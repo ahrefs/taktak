@@ -52,3 +52,24 @@ void ChatPageHandler::GetSiteInfo(GetSiteInfoCallback callback) {
   site_info->url = url;
   std::move(callback).Run(site_info.Clone());
 }
+
+void ChatPageHandler::GetActionList(GetActionListCallback callback) {
+//    chat::mojom::ActionItemPtr summarize_item = chat::mojom::ActionItem::New();
+//    summarize_item->action_type = chat::mojom::ActionType::SUMMARIZE_PAGE;
+//    summarize_item->label = "Summarize this page";
+//    chat::mojom::ActionItemPtr action_items[1] = {summarize_item.Clone()};
+//    std::move(callback).Run(action_items);
+}
+
+void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
+    if (page_.is_bound()) {
+        chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
+        response->action_type = action_type;
+        response->result = "Mock Result";
+        page_->OnSubmitActionResponse(response.Clone());
+    }
+}
+
+void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) {
+
+}

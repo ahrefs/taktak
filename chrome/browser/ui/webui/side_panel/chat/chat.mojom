@@ -2,18 +2,52 @@ module chat.mojom;
 
 import "url/mojom/url.mojom";
 
+enum APIError {
+    None,
+    ConnectionError,
+    RateLimitReached,
+    ContextLimitReached,
+};
+
 struct SiteInfo {
-  // The title of the currently active tab if it has opening page
+  // The title of the currently active tab, if it has an open page
   string? title;
 
-  // The url of the currently active tab if it has opening page
+  // The url of the currently active tab if it has opening page or probaly file which we might support in future
   string? url;
+
+  // Indicates whether the current URL contains content that can be used in conversations with Yep Chat
+  bool is_content_usable_in_conversations;
+
+  // Indicates that the content has been refined by distilling the most relevant sections from lengthy page material.
+  bool is_content_modified;
+};
+
+enum ActionType {
+     SUMMARIZE_PAGE,
+     SUMMARIZE_VIDEO,
+     EXPLAIN,
+     TRANSLATE,
+     DRAFT_SOCIAL_MEDIA_POST,
+     FACT_CHECK,
+     QUERY,
+     NONE,
+};
+
+struct ActionItem {
+    ActionType action_type;
+    string label;
+};
+
+struct ActionResponse {
+    ActionType action_type;
+    string result;
 };
 
 // Used by the WebUI page to bootstrap bidirectional communication.
 interface PageHandlerFactory {
-  CreatePageHandler(pending_remote<Page> page,
-                    pending_receiver<PageHandler> handler);
+    CreatePageHandler(pending_remote<Page> page,
+                      pending_receiver<PageHandler> handler);
 };
 
 // Browser-side handler for requests from WebUI page.
@@ -21,6 +55,18 @@ interface PageHandlerFactory {
 interface PageHandler {
 
   GetSiteInfo() => (SiteInfo site_info);
+
+  // Show as menu items in Chat UI
+  // This will be called only when SiteInfo.is_content_usable_in_conversations is true
+  GetActionList() => (array<ActionItem> action_list);
+
+  // The user selects a predefined action by clicking on menu items in the Chat UI
+  // The content of the current opening page will serve as context
+  // and a predefined prompt will be applied accordingly.
+  SubmitAction(ActionType action_type);
+
+  // Usual conversation
+  SubmitQuery(ActionType action_type, string query);
 
   // Notify the backend that the UI is ready to be shown.
   ShowUI();
@@ -33,4 +79,6 @@ interface PageHandler {
 // Browser -> Renderer
 interface Page {
     OnSiteInfoChanged(SiteInfo info);
+
+    OnSubmitActionResponse(ActionResponse response);
 };

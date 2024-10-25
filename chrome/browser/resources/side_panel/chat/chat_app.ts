@@ -13,7 +13,12 @@ export class ChatAppElement extends CrLitElement {
 
 
     private listenerIds_: number[] = [];
-    protected siteInfo_ : SiteInfo = { url : "url", title : "title"};
+    protected siteInfo_ : SiteInfo = {
+        url: "url",
+        title: "title",
+        isContentUsableInConversations: false,
+        isContentModified: false,
+    };
 
     constructor() {
         super();
