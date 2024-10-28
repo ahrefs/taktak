@@ -1,5 +1,5 @@
-#ifndef CHROMIUM_AI_CHAT_SIDE_PANEL_WEB_VIEW_H
-#define CHROMIUM_AI_CHAT_SIDE_PANEL_WEB_VIEW_H
+#ifndef CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H
+#define CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H
 
 #include "base/functional/callback_forward.h"
 #include "base/memory/raw_ptr.h"
@@ -13,15 +13,15 @@
 
 class Browser;
 
-class AIChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
-                               public TabStripModelObserver {
+class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
+                             public TabStripModelObserver {
   using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
-  METADATA_HEADER(AIChatSidePanelWebView, SidePanelWebUIViewT_ChatUI)
+  METADATA_HEADER(ChatSidePanelWebView, SidePanelWebUIViewT_ChatUI)
  public:
-  AIChatSidePanelWebView(Browser* browser, base::RepeatingClosure close_cb);
-  AIChatSidePanelWebView(const AIChatSidePanelWebView&) = delete;
-  AIChatSidePanelWebView& operator=(const AIChatSidePanelWebView&) = delete;
-  ~AIChatSidePanelWebView() override;
+  ChatSidePanelWebView(Browser* browser, base::RepeatingClosure close_cb);
+  ChatSidePanelWebView(const ChatSidePanelWebView&) = delete;
+  ChatSidePanelWebView& operator=(const ChatSidePanelWebView&) = delete;
+  ~ChatSidePanelWebView() override;
 
   // TabStripModelObserver:
   void OnTabStripModelChanged(
@@ -38,6 +38,6 @@ class AIChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
 
  private:
   const raw_ptr<Browser> browser_;
-  base::WeakPtrFactory<AIChatSidePanelWebView> weak_factory_{this};
+  base::WeakPtrFactory<ChatSidePanelWebView> weak_factory_{this};
 };
-#endif //CHROMIUM_AI_CHAT_SIDE_PANEL_WEB_VIEW_H
+#endif  // CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H

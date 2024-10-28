@@ -1,4 +1,4 @@
-#include "ai_chat_side_panel_web_view.h"
+#include "chat_side_panel_web_view.h"
 
 #include <memory>
 #include <string>
@@ -27,11 +27,11 @@ using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
 BEGIN_TEMPLATE_METADATA(SidePanelWebUIViewT_ChatUI, SidePanelWebUIViewT)
 END_METADATA
 
-AIChatSidePanelWebView::AIChatSidePanelWebView(Browser* browser,
-                                               base::RepeatingClosure close_cb)
+ChatSidePanelWebView::ChatSidePanelWebView(Browser* browser,
+                                           base::RepeatingClosure close_cb)
     : SidePanelWebUIViewT(
           base::BindRepeating(
-              &AIChatSidePanelWebView::UpdateActiveSiteInfoToActiveTab,
+              &ChatSidePanelWebView::UpdateActiveSiteInfoToActiveTab,
               base::Unretained(this)),
           close_cb,
           std::make_unique<WebUIContentsWrapperT<ChatUI>>(
@@ -44,7 +44,7 @@ AIChatSidePanelWebView::AIChatSidePanelWebView(Browser* browser,
   browser_->tab_strip_model()->AddObserver(this);
 }
 
-void AIChatSidePanelWebView::OnTabStripModelChanged(
+void ChatSidePanelWebView::OnTabStripModelChanged(
     TabStripModel* tab_strip_model,
     const TabStripModelChange& change,
     const TabStripSelectionChange& selection) {
@@ -53,16 +53,16 @@ void AIChatSidePanelWebView::OnTabStripModelChanged(
   }
 }
 
-void AIChatSidePanelWebView::TabChangedAt(content::WebContents* contents,
-                                          int index,
-                                          TabChangeType change_type) {
+void ChatSidePanelWebView::TabChangedAt(content::WebContents* contents,
+                                        int index,
+                                        TabChangeType change_type) {
   if (GetVisible() && index == browser_->tab_strip_model()->active_index() &&
       change_type == TabChangeType::kAll) {
     UpdateActiveSiteInfo(browser_->tab_strip_model()->GetWebContentsAt(index));
   }
 }
 
-void AIChatSidePanelWebView::UpdateActiveSiteInfo(
+void ChatSidePanelWebView::UpdateActiveSiteInfo(
     content::WebContents* contents) {
   auto* controller = contents_wrapper()->GetWebUIController();
   if (!controller || !contents) {
@@ -101,11 +101,11 @@ void AIChatSidePanelWebView::UpdateActiveSiteInfo(
   controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone());
 }
 
-void AIChatSidePanelWebView::UpdateActiveSiteInfoToActiveTab() {
+void ChatSidePanelWebView::UpdateActiveSiteInfoToActiveTab() {
   UpdateActiveSiteInfo(browser_->tab_strip_model()->GetActiveWebContents());
 }
 
-AIChatSidePanelWebView::~AIChatSidePanelWebView() = default;
+ChatSidePanelWebView::~ChatSidePanelWebView() = default;
 
-BEGIN_METADATA(AIChatSidePanelWebView)
+BEGIN_METADATA(ChatSidePanelWebView)
 END_METADATA

@@ -13,12 +13,12 @@ source_set("side_panel_enums") {
 
 source_set("side_panel") {
   sources = [
-    "ai_chat_side_panel_web_view.cc",
-    "ai_chat_side_panel_web_view.h",
-    "ai_chat/ai_chat_side_panel_coordinator.cc",
-    "ai_chat/ai_chat_side_panel_coordinator.h",
     "bookmarks/bookmarks_side_panel_coordinator.cc",
     "bookmarks/bookmarks_side_panel_coordinator.h",
+    "chat/chat_side_panel_coordinator.cc",
+    "chat/chat_side_panel_coordinator.h",
+    "chat_side_panel_web_view.cc",
+    "chat_side_panel_web_view.h",
     "companion/companion_side_panel_controller_utils.h",
     "companion/companion_tab_helper.cc",
     "companion/companion_tab_helper.h",

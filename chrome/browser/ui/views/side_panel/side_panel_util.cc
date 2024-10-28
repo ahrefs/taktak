@@ -16,7 +16,9 @@
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/side_panel/bookmarks/bookmarks_side_panel_coordinator.h"
+#include "chrome/browser/ui/views/side_panel/chat/chat_side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/companion/companion_utils.h"
+#include "chrome/browser/ui/views/side_panel/extensions/extension_side_panel_manager.h"
 #include "chrome/browser/ui/views/side_panel/history_clusters/history_clusters_side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/reading_list/reading_list_side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/search_companion/search_companion_side_panel_coordinator.h"
@@ -30,8 +32,6 @@
 #include "components/user_notes/user_notes_features.h"
 #include "ui/accessibility/accessibility_features.h"
 #include "ui/actions/actions.h"
-#include "chrome/browser/ui/views/side_panel/extensions/extension_side_panel_manager.h"
-#include "chrome/browser/ui/views/side_panel/ai_chat/ai_chat_side_panel_coordinator.h"
 
 // static
 void SidePanelUtil::PopulateGlobalEntries(Browser* browser,
@@ -41,7 +41,7 @@ void SidePanelUtil::PopulateGlobalEntries(Browser* browser,
       ->CreateAndRegisterEntry(window_registry);
 
   // Add ai chat
-  AIChatSidePanelCoordinator::GetOrCreateForBrowser(browser)
+  ChatSidePanelCoordinator::GetOrCreateForBrowser(browser)
       ->CreateAndRegisterEntry(window_registry);
 
   // Add bookmarks.
@@ -100,8 +100,8 @@ void SidePanelUtil::RecordSidePanelClosed(Browser* browser,
   base::UmaHistogramLongTimes("SidePanel.OpenDuration",
                               base::TimeTicks::Now() - opened_timestamp);
 
-
-  auto* ai_chat_coordinator = AIChatSidePanelCoordinator::GetOrCreateForBrowser(browser);
+  auto* ai_chat_coordinator =
+      ChatSidePanelCoordinator::GetOrCreateForBrowser(browser);
   ai_chat_coordinator->UpdateClosingPanelId(id);
 }
 
@@ -158,8 +158,8 @@ void SidePanelUtil::RecordEntryShowTriggeredMetrics(
     Browser* browser,
     SidePanelEntry::Id id,
     std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
-
-  auto* ai_chat_coordinator = AIChatSidePanelCoordinator::GetOrCreateForBrowser(browser);
+  auto* ai_chat_coordinator =
+      ChatSidePanelCoordinator::GetOrCreateForBrowser(browser);
   ai_chat_coordinator->UpdateOpeningPanelId(id);
 
   if (trigger.has_value()) {
