@@ -13,6 +13,7 @@
 #include "chrome/grit/side_panel_chat_resources_map.h"
 #include "ui/webui/mojo_web_ui_controller.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/grit/generated_resources.h"
 
 #pragma allow_unsafe_buffers
 
@@ -21,6 +22,14 @@ ChatUI::ChatUI(content::WebUI* web_ui)
     Profile* const profile = Profile::FromWebUI(web_ui);
     content::WebUIDataSource* source = content::WebUIDataSource::CreateAndAdd(
             profile, chrome::kChromeUIChatHost);
+
+    static constexpr webui::LocalizedString kLocalizedStrings[] = {
+            {"title", IDS_AI_CHAT_TITLE},
+            {"askAnything", IDS_CHAT_ASK_ANYTHING},
+    };
+    for (const auto& str : kLocalizedStrings)
+        webui::AddLocalizedString(source, str.name, str.id);
+
     webui::SetupWebUIDataSource(
             source,
             base::make_span(kSidePanelChatResources, kSidePanelChatResourcesSize),

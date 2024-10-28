@@ -1,11 +1,14 @@
 #include "chat_page_handler.h"
 
 #include <string>
+#include <vector>
 
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
+#include "chrome/grit/generated_resources.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui.h"
+#include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
 
 ChatPageHandler::ChatPageHandler(
@@ -54,11 +57,36 @@ void ChatPageHandler::GetSiteInfo(GetSiteInfoCallback callback) {
 }
 
 void ChatPageHandler::GetActionList(GetActionListCallback callback) {
-//    chat::mojom::ActionItemPtr summarize_item = chat::mojom::ActionItem::New();
-//    summarize_item->action_type = chat::mojom::ActionType::SUMMARIZE_PAGE;
-//    summarize_item->label = "Summarize this page";
-//    chat::mojom::ActionItemPtr action_items[1] = {summarize_item.Clone()};
-//    std::move(callback).Run(action_items);
+  std::vector<chat::mojom::ActionItemPtr> action_items;
+
+  chat::mojom::ActionItemPtr summarize_item = chat::mojom::ActionItem::New(
+      chat::mojom::ActionType::SUMMARIZE_PAGE,
+      l10n_util::GetStringUTF8(IDS_CHAT_SUMMARIZE_THIS_PAGE));
+
+  chat::mojom::ActionItemPtr explain_item = chat::mojom::ActionItem::New(
+      chat::mojom::ActionType::EXPLAIN,
+      l10n_util::GetStringUTF8(IDS_CHAT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE));
+
+  chat::mojom::ActionItemPtr translate_item = chat::mojom::ActionItem::New(
+      chat::mojom::ActionType::TRANSLATE,
+      l10n_util::GetStringUTF8(IDS_CHAT_TRANSLATE));
+
+  chat::mojom::ActionItemPtr draft_social_media_post_item =
+      chat::mojom::ActionItem::New(
+          chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST,
+          l10n_util::GetStringUTF8(IDS_CHAT_DRAFT_A_SOCIAL_MEDIA_POST));
+
+  chat::mojom::ActionItemPtr fact_check_item = chat::mojom::ActionItem::New(
+      chat::mojom::ActionType::FACT_CHECK,
+      l10n_util::GetStringUTF8(IDS_CHAT_DRAFT_FACT_CHECT));
+
+  action_items.push_back(summarize_item.Clone());
+  action_items.push_back(explain_item.Clone());
+  action_items.push_back(translate_item.Clone());
+  action_items.push_back(draft_social_media_post_item.Clone());
+  action_items.push_back(fact_check_item.Clone());
+
+  std::move(callback).Run(std::move(action_items));
 }
 
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {

@@ -25,7 +25,6 @@ struct SiteInfo {
 
 enum ActionType {
      SUMMARIZE_PAGE,
-     SUMMARIZE_VIDEO,
      EXPLAIN,
      TRANSLATE,
      DRAFT_SOCIAL_MEDIA_POST,

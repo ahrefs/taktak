@@ -8976,6 +8976,24 @@ Keep your key file in a safe place. You will need it to create new versions of y
             Chat
         </message>
       </if>
+      <message name="IDS_CHAT_SUMMARIZE_THIS_PAGE" desc="Label of the button in Chat to summarize the current page.">
+        Summarize this page
+      </message>
+      <message name="IDS_CHAT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE" desc="Label of the button in Chat to explain the current page's content in simple language.">
+        Explain it in simple language
+      </message>
+      <message name="IDS_CHAT_TRANSLATE" desc="Label of the button in Chat to translate the current page's content.">
+        Translate...
+      </message>
+      <message name="IDS_CHAT_DRAFT_A_SOCIAL_MEDIA_POST" desc="Label of the button in Chat to draft a social media post of the current page's content.">
+        Draft a social media post...
+      </message>
+      <message name="IDS_CHAT_DRAFT_FACT_CHECT" desc="Label of the button in Chat to fact-check the current page's content.">
+        Fact check
+      </message>
+      <message name="IDS_CHAT_ASK_ANYTHING" desc="Use in the chat prompt input box.">
+        Ask anything...
+      </message>
 
       <!-- Side panel strings -->
       <message name="IDS_ACCNAME_SIDE_PANEL_RESIZE" is_accessibility_with_no_ui="true" desc="Screen reader announcement when the side panel resize handle is focused.">

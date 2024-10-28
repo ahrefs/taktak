@@ -27,7 +27,7 @@ public:
  ~ChatPageHandler() override;
 
  void GetSiteInfo(GetSiteInfoCallback callback) override;
- void GetActionList(GetActionListCallback cllback) override;
+ void GetActionList(GetActionListCallback callback) override;
  void SubmitAction(chat::mojom::ActionType action_type) override;
  void SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) override;
  void ShowUI() override;

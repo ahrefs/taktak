@@ -5,6 +5,7 @@ import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
 import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
+import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 
 import {SiteInfo}
     from "./chat.mojom-webui.js";
@@ -20,6 +21,8 @@ export class ChatAppElement extends CrLitElement {
         isContentModified: false,
     };
 
+    protected askAnythingLabel_ = loadTimeData.getString('askAnything');
+
     constructor() {
         super();
     }
@@ -34,6 +37,7 @@ export class ChatAppElement extends CrLitElement {
     static override get properties() {
         return {
             siteInfo_: {type: Object},
+            askAnythingLabel_: {type: String},
         };
     }
 

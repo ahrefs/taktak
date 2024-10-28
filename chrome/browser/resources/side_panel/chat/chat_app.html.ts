@@ -10,7 +10,7 @@ export function getHtml(this: ChatAppElement) {
             </div>
             <div class="middle"></div>
             <div class="bottom typing-textarea">
-                <textarea id="chat-input" spellcheck="false" placeholder="Ask anything..." required></textarea>
+                <textarea id="chat-input" spellcheck="false" placeholder="${this.askAnythingLabel_}" required></textarea>
                 <span id="send-btn" class="material-symbols-rounded">send</span>
             </div>
         </div>`;

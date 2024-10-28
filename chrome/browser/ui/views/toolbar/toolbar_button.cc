@@ -253,7 +253,10 @@ void ToolbarButton::UpdateIconsWithColors(const gfx::VectorIcon& icon,
                                           SkColor pressed_color,
                                           SkColor disabled_color) {
   const int icon_size = GetIconSize();
+
+  // todo: to check alpha value with Yuri when UI customization starts
   const int alpha = 150;
+
   SetImageModel(ButtonState::STATE_NORMAL,
                 ui::ImageModel::FromVectorIcon(icon, SkColorSetA(normal_color, alpha), icon_size));
   SetImageModel(ButtonState::STATE_HOVERED,

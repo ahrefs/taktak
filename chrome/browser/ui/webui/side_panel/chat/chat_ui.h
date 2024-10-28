@@ -47,7 +47,6 @@ public:
     void SetSiteInfo(chat::mojom::SiteInfoPtr site_info);
 
    private:
-    // chat::mojom::PageHandlerFactory:
     void CreatePageHandler(
             mojo::PendingRemote<chat::mojom::Page> page,
             mojo::PendingReceiver<chat::mojom::PageHandler> receiver) override;
