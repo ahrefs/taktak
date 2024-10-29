@@ -53,6 +53,13 @@ void ChatPageHandler::GetSiteInfo(GetSiteInfoCallback callback) {
   chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
   site_info->title = title;
   site_info->url = url;
+
+  // todo: to check the schema of the current tab
+  site_info->is_content_usable_in_conversations = true;
+
+  // todo: to check the content of the current tab
+  site_info->is_content_modified = false;
+
   std::move(callback).Run(site_info.Clone());
 }
 
@@ -90,13 +97,27 @@ void ChatPageHandler::GetActionList(GetActionListCallback callback) {
 }
 
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
+    auto convertToString = [action_type](chat::mojom::ActionType action) {
+        switch (action_type) {
+            case chat::mojom::ActionType::SUMMARIZE_PAGE: return "SUMMARIZE_PAGE";
+            case chat::mojom::ActionType::EXPLAIN: return "EXPLAIN";
+            case chat::mojom::ActionType::TRANSLATE: return "TRANSLATE";
+            case chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST: return "DRAFT_SOCIAL_MEDIA_POST";
+            case chat::mojom::ActionType::FACT_CHECK: return "FACT_CHECK";
+            case chat::mojom::ActionType::QUERY: return "QUERY";
+            default: return "NONE";
+        }
+    };
+
     if (page_.is_bound()) {
+        LOG(INFO) << action_type;
         chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
         response->action_type = action_type;
-        response->result = "Mock Result";
+        response->result =convertToString(action_type);
         page_->OnSubmitActionResponse(response.Clone());
     }
 }
+
 
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) {
 

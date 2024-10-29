@@ -98,6 +98,11 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
   site_info->title = base::UTF16ToUTF8(title);
   site_info->url = url;
 
+  // todo: to check the schema of the current tab
+  site_info->is_content_usable_in_conversations = true;
+  // todo: to check the content of the current tab
+  site_info->is_content_modified = false;
+
   controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone());
 }
 

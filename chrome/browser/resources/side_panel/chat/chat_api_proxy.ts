@@ -1,8 +1,11 @@
-import {PageCallbackRouter, PageHandlerFactory, PageHandlerRemote, SiteInfo}
-    from "./chat.mojom-webui.js";
+import {PageCallbackRouter, PageHandlerFactory, PageHandlerRemote, SiteInfo,
+        ActionItem, ActionType} from "./chat.mojom-webui.js";
 
 export interface ChatApiProxy {
-    getSiteInfo():Promise<{siteInfo: SiteInfo}>
+    getActionList(): Promise<{ actionList: ActionItem[] }>;
+    submitAction(actionType: ActionType): void;
+    submitQuery(actionType: ActionType, query: string): void;
+    getSiteInfo(): Promise<{siteInfo: SiteInfo}>
     showUI(): void;
     closeUI(): void;
     getCallbackRouter(): PageCallbackRouter;
@@ -12,7 +15,7 @@ let instance: ChatApiProxy|null = null;
 
 export class ChatApiProxyImpl implements ChatApiProxy {
     private readonly callbackRouter: PageCallbackRouter = new PageCallbackRouter();
-    handler: PageHandlerRemote = new PageHandlerRemote();
+    private handler: PageHandlerRemote = new PageHandlerRemote();
 
     constructor() {
         this.callbackRouter = new PageCallbackRouter();
@@ -31,8 +34,20 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         instance = proxy;
     }
 
-    getCallbackRouter() {
-        return this.callbackRouter;
+    getActionList(): Promise<{ actionList: ActionItem[] }> {
+       return this.handler.getActionList() ;
+    }
+
+    submitAction(actionType: ActionType) {
+        this.handler.submitAction(actionType);
+    }
+
+    submitQuery(_: ActionType, __: string) {
+
+    }
+
+    getSiteInfo() {
+      return this.handler.getSiteInfo();
     }
 
     showUI() {
@@ -43,7 +58,7 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         this.handler.closeUI();
     }
 
-    getSiteInfo() {
-      return this.handler.getSiteInfo();
+    getCallbackRouter() {
+        return this.callbackRouter;
     }
 }
