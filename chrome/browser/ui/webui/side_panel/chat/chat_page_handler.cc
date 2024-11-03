@@ -97,23 +97,11 @@ void ChatPageHandler::GetActionList(GetActionListCallback callback) {
 }
 
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
-    auto convertToString = [action_type](chat::mojom::ActionType action) {
-        switch (action_type) {
-            case chat::mojom::ActionType::SUMMARIZE_PAGE: return "SUMMARIZE_PAGE";
-            case chat::mojom::ActionType::EXPLAIN: return "EXPLAIN";
-            case chat::mojom::ActionType::TRANSLATE: return "TRANSLATE";
-            case chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST: return "DRAFT_SOCIAL_MEDIA_POST";
-            case chat::mojom::ActionType::FACT_CHECK: return "FACT_CHECK";
-            case chat::mojom::ActionType::QUERY: return "QUERY";
-            default: return "NONE";
-        }
-    };
-
     if (page_.is_bound()) {
         LOG(INFO) << action_type;
         chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
         response->action_type = action_type;
-        response->result =convertToString(action_type);
+        response->result = "MOCK Result";
         page_->OnSubmitActionResponse(response.Clone());
     }
 }
