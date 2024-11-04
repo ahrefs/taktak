@@ -42,8 +42,8 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         this.handler.submitAction(actionType);
     }
 
-    submitQuery(_: ActionType, __: string) {
-
+    submitQuery(actionType: ActionType, query: string) {
+        this.handler.submitQuery(actionType, query);
     }
 
     getSiteInfo() {

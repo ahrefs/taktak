@@ -117,23 +117,19 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
         LOG(INFO) << action_type;
         chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
         response->action_type = action_type;
-
-        scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
-                profile_->GetDefaultStoragePartition()
-                        ->GetURLLoaderFactoryForBrowserProcess();
-        api_client_ = std::make_unique<CompletionApiClient>(
-                std::move(url_loader_factory));
-
-        // Fix: use proper callback
-        api_client_->QueryPrompt("test", base::NullCallback(),
-                                 base::NullCallback());
         response->result = "MOCK Result";
-
         page_->OnSubmitActionResponse(response.Clone());
     }
 }
 
 
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) {
+  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
+      profile_->GetDefaultStoragePartition()
+          ->GetURLLoaderFactoryForBrowserProcess();
+  api_client_ =
+      std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
 
+  // Fix: use proper callback
+  api_client_->QueryPrompt(query, base::NullCallback(), base::NullCallback());
 }

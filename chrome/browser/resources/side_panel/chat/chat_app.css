@@ -1,8 +1,9 @@
+
 /* #css_wrapper_metadata_start
  * #type=style-lit
+ * #import=../chat_app.css.js
  * #scheme=relative
  * #css_wrapper_metadata_end */
-
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 * {
@@ -23,6 +24,24 @@
     --incoming-chat-border: #D9D9E3;
 }
 
+cr-input, cr-textarea {
+    width: 100%;
+}
+
+cr-button {
+
+    padding: 10px 10px;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: none;
+    color: #474444;
+}
+
+.no-error {
+    --cr-input-error-display: none;
+}
 #container {
     display: flex;
     flex-direction: column;
@@ -52,40 +71,55 @@
 .bottom {
     flex: 0 0 auto;
     display: flex;
-    /* Takes only the height of its content */
+    flex-direction: column;
+    gap: 12px;
+}
+
+.button-container {
+    display: flex;
+    gap: 6px;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.action-button {
+    display: inline-block;
+    padding: 10px 10px;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: none;
 }
 
 .typing-container {
-    position: fixed;
     bottom: 0;
     width: 100%;
     display: flex;
     padding: 20px 10px;
-    justify-content: center;
+    gap: 12px;
     background: var(--outgoing-chat-bg);
     border-top: 1px solid var(--incoming-chat-border);
+    align-items: flex-start;
 }
 
 .typing-container .typing-content {
     display: flex;
-    max-width: 950px;
     width: 100%;
-    align-items: flex-end;
 }
 
 .typing-container .typing-textarea {
     width: 100%;
     display: flex;
-    position: relative;
 }
 
-.typing-textarea textarea {
+.typing-textarea{
     resize: none;
     height: 55px;
     width: 100%;
     padding: 15px 45px 15px 20px;
     color: var(--text-color);
-    font-size: 1rem;
+    font-size: 14px;
     border-radius: 12px;
     max-height: 250px;
     overflow-y: auto;

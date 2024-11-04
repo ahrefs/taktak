@@ -1,5 +1,10 @@
 import './strings.m.js';
 
+import '//resources/cr_elements/cr_button/cr_button.js';
+import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
+import '//resources/cr_elements/cr_input/cr_input.js';
+import '//resources/cr_elements/cr_textarea/cr_textarea.js';
+
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
 import {getCss} from './chat_app.css.js';
@@ -23,6 +28,7 @@ export class ChatAppElement extends CrLitElement {
         actionType: ActionType.NONE,
         result: ""
     };
+    protected textareaValue_?: string;
 
     constructor() {
         super();
@@ -42,6 +48,7 @@ export class ChatAppElement extends CrLitElement {
             askAnythingLabel_: {type: String},
             actionList_: {type: Array},
             submitResponse_: {type: Object},
+            textareaValue_: {type: String},
         };
     }
 
@@ -61,6 +68,15 @@ export class ChatAppElement extends CrLitElement {
     protected onSubmitAction_(e: Event) {
         e.stopPropagation();
         this.chatApiProxy_.submitAction(ActionType.SUMMARIZE_PAGE);
+    }
+
+    protected onTextareaValueChanged_(e: CustomEvent<{value: string}>) {
+        this.textareaValue_ = e.detail.value;
+    }
+
+    protected async onSubmitQuery_() {
+        console.log(this.textareaValue_);
+        this.chatApiProxy_.submitQuery(ActionType.QUERY, this.textareaValue_ ?? "" );
     }
 
     override connectedCallback() {
