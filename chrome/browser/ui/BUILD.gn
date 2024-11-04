@@ -1567,6 +1567,8 @@ static_library("ui") {
       "webui/side_panel/bookmarks/bookmarks_side_panel_ui.h",
       "webui/side_panel/chat/api/api_request_helper.cc",
       "webui/side_panel/chat/api/api_request_helper.h",
+      "webui/side_panel/chat/api/completion_api_client.cc",
+      "webui/side_panel/chat/api/completion_api_client.h",
       "webui/side_panel/chat/chat_page_handler.cc",
       "webui/side_panel/chat/chat_page_handler.h",
       "webui/side_panel/chat/chat_ui.cc",
