@@ -22,7 +22,6 @@ export class ChatAppElement extends CrLitElement {
         url: "",
         title: "",
         isContentUsableInConversations: false,
-        isContentModified: false,
     };
     protected submitResponse_ : ActionResponse = {
         actionType: ActionType.NONE,

@@ -18,9 +18,6 @@ struct SiteInfo {
 
   // Indicates whether the current URL contains content that can be used in conversations with Yep Chat
   bool is_content_usable_in_conversations;
-
-  // Indicates that the content has been refined by distilling the most relevant sections from lengthy page material.
-  bool is_content_modified;
 };
 
 enum ActionType {

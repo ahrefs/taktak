@@ -30,9 +30,8 @@ END_METADATA
 ChatSidePanelWebView::ChatSidePanelWebView(Browser* browser,
                                            base::RepeatingClosure close_cb)
     : SidePanelWebUIViewT(
-          base::BindRepeating(
-              &ChatSidePanelWebView::UpdateActiveSiteInfoToActiveTab,
-              base::Unretained(this)),
+          base::BindRepeating(&ChatSidePanelWebView::UpdateActiveWebContents,
+                              base::Unretained(this)),
           close_cb,
           std::make_unique<WebUIContentsWrapperT<ChatUI>>(
               GURL(chrome::kChromeUIChatURL),
@@ -69,44 +68,22 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
     return;
   }
 
-  //    auto title = base::UTF16ToUTF8( web_contents_->GetTitle());
-  //    std::string url;
-  //    const GURL gurl = web_contents_->GetLastCommittedURL();
-  //    if (gurl.SchemeIsHTTPOrHTTPS()) {
-  //        url = gurl.spec();
-  //    }
-  //    chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
-  //    site_info->title = title;
-  //    site_info->url = url;
-  //
-  auto title = contents->GetTitle();
   std::string url;
+  chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
   const GURL gurl = contents->GetLastCommittedURL();
   if (gurl.SchemeIsHTTPOrHTTPS()) {
     url = gurl.spec();
+    site_info->is_content_usable_in_conversations = true;
+  } else {
+    site_info->is_content_usable_in_conversations = false;
   }
-  //    bool ConversationDriver::IsContentAssociationPossible() {
-  //        const GURL url = GetPageURL();
-  //
-  //        if (!base::Contains(kAllowedSchemes, url.scheme())) {
-  //            return false;
-  //        }
-  //
-  //        return true;
-  //    }
-  chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
-  site_info->title = base::UTF16ToUTF8(title);
+  site_info->title = base::UTF16ToUTF8(contents->GetTitle());
   site_info->url = url;
-
-  // todo: to check the schema of the current tab
-  site_info->is_content_usable_in_conversations = true;
-  // todo: to check the content of the current tab
-  site_info->is_content_modified = false;
 
   controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone());
 }
 
-void ChatSidePanelWebView::UpdateActiveSiteInfoToActiveTab() {
+void ChatSidePanelWebView::UpdateActiveWebContents() {
   UpdateActiveSiteInfo(browser_->tab_strip_model()->GetActiveWebContents());
 }
 

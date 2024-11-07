@@ -34,7 +34,7 @@ class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
                     TabChangeType change_type) override;
 
   void UpdateActiveSiteInfo(content::WebContents* contents);
-  void UpdateActiveSiteInfoToActiveTab();
+  void UpdateActiveWebContents();
 
  private:
   const raw_ptr<Browser> browser_;
