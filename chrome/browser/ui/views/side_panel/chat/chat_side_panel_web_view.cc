@@ -68,18 +68,17 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
     return;
   }
 
-  std::string url;
   chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
+  site_info->title = base::UTF16ToUTF8(contents->GetTitle());
+
   const GURL gurl = contents->GetLastCommittedURL();
   if (gurl.SchemeIsHTTPOrHTTPS()) {
-    url = gurl.spec();
+    site_info->url = gurl.spec();
     site_info->is_content_usable_in_conversations = true;
   } else {
+    site_info->url = "";
     site_info->is_content_usable_in_conversations = false;
   }
-  site_info->title = base::UTF16ToUTF8(contents->GetTitle());
-  site_info->url = url;
-
   controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone());
 }
 

@@ -1,0 +1,24 @@
+module chat.mojom;
+
+import "url/mojom/url.mojom";
+
+enum PageContentType {
+  Text,
+  VideoTranscriptYouTube,
+  VideoTranscriptVTT
+};
+
+// It has either text or url
+union PageContentData {
+  string content;
+  url.mojom.Url content_url;
+};
+
+struct PageContent {
+  PageContentData content;
+  PageContentType type;
+};
+
+interface PageContentExtractor {
+  ExtractPageContent() => (PageContent? page_content);
+};

@@ -13,6 +13,7 @@
 #include "content/public/browser/storage_partition.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui.h"
+#include "page_content_extractor.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
@@ -110,13 +111,35 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
     if (page_.is_bound()) {
         LOG(INFO) << action_type;
-        chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
-        response->action_type = action_type;
-        response->result = "MOCK Result";
-        page_->OnSubmitActionResponse(response.Clone());
+
+        if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
+          auto on_page_text_extracted =
+              [this, &action_type](const std::optional<std::string>& text) {
+                chat::mojom::ActionResponsePtr response =
+                    chat::mojom::ActionResponse::New();
+                response->action_type = action_type;
+                response->result = text.value_or("");
+                this->page_->OnSubmitActionResponse(response.Clone());
+              };
+
+          const GURL gurl = web_contents_->GetLastCommittedURL();
+          if (gurl.SchemeIsHTTPOrHTTPS()) {
+            content::RenderFrameHost* main_frame =
+                web_contents_->GetPrimaryMainFrame();
+            ai_chat::ExtractPageText(main_frame,
+                                     content::ISOLATED_WORLD_ID_GLOBAL,
+                                     on_page_text_extracted);
+          }
+        } else {
+          // todo: to implement for other action types later
+          chat::mojom::ActionResponsePtr response =
+              chat::mojom::ActionResponse::New();
+          response->action_type = action_type;
+          response->result = "MOCK Result";
+          page_->OnSubmitActionResponse(response.Clone());
+        }
     }
 }
-
 
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) {
   scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =

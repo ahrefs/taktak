@@ -1996,6 +1996,7 @@ static_library("browser") {
     "//chrome/common:supervised_user_commands_mojom",
     "//chrome/common:version_header",
     "//chrome/common/cart:mojo_bindings",
+    "//chrome/common/chat:mojo_bindings",
     "//chrome/common/net",
     "//chrome/common/notifications",
     "//chrome/installer/util:with_no_strings",
