@@ -12,6 +12,7 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/webui/side_panel/chat/api/completion_api_client.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
+#include "chrome/common/chat/page_content_extractor.mojom.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
@@ -55,5 +56,7 @@ private:
     raw_ptr<content::WebContents, DanglingUntriaged> web_contents_;
     const raw_ptr<Profile> profile_;
     std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
+
+    void OnPageContentExtracted(chat::mojom::PageContentPtr data);
 };
 #endif //CHROMIUM_CHAT_PAGE_HANDLER_H

@@ -8,15 +8,23 @@
 #include <vector>
 
 #include "base/containers/contains.h"
+#include "base/metrics/histogram_macros.h"
 #include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
+#include "chrome/common/chrome_isolated_world_ids.h"
 #include "content/public/renderer/render_frame.h"
+#include "content/public/renderer/render_thread.h"
+#include "services/metrics/public/cpp/ukm_builders.h"
+#include "third_party/blink/public/platform/browser_interface_broker_proxy.h"
+#include "third_party/blink/public/platform/scheduler/web_agent_group_scheduler.h"
+#include "third_party/blink/public/platform/web_string.h"
 #include "third_party/blink/public/web/web_local_frame.h"
 #include "third_party/blink/public/web/web_script_source.h"
 #include "ui/accessibility/ax_node.h"
 #include "ui/accessibility/ax_tree.h"
+#include "v8/include/v8-isolate.h"
 
 namespace ai_chat {
 namespace {
@@ -103,9 +111,11 @@ void AddTextNodesToVector(const ui::AXNode* node,
 
 PageContentExtractor::PageContentExtractor(
     content::RenderFrame* render_frame,
-    service_manager::BinderRegistry* registry)
+    service_manager::BinderRegistry* registry,
+    int32_t isolated_world_id)
     : content::RenderFrameObserver(render_frame),
       RenderFrameObserverTracker<PageContentExtractor>(render_frame),
+      isolated_world_id_(isolated_world_id),
       weak_ptr_factory_(this) {
   if (!render_frame->IsMainFrame()) {
     return;
@@ -125,19 +135,20 @@ base::WeakPtr<PageContentExtractor> PageContentExtractor::GetWeakPtr() {
 }
 
 void PageContentExtractor::ExtractPageContent(
-    mojom::PageContentExtractor::ExtractPageContentCallback callback) {
-  LOG(INFO) << "AI Chat renderer has been asked for page content.";
+    chat::mojom::PageContentExtractor::ExtractPageContentCallback callback) {
+  LOG(INFO) << "AI Chat renderer has been asked for page content.xxx";
 
-  blink::WebLocalFrame* main_frame = render_frame()->GetWebFrame();
-
-  ExtractPageText(render_frame(), ISOLATED_WORLD_ID_TAKTAK_INTERNAL,
-                  std::move(callback));
+  ExtractPageText(
+      render_frame(), isolated_world_id_,
+      base::BindOnce(&PageContentExtractor::OnPageTextExtracted,
+                     weak_ptr_factory_.GetWeakPtr(), std::move(callback)));
 }
 
 void PageContentExtractor::ExtractPageText(
-    content::RenderFrameHost* render_frame,
+    content::RenderFrame* render_frame,
     int32_t isolated_world_id,
     base::OnceCallback<void(const std::optional<std::string>&)> callback) {
+  LOG(INFO) << "ExtractPageText()";
   auto snapshotter = render_frame->CreateAXTreeSnapshotter(
       ui::AXMode::kWebContents | ui::AXMode::kHTML | ui::AXMode::kScreenReader);
   ui::AXTreeUpdate snapshot;
@@ -171,20 +182,34 @@ void PageContentExtractor::ExtractPageText(
   std::string contents_text =
       base::UTF16ToUTF8(base::JoinString(text_node_contents, u" "));
 
+  LOG(INFO) << contents_text;
   if (contents_text.empty()) {
+    blink::WebLocalFrame* main_frame = render_frame->GetWebFrame();
+    v8::HandleScope handle_scope(
+        main_frame->GetAgentGroupScheduler()->Isolate());
+//      blink::WebScriptSource source = blink::WebScriptSource(
+//              blink::WebString::FromASCII("document.addEventListener('DOMContentLoaded', function() { document.body.innerText; });"));
     blink::WebScriptSource source = blink::WebScriptSource(
         blink::WebString::FromASCII("document.body.innerText"));
 
     auto on_script_executed =
         [](base::OnceCallback<void(const std::optional<std::string>&)> callback,
            std::optional<base::Value> value, base::TimeTicks start_time) {
+          LOG(INFO) << "on_script_executed";
+          LOG(INFO) << value->DebugString();
           if (value->is_string()) {
+            LOG(INFO) <<  "value is string ....";
             std::move(callback).Run(value->GetString());
             return;
           }
 
+          LOG(INFO) << "Value is not string";
           std::move(callback).Run({});
         };
+
+    if (render_frame->GetWebFrame()) {
+      LOG(INFO) << "has local web frame";
+    }
 
     render_frame->GetWebFrame()->RequestExecuteScript(
         isolated_world_id, UNSAFE_TODO(base::make_span(&source, 1u)),
@@ -195,9 +220,39 @@ void PageContentExtractor::ExtractPageText(
         blink::BackForwardCacheAware::kAllow,
         blink::mojom::WantResultOption::kWantResult,
         blink::mojom::PromiseResultOption::kAwait);
+    LOG(INFO) << "called RequestExecuteScript";
+  } else {
+    std::move(callback).Run(contents_text);
+  }
+}
+
+void PageContentExtractor::BindReceiver(
+    mojo::PendingReceiver<chat::mojom::PageContentExtractor> receiver) {
+  VLOG(1) << "AIChat PageContentExtractor handler bound.";
+  receiver_.reset();
+  receiver_.Bind(std::move(receiver));
+}
+
+void PageContentExtractor::OnPageTextExtracted(
+    chat::mojom::PageContentExtractor::ExtractPageContentCallback callback,
+    const std::optional<std::string>& content) {
+  // Validate
+  if (!content.has_value()) {
+    LOG(INFO) << "null content";
+    std::move(callback).Run({});
     return;
   }
-
-  std::move(callback).Run(contents_text);
+  if (content->empty()) {
+    LOG(INFO) << "Empty content";
+    std::move(callback).Run({});
+    return;
+  }
+  LOG(INFO) << "Got a distill result of character length: "
+            << content->length();
+  // Successful text extraction
+  auto result = chat::mojom::PageContent::New();
+  result->type = std::move(chat::mojom::PageContentType::Text);
+  result->content = chat::mojom::PageContentData::NewContent(content.value());
+  std::move(callback).Run(std::move(result));
 }
 }  // namespace ai_chat

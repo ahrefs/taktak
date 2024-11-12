@@ -51,6 +51,7 @@
 #include "chrome/renderer/benchmarking_extension.h"
 #include "chrome/renderer/browser_exposed_renderer_interfaces.h"
 #include "chrome/renderer/cart/commerce_hint_agent.h"
+#include "chrome/renderer/chat/page_content_extractor.h"
 #include "chrome/renderer/chrome_content_settings_agent_delegate.h"
 #include "chrome/renderer/chrome_render_frame_observer.h"
 #include "chrome/renderer/chrome_render_thread_observer.h"
@@ -63,6 +64,7 @@
 #include "chrome/renderer/net_benchmarking_extension.h"
 #include "chrome/renderer/plugins/non_loadable_plugin_placeholder.h"
 #include "chrome/renderer/plugins/pdf_plugin_placeholder.h"
+#include "chrome/renderer/process_state.h"
 #include "chrome/renderer/supervised_user/supervised_user_error_page_controller_delegate_impl.h"
 #include "chrome/renderer/trusted_vault_encryption_keys_extension.h"
 #include "chrome/renderer/url_loader_throttle_provider_impl.h"
@@ -819,6 +821,13 @@ void ChromeContentRendererClient::RenderFrameCreated(
   if (base::FeatureList::IsEnabled(features::kBoardingPassDetector) &&
       render_frame->IsMainFrame()) {
     new wallet::BoardingPassExtractor(render_frame, registry);
+  }
+#endif
+
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
+  if (render_frame->IsMainFrame() && !IsIncognitoProcess()) {
+    new ai_chat::PageContentExtractor(render_frame, registry,
+                                      ISOLATED_WORLD_ID_CHROME_INTERNAL);
   }
 #endif
 }

@@ -4,19 +4,27 @@
 #include <string>
 #include <vector>
 
+#include "base/containers/contains.h"
+#include "base/containers/fixed_flat_set.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/ui/webui/side_panel/chat/api/completion_api_client.h"
 #include "chrome/grit/generated_resources.h"
+#include "chrome/renderer/chat/page_content_extractor.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui.h"
-#include "page_content_extractor.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
+#include "services/service_manager/public/cpp/interface_provider.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
+
+constexpr auto kVideoPageContentTypes =
+    base::MakeFixedFlatSet<chat::mojom::PageContentType>(
+        {chat::mojom::PageContentType::VideoTranscriptYouTube,
+         chat::mojom::PageContentType::VideoTranscriptVTT});
 
 ChatPageHandler::ChatPageHandler(
         mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
@@ -51,6 +59,7 @@ void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info) {
     }
 }
 
+// todo: to remove probably, not correct url and title here
 void ChatPageHandler::GetSiteInfo(GetSiteInfoCallback callback) {
     chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
     site_info->title = base::UTF16ToUTF8(web_contents_->GetTitle());
@@ -113,23 +122,21 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
         LOG(INFO) << action_type;
 
         if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
-          auto on_page_text_extracted =
-              [this, &action_type](const std::optional<std::string>& text) {
-                chat::mojom::ActionResponsePtr response =
-                    chat::mojom::ActionResponse::New();
-                response->action_type = action_type;
-                response->result = text.value_or("");
-                this->page_->OnSubmitActionResponse(response.Clone());
-              };
+          LOG(INFO) << "ActionType: Summarize_page";
+          LOG(INFO) << "****" << base::UTF16ToUTF8(web_contents_->GetTitle());
+            const GURL gurl = web_contents_->GetLastCommittedURL();
+            LOG(INFO) << "****" << gurl.spec();
+          auto* primary_rfh = web_contents_->GetPrimaryMainFrame();
+          DCHECK(primary_rfh->IsRenderFrameLive());
 
-          const GURL gurl = web_contents_->GetLastCommittedURL();
-          if (gurl.SchemeIsHTTPOrHTTPS()) {
-            content::RenderFrameHost* main_frame =
-                web_contents_->GetPrimaryMainFrame();
-            ai_chat::ExtractPageText(main_frame,
-                                     content::ISOLATED_WORLD_ID_GLOBAL,
-                                     on_page_text_extracted);
-          }
+          mojo::Remote<chat::mojom::PageContentExtractor> extractor;
+          primary_rfh->GetRemoteInterfaces()->GetInterface(
+              extractor.BindNewPipeAndPassReceiver());
+
+          extractor->ExtractPageContent(
+              base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                             base::Unretained(this)));
+
         } else {
           // todo: to implement for other action types later
           chat::mojom::ActionResponsePtr response =
@@ -139,6 +146,27 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
           page_->OnSubmitActionResponse(response.Clone());
         }
     }
+}
+
+void ChatPageHandler::OnPageContentExtracted(chat::mojom::PageContentPtr data) {
+  if (!data) {
+    VLOG(1) << __func__ << " no data.";
+    return;
+  }
+  DVLOG(1) << "OnPageContentExtracted: " << data.get();
+  const bool is_video = base::Contains(kVideoPageContentTypes, data->type);
+  DVLOG(1) << "Is video? " << is_video;
+  // Handle text mode response
+  if (!is_video) {
+    DCHECK(data->content->is_content());
+    auto content = data->content->get_content();
+    DVLOG(1) << __func__ << ": Got content with char length of "
+             << content.length();
+    LOG(INFO) << content;
+    return;
+  }
+
+  LOG(INFO) << "content is url";
 }
 
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) {

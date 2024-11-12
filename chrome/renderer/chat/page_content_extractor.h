@@ -27,7 +27,8 @@ class PageContentExtractor
       public content::RenderFrameObserverTracker<PageContentExtractor> {
  public:
   PageContentExtractor(content::RenderFrame* render_frame,
-                       service_manager::BinderRegistry* registry);
+                       service_manager::BinderRegistry* registry,
+                       int32_t isolated_world_id);
 
   PageContentExtractor(const PageContentExtractor&) = delete;
   PageContentExtractor& operator=(const PageContentExtractor&) = delete;
@@ -41,17 +42,26 @@ class PageContentExtractor
       chat::mojom::PageContentExtractor::ExtractPageContentCallback callback)
       override;
 
+  // RenderFrameObserver implementation:
+  void OnDestruct() override;
+
   void BindReceiver(
-      mojo::PendingReceiver<mojom::PageContentExtractor> receiver);
+      mojo::PendingReceiver<chat::mojom::PageContentExtractor> receiver);
 
-  chat::mojo::Receiver<chat::mojom::PageContentExtractor> receiver_{this};
+  mojo::Receiver<chat::mojom::PageContentExtractor> receiver_{this};
 
-  base::WeakPtrFactory<PageContentExtractor> weak_ptr_factory_{this};
+  int32_t isolated_world_id_;
 
   void ExtractPageText(
       content::RenderFrame* render_frame,
       int32_t isolated_world_id,
       base::OnceCallback<void(const std::optional<std::string>& text)>);
+
+  void OnPageTextExtracted(
+      chat::mojom::PageContentExtractor::ExtractPageContentCallback callback,
+      const std::optional<std::string>& text);
+
+  base::WeakPtrFactory<PageContentExtractor> weak_ptr_factory_{this};
 };
 
 }  // namespace ai_chat

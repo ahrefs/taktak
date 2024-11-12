@@ -1,6 +1,10 @@
 #ifndef CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H
 #define CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H
 
+#include <memory>
+#include <optional>
+#include <string>
+
 #include "base/functional/callback_forward.h"
 #include "base/memory/raw_ptr.h"
 #include "chrome/browser/ui/tabs/tab_strip_model_observer.h"
@@ -10,6 +14,11 @@
 #include "ui/base/metadata/metadata_header_macros.h"
 #include "ui/views/controls/webview/webview.h"
 #include "ui/views/view.h"
+#include "chrome/common/chat/page_content_extractor.mojom.h"
+#include "mojo/public/cpp/bindings/pending_receiver.h"
+#include "mojo/public/cpp/bindings/pending_remote.h"
+#include "mojo/public/cpp/bindings/receiver.h"
+#include "mojo/public/cpp/bindings/remote.h"
 
 class Browser;
 
@@ -39,5 +48,7 @@ class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
  private:
   const raw_ptr<Browser> browser_;
   base::WeakPtrFactory<ChatSidePanelWebView> weak_factory_{this};
+
+  void OnPageContentExtracted(chat::mojom::PageContentPtr data);
 };
 #endif  // CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H

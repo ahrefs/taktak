@@ -16,7 +16,6 @@ enum ChromeIsolatedWorldIDs {
   // Isolated world ID for internal Chrome features.
   ISOLATED_WORLD_ID_CHROME_INTERNAL,
 
-  ISOLATED_WORLD_ID_TAKTAK_INTERNAL,
 
 #if BUILDFLAG(IS_MAC)
   // Isolated world ID for AppleScript.
