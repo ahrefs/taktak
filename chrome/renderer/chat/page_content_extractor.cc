@@ -136,7 +136,7 @@ base::WeakPtr<PageContentExtractor> PageContentExtractor::GetWeakPtr() {
 
 void PageContentExtractor::ExtractPageContent(
     chat::mojom::PageContentExtractor::ExtractPageContentCallback callback) {
-  LOG(INFO) << "AI Chat renderer has been asked for page content.xxx";
+  DVLOG(0) << __func__ << "The current page will be extracted for Yep Chat.";
 
   ExtractPageText(
       render_frame(), isolated_world_id_,
@@ -148,7 +148,6 @@ void PageContentExtractor::ExtractPageText(
     content::RenderFrame* render_frame,
     int32_t isolated_world_id,
     base::OnceCallback<void(const std::optional<std::string>&)> callback) {
-  LOG(INFO) << "ExtractPageText()";
   auto snapshotter = render_frame->CreateAXTreeSnapshotter(
       ui::AXMode::kWebContents | ui::AXMode::kHTML | ui::AXMode::kScreenReader);
   ui::AXTreeUpdate snapshot;
@@ -182,34 +181,23 @@ void PageContentExtractor::ExtractPageText(
   std::string contents_text =
       base::UTF16ToUTF8(base::JoinString(text_node_contents, u" "));
 
-  LOG(INFO) << contents_text;
   if (contents_text.empty()) {
     blink::WebLocalFrame* main_frame = render_frame->GetWebFrame();
     v8::HandleScope handle_scope(
         main_frame->GetAgentGroupScheduler()->Isolate());
-//      blink::WebScriptSource source = blink::WebScriptSource(
-//              blink::WebString::FromASCII("document.addEventListener('DOMContentLoaded', function() { document.body.innerText; });"));
     blink::WebScriptSource source = blink::WebScriptSource(
         blink::WebString::FromASCII("document.body.innerText"));
 
     auto on_script_executed =
         [](base::OnceCallback<void(const std::optional<std::string>&)> callback,
            std::optional<base::Value> value, base::TimeTicks start_time) {
-          LOG(INFO) << "on_script_executed";
-          LOG(INFO) << value->DebugString();
-          if (value->is_string()) {
-            LOG(INFO) <<  "value is string ....";
+          if (value && value->is_string()) {
             std::move(callback).Run(value->GetString());
             return;
           }
 
-          LOG(INFO) << "Value is not string";
           std::move(callback).Run({});
         };
-
-    if (render_frame->GetWebFrame()) {
-      LOG(INFO) << "has local web frame";
-    }
 
     render_frame->GetWebFrame()->RequestExecuteScript(
         isolated_world_id, UNSAFE_TODO(base::make_span(&source, 1u)),
@@ -220,7 +208,6 @@ void PageContentExtractor::ExtractPageText(
         blink::BackForwardCacheAware::kAllow,
         blink::mojom::WantResultOption::kWantResult,
         blink::mojom::PromiseResultOption::kAwait);
-    LOG(INFO) << "called RequestExecuteScript";
   } else {
     std::move(callback).Run(contents_text);
   }
@@ -228,7 +215,7 @@ void PageContentExtractor::ExtractPageText(
 
 void PageContentExtractor::BindReceiver(
     mojo::PendingReceiver<chat::mojom::PageContentExtractor> receiver) {
-  VLOG(1) << "AIChat PageContentExtractor handler bound.";
+  VLOG(1) << "Yep Chat PageContentExtractor handler bound.";
   receiver_.reset();
   receiver_.Bind(std::move(receiver));
 }
@@ -236,19 +223,22 @@ void PageContentExtractor::BindReceiver(
 void PageContentExtractor::OnPageTextExtracted(
     chat::mojom::PageContentExtractor::ExtractPageContentCallback callback,
     const std::optional<std::string>& content) {
-  // Validate
   if (!content.has_value()) {
-    LOG(INFO) << "null content";
+    DVLOG(0) << "Extracted content is null.";
     std::move(callback).Run({});
     return;
   }
+
   if (content->empty()) {
-    LOG(INFO) << "Empty content";
+    DVLOG(0) << "Extracted content is empty.";
     std::move(callback).Run({});
     return;
   }
-  LOG(INFO) << "Got a distill result of character length: "
-            << content->length();
+
+  DVLOG(0) << "--------> The content of the current opening page.";
+  DVLOG(0) << content.value();
+  DVLOG(0) << "The length of extracted content: " << content->length();
+
   // Successful text extraction
   auto result = chat::mojom::PageContent::New();
   result->type = std::move(chat::mojom::PageContentType::Text);

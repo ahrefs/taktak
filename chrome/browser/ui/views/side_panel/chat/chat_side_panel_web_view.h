@@ -32,7 +32,6 @@ class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
   ChatSidePanelWebView& operator=(const ChatSidePanelWebView&) = delete;
   ~ChatSidePanelWebView() override;
 
-  // TabStripModelObserver:
   void OnTabStripModelChanged(
       TabStripModel* tab_strip_model,
       const TabStripModelChange& change,
@@ -44,10 +43,11 @@ class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
 
   void UpdateActiveSiteInfo(content::WebContents* contents);
   void UpdateActiveWebContents();
+  base::WeakPtr<ChatSidePanelWebView> GetWeakPtr();
 
  private:
   const raw_ptr<Browser> browser_;
-  base::WeakPtrFactory<ChatSidePanelWebView> weak_factory_{this};
+  base::WeakPtrFactory<ChatSidePanelWebView> weak_ptr_factory_{this};
 
   void OnPageContentExtracted(chat::mojom::PageContentPtr data);
 };

@@ -13,7 +13,6 @@
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "ui/webui/mojo_web_ui_controller.h"
 
-// Forward declaration so that config definition can come before controller.
 class ChatUI;
 
 class ChatUIConfig : public DefaultTopChromeWebUIConfig<ChatUI> {
@@ -36,8 +35,6 @@ public:
 
     ~ChatUI() override;
 
-    // Instantiates the implementor of the mojom::PageHandlerFactory mojo
-    // interface passing the pending receiver that will be internally bound.
     void BindInterface(
             mojo::PendingReceiver<chat::mojom::PageHandlerFactory> receiver);
 
