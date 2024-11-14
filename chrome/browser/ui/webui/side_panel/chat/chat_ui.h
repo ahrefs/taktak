@@ -38,6 +38,13 @@ public:
     void BindInterface(
             mojo::PendingReceiver<chat::mojom::PageHandlerFactory> receiver);
 
+    // Set by WebUIContentsWrapperT. TopChromeWebUIController provides default
+    // implementation for this but we don't use it.
+    void set_embedder(
+        base::WeakPtr<TopChromeWebUIController::Embedder> embedder) {
+      embedder_ = embedder;
+    }
+
     static constexpr std::string
 
     GetWebUIName() { return "Chat"; }
@@ -52,6 +59,8 @@ public:
 
     mojo::Receiver<chat::mojom::PageHandlerFactory> page_factory_receiver_{
             this};
+
+    base::WeakPtr<TopChromeWebUIController::Embedder> embedder_;
 
     WEB_UI_CONTROLLER_TYPE_DECL();
 };

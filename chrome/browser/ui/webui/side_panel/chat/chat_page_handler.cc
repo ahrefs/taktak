@@ -27,16 +27,18 @@ constexpr auto kVideoPageContentTypes =
          chat::mojom::PageContentType::VideoTranscriptVTT});
 
 ChatPageHandler::ChatPageHandler(
-        mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
-        mojo::PendingRemote<chat::mojom::Page> page,
-        ChatUI* chat_ui,
-        content::WebUI* web_ui)
-        : receiver_(this, std::move(receiver)),
-          page_(std::move(page)),
-          chat_ui_(chat_ui),
-          web_ui_(web_ui),
-          web_contents_(web_ui->GetWebContents()),
-          profile_(Profile::FromWebUI(web_ui)) {}
+    mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
+    mojo::PendingRemote<chat::mojom::Page> page,
+    ChatUI* chat_ui,
+    content::WebUI* web_ui,
+    content::WebContents* owner_web_contents,
+    content::WebContents* chat_context_web_contents)
+    : receiver_(this, std::move(receiver)),
+      page_(std::move(page)),
+      chat_ui_(chat_ui),
+      owner_web_contents_(owner_web_contents),
+      chat_context_web_contents_(chat_context_web_contents),
+      profile_(Profile::FromWebUI(web_ui)) {}
 
 ChatPageHandler::~ChatPageHandler() = default;
 
@@ -61,16 +63,23 @@ void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info) {
 
 // todo: to remove probably, not correct url and title here
 void ChatPageHandler::GetSiteInfo(GetSiteInfoCallback callback) {
-    chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
-    site_info->title = base::UTF16ToUTF8(web_contents_->GetTitle());
-    const GURL gurl = web_contents_->GetLastCommittedURL();
+  DCHECK(chat_context_web_contents_);
+  chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
+  site_info->url = "";
+  site_info->is_content_usable_in_conversations = false;
+
+  if (chat_context_web_contents_) {
+    site_info->title =
+        base::UTF16ToUTF8(chat_context_web_contents_->GetTitle());
+    const GURL gurl = chat_context_web_contents_->GetLastCommittedURL();
     if (gurl.SchemeIsHTTPOrHTTPS()) {
-        site_info->url = gurl.spec();
-        site_info->is_content_usable_in_conversations = true;
+      site_info->url = gurl.spec();
+      site_info->is_content_usable_in_conversations = true;
     } else {
-        site_info->url = "";
-        site_info->is_content_usable_in_conversations = false;
+      site_info->url = "";
+      site_info->is_content_usable_in_conversations = false;
     }
+  }
 
     std::move(callback).Run(site_info.Clone());
 }
@@ -117,16 +126,22 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
     LOG(INFO) << result.has_value();
 }
 
+base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
+  return weak_ptr_factory_.GetWeakPtr();
+}
+
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
     if (page_.is_bound()) {
         LOG(INFO) << action_type;
 
         if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
           LOG(INFO) << "ActionType: Summarize_page";
-          LOG(INFO) << "****" << base::UTF16ToUTF8(web_contents_->GetTitle());
-            const GURL gurl = web_contents_->GetLastCommittedURL();
-            LOG(INFO) << "****" << gurl.spec();
-          auto* primary_rfh = web_contents_->GetPrimaryMainFrame();
+          LOG(INFO) << "****"
+                    << base::UTF16ToUTF8(
+                           chat_context_web_contents_->GetTitle());
+          const GURL gurl = chat_context_web_contents_->GetLastCommittedURL();
+          LOG(INFO) << "****" << gurl.spec();
+          auto* primary_rfh = chat_context_web_contents_->GetPrimaryMainFrame();
           DCHECK(primary_rfh->IsRenderFrameLive());
 
           mojo::Remote<chat::mojom::PageContentExtractor> extractor;
@@ -135,7 +150,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
 
           extractor->ExtractPageContent(
               base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                             base::Unretained(this)));
+                             weak_ptr_factory_.GetWeakPtr()));
 
         } else {
           // todo: to implement for other action types later
@@ -153,7 +168,7 @@ void ChatPageHandler::OnPageContentExtracted(chat::mojom::PageContentPtr data) {
     VLOG(1) << __func__ << " no data.";
     return;
   }
-  DVLOG(1) << "OnPageContentExtracted: " << data.get();
+  DVLOG(1) << "##################OnPageContentExtracted: " << data.get();
   const bool is_video = base::Contains(kVideoPageContentTypes, data->type);
   DVLOG(1) << "Is video? " << is_video;
   // Handle text mode response

@@ -91,18 +91,17 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
     site_info->is_content_usable_in_conversations = false;
   }
 
-    auto* primary_rfh = contents->GetPrimaryMainFrame();
-    if (primary_rfh->IsRenderFrameLive()) {
-      mojo::Remote<chat::mojom::PageContentExtractor> extractor;
-      primary_rfh->GetRemoteInterfaces()->GetInterface(
-          extractor.BindNewPipeAndPassReceiver());
+  //  auto* primary_rfh = contents->GetPrimaryMainFrame();
+  //  if (primary_rfh->IsRenderFrameLive()) {
+  //    mojo::Remote<chat::mojom::PageContentExtractor> extractor;
+  //    primary_rfh->GetRemoteInterfaces()->GetInterface(
+  //        extractor.BindNewPipeAndPassReceiver());
+  //
+  //    extractor->ExtractPageContent(
+  //        base::BindOnce(&ChatSidePanelWebView::OnPageContentExtracted,
+  //                       weak_ptr_factory_.GetWeakPtr()));
 
-      extractor->ExtractPageContent(
-          base::BindOnce(&ChatSidePanelWebView::OnPageContentExtracted,
-                         weak_ptr_factory_.GetWeakPtr()));
-
-      controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone());
-    }
+  controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone());
 }
 
 base::WeakPtr<ChatSidePanelWebView> ChatSidePanelWebView::GetWeakPtr() {
