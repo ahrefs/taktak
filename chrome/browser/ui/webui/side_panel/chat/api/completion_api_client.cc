@@ -118,6 +118,7 @@ void CompletionApiClient::OnQueryDataReceived(
     if (!result.has_value() || !result->is_dict()) {
         return;
     }
+
     const base::Value::List* list = result->GetDict().FindList("choices");
     if (list) {
         for (const auto& item : *list) {
@@ -126,7 +127,8 @@ void CompletionApiClient::OnQueryDataReceived(
                if (delta) {
                    const std::string* content = delta->FindString("content");
                    if (content) {
-                       LOG(INFO) << "delta content: " << *content;
+                     //LOG(INFO) << "delta content: " << *content;
+                     entire_completion_result.push_back(*content);
                    }
                }
             }
@@ -156,8 +158,14 @@ void CompletionApiClient::OnQueryCompleted(
                 completion = base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
             }
         }
+        std::string entire_message;
+        for (const auto& s : entire_completion_result) {
+          entire_message += s;
+        }
+        DVLOG(0) << std::endl << std::endl << entire_message << std::endl << std::endl;
 
-       // std::move(callback).Run(base::ok(std::move(completion)));
+        entire_completion_result.clear();
+        // std::move(callback).Run(base::ok(std::move(completion)));
         return;
     }
 

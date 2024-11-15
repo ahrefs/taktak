@@ -23,7 +23,6 @@ class ChatSidePanelCoordinator
 
  private:
   friend class BrowserUserData<ChatSidePanelCoordinator>;
-
   std::unique_ptr<views::View> CreateChatWebView();
 
   BROWSER_USER_DATA_KEY_DECL();

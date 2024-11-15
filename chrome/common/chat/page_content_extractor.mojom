@@ -22,3 +22,10 @@ struct PageContent {
 interface PageContentExtractor {
   ExtractPageContent() => (PageContent? page_content);
 };
+
+// Enables the renderer to signal content updates to the browser process.
+interface PageContentExtractorHost {
+  // This is just to notify that the content has changed.
+  // The current page's content will be extracted via PageContentExtractor.ExtractPageContent.
+  OnInterceptedPageContentChanged();
+};

@@ -28,11 +28,6 @@
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 
-constexpr auto kVideoPageContentTypes =
-        base::MakeFixedFlatSet<chat::mojom::PageContentType>(
-                {chat::mojom::PageContentType::VideoTranscriptYouTube,
-                 chat::mojom::PageContentType::VideoTranscriptVTT});
-
 using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
 BEGIN_TEMPLATE_METADATA(SidePanelWebUIViewT_ChatUI, SidePanelWebUIViewT)
 END_METADATA
@@ -91,44 +86,11 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
     site_info->is_content_usable_in_conversations = false;
   }
 
-  //  auto* primary_rfh = contents->GetPrimaryMainFrame();
-  //  if (primary_rfh->IsRenderFrameLive()) {
-  //    mojo::Remote<chat::mojom::PageContentExtractor> extractor;
-  //    primary_rfh->GetRemoteInterfaces()->GetInterface(
-  //        extractor.BindNewPipeAndPassReceiver());
-  //
-  //    extractor->ExtractPageContent(
-  //        base::BindOnce(&ChatSidePanelWebView::OnPageContentExtracted,
-  //                       weak_ptr_factory_.GetWeakPtr()));
-
   controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone());
 }
 
 base::WeakPtr<ChatSidePanelWebView> ChatSidePanelWebView::GetWeakPtr() {
   return weak_ptr_factory_.GetWeakPtr();
-}
-
-void ChatSidePanelWebView::OnPageContentExtracted(chat::mojom::PageContentPtr data) {
-  LOG(INFO) << "$$$$$#### log";
-  if (!data) {
-    VLOG(1) << __func__ << " no data.";
-    return;
-  }
-  DVLOG(0) << "$$$$$$******************************OnPageContentExtracted: "
-           << data.get();
-  const bool is_video = base::Contains(kVideoPageContentTypes, data->type);
-  DVLOG(1) << "Is video? " << is_video;
-  // Handle text mode response
-  if (!is_video) {
-    DCHECK(data->content->is_content());
-    auto content = data->content->get_content();
-    DVLOG(1) << __func__ << ": Got content with char length of "
-             << content.length();
-    LOG(INFO) << content;
-    return;
-    }
-
-    LOG(INFO) << "content is url";
 }
 
 void ChatSidePanelWebView::UpdateActiveWebContents() {

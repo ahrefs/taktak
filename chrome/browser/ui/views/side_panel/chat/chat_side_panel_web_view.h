@@ -48,7 +48,5 @@ class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
  private:
   const raw_ptr<Browser> browser_;
   base::WeakPtrFactory<ChatSidePanelWebView> weak_ptr_factory_{this};
-
-  void OnPageContentExtracted(chat::mojom::PageContentPtr data);
 };
 #endif  // CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H

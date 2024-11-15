@@ -62,6 +62,6 @@ private:
     const raw_ptr<Profile> profile_;
     std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
     base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
-    void OnPageContentExtracted(chat::mojom::PageContentPtr data);
+    void OnPageContentExtracted(std::string content);
 };
 #endif //CHROMIUM_CHAT_PAGE_HANDLER_H

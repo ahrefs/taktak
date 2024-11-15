@@ -143,20 +143,11 @@ void PageContentExtractor::BindReceiver(
 
 void PageContentExtractor::ExtractPageContent(
     chat::mojom::PageContentExtractor::ExtractPageContentCallback callback) {
-  DVLOG(0) << __func__ << "The current page will be extracted for Yep Chat.";
-
-  //  auto result = chat::mojom::PageContent::New();
-  //  result->type = std::move(chat::mojom::PageContentType::Text);
-  //  result->content =
-  //      chat::mojom::PageContentData::NewContent("#######################33");
-  //  DCHECK(callback);
-  //  std::move(callback).Run(std::move(result));
+  DVLOG(0) << __func__ << " The current page will be extracted for Yep Chat.";
   ExtractPageText(
       render_frame(), isolated_world_id_,
       base::BindOnce(&PageContentExtractor::OnPageTextExtracted,
                      weak_ptr_factory_.GetWeakPtr(), std::move(callback)));
-
-  DVLOG(0) << "End of " << __func__ << "\n";
 }
 
 void PageContentExtractor::ExtractPageText(
@@ -223,7 +214,7 @@ void PageContentExtractor::ExtractPageText(
         blink::mojom::WantResultOption::kWantResult,
         blink::mojom::PromiseResultOption::kAwait);
   } else {
-    std::move(callback).Run(contents_text);
+    std::move(callback).Run(std::move(contents_text));
   }
 }
 
@@ -241,10 +232,6 @@ void PageContentExtractor::OnPageTextExtracted(
     std::move(callback).Run({});
     return;
   }
-
-  DVLOG(0) << "--------> The content of the current opening page.";
-  DVLOG(0) << content.value();
-  DVLOG(0) << "The length of extracted content: " << content->length();
 
   // Successful text extraction
   auto result = chat::mojom::PageContent::New();

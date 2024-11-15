@@ -52,6 +52,7 @@ private:
                           APIRequestResult result);
 
     api_request_helper::APIRequestHelper api_request_helper_;
+    std::vector<std::string> entire_completion_result;
 
     base::WeakPtrFactory<CompletionApiClient> weak_ptr_factory_{this};
 };
