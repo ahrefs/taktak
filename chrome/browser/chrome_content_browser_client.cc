@@ -420,6 +420,10 @@
 #include "url/origin.h"
 #include "url/third_party/mozilla/url_parse.h"
 #include "url/url_constants.h"
+// #include "chrome/common/chat/page_content_extractor.mojom.h"
+// #include "chrome/browser/ui/webui/side_panel/chat/chat_context_observer.h"
+// #include
+// "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 #include "chrome/browser/enterprise/platform_auth/platform_auth_navigation_throttle.h"
@@ -8858,3 +8862,19 @@ base::ReadOnlySharedMemoryRegion
 ChromeContentBrowserClient::GetGlobalPerformanceScenarioRegion() {
   return performance_manager::GetGlobalSharedScenarioRegion();
 }
+
+// void ChromeContentBrowserClient::
+//     RegisterAssociatedInterfaceBindersForRenderFrameHost(
+//         content::RenderFrameHost& render_frame_host,
+//         blink::AssociatedInterfaceRegistry& associated_registry) {
+//   // AI Chat page content extraction renderer -> browser interface
+//   associated_registry.AddInterface<chat::mojom::PageContentExtractorHost>(
+//       base::BindRepeating(
+//           [](content::RenderFrameHost* render_frame_host,
+//              mojo::PendingAssociatedReceiver<
+//                  chat::mojom::PageContentExtractorHost> receiver) {
+//             ai_chat::ChatContextObserver::BindPageContentExtractorHost(
+//                 render_frame_host, std::move(receiver));
+//           },
+//           &render_frame_host));
+// }

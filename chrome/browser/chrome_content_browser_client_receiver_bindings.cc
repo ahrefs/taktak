@@ -25,7 +25,9 @@
 #include "chrome/browser/signin/google_accounts_private_api_host.h"
 #include "chrome/browser/supervised_user/supervised_user_navigation_observer.h"
 #include "chrome/browser/trusted_vault/trusted_vault_encryption_keys_tab_helper.h"
+#include "chrome/browser/ui/webui/side_panel/chat/chat_context_observer.h"
 #include "chrome/common/buildflags.h"
+#include "chrome/common/chat/page_content_extractor.mojom.h"
 #include "chrome/common/chrome_features.h"
 #include "components/autofill/content/browser/content_autofill_driver_factory.h"
 #include "components/content_capture/browser/onscreen_content_provider.h"
@@ -627,6 +629,17 @@ void ChromeContentBrowserClient::
                     std::move(receiver), render_frame_host);
               },
               &render_frame_host));
+
+  // AI Chat page content extraction renderer -> browser interface
+  associated_registry.AddInterface<chat::mojom::PageContentExtractorHost>(
+      base::BindRepeating(
+          [](content::RenderFrameHost* render_frame_host,
+             mojo::PendingAssociatedReceiver<
+                 chat::mojom::PageContentExtractorHost> receiver) {
+            ai_chat::ChatContextObserver::BindPageContentExtractorHost(
+                render_frame_host, std::move(receiver));
+          },
+          &render_frame_host));
 }
 
 void ChromeContentBrowserClient::BindGpuHostReceiver(

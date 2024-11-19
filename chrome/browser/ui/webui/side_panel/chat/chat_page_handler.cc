@@ -15,82 +15,94 @@
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/browser/web_contents_user_data.h"
 #include "content/public/browser/web_ui.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
 
-namespace {
-constexpr auto kVideoPageContentTypes =
-    base::MakeFixedFlatSet<chat::mojom::PageContentType>(
-        {chat::mojom::PageContentType::VideoTranscriptYouTube,
-         chat::mojom::PageContentType::VideoTranscriptVTT});
+// namespace {
+// constexpr auto kVideoPageContentTypes =
+//     base::MakeFixedFlatSet<chat::mojom::PageContentType>(
+//         {chat::mojom::PageContentType::VideoTranscriptYouTube,
+//          chat::mojom::PageContentType::VideoTranscriptVTT});
+//
+// using ExtractPageContentCallback =
+//     base::OnceCallback<void(std::string page_content)>;
+//
+// class PageContentExtractorHelper {
+//  public:
+//   PageContentExtractorHelper() {}
+//
+//   void Start(mojo::Remote<chat::mojom::PageContentExtractor>
+//   content_extractor,
+//              ExtractPageContentCallback callback) {
+//     content_extractor_ = std::move(content_extractor);
+//     if (!content_extractor_) {
+//       DeleteSelf();
+//       return;
+//     }
+//
+//     // Ref:
+//     //
+//     https://chromium.googlesource.com/chromium/src/+/refs/heads/main/mojo/public/cpp/bindings/README.md#a-note-about-endpoint-lifetime-and-callbacks
+//     // Once a `mojo::Remote<T>` is destroyed, it is guaranteed that pending
+//     // callbacks as well as the connection error handler (if registered)
+//     won't
+//     // be called. Once a `mojo::Receiver<T>` is destroyed, it is guaranteed
+//     that
+//     // no more method calls are dispatched to the implementation and the
+//     // connection error handler (if registered) won't be called.
+//     content_extractor_.set_disconnect_handler(base::BindOnce(
+//         &PageContentExtractorHelper::DeleteSelf, base::Unretained(this)));
+//     content_extractor_->ExtractPageContent(
+//         base::BindOnce(&PageContentExtractorHelper::OnPageContentExtracted,
+//                        base::Unretained(this), std::move(callback)));
+//   }
+//
+//   void OnPageContentExtracted(ExtractPageContentCallback callback,
+//                               chat::mojom::PageContentPtr data) {
+//     if (!data) {
+//       DVLOG(0) << __func__ << " no extracted page content.";
+//       SendResultAndDeleteSelf(std::move(callback));
+//       return;
+//     }
+//
+//     DVLOG(1) << "OnTabContentResult: " << data.get();
+//     const bool is_video = base::Contains(kVideoPageContentTypes, data->type);
+//     DVLOG(1) << "Is video? " << is_video;
+//
+//     if (!is_video) {
+//       DCHECK(data->content->is_content());
+//       auto content = data->content->get_content();
+//       DVLOG(1) << __func__ << ": Got content with char length of "
+//                << content.length();
+//       SendResultAndDeleteSelf(std::move(callback), content);
+//       return;
+//     }
+//
+//     SendResultAndDeleteSelf(std::move(callback));
+//   }
+//
+//  private:
+//   void DeleteSelf() { delete this; }
+//   void SendResultAndDeleteSelf(ExtractPageContentCallback callback,
+//                                std::string content = "") {
+//     std::move(callback).Run(content);
+//     delete this;
+//   }
+//   mojo::Remote<chat::mojom::PageContentExtractor> content_extractor_;
+//   base::WeakPtrFactory<PageContentExtractorHelper> weak_ptr_factory_{this};
+// };
+// }  // namespace
 
-using ExtractPageContentCallback =
-    base::OnceCallback<void(std::string page_content)>;
+ChatPageHandler::ChatWebContentsObserver::ChatWebContentsObserver(
+    content::WebContents* web_contents,
+    ChatPageHandler& page_handler)
+    : content::WebContentsObserver(web_contents), page_handler_(page_handler) {}
 
-class PageContentExtractorHelper {
- public:
-  PageContentExtractorHelper() {}
-
-  void Start(mojo::Remote<chat::mojom::PageContentExtractor> content_extractor,
-             ExtractPageContentCallback callback) {
-    content_extractor_ = std::move(content_extractor);
-    if (!content_extractor_) {
-      DeleteSelf();
-      return;
-    }
-
-    // Ref:
-    // https://chromium.googlesource.com/chromium/src/+/refs/heads/main/mojo/public/cpp/bindings/README.md#a-note-about-endpoint-lifetime-and-callbacks
-    // Once a `mojo::Remote<T>` is destroyed, it is guaranteed that pending
-    // callbacks as well as the connection error handler (if registered) won't
-    // be called. Once a `mojo::Receiver<T>` is destroyed, it is guaranteed that
-    // no more method calls are dispatched to the implementation and the
-    // connection error handler (if registered) won't be called.
-    content_extractor_.set_disconnect_handler(base::BindOnce(
-        &PageContentExtractorHelper::DeleteSelf, base::Unretained(this)));
-    content_extractor_->ExtractPageContent(
-        base::BindOnce(&PageContentExtractorHelper::OnPageContentExtracted,
-                       base::Unretained(this), std::move(callback)));
-  }
-
-  void OnPageContentExtracted(ExtractPageContentCallback callback,
-                              chat::mojom::PageContentPtr data) {
-    if (!data) {
-      DVLOG(0) << __func__ << " no extracted page content.";
-      SendResultAndDeleteSelf(std::move(callback));
-      return;
-    }
-
-    DVLOG(1) << "OnTabContentResult: " << data.get();
-    const bool is_video = base::Contains(kVideoPageContentTypes, data->type);
-    DVLOG(1) << "Is video? " << is_video;
-
-    if (!is_video) {
-      DCHECK(data->content->is_content());
-      auto content = data->content->get_content();
-      DVLOG(1) << __func__ << ": Got content with char length of "
-               << content.length();
-      SendResultAndDeleteSelf(std::move(callback), content);
-      return;
-    }
-
-    SendResultAndDeleteSelf(std::move(callback));
-  }
-
- private:
-  void DeleteSelf() { delete this; }
-  void SendResultAndDeleteSelf(ExtractPageContentCallback callback,
-                               std::string content = "") {
-    std::move(callback).Run(content);
-    delete this;
-  }
-  mojo::Remote<chat::mojom::PageContentExtractor> content_extractor_;
-  base::WeakPtrFactory<PageContentExtractorHelper> weak_ptr_factory_{this};
-};
-}  // namespace
+ChatPageHandler::ChatWebContentsObserver::~ChatWebContentsObserver() = default;
 
 ChatPageHandler::ChatPageHandler(
     mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
@@ -110,9 +122,23 @@ ChatPageHandler::ChatPageHandler(
           ->GetURLLoaderFactoryForBrowserProcess();
   api_client_ =
       std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
+
+  active_chat_context_observer_ =
+      ai_chat::ChatContextObserver::FromWebContents(chat_context_web_contents);
+  web_content_observer_ = std::make_unique<ChatWebContentsObserver>(
+      chat_context_web_contents, *this);
 }
 
 ChatPageHandler::~ChatPageHandler() = default;
+
+void ChatPageHandler::ChatWebContentsObserver::WebContentsDestroyed() {
+  page_handler_->HandleWebContentsDestroyed();
+}
+
+void ChatPageHandler::HandleWebContentsDestroyed() {
+  active_chat_context_observer_ = nullptr;
+  web_content_observer_.reset();
+}
 
 void ChatPageHandler::ShowUI() {
     auto embedder = chat_ui_->embedder();
@@ -207,22 +233,28 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
 
         if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
           LOG(INFO) << "ActionType: Summarize_page";
-          LOG(INFO) << "****"
-                    << base::UTF16ToUTF8(
-                           chat_context_web_contents_->GetTitle());
-          const GURL gurl = chat_context_web_contents_->GetLastCommittedURL();
-          LOG(INFO) << "****" << gurl.spec();
+          //          LOG(INFO) << "****"
+          //                    << base::UTF16ToUTF8(
+          //                           chat_context_web_contents_->GetTitle());
+          //          const GURL gurl =
+          //          chat_context_web_contents_->GetLastCommittedURL();
+          //          LOG(INFO) << "****" << gurl.spec();
 
-          auto* primary_rfh = chat_context_web_contents_->GetPrimaryMainFrame();
-          DCHECK(primary_rfh->IsRenderFrameLive());
+          //          auto* primary_rfh =
+          //          chat_context_web_contents_->GetPrimaryMainFrame();
+          //          DCHECK(primary_rfh->IsRenderFrameLive());
+          //
+          //          mojo::Remote<chat::mojom::PageContentExtractor> extractor;
+          //          primary_rfh->GetRemoteInterfaces()->GetInterface(
+          //              extractor.BindNewPipeAndPassReceiver());
+          //
+          //          auto* extractor_helper = new PageContentExtractorHelper();
+          //          extractor_helper->Start(
+          //              std::move(extractor),
+          //              base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+          //                             base::Unretained(this)));
 
-          mojo::Remote<chat::mojom::PageContentExtractor> extractor;
-          primary_rfh->GetRemoteInterfaces()->GetInterface(
-              extractor.BindNewPipeAndPassReceiver());
-
-          auto* extractor_helper = new PageContentExtractorHelper();
-          extractor_helper->Start(
-              std::move(extractor),
+          active_chat_context_observer_->GetPageContent(
               base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                              base::Unretained(this)));
 

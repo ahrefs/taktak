@@ -7,12 +7,16 @@
 
 #include "base/functional/callback_forward.h"
 #include "base/memory/raw_ptr.h"
+#include "base/scoped_observation.h"
 #include "base/types/expected.h"
+#include "chat_context_observer.h"
 #include "chat_ui.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/webui/side_panel/chat/api/completion_api_client.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
 #include "chrome/common/chat/page_content_extractor.mojom.h"
+#include "content/public/browser/web_contents_observer.h"
+#include "content/public/browser/web_contents_user_data.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
@@ -24,44 +28,64 @@ namespace content {
 }  // namespace content
 
 class ChatPageHandler : public chat::mojom::PageHandler {
-public:
- ChatPageHandler(mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
-                 mojo::PendingRemote<chat::mojom::Page> page,
-                 ChatUI* chat_ui,
-                 content::WebUI* web_ui,
-                 content::WebContents* owner_web_contents,
-                 content::WebContents* chat_context_web_contents);
+ public:
+  ChatPageHandler(mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
+                  mojo::PendingRemote<chat::mojom::Page> page,
+                  ChatUI* chat_ui,
+                  content::WebUI* web_ui,
+                  content::WebContents* owner_web_contents,
+                  content::WebContents* chat_context_web_contents);
 
- ChatPageHandler(const ChatPageHandler&) = delete;
- ChatPageHandler& operator=(const ChatPageHandler&) = delete;
+  ChatPageHandler(const ChatPageHandler&) = delete;
+  ChatPageHandler& operator=(const ChatPageHandler&) = delete;
 
- ~ChatPageHandler() override;
+  ~ChatPageHandler() override;
 
- void GetSiteInfo(GetSiteInfoCallback callback) override;
- void GetActionList(GetActionListCallback callback) override;
- void SubmitAction(chat::mojom::ActionType action_type) override;
- void SubmitQuery(chat::mojom::ActionType action_type,
-                  const std::string& query) override;
- void ShowUI() override;
- void CloseUI() override;
+  void GetSiteInfo(GetSiteInfoCallback callback) override;
+  void GetActionList(GetActionListCallback callback) override;
+  void SubmitAction(chat::mojom::ActionType action_type) override;
+  void SubmitQuery(chat::mojom::ActionType action_type,
+                   const std::string& query) override;
+  void ShowUI() override;
+  void CloseUI() override;
 
- void SetSiteInfo(chat::mojom::SiteInfoPtr site_info);
+  void SetSiteInfo(chat::mojom::SiteInfoPtr site_info);
 
- void SubmitQueryCallback(std::string completion);
- void SubmitQueryCompletedCallback(
-     base::expected<std::string, chat::mojom::APIError> result);
+  void SubmitQueryCallback(std::string completion);
+  void SubmitQueryCompletedCallback(
+      base::expected<std::string, chat::mojom::APIError> result);
 
- base::WeakPtr<ChatPageHandler> GetWeakPtr();
+  base::WeakPtr<ChatPageHandler> GetWeakPtr();
 
-private:
-    mojo::Receiver<chat::mojom::PageHandler> receiver_;
-    mojo::Remote<chat::mojom::Page> page_;
-    const raw_ptr<ChatUI> chat_ui_;
-    raw_ptr<content::WebContents> owner_web_contents_ = nullptr;
-    raw_ptr<content::WebContents> chat_context_web_contents_ = nullptr;
-    const raw_ptr<Profile> profile_;
-    std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
-    base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
-    void OnPageContentExtracted(std::string content);
+ private:
+  class ChatWebContentsObserver : public content::WebContentsObserver {
+   public:
+    explicit ChatWebContentsObserver(content::WebContents* web_contents,
+                                     ChatPageHandler& page_handler);
+    ~ChatWebContentsObserver() override;
+
+   private:
+    // content::WebContentsObserver
+    void WebContentsDestroyed() override;
+
+    raw_ref<ChatPageHandler> page_handler_;
+  };
+
+  void HandleWebContentsDestroyed();
+
+  void OnPageContentExtracted(std::string content);
+
+  mojo::Receiver<chat::mojom::PageHandler> receiver_;
+  mojo::Remote<chat::mojom::Page> page_;
+  const raw_ptr<ChatUI> chat_ui_;
+  raw_ptr<content::WebContents> owner_web_contents_ = nullptr;
+  raw_ptr<content::WebContents> chat_context_web_contents_ = nullptr;
+  const raw_ptr<Profile> profile_;
+  std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
+
+  raw_ptr<ai_chat::ChatContextObserver> active_chat_context_observer_ = nullptr;
+  std::unique_ptr<ChatWebContentsObserver> web_content_observer_;
+
+  base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
 #endif //CHROMIUM_CHAT_PAGE_HANDLER_H
