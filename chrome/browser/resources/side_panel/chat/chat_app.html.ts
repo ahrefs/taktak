@@ -9,7 +9,9 @@ export function getHtml(this: ChatAppElement) {
                     <h5>${this.siteInfo_.url} </h5>
                     <h6>${this.siteInfo_.title}</h6>
                 </div>
-                ${this.submitResponse_.result}
+                <p>
+                ${this.completionResult_}
+                </p>
             </div>
             <div class="bottom">
                 <div class="button-container">

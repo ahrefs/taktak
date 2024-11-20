@@ -152,7 +152,6 @@ void ChatContextObserver::DidFinishLoad(
   DVLOG(1) << __func__ << ": " << validated_url.spec();
   if (validated_url == GetPageURL()) {
     is_page_loaded_ = true;
-      page_content_extractor_helper_delegate_ = std::make_unique<PageContentExtractorHelper>(web_contents());
     if (pending_extract_page_content_callback_) {
       GetPageContent(std::move(pending_extract_page_content_callback_));
     }

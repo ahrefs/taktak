@@ -27,6 +27,7 @@ export class ChatAppElement extends CrLitElement {
         actionType: ActionType.NONE,
         result: ""
     };
+    protected completionResult_ : string = "";
     protected textareaValue_?: string;
 
     constructor() {
@@ -48,6 +49,7 @@ export class ChatAppElement extends CrLitElement {
             actionList_: {type: Array},
             submitResponse_: {type: Object},
             textareaValue_: {type: String},
+            completionResult_: {type: String},
         };
     }
 
@@ -61,11 +63,13 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private async updateSubmitResponse(response: ActionResponse) {
-        this.submitResponse_ = response;
+        //this.submitResponse_ = response;
+        this.completionResult_ += response.result;
     }
 
     protected onSubmitAction_(e: Event) {
         e.stopPropagation();
+        this.completionResult_ += "\n\n";
         this.chatApiProxy_.submitAction(ActionType.SUMMARIZE_PAGE);
     }
 

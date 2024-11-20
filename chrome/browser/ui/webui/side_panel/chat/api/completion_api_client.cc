@@ -127,18 +127,12 @@ void CompletionApiClient::OnQueryDataReceived(
                if (delta) {
                    const std::string* content = delta->FindString("content");
                    if (content) {
-                     //LOG(INFO) << "delta content: " << *content;
                      entire_completion_result.push_back(*content);
+                     callback.Run(std::move(*content));
                    }
                }
             }
         }
-    }
-
-    // This client only supports completion events
-    const std::string* completion = result->GetDict().FindString("choices");
-    if (completion) {
-        callback.Run(std::move(*completion));
     }
 }
 

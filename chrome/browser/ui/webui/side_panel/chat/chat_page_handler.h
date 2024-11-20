@@ -51,7 +51,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   void SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents);
 
-  void SubmitQueryCallback(std::string completion);
+  void SubmitQueryCallback(chat::mojom::ActionType action_type,
+                           std::string completion);
   void SubmitQueryCompletedCallback(
       base::expected<std::string, chat::mojom::APIError> result);
 
@@ -73,7 +74,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   void HandleWebContentsDestroyed();
 
-  void OnPageContentExtracted(std::string content);
+  void OnPageContentExtracted(chat::mojom::ActionType action_type,
+                              std::string content);
 
   mojo::Receiver<chat::mojom::PageHandler> receiver_;
   mojo::Remote<chat::mojom::Page> page_;

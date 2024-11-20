@@ -22,81 +22,6 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
 
-// namespace {
-// constexpr auto kVideoPageContentTypes =
-//     base::MakeFixedFlatSet<chat::mojom::PageContentType>(
-//         {chat::mojom::PageContentType::VideoTranscriptYouTube,
-//          chat::mojom::PageContentType::VideoTranscriptVTT});
-//
-// using ExtractPageContentCallback =
-//     base::OnceCallback<void(std::string page_content)>;
-//
-// class PageContentExtractorHelper {
-//  public:
-//   PageContentExtractorHelper() {}
-//
-//   void Start(mojo::Remote<chat::mojom::PageContentExtractor>
-//   content_extractor,
-//              ExtractPageContentCallback callback) {
-//     content_extractor_ = std::move(content_extractor);
-//     if (!content_extractor_) {
-//       DeleteSelf();
-//       return;
-//     }
-//
-//     // Ref:
-//     //
-//     https://chromium.googlesource.com/chromium/src/+/refs/heads/main/mojo/public/cpp/bindings/README.md#a-note-about-endpoint-lifetime-and-callbacks
-//     // Once a `mojo::Remote<T>` is destroyed, it is guaranteed that pending
-//     // callbacks as well as the connection error handler (if registered)
-//     won't
-//     // be called. Once a `mojo::Receiver<T>` is destroyed, it is guaranteed
-//     that
-//     // no more method calls are dispatched to the implementation and the
-//     // connection error handler (if registered) won't be called.
-//     content_extractor_.set_disconnect_handler(base::BindOnce(
-//         &PageContentExtractorHelper::DeleteSelf, base::Unretained(this)));
-//     content_extractor_->ExtractPageContent(
-//         base::BindOnce(&PageContentExtractorHelper::OnPageContentExtracted,
-//                        base::Unretained(this), std::move(callback)));
-//   }
-//
-//   void OnPageContentExtracted(ExtractPageContentCallback callback,
-//                               chat::mojom::PageContentPtr data) {
-//     if (!data) {
-//       DVLOG(0) << __func__ << " no extracted page content.";
-//       SendResultAndDeleteSelf(std::move(callback));
-//       return;
-//     }
-//
-//     DVLOG(1) << "OnTabContentResult: " << data.get();
-//     const bool is_video = base::Contains(kVideoPageContentTypes, data->type);
-//     DVLOG(1) << "Is video? " << is_video;
-//
-//     if (!is_video) {
-//       DCHECK(data->content->is_content());
-//       auto content = data->content->get_content();
-//       DVLOG(1) << __func__ << ": Got content with char length of "
-//                << content.length();
-//       SendResultAndDeleteSelf(std::move(callback), content);
-//       return;
-//     }
-//
-//     SendResultAndDeleteSelf(std::move(callback));
-//   }
-//
-//  private:
-//   void DeleteSelf() { delete this; }
-//   void SendResultAndDeleteSelf(ExtractPageContentCallback callback,
-//                                std::string content = "") {
-//     std::move(callback).Run(content);
-//     delete this;
-//   }
-//   mojo::Remote<chat::mojom::PageContentExtractor> content_extractor_;
-//   base::WeakPtrFactory<PageContentExtractorHelper> weak_ptr_factory_{this};
-// };
-// }  // namespace
-
 ChatPageHandler::ChatWebContentsObserver::ChatWebContentsObserver(
     content::WebContents* web_contents,
     ChatPageHandler& page_handler)
@@ -154,8 +79,6 @@ void ChatPageHandler::CloseUI() {
 }
 
 void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents) {
-
-    //ai_chat::ChatContextObserver::CreateForWebContents(contents);
     active_chat_context_observer_ =
             ai_chat::ChatContextObserver::FromWebContents(contents);
     web_content_observer_ = std::make_unique<ChatWebContentsObserver>(
@@ -220,9 +143,6 @@ void ChatPageHandler::GetActionList(GetActionListCallback callback) {
     std::move(callback).Run(std::move(action_items));
 }
 
-void ChatPageHandler::SubmitQueryCallback(std::string completion) {
-    LOG(INFO) << completion;
-}
 
 void ChatPageHandler::SubmitQueryCompletedCallback(
         base::expected<std::string, chat::mojom::APIError> result) {
@@ -239,15 +159,9 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
 
       if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
         DVLOG(0) << "ActionType: Summarize_page";
-        //          LOG(INFO) << "****"
-        //                    << base::UTF16ToUTF8(
-        //                           chat_context_web_contents_->GetTitle());
-        //          const GURL gurl =
-        //          chat_context_web_contents_->GetLastCommittedURL();
-        //          LOG(INFO) << "****" << gurl.spec();
-
-        active_chat_context_observer_->GetPageContent(base::BindOnce(
-            &ChatPageHandler::OnPageContentExtracted, base::Unretained(this)));
+        active_chat_context_observer_->GetPageContent(
+            base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                           base::Unretained(this), action_type));
 
       } else {
         // todo: to implement for other action types later
@@ -260,12 +174,24 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
     }
 }
 
-void ChatPageHandler::OnPageContentExtracted(std::string content) {
+void ChatPageHandler::OnPageContentExtracted(
+    chat::mojom::ActionType action_type,
+    std::string content) {
   // todo: to put prompt in resource file
   api_client_->QueryPrompt(
       "Provide a brief summary of the key takeaways for the following:" +
           content,
-      base::NullCallback(), base::NullCallback());
+      base::NullCallback(),
+      base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                          base::Unretained(this), action_type));
+}
+
+void ChatPageHandler::SubmitQueryCallback(chat::mojom::ActionType action_type,
+                                          std::string completion) {
+  chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
+  response->action_type = action_type;
+  response->result = completion;
+  page_->OnSubmitActionResponse(response.Clone());
 }
 
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) {
