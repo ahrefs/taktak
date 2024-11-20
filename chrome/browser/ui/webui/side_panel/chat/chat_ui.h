@@ -48,7 +48,7 @@ public:
     static constexpr std::string
 
     GetWebUIName() { return "Chat"; }
-    void SetSiteInfo(chat::mojom::SiteInfoPtr site_info);
+    void SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents );
 
    private:
     void CreatePageHandler(

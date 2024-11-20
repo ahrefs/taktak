@@ -25,13 +25,20 @@ class ChatContextObserver
       public content::WebContentsUserData<ChatContextObserver>,
       public chat::mojom::PageContentExtractorHost {
  public:
-  using ExtractPageContentCallback =
-      base::OnceCallback<void(std::string content)>;
+
+    using ExtractPageContentCallback =
+            base::OnceCallback<void(std::string content)>;
 
   static void BindPageContentExtractorHost(
       content::RenderFrameHost* rfh,
       mojo::PendingAssociatedReceiver<chat::mojom::PageContentExtractorHost>
           receiver);
+
+  class PageContentExtractorHelperDelegate {
+   public:
+    virtual ~PageContentExtractorHelperDelegate() = default;
+    virtual void ExtractPageContent(ExtractPageContentCallback callback) = 0;
+  };
 
   ChatContextObserver(const ChatContextObserver&) = delete;
 
@@ -83,12 +90,16 @@ class ChatContextObserver
   std::u16string previous_page_title_;
   bool is_page_loaded_ = false;
   raw_ptr<content::WebContents> inner_web_contents_ = nullptr;
+
+  std::unique_ptr<PageContentExtractorHelperDelegate>
+      page_content_extractor_helper_delegate_;
   ExtractPageContentCallback pending_extract_page_content_callback_;
 
   mojo::AssociatedReceiver<chat::mojom::PageContentExtractorHost>
       page_content_extractor_receiver_{this};
 
   base::WeakPtrFactory<ChatContextObserver> weak_ptr_factory_{this};
+
   WEB_CONTENTS_USER_DATA_KEY_DECL();
 };
 }  // namespace ai_chat

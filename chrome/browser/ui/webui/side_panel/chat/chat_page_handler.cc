@@ -153,7 +153,13 @@ void ChatPageHandler::CloseUI() {
         embedder->CloseUI();
 }
 
-void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info) {
+void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents) {
+
+    //ai_chat::ChatContextObserver::CreateForWebContents(contents);
+    active_chat_context_observer_ =
+            ai_chat::ChatContextObserver::FromWebContents(contents);
+    web_content_observer_ = std::make_unique<ChatWebContentsObserver>(
+            contents, *this);
     if (page_.is_bound()) {
         page_->OnSiteInfoChanged(std::move(site_info));
     }
@@ -229,43 +235,28 @@ base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
 
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
     if (page_.is_bound()) {
-        LOG(INFO) << action_type;
+      DVLOG(0) << action_type;
 
-        if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
-          LOG(INFO) << "ActionType: Summarize_page";
-          //          LOG(INFO) << "****"
-          //                    << base::UTF16ToUTF8(
-          //                           chat_context_web_contents_->GetTitle());
-          //          const GURL gurl =
-          //          chat_context_web_contents_->GetLastCommittedURL();
-          //          LOG(INFO) << "****" << gurl.spec();
+      if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
+        DVLOG(0) << "ActionType: Summarize_page";
+        //          LOG(INFO) << "****"
+        //                    << base::UTF16ToUTF8(
+        //                           chat_context_web_contents_->GetTitle());
+        //          const GURL gurl =
+        //          chat_context_web_contents_->GetLastCommittedURL();
+        //          LOG(INFO) << "****" << gurl.spec();
 
-          //          auto* primary_rfh =
-          //          chat_context_web_contents_->GetPrimaryMainFrame();
-          //          DCHECK(primary_rfh->IsRenderFrameLive());
-          //
-          //          mojo::Remote<chat::mojom::PageContentExtractor> extractor;
-          //          primary_rfh->GetRemoteInterfaces()->GetInterface(
-          //              extractor.BindNewPipeAndPassReceiver());
-          //
-          //          auto* extractor_helper = new PageContentExtractorHelper();
-          //          extractor_helper->Start(
-          //              std::move(extractor),
-          //              base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-          //                             base::Unretained(this)));
+        active_chat_context_observer_->GetPageContent(base::BindOnce(
+            &ChatPageHandler::OnPageContentExtracted, base::Unretained(this)));
 
-          active_chat_context_observer_->GetPageContent(
-              base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                             base::Unretained(this)));
-
-        } else {
-          // todo: to implement for other action types later
-          chat::mojom::ActionResponsePtr response =
-              chat::mojom::ActionResponse::New();
-          response->action_type = action_type;
-          response->result = "MOCK Result";
-          page_->OnSubmitActionResponse(response.Clone());
-        }
+      } else {
+        // todo: to implement for other action types later
+        chat::mojom::ActionResponsePtr response =
+            chat::mojom::ActionResponse::New();
+        response->action_type = action_type;
+        response->result = "MOCK Result";
+        page_->OnSubmitActionResponse(response.Clone());
+      }
     }
 }
 

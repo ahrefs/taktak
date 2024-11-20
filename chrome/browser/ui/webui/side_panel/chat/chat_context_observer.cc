@@ -28,79 +28,9 @@
 #include "ui/accessibility/ax_updates_and_events.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
+#include "page_content_extractor_helper.h"
 
 namespace ai_chat {
-
-namespace {
-constexpr auto kVideoPageContentTypes =
-    base::MakeFixedFlatSet<chat::mojom::PageContentType>(
-        {chat::mojom::PageContentType::VideoTranscriptYouTube,
-         chat::mojom::PageContentType::VideoTranscriptVTT});
-
-using ExtractPageContentCallback =
-    ChatContextObserver::ExtractPageContentCallback;
-
-class PageContentExtractorHelper {
- public:
-  PageContentExtractorHelper() {}
-
-  void Start(mojo::Remote<chat::mojom::PageContentExtractor> content_extractor,
-             ExtractPageContentCallback callback) {
-    content_extractor_ = std::move(content_extractor);
-    if (!content_extractor_) {
-      DeleteSelf();
-      return;
-    }
-
-    // Ref:
-    // https://chromium.googlesource.com/chromium/src/+/refs/heads/main/mojo/public/cpp/bindings/README.md#a-note-about-endpoint-lifetime-and-callbacks
-    // Once a `mojo::Remote<T>` is destroyed, it is guaranteed that pending
-    // callbacks as well as the connection error handler (if registered) won't
-    // be called. Once a `mojo::Receiver<T>` is destroyed, it is guaranteed that
-    // no more method calls are dispatched to the implementation and the
-    // connection error handler (if registered) won't be called.
-    content_extractor_.set_disconnect_handler(base::BindOnce(
-        &PageContentExtractorHelper::DeleteSelf, base::Unretained(this)));
-    content_extractor_->ExtractPageContent(
-        base::BindOnce(&PageContentExtractorHelper::OnPageContentExtracted,
-                       base::Unretained(this), std::move(callback)));
-  }
-
-  void OnPageContentExtracted(ExtractPageContentCallback callback,
-                              chat::mojom::PageContentPtr data) {
-    if (!data) {
-      DVLOG(0) << __func__ << " no extracted page content.";
-      SendResultAndDeleteSelf(std::move(callback));
-      return;
-    }
-
-    DVLOG(1) << "OnTabContentResult: " << data.get();
-    const bool is_video = base::Contains(kVideoPageContentTypes, data->type);
-    DVLOG(1) << "Is video? " << is_video;
-
-    if (!is_video) {
-      DCHECK(data->content->is_content());
-      auto content = data->content->get_content();
-      DVLOG(1) << __func__ << ": Got content with char length of "
-               << content.length();
-      SendResultAndDeleteSelf(std::move(callback), content);
-      return;
-    }
-
-    SendResultAndDeleteSelf(std::move(callback));
-  }
-
- private:
-  void DeleteSelf() { delete this; }
-  void SendResultAndDeleteSelf(ExtractPageContentCallback callback,
-                               std::string content = "") {
-    std::move(callback).Run(content);
-    delete this;
-  }
-  mojo::Remote<chat::mojom::PageContentExtractor> content_extractor_;
-  base::WeakPtrFactory<PageContentExtractorHelper> weak_ptr_factory_{this};
-};
-}  // namespace
 
 // static
 void ChatContextObserver::BindPageContentExtractorHost(
@@ -109,22 +39,22 @@ void ChatContextObserver::BindPageContentExtractorHost(
         receiver) {
   CHECK(rfh);
   if (!rfh->IsInPrimaryMainFrame()) {
-    DVLOG(1) << "Render frame is not in primary main frame. Not binding to "
+    DVLOG(0) << "Render frame is not in primary main frame. Not binding to "
                 "extractor host.";
     return;
   }
   auto* sender = content::WebContents::FromRenderFrameHost(rfh);
   if (!sender) {
-    DVLOG(1) << "Cannot bind extractor host, no valid WebContents";
+    DVLOG(0) << "Cannot bind extractor host, no valid WebContents";
     return;
   }
   auto* chat_context_observer = ChatContextObserver::FromWebContents(sender);
   if (!chat_context_observer) {
-    DVLOG(1) << "Cannot bind extractor host, no ChatContextObserver - "
+    DVLOG(0) << "Cannot bind extractor host, no ChatContextObserver - "
              << sender->GetVisibleURL();
     return;
   }
-  DVLOG(1) << "Binding extractor host to ChatContextObserver";
+  DVLOG(0) << "Binding extractor host to ChatContextObserver";
   chat_context_observer->BindPageContentExtractorReceiver(std::move(receiver));
 }
 
@@ -137,7 +67,10 @@ void ChatContextObserver::BindPageContentExtractorReceiver(
 
 ChatContextObserver::ChatContextObserver(content::WebContents* web_contents)
     : content::WebContentsObserver(web_contents),
-      content::WebContentsUserData<ChatContextObserver>(*web_contents) {
+      content::WebContentsUserData<ChatContextObserver>(*web_contents),
+      page_content_extractor_helper_delegate_(
+          std::make_unique<PageContentExtractorHelper>(web_contents))
+          {
   previous_page_title_ = web_contents->GetTitle();
 }
 
@@ -156,16 +89,8 @@ GURL ChatContextObserver::GetPageURL() const {
 }
 
 void ChatContextObserver::GetPageContent(ExtractPageContentCallback callback) {
-    // fix: this doesn't work properly, need to introduce intermediate class to capture related WebContents
-  auto* primary_rfh = web_contents()->GetPrimaryMainFrame();
-  DCHECK(primary_rfh->IsRenderFrameLive());
-
-  mojo::Remote<chat::mojom::PageContentExtractor> extractor;
-  primary_rfh->GetRemoteInterfaces()->GetInterface(
-      extractor.BindNewPipeAndPassReceiver());
-
-  auto* extractor_helper = new PageContentExtractorHelper();
-  extractor_helper->Start(std::move(extractor), std::move(callback));
+  page_content_extractor_helper_delegate_->ExtractPageContent(
+      std::move(callback));
 }
 
 std::u16string ChatContextObserver::GetPageTitle() const {
@@ -227,6 +152,7 @@ void ChatContextObserver::DidFinishLoad(
   DVLOG(1) << __func__ << ": " << validated_url.spec();
   if (validated_url == GetPageURL()) {
     is_page_loaded_ = true;
+      page_content_extractor_helper_delegate_ = std::make_unique<PageContentExtractorHelper>(web_contents());
     if (pending_extract_page_content_callback_) {
       GetPageContent(std::move(pending_extract_page_content_callback_));
     }

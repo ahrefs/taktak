@@ -86,7 +86,7 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
     site_info->is_content_usable_in_conversations = false;
   }
 
-  controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone());
+  controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone(), contents);
 }
 
 base::WeakPtr<ChatSidePanelWebView> ChatSidePanelWebView::GetWeakPtr() {

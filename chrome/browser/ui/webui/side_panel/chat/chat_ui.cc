@@ -121,8 +121,8 @@ void ChatUI::CreatePageHandler(
       web_ui()->GetWebContents(), web_contents);
 }
 
-void ChatUI::SetSiteInfo(chat::mojom::SiteInfoPtr site_info) {
+void ChatUI::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents) {
   if (page_handler_) {
-    page_handler_->SetSiteInfo(std::move(site_info));
+    page_handler_->SetSiteInfo(std::move(site_info), contents);
   }
 }

@@ -1573,6 +1573,8 @@ static_library("ui") {
       "webui/side_panel/chat/chat_context_observer.h",
       "webui/side_panel/chat/chat_page_handler.cc",
       "webui/side_panel/chat/chat_page_handler.h",
+      "webui/side_panel/chat/page_content_extractor_helper.cc",
+      "webui/side_panel/chat/page_content_extractor_helper.h",
       "webui/side_panel/chat/chat_ui.cc",
       "webui/side_panel/chat/chat_ui.h",
       "webui/side_panel/companion/companion_page_handler.cc",

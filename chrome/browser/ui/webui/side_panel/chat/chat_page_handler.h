@@ -49,7 +49,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   void ShowUI() override;
   void CloseUI() override;
 
-  void SetSiteInfo(chat::mojom::SiteInfoPtr site_info);
+  void SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents);
 
   void SubmitQueryCallback(std::string completion);
   void SubmitQueryCompletedCallback(
