@@ -79,6 +79,8 @@ void ChatPageHandler::CloseUI() {
 }
 
 void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents) {
+    // call the constructor of ChatContextObserver and set current WebContents to PageContentExtractorHelperDelegate
+    // todo: this should be removed when refactor and pass WebContents directly to extractor or extractor_helper
     active_chat_context_observer_ =
             ai_chat::ChatContextObserver::FromWebContents(contents);
     web_content_observer_ = std::make_unique<ChatWebContentsObserver>(
@@ -143,12 +145,6 @@ void ChatPageHandler::GetActionList(GetActionListCallback callback) {
     std::move(callback).Run(std::move(action_items));
 }
 
-
-void ChatPageHandler::SubmitQueryCompletedCallback(
-        base::expected<std::string, chat::mojom::APIError> result) {
-    LOG(INFO) << result.has_value();
-}
-
 base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
   return weak_ptr_factory_.GetWeakPtr();
 }
@@ -181,7 +177,8 @@ void ChatPageHandler::OnPageContentExtracted(
   api_client_->QueryPrompt(
       "Provide a brief summary of the key takeaways for the following:" +
           content,
-      base::NullCallback(),
+      base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                     base::Unretained(this), action_type),
       base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
                           base::Unretained(this), action_type));
 }
@@ -190,11 +187,35 @@ void ChatPageHandler::SubmitQueryCallback(chat::mojom::ActionType action_type,
                                           std::string completion) {
   chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
   response->action_type = action_type;
+  response->response_type = chat::mojom::ResponseType::DELTA;
   response->result = completion;
   page_->OnSubmitActionResponse(response.Clone());
 }
 
+void ChatPageHandler::SubmitQueryCompletedCallback(
+    chat::mojom::ActionType action_type,
+    base::expected<std::string, chat::mojom::APIErrorType> result) {
+  chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
+  response->action_type = action_type;
+  if (result.has_value()) {
+    LOG(INFO) << __func__ << " success -> " << result.value();
+    response->response_type = chat::mojom::ResponseType::COMPLETED;
+    response->result = result.value();
+  } else {
+    LOG(INFO) << __func__ << " error -> " << result.error();
+    response->response_type = chat::mojom::ResponseType::ERROR;
+    response->result =
+        "error_message_here";  // todo: to get error message from api response
+                               // and pass it to chat UI
+  }
+  page_->OnSubmitActionResponse(response.Clone());
+}
+
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) {
-  // todo: use proper callback
-  api_client_->QueryPrompt(query, base::NullCallback(), base::NullCallback());
+  api_client_->QueryPrompt(
+      query,
+      base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                     base::Unretained(this), action_type),
+      base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                          base::Unretained(this), action_type));
 }

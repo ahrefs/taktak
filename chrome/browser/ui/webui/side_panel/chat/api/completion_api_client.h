@@ -19,31 +19,30 @@ namespace network {
     class SharedURLLoaderFactory;
 }  // namespace network
 
-
 using api_request_helper::APIRequestResult;
 
 class CompletionApiClient {
 public:
-    using GenerationResult = base::expected<std::string, chat::mojom::APIError>;
-    using GenerationDataCallback = base::RepeatingCallback<void(std::string)>;
-    using GenerationCompletedCallback =
-            base::OnceCallback<void(GenerationResult)>;
+ using GenerationResult =
+     base::expected<std::string, chat::mojom::APIErrorType>;
+ using GenerationDataCallback = base::RepeatingCallback<void(std::string)>;
+ using GenerationCompletedCallback = base::OnceCallback<void(GenerationResult)>;
 
-    CompletionApiClient(
-            scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory);
+ CompletionApiClient(
+     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory);
 
-    CompletionApiClient(const CompletionApiClient&) = delete;
-    CompletionApiClient& operator=(const CompletionApiClient&) = delete;
-    virtual ~CompletionApiClient();
+ CompletionApiClient(const CompletionApiClient&) = delete;
+ CompletionApiClient& operator=(const CompletionApiClient&) = delete;
+ virtual ~CompletionApiClient();
 
-    // This function queries both types of APIs: SSE and non-SSE.
-    // In non-SSE cases, only the data_completed_callback will be triggered.
-    virtual void QueryPrompt(
-            const std::string& prompt,
-            GenerationCompletedCallback data_completed_callback,
-            GenerationDataCallback data_received_callback = base::NullCallback());
-    // Clears all in-progress requests
-    void ClearAllQueries();
+ // This function queries both types of APIs: SSE and non-SSE.
+ // In non-SSE cases, only the data_completed_callback will be triggered.
+ virtual void QueryPrompt(
+     const std::string& prompt,
+     GenerationCompletedCallback data_completed_callback,
+     GenerationDataCallback data_received_callback = base::NullCallback());
+ // Clears all in-progress requests
+ void ClearAllQueries();
 
 private:
     void OnQueryDataReceived(GenerationDataCallback callback,

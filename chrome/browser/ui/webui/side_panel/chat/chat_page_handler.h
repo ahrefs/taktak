@@ -54,7 +54,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   void SubmitQueryCallback(chat::mojom::ActionType action_type,
                            std::string completion);
   void SubmitQueryCompletedCallback(
-      base::expected<std::string, chat::mojom::APIError> result);
+      chat::mojom::ActionType action_type,
+      base::expected<std::string, chat::mojom::APIErrorType> result);
 
   base::WeakPtr<ChatPageHandler> GetWeakPtr();
 

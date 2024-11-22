@@ -2,11 +2,33 @@ module chat.mojom;
 
 import "url/mojom/url.mojom";
 
-enum APIError {
+enum APIErrorType {
     None,
     ConnectionError,
     RateLimitReached,
     ContextLimitReached,
+};
+
+enum ResponseType {
+    NONE,
+    DELTA,
+    COMPLETED,
+    ERROR,
+};
+
+enum ActionType {
+     SUMMARIZE_PAGE,
+     EXPLAIN,
+     TRANSLATE,
+     DRAFT_SOCIAL_MEDIA_POST,
+     FACT_CHECK,
+     QUERY,
+     NONE,
+};
+
+struct APIError {
+    APIErrorType error_type;
+    string error_message;
 };
 
 struct SiteInfo {
@@ -20,16 +42,6 @@ struct SiteInfo {
   bool is_content_usable_in_conversations;
 };
 
-enum ActionType {
-     SUMMARIZE_PAGE,
-     EXPLAIN,
-     TRANSLATE,
-     DRAFT_SOCIAL_MEDIA_POST,
-     FACT_CHECK,
-     QUERY,
-     NONE,
-};
-
 struct ActionItem {
     ActionType action_type;
     string label;
@@ -37,6 +49,7 @@ struct ActionItem {
 
 struct ActionResponse {
     ActionType action_type;
+    ResponseType response_type;
     string result;
 };
 

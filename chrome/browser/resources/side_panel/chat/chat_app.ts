@@ -11,12 +11,18 @@ import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
 import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
-import {SiteInfo, ActionItem, ActionType, ActionResponse} from "./chat.mojom-webui.js";
+import {SiteInfo, ActionItem, ActionType, ActionResponse, ResponseType} from "./chat.mojom-webui.js";
+
+type conversationRecord = {
+    query: string,
+    response: string,
+}
 
 export class ChatAppElement extends CrLitElement {
     private chatApiProxy_: ChatApiProxy = ChatApiProxyImpl.getInstance();
     private listenerIds_: number[] = [];
     protected actionList_: ActionItem[] = [];
+    protected conversations_: conversationRecord[] = [];
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
     protected siteInfo_ : SiteInfo = {
         url: "",
@@ -25,10 +31,12 @@ export class ChatAppElement extends CrLitElement {
     };
     protected submitResponse_ : ActionResponse = {
         actionType: ActionType.NONE,
-        result: ""
+        responseType: ResponseType.NONE,
+        result: "",
     };
     protected completionResult_ : string = "";
-    protected textareaValue_?: string;
+    protected query_?: string;
+    protected submittedQuery_?: string;
 
     constructor() {
         super();
@@ -48,7 +56,8 @@ export class ChatAppElement extends CrLitElement {
             askAnythingLabel_: {type: String},
             actionList_: {type: Array},
             submitResponse_: {type: Object},
-            textareaValue_: {type: String},
+            query_: {type: String},
+            submittedQuery_: {type: String},
             completionResult_: {type: String},
         };
     }
@@ -63,23 +72,47 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private async updateSubmitResponse(response: ActionResponse) {
-        //this.submitResponse_ = response;
-        this.completionResult_ += response.result;
+        // todo: to properly display error message
+        if (response.responseType == ResponseType.DELTA) {
+            this.completionResult_ += response.result;
+        } else if (response.responseType == ResponseType.COMPLETED) {
+            this.completionResult_ += "\n";
+        } else if (response.responseType == ResponseType.ERROR) {
+            this.completionResult_ += "\n" ;
+        }
     }
 
     protected onSubmitAction_(e: Event) {
         e.stopPropagation();
-        this.completionResult_ += "\n\n";
+        if (this.conversations_ != null) {
+            this.conversations_.push({query: "Summarise this page", response: ""});
+        }
         this.chatApiProxy_.submitAction(ActionType.SUMMARIZE_PAGE);
     }
 
     protected onTextareaValueChanged_(e: CustomEvent<{value: string}>) {
-        this.textareaValue_ = e.detail.value;
+        this.query_ = e.detail.value;
     }
 
     protected async onSubmitQuery_() {
-        console.log(this.textareaValue_);
-        this.chatApiProxy_.submitQuery(ActionType.QUERY, this.textareaValue_ ?? "" );
+        if (this.completionResult_ && this.completionResult_.length > 0) {
+            if (this.conversations_ != null) {
+                if (this.conversations_.length == 0) {
+                    this.conversations_.push({query: this.query_ ?? "", response: this.completionResult_});
+                } else {
+                    const lastIndex = this.conversations_.length - 1;
+                    const lastConversation = this.conversations_[lastIndex];
+                    if (lastConversation) {
+                        lastConversation.response = this.completionResult_;
+                    }
+                }
+            }
+        }
+        this.completionResult_ = "";
+        this.submittedQuery_ = this.query_;
+        this.conversations_.push({query: this.query_ ?? "", response: ""});
+        this.query_ = "";
+        this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? "" );
     }
 
     override connectedCallback() {

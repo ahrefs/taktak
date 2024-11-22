@@ -142,41 +142,52 @@ void CompletionApiClient::OnQueryCompleted(
     const bool success = result.Is2XXResponseCode();
     // Handle successful request
     if (success) {
-        std::string completion = "";
-        // We're checking for a value body in case for non-streaming API results.
-        if (result.value_body().is_dict()) {
-            const std::string* value =
-                    result.value_body().GetDict().FindString("choices");
-            if (value) {
-                // Trimming necessary for Llama 2 which prepends responses with a " ".
-                completion = base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
-            }
-        }
-        std::string entire_message;
-        for (const auto& s : entire_completion_result) {
-          entire_message += s;
-        }
-        DVLOG(0) << std::endl << std::endl << entire_message << std::endl << std::endl;
+      //        std::string completion = "";
+      //        // We're checking for a value body in case for non-streaming API
+      //        results. if (result.value_body().is_dict()) {
+      //            const std::string* value =
+      //                    result.value_body().GetDict().FindString("choices");
+      //            if (value) {
+      //                // Trimming necessary for Llama 2 which prepends
+      //                responses with a " ". completion =
+      //                base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
+      //            }
+      //        }
+      //        std::string entire_message;
+      //        for (const auto& s : entire_completion_result) {
+      //          entire_message += s;
+      //        }
+      //        // DVLOG(0) << std::endl << std::endl << entire_message <<
+      //        std::endl << std::endl;
 
-        entire_completion_result.clear();
-        // std::move(callback).Run(base::ok(std::move(completion)));
-        return;
+      entire_completion_result.clear();
+      std::move(callback).Run(base::ok(""));
+      return;
     }
 
 
     // Handle error
-    chat::mojom::APIError error;
+    chat::mojom::APIErrorType error;
 
+    LOG(INFO) << "Error response_code: " << result.response_code();
+    LOG(INFO) << "Error error_code: " << result.error_code();
+    if (result.value_body().is_dict()) {
+      const std::string* value =
+          result.value_body().GetDict().FindString("message");
+      if (value) {
+        // Trimming necessary for Llama 2 which prepends responses with a " ".
+        auto completion = base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
+        LOG(INFO) << "Error message: " << completion;
+      }
+    }
     if (net::HTTP_TOO_MANY_REQUESTS == result.response_code()) {
-        error = chat::mojom::APIError::RateLimitReached;
+      error = chat::mojom::APIErrorType::RateLimitReached;
     } else if (net::HTTP_REQUEST_ENTITY_TOO_LARGE == result.response_code()) {
-        error = chat::mojom::APIError::ContextLimitReached;
+      error = chat::mojom::APIErrorType::ContextLimitReached;
     } else {
-        error = chat::mojom::APIError::ConnectionError;
+      error = chat::mojom::APIErrorType::ConnectionError;
     }
 
-    auto _ = error;
-
-  //  std::move(callback).Run(base::unexpected(std::move(error)));
+    std::move(callback).Run(base::unexpected(std::move(error)));
 }
 
