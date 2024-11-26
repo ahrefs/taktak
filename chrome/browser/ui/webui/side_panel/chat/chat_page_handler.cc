@@ -166,8 +166,16 @@ void ChatPageHandler::OnPageContentExtracted(
     chat::mojom::ActionType action_type,
     const std::string& prompt,
     std::string content) {
+  std::string max_content = content;
+
+  //Note: This max tokens seems message + completion.
+  const size_t max_tokens = 32768;
+  if (content.length() > max_tokens) {
+    max_content = content.substr(0, max_tokens);
+  }
+
   api_client_->QueryPrompt(
-      prompt + content,
+      prompt + max_content,
       base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
                      base::Unretained(this), action_type),
       base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
