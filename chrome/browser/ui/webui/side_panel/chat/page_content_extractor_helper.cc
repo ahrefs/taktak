@@ -25,7 +25,6 @@
 #include "services/service_manager/public/cpp/interface_provider.h"
 #include "content/public/browser/web_contents.h"
 
-namespace ai_chat {
 
 namespace {
 constexpr auto kVideoPageContentTypes =
@@ -33,15 +32,12 @@ constexpr auto kVideoPageContentTypes =
         {chat::mojom::PageContentType::VideoTranscriptYouTube,
          chat::mojom::PageContentType::VideoTranscriptVTT});
 
-using ExtractPageContentCallback =
-    ChatContextObserver::ExtractPageContentCallback;
-
 class PageContentExtractorInternal {
  public:
     PageContentExtractorInternal() {}
 
   void Start(mojo::Remote<chat::mojom::PageContentExtractor> content_extractor,
-             ExtractPageContentCallback callback) {
+             base::OnceCallback<void(std::string content)> callback) {
     content_extractor_ = std::move(content_extractor);
     if (!content_extractor_) {
       DeleteSelf();
@@ -62,7 +58,7 @@ class PageContentExtractorInternal {
                        base::Unretained(this), std::move(callback)));
   }
 
-  void OnPageContentExtracted(ExtractPageContentCallback callback,
+  void OnPageContentExtracted(base::OnceCallback<void(std::string content)> callback,
                               chat::mojom::PageContentPtr data) {
     if (!data) {
       DVLOG(0) << __func__ << " no extracted page content.";
@@ -88,7 +84,7 @@ class PageContentExtractorInternal {
 
  private:
   void DeleteSelf() { delete this; }
-  void SendResultAndDeleteSelf(ExtractPageContentCallback callback,
+  void SendResultAndDeleteSelf(base::OnceCallback<void(std::string content)> callback,
                                std::string content = "") {
     std::move(callback).Run(content);
     delete this;
@@ -105,7 +101,7 @@ PageContentExtractorHelper::PageContentExtractorHelper(
 PageContentExtractorHelper::~PageContentExtractorHelper() = default;
 
 void PageContentExtractorHelper::ExtractPageContent(
-        ChatContextObserver::ExtractPageContentCallback callback) {
+        base::OnceCallback<void(std::string content)> callback) {
   auto* primary_rfh = web_contents_->GetPrimaryMainFrame();
   DCHECK(primary_rfh->IsRenderFrameLive());
 
@@ -117,4 +113,3 @@ void PageContentExtractorHelper::ExtractPageContent(
   internal_extractor->Start(std::move(extractor), std::move(callback));
 }
 
-}  // namespace ai_chat

@@ -1569,8 +1569,6 @@ static_library("ui") {
       "webui/side_panel/chat/api/api_request_helper.h",
       "webui/side_panel/chat/api/completion_api_client.cc",
       "webui/side_panel/chat/api/completion_api_client.h",
-      "webui/side_panel/chat/chat_context_observer.cc",
-      "webui/side_panel/chat/chat_context_observer.h",
       "webui/side_panel/chat/chat_page_handler.cc",
       "webui/side_panel/chat/chat_page_handler.h",
       "webui/side_panel/chat/page_content_extractor_helper.cc",

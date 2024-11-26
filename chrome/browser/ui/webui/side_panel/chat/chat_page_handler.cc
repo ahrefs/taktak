@@ -22,13 +22,6 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
 
-ChatPageHandler::ChatWebContentsObserver::ChatWebContentsObserver(
-    content::WebContents* web_contents,
-    ChatPageHandler& page_handler)
-    : content::WebContentsObserver(web_contents), page_handler_(page_handler) {}
-
-ChatPageHandler::ChatWebContentsObserver::~ChatWebContentsObserver() = default;
-
 ChatPageHandler::ChatPageHandler(
     mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
     mojo::PendingRemote<chat::mojom::Page> page,
@@ -41,29 +34,17 @@ ChatPageHandler::ChatPageHandler(
       chat_ui_(chat_ui),
       owner_web_contents_(owner_web_contents),
       chat_context_web_contents_(chat_context_web_contents),
-      profile_(Profile::FromWebUI(web_ui)) {
+      profile_(Profile::FromWebUI(web_ui)),
+      page_content_extractor_helper_(std::make_unique<PageContentExtractorHelper>(chat_context_web_contents))
+      {
   scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
       profile_->GetDefaultStoragePartition()
           ->GetURLLoaderFactoryForBrowserProcess();
   api_client_ =
       std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
-
-  active_chat_context_observer_ =
-      ai_chat::ChatContextObserver::FromWebContents(chat_context_web_contents);
-  web_content_observer_ = std::make_unique<ChatWebContentsObserver>(
-      chat_context_web_contents, *this);
 }
 
 ChatPageHandler::~ChatPageHandler() = default;
-
-void ChatPageHandler::ChatWebContentsObserver::WebContentsDestroyed() {
-  page_handler_->HandleWebContentsDestroyed();
-}
-
-void ChatPageHandler::HandleWebContentsDestroyed() {
-  active_chat_context_observer_ = nullptr;
-  web_content_observer_.reset();
-}
 
 void ChatPageHandler::ShowUI() {
     auto embedder = chat_ui_->embedder();
@@ -79,12 +60,7 @@ void ChatPageHandler::CloseUI() {
 }
 
 void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents) {
-    // todo: this should be removed when refactor and pass WebContents directly to extractor or extractor_helper
-    active_chat_context_observer_ =
-            ai_chat::ChatContextObserver::FromWebContents(contents);
-    web_content_observer_ = std::make_unique<ChatWebContentsObserver>(
-            contents, *this);
-
+    page_content_extractor_helper_ = std::make_unique<PageContentExtractorHelper>(contents);
     chat_context_web_contents_ = contents;
     if (page_.is_bound()) {
         page_->OnSiteInfoChanged(std::move(site_info));
@@ -156,9 +132,9 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
 
       if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
         DVLOG(0) << "ActionType: Summarize_page";
-        active_chat_context_observer_->GetPageContent(
-            base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                           base::Unretained(this), action_type));
+          page_content_extractor_helper_->ExtractPageContent(
+                  base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                                 base::Unretained(this), action_type));
 
       } else {
         // todo: to implement for other action types later

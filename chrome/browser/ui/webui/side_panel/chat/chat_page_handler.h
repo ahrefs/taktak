@@ -21,6 +21,7 @@
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
+#include "page_content_extractor_helper.h"
 
 namespace content {
     class WebContents;
@@ -60,21 +61,6 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   base::WeakPtr<ChatPageHandler> GetWeakPtr();
 
  private:
-  class ChatWebContentsObserver : public content::WebContentsObserver {
-   public:
-    explicit ChatWebContentsObserver(content::WebContents* web_contents,
-                                     ChatPageHandler& page_handler);
-    ~ChatWebContentsObserver() override;
-
-   private:
-    // content::WebContentsObserver
-    void WebContentsDestroyed() override;
-
-    raw_ref<ChatPageHandler> page_handler_;
-  };
-
-  void HandleWebContentsDestroyed();
-
   void OnPageContentExtracted(chat::mojom::ActionType action_type,
                               std::string content);
 
@@ -85,10 +71,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   raw_ptr<content::WebContents> chat_context_web_contents_ = nullptr;
   const raw_ptr<Profile> profile_;
   std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
-
-  raw_ptr<ai_chat::ChatContextObserver> active_chat_context_observer_ = nullptr;
-  std::unique_ptr<ChatWebContentsObserver> web_content_observer_;
-
+ std::unique_ptr<PageContentExtractorHelper> page_content_extractor_helper_;
   base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
 #endif //CHROMIUM_CHAT_PAGE_HANDLER_H

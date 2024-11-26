@@ -4,25 +4,24 @@
 #include <string>
 
 #include "base/functional/callback_forward.h"
-#include "chat_context_observer.h"
 #include "chrome/renderer/chat/page_content_extractor.h"
-#include "chat_context_observer.h"
 
-namespace ai_chat {
-class PageContentExtractorHelper
-: public ChatContextObserver::PageContentExtractorHelperDelegate {
+namespace content {
+    class WebContents;
+}  // namespace content
+
+class PageContentExtractorHelper{
  public:
 
   explicit PageContentExtractorHelper(content::WebContents* web_contents);
-  ~PageContentExtractorHelper() override;
+  ~PageContentExtractorHelper();
   PageContentExtractorHelper(const PageContentExtractorHelper&) = delete;
   PageContentExtractorHelper& operator=(const PageContentExtractorHelper&) =
       delete;
-  void ExtractPageContent(ChatContextObserver::ExtractPageContentCallback callback) override;
+  void ExtractPageContent( base::OnceCallback<void(std::string content)> callback);
 
  private:
   raw_ptr<content::WebContents> web_contents_;
 };
-}  // namespace ai_chat
 
 #endif  // CHROMIUM_PAGE_CONTENT_EXTRACTOR_HELPER_H

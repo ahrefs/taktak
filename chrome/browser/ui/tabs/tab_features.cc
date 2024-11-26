@@ -39,7 +39,6 @@
 #include "components/fingerprinting_protection_filter/common/fingerprinting_protection_filter_features.h"
 #include "components/image_fetcher/core/image_fetcher_service.h"
 #include "components/permissions/permission_indicators_tab_data.h"
-#include "chrome/browser/ui/webui/side_panel/chat/chat_context_observer.h"
 
 namespace tabs {
 
@@ -156,8 +155,6 @@ void TabFeatures::Init(TabInterface& tab, Profile* profile) {
   if (web_app::WebAppMetricsTabHelper::IsEnabled(tab.GetContents())) {
     web_app::WebAppMetricsTabHelper::CreateForWebContents(tab.GetContents());
   }
-
-  ai_chat::ChatContextObserver::CreateForWebContents(tab.GetContents());
 }
 
 TabFeatures::TabFeatures() = default;
