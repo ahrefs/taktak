@@ -79,12 +79,13 @@ void ChatPageHandler::CloseUI() {
 }
 
 void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents) {
-    // call the constructor of ChatContextObserver and set current WebContents to PageContentExtractorHelperDelegate
     // todo: this should be removed when refactor and pass WebContents directly to extractor or extractor_helper
     active_chat_context_observer_ =
             ai_chat::ChatContextObserver::FromWebContents(contents);
     web_content_observer_ = std::make_unique<ChatWebContentsObserver>(
             contents, *this);
+
+    chat_context_web_contents_ = contents;
     if (page_.is_bound()) {
         page_->OnSiteInfoChanged(std::move(site_info));
     }

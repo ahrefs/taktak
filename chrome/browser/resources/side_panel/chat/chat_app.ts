@@ -118,7 +118,12 @@ export class ChatAppElement extends CrLitElement {
     override connectedCallback() {
         super.connectedCallback();
 
-        setTimeout(() => this.chatApiProxy_.showUI(), 0);
+        setTimeout(async () => {
+            this.chatApiProxy_.showUI();
+            const {siteInfo} = await this.chatApiProxy_.getSiteInfo();
+            await this.updateSiteInfo(siteInfo);
+            this.updateComplete;
+        }, 0);
 
         this.listenerIds_.push(
             this.chatApiProxy_.getCallbackRouter().onSiteInfoChanged.addListener(
