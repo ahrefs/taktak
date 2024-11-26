@@ -128,20 +128,34 @@ base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
 }
 
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
+    // todo: to put prompt in resource file
+    std::string summarize_prompt = "Provide a brief summary of the key takeaways for the following:";
+    std::string explain_prompt = "Explain the following in simple language:";
+    std::string fact_check_prompt = "Fact check the following:";
     if (page_.is_bound()) {
       DVLOG(0) << action_type;
 
       if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
-        DVLOG(0) << "ActionType: Summarize_page";
           page_content_extractor_helper_->ExtractPageContent(
                   base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                                 base::Unretained(this), action_type));
+                                 base::Unretained(this), action_type, summarize_prompt));
 
-      } else {
+      } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
+          page_content_extractor_helper_->ExtractPageContent(
+                  base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                                 base::Unretained(this), action_type, explain_prompt));
+
+      } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
+          page_content_extractor_helper_->ExtractPageContent(
+                  base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                                 base::Unretained(this), action_type, fact_check_prompt));
+      }
+      else {
         // todo: to implement for other action types later
         chat::mojom::ActionResponsePtr response =
             chat::mojom::ActionResponse::New();
         response->action_type = action_type;
+        response->response_type = chat::mojom::ResponseType::DELTA;
         response->result = "MOCK Result";
         page_->OnSubmitActionResponse(response.Clone());
       }
@@ -150,11 +164,10 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
 
 void ChatPageHandler::OnPageContentExtracted(
     chat::mojom::ActionType action_type,
+    const std::string& prompt,
     std::string content) {
-  // todo: to put prompt in resource file
   api_client_->QueryPrompt(
-      "Provide a brief summary of the key takeaways for the following:" +
-          content,
+      prompt + content,
       base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
                      base::Unretained(this), action_type),
       base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,

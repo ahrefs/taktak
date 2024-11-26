@@ -61,6 +61,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
  private:
   void OnPageContentExtracted(chat::mojom::ActionType action_type,
+                              const std::string& prompt,
                               std::string content);
 
   mojo::Receiver<chat::mojom::PageHandler> receiver_;

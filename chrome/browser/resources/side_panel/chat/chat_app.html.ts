@@ -24,7 +24,10 @@ export function getHtml(this: ChatAppElement) {
                 <div class="button-container">
                 ${ this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
                     this.actionList_.map((item,_) => html`
-                        <cr-button @click="${this.onSubmitAction_}" class="action-button">
+                        <cr-button @click="${(e: Event) => {
+                            e.stopPropagation();
+                            this.onSubmitAction_(item.actionType);
+                        }}" class="action-button">
                             ${item.label}
                         </cr-button>
                 `) : html``}

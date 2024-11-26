@@ -82,12 +82,20 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
-    protected onSubmitAction_(e: Event) {
-        e.stopPropagation();
+    protected onSubmitAction_(actionType: ActionType) {
+        // todo: to handle type and display proper UI
         if (this.conversations_ != null) {
-            this.conversations_.push({query: "Summarise this page", response: ""});
+            if (actionType == ActionType.SUMMARIZE_PAGE) {
+                this.conversations_.push({query: "Summarise this page.", response: ""});
+            } else if (actionType == ActionType.EXPLAIN) {
+                this.conversations_.push({query: "Explain this page in simple language.", response: ""});
+            } else if (actionType == ActionType.FACT_CHECK) {
+                this.conversations_.push({query: "Fact check this page.", response: ""});
+            } else {
+                this.conversations_.push({query: "Other actions. To be fixed.", response: ""});
+            }
         }
-        this.chatApiProxy_.submitAction(ActionType.SUMMARIZE_PAGE);
+        this.chatApiProxy_.submitAction(actionType);
     }
 
     protected onTextareaValueChanged_(e: CustomEvent<{value: string}>) {
