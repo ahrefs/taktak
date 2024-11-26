@@ -37,7 +37,7 @@ class PageContentExtractor
   base::WeakPtr<PageContentExtractor> GetWeakPtr();
 
  private:
-  // PageContentExtractor implementation:
+  // chat::mojom::PageContentExtractor implementation:
   void ExtractPageContent(
       chat::mojom::PageContentExtractor::ExtractPageContentCallback callback)
       override;

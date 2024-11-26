@@ -74,19 +74,20 @@ void ChatPageHandler::GetSiteInfo(GetSiteInfoCallback callback) {
   site_info->is_content_usable_in_conversations = false;
 
   if (chat_context_web_contents_) {
-    site_info->title =
-        base::UTF16ToUTF8(chat_context_web_contents_->GetTitle());
     const GURL gurl = chat_context_web_contents_->GetLastCommittedURL();
     if (gurl.SchemeIsHTTPOrHTTPS()) {
+      site_info->title =
+          base::UTF16ToUTF8(chat_context_web_contents_->GetTitle());
       site_info->url = gurl.spec();
       site_info->is_content_usable_in_conversations = true;
     } else {
+      site_info->title = "";
       site_info->url = "";
       site_info->is_content_usable_in_conversations = false;
     }
   }
 
-    std::move(callback).Run(site_info.Clone());
+  std::move(callback).Run(site_info.Clone());
 }
 
 void ChatPageHandler::GetActionList(GetActionListCallback callback) {
@@ -175,11 +176,11 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
   chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
   response->action_type = action_type;
   if (result.has_value()) {
-    LOG(INFO) << __func__ << " success -> " << result.value();
+    DVLOG(0) << __func__ << " success -> " << result.value();
     response->response_type = chat::mojom::ResponseType::COMPLETED;
     response->result = result.value();
   } else {
-    LOG(INFO) << __func__ << " error -> " << result.error();
+    DVLOG(0) << __func__ << " error -> " << result.error();
     response->response_type = chat::mojom::ResponseType::ERROR;
     response->result =
         "error_message_here";  // todo: to get error message from api response

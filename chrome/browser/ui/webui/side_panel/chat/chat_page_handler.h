@@ -9,7 +9,6 @@
 #include "base/memory/raw_ptr.h"
 #include "base/scoped_observation.h"
 #include "base/types/expected.h"
-#include "chat_context_observer.h"
 #include "chat_ui.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/webui/side_panel/chat/api/completion_api_client.h"
@@ -66,12 +65,13 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   mojo::Receiver<chat::mojom::PageHandler> receiver_;
   mojo::Remote<chat::mojom::Page> page_;
-  const raw_ptr<ChatUI> chat_ui_;
+  const raw_ptr<ChatUI> chat_ui_ = nullptr;
   raw_ptr<content::WebContents> owner_web_contents_ = nullptr;
   raw_ptr<content::WebContents> chat_context_web_contents_ = nullptr;
-  const raw_ptr<Profile> profile_;
+  const raw_ptr<Profile> profile_ = nullptr;
   std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
- std::unique_ptr<PageContentExtractorHelper> page_content_extractor_helper_;
+  std::unique_ptr<PageContentExtractorHelper> page_content_extractor_helper_ =
+      nullptr;
   base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
 #endif //CHROMIUM_CHAT_PAGE_HANDLER_H

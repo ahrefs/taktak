@@ -136,7 +136,7 @@ base::WeakPtr<PageContentExtractor> PageContentExtractor::GetWeakPtr() {
 
 void PageContentExtractor::BindReceiver(
     mojo::PendingReceiver<chat::mojom::PageContentExtractor> receiver) {
-  VLOG(1) << "Yep Chat PageContentExtractor handler bound.";
+  DVLOG(0) << "Yep Chat PageContentExtractor handler bound.";
   receiver_.reset();
   receiver_.Bind(std::move(receiver));
 }
@@ -221,22 +221,6 @@ void PageContentExtractor::ExtractPageText(
 void PageContentExtractor::OnPageTextExtracted(
     chat::mojom::PageContentExtractor::ExtractPageContentCallback callback,
     const std::optional<std::string>& content) {
-  if (!content.has_value()) {
-    DVLOG(0) << "Extracted content is null.";
-    std::move(callback).Run({});
-    return;
-  }
-
-  if (content->empty()) {
-    DVLOG(0) << "Extracted content is empty.";
-    std::move(callback).Run({});
-    return;
-  }
-
-  // Successful text extraction
-  auto result = chat::mojom::PageContent::New();
-  result->type = std::move(chat::mojom::PageContentType::Text);
-  result->content = chat::mojom::PageContentData::NewContent(content.value());
-  std::move(callback).Run(std::move(result));
+  std::move(callback).Run(std::move(content));
 }
 }  // namespace ai_chat

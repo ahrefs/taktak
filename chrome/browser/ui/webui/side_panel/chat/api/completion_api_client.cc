@@ -1,12 +1,10 @@
 #include "completion_api_client.h"
 
-
-#include <base/containers/flat_map.h>
-
 #include <optional>
 #include <string_view>
 #include <utility>
 
+#include <base/containers/flat_map.h>
 #include "base/containers/flat_set.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
@@ -45,11 +43,6 @@ namespace {
 
     std::string CreateJSONRequestBody(const std::vector<std::string>& prompt) {
         base::Value::Dict dict;
-
-        //  base::Value::List stop_sequences;
-        //  stop_sequences.Append("\nUser:");
-        //  stop_sequences.Append("\nAssistant:");
-
         dict.Set("stream", true);
         dict.Set("max_tokens", 1280);
         dict.Set("top_p", 0.7);
@@ -70,7 +63,6 @@ namespace {
         base::JSONWriter::Write(dict, &json);
         return json;
     }
-
 }  // namespace
 
 CompletionApiClient::CompletionApiClient(
@@ -140,46 +132,32 @@ void CompletionApiClient::OnQueryCompleted(
         GenerationCompletedCallback callback,
         APIRequestResult result) {
     const bool success = result.Is2XXResponseCode();
+
     // Handle successful request
     if (success) {
-      //        std::string completion = "";
-      //        // We're checking for a value body in case for non-streaming API
-      //        results. if (result.value_body().is_dict()) {
-      //            const std::string* value =
-      //                    result.value_body().GetDict().FindString("choices");
-      //            if (value) {
-      //                // Trimming necessary for Llama 2 which prepends
-      //                responses with a " ". completion =
-      //                base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
-      //            }
-      //        }
-      //        std::string entire_message;
-      //        for (const auto& s : entire_completion_result) {
-      //          entire_message += s;
-      //        }
-      //        // DVLOG(0) << std::endl << std::endl << entire_message <<
-      //        std::endl << std::endl;
-
+      // todo: to pass entire_completion_result to callback so that chat_page_handler can cache it for subsequent context for chat
       entire_completion_result.clear();
       std::move(callback).Run(base::ok(""));
       return;
     }
 
-
     // Handle error
     chat::mojom::APIErrorType error;
 
-    LOG(INFO) << "Error response_code: " << result.response_code();
-    LOG(INFO) << "Error error_code: " << result.error_code();
+    DVLOG(0) << "Error response_code: " << result.response_code();
+    DVLOG(0) << "Error error_code: " << result.error_code();
+
+    // todo: to get error message from Chat API response and pass to callback
     if (result.value_body().is_dict()) {
       const std::string* value =
           result.value_body().GetDict().FindString("message");
       if (value) {
         // Trimming necessary for Llama 2 which prepends responses with a " ".
-        auto completion = base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
-        LOG(INFO) << "Error message: " << completion;
+        auto error_message = base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
+        DVLOG(0) << "Error message: " << error_message;
       }
     }
+
     if (net::HTTP_TOO_MANY_REQUESTS == result.response_code()) {
       error = chat::mojom::APIErrorType::RateLimitReached;
     } else if (net::HTTP_REQUEST_ENTITY_TOO_LARGE == result.response_code()) {

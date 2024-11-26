@@ -25,70 +25,63 @@
 #include "services/service_manager/public/cpp/interface_provider.h"
 #include "content/public/browser/web_contents.h"
 
-
 namespace {
-constexpr auto kVideoPageContentTypes =
-    base::MakeFixedFlatSet<chat::mojom::PageContentType>(
-        {chat::mojom::PageContentType::VideoTranscriptYouTube,
-         chat::mojom::PageContentType::VideoTranscriptVTT});
 
 class PageContentExtractorInternal {
  public:
     PageContentExtractorInternal() {}
 
-  void Start(mojo::Remote<chat::mojom::PageContentExtractor> content_extractor,
-             base::OnceCallback<void(std::string content)> callback) {
-    content_extractor_ = std::move(content_extractor);
-    if (!content_extractor_) {
-      DeleteSelf();
-      return;
+    void Start(
+        mojo::Remote<chat::mojom::PageContentExtractor> content_extractor,
+        base::OnceCallback<void(std::string content)> callback) {
+      content_extractor_ = std::move(content_extractor);
+      if (!content_extractor_) {
+        DeleteSelf();
+        return;
+      }
+
+      // Ref:
+      // https://chromium.googlesource.com/chromium/src/+/refs/heads/main/mojo/public/cpp/bindings/README.md#a-note-about-endpoint-lifetime-and-callbacks
+      // Once a `mojo::Remote<T>` is destroyed, it is guaranteed that pending
+      // callbacks as well as the connection error handler (if registered) won't
+      // be called. Once a `mojo::Receiver<T>` is destroyed, it is guaranteed
+      // that no more method calls are dispatched to the implementation and the
+      // connection error handler (if registered) won't be called.
+      content_extractor_.set_disconnect_handler(base::BindOnce(
+          &PageContentExtractorInternal::DeleteSelf, base::Unretained(this)));
+      content_extractor_->ExtractPageContent(
+          base::BindOnce(&PageContentExtractorInternal::OnPageContentExtracted,
+                         base::Unretained(this), std::move(callback)));
     }
 
-    // Ref:
-    // https://chromium.googlesource.com/chromium/src/+/refs/heads/main/mojo/public/cpp/bindings/README.md#a-note-about-endpoint-lifetime-and-callbacks
-    // Once a `mojo::Remote<T>` is destroyed, it is guaranteed that pending
-    // callbacks as well as the connection error handler (if registered) won't
-    // be called. Once a `mojo::Receiver<T>` is destroyed, it is guaranteed that
-    // no more method calls are dispatched to the implementation and the
-    // connection error handler (if registered) won't be called.
-    content_extractor_.set_disconnect_handler(base::BindOnce(
-        &PageContentExtractorInternal::DeleteSelf, base::Unretained(this)));
-    content_extractor_->ExtractPageContent(
-        base::BindOnce(&PageContentExtractorInternal::OnPageContentExtracted,
-                       base::Unretained(this), std::move(callback)));
-  }
+    void OnPageContentExtracted(
+        base::OnceCallback<void(std::string content)> callback,
+        const std::optional<std::string>& content) {
+      if (!content.has_value()) {
+        DVLOG(0) << __func__ << "Extracted content is null.";
+        SendResultAndDeleteSelf(std::move(callback));
+        return;
+      }
 
-  void OnPageContentExtracted(base::OnceCallback<void(std::string content)> callback,
-                              chat::mojom::PageContentPtr data) {
-    if (!data) {
-      DVLOG(0) << __func__ << " no extracted page content.";
-      SendResultAndDeleteSelf(std::move(callback));
-      return;
+      if (content->empty()) {
+        DVLOG(0) << __func__ << "Extracted content is empty.";
+        SendResultAndDeleteSelf(std::move(callback));
+        return;
+      }
+
+      DVLOG(0) << __func__ << "extracted page content: " << content.value();
+      SendResultAndDeleteSelf(std::move(callback), content.value());
     }
-
-    DVLOG(1) << "OnTabContentResult: " << data.get();
-    const bool is_video = base::Contains(kVideoPageContentTypes, data->type);
-    DVLOG(1) << "Is video? " << is_video;
-
-    if (!is_video) {
-      DCHECK(data->content->is_content());
-      auto content = data->content->get_content();
-      DVLOG(1) << __func__ << ": Got content with char length of "
-               << content.length();
-      SendResultAndDeleteSelf(std::move(callback), content);
-      return;
-    }
-
-    SendResultAndDeleteSelf(std::move(callback));
-  }
 
  private:
   void DeleteSelf() { delete this; }
+
   void SendResultAndDeleteSelf(base::OnceCallback<void(std::string content)> callback,
                                std::string content = "") {
     std::move(callback).Run(content);
     delete this;
   }
+
   mojo::Remote<chat::mojom::PageContentExtractor> content_extractor_;
   base::WeakPtrFactory<PageContentExtractorInternal> weak_ptr_factory_{this};
 };
@@ -101,7 +94,7 @@ PageContentExtractorHelper::PageContentExtractorHelper(
 PageContentExtractorHelper::~PageContentExtractorHelper() = default;
 
 void PageContentExtractorHelper::ExtractPageContent(
-        base::OnceCallback<void(std::string content)> callback) {
+    base::OnceCallback<void(std::string content)> callback) {
   auto* primary_rfh = web_contents_->GetPrimaryMainFrame();
   DCHECK(primary_rfh->IsRenderFrameLive());
 
@@ -112,4 +105,3 @@ void PageContentExtractorHelper::ExtractPageContent(
   auto* internal_extractor = new PageContentExtractorInternal();
   internal_extractor->Start(std::move(extractor), std::move(callback));
 }
-

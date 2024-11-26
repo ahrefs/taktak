@@ -240,7 +240,7 @@ namespace api_request_helper {
             request->method = method;
         }
 
-        DVLOG(4) << method << " " << url.spec();
+        DVLOG(0) << method << " " << url.spec();
 
         if (!headers.empty()) {
             for (auto entry : headers) {
@@ -250,8 +250,8 @@ namespace api_request_helper {
         }
 
         if (!payload.empty()) {
-            DVLOG(4) << "Payload type " << payload_content_type << ":";
-            DVLOG(4) << payload;
+            DVLOG(0) << "Payload type " << payload_content_type << ":";
+            DVLOG(0) << payload;
         }
 
         auto url_loader =
@@ -348,7 +348,7 @@ namespace api_request_helper {
             std::string json,
             base::OnceCallback<void(ValueOrError)> callback) {
         if (!data_decoder_) {
-            VLOG(1) << "Creating DataDecoder for APIRequestHelper";
+            VLOG(0) << "Creating DataDecoder for APIRequestHelper";
             data_decoder_ = std::make_unique<data_decoder::DataDecoder>();
         }
 
@@ -358,11 +358,11 @@ namespace api_request_helper {
     void APIRequestHelper::URLLoaderHandler::OnDataReceived(
             std::string_view string_piece,
             base::OnceClosure resume) {
-        DVLOG(2) << "[[" << __func__ << "]]" << " Chunk received";
+        DVLOG(0) << "[[" << __func__ << "]]" << " Chunk received";
         if (is_sse_) {
             ParseSSE(string_piece);
         } else {
-            DVLOG(4) << "Chunk content: \n" << string_piece;
+            DVLOG(0) << "Chunk content: \n" << string_piece;
             data_received_callback_.Run(base::Value(string_piece));
         }
         std::move(resume).Run();
@@ -370,7 +370,7 @@ namespace api_request_helper {
 
     void APIRequestHelper::URLLoaderHandler::OnComplete(bool success) {
         DCHECK(result_callback_);
-        VLOG(1) << "[[" << __func__ << "]]" << " Response completed\n";
+        VLOG(0) << "[[" << __func__ << "]]" << " Response completed\n";
 
         request_is_finished_ = true;
 
@@ -386,7 +386,7 @@ namespace api_request_helper {
     void APIRequestHelper::URLLoaderHandler::OnResponse(
             ResponseConversionCallback conversion_callback,
             const std::unique_ptr<std::string> response_body) {
-        VLOG(1) << "[[" << __func__ << "]]" << " Response received\n";
+        VLOG(0) << "[[" << __func__ << "]]" << " Response received\n";
         DCHECK(result_callback_);
 
         DCHECK_EQ(current_decoding_operation_count_, 0);
@@ -417,7 +417,7 @@ namespace api_request_helper {
             APIRequestResult result,
             ValueOrError result_value) {
         if (!result_value.has_value()) {
-            VLOG(1) << "Response validation error:" << result_value.error();
+            VLOG(0) << "Response validation error:" << result_value.error();
             if (result_value.error().starts_with("trailing comma")) {
                 DEBUG_ALIAS_FOR_GURL(url_alias, result.final_url());
                 DEBUG_ALIAS_FOR_CSTR(result_str, result_value.error().c_str(), 1024);
@@ -427,7 +427,7 @@ namespace api_request_helper {
             return;
         }
         if (!result_value.value().is_dict() && !result_value.value().is_list()) {
-            VLOG(1) << "Response validation error: Invalid top-level type";
+            VLOG(0) << "Response validation error: Invalid top-level type";
             std::move(result_callback_).Run(std::move(result));
             return;
         }
@@ -444,7 +444,7 @@ namespace api_request_helper {
         if (request_is_finished_ && decoding_is_complete) {
             std::move(result_callback_).Run(ToAPIRequestResult(std::move(url_loader_)));
         } else if (decoding_is_complete) {
-            VLOG(3) << "Did not run URLLoaderHandler completion handler, still have "
+            VLOG(0) << "Did not run URLLoaderHandler completion handler, still have "
                     << current_decoding_operation_count_
                     << " decoding operations in progress, waiting for them to"
                     << " complete...";
@@ -462,16 +462,16 @@ namespace api_request_helper {
 
         // Remove SSE events that don't look like JSON - could be string or [DONE]
         // message.
-        // TODO(@nullhook): Parse both JSON and string values. The below currently
+        // TODO: Parse both JSON and string values. The below currently
         // only identifies JSON values.
         static constexpr char kDataPrefix[] = "data: {";
         std::erase_if(stream_data, [](std::string_view item) {
-            DVLOG(3) << "Received chunk: " << item;
+            DVLOG(0) << "Received chunk: " << item;
             if (!base::StartsWith(item, kDataPrefix)) {
                 // This is useful to log in case an API starts
                 // coming back with unknown data type in some
                 // scenarios.
-                VLOG(1) << "Data did not start with SSE prefix";
+                VLOG(0) << "Data did not start with SSE prefix";
                 return true;
             }
             return false;
@@ -498,7 +498,7 @@ namespace api_request_helper {
                         handler->MaybeSendResult();
                     };
 
-            DVLOG(2) << "Going to call ParseJsonImpl";
+            DVLOG(0) << "Going to call ParseJsonImpl";
             ParseJsonImpl(std::string(json),
                           base::BindOnce(std::move(on_json_parsed),
                                          weak_ptr_factory_.GetWeakPtr()));
