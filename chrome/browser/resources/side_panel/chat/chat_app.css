@@ -4,13 +4,10 @@
  * #scheme=relative
  * #css_wrapper_metadata_end */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
-
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
 }
 
 :root {
@@ -29,7 +26,6 @@ cr-input, cr-textarea {
 }
 
 cr-button {
-
     padding: 10px 10px;
     border: 1px solid #000000;
     border-radius: 12px;
@@ -47,9 +43,10 @@ cr-button {
     display: flex;
     flex-direction: column;
     height: calc(100vh - 8px);
-    background-color: transparent;
+    width: 100vw;
     margin: 4px;
     padding: 8px;
+    background: transparent;
 }
 
 .top {
