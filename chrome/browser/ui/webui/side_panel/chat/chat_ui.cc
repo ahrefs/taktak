@@ -1,3 +1,8 @@
+
+#ifdef UNSAFE_BUFFERS_BUILD
+#pragma allow_unsafe_buffers
+#endif
+
 #include "chat_ui.h"
 
 #include "chat_page_handler.h"
@@ -12,6 +17,8 @@
 #include "chrome/grit/generated_resources.h"
 #include "chrome/grit/side_panel_chat_resources.h"
 #include "chrome/grit/side_panel_chat_resources_map.h"
+#include "chrome/grit/side_panel_shared_resources.h"
+#include "chrome/grit/side_panel_shared_resources_map.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui.h"
@@ -19,9 +26,11 @@
 #include "content/public/browser/web_ui_data_source.h"
 #include "content/public/browser/webui_config.h"
 #include "content/public/common/url_constants.h"
+#include "ui/base/ui_base_features.h"
+#include "ui/base/webui/web_ui_util.h"
+#include "ui/views/style/platform_style.h"
+#include "ui/webui/color_change_listener/color_change_handler.h"
 #include "ui/webui/mojo_web_ui_controller.h"
-
-#pragma allow_unsafe_buffers
 
 namespace {
 
@@ -82,6 +91,13 @@ ChatUI::ChatUI(content::WebUI* web_ui)
 ChatUI::~ChatUI() = default;
 
 WEB_UI_CONTROLLER_TYPE_IMPL(ChatUI)
+
+void ChatUI::BindInterface(
+    mojo::PendingReceiver<color_change_listener::mojom::PageHandler>
+        pending_receiver) {
+  color_provider_handler_ = std::make_unique<ui::ColorChangeHandler>(
+      web_ui()->GetWebContents(), std::move(pending_receiver));
+}
 
 void ChatUI::BindInterface(
         mojo::PendingReceiver<chat::mojom::PageHandlerFactory> receiver) {

@@ -12,6 +12,13 @@
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "ui/webui/mojo_web_ui_controller.h"
+#include "ui/webui/resources/cr_components/color_change_listener/color_change_listener.mojom.h"
+
+class ChatPageHandler;
+
+namespace ui {
+class ColorChangeHandler;
+}
 
 class ChatUI;
 
@@ -21,8 +28,6 @@ public:
             : DefaultTopChromeWebUIConfig(content::kChromeUIScheme,
                                           chrome::kChromeUIChatHost) {}
 };
-
-class ChatPageHandler;
 
 class ChatUI : public TopChromeWebUIController,
                public chat::mojom::PageHandlerFactory {
@@ -36,6 +41,10 @@ public:
     ~ChatUI() override;
 
     void BindInterface(
+        mojo::PendingReceiver<color_change_listener::mojom::PageHandler>
+            pending_receiver);
+
+    void BindInterface(
             mojo::PendingReceiver<chat::mojom::PageHandlerFactory> receiver);
 
     // Set by WebUIContentsWrapperT. TopChromeWebUIController provides default
@@ -45,9 +54,8 @@ public:
       embedder_ = embedder;
     }
 
-    static constexpr std::string
+    static constexpr std::string GetWebUIName() { return "Chat"; }
 
-    GetWebUIName() { return "Chat"; }
     void SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents );
 
    private:
@@ -55,6 +63,7 @@ public:
             mojo::PendingRemote<chat::mojom::Page> page,
             mojo::PendingReceiver<chat::mojom::PageHandler> receiver) override;
 
+    std::unique_ptr<ui::ColorChangeHandler> color_provider_handler_;
     std::unique_ptr<ChatPageHandler> page_handler_;
 
     mojo::Receiver<chat::mojom::PageHandlerFactory> page_factory_receiver_{

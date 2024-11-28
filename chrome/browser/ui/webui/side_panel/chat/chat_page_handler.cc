@@ -47,9 +47,9 @@ ChatPageHandler::ChatPageHandler(
 ChatPageHandler::~ChatPageHandler() = default;
 
 void ChatPageHandler::ShowUI() {
-    auto embedder = chat_ui_->embedder();
-    if (embedder) {
-        embedder->ShowUI();
+  auto embedder = chat_ui_->embedder();
+  if (embedder) {
+    embedder->ShowUI();
     }
 }
 

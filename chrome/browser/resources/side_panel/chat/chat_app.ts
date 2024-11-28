@@ -5,13 +5,14 @@ import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import '//resources/cr_elements/cr_input/cr_input.js';
 import '//resources/cr_elements/cr_textarea/cr_textarea.js';
 
+// import {ColorChangeUpdater} from 'chrome://resources/cr_components/color_change_listener/colors_css_updater.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
 import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
 import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
-import {SiteInfo, ActionItem, ActionType, ActionResponse, ResponseType} from "./chat.mojom-webui.js";
+import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo} from "./chat.mojom-webui.js";
 
 type conversationRecord = {
     query: string,
@@ -24,22 +25,23 @@ export class ChatAppElement extends CrLitElement {
     protected actionList_: ActionItem[] = [];
     protected conversations_: conversationRecord[] = [];
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
-    protected siteInfo_ : SiteInfo = {
+    protected siteInfo_: SiteInfo = {
         url: "",
         title: "",
         isContentUsableInConversations: false,
     };
-    protected submitResponse_ : ActionResponse = {
+    protected submitResponse_: ActionResponse = {
         actionType: ActionType.NONE,
         responseType: ResponseType.NONE,
         result: "",
     };
-    protected completionResult_ : string = "";
+    protected completionResult_: string = "";
     protected query_?: string;
     protected submittedQuery_?: string;
 
     constructor() {
         super();
+        // ColorChangeUpdater.forDocument().start();
     }
 
     static get is() {
@@ -48,6 +50,10 @@ export class ChatAppElement extends CrLitElement {
 
     static override get styles() {
         return getCss();
+    }
+
+    override render() {
+        return getHtml.bind(this)();
     }
 
     static override get properties() {
@@ -65,7 +71,7 @@ export class ChatAppElement extends CrLitElement {
     private async updateSiteInfo(siteInfo: SiteInfo) {
         this.siteInfo_ = siteInfo;
         if (this.siteInfo_.isContentUsableInConversations) {
-            const {actionList}  = await this.chatApiProxy_.getActionList();
+            const {actionList} = await this.chatApiProxy_.getActionList();
             this.actionList_ = actionList;
         }
         this.updateComplete;
@@ -78,7 +84,7 @@ export class ChatAppElement extends CrLitElement {
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.completionResult_ += "\n";
         } else if (response.responseType == ResponseType.ERROR) {
-            this.completionResult_ += "\n" ;
+            this.completionResult_ += "\n";
         }
     }
 
@@ -98,7 +104,7 @@ export class ChatAppElement extends CrLitElement {
         this.chatApiProxy_.submitAction(actionType);
     }
 
-    protected onTextareaValueChanged_(e: CustomEvent<{value: string}>) {
+    protected onTextareaValueChanged_(e: CustomEvent<{ value: string }>) {
         this.query_ = e.detail.value;
     }
 
@@ -120,7 +126,7 @@ export class ChatAppElement extends CrLitElement {
         this.submittedQuery_ = this.query_;
         this.conversations_.push({query: this.query_ ?? "", response: ""});
         this.query_ = "";
-        this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? "" );
+        this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? "");
     }
 
     override connectedCallback() {
@@ -130,15 +136,14 @@ export class ChatAppElement extends CrLitElement {
             this.chatApiProxy_.showUI();
             const {siteInfo} = await this.chatApiProxy_.getSiteInfo();
             await this.updateSiteInfo(siteInfo);
-            this.updateComplete;
         }, 0);
 
         this.listenerIds_.push(
             this.chatApiProxy_.getCallbackRouter().onSiteInfoChanged.addListener(
                 (siteInfo: SiteInfo) => this.updateSiteInfo(siteInfo)),
-           this.chatApiProxy_.getCallbackRouter().onSubmitActionResponse.addListener(
-               (response: ActionResponse) => this.updateSubmitResponse(response))
-            );
+            this.chatApiProxy_.getCallbackRouter().onSubmitActionResponse.addListener(
+                (response: ActionResponse) => this.updateSubmitResponse(response))
+        );
     }
 
     override disconnectedCallback() {
@@ -148,9 +153,6 @@ export class ChatAppElement extends CrLitElement {
             id => this.chatApiProxy_.getCallbackRouter().removeListener(id));
     }
 
-    override render() {
-        return getHtml.bind(this)();
-    }
 }
 
 declare global {

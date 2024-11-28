@@ -6,31 +6,33 @@ export function getHtml(this: ChatAppElement) {
         <div id="container">
             <div id="response-result" class="middle">
                 ${
-                    this.conversations_.map((conversation,_) => {
-                        return conversation.query.length > 0
-                                ? html`
-                                    <p class="query-container">${conversation.query}</p>
-                                    ${conversation.response.length > 0 ? html`<p>${conversation.response}</p>` : html``}`
-                                : 
-                                    html`${conversation.response.length > 0 ? html`<p>${conversation.response}</p>` : html``}`
-                        
-                    }) 
+                        this.conversations_.map((conversation, _) => {
+                            return conversation.query.length > 0
+                                    ? html`
+                                        <p class="query-container">${conversation.query}</p>
+                                        ${conversation.response.length > 0 ? html`<p>
+                                            ${conversation.response}</p>` : html``}`
+                                    :
+                                    html`${conversation.response.length > 0 ? html`<p>
+                                        ${conversation.response}</p>` : html``}`
+
+                        })
                 }
                 <p>
-                ${this.completionResult_}
+                    ${this.completionResult_}
                 </p>
             </div>
             <div class="bottom">
                 <div class="button-container">
-                ${ this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
-                    this.actionList_.map((item,_) => html`
-                        <cr-button @click="${(e: Event) => {
-                            e.stopPropagation();
-                            this.onSubmitAction_(item.actionType);
-                        }}" class="action-button">
-                            ${item.label}
-                        </cr-button>
-                `) : html``}
+                    ${this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
+                            this.actionList_.map((item, _) => html`
+                                <cr-button @click="${(e: Event) => {
+                                    e.stopPropagation();
+                                    this.onSubmitAction_(item.actionType);
+                                }}" class="action-button">
+                                    ${item.label}
+                                </cr-button>
+                            `) : html``}
                 </div>
                 <div class="typing-container">
                     <div class="site-info">

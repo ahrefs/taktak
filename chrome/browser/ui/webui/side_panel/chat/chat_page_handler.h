@@ -24,6 +24,7 @@
 
 namespace content {
     class WebContents;
+
     class WebUI;
 }  // namespace content
 
@@ -37,22 +38,30 @@ class ChatPageHandler : public chat::mojom::PageHandler {
                   content::WebContents* chat_context_web_contents);
 
   ChatPageHandler(const ChatPageHandler&) = delete;
+
   ChatPageHandler& operator=(const ChatPageHandler&) = delete;
 
   ~ChatPageHandler() override;
 
   void GetSiteInfo(GetSiteInfoCallback callback) override;
+
   void GetActionList(GetActionListCallback callback) override;
+
   void SubmitAction(chat::mojom::ActionType action_type) override;
+
   void SubmitQuery(chat::mojom::ActionType action_type,
                    const std::string& query) override;
+
   void ShowUI() override;
+
   void CloseUI() override;
 
-  void SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents);
+  void SetSiteInfo(chat::mojom::SiteInfoPtr site_info,
+                   content::WebContents* contents);
 
   void SubmitQueryCallback(chat::mojom::ActionType action_type,
                            std::string completion);
+
   void SubmitQueryCompletedCallback(
       chat::mojom::ActionType action_type,
       base::expected<std::string, chat::mojom::APIErrorType> result);
@@ -75,4 +84,5 @@ class ChatPageHandler : public chat::mojom::PageHandler {
       nullptr;
   base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
+
 #endif //CHROMIUM_CHAT_PAGE_HANDLER_H
