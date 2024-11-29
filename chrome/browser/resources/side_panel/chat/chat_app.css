@@ -27,7 +27,69 @@
     padding: 6px;
     width: fit-content;
     border-radius: 8px;
-    border: 1px solid;
+    background: var(--color-side-panel-content-background);
+}
+
+.query-prompt-container .siteinfo-section {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+}
+
+.query-prompt-container .siteinfo-section .vertline{
+    display: block;
+    flex: 0 0 auto;
+    width: 4px;
+    border-radius: 3px;
+    background-color: rgba(0,0,0,0.1);
+}
+
+.query-prompt-container .siteinfo-section .content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    /*font-size: 13px;*/
+    /*line-height: 18px;*/
+    font-weight: 400;
+    /*color: rgba(0, 0, 0, 1);*/
+    width: auto;
+    max-width: 100%;
+}
+
+.query-prompt-container .siteinfo-section .content .title {
+    width: 95%;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+    margin: 0px;
+    padding: 0px;
+    /*font-size: 12px;*/
+    box-sizing: border-box;
+}
+
+.query-prompt-container .siteinfo-section .content .url {
+    width: 95%;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+    margin: 0px;
+    padding: 0px;
+    /*font-size: 12px;*/
+    box-sizing: border-box;
+    /*color: rgba(0, 0, 0, 0.5);*/
+}
+
+.query-prompt-container .prompt-section {
+    font-weight: 400;
+    line-height: 22px;
+    width: 100%;
+    word-wrap: break-word;
+    white-space: normal;
+    /*color:rgba(0, 0, 0, 0.85);*/
 }
 
 .action-buttons-container {
@@ -41,20 +103,22 @@
 .action-button {
     display: inline-block;
     padding: 10px 12px 10px 12px;
-    border: 1px solid;
+    border: 1px solid var(--color-side-panel--background);
     border-radius: 12px;
     cursor: pointer;
     text-decoration: none;
+    background: var(--color-side-panel-content-background);
+    color: var(--color-side-panel-card-primary-foreground);
 }
 
 #prompt-container {
     display: flex;
     flex-direction: column;
-    border: 1px solid;
     border-radius: 12px;
     align-items: flex-start;
     padding: 10px 12px;
     gap: 12px;
+    background: var(--color-side-panel-content-background);
 }
 
 .site-info-container {

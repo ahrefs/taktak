@@ -10,7 +10,18 @@ export function getHtml(this: ChatAppElement) {
                             this.conversations_.map((conversation, _) => {
                                 return conversation.query.length > 0
                                         ? html`
-                                            <p class="query-prompt-container">${conversation.query}</p>
+                                            <div class="query-prompt-container">
+                                                ${conversation.shouldDisplaySiteInfo ? html`
+                                                    <div class="siteinfo-section">
+                                                        <div class="vertline"></div>
+                                                        <div class="content">
+                                                            <div class="title">${conversation.title}</div>
+                                                            <div class="url">${conversation.url}</div>
+                                                        </div>
+                                                    </div>` : html``
+                                                }
+                                                <div class="prompt-section">${conversation.query}</div>
+                                            </div>
                                             ${conversation.response.length > 0 ? html`<p>
                                                 ${conversation.response}</p>` : html``}`
                                         :
@@ -36,10 +47,14 @@ export function getHtml(this: ChatAppElement) {
                 </div>
             </div>
             <div id="prompt-container">
-                <div class="site-info-container">
-                    <p class="site-info-content">${this.siteInfo_.url} </p>
-                    <p class="site-info-content">${this.siteInfo_.title}</p>
-                </div>
+                ${
+                        this.siteInfo_.isContentUsableInConversations ?
+                                html`
+                                    <div class="site-info-container">
+                                        <p class="site-info-content">${this.siteInfo_.url} </p>
+                                        <p class="site-info-content">${this.siteInfo_.title}</p>
+                                    </div>` : html``
+                }
                 <div class="typing-content">
                     <cr-input
                             class="prompt-input"

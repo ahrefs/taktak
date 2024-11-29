@@ -16,6 +16,9 @@ import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo} from "./
 
 type conversationRecord = {
     query: string,
+    shouldDisplaySiteInfo: boolean,
+    title: string,
+    url: string,
     response: string,
 }
 
@@ -38,6 +41,7 @@ export class ChatAppElement extends CrLitElement {
     protected completionResult_: string = "";
     protected query_?: string;
     protected submittedQuery_?: string;
+    protected promptForActionType_: string = "";
 
     constructor() {
         super();
@@ -65,6 +69,7 @@ export class ChatAppElement extends CrLitElement {
             query_: {type: String},
             submittedQuery_: {type: String},
             completionResult_: {type: String},
+            promptForActionType_: {type: String},
         };
     }
 
@@ -92,13 +97,49 @@ export class ChatAppElement extends CrLitElement {
         // todo: to handle type and display proper UI
         if (this.conversations_ != null) {
             if (actionType == ActionType.SUMMARIZE_PAGE) {
-                this.conversations_.push({query: "Summarise this page.", response: ""});
+                this.conversations_.push({
+                    query: "Provide a brief summary of the key takeaways for this page.", shouldDisplaySiteInfo: true,
+                    title: this.siteInfo_.title ?? "",
+                    url: this.siteInfo_.url ?? "",
+                    response: ""
+                });
             } else if (actionType == ActionType.EXPLAIN) {
-                this.conversations_.push({query: "Explain this page in simple language.", response: ""});
+                this.conversations_.push({
+                    query: "Explanation in simple language.",
+                    shouldDisplaySiteInfo: true,
+                    title: this.siteInfo_.title ?? "",
+                    url: this.siteInfo_.url ?? "",
+                    response: ""
+                });
             } else if (actionType == ActionType.FACT_CHECK) {
-                this.conversations_.push({query: "Fact check this page.", response: ""});
+                this.conversations_.push({
+                    query: "Fact-check of the page.", shouldDisplaySiteInfo: true,
+                    title: this.siteInfo_.title ?? "",
+                    url: this.siteInfo_.url ?? "",
+                    response: ""
+                });
+            } else if (actionType == ActionType.TRANSLATE) {
+                this.conversations_.push({
+                    query: "Translation of the page.", shouldDisplaySiteInfo: true,
+                    title: this.siteInfo_.title ?? "",
+                    url: this.siteInfo_.url ?? "",
+                    response: ""
+                });
+            } else if (actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
+                this.conversations_.push({
+                    query: "Draft of social media post for this page.",
+                    shouldDisplaySiteInfo: true,
+                    title: this.siteInfo_.title ?? "",
+                    url: this.siteInfo_.url ?? "",
+                    response: ""
+                });
             } else {
-                this.conversations_.push({query: "Other actions. To be fixed.", response: ""});
+                this.conversations_.push({
+                    query: "Other actions. To be fixed.", shouldDisplaySiteInfo: false,
+                    title: this.siteInfo_.title ?? "",
+                    url: this.siteInfo_.url ?? "",
+                    response: ""
+                });
             }
         }
         this.chatApiProxy_.submitAction(actionType);
@@ -112,7 +153,13 @@ export class ChatAppElement extends CrLitElement {
         if (this.completionResult_ && this.completionResult_.length > 0) {
             if (this.conversations_ != null) {
                 if (this.conversations_.length == 0) {
-                    this.conversations_.push({query: this.query_ ?? "", response: this.completionResult_});
+                    this.conversations_.push({
+                        query: this.query_ ?? "",
+                        shouldDisplaySiteInfo: false,
+                        title: this.siteInfo_.title ?? "",
+                        url: this.siteInfo_.url ?? "",
+                        response: this.completionResult_
+                    });
                 } else {
                     const lastIndex = this.conversations_.length - 1;
                     const lastConversation = this.conversations_[lastIndex];
@@ -124,7 +171,12 @@ export class ChatAppElement extends CrLitElement {
         }
         this.completionResult_ = "";
         this.submittedQuery_ = this.query_;
-        this.conversations_.push({query: this.query_ ?? "", response: ""});
+        this.conversations_.push({
+            query: this.query_ ?? "", shouldDisplaySiteInfo: false,
+            title: this.siteInfo_.title ?? "",
+            url: this.siteInfo_.url ?? "",
+            response: ""
+        });
         this.query_ = "";
         this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? "");
     }
