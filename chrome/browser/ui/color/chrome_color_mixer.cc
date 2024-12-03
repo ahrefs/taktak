@@ -884,6 +884,9 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
       gfx::kGoogleBlue500, kColorReadAnythingBackgroundYellow,
       color_utils::kMinimumVisibleContrastRatio);
 
+  mixer[kColorYepChatPromptBackground] = {
+      dark_mode ? SkColorSetRGB(24, 24, 28) : SkColorSetRGB(235, 233, 240)};
+
   // Apply high contrast recipes if necessary.
   if (!ShouldApplyHighContrastColors(key)) {
     return;

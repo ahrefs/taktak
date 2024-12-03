@@ -858,6 +858,7 @@
   /* Window control button background colors. */ \
   E_CPONLY(kColorWindowControlButtonBackgroundActive) \
   E_CPONLY(kColorWindowControlButtonBackgroundInactive) \
+  E_CPONLY(kColorYepChatPromptBackground) \
 
 #if BUILDFLAG(IS_CHROMEOS)
 #define CHROME_PLATFORM_SPECIFIC_COLOR_IDS \
