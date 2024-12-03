@@ -10,18 +10,21 @@ export function getHtml(this: ChatAppElement) {
                             this.conversations_.map((conversation, _) => {
                                 return conversation.query.length > 0
                                         ? html`
-                                            <div class="query-prompt-container">
                                                 ${conversation.shouldDisplaySiteInfo ? html`
-                                                    <div class="siteinfo-section">
-                                                        <div class="vertline"></div>
-                                                        <div class="content">
-                                                            <div class="title">${conversation.title}</div>
-                                                            <div class="url">${conversation.url}</div>
+                                                    <div class="query-prompt-container auto-width">
+                                                        <div class="siteinfo-section">
+                                                            <div class="vertline"></div>
+                                                            <div class="content">
+                                                                <div class="title">${conversation.title}</div>
+                                                                <div class="url">${conversation.url}</div>
+                                                            </div>
                                                         </div>
-                                                    </div>` : html``
+                                                        <div class="prompt-section">${conversation.query}</div>
+                                                    </div>`: html`
+                                                    <div class="query-prompt-container content-fit-width">
+                                                        <div class="prompt-section">${conversation.query}</div>
+                                                    </div>`
                                                 }
-                                                <div class="prompt-section">${conversation.query}</div>
-                                            </div>
                                             ${conversation.response.length > 0 ? html`<div class="message-container">
                                                 ${conversation.response}</div>` : html``}`
                                         :
