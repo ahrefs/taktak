@@ -22,9 +22,14 @@
     flex-grow: 1;
 }
 
+.conversation-content .message-container {
+    display: block;
+    padding: 10px 12px;
+}
+
 .query-prompt-container {
     display: block;
-    padding: 6px;
+    padding: 10px 12px;
     width: fit-content;
     border-radius: 8px;
     background: var(--color-side-panel-content-background);

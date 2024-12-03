@@ -45,7 +45,6 @@ export class ChatAppElement extends CrLitElement {
 
     constructor() {
         super();
-        ColorChangeUpdater.forDocument().start();
     }
 
     static get is() {
@@ -181,9 +180,15 @@ export class ChatAppElement extends CrLitElement {
         this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? "");
     }
 
+    refreshColorCss() {
+        const updater = ColorChangeUpdater.forDocument();
+        updater.start();
+        updater.refreshColorsCss();
+    }
+
     override connectedCallback() {
         super.connectedCallback();
-
+        window.addEventListener('load', this.refreshColorCss);
         setTimeout(async () => {
             this.chatApiProxy_.showUI();
             const {siteInfo} = await this.chatApiProxy_.getSiteInfo();
@@ -201,6 +206,7 @@ export class ChatAppElement extends CrLitElement {
     override disconnectedCallback() {
         super.disconnectedCallback();
 
+        window.removeEventListener('load', this.refreshColorCss);
         this.listenerIds_.forEach(
             id => this.chatApiProxy_.getCallbackRouter().removeListener(id));
     }

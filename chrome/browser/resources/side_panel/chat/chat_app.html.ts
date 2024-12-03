@@ -22,17 +22,17 @@ export function getHtml(this: ChatAppElement) {
                                                 }
                                                 <div class="prompt-section">${conversation.query}</div>
                                             </div>
-                                            ${conversation.response.length > 0 ? html`<p>
-                                                ${conversation.response}</p>` : html``}`
+                                            ${conversation.response.length > 0 ? html`<div class="message-container">
+                                                ${conversation.response}</div>` : html``}`
                                         :
-                                        html`${conversation.response.length > 0 ? html`<p>
-                                            ${conversation.response}</p>` : html``}`
+                                        html`${conversation.response.length > 0 ? html`<div class="message-container">
+                                            ${conversation.response}</div>` : html``}`
 
                             })
                     }
-                    <p>
+                    <div class="message-container">
                         ${this.completionResult_}
-                    </p>
+                    </div>
                 </div>
                 <div class="action-buttons-container">
                     ${this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
