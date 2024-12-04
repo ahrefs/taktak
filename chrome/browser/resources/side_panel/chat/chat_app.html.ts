@@ -54,7 +54,7 @@ export function getHtml(this: ChatAppElement) {
                         this.siteInfo_.isContentUsableInConversations ?
                                 html`
                                     <div class="site-info-container">
-                                        <p class="site-info-content">${this.siteInfo_.url} </p>
+                                        <p class="site-info-content">${this.stripUrlProtocol(this.siteInfo_.url ?? "")} </p>
                                         <p class="site-info-content">${this.siteInfo_.title}</p>
                                     </div>` : html``
                 }

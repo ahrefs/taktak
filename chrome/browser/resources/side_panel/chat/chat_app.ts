@@ -92,52 +92,60 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
+    protected stripUrlProtocol(url: string = ''): string {
+        const PROTOCOL_REGEX = /^https?:\/\//;
+        return url ? url.replace(PROTOCOL_REGEX, '') : '';
+    }
+
     protected onSubmitAction_(actionType: ActionType) {
         // todo: to handle type and display proper UI
+        const title = this.siteInfo_.title ?? "";
+        const url = this.stripUrlProtocol(this.siteInfo_.url ?? "");
+        const response = "";
         if (this.conversations_ != null) {
             if (actionType == ActionType.SUMMARIZE_PAGE) {
                 this.conversations_.push({
                     query: "Provide a brief summary of the key takeaways for this page.", shouldDisplaySiteInfo: true,
-                    title: this.siteInfo_.title ?? "",
-                    url: this.siteInfo_.url ?? "",
-                    response: ""
+                    title,
+                    url,
+                    response,
                 });
             } else if (actionType == ActionType.EXPLAIN) {
                 this.conversations_.push({
                     query: "Explanation in simple language.",
                     shouldDisplaySiteInfo: true,
-                    title: this.siteInfo_.title ?? "",
-                    url: this.siteInfo_.url ?? "",
-                    response: ""
+                    title,
+                    url,
+                    response,
                 });
             } else if (actionType == ActionType.FACT_CHECK) {
                 this.conversations_.push({
                     query: "Fact-check of the page.", shouldDisplaySiteInfo: true,
-                    title: this.siteInfo_.title ?? "",
-                    url: this.siteInfo_.url ?? "",
-                    response: ""
+                    title,
+                    url,
+                    response,
                 });
             } else if (actionType == ActionType.TRANSLATE) {
                 this.conversations_.push({
                     query: "Translation of the page.", shouldDisplaySiteInfo: true,
-                    title: this.siteInfo_.title ?? "",
-                    url: this.siteInfo_.url ?? "",
-                    response: ""
+                    title,
+                    url,
+                    response,
                 });
             } else if (actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
                 this.conversations_.push({
                     query: "Draft of social media post for this page.",
                     shouldDisplaySiteInfo: true,
-                    title: this.siteInfo_.title ?? "",
-                    url: this.siteInfo_.url ?? "",
-                    response: ""
+                    title,
+                    url,
+                    response,
                 });
             } else {
                 this.conversations_.push({
                     query: "Other actions. To be fixed.", shouldDisplaySiteInfo: false,
-                    title: this.siteInfo_.title ?? "",
-                    url: this.siteInfo_.url ?? "",
-                    response: ""
+                    title,
+                    url,
+                    response,
                 });
             }
         }
