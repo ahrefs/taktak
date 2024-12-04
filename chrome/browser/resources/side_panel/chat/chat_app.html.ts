@@ -13,7 +13,7 @@ export function getHtml(this: ChatAppElement) {
                                                 ${conversation.shouldDisplaySiteInfo ? html`
                                                     <div class="query-prompt-container auto-width">
                                                         <div class="siteinfo-section">
-                                                            <div class="vertline"></div>
+                                                            <div class="vertical-bar"></div>
                                                             <div class="content">
                                                                 <div class="title">${conversation.title}</div>
                                                                 <div class="url">${conversation.url}</div>
@@ -40,12 +40,12 @@ export function getHtml(this: ChatAppElement) {
                 <div class="action-buttons-container">
                     ${this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
                             this.actionList_.map((item, _) => html`
-                                <cr-button @click="${(e: Event) => {
+                                <button @click="${(e: Event) => {
                                     e.stopPropagation();
                                     this.onSubmitAction_(item.actionType);
                                 }}" class="action-button">
                                     ${item.label}
-                                </cr-button>
+                                </button>
                             `) : html``}
                 </div>
             </div>
@@ -67,7 +67,7 @@ export function getHtml(this: ChatAppElement) {
                             .value="${this.query_}"
                             @value-changed="${this.onTextareaValueChanged_}">
                     </cr-input>
-                    <cr-button class="send-btn" @click="${this.onSubmitQuery_}">
+                    <cr-button no-ripple-on-focus class="send-btn" @click="${this.onSubmitQuery_}">
                         Send
                     </cr-button>
                 </div>

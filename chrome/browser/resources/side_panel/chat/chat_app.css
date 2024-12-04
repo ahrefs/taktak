@@ -9,6 +9,7 @@
     flex-direction: column;
     height: calc(100vh - 24px);
     padding: 10px 12px;
+    color: var(--color-yep-chat-primary-text);
 }
 
 #conversation-container {
@@ -52,12 +53,12 @@
     gap: 6px;
 }
 
-.query-prompt-container .siteinfo-section .vertline{
+.query-prompt-container .siteinfo-section .vertical-bar{
     display: block;
     flex: 0 0 auto;
     width: 4px;
     border-radius: 3px;
-    background-color: rgba(0,0,0,0.1);
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
 }
 
 .query-prompt-container .siteinfo-section .content {
@@ -66,6 +67,7 @@
     flex-grow: 1;
     /*color: rgba(0, 0, 0, 1);*/
     font-weight: 400;
+    font-size: 12px;
     width: auto;
     max-width: 100%;
 }
@@ -79,7 +81,6 @@
     vertical-align: top;
     margin: 0px;
     padding: 0px;
-    /*font-size: 12px;*/
     box-sizing: border-box;
 }
 
@@ -93,8 +94,7 @@
     margin: 0px;
     padding: 0px;
     box-sizing: border-box;
-    /*font-size: 12px;*/
-    /*color: rgba(0, 0, 0, 0.5);*/
+    color: var(--color-yep-chat-secondary-text);
 }
 
 .query-prompt-container .prompt-section {
@@ -102,7 +102,6 @@
     width: fit-content;
     word-wrap: break-word;
     white-space: normal;
-    /*color:rgba(0, 0, 0, 0.85);*/
 }
 
 .action-buttons-container {
@@ -115,13 +114,14 @@
 
 .action-button {
     display: inline-block;
-    padding: 10px 12px 10px 12px;
-    border: 1px solid var(--color-side-panel--background);
+    padding: 10px 12px;
+    border: 1px solid var(--color-yep-chat-panel-border);
     border-radius: 12px;
+    font-weight: 510;
     cursor: pointer;
     text-decoration: none;
-    background: var(--color-side-panel-content-background);
-    color: var(--color-side-panel-card-primary-foreground);
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
 }
 
 #prompt-container {
@@ -131,7 +131,7 @@
     align-items: flex-start;
     padding: 10px 12px;
     gap: 12px;
-    background: var(--color-side-panel-content-background);
+    background: var(--color-yep-chat-prompt-background);
 }
 
 .site-info-container {

@@ -884,8 +884,26 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
       gfx::kGoogleBlue500, kColorReadAnythingBackgroundYellow,
       color_utils::kMinimumVisibleContrastRatio);
 
+  /* Yep Chat Colors */
   mixer[kColorYepChatPromptBackground] = {
       dark_mode ? SkColorSetRGB(24, 24, 28) : SkColorSetRGB(235, 233, 240)};
+  mixer[kColorYepChatPanelBackground] = {dark_mode ? SkColorSetRGB(42, 41, 51)
+                                                   : SK_ColorWHITE};
+  mixer[kColorYepChatSiteInfoVerticalBarBackground] = {
+      dark_mode ? SkColorSetARGB(26, 255, 255, 255)
+                : SkColorSetARGB(26, 0, 0, 0)};
+  mixer[kColorYepChatPrimaryText] = {dark_mode
+                                         ? SkColorSetARGB(217, 255, 255, 255)
+                                         : SkColorSetARGB(217, 0, 0, 0)};
+  mixer[kColorYepChatSecondaryText] = {dark_mode
+                                           ? SkColorSetARGB(140, 255, 255, 255)
+                                           : SkColorSetARGB(140, 0, 0, 0)};
+  mixer[kColorYepChatTertiaryText] = {dark_mode
+                                          ? SkColorSetARGB(64, 255, 255, 255)
+                                          : SkColorSetARGB(64, 0, 0, 0)};
+  mixer[kColorYepChatPanelBorder] = {dark_mode
+                                         ? SkColorSetARGB(26, 255, 255, 255)
+                                         : SkColorSetARGB(26, 0, 0, 0)};
 
   // Apply high contrast recipes if necessary.
   if (!ShouldApplyHighContrastColors(key)) {
