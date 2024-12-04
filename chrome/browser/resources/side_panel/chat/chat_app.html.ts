@@ -40,7 +40,7 @@ export function getHtml(this: ChatAppElement) {
                 <div class="action-buttons-container">
                     ${this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
                             this.actionList_.map((item, _) => html`
-                                <button @click="${(e: Event) => {
+                                <button ?disabled="${this.isSubmittingQuery_}" @click="${(e: Event) => {
                                     e.stopPropagation();
                                     this.onSubmitAction_(item.actionType);
                                 }}" class="action-button">
@@ -54,22 +54,20 @@ export function getHtml(this: ChatAppElement) {
                         this.siteInfo_.isContentUsableInConversations ?
                                 html`
                                     <div class="site-info-container">
-                                        <p class="site-info-content">${this.stripUrlProtocol(this.siteInfo_.url ?? "")} </p>
                                         <p class="site-info-content">${this.siteInfo_.title}</p>
+                                        <p class="site-info-content">${this.stripUrlProtocol(this.siteInfo_.url ?? "")} </p>
                                     </div>` : html``
                 }
                 <div class="typing-content">
-                    <cr-input
+                    <cr-textarea
                             class="prompt-input"
-                            type="text"
-                            label=""
                             placeholder="Ask anything..."
-                            .value="${this.query_}"
-                            @value-changed="${this.onTextareaValueChanged_}">
-                    </cr-input>
-                    <cr-button no-ripple-on-focus class="send-btn" @click="${this.onSubmitQuery_}">
+                            .value=${this.query_}
+                            @value-changed=${this.onTextareaValueChanged_}>
+                    </cr-textarea>
+                    <button class="send-btn" @click="${this.onSubmitQuery_}">
                         Send
-                    </cr-button>
+                    </button>
                 </div>
             </div>
         </div>`;

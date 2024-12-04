@@ -42,6 +42,7 @@ export class ChatAppElement extends CrLitElement {
     protected query_?: string;
     protected submittedQuery_?: string;
     protected promptForActionType_: string = "";
+    protected isSubmittingQuery_: boolean = false;
 
     constructor() {
         super();
@@ -69,6 +70,7 @@ export class ChatAppElement extends CrLitElement {
             submittedQuery_: {type: String},
             completionResult_: {type: String},
             promptForActionType_: {type: String},
+            isSubmittingQuery_: {type: Boolean},
         };
     }
 
@@ -87,8 +89,10 @@ export class ChatAppElement extends CrLitElement {
             this.completionResult_ += response.result;
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.completionResult_ += "\n";
+            this.isSubmittingQuery_ = false;
         } else if (response.responseType == ResponseType.ERROR) {
             this.completionResult_ += "\n";
+            this.isSubmittingQuery_ = false;
         }
     }
 
@@ -149,7 +153,8 @@ export class ChatAppElement extends CrLitElement {
                 });
             }
         }
-        this.chatApiProxy_.submitAction(actionType);
+        this.isSubmittingQuery_ = true;
+        setTimeout(() => this.chatApiProxy_.submitAction(actionType), 0);
     }
 
     protected onTextareaValueChanged_(e: CustomEvent<{ value: string }>) {
@@ -185,7 +190,10 @@ export class ChatAppElement extends CrLitElement {
             response: ""
         });
         this.query_ = "";
-        this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? "");
+
+        this.isSubmittingQuery_ = true;
+        setTimeout(() =>
+            this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? ""), 0);
     }
 
     refreshColorCss() {
