@@ -10,26 +10,30 @@ export function getHtml(this: ChatAppElement) {
                             this.conversations_.map((conversation, _) => {
                                 return conversation.query.length > 0
                                         ? html`
-                                                ${conversation.shouldDisplaySiteInfo ? html`
-                                                    <div class="query-prompt-container auto-width">
-                                                        <div class="siteinfo-section">
-                                                            <div class="vertical-bar"></div>
-                                                            <div class="content">
-                                                                <div class="title">${conversation.title}</div>
-                                                                <div class="url">${conversation.url}</div>
-                                                            </div>
+                                            ${conversation.shouldDisplaySiteInfo ? html`
+                                                <div class="query-prompt-container auto-width">
+                                                    <div class="siteinfo-container">
+                                                        <div class="vertical-bar"></div>
+                                                        <div class="siteinfo-content">
+                                                            <div class="siteinfo-title">${conversation.title}</div>
+                                                            <div class="siteinfo-url">${conversation.url}</div>
                                                         </div>
-                                                        <div class="prompt-section">${conversation.query}</div>
-                                                    </div>`: html`
-                                                    <div class="query-prompt-container content-fit-width">
-                                                        <div class="prompt-section">${conversation.query}</div>
-                                                    </div>`
-                                                }
-                                            ${conversation.response.length > 0 ? html`<div class="message-container">
-                                                ${conversation.response}</div>` : html``}`
+                                                    </div>
+                                                    <div class="prompt-section">${conversation.query}</div>
+                                                </div>` : html`
+                                                <div class="query-prompt-container content-fit-width">
+                                                    <div class="prompt-section">${conversation.query}</div>
+                                                </div>`
+                                            }
+                                            ${conversation.response.length > 0 ? html`
+                                                <div class="message-container">
+                                                    ${conversation.response}
+                                                </div>` : html``}`
                                         :
-                                        html`${conversation.response.length > 0 ? html`<div class="message-container">
-                                            ${conversation.response}</div>` : html``}`
+                                        html`${conversation.response.length > 0 ? html`
+                                            <div class="message-container">
+                                                ${conversation.response}
+                                            </div>` : html``}`
 
                             })
                     }
@@ -53,18 +57,26 @@ export function getHtml(this: ChatAppElement) {
                 ${
                         this.siteInfo_.isContentUsableInConversations ?
                                 html`
-                                    <div class="site-info-container">
-                                        <p class="site-info-content">${this.siteInfo_.title}</p>
-                                        <p class="site-info-content">${this.stripUrlProtocol(this.siteInfo_.url ?? "")} </p>
-                                    </div>` : html``
+                                    <div class="siteinfo-container">
+                                        <div class="close-btn"></div>
+                                        <div class="vertical-bar"></div>
+                                        <div class="siteinfo-content">
+                                            <div class="siteinfo-title"> ${this.siteInfo_.title}</div>
+                                            <div class="siteinfo-url">
+                                                ${this.stripUrlProtocol(this.siteInfo_.url ?? "")}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : html``
                 }
                 <div class="typing-content">
-                    <cr-textarea
+                    <cr-input
+                            type="text"
                             class="prompt-input"
                             placeholder="Ask anything..."
                             .value=${this.query_}
                             @value-changed=${this.onTextareaValueChanged_}>
-                    </cr-textarea>
+                    </cr-input>
                     <button class="send-btn" @click="${this.onSubmitQuery_}">
                         Send
                     </button>

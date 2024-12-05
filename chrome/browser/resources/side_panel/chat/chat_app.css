@@ -45,15 +45,16 @@
     width: fit-content;
 }
 
-.query-prompt-container .siteinfo-section {
+.siteinfo-container {
     display: flex;
     flex-direction: row;
     width: auto;
     max-width: 100%;
     gap: 6px;
+    color: var(--color-yep-chat-primary-text);
 }
 
-.query-prompt-container .siteinfo-section .vertical-bar{
+.vertical-bar {
     display: block;
     flex: 0 0 auto;
     width: 4px;
@@ -61,7 +62,40 @@
     background: var(--color-yep-chat-site-info-vertical-bar-background);
 }
 
-.query-prompt-container .siteinfo-section .content {
+.close-btn {
+    display: block;
+    flex: 0 0 auto;
+    position: relative;
+    width: 12px;
+    height: 12px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.close-btn::before,
+.close-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 11px;
+    height: 1.2px;
+    background-color: var(--color-yep-chat-secondary-text);
+    transform-origin: center;
+}
+
+.close-btn::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+    z-index: 1;
+}
+
+.close-btn::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+    z-index: 0;
+}
+
+.siteinfo-container .siteinfo-content {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -71,7 +105,7 @@
     max-width: 100%;
 }
 
-.query-prompt-container .siteinfo-section .content .title {
+.siteinfo-container .siteinfo-content .siteinfo-common-item {
     width: 95%;
     display: inline-block;
     overflow: hidden;
@@ -83,16 +117,12 @@
     box-sizing: border-box;
 }
 
-.query-prompt-container .siteinfo-section .content .url {
-    width: 95%;
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: top;
-    margin: 0px;
-    padding: 0px;
-    box-sizing: border-box;
+.siteinfo-container .siteinfo-content .siteinfo-title {
+    composes: siteinfo-common-item;
+}
+
+.siteinfo-container .siteinfo-content .siteinfo-url {
+    composes: siteinfo-common-item;
     color: var(--color-yep-chat-secondary-text);
 }
 
@@ -127,32 +157,9 @@
     display: flex;
     flex-direction: column;
     border-radius: 12px;
-    align-items: flex-start;
     padding: 10px 12px;
     gap: 12px;
     background: var(--color-yep-chat-prompt-background);
-}
-
-.site-info-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    white-space: nowrap;
-    width: 100vw;
-    max-width: 100%;
-}
-
-.site-info-container .site-info-content {
-    width: 98%;
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: top;
-    margin: 0px;
-    padding: 0px;
-    font-size: 12px;
-    box-sizing: border-box;
 }
 
 .typing-content {
