@@ -1,5 +1,7 @@
 import {ChatAppElement} from "./chat_app";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
+import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
+import 'chrome://resources/cr_elements/icons_lit.html.js';
 
 export function getHtml(this: ChatAppElement) {
     return html`
@@ -58,7 +60,9 @@ export function getHtml(this: ChatAppElement) {
                         this.siteInfo_.isContentUsableInConversations ?
                                 html`
                                     <div class="siteinfo-container">
-                                        <div class="close-btn"></div>
+                                        <div class="close-button">
+                                            <cr-icon aria-hidden="true" icon="cr:close" class="close-icon"></cr-icon>
+                                        </div>
                                         <div class="vertical-bar"></div>
                                         <div class="siteinfo-content">
                                             <div class="siteinfo-title"> ${this.siteInfo_.title}</div>
@@ -78,7 +82,9 @@ export function getHtml(this: ChatAppElement) {
                             @value-changed=${this.onTextareaValueChanged_}>
                     </cr-input>
                     <button class="send-btn" @click="${this.onSubmitQuery_}">
-                        Send
+                        <cr-icon id="send-button" aria-hidden="true"
+                                 icon="cr:arrow-forward" class="send-btn-icon">
+                        </cr-icon>
                     </button>
                 </div>
             </div>
