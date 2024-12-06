@@ -28,6 +28,7 @@ export class ChatAppElement extends CrLitElement {
     protected actionList_: ActionItem[] = [];
     protected conversations_: conversationRecord[] = [];
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
+    protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
     protected siteInfo_: SiteInfo = {
         url: "",
         title: "",
@@ -43,6 +44,7 @@ export class ChatAppElement extends CrLitElement {
     protected submittedQuery_?: string;
     protected promptForActionType_: string = "";
     protected isSubmittingQuery_: boolean = false;
+    protected shouldDisplayChatAboutThisPageButton_: boolean = false;
 
     constructor() {
         super();
@@ -64,6 +66,7 @@ export class ChatAppElement extends CrLitElement {
         return {
             siteInfo_: {type: Object},
             askAnythingLabel_: {type: String},
+            chatAboutThisPage_: {type: String},
             actionList_: {type: Array},
             submitResponse_: {type: Object},
             query_: {type: String},
@@ -71,6 +74,7 @@ export class ChatAppElement extends CrLitElement {
             completionResult_: {type: String},
             promptForActionType_: {type: String},
             isSubmittingQuery_: {type: Boolean},
+            shouldDisplayChatAboutThisPageButton_: {type: Boolean},
         };
     }
 
@@ -96,27 +100,31 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
+    protected shouldDisplayChatAboutThisPageButton(value: boolean) {
+        this.shouldDisplayChatAboutThisPageButton_ = value;
+    }
+
     protected stripUrlProtocol(url: string = ''): string {
         const PROTOCOL_REGEX = /^https?:\/\//;
         return url ? url.replace(PROTOCOL_REGEX, '') : '';
     }
 
     protected onSubmitAction_(actionType: ActionType) {
-        // todo: to handle type and display proper UI
         const title = this.siteInfo_.title ?? "";
         const url = this.stripUrlProtocol(this.siteInfo_.url ?? "");
         const response = "";
         if (this.conversations_ != null) {
             if (actionType == ActionType.SUMMARIZE_PAGE) {
                 this.conversations_.push({
-                    query: "Provide a brief summary of the key takeaways for this page.", shouldDisplaySiteInfo: true,
+                    query: loadTimeData.getString('promptSummarizeThisPage'),
+                    shouldDisplaySiteInfo: true,
                     title,
                     url,
                     response,
                 });
             } else if (actionType == ActionType.EXPLAIN) {
                 this.conversations_.push({
-                    query: "Explanation in simple language.",
+                    query: loadTimeData.getString('promptExplainInSimpleLanguage'),
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
@@ -124,29 +132,32 @@ export class ChatAppElement extends CrLitElement {
                 });
             } else if (actionType == ActionType.FACT_CHECK) {
                 this.conversations_.push({
-                    query: "Fact-check of the page.", shouldDisplaySiteInfo: true,
+                    query: loadTimeData.getString('promptFactCheck'),
+                    shouldDisplaySiteInfo: true,
                     title,
                     url,
                     response,
                 });
             } else if (actionType == ActionType.TRANSLATE) {
                 this.conversations_.push({
-                    query: "Translation of the page.", shouldDisplaySiteInfo: true,
+                    query: loadTimeData.getString('promptTranslate'),
+                    shouldDisplaySiteInfo: true,
                     title,
                     url,
                     response,
                 });
             } else if (actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
                 this.conversations_.push({
-                    query: "Draft of social media post for this page.",
+                    query: loadTimeData.getString('promptSocialMediaPost'),
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
                     response,
                 });
             } else {
+                // this branch should not be reached
                 this.conversations_.push({
-                    query: "Other actions. To be fixed.", shouldDisplaySiteInfo: false,
+                    query: "", shouldDisplaySiteInfo: false,
                     title,
                     url,
                     response,

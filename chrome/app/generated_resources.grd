@@ -8991,8 +8991,26 @@ Keep your key file in a safe place. You will need it to create new versions of y
       <message name="IDS_CHAT_DRAFT_FACT_CHECT" desc="Label of the button in Chat to fact-check the current page's content.">
         Fact check
       </message>
+      <message name="IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE" desc="Prompt to summarize the current page.">
+        Provide a brief summary of the key takeaways for the following:
+      </message>
+      <message name="IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE" desc="Prompt to explain the current page's content in simple language.">
+        Explain the following in simple language:
+      </message>
+      <message name="IDS_CHAT_PROMPT_TRANSLATE" desc="Prompt to translate the current page's content.">
+        To Be Continued:
+      </message>
+      <message name="IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST" desc="Prompt to draft a social media post of the current page's content.">
+        To Be Continued:
+      </message>
+      <message name="IDS_CHAT_PROMPT_DRAFT_FACT_CHECT" desc="Prompt to fact-check the current page's content.">
+        Fact check this following:
+      </message>
       <message name="IDS_CHAT_ASK_ANYTHING" desc="Use in the chat prompt input box.">
         Ask anything...
+      </message>
+      <message name="IDS_CHAT_CHAT_ABOUT_THIS_PAGE" desc="Use in the chat prompt input box.">
+        Chat about this page
       </message>
 
       <!-- Side panel strings -->

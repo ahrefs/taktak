@@ -10,6 +10,7 @@
     height: calc(100vh - 24px);
     padding: 10px 12px;
     color: var(--color-yep-chat-primary-text);
+    box-sizing: border-box;
 }
 
 #conversation-container {
@@ -45,9 +46,44 @@
     width: fit-content;
 }
 
+.chat-about-this-page-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    background-color: transparent;
+}
+
+.chat-about-this-page-container .add-button {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.chat-about-this-page-container .add-button .add-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    color: var(--color-yep-chat-tertiary-text);
+}
+
+.chat-about-this-page-container .label {
+    display: block;
+    font-weight: 510;
+    font-size: 11px;
+    color: var(--color-yep-chat-tertiary-text);
+}
+
 .siteinfo-container {
     display: flex;
     flex-direction: row;
+    justify-content: flex-start;
     width: auto;
     max-width: 100%;
     gap: 6px;
@@ -62,7 +98,7 @@
     background: var(--color-yep-chat-site-info-vertical-bar-background);
 }
 
-.close-button {
+.remove-siteinfo-button {
     display: block;
     flex: 0 0 auto;
     width: 14px;
@@ -70,10 +106,12 @@
     background-color: transparent;
     border: none;
     cursor: pointer;
+    padding: 0;
+    margin: 0;
 }
 
-.close-button .close-icon {
-    padding-inline-end: 0px;
+.remove-siteinfo-button .remove-icon {
+    display: block;
     width: 14px;
     height: 14px;
     color: var(--color-yep-chat-secondary-text);

@@ -3,6 +3,35 @@ import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import 'chrome://resources/cr_elements/icons_lit.html.js';
 
+function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
+    if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
+        return html`
+            <div class="chat-about-this-page-container">
+                <button class="add-button" @click="${() => this.shouldDisplayChatAboutThisPageButton(false)}">
+                    <cr-icon aria-hidden="true" icon="cr:add" class="add-icon"></cr-icon>
+                </button>
+                <div class="label">${this.chatAboutThisPageLabel_}</div>
+            </div>`;
+    } else if (!this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
+        return html`
+            <div class="siteinfo-container">
+                <button class="remove-siteinfo-button"
+                        @click="${() => this.shouldDisplayChatAboutThisPageButton(true)}">
+                    <cr-icon aria-hidden="true" icon="cr:close" class="remove-icon"></cr-icon>
+                </button>
+                <div class="vertical-bar"></div>
+                <div class="siteinfo-content">
+                    <div class="siteinfo-title"> ${this.siteInfo_.title}</div>
+                    <div class="siteinfo-url">
+                        ${this.stripUrlProtocol(this.siteInfo_.url ?? "")}
+                    </div>
+                </div>
+            </div>`
+    } else {
+        return html``;
+    }
+}
+
 export function getHtml(this: ChatAppElement) {
     return html`
         <div id="container">
@@ -56,28 +85,12 @@ export function getHtml(this: ChatAppElement) {
                 </div>
             </div>
             <div id="prompt-container">
-                ${
-                        this.siteInfo_.isContentUsableInConversations ?
-                                html`
-                                    <div class="siteinfo-container">
-                                        <div class="close-button">
-                                            <cr-icon aria-hidden="true" icon="cr:close" class="close-icon"></cr-icon>
-                                        </div>
-                                        <div class="vertical-bar"></div>
-                                        <div class="siteinfo-content">
-                                            <div class="siteinfo-title"> ${this.siteInfo_.title}</div>
-                                            <div class="siteinfo-url">
-                                                ${this.stripUrlProtocol(this.siteInfo_.url ?? "")}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ` : html``
-                }
+                ${getSiteInfoOrAddChatAboutThisPage.bind(this)()}
                 <div class="typing-content">
                     <cr-input
                             type="text"
                             class="prompt-input"
-                            placeholder="Ask anything..."
+                            placeholder=${this.askAnythingLabel_}
                             .value=${this.query_}
                             @value-changed=${this.onTextareaValueChanged_}>
                     </cr-input>

@@ -76,9 +76,16 @@ ChatUI::ChatUI(content::WebUI* web_ui)
             profile, chrome::kChromeUIChatHost);
 
     static constexpr webui::LocalizedString kLocalizedStrings[] = {
-            {"title", IDS_AI_CHAT_TITLE},
-            {"askAnything", IDS_CHAT_ASK_ANYTHING},
-    };
+        {"title", IDS_AI_CHAT_TITLE},
+        {"askAnything", IDS_CHAT_ASK_ANYTHING},
+        {"chatAboutThisPage", IDS_CHAT_CHAT_ABOUT_THIS_PAGE},
+        {"promptSummarizeThisPage", IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE},
+        {"promptExplainInSimpleLanguage",
+         IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE},
+        {"promptFactCheck", IDS_CHAT_PROMPT_DRAFT_FACT_CHECT},
+        {"promptTranslate", IDS_CHAT_PROMPT_TRANSLATE},
+        {"promptSocialMediaPost", IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST}};
+
     for (const auto& str : kLocalizedStrings)
         webui::AddLocalizedString(source, str.name, str.id);
 
