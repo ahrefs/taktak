@@ -168,8 +168,15 @@ export class ChatAppElement extends CrLitElement {
         setTimeout(() => this.chatApiProxy_.submitAction(actionType), 0);
     }
 
-    protected onTextareaValueChanged_(e: CustomEvent<{ value: string }>) {
-        this.query_ = e.detail.value;
+    // To add it back once PromptInput component is finished
+    // protected onTextareaValueChanged_(e: CustomEvent<{ value: string }>) {
+    //     this.query_ = e.detail.value;
+    // }
+
+    protected onPromptInputChange_(e: Event){
+        const target = e.target as HTMLInputElement;
+        this.query_ = target.value;
+        this.onSubmitQuery_().then();
     }
 
     protected async onSubmitQuery_() {
@@ -195,7 +202,8 @@ export class ChatAppElement extends CrLitElement {
         this.completionResult_ = "";
         this.submittedQuery_ = this.query_;
         this.conversations_.push({
-            query: this.query_ ?? "", shouldDisplaySiteInfo: false,
+            query: this.query_ ?? "",
+            shouldDisplaySiteInfo: false,
             title: this.siteInfo_.title ?? "",
             url: this.siteInfo_.url ?? "",
             response: ""

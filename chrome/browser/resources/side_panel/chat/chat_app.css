@@ -7,7 +7,7 @@
 #container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 24px);
+    height: 100vh;
     padding: 10px 12px;
     color: var(--color-yep-chat-primary-text);
     box-sizing: border-box;
@@ -75,7 +75,7 @@
 
 .chat-about-this-page-container .label {
     display: block;
-    font-weight: 510;
+    font-weight: 500;
     font-size: 11px;
     color: var(--color-yep-chat-tertiary-text);
 }
@@ -164,11 +164,11 @@
 }
 
 .action-button {
-    display: inline-block;
+    display: block;
     padding: 10px 12px;
     border: 1px solid var(--color-yep-chat-panel-border);
     border-radius: 12px;
-    font-weight: 510;
+    font-weight: 500;
     cursor: pointer;
     text-decoration: none;
     background: var(--color-yep-chat-panel-background);
@@ -187,32 +187,53 @@
 .typing-content {
     display: flex;
     flex-direction: row;
-    gap: 6px;
+    align-items: center;
+    justify-content: flex-start;
+    align-content: center;
+    gap: 4px;
     width: 100vw;
     max-width: 100%;
-    align-content: center;
+    background: transparent;
 }
 
 .typing-content .prompt-input {
-    display: inline-block;
-    width: 90%;
+    display: block;
+    flex-grow: 1;
+    resize: none;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    font-weight: 400;
+    background: transparent;
+    box-shadow: none;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    overflow-y: auto;
+    line-clamp: 10;
+    max-height: 300px;
+    font-family: 'Roboto', 'Arial', sans-serif;
+    color: var(--color-yep-chat-primary-text);
 }
 
 .typing-content .send-btn {
-    display: inline-block;
-    width: auto;
-    background: transparent;
-    width: 16px;
-    height: 16px;
+    display: block;
+    width: 22px;
+    height: 22px;
     border: none;
     cursor: pointer;
+    padding: 0;
+    margin: 0;
+    border-radius: 50%;
+    background: var(--color-yep-chat-tertiary-text);
+    transition: background-color 0.3s ease;
 }
 
 .typing-content .send-btn .send-btn-icon {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    background: transparent;
-    color: var(--color-yep-chat-primary-text);
-    padding-inline-end: 6px;
+    display: block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    color: white;
 }
