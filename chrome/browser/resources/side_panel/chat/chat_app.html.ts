@@ -2,6 +2,7 @@ import {ChatAppElement} from "./chat_app";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import 'chrome://resources/cr_elements/icons_lit.html.js';
+import {sayHello} from 'chrome://resources/marked/marked.min.js';
 
 function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
@@ -35,6 +36,7 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
 export function getHtml(this: ChatAppElement) {
     return html`
         <div id="container">
+            <div>${sayHello()}</div>
             <div id="conversation-container">
                 <div class="conversation-content">
                     ${
@@ -88,9 +90,9 @@ export function getHtml(this: ChatAppElement) {
                 ${getSiteInfoOrAddChatAboutThisPage.bind(this)()}
                 <div class="typing-content">
                     <textarea class="prompt-input"
-                           placeholder=${this.askAnythingLabel_ ?? ""}
-                           .value=${this.query_ ?? ""}
-                           @change=${this.onPromptInputChange_}>
+                              placeholder=${this.askAnythingLabel_ ?? ""}
+                              .value=${this.query_ ?? ""}
+                              @change=${this.onPromptInputChange_}>
                     </textarea>
                     <button class="send-btn" @click="${this.onSubmitQuery_}">
                         <cr-icon aria-hidden="true"

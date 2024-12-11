@@ -54,7 +54,7 @@ lit-html/*
 marked/bin/*
 marked/lib/marked.cjs
 marked/lib/marked.cts
+marked/lib/marked.d.cts
 marked/lib/marked.umd.js
 marked/man/*
-marked/marked.min.js
 marked/README.md
