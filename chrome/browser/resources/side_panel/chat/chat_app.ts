@@ -13,6 +13,7 @@ import {getHtml} from './chat_app.html.js';
 import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
 import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo} from "./chat.mojom-webui.js";
+import {marked} from "./marked.js";
 
 type conversationRecord = {
     query: string,
@@ -94,6 +95,7 @@ export class ChatAppElement extends CrLitElement {
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
+            console.log(marked.parse(this.completionResult_, {async: false}));
         } else if (response.responseType == ResponseType.ERROR) {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
