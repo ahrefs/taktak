@@ -95,6 +95,7 @@ export class ChatAppElement extends CrLitElement {
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
+            // todo: to delete later
             console.log(marked.parse(this.completionResult_, {async: false}));
         } else if (response.responseType == ResponseType.ERROR) {
             this.completionResult_ += "\n";
@@ -178,7 +179,7 @@ export class ChatAppElement extends CrLitElement {
     protected onPromptInputChange_(e: Event){
         const target = e.target as HTMLInputElement;
         this.query_ = target.value;
-        this.onSubmitQuery_().then();
+        // this.onSubmitQuery_().then();
     }
 
     protected async onSubmitQuery_() {
@@ -190,13 +191,13 @@ export class ChatAppElement extends CrLitElement {
                         shouldDisplaySiteInfo: false,
                         title: this.siteInfo_.title ?? "",
                         url: this.siteInfo_.url ?? "",
-                        response: this.completionResult_
+                        response: marked.parse(this.completionResult_.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/,""), {async: false}),
                     });
                 } else {
                     const lastIndex = this.conversations_.length - 1;
                     const lastConversation = this.conversations_[lastIndex];
                     if (lastConversation) {
-                        lastConversation.response = this.completionResult_;
+                        lastConversation.response = marked.parse(this.completionResult_.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/,""), {async: false});
                     }
                 }
             }

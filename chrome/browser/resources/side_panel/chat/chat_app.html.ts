@@ -60,19 +60,19 @@ export function getHtml(this: ChatAppElement) {
                                                 </div>`
                                             }
                                             ${conversation.response.length > 0 ? html`
-                                                <div class="message-container">
-                                                    ${conversation.response}
+                                                <div class="message-markdown-container"
+                                                     .innerHTML="${getTrustedHTML(conversation.response)}">
                                                 </div>` : html``}`
                                         :
                                         html`${conversation.response.length > 0 ? html`
-                                            <div class="message-container">
-                                                ${conversation.response}
+                                            <div class="message-markdown-container"
+                                                 .innerHTML="${getTrustedHTML(conversation.response)}">
                                             </div>` : html``}`
 
                             })
                     }
-                    <div class="message-container">
-                        <div .innerHTML="${getTrustedHTML(marked.parse(this.completionResult_, {async: false}))}"></div>
+                    <div class="message-markdown-container"
+                         .innerHTML="${getTrustedHTML(marked.parse(this.completionResult_, {async: false}))}">
                     </div>
                 </div>
                 <div class="action-buttons-container">

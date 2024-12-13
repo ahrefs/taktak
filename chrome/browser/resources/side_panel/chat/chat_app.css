@@ -24,7 +24,7 @@
     flex-grow: 1;
 }
 
-.conversation-content .message-container {
+.conversation-content .message-markdown-container {
     display: block;
     padding: 10px 12px;
 }
@@ -236,4 +236,91 @@
     height: 22px;
     border-radius: 50%;
     color: white;
+}
+
+.conversation-content .message-markdown-container {
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+    padding: 10px 12px 0px 12px;
+}
+
+.message-markdown-container p {
+    font-weight: 400;
+    line-height: 18px;
+}
+
+.message-markdown-container h1 {
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 26px;
+}
+
+.message-markdown-container h1 {
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 22px;
+}
+
+.message-markdown-container blockquote {
+    border-left: 5px solid var(--color-yep-chat-site-info-vertical-bar-background);
+    margin: 0;
+    padding: 0 0 0 6px;
+}
+
+.message-markdown-container code {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    border-radius: 2px;
+    padding: 4px 7px;
+    background: var(--color-yep-chat-prompt-background);
+    color: var(--color-yep-chat-primary-text);
+}
+
+.message-markdown-container pre {
+    border-radius: 6px;
+    overflow-x: auto;
+    max-width: 90vw;
+    padding: 9px;
+    background: var(--color-yep-chat-prompt-background);
+    color: var(--color-yep-chat-primary-text);
+}
+
+.message-markdown-container pre code {
+    line-height: 22px;
+    padding: 0;
+}
+
+.message-markdown-container table {
+    border-collapse: collapse;
+}
+
+.message-markdown-container table thead th {
+    text-align: left;
+}
+
+.message-markdown-container table tr {
+    border: 1px solid var(--color-yep-chat-panel-border);
+    border-left: none;
+    border-right: none;
+}
+
+.message-markdown-container table th, td {
+    padding: 10px;
+}
+
+.message-markdown-container ul {
+    line-height: 24px;
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.message-markdown-container ol {
+    list-style-type: decimal;
+    line-height: 24px;
+    padding-left: 20px;
+}
+
+.message-markdown-container ol ol {
+    list-style-type: lower-alpha;
 }
