@@ -179,7 +179,6 @@ export class ChatAppElement extends CrLitElement {
     protected onPromptInputChange_(e: Event){
         const target = e.target as HTMLInputElement;
         this.query_ = target.value;
-        // this.onSubmitQuery_().then();
     }
 
     protected async onSubmitQuery_() {

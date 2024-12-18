@@ -38,7 +38,7 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
 export function getHtml(this: ChatAppElement) {
     return html`
         <div id="container">
-            <div id="conversation-container">
+            <div id="conversation-container" class="sp-scroller sp-scroller-top-of-page">
                 <div class="conversation-content">
                     ${
                             this.conversations_.map((conversation, _) => {
