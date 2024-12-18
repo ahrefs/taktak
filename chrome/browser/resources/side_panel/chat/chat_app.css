@@ -4,10 +4,6 @@
  * #scheme=relative
  * #css_wrapper_metadata_end */
 
-html {
-    --body-padding: 8px;
-}
-
 #container {
     display: flex;
     flex-direction: column;
@@ -15,6 +11,31 @@ html {
     padding: 10px 12px;
     color: var(--color-yep-chat-primary-text);
     box-sizing: border-box;
+}
+
+.chat-scroller {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scroll-behavior: smooth;
+    margin-block-start: 10px;
+}
+
+.chat-scroller::-webkit-scrollbar {
+    background: transparent;
+    width: 8px;
+}
+
+.chat-scroller::-webkit-scrollbar-thumb {
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
+    background-clip: content-box;
+    border: solid 1.5px transparent;
+    border-radius: 100px;
+}
+
+.chat-scroller-top-of-page::-webkit-scrollbar-track {
+    margin-block-start: 8px;
 }
 
 #conversation-container {
@@ -128,12 +149,12 @@ html {
     font-weight: 400;
     font-size: 12px;
     width: auto;
-    max-width: 100%;
+    max-width: 95%;
 }
 
-.siteinfo-container .siteinfo-content .siteinfo-common-item {
+.siteinfo-container .siteinfo-content .siteinfo-title {
     width: 95%;
-    display: inline-block;
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -143,12 +164,16 @@ html {
     box-sizing: border-box;
 }
 
-.siteinfo-container .siteinfo-content .siteinfo-title {
-    composes: siteinfo-common-item;
-}
-
 .siteinfo-container .siteinfo-content .siteinfo-url {
-    composes: siteinfo-common-item;
+    width: 95%;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
     color: var(--color-yep-chat-secondary-text);
 }
 
@@ -242,11 +267,10 @@ html {
     color: white;
 }
 
-
 .conversation-content .message-markdown-container {
     background: var(--color-yep-chat-panel-background);
     color: var(--color-yep-chat-primary-text);
-    padding: 10px 12px 0px 12px;
+    padding: 10px 12px 10px 12px;
 }
 
 .message-markdown-container p {
@@ -288,23 +312,22 @@ html {
     padding: 9px;
     background: var(--color-yep-chat-prompt-background);
     color: var(--color-yep-chat-primary-text);
-
     overflow-x: auto;
     overflow-y: auto;
     scrollbar-gutter: stable;
-    margin-block-start: 6px;
+    scroll-behavior: smooth;
 }
 
 .message-markdown-container pre::-webkit-scrollbar {
-    width: 6px;
+    height: 8px;
     background-color: transparent;
 }
 
 .message-markdown-container pre::-webkit-scrollbar-thumb {
     background-color: var(--color-yep-chat-site-info-vertical-bar-background);
-    background-clip: padding-box;
-    border: solid 1px transparent;
-    border-radius: 6px;
+    background-clip: content-box;
+    border: solid 1.5px transparent;
+    border-radius: 100px;
 }
 
 .message-markdown-container pre code {

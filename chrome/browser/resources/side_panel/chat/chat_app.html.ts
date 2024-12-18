@@ -38,14 +38,14 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
 export function getHtml(this: ChatAppElement) {
     return html`
         <div id="container">
-            <div id="conversation-container" class="sp-scroller sp-scroller-top-of-page">
+            <div id="conversation-container" class="chat-scroller chat-scroller-top-of-page">
                 <div class="conversation-content">
                     ${
                             this.conversations_.map((conversation, _) => {
                                 return conversation.query.length > 0
                                         ? html`
                                             ${conversation.shouldDisplaySiteInfo ? html`
-                                                <div class="query-prompt-container auto-width">
+                                                <article class="query-prompt-container auto-width">
                                                     <div class="siteinfo-container">
                                                         <div class="vertical-bar"></div>
                                                         <div class="siteinfo-content">
@@ -54,20 +54,20 @@ export function getHtml(this: ChatAppElement) {
                                                         </div>
                                                     </div>
                                                     <div class="prompt-section">${conversation.query}</div>
-                                                </div>` : html`
-                                                <div class="query-prompt-container content-fit-width">
+                                                </article>` : html`
+                                                <article class="query-prompt-container content-fit-width">
                                                     <div class="prompt-section">${conversation.query}</div>
-                                                </div>`
+                                                </article>`
                                             }
                                             ${conversation.response.length > 0 ? html`
-                                                <div class="message-markdown-container"
+                                                <article class="message-markdown-container"
                                                      .innerHTML="${getTrustedHTML(conversation.response)}">
-                                                </div>` : html``}`
+                                                </article>` : html``}`
                                         :
                                         html`${conversation.response.length > 0 ? html`
-                                            <div class="message-markdown-container"
+                                            <article class="message-markdown-container"
                                                  .innerHTML="${getTrustedHTML(conversation.response)}">
-                                            </div>` : html``}`
+                                            </article>` : html``}`
 
                             })
                     }
