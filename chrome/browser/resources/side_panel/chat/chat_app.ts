@@ -12,6 +12,7 @@ import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
 import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo} from "./chat.mojom-webui.js";
 import {marked} from "./marked.js";
+import './chat_prompt_input.js';
 
 export type conversationRecord = {
     query: string,
@@ -172,16 +173,18 @@ export class ChatAppElement extends CrLitElement {
     }
 
     // To add it back once PromptInput component is finished
-    // protected onTextareaValueChanged_(e: CustomEvent<{ value: string }>) {
-    //     this.query_ = e.detail.value;
-    // }
-
-    protected onPromptInputChange_(e: Event) {
-        const target = e.target as HTMLInputElement;
-        this.query_ = target.value;
+    protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {
+        this.query_ = e.detail.value;
+        console.log(e.detail.value);
     }
 
+    // protected onPromptInputChange_(e: Event) {
+    //     const target = e.target as HTMLInputElement;
+    //     this.query_ = target.value;
+    // }
+
     protected async onSubmitQuery_() {
+        console.log(this.query_);
         if (this.completionResult_ && this.completionResult_.length > 0) {
             if (this.conversations_ != null) {
                 if (this.conversations_.length == 0) {
