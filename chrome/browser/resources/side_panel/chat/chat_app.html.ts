@@ -1,10 +1,10 @@
+import type {conversationRecord} from "./chat_app";
 import {ChatAppElement} from "./chat_app";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import 'chrome://resources/cr_elements/icons_lit.html.js';
 import {marked} from "./marked.js";
 import {getTrustedHTML} from 'chrome://resources/js/parse_html_subset.js';
-
 
 function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
@@ -35,6 +35,13 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     }
 }
 
+function getConversationResponseElement(conversation: conversationRecord) {
+    return conversation.response.length > 0 ? html`
+        <article class="message-markdown-container"
+                 .innerHTML="${getTrustedHTML(conversation.response)}">
+        </article>` : html``;
+}
+
 export function getHtml(this: ChatAppElement) {
     return html`
         <div id="container">
@@ -59,16 +66,9 @@ export function getHtml(this: ChatAppElement) {
                                                     <div class="prompt-section">${conversation.query}</div>
                                                 </article>`
                                             }
-                                            ${conversation.response.length > 0 ? html`
-                                                <article class="message-markdown-container"
-                                                     .innerHTML="${getTrustedHTML(conversation.response)}">
-                                                </article>` : html``}`
+                                            ${getConversationResponseElement.bind(this)(conversation)}`
                                         :
-                                        html`${conversation.response.length > 0 ? html`
-                                            <article class="message-markdown-container"
-                                                 .innerHTML="${getTrustedHTML(conversation.response)}">
-                                            </article>` : html``}`
-
+                                        html`${getConversationResponseElement.bind(this)(conversation)}`
                             })
                     }
                     <div class="message-markdown-container"

@@ -1,10 +1,8 @@
 import './strings.m.js';
-
 import '//resources/cr_elements/cr_button/cr_button.js';
 import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import '//resources/cr_elements/cr_input/cr_input.js';
 import '//resources/cr_elements/cr_textarea/cr_textarea.js';
-
 import {ColorChangeUpdater} from 'chrome://resources/cr_components/color_change_listener/colors_css_updater.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
@@ -15,7 +13,7 @@ import {ChatApiProxyImpl} from "./chat_api_proxy.js";
 import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo} from "./chat.mojom-webui.js";
 import {marked} from "./marked.js";
 
-type conversationRecord = {
+export type conversationRecord = {
     query: string,
     shouldDisplaySiteInfo: boolean,
     title: string,
@@ -96,7 +94,9 @@ export class ChatAppElement extends CrLitElement {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
             // todo: to delete later
-            console.log(marked.parse(this.completionResult_, {async: false}));
+            // this is to examine response when non-SSE chunk is received.
+            console.log("Before marked:\n" + this.completionResult_);
+            console.log("After marked:\n" + marked.parse(this.completionResult_, {async: false}));
         } else if (response.responseType == ResponseType.ERROR) {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
@@ -176,7 +176,7 @@ export class ChatAppElement extends CrLitElement {
     //     this.query_ = e.detail.value;
     // }
 
-    protected onPromptInputChange_(e: Event){
+    protected onPromptInputChange_(e: Event) {
         const target = e.target as HTMLInputElement;
         this.query_ = target.value;
     }
