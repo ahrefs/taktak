@@ -190,13 +190,13 @@ export class ChatAppElement extends CrLitElement {
                         shouldDisplaySiteInfo: false,
                         title: this.siteInfo_.title ?? "",
                         url: this.siteInfo_.url ?? "",
-                        response: marked.parse(this.completionResult_.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/,""), {async: false}),
+                        response: marked.parse(this.completionResult_, {async: false}),
                     });
                 } else {
                     const lastIndex = this.conversations_.length - 1;
                     const lastConversation = this.conversations_[lastIndex];
                     if (lastConversation) {
-                        lastConversation.response = marked.parse(this.completionResult_.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/,""), {async: false});
+                        lastConversation.response = marked.parse(this.completionResult_, {async: false});
                     }
                 }
             }
