@@ -217,9 +217,8 @@
 .typing-content {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: end;
     justify-content: flex-start;
-    align-content: center;
     gap: 4px;
     width: 100vw;
     max-width: 100%;
@@ -229,22 +228,6 @@
 .typing-content .prompt-input {
     display: block;
     flex-grow: 1;
-    resize: none;
-    border: none;
-    outline: none;
-    padding: 0;
-    margin: 0;
-    font-weight: 400;
-    background: transparent;
-    box-shadow: none;
-    box-sizing: border-box;
-    width: 20px;
-    height: 20px;
-    overflow-y: auto;
-    line-clamp: 10;
-    max-height: 300px;
-    font-family: 'Roboto', 'Arial', sans-serif;
-    color: var(--color-yep-chat-primary-text);
 }
 
 .typing-content .send-btn {

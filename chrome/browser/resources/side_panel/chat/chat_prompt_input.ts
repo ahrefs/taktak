@@ -1,18 +1,12 @@
 import type {PropertyValues} from '//resources/lit/v3_0/lit.rollup.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
-
 import {getCss} from './chat_prompt_input.css.js';
 import {getHtml} from './chat_prompt_input.html.js';
 
 export interface ChatPromptInputElement {
     $: {
-        firstFooter: HTMLElement,
-        footerContainer: HTMLElement,
         input: HTMLTextAreaElement,
         label: HTMLElement,
-        mirror: HTMLElement,
-        secondFooter: HTMLElement,
-        underline: HTMLElement,
     };
 }
 
@@ -31,49 +25,29 @@ export class ChatPromptInputElement extends CrLitElement {
 
     static override get properties() {
         return {
-            /**
-             * Whether the text area should automatically get focus when the page
-             * loads.
-             */
             autofocus: {
                 type: Boolean,
                 reflect: true,
             },
-
-            /**
-             * Whether the text area is disabled. When disabled, the text area loses
-             * focus and is not reachable by tabbing.
-             */
             disabled: {
                 type: Boolean,
                 reflect: true,
             },
-
-            /** Whether the text area is required. */
             required: {
                 type: Boolean,
                 reflect: true,
             },
 
-            /** Maximum length (in characters) of the text area. */
             maxlength: {type: Number},
 
-            /**
-             * Whether the text area is read only. If read-only, content cannot be
-             * changed.
-             */
             readonly: {
                 type: Boolean,
                 reflect: true,
             },
-
-            /** Number of rows (lines) of the text area. */
             rows: {
                 type: Number,
                 reflect: true,
             },
-
-            /** Caption of the text area. */
             label: {type: String},
 
             /**
@@ -91,43 +65,7 @@ export class ChatPromptInputElement extends CrLitElement {
                 state: true,
             },
 
-            /**
-             * Placeholder text that is shown when no value is present.
-             */
             placeholder: {type: String},
-
-            /** Whether the textarea can auto-grow vertically or not. */
-            autogrow: {
-                type: Boolean,
-                reflect: true,
-            },
-
-            /**
-             * Attribute to enable limiting the maximum height of a autogrow textarea.
-             * Use --cr-textarea-autogrow-max-height to set the height.
-             */
-            hasMaxHeight: {
-                type: Boolean,
-                reflect: true,
-            },
-
-            /** Whether the textarea is invalid or not. */
-            invalid: {
-                type: Boolean,
-                reflect: true,
-            },
-
-            /**
-             * First footer text below the text area. Can be used to warn user about
-             * character limits.
-             */
-            firstFooter: {type: String},
-
-            /**
-             * Second footer text below the text area. Can be used to show current
-             * character count.
-             */
-            secondFooter: {type: String},
         };
     }
 
@@ -140,11 +78,6 @@ export class ChatPromptInputElement extends CrLitElement {
     maxlength?: number;
     value: string = '';
     placeholder: string = '';
-    autogrow: boolean = false;
-    hasMaxHeight: boolean = false;
-    invalid: boolean = false;
-    firstFooter: string = '';
-    secondFooter: string = '';
     protected internalValue_: string = '';
 
     override willUpdate(changedProperties: PropertyValues<this>) {
@@ -183,23 +116,24 @@ export class ChatPromptInputElement extends CrLitElement {
             'change', {bubbles: true, composed: true, detail: {sourceEvent: e}}));
     }
 
-    protected calculateMirror_(): string {
-        if (!this.autogrow) {
-            return '';
-        }
-        // Browsers do not render empty divs. The extra space is used to render the
-        // div when empty.
-        const tokens = this.value ? this.value.split('\n') : [''];
 
-        while (this.rows > 0 && tokens.length < this.rows) {
-            tokens.push('');
+    protected onKeydown_(e: KeyboardEvent) {
+        if (e.key === 'Enter') {
+            if (e.shiftKey) {
+                return; // Allow the default behavior
+            } else {
+                e.stopPropagation();
+                e.preventDefault(); // Prevent adding a new line
+                this.fire('enter', {value: this.value});
+            }
         }
-        return tokens.join('\n') + '&nbsp;';
     }
 
     protected onInput_(e: Event) {
         this.internalValue_ = (e.target as HTMLInputElement).value;
         this.value = this.internalValue_;
+
+        //    const lineHeight = parseInt(window.getComputedStyle(this.$.input).lineHeight);
     }
 
     protected onInputFocusChange_() {
@@ -210,10 +144,6 @@ export class ChatPromptInputElement extends CrLitElement {
         } else {
             this.removeAttribute('focused_');
         }
-    }
-
-    protected getFooterAria_(): string {
-        return this.invalid ? 'assertive' : 'polite';
     }
 }
 

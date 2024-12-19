@@ -90,11 +90,15 @@ export function getHtml(this: ChatAppElement) {
             <div id="prompt-container">
                 ${getSiteInfoOrAddChatAboutThisPage.bind(this)()}
                 <div class="typing-content">
-                    <chat-prompt-input class="prompt-input"
-                                       placeholder=${this.askAnythingLabel_ ?? ""}
-                                       .value=${this.query_ ?? ""}
-                                       @value-changed=${this.onPromptInputChange_}>
-                    </chat-prompt-input>
+                    <div class="prompt-input">
+                        <chat-prompt-input
+                                .placeholder=${this.askAnythingLabel_ ?? ""}
+                                .value=${this.query_ ?? ""}
+                                .autofocus=${true}
+                                @value-changed=${this.onPromptInputChange_}
+                                @enter=${this.onSetAndSubmitQuery_}>
+                        </chat-prompt-input>
+                    </div>
                     <button class="send-btn" @click="${this.onSubmitQuery_}">
                         <cr-icon aria-hidden="true"
                                  icon="cr:arrow-drop-up" class="send-btn-icon">

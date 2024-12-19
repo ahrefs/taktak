@@ -94,10 +94,12 @@ export class ChatAppElement extends CrLitElement {
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
+
             // todo: to delete later
             // this is to examine response when non-SSE chunk is received.
             console.log("Before marked:\n" + this.completionResult_);
             console.log("After marked:\n" + marked.parse(this.completionResult_, {async: false}));
+
         } else if (response.responseType == ResponseType.ERROR) {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
@@ -172,19 +174,16 @@ export class ChatAppElement extends CrLitElement {
         setTimeout(() => this.chatApiProxy_.submitAction(actionType), 0);
     }
 
-    // To add it back once PromptInput component is finished
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {
         this.query_ = e.detail.value;
-        console.log(e.detail.value);
     }
 
-    // protected onPromptInputChange_(e: Event) {
-    //     const target = e.target as HTMLInputElement;
-    //     this.query_ = target.value;
-    // }
+    protected onSetAndSubmitQuery_(e: CustomEvent<{ value: string }>) {
+        this.query_ = e.detail.value;
+        this.onSubmitQuery_().then();
+    }
 
     protected async onSubmitQuery_() {
-        console.log(this.query_);
         if (this.completionResult_ && this.completionResult_.length > 0) {
             if (this.conversations_ != null) {
                 if (this.conversations_.length == 0) {
