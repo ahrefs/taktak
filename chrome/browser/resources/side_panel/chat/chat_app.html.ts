@@ -1,10 +1,10 @@
+import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
+import 'chrome://resources/cr_elements/icons_lit.html.js';
+import {getTrustedHTML} from 'chrome://resources/js/parse_html_subset.js';
 import type {conversationRecord} from "./chat_app";
 import {ChatAppElement} from "./chat_app";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
-import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
 import {marked} from "./marked.js";
-import {getTrustedHTML} from 'chrome://resources/js/parse_html_subset.js';
 
 function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {

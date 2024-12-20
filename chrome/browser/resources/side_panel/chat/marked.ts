@@ -1,7 +1,9 @@
 // @ts-nocheck
 
-/**
- * marked v15.0.3 - a markdown parser
+// Copy the code as-is and ensure proper attribution is provided at third_party/marked,
+// following Chromium's recommended guidelines for crediting third-party code.
+
+/** marked v15.0.3 - a markdown parser
  * Copyright (c) 2011-2024, Christopher Jeffrey. (MIT Licensed)
  * https://github.com/markedjs/marked
  */

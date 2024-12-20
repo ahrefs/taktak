@@ -29,10 +29,12 @@ export class ChatPromptInputElement extends CrLitElement {
                 type: Boolean,
                 reflect: true,
             },
+
             disabled: {
                 type: Boolean,
                 reflect: true,
             },
+
             required: {
                 type: Boolean,
                 reflect: true,
@@ -44,11 +46,11 @@ export class ChatPromptInputElement extends CrLitElement {
                 type: Boolean,
                 reflect: true,
             },
+
             rows: {
                 type: Number,
                 reflect: true,
             },
-            label: {type: String},
 
             /**
              * Text inside the text area. If the text exceeds the bounds of the text
@@ -73,8 +75,7 @@ export class ChatPromptInputElement extends CrLitElement {
     disabled: boolean = false;
     readonly: boolean = false;
     required: boolean = false;
-    rows: number = 3;
-    label: string = '';
+    rows: number = 1;
     maxlength?: number;
     value: string = '';
     placeholder: string = '';
@@ -104,18 +105,12 @@ export class ChatPromptInputElement extends CrLitElement {
         this.$.input.focus();
     }
 
-    /**
-     * 'change' event fires when <input> value changes and user presses 'Enter'.
-     * This function helps propagate it to host since change events don't
-     * propagate across Shadow DOM boundary by default.
-     */
     protected async onInputChange_(e: Event) {
         // Ensure that |value| has been updated before re-firing 'change'.
         await this.updateComplete;
         this.dispatchEvent(new CustomEvent(
             'change', {bubbles: true, composed: true, detail: {sourceEvent: e}}));
     }
-
 
     protected onKeydown_(e: KeyboardEvent) {
         if (e.key === 'Enter') {
