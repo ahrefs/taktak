@@ -129,7 +129,7 @@ export class ChatPromptInputElement extends CrLitElement {
         this.value = this.internalValue_;
 
         const textarea = this.$.input;
-        const maxLines = 10;
+        const maxLines = 9;
         textarea.style.height = 'auto';
 
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);

@@ -3,8 +3,11 @@ import '//resources/cr_elements/cr_button/cr_button.js';
 import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import '//resources/cr_elements/cr_input/cr_input.js';
 import '//resources/cr_elements/cr_textarea/cr_textarea.js';
+import '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
+import '//resources/cr_elements/cr_dialog/cr_dialog.js';
 import {ColorChangeUpdater} from 'chrome://resources/cr_components/color_change_listener/colors_css_updater.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
+import type {CrActionMenuElement} from '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
 import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
@@ -20,6 +23,13 @@ export type conversationRecord = {
     title: string,
     url: string,
     response: string,
+}
+
+export interface ChatAppElement {
+    $: {
+        translatorMenu: CrActionMenuElement,
+        socialPostMenu: CrActionMenuElement,
+    };
 }
 
 export class ChatAppElement extends CrLitElement {

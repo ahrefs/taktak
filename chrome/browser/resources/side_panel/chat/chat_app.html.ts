@@ -5,6 +5,8 @@ import type {conversationRecord} from "./chat_app";
 import {ChatAppElement} from "./chat_app";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import {marked} from "./marked.js";
+import {ActionType} from "./chat.mojom-webui.js";
+import {AnchorAlignment} from '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
 
 function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
@@ -77,14 +79,58 @@ export function getHtml(this: ChatAppElement) {
                 </div>
                 <div class="action-buttons-container">
                     ${this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
-                            this.actionList_.map((item, _) => html`
+                            this.actionList_.map((item, _) => { 
+                                if (item.actionType == ActionType.TRANSLATE)  {
+                                    return html`
+                                    <button ?disabled="${this.isSubmittingQuery_}" @click="${(e: Event) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        this.$.translatorMenu.showAt(e.target as HTMLElement, {
+                                            anchorAlignmentX: AnchorAlignment.AFTER_END,
+                                            anchorAlignmentY: AnchorAlignment.CENTER,
+                                        });
+                                    }}" class="action-button">
+                                        ${item.label}
+                                    </button>`;
+                                 }  else if (item.actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
+                                    return html`
+                                    <button ?disabled="${this.isSubmittingQuery_}" @click="${(e: Event) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            this.$.socialPostMenu.showAt(e.target as HTMLElement, {
+                                                anchorAlignmentX: AnchorAlignment.AFTER_END,
+                                                anchorAlignmentY: AnchorAlignment.CENTER,
+                                            });
+                                        }}" class="action-button">
+                                        ${item.label}
+                                    </button>`;
+                                } else {
+                                return html`
                                 <button ?disabled="${this.isSubmittingQuery_}" @click="${(e: Event) => {
                                     e.stopPropagation();
                                     this.onSubmitAction_(item.actionType);
                                 }}" class="action-button">
                                     ${item.label}
-                                </button>
-                            `) : html``}
+                                </button>`;
+                            }
+                            }) : html``}
+                </div>
+                <div>
+                    <cr-action-menu id="translatorMenu">
+                        <button class="dropdown-item">${"Afrikaans"}</button>
+                        <button class="dropdown-item">${"Albanian"}</button>
+                        <button class="dropdown-item">${"Amharic"}</button>
+                        <button class="dropdown-item">${"Arabic"}</button>
+                        <button class="dropdown-item">${"Armenian"}</button>
+                        <button class="dropdown-item">${"Assamese"}</button>
+                        <button class="dropdown-item">${"Aymara"}</button>
+                    </cr-action-menu> 
+                    <cr-action-menu id="socialPostMenu">
+                        <button class="dropdown-item">${"X (Twitter)"}</button>
+                        <button class="dropdown-item">${"Facebook"}</button>
+                        <button class="dropdown-item">${"Instagram"}</button>
+                        <button class="dropdown-item">${"Linkedin"}</button>
+                    </cr-action-menu> 
                 </div>
             </div>
             <div id="prompt-container">
