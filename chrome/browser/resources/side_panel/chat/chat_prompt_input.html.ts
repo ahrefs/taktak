@@ -1,5 +1,4 @@
 import {html, nothing} from '//resources/lit/v3_0/lit.rollup.js';
-
 import type {ChatPromptInputElement} from './chat_prompt_input.js';
 
 export function getHtml(this: ChatPromptInputElement) {

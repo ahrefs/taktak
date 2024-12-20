@@ -14,12 +14,24 @@
     margin: 0;
     font-weight: 400;
     box-shadow: none;
-    overflow-y: auto;
     height: 1lh;
     min-height: 1lh;
     color: var(--color-yep-chat-primary-text);
     font-family: 'Roboto', 'Arial', sans-serif;
     width: 100%;
     background: var(--color-yep-chat-prompt-background);
-    border-radius: 0px;
+    border-radius: 0;
+    overflow-y: auto;
+}
+
+#input::-webkit-scrollbar {
+    width: 8px;
+    background-color: transparent;
+}
+
+#input::-webkit-scrollbar-thumb {
+    background-color: var(--color-yep-chat-site-info-vertical-bar-background);
+    background-clip: content-box;
+    border: solid 1.5px transparent;
+    border-radius: 100px;
 }

@@ -6,7 +6,6 @@ import {getHtml} from './chat_prompt_input.html.js';
 export interface ChatPromptInputElement {
     $: {
         input: HTMLTextAreaElement,
-        label: HTMLElement,
     };
 }
 
@@ -119,6 +118,7 @@ export class ChatPromptInputElement extends CrLitElement {
             } else {
                 e.stopPropagation();
                 e.preventDefault(); // Prevent adding a new line
+                this.$.input.style.height = 'auto';
                 this.fire('enter', {value: this.value});
             }
         }
@@ -128,7 +128,23 @@ export class ChatPromptInputElement extends CrLitElement {
         this.internalValue_ = (e.target as HTMLInputElement).value;
         this.value = this.internalValue_;
 
-        //    const lineHeight = parseInt(window.getComputedStyle(this.$.input).lineHeight);
+        const textarea = this.$.input;
+        const maxLines = 10;
+        textarea.style.height = 'auto';
+
+        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
+        const paddingOffset = parseInt(window.getComputedStyle(textarea).paddingTop) +
+            parseInt(window.getComputedStyle(textarea).paddingBottom);
+        const contentHeight = textarea.scrollHeight - (lineHeight + paddingOffset);
+        const lines = Math.ceil(contentHeight / lineHeight);
+
+        if (lines <= maxLines) {
+            textarea.style.height = `${lines * lineHeight}px`;
+            textarea.style.overflowY = 'hidden'; // No scrollbar for less than 10 lines
+        } else {
+            textarea.style.height = `${lineHeight * maxLines}px`;
+            textarea.style.overflowY = 'scroll'; // Show scrollbar after 10 lines
+        }
     }
 
     protected onInputFocusChange_() {
