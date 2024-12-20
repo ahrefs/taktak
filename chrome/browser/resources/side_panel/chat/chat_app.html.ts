@@ -95,11 +95,12 @@ export function getHtml(this: ChatAppElement) {
                                 .placeholder=${this.askAnythingLabel_ ?? ""}
                                 .value=${this.query_ ?? ""}
                                 .autofocus=${true}
+                                ?disabled=${this.isSubmittingQuery_}
                                 @value-changed=${this.onPromptInputChange_}
                                 @enter=${this.onSetAndSubmitQuery_}>
                         </chat-prompt-input>
                     </div>
-                    <button class="send-btn" @click="${this.onSubmitQuery_}">
+                    <button class="send-btn" ?disabled="${this.query_ == "" || this.isSubmittingQuery_}" @click="${this.onSubmitQuery_}">
                         <cr-icon aria-hidden="true"
                                  icon="cr:arrow-drop-up" class="send-btn-icon">
                         </cr-icon>

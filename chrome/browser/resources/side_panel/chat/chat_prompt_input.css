@@ -24,6 +24,11 @@
     overflow-y: auto;
 }
 
+#input:disabled {
+    cursor: wait;
+    opacity: 0.5;
+}
+
 #input::-webkit-scrollbar {
     width: 8px;
     background-color: transparent;

@@ -180,7 +180,9 @@ export class ChatAppElement extends CrLitElement {
 
     protected onSetAndSubmitQuery_(e: CustomEvent<{ value: string }>) {
         this.query_ = e.detail.value;
-        this.onSubmitQuery_().then();
+        if (this.query_ != "") {
+            this.onSubmitQuery_().then();
+        }
     }
 
     protected async onSubmitQuery_() {
