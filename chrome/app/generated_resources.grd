@@ -8985,10 +8985,16 @@ Keep your key file in a safe place. You will need it to create new versions of y
       <message name="IDS_CHAT_TRANSLATE" desc="Label of the button in Chat to translate the current page's content.">
         Translate to...
       </message>
+      <message name="IDS_CHAT_TRANSLATE_LANGS" desc="Use in sub menu list">
+        Afrikaans, Albanian, Amharic
+      </message>
       <message name="IDS_CHAT_DRAFT_A_SOCIAL_MEDIA_POST" desc="Label of the button in Chat to draft a social media post of the current page's content.">
         Draft a post for...
       </message>
-      <message name="IDS_CHAT_DRAFT_FACT_CHECT" desc="Label of the button in Chat to fact-check the current page's content.">
+      <message name="IDS_CHAT_SOCIAL_MEDIAS" desc="Use in sub menu list">
+        X (Twitter), Facebook, Instagram, LinkedIn
+      </message>
+      <message name="IDS_CHAT_DRAFT_FACT_CHECK" desc="Label of the button in Chat to fact-check the current page's content.">
         Fact check
       </message>
       <message name="IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE" desc="Prompt to summarize the current page.">

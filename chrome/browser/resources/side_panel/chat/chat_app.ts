@@ -16,6 +16,11 @@ import {ChatApiProxyImpl} from "./chat_api_proxy.js";
 import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo} from "./chat.mojom-webui.js";
 import {marked} from "./marked.js";
 import './chat_prompt_input.js';
+import './action_menu.js';
+
+function transformToArray(input: string): string[] {
+    return input.split(",").map(item => item.trim());
+}
 
 export type conversationRecord = {
     query: string,
@@ -27,7 +32,6 @@ export type conversationRecord = {
 
 export interface ChatAppElement {
     $: {
-        translatorMenu: CrActionMenuElement,
         socialPostMenu: CrActionMenuElement,
     };
 }
@@ -36,6 +40,9 @@ export class ChatAppElement extends CrLitElement {
     private chatApiProxy_: ChatApiProxy = ChatApiProxyImpl.getInstance();
     private listenerIds_: number[] = [];
     protected actionList_: ActionItem[] = [];
+    protected translateToSubItems_: string[] = [];
+    protected socialPostSubItems_: string[] = [];
+    protected chatAboutThisPage_: string = "";
     protected conversations_: conversationRecord[] = [];
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
     protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
@@ -58,6 +65,8 @@ export class ChatAppElement extends CrLitElement {
 
     constructor() {
         super();
+        this.translateToSubItems_ = transformToArray(loadTimeData.getString('translateLanguages'));
+        this.socialPostSubItems_ = transformToArray(loadTimeData.getString('socialMedias'));
     }
 
     static get is() {
@@ -78,6 +87,8 @@ export class ChatAppElement extends CrLitElement {
             askAnythingLabel_: {type: String},
             chatAboutThisPage_: {type: String},
             actionList_: {type: Array},
+            translateToSubItems_: {type: String},
+            socialPostSubItems_: {type: String},
             submitResponse_: {type: Object},
             query_: {type: String},
             submittedQuery_: {type: String},
@@ -93,6 +104,7 @@ export class ChatAppElement extends CrLitElement {
         if (this.siteInfo_.isContentUsableInConversations) {
             const {actionList} = await this.chatApiProxy_.getActionList();
             this.actionList_ = actionList;
+
         }
         this.updateComplete;
     }
@@ -125,7 +137,7 @@ export class ChatAppElement extends CrLitElement {
         return url ? url.replace(PROTOCOL_REGEX, '') : '';
     }
 
-    protected onSubmitAction_(actionType: ActionType) {
+    protected onSubmitAction_(actionType: ActionType, actionParam: string = '') {
         const title = this.siteInfo_.title ?? "";
         const url = this.stripUrlProtocol(this.siteInfo_.url ?? "");
         const response = "";
@@ -156,7 +168,7 @@ export class ChatAppElement extends CrLitElement {
                 });
             } else if (actionType == ActionType.TRANSLATE) {
                 this.conversations_.push({
-                    query: loadTimeData.getString('promptTranslate'),
+                    query: loadTimeData.getString('promptTranslate') + ' ' + actionParam,
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
@@ -164,7 +176,7 @@ export class ChatAppElement extends CrLitElement {
                 });
             } else if (actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
                 this.conversations_.push({
-                    query: loadTimeData.getString('promptSocialMediaPost'),
+                    query: loadTimeData.getString('promptSocialMediaPost') + ' ' + actionParam,
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
@@ -181,7 +193,7 @@ export class ChatAppElement extends CrLitElement {
             }
         }
         this.isSubmittingQuery_ = true;
-        setTimeout(() => this.chatApiProxy_.submitAction(actionType), 0);
+        setTimeout(() => this.chatApiProxy_.submitAction(actionType, actionParam), 0);
     }
 
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {

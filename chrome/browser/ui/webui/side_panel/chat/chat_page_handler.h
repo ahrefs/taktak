@@ -47,7 +47,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   void GetActionList(GetActionListCallback callback) override;
 
-  void SubmitAction(chat::mojom::ActionType action_type) override;
+  void SubmitAction(chat::mojom::ActionType action_type,
+                    const std::string& action_param) override;
 
   void SubmitQuery(chat::mojom::ActionType action_type,
                    const std::string& query) override;

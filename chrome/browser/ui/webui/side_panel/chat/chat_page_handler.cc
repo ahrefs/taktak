@@ -42,6 +42,7 @@ ChatPageHandler::ChatPageHandler(
           ->GetURLLoaderFactoryForBrowserProcess();
   api_client_ =
       std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
+  VLOG(0) << "ChatPageHandler created";
 }
 
 ChatPageHandler::~ChatPageHandler() = default;
@@ -112,7 +113,7 @@ void ChatPageHandler::GetActionList(GetActionListCallback callback) {
 
     chat::mojom::ActionItemPtr fact_check_item = chat::mojom::ActionItem::New(
             chat::mojom::ActionType::FACT_CHECK,
-            l10n_util::GetStringUTF8(IDS_CHAT_DRAFT_FACT_CHECT));
+            l10n_util::GetStringUTF8(IDS_CHAT_DRAFT_FACT_CHECK));
 
     action_items.push_back(summarize_item.Clone());
     action_items.push_back(explain_item.Clone());
@@ -127,13 +128,19 @@ base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
   return weak_ptr_factory_.GetWeakPtr();
 }
 
-void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
+void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
+                                   const std::string& action_param) {
   std::string summarize_prompt =
       l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE);
   std::string explain_prompt =
       l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE);
   std::string fact_check_prompt =
       l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_FACT_CHECT);
+  std::string translate_to_prompt =
+      l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_TRANSLATE);
+  std::string draft_social_media_post_prompt =
+      l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST);
+
   if (page_.is_bound()) {
     DVLOG(0) << action_type;
 
@@ -151,14 +158,18 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type) {
       page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
           &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
           action_type, fact_check_prompt));
+    } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
+      page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
+          &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
+          action_type, translate_to_prompt + " " + action_param));
+    } else if (action_type ==
+               chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
+      page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
+          &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
+          action_type, draft_social_media_post_prompt + " " + action_param));
     } else {
-      // todo: to implement for other action types later
-      chat::mojom::ActionResponsePtr response =
-          chat::mojom::ActionResponse::New();
-      response->action_type = action_type;
-      response->response_type = chat::mojom::ResponseType::DELTA;
-      response->result = "MOCK Result";
-      page_->OnSubmitActionResponse(response.Clone());
+      // this branch should not be reached because all the action items are
+      // handled above blocks
     }
     }
 }

@@ -10,7 +10,7 @@ import {
 export interface ChatApiProxy {
     getActionList(): Promise<{ actionList: ActionItem[] }>;
 
-    submitAction(actionType: ActionType): void;
+    submitAction(actionType: ActionType, actionParam: string): void;
 
     submitQuery(actionType: ActionType, query: string): void;
 
@@ -30,6 +30,7 @@ export class ChatApiProxyImpl implements ChatApiProxy {
     private handler: PageHandlerRemote = new PageHandlerRemote();
 
     constructor() {
+        console.log('ChatApiProxyImpl');
         this.callbackRouter = new PageCallbackRouter();
         this.handler = new PageHandlerRemote();
         const factory = PageHandlerFactory.getRemote();
@@ -50,8 +51,8 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         return this.handler.getActionList();
     }
 
-    submitAction(actionType: ActionType) {
-        this.handler.submitAction(actionType);
+    submitAction(actionType: ActionType, actionParam: string) {
+        this.handler.submitAction(actionType, actionParam);
     }
 
     submitQuery(actionType: ActionType, query: string) {

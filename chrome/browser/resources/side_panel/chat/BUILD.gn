@@ -14,9 +14,11 @@ build_webui("build") {
     "marked.ts",
     "chat_prompt_input.html.ts",
     "chat_prompt_input.ts",
+    "action_menu.ts",
+    "action_menu.html.ts",
   ]
 
-  css_files = [ "chat_app.css", "chat_prompt_input.css" ]
+  css_files = [ "chat_app.css", "chat_prompt_input.css", "action_menu.css" ]
 
   mojo_files_deps = [
     "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings_ts__generator",

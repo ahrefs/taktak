@@ -84,7 +84,10 @@ ChatUI::ChatUI(content::WebUI* web_ui)
          IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE},
         {"promptFactCheck", IDS_CHAT_PROMPT_DRAFT_FACT_CHECT},
         {"promptTranslate", IDS_CHAT_PROMPT_TRANSLATE},
-        {"promptSocialMediaPost", IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST}};
+        {"promptSocialMediaPost", IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST},
+        {"translateLanguages", IDS_CHAT_TRANSLATE_LANGS} ,
+        {"socialMedias", IDS_CHAT_SOCIAL_MEDIAS},
+    };
 
     for (const auto& str : kLocalizedStrings)
         webui::AddLocalizedString(source, str.name, str.id);

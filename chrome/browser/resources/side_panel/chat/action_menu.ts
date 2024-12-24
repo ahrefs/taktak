@@ -1,0 +1,67 @@
+import '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
+import '//resources/cr_elements/cr_dialog/cr_dialog.js';
+import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
+import {assert} from '//resources/js/assert.js';
+import {getCss} from './action_menu.css.js';
+import {getHtml} from './action_menu.html.js';
+import {ActionType} from "./chat.mojom-webui.js";
+
+export interface ActionMenuElement {
+    $: {
+        actionMenuButton: HTMLElement,
+    };
+}
+
+export class ActionMenuElement extends CrLitElement {
+    protected renderActionMenu_: boolean = false;
+    protected actionType_: ActionType = ActionType.NONE;
+    protected actionLabel_: string = '';
+    protected actionItems_: string[] = [];
+    protected disabled_: boolean = false;
+
+    constructor() {
+        super();
+    }
+
+    static get is() {
+        return 'action-menu';
+    }
+
+    static override get styles() {
+        return getCss();
+    }
+
+    static override get properties() {
+        return {
+            actionType_: {type: ActionType},
+            actionLabel_: {type: String},
+            actionItems_: {type: Array},
+            renderActionMenu_: {type: Boolean},
+            disabled_: {type: Boolean},
+        };
+    }
+
+    override render() {
+        return getHtml.bind(this)();
+    }
+
+    protected async onActionMenuButtonClick_(event: Event) {
+        event.preventDefault();  // Prevent default browser action (navigation).
+        if (!this.renderActionMenu_) {
+            this.renderActionMenu_ = true;
+            await this.updateComplete;
+        }
+        const menu = this.shadowRoot!.querySelector('cr-action-menu');
+        assert(menu);
+        menu.showAt(this.$.actionMenuButton);
+    }
+}
+
+
+declare global {
+    interface HTMLElementTagNameMap {
+        'action-menu': ActionMenuElement;
+    }
+}
+
+customElements.define(ActionMenuElement.is, ActionMenuElement);
