@@ -5,6 +5,7 @@ import {assert} from '//resources/js/assert.js';
 import {getCss} from './action_menu.css.js';
 import {getHtml} from './action_menu.html.js';
 import {ActionType} from "./chat.mojom-webui.js";
+import {AnchorAlignment} from '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
 
 export interface ActionMenuElement {
     $: {
@@ -53,7 +54,15 @@ export class ActionMenuElement extends CrLitElement {
         }
         const menu = this.shadowRoot!.querySelector('cr-action-menu');
         assert(menu);
-        menu.showAt(this.$.actionMenuButton);
+        menu.showAt(this.$.actionMenuButton, {
+                anchorAlignmentX: AnchorAlignment.AFTER_END,
+                anchorAlignmentY: AnchorAlignment.CENTER,
+            }
+        );
+    }
+
+    protected onActionMenuItemClick_(action_param: string) {
+        this.fire("item-click", {actionType: this.actionType_, actionParam: action_param})
     }
 }
 

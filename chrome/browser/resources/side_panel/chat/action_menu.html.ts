@@ -12,7 +12,13 @@ export function getHtml(this: ActionMenuElement) {
             <cr-action-menu>
                 ${this.actionItems_.map((item, _) => {
                     return html`
-                        <button class="dropdown-item">${item}</button>`;
+                        <button class="dropdown-item" @click="${(event: Event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            this.onActionMenuItemClick_(item);
+                        }
+                        }">${item}
+                        </button>`;
                 })}
             </cr-action-menu>` : html``}`;
 }

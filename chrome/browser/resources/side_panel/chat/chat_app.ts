@@ -40,8 +40,8 @@ export class ChatAppElement extends CrLitElement {
     private chatApiProxy_: ChatApiProxy = ChatApiProxyImpl.getInstance();
     private listenerIds_: number[] = [];
     protected actionList_: ActionItem[] = [];
-    protected translateToSubItems_: string[] = [];
-    protected socialPostSubItems_: string[] = [];
+    protected translateToLanguages_: string[] = [];
+    protected socialMediaPlatforms_: string[] = [];
     protected chatAboutThisPage_: string = "";
     protected conversations_: conversationRecord[] = [];
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
@@ -65,8 +65,8 @@ export class ChatAppElement extends CrLitElement {
 
     constructor() {
         super();
-        this.translateToSubItems_ = transformToArray(loadTimeData.getString('translateLanguages'));
-        this.socialPostSubItems_ = transformToArray(loadTimeData.getString('socialMedias'));
+        this.translateToLanguages_ = transformToArray(loadTimeData.getString('translateLanguages'));
+        this.socialMediaPlatforms_ = transformToArray(loadTimeData.getString('socialMedias'));
     }
 
     static get is() {
@@ -88,7 +88,7 @@ export class ChatAppElement extends CrLitElement {
             chatAboutThisPage_: {type: String},
             actionList_: {type: Array},
             translateToSubItems_: {type: String},
-            socialPostSubItems_: {type: String},
+            socialMediaPostSubItems_: {type: String},
             submitResponse_: {type: Object},
             query_: {type: String},
             submittedQuery_: {type: String},
@@ -135,6 +135,10 @@ export class ChatAppElement extends CrLitElement {
     protected stripUrlProtocol(url: string = ''): string {
         const PROTOCOL_REGEX = /^https?:\/\//;
         return url ? url.replace(PROTOCOL_REGEX, '') : '';
+    }
+
+    protected onActionMenuItemClick_(e: CustomEvent<{ actionType: ActionType, actionParam: string }>) {
+        this.onSubmitAction_(e.detail.actionType, e.detail.actionParam);
     }
 
     protected onSubmitAction_(actionType: ActionType, actionParam: string = '') {
