@@ -16,9 +16,9 @@
     box-shadow: none;
     height: 1lh;
     min-height: 1lh;
-    color: var(--color-yep-chat-primary-text);
     font-family: 'Roboto', 'Arial', sans-serif;
     width: 100%;
+    color: var(--color-yep-chat-primary-text);
     background: var(--color-yep-chat-prompt-background);
     border-radius: 0;
     overflow-y: auto;
