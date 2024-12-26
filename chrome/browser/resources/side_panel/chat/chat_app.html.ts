@@ -70,7 +70,7 @@ export function getHtml(this: ChatAppElement) {
                                                     </div>
                                                     ${getQueryPromptSection(conversation.query)}
                                                 </article>` : html`
-                                                <article class="query-prompt-container content-fit-width">
+                                                <article class="query-prompt-container content-fit-width top-padding">
                                                     ${getQueryPromptSection(conversation.query)}
                                                 </article>`
                                             }
