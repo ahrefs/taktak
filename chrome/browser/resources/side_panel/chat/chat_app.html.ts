@@ -45,6 +45,11 @@ function getConversationResponseElement(conversation: conversationRecord) {
         </article>` : html``;
 }
 
+function getQueryPromptSection(query: string) {
+    return html`
+        <div class="prompt-section" .innerHTML="${getTrustedHTML("<pre>" + query + "</pre>")}"></div>`;
+}
+
 export function getHtml(this: ChatAppElement) {
     return html`
         <div id="container">
@@ -63,10 +68,10 @@ export function getHtml(this: ChatAppElement) {
                                                             <div class="siteinfo-url">${conversation.url}</div>
                                                         </div>
                                                     </div>
-                                                    <div class="prompt-section">${conversation.query}</div>
+                                                    ${getQueryPromptSection(conversation.query)}
                                                 </article>` : html`
                                                 <article class="query-prompt-container content-fit-width">
-                                                    <div class="prompt-section">${conversation.query}</div>
+                                                    ${getQueryPromptSection(conversation.query)}
                                                 </article>`
                                             }
                                             ${getConversationResponseElement.bind(this)(conversation)}`
@@ -114,6 +119,7 @@ export function getHtml(this: ChatAppElement) {
                 <div class="typing-content">
                     <div class="prompt-input">
                         <chat-prompt-input
+                                id="promptInput"
                                 .placeholder=${this.askAnythingLabel_ ?? ""}
                                 .value=${this.query_ ?? ""}
                                 .autofocus=${true}

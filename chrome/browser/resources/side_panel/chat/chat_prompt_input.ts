@@ -104,6 +104,10 @@ export class ChatPromptInputElement extends CrLitElement {
         this.$.input.focus();
     }
 
+    resetToAutoHeight() {
+        this.$.input.style.height = 'auto';
+    }
+
     protected async onInputChange_(e: Event) {
         // Ensure that |value| has been updated before re-firing 'change'.
         await this.updateComplete;
@@ -118,7 +122,7 @@ export class ChatPromptInputElement extends CrLitElement {
             } else {
                 e.stopPropagation();
                 e.preventDefault(); // Prevent adding a new line
-                this.$.input.style.height = 'auto';
+                this.resetToAutoHeight();
                 this.fire('enter', {value: this.value});
             }
         }

@@ -7,7 +7,6 @@ import '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
 import '//resources/cr_elements/cr_dialog/cr_dialog.js';
 import {ColorChangeUpdater} from 'chrome://resources/cr_components/color_change_listener/colors_css_updater.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
-import type {CrActionMenuElement} from '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
 import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
@@ -15,6 +14,7 @@ import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
 import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo} from "./chat.mojom-webui.js";
 import {marked} from "./marked.js";
+import type {ChatPromptInputElement} from "./chat_prompt_input";
 import './chat_prompt_input.js';
 import './action_menu.js';
 
@@ -32,7 +32,7 @@ export type conversationRecord = {
 
 export interface ChatAppElement {
     $: {
-        socialPostMenu: CrActionMenuElement,
+        promptInput: ChatPromptInputElement,
     };
 }
 
@@ -110,7 +110,6 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private async updateSubmitResponse(response: ActionResponse) {
-        // todo: to properly display error message
         if (response.responseType == ResponseType.DELTA) {
             this.completionResult_ += response.result;
         } else if (response.responseType == ResponseType.COMPLETED) {
@@ -121,8 +120,8 @@ export class ChatAppElement extends CrLitElement {
             // this is to examine response when non-SSE chunk is received.
             console.log("Before marked:\n" + this.completionResult_);
             console.log("After marked:\n" + marked.parse(this.completionResult_, {async: false}));
-
         } else if (response.responseType == ResponseType.ERROR) {
+            // todo: to properly display error message
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
         }
@@ -189,7 +188,8 @@ export class ChatAppElement extends CrLitElement {
             } else {
                 // this branch should not be reached
                 this.conversations_.push({
-                    query: "", shouldDisplaySiteInfo: false,
+                    query: "",
+                    shouldDisplaySiteInfo: false,
                     title,
                     url,
                     response,
@@ -241,6 +241,7 @@ export class ChatAppElement extends CrLitElement {
             response: ""
         });
         this.query_ = "";
+        this.$.promptInput.resetToAutoHeight();
 
         this.isSubmittingQuery_ = true;
         setTimeout(() =>

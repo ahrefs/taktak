@@ -3,24 +3,12 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "base/containers/contains.h"
-#include "base/containers/fixed_flat_set.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
-#include "chrome/browser/ui/webui/side_panel/chat/api/completion_api_client.h"
 #include "chrome/grit/generated_resources.h"
-#include "chrome/renderer/chat/page_content_extractor.h"
-#include "content/public/browser/browser_context.h"
-#include "content/public/browser/browser_thread.h"
 #include "content/public/browser/storage_partition.h"
-#include "content/public/browser/web_contents.h"
-#include "content/public/browser/web_contents_user_data.h"
-#include "content/public/browser/web_ui.h"
-#include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
 #include "ui/base/l10n/l10n_util.h"
-#include "url/gurl.h"
 
 ChatPageHandler::ChatPageHandler(
     mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
@@ -42,7 +30,6 @@ ChatPageHandler::ChatPageHandler(
           ->GetURLLoaderFactoryForBrowserProcess();
   api_client_ =
       std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
-  VLOG(0) << "ChatPageHandler created";
 }
 
 ChatPageHandler::~ChatPageHandler() = default;
@@ -142,8 +129,6 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
       l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST);
 
   if (page_.is_bound()) {
-    DVLOG(0) << action_type;
-
     if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
       page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
           &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
@@ -169,7 +154,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
           action_type, draft_social_media_post_prompt + " " + action_param));
     } else {
       // this branch should not be reached because all the action items are
-      // handled above blocks
+      // handled in above blocks
     }
     }
 }
