@@ -242,6 +242,7 @@ export class ChatAppElement extends CrLitElement {
         });
         this.query_ = "";
         this.$.promptInput.resetToAutoHeight();
+        this.$.promptInput.focusInput();
 
         this.isSubmittingQuery_ = true;
         setTimeout(() =>

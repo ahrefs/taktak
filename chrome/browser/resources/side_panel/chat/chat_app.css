@@ -247,30 +247,40 @@
     flex-grow: 1;
 }
 
-.typing-content .send-btn {
-    display: block;
-    width: 22px;
-    height: 22px;
+.send-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
     border: none;
     cursor: pointer;
     padding: 0;
     margin: 0;
     border-radius: 50%;
-    background: var(--color-yep-chat-tertiary-text);
-    transition: background-color 0.3s ease;
+    color: var(--color-yep-chat-send-button-background);
+    background-color: var(--color-yep-chat-send-button-foreground);
 }
 
-.typing-content .send-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
+.send-icon-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
 }
 
-.typing-content .send-btn .send-btn-icon {
-    display: block;
+.send-icon {
+    top: 2px;
+    left: 2px;
     width: 22px;
     height: 22px;
-    border-radius: 50%;
-    color: white;
+}
+
+.send-btn:disabled {
+    cursor: not-allowed;
+    color: var(--color-yep-chat-tertiary-text);
 }
 
 .conversation-content .message-markdown-container {

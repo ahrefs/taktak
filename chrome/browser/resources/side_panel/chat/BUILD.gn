@@ -18,7 +18,11 @@ build_webui("build") {
     "action_menu.html.ts",
   ]
 
-  css_files = [ "chat_app.css", "chat_prompt_input.css", "action_menu.css" ]
+  css_files = [
+    "chat_app.css",
+    "chat_prompt_input.css",
+    "action_menu.css",
+  ]
 
   mojo_files_deps = [
     "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings_ts__generator",
@@ -31,7 +35,6 @@ build_webui("build") {
   ts_composite = true
 
   ts_deps = [
-    "../shared:build_ts",
     "//third_party/lit/v3_0:build_ts",
     "//ui/webui/resources/cr_components/color_change_listener:build_ts",
     "//ui/webui/resources/cr_elements:build_ts",
