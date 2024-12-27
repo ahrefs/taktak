@@ -115,6 +115,7 @@ export class ChatAppElement extends CrLitElement {
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
+            setTimeout(() => this.$.promptInput.focusInput(), 0);
 
             // todo: to delete later
             // this is to examine response when non-SSE chunk is received.
@@ -124,6 +125,7 @@ export class ChatAppElement extends CrLitElement {
             // todo: to properly display error message
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
+            setTimeout(() => this.$.promptInput.focusInput(), 0);
         }
     }
 
