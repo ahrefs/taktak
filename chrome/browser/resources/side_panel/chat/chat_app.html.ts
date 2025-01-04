@@ -47,7 +47,7 @@ function getConversationResponseElement(conversation: conversationRecord) {
 
 function getQueryPromptSection(query: string) {
     return html`
-        <div class="prompt-section" .innerHTML="${getTrustedHTML("<pre>" + query + "</pre>")}"></div>`;
+        <div class="prompt-section">${query}</div>`;
 }
 
 export function getHtml(this: ChatAppElement) {

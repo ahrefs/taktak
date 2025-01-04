@@ -30,7 +30,6 @@ export class ChatApiProxyImpl implements ChatApiProxy {
     private handler: PageHandlerRemote = new PageHandlerRemote();
 
     constructor() {
-        console.log('ChatApiProxyImpl');
         this.callbackRouter = new PageCallbackRouter();
         this.handler = new PageHandlerRemote();
         const factory = PageHandlerFactory.getRemote();
