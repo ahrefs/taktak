@@ -166,7 +166,7 @@ void ChatPageHandler::OnPageContentExtracted(
   std::string max_content = content;
 
   //Note: This max tokens seems message + completion.
-  const size_t max_tokens = 32768;
+  const size_t max_tokens = 80'000;
   if (content.length() > max_tokens) {
     max_content = content.substr(0, max_tokens);
   }

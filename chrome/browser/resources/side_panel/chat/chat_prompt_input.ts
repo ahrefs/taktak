@@ -124,19 +124,22 @@ export class ChatPromptInputElement extends CrLitElement {
             } else {
                 e.stopPropagation();
                 e.preventDefault(); // Prevent adding a new line
-                this.resetToAutoHeight();
-                textarea.style.paddingTop = '0';
-                this.fire('enter', {value: this.value});
+                const maxLength = this.maxlength === undefined ? Infinity : this.maxlength;
+                if (this.value.length <= maxLength) {
+                    this.resetToAutoHeight();
+                    textarea.style.paddingTop = '0';
+                    this.fire('enter', {value: this.value});
+                }
             }
         }
     }
 
     // Display a vertical scrollbar when the content exceeds 10 lines
     protected onInput_(e: Event) {
-        const textarea = this.$.input;
-
         this.internalValue_ = (e.target as HTMLInputElement).value;
         this.value = this.internalValue_;
+
+        const textarea = this.$.input;
         if (this.value === ""){
             textarea.style.paddingTop = '0';
         }

@@ -62,6 +62,9 @@ export class ChatAppElement extends CrLitElement {
     protected promptForActionType_: string = "";
     protected isSubmittingQuery_: boolean = false;
     protected shouldDisplayChatAboutThisPageButton_: boolean = false;
+    protected exceedMaxTokenCountErrorMessages_: string = "";
+    protected hasExceededMaxTokenCount_: boolean = false;
+    protected maxPromptInputLength_: number = 80_000;
 
     constructor() {
         super();
@@ -96,6 +99,9 @@ export class ChatAppElement extends CrLitElement {
             promptForActionType_: {type: String},
             isSubmittingQuery_: {type: Boolean},
             shouldDisplayChatAboutThisPageButton_: {type: Boolean},
+            exceedMaxLengthErrorMessages_: {type: String},
+            hasExceededMaxTokenCount: {type: Boolean},
+            maxPromptInputLength_: {type: Number},
         };
     }
 
@@ -204,11 +210,19 @@ export class ChatAppElement extends CrLitElement {
 
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {
         this.query_ = e.detail.value;
+
+        if (this.query_.length > this.maxPromptInputLength_) {
+            this.exceedMaxTokenCountErrorMessages_ = loadTimeData.getString("promptExceedMaxTokenCount") + " - " + this.query_.length + "/" + this.maxPromptInputLength_ + ".";
+            this.hasExceededMaxTokenCount_ = true;
+        } else {
+            this.exceedMaxTokenCountErrorMessages_ = "";
+            this.hasExceededMaxTokenCount_ = false;
+        }
     }
 
     protected onSetAndSubmitQuery_(e: CustomEvent<{ value: string }>) {
         this.query_ = e.detail.value;
-        if (this.query_ != "") {
+        if (this.query_ !== "" && !this.hasExceededMaxTokenCount_) {
             this.onSubmitQuery_().then();
         }
     }

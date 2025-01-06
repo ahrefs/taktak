@@ -14,7 +14,6 @@ export function getHtml(this: ChatPromptInputElement) {
                   @change="${this.onInputChange_}"
                   @keydown="${this.onKeydown_}"
                   ?disabled="${this.disabled}" 
-                  maxlength="${this.maxlength}"
                   ?readonly="${this.readonly}" 
                   ?required="${this.required}"
                   placeholder="${this.placeholder || nothing}">

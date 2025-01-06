@@ -868,6 +868,7 @@
   E_CPONLY(kColorYepChatTertiaryText) \
   E_CPONLY(kColorYepChatSendButtonBackground) \
   E_CPONLY(kColorYepChatSendButtonForeground) \
+  E_CPONLY(kColorYepChatError) \
 
 #if BUILDFLAG(IS_CHROMEOS)
 #define CHROME_PLATFORM_SPECIFIC_COLOR_IDS \

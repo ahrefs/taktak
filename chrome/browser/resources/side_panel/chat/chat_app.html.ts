@@ -60,7 +60,7 @@ export function getHtml(this: ChatAppElement) {
                                 return conversation.query.length > 0
                                         ? html`
                                             ${conversation.shouldDisplaySiteInfo ? html`
-                                                <article class="query-prompt-container auto-width">
+                                                <article class="query-prompt-container auto-width-with-padding">
                                                     <div class="siteinfo-container">
                                                         <div class="vertical-bar"></div>
                                                         <div class="siteinfo-content">
@@ -123,12 +123,14 @@ export function getHtml(this: ChatAppElement) {
                                 .placeholder=${this.askAnythingLabel_ ?? ""}
                                 .value=${this.query_ ?? ""}
                                 .autofocus=${true}
+                                .maxlength=${this.maxPromptInputLength_}
                                 ?disabled=${this.isSubmittingQuery_}
                                 @value-changed=${this.onPromptInputChange_}
                                 @enter=${this.onSetAndSubmitQuery_}>
                         </chat-prompt-input>
                     </div>
-                    <button class="send-btn" ?disabled="${this.query_ == "" && !this.isSubmittingQuery_}"
+                    <button class="send-btn"
+                            ?disabled="${(this.query_ == "" && !this.isSubmittingQuery_) || this.hasExceededMaxTokenCount_}"
                             @click="${this.onSubmitQuery_}">
                         <div class="send-icon-container">
                             <cr-iconset name="query">
@@ -141,10 +143,16 @@ export function getHtml(this: ChatAppElement) {
                                     </g>
                                 </svg>
                             </cr-iconset>
-                            <cr-icon icon="${this.isSubmittingQuery_ ? 'query:stop' : 'query:send'}" class="send-icon"></cr-icon>
+                            <cr-icon icon="${this.isSubmittingQuery_ ? 'query:stop' : 'query:send'}"
+                                     class="send-icon"></cr-icon>
                         </div>
                     </button>
                 </div>
             </div>
+            ${
+                    this.hasExceededMaxTokenCount_
+                            ? html`<div id="error">${this.exceedMaxTokenCountErrorMessages_}</div>`
+                            : html``
+            }
         </div>`;
 }

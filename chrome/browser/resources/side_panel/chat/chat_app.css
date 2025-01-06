@@ -169,8 +169,9 @@
     background: var(--color-yep-chat-prompt-background);
 }
 
-.auto-width {
+.auto-width-with-padding {
     width: auto;
+    padding-top: 12px;
 }
 
 .content-fit-width {
@@ -239,6 +240,13 @@
 .typing-content .prompt-input {
     display: block;
     flex-grow: 1;
+}
+
+#error {
+    display: block;
+    font-size: 11px;
+    padding: 6px 12px 12px 12px;
+    color: var(--color-yep-chat-error);
 }
 
 .send-btn {

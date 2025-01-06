@@ -9018,6 +9018,9 @@ Keep your key file in a safe place. You will need it to create new versions of y
       <message name="IDS_CHAT_CHAT_ABOUT_THIS_PAGE" desc="Use in the chat prompt input box.">
         Chat about this page
       </message>
+      <message name="IDS_CHAT_PROMPT_INPUT_EXCEED" desc="Use to display the error message when prompt exceeds max length.">
+        Your message is too long
+      </message>
 
       <!-- Side panel strings -->
       <message name="IDS_ACCNAME_SIDE_PANEL_RESIZE" is_accessibility_with_no_ui="true" desc="Screen reader announcement when the side panel resize handle is focused.">

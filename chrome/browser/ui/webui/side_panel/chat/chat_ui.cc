@@ -87,6 +87,7 @@ ChatUI::ChatUI(content::WebUI* web_ui)
         {"promptSocialMediaPost", IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST},
         {"translateLanguages", IDS_CHAT_TRANSLATE_LANGS} ,
         {"socialMedias", IDS_CHAT_SOCIAL_MEDIAS},
+        {"promptExceedMaxTokenCount", IDS_CHAT_PROMPT_INPUT_EXCEED},
     };
 
     for (const auto& str : kLocalizedStrings)
