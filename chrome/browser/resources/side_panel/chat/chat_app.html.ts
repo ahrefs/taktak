@@ -42,7 +42,7 @@ function getConversationResponseElement(conversation: conversationRecord) {
     return conversation.response.length > 0 ? html`
         <article class="message-markdown-container"
                  .innerHTML="${getTrustedHTML(conversation.response)}">
-        </article>` : html`<div class="vertical-space"></div>`;
+        </article>` : html``;
 }
 
 function getQueryPromptSection(query: string) {
