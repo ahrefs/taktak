@@ -178,6 +178,8 @@ namespace api_request_helper {
             int current_decoding_operation_count_ = 0;
             bool request_is_finished_ = false;
 
+            std::string previous_invalid_piece_of_response_chunk_;
+
             const scoped_refptr<base::SequencedTaskRunner> task_runner_;
 
             base::WeakPtrFactory<URLLoaderHandler> weak_ptr_factory_{this};

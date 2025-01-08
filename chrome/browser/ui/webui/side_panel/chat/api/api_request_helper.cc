@@ -300,10 +300,11 @@ namespace api_request_helper {
     }
 
     APIRequestHelper::URLLoaderHandler::URLLoaderHandler(
-            APIRequestHelper* api_request_helper,
-            scoped_refptr<base::SequencedTaskRunner> task_runner)
-            : api_request_helper_(api_request_helper),
-              task_runner_(std::move(task_runner)) {}
+        APIRequestHelper* api_request_helper,
+        scoped_refptr<base::SequencedTaskRunner> task_runner)
+        : api_request_helper_(api_request_helper),
+          previous_invalid_piece_of_response_chunk_(""),
+          task_runner_(std::move(task_runner)) {}
 
     APIRequestHelper::URLLoaderHandler::~URLLoaderHandler() = default;
 
@@ -446,27 +447,64 @@ namespace api_request_helper {
             std::string_view string_piece) {
         // New chunks should only be received before the request is completed
         DCHECK(!request_is_finished_);
+
         // We split the string into multiple chunks because there are cases where
         // multiple chunks are received in a single call.
         std::vector<std::string_view> stream_data = base::SplitStringPiece(
                 string_piece, "\r\n", base::KEEP_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
+        DVLOG(0) << "StringPiece(string_view): " << string_piece;
 
-        // Remove SSE events that don't look like JSON - could be string or [DONE]
-        // message.
-        // TODO: Parse both JSON and string values. The below currently
-        // only identifies JSON values.
         static constexpr char kDataPrefix[] = "data: {";
-        std::erase_if(stream_data, [](std::string_view item) {
-            DVLOG(0) << "Received chunk: " << item;
-            if (!base::StartsWith(item, kDataPrefix)) {
-                // This is useful to log in case an API starts
-                // coming back with unknown data type in some
-                // scenarios.
-                VLOG(0) << "Data did not start with SSE prefix";
+        static constexpr char kDataSuffix[] = "}]}";
+
+        auto first =
+            std::find_if(
+                stream_data.begin(), stream_data.end(),
+                [](std::string_view item) {
+                  if (!base::StartsWith(item, kDataPrefix)) {
+                    DVLOG(0)
+                        << "Chunk doesn't start with SSE prefix. Invalid JSON.";
+                    DVLOG(0) << "Invalid Chunk: " << item;
+                    return true;
+                  }
+                  return false;
+                });
+
+        if (first != stream_data.end()) {
+          DVLOG(0) << "First chunk of response is invalid JSON." << *first;
+          if (!previous_invalid_piece_of_response_chunk_.empty()) {
+            auto f = std::string(*first);
+            std::string combined_chunk =
+                std::move(previous_invalid_piece_of_response_chunk_).append(f);
+            stream_data[0] = std::move(combined_chunk);
+            previous_invalid_piece_of_response_chunk_ = "";
+            DVLOG(0) << "Replaced invalid chunk with valid one: "
+                     << combined_chunk;
+          }
+        }
+
+        auto last = std::find_if(
+            stream_data.rbegin(), stream_data.rend(),
+            [](std::string_view item) {
+              if (base::StartsWith(item, kDataPrefix) &&
+                  !base::EndsWith(item, kDataSuffix)) {
+                DVLOG(0) << "Chunk starts with SSE prefix but doesn't end with "
+                            "SSE suffix. Invalid JSON.";
+                DVLOG(0) << "Invalid Chunk: " << item;
                 return true;
-            }
-            return false;
-        });
+              }
+              return false;
+            });
+
+        if (last != stream_data.rend()) {
+          auto l = std::string(*last);
+          previous_invalid_piece_of_response_chunk_ = std::move(l);
+          DVLOG(0) << "Last chunk of response is invalid JSON."
+                   << previous_invalid_piece_of_response_chunk_;
+
+          std::erase_if(stream_data,
+                        [&l](std::string_view item) { return item == l; });
+        }
 
         // Keep track of number of in-progress data decoding operations
         // so that we can know if any are still in-progress when the request
