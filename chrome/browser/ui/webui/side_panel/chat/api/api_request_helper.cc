@@ -335,15 +335,6 @@ namespace api_request_helper {
         return weak_ptr_factory_.GetWeakPtr();
     }
 
-    void APIRequestHelper::URLLoaderHandler::send_sse_data_for_testing(
-            std::string_view string_piece,
-            bool is_sse,
-            DataReceivedCallback callback) {
-        is_sse_ = is_sse;
-        data_received_callback_ = std::move(callback);
-        OnDataReceived(string_piece, base::BindOnce([]() {}));
-    }
-
     void APIRequestHelper::URLLoaderHandler::ParseJsonImpl(
             std::string json,
             base::OnceCallback<void(ValueOrError)> callback) {

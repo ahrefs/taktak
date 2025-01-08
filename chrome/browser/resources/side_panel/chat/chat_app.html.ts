@@ -42,7 +42,7 @@ function getConversationResponseElement(conversation: conversationRecord) {
     return conversation.response.length > 0 ? html`
         <article class="message-markdown-container"
                  .innerHTML="${getTrustedHTML(conversation.response)}">
-        </article>` : html``;
+        </article>` : html`<div class="vertical-space"></div>`;
 }
 
 function getQueryPromptSection(query: string) {
@@ -120,9 +120,9 @@ export function getHtml(this: ChatAppElement) {
                     <div class="prompt-input">
                         <chat-prompt-input
                                 id="promptInput"
-                                .placeholder=${this.askAnythingLabel_ ?? ""}
-                                .value=${this.query_ ?? ""}
                                 .autofocus=${true}
+                                .value=${this.query_ ?? ""}
+                                .placeholder=${this.askAnythingLabel_ ?? ""}
                                 .maxlength=${this.maxPromptInputLength_}
                                 ?disabled=${this.isSubmittingQuery_}
                                 @value-changed=${this.onPromptInputChange_}
@@ -131,7 +131,7 @@ export function getHtml(this: ChatAppElement) {
                     </div>
                     <button class="send-btn"
                             ?disabled="${(this.query_ == "" && !this.isSubmittingQuery_) || this.hasExceededMaxTokenCount_}"
-                            @click="${this.onSubmitQuery_}">
+                            @click="${ this.isSubmittingQuery_ ? this.onCancelQuery_ : this.onSubmitQuery_}">
                         <div class="send-icon-container">
                             <cr-iconset name="query">
                                 <svg>

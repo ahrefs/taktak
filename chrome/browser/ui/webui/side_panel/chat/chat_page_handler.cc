@@ -130,25 +130,30 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
 
   if (page_.is_bound()) {
     if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
+      isPageContentExtracting = true;
       page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
           &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
           action_type, summarize_prompt));
 
     } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
+      isPageContentExtracting = true;
       page_content_extractor_helper_->ExtractPageContent(
           base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                          base::Unretained(this), action_type, explain_prompt));
 
     } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
+      isPageContentExtracting = true;
       page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
           &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
           action_type, fact_check_prompt));
     } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
+      isPageContentExtracting = true;
       page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
           &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
           action_type, translate_to_prompt + " " + action_param));
     } else if (action_type ==
                chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
+      isPageContentExtracting = true;
       page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
           &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
           action_type, draft_social_media_post_prompt + " " + action_param));
@@ -163,20 +168,24 @@ void ChatPageHandler::OnPageContentExtracted(
     chat::mojom::ActionType action_type,
     const std::string& prompt,
     std::string content) {
-  std::string max_content = content;
+  isPageContentExtracting = false;
 
-  //Note: This max tokens seems message + completion.
-  const size_t max_tokens = 80'000;
-  if (content.length() > max_tokens) {
-    max_content = content.substr(0, max_tokens);
+  if (!isQueryCancelling) {
+      std::string max_content = content;
+      const size_t max_tokens = 80'000;
+      if (content.length() > max_tokens) {
+          max_content = content.substr(0, max_tokens);
+      }
+
+      api_client_->QueryPrompt(
+              prompt + max_content,
+              base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                             base::Unretained(this), action_type),
+              base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                                  base::Unretained(this), action_type));
+  } else {
+      isQueryCancelling = false;
   }
-
-  api_client_->QueryPrompt(
-      prompt + max_content,
-      base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
-                     base::Unretained(this), action_type),
-      base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
-                          base::Unretained(this), action_type));
 }
 
 void ChatPageHandler::SubmitQueryCallback(chat::mojom::ActionType action_type,
@@ -214,4 +223,12 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std
                      base::Unretained(this), action_type),
       base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
                           base::Unretained(this), action_type));
+}
+
+void ChatPageHandler::CancelQuery() {
+  // This is used in case the active page content is being extracted
+  // while the query is cancelled.
+  isQueryCancelling = true;
+
+  api_client_->ClearAllQueries();
 }

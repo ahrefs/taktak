@@ -223,11 +223,11 @@ export class ChatAppElement extends CrLitElement {
     protected onSetAndSubmitQuery_(e: CustomEvent<{ value: string }>) {
         this.query_ = e.detail.value;
         if (this.query_ !== "" && !this.hasExceededMaxTokenCount_) {
-            this.onSubmitQuery_().then();
+            this.onSubmitQuery_();
         }
     }
 
-    protected async onSubmitQuery_() {
+    protected onSubmitQuery_() {
         if (this.completionResult_ && this.completionResult_.length > 0) {
             if (this.conversations_ != null) {
                 if (this.conversations_.length == 0) {
@@ -263,6 +263,15 @@ export class ChatAppElement extends CrLitElement {
         this.isSubmittingQuery_ = true;
         setTimeout(() =>
             this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? ""), 0);
+    }
+
+    protected onCancelQuery_() {
+        this.query_ = "";
+        this.submittedQuery_ = "";
+        this.isSubmittingQuery_ = false;
+        this.$.promptInput.resetToAutoHeight();
+        this.$.promptInput.focusInput();
+        setTimeout(() => this.chatApiProxy_.cancelQuery(), 0);
     }
 
     refreshColorCss() {

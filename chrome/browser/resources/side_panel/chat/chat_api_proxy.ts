@@ -20,6 +20,8 @@ export interface ChatApiProxy {
 
     closeUI(): void;
 
+    cancelQuery(): void;
+
     getCallbackRouter(): PageCallbackRouter;
 }
 
@@ -68,6 +70,10 @@ export class ChatApiProxyImpl implements ChatApiProxy {
 
     closeUI() {
         this.handler.closeUI();
+    }
+
+    cancelQuery() {
+        this.handler.cancelQuery();
     }
 
     getCallbackRouter() {

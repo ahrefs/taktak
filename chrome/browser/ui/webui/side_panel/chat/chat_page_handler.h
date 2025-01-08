@@ -67,6 +67,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
       chat::mojom::ActionType action_type,
       base::expected<std::string, chat::mojom::APIErrorType> result);
 
+  void CancelQuery() override;
+
   base::WeakPtr<ChatPageHandler> GetWeakPtr();
 
  private:
@@ -83,6 +85,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
   std::unique_ptr<PageContentExtractorHelper> page_content_extractor_helper_ =
       nullptr;
+  bool isPageContentExtracting = false;
+  bool isQueryCancelling = false;
   base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
 

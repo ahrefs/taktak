@@ -51,7 +51,7 @@
 
 .conversation-content .message-markdown-container {
     display: block;
-    padding: 10px 12px;
+    padding: 6px 12px 10px 12px;
 }
 
 .chat-about-this-page-container {
@@ -167,6 +167,10 @@
     padding: 0px 12px 10px 12px;
     border-radius: 8px;
     background: var(--color-yep-chat-prompt-background);
+}
+
+.vertical-space {
+    padding-top: 2px;
 }
 
 .auto-width-with-padding {

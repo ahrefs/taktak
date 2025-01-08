@@ -82,6 +82,8 @@ interface PageHandler {
 
   // Notify the backend that the dialog should be closed.
   CloseUI();
+
+  CancelQuery();
 };
 
 // WebUI-side handler for requests from the browser.
