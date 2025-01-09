@@ -55,11 +55,12 @@ class PageContentExtractor
   void ExtractPageText(
       content::RenderFrame* render_frame,
       int32_t isolated_world_id,
-      base::OnceCallback<void(const std::optional<std::string>& text)>);
+      base::OnceCallback<void(const std::optional<std::string>& text, const std::optional<std::string>& url)>);
 
   void OnPageTextExtracted(
       chat::mojom::PageContentExtractor::ExtractPageContentCallback callback,
-      const std::optional<std::string>& text);
+      const std::optional<std::string>& text,
+      const std::optional<std::string>& url);
 
   base::WeakPtrFactory<PageContentExtractor> weak_ptr_factory_{this};
 };

@@ -143,7 +143,7 @@ void PageContentExtractor::BindReceiver(
 
 void PageContentExtractor::ExtractPageContent(
     chat::mojom::PageContentExtractor::ExtractPageContentCallback callback) {
-  DVLOG(0) << __func__ << " The current page will be extracted for Yep Chat.";
+  DVLOG(0) << __func__ << "The current page will be extracted for Yep Chat.";
   ExtractPageText(
       render_frame(), isolated_world_id_,
       base::BindOnce(&PageContentExtractor::OnPageTextExtracted,
@@ -153,7 +153,7 @@ void PageContentExtractor::ExtractPageContent(
 void PageContentExtractor::ExtractPageText(
     content::RenderFrame* render_frame,
     int32_t isolated_world_id,
-    base::OnceCallback<void(const std::optional<std::string>&)> callback) {
+    base::OnceCallback<void(const std::optional<std::string>&, const std::optional<std::string>&)> callback) {
   auto snapshotter = render_frame->CreateAXTreeSnapshotter(
       ui::AXMode::kWebContents | ui::AXMode::kHTML | ui::AXMode::kScreenReader);
   ui::AXTreeUpdate snapshot;
@@ -187,20 +187,33 @@ void PageContentExtractor::ExtractPageText(
   std::string contents_text =
       base::UTF16ToUTF8(base::JoinString(text_node_contents, u" "));
 
-  if (contents_text.empty()) {
     blink::WebLocalFrame* main_frame = render_frame->GetWebFrame();
+    // Retrieve the current URL
+    blink::WebURL web_url = main_frame->GetDocumentLoader()->GetUrl();
+
+    // Convert to GURL for convenience
+    GURL url(web_url);
+
+//    if (url.is_valid()) {
+//        LOG(INFO) << "Current URL: " << url.spec();
+//    } else {
+//        LOG(INFO) << "Invalid URL.";
+//    }
+
+  if (contents_text.empty()) {
+
     v8::HandleScope handle_scope(
         main_frame->GetAgentGroupScheduler()->Isolate());
     blink::WebScriptSource source = blink::WebScriptSource(
         blink::WebString::FromASCII("document.body.innerText"));
 
     auto on_script_executed =
-        [](base::OnceCallback<void(const std::optional<std::string>&)> callback,
-           std::optional<base::Value> value, base::TimeTicks start_time) {
+        [](base::OnceCallback<void(const std::optional<std::string>&, const std::optional<std::string>&)> callback,
+           std::string url, std::optional<base::Value> value, base::TimeTicks start_time) {
           if (value && value->is_string()) {
-            std::move(callback).Run(value->GetString());
+            std::move(callback).Run(value->GetString(), url);
           } else {
-            std::move(callback).Run({});
+            std::move(callback).Run("", "");
           }
         };
 
@@ -209,18 +222,20 @@ void PageContentExtractor::ExtractPageText(
         blink::mojom::UserActivationOption::kDoNotActivate,
         blink::mojom::EvaluationTiming::kAsynchronous,
         blink::mojom::LoadEventBlockingOption::kDoNotBlock,
-        base::BindOnce(on_script_executed, std::move(callback)),
+        base::BindOnce(on_script_executed, std::move(callback), url.spec()),
         blink::BackForwardCacheAware::kAllow,
         blink::mojom::WantResultOption::kWantResult,
         blink::mojom::PromiseResultOption::kAwait);
   } else {
-    std::move(callback).Run(std::move(contents_text));
+    // todo: to test this path
+      std::move(callback).Run(std::move(contents_text), std::move(url.spec()));
   }
 }
 
 void PageContentExtractor::OnPageTextExtracted(
     chat::mojom::PageContentExtractor::ExtractPageContentCallback callback,
-    const std::optional<std::string>& content) {
-  std::move(callback).Run(std::move(content));
+    const std::optional<std::string>& content,
+    const std::optional<std::string>& url) {
+  std::move(callback).Run(std::move(content), std::move(url));
 }
 }  // namespace ai_chat

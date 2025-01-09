@@ -44,12 +44,10 @@ namespace {
     std::string CreateJSONRequestBody(const std::vector<std::string>& prompt) {
         base::Value::Dict dict;
         dict.Set("stream", true);
-        // dict.Set("max_tokens", 1280);
-        dict.Set("max_tokens", 2000);
+        dict.Set("max_tokens", 1280);
         dict.Set("top_p", 0.7);
         dict.Set("temperature", 0.6);
         dict.Set("model", "Mixtral-8x7B-Instruct-v0.1");
-        //  dict.Set("stop_sequences", std::move(stop_sequences));
 
         base::Value::List prompt_messages;
         for (const auto& item : prompt) {

@@ -33,7 +33,7 @@ class PageContentExtractorInternal {
 
     void Start(
         mojo::Remote<chat::mojom::PageContentExtractor> content_extractor,
-        base::OnceCallback<void(std::string content)> callback) {
+        base::OnceCallback<void(std::string content, std::string url)> callback) {
       content_extractor_ = std::move(content_extractor);
       if (!content_extractor_) {
         DeleteSelf();
@@ -55,8 +55,9 @@ class PageContentExtractorInternal {
     }
 
     void OnPageContentExtracted(
-        base::OnceCallback<void(std::string content)> callback,
-        const std::optional<std::string>& content) {
+        base::OnceCallback<void(std::string content, std::string url)> callback,
+        const std::optional<std::string>& content,
+        const std::optional<std::string>& url) {
       if (!content.has_value()) {
         DVLOG(0) << __func__ << "Extracted content is null.";
         SendResultAndDeleteSelf(std::move(callback));
@@ -69,16 +70,29 @@ class PageContentExtractorInternal {
         return;
       }
 
+      if (!url.has_value()) {
+            DVLOG(0) << __func__ << "url to extract content is null.";
+            SendResultAndDeleteSelf(std::move(callback));
+            return;
+        }
+
+        if (url->empty()) {
+            DVLOG(0) << __func__ << "url to extract content is empty.";
+            SendResultAndDeleteSelf(std::move(callback));
+            return;
+        }
+
       DVLOG(0) << __func__ << "extracted page content: " << content.value();
-      SendResultAndDeleteSelf(std::move(callback), content.value());
+      DVLOG(0) << __func__ << "url of the extracted page content: " << url.value();
+      SendResultAndDeleteSelf(std::move(callback), content.value(), url.value());
     }
 
  private:
   void DeleteSelf() { delete this; }
 
-  void SendResultAndDeleteSelf(base::OnceCallback<void(std::string content)> callback,
-                               std::string content = "") {
-    std::move(callback).Run(content);
+  void SendResultAndDeleteSelf(base::OnceCallback<void(std::string content, std::string url)> callback,
+                               std::string content = "", std::string url = "") {
+    std::move(callback).Run(content, url);
     delete this;
   }
 
@@ -94,7 +108,7 @@ PageContentExtractorHelper::PageContentExtractorHelper(
 PageContentExtractorHelper::~PageContentExtractorHelper() = default;
 
 void PageContentExtractorHelper::ExtractPageContent(
-    base::OnceCallback<void(std::string content)> callback) {
+    base::OnceCallback<void(std::string content, std::string url)> callback) {
   auto* primary_rfh = web_contents_->GetPrimaryMainFrame();
   DCHECK(primary_rfh->IsRenderFrameLive());
 

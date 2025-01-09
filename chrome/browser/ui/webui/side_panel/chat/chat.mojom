@@ -35,7 +35,7 @@ struct SiteInfo {
   // The title of the currently active tab, if it has an open page
   string? title;
 
-  // The url of the currently active tab if it has opening page or probaly file which we might support in future
+  // The url of the currently active tab if it has opening page
   string? url;
 
   // Indicates whether the current URL contains content that can be used in conversations with Yep Chat
@@ -75,7 +75,7 @@ interface PageHandler {
   SubmitAction(ActionType action_type, string param);
 
   // Usual conversation
-  SubmitQuery(ActionType action_type, string query);
+  SubmitQuery(ActionType action_type, string query, string url);
 
   // Notify the backend that the UI is ready to be shown.
   ShowUI();

@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/grit/generated_resources.h"
@@ -167,18 +168,22 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
 void ChatPageHandler::OnPageContentExtracted(
     chat::mojom::ActionType action_type,
     const std::string& prompt,
-    std::string content) {
+    std::string content,
+    std::string url) {
   isPageContentExtracting = false;
 
-  if (!isQueryCancelling) {
-      std::string max_content = content;
-      const size_t max_tokens = 80'000;
-      if (content.length() > max_tokens) {
-          max_content = content.substr(0, max_tokens);
-      }
+  std::string max_content = content;
+  const size_t max_length = 90'000;
+  if (content.length() > max_length) {
+    max_content = content.substr(0, max_length);
+  }
+  if (!url.empty()) {
+      extracted_content_cache_[url] = max_content;
+  }
 
+  if (!isQueryCancelling) {
       api_client_->QueryPrompt(
-              prompt + max_content,
+              prompt + ":" + max_content /* todo: to create a structure for properly passing */,
               base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
                              base::Unretained(this), action_type),
               base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
@@ -186,6 +191,33 @@ void ChatPageHandler::OnPageContentExtracted(
   } else {
       isQueryCancelling = false;
   }
+}
+
+void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query, const std::string& url) {
+    // chat_page_handler will cache extracted content from the page
+    // completion_api_client will cache queries and completions
+
+    if (extracted_content_cache_.contains(url)) {
+        auto previous_content = extracted_content_cache_[url];
+        api_client_->QueryPrompt(
+                query + ":" + previous_content, // just for temporary, to use a struct
+                base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                               base::Unretained(this), action_type),
+                base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                                    base::Unretained(this), action_type));
+
+    } else if (!url.empty()) {
+        page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
+                &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
+                action_type, query));
+    } else {
+        api_client_->QueryPrompt(
+                query,
+                base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                               base::Unretained(this), action_type),
+                base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                                    base::Unretained(this), action_type));
+    }
 }
 
 void ChatPageHandler::SubmitQueryCallback(chat::mojom::ActionType action_type,
@@ -214,15 +246,6 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
                                // and pass it to chat UI
   }
   page_->OnSubmitActionResponse(response.Clone());
-}
-
-void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query) {
-  api_client_->QueryPrompt(
-      query,
-      base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
-                     base::Unretained(this), action_type),
-      base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
-                          base::Unretained(this), action_type));
 }
 
 void ChatPageHandler::CancelQuery() {

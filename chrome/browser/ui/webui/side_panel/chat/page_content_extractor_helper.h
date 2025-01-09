@@ -19,7 +19,7 @@ class PageContentExtractorHelper{
   PageContentExtractorHelper& operator=(const PageContentExtractorHelper&) =
       delete;
   void ExtractPageContent(
-      base::OnceCallback<void(std::string content)> callback);
+      base::OnceCallback<void(std::string content, std::string url)> callback);
 
  private:
   raw_ptr<content::WebContents> web_contents_;

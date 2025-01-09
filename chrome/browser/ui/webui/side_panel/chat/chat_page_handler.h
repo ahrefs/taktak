@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 
+#include "base/containers/flat_set.h"
 #include "base/functional/callback_forward.h"
 #include "base/memory/raw_ptr.h"
 #include "base/scoped_observation.h"
@@ -51,7 +52,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
                     const std::string& action_param) override;
 
   void SubmitQuery(chat::mojom::ActionType action_type,
-                   const std::string& query) override;
+                   const std::string& query, const std::string& url) override;
 
   void ShowUI() override;
 
@@ -74,7 +75,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
  private:
   void OnPageContentExtracted(chat::mojom::ActionType action_type,
                               const std::string& prompt,
-                              std::string content);
+                              std::string content,
+                              std::string url);
 
   mojo::Receiver<chat::mojom::PageHandler> receiver_;
   mojo::Remote<chat::mojom::Page> page_;
@@ -87,6 +89,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
       nullptr;
   bool isPageContentExtracting = false;
   bool isQueryCancelling = false;
+  base::flat_map<std::string, std::string> extracted_content_cache_;
   base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
 

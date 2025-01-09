@@ -35,12 +35,12 @@ public:
  CompletionApiClient& operator=(const CompletionApiClient&) = delete;
  virtual ~CompletionApiClient();
 
- // This function queries both types of APIs: SSE and non-SSE.
  // In non-SSE cases, only the data_completed_callback will be triggered.
  virtual void QueryPrompt(
      const std::string& prompt,
      GenerationCompletedCallback data_completed_callback,
      GenerationDataCallback data_received_callback = base::NullCallback());
+
  // Clears all in-progress requests
  void ClearAllQueries();
 

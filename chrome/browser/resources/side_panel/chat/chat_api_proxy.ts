@@ -12,7 +12,7 @@ export interface ChatApiProxy {
 
     submitAction(actionType: ActionType, actionParam: string): void;
 
-    submitQuery(actionType: ActionType, query: string): void;
+    submitQuery(actionType: ActionType, query: string, url: string): void;
 
     getSiteInfo(): Promise<{ siteInfo: SiteInfo }>
 
@@ -56,8 +56,8 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         this.handler.submitAction(actionType, actionParam);
     }
 
-    submitQuery(actionType: ActionType, query: string) {
-        this.handler.submitQuery(actionType, query);
+    submitQuery(actionType: ActionType, query: string, url: string) {
+        this.handler.submitQuery(actionType, query, url);
     }
 
     getSiteInfo() {

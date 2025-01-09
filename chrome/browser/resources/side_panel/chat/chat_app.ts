@@ -65,6 +65,7 @@ export class ChatAppElement extends CrLitElement {
     protected exceedMaxTokenCountErrorMessages_: string = "";
     protected hasExceededMaxTokenCount_: boolean = false;
     protected maxPromptInputLength_: number = 80_000;
+    private shouldUseCurrentPageContentAsChatContext_: boolean = false;
 
     constructor() {
         super();
@@ -110,7 +111,7 @@ export class ChatAppElement extends CrLitElement {
         if (this.siteInfo_.isContentUsableInConversations) {
             const {actionList} = await this.chatApiProxy_.getActionList();
             this.actionList_ = actionList;
-
+            this.shouldUseCurrentPageContentAsChatContext_ = true;
         }
         this.updateComplete;
     }
@@ -137,6 +138,8 @@ export class ChatAppElement extends CrLitElement {
 
     protected shouldDisplayChatAboutThisPageButton(value: boolean) {
         this.shouldDisplayChatAboutThisPageButton_ = value;
+        this.shouldUseCurrentPageContentAsChatContext_ = !value;
+        console.log( "Should use content as context: " + this.shouldUseCurrentPageContentAsChatContext_);
     }
 
     protected stripUrlProtocol(url: string = ''): string {
@@ -262,7 +265,10 @@ export class ChatAppElement extends CrLitElement {
 
         this.isSubmittingQuery_ = true;
         setTimeout(() =>
-            this.chatApiProxy_.submitQuery(ActionType.QUERY, this.submittedQuery_ ?? ""), 0);
+            this.chatApiProxy_.submitQuery(
+                ActionType.QUERY,
+                this.submittedQuery_ ?? "",
+                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : ""), 0);
     }
 
     protected onCancelQuery_() {
