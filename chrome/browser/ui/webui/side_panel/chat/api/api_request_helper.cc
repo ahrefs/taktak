@@ -457,62 +457,56 @@ namespace api_request_helper {
         static constexpr char kDataPrefix[] = "data: {";
         static constexpr char kDataSuffix[] = "}]}";
 
-        auto first =
-            std::find_if(
-                stream_data.begin(), stream_data.end(),
-                [](std::string_view item) {
-                  if (!base::StartsWith(item, kDataPrefix)) {
-                    DVLOG(0)
-                        << "Chunk doesn't start with SSE prefix. Invalid JSON.";
-                    DVLOG(0) << "Invalid Chunk: " << item;
-                    return true;
-                  }
-                  return false;
-                });
+        std::vector<std::string> stream_data_copy;
 
-        if (first != stream_data.end()) {
-          DVLOG(0) << "First chunk of response is invalid JSON." << *first;
-          if (!previous_invalid_piece_of_response_chunk_.empty()) {
-            auto f = std::string(*first);
-            std::string combined_chunk =
-                std::move(previous_invalid_piece_of_response_chunk_).append(f);
-            stream_data[0] = std::move(combined_chunk);
-            previous_invalid_piece_of_response_chunk_ = "";
-            DVLOG(0) << "Replaced invalid chunk with valid one: "
-                     << combined_chunk;
-          }
-        }
+        if (!stream_data.empty()) {
+            bool is_first_piece_invalid = false;
+            bool is_last_piece_invalid = false;
+            auto first = stream_data[0] ;
+            if (!base::StartsWith(first, kDataPrefix)) {
+                is_first_piece_invalid = true;
+                DVLOG(0) << "Chunk doesn't start with SSE prefix. Invalid JSON.";
+                DVLOG(0) << "Invalid first chunk: " << first;
+                if (!previous_invalid_piece_of_response_chunk_.empty()) {
+                    std::string combined_chunk = std::string(previous_invalid_piece_of_response_chunk_) + (std::string(first));
+                    stream_data_copy.push_back(combined_chunk);
+                    previous_invalid_piece_of_response_chunk_ = "";
+                    DVLOG(0) << "Replaced invalid chunk with valid one: "
+                             << combined_chunk;
+                }
+            }
+            if (stream_data.size() > 1) {
+                auto last = stream_data[stream_data.size() - 1];
+                if (base::StartsWith(last, kDataPrefix) &&
+                    !base::EndsWith(last, kDataSuffix)) {
+                    is_last_piece_invalid = true;
+                    DVLOG(0) << "Chunk starts with SSE prefix but doesn't end with "
+                                "SSE suffix. Invalid JSON.";
+                    DVLOG(0) << "Invalid last chunk: " << last;
+                    previous_invalid_piece_of_response_chunk_ = std::string(last);
+                }
+            }
 
-        auto last = std::find_if(
-            stream_data.rbegin(), stream_data.rend(),
-            [](std::string_view item) {
-              if (base::StartsWith(item, kDataPrefix) &&
-                  !base::EndsWith(item, kDataSuffix)) {
-                DVLOG(0) << "Chunk starts with SSE prefix but doesn't end with "
-                            "SSE suffix. Invalid JSON.";
-                DVLOG(0) << "Invalid Chunk: " << item;
-                return true;
-              }
-              return false;
-            });
-
-        if (last != stream_data.rend()) {
-          auto l = std::string(*last);
-          previous_invalid_piece_of_response_chunk_ = std::move(l);
-          DVLOG(0) << "Last chunk of response is invalid JSON."
-                   << previous_invalid_piece_of_response_chunk_;
-
-          std::erase_if(stream_data,
-                        [&l](std::string_view item) { return item == l; });
+            auto size = stream_data.size();
+            for(size_t i = 0; i < size; i++) {
+                if (is_first_piece_invalid && i == 0) continue;
+                if (is_last_piece_invalid && i == size - 1) continue;
+                stream_data_copy.push_back(std::string(stream_data[i]));
+            }
         }
 
         // Keep track of number of in-progress data decoding operations
         // so that we can know if any are still in-progress when the request
         // completes.
-        current_decoding_operation_count_ += stream_data.size();
+        current_decoding_operation_count_ += stream_data_copy.size();
 
-        for (const auto& data : stream_data) {
-            auto json = data.substr(strlen(kDataPrefix) - 1);
+        for (const auto& data : stream_data_copy) {
+            auto start_index = strlen(kDataPrefix) - 1;
+            if (start_index >= data.size()) {
+                DVLOG(0) << "Start index is out of bounds.";
+                continue;
+            }
+            auto json = data.substr(start_index);
             auto on_json_parsed =
                     [](base::WeakPtr<APIRequestHelper::URLLoaderHandler> handler,
                        ValueOrError result) {

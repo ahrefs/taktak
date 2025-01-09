@@ -123,10 +123,6 @@ namespace api_request_helper {
 
             base::WeakPtr<URLLoaderHandler> GetWeakPtr();
 
-            void send_sse_data_for_testing(std::string_view string_piece,
-                                           bool is_sse,
-                                           DataReceivedCallback callback);
-
         private:
             friend class APIRequestHelper;
 
