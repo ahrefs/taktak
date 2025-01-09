@@ -10,7 +10,9 @@ import './chat_prompt_input.js';
 import './action_menu.js';
 
 function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
-    if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
+    if (this.shouldHideSiteInfoContainerDueToKnownContext_) {
+        return html``;
+    } else if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
         return html`
             <div class="chat-about-this-page-container">
                 <button class="add-button" @click="${() => this.shouldDisplayChatAboutThisPageButton(false)}">
@@ -131,7 +133,7 @@ export function getHtml(this: ChatAppElement) {
                     </div>
                     <button class="send-btn"
                             ?disabled="${(this.query_ == "" && !this.isSubmittingQuery_) || this.hasExceededMaxTokenCount_}"
-                            @click="${ this.isSubmittingQuery_ ? this.onCancelQuery_ : this.onSubmitQuery_}">
+                            @click="${this.isSubmittingQuery_ ? this.onCancelQuery_ : this.onSubmitQuery_}">
                         <div class="send-icon-container">
                             <cr-iconset name="query">
                                 <svg>
@@ -151,7 +153,8 @@ export function getHtml(this: ChatAppElement) {
             </div>
             ${
                     this.hasExceededMaxTokenCount_
-                            ? html`<div id="error">${this.exceedMaxTokenCountErrorMessages_}</div>`
+                            ? html`
+                                <div id="error">${this.exceedMaxTokenCountErrorMessages_}</div>`
                             : html``
             }
         </div>`;

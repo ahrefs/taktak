@@ -64,8 +64,10 @@ export class ChatAppElement extends CrLitElement {
     protected shouldDisplayChatAboutThisPageButton_: boolean = false;
     protected exceedMaxTokenCountErrorMessages_: string = "";
     protected hasExceededMaxTokenCount_: boolean = false;
-    protected maxPromptInputLength_: number = 80_000;
+    protected maxPromptInputLength_: number = 90_000;
+    protected shouldHideSiteInfoContainerDueToKnownContext_: boolean = false;
     private shouldUseCurrentPageContentAsChatContext_: boolean = false;
+
 
     constructor() {
         super();
@@ -103,6 +105,7 @@ export class ChatAppElement extends CrLitElement {
             exceedMaxLengthErrorMessages_: {type: String},
             hasExceededMaxTokenCount: {type: Boolean},
             maxPromptInputLength_: {type: Number},
+            shouldHideSiteInfoContainerDueToKnownContext_: {type: Boolean},
         };
     }
 
@@ -112,6 +115,7 @@ export class ChatAppElement extends CrLitElement {
             const {actionList} = await this.chatApiProxy_.getActionList();
             this.actionList_ = actionList;
             this.shouldUseCurrentPageContentAsChatContext_ = true;
+            this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
         }
         this.updateComplete;
     }
@@ -139,7 +143,6 @@ export class ChatAppElement extends CrLitElement {
     protected shouldDisplayChatAboutThisPageButton(value: boolean) {
         this.shouldDisplayChatAboutThisPageButton_ = value;
         this.shouldUseCurrentPageContentAsChatContext_ = !value;
-        console.log( "Should use content as context: " + this.shouldUseCurrentPageContentAsChatContext_);
     }
 
     protected stripUrlProtocol(url: string = ''): string {
@@ -157,6 +160,7 @@ export class ChatAppElement extends CrLitElement {
         const response = "";
         if (this.conversations_ != null) {
             if (actionType == ActionType.SUMMARIZE_PAGE) {
+                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptSummarizeThisPage'),
                     shouldDisplaySiteInfo: true,
@@ -165,6 +169,7 @@ export class ChatAppElement extends CrLitElement {
                     response,
                 });
             } else if (actionType == ActionType.EXPLAIN) {
+                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptExplainInSimpleLanguage'),
                     shouldDisplaySiteInfo: true,
@@ -173,6 +178,7 @@ export class ChatAppElement extends CrLitElement {
                     response,
                 });
             } else if (actionType == ActionType.FACT_CHECK) {
+                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptFactCheck'),
                     shouldDisplaySiteInfo: true,
@@ -181,6 +187,7 @@ export class ChatAppElement extends CrLitElement {
                     response,
                 });
             } else if (actionType == ActionType.TRANSLATE) {
+                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptTranslate') + ' ' + actionParam,
                     shouldDisplaySiteInfo: true,
@@ -189,6 +196,7 @@ export class ChatAppElement extends CrLitElement {
                     response,
                 });
             } else if (actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
+                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptSocialMediaPost') + ' ' + actionParam,
                     shouldDisplaySiteInfo: true,
@@ -227,6 +235,13 @@ export class ChatAppElement extends CrLitElement {
         this.query_ = e.detail.value;
         if (this.query_ !== "" && !this.hasExceededMaxTokenCount_) {
             this.onSubmitQuery_();
+        }
+
+        // hide site info from prompt input because it's obvious that the content of currently opening site will be used as context
+        if ((this.siteInfo_.url != undefined && this.siteInfo_.url.length > 0) && this.siteInfo_.isContentUsableInConversations) {
+            this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
+        } else {
+            this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
         }
     }
 

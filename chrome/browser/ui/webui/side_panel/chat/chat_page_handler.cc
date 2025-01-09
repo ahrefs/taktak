@@ -171,6 +171,7 @@ void ChatPageHandler::OnPageContentExtracted(
     std::string content,
     std::string url) {
   isPageContentExtracting = false;
+  extracted_content_cache_.clear();
 
   std::string max_content = content;
   const size_t max_length = 90'000;
