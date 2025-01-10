@@ -21,6 +21,11 @@ namespace network {
 
 using api_request_helper::APIRequestResult;
 
+struct CompletionMessage {
+    std::string content;
+    std::string role;
+};
+
 class CompletionApiClient {
 public:
  using GenerationResult =
@@ -37,9 +42,15 @@ public:
 
  // In non-SSE cases, only the data_completed_callback will be triggered.
  virtual void QueryPrompt(
-     const std::string& prompt,
-     GenerationCompletedCallback data_completed_callback,
-     GenerationDataCallback data_received_callback = base::NullCallback());
+    const std::string& context,
+    const std::string& latest_user_prompt,
+    GenerationCompletedCallback data_completed_callback,
+    GenerationDataCallback data_received_callback = base::NullCallback());
+
+virtual void QueryPrompt(
+        const std::vector<struct CompletionMessage>& completion_messages;
+        GenerationCompletedCallback data_completed_callback,
+        GenerationDataCallback data_received_callback = base::NullCallback());
 
  // Clears all in-progress requests
  void ClearAllQueries();

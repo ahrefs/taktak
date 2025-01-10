@@ -12,7 +12,7 @@ import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
 import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
-import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo} from "./chat.mojom-webui.js";
+import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo, ConversationItem} from "./chat.mojom-webui.js";
 import {marked} from "./marked.js";
 import type {ChatPromptInputElement} from "./chat_prompt_input";
 import './chat_prompt_input.js';
@@ -127,11 +127,6 @@ export class ChatAppElement extends CrLitElement {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
             setTimeout(() => this.$.promptInput.focusInput(), 0);
-
-            // todo: to delete later
-            // this is to examine response when non-SSE chunk is received.
-            console.log("Before marked:\n" + this.completionResult_);
-            console.log("After marked:\n" + marked.parse(this.completionResult_, {async: false}));
         } else if (response.responseType == ResponseType.ERROR) {
             // todo: to properly display error message
             this.completionResult_ += "\n";
@@ -279,11 +274,23 @@ export class ChatAppElement extends CrLitElement {
         this.$.promptInput.focusInput();
 
         this.isSubmittingQuery_ = true;
+
+        const conversation_history : ConversationItem[] = [];
+        for (let i = this.conversations_.length - 1; i >= 0; i--) {
+            const conversation = this.conversations_[i];
+            if (conversation != undefined && conversation.query.length > 0 && conversation.response.length > 0 && conversation_history.length <= 3) {
+                conversation_history.push({
+                    userQuery : conversation.query,
+                    llmResponse: conversation.response,
+                })
+            }
+        }
+
         setTimeout(() =>
             this.chatApiProxy_.submitQuery(
                 ActionType.QUERY,
                 this.submittedQuery_ ?? "",
-                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : ""), 0);
+                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse()), 0);
     }
 
     protected onCancelQuery_() {

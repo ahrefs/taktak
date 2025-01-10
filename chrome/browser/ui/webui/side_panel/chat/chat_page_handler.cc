@@ -12,33 +12,32 @@
 #include "ui/base/l10n/l10n_util.h"
 
 ChatPageHandler::ChatPageHandler(
-    mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
-    mojo::PendingRemote<chat::mojom::Page> page,
-    ChatUI* chat_ui,
-    content::WebUI* web_ui,
-    content::WebContents* owner_web_contents,
-    content::WebContents* chat_context_web_contents)
-    : receiver_(this, std::move(receiver)),
-      page_(std::move(page)),
-      chat_ui_(chat_ui),
-      owner_web_contents_(owner_web_contents),
-      chat_context_web_contents_(chat_context_web_contents),
-      profile_(Profile::FromWebUI(web_ui)),
-      page_content_extractor_helper_(std::make_unique<PageContentExtractorHelper>(chat_context_web_contents))
-      {
-  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
-      profile_->GetDefaultStoragePartition()
-          ->GetURLLoaderFactoryForBrowserProcess();
-  api_client_ =
-      std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
+        mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
+        mojo::PendingRemote<chat::mojom::Page> page,
+        ChatUI *chat_ui,
+        content::WebUI *web_ui,
+        content::WebContents *owner_web_contents,
+        content::WebContents *chat_context_web_contents)
+        : receiver_(this, std::move(receiver)),
+          page_(std::move(page)),
+          chat_ui_(chat_ui),
+          owner_web_contents_(owner_web_contents),
+          chat_context_web_contents_(chat_context_web_contents),
+          profile_(Profile::FromWebUI(web_ui)),
+          page_content_extractor_helper_(std::make_unique<PageContentExtractorHelper>(chat_context_web_contents)) {
+    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
+            profile_->GetDefaultStoragePartition()
+                    ->GetURLLoaderFactoryForBrowserProcess();
+    api_client_ =
+            std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
 }
 
 ChatPageHandler::~ChatPageHandler() = default;
 
 void ChatPageHandler::ShowUI() {
-  auto embedder = chat_ui_->embedder();
-  if (embedder) {
-    embedder->ShowUI();
+    auto embedder = chat_ui_->embedder();
+    if (embedder) {
+        embedder->ShowUI();
     }
 }
 
@@ -48,7 +47,7 @@ void ChatPageHandler::CloseUI() {
         embedder->CloseUI();
 }
 
-void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents) {
+void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents *contents) {
     page_content_extractor_helper_ = std::make_unique<PageContentExtractorHelper>(contents);
     chat_context_web_contents_ = contents;
     if (page_.is_bound()) {
@@ -57,26 +56,26 @@ void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::W
 }
 
 void ChatPageHandler::GetSiteInfo(GetSiteInfoCallback callback) {
-  DCHECK(chat_context_web_contents_);
-  chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
-  site_info->url = "";
-  site_info->is_content_usable_in_conversations = false;
+    DCHECK(chat_context_web_contents_);
+    chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
+    site_info->url = "";
+    site_info->is_content_usable_in_conversations = false;
 
-  if (chat_context_web_contents_) {
-    const GURL gurl = chat_context_web_contents_->GetLastCommittedURL();
-    if (gurl.SchemeIsHTTPOrHTTPS()) {
-      site_info->title =
-          base::UTF16ToUTF8(chat_context_web_contents_->GetTitle());
-      site_info->url = gurl.spec();
-      site_info->is_content_usable_in_conversations = true;
-    } else {
-      site_info->title = "";
-      site_info->url = "";
-      site_info->is_content_usable_in_conversations = false;
+    if (chat_context_web_contents_) {
+        const GURL gurl = chat_context_web_contents_->GetLastCommittedURL();
+        if (gurl.SchemeIsHTTPOrHTTPS()) {
+            site_info->title =
+                    base::UTF16ToUTF8(chat_context_web_contents_->GetTitle());
+            site_info->url = gurl.spec();
+            site_info->is_content_usable_in_conversations = true;
+        } else {
+            site_info->title = "";
+            site_info->url = "";
+            site_info->is_content_usable_in_conversations = false;
+        }
     }
-  }
 
-  std::move(callback).Run(site_info.Clone());
+    std::move(callback).Run(site_info.Clone());
 }
 
 void ChatPageHandler::GetActionList(GetActionListCallback callback) {
@@ -113,107 +112,120 @@ void ChatPageHandler::GetActionList(GetActionListCallback callback) {
 }
 
 base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
-  return weak_ptr_factory_.GetWeakPtr();
+    return weak_ptr_factory_.GetWeakPtr();
 }
 
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
-                                   const std::string& action_param) {
-  std::string summarize_prompt =
-      l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE);
-  std::string explain_prompt =
-      l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE);
-  std::string fact_check_prompt =
-      l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_FACT_CHECT);
-  std::string translate_to_prompt =
-      l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_TRANSLATE);
-  std::string draft_social_media_post_prompt =
-      l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST);
+                                   const std::string &action_param) {
+    std::string summarize_prompt =
+            l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE);
+    std::string explain_prompt =
+            l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE);
+    std::string fact_check_prompt =
+            l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_FACT_CHECK);
+    std::string translate_to_prompt =
+            l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_TRANSLATE);
+    std::string draft_social_media_post_prompt =
+            l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST);
 
-  if (page_.is_bound()) {
-    if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
-      isPageContentExtracting = true;
-      page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-          &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-          action_type, summarize_prompt));
+    if (page_.is_bound()) {
+        if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
+            isPageContentExtracting = true;
+            page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
+                    &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
+                    action_type, summarize_prompt));
 
-    } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
-      isPageContentExtracting = true;
-      page_content_extractor_helper_->ExtractPageContent(
-          base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                         base::Unretained(this), action_type, explain_prompt));
+        } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
+            isPageContentExtracting = true;
+            page_content_extractor_helper_->ExtractPageContent(
+                    base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                                   base::Unretained(this), action_type, explain_prompt));
 
-    } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
-      isPageContentExtracting = true;
-      page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-          &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-          action_type, fact_check_prompt));
-    } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
-      isPageContentExtracting = true;
-      page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-          &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-          action_type, translate_to_prompt + " " + action_param));
-    } else if (action_type ==
-               chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
-      isPageContentExtracting = true;
-      page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-          &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-          action_type, draft_social_media_post_prompt + " " + action_param));
-    } else {
-      // this branch should not be reached because all the action items are
-      // handled in above blocks
-    }
+        } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
+            isPageContentExtracting = true;
+            page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
+                    &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
+                    action_type, fact_check_prompt));
+        } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
+            isPageContentExtracting = true;
+            page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
+                    &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
+                    action_type, translate_to_prompt + " " + action_param));
+        } else if (action_type ==
+                   chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
+            isPageContentExtracting = true;
+            page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
+                    &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
+                    action_type, draft_social_media_post_prompt + " " + action_param));
+        } else {
+            // this branch should not be reached because all the action items are
+            // handled in above blocks
+        }
     }
 }
 
 void ChatPageHandler::OnPageContentExtracted(
-    chat::mojom::ActionType action_type,
-    const std::string& prompt,
-    std::string content,
-    std::string url) {
-  isPageContentExtracting = false;
-  extracted_content_cache_.clear();
+        chat::mojom::ActionType action_type,
+        const std::string &prompt,
+        std::string content,
+        std::string url) {
+    isPageContentExtracting = false;
+    extracted_content_cache_.clear();
 
-  std::string max_content = content;
-  const size_t max_length = 90'000;
-  if (content.length() > max_length) {
-    max_content = content.substr(0, max_length);
-  }
-  if (!url.empty()) {
-      extracted_content_cache_[url] = max_content;
-  }
+    std::string max_content = content;
+    const size_t max_length = 90'000;
+    if (content.length() > max_length) {
+        max_content = content.substr(0, max_length);
+    }
 
-  if (!isQueryCancelling) {
-      api_client_->QueryPrompt(
-              prompt + ":" + max_content /* todo: to create a structure for properly passing */,
-              base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
-                             base::Unretained(this), action_type),
-              base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
-                                  base::Unretained(this), action_type));
-  } else {
-      isQueryCancelling = false;
-  }
+    if (!url.empty()) {
+        extracted_content_cache_[url] = max_content;
+    }
+
+    if (!isQueryCancelling) {
+        api_client_->QueryPrompt(
+                max_content,
+                prompt,
+                base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                               base::Unretained(this), action_type),
+                base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                                    base::Unretained(this), action_type));
+    } else {
+        isQueryCancelling = false;
+    }
 }
 
-void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std::string& query, const std::string& url) {
-    // chat_page_handler will cache extracted content from the page
-    // completion_api_client will cache queries and completions
+void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
+                                  const std::string &query,
+                                  const std::string &url,
+                                  std::vector<chat::mojom::ConversationItemPtr> conversation_history){
+
+    std::vector<struct CompletionMessage> completion_messages;
+
+    for (auto& item : conversation_history) {
+        completion_messages.push_back({item->user_query, "user"});
+        completion_messages.push_back({item->llm_response, "assistant"});
+    }
 
     if (extracted_content_cache_.contains(url)) {
         auto previous_content = extracted_content_cache_[url];
+        completion_messages.push_back({query + ":" + previous_content, "user"});
         api_client_->QueryPrompt(
-                query + ":" + previous_content, // just for temporary, to use a struct
+                completion_messages,
                 base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
                                base::Unretained(this), action_type),
                 base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
                                     base::Unretained(this), action_type));
 
     } else if (!url.empty()) {
-        page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-                &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-                action_type, query));
+        // todo: to add conversation history as context
+        page_content_extractor_helper_->ExtractPageContent(
+                base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                               base::Unretained(this), action_type, query));
     } else {
+        completion_messages.push_back({query , "user"});
         api_client_->QueryPrompt(
-                query,
+                completion_messages,
                 base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
                                base::Unretained(this), action_type),
                 base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
@@ -223,36 +235,36 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type, const std
 
 void ChatPageHandler::SubmitQueryCallback(chat::mojom::ActionType action_type,
                                           std::string completion) {
-  chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
-  response->action_type = action_type;
-  response->response_type = chat::mojom::ResponseType::DELTA;
-  response->result = completion;
-  page_->OnSubmitActionResponse(response.Clone());
+    chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
+    response->action_type = action_type;
+    response->response_type = chat::mojom::ResponseType::DELTA;
+    response->result = completion;
+    page_->OnSubmitActionResponse(response.Clone());
 }
 
 void ChatPageHandler::SubmitQueryCompletedCallback(
-    chat::mojom::ActionType action_type,
-    base::expected<std::string, chat::mojom::APIErrorType> result) {
-  chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
-  response->action_type = action_type;
-  if (result.has_value()) {
-    DVLOG(0) << __func__ << " success -> " << result.value();
-    response->response_type = chat::mojom::ResponseType::COMPLETED;
-    response->result = result.value();
-  } else {
-    DVLOG(0) << __func__ << " error -> " << result.error();
-    response->response_type = chat::mojom::ResponseType::ERROR;
-    response->result =
-        "error_message_here";  // todo: to get error message from api response
-                               // and pass it to chat UI
-  }
-  page_->OnSubmitActionResponse(response.Clone());
+        chat::mojom::ActionType action_type,
+        base::expected<std::string, chat::mojom::APIErrorType> result) {
+    chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
+    response->action_type = action_type;
+    if (result.has_value()) {
+        DVLOG(0) << __func__ << " success -> " << result.value();
+        response->response_type = chat::mojom::ResponseType::COMPLETED;
+        response->result = result.value();
+    } else {
+        DVLOG(0) << __func__ << " error -> " << result.error();
+        response->response_type = chat::mojom::ResponseType::ERROR;
+        response->result =
+                "error_message_here";  // todo: to get error message from api response
+        // and pass it to chat UI
+    }
+    page_->OnSubmitActionResponse(response.Clone());
 }
 
 void ChatPageHandler::CancelQuery() {
-  // This is used in case the active page content is being extracted
-  // while the query is cancelled.
-  isQueryCancelling = true;
+    // This is used in case the active page content is being extracted
+    // while the query is cancelled.
+    isQueryCancelling = true;
 
-  api_client_->ClearAllQueries();
+    api_client_->ClearAllQueries();
 }

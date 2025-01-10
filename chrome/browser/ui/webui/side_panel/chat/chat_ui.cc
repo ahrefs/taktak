@@ -82,7 +82,7 @@ ChatUI::ChatUI(content::WebUI* web_ui)
         {"promptSummarizeThisPage", IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE},
         {"promptExplainInSimpleLanguage",
          IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE},
-        {"promptFactCheck", IDS_CHAT_PROMPT_DRAFT_FACT_CHECT},
+        {"promptFactCheck", IDS_CHAT_PROMPT_DRAFT_FACT_CHECK},
         {"promptTranslate", IDS_CHAT_PROMPT_TRANSLATE},
         {"promptSocialMediaPost", IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST},
         {"translateLanguages", IDS_CHAT_TRANSLATE_LANGS} ,

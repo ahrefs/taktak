@@ -31,6 +31,11 @@ struct APIError {
     string error_message;
 };
 
+struct ConversationItem {
+    string user_query;
+    string llm_response;
+};
+
 struct SiteInfo {
   // The title of the currently active tab, if it has an open page
   string? title;
@@ -75,7 +80,7 @@ interface PageHandler {
   SubmitAction(ActionType action_type, string param);
 
   // Usual conversation
-  SubmitQuery(ActionType action_type, string query, string url);
+  SubmitQuery(ActionType action_type, string query, string url, array<ConversationItem> conversation_history);
 
   // Notify the backend that the UI is ready to be shown.
   ShowUI();

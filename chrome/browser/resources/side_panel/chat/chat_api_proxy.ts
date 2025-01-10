@@ -4,7 +4,8 @@ import {
     PageCallbackRouter,
     PageHandlerFactory,
     PageHandlerRemote,
-    SiteInfo
+    SiteInfo,
+    ConversationItem,
 } from "./chat.mojom-webui.js";
 
 export interface ChatApiProxy {
@@ -12,7 +13,7 @@ export interface ChatApiProxy {
 
     submitAction(actionType: ActionType, actionParam: string): void;
 
-    submitQuery(actionType: ActionType, query: string, url: string): void;
+    submitQuery(actionType: ActionType, query: string, url: string, conversation_history : ConversationItem[]): void;
 
     getSiteInfo(): Promise<{ siteInfo: SiteInfo }>
 
@@ -56,8 +57,8 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         this.handler.submitAction(actionType, actionParam);
     }
 
-    submitQuery(actionType: ActionType, query: string, url: string) {
-        this.handler.submitQuery(actionType, query, url);
+    submitQuery(actionType: ActionType, query: string, url: string, conversation_history: ConversationItem[] ) {
+        this.handler.submitQuery(actionType, query, url, conversation_history);
     }
 
     getSiteInfo() {

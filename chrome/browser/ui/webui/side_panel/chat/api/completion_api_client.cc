@@ -16,6 +16,11 @@
 #include "net/traffic_annotation/network_traffic_annotation.h"
 #include "services/network/public/cpp/simple_url_loader.h"
 #include "url/gurl.h"
+#include "ui/base/l10n/l10n_util.h"
+#include "base/i18n/time_formatting.h"
+#include "base/strings/utf_string_conversions.h"
+#include "base/time/time.h"
+#include "chrome/grit/generated_resources.h"
 
 namespace {
 
@@ -41,7 +46,7 @@ namespace {
     )");
     }
 
-    std::string CreateJSONRequestBody(const std::vector<std::string>& prompt) {
+    std::string CreateJSONRequestBody(const std::vector<struct CompletionMessage>& messages) {
         base::Value::Dict dict;
         dict.Set("stream", true);
         dict.Set("max_tokens", 1280);
@@ -50,10 +55,10 @@ namespace {
         dict.Set("model", "Mixtral-8x7B-Instruct-v0.1");
 
         base::Value::List prompt_messages;
-        for (const auto& item : prompt) {
+        for (const auto& item : messages) {
             base::Value::Dict message;
-            message.Set("content", std::move(item));
-            message.Set("role", "user");
+            message.Set("content", std::move(item.content));
+            message.Set("role", item.role);
             prompt_messages.Append(std::move(message));
         }
         dict.Set("messages", std::move(prompt_messages));
@@ -72,7 +77,8 @@ CompletionApiClient::CompletionApiClient(
 CompletionApiClient::~CompletionApiClient() = default;
 
 void CompletionApiClient::QueryPrompt(
-        const std::string& prompt,
+        const std::string& context,
+        const std::string& latest_user_prompt,
         GenerationCompletedCallback data_completed_callback,
         GenerationDataCallback
         data_received_callback /* = base::NullCallback() */) {
@@ -91,8 +97,41 @@ void CompletionApiClient::QueryPrompt(
                                       weak_ptr_factory_.GetWeakPtr(),
                                       std::move(data_completed_callback));
 
-    std::vector<std::string> prompts = {prompt};
-    const std::string request_body = CreateJSONRequestBody(prompts);
+    std::vector<struct CompletionMessage> completion_messages;
+    if (!context.empty()) {
+        completion_messages.push_back({latest_user_prompt + ":" + context, "user"});
+    } else {
+        completion_messages.push_back({latest_user_prompt, "user"});
+    }
+
+    const std::string request_body = CreateJSONRequestBody(completion_messages);
+
+    api_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
+                                   "application/json", std::move(on_received),
+                                   std::move(on_complete), headers, {});
+}
+
+void CompletionApiClient::QueryPrompt(
+        const std::vector<struct CompletionMessage>& completion_messages;
+        GenerationCompletedCallback data_completed_callback,
+        GenerationDataCallback
+        data_received_callback /* = base::NullCallback() */) {
+
+    GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
+                               "api.yep.com", "/", "v1/chat/completions"})};
+    DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
+
+    base::flat_map<std::string, std::string> headers;
+    headers.emplace("Accept", "text/event-stream");
+
+    auto on_received = base::BindRepeating(
+            &CompletionApiClient::OnQueryDataReceived, weak_ptr_factory_.GetWeakPtr(),
+            std::move(data_received_callback));
+    auto on_complete = base::BindOnce(&CompletionApiClient::OnQueryCompleted,
+                                      weak_ptr_factory_.GetWeakPtr(),
+                                      std::move(data_completed_callback));
+
+    const std::string request_body = CreateJSONRequestBody(completion_messages);
 
     api_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
                                    "application/json", std::move(on_received),

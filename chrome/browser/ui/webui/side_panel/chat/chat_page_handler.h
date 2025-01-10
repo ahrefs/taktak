@@ -52,7 +52,9 @@ class ChatPageHandler : public chat::mojom::PageHandler {
                     const std::string& action_param) override;
 
   void SubmitQuery(chat::mojom::ActionType action_type,
-                   const std::string& query, const std::string& url) override;
+                   const std::string& query,
+                   const std::string& url,
+                   std::vector<chat::mojom::ConversationItemPtr> conversation_history) override;
 
   void ShowUI() override;
 
