@@ -75,10 +75,12 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   base::WeakPtr<ChatPageHandler> GetWeakPtr();
 
  private:
-  void OnPageContentExtracted(chat::mojom::ActionType action_type,
-                              const std::string& prompt,
-                              std::string content,
-                              std::string url);
+  void OnPageContentExtracted(
+      chat::mojom::ActionType action_type,
+      const std::string& prompt,
+      const std::vector<struct CompletionMessage>& completion_messages,
+      std::string content,
+      std::string url);
 
   mojo::Receiver<chat::mojom::PageHandler> receiver_;
   mojo::Remote<chat::mojom::Page> page_;

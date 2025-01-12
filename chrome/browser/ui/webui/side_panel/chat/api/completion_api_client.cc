@@ -77,65 +77,29 @@ CompletionApiClient::CompletionApiClient(
 CompletionApiClient::~CompletionApiClient() = default;
 
 void CompletionApiClient::QueryPrompt(
-        const std::string& context,
-        const std::string& latest_user_prompt,
-        GenerationCompletedCallback data_completed_callback,
-        GenerationDataCallback
+    const std::vector<struct CompletionMessage>& completion_messages,
+    GenerationCompletedCallback data_completed_callback,
+    GenerationDataCallback
         data_received_callback /* = base::NullCallback() */) {
+  GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
+                             "api.yep.com", "/", "v1/chat/completions"})};
+  DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
 
-    GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
-                               "api.yep.com", "/", "v1/chat/completions"})};
-    DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
+  base::flat_map<std::string, std::string> headers;
+  headers.emplace("Accept", "text/event-stream");
 
-    base::flat_map<std::string, std::string> headers;
-    headers.emplace("Accept", "text/event-stream");
+  auto on_received = base::BindRepeating(
+      &CompletionApiClient::OnQueryDataReceived, weak_ptr_factory_.GetWeakPtr(),
+      std::move(data_received_callback));
+  auto on_complete = base::BindOnce(&CompletionApiClient::OnQueryCompleted,
+                                    weak_ptr_factory_.GetWeakPtr(),
+                                    std::move(data_completed_callback));
 
-    auto on_received = base::BindRepeating(
-            &CompletionApiClient::OnQueryDataReceived, weak_ptr_factory_.GetWeakPtr(),
-            std::move(data_received_callback));
-    auto on_complete = base::BindOnce(&CompletionApiClient::OnQueryCompleted,
-                                      weak_ptr_factory_.GetWeakPtr(),
-                                      std::move(data_completed_callback));
+  const std::string request_body = CreateJSONRequestBody(completion_messages);
 
-    std::vector<struct CompletionMessage> completion_messages;
-    if (!context.empty()) {
-        completion_messages.push_back({latest_user_prompt + ":" + context, "user"});
-    } else {
-        completion_messages.push_back({latest_user_prompt, "user"});
-    }
-
-    const std::string request_body = CreateJSONRequestBody(completion_messages);
-
-    api_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
-                                   "application/json", std::move(on_received),
-                                   std::move(on_complete), headers, {});
-}
-
-void CompletionApiClient::QueryPrompt(
-        const std::vector<struct CompletionMessage>& completion_messages;
-        GenerationCompletedCallback data_completed_callback,
-        GenerationDataCallback
-        data_received_callback /* = base::NullCallback() */) {
-
-    GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
-                               "api.yep.com", "/", "v1/chat/completions"})};
-    DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
-
-    base::flat_map<std::string, std::string> headers;
-    headers.emplace("Accept", "text/event-stream");
-
-    auto on_received = base::BindRepeating(
-            &CompletionApiClient::OnQueryDataReceived, weak_ptr_factory_.GetWeakPtr(),
-            std::move(data_received_callback));
-    auto on_complete = base::BindOnce(&CompletionApiClient::OnQueryCompleted,
-                                      weak_ptr_factory_.GetWeakPtr(),
-                                      std::move(data_completed_callback));
-
-    const std::string request_body = CreateJSONRequestBody(completion_messages);
-
-    api_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
-                                   "application/json", std::move(on_received),
-                                   std::move(on_complete), headers, {});
+  api_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
+                                 "application/json", std::move(on_received),
+                                 std::move(on_complete), headers, {});
 }
 
 void CompletionApiClient::ClearAllQueries() {
