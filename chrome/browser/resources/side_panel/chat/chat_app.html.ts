@@ -151,11 +151,14 @@ export function getHtml(this: ChatAppElement) {
                     </button>
                 </div>
             </div>
-            ${
-                    this.hasExceededMaxTokenCount_
-                            ? html`
-                                <div id="error">${this.exceedMaxTokenCountErrorMessages_}</div>`
-                            : html``
+            ${this.hasExceededMaxTokenCount_
+                    ? html`
+                        <div id="error">${this.exceedMaxTokenCountErrorMessages_}</div>`
+                    : html``}
+            ${this.hasErrorOccurred_
+                    ? html`
+                        <div id="error">${this.errorMessage_}</div>`
+                    : html``
             }
         </div>`;
 }

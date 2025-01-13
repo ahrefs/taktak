@@ -251,7 +251,7 @@ void ChatPageHandler::SubmitQueryCallback(chat::mojom::ActionType action_type,
     chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
     response->action_type = action_type;
     response->response_type = chat::mojom::ResponseType::DELTA;
-    response->result = completion;
+    response->result = std::move(completion);
     page_->OnSubmitActionResponse(response.Clone());
 }
 
@@ -267,9 +267,7 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
     } else {
         DVLOG(0) << __func__ << " error -> " << result.error();
         response->response_type = chat::mojom::ResponseType::ERROR;
-        response->result =
-                "error_message_here";  // todo: to get error message from api response
-        // and pass it to chat UI
+        response->result = l10n_util::GetStringUTF8(IDS_CHAT_GENERIC_ERROR);
     }
     page_->OnSubmitActionResponse(response.Clone());
 }

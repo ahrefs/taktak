@@ -64,10 +64,11 @@ export class ChatAppElement extends CrLitElement {
     protected shouldDisplayChatAboutThisPageButton_: boolean = false;
     protected exceedMaxTokenCountErrorMessages_: string = "";
     protected hasExceededMaxTokenCount_: boolean = false;
+    protected errorMessage_: string = "";
+    protected hasErrorOccurred_: boolean = false;
     protected maxPromptInputLength_: number = 90_000;
     protected shouldHideSiteInfoContainerDueToKnownContext_: boolean = false;
     private shouldUseCurrentPageContentAsChatContext_: boolean = false;
-
 
     constructor() {
         super();
@@ -104,6 +105,8 @@ export class ChatAppElement extends CrLitElement {
             shouldDisplayChatAboutThisPageButton_: {type: Boolean},
             exceedMaxLengthErrorMessages_: {type: String},
             hasExceededMaxTokenCount: {type: Boolean},
+            errorMessage_: {type: String},
+            hasErrorOccurred_: {type: Boolean},
             maxPromptInputLength_: {type: Number},
             shouldHideSiteInfoContainerDueToKnownContext_: {type: Boolean},
         };
@@ -120,17 +123,22 @@ export class ChatAppElement extends CrLitElement {
         this.updateComplete;
     }
 
-    private async updateSubmitResponse(response: ActionResponse) {
+    private updateSubmitResponse(response: ActionResponse) {
         if (response.responseType == ResponseType.DELTA) {
             this.completionResult_ += response.result;
+            this.hasErrorOccurred_ = false;
+            this.errorMessage_ = "";
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
+            this.hasErrorOccurred_ = false;
+            this.errorMessage_ = "";
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         } else if (response.responseType == ResponseType.ERROR) {
-            // todo: to properly display error message
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
+            this.hasErrorOccurred_ = true;
+            this.errorMessage_ = loadTimeData.getString('genericError');
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         }
     }

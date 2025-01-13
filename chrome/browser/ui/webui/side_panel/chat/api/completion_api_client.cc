@@ -136,9 +136,7 @@ void CompletionApiClient::OnQueryCompleted(
         APIRequestResult result) {
     const bool success = result.Is2XXResponseCode();
 
-    // Handle successful request
     if (success) {
-      // todo: to pass entire_completion_result to callback so that chat_page_handler can cache it for subsequent context for chat
       entire_completion_result.clear();
       std::move(callback).Run(base::ok(""));
       return;
@@ -146,11 +144,9 @@ void CompletionApiClient::OnQueryCompleted(
 
     // Handle error
     chat::mojom::APIErrorType error;
-
     DVLOG(0) << "Error response_code: " << result.response_code();
     DVLOG(0) << "Error error_code: " << result.error_code();
 
-    // todo: to get error message from Chat API response and pass to callback
     if (result.value_body().is_dict()) {
       const std::string* value =
           result.value_body().GetDict().FindString("message");

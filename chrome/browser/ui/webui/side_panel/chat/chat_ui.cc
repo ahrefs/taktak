@@ -85,9 +85,10 @@ ChatUI::ChatUI(content::WebUI* web_ui)
         {"promptFactCheck", IDS_CHAT_PROMPT_DRAFT_FACT_CHECK},
         {"promptTranslate", IDS_CHAT_PROMPT_TRANSLATE},
         {"promptSocialMediaPost", IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST},
-        {"translateLanguages", IDS_CHAT_TRANSLATE_LANGS} ,
+        {"translateLanguages", IDS_CHAT_TRANSLATE_LANGS},
         {"socialMedias", IDS_CHAT_SOCIAL_MEDIAS},
         {"promptExceedMaxTokenCount", IDS_CHAT_PROMPT_INPUT_EXCEED},
+        {"genericError", IDS_CHAT_GENERIC_ERROR},
     };
 
     for (const auto& str : kLocalizedStrings)

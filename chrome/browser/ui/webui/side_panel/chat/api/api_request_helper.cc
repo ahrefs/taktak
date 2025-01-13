@@ -249,11 +249,6 @@ namespace api_request_helper {
             }
         }
 
-        if (!payload.empty()) {
-            DVLOG(0) << "Payload type " << payload_content_type << ":";
-            DVLOG(0) << payload;
-        }
-
         auto url_loader =
                 network::SimpleURLLoader::Create(std::move(request), annotation_tag_);
         if (!payload.empty()) {
@@ -454,6 +449,12 @@ namespace api_request_helper {
                 string_piece, "\r\n", base::KEEP_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
         DVLOG(0) << "StringPiece(string_view): " << string_piece;
 
+        // Occasionally, one of the response chunks may be divided into
+        // two parts—specifically, the last chunk of one response and the
+        // first chunk of the following response. We need to merge these
+        // chunks to create valid JSON. The last invalid chunk will be
+        // discarded, and the merged chunk will replace the first invalid
+        // chunk of the subsequent response.
         static constexpr char kDataPrefix[] = "data: {";
         static constexpr char kDataSuffix[] = "}]}";
 
