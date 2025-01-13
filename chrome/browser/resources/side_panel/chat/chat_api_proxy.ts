@@ -8,6 +8,8 @@ import {
     ConversationItem,
 } from "./chat.mojom-webui.js";
 
+import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
+
 export interface ChatApiProxy {
     getActionList(): Promise<{ actionList: ActionItem[] }>;
 
@@ -22,6 +24,8 @@ export interface ChatApiProxy {
     closeUI(): void;
 
     cancelQuery(): void;
+
+    openUrl(url: string, clickModifiers: ClickModifiers): void;
 
     getCallbackRouter(): PageCallbackRouter;
 }
@@ -75,6 +79,10 @@ export class ChatApiProxyImpl implements ChatApiProxy {
 
     cancelQuery() {
         this.handler.cancelQuery();
+    }
+
+    openUrl(url: string, clickModifiers: ClickModifiers) {
+        this.handler.openURL(url, clickModifiers);
     }
 
     getCallbackRouter() {

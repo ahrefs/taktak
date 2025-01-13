@@ -72,6 +72,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   void CancelQuery() override;
 
+  void OpenURL(const std::string& url, ui::mojom::ClickModifiersPtr click_modifiers) override;
+
   base::WeakPtr<ChatPageHandler> GetWeakPtr();
 
  private:

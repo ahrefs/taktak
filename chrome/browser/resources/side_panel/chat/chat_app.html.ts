@@ -6,6 +6,7 @@ import {ChatAppElement} from "./chat_app";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import {marked} from "./marked.js";
 import {ActionType} from "./chat.mojom-webui.js";
+import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
 import './chat_prompt_input.js';
 import './action_menu.js';
 
@@ -63,7 +64,37 @@ export function getHtml(this: ChatAppElement) {
                                         ? html`
                                             ${conversation.shouldDisplaySiteInfo ? html`
                                                 <article class="query-prompt-container auto-width-with-padding">
-                                                    <div class="siteinfo-container">
+                                                    <div class="siteinfo-container siteinfo-button"
+                                                         @click="${(e: MouseEvent | KeyboardEvent) => {
+                                                             // capture URL here so that the correct url will be open 
+                                                             // even if multiple browser windows are open
+                                                             const url = "https://" + conversation.url;
+                                                             const modifier: ClickModifiers = {
+                                                                 middleButton: false,
+                                                                 altKey: e.altKey,
+                                                                 ctrlKey: e.ctrlKey,
+                                                                 metaKey: e.metaKey,
+                                                                 shiftKey: e.shiftKey,
+                                                             };
+                                                             this.openUrl_(url, modifier);
+                                                         }}"
+                                                         @auxclick="${(e: MouseEvent) => {
+                                                             if (e.button !== 1) {
+                                                                 // not a middle click
+                                                                 return;
+                                                             }
+                                                             // capture URL here so that the correct url will be open 
+                                                             // even if multiple browser windows are open
+                                                             const url = "https://" + conversation.url;
+                                                             const modifier: ClickModifiers = {
+                                                                 middleButton: true,
+                                                                 altKey: e.altKey,
+                                                                 ctrlKey: e.ctrlKey,
+                                                                 metaKey: e.metaKey,
+                                                                 shiftKey: e.shiftKey,
+                                                             };
+                                                             this.openUrl_(url, modifier);
+                                                         }}">
                                                         <div class="vertical-bar"></div>
                                                         <div class="siteinfo-content">
                                                             <div class="siteinfo-title">${conversation.title}</div>

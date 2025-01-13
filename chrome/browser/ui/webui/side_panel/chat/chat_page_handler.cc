@@ -10,6 +10,15 @@
 #include "content/public/browser/storage_partition.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "ui/base/mojom/window_open_disposition.mojom.h"
+#include "ui/base/window_open_disposition.h"
+#include "ui/base/window_open_disposition_utils.h"
+#include "chrome/app/chrome_command_ids.h"
+#include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/ui/browser.h"
+#include "chrome/browser/ui/browser_commands.h"
+#include "chrome/browser/ui/browser_finder.h"
+#include "content/public/browser/web_contents.h"
 
 ChatPageHandler::ChatPageHandler(
         mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
@@ -278,4 +287,27 @@ void ChatPageHandler::CancelQuery() {
     isQueryCancelling = true;
 
     api_client_->ClearAllQueries();
+}
+
+void ChatPageHandler::OpenURL(
+        const std::string& url,
+        ui::mojom::ClickModifiersPtr click_modifiers) {
+    Browser* browser = chrome::FindLastActive();
+    if (!browser) {
+        return;
+    }
+
+    // Open in active tab if the user is on the NTP.
+    WindowOpenDisposition open_location = ui::DispositionFromClick(
+            click_modifiers->middle_button, click_modifiers->alt_key,
+            click_modifiers->ctrl_key, click_modifiers->meta_key,
+            click_modifiers->shift_key);
+
+    GURL gurl(url);
+
+    if (gurl.is_valid()) {
+        content::OpenURLParams params(gurl, content::Referrer(), open_location,
+                                      ui::PAGE_TRANSITION_AUTO_BOOKMARK, false);
+        browser->OpenURL(params, /*navigation_handle_callback=*/{});
+    }
 }

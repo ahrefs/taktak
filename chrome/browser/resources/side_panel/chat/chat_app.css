@@ -107,6 +107,10 @@
     color: var(--color-yep-chat-primary-text);
 }
 
+.siteinfo-button {
+    cursor: pointer;
+}
+
 .vertical-bar {
     display: block;
     flex: 0 0 auto;

@@ -15,6 +15,7 @@ import {ChatApiProxyImpl} from "./chat_api_proxy.js";
 import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo, ConversationItem} from "./chat.mojom-webui.js";
 import {marked} from "./marked.js";
 import type {ChatPromptInputElement} from "./chat_prompt_input";
+import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
 import './chat_prompt_input.js';
 import './action_menu.js';
 
@@ -283,12 +284,12 @@ export class ChatAppElement extends CrLitElement {
 
         this.isSubmittingQuery_ = true;
 
-        const conversation_history : ConversationItem[] = [];
+        const conversation_history: ConversationItem[] = [];
         for (let i = this.conversations_.length - 1; i >= 0; i--) {
             const conversation = this.conversations_[i];
             if (conversation != undefined && conversation.query.length > 0 && conversation.response.length > 0 && conversation_history.length <= 3) {
                 conversation_history.push({
-                    userQuery : conversation.query,
+                    userQuery: conversation.query,
                     llmResponse: conversation.response,
                 })
             }
@@ -308,6 +309,10 @@ export class ChatAppElement extends CrLitElement {
         this.$.promptInput.resetToAutoHeight();
         this.$.promptInput.focusInput();
         setTimeout(() => this.chatApiProxy_.cancelQuery(), 0);
+    }
+
+    protected openUrl_(url: string, modifiers: ClickModifiers) {
+       this.chatApiProxy_.openUrl(url, modifiers);
     }
 
     refreshColorCss() {
