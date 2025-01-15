@@ -1031,7 +1031,7 @@ BrowserView::BrowserView(std::unique_ptr<Browser> browser)
 
   unified_side_panel_ = AddChildView(std::make_unique<SidePanel>(
       this, SidePanel::HorizontalAlignment::kRight));
-  unified_side_panel_->SetPanelWidth(600);
+  unified_side_panel_->SetPanelWidth(450);
   left_aligned_side_panel_separator_ =
       AddChildView(std::make_unique<ContentsSeparator>());
   side_panel_rounded_corner_ =

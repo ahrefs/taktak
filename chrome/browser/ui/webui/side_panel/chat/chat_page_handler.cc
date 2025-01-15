@@ -20,6 +20,16 @@
 #include "chrome/browser/ui/browser_finder.h"
 #include "content/public/browser/web_contents.h"
 
+namespace {
+std::string BuildPrompt(const std::string& query,
+                        const std::string& extracted_content) {
+  std::string context_prompt =
+      l10n_util::GetStringUTF8(IDS_CHAT_CONTEXT_PROMPT);
+  return base::ReplaceStringPlaceholders(context_prompt,
+                                         {query, extracted_content}, nullptr);
+}
+}  // namespace
+
 ChatPageHandler::ChatPageHandler(
         mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
         mojo::PendingRemote<chat::mojom::Page> page,
@@ -204,7 +214,7 @@ void ChatPageHandler::OnPageContentExtracted(
     for (auto& msg : completion_messages) {
       all_messages.push_back(msg);
     }
-    all_messages.push_back({prompt + ":" + max_content, "user"});
+    all_messages.push_back({BuildPrompt(prompt, max_content), "user"});
     api_client_->QueryPrompt(
         all_messages,
         base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
@@ -230,7 +240,8 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
 
     if (extracted_content_cache_.contains(url) /* Context is in the cache */) {
       auto previous_content = extracted_content_cache_[url];
-      completion_messages.push_back({query + ":" + previous_content, "user"});
+      completion_messages.push_back(
+          {BuildPrompt(query, previous_content), "user"});
       api_client_->QueryPrompt(
           completion_messages,
           base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
