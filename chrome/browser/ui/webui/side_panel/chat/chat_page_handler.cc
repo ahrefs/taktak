@@ -22,11 +22,20 @@
 
 namespace {
 std::string BuildPrompt(const std::string& query,
-                        const std::string& extracted_content) {
-  std::string context_prompt =
-      l10n_util::GetStringUTF8(IDS_CHAT_CONTEXT_PROMPT);
-  return base::ReplaceStringPlaceholders(context_prompt,
-                                         {query, extracted_content}, nullptr);
+                        const std::string& extracted_content,
+                        chat::mojom::ActionType action_type) {
+  if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE ||
+      action_type == chat::mojom::ActionType::EXPLAIN ||
+      action_type == chat::mojom::ActionType::FACT_CHECK ||
+      action_type == chat::mojom::ActionType::TRANSLATE ||
+      action_type == chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
+    return query + ": " + extracted_content;
+  } else {
+    std::string context_prompt =
+        l10n_util::GetStringUTF8(IDS_CHAT_CONTEXT_PROMPT);
+    return base::ReplaceStringPlaceholders(context_prompt,
+                                           {query, extracted_content}, nullptr);
+  }
 }
 }  // namespace
 
@@ -214,7 +223,8 @@ void ChatPageHandler::OnPageContentExtracted(
     for (auto& msg : completion_messages) {
       all_messages.push_back(msg);
     }
-    all_messages.push_back({BuildPrompt(prompt, max_content), "user"});
+    all_messages.push_back(
+        {BuildPrompt(prompt, max_content, action_type), "user"});
     api_client_->QueryPrompt(
         all_messages,
         base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
@@ -241,7 +251,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
     if (extracted_content_cache_.contains(url) /* Context is in the cache */) {
       auto previous_content = extracted_content_cache_[url];
       completion_messages.push_back(
-          {BuildPrompt(query, previous_content), "user"});
+          {BuildPrompt(query, previous_content, action_type), "user"});
       api_client_->QueryPrompt(
           completion_messages,
           base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,

@@ -120,6 +120,9 @@ export class ChatAppElement extends CrLitElement {
             this.actionList_ = actionList;
             this.shouldUseCurrentPageContentAsChatContext_ = true;
             this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
+            this.shouldDisplayChatAboutThisPageButton_ = false;
+            this.hasErrorOccurred_ = false;
+            this.errorMessage_ = ""
         }
         this.updateComplete;
     }
@@ -147,6 +150,7 @@ export class ChatAppElement extends CrLitElement {
     protected shouldDisplayChatAboutThisPageButton(value: boolean) {
         this.shouldDisplayChatAboutThisPageButton_ = value;
         this.shouldUseCurrentPageContentAsChatContext_ = !value;
+        this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
     }
 
     protected stripUrlProtocol(url: string = ''): string {

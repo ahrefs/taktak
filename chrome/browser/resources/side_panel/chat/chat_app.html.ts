@@ -11,16 +11,16 @@ import './chat_prompt_input.js';
 import './action_menu.js';
 
 function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
-    if (this.shouldHideSiteInfoContainerDueToKnownContext_) {
-        return html``;
-    } else if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
+    if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
         return html`
-            <div class="chat-about-this-page-container">
-                <button class="add-button" @click="${() => this.shouldDisplayChatAboutThisPageButton(false)}">
+            <button class="chat-about-this-page-container" @click="${() => this.shouldDisplayChatAboutThisPageButton(false)}">
+                <div class="add-icon-wrapper" >
                     <cr-icon aria-hidden="true" icon="cr:add" class="add-icon"></cr-icon>
-                </button>
+                </div>
                 <div class="label">${this.chatAboutThisPageLabel_}</div>
-            </div>`;
+            </button>`;
+    } else if (this.shouldHideSiteInfoContainerDueToKnownContext_) {
+        return html``;
     } else if (!this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
         return html`
             <div class="siteinfo-container">

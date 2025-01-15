@@ -8998,12 +8998,14 @@ Keep your key file in a safe place. You will need it to create new versions of y
         Fact check
       </message>
       <message name="IDS_CHAT_CONTEXT_PROMPT" desc="Use in Chat as context prompt">
-        Please use the extracted content of the active web page as context to concisely answer the user's question.
-        Ensure your responses are socially unbiased and positive.
-        If the question is nonsensical, factually incoherent, or vague, request clarification or explain why it cannot be answered accurately.
-        If the question is unrelated to the extracted content, inform the user that the content does not provide information on the topic, but you will still answer the question using your general knowledge.
+        Use the content of the active web page as context to provide concise, socially unbiased, and positive responses to the user's question.
+        If the question is vague, incoherent, or nonsensical, request clarification or explain why it cannot be accurately answered.
+        Avoid using phrases like "the user's question" or "The user's question". Instead, use "your question" or other appropriate pronouns in your response.
+        Avoid repeating or quoting the question verbatim when possible.
+        For greetings like "hi" "hello" or "hey" respond warmly and briefly mention the content of the active web page, politely suggesting how you can assist the user.
+        If the question is unrelated to the content, inform the user politely and briefly that the page does not address their query, but answer it using your general knowledge, and don't include your previous response in the answer.
         Here is the user's question: <ph name="USER_QUESTION">$1</ph>
-        Here is the extracted content of the active web page you should use as context: <ph name="EXTRACTED_CONTENT">$2</ph>
+        Here is the content of the active web page you should use as context: <ph name="EXTRACTED_CONTENT">$2</ph>
       </message>
       <message name="IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE" desc="Prompt to summarize the current page.">
         Provide a brief summary of the key takeaways for this page.
