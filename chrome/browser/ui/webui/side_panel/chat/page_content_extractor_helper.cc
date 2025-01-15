@@ -103,7 +103,7 @@ class PageContentExtractorInternal {
 
 PageContentExtractorHelper::PageContentExtractorHelper(
     content::WebContents* web_contents)
-    : web_contents_(web_contents) {}
+    : web_contents_(web_contents->GetWeakPtr()) {}
 
 PageContentExtractorHelper::~PageContentExtractorHelper() = default;
 

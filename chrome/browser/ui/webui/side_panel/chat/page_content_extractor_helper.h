@@ -22,7 +22,7 @@ class PageContentExtractorHelper{
       base::OnceCallback<void(std::string content, std::string url)> callback);
 
  private:
-  raw_ptr<content::WebContents> web_contents_;
+  base::WeakPtr<content::WebContents> web_contents_;
 };
 
 #endif  // CHROMIUM_PAGE_CONTENT_EXTRACTOR_HELPER_H

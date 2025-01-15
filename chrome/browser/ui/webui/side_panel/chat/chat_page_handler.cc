@@ -40,8 +40,8 @@ ChatPageHandler::ChatPageHandler(
         : receiver_(this, std::move(receiver)),
           page_(std::move(page)),
           chat_ui_(chat_ui),
-          owner_web_contents_(owner_web_contents),
-          chat_context_web_contents_(chat_context_web_contents),
+          owner_web_contents_(owner_web_contents->GetWeakPtr()),
+          chat_context_web_contents_(chat_context_web_contents->GetWeakPtr()),
           profile_(Profile::FromWebUI(web_ui)),
           page_content_extractor_helper_(std::make_unique<PageContentExtractorHelper>(chat_context_web_contents)) {
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
@@ -68,7 +68,7 @@ void ChatPageHandler::CloseUI() {
 
 void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents *contents) {
     page_content_extractor_helper_ = std::make_unique<PageContentExtractorHelper>(contents);
-    chat_context_web_contents_ = contents;
+    chat_context_web_contents_ = contents->GetWeakPtr();
     if (page_.is_bound()) {
         page_->OnSiteInfoChanged(std::move(site_info));
     }

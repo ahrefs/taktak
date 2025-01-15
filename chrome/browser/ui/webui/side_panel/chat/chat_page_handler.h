@@ -87,8 +87,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   mojo::Receiver<chat::mojom::PageHandler> receiver_;
   mojo::Remote<chat::mojom::Page> page_;
   const raw_ptr<ChatUI> chat_ui_ = nullptr;
-  raw_ptr<content::WebContents> owner_web_contents_ = nullptr;
-  raw_ptr<content::WebContents> chat_context_web_contents_ = nullptr;
+  base::WeakPtr<content::WebContents> owner_web_contents_ = nullptr;
+  base::WeakPtr<content::WebContents> chat_context_web_contents_ = nullptr;
   const raw_ptr<Profile> profile_ = nullptr;
   std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
   std::unique_ptr<PageContentExtractorHelper> page_content_extractor_helper_ =
