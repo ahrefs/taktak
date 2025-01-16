@@ -45,6 +45,9 @@ export class ChatAppElement extends CrLitElement {
     protected socialMediaPlatforms_: string[] = [];
     protected chatAboutThisPage_: string = "";
     protected conversations_: conversationRecord[] = [];
+    protected title_: string = loadTimeData.getString('title');
+    protected translateToSubItems_: string = "";
+    protected socialMediaPostSubItems_: string = "";
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
     protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
     protected siteInfo_: SiteInfo = {
@@ -91,6 +94,7 @@ export class ChatAppElement extends CrLitElement {
 
     static override get properties() {
         return {
+            title_: {type: String},
             siteInfo_: {type: Object},
             askAnythingLabel_: {type: String},
             chatAboutThisPage_: {type: String},
@@ -120,9 +124,6 @@ export class ChatAppElement extends CrLitElement {
             this.actionList_ = actionList;
             this.shouldUseCurrentPageContentAsChatContext_ = true;
             this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
-            this.shouldDisplayChatAboutThisPageButton_ = false;
-            this.hasErrorOccurred_ = false;
-            this.errorMessage_ = ""
         }
         this.updateComplete;
     }
@@ -150,7 +151,6 @@ export class ChatAppElement extends CrLitElement {
     protected shouldDisplayChatAboutThisPageButton(value: boolean) {
         this.shouldDisplayChatAboutThisPageButton_ = value;
         this.shouldUseCurrentPageContentAsChatContext_ = !value;
-        this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
     }
 
     protected stripUrlProtocol(url: string = ''): string {
@@ -316,7 +316,7 @@ export class ChatAppElement extends CrLitElement {
     }
 
     protected openUrl_(url: string, modifiers: ClickModifiers) {
-       this.chatApiProxy_.openUrl(url, modifiers);
+        this.chatApiProxy_.openUrl(url, modifiers);
     }
 
     refreshColorCss() {

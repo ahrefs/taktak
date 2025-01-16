@@ -5,14 +5,54 @@
  * #css_wrapper_metadata_end */
 
 #container {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    padding: 10px 12px;
+    height: 99vh;
+    padding: 0 0 16px 0;
     color: var(--color-yep-chat-primary-text);
+}
+
+#header-container {
     box-sizing: border-box;
-    font-size: 13px;
-    line-height: 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    padding: 0 16px 0 16px;
+    border-bottom: 1px solid var(--color-yep-chat-panel-border);
+}
+
+#header-container .header-title-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: fit-content;
+    gap: 12px;
+}
+
+#header-container .header-btn {
+    display: block;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+.header-btn .header-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    color: var(--color-yep-chat-tertiary-text);
+}
+
+.header-title-container .chat-title {
+    display: block;
+    font-weight: 500;
+    font-size: 16px;
 }
 
 .chat-scroller {
@@ -41,10 +81,12 @@
 }
 
 #conversation-container {
+    box-sizing: border-box;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin: 8px 16px 0 16px;
 }
 
 .conversation-content {
@@ -67,17 +109,16 @@
 
 .chat-about-this-page-container {
     display: flex;
+    flex-direction: row;
+    align-items: center;
     justify-content: flex-start;
     gap: 6px;
     background-color: transparent;
-    cursor: pointer;
-    border: none;
-    padding: 0;
-    margin: 0;
 }
 
-.chat-about-this-page-container .add-icon-wrapper {
-    flex: 0 0 auto;
+.chat-about-this-page-container .add-button {
+    display: block;
+    width: 14px;
     height: 14px;
     border: none;
     cursor: pointer;
@@ -86,7 +127,7 @@
     margin: 0;
 }
 
-.chat-about-this-page-container .add-icon-wrapper .add-icon {
+.chat-about-this-page-container .add-button .add-icon {
     display: block;
     width: 14px;
     height: 14px;
@@ -94,9 +135,9 @@
 }
 
 .chat-about-this-page-container .label {
-    flex: 0 0 auto;
-    font-weight: 510;
-    font-size: 12px;
+    display: block;
+    font-weight: 500;
+    font-size: 11px;
     color: var(--color-yep-chat-tertiary-text);
 }
 
@@ -147,7 +188,6 @@
     flex-grow: 1;
     font-weight: 400;
     font-size: 12px;
-    line-height: 16px;
     width: auto;
     max-width: 97%;
 }
@@ -234,10 +274,12 @@
 }
 
 #prompt-container {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     border-radius: 12px;
     padding: 12px 12px 12px 12px;
+    margin: 0 16px 0 16px;
     gap: 8px;
     background: var(--color-yep-chat-prompt-background);
     border: 1px solid var(--color-yep-chat-panel-background);
@@ -260,9 +302,11 @@
 }
 
 #error {
+    box-sizing: border-box;
     display: block;
     font-size: 11px;
     padding: 6px 12px 12px 12px;
+    margin: 0 16px 0 16px;
     color: var(--color-yep-chat-error);
 }
 
