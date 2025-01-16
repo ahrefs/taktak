@@ -11,16 +11,17 @@ import './chat_prompt_input.js';
 import './action_menu.js';
 
 function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
-    if (this.shouldHideSiteInfoContainerDueToKnownContext_) {
-        return html``;
-    } else if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
+    if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
         return html`
-            <div class="chat-about-this-page-container">
-                <button class="add-button" @click="${() => this.shouldDisplayChatAboutThisPageButton(false)}">
+            <button class="chat-about-this-page-btn"
+                    @click="${() => this.shouldDisplayChatAboutThisPageButton(false)}">
+                <div class="add-icon-wrapper">
                     <cr-icon aria-hidden="true" icon="cr:add" class="add-icon"></cr-icon>
-                </button>
+                </div>
                 <div class="label">${this.chatAboutThisPageLabel_}</div>
-            </div>`;
+            </button>`;
+    } else if (this.shouldHideSiteInfoContainerDueToKnownContext_) {
+        return html``;
     } else if (!this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
         return html`
             <div class="siteinfo-container">
@@ -64,49 +65,50 @@ export function getHtml(this: ChatAppElement) {
                     <div class="chat-title">${this.title_}</div>
                 </div>
                 <button class="header-btn" @click="${() => {
-    }}">
+                }}">
                     <cr-icon aria-hidden="true" icon="cr:add" class="header-icon"></cr-icon>
                 </button>
             </div>
             <div id="conversation-container" class="chat-scroller chat-scroller-top-of-page">
                 <div class="conversation-content">
+                    <div style="height: 12px"></div>
                     ${
-        this.conversations_.map((conversation, _) => {
-            return conversation.query.length > 0
-                ? html`
+                            this.conversations_.map((conversation, _) => {
+                                return conversation.query.length > 0
+                                        ? html`
                                             ${conversation.shouldDisplaySiteInfo ? html`
                                                 <article class="query-prompt-container auto-width-with-padding">
                                                     <div class="siteinfo-container siteinfo-button"
                                                          @click="${(e: MouseEvent | KeyboardEvent) => {
-                    // capture URL here so that the correct url will be open 
-                    // even if multiple browser windows are open
-                    const url = "https://" + conversation.url;
-                    const modifier: ClickModifiers = {
-                        middleButton: false,
-                        altKey: e.altKey,
-                        ctrlKey: e.ctrlKey,
-                        metaKey: e.metaKey,
-                        shiftKey: e.shiftKey,
-                    };
-                    this.openUrl_(url, modifier);
-                }}"
+                                                             // capture URL here so that the correct url will be open 
+                                                             // even if multiple browser windows are open
+                                                             const url = "https://" + conversation.url;
+                                                             const modifier: ClickModifiers = {
+                                                                 middleButton: false,
+                                                                 altKey: e.altKey,
+                                                                 ctrlKey: e.ctrlKey,
+                                                                 metaKey: e.metaKey,
+                                                                 shiftKey: e.shiftKey,
+                                                             };
+                                                             this.openUrl_(url, modifier);
+                                                         }}"
                                                          @auxclick="${(e: MouseEvent) => {
-                    if (e.button !== 1) {
-                        // not a middle click
-                        return;
-                    }
-                    // capture URL here so that the correct url will be open 
-                    // even if multiple browser windows are open
-                    const url = "https://" + conversation.url;
-                    const modifier: ClickModifiers = {
-                        middleButton: true,
-                        altKey: e.altKey,
-                        ctrlKey: e.ctrlKey,
-                        metaKey: e.metaKey,
-                        shiftKey: e.shiftKey,
-                    };
-                    this.openUrl_(url, modifier);
-                }}">
+                                                             if (e.button !== 1) {
+                                                                 // not a middle click
+                                                                 return;
+                                                             }
+                                                             // capture URL here so that the correct url will be open 
+                                                             // even if multiple browser windows are open
+                                                             const url = "https://" + conversation.url;
+                                                             const modifier: ClickModifiers = {
+                                                                 middleButton: true,
+                                                                 altKey: e.altKey,
+                                                                 ctrlKey: e.ctrlKey,
+                                                                 metaKey: e.metaKey,
+                                                                 shiftKey: e.shiftKey,
+                                                             };
+                                                             this.openUrl_(url, modifier);
+                                                         }}">
                                                         <div class="vertical-bar"></div>
                                                         <div class="siteinfo-content">
                                                             <div class="siteinfo-title">${conversation.title}</div>
@@ -118,45 +120,45 @@ export function getHtml(this: ChatAppElement) {
                                                 <article class="query-prompt-container content-fit-width top-padding">
                                                     ${getQueryPromptSection(conversation.query)}
                                                 </article>`
-                }
+                                            }
                                             ${getConversationResponseElement.bind(this)(conversation)}`
-                :
-                html`${getConversationResponseElement.bind(this)(conversation)}`
-        })
-    }
+                                        :
+                                        html`${getConversationResponseElement.bind(this)(conversation)}`
+                            })
+                    }
                     <div class="message-markdown-container"
                          .innerHTML="${getTrustedHTML(marked.parse(this.completionResult_, {async: false}))}">
                     </div>
                 </div>
                 <div class="action-buttons-container">
-                    ${this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
-        this.actionList_.map((item, _) => {
-            if (item.actionType == ActionType.TRANSLATE) {
-                return html`
+                    ${this.shouldUseCurrentPageContentAsChatContext_ && this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
+                            this.actionList_.map((item, _) => {
+                                if (item.actionType == ActionType.TRANSLATE) {
+                                    return html`
                                         <action-menu
                                                 .actionType_="${item.actionType}"
                                                 .actionLabel_="${item.label}"
                                                 .actionItems_="${this.translateToLanguages_}"
                                                 @item-click="${this.onActionMenuItemClick_}">
                                         </action-menu>`;
-            } else if (item.actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
-                return html`
+                                } else if (item.actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
+                                    return html`
                                         <action-menu
                                                 .actionType_="${item.actionType}"
                                                 .actionLabel_="${item.label}"
                                                 .actionItems_="${this.socialMediaPlatforms_}"
                                                 @item-click="${this.onActionMenuItemClick_}">
                                         </action-menu>`;
-            } else {
-                return html`
+                                } else {
+                                    return html`
                                         <button ?disabled="${this.isSubmittingQuery_}" @click="${(e: Event) => {
-                    e.stopPropagation();
-                    this.onSubmitAction_(item.actionType);
-                }}" class="action-button">
+                                            e.stopPropagation();
+                                            this.onSubmitAction_(item.actionType);
+                                        }}" class="action-button">
                                             ${item.label}
                                         </button>`;
-            }
-        }) : html``}
+                                }
+                            }) : html``}
                 </div>
             </div>
             <div id="prompt-container">
@@ -195,13 +197,13 @@ export function getHtml(this: ChatAppElement) {
                 </div>
             </div>
             ${this.hasExceededMaxTokenCount_
-        ? html`
+                    ? html`
                         <div id="error">${this.exceedMaxTokenCountErrorMessages_}</div>`
-        : html``}
+                    : html``}
             ${this.hasErrorOccurred_
-        ? html`
+                    ? html`
                         <div id="error">${this.errorMessage_}</div>`
-        : html``
-    }
+                    : html``
+            }
         </div>`;
 }
