@@ -54,7 +54,7 @@
     display: block;
     width: 20px;
     height: 20px;
-    color: var(--color-yep-chat-tertiary-text);
+    color: var(--color-yep-chat-secondary-text);
 }
 
 .header-title-container .chat-title {
@@ -236,14 +236,14 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 0 12px 10px 12px;
+    padding: 0 10px 8px 10px;
     border-radius: 8px;
     background: var(--color-yep-chat-prompt-background);
 }
 
 .auto-width-with-padding {
     width: auto;
-    padding-top: 12px;
+    padding-top: 10px;
     margin-right: 4px;
 }
 
@@ -252,7 +252,7 @@
 }
 
 .top-padding {
-    padding-top: 10px;
+    padding-top: 8px;
 }
 
 .query-prompt-container .prompt-section {
