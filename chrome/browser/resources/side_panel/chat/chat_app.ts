@@ -349,7 +349,6 @@ export class ChatAppElement extends CrLitElement {
         this.$.promptInput.resetToAutoHeight();
         this.$.promptInput.focusInput();
         setTimeout(() => this.chatApiProxy_.cancelQuery(), 0);
-        setTimeout(() => this.chatApiProxy_.showUI(), 0);
     }
 
     protected openUrl_(url: string, modifiers: ClickModifiers) {

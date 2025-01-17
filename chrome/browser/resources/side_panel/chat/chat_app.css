@@ -46,6 +46,10 @@
     background-color: transparent;
 }
 
+#target-restart-btn:disabled {
+    cursor: not-allowed;
+}
+
 .header-btn .header-icon {
     display: block;
     width: 20px;
