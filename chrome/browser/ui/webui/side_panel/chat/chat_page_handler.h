@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <atomic>
 
 #include "base/containers/flat_set.h"
 #include "base/functional/callback_forward.h"
@@ -93,7 +94,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
   std::unique_ptr<PageContentExtractorHelper> page_content_extractor_helper_ =
       nullptr;
-  bool isPageContentExtracting = false;
+  std::atomic<bool> isQueryCancellingInProgress;
   base::flat_map<std::string, std::string> extracted_content_cache_;
   base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
