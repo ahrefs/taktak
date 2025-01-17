@@ -167,8 +167,9 @@ class SidePanelBorder : public views::Border {
     // header to paint on top of the border area.
     int top_inset =
         views::Separator::kThickness + header_height_ - GetBorderThickness();
-    return GetBorderInsets() + gfx::Insets::TLBR(top_inset, 0, 0, 0);
+    return GetBorderInsets() + gfx::Insets::TLBR(top_inset, 0, 0, 2);
   }
+
   gfx::Size GetMinimumSize() const override {
     return gfx::Size(GetInsets().width(), GetInsets().height());
   }
