@@ -1,12 +1,13 @@
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import 'chrome://resources/cr_elements/icons_lit.html.js';
 import {getTrustedHTML} from 'chrome://resources/js/parse_html_subset.js';
-import type {conversationRecord} from "./chat_app";
-import {ChatAppElement} from "./chat_app";
+import {ChatAppElement, conversationRecord, ActionOnExtractedContent } from "./chat_app.js";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import {marked} from "./marked.js";
 import {ActionType} from "./chat.mojom-webui.js";
 import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
+import '//resources/cr_elements/cr_tooltip/cr_tooltip.js';
+import {TooltipPosition} from '//resources/cr_elements/cr_tooltip/cr_tooltip.js';
 import './chat_prompt_input.js';
 import './action_menu.js';
 
@@ -14,7 +15,10 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     if (this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
         return html`
             <button class="chat-about-this-page-btn"
-                    @click="${() => this.shouldDisplayChatAboutThisPageButton(false)}">
+                    @click="${(e: Event) => {
+                        e.preventDefault();
+                        this.onPerformActionOnExtractedContent_(ActionOnExtractedContent.AddAsContext);
+                    }}">
                 <div class="add-icon-wrapper">
                     <cr-icon aria-hidden="true" icon="cr:add" class="add-icon"></cr-icon>
                 </div>
@@ -26,14 +30,17 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
         return html`
             <div class="siteinfo-container">
                 <button class="remove-siteinfo-button"
-                        @click="${() => this.shouldDisplayChatAboutThisPageButton(true)}">
+                        @click="${(e: Event) => {
+                            e.preventDefault();
+                            this.onPerformActionOnExtractedContent_(ActionOnExtractedContent.RemoveFromUsingAsContext);
+                        }}">
                     <cr-icon aria-hidden="true" icon="cr:close" class="remove-icon"></cr-icon>
                 </button>
                 <div class="vertical-bar"></div>
                 <div class="siteinfo-content">
                     <div class="siteinfo-title"> ${this.siteInfo_.title}</div>
                     <div class="siteinfo-url">
-                        ${this.stripUrlProtocol(this.siteInfo_.url ?? "")}
+                        ${this.stripUrlProtocol_(this.siteInfo_.url ?? "")}
                     </div>
                 </div>
             </div>`
@@ -59,15 +66,26 @@ export function getHtml(this: ChatAppElement) {
         <div id="container">
             <div id="header-container">
                 <div class="header-title-container">
-                    <button class="header-btn">
+                    <button id="target-close-btn" class="header-btn" @click="${this.onCloseSidePanel_}">
                         <cr-icon aria-hidden="true" icon="cr:close" class="header-icon"></cr-icon>
                     </button>
+                    <cr-tooltip for="target-close-btn"
+                                .offset="-7"
+                                .position="${TooltipPosition.BOTTOM}"
+                                fit-to-visible-bounds aria-hidden="true">
+                        <span>${"Close"}</span>
+                    </cr-tooltip>
                     <div class="chat-title">${this.title_}</div>
                 </div>
-                <button class="header-btn" @click="${() => {
-                }}">
+                <button id="target-restart-btn" class="header-btn" @click="${this.onRestartChat_}">
                     <cr-icon aria-hidden="true" icon="cr:add" class="header-icon"></cr-icon>
                 </button>
+                <cr-tooltip for="target-restart-btn"
+                            .offset="-7"
+                            .position="${TooltipPosition.BOTTOM}"
+                            fit-to-visible-bounds aria-hidden="true">
+                    <span>${"Restart Chat"}</span>
+                </cr-tooltip>
             </div>
             <div id="conversation-container" class="chat-scroller chat-scroller-top-of-page">
                 <div class="conversation-content">

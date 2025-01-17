@@ -104,7 +104,7 @@ class SidePanelBorder : public views::Border {
         view.GetLocalBounds(), view.layer()->device_scale_factor());
 
     gfx::RectF scaled_contents_bounds_f = scaled_view_bounds_f;
-    const float corner_radius = 24;
+    const float corner_radius = 16;
     const gfx::InsetsF insets_in_pixels(
         gfx::ConvertInsetsToPixels(GetInsets(), dsf));
     scaled_contents_bounds_f.Inset(insets_in_pixels);
@@ -149,7 +149,7 @@ class SidePanelBorder : public views::Border {
 
     // Paint the inner border around SidePanel content. Since half the stroke
     // gets painted in the clipped area, make this twice as thick.
-    const float stroke_thickness = views::Separator::kThickness * 6;
+    const float stroke_thickness = views::Separator::kThickness * 4;
     cc::PaintFlags flags;
     flags.setStrokeWidth(stroke_thickness);
     flags.setColor(view.GetColorProvider()->GetColor(kColorYepChatPanelBorder));

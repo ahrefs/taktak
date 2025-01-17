@@ -47,7 +47,7 @@ public:
     void BindInterface(
             mojo::PendingReceiver<chat::mojom::PageHandlerFactory> receiver);
 
-    // Set by WebUIContentsWrapperT. TopChromeWebUIController provides default
+    // Set by WebUIContentsWrapperT.TopChromeWebUIController provides default
     // implementation for this but we don't use it.
     void set_embedder(
         base::WeakPtr<TopChromeWebUIController::Embedder> embedder) {

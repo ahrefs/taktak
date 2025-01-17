@@ -2,25 +2,33 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
+
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
-#include "chrome/grit/generated_resources.h"
-#include "content/public/browser/storage_partition.h"
-#include "services/service_manager/public/cpp/interface_provider.h"
-#include "ui/base/l10n/l10n_util.h"
-#include "ui/base/mojom/window_open_disposition.mojom.h"
-#include "ui/base/window_open_disposition.h"
-#include "ui/base/window_open_disposition_utils.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_commands.h"
 #include "chrome/browser/ui/browser_finder.h"
+#include "chrome/browser/ui/browser_window/public/browser_window_features.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_ui.h"
+#include "chrome/grit/generated_resources.h"
+#include "content/public/browser/storage_partition.h"
 #include "content/public/browser/web_contents.h"
+#include "services/service_manager/public/cpp/interface_provider.h"
+#include "ui/base/l10n/l10n_util.h"
+#include "ui/base/mojom/window_open_disposition.mojom.h"
+#include "ui/base/window_open_disposition.h"
+#include "ui/base/window_open_disposition_utils.h"
 
 namespace {
+
+constexpr size_t kMaxUserPromptLength = 90'000;
+constexpr char kUserRole[] = "user";
+constexpr char kAssistantRole[] = "assistant";
+
 std::string BuildPrompt(const std::string& query,
                         const std::string& extracted_content,
                         chat::mojom::ActionType action_type) {
@@ -71,8 +79,18 @@ void ChatPageHandler::ShowUI() {
 
 void ChatPageHandler::CloseUI() {
     auto embedder = chat_ui_->embedder();
-    if (embedder)
-        embedder->CloseUI();
+    if (embedder) {
+      embedder->CloseUI();
+    }
+
+    Browser* browser = chrome::FindLastActive();
+    if (!browser) {
+      return;
+    }
+
+    if (SidePanelUI* ui = browser->GetFeatures().side_panel_ui()) {
+      ui->Close();
+    }
 }
 
 void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents *contents) {
@@ -209,31 +227,25 @@ void ChatPageHandler::OnPageContentExtracted(
   extracted_content_cache_.clear();
 
   std::string max_content = content;
-  const size_t max_length = 90'000;
-  if (content.length() > max_length) {
-    max_content = content.substr(0, max_length);
+  if (content.length() > kMaxUserPromptLength) {
+    max_content = content.substr(0, kMaxUserPromptLength);
   }
 
   if (!url.empty()) {
     extracted_content_cache_[url] = max_content;
   }
-
-  if (!isQueryCancelling) {
-    std::vector<struct CompletionMessage> all_messages;
-    for (auto& msg : completion_messages) {
-      all_messages.push_back(msg);
-    }
-    all_messages.push_back(
-        {BuildPrompt(prompt, max_content, action_type), "user"});
-    api_client_->QueryPrompt(
-        all_messages,
-        base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
-                       base::Unretained(this), action_type),
-        base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
-                            base::Unretained(this), action_type));
-  } else {
-    isQueryCancelling = false;
+  std::vector<struct CompletionMessage> all_messages;
+  for (auto& msg : completion_messages) {
+    all_messages.push_back(msg);
   }
+  all_messages.push_back(
+    {BuildPrompt(prompt, max_content, action_type), kUserRole});
+  api_client_->QueryPrompt(
+    all_messages,
+    base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                   base::Unretained(this), action_type),
+    base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                        base::Unretained(this), action_type));
 }
 
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
@@ -244,14 +256,14 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
     std::vector<struct CompletionMessage> completion_messages;
 
     for (auto& item : conversation_history) {
-        completion_messages.push_back({item->user_query, "user"});
-        completion_messages.push_back({item->llm_response, "assistant"});
+      completion_messages.push_back({item->user_query, kUserRole});
+      completion_messages.push_back({item->llm_response, kAssistantRole});
     }
 
     if (extracted_content_cache_.contains(url) /* Context is in the cache */) {
       auto previous_content = extracted_content_cache_[url];
       completion_messages.push_back(
-          {BuildPrompt(query, previous_content, action_type), "user"});
+          {BuildPrompt(query, previous_content, action_type), kUserRole});
       api_client_->QueryPrompt(
           completion_messages,
           base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
@@ -266,7 +278,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
     } else /* user removed the context via Chat UI or the current opening tab is
               empty */
     {
-      completion_messages.push_back({query, "user"});
+      completion_messages.push_back({query, kUserRole});
       api_client_->QueryPrompt(
           completion_messages,
           base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
@@ -290,6 +302,7 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
         base::expected<std::string, chat::mojom::APIErrorType> result) {
     chat::mojom::ActionResponsePtr response = chat::mojom::ActionResponse::New();
     response->action_type = action_type;
+
     if (result.has_value()) {
         DVLOG(0) << __func__ << " success -> " << result.value();
         response->response_type = chat::mojom::ResponseType::COMPLETED;
@@ -303,11 +316,7 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
 }
 
 void ChatPageHandler::CancelQuery() {
-    // This is used in case the active page content is being extracted
-    // while the query is cancelled.
-    isQueryCancelling = true;
-
-    api_client_->ClearAllQueries();
+  api_client_->ClearAllQueries();
 }
 
 void ChatPageHandler::OpenURL(

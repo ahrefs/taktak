@@ -23,6 +23,11 @@ function transformToArray(input: string): string[] {
     return input.split(",").map(item => item.trim());
 }
 
+export enum ActionOnExtractedContent {
+    AddAsContext = 0,
+    RemoveFromUsingAsContext = 1,
+}
+
 export type conversationRecord = {
     query: string,
     shouldDisplaySiteInfo: boolean,
@@ -107,16 +112,20 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private async updateSiteInfo(siteInfo: SiteInfo) {
+        if (this.siteInfo_.url === siteInfo.url) return;
+
         this.siteInfo_ = siteInfo;
         if (this.siteInfo_.isContentUsableInConversations) {
             const {actionList} = await this.chatApiProxy_.getActionList();
             this.actionList_ = actionList;
             this.shouldUseCurrentPageContentAsChatContext_ = true;
-            this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
             this.shouldDisplayChatAboutThisPageButton_ = false;
             this.hasErrorOccurred_ = false;
             this.errorMessage_ = ""
+        } else {
+            this.shouldUseCurrentPageContentAsChatContext_ = false;
         }
+        this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
         this.updateComplete;
     }
 
@@ -140,13 +149,47 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
-    protected shouldDisplayChatAboutThisPageButton(value: boolean) {
-        this.shouldDisplayChatAboutThisPageButton_ = value;
-        this.shouldUseCurrentPageContentAsChatContext_ = !value;
+    protected onCloseSidePanel_(e: Event){
+        e.preventDefault();
+        this.chatApiProxy_.closeUI();
+    }
+
+    protected  onRestartChat_(e: Event) {
+        e.preventDefault();
+
+        this.query_ = "";
+        this.conversations_.length = 0;
+        this.completionResult_ = "";
+        this.isSubmittingQuery_ = false;
+        this.submittedQuery_ = "";
+        this.shouldDisplayChatAboutThisPageButton_ = false;
+        this.hasErrorOccurred_ = false;
+        this.hasExceededMaxTokenCount_ = false;
+        this.exceedMaxTokenCountErrorMessages_ = "";
+        this.errorMessage_ = ""
+        this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
+        if (this.siteInfo_.isContentUsableInConversations) {
+            this.shouldUseCurrentPageContentAsChatContext_ = true;
+        } else {
+            this.shouldUseCurrentPageContentAsChatContext_ = false;
+        }
+        this.$.promptInput.resetToAutoHeight();
+        this.$.promptInput.focusInput();
+    }
+
+    protected onPerformActionOnExtractedContent_(action: ActionOnExtractedContent) {
+        if (action === ActionOnExtractedContent.AddAsContext) {
+            this.shouldDisplayChatAboutThisPageButton_ = false;
+            this.shouldUseCurrentPageContentAsChatContext_ = true;
+        } else if (action === ActionOnExtractedContent.RemoveFromUsingAsContext) {
+            this.shouldDisplayChatAboutThisPageButton_ = true;
+            this.shouldUseCurrentPageContentAsChatContext_ = false;
+        }
+        this.$.promptInput.focusInput();
         this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
     }
 
-    protected stripUrlProtocol(url: string = ''): string {
+    protected stripUrlProtocol_(url: string = ''): string {
         const PROTOCOL_REGEX = /^https?:\/\//;
         return url ? url.replace(PROTOCOL_REGEX, '') : '';
     }
@@ -157,7 +200,7 @@ export class ChatAppElement extends CrLitElement {
 
     protected onSubmitAction_(actionType: ActionType, actionParam: string = '') {
         const title = this.siteInfo_.title ?? "";
-        const url = this.stripUrlProtocol(this.siteInfo_.url ?? "");
+        const url = this.stripUrlProtocol_(this.siteInfo_.url ?? "");
         const response = "";
         if (this.conversations_ != null) {
             if (actionType == ActionType.SUMMARIZE_PAGE) {
@@ -306,6 +349,7 @@ export class ChatAppElement extends CrLitElement {
         this.$.promptInput.resetToAutoHeight();
         this.$.promptInput.focusInput();
         setTimeout(() => this.chatApiProxy_.cancelQuery(), 0);
+        setTimeout(() => this.chatApiProxy_.showUI(), 0);
     }
 
     protected openUrl_(url: string, modifiers: ClickModifiers) {

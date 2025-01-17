@@ -105,6 +105,7 @@ void CompletionApiClient::QueryPrompt(
 void CompletionApiClient::ClearAllQueries() {
   DVLOG(0) << "Clearing all queries";
   api_request_helper_.CancelAll();
+  entire_completion_result.clear();
 }
 
 void CompletionApiClient::OnQueryDataReceived(

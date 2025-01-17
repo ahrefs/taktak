@@ -361,6 +361,17 @@
     line-height: 18px;
 }
 
+.message-markdown-container a {
+    text-decoration: none;
+    color: inherit;
+    cursor: default;
+}
+
+.message-markdown-container a:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
 .message-markdown-container h1 {
     font-weight: 700;
     font-size: 22px;
