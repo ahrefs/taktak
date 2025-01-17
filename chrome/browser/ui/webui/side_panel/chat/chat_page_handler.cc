@@ -62,7 +62,7 @@ ChatPageHandler::ChatPageHandler(
           chat_context_web_contents_(chat_context_web_contents->GetWeakPtr()),
           profile_(Profile::FromWebUI(web_ui)),
           page_content_extractor_helper_(std::make_unique<PageContentExtractorHelper>(chat_context_web_contents)) {
-    isQueryCancellingInProgress.store(false);
+    isQueryCancellingInProgress_.store(false);
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
             profile_->GetDefaultStoragePartition()
                     ->GetURLLoaderFactoryForBrowserProcess();
@@ -165,7 +165,7 @@ base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
 
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
                                    const std::string &action_param) {
-    isQueryCancellingInProgress.store(false);
+    isQueryCancellingInProgress_.store(false);
     if (page_.is_bound()) {
         std::string summarize_prompt =
                 l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE);
@@ -233,8 +233,8 @@ void ChatPageHandler::OnPageContentExtracted(
         extracted_content_cache_[url] = max_content;
     }
 
-    if (isQueryCancellingInProgress.load()) {
-        isQueryCancellingInProgress.store(false);
+    if (isQueryCancellingInProgress_.load()) {
+        isQueryCancellingInProgress_.store(false);
         return;
     }
 
@@ -321,7 +321,7 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
 }
 
 void ChatPageHandler::CancelQuery() {
-    isQueryCancellingInProgress.store(true);
+    isQueryCancellingInProgress_.store(true);
     api_client_->ClearAllQueries();
 }
 

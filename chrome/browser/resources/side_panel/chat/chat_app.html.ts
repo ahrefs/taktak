@@ -73,7 +73,7 @@ export function getHtml(this: ChatAppElement) {
                                 .offset="-7"
                                 .position="${TooltipPosition.BOTTOM}"
                                 fit-to-visible-bounds aria-hidden="true">
-                        <span>${"Close"}</span>
+                        <span>${this.tooltipCloseSidePanel_}</span>
                     </cr-tooltip>
                     <div class="chat-title">${this.title_}</div>
                 </div>
@@ -86,7 +86,7 @@ export function getHtml(this: ChatAppElement) {
                             .offset="-7"
                             .position="${TooltipPosition.BOTTOM}"
                             fit-to-visible-bounds aria-hidden="true">
-                    <span>${"Restart Chat"}</span>
+                    <span>${this.tooltipNewChat_}</span>
                 </cr-tooltip>
             </div>
             <div id="conversation-container" class="chat-scroller chat-scroller-top-of-page">

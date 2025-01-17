@@ -94,7 +94,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   std::unique_ptr<CompletionApiClient> api_client_ = nullptr;
   std::unique_ptr<PageContentExtractorHelper> page_content_extractor_helper_ =
       nullptr;
-  std::atomic<bool> isQueryCancellingInProgress;
+  std::atomic<bool> isQueryCancellingInProgress_;
   base::flat_map<std::string, std::string> extracted_content_cache_;
   base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
