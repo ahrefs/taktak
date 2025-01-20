@@ -5,7 +5,7 @@
 
 #include "base/functional/callback_forward.h"
 #include "chrome/common/chat/page_content_extractor.mojom.h"
-#include "chrome/renderer/chat/page_content_extractor.h"
+#include "chrome/renderer/chat/page_content_extractor.h" // nogncheck
 
 namespace content {
     class WebContents;

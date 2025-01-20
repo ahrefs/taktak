@@ -1756,6 +1756,7 @@ static_library("ui") {
       "//chrome/browser/ui/webui/searchbox",
       "//chrome/browser/ui/webui/settings",
       "//chrome/browser/ui/webui/settings:impl",
+      "//chrome/common/chat:mojo_bindings",
       "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings",
       "//chrome/browser/ui/webui/signin",
       "//chrome/browser/ui/webui/signin:login",
