@@ -441,16 +441,16 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_TRACKING_PROTECTION_IP_PROTECTION_TOGGLE_SUB_LABEL" desc="Sub-label for the IP protection toggle. Explains that the feature only works for signed-in users and that some traffic may be sent through privacy servers when the feature is on. Provides a link to a help center article.">
-              When you're signed in to Chromium, this setting helps keep your IP address private. If Chromium suspects a site may be tracking you, some of your traffic may be sent through privacy servers. Learn more about <ph name="LINK_BEGIN">&lt;a href="#" aria-label="$1" aria-description="$2" target="_blank"&gt;</ph>how IP protection works<ph name="LINK_END">&lt;/a&gt;</ph>
+              When you're signed in to Taktak, this setting helps keep your IP address private. If Taktak suspects a site may be tracking you, some of your traffic may be sent through privacy servers. Learn more about <ph name="LINK_BEGIN">&lt;a href="#" aria-label="$1" aria-description="$2" target="_blank"&gt;</ph>how IP protection works<ph name="LINK_END">&lt;/a&gt;</ph>
           </message>
           <message name="IDS_SETTINGS_TRACKING_PROTECTION_DEFAULT_DESCRIPTION" desc="Text describing the default Tracking Protection settings state. Contains a learn more link to a help center article." translateable="false">
-              Chromium limits the type of information sites can use to track you as you browse.<ph name="BR">&lt;br&gt;</ph>Learn more about <ph name="BEGIN_LINK">&lt;a target="_blank" href="$1" aria-label="$2" aria-description="$3"&gt;</ph>Tracking Protection on Chromium<ph name="END_LINK">&lt;/a&gt;<ex>&lt;/a&gt;</ex></ph>.
+              Taktak limits the type of information sites can use to track you as you browse.<ph name="BR">&lt;br&gt;</ph>Learn more about <ph name="BEGIN_LINK">&lt;a target="_blank" href="$1" aria-label="$2" aria-description="$3"&gt;</ph>Tracking Protection on Taktak<ph name="END_LINK">&lt;/a&gt;<ex>&lt;/a&gt;</ex></ph>.
           </message>
           <message name="IDS_SETTINGS_TRACKING_PROTECTION_DEFAULT_LEARN_MORE_ARIA_LABEL" desc="Screenreader text for the help center article link in the Tracking Protection default description." translateable="false">
-              Learn about Tracking Protection on Chromium
+              Learn about Tracking Protection on Taktak
           </message>
-          <message name="IDS_SETTINGS_TRACKING_PROTECTION_TPCD_BULLET_ONE" desc="The first bullet on the Tracking Protection settings page. Informs users that Chromium limits third-party cookies by default." translateable="false">
-              Chromium automatically limits third-party cookies
+          <message name="IDS_SETTINGS_TRACKING_PROTECTION_TPCD_BULLET_ONE" desc="The first bullet on the Tracking Protection settings page. Informs users that Taktak limits third-party cookies by default." translateable="false">
+              Taktak automatically limits third-party cookies
           </message>
         </else>
       </if>
@@ -491,13 +491,13 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET1" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            Chromium notes topics of interest based on your recent browsing history
+            Taktak notes topics of interest based on your recent browsing history
           </message>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET2" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            Sites you visit can ask Chromium for topics to show you relevant ads while protecting your browsing history and identity
+            Sites you visit can ask Taktak for topics to show you relevant ads while protecting your browsing history and identity
           </message>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_THINGS_TO_CONSIDER_BULLET2" desc="A part of the things to consider section of the Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            You can see your ad topics in Chromium settings and block the ones you don't want shared with sites
+            You can see your ad topics in Taktak settings and block the ones you don't want shared with sites
           </message>
         </else>
       </if>
