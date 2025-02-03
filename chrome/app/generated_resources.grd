@@ -9031,7 +9031,7 @@ Keep your key file in a safe place. You will need it to create new versions of y
         Your message is too long
       </message>
       <message name="IDS_CHAT_GENERIC_ERROR" desc="Display on the chat UI when an error occurred">
-        An error has occurred. Please try again, restart the chat, or close and reopen the chat panel.
+        An error has occurred. Please check your connection and try again, or restart the chat by closing and reopening the panel.
       </message>
       <message name="IDS_CHAT_NEW_CHAT" desc="Display as tooltip of New Chat button">
         New Chat
