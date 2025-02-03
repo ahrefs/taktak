@@ -6,8 +6,6 @@ import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import {marked} from "./marked.js";
 import {ActionType} from "./chat.mojom-webui.js";
 import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
-import '//resources/cr_elements/cr_tooltip/cr_tooltip.js';
-import {TooltipPosition} from '//resources/cr_elements/cr_tooltip/cr_tooltip.js';
 import './chat_prompt_input.js';
 import './action_menu.js';
 
@@ -73,25 +71,13 @@ export function getHtml(this: ChatAppElement) {
                     <button id="target-close-btn" class="header-btn" @click="${this.onCloseSidePanel_}">
                         <cr-icon aria-hidden="true" icon="cr:close" class="header-icon"></cr-icon>
                     </button>
-                    <cr-tooltip for="target-close-btn"
-                                .offset="-7"
-                                .position="${TooltipPosition.BOTTOM}"
-                                fit-to-visible-bounds aria-hidden="true">
-                        <span>${this.tooltipCloseSidePanel_}</span>
-                    </cr-tooltip>
                     <div class="chat-title">${this.title_}</div>
                 </div>
                 <button id="target-restart-btn" class="header-btn"
                         ?disabled="${this.isSubmittingQuery_}"
                         @click="${this.onRestartChat_}">
-                    <cr-icon aria-hidden="true" icon="cr:add" class="header-icon"></cr-icon>
+                    <cr-icon aria-hidden="true" icon="cr:delete" class="header-icon"></cr-icon>
                 </button>
-                <cr-tooltip for="target-restart-btn"
-                            .offset="-7"
-                            .position="${TooltipPosition.BOTTOM}"
-                            fit-to-visible-bounds aria-hidden="true">
-                    <span>${this.tooltipNewChat_}</span>
-                </cr-tooltip>
             </div>
             <div id="conversation-container" class="chat-scroller chat-scroller-top-of-page">
                 <div class="conversation-content">
