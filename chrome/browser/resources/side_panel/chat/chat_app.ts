@@ -52,8 +52,6 @@ export class ChatAppElement extends CrLitElement {
     protected title_: string = loadTimeData.getString('title');
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
     protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
-    protected tooltipCloseSidePanel_ = loadTimeData.getString('closeSidePanel');
-    protected tooltipNewChat_ = loadTimeData.getString('newChat');
     protected siteInfo_: SiteInfo = {
         url: "",
         title: "",
@@ -110,8 +108,6 @@ export class ChatAppElement extends CrLitElement {
             shouldHideSiteInfoContainerDueToKnownContext_: {type: Boolean},
             shouldUseCurrentPageContentAsChatContext_: {type: Boolean},
             title_: {type: String},
-            tooltipCloseSidePanel_: {type: String},
-            tooltipNewChat_: {type: String},
         };
     }
 
@@ -133,7 +129,7 @@ export class ChatAppElement extends CrLitElement {
         this.updateComplete;
     }
 
-    private replaceThinkBlocks(input: string) {
+    private replaceThinkBlock(input: string) {
         const openingTagRegex = /<think>/g;
         const closingTagRegex = /<\/think>/g;
 
@@ -143,7 +139,7 @@ export class ChatAppElement extends CrLitElement {
 
     private updateSubmitResponse(response: ActionResponse) {
         if (response.responseType == ResponseType.DELTA) {
-            this.completionResult_ += this.replaceThinkBlocks(response.result);
+            this.completionResult_ += this.replaceThinkBlock(response.result);
             this.hasErrorOccurred_ = false;
             this.errorMessage_ = "";
         } else if (response.responseType == ResponseType.COMPLETED) {
