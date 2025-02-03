@@ -3,18 +3,18 @@ import type {ChatPromptInputElement} from './chat_prompt_input.js';
 
 export function getHtml(this: ChatPromptInputElement) {
     return html`
-        <textarea id="input" 
-                  ?autofocus="${this.autofocus}" 
+        <textarea id="input"
+                  ?autofocus="${this.autofocus}"
                   .rows="${this.rows}"
-                  .value="${this.internalValue_}" 
+                  .value="${this.internalValue_}"
                   aria-label="chat-prompt-input"
-                  @input="${this.onInput_}" 
+                  @input="${this.onInput_}"
                   @focus="${this.onInputFocusChange_}"
-                  @blur="${this.onInputFocusChange_}" 
+                  @blur="${this.onInputFocusChange_}"
                   @change="${this.onInputChange_}"
                   @keydown="${this.onKeydown_}"
-                  ?disabled="${this.disabled}" 
-                  ?readonly="${this.readonly}" 
+                  ?disabled="${this.disabled}"
+                  ?readonly="${this.readonly}"
                   ?required="${this.required}"
                   placeholder="${this.placeholder || nothing}">
             </textarea>`;

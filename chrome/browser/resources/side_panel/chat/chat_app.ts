@@ -53,7 +53,7 @@ export class ChatAppElement extends CrLitElement {
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
     protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
     protected tooltipCloseSidePanel_ = loadTimeData.getString('closeSidePanel');
-    protected tooltipNewChat_= loadTimeData.getString('newChat');
+    protected tooltipNewChat_ = loadTimeData.getString('newChat');
     protected siteInfo_: SiteInfo = {
         url: "",
         title: "",
@@ -133,9 +133,17 @@ export class ChatAppElement extends CrLitElement {
         this.updateComplete;
     }
 
+    private replaceThinkBlocks(input: string) {
+        const openingTagRegex = /<think>/g;
+        const closingTagRegex = /<\/think>/g;
+
+        let result = input.replace(openingTagRegex, '<blockquote>');
+        return result.replace(closingTagRegex, '</blockquote>');
+    }
+
     private updateSubmitResponse(response: ActionResponse) {
         if (response.responseType == ResponseType.DELTA) {
-            this.completionResult_ += response.result;
+            this.completionResult_ += this.replaceThinkBlocks(response.result);
             this.hasErrorOccurred_ = false;
             this.errorMessage_ = "";
         } else if (response.responseType == ResponseType.COMPLETED) {
@@ -153,12 +161,12 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
-    protected onCloseSidePanel_(e: Event){
+    protected onCloseSidePanel_(e: Event) {
         e.preventDefault();
         this.chatApiProxy_.closeUI();
     }
 
-    protected  onRestartChat_(e: Event) {
+    protected onRestartChat_(e: Event) {
         e.preventDefault();
 
         this.query_ = "";

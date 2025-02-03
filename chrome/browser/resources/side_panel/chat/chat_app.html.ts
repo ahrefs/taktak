@@ -1,7 +1,7 @@
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import 'chrome://resources/cr_elements/icons_lit.html.js';
 import {getTrustedHTML} from 'chrome://resources/js/parse_html_subset.js';
-import {ChatAppElement, conversationRecord, ActionOnExtractedContent } from "./chat_app.js";
+import {ChatAppElement, conversationRecord, ActionOnExtractedContent} from "./chat_app.js";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import {marked} from "./marked.js";
 import {ActionType} from "./chat.mojom-webui.js";
@@ -50,10 +50,14 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
 }
 
 function getConversationResponseElement(conversation: conversationRecord) {
-    return conversation.response.length > 0 ? html`
+    if (conversation.query.length == 0) {
+        return html``;
+    }
+
+    return html`
         <article class="message-markdown-container"
                  .innerHTML="${getTrustedHTML(conversation.response)}">
-        </article>` : html``;
+        </article>`;
 }
 
 function getQueryPromptSection(query: string) {
@@ -94,56 +98,61 @@ export function getHtml(this: ChatAppElement) {
                     <div style="height: 12px"></div>
                     ${
                             this.conversations_.map((conversation, _) => {
-                                return conversation.query.length > 0
-                                        ? html`
-                                            ${conversation.shouldDisplaySiteInfo ? html`
-                                                <article class="query-prompt-container auto-width-with-padding">
-                                                    <div class="siteinfo-container siteinfo-button"
-                                                         @click="${(e: MouseEvent | KeyboardEvent) => {
-                                                             // capture URL here so that the correct url will be open 
-                                                             // even if multiple browser windows are open
-                                                             const url = "https://" + conversation.url;
-                                                             const modifier: ClickModifiers = {
-                                                                 middleButton: false,
-                                                                 altKey: e.altKey,
-                                                                 ctrlKey: e.ctrlKey,
-                                                                 metaKey: e.metaKey,
-                                                                 shiftKey: e.shiftKey,
-                                                             };
-                                                             this.openUrl_(url, modifier);
-                                                         }}"
-                                                         @auxclick="${(e: MouseEvent) => {
-                                                             if (e.button !== 1) {
-                                                                 // not a middle click
-                                                                 return;
-                                                             }
-                                                             // capture URL here so that the correct url will be open 
-                                                             // even if multiple browser windows are open
-                                                             const url = "https://" + conversation.url;
-                                                             const modifier: ClickModifiers = {
-                                                                 middleButton: true,
-                                                                 altKey: e.altKey,
-                                                                 ctrlKey: e.ctrlKey,
-                                                                 metaKey: e.metaKey,
-                                                                 shiftKey: e.shiftKey,
-                                                             };
-                                                             this.openUrl_(url, modifier);
-                                                         }}">
-                                                        <div class="vertical-bar"></div>
-                                                        <div class="siteinfo-content">
-                                                            <div class="siteinfo-title">${conversation.title}</div>
-                                                            <div class="siteinfo-url">${conversation.url}</div>
-                                                        </div>
-                                                    </div>
-                                                    ${getQueryPromptSection(conversation.query)}
-                                                </article>` : html`
-                                                <article class="query-prompt-container content-fit-width top-padding">
-                                                    ${getQueryPromptSection(conversation.query)}
-                                                </article>`
-                                            }
-                                            ${getConversationResponseElement.bind(this)(conversation)}`
-                                        :
-                                        html`${getConversationResponseElement.bind(this)(conversation)}`
+                                // if there is no user prompt or query to display due to some errors, we will only display LLM's response
+                                if (conversation.query.length == 0) {
+                                    return html`${getConversationResponseElement.bind(this)(conversation)}`;
+                                }
+
+                                if (conversation.shouldDisplaySiteInfo) {
+                                    return html`
+                                        <article class="query-prompt-container auto-width-with-padding">
+                                            <div class="siteinfo-container siteinfo-button"
+                                                 @click="${(e: MouseEvent | KeyboardEvent) => {
+                                                     // capture URL here so that the correct url will be open 
+                                                     // even if multiple browser windows are open
+                                                     const url = "https://" + conversation.url;
+                                                     const modifier: ClickModifiers = {
+                                                         middleButton: false,
+                                                         altKey: e.altKey,
+                                                         ctrlKey: e.ctrlKey,
+                                                         metaKey: e.metaKey,
+                                                         shiftKey: e.shiftKey,
+                                                     };
+                                                     this.openUrl_(url, modifier);
+                                                 }}"
+                                                 @auxclick="${(e: MouseEvent) => {
+                                                     if (e.button !== 1) {
+                                                         // not a middle click
+                                                         return;
+                                                     }
+                                                     // capture URL here so that the correct url will be open 
+                                                     // even if multiple browser windows are open
+                                                     const url = "https://" + conversation.url;
+                                                     const modifier: ClickModifiers = {
+                                                         middleButton: true,
+                                                         altKey: e.altKey,
+                                                         ctrlKey: e.ctrlKey,
+                                                         metaKey: e.metaKey,
+                                                         shiftKey: e.shiftKey,
+                                                     };
+                                                     this.openUrl_(url, modifier);
+                                                 }}">
+                                                <div class="vertical-bar"></div>
+                                                <div class="siteinfo-content">
+                                                    <div class="siteinfo-title">${conversation.title}</div>
+                                                    <div class="siteinfo-url">${conversation.url}</div>
+                                                </div>
+                                            </div>
+                                            ${getQueryPromptSection(conversation.query)}
+                                        </article>
+                                        ${getConversationResponseElement.bind(this)(conversation)}`;
+                                } else {
+                                    return html`
+                                        <article class="query-prompt-container content-fit-width top-padding">
+                                            ${getQueryPromptSection(conversation.query)}
+                                        </article>
+                                        ${getConversationResponseElement.bind(this)(conversation)}`;
+                                }
                             })
                     }
                     <div class="message-markdown-container"
