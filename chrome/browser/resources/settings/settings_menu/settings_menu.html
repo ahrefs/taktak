@@ -1,173 +1,183 @@
-    <style include="cr-hidden-style cr-icons cr-nav-menu-item-style">
-      :host {
+<style include="cr-hidden-style cr-icons cr-nav-menu-item-style">
+    :host {
         box-sizing: border-box;
         display: block;
         padding-bottom: 5px; /* Prevents focus outlines from being cropped. */
         padding-top: 8px;
-      }
+    }
 
-      :host * {
+    :host * {
         -webkit-tap-highlight-color: transparent;
-      }
+    }
 
-      #menu {
+    #menu {
         color: var(--google-grey-700);
         display: flex;
         flex-direction: column;
         min-width: fit-content;
-      }
+    }
 
-      #extensionsLink > .cr-icon {
+    #extensionsLink > .cr-icon {
         height: var(--cr-icon-size);
-        margin-inline-end: 14px;  /* 16px - 2px from margin for outline. */
+        margin-inline-end: 14px; /* 16px - 2px from margin for outline. */
         width: var(--cr-icon-size);
-      }
+    }
 
-      .menu-separator {
+    .menu-separator {
         /* Per bettes@, this is different from the other separator lines. */
         border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         margin-bottom: 8px;
         margin-top: 8px;
-      }
+    }
 
-      @media (prefers-color-scheme: dark) {
+    @media (prefers-color-scheme: dark) {
         #menu {
-          color: var(--cr-primary-text-color);
+            color: var(--cr-primary-text-color);
         }
 
         .menu-separator {
-          border-bottom: var(--cr-separator-line);  /* override */
+            border-bottom: var(--cr-separator-line); /* override */
         }
-      }
-    </style>
+    }
+</style>
 
-    <div role="navigation">
-      <cr-menu-selector id="menu" selectable="a:not(#extensionsLink)"
-          attr-for-selected="href" on-iron-activate="onSelectorActivate_"
-          on-click="onLinkClick_" selected-attribute="selected">
+<div role="navigation">
+    <cr-menu-selector id="menu" selectable="a:not(#extensionsLink)"
+                      attr-for-selected="href" on-iron-activate="onSelectorActivate_"
+                      on-click="onLinkClick_" selected-attribute="selected">
         <a role="menuitem"
-            id="people" href="/people" hidden="[[!pageVisibility.people]]"
-            class="cr-nav-menu-item">
-<if expr="not _google_chrome">
-          <cr-icon icon="settings:person"></cr-icon>
-</if>
-<if expr="_google_chrome">
-          <cr-icon icon="settings-internal:google-g"></cr-icon>
-</if>
-          $i18n{peoplePageTitle}
-          <cr-ripple></cr-ripple>
+           id="people" href="/people" hidden="[[!pageVisibility.people]]"
+           class="cr-nav-menu-item">
+            <if expr="not _google_chrome">
+                <cr-icon icon="settings:person"></cr-icon>
+            </if>
+            <if expr="_google_chrome">
+                <cr-icon icon="settings-internal:google-g"></cr-icon>
+            </if>
+            $i18n{peoplePageTitle}
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" id="autofill" href="/autofill"
-            hidden="[[!pageVisibility.autofill]]"
-            class="cr-nav-menu-item">
-          <cr-icon icon="settings:assignment"></cr-icon>
-          $i18n{autofillPageTitle}
-          <cr-ripple></cr-ripple>
+           hidden="[[!pageVisibility.autofill]]"
+           class="cr-nav-menu-item">
+            <cr-icon icon="settings:assignment"></cr-icon>
+            $i18n{autofillPageTitle}
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" href="/privacy"
-            hidden="[[!pageVisibility.privacy]]"
-            class="cr-nav-menu-item">
-          <cr-icon icon="settings:security"></cr-icon>
-          $i18n{privacyPageTitle}
-          <cr-ripple></cr-ripple>
+           hidden="[[!pageVisibility.privacy]]"
+           class="cr-nav-menu-item">
+            <cr-icon icon="settings:security"></cr-icon>
+            $i18n{privacyPageTitle}
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" id="performance" href="/performance"
-            class="cr-nav-menu-item"
-            hidden="[[!pageVisibility.performance]]">
-          <cr-icon icon="settings:navigation-performance"></cr-icon>
-          $i18n{performancePageTitle}
-          <cr-ripple></cr-ripple>
+           class="cr-nav-menu-item"
+           hidden="[[!pageVisibility.performance]]">
+            <cr-icon icon="settings:navigation-performance"></cr-icon>
+            $i18n{performancePageTitle}
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" href="/ai"
-            hidden="[[!showExperimentalMenuItem_(
+           hidden="[[!showExperimentalMenuItem_(
                 showAdvancedFeaturesMainControl_, pageVisibility.ai)]]"
-            on-click="onAiPageClick_"
-            class="cr-nav-menu-item">
-          <cr-icon icon="[[aiPageIcon_]]"></cr-icon>
-          [[aiPageTitle_]]
-          <cr-ripple></cr-ripple>
+           on-click="onAiPageClick_"
+           class="cr-nav-menu-item">
+            <cr-icon icon="[[aiPageIcon_]]"></cr-icon>
+            [[aiPageTitle_]]
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" id="appearance" href="/appearance"
-            hidden="[[!pageVisibility.appearance]]"
-            class="cr-nav-menu-item">
-          <cr-icon icon="settings:palette"></cr-icon>
-          $i18n{appearancePageTitle}
-          <cr-ripple></cr-ripple>
+           hidden="[[!pageVisibility.appearance]]"
+           class="cr-nav-menu-item">
+            <cr-icon icon="settings:palette"></cr-icon>
+            $i18n{appearancePageTitle}
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" href="/search" class="cr-nav-menu-item">
-          <cr-icon icon="settings:search"></cr-icon>
-          $i18n{searchPageTitle}
-          <cr-ripple></cr-ripple>
+            <cr-icon icon="settings:search"></cr-icon>
+            $i18n{searchPageTitle}
+            <cr-ripple></cr-ripple>
         </a>
-  <if expr="not is_chromeos">
-        <a role="menuitem" id="defaultBrowser" class="cr-nav-menu-item"
-          href="/defaultBrowser"
-          hidden="[[!pageVisibility.defaultBrowser]]">
-          <cr-icon icon="settings:web"></cr-icon>
-          $i18n{defaultBrowser}
-          <cr-ripple></cr-ripple>
-        </a>
-  </if>
+        <if expr="not is_chromeos">
+            <a role="menuitem" id="defaultBrowser" class="cr-nav-menu-item"
+               href="/defaultBrowser"
+               hidden="[[!pageVisibility.defaultBrowser]]">
+                <cr-icon icon="settings:web"></cr-icon>
+                $i18n{defaultBrowser}
+                <cr-ripple></cr-ripple>
+            </a>
+        </if>
         <a role="menuitem" id="onStartup" href="/onStartup"
-            class="cr-nav-menu-item"
-            hidden="[[!pageVisibility.onStartup]]">
-          <cr-icon icon="settings:power-settings"></cr-icon>
-          $i18n{onStartup}
-          <cr-ripple></cr-ripple>
+           class="cr-nav-menu-item"
+           hidden="[[!pageVisibility.onStartup]]">
+            <cr-icon icon="settings:power-settings"></cr-icon>
+            $i18n{onStartup}
+            <cr-ripple></cr-ripple>
         </a>
         <div class="menu-separator"></div>
         <a role="menuitem" id="languages" href="/languages"
-            class="cr-nav-menu-item"
-            hidden="[[!pageVisibility.languages]]">
-          <cr-icon icon="settings:navigation-language"></cr-icon>
-          $i18n{languagesPageTitle}
-          <cr-ripple></cr-ripple>
+           class="cr-nav-menu-item"
+           hidden="[[!pageVisibility.languages]]">
+            <cr-icon icon="settings:navigation-language"></cr-icon>
+            $i18n{languagesPageTitle}
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" id="downloads" href="/downloads"
-            class="cr-nav-menu-item"
-            hidden="[[!pageVisibility.downloads]]">
-          <cr-icon icon="settings:download"></cr-icon>
-          $i18n{downloadsPageTitle}
-          <cr-ripple></cr-ripple>
+           class="cr-nav-menu-item"
+           hidden="[[!pageVisibility.downloads]]">
+            <cr-icon icon="settings:download"></cr-icon>
+            $i18n{downloadsPageTitle}
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" id="accessibility" href="/accessibility"
-            class="cr-nav-menu-item"
-            hidden="[[!pageVisibility.a11y]]">
-          <cr-icon icon="settings:accessibility"></cr-icon>
-          $i18n{a11yPageTitle}
-          <cr-ripple></cr-ripple>
+           class="cr-nav-menu-item"
+           hidden="[[!pageVisibility.a11y]]">
+            <cr-icon icon="settings:accessibility"></cr-icon>
+            $i18n{a11yPageTitle}
+            <cr-ripple></cr-ripple>
         </a>
-  <if expr="not chromeos_ash">
-        <a role="menuitem" id="system" href="/system" class="cr-nav-menu-item"
-            hidden="[[!pageVisibility.system]]">
-          <cr-icon icon="settings:system"></cr-icon>
-          $i18n{systemPageTitle}
-          <cr-ripple></cr-ripple>
-        </a>
-  </if>
+        <if expr="not chromeos_ash">
+            <a role="menuitem" id="system" href="/system" class="cr-nav-menu-item"
+               hidden="[[!pageVisibility.system]]">
+                <cr-icon icon="settings:system"></cr-icon>
+                $i18n{systemPageTitle}
+                <cr-ripple></cr-ripple>
+            </a>
+        </if>
         <a role="menuitem" id="reset" href="/reset"
-            hidden="[[!pageVisibility.reset]]" class="cr-nav-menu-item">
-          <cr-icon icon="settings:restore"></cr-icon>
-          $i18n{resetPageTitle}
-          <cr-ripple></cr-ripple>
+           hidden="[[!pageVisibility.reset]]" class="cr-nav-menu-item">
+            <cr-icon icon="settings:restore"></cr-icon>
+            $i18n{resetPageTitle}
+            <cr-ripple></cr-ripple>
         </a>
         <div hidden="[[!pageVisibility.advancedSettings]]"
-            class="menu-separator"></div>
+             class="menu-separator"></div>
         <a role="menuitem" id="extensionsLink" class="cr-nav-menu-item"
-            href="chrome://extensions" target="_blank"
-            hidden="[[!pageVisibility.extensions]]"
-            on-click="onExtensionsLinkClick_"
-            title="$i18n{extensionsLinkTooltip}">
-          <cr-icon icon="settings:extension"></cr-icon>
-          <span>$i18n{extensionsPageTitle}</span>
-          <div class="cr-icon icon-external"></div>
-          <cr-ripple></cr-ripple>
+           href="chrome://extensions" target="_blank"
+           hidden="[[!pageVisibility.extensions]]"
+           on-click="onExtensionsLinkClick_"
+           title="$i18n{extensionsLinkTooltip}">
+            <cr-icon icon="settings:extension"></cr-icon>
+            <span>$i18n{extensionsPageTitle}</span>
+            <div class="cr-icon icon-external"></div>
+            <cr-ripple></cr-ripple>
         </a>
         <a role="menuitem" id="about-menu" href="/help"
-            class="cr-nav-menu-item">
-          <cr-icon icon="cr:chrome-product"></cr-icon>
-          $i18n{aboutPageTitle}
-          <cr-ripple></cr-ripple>
+           class="cr-nav-menu-item">
+            <div>
+                <cr-iconset name="about">
+                    <svg>
+                        <g id="taktak" clip-path="url(#clip0_391_16131)">
+                            <circle cx="11" cy="11" r="11" fill="black"/>
+                            <path d="M4.38672 6.98076L5.53499 10.8143C6.40064 10.5139 7.28388 10.2489 8.16719 10.0369L7.61953 13.0402C7.49588 13.7291 7.44284 14.3475 7.44284 14.8774C7.44284 17.5273 8.78546 18.4459 10.7817 18.4459C11.8594 18.4459 12.8486 18.181 14.8096 16.8207L16.2405 15.8844L14.2796 12.5279L11.2234 14.5242L12.1421 9.4364C12.6367 9.40109 13.1314 9.38343 13.6436 9.38343C14.8272 9.38343 15.9932 9.47177 17.1945 9.66612L17.4418 5.74427C15.8518 5.39097 14.3149 5.23193 12.7956 5.23193C9.86311 5.23193 7.05422 5.86793 4.38672 6.98082V6.98076Z" fill="white"/>
+                        </g>
+                    </svg>
+                </cr-iconset>
+                <cr-icon icon="about:taktak"></cr-icon>
+            </div>
+            $i18n{aboutPageTitle}
+            <cr-ripple></cr-ripple>
         </a>
-      </cr-menu-selector>
-    </div>
+    </cr-menu-selector>
+</div>
