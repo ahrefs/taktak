@@ -389,6 +389,15 @@
     line-height: 22px;
 }
 
+/* this is for think block */
+.message-markdown-container blockquote:first-child {
+    border-left: 2px solid var(--color-yep-chat-site-info-vertical-bar-background);
+    margin-top: 12px;
+    padding: 0 0 0 6px;
+    font-size: 12px;
+    color: var(--color-yep-chat-tertiary-text);
+}
+
 .message-markdown-container blockquote {
     border-left: 5px solid var(--color-yep-chat-site-info-vertical-bar-background);
     margin: 0;
