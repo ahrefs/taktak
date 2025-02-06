@@ -106,7 +106,7 @@
     flex-direction: column;
     flex-grow: 1;
     gap: 1px;
-    padding: 0 16px 0 0;
+    padding: 0 12px 0 0;
 }
 
 .conversation-content .message-markdown-container {
@@ -164,11 +164,17 @@
     padding: 0 10px 8px 10px;
     border-radius: 12px;
     background: var(--color-yep-chat-prompt-background);
-    width: 80vw;
+    max-width: calc(100vw - 36px);
 }
 
-.top-padding {
+.width-with-top-padding {
+    width: 80vw;
     padding-top: 10px;
+}
+
+.content-fit-width-top-padding {
+    width: fit-content;
+    padding-top: 8px;
 }
 
 .siteinfo-container {
@@ -237,32 +243,6 @@
     width: 14px;
     height: 14px;
     color: var(--color-yep-chat-secondary-text);
-}
-
-.query-prompt-container {
-    display: flex;
-    flex-direction: column;
-    align-self: flex-end;
-    gap: 10px;
-    padding: 0 10px 8px 10px;
-    border-radius: 12px;
-    background: var(--color-yep-chat-prompt-background);
-    width: 70vw;
-    max-width: 80vw;
-}
-
-.auto-width-with-padding {
-    /*width: 95vw;*/
-    padding-top: 10px;
-    margin-left: 4px;
-}
-
-.content-fit-width {
-    width: fit-content;
-}
-
-.top-padding {
-    padding-top: 8px;
 }
 
 .query-prompt-container .prompt-section {

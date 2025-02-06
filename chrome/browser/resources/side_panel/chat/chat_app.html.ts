@@ -91,7 +91,7 @@ export function getHtml(this: ChatAppElement) {
 
                                 if (conversation.shouldDisplaySiteInfo) {
                                     return html`
-                                        <article class="query-prompt-container top-padding">
+                                        <article class="query-prompt-container width-with-top-padding">
                                             <div class="siteinfo-container siteinfo-button"
                                                  @click="${(e: MouseEvent | KeyboardEvent) => {
                                                      // capture URL here so that the correct url will be open 
@@ -134,7 +134,7 @@ export function getHtml(this: ChatAppElement) {
                                         ${getConversationResponseElement.bind(this)(conversation)}`;
                                 } else {
                                     return html`
-                                        <article class="query-prompt-container top-padding">
+                                        <article class="query-prompt-container content-fit-width-top-padding">
                                             ${getQueryPromptSection(conversation.query)}
                                         </article>
                                         ${getConversationResponseElement.bind(this)(conversation)}`;
