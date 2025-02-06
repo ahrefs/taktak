@@ -363,15 +363,16 @@ export class ChatAppElement extends CrLitElement {
         this.chatApiProxy_.openUrl(url, modifiers);
     }
 
-    refreshColorCss() {
+    onLoad() {
         const updater = ColorChangeUpdater.forDocument();
         updater.start();
         updater.refreshColorsCss();
+        this.$.promptInput.focusInput();
     }
 
     override connectedCallback() {
         super.connectedCallback();
-        window.addEventListener('load', this.refreshColorCss);
+        window.addEventListener('load', this.onLoad);
         setTimeout(async () => {
             this.chatApiProxy_.showUI();
             const {siteInfo} = await this.chatApiProxy_.getSiteInfo();
@@ -389,7 +390,7 @@ export class ChatAppElement extends CrLitElement {
     override disconnectedCallback() {
         super.disconnectedCallback();
 
-        window.removeEventListener('load', this.refreshColorCss);
+        window.removeEventListener('load', this.onLoad);
         this.listenerIds_.forEach(
             id => this.chatApiProxy_.getCallbackRouter().removeListener(id));
     }
