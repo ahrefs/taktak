@@ -46,10 +46,6 @@
     background-color: transparent;
 }
 
-#target-restart-btn:disabled {
-    cursor: not-allowed;
-}
-
 .header-btn .header-icon {
     display: block;
     width: 20px;
@@ -346,7 +342,6 @@
 }
 
 .send-btn:disabled {
-    cursor: not-allowed;
     color: var(--color-yep-chat-tertiary-text);
 }
 
