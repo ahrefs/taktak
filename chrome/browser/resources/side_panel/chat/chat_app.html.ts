@@ -146,7 +146,7 @@ export function getHtml(this: ChatAppElement) {
                     </div>
                 </div>
                 <div class="action-buttons-container">
-                    ${this.shouldUseCurrentPageContentAsChatContext_ && this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
+                    ${this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
                             this.actionList_.map((item, _) => {
                                 if (item.actionType == ActionType.TRANSLATE) {
                                     return html`
