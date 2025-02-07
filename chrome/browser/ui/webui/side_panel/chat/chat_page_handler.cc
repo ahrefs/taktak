@@ -222,6 +222,8 @@ void ChatPageHandler::OnPageContentExtracted(
         std::string content,
         std::string url) {
 
+    DVLOG(0) << __func__ << " extracted content -> " << content;
+
     extracted_content_cache_.clear();
 
     std::string max_content = content;

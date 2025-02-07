@@ -428,13 +428,17 @@ namespace api_request_helper {
         DCHECK_LE(0, current_decoding_operation_count_);
         const bool decoding_is_complete = (current_decoding_operation_count_ == 0);
 
-        if (request_is_finished_ && decoding_is_complete) {
-            std::move(result_callback_).Run(ToAPIRequestResult(std::move(url_loader_)));
-        } else if (decoding_is_complete) {
-            VLOG(0) << "Did not run URLLoaderHandler completion handler, still have "
+        DVLOG(0) << "request_is_finished_: " << request_is_finished_ << std::endl << "decoding_is_complete:" << decoding_is_complete;
+
+        if (!request_is_finished_ && decoding_is_complete) {
+            VLOG(0) << "Did not run URLLoaderHandler completion handler, maybe still have "
                     << current_decoding_operation_count_
-                    << " decoding operations in progress, waiting for them to"
-                    << " complete...";
+                    << " decoding operations in progress.";
+        }
+
+        // Don't wait for pending decoding operations it ain't matter
+        if (request_is_finished_) {
+            std::move(result_callback_).Run(ToAPIRequestResult(std::move(url_loader_)));
         }
     }
 
