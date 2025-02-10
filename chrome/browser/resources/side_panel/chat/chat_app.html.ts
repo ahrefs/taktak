@@ -22,7 +22,7 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
                 </div>
                 <div class="label">${this.chatAboutThisPageLabel_}</div>
             </button>`;
-    } else if (this.shouldHideSiteInfoContainerDueToKnownContext_) {
+    } else if (this.shouldHideContextActionElementsInPromptInputDueToKnownContext_) {
         return html``;
     } else if (!this.shouldDisplayChatAboutThisPageButton_ && this.siteInfo_.isContentUsableInConversations) {
         return html`

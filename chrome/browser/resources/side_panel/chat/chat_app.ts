@@ -67,8 +67,10 @@ export class ChatAppElement extends CrLitElement {
     protected errorMessage_: string = "";
     protected hasErrorOccurred_: boolean = false;
     protected maxPromptInputLength_: number = 90_000;
-    protected shouldHideSiteInfoContainerDueToKnownContext_: boolean = false;
+    protected shouldHideContextActionElementsInPromptInputDueToKnownContext_: boolean = false;
     protected shouldUseCurrentPageContentAsChatContext_: boolean = false;
+    private isActivePageUrlNew_: boolean = false;
+    private shouldHideSiteInfoInUserQueryElement_: boolean = false;
 
     constructor() {
         super();
@@ -108,11 +110,23 @@ export class ChatAppElement extends CrLitElement {
             shouldHideSiteInfoContainerDueToKnownContext_: {type: Boolean},
             shouldUseCurrentPageContentAsChatContext_: {type: Boolean},
             title_: {type: String},
+            isActivePageUrlNew_: {type: Boolean},
         };
     }
 
     private async updateSiteInfo(siteInfo: SiteInfo) {
-        if (this.siteInfo_.url === siteInfo.url) return;
+        if (siteInfo !== undefined && siteInfo.url != undefined && siteInfo.url.length == 0) {
+            return;
+        }
+
+        if (this.siteInfo_.url === siteInfo.url) {
+            this.isActivePageUrlNew_ = false;
+            this.shouldHideSiteInfoInUserQueryElement_ = true;
+            return;
+        } else {
+            this.isActivePageUrlNew_ = true;
+            this.shouldHideSiteInfoInUserQueryElement_ = false;
+        }
 
         this.siteInfo_ = siteInfo;
         if (this.siteInfo_.isContentUsableInConversations) {
@@ -121,11 +135,11 @@ export class ChatAppElement extends CrLitElement {
             this.shouldUseCurrentPageContentAsChatContext_ = true;
             this.shouldDisplayChatAboutThisPageButton_ = false;
             this.hasErrorOccurred_ = false;
-            this.errorMessage_ = ""
+            this.errorMessage_ = "";
         } else {
             this.shouldUseCurrentPageContentAsChatContext_ = false;
         }
-        this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
+        this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
         this.updateComplete;
     }
 
@@ -175,7 +189,7 @@ export class ChatAppElement extends CrLitElement {
         this.hasExceededMaxTokenCount_ = false;
         this.exceedMaxTokenCountErrorMessages_ = "";
         this.errorMessage_ = ""
-        this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
+        this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
         if (this.siteInfo_.isContentUsableInConversations) {
             this.shouldUseCurrentPageContentAsChatContext_ = true;
         } else {
@@ -194,7 +208,7 @@ export class ChatAppElement extends CrLitElement {
             this.shouldUseCurrentPageContentAsChatContext_ = false;
         }
         this.$.promptInput.focusInput();
-        this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
+        this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
     }
 
     protected stripUrlProtocol_(url: string = ''): string {
@@ -212,7 +226,7 @@ export class ChatAppElement extends CrLitElement {
         const response = "";
         if (this.conversations_ != null) {
             if (actionType == ActionType.SUMMARIZE_PAGE) {
-                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptSummarizeThisPage'),
                     shouldDisplaySiteInfo: true,
@@ -221,7 +235,7 @@ export class ChatAppElement extends CrLitElement {
                     response,
                 });
             } else if (actionType == ActionType.EXPLAIN) {
-                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptExplainInSimpleLanguage'),
                     shouldDisplaySiteInfo: true,
@@ -230,7 +244,7 @@ export class ChatAppElement extends CrLitElement {
                     response,
                 });
             } else if (actionType == ActionType.FACT_CHECK) {
-                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptFactCheck'),
                     shouldDisplaySiteInfo: true,
@@ -239,7 +253,7 @@ export class ChatAppElement extends CrLitElement {
                     response,
                 });
             } else if (actionType == ActionType.TRANSLATE) {
-                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptTranslate') + ' ' + actionParam,
                     shouldDisplaySiteInfo: true,
@@ -248,7 +262,7 @@ export class ChatAppElement extends CrLitElement {
                     response,
                 });
             } else if (actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
-                this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
                 this.conversations_.push({
                     query: loadTimeData.getString('promptSocialMediaPost') + ' ' + actionParam,
                     shouldDisplaySiteInfo: true,
@@ -291,9 +305,11 @@ export class ChatAppElement extends CrLitElement {
 
         // hide site info from prompt input because it's obvious that the content of currently opening site will be used as context
         if ((this.siteInfo_.url != undefined && this.siteInfo_.url.length > 0) && this.siteInfo_.isContentUsableInConversations) {
-            this.shouldHideSiteInfoContainerDueToKnownContext_ = true;
+            this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
+            this.shouldHideSiteInfoInUserQueryElement_ = true;
         } else {
-            this.shouldHideSiteInfoContainerDueToKnownContext_ = false;
+            this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
+            this.shouldHideSiteInfoInUserQueryElement_ = false;
         }
     }
 
@@ -303,7 +319,7 @@ export class ChatAppElement extends CrLitElement {
                 if (this.conversations_.length == 0) {
                     this.conversations_.push({
                         query: this.query_ ?? "",
-                        shouldDisplaySiteInfo: false,
+                        shouldDisplaySiteInfo: this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_,
                         title: this.siteInfo_.title ?? "",
                         url: this.siteInfo_.url ?? "",
                         response: marked.parse(this.completionResult_, {async: false}),
@@ -321,7 +337,7 @@ export class ChatAppElement extends CrLitElement {
         this.submittedQuery_ = this.query_;
         this.conversations_.push({
             query: this.query_ ?? "",
-            shouldDisplaySiteInfo: false,
+            shouldDisplaySiteInfo: this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_,
             title: this.siteInfo_.title ?? "",
             url: this.siteInfo_.url ?? "",
             response: ""
