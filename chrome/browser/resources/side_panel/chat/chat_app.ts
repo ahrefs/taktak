@@ -116,6 +116,7 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private async updateSiteInfo(siteInfo: SiteInfo) {
+        this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
         if (this.siteInfo_.url === siteInfo.url) {
             this.isActivePageUrlNew_ = false;
             this.shouldHideSiteInfoInUserQueryElement_ = true;
@@ -133,10 +134,8 @@ export class ChatAppElement extends CrLitElement {
             this.shouldDisplayChatAboutThisPageButton_ = false;
             this.hasErrorOccurred_ = false;
             this.errorMessage_ = "";
-            this.shouldShowActionsMenu_ = true;
         } else {
             this.shouldUseCurrentPageContentAsChatContext_ = false;
-            this.shouldShowActionsMenu_ = false;
         }
         this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
         this.updateComplete;
@@ -325,11 +324,9 @@ export class ChatAppElement extends CrLitElement {
         if ((this.siteInfo_.url != undefined && this.siteInfo_.url.length > 0) && this.siteInfo_.isContentUsableInConversations) {
             this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
             this.shouldHideSiteInfoInUserQueryElement_ = true;
-            this.shouldShowActionsMenu_ = false;
         } else {
             this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
             this.shouldHideSiteInfoInUserQueryElement_ = false;
-            this.shouldShowActionsMenu_ = true;
         }
     }
 
