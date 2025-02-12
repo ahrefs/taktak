@@ -174,6 +174,7 @@ export class ChatAppElement extends CrLitElement {
             this.$.promptInput.focusInput();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         } else if (response.responseType == ResponseType.ERROR) {
+            this.completionResult_ = this.removeCaret(this.completionResult_);
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
             this.hasErrorOccurred_ = true;
@@ -195,6 +196,7 @@ export class ChatAppElement extends CrLitElement {
         this.$.promptInput.resetToAutoHeight();
         this.$.promptInput.focusInput();
         setTimeout(() => this.chatApiProxy_.cancelQuery(), 0);
+        setTimeout(() => this.completionResult_ = this.removeCaret(this.completionResult_), 3);
     }
 
     protected onRestartChat_(e: Event) {
