@@ -151,12 +151,22 @@ export class ChatAppElement extends CrLitElement {
         return result.replace(closingTagRegex, '</blockquote>');
     }
 
+    private removeCaret(input: string) {
+       return input.replace(/<span class="caret"\/>/g, '');
+    }
+    private appendCaret(input: string) {
+        return input + '<span class="caret"/>';
+    }
+
     private updateSubmitResponse(response: ActionResponse) {
         if (response.responseType == ResponseType.DELTA) {
+            this.completionResult_ = this.removeCaret(this.completionResult_);
             this.completionResult_ += this.replaceThinkBlock(response.result);
+            this.completionResult_ = this.appendCaret(this.completionResult_);
             this.hasErrorOccurred_ = false;
             this.errorMessage_ = "";
         } else if (response.responseType == ResponseType.COMPLETED) {
+            this.completionResult_ = this.removeCaret(this.completionResult_);
             this.completionResult_ += "\n";
             this.isSubmittingQuery_ = false;
             this.hasErrorOccurred_ = false;

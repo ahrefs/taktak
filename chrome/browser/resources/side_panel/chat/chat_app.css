@@ -469,3 +469,18 @@
     margin-top: 10px;
     margin-bottom: 10px;
 }
+
+.message-markdown-container .caret {
+    display: inline-block;
+    width: 8px;
+    height: 20px;
+    border-radius: 5px;
+    background-color: var(--color-yep-chat-site-info-vertical-bar-background);
+    margin-left: 1px;
+    vertical-align: middle;
+}
+
+.message-markdown-container blockquote:first-child .caret{
+    display: none !important;
+    visibility: hidden !important;
+}
