@@ -86,7 +86,7 @@ export function getHtml(this: ChatAppElement) {
                             this.conversations_.map((conversation, _) => {
                                 // if there is no user prompt or query to display due to some errors, we will only display LLM's response
                                 if (conversation.query.length == 0) {
-                                    return html`${getConversationResponseElement.bind(this)(conversation)}`;
+                                     return html`${getConversationResponseElement.bind(this)(conversation)}`;
                                 }
 
                                 if (conversation.shouldDisplaySiteInfo) {
@@ -146,7 +146,7 @@ export function getHtml(this: ChatAppElement) {
                     </div>
                 </div>
                 <div class="action-buttons-container">
-                    ${this.siteInfo_.isContentUsableInConversations && this.conversations_ && this.conversations_.length == 0 ?
+                    ${this.shouldShowActionsMenu_ && !this.isSubmittingQuery_ ?
                             this.actionList_.map((item, _) => {
                                 if (item.actionType == ActionType.TRANSLATE) {
                                     return html`
