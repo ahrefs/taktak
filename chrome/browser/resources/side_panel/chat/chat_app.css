@@ -373,8 +373,9 @@
     line-height: 22px;
 }
 
-/* this is for think block */
-.message-markdown-container blockquote:first-child {
+/* this is for thinking block */
+/* the thinking block always has a button ahead */
+.message-markdown-container blockquote:nth-child(2) {
     border-left: 2px solid var(--color-yep-chat-site-info-vertical-bar-background);
     margin: 12px 0 10px 0;
     padding: 0 0 0 6px;
@@ -388,7 +389,7 @@
     padding: 0 0 0 6px;
 }
 
-.message-markdown-container code, .message-markdown-container blockquote:first-child code {
+.message-markdown-container code, .message-markdown-container blockquote:nth-child(2) code {
     font-size: 12px;
     font-weight: 400;
     line-height: 16px;
@@ -398,7 +399,7 @@
     color: var(--color-yep-chat-primary-text);
 }
 
-.message-markdown-container pre, .message-markdown-container blockquote:first-child pre {
+.message-markdown-container pre, .message-markdown-container blockquote:nth-child(2) pre {
     border-radius: 6px;
     max-width: 90vw;
     padding: 14px;
@@ -410,32 +411,32 @@
     scroll-behavior: smooth;
 }
 
-.message-markdown-container pre::-webkit-scrollbar, .message-markdown-container blockquote:first-child pre::-webkit-scrollbar {
+.message-markdown-container pre::-webkit-scrollbar, .message-markdown-container blockquote:nth-child(2) pre::-webkit-scrollbar {
     height: 8px;
     background-color: transparent;
 }
 
-.message-markdown-container pre::-webkit-scrollbar-thumb, .message-markdown-container blockquote:first-child pre::-webkit-scrollbar-thumb {
+.message-markdown-container pre::-webkit-scrollbar-thumb, .message-markdown-container blockquote:nth-child(2) pre::-webkit-scrollbar-thumb {
     background-color: var(--color-yep-chat-site-info-vertical-bar-background);
     background-clip: content-box;
     border: solid 1.5px transparent;
     border-radius: 100px;
 }
 
-.message-markdown-container pre code, .message-markdown-container blockquote:first-child pre code {
+.message-markdown-container pre code, .message-markdown-container blockquote:nth-child(2) pre code {
     line-height: 22px;
     padding: 0;
 }
 
-.message-markdown-container table, .message-markdown-container blockquote:first-child table {
+.message-markdown-container table, .message-markdown-container blockquote:nth-child(2) table {
     border-collapse: collapse;
 }
 
-.message-markdown-container table thead th, .message-markdown-container blockquote:first-child table thead th {
+.message-markdown-container table thead th, .message-markdown-container blockquote:nth-child(2) table thead th {
     text-align: left;
 }
 
-.message-markdown-container table tr, .message-markdown-container blockquote:first-child table tr {
+.message-markdown-container table tr, .message-markdown-container blockquote:nth-child(2) table tr {
     border-top: 1px solid var(--color-yep-chat-panel-border);
     border: 1px solid var(--color-yep-chat-panel-border);
     border-left: none;
@@ -446,17 +447,17 @@
     padding: 10px;
 }
 
-.message-markdown-container blockquote:first-child table th, td {
+.message-markdown-container blockquote:nth-child(2) table th, td {
     padding: 10px;
 }
 
-.message-markdown-container ul, .message-markdown-container blockquote:first-child ul {
+.message-markdown-container ul, .message-markdown-container blockquote:nth-child(2) ul {
     line-height: 18px;
     list-style-type: disc;
     padding-left: 14px;
 }
 
-.message-markdown-container ol, .message-markdown-container blockquote:first-child ol {
+.message-markdown-container ol, .message-markdown-container blockquote:nth-child(2) ol {
     line-height: 18px;
     list-style-type: decimal;
     padding-left: 14px;
@@ -466,15 +467,15 @@
     padding-left: 14px;
 }
 
-.message-markdown-container blockquote:first-child ol ul, blockquote:first-child ul ol {
+.message-markdown-container blockquote:nth-child(2) ol ul, blockquote:nth-child(2) ul ol {
     padding-left: 14px;
 }
 
-.message-markdown-container ol ol, .message-markdown-container blockquote:first-child ol ol {
+.message-markdown-container ol ol, .message-markdown-container blockquote:nth-child(2) ol ol {
     list-style-type: lower-alpha;
 }
 
-.message-markdown-container li, .message-markdown-container blockquote:first-child li {
+.message-markdown-container li, .message-markdown-container blockquote:nth-child(2) li {
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -489,7 +490,7 @@
     vertical-align: middle;
 }
 
-.message-markdown-container blockquote:first-child .caret{
+.message-markdown-container blockquote:nth-child(2) .caret{
     display: none !important;
     visibility: hidden !important;
 }
