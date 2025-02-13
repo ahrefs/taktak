@@ -51,11 +51,15 @@ function getConversationResponseElement(conversation: conversationRecord) {
     if (conversation.query.length == 0) {
         return html``;
     }
-
     return html`
-        <article class="message-markdown-container"
-                 .innerHTML="${getTrustedHTML(conversation.response)}">
-        </article>`;
+        <div>
+            <article class="message-markdown-container"
+                     .innerHTML="${getTrustedHTML(conversation.reasoning)}">
+            </article>
+            <article class="message-markdown-container"
+                     .innerHTML="${getTrustedHTML(conversation.response)}">
+            </article>
+        </div>`;
 }
 
 function getQueryPromptSection(query: string) {

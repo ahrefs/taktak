@@ -28,12 +28,20 @@ export enum ActionOnExtractedContent {
     RemoveFromUsingAsContext = 1,
 }
 
+export enum ConversationRecordResponseType {
+    EMPTY = 0,
+    CONVERSATION = 1,
+    ERROR = 2,
+}
+
 export type conversationRecord = {
     query: string,
     shouldDisplaySiteInfo: boolean,
     title: string,
     url: string,
+    reasoning: string,
     response: string,
+    responseType: ConversationRecordResponseType,
 }
 
 export interface ChatAppElement {
@@ -157,7 +165,7 @@ export class ChatAppElement extends CrLitElement {
         return input + '<span class="caret"/>';
     }
 
-    private updateSubmitResponse(response: ActionResponse) {
+    private updateCompletionResult(response: ActionResponse) {
         if (response.responseType == ResponseType.DELTA) {
             this.completionResult_ = this.removeCaret(this.completionResult_);
             this.completionResult_ += this.replaceThinkBlock(response.result);
@@ -183,8 +191,27 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
+    private logConversations() {
+        for (let i = 0; i < this.conversations_.length; i++) {
+            const conversation = this.conversations_[i];
+            if (conversation != undefined) {
+                console.log("Start==============================");
+                console.log("query: " + conversation.query);
+                console.log("reasoning: " + conversation.reasoning);
+                console.log("response: " + conversation.response);
+                console.log("responseType: " + ConversationRecordResponseType[conversation.responseType]);
+                console.log("shouldDisplaySiteInfo: " + conversation.shouldDisplaySiteInfo);
+                console.log("title: " + conversation.title);
+                console.log("url: " + conversation.url);
+                console.log("End==============================");
+            }
+        }
+    }
+
     protected onCloseSidePanel_(e: Event) {
         e.preventDefault();
+        this.addLatestLLMResponseIntoLastConversation_();
+        this.logConversations();
         this.chatApiProxy_.closeUI();
     }
 
@@ -238,12 +265,46 @@ export class ChatAppElement extends CrLitElement {
         this.onSubmitAction_(e.detail.actionType, e.detail.actionParam);
     }
 
+    private addLatestLLMResponseIntoLastConversation_() {
+        const lastIndex = this.conversations_.length - 1;
+        const lastConversation = this.conversations_[lastIndex];
+
+        if (!lastConversation) return;
+
+        if (this.completionResult_ && this.completionResult_.length > 0) {
+            if (this.hasErrorOccurred_) {
+                lastConversation.responseType = ConversationRecordResponseType.ERROR;
+            } else {
+                lastConversation.responseType = ConversationRecordResponseType.CONVERSATION;
+                // todo: to check for reasoning type
+                // Check the first <blockquote> block, even if it doesn’t have a closing </blockquote>
+                // because user might manually stops the active conversation
+                const match = this.completionResult_.match(/<blockquote>([\s\S]*?)(<\/blockquote>|$)/);
+                if (match) {
+                    let reasoningBlock = match[0];
+                    const responseBlock = this.completionResult_.replace(reasoningBlock, "").trim();
+                    if (!reasoningBlock.endsWith("</blockquote>")) {
+                       reasoningBlock += "</blockquote>";
+                    }
+                    lastConversation.reasoning = reasoningBlock;
+                    lastConversation.response = marked.parse(responseBlock, {async: false});
+                }else {
+                    lastConversation.response = marked.parse(this.completionResult_, {async: false});
+                }
+            }
+            this.completionResult_ = "";
+        } else {
+            lastConversation.responseType = ConversationRecordResponseType.EMPTY
+        }
+    }
+
     protected onSubmitAction_(actionType: ActionType, actionParam: string = '') {
         this.addLatestLLMResponseIntoLastConversation_();
         const title = this.siteInfo_.title ?? "";
         const url = this.stripUrlProtocol_(this.siteInfo_.url ?? "");
         this.completionResult_ = "";
         const response = "";
+        const reasoning = "";
 
         if (this.conversations_ != null) {
             if (actionType == ActionType.SUMMARIZE_PAGE) {
@@ -254,7 +315,9 @@ export class ChatAppElement extends CrLitElement {
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
+                    reasoning,
                     response,
+                    responseType: ConversationRecordResponseType.EMPTY,
                 });
             } else if (actionType == ActionType.EXPLAIN) {
                 this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
@@ -264,7 +327,9 @@ export class ChatAppElement extends CrLitElement {
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
+                    reasoning,
                     response,
+                    responseType: ConversationRecordResponseType.EMPTY,
                 });
             } else if (actionType == ActionType.FACT_CHECK) {
                 this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
@@ -274,7 +339,9 @@ export class ChatAppElement extends CrLitElement {
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
+                    reasoning,
                     response,
+                    responseType: ConversationRecordResponseType.EMPTY,
                 });
             } else if (actionType == ActionType.TRANSLATE) {
                 this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
@@ -284,7 +351,9 @@ export class ChatAppElement extends CrLitElement {
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
+                    reasoning,
                     response,
+                    responseType: ConversationRecordResponseType.EMPTY,
                 });
             } else if (actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
                 this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
@@ -294,12 +363,51 @@ export class ChatAppElement extends CrLitElement {
                     shouldDisplaySiteInfo: true,
                     title,
                     url,
+                    reasoning,
                     response,
+                    responseType: ConversationRecordResponseType.EMPTY,
                 });
             }
         }
         this.isSubmittingQuery_ = true;
         setTimeout(() => this.chatApiProxy_.submitAction(actionType, actionParam), 0);
+    }
+
+    protected onSubmitQuery_() {
+        this.addLatestLLMResponseIntoLastConversation_();
+        this.submittedQuery_ = this.query_;
+        this.conversations_.push({
+            query: this.query_ ?? "",
+            shouldDisplaySiteInfo: this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_,
+            title: this.siteInfo_.title ?? "",
+            url: this.siteInfo_.url ?? "",
+            reasoning: "",
+            response: "",
+            responseType: ConversationRecordResponseType.EMPTY,
+        });
+        this.query_ = "";
+        this.$.promptInput.resetToAutoHeight();
+        this.$.promptInput.focusInput();
+
+        this.isSubmittingQuery_ = true;
+
+        // select the last 3 conversations to use as chat context
+        const conversation_history: ConversationItem[] = [];
+        for (let i = this.conversations_.length - 1; i >= 0; i--) {
+            const conversation = this.conversations_[i];
+            if (conversation != undefined && conversation.query.length > 0 && conversation.response.length > 0 && conversation_history.length <= 3) {
+                conversation_history.push({
+                    userQuery: conversation.query,
+                    llmResponse: conversation.response,
+                })
+            }
+        }
+
+        setTimeout(() =>
+            this.chatApiProxy_.submitQuery(
+                ActionType.QUERY,
+                this.submittedQuery_ ?? "",
+                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse()), 0);
     }
 
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {
@@ -330,54 +438,6 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
-    private addLatestLLMResponseIntoLastConversation_() {
-        if (this.completionResult_ && this.completionResult_.length > 0) {
-            if (this.conversations_ != null) {
-                const lastIndex = this.conversations_.length - 1;
-                const lastConversation = this.conversations_[lastIndex];
-                if (lastConversation) {
-                    lastConversation.response = marked.parse(this.completionResult_, {async: false});
-                }
-            }
-            this.completionResult_ = "";
-        }
-    }
-
-    protected onSubmitQuery_() {
-        this.addLatestLLMResponseIntoLastConversation_();
-        this.submittedQuery_ = this.query_;
-        this.conversations_.push({
-            query: this.query_ ?? "",
-            shouldDisplaySiteInfo: this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_,
-            title: this.siteInfo_.title ?? "",
-            url: this.siteInfo_.url ?? "",
-            response: ""
-        });
-        this.query_ = "";
-        this.$.promptInput.resetToAutoHeight();
-        this.$.promptInput.focusInput();
-
-        this.isSubmittingQuery_ = true;
-
-        // select the last 3 conversations to use as chat context
-        const conversation_history: ConversationItem[] = [];
-        for (let i = this.conversations_.length - 1; i >= 0; i--) {
-            const conversation = this.conversations_[i];
-            if (conversation != undefined && conversation.query.length > 0 && conversation.response.length > 0 && conversation_history.length <= 3) {
-                conversation_history.push({
-                    userQuery: conversation.query,
-                    llmResponse: conversation.response,
-                })
-            }
-        }
-
-        setTimeout(() =>
-            this.chatApiProxy_.submitQuery(
-                ActionType.QUERY,
-                this.submittedQuery_ ?? "",
-                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse()), 0);
-    }
-
     protected openUrl_(url: string, modifiers: ClickModifiers) {
         this.chatApiProxy_.openUrl(url, modifiers);
     }
@@ -402,7 +462,7 @@ export class ChatAppElement extends CrLitElement {
             this.chatApiProxy_.getCallbackRouter().onSiteInfoChanged.addListener(
                 (siteInfo: SiteInfo) => this.updateSiteInfo(siteInfo)),
             this.chatApiProxy_.getCallbackRouter().onSubmitActionResponse.addListener(
-                (response: ActionResponse) => this.updateSubmitResponse(response))
+                (response: ActionResponse) => this.updateCompletionResult(response))
         );
     }
 
