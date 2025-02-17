@@ -48,18 +48,32 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
 }
 
 function getConversationResponseElement(conversation: conversationRecord) {
-    if (conversation.query.length == 0) {
+    if (conversation.response.length == 0) {
         return html``;
     }
+    // return html`
+    //     <div class="message-markdown-container" style="background-color: yellow;"
+    //          .innerHTML="${getTrustedHTML(conversation.response.trim())}">
+    //     </div>`;
+    // return html`
+    //     <div>
+    //         ${
+    //                 conversation.reasoning.length > 0 ? html`
+    //                     <div class="message-markdown-container"
+    //                          .innerHTML="${getTrustedHTML(conversation.reasoning)}">
+    //                     </div>` : html``
+    //         }
+    //         <div class="message-markdown-container"
+    //              .innerHTML="${getTrustedHTML(conversation.response.trim())}">
+    //         </div>
+    //     </div>`;
+    // <div class="message-markdown-container"
+    //     .innerHTML="${getTrustedHTML(conversation.reasoning)}">
+    //     </div>
     return html`
-        <div>
-            <article class="message-markdown-container"
-                     .innerHTML="${getTrustedHTML(conversation.reasoning)}">
-            </article>
-            <article class="message-markdown-container"
-                     .innerHTML="${getTrustedHTML(conversation.response)}">
-            </article>
-        </div>`;
+            <div class="message-markdown-container"
+                 .innerHTML="${getTrustedHTML(conversation.response)}">
+            </div>`;
 }
 
 function getQueryPromptSection(query: string) {
@@ -88,14 +102,15 @@ export function getHtml(this: ChatAppElement) {
                     <div style="height: 12px"></div>
                     ${
                             this.conversations_.map((conversation, _) => {
+                                console.log(this.conversations_.length);
                                 // if there is no user prompt or query to display due to some errors, we will only display LLM's response
                                 if (conversation.query.length == 0) {
-                                     return html`${getConversationResponseElement.bind(this)(conversation)}`;
+                                    return html`${getConversationResponseElement.bind(this)(conversation)}`;
                                 }
 
                                 if (conversation.shouldDisplaySiteInfo) {
                                     return html`
-                                        <article class="query-prompt-container width-with-top-padding">
+                                        <div class="query-prompt-container width-with-top-padding">
                                             <div class="siteinfo-container siteinfo-button"
                                                  @click="${(e: MouseEvent | KeyboardEvent) => {
                                                      // capture URL here so that the correct url will be open 
@@ -134,19 +149,19 @@ export function getHtml(this: ChatAppElement) {
                                                 </div>
                                             </div>
                                             ${getQueryPromptSection(conversation.query)}
-                                        </article>
+                                        </div>
                                         ${getConversationResponseElement.bind(this)(conversation)}`;
                                 } else {
                                     return html`
-                                        <article class="query-prompt-container content-fit-width-top-padding">
+                                        <div class="query-prompt-container content-fit-width-top-padding">
                                             ${getQueryPromptSection(conversation.query)}
-                                        </article>
+                                        </div>
                                         ${getConversationResponseElement.bind(this)(conversation)}`;
                                 }
                             })
                     }
                     <div class="message-markdown-container"
-                         .innerHTML="${getTrustedHTML(marked.parse(this.completionResult_, {async: false}))}">
+                         .innerHTML="${getTrustedHTML(marked.parse(this.completionResult_, {async: false}).replace("<p>", ""))}">
                     </div>
                 </div>
                 <div class="action-buttons-container">

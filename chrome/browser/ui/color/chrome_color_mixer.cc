@@ -896,8 +896,8 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
                                          ? SkColorSetARGB(217, 255, 255, 255)
                                          : SkColorSetARGB(217, 0, 0, 0)};
   mixer[kColorYepChatSecondaryText] = {dark_mode
-                                           ? SkColorSetARGB(140, 255, 255, 255)
-                                           : SkColorSetARGB(140, 0, 0, 0)};
+                                           ? SkColorSetARGB(128, 255, 255, 255)
+                                           : SkColorSetARGB(128, 0, 0, 0)};
   mixer[kColorYepChatTertiaryText] = {dark_mode
                                           ? SkColorSetARGB(64, 255, 255, 255)
                                           : SkColorSetARGB(64, 0, 0, 0)};

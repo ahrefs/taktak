@@ -105,7 +105,7 @@
     padding: 0 12px 0 0;
 }
 
-.conversation-content .message-markdown-container {
+.message-markdown-container {
     display: block;
     padding: 0 12px 0 12px;
     background: var(--color-yep-chat-panel-background);
@@ -346,8 +346,8 @@
 }
 
 .message-markdown-container p {
-    font-weight: 400;
-    line-height: 18px;
+    margin: 0;
+    padding: 0;
 }
 
 .message-markdown-container a {
@@ -375,15 +375,54 @@
 
 /* this is for thinking block */
 /* the thinking block always has a button ahead */
-.message-markdown-container blockquote:nth-child(2) {
-    border-left: 2px solid var(--color-yep-chat-site-info-vertical-bar-background);
-    margin: 12px 0 10px 0;
-    padding: 0 0 0 6px;
-    font-size: 12px;
-    color: var(--color-yep-chat-tertiary-text);
+.message-markdown-container > blockquote:nth-child(2) {
+    position: relative;
+    left: 0;
+    padding-left: 18px; /* pseudo element width 5px, gap 13px*/
+    margin: 0 0 20px 0;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--color-yep-chat-secondary-text);
 }
 
-.message-markdown-container blockquote {
+.message-markdown-container > blockquote:nth-child(2) p {
+    margin: 8px 0 0 0;
+    padding: 0;
+}
+
+.message-markdown-container > blockquote:nth-child(2)::before {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    margin: 0;
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
+    border-radius: 2px;
+}
+
+.reasoning-btn {
+    display: flex;
+    flex-direction: row;
+    min-width: 113px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--color-yep-chat-panel-border);
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 16px;
+    cursor: pointer;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-secondary-text);
+    margin-bottom: 8px;
+}
+
+/* this is incorrect for the vertical line, fix it */
+.message-markdown-container > blockquote:not(:nth-child(2)) {
     border-left: 5px solid var(--color-yep-chat-site-info-vertical-bar-background);
     margin: 0;
     padding: 0 0 0 6px;
@@ -490,7 +529,7 @@
     vertical-align: middle;
 }
 
-.message-markdown-container blockquote:nth-child(2) .caret{
+.message-markdown-container blockquote:nth-child(2) .caret {
     display: none !important;
     visibility: hidden !important;
 }

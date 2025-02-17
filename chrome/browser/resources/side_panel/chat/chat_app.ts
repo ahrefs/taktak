@@ -150,9 +150,10 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private insertThinkingButton(input: string) {
-        const btnMatch = input.match(/<button>([\s\S]*?)/);
-        if (btnMatch && btnMatch[0].trim() == "<button>") {
-           return input;
+        const btnMatch = input.match(/<button([\s\S]*?)/);
+        // Prevent from inserting more than one button
+        if (btnMatch && btnMatch[0].trim().startsWith("<button")) {
+            return input;
         }
 
         // Match the content inside the first <blockquote>, without including the tags
@@ -163,8 +164,17 @@ export class ChatAppElement extends CrLitElement {
         }
 
         const openingTagRegex = /<blockquote>/g;
-        const openingReplacement = blockquoteContent.length > 0 ? '<button>Thinking...</button><blockquote>' : '<blockquote>';
+        const openingReplacement = blockquoteContent.length > 0 ? '<button class="reasoning-btn">Thinking...</button><blockquote>' : '<blockquote>';
         return input.replace(openingTagRegex, openingReplacement);
+    }
+
+    private changeThinkingButtonText(input: string) {
+        const btnRegex = /<button([\s\S]*?)(?=<\/button>|$)/;
+        const btnMatch = input.match(btnRegex);
+        if (btnMatch) {
+            return input.replace(btnRegex, '<button class="reasoning-btn">Done thinking');
+        }
+        return input;
     }
 
     private removeCaret(input: string) {
@@ -178,28 +188,28 @@ export class ChatAppElement extends CrLitElement {
     private updateCompletionResult(response: ActionResponse) {
         if (response.responseType == ResponseType.DELTA) {
             this.completionResult_ = this.removeCaret(this.completionResult_);
-
             const responseResult = response.result;
-            const blockquoteStart = "<blockquote>";
+            const thinkingBlockquoteStart = "<blockquote>";
             if (responseResult == "<think>") {
-                this.completionResult_ += blockquoteStart;
+                this.completionResult_ += thinkingBlockquoteStart;
             } else if (responseResult == "</think>") {
                 this.completionResult_ += "</blockquote>";
+                this.completionResult_ = this.changeThinkingButtonText(this.completionResult_);
             } else {
                 this.completionResult_ += responseResult;
+                // the conditional checking is to prevent from trying to insert Thinking button whenever the response comes
+                if (this.completionResult_.length > thinkingBlockquoteStart.length && this.completionResult_.length < thinkingBlockquoteStart.length * 4) {
+                    this.completionResult_ = this.insertThinkingButton(this.completionResult_);
+                }
             }
-
-            // the conditional checking is to prevent from trying to insert Thinking button whenever the response comes
-            if (this.completionResult_.length > blockquoteStart.length && this.completionResult_.length < blockquoteStart.length * 20) {
-                this.completionResult_ = this.insertThinkingButton(this.completionResult_);
-            }
-
             this.completionResult_ = this.appendCaret(this.completionResult_);
             this.hasErrorOccurred_ = false;
             this.errorMessage_ = "";
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.completionResult_ = this.removeCaret(this.completionResult_);
             this.completionResult_ += "\n";
+            console.log("completionResult: " + marked.parse(this.completionResult_, {async: false}));
+            // console.log("completionResult: not parsed: " + this.completionResult_, {async: false});
             this.isSubmittingQuery_ = false;
             this.hasErrorOccurred_ = false;
             this.errorMessage_ = "";
@@ -296,35 +306,38 @@ export class ChatAppElement extends CrLitElement {
         const lastIndex = this.conversations_.length - 1;
         const lastConversation = this.conversations_[lastIndex];
 
-        if (!lastConversation) return;
+        console.log("lastConversation: " + lastConversation);
 
-        if (this.completionResult_ && this.completionResult_.length > 0) {
-            if (this.hasErrorOccurred_) {
-                lastConversation.responseType = ConversationRecordResponseType.ERROR;
-            } else {
-                lastConversation.responseType = ConversationRecordResponseType.CONVERSATION;
-
-                // Check the first <blockquote> block, even if it doesn’t have a closing </blockquote>
-                // because user might manually stops the active conversation
-                const match = this.completionResult_.match(/<blockquote>([\s\S]*?)(<\/blockquote>|$)/);
-                if (match) {
-                    const reasoningBlock = match[0];
-                    const beforeReasoningBlock = this.completionResult_.slice(0, match.index);
-                    let fullReasoningBlock = beforeReasoningBlock + reasoningBlock;
-                    const responseBlock = this.completionResult_.replace(fullReasoningBlock, "").trim();
-                    const blockquoteEnd = "</blockquote>";
-                    if (!fullReasoningBlock.endsWith(blockquoteEnd)) {
-                        fullReasoningBlock += blockquoteEnd;
-                    }
-                    lastConversation.reasoning = fullReasoningBlock;
-                    lastConversation.response = marked.parse(responseBlock, {async: false});
+        if (lastConversation) {
+            if (this.completionResult_ && this.completionResult_.length > 0) {
+                if (this.hasErrorOccurred_) {
+                    lastConversation.responseType = ConversationRecordResponseType.ERROR;
                 } else {
-                    lastConversation.response = marked.parse(this.completionResult_, {async: false});
+                    lastConversation.responseType = ConversationRecordResponseType.CONVERSATION;
+                    lastConversation.response = marked.parse(this.completionResult_, {async: false}).replace("<p>", "");
+
+                    // Check the first <blockquote> block, even if it doesn’t have a closing </blockquote>
+                    // because user might manually stops the active conversation
+                    // const match = this.completionResult_.match(/<blockquote>([\s\S]*?)(?=<\/blockquote>|$)/);
+                    // if (match) {
+                    //     const reasoningBlock = match[0];
+                    //     const beforeReasoningBlock = this.completionResult_.slice(0, match.index);
+                    //     let fullReasoningBlock = beforeReasoningBlock + reasoningBlock;
+                    //     const responseBlock = this.completionResult_.replace(fullReasoningBlock, "");
+                    //     const blockquoteEnd = "</blockquote>";
+                    //     if (!fullReasoningBlock.endsWith(blockquoteEnd)) {
+                    //         fullReasoningBlock += blockquoteEnd;
+                    //     }
+                    //     lastConversation.reasoning = marked.parse(fullReasoningBlock, {async: false});
+                    //     lastConversation.response = marked.parse(responseBlock, {async: false}).replace("</blockquote>", "");
+                    // } else {
+                    //     lastConversation.response = marked.parse(this.completionResult_, {async: false});
+                    // }
                 }
+                this.completionResult_ = "";
+            } else {
+                lastConversation.responseType = ConversationRecordResponseType.EMPTY
             }
-            this.completionResult_ = "";
-        } else {
-            lastConversation.responseType = ConversationRecordResponseType.EMPTY
         }
     }
 
