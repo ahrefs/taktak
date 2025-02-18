@@ -48,30 +48,39 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
 }
 
 function getThinkingElement(thinking: string) {
-    if (thinking.length == 0) {
+    if (thinking.trim().length == 0) {
         return html``;
     }
     return html`
-        <div class="message-markdown-container"
-             .innerHTML="${getTrustedHTML(marked.parse(thinking, {async: false}))}">
+        <div class="thinking-button-and-text-container">
+            <button class="thinking-button">${"Thinking..."}</button>
+            <div class="thinking-markdown-container">
+                <div class="thinking-text"
+                     .innerHTML="${getTrustedHTML(marked.parse(thinking, {async: false}))}">
+                </div>
+            </div>
         </div>`;
 }
 
 function getResponseElement(response: string) {
-    if (response.length == 0) {
+    if (response.trim().length == 0) {
         return html``;
     }
     return html`
-        <div class="message-markdown-container"
+        <div class="response-markdown-container"
              .innerHTML="${getTrustedHTML(marked.parse(response, {async: false}))}">
         </div>`;
 }
 
 function getThinkingAndResponseElements(thinking: string, response: string) {
-    return html`
+    if (thinking.trim().length == 0 && response.trim().length == 0) {
+        return html``;
+    }
+
+    return html`<div class="thinking-and-response-container">
         ${getThinkingElement(thinking)}
         ${getResponseElement(response)}
-    `;
+    </div>`;
 }
 
 function getQueryPromptSection(query: string) {
@@ -81,7 +90,7 @@ function getQueryPromptSection(query: string) {
 
 export function getHtml(this: ChatAppElement) {
     return html`
-        <div id="container">
+        <div id="main-container">
             <div id="header-container">
                 <div class="header-title-container">
                     <button id="target-close-btn" class="header-btn" @click="${this.onCloseSidePanel_}">
@@ -97,17 +106,17 @@ export function getHtml(this: ChatAppElement) {
             </div>
             <div id="conversation-container" class="chat-scroller chat-scroller-top-of-page">
                 <div class="conversation-content">
-                    <div style="height: 12px"></div>
+                    <div class="top-vertical-spacer"></div>
                     ${
                             Object.values(this.conversations_).map(conversation => {
-                                // if there is no user prompt or query to display due to some errors, we will only display LLM's response
+                                // if there is no user prompt or query to display due to some errors, we will only display LLM's response and thinking if any
                                 if (conversation.query.length == 0) {
                                     return html`${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
                                 }
 
                                 if (conversation.shouldDisplaySiteInfo) {
                                     return html`
-                                        <div class="query-prompt-container width-with-top-padding">
+                                        <div class="query-prompt-container content-wide-width">
                                             <div class="siteinfo-container siteinfo-button"
                                                  @click="${(e: MouseEvent | KeyboardEvent) => {
                                                      // capture URL here so that the correct url will be open 
@@ -150,7 +159,7 @@ export function getHtml(this: ChatAppElement) {
                                         ${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
                                 } else {
                                     return html`
-                                        <div class="query-prompt-container content-fit-width-top-padding">
+                                        <div class="query-prompt-container content-fit-width">
                                             ${getQueryPromptSection(conversation.query)}
                                         </div>
                                         ${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
@@ -190,7 +199,7 @@ export function getHtml(this: ChatAppElement) {
                             }) : html``}
                 </div>
             </div>
-            <div id="prompt-container">
+            <div id="prompt-input-container">
                 ${getSiteInfoOrAddChatAboutThisPage.bind(this)()}
                 <div class="typing-content">
                     <div class="prompt-input">
@@ -227,7 +236,7 @@ export function getHtml(this: ChatAppElement) {
             </div>
             ${this.hasExceededMaxTokenCount_
                     ? html`
-                        <div id="error">${this.exceedMaxTokenCountErrorMessages_}</div>`
+                        <div id="error-container">${this.exceedMaxTokenCountErrorMessages_}</div>`
                     : html``}
         </div>`;
 }

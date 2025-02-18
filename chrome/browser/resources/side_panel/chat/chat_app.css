@@ -4,15 +4,16 @@
  * #scheme=relative
  * #css_wrapper_metadata_end */
 
-#container {
+#main-container {
     display: flex;
     flex-direction: column;
     height: 99vh;
-    padding: 0 0 16px 0;
+    padding: 0 0 18px 0;
     color: var(--color-yep-chat-primary-text);
     box-sizing: border-box;
-    font-size: 13px;
-    line-height: 20px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
     box-sizing: border-box;
 }
 
@@ -76,7 +77,7 @@
 .chat-scroller::-webkit-scrollbar-thumb {
     background: var(--color-yep-chat-site-info-vertical-bar-background);
     background-clip: content-box;
-    border: solid 1.5px transparent;
+    border: solid 1px transparent;
     border-radius: 100px;
 }
 
@@ -89,7 +90,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin: 0 0 0 16px;
+    margin: 0 0 0 18px;
     z-index: 0;
     scroll-behavior: smooth;
     will-change: scroll-position;
@@ -97,17 +98,94 @@
     scroll-snap-stop: always;
 }
 
+.top-vertical-spacer {
+    height: 10px; /* deduct 8px cause parent container has 8px gap */
+    width: 100%;
+}
+
 .conversation-content {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    gap: 1px;
-    padding: 0 12px 0 0;
+    gap: 8px;
+    padding: 0 10px 0 0; /* deduct 8px for scrollbar width */
 }
 
-.message-markdown-container {
+.thinking-and-response-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin: 0;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+    padding: 10px 0 24px 0;
+}
+
+.thinking-button-and-text-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+}
+
+.thinking-button-and-text-container .thinking-button {
+    display: flex;
+    flex-direction: row;
+    min-width: 113px;
+    width: fit-content;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--color-yep-chat-panel-border);
+    padding: 10px 12px;
+    font-size: 13px;
+    /* font-weight 500 doesn't work in linux */
+    font-weight: 600;
+    line-height: 16px;
+    cursor: pointer;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-secondary-text);
+}
+
+.thinking-markdown-container > .thinking-text {
+    position: relative;
+    left: 0;
+    padding-left: 18px; /* pseudo element width 5px, gap 13px*/
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--color-yep-chat-secondary-text);
+}
+
+.thinking-markdown-container > .thinking-text p {
+    margin: 0 0 8px 0;
+    padding: 0;
+}
+
+.thinking-markdown-container > .thinking-text p:last-child {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.thinking-markdown-container > .thinking-text::before {
+    content: "";
     display: block;
-    padding: 0 12px 0 12px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    margin: 0;
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
+    border-radius: 2px;
+}
+
+.response-markdown-container, thinking-markdown-container {
+    display: block;
+    margin: 0;
+    word-wrap: break-word;
+    box-sizing: border-box;
     background: var(--color-yep-chat-panel-background);
     color: var(--color-yep-chat-primary-text);
 }
@@ -157,20 +235,18 @@
     flex-direction: column;
     align-self: flex-end;
     gap: 10px;
-    padding: 0 10px 8px 10px;
+    padding: 10px 12px;
     border-radius: 12px;
     background: var(--color-yep-chat-prompt-background);
     max-width: calc(100vw - 36px);
 }
 
-.width-with-top-padding {
-    width: 80vw;
-    padding-top: 10px;
+.content-wide-width {
+    width: 82vw;
 }
 
-.content-fit-width-top-padding {
+.content-fit-width {
     width: fit-content;
-    padding-top: 8px;
 }
 
 .siteinfo-container {
@@ -221,6 +297,7 @@
     border-radius: 3px;
     background: var(--color-yep-chat-site-info-vertical-bar-background);
 }
+
 
 .remove-siteinfo-button {
     display: block;
@@ -275,7 +352,7 @@
     color: var(--color-yep-chat-primary-text);
 }
 
-#prompt-container {
+#prompt-input-container {
     display: flex;
     flex-direction: column;
     border-radius: 12px;
@@ -302,7 +379,7 @@
     flex-grow: 1;
 }
 
-#error {
+#error-container {
     display: block;
     font-size: 11px;
     padding: 6px 12px 12px 12px;
@@ -345,90 +422,43 @@
     color: var(--color-yep-chat-tertiary-text);
 }
 
-.message-markdown-container p {
+.response-markdown-container p {
     margin: 0;
     padding: 0;
 }
 
-.message-markdown-container a {
+.response-markdown-container a {
     text-decoration: none;
     color: inherit;
     cursor: default;
 }
 
-.message-markdown-container a:hover {
+.response-markdown-container a:hover {
     text-decoration: none;
     color: inherit;
 }
 
-.message-markdown-container h1 {
+.response-markdown-container h1 {
     font-weight: 700;
     font-size: 22px;
     line-height: 26px;
 }
 
-.message-markdown-container h2 {
+.response-markdown-container h2 {
     font-weight: 700;
     font-size: 17px;
     line-height: 22px;
 }
 
-/* this is for thinking block */
-/* the thinking block always has a button ahead */
-.message-markdown-container > blockquote:nth-child(2) {
-    position: relative;
-    left: 0;
-    padding-left: 18px; /* pseudo element width 5px, gap 13px*/
-    margin: 0 0 20px 0;
-    font-weight: 400;
-    font-size: 13px;
-    line-height: 18px;
-    color: var(--color-yep-chat-secondary-text);
-}
-
-.message-markdown-container > blockquote:nth-child(2) p {
-    margin: 8px 0 0 0;
-    padding: 0;
-}
-
-.message-markdown-container > blockquote:nth-child(2)::before {
-    content: "";
-    display: block;
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 5px;
-    margin: 0;
-    background: var(--color-yep-chat-site-info-vertical-bar-background);
-    border-radius: 2px;
-}
-
-.reasoning-btn {
-    display: flex;
-    flex-direction: row;
-    min-width: 113px;
-    height: 36px;
-    border-radius: 12px;
-    border: 1px solid var(--color-yep-chat-panel-border);
-    padding: 10px 12px;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 16px;
-    cursor: pointer;
-    background: var(--color-yep-chat-panel-background);
-    color: var(--color-yep-chat-secondary-text);
-    margin-bottom: 8px;
-}
 
 /* this is incorrect for the vertical line, fix it */
-.message-markdown-container > blockquote:not(:nth-child(2)) {
+.response-markdown-container > blockquote:not(:nth-child(2)) {
     border-left: 5px solid var(--color-yep-chat-site-info-vertical-bar-background);
     margin: 0;
     padding: 0 0 0 6px;
 }
 
-.message-markdown-container code, .message-markdown-container blockquote:nth-child(2) code {
+.response-markdown-container code, .response-markdown-container blockquote:nth-child(2) code {
     font-size: 12px;
     font-weight: 400;
     line-height: 16px;
@@ -438,7 +468,7 @@
     color: var(--color-yep-chat-primary-text);
 }
 
-.message-markdown-container pre, .message-markdown-container blockquote:nth-child(2) pre {
+.response-markdown-container pre, .response-markdown-container blockquote:nth-child(2) pre {
     border-radius: 6px;
     max-width: 90vw;
     padding: 14px;
@@ -450,76 +480,76 @@
     scroll-behavior: smooth;
 }
 
-.message-markdown-container pre::-webkit-scrollbar, .message-markdown-container blockquote:nth-child(2) pre::-webkit-scrollbar {
+.response-markdown-container pre::-webkit-scrollbar, .response-markdown-container blockquote:nth-child(2) pre::-webkit-scrollbar {
     height: 8px;
     background-color: transparent;
 }
 
-.message-markdown-container pre::-webkit-scrollbar-thumb, .message-markdown-container blockquote:nth-child(2) pre::-webkit-scrollbar-thumb {
+.response-markdown-container pre::-webkit-scrollbar-thumb, .response-markdown-container blockquote:nth-child(2) pre::-webkit-scrollbar-thumb {
     background-color: var(--color-yep-chat-site-info-vertical-bar-background);
     background-clip: content-box;
     border: solid 1.5px transparent;
     border-radius: 100px;
 }
 
-.message-markdown-container pre code, .message-markdown-container blockquote:nth-child(2) pre code {
+.response-markdown-container pre code, .response-markdown-container blockquote:nth-child(2) pre code {
     line-height: 22px;
     padding: 0;
 }
 
-.message-markdown-container table, .message-markdown-container blockquote:nth-child(2) table {
+.response-markdown-container table, .response-markdown-container blockquote:nth-child(2) table {
     border-collapse: collapse;
 }
 
-.message-markdown-container table thead th, .message-markdown-container blockquote:nth-child(2) table thead th {
+.response-markdown-container table thead th, .response-markdown-container blockquote:nth-child(2) table thead th {
     text-align: left;
 }
 
-.message-markdown-container table tr, .message-markdown-container blockquote:nth-child(2) table tr {
+.response-markdown-container table tr, .response-markdown-container blockquote:nth-child(2) table tr {
     border-top: 1px solid var(--color-yep-chat-panel-border);
     border: 1px solid var(--color-yep-chat-panel-border);
     border-left: none;
     border-right: none;
 }
 
-.message-markdown-container table th, td {
+.response-markdown-container table th, td {
     padding: 10px;
 }
 
-.message-markdown-container blockquote:nth-child(2) table th, td {
+.response-markdown-container blockquote:nth-child(2) table th, td {
     padding: 10px;
 }
 
-.message-markdown-container ul, .message-markdown-container blockquote:nth-child(2) ul {
+.response-markdown-container ul, .response-markdown-container blockquote:nth-child(2) ul {
     line-height: 18px;
     list-style-type: disc;
     padding-left: 14px;
 }
 
-.message-markdown-container ol, .message-markdown-container blockquote:nth-child(2) ol {
+.response-markdown-container ol, .response-markdown-container blockquote:nth-child(2) ol {
     line-height: 18px;
     list-style-type: decimal;
     padding-left: 14px;
 }
 
-.message-markdown-container ol ul, ul ol {
+.response-markdown-container ol ul, ul ol {
     padding-left: 14px;
 }
 
-.message-markdown-container blockquote:nth-child(2) ol ul, blockquote:nth-child(2) ul ol {
+.response-markdown-container blockquote:nth-child(2) ol ul, blockquote:nth-child(2) ul ol {
     padding-left: 14px;
 }
 
-.message-markdown-container ol ol, .message-markdown-container blockquote:nth-child(2) ol ol {
+.response-markdown-container ol ol, .response-markdown-container blockquote:nth-child(2) ol ol {
     list-style-type: lower-alpha;
 }
 
-.message-markdown-container li, .message-markdown-container blockquote:nth-child(2) li {
+.response-markdown-container li, .response-markdown-container blockquote:nth-child(2) li {
     margin-top: 10px;
     margin-bottom: 10px;
 }
 
-.message-markdown-container .caret {
+.response-markdown-container .caret {
     display: inline-block;
     width: 8px;
     height: 20px;
@@ -529,7 +559,9 @@
     vertical-align: middle;
 }
 
-.message-markdown-container blockquote:nth-child(2) .caret {
+.response-markdown-container blockquote:nth-child(2) .caret {
     display: none !important;
     visibility: hidden !important;
 }
+
+
