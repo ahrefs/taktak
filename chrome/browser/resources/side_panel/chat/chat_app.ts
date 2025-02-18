@@ -30,10 +30,10 @@ export type ConversationRecord = {
     title: string,
     url: string,
     shouldDisplaySiteInfo: boolean,
-    thinking: string,
-    showThinking: boolean,
-    response: string,
-    error: string,
+    thinkingText: string,
+    showThinkingText: boolean,
+    responseText: string,
+    errorText: string,
 }
 
 type ConversationDictionary = { [key: string]: ConversationRecord };
@@ -76,10 +76,16 @@ export class ChatAppElement extends CrLitElement {
     private shouldHideSiteInfoInUserQueryElement_: boolean = false;
     protected shouldShowActionsMenu_: boolean = false;
 
-    private isThinking_: boolean = false;
+    // Individual properties are used to signal changes in the UI
+    // instead of a single object. Using an object would result in
+    // frequent allocations, which, over time, could degrade performance
+    // and make the chat feature sluggish.
+    protected isThinking_: boolean = false;
     protected currentResponseResult_: string = "";
     protected currentThinkingResult_: string = "";
     protected currentErrorResult_: string = "";
+    protected currentConversationId_: string = "";
+    protected showThinkingText_: boolean = true;
 
     constructor() {
         super();
@@ -122,7 +128,26 @@ export class ChatAppElement extends CrLitElement {
             currentResponseResult_: {type: String},
             currentThinkingResult_: {type: String},
             currentErrorResult_: {type: String},
+            currentConversationId_: {type: String},
+            showThinkingText_: {type: Boolean},
         };
+    }
+
+    protected onThinkingButtonClick_(id: string) {
+        if (id === this.currentConversationId_) {
+            this.showThinkingText_ = !this.showThinkingText_;
+        } else {
+            const conversation = this.conversations_[id];
+            if (conversation) {
+                console.log("Found!!!!");
+                this.conversations_[id] = {
+                    ...conversation,
+                    showThinkingText: !conversation.showThinkingText,
+                }
+                this.conversations_ = {...this.conversations_};
+            }
+        }
+        setTimeout(() => this.$.promptInput.focusInput(), 0);
     }
 
     private async updateSiteInfo(siteInfo: SiteInfo) {
@@ -201,14 +226,14 @@ export class ChatAppElement extends CrLitElement {
                 console.log("title: " + conversation.title);
                 console.log("url: " + conversation.url);
                 console.log("shouldDisplaySiteInfo: " + conversation.shouldDisplaySiteInfo);
-                console.log("showThinking: " + conversation.showThinking);
+                console.log("showThinking: " + conversation.showThinkingText);
                 console.log("query: " + conversation.query);
-                console.log("thinking: " + conversation.thinking);
-                console.log("thinking parsed: " + marked.parse(conversation.thinking, {async: false}));
-                console.log("response: " + conversation.response);
-                console.log("response parsed: " + marked.parse(conversation.response, {async: false}));
-                console.log("error: " + conversation.error);
-                console.log("error parsed: " + marked.parse(conversation.error, {async: false}));
+                console.log("thinking: " + conversation.thinkingText);
+                console.log("thinking parsed: " + marked.parse(conversation.thinkingText, {async: false}));
+                console.log("response: " + conversation.responseText);
+                console.log("response parsed: " + marked.parse(conversation.responseText, {async: false}));
+                console.log("error: " + conversation.errorText);
+                console.log("error parsed: " + marked.parse(conversation.errorText, {async: false}));
                 console.log("End==============================");
             }
         }
@@ -286,26 +311,29 @@ export class ChatAppElement extends CrLitElement {
     private storeCurrentConversation() {
         const lastConversation = this.getCurrentConversation();
         if (lastConversation) {
-            lastConversation.response = this.currentResponseResult_;
-            lastConversation.thinking = this.currentThinkingResult_;
-            lastConversation.error = this.currentErrorResult_;
+            lastConversation.id = this.currentConversationId_;
+            lastConversation.responseText = this.currentResponseResult_;
+            lastConversation.thinkingText = this.currentThinkingResult_;
+            lastConversation.errorText = this.currentErrorResult_;
         }
+        this.currentConversationId_ = "";
         this.currentResponseResult_ = "";
         this.currentThinkingResult_ = "";
         this.currentErrorResult_ = "";
     }
 
     private getInitialConversation(): ConversationRecord {
+        this.currentConversationId_ = crypto.randomUUID();
         return {
-            id: crypto.randomUUID(),
+            id: "",
             title: "",
             url: "",
             shouldDisplaySiteInfo: false,
             query: "",
-            thinking: "",
-            showThinking: true,
-            response: "",
-            error: "",
+            thinkingText: "",
+            showThinkingText: true,
+            responseText: "",
+            errorText: "",
         };
     }
 
@@ -341,7 +369,7 @@ export class ChatAppElement extends CrLitElement {
             this.shouldShowActionsMenu_ = false;
             currentConversation.query = loadTimeData.getString('promptSocialMediaPost') + ' ' + actionParam;
         }
-        this.conversations_[currentConversation.id] = currentConversation;
+        this.conversations_[this.currentConversationId_] = currentConversation;
         this.isSubmittingQuery_ = true;
         setTimeout(() => this.chatApiProxy_.submitAction(actionType, actionParam), 0);
     }
@@ -356,7 +384,7 @@ export class ChatAppElement extends CrLitElement {
         currentConversation.url = this.siteInfo_.url ?? "";
         currentConversation.shouldDisplaySiteInfo = this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_;
 
-        this.conversations_[currentConversation.id] = currentConversation;
+        this.conversations_[this.currentConversationId_] = currentConversation;
 
         this.submittedQuery_ = this.query_;
         this.query_ = "";
@@ -371,10 +399,10 @@ export class ChatAppElement extends CrLitElement {
         for (let i = keys.length - 1; i >= 0; i--) {
             let key: string = keys[i] ?? "";
             const conversation = this.conversations_[key];
-            if (conversation != undefined && conversation.query.length > 0 && conversation.response.length > 0 && conversation_history.length <= 3) {
+            if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0 && conversation_history.length <= 3) {
                 conversation_history.push({
                     userQuery: conversation.query,
-                    llmResponse: conversation.response,
+                    llmResponse: conversation.responseText,
                 })
             }
         }

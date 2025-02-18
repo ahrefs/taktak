@@ -47,17 +47,26 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     }
 }
 
-function getThinkingElement(thinking: string) {
-    if (thinking.trim().length == 0) {
+function getThinkingElement(this: ChatAppElement, thinkingText: string, id: string, isThinking: boolean, showThinkingText: boolean) {
+    if (thinkingText.trim().length == 0) {
         return html``;
     }
     return html`
         <div class="thinking-button-and-text-container">
-            <button class="thinking-button">${"Thinking..."}</button>
+            <button class="thinking-button" @click="${(e: Event) => {
+                e.preventDefault();
+                const _id = id;
+                console.log("id: " + _id);
+                this.onThinkingButtonClick_(_id);
+            }}">${isThinking ? "Thinking..." : "Done thinking"}
+            </button>
             <div class="thinking-markdown-container">
-                <div class="thinking-text"
-                     .innerHTML="${getTrustedHTML(marked.parse(thinking, {async: false}))}">
-                </div>
+                ${
+                        showThinkingText ? html`
+                            <div class="thinking-text"
+                                 .innerHTML="${getTrustedHTML(marked.parse(thinkingText, {async: false}))}">
+                            </div>` : html``
+                }
             </div>
         </div>`;
 }
@@ -72,15 +81,16 @@ function getResponseElement(response: string) {
         </div>`;
 }
 
-function getThinkingAndResponseElements(thinking: string, response: string) {
-    if (thinking.trim().length == 0 && response.trim().length == 0) {
+function getThinkingAndResponseElements(this: ChatAppElement, thinkingText: string, responseText: string, id: string, isThinking: boolean, showThinkingText: boolean) {
+    if (thinkingText.trim().length == 0 && responseText.trim().length == 0) {
         return html``;
     }
 
-    return html`<div class="thinking-and-response-container">
-        ${getThinkingElement(thinking)}
-        ${getResponseElement(response)}
-    </div>`;
+    return html`
+        <div class="thinking-and-response-container">
+            ${getThinkingElement.bind(this)(thinkingText, id, isThinking, showThinkingText)}
+            ${getResponseElement(responseText)}
+        </div>`;
 }
 
 function getQueryPromptSection(query: string) {
@@ -111,7 +121,8 @@ export function getHtml(this: ChatAppElement) {
                             Object.values(this.conversations_).map(conversation => {
                                 // if there is no user prompt or query to display due to some errors, we will only display LLM's response and thinking if any
                                 if (conversation.query.length == 0) {
-                                    return html`${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
+                                    return html`${getThinkingAndResponseElements.bind(this)(conversation.thinkingText, conversation.responseText,
+                                            conversation.id, false, conversation.showThinkingText)}`;
                                 }
 
                                 if (conversation.shouldDisplaySiteInfo) {
@@ -156,17 +167,20 @@ export function getHtml(this: ChatAppElement) {
                                             </div>
                                             ${getQueryPromptSection(conversation.query)}
                                         </div>
-                                        ${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
+                                        ${getThinkingAndResponseElements.bind(this)(conversation.thinkingText, conversation.responseText,
+                                                conversation.id, false, conversation.showThinkingText)}`;
                                 } else {
                                     return html`
                                         <div class="query-prompt-container content-fit-width">
                                             ${getQueryPromptSection(conversation.query)}
                                         </div>
-                                        ${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
+                                        ${getThinkingAndResponseElements.bind(this)(conversation.thinkingText, conversation.responseText,
+                                                conversation.id, false, conversation.showThinkingText)}`;
                                 }
                             })
                     }
-                    ${getThinkingAndResponseElements.bind(this)(this.currentThinkingResult_, this.currentResponseResult_)}
+                    ${getThinkingAndResponseElements.bind(this)(this.currentThinkingResult_, this.currentResponseResult_,
+                            this.currentConversationId_, this.isThinking_, this.showThinkingText_)}
                 </div>
                 <div class="action-buttons-container">
                     ${this.shouldShowActionsMenu_ && !this.isSubmittingQuery_ ?
