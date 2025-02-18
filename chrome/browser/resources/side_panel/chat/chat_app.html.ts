@@ -118,7 +118,7 @@ export function getHtml(this: ChatAppElement) {
                 <div class="conversation-content">
                     <div class="top-vertical-spacer"></div>
                     ${
-                            Object.values(this.conversations_).map(conversation => {
+                            this.conversations_.map(conversation => {
                                 // if there is no user prompt or query to display due to some errors, we will only display LLM's response and thinking if any
                                 if (conversation.query.length == 0) {
                                     return html`${getThinkingAndResponseElements.bind(this)(conversation.thinkingText, conversation.responseText,

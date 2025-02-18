@@ -36,7 +36,6 @@ export type ConversationRecord = {
     errorText: string,
 }
 
-type ConversationDictionary = { [key: string]: ConversationRecord };
 
 export interface ChatAppElement {
     $: {
@@ -54,7 +53,7 @@ export class ChatAppElement extends CrLitElement {
     protected actionList_: ActionItem[] = [];
     protected translateToLanguages_: string[] = [];
     protected socialMediaPlatforms_: string[] = [];
-    protected conversations_: ConversationDictionary = {};
+    protected conversations_: ConversationRecord[] = [];
     protected title_: string = loadTimeData.getString('title');
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
     protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
@@ -121,6 +120,7 @@ export class ChatAppElement extends CrLitElement {
             isActivePageUrlNew_: {type: Boolean},
             shouldShowActionsMenu_: {type: Boolean},
 
+            conversations_: {type: Array},
             query_: {type: String},
             submittedQuery_: {type: String},
             isSubmittingQuery_: {type: Boolean},
@@ -137,14 +137,21 @@ export class ChatAppElement extends CrLitElement {
         if (id === this.currentConversationId_) {
             this.showThinkingText_ = !this.showThinkingText_;
         } else {
-            const conversation = this.conversations_[id];
-            if (conversation) {
+            const index = this.conversations_.findIndex((conversation: ConversationRecord) => conversation.id === id);
+            if (index >= 0 && index < this.conversations_.length) {
                 console.log("Found!!!!");
-                this.conversations_[id] = {
-                    ...conversation,
-                    showThinkingText: !conversation.showThinkingText,
+                const conversation = this.conversations_[index];
+                if (conversation) {
+                    console.log("Found!!!!");
+                    this.conversations_ = [
+                        ...this.conversations_.slice(0, index),
+                        {
+                            ...conversation,
+                            showThinkingText: !conversation.showThinkingText,
+                        },
+                        ...this.conversations_.slice(index + 1),
+                    ];
                 }
-                this.conversations_ = {...this.conversations_};
             }
         }
         setTimeout(() => this.$.promptInput.focusInput(), 0);
@@ -216,26 +223,21 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private logConversations() {
-        let keys = Object.keys(this.conversations_);
-        for (let i = 0; i < keys.length; i++) {
-            let key: string = keys[i] ?? "";
-            const conversation = this.conversations_[key];
-            if (conversation != undefined) {
-                console.log("Start==============================");
-                console.log("id: " + conversation.id);
-                console.log("title: " + conversation.title);
-                console.log("url: " + conversation.url);
-                console.log("shouldDisplaySiteInfo: " + conversation.shouldDisplaySiteInfo);
-                console.log("showThinking: " + conversation.showThinkingText);
-                console.log("query: " + conversation.query);
-                console.log("thinking: " + conversation.thinkingText);
-                console.log("thinking parsed: " + marked.parse(conversation.thinkingText, {async: false}));
-                console.log("response: " + conversation.responseText);
-                console.log("response parsed: " + marked.parse(conversation.responseText, {async: false}));
-                console.log("error: " + conversation.errorText);
-                console.log("error parsed: " + marked.parse(conversation.errorText, {async: false}));
-                console.log("End==============================");
-            }
+        for (const conversation of this.conversations_) {
+            console.log("Start==============================");
+            console.log("id: " + conversation.id);
+            console.log("title: " + conversation.title);
+            console.log("url: " + conversation.url);
+            console.log("shouldDisplaySiteInfo: " + conversation.shouldDisplaySiteInfo);
+            console.log("showThinking: " + conversation.showThinkingText);
+            console.log("query: " + conversation.query);
+            console.log("thinking: " + conversation.thinkingText);
+            console.log("thinking parsed: " + marked.parse(conversation.thinkingText, {async: false}));
+            console.log("response: " + conversation.responseText);
+            console.log("response parsed: " + marked.parse(conversation.responseText, {async: false}));
+            console.log("error: " + conversation.errorText);
+            console.log("error parsed: " + marked.parse(conversation.errorText, {async: false}));
+            console.log("End==============================");
         }
     }
 
@@ -268,7 +270,7 @@ export class ChatAppElement extends CrLitElement {
         this.shouldUseCurrentPageContentAsChatContext_ = this.siteInfo_.isContentUsableInConversations;
         this.shouldShowActionsMenu_ = this.siteInfo_.isContentUsableInConversations;
 
-        this.conversations_ = {};
+        this.conversations_.length = 0;
         this.query_ = "";
         this.isSubmittingQuery_ = false;
         this.submittedQuery_ = "";
@@ -303,15 +305,17 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private getCurrentConversation(): ConversationRecord | undefined {
-        const keys = Object.keys(this.conversations_);
-        const lastIndex = keys.length - 1;
-        return this.conversations_[keys[lastIndex] ?? ""];
+        const lastIndex = this.conversations_.length - 1;
+        if (lastIndex >= 0) {
+            return this.conversations_[lastIndex];
+        } else {
+            return undefined;
+        }
     }
 
     private storeCurrentConversation() {
         const lastConversation = this.getCurrentConversation();
         if (lastConversation) {
-            lastConversation.id = this.currentConversationId_;
             lastConversation.responseText = this.currentResponseResult_;
             lastConversation.thinkingText = this.currentThinkingResult_;
             lastConversation.errorText = this.currentErrorResult_;
@@ -325,7 +329,7 @@ export class ChatAppElement extends CrLitElement {
     private getInitialConversation(): ConversationRecord {
         this.currentConversationId_ = crypto.randomUUID();
         return {
-            id: "",
+            id: this.currentConversationId_,
             title: "",
             url: "",
             shouldDisplaySiteInfo: false,
@@ -369,7 +373,7 @@ export class ChatAppElement extends CrLitElement {
             this.shouldShowActionsMenu_ = false;
             currentConversation.query = loadTimeData.getString('promptSocialMediaPost') + ' ' + actionParam;
         }
-        this.conversations_[this.currentConversationId_] = currentConversation;
+        this.conversations_.push(currentConversation);
         this.isSubmittingQuery_ = true;
         setTimeout(() => this.chatApiProxy_.submitAction(actionType, actionParam), 0);
     }
@@ -384,7 +388,7 @@ export class ChatAppElement extends CrLitElement {
         currentConversation.url = this.siteInfo_.url ?? "";
         currentConversation.shouldDisplaySiteInfo = this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_;
 
-        this.conversations_[this.currentConversationId_] = currentConversation;
+        this.conversations_.push(currentConversation);
 
         this.submittedQuery_ = this.query_;
         this.query_ = "";
@@ -395,10 +399,8 @@ export class ChatAppElement extends CrLitElement {
 
         // select the last 3 conversations to use as chat context
         const conversation_history: ConversationItem[] = [];
-        const keys = Object.keys(this.conversations_);
-        for (let i = keys.length - 1; i >= 0; i--) {
-            let key: string = keys[i] ?? "";
-            const conversation = this.conversations_[key];
+        for (let i = this.conversations_.length - 1; i >= 0; i--) {
+            const conversation = this.conversations_[i];
             if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0 && conversation_history.length <= 3) {
                 conversation_history.push({
                     userQuery: conversation.query,
