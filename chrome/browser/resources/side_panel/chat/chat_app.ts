@@ -19,10 +19,6 @@ import './chat_prompt_input.js';
 import './action_menu.js';
 import {marked} from "./marked.js";
 
-function transformToArray(input: string): string[] {
-    return input.split(",").map(item => item.trim());
-}
-
 export enum ActionOnExtractedContent {
     AddAsContext = 0,
     RemoveFromUsingAsContext = 1,
@@ -46,6 +42,10 @@ export interface ChatAppElement {
     $: {
         promptInput: ChatPromptInputElement,
     };
+}
+
+function transformToArray(input: string): string[] {
+    return input.split(",").map(item => item.trim());
 }
 
 export class ChatAppElement extends CrLitElement {
@@ -170,19 +170,20 @@ export class ChatAppElement extends CrLitElement {
                 } else {
                     this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_);
                     this.currentResponseResult_ += responseResult;
-                    this.currentResponseResult_ = this.appendCaret(this.currentResponseResult_);
+                    // Prevent from showing caret while "thinking" is in progress
+                    if (this.currentResponseResult_.length > 0) {
+                        this.currentResponseResult_ = this.appendCaret(this.currentResponseResult_);
+                    }
                 }
             }
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.isThinking_ = false;
-            this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_);
-            this.currentResponseResult_ += "\n";
+            this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.isSubmittingQuery_ = false;
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         } else if (response.responseType == ResponseType.ERROR) {
             this.isThinking_ = false;
-            this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_);
-            this.currentResponseResult_ += "\n";
+            this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.currentErrorResult_ = loadTimeData.getString('genericError');
             this.isSubmittingQuery_ = false;
             setTimeout(() => this.$.promptInput.focusInput(), 0);
@@ -192,7 +193,7 @@ export class ChatAppElement extends CrLitElement {
     private logConversations() {
         let keys = Object.keys(this.conversations_);
         for (let i = 0; i < keys.length; i++) {
-            let key : string = keys[i] ?? "";
+            let key: string = keys[i] ?? "";
             const conversation = this.conversations_[key];
             if (conversation != undefined) {
                 console.log("Start==============================");
@@ -206,7 +207,7 @@ export class ChatAppElement extends CrLitElement {
                 console.log("thinking parsed: " + marked.parse(conversation.thinking, {async: false}));
                 console.log("response: " + conversation.response);
                 console.log("response parsed: " + marked.parse(conversation.response, {async: false}));
-                console.log("error: " + conversation.response);
+                console.log("error: " + conversation.error);
                 console.log("error parsed: " + marked.parse(conversation.error, {async: false}));
                 console.log("End==============================");
             }
@@ -215,7 +216,7 @@ export class ChatAppElement extends CrLitElement {
 
     protected onCloseSidePanel_(e: Event) {
         e.preventDefault();
-        this.putCurrentConversationIntoList();
+        this.storeCurrentConversation();
         this.logConversations();
         this.chatApiProxy_.closeUI();
     }
@@ -276,18 +277,18 @@ export class ChatAppElement extends CrLitElement {
         this.onSubmitAction_(e.detail.actionType, e.detail.actionParam);
     }
 
-    private getCurrentConversation(): ConversationRecord | undefined{
+    private getCurrentConversation(): ConversationRecord | undefined {
         const keys = Object.keys(this.conversations_);
         const lastIndex = keys.length - 1;
         return this.conversations_[keys[lastIndex] ?? ""];
     }
 
-    private putCurrentConversationIntoList() {
+    private storeCurrentConversation() {
         const lastConversation = this.getCurrentConversation();
         if (lastConversation) {
-           lastConversation.response = this.currentResponseResult_;
-           lastConversation.thinking = this.currentThinkingResult_;
-           lastConversation.error = this.currentErrorResult_;
+            lastConversation.response = this.currentResponseResult_;
+            lastConversation.thinking = this.currentThinkingResult_;
+            lastConversation.error = this.currentErrorResult_;
         }
         this.currentResponseResult_ = "";
         this.currentThinkingResult_ = "";
@@ -309,7 +310,7 @@ export class ChatAppElement extends CrLitElement {
     }
 
     protected onSubmitAction_(actionType: ActionType, actionParam: string = '') {
-        this.putCurrentConversationIntoList();
+        this.storeCurrentConversation();
 
         const title = this.siteInfo_.title ?? "";
         const url = this.stripUrlProtocol_(this.siteInfo_.url ?? "");
@@ -317,6 +318,7 @@ export class ChatAppElement extends CrLitElement {
         const currentConversation = this.getInitialConversation();
         currentConversation.title = title;
         currentConversation.url = url;
+        currentConversation.shouldDisplaySiteInfo = true;
 
         if (actionType == ActionType.SUMMARIZE_PAGE) {
             this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
@@ -345,7 +347,7 @@ export class ChatAppElement extends CrLitElement {
     }
 
     protected onSubmitQuery_() {
-        this.putCurrentConversationIntoList();
+        this.storeCurrentConversation();
 
         const currentConversation = this.getInitialConversation();
 
@@ -367,7 +369,7 @@ export class ChatAppElement extends CrLitElement {
         const conversation_history: ConversationItem[] = [];
         const keys = Object.keys(this.conversations_);
         for (let i = keys.length - 1; i >= 0; i--) {
-            let key : string = keys[i] ?? "";
+            let key: string = keys[i] ?? "";
             const conversation = this.conversations_[key];
             if (conversation != undefined && conversation.query.length > 0 && conversation.response.length > 0 && conversation_history.length <= 3) {
                 conversation_history.push({
@@ -447,152 +449,6 @@ export class ChatAppElement extends CrLitElement {
         this.listenerIds_.forEach(
             id => this.chatApiProxy_.getCallbackRouter().removeListener(id));
     }
-
-    // private updateCompletionResult(response: ActionResponse) {
-    //     if (response.responseType == ResponseType.DELTA) {
-    //         this.completionResult_ = this.removeCaret(this.completionResult_);
-    //         const responseResult = response.result;
-    //         const thinkingBlockquoteStart = "<blockquote>";
-    //         if (responseResult == "<think>") {
-    //             this.completionResult_ += thinkingBlockquoteStart;
-    //         } else if (responseResult == "</think>") {
-    //             this.completionResult_ += "</blockquote>";
-    //             this.completionResult_ = this.changeThinkingButtonText(this.completionResult_);
-    //         } else {
-    //             this.completionResult_ += responseResult;
-    //             // the conditional checking is to prevent from trying to insert Thinking button whenever the response comes
-    //             if (this.completionResult_.length > thinkingBlockquoteStart.length && this.completionResult_.length < thinkingBlockquoteStart.length * 4) {
-    //                 this.completionResult_ = this.insertThinkingButton(this.completionResult_);
-    //             }
-    //         }
-    //         this.completionResult_ = this.appendCaret(this.completionResult_);
-    //         this.hasErrorOccurred_ = false;
-    //         this.errorMessage_ = "";
-    //     } else if (response.responseType == ResponseType.COMPLETED) {
-    //         this.completionResult_ = this.removeCaret(this.completionResult_);
-    //         this.completionResult_ += "\n";
-    //         //console.log("completionResult: " + marked.parse(this.completionResult_, {async: false}));
-    //         // console.log("completionResult: not parsed: " + this.completionResult_, {async: false});
-    //         this.isSubmittingQuery_ = false;
-    //         this.hasErrorOccurred_ = false;
-    //         this.errorMessage_ = "";
-    //         setTimeout(() => console.log(document.getElementById(this.currentUUID_)?.innerHTML), 100);
-    //         document.getElementById(this.currentUUID_)?.addEventListener('click', () => {
-    //             console.log("reasoningBtnClick: " + this.currentUUID_);
-    //         })
-    //         setTimeout(() => this.$.promptInput.focusInput(), 0);
-    //     } else if (response.responseType == ResponseType.ERROR) {
-    //         this.completionResult_ = this.removeCaret(this.completionResult_);
-    //         this.completionResult_ += "\n";
-    //         this.isSubmittingQuery_ = false;
-    //         this.hasErrorOccurred_ = true;
-    //         this.errorMessage_ = loadTimeData.getString('genericError');
-    //         this.$.promptInput.focusInput();
-    //         setTimeout(() => this.$.promptInput.focusInput(), 0);
-    //     }
-    // }
-    /*
-    private insertThinkingButton(input: string) {
-        const btnMatch = input.match(/<button([\s\S]*?)/);
-        // Prevent from inserting more than one button
-        if (btnMatch && btnMatch[0].trim().startsWith("<button")) {
-            return input;
-        }
-
-        // Match the content inside the first <blockquote>, without including the tags
-        let blockquoteContent = "";
-        const match = input.match(/<blockquote>([\s\S]*?)(?=<\/blockquote>|$)/);
-        if (match) {
-            blockquoteContent = match[1] ? match[1].trim() : "";
-        }
-
-        const reasoningBtnClickText = "(e: Event) => this.reasoningBtnClick(" + this.currentUUID_ + ")";
-        const reasoningBtnText = '<button class="reasoning-btn" onclick="' + reasoningBtnClickText + '">Thinking...</button><blockquote id="' + this.currentUUID_ + '">'
-        const openingTagRegex = /<blockquote>/g;
-        const openingReplacement = blockquoteContent.length > 0 ? reasoningBtnText : '<blockquote>';
-        return input.replace(openingTagRegex, openingReplacement);
-    }
-
-    protected reasoningBtnClick(uuid: string) {
-        console.log("reasoningBtnClick: " + uuid);
-    }
-
-    private changeThinkingButtonText(input: string) {
-        const btnRegex = /<button([\s\S]*?)(?=<\/button>|$)/;
-        const btnMatch = input.match(btnRegex);
-        if (btnMatch) {
-            // const reasoningBtnClickText = "(e: Event) => this." + this.reasoningBtnClick.name + "(" + this.currentUUID_ + ")";
-            const reasoningBtnText = '<button class="reasoning-btn" id="' + this.currentUUID_ + '">Done thinking';
-            return input.replace(btnRegex, reasoningBtnText);
-            // return input.replace(btnRegex, '<button class="reasoning-btn">Done thinking');
-        }
-        return input;
-    }
-    private addLatestLLMResponseIntoLastConversation_() {
-        const lastIndex = this.conversations_.length - 1;
-        const lastConversation = this.conversations_[lastIndex];
-
-        if (lastConversation) {
-            if (this.completionResult_ && this.completionResult_.length > 0) {
-                if (this.hasErrorOccurred_) {
-                    lastConversation.responseType = ConversationRecordResponseType.ERROR;
-                } else {
-                    lastConversation.responseType = ConversationRecordResponseType.CONVERSATION;
-                    // marked.parse add <p> at the beginning, we need to remove it
-                    lastConversation.response = marked.parse(this.completionResult_, {async: false}).replace("<p>", "");
-                }
-                this.completionResult_ = "";
-            } else {
-                lastConversation.responseType = ConversationRecordResponseType.EMPTY
-            }
-        }
-    }
-    private updateCompletionResult(response: ActionResponse) {
-        const currentConversation = this.currentConversation_;
-        if (response.responseType == ResponseType.DELTA) {
-            const responseResult = response.result;
-            if (responseResult == "<think>") {
-                this.isInReasoningMode = true;
-            } else if (responseResult == "</think>") {
-                this.isInReasoningMode = false;
-            } else {
-                if (this.isInReasoningMode) {
-                    const clone = structuredClone(currentConversation);
-                    clone.reasoning = clone.reasoning + responseResult;
-                    this.currentConversation_ = clone;
-                } else {
-                    currentConversation.response = this.removeCaret(currentConversation.response);
-                    currentConversation.response += responseResult;
-                    currentConversation.response = this.appendCaret(currentConversation.response);
-                }
-                currentConversation.responseType = ConversationRecordResponseType.CONVERSATION;
-            }
-            this.hasErrorOccurred_ = false;
-            this.errorMessage_ = "";
-        } else if (response.responseType == ResponseType.COMPLETED) {
-            this.isInReasoningMode = false;
-            if (currentConversation) {
-                currentConversation.response = this.removeCaret(currentConversation.response) + "\n";
-            }
-            this.isSubmittingQuery_ = false;
-            this.hasErrorOccurred_ = false;
-            this.errorMessage_ = "";
-            setTimeout(() => this.$.promptInput.focusInput(), 0);
-        } else if (response.responseType == ResponseType.ERROR) {
-            if (currentConversation) {
-                currentConversation.response = this.removeCaret(currentConversation.response) + "\n";
-                currentConversation.responseType = ConversationRecordResponseType.ERROR;
-            }
-            this.isInReasoningMode = false;
-            this.isSubmittingQuery_ = false;
-            this.hasErrorOccurred_ = true;
-            this.errorMessage_ = loadTimeData.getString('genericError');
-            this.$.promptInput.focusInput();
-            setTimeout(() => this.$.promptInput.focusInput(), 0);
-        }
-    }
-*/
-
 }
 
 declare global {

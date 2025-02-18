@@ -1,7 +1,7 @@
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import 'chrome://resources/cr_elements/icons_lit.html.js';
 import {getTrustedHTML} from 'chrome://resources/js/parse_html_subset.js';
-import {ChatAppElement, ConversationRecord, ActionOnExtractedContent} from "./chat_app.js";
+import {ChatAppElement, ActionOnExtractedContent} from "./chat_app.js";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';
 import {marked} from "./marked.js";
 import {ActionType} from "./chat.mojom-webui.js";
@@ -47,19 +47,31 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     }
 }
 
-function getConversationResponseElement(conversation: ConversationRecord) {
-    // if (conversation.response.length == 0) {
-    //     return html``;
-    // }
-
+function getThinkingElement(thinking: string) {
+    if (thinking.length == 0) {
+        return html``;
+    }
     return html`
         <div class="message-markdown-container"
-             .innerHTML="${getTrustedHTML(marked.parse(conversation.thinking, {async: false}))}">
-        </div>
-        <div class="message-markdown-container"
-             .innerHTML="${getTrustedHTML(marked.parse(conversation.response, {async: false}))}">
+             .innerHTML="${getTrustedHTML(marked.parse(thinking, {async: false}))}">
         </div>`;
+}
 
+function getResponseElement(response: string) {
+    if (response.length == 0) {
+        return html``;
+    }
+    return html`
+        <div class="message-markdown-container"
+             .innerHTML="${getTrustedHTML(marked.parse(response, {async: false}))}">
+        </div>`;
+}
+
+function getThinkingAndResponseElements(thinking: string, response: string) {
+    return html`
+        ${getThinkingElement(thinking)}
+        ${getResponseElement(response)}
+    `;
 }
 
 function getQueryPromptSection(query: string) {
@@ -90,7 +102,7 @@ export function getHtml(this: ChatAppElement) {
                             Object.values(this.conversations_).map(conversation => {
                                 // if there is no user prompt or query to display due to some errors, we will only display LLM's response
                                 if (conversation.query.length == 0) {
-                                    return html`${getConversationResponseElement.bind(this)(conversation)}`;
+                                    return html`${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
                                 }
 
                                 if (conversation.shouldDisplaySiteInfo) {
@@ -135,22 +147,17 @@ export function getHtml(this: ChatAppElement) {
                                             </div>
                                             ${getQueryPromptSection(conversation.query)}
                                         </div>
-                                        ${getConversationResponseElement.bind(this)(conversation)}`;
+                                        ${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
                                 } else {
                                     return html`
                                         <div class="query-prompt-container content-fit-width-top-padding">
                                             ${getQueryPromptSection(conversation.query)}
                                         </div>
-                                        ${getConversationResponseElement.bind(this)(conversation)}`;
+                                        ${getThinkingAndResponseElements.bind(this)(conversation.thinking, conversation.response)}`;
                                 }
                             })
                     }
-                    <div class="message-markdown-container"
-                         .innerHTML="${getTrustedHTML(marked.parse(this.currentThinkingResult_, {async: false}))}">
-                    </div>
-                    <div class="message-markdown-container"
-                         .innerHTML="${getTrustedHTML(marked.parse(this.currentResponseResult_, {async: false}))}">
-                    </div>
+                    ${getThinkingAndResponseElements.bind(this)(this.currentThinkingResult_, this.currentResponseResult_)}
                 </div>
                 <div class="action-buttons-container">
                     ${this.shouldShowActionsMenu_ && !this.isSubmittingQuery_ ?
