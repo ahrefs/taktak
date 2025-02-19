@@ -164,7 +164,8 @@ base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
 }
 
 void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
-                                   const std::string &action_param) {
+                                   const std::string &action_param,
+                                   bool enable_thinking) {
     isQueryCancellingInProgress_.store(false);
     if (page_.is_bound()) {
         std::string summarize_prompt =
@@ -183,31 +184,31 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
         if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
             page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
                     &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-                    action_type, summarize_prompt, completion_messages));
+                    action_type, summarize_prompt, completion_messages, enable_thinking));
 
         } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
             page_content_extractor_helper_->ExtractPageContent(
                     base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                                    base::Unretained(this), action_type,
-                                   explain_prompt, completion_messages));
+                                   explain_prompt, completion_messages, enable_thinking));
 
         } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
             page_content_extractor_helper_->ExtractPageContent(
                     base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                                    base::Unretained(this), action_type,
-                                   fact_check_prompt, completion_messages));
+                                   fact_check_prompt, completion_messages, enable_thinking));
         } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
             page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
                     &ChatPageHandler::OnPageContentExtracted,
                     base::Unretained(this), action_type,
-                    translate_to_prompt + " " + action_param, completion_messages));
+                    translate_to_prompt + " " + action_param, completion_messages, enable_thinking));
         } else if (action_type ==
                    chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
             page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
                     &ChatPageHandler::OnPageContentExtracted,
                     base::Unretained(this), action_type,
                     draft_social_media_post_prompt + " " + action_param,
-                    completion_messages));
+                    completion_messages, enable_thinking));
         } else {
             // this branch should not be reached because all the action items are
             // handled in above blocks
@@ -219,6 +220,7 @@ void ChatPageHandler::OnPageContentExtracted(
         chat::mojom::ActionType action_type,
         const std::string &prompt,
         const std::vector<struct CompletionMessage> &completion_messages,
+        bool enable_thinking,
         std::string content,
         std::string url) {
 
@@ -249,6 +251,7 @@ void ChatPageHandler::OnPageContentExtracted(
 
     api_client_->QueryPrompt(
             all_messages,
+            enable_thinking,
             base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
                            base::Unretained(this), action_type),
             base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
@@ -258,7 +261,8 @@ void ChatPageHandler::OnPageContentExtracted(
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                                   const std::string &query,
                                   const std::string &url,
-                                  std::vector<chat::mojom::ConversationItemPtr> conversation_history) {
+                                  std::vector<chat::mojom::ConversationItemPtr> conversation_history,
+                                  bool enable_thinking) {
 
     std::vector<struct CompletionMessage> completion_messages;
 
@@ -273,6 +277,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                 {BuildPrompt(query, previous_content, action_type), kUserRole});
         api_client_->QueryPrompt(
                 completion_messages,
+                enable_thinking,
                 base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
                                base::Unretained(this), action_type),
                 base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
@@ -281,13 +286,14 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
     } else if (!url.empty()/* Context is not in the cache; user visit new page so new content should be extracted */) {
         page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
                 &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-                action_type, query, completion_messages));
+                action_type, query, completion_messages, enable_thinking));
     } else /* user removed the context via Chat UI or the current opening tab is
               empty */
     {
         completion_messages.push_back({query, kUserRole});
         api_client_->QueryPrompt(
                 completion_messages,
+                enable_thinking,
                 base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
                                base::Unretained(this), action_type),
                 base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,

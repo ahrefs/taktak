@@ -78,10 +78,10 @@ interface PageHandler {
   // The user selects a predefined action by clicking on menu items in the Chat UI
   // The content of the current opening page will serve as context
   // and a predefined prompt will be applied accordingly.
-  SubmitAction(ActionType action_type, string param);
+  SubmitAction(ActionType action_type, string param, bool enable_thinking);
 
   // Usual conversation
-  SubmitQuery(ActionType action_type, string query, string url, array<ConversationItem> conversation_history);
+  SubmitQuery(ActionType action_type, string query, string url, array<ConversationItem> conversation_history, bool enable_thinking);
 
   // Notify the backend that the UI is ready to be shown.
   ShowUI();

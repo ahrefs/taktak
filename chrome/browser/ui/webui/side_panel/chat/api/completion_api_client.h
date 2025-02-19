@@ -40,9 +40,9 @@ public:
  CompletionApiClient& operator=(const CompletionApiClient&) = delete;
  virtual ~CompletionApiClient();
 
- // In non-SSE cases, only the data_completed_callback will be triggered.
  virtual void QueryPrompt(
      const std::vector<struct CompletionMessage>& completion_messages,
+     bool enable_thinking,
      GenerationCompletedCallback data_completed_callback,
      GenerationDataCallback data_received_callback = base::NullCallback());
 

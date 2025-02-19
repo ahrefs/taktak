@@ -13,9 +13,9 @@ import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_
 export interface ChatApiProxy {
     getActionList(): Promise<{ actionList: ActionItem[] }>;
 
-    submitAction(actionType: ActionType, actionParam: string): void;
+    submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean): void;
 
-    submitQuery(actionType: ActionType, query: string, url: string, conversation_history : ConversationItem[]): void;
+    submitQuery(actionType: ActionType, query: string, url: string, conversation_history : ConversationItem[], enableThinking: boolean): void;
 
     getSiteInfo(): Promise<{ siteInfo: SiteInfo }>
 
@@ -57,12 +57,12 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         return this.handler.getActionList();
     }
 
-    submitAction(actionType: ActionType, actionParam: string) {
-        this.handler.submitAction(actionType, actionParam);
+    submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean) {
+        this.handler.submitAction(actionType, actionParam, enableThinking);
     }
 
-    submitQuery(actionType: ActionType, query: string, url: string, conversation_history: ConversationItem[] ) {
-        this.handler.submitQuery(actionType, query, url, conversation_history);
+    submitQuery(actionType: ActionType, query: string, url: string, conversation_history: ConversationItem[], enableThinking: boolean ) {
+        this.handler.submitQuery(actionType, query, url, conversation_history, enableThinking);
     }
 
     getSiteInfo() {

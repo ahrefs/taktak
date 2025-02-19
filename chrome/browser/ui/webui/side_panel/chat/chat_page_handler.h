@@ -50,12 +50,12 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   void GetActionList(GetActionListCallback callback) override;
 
   void SubmitAction(chat::mojom::ActionType action_type,
-                    const std::string& action_param) override;
+                    const std::string& action_param, bool enable_thinking) override;
 
   void SubmitQuery(chat::mojom::ActionType action_type,
                    const std::string& query,
                    const std::string& url,
-                   std::vector<chat::mojom::ConversationItemPtr> conversation_history) override;
+                   std::vector<chat::mojom::ConversationItemPtr> conversation_history, bool enable_thinking) override;
 
   void ShowUI() override;
 
@@ -82,6 +82,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
       chat::mojom::ActionType action_type,
       const std::string& prompt,
       const std::vector<struct CompletionMessage>& completion_messages,
+      bool enable_thinking,
       std::string content,
       std::string url);
 

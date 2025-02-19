@@ -46,16 +46,18 @@ namespace {
     )");
     }
 
-    std::string CreateJSONRequestBody(const std::vector<struct CompletionMessage>& messages) {
+    std::string CreateJSONRequestBody(const std::vector<struct CompletionMessage> &messages,
+                                      bool enable_thinking) {
         base::Value::Dict dict;
+        const std::string model = enable_thinking ? "DeepSeek-R1-Distill-Qwen-32B" : "Mixtral-8x7B-Instruct-v0.1";
         dict.Set("stream", true);
-        dict.Set("max_tokens", 2000);
+        dict.Set("max_tokens", 8000);
         dict.Set("top_p", 0.7);
         dict.Set("temperature", 0.6);
-        dict.Set("model", "DeepSeek-R1-Distill-Qwen-32B");
+        dict.Set("model", model);
 
         base::Value::List prompt_messages;
-        for (const auto& item : messages) {
+        for (const auto &item: messages) {
             base::Value::Dict message;
             message.Set("content", std::move(item.content));
             message.Set("role", item.role);
@@ -77,35 +79,36 @@ CompletionApiClient::CompletionApiClient(
 CompletionApiClient::~CompletionApiClient() = default;
 
 void CompletionApiClient::QueryPrompt(
-    const std::vector<struct CompletionMessage>& completion_messages,
-    GenerationCompletedCallback data_completed_callback,
-    GenerationDataCallback
+        const std::vector<struct CompletionMessage> &completion_messages,
+        bool enable_thinking,
+        GenerationCompletedCallback data_completed_callback,
+        GenerationDataCallback
         data_received_callback /* = base::NullCallback() */) {
-  GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
-                             "api.yep.com", "/", "v1/chat/completions"})};
-  DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
+    GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
+                               "api.yep.com", "/", "v1/chat/completions"})};
+    DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
 
-  base::flat_map<std::string, std::string> headers;
-  headers.emplace("Accept", "text/event-stream");
+    base::flat_map<std::string, std::string> headers;
+    headers.emplace("Accept", "text/event-stream");
 
-  auto on_received = base::BindRepeating(
-      &CompletionApiClient::OnQueryDataReceived, weak_ptr_factory_.GetWeakPtr(),
-      std::move(data_received_callback));
-  auto on_complete = base::BindOnce(&CompletionApiClient::OnQueryCompleted,
-                                    weak_ptr_factory_.GetWeakPtr(),
-                                    std::move(data_completed_callback));
+    auto on_received = base::BindRepeating(
+            &CompletionApiClient::OnQueryDataReceived, weak_ptr_factory_.GetWeakPtr(),
+            std::move(data_received_callback));
+    auto on_complete = base::BindOnce(&CompletionApiClient::OnQueryCompleted,
+                                      weak_ptr_factory_.GetWeakPtr(),
+                                      std::move(data_completed_callback));
 
-  const std::string request_body = CreateJSONRequestBody(completion_messages);
+    const std::string request_body = CreateJSONRequestBody(completion_messages, enable_thinking);
 
-  api_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
-                                 "application/json", std::move(on_received),
-                                 std::move(on_complete), headers, {});
+    api_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
+                                   "application/json", std::move(on_received),
+                                   std::move(on_complete), headers, {});
 }
 
 void CompletionApiClient::ClearAllQueries() {
-  DVLOG(0) << "Clearing all queries";
-  api_request_helper_.CancelAll();
-  entire_completion_result.clear();
+    DVLOG(0) << "Clearing all queries";
+    api_request_helper_.CancelAll();
+    entire_completion_result.clear();
 }
 
 void CompletionApiClient::OnQueryDataReceived(
@@ -115,18 +118,18 @@ void CompletionApiClient::OnQueryDataReceived(
         return;
     }
 
-    const base::Value::List* list = result->GetDict().FindList("choices");
+    const base::Value::List *list = result->GetDict().FindList("choices");
     if (list) {
-        for (const auto& item : *list) {
+        for (const auto &item: *list) {
             if (item.is_dict()) {
-               const base::Value::Dict* delta = item.GetDict().FindDict("delta");
-               if (delta) {
-                   const std::string* content = delta->FindString("content");
-                   if (content) {
-                     entire_completion_result.push_back(*content);
-                     callback.Run(std::move(*content));
-                   }
-               }
+                const base::Value::Dict *delta = item.GetDict().FindDict("delta");
+                if (delta) {
+                    const std::string *content = delta->FindString("content");
+                    if (content) {
+                        entire_completion_result.push_back(*content);
+                        callback.Run(std::move(*content));
+                    }
+                }
             }
         }
     }
@@ -138,9 +141,9 @@ void CompletionApiClient::OnQueryCompleted(
     const bool success = result.Is2XXResponseCode();
 
     if (success) {
-      entire_completion_result.clear();
-      std::move(callback).Run(base::ok(""));
-      return;
+        entire_completion_result.clear();
+        std::move(callback).Run(base::ok(""));
+        return;
     }
 
     // Handle error
@@ -149,21 +152,21 @@ void CompletionApiClient::OnQueryCompleted(
     DVLOG(0) << "Error error_code: " << result.error_code();
 
     if (result.value_body().is_dict()) {
-      const std::string* value =
-          result.value_body().GetDict().FindString("message");
-      if (value) {
-        // Trimming necessary for Llama 2 which prepends responses with a " ".
-        auto error_message = base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
-        DVLOG(0) << "Error message: " << error_message;
-      }
+        const std::string *value =
+                result.value_body().GetDict().FindString("message");
+        if (value) {
+            // Trimming necessary for Llama 2 which prepends responses with a " ".
+            auto error_message = base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
+            DVLOG(0) << "Error message: " << error_message;
+        }
     }
 
     if (net::HTTP_TOO_MANY_REQUESTS == result.response_code()) {
-      error = chat::mojom::APIErrorType::RateLimitReached;
+        error = chat::mojom::APIErrorType::RateLimitReached;
     } else if (net::HTTP_REQUEST_ENTITY_TOO_LARGE == result.response_code()) {
-      error = chat::mojom::APIErrorType::ContextLimitReached;
+        error = chat::mojom::APIErrorType::ContextLimitReached;
     } else {
-      error = chat::mojom::APIErrorType::ConnectionError;
+        error = chat::mojom::APIErrorType::ConnectionError;
     }
 
     std::move(callback).Run(base::unexpected(std::move(error)));

@@ -214,6 +214,11 @@ export function getHtml(this: ChatAppElement) {
                             }) : html``}
                 </div>
             </div>
+            <div id="thinking-toggle-button-container">
+                <button class="thinking-toggle-button" @click="${this.onThinkingToggleButtonClick_}">
+                    <span>${"Enable thinking"}</span>
+                </button>
+            </div>
             <div id="prompt-input-container">
                 ${getSiteInfoOrAddChatAboutThisPage.bind(this)()}
                 <div class="typing-content">

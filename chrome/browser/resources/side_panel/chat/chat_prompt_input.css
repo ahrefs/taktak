@@ -12,11 +12,13 @@
     outline: none;
     padding: 0;
     margin: 0;
+    font-family: 'Roboto', 'Arial', sans-serif;
+    font-size: 15px;
     font-weight: 400;
+    line-height: 22px;
     box-shadow: none;
     height: 1lh;
     min-height: 1lh;
-    font-family: 'Roboto', 'Arial', sans-serif;
     width: 100%;
     color: var(--color-yep-chat-primary-text);
     background: var(--color-yep-chat-prompt-background);
@@ -36,6 +38,6 @@
 #input::-webkit-scrollbar-thumb {
     background-color: var(--color-yep-chat-site-info-vertical-bar-background);
     background-clip: content-box;
-    border: solid 1.5px transparent;
+    border: solid 1px transparent;
     border-radius: 100px;
 }

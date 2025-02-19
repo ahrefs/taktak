@@ -77,6 +77,7 @@ export class ChatAppElement extends CrLitElement {
     private shouldHideSiteInfoInUserQueryElement_: boolean = false;
     protected shouldShowActionsMenu_: boolean = false;
 
+    protected enableThinking_: boolean = false;
     // Individual properties are used to signal changes in the UI
     // instead of a single object. Using an object would result in
     // frequent allocations, which, over time, could degrade performance
@@ -87,6 +88,7 @@ export class ChatAppElement extends CrLitElement {
     protected currentErrorResult_: string = "";
     protected currentConversationId_: string = "";
     protected showThinkingText_: boolean = true;
+
 
     constructor() {
         super();
@@ -132,7 +134,14 @@ export class ChatAppElement extends CrLitElement {
             currentErrorResult_: {type: String},
             currentConversationId_: {type: String},
             showThinkingText_: {type: Boolean},
+            enableThinking_: {type: Boolean},
         };
+    }
+
+    protected onThinkingToggleButtonClick_(e: Event) {
+        e.preventDefault();
+        this.enableThinking_ = !this.enableThinking_;
+        console.log("enableThinking: " + this.enableThinking_);
     }
 
     protected onThinkingButtonClick_(id: string) {
@@ -141,10 +150,8 @@ export class ChatAppElement extends CrLitElement {
         } else {
             const index = this.conversations_.findIndex((conversation: ConversationRecord) => conversation.id === id);
             if (index >= 0 && index < this.conversations_.length) {
-                console.log("Found!!!!");
                 const conversation = this.conversations_[index];
                 if (conversation) {
-                    console.log("Found!!!!");
                     this.conversations_ = [
                         ...this.conversations_.slice(0, index),
                         {
@@ -379,7 +386,7 @@ export class ChatAppElement extends CrLitElement {
         }
         this.conversations_.push(currentConversation);
         this.isSubmittingQuery_ = true;
-        setTimeout(() => this.chatApiProxy_.submitAction(actionType, actionParam), 0);
+        setTimeout(() => this.chatApiProxy_.submitAction(actionType, actionParam, this.enableThinking_), 0);
     }
 
     protected onSubmitQuery_() {
@@ -417,7 +424,7 @@ export class ChatAppElement extends CrLitElement {
             this.chatApiProxy_.submitQuery(
                 ActionType.QUERY,
                 this.submittedQuery_ ?? "",
-                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse()), 0);
+                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse(), this.enableThinking_), 0);
     }
 
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {
