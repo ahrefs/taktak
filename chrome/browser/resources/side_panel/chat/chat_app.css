@@ -17,6 +17,7 @@
     box-sizing: border-box;
 }
 
+/* begin header */
 #header-container {
     box-sizing: border-box;
     display: flex;
@@ -60,6 +61,9 @@
     font-size: 16px;
 }
 
+/* end header */
+
+/* begin scrollbar */
 .chat-scroller {
     display: block;
     overflow-x: hidden;
@@ -85,6 +89,8 @@
     margin-block-start: 8px;
 }
 
+/* end scrollbar */
+
 #conversation-container {
     flex-grow: 1;
     display: flex;
@@ -98,7 +104,8 @@
     scroll-snap-stop: always;
 }
 
-.top-vertical-spacer {
+/* The gap between header and the first conversation should be 18px */
+.gap-between-header-and-first-conversation {
     height: 10px; /* deduct 8px cause parent container has 8px gap */
     width: 100%;
 }
@@ -111,6 +118,17 @@
     padding: 0 10px 0 0; /* deduct 8px for scrollbar width */
 }
 
+.response-markdown-container, thinking-markdown-container {
+    display: block;
+    margin: 0;
+    padding: 0;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+}
+
+/* container for thinking and response */
 .thinking-and-response-container {
     display: flex;
     flex-direction: column;
@@ -121,11 +139,12 @@
     padding: 10px 0 24px 0;
 }
 
+/* begin thinking button and text */
 .thinking-button-and-text-container {
     display: flex;
     flex-direction: column;
-    gap: 8px;
     margin: 0;
+    padding: 0;
     background: var(--color-yep-chat-panel-background);
     color: var(--color-yep-chat-primary-text);
 }
@@ -133,6 +152,8 @@
 .thinking-button-and-text-container .thinking-button {
     display: flex;
     flex-direction: row;
+    justify-content: center;
+    align-items: center;
     min-width: 113px;
     width: fit-content;
     height: 36px;
@@ -140,6 +161,7 @@
     border: 1px solid var(--color-yep-chat-panel-border);
     padding: 10px 12px;
     font-size: 13px;
+    gap:6px;
     /* font-weight 500 doesn't work in linux */
     font-weight: 600;
     line-height: 16px;
@@ -148,7 +170,15 @@
     color: var(--color-yep-chat-secondary-text);
 }
 
-.thinking-markdown-container > .thinking-text {
+.thinking-button .expand-less-more-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+    color: var(--color-yep-chat-secondary-text);
+}
+
+.thinking-button-and-text-container .thinking-text {
+    display: block;
     position: relative;
     left: 0;
     padding-left: 18px; /* pseudo element width 5px, gap 13px*/
@@ -156,19 +186,20 @@
     font-size: 13px;
     line-height: 18px;
     color: var(--color-yep-chat-secondary-text);
+    margin-top: 8px;
 }
 
-.thinking-markdown-container > .thinking-text p {
+.thinking-button-and-text-container .thinking-text p {
     margin: 0 0 8px 0;
     padding: 0;
 }
 
-.thinking-markdown-container > .thinking-text p:last-child {
+.thinking-button-and-text-container .thinking-text p:last-child {
     margin: 0 !important;
     padding: 0 !important;
 }
 
-.thinking-markdown-container > .thinking-text::before {
+.thinking-button-and-text-container .thinking-text::before {
     content: "";
     display: block;
     position: absolute;
@@ -181,14 +212,8 @@
     border-radius: 2px;
 }
 
-.response-markdown-container, thinking-markdown-container {
-    display: block;
-    margin: 0;
-    word-wrap: break-word;
-    box-sizing: border-box;
-    background: var(--color-yep-chat-panel-background);
-    color: var(--color-yep-chat-primary-text);
-}
+/* end thinking button and text */
+
 
 .vertical-space {
     padding-top: 2px;
@@ -451,24 +476,24 @@
 }
 
 
-/* this is incorrect for the vertical line, fix it */
+/* todo: this is incorrect for the vertical line, fix it */
 .response-markdown-container > blockquote:not(:nth-child(2)) {
     border-left: 5px solid var(--color-yep-chat-site-info-vertical-bar-background);
     margin: 0;
     padding: 0 0 0 6px;
 }
 
-.response-markdown-container code, .response-markdown-container blockquote:nth-child(2) code {
-    font-size: 12px;
+.response-markdown-container code, .thinking-markdown-container code {
+    font-size: 13px;
     font-weight: 400;
-    line-height: 16px;
+    line-height: 14px;
     border-radius: 2px;
     padding: 4px 7px;
     background: var(--color-yep-chat-prompt-background);
     color: var(--color-yep-chat-primary-text);
 }
 
-.response-markdown-container pre, .response-markdown-container blockquote:nth-child(2) pre {
+.response-markdown-container pre, .thinking-markdown-container pre {
     border-radius: 6px;
     max-width: 90vw;
     padding: 14px;
@@ -480,32 +505,32 @@
     scroll-behavior: smooth;
 }
 
-.response-markdown-container pre::-webkit-scrollbar, .response-markdown-container blockquote:nth-child(2) pre::-webkit-scrollbar {
+.response-markdown-container pre::-webkit-scrollbar, .thinking-markdown-container pre::-webkit-scrollbar {
     height: 8px;
     background-color: transparent;
 }
 
-.response-markdown-container pre::-webkit-scrollbar-thumb, .response-markdown-container blockquote:nth-child(2) pre::-webkit-scrollbar-thumb {
+.response-markdown-container pre::-webkit-scrollbar-thumb, .thinking-markdown-container pre::-webkit-scrollbar-thumb {
     background-color: var(--color-yep-chat-site-info-vertical-bar-background);
     background-clip: content-box;
     border: solid 1.5px transparent;
     border-radius: 100px;
 }
 
-.response-markdown-container pre code, .response-markdown-container blockquote:nth-child(2) pre code {
+.response-markdown-container pre code, .thinking-markdown-container pre code {
     line-height: 22px;
     padding: 0;
 }
 
-.response-markdown-container table, .response-markdown-container blockquote:nth-child(2) table {
+.response-markdown-container table, .thinking-markdown-container table {
     border-collapse: collapse;
 }
 
-.response-markdown-container table thead th, .response-markdown-container blockquote:nth-child(2) table thead th {
+.response-markdown-container table thead th, .thinking-markdown-container table thead th {
     text-align: left;
 }
 
-.response-markdown-container table tr, .response-markdown-container blockquote:nth-child(2) table tr {
+.response-markdown-container table tr, .thinking-markdown-container table tr {
     border-top: 1px solid var(--color-yep-chat-panel-border);
     border: 1px solid var(--color-yep-chat-panel-border);
     border-left: none;
@@ -516,17 +541,17 @@
     padding: 10px;
 }
 
-.response-markdown-container blockquote:nth-child(2) table th, td {
+.thinking-markdown-container table th, td {
     padding: 10px;
 }
 
-.response-markdown-container ul, .response-markdown-container blockquote:nth-child(2) ul {
+.response-markdown-container ul, .thinking-markdown-container ul {
     line-height: 18px;
     list-style-type: disc;
     padding-left: 14px;
 }
 
-.response-markdown-container ol, .response-markdown-container blockquote:nth-child(2) ol {
+.response-markdown-container ol, .thinking-markdown-container ol {
     line-height: 18px;
     list-style-type: decimal;
     padding-left: 14px;
@@ -536,15 +561,15 @@
     padding-left: 14px;
 }
 
-.response-markdown-container blockquote:nth-child(2) ol ul, blockquote:nth-child(2) ul ol {
+.thinking-markdown-container ol ul, ul ol {
     padding-left: 14px;
 }
 
-.response-markdown-container ol ol, .response-markdown-container blockquote:nth-child(2) ol ol {
+.response-markdown-container ol ol, .thinking-markdown-container ol ol {
     list-style-type: lower-alpha;
 }
 
-.response-markdown-container li, .response-markdown-container blockquote:nth-child(2) li {
+.response-markdown-container li, .thinking-markdown-container li {
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -558,10 +583,3 @@
     margin-left: 1px;
     vertical-align: middle;
 }
-
-.response-markdown-container blockquote:nth-child(2) .caret {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-

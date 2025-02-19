@@ -57,6 +57,8 @@ export class ChatAppElement extends CrLitElement {
     protected title_: string = loadTimeData.getString('title');
     protected askAnythingLabel_ = loadTimeData.getString('askAnything');
     protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
+    protected thinkingBtnLabel_ = loadTimeData.getString('thinking');
+    protected doneThinkingBtnLabel_ = loadTimeData.getString('doneThinking');
     protected siteInfo_: SiteInfo = {
         url: "",
         title: "",
@@ -319,11 +321,13 @@ export class ChatAppElement extends CrLitElement {
             lastConversation.responseText = this.currentResponseResult_;
             lastConversation.thinkingText = this.currentThinkingResult_;
             lastConversation.errorText = this.currentErrorResult_;
+            lastConversation.showThinkingText = this.showThinkingText_;
         }
         this.currentConversationId_ = "";
         this.currentResponseResult_ = "";
         this.currentThinkingResult_ = "";
         this.currentErrorResult_ = "";
+        this.showThinkingText_ = true;
     }
 
     private getInitialConversation(): ConversationRecord {

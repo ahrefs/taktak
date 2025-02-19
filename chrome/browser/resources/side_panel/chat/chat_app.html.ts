@@ -56,18 +56,19 @@ function getThinkingElement(this: ChatAppElement, thinkingText: string, id: stri
             <button class="thinking-button" @click="${(e: Event) => {
                 e.preventDefault();
                 const _id = id;
-                console.log("id: " + _id);
                 this.onThinkingButtonClick_(_id);
-            }}">${isThinking ? "Thinking..." : "Done thinking"}
+            }}">
+                <cr-icon aria-hidden="true" class="expand-less-more-icon" icon="${showThinkingText ? 'cr:expand-less' : 'cr:expand-more'}"></cr-icon>
+                <span>${isThinking ? this.thinkingBtnLabel_ : this.doneThinkingBtnLabel_}</span>
             </button>
-            <div class="thinking-markdown-container">
-                ${
-                        showThinkingText ? html`
-                            <div class="thinking-text"
+            ${
+                    showThinkingText ? html`
+                        <div class="thinking-text">
+                            <div class="thinking-markdown-container"
                                  .innerHTML="${getTrustedHTML(marked.parse(thinkingText, {async: false}))}">
-                            </div>` : html``
-                }
-            </div>
+                            </div>
+                        </div>` : html``
+            }
         </div>`;
 }
 
@@ -116,7 +117,7 @@ export function getHtml(this: ChatAppElement) {
             </div>
             <div id="conversation-container" class="chat-scroller chat-scroller-top-of-page">
                 <div class="conversation-content">
-                    <div class="top-vertical-spacer"></div>
+                    <div class="gap-between-header-and-first-conversation"></div>
                     ${
                             this.conversations_.map(conversation => {
                                 // if there is no user prompt or query to display due to some errors, we will only display LLM's response and thinking if any

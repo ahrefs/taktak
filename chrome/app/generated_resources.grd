@@ -9033,11 +9033,11 @@ Keep your key file in a safe place. You will need it to create new versions of y
       <message name="IDS_CHAT_GENERIC_ERROR" desc="Display on the chat UI when an error occurred">
         An error has occurred. Please check your connection and try again, or restart the chat by closing and reopening the panel.
       </message>
-      <message name="IDS_CHAT_NEW_CHAT" desc="Display as tooltip of New Chat button">
-        New Chat
+      <message name="IDS_CHAT_THINKING" desc="Display while thinking">
+        Thinking...
       </message>
-      <message name="IDS_CHAT_SIDE_PANEL_CLOSE" desc="Display as tooltip of Close side panel button">
-        Close
+      <message name="IDS_CHAT_DONE_THINKING" desc="Display when thinking is done">
+        Done thinking
       </message>
 
       <!-- Side panel strings -->

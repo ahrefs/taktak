@@ -89,8 +89,8 @@ ChatUI::ChatUI(content::WebUI* web_ui)
         {"socialMedias", IDS_CHAT_SOCIAL_MEDIAS},
         {"promptExceedMaxTokenCount", IDS_CHAT_PROMPT_INPUT_EXCEED},
         {"genericError", IDS_CHAT_GENERIC_ERROR},
-        {"closeSidePanel", IDS_CHAT_SIDE_PANEL_CLOSE},
-        {"newChat", IDS_CHAT_NEW_CHAT},
+        {"thinking", IDS_CHAT_THINKING},
+        {"doneThinking", IDS_CHAT_DONE_THINKING},
     };
 
     for (const auto& str : kLocalizedStrings)
