@@ -96,7 +96,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin: 0 0 0 18px;
+    margin: 0 0 0 17px; /* should be 18px, but 1px is stolen by both response and thinking markdown container to display list number fully  */
     z-index: 0;
     scroll-behavior: smooth;
     will-change: scroll-position;
@@ -121,7 +121,7 @@
 .response-markdown-container, thinking-markdown-container {
     display: block;
     margin: 0;
-    padding: 0;
+    padding: 0 0 0 1px;
     word-wrap: break-word;
     box-sizing: border-box;
     background: var(--color-yep-chat-panel-background);
@@ -134,9 +134,9 @@
     flex-direction: column;
     gap: 18px;
     margin: 0;
+    padding: 10px 0 24px 0;
     background: var(--color-yep-chat-panel-background);
     color: var(--color-yep-chat-primary-text);
-    padding: 10px 0 24px 0;
 }
 
 /* begin thinking button and text */
@@ -475,13 +475,12 @@
     line-height: 22px;
 }
 
-
 /* todo: this is incorrect for the vertical line, fix it */
-.response-markdown-container > blockquote:not(:nth-child(2)) {
-    border-left: 5px solid var(--color-yep-chat-site-info-vertical-bar-background);
-    margin: 0;
-    padding: 0 0 0 6px;
-}
+/*.response-markdown-container > blockquote:not(:nth-child(2)) {*/
+/*    border-left: 5px solid var(--color-yep-chat-site-info-vertical-bar-background);*/
+/*    margin: 0;*/
+/*    padding: 0 0 0 6px;*/
+/*}*/
 
 .response-markdown-container code, .thinking-markdown-container code {
     font-size: 13px;
