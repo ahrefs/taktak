@@ -6,12 +6,19 @@ import {
     PageHandlerRemote,
     SiteInfo,
     ConversationItem,
+    ChatState,
 } from "./chat.mojom-webui.js";
 
 import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
 
 export interface ChatApiProxy {
     getActionList(): Promise<{ actionList: ActionItem[] }>;
+
+    getChatState(): Promise<{ chatState: ChatState }>;
+
+    setChatState(chatState: ChatState): void;
+
+    clearChatState(): void;
 
     submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean): void;
 
@@ -55,6 +62,18 @@ export class ChatApiProxyImpl implements ChatApiProxy {
 
     getActionList(): Promise<{ actionList: ActionItem[] }> {
         return this.handler.getActionList();
+    }
+
+    getChatState(): Promise<{ chatState: ChatState }> {
+        return this.handler.getChatState();
+    }
+
+    setChatState(chatState: ChatState) {
+        this.handler.setChatState(chatState);
+    }
+
+    clearChatState() {
+        this.handler.clearChatState();
     }
 
     submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean) {

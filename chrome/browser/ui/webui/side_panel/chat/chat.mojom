@@ -59,6 +59,23 @@ struct ActionResponse {
     string result;
 };
 
+struct SavableConversationModel {
+    string id;
+    string query;
+    string title;
+    string url;
+    bool should_display_site_info;
+    string thinking_text;
+    bool show_thinking_text;
+    string response_text;
+    string error_text;
+};
+
+struct ChatState {
+    array<SavableConversationModel> conversations;
+    bool enable_thinking;
+};
+
 // Used by the WebUI page to bootstrap bidirectional communication.
 interface PageHandlerFactory {
     CreatePageHandler(pending_remote<Page> page,
@@ -74,6 +91,10 @@ interface PageHandler {
   // Show as menu items in Chat UI
   // This will be called only when SiteInfo.is_content_usable_in_conversations is true
   GetActionList() => (array<ActionItem> action_list);
+
+  GetChatState() => (ChatState chat_state);
+  SetChatState(ChatState chat_state);
+  ClearChatState();
 
   // The user selects a predefined action by clicking on menu items in the Chat UI
   // The content of the current opening page will serve as context

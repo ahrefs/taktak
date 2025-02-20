@@ -159,6 +159,19 @@ void ChatPageHandler::GetActionList(GetActionListCallback callback) {
     std::move(callback).Run(std::move(action_items));
 }
 
+
+void ChatPageHandler::GetChatState(GetChatStateCallback callback) {
+
+}
+
+void ChatPageHandler::SetChatState(chat::mojom::ChatStatePtr chat_state) {
+
+}
+
+void ChatPageHandler::ClearChatState() {
+
+}
+
 base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {
     return weak_ptr_factory_.GetWeakPtr();
 }

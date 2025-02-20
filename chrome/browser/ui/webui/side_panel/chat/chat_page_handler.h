@@ -49,6 +49,12 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   void GetActionList(GetActionListCallback callback) override;
 
+  void GetChatState(GetChatStateCallback callback) override;
+
+  void SetChatState(chat::mojom::ChatStatePtr chat_state) override;
+
+  void ClearChatState() override;
+
   void SubmitAction(chat::mojom::ActionType action_type,
                     const std::string& action_param, bool enable_thinking) override;
 
