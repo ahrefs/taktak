@@ -909,7 +909,7 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
   mixer[kColorYepChatSendButtonForeground] = {dark_mode ? SK_ColorBLACK
                                                         : SK_ColorWHITE};
 
-  mixer[kColorYepChatError] = {SK_ColorRED};
+  mixer[kColorYepChatError] = {SkColorSetARGB(255, 179, 38, 30)};
 
   // Apply high contrast recipes if necessary.
   if (!ShouldApplyHighContrastColors(key)) {

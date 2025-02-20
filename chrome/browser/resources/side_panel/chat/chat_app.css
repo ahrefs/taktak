@@ -237,6 +237,28 @@
     border-top: 1px solid var(--color-yep-chat-panel-background);
 }
 
+.generic-error-container {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    gap: 9px;
+    color: var(--color-yep-chat-error);
+}
+
+.generic-error-icon {
+    flex-shrink: 0;
+    display: block;
+    width: 22px;
+    height: 22px;
+}
+
+.generic-error-text {
+    display: block;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
 /* end thinking button and text */
 
 
@@ -430,7 +452,7 @@
     flex-grow: 1;
 }
 
-#error-container {
+#input-error-container {
     display: block;
     font-size: 11px;
     padding: 6px 12px 12px 12px;

@@ -47,7 +47,11 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
     }
 }
 
-function getThinkingElement(this: ChatAppElement, thinkingText: string, id: string, isThinking: boolean, showThinkingText: boolean) {
+function getThinkingElement(this: ChatAppElement,
+                            thinkingText: string,
+                            id: string,
+                            isThinking: boolean,
+                            showThinkingText: boolean) {
     if (thinkingText.trim().length == 0) {
         return html``;
     }
@@ -55,10 +59,10 @@ function getThinkingElement(this: ChatAppElement, thinkingText: string, id: stri
         <div class="thinking-button-and-text-container">
             <button class="thinking-button" @click="${(e: Event) => {
                 e.preventDefault();
-                const _id = id;
-                this.onThinkingButtonClick_(_id);
+                this.onThinkingButtonClick_(id);
             }}">
-                <cr-icon aria-hidden="true" class="expand-less-more-icon" icon="${showThinkingText ? 'cr:expand-less' : 'cr:expand-more'}"></cr-icon>
+                <cr-icon aria-hidden="true" class="expand-less-more-icon"
+                         icon="${showThinkingText ? 'cr:expand-less' : 'cr:expand-more'}"></cr-icon>
                 <span>${isThinking ? this.thinkingBtnLabel_ : this.doneThinkingBtnLabel_}</span>
             </button>
             ${
@@ -72,18 +76,35 @@ function getThinkingElement(this: ChatAppElement, thinkingText: string, id: stri
         </div>`;
 }
 
-function getResponseElement(response: string) {
-    if (response.trim().length == 0) {
+function getResponseElement(responseText: string) {
+    if (responseText.trim().length == 0) {
         return html``;
     }
     return html`
         <div class="response-markdown-container"
-             .innerHTML="${getTrustedHTML(marked.parse(response, {async: false}))}">
+             .innerHTML="${getTrustedHTML(marked.parse(responseText, {async: false}))}">
         </div>`;
 }
 
-function getThinkingAndResponseElements(this: ChatAppElement, thinkingText: string, responseText: string, id: string, isThinking: boolean, showThinkingText: boolean) {
-    if (thinkingText.trim().length == 0 && responseText.trim().length == 0) {
+function getErrorElement(errorText: string) {
+    if (errorText.trim().length == 0) {
+        return html``;
+    }
+    return html`
+        <div class="generic-error-container">
+            <cr-icon aria-hidden="true" icon="cr:error-outline" class="generic-error-icon"></cr-icon>
+            <span class="generic-error-text">${errorText}</span>
+        </div>`;
+}
+
+function getThinkingAndResponseElements(this: ChatAppElement,
+                                        thinkingText: string,
+                                        responseText: string,
+                                        id: string,
+                                        isThinking: boolean,
+                                        showThinkingText: boolean,
+                                        errorText: string) {
+    if (thinkingText.trim().length == 0 && responseText.trim().length == 0 && errorText.trim().length == 0) {
         return html``;
     }
 
@@ -91,6 +112,7 @@ function getThinkingAndResponseElements(this: ChatAppElement, thinkingText: stri
         <div class="thinking-and-response-container">
             ${getThinkingElement.bind(this)(thinkingText, id, isThinking, showThinkingText)}
             ${getResponseElement(responseText)}
+            ${getErrorElement(errorText)}
         </div>`;
 }
 
@@ -122,8 +144,13 @@ export function getHtml(this: ChatAppElement) {
                             this.conversations_.map(conversation => {
                                 // if there is no user prompt or query to display due to some errors, we will only display LLM's response and thinking if any
                                 if (conversation.query.length == 0) {
-                                    return html`${getThinkingAndResponseElements.bind(this)(conversation.thinkingText, conversation.responseText,
-                                            conversation.id, false, conversation.showThinkingText)}`;
+                                    return html`${getThinkingAndResponseElements.bind(this)(
+                                            conversation.thinkingText,
+                                            conversation.responseText,
+                                            conversation.id,
+                                            false,
+                                            conversation.showThinkingText,
+                                            conversation.errorText)}`;
                                 }
 
                                 if (conversation.shouldDisplaySiteInfo) {
@@ -168,20 +195,38 @@ export function getHtml(this: ChatAppElement) {
                                             </div>
                                             ${getQueryPromptSection(conversation.query)}
                                         </div>
-                                        ${getThinkingAndResponseElements.bind(this)(conversation.thinkingText, conversation.responseText,
-                                                conversation.id, false, conversation.showThinkingText)}`;
+                                        ${getThinkingAndResponseElements.bind(this)(
+                                                conversation.thinkingText,
+                                                conversation.responseText,
+                                                conversation.id,
+                                                false,
+                                                conversation.showThinkingText,
+                                                conversation.errorText
+                                        )}`;
                                 } else {
                                     return html`
                                         <div class="query-prompt-container content-fit-width">
                                             ${getQueryPromptSection(conversation.query)}
                                         </div>
-                                        ${getThinkingAndResponseElements.bind(this)(conversation.thinkingText, conversation.responseText,
-                                                conversation.id, false, conversation.showThinkingText)}`;
+                                        ${getThinkingAndResponseElements.bind(this)(
+                                                conversation.thinkingText,
+                                                conversation.responseText,
+                                                conversation.id,
+                                                false,
+                                                conversation.showThinkingText,
+                                                conversation.errorText
+                                        )}`;
                                 }
                             })
                     }
-                    ${getThinkingAndResponseElements.bind(this)(this.currentThinkingResult_, this.currentResponseResult_,
-                            this.currentConversationId_, this.isThinking_, this.showThinkingText_)}
+                    ${getThinkingAndResponseElements.bind(this)(
+                            this.currentThinkingResult_,
+                            this.currentResponseResult_,
+                            this.currentConversationId_,
+                            this.isThinking_,
+                            this.showThinkingText_,
+                            this.currentErrorResult_
+                    )}
                 </div>
                 <div class="action-buttons-container">
                     ${this.shouldShowActionsMenu_ && !this.isSubmittingQuery_ ?
@@ -256,7 +301,7 @@ export function getHtml(this: ChatAppElement) {
             </div>
             ${this.hasExceededMaxTokenCount_
                     ? html`
-                        <div id="error-container">${this.exceedMaxTokenCountErrorMessages_}</div>`
+                        <div id="input-error-container">${this.exceedMaxTokenCountErrorMessages_}</div>`
                     : html``}
         </div>`;
 }

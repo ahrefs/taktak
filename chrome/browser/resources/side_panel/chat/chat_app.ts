@@ -226,6 +226,7 @@ export class ChatAppElement extends CrLitElement {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.currentErrorResult_ = loadTimeData.getString('genericError');
+            console.log("currentError_:" + this.currentErrorResult_);
             this.isSubmittingQuery_ = false;
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         }
@@ -391,7 +392,6 @@ export class ChatAppElement extends CrLitElement {
 
     protected onSubmitQuery_() {
         this.storeCurrentConversation();
-
         const currentConversation = this.getInitialConversation();
 
         currentConversation.query = this.query_ ?? "";
@@ -408,7 +408,7 @@ export class ChatAppElement extends CrLitElement {
 
         this.isSubmittingQuery_ = true;
 
-        // select the last 3 conversations to use as chat context
+        // Retrieve the last 3 conversations to provide chat context, omitting any reasoning text.
         const conversation_history: ConversationItem[] = [];
         for (let i = this.conversations_.length - 1; i >= 0; i--) {
             const conversation = this.conversations_[i];
