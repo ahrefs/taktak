@@ -36,7 +36,6 @@ export type ConversationRecord = {
     errorText: string,
 }
 
-
 export interface ChatAppElement {
     $: {
         promptInput: ChatPromptInputElement,
@@ -59,6 +58,8 @@ export class ChatAppElement extends CrLitElement {
     protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
     protected thinkingBtnLabel_ = loadTimeData.getString('thinking');
     protected doneThinkingBtnLabel_ = loadTimeData.getString('doneThinking');
+    protected enableThinkingBtnLabel_ = loadTimeData.getString('enableThinking');
+    protected thinkingEnabledBtnLabel_ = loadTimeData.getString('thinkingEnabled');
     protected siteInfo_: SiteInfo = {
         url: "",
         title: "",
@@ -115,6 +116,8 @@ export class ChatAppElement extends CrLitElement {
             actionList_: {type: Array},
             translateToSubItems_: {type: String},
             socialMediaPostSubItems_: {type: String},
+            enableThinkingBtnLabel_: {type: String},
+            thinkingEnabledBtnLabel_: {type: String},
             shouldDisplayChatAboutThisPageButton_: {type: Boolean},
             exceedMaxLengthErrorMessages_: {type: String},
             hasExceededMaxTokenCount: {type: Boolean},
@@ -141,7 +144,6 @@ export class ChatAppElement extends CrLitElement {
     protected onThinkingToggleButtonClick_(e: Event) {
         e.preventDefault();
         this.enableThinking_ = !this.enableThinking_;
-        console.log("enableThinking: " + this.enableThinking_);
     }
 
     protected onThinkingButtonClick_(id: string) {
@@ -255,7 +257,15 @@ export class ChatAppElement extends CrLitElement {
         e.preventDefault();
         this.storeCurrentConversation();
         this.logConversations();
+        this.conversations_.length = 0;
         this.chatApiProxy_.closeUI();
+    }
+
+    onLoad() {
+        const updater = ColorChangeUpdater.forDocument();
+        updater.start();
+        updater.refreshColorsCss();
+        setTimeout(() => this.$.promptInput.focusInput(), 0);
     }
 
     protected onCancelQuery_() {
@@ -459,12 +469,6 @@ export class ChatAppElement extends CrLitElement {
         this.chatApiProxy_.openUrl(url, modifiers);
     }
 
-    onLoad() {
-        const updater = ColorChangeUpdater.forDocument();
-        updater.start();
-        updater.refreshColorsCss();
-        this.$.promptInput.focusInput();
-    }
 
     override connectedCallback() {
         super.connectedCallback();

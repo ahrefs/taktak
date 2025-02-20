@@ -9039,6 +9039,12 @@ Keep your key file in a safe place. You will need it to create new versions of y
       <message name="IDS_CHAT_DONE_THINKING" desc="Display when thinking is done">
         Done thinking
       </message>
+      <message name="IDS_CHAT_ENABLE_THINKING" desc="Display on enable thinking button">
+        Enable thinking
+      </message>
+      <message name="IDS_CHAT_THINKING_ENABLED" desc="Display on enable thinking button">
+        Thinking enabled
+      </message>
 
       <!-- Side panel strings -->
       <message name="IDS_ACCNAME_SIDE_PANEL_RESIZE" is_accessibility_with_no_ui="true" desc="Screen reader announcement when the side panel resize handle is focused.">

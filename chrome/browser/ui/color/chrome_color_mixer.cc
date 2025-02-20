@@ -910,6 +910,8 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
                                                         : SK_ColorWHITE};
 
   mixer[kColorYepChatError] = {SkColorSetARGB(255, 179, 38, 30)};
+  mixer[kColorYepChatThinkingEnabled] = {SkColorSetARGB(255, 90, 100, 205)};
+  mixer[kColorYepChatThinkingHeadIcon] = {SkColorSetARGB(255, 217, 217, 217)};
 
   // Apply high contrast recipes if necessary.
   if (!ShouldApplyHighContrastColors(key)) {

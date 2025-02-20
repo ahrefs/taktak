@@ -91,6 +91,8 @@ ChatUI::ChatUI(content::WebUI* web_ui)
         {"genericError", IDS_CHAT_GENERIC_ERROR},
         {"thinking", IDS_CHAT_THINKING},
         {"doneThinking", IDS_CHAT_DONE_THINKING},
+        {"enableThinking", IDS_CHAT_ENABLE_THINKING},
+        {"thinkingEnabled", IDS_CHAT_THINKING_ENABLED},
     };
 
     for (const auto& str : kLocalizedStrings)

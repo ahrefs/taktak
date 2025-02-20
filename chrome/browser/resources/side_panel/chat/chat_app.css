@@ -226,15 +226,26 @@
     align-items: center;
     border-radius: 12px;
     padding: 10px 12px;
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 22px;
+    gap: 6px;
     cursor: pointer;
-    text-decoration: none;
     background: var(--color-yep-chat-prompt-background);
-    color: var(--color-yep-chat-secondary-text);
     border: none;
     border-top: 1px solid var(--color-yep-chat-panel-background);
+}
+
+.thinking-toggle-button-label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 22px;
+    text-decoration: none;
+}
+
+.thinking-toggle-button-icon {
+    display: block;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
 }
 
 .generic-error-container {
@@ -408,7 +419,7 @@
     gap: 6px;
     flex-direction: column;
     align-items: flex-start;
-    padding-bottom: 30px;
+    padding-bottom: 32px;
 }
 
 .action-button {

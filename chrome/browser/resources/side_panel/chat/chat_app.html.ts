@@ -260,8 +260,27 @@ export function getHtml(this: ChatAppElement) {
                 </div>
             </div>
             <div id="thinking-toggle-button-container">
-                <button class="thinking-toggle-button" @click="${this.onThinkingToggleButtonClick_}">
-                    <span>${"Enable thinking"}</span>
+                <button class="thinking-toggle-button" @click="${this.onThinkingToggleButtonClick_}"
+                        style="${this.enableThinking_ ? 'color: var(--color-yep-chat-thinking-enabled)' : 'color: var(--color-yep-chat-secondary-text);'}">
+                    <div>
+                        <cr-iconset name="thinking-icon-set">
+                            <svg>
+                                <g id="head">
+                                    <path 
+                                          d="M10.275 13.526C11.4417 13.526 12.4333 13.151 13.25 12.401C14.0667 11.651 14.475 10.7426 14.475 9.67598C14.475 8.72598 14.1708 7.92181 13.5625 7.26348C12.9542 6.60514 12.2167 6.27598 11.35 6.27598C10.5667 6.27598 9.90417 6.52598 9.3625 7.02598C8.82083 7.52598 8.55 8.14264 8.55 8.87598C8.55 9.19264 8.6125 9.50098 8.7375 9.80098C8.8625 10.101 9.04167 10.376 9.275 10.626L10.7 9.20098C10.65 9.16764 10.6125 9.12598 10.5875 9.07598C10.5625 9.02598 10.55 8.96764 10.55 8.90098C10.55 8.71764 10.625 8.57181 10.775 8.46348C10.925 8.35514 11.1167 8.30098 11.35 8.30098C11.6833 8.30098 11.9583 8.43848 12.175 8.71348C12.3917 8.98848 12.5 9.31764 12.5 9.70098C12.5 10.2176 12.2875 10.6551 11.8625 11.0135C11.4375 11.3718 10.9167 11.551 10.3 11.551C9.51667 11.551 8.85417 11.2343 8.3125 10.601C7.77083 9.96764 7.5 9.19264 7.5 8.27598C7.5 7.79264 7.59167 7.33014 7.775 6.88848C7.95833 6.44681 8.21667 6.05931 8.55 5.72598L7.125 4.30098C6.59167 4.81764 6.18333 5.41764 5.9 6.10098C5.61667 6.78431 5.475 7.50098 5.475 8.25098C5.475 9.71764 5.94167 10.9635 6.875 11.9885C7.80833 13.0135 8.94167 13.526 10.275 13.526ZM4 20.001V15.701C3.05 14.8343 2.3125 13.8218 1.7875 12.6635C1.2625 11.5051 1 10.2843 1 9.00098C1 6.50098 1.875 4.37598 3.625 2.62598C5.375 0.875977 7.5 0.000976562 10 0.000976562C12.0833 0.000976562 13.9292 0.613477 15.5375 1.83848C17.1458 3.06348 18.1917 4.65931 18.675 6.62598L19.975 11.751C20.0583 12.0676 20 12.3551 19.8 12.6135C19.6 12.8718 19.3333 13.001 19 13.001H17V16.001C17 16.551 16.8042 17.0218 16.4125 17.4135C16.0208 17.8051 15.55 18.001 15 18.001H13V20.001H11V16.001H15V11.001H17.7L16.75 7.12598C16.3667 5.60931 15.55 4.37598 14.3 3.42598C13.05 2.47598 11.6167 2.00098 10 2.00098C8.06667 2.00098 6.41667 2.67598 5.05 4.02598C3.68333 5.37598 3 7.01764 3 8.95098C3 9.95098 3.20417 10.901 3.6125 11.801C4.02083 12.701 4.6 13.501 5.35 14.201L6 14.801V20.001H4Z"/>
+                                </g>
+                            </svg>
+                        </cr-iconset>
+                        <cr-icon icon="${'thinking-icon-set:head'}"
+                                 class="thinking-toggle-button-icon"
+                                 style="${this.enableThinking_ ? 'color: var(--color-yep-chat-thinking-enabled); opacity: 0.5;' : 'color: var(--color-yep-chat-tertiary-text); opacity: 1.0;'}"
+                        ></cr-icon>
+                    </div>
+                    <span class="thinking-toggle-button-label">${this.enableThinking_ ? this.thinkingEnabledBtnLabel_ : this.enableThinkingBtnLabel_}</span>
+                    ${
+                            this.enableThinking_ ? html`
+                                <cr-icon icon="cr:clear" class="thinking-toggle-button-icon"></cr-icon>` : html``
+                    }
                 </button>
             </div>
             <div id="prompt-input-container">
