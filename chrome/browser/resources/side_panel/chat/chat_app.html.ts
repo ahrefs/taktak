@@ -260,7 +260,7 @@ export function getHtml(this: ChatAppElement) {
                 </div>
             </div>
             <div id="thinking-toggle-button-container">
-                <button class="thinking-toggle-button" @click="${this.onThinkingToggleButtonClick_}"
+                <button class="thinking-toggle-button" @click="${this.onToggleEnableThinking}"
                         style="${this.enableThinking_ ? 'color: var(--color-yep-chat-thinking-enabled)' : 'color: var(--color-yep-chat-secondary-text);'}">
                     <div>
                         <cr-iconset name="thinking-icon-set">

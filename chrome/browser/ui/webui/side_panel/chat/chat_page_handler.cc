@@ -4,7 +4,9 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
+#include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/app/chrome_command_ids.h"
@@ -22,6 +24,7 @@
 #include "ui/base/mojom/window_open_disposition.mojom.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/base/window_open_disposition_utils.h"
+#include "base/synchronization/lock.h"
 
 namespace {
 
@@ -46,6 +49,53 @@ namespace {
                                                    {query, extracted_content}, nullptr);
         }
     }
+
+    class ChatHistoryCache {
+    public:
+        static ChatHistoryCache *GetInstance() {
+            static base::NoDestructor<ChatHistoryCache> instance;
+            return instance.get();
+        }
+
+        chat::mojom::ChatStatePtr GetChatState() {
+            base::AutoLock lock(lock_);
+            auto chat_state = chat::mojom::ChatState::New();
+            chat_state->conversations = std::vector<chat::mojom::SavableConversationModelPtr>();
+            for (const auto &entry: chat_cache_) {
+                chat_state->conversations.push_back(entry.second.Clone());
+            }
+            DVLOG(0) << "GetChatState: conversation count - " << chat_state->conversations.size();
+            chat_state->enable_thinking = this->enable_thinking_;
+            return chat_state;
+        }
+
+        void SaveConversation(chat::mojom::SavableConversationModelPtr conversation) {
+            base::AutoLock lock(lock_);
+            this->chat_cache_[conversation->id] = std::move(conversation);
+        }
+
+        void SaveThinkingState(bool thinking_state) {
+            base::AutoLock lock(lock_);
+            this->enable_thinking_ = thinking_state;
+        }
+
+        void ClearChatState() {
+            base::AutoLock lock(lock_);
+            this->chat_cache_.clear();
+        }
+
+    private:
+        ChatHistoryCache() = default;
+
+        ~ChatHistoryCache() = default;
+
+        friend class base::NoDestructor<ChatHistoryCache>;
+
+        base::Lock lock_;
+        std::unordered_map<std::string, chat::mojom::SavableConversationModelPtr> chat_cache_;
+        bool enable_thinking_;
+    };
+
 }  // namespace
 
 ChatPageHandler::ChatPageHandler(
@@ -161,15 +211,21 @@ void ChatPageHandler::GetActionList(GetActionListCallback callback) {
 
 
 void ChatPageHandler::GetChatState(GetChatStateCallback callback) {
-
+    std::move(callback).Run(ChatHistoryCache::GetInstance()->GetChatState().Clone());
 }
 
-void ChatPageHandler::SetChatState(chat::mojom::ChatStatePtr chat_state) {
+void ChatPageHandler::SaveConversation(chat::mojom::SavableConversationModelPtr conversation) {
+    ChatHistoryCache::GetInstance()->SaveConversation(conversation.Clone());
+    DVLOG(0) << __func__ << " conversation count: "
+             << ChatHistoryCache::GetInstance()->GetChatState()->conversations.size();
+}
 
+void ChatPageHandler::SaveThinkingState(bool thinking_state) {
+    ChatHistoryCache::GetInstance()->SaveThinkingState(thinking_state);
 }
 
 void ChatPageHandler::ClearChatState() {
-
+    ChatHistoryCache::GetInstance()->ClearChatState();
 }
 
 base::WeakPtr<ChatPageHandler> ChatPageHandler::GetWeakPtr() {

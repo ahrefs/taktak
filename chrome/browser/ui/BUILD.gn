@@ -1575,6 +1575,8 @@ static_library("ui") {
       "webui/side_panel/chat/page_content_extractor_helper.h",
       "webui/side_panel/chat/chat_ui.cc",
       "webui/side_panel/chat/chat_ui.h",
+      "webui/side_panel/chat/chat_cache.cc",
+      "webui/side_panel/chat/chat_cache.h",
       "webui/side_panel/companion/companion_page_handler.cc",
       "webui/side_panel/companion/companion_page_handler.h",
       "webui/side_panel/companion/companion_side_panel_untrusted_ui.cc",

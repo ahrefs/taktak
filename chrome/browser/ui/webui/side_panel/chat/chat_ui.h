@@ -1,6 +1,9 @@
 #ifndef CHROMIUM_CHAT_UI_H
 #define CHROMIUM_CHAT_UI_H
 
+#include <string>
+#include <unordered_map>
+
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
 #include "chrome/browser/ui/webui/top_chrome/top_chrome_web_ui_controller.h"
 #include "chrome/browser/ui/webui/top_chrome/top_chrome_webui_config.h"

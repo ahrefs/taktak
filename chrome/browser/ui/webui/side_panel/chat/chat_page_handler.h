@@ -51,7 +51,9 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   void GetChatState(GetChatStateCallback callback) override;
 
-  void SetChatState(chat::mojom::ChatStatePtr chat_state) override;
+  void SaveConversation(chat::mojom::SavableConversationModelPtr conversation) override;
+
+  void SaveThinkingState(bool thinking_state) override;
 
   void ClearChatState() override;
 

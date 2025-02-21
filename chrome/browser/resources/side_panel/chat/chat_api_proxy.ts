@@ -6,6 +6,7 @@ import {
     PageHandlerRemote,
     SiteInfo,
     ConversationItem,
+    SavableConversationModel,
     ChatState,
 } from "./chat.mojom-webui.js";
 
@@ -16,7 +17,9 @@ export interface ChatApiProxy {
 
     getChatState(): Promise<{ chatState: ChatState }>;
 
-    setChatState(chatState: ChatState): void;
+    saveConversation(conversation: SavableConversationModel): void;
+
+    saveThinkingState(thinkingState : boolean) : void;
 
     clearChatState(): void;
 
@@ -68,8 +71,12 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         return this.handler.getChatState();
     }
 
-    setChatState(chatState: ChatState) {
-        this.handler.setChatState(chatState);
+    saveConversation(conversation : SavableConversationModel) {
+        this.handler.saveConversation(conversation);
+    }
+
+    saveThinkingState(thinkingState: boolean) {
+        this.handler.saveThinkingState(thinkingState);
     }
 
     clearChatState() {

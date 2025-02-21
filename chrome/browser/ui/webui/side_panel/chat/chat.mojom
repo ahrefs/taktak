@@ -69,6 +69,7 @@ struct SavableConversationModel {
     bool show_thinking_text;
     string response_text;
     string error_text;
+    int64 timestamp;
 };
 
 struct ChatState {
@@ -92,8 +93,16 @@ interface PageHandler {
   // This will be called only when SiteInfo.is_content_usable_in_conversations is true
   GetActionList() => (array<ActionItem> action_list);
 
+  // Restore the entire chat UI state from in-memory cache
   GetChatState() => (ChatState chat_state);
-  SetChatState(ChatState chat_state);
+
+  // Put conversation into in-memory cache
+  SaveConversation(SavableConversationModel conversation);
+
+  // Put the toggle state of the "Enable Thinking" button into in-memory cache
+  SaveThinkingState(bool thinking_state);
+
+  // Clear the entire chat UI state from in-memory cache
   ClearChatState();
 
   // The user selects a predefined action by clicking on menu items in the Chat UI

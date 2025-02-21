@@ -12,7 +12,7 @@ import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
 import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
-import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo, ConversationItem} from "./chat.mojom-webui.js";
+import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo, ConversationItem, ChatState} from "./chat.mojom-webui.js";
 import type {ChatPromptInputElement} from "./chat_prompt_input";
 import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
 import './chat_prompt_input.js';
@@ -34,6 +34,7 @@ export type ConversationRecord = {
     showThinkingText: boolean,
     responseText: string,
     errorText: string,
+    timestamp: bigint,
 }
 
 export interface ChatAppElement {
@@ -141,9 +142,10 @@ export class ChatAppElement extends CrLitElement {
         };
     }
 
-    protected onThinkingToggleButtonClick_(e: Event) {
+    protected onToggleEnableThinking(e: Event) {
         e.preventDefault();
         this.enableThinking_ = !this.enableThinking_;
+        this.chatApiProxy_.saveThinkingState(this.enableThinking_);
     }
 
     protected onThinkingButtonClick_(id: string) {
@@ -154,14 +156,13 @@ export class ChatAppElement extends CrLitElement {
             if (index >= 0 && index < this.conversations_.length) {
                 const conversation = this.conversations_[index];
                 if (conversation) {
+                    conversation.showThinkingText = !conversation.showThinkingText;
                     this.conversations_ = [
                         ...this.conversations_.slice(0, index),
-                        {
-                            ...conversation,
-                            showThinkingText: !conversation.showThinkingText,
-                        },
+                        conversation,
                         ...this.conversations_.slice(index + 1),
                     ];
+                    this.chatApiProxy_.saveConversation(conversation);
                 }
             }
         }
@@ -192,6 +193,12 @@ export class ChatAppElement extends CrLitElement {
         this.updateComplete;
     }
 
+    private async updateConversationHistory(chatState: ChatState) {
+       this.conversations_ = chatState.conversations.sort((a, b) => Number(a.timestamp - b.timestamp));
+       this.enableThinking_ = chatState.enableThinking;
+       this.updateComplete;
+    }
+
     private removeCaret(input: string) {
         return input.replace(/<span class="caret"\/>/g, '');
     }
@@ -199,6 +206,7 @@ export class ChatAppElement extends CrLitElement {
     private appendCaret(input: string) {
         return input + '<span class="caret"/>';
     }
+
 
     private updateCompletionResult(response: ActionResponse) {
         if (response.responseType == ResponseType.DELTA) {
@@ -223,13 +231,14 @@ export class ChatAppElement extends CrLitElement {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.isSubmittingQuery_ = false;
+            this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         } else if (response.responseType == ResponseType.ERROR) {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.currentErrorResult_ = loadTimeData.getString('genericError');
-            console.log("currentError_:" + this.currentErrorResult_);
             this.isSubmittingQuery_ = false;
+            this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         }
     }
@@ -237,6 +246,7 @@ export class ChatAppElement extends CrLitElement {
     private logConversations() {
         for (const conversation of this.conversations_) {
             console.log("Start==============================");
+            console.log("timestamp: " + conversation.timestamp);
             console.log("id: " + conversation.id);
             console.log("title: " + conversation.title);
             console.log("url: " + conversation.url);
@@ -255,9 +265,11 @@ export class ChatAppElement extends CrLitElement {
 
     protected onCloseSidePanel_(e: Event) {
         e.preventDefault();
-        this.storeCurrentConversation();
-        this.logConversations();
+        this.logConversations(); // todo: to delete later
         this.conversations_.length = 0;
+        if (!this.isSubmittingQuery_) {
+           this.saveCurrentConversation();
+        }
         this.chatApiProxy_.closeUI();
     }
 
@@ -274,6 +286,7 @@ export class ChatAppElement extends CrLitElement {
         this.isSubmittingQuery_ = false;
         this.isThinking_ = false;
         this.$.promptInput.resetToAutoHeight();
+        this.saveCurrentConversation();
         setTimeout(() => this.chatApiProxy_.cancelQuery(), 0);
         setTimeout(() => {
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_);
@@ -301,6 +314,8 @@ export class ChatAppElement extends CrLitElement {
 
         this.$.promptInput.resetToAutoHeight();
         this.$.promptInput.focusInput();
+
+        this.chatApiProxy_.clearChatState();
     }
 
     protected onPerformActionOnExtractedContent_(action: ActionOnExtractedContent) {
@@ -324,22 +339,18 @@ export class ChatAppElement extends CrLitElement {
         this.onSubmitAction_(e.detail.actionType, e.detail.actionParam);
     }
 
-    private getCurrentConversation(): ConversationRecord | undefined {
+    private saveCurrentConversation() {
         const lastIndex = this.conversations_.length - 1;
-        if (lastIndex >= 0) {
-            return this.conversations_[lastIndex];
-        } else {
-            return undefined;
-        }
-    }
-
-    private storeCurrentConversation() {
-        const lastConversation = this.getCurrentConversation();
-        if (lastConversation) {
-            lastConversation.responseText = this.currentResponseResult_;
-            lastConversation.thinkingText = this.currentThinkingResult_;
-            lastConversation.errorText = this.currentErrorResult_;
-            lastConversation.showThinkingText = this.showThinkingText_;
+        const currentConversation = this.conversations_[lastIndex];
+        if (currentConversation) {
+            currentConversation.responseText = this.currentResponseResult_;
+            currentConversation.thinkingText = this.currentThinkingResult_;
+            currentConversation.errorText = this.currentErrorResult_;
+            currentConversation.showThinkingText = this.showThinkingText_;
+            setTimeout(() =>
+            this.chatApiProxy_.saveConversation({
+                ...currentConversation,
+            }), 300);
         }
         this.currentConversationId_ = "";
         this.currentResponseResult_ = "";
@@ -360,12 +371,11 @@ export class ChatAppElement extends CrLitElement {
             showThinkingText: true,
             responseText: "",
             errorText: "",
+            timestamp: BigInt(Date.now()),
         };
     }
 
     protected onSubmitAction_(actionType: ActionType, actionParam: string = '') {
-        this.storeCurrentConversation();
-
         const title = this.siteInfo_.title ?? "";
         const url = this.stripUrlProtocol_(this.siteInfo_.url ?? "");
 
@@ -401,7 +411,6 @@ export class ChatAppElement extends CrLitElement {
     }
 
     protected onSubmitQuery_() {
-        this.storeCurrentConversation();
         const currentConversation = this.getInitialConversation();
 
         currentConversation.query = this.query_ ?? "";
@@ -477,6 +486,8 @@ export class ChatAppElement extends CrLitElement {
             this.chatApiProxy_.showUI();
             const {siteInfo} = await this.chatApiProxy_.getSiteInfo();
             await this.updateSiteInfo(siteInfo);
+            const {chatState}  = await this.chatApiProxy_.getChatState();
+            await this.updateConversationHistory(chatState);
         }, 0);
 
         this.listenerIds_.push(
