@@ -299,6 +299,7 @@ export class ChatAppElement extends CrLitElement {
         this.shouldDisplayChatAboutThisPageButton_ = false;
         this.hasExceededMaxTokenCount_ = false;
         this.exceedMaxTokenCountErrorMessages_ = "";
+        this.shouldHideSiteInfoInUserQueryElement_ = false;
         this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
         this.shouldUseCurrentPageContentAsChatContext_ = this.siteInfo_.isContentUsableInConversations;
         this.shouldShowActionsMenu_ = this.siteInfo_.isContentUsableInConversations;
