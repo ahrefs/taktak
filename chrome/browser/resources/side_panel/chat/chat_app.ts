@@ -68,7 +68,7 @@ export class ChatAppElement extends CrLitElement {
     };
     protected query_?: string;
     protected submittedQuery_?: string;
-    protected isSubmittingQuery_: boolean = false;
+    protected isQuerySubmitting_: boolean = false;
     protected shouldDisplayChatAboutThisPageButton_: boolean = false;
     protected exceedMaxTokenCountErrorMessages_: string = "";
     protected hasExceededMaxTokenCount_: boolean = false;
@@ -170,7 +170,6 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private async updateSiteInfo(siteInfo: SiteInfo) {
-        this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
         if (this.siteInfo_.url === siteInfo.url) {
             this.isActivePageUrlNew_ = false;
             this.shouldHideSiteInfoInUserQueryElement_ = true;
@@ -178,6 +177,7 @@ export class ChatAppElement extends CrLitElement {
         } else {
             this.isActivePageUrlNew_ = true;
             this.shouldHideSiteInfoInUserQueryElement_ = false;
+            this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
         }
 
         this.siteInfo_ = siteInfo;
@@ -230,14 +230,14 @@ export class ChatAppElement extends CrLitElement {
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
-            this.isSubmittingQuery_ = false;
+            this.isQuerySubmitting_ = false;
             this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         } else if (response.responseType == ResponseType.ERROR) {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.currentErrorResult_ = loadTimeData.getString('genericError');
-            this.isSubmittingQuery_ = false;
+            this.isQuerySubmitting_ = false;
             this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         }
@@ -267,7 +267,7 @@ export class ChatAppElement extends CrLitElement {
         e.preventDefault();
         this.logConversations(); // todo: to delete later
         this.conversations_.length = 0;
-        if (!this.isSubmittingQuery_) {
+        if (!this.isQuerySubmitting_) {
            this.saveCurrentConversation();
         }
         this.chatApiProxy_.closeUI();
@@ -283,7 +283,7 @@ export class ChatAppElement extends CrLitElement {
     protected onCancelQuery_() {
         this.query_ = "";
         this.submittedQuery_ = "";
-        this.isSubmittingQuery_ = false;
+        this.isQuerySubmitting_ = false;
         this.isThinking_ = false;
         this.$.promptInput.resetToAutoHeight();
         this.saveCurrentConversation();
@@ -305,7 +305,7 @@ export class ChatAppElement extends CrLitElement {
 
         this.conversations_.length = 0;
         this.query_ = "";
-        this.isSubmittingQuery_ = false;
+        this.isQuerySubmitting_ = false;
         this.submittedQuery_ = "";
         this.currentResponseResult_ = "";
         this.currentThinkingResult_ = "";
@@ -376,6 +376,10 @@ export class ChatAppElement extends CrLitElement {
     }
 
     protected onSubmitAction_(actionType: ActionType, actionParam: string = '') {
+        this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
+        this.shouldShowActionsMenu_ = false;
+        this.isQuerySubmitting_ = true;
+
         const title = this.siteInfo_.title ?? "";
         const url = this.stripUrlProtocol_(this.siteInfo_.url ?? "");
 
@@ -385,32 +389,22 @@ export class ChatAppElement extends CrLitElement {
         currentConversation.shouldDisplaySiteInfo = true;
 
         if (actionType == ActionType.SUMMARIZE_PAGE) {
-            this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
-            this.shouldShowActionsMenu_ = false;
             currentConversation.query = loadTimeData.getString('promptSummarizeThisPage');
         } else if (actionType == ActionType.EXPLAIN) {
-            this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
-            this.shouldShowActionsMenu_ = false;
             currentConversation.query = loadTimeData.getString('promptExplainInSimpleLanguage');
         } else if (actionType == ActionType.FACT_CHECK) {
-            this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
-            this.shouldShowActionsMenu_ = false;
             currentConversation.query = loadTimeData.getString('promptFactCheck');
         } else if (actionType == ActionType.TRANSLATE) {
-            this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
-            this.shouldShowActionsMenu_ = false;
             currentConversation.query = loadTimeData.getString('promptTranslate') + ' ' + actionParam;
         } else if (actionType == ActionType.DRAFT_SOCIAL_MEDIA_POST) {
-            this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
-            this.shouldShowActionsMenu_ = false;
             currentConversation.query = loadTimeData.getString('promptSocialMediaPost') + ' ' + actionParam;
         }
         this.conversations_.push(currentConversation);
-        this.isSubmittingQuery_ = true;
         setTimeout(() => this.chatApiProxy_.submitAction(actionType, actionParam, this.enableThinking_), 0);
     }
 
     protected onSubmitQuery_() {
+        this.shouldShowActionsMenu_ = false;
         const currentConversation = this.getInitialConversation();
 
         currentConversation.query = this.query_ ?? "";
@@ -425,7 +419,7 @@ export class ChatAppElement extends CrLitElement {
         this.$.promptInput.resetToAutoHeight();
         this.$.promptInput.focusInput();
 
-        this.isSubmittingQuery_ = true;
+        this.isQuerySubmitting_ = true;
 
         // Retrieve the last 3 conversations to provide chat context, omitting any reasoning text.
         const conversation_history: ConversationItem[] = [];
