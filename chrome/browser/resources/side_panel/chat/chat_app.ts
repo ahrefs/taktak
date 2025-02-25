@@ -296,13 +296,16 @@ export class ChatAppElement extends CrLitElement {
 
     protected onRestartChat_(e: Event) {
         e.preventDefault();
+        if (this.isQuerySubmitting_) {
+            this.chatApiProxy_.cancelQuery();
+        }
         this.shouldDisplayChatAboutThisPageButton_ = false;
         this.hasExceededMaxTokenCount_ = false;
         this.exceedMaxTokenCountErrorMessages_ = "";
-        this.shouldHideSiteInfoInUserQueryElement_ = false;
         this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
         this.shouldUseCurrentPageContentAsChatContext_ = this.siteInfo_.isContentUsableInConversations;
         this.shouldShowActionsMenu_ = this.siteInfo_.isContentUsableInConversations;
+        this.shouldHideSiteInfoInUserQueryElement_ = !this.siteInfo_.isContentUsableInConversations;
 
         this.conversations_.length = 0;
         this.query_ = "";
