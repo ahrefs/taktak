@@ -64,7 +64,6 @@ namespace {
             for (const auto &entry: chat_cache_) {
                 chat_state->conversations.push_back(entry.second.Clone());
             }
-            DVLOG(0) << "GetChatState: conversation count - " << chat_state->conversations.size();
             chat_state->enable_thinking = this->enable_thinking_;
             return chat_state;
         }
@@ -278,9 +277,6 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
                     base::Unretained(this), action_type,
                     draft_social_media_post_prompt + " " + action_param,
                     completion_messages, enable_thinking));
-        } else {
-            // this branch should not be reached because all the action items are
-            // handled in above blocks
         }
     }
 }

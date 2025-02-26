@@ -12,7 +12,15 @@ import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
 import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
-import {ActionItem, ActionResponse, ActionType, ResponseType, SiteInfo, ConversationItem, ChatState} from "./chat.mojom-webui.js";
+import {
+    ActionItem,
+    ActionResponse,
+    ActionType,
+    ResponseType,
+    SiteInfo,
+    ConversationItem,
+    ChatState
+} from "./chat.mojom-webui.js";
 import type {ChatPromptInputElement} from "./chat_prompt_input";
 import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
 import './chat_prompt_input.js';
@@ -61,6 +69,9 @@ export class ChatAppElement extends CrLitElement {
     protected doneThinkingBtnLabel_ = loadTimeData.getString('doneThinking');
     protected enableThinkingBtnLabel_ = loadTimeData.getString('enableThinking');
     protected thinkingEnabledBtnLabel_ = loadTimeData.getString('thinkingEnabled');
+
+    protected maxPromptInputLength_: number = 90_000;
+
     protected siteInfo_: SiteInfo = {
         url: "",
         title: "",
@@ -69,17 +80,19 @@ export class ChatAppElement extends CrLitElement {
     protected query_?: string;
     protected submittedQuery_?: string;
     protected isQuerySubmitting_: boolean = false;
-    protected shouldDisplayChatAboutThisPageButton_: boolean = false;
-    protected exceedMaxTokenCountErrorMessages_: string = "";
+
     protected hasExceededMaxTokenCount_: boolean = false;
-    protected maxPromptInputLength_: number = 90_000;
+    protected exceedMaxTokenCountErrorMessages_: string = "";
+
+    protected shouldDisplayChatAboutThisPageButton_: boolean = false;
     protected shouldHideContextActionElementsInPromptInputDueToKnownContext_: boolean = false;
     protected shouldUseCurrentPageContentAsChatContext_: boolean = false;
-    private isActivePageUrlNew_: boolean = false;
     private shouldHideSiteInfoInUserQueryElement_: boolean = false;
     protected shouldShowActionsMenu_: boolean = false;
 
+    private isActivePageUrlNew_: boolean = false;
     protected enableThinking_: boolean = false;
+
     // Individual properties are used to signal changes in the UI
     // instead of a single object. Using an object would result in
     // frequent allocations, which, over time, could degrade performance
@@ -113,20 +126,23 @@ export class ChatAppElement extends CrLitElement {
     static override get properties() {
         return {
             siteInfo_: {type: Object},
-            askAnythingLabel_: {type: String},
             actionList_: {type: Array},
+
+            askAnythingLabel_: {type: String},
             translateToSubItems_: {type: String},
             socialMediaPostSubItems_: {type: String},
             enableThinkingBtnLabel_: {type: String},
             thinkingEnabledBtnLabel_: {type: String},
-            shouldDisplayChatAboutThisPageButton_: {type: Boolean},
             exceedMaxLengthErrorMessages_: {type: String},
+
             hasExceededMaxTokenCount: {type: Boolean},
             maxPromptInputLength_: {type: Number},
+
+            shouldDisplayChatAboutThisPageButton_: {type: Boolean},
             shouldUseCurrentPageContentAsChatContext_: {type: Boolean},
             shouldHideContextActionElementsInPromptInputDueToKnownContext_: {type: Boolean},
-            isActivePageUrlNew_: {type: Boolean},
             shouldShowActionsMenu_: {type: Boolean},
+            isActivePageUrlNew_: {type: Boolean},
 
             conversations_: {type: Array},
             query_: {type: String},
@@ -194,9 +210,9 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private async updateConversationHistory(chatState: ChatState) {
-       this.conversations_ = chatState.conversations.sort((a, b) => Number(a.timestamp - b.timestamp));
-       this.enableThinking_ = chatState.enableThinking;
-       this.updateComplete;
+        this.conversations_ = chatState.conversations.sort((a, b) => Number(a.timestamp - b.timestamp));
+        this.enableThinking_ = chatState.enableThinking;
+        this.updateComplete;
     }
 
     private removeCaret(input: string) {
@@ -268,7 +284,7 @@ export class ChatAppElement extends CrLitElement {
         this.logConversations(); // todo: to delete later
         this.conversations_.length = 0;
         if (!this.isQuerySubmitting_) {
-           this.saveCurrentConversation();
+            this.saveCurrentConversation();
         }
         this.chatApiProxy_.closeUI();
     }
@@ -299,9 +315,10 @@ export class ChatAppElement extends CrLitElement {
         if (this.isQuerySubmitting_) {
             this.chatApiProxy_.cancelQuery();
         }
-        this.shouldDisplayChatAboutThisPageButton_ = false;
         this.hasExceededMaxTokenCount_ = false;
         this.exceedMaxTokenCountErrorMessages_ = "";
+
+        this.shouldDisplayChatAboutThisPageButton_ = false;
         this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
         this.shouldUseCurrentPageContentAsChatContext_ = this.siteInfo_.isContentUsableInConversations;
         this.shouldShowActionsMenu_ = this.siteInfo_.isContentUsableInConversations;
@@ -352,9 +369,9 @@ export class ChatAppElement extends CrLitElement {
             currentConversation.errorText = this.currentErrorResult_;
             currentConversation.showThinkingText = this.showThinkingText_;
             setTimeout(() =>
-            this.chatApiProxy_.saveConversation({
-                ...currentConversation,
-            }), 300);
+                this.chatApiProxy_.saveConversation({
+                    ...currentConversation,
+                }), 0);
         }
         this.currentConversationId_ = "";
         this.currentResponseResult_ = "";
@@ -476,7 +493,6 @@ export class ChatAppElement extends CrLitElement {
         this.chatApiProxy_.openUrl(url, modifiers);
     }
 
-
     override connectedCallback() {
         super.connectedCallback();
         window.addEventListener('load', this.onLoad);
@@ -484,7 +500,7 @@ export class ChatAppElement extends CrLitElement {
             this.chatApiProxy_.showUI();
             const {siteInfo} = await this.chatApiProxy_.getSiteInfo();
             await this.updateSiteInfo(siteInfo);
-            const {chatState}  = await this.chatApiProxy_.getChatState();
+            const {chatState} = await this.chatApiProxy_.getChatState();
             await this.updateConversationHistory(chatState);
         }, 0);
 
