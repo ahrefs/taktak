@@ -7,23 +7,22 @@
 #input {
     display: block;
     resize: none;
-    line-height: 1.5em;
     border: none;
     outline: none;
-    padding: 0;
     margin: 0;
     font-family: 'Roboto', 'Arial', sans-serif;
     font-size: 15px;
     font-weight: 400;
     line-height: 22px;
-    box-shadow: none;
     height: 1lh;
     min-height: 1lh;
+    max-height: 10lh;
     width: 100%;
     color: var(--color-yep-chat-primary-text);
     background: var(--color-yep-chat-prompt-background);
     border-radius: 0;
     overflow-y: auto;
+    box-shadow: none;
 }
 
 #input:disabled {

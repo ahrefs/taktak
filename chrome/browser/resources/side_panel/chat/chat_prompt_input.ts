@@ -140,9 +140,6 @@ export class ChatPromptInputElement extends CrLitElement {
         this.value = this.internalValue_;
 
         const textarea = this.$.input;
-        if (this.value === ""){
-            textarea.style.paddingTop = '0';
-        }
 
         const maxLines = 9;
         textarea.style.height = '0';
@@ -154,7 +151,7 @@ export class ChatPromptInputElement extends CrLitElement {
         const lines = Math.ceil(contentHeight / lineHeight);
 
         if (lines <= maxLines) {
-            textarea.style.height = `${lines * lineHeight}px`;
+            textarea.style.height = `${(lines + 1) * lineHeight}px`;
             textarea.style.overflowY = 'hidden'; // No scrollbar for less than 10 lines
         } else {
             textarea.style.height = `${lineHeight * maxLines}px`;
