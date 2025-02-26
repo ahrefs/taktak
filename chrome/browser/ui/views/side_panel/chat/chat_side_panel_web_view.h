@@ -47,6 +47,7 @@ class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
 
  private:
   const raw_ptr<Browser> browser_;
+  std::string visited_url_;
   base::WeakPtrFactory<ChatSidePanelWebView> weak_ptr_factory_{this};
 };
 #endif  // CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H

@@ -96,11 +96,17 @@ interface PageHandler {
   // Restore the entire chat UI state from in-memory cache
   GetChatState() => (ChatState chat_state);
 
+  // Get the latest SiteInfo from cache
+  GetSiteInfoFromCache() => (SiteInfo site_info);
+
   // Put conversation into in-memory cache
   SaveConversation(SavableConversationModel conversation);
 
   // Put the toggle state of the "Enable Thinking" button into in-memory cache
   SaveThinkingState(bool thinking_state);
+
+  // Cache the latest SiteInfo if any, or empty one
+  SaveSiteInfo(SiteInfo site_info);
 
   // Clear the entire chat UI state from in-memory cache
   ClearChatState();

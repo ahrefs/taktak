@@ -47,11 +47,15 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   void GetSiteInfo(GetSiteInfoCallback callback) override;
 
+  void GetSiteInfoFromCache(GetSiteInfoFromCacheCallback callback) override;
+
   void GetActionList(GetActionListCallback callback) override;
 
   void GetChatState(GetChatStateCallback callback) override;
 
   void SaveConversation(chat::mojom::SavableConversationModelPtr conversation) override;
+
+  void SaveSiteInfo(chat::mojom::SiteInfoPtr site_info) override;
 
   void SaveThinkingState(bool thinking_state) override;
 

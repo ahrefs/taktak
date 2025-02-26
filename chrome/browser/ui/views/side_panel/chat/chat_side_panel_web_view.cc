@@ -44,6 +44,7 @@ ChatSidePanelWebView::ChatSidePanelWebView(Browser* browser,
               IDS_AI_CHAT_TITLE,
               /*esc_closes_ui=*/false)),
       browser_(browser),
+      visited_url_(""),
       weak_ptr_factory_(this) {
   SetProperty(views::kElementIdentifierKey, kChatSidePanelWebViewElementId);
   browser_->tab_strip_model()->AddObserver(this);
@@ -86,7 +87,12 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
     site_info->is_content_usable_in_conversations = false;
   }
 
-  controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone(), contents);
+  // TabChangedAt might be called multiple times based on active web page's state changes such as loading, loading complement
+  // We make sure SiteInfo will be called only once for the same active web page
+  if (this->visited_url_ != gurl.spec()) {
+      this->visited_url_ = gurl.spec();
+      controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone(), contents);
+  }
 }
 
 base::WeakPtr<ChatSidePanelWebView> ChatSidePanelWebView::GetWeakPtr() {

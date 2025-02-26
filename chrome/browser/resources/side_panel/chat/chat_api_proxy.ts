@@ -17,6 +17,10 @@ export interface ChatApiProxy {
 
     getChatState(): Promise<{ chatState: ChatState }>;
 
+    getSiteInfoFromCache(): Promise<{ siteInfo: SiteInfo }>;
+
+    saveSiteInfo(siteInfo: SiteInfo): void;
+
     saveConversation(conversation: SavableConversationModel): void;
 
     saveThinkingState(thinkingState : boolean) : void;
@@ -69,6 +73,14 @@ export class ChatApiProxyImpl implements ChatApiProxy {
 
     getChatState(): Promise<{ chatState: ChatState }> {
         return this.handler.getChatState();
+    }
+
+    getSiteInfoFromCache(): Promise<{ siteInfo: SiteInfo }> {
+        return this.handler.getSiteInfoFromCache();
+    }
+
+    saveSiteInfo(siteInfo: SiteInfo) {
+        this.handler.saveSiteInfo(siteInfo);
     }
 
     saveConversation(conversation : SavableConversationModel) {

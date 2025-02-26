@@ -78,6 +78,27 @@ namespace {
             this->enable_thinking_ = thinking_state;
         }
 
+        void SaveSiteInfo(chat::mojom::SiteInfoPtr site_info) {
+            base::AutoLock lock(lock_);
+            this->site_info_ = std::move(site_info);
+        }
+
+        chat::mojom::SiteInfoPtr GetSiteInfo() {
+            base::AutoLock lock(lock_);
+            chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
+            site_info->url = "";
+            site_info->title = "";
+            site_info->is_content_usable_in_conversations = false;
+
+            if (this->site_info_) {
+                site_info->url = this->site_info_->url.value_or("");
+                site_info->title = this->site_info_->title.value_or("");
+                site_info->is_content_usable_in_conversations = this->site_info_->is_content_usable_in_conversations;
+            }
+
+            return site_info;
+        }
+
         void ClearChatState() {
             base::AutoLock lock(lock_);
             this->chat_cache_.clear();
@@ -93,6 +114,7 @@ namespace {
         base::Lock lock_;
         std::unordered_map<std::string, chat::mojom::SavableConversationModelPtr> chat_cache_;
         bool enable_thinking_;
+        chat::mojom::SiteInfoPtr site_info_;
     };
 
 }  // namespace
@@ -217,6 +239,16 @@ void ChatPageHandler::SaveConversation(chat::mojom::SavableConversationModelPtr 
     ChatHistoryCache::GetInstance()->SaveConversation(conversation.Clone());
     DVLOG(0) << __func__ << " conversation count: "
              << ChatHistoryCache::GetInstance()->GetChatState()->conversations.size();
+}
+
+void ChatPageHandler::GetSiteInfoFromCache(GetSiteInfoFromCacheCallback callback) {
+    chat::mojom::SiteInfoPtr site_info = ChatHistoryCache::GetInstance()->GetSiteInfo();
+    DCHECK(site_info);
+    std::move(callback).Run(site_info.Clone());
+}
+
+void ChatPageHandler::SaveSiteInfo(chat::mojom::SiteInfoPtr site_info) {
+    ChatHistoryCache::GetInstance()->SaveSiteInfo(site_info.Clone());
 }
 
 void ChatPageHandler::SaveThinkingState(bool thinking_state) {
