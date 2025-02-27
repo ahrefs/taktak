@@ -17,7 +17,8 @@ export function getHtml(this: ActionMenuElement) {
                             event.stopPropagation();
                             this.onActionMenuItemClick_(item);
                         }
-                        }">${item}
+                        }">
+                            <span>${item}</span>
                         </button>`;
                 })}
             </cr-action-menu>` : html``}`;

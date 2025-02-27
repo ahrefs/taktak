@@ -53,7 +53,7 @@
     width: 24px;
     height: 24px;
     color: var(--color-yep-chat-secondary-text);
-    opacity: 0.5;
+    opacity: 0.9;
 }
 
 .header-title-container .chat-title {
