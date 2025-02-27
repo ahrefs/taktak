@@ -303,15 +303,17 @@
 
 .chat-about-this-page-btn .add-icon-wrapper .add-icon {
     display: block;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     color: var(--color-yep-chat-tertiary-text);
 }
 
-.chat-about-this-page-btn .label {
+.chat-about-this-page-btn span {
+    display: block;
     flex: 0 0 auto;
-    font-weight: 510;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 16px;
     color: var(--color-yep-chat-tertiary-text);
 }
 
@@ -339,7 +341,7 @@
     flex-direction: row;
     justify-content: flex-start;
     width: 100%;
-    gap: 6px;
+    gap: 10px;
     color: var(--color-yep-chat-primary-text);
 }
 
@@ -347,8 +349,8 @@
     display: flex;
     flex-direction: column;
     font-weight: 400;
-    font-size: 12px;
-    line-height: 16px;
+    font-size: 13px;
+    line-height: 18px;
     max-width: 97vw;
     overflow: hidden;
     width: 97vw;
@@ -397,8 +399,8 @@
 
 .remove-siteinfo-button .remove-icon {
     display: block;
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     color: var(--color-yep-chat-secondary-text);
 }
 
@@ -452,7 +454,7 @@
 .typing-content {
     display: flex;
     flex-direction: row;
-    align-items: end;
+    align-items: center;
     justify-content: flex-start;
     gap: 4px;
     width: 100vw;
@@ -482,7 +484,6 @@
     height: 18px;
     border: none;
     cursor: pointer;
-    padding: 0;
     margin: 0;
     border-radius: 50%;
     color: var(--color-yep-chat-send-button-background);
@@ -500,8 +501,8 @@
 .send-icon {
     top: 2px;
     left: 2px;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
 }
 
 .send-btn:disabled {

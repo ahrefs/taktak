@@ -25,6 +25,11 @@
     box-shadow: none;
 }
 
+textarea::placeholder {
+    color: var(--color-yep-chat-secondary-text);
+    letter-spacing: 0.25px;
+}
+
 #input:disabled {
     opacity: 0.5;
 }

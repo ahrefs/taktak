@@ -20,7 +20,7 @@ function getSiteInfoOrAddChatAboutThisPage(this: ChatAppElement) {
                 <div class="add-icon-wrapper">
                     <cr-icon aria-hidden="true" icon="cr:add" class="add-icon"></cr-icon>
                 </div>
-                <div class="label">${this.chatAboutThisPageLabel_}</div>
+                <span>${this.chatAboutThisPageLabel_}</span>
             </button>`;
     } else if (this.shouldHideContextActionElementsInPromptInputDueToKnownContext_) {
         return html``;
