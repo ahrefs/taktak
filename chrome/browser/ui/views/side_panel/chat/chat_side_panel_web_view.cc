@@ -79,18 +79,23 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
   site_info->title = base::UTF16ToUTF8(contents->GetTitle());
 
   const GURL gurl = contents->GetLastCommittedURL();
+  std::string currentVisitingUrl = "";
   if (gurl.SchemeIsHTTPOrHTTPS()) {
     site_info->url = gurl.spec();
     site_info->is_content_usable_in_conversations = true;
+    currentVisitingUrl = gurl.spec();
   } else {
     site_info->url = "";
     site_info->is_content_usable_in_conversations = false;
+    currentVisitingUrl = "";
   }
+
+  DVLOG(0) << "TabChangedAt: " << site_info->url.value_or("empty url") << ", " << site_info->title.value_or("empty title");
 
   // TabChangedAt might be called multiple times based on active web page's state changes such as loading, loading complement
   // We make sure SiteInfo will be called only once for the same active web page
-  if (this->visited_url_ != gurl.spec()) {
-      this->visited_url_ = gurl.spec();
+  if (this->visited_url_ != currentVisitingUrl) {
+      this->visited_url_ = currentVisitingUrl;
       controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone(), contents);
   }
 }
