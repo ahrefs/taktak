@@ -164,8 +164,7 @@
     padding: 10px 12px;
     font-size: 13px;
     gap:6px;
-    /* font-weight 500 doesn't work in linux */
-    font-weight: 600;
+    font-weight: 500;
     line-height: 16px;
     cursor: pointer;
     background: var(--color-yep-chat-panel-background);
@@ -227,7 +226,7 @@
     justify-content: flex-start;
     align-items: center;
     border-radius: 12px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     cursor: pointer;
     background: var(--color-yep-chat-prompt-background);
     border: none;
@@ -413,7 +412,6 @@
 }
 
 .query-prompt-container .prompt-section {
-    font-weight: 400;
     width: fit-content;
     word-wrap: break-word;
     box-sizing: border-box;
@@ -424,6 +422,9 @@
     unicode-bidi: isolate;
     white-space: pre-wrap;
     white-space-collapse: preserve;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
 }
 
 .action-buttons-container {
