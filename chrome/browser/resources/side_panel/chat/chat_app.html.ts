@@ -316,8 +316,9 @@ export function getHtml(this: ChatAppElement) {
                                     </g>
                                 </svg>
                             </cr-iconset>
-                            <cr-icon icon="${this.isQuerySubmitting_ ? 'query:stop' : 'query:send'}"
-                                     class="send-icon"></cr-icon>
+                            <cr-icon
+                                    icon="${this.isQuerySubmitting_ ? 'query:stop' : 'query:send'}"
+                                    class="send-icon"></cr-icon>
                         </div>
                     </button>
                 </div>
