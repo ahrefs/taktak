@@ -38,6 +38,7 @@ export type ConversationRecord = {
     title: string,
     url: string,
     shouldDisplaySiteInfo: boolean,
+    isUrlContext: boolean,
     thinkingText: string,
     showThinkingText: boolean,
     responseText: string,
@@ -185,57 +186,10 @@ export class ChatAppElement extends CrLitElement {
         setTimeout(() => this.$.promptInput.focusInput(), 0);
     }
 
-    private async updateSiteInfo(siteInfo: SiteInfo, willSaveInCache: boolean) {
-        console.log("updateSiteInfo");
-        if (willSaveInCache) {
-            this.chatApiProxy_.saveSiteInfo(siteInfo);
-        }
-        if (this.siteInfo_.url === siteInfo.url) {
-            this.isActivePageUrlNew_ = false;
-            this.shouldHideSiteInfoInUserQueryElement_ = true;
-            const hasConversation = this.conversations_.length > 0;
-            this.shouldShowActionsMenu_ = !hasConversation;
-            this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = hasConversation;
-            return;
-        } else {
-            const lastConversation = this.conversations_[this.conversations_.length - 1];
-            /*
-             This `if` condition evaluates the following scenarios:
-             1. The user visits abc.com, where the content can be utilized as chat context,
-                and they interact with it by asking a related question.
-             2. Afterward, the user navigates to other websites, but user don't use these sites' content
-                as the chat context.
-             3. Finally, the user navigates back to abc.com, potentially resuming the context
-                for further questions.
-             */
-            if (lastConversation && lastConversation.shouldDisplaySiteInfo && lastConversation.url == this.stripUrlProtocol_(siteInfo.url ?? "")) {
-                this.shouldShowActionsMenu_ = false;
-                this.shouldHideSiteInfoInUserQueryElement_ = true;
-                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
-            } else {
-                this.isActivePageUrlNew_ = true;
-                this.shouldHideSiteInfoInUserQueryElement_ = false;
-                this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
-                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
-            }
-        }
-
-        this.siteInfo_ = siteInfo;
-        if (this.siteInfo_.isContentUsableInConversations) {
-            const {actionList} = await this.chatApiProxy_.getActionList();
-            this.actionList_ = actionList;
-            this.shouldUseCurrentPageContentAsChatContext_ = true;
-            this.shouldDisplayChatAboutThisPageButton_ = false;
-        } else {
-            this.shouldUseCurrentPageContentAsChatContext_ = false;
-        }
-        this.updateComplete;
-    }
-
     private async updateConversationHistory(chatState: ChatState) {
         this.conversations_ = chatState.conversations.sort((a, b) => Number(a.timestamp - b.timestamp));
         this.enableThinking_ = chatState.enableThinking;
-        this.updateComplete;
+        await this.updateComplete;
     }
 
     private removeCaret(input: string) {
@@ -245,7 +199,6 @@ export class ChatAppElement extends CrLitElement {
     private appendCaret(input: string) {
         return input + '<span class="caret"/>';
     }
-
 
     private updateCompletionResult(response: ActionResponse) {
         if (response.responseType == ResponseType.DELTA) {
@@ -410,6 +363,7 @@ export class ChatAppElement extends CrLitElement {
             title: "",
             url: "",
             shouldDisplaySiteInfo: false,
+            isUrlContext: false,
             query: "",
             thinkingText: "",
             showThinkingText: true,
@@ -431,6 +385,7 @@ export class ChatAppElement extends CrLitElement {
         currentConversation.title = title;
         currentConversation.url = url;
         currentConversation.shouldDisplaySiteInfo = true;
+        currentConversation.isUrlContext = true;
 
         if (actionType == ActionType.SUMMARIZE_PAGE) {
             currentConversation.query = loadTimeData.getString('promptSummarizeThisPage');
@@ -454,13 +409,21 @@ export class ChatAppElement extends CrLitElement {
         currentConversation.query = this.query_ ?? "";
         currentConversation.title = this.siteInfo_.title ?? "";
         currentConversation.url = this.stripUrlProtocol_(this.siteInfo_.url ?? "");
+        currentConversation.isUrlContext = this.shouldUseCurrentPageContentAsChatContext_;
 
-        currentConversation.shouldDisplaySiteInfo = (this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_ && this.shouldUseCurrentPageContentAsChatContext_)
-            ||
-            /* This is for the situation where the side panel is closed while there is an active streaming based on the content of the active page.
-               In that case, the active conversation will not be saved into cache due to the abrupt closure.
-             */
-            (!this.isActivePageUrlNew_ && this.siteInfo_.isContentUsableInConversations && this.conversations_.length == 0);
+        const lastIndex = this.conversations_.length - 1;
+        const lastConversation = this.conversations_[lastIndex];
+        if (lastConversation) {
+            currentConversation.shouldDisplaySiteInfo = (lastConversation.url === currentConversation.url &&
+                lastConversation.title === currentConversation.title && lastConversation.isUrlContext) ? false : true;
+        } else {
+            currentConversation.shouldDisplaySiteInfo = (this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_ && this.shouldUseCurrentPageContentAsChatContext_)
+                ||
+                /* This is for the situation where the side panel is closed while there is an active streaming based on the content of the active page.
+                   In that case, the active conversation will not be saved into cache due to the abrupt closure.
+                 */
+                (!this.isActivePageUrlNew_ && this.siteInfo_.isContentUsableInConversations && this.conversations_.length == 0);
+        }
 
         this.conversations_.push(currentConversation);
 
@@ -520,6 +483,72 @@ export class ChatAppElement extends CrLitElement {
 
     protected openUrl_(url: string, modifiers: ClickModifiers) {
         this.chatApiProxy_.openUrl(url, modifiers);
+    }
+
+    private async updateSiteInfo(siteInfo: SiteInfo, willSaveInCache: boolean) {
+        console.log("Calling updateSiteInfo...");
+        if (willSaveInCache) {
+            this.chatApiProxy_.saveSiteInfo(siteInfo);
+        }
+        if (this.siteInfo_.url === siteInfo.url) {
+            const lastConversation = this.conversations_[this.conversations_.length - 1];
+            if (lastConversation && lastConversation.url != this.stripUrlProtocol_(siteInfo.url ?? "")) {
+                this.isActivePageUrlNew_ = true;
+                this.shouldHideSiteInfoInUserQueryElement_ = false;
+                this.shouldShowActionsMenu_ = true;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
+
+            } else {
+                this.isActivePageUrlNew_ = false;
+                this.shouldHideSiteInfoInUserQueryElement_ = true;
+                const hasConversation = this.conversations_.length > 0;
+                this.shouldShowActionsMenu_ = !hasConversation;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = hasConversation;
+                return;
+            }
+        } else {
+            const lastConversation = this.conversations_[this.conversations_.length - 1];
+            /*
+             This `if` condition evaluates the following scenarios:
+             1. The user visits abc.com, where the content can be utilized as chat context,
+                and they interact with it by asking a related question.
+             2. Afterward, the user navigates to other websites, but user don't use these sites' content
+                as the chat context.
+             3. Finally, the user navigates back to abc.com, potentially resuming the context
+                for further questions.
+
+                In this scenario, the known context is still the content of abc.com,
+                so suggestion list and site info in the prompt input container will not be displayed.
+                But the content of the abc.com will be used as the context of the chat.
+             */
+            if (lastConversation && lastConversation.isUrlContext && lastConversation.url == this.stripUrlProtocol_(siteInfo.url ?? "")) {
+                console.log("lastConversation.url : " + lastConversation.url);
+                console.log("siteInfo.url : " + this.stripUrlProtocol_(siteInfo.url ?? ""));
+                this.shouldShowActionsMenu_ = false;
+                this.shouldHideSiteInfoInUserQueryElement_ = true;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
+            } else {
+                console.log("no last Conversation found");
+                console.log("siteInfo.url : " + this.stripUrlProtocol_(siteInfo.url ?? ""));
+                this.isActivePageUrlNew_ = true;
+                this.shouldHideSiteInfoInUserQueryElement_ = false;
+                this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
+                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
+            }
+        }
+
+        this.siteInfo_ = siteInfo;
+        if (this.siteInfo_.isContentUsableInConversations) {
+            const {actionList} = await this.chatApiProxy_.getActionList();
+            this.actionList_ = actionList;
+            this.shouldUseCurrentPageContentAsChatContext_ = true;
+            this.shouldDisplayChatAboutThisPageButton_ = false;
+        } else {
+            this.shouldUseCurrentPageContentAsChatContext_ = false;
+        }
+
+        // Lit requires this to update
+        await this.updateComplete;
     }
 
     override connectedCallback() {

@@ -65,6 +65,10 @@ struct SavableConversationModel {
     string title;
     string url;
     bool should_display_site_info;
+
+    // true if the content of url is being used as the chat context, otherwise; false
+    bool is_url_context;
+
     string thinking_text;
     bool show_thinking_text;
     string response_text;

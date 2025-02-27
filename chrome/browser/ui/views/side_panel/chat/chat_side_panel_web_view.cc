@@ -96,6 +96,7 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
   // We make sure SiteInfo will be called only once for the same active web page
   if (this->visited_url_ != currentVisitingUrl) {
       this->visited_url_ = currentVisitingUrl;
+      DVLOG(0) << "Fire TabChangeAt: " << site_info->url.value_or("empty url") << ", " << site_info->title.value_or("empty title");
       controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone(), contents);
   }
 }
