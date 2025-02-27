@@ -25,7 +25,7 @@
     align-items: center;
     justify-content: space-between;
     min-height: 48px;
-    padding: 0 16px 0 16px;
+    padding: 0 16px 0 12px;
     border-bottom: 1px solid var(--color-yep-chat-panel-border);
     z-index: 10;
 }
@@ -36,7 +36,7 @@
     align-items: center;
     justify-content: space-between;
     width: fit-content;
-    gap: 12px;
+    gap: 8px;
 }
 
 #header-container .header-btn {
@@ -50,15 +50,17 @@
 
 .header-btn .header-icon {
     display: block;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     color: var(--color-yep-chat-secondary-text);
+    opacity: 0.5;
 }
 
 .header-title-container .chat-title {
     display: block;
-    font-weight: 500;
-    font-size: 16px;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 22px;
 }
 
 /* end header */
