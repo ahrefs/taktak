@@ -228,7 +228,6 @@
     align-items: center;
     border-radius: 12px;
     padding: 10px 12px;
-    gap: 4px;
     cursor: pointer;
     background: var(--color-yep-chat-prompt-background);
     border: none;
@@ -243,11 +242,20 @@
     text-decoration: none;
 }
 
-.thinking-toggle-button-icon {
+.thinking-toggle-button-head-icon {
     display: block;
     flex-shrink: 0;
-    width: 24px;
+    width: 30px;
+    height: 24px;
+    padding-top: 4px;
+}
+
+.thinking-toggle-button-close-icon {
+    display: block;
+    flex-shrink: 0;
+    width: 22px;
     height: 22px;
+    padding-left: 6px;
 }
 
 .generic-error-container {

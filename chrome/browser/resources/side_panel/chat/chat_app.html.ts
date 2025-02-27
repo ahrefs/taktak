@@ -273,15 +273,15 @@ export function getHtml(this: ChatAppElement) {
                                         </svg>
                                     </cr-iconset>
                                     <cr-icon icon="${'thinking-icon-set:head'}"
-                                             class="thinking-toggle-button-icon"
+                                             class="thinking-toggle-button-head-icon"
                                              style="${this.enableThinking_ ? 'color: var(--color-yep-chat-thinking-enabled); opacity: 0.5;' : 'color: var(--color-yep-chat-tertiary-text); opacity: 1.0;'}"
                                     ></cr-icon>
                                 </div>
                                 <span class="thinking-toggle-button-label">${this.enableThinking_ ? this.thinkingEnabledBtnLabel_ : this.enableThinkingBtnLabel_}</span>
                                 ${
                                         this.enableThinking_ ? html`
-
-                                            <cr-icon icon="cr:clear" class="thinking-toggle-button-icon"></cr-icon>
+                                            <cr-icon icon="cr:clear"
+                                                     class="thinking-toggle-button-close-icon"></cr-icon>
                                         ` : html``
                                 }
                             </button>
