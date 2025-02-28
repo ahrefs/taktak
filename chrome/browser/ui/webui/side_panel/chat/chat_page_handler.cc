@@ -151,19 +151,21 @@ void ChatPageHandler::ShowUI() {
 }
 
 void ChatPageHandler::CloseUI() {
-    auto embedder = chat_ui_->embedder();
-    if (embedder) {
-        embedder->CloseUI();
-    }
-
     Browser *browser = chrome::FindLastActive();
     if (!browser) {
         return;
     }
 
     if (SidePanelUI *ui = browser->GetFeatures().side_panel_ui()) {
+        // Todo: to fix the error that occurs when the side panel is closed while extraction content is in progress
+        this->CancelQuery();
         ui->Close();
     }
+}
+
+void ChatPageHandler::CancelQuery() {
+    isQueryCancellingInProgress_.store(true);
+    api_client_->ClearAllQueries();
 }
 
 void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents *contents) {
@@ -423,11 +425,6 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
         response->result = l10n_util::GetStringUTF8(IDS_CHAT_GENERIC_ERROR);
     }
     page_->OnSubmitActionResponse(response.Clone());
-}
-
-void ChatPageHandler::CancelQuery() {
-    isQueryCancellingInProgress_.store(true);
-    api_client_->ClearAllQueries();
 }
 
 void ChatPageHandler::OpenURL(

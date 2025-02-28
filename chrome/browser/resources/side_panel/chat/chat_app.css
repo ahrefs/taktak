@@ -332,11 +332,11 @@
     padding: 10px 12px;
     border-radius: 12px;
     background: var(--color-yep-chat-prompt-background);
-    max-width: calc(100vw - 36px);
+    max-width: 100vw;
 }
 
 .content-wide-width {
-    width: 82vw;
+    width: 79vw;
 }
 
 .content-fit-width {

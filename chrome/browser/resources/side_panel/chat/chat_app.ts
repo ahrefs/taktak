@@ -25,7 +25,6 @@ import type {ChatPromptInputElement} from "./chat_prompt_input";
 import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
 import './chat_prompt_input.js';
 import './action_menu.js';
-import {marked} from "./marked.js";
 
 export enum ActionOnExtractedContent {
     AddAsContext = 0,
@@ -235,33 +234,9 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
-    private logConversations() {
-        for (const conversation of this.conversations_) {
-            console.log("Start==============================");
-            console.log("timestamp: " + conversation.timestamp);
-            console.log("id: " + conversation.id);
-            console.log("title: " + conversation.title);
-            console.log("url: " + conversation.url);
-            console.log("shouldDisplaySiteInfo: " + conversation.shouldDisplaySiteInfo);
-            console.log("showThinking: " + conversation.showThinkingText);
-            console.log("query: " + conversation.query);
-            console.log("thinking: " + conversation.thinkingText);
-            console.log("thinking parsed: " + marked.parse(conversation.thinkingText, {async: false}));
-            console.log("response: " + conversation.responseText);
-            console.log("response parsed: " + marked.parse(conversation.responseText, {async: false}));
-            console.log("error: " + conversation.errorText);
-            console.log("error parsed: " + marked.parse(conversation.errorText, {async: false}));
-            console.log("End==============================");
-        }
-    }
-
     protected onCloseSidePanel_(e: Event) {
         e.preventDefault();
-        this.logConversations(); // todo: to delete later
-        this.conversations_.length = 0;
-        if (!this.isQuerySubmitting_) {
-            this.saveCurrentConversation();
-        }
+        // Todo: to fix the error that occurs when the side panel is closed while extraction content is in progress
         this.chatApiProxy_.closeUI();
     }
 
@@ -488,7 +463,6 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private async updateSiteInfo(siteInfo: SiteInfo, willSaveInCache: boolean) {
-        console.log("Calling updateSiteInfo...");
         if (willSaveInCache) {
             this.chatApiProxy_.saveSiteInfo(siteInfo);
         }
@@ -524,14 +498,10 @@ export class ChatAppElement extends CrLitElement {
                 But the content of the abc.com will be used as the context of the chat.
              */
             if (lastConversation && lastConversation.isUrlContext && lastConversation.url == this.stripUrlProtocol_(siteInfo.url ?? "")) {
-                console.log("lastConversation.url : " + lastConversation.url);
-                console.log("siteInfo.url : " + this.stripUrlProtocol_(siteInfo.url ?? ""));
                 this.shouldShowActionsMenu_ = false;
                 this.shouldHideSiteInfoInUserQueryElement_ = true;
                 this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
             } else {
-                console.log("no last Conversation found");
-                console.log("siteInfo.url : " + this.stripUrlProtocol_(siteInfo.url ?? ""));
                 this.isActivePageUrlNew_ = true;
                 this.shouldHideSiteInfoInUserQueryElement_ = false;
                 this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
