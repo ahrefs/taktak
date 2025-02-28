@@ -415,7 +415,9 @@ export class ChatAppElement extends CrLitElement {
         const lastConversation = this.conversations_[lastIndex];
         if (lastConversation) {
             currentConversation.shouldDisplaySiteInfo = (lastConversation.url === currentConversation.url &&
-                lastConversation.title === currentConversation.title && lastConversation.isUrlContext) ? false : true;
+                lastConversation.title === currentConversation.title && lastConversation.isUrlContext)
+                ? false
+                : this.shouldUseCurrentPageContentAsChatContext_ ;
         } else {
             currentConversation.shouldDisplaySiteInfo = (this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_ && this.shouldUseCurrentPageContentAsChatContext_)
                 ||
