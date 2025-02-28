@@ -871,6 +871,7 @@
   E_CPONLY(kColorYepChatError) \
   E_CPONLY(kColorYepChatThinkingEnabled) \
   E_CPONLY(kColorYepChatThinkingHeadIcon) \
+  E_CPONLY(kColorYepChatToolbarIcon) \
 
 #if BUILDFLAG(IS_CHROMEOS)
 #define CHROME_PLATFORM_SPECIFIC_COLOR_IDS \

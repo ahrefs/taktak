@@ -10,17 +10,24 @@ class Browser;
 class AIChatToolbarButton : public ToolbarButton {
     METADATA_HEADER(AIChatToolbarButton, ToolbarButton)
 
-    public:
-        AIChatToolbarButton(PressedCallback callback);
-        AIChatToolbarButton(const AIChatToolbarButton&) = delete;
-        AIChatToolbarButton& operator=(const AIChatToolbarButton&) = delete;
-        ~AIChatToolbarButton() override;
+public:
+    AIChatToolbarButton(PressedCallback callback);
 
-        void AddHighlight();
-        void ResetHighlight();
+    AIChatToolbarButton(const AIChatToolbarButton &) = delete;
 
-    private:
-        std::optional<Button::ScopedAnchorHighlight> anchor_higlight_;
+    AIChatToolbarButton &operator=(const AIChatToolbarButton &) = delete;
+
+    ~AIChatToolbarButton() override;
+
+    void AddHighlight();
+
+    void ResetHighlight();
+
+protected:
+    SkColor GetForegroundColor(ButtonState state) const override;
+
+private:
+    std::optional<Button::ScopedAnchorHighlight> anchor_higlight_;
 };
 
 #endif //CHROMIUM_AI_CHAT_TOOLBAR_BUTTON_H

@@ -10,14 +10,26 @@
 #include "ui/base/metadata/metadata_header_macros.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
 #include "ui/views/view.h"
+#include "third_party/skia/include/core/SkColor.h"
+#include "ui/color/color_provider.h"
 
 AIChatToolbarButton::AIChatToolbarButton(PressedCallback callback)
-                                         : ToolbarButton(std::move(callback)) {
-  SetTooltipText(l10n_util::GetStringUTF16(IDS_AI_CHAT_TITLE));
-  SetHorizontalAlignment(gfx::ALIGN_CENTER);
-  SetVectorIcon(kChatIcon);
-  SetVisible(true);
-  ConfigureInkDropForToolbar(this);
+        : ToolbarButton(std::move(callback)) {
+    SetTooltipText(l10n_util::GetStringUTF16(IDS_AI_CHAT_TITLE));
+    SetHorizontalAlignment(gfx::ALIGN_CENTER);
+    SetVectorIcon(kChatIcon);
+    SetVisible(true);
+    ConfigureInkDropForToolbar(this);
+    UpdateBackgroundColor();
+}
+
+SkColor AIChatToolbarButton::GetForegroundColor(views::Button::ButtonState state) const {
+    const ui::ColorProvider* color_provider = GetColorProvider();
+    if (!color_provider) {
+        return SK_ColorYELLOW;
+    }
+
+    return color_provider->GetColor(kColorYepChatToolbarIcon);
 }
 
 AIChatToolbarButton::~AIChatToolbarButton() = default;

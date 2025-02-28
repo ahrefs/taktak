@@ -909,11 +909,14 @@ void AddChromeColorMixer(ui::ColorProvider *provider,
     mixer[kColorYepChatSendButtonForeground] = {dark_mode ? SK_ColorBLACK
                                                           : SK_ColorWHITE};
 
-    mixer[kColorYepChatError] = { dark_mode
-                                   ? SkColorSetARGB(255, 255, 130, 124)
-                                   : SkColorSetARGB(255, 179, 38, 30)};
+    mixer[kColorYepChatError] = {dark_mode
+                                 ? SkColorSetARGB(255, 255, 130, 124)
+                                 : SkColorSetARGB(255, 179, 38, 30)};
     mixer[kColorYepChatThinkingEnabled] = {SkColorSetARGB(255, 90, 100, 205)};
     mixer[kColorYepChatThinkingHeadIcon] = {SkColorSetARGB(255, 217, 217, 217)};
+
+    mixer[kColorYepChatToolbarIcon] = {dark_mode
+                                       ? SK_ColorYELLOW : SK_ColorGRAY};
 
     // Apply high contrast recipes if necessary.
     if (!ShouldApplyHighContrastColors(key)) {
