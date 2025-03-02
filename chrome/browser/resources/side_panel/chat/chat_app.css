@@ -629,30 +629,48 @@
     line-height: 18px;
     list-style-type: disc;
     padding-left: 14px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
 }
 
 .response-markdown-container ol, .thinking-markdown-container ol {
     line-height: 18px;
     list-style-type: decimal;
     padding-left: 14px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
 }
 
 .response-markdown-container ol ul, ul ol {
     padding-left: 14px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
 }
 
 .thinking-markdown-container ol ul, ul ol {
     padding-left: 14px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
 }
 
 .response-markdown-container ol ol, .thinking-markdown-container ol ol {
     list-style-type: lower-alpha;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
 }
 
 .response-markdown-container li, .thinking-markdown-container li {
     margin-top: 10px;
     margin-bottom: 10px;
     margin-left: 1rem;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
 }
 
 .response-markdown-container .caret {
