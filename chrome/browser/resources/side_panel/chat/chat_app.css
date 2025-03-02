@@ -552,12 +552,39 @@
     line-height: 22px;
 }
 
-/* todo: this is incorrect for the vertical line, fix it */
-/*.response-markdown-container > blockquote:not(:nth-child(2)) {*/
-/*    border-left: 5px solid var(--color-yep-chat-site-info-vertical-bar-background);*/
-/*    margin: 0;*/
-/*    padding: 0 0 0 6px;*/
-/*}*/
+.response-markdown-container blockquote {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 100%;
+    margin: 18px 0 18px 0;
+    padding: 0;
+    color: var(--color-yep-chat-primary-text);
+}
+
+.response-markdown-container blockquote p {
+    display: block;
+    position: relative;
+    left: 0;
+    padding-left: 18px; /* pseudo element width 5px, gap 13px*/
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--color-yep-chat-primary-text);
+}
+
+.response-markdown-container blockquote p:before {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    margin: 0;
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
+    border-radius: 2px;
+}
 
 .response-markdown-container hr, .thinking-markdown-container hr {
     border: 1px solid var(--color-yep-chat-panel-border);
