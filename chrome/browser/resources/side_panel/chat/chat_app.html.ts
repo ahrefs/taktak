@@ -55,18 +55,6 @@ function getThinkingElement(this: ChatAppElement,
     if (thinkingText.trim().length == 0) {
         return html``;
     }
-    // const renderer = new marked.Renderer({});
-    //
-    // // Example: treating HTML inline elements
-    // // @ts-ignore
-    // renderer.html = function (html: string) {
-    //     // Implement logic to check for standalone tags and escape them
-    //     if (/<[^>]+>/.test(html)) {
-    //         // replace standalone tags with their escaped version
-    //         return html.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    //     }
-    //     return html;
-    // };
 
     return html`
         <div class="thinking-button-and-text-container">

@@ -48,6 +48,11 @@
     background-color: transparent;
 }
 
+.header-btn:focus, .header-btn:active {
+    outline: none;
+    border: none;
+}
+
 .header-btn .header-icon {
     display: block;
     width: 24px;
@@ -231,6 +236,11 @@
     background: var(--color-yep-chat-prompt-background);
     border: none;
     border-top: 1px solid var(--color-yep-chat-panel-background);
+}
+
+.thinking-toggle-button:focus, .thinking-toggle-button:active {
+    outline: none;
+    border: none;
 }
 
 .thinking-toggle-button-label {
