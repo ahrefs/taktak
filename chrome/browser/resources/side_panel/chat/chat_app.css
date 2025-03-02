@@ -605,10 +605,16 @@
 
 .response-markdown-container table, .thinking-markdown-container table {
     border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
 }
 
 .response-markdown-container table thead th, .thinking-markdown-container table thead th {
     text-align: left;
+    vertical-align: top;
+    font-weight: 700;
 }
 
 .response-markdown-container table tr, .thinking-markdown-container table tr {
@@ -619,11 +625,13 @@
 }
 
 .response-markdown-container table th, td {
-    padding: 10px;
+    padding: 10px 10px 10px 0;
+    vertical-align: top;
 }
 
 .thinking-markdown-container table th, td {
-    padding: 10px;
+    padding: 10px 10px 10px 0;
+    vertical-align: top;
 }
 
 .response-markdown-container ul, .thinking-markdown-container ul {
