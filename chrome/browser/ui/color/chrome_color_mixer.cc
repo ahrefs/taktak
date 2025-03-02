@@ -917,6 +917,9 @@ void AddChromeColorMixer(ui::ColorProvider *provider,
 
     mixer[kColorYepChatToolbarIcon] = {dark_mode
                                        ? SK_ColorYELLOW : SK_ColorGRAY};
+    mixer[kColorYepChatLink] = {dark_mode
+                                ? SkColorSetARGB(255, 129, 160, 240)
+                                : SkColorSetARGB(255, 8, 40, 187)};
 
     // Apply high contrast recipes if necessary.
     if (!ShouldApplyHighContrastColors(key)) {
