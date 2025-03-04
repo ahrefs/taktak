@@ -10,7 +10,7 @@
  * regenerate.
  */
 
-import {ChromeEvent} from '../../../../../../tools/typescript/definitions/chrome_event.js';
+import type {ChromeEvent} from '../../../../../../tools/typescript/definitions/chrome_event.js';
 
 declare global {
   export namespace chrome {
@@ -32,6 +32,23 @@ declare global {
         FEMALE = 'female',
       }
 
+      export interface LanguageUninstallOptions {
+        uninstallImmediately: boolean;
+      }
+
+      export enum LanguageInstallStatus {
+        NOT_INSTALLED = 'notInstalled',
+        INSTALLING = 'installing',
+        INSTALLED = 'installed',
+        FAILED = 'failed',
+      }
+
+      export interface LanguageStatus {
+        lang: string;
+        installStatus: LanguageInstallStatus;
+        error?: string;
+      }
+
       export interface SpeakOptions {
         voiceName?: string;
         lang?: string;
@@ -47,7 +64,7 @@ declare global {
       }
 
       export interface AudioBuffer {
-        audioBuffer: ArrayBuffer;
+        audioBuffer: Float32Array;
         charIndex?: number;
         isLastBuffer?: boolean;
       }
@@ -58,6 +75,8 @@ declare global {
           void;
 
       export function sendTtsAudio(requestId: number, audio: AudioBuffer): void;
+
+      export function updateLanguage(status: LanguageStatus): void;
 
       export const onSpeak: ChromeEvent<
           (utterance: string, options: SpeakOptions,
@@ -76,6 +95,13 @@ declare global {
       export const onResume: ChromeEvent<() => void>;
 
       export const onInstallLanguageRequest:
+          ChromeEvent<(requestor: TtsClient, lang: string) => void>;
+
+      export const onUninstallLanguageRequest: ChromeEvent<
+          (requestor: TtsClient, lang: string,
+           uninstallOptions: LanguageUninstallOptions) => void>;
+
+      export const onLanguageStatusRequest:
           ChromeEvent<(requestor: TtsClient, lang: string) => void>;
     }
   }

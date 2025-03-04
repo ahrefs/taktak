@@ -6,7 +6,6 @@
 
 #include "base/metrics/histogram_functions.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/bluetooth/bluetooth_chooser_context_factory.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/content_settings/cookie_settings_factory.h"
@@ -44,12 +43,9 @@
 #include "content/public/browser/permission_result.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/content_features.h"
+#include "third_party/blink/public/common/features.h"
 #include "ui/base/window_open_disposition_utils.h"
 #include "url/origin.h"
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ui/webui/ash/settings/app_management/app_management_uma.h"
-#endif
 
 #if BUILDFLAG(IS_ANDROID)
 #include "chrome/grit/branded_strings.h"
@@ -76,6 +72,12 @@
 #include "chrome/browser/web_applications/web_app_tab_helper.h"
 #include "components/webapps/common/web_app_id.h"
 #include "ui/events/event.h"
+#endif
+
+#if BUILDFLAG(IS_CHROMEOS)
+#include "chrome/browser/smart_card/smart_card_permission_context.h"
+#include "chrome/browser/smart_card/smart_card_permission_context_factory.h"
+#include "chrome/browser/ui/webui/ash/settings/app_management/app_management_uma.h"
 #endif
 
 namespace {
@@ -122,19 +124,23 @@ ChromePageInfoDelegate::GetChooserContext(ContentSettingsType type) {
 #if !BUILDFLAG(IS_ANDROID)
       return SerialChooserContextFactory::GetForProfile(GetProfile());
 #else
-      NOTREACHED_IN_MIGRATION();
-      return nullptr;
+      NOTREACHED();
 #endif
     case ContentSettingsType::HID_CHOOSER_DATA:
 #if !BUILDFLAG(IS_ANDROID)
       return HidChooserContextFactory::GetForProfile(GetProfile());
 #else
-      NOTREACHED_IN_MIGRATION();
-      return nullptr;
+      NOTREACHED();
 #endif
-    default:
-      NOTREACHED_IN_MIGRATION();
+    case ContentSettingsType::SMART_CARD_DATA:
+#if BUILDFLAG(IS_CHROMEOS)
+      if (base::FeatureList::IsEnabled(blink::features::kSmartCard)) {
+        return &SmartCardPermissionContextFactory::GetForProfile(*GetProfile());
+      }
+#endif
       return nullptr;
+    default:
+      NOTREACHED();
   }
 }
 
@@ -229,7 +235,8 @@ ChromePageInfoDelegate::CreateCookieControlsController() {
           ? CookieSettingsFactory::GetForProfile(profile->GetOriginalProfile())
           : nullptr,
       HostContentSettingsMapFactory::GetForProfile(profile),
-      TrackingProtectionSettingsFactory::GetForProfile(profile));
+      TrackingProtectionSettingsFactory::GetForProfile(profile),
+      profile->IsIncognitoProfile());
 }
 
 bool ChromePageInfoDelegate::IsIsolatedWebApp() {
@@ -294,6 +301,17 @@ void ChromePageInfoDelegate::OpenConnectionHelpCenterPage(
 
 void ChromePageInfoDelegate::OpenSafetyTipHelpCenterPage() {
   OpenHelpCenterFromSafetyTip(web_contents_);
+}
+
+void ChromePageInfoDelegate::OpenSafeBrowsingHelpCenterPage(
+    const ui::Event& event) {
+  web_contents_->OpenURL(
+      content::OpenURLParams(
+          GURL(chrome::kSafeBrowsingHelpCenterURL), content::Referrer(),
+          ui::DispositionFromEventFlags(
+              event.flags(), WindowOpenDisposition::NEW_FOREGROUND_TAB),
+          ui::PAGE_TRANSITION_LINK, false),
+      /*navigation_handle_callback=*/{});
 }
 
 void ChromePageInfoDelegate::OpenContentSettingsExceptions(
@@ -434,6 +452,10 @@ bool ChromePageInfoDelegate::IsHttpsFirstModeEnabled() {
   return https_first_mode_fully_enabled ||
          (GetProfile()->IsIncognitoProfile() &&
           https_first_mode_enabled_in_incognito);
+}
+
+bool ChromePageInfoDelegate::IsIncognitoProfile() {
+  return GetProfile()->IsIncognitoProfile();
 }
 
 void ChromePageInfoDelegate::SetSecurityStateForTests(

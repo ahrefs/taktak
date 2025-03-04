@@ -8,15 +8,26 @@
 #include <iterator>
 
 #include "base/strings/to_string.h"
-#include "chrome/browser/profiles/batch_upload/batch_upload_controller.h"
-#include "chrome/browser/profiles/batch_upload/batch_upload_data_provider.h"
+#include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/webui/signin/batch_upload/batch_upload.mojom.h"
 #include "chrome/browser/ui/webui/signin/signin_utils.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/signin/public/identity_manager/account_info.h"
+#include "components/sync/base/data_type.h"
+#include "components/sync/service/local_data_description.h"
+#include "net/base/url_util.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "url/gurl.h"
+
+#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
+#include "chrome/browser/device_reauth/chrome_device_authenticator_factory.h"
+#include "components/device_reauth/device_authenticator.h"
+#endif
 
 namespace {
+
+constexpr char kFolderIconUrl[] =
+    "chrome://resources/images/icon_folder_open.svg";
 
 // The subtitle of the dialog depends on which type of data is shown and the
 // number of different types.
@@ -29,12 +40,12 @@ namespace {
 // All strings take into account the plural aspect based on the count. The count
 // is either the "hero" type count if applicable, or the total item count in the
 // generic case.
-std::string ComputeBatchUploadSubtitle(BatchUploadDataType first_type,
+std::string ComputeBatchUploadSubtitle(syncer::DataType first_type,
                                        size_t first_type_item_count,
                                        size_t number_of_types,
                                        size_t total_item_count) {
   // Check for the "hero" type availability.
-  if (first_type == BatchUploadDataType::kPasswords) {
+  if (first_type == syncer::DataType::PASSWORDS) {
     if (number_of_types > 1) {
       // Returns "passwords + other items" combo string.
       return l10n_util::GetPluralStringFUTF8(
@@ -46,9 +57,51 @@ std::string ComputeBatchUploadSubtitle(BatchUploadDataType first_type,
         IDS_BATCH_UPLOAD_SUBTITLE_DESCRIPTION_PASSWORDS, first_type_item_count);
   }
 
+  if (first_type == syncer::DataType::BOOKMARKS) {
+    if (number_of_types > 1) {
+      // Returns "bookmarks + other items" combo string.
+      return l10n_util::GetPluralStringFUTF8(
+          IDS_BATCH_UPLOAD_SUBTITLE_DESCRIPTION_BOOKMARKS_COMBO,
+          first_type_item_count);
+    }
+    // Returns the bookmarks only string.
+    return l10n_util::GetPluralStringFUTF8(
+        IDS_BATCH_UPLOAD_SUBTITLE_DESCRIPTION_BOOKMARKS, first_type_item_count);
+  }
+
   // Returns the generic items string.
   return l10n_util::GetPluralStringFUTF8(
       IDS_BATCH_UPLOAD_SUBTITLE_DESCRIPTION_ITEMS, total_item_count);
+}
+
+GURL ComputeIconUrl(const syncer::LocalDataItemModel::Icon& icon) {
+  if (absl::holds_alternative<syncer::LocalDataItemModel::NoIcon>(icon)) {
+    return GURL();
+  }
+
+  if (const GURL* page_url =
+          absl::get_if<syncer::LocalDataItemModel::PageUrlIcon>(&icon)) {
+    // Add the http:// scheme if a scheme is not already present.
+    GURL::Replacements replace_scheme;
+    replace_scheme.SetSchemeStr(url::kHttpScheme);
+    GURL page_url_with_scheme =
+        page_url->has_scheme() ? *page_url
+                               : page_url->ReplaceComponents(replace_scheme);
+
+    // Build up the final chrome://favicon2 URL. See `chrome::FaviconUrlFormat`.
+    GURL favicon_url("chrome://favicon2/");
+    favicon_url = net::AppendQueryParameter(favicon_url, "pageUrl",
+                                            page_url_with_scheme.spec());
+    favicon_url = net::AppendQueryParameter(favicon_url, "size", "24");
+    favicon_url = net::AppendQueryParameter(favicon_url, "scaleFactor", "1x");
+    return favicon_url;
+  }
+
+  if (absl::holds_alternative<syncer::LocalDataItemModel::FolderIcon>(icon)) {
+    return GURL(kFolderIconUrl);
+  }
+
+  NOTREACHED() << "Unsupported icon type, index: " << icon.index();
 }
 
 }  // namespace
@@ -57,11 +110,15 @@ BatchUploadHandler::BatchUploadHandler(
     mojo::PendingReceiver<batch_upload::mojom::PageHandler> receiver,
     mojo::PendingRemote<batch_upload::mojom::Page> page,
     const AccountInfo& account_info,
-    std::vector<BatchUploadDataContainer> data_containers_list,
+    Browser* browser,
+    std::vector<syncer::LocalDataDescription> local_data_description_list,
     base::RepeatingCallback<void(int)> update_view_height_callback,
-    SelectedDataTypeItemsCallback completion_callback)
-    : data_containers_list_(std::move(data_containers_list)),
+    base::RepeatingCallback<void(bool)> allow_web_view_input_callback,
+    BatchUploadSelectedDataTypeItemsCallback completion_callback)
+    : browser_(*browser),
+      local_data_description_list_(std::move(local_data_description_list)),
       update_view_height_callback_(update_view_height_callback),
+      allow_web_view_input_callback_(allow_web_view_input_callback),
       completion_callback_(std::move(completion_callback)),
       receiver_(this, std::move(receiver)),
       page_(std::move(page)) {
@@ -76,27 +133,26 @@ void BatchUploadHandler::UpdateViewHeight(uint32_t height) {
 
 void BatchUploadHandler::Close() {
   // Clear the data as after `completion_callback_` is done.
-  data_containers_list_.clear();
+  local_data_description_list_.clear();
   std::move(completion_callback_).Run({});
 }
 
 void BatchUploadHandler::SaveToAccount(
     const std::vector<std::vector<int32_t>>& ids_to_move) {
-  CHECK_EQ(ids_to_move.size(), data_containers_list_.size());
+  CHECK_EQ(ids_to_move.size(), local_data_description_list_.size());
   CHECK_EQ(ids_to_move.size(), internal_data_item_id_mapping_list_.size());
 
   // Convert `ids_to_move` ids from `int32_t` to
-  // `BatchUploadDataItemModel::DataId` using
+  // `LocalDataItemModel::DataId` using
   // `internal_data_item_id_mapping_list_`.
-  base::flat_map<BatchUploadDataType,
-                 std::vector<BatchUploadDataItemModel::DataId>>
+  std::map<syncer::DataType, std::vector<syncer::LocalDataItemModel::DataId>>
       ret_ids_to_move;
   for (size_t i = 0; i < ids_to_move.size(); ++i) {
-    const base::flat_map<InternalId, BatchUploadDataItemModel::DataId>&
+    const std::map<InternalId, syncer::LocalDataItemModel::DataId>&
         internal_data_item_id_mapping = internal_data_item_id_mapping_list_[i];
     CHECK_LE(ids_to_move[i].size(), internal_data_item_id_mapping.size());
 
-    std::vector<BatchUploadDataItemModel::DataId> section_ids;
+    std::vector<syncer::LocalDataItemModel::DataId> section_ids;
     std::ranges::transform(
         ids_to_move[i], std::back_inserter(section_ids),
         [&internal_data_item_id_mapping](int32_t id) {
@@ -105,19 +161,72 @@ void BatchUploadHandler::SaveToAccount(
           CHECK(internal_data_item_id_mapping.contains(internal_item_id));
           return internal_data_item_id_mapping.at(internal_item_id);
         });
-    ret_ids_to_move.insert_or_assign(data_containers_list_[i].type,
+    ret_ids_to_move.insert_or_assign(local_data_description_list_[i].type,
                                      section_ids);
   }
 
-  data_containers_list_.clear();
-  std::move(completion_callback_).Run(ret_ids_to_move);
+#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
+  // Only show reauth if passwords are selected to be saved. Passwords is the
+  // only data type that needs authentication.
+  auto it = ret_ids_to_move.find(syncer::PASSWORDS);
+  bool should_show_reauth = it != ret_ids_to_move.end() && !it->second.empty();
+#endif
+
+  base::OnceCallback<void(bool)> on_save_to_account_ready =
+      base::BindOnce(&BatchUploadHandler::OnSaveToAccountRequestReady,
+                     base::Unretained(this), std::move(ret_ids_to_move));
+
+#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
+  if (should_show_reauth) {
+    // Disable all inputs in the view during reauth.
+    allow_web_view_input_callback_.Run(false);
+
+    device_reauth::DeviceAuthParams params(
+        base::Seconds(0),
+        device_reauth::DeviceAuthSource::kSettingsBatchUpload);
+
+    device_authenticator_ = ChromeDeviceAuthenticatorFactory::GetForProfile(
+        browser_->profile(),
+        browser_->tab_strip_model()
+            ->GetActiveWebContents()
+            ->GetTopLevelNativeWindow(),
+        params);
+
+    // Show authentication before proceeding with the save to account.
+    device_authenticator_->AuthenticateWithMessage(
+        l10n_util::GetStringUTF16(
+            IDS_PASSWORDS_PAGE_COPY_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX),
+        std::move(on_save_to_account_ready));
+    return;
+  }
+#endif
+
+  // Proceed directly without reauth and allowing data to be saved.
+  std::move(on_save_to_account_ready).Run(true);
+}
+
+void BatchUploadHandler::OnSaveToAccountRequestReady(
+    std::map<syncer::DataType, std::vector<syncer::LocalDataItemModel::DataId>>
+        ids_to_move,
+    bool allowed) {
+  // Reset the view inputs in all cases.
+  allow_web_view_input_callback_.Run(true);
+
+  // If not allowed do not proceed, but do not close the dialog as well to give
+  // another opportunity to the user without losing his choices.
+  if (!allowed) {
+    return;
+  }
+
+  local_data_description_list_.clear();
+  std::move(completion_callback_).Run(std::move(ids_to_move));
 }
 
 batch_upload::mojom::BatchUploadDataPtr
 BatchUploadHandler::ConstructMojoBatchUploadData(
     const AccountInfo& account_info) {
   CHECK(!account_info.IsEmpty());
-  CHECK(!data_containers_list_.empty());
+  CHECK(!local_data_description_list_.empty());
 
   batch_upload::mojom::BatchUploadAccountInfoPtr account_info_mojo =
       batch_upload::mojom::BatchUploadAccountInfo::New();
@@ -127,10 +236,10 @@ BatchUploadHandler::ConstructMojoBatchUploadData(
 
   size_t total_item_count = 0;
   std::vector<batch_upload::mojom::DataContainerPtr> data_containers_mojo;
-  for (const auto& data_container : data_containers_list_) {
-    CHECK(!data_container.items.empty());
+  for (const auto& local_data_description : local_data_description_list_) {
+    CHECK(!local_data_description.local_data_models.empty());
 
-    base::flat_map<InternalId, BatchUploadDataItemModel::DataId>&
+    std::map<InternalId, syncer::LocalDataItemModel::DataId>&
         internal_data_item_id_mapping =
             internal_data_item_id_mapping_list_.emplace_back();
 
@@ -138,10 +247,15 @@ BatchUploadHandler::ConstructMojoBatchUploadData(
         batch_upload::mojom::DataContainer::New();
     // TODO(crbug.com/372450941): Adadpt the mojo variable name.
     data_container_mojo->section_title =
-        base::ToString(data_container.section_title_id);
+        base::ToString(GetTypeSectionTitleId(local_data_description.type));
+    if (local_data_description.type == syncer::DataType::THEMES) {
+      CHECK_EQ(local_data_description.local_data_models.size(), 1u)
+          << "Themes only expects to show the currently used theme";
+      data_container_mojo->is_theme = true;
+    }
 
     InternalId current_id = InternalId(0);
-    for (const auto& data_item : data_container.items) {
+    for (const auto& data_item : local_data_description.local_data_models) {
       batch_upload::mojom::DataItemPtr data_item_mojo =
           batch_upload::mojom::DataItem::New();
       // Increment the Id everytime to have a unique id per data type.
@@ -150,7 +264,7 @@ BatchUploadHandler::ConstructMojoBatchUploadData(
       // mapping in the Mojo model.
       internal_data_item_id_mapping.insert_or_assign(current_id, data_item.id);
       data_item_mojo->id = current_id.value();
-      data_item_mojo->icon_url = data_item.icon_url.spec();
+      data_item_mojo->icon_url = ComputeIconUrl(data_item.icon).spec();
       data_item_mojo->title = data_item.title;
       data_item_mojo->subtitle = data_item.subtitle;
 
@@ -158,7 +272,7 @@ BatchUploadHandler::ConstructMojoBatchUploadData(
     }
     data_containers_mojo.push_back(std::move(data_container_mojo));
 
-    total_item_count += data_container.items.size();
+    total_item_count += local_data_description.local_data_models.size();
   }
 
   batch_upload::mojom::BatchUploadDataPtr batch_upload_mojo =
@@ -166,10 +280,26 @@ BatchUploadHandler::ConstructMojoBatchUploadData(
 
   batch_upload_mojo->account_info = std::move(account_info_mojo);
   batch_upload_mojo->dialog_subtitle = ComputeBatchUploadSubtitle(
-      /*first_type=*/data_containers_list_[0].type,
-      /*first_type_item_count=*/data_containers_list_[0].items.size(),
-      data_containers_list_.size(), total_item_count);
+      /*first_type=*/local_data_description_list_[0].type,
+      /*first_type_item_count=*/
+      local_data_description_list_[0].local_data_models.size(),
+      local_data_description_list_.size(), total_item_count);
   batch_upload_mojo->data_containers = std::move(data_containers_mojo);
 
   return batch_upload_mojo;
+}
+
+int BatchUploadHandler::GetTypeSectionTitleId(syncer::DataType type) {
+  switch (type) {
+    case syncer::DataType::PASSWORDS:
+      return IDS_BATCH_UPLOAD_SECTION_TITLE_PASSWORDS;
+    case syncer::DataType::BOOKMARKS:
+      return IDS_BATCH_UPLOAD_SECTION_TITLE_BOOKMARKS;
+    case syncer::DataType::CONTACT_INFO:
+      return IDS_BATCH_UPLOAD_SECTION_TITLE_ADDRESSES;
+    case syncer::DataType::THEMES:
+      return IDS_BATCH_UPLOAD_SECTION_TITLE_THEMES;
+    default:
+      NOTREACHED();
+  }
 }

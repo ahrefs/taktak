@@ -25,7 +25,7 @@ import java.util.Optional;
 /** Handles translating the UrlBar model data to the view state. */
 class UrlBarViewBinder {
     /**
-     * @see PropertyModelChangeProcessor.ViewBinder#bind(Object, Object, Object)
+     * @see PropertyModelChangeProcfessor.ViewBinder#bind(Object, Object, Object)
      */
     public static void bind(PropertyModel model, UrlBar view, PropertyKey propertyKey) {
         if (UrlBarProperties.ACTION_MODE_CALLBACK.equals(propertyKey)) {
@@ -34,6 +34,8 @@ class UrlBarViewBinder {
             view.setCustomSelectionActionModeCallback(callback);
         } else if (UrlBarProperties.ALLOW_FOCUS.equals(propertyKey)) {
             view.setAllowFocus(model.get(UrlBarProperties.ALLOW_FOCUS));
+        } else if (UrlBarProperties.IS_IN_CCT.equals(propertyKey)) {
+            view.setIsInCct(model.get(UrlBarProperties.IS_IN_CCT));
         } else if (UrlBarProperties.AUTOCOMPLETE_TEXT.equals(propertyKey)) {
             AutocompleteText autocomplete = model.get(UrlBarProperties.AUTOCOMPLETE_TEXT);
             if (view.shouldAutocomplete()) {
@@ -91,8 +93,6 @@ class UrlBarViewBinder {
             view.setTypingStartedListener(model.get(UrlBarProperties.TYPING_STARTED_LISTENER));
         } else if (UrlBarProperties.KEY_DOWN_LISTENER.equals(propertyKey)) {
             view.setKeyDownListener(model.get(UrlBarProperties.KEY_DOWN_LISTENER));
-        } else if (UrlBarProperties.WINDOW_DELEGATE.equals(propertyKey)) {
-            view.setWindowDelegate(model.get(UrlBarProperties.WINDOW_DELEGATE));
         } else if (UrlBarProperties.HAS_URL_SUGGESTIONS.equals(propertyKey)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 view.setHandwritingBoundsOffsets(

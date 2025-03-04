@@ -33,6 +33,8 @@ constexpr char16_t kDefaultAnswer[] = u"Fake answer";
 
 constexpr char16_t kDefaultContentTitle[] = u"fake content title";
 
+constexpr char16_t kDefaultSelectedText[] = u"fake selected text";
+
 constexpr char kDefaultContentUrl[] = "https://en.wikipedia.org/wiki/Wombat";
 
 const std::vector<chromeos::MahiOutline> kDefaultOutlines(
@@ -75,6 +77,10 @@ gfx::ImageSkia FakeMahiManager::GetContentIcon() {
 
 GURL FakeMahiManager::GetContentUrl() {
   return GURL(kDefaultContentUrl);
+}
+
+std::u16string FakeMahiManager::GetSelectedText() {
+  return current_selected_text_.value_or(kDefaultSelectedText);
 }
 
 void FakeMahiManager::GetContent(MahiContentCallback callback) {
@@ -143,6 +149,7 @@ void FakeMahiManager::OnContextMenuClicked(
   switch (context_menu_request->action_type) {
     // TODO(b:372741602): deal with kElucidation properly
     case MahiContextMenuActionType::kElucidation:
+    case MahiContextMenuActionType::kSummaryOfSelection:
       return;
     case MahiContextMenuActionType::kSummary:
     case MahiContextMenuActionType::kOutline:
@@ -188,7 +195,8 @@ void FakeMahiManager::OnContextMenuClicked(
 
 void FakeMahiManager::OpenMahiPanel(int64_t display_id,
                                     const gfx::Rect& mahi_menu_bounds) {
-  ui_controller_.OpenMahiPanel(display_id, mahi_menu_bounds);
+  ui_controller_.OpenMahiPanel(display_id, mahi_menu_bounds,
+                               /*elucidation_in_use=*/false);
 }
 
 bool FakeMahiManager::IsEnabled() {

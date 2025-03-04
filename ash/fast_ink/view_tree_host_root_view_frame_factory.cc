@@ -17,6 +17,7 @@
 #include "components/viz/common/resources/shared_image_format_utils.h"
 #include "gpu/command_buffer/client/client_shared_image.h"
 #include "gpu/command_buffer/client/shared_image_interface.h"
+#include "gpu/command_buffer/common/shared_image_capabilities.h"
 #include "gpu/command_buffer/common/shared_image_usage.h"
 #include "ui/aura/env.h"
 #include "ui/aura/window_tree_host.h"
@@ -79,7 +80,9 @@ ViewTreeHostRootViewFrameFactory::CreateUiResource(
       resource->context_provider->SharedImageInterface();
 
   gpu::SharedImageUsageSet usage = gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
-  if (is_overlay_candidate) {
+
+  if (is_overlay_candidate &&
+      sii->GetCapabilities().supports_scanout_shared_images) {
     usage |= gpu::SHARED_IMAGE_USAGE_SCANOUT;
   }
 
@@ -275,7 +278,6 @@ void ViewTreeHostRootViewFrameFactory::AppendQuad(
                        /*needs_blending=*/true, resource.id,
                        /*premultiplied=*/true, uv_crop.origin(),
                        uv_crop.bottom_right(), SkColors::kTransparent,
-                       /*flipped=*/false,
                        /*nearest=*/false,
                        /*secure_output=*/false,
                        gfx::ProtectedVideoType::kClear);

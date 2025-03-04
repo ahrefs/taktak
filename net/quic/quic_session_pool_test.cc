@@ -81,6 +81,7 @@
 #include "net/socket/next_proto.h"
 #include "net/socket/socket_tag.h"
 #include "net/socket/socket_test_util.h"
+#include "net/spdy/multiplexed_session_creation_initiator.h"
 #include "net/spdy/spdy_session_test_util.h"
 #include "net/spdy/spdy_test_util_common.h"
 #include "net/ssl/test_ssl_config_service.h"
@@ -128,18 +129,14 @@ class QuicHttpStreamPeer {
 
 namespace {
 
-// Run QuicSessionPoolTest instances with all value combinations of version
-// and the `PriorityHeader` feature.
+// Run QuicSessionPoolTest instances with all values of version.
 struct TestParams {
   quic::ParsedQuicVersion version;
-  bool priority_header_enabled;
 };
 
 // Used by ::testing::PrintToStringParamName().
 std::string PrintToString(const TestParams& p) {
-  return base::StrCat({ParsedQuicVersionToString(p.version), "_",
-                       p.priority_header_enabled ? "PriorityHeaderEnabled"
-                                                 : "PriorityHeaderDisabled"});
+  return ParsedQuicVersionToString(p.version);
 }
 
 std::vector<TestParams> GetTestParams() {
@@ -147,8 +144,7 @@ std::vector<TestParams> GetTestParams() {
   quic::ParsedQuicVersionVector all_supported_versions =
       AllSupportedQuicVersions();
   for (const auto& version : all_supported_versions) {
-    params.push_back(TestParams{version, true});
-    params.push_back(TestParams{version, false});
+    params.push_back(TestParams{version});
   }
   return params;
 }
@@ -171,6 +167,12 @@ class SessionAttemptHelper : public QuicSessionAttempt::Delegate {
         SessionUsage::kDestination, SocketTag(), NetworkAnonymizationKey(),
         SecureDnsPolicy::kAllow, /*require_dns_https_alpn=*/false);
     quic_session_alias_key_ = QuicSessionAliasKey(destination, session_key);
+    attempt_ = pool_->CreateSessionAttempt(
+        this, quic_session_alias_key_.session_key(), quic_endpoint,
+        /*cert_verify_flags=*/0,
+        /*dns_resolution_start_time=*/base::TimeTicks(),
+        /*dns_resolution_end_time=*/base::TimeTicks(), /*use_dns_aliases=*/true,
+        /*dns_aliases=*/{}, MultiplexedSessionCreationInitiator::kUnknown);
   }
 
   SessionAttemptHelper(const SessionAttemptHelper&) = delete;
@@ -186,15 +188,11 @@ class SessionAttemptHelper : public QuicSessionAttempt::Delegate {
   const NetLogWithSource& GetNetLog() override { return net_log_; }
 
   int Start() {
-    attempt_ = pool_->CreateSessionAttempt(
-        this, quic_session_alias_key_.session_key(), quic_endpoint,
-        /*cert_verify_flags=*/0,
-        /*dns_resolution_start_time=*/base::TimeTicks(),
-        /*dns_resolution_end_time=*/base::TimeTicks(), /*use_dns_aliases=*/true,
-        /*dns_aliases=*/{});
     return attempt_->Start(base::BindOnce(&SessionAttemptHelper::OnComplete,
                                           base::Unretained(this)));
   }
+
+  QuicSessionAttempt* attempt() const { return attempt_.get(); }
 
   std::optional<int> result() const { return result_; }
 
@@ -318,11 +316,6 @@ class QuicSessionPoolTest : public QuicSessionPoolTestBase,
   QuicSessionPoolTest()
       : QuicSessionPoolTestBase(GetParam().version),
         runner_(base::MakeRefCounted<TestTaskRunner>(context_.mock_clock())) {
-    if (GetParam().priority_header_enabled) {
-      feature_list_.InitAndEnableFeature(net::features::kPriorityHeader);
-    } else {
-      feature_list_.InitAndDisableFeature(net::features::kPriorityHeader);
-    }
   }
 
   void RunTestLoopUntilIdle();
@@ -401,9 +394,6 @@ class QuicSessionPoolTest : public QuicSessionPoolTestBase,
   }
 
   scoped_refptr<TestTaskRunner> runner_;
-
- private:
-  base::test::ScopedFeatureList feature_list_;
 };
 
 void QuicSessionPoolTest::RunTestLoopUntilIdle() {
@@ -570,7 +560,7 @@ void QuicSessionPoolTest::VerifyInitialization(
   QuicSessionPoolPeer::SetTaskRunner(factory_.get(), runner_.get());
 
   const AlternativeService alternative_service1(
-      kProtoQUIC, kDefaultServerHostName, kDefaultServerPort);
+      NextProto::kProtoQUIC, kDefaultServerHostName, kDefaultServerPort);
   AlternativeServiceInfoVector alternative_service_info_vector;
   base::Time expiration = base::Time::Now() + base::Days(1);
   alternative_service_info_vector.push_back(
@@ -582,7 +572,7 @@ void QuicSessionPoolTest::VerifyInitialization(
       network_anonymization_key1, alternative_service_info_vector);
 
   const AlternativeService alternative_service2(
-      kProtoQUIC, quic_server_id2.host(), quic_server_id2.port());
+      NextProto::kProtoQUIC, quic_server_id2.host(), quic_server_id2.port());
   AlternativeServiceInfoVector alternative_service_info_vector2;
   alternative_service_info_vector2.push_back(
       AlternativeServiceInfo::CreateQuicAlternativeServiceInfo(
@@ -11033,7 +11023,7 @@ TEST_P(QuicSessionPoolTest, NoRetransmittableOnWireTimeout) {
   base::RunLoop().RunUntilIdle();
 
   // Verify the ping alarm is set, but not with the default timeout.
-  const quic::QuicAlarm& ping_alarm =
+  const quic::QuicAlarmProxy ping_alarm =
       quic::test::QuicConnectionPeer::GetPingAlarm(session->connection());
   ASSERT_TRUE(ping_alarm.IsSet());
   quic::QuicTime::Delta delay =
@@ -11286,7 +11276,7 @@ TEST_P(QuicSessionPoolTest,
   base::RunLoop().RunUntilIdle();
 
   // Verify the ping alarm is set, but not with the default timeout.
-  const quic::QuicAlarm& ping_alarm =
+  const quic::QuicAlarmProxy ping_alarm =
       quic::test::QuicConnectionPeer::GetPingAlarm(session->connection());
   ASSERT_TRUE(ping_alarm.IsSet());
   quic::QuicTime::Delta delay =
@@ -12603,7 +12593,7 @@ TEST_P(QuicSessionPoolTest,
     QuicSessionPoolPeer::SetTaskRunner(factory_.get(), runner_.get());
 
     const AlternativeService alternative_service1(
-        kProtoQUIC, kDefaultServerHostName, kDefaultServerPort);
+        NextProto::kProtoQUIC, kDefaultServerHostName, kDefaultServerPort);
     AlternativeServiceInfoVector alternative_service_info_vector;
     base::Time expiration = base::Time::Now() + base::Days(1);
     alternative_service_info_vector.push_back(
@@ -12899,8 +12889,7 @@ class QuicSessionPoolWithDestinationTest
       case DIFFERENT:
         return url::SchemeHostPort(url::kHttpsScheme, kDifferentHostname, 443);
       default:
-        NOTREACHED_IN_MIGRATION();
-        return url::SchemeHostPort();
+        NOTREACHED();
     }
   }
 
@@ -14738,11 +14727,18 @@ TEST_P(QuicSessionPoolTest, CreateSessionAttempt) {
 
   SessionAttemptHelper session_attempt(factory_.get(), version_);
 
+  NetErrorDetails details;
+  session_attempt.attempt()->PopulateNetErrorDetails(&details);
+  EXPECT_EQ(details.connection_info, HttpConnectionInfo::kUNKNOWN);
+
   int rv = session_attempt.Start();
   EXPECT_THAT(rv, IsError(ERR_IO_PENDING));
   RunUntilIdle();
   EXPECT_THAT(session_attempt.result(), testing::Optional(OK));
   ASSERT_TRUE(GetActiveSession(kDefaultDestination));
+  session_attempt.attempt()->PopulateNetErrorDetails(&details);
+  // Check HttpConnectionInfo is updated, we don't care about the actual value.
+  EXPECT_NE(details.connection_info, HttpConnectionInfo::kUNKNOWN);
 
   socket_data.ExpectAllReadDataConsumed();
   socket_data.ExpectAllWriteDataConsumed();

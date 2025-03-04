@@ -14,16 +14,20 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Pair;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.chromium.components.webapk.lib.common.WebApkMetaDataKeys;
 import org.chromium.webapk.lib.common.WebApkConstants;
+import org.chromium.webapk.shell_apk.HostBrowserUtils.PackageNameAndComponentName;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
 /** Convenience wrapper for parameters to {@link HostBrowserLauncher} methods. */
 public class HostBrowserLauncherParams {
-    private boolean mIsNewStyleWebApk;
-    private String mHostBrowserPackageName;
+    private boolean mIsArcChromeOs;
+    @NonNull private PackageNameAndComponentName mHostBrowserPackageNameAndComponentName;
     private boolean mDialogShown;
     private Intent mOriginalIntent;
     private String mStartUrl;
@@ -40,7 +44,7 @@ public class HostBrowserLauncherParams {
     public static HostBrowserLauncherParams createForIntent(
             Context context,
             Intent intent,
-            String hostBrowserPackageName,
+            @NonNull PackageNameAndComponentName hostBrowserPackageNameAndComponentName,
             boolean dialogShown,
             long launchTimeMs,
             long splashShownTimeMs) {
@@ -98,11 +102,11 @@ public class HostBrowserLauncherParams {
         // Ignore deep links which came with non HTTP/HTTPS schemes and which were not rewritten.
         if (!doesUrlUseHttpOrHttpsScheme(startUrl)) return null;
 
-        boolean isNewStyleWebApk = metadata.getBoolean(WebApkMetaDataKeys.IS_NEW_STYLE_WEBAPK);
+        boolean isArcChromeos = metadata.getBoolean(WebApkMetaDataKeys.IS_ARC_CHROMEOS);
 
         return new HostBrowserLauncherParams(
-                isNewStyleWebApk,
-                hostBrowserPackageName,
+                isArcChromeos,
+                hostBrowserPackageNameAndComponentName,
                 dialogShown,
                 intent,
                 startUrl,
@@ -224,8 +228,8 @@ public class HostBrowserLauncherParams {
     }
 
     private HostBrowserLauncherParams(
-            boolean isNewStyleWebApk,
-            String hostBrowserPackageName,
+            boolean isArcChromeOs,
+            @NonNull PackageNameAndComponentName hostBrowserPackageNameAndComponentName,
             boolean dialogShown,
             Intent originalIntent,
             String startUrl,
@@ -234,8 +238,8 @@ public class HostBrowserLauncherParams {
             long launchTimeMs,
             long splashShownTimeMs,
             String selectedShareTargetActivityClassName) {
-        mIsNewStyleWebApk = isNewStyleWebApk;
-        mHostBrowserPackageName = hostBrowserPackageName;
+        mIsArcChromeOs = isArcChromeOs;
+        mHostBrowserPackageNameAndComponentName = hostBrowserPackageNameAndComponentName;
         mDialogShown = dialogShown;
         mOriginalIntent = originalIntent;
         mStartUrl = startUrl;
@@ -251,12 +255,17 @@ public class HostBrowserLauncherParams {
      * enabled for new-style WebAPKs.
      */
     public boolean isNewStyleWebApk() {
-        return mIsNewStyleWebApk;
+        return !mIsArcChromeOs;
     }
 
-    /** Returns the chosen host browser. */
-    public String getHostBrowserPackageName() {
-        return mHostBrowserPackageName;
+    /** Returns the chosen host browser Package Name. */
+    public @NonNull String getHostBrowserPackageName() {
+        return mHostBrowserPackageNameAndComponentName.getPackageName();
+    }
+
+    /** Returns the chosen host browser Component Name. */
+    public @Nullable ComponentName getHostBrowserComponentName() {
+        return mHostBrowserPackageNameAndComponentName.getComponentName();
     }
 
     /** Returns whether the choose-host-browser dialog was shown. */

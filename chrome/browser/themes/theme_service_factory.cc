@@ -8,8 +8,7 @@
 #include "base/no_destructor.h"
 #include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
-#include "chrome/browser/extensions/extension_system_factory.h"
+#include "chrome/browser/extensions/chrome_extension_system_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/themes/theme_service.h"
 #include "chrome/common/pref_names.h"
@@ -25,13 +24,8 @@
 #include "chrome/browser/themes/theme_helper_win.h"
 #endif
 
-// TODO(crbug.com/40118868): Revisit the macro expression once build flag switch
-// of lacros-chrome is complete.
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)
-#include "chrome/browser/themes/theme_service_aura_linux.h"
-#endif
-
 #if BUILDFLAG(IS_LINUX)
+#include "chrome/browser/themes/theme_service_aura_linux.h"
 #include "ui/linux/linux_ui_factory.h"
 #endif
 
@@ -55,7 +49,8 @@ BASE_FEATURE(kProfileBasedThemeService,
 
 // static
 ThemeService* ThemeServiceFactory::GetForProfile(Profile* profile) {
-  TRACE_EVENT0("loading", "ThemeServiceFactory::GetForProfile");
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("loading"),
+              "ThemeServiceFactory::GetForProfile");
   if (base::FeatureList::IsEnabled(kProfileBasedThemeService)) {
     if (!profile->theme_service()) {
       profile->set_theme_service(static_cast<ThemeService*>(
@@ -71,8 +66,9 @@ ThemeService* ThemeServiceFactory::GetForProfile(Profile* profile) {
 const extensions::Extension* ThemeServiceFactory::GetThemeForProfile(
     Profile* profile) {
   ThemeService* theme_service = GetForProfile(profile);
-  if (!theme_service->UsingExtensionTheme())
+  if (!theme_service->UsingExtensionTheme()) {
     return nullptr;
+  }
 
   return extensions::ExtensionRegistry::Get(profile)
       ->enabled_extensions()
@@ -99,12 +95,13 @@ ThemeServiceFactory::ThemeServiceFactory()
               .Build()) {
   DependsOn(extensions::ExtensionRegistryFactory::GetInstance());
   DependsOn(extensions::ExtensionPrefsFactory::GetInstance());
-  DependsOn(extensions::ExtensionSystemFactory::GetInstance());
+  DependsOn(extensions::ChromeExtensionSystemFactory::GetInstance());
 }
 
 ThemeServiceFactory::~ThemeServiceFactory() = default;
 
-KeyedService* ThemeServiceFactory::BuildServiceInstanceFor(
+std::unique_ptr<KeyedService>
+ThemeServiceFactory::BuildServiceInstanceForBrowserContext(
     content::BrowserContext* profile) const {
 #if BUILDFLAG(IS_LINUX)
   using ThemeService = ThemeServiceAuraLinux;
@@ -113,20 +110,14 @@ KeyedService* ThemeServiceFactory::BuildServiceInstanceFor(
   auto provider = std::make_unique<ThemeService>(static_cast<Profile*>(profile),
                                                  GetThemeHelper());
   provider->Init();
-  return provider.release();
+  return provider;
 }
 
 void ThemeServiceFactory::RegisterProfilePrefs(
     user_prefs::PrefRegistrySyncable* registry) {
-// TODO(crbug.com/40118868): Revisit the macro expression once build flag switch
-// of lacros-chrome is complete.
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)
-  ui::SystemTheme default_system_theme = ui::SystemTheme::kDefault;
 #if BUILDFLAG(IS_LINUX)
-  default_system_theme = ui::GetDefaultSystemTheme();
-#endif
   registry->RegisterIntegerPref(prefs::kSystemTheme,
-                                static_cast<int>(default_system_theme));
+                                static_cast<int>(ui::GetDefaultSystemTheme()));
 #endif
   registry->RegisterFilePathPref(prefs::kCurrentThemePackFilename,
                                  base::FilePath());

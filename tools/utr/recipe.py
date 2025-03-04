@@ -40,7 +40,10 @@ def check_luci_context_auth():
   if not luci_auth_path:
     logging.error("'luci-auth' binary not found. Is depot_tools not on PATH?")
     return False
-  cmd = [luci_auth_path, 'info', '-scopes-context']
+  cmd = [
+      luci_auth_path, 'info', '-scopes',
+      'https://www.googleapis.com/auth/userinfo.email'
+  ]
   try:
     subprocess.run(cmd,
                    stdout=subprocess.PIPE,
@@ -51,7 +54,8 @@ def check_luci_context_auth():
     logging.error('luci-auth context auth unavailable:')
     logging.error(e.output.strip())
     logging.error(
-        "Please run 'luci-auth login -scopes-context' to authenticate, "
+        "Please run 'luci-auth login -scopes "
+        "https://www.googleapis.com/auth/userinfo.email' to authenticate, "
         'preferring your @google.com account if you have one.')
     return False
   return True
@@ -97,10 +101,12 @@ class LegacyRunner:
                skip_compile,
                skip_test,
                skip_prompts,
-               build_dir=None,
+               build_dir,
                additional_test_args=None,
                reuse_task=None,
-               skip_coverage=False):
+               skip_coverage=False,
+               no_rbe=False,
+               no_siso=False):
     """Constructor for LegacyRunner
 
     Args:
@@ -113,11 +119,12 @@ class LegacyRunner:
       skip_compile: If True, the UTR will only run the tests.
       skip_test: If True, the UTR will only compile.
       skip_prompts: If True, skip Y/N prompts for warnings.
-      skip_coverage: If True, skip code coverage instrumentation.
-      build_dir: pathlib.Path to the build dir to build in. Will use the UTR's
-          default otherwise if needed.
+      build_dir: pathlib.Path to the build dir to build in.
       additional_test_args: List of additional args to pass to the tests.
       reuse_task: String of a swarming task to reuse.
+      skip_coverage: If True, skip code coverage instrumentation.
+      no_rbe: If True, disables RBE during compile.
+      no_siso: If True, disabled Siso during compile and isolate.
     """
     self._recipes_py = recipes_py
     self._skip_coverage = skip_coverage
@@ -143,13 +150,11 @@ class LegacyRunner:
     # https://chromium.googlesource.com/chromium/tools/build/+/HEAD/recipes/recipes/chromium/universal_test_runner.proto
     input_props = builder_props.copy()
     input_props['checkout_path'] = str(_SRC_DIR)
-    input_props['$recipe_engine/path'] = {'cache_dir': str(_SRC_DIR.parent)}
     input_props['test_names'] = tests
     input_props['$build/chromium_swarming'] = {'task_realm': self._luci_realm}
+    input_props['build_dir'] = str(build_dir.absolute())
     if additional_test_args:
       input_props['additional_test_args'] = additional_test_args
-    if build_dir:
-      input_props['build_dir'] = str(build_dir.absolute())
     # The recipe will overwrite this property so we have to put it preserve it
     # elsewhere
     if 'recipe' in input_props:
@@ -179,6 +184,14 @@ class LegacyRunner:
             },
         },
     }
+    # Some merge scripts need these two props. eg: The android result merge
+    # incorporates buildnumber in the GS URL it uploads to. We don't want the
+    # URL in UTR runs colliding with real builds' URLs, so we go with a dummy
+    # hardcoded 0. This might lead to URLs for UTR runs colliding with other
+    # UTR runs, but at least they'll be isolated from real builds.
+    # TODO(crbug.com/395081730): Remove these two props when safe.
+    input_props['buildername'] = builder
+    input_props['buildnumber'] = 0
     # TODO(crbug.com/41492688): Ensure the chrome version for internal builders
     # when they are added.
     # Set reclient and siso to use untrusted even for imitating ci builders
@@ -188,6 +201,10 @@ class LegacyRunner:
     if not '$build/siso' in input_props:
       input_props['$build/siso'] = {}
     input_props['$build/siso']['project'] = self._get_siso_project()
+    if no_rbe:
+      input_props['no_rbe'] = True
+    if no_siso:
+      input_props['no_siso'] = True
     self._input_props = input_props
 
   def _merge_rerun_props(self, rerun_props_from_recipe):
@@ -248,9 +265,6 @@ class LegacyRunner:
       rerun_props_path = pathlib.Path(tmp_dir).joinpath('rerun_props.json')
       input_props['output_properties_file'] = str(rerun_props_path)
       cmd = [
-          'luci-auth',
-          'context',
-          '--',
           'rdb',
           'stream',
           '-new',

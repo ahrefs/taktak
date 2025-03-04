@@ -16,6 +16,7 @@
 #import "base/logging.h"
 #import "base/memory/raw_ptr.h"
 #import "base/metrics/field_trial.h"
+#import "base/metrics/histogram_functions.h"
 #import "base/no_destructor.h"
 #import "base/rand_util.h"
 #import "base/strings/stringprintf.h"
@@ -146,7 +147,7 @@ class XmlWrapper {
 #pragma mark -
 
 // XML parser for the server response.
-@interface ResponseParser : NSObject<NSXMLParserDelegate> {
+@interface ResponseParser : NSObject <NSXMLParserDelegate> {
   BOOL _hasError;
   BOOL _responseIsParsed;
   BOOL _appIsParsed;
@@ -234,14 +235,16 @@ class XmlWrapper {
        namespaceURI:(NSString*)namespaceURI
       qualifiedName:(NSString*)qualifiedName
          attributes:(NSDictionary*)attributeDict {
-  if (_hasError)
+  if (_hasError) {
     return;
+  }
 
   // Array of uninteresting tags in the Omaha xml response.
   NSArray* ignoredTagNames =
       @[ @"action", @"actions", @"package", @"packages", @"ping", @"urls" ];
-  if ([ignoredTagNames containsObject:elementName])
+  if ([ignoredTagNames containsObject:elementName]) {
     return;
+  }
 
   if (!_responseIsParsed) {
     if ([elementName isEqualToString:@"response"] &&
@@ -302,11 +305,13 @@ class XmlWrapper {
       _urlIsParsed = YES;
       DCHECK(_updateInformation);
       NSString* url = [attributeDict valueForKey:@"codebase"];
-      if ([[url substringFromIndex:([url length] - 1)] isEqualToString:@"/"])
+      if ([[url substringFromIndex:([url length] - 1)] isEqualToString:@"/"]) {
         url = [url substringToIndex:([url length] - 1)];
+      }
       _updateInformation->upgrade_url = GURL(base::SysNSStringToUTF8(url));
-      if (!_updateInformation->upgrade_url.is_valid())
+      if (!_updateInformation->upgrade_url.is_valid()) {
         _hasError = YES;
+      }
     } else {
       _hasError = YES;
     }
@@ -394,6 +399,17 @@ void OmahaService::Start(std::unique_ptr<network::PendingSharedURLLoaderFactory>
   web::GetIOThreadTaskRunner({})->PostTask(
       FROM_HERE, base::BindOnce(&OmahaService::SendOrScheduleNextPing,
                                 base::Unretained(service)));
+}
+
+// static
+bool OmahaService::HasStarted() {
+  if (!OmahaService::IsEnabled()) {
+    return false;
+  }
+
+  OmahaService* service = GetInstance();
+
+  return service->started_;
 }
 
 // static
@@ -509,6 +525,8 @@ OmahaService::~OmahaService() {
 
 void OmahaService::StartInternal(
     const scoped_refptr<base::SequencedTaskRunner> task_runner) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
   if (started_) {
     return;
   }
@@ -570,8 +588,15 @@ void OmahaService::StartInternal(
     persist_again = true;
   }
 
-  if (persist_again)
+  if (persist_again) {
     PersistStates();
+  }
+
+  if (IsOmahaServiceRefactorEnabled()) {
+    for (auto& observer : observers_) {
+      observer.OnServiceStarted(this);
+    }
+  }
 }
 
 // static
@@ -674,8 +699,9 @@ std::string OmahaService::GetPingContent(const std::string& requestId,
       }
 
       // If the install date is unknown, send nothing.
-      if (!install_age.empty())
+      if (!install_age.empty()) {
         app_element.AddAttribute("installage", install_age);
+      }
 
       if (pingContent == INSTALL_EVENT) {
         // Add an install complete event.
@@ -776,8 +802,9 @@ void OmahaService::SendPing() {
 
   // Update last fail time and number of tries, so that if anything fails
   // catastrophically, the fail is taken into account.
-  if (number_of_tries_ < 30)
+  if (number_of_tries_ < 30) {
     ++number_of_tries_;
+  }
   next_tries_time_ = base::Time::Now() + GetBackOff(number_of_tries_);
   PersistStates();
 
@@ -904,6 +931,7 @@ void OmahaService::OnURLLoadComplete(
           ? base::Time::Now()
           : base::Time::Now() + base::Hours(kHoursBetweenRequests);
   current_ping_time_ = next_tries_time_;
+  base::Time original_last_sent_time = last_sent_time_;
   last_sent_time_ = base::Time::Now();
   last_sent_version_ = version_info::GetVersion();
   sending_install_event_ = false;
@@ -911,6 +939,11 @@ void OmahaService::OnURLLoadComplete(
   ClearInstallRetryRequestId();
   PersistStates();
   bool need_to_schedule_ping = true;
+
+  // Log metrics.
+  base::TimeDelta success_delta = last_sent_time_ - original_last_sent_time;
+  base::UmaHistogramCounts1000("IOS.Omaha.HoursSinceLastSuccess",
+                               success_delta.InHours());
 
   // Send notification for updates if needed.
   UpgradeRecommendedDetails* details = [delegate upgradeRecommendedDetails];
@@ -978,8 +1011,9 @@ std::string OmahaService::GetNextPingRequestId(PingContent ping_content) {
     return base::SysNSStringToUTF8(stored_id);
   } else {
     std::string identifier = ios::device_util::GetRandomId();
-    if (ping_content == INSTALL_EVENT)
+    if (ping_content == INSTALL_EVENT) {
       OmahaService::SetInstallRetryRequestId(identifier);
+    }
     return identifier;
   }
 }

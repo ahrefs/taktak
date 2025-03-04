@@ -109,7 +109,7 @@ class CONTENT_EXPORT CompositorImpl : public Compositor,
   // Compositor implementation.
   void SetRootWindow(gfx::NativeWindow root_window) override;
   void SetRootLayer(scoped_refptr<cc::slim::Layer> root) override;
-  void SetSurface(
+  std::optional<gpu::SurfaceHandle> SetSurface(
       const base::android::JavaRef<jobject>& surface,
       bool can_be_used_with_surface_control,
       const base::android::JavaRef<jobject>& host_input_token) override;
@@ -145,6 +145,7 @@ class CONTENT_EXPORT CompositorImpl : public Compositor,
       std::unique_ptr<viz::CopyOutputRequest> request) override;
   void SetNeedsAnimate() override;
   viz::FrameSinkId GetFrameSinkId() override;
+  gpu::SurfaceHandle GetSurfaceHandle() override;
   void AddChildFrameSink(const viz::FrameSinkId& frame_sink_id) override;
   void RemoveChildFrameSink(const viz::FrameSinkId& frame_sink_id) override;
   bool IsDrawingFirstVisibleFrame() const override;

@@ -24,13 +24,6 @@ const char kDisableModalAnimations[] = "disable-modal-animations";
 const char kShowMacOverlayBorders[] = "show-mac-overlay-borders";
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS)
-// Enable resources file sharing with ash-chrome.
-// This flag is enabled when feature::kLacrosResourcesFileSharing is set and
-// ash-side operation is successfully done.
-const char kEnableResourcesFileSharing[] = "enable-resources-file-sharing";
-#endif
-
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
 // Specifies system font family name. Improves determenism when rendering
 // pages in headless mode.
@@ -112,5 +105,9 @@ const char kUIDisablePartialSwap[] = "ui-disable-partial-swap";
 
 // Enables the ozone x11 clipboard for linux-chromeos.
 const char kUseSystemClipboard[] = "use-system-clipboard";
+
+// Headless screen info in the format: {0,0 800x600}{800,0 600x800}.
+// See //components/headless/screen_info/headless_screen_info.h for details.
+const char kScreenInfo[] = "screen-info";
 
 }  // namespace switches

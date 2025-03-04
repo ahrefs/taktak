@@ -4,11 +4,13 @@
 
 #include "chrome/browser/safe_browsing/cloud_content_scanning/cloud_binary_upload_service.h"
 
+#include <algorithm>
+
 #include "base/base64.h"
 #include "base/command_line.h"
 #include "base/metrics/histogram_functions.h"
-#include "base/ranges/algorithm.h"
 #include "chrome/browser/enterprise/browser_management/management_service_factory.h"
+#include "chrome/browser/enterprise/connectors/analysis/content_analysis_features.h"
 #include "chrome/browser/enterprise/connectors/common.h"
 #include "chrome/browser/enterprise/connectors/connectors_service.h"
 #include "chrome/browser/enterprise/util/affiliation.h"
@@ -23,6 +25,7 @@
 #include "components/policy/core/common/management/management_service.h"
 #include "components/safe_browsing/content/browser/web_ui/safe_browsing_ui.h"
 #include "components/safe_browsing/core/common/features.h"
+#include "components/safe_browsing/core/common/safebrowsing_switches.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "net/http/http_status_code.h"
@@ -30,10 +33,7 @@
 namespace safe_browsing {
 namespace {
 
-// The command line flag to control the max amount of concurrent active
-// requests.
 // TODO(crbug.com/40174400): Tweak this number to an "optimal" value.
-constexpr char kMaxParallelActiveRequests[] = "wp-max-parallel-active-requests";
 constexpr int kDefaultMaxParallelActiveRequests = 5;
 
 constexpr base::TimeDelta kAuthTimeout = base::Seconds(10);
@@ -185,11 +185,11 @@ bool IgnoreErrorResultForResumableUpload(BinaryUploadService::Request* request,
 // static
 size_t CloudBinaryUploadService::GetParallelActiveRequestsMax() {
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-  if (command_line->HasSwitch(kMaxParallelActiveRequests)) {
+  if (command_line->HasSwitch(switches::kWpMaxParallelActiveRequests)) {
     int parsed_max;
-    if (base::StringToInt(
-            command_line->GetSwitchValueASCII(kMaxParallelActiveRequests),
-            &parsed_max) &&
+    if (base::StringToInt(command_line->GetSwitchValueASCII(
+                              switches::kWpMaxParallelActiveRequests),
+                          &parsed_max) &&
         parsed_max > 0) {
       return parsed_max;
     } else {
@@ -202,18 +202,28 @@ size_t CloudBinaryUploadService::GetParallelActiveRequestsMax() {
 
 CloudBinaryUploadService::CloudBinaryUploadService(Profile* profile)
     : url_loader_factory_(profile->GetURLLoaderFactory()),
-      binary_fcm_service_(BinaryFCMService::Create(profile)),
       profile_(profile),
-      weakptr_factory_(this) {}
+      weakptr_factory_(this) {
+  // Only initialize binary_fcm_service_ if the experiment is off.
+  if (!enterprise_connectors::IsStopRegisterFcmEnabled()) {
+    binary_fcm_service_ = BinaryFCMService::Create(profile);
+  }
+}
 
 CloudBinaryUploadService::CloudBinaryUploadService(
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
     Profile* profile,
     std::unique_ptr<BinaryFCMService> binary_fcm_service)
     : url_loader_factory_(url_loader_factory),
-      binary_fcm_service_(std::move(binary_fcm_service)),
       profile_(profile),
-      weakptr_factory_(this) {}
+      weakptr_factory_(this) {
+  {
+    // Only initialize binary_fcm_service_ if the experiment is off.
+    if (!enterprise_connectors::IsStopRegisterFcmEnabled()) {
+      binary_fcm_service_ = std::move(binary_fcm_service);
+    }
+  }
+}
 
 CloudBinaryUploadService::~CloudBinaryUploadService() = default;
 
@@ -380,6 +390,7 @@ void CloudBinaryUploadService::OnGetInstanceID(Request::Id request_id,
 
   if (instance_id != BinaryFCMService::kInvalidId) {
     request->set_fcm_token(instance_id);
+
     // Record FCM token fetching duration only if it is successful.
     base::UmaHistogramCustomTimes(
         "SafeBrowsingBinaryUploadRequest.TimeToGetFCMToken",
@@ -436,8 +447,8 @@ void CloudBinaryUploadService::OnGetRequestData(Request::Id request_id,
 
   if (result != Result::SUCCESS) {
     if (!IgnoreErrorResultForResumableUpload(request, result)) {
-      FinishRequest(request, result,
-                    enterprise_connectors::ContentAnalysisResponse());
+      FinishAndCleanupRequest(request, result,
+                              enterprise_connectors::ContentAnalysisResponse());
       return;
     }
 
@@ -451,8 +462,8 @@ void CloudBinaryUploadService::OnGetRequestData(Request::Id request_id,
     // A size of 0 implies an edge case like an empty file being uploaded. In
     // such a case, the file doesn't need to scan so the request can simply
     // finish early.
-    FinishRequest(request, Result::SUCCESS,
-                  enterprise_connectors::ContentAnalysisResponse());
+    FinishAndCleanupRequest(request, Result::SUCCESS,
+                            enterprise_connectors::ContentAnalysisResponse());
     return;
   }
 
@@ -465,21 +476,25 @@ void CloudBinaryUploadService::OnGetRequestData(Request::Id request_id,
     url = GetUploadUrl(IsConsumerScanRequest(*request));
   net::NetworkTrafficAnnotationTag traffic_annotation =
       GetTrafficAnnotationTag(IsConsumerScanRequest(*request));
+  std::string histogram_suffix =
+      IsConsumerScanRequest(*request) ? "ConsumerUpload" : "EnterpriseUpload";
   auto callback = base::BindOnce(&CloudBinaryUploadService::OnUploadComplete,
                                  weakptr_factory_.GetWeakPtr(), request_id);
   std::unique_ptr<ConnectorUploadRequest> upload_request;
   if (request->IsAuthRequest() || !data.contents.empty()) {
     upload_request = MultipartUploadRequest::CreateStringRequest(
-        url_loader_factory_, url, metadata, data.contents,
+        url_loader_factory_, url, metadata, data.contents, histogram_suffix,
         std::move(traffic_annotation), std::move(callback));
   } else if (!data.path.empty()) {
     upload_request =
         enterprise_connectors::IsResumableUpload(*request)
             ? ResumableUploadRequest::CreateFileRequest(
                   url_loader_factory_, url, metadata, result, data.path,
-                  data.size, std::move(traffic_annotation), std::move(callback))
+                  data.size, data.is_obfuscated, histogram_suffix,
+                  std::move(traffic_annotation), std::move(callback))
             : MultipartUploadRequest::CreateFileRequest(
                   url_loader_factory_, url, metadata, data.path, data.size,
+                  data.is_obfuscated, histogram_suffix,
                   std::move(traffic_annotation), std::move(callback));
 
   } else if (data.page.IsValid()) {
@@ -487,16 +502,14 @@ void CloudBinaryUploadService::OnGetRequestData(Request::Id request_id,
         enterprise_connectors::IsResumableUpload(*request)
             ? ResumableUploadRequest::CreatePageRequest(
                   url_loader_factory_, url, metadata, result,
-                  std::move(data.page), std::move(traffic_annotation),
-                  std::move(callback))
+                  std::move(data.page), histogram_suffix,
+                  std::move(traffic_annotation), std::move(callback))
             : MultipartUploadRequest::CreatePageRequest(
                   url_loader_factory_, url, metadata, std::move(data.page),
-                  std::move(traffic_annotation), std::move(callback));
+                  histogram_suffix, std::move(traffic_annotation),
+                  std::move(callback));
   } else {
-    NOTREACHED_IN_MIGRATION();
-    FinishRequest(request, Result::UNKNOWN,
-                  enterprise_connectors::ContentAnalysisResponse());
-    return;
+    NOTREACHED();
   }
   upload_request->set_access_token(request->access_token());
 
@@ -522,27 +535,27 @@ void CloudBinaryUploadService::OnUploadComplete(
   }
 
   if (http_status == net::HTTP_UNAUTHORIZED) {
-    FinishRequest(request, Result::UNAUTHORIZED,
-                  enterprise_connectors::ContentAnalysisResponse());
+    FinishAndCleanupRequest(request, Result::UNAUTHORIZED,
+                            enterprise_connectors::ContentAnalysisResponse());
     return;
   }
 
   if (http_status == net::HTTP_TOO_MANY_REQUESTS) {
-    FinishRequest(request, Result::TOO_MANY_REQUESTS,
-                  enterprise_connectors::ContentAnalysisResponse());
+    FinishAndCleanupRequest(request, Result::TOO_MANY_REQUESTS,
+                            enterprise_connectors::ContentAnalysisResponse());
     return;
   }
 
   if (!success) {
-    FinishRequest(request, Result::UPLOAD_FAILURE,
-                  enterprise_connectors::ContentAnalysisResponse());
+    FinishAndCleanupRequest(request, Result::UPLOAD_FAILURE,
+                            enterprise_connectors::ContentAnalysisResponse());
     return;
   }
 
   enterprise_connectors::ContentAnalysisResponse response;
   if (!response.ParseFromString(response_data)) {
-    FinishRequest(request, Result::UPLOAD_FAILURE,
-                  enterprise_connectors::ContentAnalysisResponse());
+    FinishAndCleanupRequest(request, Result::UPLOAD_FAILURE,
+                            enterprise_connectors::ContentAnalysisResponse());
     return;
   }
 
@@ -561,8 +574,8 @@ void CloudBinaryUploadService::OnGetResponse(
 
   for (const auto& result : response.results()) {
     if (result.has_tag() && !result.tag().empty()) {
-      VLOG(1) << "Request " << request->request_token()
-              << " finished scanning tag <" << result.tag() << ">";
+      DVLOG(1) << "Request " << request->request_token()
+               << " finished scanning tag <" << result.tag() << ">";
       received_connector_results_[request_id][result.tag()] = result;
     }
   }
@@ -593,7 +606,7 @@ void CloudBinaryUploadService::MaybeFinishRequest(Request::Id request_id) {
   // response.
   Result result =
       response_is_complete ? Result::SUCCESS : Result::INCOMPLETE_RESPONSE;
-  FinishRequest(request, result, std::move(response));
+  FinishAndCleanupRequest(request, result, std::move(response));
 }
 
 void CloudBinaryUploadService::FinishIfActive(
@@ -602,8 +615,16 @@ void CloudBinaryUploadService::FinishIfActive(
     enterprise_connectors::ContentAnalysisResponse response) {
   Request* request = GetRequest(request_id);
   if (request) {
-    FinishRequest(request, result, response);
+    FinishAndCleanupRequest(request, result, response);
   }
+}
+
+void CloudBinaryUploadService::FinishAndCleanupRequest(
+    Request* request,
+    Result result,
+    enterprise_connectors::ContentAnalysisResponse response) {
+  FinishRequest(request, result, response);
+  CleanupRequest(request);
 }
 
 void CloudBinaryUploadService::FinishRequest(
@@ -624,18 +645,11 @@ void CloudBinaryUploadService::FinishRequest(
   WebUIInfoSingleton::GetInstance()->AddToDeepScanResponses(
       active_tokens_[request->id()], ResultToString(result), response);
 
-  std::string instance_id = request->fcm_notification_token();
   request->FinishRequest(result, response);
-  FinishRequestCleanup(request, instance_id);
-
-  // Now that a request has been cleaned up, we can try to allocate resources
-  // for queued uploads.
-  PopRequestQueue();
 }
 
-void CloudBinaryUploadService::FinishRequestCleanup(
-    Request* request,
-    const std::string& instance_id) {
+void CloudBinaryUploadService::CleanupRequest(Request* request) {
+  std::string instance_id = request->fcm_notification_token();
   Request::Id request_id = request->id();
   std::string dm_token = request->device_token();
   auto connector = request->analysis_connector();
@@ -671,6 +685,10 @@ void CloudBinaryUploadService::FinishRequestCleanup(
   if (token_it != active_tokens_.end()) {
     active_tokens_.erase(token_it);
   }
+
+  // Now that a request has been cleaned up, we can try to allocate resources
+  // for queued uploads.
+  PopRequestQueue();
 }
 
 void CloudBinaryUploadService::InstanceIDUnregisteredCallback(
@@ -771,8 +789,8 @@ bool CloudBinaryUploadService::ResponseIsComplete(Request::Id request_id) {
     if (received_connector_results_[request_id].count(tag) == 0) {
       response_is_complete = false;
       if (!request->fcm_notification_token().empty()) {
-        VLOG(1) << "Request " << request->request_token() << " is waiting for <"
-                << tag << "> scanning to complete.";
+        DVLOG(1) << "Request " << request->request_token()
+                 << " is waiting for <" << tag << "> scanning to complete.";
       }
     }
   }

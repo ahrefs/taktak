@@ -52,8 +52,6 @@ using DownloadToFileCompleteCallback =
 
 class UpdaterNetworkTest : public ::testing::Test {
  public:
-  ~UpdaterNetworkTest() override = default;
-
   void StartedCallback(int response_code, int64_t content_length) {
     EXPECT_EQ(response_code, 200);
   }
@@ -101,7 +99,7 @@ class UpdaterNetworkTest : public ::testing::Test {
       http_response->set_content("hello");
       http_response->set_content_type("application/octet-stream");
     } else {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
     }
 
     http_response->set_code(net::HTTP_OK);
@@ -136,8 +134,6 @@ class UpdaterNetworkTest : public ::testing::Test {
 // embedded test server running on localhost.
 class UpdaterDownloadTest : public ::testing::Test {
  protected:
-  ~UpdaterDownloadTest() override = default;
-
   base::FilePath dest_;
   GURL gurl_;
 
@@ -231,7 +227,7 @@ TEST_F(UpdaterDownloadTest, NetworkFetcher) {
 TEST_F(UpdaterDownloadTest, URLMonFetcher) {
   EXPECT_FALSE(base::PathExists(dest_));
   EXPECT_HRESULT_SUCCEEDED(
-      ::URLDownloadToFile(nullptr, base::ASCIIToWide(gurl_.spec()).c_str(),
+      ::URLDownloadToFile(nullptr, base::UTF8ToWide(gurl_.spec()).c_str(),
                           dest_.value().c_str(), 0, nullptr));
   EXPECT_TRUE(base::PathExists(dest_));
 }

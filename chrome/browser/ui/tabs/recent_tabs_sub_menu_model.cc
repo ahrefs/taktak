@@ -34,10 +34,12 @@
 #include "chrome/browser/ui/browser_commands.h"
 #include "chrome/browser/ui/browser_live_tab_context.h"
 #include "chrome/browser/ui/browser_window.h"
+#include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/tabs/tab_group_theme.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "chrome/browser/ui/toolbar/app_menu_model.h"
 #include "chrome/browser/ui/ui_features.h"
+#include "chrome/browser/ui/views/side_panel/history_clusters/history_clusters_side_panel_coordinator.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/favicon/core/history_ui_favicon_request_handler.h"
 #include "components/favicon_base/favicon_types.h"
@@ -248,6 +250,10 @@ bool RecentTabsSubMenuModel::ExecuteCustomCommand(int command_id,
   if (!custom_commands.contains(command_id)) {
     return false;
   }
+  if (command_id == IDC_SHOW_HISTORY_CLUSTERS_SIDE_PANEL &&
+      !HistoryClustersSidePanelCoordinator::IsSupported(browser_->profile())) {
+    return false;
+  }
   if (log_menu_metrics_callback_) {
     log_menu_metrics_callback_.Run(command_id);
   }
@@ -350,11 +356,13 @@ void RecentTabsSubMenuModel::Build() {
   InsertItemWithStringIdAt(0, IDC_SHOW_HISTORY, IDS_HISTORY_SHOW_HISTORY);
   SetCommandIcon(this, IDC_SHOW_HISTORY,
                  vector_icons::kHistoryChromeRefreshIcon);
-
-  InsertItemWithStringIdAt(1, IDC_SHOW_HISTORY_CLUSTERS_SIDE_PANEL,
-                           IDS_HISTORY_CLUSTERS_SHOW_SIDE_PANEL);
-  SetCommandIcon(this, IDC_SHOW_HISTORY_CLUSTERS_SIDE_PANEL,
-                 vector_icons::kHistoryChromeRefreshIcon);
+  if (browser_->GetFeatures().side_panel_coordinator() &&
+      HistoryClustersSidePanelCoordinator::IsSupported(browser_->profile())) {
+    InsertItemWithStringIdAt(1, IDC_SHOW_HISTORY_CLUSTERS_SIDE_PANEL,
+                             IDS_HISTORY_CLUSTERS_SHOW_SIDE_PANEL);
+    SetCommandIcon(this, IDC_SHOW_HISTORY_CLUSTERS_SIDE_PANEL,
+                   vector_icons::kHistoryChromeRefreshIcon);
+  }
 
   AddSeparator(ui::NORMAL_SEPARATOR);
   history_separator_index_ = GetItemCount() - 1;
@@ -694,7 +702,7 @@ std::u16string RecentTabsSubMenuModel::GetGroupItemLabel(std::u16string title,
   } else {
     item_label = l10n_util::GetPluralStringFUTF16(IDS_RECENTLY_CLOSED_GROUP,
                                                   static_cast<int>(num_tabs));
-    item_label = base::ReplaceStringPlaceholders(item_label, {title}, nullptr);
+    item_label = base::ReplaceStringPlaceholders(item_label, title, nullptr);
   }
   return item_label;
 }
@@ -774,9 +782,7 @@ void RecentTabsSubMenuModel::AddTabFavicon(int command_id,
         url,
         base::BindOnce(&RecentTabsSubMenuModel::OnFaviconDataAvailable,
                        weak_ptr_factory_for_other_devices_tab_.GetWeakPtr(),
-                       command_id, menu_model),
-
-        favicon::HistoryUiFaviconRequestOrigin::kRecentTabs);
+                       command_id, menu_model));
   }
 }
 
@@ -896,6 +902,5 @@ bool RecentTabsSubMenuModel::IsCommandType(CommandType command_type,
       return remote_sub_menu_items_.contains(command_id);
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }

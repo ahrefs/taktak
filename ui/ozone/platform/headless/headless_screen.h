@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "build/chromeos_buildflags.h"
+#include "base/containers/flat_map.h"
 #include "ui/display/display_list.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/ozone/public/platform_screen.h"
@@ -37,12 +37,9 @@ class HeadlessScreen : public PlatformScreen {
       const gfx::Rect& match_rect) const override;
   void AddObserver(display::DisplayObserver* observer) override;
   void RemoveObserver(display::DisplayObserver* observer) override;
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  display::TabletState GetTabletState() const override;
-#endif
-
  private:
   display::DisplayList display_list_;
+  base::flat_map<int64_t, bool> is_natural_landscape_map_;
 };
 
 }  // namespace ui

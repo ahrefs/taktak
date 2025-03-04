@@ -11,6 +11,8 @@
 
 #include "base/metrics/histogram_macros.h"
 #include "base/numerics/safe_conversions.h"
+#include "base/strings/stringprintf.h"
+#include "base/strings/to_string.h"
 #include "base/task/single_thread_task_runner.h"
 #include "third_party/blink/public/common/privacy_budget/identifiability_metric_builder.h"
 #include "third_party/blink/public/common/privacy_budget/identifiability_study_settings.h"
@@ -477,7 +479,7 @@ ToRtpParameters(ExecutionContext* context,
       degradation_preference =
           webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
     } else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
   }
 
@@ -559,14 +561,14 @@ webrtc::RtpEncodingParameters ToRtpEncodingParameters(
     if (encoding->hasScaleResolutionDownTo()) {
       RTCResolutionRestriction* resolution_restriction =
           encoding->scaleResolutionDownTo();
-      webrtc::Resolution requested_resolution;
+      webrtc::Resolution scale_resolution_down_to;
       if (resolution_restriction->hasMaxWidth()) {
-        requested_resolution.width = resolution_restriction->maxWidth();
+        scale_resolution_down_to.width = resolution_restriction->maxWidth();
       }
       if (resolution_restriction->hasMaxHeight()) {
-        requested_resolution.height = resolution_restriction->maxHeight();
+        scale_resolution_down_to.height = resolution_restriction->maxHeight();
       }
-      webrtc_encoding.requested_resolution = requested_resolution;
+      webrtc_encoding.scale_resolution_down_to = scale_resolution_down_to;
     }
     if (encoding->hasMaxFramerate()) {
       webrtc_encoding.max_framerate = encoding->maxFramerate();
@@ -656,7 +658,7 @@ RTCRtpSender::RTCRtpSender(RTCPeerConnection* pc,
   DCHECK(!track || kind_ == track->kind());
   LogMessage(base::StringPrintf(
       "%s({require_encoded_insertable_streams=%s})", __func__,
-      require_encoded_insertable_streams ? "true" : "false"));
+      base::ToString(require_encoded_insertable_streams).c_str()));
   if (!base::FeatureList::IsEnabled(kWebRtcEncodedTransformDirectCallback)) {
     if (encoded_audio_transformer_) {
       RegisterEncodedAudioStreamCallback();
@@ -748,7 +750,7 @@ RTCRtpSendParameters* RTCRtpSender::getParameters() {
         degradation_preference_str = "balanced";
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
     parameters->setDegradationPreference(degradation_preference_str);
   }
@@ -779,6 +781,15 @@ RTCRtpSendParameters* RTCRtpSender::getParameters() {
       if (webrtc_encoding.scale_resolution_down_by) {
         encoding->setScaleResolutionDownBy(
             webrtc_encoding.scale_resolution_down_by.value());
+      }
+      if (webrtc_encoding.scale_resolution_down_to) {
+        RTCResolutionRestriction* resolution_restriction =
+            RTCResolutionRestriction::Create();
+        resolution_restriction->setMaxWidth(
+            webrtc_encoding.scale_resolution_down_to->width);
+        resolution_restriction->setMaxHeight(
+            webrtc_encoding.scale_resolution_down_to->height);
+        encoding->setScaleResolutionDownTo(resolution_restriction);
       }
       if (webrtc_encoding.max_framerate) {
         encoding->setMaxFramerate(webrtc_encoding.max_framerate.value());
@@ -901,9 +912,8 @@ void RTCRtpSender::SetTrack(MediaStreamTrack* track) {
     if (kind_.IsNull()) {
       kind_ = track->kind();
     } else if (kind_ != track->kind()) {
-      LOG(ERROR) << "Trying to set track to a different kind: Old " << kind_
-                 << " new " << track->kind();
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED() << "Trying to set track to a different kind: Old " << kind_
+                   << " new " << track->kind();
     }
   }
 }
@@ -962,8 +972,9 @@ RTCInsertableStreams* RTCRtpSender::createEncodedStreams(
     ScriptState* script_state,
     ExceptionState& exception_state) {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
-  LogMessage(base::StringPrintf("%s({transform_shortcircuited_=%s})", __func__,
-                                transform_shortcircuited_ ? "true" : "false"));
+  LogMessage(
+      base::StringPrintf("%s({transform_shortcircuited_=%s})", __func__,
+                         base::ToString(transform_shortcircuited_).c_str()));
   if (transform_shortcircuited_) {
     exception_state.ThrowDOMException(DOMExceptionCode::kInvalidStateError,
                                       "Too late to create encoded streams");

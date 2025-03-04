@@ -35,7 +35,7 @@ import org.chromium.chrome.browser.tab.MockTab;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab.TabCreationState;
 import org.chromium.chrome.browser.tab.TabLaunchType;
-import org.chromium.chrome.browser.tab_group_sync.TabGroupSyncController.TabCreationDelegate;
+import org.chromium.chrome.browser.tab_group_sync.TabGroupSyncControllerImpl.TabCreationDelegate;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
 import org.chromium.chrome.test.util.browser.tabmodel.MockTabModel;
 import org.chromium.components.prefs.PrefService;
@@ -95,9 +95,9 @@ public class TabGroupSyncRemoteObserverUnitTest {
                         mIsActiveWindowSupplier);
         mEnabledLocalObservers = true;
 
-        when(mTabGroupModelFilter.getRootIdFromStableId(any())).thenReturn(Tab.INVALID_TAB_ID);
-        when(mTabGroupModelFilter.getRootIdFromStableId(eq(TOKEN_1))).thenReturn(ROOT_ID_1);
-        when(mTabGroupModelFilter.getStableIdFromRootId(eq(ROOT_ID_1))).thenReturn(TOKEN_1);
+        when(mTabGroupModelFilter.getRootIdFromTabGroupId(any())).thenReturn(Tab.INVALID_TAB_ID);
+        when(mTabGroupModelFilter.getRootIdFromTabGroupId(eq(TOKEN_1))).thenReturn(ROOT_ID_1);
+        when(mTabGroupModelFilter.getTabGroupIdFromRootId(eq(ROOT_ID_1))).thenReturn(TOKEN_1);
         when(mPrefService.getBoolean(eq(Pref.AUTO_OPEN_SYNCED_TAB_GROUPS))).thenReturn(true);
         when(mIsActiveWindowSupplier.get()).thenReturn(true);
     }
@@ -150,6 +150,14 @@ public class TabGroupSyncRemoteObserverUnitTest {
     }
 
     @Test
+    public void testTabGroupAdded_PreviouslyClosedGroupOnSignIn() {
+        SavedTabGroup savedTabGroup = TabGroupSyncTestUtils.createSavedTabGroup();
+        when(mTabGroupSyncService.wasTabGroupClosedLocally(savedTabGroup.syncId)).thenReturn(true);
+        mRemoteObserver.onTabGroupAdded(savedTabGroup, TriggerSource.REMOTE);
+        verify(mLocalMutationHelper, never()).createNewTabGroup(any(), anyInt());
+    }
+
+    @Test
     public void testTabGroupVisualsUpdated() {
         addOneTab();
         SavedTabGroup savedTabGroup = TabGroupSyncTestUtils.createSavedTabGroup();
@@ -190,6 +198,15 @@ public class TabGroupSyncRemoteObserverUnitTest {
         verify(mLocalMutationHelper, never()).updateTabGroup(any());
         mRemoteObserver.onTabGroupRemoved(LOCAL_TAB_GROUP_ID_1, TriggerSource.LOCAL);
         verify(mLocalMutationHelper, never()).closeTabGroup(any(), anyInt());
+    }
+
+    @Test
+    public void testOnLocalObservationModeChanged() {
+        Assert.assertTrue(mEnabledLocalObservers);
+        mRemoteObserver.onLocalObservationModeChanged(false);
+        Assert.assertFalse(mEnabledLocalObservers);
+        mRemoteObserver.onLocalObservationModeChanged(true);
+        Assert.assertTrue(mEnabledLocalObservers);
     }
 
     private class TestTabCreationDelegate implements TabCreationDelegate {

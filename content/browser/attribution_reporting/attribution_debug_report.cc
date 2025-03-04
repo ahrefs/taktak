@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include <algorithm>
 #include <optional>
 #include <string_view>
 #include <utility>
@@ -17,7 +18,6 @@
 #include "base/functional/overloaded.h"
 #include "base/metrics/histogram_functions.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/values.h"
 #include "components/attribution_reporting/constants.h"
@@ -282,6 +282,11 @@ std::optional<DebugDataTypeAndBody> GetReportDataTypeAndLimit(
                 DebugDataType::kTriggerAggregateInsufficientBudget,
                 GetLimit(attribution_reporting::kMaxAggregatableValue)));
           },
+          [](const CreateReportResult::InsufficientNamedBudget& v) {
+            return std::make_optional(DebugDataTypeAndBody(
+                DebugDataType::kTriggerAggregateInsufficientNamedBudget,
+                GetLimit(v.budget), base::Value::Dict().Set("name", v.name)));
+          },
           [](CreateReportResult::ReportWindowPassed) {
             return std::make_optional(DebugDataTypeAndBody(
                 DebugDataType::kTriggerAggregateReportWindowPassed));
@@ -293,6 +298,14 @@ std::optional<DebugDataTypeAndBody> GetReportDataTypeAndLimit(
           },
       },
       result);
+}
+
+void SetAdditionalFields(base::Value::Dict& data_body,
+                         base::Value::Dict additional_fields) {
+  CHECK(std::ranges::none_of(additional_fields, [&](const auto& e) {
+    return data_body.contains(e.first);
+  }));
+  data_body.Merge(std::move(additional_fields));
 }
 
 void SetSourceData(base::Value::Dict& data_body,
@@ -335,6 +348,8 @@ base::Value::Dict GetReportDataBody(DebugDataTypeAndBody data,
   if (!data.limit.is_none()) {
     SetLimit(data_body, std::move(data.limit));
   }
+
+  SetAdditionalFields(data_body, std::move(data.additional_fields));
 
   return data_body;
 }
@@ -392,10 +407,7 @@ std::optional<AttributionDebugReport> AttributionDebugReport::Create(
   SetSourceData(body, registration.source_event_id,
                 source.common_info().source_site(), registration.debug_key);
 
-  CHECK(base::ranges::none_of(data->additional_fields, [&](const auto& e) {
-    return body.contains(e.first);
-  }));
-  body.Merge(std::move(data->additional_fields));
+  SetAdditionalFields(body, std::move(data->additional_fields));
 
   base::Value::List report_body;
   report_body.Append(GetReportData(data->debug_data_type, std::move(body)));
@@ -496,7 +508,7 @@ std::optional<AttributionDebugReport> AttributionDebugReport::Create(
 
 std::optional<AttributionDebugReport> AttributionDebugReport::Create(
     attribution_reporting::SuitableOrigin reporting_origin,
-    const attribution_reporting::RegistrationHeaderError& error,
+    attribution_reporting::RegistrationHeaderError error,
     const attribution_reporting::SuitableOrigin& context_origin,
     bool is_within_fenced_frame,
     base::FunctionRef<bool(const url::Origin&)> is_operation_allowed) {
@@ -507,7 +519,7 @@ std::optional<AttributionDebugReport> AttributionDebugReport::Create(
   base::Value::Dict data_body;
   data_body.Set("context_site", net::SchemefulSite(context_origin).Serialize());
   data_body.Set("header", error.HeaderName());
-  data_body.Set("value", error.header_value);
+  data_body.Set("value", std::move(error.header_value));
 
   const DebugDataType data_type = DebugDataType::kHeaderParsingError;
 

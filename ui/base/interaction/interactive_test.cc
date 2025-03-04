@@ -12,6 +12,8 @@
 
 #include "base/functional/callback_helpers.h"
 #include "base/functional/overloaded.h"
+#include "base/logging.h"
+#include "base/memory/weak_ptr.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/scoped_run_loop_timeout.h"
@@ -208,6 +210,24 @@ InteractionSequence::StepBuilder InteractiveTestApi::Confirm(
   return builder;
 }
 
+InteractionSequence::StepBuilder InteractiveTestApi::DumpElements() {
+  return WithElement(kInteractiveTestPivotElementId,
+                     [this](ui::TrackedElement* el) {
+                       private_test_impl()
+                           .DebugDumpElements(el->context())
+                           .PrintTo(COMPACT_GOOGLE_LOG_INFO.stream());
+                     });
+}
+
+InteractionSequence::StepBuilder InteractiveTestApi::DumpElementsInContext() {
+  return WithElement(kInteractiveTestPivotElementId,
+                     [this](ui::TrackedElement* el) {
+                       private_test_impl()
+                           .DebugDumpContext(el->context())
+                           .PrintTo(COMPACT_GOOGLE_LOG_INFO.stream());
+                     });
+}
+
 // static
 InteractionSequence::StepBuilder InteractiveTestApi::WaitForShow(
     ElementSpecifier element,
@@ -293,51 +313,6 @@ InteractionSequence::StepBuilder InteractiveTestApi::NameElement(
                              GetFindElementCallback(std::move(spec)));
 }
 
-// static
-InteractiveTestApi::MultiStep InteractiveTestApi::InAnyContext(
-    MultiStep steps) {
-  for (auto& step : steps) {
-    step.SetContext(InteractionSequence::ContextMode::kAny)
-        .FormatDescription("InAnyContext( %s )");
-  }
-  return steps;
-}
-
-// static
-InteractiveTestApi::MultiStep InteractiveTestApi::InSameContext(
-    MultiStep steps) {
-  for (auto& step : steps) {
-    step.SetContext(InteractionSequence::ContextMode::kFromPreviousStep)
-        .FormatDescription("InSameContext( %s )");
-  }
-  return steps;
-}
-
-// static
-InteractiveTestApi::MultiStep InteractiveTestApi::InContext(
-    ElementContext context,
-    MultiStep steps) {
-  // This context may not yet exist, but we want the pivot element to exist.
-  private_test_impl_->MaybeAddPivotElement(context);
-  const auto fmt = base::StringPrintf("InContext( %p, %%s )",
-                                      static_cast<const void*>(context));
-  for (auto& step : steps) {
-    step.SetContext(context).FormatDescription(fmt);
-  }
-
-  return steps;
-}
-
-// static
-InteractiveTestApi::MultiStep InteractiveTestApi::WithoutDelay(
-    MultiStep steps) {
-  for (auto& step : steps) {
-    step.SetStepStartMode(InteractionSequence::StepStartMode::kImmediate)
-        .FormatDescription("WithoutDelay( %s )");
-  }
-  return steps;
-}
-
 InteractiveTestApi::StepBuilder InteractiveTestApi::SetOnIncompatibleAction(
     OnIncompatibleAction action,
     const char* reason) {
@@ -404,21 +379,33 @@ bool InteractiveTestApi::RunTestSequenceImpl(
     base::test::ScopedRunLoopTimeout timeout(
         FROM_HERE, std::nullopt,
         base::BindRepeating(
-            [](base::WeakPtr<InteractionSequence> sequence) {
+            [](base::WeakPtr<InteractionSequence> sequence,
+               base::WeakPtr<internal::InteractiveTestPrivate> impl) {
               std::ostringstream oss;
+              ui::ElementContext context;
               if (sequence) {
-                oss << internal::kInteractiveTestFailedMessagePrefix
-                    << sequence->BuildAbortedData(
-                           InteractionSequence::AbortedReason::
-                               kSequenceTimedOut);
+                const auto data = sequence->BuildAbortedData(
+                    InteractionSequence::AbortedReason::kSequenceTimedOut);
+                oss << internal::kInteractiveTestFailedMessagePrefix << data;
+                context = data.context;
               } else {
                 oss << "Interactive test: timeout after test sequence "
                        "destroyed; a failure message may already have been "
                        "logged.";
               }
+              if (impl) {
+                const auto additional_context = impl->GetAdditionalContext();
+                if (!additional_context.empty()) {
+                  oss << "\nAdditional test context:";
+                  for (const auto& ctx : additional_context) {
+                    oss << "\n * " << ctx;
+                  }
+                }
+                impl->DebugDumpElements(context).PrintTo(oss);
+              }
               return oss.str();
             },
-            sequence->AsWeakPtr()));
+            sequence->AsWeakPtr(), private_test_impl().GetAsWeakPtr()));
     sequence->RunSynchronouslyForTesting();
   }
 
@@ -488,10 +475,10 @@ void InteractiveTestApi::AddStep(MultiStep& dest, MultiStep src) {
 }
 
 // static
-void InteractiveTestApi::AddDescription(MultiStep& steps,
-                                        std::string_view format) {
+void InteractiveTestApi::AddDescriptionPrefix(MultiStep& steps,
+                                              std::string_view prefix) {
   for (auto& step : steps) {
-    step.FormatDescription(format);
+    step.AddDescriptionPrefix(prefix);
   }
 }
 

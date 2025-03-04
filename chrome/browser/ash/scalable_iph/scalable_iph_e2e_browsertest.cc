@@ -9,6 +9,7 @@
 #include "ash/constants/web_app_id_constants.h"
 #include "ash/public/cpp/shelf_model.h"
 #include "base/no_destructor.h"
+#include "base/notreached.h"
 #include "base/test/scoped_feature_list.h"
 #include "chrome/browser/ash/scalable_iph/scalable_iph_browser_test_base.h"
 #include "chrome/browser/ash/system_web_apps/system_web_app_manager.h"
@@ -74,9 +75,7 @@ const base::Feature* GetFeature(const std::string_view& feature_name) {
     }
   }
 
-  CHECK(false) << feature_name << " was not found.";
-
-  return nullptr;
+  NOTREACHED() << feature_name << " was not found.";
 }
 
 base::FieldTrialParams GetFieldTrialParams(
@@ -146,9 +145,7 @@ void ApplyExperiment(
 class ScalableIphE2EBrowserTest : public ash::ScalableIphBrowserTestBase {
  public:
   explicit ScalableIphE2EBrowserTest(const std::string& experiment_name)
-      : experiment_name_(experiment_name) {
-    enable_mock_tracker_ = false;
-  }
+      : experiment_name_(experiment_name) {}
 
   void InitializeScopedFeatureList() override {
     const variations::FieldTrialTestingStudy* study = FindStudy();
@@ -182,6 +179,11 @@ class ScalableIphE2EBrowserTest : public ash::ScalableIphBrowserTestBase {
     // Note that there is an async operation before network status change has
     // been propagated to `ScalableIph`. This does NOT wait it.
     AddOnlineNetwork();
+  }
+
+ protected:
+  MockTrackerFactoryMethod GetMockTrackerFactoryMethod() override {
+    return MockTrackerFactoryMethod();
   }
 
  private:
@@ -259,4 +261,3 @@ IN_PROC_BROWSER_TEST_F(ScalableIphE2EBrowserTestHelpAppBased, E2E) {
 
   // TODO(b/285225729): add more expectations to test the config.
 }
-

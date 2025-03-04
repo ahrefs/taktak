@@ -11,7 +11,6 @@
 #include "base/memory/weak_ptr.h"
 #include "chrome/browser/ui/views/bookmarks/saved_tab_groups/saved_tab_group_button.h"
 #include "chrome/browser/ui/views/bookmarks/saved_tab_groups/saved_tab_group_everything_menu.h"
-#include "chrome/browser/ui/views/user_education/browser_feature_promo_controller.h"
 #include "components/saved_tab_groups/internal/saved_tab_group_model.h"
 #include "components/saved_tab_groups/public/tab_group_sync_service.h"
 #include "components/saved_tab_groups/public/types.h"
@@ -88,6 +87,9 @@ class SavedTabGroupBar : public views::AccessiblePaneView,
       const std::optional<LocalTabGroupID>& local_id) override;
   void OnTabGroupRemoved(const base::Uuid& sync_id,
                          TriggerSource source) override;
+  void OnTabGroupMigrated(const SavedTabGroup& new_group,
+                          const base::Uuid& old_sync_id,
+                          TriggerSource source) override;
   void OnTabGroupsReordered(TriggerSource source) override;
 
   // WidgetObserver
@@ -96,11 +98,6 @@ class SavedTabGroupBar : public views::AccessiblePaneView,
   // Calculates what the visible width would be when a restriction on width is
   // placed on the bar.
   int CalculatePreferredWidthRestrictedBy(int width_restriction) const;
-
-  // Calculates what the visible width would be when a restriction on width is
-  // placed on the bar. Should only get invoked behind TabGroupsSaveV2.
-  // TODO(crbug.com/329659664): Rename once V2 ships.
-  int V2CalculatePreferredWidthRestrictedBy(int width_restriction) const;
 
   bool IsOverflowButtonVisible();
 
@@ -246,9 +243,6 @@ class SavedTabGroupBar : public views::AccessiblePaneView,
   // this boolean lets the SavedTabGroupButton choose whether they want to
   // animate or not.
   const bool animations_enabled_ = true;
-
-  // Determines if we should use the updated SavedTabGroups UI.
-  const bool ui_update_enabled_;
 
   // Returns WeakPtrs used in GetPageNavigatorGetter(). Used to ensure
   // safety if BookmarkBarView is deleted after getting the callback.

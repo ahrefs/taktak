@@ -9,6 +9,7 @@
 #include "chrome/browser/smart_card/get_smart_card_context_factory.h"
 #include "chrome/browser/smart_card/smart_card_permission_context.h"
 #include "chrome/browser/smart_card/smart_card_permission_context_factory.h"
+#include "components/content_settings/browser/page_specific_content_settings.h"
 #include "content/public/browser/render_frame_host.h"
 
 ChromeOsSmartCardDelegate::ChromeOsSmartCardDelegate() = default;
@@ -31,7 +32,8 @@ bool ChromeOsSmartCardDelegate::IsPermissionBlocked(
   const url::Origin& origin =
       render_frame_host.GetMainFrame()->GetLastCommittedOrigin();
 
-  return !permission_context.CanRequestObjectPermission(origin);
+  return !permission_context.CanRequestObjectPermission(origin) &&
+         !permission_context.IsAllowlistedByPolicy(origin);
 }
 
 bool ChromeOsSmartCardDelegate::HasReaderPermission(
@@ -60,3 +62,18 @@ void ChromeOsSmartCardDelegate::RequestReaderPermission(
                                               std::move(callback));
 }
 
+void ChromeOsSmartCardDelegate::NotifyConnectionUsed(
+    content::RenderFrameHost& render_frame_host) {
+  CHECK_DEREF(content_settings::PageSpecificContentSettings::GetForFrame(
+                  &render_frame_host))
+      .OnDeviceUsed(
+          content_settings::mojom::ContentSettingsType::SMART_CARD_GUARD);
+}
+
+void ChromeOsSmartCardDelegate::NotifyLastConnectionLost(
+    content::RenderFrameHost& render_frame_host) {
+  CHECK_DEREF(content_settings::PageSpecificContentSettings::GetForFrame(
+                  &render_frame_host))
+      .OnLastDeviceConnectionLost(
+          content_settings::mojom::ContentSettingsType::SMART_CARD_GUARD);
+}

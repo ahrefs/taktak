@@ -37,32 +37,9 @@ enum class AppInitStage {
   // new stages to be >= kBrowserObjectsForBackgroundHandlers.
   kBrowserObjectsForBackgroundHandlers,
 
-  // TODO(crbug.com/353683675): All follow-up stage will eventually become
-  // ProfileInitStage and will disappear. And corresponding code should move
-  // from MainController to ProfileController.
-
   // The app is fetching any enterprise policies. The initialization is blocked
   // on this because the policies might have an effect on later init stages.
   kEnterprise,
-
-  // The app is initializing the browser objects for the browser UI (e.g., the
-  // profile).
-  kBrowserObjectsForUI,
-
-  // TODO(crbug.com/333863468): code should no longer check this enum value,
-  // instead it should use ProfileInitStage::kUIReady. The enum will be
-  // removed once the AppInitStage and ProfileInitStage are fully decoupled.
-  kNormalUI,
-
-  // TODO(crbug.com/333863468): code should no longer check this enum value,
-  // instead it should use ProfileInitStage::kFirstRun. The enum will be
-  // removed once the AppInitStage and ProfileInitStage are fully decoupled.
-  kFirstRun,
-
-  // TODO(crbug.com/333863468): code should no longer check this enum value,
-  // instead it should use ProfileInitStage::kChoiceScreen. The enum will be
-  // removed once the AppInitStage and ProfileInitStage are fully decoupled.
-  kChoiceScreen,
 
   // The final stage before being done with initialization. The label and
   // relative position (always last) of this enum item should not change.

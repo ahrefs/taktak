@@ -66,7 +66,10 @@ bool ShouldBlockAccessToPath(const base::FilePath& path) {
     return false;
   }
 
-  CHECK(path.IsAbsolute());
+  // Block any empty or non-absolute paths.
+  if (!path.IsAbsolute()) {
+    return true;
+  }
 
   constexpr int kBlockedPaths[] = {
       base::DIR_ANDROID_APP_DATA,
@@ -125,7 +128,7 @@ void AwFileSystemAccessPermissionContext::ConfirmSensitiveEntryAccess(
     content::GlobalRenderFrameHostId frame_id,
     base::OnceCallback<void(SensitiveEntryResult)> callback) {
   CheckPathAgainstBlocklist(
-      path_info.path,
+      path_info,
       base::BindOnce(
           &AwFileSystemAccessPermissionContext::DidCheckPathAgainstBlocklist,
           weak_factory_.GetWeakPtr(), path_info.path, std::move(callback)));
@@ -198,11 +201,18 @@ void AwFileSystemAccessPermissionContext::CheckPathsAgainstEnterprisePolicy(
 }
 
 void AwFileSystemAccessPermissionContext::CheckPathAgainstBlocklist(
-    const base::FilePath& path,
+    const content::PathInfo& path_info,
     base::OnceCallback<void(bool)> callback) {
+  // TODO(crbug.com/40101272): Figure out what external paths should be blocked.
+  if (path_info.type == content::PathType::kExternal) {
+    std::move(callback).Run(/*should_block=*/false);
+    return;
+  }
+
   base::ThreadPool::PostTaskAndReplyWithResult(
       FROM_HERE, {base::MayBlock(), base::TaskPriority::USER_VISIBLE},
-      base::BindOnce(&ShouldBlockAccessToPath, path), std::move(callback));
+      base::BindOnce(&ShouldBlockAccessToPath, path_info.path),
+      std::move(callback));
 }
 
 void AwFileSystemAccessPermissionContext::DidCheckPathAgainstBlocklist(

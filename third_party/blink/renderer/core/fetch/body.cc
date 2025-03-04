@@ -70,17 +70,32 @@ class BodyConsumerBase : public GarbageCollected<BodyConsumerBase>,
   }
 
  private:
+  template <typename T>
+  struct IsNotShared {
+    static constexpr bool value = false;
+  };
+  template <typename T>
+  struct IsNotShared<NotShared<T>> {
+    static constexpr bool value = true;
+  };
+
   template <typename IDLType, typename T>
-    requires(
-        !std::is_same<T, Persistent<DisallowNewWrapper<ScriptValue>>>::value)
+    requires(!std::is_same<IDLType, IDLAny>::value &&
+             !IsNotShared<IDLType>::value)
   void ResolveNow(const T& object) {
     resolver_->DowncastTo<IDLType>()->Resolve(object);
   }
 
   template <typename IDLType, typename T>
-    requires std::is_same<T, Persistent<DisallowNewWrapper<ScriptValue>>>::value
+    requires std::is_same<IDLType, IDLAny>::value
   void ResolveNow(const Persistent<DisallowNewWrapper<ScriptValue>>& object) {
     resolver_->DowncastTo<IDLType>()->Resolve(object->Value());
+  }
+
+  template <typename IDLType, typename T>
+    requires IsNotShared<IDLType>::value
+  void ResolveNow(const T& object) {
+    resolver_->DowncastTo<IDLType>()->Resolve(NotShared<DOMUint8Array>(object));
   }
 
   const Member<ScriptPromiseResolverBase> resolver_;
@@ -162,16 +177,15 @@ class BodyJsonConsumer final : public BodyConsumerBase {
       return;
     ScriptState::Scope scope(Resolver()->GetScriptState());
     v8::Isolate* isolate = Resolver()->GetScriptState()->GetIsolate();
-    v8::Local<v8::String> input_string = V8String(isolate, string);
-    v8::TryCatch trycatch(isolate);
-    v8::Local<v8::Value> parsed;
-    if (v8::JSON::Parse(Resolver()->GetScriptState()->GetContext(),
-                        input_string)
-            .ToLocal(&parsed)) {
-      ResolveLater<ResolveType>(WrapPersistent(WrapDisallowNew(
-          ScriptValue(Resolver()->GetScriptState()->GetIsolate(), parsed))));
-    } else
-      Resolver()->Reject(trycatch.Exception());
+    v8::TryCatch try_catch(isolate);
+    v8::Local<v8::Value> parsed =
+        FromJSONString(Resolver()->GetScriptState(), string);
+    if (try_catch.HasCaught()) {
+      Resolver()->Reject(try_catch.Exception());
+      return;
+    }
+    ResolveLater<ResolveType>(
+        WrapPersistent(WrapDisallowNew(ScriptValue(isolate, parsed))));
   }
 };
 

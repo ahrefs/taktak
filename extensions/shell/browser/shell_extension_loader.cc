@@ -13,7 +13,9 @@
 #include "base/task/sequenced_task_runner.h"
 #include "extensions/browser/extension_file_task_runner.h"
 #include "extensions/browser/extension_prefs.h"
+#include "extensions/browser/extension_registrar.h"
 #include "extensions/browser/extension_registry.h"
+#include "extensions/common/extension.h"
 #include "extensions/common/file_util.h"
 
 namespace extensions {
@@ -60,8 +62,10 @@ scoped_refptr<const Extension> LoadUnpacked(
 ShellExtensionLoader::ShellExtensionLoader(
     content::BrowserContext* browser_context)
     : browser_context_(browser_context),
-      extension_registrar_(browser_context, this),
-      keep_alive_requester_(browser_context) {}
+      extension_registrar_(ExtensionRegistrar::Get(browser_context)),
+      keep_alive_requester_(browser_context) {
+  extension_registrar_->SetDelegate(this);
+}
 
 ShellExtensionLoader::~ShellExtensionLoader() = default;
 
@@ -69,7 +73,7 @@ const Extension* ShellExtensionLoader::LoadExtension(
     const base::FilePath& extension_dir) {
   scoped_refptr<const Extension> extension = LoadUnpacked(extension_dir);
   if (extension)
-    extension_registrar_.AddExtension(extension);
+    extension_registrar_->AddExtension(extension);
 
   return extension.get();
 }
@@ -89,7 +93,8 @@ void ShellExtensionLoader::ReloadExtension(ExtensionId extension_id) {
   // the reload so that the first step, disabling the extension, doesn't release
   // the last remaining keep-alive and shut down the application.
   keep_alive_requester_.StartTrackingReload(extension);
-  extension_registrar_.ReloadExtension(extension_id, LoadErrorBehavior::kQuiet);
+  extension_registrar_->ReloadExtension(extension_id,
+                                        LoadErrorBehavior::kQuiet);
   if (did_schedule_reload_)
     return;
 
@@ -102,7 +107,7 @@ void ShellExtensionLoader::FinishExtensionReload(
     const ExtensionId old_extension_id,
     scoped_refptr<const Extension> extension) {
   if (extension) {
-    extension_registrar_.AddExtension(extension);
+    extension_registrar_->AddExtension(extension);
     // If the extension is a platform app, adding it above caused
     // ShellKeepAliveRequester to create a new keep-alive to wait for the app to
     // open its first window.
@@ -114,6 +119,10 @@ void ShellExtensionLoader::FinishExtensionReload(
 
   // Whether or not the reload succeeded, we should stop waiting for it.
   keep_alive_requester_.StopTrackingReload(old_extension_id);
+}
+
+bool ShellExtensionLoader::CanAddExtension(const Extension* extension) {
+  return true;
 }
 
 void ShellExtensionLoader::PreAddExtension(const Extension* extension,
@@ -130,8 +139,7 @@ void ShellExtensionLoader::PreAddExtension(const Extension* extension,
     extension_prefs->RemoveDisableReason(extension->id(),
                                          disable_reason::DISABLE_RELOAD);
     // Only re-enable the extension if there are no other disable reasons.
-    if (extension_prefs->GetDisableReasons(extension->id()) ==
-        disable_reason::DISABLE_NONE) {
+    if (extension_prefs->GetDisableReasons(extension->id()).empty()) {
       extension_prefs->SetExtensionEnabled(extension->id());
     }
   }
@@ -141,6 +149,16 @@ void ShellExtensionLoader::PostActivateExtension(
     scoped_refptr<const Extension> extension) {}
 
 void ShellExtensionLoader::PostDeactivateExtension(
+    scoped_refptr<const Extension> extension) {}
+
+void ShellExtensionLoader::PreUninstallExtension(
+    scoped_refptr<const Extension> extension) {}
+
+void ShellExtensionLoader::PostUninstallExtension(
+    scoped_refptr<const Extension> extension,
+    base::OnceClosure done_callback) {}
+
+void ShellExtensionLoader::PostNotifyUninstallExtension(
     scoped_refptr<const Extension> extension) {}
 
 void ShellExtensionLoader::LoadExtensionForReload(
@@ -156,6 +174,12 @@ void ShellExtensionLoader::LoadExtensionForReload(
   did_schedule_reload_ = true;
 }
 
+void ShellExtensionLoader::ShowExtensionDisabledError(
+    const Extension* extension,
+    bool is_remote_install) {}
+
+void ShellExtensionLoader::FinishDelayedInstallationsIfAny() {}
+
 bool ShellExtensionLoader::CanEnableExtension(const Extension* extension) {
   return true;
 }
@@ -167,6 +191,10 @@ bool ShellExtensionLoader::CanDisableExtension(const Extension* extension) {
 
 bool ShellExtensionLoader::ShouldBlockExtension(const Extension* extension) {
   return false;
+}
+
+void ShellExtensionLoader::GrantActivePermissions(const Extension* extension) {
+  NOTIMPLEMENTED();
 }
 
 }  // namespace extensions

@@ -168,7 +168,7 @@ int FindNewCustomActionID(const std::vector<int>& id_list) {
     } else {
       // This is unlikely to happen because there is no repeated number in
       // `id_list`.
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
   }
 
@@ -186,8 +186,7 @@ std::unique_ptr<Action> CreateRawAction(ActionType type,
     case ActionType::MOVE:
       return std::make_unique<ActionMove>(injector);
     default:
-      NOTREACHED_IN_MIGRATION();
-      return nullptr;
+      NOTREACHED();
   }
 }
 
@@ -295,10 +294,6 @@ void TouchInjector::UnRegisterEventRewriter() {
   }
   DispatchTouchReleaseEvent();
   observation_.Reset();
-  // Need reset pending input bind if it is unregistered in edit mode.
-  for (auto& action : actions_) {
-    action->ResetPendingBind();
-  }
   OnSaveProtoFile();
 }
 
@@ -314,20 +309,12 @@ void TouchInjector::OnInputBindingChange(
     overlapped_action->UnbindInput(*input_element);
   }
 
-  target_action->PrepareToBindInput(std::move(input_element));
+  target_action->BindInput(std::move(input_element));
 
   if (overlapped_action) {
-    overlapped_action->BindPending();
     NotifyActionInputBindingUpdated(*overlapped_action);
   }
-  target_action->BindPending();
   NotifyActionInputBindingUpdated(*target_action);
-}
-
-void TouchInjector::OnApplyPendingBinding() {
-  for (auto& action : actions_) {
-    action->BindPending();
-  }
 }
 
 void TouchInjector::OnBindingSave() {
@@ -380,8 +367,7 @@ void TouchInjector::MaybeBindDefaultInputElement(Action* action) {
   if (auto* overlapped_action = FindActionWithOverlapInputElement(
           actions_, /*target_action=*/action, *input_element);
       !overlapped_action) {
-    action->PrepareToBindInput(std::move(input_element));
-    action->BindPending();
+    action->BindInput(std::move(input_element));
     NotifyActionInputBindingUpdated(*action);
   }
 }

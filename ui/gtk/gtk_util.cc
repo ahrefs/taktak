@@ -227,11 +227,12 @@ aura::Window* GetAuraTransientParent(GtkWidget* dialog) {
 }
 
 void ClearAuraTransientParent(GtkWidget* dialog, aura::Window* parent) {
+  g_object_set_data(G_OBJECT(dialog), kAuraTransientParent, nullptr);
+
   if (!parent || !parent->GetHost()) {
     return;
   }
 
-  g_object_set_data(G_OBJECT(dialog), kAuraTransientParent, nullptr);
   gfx::AcceleratedWidget parent_id = parent->GetHost()->GetAcceleratedWidget();
   GtkUi::GetPlatform()->ClearTransientFor(parent_id);
 }
@@ -396,8 +397,7 @@ GtkStateFlags StateToStateFlags(ui::NativeTheme::State state) {
       return static_cast<GtkStateFlags>(GTK_STATE_FLAG_PRELIGHT |
                                         GTK_STATE_FLAG_ACTIVE);
     default:
-      NOTREACHED_IN_MIGRATION();
-      return GTK_STATE_FLAG_NORMAL;
+      NOTREACHED();
   }
 }
 
@@ -451,7 +451,7 @@ GtkCssContext AppendCssNodeToStyleContext(GtkCssContext context,
           part_type = CSS_PSEUDOCLASS;
           break;
         default:
-          NOTREACHED_IN_MIGRATION();
+          NOTREACHED();
       }
     } else {
       switch (part_type) {
@@ -476,7 +476,7 @@ GtkCssContext AppendCssNodeToStyleContext(GtkCssContext context,
           break;
         }
         case CSS_NONE:
-          NOTREACHED_IN_MIGRATION();
+          NOTREACHED();
       }
     }
   }

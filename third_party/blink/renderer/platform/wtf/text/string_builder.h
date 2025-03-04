@@ -24,11 +24,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #ifndef THIRD_PARTY_BLINK_RENDERER_PLATFORM_WTF_TEXT_STRING_BUILDER_H_
 #define THIRD_PARTY_BLINK_RENDERER_PLATFORM_WTF_TEXT_STRING_BUILDER_H_
 
@@ -57,15 +52,6 @@ class WTF_EXPORT StringBuilder {
   void Append(base::span<const UChar> chars);
   void Append(base::span<const LChar> chars);
 
-  // This is deprecated. Use a base::span overload.
-  void Append(const UChar*, unsigned length);
-  // This is deprecated. Use a base::span overload.
-  void Append(const LChar*, unsigned length);
-
-  ALWAYS_INLINE void Append(const char* characters, unsigned length) {
-    Append(reinterpret_cast<const LChar*>(characters), length);
-  }
-
   void Append(const StringBuilder& other) {
     if (!other.length_)
       return;
@@ -78,9 +64,9 @@ class WTF_EXPORT StringBuilder {
     }
 
     if (other.Is8Bit())
-      Append(other.Characters8(), other.length_);
+      Append(other.Span8());
     else
-      Append(other.Characters16(), other.length_);
+      Append(other.Span16());
   }
 
   // NOTE: The semantics of this are different than StringView(..., offset,
@@ -118,9 +104,9 @@ class WTF_EXPORT StringBuilder {
     }
 
     if (string.Is8Bit())
-      Append(string.Characters8(), string.length());
+      Append(string.Span8());
     else
-      Append(string.Characters16(), string.length());
+      Append(string.Span16());
   }
 
   void Append(UChar c) {
@@ -211,30 +197,9 @@ class WTF_EXPORT StringBuilder {
   void Resize(unsigned new_size);
 
   UChar operator[](unsigned i) const {
-    SECURITY_DCHECK(i < length_);
     if (is_8bit_)
-      return Characters8()[i];
-    return Characters16()[i];
-  }
-
-  const LChar* Characters8() const {
-    DCHECK(is_8bit_);
-    if (!length())
-      return nullptr;
-    if (!string_.IsNull())
-      return string_.Characters8();
-    DCHECK(has_buffer_);
-    return buffer8_.data();
-  }
-
-  const UChar* Characters16() const {
-    DCHECK(!is_8bit_);
-    if (!length())
-      return nullptr;
-    if (!string_.IsNull())
-      return string_.Characters16();
-    DCHECK(has_buffer_);
-    return buffer16_.data();
+      return Span8()[i];
+    return Span16()[i];
   }
 
   base::span<const LChar> Span8() const {
@@ -310,42 +275,6 @@ class WTF_EXPORT StringBuilder {
   bool has_buffer_ = false;
 };
 
-template <typename CharType>
-bool Equal(const StringBuilder& s, const CharType* buffer, unsigned length) {
-  if (s.length() != length)
-    return false;
-
-  if (s.Is8Bit())
-    return Equal(s.Characters8(), buffer, length);
-
-  return Equal(s.Characters16(), buffer, length);
-}
-
-template <typename CharType>
-bool DeprecatedEqualIgnoringCase(const StringBuilder& s,
-                                 const CharType* buffer,
-                                 unsigned length) {
-  if (s.length() != length)
-    return false;
-
-  if (s.Is8Bit())
-    return DeprecatedEqualIgnoringCase(s.Characters8(), buffer, length);
-
-  return DeprecatedEqualIgnoringCase(s.Characters16(), buffer, length);
-}
-
-// Unicode aware case insensitive string matching. Non-ASCII characters might
-// match to ASCII characters. This function is rarely used to implement web
-// platform features.
-// This function is deprecated. We should introduce EqualIgnoringASCIICase() or
-// EqualIgnoringUnicodeCase(). See crbug.com/627682
-inline bool DeprecatedEqualIgnoringCase(const StringBuilder& s,
-                                        const char* string) {
-  return DeprecatedEqualIgnoringCase(
-      s, reinterpret_cast<const LChar*>(string),
-      base::checked_cast<wtf_size_t>(strlen(string)));
-}
-
 template <typename StringType>
 bool Equal(const StringBuilder& a, const StringType& b) {
   if (a.length() != b.length())
@@ -356,13 +285,13 @@ bool Equal(const StringBuilder& a, const StringType& b) {
 
   if (a.Is8Bit()) {
     if (b.Is8Bit())
-      return Equal(a.Characters8(), b.Characters8(), a.length());
-    return Equal(a.Characters8(), b.Characters16(), a.length());
+      return a.Span8() == b.Span8();
+    return a.Span8() == b.Span16();
   }
 
   if (b.Is8Bit())
-    return Equal(a.Characters16(), b.Characters8(), a.length());
-  return Equal(a.Characters16(), b.Characters16(), a.length());
+    return a.Span16() == b.Span8();
+  return a.Span16() == b.Span16();
 }
 
 inline bool operator==(const StringBuilder& a, const StringBuilder& b) {

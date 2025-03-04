@@ -108,8 +108,9 @@ UIImage* DefaultFaviconImage() {
   if ((self = [super initWithFrame:CGRectZero])) {
     [self setOpaque:NO];
     [self createCommonViews];
-    if (!emptyView)
+    if (!emptyView) {
       [self createButtonsAndLabel];
+    }
 
     // -setSelected only calls -updateStyleForSelected if the selected state
     // changes.  `isSelected` defaults to NO, so if `selected` is also NO,
@@ -122,6 +123,20 @@ UIImage* DefaultFaviconImage() {
     [self addTarget:self
                   action:@selector(tabWasTapped)
         forControlEvents:UIControlEventTouchUpInside];
+
+    if (@available(iOS 17, *)) {
+      NSArray<UITrait>* traits = TraitCollectionSetForTraits(@[
+        UITraitUserInterfaceIdiom.class, UITraitUserInterfaceStyle.class,
+        UITraitDisplayGamut.class, UITraitAccessibilityContrast.class,
+        UITraitUserInterfaceLevel.class
+      ]);
+      __weak __typeof(self) weakSelf = self;
+      UITraitChangeHandler handler = ^(id<UITraitEnvironment> traitEnvironment,
+                                       UITraitCollection* previousCollection) {
+        [weakSelf updateStyleOnTraitChange:previousCollection];
+      };
+      [self registerForTraitChanges:traits withHandler:handler];
+    }
   }
   return self;
 }
@@ -143,8 +158,9 @@ UIImage* DefaultFaviconImage() {
 }
 
 - (void)setTitle:(NSString*)title {
-  if ([_titleLabel.text isEqualToString:title])
+  if ([_titleLabel.text isEqualToString:title]) {
     return;
+  }
   _titleLabel.text = title;
   [_closeButton setAccessibilityValue:title];
 }
@@ -154,8 +170,9 @@ UIImage* DefaultFaviconImage() {
 }
 
 - (void)setFavicon:(UIImage*)favicon {
-  if (!favicon)
+  if (!favicon) {
     favicon = DefaultFaviconImage();
+  }
   [_faviconView setImage:favicon];
 }
 
@@ -221,19 +238,15 @@ UIImage* DefaultFaviconImage() {
   return CGRectContainsPoint(CGRectInset([self bounds], inset, 0), point);
 }
 
+#if !defined(__IPHONE_17_0) || __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_17_0
 - (void)traitCollectionDidChange:(UITraitCollection*)previousTraitCollection {
   [super traitCollectionDidChange:previousTraitCollection];
-
-  // As of iOS 13 Beta 4, resizable images are flaky for dark mode.
-  // This triggers the styling again, where the image is resolved instead of
-  // relying in the system's magic. Radar filled:
-  // b/137942721.hasDifferentColorAppearanceComparedToTraitCollection
-  if ([self.traitCollection
-          hasDifferentColorAppearanceComparedToTraitCollection:
-              previousTraitCollection]) {
-    [self updateStyleForSelected:self.selected];
+  if (@available(iOS 17, *)) {
+    return;
   }
+  [self updateStyleOnTraitChange:previousTraitCollection];
 }
+#endif
 
 #pragma mark - Private
 
@@ -345,12 +358,14 @@ UIImage* DefaultFaviconImage() {
   _backgroundImageView.image = [UIImage imageNamed:imageName];
 
   if (selected) {
-    if (_pointerInteraction)
+    if (_pointerInteraction) {
       [self removeInteraction:_pointerInteraction];
+    }
   } else {
-    if (!_pointerInteraction)
+    if (!_pointerInteraction) {
       _pointerInteraction =
           [[UIPointerInteraction alloc] initWithDelegate:self];
+    }
     [self addInteraction:_pointerInteraction];
   }
 
@@ -455,6 +470,20 @@ UIImage* DefaultFaviconImage() {
   effect.prefersScaledContent = NO;
   effect.prefersShadow = NO;
   return [UIPointerStyle styleWithEffect:effect shape:nil];
+}
+
+// Invokes the `updateStyleForSelected` function if the view's color appearance
+// was changed.
+- (void)updateStyleOnTraitChange:(UITraitCollection*)previousTraitCollection {
+  // As of iOS 13 Beta 4, resizable images are flaky for dark mode.
+  // This triggers the styling again, where the image is resolved instead of
+  // relying in the system's magic. Radar filled:
+  // b/137942721.hasDifferentColorAppearanceComparedToTraitCollection
+  if ([self.traitCollection
+          hasDifferentColorAppearanceComparedToTraitCollection:
+              previousTraitCollection]) {
+    [self updateStyleForSelected:self.selected];
+  }
 }
 
 #pragma mark - Touch events

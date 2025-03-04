@@ -4,9 +4,12 @@
 
 package org.chromium.chrome.browser.ui.android.webid.data;
 
+import android.graphics.Bitmap;
+
 import androidx.annotation.Nullable;
 
 import org.jni_zero.CalledByNative;
+import org.jni_zero.JniType;
 
 import org.chromium.ui.util.ColorUtils;
 import org.chromium.url.GURL;
@@ -15,19 +18,21 @@ import org.chromium.url.GURL;
 public class IdentityProviderMetadata {
     private final Integer mBrandTextColor;
     private final Integer mBrandBackgroundColor;
-    private final String mBrandIconUrl;
+    private final Bitmap mBrandIconBitmap;
     private final GURL mConfigUrl;
     private final GURL mLoginUrl;
-    private final boolean mSupportsAddAccount;
+    // Whether use a different account button needs to be shown, whether due to the IDP requesting
+    // it or due to filtered out accounts being shown.
+    private final boolean mShowUseDifferentAccountButton;
 
     @CalledByNative
     public IdentityProviderMetadata(
             long brandTextColor,
             long brandBackgroundColor,
-            String brandIconUrl,
-            GURL configUrl,
-            GURL loginUrl,
-            boolean supportsAddAccount) {
+            Bitmap brandIconBitmap,
+            @JniType("GURL") GURL configUrl,
+            @JniType("GURL") GURL loginUrl,
+            boolean showUseDifferentAccountButton) {
         // Parameters are longs because ColorUtils.INVALID_COLOR does not fit in an int.
         mBrandTextColor =
                 (brandTextColor == ColorUtils.INVALID_COLOR) ? null : (int) brandTextColor;
@@ -35,10 +40,10 @@ public class IdentityProviderMetadata {
                 (brandBackgroundColor == ColorUtils.INVALID_COLOR)
                         ? null
                         : (int) brandBackgroundColor;
-        mBrandIconUrl = brandIconUrl;
+        mBrandIconBitmap = brandIconBitmap;
         mConfigUrl = configUrl;
         mLoginUrl = loginUrl;
-        mSupportsAddAccount = supportsAddAccount;
+        mShowUseDifferentAccountButton = showUseDifferentAccountButton;
     }
 
     public @Nullable Integer getBrandTextColor() {
@@ -49,8 +54,8 @@ public class IdentityProviderMetadata {
         return mBrandBackgroundColor;
     }
 
-    public String getBrandIconUrl() {
-        return mBrandIconUrl;
+    public Bitmap getBrandIconBitmap() {
+        return mBrandIconBitmap;
     }
 
     public GURL getConfigUrl() {
@@ -61,7 +66,7 @@ public class IdentityProviderMetadata {
         return mLoginUrl;
     }
 
-    public boolean supportsAddAccount() {
-        return mSupportsAddAccount;
+    public boolean showUseDifferentAccountButton() {
+        return mShowUseDifferentAccountButton;
     }
 }

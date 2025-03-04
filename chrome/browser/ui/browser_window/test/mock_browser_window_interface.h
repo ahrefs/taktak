@@ -23,6 +23,10 @@ class MockBrowserWindowInterface : public BrowserWindowInterface {
   MOCK_METHOD(TabStripModel*, GetTabStripModel, (), (override));
   MOCK_METHOD(bool, IsTabStripVisible, (), (override));
   MOCK_METHOD(bool, ShouldHideUIForFullscreen, (), (const, override));
+  MOCK_METHOD(base::CallbackListSubscription,
+              RegisterBrowserDidClose,
+              (BrowserDidCloseCallback callback),
+              (override));
   MOCK_METHOD(bool, IsAttemptingToCloseBrowser, (), (const, override));
   MOCK_METHOD(views::View*, TopContainer, (), (override));
   MOCK_METHOD(base::CallbackListSubscription,
@@ -48,6 +52,10 @@ class MockBrowserWindowInterface : public BrowserWindowInterface {
               GetExclusiveAccessManager,
               (),
               (override));
+  MOCK_METHOD(ImmersiveModeController*,
+              GetImmersiveModeController,
+              (),
+              (override));
   MOCK_METHOD(BrowserActions*, GetActions, (), (override));
   MOCK_METHOD(Type, GetType, (), (const, override));
   MOCK_METHOD(BrowserUserEducationInterface*,
@@ -57,6 +65,15 @@ class MockBrowserWindowInterface : public BrowserWindowInterface {
   MOCK_METHOD(web_app::AppBrowserController*,
               GetAppBrowserController,
               (),
+              (override));
+  MOCK_METHOD(std::vector<tabs::TabInterface*>,
+              GetAllTabInterfaces,
+              (),
+              (override));
+  MOCK_METHOD(Browser*, GetBrowserForMigrationOnly, (), (override));
+  MOCK_METHOD(void,
+              SetWebContentsBlocked,
+              (content::WebContents*, bool),
               (override));
 
   // PageNavigator methods

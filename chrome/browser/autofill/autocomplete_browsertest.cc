@@ -21,15 +21,15 @@
 #include "chrome/test/base/ui_test_utils.h"
 #include "components/autofill/content/browser/content_autofill_driver.h"
 #include "components/autofill/content/browser/test_autofill_manager_injector.h"
-#include "components/autofill/core/browser/autocomplete_history_manager.h"
-#include "components/autofill/core/browser/autofill_test_utils.h"
-#include "components/autofill/core/browser/browser_autofill_manager.h"
-#include "components/autofill/core/browser/personal_data_manager_test_utils.h"
-#include "components/autofill/core/browser/suggestions_context.h"
-#include "components/autofill/core/browser/test_autofill_clock.h"
-#include "components/autofill/core/browser/test_autofill_manager_waiter.h"
-#include "components/autofill/core/browser/ui/suggestion.h"
-#include "components/autofill/core/browser/ui/suggestion_test_helpers.h"
+#include "components/autofill/core/browser/data_manager/personal_data_manager_test_utils.h"
+#include "components/autofill/core/browser/foundations/browser_autofill_manager.h"
+#include "components/autofill/core/browser/foundations/test_autofill_manager_waiter.h"
+#include "components/autofill/core/browser/single_field_fillers/autocomplete/autocomplete_history_manager.h"
+#include "components/autofill/core/browser/suggestions/suggestion.h"
+#include "components/autofill/core/browser/suggestions/suggestion_test_helpers.h"
+#include "components/autofill/core/browser/suggestions/suggestions_context.h"
+#include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
+#include "components/autofill/core/browser/test_utils/test_autofill_clock.h"
 #include "components/autofill/core/common/autofill_clock.h"
 #include "components/autofill/core/common/autofill_constants.h"
 #include "components/autofill/core/common/autofill_features.h"
@@ -64,7 +64,7 @@ class AutocompleteTest : public InProcessBrowserTest {
   class TestAutofillManager : public BrowserAutofillManager {
    public:
     explicit TestAutofillManager(ContentAutofillDriver* driver)
-        : BrowserAutofillManager(driver, "en-US") {}
+        : BrowserAutofillManager(driver) {}
 
     TestAutofillManagerWaiter& text_field_change_waiter() {
       return text_field_change_waiter_;
@@ -79,7 +79,7 @@ class AutocompleteTest : public InProcessBrowserTest {
    private:
     TestAutofillManagerWaiter text_field_change_waiter_{
         *this,
-        {AutofillManagerEvent::kTextFieldDidChange}};
+        {AutofillManagerEvent::kTextFieldValueChanged}};
     TestAutofillManagerWaiter forms_seen_waiter_{
         *this,
         {AutofillManagerEvent::kFormsSeen}};
@@ -124,8 +124,8 @@ class AutocompleteTest : public InProcessBrowserTest {
     command_line->AppendSwitch(blink::switches::kAllowPreCommitInput);
   }
 
-  // Uses the browser to open the file named |filename| based on the given
-  // |disposition|.
+  // Uses the browser to open the file named `filename` based on the given
+  // `disposition`.
   void NavigateToFile(const char* filename,
                       const WindowOpenDisposition& disposition =
                           WindowOpenDisposition::NEW_FOREGROUND_TAB) {
@@ -191,16 +191,16 @@ class AutocompleteTest : public InProcessBrowserTest {
   std::vector<Suggestion> GetAutocompleteSuggestions(
       const std::string& input_name,
       const std::string& prefix) {
-    base::MockCallback<SingleFieldFormFiller::OnSuggestionsReturnedCallback>
-        callback;
+    base::MockCallback<SingleFieldFillRouter::OnSuggestionsReturnedCallback>
+        mock_callback;
     std::vector<Suggestion> suggestions;
-    EXPECT_CALL(callback, Run).WillOnce(testing::SaveArg<1>(&suggestions));
+    EXPECT_CALL(mock_callback, Run).WillOnce(testing::SaveArg<1>(&suggestions));
+    SingleFieldFillRouter::OnSuggestionsReturnedCallback callback =
+        mock_callback.Get();
     EXPECT_TRUE(autocomplete_history_manager()->OnGetSingleFieldSuggestions(
-        /*form_structure=*/nullptr,
         test::CreateTestFormField(/*label=*/"", input_name, prefix,
                                   FormControlType::kInputText),
-        /*autofill_field=*/nullptr, autofill_manager()->client(),
-        callback.Get()));
+        autofill_manager()->client(), callback));
 
     // Make sure the DB task gets executed.
     WaitForPendingDBTasks(*GetWebDataService());

@@ -24,7 +24,6 @@ import org.chromium.chrome.browser.night_mode.SystemNightModeMonitor;
 public class CustomTabNightModeStateController implements DestroyObserver, NightModeStateProvider {
     private final ObserverList<Observer> mObservers = new ObserverList<>();
     private final PowerSavingModeMonitor mPowerSavingModeMonitor;
-    private final SystemNightModeMonitor mSystemNightModeMonitor;
     private final SystemNightModeMonitor.Observer mSystemNightModeObserver = this::updateNightMode;
     private final Runnable mPowerSaveModeObserver = this::updateNightMode;
 
@@ -42,9 +41,7 @@ public class CustomTabNightModeStateController implements DestroyObserver, Night
 
     CustomTabNightModeStateController(
             ActivityLifecycleDispatcher lifecycleDispatcher,
-            SystemNightModeMonitor systemNightModeMonitor,
             PowerSavingModeMonitor powerSavingModeMonitor) {
-        mSystemNightModeMonitor = systemNightModeMonitor;
         mPowerSavingModeMonitor = powerSavingModeMonitor;
         lifecycleDispatcher.register(this);
     }
@@ -69,16 +66,12 @@ public class CustomTabNightModeStateController implements DestroyObserver, Night
 
         // No need to observe system settings if the intent specifies a light/dark color scheme.
         if (mRequestedColorScheme == CustomTabsIntent.COLOR_SCHEME_SYSTEM) {
-            mSystemNightModeMonitor.addObserver(mSystemNightModeObserver);
+            SystemNightModeMonitor.getInstance().addObserver(mSystemNightModeObserver);
             mPowerSavingModeMonitor.addObserver(mPowerSaveModeObserver);
         }
     }
 
     private int getRequestedColorScheme(Intent intent) {
-        if (AuthTabIntentDataProvider.isAuthTabIntent(intent)) {
-            return CustomTabsIntent.COLOR_SCHEME_SYSTEM;
-        }
-
         return IntentUtils.safeGetIntExtra(
                 intent, CustomTabsIntent.EXTRA_COLOR_SCHEME, CustomTabsIntent.COLOR_SCHEME_SYSTEM);
     }
@@ -86,7 +79,7 @@ public class CustomTabNightModeStateController implements DestroyObserver, Night
     // DestroyObserver implementation.
     @Override
     public void onDestroy() {
-        mSystemNightModeMonitor.removeObserver(mSystemNightModeObserver);
+        SystemNightModeMonitor.getInstance().removeObserver(mSystemNightModeObserver);
         mPowerSavingModeMonitor.removeObserver(mPowerSaveModeObserver);
     }
 
@@ -131,7 +124,7 @@ public class CustomTabNightModeStateController implements DestroyObserver, Night
         return switch (mRequestedColorScheme) {
             case CustomTabsIntent.COLOR_SCHEME_LIGHT -> false;
             case CustomTabsIntent.COLOR_SCHEME_DARK -> true;
-            default -> mSystemNightModeMonitor.isSystemNightModeOn()
+            default -> SystemNightModeMonitor.getInstance().isSystemNightModeOn()
                     || mPowerSavingModeMonitor.powerSavingIsOn();
         };
     }

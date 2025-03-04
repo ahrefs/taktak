@@ -26,6 +26,7 @@
 #include <memory>
 #include <optional>
 
+#include "base/containers/span.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/time/time.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
@@ -75,7 +76,6 @@ class ExecutionContext;
 class FormData;
 class PrivateToken;
 class ScriptState;
-class ScriptValue;
 class TextResourceDecoder;
 class ThreadableLoader;
 class URLSearchParams;
@@ -148,7 +148,7 @@ class CORE_EXPORT XMLHttpRequest final
   const AtomicString& getResponseHeader(const AtomicString&) const;
   String responseText(ExceptionState&);
   Document* responseXML(ExceptionState&);
-  ScriptValue response(ScriptState*, ExceptionState&);
+  v8::Local<v8::Value> response(ScriptState*);
   unsigned timeout() const {
     return static_cast<unsigned>(timeout_.InMilliseconds());
   }
@@ -202,7 +202,7 @@ class CORE_EXPORT XMLHttpRequest final
 
   void EndLoading();
 
-  v8::Local<v8::Value> ResponseJSON(v8::Isolate*, ExceptionState&);
+  v8::Local<v8::Value> ResponseJSON(ScriptState*);
   Blob* ResponseBlob();
   DOMArrayBuffer* ResponseArrayBuffer();
 
@@ -235,7 +235,7 @@ class CORE_EXPORT XMLHttpRequest final
   void ThrowForLoadFailureIfNeeded(ExceptionState&, const String&);
 
   bool InitSend(ExceptionState&);
-  void SendBytesData(const void*, size_t, ExceptionState&);
+  void SendBytesData(base::span<const uint8_t>, ExceptionState&);
   void send(Document*, ExceptionState&);
   void send(const String&, ExceptionState&);
   void send(Blob*, ExceptionState&);

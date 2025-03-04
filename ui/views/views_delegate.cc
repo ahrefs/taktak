@@ -8,11 +8,13 @@
 
 #include "base/command_line.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
+#include "ui/accessibility/accessibility_features.h"
+#include "ui/accessibility/platform/ax_platform.h"
 #include "ui/base/mojom/window_show_state.mojom.h"
 #include "ui/views/widget/native_widget_private.h"
 
 #if defined(USE_AURA)
+#include "ui/views/accessibility/tree/browser_views_ax_manager.h"
 #include "ui/views/touchui/touch_selection_menu_runner_views.h"
 #endif
 
@@ -28,13 +30,22 @@ ViewsDelegate::ViewsDelegate() {
   DCHECK(!views_delegate);
   views_delegate = this;
 
-#if BUILDFLAG(ENABLE_DESKTOP_AURA) || BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(ENABLE_DESKTOP_AURA) || BUILDFLAG(IS_CHROMEOS)
   // TouchSelectionMenuRunnerViews is not supported on Mac or Cast.
   // It is also not used on Ash (the ChromeViewsDelegate() for Ash will
   // immediately replace this). But tests running without the Chrome layer
   // will not get the replacement.
   touch_selection_menu_runner_ =
       std::make_unique<TouchSelectionMenuRunnerViews>();
+#endif
+
+#if BUILDFLAG(ENABLE_DESKTOP_AURA)
+  if (::features::IsAccessibilityTreeForViewsEnabled() &&
+      (BrowserViewsAXManager::GetInstance()->is_enabled() ||
+       !ui::AXPlatform::GetInstance().GetMode().has_mode(
+           ui::AXMode::kNativeAPIs))) {
+    BrowserViewsAXManager::GetInstance()->Enable();
+  }
 #endif
 }
 
@@ -76,13 +87,6 @@ ViewsDelegate::ProcessAcceleratorWhileMenuShowing(
 bool ViewsDelegate::ShouldCloseMenuIfMouseCaptureLost() const {
   return true;
 }
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-bool ViewsDelegate::ShouldWindowHaveRoundedCorners(
-    const gfx::NativeWindow window) const {
-  return false;
-}
-#endif
 
 #if BUILDFLAG(IS_WIN)
 HICON ViewsDelegate::GetDefaultWindowIcon() const {

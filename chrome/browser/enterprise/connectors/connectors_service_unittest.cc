@@ -10,7 +10,7 @@
 #include "base/memory/raw_ptr.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/test_future.h"
-#include "build/chromeos_buildflags.h"
+#include "build/build_config.h"
 #include "chrome/browser/enterprise/connectors/common.h"
 #include "chrome/browser/enterprise/connectors/connectors_manager.h"
 #include "chrome/browser/enterprise/connectors/test/deep_scanning_test_utils.h"
@@ -30,11 +30,8 @@
 #include "url/gurl.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/components/mgs/managed_guest_session_test_utils.h"
-#endif
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "base/strings/strcat.h"
+#include "chromeos/components/mgs/managed_guest_session_test_utils.h"
 #include "extensions/common/constants.h"
 #endif
 
@@ -191,11 +188,9 @@ INSTANTIATE_TEST_SUITE_P(
 #if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
 class ConnectorsServiceReportingFeatureTest
     : public ConnectorsServiceTest,
-      public testing::WithParamInterface<
-          std::tuple<ReportingConnector, const char*>> {
+      public testing::WithParamInterface<const char*> {
  public:
-  ReportingConnector connector() const { return std::get<0>(GetParam()); }
-  const char* pref_value() const { return std::get<1>(GetParam()); }
+  const char* pref_value() const { return GetParam(); }
 
   const char* pref() const { return kOnSecurityEventPref; }
 
@@ -282,13 +277,11 @@ TEST_P(ConnectorsServiceReportingFeatureTest, CheckTelemetryPolicyObserver) {
 }
 #endif  // BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
 
-INSTANTIATE_TEST_SUITE_P(
-    ,
-    ConnectorsServiceReportingFeatureTest,
-    testing::Combine(testing::Values(ReportingConnector::SECURITY_EVENT),
-                     testing::Values(nullptr,
-                                     kNormalReportingSettingsPref,
-                                     kEmptySettingsPref)));
+INSTANTIATE_TEST_SUITE_P(,
+                         ConnectorsServiceReportingFeatureTest,
+                         testing::Values(nullptr,
+                                         kNormalReportingSettingsPref,
+                                         kEmptySettingsPref));
 
 #endif  // BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
 
@@ -315,6 +308,9 @@ TEST_F(ConnectorsServiceTest, RealtimeURLCheck) {
 
   maybe_dm_token = ConnectorsServiceFactory::GetForBrowserContext(profile_)
                        ->GetDMTokenForRealTimeUrlCheck();
+  ASSERT_EQ(
+      maybe_dm_token.error(),
+      ConnectorsServiceBase::NoDMTokenForRealTimeUrlCheckReason::kNoDmToken);
   EXPECT_FALSE(maybe_dm_token.has_value());
 
 #if !BUILDFLAG(IS_CHROMEOS)
@@ -414,7 +410,7 @@ TEST_P(ConnectorsServiceExemptURLsTest, BlobAndFilesystem) {
   }
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 TEST_P(ConnectorsServiceExemptURLsTest, FirstPartyExtensions) {
   auto* service = ConnectorsServiceFactory::GetForBrowserContext(profile_);
 
@@ -426,7 +422,7 @@ TEST_P(ConnectorsServiceExemptURLsTest, FirstPartyExtensions) {
     ASSERT_FALSE(settings.has_value());
   }
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 INSTANTIATE_TEST_SUITE_P(
     ,

@@ -53,6 +53,7 @@ SharingHubBubbleViewImpl::SharingHubBubbleViewImpl(
   DCHECK(anchor_view);
   DCHECK(controller);
 
+  set_background_color(ui::kColorMenuBackground);
   SetAccessibleTitle(l10n_util::GetStringUTF16(IDS_SHARING_HUB_TOOLTIP));
   SetButtons(static_cast<int>(ui::mojom::DialogButton::kNone));
   set_fixed_width(views::LayoutProvider::Get()->GetDistanceMetric(
@@ -73,17 +74,11 @@ void SharingHubBubbleViewImpl::Hide() {
   CloseBubble();
 }
 
-void SharingHubBubbleViewImpl::OnThemeChanged() {
-  LocationBarBubbleDelegateView::OnThemeChanged();
-  if (GetWidget()) {
-    set_color(GetColorProvider()->GetColor(ui::kColorMenuBackground));
-  }
-}
-
 void SharingHubBubbleViewImpl::OnActionSelected(
     SharingHubBubbleActionButton* button) {
-  if (!controller_)
+  if (!controller_) {
     return;
+  }
 
   // The announcement has to happen here rather than in the button itself: the
   // button doesn't know whether controller_ will be null, so it doesn't know

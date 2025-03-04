@@ -9,6 +9,7 @@
 
 #include "third_party/blink/renderer/platform/peerconnection/rtc_video_encoder.h"
 
+#include <array>
 #include <memory>
 #include <numeric>
 #include <vector>
@@ -34,13 +35,13 @@
 #include "base/time/time.h"
 #include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "components/viz/common/resources/shared_image_format_utils.h"
 #include "media/base/bitrate.h"
 #include "media/base/bitstream_buffer.h"
 #include "media/base/media_switches.h"
 #include "media/base/media_util.h"
 #include "media/base/platform_features.h"
+#include "media/base/supported_types.h"
 #include "media/base/svc_scalability_mode.h"
 #include "media/base/video_bitrate_allocation.h"
 #include "media/base/video_frame.h"
@@ -51,6 +52,7 @@
 #include "media/parsers/h264_parser.h"
 #include "media/video/gpu_video_accelerator_factories.h"
 #include "media/video/video_encode_accelerator.h"
+#include "media/webrtc/webrtc_features.h"
 #include "third_party/blink/public/common/buildflags.h"
 #include "third_party/blink/public/common/features.h"
 #include "third_party/blink/renderer/platform/allow_discouraged_type.h"
@@ -69,8 +71,8 @@
 #include "third_party/libyuv/include/libyuv.h"
 #include "third_party/webrtc/modules/video_coding/codecs/h264/include/h264.h"
 #include "third_party/webrtc/modules/video_coding/include/video_error_codes.h"
+#include "third_party/webrtc/modules/video_coding/svc/create_scalability_structure.h"
 #include "third_party/webrtc/modules/video_coding/svc/simulcast_to_svc_converter.h"
-#include "third_party/webrtc/modules/video_coding/utility/simulcast_utility.h"
 #include "third_party/webrtc/rtc_base/time_utils.h"
 #include "ui/gfx/buffer_format_util.h"
 
@@ -98,8 +100,7 @@ class SignaledValue {
 
   ~SignaledValue() {
     if (IsValid() && !event->IsSignaled()) {
-      NOTREACHED_IN_MIGRATION() << "never signaled";
-      event->Signal();
+      NOTREACHED() << "never signaled";
     }
   }
 
@@ -188,7 +189,7 @@ class RefCountedWritableSharedMemoryMapping
       const RefCountedWritableSharedMemoryMapping&) = delete;
 
   const unsigned char* front() const {
-    return static_cast<unsigned char*>(mapping_.memory());
+    return static_cast<const unsigned char*>(mapping_.memory());
   }
   unsigned char* front() {
     return static_cast<unsigned char*>(mapping_.memory());
@@ -199,7 +200,7 @@ class RefCountedWritableSharedMemoryMapping
   friend class ThreadSafeRefCounted<RefCountedWritableSharedMemoryMapping>;
   ~RefCountedWritableSharedMemoryMapping() = default;
 
-  const base::WritableSharedMemoryMapping mapping_;
+  base::WritableSharedMemoryMapping mapping_;
 };
 
 class EncodedDataWrapper : public webrtc::EncodedImageBufferInterface {
@@ -269,11 +270,12 @@ webrtc::VideoBitrateAllocation AllocateBitrateForVEAConfig(
     const media::VideoEncodeAccelerator::Config& config) {
   // The same bitrate factors as the software encoder.
   // https://source.chromium.org/chromium/chromium/src/+/main:media/video/vpx_video_encoder.cc;l=131;drc=d383d0b3e4f76789a6de2a221c61d3531f4c59da
-  constexpr double kTemporalLayersBitrateScaleFactors[][3] = {
-      {1.00, 0.00, 0.00},  // For one temporal layer.
-      {0.60, 0.40, 0.00},  // For two temporal layers.
-      {0.50, 0.20, 0.30},  // For three temporal layers.
-  };
+  constexpr auto kTemporalLayersBitrateScaleFactors =
+      std::to_array<std::array<double, 3>>({
+          {1.00, 0.00, 0.00},  // For one temporal layer.
+          {0.60, 0.40, 0.00},  // For two temporal layers.
+          {0.50, 0.20, 0.30},  // For three temporal layers.
+      });
   DCHECK_EQ(config.bitrate.mode(), media::Bitrate::Mode::kConstant);
   webrtc::VideoBitrateAllocation bitrate_allocation;
   bitrate_allocation.SetBitrate(0, 0, config.bitrate.target_bps());
@@ -289,6 +291,53 @@ webrtc::VideoBitrateAllocation AllocateBitrateForVEAConfig(
     }
   }
   return bitrate_allocation;
+}
+
+// Configures the spatial layer settings to be passed to encoder.
+// If some config of |codec_settings| is not supported, returns false.
+bool SetLayerConfigForTemporalScalability(
+    const webrtc::VideoCodec& codec_settings,
+    std::vector<media::VideoEncodeAccelerator::Config::SpatialLayer>&
+        spatial_layers,
+    int num_temporal_layers) {
+  spatial_layers.resize(1u);
+  auto& sl = spatial_layers[0];
+  sl.width = codec_settings.width;
+  sl.height = codec_settings.height;
+  if (!ConvertKbpsToBps(codec_settings.startBitrate, &sl.bitrate_bps)) {
+    return false;
+  }
+  sl.framerate = codec_settings.maxFramerate;
+  sl.max_qp = base::saturated_cast<uint8_t>(codec_settings.qpMax);
+  sl.num_of_temporal_layers =
+      base::saturated_cast<uint8_t>(num_temporal_layers);
+
+  return true;
+}
+
+bool IsValidTemporalSVC(
+    const std::optional<webrtc::ScalabilityMode>& scalability_mode,
+    int& num_temporal_layers) {
+  if (!scalability_mode.has_value()) {
+    // Assume L1T1 if no scalability mode is set.
+    num_temporal_layers = 1;
+    return true;
+  }
+
+  switch (*scalability_mode) {
+    case webrtc::ScalabilityMode::kL1T1:
+      num_temporal_layers = 1;
+      break;
+    case webrtc::ScalabilityMode::kL1T2:
+      num_temporal_layers = 2;
+      break;
+    case webrtc::ScalabilityMode::kL1T3:
+      num_temporal_layers = 3;
+      break;
+    default:
+      return false;
+  }
+  return (num_temporal_layers <= 3);
 }
 
 }  // namespace
@@ -415,21 +464,8 @@ bool CreateSpatialLayersConfig(
       break;
     case webrtc::kVideoCodecVP8: {
       int number_of_temporal_layers = 1;
-      if (scalability_mode.has_value()) {
-        switch (*scalability_mode) {
-          case webrtc::ScalabilityMode::kL1T1:
-            number_of_temporal_layers = 1;
-            break;
-          case webrtc::ScalabilityMode::kL1T2:
-            number_of_temporal_layers = 2;
-            break;
-          case webrtc::ScalabilityMode::kL1T3:
-            number_of_temporal_layers = 3;
-            break;
-          default:
-            // Other modes not supported.
-            return false;
-        }
+      if (!IsValidTemporalSVC(scalability_mode, number_of_temporal_layers)) {
+        return false;
       }
       if (number_of_temporal_layers > 1) {
         if (codec_settings.mode == webrtc::VideoCodecMode::kScreensharing) {
@@ -447,16 +483,8 @@ bool CreateSpatialLayersConfig(
         }
         // Though there is no SVC in VP8 spec. We allocate 1 element in
         // spatial_layers for temporal layer encoding.
-        spatial_layers->resize(1u);
-        auto& sl = (*spatial_layers)[0];
-        sl.width = codec_settings.width;
-        sl.height = codec_settings.height;
-        if (!ConvertKbpsToBps(codec_settings.startBitrate, &sl.bitrate_bps))
-          return false;
-        sl.framerate = codec_settings.maxFramerate;
-        sl.max_qp = base::saturated_cast<uint8_t>(codec_settings.qpMax);
-        sl.num_of_temporal_layers =
-            base::saturated_cast<uint8_t>(number_of_temporal_layers);
+        return SetLayerConfigForTemporalScalability(
+            codec_settings, *spatial_layers, number_of_temporal_layers);
       }
       break;
     }
@@ -509,14 +537,28 @@ bool CreateSpatialLayersConfig(
         }
       }
       break;
-    case webrtc::kVideoCodecAV1:
-      // No hardware encoder supports for AV1 either temporal layer or spatial
-      // layer encoding.
-      if (scalability_mode.value_or(webrtc::ScalabilityMode::kL1T1) !=
-          webrtc::ScalabilityMode::kL1T1) {
+    case webrtc::kVideoCodecAV1: {
+      int number_of_temporal_layers = 1;
+      if (!IsValidTemporalSVC(scalability_mode, number_of_temporal_layers)) {
         return false;
       }
-      break;
+      return SetLayerConfigForTemporalScalability(
+          codec_settings, *spatial_layers, number_of_temporal_layers);
+    }
+#if BUILDFLAG(RTC_USE_H265)
+    case webrtc::kVideoCodecH265: {
+      int number_of_temporal_layers = 1;
+      if (!IsValidTemporalSVC(scalability_mode, number_of_temporal_layers) ||
+          (number_of_temporal_layers == 2 &&
+           !base::FeatureList::IsEnabled(::features::kWebRtcH265L1T2)) ||
+          (number_of_temporal_layers == 3 &&
+           !base::FeatureList::IsEnabled(::features::kWebRtcH265L1T3))) {
+        return false;
+      }
+      return SetLayerConfigForTemporalScalability(
+          codec_settings, *spatial_layers, number_of_temporal_layers);
+    }
+#endif  // BUILDFLAG(RTC_USE_H265)
     default:
       break;
   }
@@ -565,9 +607,7 @@ webrtc::VideoCodecType ProfileToWebRtcVideoCodecType(
       return webrtc::kVideoCodecH265;
 #endif
     default:
-      NOTREACHED_IN_MIGRATION()
-          << "Invalid profile " << GetProfileName(profile);
-      return webrtc::kVideoCodecGeneric;
+      NOTREACHED() << "Invalid profile " << GetProfileName(profile);
   }
 }
 
@@ -612,7 +652,7 @@ void RecordEncoderStatusUMA(const media::EncoderStatus& status,
 bool IsZeroCopyEnabled(webrtc::VideoContentType content_type) {
   if (content_type == webrtc::VideoContentType::SCREENSHARE) {
     // Zero copy screen capture.
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     // The zero-copy capture is available for all sources in ChromeOS
     // Ash-chrome.
     return base::FeatureList::IsEnabled(blink::features::kZeroCopyTabCapture);
@@ -827,9 +867,6 @@ class RTCVideoEncoder::Impl : public media::VideoEncodeAccelerator::Client {
                           const webrtc::CodecSpecificInfo& info,
                           int32_t bitstream_buffer_id);
 
-  // Records |failed_timestamp_match_| value after a session.
-  void RecordTimestampMatchUMA() const;
-
   // Gets ActiveSpatialLayers that are currently active,
   // meaning the are configured, have active=true and have non-zero bandwidth
   // allocated to them.
@@ -844,6 +881,12 @@ class RTCVideoEncoder::Impl : public media::VideoEncodeAccelerator::Client {
   // RTCVideoEncoder::ReturnEncodedImage() function.  When that is complete,
   // the buffer is returned to Impl by its index using this function.
   void BitstreamBufferAvailable(int32_t bitstream_buffer_id);
+
+  // Fill `webrtc::CodecSpecificInfo.generic_frame_info` to provide more
+  // accurate description of used layering.
+  media::EncoderStatus FillGenericFrameInfo(
+      webrtc::CodecSpecificInfo& info,
+      const media::BitstreamBufferMetadata& metadata);
 
   // This is attached to |gpu_task_runner_|, not the thread class is constructed
   // on.
@@ -924,6 +967,12 @@ class RTCVideoEncoder::Impl : public media::VideoEncodeAccelerator::Client {
   // The scalability mode, as reported to WebRTC.
   const std::optional<webrtc::ScalabilityMode> scalability_mode_;
 
+  // Generate the dependency template and generic frame info according to
+  // https://w3c.github.io/webrtc-svc/#scalabilitymodes*
+  std::unique_ptr<webrtc::ScalableVideoController> svc_controller_;
+  // Maintain the temporal layer idx for each frame in the encode buffer.
+  Vector<uint32_t> encode_buffers_tid_;
+
   // The content type, as reported to WebRTC (screenshare vs realtime video).
   const webrtc::VideoContentType video_content_type_;
 
@@ -1003,6 +1052,19 @@ RTCVideoEncoder::Impl::Impl(
   encoded_buffer_reference_holder_ =
       std::make_unique<EncodedBufferReferenceHolder>(weak_this_);
   weak_this_for_client = weak_this_;
+  if (scalability_mode_.has_value() &&
+      (
+#if BUILDFLAG(RTC_USE_H265)
+          video_codec_type == webrtc::kVideoCodecH265 ||
+#endif
+          video_codec_type == webrtc::kVideoCodecAV1)) {
+    svc_controller_ =
+        webrtc::CreateScalabilityStructure(scalability_mode.value());
+    if (!svc_controller_) {
+      LOG(ERROR) << "Failed to set scalability mode "
+                 << static_cast<int>(*scalability_mode_);
+    }
+  }
 }
 
 void RTCVideoEncoder::Impl::CreateAndInitializeVEA(
@@ -1118,7 +1180,7 @@ void RTCVideoEncoder::Impl::Enqueue(FrameChunk frame_chunk) {
     // |use_native_input_| state. As a result we don't toggle
     // |use_native_input_| flag here for them.
     if (frame_buffer->type() == webrtc::VideoFrameBuffer::Type::kNative) {
-      frame = static_cast<WebRtcVideoFrameAdapter*>(frame_buffer.get())
+      frame = static_cast<WebRtcVideoFrameAdapterInterface*>(frame_buffer.get())
                   ->getMediaVideoFrame();
       if (frame->storage_type() == media::VideoFrame::STORAGE_UNOWNED_MEMORY) {
         if (use_native_input_) {
@@ -1340,11 +1402,6 @@ void RTCVideoEncoder::Impl::RequestEncodingParametersChangeWithSizeChange(
   input_visible_size_ = input_visible_size;
 }
 
-void RTCVideoEncoder::Impl::RecordTimestampMatchUMA() const {
-  base::UmaHistogramBoolean("Media.RTCVideoEncoderTimestampMatchSuccess",
-                            !failed_timestamp_match_);
-}
-
 ActiveSpatialLayers RTCVideoEncoder::Impl::GetActiveSpatialLayers() const {
   if (init_spatial_layer_resolutions_.empty()) {
     return ActiveSpatialLayers();
@@ -1409,6 +1466,93 @@ void RTCVideoEncoder::Impl::RequireBitstreamBuffers(
   status_ = WEBRTC_VIDEO_CODEC_OK;
 
   scoped_event.SetAndReset(WEBRTC_VIDEO_CODEC_OK);
+}
+
+media::EncoderStatus RTCVideoEncoder::Impl::FillGenericFrameInfo(
+    webrtc::CodecSpecificInfo& info,
+    const media::BitstreamBufferMetadata& metadata) {
+  CHECK(svc_controller_);
+
+  auto config = svc_controller_->StreamConfig();
+
+  // For L1T1 we don't care what reference structure the encoder has produced.
+  const bool is_l1t1 =
+      config.num_spatial_layers == 1 && config.num_temporal_layers == 1;
+
+  std::vector<webrtc::ScalableVideoController::LayerFrameConfig> layer_frames =
+      svc_controller_->NextFrameConfig(metadata.key_frame);
+
+  DCHECK_EQ(config.num_spatial_layers, 1);
+  if (layer_frames.size() != 1ull /*num_of_spatial_layers*/) {
+    return {media::EncoderStatus::Codes::kEncoderFailedEncode,
+            "Invalid number of layer frames: " +
+                base::NumberToString(layer_frames.size())};
+  }
+
+  webrtc::GenericFrameInfo generic =
+      svc_controller_->OnEncodeDone(layer_frames[0]);
+
+  // VEA can skip svc_generic only for L1T1.
+  CHECK(metadata.svc_generic.has_value() || is_l1t1);
+
+  if (!is_l1t1 && !metadata.svc_generic->follow_svc_spec) {
+    const media::SVCGenericMetadata& md_generic = metadata.svc_generic.value();
+    // Some codecs, like H.265, may produce output bitstream that does not
+    // follow SVC spec and there is no parsing on the bitstream to get the
+    // reference structure.
+    if (!md_generic.reference_flags || !md_generic.refresh_flags) {
+      return {media::EncoderStatus::Codes::kEncoderFailedEncode,
+              "Missing reference flags or refresh flags"};
+    }
+    if (*md_generic.refresh_flags >= (1 << webrtc::kMaxEncoderBuffers)) {
+      return {media::EncoderStatus::Codes::kEncoderFailedEncode,
+              "Invalid refreshed encode buffer flags: " +
+                  base::NumberToString(*md_generic.refresh_flags)};
+    }
+
+    if (layer_frames[0].TemporalId() != md_generic.temporal_idx) {
+      return {media::EncoderStatus::Codes::kEncoderFailedEncode,
+              "Invalid temporal id: " +
+                  base::NumberToString(md_generic.temporal_idx) +
+                  " expected: " +
+                  base::NumberToString(layer_frames[0].TemporalId())};
+    }
+
+    generic.encoder_buffers.clear();
+    if (encode_buffers_tid_.size() == 0) {
+      encode_buffers_tid_.resize(webrtc::kMaxEncoderBuffers);
+    }
+    uint32_t temporal_id = md_generic.temporal_idx;
+    for (int i = 0; i < webrtc::kMaxEncoderBuffers; i++) {
+      bool referenced = !!(*md_generic.reference_flags & (1u << i));
+      if (referenced) {
+        // If VEA doesn't follow the SVC spec, we need to check whether
+        // the reference dependency is allowed.
+        if (encode_buffers_tid_[i] > temporal_id ||
+            (encode_buffers_tid_[i] == temporal_id && temporal_id != 0)) {
+          return {media::EncoderStatus::Codes::kEncoderFailedEncode,
+                  "Invalid referenced temporal id: " +
+                      base::NumberToString(encode_buffers_tid_[i]) +
+                      " for current frame with tid: " +
+                      base::NumberToString(temporal_id)};
+        }
+      }
+      bool updated = !!(*md_generic.refresh_flags & (1u << i));
+      if (updated) {
+        encode_buffers_tid_[i] = temporal_id;
+      }
+      if (referenced || updated) {
+        webrtc::CodecBufferUsage buffer(i, referenced, updated);
+        generic.encoder_buffers.push_back(buffer);
+      }
+    }
+  }
+
+  info.generic_frame_info = generic;
+  if (metadata.key_frame) {
+    info.template_structure = svc_controller_->DependencyStructure();
+  }
+  return {media::EncoderStatus::Codes::kOk};
 }
 
 void RTCVideoEncoder::Impl::BitstreamBufferReady(
@@ -1743,6 +1887,17 @@ void RTCVideoEncoder::Impl::BitstreamBufferReady(
       // provide more accurate description of used layering than webrtc can
       // simulate based on the codec specific info.
     } break;
+    case webrtc::kVideoCodecAV1:
+#if BUILDFLAG(RTC_USE_H265)
+    case webrtc::kVideoCodecH265:
+#endif  // BUILDFLAG(RTC_USE_H265)
+      if (svc_controller_) {
+        media::EncoderStatus status = FillGenericFrameInfo(info, metadata);
+        if (!status.is_ok()) {
+          NotifyErrorStatus(status);
+        }
+      }
+      break;
     default:
       break;
   }
@@ -1794,7 +1949,6 @@ void RTCVideoEncoder::Impl::NotifyErrorStatus(
 RTCVideoEncoder::Impl::~Impl() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
-  RecordTimestampMatchUMA();
   if (video_encoder_) {
     video_encoder_.reset();
     status_ = WEBRTC_VIDEO_CODEC_UNINITIALIZED;
@@ -1832,8 +1986,8 @@ void RTCVideoEncoder::Impl::EncodeOneFrame(FrameChunk frame_chunk) {
   bool requires_copy_or_scale =
       frame_buffer->type() != webrtc::VideoFrameBuffer::Type::kNative;
   if (!requires_copy_or_scale) {
-    const WebRtcVideoFrameAdapter* frame_adapter =
-        static_cast<WebRtcVideoFrameAdapter*>(frame_buffer.get());
+    const WebRtcVideoFrameAdapterInterface* frame_adapter =
+        static_cast<WebRtcVideoFrameAdapterInterface*>(frame_buffer.get());
     frame = frame_adapter->getMediaVideoFrame();
     frame->set_timestamp(timestamp);
     const media::VideoFrame::StorageType storage = frame->storage_type();
@@ -2007,7 +2161,7 @@ void RTCVideoEncoder::Impl::EncodeOneFrameWithNativeInput(
         black_frame_, black_frame_->format(), black_frame_->visible_rect(),
         black_frame_->natural_size());
   } else {
-    frame = static_cast<WebRtcVideoFrameAdapter*>(frame_buffer.get())
+    frame = static_cast<WebRtcVideoFrameAdapterInterface*>(frame_buffer.get())
                 ->getMediaVideoFrame();
   }
   frame->set_timestamp(base::Microseconds(frame_chunk.timestamp_us));
@@ -2048,8 +2202,8 @@ bool RTCVideoEncoder::Impl::CreateBlackMappableSIFrame(
       gfx::BufferUsage::VEA_READ_CAMERA_AND_CPU_READ_WRITE;
 
   // Setting some default usage in order to get a mappable shared image.
-  const auto si_usage =
-      gpu::SHARED_IMAGE_USAGE_CPU_WRITE | gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
+  const auto si_usage = gpu::SHARED_IMAGE_USAGE_CPU_WRITE_ONLY |
+                        gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
 
   auto* sii = gpu_factories_->SharedImageInterface();
   if (!sii) {
@@ -2322,8 +2476,7 @@ int32_t RTCVideoEncoder::InitEncode(
     if (codec_settings->codecType != webrtc::kVideoCodecVP9 ||
         !base::FeatureList::IsEnabled(
             features::kRtcVideoEncoderConvertSimulcastToSvc) ||
-        !webrtc::SimulcastUtility::ValidSimulcastParameters(
-            *codec_settings, codec_settings->numberOfSimulcastStreams)) {
+        !webrtc::SimulcastToSvcConverter::IsConfigSupported(*codec_settings)) {
       return WEBRTC_VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED;
     }
     simulcast_to_svc_converter.emplace(*codec_settings);
@@ -2379,14 +2532,18 @@ int32_t RTCVideoEncoder::InitEncode(
     return initialization_error_message;
   }
 
-  // Fallback to SW if VEA does not support VP9 SVC encoding.
-  if (codec_settings_.codecType == webrtc::kVideoCodecVP9 &&
-      (codec_settings_.VP9()->numberOfTemporalLayers > 1 ||
-       codec_settings_.VP9()->numberOfSpatialLayers > 1)) {
+  // Fallback to SW if VEA does not support VP9/AV1 SVC encoding. For H.265,
+  // this will fail the initialization as there is no fallback.
+  if ((codec_settings_.codecType == webrtc::kVideoCodecVP9 ||
+#if BUILDFLAG(RTC_USE_H265)
+       codec_settings_.codecType == webrtc::kVideoCodecH265 ||
+#endif
+       codec_settings_.codecType == webrtc::kVideoCodecAV1) &&
+      !!spatial_layers.size()) {
     const auto vea_supported_profiles =
         gpu_factories_->GetVideoEncodeAcceleratorSupportedProfiles().value_or(
             media::VideoEncodeAccelerator::SupportedProfiles());
-    auto support_profile = base::ranges::find_if(
+    auto support_profile = std::ranges::find_if(
         vea_supported_profiles,
         [this](const media::VideoEncodeAccelerator::SupportedProfile&
                    support_profile) {
@@ -2397,10 +2554,15 @@ int32_t RTCVideoEncoder::InitEncode(
       media::SVCScalabilityMode scalability_mode =
           ToSVCScalabilityMode(spatial_layers, inter_layer_pred);
       if (support_profile->scalability_modes.end() ==
-          base::ranges::find_if(
+          std::ranges::find_if(
               support_profile->scalability_modes,
-              [scalability_mode](const media::SVCScalabilityMode& value) {
-                return value == scalability_mode;
+              [&support_profile,
+               scalability_mode](const media::SVCScalabilityMode& value) {
+                return (value == scalability_mode) &&
+                       (!support_profile->is_software_codec ||
+                        media::MayHaveAndAllowSelectOSSoftwareEncoder(
+                            media::VideoCodecProfileToVideoCodec(
+                                support_profile->profile)));
               })) {
         return initialization_error_message;
       }
@@ -2412,19 +2574,30 @@ int32_t RTCVideoEncoder::InitEncode(
     const auto vea_supported_profiles =
         gpu_factories_->GetVideoEncodeAcceleratorSupportedProfiles().value_or(
             media::VideoEncodeAccelerator::SupportedProfiles());
+    auto it = std::find_if(
+        vea_supported_profiles.begin(), vea_supported_profiles.end(),
+        [this, &input_visible_size](
+            const media::VideoEncodeAccelerator::SupportedProfile&
+                vea_profile) {
+          return vea_profile.profile == profile_ &&
+                 (!vea_profile.is_software_codec ||
+                  media::MayHaveAndAllowSelectOSSoftwareEncoder(
+                      media::VideoCodecProfileToVideoCodec(
+                          vea_profile.profile))) &&
+                 input_visible_size.width() <=
+                     vea_profile.max_resolution.width() &&
+                 input_visible_size.height() <=
+                     vea_profile.max_resolution.height() &&
+                 input_visible_size.width() >=
+                     vea_profile.min_resolution.width() &&
+                 input_visible_size.height() >=
+                     vea_profile.min_resolution.height();
+        });
 
-    for (const auto& vea_profile : vea_supported_profiles) {
-      if (vea_profile.profile == profile_ &&
-          (input_visible_size.width() > vea_profile.max_resolution.width() ||
-           input_visible_size.height() > vea_profile.max_resolution.height() ||
-           input_visible_size.width() < vea_profile.min_resolution.width() ||
-           input_visible_size.height() < vea_profile.min_resolution.height())) {
-        LOG(ERROR) << "Requested dimensions (" << input_visible_size.ToString()
-                   << ") beyond accelerator limits ("
-                   << vea_profile.min_resolution.ToString() << " - "
-                   << vea_profile.max_resolution.ToString() << ")";
-        return initialization_error_message;
-      }
+    if (vea_supported_profiles.empty() || it == vea_supported_profiles.end()) {
+      LOG(ERROR) << "Requested dimensions (" << input_visible_size.ToString()
+                 << ") beyond accelerator limits.";
+      return initialization_error_message;
     }
   }
 
@@ -2473,15 +2646,13 @@ int32_t RTCVideoEncoder::InitEncode(
   vea_config.inter_layer_pred = inter_layer_pred;
   vea_config.drop_frame_thresh_percentage =
       GetDropFrameThreshold(codec_settings_);
-  // When we don't have built in H264 software encoding, allow usage of any
+  // When we don't have built in H264/H265 software encoding, allow usage of any
   // software encoders provided by the platform.
-#if !BUILDFLAG(ENABLE_OPENH264) && BUILDFLAG(RTC_USE_H264)
-  if (profile_ >= media::H264PROFILE_MIN &&
-      profile_ <= media::H264PROFILE_MAX) {
+  if (media::MayHaveAndAllowSelectOSSoftwareEncoder(
+          media::VideoCodecProfileToVideoCodec(profile_))) {
     vea_config.required_encoder_type =
         media::VideoEncodeAccelerator::Config::EncoderType::kNoPreference;
   }
-#endif
 
   int32_t initialization_ret = InitializeEncoder(vea_config);
   if (initialization_ret != WEBRTC_VIDEO_CODEC_OK) {
@@ -2648,6 +2819,17 @@ void RTCVideoEncoder::UpdateEncoderInfo(
        base::FeatureList::IsEnabled(
            features::kRtcVideoEncoderConvertSimulcastToSvc));
   encoder_info_.is_qp_trusted = media_enc_info.reports_average_qp;
+  if (media::VideoCodecProfileToVideoCodec(profile_) ==
+          media::VideoCodec::kHEVC &&
+      encoder_info_.is_qp_trusted) {
+    // Thresholds based on local QP and PSNR measurements.
+    constexpr int kH265QpThresholdLow = 29;
+    constexpr int kH265QpThresholdHigh = 41;
+    encoder_info_.scaling_settings = VideoEncoder::ScalingSettings(
+        kH265QpThresholdLow, kH265QpThresholdHigh);
+  } else {
+    encoder_info_.scaling_settings = VideoEncoder::ScalingSettings::kOff;
+  }
   encoder_info_.requested_resolution_alignment =
       media_enc_info.requested_resolution_alignment;
   encoder_info_.apply_alignment_to_all_simulcast_layers =
@@ -2664,7 +2846,7 @@ void RTCVideoEncoder::UpdateEncoderInfo(
             media_enc_info.fps_allocation[i].begin(),
             media_enc_info.fps_allocation[i].end());
   }
-  for (const auto& limit : media_enc_info.resolution_bitrate_limits) {
+  for (const auto& limit : media_enc_info.resolution_rate_limits) {
     encoder_info_.resolution_bitrate_limits.emplace_back(
         limit.frame_size.GetArea(), limit.min_start_bitrate_bps,
         limit.min_bitrate_bps, limit.max_bitrate_bps);

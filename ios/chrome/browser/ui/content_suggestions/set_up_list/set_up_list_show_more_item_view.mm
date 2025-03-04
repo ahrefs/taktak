@@ -19,6 +19,7 @@
 #import "ios/chrome/common/ui/util/constraints_ui_util.h"
 #import "ios/chrome/grit/ios_branded_strings.h"
 #import "ios/chrome/grit/ios_strings.h"
+#import "ui/base/device_form_factor.h"
 #import "ui/base/l10n/l10n_util.h"
 
 namespace {
@@ -178,7 +179,10 @@ NSAttributedString* Strikethrough(NSString* text) {
       return l10n_util::GetNSString(
           IDS_IOS_CONSISTENCY_PROMO_DEFAULT_ACCOUNT_TITLE);
     case SetUpListItemType::kDefaultBrowser:
-      return l10n_util::GetNSString(IDS_IOS_SET_UP_LIST_DEFAULT_BROWSER_TITLE);
+      return l10n_util::GetNSString(
+          ui::GetDeviceFormFactor() == ui::DEVICE_FORM_FACTOR_TABLET
+              ? IDS_IOS_SET_UP_LIST_DEFAULT_BROWSER_TITLE_IPAD
+              : IDS_IOS_SET_UP_LIST_DEFAULT_BROWSER_TITLE);
     case SetUpListItemType::kAutofill:
       return l10n_util::GetNSString(IDS_IOS_SET_UP_LIST_AUTOFILL_TITLE);
     case SetUpListItemType::kNotifications:
@@ -187,6 +191,10 @@ NSAttributedString* Strikethrough(NSString* text) {
                        IDS_IOS_SET_UP_LIST_NOTIFICATIONS_TITLE)
                  : l10n_util::GetNSString(
                        IDS_IOS_SET_UP_LIST_CONTENT_NOTIFICATION_TITLE);
+    case SetUpListItemType::kDocking:
+      return l10n_util::GetNSString(IDS_IOS_SET_UP_LIST_DOCK_CHROME_TITLE);
+    case SetUpListItemType::kAddressBar:
+      return l10n_util::GetNSString(IDS_IOS_SET_UP_LIST_ADDRESS_BAR_TITLE);
     case SetUpListItemType::kAllSet:
       return l10n_util::GetNSString(IDS_IOS_SET_UP_LIST_ALL_SET_TITLE);
     case SetUpListItemType::kFollow:
@@ -233,6 +241,12 @@ NSAttributedString* Strikethrough(NSString* text) {
                        IDS_IOS_SET_UP_LIST_NOTIFICATIONS_DESCRIPTION)
                  : l10n_util::GetNSString(
                        IDS_IOS_SET_UP_LIST_CONTENT_NOTIFICATION_DESCRIPTION);
+    case SetUpListItemType::kDocking:
+      return l10n_util::GetNSString(
+          IDS_IOS_SET_UP_LIST_DOCK_CHROME_SHORT_DESCRIPTION);
+    case SetUpListItemType::kAddressBar:
+      return l10n_util::GetNSString(
+          IDS_IOS_SET_UP_LIST_ADDRESS_BAR_LONG_DESCRIPTION);
     case SetUpListItemType::kAllSet:
     case SetUpListItemType::kFollow:
       NOTREACHED();

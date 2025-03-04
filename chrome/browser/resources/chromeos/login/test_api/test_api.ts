@@ -1160,8 +1160,8 @@ class GaiaInfoScreenTester extends ScreenElementApi {
     return loadTimeData.getBoolean('testapi_shouldSkipGaiaInfoScreen');
   }
 
-  isOobeQuickStartEnabled(): boolean {
-    return loadTimeData.getBoolean('testapi_isOobeQuickStartEnabled');
+  isCrossDeviceFeatureSuiteAllowed(): boolean {
+    return loadTimeData.getBoolean('testapi_isCrossDeviceFeatureSuiteAllowed');
   }
 
   /**
@@ -1232,12 +1232,6 @@ class ChoobeScreenTester extends ScreenElementApi {
         '`shouldSkip()` should only be called after `requestShouldSkip()`' +
             'is called, and `isShouldSkippedReceived()` starts returning true');
     return this.shouldBeSkipped;
-  }
-
-  // TODO(b/327270907): Remove `updatedShouldSkip()` after the users of the test
-  // API migrate to using `shouldSkip()`
-  updatedShouldSkip(): boolean {
-    return this.shouldSkip();
   }
 
   isReadyForTesting(): boolean {
@@ -1358,12 +1352,6 @@ class ChoobeTouchpadScrollScreenTester extends ScreenElementApi {
         '`shouldSkip()` should only be called after `requestShouldSkip()`' +
             'is called, and `isShouldSkippedReceived()` starts returning true');
     return this.shouldBeSkipped;
-  }
-
-  // TODO(b/327270907): Remove `updatedShouldSkip()` after the users of the test
-  // API migrate to using `shouldSkip()`
-  updatedShouldSkip(): boolean {
-    return this.shouldSkip();
   }
 
   isReadyForTesting(): boolean {

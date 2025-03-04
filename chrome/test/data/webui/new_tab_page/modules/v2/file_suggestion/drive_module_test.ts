@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {FileSuggestionHandlerRemote} from 'chrome://new-tab-page/file_suggestion.mojom-webui.js';
-import type {DisableModuleEvent, DismissModuleEvent, DriveModuleV2Element} from 'chrome://new-tab-page/lazy_load.js';
+import {DriveSuggestionHandlerRemote} from 'chrome://new-tab-page/drive_suggestion.mojom-webui.js';
+import type {DisableModuleEvent, DismissModuleInstanceEvent, DriveModuleV2Element} from 'chrome://new-tab-page/lazy_load.js';
 import {driveModuleV2Descriptor, FileProxy} from 'chrome://new-tab-page/lazy_load.js';
 import {$$} from 'chrome://new-tab-page/new_tab_page.js';
 import {assertEquals, assertFalse, assertTrue} from 'chrome://webui-test/chai_assert.js';
@@ -14,11 +14,12 @@ import {eventToPromise, microtasksFinished} from 'chrome://webui-test/test_util.
 import {installMock} from '../../../test_support.js';
 
 suite('DriveModuleV2', () => {
-  let handler: TestMock<FileSuggestionHandlerRemote>;
+  let handler: TestMock<DriveSuggestionHandlerRemote>;
+  const iconUrl = 'https://example.com/application/vnd.google-apps.spreadsheet';
 
   setup(() => {
     document.body.innerHTML = window.trustedTypes!.emptyHTML;
-    handler = installMock(FileSuggestionHandlerRemote, FileProxy.setHandler);
+    handler = installMock(DriveSuggestionHandlerRemote, FileProxy.setHandler);
   });
 
   test(
@@ -29,42 +30,42 @@ suite('DriveModuleV2', () => {
               justificationText: 'Edited last week',
               title: 'Foo',
               id: '123',
-              mimeType: 'application/vnd.google-apps.spreadsheet',
+              iconUrl: {url: iconUrl},
               itemUrl: {url: 'https://foo.com'},
             },
             {
               justificationText: 'Edited yesterday',
               title: 'Bar',
               id: '132',
-              mimeType: 'application/vnd.google-apps.document',
+              iconUrl: {url: iconUrl},
               itemUrl: {url: 'https://bar.com'},
             },
             {
               justificationText: 'Created today',
               title: 'Baz',
               id: '213',
-              mimeType: 'application/vnd.google-apps.presentation',
+              iconUrl: {url: iconUrl},
               itemUrl: {url: 'https://baz.com'},
             },
             {
               justificationText: 'Created yesterday',
               title: 'Qux',
               id: '231',
-              mimeType: 'application/vnd.google-apps.presentation',
+              iconUrl: {url: iconUrl},
               itemUrl: {url: 'https://qux.com'},
             },
             {
               justificationText: 'Edited last week',
               title: 'FooBar',
               id: '312',
-              mimeType: 'application/vnd.google-apps.spreadsheet',
+              iconUrl: {url: iconUrl},
               itemUrl: {url: 'https://foo.com'},
             },
             {
               justificationText: 'Edited yesterday',
               title: 'BazQux',
               id: '321',
-              mimeType: 'application/vnd.google-apps.document',
+              iconUrl: {url: iconUrl},
               itemUrl: {url: 'https://bar.com'},
             },
           ],
@@ -79,7 +80,7 @@ suite('DriveModuleV2', () => {
         await microtasksFinished();
         const fileSuggestion = module.$.fileSuggestion;
         const items =
-            Array.from(fileSuggestion.shadowRoot!.querySelectorAll('.file'));
+            Array.from(fileSuggestion.shadowRoot.querySelectorAll('.file'));
 
         assertEquals(6, items.length);
       });
@@ -100,7 +101,7 @@ suite('DriveModuleV2', () => {
           justificationText: 'Edited yesterday',
           title: 'Abc',
           id: '012',
-          mimeType: 'application/vnd.google-apps.presentation',
+          iconUrl: {url: iconUrl},
           itemUrl: {url: 'https://abc.com'},
         },
       ],
@@ -114,7 +115,7 @@ suite('DriveModuleV2', () => {
     assertFalse(!!$$(driveModule, 'ntp-info-dialog'));
 
     // Act.
-    const infoButton = driveModule.$.moduleHeaderElementV2.shadowRoot!
+    const infoButton = driveModule.$.moduleHeaderElementV2.shadowRoot
                            .querySelector<HTMLElement>('#info');
     assertTrue(!!infoButton);
     infoButton.click();
@@ -134,7 +135,7 @@ suite('DriveModuleV2', () => {
               justificationText: 'Edited yesterday',
               title: 'Abc',
               id: '012',
-              mimeType: 'application/vnd.google-apps.presentation',
+              iconUrl: {url: iconUrl},
               itemUrl: {url: 'https://abc.com'},
             },
           ],
@@ -147,7 +148,7 @@ suite('DriveModuleV2', () => {
 
         // Act.
         const whenFired = eventToPromise('disable-module', driveModule);
-        const disableButton = driveModule.$.moduleHeaderElementV2.shadowRoot!
+        const disableButton = driveModule.$.moduleHeaderElementV2.shadowRoot
                                   .querySelector<HTMLElement>('#disable');
         assertTrue(!!disableButton);
         disableButton.click();
@@ -155,7 +156,7 @@ suite('DriveModuleV2', () => {
         // Assert.
         const event: DisableModuleEvent = await whenFired;
         assertEquals(
-            'You won\'t see Drive files on this page again',
+            'You won\'t see Google Drive on this page again',
             event.detail.message);
       });
 
@@ -167,7 +168,7 @@ suite('DriveModuleV2', () => {
           justificationText: '',
           title: '',
           id: '',
-          mimeType: '',
+          iconUrl: {url: ''},
           itemUrl: {url: ''},
         },
       ],
@@ -181,19 +182,19 @@ suite('DriveModuleV2', () => {
 
     // Act.
     const whenFired = eventToPromise('dismiss-module-instance', moduleElement);
-    const dismissButton = moduleElement.$.moduleHeaderElementV2.shadowRoot!
+    const dismissButton = moduleElement.$.moduleHeaderElementV2.shadowRoot
                               .querySelector<HTMLElement>('#dismiss');
     assertTrue(!!dismissButton);
     dismissButton.click();
 
     // Assert.
-    const event: DismissModuleEvent = await whenFired;
+    const event: DismissModuleInstanceEvent = await whenFired;
     assertEquals('Files hidden', event.detail.message);
     assertTrue(!!event.detail.restoreCallback);
     assertEquals(1, handler.getCallCount('dismissModule'));
 
     // Act.
-    event.detail.restoreCallback!();
+    event.detail.restoreCallback();
 
     // Assert.
     assertEquals(1, handler.getCallCount('restoreModule'));
@@ -209,7 +210,7 @@ suite('DriveModuleV2', () => {
           justificationText: 'Edited yesterday',
           title: 'Abc',
           id: '012',
-          mimeType: 'application/vnd.google-apps.presentation',
+          iconUrl: {url: iconUrl},
           itemUrl: {url: 'https://abc.com'},
         },
       ],

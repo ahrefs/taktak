@@ -7,11 +7,16 @@
 
 #include <stddef.h>
 
+#include <unordered_set>
+
+#include "base/uuid.h"
 #include "components/saved_tab_groups/public/types.h"
 
 namespace tab_groups {
 
 class SavedTabGroupModel;
+class SavedTabGroup;
+class SavedTabGroupTab;
 class TabGroupVisualData;
 
 namespace stats {
@@ -57,6 +62,18 @@ enum class SharedTabGroupDataLoadFromDiskResult {
 };
 // LINT.ThenChange(//tools/metrics/histograms/metadata/tab/enums.xml:SharedTabGroupDataLoadFromDiskResult)
 
+// Types of tab title sanitization.
+enum class TitleSanitizationType {
+  // A tab was added to a group.
+  kAddTab = 0,
+  // A navigation was triggered in the tab.
+  kNavigateTab = 1,
+  // A tab group become shared.
+  kShareTabGroup = 2,
+
+  kMaxValue = kShareTabGroup
+};
+
 // Records metrics about the state of model such as the number of saved groups,
 // the number of tabs in each group, and more.
 // Only used for desktop code that uses SavedTabGroupKeyedService. Soon to be
@@ -89,6 +106,32 @@ void RecordTabGroupVisualsMetrics(
 void RecordSharedTabGroupDataLoadFromDiskResult(
     SharedTabGroupDataLoadFromDiskResult result);
 
+void RecordEmptyGroupsMetricsOnLoad(
+    const std::vector<SavedTabGroup>& all_groups,
+    const std::vector<SavedTabGroupTab>& all_tabs,
+    const std::unordered_set<base::Uuid, base::UuidHash>&
+        groups_with_filtered_tabs);
+
+// Records whether the group is currently empty when it is added to the
+// SavedTabGroupModel.
+void RecordEmptyGroupsMetricsOnGroupAddedLocally(const SavedTabGroup& group,
+                                                 bool model_is_loaded);
+void RecordEmptyGroupsMetricsOnGroupAddedFromSync(const SavedTabGroup& group,
+                                                  bool model_is_loaded);
+
+// Records whether the group is currently empty, before the tab is added to the
+// SavedTabGroupModel. The tab must not be in the group yet.
+void RecordEmptyGroupsMetricsOnTabAddedLocally(const SavedTabGroup& group,
+                                               const SavedTabGroupTab& tab,
+                                               bool model_is_loaded);
+void RecordEmptyGroupsMetricsOnTabAddedFromSync(const SavedTabGroup& group,
+                                                const SavedTabGroupTab& tab,
+                                                bool model_is_loaded);
+
+// Records metrics about title sanitization for shared tab groups.
+void RecordSharedGroupTitleSanitization(
+    bool use_url_as_title,
+    TitleSanitizationType title_sanitization_type);
 }  // namespace stats
 }  // namespace tab_groups
 

@@ -60,6 +60,7 @@ class PinnedToolbarActionsContainer
 
   // views::View:
   void OnThemeChanged() override;
+  void AddedToWidget() override;
   bool GetDropFormats(int* formats,
                       std::set<ui::ClipboardFormatType>* format_types) override;
   bool AreDropTypesRequired() override;
@@ -100,6 +101,8 @@ class PinnedToolbarActionsContainer
 
   // Removes the popped out button if it should no longer remain in the toolbar.
   void MaybeRemovePoppedOutButtonFor(const actions::ActionId& id);
+
+  const std::vector<actions::ActionId>& PinnedActionIds() const override;
 
  private:
   friend class PinnedSidePanelInteractiveTest;

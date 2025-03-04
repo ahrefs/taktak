@@ -4,9 +4,13 @@
 
 #include "components/lens/lens_overlay_metrics.h"
 
+#include <cstddef>
+
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/user_metrics.h"
 #include "base/time/time.h"
+#include "components/lens/lens_features.h"
+#include "components/lens/lens_overlay_mime_type.h"
 #include "services/metrics/public/cpp/ukm_builders.h"
 
 namespace lens {
@@ -26,6 +30,12 @@ std::string InvocationSourceToString(
       return "FindInPage";
     case LensOverlayInvocationSource::kOmnibox:
       return "Omnibox";
+    case LensOverlayInvocationSource::kLVFShutterButton:
+      return "LVFShutterButton";
+    case LensOverlayInvocationSource::kLVFGallery:
+      return "LVFGallery";
+    case LensOverlayInvocationSource::kContextMenu:
+      return "ContextMenu";
   }
 }
 
@@ -42,6 +52,27 @@ std::string FirstInteractionTypeToString(
       return "TextSelect";
     case LensOverlayFirstInteractionType::kSearchbox:
       return "Searchbox";
+  }
+}
+
+std::string MimeTypeToMetricString(lens::MimeType mime_type) {
+  switch (mime_type) {
+    case lens::MimeType::kPdf:
+      return "Pdf";
+    case lens::MimeType::kHtml:
+      return "Html";
+    case lens::MimeType::kPlainText:
+      return "PlainText";
+    case lens::MimeType::kImage:
+      return "Image";
+    case lens::MimeType::kVideo:
+      return "Video";
+    case lens::MimeType::kAudio:
+      return "Audio";
+    case lens::MimeType::kJson:
+      return "Json";
+    default:
+      return "Unknown";
   }
 }
 
@@ -65,8 +96,15 @@ void RecordPermissionUserAction(LensPermissionUserAction user_action,
   base::UmaHistogramEnumeration(histogram_name, user_action);
 }
 
-void RecordInvocation(LensOverlayInvocationSource invocation_source) {
+void RecordInvocation(LensOverlayInvocationSource invocation_source,
+                      lens::MimeType document_content_type) {
   base::UmaHistogramEnumeration("Lens.Overlay.Invoked", invocation_source);
+
+  // UMA Invocation sliced by document type.
+  const auto sliced_invoked_histogram_name =
+      "Lens.Overlay.ByDocumentType." +
+      MimeTypeToMetricString(document_content_type) + ".Invoked";
+  base::UmaHistogramBoolean(sliced_invoked_histogram_name, true);
 }
 
 void RecordDismissal(LensOverlayDismissalSource dismissal_source) {
@@ -104,6 +142,162 @@ void RecordSessionDuration(LensOverlayInvocationSource invocation_source,
                                 duration,
                                 /*min=*/base::Milliseconds(1),
                                 /*max=*/base::Minutes(10), /*buckets=*/50);
+}
+
+void RecordContextualSearchboxSessionEndMetrics(
+    ukm::SourceId source_id,
+    ContextualSearchboxSessionEndMetrics session_end_metrics,
+    lens::MimeType page_content_type,
+    lens::MimeType document_content_type) {
+  // Only record if the contextual search box feature is enabled.
+  if (!lens::features::IsLensOverlayContextualSearchboxEnabled()) {
+    return;
+  }
+
+  // UMA contextual searchbox shown in session.
+  base::UmaHistogramBoolean("Lens.Overlay.ContextualSearchBox.ShownInSession",
+                            session_end_metrics.searchbox_shown_);
+
+  // UMA contextual searchbox shown in session sliced by page content type.
+  const auto sliced_page_content_invoked_histogram_name =
+      "Lens.Overlay.ContextualSearchBox.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) + ".ShownInSession";
+  base::UmaHistogramBoolean(sliced_page_content_invoked_histogram_name,
+                            session_end_metrics.searchbox_shown_);
+
+  // UMA contextual searchbox shown in session sliced by document type.
+  const auto sliced_document_invoked_histogram_name =
+      "Lens.Overlay.ContextualSearchBox.ByDocumentType." +
+      MimeTypeToMetricString(document_content_type) + ".ShownInSession";
+  base::UmaHistogramBoolean(sliced_document_invoked_histogram_name,
+                            session_end_metrics.searchbox_shown_);
+
+  // Record UKM for contextual search box shown in session.
+  if (source_id != ukm::kInvalidSourceId) {
+    ukm::builders::Lens_Overlay_ContextualSearchBox_ShownInSession event(
+        source_id);
+    event.SetWasShown(session_end_metrics.searchbox_shown_)
+        .SetPageContentType(static_cast<int64_t>(page_content_type))
+        .Record(ukm::UkmRecorder::Get());
+  }
+
+  // Don't record the rest of the contextual searchbox metrics if it was not
+  // shown in the session.
+  if (!session_end_metrics.searchbox_shown_) {
+    return;
+  }
+
+  // UMA contextual searchbox focused in session.
+  base::UmaHistogramBoolean("Lens.Overlay.ContextualSearchBox.FocusedInSession",
+                            session_end_metrics.searchbox_focused_);
+  // UMA contextual searchbox focused in session sliced by document type.
+  const auto sliced_focused_histogram_name =
+      "Lens.Overlay.ContextualSearchBox.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) + ".FocusedInSession";
+  base::UmaHistogramBoolean(sliced_focused_histogram_name,
+                            session_end_metrics.searchbox_focused_);
+
+  bool zps_shown_in_session =
+      session_end_metrics.zps_shown_on_initial_query_ ||
+      session_end_metrics.zps_shown_on_follow_up_query_;
+  // UMA contextual zps shown in session.
+  base::UmaHistogramBoolean("Lens.Overlay.ContextualSuggest.ZPS.ShownInSession",
+                            zps_shown_in_session);
+  // UMA contextual zps shown in session sliced by document type.
+  const auto sliced_contextual_zps_histogram_name =
+      "Lens.Overlay.ContextualSuggest.ZPS.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) + ".ShownInSession";
+  base::UmaHistogramBoolean(sliced_contextual_zps_histogram_name,
+                            zps_shown_in_session);
+
+  // UMA contextual zps used in session.
+  base::UmaHistogramBoolean(
+      "Lens.Overlay.ContextualSuggest.ZPS.SuggestionUsedInSession",
+      session_end_metrics.zps_used_);
+  // UMA contextual zps used in session sliced by document type.
+  const auto sliced_contextual_zps_used_histogram_name =
+      "Lens.Overlay.ContextualSuggest.ZPS.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) + ".SuggestionUsedInSession";
+  base::UmaHistogramBoolean(sliced_contextual_zps_used_histogram_name,
+                            session_end_metrics.zps_used_);
+
+  // UMA contextual query issued in session.
+  base::UmaHistogramBoolean(
+      "Lens.Overlay.ContextualSuggest.QueryIssuedInSession",
+      session_end_metrics.query_issued_);
+  // UMA contextual query issued in session sliced by document type.
+  const auto sliced_contextual_query_issued_histogram_name =
+      "Lens.Overlay.ContextualSuggest.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) + ".QueryIssuedInSession";
+  base::UmaHistogramBoolean(sliced_contextual_query_issued_histogram_name,
+                            session_end_metrics.query_issued_);
+
+  // Only record the contextual query issued before zps shown metrics if a
+  // contextual query was issued in the session.
+  if (session_end_metrics.query_issued_) {
+    // UMA initial contextual query issued before zps shown in session.
+    base::UmaHistogramBoolean(
+        "Lens.Overlay.ContextualSuggest.InitialQuery."
+        "QueryIssuedInSessionBeforeSuggestShown",
+        session_end_metrics.initial_query_issued_before_zps_shown_);
+    // UMA initial contextual query issued before zps shown in session sliced by
+    // page content type.
+    const auto
+        sliced_contextual_query_issued_before_zps_shown_initial_histogram_name =
+            "Lens.Overlay.ContextualSuggest.InitialQuery.ByPageContentType." +
+            MimeTypeToMetricString(page_content_type) +
+            ".QueryIssuedInSessionBeforeSuggestShown";
+    base::UmaHistogramBoolean(
+        sliced_contextual_query_issued_before_zps_shown_initial_histogram_name,
+        session_end_metrics.initial_query_issued_before_zps_shown_);
+  }
+
+  if (session_end_metrics.follow_up_query_issued_) {
+    // UMA follow up contextual query issued before zps shown in session.
+    base::UmaHistogramBoolean(
+        "Lens.Overlay.ContextualSuggest.FollowUpQuery."
+        "QueryIssuedInSessionBeforeSuggestShown",
+        session_end_metrics.follow_up_query_issued_before_zps_shown_);
+    // UMA initial contextual query issued before zps shown in session sliced by
+    // page content type.
+    const auto
+        sliced_contextual_query_issued_before_zps_shown_follow_up_histogram_name =
+            "Lens.Overlay.ContextualSuggest.FollowUpQuery.ByPageContentType." +
+            MimeTypeToMetricString(page_content_type) +
+            ".QueryIssuedInSessionBeforeSuggestShown";
+    base::UmaHistogramBoolean(
+        sliced_contextual_query_issued_before_zps_shown_follow_up_histogram_name,
+        session_end_metrics.follow_up_query_issued_before_zps_shown_);
+  }
+
+  if (source_id == ukm::kInvalidSourceId) {
+    return;
+  }
+
+  // UKM contextual searchbox focused in session.
+  ukm::builders::Lens_Overlay_ContextualSearchbox_FocusedInSession(source_id)
+      .SetFocusedInSession(session_end_metrics.searchbox_focused_)
+      .SetPageContentType(static_cast<int64_t>(page_content_type))
+      .Record(ukm::UkmRecorder::Get());
+
+  // UKM contextual zps shown in session.
+  ukm::builders::Lens_Overlay_ContextualSuggest_ZPS_ShownInSession(source_id)
+      .SetShownInSession(zps_shown_in_session)
+      .SetPageContentType(static_cast<int64_t>(page_content_type))
+      .Record(ukm::UkmRecorder::Get());
+
+  // UKM contextual zps used in session.
+  ukm::builders::Lens_Overlay_ContextualSuggest_ZPS_SuggestionUsedInSession(
+      source_id)
+      .SetSuggestionUsedInSession(session_end_metrics.zps_used_)
+      .SetPageContentType(static_cast<int64_t>(page_content_type))
+      .Record(ukm::UkmRecorder::Get());
+
+  // UKM contextual query issued in session.
+  ukm::builders::Lens_Overlay_ContextualSuggest_QueryIssuedInSession(source_id)
+      .SetQueryIssuedInSession(session_end_metrics.query_issued_)
+      .SetPageContentType(static_cast<int64_t>(page_content_type))
+      .Record(ukm::UkmRecorder::Get());
 }
 
 void RecordSessionForegroundDuration(
@@ -179,6 +373,12 @@ void RecordTimeToFirstInteraction(
       // without the user having to interact with the overlay. Time to first
       // interaction in this case is essentially zero.
       break;
+    case LensOverlayInvocationSource::kLVFShutterButton:
+    case LensOverlayInvocationSource::kLVFGallery:
+    case LensOverlayInvocationSource::kContextMenu:
+      // Not recorded since for LVF and context menu invocation the first
+      // interaction is done automatically by autoselection.
+      break;
     case lens::LensOverlayInvocationSource::kToolbar:
       event.SetToolbar(time_to_first_interaction.InMilliseconds());
       break;
@@ -207,6 +407,7 @@ void RecordUKMSessionEndMetrics(
     LensOverlayInvocationSource invocation_source,
     bool search_performed_in_session,
     base::TimeDelta session_duration,
+    lens::MimeType document_content_type,
     std::optional<base::TimeDelta> session_foreground_duration,
     std::optional<int> generated_tab_count) {
   if (source_id == ukm::kInvalidSourceId) {
@@ -225,7 +426,80 @@ void RecordUKMSessionEndMetrics(
   event.SetInvocationSource(static_cast<int64_t>(invocation_source))
       .SetInvocationResultedInSearch(search_performed_in_session)
       .SetSessionDuration(session_duration.InMilliseconds())
+      .SetInvocationDocumentType(static_cast<int64_t>(document_content_type))
       .Record(ukm::UkmRecorder::Get());
+}
+
+void RecordLensResponseTime(base::TimeDelta response_time) {
+  base::UmaHistogramTimes("Lens.Overlay.LensResponseTime", response_time);
+}
+
+void RecordContextualSearchboxTimeToFirstFocus(
+    base::TimeDelta time_to_focus,
+    lens::MimeType page_content_type) {
+  const auto sliced_time_to_interaction_histogram_name =
+      "Lens.Overlay.ContextualSearchBox.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) +
+      ".TimeFromInvocationToFirstFocus";
+  base::UmaHistogramCustomTimes(sliced_time_to_interaction_histogram_name,
+                                time_to_focus,
+                                /*min=*/base::Milliseconds(1),
+                                /*max=*/base::Minutes(5), /*buckets=*/50);
+}
+
+void RecordContextualSearchboxTimeToFocusAfterNavigation(
+    base::TimeDelta time_to_focus,
+    lens::MimeType page_content_type) {
+  const auto sliced_time_to_interaction_histogram_name =
+      "Lens.Overlay.ContextualSearchBox.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) +
+      ".TimeFromNavigationToFirstFocus";
+  base::UmaHistogramCustomTimes(sliced_time_to_interaction_histogram_name,
+                                time_to_focus,
+                                /*min=*/base::Milliseconds(1),
+                                /*max=*/base::Minutes(10), /*buckets=*/50);
+}
+
+void RecordContextualSearchboxTimeToInteractionAfterNavigation(
+    base::TimeDelta time_to_interaction,
+    lens::MimeType page_content_type) {
+  const auto sliced_time_to_interaction_histogram_name =
+      "Lens.Overlay.ContextualSearchBox.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) +
+      ".TimeFromNavigationToFirstInteraction";
+  base::UmaHistogramCustomTimes(sliced_time_to_interaction_histogram_name,
+                                time_to_interaction,
+                                /*min=*/base::Milliseconds(1),
+                                /*max=*/base::Minutes(10), /*buckets=*/50);
+}
+
+void RecordDocumentSizeBytes(lens::MimeType page_content_type,
+                             size_t document_size_bytes) {
+  const auto sliced_invoked_histogram_name =
+      "Lens.Overlay.ByPageContentType." +
+      MimeTypeToMetricString(page_content_type) + ".DocumentSize";
+  base::UmaHistogramMemoryKB(sliced_invoked_histogram_name,
+                             document_size_bytes / 1000);
+}
+
+void RecordPdfPageCount(uint32_t page_count) {
+  base::UmaHistogramCounts10000("Lens.Overlay.ByPageContentType.Pdf.PageCount",
+                               page_count);
+}
+
+void RecordOcrDomSimilarity(double similarity) {
+  base::UmaHistogramPercentage("Lens.Overlay.OcrDomSimilarity",
+                               similarity * 100);
+}
+
+void RecordSidePanelResultStatus(SidePanelResultStatus status) {
+  base::UmaHistogramEnumeration("Lens.Overlay.SidePanelResultStatus", status);
+}
+
+void RecordSidePanelMenuOptionSelected(
+    lens::LensOverlaySidePanelMenuOption menu_option) {
+  base::UmaHistogramEnumeration(
+      "Lens.Overlay.SidePanel.SelectedMoreInfoMenuOption", menu_option);
 }
 
 }  // namespace lens

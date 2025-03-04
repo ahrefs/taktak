@@ -101,36 +101,16 @@ class FocusModeTaskView::TaskTextfield : public SystemTextfield {
 
   bool show_selected() const { return show_selected_state_; }
 
-  std::u16string GetTooltipText() const { return tooltip_text_; }
-
-  void SetTooltipText(const std::u16string& tooltip_text) {
-    if (tooltip_text_ == tooltip_text) {
-      return;
-    }
-
-    tooltip_text_ = tooltip_text;
-    TooltipTextChanged();
-    OnPropertyChanged(&tooltip_text_, views::kPropertyEffectsNone);
-  }
-
   void UpdateElideBehavior(bool active) {
     GetRenderText()->SetElideBehavior(active ? gfx::NO_ELIDE : gfx::ELIDE_TAIL);
-  }
-
-  // views::View:
-  std::u16string GetTooltipText(const gfx::Point& p) const override {
-    return tooltip_text_;
   }
 
  private:
   // True if `FocusModeTaskView` has a selected task.
   bool show_selected_state_ = false;
-
-  std::u16string tooltip_text_;
 };
 
 BEGIN_METADATA(FocusModeTaskView, TaskTextfield)
-ADD_PROPERTY_METADATA(std::u16string, TooltipText)
 END_METADATA
 
 //---------------------------------------------------------------------
@@ -185,7 +165,7 @@ class FocusModeTaskView::TaskTextfieldController
 
   // views::ViewObserver:
   void OnViewBlurred(views::View* view) override {
-    owner_->CommitTextfieldContents(textfield_->GetText());
+    owner_->CommitTextfieldContents(std::u16string(textfield_->GetText()));
   }
 
  private:
@@ -533,7 +513,7 @@ void FocusModeTaskView::UpdateStyle(bool show_selected_state,
   complete_button_->SetVisible(show_selected_state);
   if (show_selected_state) {
     complete_button_->GetViewAccessibility().SetDescription(
-        textfield_->GetText());
+        std::u16string(textfield_->GetText()));
   } else {
     complete_button_->GetViewAccessibility().SetDescription(
         std::u16string(),
@@ -563,14 +543,15 @@ void FocusModeTaskView::UpdateStyle(bool show_selected_state,
   textfield_->set_show_selected_state(show_selected_state);
   textfield_->SetTooltipText(
       is_network_connected
-          ? (show_selected_state ? textfield_->GetText() : std::u16string())
+          ? (show_selected_state ? std::u16string(textfield_->GetText())
+                                 : std::u16string())
           : l10n_util::GetStringUTF16(
                 IDS_ASH_STATUS_TRAY_FOCUS_MODE_TASK_OFFLINE_TOOLTIP));
   textfield_->GetViewAccessibility().SetName(
       show_selected_state
           ? l10n_util::GetStringFUTF16(
                 IDS_ASH_STATUS_TRAY_FOCUS_MODE_TASK_TEXTFIELD_SELECTED_ACCESSIBLE_NAME,
-                textfield_->GetText())
+                std::u16string(textfield_->GetText()))
           : l10n_util::GetStringUTF16(
                 IDS_ASH_STATUS_TRAY_FOCUS_MODE_TASK_TEXTFIELD_UNSELECTED_ACCESSIBLE_NAME));
   textfield_->SetBorder(views::CreateEmptyBorder(

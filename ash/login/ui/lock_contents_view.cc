@@ -19,7 +19,7 @@
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_switches.h"
 #include "ash/detachable_base/detachable_base_pairing_status.h"
-#include "ash/focus_cycler.h"
+#include "ash/focus/focus_cycler.h"
 #include "ash/ime/ime_controller_impl.h"
 #include "ash/login/login_screen_controller.h"
 #include "ash/login/ui/auth_error_bubble.h"
@@ -36,7 +36,6 @@
 #include "ash/login/ui/login_public_account_user_view.h"
 #include "ash/login/ui/login_user_view.h"
 #include "ash/login/ui/non_accessible_view.h"
-#include "ash/login/ui/note_action_launch_button.h"
 #include "ash/login/ui/scrollable_users_list_view.h"
 #include "ash/login/ui/views_utils.h"
 #include "ash/media/media_controller_impl.h"
@@ -56,7 +55,6 @@
 #include "ash/shell.h"
 #include "ash/strings/grit/ash_strings.h"
 #include "ash/style/ash_color_id.h"
-#include "ash/style/ash_color_provider.h"
 #include "ash/style/pill_button.h"
 #include "ash/system/model/enterprise_domain_model.h"
 #include "ash/system/model/system_tray_model.h"
@@ -74,7 +72,6 @@
 #include "base/strings/utf_string_conversions.h"
 #include "chromeos/ash/components/login/auth/auth_events_recorder.h"
 #include "chromeos/ash/components/proximity_auth/public/mojom/auth_type.mojom.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/strings/grit/chromeos_strings.h"
 #include "chromeos/ui/vector_icons/vector_icons.h"
 #include "components/user_manager/known_user.h"
@@ -359,12 +356,9 @@ class LockContentsView::LockContentsViewLayout : public views::LayoutManager {
   // Triggered when the children of the top header change contents or
   // visibility.
   void LayoutTopHeader() {
-    const int preferred_width =
-        host_->system_info_->GetPreferredSize().width() +
-        host_->note_action_->GetPreferredSize().width();
+    const int preferred_width = host_->system_info_->GetPreferredSize().width();
     const int preferred_height =
-        std::max(host_->system_info_->GetPreferredSize().height(),
-                 host_->note_action_->GetPreferredSize().height());
+        host_->system_info_->GetPreferredSize().height();
     // Position the top header - the origin is offset to the left from the top
     // right corner of the entire view by the width of this top header view.
     const gfx::Point position =
@@ -433,7 +427,6 @@ class LockContentsView::LockContentsViewLayout : public views::LayoutManager {
 };
 
 LockContentsView::LockContentsView(
-    mojom::TrayActionState initial_note_action_state,
     LockScreen::ScreenType screen_type,
     LoginDataDispatcher* data_dispatcher,
     std::unique_ptr<LoginDetachableBaseModel> detachable_base_model)
@@ -493,9 +486,6 @@ LockContentsView::LockContentsView(
     ShowEnterpriseDomainManager(enterprise_domain_manager);
   }
 
-  note_action_ = top_header_->AddChildView(
-      std::make_unique<NoteActionLaunchButton>(initial_note_action_state));
-
   // Public Session expanded view.
   expanded_view_ =
       AddChildView(std::make_unique<LoginExpandedPublicAccountView>(
@@ -529,19 +519,14 @@ LockContentsView::LockContentsView(
     user_adding_screen_indicator_ =
         AddChildView(std::make_unique<UserAddingScreenIndicator>());
   }
-  OnLockScreenNoteStateChanged(initial_note_action_state);
   chromeos::PowerManagerClient::Get()->AddObserver(this);
   RegisterAccelerators();
 
-  // If feature is enabled, update the boolean kiosk_license_mode_. Otherwise,
-  // it's false by default.
-  if (features::IsKioskLoginScreenEnabled()) {
-    kiosk_license_mode_ =
-        Shell::Get()
-            ->system_tray_model()
-            ->enterprise_domain()
-            ->management_device_mode() == ManagementDeviceMode::kKioskSku;
-  }
+  kiosk_license_mode_ =
+      Shell::Get()
+          ->system_tray_model()
+          ->enterprise_domain()
+          ->management_device_mode() == ManagementDeviceMode::kKioskSku;
 
   GetViewAccessibility().SetRole(ax::mojom::Role::kWindow);
   GetViewAccessibility().SetName(
@@ -756,6 +741,8 @@ void LockContentsView::AddedToWidget() {
   if (primary_big_view_) {
     primary_big_view_->RequestFocus();
   }
+
+  UpdateAccessiblePreviousAndNextFocus();
 }
 
 void LockContentsView::RemovedFromWidget() {
@@ -767,6 +754,8 @@ void LockContentsView::RemovedFromWidget() {
     focus_manager->RemoveFocusChangeListener(this);
   }
   widget_ = nullptr;
+
+  UpdateAccessiblePreviousAndNextFocus();
 }
 
 void LockContentsView::OnFocus() {
@@ -780,22 +769,7 @@ void LockContentsView::OnFocus() {
 }
 
 void LockContentsView::AboutToRequestFocusFromTabTraversal(bool reverse) {
-  // The LockContentsView itself doesn't have anything to focus. If it gets
-  // focused we should change the currently focused widget (ie, to the shelf or
-  // status area, or lock screen apps, if they are active).
-  if (reverse && lock_screen_apps_active_) {
-    Shell::Get()->login_screen_controller()->FocusLockScreenApps(reverse);
-    return;
-  }
-
   FocusNextWidget(reverse);
-}
-
-void LockContentsView::GetAccessibleNodeData(ui::AXNodeData* node_data) {
-  Shelf* shelf = Shelf::ForWindow(GetWidget()->GetNativeWindow());
-  ShelfWidget* shelf_widget = shelf->shelf_widget();
-  GetViewAccessibility().SetNextFocus(shelf_widget);
-  GetViewAccessibility().SetPreviousFocus(shelf->GetStatusAreaWidget());
 }
 
 bool LockContentsView::AcceleratorPressed(const ui::Accelerator& accelerator) {
@@ -1166,9 +1140,6 @@ void LockContentsView::OnAuthEnabledForUser(const AccountId& user) {
   }
 
   state->disable_auth = false;
-  disable_lock_screen_note_ = state->disable_auth;
-  OnLockScreenNoteStateChanged(
-      Shell::Get()->tray_action()->GetLockScreenNoteState());
 
   LoginBigUserView* big_user =
       TryToFindBigUser(user, true /*require_auth_active*/);
@@ -1187,8 +1158,6 @@ void LockContentsView::OnAuthDisabledForUser(
   }
 
   state->disable_auth = true;
-  disable_lock_screen_note_ = state->disable_auth;
-  OnLockScreenNoteStateChanged(mojom::TrayActionState::kNotAvailable);
 
   if (auth_disabled_data.disable_lock_screen_media) {
     Shell::Get()->media_controller()->SuspendMediaSessions();
@@ -1266,25 +1235,6 @@ void LockContentsView::OnWarningMessageUpdated(const std::u16string& message) {
       CurrentBigUserView()->auth_user()->GetActiveInputView());
   warning_banner_bubble_->SetTextContent(message);
   warning_banner_bubble_->Show();
-}
-
-void LockContentsView::OnLockScreenNoteStateChanged(
-    mojom::TrayActionState state) {
-  if (disable_lock_screen_note_) {
-    state = mojom::TrayActionState::kNotAvailable;
-  }
-
-  bool old_lock_screen_apps_active = lock_screen_apps_active_;
-  lock_screen_apps_active_ = state == mojom::TrayActionState::kActive;
-  note_action_->UpdateVisibility(state);
-  top_header_->InvalidateLayout();
-
-  // If lock screen apps just got deactivated - request focus for primary auth,
-  // which should focus the password field.
-  if (old_lock_screen_apps_active && !lock_screen_apps_active_ &&
-      primary_big_view_) {
-    primary_big_view_->RequestFocus();
-  }
 }
 
 void LockContentsView::OnSystemInfoChanged(
@@ -1438,14 +1388,6 @@ void LockContentsView::OnDetachableBasePairingStatusChanged(
   }
 }
 
-void LockContentsView::OnFocusLeavingLockScreenApps(bool reverse) {
-  if (!reverse || lock_screen_apps_active_) {
-    FocusNextWidget(reverse);
-  } else {
-    FocusFirstOrLastFocusableChild(this, reverse);
-  }
-}
-
 void LockContentsView::OnOobeDialogStateChanged(OobeDialogState state) {
   const bool oobe_dialog_was_visible = oobe_dialog_visible_;
   oobe_dialog_visible_ = state != OobeDialogState::HIDDEN &&
@@ -1477,7 +1419,8 @@ void LockContentsView::OnOobeDialogStateChanged(OobeDialogState state) {
     Shelf* shelf = Shelf::ForWindow(GetWidget()->GetNativeWindow());
     shelf->GetStatusAreaWidget()
         ->status_area_widget_delegate()
-        ->NotifyAccessibilityEvent(ax::mojom::Event::kStateChanged, true);
+        ->NotifyAccessibilityEventDeprecated(ax::mojom::Event::kStateChanged,
+                                             true);
   }
 }
 
@@ -1498,11 +1441,6 @@ void LockContentsView::OnFocusLeavingSystemTray(bool reverse) {
   // tray) - lock shelf view expect the focus to be taken when it passes it
   // to lock screen view, and can misbehave in case the focus is kept in it.
   FocusFirstOrLastFocusableChild(this, reverse);
-
-  if (lock_screen_apps_active_) {
-    Shell::Get()->login_screen_controller()->FocusLockScreenApps(reverse);
-    return;
-  }
 
   if (oobe_dialog_visible_) {
     Shell::Get()->login_screen_controller()->FocusOobeDialog();
@@ -1549,12 +1487,6 @@ void LockContentsView::SuspendImminent(
 }
 
 void LockContentsView::OnDeviceEnterpriseInfoChanged() {
-  // If feature is enabled, update the boolean kiosk_license_mode_. Otherwise,
-  // it's false by default.
-  if (!features::IsKioskLoginScreenEnabled()) {
-    return;
-  }
-
   kiosk_license_mode_ =
       Shell::Get()
           ->system_tray_model()
@@ -1991,15 +1923,6 @@ void LockContentsView::LayoutAuth(LoginBigUserView* to_update,
         // Currently the challenge-response authentication can't be combined
         // with the password or PIN based one.
         to_update_auth = LoginAuthUserView::AUTH_CHALLENGE_RESPONSE;
-      } else if (!state->show_password && !state->show_pin) {
-        CHECK(IsTimeInFuture(state->pin_available_at))
-            << "Password or pin factor must be present, if pin is not locked";
-        to_update_auth = LoginAuthUserView::AUTH_RECOVERY;
-        auth_metadata.pin_available_at = state->pin_available_at;
-        // The auth error message might be shown at the moment due to previous
-        // wrong attempts. We will hide it as it shows similar content as the
-        // recover button and the pin delay message.
-        HideAuthErrorMessage();
       } else {
         to_update_auth = LoginAuthUserView::AUTH_NONE;
         if (state->show_password) {
@@ -2016,6 +1939,24 @@ void LockContentsView::LayoutAuth(LoginBigUserView* to_update,
         auth_metadata.pin_available_at = state->pin_available_at;
         if (state->show_pin) {
           to_update_auth |= LoginAuthUserView::AUTH_PIN;
+        }
+        if (!state->show_password && !state->show_pin) {
+          CHECK(state->pin_available_at.has_value())
+              << "Password or pin factor must be present, if pin is not locked";
+          if (IsTimeInPast(state->pin_available_at)) {
+            LOG(WARNING)
+                << "User PIN factor should have been enabled by cryptohome at "
+                << ToString(state->pin_available_at)
+                << ". Waiting for OnPinUnlock call.";
+          }
+          to_update_auth =
+              screen_type_ == LockScreen::ScreenType::kLogin
+                  ? LoginAuthUserView::AUTH_PIN_LOCKED_SHOW_RECOVERY
+                  : LoginAuthUserView::AUTH_PIN_LOCKED;
+          // The auth error message might be shown at the moment due to previous
+          // wrong attempts. We will hide it as it shows similar content as the
+          // recover button and the pin delay message.
+          HideAuthErrorMessage();
         }
         if (state->fingerprint_state != FingerprintState::UNAVAILABLE) {
           to_update_auth |= LoginAuthUserView::AUTH_FINGERPRINT;
@@ -2400,43 +2341,28 @@ bool LockContentsView::GetSystemInfoVisibility() const {
 void LockContentsView::UpdateSystemInfoColors() {
   for (views::View* child : system_info_->children()) {
     views::Label* label = static_cast<views::Label*>(child);
-    label->SetEnabledColorId(kColorAshTextColorPrimary);
+    label->SetEnabledColor(kColorAshTextColorPrimary);
   }
 }
 
 void LockContentsView::UpdateBottomStatusIndicatorColors() {
-  const bool jelly_style = chromeos::features::IsJellyrollEnabled();
   switch (bottom_status_indicator_state_) {
     case BottomIndicatorState::kNone:
       return;
     case BottomIndicatorState::kManagedDevice: {
-      if (jelly_style) {
-        bottom_status_indicator_->SetIcon(chromeos::kEnterpriseIcon,
-                                          cros_tokens::kCrosSysOnSurface, 20);
-        bottom_status_indicator_->SetEnabledTextColorIds(
-            cros_tokens::kCrosSysOnSurface);
-        bottom_status_indicator_->SetImageLabelSpacing(16);
-      } else {
-        bottom_status_indicator_->SetIcon(chromeos::kEnterpriseIcon,
-                                          kColorAshIconColorPrimary);
-        bottom_status_indicator_->SetEnabledTextColorIds(
-            kColorAshTextColorPrimary);
-      }
+      bottom_status_indicator_->SetIcon(chromeos::kEnterpriseIcon,
+                                        cros_tokens::kCrosSysOnSurface, 20);
+      bottom_status_indicator_->SetEnabledTextColors(
+          cros_tokens::kCrosSysOnSurface);
+      bottom_status_indicator_->SetImageLabelSpacing(16);
       break;
     }
     case BottomIndicatorState::kAdbSideLoadingEnabled: {
-      if (jelly_style) {
-        bottom_status_indicator_->SetIcon(kLockScreenAlertIcon,
-                                          cros_tokens::kCrosSysError, 20);
-        bottom_status_indicator_->SetEnabledTextColorIds(
-            cros_tokens::kCrosSysError);
-        bottom_status_indicator_->SetImageLabelSpacing(16);
-      } else {
-        bottom_status_indicator_->SetIcon(kLockScreenAlertIcon,
-                                          kColorAshIconColorAlert);
-        bottom_status_indicator_->SetEnabledTextColorIds(
-            kColorAshTextColorAlert);
-      }
+      bottom_status_indicator_->SetIcon(kLockScreenAlertIcon,
+                                        cros_tokens::kCrosSysError, 20);
+      bottom_status_indicator_->SetEnabledTextColors(
+          cros_tokens::kCrosSysError);
+      bottom_status_indicator_->SetImageLabelSpacing(16);
       break;
     }
   }
@@ -2530,6 +2456,18 @@ void LockContentsView::CheckIfPinEnabled(const AccountId& account_id) {
 void LockContentsView::ForceSyncLayoutOfAllViews() {
   InvalidateLayoutForAllDescendants(this);
   DeprecatedLayoutImmediately();
+}
+
+void LockContentsView::UpdateAccessiblePreviousAndNextFocus() {
+  if (GetWidget() && GetWidget()->GetNativeWindow()) {
+    Shelf* shelf = Shelf::ForWindow(GetWidget()->GetNativeWindow());
+    ShelfWidget* shelf_widget = shelf->shelf_widget();
+    GetViewAccessibility().SetNextFocus(shelf_widget);
+    GetViewAccessibility().SetPreviousFocus(shelf->GetStatusAreaWidget());
+  } else {
+    GetViewAccessibility().SetNextFocus(nullptr);
+    GetViewAccessibility().SetPreviousFocus(nullptr);
+  }
 }
 
 BEGIN_METADATA(LockContentsView)

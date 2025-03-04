@@ -7,6 +7,7 @@
 #include "base/notreached.h"
 #include "components/data_sharing/public/group_data.h"
 #include "components/data_sharing/public/protocol/group_data.pb.h"
+#include "google_apis/gaia/gaia_id.h"
 
 namespace data_sharing {
 
@@ -20,6 +21,8 @@ data_sharing_pb::MemberRole MemberRoleToProto(const MemberRole& member_role) {
       return data_sharing_pb::MEMBER_ROLE_MEMBER;
     case MemberRole::kInvitee:
       return data_sharing_pb::MEMBER_ROLE_INVITEE;
+    case MemberRole::kFormerMember:
+      return data_sharing_pb::MEMBER_ROLE_FORMER_MEMBER;
     case MemberRole::kUnknown:
       return data_sharing_pb::MEMBER_ROLE_UNSPECIFIED;
   }
@@ -34,6 +37,8 @@ MemberRole MemberRoleFromProto(const data_sharing_pb::MemberRole& member_role) {
       return MemberRole::kMember;
     case data_sharing_pb::MEMBER_ROLE_INVITEE:
       return MemberRole::kInvitee;
+    case data_sharing_pb::MEMBER_ROLE_FORMER_MEMBER:
+      return MemberRole::kFormerMember;
     case data_sharing_pb::MEMBER_ROLE_UNSPECIFIED:
       return MemberRole::kUnknown;
   }
@@ -43,7 +48,7 @@ MemberRole MemberRoleFromProto(const data_sharing_pb::MemberRole& member_role) {
 data_sharing_pb::GroupMember GroupMemberToProto(
     const GroupMember& group_member) {
   data_sharing_pb::GroupMember result;
-  result.set_gaia_id(group_member.gaia_id);
+  result.set_gaia_id(group_member.gaia_id.ToString());
   result.set_display_name(group_member.display_name);
   result.set_email(group_member.email);
   result.set_role(MemberRoleToProto(group_member.role));
@@ -55,7 +60,7 @@ data_sharing_pb::GroupMember GroupMemberToProto(
 GroupMember GroupMemberFromProto(
     const data_sharing_pb::GroupMember& group_member_proto) {
   GroupMember result;
-  result.gaia_id = group_member_proto.gaia_id();
+  result.gaia_id = GaiaId(group_member_proto.gaia_id());
   result.display_name = group_member_proto.display_name();
   result.email = group_member_proto.email();
   result.role = MemberRoleFromProto(group_member_proto.role());
@@ -73,6 +78,9 @@ data_sharing_pb::GroupData GroupDataToProto(const GroupData& group_data) {
   for (const auto& member : group_data.members) {
     *result.add_members() = GroupMemberToProto(member);
   }
+  for (const auto& member : group_data.former_members) {
+    *result.add_former_members() = GroupMemberToProto(member);
+  }
   result.set_access_token(group_data.group_token.access_token);
   return result;
 }
@@ -84,6 +92,9 @@ GroupData GroupDataFromProto(
   result.display_name = group_data_proto.display_name();
   for (const auto& member_proto : group_data_proto.members()) {
     result.members.push_back(GroupMemberFromProto(member_proto));
+  }
+  for (const auto& member_proto : group_data_proto.former_members()) {
+    result.former_members.push_back(GroupMemberFromProto(member_proto));
   }
   result.group_token.access_token = group_data_proto.access_token();
   return result;

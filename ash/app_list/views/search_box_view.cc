@@ -9,6 +9,7 @@
 
 #include "ash/app_list/views/search_box_view.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
@@ -25,6 +26,7 @@
 #include "ash/app_list/views/search_result_base_view.h"
 #include "ash/ash_element_identifiers.h"
 #include "ash/assistant/ui/main_stage/launcher_search_iph_view.h"
+#include "ash/capture_mode/capture_mode_constants.h"
 #include "ash/capture_mode/capture_mode_controller.h"
 #include "ash/constants/ash_features.h"
 #include "ash/keyboard/ui/keyboard_ui_controller.h"
@@ -33,6 +35,7 @@
 #include "ash/public/cpp/app_list/app_list_types.h"
 #include "ash/public/cpp/app_list/vector_icons/vector_icons.h"
 #include "ash/public/cpp/app_menu_constants.h"
+#include "ash/public/cpp/capture_mode/capture_mode_api.h"
 #include "ash/public/cpp/wallpaper/wallpaper_types.h"
 #include "ash/resources/vector_icons/vector_icons.h"
 #include "ash/search_box/search_box_constants.h"
@@ -44,6 +47,7 @@
 #include "ash/user_education/user_education_util.h"
 #include "ash/user_education/welcome_tour/welcome_tour_metrics.h"
 #include "base/containers/contains.h"
+#include "base/functional/bind.h"
 #include "base/i18n/case_conversion.h"
 #include "base/i18n/rtl.h"
 #include "base/metrics/histogram_functions.h"
@@ -51,9 +55,9 @@
 #include "base/metrics/user_metrics.h"
 #include "base/notreached.h"
 #include "base/rand_util.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
 #include "base/types/cxx23_to_underlying.h"
+#include "chromeos/ash/services/assistant/public/cpp/assistant_browser_delegate.h"
 #include "chromeos/ash/services/assistant/public/cpp/assistant_enums.h"
 #include "chromeos/constants/chromeos_features.h"
 #include "chromeos/ui/vector_icons/vector_icons.h"
@@ -64,7 +68,7 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/metadata/metadata_header_macros.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
-#include "ui/base/models/simple_menu_model.h"
+#include "ui/base/models/image_model.h"
 #include "ui/base/mojom/menu_source_type.mojom.h"
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/chromeos/styles/cros_tokens_color_mappings.h"
@@ -77,7 +81,9 @@
 #include "ui/gfx/color_palette.h"
 #include "ui/gfx/geometry/insets.h"
 #include "ui/gfx/geometry/rounded_corners_f.h"
+#include "ui/gfx/image/image_util.h"
 #include "ui/gfx/paint_vector_icon.h"
+#include "ui/menus/simple_menu_model.h"
 #include "ui/views/accessibility/view_accessibility.h"
 #include "ui/views/animation/ink_drop.h"
 #include "ui/views/animation/ink_drop_host.h"
@@ -115,6 +121,10 @@ constexpr int kMinimumLengthToAutocomplete = 2;
 
 // Border insets for SearchBoxView in bubble launcher.
 constexpr auto kBorderInsetsForAppListBubble = gfx::Insets::TLBR(4, 4, 4, 0);
+
+// The size the of the `kLensColorIcon` used for the sunfish button. Larger than
+// the regular search box icon size to accommodate for the Lens icon's padding.
+constexpr int kLensColorIconSize = 24;
 
 // The default PlaceholderTextTypes used for productivity launcher. Randomly
 // selected when placeholder text would be shown.
@@ -209,40 +219,6 @@ std::u16string GetCategoryName(SearchResult* search_result) {
   }
 }
 
-std::u16string GetCategoryMenuItemTooltip(
-    AppListSearchControlCategory category) {
-  int tooltip_id = -1;
-  switch (category) {
-    case AppListSearchControlCategory::kApps:
-      tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_APPS_TOOLTIP;
-      break;
-    case AppListSearchControlCategory::kAppShortcuts:
-      tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_APP_SHORTCUTS_TOOLTIP;
-      break;
-    case AppListSearchControlCategory::kFiles:
-      tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_FILES_TOOLTIP;
-      break;
-    case AppListSearchControlCategory::kGames:
-      tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_GAMES_TOOLTIP;
-      break;
-    case AppListSearchControlCategory::kHelp:
-      tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_HELP_TOOLTIP;
-      break;
-    case AppListSearchControlCategory::kImages:
-      tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_IMAGES_TOOLTIP;
-      break;
-    case AppListSearchControlCategory::kPlayStore:
-      tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_PLAYSTORE_TOOLTIP;
-      break;
-    case AppListSearchControlCategory::kWeb:
-      tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_WEBSITES_TOOLTIP;
-      break;
-    case AppListSearchControlCategory::kCannotToggle:
-      NOTREACHED();
-  }
-  return l10n_util::GetStringUTF16(tooltip_id);
-}
-
 // Returns the check box icon that is shown on the category filter menu item.
 ui::ImageModel GetCheckboxImage(bool checked) {
   return ui::ImageModel::FromVectorIcon(
@@ -300,8 +276,16 @@ class CheckBoxMenuItemView : public views::MenuItemView {
                             command,
                             views::MenuItemView::Type::kNormal),
         view_delegate_(view_delegate) {
+    SetTooltip(GetCategoryMenuItemTooltip(
+                   static_cast<AppListSearchControlCategory>(command)),
+               command);
+
     // Set the role of the toggleable menu items to checkbox.
     GetViewAccessibility().SetRole(ax::mojom::Role::kMenuItemCheckBox);
+    // The title of the menu is not focusable but included in the position
+    // counting. Explicitly set the hierarchical level of the toggleable menu
+    // items to exclude the title.
+    GetViewAccessibility().SetHierarchicalLevel(1);
   }
 
   CheckBoxMenuItemView(const CheckBoxMenuItemView&) = delete;
@@ -309,20 +293,46 @@ class CheckBoxMenuItemView : public views::MenuItemView {
 
   ~CheckBoxMenuItemView() override = default;
 
-  void GetAccessibleNodeData(ui::AXNodeData* node_data) override {
-    views::MenuItemView::GetAccessibleNodeData(node_data);
-    // The title of the menu is not focusable but included in the position
-    // counting. Explicitly set the hierarchical level of the toggleable menu
-    // items to exclude the title.
-    node_data->AddIntAttribute(ax::mojom::IntAttribute::kHierarchicalLevel, 1);
-  }
-
   void UpdateAccessibleCheckedState() override {
     bool category_enabled = view_delegate_->IsCategoryEnabled(
         static_cast<AppListSearchControlCategory>(GetCommand()));
     GetViewAccessibility().SetCheckedState(
         category_enabled ? ax::mojom::CheckedState::kTrue
                          : ax::mojom::CheckedState::kFalse);
+  }
+
+  std::u16string GetCategoryMenuItemTooltip(
+      AppListSearchControlCategory category) const {
+    int tooltip_id = -1;
+    switch (category) {
+      case AppListSearchControlCategory::kApps:
+        tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_APPS_TOOLTIP;
+        break;
+      case AppListSearchControlCategory::kAppShortcuts:
+        tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_APP_SHORTCUTS_TOOLTIP;
+        break;
+      case AppListSearchControlCategory::kFiles:
+        tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_FILES_TOOLTIP;
+        break;
+      case AppListSearchControlCategory::kGames:
+        tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_GAMES_TOOLTIP;
+        break;
+      case AppListSearchControlCategory::kHelp:
+        tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_HELP_TOOLTIP;
+        break;
+      case AppListSearchControlCategory::kImages:
+        tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_IMAGES_TOOLTIP;
+        break;
+      case AppListSearchControlCategory::kPlayStore:
+        tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_PLAYSTORE_TOOLTIP;
+        break;
+      case AppListSearchControlCategory::kWeb:
+        tooltip_id = IDS_ASH_SEARCH_CATEGORY_FILTER_MENU_WEBSITES_TOOLTIP;
+        break;
+      case AppListSearchControlCategory::kCannotToggle:
+        NOTREACHED();
+    }
+    return l10n_util::GetStringUTF16(tooltip_id);
   }
 
  private:
@@ -380,14 +390,6 @@ class FilterMenuAdapter : public views::MenuModelAdapter {
                                               const ui::Event& e) override {
     // Keep the menu open if the user toggles the checkboxes in the menu.
     return true;
-  }
-  std::u16string GetTooltipText(int id,
-                                const gfx::Point& screen_loc) const override {
-    if (id == ui::MenuModel::kTitleId) {
-      return std::u16string();
-    }
-    return GetCategoryMenuItemTooltip(
-        static_cast<AppListSearchControlCategory>(id));
   }
   void ExecuteCommand(int id) override { ExecuteCommand(id, 0); }
   void ExecuteCommand(int id, int mouse_event_flags) override {
@@ -559,17 +561,15 @@ SearchBoxView::SearchBoxView(SearchBoxViewDelegate* delegate,
 
   CreateEndButtonContainer();
 
-  if (features::IsSunfishFeatureEnabled()) {
-    views::ImageButton* sunfish_button =
-        CreateSunfishButton(base::BindRepeating(
-            &SearchBoxView::SunfishButtonPressed, base::Unretained(this)));
-    sunfish_button->SetFlipCanvasOnPaintForRTLUI(false);
-    // TODO(http://b/361850292): Upload label for translation.
-    std::u16string sunfish_button_label(u"Select to search");
-    sunfish_button->GetViewAccessibility().SetName(sunfish_button_label);
-    sunfish_button->SetTooltipText(sunfish_button_label);
-    SetShowSunfishButton(true);
-  }
+  views::ImageButton* sunfish_button = CreateSunfishButton(base::BindRepeating(
+      &SearchBoxView::SunfishButtonPressed, base::Unretained(this)));
+  sunfish_button->SetFlipCanvasOnPaintForRTLUI(false);
+  // TODO(http://b/361850292): Upload label for translation.
+  std::u16string sunfish_button_label(u"Select to search");
+  sunfish_button->GetViewAccessibility().SetName(sunfish_button_label);
+  sunfish_button->SetTooltipText(sunfish_button_label);
+  // Update the visibility based on the search box model.
+  SunfishButtonVisibilityChanged();
 
   views::ImageButton* assistant_button =
       CreateAssistantButton(base::BindRepeating(
@@ -580,6 +580,9 @@ SearchBoxView::SearchBoxView(SearchBoxViewDelegate* delegate,
   assistant_button->GetViewAccessibility().SetName(assistant_button_label);
   assistant_button->SetTooltipText(assistant_button_label);
   SetShowAssistantButton(search_box_model->show_assistant_button());
+
+  // Create Assistant new entry point button in this method if eligibile.
+  SearchBoxView::ShowAssistantNewEntryPointChanged();
 
   GetViewAccessibility().SetRole(ax::mojom::Role::kTextField);
   UpdateAccessibleValue();
@@ -667,7 +670,7 @@ void SearchBoxView::UpdateKeyboardVisibility() {
   keyboard_controller->HideKeyboardByUser();
 }
 
-void SearchBoxView::HandleQueryChange(const std::u16string& query,
+void SearchBoxView::HandleQueryChange(std::u16string_view query,
                                       bool initiated_by_user) {
   // Randomly select a new placeholder text when we get an empty new query.
   if (query.empty()) {
@@ -714,7 +717,7 @@ void SearchBoxView::HandleQueryChange(const std::u16string& query,
   const bool query_empty_changed =
       trimmed_query.empty() != IsTrimmedQueryEmpty(current_query_);
 
-  current_query_ = query;
+  current_query_ = std::u16string(query);
 
   if (query_changed_callback_) {
     query_changed_callback_.Run();
@@ -733,8 +736,9 @@ void SearchBoxView::HandleQueryChange(const std::u16string& query,
   // Don't reinitiate zero state search if the previous query was already empty
   // (to avoid issuing zero state search twice in a row while clearing up search
   // - see http://crbug.com/979594).
-  if (initiated_by_user || !trimmed_query.empty() || query_empty_changed)
-    view_delegate_->StartSearch(query);
+  if (initiated_by_user || !trimmed_query.empty() || query_empty_changed) {
+    view_delegate_->StartSearch(current_query_);
+  }
 }
 
 void SearchBoxView::SetQueryChangedCallback(QueryChangedCallback callback) {
@@ -800,9 +804,7 @@ void SearchBoxView::OnPaintBorder(gfx::Canvas* canvas) {
     views::HighlightBorder::PaintBorderToCanvas(
         canvas, *this, GetContentsBounds(),
         gfx::RoundedCornersF(corner_radius_),
-        chromeos::features::IsJellyrollEnabled()
-            ? views::HighlightBorder::Type::kHighlightBorderNoShadow
-            : views::HighlightBorder::Type::kHighlightBorder1);
+        views::HighlightBorder::Type::kHighlightBorderNoShadow);
   }
 }
 
@@ -815,16 +817,16 @@ void SearchBoxView::OnThemeChanged() {
       views::ImageButton::STATE_NORMAL,
       ui::ImageModel::FromVectorIcon(views::kIcCloseIcon, button_icon_color,
                                      GetSearchBoxIconSize()));
-  if (features::IsSunfishFeatureEnabled()) {
-    sunfish_button()->SetImageModel(
-        views::ImageButton::STATE_NORMAL,
-        ui::ImageModel::FromVectorIcon(kSearchIcon, button_icon_color,
-                                       GetSearchBoxIconSize()));
-  }
+  // Update the icon of the Sunfish-session button.
+  SunfishButtonVisibilityChanged();
   assistant_button()->SetImageModel(
       views::ImageButton::STATE_NORMAL,
       ui::ImageModel::FromVectorIcon(
           chromeos::kAssistantIcon, button_icon_color, GetSearchBoxIconSize()));
+
+  // Image model of `assistant_new_entry_point_button()` is set in
+  // `SearchBoxView::ShowAssistantNewEntryPointChanged`.
+
   if (filter_button()) {
     filter_button()->SetImageModel(
         views::ImageButton::STATE_NORMAL,
@@ -866,7 +868,7 @@ void SearchBoxView::AddedToWidget() {
   }
 }
 
-void SearchBoxView::RunLauncherSearchQuery(const std::u16string& query) {
+void SearchBoxView::RunLauncherSearchQuery(std::u16string_view query) {
   UpdateQuery(query);
 }
 
@@ -876,7 +878,7 @@ void SearchBoxView::OpenAssistantPage() {
       assistant::AssistantEntryPoint::kLauncherSearchIphChip);
 }
 
-void SearchBoxView::OnLauncherSearchChipPressed(const std::u16string& query) {
+void SearchBoxView::OnLauncherSearchChipPressed(std::u16string_view query) {
   view_delegate_->EndAssistant(
       assistant::AssistantExitPoint::kLauncherSearchIphChip);
   UpdateQuery(query);
@@ -1105,8 +1107,8 @@ void SearchBoxView::ProcessAutocomplete(
   }
 
   // Current non-autocompleted text.
-  const std::u16string& user_typed_text =
-      search_box()->GetText().substr(0, highlight_range_.start());
+  std::u16string user_typed_text(
+      search_box()->GetText().substr(0, highlight_range_.start()));
   if (last_key_pressed_ == ui::VKEY_BACK ||
       last_key_pressed_ == ui::VKEY_DELETE || IsArrowKey(last_key_pressed_) ||
       !first_visible_result ||
@@ -1249,8 +1251,39 @@ void SearchBoxView::AssistantButtonPressed() {
   SetSearchBoxActive(true, /*event_type=*/ui::EventType::kUnknown);
 }
 
+void SearchBoxView::AssistantNewEntryPointButtonPressed() {
+  assistant::AssistantBrowserDelegate* delegate =
+      assistant::AssistantBrowserDelegate::Get();
+  CHECK(delegate);
+
+  base::RecordAction(
+      base::UserMetricsAction("Assistant.NewEntryPoint.Launcher"));
+
+  delegate->OpenNewEntryPoint();
+}
+
 void SearchBoxView::SunfishButtonPressed() {
-  view_delegate_->DismissAppList();
+  if (is_app_list_bubble_) {
+    // Only hide the launcher bubble in clamshell mode.
+    view_delegate_->DismissAppList();
+  }
+
+  if (!CanShowSunfishOrScannerUi()) {
+    // The Sunfish-session allowed state changed between when the launcher was
+    // shown and when the the button was clicked. Hide the Sunfish-session
+    // button immediately for tablet mode.
+    AppListModelProvider::Get()
+        ->search_model()
+        ->search_box()
+        ->SetSunfishButtonVisibility(
+            SearchBoxModel::SunfishButtonVisibility::kHidden);
+    return;
+  }
+
+  // If the user presses the button, there is no need to show the nudge anymore,
+  // so set the pref to its limit.
+  SetSunfishLauncherNudgeShownCount(capture_mode::kSunfishNudgeMaxShownCount);
+
   CaptureModeController::Get()->StartSunfishSession();
 }
 
@@ -1379,7 +1412,7 @@ void SearchBoxView::SetAutocompleteText(
   // Clear existing autocomplete text and reset the highlight range.
   ClearAutocompleteText();
 
-  const std::u16string& current_text = search_box()->GetText();
+  std::u16string_view current_text = search_box()->GetText();
   // Currrent text is a prefix of autocomplete text.
   DCHECK(base::StartsWith(autocomplete_text, current_text,
                           base::CompareCase::INSENSITIVE_ASCII));
@@ -1435,12 +1468,12 @@ SearchBoxView::PlaceholderTextType SearchBoxView::SelectPlaceholderText()
   return kDefaultPlaceholders[rand() % std::size(kDefaultPlaceholders)];
 }
 
-void SearchBoxView::UpdateQuery(const std::u16string& new_query) {
+void SearchBoxView::UpdateQuery(std::u16string_view new_query) {
   SetText(new_query);
-  ContentsChanged(search_box(), new_query);
+  ContentsChanged(search_box(), std::u16string(new_query));
 }
 
-void SearchBoxView::SetText(const std::u16string& text) {
+void SearchBoxView::SetText(std::u16string_view text) {
   search_box()->SetText(text);
   UpdateAccessibleValue();
 }
@@ -1707,6 +1740,74 @@ void SearchBoxView::ShowAssistantChanged() {
                              ->show_assistant_button());
 }
 
+void SearchBoxView::ShowAssistantNewEntryPointChanged() {
+  const bool show = AppListModelProvider::Get()
+                        ->search_model()
+                        ->search_box()
+                        ->show_assistant_new_entry_point_button();
+
+  if (show && !assistant_new_entry_point_button()) {
+    views::ImageButton* assistant_new_entry_point_button =
+        CreateAssistantNewEntryPointButton(base::BindRepeating(
+            &SearchBoxView::AssistantNewEntryPointButtonPressed,
+            base::Unretained(this)));
+    assistant_new_entry_point_button->SetFlipCanvasOnPaintForRTLUI(false);
+
+    // `AssistantBrowserDelegate::Get` has `DCHECK`. It's not allowed to call if
+    // `AssistantBrowserDelegate` is not available, and that is the case for
+    // some tests. `AssistantBrowserDelegate` should be available if visibility
+    // is determined to be eligible (i.e., show=true) as querying visibility
+    // requires access to the delegate.
+    assistant::AssistantBrowserDelegate* assistant_browser_delegate =
+        assistant::AssistantBrowserDelegate::Get();
+    CHECK(assistant_browser_delegate);
+
+    // Assistant new entry point icon includes margins. Use button size
+    // instead of search box icon size, which contains margins, to avoid
+    // having duplicated margins.
+    assistant_new_entry_point_button->SetImageModel(
+        views::ImageButton::STATE_NORMAL,
+        ui::ImageModel::FromImage(gfx::ResizedImage(
+            ui::ResourceBundle::GetSharedInstance().GetImageNamed(
+                assistant_browser_delegate->GetNewEntryPointIconResourceId()),
+            assistant_new_entry_point_button->GetPreferredSize())));
+
+    std::string name = AppListModelProvider::Get()
+                           ->search_model()
+                           ->search_box()
+                           ->assistant_new_entry_point_name();
+    CHECK(!name.empty())
+        << "New entry point name must be set if a profile is eligible for the "
+           "new entry point";
+    assistant_new_entry_point_button->SetTooltipText(base::UTF8ToUTF16(name));
+    assistant_new_entry_point_button->GetViewAccessibility().SetName(name);
+  }
+
+  SetShowAssistantNewEntryPointButton(show);
+}
+
+void SearchBoxView::SunfishButtonVisibilityChanged() {
+  SearchBoxModel::SunfishButtonVisibility visibility =
+      AppListModelProvider::Get()
+          ->search_model()
+          ->search_box()
+          ->sunfish_button_visibility();
+  bool shown = visibility != SearchBoxModel::SunfishButtonVisibility::kHidden;
+  SetShowSunfishButton(shown);
+
+  if (shown) {
+    bool is_sunfish_icon =
+        visibility ==
+        SearchBoxModel::SunfishButtonVisibility::kShownWithSunfishIcon;
+    sunfish_button()->SetImageModel(
+        views::ImageButton::STATE_NORMAL,
+        ui::ImageModel::FromVectorIcon(
+            is_sunfish_icon ? kLensColorIcon : kScannerIcon,
+            kColorAshButtonIconColor,
+            is_sunfish_icon ? kLensColorIconSize : GetSearchBoxIconSize()));
+  }
+}
+
 void SearchBoxView::UpdateIphViewVisibility(bool can_show_iph) {
   const bool would_trigger_iph =
       AppListModelProvider::Get()->search_model()->would_trigger_iph();
@@ -1836,8 +1937,9 @@ void SearchBoxView::UpdateAccessibleValue() {
     GetViewAccessibility().RemoveValue();
     return;
   }
-  GetViewAccessibility().SetValue(l10n_util::GetStringFUTF16(
-      IDS_APP_LIST_SEARCH_BOX_AUTOCOMPLETE, search_box()->GetText()));
+  GetViewAccessibility().SetValue(
+      l10n_util::GetStringFUTF16(IDS_APP_LIST_SEARCH_BOX_AUTOCOMPLETE,
+                                 std::u16string(search_box()->GetText())));
 }
 
 BEGIN_METADATA(SearchBoxView)

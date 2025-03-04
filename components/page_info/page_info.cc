@@ -21,7 +21,6 @@
 #include "base/time/time.h"
 #include "base/values.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "components/browsing_data/content/browsing_data_helper.h"
 #include "components/content_settings/browser/ui/cookie_controls_controller.h"
 #include "components/content_settings/core/browser/content_settings_registry.h"
@@ -225,6 +224,12 @@ const PageInfo::ChooserUIInfo kChooserUIInfo[] = {
      IDS_PAGE_INFO_HID_DEVICE_SECONDARY_LABEL,
      IDS_PAGE_INFO_HID_DEVICE_ALLOWED_BY_POLICY_LABEL,
      IDS_PAGE_INFO_DELETE_HID_DEVICE_WITH_NAME},
+#if BUILDFLAG(IS_CHROMEOS)
+    {ContentSettingsType::SMART_CARD_DATA,
+     IDS_PAGE_INFO_SMART_CARD_READER_SECONDARY_LABEL,
+     IDS_PAGE_INFO_SMART_CARD_READER_ALLOWED_BY_POLICY_LABEL,
+     IDS_PAGE_INFO_DELETE_SMART_CARD_READER_WITH_NAME},
+#endif
     {ContentSettingsType::SERIAL_CHOOSER_DATA,
      IDS_PAGE_INFO_SERIAL_PORT_SECONDARY_LABEL,
      IDS_PAGE_INFO_SERIAL_PORT_ALLOWED_BY_POLICY_LABEL,
@@ -581,6 +586,10 @@ void PageInfo::RecordPageInfoAction(page_info::PageInfoAction action) {
       base::RecordAction(
           base::UserMetricsAction("PageInfo.History.ShowFullHistoryClicked"));
       break;
+    case page_info::PAGE_INFO_SAFE_BROWSING_HELP_OPENED:
+      base::RecordAction(
+          base::UserMetricsAction("PageInfo.SafeBrowsing.HelpOpened"));
+      break;
   }
 }
 
@@ -677,8 +686,7 @@ void PageInfo::OnSitePermissionChanged(
   if (is_one_time) {
     constraints.set_session_model(
         content_settings::mojom::SessionModel::ONE_TIME);
-    if (base::FeatureList::IsEnabled(
-            content_settings::features::kActiveContentSettingExpiry)) {
+    if (content_settings::ShouldTypeExpireActively(type)) {
       constraints.set_lifetime(permissions::kOneTimePermissionMaximumLifetime);
     }
   }
@@ -700,7 +708,7 @@ void PageInfo::OnSitePermissionChanged(
         web_contents_->GetBrowserContext()->GetPermissionController();
 
     blink::PermissionType permission_type =
-        permissions::PermissionUtil::ContentSettingTypeToPermissionType(type);
+        permissions::PermissionUtil::ContentSettingsTypeToPermissionType(type);
 
     // An origin should subscribe to a permission status change from the top
     // frame. Hence we verify only the main frame.
@@ -748,12 +756,12 @@ void PageInfo::OnSiteChosenObjectDeleted(const ChooserUIInfo& ui_info,
 }
 
 void PageInfo::OnUIClosing(bool* reload_prompt) {
+#if BUILDFLAG(IS_ANDROID)
+  NOTREACHED();
+#else
   if (reload_prompt) {
     *reload_prompt = false;
   }
-#if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
-#else
   if (show_info_bar_ && web_contents_ && !web_contents_->IsBeingDestroyed()) {
     if (delegate_->CreateInfoBarDelegate() && reload_prompt) {
       *reload_prompt = true;
@@ -779,7 +787,7 @@ void PageInfo::OnPermissionUsageChange() {
 
 void PageInfo::OpenSiteSettingsView() {
 #if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else
   RecordPageInfoAction(page_info::PAGE_INFO_SITE_SETTINGS_OPENED);
   delegate_->ShowSiteSettings(site_url());
@@ -788,7 +796,7 @@ void PageInfo::OpenSiteSettingsView() {
 
 void PageInfo::OpenCookiesSettingsView() {
 #if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else
   RecordPageInfoAction(page_info::PAGE_INFO_COOKIES_SETTINGS_OPENED);
   delegate_->ShowCookiesSettings();
@@ -797,7 +805,7 @@ void PageInfo::OpenCookiesSettingsView() {
 
 void PageInfo::OpenAllSitesViewFilteredToRws() {
 #if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else
   auto rws_owner = delegate_->GetRwsOwner(site_url_);
   RecordPageInfoAction(page_info::PAGE_INFO_ALL_SITES_WITH_FPS_FILTER_OPENED);
@@ -812,7 +820,7 @@ void PageInfo::OpenAllSitesViewFilteredToRws() {
 
 void PageInfo::OpenCookiesDialog() {
 #if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else
   if (!web_contents_ || web_contents_->IsBeingDestroyed()) {
     return;
@@ -825,7 +833,7 @@ void PageInfo::OpenCookiesDialog() {
 
 void PageInfo::OpenCertificateDialog(net::X509Certificate* certificate) {
 #if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else
   if (!web_contents_ || web_contents_->IsBeingDestroyed()) {
     return;
@@ -841,7 +849,7 @@ void PageInfo::OpenCertificateDialog(net::X509Certificate* certificate) {
 
 void PageInfo::OpenSafetyTipHelpCenterPage() {
 #if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else
   RecordPageInfoAction(page_info::PAGE_INFO_SAFETY_TIP_HELP_OPENED);
   delegate_->OpenSafetyTipHelpCenterPage();
@@ -850,17 +858,26 @@ void PageInfo::OpenSafetyTipHelpCenterPage() {
 
 void PageInfo::OpenConnectionHelpCenterPage(const ui::Event& event) {
 #if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else
   RecordPageInfoAction(page_info::PAGE_INFO_CONNECTION_HELP_OPENED);
   delegate_->OpenConnectionHelpCenterPage(event);
 #endif
 }
 
+void PageInfo::OpenSafeBrowsingHelpCenterPage(const ui::Event& event) {
+#if BUILDFLAG(IS_ANDROID)
+  NOTREACHED();
+#else
+  RecordPageInfoAction(page_info::PAGE_INFO_SAFE_BROWSING_HELP_OPENED);
+  delegate_->OpenSafeBrowsingHelpCenterPage(event);
+#endif
+}
+
 void PageInfo::OpenContentSettingsExceptions(
     ContentSettingsType content_settings_type) {
 #if BUILDFLAG(IS_ANDROID)
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else
   RecordPageInfoAction(page_info::PAGE_INFO_CONNECTION_HELP_OPENED);
   delegate_->OpenContentSettingsExceptions(content_settings_type);
@@ -954,47 +971,38 @@ void PageInfo::ComputeUIInputs(const GURL& url) {
 
   if (certificate_ &&
       (!net::IsCertStatusError(visible_security_state.cert_status))) {
-    // HTTPS with no or minor errors.
-    if (security_level == security_state::SECURE_WITH_POLICY_INSTALLED_CERT) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-      site_identity_status_ = SITE_IDENTITY_STATUS_ADMIN_PROVIDED_CERT;
-#else
-      DCHECK(false) << "Policy certificates exist only on ChromeOS";
-#endif
+    // No major or minor errors.
+    if (visible_security_state.cert_status & net::CERT_STATUS_IS_EV) {
+      // EV HTTPS page.
+      site_identity_status_ = SITE_IDENTITY_STATUS_EV_CERT;
     } else {
-      // No major or minor errors.
-      if (visible_security_state.cert_status & net::CERT_STATUS_IS_EV) {
-        // EV HTTPS page.
-        site_identity_status_ = SITE_IDENTITY_STATUS_EV_CERT;
-      } else {
-        // Non-EV OK HTTPS page.
-        site_identity_status_ = SITE_IDENTITY_STATUS_CERT;
-        std::u16string issuer_name(
-            UTF8ToUTF16(certificate_->issuer().GetDisplayName()));
-        if (issuer_name.empty()) {
-          issuer_name.assign(l10n_util::GetStringUTF16(
-              IDS_PAGE_INFO_SECURITY_TAB_UNKNOWN_PARTY));
-        }
+      // Non-EV OK HTTPS page.
+      site_identity_status_ = SITE_IDENTITY_STATUS_CERT;
+      std::u16string issuer_name(
+          UTF8ToUTF16(certificate_->issuer().GetDisplayName()));
+      if (issuer_name.empty()) {
+        issuer_name.assign(l10n_util::GetStringUTF16(
+            IDS_PAGE_INFO_SECURITY_TAB_UNKNOWN_PARTY));
+      }
 
 #if BUILDFLAG(IS_ANDROID)
-        // This string is shown on all non-error HTTPS sites on Android when
-        // the user taps "Details" link on page info.
-        identity_status_description_android_.assign(l10n_util::GetStringFUTF16(
-            IDS_PAGE_INFO_SECURE_IDENTITY_VERIFIED,
-            delegate_->GetClientApplicationName(), issuer_name));
+      // This string is shown on all non-error HTTPS sites on Android when
+      // the user taps "Details" link on page info.
+      identity_status_description_android_.assign(l10n_util::GetStringFUTF16(
+          IDS_PAGE_INFO_SECURE_IDENTITY_VERIFIED,
+          delegate_->GetClientApplicationName(), issuer_name));
 #endif
-      }
-      if (security_state::IsSHA1InChain(visible_security_state)) {
-        site_identity_status_ =
-            SITE_IDENTITY_STATUS_DEPRECATED_SIGNATURE_ALGORITHM;
+    }
+    if (security_state::IsSHA1InChain(visible_security_state)) {
+      site_identity_status_ =
+          SITE_IDENTITY_STATUS_DEPRECATED_SIGNATURE_ALGORITHM;
 
 #if BUILDFLAG(IS_ANDROID)
-        identity_status_description_android_ +=
-            u"\n\n" +
-            l10n_util::GetStringUTF16(
-                IDS_PAGE_INFO_SECURITY_TAB_DEPRECATED_SIGNATURE_ALGORITHM);
+      identity_status_description_android_ +=
+          u"\n\n" +
+          l10n_util::GetStringUTF16(
+              IDS_PAGE_INFO_SECURITY_TAB_DEPRECATED_SIGNATURE_ALGORITHM);
 #endif
-      }
     }
   } else {
     // HTTP or HTTPS with errors (not warnings).
@@ -1131,8 +1139,7 @@ void PageInfo::ComputeUIInputs(const GURL& url) {
         key_exchange =
             SSL_get_curve_name(visible_security_state.key_exchange_group);
         if (!key_exchange) {
-          NOTREACHED_IN_MIGRATION();
-          key_exchange = "";
+          NOTREACHED();
         }
       }
       site_connection_details_ += l10n_util::GetStringFUTF16(
@@ -1219,7 +1226,7 @@ void PageInfo::PopulatePermissionInfo(PermissionInfo& permission_info,
         PermissionStatus::ASK, content::PermissionStatusSource::UNSPECIFIED);
     if (permissions::PermissionUtil::IsPermission(permission_info.type)) {
       permission_result = delegate_->GetPermissionResult(
-          permissions::PermissionUtil::ContentSettingTypeToPermissionType(
+          permissions::PermissionUtil::ContentSettingsTypeToPermissionType(
               permission_info.type),
           url::Origin::Create(site_url_), permission_info.requesting_origin);
     } else if (permission_info.type ==
@@ -1375,8 +1382,15 @@ void PageInfo::PresentSitePermissions() {
     PopulatePermissionInfo(permission_info, content_settings, info, setting);
     if (ShouldShowPermission(permission_info)) {
       permission_info_list.push_back(permission_info);
+      if (!has_recorded_permission_metrics_) {
+        CHECK_EQ(info.secondary_pattern, ContentSettingsPattern::Wildcard());
+        base::UmaHistogramEnumeration(
+            "Privacy.PageInfo.SiteExceptionsScopeType",
+            info.primary_pattern.GetScope());
+      }
     }
   }
+  has_recorded_permission_metrics_ = true;
 
   for (ContentSettingsType type : kTwoPatternPermissions) {
     for (auto& requester : GetTwoSitePermissionRequesters(type)) {
@@ -1388,7 +1402,7 @@ void PageInfo::PresentSitePermissions() {
       ContentSetting setting = content_settings->GetContentSetting(
           requester.GetURL(), site_url_, permission_info.type, &info);
 
-      if (IsGrantedByRelatedWebsiteSets(type, info.metadata) &&
+      if (info.metadata.decided_by_related_website_sets() &&
           !base::FeatureList::IsEnabled(
               permissions::features::kShowRelatedWebsiteSetsPermissionGrants)) {
         continue;
@@ -1452,7 +1466,7 @@ std::set<net::SchemefulSite> PageInfo::GetTwoSitePermissionRequesters(
       if (setting.primary_pattern.Matches(site_url_)) {
         continue;  // Skip first-party settings.
       }
-      if (IsGrantedByRelatedWebsiteSets(type, setting.metadata) &&
+      if (setting.metadata.decided_by_related_website_sets() &&
           !base::FeatureList::IsEnabled(
               permissions::features::kShowRelatedWebsiteSetsPermissionGrants)) {
         continue;
@@ -1496,7 +1510,7 @@ void PageInfo::PresentSiteDataInternal(base::OnceClosure done) {
   cookies_info.blocking_status = blocking_status_;
   cookies_info.features = features_;
   cookies_info.expiration = cookie_exception_expiration_;
-  cookies_info.is_otr = web_contents_->GetBrowserContext()->IsOffTheRecord();
+  cookies_info.is_incognito = delegate_->IsIncognitoProfile();
   ui_->SetCookieInfo(cookies_info);
 
   std::move(done).Run();
@@ -1601,8 +1615,7 @@ void PageInfo::GetSafeBrowsingStatusByMaliciousContentStatus(
     std::u16string* details) {
   switch (malicious_content_status) {
     case security_state::MALICIOUS_CONTENT_STATUS_NONE:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
     case security_state::MALICIOUS_CONTENT_STATUS_MALWARE:
       *status = PageInfo::SAFE_BROWSING_STATUS_MALWARE;
       *details = l10n_util::GetStringUTF16(IDS_PAGE_INFO_MALWARE_DETAILS);

@@ -12,6 +12,7 @@
 #include "base/check_op.h"
 #include "base/functional/bind.h"
 #include "base/notreached.h"
+#include "build/build_config.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/signin/identity_test_environment_profile_adaptor.h"
@@ -201,7 +202,7 @@ void SupervisionMixin::ConfigureIdentityTestEnvironment() {
         GetIdentityTestEnvironment()->MakeAccountAvailable(
             signin::AccountAvailabilityOptionsBuilder()
                 .AsPrimary(consent_level_)
-                .WithGaiaId(FakeGaia::kDefaultGaiaId)
+                .WithGaiaId(FakeGaia::GetDefaultGaiaId())
                 .WithRefreshToken(FakeGaiaMixin::kFakeRefreshToken)
                 .Build(email_));
     CHECK(!account_info.account_id.empty());
@@ -216,7 +217,7 @@ void SupervisionMixin::ConfigureIdentityTestEnvironment() {
 }
 
 Profile* SupervisionMixin::GetProfile() const {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   return ProfileManager::GetActiveUserProfile();
 #else
   return test_base_->browser()->profile();

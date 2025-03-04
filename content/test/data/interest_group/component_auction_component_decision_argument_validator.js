@@ -171,16 +171,25 @@ function validateBrowserSignals(browserSignals, isScoreAd) {
     throw 'Wrong renderUrl ' + browserSignals.renderUrl;
   if (browserSignals.bidCurrency != 'USD')
       throw 'Wrong bidCurrency ' + browserSignals.bidCurrency;
+  if (!(browserSignals.decodeUtf8 instanceof Function))
+    throw 'Wrong decodeUtf8';
+  if (!(browserSignals.encodeUtf8 instanceof Function))
+    throw 'Wrong encodeUtf8';
 
   // Fields that vary by method.
   if (isScoreAd) {
-    if (Object.keys(browserSignals).length !== 10) {
+    if (Object.keys(browserSignals).length !== 14) {
       throw 'Wrong number of browser signals fields ' +
           JSON.stringify(browserSignals);
     }
     const adComponentsJson = JSON.stringify(browserSignals.adComponents);
     if (adComponentsJson !== '["https://example.com/render-component"]')
       throw 'Wrong adComponents ' + adComponentsJson;
+    const componentsCreativeScanningMetadata =
+        JSON.stringify(browserSignals.adComponentsCreativeScanningMetadata);
+    if (componentsCreativeScanningMetadata !== '[null]')
+      throw 'Wrong adComponentsCreativeScanningMetadata ' +
+          componentsCreativeScanningMetadata;
     if (browserSignals.biddingDurationMsec < 0)
       throw 'Wrong biddingDurationMsec ' + browserSignals.biddingDurationMsec;
     if (browserSignals.dataVersion !== 5678)
@@ -188,8 +197,11 @@ function validateBrowserSignals(browserSignals, isScoreAd) {
     if (browserSignals.forDebuggingOnlyInCooldownOrLockout)
       throw 'Wrong forDebuggingOnlyInCooldownOrLockout ' +
           browserSignals.forDebuggingOnlyInCooldownOrLockout;
+    if (browserSignals.forDebuggingOnlySampling)
+      throw 'Wrong forDebuggingOnlySampling ' +
+          browserSignals.forDebuggingOnlySampling;
   } else {
-    if (Object.keys(browserSignals).length !== 13) {
+    if (Object.keys(browserSignals).length !== 15) {
       throw 'Wrong number of browser signals fields ' +
           JSON.stringify(browserSignals);
     }

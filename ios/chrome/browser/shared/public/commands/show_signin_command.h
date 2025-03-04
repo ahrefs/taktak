@@ -8,13 +8,9 @@
 #import <Foundation/Foundation.h>
 
 #include "components/signin/public/base/signin_metrics.h"
+#include "ios/chrome/browser/authentication/ui_bundled/signin/signin_constants.h"
 
-@class SigninCompletionInfo;
-typedef NS_ENUM(NSUInteger, SigninCoordinatorResult);
 @protocol SystemIdentity;
-
-using ShowSigninCommandCompletionCallback =
-    void (^)(SigninCoordinatorResult result, SigninCompletionInfo*);
 
 enum class AuthenticationOperation {
   // Operation to start a re-authenticate operation. The user is presented with
@@ -48,6 +44,9 @@ enum class AuthenticationOperation {
   // account dialog to sign-in.
   // Once signed in, the history sync opt-in is displayed.
   kSheetSigninAndHistorySync,
+  // Operation to trigger the history sync.
+  // The user must already be signed in but with the history sync turned off.
+  kHistorySync,
 };
 
 // A command to perform a sign in operation.
@@ -62,27 +61,32 @@ enum class AuthenticationOperation {
                          identity:(id<SystemIdentity>)identity
                       accessPoint:(signin_metrics::AccessPoint)accessPoint
                       promoAction:(signin_metrics::PromoAction)promoAction
-                         callback:(ShowSigninCommandCompletionCallback)callback
+                       completion:
+                           (SigninCoordinatorCompletionCallback)completion
     NS_DESIGNATED_INITIALIZER;
 
-// Initializes a ShowSigninCommand with `identity` and `callback` set to nil.
+// Initializes a ShowSigninCommand with `identity` and `completion` set to nil.
 - (instancetype)initWithOperation:(AuthenticationOperation)operation
                       accessPoint:(signin_metrics::AccessPoint)accessPoint
                       promoAction:(signin_metrics::PromoAction)promoAction;
 
 // Initializes a ShowSigninCommand with PROMO_ACTION_NO_SIGNIN_PROMO and a nil
-// callback.
+// completion.
 - (instancetype)initWithOperation:(AuthenticationOperation)operation
                       accessPoint:(signin_metrics::AccessPoint)accessPoint;
 
 // If YES, the sign-in command will not be presented and ignored if there is
 // any dialog already presented on the NTP.
 // Default value: NO.
-@property(nonatomic, assign) BOOL skipIfUINotAvaible;
+@property(nonatomic, assign) BOOL skipIfUINotAvailable;
 
-// The callback to be invoked after the operation is complete.
+// Whether the history opt in sync should always be shown when the user hasn't
+// approved it before. Default: YES
+@property(nonatomic, assign) BOOL optionalHistorySync;
+
+// The completion to be invoked after the operation is complete.
 @property(nonatomic, copy, readonly)
-    ShowSigninCommandCompletionCallback callback;
+    SigninCoordinatorCompletionCallback completion;
 
 // The operation to perform during the sign-in flow.
 @property(nonatomic, readonly) AuthenticationOperation operation;

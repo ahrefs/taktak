@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 #include "chrome/browser/ash/floating_workspace/floating_workspace_service.h"
 
+#include <algorithm>
 #include <memory>
 
 #include "ash/constants/ash_features.h"
@@ -12,9 +13,9 @@
 #include "ash/test/ash_test_helper.h"
 #include "ash/wm/desks/desk.h"
 #include "ash/wm/desks/templates/saved_desk_metrics_util.h"
+#include "base/check_deref.h"
 #include "base/files/scoped_temp_dir.h"
 #include "base/memory/raw_ptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/bind.h"
 #include "base/test/metrics/histogram_tester.h"
@@ -23,6 +24,7 @@
 #include "chrome/browser/ash/floating_workspace/floating_workspace_metrics_util.h"
 #include "chrome/browser/ash/floating_workspace/floating_workspace_service_factory.h"
 #include "chrome/browser/ash/floating_workspace/floating_workspace_util.h"
+#include "chrome/browser/ash/settings/scoped_cros_settings_test_helper.h"
 #include "chrome/browser/notifications/notification_display_service_tester.h"
 #include "chrome/browser/prefs/browser_prefs.h"
 #include "chrome/browser/profiles/profile_keyed_service_factory.h"
@@ -30,6 +32,7 @@
 #include "chrome/browser/ui/ash/multi_user/multi_user_util.h"
 #include "chrome/browser/ui/ash/session/session_controller_client_impl.h"
 #include "chrome/browser/ui/ash/session/test_session_controller.h"
+#include "chrome/common/pref_names.h"
 #include "chrome/test/base/testing_browser_process.h"
 #include "chrome/test/base/testing_profile.h"
 #include "chrome/test/base/testing_profile_manager.h"
@@ -48,6 +51,7 @@
 #include "components/services/app_service/public/cpp/app_registry_cache_wrapper.h"
 #include "components/session_manager/core/session_manager.h"
 #include "components/sync/base/data_type.h"
+#include "components/sync/base/pref_names.h"
 #include "components/sync/service/sync_service.h"
 #include "components/sync/test/test_sync_service.h"
 #include "components/sync_device_info/device_info.h"
@@ -58,6 +62,7 @@
 #include "components/user_manager/fake_user_manager.h"
 #include "components/user_manager/scoped_user_manager.h"
 #include "content/public/test/browser_task_environment.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/cros_system_api/dbus/shill/dbus-constants.h"
@@ -72,10 +77,16 @@ constexpr char kLocalSessionName[] = "local_session";
 constexpr char kRemoteSessionOneName[] = "remote_session_1";
 constexpr char kRemoteSession2Name[] = "remote_session_2";
 constexpr char kTestAccount[] = "usertest@gmail.com";
+constexpr GaiaId::Literal kFakeGaia("fakegaia");
 constexpr char kTestAccount2[] = "usertest2@gmail.com";
-const base::Time most_recent_time = base::Time::FromSecondsSinceUnixEpoch(15);
-const base::Time more_recent_time = base::Time::FromSecondsSinceUnixEpoch(10);
-const base::Time least_recent_time = base::Time::FromSecondsSinceUnixEpoch(5);
+constexpr GaiaId::Literal kFakeGaia2("fakegaia2");
+constexpr base::Time most_recent_time =
+    base::Time::FromSecondsSinceUnixEpoch(15);
+constexpr base::Time more_recent_time =
+    base::Time::FromSecondsSinceUnixEpoch(10);
+constexpr base::Time least_recent_time =
+    base::Time::FromSecondsSinceUnixEpoch(5);
+
 std::unique_ptr<sync_sessions::SyncedSession> CreateNewSession(
     const std::string& session_name,
     const base::Time& session_time) {
@@ -201,10 +212,10 @@ class MockOpenTabsUIDelegate : public sync_sessions::OpenTabsUIDelegate {
       std::vector<raw_ptr<const sync_sessions::SyncedSession,
                           VectorExperimental>>* sessions) override {
     *sessions = foreign_sessions_;
-    base::ranges::sort(*sessions, std::greater(),
-                       [](const sync_sessions::SyncedSession* session) {
-                         return session->GetModifiedTime();
-                       });
+    std::ranges::sort(*sessions, std::greater(),
+                      [](const sync_sessions::SyncedSession* session) {
+                        return session->GetModifiedTime();
+                      });
 
     return !sessions->empty();
   }
@@ -400,6 +411,8 @@ class FloatingWorkspaceServiceTest : public testing::Test {
 
   void SetUp() override {
     chromeos::PowerManagerClient::InitializeFake();
+    cros_settings_test_helper_ =
+        std::make_unique<ScopedCrosSettingsTestHelper>();
     ash::AshTestHelper::InitParams params;
     ash_test_helper_.SetUp(std::move(params));
     profile_manager_ = std::make_unique<TestingProfileManager>(
@@ -409,16 +422,17 @@ class FloatingWorkspaceServiceTest : public testing::Test {
     ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
     fake_user_manager_.Reset(std::make_unique<user_manager::FakeUserManager>(
         TestingBrowserProcess::GetGlobal()->local_state()));
-    account_id_ = AccountId::FromUserEmail(kTestAccount);
-    const std::string username_hash =
-        user_manager::FakeUserManager::GetFakeUsernameHash(account_id_);
-    fake_user_manager()->AddUser(account_id_);
-    fake_user_manager()->UserLoggedIn(account_id_, username_hash,
-                                      /*browser_restart=*/false,
-                                      /*is_child=*/false);
+    account_id_ = AccountId::FromUserEmailGaiaId(kTestAccount, kFakeGaia);
+    fake_user_manager()->AddGaiaUser(account_id_,
+                                     user_manager::UserType::kRegular);
+    fake_user_manager()->UserLoggedIn(
+        account_id_,
+        user_manager::FakeUserManager::GetFakeUsernameHash(account_id_),
+        /*browser_restart=*/false,
+        /*is_child=*/false);
     CoreAccountInfo account_info;
     account_info.email = kTestAccount;
-    account_info.gaia = "gaia";
+    account_info.gaia = GaiaId("gaia");
     account_info.account_id = CoreAccountId::FromGaiaId(account_info.gaia);
     test_sync_service_.SetSignedIn(signin::ConsentLevel::kSync, account_info);
 
@@ -461,7 +475,9 @@ class FloatingWorkspaceServiceTest : public testing::Test {
     profile_ = nullptr;
     profile_manager_ = nullptr;
     mock_desks_client_ = nullptr;
+    fake_user_manager_.Reset();
     ash_test_helper_.TearDown();
+    cros_settings_test_helper_.reset();
     chromeos::PowerManagerClient::Shutdown();
   }
 
@@ -477,6 +493,7 @@ class FloatingWorkspaceServiceTest : public testing::Test {
   std::unique_ptr<NetworkHandlerTestHelper> network_handler_test_helper_;
   std::unique_ptr<apps::AppRegistryCache> cache_;
   AccountId account_id_;
+  std::unique_ptr<ScopedCrosSettingsTestHelper> cros_settings_test_helper_;
   AshTestHelper ash_test_helper_;
   std::unique_ptr<TestingProfileManager> profile_manager_;
   std::unique_ptr<MockDesksClient> mock_desks_client_;
@@ -1741,7 +1758,8 @@ TEST_F(FloatingWorkspaceServiceV2Test,
 
 TEST_F(FloatingWorkspaceServiceV2Test,
        CaptureFloatingWorkspaceTemplateOnLockScreen) {
-  SessionControllerClientImpl client;
+  SessionControllerClientImpl client(
+      CHECK_DEREF(TestingBrowserProcess::GetGlobal()->local_state()));
   client.Init();
   PopulateAppsCache();
   CreateFloatingWorkspaceServiceForTesting(profile());
@@ -2292,16 +2310,17 @@ class FloatingWorkspaceServiceMultiUserTest
         kTestAccount2, std::move(prefs), std::u16string(),
         /*avatar_id=*/0, TestingProfile::TestingFactories());
 
-    account_id2_ = AccountId::FromUserEmail(kTestAccount2);
-    const std::string username_hash2 =
-        user_manager::FakeUserManager::GetFakeUsernameHash(account_id2_);
-    fake_user_manager()->AddUser(account_id2_);
-    fake_user_manager()->UserLoggedIn(account_id2_, username_hash2,
-                                      /*browser_restart=*/false,
-                                      /*is_child=*/false);
+    account_id2_ = AccountId::FromUserEmailGaiaId(kTestAccount2, kFakeGaia2);
+    fake_user_manager()->AddGaiaUser(account_id2_,
+                                     user_manager::UserType::kRegular);
+    fake_user_manager()->UserLoggedIn(
+        account_id2_,
+        user_manager::FakeUserManager::GetFakeUsernameHash(account_id2_),
+        /*browser_restart=*/false,
+        /*is_child=*/false);
     CoreAccountInfo account_info;
     account_info.email = kTestAccount2;
-    account_info.gaia = "gaia2";
+    account_info.gaia = GaiaId("gaia2");
     account_info.account_id = CoreAccountId::FromGaiaId(account_info.gaia);
     test_sync_service()->SetSignedIn(signin::ConsentLevel::kSync, account_info);
     fake_desk_sync_service2_ =
@@ -2445,4 +2464,102 @@ TEST_F(FloatingWorkspaceServiceMultiUserTest,
   EXPECT_FALSE(
       floating_workspace_service2->GetLatestFloatingWorkspaceTemplate());
 }
+
+class FloatingWorkspaceServiceV2WithCookiesTest
+    : public FloatingWorkspaceServiceTest {
+ protected:
+  FloatingWorkspaceServiceV2WithCookiesTest() = default;
+  ~FloatingWorkspaceServiceV2WithCookiesTest() override = default;
+
+  void SetUp() override {
+    scoped_feature_list().InitWithFeatures(
+        {features::kFloatingWorkspaceV2, features::kDeskTemplateSync,
+         features::kFloatingSso},
+        {});
+    FloatingWorkspaceServiceTest::SetUp();
+    // Set prefs needed for Floating SSO feature (which syncs cookies).
+    profile()->GetPrefs()->SetBoolean(::prefs::kFloatingSsoEnabled, true);
+    profile()->GetPrefs()->SetBoolean(syncer::prefs::internal::kSyncManaged,
+                                      false);
+    profile()->GetPrefs()->SetBoolean(
+        syncer::prefs::internal::kSyncKeepEverythingSynced, true);
+  }
+};
+
+TEST_F(FloatingWorkspaceServiceV2WithCookiesTest,
+       RestoreTemplateAfterWaitingForCookies) {
+  PopulateAppsCache();
+  const std::string template_name = "floating_workspace_template";
+  base::RunLoop loop;
+  fake_desk_sync_service()->GetDeskModel()->AddOrUpdateEntry(
+      MakeTestFloatingWorkspaceDeskTemplate(template_name, base::Time::Now()),
+      base::BindLambdaForTesting(
+          [&](desks_storage::DeskModel::AddOrUpdateEntryStatus status,
+              std::unique_ptr<ash::DeskTemplate> new_entry) {
+            EXPECT_EQ(desks_storage::DeskModel::AddOrUpdateEntryStatus::kOk,
+                      status);
+            loop.Quit();
+          }));
+  loop.Run();
+  CreateFloatingWorkspaceServiceForTesting(profile());
+  auto* floating_workspace_service =
+      FloatingWorkspaceServiceFactory::GetForProfile(profile());
+  floating_workspace_service->Init(test_sync_service(),
+                                   fake_desk_sync_service(),
+                                   fake_device_info_sync_service());
+  test_sync_service()->SetDownloadStatusFor(
+      {syncer::DataType::WORKSPACE_DESK},
+      syncer::SyncService::DataTypeDownloadStatus::kUpToDate);
+  test_sync_service()->SetDownloadStatusFor(
+      {syncer::DataType::COOKIES},
+      syncer::SyncService::DataTypeDownloadStatus::kWaitingForUpdates);
+  test_sync_service()->FireStateChanged();
+  // Verify that there is no restored desk template yet: when Floating SSO is
+  // enabled, we also wait for cookies to be up to date.
+  EXPECT_FALSE(mock_desks_client()->restored_desk_template());
+  test_sync_service()->SetDownloadStatusFor(
+      {syncer::DataType::COOKIES},
+      syncer::SyncService::DataTypeDownloadStatus::kUpToDate);
+  test_sync_service()->FireStateChanged();
+  // Desk template is restored once cookies are up to date.
+  EXPECT_TRUE(mock_desks_client()->restored_desk_template());
+  EXPECT_EQ(mock_desks_client()->restored_desk_template()->template_name(),
+            base::UTF8ToUTF16(template_name));
+}
+
+TEST_F(FloatingWorkspaceServiceV2WithCookiesTest,
+       RestoreTemplateWhenCookiesHaveSyncError) {
+  PopulateAppsCache();
+  const std::string template_name = "floating_workspace_template";
+  base::RunLoop loop;
+  fake_desk_sync_service()->GetDeskModel()->AddOrUpdateEntry(
+      MakeTestFloatingWorkspaceDeskTemplate(template_name, base::Time::Now()),
+      base::BindLambdaForTesting(
+          [&](desks_storage::DeskModel::AddOrUpdateEntryStatus status,
+              std::unique_ptr<ash::DeskTemplate> new_entry) {
+            EXPECT_EQ(desks_storage::DeskModel::AddOrUpdateEntryStatus::kOk,
+                      status);
+            loop.Quit();
+          }));
+  loop.Run();
+  CreateFloatingWorkspaceServiceForTesting(profile());
+  auto* floating_workspace_service =
+      FloatingWorkspaceServiceFactory::GetForProfile(profile());
+  floating_workspace_service->Init(test_sync_service(),
+                                   fake_desk_sync_service(),
+                                   fake_device_info_sync_service());
+  test_sync_service()->SetDownloadStatusFor(
+      {syncer::DataType::WORKSPACE_DESK},
+      syncer::SyncService::DataTypeDownloadStatus::kUpToDate);
+  test_sync_service()->SetDownloadStatusFor(
+      {syncer::DataType::COOKIES},
+      syncer::SyncService::DataTypeDownloadStatus::kError);
+  test_sync_service()->FireStateChanged();
+  // Desk template is restored without waiting for Floating SSO if Sync reports
+  // an error for cookies.
+  EXPECT_TRUE(mock_desks_client()->restored_desk_template());
+  EXPECT_EQ(mock_desks_client()->restored_desk_template()->template_name(),
+            base::UTF8ToUTF16(template_name));
+}
+
 }  // namespace ash::floating_workspace

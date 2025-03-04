@@ -5,7 +5,6 @@
 #include "chrome/common/chrome_switches.h"
 
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "ppapi/buildflags/buildflags.h"
 #include "printing/buildflags/buildflags.h"
 
@@ -253,11 +252,6 @@ const char kEnableCloudPrintProxy[] = "enable-cloud-print-proxy";
 // Enables Domain Reliability Monitoring.
 const char kEnableDomainReliability[] = "enable-domain-reliability";
 
-// Enables a number of UI improvements to downloads, download scanning, and
-// download warnings.
-const char kEnableDownloadWarningImprovements[] =
-    "enable-download-warning-improvements";
-
 // Enables logging for extension activity.
 const char kEnableExtensionActivityLogging[] =
     "enable-extension-activity-logging";
@@ -363,14 +357,6 @@ const char kHomePage[] = "homepage";
 // Causes the initial browser opened to be in incognito mode. Further browsers
 // may or may not be in incognito mode; see `IncognitoModePrefs`.
 const char kIncognito[] = "incognito";
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-// Manually sets the initial preferences file. This is required to change the
-// initial preferences when the default file is read-only (eg. on lacros).
-// Passing this flag will reset the preferences regardless of whether this is
-// the first run.
-const char kInitialPreferencesFile[] = "initial-preferences-file";
-#endif
 
 // Specifies that the main-thread Isolate should initialize in foreground mode.
 // If not specified, the the Isolate will start in background mode for extension
@@ -486,6 +472,11 @@ const char kPackExtension[] = "pack-extension";
 // Optional PEM private key to use in signing packaged .crx.
 const char kPackExtensionKey[] = "pack-extension-key";
 
+// This switch allows testing password change feature on provided URL. Password
+// change will be offered by submitting password form on any URL with matching
+// eTLD+1.
+const char kPasswordChangeUrl[] = "password-change-url";
+
 // Causes the browser process to crash very early in startup, just before
 // crashpad (or breakpad) is initialized.
 const char kPreCrashpadCrashTest[] = "pre-crashpad-crash-test";
@@ -550,11 +541,6 @@ const char kRestart[] = "restart";
 // implement support for OS-specific "continue where you left off" functionality
 // on OS X and Windows.
 const char kRestoreLastSession[] = "restore-last-session";
-
-// Disable saving pages as HTML-only, disable saving pages as HTML Complete
-// (with a directory of sub-resources). Enable only saving pages as MHTML.
-// See http://crbug.com/120416 for how to remove this switch.
-const char kSavePageAsMHTML[] = "save-page-as-mhtml";
 
 // This flag sets the checkboxes for sharing audio during screen capture to off
 // by default. It is primarily intended to be used for tests.
@@ -738,7 +724,7 @@ const char kMarketUrlForTesting[] = "market-url-for-testing";
 const char kRequestDesktopSites[] = "request-desktop-sites";
 #endif  // BUILDFLAG(IS_ANDROID)
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // Custom crosh command.
 const char kCroshCommand[] = "crosh-command";
 
@@ -752,18 +738,14 @@ const char kDisableLoginScreenApps[] = "disable-login-screen-apps";
 // Use a short (1 second) timeout for merge session loader throttle testing.
 const char kShortMergeSessionTimeoutForTest[] =
     "short-merge-session-timeout-for-test";
+#else
+// Enables saving webpages as MHTML (Webpage, Single) by default, instead of
+// saving as HTML with a directory of sub-resources. (Webpage, Complete).
+// See http://crbug.com/40179885 for how to remove this switch.
+const char kSavePageAsMHTML[] = "save-page-as-mhtml";
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
-// Selects the scheduler configuration specified in the parameter.
-const char kSchedulerConfiguration[] = "scheduler-configuration";
-const char kSchedulerConfigurationConservative[] = "conservative";
-const char kSchedulerConfigurationPerformance[] = "performance";
-
-// Specifies what the default scheduler configuration value is if the user does
-// not set one.
-const char kSchedulerConfigurationDefault[] = "scheduler-configuration-default";
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
-#if BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_CHROMEOS)
 // These flags show the man page on Linux. They are equivalent to each
 // other.
 const char kHelp[] = "help";
@@ -902,6 +884,19 @@ const char kGuest[] = "guest";
 const char kForceNtpMobilePromo[] = "force-ntp-mobile-promo";
 #endif
 
+#if BUILDFLAG(ENABLE_GLIC)
+// Overrides the glic guest URL.
+const char kGlicGuestURL[] = "glic-guest-url";
+const char kGlicAlwaysOpenFre[] = "glic-always-open-fre";
+const char kGlicFreURL[] = "glic-fre-url";
+// Use --glic-open-on-startup=attached or --glic-open-on-startup=detached.
+const char kGlicOpenOnStartup[] = "glic-open-on-startup";
+// List of allowed origins in the glic webview, as a space-separated list.
+const char kGlicAllowedOrigins[] = "glic-webui-allowed-origins";
+// Dev mode for glic only exposed via command line flag.
+const char kGlicDev[] = "glic-dev";
+#endif
+
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
 // Writes open and installed web apps for each profile to the specified file
 // without launching a new browser window or tab. Pass a absolute file path to
@@ -918,12 +913,12 @@ const char kProfileBaseName[] = "profile-base-name";
 const char kProfileManagementAttributes[] = "profile-management-attributes";
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH) || BUILDFLAG(IS_ANDROID)
+#if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_ANDROID)
 // Custom WebAPK server URL for the sake of testing.
 const char kWebApkServerUrl[] = "webapk-server-url";
 #endif
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH) && !BUILDFLAG(IS_ANDROID)
+#if !BUILDFLAG(IS_CHROMEOS) && !BUILDFLAG(IS_ANDROID)
 // Uses the system default printer as the initially selected destination in
 // print preview, instead of the most recently used destination.
 const char kUseSystemDefaultPrinter[] = "use-system-default-printer";

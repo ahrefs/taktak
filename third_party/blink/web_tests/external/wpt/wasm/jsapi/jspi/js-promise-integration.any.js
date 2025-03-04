@@ -237,10 +237,10 @@ promise_test(async () => {
 
   let exported_promise = wrapped_export();
   AbeforeB.setB();
-  assert_true(AbeforeB.isAbeforeB());
 
   assert_equals(await exported_promise, 42);
-}, "Do not suspend if the import's return value is not a Promise");
+  assert_true(AbeforeB.isBbeforeA());
+}, "Do suspend even if the import's return value is not a Promise by wrapping it with Promise.resolve");
 
 promise_test(async (t) => {
   let tag = new WebAssembly.Tag({
@@ -334,9 +334,7 @@ test(() => {
   builder.addFunction("export", kSig_v_v).addBody([]).exportFunc();
   let instance = builder.instantiate();
   let export_wrapper = WebAssembly.promising(instance.exports.export);
-  let export_sig = export_wrapper.type();
-  assert_array_equals(export_sig.parameters, []);
-  assert_array_equals(export_sig.results, ['externref']);
+  assert_true(export_wrapper instanceof Function);
 },"Promising with no return");
 
 promise_test(async () => {

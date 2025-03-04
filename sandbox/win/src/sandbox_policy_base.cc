@@ -266,7 +266,7 @@ ResultCode ConfigBase::SetFakeGdiInit() {
   return SBOX_ALL_OK;
 }
 
-ResultCode ConfigBase::AllowExtraDlls(const wchar_t* pattern) {
+ResultCode ConfigBase::AllowExtraDll(const wchar_t* path) {
   // Signed intercept rules only supported on Windows 10 TH2 and above. This
   // must match the version checks in process_mitigations.cc for
   // consistency.
@@ -275,7 +275,7 @@ ResultCode ConfigBase::AllowExtraDlls(const wchar_t* pattern) {
               mitigations_ & MITIGATION_FORCE_MS_SIGNED_BINS)
         << "Enable MITIGATION_FORCE_MS_SIGNED_BINS before adding signed "
            "policy rules.";
-    if (!SignedPolicy::GenerateRules(pattern, PolicyMaker())) {
+    if (!SignedPolicy::GenerateRules(base::FilePath(path), PolicyMaker())) {
       return SBOX_ERROR_BAD_PARAMS;
     }
   }
@@ -787,7 +787,7 @@ bool PolicyBase::SetupHandleCloser(TargetProcess& target) {
 
 std::optional<base::span<const uint8_t>> PolicyBase::delegate_data_span() {
   if (delegate_data_) {
-    return base::make_span(*delegate_data_);
+    return base::span(*delegate_data_);
   }
   return std::nullopt;
 }

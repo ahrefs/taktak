@@ -21,8 +21,8 @@
  */
 
 #ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
 #endif
 
 #include "third_party/blink/renderer/platform/wtf/text/wtf_string.h"
@@ -36,7 +36,7 @@
 #include "base/functional/callback.h"
 #include "base/logging.h"
 #include "base/numerics/safe_conversions.h"
-#include "base/strings/string_util.h"
+#include "base/strings/span_printf.h"
 #include "build/build_config.h"
 #include "third_party/blink/renderer/platform/wtf/dtoa.h"
 #include "third_party/blink/renderer/platform/wtf/math_extras.h"
@@ -44,6 +44,7 @@
 #include "third_party/blink/renderer/platform/wtf/text/ascii_ctype.h"
 #include "third_party/blink/renderer/platform/wtf/text/case_map.h"
 #include "third_party/blink/renderer/platform/wtf/text/character_names.h"
+#include "third_party/blink/renderer/platform/wtf/text/character_visitor.h"
 #include "third_party/blink/renderer/platform/wtf/text/code_point_iterator.h"
 #include "third_party/blink/renderer/platform/wtf/text/copy_lchars_from_uchar_source.h"
 #include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
@@ -61,36 +62,17 @@ ASSERT_SIZE(String, void*);
 String::String(base::span<const UChar> utf16_data)
     : impl_(utf16_data.data() ? StringImpl::Create(utf16_data) : nullptr) {}
 
-String::String(const UChar* characters, unsigned length)
-    : impl_(characters ? StringImpl::Create(characters, length) : nullptr) {}
-
 // Construct a string with UTF-16 data, from a null-terminated source.
 String::String(const UChar* str) {
-  if (!str)
+  if (!str) {
     return;
-  impl_ = StringImpl::Create(str, LengthOfNullTerminatedString(str));
+  }
+  impl_ = StringImpl::Create(std::u16string_view(str));
 }
 
 // Construct a string with latin1 data.
 String::String(base::span<const LChar> latin1_data)
     : impl_(latin1_data.data() ? StringImpl::Create(latin1_data) : nullptr) {}
-
-String::String(const LChar* characters, unsigned length)
-    : impl_(characters ? StringImpl::Create(characters, length) : nullptr) {}
-
-String::String(const char* characters, unsigned length)
-    : impl_(characters
-                ? StringImpl::Create(reinterpret_cast<const LChar*>(characters),
-                                     length)
-                : nullptr) {}
-
-#if defined(ARCH_CPU_64_BITS)
-String::String(const UChar* characters, size_t length)
-    : String(characters, base::checked_cast<unsigned>(length)) {}
-
-String::String(const char* characters, size_t length)
-    : String(characters, base::checked_cast<unsigned>(length)) {}
-#endif  // defined(ARCH_CPU_64_BITS)
 
 int CodeUnitCompare(const String& a, const String& b) {
   return CodeUnitCompare(a.Impl(), b.Impl());
@@ -228,7 +210,7 @@ String String::Format(const char* format, ...) {
   Vector<char, kDefaultSize> buffer(kDefaultSize);
 
   va_start(args, format);
-  int length = base::vsnprintf(buffer.data(), buffer.size(), format, args);
+  int length = base::VSpanPrintf(buffer, format, args);
   va_end(args);
 
   // TODO(esprehn): This can only happen if there's an encoding error, what's
@@ -249,12 +231,11 @@ String String::Format(const char* format, ...) {
     // Not calling va_end/va_start here happens to work on lots of systems, but
     // fails e.g. on 64bit Linux.
     va_start(args, format);
-    length = base::vsnprintf(buffer.data(), buffer.size(), format, args);
+    length = base::VSpanPrintf(buffer, format, args);
     va_end(args);
   }
 
-  CHECK_LT(static_cast<unsigned>(length), buffer.size());
-  return String(reinterpret_cast<const LChar*>(buffer.data()), length);
+  return String(base::span(buffer).first(base::checked_cast<size_t>(length)));
 }
 
 String String::EncodeForDebugging() const {
@@ -406,28 +387,17 @@ void String::Split(UChar separator,
 std::string String::Ascii() const {
   // Printable ASCII characters 32..127 and the null character are
   // preserved, characters outside of this range are converted to '?'.
-
   unsigned length = this->length();
   if (!length)
     return std::string();
 
   std::string ascii(length, '\0');
-  if (Is8Bit()) {
-    const LChar* characters = Characters8();
-
-    for (unsigned i = 0; i < length; ++i) {
-      LChar ch = characters[i];
-      ascii[i] = ch && (ch < 0x20 || ch > 0x7f) ? '?' : ch;
+  VisitCharacters(*this, [&ascii](auto chars) {
+    for (size_t i = 0; i < chars.size(); ++i) {
+      const auto ch = chars[i];
+      ascii[i] = ch && (ch < 0x20 || ch > 0x7f) ? '?' : static_cast<char>(ch);
     }
-    return ascii;
-  }
-
-  const UChar* characters = Characters16();
-  for (unsigned i = 0; i < length; ++i) {
-    UChar ch = characters[i];
-    ascii[i] = ch && (ch < 0x20 || ch > 0x7f) ? '?' : static_cast<char>(ch);
-  }
-
+  });
   return ascii;
 }
 
@@ -435,21 +405,19 @@ std::string String::Latin1() const {
   // Basic Latin1 (ISO) encoding - Unicode characters 0..255 are
   // preserved, characters outside of this range are converted to '?'.
   unsigned length = this->length();
-
   if (!length)
     return std::string();
 
   if (Is8Bit()) {
-    return std::string(reinterpret_cast<const char*>(Characters8()), length);
+    return std::string(base::as_string_view(Span8()));
   }
 
-  const UChar* characters = Characters16();
   std::string latin1(length, '\0');
-  for (unsigned i = 0; i < length; ++i) {
-    UChar ch = characters[i];
+  base::span<const UChar> characters = Span16();
+  for (size_t i = 0; i < characters.size(); ++i) {
+    const UChar ch = characters[i];
     latin1[i] = ch > 0xff ? '?' : static_cast<char>(ch);
   }
-
   return latin1;
 }
 
@@ -472,21 +440,16 @@ String String::Make16BitFrom8BitSource(base::span<const LChar> source) {
     return g_empty_string16_bit;
   }
 
-  const wtf_size_t length = base::checked_cast<wtf_size_t>(source.size());
   base::span<UChar> destination;
-  String result = String::CreateUninitialized(length, destination);
+  String result = String::CreateUninitialized(source.size(), destination);
 
-  StringImpl::CopyChars(destination.data(), source.data(), length);
-
+  StringImpl::CopyChars(destination, source);
   return result;
 }
 
 String String::FromUTF8(base::span<const uint8_t> bytes) {
-  return FromUTF8(bytes.data(), bytes.size());
-}
-
-String String::FromUTF8(const uint8_t* string_start, size_t string_length) {
-  wtf_size_t length = base::checked_cast<wtf_size_t>(string_length);
+  const uint8_t* string_start = bytes.data();
+  wtf_size_t length = base::checked_cast<wtf_size_t>(bytes.size());
 
   if (!string_start)
     return String();
@@ -496,27 +459,17 @@ String String::FromUTF8(const uint8_t* string_start, size_t string_length) {
 
   ASCIIStringAttributes attributes = CharacterAttributes(string_start, length);
   if (attributes.contains_only_ascii)
-    return StringImpl::Create(string_start, length, attributes);
+    return StringImpl::Create(bytes, attributes);
 
   Vector<UChar, 1024> buffer(length);
-  UChar* buffer_start = buffer.data();
 
-  UChar* buffer_current = buffer_start;
-  const char* string_current = reinterpret_cast<const char*>(string_start);
-  if (unicode::ConvertUTF8ToUTF16(
-          &string_current, reinterpret_cast<const char*>(string_start + length),
-          &buffer_current,
-          buffer_current + buffer.size()) != unicode::kConversionOK)
+  unicode::ConversionResult result =
+      unicode::ConvertUTF8ToUTF16(bytes, base::span(buffer));
+  if (result.status != unicode::kConversionOK) {
     return String();
+  }
 
-  unsigned utf16_length =
-      static_cast<wtf_size_t>(buffer_current - buffer_start);
-  DCHECK_LT(utf16_length, length);
-  return StringImpl::Create(buffer_start, utf16_length);
-}
-
-String String::FromUTF8WithLatin1Fallback(base::span<const uint8_t> bytes) {
-  return FromUTF8WithLatin1Fallback(bytes.data(), bytes.size());
+  return StringImpl::Create(result.converted);
 }
 
 String String::FromUTF8(const char* s) {
@@ -526,10 +479,10 @@ String String::FromUTF8(const char* s) {
   return FromUTF8(std::string_view(s));
 }
 
-String String::FromUTF8WithLatin1Fallback(const uint8_t* string, size_t size) {
-  String utf8 = FromUTF8(string, size);
+String String::FromUTF8WithLatin1Fallback(base::span<const uint8_t> bytes) {
+  String utf8 = FromUTF8(bytes);
   if (!utf8)
-    return String(string, base::checked_cast<wtf_size_t>(size));
+    return String(bytes);
   return utf8;
 }
 

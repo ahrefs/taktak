@@ -94,9 +94,9 @@ found in the LICENSE file.
     <dimen name="promo_slim_padding_vertical">10dp</dimen>
 
     <dimen name="promo_large_image_size">48dp</dimen>
-    <dimen name="promo_large_padding_vertical">8dp</dimen>
+    <dimen name="promo_large_padding_vertical">16dp</dimen>
     <dimen name="promo_large_padding_horizontal">24dp</dimen>
-    <dimen name="promo_large_illustration_margin">16dp</dimen>
+    <dimen name="promo_large_illustration_margin">12dp</dimen>
     <dimen name="promo_large_text_group_bottom_margin">10dp</dimen>
 
     <!-- TextBubble dimensions -->
@@ -223,9 +223,12 @@ found in the LICENSE file.
     <dimen name="switch_pre_scale_min_height">60dp</dimen>
     <dimen name="switch_with_text_min_height">@dimen/min_touch_target_size</dimen>
 
-    <!-- Default values for GradientParagraphLoadingIndicator. -->
-    <item type="integer" name="loading_text_line_count">3</item>
-    <dimen name="loading_text_line_height">14dp</dimen>
-    <dimen name="loading_text_line_spacing">6dp</dimen>
-    <item type="fraction" format="fraction" name="loading_text_last_line_width_fraction">50%</item>
+    <!-- Price change indicator dimens -->
+    <dimen name="price_change_indicator_card_radius">8dp</dimen>
+    <dimen name="price_change_indicator_card_height">24dp</dimen>
+
+    <!-- Loading Fullscreen dimens -->
+    <dimen name="left_right_padding">16dp</dimen>
+    <dimen name="top_bottom_padding">18dp</dimen>
+    <dimen name="text_bottom_padding">30dp</dimen>
 </resources>

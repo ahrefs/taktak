@@ -14,7 +14,6 @@
 #include "base/logging.h"
 #include "base/notreached.h"
 #include "base/path_service.h"
-#include "chrome/browser/ash/login/session/user_session_manager.h"
 #include "chrome/browser/ash/login/users/chrome_user_manager_util.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/profile_attributes_storage.h"
@@ -56,16 +55,11 @@ void UserManagerDelegateImpl::OverrideDirHome(
                                                /*create=*/false);
 }
 
-bool UserManagerDelegateImpl::IsUserSessionRestoreInProgress() {
-  return UserSessionManager::GetInstance()->UserSessionsRestoreInProgress();
-}
-
 std::optional<user_manager::UserType>
 UserManagerDelegateImpl::GetDeviceLocalAccountUserType(std::string_view email) {
   auto type = policy::GetDeviceLocalAccountType(email);
   if (!type.has_value()) {
-    NOTREACHED_IN_MIGRATION();
-    return std::nullopt;
+    NOTREACHED();
   }
   return chrome_user_manager_util::DeviceLocalAccountTypeToUserType(*type);
 }

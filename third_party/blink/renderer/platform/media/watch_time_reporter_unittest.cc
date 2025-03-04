@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "third_party/blink/public/common/media/watch_time_reporter.h"
+
 #include <memory>
 
-#include "base/functional/bind.h"
-#include "base/functional/callback_helpers.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/run_loop.h"
@@ -24,8 +24,8 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/blink/public/common/media/display_type.h"
 #include "third_party/blink/public/common/media/watch_time_component.h"
-#include "third_party/blink/public/common/media/watch_time_reporter.h"
 #include "third_party/blink/public/platform/scheduler/test/renderer_scheduler_test_support.h"
+#include "third_party/blink/renderer/platform/wtf/functional.h"
 
 namespace blink {
 
@@ -290,6 +290,7 @@ class WatchTimeReporterTest
     void SetContainerName(
         media::container_names::MediaContainerName container_name) override {}
     void SetRendererType(media::RendererType renderer_type) override {}
+    void SetDemuxerType(media::DemuxerType demuxer_type) override {}
     void SetKeySystem(const std::string& key_system) override {}
     void SetHasWaitingForKey() override {}
     void SetIsHardwareSecure() override {}
@@ -335,10 +336,10 @@ class WatchTimeReporterTest
             has_audio_, has_video_, false, false, is_mse, is_encrypted, false,
             media::mojom::MediaStreamType::kNone, renderer_type),
         initial_video_size,
-        base::BindRepeating(&WatchTimeReporterTest::GetCurrentMediaTime,
-                            base::Unretained(this)),
-        base::BindRepeating(&WatchTimeReporterTest::GetPipelineStatistics,
-                            base::Unretained(this)),
+        WTF::BindRepeating(&WatchTimeReporterTest::GetCurrentMediaTime,
+                           WTF::Unretained(this)),
+        WTF::BindRepeating(&WatchTimeReporterTest::GetPipelineStatistics,
+                           WTF::Unretained(this)),
         &fake_metrics_provider_, scheduler::GetSequencedTaskRunnerForTesting(),
         task_environment_.GetMockTickClock());
     reporting_interval_ = wtr_->reporting_interval_;
@@ -1874,6 +1875,24 @@ TEST_P(WatchTimeReporterTest, WatchTimeCategoryMapping) {
   Initialize(false, false, kSizeJustRight);
   OnNativeControlsEnabled(true);
   OnDisplayTypeChanged(DisplayType::kPictureInPicture);
+  wtr_->OnPlaying();
+  EXPECT_TRUE(IsMonitoring());
+  EXPECT_WATCH_TIME(Ac, kWatchTime);
+  EXPECT_WATCH_TIME(All, kWatchTime);
+  EXPECT_WATCH_TIME(Src, kWatchTime);
+  EXPECT_WATCH_TIME(NativeControlsOn, kWatchTime);
+  EXPECT_WATCH_TIME_IF_VIDEO(DisplayPictureInPicture, kWatchTime);
+  EXPECT_WATCH_TIME_FINALIZED();
+  wtr_.reset();
+
+  // Verify ac, all, src, native controls, display picture-in-picture (with
+  // display type changed using `kDocumentPictureInPicture`).
+  EXPECT_CALL(*this, GetCurrentMediaTime())
+      .WillOnce(testing::Return(base::TimeDelta()))
+      .WillOnce(testing::Return(kWatchTime));
+  Initialize(false, false, kSizeJustRight);
+  OnNativeControlsEnabled(true);
+  OnDisplayTypeChanged(DisplayType::kDocumentPictureInPicture);
   wtr_->OnPlaying();
   EXPECT_TRUE(IsMonitoring());
   EXPECT_WATCH_TIME(Ac, kWatchTime);

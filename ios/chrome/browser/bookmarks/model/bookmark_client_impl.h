@@ -12,10 +12,10 @@
 #import "base/memory/raw_ptr.h"
 #import "base/task/deferred_sequenced_task_runner.h"
 #import "components/power_bookmarks/core/bookmark_client_base.h"
-#import "ios/chrome/browser/shared/model/profile/profile_ios_forward.h"
 
 class BookmarkUndoService;
 class GURL;
+class ProfileIOS;
 
 namespace bookmarks {
 class BookmarkModel;
@@ -64,7 +64,7 @@ class BookmarkClientImpl : public power_bookmarks::BookmarkClientBase {
   void DecodeLocalOrSyncableBookmarkSyncMetadata(
       const std::string& metadata_str,
       const base::RepeatingClosure& schedule_save_closure) override;
-  void DecodeAccountBookmarkSyncMetadata(
+  DecodeAccountBookmarkSyncMetadataResult DecodeAccountBookmarkSyncMetadata(
       const std::string& metadata_str,
       const base::RepeatingClosure& schedule_save_closure) override;
   void OnBookmarkNodeRemovedUndoable(

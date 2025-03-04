@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "components/safe_browsing/content/browser/client_side_phishing_model.h"
 
 #include <stdint.h>
@@ -29,6 +34,7 @@
 #include "components/safe_browsing/core/common/fbs/client_model_generated.h"
 #include "components/safe_browsing/core/common/features.h"
 #include "components/safe_browsing/core/common/proto/client_model.pb.h"
+#include "components/safe_browsing/core/common/safebrowsing_switches.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
@@ -36,10 +42,6 @@
 namespace safe_browsing {
 
 namespace {
-
-// Command-line flag that can be used to override the current CSD model. Must be
-// provided with an absolute path.
-const char kOverrideCsdModelFlag[] = "csd-model-override-path";
 
 void ReturnModelOverrideFailure(
     base::OnceCallback<void(std::pair<std::string, base::File>)> callback) {
@@ -252,6 +254,31 @@ void ClientSidePhishingModel::SubscribeToImageEmbedderOptimizationGuide() {
   }
 }
 
+void ClientSidePhishingModel::UnsubscribeToImageEmbedderOptimizationGuide() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  if (subscribed_to_image_embedder_ && opt_guide_) {
+    subscribed_to_image_embedder_ = false;
+    opt_guide_->RemoveObserverForOptimizationTargetModel(
+        optimization_guide::proto::
+            OPTIMIZATION_TARGET_CLIENT_SIDE_PHISHING_IMAGE_EMBEDDER,
+        this);
+    embedding_model_opt_guide_metadata_image_embedding_version_.reset();
+    if (image_embedding_model_) {
+      background_task_runner_->PostTask(
+          FROM_HERE,
+          base::BindOnce(&CloseModelFile, std::move(*image_embedding_model_)));
+
+      // We will only notify if there was an image embedding model available, so
+      // the renderer can remove it.
+      content::GetUIThreadTaskRunner({})->PostTask(
+          FROM_HERE,
+          base::BindOnce(&ClientSidePhishingModel::NotifyCallbacksOnUI,
+                         weak_ptr_factory_.GetWeakPtr()));
+    }
+  }
+}
+
 bool ClientSidePhishingModel::IsSubscribedToImageEmbeddingModelUpdates() {
   return subscribed_to_image_embedder_;
 }
@@ -275,7 +302,7 @@ void ClientSidePhishingModel::OnModelAndVisualTfLiteFileLoaded(
   bool model_valid = false;
   bool tflite_valid = visual_tflite_model.IsValid();
   if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
-          kOverrideCsdModelFlag) &&
+          switches::kOverrideCsdModelFlag) &&
       !model_str.empty()) {
     model_type_ = CSDModelType::kNone;
     flatbuffers::Verifier verifier(
@@ -566,7 +593,7 @@ void ClientSidePhishingModel::SetModelStringForTesting(
   // TODO (andysjlim): Move to a helper function once protobuf feature is
   // removed
   if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
-          kOverrideCsdModelFlag) &&
+          switches::kOverrideCsdModelFlag) &&
       !model_str.empty()) {
     model_type_ = CSDModelType::kNone;
     flatbuffers::Verifier verifier(
@@ -631,10 +658,10 @@ void* ClientSidePhishingModel::GetFlatBufferMemoryAddressForTesting() {
 // This function is used for testing in client_side_phishing_model_unittest
 void ClientSidePhishingModel::MaybeOverrideModel() {
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-          kOverrideCsdModelFlag)) {
+          switches::kOverrideCsdModelFlag)) {
     base::FilePath overriden_model_directory =
         base::CommandLine::ForCurrentProcess()->GetSwitchValuePath(
-            kOverrideCsdModelFlag);
+            switches::kOverrideCsdModelFlag);
     base::ThreadPool::PostTask(
         FROM_HERE, {base::MayBlock()},
         base::BindOnce(
@@ -678,8 +705,7 @@ void ClientSidePhishingModel::OnGetOverridenModelData(
       break;
     }
     case CSDModelType::kNone:
-      NOTREACHED_IN_MIGRATION();
-      return;
+      NOTREACHED();
   }
 
   if (tflite_model.IsValid()) {

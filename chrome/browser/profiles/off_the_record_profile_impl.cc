@@ -148,9 +148,8 @@ profile_metrics::BrowserProfileType ComputeOffTheRecordProfileType(
 
     case profile_metrics::BrowserProfileType::kIncognito:
     case profile_metrics::BrowserProfileType::kOtherOffTheRecordProfile:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
-  return profile_metrics::BrowserProfileType::kOtherOffTheRecordProfile;
 }
 
 }  // namespace
@@ -170,9 +169,15 @@ OffTheRecordProfileImpl::OffTheRecordProfileImpl(
         profile_, ProfileKeepAliveOrigin::kOffTheRecordProfile);
   }
 
-  prefs_ = CreateIncognitoPrefServiceSyncable(
-      PrefServiceSyncableFromProfile(profile_),
-      CreateExtensionPrefStore(profile_, true));
+  if (otr_profile_id.IsDevTools()) {
+    prefs_ =
+        CreateAutomationPrefService(PrefServiceSyncableFromProfile(profile_),
+                                    CreateExtensionPrefStore(profile_, true));
+  } else {
+    prefs_ = CreateIncognitoPrefServiceSyncable(
+        PrefServiceSyncableFromProfile(profile_),
+        CreateExtensionPrefStore(profile_, true));
+  }
 
   key_->SetPrefs(prefs_.get());
   SimpleKeyMap::GetInstance()->Associate(this, key_.get());
@@ -235,13 +240,11 @@ void OffTheRecordProfileImpl::Init() {
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS)
-  if (chromeos::features::IsCaptivePortalPopupWindowEnabled()) {
-    if (otr_profile_id_->IsCaptivePortal()) {
-      // Set a pref to indicate that the Profile's PrefService is associated
-      // with a captive portal signin window. We use a pref for this because
-      // proxy configuration is associated with the PrefService, not a Profile.
-      GetPrefs()->SetBoolean(chromeos::prefs::kCaptivePortalSignin, true);
-    }
+  if (otr_profile_id_->IsCaptivePortal()) {
+    // Set a pref to indicate that the Profile's PrefService is associated
+    // with a captive portal signin window. We use a pref for this because
+    // proxy configuration is associated with the PrefService, not a Profile.
+    GetPrefs()->SetBoolean(chromeos::prefs::kCaptivePortalSignin, true);
   }
 #endif
 }
@@ -369,7 +372,7 @@ void OffTheRecordProfileImpl::DestroyOffTheRecordProfile(
     Profile* /*otr_profile*/) {
   // OffTheRecord profiles should be destroyed through a request to their
   // original profile.
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 bool OffTheRecordProfileImpl::HasOffTheRecordProfile(
@@ -618,8 +621,13 @@ class GuestSessionProfile : public OffTheRecordProfileImpl {
  public:
   explicit GuestSessionProfile(Profile* real_profile)
       : OffTheRecordProfileImpl(real_profile, OTRProfileID::PrimaryID()) {
-    profile_metrics::SetBrowserProfileType(
-        this, profile_metrics::BrowserProfileType::kGuest);
+    if (new_guest_profile_impl_) {
+      CHECK_EQ(profile_metrics::BrowserProfileType::kGuest,
+               profile_metrics::GetBrowserProfileType(this));
+    } else {
+      profile_metrics::SetBrowserProfileType(
+          this, profile_metrics::BrowserProfileType::kGuest);
+    }
   }
 
   void InitChromeOSPreferences() override {

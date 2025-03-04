@@ -30,10 +30,6 @@ class PaintContext;
 
 namespace views {
 
-namespace corewm {
-class TooltipController;
-}
-
 class VIEWS_EXPORT DesktopWindowTreeHostPlatform
     : public aura::WindowTreeHostPlatform,
       public DesktopWindowTreeHost,
@@ -104,6 +100,7 @@ class VIEWS_EXPORT DesktopWindowTreeHostPlatform
   void Maximize() override;
   void Minimize() override;
   void Restore() override;
+  void ShowWindowControlsMenu(const gfx::Point& point) override;
   bool IsMaximized() const override;
   bool IsMinimized() const override;
   bool HasCapture() const override;
@@ -212,8 +209,6 @@ class VIEWS_EXPORT DesktopWindowTreeHostPlatform
 
   Widget* GetWidget();
   const Widget* GetWidget() const;
-
-  views::corewm::TooltipController* tooltip_controller();
 
   void ScheduleRelayout();
 

@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 
-#include "ash/components/arc/session/arc_service_manager.h"
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_switches.h"
 #include "ash/public/cpp/holding_space/holding_space_client.h"
@@ -60,6 +59,7 @@
 #include "chrome/test/base/testing_profile_manager.h"
 #include "chromeos/ash/components/disks/disk_mount_manager.h"
 #include "chromeos/ash/components/disks/fake_disk_mount_manager.h"
+#include "chromeos/ash/experiences/arc/session/arc_service_manager.h"
 #include "chromeos/ui/base/file_icon_util.h"
 #include "components/account_id/account_id.h"
 #include "components/pref_registry/pref_registry_syncable.h"
@@ -69,6 +69,7 @@
 #include "components/vector_icons/vector_icons.h"
 #include "content/public/test/fake_download_item.h"
 #include "content/public/test/mock_download_manager.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "storage/browser/file_system/file_system_context.h"
 #include "storage/browser/file_system/file_system_url.h"
 #include "storage/browser/test/async_file_test_helper.h"
@@ -195,7 +196,7 @@ GetExpectedTotalCountV2HistogramSamples(const HoldingSpaceModel* model) {
     result.emplace(
         base::StrCat({kTotalCountV2HistogramPrefix, ".All.FileSystemType.",
                       holding_space_util::ToString(fs_type)}),
-        std::vector<Bucket>({Bucket(/*sample=*/base::ranges::count(
+        std::vector<Bucket>({Bucket(/*sample=*/std::ranges::count(
                                         model->items(), fs_type,
                                         [&](const auto& item) {
                                           return item->file().file_system_type;
@@ -208,8 +209,8 @@ GetExpectedTotalCountV2HistogramSamples(const HoldingSpaceModel* model) {
     result.emplace(base::StrCat({kTotalCountV2HistogramPrefix, ".",
                                  holding_space_util::ToString(type)}),
                    std::vector<Bucket>({Bucket(
-                       /*sample=*/base::ranges::count(model->items(), type,
-                                                      &HoldingSpaceItem::type),
+                       /*sample=*/std::ranges::count(model->items(), type,
+                                                     &HoldingSpaceItem::type),
                        /*count=*/1u)}));
 
     // Fill "HoldingSpace.Item.TotalCountV2.{type}.FileSystemType.{fs_type}".
@@ -219,7 +220,7 @@ GetExpectedTotalCountV2HistogramSamples(const HoldingSpaceModel* model) {
                         holding_space_util::ToString(type), ".FileSystemType.",
                         holding_space_util::ToString(fs_type)}),
           std::vector<Bucket>({Bucket(
-              /*sample=*/base::ranges::count_if(
+              /*sample=*/std::ranges::count_if(
                   model->items(),
                   [&](const auto& item) {
                     return item->type() == type &&
@@ -251,7 +252,7 @@ std::map<std::string, std::vector<Bucket>> MergeHistogramSamples(
     // Case: Name *did* exist in other map.
     for (const auto& bucket : buckets) {
       auto bucket_it =
-          base::ranges::find(result_buckets, bucket.min, &Bucket::min);
+          std::ranges::find(result_buckets, bucket.min, &Bucket::min);
 
       // Case: Bucket did *not* exist in other map. Add bucket.
       if (bucket_it == result_buckets.end()) {
@@ -604,12 +605,11 @@ class HoldingSpaceKeyedServiceTest : public BrowserWithTestWindowTest {
   TestingProfile* CreateSecondaryProfile(
       std::unique_ptr<sync_preferences::PrefServiceSyncable> prefs = nullptr) {
     constexpr char kSecondaryProfileName[] = "secondary_profile";
-    LogIn(kSecondaryProfileName);
-    auto* profile = profile_manager()->CreateTestingProfile(
+    const GaiaId kFakeGaia2("fakegaia2");
+    LogIn(kSecondaryProfileName, kFakeGaia2);
+    return profile_manager()->CreateTestingProfile(
         kSecondaryProfileName, std::move(prefs), /*user_name=*/std::u16string(),
         /*avatar_id=*/0, GetTestingFactories());
-    OnUserProfileCreated(kSecondaryProfileName, profile);
-    return profile;
   }
 
   using PopulatePrefStoreCallback = base::OnceCallback<void(TestingPrefStore*)>;
@@ -633,7 +633,6 @@ class HoldingSpaceKeyedServiceTest : public BrowserWithTestWindowTest {
   void ActivateSecondaryProfile() {
     const std::string kSecondaryProfileName = "secondary_profile";
     const AccountId account_id(AccountId::FromUserEmail(kSecondaryProfileName));
-    GetSessionControllerClient()->AddUserSession(kSecondaryProfileName);
     GetSessionControllerClient()->SwitchActiveUser(account_id);
   }
 
@@ -762,22 +761,25 @@ class HoldingSpaceKeyedServiceWithExperimentalFeatureForGuestTest
   }
 
   void TearDown() override {
-    profile_.reset();
+    // Drop user pref service reference before `profile_` is released. This is
+    // needed because `profile_` is owned by the test not `TestProfileManager`.
+    ash_test_helper()->prefs_provider()->ClearUnownedUserPrefs(
+        AccountId::FromUserEmail(profile_->GetProfileUserName()));
+    profile_ = nullptr;
     HoldingSpaceKeyedServiceWithExperimentalFeatureTest::TearDown();
   }
 
-  std::string GetDefaultProfileName() override {
+  std::optional<std::string> GetDefaultProfileName() override {
     return user_manager::kGuestUserName;
   }
 
-  void LogIn(const std::string& email) override {
+  void LogIn(std::string_view email, const GaiaId& gaia_id) override {
     CHECK_EQ(email, user_manager::kGuestUserName);
-    auto account_id = user_manager::GuestAccountId();
-
-    user_manager()->AddGuestUser(account_id);
+    auto* user = user_manager()->AddGuestUser();
     user_manager()->UserLoggedIn(
-        account_id,
-        user_manager::FakeUserManager::GetFakeUsernameHash(account_id),
+        user->GetAccountId(),
+        user_manager::FakeUserManager::GetFakeUsernameHash(
+            user->GetAccountId()),
         /*browser_restart=*/false,
         /*is_child=*/false);
   }
@@ -790,8 +792,6 @@ class HoldingSpaceKeyedServiceWithExperimentalFeatureForGuestTest
     // Profile is created outside of TestingProfileManager management
     // to inject more factories.
     TestingProfile::Builder guest_profile_builder;
-    guest_profile_builder.SetGuestSession();
-    guest_profile_builder.SetProfileName(profile_name);
     guest_profile_builder.AddTestingFactories(
         {TestingProfile::TestingFactory{
              arc::ArcFileSystemBridge::GetFactory(),
@@ -799,9 +799,9 @@ class HoldingSpaceKeyedServiceWithExperimentalFeatureForGuestTest
          TestingProfile::TestingFactory{
              file_manager::VolumeManagerFactory::GetInstance(),
              base::BindRepeating(&BuildVolumeManager)}});
-    profile_ = guest_profile_builder.Build();
-    OnUserProfileCreated(profile_name, profile_.get());
-    return profile_.get();
+    profile_ =
+        profile_manager()->CreateGuestProfile(std::move(guest_profile_builder));
+    return profile_;
   }
 
   std::unique_ptr<Browser> CreateBrowser(
@@ -814,7 +814,7 @@ class HoldingSpaceKeyedServiceWithExperimentalFeatureForGuestTest
   }
 
  private:
-  std::unique_ptr<TestingProfile> profile_;
+  raw_ptr<TestingProfile> profile_;
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -843,29 +843,6 @@ TEST_P(HoldingSpaceKeyedServiceWithExperimentalFeatureForGuestTest,
       HoldingSpaceKeyedServiceFactory::GetInstance()->GetService(
           guest_profile->GetPrimaryOTRProfile(/*create_if_needed=*/true));
   ASSERT_EQ(guest_profile_service, primary_otr_guest_profile_service);
-
-  // Construct a second OTR profile from `guest_profile`.
-  TestingProfile::Builder secondary_otr_guest_profile_builder;
-  secondary_otr_guest_profile_builder.SetGuestSession();
-  secondary_otr_guest_profile_builder.SetProfileName(
-      guest_profile->GetProfileUserName());
-  TestingProfile* const secondary_otr_guest_profile =
-      secondary_otr_guest_profile_builder.BuildOffTheRecord(
-          guest_profile, Profile::OTRProfileID::CreateUniqueForTesting());
-  ASSERT_TRUE(secondary_otr_guest_profile);
-  ASSERT_TRUE(secondary_otr_guest_profile->IsOffTheRecord());
-
-  // Service instances should be created for non-primary OTR guest session
-  // profiles but as stated earlier the service factory will redirect to use the
-  // primary OTR profile. This means that the secondary OTR profile service
-  // instance should be equal to that explicitly created for the primary OTR
-  // profile.
-  HoldingSpaceKeyedService* const secondary_otr_guest_profile_service =
-      HoldingSpaceKeyedServiceFactory::GetInstance()->GetService(
-          secondary_otr_guest_profile);
-  ASSERT_TRUE(secondary_otr_guest_profile_service);
-  ASSERT_EQ(primary_otr_guest_profile_service,
-            secondary_otr_guest_profile_service);
 }
 
 TEST_P(HoldingSpaceKeyedServiceWithExperimentalFeatureTest,
@@ -1635,10 +1612,9 @@ TEST_P(HoldingSpaceKeyedServiceWithExperimentalFeatureTest,
   for (size_t i = 0; i < secondary_holding_space_model->items().size(); ++i) {
     const auto& item = secondary_holding_space_model->items()[i];
     const auto& restored_item = restored_holding_space_items[i];
-    EXPECT_EQ(*item, *restored_item)
-        << "Expected equality of values at index " << i << ":"
-        << "\n\tActual: " << item->id()
-        << "\n\rRestored: " << restored_item->id();
+    EXPECT_EQ(*item, *restored_item) << "Expected equality of values at index "
+                                     << i << ":" << "\n\tActual: " << item->id()
+                                     << "\n\rRestored: " << restored_item->id();
   }
 
   // Verify persisted holding space items.
@@ -2259,10 +2235,9 @@ TEST_P(HoldingSpaceKeyedServiceWithExperimentalFeatureTest,
   for (size_t i = 0; i < secondary_holding_space_model->items().size(); ++i) {
     const auto& item = secondary_holding_space_model->items()[i];
     const auto& restored_item = restored_holding_space_items[i];
-    EXPECT_EQ(*item, *restored_item)
-        << "Expected equality of values at index " << i << ":"
-        << "\n\tActual: " << item->id()
-        << "\n\rRestored: " << restored_item->id();
+    EXPECT_EQ(*item, *restored_item) << "Expected equality of values at index "
+                                     << i << ":" << "\n\tActual: " << item->id()
+                                     << "\n\rRestored: " << restored_item->id();
   }
 
   // Verify persisted holding space items.
@@ -2626,8 +2601,7 @@ TEST_P(HoldingSpaceKeyedServiceWithExperimentalFeatureTest, RemoveAll) {
       {file_manager::util::GetFileManagerFileSystemContext(profile)
            ->CrackURLInFirstPartyContext(
                holding_space_util::ResolveFileSystemUrl(profile,
-                                                        pinned_file_path))},
-      holding_space_metrics::EventSource::kTest);
+                                                        pinned_file_path))});
 
   ASSERT_EQ(2u, model->items().size());
   service->RemoveAll();
@@ -2828,7 +2802,6 @@ class HoldingSpaceKeyedServiceAddAndRemoveItemTest
     switch (type) {
       case HoldingSpaceItem::Type::kArcDownload:
       case HoldingSpaceItem::Type::kDownload:
-      case HoldingSpaceItem::Type::kLacrosDownload:
         EXPECT_EQ(
             holding_space_model->ContainsItem(type, file_path),
             holding_space_service->AddItemOfType(type, file_path).empty());
@@ -2847,8 +2820,7 @@ class HoldingSpaceKeyedServiceAddAndRemoveItemTest
             {file_manager::util::GetFileManagerFileSystemContext(profile)
                  ->CrackURLInFirstPartyContext(
                      holding_space_util::ResolveFileSystemUrl(profile,
-                                                              file_path))},
-            holding_space_metrics::EventSource::kTest);
+                                                              file_path))});
         break;
       case HoldingSpaceItem::Type::kPhoneHubCameraRoll:
         EXPECT_EQ(
@@ -3022,16 +2994,7 @@ TEST_P(HoldingSpaceKeyedServiceAddAndRemoveItemTest, AddAndRemoveItemOfType) {
   EXPECT_TRUE(model->items().empty());
 }
 
-class HoldingSpaceKeyedServiceNearbySharingTest
-    : public HoldingSpaceKeyedServiceTest {
- public:
-  HoldingSpaceKeyedServiceNearbySharingTest() {
-    scoped_feature_list_.InitAndEnableFeature(::features::kNearbySharing);
-  }
-
- private:
-  base::test::ScopedFeatureList scoped_feature_list_;
-};
+using HoldingSpaceKeyedServiceNearbySharingTest = HoldingSpaceKeyedServiceTest;
 
 TEST_F(HoldingSpaceKeyedServiceNearbySharingTest, AddNearbyShareItem) {
   // Create a test downloads mount point.

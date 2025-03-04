@@ -5,104 +5,155 @@
 package org.chromium.chrome.browser.ui.signin.signin_promo;
 
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 
+import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.signin.services.DisplayableProfileData;
+import org.chromium.chrome.browser.signin.services.SigninPreferencesManager;
+import org.chromium.chrome.browser.ui.signin.BottomSheetSigninAndHistorySyncConfig;
+import org.chromium.chrome.browser.ui.signin.BottomSheetSigninAndHistorySyncConfig.NoAccountSigninMode;
+import org.chromium.chrome.browser.ui.signin.BottomSheetSigninAndHistorySyncConfig.WithAccountSigninMode;
 import org.chromium.chrome.browser.ui.signin.R;
+import org.chromium.chrome.browser.ui.signin.SigninAndHistorySyncActivityLauncher;
 import org.chromium.chrome.browser.ui.signin.SigninUtils;
+import org.chromium.chrome.browser.ui.signin.account_picker.AccountPickerBottomSheetStrings;
+import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncConfig;
+import org.chromium.components.signin.base.CoreAccountInfo;
 
 /** A delegate object that provides necessary information to customize sign-in promo. */
-public class SigninPromoDelegate {
-    /* Provides primary button text for the sign-in promo. */
-    public interface PrimaryButtonTextProvider {
-        String get(Context context, @Nullable DisplayableProfileData profileData);
+public abstract class SigninPromoDelegate {
+    protected final Context mContext;
+    protected final Profile mProfile;
+    protected final SigninAndHistorySyncActivityLauncher mLauncher;
+    protected final Runnable mOnPromoVisibilityChange;
+    private final AccountPickerBottomSheetStrings mBottomSheetStrings;
+
+    protected SigninPromoDelegate(
+            Context context,
+            Profile profile,
+            SigninAndHistorySyncActivityLauncher launcher,
+            Runnable onPromoVisibilityChange) {
+        mContext = context;
+        mProfile = profile;
+        mLauncher = launcher;
+        mOnPromoVisibilityChange = onPromoVisibilityChange;
+        mBottomSheetStrings =
+                new AccountPickerBottomSheetStrings.Builder(
+                                R.string.signin_account_picker_bottom_sheet_title)
+                        .build();
     }
 
-    private final Context mContext;
-    private final @StringRes int mTitle;
-    private final @StringRes int mDescription;
-    private final boolean mShouldHideSecondaryButton;
-    private final boolean mShouldHideDismissButton;
-    private final PrimaryButtonTextProvider mPrimaryButtonTextProvider;
+    /** Returns the title string for the promo. */
+    abstract String getTitle();
 
-    /* Delegate for sign-in promo in bookmark manager. */
-    public static SigninPromoDelegate forBookmarkManager(Context context) {
-        return new SigninPromoDelegate(
-                context,
-                R.string.signin_promo_title_bookmarks,
-                R.string.signin_promo_description_bookmarks,
-                /* shouldHideSecondaryButton= */ false,
-                /* shouldHideDismissButton= */ false,
-                SigninPromoDelegate::primaryButtonTextForBookmarkAndNtp);
+    /** Returns the description string for the promo. */
+    abstract String getDescription();
+
+    /** Returns the access point name to be recorded in promo histograms. */
+    abstract @SigninPreferencesManager.SigninPromoAccessPointId String getAccessPointName();
+
+    /**
+     * Returns the {@link SigninAndHistorySyncActivityLauncher.AccessPoint} that will be used for
+     * sign-in for the promo.
+     */
+    abstract @SigninAndHistorySyncActivityLauncher.AccessPoint int getAccessPoint();
+
+    /**
+     * Called when dismiss button is clicked. Subclasses that want to hide promos in the future can
+     * do it here.
+     */
+    abstract void onDismissButtonClicked();
+
+    /**
+     * Whether the promo can be shown.
+     *
+     * <p>If a condition affecting the promo's content changes, refreshPromoState should be called
+     * before calling this method.
+     */
+    abstract boolean canShowPromo();
+
+    /**
+     * Refresh the promo state including its content and visibility. This method is invoked by
+     * SigninPromoMediator whenever observed state affecting promo content/visibility is updated
+     * (e.g. the primary account, sync data types...).
+     *
+     * @param visibleAccount The account currently shown in the promo.
+     * @return Whether the promo state has changed during the refresh. If it returns true, {@link
+     *     SigninPromoCoordinator} will refresh the promo visibility and the whole promo content
+     *     (e.g. title, description, buttons...) for a visible promo, by updating the promo's model
+     *     with new values retrieved from the delegate.
+     */
+    abstract boolean refreshPromoState(@Nullable CoreAccountInfo visibleAccount);
+
+    boolean shouldHideSecondaryButton() {
+        return false;
     }
 
-    /* Delegate for sign-in promo in ntp feed top promo. */
-    public static SigninPromoDelegate forNtpFeedTopPromo(Context context) {
-        return new SigninPromoDelegate(
-                context,
-                R.string.signin_promo_title_ntp_feed_top_promo,
-                R.string.signin_promo_description_ntp_feed_top_promo,
-                /* shouldHideSecondaryButton= */ false,
-                /* shouldHideDismissButton= */ false,
-                SigninPromoDelegate::primaryButtonTextForBookmarkAndNtp);
+    boolean shouldHideDismissButton() {
+        return false;
     }
 
-    /* Delegate for sign-in promo in recent tabs. */
-    public static SigninPromoDelegate forRecentTabs(Context context) {
-        return new SigninPromoDelegate(
-                context,
-                R.string.signin_promo_title_recent_tabs,
-                R.string.signin_promo_description_recent_tabs,
-                /* shouldHideSecondaryButton= */ true,
-                /* shouldHideDismissButton= */ true,
-                (context1, profileData) -> context1.getString(R.string.signin_promo_turn_on));
+    String getTextForPrimaryButton(@Nullable DisplayableProfileData profileData) {
+        return profileData == null
+                ? mContext.getString(R.string.signin_promo_signin)
+                : SigninUtils.getContinueAsButtonText(mContext, profileData);
     }
 
-    public String getTitle() {
-        return mContext.getString(mTitle);
-    }
-
-    public String getDescription() {
-        return mContext.getString(mDescription);
-    }
-
-    public boolean shouldHideSecondaryButton() {
-        return mShouldHideSecondaryButton;
-    }
-
-    public boolean shouldHideDismissButton() {
-        return mShouldHideDismissButton;
-    }
-
-    public String getTextForPrimaryButton(@Nullable DisplayableProfileData profileData) {
-        return mPrimaryButtonTextProvider.get(mContext, profileData);
-    }
-
-    public String getTextForSecondaryButton() {
+    String getTextForSecondaryButton() {
         return mContext.getString(R.string.signin_promo_choose_another_account);
     }
 
-    private static String primaryButtonTextForBookmarkAndNtp(
-            Context context, @Nullable DisplayableProfileData profileData) {
-        return profileData == null
-                ? context.getResources().getString(R.string.signin_promo_signin)
-                : SigninUtils.getContinueAsButtonText(context, profileData);
+    @HistorySyncConfig.OptInMode
+    int getHistoryOptInMode() {
+        return HistorySyncConfig.OptInMode.NONE;
     }
 
-    private SigninPromoDelegate(
-            Context context,
-            @StringRes int title,
-            @StringRes int description,
-            boolean shouldHideSecondaryButton,
-            boolean shouldHideDismissButton,
-            PrimaryButtonTextProvider provider) {
-        mContext = context;
-        mTitle = title;
-        mDescription = description;
-        mShouldHideSecondaryButton = shouldHideSecondaryButton;
-        mShouldHideDismissButton = shouldHideDismissButton;
-        mPrimaryButtonTextProvider = provider;
+    /** Subclasses that want to record impression counts should do them here. */
+    void recordImpression() {}
+
+    boolean isMaxImpressionsReached() {
+        return false;
+    }
+
+    void onPrimaryButtonClicked() {
+        BottomSheetSigninAndHistorySyncConfig config =
+                new BottomSheetSigninAndHistorySyncConfig.Builder(
+                                mBottomSheetStrings,
+                                NoAccountSigninMode.BOTTOM_SHEET,
+                                WithAccountSigninMode.DEFAULT_ACCOUNT_BOTTOM_SHEET,
+                                getHistoryOptInMode())
+                        .build();
+        @Nullable
+        Intent intent =
+                mLauncher.createBottomSheetSigninIntentOrShowError(
+                        mContext, mProfile, config, getAccessPoint());
+        if (intent != null) {
+            mContext.startActivity(intent);
+        }
+    }
+
+    void onSecondaryButtonClicked() {
+        assert !shouldHideSecondaryButton();
+
+        BottomSheetSigninAndHistorySyncConfig config =
+                new BottomSheetSigninAndHistorySyncConfig.Builder(
+                                mBottomSheetStrings,
+                                NoAccountSigninMode.BOTTOM_SHEET,
+                                WithAccountSigninMode.CHOOSE_ACCOUNT_BOTTOM_SHEET,
+                                getHistoryOptInMode())
+                        .build();
+        @Nullable
+        Intent intent =
+                mLauncher.createBottomSheetSigninIntentOrShowError(
+                        mContext, mProfile, config, getAccessPoint());
+        if (intent != null) {
+            mContext.startActivity(intent);
+        }
+    }
+
+    void onPromoVisibilityChange() {
+        mOnPromoVisibilityChange.run();
     }
 }

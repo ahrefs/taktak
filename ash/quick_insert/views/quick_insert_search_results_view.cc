@@ -57,52 +57,56 @@ constexpr gfx::Size kNoResultsIllustrationSize(200, 100);
 constexpr int kMaxIndexForMetrics = 10;
 
 std::u16string GetAccessibleNameForSeeMoreButton(
-    PickerSectionType section_type) {
+    QuickInsertSectionType section_type) {
   switch (section_type) {
-    case PickerSectionType::kLinks:
+    case QuickInsertSectionType::kLinks:
       return l10n_util::GetStringUTF16(
           IDS_PICKER_SEE_MORE_LINKS_BUTTON_ACCESSIBLE_NAME);
-    case PickerSectionType::kLocalFiles:
+    case QuickInsertSectionType::kLocalFiles:
       return l10n_util::GetStringUTF16(
           IDS_PICKER_SEE_MORE_LOCAL_FILES_BUTTON_ACCESSIBLE_NAME);
-    case PickerSectionType::kDriveFiles:
+    case QuickInsertSectionType::kDriveFiles:
       return l10n_util::GetStringUTF16(
           IDS_PICKER_SEE_MORE_DRIVE_FILES_BUTTON_ACCESSIBLE_NAME);
-    case PickerSectionType::kNone:
-    case PickerSectionType::kClipboard:
-    case PickerSectionType::kExamples:
-    case PickerSectionType::kContentEditor:
+    case QuickInsertSectionType::kNone:
+    case QuickInsertSectionType::kClipboard:
+    case QuickInsertSectionType::kExamples:
+    case QuickInsertSectionType::kContentEditor:
+    case QuickInsertSectionType::kFeaturedGifs:
+    case QuickInsertSectionType::kSearchedGifs:
       return u"";
   }
 }
 
 QuickInsertSectionView::LocalFileResultStyle ConvertLocalFileResultStyle(
-    PickerSearchResultsView::LocalFileResultStyle style) {
+    QuickInsertSearchResultsView::LocalFileResultStyle style) {
   switch (style) {
-    case PickerSearchResultsView::LocalFileResultStyle::kList:
+    case QuickInsertSearchResultsView::LocalFileResultStyle::kList:
       return QuickInsertSectionView::LocalFileResultStyle::kList;
-    case PickerSearchResultsView::LocalFileResultStyle::kGrid:
+    case QuickInsertSearchResultsView::LocalFileResultStyle::kGrid:
       return QuickInsertSectionView::LocalFileResultStyle::kGrid;
   }
 }
 
 }  // namespace
 
-PickerSearchResultsView::PickerSearchResultsView(
-    PickerSearchResultsViewDelegate* delegate,
-    int picker_view_width,
-    PickerAssetFetcher* asset_fetcher,
-    PickerSubmenuController* submenu_controller,
-    PickerPreviewBubbleController* preview_controller)
+QuickInsertSearchResultsView::QuickInsertSearchResultsView(
+    QuickInsertSearchResultsViewDelegate* delegate,
+    int quick_insert_view_width,
+    QuickInsertAssetFetcher* asset_fetcher,
+    QuickInsertSubmenuController* submenu_controller,
+    QuickInsertPreviewBubbleController* preview_controller)
     : delegate_(delegate), preview_controller_(preview_controller) {
   SetLayoutManager(std::make_unique<views::BoxLayout>())
       ->SetOrientation(views::LayoutOrientation::kVertical);
-  SetProperty(views::kElementIdentifierKey, kPickerSearchResultsPageElementId);
+  SetProperty(views::kElementIdentifierKey,
+              kQuickInsertSearchResultsPageElementId);
   GetViewAccessibility().SetRole(ax::mojom::Role::kStatus);
   GetViewAccessibility().SetContainerLiveStatus("polite");
 
-  section_list_view_ = AddChildView(std::make_unique<PickerSectionListView>(
-      picker_view_width, asset_fetcher, submenu_controller));
+  section_list_view_ =
+      AddChildView(std::make_unique<QuickInsertSectionListView>(
+          quick_insert_view_width, asset_fetcher, submenu_controller));
   no_results_view_ = AddChildView(
       views::Builder<views::BoxLayoutView>()
           .SetVisible(false)
@@ -125,8 +129,10 @@ PickerSearchResultsView::PickerSearchResultsView(
                   .SetHorizontalAlignment(gfx::ALIGN_CENTER))
           .Build());
 
-  skeleton_loader_view_ = AddChildView(
-      views::Builder<PickerSkeletonLoaderView>().SetVisible(false).Build());
+  skeleton_loader_view_ =
+      AddChildView(views::Builder<QuickInsertSkeletonLoaderView>()
+                       .SetVisible(false)
+                       .Build());
 
   throbber_container_ = AddChildView(
       views::Builder<views::BoxLayoutView>()
@@ -141,22 +147,22 @@ PickerSearchResultsView::PickerSearchResultsView(
           .Build());
 }
 
-PickerSearchResultsView::~PickerSearchResultsView() = default;
+QuickInsertSearchResultsView::~QuickInsertSearchResultsView() = default;
 
-void PickerSearchResultsView::SetLocalFileResultStyle(
+void QuickInsertSearchResultsView::SetLocalFileResultStyle(
     LocalFileResultStyle style) {
   local_file_result_style_ = style;
 }
 
-views::View* PickerSearchResultsView::GetTopItem() {
+views::View* QuickInsertSearchResultsView::GetTopItem() {
   return section_list_view_->GetTopItem();
 }
 
-views::View* PickerSearchResultsView::GetBottomItem() {
+views::View* QuickInsertSearchResultsView::GetBottomItem() {
   return section_list_view_->GetBottomItem();
 }
 
-views::View* PickerSearchResultsView::GetItemAbove(views::View* item) {
+views::View* QuickInsertSearchResultsView::GetItemAbove(views::View* item) {
   if (!Contains(item)) {
     return nullptr;
   }
@@ -165,12 +171,12 @@ views::View* PickerSearchResultsView::GetItemAbove(views::View* item) {
     // navigate between items.
     return section_list_view_->GetItemAbove(item);
   }
-  views::View* prev_item = GetNextPickerPseudoFocusableView(
-      item, PickerPseudoFocusDirection::kBackward, /*should_loop=*/false);
+  views::View* prev_item = GetNextQuickInsertPseudoFocusableView(
+      item, QuickInsertPseudoFocusDirection::kBackward, /*should_loop=*/false);
   return Contains(prev_item) ? prev_item : nullptr;
 }
 
-views::View* PickerSearchResultsView::GetItemBelow(views::View* item) {
+views::View* QuickInsertSearchResultsView::GetItemBelow(views::View* item) {
   if (!Contains(item)) {
     return nullptr;
   }
@@ -179,30 +185,30 @@ views::View* PickerSearchResultsView::GetItemBelow(views::View* item) {
     // navigate between items.
     return section_list_view_->GetItemBelow(item);
   }
-  views::View* next_item = GetNextPickerPseudoFocusableView(
-      item, PickerPseudoFocusDirection::kForward, /*should_loop=*/false);
+  views::View* next_item = GetNextQuickInsertPseudoFocusableView(
+      item, QuickInsertPseudoFocusDirection::kForward, /*should_loop=*/false);
   return Contains(next_item) ? next_item : nullptr;
 }
 
-views::View* PickerSearchResultsView::GetItemLeftOf(views::View* item) {
+views::View* QuickInsertSearchResultsView::GetItemLeftOf(views::View* item) {
   if (!Contains(item)) {
     return nullptr;
   }
   return section_list_view_->GetItemLeftOf(item);
 }
 
-views::View* PickerSearchResultsView::GetItemRightOf(views::View* item) {
+views::View* QuickInsertSearchResultsView::GetItemRightOf(views::View* item) {
   if (!Contains(item)) {
     return nullptr;
   }
   return section_list_view_->GetItemRightOf(item);
 }
 
-bool PickerSearchResultsView::ContainsItem(views::View* item) {
+bool QuickInsertSearchResultsView::ContainsItem(views::View* item) {
   return Contains(item);
 }
 
-void PickerSearchResultsView::ClearSearchResults() {
+void QuickInsertSearchResultsView::ClearSearchResults() {
   section_views_.clear();
   section_list_view_->ClearSectionList();
   section_list_view_->SetVisible(true);
@@ -214,21 +220,22 @@ void PickerSearchResultsView::ClearSearchResults() {
   UpdateAccessibleName();
 }
 
-void PickerSearchResultsView::AppendSearchResults(
-    PickerSearchResultsSection section) {
+void QuickInsertSearchResultsView::AppendSearchResults(
+    QuickInsertSearchResultsSection section) {
   StopLoadingAnimation();
   StopThrobber();
 
   auto* section_view = section_list_view_->AddSection();
   std::u16string section_title =
-      GetSectionTitleForPickerSectionType(section.type());
+      GetSectionTitleForQuickInsertSectionType(section.type());
   section_view->AddTitleLabel(section_title);
   if (section.has_more_results()) {
     section_view->AddTitleTrailingLink(
         l10n_util::GetStringUTF16(IDS_PICKER_SEE_MORE_BUTTON_TEXT),
         GetAccessibleNameForSeeMoreButton(section.type()),
-        base::BindRepeating(&PickerSearchResultsView::OnTrailingLinkClicked,
-                            base::Unretained(this), section.type()));
+        base::BindRepeating(
+            &QuickInsertSearchResultsView::OnTrailingLinkClicked,
+            base::Unretained(this), section.type()));
   }
   for (const auto& result : section.results()) {
     AddResultToSection(result, section_view);
@@ -243,8 +250,8 @@ void PickerSearchResultsView::AppendSearchResults(
   UpdateAccessibleName();
 }
 
-bool PickerSearchResultsView::SearchStopped(ui::ImageModel illustration,
-                                            std::u16string description) {
+bool QuickInsertSearchResultsView::SearchStopped(ui::ImageModel illustration,
+                                                 std::u16string description) {
   StopLoadingAnimation();
   StopThrobber();
   if (!section_views_.empty()) {
@@ -260,7 +267,7 @@ bool PickerSearchResultsView::SearchStopped(ui::ImageModel illustration,
   return true;
 }
 
-void PickerSearchResultsView::ShowLoadingAnimation() {
+void QuickInsertSearchResultsView::ShowLoadingAnimation() {
   ClearSearchResults();
   StopThrobber();
   skeleton_loader_view_->StartAnimationAfter(kLoadingAnimationDelay);
@@ -268,12 +275,12 @@ void PickerSearchResultsView::ShowLoadingAnimation() {
   delegate_->OnSearchResultsViewHeightChanged();
 }
 
-void PickerSearchResultsView::SelectSearchResult(
+void QuickInsertSearchResultsView::SelectSearchResult(
     const QuickInsertSearchResult& result) {
   delegate_->SelectSearchResult(result);
 }
 
-void PickerSearchResultsView::AddResultToSection(
+void QuickInsertSearchResultsView::AddResultToSection(
     const QuickInsertSearchResult& result,
     QuickInsertSectionView* section_view) {
   // `base::Unretained` is safe here because `this` will own the item view which
@@ -281,30 +288,30 @@ void PickerSearchResultsView::AddResultToSection(
   QuickInsertItemView* view = section_view->AddResult(
       result, preview_controller_,
       ConvertLocalFileResultStyle(local_file_result_style_),
-      base::BindRepeating(&PickerSearchResultsView::SelectSearchResult,
+      base::BindRepeating(&QuickInsertSearchResultsView::SelectSearchResult,
                           base::Unretained(this), result));
 
   if (auto* list_item_view =
           views::AsViewClass<QuickInsertListItemView>(view)) {
     list_item_view->SetBadgeAction(delegate_->GetActionForResult(result));
   } else if (auto* image_item_view =
-                 views::AsViewClass<PickerImageItemView>(view)) {
+                 views::AsViewClass<QuickInsertImageItemView>(view)) {
     image_item_view->SetAction(delegate_->GetActionForResult(result));
   }
 }
 
-void PickerSearchResultsView::OnTrailingLinkClicked(
-    PickerSectionType section_type,
+void QuickInsertSearchResultsView::OnTrailingLinkClicked(
+    QuickInsertSectionType section_type,
     const ui::Event& event) {
   delegate_->SelectMoreResults(section_type);
 }
 
-int PickerSearchResultsView::GetIndex(
+int QuickInsertSearchResultsView::GetIndex(
     const QuickInsertSearchResult& inserted_result) {
   if (top_results_.empty()) {
     return -1;
   }
-  auto it = base::ranges::find(top_results_, inserted_result);
+  auto it = std::ranges::find(top_results_, inserted_result);
   if (it == top_results_.end()) {
     return kMaxIndexForMetrics;
   }
@@ -312,30 +319,30 @@ int PickerSearchResultsView::GetIndex(
                   static_cast<int>(it - top_results_.begin()));
 }
 
-void PickerSearchResultsView::SetNumEmojiResultsForA11y(
+void QuickInsertSearchResultsView::SetNumEmojiResultsForA11y(
     size_t num_emoji_results) {
   num_emoji_results_displayed_ = num_emoji_results;
 }
 
-void PickerSearchResultsView::StartThrobber() {
+void QuickInsertSearchResultsView::StartThrobber() {
   throbber_container_->SetVisible(true);
   throbber_->Start();
   delegate_->OnSearchResultsViewHeightChanged();
 }
 
-void PickerSearchResultsView::StopThrobber() {
+void QuickInsertSearchResultsView::StopThrobber() {
   throbber_container_->SetVisible(false);
   throbber_->Stop();
   delegate_->OnSearchResultsViewHeightChanged();
 }
 
-void PickerSearchResultsView::StopLoadingAnimation() {
+void QuickInsertSearchResultsView::StopLoadingAnimation() {
   skeleton_loader_view_->StopAnimation();
   skeleton_loader_view_->SetVisible(false);
   delegate_->OnSearchResultsViewHeightChanged();
 }
 
-void PickerSearchResultsView::UpdateAccessibleName() {
+void QuickInsertSearchResultsView::UpdateAccessibleName() {
   // If the sections are empty but the no results view is not visible, it means
   // we are in a pending state, which should not have an announcement.
   if (!section_views_.empty() || !no_results_view_->GetVisible()) {
@@ -354,10 +361,11 @@ void PickerSearchResultsView::UpdateAccessibleName() {
     return;
   }
   GetViewAccessibility().SetName(std::move(accessible_name));
-  NotifyAccessibilityEvent(ax::mojom::Event::kLiveRegionChanged, true);
+  NotifyAccessibilityEventDeprecated(ax::mojom::Event::kLiveRegionChanged,
+                                     true);
 }
 
-BEGIN_METADATA(PickerSearchResultsView)
+BEGIN_METADATA(QuickInsertSearchResultsView)
 END_METADATA
 
 }  // namespace ash

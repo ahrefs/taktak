@@ -39,13 +39,13 @@ import org.chromium.chrome.browser.layouts.LayoutStateProvider;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab.TabObserver;
 import org.chromium.chrome.browser.tab_ui.TabContentManager;
-import org.chromium.chrome.browser.tabmodel.IncognitoStateProvider;
 import org.chromium.chrome.browser.tabmodel.TabCreatorManager;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilterProvider;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
+import org.chromium.chrome.browser.theme.ThemeColorProvider;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
-import org.chromium.components.browser_ui.widget.scrim.ScrimCoordinator;
+import org.chromium.components.browser_ui.widget.scrim.ScrimManager;
 import org.chromium.ui.modaldialog.ModalDialogManager;
 
 /** Unit tests for {@link TabGroupUiOneshotSupplier}. */
@@ -58,8 +58,7 @@ public class TabGroupUiOneshotSupplierUnitTest {
     @Mock private Activity mActivity;
     @Mock private ViewGroup mViewGroup;
     @Mock private BrowserControlsStateProvider mBrowserControlsStateProvider;
-    @Mock private IncognitoStateProvider mIncognitoStateProvider;
-    @Mock private ScrimCoordinator mScrimCoordinator;
+    @Mock private ScrimManager mScrimManager;
     @Mock private BottomSheetController mBottomSheetController;
     @Mock private DataSharingTabManager mDataSharingTabManager;
     @Mock private TabContentManager mTabContentManager;
@@ -71,6 +70,7 @@ public class TabGroupUiOneshotSupplierUnitTest {
     @Mock private TabGroupModelFilter mTabGroupModelFilter;
     @Mock private TabManagementDelegate mTabManagementDelegate;
     @Mock private TabGroupUi mTabGroupUi;
+    @Mock private ThemeColorProvider mThemeColorProvider;
 
     @Captor private ArgumentCaptor<TabObserver> mTabObserverCaptor;
     @Captor private ArgumentCaptor<Callback<Tab>> mActivityTabObserverCaptor;
@@ -96,15 +96,15 @@ public class TabGroupUiOneshotSupplierUnitTest {
                         mActivity,
                         mViewGroup,
                         mBrowserControlsStateProvider,
-                        mIncognitoStateProvider,
-                        mScrimCoordinator,
+                        mScrimManager,
                         mOmniboxFocusStateSupplier,
                         mBottomSheetController,
                         mDataSharingTabManager,
                         mTabContentManager,
                         mTabCreatorManager,
                         mLayoutStateProviderSupplier,
-                        mModalDialogManager);
+                        mModalDialogManager,
+                        mThemeColorProvider);
         when(mTabManagementDelegate.createTabGroupUi(
                         any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
                         any(), any()))
@@ -140,8 +140,7 @@ public class TabGroupUiOneshotSupplierUnitTest {
                         mActivity,
                         mViewGroup,
                         mBrowserControlsStateProvider,
-                        mIncognitoStateProvider,
-                        mScrimCoordinator,
+                        mScrimManager,
                         mOmniboxFocusStateSupplier,
                         mBottomSheetController,
                         mDataSharingTabManager,
@@ -149,7 +148,8 @@ public class TabGroupUiOneshotSupplierUnitTest {
                         mTabContentManager,
                         mTabCreatorManager,
                         mLayoutStateProviderSupplier,
-                        mModalDialogManager);
+                        mModalDialogManager,
+                        mThemeColorProvider);
         assertNotNull(mTabGroupUiOneshotSupplier.get());
     }
 
@@ -169,8 +169,7 @@ public class TabGroupUiOneshotSupplierUnitTest {
                         mActivity,
                         mViewGroup,
                         mBrowserControlsStateProvider,
-                        mIncognitoStateProvider,
-                        mScrimCoordinator,
+                        mScrimManager,
                         mOmniboxFocusStateSupplier,
                         mBottomSheetController,
                         mDataSharingTabManager,
@@ -178,7 +177,8 @@ public class TabGroupUiOneshotSupplierUnitTest {
                         mTabContentManager,
                         mTabCreatorManager,
                         mLayoutStateProviderSupplier,
-                        mModalDialogManager);
+                        mModalDialogManager,
+                        mThemeColorProvider);
         assertNotNull(mTabGroupUiOneshotSupplier.get());
     }
 }

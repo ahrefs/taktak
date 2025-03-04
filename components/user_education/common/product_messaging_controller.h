@@ -11,8 +11,8 @@
 #include "base/callback_list.h"
 #include "base/functional/callback_forward.h"
 #include "base/memory/weak_ptr.h"
-#include "components/user_education/common/feature_promo_session_manager.h"
-#include "components/user_education/common/feature_promo_storage_service.h"
+#include "components/user_education/common/session/user_education_session_manager.h"
+#include "components/user_education/common/user_education_storage_service.h"
 #include "ui/base/interaction/element_identifier.h"
 
 namespace user_education {
@@ -36,6 +36,16 @@ using RequiredNoticeId = ui::ElementIdentifier;
 // This can be used in tests to avoid name conflicts.
 #define DEFINE_LOCAL_REQUIRED_NOTICE_IDENTIFIER(name) \
   DEFINE_MACRO_ELEMENT_IDENTIFIER_VALUE(__FILE__, __LINE__, name)
+
+// This can be used to scope an identifier to a class; use this in the public
+// part of the class definition.
+#define DECLARE_CLASS_REQUIRED_NOTICE_IDENTIFIER(name) \
+  DECLARE_CLASS_ELEMENT_IDENTIFIER_VALUE(name)
+
+// Use this in the .cc file to define an identifier scoped to a class, this must
+// be paired with the DECLARE macro above.
+#define DEFINE_CLASS_REQUIRED_NOTICE_IDENTIFIER(Class, Name) \
+  DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(Class, Name)
 
 namespace internal {
 // Special value in the "show after" list that causes the notice to happen last.
@@ -100,8 +110,8 @@ class ProductMessagingController final {
 
   // Register the session provider which is used to clear the set of shown
   // notices and the storage service used to retrieve shown promos.
-  void Init(FeaturePromoSessionProvider& session_provider,
-            FeaturePromoStorageService& storage_service);
+  void Init(UserEducationSessionProvider& session_provider,
+            UserEducationStorageService& storage_service);
 
   // Returns whether there are any notices queued or showing. This can be used
   // to prevent other, lower-priority User Education experiences from showing.
@@ -142,6 +152,22 @@ class ProductMessagingController final {
   // Has no effect if the notice has already started to show.
   void UnqueueRequiredNotice(RequiredNoticeId notice_id);
 
+  // Callback for notifications about other services' activity.
+  using StatusUpdateCallback = base::RepeatingCallback<void(RequiredNoticeId)>;
+
+  // Adds a callback that will be called whenever a RequiredNoticeHandle will be
+  // granted. This can optionally be used to know when other systems are about
+  // to show a notice.
+  base::CallbackListSubscription AddRequiredNoticePriorityHandleGrantedCallback(
+      StatusUpdateCallback callback);
+
+  // Adds a callback that will be called when the UI of a required notice will
+  // actually be shown (not just that the handle is being held).
+  base::CallbackListSubscription AddRequiredNoticeShownCallback(
+      StatusUpdateCallback callback);
+
+  bool has_current_notice() const { return static_cast<bool>(current_notice_); }
+
   RequiredNoticeId current_notice_for_testing() const {
     return current_notice_;
   }
@@ -177,14 +203,21 @@ class ProductMessagingController final {
   // Do housekeeping associated with a new session.
   void OnNewSession();
 
+  // Notify that the notice was actually shown.
+  void OnNoticeShown(RequiredNoticeId notice_id);
+
   // Describes the current contents of `pending_notices_` for debugging/error
   // purposes.
   std::string DumpData() const;
 
   RequiredNoticeId current_notice_;
-  raw_ptr<FeaturePromoStorageService> storage_service_ = nullptr;
+  raw_ptr<UserEducationStorageService> storage_service_ = nullptr;
   std::map<RequiredNoticeId, RequiredNoticeData> pending_notices_;
   base::CallbackListSubscription session_subscription_;
+  base::RepeatingCallbackList<StatusUpdateCallback::RunType>
+      handle_granted_callbacks_;
+  base::RepeatingCallbackList<StatusUpdateCallback::RunType>
+      notice_shown_callbacks_;
   base::WeakPtrFactory<ProductMessagingController> weak_ptr_factory_{this};
 };
 

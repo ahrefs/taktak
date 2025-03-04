@@ -2,13 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40284755): Remove this and spanify to fix the errors.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "base/json/json_parser.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iterator>
 #include <string_view>
@@ -16,13 +12,13 @@
 #include <vector>
 
 #include "base/check_op.h"
+#include "base/compiler_specific.h"
 #include "base/feature_list.h"
 #include "base/features.h"
 #include "base/json/json_reader.h"
 #include "base/metrics/histogram_functions.h"
 #include "base/notreached.h"
 #include "base/numerics/safe_conversions.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
@@ -30,8 +26,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/third_party/icu/icu_utf.h"
 
-namespace base {
-namespace internal {
+namespace base::internal {
 
 namespace {
 
@@ -74,8 +69,8 @@ constexpr base_icu::UChar32 kUnicodeReplacementPoint = 0xFFFD;
 // input consists purely of hex digits. I.e. no "0x" nor "OX" prefix is
 // permitted.
 bool UnprefixedHexStringToInt(std::string_view input, int* output) {
-  for (size_t i = 0; i < input.size(); i++) {
-    if (!IsHexDigit(input[i])) {
+  for (char i : input) {
+    if (!IsHexDigit(i)) {
       return false;
     }
   }
@@ -159,8 +154,9 @@ std::optional<Value> JSONParser::Parse(std::string_view input) {
 
   // Parse the first and any nested tokens.
   std::optional<Value> root(ParseNextToken());
-  if (!root)
+  if (!root) {
     return std::nullopt;
+  }
 
   // Make sure the input stream is at an end.
   if (GetNextToken() != T_END_OF_INPUT) {
@@ -204,41 +200,46 @@ std::optional<std::string_view> JSONParser::PeekChars(size_t count) {
   // restructured the code so that we only stored the remaining data, that
   // would avoid this, but it would prevent rewinding (the places in this file
   // which look at `input_[index_ - 1]`.)
-  return std::string_view(input_.data() + index_, count);
+  return UNSAFE_BUFFERS(std::string_view(input_.data() + index_, count));
 }
 
 std::optional<char> JSONParser::PeekChar() {
   std::optional<std::string_view> chars = PeekChars(1);
-  if (chars)
+  if (chars) {
     return (*chars)[0];
+  }
   return std::nullopt;
 }
 
 std::optional<std::string_view> JSONParser::ConsumeChars(size_t count) {
   std::optional<std::string_view> chars = PeekChars(count);
-  if (chars)
+  if (chars) {
     index_ += count;
+  }
   return chars;
 }
 
 std::optional<char> JSONParser::ConsumeChar() {
   std::optional<std::string_view> chars = ConsumeChars(1);
-  if (chars)
+  if (chars) {
     return (*chars)[0];
+  }
   return std::nullopt;
 }
 
 const char* JSONParser::pos() {
   CHECK_LE(index_, input_.length());
-  return input_.data() + index_;
+  // SAFETY: Checked above.
+  return UNSAFE_BUFFERS(input_.data() + index_);
 }
 
 JSONParser::Token JSONParser::GetNextToken() {
   EatWhitespaceAndComments();
 
   std::optional<char> c = PeekChar();
-  if (!c)
+  if (!c) {
     return T_END_OF_INPUT;
+  }
 
   switch (*c) {
     case '{':
@@ -294,8 +295,9 @@ void JSONParser::EatWhitespaceAndComments() {
         ConsumeChar();
         break;
       case '/':
-        if (!EatComment())
+        if (!EatComment()) {
           return;
+        }
         break;
       default:
         return;
@@ -305,8 +307,9 @@ void JSONParser::EatWhitespaceAndComments() {
 
 bool JSONParser::EatComment() {
   std::optional<std::string_view> comment_start = PeekChars(2);
-  if (!comment_start)
+  if (!comment_start) {
     return false;
+  }
 
   const bool comments_allowed = options_ & JSON_ALLOW_COMMENTS;
 
@@ -321,8 +324,9 @@ bool JSONParser::EatComment() {
     ConsumeChars(2);
     // Single line comment, read to newline.
     while (std::optional<char> c = PeekChar()) {
-      if (c == '\n' || c == '\r')
+      if (c == '\n' || c == '\r') {
         return true;
+      }
       ConsumeChar();
     }
   } else if (comment_start == "/*") {
@@ -438,7 +442,7 @@ std::optional<Value> JSONParser::ConsumeDictionary() {
   ConsumeChar();  // Closing '}'.
   // Reverse |dict_storage| to keep the last of elements with the same key in
   // the input.
-  ranges::reverse(values);
+  std::ranges::reverse(values);
   return Value(Value::Dict(std::make_move_iterator(values.begin()),
                            std::make_move_iterator(values.end())));
 }
@@ -697,21 +701,24 @@ JSONParser::ConsumeStringPart() {
 // Entry is at the first X in \uXXXX.
 bool JSONParser::DecodeUTF16(base_icu::UChar32* out_code_point) {
   std::optional<std::string_view> escape_sequence = ConsumeChars(4);
-  if (!escape_sequence)
+  if (!escape_sequence) {
     return false;
+  }
 
   // Consume the UTF-16 code unit, which may be a high surrogate.
   int code_unit16_high = 0;
-  if (!UnprefixedHexStringToInt(*escape_sequence, &code_unit16_high))
+  if (!UnprefixedHexStringToInt(*escape_sequence, &code_unit16_high)) {
     return false;
+  }
 
   // If this is a high surrogate, consume the next code unit to get the
   // low surrogate.
   if (CBU16_IS_SURROGATE(code_unit16_high)) {
     // Make sure this is the high surrogate.
     if (!CBU16_IS_SURROGATE_LEAD(code_unit16_high)) {
-      if ((options_ & JSON_REPLACE_INVALID_CHARACTERS) == 0)
+      if ((options_ & JSON_REPLACE_INVALID_CHARACTERS) == 0) {
         return false;
+      }
       *out_code_point = kUnicodeReplacementPoint;
       return true;
     }
@@ -719,23 +726,27 @@ bool JSONParser::DecodeUTF16(base_icu::UChar32* out_code_point) {
     // Make sure that the token has more characters to consume the
     // lower surrogate.
     if (!ConsumeIfMatch("\\u")) {
-      if ((options_ & JSON_REPLACE_INVALID_CHARACTERS) == 0)
+      if ((options_ & JSON_REPLACE_INVALID_CHARACTERS) == 0) {
         return false;
+      }
       *out_code_point = kUnicodeReplacementPoint;
       return true;
     }
 
     escape_sequence = ConsumeChars(4);
-    if (!escape_sequence)
+    if (!escape_sequence) {
       return false;
+    }
 
     int code_unit16_low = 0;
-    if (!UnprefixedHexStringToInt(*escape_sequence, &code_unit16_low))
+    if (!UnprefixedHexStringToInt(*escape_sequence, &code_unit16_low)) {
       return false;
+    }
 
     if (!CBU16_IS_TRAIL(code_unit16_low)) {
-      if ((options_ & JSON_REPLACE_INVALID_CHARACTERS) == 0)
+      if ((options_ & JSON_REPLACE_INVALID_CHARACTERS) == 0) {
         return false;
+      }
       *out_code_point = kUnicodeReplacementPoint;
       return true;
     }
@@ -759,8 +770,9 @@ std::optional<Value> JSONParser::ConsumeNumber() {
   const size_t start_index = index_;
   size_t end_index = start_index;
 
-  if (PeekChar() == '-')
+  if (PeekChar() == '-') {
     ConsumeChar();
+  }
 
   if (!ReadInt(false)) {
     ReportError(JSON_SYNTAX_ERROR, 0);
@@ -818,32 +830,39 @@ bool JSONParser::ReadInt(bool allow_leading_zeros) {
   char first = 0;
 
   while (std::optional<char> c = PeekChar()) {
-    if (!IsAsciiDigit(c))
+    if (!IsAsciiDigit(*c)) {
       break;
+    }
 
-    if (len == 0)
+    if (len == 0) {
       first = *c;
+    }
 
     ++len;
     ConsumeChar();
   }
 
-  if (len == 0)
+  if (len == 0) {
     return false;
+  }
 
-  if (!allow_leading_zeros && len > 1 && first == '0')
+  if (!allow_leading_zeros && len > 1 && first == '0') {
     return false;
+  }
 
   return true;
 }
 
 std::optional<Value> JSONParser::ConsumeLiteral() {
-  if (ConsumeIfMatch("true"))
+  if (ConsumeIfMatch("true")) {
     return Value(true);
-  if (ConsumeIfMatch("false"))
+  }
+  if (ConsumeIfMatch("false")) {
     return Value(false);
-  if (ConsumeIfMatch("null"))
+  }
+  if (ConsumeIfMatch("null")) {
     return Value(Value::Type::NONE);
+  }
   ReportError(JSON_SYNTAX_ERROR, 0);
   return std::nullopt;
 }
@@ -869,14 +888,14 @@ void JSONParser::ReportError(JsonParseError code, int column_adjust) {
 }
 
 // static
-std::string JSONParser::FormatErrorMessage(int line, int column,
+std::string JSONParser::FormatErrorMessage(int line,
+                                           int column,
                                            const std::string& description) {
   if (line || column) {
-    return StringPrintf("Line: %i, column: %i, %s",
-        line, column, description.c_str());
+    return StringPrintf("Line: %i, column: %i, %s", line, column,
+                        description.c_str());
   }
   return description;
 }
 
-}  // namespace internal
-}  // namespace base
+}  // namespace base::internal

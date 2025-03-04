@@ -68,7 +68,7 @@
     syncer::SyncService* syncService =
         SyncServiceFactory::GetForProfile(profile);
     auto profilePasswordStore =
-        IOSChromeProfilePasswordStoreFactory::GetForBrowserState(
+        IOSChromeProfilePasswordStoreFactory::GetForProfile(
             profile, ServiceAccessType::EXPLICIT_ACCESS);
     auto accountPasswordStore =
         IOSChromeAccountPasswordStoreFactory::GetForProfile(
@@ -168,10 +168,10 @@
   }];
 }
 
-- (void)openAllPlusAddressList {
+- (void)openAllPlusAddressList:(BOOL)isAddressManualFallback {
   __weak __typeof(self) weakSelf = self;
   [self dismissIfNecessaryThenDoCompletion:^{
-    [weakSelf.delegate openAllPlusAddressesPicker];
+    [weakSelf.delegate openAllPlusAddressesPicker:isAddressManualFallback];
   }];
 }
 

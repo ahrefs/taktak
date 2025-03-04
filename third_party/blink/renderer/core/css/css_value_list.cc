@@ -105,28 +105,11 @@ CSSValueList* CSSValueList::Copy() const {
       new_list = CreateSlashSeparated();
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
   new_list->values_ = values_;
   new_list->needs_tree_scope_population_ = needs_tree_scope_population_;
   return new_list;
-}
-
-const CSSValue* CSSValueList::UntaintedCopy() const {
-  bool changed = false;
-  HeapVector<Member<const CSSValue>, 4> untainted_values;
-  for (const CSSValue* value : values_) {
-    untainted_values.push_back(value->UntaintedCopy());
-    if (value != untainted_values.back().Get()) {
-      changed = true;
-    }
-  }
-  if (!changed) {
-    return this;
-  }
-  return MakeGarbageCollected<CSSValueList>(
-      static_cast<ValueListSeparator>(value_list_separator_),
-      std::move(untainted_values));
 }
 
 const CSSValueList& CSSValueList::PopulateWithTreeScope(
@@ -148,7 +131,7 @@ const CSSValueList& CSSValueList::PopulateWithTreeScope(
       new_list = CreateSlashSeparated();
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
   new_list->values_.ReserveInitialCapacity(values_.size());
   for (const CSSValue* value : values_) {
@@ -170,7 +153,7 @@ String CSSValueList::CustomCSSText() const {
       separator = " / ";
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   StringBuilder result;

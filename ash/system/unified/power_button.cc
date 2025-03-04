@@ -32,7 +32,6 @@
 #include "ui/base/metadata/metadata_impl_macros.h"
 #include "ui/base/models/image_model.h"
 #include "ui/base/models/menu_separator_types.h"
-#include "ui/base/models/simple_menu_model.h"
 #include "ui/base/mojom/menu_source_type.mojom.h"
 #include "ui/chromeos/styles/cros_tokens_color_mappings.h"
 #include "ui/color/color_id.h"
@@ -43,6 +42,7 @@
 #include "ui/gfx/geometry/insets.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rounded_corners_f.h"
+#include "ui/menus/simple_menu_model.h"
 #include "ui/views/accessibility/view_accessibility.h"
 #include "ui/views/context_menu_controller.h"
 #include "ui/views/controls/focus_ring.h"
@@ -398,7 +398,6 @@ PowerButton::PowerButton(UnifiedSystemTrayController* tray_controller)
   background_view_->SetPaintToLayer(ui::LAYER_SOLID_COLOR);
   auto* background_layer = background_view_->layer();
   background_layer->SetRoundedCornerRadius(kAllRoundedCorners);
-  background_layer->SetFillsBoundsOpaquely(false);
   background_layer->SetIsFastRoundedCorner(true);
 
   set_context_menu_controller(context_menu_.get());

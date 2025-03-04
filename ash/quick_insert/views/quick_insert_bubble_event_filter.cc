@@ -12,18 +12,20 @@
 
 namespace ash {
 
-PickerBubbleEventFilter::PickerBubbleEventFilter(views::Widget* widget)
+QuickInsertBubbleEventFilter::QuickInsertBubbleEventFilter(
+    views::Widget* widget)
     : BubbleEventFilter(
           widget,
           /*button=*/nullptr,
           // base::Unretained is safe here because `widget` outlives this.
-          base::BindRepeating(&PickerBubbleEventFilter::OnClickOutsideWidget,
-                              base::Unretained(this))),
+          base::BindRepeating(
+              &QuickInsertBubbleEventFilter::OnClickOutsideWidget,
+              base::Unretained(this))),
       widget_(widget) {}
 
-PickerBubbleEventFilter::~PickerBubbleEventFilter() = default;
+QuickInsertBubbleEventFilter::~QuickInsertBubbleEventFilter() = default;
 
-bool PickerBubbleEventFilter::ShouldRunOnClickOutsideCallback(
+bool QuickInsertBubbleEventFilter::ShouldRunOnClickOutsideCallback(
     const ui::LocatedEvent& event) {
   // Check the general rules for closing bubbles.
   if (!bubble_utils::ShouldCloseBubbleForEvent(event)) {
@@ -36,8 +38,8 @@ bool PickerBubbleEventFilter::ShouldRunOnClickOutsideCallback(
 
   // Perform a hit-test for every child widget of `widget_` (which includes
   // itself).
-  views::Widget::Widgets widgets;
-  views::Widget::GetAllChildWidgets(widget_->GetNativeView(), &widgets);
+  views::Widget::Widgets widgets =
+      views::Widget::GetAllChildWidgets(widget_->GetNativeView());
   for (views::Widget* child : widgets) {
     // Ignore clicks inside the bubble widget.
     if (child->GetWindowBoundsInScreen().Contains(event_location)) {
@@ -48,7 +50,7 @@ bool PickerBubbleEventFilter::ShouldRunOnClickOutsideCallback(
   return true;
 }
 
-void PickerBubbleEventFilter::OnClickOutsideWidget(
+void QuickInsertBubbleEventFilter::OnClickOutsideWidget(
     const ui::LocatedEvent& event) {
   widget_->Close();
 }

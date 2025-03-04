@@ -4,6 +4,7 @@
 
 #include "third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d_state.h"
 
+#include <algorithm>
 #include <optional>
 
 #include "base/check.h"
@@ -11,12 +12,12 @@
 #include "base/compiler_specific.h"
 #include "base/dcheck_is_on.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "cc/paint/draw_looper.h"
 #include "cc/paint/paint_flags.h"
 #include "cc/paint/path_effect.h"
 #include "third_party/blink/public/common/metrics/document_update_reason.h"
 #include "third_party/blink/public/mojom/frame/color_scheme.mojom-blink.h"
+#include "third_party/blink/renderer/bindings/core/v8/v8_canvas_text_align.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_canvas_font_stretch.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_canvas_text_rendering.h"
 #include "third_party/blink/renderer/core/css/css_primitive_value.h"
@@ -47,6 +48,7 @@
 #include "third_party/blink/renderer/platform/graphics/interpolation_space.h"
 #include "third_party/blink/renderer/platform/graphics/paint/paint_filter.h"
 #include "third_party/blink/renderer/platform/graphics/skia/skia_utils.h"
+#include "third_party/blink/renderer/platform/heap/garbage_collected.h"
 #include "third_party/blink/renderer/platform/heap/visitor.h"
 #include "third_party/blink/renderer/platform/transforms/affine_transform.h"
 #include "third_party/blink/renderer/platform/wtf/math_extras.h"
@@ -128,12 +130,12 @@ FontSelectionValue CanvasFontStretchToSelectionValue(
       stretch_value = kSemiExpandedWidthValue;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
   return stretch_value;
 }
 
-TextRenderingMode CanvasTextRenderingToTextRendering(
+TextRenderingMode CanvasTextRenderingToTextRenderingMode(
     V8CanvasTextRendering text_rendering) {
   TextRenderingMode text_rendering_mode;
   switch (text_rendering.AsEnum()) {
@@ -141,16 +143,16 @@ TextRenderingMode CanvasTextRenderingToTextRendering(
       text_rendering_mode = TextRenderingMode::kAutoTextRendering;
       break;
     case (V8CanvasTextRendering::Enum::kOptimizeSpeed):
-      text_rendering_mode = TextRenderingMode::kAutoTextRendering;
+      text_rendering_mode = TextRenderingMode::kOptimizeSpeed;
       break;
     case (V8CanvasTextRendering::Enum::kOptimizeLegibility):
-      text_rendering_mode = TextRenderingMode::kAutoTextRendering;
+      text_rendering_mode = TextRenderingMode::kOptimizeLegibility;
       break;
     case (V8CanvasTextRendering::Enum::kGeometricPrecision):
-      text_rendering_mode = TextRenderingMode::kAutoTextRendering;
+      text_rendering_mode = TextRenderingMode::kGeometricPrecision;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
   return text_rendering_mode;
 }
@@ -161,8 +163,9 @@ CanvasRenderingContext2DState::CanvasRenderingContext2DState()
       global_alpha_(1.0),
       line_dash_offset_(0.0),
       unparsed_font_(defaultFont),
+      font_(MakeGarbageCollected<Font>()),
+      font_for_filter_(font_),
       unparsed_css_filter_(defaultFilter),
-      text_align_(kStartTextAlign),
       parsed_letter_spacing_(defaultSpacing),
       parsed_word_spacing_(defaultSpacing),
       realized_font_(false),
@@ -171,6 +174,7 @@ CanvasRenderingContext2DState::CanvasRenderingContext2DState()
       has_complex_clip_(false),
       letter_spacing_is_set_(false),
       word_spacing_is_set_(false),
+      lang_is_dirty_(false),
       line_dash_dirty_(false),
       image_smoothing_quality_(cc::PaintFlags::FilterQuality::kLow) {
   fill_flags_.setStyle(cc::PaintFlags::kFill_Style);
@@ -236,6 +240,7 @@ CanvasRenderingContext2DState::CanvasRenderingContext2DState(
       has_complex_clip_(other.has_complex_clip_),
       letter_spacing_is_set_(other.letter_spacing_is_set_),
       word_spacing_is_set_(other.word_spacing_is_set_),
+      lang_is_dirty_(other.lang_is_dirty_),
       line_dash_dirty_(other.line_dash_dirty_),
       image_smoothing_enabled_(other.image_smoothing_enabled_),
       image_smoothing_quality_(other.image_smoothing_quality_),
@@ -245,8 +250,9 @@ CanvasRenderingContext2DState::CanvasRenderingContext2DState(
   }
   // Since FontSelector is weakly persistent with |font_|, the memory may be
   // freed even |font_| is valid.
-  if (realized_font_ && font_.GetFontSelector())
-    font_.GetFontSelector()->RegisterForInvalidationCallbacks(this);
+  if (realized_font_ && font_->GetFontSelector()) {
+    font_->GetFontSelector()->RegisterForInvalidationCallbacks(this);
+  }
   ValidateFilterState();
 }
 
@@ -254,7 +260,7 @@ CanvasRenderingContext2DState::~CanvasRenderingContext2DState() = default;
 
 void CanvasRenderingContext2DState::FontsNeedUpdate(FontSelector* font_selector,
                                                     FontInvalidationReason) {
-  DCHECK_EQ(font_selector, font_.GetFontSelector());
+  DCHECK_EQ(font_selector, font_->GetFontSelector());
   DCHECK(realized_font_);
 
   // |font_| will revalidate its FontFallbackList on demand. We don't need to
@@ -289,8 +295,8 @@ void CanvasRenderingContext2DState::SetLineDash(const Vector<double>& dash) {
   if (dash.size() % 2)
     line_dash_.AppendVector(dash);
   // clamp the double values to float
-  base::ranges::transform(line_dash_, line_dash_.begin(),
-                          [](double d) { return ClampTo<float>(d); });
+  std::ranges::transform(line_dash_, line_dash_.begin(),
+                         [](double d) { return ClampTo<float>(d); });
 
   line_dash_dirty_ = true;
 }
@@ -311,7 +317,7 @@ ALWAYS_INLINE void CanvasRenderingContext2DState::UpdateLineDash() const {
     stroke_flags_.setPathEffect(nullptr);
   } else {
     Vector<float> line_dash(line_dash_.size());
-    base::ranges::copy(line_dash_, line_dash.begin());
+    std::ranges::copy(line_dash_, line_dash.begin());
     stroke_flags_.setPathEffect(cc::PathEffect::MakeDash(
         line_dash.data(), line_dash.size(), line_dash_offset_));
   }
@@ -340,11 +346,15 @@ void CanvasRenderingContext2DState::SetGlobalAlpha(double alpha) {
 void CanvasRenderingContext2DState::ClipPath(
     const SkPath& path,
     AntiAliasingMode anti_aliasing_mode) {
-  clip_list_.ClipPath(path, anti_aliasing_mode,
-                      AffineTransformToSkMatrix(transform_));
+  clip_list_.ClipPath(path, anti_aliasing_mode, transform_.ToSkMatrix());
   has_clip_ = true;
   if (!path.isRect(nullptr))
     has_complex_clip_ = true;
+}
+
+void CanvasRenderingContext2DState::SetLang(const String& lang) {
+  lang_ = lang;
+  lang_is_dirty_ = true;
 }
 
 void CanvasRenderingContext2DState::SetFont(
@@ -353,10 +363,11 @@ void CanvasRenderingContext2DState::SetFont(
   FontDescription font_description = passed_font_description;
   font_description.SetSubpixelAscentDescent(true);
 
-  CSSToLengthConversionData conversion_data = CSSToLengthConversionData();
-  Font font = Font();
+  CSSToLengthConversionData conversion_data =
+      CSSToLengthConversionData(/*element=*/nullptr);
   auto const font_size = CSSToLengthConversionData::FontSizes(
-      font_description.ComputedSize(), font_description.ComputedSize(), &font,
+      font_description.ComputedSize(), font_description.ComputedSize(),
+      MakeGarbageCollected<Font>(),
       1.0f /*Deliberately ignore zoom on the canvas element*/);
   conversion_data.SetFontSizes(font_size);
 
@@ -387,7 +398,7 @@ void CanvasRenderingContext2DState::SetFont(
   }
   font_description.SetKerning(font_kerning_);
   font_description.SetTextRendering(
-      CanvasTextRenderingToTextRendering(text_rendering_mode_));
+      CanvasTextRenderingToTextRenderingMode(text_rendering_mode_));
   font_variant_caps_ = font_description.VariantCaps();
   std::optional<blink::V8CanvasFontStretch> font_value =
       V8CanvasFontStretch::Create(
@@ -406,8 +417,9 @@ void CanvasRenderingContext2DState::SetFontInternal(
   FontDescription font_description = passed_font_description;
   font_description.SetSubpixelAscentDescent(true);
 
-  font_ = Font(font_description, selector);
+  font_ = MakeGarbageCollected<Font>(font_description, selector);
   realized_font_ = true;
+  lang_is_dirty_ = false;  // The font has been created with the current lang.
   if (selector)
     selector->RegisterForInvalidationCallbacks(this);
 }
@@ -416,17 +428,17 @@ bool CanvasRenderingContext2DState::IsFontDirtyForFilter() const {
   // Indicates if the font has changed since the last time the filter was set.
   if (!HasRealizedFont())
     return true;
-  return GetFont() != font_for_filter_;
+  return *GetFont() != *font_for_filter_;
 }
 
-const Font& CanvasRenderingContext2DState::GetFont() const {
+const Font* CanvasRenderingContext2DState::GetFont() const {
   return font_;
 }
 
 const FontDescription& CanvasRenderingContext2DState::GetFontDescription()
     const {
   DCHECK(realized_font_);
-  return font_.GetFontDescription();
+  return font_->GetFontDescription();
 }
 
 void CanvasRenderingContext2DState::SetFontKerning(
@@ -490,7 +502,7 @@ void CanvasRenderingContext2DState::ValidateFilterState() const {
       DCHECK(css_filter_value_ || canvas_filter_);
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 #endif
 }
@@ -564,13 +576,13 @@ sk_sp<PaintFilter> CanvasRenderingContext2DState::GetFilter(
       css_filter_value_->ReResolveUrl(document);
     }
 
-    const Font* font = &font_for_filter_;
+    const Font* font = font_for_filter_;
 
     // Must set font in case the filter uses any font-relative units (em, ex)
     // If font_for_filter_ was never set (ie frame-less documents) use base font
-    if (!font_for_filter_.GetFontSelector()) [[unlikely]] {
+    if (!font_for_filter_->GetFontSelector()) [[unlikely]] {
       if (LayoutView* layout_view = document.GetLayoutView()) {
-        font = &layout_view->StyleRef().GetFont();
+        font = layout_view->StyleRef().GetFont();
       } else {
         return nullptr;
       }
@@ -801,10 +813,7 @@ const cc::PaintFlags* CanvasRenderingContext2DState::GetFlags(
       flags = &stroke_flags_;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      // no break on purpose: flags needs to be assigned to avoid compiler
-      // warning about uninitialized variable.
-      [[fallthrough]];
+      NOTREACHED();
     case kFillPaintType:
       fill_style_.SyncFlags(fill_flags_, global_alpha_);
       flags = &fill_flags_;
@@ -852,8 +861,7 @@ const cc::PaintFlags* CanvasRenderingContext2DState::GetFlags(
 void CanvasRenderingContext2DState::SetLetterSpacing(
     const String& letter_spacing) {
   DCHECK(realized_font_);
-  if (!letter_spacing_is_set_)
-    letter_spacing_is_set_ = true;
+  letter_spacing_is_set_ = true;
   if (parsed_letter_spacing_ == letter_spacing)
     return;
   float num_spacing;
@@ -872,23 +880,24 @@ void CanvasRenderingContext2DState::SetLetterSpacing(
   parsed_letter_spacing_ = builder.ToString();
   // Convert letter spacing to pixel length and set it in font_description.
   FontDescription font_description(GetFontDescription());
-  CSSToLengthConversionData conversion_data = CSSToLengthConversionData();
+  CSSToLengthConversionData conversion_data =
+      CSSToLengthConversionData(/*element=*/nullptr);
   auto const font_size = CSSToLengthConversionData::FontSizes(
-      font_description.ComputedSize(), font_description.ComputedSize(), &font_,
+      font_description.ComputedSize(), font_description.ComputedSize(), font_,
       1.0f /*Deliberately ignore zoom on the canvas element*/);
   conversion_data.SetFontSizes(font_size);
   float letter_spacing_in_pixel =
       conversion_data.ZoomedComputedPixels(num_spacing, unit);
 
   font_description.SetLetterSpacing(letter_spacing_in_pixel);
-  if (font_.GetFontSelector())
-    SetFontInternal(font_description, font_.GetFontSelector());
+  if (font_->GetFontSelector()) {
+    SetFontInternal(font_description, font_->GetFontSelector());
+  }
 }
 
 void CanvasRenderingContext2DState::SetWordSpacing(const String& word_spacing) {
   DCHECK(realized_font_);
-  if (!word_spacing_is_set_)
-    word_spacing_is_set_ = true;
+  word_spacing_is_set_ = true;
   if (parsed_word_spacing_ == word_spacing)
     return;
   float num_spacing;
@@ -907,17 +916,19 @@ void CanvasRenderingContext2DState::SetWordSpacing(const String& word_spacing) {
   parsed_word_spacing_ = builder.ToString();
   // Convert letter spacing to pixel length and set it in font_description.
   FontDescription font_description(GetFontDescription());
-  CSSToLengthConversionData conversion_data = CSSToLengthConversionData();
+  CSSToLengthConversionData conversion_data =
+      CSSToLengthConversionData(/*element=*/nullptr);
   auto const font_size = CSSToLengthConversionData::FontSizes(
-      font_description.ComputedSize(), font_description.ComputedSize(), &font_,
+      font_description.ComputedSize(), font_description.ComputedSize(), font_,
       1.0f /*Deliberately ignore zoom on the canvas element*/);
   conversion_data.SetFontSizes(font_size);
   float word_spacing_in_pixel =
       conversion_data.ZoomedComputedPixels(num_spacing, unit);
 
   font_description.SetWordSpacing(word_spacing_in_pixel);
-  if (font_.GetFontSelector())
-    SetFontInternal(font_description, font_.GetFontSelector());
+  if (font_->GetFontSelector()) {
+    SetFontInternal(font_description, font_->GetFontSelector());
+  }
 }
 
 void CanvasRenderingContext2DState::SetTextRendering(
@@ -925,7 +936,7 @@ void CanvasRenderingContext2DState::SetTextRendering(
     FontSelector* selector) {
   DCHECK(realized_font_);
   TextRenderingMode text_rendering_mode =
-      CanvasTextRenderingToTextRendering(text_rendering);
+      CanvasTextRenderingToTextRenderingMode(text_rendering);
   FontDescription font_description(GetFontDescription());
   font_description.SetTextRendering(text_rendering_mode);
   text_rendering_mode_ = text_rendering;

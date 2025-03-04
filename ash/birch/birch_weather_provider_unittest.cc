@@ -39,8 +39,7 @@ BirchWeatherProvider* GetWeatherProvider() {
 class BirchWeatherProviderTest : public AshTestBase {
  public:
   BirchWeatherProviderTest() : clock_override_(&GetTestTime, nullptr, nullptr) {
-    feature_list_.InitWithFeatures(
-        {features::kForestFeature, features::kBirchWeather}, {});
+    feature_list_.InitAndEnableFeature(features::kForestFeature);
     // Ensure the time is morning (7 AM) so weather will be fetched.
     SetTestTime(base::Time::Now().LocalMidnight() + base::Hours(7));
   }
@@ -101,8 +100,10 @@ TEST_F(BirchWeatherProviderTest, GetWeather) {
   EXPECT_EQ(u"Cloudy", weather_items[0].title());
   EXPECT_FLOAT_EQ(70.f, weather_items[0].temp_f());
   weather_items[0].LoadIcon(base::BindOnce(
-      [](const ui::ImageModel& icon, SecondaryIconType secondary_icon_type) {
+      [](PrimaryIconType primary_icon_type,
+         SecondaryIconType secondary_icon_type, const ui::ImageModel& icon) {
         EXPECT_FALSE(icon.IsEmpty());
+        EXPECT_EQ(primary_icon_type, PrimaryIconType::kWeatherImage);
         EXPECT_EQ(secondary_icon_type, SecondaryIconType::kNoIcon);
       }));
 }
@@ -155,8 +156,10 @@ TEST_F(BirchWeatherProviderTest, GetWeatherWaitsForRefreshTokens) {
   EXPECT_EQ(u"Cloudy", weather_items[0].title());
   EXPECT_FLOAT_EQ(70.f, weather_items[0].temp_f());
   weather_items[0].LoadIcon(base::BindOnce(
-      [](const ui::ImageModel& icon, SecondaryIconType secondary_icon_type) {
+      [](PrimaryIconType primary_icon_type,
+         SecondaryIconType secondary_icon_type, const ui::ImageModel& icon) {
         EXPECT_FALSE(icon.IsEmpty());
+        EXPECT_EQ(primary_icon_type, PrimaryIconType::kWeatherImage);
         EXPECT_EQ(secondary_icon_type, SecondaryIconType::kNoIcon);
       }));
 
@@ -356,8 +359,10 @@ TEST_F(BirchWeatherProviderTest, RefetchWeather) {
   EXPECT_EQ(u"Cloudy", weather_items[0].title());
   EXPECT_FLOAT_EQ(70.f, weather_items[0].temp_f());
   weather_items[0].LoadIcon(base::BindOnce(
-      [](const ui::ImageModel& icon, SecondaryIconType secondary_icon_type) {
+      [](PrimaryIconType primary_icon_type,
+         SecondaryIconType secondary_icon_type, const ui::ImageModel& icon) {
         EXPECT_FALSE(icon.IsEmpty());
+        EXPECT_EQ(primary_icon_type, PrimaryIconType::kWeatherImage);
         EXPECT_EQ(secondary_icon_type, SecondaryIconType::kNoIcon);
       }));
 
@@ -381,8 +386,10 @@ TEST_F(BirchWeatherProviderTest, RefetchWeather) {
   EXPECT_EQ(u"Sunny", updated_weather_items[0].title());
   EXPECT_FLOAT_EQ(73.f, updated_weather_items[0].temp_f());
   weather_items[0].LoadIcon(base::BindOnce(
-      [](const ui::ImageModel& icon, SecondaryIconType secondary_icon_type) {
+      [](PrimaryIconType primary_icon_type,
+         SecondaryIconType secondary_icon_type, const ui::ImageModel& icon) {
         EXPECT_FALSE(icon.IsEmpty());
+        EXPECT_EQ(primary_icon_type, PrimaryIconType::kWeatherImage);
         EXPECT_EQ(secondary_icon_type, SecondaryIconType::kNoIcon);
       }));
 }
@@ -451,8 +458,10 @@ TEST_F(BirchWeatherProviderTest, RefetchInvalidWeather) {
   EXPECT_EQ(u"Cloudy", weather_items[0].title());
   EXPECT_FLOAT_EQ(70.f, weather_items[0].temp_f());
   weather_items[0].LoadIcon(base::BindOnce(
-      [](const ui::ImageModel& icon, SecondaryIconType secondary_icon_type) {
+      [](PrimaryIconType primary_icon_type,
+         SecondaryIconType secondary_icon_type, const ui::ImageModel& icon) {
         EXPECT_FALSE(icon.IsEmpty());
+        EXPECT_EQ(primary_icon_type, PrimaryIconType::kWeatherImage);
         EXPECT_EQ(secondary_icon_type, SecondaryIconType::kNoIcon);
       }));
 
@@ -505,6 +514,27 @@ TEST_F(BirchWeatherProviderTest, DisabledByPolicy) {
   pref_service->SetList(prefs::kContextualGoogleIntegrationsConfiguration,
                         std::move(enabled_integrations));
 
+  provider.RequestBirchDataFetch();
+  EXPECT_EQ(ambient_backend_controller_->fetch_weather_count(), 1);
+}
+
+TEST_F(BirchWeatherProviderTest, WeatherManagedUser) {
+  auto* birch_model = Shell::Get()->birch_model();
+  BirchWeatherProvider provider(birch_model);
+
+  provider.RequestBirchDataFetch();
+  EXPECT_EQ(ambient_backend_controller_->fetch_weather_count(), 1);
+
+  // Add and switch to a managed user account.
+  const AccountId& account_id = AccountId::FromUserEmail("primary@test");
+  TestSessionControllerClient* const session = GetSessionControllerClient();
+  session->AddUserSession("primary@test", user_manager::UserType::kRegular,
+                          /*pref_service=*/nullptr,
+                          /*is_new_profile=*/true, std::string(),
+                          /*is_account_managed=*/true);
+  session->SwitchActiveUser(account_id);
+
+  // Weather should not be fetched when the active account is managed.
   provider.RequestBirchDataFetch();
   EXPECT_EQ(ambient_backend_controller_->fetch_weather_count(), 1);
 }

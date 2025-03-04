@@ -121,8 +121,7 @@ class RecordReplayCommandBuffer : public CommandBufferDirect {
         saved_get_buffer_ = transfer_buffer_id;
         break;
       case kReplay:
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
     }
   }
 
@@ -188,10 +187,9 @@ class RecordReplayContext : public GpuControl {
 
     scoped_refptr<gles2::FeatureInfo> feature_info = new gles2::FeatureInfo();
     scoped_refptr<gles2::ContextGroup> context_group = new gles2::ContextGroup(
-        gpu_preferences_, true, nullptr /* memory_tracker */,
-        &translator_cache_, &completeness_cache_, feature_info,
-        bind_generates_resource, nullptr /* progress_reporter */,
-        GpuFeatureInfo(), &discardable_manager_,
+        gpu_preferences_, /*memory_tracker=*/nullptr, &translator_cache_,
+        &completeness_cache_, feature_info, bind_generates_resource,
+        /*progress_reporter=*/nullptr, GpuFeatureInfo(), &discardable_manager_,
         &passthrough_discardable_manager_, &shared_image_manager_);
     command_buffer_ = std::make_unique<RecordReplayCommandBuffer>();
 
@@ -250,6 +248,8 @@ class RecordReplayContext : public GpuControl {
     command_buffer_->AdvanceMode();
   }
 
+  void WaitExec() { gles2_helper_->Finish(); }
+
   void StartReplay() {
     DCHECK_EQ(command_buffer_->mode(), RecordReplayCommandBuffer::kRecord);
     gles2_helper_->FlushLazy();
@@ -271,24 +271,24 @@ class RecordReplayContext : public GpuControl {
   }
 
   void SignalQuery(uint32_t query, base::OnceClosure callback) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
-  void CancelAllQueries() override { NOTREACHED_IN_MIGRATION(); }
+  void CancelAllQueries() override { NOTREACHED(); }
 
   void CreateGpuFence(uint32_t gpu_fence_id, ClientGpuFence source) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   void GetGpuFence(uint32_t gpu_fence_id,
                    base::OnceCallback<void(std::unique_ptr<gfx::GpuFence>)>
                        callback) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
-  void SetLock(base::Lock*) override { NOTREACHED_IN_MIGRATION(); }
+  void SetLock(base::Lock*) override { NOTREACHED(); }
 
-  void EnsureWorkVisible() override { NOTREACHED_IN_MIGRATION(); }
+  void EnsureWorkVisible() override { NOTREACHED(); }
 
   gpu::CommandBufferNamespace GetNamespaceID() const override {
     return gpu::CommandBufferNamespace::INVALID;
@@ -298,30 +298,23 @@ class RecordReplayContext : public GpuControl {
     return gpu::CommandBufferId();
   }
 
-  void FlushPendingWork() override { NOTREACHED_IN_MIGRATION(); }
+  void FlushPendingWork() override { NOTREACHED(); }
 
-  uint64_t GenerateFenceSyncRelease() override {
-    NOTREACHED_IN_MIGRATION();
-    return 0;
-  }
+  uint64_t GenerateFenceSyncRelease() override { NOTREACHED(); }
 
-  bool IsFenceSyncReleased(uint64_t release) override {
-    NOTREACHED_IN_MIGRATION();
-    return true;
-  }
+  bool IsFenceSyncReleased(uint64_t release) override { NOTREACHED(); }
 
   void SignalSyncToken(const gpu::SyncToken& sync_token,
                        base::OnceClosure callback) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   void WaitSyncToken(const gpu::SyncToken& sync_token) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   bool CanWaitUnverifiedSyncToken(const gpu::SyncToken& sync_token) override {
-    NOTREACHED_IN_MIGRATION();
-    return true;
+    NOTREACHED();
   }
 
   GpuPreferences gpu_preferences_;
@@ -436,6 +429,8 @@ class DecoderPerfTest : public testing::Test {
   void StartRecord() { context_->StartRecord(); }
 
   void StartReplay() { context_->StartReplay(); }
+
+  void WaitExec() { context_->WaitExec(); }
 
   void Replay() { context_->Replay(); }
 
@@ -693,6 +688,7 @@ TEST_F(DecoderPerfTest, ProgramDraw) {
       program = 1 - program;
     }
   }
+  WaitExec();
 
   StartReplay();
   PerfIterator iterator("program_draw_100", kDefaultRuns, kDefaultIterations);

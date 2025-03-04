@@ -53,7 +53,7 @@ class ExtensionManagement : public KeyedService {
   // Observer class for extension management settings changes.
   class Observer {
    public:
-    virtual ~Observer() {}
+    virtual ~Observer() = default;
 
     // Called when the extension management settings change.
     virtual void OnExtensionManagementSettingsChanged() = 0;
@@ -385,8 +385,6 @@ class ExtensionManagementFactory : public ProfileKeyedServiceFactory {
   // BrowserContextKeyedServiceExtensionManagementFactory:
   std::unique_ptr<KeyedService> BuildServiceInstanceForBrowserContext(
       content::BrowserContext* context) const override;
-  void RegisterProfilePrefs(
-      user_prefs::PrefRegistrySyncable* registry) override;
 };
 
 }  // namespace extensions

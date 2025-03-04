@@ -6,14 +6,20 @@
 
 #include "base/i18n/time_formatting.h"
 #include "base/metrics/histogram_functions.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/feedback/show_feedback_page.h"
 #include "chrome/browser/history_embeddings/history_embeddings_service_factory.h"
+#include "chrome/browser/history_embeddings/history_embeddings_utils.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_navigator.h"
 #include "chrome/browser/ui/browser_navigator_params.h"
+#include "chrome/browser/ui/hats/hats_service.h"
+#include "chrome/browser/ui/hats/hats_service_factory.h"
+#include "chrome/common/chrome_features.h"
 #include "chrome/common/url_constants.h"
+#include "components/history_clusters/core/history_clusters_util.h"
 #include "components/history_embeddings/history_embeddings_features.h"
 #include "components/history_embeddings/history_embeddings_service.h"
 #include "components/strings/grit/components_strings.h"
@@ -93,7 +99,8 @@ void HistoryEmbeddingsHandler::Search(
   CHECK(service);
   last_result_ = service->Search(
       &last_result_, query->query, query->time_range_start,
-      history_embeddings::kSearchResultItemCount.Get(),
+      history_embeddings::GetFeatureParameters().search_result_item_count,
+      /*skip_answering=*/false,
       base::BindRepeating(&HistoryEmbeddingsHandler::OnReceivedSearchResult,
                           weak_ptr_factory_.GetWeakPtr()));
   VLOG(3) << "HistoryEmbeddingsHandler::Search started for '"
@@ -112,16 +119,9 @@ void HistoryEmbeddingsHandler::PublishResultToPage(
 
   auto mojom_search_result = history_embeddings::mojom::SearchResult::New();
   mojom_search_result->query = native_search_result.query;
-
-  bool has_answer = false;
-  if (history_embeddings::IsHistoryEmbeddingsAnswersEnabled()) {
-    mojom_search_result->answer_status = AnswererAnswerStatusToMojoAnswerStatus(
-        native_search_result.answerer_result.status);
-    if (!native_search_result.AnswerText().empty()) {
-      has_answer = true;
-      mojom_search_result->answer = native_search_result.AnswerText();
-    }
-  }
+  mojom_search_result->answer_status = AnswererAnswerStatusToMojoAnswerStatus(
+      native_search_result.answerer_result.status);
+  mojom_search_result->answer = native_search_result.AnswerText();
 
   for (size_t i = 0; i < native_search_result.scored_url_rows.size(); i++) {
     const history_embeddings::ScoredUrlRow& scored_url_row =
@@ -136,25 +136,23 @@ void HistoryEmbeddingsHandler::PublishResultToPage(
         base::TimeFormatShortDate(scored_url_row.row.last_visit()));
     item->last_url_visit_timestamp =
         scored_url_row.row.last_visit().InMillisecondsFSinceUnixEpoch();
-
-    url_formatter::FormatUrlTypes format_types =
-        url_formatter::kFormatUrlOmitDefaults |
-        url_formatter::kFormatUrlOmitHTTPS |
-        url_formatter::kFormatUrlOmitTrivialSubdomains;
-    item->url_for_display = base::UTF16ToUTF8(url_formatter::FormatUrl(
-        scored_url_row.row.url(), format_types, base::UnescapeRule::SPACES,
-        nullptr, nullptr, nullptr));
-    if (has_answer && i == native_search_result.AnswerIndex()) {
+    item->url_for_display =
+        base::UTF16ToUTF8(history_clusters::ComputeURLForDisplay(
+            scored_url_row.row.url(), history_embeddings::GetFeatureParameters()
+                                          .trim_after_host_in_results));
+    if (!native_search_result.AnswerText().empty() &&
+        i == native_search_result.AnswerIndex()) {
       item->answer_data = history_embeddings::mojom::AnswerData::New();
       item->answer_data->answer_text_directives.assign(
           native_search_result.answerer_result.text_directives.begin(),
           native_search_result.answerer_result.text_directives.end());
     }
 
-    if (history_embeddings::kShowSourcePassages.Get()) {
+    if (history_embeddings::GetFeatureParameters().show_source_passages) {
       item->source_passage = scored_url_row.GetBestPassage();
     }
 
+    item->is_url_known_to_sync = scored_url_row.is_url_known_to_sync;
     mojom_search_result->items.push_back(std::move(item));
   }
   page_->SearchResultChanged(std::move(mojom_search_result));
@@ -195,7 +193,8 @@ void HistoryEmbeddingsHandler::RecordSearchResultsMetrics(
     bool user_clicked_results,
     bool answer_shown,
     bool answer_citation_clicked,
-    bool other_history_result_clicked) {
+    bool other_history_result_clicked,
+    uint32_t query_word_count) {
   auto record_histograms = [&](const std::string& histogram_name) {
     base::UmaHistogramEnumeration(
         histogram_name, HistoryEmbeddingsUserActions::kEmbeddingsSearch);
@@ -232,6 +231,25 @@ void HistoryEmbeddingsHandler::RecordSearchResultsMetrics(
     record_histograms("History.Embeddings.UserActions.SidePanel");
   } else {
     record_histograms("History.Embeddings.UserActions.HistoryPage");
+  }
+
+  if (answer_shown &&
+      base::FeatureList::IsEnabled(
+          features::kHappinessTrackingSurveysForHistoryEmbeddings)) {
+    HatsService* hats_service = HatsServiceFactory::GetForProfile(
+        profile_.get(), /*create_if_necessary=*/true);
+    CHECK(hats_service);
+
+    base::TimeDelta delay_time =
+        features::kHappinessTrackingSurveysForHistoryEmbeddingsDelayTime.Get();
+    hats_service->LaunchDelayedSurvey(
+        kHatsSurveyTriggerHistoryEmbeddings, delay_time.InMilliseconds(),
+        {{"non empty results", non_empty_results},
+         {"best matches result clicked", user_clicked_results},
+         {"result clicked", other_history_result_clicked},
+         {"answer shown", answer_shown},
+         {"answer citation clicked", answer_citation_clicked}},
+        {{"query word count", base::NumberToString(query_word_count)}});
   }
 }
 

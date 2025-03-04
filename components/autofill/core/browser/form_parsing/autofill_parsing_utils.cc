@@ -26,6 +26,14 @@ const base::Feature* GetFeatureOfRegexFeature(RegexFeature feature) {
       return &features::kAutofillUsePLAddressModel;
     case RegexFeature::kAutofillUseFRAddressModel:
       return &features::kAutofillUseFRAddressModel;
+    case RegexFeature::kAutofillUseNLAddressModel:
+      return &features::kAutofillUseNLAddressModel;
+    case RegexFeature::kAutofillSupportPhoneticNameForJP:
+      return &features::kAutofillSupportPhoneticNameForJP;
+    case RegexFeature::kAutofillSupportLastNamePrefix:
+      return &features::kAutofillSupportLastNamePrefix;
+    case RegexFeature::kAutofillEnableLoyaltyCardsFilling:
+      return &features::kAutofillEnableLoyaltyCardsFilling;
   }
   NOTREACHED();
 }

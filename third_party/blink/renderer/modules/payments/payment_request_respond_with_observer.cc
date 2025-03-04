@@ -48,22 +48,11 @@ void PaymentRequestRespondWithObserver::OnResponseRejected(
 
 void PaymentRequestRespondWithObserver::OnResponseFulfilled(
     ScriptState* script_state,
-    const ScriptValue& value) {
+    PaymentHandlerResponse* response) {
   DCHECK(GetExecutionContext());
-  v8::TryCatch try_catch(script_state->GetIsolate());
-  PaymentHandlerResponse* response =
-      NativeValueTraits<PaymentHandlerResponse>::NativeValue(
-          script_state->GetIsolate(), value.V8Value(),
-          PassThroughException(script_state->GetIsolate()));
-  if (try_catch.HasCaught()) {
-    OnResponseRejected(mojom::ServiceWorkerResponseError::kNoV8Instance);
-    return;
-  }
-
   // Check payment response validity.
   if (!response->hasMethodName() || response->methodName().empty() ||
-      !response->hasDetails() || response->details().IsNull() ||
-      !response->details().IsObject()) {
+      !response->hasDetails()) {
     GetExecutionContext()->AddConsoleMessage(
         MakeGarbageCollected<ConsoleMessage>(
             mojom::ConsoleMessageSource::kJavaScript,
@@ -83,16 +72,9 @@ void PaymentRequestRespondWithObserver::OnResponseFulfilled(
     return;
   }
 
-  if (response->details().IsNull() || !response->details().IsObject() ||
-      response->details().IsEmpty()) {
-    BlankResponseWithError(
-        PaymentEventResponseType::PAYMENT_DETAILS_NOT_OBJECT);
-    return;
-  }
-
   v8::Local<v8::String> details_value;
   if (!v8::JSON::Stringify(script_state->GetContext(),
-                           response->details().V8Value().As<v8::Object>())
+                           response->details().V8Object())
            .ToLocal(&details_value)) {
     GetExecutionContext()->AddConsoleMessage(
         MakeGarbageCollected<ConsoleMessage>(

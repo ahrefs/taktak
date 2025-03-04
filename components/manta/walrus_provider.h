@@ -31,6 +31,14 @@ namespace manta {
 // `IdentityManager` destruction.
 class COMPONENT_EXPORT(MANTA) WalrusProvider : virtual public BaseProvider {
  public:
+  // Enum for different image types used in Walrus requests.
+  enum class ImageType {
+    kInputImage,
+    kOutputImage,
+    kGeneratedRegion,
+    kGeneratedRegionOutpainting,
+  };
+
   // Returns a `WalrusProvider` instance tied to the profile of the passed
   // arguments.
   WalrusProvider(
@@ -52,6 +60,14 @@ class COMPONENT_EXPORT(MANTA) WalrusProvider : virtual public BaseProvider {
                       const std::vector<std::vector<uint8_t>>& images,
                       MantaGenericCallback done_callback);
 
+  // Filters the given `text_prompt` and `images`. The `image_types` vector
+  // specifies the type of each image in the `images` vector.
+  // The sizes of `images` and `image_types` must match.
+  virtual void Filter(const std::optional<std::string>& text_prompt,
+                      const std::vector<std::vector<uint8_t>>& images,
+                      const std::vector<ImageType>& image_types,
+                      MantaGenericCallback done_callback);
+
   // Filters the given `text_prompt`.
   virtual void Filter(const std::string text_prompt,
                       MantaGenericCallback done_callback);
@@ -63,6 +79,10 @@ class COMPONENT_EXPORT(MANTA) WalrusProvider : virtual public BaseProvider {
 
  private:
   friend class FakeWalrusProvider;
+
+  std::optional<std::vector<uint8_t>> DownscaleImageIfNeeded(
+      const std::vector<uint8_t>& image_bytes,
+      int32_t max_pixels_after_resizing);
 
   base::WeakPtrFactory<WalrusProvider> weak_ptr_factory_{this};
 };

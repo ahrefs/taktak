@@ -4,7 +4,7 @@
 
 #include "ash/lobster/lobster_metrics_recorder.h"
 
-#include "ash/lobster/lobster_metrics_state_enums.h"
+#include "ash/public/cpp/lobster/lobster_metrics_state_enums.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/task_environment.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -36,9 +36,9 @@ INSTANTIATE_TEST_SUITE_P(
         LobsterMetricState::kRightClickTriggerImpression,
         LobsterMetricState::kRightClickTriggerFired,
         LobsterMetricState::kRightClickTriggerNeedsConsent,
-        LobsterMetricState::kPickerTriggerImpression,
-        LobsterMetricState::kPickerTriggerFired,
-        LobsterMetricState::kPickerTriggerNeedsConsent,
+        LobsterMetricState::kQuickInsertTriggerImpression,
+        LobsterMetricState::kQuickInsertTriggerFired,
+        LobsterMetricState::kQuickInsertTriggerNeedsConsent,
         LobsterMetricState::kConsentScreenImpression,
         LobsterMetricState::kConsentAccepted,
         LobsterMetricState::kConsentRejected,

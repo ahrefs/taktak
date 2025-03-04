@@ -33,13 +33,16 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/page.h"
 #include "content/public/browser/page_navigator.h"
+#include "content/public/browser/prefetch_handle.h"
 #include "content/public/browser/preloading.h"
 #include "content/public/browser/preloading_trigger_type.h"
 #include "content/public/browser/prerender_handle.h"
 #include "content/public/browser/save_page_type.h"
 #include "content/public/browser/visibility.h"
+#include "content/public/browser/web_contents_capability_type.h"
 #include "content/public/common/stop_find_action.h"
 #include "net/base/network_handle.h"
+#include "net/http/http_request_headers.h"
 #include "services/network/public/mojom/web_sandbox_flags.mojom-shared.h"
 #include "third_party/blink/public/mojom/favicon/favicon_url.mojom-forward.h"
 #include "third_party/blink/public/mojom/frame/find_in_page.mojom-forward.h"
@@ -73,12 +76,13 @@ namespace web_pref {
 struct WebPreferences;
 }
 class WebInputEvent;
+struct Impression;
 struct UserAgentOverride;
 struct RendererPreferences;
 }  // namespace blink
 
 namespace cc {
-struct BrowserControlsOffsetTagsInfo;
+struct BrowserControlsOffsetTagModifications;
 }  // namespace cc
 
 namespace device {
@@ -88,8 +92,9 @@ class WakeLockContext;
 }  // namespace device
 
 namespace net {
+class HttpNoVarySearchData;
 struct LoadStateWithParam;
-}
+}  // namespace net
 
 namespace service_manager {
 class InterfaceProvider;
@@ -108,6 +113,7 @@ namespace content {
 class BackForwardTransitionAnimationManager;
 class BrowserContext;
 class BrowserPluginGuestDelegate;
+class GuestPageHolder;
 class RenderFrameHost;
 class RenderViewHost;
 class RenderWidgetHostView;
@@ -674,11 +680,10 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
   virtual void UpdateTitleForEntry(NavigationEntry* entry,
                                    const std::u16string& title) = 0;
 
-  // Returns app title of the current navigation entry. The apptitle is
-  // an alternative title text that can be used by app windows.
-  // See
+  // Returns application title of the current navigation entry. The application
+  // title is an alternative title text that can be used by app windows. See
   // https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/main/DocumentSubtitle/explainer.md
-  virtual const std::optional<std::u16string>& GetAppTitle() = 0;
+  virtual const std::optional<std::u16string>& GetApplicationTitle() = 0;
 
   // Returns the SiteInstance associated with the current page.
   virtual SiteInstance* GetSiteInstance() = 0;
@@ -812,25 +817,10 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
   // Returns true if the audio is currently audible.
   virtual bool IsCurrentlyAudible() = 0;
 
-  // Indicates whether any frame in the WebContents is connected to a Bluetooth
-  // Device.
-  virtual bool IsConnectedToBluetoothDevice() = 0;
-
-  // Indicates whether any frame in the WebContents is scanning for Bluetooth
-  // devices.
-  virtual bool IsScanningForBluetoothDevices() = 0;
-
-  // Indicates whether any frame in the WebContents is connected to a serial
-  // port.
-  virtual bool IsConnectedToSerialPort() = 0;
-
-  // Indicates whether any frame in the WebContents is connected to a HID
-  // device.
-  virtual bool IsConnectedToHidDevice() = 0;
-
-  // Indicates whether any frame in the WebContents is connected to a USB
-  // device.
-  virtual bool IsConnectedToUsbDevice() = 0;
+  // Indicates whether any frame in the WebContents is connected to anything in
+  // the WebContentsCapabilityType enum.
+  virtual bool IsCapabilityActive(
+      WebContentsCapabilityType capability_type) = 0;
 
   // Indicates whether any frame in the WebContents has File System Access
   // handles.
@@ -926,6 +916,19 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
       RenderFrameHost* render_frame_host,
       bool is_full_page) = 0;
 
+  // Attaches `guest_page` to the container frame `outer_render_frame_host`,
+  // which must be in a FrameTree for this WebContents. Note:
+  // `outer_render_frame_host` will be swapped out and destroyed during the
+  // process. Generally a frame same-process with its parent is the right choice
+  // but ideally it should be "about:blank" to avoid problems with beforeunload.
+  // To ensure sane usage of this API users first should call the async API
+  // RenderFrameHost::PrepareForInnerWebContentsAttach first.
+  // TODO(crbug.com/40202416): This method is the MPArch equivalent of
+  // `AttachInnerWebContents`. Once `features::kGuestViewMPArch` ships,
+  // `AttachInnerWebContents` will be removable.
+  virtual void AttachGuestPage(std::unique_ptr<GuestPageHolder> guest_page,
+                               RenderFrameHost* outer_render_frame_host) = 0;
+
   // Returns whether this WebContents is an inner WebContents for a guest.
   // Important: please avoid using this in new callsites, and use
   // GetOuterWebContents instead.
@@ -1018,7 +1021,9 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
   virtual void ReplaceMisspelling(const std::u16string& word) = 0;
 
   // Let the renderer know that the menu has been closed.
-  virtual void NotifyContextMenuClosed(const GURL& link_followed) = 0;
+  virtual void NotifyContextMenuClosed(
+      const GURL& link_followed,
+      const std::optional<blink::Impression>&) = 0;
 
   // Executes custom context menu action that was provided from Blink.
   virtual void ExecuteCustomContextMenuCommand(int action,
@@ -1309,7 +1314,7 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
   // This means if there's any value previously set through SetWebPreferences
   // which does not have special recomputation logic in either
   // WebContentsImpl::ComputeWebPreferences or
-  // ContentBrowserClient::OverrideWebkitPrefs, it will return back to its
+  // ContentBrowserClient::OverrideWebPreferences, it will return back to its
   // default value whenever this function is called.
   virtual void NotifyPreferencesChanged() = 0;
 
@@ -1322,7 +1327,7 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
   // be overridden. if there's any value previously set through
   // SetWebPreferences which does not have special recomputation logic in either
   // WebContentsImpl::ComputeWebPreferences or
-  // ContentBrowserClient::OverrideWebkitPrefs, it will return back to its
+  // ContentBrowserClient::OverrideWebPreferences, it will return back to its
   // default value, which might be different from the value we set it to here.
   // If you want to use this function outside of tests, consider adding
   // recomputation logic in either of those functions.
@@ -1445,6 +1450,7 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
       base::RepeatingCallback<bool(const blink::WebInputEvent&)>;
   [[nodiscard]] virtual ScopedIgnoreInputEvents IgnoreInputEvents(
       std::optional<WebInputEventAuditCallback> audit_callback) = 0;
+  virtual bool ShouldIgnoreInputEventsForTesting() = 0;
 
   // Returns the group id for all audio streams that correspond to a single
   // WebContents. This can be used to determine if a AudioOutputStream was
@@ -1488,8 +1494,8 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
       cc::BrowserControlsState constraints,
       cc::BrowserControlsState current,
       bool animate,
-      const std::optional<cc::BrowserControlsOffsetTagsInfo>&
-          offset_tags_info) = 0;
+      const std::optional<cc::BrowserControlsOffsetTagModifications>&
+          offset_tag_modifications) = 0;
 
   // Transmits data to V8CrowdsourcedCompileHintsConsumer in the renderer. The
   // data is a model describing which JavaScript functions on the page should be
@@ -1538,7 +1544,10 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
   //   request.
   // - `holdback_status_override` is used to override holdback status, if
   //   specified.
-  virtual void StartPrefetch(
+  //  - Returns `PrefetchHandle` to control prefetch resources. This can be
+  //    nullptr when this function can't add `PrefetchContainer` to
+  //    `PrefetchService`.
+  virtual std::unique_ptr<PrefetchHandle> StartPrefetch(
       const GURL& prefetch_url,
       bool use_prefetch_proxy,
       const blink::mojom::Referrer& referrer,
@@ -1565,8 +1574,11 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
       const GURL& prerendering_url,
       PreloadingTriggerType trigger_type,
       const std::string& embedder_histogram_suffix,
+      net::HttpRequestHeaders additional_headers,
+      std::optional<net::HttpNoVarySearchData> no_vary_search_hint,
       ui::PageTransition page_transition,
       bool should_warm_up_compositor,
+      bool should_prepare_paint_tree,
       PreloadingHoldbackStatus holdback_status_override,
       PreloadingAttempt* preloading_attempt,
       base::RepeatingCallback<bool(const GURL&,
@@ -1577,6 +1589,12 @@ class WebContents : public PageNavigator, public base::SupportsUserData {
 
   // Cancels all prerendering hosted on this WebContents.
   virtual void CancelAllPrerendering() = 0;
+
+  // Returns true when prerendering can be triggered by StartPrerendering()
+  // without hitting the number limit of running prerenders. When this returns
+  // false, an embedder is expected to cancel existing prerendering before
+  // starting a new one.
+  virtual bool IsAllowedToStartPrerendering() = 0;
 
   // May be called when the embedder believes that it is likely that the user
   // will perform a back navigation due to the trigger indicated by `predictor`

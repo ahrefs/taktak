@@ -30,7 +30,7 @@
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "ash/components/kcer/extra_instances.h"
+#include "chromeos/ash/components/kcer/extra_instances.h"
 #endif
 
 namespace {
@@ -71,7 +71,7 @@ CertificateManagerModel::CertInfo* GetCertInfoFromOrgGroupingMap(
 
 class CertificateManagerModelTest : public testing::Test {
  public:
-  CertificateManagerModelTest() {}
+  CertificateManagerModelTest() = default;
 
   CertificateManagerModelTest(const CertificateManagerModelTest&) = delete;
   CertificateManagerModelTest& operator=(const CertificateManagerModelTest&) =
@@ -239,8 +239,7 @@ class FakePolicyCertificateProvider : public ash::PolicyCertificateProvider {
   net::CertificateList GetAllAuthorityCertificates(
       const chromeos::onc::CertificateScope& scope) const override {
     // This function is not called by CertificateManagerModel.
-    NOTREACHED_IN_MIGRATION();
-    return net::CertificateList();
+    NOTREACHED();
   }
 
   net::CertificateList GetWebTrustedCertificates(
@@ -262,8 +261,7 @@ class FakePolicyCertificateProvider : public ash::PolicyCertificateProvider {
   const std::set<std::string>& GetExtensionIdsWithPolicyCertificates()
       const override {
     // This function is not called by CertificateManagerModel.
-    NOTREACHED_IN_MIGRATION();
-    return kNoExtensions;
+    NOTREACHED();
   }
 
   void SetPolicyProvidedCertificates(

@@ -141,6 +141,7 @@ void CloudPolicyClientRegistrationHelper::StartRegistrationWithOidcTokens(
     const std::string& client_id,
     const std::string& state,
     const base::TimeDelta& timeout_duration,
+    bool is_token_encrypted,
     CloudPolicyClient::ResultCallback callback) {
   DVLOG_POLICY(1, POLICY_AUTH)
       << "Starting profile registration with Oidc tokens";
@@ -158,7 +159,7 @@ void CloudPolicyClientRegistrationHelper::StartRegistrationWithOidcTokens(
 
   client_->RegisterWithOidcResponse(register_user, oauth_token, id_token,
                                     client_id, timeout_duration,
-                                    std::move(callback));
+                                    is_token_encrypted, std::move(callback));
 }
 
 void CloudPolicyClientRegistrationHelper::OnTokenFetched(
@@ -207,9 +208,7 @@ void CloudPolicyClientRegistrationHelper::OnGetUserInfoSuccess(
   // CloudPolicyClient and make requests to DMServer.
   if (client_->is_registered()) {
     // Client should not be registered yet.
-    NOTREACHED_IN_MIGRATION();
-    RequestCompleted();
-    return;
+    NOTREACHED();
   }
 
   // Kick off registration of the CloudPolicyClient with our newly minted
@@ -219,11 +218,6 @@ void CloudPolicyClientRegistrationHelper::OnGetUserInfoSuccess(
           registration_type_, enterprise_management::DeviceRegisterRequest::
                                   FLAVOR_USER_REGISTRATION),
       std::string() /* client_id */, oauth_access_token_);
-}
-
-void CloudPolicyClientRegistrationHelper::OnPolicyFetched(
-    CloudPolicyClient* client) {
-  // Ignored.
 }
 
 void CloudPolicyClientRegistrationHelper::OnRegistrationStateChanged(

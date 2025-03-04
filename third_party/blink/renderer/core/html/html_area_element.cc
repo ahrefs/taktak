@@ -29,7 +29,7 @@
 #include "third_party/blink/renderer/core/html_names.h"
 #include "third_party/blink/renderer/core/layout/hit_test_result.h"
 #include "third_party/blink/renderer/core/layout/layout_image.h"
-#include "third_party/blink/renderer/platform/graphics/path.h"
+#include "third_party/blink/renderer/platform/geometry/path.h"
 #include "third_party/blink/renderer/platform/transforms/affine_transform.h"
 
 namespace blink {
@@ -160,8 +160,7 @@ Path HTMLAreaElement::GetPath(const LayoutObject* container_object) const {
         }
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
     }
 
     // Cache the original path, not depending on containerObject.
@@ -185,10 +184,10 @@ HTMLImageElement* HTMLAreaElement::ImageElement() const {
   return nullptr;
 }
 
-bool HTMLAreaElement::IsKeyboardFocusable(
+bool HTMLAreaElement::IsKeyboardFocusableSlow(
     UpdateBehavior update_behavior) const {
   // Explicitly skip over the HTMLAnchorElementBase's keyboard focus behavior.
-  return Element::IsKeyboardFocusable(update_behavior);
+  return Element::IsKeyboardFocusableSlow(update_behavior);
 }
 
 FocusableState HTMLAreaElement::IsFocusableState(
@@ -208,7 +207,7 @@ bool HTMLAreaElement::IsFocusableStyle(UpdateBehavior update_behavior) const {
   }
   const ComputedStyle& style = layout_object->StyleRef();
   // TODO(crbug.com/40911863): Why is this not just image->IsFocusableStyle()?
-  return !style.IsInert() && style.UsedVisibility() == EVisibility::kVisible &&
+  return !style.IsInert() && style.Visibility() == EVisibility::kVisible &&
          Element::tabIndex() >= 0 &&
          SupportsFocus(update_behavior) != FocusableState::kNotFocusable;
 }
@@ -227,28 +226,6 @@ void HTMLAreaElement::SetFocused(bool should_be_focused,
   LayoutObject* layout_object = image_element->GetLayoutObject();
   if (auto* layout_image = DynamicTo<LayoutImage>(layout_object))
     layout_image->AreaElementFocusChanged(this);
-}
-
-Element* HTMLAreaElement::interestTargetElement() {
-  CHECK(RuntimeEnabledFeatures::HTMLInterestTargetAttributeEnabled());
-
-  if (!IsInTreeScope()) {
-    return nullptr;
-  }
-
-  return GetElementAttributeResolvingReferenceTarget(
-      html_names::kInteresttargetAttr);
-}
-
-AtomicString HTMLAreaElement::interestAction() const {
-  CHECK(RuntimeEnabledFeatures::HTMLInterestTargetAttributeEnabled());
-  const AtomicString& attribute_value =
-      FastGetAttribute(html_names::kInterestactionAttr);
-  if (attribute_value && !attribute_value.IsNull() &&
-      !attribute_value.empty()) {
-    return attribute_value;
-  }
-  return g_empty_atom;
 }
 
 void HTMLAreaElement::UpdateSelectionOnFocus(

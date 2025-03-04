@@ -14,8 +14,9 @@
 #include "chrome/test/base/ui_test_utils.h"
 #include "components/performance_manager/graph/page_node_impl.h"
 #include "components/performance_manager/performance_manager_impl.h"
+#include "components/performance_manager/public/graph/graph.h"
 #include "components/performance_manager/public/graph/page_node.h"
-#include "components/performance_manager/test_support/run_in_graph.h"
+#include "components/performance_manager/test_support/graph/mock_frame_node_observer.h"
 #include "content/public/test/back_forward_cache_util.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/prerender_test_util.h"
@@ -46,16 +47,13 @@ class FrameNodeImplBrowserTest : public InProcessBrowserTest {
 // Templated PassToGraph helper that also returns a pointer to the object.
 template <typename DerivedType>
 DerivedType* PassToPMGraph(std::unique_ptr<DerivedType> graph_owned) {
-  DerivedType* object = graph_owned.get();
-  PerformanceManagerImpl::PassToGraph(FROM_HERE, std::move(graph_owned));
-  return object;
+  return PerformanceManager::GetGraph()->PassToGraph(std::move(graph_owned));
 }
 
 // A FrameNodeObserver that allows waiting until a frame's viewport intersection
 // state is initialized to a set value.
-class ViewportIntersectionStateChangedObserver
-    : public GraphOwned,
-      public FrameNode::ObserverDefaultImpl {
+class ViewportIntersectionStateChangedObserver : public GraphOwned,
+                                                 public FrameNodeObserver {
  public:
   // Needed to filter OnIntersectsViewportChanged() notifications for frames
   // that aren't under test. Since the frame node does not exist before the
@@ -121,10 +119,8 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest,
         return frame_node->GetParentFrameNode() == main_frame_node;
       });
   base::RunLoop run_loop;
-  PerformanceManagerImpl::PassToGraph(
-      FROM_HERE,
-      std::make_unique<ViewportIntersectionStateChangedObserver>(
-          std::move(frame_node_matcher), false, run_loop.QuitClosure()));
+  PassToPMGraph(std::make_unique<ViewportIntersectionStateChangedObserver>(
+      std::move(frame_node_matcher), false, run_loop.QuitClosure()));
 
   // Navigate.
   const GURL main_frame_url(
@@ -152,10 +148,8 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest, ViewportIntersection_Hidden) {
         return frame_node->GetParentFrameNode() == main_frame_node;
       });
   base::RunLoop run_loop;
-  PerformanceManagerImpl::PassToGraph(
-      FROM_HERE,
-      std::make_unique<ViewportIntersectionStateChangedObserver>(
-          std::move(frame_node_matcher), false, run_loop.QuitClosure()));
+  PassToPMGraph(std::make_unique<ViewportIntersectionStateChangedObserver>(
+      std::move(frame_node_matcher), false, run_loop.QuitClosure()));
 
   // Navigate.
   const GURL main_frame_url(
@@ -184,10 +178,8 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest,
         return frame_node->GetParentFrameNode() == main_frame_node;
       });
   base::RunLoop run_loop;
-  PerformanceManagerImpl::PassToGraph(
-      FROM_HERE,
-      std::make_unique<ViewportIntersectionStateChangedObserver>(
-          std::move(frame_node_matcher), true, run_loop.QuitClosure()));
+  PassToPMGraph(std::make_unique<ViewportIntersectionStateChangedObserver>(
+      std::move(frame_node_matcher), true, run_loop.QuitClosure()));
 
   // Navigate.
   const GURL main_frame_url(
@@ -215,10 +207,8 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest, ViewportIntersection_Scaled) {
         return frame_node->GetParentFrameNode() == main_frame_node;
       });
   base::RunLoop run_loop;
-  PerformanceManagerImpl::PassToGraph(
-      FROM_HERE,
-      std::make_unique<ViewportIntersectionStateChangedObserver>(
-          std::move(frame_node_matcher), true, run_loop.QuitClosure()));
+  PassToPMGraph(std::make_unique<ViewportIntersectionStateChangedObserver>(
+      std::move(frame_node_matcher), true, run_loop.QuitClosure()));
 
   // Navigate.
   const GURL main_frame_url(
@@ -246,10 +236,8 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest, ViewportIntersection_Rotated) {
         return frame_node->GetParentFrameNode() == main_frame_node;
       });
   base::RunLoop run_loop;
-  PerformanceManagerImpl::PassToGraph(
-      FROM_HERE,
-      std::make_unique<ViewportIntersectionStateChangedObserver>(
-          std::move(frame_node_matcher), true, run_loop.QuitClosure()));
+  PassToPMGraph(std::make_unique<ViewportIntersectionStateChangedObserver>(
+      std::move(frame_node_matcher), true, run_loop.QuitClosure()));
 
   // Navigate.
   const GURL main_frame_url(
@@ -261,21 +249,9 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest, ViewportIntersection_Rotated) {
   run_loop.Run();
 }
 
-// For the following tests, listen to OnHadFormInteractionChanged() to ensure
-// that the DocumentCoordinationUnit interface is correctly bound.
-class MockFrameNodeObserver : public FrameNode::ObserverDefaultImpl {
- public:
-  MockFrameNodeObserver() = default;
-  ~MockFrameNodeObserver() override = default;
-
-  // FrameNodeObserver:
-  MOCK_METHOD(void,
-              OnHadFormInteractionChanged,
-              (const FrameNode* frame_node),
-              (override));
-};
-
-IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest, Bind_SimpleNavigation) {
+// TODO(https://crbug.com/376315752): Deflake and re-enable.
+IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest,
+                       DISABLED_Bind_SimpleNavigation) {
   ASSERT_TRUE(embedded_test_server()->Start());
   EXPECT_EQ(1, browser()->tab_strip_model()->count());
 
@@ -288,12 +264,14 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest, Bind_SimpleNavigation) {
   EXPECT_EQ(rfh->GetLifecycleState(),
             content::RenderFrameHost::LifecycleState::kActive);
 
+  Graph* graph = PerformanceManager::GetGraph();
+
   // Get the frame's node.
 
   // Check that a form interaction notification is received through the bound
   // receiver.
   MockFrameNodeObserver obs;
-  RunInGraph([&](GraphImpl* graph) { graph->AddFrameNodeObserver(&obs); });
+  graph->AddFrameNodeObserver(&obs);
 
   base::RunLoop run_loop;
   EXPECT_CALL(obs, OnHadFormInteractionChanged(_)).WillOnce([&]() {
@@ -304,7 +282,7 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBrowserTest, Bind_SimpleNavigation) {
   run_loop.Run();
 
   // Clean up.
-  RunInGraph([&](GraphImpl* graph) { graph->RemoveFrameNodeObserver(&obs); });
+  graph->RemoveFrameNodeObserver(&obs);
 }
 
 class FrameNodeImplBackForwardCacheBrowserTest
@@ -346,10 +324,12 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBackForwardCacheBrowserTest,
   EXPECT_EQ(rfh->GetLifecycleState(),
             content::RenderFrameHost::LifecycleState::kActive);
 
+  Graph* graph = PerformanceManager::GetGraph();
+
   // Check that a form interaction notification is received through the bound
   // receiver.
-  MockFrameNodeObserver obs;
-  RunInGraph([&](GraphImpl* graph) { graph->AddFrameNodeObserver(&obs); });
+  LenientMockFrameNodeObserver obs;
+  graph->AddFrameNodeObserver(&obs);
 
   base::RunLoop run_loop;
   EXPECT_CALL(obs, OnHadFormInteractionChanged(_)).WillOnce([&]() {
@@ -363,7 +343,7 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplBackForwardCacheBrowserTest,
   run_loop.Run();
 
   // Clean up.
-  RunInGraph([&](GraphImpl* graph) { graph->RemoveFrameNodeObserver(&obs); });
+  graph->RemoveFrameNodeObserver(&obs);
 }
 
 class FrameNodeImplPrerenderBrowserTest : public FrameNodeImplBrowserTest {
@@ -413,10 +393,12 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplPrerenderBrowserTest,
   EXPECT_EQ(prerender_rfh->GetLifecycleState(),
             content::RenderFrameHost::LifecycleState::kActive);
 
+  Graph* graph = PerformanceManager::GetGraph();
+
   // Check that a form interaction notification is received through the bound
   // receiver.
   MockFrameNodeObserver obs;
-  RunInGraph([&](GraphImpl* graph) { graph->AddFrameNodeObserver(&obs); });
+  graph->AddFrameNodeObserver(&obs);
 
   base::RunLoop run_loop;
   EXPECT_CALL(obs, OnHadFormInteractionChanged(_)).WillOnce([&]() {
@@ -430,7 +412,7 @@ IN_PROC_BROWSER_TEST_F(FrameNodeImplPrerenderBrowserTest,
   run_loop.Run();
 
   // Clean up.
-  RunInGraph([&](GraphImpl* graph) { graph->RemoveFrameNodeObserver(&obs); });
+  graph->RemoveFrameNodeObserver(&obs);
 }
 
 }  // namespace performance_manager

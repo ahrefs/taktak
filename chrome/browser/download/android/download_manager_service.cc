@@ -4,6 +4,7 @@
 
 #include "chrome/browser/download/android/download_manager_service.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 
@@ -14,7 +15,6 @@
 #include "base/functional/bind.h"
 #include "base/location.h"
 #include "base/metrics/field_trial_params.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/time/default_clock.h"
@@ -64,10 +64,6 @@ namespace {
 
 // The remaining time for a download item if it cannot be calculated.
 constexpr int64_t kUnknownRemainingTime = -1;
-
-// Finch flag for controlling auto resumption limit.
-int kDefaultAutoResumptionLimit = 5;
-const char kAutoResumptionLimitParamName[] = "AutoResumptionLimit";
 
 bool ShouldShowDownloadItem(download::DownloadItem* item) {
   return !item->IsTemporary() && !item->IsTransient();
@@ -170,7 +166,8 @@ ScopedJavaLocalRef<jobject> DownloadManagerService::CreateJavaDownloadInfo(
       item->IsDangerous(),
       static_cast<int>(
           OfflineItemUtils::ConvertDownloadInterruptReasonToFailState(
-              item->GetLastReason())));
+              item->GetLastReason())),
+      item->IsTransient());
 }
 
 static jlong JNI_DownloadManagerService_Init(JNIEnv* env,
@@ -184,7 +181,7 @@ static jlong JNI_DownloadManagerService_Init(JNIEnv* env,
 DownloadManagerService::DownloadManagerService()
     : is_manager_initialized_(false), is_pending_downloads_loaded_(false) {}
 
-DownloadManagerService::~DownloadManagerService() {}
+DownloadManagerService::~DownloadManagerService() = default;
 
 void DownloadManagerService::Init(JNIEnv* env,
                                   jobject obj,
@@ -539,8 +536,7 @@ void DownloadManagerService::EnqueueDownloadAction(
       iter->second = download_action;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 
@@ -575,8 +571,8 @@ void DownloadManagerService::OnPendingDownloadsLoaded() {
   is_pending_downloads_loaded_ = true;
 
   auto result =
-      base::ranges::find_if_not(coordinators_, &ProfileKey::IsOffTheRecord,
-                                &Coordinators::value_type::first);
+      std::ranges::find_if_not(coordinators_, &ProfileKey::IsOffTheRecord,
+                               &Coordinators::value_type::first);
   CHECK(result != coordinators_.end())
       << "A non-OffTheRecord coordinator should exist when "
          "OnPendingDownloadsLoaded is triggered.";
@@ -606,8 +602,7 @@ void DownloadManagerService::OnPendingDownloadsLoaded() {
         CancelDownloadInternal(download_guid, profile_key);
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
     }
   }
   pending_actions_.clear();
@@ -711,15 +706,4 @@ jboolean JNI_DownloadManagerService_IsSupportedMimeType(
     JNIEnv* env,
     std::string& mime_type) {
   return blink::IsSupportedMimeType(mime_type);
-}
-
-// static
-jint JNI_DownloadManagerService_GetAutoResumptionLimit(JNIEnv* env) {
-  std::string value = base::GetFieldTrialParamValueByFeature(
-      chrome::android::kDownloadAutoResumptionThrottling,
-      kAutoResumptionLimitParamName);
-  int auto_resumption_limit;
-  return base::StringToInt(value, &auto_resumption_limit)
-             ? auto_resumption_limit
-             : kDefaultAutoResumptionLimit;
 }

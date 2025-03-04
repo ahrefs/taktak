@@ -73,6 +73,7 @@
 <translation id="1577977504532381335">Beheerdersbeleid bekijken</translation>
 <translation id="158849752021629804">Thuisnetwerk vereist</translation>
 <translation id="1589128298353575783"><ph name="NUMBER_OF_PB" /> PB</translation>
+<translation id="1601786938618212857">Zip</translation>
 <translation id="1620510694547887537">Camera</translation>
 <translation id="162175252992296058">Portugees met Amerikaans toetsenbord (internationaal)</translation>
 <translation id="1629521517399325891">Het gebruikerscertificaat is niet beschikbaar voor netwerkverificatie.</translation>
@@ -367,7 +368,7 @@
 <translation id="3901991538546252627">Verbinding maken met <ph name="NAME" /></translation>
 <translation id="3906232975181435906">Mobiel profiel installeren, netwerk <ph name="NETWORK_INDEX" /> van <ph name="NETWORK_COUNT" />, <ph name="NETWORK_NAME" /></translation>
 <translation id="3924145049010392604">Meta</translation>
-<translation id="3943857333388298514">Plak</translation>
+<translation id="3943857333388298514">Plakken</translation>
 <translation id="3950820424414687140">Inloggen</translation>
 <translation id="3952872973865944257">Telugu (fonetisch)</translation>
 <translation id="3958548648197196644">Kiwi</translation>
@@ -394,7 +395,6 @@
 <translation id="4179621117429069925">Dit item staat in je prullenbak</translation>
 <translation id="4186579485882418952">Offline aanzetten</translation>
 <translation id="4193154014135846272">Google-document</translation>
-<translation id="4197674956721858839">Geselecteerde bestanden toevoegen aan zip-bestand</translation>
 <translation id="4202378258276439759">Spaans (Latijns-Amerika)</translation>
 <translation id="4202977638116331303">Georgisch</translation>
 <translation id="421017592316736757">Je moet online zijn om dit bestand te openen.</translation>
@@ -422,6 +422,7 @@
 <translation id="4387004326333427325">Verificatiecertificaat afgewezen op afstand</translation>
 <translation id="4394214039309501350">Externe link</translation>
 <translation id="4394980935660306080">Eerder deze week</translation>
+<translation id="4397435965699247285">OneDrive is niet beschikbaar als je offline bent</translation>
 <translation id="4398096759193130964">Herstel de items of sleep ze naar een nieuwe map buiten de prullenbak</translation>
 <translation id="4401287888955153199">Alles uitpakken</translation>
 <translation id="4410695710508688828">Bewerking voor uitpakken is mislukt. <ph name="ERROR_MESSAGE" /></translation>
@@ -664,7 +665,7 @@
 <translation id="6096979789310008754">Zoektekst is gewist. Alle bestanden en mappen worden getoond.</translation>
 <translation id="610101264611565198"><ph name="FILE_NAME" /> verplaatsen naar <ph name="FOLDER_NAME" /></translation>
 <translation id="61118516107968648">Csv-tekst</translation>
-<translation id="6129953537138746214">Spatie</translation>
+<translation id="6129953537138746214">Spatiebalk</translation>
 <translation id="6133173853026656527"><ph name="FILE_NAME" /> verplaatsen...</translation>
 <translation id="6133877453787250710">De beheerder checkt het volgende:</translation>
 <translation id="613750717151263950">Japans met Amerikaans toetsenbord</translation>
@@ -875,7 +876,7 @@
 <translation id="7707941139430559579">Kan bestand niet verplaatsen. <ph name="ERROR_MESSAGE" /></translation>
 <translation id="7708271999969613024">Als je dit netwerk wilt gebruiken, moet je de 8-cijferige pukcode opgeven die je van je provider hebt gekregen.</translation>
 <translation id="7711920809702896782">Afbeeldingsgegevens</translation>
-<translation id="7724603315864178912">Knip</translation>
+<translation id="7724603315864178912">Knippen</translation>
 <translation id="7732111077498238432">Netwerk wordt beheerd op basis van beleid</translation>
 <translation id="7736003208887389532">Deze bestanden definitief verwijderen?</translation>
 <translation id="7740287852186792672">Zoekresultaten</translation>

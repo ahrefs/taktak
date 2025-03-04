@@ -745,8 +745,7 @@ bool EventDeviceInfo::HasDirect() const {
       return false;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 bool EventDeviceInfo::HasPointer() const {
@@ -765,8 +764,7 @@ bool EventDeviceInfo::HasPointer() const {
       return false;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 bool EventDeviceInfo::HasStylus() const {
@@ -985,14 +983,16 @@ ui::InputDeviceType EventDeviceInfo::GetInputDeviceTypeFromId(input_id id) {
       {0x18d1, 0x505B},  // Google, Duck PID (quackingstick)
       {0x18d1, 0x5061},  // Google, Jewel PID (starmie)
       {0x18d1, 0x5067},  // Google, Spikyrock (wugtrio)
+      {0x18d1, 0x5074},  // Google, Whitebeard (wyrdeer)
       {0x1fd2, 0x8103},  // LG, Internal TouchScreen PID
   };
 
   if (id.bustype == BUS_USB) {
     for (size_t i = 0; i < std::size(kUSBInternalDevices); ++i) {
       if (id.vendor == kUSBInternalDevices[i].vid &&
-          id.product == kUSBInternalDevices[i].pid)
+          id.product == kUSBInternalDevices[i].pid) {
         return InputDeviceType::INPUT_DEVICE_INTERNAL;
+      }
     }
   }
 

@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <string>
@@ -22,7 +23,6 @@
 #include "base/containers/span.h"
 #include "base/logging.h"
 #include "base/memory/raw_ptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/values.h"
 #include "v8/include/v8-array-buffer.h"
 #include "v8/include/v8-container.h"
@@ -351,8 +351,8 @@ v8::Local<v8::Value> V8ValueConverterImpl::ToArrayBuffer(
          isolate->GetCurrentContext());
   v8::Local<v8::ArrayBuffer> buffer =
       v8::ArrayBuffer::New(isolate, value.size());
-  base::ranges::copy(value,
-                     static_cast<uint8_t*>(buffer->GetBackingStore()->Data()));
+  std::ranges::copy(value,
+                    static_cast<uint8_t*>(buffer->GetBackingStore()->Data()));
   return buffer;
 }
 
@@ -421,7 +421,11 @@ std::unique_ptr<base::Value> V8ValueConverterImpl::FromV8ValueImpl(
     if (!reg_exp_allowed_)
       // JSON.stringify converts to an object.
       return FromV8Object(val.As<v8::Object>(), state, isolate);
-    return std::make_unique<base::Value>(*v8::String::Utf8Value(isolate, val));
+    auto utf8_value = v8::String::Utf8Value(isolate, val);
+    if (!*utf8_value) {
+      return FromV8Object(val.As<v8::Object>(), state, isolate);
+    }
+    return std::make_unique<base::Value>(*utf8_value);
   }
 
   // v8::Value doesn't have a ToArray() method for some reason.
@@ -514,7 +518,7 @@ std::unique_ptr<base::Value> V8ValueConverterImpl::FromV8ArrayBuffer(
     const auto* data = static_cast<const uint8_t*>(array_buffer->Data());
     const size_t byte_length = array_buffer->ByteLength();
     return base::Value::ToUniquePtrValue(
-        base::Value(base::make_span(data, byte_length)));
+        base::Value(base::span(data, byte_length)));
   }
   if (val->IsArrayBufferView()) {
     v8::Local<v8::ArrayBufferView> view = val.As<v8::ArrayBufferView>();
@@ -524,9 +528,7 @@ std::unique_ptr<base::Value> V8ValueConverterImpl::FromV8ArrayBuffer(
     return std::make_unique<base::Value>(std::move(buffer));
   }
 
-  NOTREACHED_IN_MIGRATION()
-      << "Only ArrayBuffer and ArrayBufferView should get here.";
-  return nullptr;
+  NOTREACHED() << "Only ArrayBuffer and ArrayBufferView should get here.";
 }
 
 std::unique_ptr<base::Value> V8ValueConverterImpl::FromV8Object(
@@ -583,11 +585,9 @@ std::unique_ptr<base::Value> V8ValueConverterImpl::FromV8Object(
     // Extend this test to cover more types as necessary and if sensible.
     if (!key->IsString() &&
         !key->IsNumber()) {
-      NOTREACHED_IN_MIGRATION()
-          << "Key \"" << *v8::String::Utf8Value(isolate, key)
-          << "\" "
-             "is neither a string nor a number";
-      continue;
+      NOTREACHED() << "Key \"" << *v8::String::Utf8Value(isolate, key)
+                   << "\" "
+                      "is neither a string nor a number";
     }
 
     v8::String::Utf8Value name_utf8(isolate, key);

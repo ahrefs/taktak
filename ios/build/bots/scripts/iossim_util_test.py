@@ -419,7 +419,8 @@ class GetiOSSimUtil(test_runner_test.TestCase):
     iossim_util.add_simulator_runtime(dmg_path)
 
     calls = [
-        mock.call(['xcrun', 'simctl', 'runtime', 'add', dmg_path]),
+        mock.call(['xcrun', 'simctl', 'runtime', 'add', dmg_path, '--verbose'],
+                  stderr=subprocess.STDOUT),
     ]
 
     check_output_mock.assert_has_calls(calls)
@@ -482,17 +483,6 @@ class GetiOSSimUtil(test_runner_test.TestCase):
       iossim_util.delete_least_recently_used_simulator_runtimes()
 
       self.assertEqual(mock_delete_simulator_runtime.call_count, 0)
-
-  def test_delete_other_ios18_runtimes(self, mock_get_simulator_runtime_list,
-                                       _):
-    mock_get_simulator_runtime_list.return_value = IOS18_RUNTIMES_LIST
-    with mock.patch('iossim_util.delete_simulator_runtime') \
-       as mock_delete_simulator_runtime:
-      iossim_util.delete_other_ios18_runtimes('22A5297f')
-
-      self.assertEqual(mock_delete_simulator_runtime.call_count, 1)
-      mock_delete_simulator_runtime.assert_has_calls(
-          [mock.call('222222', True)], any_order=True)
 
   def test_disable_hardware_keyboard(self, _, _2):
     """Ensures right commands are issued to disable hardware keyboard"""

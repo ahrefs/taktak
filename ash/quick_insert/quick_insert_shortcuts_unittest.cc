@@ -5,7 +5,6 @@
 #include "ash/quick_insert/quick_insert_shortcuts.h"
 
 #include "ash/constants/ash_features.h"
-#include "ash/constants/ash_switches.h"
 #include "ash/quick_insert/quick_insert_search_result.h"
 #include "ash/shell.h"
 #include "ash/test/ash_test_base.h"
@@ -34,7 +33,7 @@ TEST_F(QuickInsertShortcutsTest, GetsCapsLockShortcutWithSearchKey) {
   Shell::Get()->keyboard_capability()->SetKeyboardInfoForTesting(
       keyboard, std::move(keyboard_info));
 
-  EXPECT_EQ(GetPickerShortcutForCapsLock(),
+  EXPECT_EQ(GetQuickInsertShortcutForCapsLock(),
             QuickInsertCapsLockResult::Shortcut::kAltSearch);
 }
 
@@ -50,17 +49,12 @@ TEST_F(QuickInsertShortcutsTest, GetsCapsLockShortcutWithLauncherKey) {
   Shell::Get()->keyboard_capability()->SetKeyboardInfoForTesting(
       keyboard, std::move(keyboard_info));
 
-  EXPECT_EQ(GetPickerShortcutForCapsLock(),
+  EXPECT_EQ(GetQuickInsertShortcutForCapsLock(),
             QuickInsertCapsLockResult::Shortcut::kAltLauncher);
 }
 
 TEST_F(QuickInsertShortcutsTest, GetsCapsLockShortcutWithFnKey) {
   base::test::ScopedFeatureList scoped_feature_list(features::kModifierSplit);
-  base::AutoReset<bool> ignore_modifier_split_key =
-      switches::SetIgnoreModifierSplitSecretKeyForTest();
-  Shell::Get()
-      ->keyboard_capability()
-      ->ResetModifierSplitDogfoodControllerForTesting();
   ui::KeyboardDevice keyboard(/*id=*/1, ui::INPUT_DEVICE_INTERNAL,
                               /*name=*/"Keyboard1", /*has_assistant_key=*/true,
                               /*has_function_key=*/true);
@@ -73,8 +67,8 @@ TEST_F(QuickInsertShortcutsTest, GetsCapsLockShortcutWithFnKey) {
   Shell::Get()->keyboard_capability()->SetKeyboardInfoForTesting(
       keyboard, std::move(keyboard_info));
 
-  EXPECT_EQ(GetPickerShortcutForCapsLock(),
-            QuickInsertCapsLockResult::Shortcut::kFnRightAlt);
+  EXPECT_EQ(GetQuickInsertShortcutForCapsLock(),
+            QuickInsertCapsLockResult::Shortcut::kFnQuickInsert);
 }
 
 }  // namespace

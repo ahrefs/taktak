@@ -17,8 +17,8 @@
 #import "components/search_engines/template_url_service.h"
 #import "ios/chrome/browser/browsing_data/model/browsing_data_remove_mask.h"
 #import "ios/chrome/browser/browsing_data/model/browsing_data_remover.h"
-#import "ios/chrome/browser/shared/model/profile/profile_ios_forward.h"
 
+class ProfileIOS;
 @class WKWebView;
 
 class Browser;
@@ -47,10 +47,14 @@ class BrowsingDataRemoverImpl : public BrowsingDataRemover {
 
   // BrowsingDataRemover implementation.
   bool IsRemoving() const override;
+  // TODO(crbug.com/335387869): Consider deprecating this method after the Quick
+  // Delete is fully launched.
   void Remove(browsing_data::TimePeriod time_period,
               BrowsingDataRemoveMask remove_mask,
               base::OnceClosure callback,
               RemovalParams params = RemovalParams::Default()) override;
+  // `RemoveInRange` does not record metrics related to the time period deletion
+  // since it's triggered only with timestamps.
   void RemoveInRange(base::Time start_time,
                      base::Time end_time,
                      BrowsingDataRemoveMask mask,

@@ -16,6 +16,7 @@
 #include "chrome/browser/promos/promos_pref_names.h"
 #include "chrome/browser/promos/promos_types.h"
 #include "chrome/browser/promos/promos_utils.h"
+#include "chrome/browser/ui/color/chrome_color_id.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
 #include "chrome/browser/ui/views/page_action/page_action_icon_view.h"
@@ -26,6 +27,7 @@
 #include "components/feature_engagement/public/tracker.h"
 #include "components/prefs/pref_service.h"
 #include "components/qr_code_generator/bitmap_generator.h"
+#include "components/strings/grit/components_strings.h"
 #include "content/public/browser/page_navigator.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/models/dialog_model.h"
@@ -42,23 +44,24 @@
 #include "ui/views/widget/widget.h"
 
 namespace {
-// Get the correct Finch-paramed (or default) URL for the promo's QR code.
+// Get the correct URL for the promo's QR code.
 std::string GetIOSDesktopPromoQRCodeURL(IOSPromoType promo_type) {
   switch (promo_type) {
     case IOSPromoType::kPassword:
-      return features::kIOSPromoPasswordBubbleQRCodeURL.Get();
+      return IOSPromoConstants::kIOSPromoPasswordBubbleQRCodeURL;
     case IOSPromoType::kAddress:
-      return features::kIOSPromoAddressBubbleQRCodeURL.Get();
+      return IOSPromoConstants::kIOSPromoAddressBubbleQRCodeURL;
     case IOSPromoType::kPayment:
-      return features::kIOSPromoPaymentBubbleQRCodeURL.Get();
+      return IOSPromoConstants::kIOSPromoPaymentBubbleQRCodeURL;
   }
 }
 }  // namespace
 
 // Pointer to BubbleDialogDelegate instance.
-views::BubbleDialogDelegate* ios_promo_delegate_ = nullptr;
+views::BubbleDialogDelegate* IOSPromoBubble::ios_promo_delegate_ = nullptr;
+IOSPromoType IOSPromoBubble::current_promo_type_;
 
-class IOSPromoBubbleDelegate : public ui::DialogModelDelegate {
+class IOSPromoBubble::IOSPromoBubbleDelegate : public ui::DialogModelDelegate {
  public:
   IOSPromoBubbleDelegate(Profile* profile, IOSPromoType promo_type)
       : profile_(profile),
@@ -118,9 +121,10 @@ class IOSPromoBubbleDelegate : public ui::DialogModelDelegate {
   const promos_utils::IOSPromoPrefsConfig ios_promo_prefs_config_;
 };
 
+// static
 // CreateFooter creates the view that is inserted as footer to the bubble.
-std::unique_ptr<views::View> CreateFooter(
-    IOSPromoBubbleDelegate* bubble_delegate,
+std::unique_ptr<views::View> IOSPromoBubble::CreateFooter(
+    IOSPromoBubble::IOSPromoBubbleDelegate* bubble_delegate,
     const IOSPromoConstants::IOSPromoTypeConfigs& ios_promo_config) {
   views::LayoutProvider* provider = views::LayoutProvider::Get();
 
@@ -149,9 +153,9 @@ std::unique_ptr<views::View> CreateFooter(
           .SetBetweenChildSpacing(provider->GetDistanceMetric(
               views::DistanceMetric::DISTANCE_VECTOR_ICON_PADDING));
 
-  auto decline_button_callback =
-      base::BindRepeating(&IOSPromoBubbleDelegate::OnNoThanksButtonClicked,
-                          base::Unretained(bubble_delegate));
+  auto decline_button_callback = base::BindRepeating(
+      &IOSPromoBubble::IOSPromoBubbleDelegate::OnNoThanksButtonClicked,
+      base::Unretained(bubble_delegate));
 
   auto decline_button = views::Builder<views::MdTextButton>()
                             .SetText(l10n_util::GetStringUTF16(
@@ -164,7 +168,8 @@ std::unique_ptr<views::View> CreateFooter(
           .SetText(
               l10n_util::GetStringUTF16(ios_promo_config.promo_description_id))
           .SetTextContext(views::style::CONTEXT_BUBBLE_FOOTER)
-          .SetTextStyle(views::style::STYLE_DISABLED)
+          .SetTextStyle(views::style::STYLE_SECONDARY)
+          .SetEnabledColor(kColorDesktopToIOSPromoFooterSubtitleLabel)
           .SetMultiLine(true)
           .SetProperty(views::kFlexBehaviorKey,
                        views::FlexSpecification(
@@ -231,7 +236,7 @@ std::unique_ptr<views::View> CreateFooter(
   // can't result in input-too-long error or other errors).
   CHECK(qr_image.has_value());
 
-  image_view->SetImage(qr_image.value());
+  image_view->SetImage(ui::ImageModel::FromImageSkia(qr_image.value()));
 
   return built_footer_view;
 }
@@ -273,9 +278,9 @@ IOSPromoConstants::IOSPromoTypeConfigs IOSPromoBubble::SetUpBubble(
     case IOSPromoType::kPayment:
       // Set up iOS Payment Promo Bubble.
       ios_promo_config.bubble_title_id =
-          IDS_IOS_DESKTOP_PAYMENT_PROMO_BUBBLE_TITLE;
+          IDS_AUTOFILL_SAVE_CARD_CONFIRMATION_SUCCESS_TITLE_TEXT;
       ios_promo_config.bubble_subtitle_id =
-          IDS_IOS_DESKTOP_PAYMENT_PROMO_BUBBLE_SUBTITLE;
+          IDS_AUTOFILL_SAVE_CARD_CONFIRMATION_SUCCESS_DESCRIPTION_TEXT;
       ios_promo_config.promo_title_id =
           IDS_IOS_DESKTOP_PAYMENT_PROMO_BUBBLE_FOOTER_TITLE;
       ios_promo_config.promo_description_id =
@@ -328,6 +333,7 @@ void IOSPromoBubble::ShowPromoBubble(views::View* anchor_view,
       views::BubbleBorder::TOP_RIGHT);
 
   ios_promo_delegate_ = promo_bubble.get();
+  current_promo_type_ = promo_type;
 
   promo_bubble->SetHighlightedButton(highlighted_button);
   promo_bubble->SetFootnoteView(
@@ -336,6 +342,8 @@ void IOSPromoBubble::ShowPromoBubble(views::View* anchor_view,
   views::Widget* const widget =
       views::BubbleDialogDelegate::CreateBubble(std::move(promo_bubble));
   widget->Show();
+
+  highlighted_button->SetVisible(true);
 }
 
 // static
@@ -343,4 +351,13 @@ void IOSPromoBubble::Hide() {
   if (ios_promo_delegate_) {
     ios_promo_delegate_->GetWidget()->Close();
   }
+}
+
+// static
+bool IOSPromoBubble::IsPromoTypeVisible(IOSPromoType promo_type) {
+  if (!ios_promo_delegate_) {
+    return false;
+  }
+
+  return current_promo_type_ == promo_type;
 }

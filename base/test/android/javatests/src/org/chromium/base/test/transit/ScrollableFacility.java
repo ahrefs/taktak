@@ -37,7 +37,7 @@ import java.util.function.Function;
  *
  * @param <HostStationT> the type of host {@link Station} this is scoped to.
  */
-public abstract class ScrollableFacility<HostStationT extends Station>
+public abstract class ScrollableFacility<HostStationT extends Station<?>>
         extends Facility<HostStationT> {
 
     private ArrayList<Item<?>> mItems;
@@ -112,10 +112,11 @@ public abstract class ScrollableFacility<HostStationT extends Station>
         }
 
         /** Create a new item which transitions to a |DestinationStationT| when selected. */
-        public <DestinationStationT extends Station> Item<DestinationStationT> declareItemToStation(
-                Matcher<View> onScreenViewMatcher,
-                @Nullable Matcher<?> offScreenDataMatcher,
-                Callable<DestinationStationT> destinationStationFactory) {
+        public <DestinationStationT extends Station<?>>
+                Item<DestinationStationT> declareItemToStation(
+                        Matcher<View> onScreenViewMatcher,
+                        @Nullable Matcher<?> offScreenDataMatcher,
+                        Callable<DestinationStationT> destinationStationFactory) {
             var item =
                     new Item<DestinationStationT>(
                             onScreenViewMatcher,
@@ -197,7 +198,7 @@ public abstract class ScrollableFacility<HostStationT extends Station>
             return item;
         }
 
-        private static <HostStationT extends Station> Void unsupported(
+        private static <HostStationT extends Station<?>> Void unsupported(
                 ScrollableFacility<HostStationT>.ItemOnScreenFacility<Void> itemOnScreen) {
             // Selected an item created with newStubItem().
             // Use newItemToStation(), newItemToFacility() or newItem() to declare expected behavior
@@ -397,7 +398,7 @@ public abstract class ScrollableFacility<HostStationT extends Station>
                 List.of(this, itemOnScreenFacility), destination, item.getViewSpec()::click);
     }
 
-    private <DestinationStationT extends Station> DestinationStationT travelToStation(
+    private <DestinationStationT extends Station<?>> DestinationStationT travelToStation(
             Item<DestinationStationT> item,
             ItemOnScreenFacility<DestinationStationT> itemOnScreenFacility,
             Callable<DestinationStationT> destinationFactory) {
@@ -424,6 +425,7 @@ public abstract class ScrollableFacility<HostStationT extends Station>
     public class ItemOnScreenFacility<SelectReturnT> extends Facility<HostStationT> {
 
         protected final Item<SelectReturnT> mItem;
+        private ViewElement mViewElement;
 
         protected ItemOnScreenFacility(Item<SelectReturnT> item) {
             mItem = item;
@@ -431,7 +433,7 @@ public abstract class ScrollableFacility<HostStationT extends Station>
 
         @Override
         public void declareElements(Elements.Builder elements) {
-            elements.declareView(mItem.getViewSpec(), mItem.getViewElementOptions());
+            mViewElement = elements.declareView(mItem.getViewSpec(), mItem.getViewElementOptions());
         }
 
         /** Select the item and trigger its |selectHandler|. */
@@ -445,6 +447,8 @@ public abstract class ScrollableFacility<HostStationT extends Station>
 
             try {
                 return mItem.getSelectHandler().apply(this);
+            } catch (TravelException e) {
+                throw e;
             } catch (Exception e) {
                 throw TravelException.newTravelException("Select handler threw an exception:", e);
             }
@@ -458,6 +462,12 @@ public abstract class ScrollableFacility<HostStationT extends Station>
         /** Returns a {@link Transition.Trigger} to click the item. */
         public Transition.Trigger clickTrigger() {
             return getItem().getViewSpec()::click;
+        }
+
+        /** Returns the item rendered to an Android View. */
+        public View getView() {
+            assertSuppliersCanBeUsed();
+            return mViewElement.get();
         }
     }
 }

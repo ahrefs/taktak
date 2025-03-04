@@ -29,16 +29,13 @@ import org.chromium.chrome.browser.document.ChromeLauncherActivity;
 import org.chromium.chrome.browser.download.ChromeDownloadDelegate;
 import org.chromium.chrome.browser.ephemeraltab.EphemeralTabCoordinator;
 import org.chromium.chrome.browser.feature_engagement.TrackerFactory;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.incognito.IncognitoUtils;
 import org.chromium.chrome.browser.multiwindow.MultiWindowUtils;
 import org.chromium.chrome.browser.offlinepages.OfflinePageBridge;
 import org.chromium.chrome.browser.offlinepages.RequestCoordinatorBridge;
 import org.chromium.chrome.browser.profiles.Profile;
-import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.chrome.browser.tabmodel.document.ChromeAsyncTabLauncher;
-import org.chromium.chrome.browser.tasks.tab_management.TabGroupCreationDialogManager;
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.embedder_support.contextmenu.ContextMenuItemDelegate;
@@ -50,10 +47,7 @@ import org.chromium.content_public.browser.WebContents;
 import org.chromium.content_public.common.Referrer;
 import org.chromium.ui.base.Clipboard;
 import org.chromium.ui.base.PageTransition;
-import org.chromium.ui.modaldialog.ModalDialogManager;
 import org.chromium.url.GURL;
-
-import java.util.List;
 
 /**
  * A default {@link ContextMenuItemDelegate} that supports the context menu functionality in Tab.
@@ -66,8 +60,6 @@ public class TabContextMenuItemDelegate implements ContextMenuItemDelegate {
     private final Runnable mContextMenuCopyLinkObserver;
     private final Supplier<SnackbarManager> mSnackbarManagerSupplier;
     private final Supplier<BottomSheetController> mBottomSheetControllerSupplier;
-    private final Supplier<ModalDialogManager> mModalDialogManagerSupplier;
-    private final TabGroupCreationDialogManager mTabGroupCreationDialogManager;
 
     /** Builds a {@link TabContextMenuItemDelegate} instance. */
     public TabContextMenuItemDelegate(
@@ -77,8 +69,7 @@ public class TabContextMenuItemDelegate implements ContextMenuItemDelegate {
             Supplier<EphemeralTabCoordinator> ephemeralTabCoordinatorSupplier,
             Runnable contextMenuCopyLinkObserver,
             Supplier<SnackbarManager> snackbarManagerSupplier,
-            Supplier<BottomSheetController> bottomSheetControllerSupplier,
-            Supplier<ModalDialogManager> modalDialogManagerSupplier) {
+            Supplier<BottomSheetController> bottomSheetControllerSupplier) {
         mActivity = activity;
         mTab = (TabImpl) tab;
         mTabModelSelector = tabModelSelector;
@@ -86,12 +77,6 @@ public class TabContextMenuItemDelegate implements ContextMenuItemDelegate {
         mContextMenuCopyLinkObserver = contextMenuCopyLinkObserver;
         mSnackbarManagerSupplier = snackbarManagerSupplier;
         mBottomSheetControllerSupplier = bottomSheetControllerSupplier;
-        mModalDialogManagerSupplier = modalDialogManagerSupplier;
-        mTabGroupCreationDialogManager =
-                new TabGroupCreationDialogManager(
-                        activity,
-                        mModalDialogManagerSupplier.get(),
-                        /* onTabGroupCreation= */ null);
     }
 
     @Override
@@ -274,22 +259,11 @@ public class TabContextMenuItemDelegate implements ContextMenuItemDelegate {
         RecordUserAction.record("LinkOpenedInNewTab");
         LoadUrlParams loadUrlParams = new LoadUrlParams(url.getSpec());
         loadUrlParams.setReferrer(referrer);
-
-        TabGroupModelFilter filter =
-                mTabModelSelector.getTabGroupModelFilterProvider().getCurrentTabGroupModelFilter();
-        boolean willMergingCreateNewGroup = filter.willMergingCreateNewGroup(List.of(mTab));
         mTabModelSelector.openNewTab(
                 loadUrlParams,
                 TabLaunchType.FROM_LONGPRESS_BACKGROUND_IN_GROUP,
                 mTab,
                 isIncognito());
-
-        if (ChromeFeatureList.sTabGroupParityAndroid.isEnabled()
-                && willMergingCreateNewGroup
-                && !TabGroupCreationDialogManager.shouldSkipGroupCreationDialog(
-                        /* shouldShow= */ false)) {
-            mTabGroupCreationDialogManager.showDialog(mTab.getRootId(), filter);
-        }
     }
 
     /**
@@ -425,7 +399,7 @@ public class TabContextMenuItemDelegate implements ContextMenuItemDelegate {
      * @param linkUrl The URL to open.
      * @param isIncognito true if the {@code url} should be opened in a new incognito page.
      */
-    public void onOpenInNewChromeTabFromCCT(GURL linkUrl, boolean isIncognito) {
+    public void onOpenInNewChromeTabFromCct(GURL linkUrl, boolean isIncognito) {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(linkUrl.getSpec()));
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setClass(ContextUtils.getApplicationContext(), ChromeLauncherActivity.class);
@@ -453,7 +427,7 @@ public class TabContextMenuItemDelegate implements ContextMenuItemDelegate {
         // and so cannot handle data scheme view Intents. Use the browser backing the currently
         // running CCT.
         if (TextUtils.equals("data", url.getScheme())) {
-            onOpenInNewChromeTabFromCCT(url, false);
+            onOpenInNewChromeTabFromCct(url, false);
             return;
         }
 

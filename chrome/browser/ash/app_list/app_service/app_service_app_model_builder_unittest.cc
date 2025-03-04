@@ -26,7 +26,6 @@
 #include "chrome/browser/apps/icon_standardizer.h"
 #include "chrome/browser/ash/app_list/app_list_test_util.h"
 #include "chrome/browser/ash/app_list/chrome_app_list_item.h"
-#include "chrome/browser/ash/app_list/internal_app/internal_app_metadata.h"
 #include "chrome/browser/ash/app_list/md_icon_normalizer.h"
 #include "chrome/browser/ash/app_list/test/fake_app_list_model_updater.h"
 #include "chrome/browser/ash/app_list/test/test_app_list_controller_delegate.h"
@@ -220,9 +219,9 @@ class AppServiceAppModelBuilderTest : public AppListTestBase {
   void CreateBuilder(bool guest_mode) {
     ResetBuilder();  // Destroy any existing builder in the correct order.
 
-    app_service_test_.UninstallAllApps(profile());
-    testing_profile()->SetGuestSession(guest_mode);
-    app_service_test_.SetUp(profile());
+    app_service_test_.UninstallAllApps(GetAppServiceProfile());
+    SetGuestSessionOnProfile(guest_mode);
+    app_service_test_.SetUp(GetAppServiceProfile());
     // Wait for some default apps added to AppService.
     base::RunLoop().RunUntilIdle();
     model_updater_ = std::make_unique<FakeAppListModelUpdater>(
@@ -232,7 +231,7 @@ class AppServiceAppModelBuilderTest : public AppListTestBase {
     scoped_callback_ = std::make_unique<
         AppServiceAppModelBuilder::ScopedAppPositionInitCallbackForTest>(
         builder_.get(), base::BindRepeating(&InitAppPosition));
-    builder_->Initialize(nullptr, profile(), model_updater_.get());
+    builder_->Initialize(nullptr, GetAppServiceProfile(), model_updater_.get());
   }
 
   apps::AppServiceTest app_service_test_;
@@ -243,21 +242,6 @@ class AppServiceAppModelBuilderTest : public AppListTestBase {
   std::unique_ptr<FakeAppListModelUpdater> model_updater_;
   std::unique_ptr<test::TestAppListControllerDelegate> controller_;
   display::test::TestScreen test_screen_;
-};
-
-class BuiltInAppTest : public AppServiceAppModelBuilderTest {
- public:
-  // Don't call AppListTestBase::SetUp() - it's called from CreateBuilder().
-  void SetUp() override {}
-
- protected:
-  // Creates a new builder. Should be called only once for each test.
-  // Calls `AppListTestBase::SetUp()`.
-  void CreateBuilder(bool guest_mode) {
-    AppListTestBase::SetUp(guest_mode);
-    AppServiceAppModelBuilderTest::CreateBuilder(guest_mode);
-    RemoveApps(apps::AppType::kBuiltIn, profile(), model_updater_.get());
-  }
 };
 
 class ExtensionAppTest : public AppServiceAppModelBuilderTest {
@@ -273,11 +257,11 @@ class ExtensionAppTest : public AppServiceAppModelBuilderTest {
   // Creates a new builder, destroying any existing one.
   void CreateBuilder() {
     AppServiceAppModelBuilderTest::CreateBuilder(false /*guest_mode*/);
-    RemoveApps(apps::AppType::kChromeApp, testing_profile(),
+    RemoveApps(apps::AppType::kChromeApp, GetAppServiceProfile(),
                model_updater_.get());
   }
 
-  void GenerateExtensionAppIcon(const std::string app_id,
+  void GenerateExtensionAppIcon(const std::string& app_id,
                                 gfx::ImageSkia& output_image_skia) {
     extensions::ExtensionRegistry* registry =
         extensions::ExtensionRegistry::Get(profile());
@@ -296,8 +280,7 @@ class ExtensionAppTest : public AppServiceAppModelBuilderTest {
         apps::CreateStandardIconImage(image_future.Take().AsImageSkia());
   }
 
-  std::vector<uint8_t> GenerateExtensionAppCompressedIcon(
-      const std::string app_id) {
+  std::vector<uint8_t> GenerateExtensionAppCompressedIcon(std::string app_id) {
     gfx::ImageSkia image_skia;
     GenerateExtensionAppIcon(app_id, image_skia);
 
@@ -329,7 +312,8 @@ class WebAppBuilderTest : public AppServiceAppModelBuilderTest {
   // Creates a new builder, destroying any existing one.
   void CreateBuilder() {
     AppServiceAppModelBuilderTest::CreateBuilder(false /*guest_mode*/);
-    RemoveApps(apps::AppType::kWeb, testing_profile(), model_updater_.get());
+    RemoveApps(apps::AppType::kWeb, GetAppServiceProfile(),
+               model_updater_.get());
   }
 
   std::string CreateWebApp(const std::string& app_name) {
@@ -342,7 +326,8 @@ class WebAppBuilderTest : public AppServiceAppModelBuilderTest {
     web_app_info->user_display_mode =
         web_app::mojom::UserDisplayMode::kStandalone;
 
-    return web_app::test::InstallWebApp(profile(), std::move(web_app_info));
+    return web_app::test::InstallWebApp(GetAppServiceProfile(),
+                                        std::move(web_app_info));
   }
 
   void GenerateWebAppIcon(const std::string& app_id,
@@ -362,7 +347,7 @@ class WebAppBuilderTest : public AppServiceAppModelBuilderTest {
     }
 
     web_app::WebAppProvider* web_app_provider =
-        web_app::WebAppProvider::GetForTest(profile());
+        web_app::WebAppProvider::GetForTest(GetAppServiceProfile());
     ASSERT_TRUE(web_app_provider);
 
     base::test::TestFuture<std::map<web_app::SquareSizePx, SkBitmap>>
@@ -392,30 +377,6 @@ class WebAppBuilderTest : public AppServiceAppModelBuilderTest {
  private:
   base::test::ScopedCommandLine scoped_command_line_;
 };
-
-TEST_F(BuiltInAppTest, Build) {
-  // The internal apps list is provided by GetInternalAppList() in
-  // internal_app_metadata.cc. Only count the apps can display in launcher.
-  std::string built_in_apps_name;
-  CreateBuilder(false);
-  EXPECT_EQ(GetNumberOfInternalAppsShowInLauncherForTest(&built_in_apps_name,
-                                                         profile()),
-            model_updater_->ItemCount());
-  EXPECT_EQ(built_in_apps_name,
-            base::JoinString(GetModelContent(model_updater_.get()), ","));
-}
-
-TEST_F(BuiltInAppTest, BuildGuestMode) {
-  // The internal apps list is provided by GetInternalAppList() in
-  // internal_app_metadata.cc. Only count the apps can display in launcher.
-  std::string built_in_apps_name;
-  CreateBuilder(true);
-  EXPECT_EQ(GetNumberOfInternalAppsShowInLauncherForTest(&built_in_apps_name,
-                                                         profile()),
-            model_updater_->ItemCount());
-  EXPECT_EQ(built_in_apps_name,
-            base::JoinString(GetModelContent(model_updater_.get()), ","));
-}
 
 TEST_F(ExtensionAppTest, Build) {
   // The apps list would have 3 extension apps in the profile.
@@ -687,7 +648,7 @@ TEST_F(WebAppBuilderDemoModeTest, WebAppListOffline) {
 class CrostiniAppTest : public AppServiceAppModelBuilderTest {
  public:
   CrostiniAppTest() = default;
-  ~CrostiniAppTest() override {}
+  ~CrostiniAppTest() override = default;
 
   CrostiniAppTest(const CrostiniAppTest&) = delete;
   CrostiniAppTest& operator=(const CrostiniAppTest&) = delete;
@@ -697,7 +658,7 @@ class CrostiniAppTest : public AppServiceAppModelBuilderTest {
     ash::ConciergeClient::InitializeFake();
     ash::SeneschalClient::InitializeFake();
     AppServiceAppModelBuilderTest::SetUp();
-    test_helper_ = std::make_unique<CrostiniTestHelper>(testing_profile());
+    test_helper_ = std::make_unique<CrostiniTestHelper>(profile());
     test_helper_->ReInitializeAppServiceIntegration();
     CreateBuilder();
   }
@@ -789,14 +750,14 @@ TEST_F(CrostiniAppTest, EnableAndDisableCrostini) {
   ResetBuilder();
   test_helper_.reset();
   test_helper_ = std::make_unique<CrostiniTestHelper>(
-      testing_profile(), /*enable_crostini=*/false);
+      profile(), /*enable_crostini=*/false);
   CreateBuilder();
 
   EXPECT_EQ(0u, GetModelItemCount());
 
-  CrostiniTestHelper::EnableCrostini(testing_profile());
+  CrostiniTestHelper::EnableCrostini(profile());
   EXPECT_THAT(GetAllApps(), testing::IsEmpty());
-  CrostiniTestHelper::DisableCrostini(testing_profile());
+  CrostiniTestHelper::DisableCrostini(profile());
   EXPECT_THAT(GetAllApps(), testing::IsEmpty());
 }
 
@@ -898,7 +859,7 @@ TEST_F(CrostiniAppTest, DisableCrostini) {
   // to false, so we need to do that explicitly too.
   RegistryService()->ClearApplicationList(guest_os::VmType::TERMINA,
                                           crostini::kCrostiniDefaultVmName, "");
-  CrostiniTestHelper::DisableCrostini(testing_profile());
+  CrostiniTestHelper::DisableCrostini(profile());
   EXPECT_EQ(0u, GetModelItemCount());
 }
 

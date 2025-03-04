@@ -14,54 +14,48 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.text.TextUtils;
 
+import androidx.annotation.OptIn;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.VisibleForTesting;
+import androidx.browser.auth.AuthTabIntent;
+import androidx.browser.auth.ExperimentalAuthTab;
 import androidx.browser.customtabs.CustomTabsService;
 
 import org.chromium.base.CallbackController;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.metrics.RecordHistogram;
+import org.chromium.base.task.AsyncTask;
 import org.chromium.base.task.PostTask;
 import org.chromium.base.task.TaskTraits;
 import org.chromium.chrome.browser.browserservices.intents.BrowserServicesIntentDataProvider;
 import org.chromium.chrome.browser.browserservices.ui.controller.CurrentPageVerifier.VerificationStatus;
 import org.chromium.chrome.browser.browserservices.verification.ChromeOriginVerifier;
 import org.chromium.chrome.browser.browserservices.verification.ChromeOriginVerifierFactory;
-import org.chromium.chrome.browser.customtabs.BaseCustomTabActivity;
 import org.chromium.chrome.browser.customtabs.content.CustomTabActivityTabProvider;
-import org.chromium.chrome.browser.dependency_injection.ActivityScope;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.lifecycle.ActivityLifecycleDispatcher;
 import org.chromium.chrome.browser.lifecycle.DestroyObserver;
 import org.chromium.chrome.browser.lifecycle.NativeInitObserver;
 import org.chromium.components.embedder_support.util.Origin;
 import org.chromium.components.embedder_support.util.UrlConstants;
 import org.chromium.components.embedder_support.util.UrlUtilities;
-import org.chromium.components.externalauth.ExternalAuthUtils;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.url.GURL;
 
 import java.util.Map;
 
-import javax.inject.Inject;
-
 /**
  * Runs Digital Asset Link verification for AuthTab, returns as Activity result for the matching
  * redirect URL when navigated to it.
  */
-@ActivityScope
+@OptIn(markerClass = ExperimentalAuthTab.class)
 public class AuthTabVerifier implements NativeInitObserver, DestroyObserver {
-    // Value to return as activity result when the verification failed.
-    // TODO(358167556): Move this to AndroidX.
-    public static final int RESULT_VERIFICATION_FAILED = 2;
-    public static final int RESULT_VERIFICATION_TIMED_OUT = 3;
-
-    @VisibleForTesting static final long VERIFICATION_TIMEOUT_MS = 10000;
-
     private static boolean sDelayVerificationForTesting;
 
     private final Activity mActivity;
     private final ActivityLifecycleDispatcher mLifecycleDispatcher;
     private final BrowserServicesIntentDataProvider mIntentDataProvider;
+    private final CustomTabActivityTabProvider mTabProvider;
     private final String mRedirectHost;
     private final String mRedirectPath;
 
@@ -80,49 +74,64 @@ public class AuthTabVerifier implements NativeInitObserver, DestroyObserver {
     private Long mHttpsReturnAttemptTime;
     private CallbackController mCallbackController;
 
-    @Inject
     public AuthTabVerifier(
+            Activity activity,
             ActivityLifecycleDispatcher lifecycleDispatcher,
             BrowserServicesIntentDataProvider intentDataProvider,
-            ChromeOriginVerifierFactory originVerifierFactory,
-            BaseCustomTabActivity activity,
-            ExternalAuthUtils externalAuthUtils) {
+            CustomTabActivityTabProvider customTabActivityTabProvider) {
         mLifecycleDispatcher = lifecycleDispatcher;
         mIntentDataProvider = intentDataProvider;
+        mTabProvider = customTabActivityTabProvider;
         mActivity = activity;
-        mRedirectHost = intentDataProvider.getAuthRedirectHost();
-        mRedirectPath = intentDataProvider.getAuthRedirectPath();
+        mRedirectHost = mIntentDataProvider.getAuthRedirectHost();
+        mRedirectPath = mIntentDataProvider.getAuthRedirectPath();
         mLifecycleDispatcher.register(this);
 
-        // TODO(b/358167556): Do this in a background to avoid potential ANR from system IPC call.
-        mVerifiedByAndroid =
-                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
-                        && isApprovedDomain(mRedirectHost);
-        mStatus = mVerifiedByAndroid ? VerificationStatus.SUCCESS : VerificationStatus.PENDING;
-        mActivityResult = Activity.RESULT_OK;
+        mStatus = VerificationStatus.PENDING;
+        mVerifiedByAndroid = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            new AsyncTask<Boolean>() {
+                @Override
+                protected Boolean doInBackground() {
+                    return isApprovedDomain(mRedirectHost);
+                }
 
-        CustomTabActivityTabProvider tabProvider = activity.getCustomTabActivityTabProvider();
-        if (shouldRunOriginVerifier()) {
-            WebContents webContents =
-                    tabProvider.getTab() != null ? tabProvider.getTab().getWebContents() : null;
-            mOriginVerifier =
-                    originVerifierFactory.create(
-                            intentDataProvider.getClientPackageName(),
-                            CustomTabsService.RELATION_HANDLE_ALL_URLS,
-                            webContents,
-                            externalAuthUtils);
+                @Override
+                protected void onPostExecute(Boolean result) {
+                    mVerifiedByAndroid = result;
+                    if (result) mStatus = VerificationStatus.SUCCESS;
+                }
+            }.executeWithTaskTraits(TaskTraits.UI_DEFAULT);
         }
+        mActivityResult = AuthTabIntent.RESULT_OK;
+        maybeInitOriginVerifier();
     }
 
-    private boolean shouldRunOriginVerifier() {
+    private boolean maybeInitOriginVerifier() {
+        if (!shouldRunOriginVerifier()) return false;
+
+        if (mOriginVerifier == null) {
+            WebContents webContents =
+                    mTabProvider.getTab() != null ? mTabProvider.getTab().getWebContents() : null;
+            mOriginVerifier =
+                    ChromeOriginVerifierFactory.create(
+                            mIntentDataProvider.getClientPackageName(),
+                            CustomTabsService.RELATION_HANDLE_ALL_URLS,
+                            webContents);
+        }
+        return true;
+    }
+
+    @VisibleForTesting
+    boolean shouldRunOriginVerifier() {
         return !(mVerifiedByAndroid || mRedirectHost == null || mRedirectPath == null);
     }
 
     @Override
     public void onFinishNativeInitialization() {
-        if (!shouldRunOriginVerifier()) return;
-
         if (sDelayVerificationForTesting) return;
+
+        if (!maybeInitOriginVerifier()) return;
 
         // Start verification against the redirect URL
         Uri redirectUri =
@@ -137,10 +146,10 @@ public class AuthTabVerifier implements NativeInitObserver, DestroyObserver {
                     if (mDestroyed) return;
                     if (verified) {
                         mStatus = VerificationStatus.SUCCESS;
-                        mActivityResult = Activity.RESULT_OK;
+                        mActivityResult = AuthTabIntent.RESULT_OK;
                     } else {
                         mStatus = VerificationStatus.FAILURE;
-                        mActivityResult = RESULT_VERIFICATION_FAILED;
+                        mActivityResult = AuthTabIntent.RESULT_VERIFICATION_FAILED;
                     }
                     // Handles the case where the DAL response comes after the user initiates login.
                     if (mReturnUrl != null) {
@@ -224,7 +233,8 @@ public class AuthTabVerifier implements NativeInitObserver, DestroyObserver {
             PostTask.postDelayedTask(
                     TaskTraits.UI_DEFAULT,
                     mCallbackController.makeCancelable(this::returnTimeoutAsActivityResult),
-                    VERIFICATION_TIMEOUT_MS);
+                    ChromeFeatureList.sCctAuthTabEnableHttpsRedirectsVerificationTimeoutMs
+                            .getValue());
         }
     }
 
@@ -232,8 +242,8 @@ public class AuthTabVerifier implements NativeInitObserver, DestroyObserver {
         assert mStatus != VerificationStatus.PENDING : "Verification was not completed!";
         Intent intent = new Intent();
 
-        int resultCode = customScheme ? Activity.RESULT_OK : mActivityResult;
-        if (resultCode == Activity.RESULT_OK) {
+        int resultCode = customScheme ? AuthTabIntent.RESULT_OK : mActivityResult;
+        if (resultCode == AuthTabIntent.RESULT_OK) {
             intent.setData(Uri.parse(url.getSpec()));
         }
 
@@ -268,7 +278,7 @@ public class AuthTabVerifier implements NativeInitObserver, DestroyObserver {
 
     private void returnTimeoutAsActivityResult() {
         mStatus = VerificationStatus.FAILURE;
-        mActivityResult = RESULT_VERIFICATION_TIMED_OUT;
+        mActivityResult = AuthTabIntent.RESULT_VERIFICATION_TIMED_OUT;
         returnAsActivityResultInternal(GURL.emptyGURL(), false);
     }
 

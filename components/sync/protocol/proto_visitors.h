@@ -71,8 +71,8 @@
 
 // This file implements VisitProtoFields() functions for sync protos.
 //
-// VisitProtoFields(visitor, proto) calls |visitor| for each field in
-// |proto|. When called, |visitor| gets passed |proto|, field name and
+// VisitProtoFields(visitor, proto) calls `visitor` for each field in
+// `proto`. When called, `visitor` gets passed `proto`, field name and
 // field value.
 //
 // VisitProtoFields() used to implement two distinctive features:
@@ -130,7 +130,6 @@ VISIT_PROTO_FIELDS(const sync_pb::AppListSpecifics& proto) {
   VISIT(parent_id);
   VISIT(item_ordinal);
   VISIT(item_pin_ordinal);
-  VISIT(is_user_pinned);
   VISIT(promise_package_id);
 }
 
@@ -215,6 +214,8 @@ VISIT_PROTO_FIELDS(const sync_pb::AutofillProfileSpecifics& proto) {
   VISIT(profile_label);
   VISIT_REP(name_first);
   VISIT_REP(name_middle);
+  VISIT_REP(name_last_prefix);
+  VISIT_REP(name_last_core);
   VISIT_REP(name_last_first);
   VISIT_REP(name_last_conjunction);
   VISIT_REP(name_last_second);
@@ -223,11 +224,21 @@ VISIT_PROTO_FIELDS(const sync_pb::AutofillProfileSpecifics& proto) {
 
   VISIT_REP(name_first_status);
   VISIT_REP(name_middle_status);
+  VISIT_REP(name_last_prefix_status);
+  VISIT_REP(name_last_core_status);
   VISIT_REP(name_last_first_status);
   VISIT_REP(name_last_conjunction_status);
   VISIT_REP(name_last_second_status);
   VISIT_REP(name_last_status);
   VISIT_REP(name_full_status);
+
+  VISIT(alternative_full_name);
+  VISIT(alternative_given_name);
+  VISIT(alternative_family_name);
+
+  VISIT_ENUM(alternative_full_name_status);
+  VISIT_ENUM(alternative_given_name_status);
+  VISIT_ENUM(alternative_family_name_status);
 
   VISIT_REP(email_address);
   VISIT(company_name);
@@ -320,6 +331,17 @@ VISIT_PROTO_FIELDS(const sync_pb::AutofillWalletSpecifics& proto) {
   VISIT(customer_data);
   VISIT(cloud_token_data);
   VISIT(payment_instrument);
+  VISIT(payment_instrument_creation_option);
+}
+
+VISIT_PROTO_FIELDS(const sync_pb::BnplCreationOption& proto) {
+  VISIT(issuer_id);
+  VISIT_REP(eligible_price_range);
+}
+
+VISIT_PROTO_FIELDS(const sync_pb::BnplIssuerDetails& proto) {
+  VISIT(issuer_id);
+  VISIT_REP(eligible_price_range);
 }
 
 VISIT_PROTO_FIELDS(const sync_pb::BookmarkSpecifics& proto) {
@@ -388,10 +410,15 @@ VISIT_PROTO_FIELDS(const sync_pb::ContactInfoSpecifics& proto) {
   VISIT(name_first);
   VISIT(name_middle);
   VISIT(name_last);
+  VISIT(name_last_prefix);
+  VISIT(name_last_core);
   VISIT(name_last_first);
   VISIT(name_last_conjunction);
   VISIT(name_last_second);
   VISIT(name_full);
+  VISIT(alternative_full_name);
+  VISIT(alternative_given_name);
+  VISIT(alternative_family_name);
   VISIT(email_address);
   VISIT(company_name);
   VISIT(address_city);
@@ -420,6 +447,7 @@ VISIT_PROTO_FIELDS(const sync_pb::ContactInfoSpecifics& proto) {
   VISIT(address_overflow_and_landmark);
   VISIT(address_street_location_and_locality);
   VISIT(address_thoroughfare_number_and_apt);
+  VISIT(invisible_in_autofill);
 }
 
 VISIT_PROTO_FIELDS(const sync_pb::ContactInfoSpecifics::Observation& proto) {
@@ -614,6 +642,12 @@ VISIT_PROTO_FIELDS(const sync_pb::DeviceInfoSpecifics& proto) {
   VISIT_ENUM(device_form_factor);
 }
 
+VISIT_PROTO_FIELDS(const sync_pb::EligiblePriceRange& proto) {
+  VISIT(currency);
+  VISIT(min_price_in_micros);
+  VISIT(max_price_in_micros);
+}
+
 VISIT_PROTO_FIELDS(const sync_pb::FeatureSpecificFields& proto) {
   VISIT(send_tab_to_self_receiving_enabled);
   VISIT_ENUM(send_tab_to_self_receiving_type);
@@ -637,7 +671,7 @@ VISIT_PROTO_FIELDS(const sync_pb::PhoneAsASecurityKeySpecificFields& proto) {
   VISIT(id);
   VISIT_BYTES(peer_public_key_x962);
   VISIT_BYTES(google_credential_id);
-  // |secret| is deliberately omitted to avoid including sensitive information
+  // `secret` is deliberately omitted to avoid including sensitive information
   // in debugging output, which might be included in bug reports etc.
 }
 
@@ -678,10 +712,17 @@ VISIT_PROTO_FIELDS(const sync_pb::EntityMetadata& proto) {
 VISIT_PROTO_FIELDS(
     const sync_pb::EntityMetadata::CollaborationMetadata& proto) {
   VISIT(collaboration_id);
+  VISIT(creation_attribution);
+  VISIT(last_update_attribution);
+}
+
+VISIT_PROTO_FIELDS(
+    const sync_pb::EntityMetadata::CollaborationMetadata::Attribution& proto) {
+  VISIT(obfuscated_gaia_id);
 }
 
 VISIT_PROTO_FIELDS(const sync_pb::EntitySpecifics& proto) {
-  static_assert(53 == GetNumDataTypes(),
+  static_assert(54 == GetNumDataTypes(),
                 "When adding a new protocol type, you will likely need to add "
                 "it here as well.");
   VISIT(encrypted);
@@ -690,6 +731,7 @@ VISIT_PROTO_FIELDS(const sync_pb::EntitySpecifics& proto) {
   VISIT(app_setting);
   VISIT(arc_package);
   VISIT(autofill);
+  VISIT(autofill_loyalty_card);
   VISIT(autofill_offer);
   VISIT(autofill_profile);
   VISIT(autofill_wallet);
@@ -756,6 +798,7 @@ VISIT_PROTO_FIELDS(const sync_pb::ExtensionSpecifics& proto) {
   VISIT(remote_install);
   VISIT(all_urls_enabled);
   VISIT(disable_reasons);
+  VISIT_REP(disable_reasons_list);
 }
 
 VISIT_PROTO_FIELDS(const sync_pb::GetUpdateTriggers& proto) {
@@ -938,6 +981,7 @@ VISIT_PROTO_FIELDS(const sync_pb::WebauthnCredentialSpecifics& proto) {
   VISIT_SECRET(encrypted);
   VISIT(edited_by_user);
   VISIT(hidden);
+  VISIT(hidden_time);
 }
 
 VISIT_PROTO_FIELDS(const sync_pb::HistorySpecifics::PageTransition& proto) {
@@ -1334,7 +1378,6 @@ VISIT_PROTO_FIELDS(const sync_pb::SharedTabGroup& proto) {
 VISIT_PROTO_FIELDS(const sync_pb::SharedTab& proto) {
   VISIT(url);
   VISIT(title);
-  VISIT(favicon_url);
   VISIT(shared_tab_group_guid);
   VISIT(unique_position);
 }
@@ -1407,25 +1450,13 @@ VISIT_PROTO_FIELDS(const sync_pb::SyncEntity& proto) {
 
 VISIT_PROTO_FIELDS(const sync_pb::SyncEntity::CollaborationMetadata& proto) {
   VISIT(collaboration_id);
-  VISIT(attribution_metadata);
+  VISIT(creation_attribution);
+  VISIT(last_update_attribution);
 }
 
 VISIT_PROTO_FIELDS(
-    const sync_pb::SyncEntity::CollaborationMetadata::AttributionMetadata&
-        proto) {
-  VISIT(created);
-  VISIT(updated);
-}
-
-VISIT_PROTO_FIELDS(const sync_pb::SyncEntity::CollaborationMetadata::
-                       AttributionMetadata::Attribution& proto) {
-  VISIT(user_info);
-}
-
-VISIT_PROTO_FIELDS(
-    const sync_pb::SyncEntity::CollaborationMetadata::AttributionMetadata::
-        Attribution::AttributionUserInfo& proto) {
-  VISIT(gaia_id);
+    const sync_pb::SyncEntity::CollaborationMetadata::Attribution& proto) {
+  VISIT(obfuscated_gaia_id);
 }
 
 VISIT_PROTO_FIELDS(const sync_pb::SyncInvalidationsPayload& proto) {
@@ -1690,6 +1721,12 @@ VISIT_PROTO_FIELDS(const sync_pb::PaymentInstrument& proto) {
   VISIT(iban);
   VISIT(ewallet_details);
   VISIT(device_details);
+  VISIT(bnpl_issuer_details);
+}
+
+VISIT_PROTO_FIELDS(const sync_pb::PaymentInstrumentCreationOption& proto) {
+  VISIT(id);
+  VISIT(buy_now_pay_later_option);
 }
 
 VISIT_PROTO_FIELDS(const sync_pb::BankAccountDetails& proto) {
@@ -1955,6 +1992,13 @@ VISIT_PROTO_FIELDS(
   VISIT(title);
   VISIT_ENUM(color);
   VISIT(is_collapsed);
+}
+
+VISIT_PROTO_FIELDS(const sync_pb::AutofillLoyaltyCardSpecifics& proto) {
+  VISIT(uuid);
+  VISIT(merchant_name);
+  VISIT(program_name);
+  VISIT(program_logo);
 }
 
 }  // namespace syncer

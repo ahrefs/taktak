@@ -31,15 +31,9 @@
 namespace gl {
 namespace {
 
-// When in BGRA888 overlay format, wait for this time delta before retrying
+// When in BGRA8888 overlay format, wait for this time delta before retrying
 // YUV format.
 constexpr base::TimeDelta kDelayForRetryingYUVFormat = base::Minutes(10);
-
-// Some drivers fail to correctly handle BT.709 video in overlays. This flag
-// converts them to BT.601 in the video processor.
-BASE_FEATURE(kFallbackBT709VideoToBT601,
-             "FallbackBT709VideoToBT601",
-             base::FEATURE_DISABLED_BY_DEFAULT);
 
 BASE_FEATURE(kDisableVPBLTUpscale,
              "DisableVPBLTUpscale",
@@ -54,10 +48,6 @@ gfx::ColorSpace GetOutputColorSpace(const gfx::ColorSpace& input_color_space,
                                     bool is_yuv_swapchain) {
   gfx::ColorSpace output_color_space =
       is_yuv_swapchain ? input_color_space : gfx::ColorSpace::CreateSRGB();
-  if (base::FeatureList::IsEnabled(kFallbackBT709VideoToBT601) &&
-      (output_color_space == gfx::ColorSpace::CreateREC709())) {
-    output_color_space = gfx::ColorSpace::CreateREC601();
-  }
   if (input_color_space.IsHDR()) {
     output_color_space = gfx::ColorSpace::CreateHDR10();
   }
@@ -131,8 +121,7 @@ const char* DxgiFormatToString(DXGI_FORMAT format) {
     case DXGI_FORMAT_P010:
       return "P010";
     default:
-      NOTREACHED_IN_MIGRATION();
-      return "UNKNOWN";
+      NOTREACHED();
   }
 }
 
@@ -263,10 +252,6 @@ HRESULT ToggleNvidiaVpSuperResolution(ID3D11VideoContext* video_context,
       video_processor, 0, &kNvidiaPPEInterfaceGUID,
       sizeof(stream_extension_info), &stream_extension_info);
 
-  base::UmaHistogramSparse(enable
-                               ? "GPU.NvidiaVpSuperResolution.On.SetStreamExt"
-                               : "GPU.NvidiaVpSuperResolution.Off.SetStreamExt",
-                           hr);
   if (FAILED(hr)) {
     DLOG(ERROR) << "VideoProcessorSetStreamExtension failed with error 0x"
                 << std::hex << hr;
@@ -352,9 +337,6 @@ HRESULT ToggleNvidiaVpTrueHDR(bool driver_supports_vp_auto_hdr,
       video_processor, 0, &kNvidiaTrueHDRInterfaceGUID,
       sizeof(stream_extension_info), &stream_extension_info);
 
-  base::UmaHistogramSparse(enable ? "GPU.NvidiaVpTrueHDR.On.SetStreamExt"
-                                  : "GPU.NvidiaVpTrueHDR.Off.SetStreamExt",
-                           hr);
   if (FAILED(hr)) {
     DLOG(ERROR) << "VideoProcessorSetStreamExtension failed with error 0x"
                 << std::hex << hr;
@@ -444,6 +426,12 @@ bool TryDisableDesktopPlane(IDXGIDecodeSwapChain* decode_swap_chain,
   }
 
   return true;
+}
+
+bool IsCompatibleHDRMetadata(const gfx::HDRMetadata& hdr_metadata) {
+  return (
+      (hdr_metadata.smpte_st_2086 && hdr_metadata.smpte_st_2086->IsValid()) ||
+      (hdr_metadata.cta_861_3 && hdr_metadata.cta_861_3->IsValid()));
 }
 
 }  // namespace
@@ -558,9 +546,9 @@ DXGI_FORMAT SwapChainPresenter::GetSwapChainFormat(
 
 Microsoft::WRL::ComPtr<ID3D11Texture2D> SwapChainPresenter::UploadVideoImage(
     const gfx::Size& texture_size,
-    const uint8_t* shm_video_pixmap,
+    base::span<const uint8_t> shm_video_pixmap,
     size_t pixmap_stride) {
-  if (!shm_video_pixmap) {
+  if (!shm_video_pixmap.data()) {
     DLOG(ERROR) << "Invalid NV12 pixmap data.";
     return nullptr;
   }
@@ -570,7 +558,9 @@ Microsoft::WRL::ComPtr<ID3D11Texture2D> SwapChainPresenter::UploadVideoImage(
     return nullptr;
   }
 
-  if (pixmap_stride < static_cast<size_t>(texture_size.width())) {
+  const auto cols = static_cast<size_t>(texture_size.width());
+  const auto rows = static_cast<size_t>(texture_size.height());
+  if (pixmap_stride < cols) {
     DLOG(ERROR) << "Invalid NV12 pixmap stride.";
     return nullptr;
   }
@@ -630,34 +620,30 @@ Microsoft::WRL::ComPtr<ID3D11Texture2D> SwapChainPresenter::UploadVideoImage(
   }
 
   size_t dest_stride = mapped_resource.RowPitch;
-  DCHECK_GE(dest_stride, static_cast<size_t>(texture_size.width()));
+  DCHECK_GE(dest_stride, cols);
   // y-plane size.
-  size_t src_size = pixmap_stride * texture_size.height();
-  size_t dest_size = dest_stride * texture_size.height();
-  if (texture_size.height() / 2 > 0) {
+
+  size_t dest_size = dest_stride * rows;
+  if (rows / 2 > 0) {
     // uv-plane size. Note that the last row is actual texture width, not
     // the stride.
-    src_size +=
-        pixmap_stride * (texture_size.height() / 2 - 1) + texture_size.width();
-    dest_size +=
-        dest_stride * (texture_size.height() / 2 - 1) + texture_size.width();
+    dest_size += dest_stride * (rows / 2 - 1) + cols;
   }
-  base::span<const uint8_t> src =
-      UNSAFE_TODO(base::span(shm_video_pixmap, src_size));
+
   // SAFETY: required from Map() call result.
   base::span<uint8_t> dest = UNSAFE_BUFFERS(
       base::span(reinterpret_cast<uint8_t*>(mapped_resource.pData), dest_size));
-  for (int y = 0; y < texture_size.height(); y++) {
-    auto src_row = src.subspan(pixmap_stride * y, texture_size.width());
-    auto dest_row = dest.subspan(dest_stride * y, texture_size.width());
+  for (size_t y = 0; y < rows; ++y) {
+    auto src_row = shm_video_pixmap.subspan(pixmap_stride * y, cols);
+    auto dest_row = dest.subspan(dest_stride * y, cols);
     dest_row.copy_prefix_from(src_row);
   }
 
-  auto uv_src = src.subspan(pixmap_stride * texture_size.height());
-  auto uv_dest = dest.subspan(dest_stride * texture_size.height());
-  for (int y = 0; y < texture_size.height() / 2; y++) {
-    auto src_row = uv_src.subspan(pixmap_stride * y, texture_size.width());
-    auto dest_row = uv_dest.subspan(dest_stride * y, texture_size.width());
+  auto uv_src = shm_video_pixmap.subspan(pixmap_stride * rows);
+  auto uv_dest = dest.subspan(dest_stride * rows);
+  for (size_t y = 0; y < rows / 2; ++y) {
+    auto src_row = uv_src.subspan(pixmap_stride * y, cols);
+    auto dest_row = uv_dest.subspan(dest_stride * y, cols);
     dest_row.copy_prefix_from(src_row);
   }
   context->Unmap(staging_texture_.Get(), 0);
@@ -1235,6 +1221,22 @@ gfx::Size SwapChainPresenter::CalculateSwapChainSize(
     swap_chain_size.set_height(swap_chain_size.height() + 1);
   }
 
+  // Adjust `swap_chain_size` to fit into the max texture size.
+  const gfx::SizeF max_texture_size(D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
+                                    D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+  if (swap_chain_size.width() > max_texture_size.width() ||
+      swap_chain_size.height() > max_texture_size.height()) {
+    if (max_texture_size.AspectRatio() > swap_chain_size.AspectRatio()) {
+      swap_chain_size =
+          gfx::SizeF(max_texture_size.height() * swap_chain_size.AspectRatio(),
+                     max_texture_size.height());
+    } else {
+      swap_chain_size =
+          gfx::SizeF(max_texture_size.width(),
+                     max_texture_size.width() / swap_chain_size.AspectRatio());
+    }
+  }
+
   // Adjust the transform matrix.
   UpdateSwapChainTransform(params.quad_rect.size(), swap_chain_size,
                            visual_transform);
@@ -1544,19 +1546,29 @@ bool SwapChainPresenter::PresentToSwapChain(DCLayerOverlayParams& params,
 
   bool content_is_hdr = input_color_space.IsHDR();
 
-  // Enable VideoProcessor-HDR for SDR content if the monitor supports it and
-  // the GPU driver version is not blocked (enable_vp_auto_hdr_). The actual GPU
-  // driver support will be queried right after InitializeVideoProcessor() and
-  // is checked in ToggleVpAutoHDR().
+  // Enable VideoProcessor-HDR for SDR content if the monitor supports it
+  // and the GPU driver version is not blocked (enable_vp_auto_hdr_). The
+  // actual GPU driver support will be queried right after
+  // InitializeVideoProcessor() and is checked in ToggleVpAutoHDR().
   bool use_vp_auto_hdr =
       !content_is_hdr &&
       DirectCompositionMonitorHDREnabled(layer_tree_->window()) &&
       enable_vp_auto_hdr_ && !is_on_battery_power_;
 
+  // We allow HDR10 swap chains to be created without metadata if the input
+  // stream is BT.2020 and the transfer function is PQ (Perceptual Quantizer).
+  // For this combination, the corresponding DXGI color space is
+  // DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020 (full range RGB),
+  // DXGI_COLOR_SPACE_RGB_STUDIO_G2084_NONE_P2020 (studio range RGB)
+  // DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_TOPLEFT_P2020 (studio range YUV)
+  bool content_is_pq10 =
+      (input_color_space.GetPrimaryID() ==
+       gfx::ColorSpace::PrimaryID::BT2020) &&
+      (input_color_space.GetTransferID() == gfx::ColorSpace::TransferID::PQ);
+
   bool use_hdr_swap_chain =
       DirectCompositionMonitorHDREnabled(layer_tree_->window()) &&
-      ((content_is_hdr && params.video_params.hdr_metadata.IsValid()) ||
-       use_vp_auto_hdr);
+      (content_is_pq10 || use_vp_auto_hdr);
 
   // Try to use P010 swapchain when playing 10-bit content on SDR monitor where
   // P010 pixel format is also detected as displayable surface, due to the
@@ -1635,9 +1647,19 @@ bool SwapChainPresenter::PresentToSwapChain(DCLayerOverlayParams& params,
   }
 
   std::optional<DXGI_HDR_METADATA_HDR10> stream_metadata;
-  if (params.video_params.hdr_metadata.IsValid()) {
-    stream_metadata = HDRMetadataHelperWin::HDRMetadataToDXGI(
-        params.video_params.hdr_metadata);
+  if (content_is_pq10) {
+    gfx::HDRMetadata hdr_metadata = params.video_params.hdr_metadata;
+    // Potential parser bug (https://crbug.com/1362288) if HDR metadata is
+    // incompatible. Missing `smpte_st_2086` or `cta_861_3` can cause Intel
+    // driver crashes in HDR overlay mode. Having at least one of
+    // `smpte_st_2086` or `cta_861_3` can prevent crashes. If HDR metadata is
+    // invalid, set up default metadata (HdrMetadataSmpteSt2086) to avoid
+    // crashes.
+    if (!IsCompatibleHDRMetadata(hdr_metadata)) {
+      hdr_metadata = gfx::HDRMetadata::PopulateUnspecifiedWithDefaults(
+          std::make_optional(params.video_params.hdr_metadata));
+    }
+    stream_metadata = HDRMetadataHelperWin::HDRMetadataToDXGI(hdr_metadata);
   }
 
   if (!VideoProcessorBlt(std::move(input_texture), input_level,
@@ -1692,6 +1714,20 @@ bool SwapChainPresenter::PresentToSwapChain(DCLayerOverlayParams& params,
       device_removed_reason = d3d11_device_->GetDeviceRemovedReason();
       base::debug::Alias(&hr);
       base::debug::Alias(&device_removed_reason);
+
+      // Add a crash key. The minidump might be discarded due to large size.
+      static auto* hr_enqueue_set_event_key =
+          base::debug::AllocateCrashKeyString(
+              "hr-EnqueueSetEvent", base::debug::CrashKeySize::Size64);
+      base::debug::ScopedCrashKeyString scoped_crash_key_1(
+          hr_enqueue_set_event_key, base::StringPrintf("0x%x", hr));
+      static auto* hr_device_removed_reason_key =
+          base::debug::AllocateCrashKeyString(
+              "hr-DeviceRemovedReason", base::debug::CrashKeySize::Size64);
+      base::debug::ScopedCrashKeyString scoped_crash_key_2(
+          hr_device_removed_reason_key,
+          base::StringPrintf("0x%x", device_removed_reason));
+
       base::debug::DumpWithoutCrashing();
     }
   }
@@ -2105,15 +2141,6 @@ bool SwapChainPresenter::VideoProcessorBlt(
       hr = video_context->VideoProcessorBlt(video_processor.Get(),
                                             output_view_.Get(), 0, 1, &stream);
     }
-    base::UmaHistogramSparse(
-        (use_vp_auto_hdr ? "GPU.VideoProcessorBlt.VpAutoHDR.On"
-                         : "GPU.VideoProcessorBlt.VpAutoHDR.Off"),
-        hr);
-    base::UmaHistogramSparse(
-        (use_vp_super_resolution
-             ? "GPU.VideoProcessorBlt.VpSuperResolution.On"
-             : "GPU.VideoProcessorBlt.VpSuperResolution.Off"),
-        hr);
 
     // Retry VideoProcessorBlt with VpSuperResolution off if it was on.
     if (FAILED(hr) && use_vp_super_resolution) {
@@ -2128,8 +2155,6 @@ bool SwapChainPresenter::VideoProcessorBlt(
         hr = video_context->VideoProcessorBlt(
             video_processor.Get(), output_view_.Get(), 0, 1, &stream);
       }
-      base::UmaHistogramSparse(
-          "GPU.VideoProcessorBlt.VpSuperResolution.RetryOffAfterError", hr);
 
       // We shouldn't use VpSuperResolution if it was the reason that caused
       // the VideoProcessorBlt failure.
@@ -2157,8 +2182,6 @@ bool SwapChainPresenter::VideoProcessorBlt(
         hr = video_context->VideoProcessorBlt(
             video_processor.Get(), output_view_.Get(), 0, 1, &stream);
       }
-      base::UmaHistogramSparse(
-          "GPU.VideoProcessorBlt.VpAutoHDR.RetryOffAfterError", hr);
 
       // We shouldn't use VpAutoHDR if it was the reason that caused
       // the VideoProcessorBlt failure.
@@ -2291,7 +2314,7 @@ bool SwapChainPresenter::ReallocateSwapChain(
     }
   }
   if (!use_yuv_swap_chain) {
-    TRACE_EVENT1("gpu", "SwapChainPresenter::ReallocateSwapChain::BGRA",
+    TRACE_EVENT1("gpu", "SwapChainPresenter::ReallocateSwapChain::RGB",
                  "format", DxgiFormatToString(swap_chain_format));
 
     desc.Format = swap_chain_format;

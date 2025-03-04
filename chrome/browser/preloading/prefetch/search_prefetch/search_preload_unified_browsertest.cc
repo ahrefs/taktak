@@ -91,7 +91,6 @@ class SearchPreloadUnifiedBrowserTest : public PlatformBrowserTest,
             base::Unretained(this))) {
     scoped_feature_list_.InitWithFeaturesAndParameters(
         {
-            {features::kSupportSearchSuggestionForPrerender2, {}},
             {kSearchPrefetchServicePrefetching,
              {{"max_attempts_per_caching_duration", "3"},
               {"cache_size", "1"},
@@ -148,8 +147,6 @@ class SearchPreloadUnifiedBrowserTest : public PlatformBrowserTest,
     prediction_entry_builder_ =
         std::make_unique<content::test::PreloadingPredictionUkmEntryBuilder>(
             chrome_preloading_predictor::kDefaultSearchEngine);
-    scoped_test_timer_ =
-        std::make_unique<base::ScopedMockElapsedTimersForTest>();
 
     // Reset pointer position to avoid the pointer hover on the back button
     // that unintentionally triggers `kBackButtonHover` preloading, which may
@@ -441,6 +438,7 @@ class SearchPreloadUnifiedBrowserTest : public PlatformBrowserTest,
 
   constexpr static char kSearchDomain[] = "a.test";
   constexpr static char16_t kSearchDomain16[] = u"a.test";
+  base::ScopedMockElapsedTimersForTest scoped_test_timer_;
   raw_ptr<PrerenderManager, AcrossTasksDanglingUntriaged> prerender_manager_ =
       nullptr;
   raw_ptr<SearchPrefetchService, AcrossTasksDanglingUntriaged>
@@ -456,7 +454,6 @@ class SearchPreloadUnifiedBrowserTest : public PlatformBrowserTest,
 
   content::test::PrerenderTestHelper prerender_helper_;
   base::test::ScopedFeatureList scoped_feature_list_;
-  std::unique_ptr<base::ScopedMockElapsedTimersForTest> scoped_test_timer_;
 };
 
 // Tests that the SearchSuggestionService can trigger prerendering after the
@@ -1140,6 +1137,22 @@ IN_PROC_BROWSER_TEST_F(SearchPreloadUnifiedBrowserTest, DoNotRefetchSameTerms) {
 class HoldbackSearchPreloadUnifiedBrowserTest
     : public SearchPreloadUnifiedBrowserTest {
  public:
+  HoldbackSearchPreloadUnifiedBrowserTest() {
+    scoped_feature_list_.InitWithFeaturesAndParameters(
+        {
+            {kSearchPrefetchServicePrefetching,
+             {{"max_attempts_per_caching_duration", "3"},
+              {"cache_size", "4"},
+              {"device_memory_threshold_MB", "0"}}},
+        },
+        {});
+    preloading_config_override_.SetHoldback(
+        content::PreloadingType::kPrerender,
+        chrome_preloading_predictor::kDefaultSearchEngine, true);
+  }
+
+  ~HoldbackSearchPreloadUnifiedBrowserTest() override = default;
+
   void RunTest() {
     base::HistogramTester histogram_tester;
     const GURL kInitialUrl = embedded_test_server()->GetURL("/empty.html");
@@ -1219,62 +1232,15 @@ class HoldbackSearchPreloadUnifiedBrowserTest
                  ukm_entries, expected_entries);
     }
   }
-  ~HoldbackSearchPreloadUnifiedBrowserTest() override = default;
-
- protected:
-  base::test::ScopedFeatureList scoped_feature_list_;
-};
-
-class DSEPrerenderHoldbackSearchPreloadUnifiedBrowserTest
-    : public HoldbackSearchPreloadUnifiedBrowserTest {
- public:
-  DSEPrerenderHoldbackSearchPreloadUnifiedBrowserTest() {
-    scoped_feature_list_.InitWithFeaturesAndParameters(
-        {
-            {features::kSupportSearchSuggestionForPrerender2, {{}}},
-            {kSearchPrefetchServicePrefetching,
-             {{"max_attempts_per_caching_duration", "3"},
-              {"cache_size", "4"},
-              {"device_memory_threshold_MB", "0"}}},
-            {features::kPrerenderDSEHoldback, {{}}},
-        },
-        /*disabled_features=*/{});
-  }
-};
-
-// Tests that we log correct metrics for Prerender holdback in case of Search
-// Prerender.
-IN_PROC_BROWSER_TEST_F(DSEPrerenderHoldbackSearchPreloadUnifiedBrowserTest,
-                       PrerenderDSEHoldbackTest) {
-  RunTest();
-}
-
-class PreloadingConfigHoldbackSearchPreloadUnifiedBrowserTest
-    : public HoldbackSearchPreloadUnifiedBrowserTest {
- public:
-  PreloadingConfigHoldbackSearchPreloadUnifiedBrowserTest() {
-    scoped_feature_list_.InitWithFeaturesAndParameters(
-        {
-            {features::kSupportSearchSuggestionForPrerender2, {{}}},
-            {kSearchPrefetchServicePrefetching,
-             {{"max_attempts_per_caching_duration", "3"},
-              {"cache_size", "4"},
-              {"device_memory_threshold_MB", "0"}}},
-            {features::kPrerenderDSEHoldback, {{}}},
-        },
-        {});
-    preloading_config_override_.SetHoldback(
-        content::PreloadingType::kPrerender,
-        chrome_preloading_predictor::kDefaultSearchEngine, true);
-  }
 
  private:
+  base::test::ScopedFeatureList scoped_feature_list_;
   content::test::PreloadingConfigOverride preloading_config_override_;
 };
 
 // Tests that we log correct metrics for Prerender holdback in case of Search
 // Prerender.
-IN_PROC_BROWSER_TEST_F(PreloadingConfigHoldbackSearchPreloadUnifiedBrowserTest,
+IN_PROC_BROWSER_TEST_F(HoldbackSearchPreloadUnifiedBrowserTest,
                        PrerenderDSEHoldbackTest) {
   RunTest();
 }
@@ -1287,7 +1253,6 @@ class HTTPCacheSearchPreloadUnifiedBrowserTest
   HTTPCacheSearchPreloadUnifiedBrowserTest() {
     scoped_feature_list_.InitWithFeaturesAndParameters(
         {
-            {features::kSupportSearchSuggestionForPrerender2, {{}}},
             {kSearchPrefetchServicePrefetching,
              {{"max_attempts_per_caching_duration", "3"},
               {"cache_size", "4"},
@@ -1410,9 +1375,7 @@ IN_PROC_BROWSER_TEST_F(SearchPreloadUnifiedBrowserTest,
 
 // TODO(https://cubug.com/1282624): This test should run on Android after we're
 // able to interact with Android UI.
-// TODO(crbug.com/40231021): On LacrOS, the window's bound changes
-// unexpectedly, and it stops auto completing.
-#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS_LACROS)
+#if !BUILDFLAG(IS_ANDROID)
 IN_PROC_BROWSER_TEST_F(SearchPreloadUnifiedBrowserTest, TriggerAndActivate) {
   base::HistogramTester histogram_tester;
   const GURL kInitialUrl = embedded_test_server()->GetURL("/empty.html");
@@ -1558,7 +1521,7 @@ IN_PROC_BROWSER_TEST_F(SearchPreloadUnifiedBrowserTest,
 
   EXPECT_EQ(1, prerender_helper().GetRequestCount(expected_prefetch_url));
 }
-#endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS_LACROS)
+#endif  // !BUILDFLAG(IS_ANDROID)
 
 // Tests prerender is not cancelled after SearchPrefetchService cancels prefetch
 // requests.
@@ -2073,8 +2036,12 @@ IN_PROC_BROWSER_TEST_F(SearchPreloadUnifiedBrowserTest,
   content::test::PrerenderHostObserver prerender_observer(
       *GetActiveWebContents(), expected_prerender_url);
 
-  // 4. Activate the prerendered page.
-  NavigateToPrerenderedResult(expected_prerender_url);
+  // 4. Activate the prerendered page. Don't wait for completion of page load,
+  // as it will not be completed until the remaining response is dispatched on
+  // the step 6.
+  NavigateToPrerenderedResult(
+      expected_prerender_url,
+      content::TestNavigationObserver::WaitEvent::kNavigationFinished);
 
   prerender_observer.WaitForActivation();
 
@@ -2217,7 +2184,7 @@ class SearchPreloadServingTestURLLoader
  private:
   // network::mojom::URLLoaderClient
   void OnReceiveEarlyHints(network::mojom::EarlyHintsPtr early_hints) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
   void OnReceiveResponse(
       network::mojom::URLResponseHeadPtr head,
@@ -2228,12 +2195,12 @@ class SearchPreloadServingTestURLLoader
   }
   void OnReceiveRedirect(const net::RedirectInfo& redirect_info,
                          network::mojom::URLResponseHeadPtr head) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
   void OnUploadProgress(int64_t current_position,
                         int64_t total_size,
                         OnUploadProgressCallback callback) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
   void OnTransferSizeUpdated(int32_t transfer_size_diff) override { return; }
   void OnComplete(const network::URLLoaderCompletionStatus& status) override {
@@ -2278,14 +2245,12 @@ IN_PROC_BROWSER_TEST_F(SearchPreloadUnifiedBrowserTest,
   SearchPrefetchURLLoader::RequestHandler prerender_serving_handler =
       CreatePrerenderRequestHandler(prerender_serving_request);
   if (!prerender_serving_handler) {
-    NOTREACHED_IN_MIGRATION()
-        << "prerender handler should not be an empty callback!";
+    NOTREACHED() << "prerender handler should not be an empty callback!";
   }
   SearchPrefetchURLLoader::RequestHandler prefetch_serving_handler =
       CreatePrefetchRequestHandler(prefetch_serving_request);
   if (!prefetch_serving_handler) {
-    NOTREACHED_IN_MIGRATION()
-        << "prefetch handler should not be an empty callback!";
+    NOTREACHED() << "prefetch handler should not be an empty callback!";
   }
   SearchPreloadServingTestURLLoader prefetch_serving_loader;
   SearchPreloadServingTestURLLoader prerender_serving_loader;

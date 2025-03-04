@@ -6,9 +6,10 @@
 #define PDF_TEST_PDF_INK_TEST_HELPERS_H_
 
 #include <optional>
-#include <string>
+#include <string_view>
 
 #include "base/containers/span.h"
+#include "base/files/file_path.h"
 #include "base/time/time.h"
 #include "base/values.h"
 #include "testing/gmock/include/gmock/gmock.h"
@@ -18,12 +19,18 @@
 
 namespace chrome_pdf {
 
+enum class TestAnnotationUndoRedoMessageType {
+  kUndo,
+  kRedo,
+};
+
 // Optional parameters that the `setAnnotationBrushMessage` may have, depending
 // on the brush type.
 struct TestAnnotationBrushMessageParams {
   int color_r;
   int color_g;
   int color_b;
+  double size;
 };
 
 // Used to generate ink::StrokeInput. Many tests may need both a `position` and
@@ -40,9 +47,11 @@ std::optional<ink::StrokeInputBatch> CreateInkInputBatch(
 base::Value::Dict CreateSetAnnotationModeMessageForTesting(bool enable);
 
 base::Value::Dict CreateSetAnnotationBrushMessageForTesting(
-    const std::string& type,
-    double size,
+    std::string_view type,
     const TestAnnotationBrushMessageParams* params);
+
+base::Value::Dict CreateSetAnnotationUndoRedoMessageForTesting(
+    TestAnnotationUndoRedoMessageType type);
 
 MATCHER_P6(InkAffineTransformEq,
            expected_a,
@@ -61,6 +70,9 @@ MATCHER_P6(InkAffineTransformEq,
          Matches(FloatEq(expected_e))(arg.E()) &&
          Matches(FloatEq(expected_f))(arg.F());
 }
+
+// Generate the path for test files specific to Ink.
+base::FilePath GetInkTestDataFilePath(std::string_view filename);
 
 }  // namespace chrome_pdf
 

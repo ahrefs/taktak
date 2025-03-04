@@ -26,6 +26,7 @@
 #include "chrome/browser/chromeos/platform_keys/extension_key_permissions_service_factory.h"
 #include "chrome/browser/chromeos/platform_keys/platform_keys.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/crosapi/cpp/keystore_service_util.h"
 #include "chromeos/crosapi/mojom/keystore_error.mojom-shared.h"
 #include "chromeos/crosapi/mojom/keystore_error.mojom.h"
@@ -43,20 +44,17 @@
 #include "net/cert/x509_certificate.h"
 
 using content::BrowserThread;
-using crosapi::keystore_service_util::MakeEcKeystoreSigningAlgorithm;
-using crosapi::keystore_service_util::MakeRsaKeystoreSigningAlgorithm;
+using crosapi::keystore_service_util::MakeEcdsaKeystoreAlgorithm;
+using crosapi::keystore_service_util::MakeRsaOaepKeystoreAlgorithm;
+using crosapi::keystore_service_util::MakeRsassaPkcs1v15KeystoreAlgorithm;
+using crosapi::mojom::KeystoreAlgorithmPtr;
 using crosapi::mojom::KeystoreBinaryResult;
 using crosapi::mojom::KeystoreBinaryResultPtr;
-using crosapi::mojom::KeystoreECDSAParams;
-using crosapi::mojom::KeystoreECDSAParamsPtr;
 using crosapi::mojom::KeystoreError;
-using crosapi::mojom::KeystorePKCS115Params;
-using crosapi::mojom::KeystorePKCS115ParamsPtr;
+using crosapi::mojom::KeystoreKeyAttributeType;
 using crosapi::mojom::KeystoreSelectClientCertificatesResult;
 using crosapi::mojom::KeystoreSelectClientCertificatesResultPtr;
 using crosapi::mojom::KeystoreService;
-using crosapi::mojom::KeystoreSigningAlgorithm;
-using crosapi::mojom::KeystoreSigningAlgorithmPtr;
 using crosapi::mojom::KeystoreSigningScheme;
 using crosapi::mojom::KeystoreType;
 
@@ -122,9 +120,21 @@ KeystoreSigningScheme GetKeystoreSigningScheme(
           return KeystoreSigningScheme::kEcdsaSha512;
       }
     }
+    case platform_keys::KeyType::kRsaOaep:
+      // Keys with type RSA-OAEP cannot be used for signing.
+      return KeystoreSigningScheme::kUnknown;
   }
-  NOTREACHED_IN_MIGRATION();
-  return KeystoreSigningScheme::kUnknown;
+}
+
+// Returns whether a key with algorithm `key_type` can be used for signing.
+bool IsKeyUsedForSigning(platform_keys::KeyType key_type) {
+  switch (key_type) {
+    case platform_keys::KeyType::kRsassaPkcs1V15:
+    case platform_keys::KeyType::kEcdsa:
+      return true;
+    case platform_keys::KeyType::kRsaOaep:
+      return false;
+  }
 }
 
 // Returns appropriate KeystoreService for |browser_context|, which can be:
@@ -161,10 +171,12 @@ class ExtensionPlatformKeysService::GenerateKeyTask : public Task {
   };
 
   GenerateKeyTask(platform_keys::TokenId token_id,
+                  platform_keys::KeyType key_type,
                   extensions::ExtensionId extension_id,
                   GenerateKeyCallback callback,
                   ExtensionPlatformKeysService* service)
       : token_id_(token_id),
+        key_type_(key_type),
         extension_id_(std::move(extension_id)),
         callback_(std::move(callback)),
         service_(service) {}
@@ -185,6 +197,7 @@ class ExtensionPlatformKeysService::GenerateKeyTask : public Task {
   virtual void GenerateKey(KeystoreService::GenerateKeyCallback callback) = 0;
 
   platform_keys::TokenId token_id_;
+  platform_keys::KeyType key_type_;
   std::vector<uint8_t> public_key_spki_der_;
   const extensions::ExtensionId extension_id_;
   GenerateKeyCallback callback_;
@@ -197,7 +210,7 @@ class ExtensionPlatformKeysService::GenerateKeyTask : public Task {
     switch (next_step_) {
       case Step::GENERATE_KEY:
         next_step_ = Step::GET_EXTENSION_PERMISSIONS;
-        GenerateKey(base::BindOnce(&GenerateKeyTask::GeneratedKey,
+        GenerateKey(base::BindOnce(&GenerateKeyTask::OnKeyGenerated,
                                    weak_factory_.GetWeakPtr()));
         return;
       case Step::GET_EXTENSION_PERMISSIONS:
@@ -217,12 +230,12 @@ class ExtensionPlatformKeysService::GenerateKeyTask : public Task {
 
   // Stores the generated key or in case of an error calls |callback_| with the
   // error status.
-  void GeneratedKey(KeystoreBinaryResultPtr result) {
+  void OnKeyGenerated(KeystoreBinaryResultPtr result) {
     using Tag = KeystoreBinaryResult::Tag;
     switch (result->which()) {
       case Tag::kError:
         next_step_ = Step::DONE;
-        std::move(callback_).Run(std::vector<uint8_t>() /* no public key */,
+        std::move(callback_).Run(/*public_key_spki_der=*/std::vector<uint8_t>(),
                                  result->get_error());
         break;
       case Tag::kBlob:
@@ -236,12 +249,12 @@ class ExtensionPlatformKeysService::GenerateKeyTask : public Task {
   void GetExtensionPermissions() {
     platform_keys::ExtensionKeyPermissionsServiceFactory::
         GetForBrowserContextAndExtension(
-            base::BindOnce(&GenerateKeyTask::GotPermissions,
+            base::BindOnce(&GenerateKeyTask::OnPermissionsGot,
                            weak_factory_.GetWeakPtr()),
             service_->browser_context_, extension_id_);
   }
 
-  void GotPermissions(
+  void OnPermissionsGot(
       std::unique_ptr<platform_keys::ExtensionKeyPermissionsService>
           extension_key_permissions_service) {
     extension_key_permissions_service_ =
@@ -250,6 +263,12 @@ class ExtensionPlatformKeysService::GenerateKeyTask : public Task {
   }
 
   void UpdatePermissionsAndCallBack() {
+    // Only set the one-time signing permissions for keys used for signing.
+    if (IsKeyUsedForSigning(key_type_)) {
+      extension_key_permissions_service_
+          ->RegisterOneTimeSigningPermissionForKey(public_key_spki_der_);
+    }
+
     extension_key_permissions_service_->RegisterKeyForCorporateUsage(
         public_key_spki_der_,
         base::BindOnce(&GenerateKeyTask::OnKeyRegisteredForCorporateUsage,
@@ -289,7 +308,7 @@ class ExtensionPlatformKeysService::GenerateKeyTask : public Task {
     }
 
     next_step_ = Step::DONE;
-    std::move(callback_).Run(std::vector<uint8_t>() /* no public key */,
+    std::move(callback_).Run(/*public_key_spki_der=*/std::vector<uint8_t>(),
                              corporate_key_registration_error);
     DoStep();
   }
@@ -306,12 +325,17 @@ class ExtensionPlatformKeysService::GenerateRSAKeyTask
   // |modulus_length| and registers it for the extension with id |extension_id|.
   // The generated key will be passed to |callback|.
   GenerateRSAKeyTask(platform_keys::TokenId token_id,
+                     platform_keys::KeyType key_type,
                      unsigned int modulus_length,
                      bool sw_backed,
                      const std::string& extension_id,
                      GenerateKeyCallback callback,
                      ExtensionPlatformKeysService* service)
-      : GenerateKeyTask(token_id, extension_id, std::move(callback), service),
+      : GenerateKeyTask(token_id,
+                        key_type,
+                        extension_id,
+                        std::move(callback),
+                        service),
         modulus_length_(modulus_length),
         sw_backed_(sw_backed) {}
 
@@ -320,10 +344,16 @@ class ExtensionPlatformKeysService::GenerateRSAKeyTask
  private:
   // Generates the RSA key.
   void GenerateKey(KeystoreService::GenerateKeyCallback callback) override {
-    service_->keystore_service_->GenerateKey(
-        KeystoreTypeFromTokenId(token_id_),
-        MakeRsaKeystoreSigningAlgorithm(modulus_length_, sw_backed_),
-        std::move(callback));
+    CHECK(key_type_ == platform_keys::KeyType::kRsassaPkcs1V15 ||
+          key_type_ == platform_keys::KeyType::kRsaOaep);
+
+    KeystoreAlgorithmPtr algorithm_ptr =
+        key_type_ == platform_keys::KeyType::kRsassaPkcs1V15
+            ? MakeRsassaPkcs1v15KeystoreAlgorithm(modulus_length_, sw_backed_)
+            : MakeRsaOaepKeystoreAlgorithm(modulus_length_, sw_backed_);
+    service_->keystore_service_->GenerateKey(KeystoreTypeFromTokenId(token_id_),
+                                             std::move(algorithm_ptr),
+                                             std::move(callback));
   }
 
   const unsigned int modulus_length_;
@@ -336,11 +366,13 @@ class ExtensionPlatformKeysService::GenerateECKeyTask : public GenerateKeyTask {
   // |named_curve| and registers it for the extension with id |extension_id|.
   // The generated key will be passed to |callback|.
   GenerateECKeyTask(platform_keys::TokenId token_id,
+                    platform_keys::KeyType key_type,
                     std::string named_curve,
                     std::string extension_id,
                     GenerateKeyCallback callback,
                     ExtensionPlatformKeysService* service)
       : GenerateKeyTask(token_id,
+                        key_type,
                         std::move(extension_id),
                         std::move(callback),
                         service),
@@ -351,9 +383,11 @@ class ExtensionPlatformKeysService::GenerateECKeyTask : public GenerateKeyTask {
  private:
   // Generates the EC key.
   void GenerateKey(KeystoreService::GenerateKeyCallback callback) override {
+    CHECK(key_type_ == platform_keys::KeyType::kEcdsa);
+
     service_->keystore_service_->GenerateKey(
         KeystoreTypeFromTokenId(token_id_),
-        MakeEcKeystoreSigningAlgorithm(named_curve_), std::move(callback));
+        MakeEcdsaKeystoreAlgorithm(named_curve_), std::move(callback));
   }
 
   const std::string named_curve_;
@@ -435,12 +469,12 @@ class ExtensionPlatformKeysService::SignTask : public Task {
   void GetExtensionPermissions() {
     platform_keys::ExtensionKeyPermissionsServiceFactory::
         GetForBrowserContextAndExtension(
-            base::BindOnce(&SignTask::GotPermissions,
+            base::BindOnce(&SignTask::OnPermissionsGot,
                            weak_factory_.GetWeakPtr()),
             service_->browser_context_, extension_id_);
   }
 
-  void GotPermissions(
+  void OnPermissionsGot(
       std::unique_ptr<platform_keys::ExtensionKeyPermissionsService>
           extension_key_permissions_service) {
     extension_key_permissions_service_ =
@@ -458,16 +492,16 @@ class ExtensionPlatformKeysService::SignTask : public Task {
       return;
     }
 
-    extension_key_permissions_service_->CanUseKeyForSigning(
-        public_key_spki_der_,
+    extension_key_permissions_service_->CanUseKey(
+        public_key_spki_der_, /*is_sign_operation=*/true,
         base::BindOnce(&SignTask::OnCanUseKeyForSigningKnown,
                        weak_factory_.GetWeakPtr()));
   }
 
   void OnCanUseKeyForSigningKnown(bool allowed) {
     if (!allowed) {
-      std::move(callback_).Run(std::vector<uint8_t>() /* no signature */,
-                               KeystoreError::kKeyNotAllowedForSigning);
+      std::move(callback_).Run(/*signature=*/std::vector<uint8_t>(),
+                               KeystoreError::kKeyNotAllowedForOperation);
       next_step_ = Step::DONE;
       DoStep();
       return;
@@ -490,8 +524,7 @@ class ExtensionPlatformKeysService::SignTask : public Task {
       LOG(ERROR) << "Marking a key used for signing failed: "
                  << platform_keys::KeystoreErrorToString(error);
       next_step_ = Step::DONE;
-      std::move(callback_).Run(std::vector<uint8_t>() /* no signature */,
-                               error);
+      std::move(callback_).Run(/*signature=*/std::vector<uint8_t>(), error);
       DoStep();
       return;
     }
@@ -544,6 +577,130 @@ class ExtensionPlatformKeysService::SignTask : public Task {
       extension_key_permissions_service_;
   const raw_ptr<ExtensionPlatformKeysService> service_;
   base::WeakPtrFactory<SignTask> weak_factory_{this};
+};
+
+class ExtensionPlatformKeysService::SetKeyTagTask : public Task {
+ public:
+  enum class Step {
+    GET_EXTENSION_PERMISSIONS,
+    CHECK_PERMISSIONS,
+    SET_KEY_TAG,
+    DONE,
+  };
+
+  SetKeyTagTask(platform_keys::TokenId token_id,
+                std::vector<uint8_t> key_tag,
+                std::vector<uint8_t> public_key_spki_der,
+                std::string extension_id,
+                SetKeyTagCallback callback,
+                ExtensionPlatformKeysService* service)
+      : token_id_(token_id),
+        key_tag_(std::move(key_tag)),
+        public_key_spki_der_(std::move(public_key_spki_der)),
+        extension_id_(std::move(extension_id)),
+        callback_(std::move(callback)),
+        service_(service) {}
+
+  SetKeyTagTask(const SetKeyTagTask&) = delete;
+  auto operator=(const SetKeyTagTask&) = delete;
+
+  ~SetKeyTagTask() override = default;
+
+  void Start() override {
+    CHECK(next_step_ == Step::GET_EXTENSION_PERMISSIONS);
+    DoStep();
+  }
+
+  bool IsDone() override { return next_step_ == Step::DONE; }
+
+ private:
+  void DoStep() {
+    switch (next_step_) {
+      case Step::GET_EXTENSION_PERMISSIONS:
+        next_step_ = Step::CHECK_PERMISSIONS;
+        GetExtensionPermissions();
+        return;
+      case Step::CHECK_PERMISSIONS:
+        next_step_ = Step::SET_KEY_TAG;
+        CheckPermissions();
+        return;
+      case Step::SET_KEY_TAG:
+        next_step_ = Step::DONE;
+        SetKeyTag();
+        return;
+      case Step::DONE:
+        service_->TaskFinished(this);
+        // |this| might be invalid now.
+        return;
+    }
+  }
+
+  void GetExtensionPermissions() {
+    platform_keys::ExtensionKeyPermissionsServiceFactory::
+        GetForBrowserContextAndExtension(
+            base::BindOnce(&SetKeyTagTask::GotPermissions,
+                           weak_factory_.GetWeakPtr()),
+            service_->browser_context_, extension_id_);
+  }
+
+  void GotPermissions(
+      std::unique_ptr<platform_keys::ExtensionKeyPermissionsService>
+          extension_key_permissions_service) {
+    extension_key_permissions_service_ =
+        std::move(extension_key_permissions_service);
+    DoStep();
+  }
+
+  void CheckPermissions() {
+    extension_key_permissions_service_->CanUseKey(
+        public_key_spki_der_, /*is_sign_operation=*/false,
+        base::BindOnce(&SetKeyTagTask::OnCanUseKeyKnown,
+                       weak_factory_.GetWeakPtr()));
+  }
+
+  void OnCanUseKeyKnown(bool allowed) {
+    if (!allowed) {
+      std::move(callback_).Run(KeystoreError::kKeyNotAllowedForOperation);
+      next_step_ = Step::DONE;
+      DoStep();
+      return;
+    }
+
+    DoStep();
+  }
+
+  void SetKeyTag() {
+    service_->keystore_service_->SetAttributeForKey(
+        KeystoreTypeFromTokenId(token_id_), public_key_spki_der_,
+        KeystoreKeyAttributeType::kPlatformKeysTag, key_tag_,
+        base::BindOnce(&SetKeyTagTask::DidSetKeyTag,
+                       weak_factory_.GetWeakPtr()));
+  }
+
+  void DidSetKeyTag(bool is_error, KeystoreError error) {
+    if (is_error) {
+      LOG(ERROR) << "Failed to set the tag to the key with an error: "
+                 << platform_keys::KeystoreErrorToString(error);
+      std::move(callback_).Run(error);
+    } else {
+      std::move(callback_).Run(/*error=*/std::nullopt);
+    }
+
+    DoStep();
+  }
+
+  Step next_step_ = Step::GET_EXTENSION_PERMISSIONS;
+
+  platform_keys::TokenId token_id_;
+  const std::vector<uint8_t> key_tag_;
+  const std::vector<uint8_t> public_key_spki_der_;
+
+  const extensions::ExtensionId extension_id_;
+  SetKeyTagCallback callback_;
+  std::unique_ptr<platform_keys::ExtensionKeyPermissionsService>
+      extension_key_permissions_service_;
+  const raw_ptr<ExtensionPlatformKeysService> service_;
+  base::WeakPtrFactory<SetKeyTagTask> weak_factory_{this};
 };
 
 class ExtensionPlatformKeysService::SelectTask : public Task {
@@ -611,10 +768,11 @@ class ExtensionPlatformKeysService::SelectTask : public Task {
         CheckKeyPermissions(Step::INTERSECT_WITH_INPUT_CERTS /* next_step */);
         return;
       case Step::INTERSECT_WITH_INPUT_CERTS:
-        if (interactive_)
+        if (interactive_) {
           next_step_ = Step::SELECT_CERTS;
-        else  // Skip SelectCerts and UpdatePermission if not interactive.
+        } else {  // Skip SelectCerts and UpdatePermission if not interactive.
           next_step_ = Step::PASS_RESULTING_CERTS;
+        }
         IntersectWithInputCerts();
         return;
       case Step::SELECT_CERTS:
@@ -639,12 +797,12 @@ class ExtensionPlatformKeysService::SelectTask : public Task {
   void GetExtensionPermissions() {
     platform_keys::ExtensionKeyPermissionsServiceFactory::
         GetForBrowserContextAndExtension(
-            base::BindOnce(&SelectTask::GotPermissions,
+            base::BindOnce(&SelectTask::OnPermissionsGot,
                            weak_factory_.GetWeakPtr()),
             service_->browser_context_, extension_id_);
   }
 
-  void GotPermissions(
+  void OnPermissionsGot(
       std::unique_ptr<platform_keys::ExtensionKeyPermissionsService>
           extension_key_permissions_service) {
     extension_key_permissions_service_ =
@@ -693,8 +851,9 @@ class ExtensionPlatformKeysService::SelectTask : public Task {
             certificate->cert_buffer(), &unused_key_size, &actual_key_type);
         const std::vector<net::X509Certificate::PublicKeyType>& accepted_types =
             request_.certificate_key_types;
-        if (!base::Contains(accepted_types, actual_key_type))
+        if (!base::Contains(accepted_types, actual_key_type)) {
           continue;
+        }
       }
 
       matches_pending_permissions_check_.push_back(std::move(certificate));
@@ -707,7 +866,7 @@ class ExtensionPlatformKeysService::SelectTask : public Task {
   // element and removes it from the deque. Each processed certificate is added
   // to |matches_| if it is selectable according to
   // ExtensionKeyPermissionsService. When all certificates have been processed,
-  // advances the SignTask state machine to |next_step|.
+  // advances the SelectTask state machine to |next_step|.
   void CheckKeyPermissions(Step next_step) {
     if (matches_pending_permissions_check_.empty()) {
       next_step_ = next_step;
@@ -721,8 +880,8 @@ class ExtensionPlatformKeysService::SelectTask : public Task {
     std::vector<uint8_t> public_key_spki_der =
         platform_keys::GetSubjectPublicKeyInfoBlob(certificate);
 
-    extension_key_permissions_service_->CanUseKeyForSigning(
-        public_key_spki_der,
+    extension_key_permissions_service_->CanUseKey(
+        public_key_spki_der, /*is_sign_operation=*/true,
         base::BindOnce(&SelectTask::OnKeySigningPermissionKnown,
                        weak_factory_.GetWeakPtr(), public_key_spki_der,
                        certificate));
@@ -803,7 +962,7 @@ class ExtensionPlatformKeysService::SelectTask : public Task {
       DoStep();
       return;
     }
-    extension_key_permissions_service_->SetUserGrantedPermission(
+    extension_key_permissions_service_->SetUserGrantedSigningPermission(
         platform_keys::GetSubjectPublicKeyInfoBlob(selected_cert_),
         base::BindOnce(&SelectTask::OnPermissionsUpdated,
                        weak_factory_.GetWeakPtr()));
@@ -823,8 +982,9 @@ class ExtensionPlatformKeysService::SelectTask : public Task {
   void PassResultingCerts() {
     std::unique_ptr<net::CertificateList> selection(new net::CertificateList);
     if (interactive_) {
-      if (selected_cert_)
+      if (selected_cert_) {
         selection->push_back(selected_cert_);
+      }
     } else {
       selection->assign(matches_.begin(), matches_.end());
     }
@@ -871,6 +1031,7 @@ void ExtensionPlatformKeysService::SetSelectDelegate(
 
 void ExtensionPlatformKeysService::GenerateRSAKey(
     platform_keys::TokenId token_id,
+    platform_keys::KeyType key_type,
     unsigned int modulus_length,
     bool sw_backed,
     std::string extension_id,
@@ -883,13 +1044,22 @@ void ExtensionPlatformKeysService::GenerateRSAKey(
     return;
   }
 
+  if (key_type == platform_keys::KeyType::kRsaOaep &&
+      !chromeos::features::IsPlatformKeysChangesWave1Enabled()) {
+    std::move(callback).Run(
+        /*public_key_spki_der=*/std::vector<uint8_t>(),
+        crosapi::mojom::KeystoreError::kAlgorithmNotSupported);
+    return;
+  }
+
   StartOrQueueTask(std::make_unique<GenerateRSAKeyTask>(
-      token_id, modulus_length, sw_backed, std::move(extension_id),
+      token_id, key_type, modulus_length, sw_backed, std::move(extension_id),
       std::move(callback), this));
 }
 
 void ExtensionPlatformKeysService::GenerateECKey(
     platform_keys::TokenId token_id,
+    platform_keys::KeyType key_type,
     std::string named_curve,
     std::string extension_id,
     GenerateKeyCallback callback) {
@@ -902,7 +1072,7 @@ void ExtensionPlatformKeysService::GenerateECKey(
   }
 
   StartOrQueueTask(std::make_unique<GenerateECKeyTask>(
-      token_id, std::move(named_curve), std::move(extension_id),
+      token_id, key_type, std::move(named_curve), std::move(extension_id),
       std::move(callback), this));
 }
 
@@ -973,24 +1143,45 @@ void ExtensionPlatformKeysService::SelectClientCertificates(
       std::move(extension_id), std::move(callback), web_contents, this));
 }
 
+void ExtensionPlatformKeysService::SetKeyTag(
+    platform_keys::TokenId token_id,
+    std::vector<uint8_t> tag,
+    std::vector<uint8_t> public_key_spki_der,
+    std::string extension_id,
+    SetKeyTagCallback callback) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+
+  if (!keystore_service_) [[unlikely]] {
+    std::move(callback).Run(crosapi::mojom::KeystoreError::kMojoUnavailable);
+    return;
+  }
+
+  StartOrQueueTask(std::make_unique<SetKeyTagTask>(
+      token_id, std::move(tag), std::move(public_key_spki_der),
+      std::move(extension_id), std::move(callback), this));
+}
+
 void ExtensionPlatformKeysService::StartOrQueueTask(
     std::unique_ptr<Task> task) {
   tasks_.push(std::move(task));
-  if (tasks_.size() == 1)
+  if (tasks_.size() == 1) {
     tasks_.front()->Start();
+  }
 }
 
 void ExtensionPlatformKeysService::TaskFinished(Task* task) {
   DCHECK(!tasks_.empty());
   DCHECK(task == tasks_.front().get());
   // Remove all finished tasks from the queue (should be at most one).
-  while (!tasks_.empty() && tasks_.front()->IsDone())
+  while (!tasks_.empty() && tasks_.front()->IsDone()) {
     tasks_.pop();
+  }
 
   // Now either the queue is empty or the next task is not finished yet and it
   // can be started.
-  if (!tasks_.empty())
+  if (!tasks_.empty()) {
     tasks_.front()->Start();
+  }
 }
 
 }  // namespace chromeos

@@ -8,6 +8,9 @@
 
 #import <optional>
 
+#import "base/debug/crash_logging.h"
+#import "base/debug/dump_without_crashing.h"
+#import "base/feature_list.h"
 #import "base/functional/bind.h"
 #import "base/logging.h"
 #import "base/metrics/histogram_functions.h"
@@ -18,10 +21,13 @@
 #import "components/autofill/core/common/form_data.h"
 #import "components/autofill/core/common/unique_ids.h"
 #import "components/autofill/ios/browser/autofill_util.h"
+#import "components/autofill/ios/common/features.h"
 #import "components/autofill/ios/common/field_data_manager_factory_ios.h"
+#import "components/autofill/ios/form_util/child_frame_registrar.h"
 #import "components/autofill/ios/form_util/form_activity_observer.h"
 #import "components/autofill/ios/form_util/form_activity_params.h"
 #import "components/autofill/ios/form_util/form_util_java_script_feature.h"
+#import "ios/web/public/js_messaging/content_world.h"
 #import "ios/web/public/js_messaging/script_message.h"
 #import "ios/web/public/js_messaging/web_frame.h"
 #import "ios/web/public/js_messaging/web_frames_manager.h"
@@ -30,7 +36,10 @@
 using autofill::FieldDataManager;
 using autofill::FieldDataManagerFactoryIOS;
 using autofill::FormData;
+using autofill::LocalFrameToken;
 using base::SysUTF8ToNSString;
+using web::ContentWorld;
+using web::WebFrame;
 
 namespace {
 
@@ -67,6 +76,77 @@ void RecordMetrics(const base::Value::Dict& message_body) {
                                  percentage);
   }
 }
+
+// Finds the frame with `frame_id` in the given content world.
+web::WebFrame* GetFrameInContentWorld(std::string frame_id,
+                                      ContentWorld content_world,
+                                      web::WebState* web_state) {
+  auto* frames_manager = web_state->GetWebFramesManager(content_world);
+  return frames_manager->GetFrameWithId(frame_id);
+}
+
+// Finds the local frame token associated to
+// `remote_frame_token` in autofill::ChildFrameRegistrar.
+std::optional<LocalFrameToken> LookupLocalFrame(std::string remote_frame_token,
+                                                web::WebState* web_state) {
+  if (std::optional<base::UnguessableToken> remote =
+          autofill::DeserializeJavaScriptFrameId(remote_frame_token)) {
+    auto* registrar =
+        autofill::ChildFrameRegistrar::GetOrCreateForWebState(web_state);
+    return registrar->LookupChildFrame(autofill::RemoteFrameToken(*remote));
+  }
+
+  SCOPED_CRASH_KEY_STRING32(/*category=*/"FormSubmission",
+                            /*name=*/"remote_frame_token",
+                            /*value=*/remote_frame_token);
+  base::debug::DumpWithoutCrashing();
+
+  return std::nullopt;
+}
+
+// Finds the WebFrame in the isolated content world corresponding to a page
+// content world WebFrame with id `page_world_frame_id`. The isolated world
+// frame is retrieved using `remote_frame_token`, which should be associated to
+// the frame's id in autofill::ChildFrameRegistrar.
+//
+// Returns std::nullopt if the
+// isolated frame cannot be found or it has a different origin than its
+// corresponding page world frame. Otherwise it returns the isolated world
+// WebFrame along with its LocalFrameToken.
+std::optional<std::pair<WebFrame*, LocalFrameToken>> GetIsolatedFrame(
+    const std::string& page_world_frame_id,
+    const std::string& remote_frame_token,
+    web::WebState* web_state) {
+  if (!base::FeatureList::IsEnabled(kAutofillIsolatedWorldForJavascriptIos)) {
+    return std::nullopt;
+  }
+
+  std::optional<LocalFrameToken> local_frame_token =
+      LookupLocalFrame(remote_frame_token, web_state);
+
+  if (!local_frame_token) {
+    return std::nullopt;
+  }
+
+  // Verify that the sender frame in the page world has the same origin as the
+  // isolated one. Avoid cross origin talk.
+  web::WebFrame* isolated_world_frame = GetFrameInContentWorld(
+      local_frame_token->ToString(), ContentWorld::kIsolatedWorld, web_state);
+  web::WebFrame* page_world_frame = GetFrameInContentWorld(
+      page_world_frame_id, ContentWorld::kPageContentWorld, web_state);
+
+  if (!isolated_world_frame || !page_world_frame) {
+    return std::nullopt;
+  }
+
+  if (isolated_world_frame->GetSecurityOrigin() !=
+      page_world_frame->GetSecurityOrigin()) {
+    return std::nullopt;
+  }
+
+  return std::make_pair(isolated_world_frame, *local_frame_token);
+}
+
 }  // namespace
 
 namespace autofill {
@@ -168,12 +248,35 @@ void FormActivityTabHelper::FormSubmissionHandler(
     return;
   }
 
-  web::WebFramesManager* frames_manager =
-      GetWebFramesManagerForAutofill(web_state);
-  web::WebFrame* sender_frame = frames_manager->GetFrameWithId(*frame_id);
+  web::WebFrame* sender_frame = nullptr;
+
+  const std::string* remote_frame_token =
+      message_body.FindString("remoteFrameToken");
+  LocalFrameToken local_frame_token;
+
+  // The submit message came from a page world frame. Autofill works on the
+  // isolated world space so map the page frame to the corresponding isolated
+  // world one.
+  if (remote_frame_token) {
+    if (std::optional<std::pair<WebFrame*, LocalFrameToken>>
+            isolated_frame_with_token =
+                GetIsolatedFrame(*frame_id, *remote_frame_token, web_state)) {
+      sender_frame = isolated_frame_with_token->first;
+      local_frame_token = isolated_frame_with_token->second;
+    } else {
+      return;
+    }
+  } else {
+    // Handle isolated world messages without any special consideration.
+    web::WebFramesManager* frames_manager =
+        GetWebFramesManagerForAutofill(web_state);
+    sender_frame = frames_manager->GetFrameWithId(*frame_id);
+  }
+
   if (!sender_frame) {
     return;
   }
+
   if (sender_frame->IsMainFrame() != message.is_main_frame()) {
     return;
   }
@@ -183,7 +286,6 @@ void FormActivityTabHelper::FormSubmissionHandler(
     return;
   }
   const std::string* maybe_form_name = message_body.FindString("formName");
-  const std::string* maybe_form_data = message_body.FindString("formData");
 
   // We decide the form is user-submitted if the user has interacted with
   // the main page (using logic from the popup blocker), or if the keyboard
@@ -195,28 +297,35 @@ void FormActivityTabHelper::FormSubmissionHandler(
   if (maybe_form_name) {
     form_name = *maybe_form_name;
   }
-  std::string form_data;
-  if (maybe_form_data) {
-    form_data = *maybe_form_data;
+
+  const base::Value::Dict* form_data = message_body.FindDict("formData");
+  if (!form_data) {
+    return;
   }
 
   FieldDataManager* fieldDataManager =
       FieldDataManagerFactoryIOS::FromWebFrame(sender_frame);
-  // TODO(crbug.com/357892651): Pass isolated local frame token for forms
-  // extracted in the page world.
-  std::optional<std::vector<FormData>> forms = autofill::ExtractFormsData(
-      base::SysUTF8ToNSString(form_data), true, base::UTF8ToUTF16(form_name),
+  // We need to pass `frame_id` when extracting the form even if the frame is
+  // from the page world. `ExtractFormsData` checks that the frame id matches
+  // the id of the frame that contains the forms. For page world forms, we set
+  // FormData::host_frame with the corresponding isolated world frame in
+  // `local_frame_token`.
+  std::optional<FormData> form = autofill::ExtractFormData(
+      *form_data, true, base::UTF8ToUTF16(form_name),
       web_state->GetLastCommittedURL(), sender_frame->GetSecurityOrigin(),
-      *fieldDataManager, sender_frame->GetFrameId());
-
-  if (!forms || forms->size() != 1) {
+      *fieldDataManager, *frame_id, local_frame_token);
+  if (!form) {
     return;
   }
 
-  FormData form = forms.value()[0];
+  if (std::optional<bool> programmatic_submission =
+          message_body.FindBool("programmaticSubmission")) {
+    base::UmaHistogramBoolean(kProgrammaticFormSubmissionHistogram,
+                              *programmatic_submission);
+  }
 
   for (auto& observer : observers_) {
-    observer.DocumentSubmitted(web_state, sender_frame, form,
+    observer.DocumentSubmitted(web_state, sender_frame, *form,
                                submitted_by_user);
   }
 }

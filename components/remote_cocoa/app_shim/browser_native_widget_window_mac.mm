@@ -6,9 +6,14 @@
 
 #import <AppKit/AppKit.h>
 
+#include "components/remote_cocoa/app_shim/features.h"
 #include "components/remote_cocoa/app_shim/native_widget_ns_window_bridge.h"
 #include "components/remote_cocoa/common/native_widget_ns_window_host.mojom.h"
 
+namespace {
+// Workaround for https://crbug.com/1369643
+const double kThinControllerHeight = 0.5;
+}  // namespace
 @interface NSWindow (PrivateBrowserNativeWidgetAPI)
 + (Class)frameViewClassForStyleMask:(NSUInteger)windowStyle;
 @end
@@ -17,9 +22,6 @@
 - (CGFloat)_titlebarHeight;
 - (void)setStyleMask:(NSUInteger)styleMask;
 - (void)setButtonRevealAmount:(double)amount;
-@property(readonly) NSView* closeButton;
-@property(readonly) NSView* minimizeButton;
-@property(readonly) NSView* zoomButton;
 @end
 
 @interface BrowserWindowFrame : NativeWidgetMacNSWindowTitledFrame
@@ -87,20 +89,20 @@
 }
 
 - (void)maybeShowTrafficLights {
-  if (!_alwaysShowTrafficLights ||
-      ![self respondsToSelector:@selector(closeButton)] ||
-      ![self respondsToSelector:@selector(minimizeButton)] ||
-      ![self respondsToSelector:@selector(zoomButton)]) {
+  if (!_alwaysShowTrafficLights) {
     return;
   }
-  self.closeButton.alphaValue = 1.0;
-  self.minimizeButton.alphaValue = 1.0;
-  self.zoomButton.alphaValue = 1.0;
+  NSWindow* window = [self window];
+  [[window standardWindowButton:NSWindowCloseButton] setAlphaValue:1.0];
+  [[window standardWindowButton:NSWindowMiniaturizeButton] setAlphaValue:1.0];
+  [[window standardWindowButton:NSWindowZoomButton] setAlphaValue:1.0];
 }
 
 @end
 
 @implementation BrowserNativeWidgetWindow
+
+@synthesize thinTitlebarViewController = _thinTitlebarViewController;
 
 // NSWindow (PrivateAPI) overrides.
 
@@ -124,6 +126,17 @@
            selector:@selector(windowDidBecomeKey:)
                name:NSWindowDidBecomeKeyNotification
              object:nil];
+
+    _thinTitlebarViewController =
+        [[NSTitlebarAccessoryViewController alloc] init];
+    NSView* thinView = [[NSView alloc] init];
+    thinView.wantsLayer = YES;
+    thinView.layer.backgroundColor = NSColor.blackColor.CGColor;
+    _thinTitlebarViewController.view = thinView;
+    _thinTitlebarViewController.layoutAttribute = NSLayoutAttributeBottom;
+    _thinTitlebarViewController.fullScreenMinHeight = kThinControllerHeight;
+    _thinTitlebarViewController.hidden = YES;
+    [self addTitlebarAccessoryViewController:_thinTitlebarViewController];
   }
   return self;
 }

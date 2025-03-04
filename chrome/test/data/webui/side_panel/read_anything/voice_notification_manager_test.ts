@@ -12,13 +12,19 @@ suite('VoiceNotificationManager', () => {
   let manager: VoiceNotificationManager;
   let listener: VoiceNotificationListener;
   let notifications: {[lang: string]: NotificationType};
+  let actualLang: string|undefined;
+  let actualNotification: NotificationType;
 
   setup(() => {
     manager = new VoiceNotificationManager();
     notifications = {};
     listener = {
-      notify(lang: string, type: NotificationType): void {
-        notifications = {...notifications, [lang]: type};
+      notify(type: NotificationType, lang?: string): void {
+        if (lang) {
+          notifications = {...notifications, [lang]: type};
+        }
+        actualLang = lang;
+        actualNotification = type;
       },
     };
   });
@@ -71,5 +77,37 @@ suite('VoiceNotificationManager', () => {
     assertEquals(NotificationType.DOWNLOADED, notifications['yue']);
     assertEquals(NotificationType.GENERIC_ERROR, notifications['hi']);
     assertEquals(NotificationType.NO_SPACE, notifications['bn']);
+  });
+
+  test(
+      'listener notified of Google Voices Unavailable without a language',
+      () => {
+        manager.addListener(listener);
+
+        manager.onNoEngineConnection();
+
+        assertEquals(
+            actualNotification, NotificationType.GOOGLE_VOICES_UNAVAILABLE);
+        assertEquals(actualLang, undefined);
+      });
+
+  test('listener notified of canceled download', () => {
+    const lang = 'tr';
+    manager.addListener(listener);
+
+    manager.onVoiceStatusChange(
+        lang, VoiceClientSideStatusCode.SENT_INSTALL_REQUEST, []);
+    manager.onCancelDownload(lang);
+
+    assertEquals(NotificationType.NONE, notifications[lang]);
+  });
+
+  test('listener not notified if canceled language is not downloading', () => {
+    const lang = 'tr';
+    manager.addListener(listener);
+
+    manager.onCancelDownload(lang);
+
+    assertFalse(!!notifications[lang]);
   });
 });

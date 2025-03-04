@@ -29,11 +29,11 @@ enum class PageActionIconType {
   kSaveCard = 15,
   // DEPRECATED: kSendTabToSelf = 16,
   kSharingHub = 17,
-  kSideSearch = 18,
+  // DEPRECATED: kSideSearch = 18,
   kSmsRemoteFetcher = 19,
   kTranslate = 20,
   kVirtualCardEnroll = 21,
-  kVirtualCardManualFallback = 22,
+  kFilledCardInformation = 22,
   kZoom = 23,
   kSaveIban = 24,
   kMandatoryReauth = 25,
@@ -42,7 +42,10 @@ enum class PageActionIconType {
   kProductSpecifications = 28,
   kLensOverlay = 29,
   kDiscounts = 30,
-  kMaxValue = kDiscounts,
+  kOptimizationGuide = 31,
+  kCollaborationMessaging = 32,
+  kChangePassword = 33,
+  kMaxValue = kChangePassword,
 };
 
 static_assert(static_cast<int>(PageActionIconType::kBookmarkStar) == 0);
@@ -61,12 +64,11 @@ static_assert(static_cast<int>(PageActionIconType::kPwaInstall) == 11);
 static_assert(static_cast<int>(PageActionIconType::kAutofillAddress) == 14);
 static_assert(static_cast<int>(PageActionIconType::kSaveCard) == 15);
 static_assert(static_cast<int>(PageActionIconType::kSharingHub) == 17);
-static_assert(static_cast<int>(PageActionIconType::kSideSearch) == 18);
 static_assert(static_cast<int>(PageActionIconType::kSmsRemoteFetcher) == 19);
 static_assert(static_cast<int>(PageActionIconType::kTranslate) == 20);
 static_assert(static_cast<int>(PageActionIconType::kVirtualCardEnroll) == 21);
-static_assert(
-    static_cast<int>(PageActionIconType::kVirtualCardManualFallback) == 22);
+static_assert(static_cast<int>(PageActionIconType::kFilledCardInformation) ==
+              22);
 static_assert(static_cast<int>(PageActionIconType::kZoom) == 23);
 static_assert(static_cast<int>(PageActionIconType::kSaveIban) == 24);
 static_assert(static_cast<int>(PageActionIconType::kMandatoryReauth) == 25);
@@ -75,4 +77,8 @@ static_assert(static_cast<int>(PageActionIconType::kProductSpecifications) ==
               28);
 static_assert(static_cast<int>(PageActionIconType::kLensOverlay) == 29);
 static_assert(static_cast<int>(PageActionIconType::kDiscounts) == 30);
+static_assert(static_cast<int>(PageActionIconType::kOptimizationGuide) == 31);
+static_assert(static_cast<int>(PageActionIconType::kCollaborationMessaging) ==
+              32);
+static_assert(static_cast<int>(PageActionIconType::kChangePassword) == 33);
 #endif  // CHROME_BROWSER_UI_PAGE_ACTION_PAGE_ACTION_ICON_TYPE_H_

@@ -404,10 +404,7 @@ void BrowserAccessibilityStateImplAndroid::OnAnimatorDurationScaleChanged() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
   gfx::Animation::UpdatePrefersReducedMotion();
-  for (content::WebContentsImpl* wc :
-       content::WebContentsImpl::GetAllWebContents()) {
-    wc->OnWebPreferencesChanged();
-  }
+  NotifyWebContentsPreferencesChanged();
 }
 
 void BrowserAccessibilityStateImplAndroid::OnDisplayInversionEnabledChanged(
@@ -454,6 +451,21 @@ void BrowserAccessibilityStateImplAndroid::UpdateUniqueUserHistograms() {
   ui::AXMode mode = GetAccessibilityMode();
   UMA_HISTOGRAM_BOOLEAN("Accessibility.Android.ScreenReader.EveryReport",
                         mode.has_mode(ui::AXMode::kScreenReader));
+}
+
+void BrowserAccessibilityStateImplAndroid::SetKnownScreenReaderAppActive(
+    bool is_known_screen_reader_running) {
+  static auto* ax_talkback_crash_key = base::debug::AllocateCrashKeyString(
+      "ax_talkback", base::debug::CrashKeySize::Size32);
+
+  if (is_known_screen_reader_running) {
+    base::debug::SetCrashKeyString(ax_talkback_crash_key, "true");
+  } else {
+    base::debug::ClearCrashKeyString(ax_talkback_crash_key);
+  }
+
+  UMA_HISTOGRAM_BOOLEAN("Accessibility.Android.Talkback",
+                        is_known_screen_reader_running);
 }
 
 // static

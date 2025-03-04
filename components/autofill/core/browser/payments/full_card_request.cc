@@ -13,38 +13,26 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "components/autofill/core/browser/autofill_client.h"
-#include "components/autofill/core/browser/data_model/credit_card.h"
+#include "components/autofill/core/browser/data_manager/payments/payments_data_manager.h"
+#include "components/autofill/core/browser/data_manager/personal_data_manager.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card.h"
+#include "components/autofill/core/browser/foundations/autofill_client.h"
 #include "components/autofill/core/browser/metrics/autofill_metrics.h"
 #include "components/autofill/core/browser/metrics/payments/better_auth_metrics.h"
 #include "components/autofill/core/browser/metrics/payments/card_unmask_authentication_metrics.h"
 #include "components/autofill/core/browser/payments/autofill_payments_feature_availability.h"
 #include "components/autofill/core/browser/payments/payments_network_interface.h"
 #include "components/autofill/core/browser/payments/payments_util.h"
-#include "components/autofill/core/browser/payments_data_manager.h"
-#include "components/autofill/core/browser/personal_data_manager.h"
 #include "components/autofill/core/common/autofill_clock.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "url/origin.h"
 
-namespace autofill {
-namespace payments {
+namespace autofill::payments {
 
 using PaymentsRpcResult = PaymentsAutofillClient::PaymentsRpcResult;
 
-FullCardRequest::FullCardRequest(
-    AutofillClient* autofill_client,
-    PaymentsNetworkInterface* payments_network_interface,
-    PersonalDataManager* personal_data_manager)
-    : autofill_client_(CHECK_DEREF(autofill_client)),
-      payments_network_interface_(payments_network_interface),
-      personal_data_manager_(personal_data_manager),
-      result_delegate_(nullptr),
-      ui_delegate_(nullptr),
-      should_unmask_card_(false) {
-  DCHECK(payments_network_interface_);
-  DCHECK(personal_data_manager_);
-}
+FullCardRequest::FullCardRequest(AutofillClient* autofill_client)
+    : autofill_client_(CHECK_DEREF(autofill_client)) {}
 
 FullCardRequest::~FullCardRequest() = default;
 
@@ -125,24 +113,11 @@ void FullCardRequest::GetFullCardImpl(
   result_delegate_ = result_delegate;
   ui_delegate_ = ui_delegate;
 
-  // If unmasking is for a virtual card and
-  // |last_committed_primary_main_frame_origin| is empty, end the request as
-  // failure and reset.
+  // If unmasking is for a virtual card then
+  // |last_committed_primary_main_frame_origin| should not be empty.
   if (card.record_type() == CreditCard::RecordType::kVirtualCard &&
       !last_committed_primary_main_frame_origin.has_value()) {
-    NOTREACHED_IN_MIGRATION();
-    if (ui_delegate_) {
-      ui_delegate_->OnUnmaskVerificationResult(
-          PaymentsRpcResult::kVcnRetrievalPermanentFailure);
-    }
-
-    if (result_delegate_) {
-      result_delegate_->OnFullCardRequestFailed(
-          card_type, FailureType::VIRTUAL_CARD_RETRIEVAL_PERMANENT_FAILURE);
-    }
-
-    Reset();
-    return;
+    NOTREACHED();
   }
 
   request_ = std::make_unique<UnmaskRequestDetails>();
@@ -157,9 +132,9 @@ void FullCardRequest::GetFullCardImpl(
   should_unmask_card_ = card.masked() ||
                         (card_type == CreditCard::RecordType::kVirtualCard);
   if (should_unmask_card_) {
-    payments_network_interface_->Prepare();
+    GetPaymentsNetworkInterface()->Prepare();
     request_->billing_customer_number =
-        GetBillingCustomerId(&personal_data_manager_->payments_data_manager());
+        GetBillingCustomerId(GetPaymentsDataManager());
   }
 
   request_->fido_assertion_info = std::move(fido_assertion_info);
@@ -170,12 +145,7 @@ void FullCardRequest::GetFullCardImpl(
     request_->client_behavior_signals.push_back(
         ClientBehaviorConstants::kShowingCardArtImageAndCardProductName);
   }
-  // TODO(crbug.com/332715322): Refactor FullCardRequest to use
-  // AutofillClient::GetPersonalDataManager() instead of a separate class
-  // variable.
-  if (DidDisplayBenefitForCard(
-          card, autofill_client_.get(),
-          personal_data_manager_->payments_data_manager())) {
+  if (DidDisplayBenefitForCard(card, autofill_client_.get())) {
     request_->client_behavior_signals.push_back(
         ClientBehaviorConstants::kShowingCardBenefits);
   }
@@ -208,8 +178,7 @@ void FullCardRequest::OnUnmaskPromptAccepted(
   if (request_->card.record_type() == CreditCard::RecordType::kLocalCard &&
       !request_->card.guid().empty() &&
       (!user_response.exp_month.empty() || !user_response.exp_year.empty())) {
-    personal_data_manager_->payments_data_manager().UpdateCreditCard(
-        request_->card);
+    GetPaymentsDataManager().UpdateCreditCard(request_->card);
   }
 
   if (!should_unmask_card_) {
@@ -268,7 +237,7 @@ void FullCardRequest::OnDidGetUnmaskRiskData(const std::string& risk_data) {
 
 void FullCardRequest::SendUnmaskCardRequest() {
   real_pan_request_timestamp_ = base::TimeTicks::Now();
-  payments_network_interface_->UnmaskCard(
+  GetPaymentsNetworkInterface()->UnmaskCard(
       *request_, base::BindOnce(&FullCardRequest::OnDidGetRealPan,
                                 weak_ptr_factory_.GetWeakPtr()));
 }
@@ -375,7 +344,7 @@ void FullCardRequest::OnDidGetRealPan(
         // server cards are not persisted in any way.
         request_->card.set_record_type(CreditCard::RecordType::kFullServerCard);
       } else {
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
       }
 
       // TODO(crbug.com/40621544): Once |fido_opt_in| is added to
@@ -396,8 +365,7 @@ void FullCardRequest::OnDidGetRealPan(
     }
 
     case PaymentsRpcResult::kNone:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 
@@ -407,7 +375,7 @@ void FullCardRequest::OnFIDOVerificationCancelled() {
 
 void FullCardRequest::Reset() {
   weak_ptr_factory_.InvalidateWeakPtrs();
-  payments_network_interface_->CancelRequest();
+  GetPaymentsNetworkInterface()->CancelRequest();
   result_delegate_ = nullptr;
   ui_delegate_ = nullptr;
   request_.reset();
@@ -415,5 +383,13 @@ void FullCardRequest::Reset() {
   unmask_response_details_ = UnmaskResponseDetails();
 }
 
-}  // namespace payments
-}  // namespace autofill
+PaymentsDataManager& FullCardRequest::GetPaymentsDataManager() {
+  return autofill_client_->GetPersonalDataManager().payments_data_manager();
+}
+
+PaymentsNetworkInterface* FullCardRequest::GetPaymentsNetworkInterface() {
+  return autofill_client_->GetPaymentsAutofillClient()
+      ->GetPaymentsNetworkInterface();
+}
+
+}  // namespace autofill::payments

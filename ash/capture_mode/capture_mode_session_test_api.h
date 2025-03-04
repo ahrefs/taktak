@@ -5,6 +5,8 @@
 #ifndef ASH_CAPTURE_MODE_CAPTURE_MODE_SESSION_TEST_API_H_
 #define ASH_CAPTURE_MODE_CAPTURE_MODE_SESSION_TEST_API_H_
 
+#include "ash/capture_mode/action_button_container_view.h"
+#include "ash/capture_mode/capture_mode_constants.h"
 #include "ash/capture_mode/capture_mode_session_focus_cycler.h"
 #include "base/memory/raw_ptr.h"
 
@@ -14,10 +16,12 @@ class Label;
 
 namespace ash {
 
+class ActionButtonView;
 class BaseCaptureModeSession;
 class CaptureLabelView;
 class CaptureModeBarView;
 class CaptureModeSettingsView;
+class CaptureRegionOverlayController;
 class MagnifierGlass;
 class PillButton;
 class RecordingTypeMenuView;
@@ -47,9 +51,15 @@ class CaptureModeSessionTestApi {
 
   views::Widget* GetCaptureLabelWidget();
 
+  views::Widget* GetActionContainerWidget();
+
+  views::Widget* GetDisclaimerWidget();
+
   views::Widget* GetRecordingTypeMenuWidget();
 
   views::Widget* GetDimensionsLabelWidget();
+
+  views::Widget* GetFeedbackButtonWidget();
 
   UserNudgeController* GetUserNudgeController();
 
@@ -78,9 +88,19 @@ class CaptureModeSessionTestApi {
 
   gfx::Rect GetSelectedWindowTargetBounds();
 
-  // A vector of the current action buttons for a Sunfish session. Will return
-  // an empty vector if there are no buttons or there is no selected region.
-  std::vector<PillButton*> GetActionButtons() const;
+  // Returns a vector of the current action buttons for the capture mode
+  // session. The returned vector will be empty if there are no buttons or there
+  // is no selected region.
+  std::vector<ActionButtonView*> GetActionButtons() const;
+
+  // Returns the action button with view ID `id`, or nullptr if there is none.
+  ActionButtonView* GetActionButtonByViewId(ActionButtonViewID id) const;
+
+  ActionButtonContainerView::ErrorView* GetActionContainerErrorView() const;
+
+  CaptureRegionOverlayController* GetCaptureRegionOverlayController() const;
+
+  PillButton* GetFeedbackButton();
 
  private:
   const raw_ptr<CaptureModeSession, DanglingUntriaged> session_;

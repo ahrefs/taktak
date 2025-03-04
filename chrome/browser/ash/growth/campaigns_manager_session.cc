@@ -10,6 +10,7 @@
 
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_switches.h"
+#include "ash/login/ui/lock_screen.h"
 #include "ash/session/session_controller_impl.h"
 #include "ash/shell.h"
 #include "base/check.h"
@@ -26,9 +27,9 @@
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_list.h"
-#include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/web_applications/app_browser_controller.h"
 #include "chromeos/ash/components/growth/action_performer.h"
+#include "chromeos/ash/components/growth/campaigns_constants.h"
 #include "chromeos/ash/components/growth/campaigns_logger.h"
 #include "chromeos/ash/components/growth/campaigns_manager.h"
 #include "chromeos/ash/components/growth/campaigns_model.h"
@@ -95,9 +96,7 @@ bool IsEligible() {
 }
 
 bool IsWebBrowserAppId(std::string_view app_id) {
-  return app_id == app_constants::kChromeAppId ||
-         app_id == app_constants::kAshDebugBrowserAppId ||
-         app_id == app_constants::kLacrosAppId;
+  return app_id == app_constants::kChromeAppId;
 }
 
 bool IsAppVisible(const apps::InstanceUpdate& update) {
@@ -273,21 +272,6 @@ std::optional<apps::AppType> GetAppType(const std::string& app_id) {
   return cache->GetAppType(app_id);
 }
 
-// Returns current active browser. If there's no active browser, return nullptr.
-Browser* GetActiveBrowser() {
-  for (Browser* browser : BrowserList::GetInstance()->OrderedByActivation()) {
-    if (browser->profile()->IsOffTheRecord() ||
-        !browser->window()->IsVisible()) {
-      continue;
-    }
-
-    if (browser->window()->IsActive()) {
-      return browser;
-    }
-  }
-  return nullptr;
-}
-
 bool IsSystemWebApp(Profile* profile, const webapps::AppId& app_id) {
   ash::SystemWebAppManager* swa_manager =
       ash::SystemWebAppManager::Get(profile);
@@ -299,24 +283,26 @@ bool IsSystemWebApp(Profile* profile, const webapps::AppId& app_id) {
 }
 
 bool HasValidPwaBrowserForAppId(const std::string& app_id) {
-  auto* browser = GetActiveBrowser();
+  for (Browser* browser : BrowserList::GetInstance()->OrderedByActivation()) {
+    if (browser->profile()->IsOffTheRecord() || !browser->IsActive()) {
+      continue;
+    }
 
-  if (!browser) {
-    CAMPAIGNS_LOG(ERROR) << "No browser window";
-    return false;
+    if (browser->type() != Browser::TYPE_APP) {
+      CAMPAIGNS_LOG(ERROR) << "Not pwa browser type";
+      return false;
+    }
+
+    if (!web_app::AppBrowserController::IsForWebApp(browser, app_id)) {
+      CAMPAIGNS_LOG(ERROR) << "Browser belongs to a different app";
+      return false;
+    }
+
+    return true;
   }
 
-  if (browser->type() != Browser::TYPE_APP) {
-    CAMPAIGNS_LOG(ERROR) << "Not pwa browser type";
-    return false;
-  }
-
-  if (!web_app::AppBrowserController::IsForWebApp(browser, app_id)) {
-    CAMPAIGNS_LOG(ERROR) << "Browser belongs to a different app";
-    return false;
-  }
-
-  return true;
+  CAMPAIGNS_LOG(ERROR) << "No browser window";
+  return false;
 }
 
 void SetCampaignManagerPrefService(Profile* profile) {
@@ -346,6 +332,13 @@ CampaignsManagerSession::CampaignsManagerSession() {
   if (session_manager) {
     session_manager_observation_.Observe(session_manager);
     OnSessionStateChanged();
+  }
+
+  // Shell is not available in unit tests.
+  auto* power_manager_client = chromeos::PowerManagerClient::Get();
+  if (power_manager_client && ash::Shell::HasInstance()) {
+    shell_observer_.Observe(ash::Shell::Get());
+    power_manager_client_observer_.Observe(power_manager_client);
   }
 }
 
@@ -380,6 +373,7 @@ void CampaignsManagerSession::OnSessionStateChanged() {
     return;
   }
 
+  RecordSessionUnlockEvent();
   SetCampaignManagerPrefService(GetProfile());
 
   ash::OwnerSettingsServiceAsh* service =
@@ -394,6 +388,23 @@ void CampaignsManagerSession::OnSessionStateChanged() {
     CAMPAIGNS_LOG(ERROR)
         << "Owner settings service unavailable for the profile.";
   }
+}
+
+void CampaignsManagerSession::OnShellDestroying() {
+  // Observe shell destroying as indicator of power manager destroying event if
+  // this happens before campaign manager session is destructed.
+  power_manager_client_observer_.Reset();
+  shell_observer_.Reset();
+}
+
+void CampaignsManagerSession::SuspendDone(base::TimeDelta sleep_duration) {
+  // Do not record event when the session is not active, such as lock screen.
+  if (session_manager::SessionManager::Get()->session_state() !=
+      session_manager::SessionState::ACTIVE) {
+    return;
+  }
+
+  RecordSessionUnlockEvent();
 }
 
 void CampaignsManagerSession::OnInstanceUpdate(
@@ -417,9 +428,7 @@ void CampaignsManagerSession::OnInstanceUpdate(
 
   switch (app_type.value()) {
     case apps::AppType::kUnknown:
-      // e.g Ash debug browser.
       break;
-    case apps::AppType::kStandaloneBrowser:
     case apps::AppType::kChromeApp:
       HandleWebBrowserInstanceUpdate(update);
       break;
@@ -660,4 +669,11 @@ void CampaignsManagerSession::MaybeTriggerCampaignsWhenAppOpened() {
   }
 
   MaybeTriggerRuntimeCampaigns(growth::TriggerType::kAppOpened);
+}
+
+void CampaignsManagerSession::RecordSessionUnlockEvent() {
+  auto* campaigns_manager = growth::CampaignsManager::Get();
+  CHECK(campaigns_manager);
+
+  campaigns_manager->RecordEvent(growth::kGrowthCampaignsEventSessionUnlock);
 }

@@ -54,10 +54,10 @@ bool PrefetchCloseIdleSockets();
 // Whether a spare renderer should be started after prefetching.
 bool PrefetchStartsSpareRenderer();
 
-// The amount of time |PrefetchService| will keep an owned |PrefetchContainer|
-// alive. If this value is zero or less, the service will keep the prefetch
-// forever.
-base::TimeDelta PrefetchContainerLifetimeInPrefetchService();
+// The default amount of time `PrefetchService` will keep an owned
+// `PrefetchContainer` alive. If this value is zero or less, the service will
+// keep the prefetch forever. This can be overridden in the `PrefetchContainer`.
+base::TimeDelta PrefetchContainerDefaultTtlInPrefetchService();
 
 // Returns if the specified host should have the prefetch proxy bypassed for
 // testing purposes. Currently this is only used for WPT test servers.
@@ -122,6 +122,8 @@ bool PrefetchBrowserInitiatedTriggersEnabled();
 // `PrefetchMatchResolver2::FindPrefetch()` instead of
 // `PrefetchService::GetPrefetchToServe()`.
 CONTENT_EXPORT bool UseNewWaitLoop();
+
+size_t GetPrefetchDataPipeTeeBodySizeLimit();
 
 }  // namespace content
 

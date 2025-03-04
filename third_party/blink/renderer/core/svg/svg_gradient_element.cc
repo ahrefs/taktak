@@ -36,11 +36,11 @@ namespace blink {
 
 template <>
 const SVGEnumerationMap& GetEnumerationMap<SVGSpreadMethodType>() {
-  static const SVGEnumerationMap::Entry enum_items[] = {
-      {kSVGSpreadMethodPad, "pad"},
-      {kSVGSpreadMethodReflect, "reflect"},
-      {kSVGSpreadMethodRepeat, "repeat"},
-  };
+  static constexpr auto enum_items = std::to_array<const char* const>({
+      "pad",
+      "reflect",
+      "repeat",
+  });
   static const SVGEnumerationMap entries(enum_items);
   return entries;
 }
@@ -215,7 +215,7 @@ void SVGGradientElement::SynchronizeAllSVGAttributes() const {
 }
 
 void SVGGradientElement::CollectExtraStyleForPresentationAttribute(
-    MutableCSSPropertyValueSet* style) {
+    HeapVector<CSSPropertyValue, 8>& style) {
   AddAnimatedPropertyToPresentationAttributeStyle(*gradient_transform_, style);
   SVGElement::CollectExtraStyleForPresentationAttribute(style);
 }

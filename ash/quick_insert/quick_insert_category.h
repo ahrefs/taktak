@@ -10,15 +10,17 @@
 namespace ash {
 
 // A category specifies a type of data that can be searched for.
-enum class ASH_EXPORT PickerCategory {
+enum class ASH_EXPORT QuickInsertCategory {
   // Editor categories:
   kEditorWrite,
   kEditorRewrite,
-  kLobster,
+  kLobsterWithSelectedText,
+  kLobsterWithNoSelectedText,
   // General categories:
   kLinks,
   kEmojisGifs,
   kEmojis,
+  kGifs,
   kClipboard,
   kDriveFiles,
   kLocalFiles,

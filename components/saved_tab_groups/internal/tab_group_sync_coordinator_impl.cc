@@ -5,6 +5,7 @@
 #include "components/saved_tab_groups/internal/tab_group_sync_coordinator_impl.h"
 
 #include "base/uuid.h"
+#include "components/prefs/pref_service.h"
 #include "components/saved_tab_groups/delegate/tab_group_sync_delegate.h"
 #include "components/saved_tab_groups/internal/startup_helper.h"
 #include "components/saved_tab_groups/public/saved_tab_group.h"
@@ -14,11 +15,13 @@ namespace tab_groups {
 
 TabGroupSyncCoordinatorImpl::TabGroupSyncCoordinatorImpl(
     std::unique_ptr<TabGroupSyncDelegate> delegate,
-    TabGroupSyncService* service)
+    TabGroupSyncService* service,
+    PrefService* pref_service)
     : service_(service),
       platform_delegate_(std::move(delegate)),
-      startup_helper_(
-          std::make_unique<StartupHelper>(platform_delegate_.get(), service_)) {
+      startup_helper_(std::make_unique<StartupHelper>(platform_delegate_.get(),
+                                                      service_,
+                                                      pref_service)) {
   CHECK(platform_delegate_);
   CHECK(service_);
 }
@@ -26,7 +29,31 @@ TabGroupSyncCoordinatorImpl::TabGroupSyncCoordinatorImpl(
 TabGroupSyncCoordinatorImpl::~TabGroupSyncCoordinatorImpl() = default;
 
 void TabGroupSyncCoordinatorImpl::OnInitialized() {
-  startup_helper_->InitializeTabGroupSync();
+  InitializeTabGroupSync();
+}
+
+void TabGroupSyncCoordinatorImpl::InitializeTabGroupSync() {
+  startup_helper_->CloseDeletedTabGroupsFromTabModel();
+  startup_helper_->HandleUnsavedLocalTabGroups();
+
+  // At this point, there should be no unsaved local groups. Update them to
+  // match sync state.
+  for (const auto& saved_tab_group : service_->GetAllGroups()) {
+    if (!saved_tab_group.local_group_id()) {
+      continue;
+    }
+
+    base::Uuid sync_group_id = saved_tab_group.saved_guid();
+    LocalTabGroupID local_group_id = saved_tab_group.local_group_id().value();
+    ConnectLocalTabGroup(sync_group_id, local_group_id);
+
+    // Update the local to group to match sync. As the group was modified, query
+    // it again to have the updated one.
+    auto updated_saved_group = service_->GetGroup(sync_group_id);
+    if (updated_saved_group) {
+      platform_delegate_->UpdateLocalTabGroup(updated_saved_group.value());
+    }
+  }
 }
 
 void TabGroupSyncCoordinatorImpl::HandleOpenTabGroupRequest(
@@ -38,26 +65,33 @@ void TabGroupSyncCoordinatorImpl::HandleOpenTabGroupRequest(
 
 void TabGroupSyncCoordinatorImpl::ConnectLocalTabGroup(
     const base::Uuid& sync_id,
-    const LocalTabGroupID& local_id,
-    OpeningSource opening_source) {
+    const LocalTabGroupID& local_id) {
   std::optional<SavedTabGroup> group = service_->GetGroup(sync_id);
   if (!group) {
     return;
   }
 
-  // First, create ID mappings for both the group and its tabs.
-  service_->UpdateLocalTabGroupMapping(sync_id, local_id, opening_source);
+  // First, create ID mappings for the tabs.
   startup_helper_->MapTabIdsForGroup(local_id, *group);
 
   // Retrieve the group again which should have IDs mapped already. Now, update
   // the local tab URLs and group visuals to exactly match sync.
   group = service_->GetGroup(sync_id);
-  platform_delegate_->UpdateLocalTabGroup(*group);
+  platform_delegate_->ConnectLocalTabGroup(*group);
 }
 
 std::unique_ptr<ScopedLocalObservationPauser>
 TabGroupSyncCoordinatorImpl::CreateScopedLocalObserverPauser() {
   return platform_delegate_->CreateScopedLocalObserverPauser();
+}
+
+std::set<LocalTabID> TabGroupSyncCoordinatorImpl::GetSelectedTabs() {
+  return platform_delegate_->GetSelectedTabs();
+}
+
+std::u16string TabGroupSyncCoordinatorImpl::GetTabTitle(
+    const LocalTabID& local_tab_id) {
+  return platform_delegate_->GetTabTitle(local_tab_id);
 }
 
 void TabGroupSyncCoordinatorImpl::DisconnectLocalTabGroup(

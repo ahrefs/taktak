@@ -11,7 +11,7 @@
 #include "extensions/buildflags/buildflags.h"
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)
-#include "chrome/browser/extensions/api/bookmarks/bookmarks_api_watcher.h"
+#include "chrome/browser/extensions/api/bookmarks/bookmarks_api_watcher.h"  // nogncheck
 
 class ExtensionFunction;
 #endif
@@ -28,7 +28,7 @@ using BookmarksApiWatcherObserver = extensions::BookmarksApiWatcher::Observer;
 // Provides a stub class to inherit from to support overriding the destructor.
 class BookmarksApiWatcherObserver {
  public:
-  virtual ~BookmarksApiWatcherObserver() {}
+  virtual ~BookmarksApiWatcherObserver() = default;
 };
 #endif
 

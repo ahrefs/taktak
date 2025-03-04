@@ -11,7 +11,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -20,8 +19,8 @@ import org.robolectric.annotation.Config;
 
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.HistogramWatcher;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.chrome.browser.profiles.Profile;
+import org.chromium.chrome.browser.ui.signin.signin_promo.SigninPromoCoordinator;
 import org.chromium.components.browsing_data.DeleteBrowsingDataAction;
 import org.chromium.url.GURL;
 
@@ -32,9 +31,9 @@ import java.util.List;
 @RunWith(BaseRobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
 public class BrowsingHistoryBridgeTest {
-    @Rule public JniMocker mocker = new JniMocker();
 
     @Mock BrowsingHistoryBridge.Natives mNativeMocks;
+    @Mock SigninPromoCoordinator mHistorySyncPromoCoordinator;
 
     @Mock private Profile mProfile;
 
@@ -43,7 +42,7 @@ public class BrowsingHistoryBridgeTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        mocker.mock(BrowsingHistoryBridgeJni.TEST_HOOKS, mNativeMocks);
+        BrowsingHistoryBridgeJni.setInstanceForTesting(mNativeMocks);
         mBrowsingHistoryBridge = new BrowsingHistoryBridge(mProfile);
     }
 
@@ -64,7 +63,9 @@ public class BrowsingHistoryBridgeTest {
         // Ensure the app ID passed from BrowsingHistoryBridge is stored in the item
         // object, and later gets passed down when marking the item for removal.
         HistoryContentManager contentManager = mock(HistoryContentManager.class);
-        HistoryAdapter adapter = new HistoryAdapter(contentManager, mBrowsingHistoryBridge);
+        HistoryAdapter adapter =
+                new HistoryAdapter(
+                        contentManager, mBrowsingHistoryBridge, mHistorySyncPromoCoordinator);
         mBrowsingHistoryBridge.setObserver(adapter);
 
         List<HistoryItem> items = new ArrayList<>();

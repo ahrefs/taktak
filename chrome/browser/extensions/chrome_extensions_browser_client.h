@@ -83,6 +83,7 @@ class ChromeExtensionsBrowserClient : public ExtensionsBrowserClient {
   bool AreExtensionsDisabledForContext(
       content::BrowserContext* context) override;
 #if BUILDFLAG(IS_CHROMEOS)
+  bool IsActiveContext(content::BrowserContext* browser_context) const override;
   std::string GetUserIdHashFromContext(
       content::BrowserContext* context) override;
 #endif
@@ -171,7 +172,6 @@ class ChromeExtensionsBrowserClient : public ExtensionsBrowserClient {
                                        int* tab_id,
                                        int* window_id) override;
   KioskDelegate* GetKioskDelegate() override;
-  bool IsLockScreenContext(content::BrowserContext* context) override;
   std::string GetApplicationLocale() override;
   bool IsExtensionEnabled(const ExtensionId& extension_id,
                           content::BrowserContext* context) const override;
@@ -179,7 +179,6 @@ class ChromeExtensionsBrowserClient : public ExtensionsBrowserClient {
   network::mojom::NetworkContext* GetSystemNetworkContext() override;
   UserScriptListener* GetUserScriptListener() override;
   void SignalContentScriptsLoaded(content::BrowserContext* context) override;
-  std::string GetUserAgent() const override;
   bool ShouldSchemeBypassNavigationChecks(
       const std::string& scheme) const override;
   base::FilePath GetSaveFilePath(content::BrowserContext* context) override;
@@ -190,9 +189,13 @@ class ChromeExtensionsBrowserClient : public ExtensionsBrowserClient {
   bool IsScreenshotRestricted(
       content::WebContents* web_contents) const override;
   bool IsValidTabId(content::BrowserContext* context,
-                    int tab_id) const override;
+                    int tab_id,
+                    bool include_incognito,
+                    content::WebContents** web_contents) const override;
   bool IsExtensionTelemetryServiceEnabled(
       content::BrowserContext* context) const override;
+  ScriptExecutor* GetScriptExecutorForTab(
+      content::WebContents& web_contents) override;
   void NotifyExtensionApiTabExecuteScript(
       content::BrowserContext* context,
       const ExtensionId& extension_id,
@@ -207,9 +210,6 @@ class ChromeExtensionsBrowserClient : public ExtensionsBrowserClient {
       const ExtensionId& extension_id,
       const GURL& request_url,
       const GURL& redirect_url) const override;
-  void NotifyExtensionRemoteHostContacted(content::BrowserContext* context,
-                                          const ExtensionId& extension_id,
-                                          const GURL& url) const override;
   static void set_did_chrome_update_for_testing(bool did_update);
   bool IsUsbDeviceAllowedByPolicy(content::BrowserContext* context,
                                   const ExtensionId& extension_id,

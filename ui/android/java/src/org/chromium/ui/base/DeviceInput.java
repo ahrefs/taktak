@@ -18,12 +18,15 @@ import androidx.annotation.VisibleForTesting;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.ResettersForTesting;
 import org.chromium.base.ThreadUtils;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 
 /**
  * Utilities for accessing device input information. Note that this class is not thread-safe and
  * currently asserts all interactions occur on the UI thread. If usage is required off the UI thread
  * in the future, this class can be modified for multi-thread support.
  */
+@NullMarked
 public class DeviceInput implements InputDeviceListener {
 
     /** Wrapper class which provides lazy initialization of a singleton instance. */
@@ -32,10 +35,10 @@ public class DeviceInput implements InputDeviceListener {
     }
 
     /** See {@link #setSupportsAlphabeticKeyboardForTesting(boolean)}. */
-    private static Boolean sSupportsAlphabeticKeyboardForTesting;
+    private static @Nullable Boolean sSupportsAlphabeticKeyboardForTesting;
 
     /** See {@link #setSupportsPrevisionPointerForTesting(boolean)}. */
-    private static Boolean sSupportsPrecisionPointerForTesting;
+    private static @Nullable Boolean sSupportsPrecisionPointerForTesting;
 
     /** Cached snapshots of all currently connected {@link InputDevice}s. */
     private final SparseArray<DeviceSnapshot> mDeviceSnapshotsById = new SparseArray<>();
@@ -48,8 +51,8 @@ public class DeviceInput implements InputDeviceListener {
         final int[] deviceIds = InputDevice.getDeviceIds();
         for (int i = 0; i < deviceIds.length; i++) {
             int deviceId = deviceIds[i];
-            var snapshot = DeviceSnapshot.from(InputDevice.getDevice(deviceId));
-            mDeviceSnapshotsById.put(deviceId, snapshot);
+            InputDevice device = InputDevice.getDevice(deviceId);
+            if (device != null) mDeviceSnapshotsById.put(deviceId, DeviceSnapshot.from(device));
         }
 
         // Register listener to perform cache updates.
@@ -122,13 +125,16 @@ public class DeviceInput implements InputDeviceListener {
     @Override
     public void onInputDeviceAdded(int deviceId) {
         ThreadUtils.assertOnUiThread();
-        mDeviceSnapshotsById.put(deviceId, DeviceSnapshot.from(InputDevice.getDevice(deviceId)));
+        InputDevice device = InputDevice.getDevice(deviceId);
+        if (device != null) mDeviceSnapshotsById.put(deviceId, DeviceSnapshot.from(device));
     }
 
     @Override
     public void onInputDeviceChanged(int deviceId) {
         ThreadUtils.assertOnUiThread();
-        mDeviceSnapshotsById.put(deviceId, DeviceSnapshot.from(InputDevice.getDevice(deviceId)));
+        InputDevice device = InputDevice.getDevice(deviceId);
+        if (device != null) mDeviceSnapshotsById.put(deviceId, DeviceSnapshot.from(device));
+        else mDeviceSnapshotsById.remove(deviceId);
     }
 
     @Override

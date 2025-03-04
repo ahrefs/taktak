@@ -11,6 +11,7 @@
 #include "base/functional/bind.h"
 #include "base/run_loop.h"
 #include "base/strings/stringprintf.h"
+#include "base/test/scoped_feature_list.h"
 #include "base/test/simple_test_clock.h"
 #include "base/test/task_environment.h"
 #include "components/history/core/browser/history_service.h"
@@ -349,7 +350,8 @@ TEST_F(SendTabToSelfBridgeTest, ApplyIncrementalSyncChangesOneDeletion) {
                                         std::move(add_changes));
   EXPECT_EQ(1ul, bridge()->GetAllGuids().size());
   syncer::EntityChangeList delete_changes;
-  delete_changes.push_back(syncer::EntityChange::CreateDelete("guid1"));
+  delete_changes.push_back(
+      syncer::EntityChange::CreateDelete("guid1", syncer::EntityData()));
 
   EXPECT_CALL(*mock_observer(), EntriesRemovedRemotely(SizeIs(1)));
   bridge()->ApplyIncrementalSyncChanges(bridge()->CreateMetadataChangeList(),
@@ -456,8 +458,8 @@ TEST_F(SendTabToSelfBridgeTest, ApplyIncrementalSyncChangesInMemory) {
   EXPECT_CALL(*mock_observer(), EntriesRemovedRemotely(SizeIs(1)));
 
   syncer::EntityChangeList entity_change_list;
-  entity_change_list.push_back(
-      syncer::EntityChange::CreateDelete(specifics.guid()));
+  entity_change_list.push_back(syncer::EntityChange::CreateDelete(
+      specifics.guid(), syncer::EntityData()));
   auto error_on_delete = bridge()->ApplyIncrementalSyncChanges(
       bridge()->CreateMetadataChangeList(), std::move(entity_change_list));
 
@@ -475,7 +477,8 @@ TEST_F(SendTabToSelfBridgeTest, ApplyDeleteNonexistent) {
   EXPECT_CALL(*processor(), Delete(_, _, _)).Times(0);
 
   syncer::EntityChangeList entity_change_list;
-  entity_change_list.push_back(syncer::EntityChange::CreateDelete("guid"));
+  entity_change_list.push_back(
+      syncer::EntityChange::CreateDelete("guid", syncer::EntityData()));
   auto error = bridge()->ApplyIncrementalSyncChanges(
       std::move(metadata_changes), std::move(entity_change_list));
   EXPECT_FALSE(error);
@@ -931,6 +934,13 @@ TEST_F(SendTabToSelfBridgeTest, NotifyRemoteSendTabToSelfEntryOpened) {
 
 #if BUILDFLAG(IS_IOS)
 TEST_F(SendTabToSelfBridgeTest, WriteToLastTabReceivedPref) {
+  base::test::ScopedFeatureList feature_list;
+  feature_list.InitWithFeaturesAndParameters(
+      {{send_tab_to_self::kSendTabToSelfIOSPushNotifications,
+        {{send_tab_to_self::kSendTabIOSPushNotificationsWithMagicStackCardParam,
+          "true"}}}},
+      {});
+
   InitializeBridge();
 
   // Add two remote entries.

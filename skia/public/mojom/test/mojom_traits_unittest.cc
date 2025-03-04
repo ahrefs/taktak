@@ -2,7 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include <limits>
+
 #include "mojo/public/cpp/test_support/test_utils.h"
 #include "skia/ext/skcolorspace_primaries.h"
 #include "skia/public/mojom/bitmap.mojom.h"
@@ -31,10 +37,10 @@ namespace {
 // to bypass checks on the sending/serialization side.
 mojo::StructPtr<skia::mojom::BitmapN32> ConstructBitmapN32(
     SkImageInfo info,
-    std::vector<unsigned char> pixels) {
+    const std::vector<unsigned char>& pixels) {
   auto mojom_bitmap = skia::mojom::BitmapN32::New();
   mojom_bitmap->image_info = std::move(info);
-  mojom_bitmap->pixel_data = std::move(pixels);
+  mojom_bitmap->pixel_data = {pixels};
   return mojom_bitmap;
 }
 
@@ -43,24 +49,25 @@ mojo::StructPtr<skia::mojom::BitmapN32> ConstructBitmapN32(
 mojo::StructPtr<skia::mojom::BitmapWithArbitraryBpp>
 ConstructBitmapWithArbitraryBpp(SkImageInfo info,
                                 int row_bytes,
-                                std::vector<unsigned char> pixels) {
+                                const std::vector<unsigned char>& pixels) {
   auto mojom_bitmap = skia::mojom::BitmapWithArbitraryBpp::New();
   mojom_bitmap->image_info = std::move(info);
   mojom_bitmap->UNUSED_row_bytes = row_bytes;
-  mojom_bitmap->pixel_data = std::move(pixels);
+  mojom_bitmap->pixel_data = {pixels};
   return mojom_bitmap;
 }
 
 // A helper to construct a skia.mojom.BitmapMappedFromTrustedProcess without
 // using StructTraits to bypass checks on the sending/serialization side.
 mojo::StructPtr<skia::mojom::BitmapMappedFromTrustedProcess>
-ConstructBitmapMappedFromTrustedProcess(SkImageInfo info,
-                                        int row_bytes,
-                                        std::vector<unsigned char> pixels) {
+ConstructBitmapMappedFromTrustedProcess(
+    SkImageInfo info,
+    int row_bytes,
+    const std::vector<unsigned char>& pixels) {
   auto mojom_bitmap = skia::mojom::BitmapMappedFromTrustedProcess::New();
   mojom_bitmap->image_info = std::move(info);
   mojom_bitmap->UNUSED_row_bytes = row_bytes;
-  mojom_bitmap->pixel_data = mojo_base::BigBuffer(std::move(pixels));
+  mojom_bitmap->pixel_data = {pixels};
   return mojom_bitmap;
 }
 
@@ -68,11 +75,11 @@ ConstructBitmapMappedFromTrustedProcess(SkImageInfo info,
 // to bypass checks on the sending/serialization side.
 mojo::StructPtr<skia::mojom::InlineBitmap> ConstructInlineBitmap(
     SkImageInfo info,
-    std::vector<unsigned char> pixels) {
+    const std::vector<unsigned char>& pixels) {
   DCHECK_EQ(info.colorType(), kN32_SkColorType);
   auto mojom_bitmap = skia::mojom::InlineBitmap::New();
   mojom_bitmap->image_info = std::move(info);
-  mojom_bitmap->pixel_data = std::move(pixels);
+  mojom_bitmap->pixel_data = {pixels};
   return mojom_bitmap;
 }
 
@@ -177,7 +184,7 @@ TEST(StructTraitsTest, SkColorSpace) {
       in_null_cs, out_null_cs));
   EXPECT_EQ(out_null_cs.get(), nullptr);
 
-  SkColorSpacePrimaries in_p = SkNamedPrimariesExt::kGenericFilm;
+  SkColorSpacePrimaries in_p = SkNamedPrimaries::kGenericFilm;
   SkColorSpacePrimaries out_p;
   ASSERT_TRUE(
       mojo::test::SerializeAndDeserialize<skia::mojom::SkColorSpacePrimaries>(

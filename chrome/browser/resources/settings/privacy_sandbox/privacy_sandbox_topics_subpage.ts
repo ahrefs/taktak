@@ -20,7 +20,6 @@ import {afterNextRender, PolymerElement} from 'chrome://resources/polymer/v3_0/p
 
 import type {SettingsToggleButtonElement} from '../controls/settings_toggle_button.js';
 import type {FocusConfig} from '../focus_config.js';
-import {HatsBrowserProxyImpl, TrustSafetyInteraction} from '../hats_browser_proxy.js';
 import {loadTimeData} from '../i18n_setup.js';
 import type {MetricsBrowserProxy} from '../metrics_browser_proxy.js';
 import {MetricsBrowserProxyImpl} from '../metrics_browser_proxy.js';
@@ -35,7 +34,6 @@ import {getTemplate} from './privacy_sandbox_topics_subpage.html.js';
 export interface SettingsPrivacySandboxTopicsSubpageElement {
   $: {
     topicsToggle: SettingsToggleButtonElement,
-    footer: HTMLElement,
   };
 }
 
@@ -119,6 +117,31 @@ export class SettingsPrivacySandboxTopicsSubpageElement extends
         computed: 'computeEmptyState_(' +
             'prefs.privacy_sandbox.m1.topics_enabled.value)',
       },
+
+      /**
+       * If true, the Ads API UX Enhancement should be shown.
+       */
+      shouldShowV2_: {
+        type: Boolean,
+        value: () => {
+          return loadTimeData.getBoolean(
+              'isPrivacySandboxAdsApiUxEnhancementsEnabled');
+        },
+      },
+
+      /**
+       * If true, the Ad Topics Content parity should be shown.
+       */
+      shouldShowAdTopicsContentParity_: {
+        type: Boolean,
+        value: false,
+      },
+
+      adTopicsToggleSubLabel_: {
+        type: String,
+        computed:
+            'computeAdTopicsToggleSubLabel_(shouldShowAdTopicsContentParity_)',
+      },
     };
   }
 
@@ -139,16 +162,20 @@ export class SettingsPrivacySandboxTopicsSubpageElement extends
   private shouldShowBlockTopicDialog_: boolean;
   private blockTopicDialogTitle_: string;
   private blockTopicDialogBody_: string;
+  private shouldShowAdTopicsContentParity_: boolean;
 
   override ready() {
     super.ready();
 
     this.privacySandboxBrowserProxy_.getTopicsState().then(
         state => this.onTopicsStateChanged_(state));
-
-    this.$.footer.querySelectorAll('a').forEach(
-        link =>
-            link.setAttribute('aria-description', this.i18n('opensInNewTab')));
+    this.privacySandboxBrowserProxy_
+        .shouldShowPrivacySandboxAdTopicsContentParity()
+        .then(
+            shouldShow => {
+              this.shouldShowAdTopicsContentParity_ = shouldShow;
+            },
+        );
   }
 
   // Goal is to not show anything but the toggle and disclaimer when the pref is
@@ -159,8 +186,6 @@ export class SettingsPrivacySandboxTopicsSubpageElement extends
 
   override currentRouteChanged(newRoute: Route) {
     if (newRoute === routes.PRIVACY_SANDBOX_TOPICS) {
-      HatsBrowserProxyImpl.getInstance().trustSafetyInteractionOccurred(
-          TrustSafetyInteraction.OPENED_TOPICS_SUBPAGE);
       // Updating the TopicsState because it can be changed by being
       // blocked/unblocked in the Manage Topics Page. Need to keep the data
       // between the two pages up to date.
@@ -230,7 +255,7 @@ export class SettingsPrivacySandboxTopicsSubpageElement extends
     assert(dialog);
     assert(this.currentInterest_);
     if (dialog.wasConfirmed()) {
-      this.updateTopicsStateForSelectedTopic_(this.currentInterest_!);
+      this.updateTopicsStateForSelectedTopic_(this.currentInterest_);
     }
     this.blockTopicDialogBody_ = '';
     this.blockTopicDialogTitle_ = '';
@@ -254,7 +279,7 @@ export class SettingsPrivacySandboxTopicsSubpageElement extends
 
     // After allowing or blocking the last item, the focus is lost after the
     // item is removed. Set the focus to the #blockedTopicsRow element.
-    afterNextRender(this, async () => {
+    afterNextRender(this, () => {
       if (!this.shadowRoot!.activeElement) {
         this.shadowRoot!.querySelector<HTMLElement>('#blockedTopicsRow')
             ?.focus();
@@ -268,36 +293,34 @@ export class SettingsPrivacySandboxTopicsSubpageElement extends
     this.currentInterest_ = e.detail;
     assert(!this.currentInterest_.site);
 
-    assert(this.currentInterest_!.topic);
-    assert(this.currentInterest_!.topic!.displayString);
+    assert(this.currentInterest_.topic);
+    assert(this.currentInterest_.topic.displayString);
 
     // If topic is being unblocked, show toast and update topic state.
-    if (this.currentInterest_!.removed) {
+    if (this.currentInterest_.removed) {
       const toast = this.shadowRoot!.querySelector('cr-toast');
       assert(toast);
       toast.show();
-      this.updateTopicsStateForSelectedTopic_(this.currentInterest_!);
+      this.updateTopicsStateForSelectedTopic_(this.currentInterest_);
       return;
     }
 
     this.currentChildTopics_ =
         await this.privacySandboxBrowserProxy_.getChildTopicsCurrentlyAssigned(
-            this.currentInterest_!.topic!);
+            this.currentInterest_.topic);
     // Check if currently selected topic to block has active child topics
     // if it does, show simple confirmation dialog.
     if (this.currentChildTopics_.length !== 0) {
       this.blockTopicDialogTitle_ = loadTimeData.getStringF(
-          'manageTopicsDialogTitle',
-          this.currentInterest_!.topic!.displayString);
+          'manageTopicsDialogTitle', this.currentInterest_.topic.displayString);
       this.blockTopicDialogBody_ = loadTimeData.getStringF(
-          'manageTopicsDialogBody',
-          this.currentInterest_!.topic!.displayString);
+          'manageTopicsDialogBody', this.currentInterest_.topic.displayString);
       this.shouldShowBlockTopicDialog_ = true;
       return;
     }
     // Currently selected topic doesn't have active child topics.
     // Update topics state.
-    this.updateTopicsStateForSelectedTopic_(this.currentInterest_!);
+    this.updateTopicsStateForSelectedTopic_(this.currentInterest_);
     this.blockedTopicsExpanded_ = true;
   }
 
@@ -328,6 +351,17 @@ export class SettingsPrivacySandboxTopicsSubpageElement extends
     const toast = this.shadowRoot!.querySelector('cr-toast');
     assert(toast);
     toast.hide();
+  }
+
+  private onPrivacyPolicyLinkClicked_() {
+    this.metricsBrowserProxy_.recordAction(
+        'Settings.PrivacySandbox.AdTopics.PrivacyPolicyLinkClicked');
+  }
+
+  private computeAdTopicsToggleSubLabel_(): string {
+    return this.i18n(
+        this.shouldShowAdTopicsContentParity_ ? 'adTopicsPageToggleSubLabel' :
+                                                'topicsPageToggleSubLabel');
   }
 }
 

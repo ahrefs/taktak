@@ -153,8 +153,13 @@ public class TabModelSelectorTabObserverTest {
         TestTabModelSelectorTabObserver observer = createTabModelSelectorTabObserver();
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
+                    TabUngrouperFactory factory =
+                            (isIncognitoBranded, tabGroupModelFilterSupplier) ->
+                                    new PassthroughTabUngrouper(tabGroupModelFilterSupplier);
                     selector.initialize(
-                            sTestRule.getNormalTabModel(), sTestRule.getIncognitoTabModel());
+                            sTestRule.getNormalTabModel(),
+                            sTestRule.getIncognitoTabModel(),
+                            factory);
                 });
 
         Tab normalTab1 = createTestTab(false);
@@ -211,11 +216,16 @@ public class TabModelSelectorTabObserverTest {
 
     private static void closeTab(TabModel tabModel, Tab tab) {
         ThreadUtils.runOnUiThreadBlocking(
-                () -> tabModel.closeTabs(TabClosureParams.closeTab(tab).allowUndo(false).build()));
+                () ->
+                        tabModel.getTabRemover()
+                                .closeTabs(
+                                        TabClosureParams.closeTab(tab).allowUndo(false).build(),
+                                        /* allowDialog= */ false));
     }
 
     private static void removeTab(TabModel tabModel, Tab tab) {
-        ThreadUtils.runOnUiThreadBlocking(() -> tabModel.removeTab(tab));
+        ThreadUtils.runOnUiThreadBlocking(
+                () -> tabModel.getTabRemover().removeTab(tab, /* allowDialog= */ false));
     }
 
     private static class TestTabModelSelectorTabObserver extends TabModelSelectorTabObserver {

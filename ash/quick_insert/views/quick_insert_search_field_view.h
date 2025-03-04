@@ -26,15 +26,16 @@ class ImageButton;
 
 namespace ash {
 
-class PickerKeyEventHandler;
-class PickerPerformanceMetrics;
-class PickerSearchBarTextfield;
+class QuickInsertKeyEventHandler;
+class QuickInsertPerformanceMetrics;
+class QuickInsertSearchBarTextfield;
 
-// View for the Picker search field.
-class ASH_EXPORT PickerSearchFieldView : public views::BoxLayoutView,
-                                         public views::TextfieldController,
-                                         public views::FocusChangeListener {
-  METADATA_HEADER(PickerSearchFieldView, views::BoxLayoutView)
+// View for the Quick Insert search field.
+class ASH_EXPORT QuickInsertSearchFieldView
+    : public views::BoxLayoutView,
+      public views::TextfieldController,
+      public views::FocusChangeListener {
+  METADATA_HEADER(QuickInsertSearchFieldView, views::BoxLayoutView)
 
  public:
   using SearchCallback =
@@ -53,13 +54,15 @@ class ASH_EXPORT PickerSearchFieldView : public views::BoxLayoutView,
   // debouncing.
   //
   // `back_callback` is called when clicking on the back button.
-  explicit PickerSearchFieldView(SearchCallback search_callback,
-                                 BackCallback back_callback,
-                                 PickerKeyEventHandler* key_event_handler,
-                                 PickerPerformanceMetrics* performance_metrics);
-  PickerSearchFieldView(const PickerSearchFieldView&) = delete;
-  PickerSearchFieldView& operator=(const PickerSearchFieldView&) = delete;
-  ~PickerSearchFieldView() override;
+  explicit QuickInsertSearchFieldView(
+      SearchCallback search_callback,
+      BackCallback back_callback,
+      QuickInsertKeyEventHandler* key_event_handler,
+      QuickInsertPerformanceMetrics* performance_metrics);
+  QuickInsertSearchFieldView(const QuickInsertSearchFieldView&) = delete;
+  QuickInsertSearchFieldView& operator=(const QuickInsertSearchFieldView&) =
+      delete;
+  ~QuickInsertSearchFieldView() override;
 
   // views::View:
   void RequestFocus() override;
@@ -82,8 +85,8 @@ class ASH_EXPORT PickerSearchFieldView : public views::BoxLayoutView,
   void ContentsChangedInternal(std::u16string_view new_contents);
 
   // Gets or sets the placeholder text to show when the textfield is empty.
-  const std::u16string& GetPlaceholderText() const;
-  void SetPlaceholderText(const std::u16string& new_placeholder_text);
+  std::u16string_view GetPlaceholderText() const;
+  void SetPlaceholderText(std::u16string_view new_placeholder_text);
 
   // Sets the active descendant of the underlying textfield to `view` for screen
   // readers. `view` may be null, in which case the active descendant is
@@ -101,7 +104,7 @@ class ASH_EXPORT PickerSearchFieldView : public views::BoxLayoutView,
   void SetShouldShowFocusIndicator(bool should_show_focus_indicator);
 
   // Returns the view directly to the left / right of `view`, or nullptr if
-  // there is no such view in the PickerSearchFieldView.
+  // there is no such view in the QuickInsertSearchFieldView.
   views::View* GetViewLeftOf(views::View* view);
   views::View* GetViewRightOf(views::View* view);
 
@@ -115,9 +118,9 @@ class ASH_EXPORT PickerSearchFieldView : public views::BoxLayoutView,
   void OnGainedPseudoFocusFromLeftEvent(views::View* pseudo_focused_view);
   void OnGainedPseudoFocusFromRightEvent(views::View* pseudo_focused_view);
 
-  PickerSearchBarTextfield* textfield() { return textfield_; }
+  QuickInsertSearchBarTextfield* textfield() { return textfield_; }
 
-  PickerSearchBarTextfield& textfield_for_testing() { return *textfield_; }
+  QuickInsertSearchBarTextfield& textfield_for_testing() { return *textfield_; }
   views::ImageButton& back_button_for_testing() { return *back_button_; }
   views::ImageButton& clear_button_for_testing() { return *clear_button_; }
 
@@ -134,16 +137,16 @@ class ASH_EXPORT PickerSearchFieldView : public views::BoxLayoutView,
   // Gets the start and end indices of the current search query text, to use
   // when moving pseudo focus to and from the textfield. Note that the start and
   // end are swapped in RTL locales since we swapped left and right key events
-  // when traversing the Picker UI in RTL.
+  // when traversing the Quick Insert UI in RTL.
   size_t GetQueryStartIndexForTraversal();
   size_t GetQueryEndIndexForTraversal();
 
   bool should_show_focus_indicator_ = false;
 
   SearchCallback search_callback_;
-  raw_ptr<PickerKeyEventHandler> key_event_handler_ = nullptr;
-  raw_ptr<PickerPerformanceMetrics> performance_metrics_ = nullptr;
-  raw_ptr<PickerSearchBarTextfield> textfield_ = nullptr;
+  raw_ptr<QuickInsertKeyEventHandler> key_event_handler_ = nullptr;
+  raw_ptr<QuickInsertPerformanceMetrics> performance_metrics_ = nullptr;
+  raw_ptr<QuickInsertSearchBarTextfield> textfield_ = nullptr;
   raw_ptr<views::ImageButton> back_button_ = nullptr;
   raw_ptr<views::ImageButton> clear_button_ = nullptr;
 
@@ -153,12 +156,12 @@ class ASH_EXPORT PickerSearchFieldView : public views::BoxLayoutView,
   base::OneShotTimer notify_initial_active_descendant_timer_;
 };
 
-BEGIN_VIEW_BUILDER(ASH_EXPORT, PickerSearchFieldView, views::BoxLayoutView)
+BEGIN_VIEW_BUILDER(ASH_EXPORT, QuickInsertSearchFieldView, views::BoxLayoutView)
 VIEW_BUILDER_PROPERTY(std::u16string, PlaceholderText)
 END_VIEW_BUILDER
 
 }  // namespace ash
 
-DEFINE_VIEW_BUILDER(ASH_EXPORT, ash::PickerSearchFieldView)
+DEFINE_VIEW_BUILDER(ASH_EXPORT, ash::QuickInsertSearchFieldView)
 
 #endif  // ASH_QUICK_INSERT_VIEWS_QUICK_INSERT_SEARCH_FIELD_VIEW_H_

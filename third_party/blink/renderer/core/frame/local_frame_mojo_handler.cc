@@ -8,7 +8,7 @@
 #include "base/numerics/safe_conversions.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "cc/input/browser_controls_offset_tags_info.h"
+#include "cc/input/browser_controls_offset_tag_modifications.h"
 #include "services/network/public/cpp/url_loader_completion_status.h"
 #include "services/network/public/mojom/url_response_head.mojom.h"
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
@@ -209,24 +209,23 @@ v8::Local<v8::String> ErrorToString(ScriptState* script_state,
 class JavaScriptExecuteRequestForTestsHandler
     : public GarbageCollected<JavaScriptExecuteRequestForTestsHandler> {
  public:
-  class PromiseCallback : public ScriptFunction::Callable {
+  class PromiseCallback : public ThenCallable<IDLAny, PromiseCallback> {
    public:
     PromiseCallback(JavaScriptExecuteRequestForTestsHandler& handler,
                     mojom::blink::JavaScriptExecutionResultType type)
         : handler_(handler), type_(type) {}
 
-    ScriptValue Call(ScriptState* script_state, ScriptValue value) override {
+    void React(ScriptState* script_state, ScriptValue value) {
       DCHECK(script_state);
       if (type_ == mojom::blink::JavaScriptExecutionResultType::kSuccess)
         handler_->SendSuccess(script_state, value.V8Value());
       else
         handler_->SendException(script_state, value.V8Value());
-      return {};
     }
 
     void Trace(Visitor* visitor) const override {
       visitor->Trace(handler_);
-      ScriptFunction::Callable::Trace(visitor);
+      ThenCallable<IDLAny, PromiseCallback>::Trace(visitor);
     }
 
    private:
@@ -249,20 +248,16 @@ class JavaScriptExecuteRequestForTestsHandler
     }
   }
 
-  ScriptFunction* CreateResolveCallback(ScriptState* script_state,
-                                        LocalFrame* frame) {
-    return MakeGarbageCollected<ScriptFunction>(
-        script_state,
-        MakeGarbageCollected<PromiseCallback>(
-            *this, mojom::blink::JavaScriptExecutionResultType::kSuccess));
+  PromiseCallback* CreateResolveCallback(ScriptState* script_state,
+                                         LocalFrame* frame) {
+    return MakeGarbageCollected<PromiseCallback>(
+        *this, mojom::blink::JavaScriptExecutionResultType::kSuccess);
   }
 
-  ScriptFunction* CreateRejectCallback(ScriptState* script_state,
-                                       LocalFrame* frame) {
-    return MakeGarbageCollected<ScriptFunction>(
-        script_state,
-        MakeGarbageCollected<PromiseCallback>(
-            *this, mojom::blink::JavaScriptExecutionResultType::kException));
+  PromiseCallback* CreateRejectCallback(ScriptState* script_state,
+                                        LocalFrame* frame) {
+    return MakeGarbageCollected<PromiseCallback>(
+        *this, mojom::blink::JavaScriptExecutionResultType::kException);
   }
 
   void SendSuccess(ScriptState* script_state, v8::Local<v8::Value> value) {
@@ -913,7 +908,8 @@ void LocalFrameMojoHandler::JavaScriptExecuteRequestForTests(
       if (resolve_promises && !value.IsEmpty() && value->IsPromise()) {
         auto promise = ScriptPromise<IDLAny>::FromV8Promise(
             script_state->GetIsolate(), value.As<v8::Promise>());
-        promise.Then(handler->CreateResolveCallback(script_state, frame_),
+        promise.Then(script_state,
+                     handler->CreateResolveCallback(script_state, frame_),
                      handler->CreateRejectCallback(script_state, frame_));
       } else {
         handler->SendSuccess(script_state, value);
@@ -1282,7 +1278,7 @@ void LocalFrameMojoHandler::PluginActionAt(
           WebPlugin::RotationType::k90Counterclockwise);
       return;
   }
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 void LocalFrameMojoHandler::SetInitialFocus(bool reverse) {
@@ -1317,7 +1313,8 @@ void LocalFrameMojoHandler::UpdateBrowserControlsState(
     cc::BrowserControlsState constraints,
     cc::BrowserControlsState current,
     bool animate,
-    const std::optional<cc::BrowserControlsOffsetTagsInfo>& offset_tags_info) {
+    const std::optional<cc::BrowserControlsOffsetTagModifications>&
+        offset_tag_modifications) {
   DCHECK(frame_->IsOutermostMainFrame());
   TRACE_EVENT2("renderer", "LocalFrame::UpdateBrowserControlsState",
                "Constraint", static_cast<int>(constraints), "Current",
@@ -1326,11 +1323,17 @@ void LocalFrameMojoHandler::UpdateBrowserControlsState(
                        "animated", animate);
 
   frame_->GetWidgetForLocalRoot()->UpdateBrowserControlsState(
-      constraints, current, animate, offset_tags_info);
+      constraints, current, animate, offset_tag_modifications);
 }
 
 void LocalFrameMojoHandler::Discard() {
   frame_->Discard();
+}
+
+void LocalFrameMojoHandler::FinalizeNavigationConfidence(
+    double randomized_trigger_rate,
+    mojom::blink::ConfidenceLevel confidence) {
+  frame_->SetNavigationConfidence(randomized_trigger_rate, confidence);
 }
 
 void LocalFrameMojoHandler::SetV8CompileHints(
@@ -1344,13 +1347,12 @@ void LocalFrameMojoHandler::SetV8CompileHints(
   if (!mapping.IsValid()) {
     return;
   }
-  const int64_t* memory = mapping.GetMemoryAs<int64_t>();
-  if (memory == nullptr) {
+  base::span<const int64_t> memory = mapping.GetMemoryAsSpan<int64_t>();
+  if (memory.empty()) {
     return;
   }
 
-  page->GetV8CrowdsourcedCompileHintsConsumer().SetData(memory,
-                                                        mapping.size() / 8);
+  page->GetV8CrowdsourcedCompileHintsConsumer().SetData(memory);
 }
 
 void LocalFrameMojoHandler::SnapshotDocumentForViewTransition(

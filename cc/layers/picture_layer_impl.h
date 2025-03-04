@@ -52,7 +52,11 @@ class CC_EXPORT PictureLayerImpl
   PictureLayerImpl& operator=(const PictureLayerImpl&) = delete;
 
   void SetIsBackdropFilterMask(bool is_backdrop_filter_mask) {
+    if (is_backdrop_filter_mask_ == is_backdrop_filter_mask) {
+      return;
+    }
     is_backdrop_filter_mask_ = is_backdrop_filter_mask;
+    SetNeedsPushProperties();
   }
   bool is_backdrop_filter_mask() const { return is_backdrop_filter_mask_; }
 
@@ -61,7 +65,8 @@ class CC_EXPORT PictureLayerImpl
   std::unique_ptr<LayerImpl> CreateLayerImpl(
       LayerTreeImpl* tree_impl) const override;
   void PushPropertiesTo(LayerImpl* layer) override;
-  void AppendQuads(viz::CompositorRenderPass* render_pass,
+  void AppendQuads(const AppendQuadsContext& context,
+                   viz::CompositorRenderPass* render_pass,
                    AppendQuadsData* append_quads_data) override;
   void NotifyTileStateChanged(const Tile* tile) override;
   gfx::Rect GetDamageRect() const override;
@@ -94,7 +99,11 @@ class CC_EXPORT PictureLayerImpl
   bool ShouldAnimate(PaintImage::Id paint_image_id) const override;
 
   void set_gpu_raster_max_texture_size(gfx::Size gpu_raster_max_texture_size) {
+    if (gpu_raster_max_texture_size_ == gpu_raster_max_texture_size) {
+      return;
+    }
     gpu_raster_max_texture_size_ = gpu_raster_max_texture_size;
+    SetNeedsPushProperties();
   }
 
   gfx::Size gpu_raster_max_texture_size() {
@@ -103,7 +112,9 @@ class CC_EXPORT PictureLayerImpl
 
   void UpdateRasterSource(scoped_refptr<RasterSource> raster_source,
                           Region* new_invalidation);
-  void RegenerateDiscardableImageMapIfNeeded();
+  void SetRasterSourceForTesting(scoped_refptr<RasterSource> raster_source,
+                                 const Region& invalidation = Region());
+  void RegenerateDiscardableImageMap();
   bool UpdateTiles();
 
   // Mask-related functions.
@@ -251,8 +262,7 @@ class CC_EXPORT PictureLayerImpl
   // Set the collection of PaintWorkletInput as well as their PaintImageId that
   // are part of this layer.
   void SetPaintWorkletInputs(
-      const std::vector<DiscardableImageMap::PaintWorkletInputWithImageId>&
-          inputs);
+      const DiscardableImageMap::PaintWorkletInputs& inputs);
 
   LCDTextDisallowedReason ComputeLCDTextDisallowedReason(
       bool raster_translation_aligns_pixels) const;
@@ -317,8 +327,6 @@ class CC_EXPORT PictureLayerImpl
   bool raster_source_size_changed_ : 1 = false;
 
   bool directly_composited_image_default_raster_scale_changed_ : 1 = false;
-
-  bool needs_regenerate_discardable_image_map_ : 1 = false;
 
   // Keep track of if a non-empty update_rect is due to animated image or other
   // reasons.

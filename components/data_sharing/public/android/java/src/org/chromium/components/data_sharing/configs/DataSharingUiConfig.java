@@ -4,6 +4,7 @@
 
 package org.chromium.components.data_sharing.configs;
 
+import android.app.Activity;
 import android.content.Context;
 
 import org.chromium.url.GURL;
@@ -19,19 +20,23 @@ public class DataSharingUiConfig {
 
     // --- Usage Config ---
     private Context mContext;
+    private Activity mActivity;
     private GURL mLearnMoreHyperLink;
+    private DataSharingStringConfig mDataSharingStringConfig;
     private DataSharingCallback mDataSharingCallback;
 
     /** Callback interface for common data sharing UI events. */
     public interface DataSharingCallback {
-        default void onLearnMoreAboutSharedTabGroupsClicked(GURL url) {}
+        default void onClickOpenChromeCustomTab(Context context, GURL url) {}
     }
 
     private DataSharingUiConfig(Builder builder) {
         this.mIsTablet = builder.mIsTablet;
         this.mContext = builder.mContext;
+        this.mActivity = builder.mActivity;
         this.mTabGroupName = builder.mTabGroupName;
         this.mLearnMoreHyperLink = builder.mLearnMoreHyperLink;
+        this.mDataSharingStringConfig = builder.mDataSharingStringConfig;
         this.mDataSharingCallback = builder.mDataSharingCallback;
     }
 
@@ -43,12 +48,20 @@ public class DataSharingUiConfig {
         return mContext;
     }
 
+    public Activity getActivity() {
+        return mActivity;
+    }
+
     public String getTabGroupName() {
         return mTabGroupName;
     }
 
     public GURL getLearnMoreHyperLink() {
         return mLearnMoreHyperLink;
+    }
+
+    public DataSharingStringConfig getDataSharingStringConfig() {
+        return mDataSharingStringConfig;
     }
 
     public DataSharingCallback getDataSharingCallback() {
@@ -59,8 +72,10 @@ public class DataSharingUiConfig {
     public static class Builder {
         private boolean mIsTablet;
         private Context mContext;
+        private Activity mActivity;
         private String mTabGroupName;
         private GURL mLearnMoreHyperLink;
+        private DataSharingStringConfig mDataSharingStringConfig;
         private DataSharingCallback mDataSharingCallback;
 
         /**
@@ -84,6 +99,16 @@ public class DataSharingUiConfig {
         }
 
         /**
+         * Sets the current android activity.
+         *
+         * @param activity The current android activity.
+         */
+        public Builder setActivity(Activity activity) {
+            this.mActivity = activity;
+            return this;
+        }
+
+        /**
          * Sets the name of the tab group.
          *
          * @param tabGroupName The name of the tab group.
@@ -100,6 +125,16 @@ public class DataSharingUiConfig {
          */
         public Builder setLearnMoreHyperLink(GURL learnMoreHyperLink) {
             this.mLearnMoreHyperLink = learnMoreHyperLink;
+            return this;
+        }
+
+        /**
+         * Sets the data sharing string config.
+         *
+         * @param dataSharingStringConfig The data sharing string configuration.
+         */
+        public Builder setDataSharingStringConfig(DataSharingStringConfig dataSharingStringConfig) {
+            this.mDataSharingStringConfig = dataSharingStringConfig;
             return this;
         }
 

@@ -21,15 +21,14 @@
 #include "chrome/browser/ash/app_list/search/ranking/ranker_manager.h"
 #include "chrome/browser/ash/input_method/editor_announcer.h"
 #include "chrome/browser/ash/login/session/user_session_manager.h"
-#include "chrome/browser/ui/ash/quick_insert/quick_insert_link_suggester.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
+#include "ui/base/ime/text_input_client.h"
 #include "url/gurl.h"
 
-class PrefService;
 class Profile;
 class ChromeSearchResult;
-class PickerFileSuggester;
-class PickerThumbnailLoader;
+class QuickInsertFileSuggester;
+class QuickInsertThumbnailLoader;
 
 namespace app_list {
 class SearchEngine;
@@ -37,37 +36,38 @@ class SearchProvider;
 }  // namespace app_list
 
 namespace ash {
-class PickerController;
+class QuickInsertController;
 }
 
 namespace user_manager {
 class User;
 }
 
-// Implements the PickerClient used by Ash.
-class PickerClientImpl
-    : public ash::PickerClient,
+// Implements the QuickInsertClient used by Ash.
+class QuickInsertClientImpl
+    : public ash::QuickInsertClient,
       public user_manager::UserManager::UserSessionStateObserver {
  public:
   // Sets this instance as the client of `controller`.
   // Automatically unsets the client when this instance is destroyed.
   // `manager` needs to outlive this class.
-  explicit PickerClientImpl(ash::PickerController* controller,
-                            user_manager::UserManager* user_manager);
-  PickerClientImpl(const PickerClientImpl&) = delete;
-  PickerClientImpl& operator=(const PickerClientImpl&) = delete;
-  ~PickerClientImpl() override;
+  explicit QuickInsertClientImpl(ash::QuickInsertController* controller,
+                                 user_manager::UserManager* user_manager);
+  QuickInsertClientImpl(const QuickInsertClientImpl&) = delete;
+  QuickInsertClientImpl& operator=(const QuickInsertClientImpl&) = delete;
+  ~QuickInsertClientImpl() override;
 
-  // ash::PickerClient:
+  // ash::QuickInsertClient:
   scoped_refptr<network::SharedURLLoaderFactory> GetSharedURLLoaderFactory()
       override;
   void StartCrosSearch(const std::u16string& query,
-                       std::optional<ash::PickerCategory> category,
+                       std::optional<ash::QuickInsertCategory> category,
                        CrosSearchResultsCallback callback) override;
   void StopCrosQuery() override;
   bool IsEligibleForEditor() override;
   ShowEditorCallback CacheEditorContext() override;
-  ShowLobsterCallback GetShowLobsterCallback() override;
+  ShowLobsterCallback CacheLobsterContext(
+      ui::TextInputClient* text_input_client) override;
   void GetSuggestedEditorResults(
       SuggestedEditorResultsCallback callback) override;
   void GetRecentLocalFileResults(size_t max_files,
@@ -75,14 +75,13 @@ class PickerClientImpl
                                  RecentFilesCallback callback) override;
   void GetRecentDriveFileResults(size_t max_files,
                                  RecentFilesCallback callback) override;
-  void GetSuggestedLinkResults(size_t max_results,
-                               SuggestedLinksCallback callback) override;
   void FetchFileThumbnail(const base::FilePath& path,
                           const gfx::Size& size,
                           FetchFileThumbnailCallback callback) override;
-  PrefService* GetPrefs() override;
-  std::optional<ash::PickerWebPasteTarget> GetWebPasteTarget() override;
+  std::optional<ash::QuickInsertWebPasteTarget> GetWebPasteTarget() override;
   void Announce(std::u16string_view message) override;
+  history::HistoryService* GetHistoryService() override;
+  favicon::FaviconService* GetFaviconService() override;
 
   // user_manager::UserManager::UserSessionStateObserver:
   void ActiveUserChanged(user_manager::User* active_user) override;
@@ -92,11 +91,7 @@ class PickerClientImpl
     ranker_manager_ = std::move(ranker_manager);
   }
 
-  PickerLinkSuggester* get_link_suggester_for_test() {
-    return link_suggester_.get();
-  }
-
-  // Returns a bitmask of `AutocompleteProvider::Type` for Picker's
+  // Returns a bitmask of `AutocompleteProvider::Type` for Quick Insert's
   // `SearchController`.
   int LauncherSearchProviderTypes(bool bookmarks, bool history, bool open_tabs);
 
@@ -111,7 +106,7 @@ class PickerClientImpl
   std::unique_ptr<app_list::SearchProvider>
   CreateOmniboxProvider(bool bookmarks, bool history, bool open_tabs);
   std::unique_ptr<app_list::SearchProvider> CreateSearchProviderForCategory(
-      ash::PickerCategory category);
+      ash::QuickInsertCategory category);
 
   void ShowEditor(std::optional<std::string> preset_query_id,
                   std::optional<std::string> freeform_text);
@@ -120,20 +115,19 @@ class PickerClientImpl
 
   ash::input_method::EditorLiveRegionAnnouncer announcer_;
 
-  raw_ptr<ash::PickerController> controller_ = nullptr;
+  raw_ptr<ash::QuickInsertController> controller_ = nullptr;
   raw_ptr<Profile> profile_ = nullptr;
 
   std::unique_ptr<app_list::SearchEngine> search_engine_;
 
   // A dedicated cros search engine for filtered searches.
   std::unique_ptr<app_list::SearchEngine> filtered_search_engine_;
-  std::optional<ash::PickerCategory> current_filter_category_;
+  std::optional<ash::QuickInsertCategory> current_filter_category_;
 
   std::unique_ptr<app_list::RankerManager> ranker_manager_;
 
-  std::unique_ptr<PickerFileSuggester> file_suggester_;
-  std::unique_ptr<PickerLinkSuggester> link_suggester_;
-  std::unique_ptr<PickerThumbnailLoader> thumbnail_loader_;
+  std::unique_ptr<QuickInsertFileSuggester> file_suggester_;
+  std::unique_ptr<QuickInsertThumbnailLoader> thumbnail_loader_;
 
   std::unique_ptr<ash::LobsterController::Trigger> lobster_trigger_;
 
@@ -141,7 +135,7 @@ class PickerClientImpl
                           user_manager::UserManager::UserSessionStateObserver>
       user_session_state_observation_{this};
 
-  base::WeakPtrFactory<PickerClientImpl> weak_factory_{this};
+  base::WeakPtrFactory<QuickInsertClientImpl> weak_factory_{this};
 };
 
 #endif  // CHROME_BROWSER_UI_ASH_QUICK_INSERT_QUICK_INSERT_CLIENT_IMPL_H_

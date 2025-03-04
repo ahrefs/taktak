@@ -71,7 +71,6 @@ class CC_MOJO_EMBEDDER_EXPORT AsyncLayerTreeFrameSink
     ~InitParams();
 
     scoped_refptr<base::SingleThreadTaskRunner> compositor_task_runner;
-    raw_ptr<gpu::GpuMemoryBufferManager> gpu_memory_buffer_manager = nullptr;
     std::unique_ptr<viz::SyntheticBeginFrameSource>
         synthetic_begin_frame_source;
     UnboundMessagePipes pipes;
@@ -141,9 +140,6 @@ class CC_MOJO_EMBEDDER_EXPORT AsyncLayerTreeFrameSink
                           FrameSkippedReason reason) override;
   std::unique_ptr<LayerContext> CreateLayerContext(
       LayerTreeHostImpl& host_impl) override;
-  void DidAllocateSharedBitmap(base::ReadOnlySharedMemoryRegion region,
-                               const viz::SharedBitmapId& id) override;
-  void DidDeleteSharedBitmap(const viz::SharedBitmapId& id) override;
 
   const viz::HitTestRegionList& get_last_hit_test_data_for_testing() const {
     return last_hit_test_data_;

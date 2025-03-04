@@ -11,7 +11,6 @@
 #include "base/json/json_writer.h"
 #include "base/strings/stringprintf.h"
 #include "base/task/single_thread_task_runner.h"
-#include "base/test/scoped_feature_list.h"
 #include "base/test/task_environment.h"
 #include "base/values.h"
 #include "chromeos/ash/components/network/network_handler.h"
@@ -71,6 +70,11 @@ class TestProxyConfigService : public net::ProxyConfigService {
 class ProxyConfigServiceImplTest : public testing::Test {
  public:
   void SetUp() override {
+    profile_prefs_.registry()->RegisterBooleanPref(
+        chromeos::prefs::kCaptivePortalSignin, false);
+    profile_prefs_.registry()->RegisterBooleanPref(
+        chromeos::prefs::kCaptivePortalAuthenticationIgnoresProxy, true);
+
     network_handler_test_helper_ = std::make_unique<NetworkHandlerTestHelper>();
 
     PrefProxyConfigTrackerImpl::RegisterProfilePrefs(profile_prefs_.registry());
@@ -155,15 +159,6 @@ class ProxyConfigServiceImplTest : public testing::Test {
   std::unique_ptr<net::ProxyConfigService> proxy_resolution_service_;
 };
 
-TEST_F(ProxyConfigServiceImplTest, Default) {
-  CreateTrackingProxyConfigService(nullptr);
-
-  net::ProxyConfigWithAnnotation config;
-  EXPECT_EQ(net::ProxyConfigService::CONFIG_VALID,
-            GetLatestProxyConfig(&config));
-  EXPECT_TRUE(config.value().Equals(net::ProxyConfig::CreateDirect()));
-}
-
 // By default, ProxyConfigServiceImpl should ignore the state of the nested
 // ProxyConfigService.
 TEST_F(ProxyConfigServiceImplTest, IgnoresNestedProxyConfigServiceByDefault) {
@@ -241,47 +236,7 @@ TEST_F(ProxyConfigServiceImplTest,
       net::ProxyConfig::CreateFromCustomPacURL(GURL(kFixedPacUrl)).ToValue());
 }
 
-class ProxyConfigServiceImplCaptivePortalPopupWindowTest
-    : public ProxyConfigServiceImplTest {
- public:
-  void SetUp() override {
-    feature_list_.InitAndEnableFeature(
-        chromeos::features::kCaptivePortalPopupWindow);
-    profile_prefs_.registry()->RegisterBooleanPref(
-        chromeos::prefs::kCaptivePortalSignin, false);
-    profile_prefs_.registry()->RegisterBooleanPref(
-        chromeos::prefs::kCaptivePortalAuthenticationIgnoresProxy, true);
-    ProxyConfigServiceImplTest::SetUp();
-  }
-
- private:
-  base::test::ScopedFeatureList feature_list_;
-};
-
-TEST_F(ProxyConfigServiceImplCaptivePortalPopupWindowTest,
-       DetermineEffectiveConfigFromDefaultNetworkAndPref) {
-  CreateTrackingProxyConfigService(nullptr);
-
-  // No proxy set
-  DetermineEffectiveConfigFromDefaultNetwork();
-  net::ProxyConfigWithAnnotation config;
-  EXPECT_EQ(net::ProxyConfigService::CONFIG_VALID,
-            GetLatestProxyConfig(&config));
-  EXPECT_EQ(config.value().ToValue(),
-            net::ProxyConfig::CreateDirect().ToValue());
-
-  // Proxy pref set
-  SetProxyPref();
-  DetermineEffectiveConfigFromDefaultNetwork();
-  EXPECT_EQ(net::ProxyConfigService::CONFIG_VALID,
-            GetLatestProxyConfig(&config));
-  EXPECT_EQ(
-      config.value().ToValue(),
-      net::ProxyConfig::CreateFromCustomPacURL(GURL(kFixedPacUrl)).ToValue());
-}
-
-TEST_F(ProxyConfigServiceImplCaptivePortalPopupWindowTest,
-       NetworkPortalSignin) {
+TEST_F(ProxyConfigServiceImplTest, NetworkPortalSignin) {
   SetCaptivePortalSignin();
   CreateTrackingProxyConfigService(nullptr);
 
@@ -295,8 +250,7 @@ TEST_F(ProxyConfigServiceImplCaptivePortalPopupWindowTest,
             net::ProxyConfig::CreateDirect().ToValue());
 }
 
-TEST_F(ProxyConfigServiceImplCaptivePortalPopupWindowTest,
-       CaptivePortalAuthenticationIgnoresProxy) {
+TEST_F(ProxyConfigServiceImplTest, CaptivePortalAuthenticationIgnoresProxy) {
   SetCaptivePortalSignin();
   SetCaptivePortalAuthenticationIgnoresProxy();
   CreateTrackingProxyConfigService(nullptr);
@@ -612,8 +566,7 @@ class ProxyConfigServiceImplWithDescriptionTest : public testing::Test {
         return ProxyConfigDictionary::CreateFixedServers(input.server,
                                                          input.bypass_rules);
     }
-    NOTREACHED_IN_MIGRATION();
-    return base::Value::Dict();
+    NOTREACHED();
   }
 
   void SetUserConfigInShill(const base::Value::Dict* pref_proxy_config_dict) {

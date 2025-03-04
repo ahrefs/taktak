@@ -35,9 +35,10 @@ import re
 import shlex
 import sys
 from copy import deepcopy
-from typing import List
+from typing import List, get_args
 
 from blinkpy.common.path_finder import PathFinder
+from blinkpy.w3c.wpt_manifest import TestType
 
 
 class PortFactory:
@@ -271,10 +272,10 @@ def add_results_options_group(parser: argparse.ArgumentParser,
     results_group.add_argument(
         '--build-directory',
         metavar='PATH',
-        default='out',
-        help=(
-            'Path to the directory where build files are kept, not including '
-            'configuration. In general this will be "out".'))
+        help=('Full path to the directory where build files are generated. '
+              'Likely similar to "out/some-dir-name/". If not specified, will '
+              'look for a dir under out/ of the same name as the value passed '
+              'to --target.'))
     results_group.add_argument(
         '--clobber-old-results',
         action='store_true',
@@ -313,13 +314,13 @@ def add_results_options_group(parser: argparse.ArgumentParser,
         help=('Path to a test_expectations file that will override previous '
               'expectations. Specify multiple times for multiple sets of '
               'overrides.'))
+    results_group.add_argument(
+        '--ignore-default-expectations',
+        action='store_true',
+        help='Do not use the default set of TestExpectations files.')
     results_group.add_argument('--driver-name',
                                help='Alternative driver binary to use')
     if rwt:
-        results_group.add_argument(
-            '--ignore-default-expectations',
-            action='store_true',
-            help='Do not use the default set of TestExpectations files.')
         results_group.add_argument(
             '--no-expectations',
             action='store_true',
@@ -347,23 +348,29 @@ def add_results_options_group(parser: argparse.ArgumentParser,
         results_group.add_argument(
             '--reset-results',
             action='store_true',
-            help=
-            ('Reset baselines to the generated results in their existing '
-             'location or the default location if no baseline exists. For '
-             'virtual tests, reset the virtual baselines. If '
-             '--additional-driver-flag is specified, reset the flag-specific '
-             'baselines. If --copy-baselines is specified, the copied '
-             'baselines will be reset.'))
+            help=(
+                'Reset baselines to the generated results in their existing '
+                'location or the default location if no baseline exists. For '
+                'virtual tests, reset the virtual baselines. If '
+                '--flag-specific is specified, reset the flag-specific '
+                'baselines. If --copy-baselines is specified, the copied '
+                'baselines will be reset.'))
     else:
+        # TODO(crbug.com/395544417): Support `--copy-baselines`.
         results_group.add_argument(
             '--reset-results',
             action='store_true',
-            help=('Reset expectations in test metadata to the generated '
-                  'results. Without existing platform-specific expectations, '
-                  'extend local results to all platforms. If `--product` or '
-                  '`--flag-specific` is specified, only reset expectations '
-                  'for that product or flag. Virtual expectations are always '
-                  'updated per-suite.'))
+            help=(
+                'Reset baselines to the generated results in their existing '
+                'location or the default location if no baseline exists. For '
+                'virtual tests, reset the virtual baselines. If '
+                '--flag-specific is specified, reset the flag-specific '
+                'baselines.'))
+        results_group.add_argument(
+            '--no-expectations',
+            action='store_true',
+            help=('Do not use TestExpectations. All the results will be '
+                  'reported as expected.'))
 
 
 def add_testing_options_group(parser: argparse.ArgumentParser,
@@ -679,14 +686,7 @@ def add_testing_options_group(parser: argparse.ArgumentParser,
                   'testharness test failures will be shown, even if the '
                   'failures are expected in *-expected.txt.'))
     else:
-        test_types = [
-            'testharness',
-            'reftest',
-            'wdspec',
-            'crashtest',
-            'print-reftest',
-            'manual',
-        ]
+        test_types = get_args(TestType)
         testing_group.add_argument(
             '--timeout-multiplier',
             type=float,
@@ -695,20 +695,13 @@ def add_testing_options_group(parser: argparse.ArgumentParser,
             '--test-types',
             nargs='*',
             choices=test_types,
-            default=[
-                'testharness', 'reftest', 'crashtest', 'print-reftest',
-                'wdspec'
-            ],
+            default=sorted(set(test_types) - {'manual'}),
             metavar='TYPE',
             help=f'Test types to run (choices: {", ".join(test_types)})')
         testing_group.add_argument('--no-virtual-tests',
                                    action='store_true',
                                    default=None,
                                    help=('Do not run virtual tests.'))
-        testing_group.add_argument('--no-wpt-internal',
-                                   action='store_false',
-                                   dest='run_wpt_internal',
-                                   help='Do not run internal WPTs.')
 
 
 # for run_wpt_tests.py only
@@ -830,13 +823,14 @@ def _update_configuration_and_target(host, options):
 
 def _read_configuration_from_gn(fs, options):
     """Returns the configuration to used based on args.gn, if possible."""
-    build_directory = getattr(options, 'build_directory', 'out')
-    target = options.target
+    build_directory = getattr(options, 'build_directory', None)
     finder = PathFinder(fs)
-    path = fs.join(finder.chromium_base(), build_directory, target, 'args.gn')
+    if not build_directory:
+        build_directory = fs.join(finder.chromium_base(), 'out',
+                                  options.target)
+    path = fs.join(build_directory, 'args.gn')
     if not fs.exists(path):
-        path = fs.join(finder.chromium_base(), build_directory, target,
-                       'toolchain.ninja')
+        path = fs.join(build_directory, 'toolchain.ninja')
         if not fs.exists(path):
             # This does not appear to be a GN-based build directory, so we don't know
             # how to interpret it.

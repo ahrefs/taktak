@@ -141,10 +141,9 @@ class SessionRestorationBrowserAgentTest : public PlatformTest {
     TestProfileIOS::Builder test_cbs_builder;
     test_cbs_builder.AddTestingFactory(
         AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
     profile_ = std::move(test_cbs_builder).Build();
-    AuthenticationServiceFactory::CreateAndInitializeForBrowserState(
-        profile_.get(), std::make_unique<FakeAuthenticationServiceDelegate>());
 
     session_identifier_ = [[NSUUID UUID] UUIDString];
   }
@@ -157,7 +156,8 @@ class SessionRestorationBrowserAgentTest : public PlatformTest {
     // rather than the TestWebStateList delegate used in the default TestBrowser
     // constructor.
     browser_ = std::make_unique<TestBrowser>(
-        profile_.get(), std::make_unique<BrowserWebStateListDelegate>());
+        profile_.get(),
+        std::make_unique<BrowserWebStateListDelegate>(profile_.get()));
   }
 
   void TearDown() override {

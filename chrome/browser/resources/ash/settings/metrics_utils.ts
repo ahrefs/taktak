@@ -9,7 +9,7 @@
 import {assert} from 'chrome://resources/js/assert.js';
 
 import {Setting} from './mojom-webui/setting.mojom-webui.js';
-import {SettingChangeValue} from './mojom-webui/user_action_recorder.mojom-webui.js';
+import type {SettingChangeValue} from './mojom-webui/user_action_recorder.mojom-webui.js';
 
 interface SettingMetric {
   setting: Setting;
@@ -125,6 +125,10 @@ const PREF_TO_SETTING_MAP: Record<string, SettingAndType> = {
     setting: Setting.kEnableCursorColor,
     type: PrefType.BOOLEAN,
   },
+  'settings.a11y.face_gaze.enabled': {
+    setting: Setting.kFaceGaze,
+    type: PrefType.BOOLEAN,
+  },
   'settings.a11y.large_cursor_enabled': {
     setting: Setting.kLargeCursor,
     type: PrefType.BOOLEAN,
@@ -159,7 +163,7 @@ const PREF_TO_SETTING_MAP: Record<string, SettingAndType> = {
     type: PrefType.BOOLEAN,
   },
   'settings.a11y.overlay_scrollbar.enabled': {
-    setting: Setting.kOverlayScrollbarEnabled,
+    setting: Setting.kAlwaysShowScrollbarsEnabled,
     type: PrefType.BOOLEAN,
   },
   'settings.a11y.screen_magnifier': {
@@ -183,6 +187,10 @@ const PREF_TO_SETTING_MAP: Record<string, SettingAndType> = {
     type: PrefType.NUMBER,
   },
   // os_a11y_page/keyboard_and_text_input_page.ts
+  'settings.a11y.bounce_keys_enabled': {
+    setting: Setting.kBounceKeys,
+    type: PrefType.BOOLEAN,
+  },
   'settings.a11y.caret.blink_interval': {
     setting: Setting.kCaretBlinkInterval,
     type: PrefType.NUMBER,
@@ -201,6 +209,10 @@ const PREF_TO_SETTING_MAP: Record<string, SettingAndType> = {
   },
   'settings.a11y.focus_highlight': {
     setting: Setting.kHighlightKeyboardFocus,
+    type: PrefType.BOOLEAN,
+  },
+  'settings.a11y.slow_keys_enabled': {
+    setting: Setting.kSlowKeys,
     type: PrefType.BOOLEAN,
   },
   'settings.a11y.sticky_keys_enabled': {
@@ -248,6 +260,18 @@ const PREF_TO_SETTING_MAP: Record<string, SettingAndType> = {
   },
   'assistive_input.orca_enabled': {
     setting: Setting.kShowOrca,
+    type: PrefType.BOOLEAN,
+  },
+  'settings.lobster_enabled': {
+    setting: Setting.kLobsterOnOff,
+    type: PrefType.BOOLEAN,
+  },
+  'ash.capture_mode.sunfish_enabled': {
+    setting: Setting.kSunfishOnOff,
+    type: PrefType.BOOLEAN,
+  },
+  'ash.scanner.enabled': {
+    setting: Setting.kScannerOnOff,
     type: PrefType.BOOLEAN,
   },
 };

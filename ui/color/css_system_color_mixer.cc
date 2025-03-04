@@ -71,6 +71,19 @@ void AddWhitePageColorsToMixer(ColorMixer& mixer) {
   mixer[kColorCssSystemWindowText] = {SK_ColorBLACK};
 }
 
+void AddAquaticPageColorsToMixer(ColorMixer& mixer) {
+  mixer[kColorCssSystemBtnFace] = {SkColorSetRGB(0x20, 0x20, 0x20)};
+  mixer[kColorCssSystemBtnText] = {SK_ColorWHITE};
+  mixer[kColorCssSystemGrayText] = {SkColorSetRGB(0xA6, 0xA6, 0xA6)};
+  mixer[kColorCssSystemHighlight] = {SkColorSetRGB(0x8E, 0xE3, 0xF0)};
+  mixer[kColorCssSystemHighlightText] = {SkColorSetRGB(0x26, 0x3B, 0x50)};
+  mixer[kColorCssSystemHotlight] = {SkColorSetRGB(0x75, 0xE9, 0xFC)};
+  mixer[kColorCssSystemMenuHilight] = {SkColorSetRGB(0x80, 0x00, 0x80)};
+  mixer[kColorCssSystemScrollbar] = {SkColorSetRGB(0x20, 0x20, 0x20)};
+  mixer[kColorCssSystemWindow] = {SkColorSetRGB(0x20, 0x20, 0x20)};
+  mixer[kColorCssSystemWindowText] = {SK_ColorWHITE};
+}
+
 void AddCssSystemColorMixer(ColorProvider* provider,
                             const ColorProviderKey& key) {
   ColorMixer& mixer = provider->AddMixer();
@@ -84,12 +97,10 @@ void AddCssSystemColorMixer(ColorProvider* provider,
       break;
     }
     case ColorProviderKey::ForcedColors::kNone:
+    case ColorProviderKey::ForcedColors::kActive:
       CompleteDefaultCssSystemColorDefinition(
           mixer,
           /*dark_mode=*/key.color_mode == ColorProviderKey::ColorMode::kDark);
-      MapNativeColorsToCssSystemColors(mixer, key);
-      break;
-    case ColorProviderKey::ForcedColors::kActive:
       MapNativeColorsToCssSystemColors(mixer, key);
       break;
     case ColorProviderKey::ForcedColors::kDusk:
@@ -103,6 +114,9 @@ void AddCssSystemColorMixer(ColorProvider* provider,
       break;
     case ColorProviderKey::ForcedColors::kWhite:
       AddWhitePageColorsToMixer(mixer);
+      break;
+    case ColorProviderKey::ForcedColors::kAquatic:
+      AddAquaticPageColorsToMixer(mixer);
       break;
     default:
       NOTREACHED();

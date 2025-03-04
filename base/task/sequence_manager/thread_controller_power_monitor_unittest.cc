@@ -6,25 +6,25 @@
 
 #include "base/power_monitor/power_monitor.h"
 #include "base/power_monitor/power_monitor_source.h"
+#include "base/test/mock_callback.h"
 #include "base/test/power_monitor_test.h"
 #include "base/test/task_environment.h"
-
-#include "base/test/mock_callback.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace base {
-namespace sequence_manager {
-namespace internal {
+namespace base::sequence_manager::internal {
 
 class ThreadControllerPowerMonitorTest : public testing::Test {
  public:
   void SetUp() override {
     thread_controller_power_monitor_ =
         std::make_unique<ThreadControllerPowerMonitor>();
+    internal::ThreadControllerPowerMonitor::OverrideUsePowerMonitorForTesting(
+        true);
   }
 
   void TearDown() override {
     thread_controller_power_monitor_.reset();
+    internal::ThreadControllerPowerMonitor::ResetForTesting();
   }
 
  protected:
@@ -57,6 +57,4 @@ TEST_F(ThreadControllerPowerMonitorTest, IsProcessInPowerSuspendState) {
       thread_controller_power_monitor_->IsProcessInPowerSuspendState());
 }
 
-}  // namespace internal
-}  // namespace sequence_manager
-}  // namespace base
+}  // namespace base::sequence_manager::internal

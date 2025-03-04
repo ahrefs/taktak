@@ -173,13 +173,12 @@ IN_PROC_BROWSER_TEST_F(TranslateBubbleViewBrowserTest,
       browser()->tab_strip_model()->GetActiveWebContents()));
 
   // Close the last tab.
-  chrome::CloseWebContents(browser(),
-                           browser()->tab_strip_model()->GetActiveWebContents(),
-                           false);
+  chrome::CloseWebContents(
+      browser(), browser()->tab_strip_model()->GetActiveWebContents(), false);
 }
 
 IN_PROC_BROWSER_TEST_F(TranslateBubbleViewBrowserTest, AlertAccessibleEvent) {
-  views::test::AXEventCounter counter(views::AXEventManager::Get());
+  views::test::AXEventCounter counter(views::AXUpdateNotifier::Get());
   EXPECT_EQ(0, counter.GetCount(ax::mojom::Event::kAlert));
 
   GURL french_url = GURL(embedded_test_server()->GetURL("/french_page.html"));

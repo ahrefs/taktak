@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/auto_reset.h"
 #include "base/trace_event/trace_event.h"
 #include "base/trace_event/traced_value.h"
 #include "cc/animation/animation.h"
@@ -219,7 +220,8 @@ void ScrollOffsetAnimationImpl::NotifyAnimationFinished(
     int group) {
   DCHECK_EQ(target_property, TargetProperty::SCROLL_OFFSET);
   DCHECK(animation_host_->mutator_host_client());
-  animation_host_->mutator_host_client()->ScrollOffsetAnimationFinished();
+  animation_host_->mutator_host_client()->ScrollOffsetAnimationFinished(
+      scroll_offset_animation_->element_id());
   TRACE_EVENT_INSTANT0("cc", "NotifyAnimationFinished",
                        TRACE_EVENT_SCOPE_THREAD);
 }

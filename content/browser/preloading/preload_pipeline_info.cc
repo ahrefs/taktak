@@ -6,7 +6,10 @@
 
 namespace content {
 
-PreloadPipelineInfo::PreloadPipelineInfo() = default;
+PreloadPipelineInfo::PreloadPipelineInfo(
+    PreloadingType planned_max_preloading_type)
+    : id_(base::UnguessableToken::Create()),
+      planned_max_preloading_type_(planned_max_preloading_type) {}
 
 PreloadPipelineInfo::~PreloadPipelineInfo() = default;
 

@@ -17,6 +17,8 @@ static_library("autofill") {
     "address_normalizer_factory.h",
     "autocomplete_history_manager_factory.cc",
     "autocomplete_history_manager_factory.h",
+    "autofill_entity_data_manager_factory.cc",
+    "autofill_entity_data_manager_factory.h",
     "autofill_image_fetcher_factory.cc",
     "autofill_image_fetcher_factory.h",
     "autofill_offer_manager_factory.cc",
@@ -27,6 +29,8 @@ static_library("autofill") {
     "iban_manager_factory.h",
     "merchant_promo_code_manager_factory.cc",
     "merchant_promo_code_manager_factory.h",
+    "passes_data_manager_factory.cc",
+    "passes_data_manager_factory.h",
     "personal_data_manager_factory.cc",
     "personal_data_manager_factory.h",
     "strike_database_factory.cc",
@@ -45,6 +49,7 @@ static_library("autofill") {
     "//chrome/browser/profiles:profile",
     "//components/autofill/core/browser",
     "//components/autofill/core/common",
+    "//components/autofill_ai/core/browser:features",
     "//components/keyed_service/content",
     "//components/keyed_service/core",
     "//components/signin/public/identity_manager:identity_manager",
@@ -58,7 +63,7 @@ static_library("autofill") {
     "//chrome/browser:browser_process",
     "//chrome/browser/optimization_guide",
     "//chrome/browser/profiles",
-    "//chrome/browser/sync",
+    "//chrome/browser/sync:factories",
     "//chrome/common:constants",
     "//components/autofill/content/browser",
     "//components/image_fetcher/core",
@@ -116,8 +121,8 @@ static_library("autofill") {
 
   if (build_with_tflite_lib) {
     sources += [
-      "autofill_ml_prediction_model_service_factory.cc",
-      "autofill_ml_prediction_model_service_factory.h",
+      "autofill_field_classification_model_service_factory.cc",
+      "autofill_field_classification_model_service_factory.h",
     ]
   }
 }

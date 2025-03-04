@@ -12,8 +12,8 @@
 #include "ash/public/cpp/app_menu_constants.h"
 #include "base/metrics/histogram_functions.h"
 #include "ui/accessibility/ax_enums.mojom.h"
-#include "ui/base/models/simple_menu_model.h"
 #include "ui/base/mojom/menu_source_type.mojom-forward.h"
+#include "ui/menus/simple_menu_model.h"
 #include "ui/views/controls/menu/menu_item_view.h"
 #include "ui/views/controls/menu/menu_model_adapter.h"
 #include "ui/views/controls/menu/menu_runner.h"
@@ -132,7 +132,7 @@ void AppMenuModelAdapter::OnMenuClosed(views::MenuItemView* menu) {
 
   // No |widget_owner_| in tests.
   if (widget_owner_ && widget_owner_->GetRootView()) {
-    widget_owner_->GetRootView()->NotifyAccessibilityEvent(
+    widget_owner_->GetRootView()->NotifyAccessibilityEventDeprecated(
         ax::mojom::Event::kMenuEnd,
         /*send_native_event=*/true);
   }

@@ -38,9 +38,7 @@ class HelpAppSearchBrowserTestBase : public AppListSearchBrowserTest {
   HelpAppSearchBrowserTestBase() {
     // TODO: Remove parameterization on kProductivityLauncher.
     scoped_feature_list_.InitWithFeaturesAndParameters(
-        {{ash::features::kProductivityLauncher, {{"enable_continue", "true"}}},
-         {{ash::features::kHelpAppLauncherSearch}, {}}},
-        {});
+        {{}, {{ash::features::kHelpAppLauncherSearch}, {}}}, {});
   }
 
   ~HelpAppSearchBrowserTestBase() override = default;
@@ -366,6 +364,9 @@ IN_PROC_BROWSER_TEST_F(HelpAppSwaSearchBrowserTest, Launch) {
   auto* result = FindResult(ash::kHelpAppId);
   ASSERT_TRUE(result);
   result->Open(ui::EF_NONE);
+
+  // TODO(crbug.com/41435725): Remove or document why this is needed.
+  base::RunLoop().RunUntilIdle();
 }
 
 }  // namespace app_list::test

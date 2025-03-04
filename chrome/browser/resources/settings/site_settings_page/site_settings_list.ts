@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'chrome://resources/cr_elements/cr_link_row/cr_link_row.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
+import 'chrome://resources/cr_elements/icons.html.js';
 import '../icons.html.js';
 import '../settings_shared.css.js';
 
@@ -81,7 +81,8 @@ class SettingsSiteSettingsListElement extends
       'updateLocationLabel_(prefs.generated.geolocation.*)',
       'updateSiteDataLabel_(prefs.generated.cookie_default_content_setting.*)',
       'updateThirdPartyCookiesLabel_(prefs.profile.cookie_controls_mode.*,' +
-          'prefs.tracking_protection.block_all_3pc_toggle_enabled.*)',
+          'prefs.tracking_protection.block_all_3pc_toggle_enabled.*,' +
+          'prefs.generated.third_party_cookie_blocking_setting.*)',
       'updateOfferWritingHelpLabel_(prefs.compose.proactive_nudge_enabled.*)',
     ];
   }
@@ -151,21 +152,10 @@ class SettingsSiteSettingsListElement extends
         category === ContentSettingsTypes.PROTECTED_CONTENT ||
         category === ContentSettingsTypes.PDF_DOCUMENTS ||
         category === ContentSettingsTypes.SITE_DATA ||
-        category === ContentSettingsTypes.OFFER_WRITING_HELP) {
-      return Promise.resolve();
-    }
-
-    if (category === ContentSettingsTypes.COOKIES) {
-      if (loadTimeData.getBoolean('is3pcdCookieSettingsRedesignEnabled') &&
-          loadTimeData.getBoolean('isTrackingProtectionUxEnabled')) {
-        const index = this.categoryList.map(e => e.id).indexOf(
-            ContentSettingsTypes.COOKIES);
-        this.set(
-            `categoryList.${index}.subLabel`,
-            this.i18n('trackingProtectionLinkRowSubLabel'));
-      }
-      // Updates to the cookies label are handled by the
-      // cookieSettingDescriptionChanged event listener.
+        category === ContentSettingsTypes.OFFER_WRITING_HELP ||
+        // Updates to the cookies label are handled by the
+        // cookieSettingDescriptionChanged event listener.
+        category === ContentSettingsTypes.COOKIES) {
       return Promise.resolve();
     }
 
@@ -309,11 +299,6 @@ class SettingsSiteSettingsListElement extends
    * Update the third-party cookies link row label when the pref changes.
    */
   private updateThirdPartyCookiesLabel_() {
-    if (loadTimeData.getBoolean('is3pcdCookieSettingsRedesignEnabled') &&
-        loadTimeData.getBoolean('isTrackingProtectionUxEnabled')) {
-      return;
-    }
-
     const index =
         this.categoryList.map(e => e.id).indexOf(ContentSettingsTypes.COOKIES);
     // The third-party cookies might not be part of the current
@@ -335,7 +320,9 @@ class SettingsSiteSettingsListElement extends
       if (state === CookieControlsMode.OFF) {
         label = 'thirdPartyCookiesLinkRowSublabelEnabled';
       } else if (state === CookieControlsMode.INCOGNITO_ONLY) {
-        label = 'thirdPartyCookiesLinkRowSublabelDisabledIncognito';
+        label = loadTimeData.getBoolean('isAlwaysBlock3pcsIncognitoEnabled') ?
+            'thirdPartyCookiesLinkRowSublabelEnabled' :
+            'thirdPartyCookiesLinkRowSublabelDisabledIncognito';
       } else if (state === CookieControlsMode.BLOCK_THIRD_PARTY) {
         label = 'thirdPartyCookiesLinkRowSublabelDisabled';
       }

@@ -144,7 +144,7 @@ api::sessions::Session CreateSessionModelHelper(
     // TODO(crbug.com/40757179): Implement group support.
     NOTIMPLEMENTED();
   } else {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
   return session_struct;
 }
@@ -332,7 +332,7 @@ SessionsGetDevicesFunction::CreateWindowModel(
 #if BUILDFLAG(IS_CHROMEOS)
     case sessions::SessionWindow::TYPE_CUSTOM_TAB:
 #endif
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   api::windows::WindowState state = api::windows::WindowState::kNone;
@@ -658,8 +658,7 @@ SessionsAPI::SessionsAPI(content::BrowserContext* context)
       api::sessions::OnChanged::kEventName);
 }
 
-SessionsAPI::~SessionsAPI() {
-}
+SessionsAPI::~SessionsAPI() = default;
 
 void SessionsAPI::Shutdown() {
   EventRouter::Get(browser_context_)->UnregisterObserver(this);

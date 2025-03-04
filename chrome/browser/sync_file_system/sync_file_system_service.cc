@@ -20,6 +20,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/observer_list.h"
 #include "base/task/single_thread_task_runner.h"
+#include "chrome/browser/apps/platform_apps/api/deprecation_features.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/sync/sync_service_factory.h"
 #include "chrome/browser/sync_file_system/local/local_file_sync_service.h"
@@ -72,10 +73,9 @@ SyncServiceState RemoteStateToSyncServiceState(
     case REMOTE_SERVICE_DISABLED:
       return SYNC_SERVICE_DISABLED;
     case REMOTE_SERVICE_STATE_MAX:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
-  NOTREACHED_IN_MIGRATION() << "Unknown remote service state: " << state;
-  return SYNC_SERVICE_DISABLED;
+  NOTREACHED() << "Unknown remote service state: " << state;
 }
 
 void DidHandleUninstalledEvent(const GURL& origin, SyncStatusCode code) {
@@ -427,6 +427,13 @@ void SyncFileSystemService::Initialize(
   }
 
   ExtensionRegistry::Get(profile_)->AddObserver(this);
+
+  // Don't enable file sync if deprecation flag is enabled.
+  if (base::FeatureList::IsEnabled(
+          chrome_apps::features::kDeprecateSyncFileSystemApis)) {
+    sync_enabled_ = false;
+    remote_service_->SetSyncEnabled(false);
+  }
 }
 
 void SyncFileSystemService::DidInitializeFileSystem(const GURL& app_origin,
@@ -530,9 +537,9 @@ void SyncFileSystemService::OnExtensionUnloaded(
     return;
 
   GURL app_origin = Extension::GetBaseURLFromExtensionId(extension->id());
-  int disable_reasons =
+  extensions::DisableReasonSet disable_reasons =
       ExtensionPrefs::Get(profile_)->GetDisableReasons(extension->id());
-  if (disable_reasons & extensions::disable_reason::DISABLE_RELOAD) {
+  if (disable_reasons.contains(extensions::disable_reason::DISABLE_RELOAD)) {
     // Bypass disabling the origin since the app will be re-enabled soon.
     // NOTE: If re-enabling the app fails, the app is disabled while it is
     // handled as enabled origin in the SyncFS. This should be safe and will be

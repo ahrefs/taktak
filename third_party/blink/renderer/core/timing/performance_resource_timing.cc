@@ -119,8 +119,7 @@ uint64_t PerformanceResourceTiming::GetTransferSize(
     case mojom::blink::CacheState::kNone:
       return encoded_body_size + kHeaderSize;
   }
-  NOTREACHED_IN_MIGRATION();
-  return 0;
+  NOTREACHED();
 }
 
 bool PerformanceResourceTiming::IsResponseFromCacheStorage() const {
@@ -153,6 +152,10 @@ V8RenderBlockingStatusType PerformanceResourceTiming::renderBlockingStatus()
 
 AtomicString PerformanceResourceTiming::contentType() const {
   return AtomicString(info_->content_type);
+}
+
+AtomicString PerformanceResourceTiming::contentEncoding() const {
+  return AtomicString(info_->content_encoding);
 }
 
 uint16_t PerformanceResourceTiming::responseStatus() const {
@@ -417,8 +420,22 @@ DOMHighResTimeStamp PerformanceResourceTiming::firstInterimResponseStart()
       CrossOriginIsolatedCapability());
 }
 
+DOMHighResTimeStamp PerformanceResourceTiming::finalResponseHeadersStart()
+    const {
+  if (!info_->allow_timing_details || !info_->timing ||
+      info_->timing->receive_non_informational_headers_start.is_null()) {
+    return 0;
+  }
+
+  return Performance::MonotonicTimeToDOMHighResTimeStamp(
+      TimeOrigin(), info_->timing->receive_non_informational_headers_start,
+      info_->allow_negative_values, CrossOriginIsolatedCapability());
+}
+
 DOMHighResTimeStamp PerformanceResourceTiming::responseStart() const {
-  if (!info_->allow_timing_details || !info_->timing) {
+  if (!info_->allow_timing_details || !info_->timing ||
+      RuntimeEnabledFeatures::
+          ResourceTimingFinalResponseHeadersStartEnabled()) {
     return GetAnyFirstResponseStart();
   }
 
@@ -496,6 +513,9 @@ void PerformanceResourceTiming::BuildJSONValue(V8ObjectBuilder& builder) const {
   if (RuntimeEnabledFeatures::ResourceTimingContentTypeEnabled()) {
     builder.AddString("contentType", contentType());
   }
+  if (RuntimeEnabledFeatures::ResourceTimingContentEncodingEnabled()) {
+    builder.AddString("contentEncoding", contentEncoding());
+  }
   builder.AddNumber("workerStart", workerStart());
   if (RuntimeEnabledFeatures::ServiceWorkerStaticRouterTimingInfoEnabled(
           ExecutionContext::From(builder.GetScriptState()))) {
@@ -516,6 +536,10 @@ void PerformanceResourceTiming::BuildJSONValue(V8ObjectBuilder& builder) const {
   builder.AddNumber("requestStart", requestStart());
   builder.AddNumber("responseStart", responseStart());
   builder.AddNumber("firstInterimResponseStart", firstInterimResponseStart());
+  if (RuntimeEnabledFeatures::
+          ResourceTimingFinalResponseHeadersStartEnabled()) {
+    builder.AddNumber("finalResponseHeadersStart", finalResponseHeadersStart());
+  }
 
   builder.AddNumber("responseEnd", responseEnd());
   builder.AddNumber("transferSize", transferSize());

@@ -42,6 +42,7 @@ import org.chromium.chrome.test.ChromeTabbedActivityTestRule;
 import org.chromium.chrome.test.util.ChromeRenderTestRule;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetTestSupport;
+import org.chromium.components.plus_addresses.PlusAddressCreationBottomSheetErrorType;
 import org.chromium.ui.test.util.RenderTestRule.Component;
 import org.chromium.ui.widget.LoadingView;
 import org.chromium.url.GURL;
@@ -59,9 +60,8 @@ import java.util.List;
 @ParameterAnnotations.UseRunnerDelegate(ChromeJUnit4RunnerDelegate.class)
 @CommandLineFlags.Add({ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE})
 @EnableFeatures({
-    ChromeFeatureList.PLUS_ADDRESS_ANDROID_ENHANCED_LOADING_STATES_ENABLED,
+    ChromeFeatureList.PLUS_ADDRESSES_ENABLED,
     ChromeFeatureList.PLUS_ADDRESS_ANDROID_OPEN_GMS_CORE_MANAGEMENT_PAGE,
-    ChromeFeatureList.PLUS_ADDRESS_ANDROID_SETTINGS_ENTRY
 })
 public class PlusAddressCreationRenderTest {
     private static final String MANAGE_PLUS_ADDRESSES_DESCRIPTION = "For example@gmail.com.";

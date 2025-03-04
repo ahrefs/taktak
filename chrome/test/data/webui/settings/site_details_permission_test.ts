@@ -82,7 +82,7 @@ suite('SiteDetailsPermission', function() {
     const header =
         testElement.$.details.querySelector<HTMLElement>('#permissionHeader')!;
     assertEquals(
-        'Camera', header.innerText!.trim(),
+        'Camera', header.innerText.trim(),
         'Widget should be labelled correctly');
 
     // Flip the permission and validate that prefs stay in sync.
@@ -554,6 +554,49 @@ suite('SiteDetailsPermission', function() {
             testElement.$.permission.querySelector<HTMLElement>(
                                         '#block')!.hidden);
       });
+
+  // <if expr="is_chromeos">
+  test(
+      'Smart Card Readers: ASK/BLOCK can be chosen as a preference by users',
+      function() {
+        const origin = 'https://www.example.com';
+        testElement.category = ContentSettingsTypes.SMART_CARD_READERS;
+        testElement.label = 'Smart card readers';
+        testElement.site = createRawSiteException(origin, {
+          origin,
+          embeddingOrigin: origin,
+          setting: ContentSetting.ASK,
+          source: SiteSettingSource.PREFERENCE,
+        });
+
+        // In addition to the assertions below, the main goal of this test is to
+        // ensure we do not hit any assertions when choosing ASK as a setting.
+        assertEquals(ContentSetting.ASK, testElement.$.permission.value);
+        assertFalse(testElement.$.permission.disabled);
+        assertFalse(testElement.$.permission.querySelector<HTMLElement>(
+                                                '#ask')!.hidden);
+
+        testElement.site = createRawSiteException(origin, {
+          origin: origin,
+          embeddingOrigin: origin,
+          setting: ContentSetting.BLOCK,
+          source: SiteSettingSource.PREFERENCE,
+        });
+
+        // In addition to the assertions below, the main goal of this test is to
+        // ensure we do not hit any assertions when choosing BLOCK as a setting.
+        assertEquals(ContentSetting.BLOCK, testElement.$.permission.value);
+        assertFalse(testElement.$.permission.disabled);
+        assertFalse(
+            testElement.$.permission.querySelector<HTMLElement>(
+                                        '#block')!.hidden);
+
+        // ALLOW setting is not supported for this setting, it should not show.
+        assertTrue(
+            testElement.$.permission.querySelector<HTMLElement>(
+                                        '#allow')!.hidden);
+      });
+  // </if>
 
   test('Chooser exceptions getChooserExceptionList API used', async function() {
     const origin = 'https://www.example.com';

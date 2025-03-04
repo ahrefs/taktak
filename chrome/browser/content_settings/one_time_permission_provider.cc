@@ -4,11 +4,11 @@
 
 #include "chrome/browser/content_settings/one_time_permission_provider.h"
 
+#include <algorithm>
 #include <memory>
 #include <set>
 
 #include "base/power_monitor/power_monitor.h"
-#include "base/ranges/algorithm.h"
 #include "base/time/default_clock.h"
 #include "base/time/time.h"
 #include "chrome/browser/browser_process.h"
@@ -141,8 +141,7 @@ bool OneTimePermissionProvider::SetWebsiteSetting(
   content_settings::RuleMetaData metadata;
   metadata.set_session_model(content_settings::mojom::SessionModel::ONE_TIME);
   metadata.set_last_modified(now);
-  if (base::FeatureList::IsEnabled(
-          content_settings::features::kActiveContentSettingExpiry) &&
+  if (content_settings::ShouldTypeExpireActively(content_settings_type) &&
       !constraints.lifetime().is_zero()) {
     metadata.SetExpirationAndLifetime(now + constraints.lifetime(),
                                       constraints.lifetime());

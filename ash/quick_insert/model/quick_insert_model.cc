@@ -8,7 +8,7 @@
 #include "ash/quick_insert/model/quick_insert_mode_type.h"
 #include "ash/quick_insert/quick_insert_category.h"
 #include "base/check_deref.h"
-#include "chromeos/components/editor_menu/public/cpp/editor_helpers.h"
+#include "chromeos/ash/components/editor_menu/public/cpp/editor_helpers.h"
 #include "components/prefs/pref_service.h"
 #include "ui/base/ime/ash/ime_keyboard.h"
 #include "ui/base/ime/text_input_client.h"
@@ -74,66 +74,67 @@ QuickInsertModel::QuickInsertModel(PrefService* prefs,
       text_input_type_(GetTextInputType(focused_client)),
       is_gifs_enabled_(GetIsGifsEnabled(prefs)) {}
 
-std::vector<PickerCategory> QuickInsertModel::GetAvailableCategories() const {
+std::vector<QuickInsertCategory> QuickInsertModel::GetAvailableCategories()
+    const {
   switch (GetMode()) {
-    case PickerModeType::kUnfocused:
-      return std::vector<PickerCategory>{
-          PickerCategory::kLinks,
-          PickerCategory::kDriveFiles,
-          PickerCategory::kLocalFiles,
+    case QuickInsertModeType::kUnfocused:
+      return std::vector<QuickInsertCategory>{
+          QuickInsertCategory::kLinks,
+          QuickInsertCategory::kDriveFiles,
+          QuickInsertCategory::kLocalFiles,
       };
-    case PickerModeType::kHasSelection: {
-      std::vector<PickerCategory> categories;
+    case QuickInsertModeType::kHasSelection: {
+      std::vector<QuickInsertCategory> categories;
       if (editor_status_ == EditorStatus::kEnabled) {
-        categories.push_back(PickerCategory::kEditorRewrite);
+        categories.push_back(QuickInsertCategory::kEditorRewrite);
       }
 
       if (lobster_status_ == LobsterStatus::kEnabled) {
-        categories.push_back(PickerCategory::kLobster);
+        categories.push_back(QuickInsertCategory::kLobsterWithSelectedText);
       }
       return categories;
     }
-    case PickerModeType::kNoSelection: {
-      std::vector<PickerCategory> categories;
+    case QuickInsertModeType::kNoSelection: {
+      std::vector<QuickInsertCategory> categories;
       if (editor_status_ == EditorStatus::kEnabled) {
-        categories.push_back(PickerCategory::kEditorWrite);
+        categories.push_back(QuickInsertCategory::kEditorWrite);
       }
 
       if (lobster_status_ == LobsterStatus::kEnabled) {
-        categories.push_back(PickerCategory::kLobster);
+        categories.push_back(QuickInsertCategory::kLobsterWithNoSelectedText);
       }
 
-      categories.push_back(PickerCategory::kLinks);
+      categories.push_back(QuickInsertCategory::kLinks);
       if (text_input_type_ != ui::TextInputType::TEXT_INPUT_TYPE_URL) {
-        categories.push_back(is_gifs_enabled_ ? PickerCategory::kEmojisGifs
-                                              : PickerCategory::kEmojis);
+        categories.push_back(is_gifs_enabled_ ? QuickInsertCategory::kEmojisGifs
+                                              : QuickInsertCategory::kEmojis);
       }
       categories.insert(categories.end(), {
-                                              PickerCategory::kClipboard,
-                                              PickerCategory::kDriveFiles,
-                                              PickerCategory::kLocalFiles,
-                                              PickerCategory::kDatesTimes,
-                                              PickerCategory::kUnitsMaths,
+                                              QuickInsertCategory::kClipboard,
+                                              QuickInsertCategory::kDriveFiles,
+                                              QuickInsertCategory::kLocalFiles,
+                                              QuickInsertCategory::kDatesTimes,
+                                              QuickInsertCategory::kUnitsMaths,
                                           });
 
       return categories;
     }
-    case PickerModeType::kPassword: {
+    case QuickInsertModeType::kPassword: {
       return {};
     }
   }
 }
 
-std::vector<PickerCategory> QuickInsertModel::GetRecentResultsCategories()
+std::vector<QuickInsertCategory> QuickInsertModel::GetRecentResultsCategories()
     const {
-  if (GetMode() == PickerModeType::kHasSelection) {
-    return std::vector<PickerCategory>{};
+  if (GetMode() == QuickInsertModeType::kHasSelection) {
+    return std::vector<QuickInsertCategory>{};
   }
 
   return {
-      PickerCategory::kDriveFiles,
-      PickerCategory::kLocalFiles,
-      PickerCategory::kLinks,
+      QuickInsertCategory::kDriveFiles,
+      QuickInsertCategory::kLocalFiles,
+      QuickInsertCategory::kLinks,
   };
 }
 
@@ -149,19 +150,19 @@ bool QuickInsertModel::is_caps_lock_enabled() const {
   return is_caps_lock_enabled_;
 }
 
-PickerModeType QuickInsertModel::GetMode() const {
+QuickInsertModeType QuickInsertModel::GetMode() const {
   if (!has_focus_) {
-    return PickerModeType::kUnfocused;
+    return QuickInsertModeType::kUnfocused;
   }
 
   if (text_input_type_ == ui::TextInputType::TEXT_INPUT_TYPE_PASSWORD) {
-    return PickerModeType::kPassword;
+    return QuickInsertModeType::kPassword;
   }
 
   return chromeos::editor_helpers::NonWhitespaceAndSymbolsLength(
              selected_text_, gfx::Range(0, selected_text_.size())) == 0
-             ? PickerModeType::kNoSelection
-             : PickerModeType::kHasSelection;
+             ? QuickInsertModeType::kNoSelection
+             : QuickInsertModeType::kHasSelection;
 }
 
 bool QuickInsertModel::IsGifsEnabled() const {

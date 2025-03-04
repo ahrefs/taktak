@@ -2,16 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// https://github.com/explainers-by-googlers/prompt-api
-
-enum AICapabilityAvailability {
-  "readily",
-  "after-download",
-  "no"
-};
+// https://github.com/webmachinelearning/prompt-api
 
 [
   Exposed=(Window,Worker),
+  SecureContext,
   RuntimeEnabled=BuiltInAIAPI
 ]
 interface AI {
@@ -19,7 +14,7 @@ interface AI {
     Measure,
     RuntimeEnabled=AIPromptAPI
   ]
-  readonly attribute AIAssistantFactory languageModel;
+  readonly attribute AILanguageModelFactory languageModel;
   [
     Measure,
     RuntimeEnabled=AISummarizationAPI
@@ -42,4 +37,9 @@ interface AI {
     RuntimeEnabled=LanguageDetectionAPI
   ]
   readonly attribute AILanguageDetectorFactory languageDetector;
+
+  [
+    RuntimeEnabled=TranslationAPI
+  ]
+  readonly attribute AITranslatorFactory translator;
 };

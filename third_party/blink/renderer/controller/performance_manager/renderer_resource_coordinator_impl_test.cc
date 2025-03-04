@@ -86,6 +86,11 @@ class MockProcessCoordinationUnit : public ProcessCoordinationUnit {
   mojo::Receiver<ProcessCoordinationUnit> receiver_;
 };
 
+using StrictMockProcessCoordinationUnit =
+    ::testing::StrictMock<MockProcessCoordinationUnit>;
+using NiceMockProcessCoordinationUnit =
+    ::testing::NiceMock<MockProcessCoordinationUnit>;
+
 MATCHER_P(MatchV8ContextDescription,
           execution_context_token,
           "V8ContextDescription::execution_context_token matches") {
@@ -113,6 +118,8 @@ class RendererResourceCoordinatorImplTest : public ::testing::Test {
     RendererResourceCoordinator::Set(nullptr);
   }
 
+  // Creates a MockProcessCoordinationUnit and binds it to a
+  // RendererResourceCoordinatorImpl.
   template <typename MockType>
   void InitializeMockProcessCoordinationUnit() {
     DCHECK(!mock_process_coordination_unit_);
@@ -136,8 +143,7 @@ class RendererResourceCoordinatorImplTest : public ::testing::Test {
 };
 
 TEST_F(RendererResourceCoordinatorImplTest, IframeNotifications) {
-  InitializeMockProcessCoordinationUnit<
-      ::testing::StrictMock<MockProcessCoordinationUnit>>();
+  InitializeMockProcessCoordinationUnit<StrictMockProcessCoordinationUnit>();
 
   frame_test_helpers::WebViewHelper helper;
   helper.InitializeAndLoad("about:blank");
@@ -250,8 +256,7 @@ TEST_F(RendererResourceCoordinatorImplTest, IframeNotifications) {
 
 TEST_F(RendererResourceCoordinatorImplTest, NonIframeNotifications) {
   // Don't care about mocked methods except for OnRemoteIframeAttached.
-  InitializeMockProcessCoordinationUnit<
-      ::testing::NiceMock<MockProcessCoordinationUnit>>();
+  InitializeMockProcessCoordinationUnit<NiceMockProcessCoordinationUnit>();
 
   frame_test_helpers::WebViewHelper helper;
   helper.InitializeAndLoad("about:blank");

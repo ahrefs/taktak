@@ -5,7 +5,7 @@
 import 'chrome://resources/cr_elements/cr_shared_vars.css.js';
 import 'chrome://resources/polymer/v3_0/iron-list/iron-list.js';
 import './shared_style.css.js';
-import './strings.m.js';
+import '/strings.m.js';
 import './item.js';
 
 import {getInstance as getAnnouncerInstance} from 'chrome://resources/cr_elements/cr_a11y_announcer/cr_a11y_announcer.js';
@@ -34,7 +34,7 @@ const BookmarksListElementBase =
 export interface BookmarksListElement {
   $: {
     list: IronListElement,
-    message: HTMLDivElement,
+    message: HTMLElement,
   };
 }
 
@@ -88,13 +88,13 @@ export class BookmarksListElement extends BookmarksListElementBase {
   private searchTerm_: string;
   private selectedFolder_: string;
   private selectedItems_: Set<string>;
-  private boundOnHighlightItems_: (p1: CustomEvent) => void;
+
+  private focusTimeoutId_: number = -1;
 
   override ready() {
     super.ready();
     this.addEventListener('click', () => this.deselectItems_());
-    this.addEventListener('contextmenu',
-                          e => this.onContextMenu_(e as MouseEvent));
+    this.addEventListener('contextmenu', e => this.onContextMenu_(e));
     this.addEventListener(
         'open-command-menu',
         e => this.onOpenCommandMenu_(e as CustomEvent<OpenCommandMenuDetail>));
@@ -143,6 +143,11 @@ export class BookmarksListElement extends BookmarksListElementBase {
    */
   private async onDisplayedIdsChanged_(
       newValue: string[], _oldValue: string[]) {
+    if (this.focusTimeoutId_ !== -1) {
+      clearTimeout(this.focusTimeoutId_);
+      this.focusTimeoutId_ = -1;
+    }
+
     const updatedList = newValue.map(id => ({id: id}));
     let skipFocus = false;
     let selectIndex = -1;
@@ -165,12 +170,10 @@ export class BookmarksListElement extends BookmarksListElementBase {
     // as blank entries. See https://crbug.com/848683
     this.$.list.dispatchEvent(
         new CustomEvent('iron-resize', {bubbles: true, composed: true}));
-    const label = await PluralStringProxyImpl.getInstance().getPluralString(
-        'listChanged', this.displayedList_.length);
-    getAnnouncerInstance().announce(label);
 
     if (!skipFocus && selectIndex > -1) {
-      setTimeout(() => {
+      this.focusTimeoutId_ = setTimeout(() => {
+        this.focusTimeoutId_ = -1;
         this.$.list.focusItem(selectIndex);
         // Focus menu button so 'Undo' is only one tab stop away on delete.
         const item = getDeepActiveElement();
@@ -179,6 +182,10 @@ export class BookmarksListElement extends BookmarksListElementBase {
         }
       });
     }
+
+    const label = await PluralStringProxyImpl.getInstance().getPluralString(
+        'listChanged', this.displayedList_.length);
+    getAnnouncerInstance().announce(label);
   }
 
   private onDisplayedListSourceChange_() {
@@ -243,7 +250,7 @@ export class BookmarksListElement extends BookmarksListElementBase {
       return;
     }
 
-    const leadId = toHighlight[0]!;
+    const leadId = toHighlight[0];
     this.dispatch(selectAll(toHighlight, this.getState(), leadId));
 
     // Allow iron-list time to render additions to the list.
@@ -285,7 +292,7 @@ export class BookmarksListElement extends BookmarksListElementBase {
       focusMoved = true;
     } else if (e.key === ' ' && cursorModifier) {
       this.dispatch(
-          selectItem(this.displayedIds_[focusedIndex]!, this.getState(), {
+          selectItem(this.displayedIds_[focusedIndex], this.getState(), {
             clear: false,
             range: false,
             toggle: true,
@@ -300,11 +307,11 @@ export class BookmarksListElement extends BookmarksListElementBase {
       list.focusItem(focusedIndex);
 
       if (cursorModifier && !e.shiftKey) {
-        this.dispatch(updateAnchor(this.displayedIds_[focusedIndex]!));
+        this.dispatch(updateAnchor(this.displayedIds_[focusedIndex]));
       } else {
         // If shift-selecting with no anchor, use the old focus index.
         if (e.shiftKey && this.getState().selection.anchor === null) {
-          this.dispatch(updateAnchor(this.displayedIds_[oldFocusedIndex]!));
+          this.dispatch(updateAnchor(this.displayedIds_[oldFocusedIndex]));
         }
 
         // If the focus moved from something other than a Ctrl + move event,
@@ -316,7 +323,7 @@ export class BookmarksListElement extends BookmarksListElementBase {
         };
 
         this.dispatch(selectItem(
-            this.displayedIds_[focusedIndex]!, this.getState(), config));
+            this.displayedIds_[focusedIndex], this.getState(), config));
       }
     }
 

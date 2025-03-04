@@ -11,6 +11,8 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -23,13 +25,13 @@ import android.widget.Button;
 
 import androidx.test.filters.MediumTest;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.supplier.ObservableSupplierImpl;
@@ -50,6 +52,7 @@ import org.chromium.ui.test.util.modaldialog.FakeModalDialogManager;
 // TODO(b/309163597): Add Robolectric tests to test the local editor behavior.
 @RunWith(ChromeJUnit4ClassRunner.class)
 public class AutofillLocalIbanEditorTest {
+    @Rule public MockitoRule mMockitoRule = MockitoJUnit.rule();
     @Rule public final AutofillTestRule rule = new AutofillTestRule();
 
     @Rule
@@ -76,7 +79,6 @@ public class AutofillLocalIbanEditorTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
         mAutofillTestHelper = new AutofillTestHelper();
     }
 
@@ -250,10 +252,10 @@ public class AutofillLocalIbanEditorTest {
                 autofillLocalIbanEditorFragment, fakeModalDialogManager);
 
         // Verify the dialog is open.
-        Assert.assertNotNull(fakeModalDialogManager.getShownDialogModel());
+        assertNotNull(fakeModalDialogManager.getShownDialogModel());
         ThreadUtils.runOnUiThreadBlocking(() -> fakeModalDialogManager.clickNegativeButton());
         // Verify the dialog is closed.
-        Assert.assertNull(fakeModalDialogManager.getShownDialogModel());
+        assertNull(fakeModalDialogManager.getShownDialogModel());
         // Verify the IBAN entry is not deleted.
         verify(mPersonalDataManagerMock, never()).deleteIban(guid);
     }
@@ -276,10 +278,10 @@ public class AutofillLocalIbanEditorTest {
                 autofillLocalIbanEditorFragment, fakeModalDialogManager);
 
         // Verify the dialog is open.
-        Assert.assertNotNull(fakeModalDialogManager.getShownDialogModel());
+        assertNotNull(fakeModalDialogManager.getShownDialogModel());
         ThreadUtils.runOnUiThreadBlocking(() -> fakeModalDialogManager.clickPositiveButton());
         // Verify the dialog is closed.
-        Assert.assertNull(fakeModalDialogManager.getShownDialogModel());
+        assertNull(fakeModalDialogManager.getShownDialogModel());
         // Verify the IBAN entry is deleted.
         verify(mPersonalDataManagerMock, times(1)).deleteIban(guid);
     }

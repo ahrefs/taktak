@@ -19,7 +19,7 @@
 #include "base/test/bind.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/test_future.h"
-#include "build/chromeos_buildflags.h"
+#include "build/build_config.h"
 #include "chrome/browser/apps/app_service/app_registry_cache_waiter.h"
 #include "chrome/browser/apps/app_service/app_service_proxy.h"
 #include "chrome/browser/apps/app_service/app_service_proxy_factory.h"
@@ -62,7 +62,7 @@
 #include "net/test/embedded_test_server/http_request.h"
 #include "net/test/embedded_test_server/http_response.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "ash/public/cpp/app_list/app_list_types.h"
 #include "chrome/browser/ash/app_list/app_list_model_updater.h"
 #include "chrome/browser/ash/app_list/app_list_syncable_service.h"
@@ -70,17 +70,6 @@
 #include "chrome/browser/ash/app_list/chrome_app_list_item.h"
 #include "chrome/browser/ui/ash/shelf/chrome_shelf_controller_util.h"
 #endif
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-#include "chrome/browser/web_applications/commands/web_app_command.h"
-#include "chrome/browser/web_applications/jobs/uninstall/web_app_uninstall_and_replace_job.h"
-#include "chrome/browser/web_applications/locks/app_lock.h"
-#include "chrome/browser/web_applications/web_app_command_scheduler.h"
-#include "chromeos/crosapi/mojom/app_service.mojom.h"
-#include "chromeos/crosapi/mojom/test_controller.mojom.h"
-#include "chromeos/crosapi/mojom/web_app_service.mojom.h"
-#include "chromeos/lacros/lacros_service.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 
 namespace {
 
@@ -144,12 +133,11 @@ class PreinstalledWebAppMigrationBrowserTest
   }
 
   void TearDownOnMainThread() override {
-    // We uninstall all web apps, as Ash is not restarted between Lacros tests.
     auto* const provider = WebAppProvider::GetForTest(profile());
     const WebAppRegistrar& registrar = provider->registrar_unsafe();
     std::vector<webapps::AppId> app_ids = registrar.GetAppIds();
     for (const auto& app_id : app_ids) {
-      if (!registrar.IsInstalled(app_id)) {
+      if (!registrar.IsInRegistrar(app_id)) {
         continue;
       }
       apps::AppReadinessWaiter(profile(), app_id).Await();
@@ -283,27 +271,18 @@ class PreinstalledWebAppMigrationBrowserTest
   }
 
   bool IsWebAppInstalled() {
-    return WebAppProvider::GetForTest(profile())
-        ->registrar_unsafe()
-        .IsInstallState(GetWebAppId(), {proto::INSTALLED_WITHOUT_OS_INTEGRATION,
-                                        proto::INSTALLED_WITH_OS_INTEGRATION});
+    std::optional<proto::InstallState> install_state =
+        WebAppProvider::GetForTest(profile())
+            ->registrar_unsafe()
+            .GetInstallState(GetWebAppId());
+
+    return install_state == proto::INSTALLED_WITHOUT_OS_INTEGRATION ||
+           install_state == proto::INSTALLED_WITH_OS_INTEGRATION;
   }
 
   bool IsExtensionAppInstalled() {
     return extensions::ExtensionRegistry::Get(profile())->GetExtensionById(
         kExtensionId, extensions::ExtensionRegistry::EVERYTHING);
-  }
-
-  bool IsUninstallSilentlySupported() {
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-    DCHECK(IsWebAppsCrosapiEnabled());
-    return chromeos::LacrosService::Get()
-               ->GetInterfaceVersion<crosapi::mojom::AppServiceProxy>() >=
-           int{crosapi::mojom::AppServiceProxy::MethodMinVersions::
-                   kUninstallSilentlyMinVersion};
-#else   // BUILDFLAG(IS_CHROMEOS_LACROS)
-    return true;
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
   }
 
  protected:
@@ -321,10 +300,7 @@ class PreinstalledWebAppMigrationBrowserTest
 
 IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
                        MigrateRevertMigrate) {
-  if (!IsUninstallSilentlySupported())
-    GTEST_SKIP() << "Unsupported Ash version.";
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // Grab handles to the app list to update shelf/list state for apps later on.
   app_list::AppListSyncableService* app_list_syncable_service =
       app_list::AppListSyncableServiceFactory::GetForProfile(profile());
@@ -344,15 +320,14 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
     EXPECT_FALSE(IsWebAppInstalled());
     EXPECT_TRUE(IsExtensionAppInstalled());
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     app_list_model_updater->SetItemPosition(
         kExtensionId, syncer::StringOrdinal("testapplistposition"));
     app_list_syncable_service->SetPinPosition(
-        kExtensionId, syncer::StringOrdinal("testpinposition"),
-        /*pinned_by_policy=*/false);
+        kExtensionId, syncer::StringOrdinal("testpinposition"));
     EXPECT_EQ(app_list_syncable_service->GetSyncItem(kExtensionId)->ToString(),
               "kbmnembi { Nothing } [testapplistposition] "
-              "[testpinposition(up=?)](INVALID COLOR)");
+              "[testpinposition](INVALID COLOR)");
 #endif
   }
 
@@ -386,18 +361,18 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
       histograms.ExpectUniqueSample(
           PreinstalledWebAppManager::kHistogramUninstallAndReplaceCount, 1, 1);
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
       // Chrome OS shelf/list position should migrate.
       EXPECT_EQ(
           app_list_syncable_service->GetSyncItem(GetWebAppId())->ToString(),
           base::StringPrintf("%s { Basic web app } [testapplistposition] "
-                             "[testpinposition(up=?)](INVALID COLOR)",
+                             "[testpinposition](INVALID COLOR)",
                              GetWebAppId().substr(0, 8).c_str()));
       // Old Chrome app prefs are retained.
       EXPECT_EQ(
           app_list_syncable_service->GetSyncItem(kExtensionId)->ToString(),
           "kbmnembi { Nothing } [testapplistposition] "
-          "[testpinposition(up=?)](INVALID COLOR)");
+          "[testpinposition](INVALID COLOR)");
 #endif
     }
   }
@@ -441,26 +416,23 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
     histograms.ExpectUniqueSample(
         PreinstalledWebAppManager::kHistogramUninstallAndReplaceCount, 1, 1);
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     // Chrome OS shelf/list position should re-migrate.
     EXPECT_EQ(app_list_syncable_service->GetSyncItem(GetWebAppId())->ToString(),
               base::StringPrintf("%s { Basic web app } [testapplistposition] "
-                                 "[testpinposition(up=?)](INVALID COLOR)",
+                                 "[testpinposition](INVALID COLOR)",
                                  GetWebAppId().substr(0, 8).c_str()));
     // Old Chrome app prefs are retained.
     EXPECT_EQ(app_list_syncable_service->GetSyncItem(kExtensionId)->ToString(),
               "kbmnembi { Nothing } [testapplistposition] "
-              "[testpinposition(up=?)](INVALID COLOR)");
+              "[testpinposition](INVALID COLOR)");
 #endif
   }
 }
 
 IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
                        MigratePreferences) {
-  if (!IsUninstallSilentlySupported())
-    GTEST_SKIP() << "Unsupported Ash version.";
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   app_list::AppListSyncableService* app_list_syncable_service =
       app_list::AppListSyncableServiceFactory::GetForProfile(profile());
   AppListModelUpdater* app_list_model_updater =
@@ -481,15 +453,14 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
     EXPECT_FALSE(IsWebAppInstalled());
     EXPECT_TRUE(IsExtensionAppInstalled());
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     app_list_model_updater->SetItemPosition(
         kExtensionId, syncer::StringOrdinal("testapplistposition"));
     app_list_syncable_service->SetPinPosition(
-        kExtensionId, syncer::StringOrdinal("testpinposition"),
-        /*pinned_by_policy=*/false);
+        kExtensionId, syncer::StringOrdinal("testpinposition"));
     EXPECT_EQ(app_list_syncable_service->GetSyncItem(kExtensionId)->ToString(),
               "kbmnembi { Nothing } [testapplistposition] "
-              "[testpinposition(up=?)](INVALID COLOR)");
+              "[testpinposition](INVALID COLOR)");
 #endif
 
     // Set chrome://apps position.
@@ -538,16 +509,16 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
   {
     const webapps::AppId web_app_id = GetWebAppId();
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     // Chrome OS shelf/list position should migrate.
     EXPECT_EQ(app_list_syncable_service->GetSyncItem(GetWebAppId())->ToString(),
               base::StringPrintf("%s { Basic web app } [testapplistposition] "
-                                 "[testpinposition(up=?)](INVALID COLOR)",
+                                 "[testpinposition](INVALID COLOR)",
                                  GetWebAppId().substr(0, 8).c_str()));
     // Chrome app shelf/list position should be retained.
     EXPECT_EQ(app_list_syncable_service->GetSyncItem(kExtensionId)->ToString(),
               "kbmnembi { Nothing } [testapplistposition] "
-              "[testpinposition(up=?)](INVALID COLOR)");
+              "[testpinposition](INVALID COLOR)");
 #endif
 
     // chrome://apps position should migrate.
@@ -583,9 +554,6 @@ class PreinstalledWebAppMigratePlatformAppBrowserTest
 
 IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigratePlatformAppBrowserTest,
                        MigratePlatformAppPreferences) {
-  if (!IsUninstallSilentlySupported())
-    GTEST_SKIP() << "Unsupported Ash version.";
-
   // Install platform app to migrate.
   {
     apps::AppReadinessWaiter extension_app_registration_waiter(profile(),
@@ -658,8 +626,6 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
   }
 }
 
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
-// TODO(crbug.com/40204047): Make this work under Lacros.
 // Check histogram counts when an app to replace gets installed after the
 // preinstalled web app is installed.
 IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
@@ -709,7 +675,7 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
         0, 1);
   }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // Pin both apps to the shelf.
   PinAppWithIDToShelf(GetWebAppId());
   PinAppWithIDToShelf(kExtensionId);
@@ -725,17 +691,13 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
             kHistogramAppToReplaceStillInstalledInShelfCount,
         1, 1);
   }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_LACROS)
 
 // Tests the migration from an extension-app to a preinstalled web app provided
 // by the preinstalled apps (rather than an external config).
 IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
                        MigrateToPreinstalledWebApp) {
-  if (!IsUninstallSilentlySupported())
-    GTEST_SKIP() << "Unsupported Ash version.";
-
   ScopedTestingPreinstalledAppData preinstalled_apps;
   ExternalInstallOptions options(GetWebAppUrl(),
                                  mojom::UserDisplayMode::kBrowser,
@@ -815,124 +777,5 @@ IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
     }
   }
 }
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-class TestUninstallAndReplaceJobCommand
-    : public WebAppCommand<AppLock, bool /*uninstall_triggered*/> {
- public:
-  TestUninstallAndReplaceJobCommand(
-      Profile* profile,
-      const std::vector<webapps::AppId>& from_apps,
-      const webapps::AppId& to_app,
-      base::OnceCallback<void(bool uninstall_triggered)> on_complete)
-      : WebAppCommand<AppLock, bool>("TestUninstallAndReplaceJobCommand",
-                                     AppLockDescription(to_app),
-                                     std::move(on_complete),
-                                     /*args_for_shutdown=*/false),
-        profile_(profile),
-        from_apps_(from_apps),
-        to_app_(to_app) {}
-
-  ~TestUninstallAndReplaceJobCommand() override = default;
-
-  void StartWithLock(std::unique_ptr<AppLock> lock) override {
-    lock_ = std::move(lock);
-    uninstall_and_replace_job_.emplace(
-        profile_, GetMutableDebugValue(), *lock_, from_apps_, to_app_,
-        base::BindOnce(&TestUninstallAndReplaceJobCommand::OnComplete,
-                       base::Unretained(this)));
-    uninstall_and_replace_job_->Start();
-  }
-
-  void OnComplete(bool uninstall_triggered) {
-    CompleteAndSelfDestruct(CommandResult::kSuccess, uninstall_triggered);
-  }
-
- private:
-  raw_ptr<Profile> profile_ = nullptr;
-  std::unique_ptr<AppLock> lock_;
-
-  const std::vector<webapps::AppId> from_apps_;
-  const webapps::AppId to_app_;
-
-  std::optional<WebAppUninstallAndReplaceJob> uninstall_and_replace_job_;
-};
-
-IN_PROC_BROWSER_TEST_F(PreinstalledWebAppMigrationBrowserTest,
-                       TransferAppAttributes) {
-  // If ash does not contain the relevant test controller functionality, then
-  // there's nothing to do for this test.
-  auto* lacros_service = chromeos::LacrosService::Get();
-  if (lacros_service->GetInterfaceVersion<crosapi::mojom::TestController>() <
-      static_cast<int>(crosapi::mojom::TestController::MethodMinVersions::
-                           kSetAppListItemAttributesMinVersion)) {
-    LOG(WARNING) << "Unsupported ash version.";
-    return;
-  }
-
-  auto& test_controller =
-      lacros_service->GetRemote<crosapi::mojom::TestController>();
-
-  webapps::AppId old_app_id;
-  {
-    auto info = WebAppInstallInfo::CreateWithStartUrlForTesting(
-        embedded_test_server()->GetURL("/webapps/migration/old/"));
-    info->scope = info->start_url();
-    info->title = u"Old app";
-    old_app_id = web_app::test::InstallWebApp(profile(), std::move(info));
-    apps::AppReadinessWaiter(profile(), old_app_id).Await();
-
-    auto attributes = crosapi::mojom::AppListItemAttributes::New();
-    attributes->item_position = "testapplistposition";
-    attributes->pin_position = "testpinposition";
-
-    base::test::TestFuture<void> future;
-    test_controller->SetAppListItemAttributes(old_app_id, std::move(attributes),
-                                              future.GetCallback());
-    ASSERT_TRUE(future.Wait());
-  }
-
-  webapps::AppId new_app_id;
-  {
-    auto info = WebAppInstallInfo::CreateWithStartUrlForTesting(
-        embedded_test_server()->GetURL("/webapps/migration/new/"));
-    info->scope = info->start_url();
-    info->title = u"New app";
-
-    WebAppInstallParams install_params;
-    base::test::TestFuture<const webapps::AppId&, webapps::InstallResultCode>
-        future;
-    WebAppProvider::GetForTest(profile())
-        ->scheduler()
-        .InstallFromInfoWithParams(
-            std::move(info),
-            /*overwrite_existing_manifest_fields=*/false,
-            webapps::WebappInstallSource::OMNIBOX_INSTALL_ICON,
-            future.GetCallback(), install_params);
-
-    EXPECT_EQ(future.Get<webapps::InstallResultCode>(),
-              webapps::InstallResultCode::kSuccessNewInstall);
-    new_app_id = future.Get<webapps::AppId>();
-    apps::AppReadinessWaiter(profile(), new_app_id).Await();
-  }
-  {
-    base::test::TestFuture<bool> future;
-    WebAppProvider::GetForTest(profile())->command_manager().ScheduleCommand(
-        std::make_unique<TestUninstallAndReplaceJobCommand>(
-            profile(), std::vector<webapps::AppId>{old_app_id}, new_app_id,
-            future.GetCallback()));
-    ASSERT_TRUE(future.Wait());
-    EXPECT_TRUE(future.Get<bool /*did_uninstall_and_replace*/>());
-  }
-
-  base::test::TestFuture<crosapi::mojom::AppListItemAttributesPtr>
-      attributes_future;
-  test_controller->GetAppListItemAttributes(new_app_id,
-                                            attributes_future.GetCallback());
-  auto attributes = attributes_future.Take();
-  EXPECT_EQ(attributes->item_position, "testapplistposition");
-  EXPECT_EQ(attributes->pin_position, "testpinposition");
-}
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 
 }  // namespace web_app

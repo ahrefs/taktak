@@ -17,7 +17,6 @@
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/scoped_feature_list.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/external_protocol/external_protocol_handler.h"
 #include "chrome/browser/interstitials/security_interstitial_page_test_utils.h"
@@ -82,6 +81,8 @@
 #include "base/win/scoped_bstr.h"
 #include "base/win/scoped_safearray.h"
 #include "chrome/browser/ui/views/accessibility/uia_accessibility_event_waiter.h"
+#include "content/public/browser/browser_accessibility_state.h"
+#include "content/public/browser/scoped_accessibility_mode.h"
 #include "ui/display/win/screen_win.h"
 #include "ui/views/win/hwnd_util.h"
 #endif
@@ -120,8 +121,9 @@ class OmniboxViewViewsTest : public InProcessBrowserTest {
   // Move the mouse to the center of the browser window and left-click.
   void ClickBrowserWindowCenter() {
     ASSERT_TRUE(ui_test_utils::SendMouseMoveSync(
-        BrowserView::GetBrowserViewForBrowser(
-            browser())->GetBoundsInScreen().CenterPoint()));
+        BrowserView::GetBrowserViewForBrowser(browser())
+            ->GetBoundsInScreen()
+            .CenterPoint()));
     ASSERT_TRUE(ui_test_utils::SendMouseEventsSync(ui_controls::LEFT,
                                                    ui_controls::DOWN));
     ASSERT_TRUE(
@@ -137,8 +139,9 @@ class OmniboxViewViewsTest : public InProcessBrowserTest {
     ASSERT_TRUE(ui_test_utils::SendMouseMoveSync(press_location));
     ASSERT_TRUE(ui_test_utils::SendMouseEventsSync(button, ui_controls::DOWN));
 
-    if (press_location != release_location)
+    if (press_location != release_location) {
       ASSERT_TRUE(ui_test_utils::SendMouseMoveSync(release_location));
+    }
     ASSERT_TRUE(ui_test_utils::SendMouseEventsSync(button, ui_controls::UP));
   }
 
@@ -264,11 +267,13 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, DISABLED_SelectAllOnClick) {
   EXPECT_FALSE(omnibox_view->IsSelectAll());
 
   // Clicking in the omnibox should take focus and select all text.
-  const gfx::Rect omnibox_bounds = BrowserView::GetBrowserViewForBrowser(
-        browser())->GetViewByID(VIEW_ID_OMNIBOX)->GetBoundsInScreen();
+  const gfx::Rect omnibox_bounds =
+      BrowserView::GetBrowserViewForBrowser(browser())
+          ->GetViewByID(VIEW_ID_OMNIBOX)
+          ->GetBoundsInScreen();
   const gfx::Point click_location = omnibox_bounds.CenterPoint();
-  ASSERT_NO_FATAL_FAILURE(Click(ui_controls::LEFT,
-                                click_location, click_location));
+  ASSERT_NO_FATAL_FAILURE(
+      Click(ui_controls::LEFT, click_location, click_location));
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
   EXPECT_TRUE(omnibox_view->IsSelectAll());
 
@@ -278,36 +283,35 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, DISABLED_SelectAllOnClick) {
   EXPECT_FALSE(omnibox_view->IsSelectAll());
 
   // Clicking in the omnibox again should take focus and select all text again.
-  ASSERT_NO_FATAL_FAILURE(Click(ui_controls::LEFT,
-                                click_location, click_location));
+  ASSERT_NO_FATAL_FAILURE(
+      Click(ui_controls::LEFT, click_location, click_location));
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
   EXPECT_TRUE(omnibox_view->IsSelectAll());
 
   // Clicking another omnibox spot should keep focus but clear the selection.
   omnibox_view->SelectAll(false);
-  const gfx::Point click2_location = omnibox_bounds.origin() +
+  const gfx::Point click2_location =
+      omnibox_bounds.origin() +
       gfx::Vector2d(omnibox_bounds.width() / 4, omnibox_bounds.height() / 4);
-  ASSERT_NO_FATAL_FAILURE(Click(ui_controls::LEFT,
-                                click2_location, click2_location));
+  ASSERT_NO_FATAL_FAILURE(
+      Click(ui_controls::LEFT, click2_location, click2_location));
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
   EXPECT_FALSE(omnibox_view->IsSelectAll());
 
   // Take the focus away and click in the omnibox again, but drag a bit before
   // releasing.  We should focus the omnibox but not select all of its text.
   ASSERT_NO_FATAL_FAILURE(ClickBrowserWindowCenter());
-  ASSERT_NO_FATAL_FAILURE(Click(ui_controls::LEFT,
-                                click_location, click2_location));
+  ASSERT_NO_FATAL_FAILURE(
+      Click(ui_controls::LEFT, click_location, click2_location));
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
   EXPECT_FALSE(omnibox_view->IsSelectAll());
 
   // Middle-click is only handled on Linux, by pasting the selection clipboard
   // and moving the cursor after the pasted text instead of selecting-all.
   ASSERT_NO_FATAL_FAILURE(ClickBrowserWindowCenter());
-  ASSERT_NO_FATAL_FAILURE(Click(ui_controls::MIDDLE,
-                                click_location, click_location));
-// TODO(crbug.com/40118868): Revisit the macro expression once build flag switch
-// of lacros-chrome is complete.
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)
+  ASSERT_NO_FATAL_FAILURE(
+      Click(ui_controls::MIDDLE, click_location, click_location));
+#if BUILDFLAG(IS_LINUX)
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
 #else
   EXPECT_FALSE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
@@ -332,8 +336,11 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, DISABLED_SelectionClipboard) {
   EXPECT_FALSE(omnibox_view->IsSelectAll());
 
   size_t cursor_position = 14;
-  int cursor_x = render_text->GetCursorBounds(
-      gfx::SelectionModel(cursor_position, gfx::CURSOR_FORWARD), false).x();
+  int cursor_x =
+      render_text
+          ->GetCursorBounds(
+              gfx::SelectionModel(cursor_position, gfx::CURSOR_FORWARD), false)
+          .x();
   gfx::Point click_location = omnibox_view_views->GetBoundsInScreen().origin();
   click_location.Offset(cursor_x + render_text->display_rect().x(),
                         omnibox_view_views->height() / 2);
@@ -341,8 +348,8 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, DISABLED_SelectionClipboard) {
   // Middle click focuses the omnibox, pastes, and sets a trailing cursor.
   // Select-all on focus shouldn't alter the selection clipboard or cursor.
   SetClipboardText(ui::ClipboardBuffer::kSelection, u"123");
-  ASSERT_NO_FATAL_FAILURE(Click(ui_controls::MIDDLE,
-                                click_location, click_location));
+  ASSERT_NO_FATAL_FAILURE(
+      Click(ui_controls::MIDDLE, click_location, click_location));
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
   EXPECT_FALSE(omnibox_view->IsSelectAll());
   EXPECT_EQ(u"http://www.goo123gle.com/", omnibox_view->GetText());
@@ -354,8 +361,8 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, DISABLED_SelectionClipboard) {
 
   // Middle clicking again, with focus, pastes and updates the cursor.
   SetClipboardText(ui::ClipboardBuffer::kSelection, u"4567");
-  ASSERT_NO_FATAL_FAILURE(Click(ui_controls::MIDDLE,
-                                click_location, click_location));
+  ASSERT_NO_FATAL_FAILURE(
+      Click(ui_controls::MIDDLE, click_location, click_location));
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
   EXPECT_FALSE(omnibox_view->IsSelectAll());
   EXPECT_EQ(u"http://www.goo4567123gle.com/", omnibox_view->GetText());
@@ -377,8 +384,10 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, SelectAllOnTap) {
   EXPECT_FALSE(omnibox_view->IsSelectAll());
 
   // Tapping in the omnibox should take focus and select all text.
-  const gfx::Rect omnibox_bounds = BrowserView::GetBrowserViewForBrowser(
-      browser())->GetViewByID(VIEW_ID_OMNIBOX)->GetBoundsInScreen();
+  const gfx::Rect omnibox_bounds =
+      BrowserView::GetBrowserViewForBrowser(browser())
+          ->GetViewByID(VIEW_ID_OMNIBOX)
+          ->GetBoundsInScreen();
   const gfx::Point tap_location = omnibox_bounds.CenterPoint();
   ASSERT_NO_FATAL_FAILURE(Tap(tap_location, tap_location));
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
@@ -397,7 +406,8 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, SelectAllOnTap) {
 
   // Tapping another omnibox spot should keep focus and selection.
   omnibox_view->SelectAll(false);
-  const gfx::Point tap2_location = omnibox_bounds.origin() +
+  const gfx::Point tap2_location =
+      omnibox_bounds.origin() +
       gfx::Vector2d(omnibox_bounds.width() / 4, omnibox_bounds.height() / 4);
   ASSERT_NO_FATAL_FAILURE(Tap(tap2_location, tap2_location));
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
@@ -451,11 +461,50 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, SelectAllOnTabToFocus) {
 
   // Pressing tab to focus the omnibox should select all text.
   while (!ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX)) {
-    ASSERT_TRUE(ui_test_utils::SendKeyPressSync(browser(), ui::VKEY_TAB,
-                                                false, false, false, false));
+    ASSERT_TRUE(ui_test_utils::SendKeyPressSync(browser(), ui::VKEY_TAB, false,
+                                                false, false, false));
   }
   EXPECT_TRUE(ui_test_utils::IsViewFocused(browser(), VIEW_ID_OMNIBOX));
   EXPECT_TRUE(omnibox_view->IsSelectAll());
+}
+
+IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, AccessibleTextSelection) {
+  OmniboxView* omnibox_view = nullptr;
+  ASSERT_NO_FATAL_FAILURE(GetOmniboxViewForBrowser(browser(), &omnibox_view));
+  OmniboxViewViews* omnibox_view_views =
+      static_cast<OmniboxViewViews*>(omnibox_view);
+
+  // Navigate to a URL.
+  std::u16string url = u"google.com";
+  omnibox_view->SetUserText(url);
+  ui::AXNodeData data;
+  omnibox_view_views->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(static_cast<int>(url.size()),
+            data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelStart));
+  EXPECT_EQ(static_cast<int>(url.size()),
+            data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelEnd));
+
+  // Move the cursor to the end of the address bar.
+  ASSERT_TRUE(ui_test_utils::SendKeyPressSync(browser(), ui::VKEY_END, false,
+                                              false, false, false));
+  data = ui::AXNodeData();
+  omnibox_view_views->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(static_cast<int>(url.size()),
+            data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelStart));
+  EXPECT_EQ(static_cast<int>(url.size()),
+            data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelEnd));
+
+  // Press the left arrow key multiple times and log the focused character.
+  for (size_t i = 0; i < url.size(); ++i) {
+    ASSERT_TRUE(ui_test_utils::SendKeyPressSync(browser(), ui::VKEY_LEFT, false,
+                                                false, false, false));
+    data = ui::AXNodeData();
+    omnibox_view_views->GetViewAccessibility().GetAccessibleNodeData(&data);
+    EXPECT_EQ(static_cast<int>(url.size() - i - 1),
+              data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelStart));
+    EXPECT_EQ(static_cast<int>(url.size() - i - 1),
+              data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelEnd));
+  }
 }
 
 IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, CloseOmniboxPopupOnTextDrag) {
@@ -472,8 +521,7 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, CloseOmniboxPopupOnTextDrag) {
   AutocompleteMatch match(nullptr, 500, false,
                           AutocompleteMatchType::HISTORY_TITLE);
   match.contents = u"http://autocomplete-result/";
-  match.contents_class.push_back(
-      ACMatchClassification(0, ACMatchClassification::URL));
+  match.contents_class.emplace_back(0, ACMatchClassification::URL);
   match.destination_url = GURL("http://autocomplete-result/");
   match.allowed_to_be_default_match = true;
   matches.push_back(match);
@@ -519,8 +567,7 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, MaintainCursorAfterFocusCycle) {
   AutocompleteMatch match(nullptr, 500, false,
                           AutocompleteMatchType::HISTORY_TITLE);
   match.contents = u"http://autocomplete-result/";
-  match.contents_class.push_back(
-      ACMatchClassification(0, ACMatchClassification::URL));
+  match.contents_class.emplace_back(0, ACMatchClassification::URL);
   match.destination_url = GURL("http://autocomplete-result/");
   match.allowed_to_be_default_match = true;
   matches.push_back(match);
@@ -563,8 +610,10 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, MaintainCursorAfterFocusCycle) {
 IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, BackgroundIsOpaque) {
   // The omnibox text should be rendered on an opaque background. Otherwise, we
   // can't use subpixel rendering.
-  OmniboxViewViews* view = BrowserView::GetBrowserViewForBrowser(browser())->
-      toolbar()->location_bar()->omnibox_view();
+  OmniboxViewViews* view = BrowserView::GetBrowserViewForBrowser(browser())
+                               ->toolbar()
+                               ->location_bar()
+                               ->omnibox_view();
   ASSERT_TRUE(view);
   EXPECT_FALSE(view->GetRenderText()->subpixel_rendering_suppressed());
 }
@@ -614,8 +663,7 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, FriendlyAccessibleLabel) {
   AutocompleteMatch match(nullptr, 500, false,
                           AutocompleteMatchType::HISTORY_TITLE);
   match.contents = match_url;
-  match.contents_class.push_back(
-      ACMatchClassification(0, ACMatchClassification::URL));
+  match.contents_class.emplace_back(0, ACMatchClassification::URL);
   match.destination_url = GURL(match_url);
   match.description = u"Google";
   match.description_class = {{0, 0}};
@@ -706,8 +754,7 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, AccessiblePopup) {
   AutocompleteMatch match(nullptr, 500, false,
                           AutocompleteMatchType::HISTORY_TITLE);
   match.contents = match_url;
-  match.contents_class.push_back(
-      ACMatchClassification(0, ACMatchClassification::URL));
+  match.contents_class.emplace_back(0, ACMatchClassification::URL);
   match.destination_url = GURL(match_url);
   match.description = u"Google";
   match.allowed_to_be_default_match = true;
@@ -816,7 +863,7 @@ using Microsoft::WRL::ComPtr;
 
 class OmniboxViewViewsUIATest : public OmniboxViewViewsTest {
  public:
-  OmniboxViewViewsUIATest() {}
+  OmniboxViewViewsUIATest() = default;
 
   void ExpectUIADoubleSafearrayEQ(
       SAFEARRAY* safearray,
@@ -840,8 +887,21 @@ class OmniboxViewViewsUIATest : public OmniboxViewViewsTest {
     ASSERT_HRESULT_SUCCEEDED(::SafeArrayUnaccessData(safearray));
   }
 
+  // Enables accessibility for the test, while this is not necessary to set or
+  // retrieve most accessible attributes (most are cached no matter what), it is
+  // necessary to enable the behavior that is enabled by
+  // view::OnAccessibilityInitializing(). See more info for that in the View
+  // header file.
+  void EnableDeferredLoadingAccessibility() {
+    scoped_accessibility_mode_ =
+        content::BrowserAccessibilityState::GetInstance()
+            ->CreateScopedModeForProcess(ui::AXMode::kNativeAPIs);
+  }
+
  private:
   base::test::ScopedFeatureList scoped_feature_list_{::features::kUiaProvider};
+
+  std::unique_ptr<content::ScopedAccessibilityMode> scoped_accessibility_mode_;
 };
 
 // Omnibox fires the right events when the popup opens/closes with UIA turned
@@ -899,6 +959,7 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsUIATest, AccessibleOmnibox) {
 }
 
 IN_PROC_BROWSER_TEST_F(OmniboxViewViewsUIATest, GetSelectionAndBounds) {
+  EnableDeferredLoadingAccessibility();
   OmniboxView* omnibox_view = nullptr;
   ASSERT_NO_FATAL_FAILURE(GetOmniboxViewForBrowser(browser(), &omnibox_view));
   OmniboxViewViews* omnibox_view_views =
@@ -1061,9 +1122,7 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsIMETest, TextInputTypeInitRespectsIME) {
 // Looks like the same problem as in the SelectAllOnClick().
 // Tracked in: https://crbug.com/915591
 // Test is also flaky on Linux: https://crbug.com/1157250
-// Click goes to the popup widget, but doesn't sets focus to the popup view if
-// it's a separate accelerated widget on Lacros: https://crbug.com/329271186
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)
+#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
 #define MAYBE_HandleExternalProtocolURLs DISABLED_HandleExternalProtocolURLs
 #else
 #define MAYBE_HandleExternalProtocolURLs HandleExternalProtocolURLs
@@ -1086,8 +1145,9 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, MAYBE_HandleExternalProtocolURLs) {
 
     // Set omnibox text and wait for autocomplete.
     omnibox_view->SetUserText(fake_url);
-    if (!controller->done())
+    if (!controller->done()) {
       ui_test_utils::WaitForAutocompleteDone(browser());
+    }
     ASSERT_TRUE(controller->done());
     ASSERT_TRUE(omnibox_view->model()->PopupIsOpen());
 
@@ -1147,8 +1207,7 @@ IN_PROC_BROWSER_TEST_F(OmniboxViewViewsTest, MAYBE_HandleExternalProtocolURLs) {
 }
 
 // SendKeyPressSync times out on Mac, probably due to https://crbug.com/824418.
-// TODO(crbug.com/332299695): Also fails on lacros.
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_CHROMEOS_LACROS)
+#if BUILDFLAG(IS_MAC)
 #define MAYBE_DefaultTypedNavigationsToHttps_ZeroSuggest_NoUpgrade \
   DISABLED_DefaultTypedNavigationsToHttps_ZeroSuggest_NoUpgrade
 #else

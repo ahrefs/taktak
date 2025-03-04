@@ -12,8 +12,11 @@
 #include "content/public/browser/render_frame_host.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/receiver_set.h"
-#include "third_party/blink/public/mojom/ai/ai_assistant.mojom-forward.h"
+#include "mojo/public/cpp/bindings/remote_set.h"
+#include "third_party/blink/public/mojom/ai/ai_language_model.mojom-forward.h"
+#include "third_party/blink/public/mojom/ai/ai_language_model.mojom.h"
 #include "third_party/blink/public/mojom/ai/ai_manager.mojom.h"
+#include "third_party/blink/public/mojom/ai/model_download_progress_observer.mojom.h"
 
 namespace content {
 
@@ -22,16 +25,16 @@ namespace content {
 // will be set using the default value.
 class EchoAIManagerImpl : public blink::mojom::AIManager {
  public:
-  using ReceiverContext =
-      std::variant<RenderFrameHost*, base::SupportsUserData*>;
+  // The context size for EchoAIManagerImpl is intentionally set to a small
+  // value so we can easily simulate the context overflow scenario.
+  static constexpr int kMaxContextSizeInTokens = 1000;
 
   EchoAIManagerImpl(const EchoAIManagerImpl&) = delete;
   EchoAIManagerImpl& operator=(const EchoAIManagerImpl&) = delete;
 
   ~EchoAIManagerImpl() override;
 
-  static void Create(ReceiverContext context,
-                     mojo::PendingReceiver<blink::mojom::AIManager> receiver);
+  static void Create(mojo::PendingReceiver<blink::mojom::AIManager> receiver);
 
  private:
   friend base::NoDestructor<EchoAIManagerImpl>;
@@ -39,27 +42,52 @@ class EchoAIManagerImpl : public blink::mojom::AIManager {
   EchoAIManagerImpl();
 
   // `blink::mojom::AIManager` implementation.
-  void CanCreateAssistant(CanCreateAssistantCallback callback) override;
-
-  void CreateAssistant(
-      mojo::PendingRemote<blink::mojom::AIManagerCreateAssistantClient> client,
-      blink::mojom::AIAssistantCreateOptionsPtr options) override;
-
-  void CanCreateSummarizer(CanCreateSummarizerCallback callback) override;
-
+  void CanCreateLanguageModel(
+      std::optional<std::vector<blink::mojom::AILanguageCodePtr>>
+          expected_input_languages,
+      CanCreateLanguageModelCallback callback) override;
+  void CreateLanguageModel(
+      mojo::PendingRemote<blink::mojom::AIManagerCreateLanguageModelClient>
+          client,
+      blink::mojom::AILanguageModelCreateOptionsPtr options) override;
+  void CanCreateSummarizer(blink::mojom::AISummarizerCreateOptionsPtr options,
+                           CanCreateSummarizerCallback callback) override;
   void CreateSummarizer(
       mojo::PendingRemote<blink::mojom::AIManagerCreateSummarizerClient> client,
       blink::mojom::AISummarizerCreateOptionsPtr options) override;
-
-  void GetModelInfo(GetModelInfoCallback callback) override;
+  void GetLanguageModelParams(GetLanguageModelParamsCallback callback) override;
+  void CanCreateWriter(blink::mojom::AIWriterCreateOptionsPtr options,
+                       CanCreateWriterCallback callback) override;
   void CreateWriter(
       mojo::PendingRemote<blink::mojom::AIManagerCreateWriterClient> client,
       blink::mojom::AIWriterCreateOptionsPtr options) override;
+  void CanCreateRewriter(blink::mojom::AIRewriterCreateOptionsPtr options,
+                         CanCreateRewriterCallback callback) override;
   void CreateRewriter(
       mojo::PendingRemote<blink::mojom::AIManagerCreateRewriterClient> client,
       blink::mojom::AIRewriterCreateOptionsPtr options) override;
+  void AddModelDownloadProgressObserver(
+      mojo::PendingRemote<blink::mojom::ModelDownloadProgressObserver>
+          observer_remote) override;
 
-  mojo::ReceiverSet<blink::mojom::AIManager, ReceiverContext> receivers_;
+  void ReturnAILanguageModelCreationResult(
+      mojo::Remote<blink::mojom::AIManagerCreateLanguageModelClient>
+          client_remote,
+      blink::mojom::AILanguageModelSamplingParamsPtr sampling_params);
+  void ReturnAISummarizerCreationResult(
+      mojo::Remote<blink::mojom::AIManagerCreateSummarizerClient>
+          client_remote);
+
+  void DoMockDownloadingAndReturn(base::OnceClosure callback);
+
+  bool summarizer_downloaded_ = false;
+
+  mojo::RemoteSet<blink::mojom::ModelDownloadProgressObserver>
+      download_progress_observers_;
+
+  mojo::ReceiverSet<blink::mojom::AIManager> receivers_;
+
+  base::WeakPtrFactory<EchoAIManagerImpl> weak_ptr_factory_{this};
 };
 
 }  // namespace content

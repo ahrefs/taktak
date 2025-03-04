@@ -19,7 +19,6 @@
 class KeywordWebDataService;
 class PrefService;
 class TemplateURL;
-class WDTypedResult;
 
 // Returns the short name of the default search engine, or the empty string if
 // none is set.
@@ -175,10 +174,11 @@ void SetDefaultSearchProviderGuidToPrefs(PrefService& prefs,
 // GUIDs added to it. `default_search_provider` will be used to prevent removing
 // the current user-selected DSE, regardless of changes in prepopulate data.
 void GetSearchProvidersUsingKeywordResult(
-    const WDTypedResult& result,
+    const WDKeywordsResult& result,
     KeywordWebDataService* service,
     PrefService* prefs,
     search_engines::SearchEngineChoiceService* search_engine_choice_service,
+    const TemplateURLPrepopulateData::Resolver& template_url_data_resolver,
     TemplateURLService::OwnedTemplateURLVector* template_urls,
     TemplateURL* default_search_provider,
     const SearchTermsData& search_terms_data,
@@ -195,6 +195,7 @@ void GetSearchProvidersUsingLoadedEngines(
     KeywordWebDataService* service,
     PrefService* prefs,
     search_engines::SearchEngineChoiceService* search_engine_choice_service,
+    const TemplateURLPrepopulateData::Resolver& template_url_data_resolver,
     TemplateURLService::OwnedTemplateURLVector* template_urls,
     TemplateURL* default_search_provider,
     const SearchTermsData& search_terms_data,

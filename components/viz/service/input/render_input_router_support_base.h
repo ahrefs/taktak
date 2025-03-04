@@ -8,6 +8,7 @@
 #include "base/observer_list.h"
 #include "components/input/render_widget_host_view_input.h"
 #include "components/viz/common/hit_test/hit_test_data_provider.h"
+#include "components/viz/common/quads/compositor_frame_metadata.h"
 #include "components/viz/service/viz_service_export.h"
 
 namespace viz {
@@ -23,7 +24,18 @@ class VIZ_SERVICE_EXPORT RenderInputRouterSupportBase
 
   class Delegate {
    public:
+    virtual const DisplayHitTestQueryMap& GetDisplayHitTestQuery() const = 0;
     virtual float GetDeviceScaleFactorForId(
+        const FrameSinkId& frame_sink_id) = 0;
+    virtual FrameSinkId GetRootCompositorFrameSinkId(
+        const FrameSinkId& child_frame_sink_id) = 0;
+    // The following Get(Parent/Root)RenderInputRouterSupport methods should be
+    // called only from RenderInputRouterSupportChildFrame.
+    virtual RenderInputRouterSupportBase* GetParentRenderInputRouterSupport(
+        const FrameSinkId& frame_sink_id) = 0;
+    virtual RenderInputRouterSupportBase* GetRootRenderInputRouterSupport(
+        const FrameSinkId& frame_sink_id) = 0;
+    virtual const CompositorFrameMetadata* GetLastActivatedFrameMetadata(
         const FrameSinkId& frame_sink_id) = 0;
   };
 
@@ -43,10 +55,16 @@ class VIZ_SERVICE_EXPORT RenderInputRouterSupportBase
   void ProcessGestureEvent(const blink::WebGestureEvent& event,
                            const ui::LatencyInfo& latency) override;
   RenderInputRouterSupportBase* GetRootView() override;
+  const LocalSurfaceId& GetLocalSurfaceId() const override;
   const FrameSinkId& GetFrameSinkId() const override;
+  gfx::Size GetVisibleViewportSize() override;
   void OnAutoscrollStart() override;
+  void UpdateCursor(const ui::Cursor& cursor) override {}
+  const DisplayHitTestQueryMap& GetDisplayHitTestQuery() const override;
   float GetDeviceScaleFactor() const final;
   bool IsPointerLocked() override;
+
+  Delegate* delegate() { return delegate_; }
 
  protected:
   explicit RenderInputRouterSupportBase(input::RenderInputRouter* rir,

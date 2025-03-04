@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "base/callback_list.h"
@@ -285,7 +286,7 @@ class EditableCombobox::EditableComboboxMenuModel final
   // The strategy used to customize the display of the dropdown menu.
   std::unique_ptr<MenuDecorationStrategy> decoration_strategy_;
 
-  raw_ptr<EditableCombobox> owner_;            // Weak. Owns |this|.
+  raw_ptr<EditableCombobox> owner_;  // Weak. Owns |this|.
   std::unique_ptr<ui::ComboboxModel> combobox_model_;
 
   // Whether to adapt the items shown to the textfield content.
@@ -386,6 +387,8 @@ EditableCombobox::EditableCombobox(
       gfx::Insets::TLBR(kEditableComboboxControlsContainerInsets, 0,
                         kEditableComboboxControlsContainerInsets,
                         kEditableComboboxControlsContainerInsets));
+  control_elements_container_->SetBetweenChildSpacing(
+      kComboboxArrowPaddingWidth);
   if (display_arrow) {
     arrow_ = AddControlElement(std::make_unique<Arrow>(base::BindRepeating(
         &EditableCombobox::ArrowButtonPressed, base::Unretained(this))));
@@ -411,11 +414,11 @@ void EditableCombobox::SetModel(std::unique_ptr<ui::ComboboxModel> model) {
       this, std::move(model), filter_on_edit_, show_on_empty_);
 }
 
-const std::u16string& EditableCombobox::GetText() const {
+std::u16string_view EditableCombobox::GetText() const {
   return textfield_->GetText();
 }
 
-void EditableCombobox::SetText(const std::u16string& text) {
+void EditableCombobox::SetText(std::u16string_view text) {
   textfield_->SetText(text);
   // SetText does not actually notify the TextfieldController, so we call the
   // handling code directly.
@@ -426,11 +429,11 @@ void EditableCombobox::SetInvalid(bool invalid) {
   textfield_->SetInvalid(invalid);
 }
 
-const std::u16string& EditableCombobox::GetPlaceholderText() const {
+std::u16string_view EditableCombobox::GetPlaceholderText() const {
   return textfield_->GetPlaceholderText();
 }
 
-void EditableCombobox::SetPlaceholderText(const std::u16string& text) {
+void EditableCombobox::SetPlaceholderText(std::u16string_view text) {
   textfield_->SetPlaceholderText(text);
 }
 
@@ -548,8 +551,8 @@ void EditableCombobox::OnItemSelected(size_t index) {
   HandleNewContent(selected_item_text);
 }
 
-void EditableCombobox::HandleNewContent(const std::u16string& new_content) {
-  DCHECK(GetText() == new_content);
+void EditableCombobox::HandleNewContent(std::u16string_view new_content) {
+  DCHECK_EQ(GetText(), new_content);
   // We notify |callback_| before updating |menu_model_|'s items shown. This
   // gives the user a chance to modify the ComboboxModel beforehand if they wish
   // to do so.
@@ -645,8 +648,8 @@ const ui::ComboboxModel* EditableCombobox::GetComboboxModel() const {
 }
 
 BEGIN_METADATA(EditableCombobox)
-ADD_PROPERTY_METADATA(std::u16string, Text)
-ADD_PROPERTY_METADATA(std::u16string, PlaceholderText)
+ADD_PROPERTY_METADATA(std::u16string_view, Text)
+ADD_PROPERTY_METADATA(std::u16string_view, PlaceholderText)
 END_METADATA
 
 }  // namespace views

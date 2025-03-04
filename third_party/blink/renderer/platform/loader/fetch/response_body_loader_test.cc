@@ -7,10 +7,11 @@
 #include <memory>
 #include <string>
 #include <utility>
+
 #include "base/strings/string_number_conversions.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/test/scoped_feature_list.h"
-#include "services/network/public/cpp/features.h"
+#include "services/network/public/cpp/loading_params.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/blink/public/common/features.h"
 #include "third_party/blink/public/platform/web_runtime_features.h"
@@ -66,7 +67,7 @@ class ResponseBodyLoaderTest : public testing::Test {
     void DidReceiveData(base::span<const char> data) override {
       DCHECK(!finished_);
       DCHECK(!failed_);
-      data_.Append(data.data(), static_cast<wtf_size_t>(data.size()));
+      data_.Append(base::as_bytes(data));
       switch (option_) {
         case Option::kNone:
           break;
@@ -352,13 +353,13 @@ TEST_F(ResponseBodyLoaderTest, Suspend) {
 TEST_F(ResponseBodyLoaderTest, ReadTooBigBuffer) {
   auto task_runner = base::MakeRefCounted<scheduler::FakeTaskRunner>();
   auto* consumer = MakeGarbageCollected<ReplayingBytesConsumer>(task_runner);
-  const size_t kMax = network::features::GetLoaderChunkSize();
+  const size_t kMax = network::kMaxNumConsumedBytesInTask;
 
-  consumer->Add(Command(Command::kData, std::string(kMax - 1, 'a').data()));
-  consumer->Add(Command(Command::kData, std::string(2, 'b').data()));
+  consumer->Add(Command(Command::kData, std::string(kMax - 1, 'a')));
+  consumer->Add(Command(Command::kData, std::string(2, 'b')));
   consumer->Add(Command(Command::kWait));
-  consumer->Add(Command(Command::kData, std::string(kMax, 'c').data()));
-  consumer->Add(Command(Command::kData, std::string(kMax + 3, 'd').data()));
+  consumer->Add(Command(Command::kData, std::string(kMax, 'c')));
+  consumer->Add(Command(Command::kData, std::string(kMax + 3, 'd')));
   consumer->Add(Command(Command::kDone));
 
   auto* client = MakeGarbageCollected<TestClient>();
@@ -667,7 +668,7 @@ TEST_P(ResponseBodyLoaderLoadingTasksUnfreezableTest,
   // Suspend, then add a long response body to |consumer|.
   body_loader->Suspend(LoaderFreezeMode::kBufferIncoming);
   std::string body(70000, '*');
-  consumer->Add(Command(Command::kDataAndDone, body.c_str()));
+  consumer->Add(Command(Command::kDataAndDone, body));
 
   // ResponseBodyLoader will buffer data when deferred, and won't notify the
   // client until it's resumed.
@@ -755,7 +756,7 @@ TEST_F(ResponseBodyLoaderTest, DrainAsBytesConsumer) {
 
   auto result = reader->Run(task_runner.get());
   EXPECT_EQ(result.first, BytesConsumer::Result::kDone);
-  EXPECT_EQ(String(result.second.data(), result.second.size()), "hello");
+  EXPECT_EQ(String(result.second), "hello");
   EXPECT_FALSE(client->LoadingIsCancelled());
   EXPECT_TRUE(client->LoadingIsFinished());
   EXPECT_FALSE(client->LoadingIsFailed());
@@ -786,7 +787,7 @@ TEST_F(ResponseBodyLoaderTest, CancelDrainedBytesConsumer) {
 
   auto result = reader->Run(task_runner.get());
   EXPECT_EQ(result.first, BytesConsumer::Result::kDone);
-  EXPECT_EQ(String(result.second.data(), result.second.size()), String());
+  EXPECT_EQ(String(result.second), String());
 
   EXPECT_FALSE(client->LoadingIsCancelled());
   EXPECT_FALSE(client->LoadingIsFinished());
@@ -841,7 +842,7 @@ TEST_F(ResponseBodyLoaderTest, DrainAsBytesConsumerWithError) {
 
   auto result = reader->Run(task_runner.get());
   EXPECT_EQ(result.first, BytesConsumer::Result::kError);
-  EXPECT_EQ(String(result.second.data(), result.second.size()), "hello");
+  EXPECT_EQ(String(result.second), "hello");
   EXPECT_FALSE(client->LoadingIsCancelled());
   EXPECT_FALSE(client->LoadingIsFinished());
   EXPECT_TRUE(client->LoadingIsFailed());
@@ -1041,7 +1042,7 @@ TEST_F(ResponseBodyLoaderDrainedBytesConsumerNotificationOutOfOnStateChangeTest,
   EXPECT_FALSE(client->LoadingIsFinished());
   EXPECT_FALSE(client->LoadingIsFailed());
   ASSERT_EQ(5u, buffer.size());
-  EXPECT_EQ(String(buffer.data(), buffer.size()), "hello");
+  EXPECT_EQ(String(base::as_bytes(buffer)), "hello");
 
   task_runner->RunUntilIdle();
   EXPECT_FALSE(client->LoadingIsCancelled());
@@ -1291,7 +1292,7 @@ TEST_F(ResponseBodyLoaderTestAllowDrainAsBytesConsumerInBFCache,
 
   auto result = reader->Run(task_runner.get());
   EXPECT_EQ(result.first, BytesConsumer::Result::kDone);
-  EXPECT_EQ(String(result.second.data(), result.second.size()), "helloworld");
+  EXPECT_EQ(String(result.second), "helloworld");
   // Check that `DidFinishLoadingBody()` has not been called.
   EXPECT_FALSE(client->LoadingIsCancelled());
   EXPECT_FALSE(client->LoadingIsFinished());

@@ -10,29 +10,36 @@ import android.view.ViewTreeObserver;
 
 import androidx.core.view.ViewCompat;
 
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
+
 /**
  * Provides a {@link Rect} for the location of a {@link View} in its window, see {@link
  * View#getLocationOnScreen(int[])}. When view bound changes, {@link RectProvider.Observer} will be
  * notified.
  */
+@NullMarked
 public class ViewRectProvider extends RectProvider
         implements ViewTreeObserver.OnGlobalLayoutListener,
                 View.OnAttachStateChangeListener,
                 ViewTreeObserver.OnPreDrawListener {
     private final int[] mCachedWindowCoordinates = new int[2];
     private final Rect mInsetRect = new Rect();
+    private final Rect mMarginRect = new Rect();
     private final View mView;
 
     private int mCachedViewWidth;
     private int mCachedViewHeight;
 
     /** If not {@code null}, the {@link ViewTreeObserver} that we are registered to. */
-    private ViewTreeObserver mViewTreeObserver;
+    private @Nullable ViewTreeObserver mViewTreeObserver;
 
     private boolean mIncludePadding;
+    private boolean mUseCenterPoint;
 
     /**
      * Creates an instance of a {@link ViewRectProvider}.
+     *
      * @param view The {@link View} used to generate a {@link Rect}.
      */
     public ViewRectProvider(View view) {
@@ -63,7 +70,27 @@ public class ViewRectProvider extends RectProvider
     }
 
     /**
+     * Specifies the margin values in pixels that determine how to expand the {@link View} bounds
+     * when creating the {@link Rect}.
+     */
+    public void setMarginPx(int left, int top, int right, int bottom) {
+        setMarginPx(new Rect(left, top, right, bottom));
+    }
+
+    /**
+     * Specifies the margin values in pixels that determine how to expand the {@link View} bounds
+     * when creating the {@link Rect}.
+     */
+    public void setMarginPx(Rect marginRect) {
+        if (marginRect.equals(mMarginRect)) return;
+
+        mMarginRect.set(marginRect);
+        refreshRectBounds(/* forceRefresh= */ true);
+    }
+
+    /**
      * Whether padding should be included in the {@link Rect} for the {@link View}.
+     *
      * @param includePadding Whether padding should be included. Defaults to false.
      */
     public void setIncludePadding(boolean includePadding) {
@@ -71,6 +98,16 @@ public class ViewRectProvider extends RectProvider
 
         mIncludePadding = includePadding;
         refreshRectBounds(/* forceRefresh= */ true);
+    }
+
+    /**
+     * Whether use the center of the view after all the adjustment applied (insets, margins). The
+     * Rect being provided will be a single point.
+     *
+     * @param useCenterPoint Whether the rect represents the center of the view after adjustments.
+     */
+    public void setUseCenter(boolean useCenterPoint) {
+        mUseCenterPoint = useCenterPoint;
     }
 
     @Override
@@ -160,6 +197,11 @@ public class ViewRectProvider extends RectProvider
         mRect.right -= mInsetRect.right;
         mRect.bottom -= mInsetRect.bottom;
 
+        mRect.left -= mMarginRect.left;
+        mRect.top -= mMarginRect.top;
+        mRect.right += mMarginRect.right;
+        mRect.bottom += mMarginRect.bottom;
+
         // Account for the padding.
         if (!mIncludePadding) {
             boolean isRtl = mView.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
@@ -177,6 +219,12 @@ public class ViewRectProvider extends RectProvider
 
         mRect.right = Math.min(mRect.right, mView.getRootView().getWidth());
         mRect.bottom = Math.min(mRect.bottom, mView.getRootView().getHeight());
+
+        if (mUseCenterPoint) {
+            int centerX = mRect.left + mRect.width() / 2;
+            int centerY = mRect.top + mRect.height() / 2;
+            mRect.set(centerX, centerY, centerX, centerY);
+        }
 
         notifyRectChanged();
     }

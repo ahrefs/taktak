@@ -4,6 +4,8 @@
 
 #include "ash/system/input_device_settings/input_device_notifier.h"
 
+#include <algorithm>
+#include <functional>
 #include <memory>
 
 #include "ash/public/cpp/input_device_settings_controller.h"
@@ -12,8 +14,6 @@
 #include "base/files/file_path.h"
 #include "base/functional/bind.h"
 #include "base/memory/raw_ptr.h"
-#include "base/ranges/algorithm.h"
-#include "base/ranges/functional.h"
 #include "base/test/scoped_feature_list.h"
 #include "device/bluetooth/bluetooth_adapter_factory.h"
 #include "device/bluetooth/bluetooth_common.h"
@@ -58,9 +58,9 @@ const ui::InputDevice kSampleMouseBluetooth = {25, ui::INPUT_DEVICE_BLUETOOTH,
 const ui::InputDevice kSampleMouseInternal = {30, ui::INPUT_DEVICE_INTERNAL,
                                               "kSampleMouseInternal"};
 
-template <typename Comp = base::ranges::less>
+template <typename Comp = std::ranges::less>
 void SortDevices(std::vector<ui::KeyboardDevice>& devices, Comp comp = {}) {
-  base::ranges::sort(devices, comp, [](const ui::KeyboardDevice& keyboard) {
+  std::ranges::sort(devices, comp, [](const ui::KeyboardDevice& keyboard) {
     return keyboard.id;
   });
 }
@@ -292,6 +292,10 @@ TEST_F(InputDeviceStateNotifierTest, BluetoothKeyboardTest) {
   ui::DeviceDataManagerTestApi()
       .NotifyObserversKeyboardDeviceConfigurationChanged();
   ASSERT_EQ(2u, devices_to_add_.size());
+
+  // Clear `bluetooth_adapter_` mock so that it would not return dangling
+  // pointers after return.
+  ASSERT_TRUE(testing::Mock::VerifyAndClear(bluetooth_adapter_.get()));
 }
 
 class InputDeviceStateLoginScreenNotifierTest : public NoSessionAshTestBase {
@@ -697,11 +701,9 @@ TEST_F(InputDeviceMouseNotifierTest, BluetoothMouseTest) {
       .NotifyObserversMouseDeviceConfigurationChanged();
   ASSERT_EQ(2u, devices_to_add_.size());
 
-  // Needed to reset the `bluetooth_adapter_`.
-  ON_CALL(*bluetooth_adapter_, GetDevices)
-      .WillByDefault(testing::Return(
-          std::vector<
-              raw_ptr<const device::BluetoothDevice, VectorExperimental>>()));
+  // Clear `bluetooth_adapter_` mock so that it would not return dangling
+  // pointers after return.
+  ASSERT_TRUE(testing::Mock::VerifyAndClear(bluetooth_adapter_.get()));
 }
 
 TEST_F(InputDeviceMouseNotifierTest, ImpostersRemoved) {

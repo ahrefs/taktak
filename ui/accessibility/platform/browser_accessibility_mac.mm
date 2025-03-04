@@ -12,6 +12,7 @@
 #import "base/task/single_thread_task_runner.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/time/time.h"
+#include "ui/accessibility/accessibility_features.h"
 #import "ui/accessibility/platform/browser_accessibility_cocoa.h"
 #include "ui/accessibility/platform/browser_accessibility_manager_mac.h"
 
@@ -29,28 +30,21 @@ BrowserAccessibilityMac::BrowserAccessibilityMac(
     AXNode* node)
     : BrowserAccessibility(manager, node) {}
 
-BrowserAccessibilityMac::~BrowserAccessibilityMac() {
-  if (platform_node_) {
-    // `Destroy()` also deletes the object.
-    platform_node_.ExtractAsDangling()->Destroy();
-  }
-}
+BrowserAccessibilityMac::~BrowserAccessibilityMac() = default;
 
 BrowserAccessibilityCocoa* BrowserAccessibilityMac::GetNativeWrapper() const {
   return platform_node_ ? static_cast<BrowserAccessibilityCocoa*>(
-                              platform_node_->GetNativeWrapper())
+                              platform_node()->GetNativeWrapper())
                         : nullptr;
 }
 
 void BrowserAccessibilityMac::OnDataChanged() {
   BrowserAccessibility::OnDataChanged();
-
-  if (GetNativeWrapper()) {
+  if (!GetNativeWrapper()) {
+    CreatePlatformNodes();
+  } else if (!features::IsMacAccessibilityOptimizeChildrenChangedEnabled()) {
     [GetNativeWrapper() childrenChanged];
-    return;
   }
-
-  CreatePlatformNodes();
 }
 
 // Replace a native object and refocus if it had focus.
@@ -61,23 +55,19 @@ void BrowserAccessibilityMac::ReplaceNativeObject() {
   // could have never called this method without a platform node having been
   // created.
   if (!platform_node_) {
-    NOTREACHED_IN_MIGRATION()
-        << "No platform node exists, so there should not be any "
-           "native wrapper to replace.";
-    return;
+    NOTREACHED() << "No platform node exists, so there should not be any "
+                    "native wrapper to replace.";
   }
 
   // We need to keep the old native wrapper alive until we set up the new one
   // because we need to retrieve some information from the old wrapper in order
   // to add it to the new one, e.g. its list of children.
-  AXPlatformNodeCocoa* old_native_obj = platform_node_->ReleaseNativeWrapper();
+  AXPlatformNodeCocoa* old_native_obj = platform_node()->ReleaseNativeWrapper();
 
   // We should have never called this method if a native wrapper has not been
   // created, but keep a null check just in case.
   if (!old_native_obj) {
-    NOTREACHED_IN_MIGRATION()
-        << "No native wrapper exists, so there is nothing to replace.";
-    return;
+    NOTREACHED() << "No native wrapper exists, so there is nothing to replace.";
   }
 
   // Replace child in parent.
@@ -202,13 +192,12 @@ gfx::NativeViewAccessible BrowserAccessibilityMac::GetNativeViewAccessible() {
 }
 
 AXPlatformNode* BrowserAccessibilityMac::GetAXPlatformNode() const {
-  return platform_node_;
+  return platform_node_.get();
 }
 
 void BrowserAccessibilityMac::CreatePlatformNodes() {
   DCHECK(!platform_node_);
-  platform_node_ =
-      static_cast<AXPlatformNodeMac*>(AXPlatformNode::Create(this));
+  platform_node_ = AXPlatformNode::Create(this);
   CreateNativeWrapper();
 }
 
@@ -217,9 +206,9 @@ BrowserAccessibilityCocoa* BrowserAccessibilityMac::CreateNativeWrapper() {
 
   BrowserAccessibilityCocoa* node_cocoa =
       [[BrowserAccessibilityCocoa alloc] initWithObject:this
-                                       withPlatformNode:platform_node_];
+                                       withPlatformNode:platform_node()];
 
-  platform_node_->SetNativeWrapper(node_cocoa);
+  platform_node()->SetNativeWrapper(node_cocoa);
   return node_cocoa;
 }
 

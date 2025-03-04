@@ -81,9 +81,9 @@ class AcceptLanguageBuilder {
 // Extract the base language code from a language code.
 // If there is no '-' in the code, the original code is returned.
 std::string GetBaseLanguageCode(const std::string& language_code) {
-  const std::vector<std::string> tokens = base::SplitString(
+  std::vector<std::string> tokens = base::SplitString(
       language_code, "-", base::TRIM_WHITESPACE, base::SPLIT_WANT_ALL);
-  return tokens.empty() ? "" : tokens[0];
+  return tokens.empty() ? "" : std::move(tokens[0]);
 }
 
 }  // namespace
@@ -1047,7 +1047,7 @@ bool HttpUtil::NameValuePairsIterator::ParseNameValuePair(
   // If there is a value, do additional checking and calculate the value.
   if (has_value) {
     // Check that no quote appears before the equals sign.
-    if (base::ranges::any_of(name_, IsQuote)) {
+    if (std::ranges::any_of(name_, IsQuote)) {
       return false;
     }
 

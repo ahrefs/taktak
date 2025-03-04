@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import './strings.m.js';
+import '/strings.m.js';
 import 'chrome://resources/js/action_link.js';
 // <if expr="is_ios">
 import 'chrome://resources/js/ios/web_ui.js';
@@ -10,6 +10,7 @@ import 'chrome://resources/js/ios/web_ui.js';
 
 import './status_box.js';
 import './policy_table.js';
+import './policy_promotion.js';
 
 import {addWebUiListener, sendWithPromise} from 'chrome://resources/js/cr.js';
 import {FocusOutlineManager} from 'chrome://resources/js/focus_outline_manager.js';
@@ -18,8 +19,7 @@ import {getRequiredElement} from 'chrome://resources/js/util.js';
 
 import type {Policy} from './policy_row.js';
 import type {PolicyTableElement, PolicyTableModel} from './policy_table.js';
-import type {Status, StatusBoxElement} from './status_box.js';
-
+import type {Status} from './status_box.js';
 export interface PolicyNamesResponse {
   [id: string]: {name: string, policyNames: NonNullable<string[]>};
 }
@@ -63,6 +63,40 @@ export class Page {
     this.mainSection = getRequiredElement('main-section');
 
     const policyElement = getRequiredElement('policy-ui');
+
+    sendWithPromise('shouldShowPromotion').then((shouldShowPromo: boolean) => {
+      if (!shouldShowPromo) {
+        return;
+      }
+      const promotionSection =
+          document.createElement('promotion-banner-section-container') as
+          HTMLElement;
+
+      // Insert the promotion section before the policy element.
+      const policyParent = getRequiredElement('policy-ui-container');
+      policyParent.insertBefore(promotionSection, policyElement);
+
+      const promotionDismissButton =
+          promotionSection.shadowRoot!.getElementById(
+              'promotion-dismiss-button');
+
+      promotionDismissButton?.addEventListener('click', () => {
+        chrome.send('setBannerDismissed');
+        promotionSection.remove();
+      });
+
+      const promotionRedirectButton =
+          promotionSection.shadowRoot!.getElementById(
+              'promotion-redirect-button');
+      promotionRedirectButton?.addEventListener('click', () => {
+        chrome.send('recordBannerRedirected');
+        window.open(
+            'https://admin.google.com/ac/chrome/guides/?ref=browser&utm_source=chrome_policy_cec',
+            '_blank',
+        );
+      });
+    });
+
     // Add or remove header shadow based on scroll position.
     policyElement.addEventListener('scroll', () => {
       document.getElementsByTagName('header')[0]!.classList.toggle(
@@ -71,31 +105,28 @@ export class Page {
 
     // Place the initial focus on the search input field.
     const filterElement =
-        getRequiredElement('search-field-input') as HTMLInputElement;
+        getRequiredElement<HTMLInputElement>('search-field-input');
     filterElement.focus();
 
     filterElement.addEventListener('search', () => {
       for (const policyTable in this.policyTables) {
-        this.policyTables[policyTable]!.setFilterPattern(
-            filterElement.value as string);
+        this.policyTables[policyTable]!.setFilterPattern(filterElement.value);
       }
     });
 
     const reloadPoliciesButton =
-        getRequiredElement('reload-policies') as HTMLButtonElement;
+        getRequiredElement<HTMLButtonElement>('reload-policies');
     reloadPoliciesButton.onclick = () => {
-      reloadPoliciesButton!.disabled = true;
+      reloadPoliciesButton.disabled = true;
       this.createToast(loadTimeData.getString('reloadingPolicies'));
       sendWithPromise('reloadPolicies');
     };
 
-    const moreActionsButton =
-        getRequiredElement('more-actions-button') as HTMLButtonElement;
-    const moreActionsIcon = getRequiredElement('dropdown-icon') as HTMLElement;
-    const moreActionsList =
-        getRequiredElement('more-actions-list') as HTMLElement;
+    const moreActionsButton = getRequiredElement('more-actions-button');
+    const moreActionsIcon = getRequiredElement('dropdown-icon');
+    const moreActionsList = getRequiredElement('more-actions-list');
     moreActionsButton.onclick = () => {
-      moreActionsList!.classList.toggle('more-actions-visibility');
+      moreActionsList.classList.toggle('more-actions-visibility');
     };
 
     // Close dropdown if user clicks anywhere on page.
@@ -121,7 +152,7 @@ export class Page {
     // Hide report button by default, will be displayed once we have policy
     // value.
     const uploadReportButton =
-        getRequiredElement('upload-report') as HTMLButtonElement;
+        getRequiredElement<HTMLButtonElement>('upload-report');
     uploadReportButton.style.display = 'none';
     uploadReportButton.onclick = () => {
       uploadReportButton.disabled = true;
@@ -153,13 +184,6 @@ export class Page {
             this.onPoliciesReceived_(names, values));
     addWebUiListener(
         'download-json', (json: string) => this.downloadJson(json));
-
-    sendWithPromise('shouldShowPromotion').then((shouldShowPromo: boolean) => {
-        const bannerSection = getRequiredElement('promotion-banner-section');
-            if(shouldShowPromo){
-              bannerSection.hidden = false;
-            }
-    });
   }
 
   private onPoliciesReceived_(
@@ -171,7 +195,7 @@ export class Page {
     const policyGroups: Array<NonNullable<PolicyTableModel>> =
         policyIds.map((id: string) => {
           const knownPolicyNames =
-              policyNames[id] ? policyNames[id]!.policyNames : [];
+              policyNames[id] ? policyNames[id].policyNames : [];
           const value: any = policyValues[id];
           const knownPolicyNamesSet = new Set(knownPolicyNames);
           const receivedPolicyNames =
@@ -208,8 +232,10 @@ export class Page {
 
     // <if expr="not is_chromeos">
     this.updateReportButton(
-      !!policyValues['chrome']?.policies['CloudReportingEnabled']?.value ||
-      !!policyValues['chrome']?.policies['CloudProfileReportingEnabled']?.value,
+        !!policyValues['chrome']?.policies['CloudReportingEnabled']?.value ||
+            !!policyValues['chrome']
+                  ?.policies['CloudProfileReportingEnabled']
+                  ?.value,
     );
     // </if>
     this.reloadPoliciesDone();
@@ -263,10 +289,10 @@ export class Page {
     const id = `${dataModel.name}-${dataModel.id}`;
     if (!this.policyTables[id]) {
       this.policyTables[id] = document.createElement('policy-table');
-      this.mainSection!.appendChild(this.policyTables[id]!);
-      this.policyTables[id]!.addEventListeners();
+      this.mainSection.appendChild(this.policyTables[id]);
+      this.policyTables[id].addEventListeners();
     }
-    this.policyTables[id]!.updateDataModel(dataModel);
+    this.policyTables[id].updateDataModel(dataModel);
   }
 
   /**
@@ -282,7 +308,7 @@ export class Page {
     }
     // Hide the status section.
     const section = getRequiredElement('status-section');
-    section!.hidden = true;
+    section.hidden = true;
 
     // Add a status box for each scope that has a cloud policy status.
     for (const scope in status) {
@@ -290,11 +316,11 @@ export class Page {
       if (!boxStatus.policyDescriptionKey) {
         continue;
       }
-      const box = document.createElement('status-box') as StatusBoxElement;
+      const box = document.createElement('status-box');
       box.initialize(scope, boxStatus);
       container.appendChild(box);
       // Show the status section.
-      section!.hidden = false;
+      section.hidden = false;
     }
   }
 
@@ -304,9 +330,9 @@ export class Page {
    */
   reloadPoliciesDone() {
     const reloadButton =
-        getRequiredElement('reload-policies') as HTMLButtonElement;
-    if (reloadButton!.disabled) {
-      reloadButton!.disabled = false;
+        getRequiredElement<HTMLButtonElement>('reload-policies');
+    if (reloadButton.disabled) {
+      reloadButton.disabled = false;
       this.createToast(loadTimeData.getString('reloadPoliciesDone'));
     }
   }

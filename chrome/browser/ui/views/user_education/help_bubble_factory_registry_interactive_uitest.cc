@@ -20,7 +20,7 @@
 #include "chrome/test/base/interactive_test_utils.h"
 #include "chrome/test/interaction/interaction_test_util_browser.h"
 #include "chrome/test/interaction/interactive_browser_test.h"
-#include "components/user_education/common/help_bubble_factory_registry.h"
+#include "components/user_education/common/help_bubble/help_bubble_factory_registry.h"
 #include "components/user_education/views/help_bubble_view.h"
 #include "content/public/test/browser_test.h"
 #include "ui/base/interaction/element_tracker.h"
@@ -117,7 +117,7 @@ IN_PROC_BROWSER_TEST_F(HelpBubbleFactoryRegistryInteractiveUitest,
       // Because context menus run inside of a system message pump that cannot
       // process Chrome tasks, the following steps must be executed immediately
       // on the platform.
-      WithoutDelay(Steps(
+      WithoutDelay(
 #endif
           // This step should still trigger even inside the Mac context menu
           // loop because it runs immediately on the callback from the menu item
@@ -143,7 +143,7 @@ IN_PROC_BROWSER_TEST_F(HelpBubbleFactoryRegistryInteractiveUitest,
                 ->CloseContextMenuForTesting();
           })
 #if BUILDFLAG(IS_MAC)
-              ))  // WithoutDelay(Steps(
+              )  // WithoutDelay(
 #endif
   );
 }

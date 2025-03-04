@@ -31,7 +31,8 @@
 #include "ui/android/window_android.h"
 #else  // !BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/ui/autofill/payments/save_card_bubble_controller_impl.h"
-#endif  // BUILDFLAG(IS_ANDROID)
+#include "chrome/browser/ui/ui_features.h"  // nogncheck
+#endif                                      // BUILDFLAG(IS_ANDROID)
 
 using ::testing::_;
 using ::testing::AllOf;
@@ -137,9 +138,7 @@ class ChromePaymentsAutofillClientTest
   ChromePaymentsAutofillClientTest() {
     feature_list_.InitWithFeatures(
         /*enabled_features=*/
-        {features::kAutofillEnableSaveCardLoadingAndConfirmation,
-         features::kAutofillEnableVcnEnrollLoadingAndConfirmation,
-         features::kAutofillEnableCvcStorageAndFilling,
+        {features::kAutofillEnableCvcStorageAndFilling,
          features::kAutofillEnablePrefetchingRiskDataForRetrieval},
         /*disabled_features=*/{});
   }
@@ -150,13 +149,15 @@ class ChromePaymentsAutofillClientTest
     ChromeAutofillClient::CreateForWebContents(web_contents());
     auto mock_virtual_card_bubble_controller =
         std::make_unique<MockVirtualCardEnrollBubbleController>(web_contents());
-    web_contents()->SetUserData(
-        mock_virtual_card_bubble_controller->UserDataKey(),
-        std::move(mock_virtual_card_bubble_controller));
+    const auto* user_data_key =
+        mock_virtual_card_bubble_controller->UserDataKey();
+    web_contents()->SetUserData(user_data_key,
+                                std::move(mock_virtual_card_bubble_controller));
 #if !BUILDFLAG(IS_ANDROID)
     auto mock_save_card_bubble_controller =
         std::make_unique<MockSaveCardBubbleController>(web_contents());
-    web_contents()->SetUserData(mock_save_card_bubble_controller->UserDataKey(),
+    user_data_key = mock_save_card_bubble_controller->UserDataKey();
+    web_contents()->SetUserData(user_data_key,
                                 std::move(mock_save_card_bubble_controller));
 #endif
   }
@@ -603,5 +604,34 @@ TEST_F(ChromePaymentsAutofillClientTest, RiskDataCaching_DataCached) {
 
   chrome_payments_client()->LoadRiskData(callback2.Get());
 }
+
+#if !BUILDFLAG(IS_ANDROID)
+class ChromePaymentsAutofillIOSPromoClientTest
+    : public ChromePaymentsAutofillClientTest {
+ public:
+  ChromePaymentsAutofillIOSPromoClientTest() {
+    feature_list_.InitWithFeatures(
+        /*enabled_features=*/
+        {features::kAutofillEnableCvcStorageAndFilling,
+         features::kAutofillEnablePrefetchingRiskDataForRetrieval},
+        /*disabled_features=*/{});
+  }
+
+ private:
+  base::test::ScopedFeatureList feature_list_;
+};
+
+// Test that calling `CreditCardUploadCompleted` still calls
+// SaveCardBubbleControllerImpl::ShowConfirmationBubbleView on card upload
+// success as callback, after failing to show the iOS promo.
+TEST_F(ChromePaymentsAutofillIOSPromoClientTest,
+       IOSPaymentPromoFailedToShow_CallsShowConfirmationBubbleView) {
+  EXPECT_CALL(save_card_bubble_controller(),
+              ShowConfirmationBubbleView(true, _));
+  chrome_payments_client()->CreditCardUploadCompleted(
+      payments::PaymentsAutofillClient::PaymentsRpcResult::kSuccess,
+      std::nullopt);
+}
+#endif  // !BUILDFLAG(IS_ANDROID)
 
 }  // namespace autofill

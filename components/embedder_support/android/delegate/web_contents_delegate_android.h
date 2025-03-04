@@ -85,8 +85,6 @@ class WebContentsDelegateAndroid : public content::WebContentsDelegate {
       const std::string& frame_name,
       const GURL& target_url) override;
   void CloseContents(content::WebContents* source) override;
-  void SetContentsBounds(content::WebContents* source,
-                         const gfx::Rect& bounds) override;
   bool DidAddMessageToConsole(content::WebContents* source,
                               blink::mojom::ConsoleMessageLevel log_level,
                               const std::u16string& message,
@@ -110,7 +108,6 @@ class WebContentsDelegateAndroid : public content::WebContentsDelegate {
   void OnDidBlockNavigation(
       content::WebContents* web_contents,
       const GURL& blocked_url,
-      const GURL& initiator_url,
       blink::mojom::NavigationBlockedReason reason) override;
   int GetTopControlsHeight() override;
   int GetTopControlsMinHeight() override;
@@ -130,6 +127,7 @@ class WebContentsDelegateAndroid : public content::WebContentsDelegate {
   bool MaybeCopyContentAreaAsBitmap(
       base::OnceCallback<void(const SkBitmap&)> callback) override;
   SkBitmap MaybeCopyContentAreaAsBitmapSync() override;
+  SkBitmap GetBackForwardTransitionFallbackUXInternalPageIcon() override;
   void DidBackForwardTransitionAnimationChange() override;
   content::BackForwardTransitionAnimationManager::FallbackUXConfig
   GetBackForwardTransitionFallbackUXConfig() override;

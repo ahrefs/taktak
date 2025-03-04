@@ -6,9 +6,10 @@ import 'chrome://compare/header.js';
 import 'chrome://compare/disclosure/app.js';
 
 import type {DisclosureAppElement} from 'chrome://compare/disclosure/app.js';
-import {ProductSpecificationsDisclosureVersion} from 'chrome://compare/shopping_service.mojom-webui.js';
-import type {ProductSpecificationsSet} from 'chrome://compare/shopping_service.mojom-webui.js';
-import {BrowserProxyImpl} from 'chrome://resources/cr_components/commerce/browser_proxy.js';
+import {DisclosureVersion} from 'chrome://compare/product_specifications.mojom-webui.js';
+import type {ProductSpecificationsSet} from 'chrome://compare/shared.mojom-webui.js';
+import {ProductSpecificationsBrowserProxyImpl} from 'chrome://resources/cr_components/commerce/product_specifications_browser_proxy.js';
+import {ShoppingServiceBrowserProxyImpl} from 'chrome://resources/cr_components/commerce/shopping_service_browser_proxy.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 import {assertEquals, assertTrue} from 'chrome://webui-test/chai_assert.js';
 import type {MetricsTracker} from 'chrome://webui-test/metrics_test_support.js';
@@ -26,13 +27,20 @@ declare const chrome: {
 suite('DisclosureAppTest', () => {
   let app: DisclosureAppElement;
   let metrics: MetricsTracker;
-  const shoppingServiceApi = TestMock.fromClass(BrowserProxyImpl);
+  const shoppingServiceApi =
+      TestMock.fromClass(ShoppingServiceBrowserProxyImpl);
+  const productSpecificationsProxy =
+      TestMock.fromClass(ProductSpecificationsBrowserProxyImpl);
   const fakeUserEmail = 'test@gmail.com';
 
   setup(async () => {
     metrics = fakeMetricsPrivate();
     shoppingServiceApi.reset();
-    BrowserProxyImpl.setInstance(shoppingServiceApi);
+    ShoppingServiceBrowserProxyImpl.setInstance(shoppingServiceApi);
+
+    productSpecificationsProxy.reset();
+    ProductSpecificationsBrowserProxyImpl.setInstance(
+        productSpecificationsProxy);
 
     document.body.innerHTML = window.trustedTypes!.emptyHTML;
     app = document.createElement('product-specifications-disclosure-app');
@@ -42,17 +50,17 @@ suite('DisclosureAppTest', () => {
     await flushTasks();
   });
 
-  test('records metrics for disclosure show', async () => {
+  test('records metrics for disclosure show', () => {
     assertEquals(1, metrics.count('Commerce.Compare.FirstRunExperience.Shown'));
   });
 
-  test('disclosure has 4 items', async () => {
-    const container = app.shadowRoot!.querySelectorAll('.item');
+  test('disclosure has 4 items', () => {
+    const container = app.shadowRoot.querySelectorAll('.item');
     assertEquals(4, container.length);
   });
 
-  test('disclosure has correct icons', async () => {
-    const icons = app.shadowRoot!.querySelectorAll('.item cr-icon');
+  test('disclosure has correct icons', () => {
+    const icons = app.shadowRoot.querySelectorAll('.item cr-icon');
     assertEquals(4, icons.length);
     assertEquals(
         'product-specifications-disclosure:plant',
@@ -68,8 +76,8 @@ suite('DisclosureAppTest', () => {
         icons[3]!.getAttribute('icon'));
   });
 
-  test('disclosure has correct item text', async () => {
-    const items = app.shadowRoot!.querySelectorAll('.item div');
+  test('disclosure has correct item text', () => {
+    const items = app.shadowRoot.querySelectorAll('.item div');
     assertEquals(4, items.length);
     assertEquals(app.i18n('disclosureAboutItem'), items[0]!.textContent);
     assertEquals(app.i18n('disclosureTabItem'), items[1]!.textContent);
@@ -79,18 +87,18 @@ suite('DisclosureAppTest', () => {
         items[3]!.textContent);
   });
 
-  test('disclosure has correct learn more link', async () => {
+  test('disclosure has correct learn more link', () => {
     const learnMoreLinkElement = $$<HTMLElement>(app, '#learnMoreLink');
     assertTrue(!!learnMoreLinkElement);
-    assertTrue(!!learnMoreLinkElement!.textContent);
+    assertTrue(!!learnMoreLinkElement.textContent);
     assertEquals(
-        app.i18n('learnMore'), learnMoreLinkElement!.textContent!.trim());
+        app.i18n('learnMore'), learnMoreLinkElement.textContent.trim());
     assertEquals(
         loadTimeData.getString('compareLearnMoreUrl'),
-        learnMoreLinkElement!.getAttribute('href'));
+        learnMoreLinkElement.getAttribute('href'));
   });
 
-  test('click disclosure learn more link', async () => {
+  test('click disclosure learn more link', () => {
     // Overwrite `chrome.send` for testing.
     const chromeSend = chrome.send;
     let receivedMessage = 'none';
@@ -105,7 +113,7 @@ suite('DisclosureAppTest', () => {
 
     const learnMoreLinkElement = $$<HTMLElement>(app, '#learnMoreLink');
     assertTrue(!!learnMoreLinkElement);
-    learnMoreLinkElement!.click();
+    learnMoreLinkElement.click();
 
     assertEquals(
         1, metrics.count('Commerce.Compare.FirstRunExperience.LearnMore'));
@@ -116,10 +124,10 @@ suite('DisclosureAppTest', () => {
     chrome.send = chromeSend;
   });
 
-  test('accept button shows the correct text', async () => {
+  test('accept button shows the correct text', () => {
     const acceptButton = $$<HTMLElement>(app, 'cr-button.action-button');
     assertTrue(!!acceptButton);
-    assertEquals(app.i18n('acceptDisclosure'), acceptButton!.innerText);
+    assertEquals(app.i18n('acceptDisclosure'), acceptButton.innerText);
   });
 
   test('click accept button', async () => {
@@ -169,13 +177,12 @@ suite('DisclosureAppTest', () => {
     // Ensure browser is called to update prefs.
     assertEquals(
         1,
-        shoppingServiceApi.getCallCount(
-            'setProductSpecificationDisclosureAcceptVersion'));
+        productSpecificationsProxy.getCallCount(
+            'setAcceptedDisclosureVersion'));
     assertEquals(
-        ProductSpecificationsDisclosureVersion.kV1,
-        shoppingServiceApi.getArgs(
-            'setProductSpecificationDisclosureAcceptVersion')[0] as
-            ProductSpecificationsDisclosureVersion);
+        DisclosureVersion.kV1,
+        productSpecificationsProxy.getArgs('setAcceptedDisclosureVersion')[0] as
+            DisclosureVersion);
 
     // Create product spec set.
     assertEquals(
@@ -187,12 +194,14 @@ suite('DisclosureAppTest', () => {
     assertEquals('https://bar.com', addSetArgs[0][1][1].url);
 
     // Show product spec set.
-    await shoppingServiceApi.whenCalled('showProductSpecificationsSetForUuid');
+    await productSpecificationsProxy.whenCalled(
+        'showProductSpecificationsSetForUuid');
     assertEquals(
         1,
-        shoppingServiceApi.getCallCount('showProductSpecificationsSetForUuid'));
-    const showArgs =
-        shoppingServiceApi.getArgs('showProductSpecificationsSetForUuid');
+        productSpecificationsProxy.getCallCount(
+            'showProductSpecificationsSetForUuid'));
+    const showArgs = productSpecificationsProxy.getArgs(
+        'showProductSpecificationsSetForUuid');
     assertEquals('123', showArgs[0][0].value);
     assertEquals(false, showArgs[0][1]);
 
@@ -204,7 +213,7 @@ suite('DisclosureAppTest', () => {
     chrome.send = chromeSend;
   });
 
-  test('click accept button to create set with default name', async () => {
+  test('click accept button to create set with default name', () => {
     const setValue = {
       name: '',
       uuid: {value: '123'},
@@ -244,7 +253,7 @@ suite('DisclosureAppTest', () => {
     chrome.getVariableValue = chromeGetVariableValue;
   });
 
-  test('click accept button to open existing set', async () => {
+  test('click accept button to open existing set', () => {
     // Overwrite `chrome.getVariableValue` for testing.
     const set_id = '123';
     const chromeGetVariableValue = chrome.getVariableValue;
@@ -281,9 +290,10 @@ suite('DisclosureAppTest', () => {
         0, shoppingServiceApi.getCallCount('addProductSpecificationsSet'));
     assertEquals(
         1,
-        shoppingServiceApi.getCallCount('showProductSpecificationsSetForUuid'));
-    const showSetArgs =
-        shoppingServiceApi.getArgs('showProductSpecificationsSetForUuid');
+        productSpecificationsProxy.getCallCount(
+            'showProductSpecificationsSetForUuid'));
+    const showSetArgs = productSpecificationsProxy.getArgs(
+        'showProductSpecificationsSetForUuid');
     assertEquals(set_id, showSetArgs[0][0].value);
 
     // Received signal to close dialog.
@@ -294,13 +304,13 @@ suite('DisclosureAppTest', () => {
     chrome.send = chromeSend;
   });
 
-  test('decline button shows the correct text', async () => {
+  test('decline button shows the correct text', () => {
     const declineButton = $$<HTMLElement>(app, 'cr-button.tonal-button');
     assertTrue(!!declineButton);
-    assertEquals(app.i18n('declineDisclosure'), declineButton!.innerText);
+    assertEquals(app.i18n('declineDisclosure'), declineButton.innerText);
   });
 
-  test('click decline button', async () => {
+  test('click decline button', () => {
     // Overwrite `chrome.send` for testing.
     const chromeSend = chrome.send;
     let receivedMessage = 'none';
@@ -321,9 +331,7 @@ suite('DisclosureAppTest', () => {
         1, metrics.count('Commerce.Compare.FirstRunExperience.Reject'));
     // Ensure browser is called about declining the disclosure.
     assertEquals(
-        1,
-        shoppingServiceApi.getCallCount(
-            'declineProductSpecificationDisclosure'));
+        1, productSpecificationsProxy.getCallCount('declineDisclosure'));
 
     // Received signal to close dialog.
     assertEquals(receivedMessage, 'dialogClose');

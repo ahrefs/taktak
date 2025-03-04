@@ -7,6 +7,8 @@
 
 #include "base/memory/weak_ptr.h"
 #include "chrome/browser/lens/core/mojom/lens.mojom.h"
+#include "chrome/browser/lens/core/mojom/lens_ghost_loader.mojom.h"
+#include "chrome/browser/lens/core/mojom/lens_side_panel.mojom.h"
 #include "chrome/browser/ui/webui/top_chrome/top_chrome_webui_config.h"
 #include "chrome/browser/ui/webui/top_chrome/untrusted_top_chrome_web_ui_controller.h"
 #include "chrome/common/webui_url_constants.h"
@@ -18,9 +20,11 @@
 #include "ui/webui/resources/cr_components/help_bubble/help_bubble.mojom.h"
 #include "ui/webui/resources/cr_components/searchbox/searchbox.mojom-forward.h"
 
+class LensOverlayController;
+
 namespace ui {
 class ColorChangeHandler;
-}
+}  // namespace ui
 
 namespace lens {
 
@@ -38,6 +42,7 @@ class LensSidePanelUntrustedUIConfig
 class LensSidePanelUntrustedUI
     : public UntrustedTopChromeWebUIController,
       public lens::mojom::LensSidePanelPageHandlerFactory,
+      public lens::mojom::LensGhostLoaderPageHandlerFactory,
       public help_bubble::mojom::HelpBubbleHandlerFactory {
  public:
   explicit LensSidePanelUntrustedUI(content::WebUI* web_ui);
@@ -51,6 +56,13 @@ class LensSidePanelUntrustedUI
   void BindInterface(
       mojo::PendingReceiver<lens::mojom::LensSidePanelPageHandlerFactory>
           receiver);
+
+  // Instantiates the implementor of the
+  // lens::mojom::LensGhostLoaderPageHandlerFactory mojo interface passing the
+  // pending receiver that will be internally bound.
+  void BindInterface(
+      mojo::PendingReceiver<lens::mojom::LensGhostLoaderPageHandlerFactory>
+          pending_receiver);
 
   // Instantiates the implementor of the searchbox::mojom::PageHandler mojo
   // interface passing the pending receiver that will be internally bound.
@@ -76,10 +88,16 @@ class LensSidePanelUntrustedUI
   }
 
  private:
+  LensOverlayController& GetLensOverlayController();
+
   // lens::mojom::LensSidePanelPageHandlerFactory:
   void CreateSidePanelPageHandler(
       mojo::PendingReceiver<lens::mojom::LensSidePanelPageHandler> receiver,
       mojo::PendingRemote<lens::mojom::LensSidePanelPage> page) override;
+
+  // lens::mojom::LensGhostLoaderPageHandlerFactory:
+  void CreateGhostLoaderPage(
+      mojo::PendingRemote<lens::mojom::LensGhostLoaderPage> page) override;
 
   // help_bubble::mojom::HelpBubbleHandlerFactory:
   void CreateHelpBubbleHandler(
@@ -91,6 +109,9 @@ class LensSidePanelUntrustedUI
 
   mojo::Receiver<lens::mojom::LensSidePanelPageHandlerFactory>
       lens_side_panel_page_factory_receiver_{this};
+
+  mojo::Receiver<lens::mojom::LensGhostLoaderPageHandlerFactory>
+      lens_ghost_loader_page_factory_receiver_{this};
 
   std::unique_ptr<user_education::HelpBubbleHandler> help_bubble_handler_;
 

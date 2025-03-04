@@ -199,8 +199,8 @@ class CONTENT_EXPORT VideoCaptureManager
       const std::string& device_id);
 
   // If there is a capture session associated with |session_id|, and the
-  // captured entity a tab, return the GlobalRenderFrameHostId of
-  // the captured tab.
+  // captured entity is a tab, return the GlobalRenderFrameHostId of the
+  // captured tab.
   // Otherwise, returns an empty GlobalRenderFrameHostId.
   GlobalRenderFrameHostId GetGlobalRenderFrameHostId(
       const base::UnguessableToken& session_id) const;
@@ -308,7 +308,7 @@ class CONTENT_EXPORT VideoCaptureManager
   // Finds a VideoCaptureController for the indicated |capture_session_id|,
   // creating a fresh one if necessary. Returns nullptr if said
   // |capture_session_id| is invalid.
-  VideoCaptureController* GetOrCreateController(
+  scoped_refptr<VideoCaptureController> GetOrCreateController(
       const media::VideoCaptureSessionId& capture_session_id,
       const media::VideoCaptureParams& params);
 
@@ -320,10 +320,12 @@ class CONTENT_EXPORT VideoCaptureManager
   // another request pending start.
   void QueueStartDevice(
       const media::VideoCaptureSessionId& session_id,
-      VideoCaptureController* controller,
+      scoped_refptr<VideoCaptureController> controller,
       const media::VideoCaptureParams& params,
       mojo::PendingRemote<video_effects::mojom::VideoEffectsProcessor>
-          video_effects_processor);
+          video_effects_processor,
+      mojo::PendingRemote<media::mojom::ReadonlyVideoEffectsManager>
+          readonly_video_effects_manager);
   void DoStopDevice(VideoCaptureController* controller);
   void ProcessDeviceStartRequestQueue();
 

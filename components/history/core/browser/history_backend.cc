@@ -42,6 +42,7 @@
 #include "build/build_config.h"
 #include "build/ios_buildflags.h"
 #include "components/favicon/core/favicon_backend.h"
+#include "components/favicon/core/favicon_types.h"
 #include "components/history/core/browser/download_constants.h"
 #include "components/history/core/browser/download_row.h"
 #include "components/history/core/browser/features.h"
@@ -284,18 +285,53 @@ bool IsVisitedLinkTransition(ui::PageTransition transition) {
          ui::PageTransitionCoreTypeIs(transition,
                                       ui::PAGE_TRANSITION_MANUAL_SUBFRAME);
 }
-// We require a `top_level_site` and a frame_origin to construct a
-// visited link partition key. So if `top_level_url` and/or `fame_url` are NULL
-// OR the transition type is a context where we know we cannot accurately
-// construct a triple partition key, then we skip the VisitedLinkDatabase.
-// We aren't adding ephemeral keys because inherently, their state shouldn't
-// be persisted across browsing sessions.
+
+// Context Clicks are when a user right clicks on a link and selects one of the
+// "Open in New ..." options. By design, these navigations do not have a valid
+// top-level site, and instead this information is stored in the opener. This
+// function determines the appropriate top-level value (whether `top_level_url`
+// or `opener_url`) to use when constructing our triple-partition key. If no
+// suitable value can be found, this function will return std::nullopt.
+std::optional<GURL> CalculateTopLevelOrOpener(ui::PageTransition transition,
+                                              std::optional<GURL> top_level_url,
+                                              std::optional<GURL> opener_url) {
+  // Determine if `top_level_url` has a valid value.
+  if (top_level_url.has_value() && top_level_url->is_valid()) {
+    return top_level_url.value();
+  } else {
+    // Context clicks may replace their empty or invalid top-level site with a
+    // valid opener value. Check if the navigation transition type matches a
+    // context click.
+    if (ui::PageTransitionCoreTypeIs(transition, ui::PAGE_TRANSITION_LINK)) {
+      if (opener_url.has_value() && opener_url->is_valid()) {
+        return opener_url.value();
+      }
+    }
+  }
+  // We could not find a suitable top-level value.
+  return std::nullopt;
+}
+
+// We require a `top_level_site` and a `frame_origin` to construct a
+// visited link partition key. So if `top_level_or_opener` and/or `fame_url` are
+// invalid OR the transition type is a context where we know we cannot
+// accurately construct a triple partition key, we DO NOT add this navigation as
+// an entry into VisitedLinkDatabase. We do not add ephemeral keys because,
+// inherently, their state shouldn't be persisted across browsing sessions.
 bool AddToVisitedLinkDatabase(ui::PageTransition transition,
-                              std::optional<GURL> top_level_url,
+                              std::optional<GURL> top_level_or_opener,
                               std::optional<GURL> frame_url,
                               bool is_ephemeral) {
-  return IsVisitedLinkTransition(transition) && top_level_url.has_value() &&
-         frame_url.has_value() && !is_ephemeral;
+  // If our navigation comes from an ephemeral context or does not provide
+  // enough information to construct our triple partition key, do not add it to
+  // the database.
+  if (is_ephemeral || !IsVisitedLinkTransition(transition) ||
+      !top_level_or_opener.has_value() || !frame_url.has_value()) {
+    return false;
+  }
+
+  // Check whether the URLs for our key are valid.
+  return top_level_or_opener->is_valid() && frame_url->is_valid();
 }
 
 }  // namespace
@@ -1008,8 +1044,8 @@ void HistoryBackend::AddPage(const HistoryAddPageArgs& request) {
                                          request.opener->url);
   }
 
-  // Every url in the redirect chain gets the same `top_level_url` and
-  // `frame_url` values.
+  // Every url in the redirect chain gets the same `top_level_url`,
+  // `frame_url`, and `opener_url` values.
   std::optional<GURL> top_level_url = std::nullopt;
   if (request.top_level_url.has_value() && request.top_level_url->is_valid()) {
     top_level_url = request.top_level_url;
@@ -1017,6 +1053,10 @@ void HistoryBackend::AddPage(const HistoryAddPageArgs& request) {
   std::optional<GURL> frame_url = std::nullopt;
   if (request.referrer.is_valid()) {
     frame_url = request.referrer;
+  }
+  std::optional<GURL> opener_url = std::nullopt;
+  if (request.opener.has_value() && request.opener->url.is_valid()) {
+    opener_url = std::make_optional<GURL>(request.opener->url);
   }
 
   if (!has_redirects) {
@@ -1027,12 +1067,12 @@ void HistoryBackend::AddPage(const HistoryAddPageArgs& request) {
 
     // No redirect case (one element means just the page itself).
     last_visit_id =
-        AddPageVisit(request.url, request.time, last_visit_id,
-                     external_referrer_url, t, request.hidden,
-                     request.visit_source, IsTypedIncrement(t), opener_visit,
-                     request.consider_for_ntp_most_visited,
-                     request.local_navigation_id, request.title, top_level_url,
-                     frame_url, request.app_id)
+        AddPageVisit(
+            request.url, request.time, last_visit_id, external_referrer_url, t,
+            request.hidden, request.visit_source, IsTypedIncrement(t),
+            opener_visit, request.consider_for_ntp_most_visited,
+            request.is_ephemeral, request.local_navigation_id, request.title,
+            top_level_url, frame_url, opener_url, request.app_id)
             .second;
 
     // Update the segment for this visit. KEYWORD_GENERATED visits should not
@@ -1163,8 +1203,9 @@ void HistoryBackend::AddPage(const HistoryAddPageArgs& request) {
                        should_increment_typed_count,
                        redirect_index == 0 ? opener_visit : 0,
                        request.consider_for_ntp_most_visited,
-                       request.local_navigation_id, request.title,
-                       top_level_url, frame_url, request.app_id)
+                       request.is_ephemeral, request.local_navigation_id,
+                       request.title, top_level_url, frame_url, opener_url,
+                       request.app_id)
               .second;
 
       if (t & ui::PAGE_TRANSITION_CHAIN_START) {
@@ -1289,7 +1330,7 @@ void HistoryBackend::InitImpl(
       return;
     }
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   // Fill the in-memory database and send it back to the history service on the
@@ -1369,18 +1410,19 @@ std::pair<URLID, VisitID> HistoryBackend::AddPageVisit(
     bool should_increment_typed_count,
     VisitID opener_visit,
     bool consider_for_ntp_most_visited,
+    bool is_ephemeral,
     std::optional<int64_t> local_navigation_id,
     std::optional<std::u16string> title,
     std::optional<GURL> top_level_url,
     std::optional<GURL> frame_url,
+    std::optional<GURL> opener_url,
     std::optional<std::string> app_id,
     std::optional<base::TimeDelta> visit_duration,
     std::optional<std::string> originator_cache_guid,
     std::optional<VisitID> originator_visit_id,
     std::optional<VisitID> originator_referring_visit,
     std::optional<VisitID> originator_opener_visit,
-    bool is_known_to_sync,
-    bool is_ephemeral) {
+    bool is_known_to_sync) {
   DCHECK(url.is_valid());
   // See if this URL is already in the DB.
   URLRow url_info(url);
@@ -1420,29 +1462,33 @@ std::pair<URLID, VisitID> HistoryBackend::AddPageVisit(
 
   VisitedLinkRow visited_link_info;
   if (base::FeatureList::IsEnabled(kPopulateVisitedLinkDatabase)) {
-    // Returns whether or not the current row should be added to the
-    // VisitedLinkDatabase
-    if (AddToVisitedLinkDatabase(transition, top_level_url, frame_url,
+    // Calculate our "top-level value" - see CalculateTopLevelOrOpener() for
+    // more info on how context clicks affect this calculation.
+    const std::optional<GURL> top_level_or_opener =
+        CalculateTopLevelOrOpener(transition, top_level_url, opener_url);
+    // Determine whether or not the current row should be added to the
+    // VisitedLinkDatabase.
+    if (AddToVisitedLinkDatabase(transition, top_level_or_opener, frame_url,
                                  is_ephemeral)) {
       // Determine if the visited link is already in the database.
       VisitedLinkID existing_row_id = db_->GetRowForVisitedLink(
-          url_id, *top_level_url, *frame_url, visited_link_info);
+          url_id, *top_level_or_opener, *frame_url, visited_link_info);
       // If the returned row id is valid, we update this existing row.
       if (existing_row_id) {
         if (!db_->UpdateVisitedLinkRowVisitCount(
                 existing_row_id, visited_link_info.visit_count + 1)) {
           // If the update fails, log an error and return.
           DLOG(ERROR) << "AddPageVisit: Updating VisitedLink failed: " << url
-                      << " " << *top_level_url << " " << *frame_url;
+                      << " " << *top_level_or_opener << " " << *frame_url;
           return std::make_pair(0, 0);
         }
       } else {  // otherwise, insert this new visited link.
         VisitedLinkID new_row_id =
-            db_->AddVisitedLink(url_id, *top_level_url, *frame_url, 1);
+            db_->AddVisitedLink(url_id, *top_level_or_opener, *frame_url, 1);
         if (!new_row_id) {
           // If the insert fails, log an error and return.
           DLOG(ERROR) << "AddPageVisit: Inserting VisitedLink failed: " << url
-                      << " " << *top_level_url << " " << *frame_url;
+                      << " " << *top_level_or_opener << " " << *frame_url;
           return std::make_pair(0, 0);
         }
         db_->GetVisitedLinkRow(new_row_id, visited_link_info);
@@ -1708,6 +1754,13 @@ QueryURLResult HistoryBackend::GetMostRecentVisitsForGurl(GURL url,
   return result;
 }
 
+bool HistoryBackend::GetIsUrlKnownToSync(URLID id, bool* is_known_to_sync) {
+  if (db_) {
+    return db_->GetIsUrlKnownToSync(id, is_known_to_sync);
+  }
+  return false;
+}
+
 bool HistoryBackend::GetForeignVisit(const std::string& originator_cache_guid,
                                      VisitID originator_visit_id,
                                      VisitRow* visit_row) {
@@ -1745,12 +1798,13 @@ VisitID HistoryBackend::AddSyncedVisit(
       url, visit.visit_time, visit.referring_visit, visit.external_referrer_url,
       visit.transition, hidden, VisitSource::SOURCE_SYNCED,
       IsTypedIncrement(visit.transition), visit.opener_visit,
-      visit.consider_for_ntp_most_visited,
+      visit.consider_for_ntp_most_visited, /*is_ephemeral=*/false,
       /*local_navigation_id=*/std::nullopt, title,
-      /*top_level_url=*/std::nullopt, /*frame_url=*/std::nullopt, visit.app_id,
-      visit.visit_duration, visit.originator_cache_guid,
-      visit.originator_visit_id, visit.originator_referring_visit,
-      visit.originator_opener_visit, visit.is_known_to_sync);
+      /*top_level_url=*/std::nullopt, /*frame_url=*/std::nullopt,
+      /*opener_url=*/std::nullopt, visit.app_id, visit.visit_duration,
+      visit.originator_cache_guid, visit.originator_visit_id,
+      visit.originator_referring_visit, visit.originator_opener_visit,
+      visit.is_known_to_sync);
 
   if (visit_id == kInvalidVisitID) {
     // Adding the page visit failed, do not continue.
@@ -2012,16 +2066,6 @@ QueryURLResult HistoryBackend::QueryURL(const GURL& url, bool want_visits) {
   return result;
 }
 
-std::vector<QueryURLResult> HistoryBackend::QueryURLs(
-    const std::vector<GURL>& urls,
-    bool want_visits) {
-  std::vector<QueryURLResult> results;
-  for (auto url : urls) {
-    results.push_back(QueryURL(url, want_visits));
-  }
-  return results;
-}
-
 base::WeakPtr<syncer::DataTypeControllerDelegate>
 HistoryBackend::GetHistorySyncControllerDelegate() {
   if (history_sync_bridge_) {
@@ -2146,15 +2190,6 @@ HistoryLastVisitResult HistoryBackend::GetLastVisitToOrigin(
   return {db_ && db_->GetLastVisitToOrigin(origin, begin_time, end_time,
                                            &last_visit),
           last_visit};
-}
-
-HistoryLastVisitResult HistoryBackend::GetLastVisitToURL(const GURL& url,
-                                                         base::Time end_time) {
-  base::Time last_visit;
-  return {
-      db_ && db_->GetLastVisitToURL(url, end_time, &last_visit),
-      last_visit,
-  };
 }
 
 DailyVisitsResult HistoryBackend::GetDailyVisitsToHost(const GURL& host,
@@ -2298,12 +2333,12 @@ std::vector<AnnotatedVisit> HistoryBackend::GetAnnotatedVisits(
   }
 
   if (get_unclustered_visits_only) {
-    auto remove_it = base::ranges::remove_if(
+    auto to_remove = std::ranges::remove_if(
         visit_rows.begin(), visit_rows.end(), [&](auto& visit) {
           // This may seem slow, but it's an indexed lookup.
           return db_->GetClusterIdContainingVisit(visit.visit_id) > 0;
         });
-    visit_rows.erase(remove_it, visit_rows.end());
+    visit_rows.erase(to_remove.begin(), to_remove.end());
   }
 
   DCHECK_LE(static_cast<int>(visit_rows.size()), options.EffectiveMaxCount());
@@ -2386,7 +2421,7 @@ std::vector<ClusterVisit> HistoryBackend::ToClusterVisits(
       visit_ids, /*compute_redirect_chain_start_properties=*/false);
   std::vector<ClusterVisit> cluster_visits;
   std::set<VisitID> seen_duplicate_ids;
-  base::ranges::for_each(annotated_visits, [&](const auto& annotated_visit) {
+  std::ranges::for_each(annotated_visits, [&](const auto& annotated_visit) {
     ClusterVisit cluster_visit =
         db_->GetClusterVisit(annotated_visit.visit_row.visit_id);
     // `cluster_visit` should be valid in the normal flow, but DB corruption can
@@ -2398,7 +2433,7 @@ std::vector<ClusterVisit> HistoryBackend::ToClusterVisits(
       cluster_visit.duplicate_visits = ToDuplicateClusterVisits(
           db_->GetDuplicateClusterVisitIdsForClusterVisit(
               annotated_visit.visit_row.visit_id));
-      base::ranges::for_each(
+      std::ranges::for_each(
           cluster_visit.duplicate_visits, [&](const auto& duplicate_visit) {
             seen_duplicate_ids.insert(duplicate_visit.visit_id);
           });
@@ -3180,7 +3215,8 @@ void HistoryBackend::SetImportedFavicons(
           url_info.set_last_visit(base::Time());
           url_info.set_hidden(false);
           db_->AddURL(url_info);
-          favicon_db->AddIconMapping(url, favicon_id);
+          favicon_db->AddIconMapping(url, favicon_id,
+                                     favicon::PageUrlType::kRegular);
           favicons_changed.insert(url);
         }
       } else {
@@ -3189,7 +3225,8 @@ void HistoryBackend::SetImportedFavicons(
                 /*mapping_data=*/nullptr)) {
           // URL is present in history, update the favicon *only* if it is not
           // set already.
-          favicon_db->AddIconMapping(url, favicon_id);
+          favicon_db->AddIconMapping(url, favicon_id,
+                                     favicon::PageUrlType::kRegular);
           favicons_changed.insert(url);
         }
       }
@@ -3331,7 +3368,7 @@ void HistoryBackend::BeginSingletonTransaction() {
     // at about 1 failure per million, almost exclusively on Windows. Previous
     // analysis showed SQLITE_BUSY to be the main cause, which could suggest
     // some other process (could be malware) trying to read Chrome history.
-    // See https://crbug.com/1377512 for more discussion.
+    // See https://crbug.com/40874369 for more discussion.
     //
     // In any case, failing here is not a big deal, because Chrome will try to
     // start another transaction again at the next commit interval. Clear out
@@ -3355,18 +3392,13 @@ void HistoryBackend::CommitSingletonTransactionIfItExists() {
       << "Someone opened multiple transactions.";
 
   bool success = singleton_transaction_->Commit();
-  UMA_HISTOGRAM_BOOLEAN("History.Backend.TransactionCommitSuccess", success);
   if (success) {
     DCHECK_EQ(db_->transaction_nesting(), 0)
         << "Someone left a transaction open.";
-  } else {
-    // The long-running transaction fails to commit about 1 per 100,000 times.
-    // The crash reports are again predominantly on Windows. The exact breakdown
-    // is less clear here compared to BEGIN, but some logs show "no transaction
-    // is active" and some show SQLITE_BUSY. Maybe this UMA will reveal things.
-    sql::UmaHistogramSqliteResult("History.Backend.TransactionCommitError",
-                                  diagnostics_.reported_sqlite_error_code);
   }
+  // The long-running transaction fails to commit about 1 per 100,000 times.
+  // The crash reports are again predominantly on Windows. More discussion in
+  // https://crbug.com/40874369 and https://crbug.com/385734240#comment4.
   singleton_transaction_.reset();
 }
 
@@ -3763,11 +3795,6 @@ bool HistoryBackend::ClearAllFaviconHistory(
   if (!favicon_backend_->ClearAllExcept(kept_urls))
     return false;
 
-#if BUILDFLAG(IS_ANDROID)
-  // TODO(michaelbai): Add the unit test once AndroidProviderBackend is
-  // available in HistoryBackend.
-  db_->ClearAndroidURLRows();
-#endif
   return true;
 }
 

@@ -5,8 +5,8 @@
 // This file defines utility functions for working with strings.
 
 #ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40284755): Remove this and spanify to fix the errors.
-#pragma allow_unsafe_buffers
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
 #endif
 
 #ifndef BASE_STRINGS_STRING_UTIL_H_
@@ -42,6 +42,7 @@ namespace base {
 // Wrapper for vsnprintf that always null-terminates and always returns the
 // number of characters that would be in an untruncated formatted
 // string, even when truncation occurs.
+// TODO(tsepez): should be UNSAFE_BUFFER_USAGE.
 PRINTF_FORMAT(3, 0)
 int vsnprintf(char* buffer, size_t size, const char* format, va_list arguments);
 
@@ -49,6 +50,7 @@ int vsnprintf(char* buffer, size_t size, const char* format, va_list arguments);
 
 // We separate the declaration from the implementation of this inline
 // function just so the PRINTF_FORMAT works.
+// TODO(tsepez): should be UNSAFE_BUFFER_USAGE.
 PRINTF_FORMAT(3, 4)
 inline int snprintf(char* buffer, size_t size, const char* format, ...);
 inline int snprintf(char* buffer, size_t size, const char* format, ...) {
@@ -167,7 +169,9 @@ BASE_EXPORT std::u16string ToUpperASCII(std::u16string_view str);
 // context (combining accents), and require handling UTF-16. If you need
 // proper Unicode support, use base::i18n::ToLower/FoldCase and then just
 // use a normal operator== on the result.
-template<typename Char> struct CaseInsensitiveCompareASCII {
+template <typename Char>
+  requires(std::integral<Char>)
+struct CaseInsensitiveCompareASCII {
  public:
   bool operator()(Char x, Char y) const {
     return ToLowerASCII(x) == ToLowerASCII(y);
@@ -234,15 +238,16 @@ BASE_EXPORT const std::u16string& EmptyString16();
 // Contains the set of characters representing whitespace in the corresponding
 // encoding. Null-terminated. The ASCII versions are the whitespaces as defined
 // by HTML5, and don't include control characters.
-BASE_EXPORT extern const wchar_t kWhitespaceWide[];  // Includes Unicode.
+BASE_EXPORT extern const wchar_t kWhitespaceWide[];    // Includes Unicode.
 BASE_EXPORT extern const char16_t kWhitespaceUTF16[];  // Includes Unicode.
 BASE_EXPORT extern const char16_t
     kWhitespaceNoCrLfUTF16[];  // Unicode w/o CR/LF.
 BASE_EXPORT extern const char kWhitespaceASCII[];
 BASE_EXPORT extern const char16_t kWhitespaceASCIIAs16[];  // No unicode.
-                                                           //
+
 // https://infra.spec.whatwg.org/#ascii-whitespace
-BASE_EXPORT extern const char kInfraAsciiWhitespace[];
+// Note that this array is not null-terminated.
+inline constexpr char kInfraAsciiWhitespace[] = {0x09, 0x0A, 0x0C, 0x0D, 0x20};
 
 // Null-terminated string representing the UTF-8 byte order mark.
 BASE_EXPORT extern const char kUtf8ByteOrderMark[];
@@ -272,10 +277,10 @@ BASE_EXPORT bool ReplaceChars(std::string_view input,
                               std::string* output);
 
 enum TrimPositions {
-  TRIM_NONE     = 0,
-  TRIM_LEADING  = 1 << 0,
+  TRIM_NONE = 0,
+  TRIM_LEADING = 1 << 0,
   TRIM_TRAILING = 1 << 1,
-  TRIM_ALL      = TRIM_LEADING | TRIM_TRAILING,
+  TRIM_ALL = TRIM_LEADING | TRIM_TRAILING,
 };
 
 // Removes characters in |trim_chars| from the beginning and end of |input|.
@@ -305,6 +310,8 @@ BASE_EXPORT std::string_view TrimString(std::string_view input,
 BASE_EXPORT void TruncateUTF8ToByteSize(const std::string& input,
                                         const size_t byte_size,
                                         std::string* output);
+BASE_EXPORT std::string_view TruncateUTF8ToByteSize(std::string_view input,
+                                                    size_t byte_size);
 
 // Trims any whitespace from either end of the input string.
 //
@@ -408,41 +415,50 @@ BASE_EXPORT bool EndsWith(
 // Determines the type of ASCII character, independent of locale (the C
 // library versions will change based on locale).
 template <typename Char>
-inline bool IsAsciiWhitespace(Char c) {
-  // kWhitespaceASCII is a null-terminated string.
-  for (const char* cur = kWhitespaceASCII; *cur; ++cur) {
-    if (*cur == c)
+  requires(std::integral<Char>)
+constexpr bool IsAsciiWhitespace(Char c) {
+  // SAFETY: kWhitespaceASCII is a NUL-terminated string.
+  for (const char* cur = kWhitespaceASCII; *cur; UNSAFE_BUFFERS(++cur)) {
+    if (*cur == c) {
       return true;
+    }
   }
   return false;
 }
 template <typename Char>
-inline bool IsAsciiAlpha(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsAsciiAlpha(Char c) {
   return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
 template <typename Char>
-inline bool IsAsciiUpper(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsAsciiUpper(Char c) {
   return c >= 'A' && c <= 'Z';
 }
 template <typename Char>
-inline bool IsAsciiLower(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsAsciiLower(Char c) {
   return c >= 'a' && c <= 'z';
 }
 template <typename Char>
-inline bool IsAsciiDigit(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsAsciiDigit(Char c) {
   return c >= '0' && c <= '9';
 }
 template <typename Char>
-inline bool IsAsciiAlphaNumeric(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsAsciiAlphaNumeric(Char c) {
   return IsAsciiAlpha(c) || IsAsciiDigit(c);
 }
 template <typename Char>
-inline bool IsAsciiPrintable(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsAsciiPrintable(Char c) {
   return c >= ' ' && c <= '~';
 }
 
 template <typename Char>
-inline bool IsAsciiControl(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsAsciiControl(Char c) {
   if constexpr (std::is_signed_v<Char>) {
     if (c < 0) {
       return false;
@@ -452,21 +468,23 @@ inline bool IsAsciiControl(Char c) {
 }
 
 template <typename Char>
-inline bool IsUnicodeControl(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsUnicodeControl(Char c) {
   return IsAsciiControl(c) ||
          // C1 control characters: http://unicode.org/charts/PDF/U0080.pdf
          (c >= 0x80 && c <= 0x9F);
 }
 
 template <typename Char>
-inline bool IsAsciiPunctuation(Char c) {
+  requires(std::integral<Char>)
+constexpr bool IsAsciiPunctuation(Char c) {
   return c > 0x20 && c < 0x7f && !IsAsciiAlphaNumeric(c);
 }
 
 template <typename Char>
-inline bool IsHexDigit(Char c) {
-  return (c >= '0' && c <= '9') ||
-         (c >= 'A' && c <= 'F') ||
+  requires(std::integral<Char>)
+constexpr bool IsHexDigit(Char c) {
+  return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') ||
          (c >= 'a' && c <= 'f');
 }
 
@@ -488,21 +506,22 @@ inline char HexDigitToInt(char16_t c) {
 // values known to hold the full code point before calling this.
 template <typename Char>
   requires(sizeof(Char) > 1)
-inline bool IsUnicodeWhitespace(Char c) {
-  // kWhitespaceWide is a null-terminated string.
-  for (const auto* cur = kWhitespaceWide; *cur; ++cur) {
+constexpr bool IsUnicodeWhitespace(Char c) {
+  // SAFETY: kWhitespaceWide is a NUL-terminated string.
+  for (const auto* cur = kWhitespaceWide; *cur; UNSAFE_BUFFERS(++cur)) {
     if (static_cast<typename std::make_unsigned_t<wchar_t>>(*cur) ==
-        static_cast<typename std::make_unsigned_t<Char>>(c))
+        static_cast<typename std::make_unsigned_t<Char>>(c)) {
       return true;
+    }
   }
   return false;
 }
 
-// DANGEROUS: Assumes ASCII or not base on the size of `Char`.  You should
+// DANGEROUS: Assumes ASCII or not based on the size of `Char`.  You should
 // probably be explicitly calling IsUnicodeWhitespace() or IsAsciiWhitespace()
 // instead!
 template <typename Char>
-inline bool IsWhitespace(Char c) {
+constexpr bool IsWhitespace(Char c) {
   if constexpr (sizeof(Char) > 1) {
     return IsUnicodeWhitespace(c);
   } else {
@@ -598,20 +617,28 @@ BASE_EXPORT std::u16string JoinString(
 // Additionally, any number of consecutive '$' characters is replaced by that
 // number less one. Eg $$->$, $$$->$$, etc. The offsets parameter here can be
 // NULL. This only allows you to use up to nine replacements.
+//
+// Calling ReplaceStringPlaceholders(u"$1", {ReturnU16string()}, nullptr) will
+// unexpectedly give you the single-u16string overload below, the same as if you
+// had written ReplaceStringPlaceholders(u"$1", ReturnU16String(), nullptr).
+// This is surprising but mostly harmless. Call the base::span constructor
+// explicitly if you need to force this overload, ie.
+// ReplaceStringPlaceholders(
+//     u"$1", base::span<const std::u16string>({ReturnU16string()}), nullptr).
 BASE_EXPORT std::u16string ReplaceStringPlaceholders(
     std::u16string_view format_string,
-    const std::vector<std::u16string>& subst,
+    base::span<const std::u16string> subst,
     std::vector<size_t>* offsets);
 
 BASE_EXPORT std::string ReplaceStringPlaceholders(
     std::string_view format_string,
-    const std::vector<std::string>& subst,
+    base::span<const std::string> subst,
     std::vector<size_t>* offsets);
 
 // Single-string shortcut for ReplaceStringHolders. |offset| may be NULL.
 BASE_EXPORT std::u16string ReplaceStringPlaceholders(
-    const std::u16string& format_string,
-    const std::u16string& a,
+    std::u16string_view format_string,
+    std::u16string_view subst,
     size_t* offset);
 
 // Helper function for creating a std::string_view from a string literal that

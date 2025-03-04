@@ -13,30 +13,31 @@ cargo_crate("lib") {
   epoch = "1"
   crate_type = "rlib"
   crate_root =
-      "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/lib.rs"
+      "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/lib.rs"
   sources = [
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/builders.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/bytes.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/error.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/find_byte.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/lib.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/pattern.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/regex/bytes.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/regex/mod.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/regex/string.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/regexset/bytes.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/regexset/mod.rs",
-    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.0/src/regexset/string.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/builders.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/bytes.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/error.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/find_byte.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/lib.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/pattern.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/regex/bytes.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/regex/mod.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/regex/string.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/regexset/bytes.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/regexset/mod.rs",
+    "//third_party/rust/chromium_crates_io/vendor/regex-1.11.1/src/regexset/string.rs",
   ]
   inputs = []
 
   build_native_rust_unit_tests = false
   edition = "2021"
-  cargo_pkg_version = "1.11.0"
+  cargo_pkg_version = "1.11.1"
   cargo_pkg_authors =
       "The Rust Project Developers, Andrew Gallant <jamslam@gmail.com>"
   cargo_pkg_name = "regex"
   cargo_pkg_description = "An implementation of regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs."
+  library_configs -= [ "//build/config/coverage:default_coverage" ]
   library_configs -= [ "//build/config/compiler:chromium_code" ]
   library_configs += [ "//build/config/compiler:no_chromium_code" ]
   executable_configs -= [ "//build/config/compiler:chromium_code" ]
@@ -66,6 +67,9 @@ cargo_crate("lib") {
     "unicode-perl",
     "unicode-script",
     "unicode-segment",
+  ]
+  rustflags = [
+    "--cap-lints=allow",  # Suppress all warnings in crates.io crates
   ]
 
   testonly = true

@@ -108,11 +108,11 @@ size_t FindIndex(ToolbarActionsModel& toolbar_model,
       base::i18n::ToLower(toolbar_model.GetExtensionName(action_id));
   auto sorted_action_ids = SortExtensionsByName(toolbar_model);
   return static_cast<size_t>(
-      base::ranges::lower_bound(sorted_action_ids, extension_name, {},
-                                [&toolbar_model](std::string id) {
-                                  return base::i18n::ToLower(
-                                      toolbar_model.GetExtensionName(id));
-                                }) -
+      std::ranges::lower_bound(sorted_action_ids, extension_name, {},
+                               [&toolbar_model](std::string id) {
+                                 return base::i18n::ToLower(
+                                     toolbar_model.GetExtensionName(id));
+                               }) -
       sorted_action_ids.begin());
 }
 
@@ -292,8 +292,7 @@ void LogSiteAccessUpdate(PermissionsManager::UserSiteAccess site_access) {
           base::UserMetricsAction("Extensions.Menu.OnAllSitesSelected"));
       break;
     default:
-      NOTREACHED_IN_MIGRATION() << "Unknown site access";
-      break;
+      NOTREACHED() << "Unknown site access";
   }
 }
 
@@ -315,10 +314,9 @@ ExtensionsMenuViewController::ExtensionsMenuViewController(
       PermissionsManager::Get(browser_->profile()));
 }
 
-ExtensionsMenuViewController::~ExtensionsMenuViewController() {
-  // Note: No need to call TabStripModel::RemoveObserver(), because it's handled
-  // directly within TabStripModelObserver::~TabStripModelObserver().
-}
+// Note: No need to call TabStripModel::RemoveObserver(), because it's handled
+// directly within TabStripModelObserver::~TabStripModelObserver().
+ExtensionsMenuViewController::~ExtensionsMenuViewController() = default;
 
 void ExtensionsMenuViewController::OpenMainPage() {
   auto main_page = std::make_unique<ExtensionsMenuMainPageView>(browser_, this);
@@ -487,7 +485,7 @@ void ExtensionsMenuViewController::OnDismissExtensionClicked(
   CHECK(permissions_manager);
   content::WebContents* web_contents = GetActiveWebContents();
   int tab_id = extensions::ExtensionTabUtil::GetTabId(web_contents);
-  permissions_manager->UserDismissedSiteAccessRequest(web_contents, tab_id,
+  permissions_manager->UserDismissedHostAccessRequest(web_contents, tab_id,
                                                       extension_id);
 
   base::RecordAction(base::UserMetricsAction(
@@ -575,7 +573,15 @@ void ExtensionsMenuViewController::UpdateMainPage(
     ExtensionsMenuMainPageView* main_page,
     content::WebContents* web_contents) {
   CHECK(web_contents);
-
+  auto has_enterprise_extensions = [&]() {
+    return std::any_of(
+        toolbar_model_->action_ids().begin(),
+        toolbar_model_->action_ids().end(),
+        [this](const ToolbarActionsModel::ActionId extension_id) {
+          auto* extension = GetExtension(browser_, extension_id);
+          return HasEnterpriseForcedAccess(*extension, *browser_->profile());
+        });
+  };
   auto reload_required = [web_contents]() {
     return extensions::TabHelper::FromWebContents(web_contents)
         ->IsReloadRequired();
@@ -585,6 +591,7 @@ void ExtensionsMenuViewController::UpdateMainPage(
   int site_settings_label_id;
   bool is_site_settings_toggle_visible = false;
   bool is_site_settings_toggle_on = false;
+  bool is_site_settings_tooltip_visible = false;
   bool is_reload_required = false;
   bool can_have_requests = false;
 
@@ -592,16 +599,23 @@ void ExtensionsMenuViewController::UpdateMainPage(
       GetMainPageState(*browser_->profile(), *toolbar_model_, *web_contents);
   switch (state) {
     case MainPageState::kRestrictedSite:
-    case MainPageState::kPolicyBlockedSite:
       site_settings_label_id =
           IDS_EXTENSIONS_MENU_SITE_SETTINGS_NOT_ALLOWED_LABEL;
       is_site_settings_toggle_visible = false;
       is_site_settings_toggle_on = false;
       break;
+    case MainPageState::kPolicyBlockedSite:
+      site_settings_label_id =
+          IDS_EXTENSIONS_MENU_SITE_SETTINGS_NOT_ALLOWED_LABEL;
+      is_site_settings_toggle_visible = false;
+      is_site_settings_toggle_on = false;
+      is_site_settings_tooltip_visible = has_enterprise_extensions();
+      break;
     case MainPageState::kUserBlockedSite:
       site_settings_label_id = IDS_EXTENSIONS_MENU_SITE_SETTINGS_LABEL;
       is_site_settings_toggle_visible = true;
       is_site_settings_toggle_on = false;
+      is_site_settings_tooltip_visible = has_enterprise_extensions();
       is_reload_required = reload_required();
       break;
     case MainPageState::kUserCustomizedSite:
@@ -613,9 +627,9 @@ void ExtensionsMenuViewController::UpdateMainPage(
       break;
   }
 
-  main_page->UpdateSiteSettings(current_site, site_settings_label_id,
-                                is_site_settings_toggle_visible,
-                                is_site_settings_toggle_on);
+  main_page->UpdateSiteSettings(
+      current_site, site_settings_label_id, is_site_settings_tooltip_visible,
+      is_site_settings_toggle_visible, is_site_settings_toggle_on);
 
   if (is_reload_required) {
     main_page->ShowReloadSection();
@@ -627,7 +641,7 @@ void ExtensionsMenuViewController::UpdateMainPage(
         SortExtensionsByName(*toolbar_model_);
 
     for (const auto& extension_id : extension_ids) {
-      if (permissions_manager->HasActiveSiteAccessRequest(tab_id,
+      if (permissions_manager->HasActiveHostAccessRequest(tab_id,
                                                           extension_id)) {
         AddOrUpdateExtensionRequestingAccess(main_page, extension_id, index,
                                              web_contents);
@@ -816,7 +830,7 @@ void ExtensionsMenuViewController::OnShowAccessRequestsInToolbarChanged(
   }
 }
 
-void ExtensionsMenuViewController::OnSiteAccessRequestDismissedByUser(
+void ExtensionsMenuViewController::OnHostAccessRequestDismissedByUser(
     const extensions::ExtensionId& extension_id,
     const url::Origin& origin) {
   DCHECK(current_page_);
@@ -835,7 +849,7 @@ void ExtensionsMenuViewController::OnSiteAccessRequestDismissedByUser(
   main_page->MaybeShowRequestsSection();
 }
 
-void ExtensionsMenuViewController::OnSiteAccessRequestAdded(
+void ExtensionsMenuViewController::OnHostAccessRequestAdded(
     const extensions::ExtensionId& extension_id,
     int tab_id) {
   DCHECK(current_page_);
@@ -856,7 +870,7 @@ void ExtensionsMenuViewController::OnSiteAccessRequestAdded(
   // Add the request iff it's an active one.
   auto* permissions_manager =
       extensions::PermissionsManager::Get(browser_->profile());
-  if (permissions_manager->HasActiveSiteAccessRequest(tab_id, extension_id)) {
+  if (permissions_manager->HasActiveHostAccessRequest(tab_id, extension_id)) {
     // TODO(crbug.com/330588494): Add to correct index based on alphabetic
     // order.
     int index = 0;
@@ -866,7 +880,7 @@ void ExtensionsMenuViewController::OnSiteAccessRequestAdded(
   }
 }
 
-void ExtensionsMenuViewController::OnSiteAccessRequestUpdated(
+void ExtensionsMenuViewController::OnHostAccessRequestUpdated(
     const extensions::ExtensionId& extension_id,
     int tab_id) {
   DCHECK(current_page_);
@@ -887,7 +901,7 @@ void ExtensionsMenuViewController::OnSiteAccessRequestUpdated(
   // Update the request iff it's an active one.
   auto* permissions_manager =
       extensions::PermissionsManager::Get(browser_->profile());
-  if (permissions_manager->HasActiveSiteAccessRequest(tab_id, extension_id)) {
+  if (permissions_manager->HasActiveHostAccessRequest(tab_id, extension_id)) {
     // TODO(crbug.com/330588494): Add to correct index based on alphabetic
     // order.
     int index = 0;
@@ -902,7 +916,7 @@ void ExtensionsMenuViewController::OnSiteAccessRequestUpdated(
   main_page->MaybeShowRequestsSection();
 }
 
-void ExtensionsMenuViewController::OnSiteAccessRequestRemoved(
+void ExtensionsMenuViewController::OnHostAccessRequestRemoved(
     const extensions::ExtensionId& extension_id,
     int tab_id) {
   DCHECK(current_page_);
@@ -924,7 +938,7 @@ void ExtensionsMenuViewController::OnSiteAccessRequestRemoved(
   main_page->MaybeShowRequestsSection();
 }
 
-void ExtensionsMenuViewController::OnSiteAccessRequestsCleared(int tab_id) {
+void ExtensionsMenuViewController::OnHostAccessRequestsCleared(int tab_id) {
   DCHECK(current_page_);
 
   // Ignore requests for other tabs.

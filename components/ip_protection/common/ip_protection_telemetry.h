@@ -5,13 +5,17 @@
 #ifndef COMPONENTS_IP_PROTECTION_COMMON_IP_PROTECTION_TELEMETRY_H_
 #define COMPONENTS_IP_PROTECTION_COMMON_IP_PROTECTION_TELEMETRY_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 
 #include "base/time/time.h"
-#include "components/ip_protection/common/ip_protection_data_types.h"
-#include "net/base/proxy_chain.h"
 
 namespace ip_protection {
+
+enum class TryGetAuthTokensResult;
+enum class TryGetAuthTokensAndroidResult;
+enum class ProxyLayer;
 
 // An enumeration of the eligibility finding for use with
 // `UmaHistogramEnumeration`. These values are persisted to logs. Entries should
@@ -137,6 +141,10 @@ class IpProtectionTelemetry {
   // `IpProtectionConfigGetter::TryGetAuthTokens` until `OnGotAuthTokens`.
   virtual void TokenBatchGenerationComplete(base::TimeDelta duration) = 0;
 
+  // Record the `base::PersistentHash` of an error string that resulted from a
+  // TryGetAuthTokens call.
+  virtual void TryGetAuthTokensError(uint32_t hash) = 0;
+
   // Whether tokens already exist for a new geo, as measured when current geo
   // changes.
   virtual void GeoChangeTokenPresence(bool) = 0;
@@ -159,6 +167,14 @@ class IpProtectionTelemetry {
   // MDL is fully loaded/updated (with any exclusions applied).
   virtual void MdlEstimatedMemoryUsage(size_t) = 0;
 
+  // The estimated disk usage of the MDL, in KB. This is emitted only for the
+  // disk-based data structure, and only after the MDL is fully loaded/updated.
+  // This is measured for all types of MDLs.
+  virtual void MdlEstimatedDiskUsage(int64_t) = 0;
+
+  // The size of the MDL protobuf data, in KB.
+  virtual void MdlSize(int64_t) = 0;
+
   // Time taken to create an Android IP Protection auth client, including
   // binding to the system-provided auth service.
   virtual void AndroidAuthClientCreationTime(base::TimeDelta duration) = 0;
@@ -175,6 +191,9 @@ class IpProtectionTelemetry {
   // Delay between the MDL manager being created and UpdateMaskedDomainList
   // first being called.
   virtual void MdlFirstUpdateTime(base::TimeDelta duration) = 0;
+
+  // Time taken to for a `MaskedDomainListManager::Matches` call.
+  virtual void MdlMatchesTime(base::TimeDelta duration) = 0;
 };
 
 // Get the singleton instance of this type. This will be implemented by each

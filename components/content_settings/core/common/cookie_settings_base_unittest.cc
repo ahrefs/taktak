@@ -80,7 +80,11 @@ class CallbackCookieSettings : public CookieSettingsBase {
     return false;
   }
 
-  bool ShouldBlockThirdPartyCookies() const override { return false; }
+  bool ShouldBlockThirdPartyCookies(
+      base::optional_ref<const url::Origin> top_frame_origin,
+      net::CookieSettingOverrides overrides) const override {
+    return Are3pcsForceDisabledByOverride(overrides);
+  }
   bool MitigationsEnabledFor3pcd() const override { return false; }
 
   bool IsThirdPartyCookiesAllowedScheme(
@@ -91,13 +95,11 @@ class CallbackCookieSettings : public CookieSettingsBase {
   bool ShouldIgnoreSameSiteRestrictions(
       const GURL& url,
       const net::SiteForCookies& site_for_cookies) const override {
-    NOTREACHED_IN_MIGRATION();
-    return false;
+    NOTREACHED();
   }
 
  private:
   GetSettingCallback callback_;
-  ContentSettingsType type_;
 };
 
 class CookieSettingsBaseTest : public testing::Test {

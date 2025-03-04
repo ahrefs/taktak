@@ -25,7 +25,6 @@
 
 #include "base/files/file_path.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "util/file/file_io.h"
 
 #if !BUILDFLAG(IS_FUCHSIA)
@@ -373,6 +372,9 @@ class CrashpadClient {
   //!     Arguments passed in other parameters and arguments required to perform
   //!     the handshake are the responsibility of this method, and must not be
   //!     specified in this parameter.
+  //! \param[in] attachments Attachment paths to pass to the Crashpad handler.
+  //!     The handler will be started with an `--attachment` argument for each
+  //!     path in this vector.
   //!
   //! \return `true` on success, `false` on failure with a message logged.
   bool StartHandlerAtCrash(
@@ -796,7 +798,7 @@ class CrashpadClient {
   static void UseSystemDefaultHandler();
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   //! \brief Sets a timestamp on the signal handler to be passed on to
   //!     crashpad_handler and then eventually Chrome OS's crash_reporter.
   //!
@@ -807,7 +809,7 @@ class CrashpadClient {
 #endif
 
  private:
-#if BUILDFLAG(IS_WIN)
+#if BUILDFLAG(IS_WIN) || DOXYGEN
   //!  \brief Registers process handlers for the client.
   void RegisterHandlers();
 #endif

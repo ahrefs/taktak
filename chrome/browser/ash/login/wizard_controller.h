@@ -324,7 +324,9 @@ class WizardController : public OobeUI::Observer {
   void ShowAssistantOptInFlowScreen();
   void ShowMultiDeviceSetupScreen();
   void ShowGestureNavigationScreen();
-  void ShowPinSetupScreen();
+  void ShowPinSetupScreenAsSecondaryFactor();
+  void ShowPinSetupScreenAsMainFactor();
+  void ShowPinSetupScreenForRecovery();
   void ShowMarketingOptInScreen();
   void ShowPackagedLicenseScreen();
   void ShowEduCoexistenceLoginScreen();
@@ -574,6 +576,9 @@ class WizardController : public OobeUI::Observer {
   // Aborts Quick Start if the flow is ongoing.
   void MaybeAbortQuickStartFlow(
       quick_start::QuickStartController::AbortFlowReason reason);
+
+  // Tries to enable pre-consent metrics.
+  void MaybeEnablePreConsentMetrics();
 
   std::unique_ptr<policy::AutoEnrollmentController> auto_enrollment_controller_;
   std::unique_ptr<ChoobeFlowController> choobe_flow_controller_;

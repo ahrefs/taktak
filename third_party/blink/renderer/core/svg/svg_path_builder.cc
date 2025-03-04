@@ -24,7 +24,7 @@
 #include "third_party/blink/renderer/core/svg/svg_path_builder.h"
 
 #include "base/notreached.h"
-#include "third_party/blink/renderer/platform/graphics/path.h"
+#include "third_party/blink/renderer/platform/geometry/path.h"
 
 namespace blink {
 
@@ -177,7 +177,7 @@ void SVGPathBuilder::EmitSegment(const PathSegmentData& segment) {
                 segment.LargeArcFlag(), segment.SweepFlag());
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   last_command_ = segment.command;

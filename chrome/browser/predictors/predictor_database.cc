@@ -90,20 +90,20 @@ PredictorDatabaseInternal::PredictorDatabaseInternal(
     Profile* profile,
     scoped_refptr<base::SequencedTaskRunner> db_task_runner)
     : db_path_(profile->GetPath().Append(kPredictorDatabaseName)),
-      db_(std::make_unique<sql::Database>(sql::DatabaseOptions{
-          .page_size = 4096,
-          .cache_size = 500,
-          // TODO(pwnall): Add a meta table and remove this option.
-          .mmap_alt_status_discouraged = true,
-          .enable_views_discouraged = true,  // Required by mmap_alt_status.
-      })),
+      db_(std::make_unique<sql::Database>(
+          sql::DatabaseOptions()
+              .set_preload(base::FeatureList::IsEnabled(
+                  sql::features::kPreOpenPreloadDatabase))
+              // TODO(pwnall): Add a meta table and remove this option.
+              .set_mmap_alt_status_discouraged(true)
+              .set_enable_views_discouraged(
+                  true),  // Required by mmap_alt_status.
+          sql::Database::Tag("Predictor"))),
       db_task_runner_(db_task_runner),
       autocomplete_table_(
           new AutocompleteActionPredictorTable(db_task_runner_)),
       resource_prefetch_tables_(
           new ResourcePrefetchPredictorTables(db_task_runner_)) {
-  db_->set_histogram_tag("Predictor");
-
   is_loading_predictor_enabled_ = IsLoadingPredictorEnabled(profile);
 }
 
@@ -117,7 +117,13 @@ PredictorDatabaseInternal::~PredictorDatabaseInternal() {
   }
   // The connection pointer needs to be deleted on the DB sequence since there
   // might be a task in progress on the DB sequence which uses this connection.
-  db_task_runner_->DeleteSoon(FROM_HERE, db_.release());
+  db_task_runner_->PostTask(
+      FROM_HERE, base::BindOnce(&AutocompleteActionPredictorTable::ResetDB,
+                                autocomplete_table_));
+  db_task_runner_->PostTask(
+      FROM_HERE, base::BindOnce(&ResourcePrefetchPredictorTables::ResetDB,
+                                resource_prefetch_tables_));
+  db_task_runner_->DeleteSoon(FROM_HERE, std::move(db_));
 }
 
 void PredictorDatabaseInternal::Initialize() {
@@ -128,7 +134,9 @@ void PredictorDatabaseInternal::Initialize() {
   }
 
   bool success = db_->Open(db_path_);
-  db_->Preload();
+  if (!base::FeatureList::IsEnabled(sql::features::kPreOpenPreloadDatabase)) {
+    db_->Preload();
+  }
 
   if (!success) {
     return;
@@ -170,7 +178,7 @@ PredictorDatabase::PredictorDatabase(
       FROM_HERE, base::BindOnce(&PredictorDatabaseInternal::Initialize, db_));
 }
 
-PredictorDatabase::~PredictorDatabase() {}
+PredictorDatabase::~PredictorDatabase() = default;
 
 void PredictorDatabase::Shutdown() {
   db_->SetCancelled();

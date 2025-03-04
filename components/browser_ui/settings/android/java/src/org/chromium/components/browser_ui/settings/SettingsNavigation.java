@@ -4,23 +4,26 @@
 
 package org.chromium.components.browser_ui.settings;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.IntDef;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /** Interface for navigating Settings. */
+@NullMarked
 public interface SettingsNavigation {
     @IntDef({
         SettingsFragment.MAIN,
         SettingsFragment.CLEAR_BROWSING_DATA,
-        SettingsFragment.CLEAR_BROWSING_DATA_ADVANCED_PAGE,
         SettingsFragment.PAYMENT_METHODS,
         SettingsFragment.SAFETY_CHECK,
         SettingsFragment.SITE,
@@ -36,24 +39,22 @@ public interface SettingsNavigation {
         int MAIN = 0;
         /// Browsing Data management.
         int CLEAR_BROWSING_DATA = 1;
-        /// Advanced page of browsing data management.
-        int CLEAR_BROWSING_DATA_ADVANCED_PAGE = 2;
         /// Payment methods and autofill settings.
-        int PAYMENT_METHODS = 3;
+        int PAYMENT_METHODS = 2;
         /// Safety check, automatically running the action.
-        int SAFETY_CHECK = 4;
+        int SAFETY_CHECK = 3;
         /// Site settings and permissions.
-        int SITE = 5;
+        int SITE = 4;
         /// Accessibility settings.
-        int ACCESSIBILITY = 6;
+        int ACCESSIBILITY = 5;
         /// Password settings.
-        int PASSWORDS = 7;
+        int PASSWORDS = 6;
         /// Google services.
-        int GOOGLE_SERVICES = 8;
+        int GOOGLE_SERVICES = 7;
         /// Manage sync.
-        int MANAGE_SYNC = 9;
+        int MANAGE_SYNC = 8;
         /// Financial accounts.
-        int FINANCIAL_ACCOUNTS = 10;
+        int FINANCIAL_ACCOUNTS = 9;
     }
 
     /**
@@ -126,11 +127,30 @@ public interface SettingsNavigation {
     /**
      * Finishes the current settings.
      *
-     * <p>Call this method when the user is done with the current fragment and should go back to the
-     * previous fragment (e.g. selected a language from the language list). If the given fragment is
-     * not the current one, this method does nothing.
+     * <p>Call this method when the user is done with the current settings page and should go back
+     * to the previous page (e.g. selected a language from the language list).
+     *
+     * <p>If the given page is not the current one, or the page is already finished, this method
+     * does nothing. In other words, this method is idempotent.
+     *
+     * <p>This method executes navigations asynchronously. It means that it is safe to call this
+     * method on the UI thread in most cases, particularly even in the middle of executing fragment
+     * transactions. On the other hand, you have to be careful when you want to go back multiple
+     * pages using this method; it may not work as you expect to call this method multiple times in
+     * a row because the subsequent method calls are ignored due to fragment mismatch. Use {@link
+     * executePendingNavigations} to synchronously execute pending navigations to work around this
+     * problem.
      *
      * @param fragment The expected current fragment.
      */
     void finishCurrentSettings(Fragment fragment);
+
+    /**
+     * Executes pending navigations immediately.
+     *
+     * <p>See {@link finishCurrentSettings} for a valid use case of this method.
+     *
+     * @param activity The settings activity.
+     */
+    void executePendingNavigations(Activity activity);
 }

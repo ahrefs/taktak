@@ -50,6 +50,7 @@
 #include "base/numerics/checked_math.h"
 #include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
+#include "skia/ext/skia_utils_base.h"
 #include "third_party/blink/renderer/platform/graphics/bitmap_image_metrics.h"
 #include "third_party/skia/include/core/SkColorSpace.h"
 #include "third_party/skia/include/private/SkJpegMetadataDecoder.h"
@@ -57,6 +58,7 @@
 extern "C" {
 #include <setjmp.h>
 #include <stdio.h>  // jpeglib.h needs stdio FILE.
+
 #include "jpeglib.h"
 }
 
@@ -291,9 +293,8 @@ class JPEGImageReader final {
       UpdateRestartPosition();
     }
 
-    const char* segment;
-    const size_t bytes = data_->GetSomeData(segment, next_read_position_);
-    if (bytes == 0) {
+    base::span<const uint8_t> segment = data_->GetSomeData(next_read_position_);
+    if (segment.empty()) {
       // We had to suspend. When we resume, we will need to start from the
       // restart position.
       needs_restart_ = true;
@@ -301,9 +302,9 @@ class JPEGImageReader final {
       return false;
     }
 
-    next_read_position_ += bytes;
-    info_.src->bytes_in_buffer = bytes;
-    const JOCTET* next_byte = reinterpret_cast_ptr<const JOCTET*>(segment);
+    next_read_position_ += segment.size();
+    info_.src->bytes_in_buffer = segment.size();
+    auto* next_byte = reinterpret_cast_ptr<const JOCTET*>(segment.data());
     info_.src->next_input_byte = next_byte;
     last_set_byte_ = next_byte;
     return true;
@@ -476,8 +477,8 @@ class JPEGImageReader final {
           sk_sp<SkData> profile_data =
               metadata_decoder_->getICCProfileData(/*copyData=*/false);
           if (profile_data) {
-            std::unique_ptr<ColorProfile> profile = ColorProfile::Create(
-                base::span(profile_data->bytes(), profile_data->size()));
+            std::unique_ptr<ColorProfile> profile =
+                ColorProfile::Create(skia::as_byte_span(*profile_data));
             if (profile) {
               uint32_t data_color_space =
                   profile->GetProfile()->data_color_space;
@@ -1255,10 +1256,8 @@ bool JPEGImageDecoder::OutputScanlines() {
     case JCS_CMYK:
       return OutputRows<JCS_CMYK>(reader_.get(), buffer);
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
-
-  return SetFailed();
 }
 
 void JPEGImageDecoder::Complete() {

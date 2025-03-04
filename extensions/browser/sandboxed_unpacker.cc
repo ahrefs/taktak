@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "extensions/browser/sandboxed_unpacker.h"
 
 #include <stddef.h>
@@ -19,6 +14,7 @@
 #include <vector>
 
 #include "base/command_line.h"
+#include "base/containers/to_vector.h"
 #include "base/files/file_enumerator.h"
 #include "base/files/file_util.h"
 #include "base/functional/bind.h"
@@ -86,8 +82,9 @@ base::FilePath NormalizeFilePath(const base::FilePath& path) {
 // Work horse for FindWritableTempLocation. Creates a temp file in the folder
 // tries to normalize the path.
 bool VerifyWritableTempLocation(base::FilePath* temp_dir) {
-  if (temp_dir->empty())
+  if (temp_dir->empty()) {
     return false;
+  }
 
   base::FilePath temp_file;
   if (!base::CreateTemporaryFileInDir(*temp_dir, &temp_file)) {
@@ -256,8 +253,7 @@ void SandboxedUnpackerClient::ShouldComputeHashesForOffWebstoreExtension(
 
 void SandboxedUnpackerClient::GetContentVerifierKey(
     base::OnceCallback<void(ContentVerifierKey)> callback) {
-  std::move(callback).Run(ContentVerifierKey(kWebstoreSignaturesPublicKey,
-                                             kWebstoreSignaturesPublicKeySize));
+  std::move(callback).Run(kWebstoreSignaturesPublicKey);
 }
 
 SandboxedUnpacker::ScopedVerifierFormatOverrideForTest::
@@ -327,8 +323,9 @@ void SandboxedUnpacker::StartWithCrx(const CRXFileInfo& crx_info) {
     expected_hash = base::ToLowerASCII(crx_info.expected_hash);
   }
 
-  if (!CreateTempDirectory())
+  if (!CreateTempDirectory()) {
     return;  // ReportFailure() already called.
+  }
 
   // Initialize the path that will eventually contain the unpacked extension.
   extension_root_ = temp_dir_.GetPath().AppendASCII(kTempExtensionName);
@@ -382,8 +379,9 @@ void SandboxedUnpacker::StartWithDirectory(const ExtensionId& extension_id,
 
   extension_id_ = extension_id;
   public_key_ = public_key;
-  if (!CreateTempDirectory())
+  if (!CreateTempDirectory()) {
     return;  // ReportFailure() already called.
+  }
 
   extension_root_ = temp_dir_.GetPath().AppendASCII(kTempExtensionName);
 
@@ -460,8 +458,7 @@ void SandboxedUnpacker::OnVerifiedContentsUncompressed(
   }
   // Make a copy, since |result| may store data in shared memory, accessible by
   // some other processes.
-  std::vector<uint8_t> verified_contents(result->data(),
-                                         result->data() + result->size());
+  std::vector<uint8_t> verified_contents = base::ToVector(*result);
 
   client_->GetContentVerifierKey(
       base::BindOnce(&SandboxedUnpacker::StoreVerifiedContentsInExtensionDir,
@@ -557,8 +554,9 @@ void SandboxedUnpacker::UnpackExtensionSucceeded(base::Value::Dict manifest) {
 
   std::optional<base::Value::Dict> final_manifest(
       RewriteManifestFile(manifest));
-  if (!final_manifest)
+  if (!final_manifest) {
     return;
+  }
 
   // Create an extension object that refers to the temporary location the
   // extension was unpacked to. We use this until the extension is finally
@@ -621,8 +619,9 @@ data_decoder::DataDecoder* SandboxedUnpacker::GetDataDecoder() {
 
 void SandboxedUnpacker::OnImageDecoded(const base::FilePath& path,
                                        SkBitmap image) {
-  if (path == install_icon_path_)
+  if (path == install_icon_path_) {
     install_icon_ = image;
+  }
 }
 
 void SandboxedUnpacker::OnImageSanitizationDone(
@@ -669,8 +668,7 @@ void SandboxedUnpacker::OnImageSanitizationDone(
                                          u"ERROR_SAVING_THEME_IMAGE");
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   ReportFailure(failure_reason, error);
@@ -735,8 +733,7 @@ void SandboxedUnpacker::MessageCatalogsSanitized(
                                          u"ERROR_SAVING_CATALOG");
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   ReportFailure(failure_reason, error);
@@ -769,8 +766,9 @@ void SandboxedUnpacker::OnJSONRulesetsIndexed(RulesetParseResult result) {
     return;
   }
 
-  if (!result.warnings.empty())
+  if (!result.warnings.empty()) {
     extension_->AddInstallWarnings(std::move(result.warnings));
+  }
 
   ruleset_install_prefs_ = std::move(result.ruleset_install_prefs);
 
@@ -919,8 +917,7 @@ std::u16string SandboxedUnpacker::FailureReasonToString16(
     case SandboxedUnpackerFailureReason::DEPRECATED_ERROR_PARSING_DNR_RULESET:
     case SandboxedUnpackerFailureReason::NUM_FAILURE_REASONS:
     default:
-      NOTREACHED_IN_MIGRATION();
-      return std::u16string();
+      NOTREACHED();
   }
 }
 

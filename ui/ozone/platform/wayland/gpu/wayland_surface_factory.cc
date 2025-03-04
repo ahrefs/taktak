@@ -203,18 +203,10 @@ WaylandSurfaceFactory::CreateCanvasForWidget(gfx::AcceleratedWidget widget) {
   return std::make_unique<WaylandCanvasSurface>(buffer_manager_, widget);
 }
 
-bool WaylandSurfaceFactory::SupportsOverlays() {
-  return buffer_manager_->supports_overlays();
-}
-
 std::vector<gl::GLImplementationParts>
 WaylandSurfaceFactory::GetAllowedGLImplementations() {
   std::vector<gl::GLImplementationParts> impls;
   if (egl_implementation_) {
-    // Allow for Angle-vulkan implementation.
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-    impls.emplace_back(gl::kGLImplementationEGLANGLE);
-#endif
     impls.emplace_back(gl::ANGLEImplementation::kOpenGL);
     impls.emplace_back(gl::ANGLEImplementation::kOpenGLES);
     impls.emplace_back(gl::ANGLEImplementation::kSwiftShader);

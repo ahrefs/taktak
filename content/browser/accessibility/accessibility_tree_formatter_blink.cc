@@ -12,6 +12,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
+#include "base/strings/to_string.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/values.h"
 #include "ui/accessibility/ax_enums.mojom.h"
@@ -68,9 +69,7 @@ std::string IntAttrToString(const ui::AXNode& node,
                             int32_t value) {
   if (ui::IsNodeIdIntAttribute(attr)) {
     // Relation
-    ui::AXTreeID tree_id = node.tree()->GetAXTreeID();
-    ui::AXNode* target =
-        ui::AXTreeManager::FromID(tree_id)->GetNodeFromTree(tree_id, value);
+    const ui::AXNode* target = node.tree()->GetFromId(value);
     if (!target) {
       return "null";
     }
@@ -265,8 +264,7 @@ base::Value::Dict AccessibilityTreeFormatterBlink::BuildTree(
 
 base::Value::Dict AccessibilityTreeFormatterBlink::BuildTreeForSelector(
     const AXTreeSelector& selector) const {
-  NOTREACHED_IN_MIGRATION();
-  return base::Value::Dict();
+  NOTREACHED();
 }
 
 base::Value::Dict AccessibilityTreeFormatterBlink::BuildTreeForNode(
@@ -758,7 +756,7 @@ std::string AccessibilityTreeFormatterBlink::ProcessTreeForOutput(
     }
     WriteAttribute(false,
                    base::StringPrintf("%s=%s", ui::ToString(attr),
-                                      *bool_value ? "true" : "false"),
+                                      base::ToString(*bool_value)),
                    &line);
   }
 
@@ -834,8 +832,7 @@ std::string AccessibilityTreeFormatterBlink::ProcessTreeForOutput(
             &line);
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
     }
   }
 

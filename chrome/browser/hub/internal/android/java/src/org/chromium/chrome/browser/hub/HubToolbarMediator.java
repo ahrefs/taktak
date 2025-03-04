@@ -5,33 +5,43 @@
 package org.chromium.chrome.browser.hub;
 
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.ACTION_BUTTON_DATA;
+import static org.chromium.chrome.browser.hub.HubToolbarProperties.APPLY_DELAY_FOR_SEARCH_BOX_ANIMATION;
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.COLOR_SCHEME;
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.IS_INCOGNITO;
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.MENU_BUTTON_VISIBLE;
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.PANE_BUTTON_LOOKUP_CALLBACK;
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.PANE_SWITCHER_BUTTON_DATA;
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.PANE_SWITCHER_INDEX;
-import static org.chromium.chrome.browser.hub.HubToolbarProperties.SEARCH_BOX_LISTENER;
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.SEARCH_BOX_VISIBLE;
+import static org.chromium.chrome.browser.hub.HubToolbarProperties.SEARCH_LISTENER;
+import static org.chromium.chrome.browser.hub.HubToolbarProperties.SEARCH_LOUPE_VISIBLE;
 import static org.chromium.chrome.browser.hub.HubToolbarProperties.SHOW_ACTION_BUTTON_TEXT;
+import static org.chromium.chrome.browser.hub.HubToolbarProperties.TOOLBAR_OVERVIEW_COLOR_SETTER;
 
-import android.app.Activity;
+import android.content.ComponentCallbacks;
+import android.content.Context;
+import android.content.res.Configuration;
 import android.view.View;
 
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.core.util.Pair;
 
 import org.chromium.base.Callback;
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.base.supplier.ObservableSupplier;
+import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.base.supplier.TransitiveObservableSupplier;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.hub.HubToolbarProperties.PaneButtonLookup;
 import org.chromium.chrome.browser.ui.searchactivityutils.SearchActivityClient;
-import org.chromium.chrome.browser.ui.searchactivityutils.SearchActivityExtras.IntentOrigin;
+import org.chromium.chrome.browser.ui.searchactivityutils.SearchActivityExtras.ResolutionType;
 import org.chromium.components.embedder_support.util.UrlConstants;
 import org.chromium.components.feature_engagement.Tracker;
+import org.chromium.components.omnibox.OmniboxFeatures;
+import org.chromium.ui.base.DeviceFormFactor;
 import org.chromium.ui.modelutil.PropertyModel;
 import org.chromium.url.GURL;
 
@@ -41,15 +51,65 @@ import java.util.Objects;
 
 /** Logic for the toolbar of the Hub. */
 public class HubToolbarMediator {
+    // These values are persisted to logs. Entries should not be renumbered and numeric values
+    // should never be reused.
+    // LINT.IfChange(HubSearchEntrypoint)
+    @IntDef({
+        HubSearchEntrypoint.REGULAR_SEARCHBOX,
+        HubSearchEntrypoint.INCOGNITO_SEARCHBOX,
+        HubSearchEntrypoint.REGULAR_LOUPE,
+        HubSearchEntrypoint.INCOGNITO_LOUPE,
+        HubSearchEntrypoint.NUM_ENTRIES
+    })
+    public @interface HubSearchEntrypoint {
+        int REGULAR_SEARCHBOX = 0;
+        int INCOGNITO_SEARCHBOX = 1;
+        int REGULAR_LOUPE = 2;
+        int INCOGNITO_LOUPE = 3;
+
+        // Be sure to also update enums.xml when updating these values.
+        int NUM_ENTRIES = 4;
+    }
+
+    // LINT.ThenChange(/tools/metrics/histograms/metadata/android/enums.xml:HubSearchEntrypoint)
+
     private static final int INVALID_PANE_SWITCHER_INDEX = -1;
 
-    private final @NonNull Activity mActivity;
+    private final ComponentCallbacks mComponentCallbacks =
+            new ComponentCallbacks() {
+                @Override
+                public void onConfigurationChanged(@NonNull Configuration configuration) {
+                    // Only show the search box visuals in the tab switcher and incognito panes.
+                    @PaneId
+                    int focusedPaneId = mPaneManager.getFocusedPaneSupplier().get().getPaneId();
+                    if (focusedPaneId != PaneId.TAB_SWITCHER
+                            && focusedPaneId != PaneId.INCOGNITO_TAB_SWITCHER) {
+                        mPropertyModel.set(APPLY_DELAY_FOR_SEARCH_BOX_ANIMATION, true);
+                        mPropertyModel.set(SEARCH_BOX_VISIBLE, false);
+                        mPropertyModel.set(SEARCH_LOUPE_VISIBLE, false);
+                        return;
+                    }
+
+                    int screenWidthDp = mContext.getResources().getConfiguration().screenWidthDp;
+                    boolean showLoupe = isScreenWidthTablet(screenWidthDp);
+                    mPropertyModel.set(APPLY_DELAY_FOR_SEARCH_BOX_ANIMATION, false);
+                    mPropertyModel.set(SEARCH_BOX_VISIBLE, !showLoupe);
+                    mPropertyModel.set(SEARCH_LOUPE_VISIBLE, showLoupe);
+
+                    updateShowActionButtonText();
+                }
+
+                @Override
+                public void onLowMemory() {}
+            };
+
     private final @NonNull PropertyModel mPropertyModel;
 
     private final @NonNull Callback<FullButtonData> mOnActionButtonChangeCallback =
             this::onActionButtonChange;
     private @Nullable TransitiveObservableSupplier<Pane, FullButtonData> mActionButtonDataSupplier;
 
+    private final @NonNull Context mContext;
     private final @NonNull PaneManager mPaneManager;
     private final @NonNull Tracker mTracker;
     private final @NonNull SearchActivityClient mSearchActivityClient;
@@ -67,12 +127,13 @@ public class HubToolbarMediator {
 
     /** Creates the mediator. */
     public HubToolbarMediator(
-            @NonNull Activity activity,
+            @NonNull Context context,
             @NonNull PropertyModel propertyModel,
             @NonNull PaneManager paneManager,
             @NonNull Tracker tracker,
-            @NonNull SearchActivityClient searchActivityClient) {
-        mActivity = activity;
+            @NonNull SearchActivityClient searchActivityClient,
+            @NonNull ObservableSupplierImpl<Integer> hubToolbarOverviewColorSupplier) {
+        mContext = context;
         mPropertyModel = propertyModel;
         mPaneManager = paneManager;
         mTracker = tracker;
@@ -99,17 +160,20 @@ public class HubToolbarMediator {
         focusedPaneSupplier.addObserver(mOnFocusedPaneChange);
         rebuildPaneSwitcherButtonData();
 
-        if (!HubFieldTrial.usesFloatActionButton()) {
-            mActionButtonDataSupplier =
-                    new TransitiveObservableSupplier<>(
-                            focusedPaneSupplier, p -> p.getActionButtonDataSupplier());
-            mActionButtonDataSupplier.addObserver(mOnActionButtonChangeCallback);
-        }
+        mActionButtonDataSupplier =
+                new TransitiveObservableSupplier<>(
+                        focusedPaneSupplier, p -> p.getActionButtonDataSupplier());
+        mActionButtonDataSupplier.addObserver(mOnActionButtonChangeCallback);
 
         mPropertyModel.set(PANE_BUTTON_LOOKUP_CALLBACK, this::consumeButtonLookup);
 
-        mPropertyModel.set(SEARCH_BOX_VISIBLE, ChromeFeatureList.sAndroidHubSearch.isEnabled());
-        mPropertyModel.set(SEARCH_BOX_LISTENER, this::onSearchClicked);
+        if (OmniboxFeatures.sAndroidHubSearch.isEnabled()) {
+            mPropertyModel.set(SEARCH_LISTENER, this::onSearchClicked);
+            // Fire an event for the original setup.
+            mComponentCallbacks.onConfigurationChanged(mContext.getResources().getConfiguration());
+            mContext.registerComponentCallbacks(mComponentCallbacks);
+        }
+        mPropertyModel.set(TOOLBAR_OVERVIEW_COLOR_SETTER, hubToolbarOverviewColorSupplier::set);
     }
 
     /** Cleans up observers. */
@@ -118,9 +182,12 @@ public class HubToolbarMediator {
             mActionButtonDataSupplier.removeObserver(mOnActionButtonChangeCallback);
             mActionButtonDataSupplier = null;
         }
-        mRemoveReferenceButtonObservers.stream().forEach(r -> r.run());
+        mRemoveReferenceButtonObservers.forEach(Runnable::run);
         mRemoveReferenceButtonObservers.clear();
         mPaneManager.getFocusedPaneSupplier().removeObserver(mOnFocusedPaneChange);
+        if (OmniboxFeatures.sAndroidHubSearch.isEnabled()) {
+            mContext.unregisterComponentCallbacks(mComponentCallbacks);
+        }
     }
 
     /** Returns the button view for a given pane if present. */
@@ -186,11 +253,36 @@ public class HubToolbarMediator {
         }
         mPropertyModel.set(PANE_SWITCHER_INDEX, selectedIndex);
         mPropertyModel.set(PANE_SWITCHER_BUTTON_DATA, buttonDataList);
-        mPropertyModel.set(SHOW_ACTION_BUTTON_TEXT, buttonDataList.size() <= 1);
+        updateShowActionButtonText();
+    }
+
+    private void updateShowActionButtonText() {
+        @Nullable List<FullButtonData> buttonData = mPropertyModel.get(PANE_SWITCHER_BUTTON_DATA);
+        if (buttonData == null) return;
+
+        int screenWidthDp = mContext.getResources().getConfiguration().screenWidthDp;
+        boolean showText = shouldShowActionButtonText(buttonData.size(), screenWidthDp);
+
+        mPropertyModel.set(SHOW_ACTION_BUTTON_TEXT, showText);
+    }
+
+    private static boolean shouldShowActionButtonText(int buttonCount, int screenWidthDp) {
+        if (ChromeFeatureList.sTabSwitcherFullNewTabButton.isEnabled()) {
+            return buttonCount <= (isScreenWidthTablet(screenWidthDp) ? 3 : 2);
+        } else {
+            return buttonCount <= 1;
+        }
     }
 
     private void onFocusedPaneChange(@Nullable Pane focusedPane) {
-        mPropertyModel.set(COLOR_SCHEME, HubColors.getColorSchemeSafe(focusedPane));
+        @HubColorScheme int newColorScheme = HubColors.getColorSchemeSafe(focusedPane);
+        @HubColorScheme
+        int prevColorScheme =
+                mPropertyModel.get(COLOR_SCHEME) == null
+                        ? newColorScheme
+                        : mPropertyModel.get(COLOR_SCHEME).newColorScheme;
+
+        mPropertyModel.set(COLOR_SCHEME, new HubColorSchemeUpdate(newColorScheme, prevColorScheme));
 
         @Nullable Integer focusedPaneId = focusedPane == null ? null : focusedPane.getPaneId();
         if (focusedPaneId == null) {
@@ -198,12 +290,20 @@ public class HubToolbarMediator {
             mPropertyModel.set(MENU_BUTTON_VISIBLE, false);
             mPropertyModel.set(IS_INCOGNITO, false);
             return;
-        } else {
-            mPropertyModel.set(MENU_BUTTON_VISIBLE, focusedPane.getMenuButtonVisible());
-
-            boolean isIncognito = focusedPaneId == PaneId.INCOGNITO_TAB_SWITCHER;
-            mPropertyModel.set(IS_INCOGNITO, isIncognito);
         }
+
+        // This must be called before IS_INCOGNITO is set for all valid focused panes. This is
+        // because hub search box elements (hint text) that will be updated via incognito state
+        // changing will depend on a delay property key set in the configuration changed callback.
+        if (OmniboxFeatures.sAndroidHubSearch.isEnabled()) {
+            // Fire an event to determine what is shown.
+            mComponentCallbacks.onConfigurationChanged(mContext.getResources().getConfiguration());
+        }
+
+        mPropertyModel.set(MENU_BUTTON_VISIBLE, focusedPane.getMenuButtonVisible());
+
+        boolean isIncognito = focusedPaneId == PaneId.INCOGNITO_TAB_SWITCHER;
+        mPropertyModel.set(IS_INCOGNITO, isIncognito);
 
         int index = 0;
         for (Pair<Integer, DisplayButtonData> pair : mCachedPaneSwitcherButtonData) {
@@ -238,10 +338,40 @@ public class HubToolbarMediator {
 
     private void onSearchClicked() {
         mSearchActivityClient.requestOmniboxForResult(
-                mActivity,
-                new GURL(UrlConstants.NTP_NON_NATIVE_URL),
-                IntentOrigin.HUB,
-                null,
-                mPropertyModel.get(IS_INCOGNITO));
+                mSearchActivityClient
+                        .newIntentBuilder()
+                        .setPageUrl(new GURL(UrlConstants.NTP_NON_NATIVE_URL))
+                        .setIncognito(mPropertyModel.get(IS_INCOGNITO))
+                        .setResolutionType(ResolutionType.OPEN_IN_CHROME)
+                        .build());
+        recordHubSearchEntrypointHistogram(
+                mPropertyModel.get(SEARCH_BOX_VISIBLE), mPropertyModel.get(IS_INCOGNITO));
+    }
+
+    /** Utility to determine which UI variants to show based on device width. */
+    @VisibleForTesting
+    public static boolean isScreenWidthTablet(int screenWidthDp) {
+        return screenWidthDp >= DeviceFormFactor.MINIMUM_TABLET_WIDTH_DP;
+    }
+
+    private void recordHubSearchEntrypointHistogram(boolean isSearchBox, boolean isIncognito) {
+        // Based on the ComponentCallback#onConfigurationChanged logic for hub search, it is implied
+        // that the search box and search loupe visibilities have opposite behaviors at any time.
+        @HubSearchEntrypoint int action;
+
+        if (isIncognito) {
+            action =
+                    isSearchBox
+                            ? HubSearchEntrypoint.INCOGNITO_SEARCHBOX
+                            : HubSearchEntrypoint.INCOGNITO_LOUPE;
+        } else {
+            action =
+                    isSearchBox
+                            ? HubSearchEntrypoint.REGULAR_SEARCHBOX
+                            : HubSearchEntrypoint.REGULAR_LOUPE;
+        }
+
+        RecordHistogram.recordEnumeratedHistogram(
+                "Android.HubSearch.SearchBoxEntrypointV2", action, HubSearchEntrypoint.NUM_ENTRIES);
     }
 }

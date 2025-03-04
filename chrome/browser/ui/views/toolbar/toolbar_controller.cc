@@ -5,8 +5,11 @@
 #include "chrome/browser/ui/views/toolbar/toolbar_controller.h"
 
 #include <optional>
+#include <ranges>
 #include <string_view>
+#include <vector>
 
+#include "base/containers/adapters.h"
 #include "base/functional/overloaded.h"
 #include "base/metrics/user_metrics.h"
 #include "base/metrics/user_metrics_action.h"
@@ -16,6 +19,7 @@
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/browser_actions.h"
+#include "chrome/browser/ui/toolbar/pinned_toolbar/pinned_toolbar_actions_model.h"
 #include "chrome/browser/ui/toolbar_controller_util.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_action_callback.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_enums.h"
@@ -25,8 +29,9 @@
 #include "chrome/grit/generated_resources.h"
 #include "components/vector_icons/vector_icons.h"
 #include "ui/base/l10n/l10n_util.h"
-#include "ui/base/models/simple_menu_model.h"
 #include "ui/base/mojom/menu_source_type.mojom.h"
+#include "ui/gfx/paint_vector_icon.h"
+#include "ui/menus/simple_menu_model.h"
 #include "ui/views/controls/menu/menu_item_view.h"
 #include "ui/views/controls/menu/menu_model_adapter.h"
 #include "ui/views/controls/menu/submenu_view.h"
@@ -50,9 +55,8 @@ base::flat_map<ui::ElementIdentifier, int> CalculateFlexOrder(
 
   // Loop in reverse order to ensure the first element gets the largest flex
   // order and overflows the first.
-  for (auto it = elements_in_overflow_order.rbegin();
-       it != elements_in_overflow_order.rend(); ++it) {
-    id_to_order_map[*it] = element_flex_order_start++;
+  for (auto it : base::Reversed(elements_in_overflow_order)) {
+    id_to_order_map[it] = element_flex_order_start++;
   }
 
   return id_to_order_map;
@@ -94,13 +98,23 @@ void ToolbarController::PopOutHandler::OnElementHidden(
   controller_->EndPopOut(identifier_);
 }
 
+ToolbarController::ElementIdInfo::ElementIdInfo(
+    ui::ElementIdentifier overflow_identifier,
+    int menu_text_id,
+    raw_ptr<const gfx::VectorIcon> menu_icon,
+    ui::ElementIdentifier activate_identifier,
+    std::optional<ui::ElementIdentifier> observed_identifier)
+    : overflow_identifier(overflow_identifier),
+      menu_text_id(menu_text_id),
+      menu_icon(menu_icon),
+      activate_identifier(activate_identifier),
+      observed_identifier(observed_identifier) {}
+
 ToolbarController::ResponsiveElementInfo::ResponsiveElementInfo(
     absl::variant<ElementIdInfo, actions::ActionId> overflow_id,
-    bool is_section_end,
-    std::optional<ui::ElementIdentifier> observed_identifier)
-    : overflow_id(overflow_id),
-      is_section_end(is_section_end),
-      observed_identifier(observed_identifier) {}
+    bool is_section_end)
+    : overflow_id(overflow_id), is_section_end(is_section_end) {}
+
 ToolbarController::ResponsiveElementInfo::ResponsiveElementInfo(
     const ResponsiveElementInfo& info) = default;
 ToolbarController::ResponsiveElementInfo::~ResponsiveElementInfo() = default;
@@ -112,12 +126,14 @@ ToolbarController::ToolbarController(
     int element_flex_order_start,
     views::View* toolbar_container_view,
     OverflowButton* overflow_button,
-    ToolbarController::PinnedActionsDelegate* pinned_actions_delegate)
+    ToolbarController::PinnedActionsDelegate* pinned_actions_delegate,
+    PinnedToolbarActionsModel* pinned_actions_model)
     : responsive_elements_(responsive_elements),
       element_flex_order_start_(element_flex_order_start),
       toolbar_container_view_(toolbar_container_view),
       overflow_button_(overflow_button),
-      pinned_actions_delegate_(pinned_actions_delegate) {
+      pinned_actions_delegate_(pinned_actions_delegate),
+      pinned_actions_model_(pinned_actions_model) {
   if (ToolbarControllerUtil::PreventOverflow()) {
     return;
   }
@@ -141,7 +157,6 @@ ToolbarController::ToolbarController(
       CalculateFlexOrder(elements_in_overflow_order, element_flex_order_start);
   for (const auto& element : responsive_elements) {
     const auto& overflow_id = element.overflow_id;
-    const auto& observed_identifier = element.observed_identifier;
 
     absl::visit(
         base::Overloaded{
@@ -169,7 +184,7 @@ ToolbarController::ToolbarController(
               toolbar_element->SetProperty(views::kFlexBehaviorKey, flex_spec);
 
               // Create pop out state and pop out handlers to support pop out.
-              if (observed_identifier.has_value()) {
+              if (id.observed_identifier.has_value()) {
                 auto state = std::make_unique<PopOutState>();
                 if (original_spec) {
                   state->original_spec =
@@ -180,16 +195,20 @@ ToolbarController::ToolbarController(
                     this,
                     views::ElementTrackerViews::GetContextForView(
                         toolbar_container_view),
-                    id.overflow_identifier, observed_identifier.value());
+                    id.overflow_identifier, id.observed_identifier.value());
                 pop_out_state_[id.overflow_identifier] = std::move(state);
               }
             }},
         overflow_id);
   }
+
+  responsive_elements_ = GetResponsiveElementsWithOrderedActions();
+  pinned_actions_model_->AddObserver(this);
 }
 
 ToolbarController::~ToolbarController() {
   CloseMenu();
+  pinned_actions_model_->RemoveObserver(this);
 }
 
 std::vector<ToolbarController::ResponsiveElementInfo>
@@ -198,15 +217,18 @@ ToolbarController::GetDefaultResponsiveElements(Browser* browser) {
   // TODO(crbug.com/40912482): Fill in observed identifier.
   // Order matters because it should match overflow menu order top to bottom.
   std::vector<ToolbarController::ResponsiveElementInfo> elements = {
-      {ToolbarController::ElementIdInfo{
-           kToolbarForwardButtonElementId, IDS_OVERFLOW_MENU_ITEM_TEXT_FORWARD,
-           &vector_icons::kForwardArrowChromeRefreshIcon,
-           kToolbarForwardButtonElementId},
-       /*is_section_end=*/false},
-      {ToolbarController::ElementIdInfo{
-           kToolbarHomeButtonElementId, IDS_OVERFLOW_MENU_ITEM_TEXT_HOME,
-           &kNavigateHomeChromeRefreshIcon, kToolbarHomeButtonElementId},
-       /*is_section_end=*/true}};
+      ToolbarController::ResponsiveElementInfo(
+          ToolbarController::ElementIdInfo{
+              kToolbarForwardButtonElementId,
+              IDS_OVERFLOW_MENU_ITEM_TEXT_FORWARD,
+              &vector_icons::kForwardArrowChromeRefreshIcon,
+              kToolbarForwardButtonElementId},
+          /*is_section_end=*/false),
+      ToolbarController::ResponsiveElementInfo(
+          ToolbarController::ElementIdInfo{
+              kToolbarHomeButtonElementId, IDS_OVERFLOW_MENU_ITEM_TEXT_HOME,
+              &kNavigateHomeChromeRefreshIcon, kToolbarHomeButtonElementId},
+          /*is_section_end=*/false)};
 
   // Support actions items.
   const auto* const browser_actions = browser->browser_actions();
@@ -215,7 +237,9 @@ ToolbarController::GetDefaultResponsiveElements(Browser* browser) {
     if (root_item) {
       for (const auto& item : root_item->GetChildren().children()) {
         auto id = item->GetActionId();
-        if (item->GetProperty(actions::kActionItemPinnableKey) &&
+        if (item->GetProperty(actions::kActionItemPinnableKey) ==
+                std::underlying_type_t<actions::ActionPinnableState>(
+                    actions::ActionPinnableState::kPinnable) &&
             id.has_value()) {
           elements.emplace_back(id.value());
         }
@@ -230,37 +254,38 @@ ToolbarController::GetDefaultResponsiveElements(Browser* browser) {
 
   elements.insert(
       elements.end(),
-      {{ToolbarController::ElementIdInfo{
-            kToolbarChromeLabsButtonElementId, IDS_OVERFLOW_MENU_ITEM_TEXT_LABS,
-            &kScienceIcon, kToolbarChromeLabsButtonElementId},
-        /*is_section_end=*/false, kToolbarChromeLabsBubbleElementId},
-       {ToolbarController::ElementIdInfo{
-            kToolbarMediaButtonElementId,
-            IDS_OVERFLOW_MENU_ITEM_TEXT_MEDIA_CONTROLS,
-            &kMediaToolbarButtonChromeRefreshIcon,
-            kToolbarMediaButtonElementId},
-        /*is_section_end=*/false, kToolbarMediaBubbleElementId},
-       {ToolbarController::ElementIdInfo{
-            kToolbarDownloadButtonElementId,
-            IDS_OVERFLOW_MENU_ITEM_TEXT_DOWNLOADS,
-            &kDownloadToolbarButtonChromeRefreshIcon,
-            kToolbarDownloadButtonElementId},
-        /*is_section_end=*/true, kToolbarDownloadBubbleElementId},
-       {ToolbarController::ElementIdInfo{kToolbarNewTabButtonElementId,
-                                         IDS_OVERFLOW_MENU_ITEM_TEXT_NEW_TAB,
+      {ToolbarController::ResponsiveElementInfo(
+           ToolbarController::ElementIdInfo(kToolbarChromeLabsButtonElementId,
+                                            IDS_OVERFLOW_MENU_ITEM_TEXT_LABS,
+                                            &kScienceIcon,
+                                            kToolbarChromeLabsButtonElementId,
+                                            kToolbarChromeLabsBubbleElementId),
+           /*is_section_end=*/false),
+       ToolbarController::ResponsiveElementInfo(
+           ToolbarController::ElementIdInfo(
+               kToolbarMediaButtonElementId,
+               IDS_OVERFLOW_MENU_ITEM_TEXT_MEDIA_CONTROLS,
+               &kMediaToolbarButtonChromeRefreshIcon,
+               kToolbarMediaButtonElementId, kToolbarMediaBubbleElementId),
+           /*is_section_end=*/true),
+       ToolbarController::ResponsiveElementInfo(
+           ToolbarController::ElementIdInfo(kToolbarNewTabButtonElementId,
+                                            IDS_OVERFLOW_MENU_ITEM_TEXT_NEW_TAB,
 #if BUILDFLAG(ENABLE_WEBUI_TAB_STRIP)
-                                         &kNewTabToolbarButtonIcon,
+                                            &kNewTabToolbarButtonIcon,
 #else
-                                         nullptr,
+                                            nullptr,
 #endif  // BUILDFLAG(ENABLE_WEBUI_TAB_STRIP)
-                                         kToolbarNewTabButtonElementId},
-        /*is_section_end=*/true},
-       {ToolbarController::ElementIdInfo{
-            kToolbarAvatarButtonElementId, IDS_OVERFLOW_MENU_ITEM_TEXT_PROFILE,
-            is_incognito ? (&kIncognitoRefreshMenuIcon)
-                         : (&kUserAccountAvatarRefreshIcon),
-            kToolbarAvatarButtonElementId},
-        /*is_section_end=*/false, kToolbarAvatarBubbleElementId}});
+                                            kToolbarNewTabButtonElementId),
+           /*is_section_end=*/true),
+       ToolbarController::ResponsiveElementInfo(
+           ToolbarController::ElementIdInfo(
+               kToolbarAvatarButtonElementId,
+               IDS_OVERFLOW_MENU_ITEM_TEXT_PROFILE,
+               is_incognito ? (&kIncognitoRefreshMenuIcon)
+                            : (&kUserAccountAvatarRefreshIcon),
+               kToolbarAvatarButtonElementId, kToolbarAvatarBubbleElementId),
+           /*is_section_end=*/false)});
   return elements;
 }
 
@@ -268,9 +293,8 @@ std::vector<ui::ElementIdentifier>
 ToolbarController::GetDefaultOverflowOrder() {
   return std::vector<ui::ElementIdentifier>(
       {kToolbarHomeButtonElementId, kToolbarChromeLabsButtonElementId,
-       kToolbarMediaButtonElementId, kToolbarDownloadButtonElementId,
-       kToolbarNewTabButtonElementId, kToolbarForwardButtonElementId,
-       kToolbarAvatarButtonElementId});
+       kToolbarMediaButtonElementId, kToolbarNewTabButtonElementId,
+       kToolbarForwardButtonElementId, kToolbarAvatarButtonElementId});
 }
 
 // Every activate identifier should have an action name in order to emit
@@ -283,7 +307,6 @@ std::string ToolbarController::GetActionNameFromElementIdentifier(
       identifier_to_action_name_map({
           {kToolbarAvatarButtonElementId, "AvatarButton"},
           {kToolbarChromeLabsButtonElementId, "ChromeLabsButton"},
-          {kToolbarDownloadButtonElementId, "DownloadButton"},
           {kExtensionsMenuButtonElementId, "ExtensionsMenuButton"},
           {kToolbarForwardButtonElementId, "ForwardButton"},
           {kToolbarHomeButtonElementId, "HomeButton"},
@@ -301,6 +324,7 @@ std::string ToolbarController::GetActionNameFromElementIdentifier(
           {kActionShowAddressesBubbleOrPage,
            "PinnedShowAddressesBubbleOrPageButton"},
           {kActionShowChromeLabs, "PinnedShowChromeLabsButton"},
+          {kActionShowDownloads, "PinnedShowDownloadsButton"},
           {kActionShowPasswordsBubbleOrPage,
            "PinnedShowPasswordsBubbleOrPageButton"},
           {kActionShowPaymentsBubbleOrPage,
@@ -432,7 +456,8 @@ std::u16string ToolbarController::GetMenuText(
   return absl::visit(
       base::Overloaded{
           [this](actions::ActionId id) {
-            return pinned_actions_delegate_->GetActionItemFor(id)->GetText();
+            return std::u16string(
+                pinned_actions_delegate_->GetActionItemFor(id)->GetText());
           },
           [](ToolbarController::ElementIdInfo id) {
             return l10n_util::GetStringUTF16(id.menu_text_id);
@@ -453,10 +478,17 @@ std::optional<ui::ImageModel> ToolbarController::GetMenuIcon(
               ui::VectorIconModel vector_icon_model =
                   pinned_icon_image.GetVectorIcon();
 
-              return std::make_optional(ui::ImageModel::FromVectorIcon(
-                  *vector_icon_model.vector_icon(),
-                  vector_icon_model.color_id(),
-                  ui::SimpleMenuModel::kDefaultIconSize));
+              if (vector_icon_model.has_color()) {
+                return std::make_optional(ui::ImageModel::FromVectorIcon(
+                    *vector_icon_model.vector_icon(), vector_icon_model.color(),
+                    ui::SimpleMenuModel::kDefaultIconSize));
+
+              } else {
+                return std::make_optional(ui::ImageModel::FromVectorIcon(
+                    *vector_icon_model.vector_icon(),
+                    vector_icon_model.color_id(),
+                    ui::SimpleMenuModel::kDefaultIconSize));
+              }
             } else {
               return std::make_optional(pinned_icon_image);
             }
@@ -509,26 +541,92 @@ bool ToolbarController::IsOverflowed(
     const ResponsiveElementInfo& element,
     const views::ProposedLayout* proposed_layout) const {
   return absl::visit(
-      base::Overloaded{[&](actions::ActionId id) {
-                         CHECK(!proposed_layout);
-                         return pinned_actions_delegate_ &&
-                                pinned_actions_delegate_->IsOverflowed(id);
-                       },
-                       [&](ToolbarController::ElementIdInfo id) {
-                         const auto* const toolbar_element =
-                             FindToolbarElementWithId(toolbar_container_view_,
-                                                      id.overflow_identifier);
-                         const views::FlexLayout* const flex_layout =
-                             static_cast<views::FlexLayout*>(
-                                 toolbar_container_view_->GetLayoutManager());
-                         return flex_layout->CanBeVisible(toolbar_element) &&
-                                !(proposed_layout
-                                      ? proposed_layout
-                                            ->GetLayoutFor(toolbar_element)
-                                            ->visible
-                                      : toolbar_element->GetVisible());
-                       }},
+      base::Overloaded{
+          [&](actions::ActionId id) {
+            CHECK(!proposed_layout);
+            return pinned_actions_delegate_ &&
+                   pinned_actions_delegate_->IsOverflowed(id);
+          },
+          [&](ToolbarController::ElementIdInfo id) {
+            const auto* const toolbar_element = FindToolbarElementWithId(
+                toolbar_container_view_, id.overflow_identifier);
+            const views::FlexLayout* const flex_layout =
+                static_cast<views::FlexLayout*>(
+                    toolbar_container_view_->GetLayoutManager());
+            return flex_layout->CanBeVisible(toolbar_element) &&
+                   !(proposed_layout
+                         ? proposed_layout->GetLayoutFor(toolbar_element)
+                               ->visible
+                         : toolbar_element->GetVisible());
+          }},
       element.overflow_id);
+}
+
+void ToolbarController::OnActionsChanged() {
+  responsive_elements_ = GetResponsiveElementsWithOrderedActions();
+}
+
+// This function returns responsive_elements_ but with some portions reordered.
+// It rearranges any consecutive sequence of elements that have overflow_id
+// of type ActionId.
+// Elements with overflow_id of type ElementIdInfo are left in their original
+// position. pinned_actions_delegate_->PinnedActionIds() determines the new
+// order for the ActionId elements. ActionId elements that aren't in
+// PinnedActionIds() are sorted to the front (i.e. placed closer to index 0).
+std::vector<ToolbarController::ResponsiveElementInfo>
+ToolbarController::GetResponsiveElementsWithOrderedActions() const {
+  std::vector<ResponsiveElementInfo> ordered_responsive_elements(
+      responsive_elements_);
+  const std::vector<actions::ActionId>& ordered_pinned_action_ids =
+      pinned_actions_delegate_->PinnedActionIds();
+
+  auto actions_sorting_function =
+      [&ordered_pinned_action_ids](
+          const ToolbarController::ResponsiveElementInfo& a,
+          const ToolbarController::ResponsiveElementInfo& b) -> bool {
+    CHECK(absl::holds_alternative<actions::ActionId>(a.overflow_id));
+    CHECK(absl::holds_alternative<actions::ActionId>(b.overflow_id));
+    actions::ActionId a_action_id = absl::get<actions::ActionId>(a.overflow_id);
+    actions::ActionId b_action_id = absl::get<actions::ActionId>(b.overflow_id);
+
+    for (int ordered_pinned_action_id : ordered_pinned_action_ids) {
+      if (a_action_id == ordered_pinned_action_id) {
+        return true;
+      }
+      if (b_action_id == ordered_pinned_action_id) {
+        return false;
+      }
+    }
+    return false;
+  };
+
+  size_t element_index = 0;
+  while (element_index < ordered_responsive_elements.size()) {
+    // If the element is not an Action, continue
+    if (!absl::holds_alternative<actions::ActionId>(
+            ordered_responsive_elements[element_index].overflow_id)) {
+      element_index++;
+      continue;
+    }
+    // If the current element is an Action, look at the next elements to find
+    // what's the next one that is not an Action.
+    // The elements in the [element_index, next_non_action_element_index) range
+    // will all be Actions and need to be sorted.
+    size_t next_non_action_element_index = element_index + 1;
+    while (next_non_action_element_index < ordered_responsive_elements.size() &&
+           absl::holds_alternative<actions::ActionId>(
+               ordered_responsive_elements[next_non_action_element_index]
+                   .overflow_id)) {
+      next_non_action_element_index++;
+    }
+    std::sort(
+        ordered_responsive_elements.begin() + element_index,
+        ordered_responsive_elements.begin() + next_non_action_element_index,
+        actions_sorting_function);
+
+    element_index = next_non_action_element_index;
+  }
+  return ordered_responsive_elements;
 }
 
 std::unique_ptr<ui::SimpleMenuModel>
@@ -651,11 +749,9 @@ void ToolbarController::ShowStatusIndicator() {
           ui::VectorIconModel vector_icon_model =
               pinned_icon_image.GetVectorIcon();
 
-          menu_item->icon_view()->SetImage(gfx::CreateVectorIcon(
-              *vector_icon_model.vector_icon(),
-              ui::SimpleMenuModel::kDefaultIconSize,
-              menu_item->icon_view()->GetColorProvider()->GetColor(
-                  kColorToolbarActionItemEngaged)));
+          menu_item->icon_view()->SetImage(ui::ImageModel::FromVectorIcon(
+              *vector_icon_model.vector_icon(), kColorToolbarActionItemEngaged,
+              ui::SimpleMenuModel::kDefaultIconSize));
         }
         status_indicator->Show();
       }
@@ -705,11 +801,9 @@ void ToolbarController::ActionItemChanged(actions::ActionItem* action_item) {
     if (!pinned_icon_image.IsEmpty() && pinned_icon_image.IsVectorIcon()) {
       ui::VectorIconModel vector_icon_model = pinned_icon_image.GetVectorIcon();
 
-      menu_item->icon_view()->SetImage(gfx::CreateVectorIcon(
-          *vector_icon_model.vector_icon(),
-          ui::SimpleMenuModel::kDefaultIconSize,
-          menu_item->icon_view()->GetColorProvider()->GetColor(
-              kColorToolbarActionItemEngaged)));
+      menu_item->icon_view()->SetImage(ui::ImageModel::FromVectorIcon(
+          *vector_icon_model.vector_icon(), kColorToolbarActionItemEngaged,
+          ui::SimpleMenuModel::kDefaultIconSize));
     }
     status_indicator->Show();
   } else {
@@ -717,11 +811,9 @@ void ToolbarController::ActionItemChanged(actions::ActionItem* action_item) {
     if (!pinned_icon_image.IsEmpty() && pinned_icon_image.IsVectorIcon()) {
       ui::VectorIconModel vector_icon_model = pinned_icon_image.GetVectorIcon();
 
-      menu_item->icon_view()->SetImage(gfx::CreateVectorIcon(
-          *vector_icon_model.vector_icon(),
-          ui::SimpleMenuModel::kDefaultIconSize,
-          menu_item->icon_view()->GetColorProvider()->GetColor(
-              vector_icon_model.color_id())));
+      menu_item->icon_view()->SetImage(ui::ImageModel::FromVectorIcon(
+          *vector_icon_model.vector_icon(), vector_icon_model.color_id(),
+          ui::SimpleMenuModel::kDefaultIconSize));
     }
     status_indicator->Hide();
   }

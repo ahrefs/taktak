@@ -11,6 +11,7 @@
 #include "base/test/bind.h"
 #include "base/trace_event/typed_macros.h"
 #include "base/types/cxx23_to_underlying.h"
+#include "content/browser/preloading/prerender/prerender_features.h"
 #include "content/browser/preloading/prerender/prerender_final_status.h"
 #include "content/browser/preloading/prerender/prerender_host.h"
 #include "content/browser/preloading/prerender/prerender_host_registry.h"
@@ -423,15 +424,51 @@ FrameTreeNodeId PrerenderHostCreationWaiter::Wait() {
   return created_host_id_;
 }
 
-ScopedPrerenderFeatureList::ScopedPrerenderFeatureList() {
+ScopedPrerenderFeatureList::ScopedPrerenderFeatureList()
+    : ScopedPrerenderFeatureList(/*force_disable_prerender2_fallback=*/true,
+                                 /*force_enable_prerender2_in_new_tab=*/true) {}
+
+ScopedPrerenderFeatureList::ScopedPrerenderFeatureList(
+    bool force_disable_prerender2_fallback,
+    bool force_enable_prerender2_in_new_tab) {
+  std::vector<base::test::FeatureRef> enabled_features;
+  std::vector<base::test::FeatureRef> disabled_features;
+
+  // Explicitly enables blink::features::kPrerender2InNewTab to override
+  // SpeculationRulesTargetHint.
+  if (force_enable_prerender2_in_new_tab) {
+    enabled_features.push_back(blink::features::kPrerender2InNewTab);
+  }
+
   // Disable the memory requirement of Prerender2
   // so the test can run on any bot.
-  feature_list_.InitWithFeatures({blink::features::kPrerender2InNewTab},
-                                 {blink::features::kPrerender2MemoryControls});
+  disabled_features.push_back(blink::features::kPrerender2MemoryControls);
+
+  // In addition, disable `kPrerender2FallbackPrefetchSpecRules` if the user
+  // of `PrerenderTestHelper` is not ready for it as it changes
+  // `PrerenderFinalStatus` to `PrerenderFailedDuringPrefetch`, so that we
+  // enable it in fieldtrial testing config and then fix them one by one.
+  if (force_disable_prerender2_fallback) {
+    disabled_features.push_back(features::kPrerender2FallbackPrefetchSpecRules);
+  }
+
+  feature_list_.InitWithFeatures(enabled_features, disabled_features);
 }
 
 PrerenderTestHelper::PrerenderTestHelper(const WebContents::Getter& fn)
-    : get_web_contents_fn_(fn) {}
+    : feature_list_(ScopedPrerenderFeatureList(
+          /*force_disable_prerender2_fallback=*/true,
+          /*force_enable_prerender2_in_new_tab*/ true)),
+      get_web_contents_fn_(fn) {}
+
+PrerenderTestHelper::PrerenderTestHelper(
+    const WebContents::Getter& fn,
+    bool force_disable_prerender2_fallback,
+    bool force_enable_prerender2_in_new_tab)
+    : feature_list_(
+          ScopedPrerenderFeatureList(force_disable_prerender2_fallback,
+                                     force_enable_prerender2_in_new_tab)),
+      get_web_contents_fn_(fn) {}
 
 PrerenderTestHelper::~PrerenderTestHelper() = default;
 
@@ -613,6 +650,7 @@ void PrerenderTestHelper::AddPrefetchAsync(const GURL& prefetch_url) {
 
 std::unique_ptr<PrerenderHandle>
 PrerenderTestHelper::AddEmbedderTriggeredPrerenderAsync(
+    WebContents& web_contents,
     const GURL& prerendering_url,
     PreloadingTriggerType trigger_type,
     const std::string& embedder_histogram_suffix,
@@ -624,13 +662,26 @@ PrerenderTestHelper::AddEmbedderTriggeredPrerenderAsync(
   if (!content::BrowserThread::CurrentlyOn(BrowserThread::UI))
     return nullptr;
 
-  WebContents* web_contents = GetWebContents();
-  return web_contents->StartPrerendering(
+  return web_contents.StartPrerendering(
       prerendering_url, trigger_type, embedder_histogram_suffix,
-      page_transition, /*should_warm_up_compositor=*/false,
+      /*additional_headers=*/net::HttpRequestHeaders(),
+      /*no_vary_search_hint=*/std::nullopt, page_transition,
+      /*should_warm_up_compositor=*/false,
+      /*should_prepare_paint_tree=*/false,
       PreloadingHoldbackStatus::kUnspecified,
       /*preloading_attempt=*/nullptr, /*url_match_predicate=*/{},
       /*prerender_navigation_handle_callback=*/{});
+}
+
+std::unique_ptr<PrerenderHandle>
+PrerenderTestHelper::AddEmbedderTriggeredPrerenderAsync(
+    const GURL& prerendering_url,
+    PreloadingTriggerType trigger_type,
+    const std::string& embedder_histogram_suffix,
+    ui::PageTransition page_transition) {
+  return AddEmbedderTriggeredPrerenderAsync(
+      *GetWebContents(), prerendering_url, trigger_type,
+      embedder_histogram_suffix, page_transition);
 }
 
 void PrerenderTestHelper::NavigatePrerenderedPage(FrameTreeNodeId host_id,
@@ -850,7 +901,7 @@ std::string PrerenderTestHelper::GenerateHistogramName(
       DCHECK(!embedder_suffix.empty());
       return std::string(histogram_base_name) + ".Embedder_" + embedder_suffix;
   }
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 ScopedPrerenderWebContentsDelegate::ScopedPrerenderWebContentsDelegate(
@@ -865,7 +916,8 @@ ScopedPrerenderWebContentsDelegate::~ScopedPrerenderWebContentsDelegate() {
 }
 
 PreloadingEligibility ScopedPrerenderWebContentsDelegate::IsPrerender2Supported(
-    WebContents& web_contents) {
+    WebContents& web_contents,
+    PreloadingTriggerType trigger_type) {
   return PreloadingEligibility::kEligible;
 }
 

@@ -17,7 +17,7 @@ source_set("payments") {
     "mandatory_reauth_bubble_controller.h",
     "mandatory_reauth_bubble_controller_impl.h",
     "payments_ui_constants.h",
-    "view_factory.h",
+    "payments_view_factory.h",
     "virtual_card_enroll_bubble_controller_impl.h",
   ]
 
@@ -61,6 +61,8 @@ source_set("payments") {
 
   if (toolkit_views) {
     sources += [
+      "filled_card_information_bubble_controller.h",
+      "filled_card_information_bubble_controller_impl.h",
       "iban_bubble_controller.h",
       "iban_bubble_controller_impl.h",
       "local_card_migration_bubble_controller_impl.h",
@@ -78,8 +80,6 @@ source_set("payments") {
       "save_card_ui.h",
       "save_iban_ui.h",
       "save_payment_icon_controller.h",
-      "virtual_card_manual_fallback_bubble_controller.h",
-      "virtual_card_manual_fallback_bubble_controller_impl.h",
     ]
   }
 }
@@ -137,6 +137,7 @@ source_set("impl") {
       "//chrome/browser/sync",
       "//chrome/browser/sync:factories",
       "//chrome/browser/ui:browser_navigator_params_headers",
+      "//chrome/browser/ui/promos:utils",
       "//chrome/browser/ui/tabs:tab_strip",
       "//chrome/common",
       "//components/autofill/core/common:credit_card_number_validation",
@@ -151,15 +152,14 @@ source_set("impl") {
 
   if (toolkit_views) {
     sources += [
+      "filled_card_information_bubble_controller_impl.cc",
       "iban_bubble_controller_impl.cc",
       "local_card_migration_bubble_controller_impl.cc",
       "local_card_migration_dialog_controller_impl.cc",
       "manage_migration_ui_controller.cc",
       "offer_notification_bubble_controller_impl.cc",
       "save_card_bubble_controller_impl.cc",
-      "save_card_ui.cc",
       "save_payment_icon_controller.cc",
-      "virtual_card_manual_fallback_bubble_controller_impl.cc",
     ]
     deps += [ "//chrome/browser/ui/hats" ]
   }
@@ -193,6 +193,7 @@ if (!is_android) {
 
     sources = [
       "card_unmask_prompt_view_browsertest.cc",
+      "chrome_payments_autofill_client_browsertest.cc",
       "save_card_bubble_controller_impl_browsertest.cc",
     ]
 
@@ -280,7 +281,6 @@ source_set("unit_tests") {
     ]
     deps += [
       ":payments",
-      "//build:chromeos_buildflags",
       "//chrome/app:generated_resources",
       "//chrome/app:generated_resources_grit",
       "//chrome/browser/autofill",

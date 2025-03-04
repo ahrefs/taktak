@@ -13,7 +13,7 @@
 
 namespace ash {
 
-enum class ASH_EXPORT PickerSectionType {
+enum class ASH_EXPORT QuickInsertSectionType {
   kNone,
   kClipboard,
   kExamples,
@@ -21,31 +21,34 @@ enum class ASH_EXPORT PickerSectionType {
   kLocalFiles,
   kDriveFiles,
   kContentEditor,
-  kMaxValue = kContentEditor,
+  kFeaturedGifs,
+  kSearchedGifs,
+  kMaxValue = kSearchedGifs,
 };
 
 // Search results are divided into different sections.
-class ASH_EXPORT PickerSearchResultsSection {
+class ASH_EXPORT QuickInsertSearchResultsSection {
  public:
-  explicit PickerSearchResultsSection(
-      PickerSectionType type,
+  explicit QuickInsertSearchResultsSection(
+      QuickInsertSectionType type,
       std::vector<QuickInsertSearchResult> results,
       bool has_more_results);
-  PickerSearchResultsSection(const PickerSearchResultsSection& other);
-  PickerSearchResultsSection& operator=(
-      const PickerSearchResultsSection& other);
-  PickerSearchResultsSection(PickerSearchResultsSection&& other);
-  PickerSearchResultsSection& operator=(PickerSearchResultsSection&& other);
-  ~PickerSearchResultsSection();
+  QuickInsertSearchResultsSection(const QuickInsertSearchResultsSection& other);
+  QuickInsertSearchResultsSection& operator=(
+      const QuickInsertSearchResultsSection& other);
+  QuickInsertSearchResultsSection(QuickInsertSearchResultsSection&& other);
+  QuickInsertSearchResultsSection& operator=(
+      QuickInsertSearchResultsSection&& other);
+  ~QuickInsertSearchResultsSection();
 
-  PickerSectionType type() const;
+  QuickInsertSectionType type() const;
 
   base::span<const QuickInsertSearchResult> results() const;
 
   bool has_more_results() const;
 
  private:
-  PickerSectionType type_;
+  QuickInsertSectionType type_;
   std::vector<QuickInsertSearchResult> results_;
   bool has_more_results_;
 };

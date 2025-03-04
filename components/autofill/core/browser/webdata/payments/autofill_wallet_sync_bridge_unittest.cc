@@ -19,18 +19,18 @@
 #include "base/test/bind.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/mock_callback.h"
+#include "base/test/protobuf_matchers.h"
 #include "base/test/task_environment.h"
 #include "base/time/time.h"
-#include "components/autofill/core/browser/autofill_test_utils.h"
-#include "components/autofill/core/browser/data_model/autofill_profile.h"
-#include "components/autofill/core/browser/data_model/bank_account.h"
-#include "components/autofill/core/browser/data_model/credit_card.h"
-#include "components/autofill/core/browser/data_model/credit_card_benefit.h"
-#include "components/autofill/core/browser/data_model/credit_card_benefit_test_api.h"
-#include "components/autofill/core/browser/data_model/credit_card_cloud_token_data.h"
-#include "components/autofill/core/browser/data_model/payments_metadata.h"
+#include "components/autofill/core/browser/data_model/addresses/autofill_profile.h"
+#include "components/autofill/core/browser/data_model/payments/bank_account.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card_benefit.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card_benefit_test_api.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card_cloud_token_data.h"
+#include "components/autofill/core/browser/data_model/payments/payments_metadata.h"
 #include "components/autofill/core/browser/payments/payments_customer_data.h"
-#include "components/autofill/core/browser/test_autofill_clock.h"
+#include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #include "components/autofill/core/browser/webdata/autofill_sync_metadata_table.h"
 #include "components/autofill/core/browser/webdata/autofill_webdata_backend.h"
 #include "components/autofill/core/browser/webdata/mock_autofill_webdata_backend.h"
@@ -61,40 +61,45 @@
 namespace autofill {
 namespace {
 
-using autofill::AutofillProfileChange;
-using autofill::CreditCardChange;
-using base::ScopedTempDir;
+using ::autofill::AutofillProfileChange;
+using ::autofill::CreditCardChange;
+using ::base::ScopedTempDir;
 using IbanChangeKey = absl::variant<std::string, int64_t>;
-using sync_pb::AutofillWalletSpecifics;
-using sync_pb::DataTypeState;
-using sync_pb::EntityMetadata;
-using syncer::DataBatch;
-using syncer::DataType;
-using syncer::EntityChange;
-using syncer::EntityData;
-using syncer::HasInitialSyncDone;
-using syncer::KeyAndData;
-using syncer::MockDataTypeLocalChangeProcessor;
-using testing::NiceMock;
-using testing::Pointee;
-using testing::Return;
-using testing::SizeIs;
-using testing::UnorderedElementsAre;
+using ::base::test::EqualsProto;
+using ::sync_pb::AutofillWalletSpecifics;
+using ::sync_pb::DataTypeState;
+using ::sync_pb::EntityMetadata;
+using ::syncer::DataBatch;
+using ::syncer::DataType;
+using ::syncer::EntityChange;
+using ::syncer::EntityData;
+using ::syncer::HasInitialSyncDone;
+using ::syncer::KeyAndData;
+using ::syncer::MockDataTypeLocalChangeProcessor;
+using ::testing::NiceMock;
+using ::testing::Pointee;
+using ::testing::Return;
+using ::testing::SizeIs;
+using ::testing::UnorderedElementsAre;
 
 // Represents a Payments customer id.
-const char kCustomerDataId[] = "deadbeef";
-const char kCustomerDataId2[] = "deadcafe";
+constexpr char kCustomerDataId[] = "deadbeef";
+constexpr char kCustomerDataId2[] = "deadcafe";
 
 // Unique client tags for the server data.
-const char kCard1ClientTag[] = "Y2FyZDHvv74=";
-const char kCustomerDataClientTag[] = "deadbeef";
-const char kCloudTokenDataClientTag[] = "token";
-const char kBankAccountClientTag[] = "payment_instrument:1234";
-const char kEwalletAccountClientTag[] = "payment_instrument:2345";
+constexpr char kCard1ClientTag[] = "Y2FyZDHvv74=";
+constexpr char kCustomerDataClientTag[] = "deadbeef";
+constexpr char kCloudTokenDataClientTag[] = "token";
+constexpr char kBankAccountClientTag[] = "payment_instrument:1234";
+constexpr char kEwalletAccountClientTag[] = "payment_instrument:2345";
+constexpr char kPaymentInstrumentCreationOptionClientTag[] =
+    "payment_instrument_creation_option:1234";
 
-const base::Time kJune2017 = base::Time::FromSecondsSinceUnixEpoch(1497552271);
+// Payment Instrument Creation Option ID should always be synced with
+// kPaymentInstrumentCreationOptionClientTag.
+constexpr char kPaymentInstrumentCreationOptionId[] = "1234";
 
-const char kDefaultCacheGuid[] = "CacheGuid";
+constexpr char kDefaultCacheGuid[] = "CacheGuid";
 
 void ExtractAutofillWalletSpecificsFromDataBatch(
     std::unique_ptr<DataBatch> batch,
@@ -214,6 +219,39 @@ std::string WalletMaskedIbanSpecificsAsDebugString(
   return output.str();
 }
 
+std::string BnplCreationOptionAsDebugString(
+    const sync_pb::BnplCreationOption& bnpl_creation_option) {
+  std::ostringstream output;
+  output << "[issuer_id: " << bnpl_creation_option.issuer_id()
+         << ", eligible_price_range: {";
+  for (auto eligible_price_range :
+       bnpl_creation_option.eligible_price_range()) {
+    output << "[currency: " << eligible_price_range.currency()
+           << ", min_price_in_micros: "
+           << eligible_price_range.min_price_in_micros()
+           << ", max_price_in_micros: "
+           << eligible_price_range.max_price_in_micros() << "], ";
+  }
+  output << "}]";
+  return output.str();
+}
+
+std::string WalletPaymentInstrumentCreationOptionAsDebugString(
+    const AutofillWalletSpecifics& specifics) {
+  std::ostringstream output;
+  output << "[id: " << specifics.payment_instrument_creation_option().id();
+  if (specifics.payment_instrument_creation_option()
+          .has_buy_now_pay_later_option()) {
+    output << ", buy_now_pay_later_option: {"
+           << BnplCreationOptionAsDebugString(
+                  specifics.payment_instrument_creation_option()
+                      .buy_now_pay_later_option())
+           << "}";
+  }
+  output << "]";
+  return output.str();
+}
+
 std::string AutofillWalletSpecificsAsDebugString(
     const AutofillWalletSpecifics& specifics) {
   switch (specifics.type()) {
@@ -235,6 +273,9 @@ std::string AutofillWalletSpecificsAsDebugString(
     case sync_pb::AutofillWalletSpecifics_WalletInfoType::
         AutofillWalletSpecifics_WalletInfoType_MASKED_IBAN:
       return WalletMaskedIbanSpecificsAsDebugString(specifics);
+    case sync_pb::AutofillWalletSpecifics_WalletInfoType::
+        AutofillWalletSpecifics_WalletInfoType_PAYMENT_INSTRUMENT_CREATION_OPTION:
+      return WalletPaymentInstrumentCreationOptionAsDebugString(specifics);
     case sync_pb::AutofillWalletSpecifics_WalletInfoType::
         AutofillWalletSpecifics_WalletInfoType_UNKNOWN:
       return "Unknown";
@@ -281,8 +322,7 @@ class AutofillWalletSyncBridgeTestBase {
  public:
   AutofillWalletSyncBridgeTestBase()
       : encryptor_(os_crypt_async::GetTestEncryptorForTesting()) {
-    // Fix a time for implicitly constructed use_dates in AutofillProfile.
-    test_clock_.SetNow(kJune2017);
+    task_environment_.AdvanceClock(test::kJune2017 - base::Time::Now());
     EXPECT_TRUE(temp_dir_.CreateUniqueTempDir());
     db_.AddTable(&sync_metadata_table_);
     db_.AddTable(&table_);
@@ -428,9 +468,9 @@ class AutofillWalletSyncBridgeTestBase {
   MockAutofillWebDataBackend* backend() { return &backend_; }
 
  private:
-  autofill::TestAutofillClock test_clock_;
   ScopedTempDir temp_dir_;
-  base::test::SingleThreadTaskEnvironment task_environment_;
+  base::test::SingleThreadTaskEnvironment task_environment_{
+      base::test::TaskEnvironment::TimeSource::MOCK_TIME};
   const os_crypt_async::Encryptor encryptor_;
   NiceMock<MockAutofillWebDataBackend> backend_;
   AutofillSyncMetadataTable sync_metadata_table_;
@@ -445,10 +485,11 @@ class AutofillWalletSyncBridgeTest : public testing::Test,
                                      public AutofillWalletSyncBridgeTestBase {
  public:
   AutofillWalletSyncBridgeTest() {
-    feature_list_.InitAndEnableFeature(
-        autofill::features::kAutofillEnableCardBenefitsSync);
+    feature_list_.InitWithFeatures(
+        /*enabled_features=*/{features::kAutofillEnableCardBenefitsSync,
+                              features::kAutofillEnableBuyNowPayLaterSyncing},
+        /*disabled_features=*/{});
   }
-
   ~AutofillWalletSyncBridgeTest() override = default;
 
  private:
@@ -507,6 +548,17 @@ TEST_F(AutofillWalletSyncBridgeTest, GetClientTagForEwalletAccount) {
             kEwalletAccountClientTag);
 }
 
+TEST_F(AutofillWalletSyncBridgeTest,
+       GetClientTagForPaymentInstrumentCreationOption) {
+  sync_pb::AutofillWalletSpecifics specifics =
+      CreateAutofillWalletSpecificsForPaymentInstrumentCreationOption(
+          test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(
+              kPaymentInstrumentCreationOptionId));
+
+  EXPECT_EQ(bridge()->GetClientTag(SpecificsToEntity(specifics)),
+            kPaymentInstrumentCreationOptionClientTag);
+}
+
 // The following 3 tests make sure storage keys stay stable.
 TEST_F(AutofillWalletSyncBridgeTest, GetStorageKeyForCard) {
   AutofillWalletSpecifics specifics2 =
@@ -560,7 +612,21 @@ TEST_F(AutofillWalletSyncBridgeTest, GetStorageKeyForEwalletAccount) {
 }
 
 TEST_F(AutofillWalletSyncBridgeTest,
+       GetStorageKeyForPaymentInstrumentCreationOption) {
+  sync_pb::AutofillWalletSpecifics specifics =
+      CreateAutofillWalletSpecificsForPaymentInstrumentCreationOption(
+          test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(
+              kPaymentInstrumentCreationOptionId));
+
+  EXPECT_EQ(bridge()->GetStorageKey(SpecificsToEntity(specifics)),
+            kPaymentInstrumentCreationOptionClientTag);
+}
+
+TEST_F(AutofillWalletSyncBridgeTest,
        GetAllDataForDebugging_ShouldReturnAllData) {
+  base::test::ScopedFeatureList feature;
+  feature.InitAndEnableFeature(
+      features::kAutofillEnableCardInfoRuntimeRetrieval);
   // Create Wallet Data and store them in the table.
   CreditCard card1 = test::GetMaskedServerCard();
   // Set the card issuer to Google.
@@ -662,6 +728,35 @@ TEST_F(AutofillWalletSyncBridgeTest,
                            EqualsSpecifics(cloud_token_data_specifics2)));
 }
 
+// Test that PaymentInstrumentCreationOption data is correctly returned from
+// GetAllLocalData(). This is separated from the overall tests due to the
+// buildflag dependencies.
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
+    BUILDFLAG(IS_CHROMEOS)
+TEST_F(AutofillWalletSyncBridgeTest,
+       GetAllDataForDebugging_ShouldReturnPaymentInstrumentCreationOptionData) {
+  sync_pb::PaymentInstrumentCreationOption creation_option =
+      test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(
+          kPaymentInstrumentCreationOptionId);
+  table()->SetPaymentInstrumentCreationOptions({creation_option});
+
+  AutofillWalletSpecifics creation_option_specifics;
+  SetAutofillWalletSpecificsFromPaymentInstrumentCreationOption(
+      creation_option, creation_option_specifics);
+
+  // First ensure that specific fields in expected wallet specifics are set
+  // correctly before we compare with local table.
+  EXPECT_THAT(creation_option_specifics.payment_instrument_creation_option(),
+              EqualsProto(creation_option));
+
+  // Read local Wallet Data from Autofill table, and compare with expected
+  // wallet specifics.
+  EXPECT_THAT(GetAllLocalData(),
+              UnorderedElementsAre(EqualsSpecifics(creation_option_specifics)));
+}
+#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) ||
+        // BUILDFLAG(IS_CHROMEOS)
+
 // Tests that when a new wallet card is sent by the server, the client only
 // keeps the new data.
 TEST_F(AutofillWalletSyncBridgeTest, MergeFullSyncData_NewWalletCard) {
@@ -716,6 +811,9 @@ TEST_F(AutofillWalletSyncBridgeTest, MergeFullSyncData_NewWalletCard) {
 // CardInfoRetrievalEnrollment, the client only keeps the new data.
 TEST_F(AutofillWalletSyncBridgeTest,
        MergeFullSyncData_NewWalletCard_CardInfoRetrievalEnrollment) {
+  base::test::ScopedFeatureList feature;
+  feature.InitAndEnableFeature(
+      features::kAutofillEnableCardInfoRuntimeRetrieval);
   // Create one card on the client.
   CreditCard card1 = test::GetMaskedServerCard();
   card1.set_card_info_retrieval_enrollment_state(
@@ -891,6 +989,39 @@ TEST_F(AutofillWalletSyncBridgeTest, MergeFullSyncData_NewCloudTokenData) {
                            EqualsSpecifics(cloud_token_data_specifics2)));
 }
 
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
+    BUILDFLAG(IS_CHROMEOS)
+// Tests that when a new payment instrument creation options are sent by the
+// server, the client only keeps the new data.
+TEST_F(AutofillWalletSyncBridgeTest,
+       MergeFullSyncData_NewPaymentInstrumentCreationOption) {
+  // Create a payment instrument creation option on the client.
+  table()->SetPaymentInstrumentCreationOptions(
+      {test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(
+          kPaymentInstrumentCreationOptionId)});
+
+  // Create a different payment instrument creation option as a wallet specific
+  // sent by the server.
+  AutofillWalletSpecifics creation_option_specifics;
+  std::string new_id = "5678";
+  ASSERT_NE(kPaymentInstrumentCreationOptionId, new_id);
+  SetAutofillWalletSpecificsFromPaymentInstrumentCreationOption(
+      test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(new_id),
+      creation_option_specifics);
+
+  EXPECT_CALL(*backend(),
+              NotifyOnAutofillChangedBySync(syncer::AUTOFILL_WALLET_DATA));
+  EXPECT_CALL(*backend(), CommitChanges());
+  StartSyncing({creation_option_specifics});
+
+  // Only the new payment instrument creation option should be present on the
+  // client.
+  EXPECT_THAT(GetAllLocalData(),
+              UnorderedElementsAre(EqualsSpecifics(creation_option_specifics)));
+}
+#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) ||
+        // BUILDFLAG(IS_CHROMEOS)
+
 // Tests that when the server sends no cards, the client should delete all it's
 // existing data.
 TEST_F(AutofillWalletSyncBridgeTest, MergeFullSyncData_NoWalletCard) {
@@ -948,10 +1079,35 @@ TEST_F(AutofillWalletSyncBridgeTest, MergeFullSyncData_NoCloudTokenData) {
   EXPECT_TRUE(GetAllLocalData().empty());
 }
 
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
+    BUILDFLAG(IS_CHROMEOS)
+// Tests that when the server sends no payment instrument creation options, the
+// client should delete all it's existing data.
+TEST_F(AutofillWalletSyncBridgeTest,
+       MergeFullSyncData_NoPaymentInstrumentCreationOption) {
+  // Create a payment instrument creation option on the client.
+  table()->SetPaymentInstrumentCreationOptions(
+      {test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(
+          kPaymentInstrumentCreationOptionId)});
+
+  EXPECT_CALL(*backend(),
+              NotifyOnAutofillChangedBySync(syncer::AUTOFILL_WALLET_DATA));
+  EXPECT_CALL(*backend(), CommitChanges());
+  StartSyncing({});
+
+  // The payment instrument creation options should be deleted.
+  EXPECT_TRUE(GetAllLocalData().empty());
+}
+#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) ||
+        // BUILDFLAG(IS_CHROMEOS)
+
 // Tests that when the server sends the same data as the client has, nothing
 // changes on the client.
 TEST_F(AutofillWalletSyncBridgeTest,
        MergeFullSyncData_SameWalletCardAndCustomerDataAndCloudTokenData) {
+  base::test::ScopedFeatureList feature;
+  feature.InitAndEnableFeature(
+      features::kAutofillEnableCardInfoRuntimeRetrieval);
   // Create one card on the client.
   CreditCard card = test::GetMaskedServerCard();
   card.set_virtual_card_enrollment_state(
@@ -1033,6 +1189,9 @@ TEST_F(AutofillWalletSyncBridgeTest,
 // Test that all field values for a card sent from the server are copied on the
 // card on the client.
 TEST_F(AutofillWalletSyncBridgeTest, MergeFullSyncData_SetsAllWalletCardData) {
+  base::test::ScopedFeatureList feature;
+  feature.InitAndEnableFeature(
+      features::kAutofillEnableCardInfoRuntimeRetrieval);
   // Create a card to be synced from the server.
   CreditCard card = test::GetMaskedServerCard();
   card.SetNickname(u"Grocery card");
@@ -1136,6 +1295,30 @@ TEST_F(AutofillWalletSyncBridgeTest, MergeFullSyncData_SetsNewMaskedIban) {
   ASSERT_TRUE(table()->GetServerIbans(iban_vector));
   EXPECT_THAT(iban_vector, UnorderedElementsAre(testing::Pointee(server_iban)));
 }
+
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
+    BUILDFLAG(IS_CHROMEOS)
+// Test that all field values for a payment instrument creation option sent from
+// the server are copied on the payment instrument creation option on the
+// client.
+TEST_F(AutofillWalletSyncBridgeTest,
+       MergeFullSyncData_SetsAllPaymentInstrumentCreationOptionData) {
+  // Create a payment instrument creation option to be synced from the server.
+  AutofillWalletSpecifics creation_option_specifics;
+  SetAutofillWalletSpecificsFromPaymentInstrumentCreationOption(
+      test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(
+          kPaymentInstrumentCreationOptionId),
+      creation_option_specifics);
+
+  StartSyncing({creation_option_specifics});
+
+  // The payment instrument creation options on the client should match what was
+  // sent from the server.
+  EXPECT_THAT(GetAllLocalData(),
+              UnorderedElementsAre(EqualsProto(creation_option_specifics)));
+}
+#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) ||
+        // BUILDFLAG(IS_CHROMEOS)
 
 // Tests that when there are existing IBANs, the data from the server is what
 // the client ends up with.
@@ -1248,6 +1431,36 @@ TEST_F(AutofillWalletSyncBridgeTest, ApplyDisableSyncChanges_Ibans) {
 
   EXPECT_TRUE(GetAllLocalData().empty());
 }
+
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
+    BUILDFLAG(IS_CHROMEOS)
+TEST_F(AutofillWalletSyncBridgeTest,
+       ApplyDisableSyncChanges_PaymentInstrumentCreationOptions) {
+  // Create a payment instrument creation option on the client.
+  table()->SetPaymentInstrumentCreationOptions(
+      {test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(
+          kPaymentInstrumentCreationOptionId)});
+
+  EXPECT_CALL(*backend(), CommitChanges());
+  EXPECT_CALL(*backend(),
+              NotifyOnAutofillChangedBySync(syncer::AUTOFILL_WALLET_DATA));
+
+  // ApplyDisableSyncChanges indicates to the bridge that sync is stopping
+  // because it was disabled.
+  bridge()->ApplyDisableSyncChanges(
+      std::make_unique<syncer::InMemoryMetadataChangeList>());
+
+  // The bridge should delete the payment instrument creation options.
+  std::vector<sync_pb::PaymentInstrumentCreationOption>
+      payment_instrument_creation_options;
+  ASSERT_TRUE(table()->GetPaymentInstrumentCreationOptions(
+      payment_instrument_creation_options));
+  EXPECT_EQ(0u, payment_instrument_creation_options.size());
+
+  EXPECT_TRUE(GetAllLocalData().empty());
+}
+#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) ||
+        // BUILDFLAG(IS_CHROMEOS)
 
 // This test ensures that an int64 -> int conversion bug we encountered is
 // fixed.
@@ -1489,6 +1702,32 @@ TEST_F(AutofillWalletSyncBridgeTest,
               UnorderedElementsAre(EqualsSpecifics(card_specifics)));
 }
 
+// Tests that when the BNPL sync flag is disabled and new payment instrument
+// creation options are sent by the server, the client does not save the data.
+TEST_F(AutofillWalletSyncBridgeTest,
+       MergeFullSyncData_BnplSyncFeatureDisabled) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndDisableFeature(
+      features::kAutofillEnableBuyNowPayLaterSyncing);
+
+  // Create a payment instrument creation option as a wallet specific sent by
+  // the server.
+  AutofillWalletSpecifics creation_option_specifics;
+  SetAutofillWalletSpecificsFromPaymentInstrumentCreationOption(
+      test::CreatePaymentInstrumentCreationOptionWithBnplIssuer(
+          kPaymentInstrumentCreationOptionId),
+      creation_option_specifics);
+
+  EXPECT_CALL(*backend(),
+              NotifyOnAutofillChangedBySync(syncer::AUTOFILL_WALLET_DATA))
+      .Times(0);
+  EXPECT_CALL(*backend(), CommitChanges());
+  StartSyncing({creation_option_specifics});
+
+  // Nothing should be added to the client.
+  EXPECT_TRUE(GetAllLocalData().empty());
+}
+
 // Test suite for sync bridge with the benefit syncing feature disabled.
 class AutofillWalletSyncBridgeTestWithBenefitSyncDisabled
     : public testing::Test,
@@ -1496,7 +1735,7 @@ class AutofillWalletSyncBridgeTestWithBenefitSyncDisabled
  public:
   AutofillWalletSyncBridgeTestWithBenefitSyncDisabled() {
     feature_list_.InitAndDisableFeature(
-        autofill::features::kAutofillEnableCardBenefitsSync);
+        features::kAutofillEnableCardBenefitsSync);
   }
 
   ~AutofillWalletSyncBridgeTestWithBenefitSyncDisabled() override = default;

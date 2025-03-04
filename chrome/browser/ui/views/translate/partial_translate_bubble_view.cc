@@ -104,10 +104,7 @@ std::unique_ptr<views::View> CreateWordmarkView() {
   const int translate_icon_id = IDR_TRANSLATE_TAB_WORDMARK;
   std::unique_ptr<views::ImageView> translate_icon =
       std::make_unique<views::ImageView>();
-  gfx::ImageSkia* translate_icon_image =
-      ui::ResourceBundle::GetSharedInstance().GetImageSkiaNamed(
-          translate_icon_id);
-  translate_icon->SetImage(*translate_icon_image);
+  translate_icon->SetImage(ui::ImageModel::FromResourceId(translate_icon_id));
   view->AddChildView(std::move(translate_icon));
 
   return view;
@@ -521,7 +518,7 @@ std::unique_ptr<views::View> PartialTranslateBubbleView::CreateView() {
       views::CreateEmptyBorder(gfx::Insets::VH(2, 20)));
   tabbed_pane_->GetTabAt(1)->SetBorder(
       views::CreateEmptyBorder(gfx::Insets::VH(2, 20)));
-  tabbed_pane_->set_listener(this);
+  tabbed_pane_->SetListener(this);
 
   auto* padding_view =
       tab_view_top_row_->AddChildView(std::make_unique<views::View>());
@@ -1061,9 +1058,9 @@ void PartialTranslateBubbleView::SwitchTabForViewState(
     // other than user interaction, |this| needs to unregister from listening
     // to the tabbed pane events otherwise it'll trigger an additional
     // translation as if the user had clicked the tabs.
-    tabbed_pane_->set_listener(nullptr);
+    tabbed_pane_->SetListener(nullptr);
     tabbed_pane_->SelectTabAt(1, false);
-    tabbed_pane_->set_listener(this);
+    tabbed_pane_->SetListener(this);
   } else if (view_state ==
                  PartialTranslateBubbleModel::VIEW_STATE_BEFORE_TRANSLATE &&
              tabbed_pane_->GetSelectedTabIndex() != 0) {

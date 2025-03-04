@@ -22,7 +22,6 @@
 #include "base/test/simple_test_clock.h"
 #include "base/test/simple_test_tick_clock.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/autocomplete/autocomplete_classifier_factory.h"
 #include "chrome/browser/autocomplete/chrome_autocomplete_scheme_classifier.h"
@@ -41,7 +40,9 @@
 #include "components/omnibox/browser/omnibox_edit_model.h"
 #include "components/omnibox/browser/test_location_bar_model.h"
 #include "components/omnibox/common/omnibox_features.h"
+#include "content/public/browser/browser_accessibility_state.h"
 #include "content/public/browser/focused_node_details.h"
+#include "content/public/browser/scoped_accessibility_mode.h"
 #include "content/public/test/browser_task_environment.h"
 #include "content/public/test/mock_navigation_handle.h"
 #include "content/public/test/test_renderer_host.h"
@@ -182,8 +183,9 @@ std::optional<SkColor> TestingOmniboxView::GetLatestColorForRange(
     const gfx::Range& range) {
   // Iterate backwards to get the most recently applied color for |range|.
   for (const auto& [color, other_range] : base::Reversed(range_colors_)) {
-    if (range == other_range)
+    if (range == other_range) {
       return color;
+    }
   }
   return std::nullopt;
 }
@@ -193,8 +195,9 @@ TestingOmniboxView::GetLatestStyleForRange(const gfx::Range& range) const {
   // Iterate backwards to get the most recently applied style for |range|.
   for (const auto& [style, value, other_range] :
        base::Reversed(range_styles_)) {
-    if (range == other_range)
+    if (range == other_range) {
       return std::make_pair(style, value);
+    }
   }
   return std::nullopt;
 }
@@ -334,6 +337,17 @@ class OmniboxViewViewsTest : public OmniboxViewViewsTestBase {
     return views::TextfieldTestApi(omnibox_view());
   }
 
+  // Enables accessibiility for the test, while this is not necessary to set or
+  // retrieve most accessible attributes (most are cached no matter what), it is
+  // necessary to enable the behavior that is enabled by
+  // view::OnAccessibilityInitializing(). See more info for that in the View
+  // header file.
+  void EnableDeferredLoadingAccessibility() {
+    scoped_accessibility_mode_ =
+        content::BrowserAccessibilityState::GetInstance()
+            ->CreateScopedModeForProcess(ui::AXMode::kNativeAPIs);
+  }
+
   // Sets |new_text| as the omnibox text, and emphasizes it appropriately.  If
   // |accept_input| is true, pretends that the user has accepted this input
   // (i.e. it's been navigated to).
@@ -384,6 +398,8 @@ class OmniboxViewViewsTest : public OmniboxViewViewsTestBase {
   TestLocationBarModel location_bar_model_;
   TestLocationBar location_bar_;
   content::RenderViewHostTestEnabler rvh_test_enabler_;
+
+  std::unique_ptr<content::ScopedAccessibilityMode> scoped_accessibility_mode_;
 
   std::unique_ptr<views::Widget> widget_;
 
@@ -453,8 +469,9 @@ void OmniboxViewViewsTest::SetUp() {
 
 void OmniboxViewViewsTest::TearDown() {
   // Clean ourselves up as the text input client.
-  if (omnibox_view_->GetInputMethod())
+  if (omnibox_view_->GetInputMethod()) {
     omnibox_view_->GetInputMethod()->DetachTextInputClient(omnibox_view_);
+  }
 
   location_bar()->set_omnibox_view(nullptr);
   omnibox_view_ = nullptr;
@@ -726,6 +743,36 @@ TEST_F(OmniboxViewViewsTest, RevertOnEscape) {
   EXPECT_FALSE(omnibox_view()->model()->user_input_in_progress());
 }
 
+TEST_F(OmniboxViewViewsTest, AccessibleTextSelectBoundTest) {
+  ui::AXNodeData data;
+  gfx::Range range(4, 10);
+
+  omnibox_view()->SetTextAndSelectedRanges(u"AccessibleTextSelectBoundTest",
+                                           {range});
+  omnibox_view()->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelStart), 4);
+  EXPECT_EQ(data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelEnd), 10);
+
+  omnibox_view()->SetUserText(u"Hello there", false);
+  data = ui::AXNodeData();
+  omnibox_view()->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelStart), 11);
+  EXPECT_EQ(data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelEnd), 11);
+
+  omnibox_view()->RevertAll();
+  data = ui::AXNodeData();
+  omnibox_view()->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelStart), 0);
+  EXPECT_EQ(data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelEnd), 0);
+
+  omnibox_view()->SetUserText(u"Testing selectAll", false);
+  omnibox_view()->SelectAll(false);
+  data = ui::AXNodeData();
+  omnibox_view()->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelStart), 0);
+  EXPECT_EQ(data.GetIntAttribute(ax::mojom::IntAttribute::kTextSelEnd), 17);
+}
+
 TEST_F(OmniboxViewViewsTest, ShiftEscapeDoesNotSkipDefaultProcessing) {
   ui::KeyEvent shiftEscape(ui::EventType::kKeyPressed, ui::VKEY_ESCAPE,
                            ui::EF_SHIFT_DOWN);
@@ -987,6 +1034,8 @@ TEST_F(OmniboxViewViewsTest,
        AccessibleTextOffsetsUpdatesAfterElideBehaviorChange) {
   base::test::ScopedFeatureList scoped_feature_list;
   scoped_feature_list.InitAndEnableFeature(::features::kUiaProvider);
+  EnableDeferredLoadingAccessibility();
+  CHECK(omnibox_view()->GetViewAccessibility().is_initialized());
 
   // Make the Omnibox very narrow (so it couldn't fit the whole string).
   int kOmniboxWidth = 60;
@@ -1109,8 +1158,9 @@ TEST_P(OmniboxViewViewsClipboardTest, ClipboardCopyOrCutURL) {
   GetTextfieldTestApi().ExecuteTextEditCommand(clipboard_command);
 
   std::u16string expected_text;
-  if (clipboard_command == ui::TextEditCommand::COPY)
+  if (clipboard_command == ui::TextEditCommand::COPY) {
     expected_text = u"https://test.com/";
+  }
   EXPECT_EQ(expected_text, omnibox_view()->GetText());
 
   // Make sure the plain text format is available, but the HTML one isn't.
@@ -1148,8 +1198,9 @@ TEST_P(OmniboxViewViewsClipboardTest, ClipboardCopyOrCutUserText) {
   ui::TextEditCommand clipboard_command = GetParam();
   GetTextfieldTestApi().ExecuteTextEditCommand(clipboard_command);
 
-  if (clipboard_command == ui::TextEditCommand::CUT)
+  if (clipboard_command == ui::TextEditCommand::CUT) {
     EXPECT_EQ(std::u16string(), omnibox_view()->GetText());
+  }
 
   // Make sure HTML format isn't written. See
   // BookmarkNodeData::WriteToClipboard() for details.

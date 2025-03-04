@@ -5,54 +5,58 @@
 package org.chromium.chrome.browser.educational_tip;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 
 import org.chromium.base.CallbackController;
-import org.chromium.chrome.browser.educational_tip.EducationalTipCardProvider.EducationalTipCardType;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
+import org.chromium.chrome.browser.feature_engagement.TrackerFactory;
 import org.chromium.chrome.browser.magic_stack.ModuleDelegate;
 import org.chromium.chrome.browser.magic_stack.ModuleDelegate.ModuleType;
+import org.chromium.chrome.browser.profiles.Profile;
+import org.chromium.chrome.browser.ui.default_browser_promo.DefaultBrowserPromoUtils;
+import org.chromium.chrome.browser.ui.default_browser_promo.DefaultBrowserPromoUtils.DefaultBrowserPromoTriggerStateListener;
+import org.chromium.components.feature_engagement.FeatureConstants;
+import org.chromium.components.feature_engagement.Tracker;
 import org.chromium.ui.modelutil.PropertyModel;
 
 /** Mediator for the educational tip module. */
 public class EducationalTipModuleMediator {
-    @VisibleForTesting static final String FORCE_TAB_GROUP = "force_tab_group";
-    @VisibleForTesting static final String FORCE_TAB_GROUP_SYNC = "force_tab_group_sync";
-    @VisibleForTesting static final String FORCE_QUICK_DELETE = "force_quick_delete";
-    @VisibleForTesting static final String FORCE_DEFAULT_BROWSER = "force_default_browser";
-
     private final EducationTipModuleActionDelegate mActionDelegate;
-    private final @ModuleType int mModuleType;
+    private final Profile mProfile;
+    private @ModuleType int mModuleType;
     private final PropertyModel mModel;
     private final ModuleDelegate mModuleDelegate;
     private final CallbackController mCallbackController;
 
     private EducationalTipCardProvider mEducationalTipCardProvider;
+    private DefaultBrowserPromoTriggerStateListener mDefaultBrowserPromoTriggerStateListener;
+    private Tracker mTracker;
 
     EducationalTipModuleMediator(
+            @ModuleType int moduleType,
             @NonNull PropertyModel model,
             @NonNull ModuleDelegate moduleDelegate,
-            EducationTipModuleActionDelegate actionDelegate) {
-        mModuleType = ModuleType.EDUCATIONAL_TIP;
+            EducationTipModuleActionDelegate actionDelegate,
+            @NonNull Profile profile) {
+        mModuleType = moduleType;
         mModel = model;
         mModuleDelegate = moduleDelegate;
         mActionDelegate = actionDelegate;
+        mProfile = profile;
+        mTracker = TrackerFactory.getTrackerForProfile(mProfile);
+        mDefaultBrowserPromoTriggerStateListener = this::removeModule;
 
         mCallbackController = new CallbackController();
     }
 
     /** Show the educational tip module. */
     void showModule() {
-        Integer cardType = getCardType();
-        if (cardType == null) {
-            mModuleDelegate.onDataFetchFailed(mModuleType);
-            return;
+        if (mModuleType == ModuleType.DEFAULT_BROWSER_PROMO) {
+            DefaultBrowserPromoUtils.getInstance()
+                    .addListener(mDefaultBrowserPromoTriggerStateListener);
         }
 
         mEducationalTipCardProvider =
                 EducationalTipCardProviderFactory.createInstance(
-                        cardType, this::onCardClicked, mCallbackController, mActionDelegate);
+                        mModuleType, this::onCardClicked, mCallbackController, mActionDelegate);
 
         mModel.set(
                 EducationalTipModuleProperties.MODULE_CONTENT_TITLE_STRING,
@@ -72,23 +76,19 @@ public class EducationalTipModuleMediator {
         mModuleDelegate.onDataReady(mModuleType, mModel);
     }
 
-    @EducationalTipCardType
-    private @Nullable Integer getCardType() {
-        // TODO(b/355015904): add a logic here to integrate with segmentation or feature engagement.
-        if (ChromeFeatureList.getFieldTrialParamByFeatureAsBoolean(
-                ChromeFeatureList.EDUCATIONAL_TIP_MODULE, FORCE_DEFAULT_BROWSER, false)) {
-            return EducationalTipCardType.DEFAULT_BROWSER_PROMO;
-        } else if (ChromeFeatureList.getFieldTrialParamByFeatureAsBoolean(
-                ChromeFeatureList.EDUCATIONAL_TIP_MODULE, FORCE_TAB_GROUP, false)) {
-            return EducationalTipCardType.TAB_GROUPS;
-        } else if (ChromeFeatureList.getFieldTrialParamByFeatureAsBoolean(
-                ChromeFeatureList.EDUCATIONAL_TIP_MODULE, FORCE_TAB_GROUP_SYNC, false)) {
-            return EducationalTipCardType.TAB_GROUP_SYNC;
-        } else if (ChromeFeatureList.getFieldTrialParamByFeatureAsBoolean(
-                ChromeFeatureList.EDUCATIONAL_TIP_MODULE, FORCE_QUICK_DELETE, false)) {
-            return EducationalTipCardType.QUICK_DELETE;
+    /** Called when the educational tip module is visible to users on the magic stack. */
+    void onViewCreated() {
+        if (mModuleType == ModuleType.DEFAULT_BROWSER_PROMO) {
+            boolean shouldDisplay =
+                    mTracker.shouldTriggerHelpUi(
+                            FeatureConstants.DEFAULT_BROWSER_PROMO_MAGIC_STACK);
+            if (shouldDisplay) {
+                DefaultBrowserPromoUtils defaultBrowserPromoUtils =
+                        DefaultBrowserPromoUtils.getInstance();
+                defaultBrowserPromoUtils.removeListener(mDefaultBrowserPromoTriggerStateListener);
+                defaultBrowserPromoUtils.notifyDefaultBrowserPromoVisible();
+            }
         }
-        return null;
     }
 
     @ModuleType
@@ -97,6 +97,7 @@ public class EducationalTipModuleMediator {
     }
 
     void destroy() {
+        removeDefaultBrowserPromoTriggerStateListener();
         if (mEducationalTipCardProvider != null) {
             mEducationalTipCardProvider.destroy();
             mEducationalTipCardProvider = null;
@@ -104,8 +105,34 @@ public class EducationalTipModuleMediator {
         mCallbackController.destroy();
     }
 
+    /**
+     * Triggered when the user has viewed the default browser promo from another location, removing
+     * the educational tip module from the magic stack.
+     */
+    private void removeModule() {
+        mModuleDelegate.removeModule(mModuleType);
+        removeDefaultBrowserPromoTriggerStateListener();
+    }
+
+    /**
+     * Removes the {@link DefaultBrowserPromoTriggerStateListener} from the listener list in {@link
+     * DefaultBrowserPromoUtils}.
+     */
+    private void removeDefaultBrowserPromoTriggerStateListener() {
+        DefaultBrowserPromoUtils.getInstance()
+                .removeListener(mDefaultBrowserPromoTriggerStateListener);
+    }
+
     /** Called when user clicks the card. */
     private void onCardClicked() {
-        // TODO(b/): Records metrics for clicking the card.
+        mModuleDelegate.onModuleClicked(mModuleType);
+    }
+
+    DefaultBrowserPromoTriggerStateListener getDefaultBrowserPromoTriggerStateListenerForTesting() {
+        return mDefaultBrowserPromoTriggerStateListener;
+    }
+
+    void setModuleTypeForTesting(@ModuleType int moduleType) {
+        mModuleType = moduleType;
     }
 }

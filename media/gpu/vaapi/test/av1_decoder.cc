@@ -12,6 +12,8 @@
 #include <va/va.h>
 #include <va/va_dec_av1.h>
 
+#include <bitset>
+
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "base/notreached.h"
@@ -22,6 +24,7 @@
 #include "media/gpu/vaapi/test/scoped_va_context.h"
 #include "media/gpu/vaapi/test/shared_va_surface.h"
 #include "media/gpu/vaapi/test/vaapi_device.h"
+#include "third_party/libgav1/src/src/utils/common.h"
 #include "third_party/libgav1/src/src/warp_prediction.h"
 
 namespace media {
@@ -211,9 +214,8 @@ void FillGlobalMotionInfo(
         va_warped_motion[i].wmtype = VAAV1TransformationAffine;
         break;
       default:
-        NOTREACHED_IN_MIGRATION()
-            << "Invalid global motion transformation type, "
-            << va_warped_motion[i].wmtype;
+        NOTREACHED() << "Invalid global motion transformation type, "
+                     << va_warped_motion[i].wmtype;
     }
     static_assert(ARRAY_SIZE(va_warped_motion[i].wmmat) == 8 &&
                       ARRAY_SIZE(gm.params) == 6,
@@ -421,9 +423,8 @@ void FillLoopRestorationInfo(VADecPictureParameterBufferAV1& va_pic_param,
       case libgav1::LoopRestorationType::kLoopRestorationTypeSgrProj:
         return 2;
       default:
-        NOTREACHED_IN_MIGRATION()
-            << "Invalid restoration type" << base::strict_cast<int>(lr_type);
-        return 0;
+        NOTREACHED() << "Invalid restoration type"
+                     << base::strict_cast<int>(lr_type);
     }
   };
   static_assert(
@@ -519,18 +520,15 @@ unsigned int GetFormatForColorConfig(libgav1::ColorConfig color_config) {
       // AV1 stream whose profile is 'main' - this profile only supports bit
       // depths of 8 and 10 and libgav1 should guarantee that
       // |color_config.bitdepth| meets that requirement at parsing time.
-      NOTREACHED_IN_MIGRATION()
+      NOTREACHED()
           << "Unsupported color config with chroma subsampling of bitdepth %d"
           << color_config.bitdepth;
     }
   }
   // If this AV1 stream has profile 'main', then libgav1 ensures that both
   // |color_config.subsampling_x| and |color_config.subsampling_y| are 1.
-  NOTREACHED_IN_MIGRATION()
-      << "Unsupported color config; only profile 0 with 4:2:0 Chroma "
-         "subsampling is supported.";
-  // There is no VA_RT_FORMAT_UNSUPPORTED; use a "default" value.
-  return 0u;
+  NOTREACHED() << "Unsupported color config; only profile 0 with 4:2:0 Chroma "
+                  "subsampling is supported.";
 }
 
 }  // namespace
@@ -572,7 +570,8 @@ Av1Decoder::~Av1Decoder() {
 Av1Decoder::ParsingResult Av1Decoder::ReadNextFrame(
     libgav1::RefCountedBufferPtr& current_frame) {
   if (!obu_parser_ || !obu_parser_->HasData()) {
-    if (!ivf_parser_->ParseNextFrame(&ivf_frame_header_, &ivf_frame_data_)) {
+    if (!ivf_parser_->ParseNextFrame(&ivf_frame_header_,
+                                     &ivf_frame_data_.AsEphemeralRawAddr())) {
       return ParsingResult::kEOStream;
     }
 
@@ -755,15 +754,13 @@ VideoDecoder::Result Av1Decoder::DecodeNextFrame() {
     case 12:
       // This is a valid bitdepth in streams, but we do not support it;
       // GetFormatForColorConfig() only expects bit depths of 8 or 10.
-      NOTREACHED_IN_MIGRATION() << "12bpp color is not yet supported.";
-      break;
+      NOTREACHED() << "12bpp color is not yet supported.";
     default:
       // The OBU Parser can only produce bit depths of 8, 10, and 12; we should
       // not hit any other cases. See
       // https://source.chromium.org/chromium/chromium/src/+/main:third_party/libgav1/src/src/obu_parser.cc;l=144-150;drc=7880d0cc1d1976012dbec8a1bb982191ac49b7f4
-      NOTREACHED_IN_MIGRATION()
-          << "Invalid color bit depth: "
-          << current_sequence_header_->color_config.bitdepth;
+      NOTREACHED() << "Invalid color bit depth: "
+                   << current_sequence_header_->color_config.bitdepth;
   }
   pic_parameters.matrix_coefficients = base::checked_cast<uint8_t>(
       current_sequence_header_->color_config.matrix_coefficients);
@@ -888,7 +885,7 @@ VideoDecoder::Result Av1Decoder::DecodeNextFrame() {
   const size_t tile_columns = current_frame_header.tile_info.tile_columns;
   const bool slice_parameters_success = FillAV1SliceParameters(
       obu_parser_->tile_buffers(), tile_columns,
-      base::make_span(ivf_frame_data_, ivf_frame_header_.frame_size),
+      base::span(ivf_frame_data_.get(), ivf_frame_header_.frame_size),
       slice_params);
   LOG_ASSERT(slice_parameters_success)
       << "Failed to fill slice parameters for current frame.";
@@ -905,7 +902,7 @@ VideoDecoder::Result Av1Decoder::DecodeNextFrame() {
   // Set up the slice data buffer.
   res = vaCreateBuffer(va_device_->display(), va_context_->id(),
                        VASliceDataBufferType, ivf_frame_header_.frame_size, 1u,
-                       const_cast<uint8_t*>(ivf_frame_data_), &buffer_id);
+                       const_cast<uint8_t*>(ivf_frame_data_.get()), &buffer_id);
   VA_LOG_ASSERT(res, "vaCreateBuffer");
   buffers.push_back(buffer_id);
 

@@ -1,6 +1,6 @@
 CONSOLE ERROR: Uncaught SyntaxError: Failed to execute 'write' on 'Document': Unexpected token '<'
-CONSOLE WARNING: A <select> tag was parsed within another <select> tag and was converted into </select><select>. Please add the missing </select> end tag.
-CONSOLE WARNING: A <select> tag was parsed within another <select> tag and was converted into </select><select>. Please add the missing </select> end tag.
+CONSOLE WARNING: A <select> tag was parsed within another <select> tag and was converted into </select>. Please add the missing </select> end tag.
+CONSOLE WARNING: A <select> tag was parsed within another <select> tag and was converted into </select>. Please add the missing </select> end tag.
 ../resources/tests1.dat:
 30
 100
@@ -15,9 +15,7 @@ Got:
 |       <b>
 |         <option>
 |     <b>
-|     <select>
-|       <b>
-|         <option>
+|       <option>
 |     "X"
 Expected:
 | <html>
@@ -38,9 +36,7 @@ Got:
 |       <b>
 |         <option>
 |     <b>
-|     <select>
-|       <b>
-|         <option>
+|       <option>
 Expected:
 | <html>
 |   <head>

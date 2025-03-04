@@ -28,9 +28,10 @@ namespace {
 // `auth_required_callback`.
 class LoginHandlerViews : public LoginHandler {
  public:
-  LoginHandlerViews(const net::AuthChallengeInfo& auth_info,
-                    content::WebContents* web_contents,
-                    LoginAuthRequiredCallback auth_required_callback)
+  LoginHandlerViews(
+      const net::AuthChallengeInfo& auth_info,
+      content::WebContents* web_contents,
+      content::LoginDelegate::LoginAuthRequiredCallback auth_required_callback)
       : LoginHandler(auth_info,
                      web_contents,
                      std::move(auth_required_callback)),
@@ -103,16 +104,18 @@ class LoginHandlerViews : public LoginHandler {
           l10n_util::GetStringUTF16(IDS_LOGIN_DIALOG_OK_BUTTON_LABEL));
       SetAcceptCallback(base::BindOnce(
           [](Dialog* dialog) {
-            if (!dialog->handler_)
+            if (!dialog->handler_) {
               return;
+            }
             dialog->handler_->SetAuth(dialog->login_view_->GetUsername(),
                                       dialog->login_view_->GetPassword());
           },
           base::Unretained(this)));
       SetCancelCallback(base::BindOnce(
           [](Dialog* dialog) {
-            if (!dialog->handler_)
+            if (!dialog->handler_) {
               return;
+            }
             dialog->handler_->CancelAuth(/*notify_others=*/true);
           },
           base::Unretained(this)));
@@ -134,8 +137,9 @@ class LoginHandlerViews : public LoginHandler {
     void CloseDialog() {
       handler_ = nullptr;
       // The hosting widget may have been freed.
-      if (widget_)
+      if (widget_) {
         widget_->Close();
+      }
     }
 
     // views::DialogDelegate:
@@ -148,8 +152,9 @@ class LoginHandlerViews : public LoginHandler {
     void WindowClosing() override {
       // Reference is no longer valid.
       widget_ = nullptr;
-      if (handler_)
+      if (handler_) {
         handler_->CancelAuth(/*notify_others=*/true);
+      }
     }
 
     views::View* GetInitiallyFocusedView() override {
@@ -166,8 +171,9 @@ class LoginHandlerViews : public LoginHandler {
 
    private:
     ~Dialog() override {
-      if (handler_)
+      if (handler_) {
         handler_->OnDialogDestroyed();
+      }
     }
 
     raw_ptr<LoginHandlerViews> handler_;
@@ -186,7 +192,7 @@ class LoginHandlerViews : public LoginHandler {
 std::unique_ptr<LoginHandler> LoginHandler::Create(
     const net::AuthChallengeInfo& auth_info,
     content::WebContents* web_contents,
-    LoginAuthRequiredCallback auth_required_callback) {
+    content::LoginDelegate::LoginAuthRequiredCallback auth_required_callback) {
   return std::make_unique<LoginHandlerViews>(auth_info, web_contents,
                                              std::move(auth_required_callback));
 }

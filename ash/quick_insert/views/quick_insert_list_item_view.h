@@ -7,6 +7,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "ash/ash_export.h"
 #include "ash/public/cpp/holding_space/holding_space_image.h"
@@ -35,12 +36,13 @@ class View;
 
 namespace ash {
 
-class PickerBadgeView;
-class PickerPreviewBubbleController;
-class PickerShortcutHintView;
+class QuickInsertBadgeView;
+class QuickInsertPreviewBubbleController;
+class QuickInsertShortcutHintView;
 
-// View for a Picker list item with text or an image as its primary contents.
-// Can optionally have other parts such as a leading icon and secondary text.
+// View for a Quick Insert list item with text or an image as its primary
+// contents. Can optionally have other parts such as a leading icon and
+// secondary text.
 class ASH_EXPORT QuickInsertListItemView : public QuickInsertItemView {
   METADATA_HEADER(QuickInsertListItemView, QuickInsertItemView)
 
@@ -75,15 +77,15 @@ class ASH_EXPORT QuickInsertListItemView : public QuickInsertItemView {
   void SetSecondaryText(const std::u16string& secondary_text);
 
   void SetShortcutHintView(
-      std::unique_ptr<PickerShortcutHintView> shortcut_hint_view);
+      std::unique_ptr<QuickInsertShortcutHintView> shortcut_hint_view);
 
-  void SetBadgeAction(PickerActionType action);
+  void SetBadgeAction(QuickInsertActionType action);
   void SetBadgeVisible(bool visible);
 
   // Starts to retrieve a thumbnail preview of `file_path` to be used when the
   // item is hovered on. If `update_icon` is true, then the leading icon of this
   // item will also be updated to match the thumbnail.
-  void SetPreview(PickerPreviewBubbleController* preview_bubble_controller,
+  void SetPreview(QuickInsertPreviewBubbleController* preview_bubble_controller,
                   FileInfoResolver get_file_info,
                   const base::FilePath& file_path,
                   AsyncBitmapResolver async_bitmap_resolver,
@@ -99,13 +101,13 @@ class ASH_EXPORT QuickInsertListItemView : public QuickInsertItemView {
   const views::View* primary_container_for_testing() const {
     return primary_container_;
   }
-  const PickerShortcutHintView* shortcut_hint_view_for_testing() const {
+  const QuickInsertShortcutHintView* shortcut_hint_view_for_testing() const {
     return shortcut_hint_view_;
   }
-  const PickerBadgeView& trailing_badge_for_testing() const {
+  const QuickInsertBadgeView& trailing_badge_for_testing() const {
     return *trailing_badge_;
   }
-  std::u16string GetPrimaryTextForTesting() const;
+  std::u16string_view GetPrimaryTextForTesting() const;
   ui::ImageModel GetPrimaryImageForTesting() const;
   std::u16string_view GetSecondaryTextForTesting() const;
 
@@ -130,11 +132,11 @@ class ASH_EXPORT QuickInsertListItemView : public QuickInsertItemView {
 
   // Contains the item's shortcut hint if it has been set.
   raw_ptr<views::View> shortcut_hint_container_ = nullptr;
-  raw_ptr<PickerShortcutHintView> shortcut_hint_view_ = nullptr;
+  raw_ptr<QuickInsertShortcutHintView> shortcut_hint_view_ = nullptr;
 
   // Contains the item's trailing badge if it has been set.
-  raw_ptr<PickerBadgeView> trailing_badge_ = nullptr;
-  PickerActionType badge_action_ = PickerActionType::kDo;
+  raw_ptr<QuickInsertBadgeView> trailing_badge_ = nullptr;
+  QuickInsertActionType badge_action_ = QuickInsertActionType::kDo;
 
   // These are only used for file items.
   // TODO: b/344457947 - Combine the two async images by allowing the
@@ -143,7 +145,7 @@ class ASH_EXPORT QuickInsertListItemView : public QuickInsertItemView {
   std::unique_ptr<HoldingSpaceImage> async_preview_icon_;
   base::FilePath file_path_;
   std::optional<base::File::Info> file_info_;
-  raw_ptr<PickerPreviewBubbleController> preview_bubble_controller_;
+  raw_ptr<QuickInsertPreviewBubbleController> preview_bubble_controller_;
   base::CallbackListSubscription async_icon_subscription_;
 
   base::WeakPtrFactory<QuickInsertListItemView> weak_ptr_factory_{this};

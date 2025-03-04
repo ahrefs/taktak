@@ -14,19 +14,19 @@ import 'chrome://resources/ash/common/cr_elements/cr_icon_button/cr_icon_button.
 import 'chrome://resources/ash/common/cr_elements/cr_input/cr_input.js';
 import 'chrome://resources/ash/common/cr_elements/icons.html.js';
 import 'chrome://resources/ash/common/cr_elements/cr_shared_vars.css.js';
-import './components/buttons/oobe_text_button.js';
-import './components/oobe_icons.html.js';
-import './components/oobe_illo_icons.html.js';
-import './gaia_action_buttons/gaia_action_buttons.js';
+import '/components/buttons/oobe_text_button.js';
+import '/components/oobe_icons.html.js';
+import '/components/oobe_illo_icons.html.js';
+import '/gaia_action_buttons/gaia_action_buttons.js';
 import '//resources/ash/common/cr_elements/policy/cr_tooltip_icon.js';
 import '//resources/polymer/v3_0/iron-icon/iron-icon.js';
 
-import {AuthCompletedCredentials, AuthCompletedEvent, AuthDomainChangeEvent, Authenticator, AuthFlow, AuthFlowChangeEvent, AuthMode, AuthParams, LoadAbortEvent, SUPPORTED_PARAMS} from '//lock-reauth/gaia_auth_host/authenticator.js';
-import {CrInputElement} from '//resources/ash/common/cr_elements/cr_input/cr_input.js';
+import type {AuthCompletedCredentials, AuthCompletedEvent, AuthDomainChangeEvent, AuthFlowChangeEvent, AuthParams, LoadAbortEvent} from '//lock-reauth/gaia_auth_host/authenticator.js';
+import {Authenticator, AuthFlow, AuthMode, SUPPORTED_PARAMS} from '//lock-reauth/gaia_auth_host/authenticator.js';
+import type {CrInputElement} from '//resources/ash/common/cr_elements/cr_input/cr_input.js';
 import {I18nMixin} from 'chrome://resources/ash/common/cr_elements/i18n_mixin.js';
 import {assert} from 'chrome://resources/js/assert.js';
 import {sendWithPromise} from 'chrome://resources/js/cr.js';
-import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 
 import {getTemplate} from './lock_screen_reauth.html.js';
@@ -434,10 +434,6 @@ class LockReauthElement extends LockReauthElementBase {
   private onChangeSigninProviderClicked() {
     this.resetState();
     chrome.send('startOnlineAuth', /*force_reauth_gaia_page=*/[true]);
-  }
-
-  private policyProvidedTrustedAnchorsUsed() {
-    return loadTimeData.getBoolean('policyProvidedCaCertsPresent');
   }
 }
 

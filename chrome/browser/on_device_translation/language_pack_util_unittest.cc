@@ -50,6 +50,10 @@ TEST(LanguagePackUtilTest, ToLanguageCode) {
   EXPECT_EQ(ToLanguageCode(SupportedLanguage::kSl), "sl");
   EXPECT_EQ(ToLanguageCode(SupportedLanguage::kSv), "sv");
   EXPECT_EQ(ToLanguageCode(SupportedLanguage::kUk), "uk");
+  EXPECT_EQ(ToLanguageCode(SupportedLanguage::kKn), "kn");
+  EXPECT_EQ(ToLanguageCode(SupportedLanguage::kTa), "ta");
+  EXPECT_EQ(ToLanguageCode(SupportedLanguage::kTe), "te");
+  EXPECT_EQ(ToLanguageCode(SupportedLanguage::kMr), "mr");
 }
 
 TEST(LanguagePackUtilTest, ToSupportedLanguage) {
@@ -90,6 +94,10 @@ TEST(LanguagePackUtilTest, ToSupportedLanguage) {
   EXPECT_EQ("sl", ToLanguageCode(SupportedLanguage::kSl));
   EXPECT_EQ("sv", ToLanguageCode(SupportedLanguage::kSv));
   EXPECT_EQ("uk", ToLanguageCode(SupportedLanguage::kUk));
+  EXPECT_EQ("kn", ToLanguageCode(SupportedLanguage::kKn));
+  EXPECT_EQ("ta", ToLanguageCode(SupportedLanguage::kTa));
+  EXPECT_EQ("te", ToLanguageCode(SupportedLanguage::kTe));
+  EXPECT_EQ("mr", ToLanguageCode(SupportedLanguage::kMr));
 
   // TODO(crbug.com/358030919): Currently we are checking case-sensitive
   // language codes. This may be changed in the future.
@@ -135,6 +143,10 @@ TEST(LanguagePackUtilTest, IsPopularLanguage) {
   EXPECT_FALSE(IsPopularLanguage(SupportedLanguage::kSl));
   EXPECT_FALSE(IsPopularLanguage(SupportedLanguage::kSv));
   EXPECT_FALSE(IsPopularLanguage(SupportedLanguage::kUk));
+  EXPECT_FALSE(IsPopularLanguage(SupportedLanguage::kKn));
+  EXPECT_FALSE(IsPopularLanguage(SupportedLanguage::kTa));
+  EXPECT_FALSE(IsPopularLanguage(SupportedLanguage::kTe));
+  EXPECT_FALSE(IsPopularLanguage(SupportedLanguage::kMr));
 }
 
 TEST(LanguagePackUtilTest, GetLanguagePackComponentConfig) {
@@ -343,6 +355,30 @@ TEST(LanguagePackUtilTest, GetLanguagePackComponentConfig) {
             SupportedLanguage::kEn);
   EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Uk).language2,
             SupportedLanguage::kUk);
+
+  // En to Uk
+  EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Kn).language1,
+            SupportedLanguage::kEn);
+  EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Kn).language2,
+            SupportedLanguage::kKn);
+
+  // En to Uk
+  EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Ta).language1,
+            SupportedLanguage::kEn);
+  EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Ta).language2,
+            SupportedLanguage::kTa);
+
+  // En to Uk
+  EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Te).language1,
+            SupportedLanguage::kEn);
+  EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Te).language2,
+            SupportedLanguage::kTe);
+
+  // En to Uk
+  EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Te).language1,
+            SupportedLanguage::kEn);
+  EXPECT_EQ(GetLanguagePackComponentConfig(LanguagePackKey::kEn_Te).language2,
+            SupportedLanguage::kTe);
 }
 
 TEST(LanguagePackUtilTest, GetComponentPathPrefName) {
@@ -448,6 +484,18 @@ TEST(LanguagePackUtilTest, GetComponentPathPrefName) {
   EXPECT_THAT(GetComponentPathPrefName(
                   GetLanguagePackComponentConfig(LanguagePackKey::kEn_Uk)),
               "on_device_translation.translate_kit_packages.en_uk_path");
+  EXPECT_THAT(GetComponentPathPrefName(
+                  GetLanguagePackComponentConfig(LanguagePackKey::kEn_Kn)),
+              "on_device_translation.translate_kit_packages.en_kn_path");
+  EXPECT_THAT(GetComponentPathPrefName(
+                  GetLanguagePackComponentConfig(LanguagePackKey::kEn_Ta)),
+              "on_device_translation.translate_kit_packages.en_ta_path");
+  EXPECT_THAT(GetComponentPathPrefName(
+                  GetLanguagePackComponentConfig(LanguagePackKey::kEn_Te)),
+              "on_device_translation.translate_kit_packages.en_te_path");
+  EXPECT_THAT(GetComponentPathPrefName(
+                  GetLanguagePackComponentConfig(LanguagePackKey::kEn_Mr)),
+              "on_device_translation.translate_kit_packages.en_mr_path");
 }
 
 TEST(LanguagePackUtilTest, GetRegisteredFlagPrefName) {
@@ -554,6 +602,18 @@ TEST(LanguagePackUtilTest, GetRegisteredFlagPrefName) {
   EXPECT_THAT(GetRegisteredFlagPrefName(
                   GetLanguagePackComponentConfig(LanguagePackKey::kEn_Uk)),
               "on_device_translation.translate_kit_packages.en_uk_registered");
+  EXPECT_THAT(GetRegisteredFlagPrefName(
+                  GetLanguagePackComponentConfig(LanguagePackKey::kEn_Kn)),
+              "on_device_translation.translate_kit_packages.en_kn_registered");
+  EXPECT_THAT(GetRegisteredFlagPrefName(
+                  GetLanguagePackComponentConfig(LanguagePackKey::kEn_Ta)),
+              "on_device_translation.translate_kit_packages.en_ta_registered");
+  EXPECT_THAT(GetRegisteredFlagPrefName(
+                  GetLanguagePackComponentConfig(LanguagePackKey::kEn_Te)),
+              "on_device_translation.translate_kit_packages.en_te_registered");
+  EXPECT_THAT(GetRegisteredFlagPrefName(
+                  GetLanguagePackComponentConfig(LanguagePackKey::kEn_Mr)),
+              "on_device_translation.translate_kit_packages.en_mr_registered");
 }
 
 TEST(LanguagePackUtilTest, CalculateRequiredLanguagePacks) {
@@ -626,6 +686,10 @@ TEST(LanguagePackUtilTest, GetPackageInstallDirName) {
   EXPECT_EQ(GetPackageInstallDirName(LanguagePackKey::kEn_Sl), "en_sl");
   EXPECT_EQ(GetPackageInstallDirName(LanguagePackKey::kEn_Sv), "en_sv");
   EXPECT_EQ(GetPackageInstallDirName(LanguagePackKey::kEn_Uk), "en_uk");
+  EXPECT_EQ(GetPackageInstallDirName(LanguagePackKey::kEn_Kn), "en_kn");
+  EXPECT_EQ(GetPackageInstallDirName(LanguagePackKey::kEn_Ta), "en_ta");
+  EXPECT_EQ(GetPackageInstallDirName(LanguagePackKey::kEn_Te), "en_te");
+  EXPECT_EQ(GetPackageInstallDirName(LanguagePackKey::kEn_Mr), "en_mr");
 }
 
 TEST(LanguagePackUtilTest, GetPackageNameSuffix) {
@@ -663,6 +727,10 @@ TEST(LanguagePackUtilTest, GetPackageNameSuffix) {
   EXPECT_EQ(GetPackageNameSuffix(LanguagePackKey::kEn_Sl), "en-sl");
   EXPECT_EQ(GetPackageNameSuffix(LanguagePackKey::kEn_Sv), "en-sv");
   EXPECT_EQ(GetPackageNameSuffix(LanguagePackKey::kEn_Uk), "en-uk");
+  EXPECT_EQ(GetPackageNameSuffix(LanguagePackKey::kEn_Kn), "en-kn");
+  EXPECT_EQ(GetPackageNameSuffix(LanguagePackKey::kEn_Ta), "en-ta");
+  EXPECT_EQ(GetPackageNameSuffix(LanguagePackKey::kEn_Te), "en-te");
+  EXPECT_EQ(GetPackageNameSuffix(LanguagePackKey::kEn_Mr), "en-mr");
 }
 
 TEST(LanguagePackUtilTest, GetPackageInstallSubDirNamesForVerification) {
@@ -770,6 +838,100 @@ TEST(LanguagePackUtilTest, GetPackageInstallSubDirNamesForVerification) {
   EXPECT_THAT(
       GetPackageInstallSubDirNamesForVerification(LanguagePackKey::kEn_Uk),
       std::vector<std::string>({"en_uk_dictionary", "en_uk_nmt", "uk_en_nmt"}));
+  EXPECT_THAT(
+      GetPackageInstallSubDirNamesForVerification(LanguagePackKey::kEn_Kn),
+      std::vector<std::string>({"en_kn_dictionary", "en_kn_nmt", "kn_en_nmt"}));
+  EXPECT_THAT(
+      GetPackageInstallSubDirNamesForVerification(LanguagePackKey::kEn_Ta),
+      std::vector<std::string>({"en_ta_dictionary", "en_ta_nmt", "ta_en_nmt"}));
+  EXPECT_THAT(
+      GetPackageInstallSubDirNamesForVerification(LanguagePackKey::kEn_Te),
+      std::vector<std::string>({"en_te_dictionary", "en_te_nmt", "te_en_nmt"}));
+  EXPECT_THAT(
+      GetPackageInstallSubDirNamesForVerification(LanguagePackKey::kEn_Mr),
+      std::vector<std::string>({"en_mr_dictionary", "en_mr_nmt", "mr_en_nmt"}));
+}
+
+TEST(LanguagePackUtilTest, GetSourceLanguageCode) {
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Es), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Ja), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kAr_En), "ar");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kBn_En), "bn");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kDe_En), "de");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Fr), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Hi), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_It), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Ko), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Nl), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Pl), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Pt), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Ru), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Th), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Tr), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Vi), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Zh), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_ZhHant), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kBg_En), "bg");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kCs_En), "cs");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kDa_En), "da");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEl_En), "el");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Fi), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Hr), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Hu), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Id), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Iw), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Lt), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_No), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Ro), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Sk), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Sl), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Sv), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Uk), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Kn), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Ta), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Te), "en");
+  EXPECT_EQ(GetSourceLanguageCode(LanguagePackKey::kEn_Mr), "en");
+}
+
+TEST(LanguagePackUtilTest, GetTargetLanguageCode) {
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Es), "es");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Ja), "ja");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kAr_En), "en");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kBn_En), "en");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kDe_En), "en");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Fr), "fr");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Hi), "hi");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_It), "it");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Ko), "ko");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Nl), "nl");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Pl), "pl");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Pt), "pt");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Ru), "ru");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Th), "th");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Tr), "tr");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Vi), "vi");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Zh), "zh");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_ZhHant), "zh-Hant");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kBg_En), "en");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kCs_En), "en");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kDa_En), "en");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEl_En), "en");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Fi), "fi");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Hr), "hr");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Hu), "hu");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Id), "id");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Iw), "iw");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Lt), "lt");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_No), "no");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Ro), "ro");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Sk), "sk");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Sl), "sl");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Sv), "sv");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Uk), "uk");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Kn), "kn");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Ta), "ta");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Te), "te");
+  EXPECT_EQ(GetTargetLanguageCode(LanguagePackKey::kEn_Mr), "mr");
 }
 
 }  // namespace

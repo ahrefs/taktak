@@ -23,6 +23,10 @@
 #include "components/viz/service/surfaces/surface.h"
 #include "gpu/ipc/client/client_shared_image_interface.h"
 
+#if BUILDFLAG(IS_APPLE)
+#include "ui/accelerated_widget_mac/ca_layer_frame_sink.h"
+#endif
+
 namespace ui {
 
 DirectLayerTreeFrameSink::DirectLayerTreeFrameSink(
@@ -33,15 +37,15 @@ DirectLayerTreeFrameSink::DirectLayerTreeFrameSink(
     scoped_refptr<cc::RasterContextProviderWrapper>
         worker_context_provider_wrapper,
     scoped_refptr<base::SingleThreadTaskRunner> compositor_task_runner,
-    gpu::GpuMemoryBufferManager* gpu_memory_buffer_manager)
+    gfx::AcceleratedWidget widget)
     : LayerTreeFrameSink(std::move(context_provider),
                          std::move(worker_context_provider_wrapper),
                          std::move(compositor_task_runner),
-                         gpu_memory_buffer_manager,
                          /*shared_image_interface=*/nullptr),
       frame_sink_id_(frame_sink_id),
       frame_sink_manager_(frame_sink_manager),
-      display_(display) {
+      display_(display),
+      widget_(widget) {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
 }
 
@@ -134,18 +138,6 @@ void DirectLayerTreeFrameSink::DidNotProduceFrame(
   support_->DidNotProduceFrame(ack);
 }
 
-void DirectLayerTreeFrameSink::DidAllocateSharedBitmap(
-    base::ReadOnlySharedMemoryRegion region,
-    const viz::SharedBitmapId& id) {
-  bool ok = support_->DidAllocateSharedBitmap(std::move(region), id);
-  DCHECK(ok);
-}
-
-void DirectLayerTreeFrameSink::DidDeleteSharedBitmap(
-    const viz::SharedBitmapId& id) {
-  support_->DidDeleteSharedBitmap(id);
-}
-
 void DirectLayerTreeFrameSink::DisplayOutputSurfaceLost() {
   is_lost_ = true;
   client_->DidLoseLayerTreeFrameSink();
@@ -157,6 +149,23 @@ void DirectLayerTreeFrameSink::DisplayWillDrawAndSwap(
   if (support_->GetHitTestAggregator()) {
     support_->GetHitTestAggregator()->Aggregate(display_->CurrentSurfaceId());
   }
+}
+
+void DirectLayerTreeFrameSink::DisplayDidReceiveCALayerParams(
+    const gfx::CALayerParams& ca_layer_params) {
+#if BUILDFLAG(IS_APPLE)
+  ui::CALayerFrameSink* ca_layer_frame_sink =
+      ui::CALayerFrameSink::FromAcceleratedWidget(widget_);
+  if (ca_layer_frame_sink) {
+    ca_layer_frame_sink->UpdateCALayerTree(ca_layer_params);
+  } else {
+    DLOG(WARNING) << "Received frame for non-existent widget.";
+  }
+#else
+  // Suppress -Wunused-private-field warning.
+  (void)widget_;
+  NOTREACHED();
+#endif
 }
 
 base::TimeDelta

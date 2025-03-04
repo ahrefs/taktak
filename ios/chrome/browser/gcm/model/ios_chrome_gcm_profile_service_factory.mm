@@ -5,15 +5,15 @@
 #import "ios/chrome/browser/gcm/model/ios_chrome_gcm_profile_service_factory.h"
 
 #import "base/functional/bind.h"
-#import "base/memory/ptr_util.h"
+#import "base/functional/callback_helpers.h"
 #import "base/memory/ref_counted.h"
 #import "base/no_destructor.h"
+#import "base/task/bind_post_task.h"
 #import "base/task/sequenced_task_runner.h"
 #import "base/task/thread_pool.h"
 #import "build/branding_buildflags.h"
 #import "components/gcm_driver/gcm_client_factory.h"
 #import "components/gcm_driver/gcm_profile_service.h"
-#import "components/keyed_service/ios/browser_state_dependency_manager.h"
 #import "ios/chrome/browser/shared/model/application_context/application_context.h"
 #import "ios/chrome/browser/shared/model/profile/profile_ios.h"
 #import "ios/chrome/browser/signin/model/identity_manager_factory.h"
@@ -24,42 +24,11 @@
 #import "services/network/public/cpp/shared_url_loader_factory.h"
 #import "services/network/public/mojom/proxy_resolving_socket.mojom.h"
 
-namespace {
-
-// Requests a network::mojom::ProxyResolvingSocketFactory on the UI thread. Note
-// that a WeakPtr of GCMProfileService is needed to detect when the KeyedService
-// shuts down, and avoid calling into `profile` which might have also been
-// destroyed.
-void RequestProxyResolvingSocketFactoryOnUIThread(
-    web::BrowserState* context,
-    base::WeakPtr<gcm::GCMProfileService> service,
-    mojo::PendingReceiver<network::mojom::ProxyResolvingSocketFactory>
-        receiver) {
-  if (!service)
-    return;
-  context->GetProxyResolvingSocketFactory(std::move(receiver));
-}
-
-// A thread-safe wrapper to request a
-// network::mojom::ProxyResolvingSocketFactory.
-void RequestProxyResolvingSocketFactory(
-    web::BrowserState* context,
-    base::WeakPtr<gcm::GCMProfileService> service,
-    mojo::PendingReceiver<network::mojom::ProxyResolvingSocketFactory>
-        receiver) {
-  web::GetUIThreadTaskRunner({})->PostTask(
-      FROM_HERE,
-      base::BindOnce(&RequestProxyResolvingSocketFactoryOnUIThread, context,
-                     std::move(service), std::move(receiver)));
-}
-
-}  // namespace
-
 // static
 gcm::GCMProfileService* IOSChromeGCMProfileServiceFactory::GetForProfile(
     ProfileIOS* profile) {
-  return static_cast<gcm::GCMProfileService*>(
-      GetInstance()->GetServiceForBrowserState(profile, true));
+  return GetInstance()->GetServiceForProfileAs<gcm::GCMProfileService>(
+      profile, /*create=*/true);
 }
 
 // static
@@ -79,9 +48,7 @@ std::string IOSChromeGCMProfileServiceFactory::GetProductCategoryForSubtypes() {
 }
 
 IOSChromeGCMProfileServiceFactory::IOSChromeGCMProfileServiceFactory()
-    : BrowserStateKeyedServiceFactory(
-          "GCMProfileService",
-          BrowserStateDependencyManager::GetInstance()) {
+    : ProfileKeyedServiceFactoryIOS("GCMProfileService") {
   DependsOn(IdentityManagerFactory::GetInstance());
 }
 
@@ -99,12 +66,20 @@ IOSChromeGCMProfileServiceFactory::BuildServiceInstanceFor(
   ProfileIOS* profile = ProfileIOS::FromBrowserState(context);
   return std::make_unique<gcm::GCMProfileService>(
       profile->GetPrefs(), profile->GetStatePath(),
-      base::BindRepeating(&RequestProxyResolvingSocketFactory, context),
+      // This callback may be invoked on a background sequence, but it calls
+      // a method of ProfileIOS which is a sequence-affine object, so wrap
+      // the callback in BindPostTask(...) to ensure the method happens on
+      // the correct sequence. Use base::IgnoreArgs<...> to adapt the callback
+      // signature as some parameters are unused.
+      base::BindPostTask(
+          base::SequencedTaskRunner::GetCurrentDefault(),
+          base::IgnoreArgs<base::WeakPtr<gcm::GCMProfileService>>(
+              base::BindRepeating(&ProfileIOS::GetProxyResolvingSocketFactory,
+                                  profile->AsWeakPtr()))),
       profile->GetSharedURLLoaderFactory(),
       GetApplicationContext()->GetNetworkConnectionTracker(), ::GetChannel(),
       GetProductCategoryForSubtypes(),
       IdentityManagerFactory::GetForProfile(profile),
-      base::WrapUnique(new gcm::GCMClientFactory),
-      web::GetUIThreadTaskRunner({}), web::GetIOThreadTaskRunner({}),
-      blocking_task_runner);
+      std::make_unique<gcm::GCMClientFactory>(), web::GetUIThreadTaskRunner({}),
+      web::GetIOThreadTaskRunner({}), blocking_task_runner);
 }

@@ -6,6 +6,7 @@
 
 #include <stddef.h>
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
@@ -16,7 +17,6 @@
 #include "base/functional/bind.h"
 #include "base/i18n/case_conversion.h"
 #include "base/metrics/histogram_macros.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/strcat.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
@@ -197,7 +197,7 @@ std::u16string ExpandToFullWord(std::u16string trimmed_text,
   // Add on the missing letters of `text_last_word`, rather than replace it with
   // `best_word` to preserve capitalization.
   return best_word.empty()
-             ? trimmed_text
+             ? std::move(trimmed_text)
              : base::StrCat(
                    {trimmed_text, best_word.substr(text_last_word.length())});
 }
@@ -335,6 +335,12 @@ void ShortcutsBackend::AddOrUpdateShortcut(const std::u16string& text,
     return;
   }
 
+  // Answers are visually loud and context specific (e.g. history embedding
+  // answers are limited to the @history scope and question-like inputs).
+  // Showing them in a different context would look bad.
+  if (match.type == AutocompleteMatchType::HISTORY_EMBEDDINGS_ANSWER)
+    return;
+
   const std::u16string text_trimmed_lowercase(
       base::i18n::ToLower(text_trimmed));
   const base::Time now(base::Time::Now());
@@ -440,7 +446,7 @@ void ShortcutsBackend::OnHistoryDeletions(
 
   ShortcutsDatabase::ShortcutIDs shortcut_ids;
   for (const auto& guid_pair : guid_map_) {
-    if (base::ranges::any_of(
+    if (std::ranges::any_of(
             deletion_info.deleted_rows(),
             history::URLRow::URLRowHasURL(
                 guid_pair.second->second.match_core.destination_url))) {
@@ -487,14 +493,12 @@ void ShortcutsBackend::InitCompleted() {
 
   ComputeDatabaseMetrics();
 
-  if (base::FeatureList::IsEnabled(omnibox::kOmniboxDeleteOldShortcuts)) {
-    main_runner_->PostDelayedTask(
-        FROM_HERE,
-        base::BindOnce(
-            base::IgnoreResult(&ShortcutsBackend::DeleteOldShortcuts),
-            weak_factory_.GetWeakPtr()),
-        base::Minutes(kInitialExpirationDelayMinutes));
-  }
+  main_runner_->PostDelayedTask(
+      FROM_HERE,
+      base::BindOnce(
+          base::IgnoreResult(&ShortcutsBackend::DeleteOldShortcuts),
+          weak_factory_.GetWeakPtr()),
+      base::Minutes(kInitialExpirationDelayMinutes));
 }
 
 void ShortcutsBackend::ComputeDatabaseMetrics() {

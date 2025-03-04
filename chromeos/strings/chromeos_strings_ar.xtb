@@ -7,6 +7,7 @@
 <translation id="1018656279737460067">تم الإلغاء</translation>
 <translation id="1020274983236703756">مواد العرض الحصرية لأجهزة <ph name="PRODUCT_NAME" /> متاحة الآن</translation>
 <translation id="1022628058306505708">انسياب أرضي</translation>
+<translation id="102432830749687801">‏يُرجى التأكّد من استخدام تطبيق "نقل المحتوى" من Google لنقل بيانات حسابك الذي تديره المؤسسة التعليمية إلى حسابك الشخصي قبل فقدان إمكانية الوصول إليه.</translation>
 <translation id="1026212596705997935">يتم حاليًا استخدام هذا الاختصار لتنفيذ الإجراء "<ph name="CONFLICT_ACCEL_NAME" />". يُرجى الضغط على اختصار جديد. لاستبدال الاختصار الحالي، اضغط على هذا الاختصار مرة أخرى.</translation>
 <translation id="1030856839388844477">إعادة ضبط استخدام البيانات</translation>
 <translation id="1047458377670401304"><ph name="CPU_NAME" /> (<ph name="THREAD_COUNT" /> عملية، <ph name="CPU_MAX_CLOCK_SPEED" /> غيغاهرتز)</translation>
@@ -17,15 +18,16 @@
 <translation id="1059913517121127803">تعذَّر إجراء عملية المسح الضوئي.</translation>
 <translation id="1061864016440983342">الاستخدام بدون تفعيل الموقع الجغرافي</translation>
 <translation id="1062823486781306604">‫<ph name="INDEX" /> من أصل <ph name="COUNT" />، <ph name="NAME" /></translation>
+<translation id="1069150558259542054">لا تتوافق ميزة "الإدراج السريع" مع الاختصارات المخصَّصة.</translation>
 <translation id="1070066693520972135">WEP</translation>
 <translation id="1071587090247825784">تم العثور على جدار حماية.</translation>
 <translation id="1075811647922107217">حجم الصفحة</translation>
-<translation id="108084407137234521">يجب ألا يقل عدد كلمات الطلبات الصوتية عن <ph name="MIN_WORD_LENGTH" /> ليتم تلخيصها</translation>
 <translation id="1082009148392559545">جارٍ تنزيل شاشة الاستراحة</translation>
 <translation id="1094693127011229778">‏عنوان IP غير متوفّر.</translation>
 <translation id="1100902271996134409">جارٍ إنشاء الصور...</translation>
 <translation id="1116694919640316211">لمحة</translation>
 <translation id="1118572504348554005">قد نشارك مع شركائنا الملاحظات التي يتم إرسالها من خلال هذا النموذج، وذلك لتحديد وحلّ المشاكل والأخطاء التي يتم الإبلاغ عنها، لذا يُرجى عدم إدراج معلومات حساسة، مثل كلمات المرور.</translation>
+<translation id="1119403468619527527">عدد الكلمات قليل جدًا ولا يكفي لتبسيط النص</translation>
 <translation id="1119447706177454957">خطأ داخلي</translation>
 <translation id="1124772482545689468">المستخدم</translation>
 <translation id="1128128132059598906">EAP-TTLS</translation>
@@ -49,6 +51,7 @@
 <translation id="1181037720776840403">إزالة</translation>
 <translation id="1191518099344003522">‏تم تفعيل اسم نقطة الوصول (APN).</translation>
 <translation id="1195447618553298278">خطأ  غير محدّد.</translation>
+<translation id="1196264380943975940">يتعذّر تلخيص المحتوى. يُرجى تجربة استخدام نص أطول.</translation>
 <translation id="1196959502276349371">الإصدار <ph name="VERSION" /></translation>
 <translation id="1199355487114804640">التشغيل/الإيقاف المؤقت</translation>
 <translation id="1201402288615127009">التالي</translation>
@@ -59,6 +62,7 @@
 <translation id="1223498995510244364">تلخيص</translation>
 <translation id="123124571410524056">تم الاشتباه في مدخل.</translation>
 <translation id="1232610416724362657">شلّال</translation>
+<translation id="1238163879850290856">يجب إعادة الضبط لمنع الآخرين من الوصول إلى البيانات. ويُرجى استخدام أساليب إدخال موثوقة فقط.</translation>
 <translation id="1238612778414822719">‏وقت استجابة بروتوكول HTTPS</translation>
 <translation id="1252766349417594414">ذراع التحكّم</translation>
 <translation id="1270369111467284986">اشتباه في مدخل مشروط الوصول إليه</translation>
@@ -91,6 +95,7 @@
 <translation id="1394661041439318933">مستوى شحن بطارية الحافظة هو %<ph name="BATTERY_PERCENTAGE" />.</translation>
 <translation id="1397738625398125236">يمكن فحص اتصال البوابة</translation>
 <translation id="1398634363027580500">‏وقت استجابة بروتوكول HTTPS طويل جدًا.</translation>
+<translation id="1406389211945506521">نشكرك على مشاركة تجربتك. تساعدنا ملاحظاتك في إنشاء محتوى أكثر دقةً وفائدةً.</translation>
 <translation id="1407069428457324124">المظهر الداكن</translation>
 <translation id="1413240736185167732">تعذَّرت الطباعة - خلل في عامل تصفية الطباعة</translation>
 <translation id="1416836038590872660">EAP-MD5</translation>
@@ -137,6 +142,7 @@
 <translation id="1604959087182679653">إخفاء نص التسجيل</translation>
 <translation id="160633243685262989">معاينة الصورة</translation>
 <translation id="1611649489706141841">للأمام</translation>
+<translation id="1615144046047995187">‏يتعذّر التنزيل. يُرجى إعادة المحاولة أو إعادة تشغيل جهاز Chromebook.</translation>
 <translation id="1615335640928990664">عرض معدل استخدام البيانات منذ تاريخ <ph name="FRIENDLY_DATE" /></translation>
 <translation id="1618566998877964907">استخدام مظهر</translation>
 <translation id="1621067168122174824">تشغيل اختبار فحص البطارية</translation>
@@ -193,9 +199,13 @@
 <translation id="1801418420130173017">إيقاف المظهر الداكن</translation>
 <translation id="1807246157184219062">فاتح</translation>
 <translation id="1808803439260407870">الفن الكلاسيكي</translation>
+<translation id="181434555916624618">لن يتم عرض النتائج التي تتضمّن أشخاصًا في الوقت الحالي. يُرجى تجربة طلب آخر.</translation>
 <translation id="1815850098929213707">المفتاح الذي تم اختياره: <ph name="KEYS" />. انقر على الزر لتعديل عنصر التحكّم.</translation>
+<translation id="1818174214124933000">‏عند النقر على "إرسال"، سيتم إرسال ملاحظاتك والمحتوى (الموضَّح أدناه) إلى Google لمراجعته من قِبل فريق المراجعين، واستخدامه لأغراض التدريب أو لتحسين منتجاتنا وخدماتنا بما يتوافق مع <ph name="LINK_POLICY_BEGIN" />سياسة الخصوصية<ph name="LINK_POLICY_END" /> و<ph name="LINK_TERMS_OF_SERVICE_BEGIN" />بنود خدمة Google<ph name="LINK_TERMS_OF_SERVICE_END" />.</translation>
 <translation id="1823120442877418684">أصناف</translation>
 <translation id="1827738518074806965">معرض الفنون</translation>
+<translation id="183287940576828840">مسيء أو غير آمن</translation>
+<translation id="1834032517784994783">اختيار لغة تحويل الصوت إلى نص</translation>
 <translation id="1836553715834333258">لون النظام</translation>
 <translation id="183675228220305365">الفن الواقعي</translation>
 <translation id="1838374766361614909">محو البحث</translation>
@@ -220,6 +230,8 @@
 <translation id="1905710495812624430">تم تجاوز الحد الأقصى لعدد المحاولات المسموح بها.</translation>
 <translation id="1908234395526491708">‏تعذَّر طلب بروتوكول UDP.</translation>
 <translation id="1908394185991500139">سهم متّجه لليسار</translation>
+<translation id="1914144885717544695">يوم الجمعة</translation>
+<translation id="1915960750806557358">يُرجى إخبارنا بملاحظاتك أو توضيح مشكلتك، مع الحرص على عدم تضمين أي معلومات شخصية أو حسّاسة أو سرية.</translation>
 <translation id="1923388006036088459">ألوان التمييز</translation>
 <translation id="1945403655450283000">المسجّلة الذكية</translation>
 <translation id="1947737735496445907">تمت الطباعة</translation>
@@ -258,6 +270,7 @@
 <translation id="2138109643290557664">التحليق عاليًا</translation>
 <translation id="2141644705054017895"><ph name="PERCENTAGE_VALUE" />%</translation>
 <translation id="2148716181193084225">اليوم</translation>
+<translation id="215206000155329774"><ph name="INTENT" />؛ <ph name="QUERY_TEXT" />؛ <ph name="RESULT_TEXT" /></translation>
 <translation id="2152882202543497059"><ph name="NUMBER" /> صورة</translation>
 <translation id="2154460308960858308">محو البحث</translation>
 <translation id="2157660087437850958">أداة اختيار رموز الإيموجي</translation>
@@ -267,6 +280,7 @@
 <translation id="2161394479394250669">إلغاء مهمة الطباعة</translation>
 <translation id="2161656808144014275">نص</translation>
 <translation id="2163937499206714165">تفعيل الوضع المُعتِم</translation>
+<translation id="2164131940279488868">يُرجى التأكّد من توصيل ميكروفون لبدء تسجيل الصوت</translation>
 <translation id="2173302385160625112">يُرجى التحقُّق من اتصال الإنترنت.</translation>
 <translation id="2180197493692062006">حدث خطأ. يُرجى إعادة فتح التطبيق.</translation>
 <translation id="2189104374785738357">تعديل تفاصيل اسم نقطة الوصول</translation>
@@ -291,6 +305,7 @@
 <translation id="2244834438220057800">أخضر</translation>
 <translation id="225692081236532131">حالة التفعيل</translation>
 <translation id="2267285889943769271">إضافة لقطة شاشة</translation>
+<translation id="2268044343513325586">تحسين</translation>
 <translation id="2271469253353559191">الجدول الزمني للوضع المُعتِم</translation>
 <translation id="2276999893457278469">أهم مقالات المحتوى المساعِد ذات الصلة</translation>
 <translation id="2277631741861284101">تسجيل الصوت ومشاركته بسهولة</translation>
@@ -348,7 +363,6 @@
 <translation id="2561093647892030937">ليمون</translation>
 <translation id="2570743873672969996">جارٍ تنفيذ اختبار <ph name="TEST_NAME" />...</translation>
 <translation id="2573178735329662769">‏تسجيل كلّ الأصوات على جهاز Chromebook</translation>
-<translation id="2575552334616524665">يمكنك تفعيل هذه الميزة في "الإعدادات" أو في القائمة "<ph name="THREE_DOTS_MENU_ICON" />"</translation>
 <translation id="2576253868710695442">ستستهلك عملية التسجيل ما يصل إلى 2 غيغابايت من مساحة التخزين</translation>
 <translation id="2584547424703650812">منظر بألوان لامعة</translation>
 <translation id="2584559707064218956">لضبط إعدادات الشبكة، انتقِل إلى "الإعدادات".</translation>
@@ -356,6 +370,7 @@
 <translation id="2589921777872778654">قائمة التعديل والحذف</translation>
 <translation id="2597774443162333062">‏سيتم إرسال الملفات إلى Google لتصحيح الأخطاء.</translation>
 <translation id="2599691907981599502">{NUMBER_OF_PAGES,plural, =1{اكتمل المسح الضوئي. تم مسح صفحة واحدة ضوئيًا.}zero{اكتمل المسح الضوئي. تم مسح {NUMBER_OF_PAGES} صفحة ضوئيًا.}two{اكتمل المسح الضوئي. تم مسح صفحتَين ({NUMBER_OF_PAGES}) ضوئيًا.}few{اكتمل المسح الضوئي. تم مسح {NUMBER_OF_PAGES} صفحات ضوئيًا.}many{اكتمل المسح الضوئي. تم مسح {NUMBER_OF_PAGES} صفحة ضوئيًا.}other{اكتمل المسح الضوئي. تم مسح {NUMBER_OF_PAGES} صفحة ضوئيًا.}}</translation>
+<translation id="261322795497077164">تحديد هوية المتحدّث</translation>
 <translation id="2617397783536231890">القطن</translation>
 <translation id="2618015542787108131">كثيب رملي</translation>
 <translation id="2619761439309613843">إعادة التحميل يوميًا</translation>
@@ -376,10 +391,12 @@
 <translation id="2713444072780614174">أبيض</translation>
 <translation id="2715723665057727940">نهر</translation>
 <translation id="2717139507051041123">تفعيل وضع الألوان الداكنة</translation>
+<translation id="2726755229438917165">يوم الاثنين</translation>
 <translation id="2728460467788544679">محو سجلّ الطباعة بالكامل</translation>
 <translation id="2731700343119398978">يرجى الانتظار...</translation>
 <translation id="2740531572673183784">حسنًا</translation>
 <translation id="2744221223678373668">مشتركة</translation>
+<translation id="2749164457515831917">تم ترتيب الاقتراحات عشوائيًا</translation>
 <translation id="2751739896257479635">‏مصادقة المرحلة الثانية عبر EAP</translation>
 <translation id="2754757901767760034">مصباح</translation>
 <translation id="2780756493585863768">‏أحدث الخلفيات المستندة إلى تكنولوجيات الذكاء الاصطناعي من Google</translation>
@@ -403,6 +420,7 @@
 <translation id="2888298276507578975">أدخِل طلبًا، مثل "كتابة رسالة شكر"</translation>
 <translation id="2890557891229184386">جزيرة استوائية</translation>
 <translation id="2895772081848316509">داكنة</translation>
+<translation id="2915996080311180594">إعادة التشغيل لاحقًا</translation>
 <translation id="2926057806159140518">أدخِل اسم المستخدم وكلمة المرور أو امسَح رمز الاستجابة السريعة ضوئيًا.</translation>
 <translation id="2940811910881150316">يتعذّر اختبار لوحة المفاتيح الخاصة بالجهاز. أعِد فتح غطاء الجهاز لاختبار لوحة المفاتيح.</translation>
 <translation id="2941112035454246133">منخفضة</translation>
@@ -415,10 +433,10 @@
 <translation id="3031560714565892478">الجهاز هو كاميرا فيديو.</translation>
 <translation id="3042927241478734594">هل تريد إنهاء التسجيل؟</translation>
 <translation id="3054177598518735801"><ph name="CURRENT_VALUE" /> ميلي أمبير</translation>
-<translation id="3055176406666937744">يجب ألا يزيد عدد كلمات الطلبات الصوتية عن <ph name="MAX_WORD_LENGTH" /> ليتم تلخيصها</translation>
 <translation id="3056720590588772262">نقطة النهاية</translation>
 <translation id="3060579846059757016">المخططات</translation>
 <translation id="3061850252076394168">تفعيل ميزة "سماع الاختيار"</translation>
+<translation id="3066772729299747758">يوم الثلاثاء</translation>
 <translation id="3069085583900247081">تعذّر إجراء اختبار</translation>
 <translation id="3078740164268491126">جدول</translation>
 <translation id="3081652522083185657">فاتحة</translation>
@@ -426,14 +444,17 @@
 <translation id="3084958266922136097">إيقاف شاشة التوقف</translation>
 <translation id="3091839911843451378">تعذَّرت الطباعة - توقّفت الطابعة</translation>
 <translation id="3102119246920354026">ذاكرة التخزين المؤقت</translation>
+<translation id="3112413615003385433">أزال المُعلّم محتوًى في "الأدوات التعليمية"</translation>
 <translation id="3122464029669770682">وحدة المعالجة المركزية</translation>
 <translation id="3122614491980756867">بِرك طبيعية</translation>
 <translation id="3122883569442693641">المزيد من التفاصيل</translation>
 <translation id="3124039320086536031">الجهاز متصل.</translation>
 <translation id="3127341325625468058">{PAGE_NUMBER,plural, =0{هل تريد إزالة الصفحة؟}=1{هل تريد إزالة الصفحة {PAGE_NUMBER}؟}two{هل تريد إزالة الصفحة {PAGE_NUMBER}؟}few{هل تريد إزالة الصفحة {PAGE_NUMBER}؟}many{هل تريد إزالة الصفحة {PAGE_NUMBER}؟}other{هل تريد إزالة الصفحة {PAGE_NUMBER}؟}}</translation>
+<translation id="3134486240968249588">في ما يلي بعض الملاحظات التي يجب مراعاتها</translation>
 <translation id="3140130301071865159">ثلوج</translation>
 <translation id="3146655726035122603">حصريًا في <ph name="PRODUCT_NAME" /></translation>
 <translation id="315116470104423982">بيانات الجوال</translation>
+<translation id="3153094818810437149">يمكنك تغيير ذلك لاحقًا من خلال إعدادات "المسجّلة الذكية"</translation>
 <translation id="3156511682997763015">التقديم بمقدار 10 ثوانٍ</translation>
 <translation id="3156846309055100599">جارٍ مسح الصفحة <ph name="PAGE_NUMBER" /> ضوئيًا...</translation>
 <translation id="315738237743207937">تم رصد مدخل مشروط الوصول إليه.</translation>
@@ -443,7 +464,7 @@
 <translation id="3178532070248519384">الفن الطلائعي</translation>
 <translation id="3182676044300231689">أدخِل طلبًا، مثل "إعادة الكتابة بأسلوب أكثر ثقة"</translation>
 <translation id="3188257591659621405">ملفاتي</translation>
-<translation id="319101249942218879">تم تغيير الصورة الرمزية.</translation>
+<translation id="319101249942218879">تم تغيير الأفاتار.</translation>
 <translation id="3192947282887913208">ملفات صوتية</translation>
 <translation id="3199982728237701504">وحدة تغذية المستندات (وجهان)</translation>
 <translation id="3201315366910775591">يمكن للمستخدمين الآخرين تعديل الألبومات المشترَكة</translation>
@@ -451,35 +472,37 @@
 <translation id="3226405216343213872">جارٍ البحث عن أجهزة مسح ضوئي</translation>
 <translation id="3226657629376379887">قائمة إجراءات التصميم</translation>
 <translation id="3227186760713762082">قسمة قيمة <ph name="CATEGORY_TEXT" /> على <ph name="CONVERSION_RATE" /></translation>
-<translation id="3237710083340813756">إعادة الكتابة</translation>
-<translation id="3245518008592055173">يتعذّر إنشاء أسماء للطلبات الصوتية التي يقلّ عدد كلماتها عن <ph name="MIN_WORD_LENGTH" /></translation>
 <translation id="3246869037381808805">ستتم إزالة طلبات الطباعة التي مرَّ عليها أكثر من يوم.</translation>
+<translation id="3248791727258378769">لن يتم إنشاء أي نص</translation>
 <translation id="324961752321393509">لا يسمح المشرف بإغلاق هذا التطبيق.</translation>
 <translation id="3263941347294171263">عليك فصل "<ph name="DEVICE_NAME" />" عن مصدر الطاقة ثم إعادة توصيله به لمواصلة عملية التحديث</translation>
 <translation id="3268178239013324452">تعذَّرت الطباعة - باب الطابعة مفتوح</translation>
-<translation id="3275729367986477355">الصورة الرمزية</translation>
+<translation id="3275729367986477355">الأفاتار</translation>
 <translation id="3283504360622356314">{0,plural, =1{تعديل الملف}zero{تعديل الملفات}two{تعديل الملفَين}few{تعديل الملفات}many{تعديل الملفات}other{تعديل الملفات}}</translation>
 <translation id="3286515922899063534"><ph name="CURRENT" /> غيغاهرتز</translation>
+<translation id="3286538390144397061">إعادة التشغيل الآن</translation>
 <translation id="3291996639387199448">اتجاه المفتاح</translation>
 <translation id="3294437725009624529">ضيف</translation>
 <translation id="3303855915957856445">لم يتم العثور على أي نتائج بحث</translation>
 <translation id="3305294846493618482">عرض المزيد</translation>
 <translation id="3310640316857623290">وقت استجابة "نظام أسماء النطاقات" أعلى بكثير من الحدّ الأقصى المسموح به.</translation>
 <translation id="3321030238473337787">سرعة التشغيل</translation>
+<translation id="3327613592010997943">سيصبح بإمكانك استخدام هذا الجهاز مجددًا <ph name="DAY" /> في <ph name="TIME" />.</translation>
 <translation id="3328783797891415197">الاختبار قيد التشغيل.</translation>
 <translation id="3340011300870565703">مستوى شحن بطارية السماعة اليمنى هو %<ph name="BATTERY_PERCENTAGE" />.</translation>
 <translation id="3340978935015468852">الإعدادات</translation>
 <translation id="3347558044552027859">عصري</translation>
+<translation id="3353477144743332882">تنزيل نموذج إنشاء الملخّص والاسم</translation>
 <translation id="3359218928534347896">إيقاف/تفعيل كتم صوت الميكروفون</translation>
 <translation id="3360306038446926262">‏نظام التشغيل Windows</translation>
 <translation id="3361618936611118375">سوشي</translation>
 <translation id="3368922792935385530">متصل</translation>
 <translation id="3369013195428705271">هل تريد فعلاً محو سجلّ الطباعة بالكامل؟ لن يتم محو مهام الطباعة الجارية.</translation>
+<translation id="3369632935976756339"><ph name="INTENT" />؛ <ph name="QUERY_TEXT" />؛ <ph name="SUBTEXT" />؛ <ph name="RESULT_TEXT" /></translation>
 <translation id="3373141842870501561">خلفية تعرض منظرًا انسيابيًا للأرض</translation>
 <translation id="33736539805963175">خلفية <ph name="LETTERS_COLOR" /> على شكل حرف <ph name="LETTERS_LETTER" /></translation>
 <translation id="3383623117265110236">مجموعة حصرية</translation>
 <translation id="3404249063913988450">تفعيل شاشة التوقف</translation>
-<translation id="3410165745972100556">ميزة "تحويل الصوت إلى نص" غير مفعَّلة</translation>
 <translation id="3413935475507503304">لمواصلة عملية التحديث، انقر على "التالي".</translation>
 <translation id="3428551088151258685">خارجي</translation>
 <translation id="3428971106895559033">باستيل</translation>
@@ -493,12 +516,14 @@
 <translation id="3462187165860821523">جارٍ تحديث <ph name="DEVICE_NAME" /></translation>
 <translation id="346423161771747987">الاستهلاك الحالي لطاقة البطارية</translation>
 <translation id="346539236881580388">إعادة التقاط</translation>
+<translation id="3479552764303398839">ليس الآن</translation>
 <translation id="3484914941826596830">لا تفصل هذا الجهاز الخارجي أو توقف تشغيل الكمبيوتر أثناء تحديث البرامج الثابتة. يمكنك تصغير هذه النافذة. قد يستغرق هذا التحديث بضع دقائق وقد يتوقف الجهاز الخارجي عن العمل أثناء التحديث.</translation>
 <translation id="3486220673238053218">تعريف</translation>
 <translation id="3487866404496702283">‏ملاحظات حول ميزة Mahi</translation>
 <translation id="3488065109653206955">نشطة جزئيًا</translation>
 <translation id="3492882532495507361">مكتب <ph name="OFFICE_STYLE" /> بألوان <ph name="OFFICE_COLOR" /></translation>
 <translation id="3493187369049186498">‏يقيس جهاز Chromebook البيانات التي يتم استخدامها. وقد يختلف هذا القياس عن قياسات مزوِّد البيانات.</translation>
+<translation id="349570724365779960">‏هناك جلسة حالية بين School Tools والطلاب</translation>
 <translation id="3502426834823382181">عرض جميع التطبيقات</translation>
 <translation id="3510890413042482857">إرسال <ph name="BEGIN_LINK1" />بيانات تتبُّع مستوى الأداء<ph name="END_LINK1" /></translation>
 <translation id="3517001332549868749">‏تحديث نظام التشغيل Chrome</translation>
@@ -506,6 +531,7 @@
 <translation id="353214771040290298">تم التعديل</translation>
 <translation id="3532980081107202182">يتبقّى حوالي <ph name="MIN_REMAINING" /> دقيقة.</translation>
 <translation id="3533790840489634638">بركة طبيعية</translation>
+<translation id="3535802910192338629">أضاف المُعلّم محتوًى جديدًا في "الأدوات التعليمية"</translation>
 <translation id="3547264467365135390">المعادَلة</translation>
 <translation id="3557205324756024651">هوية الجهاز (اختياري)</translation>
 <translation id="3565064564551103223">‏عناوين IP المسموح بها</translation>
@@ -519,19 +545,22 @@
 <translation id="3595596368722241419">البطارية ممتلئة</translation>
 <translation id="3600339377155080675">النسخ المطابق لمحتوى الشاشة</translation>
 <translation id="3602290021589620013">معاينة</translation>
-<translation id="3603829704940252505">الصورة الرمزية</translation>
+<translation id="3603829704940252505">الأفاتار</translation>
 <translation id="3604713164406837697">تغيير الخلفية</translation>
 <translation id="360565022852130722">‏شبكة Wi-Fi مؤمَّنة باستخدام بروتوكول WEP 802.1x ضعيف.</translation>
 <translation id="3606583719724308068">‏وقت الاستجابة طويل في المواقع الإلكترونية التي تستخدم بروتوكول HTTPS</translation>
 <translation id="361575905210396100">شكرًا على ملاحظاتك</translation>
 <translation id="3621072146987826699">أفيال</translation>
+<translation id="3628462041319107639">جارٍ تنزيل نموذج تحويل الصوت إلى نص…</translation>
 <translation id="3632040286124154621">اقتراح جيد</translation>
 <translation id="3632579075709132555">إيقاف/تفعيل شاشة الخصوصية</translation>
+<translation id="3634941468757842845">اختيار مظهر</translation>
 <translation id="3639873154908477486">الاسم (من أ إلى ي)</translation>
 <translation id="3644695927181369554">اقتراح غير مناسب</translation>
 <translation id="3651050199673793219">اختيار وحدة قياس درجة الحرارة</translation>
 <translation id="3661106764436337772">الكتابة بشكلٍ أسرع وبأسلوب أكثر ثقة</translation>
 <translation id="3662461537616691585">الخمريّ والكستنائي</translation>
+<translation id="3664755900672940272">تم ترتيب نماذج الطلبات عشوائيًا</translation>
 <translation id="3668449597372804501">خلفية تعرض منظرًا انسيابيًا للسُحب</translation>
 <translation id="3668570675727296296">إعدادات اللغة</translation>
 <translation id="3675132884790542448">خنازير</translation>
@@ -545,18 +574,20 @@
 <translation id="3740976234706877572"><ph name="AVERAGE_SCORE" /> ★ (<ph name="AGGREGATED_COUNT" /> مراجعة)</translation>
 <translation id="3748026146096797577">غير متصل</translation>
 <translation id="3749289110408117711">اسم الملف</translation>
+<translation id="3763034084412196440">ضبط مستوى الصوت</translation>
 <translation id="3767737419527918477">البحث في ملفات التسجيل</translation>
 <translation id="3771294271822695279">ملفات فيديو</translation>
+<translation id="3771694256347217732">‏بنود خدمة Google</translation>
 <translation id="3780740315729837296">تخصيص أحد مفاتيح لوحة المفاتيح</translation>
 <translation id="3784455785234192852">قفل</translation>
 <translation id="3785643128701396311">فن البكسل</translation>
 <translation id="3799381533888781854">غير مفعّل - يدير المشرف هذا الإعداد.</translation>
 <translation id="380097101658023925">‏عناصر التحكُّم في ألوان الأحمر والأخضر والأزرق (RGB) للإضاءة الخلفية</translation>
+<translation id="380493988330050229">يتعذّر إنشاء ملخّص للغة الطلب الصوتي هذه</translation>
 <translation id="38114475217616659">محو السجلّ بأكمله</translation>
 <translation id="3820172043799983114">رقم التعريف الشخصي غير صالح.</translation>
 <translation id="382043424867370667">خلفية تعرض غروب الشمس</translation>
 <translation id="3824259034819781947">إرفاق ملفات</translation>
-<translation id="3836587210832263413">ننصحك بتفعيل الإضافات التي تثق بها فقط</translation>
 <translation id="3838338534323494292">كلمة المرور الجديدة</translation>
 <translation id="3845880861638660475">‏اضغط على <ph name="ALT_SHORTCUT_START" />Alt<ph name="ALT_SHORTCUT_END" /> + <ph name="ESC_SHORTCUT_START" />مفتاح الخروج (Esc)<ph name="ESC_SHORTCUT_END" /> لإغلاق مربع الحوار.</translation>
 <translation id="3848280697030027394">جعل إضاءة لوحة المفاتيح داكنة</translation>
@@ -572,9 +603,11 @@
 <translation id="387301095347517405">عدد المرات التي تم فيها شحن بطاريتك بالكامل</translation>
 <translation id="3877066159641251281">الاستماع إلى الترجمة</translation>
 <translation id="3880601782712134623">رصد الأصوات المختلفة تلقائيًا ومنح تصنيف عام لكل متحدّث مثل "المتحدّث 1" و"المتحدّث 2"</translation>
+<translation id="38811596981744338">مشكلة قانونية</translation>
 <translation id="3885327323343477505">تغيير شاشة الاستراحة</translation>
 <translation id="3889914174935857450">إعادة ضبط التاريخ</translation>
 <translation id="3897092660631435901">قائمة</translation>
+<translation id="3902271751020176019">لغة تحويل الصوت إلى نص</translation>
 <translation id="391412459402535266">يتعذّر اختبار لوحة المفاتيح الخاصة بالجهاز. يُرجى الانتقال إلى وضع "الكمبيوتر المحمول" لتتمكّن من إجراء الاختبار.</translation>
 <translation id="3916998944874125962">أخذ لقطة شاشة</translation>
 <translation id="3923184630988645767">استخدام البيانات</translation>
@@ -613,7 +646,6 @@
 <translation id="409427325554347132">حفظ تفاصيل الاختبار</translation>
 <translation id="409469431304488632">ميزة تجريبية</translation>
 <translation id="4095829376260267438">WPA2WPA3</translation>
-<translation id="4105182082354119881">يتعذّر إنشاء أسماء للطلبات الصوتية التي يزيد عدد كلماتها عن <ph name="MAX_WORD_LENGTH" /></translation>
 <translation id="4110686435123617899">اختيار ألبوم <ph name="TITLE" /> <ph name="DESC" /></translation>
 <translation id="4111761024568264522">‏لوحة لمس USB</translation>
 <translation id="4113067922640381334">يمكنك الآن الوصول إلى <ph name="BEGIN_LINK_WALLPAPER_SUBPAGE" />خلفيات<ph name="END_LINK_WALLPAPER_SUBPAGE" /> جديدة.</translation>
@@ -622,6 +654,8 @@
 <translation id="4130035430755296270">استمِر في تمرير مؤشر الماوس هنا للاطّلاع على المزيد من خيارات التنسيق.</translation>
 <translation id="4130750466177569591">أوافق</translation>
 <translation id="4131410914670010031">أبيض وأسود</translation>
+<translation id="4137700675046373159">يوم السبت</translation>
+<translation id="4139326893730851150">تحديثات البرامج الثابتة</translation>
 <translation id="4143226836069425823">انقر على مفتاح آخر بلوحة المفاتيح لاستبدال هذا المفتاح</translation>
 <translation id="4145784616224233563">‏جدار الحماية لبروتوكل HTTP</translation>
 <translation id="4147897805161313378">‏صور Google‏‏</translation>
@@ -639,11 +673,13 @@
 <translation id="420283545744377356">إيقاف شاشة التوقف</translation>
 <translation id="4210636113897977670">حفظ وخروج</translation>
 <translation id="4210659479607886331">نهر جليدي</translation>
+<translation id="4212169537710712814">اكتمل تنزيل نموذج تحويل الصوت إلى نص باللغة <ph name="LANGUAGE_NAME" /></translation>
 <translation id="42126664696688958">تصدير</translation>
 <translation id="4213104098953699324">‏لوحة مفاتيح USB</translation>
 <translation id="4227825898293920515">تنتهي صلاحية كلمة المرور في <ph name="TIME" /></translation>
 <translation id="4238516577297848345">ما من مهام قيد الطباعة.</translation>
 <translation id="4239069858505860023">‏شبكة GPRS</translation>
+<translation id="4249717042534905822">يوم الأحد</translation>
 <translation id="4250229828105606438">لقطة شاشة</translation>
 <translation id="4251839292699800785">مكتب أنيق</translation>
 <translation id="4258281355379922695">‏وقت استجابة بروتوكول HTTP</translation>
@@ -657,13 +693,16 @@
 <translation id="4289849978083912975">عرض الشرائح</translation>
 <translation id="4297501883039923494">توقّفت الطابعة - خطأ غير معروف</translation>
 <translation id="4300073214558989"><ph name="IMAGE_COUNT" /> صورة</translation>
+<translation id="4300272766492248925">فتح التطبيق</translation>
 <translation id="430786093962686457">الشيفون</translation>
 <translation id="4310735698903592804">‏أحدث الخلفيات المستندة إلى تكنولوجيات الذكاء الاصطناعي من Google</translation>
 <translation id="4320904097188876154">وردي نيون</translation>
 <translation id="4333390807948134856">تم الضغط على المفتاح <ph name="KEY_NAME" />.</translation>
 <translation id="4334293042716981313">يمكنك أيضًا <ph name="BEGIN_LINK_FREEFORM_SUBPAGE" />كتابة طلبك الخاص<ph name="END_LINK_FREEFORM_SUBPAGE" /></translation>
 <translation id="4354430579665871434">مفتاح</translation>
+<translation id="4356100841225547054">إيقاف الصوت</translation>
 <translation id="4361257691546579041">إنّ اسم نقطة الوصول من النوع التلقائي.</translation>
+<translation id="4368101969572512692">الترتيب العشوائي للاقتراحات</translation>
 <translation id="437294888293595148">إعادة ضبط جميع الاختصارات</translation>
 <translation id="437477383107495720">أرانب</translation>
 <translation id="4376423484621194274">لا يسمح المشرف بإغلاق "<ph name="APP_NAME" />".</translation>
@@ -674,13 +713,14 @@
 <translation id="439429847087949098">جارٍ إعادة تشغيل <ph name="DEVICE_NAME" />.</translation>
 <translation id="4395835743215824109">تخصيص لوحة المفاتيح</translation>
 <translation id="439946595190720558">تم إنشاء هذه الخلفية بواسطة الذكاء الاصطناعي باستخدام النص التالي: "<ph name="PROMPT" />".</translation>
-<translation id="4415951057168511744">الصورة الرمزية الحالية</translation>
+<translation id="4415951057168511744">الأفاتار الحالي</translation>
 <translation id="4417830657741848074">لقد ضبط مشرفك بعض التطبيقات لبدء تشغيلها تلقائيًا. ولا يمكنك إغلاقها.</translation>
 <translation id="4422041425070339732">سهم متّجه للأسفل</translation>
 <translation id="4425149324548788773">ملفاتي</translation>
 <translation id="4428374560396076622">شبكة<ph name="NETWORK_NAME" /> متوقّفة</translation>
 <translation id="4428840632568803690">المتحدّث <ph name="SPEAKER_LABEL" /></translation>
 <translation id="4429881212383817840">‏ستنتهي صلاحية تذكرة Kerberos قريبًا</translation>
+<translation id="4430019312045809116">مستوى الصوت</translation>
 <translation id="4431821876790500265">عرض التقرير</translation>
 <translation id="4443192710976771874">أحمر</translation>
 <translation id="4447592701292766824">يتعذّر إنشاء ملخّص لهذا المحتوى</translation>
@@ -693,6 +733,7 @@
 <translation id="4474142134969976028">ما مِن نتائج مطابقة</translation>
 <translation id="4479639480957787382">إيثرنت</translation>
 <translation id="4483049906298469269">تعذَّر فحص اتصال بوابة الشبكة غير التلقائية.</translation>
+<translation id="4483498983731992167">تعذَّر إنشاء النص</translation>
 <translation id="4486524074141928967">سيتمّ تسجيل خروجك في <ph name="TIME" /></translation>
 <translation id="4500722292849917410">‏هذا الاختصار غير متاح. اضغط على اختصار جديد باستخدام أحد مفاتيح التعديل (Ctrl أو Alt أو Shift أو مفتاح <ph name="META_KEY" />).</translation>
 <translation id="4500966230243561393">لون الواجهة</translation>
@@ -701,7 +742,6 @@
 <translation id="4507392511610824664">رفع مستوى السطوع</translation>
 <translation id="4511264077854731334">المدخل</translation>
 <translation id="4513946894732546136">ملاحظات</translation>
-<translation id="4516323842122524821">مستوى الصوت</translation>
 <translation id="4521826082652183069">مطابقة الاسم البديل الخاص بالموضوع</translation>
 <translation id="4522570452068850558">التفاصيل</translation>
 <translation id="4536864596629708641">‏إعدادات عنوان IP</translation>
@@ -718,6 +758,7 @@
 <translation id="458794348635939462">تعذَّرت مطابقة جميع الأجهزة المضيفة.</translation>
 <translation id="4593212453765072419">مطلوب مصادقة الخادم الوكيل</translation>
 <translation id="4594021849294327751">إنشاء نص</translation>
+<translation id="4594541568452132351">اختيار لغة تحويل الصوت إلى نص وتنزيل النموذج</translation>
 <translation id="4607282946861182308">يتعذّر إنشاء صور استنادًا إلى الطلب الذي أدخلته. جرِّب طلبًا آخر.</translation>
 <translation id="4609350030397390689">تقليل سطوع لوحة المفاتيح</translation>
 <translation id="4623061655523261501">تمّ إنشاء أسماء التسجيلات بنجاح</translation>
@@ -728,11 +769,14 @@
 <translation id="4650608062294027130">‏المفتاح Shift الأيمن</translation>
 <translation id="4654549501020883054">التغيير يوميًا</translation>
 <translation id="4655868084888499342">تم ضبط الصورة كخلفية</translation>
+<translation id="4660989616054030633">قد ترتكب تكنولوجيا الذكاء الاصطناعي التوليدي أخطاءً، بما فيها تلك المتعلّقة بالأشخاص، لذا يُنصَح بالتحقّق من ردودها</translation>
 <translation id="4661249927038176904">سريالي</translation>
+<translation id="4661392828086261436">‏هذا التحديث مقدَّم من الشركة المصنّعة للجهاز ولم تتحقّق Google منه</translation>
 <translation id="4664651912255946953">الفَرْو</translation>
 <translation id="4665014895760275686">جهة التصنيع</translation>
 <translation id="467510802200863975">كلمتا المرور غير متطابقتين.</translation>
 <translation id="467715984478005772">تم الاشتباه في جدار حماية.</translation>
+<translation id="4678534708181186163">يتعذّر تلخيص المحتوى. يُرجى تجربة استخدام نص أقصر.</translation>
 <translation id="4683762547447150570">انقر على الزر للتركيز على تخصيص المفتاح</translation>
 <translation id="4691278870498629773">توقّفت الطابعة - دُرج الورق غير متوفّر</translation>
 <translation id="469379815867856270">قوة الإشارة</translation>
@@ -740,7 +784,10 @@
 <translation id="4731797938093519117">وصول أحد الوالدين</translation>
 <translation id="473775607612524610">تحديث</translation>
 <translation id="4744944742468440486">معلومات ذات صلة باختيارك</translation>
+<translation id="4750394297954878236">الاقتراحات</translation>
+<translation id="4763771683769971829">قائمة اللغات المتاحة</translation>
 <translation id="4771607256327216405">زيادة سطوع لوحة المفاتيح</translation>
+<translation id="4771923071974529837">غدًا</translation>
 <translation id="4773299976671772492">متوقفة</translation>
 <translation id="4778082030331381943">الجمشت</translation>
 <translation id="4782311465517282004">يمكنك الحصول على تعريفات أو ترجمات للنصوص أو تحويل الوحدات من خلال النقر بزر الماوس الأيمن على النص أو النقر عليه مع الاستمرار.</translation>
@@ -784,6 +831,7 @@
 <translation id="4921665434385737356">تم شحن <ph name="RATE" /> خلال <ph name="NUM_SECONDS" /> ثانية.</translation>
 <translation id="4930320165497208503">لإعداد اتصال أو تعديله، انتقِل إلى <ph name="BEGIN_LINK" />الإعدادات<ph name="END_LINK" />.</translation>
 <translation id="4932733599132424254">التاريخ</translation>
+<translation id="494102685638938793"><ph name="LINK_TEXT" /> (يفتح هذا الرابط في علامة تبويب جديدة)</translation>
 <translation id="4946927805998996217">جارٍ إنشاء ملخّص</translation>
 <translation id="4950314376641394653">تم تحديث البرامج الثابتة لجهاز <ph name="DEVICE_NAME" /> إلى الإصدار <ph name="VERSION" /></translation>
 <translation id="4950893758552030541">نفق شجري</translation>
@@ -803,6 +851,7 @@
 <translation id="500920857929044050">إيقاف الاختبار</translation>
 <translation id="5017508259293544172">LEAP</translation>
 <translation id="5035083460461104704">لون المظهر</translation>
+<translation id="5037240652947866174">اليوم</translation>
 <translation id="5038292761217083259">لوحة مفاتيح متعددة الألوان</translation>
 <translation id="5039804452771397117">سماح</translation>
 <translation id="5049856988445523908">‏تم قفل شريحة SIM (باستخدام <ph name="LOCK_TYPE" />).</translation>
@@ -816,12 +865,14 @@
 <translation id="5089810972385038852">الولاية</translation>
 <translation id="5090362543162270857">IPsec (IKEv2)</translation>
 <translation id="5095761549884461003">‏عليك فصل كابل USB في <ph name="DEVICE_NAME" /> ثم إعادة توصيله لمواصلة عملية التحديث</translation>
-<translation id="5095864667399748231">إيقاف أو تفعيل كتم الصوت</translation>
 <translation id="5099354524039520280">لأعلى</translation>
 <translation id="5107243100836678918">قد يتعارض الاختصار بدون مفتاح <ph name="META_KEY" /> مع اختصار بعض التطبيقات. اضغط على هذا الاختصار مرة أخرى لمواصلة استخدامه، أو اضغط على اختصار جديد يستخدِم مفتاح <ph name="KEY" />. <ph name="LINK_BEGIN" />مزيد من المعلومات<ph name="LINK_END" /></translation>
+<translation id="5107402373921342399">‏يتعذَّر تنزيل نموذج تحويل الصوت إلى نص باللغة <ph name="LANGUAGE_NAME" />. يُرجى إعادة المحاولة أو إعادة تشغيل جهاز Chromebook</translation>
 <translation id="5108781503443873320">المرادفات المشابهة:</translation>
+<translation id="5121677070210013200">‏تعذَّر تنزيل نموذج تحويل الصوت إلى نص. يُرجى إعادة المحاولة أو إعادة تشغيل جهاز Chromebook.</translation>
 <translation id="5130848777448318809">مهور</translation>
 <translation id="5137451382116112100">ملء الشاشة</translation>
+<translation id="5139813694804168398">عدم الإزعاج</translation>
 <translation id="5140788690559353412">‏عند فقدان إمكانية الوصول إلى حسابك الذي تديره المؤسسة التعليمية، لن يعود بإمكانك الوصول إلى عنوان بريدك الإلكتروني وملفات Google Drive المرتبطة، مثل Gmail و"مستندات Google" و"العروض التقديمية من Google" وغير ذلك.</translation>
 <translation id="5142961317498132443">المصادقة</translation>
 <translation id="5144311987923128508">تم إيقاف زر "تأكيد" الآن</translation>
@@ -833,6 +884,7 @@
 <translation id="5168185087976003268">حالة البطارية</translation>
 <translation id="5170568018924773124">العرض في المجلد</translation>
 <translation id="517075088756846356">عليك فصل كابل الطاقة الخاص بجهاز "<ph name="DEVICE_NAME" />" عن مصدر الطاقة وإعادة توصيله لمواصلة عملية التحديث</translation>
+<translation id="5178021559562393163">يتعذّر إنشاء الأسماء. يُرجى تجربة استخدام نص أقصر.</translation>
 <translation id="5180108905184566358">أشجار الباوباب</translation>
 <translation id="5180712487038406644">معبِّر</translation>
 <translation id="5190187232518914472">‏استرجِع ذكرياتك المفضّلة. ولإضافة أي ألبومات أو تعديلها، انتقِل إلى <ph name="LINK_BEGIN" />صور Google<ph name="LINK_END" />.</translation>
@@ -865,8 +917,10 @@
 <translation id="5302048478445481009">اللغة</translation>
 <translation id="5303837385540978511">خلفية حصرية على <ph name="PRODUCT_NAME" /></translation>
 <translation id="5304899856529773394">EVDO</translation>
+<translation id="530883153651464140">‏تحديث <ph name="DEVICE_NAME" /> إلى الإصدار ‎<ph name="VERSION" /></translation>
 <translation id="5315873049536339193">الهوية</translation>
 <translation id="5317780077021120954">حفظ</translation>
+<translation id="5318310531701770497">يتعذّر إنشاء الأسماء. يُرجى تجربة استخدام نص أطول.</translation>
 <translation id="5318334351163689047">‏تعذَّر طلب بروتوكول TCP.</translation>
 <translation id="53196409393069519">هل تريد تفعيل تحويل الصوت إلى نص؟</translation>
 <translation id="5326394068492324457"><ph name="DOCUMENT_TITLE" />، <ph name="PRINTER_NAME" />، <ph name="CREATION_TIME" />، <ph name="COMPLETION_STATUS" /></translation>
@@ -890,6 +944,7 @@
 <translation id="5431318178759467895">بالألوان</translation>
 <translation id="5457599981699367932">التصفّح كضيف</translation>
 <translation id="54609108002486618">تتم إدارته</translation>
+<translation id="5461608756903394951">جارٍ تنزيل نموذج تحويل الصوت إلى نص باللغة <ph name="LANGUAGE_NAME" /></translation>
 <translation id="5470776029649730099">الخيش</translation>
 <translation id="5478289488939624992">{ATTEMPTS_LEFT,plural, =1{تتبقّى محاولة واحدة ({0}).}zero{تتبقّى {0} محاولة.}two{تتبقّى محاولتان ({0}).}few{تتبقّى {0} محاولات.}many{تتبقّى {0} محاولة.}other{تتبقّى {0} محاولة.}}</translation>
 <translation id="5488280942828718790">أحمر أرجواني</translation>
@@ -900,8 +955,9 @@
 <translation id="550600468576850160">مرج</translation>
 <translation id="551689408806449779">انقطع اتصال الجهاز. يُرجى إعادة توصيل الجهاز لاختباره.</translation>
 <translation id="5519195206574732858">LTE</translation>
+<translation id="5527146180235316490">خيارات الميكروفون</translation>
 <translation id="5534900277405737921">تضاريس</translation>
-<translation id="554067135846762198">الأحمر المرجاني والبني الفاتح</translation>
+<translation id="554067135846762198">المرجاني والبيج</translation>
 <translation id="5543701552415191873">مقفَل</translation>
 <translation id="554517032089923082">GTC</translation>
 <translation id="5554741914132564590">‏هذا التحديث مقدَّم من الشركة المصنّعة للجهاز الخارجي ولم تتحقّق Google منه.</translation>
@@ -916,8 +972,10 @@
 <translation id="5595623927872580850">رمادي</translation>
 <translation id="5596627076506792578">خيارات إضافية</translation>
 <translation id="5600027863942488546">تم اختبار المفتاح <ph name="KEY_NAME" />.</translation>
+<translation id="5606865426897221650">‏مفتاح Tab</translation>
 <translation id="5613201299517339763">لقد سجّلت الخروج</translation>
 <translation id="5620281292257375798">داخلي فقط</translation>
+<translation id="5628106863521633649">اللغات المتاحة</translation>
 <translation id="5630438231335788050">فن الباوهاوس</translation>
 <translation id="5631759159893697722">نبذة مختصرة</translation>
 <translation id="5655283760733841251">زيادة سطوع لوحة المفاتيح</translation>
@@ -937,7 +995,6 @@
 <translation id="5703716265115423771">صوت منخفض</translation>
 <translation id="5707900041990977207"><ph name="CURRENT_PAGE" /> من <ph name="TOTAL_PAGES" /></translation>
 <translation id="572854785834323605">زر تعديل الاختصار <ph name="SHORTCUT_DESCRIPTION" /></translation>
-<translation id="5733298426544876109">تحديث <ph name="DEVICE_NAME" /></translation>
 <translation id="5736820754189340309">تمت إعادة ضبط استخدام البيانات</translation>
 <translation id="574392208103952083">متوسط</translation>
 <translation id="5744175046705638478">ترجمة "<ph name="QUERY" />"</translation>
@@ -945,6 +1002,7 @@
 <translation id="5760715441271661976">حالة المدخل</translation>
 <translation id="5763838252932650682">إعادة تشغيل "<ph name="APP_NAME" />" وتحديثه</translation>
 <translation id="576835345334454681">زيادة سطوع الشاشة</translation>
+<translation id="5775340474232476653">أنهى مُعلّمك الصف</translation>
 <translation id="5779818640587041940">إبقاء الشاشة مشغَّلة أثناء التسجيل</translation>
 <translation id="57838592816432529">كتم الصوت</translation>
 <translation id="5784136236926853061">‏وقت استجابة بروتوكول HTTP طويل.</translation>
@@ -961,6 +1019,7 @@
 <translation id="5859969039821714932">هذا الاختصار غير متاح. اضغط على اختصار جديد بدون "<ph name="KEY" />".</translation>
 <translation id="5860033963881614850">غير مفعّلة</translation>
 <translation id="5860491529813859533">تفعيل</translation>
+<translation id="5875913454160982848">تنزيل نموذج تحويل الصوت إلى نص</translation>
 <translation id="5876385649737594562">يُرجى تفعيل "وضع الاستراحة" لتحديد الخيارات.</translation>
 <translation id="5877503382465267833">إيقاف تنزيل "<ph name="RECORDING_NAME" />" مؤقتًا</translation>
 <translation id="588258955323874662">ملء الشاشة</translation>
@@ -972,6 +1031,8 @@
 <translation id="5904994456462260490">‏إضافة اسم نقطة وصول (APN) جديد</translation>
 <translation id="590746845088109442">قطط</translation>
 <translation id="5907649332524363701">لون المفتاح</translation>
+<translation id="5908813850962688338">سيستغرق تثبيت هذا التحديث بضع دقائق. يُرجى إبقاء الجهاز متصلاً بمقبس الكهرباء وقيد التشغيل أثناء تنزيل التحديث. وقد تتم إعادة تشغيل جهازك عدة مرات أو قد تظهر شاشة سوداء أثناء هذه العملية. سُيطلب منك إعادة تشغيل جهازك لإكمال عملية التثبيت.</translation>
+<translation id="5915794087373112615">سيطّلع مُعلّمك على شاشتك بعد <ph name="NUM_SECONDS" /> من الثواني</translation>
 <translation id="5916084858004523819">محظورة</translation>
 <translation id="5916664084637901428">مفعّل</translation>
 <translation id="5921506667911082617">{COUNT,plural, =1{تم بنجاح مسح الملف ضوئيًا وحفظه في <ph name="LINK_BEGIN" /><ph name="FOLDER_NAME" /><ph name="LINK_END" />.}zero{تم بنجاح مسح الملفات ضوئيًا وحفظها في <ph name="LINK_BEGIN" /><ph name="FOLDER_NAME" /><ph name="LINK_END" />.}two{تم بنجاح مسح الملفين ضوئيًا وحفظهما في <ph name="LINK_BEGIN" /><ph name="FOLDER_NAME" /><ph name="LINK_END" />.}few{تم بنجاح مسح الملفات ضوئيًا وحفظها في <ph name="LINK_BEGIN" /><ph name="FOLDER_NAME" /><ph name="LINK_END" />.}many{تم بنجاح مسح الملفات ضوئيًا وحفظها في <ph name="LINK_BEGIN" /><ph name="FOLDER_NAME" /><ph name="LINK_END" />.}other{تم بنجاح مسح الملفات ضوئيًا وحفظها في <ph name="LINK_BEGIN" /><ph name="FOLDER_NAME" /><ph name="LINK_END" />.}}</translation>
@@ -1000,17 +1061,17 @@
 <translation id="6040143037577758943">إغلاق</translation>
 <translation id="6040852767465482106">هوية مجهولة</translation>
 <translation id="604124094241169006">تلقائي</translation>
-<translation id="6042308850641462728">عرض المزيد</translation>
 <translation id="6048107060512778456">تعذَّرت الطباعة - الورق مكدّس</translation>
 <translation id="6050189528197190982">تدرج الرمادي</translation>
 <translation id="6054711098834486579">الفن التعبيري</translation>
 <translation id="6058625436358447366">يُرجى إدخال كلمتي المرور القديمة والجديدة لإنهاء الإجراء.</translation>
 <translation id="6061772781719867950">‏حدث خطأ في طلبات HTTPS.</translation>
 <translation id="6073292342939316679">تقليل سطوع لوحة المفاتيح</translation>
+<translation id="6074752328838739425">إخفاء الملخّص</translation>
 <translation id="6075872808778243331">‏(نظام التشغيل Android) اختبار وقت استجابة بروتوكول HTTP</translation>
 <translation id="6078323886959318429">إضافة اختصار</translation>
+<translation id="6079693086494835199">يجب إعادة الضبط للتأكّد من أنّ الصفحة الرئيسية التلقائية ليست موقع تصيّد احتيالي. ويُرجى استخدام المواقع الإلكترونية الموثوقة فقط.</translation>
 <translation id="6091080061796993741">أصفر</translation>
-<translation id="6093853427925392522">‏احرص على استخدام تطبيق "نقل المحتوى" من Google لنقل بيانات حسابك الذي تديره المؤسسة التعليمية إلى حسابك الشخصي قبل أن تفقد إمكانية الوصول إليه.</translation>
 <translation id="6104112872696127344">تم إلغاء المسح الضوئي.</translation>
 <translation id="6106186594183574873">يُرجى إدخال كلمة المرور القديمة لإنهاء الإجراء.</translation>
 <translation id="6108689792487843350">يتعذّر الوصول إلى البوابة</translation>
@@ -1033,6 +1094,7 @@
 <translation id="6156030503438652198">الأحمر الداكن والوردي</translation>
 <translation id="6165508094623778733">مزيد من المعلومات</translation>
 <translation id="6184793017104303157">B4</translation>
+<translation id="6185263894115593524">يجب إعادة الضبط لمنع الآخرين من استخدام الميكروفون أو الكاميرا. ويُرجى عدم منح الأذونات إلا للمواقع الإلكترونية الموثوقة.</translation>
 <translation id="6188737759358894319">‏تم إنشاء الخلفية بتاريخ ‎<ph name="DATE" />.</translation>
 <translation id="6189418609903030344">تقلّ قدرة البطارية مع الاستخدام.</translation>
 <translation id="6189987971574353264">تشغيل</translation>
@@ -1057,10 +1119,9 @@
 <translation id="628726841779494414">إدارة الطابعات في إعدادات الطابعة</translation>
 <translation id="6292095526077353682">عرض شاشة الاستراحة أثناء الشحن لمدة</translation>
 <translation id="629550705077076970">تعتيم لوحة المفاتيح</translation>
-<translation id="6301193653204230066">‏تؤدي ميزة "إعادة الضبط لتعزيز الأمان" إلى إيقاف إضافات متصفِّح Chrome وإعادة ضبط الشبكة والإعدادات الأخرى على الإعدادات التلقائية الآمنة.
-          ولن يتم تغيير علامات التبويب والملفات وسجلّ البحث وملفات تعريف الارتباط.</translation>
 <translation id="6302401976930124515">تم إلغاء اختبار <ph name="TEST_NAME" />.</translation>
 <translation id="631063167932043783">تطبيق "استكشاف"</translation>
+<translation id="6314333689576767865">‏تمت إعادة ضبط جهاز Chromebook على الإعدادات التلقائية الآمنة. ويمكنك إجراء تغييرات في أي وقت من خلال "الإعدادات".</translation>
 <translation id="6318437367327684789">للأبد</translation>
 <translation id="6319207335391420837">تحديث البرامج الثابتة على <ph name="DEVICE_NAME" /></translation>
 <translation id="6321407676395378991">تفعيل شاشة التوقف</translation>
@@ -1077,6 +1138,7 @@
 <translation id="6359919876285606596">هذا الإجراء نهائي ولا يمكن التراجع عنه</translation>
 <translation id="6368342879959028556">‏عند اختيار "الإنشاء باستخدام الذكاء الاصطناعي (AI)"، اكتب طلبًا مخصّصًا. أو يمكنك أيضًا اختيار "خلفيات قائمة على الذكاء الاصطناعي" لاختيار مظهر ثمّ النقر على الكلمات التي تحتها خط لتخصيص خلفيتك القائمة على الذكاء الاصطناعي.</translation>
 <translation id="636850387210749493">التسجيل في المؤسسة</translation>
+<translation id="6369221585240879141">يتعذّر إنشاء أسماء تسجيلات للغة الطلب الصوتي هذه</translation>
 <translation id="6373461326814131011">بِركة صناعية</translation>
 <translation id="6379086450106841622">الشاشة التي تعمل باللمس</translation>
 <translation id="6381741036071372448">اختبار لوحة المفاتيح</translation>
@@ -1116,8 +1178,10 @@
 <translation id="6517239166834772319">استكشاف</translation>
 <translation id="6526200165918397681">مطابقة درجات لون الخلفية</translation>
 <translation id="6527081081771465939">‏بروتوكول حماية شبكة Wi-Fi غير معروف.</translation>
+<translation id="6531528791584205545">الإدراج السريع</translation>
 <translation id="6535178685492749208">لا يتوفّر اتصال بالإنترنت. سيتم إرسال التعليقات لاحقًا.</translation>
 <translation id="6543412779435705598">تاكو</translation>
+<translation id="6550369542114086980">يوم الخميس</translation>
 <translation id="6551839203326557324">تفاح</translation>
 <translation id="65526652485742171">زر "تأكيد" متاح الآن</translation>
 <translation id="6557784757915238407">اسم نقطة الوصول من النوع <ph name="ATTACH" />.</translation>
@@ -1133,6 +1197,7 @@
 <translation id="6595046262780525922">هل تريد تفعيل ميزة "تحويل الصوت إلى نص" وتنزيل النموذج الخاص بها؟</translation>
 <translation id="6596816719288285829">‏عنوان IP</translation>
 <translation id="6599673642868607614">‏شكرًا على ملاحظاتك. تساعدنا ملاحظاتك في تحسين تجربة استخدام أجهزة Chromebook وسيراجعها فريقنا. وبسبب التقارير التي تصلنا بأعداد هائلة، لن نتمكّن من إرسال ردّ إليك.</translation>
+<translation id="6608043585557830684">ميزة تحويل الصوت إلى نص غير مفعَّلة. يمكنك تفعيلها من خلال "الإعدادات" أو قائمة <ph name="THREE_DOTS_MENU_ICON" />.</translation>
 <translation id="660846213831377756">مفاتيح الماوس</translation>
 <translation id="6618744767048954150">قيد التشغيل</translation>
 <translation id="6620487321149975369">ستظهر طلبات الطباعة في السجلّ إلّا إذا تمت إزالتها يدويًا.</translation>
@@ -1143,7 +1208,6 @@
 <translation id="6650062777702288430">مفتاح التبديل بين لوحة مفاتيح "كانا" ولوحة المفاتيح الأبجدية الرقمية</translation>
 <translation id="6657240842932274095">هل تريد السماح لخدمات النظام باستخدام موقعك الجغرافي؟</translation>
 <translation id="6657585470893396449">كلمة المرور</translation>
-<translation id="6659594942844771486">‏مفتاح Tab</translation>
 <translation id="66621959568103627">وردي مرجاني</translation>
 <translation id="6667885109186363316">‏<ph name="SEA_PEN_INTRO_FIRST_PARAGRAPH" />
           <ph name="LINE_BREAK" />
@@ -1158,6 +1222,8 @@
 <translation id="6673898378497337661">زيادة سطوع لوحة المفاتيح</translation>
 <translation id="6692996468359469499">الحصول على معلومات ذات صلة باختيارك</translation>
 <translation id="6694534975463174713">رمز القفل</translation>
+<translation id="6700703207451721535">لا يُسمح بالوصول إلى هذا الرابط. للوصول إليه، يُرحى التواصل مع معلّمك.</translation>
+<translation id="6703179086771097594">ما الذي لم يعجبك؟</translation>
 <translation id="6704062477274546131">دقة نظام أسماء النطاقات</translation>
 <translation id="6712933881624804031">وادٍ</translation>
 <translation id="6716013206176357696">فراولة</translation>
@@ -1173,6 +1239,7 @@
 <translation id="6747035363363040417">محايدة</translation>
 <translation id="6747215703636344499">توقّفت الطابعة - دُرج الإخراج ممتلئ</translation>
 <translation id="6749473226660745022">الصور</translation>
+<translation id="6752960629591143793">يُرجى اختيار لغة تحويل الصوت إلى نص وتنزيل النموذج من خلال "الإعدادات" أو قائمة <ph name="THREE_DOTS_MENU_ICON" /></translation>
 <translation id="6753452347192452143">الجهاز هو كمبيوتر.</translation>
 <translation id="6756731097889387912">تعذّر إلغاء عملية المسح الضوئي.</translation>
 <translation id="6760706756348334449">خفض مستوى الصوت</translation>
@@ -1192,7 +1259,9 @@
 <translation id="6862416241246624313">تم إرسال الملاحظات</translation>
 <translation id="6866732840889595464">أقحوان</translation>
 <translation id="6871256179359663621">أرجواني فاتح</translation>
+<translation id="6887967050249348172">تم إيقاف الإضافات لمنع تغيير الإعدادات. ويُرجى تفعيل الإضافات الموثوقة فقط.</translation>
 <translation id="6889786074662672253">عند إعادة تشغيل الجهاز، لا تفصل هذا الجهاز الخارجي أو توقِف تشغيل الكمبيوتر، لكن يمكنك تصغير هذه النافذة. قد تستغرق هذه العملية بضع دقائق وقد يتوقف الجهاز الخارجي عن العمل حتى اكتمالها.</translation>
+<translation id="6899460405678814458">عرض الملخّص</translation>
 <translation id="6900701049656042631">لا يتضمّن هذا الألبوم أي صور. لإضافة صور إليه، انتقِل إلى <ph name="LINK" />.</translation>
 <translation id="6902359863093437070">إنشاء خلفية باستخدام الذكاء الاصطناعي</translation>
 <translation id="6905163627763043954">التجربة الآن</translation>
@@ -1217,6 +1286,7 @@
 <translation id="6975620886940770104">‫<ph name="GLOWSCAPES_LANDSCAPE" /> يتدفق خلاله <ph name="GLOWSCAPES_FEATURE" /> لامع</translation>
 <translation id="6975981640379148271">كوالا</translation>
 <translation id="6977381486153291903">مراجعة البرامج الثابتة</translation>
+<translation id="6978396562261420054">صورة تم إنشاؤها</translation>
 <translation id="6981982820502123353">تسهيل الاستخدام</translation>
 <translation id="6982462588253070448">كثبان رملية</translation>
 <translation id="7005833343836210400">الجهاز غير متصل بالإنترنت.</translation>
@@ -1226,8 +1296,11 @@
 <translation id="7040729769968826896">السماح بتحديد هوية المتحدّث</translation>
 <translation id="7041549558901442110">الجهاز غير متصل.</translation>
 <translation id="7046522406494308071">هل تريد إعادة ضبط كل الاختصارات على الإعدادات التلقائية؟</translation>
+<translation id="7049916119678019302">تنزيل نموذج تحويل الصوت إلى نص من خلال "الإعدادات"</translation>
 <translation id="7058278511608979688">إنهاء وحفظ</translation>
 <translation id="7059230779847288458">جارٍ الشحن. تتبقَّى <ph name="TIME_VALUE" /> حتى اكتمال الشحن.</translation>
+<translation id="7064209589142995848">نقل المحتوى</translation>
+<translation id="7065336548231472971">تمّ اختيار <ph name="LANGUAGE_NAME" /></translation>
 <translation id="7066538517128343186">المفتاح <ph name="KEY" /></translation>
 <translation id="7068619307603204412">تحضير جهازك لإجراء التحديث</translation>
 <translation id="7076851914315147928">اختيار خلفية</translation>
@@ -1239,6 +1312,7 @@
 <translation id="710028965487274708">تعذَّر التفويض: تعذَّر إتمام عملية التفويض.</translation>
 <translation id="7101959270679078188">يجب فتح قفل "<ph name="DEVICE_NAME" />" لمواصلة عملية التحديث</translation>
 <translation id="7103252855940681301">الجهاز <ph name="INDEX" /> من إجمالي <ph name="COUNT" /> اسمه <ph name="NAME" />.</translation>
+<translation id="7103793063702494489">اللغة المحددّة</translation>
 <translation id="7107255225945990211">اختيار عمل فني حصري مِن <ph name="PRODUCT_NAME" /></translation>
 <translation id="7108668606237948702">إدخال</translation>
 <translation id="7117228822971127758">يُرجى إعادة المحاولة لاحقًا</translation>
@@ -1248,7 +1322,8 @@
 <translation id="7130438335435247835">‏اسم نقطة الوصول (APN)</translation>
 <translation id="7134436342991564651">{0,plural, =1{خادم أسماء واحد}zero{خوادم الأسماء}two{خادما أسماء}few{خوادم الأسماء}many{خوادم الأسماء}other{خوادم الأسماء}}</translation>
 <translation id="7135814714616751706">البحث في الاختصارات</translation>
-<translation id="7141470099673912333">نقل المحتوى</translation>
+<translation id="7138614237884624401">نص مُبسّط</translation>
+<translation id="7138668887584231801">عدد الكلمات غير كافٍ لتلخيص النص</translation>
 <translation id="7143207342074048698">اتصال</translation>
 <translation id="7144878232160441200">إعادة المحاولة</translation>
 <translation id="7144954474087165241">معبد هندي</translation>
@@ -1265,6 +1340,8 @@
 <translation id="7180865173735832675">تخصيص</translation>
 <translation id="7182063559013288142">نقطة اتصال فورية</translation>
 <translation id="7184043045742675738">انقر على أي مفتاح لتخصيص الزر. غيِّر موضع المفتاح باستخدام الماوس أو مفاتيح الأسهم.</translation>
+<translation id="7187669805838282391">يوم الأربعاء</translation>
+<translation id="7205318498545665455">اختيار الميكروفون</translation>
 <translation id="7206979415662233817">بنود الخدمة</translation>
 <translation id="7210635925306941239">سماوي</translation>
 <translation id="7212547870105584639">يمكنك إدارة إعدادات اسم نقطة الوصول للشبكة. وتُنشئ أسماء نقاط الوصول اتصالاً بين شبكة الجوّال والإنترنت. <ph name="BEGIN_LINK_LEARN_MORE" />مزيد من المعلومات<ph name="END_LINK_LEARN_MORE" /></translation>
@@ -1274,12 +1351,14 @@
 <translation id="7233782086689993269">تمت استعادة الاختصار.</translation>
 <translation id="725133483556299729">اختيار عنوان البريد الإلكتروني</translation>
 <translation id="7255187042098209569">الوردي والأرجواني</translation>
+<translation id="7267918995585557751">يجب إعادة الضبط للتأكّد من أنّ صفحة بدء التشغيل التلقائية ليست موقع تصيّد احتيالي. ويُرجى استخدام المواقع الإلكترونية الموثوقة فقط.</translation>
 <translation id="7271000785316964275">الفن الكلاسيكي</translation>
 <translation id="7271040990581020067">يتم حاليًا استخدام الماسح الضوئي. يُرجى إعادة المحاولة لاحقًا.</translation>
 <translation id="7271932918253517778">إنّ الاختصار المكوَّن من أحد مفاتيح الصف العلوي يجب أن يشتمل على مفتاح <ph name="META_KEY" />.</translation>
 <translation id="7274587244503383581"><ph name="PRINTED_PAGES_NUMBER" />/<ph name="TOTAL_PAGES_NUMBER" /></translation>
 <translation id="7281657306185710294">استنشاق النسيم</translation>
 <translation id="7287310195820267359">مجموعات الخلفيات</translation>
+<translation id="7293429513719260019">اختيار لغة</translation>
 <translation id="7297226631177386107">‏تعذَّر اجتياز جدار الحماية للاتصال بالمواقع الإلكترونية التي تستخدم بروتوكول HTTPS.</translation>
 <translation id="7297726121602187087">أخضر داكن</translation>
 <translation id="7301262279595293068">يُرجى الانتظار إلى أن يتم تحديث هذا التطبيق.</translation>
@@ -1311,12 +1390,15 @@
 <translation id="7388959671917308825">لوحة لمس مُدمَجة</translation>
 <translation id="7397270852490618635">إيقاف تشغيل المظهر الفاتح</translation>
 <translation id="7401543881546089382">حذف الاختصار</translation>
+<translation id="7405493795721832710"><ph name="DEVICE_NAME" /> جاهز للتحديث</translation>
 <translation id="741244894080940828">التحويل</translation>
 <translation id="7415801143053185905">‏وقت استجابة بروتوكول HTTP طويل جدًا.</translation>
+<translation id="7418738250896500352">عدد الكلمات كبير جدًا ولا يمكن تبسيط النص</translation>
 <translation id="7425037327577270384">مساعدة في الكتابة</translation>
+<translation id="7425832472614771259">تم تنزيل %<ph name="PROGRESS_PERCENTAGE" /> من نموذج تحويل الصوت إلى نص باللغة <ph name="LANGUAGE_NAME" /></translation>
 <translation id="7427315641433634153">MSCHAP</translation>
 <translation id="7438298994385592770">‏لا يمكن إيقاف اسم نقطة الوصول (APN) هذا أو إزالته. يُرجى إيقاف أو إزالة أسماء نقاط الوصول المفعَّلة من نوع <ph name="ATTACH" />.</translation>
-<translation id="7458970041932198923">يُرجى الاتصال بإحدى الشبكات وإعادة تحميل الصفحة لعرض الصور الرمزية وتحديدها.</translation>
+<translation id="7458970041932198923">يُرجى الاتصال بإحدى الشبكات وإعادة تحميل الصفحة لعرض صور الأفاتار وتحديدها.</translation>
 <translation id="7469648432129124067">تم رصد مدخل.</translation>
 <translation id="7481312909269577407">إلى الأمام</translation>
 <translation id="7487067081878637334">التقنية</translation>
@@ -1325,6 +1407,7 @@
 <translation id="7500205272584643581">هل تريد السماح لتطبيق "المسجّلة الذكية" برصد المتحدّثِين وتصنيفهم؟</translation>
 <translation id="7501957181231305652">أو</translation>
 <translation id="7502658306369382406">‏عنوان IPv6</translation>
+<translation id="7503342217608032738">يتعذَّر استخدام هذا الجهاز</translation>
 <translation id="7507061649493508884">صورة <ph name="FLOWER_TYPE" /> مشرقة بلون <ph name="FLOWER_COLOR" /></translation>
 <translation id="7513770521371759388">الأسفل</translation>
 <translation id="7514365320538308">تنزيل</translation>
@@ -1337,17 +1420,21 @@
 <translation id="7544853251252956727">ترتيب عشوائي</translation>
 <translation id="7550715992156305117">سلسلة إجراءات بيانات التشخيص</translation>
 <translation id="7551123448725492271">الجهاز هو جهاز سماعي.</translation>
+<translation id="7553913964854052228">‏الميكروفون مُستخدَم حاليًا بواسطة School Tools</translation>
 <translation id="7559239713112547082">معاينة لقطة الشاشة</translation>
 <translation id="7561454561030345039">يتولّى مشرفك إدارة هذا الإجراء.</translation>
+<translation id="7561759921596375678">تفعيل الصوت</translation>
 <translation id="7569444139234840525"><ph name="QUERY_TEXT" /> · /<ph name="PHONETICS" />/</translation>
 <translation id="7570674786725311828">‏شاشة USB تعمل باللمس</translation>
 <translation id="757747079855995705">الحجر</translation>
 <translation id="7590883480672980941">إعدادات الإدخال</translation>
 <translation id="7595982850646262331">الوقت المتبقّي: <ph name="TIME_VALUE" /></translation>
+<translation id="7600430297804876776">ضبطَ مشرف <ph name="MANAGER" /> وقتًا لاستخدام جهاز <ph name="DEVICE_TYPE" /> خلاله.</translation>
 <translation id="7613724632293948900">غيِّر الموضع باستخدام الماوس أو مفاتيح الأسهم.</translation>
+<translation id="7618216277886673749">اختيار <ph name="LANGUAGE_NAME" /></translation>
 <translation id="7618774594543487847">معتدل</translation>
 <translation id="7620771111601174153">مزيد من المعلومات في "مركز المساعدة"</translation>
-<translation id="7625095758347640998">خلفيات قائمة على الذكاء الاصطناعي</translation>
+<translation id="7623327321610992184">‏بودكاست OnTask</translation>
 <translation id="763165478673169849">وقت آخر عملية إعادة ضبط</translation>
 <translation id="7633068090678117093">صورة الخلفية</translation>
 <translation id="763873111564339966">نيلي</translation>
@@ -1355,7 +1442,7 @@
 <translation id="7656388927906093505">الجهاز هو ماوس.</translation>
 <translation id="7658239707568436148">إلغاء</translation>
 <translation id="7663672983483557630"><ph name="DESCRIPTION" />، <ph name="ACCELERATOR_INFO" />، <ph name="ROW_STATUS" />.</translation>
-<translation id="7665800271478495366">تغيير الصورة الرمزية</translation>
+<translation id="7665800271478495366">تغيير الأفاتار</translation>
 <translation id="7673177760638264939">وردة الحديقة</translation>
 <translation id="7683228889864052081">التدرّج اللوني في إضاءة لوحة المفاتيح</translation>
 <translation id="7690294790491645610">تأكيد كلمة المرور الجديدة</translation>
@@ -1390,6 +1477,7 @@
 <translation id="7828503206075800057">مقهى <ph name="CAFE_STYLE" /> على شكل <ph name="CAFE_TYPE" /></translation>
 <translation id="7841134249932030522">تفعيل الوضع المُعتِم</translation>
 <translation id="7846634333498149051">لوحة المفاتيح</translation>
+<translation id="7847923465436619066">أداة اختيار لغة تحويل الصوت إلى نص</translation>
 <translation id="7849030488395653706">الشفق القطبي الشمالي</translation>
 <translation id="7849737607196682401">الدانتيل</translation>
 <translation id="7850320739366109486">عدم الإزعاج</translation>
@@ -1397,6 +1485,7 @@
 <translation id="785170686607360576">توليب</translation>
 <translation id="7856267634822906833">شاشة تعمل باللمس وتتضمّن بلوتوث</translation>
 <translation id="7859006200041800233">زهرة صبار</translation>
+<translation id="7865217133132122390">تفعيل الميكروفون</translation>
 <translation id="7869143217755017858">إيقاف الوضع المُعتِم</translation>
 <translation id="7878972877380405573">تلخيص المحتوى باستخدام ميزة "ساعدني في القراءة"</translation>
 <translation id="7881066108824108340">نظام أسماء النطاقات</translation>
@@ -1409,6 +1498,7 @@
 <translation id="7903695460270716054">اختيار أعمال فنية وصور منظّمة</translation>
 <translation id="7912005977894000746">الرجوع إلى الصفحة الرئيسية</translation>
 <translation id="7915220255123750251">‏يمكنك إدارة إعدادات اسم نقطة الوصول (APN) للشبكة. تنشئ أسماء APN اتصالاً بين شبكة الجوّال والإنترنت.</translation>
+<translation id="7915759923880480519">يجب إعادة الضبط لحماية البيانات المُرسَلة عبر الشبكات. ويُرجى استخدام الشبكات الموثوقة فقط.</translation>
 <translation id="7936303884198020182">لم يتم العثور على خوادم الأسماء.</translation>
 <translation id="7942349550061667556">أحمر</translation>
 <translation id="7943235353293548836">الفاصل الدائم لرسالة التحقّق من الاتصال</translation>
@@ -1425,6 +1515,7 @@
 <translation id="7983597390787556680">{NUM_ROOL_APPS,plural, =1{تم بدء تشغيل "<ph name="APP_NAME_1" />" تلقائيًا}zero{تم بدء تشغيل # تطبيق تلقائيًا}two{تم بدء تشغيل تطبيقَين تلقائيًا}few{تم بدء تشغيل # تطبيقات تلقائيًا}many{تم بدء تشغيل # تطبيقًا تلقائيًا}other{تم بدء تشغيل # تطبيق تلقائيًا}}</translation>
 <translation id="7994702968232966508">‏طريقة EAP</translation>
 <translation id="8004582292198964060">المتصفّح</translation>
+<translation id="8010765388850538088">مزيد من المعلومات حول الذكاء الاصطناعي التوليدي</translation>
 <translation id="8017679124341497925">تمّ تعديل الاختصار</translation>
 <translation id="802154636333426148">تعذّر التنزيل</translation>
 <translation id="8028993641010258682">الحجم</translation>
@@ -1434,6 +1525,8 @@
 <translation id="8045012663542226664">كتم صوت الميكروفون</translation>
 <translation id="8054112564438735763">بيج</translation>
 <translation id="8062968459344882447"><ph name="CHARACTERS_SUBJECTS" /> بلون <ph name="CHARACTERS_COLOR" /> على خلفية بلون <ph name="CHARACTERS_BACKGROUND" /></translation>
+<translation id="8064337065720789104"><ph name="QUERY_TEXT" />؛ <ph name="RESULT_TEXT" /></translation>
+<translation id="8065371548313750052">يُرجى توصيل ميكروفون لبدء تسجيل الصوت</translation>
 <translation id="8067126283828232460">‏اسم نقطة الوصول (APN) متصل.</translation>
 <translation id="8067208048261192356">بني</translation>
 <translation id="8067224607978179455">حذف <ph name="ACTION_NAME" /></translation>
@@ -1446,12 +1539,14 @@
 <translation id="8088963492174775412">اضغط لبدء التسجيل</translation>
 <translation id="8094062939584182041">‏السماح بتلقّي رسائل إلكترونية من Google حول هذه المشكلة</translation>
 <translation id="8104083085214006426">أنت تستخدم شبكةً مفتوحة وغير آمنة.</translation>
+<translation id="8110942816572072814">قفل مُعلّمك الشاشة</translation>
 <translation id="811820734797650957">‏(نظام التشغيل Android) اختبار إمكانية فحص اتصال البوابة</translation>
 <translation id="8129620843620772246"><ph name="TEMPERATURE_C" />° مئوية</translation>
 <translation id="8131740175452115882">تأكيد</translation>
 <translation id="8132480444149501833">طلب عدّادات حركة بيانات الشبكة</translation>
 <translation id="8135609423982943441">‏تمت إعادة ضبط جهاز Chromebook على الإعدادات التلقائية الآمنة. ويمكنك متى شئت تعديل هذه التغييرات من خلال "الإعدادات".</translation>
 <translation id="8138405288920084977">LTEAdvanced</translation>
+<translation id="8140591278915222789">إنشاء خلفيتك الخاصة</translation>
 <translation id="8143951647992294073">اختيار <ph name="TOPIC_SOURCE" /> <ph name="TOPIC_SOURCE_DESC" /></translation>
 <translation id="8151185429379586178">أدوات مطوري البرامج</translation>
 <translation id="8152370627892825"><ph name="DESCRIPTION" />، <ph name="ACCELERATOR_INFO" />.</translation>
@@ -1475,7 +1570,6 @@
 <translation id="8261506727792406068">حذف</translation>
 <translation id="8262870577632766028">ساعة واحدة</translation>
 <translation id="827422111966801947">نيلي</translation>
-<translation id="8281886186245836920">التخطّي</translation>
 <translation id="8286154143153872371">يُرجى الاتصال بإحدى الشبكات وإعادة تحميل الصفحة لعرض الخلفية.</translation>
 <translation id="8291967909914612644">بلد مقدم الخدمة الرئيسي</translation>
 <translation id="8294431847097064396">المصدر</translation>
@@ -1521,6 +1615,8 @@
 <translation id="8476942730579767658">النوافذ وأسطح المكتب</translation>
 <translation id="8477536061607044749">التصميم الطباعي</translation>
 <translation id="8477551185774834963">وقت استجابة "نظام أسماء النطاقات" أعلى بقليل من الحدّ الأقصى المسموح به.</translation>
+<translation id="8481308460877552925">يضم معلومات غير صحيحة</translation>
+<translation id="8482376765267780829">اختَر جزءًا من النص لتبسيطه</translation>
 <translation id="8483248364096924578">‏عنوان IP</translation>
 <translation id="8491311378305535241">‏تعذَّر اجتياز جدار الحماية للاتصال بالمواقع الإلكترونية التي تستخدم بروتوكول HTTP من خلال تطبيقات Android.</translation>
 <translation id="8495070016475833911">اللبّاد</translation>
@@ -1529,15 +1625,19 @@
 <translation id="8503836310948963452">يُرجى الانتظار بضع دقائق فقط…</translation>
 <translation id="8505011850330200833">‏يتطلّب نموذج Gemini مساحة تخزين تبلغ 2 غيغابايت لمعالجة النصوص وإنشاء الملخّصات</translation>
 <translation id="8508640263392900755">‏تفاصيل APN</translation>
+<translation id="8509574872955173831">مزيد من المعلومات حول نموذج إنشاء الملخّص والاسم</translation>
 <translation id="8522687886059337719">يمكنك الآن الوصول إلى <ph name="BEGIN_LINK_WALLPAPER_SUBPAGE" />خلفيات<ph name="END_LINK_WALLPAPER_SUBPAGE" /> و<ph name="BEGIN_LINK_SCREENSAVER_SUBPAGE" />شاشة استراحة<ph name="END_LINK_SCREENSAVER_SUBPAGE" /> جديدة.</translation>
 <translation id="8528615187455571738">Crosvm</translation>
 <translation id="852896705346853285">لتقديم الشاي</translation>
 <translation id="8538236298648811558">‏الخلفية مستندة إلى تكنولوجيات الذكاء الاصطناعي من Google</translation>
+<translation id="8543574988889671960">إعادة تحميل علامة التبويب</translation>
 <translation id="8550364285433943656">خصِّص لكل إجراء في اللعبة مفتاحًا معيّنًا لتلعب باستخدام لوحة المفاتيح</translation>
 <translation id="8557447961879934694">WPA2</translation>
 <translation id="8575298406870537639">قد يتطلّب مشغّل شبكة الجوّال تفعيل هذا الخيار للاتصال بالشبكة التابعة له. يُرجى التواصل مع مشغّل شبكة الجوّال للاطّلاع على التفاصيل.</translation>
 <translation id="8576249514688522074">غير مهيأة</translation>
+<translation id="8584654835905316966">يجب إعادة تشغيل الجهاز لإكمال عملية تثبيت البرامج الثابتة لـ <ph name="DEVICE_NAME" /> على الإصدار <ph name="VERSION" />. وقد يبدو أنّه يُعاد تشغيل جهاز الكمبيوتر عدة مرات، فهذا سلوك متوقَّع.</translation>
 <translation id="8593058461203131755">إيقاف الوسائط مؤقتًا</translation>
+<translation id="8619169570378509764">الأدوات التعليمية</translation>
 <translation id="8620617069779373398">حالة التجوال</translation>
 <translation id="8626489604350149811">مزيد من الإجراءات لـ "<ph name="APN_NAME" />"</translation>
 <translation id="86356131183441916">أرجواني فاتح</translation>
@@ -1565,8 +1665,8 @@
 <translation id="8747900814994928677">تأكيد التغيير</translation>
 <translation id="8749478549112817787">خلفية الكاميرا</translation>
 <translation id="8755946156089753497">برج</translation>
-<translation id="8756235582947991808">معلومات حول كيفية إنشاء محتوى بالذكاء الاصطناعي وملاحظات مهمة</translation>
 <translation id="8760616037557661287">الطلبات السابقة</translation>
+<translation id="876280838467039397">تنزيل نموذج تحويل الصوت إلى نص باللغة <ph name="LANGUAGE_NAME" /> واختياره</translation>
 <translation id="8764414543112028321">WireGuard</translation>
 <translation id="87646919272181953">‏ألبوم "صور Google"</translation>
 <translation id="8775713578693478175">اسم نقطة وصول المودم</translation>
@@ -1576,6 +1676,7 @@
 <translation id="8797082062139985406">‏إنشاء اسم باستخدام الذكاء الاصطناعي من Google</translation>
 <translation id="8798099450830957504">التلقائي</translation>
 <translation id="8798441408945964110">اسم مقدم الخدمة</translation>
+<translation id="8804164990146287819">سياسة الخصوصية</translation>
 <translation id="8808828119384186784">‏إعدادات Chrome</translation>
 <translation id="8814190375133053267">‏لاسلكي، Wi-Fi</translation>
 <translation id="8818152010000655963">الخلفية</translation>
@@ -1596,6 +1697,7 @@
 <translation id="8876270629542503161">الجهاز هو جهاز لوحي.</translation>
 <translation id="8881098542468797602">نجح الاختبار.</translation>
 <translation id="8882789155418924367">بوم</translation>
+<translation id="8885038613856655272">توصيل ميكروفون</translation>
 <translation id="8892443466059986410">إلغاء تعديل الاختصارات</translation>
 <translation id="8897043028305808902">تمّت إعادة تسمية الملف</translation>
 <translation id="8898840733695078011">قوة الإشارة</translation>
@@ -1626,6 +1728,7 @@
 <translation id="89945434909472341">قرية</translation>
 <translation id="8997710128084572139">مستوى شحن بطارية الجهاز هو %<ph name="BATTERY_PERCENTAGE" />.</translation>
 <translation id="8998289560386111590">غير متاح على جهازك</translation>
+<translation id="9000871120886759611">يجب إعادة الضبط للتأكُّد من إمكانية الوصول إلى المعلومات بلغتك المفضّلة. ويُرجى التأكّد من استخدام اللغات المفضَّلة فقط.</translation>
 <translation id="9003499805101629690">بيتزا</translation>
 <translation id="9003704114456258138">التردد</translation>
 <translation id="901834265349196618">بريد إلكتروني</translation>
@@ -1648,11 +1751,13 @@
 <translation id="9082718469794970195">استخدام هذا الفيديو</translation>
 <translation id="9087578468327036362">الإبلاغ عن هذا الطلب</translation>
 <translation id="9088306295921699330">الاستخدام الحالي</translation>
+<translation id="9088994563996376283">تبسيط</translation>
 <translation id="9095775724867566971">Pluginvm</translation>
 <translation id="909856219855259344">مزيد من المعلومات حول "تاريخ إعادة الضبط"</translation>
 <translation id="9100765901046053179">الإعدادات المتقدمة</translation>
 <translation id="910415269708673980">تحديث تذكرة من أجل <ph name="PRINCIPAL_NAME" /></translation>
 <translation id="9106415115617144481">جارٍ المسح ضوئيًا للصفحة رقم <ph name="PAGE_NUMBER" />.</translation>
+<translation id="9108856746036501072">يمكن لتطبيق "المسجّلة الذكية" تحويل الكلام في التسجيلات إلى نصوص. في الخطوة التالية، عليك اختيار لغة تحويل الصوت إلى نص وتنزيل النموذج (يصل حجمه إلى 100 ميغابايت).</translation>
 <translation id="9111102763498581341">فتح القفل</translation>
 <translation id="9122492456897874028">يمكنك تلخيص المحتوى وتعريف المصطلحات والمزيد</translation>
 <translation id="9122602430962285795">لإعادة الاتصال، انتقِل إلى "الإعدادات".</translation>
@@ -1670,6 +1775,7 @@
 <translation id="917720651393141712">اختبار</translation>
 <translation id="9188992814426075118">يمكن أن تكون لوحة المفاتيح متطابقة تلقائيًا مع خلفيتك.</translation>
 <translation id="9189000703457422362">‏يتعذّر الاتصال بهذه الشبكة باستخدام أسماء نقاط الوصول (APN) التي يتم رصدها تلقائيًا. يُرجى التواصل مع مشغِّل شبكة الجوّال للحصول على مزيد من المعلومات.</translation>
+<translation id="9190726385682694354"><ph name="QUERY_TEXT" />؛ <ph name="SUBTEXT" />؛ <ph name="RESULT_TEXT" /></translation>
 <translation id="9193744392140377127">‫APN*‎</translation>
 <translation id="9195918315673527512">مفاتيح ذراع التحكّم التي تمّ اختيارها هي <ph name="KEYS" />. انقر على الزر لتعديل عنصر التحكّم.</translation>
 <translation id="9204237731135241582">‏تعذَّر الاتصال بالبوابة من خلال تطبيقات Android.</translation>
@@ -1683,6 +1789,8 @@
 <translation id="951780398843003443">مقارنة الأصوات طوال مدة التسجيل ليعرض النص ما يقوله كل متحدّث ووقت الكلام</translation>
 <translation id="952992212772159698">غير نشطة</translation>
 <translation id="95718197892796296">الصلصال</translation>
+<translation id="959792926760890141">‏وتؤدي الميزة إلى إيقاف إضافات متصفِّح Chrome وإعادة ضبط الشبكة والإعدادات الأخرى على الإعدادات التلقائية الآمنة.
+          ستتمّ إعادة ضبط محرك البحث التلقائي، ولكن لن يتمّ تغيير علامات التبويب والملفات وسجل البحث وملفات تعريف الارتباط.</translation>
 <translation id="960719561871045870">رمز مشغل شبكة الجوال</translation>
 <translation id="965918541715156800">الأصفر والأزرق المخضر</translation>
 <translation id="966787709310836684">القائمة</translation>
@@ -1690,5 +1798,6 @@
 <translation id="982713511914535780">تشغيل اختبار تفريغ شحن البطارية</translation>
 <translation id="98515147261107953">مناظر طبيعية</translation>
 <translation id="987264212798334818">عام</translation>
+<translation id="994473081369871639">إيقاف الميكروفون</translation>
 <translation id="995062385528875723">لا يمكن استخدام أحرف تحمل علامات صوتية أو أحرف أبجدية غير لاتينية أو رموز.</translation>
 </translationbundle>

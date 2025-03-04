@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'chrome://resources/cr_elements/cr_icon_button/cr_icon_button.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
+import 'chrome://resources/cr_elements/icons.html.js';
 import 'chrome://resources/cr_elements/cr_progress/cr_progress.js';
 import './icons.html.js';
 import './viewer_download_controls.js';
@@ -12,6 +12,7 @@ import './shared_vars.css.js';
 // <if expr="enable_ink">
 import './viewer_annotations_bar.js';
 import './viewer_annotations_mode_dialog.js';
+
 // </if>
 
 import type {CrActionMenuElement} from 'chrome://resources/cr_elements/cr_action_menu/cr_action_menu.js';
@@ -20,6 +21,7 @@ import {AnchorAlignment} from 'chrome://resources/cr_elements/cr_action_menu/cr_
 import {assert} from 'chrome://resources/js/assert.js';
 import {EventTracker} from 'chrome://resources/js/event_tracker.js';
 // </if>
+import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 import {CrLitElement} from 'chrome://resources/lit/v3_0/lit.rollup.js';
 import type {PropertyValues} from 'chrome://resources/lit/v3_0/lit.rollup.js';
 
@@ -42,7 +44,7 @@ declare global {
 
 export interface ViewerToolbarElement {
   $: {
-    sidenavToggle: HTMLElement,
+    sidenavToggle: HTMLButtonElement,
     menu: CrActionMenuElement,
     'present-button': HTMLButtonElement,
     'two-page-view-button': HTMLButtonElement,
@@ -102,6 +104,7 @@ export class ViewerToolbarElement extends CrLitElement {
 
       printingEnabled: {type: Boolean},
       rotated: {type: Boolean},
+      strings: {type: Object},
       viewportZoom: {type: Number},
       zoomBounds: {type: Object},
       sidenavCollapsed: {type: Boolean},
@@ -136,6 +139,7 @@ export class ViewerToolbarElement extends CrLitElement {
   pdfCr23Enabled: boolean = false;
   printingEnabled: boolean = false;
   rotated: boolean = false;
+  strings?: {[key: string]: string};
   viewportZoom: number = 0;
   zoomBounds: {min: number, max: number} = {min: 0, max: 0};
   sidenavCollapsed: boolean = false;
@@ -231,10 +235,13 @@ export class ViewerToolbarElement extends CrLitElement {
   }
 
   /** @return The appropriate tooltip for the current state. */
-  protected getFitToButtonTooltip_(
-      fitToPageTooltip: string, fitToWidthTooltip: string): string {
-    return this.fittingType_ === FittingType.FIT_TO_PAGE ? fitToPageTooltip :
-                                                           fitToWidthTooltip;
+  protected getFitToButtonTooltip_() {
+    if (!this.strings) {
+      return '';
+    }
+    return loadTimeData.getString(
+        this.fittingType_ === FittingType.FIT_TO_PAGE ? 'tooltipFitToPage' :
+                                                        'tooltipFitToWidth');
   }
 
   // <if expr="enable_ink">
@@ -255,11 +262,22 @@ export class ViewerToolbarElement extends CrLitElement {
   }
   // </if>
 
-  // <if expr="enable_ink or enable_pdf_ink2">
+  // <if expr="enable_ink">
   protected showAnnotationsBar_(): boolean {
-    return this.pdfAnnotationsEnabled && !this.loading_ && this.annotationMode;
+    return this.pdfAnnotationsEnabled && !this.loading_ &&
+        this.isInInk1AnnotationMode_();
   }
-  // </if>
+
+  protected isInInk1AnnotationMode_(): boolean {
+    // <if expr="enable_pdf_ink2">
+    if (this.pdfInk2Enabled) {
+      return false;
+    }
+    // </if> enable_pdf_ink2
+
+    return this.annotationMode;
+  }
+  // </if> enable_ink
 
   protected onPrintClick_() {
     this.dispatchEvent(new CustomEvent('print'));
@@ -340,7 +358,7 @@ export class ViewerToolbarElement extends CrLitElement {
   }
 
   private getZoomInput_(): HTMLInputElement {
-    return this.shadowRoot!.querySelector('#zoom-controls input')!;
+    return this.shadowRoot.querySelector('#zoom-controls input')!;
   }
 
   protected onZoomChange_() {
@@ -378,7 +396,7 @@ export class ViewerToolbarElement extends CrLitElement {
   }
 
   protected onMoreClick_() {
-    const anchor = this.shadowRoot!.querySelector<HTMLElement>('#more')!;
+    const anchor = this.shadowRoot.querySelector<HTMLElement>('#more')!;
     this.$.menu.showAt(anchor, {
       anchorAlignmentX: AnchorAlignment.CENTER,
       anchorAlignmentY: AnchorAlignment.AFTER_END,
@@ -403,8 +421,8 @@ export class ViewerToolbarElement extends CrLitElement {
   // <if expr="enable_ink">
   protected onDialogClose_() {
     const confirmed =
-        this.shadowRoot!.querySelector(
-                            'viewer-annotations-mode-dialog')!.wasConfirmed();
+        this.shadowRoot.querySelector(
+                           'viewer-annotations-mode-dialog')!.wasConfirmed();
     this.showAnnotationsModeDialog_ = false;
     if (confirmed) {
       this.dispatchEvent(new CustomEvent('annotation-mode-dialog-confirmed'));
@@ -483,6 +501,7 @@ export class ViewerToolbarElement extends CrLitElement {
     this.dispatchEvent(new CustomEvent(
         'strokes-updated',
         {detail: this.currentStroke, bubbles: true, composed: true}));
+    record(UserAction.UNDO_INK2);
   }
 
   /**
@@ -502,6 +521,7 @@ export class ViewerToolbarElement extends CrLitElement {
     this.dispatchEvent(new CustomEvent(
         'strokes-updated',
         {detail: this.currentStroke, bubbles: true, composed: true}));
+    record(UserAction.REDO_INK2);
   }
 
   /**

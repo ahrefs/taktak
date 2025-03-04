@@ -47,6 +47,43 @@ class IncognitoTabModelImpl implements IncognitoTabModelInternal {
     private final Callback<Integer> mDelegateModelTabCountSupplierObserver;
     private final ObservableSupplierImpl<Integer> mTabCountSupplier =
             new ObservableSupplierImpl<>();
+    private final TabRemover mTabRemoverProxy =
+            new TabRemover() {
+                @Override
+                public void closeTabs(
+                        @NonNull TabClosureParams tabClosureParams,
+                        boolean allowDialog,
+                        @Nullable TabModelActionListener listener) {
+                    mDelegateModel
+                            .getTabRemover()
+                            .closeTabs(tabClosureParams, allowDialog, listener);
+                }
+
+                @Override
+                public void prepareCloseTabs(
+                        @NonNull TabClosureParams tabClosureParams,
+                        boolean allowDialog,
+                        @Nullable TabModelActionListener listener,
+                        @NonNull Callback<TabClosureParams> onPreparedCallback) {
+                    mDelegateModel
+                            .getTabRemover()
+                            .prepareCloseTabs(
+                                    tabClosureParams, allowDialog, listener, onPreparedCallback);
+                }
+
+                @Override
+                public void forceCloseTabs(@NonNull TabClosureParams tabClosureParams) {
+                    mDelegateModel.getTabRemover().forceCloseTabs(tabClosureParams);
+                }
+
+                @Override
+                public void removeTab(
+                        @NonNull Tab tab,
+                        boolean allowDialog,
+                        @Nullable TabModelActionListener listener) {
+                    mDelegateModel.getTabRemover().removeTab(tab, allowDialog, listener);
+                }
+            };
 
     private TabModelInternal mDelegateModel;
     private int mCountOfAddingOrClosingTabs;
@@ -136,6 +173,11 @@ class IncognitoTabModelImpl implements IncognitoTabModelInternal {
     @Override
     public boolean isIncognitoBranded() {
         return mDelegateModel.isIncognitoBranded();
+    }
+
+    @Override
+    public @NonNull TabRemover getTabRemover() {
+        return mTabRemoverProxy;
     }
 
     @Override
@@ -238,11 +280,6 @@ class IncognitoTabModelImpl implements IncognitoTabModelInternal {
     }
 
     @Override
-    public void notifyAllTabsClosureUndone() {
-        mDelegateModel.notifyAllTabsClosureUndone();
-    }
-
-    @Override
     public @NonNull ObservableSupplier<Integer> getTabCountSupplier() {
         return mTabCountSupplier;
     }
@@ -273,17 +310,6 @@ class IncognitoTabModelImpl implements IncognitoTabModelInternal {
     public void removeObserver(TabModelObserver observer) {
         mObservers.removeObserver(observer);
         mDelegateModel.removeObserver(observer);
-    }
-
-    @Override
-    public int getTabCountNavigatedInTimeWindow(long beginTimeMs, long endTimeMs) {
-        assert false : "Not reached.";
-        return 0;
-    }
-
-    @Override
-    public void closeTabsNavigatedInTimeWindow(long beginTimeMs, long endTimeMs) {
-        assert false : "Not reached.";
     }
 
     @Override

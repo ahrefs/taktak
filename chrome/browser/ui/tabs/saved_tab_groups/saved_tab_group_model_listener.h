@@ -19,7 +19,7 @@ class TabStripModel;
 class Profile;
 
 namespace tabs {
-class TabModel;
+class TabInterface;
 }
 
 namespace tab_groups {
@@ -61,7 +61,7 @@ class SavedTabGroupModelListener : public BrowserListObserver,
   // corresponding local group.
   void ConnectToLocalTabGroup(
       const SavedTabGroup& saved_tab_group,
-      std::map<tabs::TabModel*, base::Uuid> tab_guid_mapping);
+      std::map<tabs::TabInterface*, base::Uuid> tab_guid_mapping);
 
   // Stop updating the saved group corresponding to the local group with id
   // `tab_group_id` when the local group changes.
@@ -86,8 +86,10 @@ class SavedTabGroupModelListener : public BrowserListObserver,
   void OnTabGroupAdded(const tab_groups::TabGroupId& group_id) override;
   void OnTabGroupWillBeRemoved(const tab_groups::TabGroupId& group_id) override;
   void OnTabGroupChanged(const TabGroupChange& change) override;
-  void TabGroupedStateChanged(std::optional<tab_groups::TabGroupId> group,
-                              tabs::TabModel* tab,
+  void TabGroupedStateChanged(TabStripModel* tab_strip_model,
+                              std::optional<tab_groups::TabGroupId> old_group,
+                              std::optional<tab_groups::TabGroupId> new_group,
+                              tabs::TabInterface* tab,
                               int index) override;
   void OnTabStripModelChanged(
       TabStripModel* tab_strip_model,
@@ -110,7 +112,7 @@ class SavedTabGroupModelListener : public BrowserListObserver,
   // to their saved tab guid. This mapping will be used in
   // ConnectToLocalTabGroup in order to observe any changes to the tabs over
   // time.
-  std::pair<SavedTabGroup, std::map<tabs::TabModel*, base::Uuid>>
+  std::pair<SavedTabGroup, std::map<tabs::TabInterface*, base::Uuid>>
   CreateSavedTabGroupAndTabMapping(const tab_groups::TabGroupId& group_id);
 
   // The LocalTabGroupListeners for each saved tab group that's currently open.

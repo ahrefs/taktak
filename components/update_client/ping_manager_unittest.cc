@@ -40,9 +40,8 @@ namespace update_client {
 
 class PingManagerTest : public testing::Test,
                         public testing::WithParamInterface<bool> {
- public:
+ protected:
   PingManagerTest();
-  ~PingManagerTest() override = default;
 
   base::OnceClosure MakePingCallback();
   scoped_refptr<UpdateContext> MakeMockUpdateContext() const;
@@ -53,7 +52,6 @@ class PingManagerTest : public testing::Test,
 
   void PingSentCallback(int error, const std::string& response);
 
- protected:
   void Quit();
   void RunThreads();
 
@@ -61,14 +59,14 @@ class PingManagerTest : public testing::Test,
   scoped_refptr<PingManager> ping_manager_;
 
  private:
-  base::test::TaskEnvironment task_environment_;
+  base::test::TaskEnvironment task_environment_{
+      base::test::TaskEnvironment::MainThreadType::IO};
+  std::unique_ptr<TestingPrefServiceSimple> pref_{
+      std::make_unique<TestingPrefServiceSimple>()};
   base::OnceClosure quit_closure_;
-  std::unique_ptr<TestingPrefServiceSimple> pref_;
 };
 
-PingManagerTest::PingManagerTest()
-    : task_environment_(base::test::TaskEnvironment::MainThreadType::IO) {
-  pref_ = std::make_unique<TestingPrefServiceSimple>();
+PingManagerTest::PingManagerTest() {
   RegisterPersistedDataPrefs(pref_->registry());
 }
 
@@ -123,7 +121,7 @@ TEST_P(PingManagerTest, SendPing) {
   EXPECT_TRUE(interceptor);
 
   const auto update_context = MakeMockUpdateContext();
-  {
+  for (const std::string& lang : {"ar", "en-UK", ""}) {
     // Test eventresult="1" is sent for successful updates.
     Component component(*update_context, "abc");
     component.crx_component_ = CrxComponent();
@@ -131,6 +129,7 @@ TEST_P(PingManagerTest, SendPing) {
     component.crx_component_->version = base::Version("1.0");
     component.crx_component_->ap = "ap1";
     component.crx_component_->brand = "BRND";
+    component.crx_component_->lang = lang;
     component.state_ = std::make_unique<Component::StateUpdated>(&component);
     component.previous_version_ = base::Version("1.0");
     component.next_version_ = base::Version("2.0");
@@ -180,7 +179,8 @@ TEST_P(PingManagerTest, SendPing) {
     EXPECT_EQ("abc", CHECK_DEREF(app.FindString("appid")));
     EXPECT_EQ("ap1", CHECK_DEREF(app.FindString("ap")));
     EXPECT_EQ("BRND", CHECK_DEREF(app.FindString("brand")));
-    EXPECT_EQ("fake_lang", CHECK_DEREF(app.FindString("lang")));
+    EXPECT_EQ(lang.empty() ? "fake_lang" : lang,
+              CHECK_DEREF(app.FindString("lang")));
     EXPECT_EQ(-1, app.FindInt("installdate"));
     EXPECT_EQ("1.0", CHECK_DEREF(app.FindString("version")));
     EXPECT_EQ("c1", CHECK_DEREF(app.FindString("cohort")));
@@ -339,7 +339,9 @@ TEST_P(PingManagerTest, SendPing) {
               return nullptr;
             }),
         ping_manager_, base::DoNothing())
-        ->SendPing(crx_component, {.event_type = 4, .result = 1},
+        ->SendPing(crx_component,
+                   {.event_type = protocol_request::kEventUninstall,
+                    .result = protocol_request::kEventResultSuccess},
                    base::BindLambdaForTesting([&](Error) { Quit(); }));
     RunThreads();
 
@@ -404,7 +406,7 @@ TEST_P(PingManagerTest, SendPing) {
         ->SendPing(crx_component,
                    {
                        .event_type = protocol_request::kEventAppCommandComplete,
-                       .result = false,
+                       .result = protocol_request::kEventResultError,
                        .error_code = -11,
                        .extra_code1 = 101,
                        .app_command_id = "appcommandid1",

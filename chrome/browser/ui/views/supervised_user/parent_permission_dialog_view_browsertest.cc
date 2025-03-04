@@ -230,7 +230,14 @@ class ParentPermissionDialogViewTest
           InteractiveBrowserTestT<MixinBasedInProcessBrowserTest>> {
  protected:
   void ShowUi(const std::string& name) override {
-    if (name.find("default") != std::string::npos) {
+    if (name == "LongNameExtension") {
+      const std::string long_name =
+          "This extension name should be longer than our truncation threshold "
+          "to test that the bubble can handle long names";
+      scoped_refptr<const extensions::Extension> extension =
+          AddAndDisableExtensionWithName(long_name);
+      harness_.ShowUi(extension.get(), browser());
+    } else if (name.find("default") != std::string::npos) {
       harness_.ShowUi(std::u16string(u"Test prompt message"), browser());
       return;
     } else if (name.find("extension") != std::string::npos) {
@@ -253,11 +260,7 @@ class ParentPermissionDialogViewTest
         std::make_unique<extensions::SupervisedUserExtensionsDelegateImpl>(
             browser()->profile());
 
-    test_extension_ = extensions::ExtensionBuilder("test extension").Build();
-    extension_service()->AddExtension(test_extension_.get());
-    extension_service()->DisableExtension(
-        test_extension_->id(),
-        extensions::disable_reason::DISABLE_CUSTODIAN_APPROVAL_REQUIRED);
+    test_extension_ = AddAndDisableExtensionWithName("test extension");
   }
 
   void TearDownOnMainThread() override {
@@ -331,6 +334,17 @@ class ParentPermissionDialogViewTest
   ParentPermissionDialogViewHarness harness_{supervision_mixin_};
 
  private:
+  scoped_refptr<const extensions::Extension> AddAndDisableExtensionWithName(
+      const std::string& extension_name) {
+    scoped_refptr<const extensions::Extension> extension =
+        extensions::ExtensionBuilder(extension_name).Build();
+    extension_service()->AddExtension(extension.get());
+    extension_service()->DisableExtension(
+        extension->id(),
+        extensions::disable_reason::DISABLE_CUSTODIAN_APPROVAL_REQUIRED);
+    return extension;
+  }
+
   base::HistogramTester histogram_tester_;
   base::UserActionTester user_action_tester_;
   scoped_refptr<const extensions::Extension> test_extension_;
@@ -349,14 +363,19 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest, InvokeUi_extension) {
 }
 
 IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
+                       InvokeUi_LongNameExtension) {
+  ShowAndVerifyUi();
+}
+
+IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
                        PermissionReceived_default) {
-  RunTestSequence(InAnyContext(Steps(
+  RunTestSequence(InAnyContext(
       ShowDialog(),
       WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
       PressButton(views::DialogClientView::kOkButtonElementId),
       WaitForHide(ParentPermissionDialog::kDialogViewIdForTesting),
       CheckResult([this]() { return harness_.GetResult(); },
-                  ParentPermissionDialog::Result::kParentPermissionReceived))));
+                  ParentPermissionDialog::Result::kParentPermissionReceived)));
 }
 
 IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
@@ -364,31 +383,31 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
   supervision_mixin_.SetNextReAuthStatus(
       GaiaAuthConsumer::ReAuthProofTokenStatus::kInvalidGrant);
 
-  RunTestSequence(InAnyContext(Steps(
+  RunTestSequence(InAnyContext(
       ShowDialog(),
       WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
       PressButton(views::DialogClientView::kOkButtonElementId),
       // Closing the dialog results in the freeing of resources, so checks must
       // be done together without waiting for a fresh call stack.
-      WithoutDelay(Steps(
+      WithoutDelay(
           WaitForHide(ParentPermissionDialog::kDialogViewIdForTesting),
           CheckResult(
               [this]() { return harness_.InvalidCredentialWasReceived(); },
               true),
           CheckResult(
               [this]() { return harness_.GetResult(); },
-              ParentPermissionDialog::Result::kParentPermissionFailed))))));
+              ParentPermissionDialog::Result::kParentPermissionFailed))));
 }
 
 IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
                        PermissionDialogCanceled_default) {
-  RunTestSequence(InAnyContext(Steps(
+  RunTestSequence(InAnyContext(
       ShowDialog(),
       WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
       PressButton(views::DialogClientView::kCancelButtonElementId),
       WaitForHide(ParentPermissionDialog::kDialogViewIdForTesting),
       CheckResult([this]() { return harness_.GetResult(); },
-                  ParentPermissionDialog::Result::kParentPermissionCanceled))));
+                  ParentPermissionDialog::Result::kParentPermissionCanceled)));
 }
 
 IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
@@ -399,7 +418,7 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
   supervision_mixin_.SetNextReAuthStatus(
       GaiaAuthConsumer::ReAuthProofTokenStatus::kSuccess);
 
-  RunTestSequence(InAnyContext(Steps(
+  RunTestSequence(InAnyContext(
       ShowDialog(),
       WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
       PressButton(views::DialogClientView::kOkButtonElementId),
@@ -436,7 +455,7 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
       CheckResult(
           GetActionStatus(SupervisedUserExtensionsMetricsRecorder::
                               kParentPermissionDialogParentApprovedActionName),
-          ActionStatus::kWasPerformed))));
+          ActionStatus::kWasPerformed)));
 }
 
 IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
@@ -448,13 +467,13 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
   supervision_mixin_.SetNextReAuthStatus(
       GaiaAuthConsumer::ReAuthProofTokenStatus::kInvalidGrant);
 
-  RunTestSequence(InAnyContext(Steps(
+  RunTestSequence(InAnyContext(
       ShowDialog(),
       WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
       PressButton(views::DialogClientView::kOkButtonElementId),
       // Closing the dialog results in the freeing of resources, so checks must
       // be done together without waiting for a fresh call stack.
-      WithoutDelay(Steps(
+      WithoutDelay(
           WaitForHide(ParentPermissionDialog::kDialogViewIdForTesting),
           CheckResult(
               [this]() { return harness_.InvalidCredentialWasReceived(); },
@@ -493,7 +512,7 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
           CheckResult(
               GetActionStatus(SupervisedUserExtensionsMetricsRecorder::
                                   kParentPermissionDialogOpenedActionName),
-              ActionStatus::kWasPerformed))))));
+              ActionStatus::kWasPerformed))));
 }
 
 IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
@@ -502,7 +521,7 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
   supervision_mixin_.SetNextReAuthStatus(
       GaiaAuthConsumer::ReAuthProofTokenStatus::kInvalidGrant);
 
-  RunTestSequence(InAnyContext(Steps(
+  RunTestSequence(InAnyContext(
       ShowDialog(),
       WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
       PressButton(views::DialogClientView::kOkButtonElementId),
@@ -527,12 +546,12 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
                                     kParentPermissionDialogHistogramName,
                                 SupervisedUserExtensionsMetricsRecorder::
                                     ParentPermissionDialogState::kFailed,
-                                0))));
+                                0)));
 }
 
 IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
                        PermissionDialogCanceled_extension) {
-  RunTestSequence(InAnyContext(Steps(
+  RunTestSequence(InAnyContext(
       ShowDialog(),
       WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
       PressButton(views::DialogClientView::kCancelButtonElementId),
@@ -561,7 +580,7 @@ IN_PROC_BROWSER_TEST_F(ParentPermissionDialogViewTest,
       CheckResult(
           GetActionStatus(SupervisedUserExtensionsMetricsRecorder::
                               kParentPermissionDialogParentCanceledActionName),
-          ActionStatus::kWasPerformed))));
+          ActionStatus::kWasPerformed)));
 }
 
 enum class ExtensionsManagingToggle : int {
@@ -582,18 +601,22 @@ class ParentPermissionInputSectionLabelTest
  public:
   ParentPermissionInputSectionLabelTest() {
     std::vector<base::test::FeatureRef> enabled_features;
+    std::vector<base::test::FeatureRef> disabled_features;
     if (GetParam() == ExtensionsManagingToggle::kExtensions) {
       enabled_features.push_back(
           supervised_user::
               kEnableSupervisedUserSkipParentApprovalToInstallExtensions);
       enabled_features.push_back(
           supervised_user::kUpdatedSupervisedUserExtensionApprovalStrings);
+    } else {
+      disabled_features.push_back(
+          supervised_user::
+              kEnableSupervisedUserSkipParentApprovalToInstallExtensions);
     }
     enabled_features.push_back(
         supervised_user::
             kEnableExtensionsPermissionsForSupervisedUsersOnDesktop);
-    scoped_feature_list_.InitWithFeatures(enabled_features,
-                                          /*disabled_features=*/{});
+    scoped_feature_list_.InitWithFeatures(enabled_features, disabled_features);
   }
 
  private:
@@ -621,11 +644,11 @@ IN_PROC_BROWSER_TEST_P(ParentPermissionInputSectionLabelTest,
           : ParentPermissionDialog::
                 kExtensionsParentApprovalVerificationTextIdForTesting;
 
-  RunTestSequence(InAnyContext(
-      Steps(ShowDialog(),
-            WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
-            WaitForShow(present_parent_label_id),
-            EnsureNotPresent(non_present_parent_label_id))));
+  RunTestSequence(
+      InAnyContext(ShowDialog(),
+                   WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
+                   WaitForShow(present_parent_label_id),
+                   EnsureNotPresent(non_present_parent_label_id)));
 }
 
 IN_PROC_BROWSER_TEST_P(ParentPermissionInputSectionLabelTest,
@@ -637,12 +660,12 @@ IN_PROC_BROWSER_TEST_P(ParentPermissionInputSectionLabelTest,
   // approval dialog is used for a purpose other than extension approval. Labels
   // related to extension approval are not shown.
   RunTestSequence(InAnyContext(
-      Steps(ShowDialog(),
-            WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
-            WaitForShow(ParentPermissionDialog::kParentAccountTextIdForTesting),
-            EnsureNotPresent(
-                ParentPermissionDialog::
-                    kExtensionsParentApprovalVerificationTextIdForTesting))));
+      ShowDialog(),
+      WaitForShow(ParentPermissionDialog::kDialogViewIdForTesting),
+      WaitForShow(ParentPermissionDialog::kParentAccountTextIdForTesting),
+      EnsureNotPresent(
+          ParentPermissionDialog::
+              kExtensionsParentApprovalVerificationTextIdForTesting)));
 }
 
 INSTANTIATE_TEST_SUITE_P(

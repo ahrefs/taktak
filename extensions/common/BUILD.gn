@@ -4,12 +4,16 @@
 
 import("//build/config/chromeos/ui_mode.gni")
 import("//build/config/features.gni")
+import("//components/guest_view/buildflags/buildflags.gni")
 import("//components/nacl/features.gni")
 import("//extensions/buildflags/buildflags.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//testing/libfuzzer/fuzzer_test.gni")
 
 assert(enable_extensions_core)
+
+# If enable_extensions is true then enable_guest_view must also be true.
+assert(!enable_extensions || enable_guest_view)
 
 group("common_constants") {
   if (is_component_build) {
@@ -63,6 +67,14 @@ source_set("constants_impl") {
   configs += [ "//build/config/compiler:wexit_time_destructors" ]
 }
 
+source_set("extension_features") {
+  sources = [
+    "extension_features.cc",
+    "extension_features.h",
+  ]
+  public_deps = [ "//base" ]
+}
+
 mojom("mojom") {
   # We don't want Blink variants of bindings to be generated.
   disable_variants = true
@@ -85,6 +97,7 @@ mojom("mojom") {
     "mojom/injection_type.mojom",
     "mojom/keep_alive.mojom",
     "mojom/manifest.mojom",
+    "mojom/match_origin_as_fallback.mojom",
     "mojom/message_port.mojom",
     "mojom/permission_set.mojom",
     "mojom/renderer.mojom",
@@ -288,8 +301,6 @@ static_library("common") {
     "extension.h",
     "extension_api.cc",
     "extension_api.h",
-    "extension_features.cc",
-    "extension_features.h",
     "extension_id.h",
     "extension_l10n_util.cc",
     "extension_l10n_util.h",
@@ -456,7 +467,6 @@ static_library("common") {
     "permissions/usb_device_permission_data.cc",
     "permissions/usb_device_permission_data.h",
     "process_context_data.h",
-    "script_constants.h",
     "stack_frame.cc",
     "stack_frame.h",
     "switches.cc",
@@ -493,6 +503,7 @@ static_library("common") {
 
   public_deps = [
     ":common_constants",
+    ":extension_features",
     ":mojom",
     "//components/services/app_service",
     "//content/public/common",
@@ -552,12 +563,6 @@ static_library("common") {
   }
 
   if (is_chromeos) {
-    sources += [
-      "manifest_handlers/action_handlers_handler.cc",
-      "manifest_handlers/action_handlers_handler.h",
-    ]
-  }
-  if (is_chromeos_ash) {
     sources += [
       "manifest_handlers/input_components_handler.cc",
       "manifest_handlers/input_components_handler.h",
@@ -712,10 +717,6 @@ source_set("unit_tests") {
     sources += [ "manifest_handlers/file_handler_manifest_unittest.cc" ]
   }
 
-  if (is_chromeos_ash) {
-    sources += [ "manifest_handlers/action_handlers_handler_unittest.cc" ]
-  }
-
   data = [
     "//extensions/common/mojom/api_permission_id.mojom",
     "//tools/metrics/histograms/metadata/extensions/enums.xml",
@@ -738,6 +739,8 @@ if (enable_extensions) {
     deps = [
       ":common",
       "//base",
+      "//content/public/common",
+      "//content/test:test_support",
       "//extensions:test_support",
     ]
 

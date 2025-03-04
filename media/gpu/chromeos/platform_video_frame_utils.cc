@@ -45,6 +45,7 @@
 #include "ui/gfx/linux/native_pixmap_dmabuf.h"
 #include "ui/gfx/native_pixmap.h"
 #include "ui/gfx/switches.h"
+#include "ui/ozone/public/ozone_switches.h"
 
 namespace media {
 
@@ -187,6 +188,38 @@ class GbmDeviceWrapper {
 
  private:
   GbmDeviceWrapper() {
+    if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+            switches::kRenderNodeOverride)) {
+      const base::FilePath dev_path(
+          base::CommandLine::ForCurrentProcess()->GetSwitchValuePath(
+              switches::kRenderNodeOverride));
+#if BUILDFLAG(IS_LINUX) && BUILDFLAG(USE_V4L2_CODEC)
+      const bool is_render_node = base::Contains(dev_path.value(), "render");
+
+      // TODO(b/313513760): don't guard base::File::FLAG_WRITE behind
+      // BUILDFLAG(IS_LINUX) && BUILDFLAG(USE_V4L2_CODEC) once the hardware
+      // video decoding sandbox allows R+W access to the render nodes.
+      // base::File::FLAG_WRITE is needed on Linux for gbm_create_device().
+      const uint32_t kDrmNodeFileFlags =
+          base::File::FLAG_OPEN | base::File::FLAG_READ |
+          (is_render_node ? base::File::FLAG_WRITE : 0);
+#else
+      const uint32_t kDrmNodeFileFlags =
+          base::File::FLAG_OPEN | base::File::FLAG_READ;
+#endif
+      base::File drm_node_file(dev_path, kDrmNodeFileFlags);
+      if (drm_node_file.IsValid()) {
+        // GbmDevice expects its owner to keep |drm_node_file| open during the
+        // former's lifetime. We give it away here since GbmDeviceWrapper is a
+        // singleton that fully owns |gbm_device|.
+        gbm_device_ = ui::CreateGbmDevice(drm_node_file.GetPlatformFile());
+        if (gbm_device_) {
+          drm_node_file.TakePlatformFile();
+        }
+      }
+      return;
+    }
+
     constexpr char kRenderNodeFilePrefix[] = "/dev/dri/renderD";
     constexpr int kMinRenderNodeNum = 128;
 
@@ -272,6 +305,70 @@ gfx::GpuMemoryBufferHandle AllocateGpuMemoryBufferHandle(
       *buffer_format, coded_size, buffer_usage);
 }
 
+UniqueTrackingTokenHelper::UniqueTrackingTokenHelper() {
+  Initialize();
+}
+
+UniqueTrackingTokenHelper::~UniqueTrackingTokenHelper() = default;
+
+void UniqueTrackingTokenHelper::ClearTokens() {
+  tokens_.clear();
+  Initialize();
+}
+
+void UniqueTrackingTokenHelper::Initialize() {
+  // This should only be run with an empty token list.
+  CHECK_EQ(0u, tokens_.size());
+
+  // Insert an empty tracking token. This guarantees that all returned tokens
+  // will be non-empty.
+  tokens_.insert(base::UnguessableToken());
+}
+
+void UniqueTrackingTokenHelper::ClearToken(
+    const base::UnguessableToken& token) {
+  // Only non-empty tokens are stored.
+  CHECK(!token.is_empty());
+  auto iter = tokens_.find(token);
+  CHECK(iter != tokens_.end());
+  tokens_.erase(iter);
+}
+
+base::UnguessableToken UniqueTrackingTokenHelper::GenerateToken() {
+  CHECK(tokens_.size() < kMaxNumberOfTokens);
+
+  // Capping the number of insertion attempts is done to avoid an unbounded
+  // while loop. The expected collision frequency is very low since
+  // base::UnguessableToken is a 128-bit number. If we can't find a unique token
+  // in 1024 attempts, then something is likely wrong.
+  constexpr int kMaxAttempts = 1024;
+  for (int attempt_count = 0; attempt_count < kMaxAttempts; ++attempt_count) {
+    // Generate an UnguessableToken and attempt to insert it into |tokens_|.
+    auto res = tokens_.insert(base::UnguessableToken::Create());
+    if (res.second) {
+      // Success
+      return *res.first;
+    }
+  }
+  LOG(FATAL) << "Unable to generate a unique UnguessableToken. Aborting.";
+}
+
+void UniqueTrackingTokenHelper::SetUniqueTrackingToken(
+    VideoFrameMetadata& metadata) {
+  CHECK(tokens_.size() < kMaxNumberOfTokens);
+
+  if (metadata.tracking_token.has_value()) {
+    if (auto res = tokens_.insert(*metadata.tracking_token);
+        true == res.second) {
+      // We were able to insert the tracking token into |tokens_|. There is
+      // nothing left to do.
+      return;
+    }
+  }
+  // Otherwise, it needs to be generated.
+  metadata.tracking_token = GenerateToken();
+}
+
 gfx::GpuMemoryBufferId GetNextGpuMemoryBufferId() {
   static base::NoDestructor<base::Lock> id_lock;
   static int next_gpu_memory_buffer_id = 0;
@@ -328,10 +425,12 @@ scoped_refptr<VideoFrame> CreateVideoFrameFromGpuMemoryBufferHandle(
   // We only support importing non-DISJOINT multi-planar GbmBuffer right now.
   // TODO(crbug.com/40201271): Add DISJOINT support.
   frame->metadata().is_webgpu_compatible = supports_zero_copy_webgpu_import;
+  frame->metadata().tracking_token = base::UnguessableToken::Create();
 
   return frame;
 }
 
+// TODO(crbug.com/381896729): Mark CreatePlatformVideoFrame as test only.
 scoped_refptr<VideoFrame> CreatePlatformVideoFrame(
     VideoPixelFormat pixel_format,
     const gfx::Size& coded_size,
@@ -364,6 +463,8 @@ scoped_refptr<VideoFrame> CreatePlatformVideoFrame(
       *layout, visible_rect, natural_size, std::move(dmabuf_fds), timestamp);
   if (!frame)
     return nullptr;
+
+  frame->metadata().tracking_token = base::UnguessableToken::Create();
 
   return frame;
 }
@@ -424,8 +525,8 @@ gfx::GpuMemoryBufferHandle CreateGpuMemoryBufferHandle(
       }
     } break;
     default:
-      NOTREACHED_IN_MIGRATION()
-          << "Unsupported storage type: " << video_frame->storage_type();
+      NOTREACHED() << "Unsupported storage type: "
+                   << video_frame->storage_type();
   }
   CHECK_EQ(handle.type, gfx::NATIVE_PIXMAP);
   if (video_frame->format() == PIXEL_FORMAT_MJPEG)
@@ -467,17 +568,6 @@ scoped_refptr<gfx::NativePixmapDmaBuf> CreateNativePixmapDmaBuf(
 
   DCHECK(native_pixmap->AreDmaBufFdsValid());
   return native_pixmap;
-}
-
-gfx::GenericSharedMemoryId GetSharedMemoryId(const VideoFrame& frame) {
-  if (auto* gmb = frame.GetGpuMemoryBuffer()) {
-    return gmb->GetId();
-  }
-  if (frame.HasDmaBufs()) {
-    return gfx::GenericSharedMemoryId(frame.GetDmabufFd(0));
-  }
-  NOTREACHED_IN_MIGRATION() << "The frame is not backed by shared memory";
-  return gfx::GenericSharedMemoryId();  // Invalid
 }
 
 bool CanImportGpuMemoryBufferHandle(

@@ -22,6 +22,7 @@ cargo_crate("lib") {
   cargo_pkg_authors = "Michele d'Amico <michele.damico@gmail.com>"
   cargo_pkg_name = "rstest_reuse"
   cargo_pkg_description = "Reuse rstest attributes: create a set of tests and apply it  to every scenario you want to test."
+  library_configs -= [ "//build/config/coverage:default_coverage" ]
   library_configs -= [ "//build/config/compiler:chromium_code" ]
   library_configs += [ "//build/config/compiler:no_chromium_code" ]
   executable_configs -= [ "//build/config/compiler:chromium_code" ]
@@ -32,6 +33,9 @@ cargo_crate("lib") {
     "//third_party/rust/quote/v1:lib",
     "//third_party/rust/rand/v0_8:lib",
     "//third_party/rust/syn/v2:lib",
+  ]
+  rustflags = [
+    "--cap-lints=allow",  # Suppress all warnings in crates.io crates
   ]
 
   testonly = true

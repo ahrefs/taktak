@@ -4,6 +4,7 @@
 
 #include "chrome/browser/web_applications/isolated_web_apps/update_manifest/update_manifest.h"
 
+#include <algorithm>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -14,7 +15,6 @@
 #include "base/containers/flat_map.h"
 #include "base/containers/map_util.h"
 #include "base/containers/to_vector.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
 #include "base/types/expected.h"
 #include "base/types/expected_macros.h"
@@ -188,6 +188,18 @@ std::optional<UpdateManifest::VersionEntry> UpdateManifest::GetLatestVersion(
     }
   }
   return latest_version_entry;
+}
+
+std::optional<UpdateManifest::VersionEntry> UpdateManifest::GetVersion(
+    const base::Version& version,
+    const UpdateChannel& channel) const {
+  for (const VersionEntry& version_entry : version_entries_) {
+    if (version_entry.channels().contains(channel) &&
+        version_entry.version() == version) {
+      return version_entry;
+    }
+  }
+  return std::nullopt;
 }
 
 UpdateManifest::ChannelMetadata UpdateManifest::GetChannelMetadata(

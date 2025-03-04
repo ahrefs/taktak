@@ -26,7 +26,7 @@ class ControllerDelegate : public DataTypeControllerDelegate {
       : type_(type), dump_stack_(dump_stack) {
     DCHECK(store_factory);
 
-    // The |syncable_service| can be null in some cases (e.g. when the
+    // The `syncable_service` can be null in some cases (e.g. when the
     // underlying service failed to initialize), and in tests.
     if (syncable_service) {
       bridge_ = std::make_unique<SyncableServiceBasedBridge>(
@@ -123,8 +123,9 @@ SyncableServiceBasedDataTypeController::SyncableServiceBasedDataTypeController(
     OnceDataTypeStoreFactory store_factory,
     base::WeakPtr<SyncableService> syncable_service,
     const base::RepeatingClosure& dump_stack,
-    DelegateMode delegate_mode)
-    : DataTypeController(type),
+    DelegateMode delegate_mode,
+    std::unique_ptr<DataTypeLocalDataBatchUploader> batch_uploader)
+    : DataTypeController(type, std::move(batch_uploader)),
       delegate_(std::make_unique<ControllerDelegate>(type,
                                                      std::move(store_factory),
                                                      syncable_service,

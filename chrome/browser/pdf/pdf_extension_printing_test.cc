@@ -42,6 +42,7 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/blink/public/common/input/web_input_event.h"
 #include "third_party/blink/public/common/input/web_mouse_event.h"
+#include "ui/base/mojom/menu_source_type.mojom.h"
 
 #if BUILDFLAG(ENABLE_OOP_PRINTING)
 #include "chrome/browser/printing/print_backend_service_manager.h"
@@ -187,8 +188,7 @@ class PDFExtensionPrintingTest
         printer_name,
         /*display_name=*/"test printer",
         /*printer_description=*/"A printer for testing.",
-        /*printer_status=*/0,
-        /*is_default=*/true, printing::test::kPrintInfoOptions);
+        printing::test::kPrintInfoOptions);
 
     auto default_caps =
         std::make_unique<printing::PrinterSemanticCapsAndDefaults>();
@@ -200,6 +200,7 @@ class PDFExtensionPrintingTest
     test_print_backend_->AddValidPrinter(
         printer_name, std::move(default_caps),
         std::make_unique<printing::PrinterBasicInfo>(printer_info));
+    test_print_backend_->SetDefaultPrinterName(printer_name);
   }
 
   void SetupPrintViewManagerForJobMonitoring(content::RenderFrameHost* frame) {
@@ -345,7 +346,7 @@ IN_PROC_BROWSER_TEST_P(PDFExtensionPrintingTest,
   printing::TestPrintPreviewObserver print_observer(/*wait_for_loaded=*/false);
   SetInputFocusOnPlugin(extension_host, embedder_web_contents);
   plugin_frame->GetRenderWidgetHost()->ShowContextMenuAtPoint(
-      {1, 1}, ui::MENU_SOURCE_MOUSE);
+      {1, 1}, ui::mojom::MenuSourceType::kMouse);
   print_observer.WaitUntilPreviewIsReady();
   menu_interceptor.Wait();
 }
@@ -374,7 +375,7 @@ IN_PROC_BROWSER_TEST_P(PDFExtensionPrintingTest,
   printing::TestPrintPreviewObserver print_observer(/*wait_for_loaded=*/false);
   SetInputFocusOnPlugin(extension_host, embedder_web_contents);
   plugin_frame->GetRenderWidgetHost()->ShowContextMenuAtPoint(
-      {1, 1}, ui::MENU_SOURCE_MOUSE);
+      {1, 1}, ui::mojom::MenuSourceType::kMouse);
   print_observer.WaitUntilPreviewIsReady();
   menu_interceptor.Wait();
 }

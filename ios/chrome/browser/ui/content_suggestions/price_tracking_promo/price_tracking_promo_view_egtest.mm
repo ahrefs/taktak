@@ -7,9 +7,10 @@
 #import "base/strings/stringprintf.h"
 #import "base/test/ios/wait_util.h"
 #import "components/commerce/core/commerce_feature_list.h"
+#import "components/segmentation_platform/embedder/home_modules/constants.h"
 #import "components/segmentation_platform/public/features.h"
+#import "ios/chrome/browser/push_notification/ui_bundled/scoped_notification_auth_swizzler.h"
 #import "ios/chrome/browser/ui/content_suggestions/price_tracking_promo/price_tracking_promo_constants.h"
-#import "ios/chrome/browser/ui/push_notification/scoped_notification_auth_swizzler.h"
 #import "ios/chrome/grit/ios_strings.h"
 #import "ios/chrome/test/earl_grey/chrome_earl_grey.h"
 #import "ios/chrome/test/earl_grey/chrome_matchers.h"
@@ -57,7 +58,7 @@ void WaitForPriceTrackingPromoToDisappear() {
       segmentation_platform::features::kSegmentationPlatformEphemeralCardRanker
           .name,
       segmentation_platform::features::kEphemeralCardRankerForceShowCardParam,
-      segmentation_platform::features::kPriceTrackingPromoForceOverride);
+      segmentation_platform::kPriceTrackingNotificationPromo);
   config.additional_args.push_back(enableFeatures);
   return config;
 }

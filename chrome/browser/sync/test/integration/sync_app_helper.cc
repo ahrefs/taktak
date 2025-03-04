@@ -9,8 +9,10 @@
 #include <memory>
 
 #include "chrome/browser/extensions/extension_service.h"
+#include "chrome/browser/extensions/extension_sync_util.h"
 #include "chrome/browser/extensions/extension_util.h"
 #include "chrome/browser/extensions/launch_util.h"
+#include "chrome/browser/extensions/pending_extension_manager.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/sync/test/integration/extensions_helper.h"
 #include "chrome/browser/sync/test/integration/sync_datatype_helper.h"
@@ -95,7 +97,7 @@ AppStateMap GetAppStates(Profile* profile) {
           ->GenerateInstalledExtensionsSet();
   for (const auto& extension : extensions) {
     if (extension->is_app() &&
-        extensions::util::ShouldSync(extension.get(), profile)) {
+        extensions::sync_util::ShouldSync(profile, extension.get())) {
       const std::string& id = extension->id();
       LoadApp(profile, id, &(app_state_map[id]));
     }

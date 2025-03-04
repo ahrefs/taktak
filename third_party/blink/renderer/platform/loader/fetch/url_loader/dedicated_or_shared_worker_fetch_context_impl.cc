@@ -4,10 +4,10 @@
 
 #include "third_party/blink/renderer/platform/loader/fetch/url_loader/dedicated_or_shared_worker_fetch_context_impl.h"
 
+#include <algorithm>
 #include <utility>
 
 #include "base/functional/bind.h"
-#include "base/ranges/algorithm.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/task/single_thread_task_runner.h"
@@ -28,6 +28,7 @@
 #include "third_party/blink/public/platform/web_security_origin.h"
 #include "third_party/blink/public/platform/web_url_request_extra_data.h"
 #include "third_party/blink/public/platform/websocket_handshake_throttle_provider.h"
+#include "third_party/blink/renderer/platform/accept_languages_watcher.h"
 #include "third_party/blink/renderer/platform/loader/fetch/url_loader/url_loader.h"
 #include "third_party/blink/renderer/platform/loader/fetch/url_loader/url_loader_factory.h"
 #include "url/url_constants.h"
@@ -394,7 +395,7 @@ void DedicatedOrSharedWorkerFetchContextImpl::FinalizeRequest(
   }
 }
 
-WebVector<std::unique_ptr<URLLoaderThrottle>>
+std::vector<std::unique_ptr<URLLoaderThrottle>>
 DedicatedOrSharedWorkerFetchContextImpl::CreateThrottles(
     const network::ResourceRequest& request) {
   if (throttle_provider_) {
@@ -599,9 +600,13 @@ void DedicatedOrSharedWorkerFetchContextImpl::UpdateSubresourceLoaderFactories(
 
 void DedicatedOrSharedWorkerFetchContextImpl::NotifyUpdate(
     const RendererPreferences& new_prefs) {
-  if (accept_languages_watcher_ &&
-      renderer_preferences_.accept_languages != new_prefs.accept_languages)
-    accept_languages_watcher_->NotifyUpdate();
+  // Reserving `accept_languages_watcher` on the stack ensures it is not GC'd
+  // within this scope.
+  auto* accept_languages_watcher = accept_languages_watcher_.Get();
+  if (accept_languages_watcher &&
+      renderer_preferences_.accept_languages != new_prefs.accept_languages) {
+    accept_languages_watcher->NotifyUpdate();
+  }
   renderer_preferences_ = new_prefs;
   for (auto& watcher : child_preference_watchers_)
     watcher->NotifyUpdate(new_prefs);
@@ -625,7 +630,7 @@ WebDedicatedOrSharedWorkerFetchContext::Create(
         pending_fallback_factory,
     CrossVariantMojoReceiver<mojom::SubresourceLoaderUpdaterInterfaceBase>
         pending_subresource_loader_updater,
-    const WebVector<WebString>& web_cors_exempt_header_list,
+    const std::vector<WebString>& web_cors_exempt_header_list,
     mojo::PendingRemote<mojom::ResourceLoadInfoNotifier>
         pending_resource_load_info_notifier) {
   mojo::PendingReceiver<mojom::blink::ServiceWorkerWorkerClient>
@@ -652,9 +657,9 @@ WebDedicatedOrSharedWorkerFetchContext::Create(
 
   Vector<String> cors_exempt_header_list(
       base::checked_cast<wtf_size_t>(web_cors_exempt_header_list.size()));
-  base::ranges::transform(web_cors_exempt_header_list,
-                          cors_exempt_header_list.begin(),
-                          &WebString::operator WTF::String);
+  std::ranges::transform(web_cors_exempt_header_list,
+                         cors_exempt_header_list.begin(),
+                         &WebString::operator WTF::String);
 
   scoped_refptr<DedicatedOrSharedWorkerFetchContextImpl> worker_fetch_context =
       base::AdoptRef(new DedicatedOrSharedWorkerFetchContextImpl(

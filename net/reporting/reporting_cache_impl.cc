@@ -13,7 +13,6 @@
 #include "base/containers/contains.h"
 #include "base/memory/raw_ptr.h"
 #include "base/not_fatal_until.h"
-#include "base/ranges/algorithm.h"
 #include "base/stl_util.h"
 #include "base/time/clock.h"
 #include "base/time/tick_clock.h"
@@ -261,8 +260,8 @@ ReportingEndpoint::Statistics* ReportingCacheImpl::GetEndpointStats(
     if (document_endpoints_source_it == document_endpoints_.end())
       return nullptr;
     const auto document_endpoint_it =
-        base::ranges::find(document_endpoints_source_it->second, group_key,
-                           &ReportingEndpoint::group_key);
+        std::ranges::find(document_endpoints_source_it->second, group_key,
+                          &ReportingEndpoint::group_key);
     // The endpoint may have been removed while the upload was in progress. In
     // that case, we no longer care about the stats for the removed endpoint.
     if (document_endpoint_it == document_endpoints_source_it->second.end())
@@ -454,12 +453,11 @@ void ReportingCacheImpl::RemoveSourceAndEndpoints(
   // there must be no more cached reports for it (except reports already marked
   // as doomed, as they will be garbage collected soon).
   DCHECK(expired_sources_.contains(reporting_source));
-  DCHECK(
-      base::ranges::none_of(reports_, [reporting_source](const auto& report) {
-        return report->reporting_source == reporting_source &&
-               report->status != ReportingReport::Status::DOOMED &&
-               report->status != ReportingReport::Status::SUCCESS;
-      }));
+  DCHECK(std::ranges::none_of(reports_, [reporting_source](const auto& report) {
+    return report->reporting_source == reporting_source &&
+           report->status != ReportingReport::Status::DOOMED &&
+           report->status != ReportingReport::Status::SUCCESS;
+  }));
   url::Origin origin;
   if (document_endpoints_.count(reporting_source) > 0) {
     // Document endpoints should have an origin.
@@ -538,8 +536,7 @@ void ReportingCacheImpl::RemoveClient(
 
 void ReportingCacheImpl::RemoveClientsForOrigin(const url::Origin& origin) {
   ConsistencyCheckClients();
-  std::string domain = origin.host();
-  const auto domain_range = clients_.equal_range(domain);
+  const auto domain_range = clients_.equal_range(origin.host());
   ClientMap::iterator it = domain_range.first;
   while (it != domain_range.second) {
     if (it->second.origin == origin) {
@@ -989,7 +986,7 @@ void ReportingCacheImpl::SetEndpointForTesting(
     DCHECK(group_key.origin.has_value());
     Client new_client(group_key.network_anonymization_key,
                       group_key.origin.value());
-    std::string domain = group_key.origin.value().host();
+    const std::string& domain = group_key.origin.value().host();
     client_it = clients_.emplace(domain, std::move(new_client));
   }
 
@@ -1040,7 +1037,7 @@ IsolationInfo ReportingCacheImpl::GetIsolationInfoForEndpoint(
   // uploaded. Enterprise endpoints are profile-bound and
   // not document-bound like web developer endpoints.
   if (endpoint.group_key.target_type == ReportingTargetType::kEnterprise) {
-    return IsolationInfo::CreateTransient();
+    return IsolationInfo::CreateTransient(/*nonce=*/std::nullopt);
   }
   // V0 endpoint groups do not support credentials.
   if (!endpoint.group_key.reporting_source.has_value()) {

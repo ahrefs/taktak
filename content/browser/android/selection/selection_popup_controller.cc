@@ -9,6 +9,7 @@
 #include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
 #include "base/android/scoped_java_ref.h"
+#include "base/feature_list.h"
 #include "content/browser/android/selection/composited_touch_handle_drawable.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/render_widget_host_view_android.h"
@@ -19,7 +20,7 @@
 #include "content/public/common/content_features.h"
 #include "third_party/blink/public/common/context_menu_data/edit_flags.h"
 #include "third_party/blink/public/mojom/context_menu/context_menu.mojom.h"
-#include "third_party/blink/public/mojom/input/input_handler.mojom-blink.h"
+#include "third_party/blink/public/mojom/input/input_handler.mojom.h"
 #include "ui/base/mojom/menu_source_type.mojom.h"
 #include "ui/gfx/android/android_surface_control_compat.h"
 #include "ui/gfx/geometry/point_conversions.h"
@@ -62,6 +63,10 @@ bool IsAndroidSurfaceControlMagnifierEnabled() {
   static bool enabled = gfx::SurfaceControl::SupportsSurfacelessControl();
   return enabled;
 }
+
+BASE_FEATURE(kDismissMagnifierOnViewSwap,
+             "DismissMagnifierOnViewSwap",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 }  // namespace
 
@@ -200,6 +205,17 @@ void SelectionPopupController::UpdateRenderProcessConnection(
   if (new_rwhva)
     new_rwhva->set_selection_popup_controller(this);
   rwhva_ = new_rwhva;
+
+  if (!base::FeatureList::IsEnabled(kDismissMagnifierOnViewSwap)) {
+    return;
+  }
+  JNIEnv* env = AttachCurrentThread();
+  ScopedJavaLocalRef<jobject> obj = java_obj_.get(env);
+  if (obj.is_null()) {
+    return;
+  }
+
+  Java_SelectionPopupControllerImpl_renderWidgetHostViewChanged(env, obj);
 }
 
 void SelectionPopupController::OnSelectionEvent(

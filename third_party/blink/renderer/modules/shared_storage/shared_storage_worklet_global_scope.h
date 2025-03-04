@@ -43,6 +43,7 @@ class SharedStorageOperationDefinition;
 class V8NoArgumentConstructor;
 class SharedStorage;
 class ScriptCachedMetadataHandler;
+class SharedStorageWorkletNavigator;
 class PrivateAggregation;
 class Crypto;
 class StorageInterestGroup;
@@ -129,6 +130,7 @@ class MODULES_EXPORT SharedStorageWorkletGlobalScope final
   ScriptPromise<IDLSequence<StorageInterestGroup>> interestGroups(
       ScriptState*,
       ExceptionState&);
+  SharedStorageWorkletNavigator* Navigator(ScriptState*, ExceptionState&);
 
   // Returns the unique ID for the currently running operation.
   int64_t GetCurrentOperationId();
@@ -144,6 +146,8 @@ class MODULES_EXPORT SharedStorageWorkletGlobalScope final
   permissions_policy_state() const {
     return permissions_policy_state_;
   }
+
+  bool add_module_finished() const { return add_module_finished_; }
 
  private:
   void OnModuleScriptDownloaded(
@@ -166,14 +170,13 @@ class MODULES_EXPORT SharedStorageWorkletGlobalScope final
       SharedStorageOperationDefinition*& operation_definition);
 
   network::mojom::RequestDestination GetDestination() const override {
-    // Not called as the current implementation uses the custom module script
-    // loader.
-    NOTREACHED_IN_MIGRATION();
-
     // Once we migrate to the blink-worklet's script loading infra, this needs
     // to return a valid destination defined in the Fetch standard:
     // https://fetch.spec.whatwg.org/#concept-request-destination
-    return network::mojom::RequestDestination::kEmpty;
+    //
+    // Not called as the current implementation uses the custom module script
+    // loader.
+    NOTREACHED();
   }
 
   // Sets continuation-preserved embedder data to allow us to identify this
@@ -222,6 +225,10 @@ class MODULES_EXPORT SharedStorageWorkletGlobalScope final
   // The per-global-scope crypto object. Created on the first access of
   // `crypto`.
   Member<Crypto> crypto_;
+
+  // The per-global-scope navigator object. Created on the first access of
+  // `navigator`.
+  Member<SharedStorageWorkletNavigator> navigator_;
 
   // The map from the registered operation names to their definition.
   HeapHashMap<String, Member<SharedStorageOperationDefinition>>

@@ -301,8 +301,8 @@ void RecordWidgetUsage(base::span<const HistogramNameCountPair> histograms) {
 }
 }  // namespace metrics_mediator
 
-using metrics_mediator::kAppEnteredBackgroundDateKey;
 using metrics_mediator::kAppDidFinishLaunchingConsecutiveCallsKey;
+using metrics_mediator::kAppEnteredBackgroundDateKey;
 
 @interface MetricsMediator ()
 // Starts or stops metrics recording.
@@ -372,8 +372,9 @@ BOOL _credentialExtensionWasUsed = NO;
 }
 
 + (void)logStartupDuration:(id<StartupInformation>)startupInformation {
-  if (![startupInformation isColdStart])
+  if (![startupInformation isColdStart]) {
     return;
+  }
 
   [MetricKitSubscriber endExtendedLaunchTask];
   base::TimeTicks now = base::TimeTicks::Now();
@@ -629,8 +630,9 @@ BOOL _credentialExtensionWasUsed = NO;
 
 - (void)updateMetricsStateBasedOnPrefsUserTriggered:(BOOL)isUserTriggered {
   BOOL optIn = [self areMetricsEnabled];
-  if (isUserTriggered)
+  if (isUserTriggered) {
     [self updateMetricsPrefsOnPermissionChange:optIn];
+  }
   [self setMetricsEnabled:optIn];
   crash_helper::SetEnabled(optIn);
   [self setAppGroupMetricsEnabled:optIn];
@@ -669,16 +671,19 @@ BOOL _credentialExtensionWasUsed = NO;
   metrics::MetricsService* metrics =
       GetApplicationContext()->GetMetricsService();
   DCHECK(metrics);
-  if (!metrics)
+  if (!metrics) {
     return;
+  }
   if (enabled) {
-    if (!metrics->recording_active())
+    if (!metrics->recording_active()) {
       metrics->Start();
+    }
 
     metrics->EnableReporting();
   } else {
-    if (metrics->recording_active())
+    if (metrics->recording_active()) {
       metrics->Stop();
+    }
   }
 }
 
@@ -723,14 +728,16 @@ BOOL _credentialExtensionWasUsed = NO;
   metrics::MetricsService* metrics =
       GetApplicationContext()->GetMetricsService();
   DCHECK(metrics);
-  if (!metrics)
+  if (!metrics) {
     return;
+  }
   if (enabled) {
     // When a user opts in to the metrics reporting service, the previously
     // collected data should be cleared to ensure that nothing is reported
     // before a user opts in and all reported data is accurate.
-    if (!metrics->recording_active())
+    if (!metrics->recording_active()) {
       metrics->ClearSavedStabilityMetrics();
+    }
   } else {
     // Clear the client id pref when opting out.
     // Note: Clearing client id will not affect the running state (e.g. field
@@ -747,7 +754,10 @@ BOOL _credentialExtensionWasUsed = NO;
 
 + (void)applicationDidEnterBackground:(NSInteger)memoryWarningCount {
   base::RecordAction(base::UserMetricsAction("MobileEnteredBackground"));
+  [self logMemoryToUMA:"Memory.Browser.MemoryFootprint.OnBackground"];
+}
 
++ (void)logMemoryToUMA:(const std::string&)histogramName {
   task_vm_info task_info_data;
   mach_msg_type_number_t count = sizeof(task_vm_info) / sizeof(natural_t);
   kern_return_t result =
@@ -755,8 +765,7 @@ BOOL _credentialExtensionWasUsed = NO;
                 reinterpret_cast<task_info_t>(&task_info_data), &count);
   if (result == KERN_SUCCESS) {
     mach_vm_size_t footprint_mb = task_info_data.phys_footprint / 1024 / 1024;
-    base::UmaHistogramMemoryLargeMB(
-        "Memory.Browser.MemoryFootprint.OnBackground", footprint_mb);
+    base::UmaHistogramMemoryLargeMB(histogramName, footprint_mb);
   }
 }
 

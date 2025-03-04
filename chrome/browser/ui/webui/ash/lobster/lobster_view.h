@@ -24,6 +24,8 @@ class LobsterView : public WebUIBubbleDialogView {
   ~LobsterView() override;
 
   // WebUIBubbleDialogView:
+  void ResizeDueToAutoResize(content::WebContents* source,
+                             const gfx::Size& new_size) override;
   void SetContentsBounds(content::WebContents* source,
                          const gfx::Rect& new_size) override;
   void ShowUI() override;
@@ -33,7 +35,6 @@ class LobsterView : public WebUIBubbleDialogView {
   // screen coordinates. The bubble view will be positioned around this caret
   // bound.
   gfx::Rect caret_bounds_;
-  bool initial_bounds_set = false;
 };
 
 }  // namespace ash

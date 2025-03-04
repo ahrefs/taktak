@@ -169,8 +169,7 @@ void Edit::ApplyTo(std::u16string& text) const {
     }
     case Kind::KEEP:
     default: {
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
     }
   }
 }
@@ -450,7 +449,7 @@ class LoadSignificantUrls : public history::HistoryDBTask {
 void HistoryFuzzyProvider::RecordOpenMatchMetrics(
     const AutocompleteResult& result,
     const AutocompleteMatch& match_opened) {
-  if (base::ranges::any_of(result, [](const AutocompleteMatch& match) {
+  if (std::ranges::any_of(result, [](const AutocompleteMatch& match) {
         return match.provider && match.provider->type() ==
                                      AutocompleteProvider::TYPE_HISTORY_FUZZY;
       })) {

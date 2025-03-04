@@ -120,7 +120,7 @@ void EmptySetterCallback(v8::Local<v8::Name> name,
 ExtensionHooksDelegate::ExtensionHooksDelegate(
     NativeRendererMessagingService* messaging_service)
     : messaging_service_(messaging_service) {}
-ExtensionHooksDelegate::~ExtensionHooksDelegate() {}
+ExtensionHooksDelegate::~ExtensionHooksDelegate() = default;
 
 RequestResult ExtensionHooksDelegate::HandleRequest(
     const std::string& method_name,
@@ -299,9 +299,8 @@ APIBindingHooks::RequestResult ExtensionHooksDelegate::HandleGetViews(
     if (!options_dict.Get("windowId", &v8_window_id) ||
         !options_dict.Get("tabId", &v8_tab_id) ||
         !options_dict.Get("type", &v8_view_type)) {
-      NOTREACHED_IN_MIGRATION()
+      NOTREACHED()
           << "Unexpected exception: argument parsing produces plain objects";
-      return RequestResult(RequestResult::THROWN);
     }
 
     if (!v8_window_id->IsUndefined()) {

@@ -22,7 +22,6 @@ import org.jni_zero.NativeMethods;
 
 import org.chromium.base.ObserverList;
 import org.chromium.base.TraceEvent;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.omnibox.ChromeAutocompleteSchemeClassifier;
 import org.chromium.chrome.browser.omnibox.LocationBarDataProvider;
 import org.chromium.chrome.browser.omnibox.NewTabPageDelegate;
@@ -161,7 +160,6 @@ public class LocationBarModel implements ToolbarDataProvider, LocationBarDataPro
     protected GURL mVisibleGurl = GURL.emptyGURL();
     protected String mFormattedFullUrl;
     protected String mUrlForDisplay;
-    private boolean mOmniboxUpdatedConnectionSecurityIndicatorsEnabled;
 
     // notifyUrlChanged and notifySecurityStateChanged are usually called 3 times across a same
     // document navigation. The first call is usually necessary, which updates the UrlBar to reflect
@@ -197,9 +195,6 @@ public class LocationBarModel implements ToolbarDataProvider, LocationBarDataPro
 
     /** Handle any initialization that must occur after native has been initialized. */
     public void initializeWithNative() {
-        mOmniboxUpdatedConnectionSecurityIndicatorsEnabled =
-                ChromeFeatureList.isEnabled(
-                        ChromeFeatureList.OMNIBOX_UPDATED_CONNECTION_SECURITY_INDICATORS);
         mNativeLocationBarModelAndroid = LocationBarModelJni.get().init(LocationBarModel.this);
         mSpannableDisplayTextCache = new LruCache<>(LRU_CACHE_SIZE);
     }
@@ -412,65 +407,71 @@ public class LocationBarModel implements ToolbarDataProvider, LocationBarDataPro
         return buildUrlBarData(url, isOfflinePage, displayText, displayText);
     }
 
-    private UrlBarData buildUrlBarData(
+    @VisibleForTesting
+    UrlBarData buildUrlBarData(
             GURL url, boolean isOfflinePage, String displayText, String editingText) {
-        SpannableStringBuilder spannableDisplayText = null;
-        if (mNativeLocationBarModelAndroid != 0
-                && displayText != null
-                && displayText.length() > 0
-                && shouldEmphasizeUrl()) {
-            final @BrandedColorScheme int brandedColorScheme =
-                    OmniboxResourceProvider.getBrandedColorScheme(
-                            mContext, isIncognitoBranded(), getPrimaryColor());
-            final @ColorInt int nonEmphasizedColor =
-                    OmniboxResourceProvider.getUrlBarSecondaryTextColor(
-                            mContext, brandedColorScheme);
-            final @ColorInt int emphasizedColor =
-                    OmniboxResourceProvider.getUrlBarPrimaryTextColor(mContext, brandedColorScheme);
-            final @ColorInt int dangerColor =
-                    OmniboxResourceProvider.getUrlBarDangerColor(mContext, brandedColorScheme);
-            final @ColorInt int secureColor =
-                    OmniboxResourceProvider.getUrlBarSecureColor(mContext, brandedColorScheme);
+        if (mNativeLocationBarModelAndroid == 0
+                || TextUtils.isEmpty(displayText)
+                || !shouldEmphasizeUrl()) {
+            return UrlBarData.forUrl(url);
+        }
 
-            AutocompleteSchemeClassifier autocompleteSchemeClassifier;
-            int securityLevel = getSecurityLevel(getTab(), isOfflinePage);
-            SpannableDisplayTextCacheKey cacheKey =
-                    new SpannableDisplayTextCacheKey(
-                            url.getSpec(),
-                            displayText,
-                            securityLevel,
-                            nonEmphasizedColor,
-                            emphasizedColor,
-                            dangerColor,
-                            secureColor);
-            SpannableStringBuilder cachedSpannableDisplayText =
-                    mSpannableDisplayTextCache.get(cacheKey);
-            autocompleteSchemeClassifier = mChromeAutocompleteSchemeClassifier;
+        return UrlBarData.forUrlAndText(
+                url,
+                getOrCreateUrlBarDataStyledDisplayText(url, displayText, isOfflinePage),
+                editingText);
+    }
 
-            if (cachedSpannableDisplayText != null) {
-                return UrlBarData.forUrlAndText(url, cachedSpannableDisplayText, editingText);
-            } else {
-                spannableDisplayText = new SpannableStringBuilder(displayText);
-                OmniboxUrlEmphasizer.emphasizeUrl(
-                        spannableDisplayText,
-                        autocompleteSchemeClassifier,
-                        getSecurityLevel(),
-                        shouldEmphasizeHttpsScheme(),
+    @VisibleForTesting
+    CharSequence getOrCreateUrlBarDataStyledDisplayText(
+            GURL url, String displayText, boolean isOfflinePage) {
+        final @BrandedColorScheme int brandedColorScheme =
+                OmniboxResourceProvider.getBrandedColorScheme(
+                        mContext, isIncognitoBranded(), getPrimaryColor());
+        final @ColorInt int nonEmphasizedColor =
+                OmniboxResourceProvider.getUrlBarSecondaryTextColor(mContext, brandedColorScheme);
+        final @ColorInt int emphasizedColor =
+                OmniboxResourceProvider.getUrlBarPrimaryTextColor(mContext, brandedColorScheme);
+        final @ColorInt int dangerColor =
+                OmniboxResourceProvider.getUrlBarDangerColor(mContext, brandedColorScheme);
+        final @ColorInt int secureColor =
+                OmniboxResourceProvider.getUrlBarSecureColor(mContext, brandedColorScheme);
+
+        int securityLevel = getSecurityLevel(getTab(), isOfflinePage);
+        SpannableDisplayTextCacheKey cacheKey =
+                new SpannableDisplayTextCacheKey(
+                        url.getSpec(),
+                        displayText,
+                        securityLevel,
                         nonEmphasizedColor,
                         emphasizedColor,
                         dangerColor,
                         secureColor);
-                mSpannableDisplayTextCache.put(cacheKey, spannableDisplayText);
-            }
+        SpannableStringBuilder cachedSpannableDisplayText =
+                mSpannableDisplayTextCache.get(cacheKey);
+
+        if (cachedSpannableDisplayText == null) {
+            cachedSpannableDisplayText = new SpannableStringBuilder(displayText);
+            OmniboxUrlEmphasizer.emphasizeUrl(
+                    cachedSpannableDisplayText,
+                    mChromeAutocompleteSchemeClassifier,
+                    getSecurityLevel(),
+                    shouldEmphasizeHttpsScheme(),
+                    nonEmphasizedColor,
+                    emphasizedColor,
+                    dangerColor,
+                    secureColor);
+            mSpannableDisplayTextCache.put(cacheKey, cachedSpannableDisplayText);
         }
-        return UrlBarData.forUrlAndText(url, spannableDisplayText, editingText);
+        return cachedSpannableDisplayText;
     }
 
     /**
-     * @return True if the displayed URL should be emphasized, false if the displayed text
-     *         already has formatting for emphasis applied.
+     * @return True if the displayed URL should be emphasized, false if the displayed text already
+     *     has formatting for emphasis applied.
      */
-    private boolean shouldEmphasizeUrl() {
+    @VisibleForTesting
+    boolean shouldEmphasizeUrl() {
         // If the toolbar shows the publisher URL, it applies its own formatting for emphasis.
         if (mTab == null) return true;
 
@@ -686,7 +687,7 @@ public class LocationBarModel implements ToolbarDataProvider, LocationBarDataPro
                 securityLevel,
                 isSmallDevice,
                 skipIconForNeutralState,
-                mOmniboxUpdatedConnectionSecurityIndicatorsEnabled);
+                /* useLockIconForSecureState= */ false);
     }
 
     @Override

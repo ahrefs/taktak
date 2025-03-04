@@ -7,15 +7,19 @@ package org.chromium.chrome.browser.compositor.bottombar;
 import android.animation.Animator;
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import org.chromium.base.MathUtils;
+import org.chromium.chrome.browser.browser_controls.BottomControlsStacker;
+import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider;
 import org.chromium.chrome.browser.compositor.bottombar.OverlayPanel.PanelState;
 import org.chromium.chrome.browser.compositor.bottombar.OverlayPanel.StateChangeReason;
 import org.chromium.chrome.browser.compositor.layouts.LayoutUpdateHost;
 import org.chromium.chrome.browser.layouts.animation.CompositorAnimationHandler;
 import org.chromium.chrome.browser.layouts.animation.CompositorAnimator;
+import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateManager;
 import org.chromium.components.browser_ui.widget.animation.CancelAwareAnimatorListener;
 
 /** Base abstract class for animating the Overlay Panel. */
@@ -55,10 +59,25 @@ public abstract class OverlayPanelAnimation extends OverlayPanelBase {
      * @param context The current Android {@link Context}.
      * @param updateHost The {@link LayoutUpdateHost} used to request updates in the Layout.
      * @param toolbarHeightDp The height of the toolbar in dp.
+     * @param desktopWindowStateManager Manager to get desktop window and app header state.
+     * @param browserControlsStateProvider The {@link BrowserControlsStateProvider} for measuring
+     *     controls.
+     * @param bottomControlsStacker The {@link BottomControlsStacker} for observing and changing
+     *     browser controls heights.
      */
     public OverlayPanelAnimation(
-            Context context, LayoutUpdateHost updateHost, float toolbarHeightDp) {
-        super(context, toolbarHeightDp);
+            Context context,
+            LayoutUpdateHost updateHost,
+            float toolbarHeightDp,
+            DesktopWindowStateManager desktopWindowStateManager,
+            @NonNull BrowserControlsStateProvider browserControlsStateProvider,
+            @NonNull BottomControlsStacker bottomControlsStacker) {
+        super(
+                context,
+                toolbarHeightDp,
+                desktopWindowStateManager,
+                browserControlsStateProvider,
+                bottomControlsStacker);
         mUpdateHost = updateHost;
     }
 

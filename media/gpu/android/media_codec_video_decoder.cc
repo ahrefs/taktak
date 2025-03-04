@@ -15,6 +15,7 @@
 #include "base/memory/ptr_util.h"
 #include "base/memory/weak_ptr.h"
 #include "base/metrics/histogram_macros.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/task/bind_post_task.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/time/time.h"
@@ -73,7 +74,7 @@ std::vector<SupportedVideoDecoderConfig> GenerateSupportedConfigs(
     if ((codec == VideoCodec::kVP8 && device_info->IsVp8DecoderAvailable()) ||
         (codec == VideoCodec::kVP9 && device_info->IsVp9DecoderAvailable()) ||
         (codec == VideoCodec::kAV1 && device_info->IsAv1DecoderAvailable()) ||
-        (codec == VideoCodec::kH264 && IsBuiltInVideoCodec(codec))) {
+        (codec == VideoCodec::kH264 && IsDecoderBuiltInVideoCodec(codec))) {
       // Don't allow OS software decoding for bundled software decoders unless
       // the content is encrypted.
       const bool can_use_builtin_software_decoder =
@@ -186,7 +187,9 @@ void SelectMediaCodec(const VideoDecoderConfig& config,
         || config.codec() == VideoCodec::kDolbyVision
 #endif  // BUILDFLAG(ENABLE_PLATFORM_DOLBY_VISION)
 #endif  // BUILDFLAG(USE_PROPRIETARY_CODECS)
-        )) {
+        // TODO(b/376720494): Allow this only libvpx doesn't supports HRD.
+        || config.profile() == VP9PROFILE_PROFILE2 ||
+        config.profile() == VP9PROFILE_PROFILE3)) {
     DVLOG(2) << "Can't find proper video decoder from decoder info cache, "
                 "fallback to the default decoder selection path.";
     return;
@@ -251,9 +254,9 @@ MediaCodecVideoDecoder::MediaCodecVideoDecoder(
           gpu_preferences.enable_threaded_texture_mailboxes),
       allow_nonsecure_overlays_(
           base::FeatureList::IsEnabled(media::kAllowNonSecureOverlays)),
-      use_block_model_(base::FeatureList::IsEnabled(kMediaCodecBlockModel) &&
-                       device_info_->SdkVersion() >=
-                           base::android::SDK_VERSION_R) {
+      use_block_model_(device_info_->SdkVersion() >=
+                           base::android::SDK_VERSION_V &&
+                       base::FeatureList::IsEnabled(kMediaCodecBlockModel)) {
   DVLOG(2) << __func__;
   surface_chooser_helper_.chooser()->SetClientCallbacks(
       base::BindRepeating(&MediaCodecVideoDecoder::OnSurfaceChosen,
@@ -353,7 +356,7 @@ void MediaCodecVideoDecoder::Initialize(const VideoDecoderConfig& config,
   // If we don't have support support for a given codec, try to initialize
   // anyways -- otherwise we're certain to fail playback.
   if (!IsVideoDecoderConfigSupported(GetSupportedConfigsInternal(), config) &&
-      IsBuiltInVideoCodec(config.codec())) {
+      IsDecoderBuiltInVideoCodec(config.codec())) {
     MEDIA_LOG(INFO, media_log_) << "Video configuration is not valid: "
                                 << config.AsHumanReadableString();
     base::BindPostTaskToCurrentDefault(std::move(init_cb))
@@ -781,7 +784,8 @@ void MediaCodecVideoDecoder::OnCodecConfigured(
   codec_name_ = codec->GetName();
   MEDIA_LOG(INFO, media_log_)
       << "Created MediaCodec " << codec_name_
-      << ", is_software_codec=" << codec->IsSoftwareCodec();
+      << ", is_software_codec=" << codec->IsSoftwareCodec()
+      << ", use_block_model_=" << use_block_model_;
 
   // Since we can't get the coded size w/o rendering the frame, we try to guess
   // in cases where we are unable to render the frame (resolution changes). If
@@ -810,7 +814,7 @@ void MediaCodecVideoDecoder::OnCodecConfigured(
               &MediaCodecVideoDecoder::PumpCodec, weak_factory_.GetWeakPtr()))),
       decoder_config_.coded_size(),
       decoder_config_.color_space_info().ToGfxColorSpace(),
-      coded_size_alignment, use_block_model_);
+      coded_size_alignment);
 
   // If the target surface changed while codec creation was in progress,
   // transition to it immediately.
@@ -993,8 +997,15 @@ bool MediaCodecVideoDecoder::QueueInput() {
           << decoder_config_.coded_size().ToString() << " to "
           << new_config.coded_size().ToString();
       std::move(pending_decodes_.front().decode_cb)
-          .Run(DecoderStatus::Codes::kOk);
+          .Run(DecoderStatus::Codes::kElidedEndOfStreamForConfigChange);
       pending_decodes_.pop_front();
+      DCHECK(pending_decodes_.empty());
+      decoder_config_ = new_config;
+
+      // Note: We don't set `last_width_` here since the codec was allocated
+      // with the pre-config change resolution. If `max_input_size_` is
+      // exceeded, the code will detect that `last_width_` doesn't match the
+      // current config and try reallocating at that size.
       return true;
     }
   }
@@ -1005,7 +1016,7 @@ bool MediaCodecVideoDecoder::QueueInput() {
              ? 3
              : 2))
       << "QueueInput(" << pending_buffer->AsHumanReadableString()
-      << ") status=" << MediaSerialize(status);
+      << ") status=" << status.message();
 
   switch (status.code()) {
     case CodecWrapper::QueueStatus::Codes::kOk:
@@ -1076,7 +1087,7 @@ bool MediaCodecVideoDecoder::DequeueOutput() {
   }
   DVLOG(3) << "DequeueOutputBuffer(): pts="
            << (eos ? "EOS"
-                   : std::to_string(presentation_time.InMilliseconds()));
+                   : base::NumberToString(presentation_time.InMilliseconds()));
 
   if (eos) {
     if (eos_decode_cb_) {

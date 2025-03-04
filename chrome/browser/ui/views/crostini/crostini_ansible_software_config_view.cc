@@ -4,6 +4,8 @@
 
 #include "chrome/browser/ui/views/crostini/crostini_ansible_software_config_view.h"
 
+#include <string_view>
+
 #include "base/functional/callback_helpers.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
@@ -12,7 +14,6 @@
 #include "chrome/browser/ash/crostini/crostini_pref_names.h"
 #include "chrome/browser/ash/crostini/crostini_util.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/network_service_instance.h"
@@ -70,12 +71,12 @@ std::u16string CrostiniAnsibleSoftwareConfigView::GetSubtextLabel() const {
   }
 }
 
-std::u16string
+std::u16string_view
 CrostiniAnsibleSoftwareConfigView::GetSubtextLabelStringForTesting() {
   return subtext_label_->GetText();
 }
 
-std::u16string
+std::u16string_view
 CrostiniAnsibleSoftwareConfigView::GetProgressLabelStringForTesting() {
   return progress_label_->GetText();
 }
@@ -84,8 +85,8 @@ CrostiniAnsibleSoftwareConfigView::CrostiniAnsibleSoftwareConfigView(
     Profile* profile,
     guest_os::GuestId container_id)
     : profile_(profile), container_id_(container_id) {
-  set_fixed_width(ChromeLayoutProvider::Get()->GetDistanceMetric(
-      DISTANCE_STANDALONE_BUBBLE_PREFERRED_WIDTH));
+  set_fixed_width(views::LayoutProvider::Get()->GetDistanceMetric(
+      views::DISTANCE_MODAL_DIALOG_PREFERRED_WIDTH));
 
   views::LayoutProvider* provider = views::LayoutProvider::Get();
   SetLayoutManager(std::make_unique<views::BoxLayout>(
@@ -155,8 +156,9 @@ void CrostiniAnsibleSoftwareConfigView::OnAnsibleSoftwareConfigurationProgress(
     const std::vector<std::string>& status_lines) {
   // Pass if this isn't for the current dialog.
   LOG(ERROR) << "Progress: " << status_lines.back();
-  if (container_id != container_id_)
+  if (container_id != container_id_) {
     return;
+  }
   progress_label_->SetText(base::UTF8ToUTF16(status_lines.back()));
   OnStateChanged();
 }
@@ -165,15 +167,17 @@ void CrostiniAnsibleSoftwareConfigView::OnAnsibleSoftwareConfigurationFinished(
     const guest_os::GuestId& container_id,
     bool success) {
   // Pass if this isn't for the current dialog.
-  if (container_id != container_id_)
+  if (container_id != container_id_) {
     return;
+  }
 
   DCHECK_EQ(state_, State::CONFIGURING);
   if (!success) {
-    if (content::GetNetworkConnectionTracker()->IsOffline())
+    if (content::GetNetworkConnectionTracker()->IsOffline()) {
       state_ = State::ERROR_OFFLINE;
-    else
+    } else {
       state_ = State::ERROR;
+    }
 
     OnStateChanged();
     return;
@@ -201,8 +205,9 @@ void CrostiniAnsibleSoftwareConfigView::OnStateChanged() {
   SetButtonLabel(ui::mojom::DialogButton::kCancel,
                  l10n_util::GetStringUTF16(IDS_APP_CANCEL));
   DialogModelChanged();
-  if (GetWidget())
+  if (GetWidget()) {
     GetWidget()->SetSize(GetWidget()->non_client_view()->GetPreferredSize());
+  }
 }
 
 BEGIN_METADATA(CrostiniAnsibleSoftwareConfigView)

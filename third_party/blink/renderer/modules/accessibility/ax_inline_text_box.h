@@ -67,8 +67,7 @@ class AXInlineTextBox final : public AXObject {
   AXObject* PreviousOnLine() const override;
   void SerializeMarkerAttributes(ui::AXNodeData* node_data) const override;
   ax::mojom::blink::Role NativeRoleIgnoringAria() const override {
-    NOTREACHED_IN_MIGRATION();
-    return ax::mojom::blink::Role::kInlineTextBox;
+    NOTREACHED();
   }
   void ClearChildren() override;
   AbstractInlineTextBox* GetInlineTextBox() const override;
@@ -85,7 +84,13 @@ class AXInlineTextBox final : public AXObject {
   void AddChildren() override {}
 
  private:
+  enum class Direction { kNext, kPrevious };
+  AXObject* NeighboringOnLine(const Direction direction) const;
+
+  // TODO(a11y): Remove default argument on virtual override.
+  // See https://google.github.io/styleguide/cppguide.html#Default_Arguments
   bool ComputeIsIgnored(IgnoredReasons* = nullptr) const override;
+  bool IsPartOfAListItem() const;
 
   Member<AbstractInlineTextBox> inline_text_box_;
 };

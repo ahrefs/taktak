@@ -22,7 +22,6 @@ import androidx.recyclerview.widget.RecyclerView.State;
 
 import org.chromium.base.Callback;
 import org.chromium.base.supplier.Supplier;
-import org.chromium.chrome.browser.commerce.CommerceBottomSheetContentCoordinator.ContentType;
 import org.chromium.chrome.browser.commerce.CommerceBottomSheetContentProvider;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.ui.modelutil.LayoutViewBuilder;
@@ -95,7 +94,7 @@ public class DiscountsBottomSheetContentCoordinator implements CommerceBottomShe
         return new PropertyModel.Builder(ALL_KEYS)
                 .with(TYPE, ContentType.DISCOUNTS)
                 .with(HAS_TITLE, true)
-                .with(TITLE, mContext.getResources().getString(R.string.discount_container_title))
+                .with(TITLE, mContext.getString(R.string.discount_container_title))
                 .with(CUSTOM_VIEW, mDiscountsContentContainer)
                 .build();
     }

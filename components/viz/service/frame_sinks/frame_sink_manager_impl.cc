@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <algorithm>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -29,7 +30,6 @@
 #include "components/viz/common/surfaces/subtree_capture_id.h"
 #include "components/viz/common/surfaces/video_capture_target.h"
 #include "components/viz/service/display/overdraw_tracker.h"
-#include "components/viz/service/display/shared_bitmap_manager.h"
 #include "components/viz/service/display_embedder/output_surface_provider.h"
 #include "components/viz/service/frame_sinks/compositor_frame_sink_support.h"
 #include "components/viz/service/frame_sinks/frame_sink_bundle_impl.h"
@@ -43,13 +43,10 @@
 
 namespace viz {
 
-FrameSinkManagerImpl::InitParams::InitParams() = default;
 FrameSinkManagerImpl::InitParams::InitParams(
-    SharedBitmapManager* shared_bitmap_manager,
     OutputSurfaceProvider* output_surface_provider,
     GmbVideoFramePoolContextProvider* gmb_context_provider)
-    : shared_bitmap_manager(shared_bitmap_manager),
-      output_surface_provider(output_surface_provider),
+    : output_surface_provider(output_surface_provider),
       gmb_context_provider(gmb_context_provider) {}
 FrameSinkManagerImpl::InitParams::InitParams(InitParams&& other) = default;
 FrameSinkManagerImpl::InitParams::~InitParams() = default;
@@ -79,8 +76,7 @@ FrameSinkManagerImpl::FrameSinkData& FrameSinkManagerImpl::FrameSinkData::
 operator=(FrameSinkData&& other) = default;
 
 FrameSinkManagerImpl::FrameSinkManagerImpl(const InitParams& params)
-    : shared_bitmap_manager_(params.shared_bitmap_manager),
-      output_surface_provider_(params.output_surface_provider),
+    : output_surface_provider_(params.output_surface_provider),
       gpu_service_(params.gpu_service),
       gmb_context_provider_(params.gmb_context_provider),
       surface_manager_(this,
@@ -815,6 +811,15 @@ void FrameSinkManagerImpl::DidFinishFrame(const FrameSinkId& frame_sink_id,
     observer.OnFrameSinkDidFinishFrame(frame_sink_id, args);
 }
 
+void FrameSinkManagerImpl::OnFrameSinkDeviceScaleFactorChanged(
+    const FrameSinkId& frame_sink_id,
+    float device_scale_factor) {
+  for (auto& observer : observer_list_) {
+    observer.OnFrameSinkDeviceScaleFactorChanged(frame_sink_id,
+                                                 device_scale_factor);
+  }
+}
+
 void FrameSinkManagerImpl::AddObserver(FrameSinkObserver* obs) {
   observer_list_.AddObserver(obs);
 }
@@ -919,7 +924,12 @@ void FrameSinkManagerImpl::VerifySandboxedThreadIds(
     return;
   }
   // GPU check passed, now do an async check for the Browser process.
-  std::vector<int32_t> tids(thread_ids.begin(), thread_ids.end());
+  static_assert(
+      std::is_same_v<int32_t, base::PlatformThreadId::UnderlyingType>);
+  std::vector<int32_t> tids;
+  tids.reserve(thread_ids.size());
+  std::transform(thread_ids.begin(), thread_ids.end(), std::back_inserter(tids),
+                 [](const base::PlatformThreadId& tid) { return tid.raw(); });
   client_->VerifyThreadIdsDoNotBelongToHost(tids,
                                             std::move(verification_callback));
 #else
@@ -1082,6 +1092,11 @@ void FrameSinkManagerImpl::OnScreenshotCaptured(
                                 std::move(copy_output_result));
 }
 
+bool FrameSinkManagerImpl::IsFrameSinkIdInRootSinkMap(
+    const FrameSinkId& frame_sink_id) {
+  return root_sink_map_.find(frame_sink_id) != root_sink_map_.end();
+}
+
 gpu::SharedImageInterface* FrameSinkManagerImpl::GetSharedImageInterface() {
   DCHECK(shared_image_interface_provider_);
   return shared_image_interface_provider_->GetSharedImageInterface();
@@ -1158,6 +1173,26 @@ void FrameSinkManagerImpl::SetSameDocNavigationScreenshotSize(
   std::move(callback).Run();
 }
 
+void FrameSinkManagerImpl::GetForceEnableZoomState(
+    const FrameSinkId& frame_sink_id,
+    GetForceEnableZoomStateCallback callback) {
+  CHECK(GetInputManager());
+  CHECK(GetInputManager()->GetRenderInputRouterFromFrameSinkId(frame_sink_id));
+  bool enabled = GetInputManager()
+                     ->GetRenderInputRouterFromFrameSinkId(frame_sink_id)
+                     ->GetForceEnableZoom();
+  std::move(callback).Run(enabled);
+}
+
+void FrameSinkManagerImpl::WaitForSurfaceAnimationManager(
+    const FrameSinkId& frame_sink_id,
+    WaitForSurfaceAnimationManagerCallback callback) {
+  auto* support = FrameSinkManagerImpl::GetFrameSinkForId(frame_sink_id);
+  CHECK(support);
+
+  support->RegisterSurfaceAnimationManagerNotification(std::move(callback));
+}
+
 void FrameSinkManagerImpl::ClearUnclaimedViewTransitionResources(
     const blink::ViewTransitionToken& transition_token) {
   transition_token_to_animation_manager_.erase(transition_token);
@@ -1175,6 +1210,30 @@ void FrameSinkManagerImpl::EnableFrameSinkManagerTestApi(
   test_api_receiver_.Bind(std::move(receiver));
 }
 
+void FrameSinkManagerImpl::SetupRenderInputRouterDelegateConnection(
+    const base::UnguessableToken& grouping_id,
+    mojo::PendingRemote<input::mojom::RenderInputRouterDelegateClient>
+        rir_delegate_client_remote,
+    mojo::PendingReceiver<input::mojom::RenderInputRouterDelegate>
+        rir_delegate_receiver) {
+  input_manager_->SetupRenderInputRouterDelegateConnection(
+      grouping_id, std::move(rir_delegate_client_remote),
+      std::move(rir_delegate_receiver));
+}
+
+void FrameSinkManagerImpl::NotifyRendererBlockStateChanged(
+    bool blocked,
+    const std::vector<FrameSinkId>& render_input_routers) {
+  input_manager_->NotifyRendererBlockStateChanged(blocked,
+                                                  render_input_routers);
+}
+
+void FrameSinkManagerImpl::RequestInputBack() {
+  bool success = input_manager_->ReturnInputBackToBrowser();
+  TRACE_EVENT_INSTANT("viz", "FrameSinkManagerImpl::RequestInputBack",
+                      "success", success);
+}
+
 void FrameSinkManagerImpl::RequestBeginFrameForGpuService(bool toggle) {
   if (root_begin_frame_source_ && gpu_service_) {
     if (toggle) {
@@ -1183,6 +1242,10 @@ void FrameSinkManagerImpl::RequestBeginFrameForGpuService(bool toggle) {
       root_begin_frame_source_->RemoveObserver(gpu_service_);
     }
   }
+}
+
+GpuServiceImpl* FrameSinkManagerImpl::GetGpuService() {
+  return gpu_service_;
 }
 
 }  // namespace viz

@@ -7,7 +7,7 @@ import '//components/autofill/ios/form_util/resources/create_fill_namespace.js';
 import * as fillConstants from '//components/autofill/ios/form_util/resources/fill_constants.js';
 import {findChildText} from '//components/autofill/ios/form_util/resources/fill_element_inference_util.js';
 import {gCrWeb} from '//ios/web/public/js_messaging/resources/gcrweb.js';
-import {trim} from '//ios/web/public/js_messaging/resources/utils.js';
+import {removeQueryAndReferenceFromURL, trim} from '//ios/web/public/js_messaging/resources/utils.js';
 
 declare interface AutofillFormFieldData {
   name: string;
@@ -31,6 +31,7 @@ declare interface AutofillFormFieldData {
   identifier?: string;
   name_attribute?: string;
   id_attribute?: string;
+  pattern_attribute?: string;
 }
 
 declare interface AutofillFormData {
@@ -493,7 +494,7 @@ gCrWeb.fill.getCanonicalActionForForm = function(
     formElement: HTMLFormElement): string {
   const rawAction = formElement.getAttribute('action') || '';
   const absoluteUrl = absoluteURL(formElement.ownerDocument, rawAction);
-  return gCrWeb.common.removeQueryAndReferenceFromURL(absoluteUrl);
+  return removeQueryAndReferenceFromURL(absoluteUrl);
 };
 
 declare interface OptionFieldStrings {

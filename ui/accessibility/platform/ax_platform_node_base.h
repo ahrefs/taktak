@@ -103,6 +103,10 @@ class COMPONENT_EXPORT(AX_PLATFORM) AXPlatformNodeBase : public AXPlatformNode {
   gfx::NativeViewAccessible GetNativeViewAccessible() override;
   void NotifyAccessibilityEvent(ax::mojom::Event event_type) override;
 
+  // Returns the top-level URL for the active document. This should generally
+  // correspond to what would be shown in the Omnibox.
+  std::string GetRootURL() const override;
+
 #if BUILDFLAG(IS_APPLE)
   void AnnounceTextAs(const std::u16string& text,
                       AnnouncementType announcement_type) override;
@@ -110,6 +114,9 @@ class COMPONENT_EXPORT(AX_PLATFORM) AXPlatformNodeBase : public AXPlatformNode {
 
   AXPlatformNodeDelegate* GetDelegate() const override;
   bool IsDescendantOf(AXPlatformNode* ancestor) const override;
+  bool IsDescendant(AXPlatformNodeBase* descendant) {
+    return descendant->IsDescendantOf(this);
+  }
 
   // Helpers.
   AXPlatformNodeBase* GetPlatformParent() const;
@@ -117,7 +124,6 @@ class COMPONENT_EXPORT(AX_PLATFORM) AXPlatformNodeBase : public AXPlatformNode {
   AXPlatformNodeBase* GetNextSibling() const;
   AXPlatformNodeBase* GetFirstChild() const;
   AXPlatformNodeBase* GetLastChild() const;
-  bool IsDescendant(AXPlatformNodeBase* descendant);
 
   AXNodeID GetNodeId() const;
   AXPlatformNodeBase* GetActiveDescendant() const;
@@ -341,6 +347,7 @@ class COMPONENT_EXPORT(AX_PLATFORM) AXPlatformNodeBase : public AXPlatformNode {
   // attributes that is either not displayed on screen, or outside this node,
   // e.g. aria-label and HTML title, is not returned.
   std::u16string GetTextContentUTF16() const;
+  int GetTextContentLengthUTF16() const;
 
   // Returns the value of a control such as a text field, a slider, a <select>
   // element, a date picker or an ARIA combo box. In order to minimize
@@ -354,6 +361,9 @@ class COMPONENT_EXPORT(AX_PLATFORM) AXPlatformNodeBase : public AXPlatformNode {
   // IAccessibleText::get_text, indicating the position where a non-static text
   // child object appears.
   static const char16_t kEmbeddedCharacter;
+
+  // Prefix for the name of an action from the aria-actions attribute.
+  static const std::string kAriaActionsPrefix;
 
   // Get a node given its unique id or null in the case that the id is unknown.
   static AXPlatformNode* GetFromUniqueId(int32_t unique_id);
@@ -460,6 +470,10 @@ class COMPONENT_EXPORT(AX_PLATFORM) AXPlatformNodeBase : public AXPlatformNode {
   static AXPlatformNodeBase* FromNativeViewAccessible(
       gfx::NativeViewAccessible accessible);
 
+  // Releases resources used by the platform node. Called by `Destroy()`. The
+  // default implementation deletes the instance. Subclasses with different
+  // memory management requirements may provide their own implementation; e.g.,
+  // Windows.
   virtual void Dispose();
 
   // Sets the hypertext selection in this object if possible.
@@ -538,9 +552,17 @@ class COMPONENT_EXPORT(AX_PLATFORM) AXPlatformNodeBase : public AXPlatformNode {
   void GetSelectionOffsets(const AXSelection* selection,
                            int* selection_start,
                            int* selection_end);
+  // Retrieve selection offsets, or if caret_only is true, the caret offset.
+  // The difference is that a selection end must skip past an embedded object
+  // character's offset if there is a non-collapsed selection inside, to show
+  // that there is something inside the object that is selected, whereas the
+  // caret would be at the start of the embedded object.
   void GetSelectionOffsetsFromTree(const AXSelection* selection,
                                    int* selection_start,
-                                   int* selection_end);
+                                   int* selection_end,
+                                   bool caret_only = false);
+
+  int GetCaretOffset();
 
   // Returns the hyperlink at the given text position, or nullptr if no
   // hyperlink can be found.
@@ -595,7 +617,7 @@ class COMPONENT_EXPORT(AX_PLATFORM) AXPlatformNodeBase : public AXPlatformNode {
   // Is there an aria-describedby that points to a role="tooltip".
   bool IsDescribedByTooltip() const;
 
-  friend AXPlatformNode* AXPlatformNode::Create(
+  friend AXPlatformNode::Pointer AXPlatformNode::Create(
       AXPlatformNodeDelegate* delegate);
 
   FRIEND_TEST_ALL_PREFIXES(AXPlatformNodeTest, HypertextOffsetFromEndpoint);

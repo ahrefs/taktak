@@ -215,7 +215,8 @@ void WebRtcVideoTrackSource::OnFrameCaptured(
               adapter_resources_->GetFeedback().require_mapped_frame,
               "HasMappableGmb", current_frame->HasMappableGpuBuffer(),
               "AsyncMappingIsNonBlocking",
-              current_frame->AsyncMappingIsNonBlocking());
+              current_frame->HasMappableGpuBuffer() &&
+                  current_frame->AsyncMappingIsNonBlocking());
   // Map the GMB here if we know that the mapped image is required downstream.
   // If the feedback has reached the capturer, this is a no-op as the frame is
   // premapped. Otherwise it moves the mapping out of the encode operation,
@@ -481,8 +482,8 @@ void WebRtcVideoTrackSource::DeliverFrame(
   }
 
   rtc::scoped_refptr<webrtc::VideoFrameBuffer> frame_adapter(
-      new rtc::RefCountedObject<WebRtcVideoFrameAdapter>(frame,
-                                                         adapter_resources_));
+      new webrtc::RefCountedObject<WebRtcVideoFrameAdapter>(
+          frame, adapter_resources_));
 
   webrtc::VideoFrame::Builder frame_builder =
       webrtc::VideoFrame::Builder()

@@ -12,6 +12,7 @@
 
 #include "base/check.h"
 #include "base/debug/crash_logging.h"
+#include "base/feature_list.h"
 #include "base/functional/callback.h"
 #include "base/memory/ref_counted.h"
 #include "base/strings/escape.h"
@@ -33,6 +34,7 @@
 #include "net/base/isolation_info.h"
 #include "net/base/load_flags.h"
 #include "net/base/network_anonymization_key.h"
+#include "net/base/network_isolation_partition.h"
 #include "net/cookies/site_for_cookies.h"
 #include "net/http/http_request_headers.h"
 #include "net/traffic_annotation/network_traffic_annotation.h"
@@ -54,6 +56,20 @@ net::IsolationInfo CreateBidderIsolationInfo(const url::Origin& bidder_origin) {
   return net::IsolationInfo::Create(net::IsolationInfo::RequestType::kOther,
                                     bidder_origin, bidder_origin,
                                     net::SiteForCookies());
+}
+
+// Helper to create the IsolationInfo used for trusted seller signals requests.
+net::IsolationInfo CreateTrustedSellerSignalsIsolationInfo(
+    const url::Origin& top_frame_origin,
+    const url::Origin& seller_origin) {
+  if (base::FeatureList::IsEnabled(
+          features::kFledgeUseNonTransientNIKForSeller)) {
+    return net::IsolationInfo::Create(
+        net::IsolationInfo::RequestType::kOther, top_frame_origin,
+        seller_origin, net::SiteForCookies(), /*nonce=*/std::nullopt,
+        net::NetworkIsolationPartition::kProtectedAudienceSellerWorklet);
+  }
+  return net::IsolationInfo::CreateTransient(/*nonce=*/std::nullopt);
 }
 
 }  // namespace
@@ -88,7 +104,9 @@ AuctionURLLoaderFactoryProxy::AuctionURLLoaderFactoryProxy(
       is_for_seller_(is_for_seller),
       force_reload_(force_reload),
       client_security_state_(std::move(client_security_state)),
-      isolation_info_(is_for_seller ? net::IsolationInfo::CreateTransient()
+      isolation_info_(is_for_seller ? CreateTrustedSellerSignalsIsolationInfo(
+                                          top_frame_origin,
+                                          url::Origin::Create(script_url))
                                     : CreateBidderIsolationInfo(
                                           url::Origin::Create(script_url))),
       owner_frame_tree_node_id_(frame_tree_node_id),
@@ -182,13 +200,6 @@ void AuctionURLLoaderFactoryProxy::CreateLoaderAndStart(
     return;
   }
 
-  bool is_cross_origin_enabled_trusted_signals_request = false;
-  if (is_trusted_signals_request &&
-      base::FeatureList::IsEnabled(
-          blink::features::kFledgePermitCrossOriginTrustedSignals)) {
-    is_cross_origin_enabled_trusted_signals_request = true;
-  }
-
   // Create fresh request object, only keeping the URL field and Accept request
   // header for GET requests, to protect against compromised auction worklet
   // processes setting values that should not have access to (e.g., sending
@@ -235,9 +246,7 @@ void AuctionURLLoaderFactoryProxy::CreateLoaderAndStart(
       new_request.headers.SetHeader("Sec-Cookie-Deprecation",
                                     *maybe_deprecation_label);
     }
-  }
 
-  if (is_cross_origin_enabled_trusted_signals_request) {
     // For cross-origin trusted signals request, the principal is the origin
     // of the script.
     new_request.request_initiator = url::Origin::Create(script_url_);
@@ -245,10 +254,13 @@ void AuctionURLLoaderFactoryProxy::CreateLoaderAndStart(
 
   if (force_reload_) {
     new_request.load_flags = net::LOAD_BYPASS_CACHE;
+  } else if (url_request.load_flags & net::LOAD_SUPPORT_ASYNC_REVALIDATION) {
+    // Support stale-while-revalidate in the worklet.
+    new_request.load_flags |= net::LOAD_SUPPORT_ASYNC_REVALIDATION;
   }
 
   if (maybe_subresource_info || needs_cors_for_additional_bid_ ||
-      is_cross_origin_enabled_trusted_signals_request) {
+      is_trusted_signals_request) {
     // CORS is needed.
     //
     // For subresource bundle requests, CORS is supported if the subresource
@@ -256,6 +268,8 @@ void AuctionURLLoaderFactoryProxy::CreateLoaderAndStart(
     // traditional network requests, the browser cannot read the response if
     // kNoCors is used, even with CORS-safe methods and headers -- the response
     // is blocked by ORB.
+    //
+    // For trusted signals requests, need CORS as they may be cross-origin.
     new_request.mode = network::mojom::RequestMode::kCors;
   } else {
     // CORS is not needed.
@@ -264,16 +278,9 @@ void AuctionURLLoaderFactoryProxy::CreateLoaderAndStart(
     // owner, which was either added by the owner itself, or by a third party
     // explicitly allowed to do so.
     //
-    // For seller worklets, while the publisher page provides both the script
-    // and the trusted signals URLs, both requests use safe methods (GET), and
-    // don't set any headers, so CORS is not needed. ORB would block the
-    // signal's JSON response, if made in the context of the page, but the JSON
-    // is only made available to the same-origin script, so ORB isn't needed
-    // here.
-    //
-    // This does not apply if we permit trusted signals to be cross-origin from
-    // the corresponding script, in which has the signals origin's permission is
-    // required before sharing its data with the script.
+    // For seller worklets, while the publisher page provides the script URL,
+    // requests use safe methods (GET), and don't set any headers, so CORS is
+    // not needed.
     new_request.mode = network::mojom::RequestMode::kNoCors;
   }
 
@@ -336,10 +343,11 @@ void AuctionURLLoaderFactoryProxy::CreateLoaderAndStart(
               .GetDelegate()
               ->ShouldOverrideUserAgentForRendererInitiatedNavigation();
       if (override_user_agent) {
-        std::string maybe_user_agent = owner_frame_tree_node->navigator()
-                                           .GetDelegate()
-                                           ->GetUserAgentOverride()
-                                           .ua_string_override;
+        std::string maybe_user_agent =
+            owner_frame_tree_node->navigator()
+                .GetDelegate()
+                ->GetUserAgentOverride(owner_frame_tree_node->frame_tree())
+                .ua_string_override;
         if (!maybe_user_agent.empty()) {
           new_request.headers.SetHeader(net::HttpRequestHeaders::kUserAgent,
                                         std::move(maybe_user_agent));
@@ -369,7 +377,7 @@ void AuctionURLLoaderFactoryProxy::CreateLoaderAndStart(
 
 void AuctionURLLoaderFactoryProxy::Clone(
     mojo::PendingReceiver<network::mojom::URLLoaderFactory> receiver) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 AuctionNetworkEventsProxy::AuctionNetworkEventsProxy(

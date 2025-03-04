@@ -5,6 +5,7 @@
 #include "content/browser/renderer_host/back_forward_cache_can_store_document_result.h"
 
 #include <inttypes.h>
+
 #include <cstdint>
 
 #include "base/debug/dump_without_crashing.h"
@@ -203,9 +204,10 @@ ProtoEnum::BackForwardCacheNotRestoredReason NotRestoredReasonToTraceEnum(
       return ProtoEnum::BLOCKLISTED_FEATURES;
     case Reason::kUnknown:
       return ProtoEnum::UNKNOWN;
+    case Reason::kCacheControlNoStoreDeviceBoundSessionTerminated:
+      return ProtoEnum::CACHE_CONTROL_NO_STORE_DEVICE_BOUND_SESSION_TERMINATED;
   }
-  NOTREACHED_IN_MIGRATION();
-  return ProtoEnum::UNKNOWN;
+  NOTREACHED();
 }
 
 }  // namespace
@@ -463,6 +465,9 @@ std::string BackForwardCacheCanStoreDocumentResult::NotRestoredReasonToString(
       return "Android WebView safe browsing allowlist changed";
     case Reason::kWebViewDocumentStartJavascriptChanged:
       return "Android WebView document start script changed";
+    case Reason::kCacheControlNoStoreDeviceBoundSessionTerminated:
+      return "A device bound session was terminated on a cached page with "
+             "Cache-Control: no-store";
   }
 }
 
@@ -474,7 +479,10 @@ BackForwardCacheCanStoreDocumentResult::NotRestoredReasonToReportString(
     // If you ever add a new one, you have to add it to the spec as well.
     // https://html.spec.whatwg.org/#nrr-details-reason
     case Reason::kNotPrimaryMainFrame:
-      return "not-main-frame";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "masked"
+                 : "not-main-frame";
     case Reason::kRelatedActiveContentsExist:
       return "non-trivial-browsing-context-group";
     case Reason::kSchemeNotHTTPOrHTTPS:
@@ -486,25 +494,43 @@ BackForwardCacheCanStoreDocumentResult::NotRestoredReasonToReportString(
       // reported.
       return "Blocklisted feature";
     case Reason::kHTTPMethodNotGET:
-      return "response-method-not-get";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "request-method-not-get"
+                 : "response-method-not-get";
     case Reason::kSubframeIsNavigating:
-      return "frame-navigating";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "masked"
+                 : "frame-navigating";
     case Reason::kTimeout:
-      return "timeout";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "masked"
+                 : "timeout";
     case Reason::kServiceWorkerVersionActivation:
-      return "serviceworker-version-activation";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "serviceworker-version-activated"
+                 : "serviceworker-version-activation";
     case Reason::kSessionRestored:
       return "session-restored";
     case Reason::kServiceWorkerPostMessage:
       return "serviceworker-postmessage";
     case Reason::kEnteredBackForwardCacheBeforeServiceWorkerHostAdded:
-      return "serviceworker-added-after-bfcache";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "serviceworker-added"
+                 : "serviceworker-added-after-bfcache";
     case Reason::kServiceWorkerClaim:
-      return "serviceworker-claim";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "serviceworker-claimed"
+                 : "serviceworker-claim";
     case Reason::kNavigationCancelledWhileRestoring:
       return "navigation-canceled";
     case Reason::kServiceWorkerUnregistration:
-      return "serviceworker-unregistration";
+      return "serviceworker-unregistered";
     case Reason::kErrorDocument:
     case Reason::kHTTPStatusNotOK:
       return "response-status-not-ok";
@@ -521,13 +547,20 @@ BackForwardCacheCanStoreDocumentResult::NotRestoredReasonToReportString(
     case Reason::kCacheControlNoStore:
     case Reason::kCacheControlNoStoreCookieModified:
     case Reason::kCacheControlNoStoreHTTPOnlyCookieModified:
+    case Reason::kCacheControlNoStoreDeviceBoundSessionTerminated:
       return "response-cache-control-no-store";
     case Reason::kCookieDisabled:
-      return "cookie-disabled";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "masked"
+                 : "cookie-disabled";
     case Reason::kHTTPAuthRequired:
       return "response-auth-required";
     case Reason::kCookieFlushed:
-      return "cookie-removed";
+      return base::FeatureList::IsEnabled(
+                 blink::features::kBackForwardCacheUpdateNotRestoredReasonsName)
+                 ? "masked"
+                 : "cookie-removed";
     case Reason::kDisableForRenderFrameHostCalled:
       return DisabledReasonsToString(disabled_reasons_,
                                      /*for_not_restored_reasons=*/true);

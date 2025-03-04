@@ -7,6 +7,7 @@
 #import <optional>
 
 #import "base/check.h"
+#import "base/ios/block_types.h"
 #import "base/memory/raw_ptr.h"
 #import "base/metrics/histogram_functions.h"
 #import "base/metrics/histogram_macros.h"
@@ -17,14 +18,24 @@
 #import "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #import "components/search/search.h"
 #import "components/search_engines/template_url_service.h"
+#import "components/segmentation_platform/embedder/home_modules/address_bar_position_ephemeral_module.h"
+#import "components/segmentation_platform/embedder/home_modules/autofill_passwords_ephemeral_module.h"
 #import "components/segmentation_platform/embedder/home_modules/constants.h"
-#import "components/segmentation_platform/embedder/home_modules/tips_ephemeral_module.h"
-#import "components/segmentation_platform/embedder/home_modules/tips_ephemeral_module_constants.h"
+#import "components/segmentation_platform/embedder/home_modules/enhanced_safe_browsing_ephemeral_module.h"
+#import "components/segmentation_platform/embedder/home_modules/home_modules_card_registry.h"
+#import "components/segmentation_platform/embedder/home_modules/lens_ephemeral_module.h"
+#import "components/segmentation_platform/embedder/home_modules/save_passwords_ephemeral_module.h"
+#import "components/segmentation_platform/embedder/home_modules/send_tab_notification_promo.h"
 #import "components/segmentation_platform/embedder/home_modules/tips_manager/constants.h"
 #import "components/segmentation_platform/embedder/home_modules/tips_manager/signal_constants.h"
 #import "components/segmentation_platform/public/constants.h"
 #import "components/segmentation_platform/public/features.h"
 #import "components/segmentation_platform/public/segmentation_platform_service.h"
+#import "components/send_tab_to_self/features.h"
+#import "components/send_tab_to_self/pref_names.h"
+#import "ios/chrome/browser/lens/ui_bundled/lens_availability.h"
+#import "ios/chrome/browser/lens/ui_bundled/lens_entrypoint.h"
+#import "ios/chrome/browser/ntp/model/features.h"
 #import "ios/chrome/browser/ntp/ui_bundled/home_start_data_source.h"
 #import "ios/chrome/browser/ntp_tiles/model/tab_resumption/tab_resumption_prefs.h"
 #import "ios/chrome/browser/parcel_tracking/features.h"
@@ -52,33 +63,40 @@
 #import "ios/chrome/browser/ui/content_suggestions/safety_check/safety_check_magic_stack_mediator.h"
 #import "ios/chrome/browser/ui/content_suggestions/safety_check/safety_check_prefs.h"
 #import "ios/chrome/browser/ui/content_suggestions/safety_check/safety_check_state.h"
+#import "ios/chrome/browser/ui/content_suggestions/send_tab_to_self/send_tab_promo_item.h"
 #import "ios/chrome/browser/ui/content_suggestions/send_tab_to_self/send_tab_promo_mediator.h"
 #import "ios/chrome/browser/ui/content_suggestions/set_up_list/set_up_list_config.h"
 #import "ios/chrome/browser/ui/content_suggestions/set_up_list/set_up_list_item_view_data.h"
 #import "ios/chrome/browser/ui/content_suggestions/set_up_list/set_up_list_mediator.h"
 #import "ios/chrome/browser/ui/content_suggestions/set_up_list/utils.h"
+#import "ios/chrome/browser/ui/content_suggestions/shop_card/shop_card_item.h"
+#import "ios/chrome/browser/ui/content_suggestions/shop_card/shop_card_mediator.h"
 #import "ios/chrome/browser/ui/content_suggestions/tab_resumption/tab_resumption_helper_delegate.h"
 #import "ios/chrome/browser/ui/content_suggestions/tab_resumption/tab_resumption_item.h"
 #import "ios/chrome/browser/ui/content_suggestions/tab_resumption/tab_resumption_mediator.h"
 #import "ios/chrome/browser/ui/content_suggestions/tips/tips_magic_stack_mediator.h"
 #import "ios/chrome/browser/ui/content_suggestions/tips/tips_module_state.h"
 #import "ios/chrome/browser/ui/content_suggestions/tips/tips_prefs.h"
-#import "ios/chrome/browser/ui/lens/lens_availability.h"
-#import "ios/chrome/browser/ui/lens/lens_entrypoint.h"
 #import "ui/base/device_form_factor.h"
 
 using segmentation_platform::TipIdentifier;
-using segmentation_platform::home_modules::TipIdentifierForOutputLabel;
-using segmentation_platform::home_modules::TipsEphemeralModule;
+using segmentation_platform::TipIdentifierForOutputLabel;
+using segmentation_platform::home_modules::AddressBarPositionEphemeralModule;
+using segmentation_platform::home_modules::AutofillPasswordsEphemeralModule;
+using segmentation_platform::home_modules::EnhancedSafeBrowsingEphemeralModule;
+using segmentation_platform::home_modules::LensEphemeralModule;
+using segmentation_platform::home_modules::SavePasswordsEphemeralModule;
 
 @interface MagicStackRankingModel () <MostVisitedTilesMediatorDelegate,
                                       ParcelTrackingMediatorDelegate,
                                       PriceTrackingPromoMediatorDelegate,
                                       SafetyCheckMagicStackMediatorDelegate,
-                                      TipsMagicStackMediatorDelegate,
+                                      SendTabPromoMediatorDelegate,
+                                      ShopCardMediatorDelegate,
                                       SetUpListMediatorAudience,
                                       ShortcutsMediatorDelegate,
-                                      TabResumptionHelperDelegate>
+                                      TabResumptionHelperDelegate,
+                                      TipsMagicStackMediatorDelegate>
 // For testing-only
 @property(nonatomic, assign) BOOL hasReceivedMagicStackResponse;
 @property(nonatomic, assign) BOOL hasReceivedEphemericalCardResponse;
@@ -105,8 +123,10 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
   TabResumptionMediator* _tabResumptionMediator;
   ParcelTrackingMediator* _parcelTrackingMediator;
   PriceTrackingPromoMediator* _priceTrackingPromoMediator;
+  ShopCardMediator* _shopCardMediator;
   ShortcutsMediator* _shortcutsMediator;
   SafetyCheckMagicStackMediator* _safetyCheckMediator;
+  SendTabPromoMediator* _sendTabPromoMediator;
   TipsMagicStackMediator* _tipsMediator;
   raw_ptr<TipsManagerIOS> _tipsManager;
   base::TimeTicks ranking_fetch_start_time_;
@@ -150,6 +170,9 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
       } else if ([mediator isKindOfClass:[TabResumptionMediator class]]) {
         _tabResumptionMediator = static_cast<TabResumptionMediator*>(mediator);
         _tabResumptionMediator.delegate = self;
+      } else if ([mediator isKindOfClass:[ShopCardMediator class]]) {
+        _shopCardMediator = static_cast<ShopCardMediator*>(mediator);
+        _shopCardMediator.delegate = self;
       } else if ([mediator isKindOfClass:[ShortcutsMediator class]]) {
         _shortcutsMediator = static_cast<ShortcutsMediator*>(mediator);
         _shortcutsMediator.delegate = self;
@@ -170,10 +193,11 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
         _tipsMediator = static_cast<TipsMagicStackMediator*>(mediator);
         _tipsMediator.delegate = self;
       } else if ([mediator isKindOfClass:[SendTabPromoMediator class]]) {
-        // TODO(crbug.com/343495516): Handle case.
+        _sendTabPromoMediator = static_cast<SendTabPromoMediator*>(mediator);
+        _sendTabPromoMediator.delegate = self;
       } else {
         // Known module mediators need to be handled.
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
       }
     }
   }
@@ -188,6 +212,8 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
   _priceTrackingPromoMediator = nil;
   _shortcutsMediator = nil;
   _safetyCheckMediator = nil;
+  _sendTabPromoMediator = nil;
+  _shopCardMediator = nil;
   _tipsMediator = nil;
   _tipsManager = nil;
 }
@@ -221,7 +247,9 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
       kMagicStackModuleDisabledHistogram,
       ContentSuggestionsModuleType::kCompactedSetUpList);
   [self.delegate magicStackRankingModel:self
-                          didRemoveItem:_setUpListMediator.setUpListConfigs[0]];
+                          didRemoveItem:_setUpListMediator.setUpListConfigs[0]
+                                animate:YES
+                         withCompletion:nil];
 }
 
 - (void)replaceSetUpListWithAllSet:(SetUpListConfig*)allSetConfig {
@@ -240,12 +268,36 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
   base::UmaHistogramEnumeration(kMagicStackModuleDisabledHistogram,
                                 ContentSuggestionsModuleType::kSafetyCheck);
   [self.delegate magicStackRankingModel:self
-                          didRemoveItem:_safetyCheckMediator.safetyCheckState];
+                          didRemoveItem:_safetyCheckMediator.safetyCheckState
+                                animate:YES
+                         withCompletion:nil];
+}
+
+#pragma mark - SendTabPromoMediatorDelegate
+
+- (void)sentTabReceived {
+  MagicStackModule* item = _sendTabPromoMediator.sendTabPromoItemToShow;
+  NSArray<MagicStackModule*>* rank = [self latestMagicStackConfigRank];
+  NSUInteger index = [rank indexOfObject:item];
+  if (index == NSNotFound) {
+    return;
+  }
+  [self.delegate magicStackRankingModel:self didInsertItem:item atIndex:index];
+}
+
+- (void)removeSendTabPromoModule {
+  base::UmaHistogramEnumeration(kMagicStackModuleDisabledHistogram,
+                                ContentSuggestionsModuleType::kSendTabPromo);
+  [self.delegate
+      magicStackRankingModel:self
+               didRemoveItem:_sendTabPromoMediator.sendTabPromoItemToShow
+                     animate:YES
+              withCompletion:nil];
 }
 
 #pragma mark - TipsMagicStackMediatorDelegate
 
-- (void)removeTipsModule {
+- (void)removeTipsModuleWithCompletion:(ProceduralBlock)completion {
   if (![self isMagicStackOrderReady]) {
     return;
   }
@@ -253,15 +305,17 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
   base::UmaHistogramEnumeration(kMagicStackModuleDisabledHistogram,
                                 ContentSuggestionsModuleType::kTips);
 
-  [self.delegate magicStackRankingModel:self didRemoveItem:_tipsMediator.state];
+  [self.delegate magicStackRankingModel:self
+                          didRemoveItem:_tipsMediator.state
+                                animate:YES
+                         withCompletion:completion];
 }
 
 #pragma mark - TabResumptionHelperDelegate
 
 - (void)tabResumptionHelperDidReceiveItem {
   CHECK(IsTabResumptionEnabled());
-  if (tab_resumption_prefs::IsTabResumptionDisabled(
-          IsHomeCustomizationEnabled() ? _prefService : _localState)) {
+  if (tab_resumption_prefs::IsTabResumptionDisabled(_prefService)) {
     return;
   }
 
@@ -269,8 +323,7 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
 }
 
 - (void)tabResumptionHelperDidReconfigureItem {
-  if (tab_resumption_prefs::IsTabResumptionDisabled(
-          IsHomeCustomizationEnabled() ? _prefService : _localState)) {
+  if (tab_resumption_prefs::IsTabResumptionDisabled(_prefService)) {
     return;
   }
   TabResumptionItem* item = _tabResumptionMediator.itemConfig;
@@ -279,7 +332,9 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
 
 - (void)removeTabResumptionModule {
   [self.delegate magicStackRankingModel:self
-                          didRemoveItem:_tabResumptionMediator.itemConfig];
+                          didRemoveItem:_tabResumptionMediator.itemConfig
+                                animate:NO
+                         withCompletion:nil];
 }
 
 #pragma mark - ParcelTrackingMediatorDelegate
@@ -299,7 +354,9 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
                                 ContentSuggestionsModuleType::kParcelTracking);
   [self.delegate
       magicStackRankingModel:self
-               didRemoveItem:_parcelTrackingMediator.parcelTrackingItemToShow];
+               didRemoveItem:_parcelTrackingMediator.parcelTrackingItemToShow
+                     animate:YES
+              withCompletion:nil];
 }
 
 - (NSUInteger)indexForMagicStackModule:
@@ -334,7 +391,16 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
 
   [self.delegate
       magicStackRankingModel:self
-               didRemoveItem:_mostVisitedTilesMediator.mostVisitedConfig];
+               didRemoveItem:_mostVisitedTilesMediator.mostVisitedConfig
+                     animate:YES
+              withCompletion:nil];
+}
+
+#pragma mark - PriceTrackingPromoMediatorDelegate
+
+- (void)promoWasTapped {
+  [self logMagicStackEngagementForType:ContentSuggestionsModuleType::
+                                           kPriceTrackingPromo];
 }
 
 #pragma mark - Private
@@ -380,24 +446,40 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
       base::MakeRefCounted<segmentation_platform::InputContext>();
   // This check has to match check in HomeModulesCardRegistry::CreateAllCards()
   // so that expected inputs match passed inputs.
-  if (base::FeatureList::IsEnabled(commerce::kPriceTrackingPromo)) {
+  if (base::FeatureList::IsEnabled(commerce::kPriceTrackingPromo) ||
+      (IsTipsMagicStackEnabled() && _tipsManager)) {
     inputContext->metadata_args.emplace(
         segmentation_platform::kIsNewUser,
         segmentation_platform::processing::ProcessedValue::FromFloat(
-            IsFirstRunRecent(base::Days(14))));
+            IsFirstRunRecent(set_up_list::SetUpListDurationPastFirstRun())));
+  }
+
+  if (base::FeatureList::IsEnabled(commerce::kPriceTrackingPromo)) {
     inputContext->metadata_args.emplace(
         segmentation_platform::kIsSynced,
         segmentation_platform::processing::ProcessedValue::FromFloat(
             _shoppingService->IsShoppingListEligible()));
   }
 
+  if (send_tab_to_self::
+          IsSendTabIOSPushNotificationsEnabledWithMagicStackCard()) {
+    inputContext->metadata_args.emplace(
+        segmentation_platform::kSendTabInfobarReceivedInLastSession,
+        segmentation_platform::processing::ProcessedValue::FromFloat(
+            !_prefService
+                 ->GetString(send_tab_to_self::prefs::
+                                 kIOSSendTabToSelfLastReceivedTabURLPref)
+                 .empty()));
+  }
+
   if (IsTipsMagicStackEnabled() && _tipsManager) {
     // Profile signals
     inputContext->metadata_args.emplace(
-        segmentation_platform::tips_manager::signals::kLensUsed,
+        segmentation_platform::kLensNotUsedRecently,
         segmentation_platform::processing::ProcessedValue::FromFloat(
-            _tipsManager->WasSignalFired(
-                segmentation_platform::tips_manager::signals::kLensUsed)));
+            !_tipsManager->WasSignalFiredWithin(
+                segmentation_platform::tips_manager::signals::kLensUsed,
+                base::Days(30))));
 
     inputContext->metadata_args.emplace(
         segmentation_platform::tips_manager::signals::kOpenedShoppingWebsite,
@@ -414,10 +496,10 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
                     kOpenedWebsiteInAnotherLanguage)));
 
     inputContext->metadata_args.emplace(
-        segmentation_platform::tips_manager::signals::kSavedPasswords,
+        segmentation_platform::kNoSavedPasswords,
         segmentation_platform::processing::ProcessedValue::FromFloat(
-            _tipsManager->WasSignalFired(segmentation_platform::tips_manager::
-                                             signals::kSavedPasswords)));
+            !_tipsManager->WasSignalFired(segmentation_platform::tips_manager::
+                                              signals::kSavedPasswords)));
 
     inputContext->metadata_args.emplace(
         segmentation_platform::tips_manager::signals::kUsedGoogleTranslation,
@@ -426,15 +508,15 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
                                              signals::kUsedGoogleTranslation)));
 
     inputContext->metadata_args.emplace(
-        segmentation_platform::tips_manager::signals::kUsedPasswordAutofill,
+        segmentation_platform::kDidNotUsePasswordAutofill,
         segmentation_platform::processing::ProcessedValue::FromFloat(
-            _tipsManager->WasSignalFired(segmentation_platform::tips_manager::
-                                             signals::kUsedPasswordAutofill)));
+            !_tipsManager->WasSignalFired(segmentation_platform::tips_manager::
+                                              signals::kUsedPasswordAutofill)));
 
     inputContext->metadata_args.emplace(
-        segmentation_platform::kHasEnhancedSafeBrowsing,
+        segmentation_platform::kLacksEnhancedSafeBrowsing,
         segmentation_platform::processing::ProcessedValue::FromFloat(
-            _prefService->GetBoolean(prefs::kSafeBrowsingEnhanced)));
+            !_prefService->GetBoolean(prefs::kSafeBrowsingEnhanced)));
 
     inputContext->metadata_args.emplace(
         segmentation_platform::kPasswordManagerAllowedByEnterprisePolicy,
@@ -449,10 +531,9 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
 
     // Local signals
     inputContext->metadata_args.emplace(
-        segmentation_platform::tips_manager::signals::
-            kAddressBarPositionChoiceScreenDisplayed,
+        segmentation_platform::kDidNotSeeAddressBarPositionChoiceScreen,
         segmentation_platform::processing::ProcessedValue::FromFloat(
-            _tipsManager->WasSignalFired(
+            !_tipsManager->WasSignalFired(
                 segmentation_platform::tips_manager::signals::
                     kAddressBarPositionChoiceScreenDisplayed)));
 
@@ -499,16 +580,21 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
         card = _priceTrackingPromoMediator.priceTrackingPromoItemToShow;
         break;
       }
-    } else if (TipsEphemeralModule::IsModuleLabel(label) &&
+    } else if (segmentation_platform::home_modules::HomeModulesCardRegistry::
+                   IsEphemeralTipsModuleLabel(label) &&
                IsTipsMagicStackEnabled() &&
                !tips_prefs::IsTipsInMagicStackDisabled(_prefService)) {
       TipIdentifier tipIdentifier = TipIdentifierForOutputLabel(label);
 
       if (tipIdentifier != TipIdentifier::kUnknown) {
+        BOOL shouldShowTipsWithProductImage =
+            tipIdentifier == TipIdentifier::kLensShop &&
+            TipsLensShopExperimentTypeEnabled() ==
+                TipsLensShopExperimentType::kWithProductImage &&
+            _tipsMediator.state.productImageData.length > 0;
+
         _ephemeralCardToShow =
-            (tipIdentifier == TipIdentifier::kLensShop &&
-             TipsLensShopExperimentTypeEnabled() ==
-                 TipsLensShopExperimentType::kWithProductImage)
+            shouldShowTipsWithProductImage
                 ? ContentSuggestionsModuleType::kTipsWithProductImage
                 : ContentSuggestionsModuleType::kTips;
 
@@ -516,6 +602,13 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
 
         card = _tipsMediator.state;
 
+        break;
+      }
+    } else if (label == segmentation_platform::kSendTabNotificationPromo) {
+      if (send_tab_to_self::
+              IsSendTabIOSPushNotificationsEnabledWithMagicStackCard()) {
+        _ephemeralCardToShow = ContentSuggestionsModuleType::kSendTabPromo;
+        card = _sendTabPromoMediator.sendTabPromoItemToShow;
         break;
       }
     }
@@ -539,7 +632,16 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
 - (void)removePriceTrackingPromo {
   [self.delegate magicStackRankingModel:self
                           didRemoveItem:_priceTrackingPromoMediator
-                                            .priceTrackingPromoItemToShow];
+                                            .priceTrackingPromoItemToShow
+                                animate:YES
+                         withCompletion:nil];
+}
+
+- (void)removeShopCard {
+  [self.delegate magicStackRankingModel:self
+                          didRemoveItem:_shopCardMediator.shopCardItemToShow
+                                animate:YES
+                         withCompletion:nil];
 }
 
 // Starts a fetch of the Segmentation module ranking.
@@ -592,6 +694,12 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
       segmentation_platform::kParcelTrackingFreshness,
       segmentation_platform::processing::ProcessedValue::FromFloat(
           parcelTrackingFreshnessImpressionCount));
+  int shopCardFreshnessImpressionCount = _localState->GetInteger(
+      prefs::kIosMagicStackSegmentationShopCardImpressionsSinceFreshness);
+  inputContext->metadata_args.emplace(
+      segmentation_platform::kShopCardFreshness,
+      segmentation_platform::processing::ProcessedValue::FromFloat(
+          shopCardFreshnessImpressionCount));
   __weak MagicStackRankingModel* weakSelf = self;
   segmentation_platform::PredictionOptions options;
 
@@ -660,8 +768,12 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
     } else if (label == segmentation_platform::kPriceTrackingPromo) {
       [magicStackOrder
           addObject:@(int(ContentSuggestionsModuleType::kPriceTrackingPromo))];
+    } else if (label == segmentation_platform::kShopCard) {
+      [magicStackOrder
+          addObject:@(int(ContentSuggestionsModuleType::kShopCard))];
     }
   }
+
   _magicStackOrderFromSegmentationReceived = YES;
   _magicStackOrderFromSegmentation = magicStackOrder;
   _latestMagicStackConfigOrder = [self latestMagicStackConfigRank];
@@ -688,9 +800,18 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
                                          .priceTrackingPromoItemToShow];
         }
         break;
+      case ContentSuggestionsModuleType::kSendTabPromo:
+        if (send_tab_to_self::
+                IsSendTabIOSPushNotificationsEnabledWithMagicStackCard() &&
+            _sendTabPromoMediator &&
+            _sendTabPromoMediator.sendTabPromoItemToShow) {
+          [magicStackOrder
+              addObject:_sendTabPromoMediator.sendTabPromoItemToShow];
+        }
+        break;
       case ContentSuggestionsModuleType::kTips:
       case ContentSuggestionsModuleType::kTipsWithProductImage: {
-        if (IsTipsMagicStackEnabled()) {
+        if (IsTipsMagicStackEnabled() && _tipsMediator && _tipsMediator.state) {
           [magicStackOrder addObject:_tipsMediator.state];
         }
         break;
@@ -703,14 +824,20 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
     ContentSuggestionsModuleType moduleType =
         (ContentSuggestionsModuleType)[moduleNumber intValue];
     switch (moduleType) {
-      case ContentSuggestionsModuleType::kMostVisited:
-        if (ShouldPutMostVisitedSitesInMagicStack() &&
-            [_mostVisitedTilesMediator.mostVisitedConfig
-                    .mostVisitedItems count] > 0) {
+      case ContentSuggestionsModuleType::kMostVisited: {
+        BOOL shouldShowMostVisitedTileInMagicStack =
+            _mostVisitedTilesMediator.mostVisitedConfig.inMagicStack;
+        BOOL isMostVisitedTileVisible = _prefService->GetBoolean(
+            prefs::kHomeCustomizationMostVisitedEnabled);
+        BOOL hasMostVisitedItems = [_mostVisitedTilesMediator.mostVisitedConfig
+                                           .mostVisitedItems count] > 0;
+        if (shouldShowMostVisitedTileInMagicStack && isMostVisitedTileVisible &&
+            hasMostVisitedItems) {
           [magicStackOrder
               addObject:_mostVisitedTilesMediator.mostVisitedConfig];
         }
         break;
+      }
       case ContentSuggestionsModuleType::kTabResumption:
         if (![self shouldShowTabResumption]) {
           break;
@@ -730,8 +857,7 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
         // - Irrelevant modules are hidden and it's not the first ranked module.
         BOOL disabled =
             !IsSafetyCheckMagicStackEnabled() ||
-            safety_check_prefs::IsSafetyCheckInMagicStackDisabled(
-                IsHomeCustomizationEnabled() ? _prefService : _localState);
+            safety_check_prefs::IsSafetyCheckInMagicStackDisabled(_prefService);
 
         if (disabled) {
           base::UmaHistogramEnumeration(
@@ -767,6 +893,11 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
       case ContentSuggestionsModuleType::kShortcuts:
         [magicStackOrder addObject:_shortcutsMediator.shortcutsConfig];
         break;
+      case ContentSuggestionsModuleType::kShopCard:
+        if (_shopCardMediator && _shopCardMediator.shopCardItemToShow) {
+          [magicStackOrder addObject:_shopCardMediator.shopCardItemToShow];
+        }
+        break;
       case ContentSuggestionsModuleType::kParcelTracking:
         if (IsIOSParcelTrackingEnabled() &&
             !IsParcelTrackingDisabled(
@@ -779,8 +910,7 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
       default:
         // These module types should not have been added by the logic
         // receiving the order list from Segmentation.
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
     }
   }
   return magicStackOrder;
@@ -789,7 +919,7 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
 // Returns NO if client is expecting the order from Segmentation and it has not
 // returned yet.
 - (BOOL)isMagicStackOrderReady {
-    return _magicStackOrderFromSegmentationReceived;
+  return _magicStackOrderFromSegmentationReceived;
 }
 
 // Shows the tab resumption tile with the given `item` configuration.
@@ -809,8 +939,7 @@ using segmentation_platform::home_modules::TipsEphemeralModule;
 // Returns YES if the tab resumption module should added into the Magic Stack.
 - (BOOL)shouldShowTabResumption {
   return IsTabResumptionEnabled() &&
-         !tab_resumption_prefs::IsTabResumptionDisabled(
-             IsHomeCustomizationEnabled() ? _prefService : _localState) &&
+         !tab_resumption_prefs::IsTabResumptionDisabled(_prefService) &&
          _tabResumptionMediator.itemConfig;
 }
 

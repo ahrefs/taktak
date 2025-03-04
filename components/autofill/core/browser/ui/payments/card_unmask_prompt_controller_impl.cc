@@ -6,6 +6,8 @@
 
 #include <stddef.h>
 
+#include <string_view>
+
 #include "base/check_deref.h"
 #include "base/functional/bind.h"
 #include "base/memory/raw_ptr.h"
@@ -15,10 +17,10 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "components/autofill/core/browser/autofill_experiments.h"
+#include "components/autofill/core/browser/data_quality/validation.h"
 #include "components/autofill/core/browser/metrics/autofill_metrics.h"
+#include "components/autofill/core/browser/studies/autofill_experiments.h"
 #include "components/autofill/core/browser/ui/payments/card_unmask_prompt_view.h"
-#include "components/autofill/core/browser/validation.h"
 #include "components/autofill/core/common/autofill_clock.h"
 #include "components/autofill/core/common/autofill_features.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
@@ -122,8 +124,7 @@ void CardUnmaskPromptControllerImpl::OnVerificationResult(
     }
 
     case PaymentsRpcResult::kNone:
-      NOTREACHED_IN_MIGRATION();
-      return;
+      NOTREACHED();
   }
 
   flow_ended_with_unmask_server_response_ =
@@ -157,7 +158,7 @@ void CardUnmaskPromptControllerImpl::OnUnmaskDialogClosed() {
 }
 
 void CardUnmaskPromptControllerImpl::OnUnmaskPromptAccepted(
-    const std::u16string& cvc,
+    std::u16string_view cvc,
     const std::u16string& exp_month,
     const std::u16string& exp_year,
     bool enable_fido_auth,
@@ -334,7 +335,7 @@ std::u16string CardUnmaskPromptControllerImpl::GetCvcImageAnnouncement() const {
 #endif
 
 bool CardUnmaskPromptControllerImpl::InputCvcIsValid(
-    const std::u16string& input_text) const {
+    std::u16string_view input_text) const {
   std::u16string trimmed_text;
   base::TrimWhitespace(input_text, base::TRIM_ALL, &trimmed_text);
 

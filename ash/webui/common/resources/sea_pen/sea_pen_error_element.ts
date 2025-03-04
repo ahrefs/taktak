@@ -7,7 +7,7 @@
  */
 
 import 'chrome://resources/ash/common/personalization/personalization_shared_icons.html.js';
-import 'chrome://resources/ash/common/sea_pen/sea_pen.css.js';
+import './sea_pen.css.js';
 
 import {I18nMixin} from 'chrome://resources/ash/common/cr_elements/i18n_mixin.js';
 import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
@@ -66,6 +66,8 @@ export class SeaPenErrorElement extends SeaPenErrorElementBase {
           return this.i18n('seaPenFreeformErrorUnsupportedLanguage');
         case MantaStatusCode.kBlockedOutputs:
           return this.i18n('seaPenFreeformErrorBlockedOutputs');
+        case MantaStatusCode.kImageHasPerson:
+          return this.i18n('seaPenFreeformErrorPerson');
       }
     }
     return this.i18n('seaPenErrorGeneric');

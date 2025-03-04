@@ -40,7 +40,10 @@ enum class ContentSuggestionsModuleType {
   kTipsWithProductImage = 16,
   kTips = 17,
   kSendTabPromo = 18,
-  kMaxValue = kSendTabPromo,
+  kSetUpListDocking = 19,
+  kSetUpListAddressBar = 20,
+  kShopCard = 21,
+  kMaxValue = kShopCard,
 };
 // LINT.ThenChange(/tools/metrics/histograms/metadata/ios/enums.xml)
 

@@ -64,6 +64,9 @@ const char kPeopleApiReadOnlyOAuth2Scope[] =
 const char kPeopleApiReadWriteOAuth2Scope[] =
     "https://www.googleapis.com/auth/peopleapi.readwrite";
 
+// OAuth2 scope for read-write access to contacts.
+const char kContactsOAuth2Scope[] = "https://www.googleapis.com/auth/contacts";
+
 // OAuth2 scope for access to the people API person's locale preferences
 // (read-only).
 const char kProfileLanguageReadOnlyOAuth2Scope[] =
@@ -194,6 +197,10 @@ const char kPasskeysEnclaveOAuth2Scope[] =
 const char kCloudSearchQueryOAuth2Scope[] =
     "https://www.googleapis.com/auth/cloud_search.query";
 
+// OAuth2 scope for Discovery Engine suggestion API.
+const char kDiscoveryEngineCompleteQueryOAuth2Scope[] =
+    "https://www.googleapis.com/auth/discoveryengine.complete_query";
+
 // OAuth 2 scopes for Google Tasks API.
 const char kTasksReadOnlyOAuth2Scope[] =
     "https://www.googleapis.com/auth/tasks.readonly";
@@ -207,6 +214,8 @@ const char kClassroomReadOnlyCoursesOAuth2Scope[] =
     "https://www.googleapis.com/auth/classroom.courses.readonly";
 const char kClassroomReadOnlyCourseWorkSelfOAuth2Scope[] =
     "https://www.googleapis.com/auth/classroom.coursework.me.readonly";
+const char kClassroomReadOnlyCourseWorkStudentsOAuth2Scope[] =
+    "https://www.googleapis.com/auth/classroom.coursework.students.readonly";
 const char kClassroomReadOnlyStudentSubmissionsSelfOAuth2Scope[] =
     "https://www.googleapis.com/auth/classroom.student-submissions.me.readonly";
 const char kClassroomReadOnlyRostersOAuth2Scope[] =

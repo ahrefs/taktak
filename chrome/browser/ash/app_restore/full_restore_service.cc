@@ -4,19 +4,18 @@
 
 #include "chrome/browser/ash/app_restore/full_restore_service.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "ash/constants/ash_features.h"
 #include "ash/constants/ash_pref_names.h"
 #include "ash/constants/ash_switches.h"
 #include "ash/constants/notifier_catalogs.h"
 #include "ash/constants/web_app_id_constants.h"
 #include "ash/glanceables/post_login_glanceables_metrics_recorder.h"
-#include "ash/metrics/login_unlock_throughput_recorder.h"
 #include "ash/public/cpp/notification_utils.h"
 #include "ash/public/cpp/session/session_controller.h"
 #include "ash/shell.h"
@@ -27,13 +26,12 @@
 #include "ash/wm/window_restore/window_restore_metrics.h"
 #include "ash/wm/window_restore/window_restore_util.h"
 #include "base/barrier_callback.h"
+#include "base/check_is_test.h"
 #include "base/command_line.h"
-#include "base/files/file_util.h"
 #include "base/metrics/histogram_functions.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
-#include "base/task/thread_pool.h"
 #include "base/trace_event/trace_event.h"
+#include "base/version.h"
 #include "base/version_info/version_info.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/ash/app_restore/app_restore_arc_task_handler.h"
@@ -42,9 +40,6 @@
 #include "chrome/browser/ash/app_restore/full_restore_data_handler.h"
 #include "chrome/browser/ash/app_restore/full_restore_prefs.h"
 #include "chrome/browser/ash/app_restore/new_user_restore_pref_handler.h"
-#include "chrome/browser/ash/crosapi/browser_util.h"
-#include "chrome/browser/ash/crosapi/crosapi_ash.h"
-#include "chrome/browser/ash/crosapi/crosapi_manager.h"
 #include "chrome/browser/ash/policy/scheduled_task_handler/reboot_notifications_scheduler.h"
 #include "chrome/browser/ash/profiles/profile_helper.h"
 #include "chrome/browser/first_run/first_run.h"
@@ -71,6 +66,7 @@
 #include "components/app_restore/window_info.h"
 #include "components/prefs/pref_service.h"
 #include "components/strings/grit/components_strings.h"
+#include "components/url_formatter/url_formatter.h"
 #include "components/user_manager/user.h"
 #include "components/user_manager/user_manager.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -122,43 +118,6 @@ void MaybeInitiateAdminTemplateAutoLaunch() {
   if (auto* saved_desk_controller = ash::SavedDeskController::Get()) {
     saved_desk_controller->InitiateAdminTemplateAutoLaunch(base::DoNothing());
   }
-}
-
-// Collects window id and app id of normal browser windows.
-std::vector<LoginUnlockThroughputRecorder::RestoreWindowID>
-CollectRestoreIDsForNormalBrowserWindows(
-    ::app_restore::RestoreData* restore_data) {
-  if (!restore_data || restore_data->app_id_to_launch_list().empty()) {
-    return {};
-  }
-
-  std::vector<LoginUnlockThroughputRecorder::RestoreWindowID> app_restore_ids;
-  for (const auto& [app_id, launch_list] :
-       restore_data->app_id_to_launch_list()) {
-    const bool is_browser = app_id == app_constants::kChromeAppId;
-    // We are only interested in Ash browsers.
-    if (!is_browser) {
-      continue;
-    }
-
-    for (const auto& [window_id, app_restore_data] : launch_list) {
-      if (app_id == app_constants::kChromeAppId) {
-        // Ignore app type browsers.
-        const bool app_type_browser =
-            app_restore_data->browser_extra_info.app_type_browser.value_or(
-                false);
-        if (app_type_browser) {
-          continue;
-        }
-      }
-      app_restore_ids.emplace_back(window_id, app_id);
-    }
-  }
-  return app_restore_ids;
-}
-
-bool IsFactoryTestRunningMayBlock() {
-  return base::PathExists(base::FilePath("/use/local/factory/enabled"));
 }
 
 }  // namespace
@@ -328,11 +287,17 @@ void FullRestoreService::Init(bool& show_notification) {
     is_update = old_version.IsValid() && current_version > old_version;
   }
 
-  // If the system crashed before reboot, show the restore notification.
   if (ExitTypeService::GetLastSessionExitType(profile_) == ExitType::kCrashed) {
     if (!HasRestorePref(prefs))
       SetDefaultRestorePrefIfNecessary(prefs);
 
+    // TODO(crbug.com/388309832): Determine if we should show a notification for
+    // crashes if always or never restore setting is set for forest.
+    if (features::IsForestFeatureEnabled() && !IsAskEveryTime(prefs)) {
+      return;
+    }
+
+    // If the system crashed before reboot, show the crash notification.
     MaybeShowRestoreNotification(
         InformedRestoreContentsData::DialogType::kCrash, show_notification);
     return;
@@ -349,7 +314,7 @@ void FullRestoreService::Init(bool& show_notification) {
     return;
   }
 
-  RestoreOption restore_pref = static_cast<RestoreOption>(
+  const RestoreOption restore_pref = static_cast<RestoreOption>(
       prefs->GetInteger(prefs::kRestoreAppsAndPagesPrefName));
   base::UmaHistogramEnumeration(kRestoreInitSettingHistogramName, restore_pref);
 
@@ -367,17 +332,6 @@ void FullRestoreService::Init(bool& show_notification) {
       base::UmaHistogramCounts100(kFullRestoreWindowCountHistogramName,
                                   window_count);
     }
-  }
-
-  // LoginUnlockThroughputRecorder needs to track when session
-  // restore is done. Here we notify it of the set of normal browser windows.
-  if (ProfileHelper::IsPrimaryProfile(profile_) && Shell::HasInstance() &&
-      Shell::Get()->login_unlock_throughput_recorder()) {
-    Shell::Get()
-        ->login_unlock_throughput_recorder()
-        ->FullSessionRestoreDataLoaded(
-            CollectRestoreIDsForNormalBrowserWindows(restore_data),
-            /*restore_automatically=*/restore_pref == RestoreOption::kAlways);
   }
 
   switch (restore_pref) {
@@ -492,14 +446,9 @@ void FullRestoreService::Click(const std::optional<int>& button_index,
   if (notification_->id() == kRestoreNotificationId) {
     // Show the 'On Startup' OS setting page if the user clicks the settings
     // button of the restore notification.
-    ash::features::IsOsSettingsRevampWayfindingEnabled()
-        ? chrome::SettingsWindowManager::GetInstance()->ShowOSSettings(
-              profile_,
-              chromeos::settings::mojom::kSystemPreferencesSectionPath,
-              chromeos::settings::mojom::Setting::kRestoreAppsAndPages)
-        : chrome::SettingsWindowManager::GetInstance()->ShowOSSettings(
-              profile_, chromeos::settings::mojom::kAppsSectionPath);
-
+    chrome::SettingsWindowManager::GetInstance()->ShowOSSettings(
+        profile_, chromeos::settings::mojom::kSystemPreferencesSectionPath,
+        chromeos::settings::mojom::Setting::kRestoreAppsAndPages);
     return;
   }
 
@@ -631,8 +580,8 @@ void FullRestoreService::InitInformedRestoreContentsData(
   // Sort the windows based on their activation index (more recent windows
   // have a lower index). Windows without an activation index can be placed at
   // the end.
-  base::ranges::sort(complete_window_list, [](const WindowAppData& element_a,
-                                              const WindowAppData& element_b) {
+  std::ranges::sort(complete_window_list, [](const WindowAppData& element_a,
+                                             const WindowAppData& element_b) {
     return element_a.app_restore_data->window_info.activation_index.value_or(
                INT_MAX) <
            element_b.app_restore_data->window_info.activation_index.value_or(
@@ -671,15 +620,17 @@ void FullRestoreService::MaybeShowRestoreNotification(
     return;
   }
 
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+  const bool last_session_crashed =
+      dialog_type == InformedRestoreContentsData::DialogType::kCrash;
+
+  if (last_session_crashed &&
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
           kForceFullRestoreAndSessionRestoreAfterCrash)) {
     LOG(WARNING) << "Full session restore was forced by a debug flag.";
     Restore();
     return;
   }
 
-  const bool last_session_crashed =
-      dialog_type == InformedRestoreContentsData::DialogType::kCrash;
   const std::string id = last_session_crashed ? kRestoreForCrashNotificationId
                                               : kRestoreNotificationId;
   if (!app_launch_handler_->HasRestoreData()) {
@@ -708,27 +659,27 @@ void FullRestoreService::MaybeShowRestoreNotification(
 
     InitInformedRestoreContentsData(dialog_type);
 
-      // Retrieves session service data from browser and app browsers, which
-      // will be used to display favicons and tab titles.
-      SessionServiceBase* service =
-          SessionServiceFactory::GetForProfileForSessionRestore(profile_);
-      SessionServiceBase* app_service =
-          AppSessionServiceFactory::GetForProfileForSessionRestore(profile_);
-      if (service && app_service) {
-        auto barrier = base::BarrierCallback<SessionWindows>(
-            /*num_callbacks=*/2u, /*done_callback=*/base::BindOnce(
-                &FullRestoreService::OnGotAllSessionsAsh,
-                weak_ptr_factory_.GetWeakPtr()));
+    // Retrieves session service data from browser and app browsers, which
+    // will be used to display favicons and tab titles.
+    SessionServiceBase* service =
+        SessionServiceFactory::GetForProfileForSessionRestore(profile_);
+    SessionServiceBase* app_service =
+        AppSessionServiceFactory::GetForProfileForSessionRestore(profile_);
+    if (service && app_service) {
+      auto barrier = base::BarrierCallback<SessionWindows>(
+          /*num_callbacks=*/2u, /*done_callback=*/base::BindOnce(
+              &FullRestoreService::OnGotAllSessionsAsh,
+              weak_ptr_factory_.GetWeakPtr()));
 
-        service->GetLastSession(
-            base::BindOnce(&FullRestoreService::OnGotSessionAsh,
-                           weak_ptr_factory_.GetWeakPtr(), barrier));
-        app_service->GetLastSession(
-            base::BindOnce(&FullRestoreService::OnGotSessionAsh,
-                           weak_ptr_factory_.GetWeakPtr(), barrier));
-      } else {
-        OnGotAllSessionsAsh(/*all_session_windows=*/{});
-      }
+      service->GetLastSession(
+          base::BindOnce(&FullRestoreService::OnGotSessionAsh,
+                         weak_ptr_factory_.GetWeakPtr(), barrier));
+      app_service->GetLastSession(
+          base::BindOnce(&FullRestoreService::OnGotSessionAsh,
+                         weak_ptr_factory_.GetWeakPtr(), barrier));
+    } else {
+      OnGotAllSessionsAsh(/*all_session_windows=*/{});
+    }
 
     // Set to true as we might want to show the post reboot notification.
     show_notification = true;
@@ -943,19 +894,27 @@ void FullRestoreService::OnSessionInformationReceived(
 
         // Use the tab title if possible. If no tab title is available and it is
         // a chrome WebUI, use the host piece (history, extensions, etc.).
-        // Otherwise we will default to the app title, "Chrome".
+        // Otherwise we will use the formatted url as tab title.
         std::string tab_title = base::UTF16ToUTF8(entry.title());
-        if (tab_title.empty() &&
-            entry.original_request_url().SchemeIs(content::kChromeUIScheme)) {
-          tab_title = entry.original_request_url().host_piece();
+        const GURL& url = entry.original_request_url();
+        if (tab_title.empty()) {
+          if (url.SchemeIs(content::kChromeUIScheme)) {
+            tab_title = url.host_piece();
+          } else {
+            tab_title = base::UTF16ToUTF8(url_formatter::FormatUrl(
+                entry.virtual_url().is_empty() ? url : entry.virtual_url(),
+                url_formatter::kFormatUrlOmitDefaults |
+                    url_formatter::kFormatUrlOmitTrivialSubdomains |
+                    url_formatter::kFormatUrlOmitHTTPS,
+                base::UnescapeRule::SPACES, nullptr, nullptr, nullptr));
+          }
         }
 
         if (active_tab_title.empty()) {
           active_tab_title = tab_title;
         }
 
-        tab_infos.push_back(InformedRestoreContentsData::TabInfo(
-            entry.original_request_url(), tab_title));
+        tab_infos.emplace_back(url, tab_title);
       }
     };
 
@@ -1008,22 +967,10 @@ void FullRestoreService::MaybeShowInformedRestoreOnboarding(bool restore_on) {
     return;
   }
 
-  base::ThreadPool::PostTaskAndReplyWithResult(
-      FROM_HERE, {base::MayBlock()},
-      base::BindOnce(&IsFactoryTestRunningMayBlock),
-      base::BindOnce(&FullRestoreService::OnShouldShowInformedRestoreOnboarding,
-                     weak_ptr_factory_.GetWeakPtr(), restore_on));
-}
-
-void FullRestoreService::OnShouldShowInformedRestoreOnboarding(
-    bool restore_on,
-    bool factory_test_running) {
-  if (!factory_test_running) {
-    CHECK(Shell::Get()->informed_restore_controller());
-    Shell::Get()
-        ->informed_restore_controller()
-        ->MaybeShowInformedRestoreOnboarding(restore_on);
-  }
+  auto* informed_restore_controller =
+      Shell::Get()->informed_restore_controller();
+  CHECK(informed_restore_controller);
+  informed_restore_controller->MaybeShowInformedRestoreOnboarding(restore_on);
 }
 
 ScopedRestoreForTesting::ScopedRestoreForTesting() {

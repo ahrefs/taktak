@@ -25,21 +25,17 @@
 #include "cc/cc_export.h"
 #include "components/viz/common/resources/resource_id.h"
 #include "components/viz/common/resources/resource_sizes.h"
-#include "components/viz/common/resources/shared_bitmap.h"
 #include "components/viz/common/resources/shared_image_format.h"
 #include "components/viz/common/resources/transferable_resource.h"
+#include "gpu/command_buffer/client/client_shared_image.h"
+#include "gpu/command_buffer/client/shared_image_interface.h"
 #include "gpu/command_buffer/common/sync_token.h"
-#include "third_party/khronos/GLES2/gl2.h"
 #include "ui/gfx/color_space.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/gpu_memory_buffer.h"
 
 namespace base {
 class SingleThreadTaskRunner;
-}
-
-namespace gpu {
-class ClientSharedImage;
 }
 
 namespace viz {
@@ -58,28 +54,22 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
   // Max delay before an evicted resource is flushed.
   static constexpr base::TimeDelta kDefaultMaxFlushDelay = base::Seconds(1);
 
-  // A base class to hold ownership of gpu backed PoolResources. Allows the
-  // client to define destruction semantics.
-  class CC_EXPORT GpuBacking {
+  // A class to hold ownership of PoolResources.
+  class CC_EXPORT Backing {
    public:
-    GpuBacking();
-    virtual ~GpuBacking();
+    Backing();
+    virtual ~Backing();
 
-    // Dumps information about the memory backing the GpuBacking to |pmd|.
-    // The memory usage is attributed to |buffer_dump_guid|.
-    // |tracing_process_id| uniquely identifies the process owning the memory.
-    // |importance| is relevant only for the cases of co-ownership, the memory
-    // gets attributed to the owner with the highest importance.
-    // Called on the compositor thread.
-    virtual void OnMemoryDump(
-        base::trace_event::ProcessMemoryDump* pmd,
-        const base::trace_event::MemoryAllocatorDumpGuid& buffer_dump_guid,
-        uint64_t tracing_process_id,
-        int importance) const = 0;
+    void set_shared_image(scoped_refptr<gpu::ClientSharedImage> si) {
+      shared_image_ = std::move(si);
+    }
+    void clear_shared_image() { shared_image_.reset(); }
+    scoped_refptr<gpu::ClientSharedImage> shared_image() {
+      return shared_image_;
+    }
 
-    scoped_refptr<gpu::ClientSharedImage> shared_image;
     gpu::SyncToken mailbox_sync_token;
-    bool overlay_candidate = false;
+
     // For resources that are modified directly on the gpu, outside the command
     // stream, a fence must be used to know when the backing is not in use and
     // may be returned to and reused by the pool.
@@ -94,37 +84,14 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
 
     // True if the backing is using raw draw.
     bool is_using_raw_draw = false;
-  };
 
-  // A base class to hold ownership of software backed PoolResources. Allows the
-  // client to define destruction semantics.
-  class CC_EXPORT SoftwareBacking {
-   public:
-    SoftwareBacking();
-    virtual ~SoftwareBacking();
-
-    // Dumps information about the memory backing the SoftwareBacking to |pmd|.
-    // The memory usage is attributed to |buffer_dump_guid|.
-    // |tracing_process_id| uniquely identifies the process owning the memory.
-    // |importance| is relevant only for the cases of co-ownership, the memory
-    // gets attributed to the owner with the highest importance.
-    // Called on the compositor thread.
-    virtual void OnMemoryDump(
-        base::trace_event::ProcessMemoryDump* pmd,
-        const base::trace_event::MemoryAllocatorDumpGuid& buffer_dump_guid,
-        uint64_t tracing_process_id,
-        int importance) const = 0;
-
-    // Mailbox
-    viz::SharedBitmapId shared_bitmap_id;
-
-    scoped_refptr<gpu::ClientSharedImage> shared_image;
-    gpu::SyncToken mailbox_sync_token;
+   private:
+    scoped_refptr<gpu::ClientSharedImage> shared_image_;
   };
 
   // Scoped move-only object returned when getting a resource from the pool.
   // Ownership must be given back to the pool to release the resource.
-  class InUsePoolResource {
+  class CC_EXPORT InUsePoolResource {
    public:
     InUsePoolResource() = default;
     ~InUsePoolResource() {
@@ -132,12 +99,10 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
     }
 
     InUsePoolResource(InUsePoolResource&& other) {
-      is_gpu_ = other.is_gpu_;
       resource_ = other.resource_;
       other.resource_ = nullptr;
     }
     InUsePoolResource& operator=(InUsePoolResource&& other) {
-      is_gpu_ = other.is_gpu_;
       resource_ = other.resource_;
       other.resource_ = nullptr;
       return *this;
@@ -161,25 +126,23 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
       return resource_->resource_id();
     }
 
-    // Only valid when the ResourcePool is vending texture-backed resources.
-    GpuBacking* gpu_backing() const {
-      DCHECK(is_gpu_);
-      return resource_->gpu_backing();
-    }
-    void set_gpu_backing(std::unique_ptr<GpuBacking> gpu) const {
-      DCHECK(is_gpu_);
-      return resource_->set_gpu_backing(std::move(gpu));
+    Backing* backing() const { return resource_->backing(); }
+    void set_backing(std::unique_ptr<Backing> backing) const {
+      return resource_->set_backing(std::move(backing));
     }
 
-    // Only valid when the ResourcePool is vending software-backed resources.
-    SoftwareBacking* software_backing() const {
-      DCHECK(!is_gpu_);
-      return resource_->software_backing();
-    }
-    void set_software_backing(std::unique_ptr<SoftwareBacking> software) const {
-      DCHECK(!is_gpu_);
-      resource_->set_software_backing(std::move(software));
-    }
+    // Creates a SharedImage based on the configuration of this resource and
+    // installs a backing for this resource that is itself backed by that SI.
+    void InstallGpuBacking(gpu::SharedImageInterface* sii,
+                           bool is_overlay_candidate,
+                           bool use_gpu_rasterization,
+                           std::string_view debug_label) const;
+
+    // Creates a software SharedImage based on the configuration of this
+    // resource and installs a backing for this resource that is itself backed
+    // by that SI.
+    void InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface> sii,
+                                std::string_view debug_label) const;
 
     size_t memory_usage() const {
       DCHECK(resource_);
@@ -192,13 +155,10 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
 
    private:
     friend ResourcePool;
-    explicit InUsePoolResource(PoolResource* resource, bool is_gpu)
-        : is_gpu_(is_gpu), resource_(resource) {
+    explicit InUsePoolResource(PoolResource* resource) : resource_(resource) {
       DCHECK_EQ(resource->state(), PoolResource::kInUse);
     }
     void SetWasFreedByResourcePool() { resource_ = nullptr; }
-
-    bool is_gpu_ = false;
 
     // `resource_` is not a raw_ptr<...> for performance reasons (based on
     // analysis of sampling profiler data and tab_search:top100:2020).
@@ -227,7 +187,7 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
       const std::string& debug_name = std::string());
 
   // Tries to acquire the resource with |previous_content_id| for us in partial
-  // raster. If successful, this function will retun the invalidated rect which
+  // raster. If successful, this function will return the invalidated rect which
   // must be re-rastered in |total_invalidated_rect|.
   InUsePoolResource TryAcquireResourceForPartialRaster(
       uint64_t new_content_id,
@@ -244,7 +204,7 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
   // to it by code which is aware of the expected backing type - currently by
   // RasterBufferProvider::AcquireBufferForRaster().
   // Returns false if the backing does not contain valid data, in particular
-  // a zero mailbox for GpuBacking, in which case the resource is not exported,
+  // a zero mailbox for Backing, in which case the resource is not exported,
   // and true otherwise.
   bool PrepareForExport(
       const InUsePoolResource& resource,
@@ -315,23 +275,11 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
     const viz::ResourceId& resource_id() const { return resource_id_; }
     void set_resource_id(viz::ResourceId id) { resource_id_ = id; }
 
-    GpuBacking* gpu_backing() const { return gpu_backing_.get(); }
-    void set_gpu_backing(std::unique_ptr<GpuBacking> gpu) {
-      DCHECK(gpu);
-      DCHECK(!gpu_backing_);
-      DCHECK(!software_backing_);
-      gpu_backing_ = std::move(gpu);
-      resource_pool_->OnBackingAllocated(this);
-    }
-
-    SoftwareBacking* software_backing() const {
-      return software_backing_.get();
-    }
-    void set_software_backing(std::unique_ptr<SoftwareBacking> software) {
-      DCHECK(software);
-      DCHECK(!gpu_backing_);
-      DCHECK(!software_backing_);
-      software_backing_ = std::move(software);
+    Backing* backing() const { return backing_.get(); }
+    void set_backing(std::unique_ptr<Backing> backing) {
+      DCHECK(backing);
+      DCHECK(!backing_);
+      backing_ = std::move(backing);
       resource_pool_->OnBackingAllocated(this);
     }
 
@@ -371,7 +319,7 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
       // to kBusy or kUnused depends on if the resource is exported.
       kInUse,
 
-      // The resource has been expored (sent) to viz process for compositing.
+      // The resource has been exported (sent) to viz process for compositing.
       // When the resource is returned from the viz, the state will be changed
       // to kUnused.
       kBusy,
@@ -380,8 +328,9 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
     void set_state(State state) { state_ = state; }
 
     size_t memory_usage() const {
-      if (!gpu_backing_ && !software_backing_)
+      if (!backing_) {
         return 0;
+      }
 
       size_t memory_usage = format().EstimatedSizeInBytes(size());
 
@@ -389,7 +338,7 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
       // 50%, so we consider a raw draw backing uses 50% of a normal backing
       // in average.
       // TODO(crbug.com/40214331): use accurate size for raw draw backings.
-      if (gpu_backing_ && gpu_backing_->is_using_raw_draw) {
+      if (backing_->is_using_raw_draw) {
         memory_usage = memory_usage / 2;
       }
 
@@ -414,15 +363,10 @@ class CC_EXPORT ResourcePool : public base::trace_event::MemoryDumpProvider {
     // An id used to name the backing for transfer to the display compositor.
     viz::ResourceId resource_id_ = viz::kInvalidResourceId;
 
-    // The backing for gpu resources. Initially null for resources given
+    // The backing for this resource. Initially null for resources given
     // out by ResourcePool, to be filled in by the client. Is destroyed on the
     // compositor thread.
-    std::unique_ptr<GpuBacking> gpu_backing_;
-
-    // The backing for software resources. Initially null for resources given
-    // out by ResourcePool, to be filled in by the client. Is destroyed on the
-    // compositor thread.
-    std::unique_ptr<SoftwareBacking> software_backing_;
+    std::unique_ptr<Backing> backing_;
 
     // Used for debugging and tracing.
     std::string debug_name_;

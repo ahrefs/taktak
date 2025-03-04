@@ -12,6 +12,7 @@
 #import "base/strings/sys_string_conversions.h"
 #import "ios/chrome/app/application_delegate/app_state.h"
 #import "ios/chrome/app/chrome_overlay_window.h"
+#import "ios/chrome/app/profile/profile_state.h"
 #import "ios/chrome/browser/shared/coordinator/scene/scene_controller.h"
 #import "ios/chrome/browser/shared/coordinator/scene/scene_util.h"
 
@@ -99,6 +100,23 @@ ContentVisibility ContentVisibilityForIncognito(BOOL isIncognito) {
   return self.agents;
 }
 
+- (void)setRootViewController:(UIViewController*)rootViewController
+            makeKeyAndVisible:(BOOL)makeKeyAndVisible {
+  [self.window setRootViewController:rootViewController];
+  if (makeKeyAndVisible) {
+    [self.window makeKeyAndVisible];
+  }
+}
+
+- (void)setRootViewControllerKeyAndVisible {
+  [self.window makeKeyAndVisible];
+}
+
+- (void)setWindowUserInterfaceStyle:
+    (UIUserInterfaceStyle)windowUserInterfaceStyle {
+  self.window.overrideUserInterfaceStyle = windowUserInterfaceStyle;
+}
+
 #pragma mark - Setters & Getters.
 
 - (UIWindow*)window {
@@ -109,6 +127,18 @@ ContentVisibility ContentVisibilityForIncognito(BOOL isIncognito) {
     }
   }
   return mainWindow;
+}
+
+- (NSString*)windowAccessibilityIdentifier {
+  return self.window.accessibilityIdentifier;
+}
+
+- (UIViewController*)rootViewController {
+  return [self.window rootViewController];
+}
+
+- (UIView*)rootView {
+  return self.rootViewController.view;
 }
 
 - (void)setScene:(UIWindowScene*)scene {
@@ -228,14 +258,24 @@ ContentVisibility ContentVisibilityForIncognito(BOOL isIncognito) {
   }
 }
 
+- (void)setProfileState:(ProfileState*)profileState {
+  _profileState = profileState;
+  [self.observers sceneState:self profileStateConnected:_profileState];
+}
+
 #pragma mark - UIBlockerTarget
 
 - (BOOL)isUIBlocked {
   return _presentingModalOverlay;
 }
 
-- (id<UIBlockerManager>)uiBlockerManager {
-  return _appState;
+- (id<UIBlockerManager>)uiBlockerManagerForExtent:(UIBlockerExtent)extent {
+  switch (extent) {
+    case UIBlockerExtent::kProfile:
+      return _profileState;
+    case UIBlockerExtent::kApplication:
+      return _appState;
+  }
 }
 
 - (void)bringBlockerToFront:(UIScene*)requestingScene {
@@ -253,7 +293,7 @@ ContentVisibility ContentVisibilityForIncognito(BOOL isIncognito) {
                        errorHandler:^(NSError* error) {
                          LOG(ERROR) << base::SysNSStringToUTF8(
                              error.localizedDescription);
-                         NOTREACHED_IN_MIGRATION();
+                         NOTREACHED();
                        }];
 }
 

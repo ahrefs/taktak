@@ -29,8 +29,8 @@ import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaym
 import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.CreditCardSuggestionProperties.APPLY_DEACTIVATED_STYLE;
 import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.CreditCardSuggestionProperties.FIRST_LINE_LABEL;
 import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.CreditCardSuggestionProperties.MAIN_TEXT;
+import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.CreditCardSuggestionProperties.MAIN_TEXT_CONTENT_DESCRIPTION;
 import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.CreditCardSuggestionProperties.MINOR_TEXT;
-import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.CreditCardSuggestionProperties.NETWORK_NAME;
 import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.CreditCardSuggestionProperties.ON_CREDIT_CARD_CLICK_ACTION;
 import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.CreditCardSuggestionProperties.SECOND_LINE_LABEL;
 import static org.chromium.chrome.browser.touch_to_fill.payments.TouchToFillPaymentMethodProperties.DISMISS_HANDLER;
@@ -59,7 +59,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
@@ -82,8 +81,8 @@ import org.chromium.components.autofill.AutofillSuggestion;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController.StateChangeReason;
-import org.chromium.components.payments.InputProtector;
-import org.chromium.components.payments.test_support.FakeClock;
+import org.chromium.components.payments.ui.InputProtector;
+import org.chromium.components.payments.ui.test_support.FakeClock;
 import org.chromium.ui.modelutil.MVCListAdapter.ModelList;
 import org.chromium.ui.modelutil.PropertyModel;
 
@@ -99,10 +98,7 @@ import java.util.stream.StreamSupport;
  */
 @RunWith(BaseRobolectricTestRunner.class)
 @Batch(Batch.PER_CLASS)
-@DisableFeatures({
-    AutofillFeatures.AUTOFILL_ENABLE_CARD_ART_IMAGE,
-    AutofillFeatures.AUTOFILL_ENABLE_SECURITY_TOUCH_EVENT_FILTERING_ANDROID
-})
+@DisableFeatures({AutofillFeatures.AUTOFILL_ENABLE_SECURITY_TOUCH_EVENT_FILTERING_ANDROID})
 public class TouchToFillPaymentMethodControllerRobolectricTest {
     private static final CreditCard VISA =
             createCreditCard(
@@ -167,6 +163,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                     VISA.getObfuscatedLastFourDigits(),
                     VISA.getFormattedExpirationDate(ContextUtils.getApplicationContext()),
                     /* secondarySubLabel= */ "",
+                    /* labelContentDescription= */ "",
                     /* applyDeactivatedStyle= */ false,
                     /* shouldDisplayTermsAvailable= */ false);
     private static final AutofillSuggestion VISA_SUGGESTION_WITH_CARD_BENEFITS =
@@ -175,6 +172,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                     VISA.getObfuscatedLastFourDigits(),
                     /* subLabel= */ "2% cashback on travel",
                     VISA.getFormattedExpirationDate(ContextUtils.getApplicationContext()),
+                    /* labelContentDescription= */ "",
                     /* applyDeactivatedStyle= */ false,
                     /* shouldDisplayTermsAvailable= */ true);
     private static final AutofillSuggestion NICKNAMED_VISA_SUGGESTION =
@@ -183,6 +181,10 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                     NICKNAMED_VISA.getObfuscatedLastFourDigits(),
                     NICKNAMED_VISA.getFormattedExpirationDate(ContextUtils.getApplicationContext()),
                     /* secondarySubLabel= */ "",
+                    String.format(
+                            "%s %s",
+                            NICKNAMED_VISA.getCardNameForAutofillDisplay(),
+                            NICKNAMED_VISA.getBasicCardIssuerNetwork()),
                     /* applyDeactivatedStyle= */ false,
                     /* shouldDisplayTermsAvailable= */ false);
     private static final AutofillSuggestion MASTERCARD_SUGGESTION =
@@ -191,6 +193,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                     MASTERCARD.getObfuscatedLastFourDigits(),
                     MASTERCARD.getFormattedExpirationDate(ContextUtils.getApplicationContext()),
                     /* secondarySubLabel= */ "",
+                    /* labelContentDescription= */ "",
                     /* applyDeactivatedStyle= */ false,
                     /* shouldDisplayTermsAvailable= */ false);
     private static final AutofillSuggestion NON_ACCEPTABLE_VIRTUAL_CARD_SUGGESTION =
@@ -199,6 +202,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                     VIRTUAL_CARD.getObfuscatedLastFourDigits(),
                     /* subLabel= */ "Merchant doesn't accept this virtual card",
                     /* secondarySubLabel= */ "",
+                    /* labelContentDescription= */ "",
                     /* applyDeactivatedStyle= */ true,
                     /* shouldDisplayTermsAvailable= */ false);
     private static final AutofillSuggestion ACCEPTABLE_VIRTUAL_CARD_SUGGESTION =
@@ -207,6 +211,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                     VIRTUAL_CARD.getObfuscatedLastFourDigits(),
                     /* subLabel= */ "Virtual Card",
                     /* secondarySubLabel= */ "",
+                    /* labelContentDescription= */ "",
                     /* applyDeactivatedStyle= */ false,
                     /* shouldDisplayTermsAvailable= */ false);
     private static final AutofillSuggestion VIRTUAL_CARD_SUGGESTION_WITH_CARD_BENEFITS =
@@ -215,6 +220,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                     VIRTUAL_CARD.getObfuscatedLastFourDigits(),
                     /* subLabel= */ "2% cashback on travel",
                     /* secondarySubLabel= */ "Virtual card",
+                    /* labelContentDescription= */ "",
                     /* applyDeactivatedStyle= */ false,
                     /* shouldDisplayTermsAvailable= */ true);
 
@@ -237,7 +243,6 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
         Mockito.when(
                         mBottomSheetController.requestShowContent(
                                 any(BottomSheetContent.class), anyBoolean()))
@@ -428,7 +433,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
 
         ModelList itemList = mTouchToFillPaymentMethodModel.get(SHEET_ITEMS);
         List<PropertyModel> termsLabelModelList = getModelsOfType(itemList, TERMS_LABEL);
-        assertEquals(termsLabelModelList.size(), 1);
+        assertEquals(1, termsLabelModelList.size());
         assertTrue(termsLabelModelList.get(0).get(CARD_BENEFITS_TERMS_AVAILABLE));
     }
 
@@ -438,7 +443,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                 List.of(VISA), List.of(VISA_SUGGESTION), /* shouldShowScanCreditCard= */ true);
 
         ModelList itemList = mTouchToFillPaymentMethodModel.get(SHEET_ITEMS);
-        assertEquals(getModelsOfType(itemList, TERMS_LABEL).size(), 0);
+        assertEquals(0, getModelsOfType(itemList, TERMS_LABEL).size());
     }
 
     @Test
@@ -566,7 +571,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                 List.of(VISA), List.of(VISA_SUGGESTION), /* shouldShowScanCreditCard= */ true);
 
         ModelList itemList = mTouchToFillPaymentMethodModel.get(SHEET_ITEMS);
-        assertEquals(getModelsOfType(itemList, FILL_BUTTON).size(), 1);
+        assertEquals(1, getModelsOfType(itemList, FILL_BUTTON).size());
     }
 
     @Test
@@ -577,7 +582,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
                 /* shouldShowScanCreditCard= */ true);
 
         ModelList itemList = mTouchToFillPaymentMethodModel.get(SHEET_ITEMS);
-        assertEquals(getModelsOfType(itemList, FILL_BUTTON).size(), 0);
+        assertEquals(0, getModelsOfType(itemList, FILL_BUTTON).size());
     }
 
     @Test
@@ -656,20 +661,8 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
         Optional<PropertyModel> cardSuggestionModel =
                 getCardSuggestionModel(itemList, NICKNAMED_VISA_SUGGESTION);
         assertTrue(cardSuggestionModel.isPresent());
-        assertEquals("visa", cardSuggestionModel.get().get(NETWORK_NAME));
-    }
-
-    @Test
-    public void testCardSuggestionModelForACardWithoutANicknameDoesNotContainANetworkName() {
-        mCoordinator.showSheet(
-                List.of(VISA), List.of(VISA_SUGGESTION), /* shouldShowScanCreditCard= */ false);
-
-        ModelList itemList = mTouchToFillPaymentMethodModel.get(SHEET_ITEMS);
-
-        Optional<PropertyModel> cardSuggestionModel =
-                getCardSuggestionModel(itemList, VISA_SUGGESTION);
-        assertTrue(cardSuggestionModel.isPresent());
-        assertTrue(cardSuggestionModel.get().get(NETWORK_NAME).isEmpty());
+        assertEquals(
+                "Best Card visa", cardSuggestionModel.get().get(MAIN_TEXT_CONTENT_DESCRIPTION));
     }
 
     @Test
@@ -783,7 +776,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
         mCoordinator.showSheet(List.of(LOCAL_IBAN));
 
         ModelList itemList = mTouchToFillPaymentMethodModel.get(SHEET_ITEMS);
-        assertEquals(getModelsOfType(itemList, FILL_BUTTON).size(), 1);
+        assertEquals(1, getModelsOfType(itemList, FILL_BUTTON).size());
     }
 
     @Test
@@ -791,7 +784,7 @@ public class TouchToFillPaymentMethodControllerRobolectricTest {
         mCoordinator.showSheet(List.of(LOCAL_IBAN, LOCAL_IBAN_NO_NICKNAME));
 
         ModelList itemList = mTouchToFillPaymentMethodModel.get(SHEET_ITEMS);
-        assertEquals(getModelsOfType(itemList, FILL_BUTTON).size(), 0);
+        assertEquals(0, getModelsOfType(itemList, FILL_BUTTON).size());
     }
 
     private static List<PropertyModel> getModelsOfType(ModelList items, int type) {

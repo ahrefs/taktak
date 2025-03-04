@@ -22,38 +22,33 @@ namespace {
 // this array may either refer to features defined in the header of this file or
 // in other locations in the code base (e.g. content_features.h).
 const base::Feature* const kFeaturesExposedToJava[] = {
-    &blink::features::kCursorAnchorInfoMojoPipe,
     &blink::features::kDevicePosture,
-    &blink::features::kStylusPointerAdjustment,
+    &blink::features::kSecurePaymentConfirmationBrowserBoundKeys,
     &blink::features::kStylusRichGestures,
     &blink::features::kViewportSegments,
     &input::features::kInputOnViz,
+    &features::kAccessibilityDeprecateTypeAnnounce,
     &features::kAccessibilityIncludeLongClickAction,
-    &features::kAccessibilityPageZoom,
-    &features::kAccessibilityPageZoomEnhancements,
     &features::kAccessibilityPageZoomV2,
     &features::kAccessibilityUnifiedSnapshots,
     &features::kAccessibilityManageBroadcastReceiverOnBackground,
+    &features::kAndroidFallbackToNextSlot,
     &features::kAndroidOpenPdfInline,
     &features::kFedCm,
     &features::kHidePastePopupOnGSB,
-    &features::kMouseAndTrackpadDropdownMenu,
-    &features::kOptimizeImmHideCalls,
-    &features::kProcessSharingWithStrictSiteInstances,
     &features::kReduceGpuPriorityOnBackground,
     &features::kContinueGestureOnLosingFocus,
-    &features::kSelectionMenuItemModification,
     &features::kSmartZoom,
     &features::kTouchDragAndContextMenu,
     &features::kWebBluetoothNewPermissionsBackend,
     &features::kWebIdentityDigitalCredentials,
-    &features::kWebNfc,
+    &features::kBtmTtl,
 };
 
 // static
 base::android::FeatureMap* GetFeatureMap() {
-  static base::NoDestructor<base::android::FeatureMap> kFeatureMap(std::vector(
-      std::begin(kFeaturesExposedToJava), std::end(kFeaturesExposedToJava)));
+  static base::NoDestructor<base::android::FeatureMap> kFeatureMap(
+      kFeaturesExposedToJava);
   return kFeatureMap.get();
 }
 

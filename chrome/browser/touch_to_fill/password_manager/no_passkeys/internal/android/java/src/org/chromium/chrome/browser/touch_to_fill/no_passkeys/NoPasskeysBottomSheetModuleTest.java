@@ -30,7 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
@@ -38,7 +37,6 @@ import org.robolectric.annotation.Config;
 
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.Batch;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 
 import java.lang.ref.WeakReference;
@@ -52,7 +50,6 @@ public class NoPasskeysBottomSheetModuleTest {
     private static final String TEST_ORIGIN = "origin.com";
 
     @Rule public MockitoRule mMockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
-    @Rule public JniMocker jniMocker = new JniMocker();
 
     @Mock private NoPasskeysBottomSheetBridge.Natives mNativeMock;
     @Mock private BottomSheetController mBottomSheetController;
@@ -66,8 +63,7 @@ public class NoPasskeysBottomSheetModuleTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        jniMocker.mock(NoPasskeysBottomSheetBridgeJni.TEST_HOOKS, mNativeMock);
+        NoPasskeysBottomSheetBridgeJni.setInstanceForTesting(mNativeMock);
         doReturn(true)
                 .when(mBottomSheetController)
                 .requestShowContent(any(NoPasskeysBottomSheetContent.class), anyBoolean());
@@ -156,8 +152,8 @@ public class NoPasskeysBottomSheetModuleTest {
                 spannedMessage.getSpans(
                         originStartIndex, originStartIndex + TEST_ORIGIN.length(), StyleSpan.class);
 
-        assertEquals(spans.length, 1);
-        assertEquals(spans[0].getStyle(), Typeface.BOLD);
+        assertEquals(1, spans.length);
+        assertEquals(Typeface.BOLD, spans[0].getStyle());
     }
 
     private static View findOkButton(NoPasskeysBottomSheetContent content) {

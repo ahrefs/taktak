@@ -222,6 +222,9 @@ CONSOLE MESSAGE:     attribute @@toStringTag
 CONSOLE MESSAGE:     getter highWaterMark
 CONSOLE MESSAGE:     getter size
 CONSOLE MESSAGE:     method constructor
+CONSOLE MESSAGE: interface Float16Array : TypedArray
+CONSOLE MESSAGE:     attribute BYTES_PER_ELEMENT
+CONSOLE MESSAGE:     method constructor
 CONSOLE MESSAGE: interface Mesh2DIndexBuffer
 CONSOLE MESSAGE:     attribute @@toStringTag
 CONSOLE MESSAGE:     method constructor
@@ -679,6 +682,9 @@ CONSOLE MESSAGE: interface CountQueuingStrategy
 CONSOLE MESSAGE:     attribute @@toStringTag
 CONSOLE MESSAGE:     getter highWaterMark
 CONSOLE MESSAGE:     getter size
+CONSOLE MESSAGE:     method constructor
+CONSOLE MESSAGE: interface Float16Array : TypedArray
+CONSOLE MESSAGE:     attribute BYTES_PER_ELEMENT
 CONSOLE MESSAGE:     method constructor
 CONSOLE MESSAGE: interface Mesh2DIndexBuffer
 CONSOLE MESSAGE:     attribute @@toStringTag

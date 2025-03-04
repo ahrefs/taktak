@@ -9,18 +9,16 @@
 
 #include "chrome/browser/enterprise/signals/context_info_fetcher.h"
 
+#include <algorithm>
 #include <memory>
 
 #include "base/command_line.h"
 #include "base/files/file_util.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_split.h"
 #include "base/task/thread_pool.h"
 #include "base/threading/scoped_blocking_call.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/connectors/connectors_service.h"
 #include "chrome/browser/enterprise/identifiers/profile_id_service_factory.h"
 #include "chrome/browser/enterprise/signals/signals_utils.h"
 #include "chrome/browser/enterprise/util/affiliation.h"
@@ -56,8 +54,12 @@
 #include "net/dns/public/win_dns_system_settings.h"
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "chromeos/dbus/constants/dbus_switches.h"
+#endif
+
+#if BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
+#include "chrome/browser/enterprise/connectors/connectors_service.h"
 #endif
 
 namespace enterprise_signals {
@@ -88,7 +90,7 @@ SettingValue GetUfwStatus() {
     return SettingValue::UNKNOWN;
   }
   base::SplitStringIntoKeyValuePairs(file_content, '=', '\n', &values);
-  auto is_ufw_enabled = base::ranges::find(
+  auto is_ufw_enabled = std::ranges::find(
       values, "ENABLED", &std::pair<std::string, std::string>::first);
   if (is_ufw_enabled == values.end())
     return SettingValue::UNKNOWN;
@@ -200,7 +202,7 @@ SettingValue GetMacOSFirewall() {
 }
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 SettingValue GetChromeosFirewall() {
   // The firewall is always enabled and can only be disabled in dev mode on
   // ChromeOS. If the device isn't in dev mode, the firewall is guaranteed to be
@@ -251,6 +253,7 @@ void ContextInfoFetcher::Fetch(ContextInfoCallback callback) {
 
   info.browser_affiliation_ids = GetBrowserAffiliationIDs();
   info.profile_affiliation_ids = GetProfileAffiliationIDs();
+#if BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
   info.on_file_attached_providers =
       GetAnalysisConnectorProviders(enterprise_connectors::FILE_ATTACHED);
   info.on_file_downloaded_providers =
@@ -261,6 +264,7 @@ void ContextInfoFetcher::Fetch(ContextInfoCallback callback) {
       GetAnalysisConnectorProviders(enterprise_connectors::PRINT);
   info.realtime_url_check_mode = GetRealtimeUrlCheckMode();
   info.on_security_event_providers = GetOnSecurityEventProviders();
+#endif  // BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
   info.browser_version = version_info::GetVersionNumber();
   info.site_isolation_enabled =
       content::SiteIsolationPolicy::UseDedicatedProcessesForAllSites();
@@ -311,6 +315,7 @@ std::vector<std::string> ContextInfoFetcher::GetProfileAffiliationIDs() {
   return {ids.begin(), ids.end()};
 }
 
+#if BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
 std::vector<std::string> ContextInfoFetcher::GetAnalysisConnectorProviders(
     enterprise_connectors::AnalysisConnector connector) {
   return connectors_service_->GetAnalysisServiceProviderNames(connector);
@@ -322,9 +327,9 @@ ContextInfoFetcher::GetRealtimeUrlCheckMode() {
 }
 
 std::vector<std::string> ContextInfoFetcher::GetOnSecurityEventProviders() {
-  return connectors_service_->GetReportingServiceProviderNames(
-      enterprise_connectors::ReportingConnector::SECURITY_EVENT);
+  return connectors_service_->GetReportingServiceProviderNames();
 }
+#endif  // BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
 
 SettingValue ContextInfoFetcher::GetOSFirewall() {
 #if BUILDFLAG(IS_LINUX)
@@ -333,7 +338,7 @@ SettingValue ContextInfoFetcher::GetOSFirewall() {
   return GetWinOSFirewall();
 #elif BUILDFLAG(IS_MAC)
   return GetMacOSFirewall();
-#elif BUILDFLAG(IS_CHROMEOS_ASH)
+#elif BUILDFLAG(IS_CHROMEOS)
   return GetChromeosFirewall();
 #else
   return SettingValue::UNKNOWN;

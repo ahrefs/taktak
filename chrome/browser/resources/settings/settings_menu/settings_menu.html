@@ -99,7 +99,7 @@
           $i18n{searchPageTitle}
           <cr-ripple></cr-ripple>
         </a>
-  <if expr="not is_chromeos">
+<if expr="not is_chromeos">
         <a role="menuitem" id="defaultBrowser" class="cr-nav-menu-item"
           href="/defaultBrowser"
           hidden="[[!pageVisibility.defaultBrowser]]">
@@ -107,7 +107,7 @@
           $i18n{defaultBrowser}
           <cr-ripple></cr-ripple>
         </a>
-  </if>
+</if>
         <a role="menuitem" id="onStartup" href="/onStartup"
             class="cr-nav-menu-item"
             hidden="[[!pageVisibility.onStartup]]">
@@ -137,14 +137,14 @@
           $i18n{a11yPageTitle}
           <cr-ripple></cr-ripple>
         </a>
-  <if expr="not chromeos_ash">
+<if expr="not chromeos_ash">
         <a role="menuitem" id="system" href="/system" class="cr-nav-menu-item"
             hidden="[[!pageVisibility.system]]">
           <cr-icon icon="settings:system"></cr-icon>
           $i18n{systemPageTitle}
           <cr-ripple></cr-ripple>
         </a>
-  </if>
+</if>
         <a role="menuitem" id="reset" href="/reset"
             hidden="[[!pageVisibility.reset]]" class="cr-nav-menu-item">
           <cr-icon icon="settings:restore"></cr-icon>

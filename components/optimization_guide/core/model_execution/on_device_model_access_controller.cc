@@ -16,7 +16,6 @@ namespace {
 
 using model_execution::prefs::localstate::kOnDeviceModelChromeVersion;
 using model_execution::prefs::localstate::kOnDeviceModelCrashCount;
-using model_execution::prefs::localstate::kOnDeviceModelTimeoutCount;
 using model_execution::prefs::localstate::kOnDeviceModelValidationResult;
 
 const char kComponentVersionKey[] = "component_version";
@@ -32,6 +31,18 @@ OnDeviceModelValidationResult ConvertToOnDeviceModelValidationResult(
   return static_cast<OnDeviceModelValidationResult>(value);
 }
 
+base::Time GetNextAttemptAfterBackoff(int current_count,
+                                      int disable_count,
+                                      base::TimeDelta min_backoff,
+                                      base::TimeDelta max_backoff) {
+  int diff = current_count - disable_count;
+  if (diff < 0) {
+    return base::Time::Now();
+  }
+  int scale_factor = pow(2, diff);
+  return base::Time::Now() + std::min(max_backoff, scale_factor * min_backoff);
+}
+
 }  // namespace
 
 OnDeviceModelAccessController::OnDeviceModelAccessController(
@@ -41,7 +52,6 @@ OnDeviceModelAccessController::OnDeviceModelAccessController(
       version_info::GetVersionNumber()) {
     // When the version changes, reset the counts so that we try again.
     pref_service_->SetInteger(kOnDeviceModelCrashCount, 0);
-    pref_service_->SetInteger(kOnDeviceModelTimeoutCount, 0);
     pref_service_->SetString(kOnDeviceModelChromeVersion,
                              version_info::GetVersionNumber());
     if (features::ShouldOnDeviceModelClearValidationOnVersionChange()) {
@@ -71,10 +81,6 @@ OnDeviceModelAccessController::ShouldStartNewSession() const {
       base::Time::Now() < next_attempt_time_after_crash_) {
     return OnDeviceModelEligibilityReason::kTooManyRecentCrashes;
   }
-  if (pref_service_->GetInteger(kOnDeviceModelTimeoutCount) >=
-      features::GetOnDeviceModelTimeoutCountBeforeDisable()) {
-    return OnDeviceModelEligibilityReason::kTooManyRecentTimeouts;
-  }
   if (features::IsOnDeviceModelValidationEnabled() &&
       features::ShouldOnDeviceModelBlockOnValidationFailure()) {
     ValidationState state = GetValidationState();
@@ -90,7 +96,6 @@ OnDeviceModelAccessController::ShouldStartNewSession() const {
 
 void OnDeviceModelAccessController::OnResponseCompleted() {
   pref_service_->SetInteger(kOnDeviceModelCrashCount, 0);
-  pref_service_->SetInteger(kOnDeviceModelTimeoutCount, 0);
   next_attempt_time_after_crash_ = base::Time::Now();
 }
 
@@ -99,26 +104,14 @@ void OnDeviceModelAccessController::OnDisconnectedFromRemote() {
   pref_service_->SetInteger(kOnDeviceModelCrashCount, crash_count);
   // If the model will be disabled because of crash count, use exponential
   // backoff to re-enable.
-  int crash_diff =
-      crash_count - features::GetOnDeviceModelCrashCountBeforeDisable();
-  if (crash_diff >= 0) {
-    int scale_factor = pow(2, crash_diff);
-    next_attempt_time_after_crash_ =
-        base::Time::Now() +
-        std::min(
-            features::GetOnDeviceModelMaxCrashBackoffTime(),
-            scale_factor * features::GetOnDeviceModelCrashBackoffBaseTime());
-  }
+  next_attempt_time_after_crash_ = GetNextAttemptAfterBackoff(
+      crash_count, features::GetOnDeviceModelCrashCountBeforeDisable(),
+      features::GetOnDeviceModelCrashBackoffBaseTime(),
+      features::GetOnDeviceModelMaxCrashBackoffTime());
 }
 
 void OnDeviceModelAccessController::OnGpuBlocked() {
   is_gpu_blocked_ = true;
-}
-
-void OnDeviceModelAccessController::OnSessionTimedOut() {
-  pref_service_->SetInteger(
-      kOnDeviceModelTimeoutCount,
-      pref_service_->GetInteger(kOnDeviceModelTimeoutCount) + 1);
 }
 
 bool OnDeviceModelAccessController::ShouldValidateModel(

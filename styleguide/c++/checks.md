@@ -1,11 +1,15 @@
 # CHECK(), DCHECK() and NOTREACHED()
 
 `CHECK()`, `DCHECK()` and `NOTREACHED()` are all used to ensure that invariants
-hold.  They document (and verify) programmer expectations that either some
+hold. They document (and verify) programmer expectations that either some
 statement *always* holds true at the point of `(D)CHECK`ing or that a piece of
-code is unreachable. They should not be used to validate data that is provided
-by end-users or website developers. Such data is untrusted, and must be
-validated by standard control flow.
+code is unreachable (for `NOTREACHED`). `CHECK` failures and reachable
+`NOTREACHED`s result in an application crash (generating a crash report).
+`DCHECK`s are only evaluated on developer builds, test infrastructure and a
+minuscule in-the-wild population that does not currently represent all
+platforms. None of these should be used to validate data that is provided by
+end-users or website developers. Such data is untrusted, and must be validated
+by standard control flow.
 
 An invariant that does not hold should be seen as Undefined Behavior, and
 continuing past it puts the program into an unexpected state. This applies in
@@ -184,6 +188,40 @@ problem rather than resolving it. In rare exceptions you could use
 `DUMP_WILL_BE_CHECK()` macros for similar semantics (report on failure) without
 timeline expectations, though in this case you must also handle failure as best
 you can as failures are known to happen.
+
+## Non-fatal crash reporting
+
+For non-invariant situations we'd like to be notified about, such as an OS API
+returning undocumented or unexpected values, we'd like to collect enough
+information to diagnose what's going on. Here non-fatal crash reporting can be
+done with `base::debug::DumpWithoutCrashing()`. Using crash keys is helpful for
+gathering enough information to take action. When doing so, provide enough
+context (such as a link to a bug) to explain why the information is being
+collected and actions to take when it fires.
+
+Note that this should only be used in cases where crash dumping yields something
+actionable and should not be kept dumping indefinitely. Crash dumping causes
+jank and is rate limited which hides (throttles) other crash reporting. As a
+`DumpWithoutCrashing()` starts firing, it should be made to stop firing. Either
+remove it if this was part of a one-off investigation (and we have enough data)
+or update the code to make sure it no longer generates reports (for instance,
+handle a new OS API result). In either case consider merging to release branches
+to avoid generating a large number of crash reports.
+
+As an illustrative example here's a snippet that notifies us of unexpected OS
+API results and the last reported error from WaitableEvent on Windows. When this
+hits we want to update surrounding code to handle the new return code or prevent
+it from happening. If we're generating a concerning number of crash reports we
+should also decide whether to merge a fix to release branches or remove
+`base::debug::DumpWithoutCrashing();` on branch to prevent excessive flooding.
+
+```c++
+NOINLINE void ReportInvalidWaitableEventResult(DWORD result) {
+  SCOPED_CRASH_KEY_NUMBER("WaitableEvent", "result", result);
+  SCOPED_CRASH_KEY_NUMBER("WaitableEvent", "last_error", ::GetLastError());
+  base::debug::DumpWithoutCrashing();  // https://crbug.com/1478972.
+}
+```
 
 ## Alternatives in tests
 

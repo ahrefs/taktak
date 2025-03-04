@@ -19,7 +19,7 @@
 #include "ash/app_list/test/app_list_test_helper.h"
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_pref_names.h"
-#include "ash/focus_cycler.h"
+#include "ash/focus/focus_cycler.h"
 #include "ash/frame_throttler/frame_throttling_controller.h"
 #include "ash/frame_throttler/mock_frame_throttling_observer.h"
 #include "ash/multi_user/multi_user_window_manager_impl.h"
@@ -38,7 +38,6 @@
 #include "ash/style/tab_slider_button.h"
 #include "ash/system/unified/unified_system_tray.h"
 #include "ash/test/ash_test_base.h"
-#include "ash/test/raster_scale_change_tracker.h"
 #include "ash/test_shell_delegate.h"
 #include "ash/wm/desks/desk.h"
 #include "ash/wm/desks/desks_controller.h"
@@ -1799,31 +1798,6 @@ TEST_F(WindowCycleControllerTest, ArrowKeyBeforeCycleViewUI) {
   CompleteCycling(controller);
 }
 
-// Tests that raster scale is not set for alt-tab on visible windows.
-TEST_F(WindowCycleControllerTest, RasterScaleNotSetForVisibleWindows) {
-  WindowCycleController* controller = Shell::Get()->window_cycle_controller();
-
-  std::unique_ptr<Window> window0(CreateAppWindow(gfx::Rect(600, 600)));
-  std::unique_ptr<Window> window1(CreateAppWindow(gfx::Rect(600, 600)));
-  wm::ActivateWindow(window0.get());
-
-  auto tracker0 = RasterScaleChangeTracker(window0.get());
-  auto tracker1 = RasterScaleChangeTracker(window1.get());
-
-  // Simulate pressing and releasing Alt-tab.
-  EXPECT_TRUE(wm::IsActiveWindow(window0.get()));
-  controller->HandleCycleWindow(
-      WindowCycleController::WindowCyclingDirection::kForward);
-
-  EXPECT_EQ(std::vector<float>{}, tracker0.TakeRasterScaleChanges());
-  EXPECT_EQ(std::vector<float>{}, tracker1.TakeRasterScaleChanges());
-
-  CompleteCycling(controller);
-
-  EXPECT_EQ(std::vector<float>{}, tracker0.TakeRasterScaleChanges());
-  EXPECT_EQ(std::vector<float>{}, tracker1.TakeRasterScaleChanges());
-}
-
 // Tests the UAF issue reported in https://crbug.com/1350558. `OnFlingStep()`
 // triggers layout, which may trigger an `OnFlingEnd()` where the
 // `WmFlingHandler` is destroyed while still in the middle of its
@@ -3216,8 +3190,6 @@ class MultiUserWindowCycleControllerTest
   MultiUserWindowManager* multi_user_window_manager() {
     return multi_user_window_manager_.get();
   }
-  TestingPrefServiceSimple* user_1_prefs() { return user_1_prefs_; }
-  TestingPrefServiceSimple* user_2_prefs() { return user_2_prefs_; }
 
   void SetUp() override {
     NoSessionAshTestBase::SetUp();
@@ -3233,26 +3205,10 @@ class MultiUserWindowCycleControllerTest
         GetSessionControllerClient();
     session_controller->Reset();
 
-    // Inject our own PrefServices for each user which enables us to setup the
-    // desks restore data before the user signs in.
-    auto user_1_prefs = std::make_unique<TestingPrefServiceSimple>();
-    user_1_prefs_ = user_1_prefs.get();
-    RegisterUserProfilePrefs(user_1_prefs_->registry(), /*country=*/"",
-                             /*for_test=*/true);
-    auto user_2_prefs = std::make_unique<TestingPrefServiceSimple>();
-    user_2_prefs_ = user_2_prefs.get();
-    RegisterUserProfilePrefs(user_2_prefs_->registry(), /*country=*/"",
-                             /*for_test=*/true);
     session_controller->AddUserSession(kUser1Email,
-                                       user_manager::UserType::kRegular,
-                                       /*provide_pref_service=*/false);
-    session_controller->SetUserPrefService(GetUser1AccountId(),
-                                           std::move(user_1_prefs));
+                                       user_manager::UserType::kRegular);
     session_controller->AddUserSession(kUser2Email,
-                                       user_manager::UserType::kRegular,
-                                       /*provide_pref_service=*/false);
-    session_controller->SetUserPrefService(GetUser2AccountId(),
-                                           std::move(user_2_prefs));
+                                       user_manager::UserType::kRegular);
   }
 
   void TearDown() override {
@@ -3355,9 +3311,6 @@ class MultiUserWindowCycleControllerTest
   std::unique_ptr<ShelfViewTestAPI> shelf_view_test_;
 
   std::unique_ptr<MultiUserWindowManager> multi_user_window_manager_;
-
-  raw_ptr<TestingPrefServiceSimple, DanglingUntriaged> user_1_prefs_ = nullptr;
-  raw_ptr<TestingPrefServiceSimple, DanglingUntriaged> user_2_prefs_ = nullptr;
 };
 
 // Tests that when the active user prefs' |prefs::kAltTabPerDesk| is updated,

@@ -78,9 +78,12 @@ const char kEarlyBootTestSeed_Signature[] =
 
 const char* kEarlyBootTestSeed_StudyNames[] = {"EarlyBootStudy"};
 
-const SignedSeedData kEarlyBootTestData{
-    kEarlyBootTestSeed_StudyNames, kEarlyBootTestSeed_Uncompressed,
-    kEarlyBootTestSeed_Compressed, kEarlyBootTestSeed_Signature};
+const SignedSeedData kEarlyBootTestData{kEarlyBootTestSeed_StudyNames,
+                                        kEarlyBootTestSeed_Uncompressed,
+                                        kEarlyBootTestSeed_Compressed,
+                                        kEarlyBootTestSeed_Signature,
+                                        /*in_compressed_data=*/{},
+                                        /*in_compressed_data_size=*/0};
 
 // Create mock testing config equivalent to:
 // {
@@ -162,7 +165,11 @@ std::unique_ptr<ClientFilterableState> GetBasicClientFilterableState() {
   metrics::MetricsService::RegisterPrefs(prefs.registry());
   ::variations::VariationsService::RegisterPrefs(prefs.registry());
   std::unique_ptr<CrOSVariationsFieldTrialCreator> creator =
-      GetFieldTrialCreator(&prefs, &client, /*safe_seed_details=*/std::nullopt);
+      GetFieldTrialCreator(
+          &prefs, &client, /*safe_seed_details=*/std::nullopt,
+          std::make_unique<const MockEntropyProviders>(
+              MockEntropyProviders::Results{.low_entropy = kAlwaysUseLastGroup})
+              .get());
 
   return creator->GetClientFilterableStateForVersion(
       version_info::GetVersion());
@@ -235,15 +242,20 @@ std::unique_ptr<CrOSVariationsFieldTrialCreator>
 CreateTestCrOSVariationsFieldTrialCreator(
     PrefService* local_state,
     CrosVariationsServiceClient* client,
-    const std::optional<featured::SeedDetails>& safe_seed_details) {
+    const std::optional<featured::SeedDetails>& safe_seed_details,
+    const variations::EntropyProviders* entropy_providers) {
   // This argument is not needed. It is only included for compatibility with the
   // non-test signature.
   (void)safe_seed_details;
 
-  auto safe_seed =
-      std::make_unique<VariationsSafeSeedStoreLocalState>(local_state);
-  auto seed_store =
-      std::make_unique<VariationsSeedStore>(local_state, std::move(safe_seed));
+  auto safe_seed = std::make_unique<VariationsSafeSeedStoreLocalState>(
+      local_state, client->GetVariationsSeedFileDir(),
+      client->GetChannelForVariations(), entropy_providers);
+  auto seed_store = std::make_unique<VariationsSeedStore>(
+      local_state, /*initial_seed=*/nullptr,
+      /*signature_verification_enabled=*/true, std::move(safe_seed),
+      client->GetChannelForVariations(), client->GetVariationsSeedFileDir(),
+      entropy_providers);
   return std::make_unique<TestCrOSVariationsFieldTrialCreator>(
       client, std::move(seed_store));
 }

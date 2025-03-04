@@ -108,7 +108,7 @@ public class MerchantTrustMetrics {
     public void recordMetricsForMessageCleared(@MessageClearReason int clearReason) {
         finishMessagePreparedTimer();
         RecordHistogram.recordEnumeratedHistogram(
-                "MerchantTrust.Message.ClearReason", clearReason, MessageClearReason.MAX_VALUE + 1);
+                "MerchantTrust.Message.ClearReason", clearReason, MessageClearReason.MAX_VALUE);
         resetMessageMetrics();
     }
 
@@ -210,7 +210,7 @@ public class MerchantTrustMetrics {
         RecordHistogram.recordEnumeratedHistogram(
                 "MerchantTrust.BottomSheet.CloseReason",
                 stateChangeReason,
-                StateChangeReason.MAX_VALUE + 1);
+                StateChangeReason.MAX_VALUE);
         resetBottomSheetMetrics();
     }
 
@@ -301,7 +301,7 @@ public class MerchantTrustMetrics {
         RecordHistogram.recordEnumeratedHistogram(
                 "MerchantTrust.BottomSheet.OpenSource",
                 source,
-                BottomSheetOpenedSource.MAX_VALUE + 1);
+                BottomSheetOpenedSource.MAX_VALUE);
     }
 
     /** Start recording message impact on user browsing time and navigation times. */
@@ -405,8 +405,7 @@ public class MerchantTrustMetrics {
     private void recordBooleanUkm(
             @Nullable WebContents webContents, String eventName, String metricsName) {
         if (webContents != null) {
-            new UkmRecorder.Bridge()
-                    .recordEventWithBooleanMetric(webContents, eventName, metricsName);
+            new UkmRecorder(webContents, eventName).addBooleanMetric(metricsName).record();
         }
     }
 }

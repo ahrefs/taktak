@@ -4,6 +4,7 @@
 
 #include "headless/lib/browser/headless_content_browser_client.h"
 
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -31,6 +32,7 @@
 #include "content/public/browser/storage_partition.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/content_switches.h"
+#include "headless/lib/browser/headless_bluetooth_delegate.h"
 #include "headless/lib/browser/headless_browser_context_impl.h"
 #include "headless/lib/browser/headless_browser_impl.h"
 #include "headless/lib/browser/headless_browser_main_parts.h"
@@ -107,6 +109,10 @@ class HeadlessVideoOverlayWindow : public content::VideoOverlayWindow {
   void SetHangUpButtonVisibility(bool is_visible) override {}
   void SetNextSlideButtonVisibility(bool is_visible) override {}
   void SetPreviousSlideButtonVisibility(bool is_visible) override {}
+  void SetMediaPosition(const media_session::MediaPosition&) override {}
+  void SetSourceTitle(const std::u16string& source_title) override {}
+  void SetFaviconImages(
+      const std::vector<media_session::MediaImage>& images) override {}
 
   void SetSurfaceId(const viz::SurfaceId& surface_id) override {}
 
@@ -154,10 +160,17 @@ HeadlessContentBrowserClient::CreateBrowserMainParts(
   return std::make_unique<HeadlessBrowserMainParts>(*browser_);
 }
 
-void HeadlessContentBrowserClient::OverrideWebkitPrefs(
+void HeadlessContentBrowserClient::OverrideWebPreferences(
     content::WebContents* web_contents,
+    content::SiteInstance& main_frame_site,
     blink::web_pref::WebPreferences* prefs) {
   prefs->lazy_load_enabled = browser_->options()->lazy_load_enabled;
+
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          ::switches::kForceHighContrast)) {
+    prefs->in_forced_colors = true;
+    prefs->preferred_contrast = blink::mojom::PreferredContrast::kMore;
+  }
 }
 
 void HeadlessContentBrowserClient::RegisterBrowserInterfaceBindersForFrame(
@@ -313,11 +326,9 @@ base::OnceClosure HeadlessContentBrowserClient::SelectClientCertificate(
 }
 
 bool HeadlessContentBrowserClient::ShouldEnableStrictSiteIsolation() {
-  // TODO(lukasza): https://crbug.com/869494: Instead of overriding
-  // ShouldEnableStrictSiteIsolation, //headless should inherit the default
-  // site-per-process setting from //content - this way tools (tests, but also
-  // production cases like screenshot or pdf generation) based on //headless
-  // will use a mode that is actually shipping in Chrome.
+  // Use --site-per-process as the only source of truth for enabling site
+  // isolation, see SiteIsolationPolicy::UseDedicatedProcessesForAllSites()
+  // in content/public/browser/site_isolation_policy.cc.
   return false;
 }
 
@@ -360,6 +371,26 @@ bool HeadlessContentBrowserClient::IsSharedStorageSelectURLAllowed(
     const url::Origin& accessing_origin,
     std::string* out_debug_message,
     bool* out_block_is_site_setting_specific) {
+  return true;
+}
+
+bool HeadlessContentBrowserClient::IsFencedStorageReadAllowed(
+    content::BrowserContext* browser_context,
+    content::RenderFrameHost* rfh,
+    const url::Origin& top_frame_origin,
+    const url::Origin& accessing_origin) {
+  return true;
+}
+
+bool HeadlessContentBrowserClient::IsCookieDeprecationLabelAllowed(
+    content::BrowserContext* browser_context) {
+  return true;
+}
+
+bool HeadlessContentBrowserClient::IsCookieDeprecationLabelAllowedForContext(
+    content::BrowserContext* browser_context,
+    const url::Origin& top_frame_origin,
+    const url::Origin& context_origin) {
   return true;
 }
 
@@ -500,6 +531,14 @@ void HeadlessContentBrowserClient::SetEncryptionKey(
     network_service->SetEncryptionKey(OSCrypt::GetRawEncryptionKey());
   }
 #endif
+}
+
+content::BluetoothDelegate*
+HeadlessContentBrowserClient::GetBluetoothDelegate() {
+  if (!bluetooth_delegate_) {
+    bluetooth_delegate_ = std::make_unique<HeadlessBluetoothDelegate>();
+  }
+  return bluetooth_delegate_.get();
 }
 
 }  // namespace headless

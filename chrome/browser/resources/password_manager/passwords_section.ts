@@ -3,9 +3,8 @@
 // found in the LICENSE file.
 import 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import 'chrome://resources/polymer/v3_0/iron-list/iron-list.js';
-import 'chrome://resources/polymer/v3_0/iron-flex-layout/iron-flex-layout-classes.js';
 import 'chrome://resources/cr_elements/cr_shared_style.css.js';
-import './strings.m.js';
+import '/strings.m.js';
 import './password_list_item.js';
 import './dialogs/add_password_dialog.js';
 import './dialogs/auth_timed_out_dialog.js';
@@ -313,7 +312,7 @@ export class PasswordsSectionElement extends PasswordsSectionElementBase {
     const importLink = this.$.importPasswords.querySelector('a');
     // Add an event listener to the import link, points to the import flow.
     assert(importLink);
-    importLink!.addEventListener('click', (event: Event) => {
+    importLink.addEventListener('click', (event: Event) => {
       // The action is triggered from a dummy anchor element poining to "#".
       // For that case preventing the default behaviour is required here.
       event.preventDefault();

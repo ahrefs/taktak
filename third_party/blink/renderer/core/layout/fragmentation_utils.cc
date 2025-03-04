@@ -14,6 +14,7 @@
 #include "third_party/blink/renderer/core/layout/length_utils.h"
 #include "third_party/blink/renderer/core/layout/logical_box_fragment.h"
 #include "third_party/blink/renderer/core/layout/physical_box_fragment.h"
+#include "third_party/blink/renderer/core/layout/space_utils.h"
 #include "third_party/blink/renderer/core/style/computed_style.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 
@@ -37,8 +38,7 @@ inline int FragmentainerBreakPrecedence(EBreakBetween break_value) {
 
   switch (break_value) {
     default:
-      NOTREACHED_IN_MIGRATION();
-      [[fallthrough]];
+      NOTREACHED();
     case EBreakBetween::kAuto:
       return 0;
     case EBreakBetween::kAvoidColumn:
@@ -1389,7 +1389,8 @@ ConstraintSpace CreateConstraintSpaceForFragmentainer(
     LogicalSize fragmentainer_size,
     LogicalSize percentage_resolution_size,
     bool balance_columns,
-    BreakAppeal min_break_appeal) {
+    BreakAppeal min_break_appeal,
+    const BoxFragmentBuilder* container_builder) {
   ConstraintSpaceBuilder space_builder(
       parent_space, parent_space.GetWritingDirection(), /* is_new_fc */ true);
   space_builder.SetAvailableSize(fragmentainer_size);
@@ -1409,6 +1410,10 @@ ConstraintSpace CreateConstraintSpaceForFragmentainer(
   space_builder.SetMinBreakAppeal(min_break_appeal);
   space_builder.SetBaselineAlgorithmType(
       parent_space.GetBaselineAlgorithmType());
+
+  if (container_builder && container_builder->ShouldTextBoxTrim()) {
+    SetTextBoxTrimOnChildSpaceBuilder(*container_builder, &space_builder);
+  }
 
   return space_builder.ToConstraintSpace();
 }
@@ -1510,8 +1515,7 @@ wtf_size_t PreviousInnerFragmentainerIndex(
     }
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return idx;
+  NOTREACHED();
 }
 
 PhysicalOffset OffsetInStitchedFragments(
@@ -1585,6 +1589,10 @@ LayoutUnit BlockSizeForFragmentation(
     LogicalSize logical_size =
         result.GetPhysicalFragment().Size().ConvertToLogical(writing_mode);
     block_size = logical_size.block_size;
+
+    // Then remove any block-end trimming, since it shouldn't take up space in
+    // ancestry layout.
+    block_size -= result.TrimBlockEndBy().value_or(LayoutUnit());
   }
 
   // Ruby annotations do not take up space in the line box, so we need this to

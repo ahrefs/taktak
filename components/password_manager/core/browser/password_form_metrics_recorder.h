@@ -224,7 +224,9 @@ class PasswordFormMetricsRecorder
     // A credential with a different domain was grouped with the current domain
     // by the `AffiliationService`.
     kGroupedMatch = 13,
-    kMaxValue = kGroupedMatch,
+    // A form on a page is a single username form.
+    kSingleUsernameForm = 14,
+    kMaxValue = kSingleUsernameForm,
   };
 
   // Used in UMA histogram, please do NOT reorder.
@@ -291,7 +293,9 @@ class PasswordFormMetricsRecorder
     // No credentials exist and the user has ignored the save bubble too often,
     // meaning that they won't be asked to save credentials anymore.
     kNoSavedCredentialsAndBlocklistedBySmartBubble = 8,
-    kMaxValue = kNoSavedCredentialsAndBlocklistedBySmartBubble,
+    // Whether the user used manual fallback to fill a form.
+    kManualFallbackUsed = 9,
+    kMaxValue = kManualFallbackUsed,
   };
 
   // These values are persisted to logs. Entries should not be renumbered and
@@ -319,7 +323,9 @@ class PasswordFormMetricsRecorder
     kNoSavedCredentialsAndBlocklistedBySmartBubble = 6,
     // Neither user input nor filling.
     kNoUserInputNoFillingOfUsername = 7,
-    kMaxValue = kNoUserInputNoFillingOfUsername,
+    // Whether the user used manual fallback to fill a form.
+    kManualFallbackUsed = 8,
+    kMaxValue = kManualFallbackUsed,
   };
 
   // Records which store(s) a filled password came from.
@@ -468,6 +474,10 @@ class PasswordFormMetricsRecorder
   void RecordFirstWaitForUsernameReason(WaitForUsernameReason reason);
   void RecordMatchedFormType(const PasswordForm& form);
   void RecordPotentialPreferredMatch(std::optional<MatchedFormType> form_type);
+
+  // Records whether there was at least one grouped match in fill suggestions.
+  void RecordFillSuggestionHasGroupedMatch(
+      base::span<const PasswordForm> best_matches);
 
   // Calculates FillingAssistance metrics for |submitted_form|.
   void CalculateFillingAssistanceMetric(
@@ -644,9 +654,11 @@ class PasswordFormMetricsRecorder
 
   bool recorded_wait_for_username_reason_ = false;
 
-  bool recorded_preferred_matched_password_type = false;
+  bool recorded_preferred_matched_password_type_ = false;
 
-  bool recorded_potential_preferred_matched_password_type = false;
+  bool recorded_potential_preferred_matched_password_type_ = false;
+
+  bool recorded_fill_suggestion_has_grouped_match_ = false;
 
   absl::variant<absl::monostate,
                 FillingAssistance,

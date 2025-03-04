@@ -22,13 +22,14 @@ class ProductSpecificationsTest : public WebUIMochaBrowserTest {
  protected:
   ProductSpecificationsTest()
       : prefs_(std::make_unique<TestingPrefServiceSimple>()),
-        account_checker_(std::make_unique<commerce::MockAccountChecker>()) {
+        account_checker_(std::make_unique<
+                         testing::NiceMock<commerce::MockAccountChecker>>()) {
     account_checker_->SetCountry("US");
     account_checker_->SetLocale("en-us");
     account_checker_->SetSignedIn(true);
     account_checker_->SetPrefs(prefs_.get());
 
-    commerce::RegisterCommercePrefs(prefs_->registry());
+    commerce::MockAccountChecker::RegisterCommercePrefs(prefs_->registry());
     commerce::SetTabCompareEnterprisePolicyPref(prefs_.get(), 0);
 
     set_test_loader_host(commerce::kChromeUICompareHost);
@@ -69,13 +70,22 @@ class ProductSpecificationsTest : public WebUIMochaBrowserTest {
   base::WeakPtrFactory<ProductSpecificationsTest> weak_ptr_factory_{this};
 };
 
-// TODO(crbug.com/364441518): Flaky on all platforms.
-IN_PROC_BROWSER_TEST_F(ProductSpecificationsTest, DISABLED_App) {
+IN_PROC_BROWSER_TEST_F(ProductSpecificationsTest, App) {
   RunTest("commerce/product_specifications/app_test.js", "mocha.run()");
 }
 
 IN_PROC_BROWSER_TEST_F(ProductSpecificationsTest, BuyingOptionsSection) {
   RunTest("commerce/product_specifications/buying_options_section_test.js",
+          "mocha.run()");
+}
+
+IN_PROC_BROWSER_TEST_F(ProductSpecificationsTest, ComparisonTableList) {
+  RunTest("commerce/product_specifications/comparison_table_list_test.js",
+          "mocha.run()");
+}
+
+IN_PROC_BROWSER_TEST_F(ProductSpecificationsTest, ComparisonTableListItem) {
+  RunTest("commerce/product_specifications/comparison_table_list_item_test.js",
           "mocha.run()");
 }
 
@@ -89,7 +99,13 @@ IN_PROC_BROWSER_TEST_F(ProductSpecificationsTest, DescriptionSection) {
           "mocha.run()");
 }
 
-IN_PROC_BROWSER_TEST_F(ProductSpecificationsTest, DisclosureApp) {
+// TODO(https://crbug.com/374855688): Fix flaky timeout on Mac.
+#if BUILDFLAG(IS_MAC)
+#define MAYBE_DisclosureApp DISABLED_DisclosureApp
+#else
+#define MAYBE_DisclosureApp DisclosureApp
+#endif
+IN_PROC_BROWSER_TEST_F(ProductSpecificationsTest, MAYBE_DisclosureApp) {
   RunTest("commerce/product_specifications/disclosure_app_test.js",
           "mocha.run()");
 }

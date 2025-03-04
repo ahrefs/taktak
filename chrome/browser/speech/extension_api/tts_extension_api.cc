@@ -32,11 +32,6 @@
 #include "chrome/common/extensions/extension_constants.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-#include "chrome/browser/profiles/profile_manager.h"
-#include "chrome/browser/speech/tts_client_lacros.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-
 namespace constants = tts_extension_api_constants;
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -88,8 +83,7 @@ const char* TtsEventTypeToString(content::TtsEventType event_type) {
     case content::TTS_EVENT_RESUME:
       return constants::kEventTypeResume;
     default:
-      NOTREACHED_IN_MIGRATION();
-      return constants::kEventTypeError;
+      NOTREACHED();
   }
 }
 
@@ -115,8 +109,7 @@ content::TtsEventType TtsEventTypeFromString(const std::string& str) {
   if (str == constants::kEventTypeResume)
     return content::TTS_EVENT_RESUME;
 
-  NOTREACHED_IN_MIGRATION();
-  return content::TTS_EVENT_ERROR;
+  NOTREACHED();
 }
 
 namespace extensions {
@@ -361,27 +354,6 @@ void TtsIsSpeakingFunction::OnIsSpeakingComplete(bool speaking) {
 }
 
 ExtensionFunction::ResponseAction TtsIsSpeakingFunction::Run() {
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  // Lacros tts support is behind an ash feature flag and pushed to Lacros via
-  // crosapi. The feature flag is disabled by default and can not be turned on
-  // in ash from lacros browser test. To enable lacros tts support for lacros
-  // browser test, we have to use a workaround to enable it for testing.
-  // TtsPlatformImplLacros::PlatformImplSupported() returns true if lacros
-  // tts support is enabled either by ash feature flag or by testing workaround.
-  // TODO(crbug.com/40259646): Remove the workaround for enable lacros tts
-  // support for testing and call
-  // tts_crosapi_util::ShouldEnableLacrosTtsSupport() instead.
-  if (content::TtsPlatform::GetInstance()->PlatformImplSupported()) {
-    content::BrowserContext* browser_context =
-        ProfileManager::GetPrimaryUserProfile();
-    TtsClientLacros::GetForBrowserContext(browser_context)
-        ->IsSpeaking(
-            base::BindOnce(&TtsIsSpeakingFunction::OnIsSpeakingComplete, this));
-
-    return RespondLater();
-  }
-#endif
-
   return RespondNow(
       WithArguments(content::TtsController::GetInstance()->IsSpeaking()));
 }
@@ -421,6 +393,7 @@ TtsAPI::TtsAPI(content::BrowserContext* context) {
   registry.RegisterFunction<ExtensionTtsEngineUpdateVoicesFunction>();
   registry.RegisterFunction<ExtensionTtsEngineSendTtsEventFunction>();
   registry.RegisterFunction<ExtensionTtsEngineSendTtsAudioFunction>();
+  registry.RegisterFunction<ExtensionTtsEngineUpdateLanguageFunction>();
   registry.RegisterFunction<TtsGetVoicesFunction>();
   registry.RegisterFunction<TtsIsSpeakingFunction>();
   registry.RegisterFunction<TtsSpeakFunction>();

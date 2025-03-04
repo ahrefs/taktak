@@ -11,7 +11,8 @@
 
 namespace cc {
 
-const int TaskGraphRunnerTestBase::kNamespaceCount;
+TaskGraphRunnerTestBase::TaskGraphRunnerTestBase() = default;
+TaskGraphRunnerTestBase::~TaskGraphRunnerTestBase() = default;
 
 void TaskGraphRunnerTestBase::SetTaskGraphRunner(
     TaskGraphRunner* task_graph_runner) {
@@ -34,6 +35,18 @@ void TaskGraphRunnerTestBase::RunAllTasks(int namespace_index) {
        it != completed_tasks.end(); ++it) {
     FakeTaskImpl* task = static_cast<FakeTaskImpl*>(it->get());
     task->OnTaskCompleted();
+  }
+}
+
+void TaskGraphRunnerTestBase::RunUntilIdle() {
+  task_graph_runner_->RunTasksUntilIdleForTest();
+
+  for (const NamespaceToken& token : namespace_token_) {
+    Task::Vector completed_tasks;
+    task_graph_runner_->CollectCompletedTasks(token, &completed_tasks);
+    for (scoped_refptr<Task>& task : completed_tasks) {
+      static_cast<FakeTaskImpl*>(task.get())->OnTaskCompleted();
+    }
   }
 }
 
@@ -68,8 +81,9 @@ void TaskGraphRunnerTestBase::ScheduleTasks(
   for (auto it = tasks.begin(); it != tasks.end(); ++it) {
     scoped_refptr<FakeTaskImpl> new_task(
         new FakeTaskImpl(this, it->namespace_index, it->id));
-    new_graph.nodes.push_back(
-        TaskGraph::Node(new_task.get(), it->category, it->priority, 0u));
+    new_graph.nodes.emplace_back(new_task.get(), it->category, it->priority,
+                                 it->has_external_dependency ? 1u : 0u,
+                                 it->has_external_dependency);
     for (unsigned i = 0; i < it->dependent_count; ++i) {
       scoped_refptr<FakeDependentTaskImpl> new_dependent_task(
           new FakeDependentTaskImpl(this, it->namespace_index,
@@ -90,6 +104,13 @@ void TaskGraphRunnerTestBase::ScheduleTasks(
 
   dependents_[namespace_index].swap(new_dependents);
   tasks_[namespace_index].swap(new_tasks);
+}
+
+void TaskGraphRunnerTestBase::ExternalDependencyCompletedForTask(
+    int namespace_index,
+    int task_index) {
+  task_graph_runner_->ExternalDependencyCompletedForTask(
+      namespace_token_[namespace_index], tasks_[namespace_index][task_index]);
 }
 
 void TaskGraphRunnerTestBase::FakeTaskImpl::RunOnWorkerThread() {

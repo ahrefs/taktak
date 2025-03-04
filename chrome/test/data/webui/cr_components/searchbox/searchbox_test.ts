@@ -111,7 +111,7 @@ suite('NewTabPageRealboxTest', () => {
     });
   });
 
-  setup(async () => {
+  setup(() => {
     document.body.innerHTML = window.trustedTypes!.emptyHTML;
 
     // Set up Realbox's browser proxy.
@@ -220,7 +220,7 @@ suite('NewTabPageRealboxTest', () => {
     await whenOpenVoiceSearch;
   });
 
-  test('realbox default loupe icon', async () => {
+  test('realbox default loupe icon', () => {
     // Arrange.
     loadTimeData.overrideValues({
       searchboxDefaultIcon: 'search.svg',
@@ -233,7 +233,7 @@ suite('NewTabPageRealboxTest', () => {
     assertIconMaskImageUrl(realbox.$.icon, 'search.svg');
   });
 
-  test('realbox default Google G icon', async () => {
+  test('realbox default Google G icon', () => {
     // Arrange.
     loadTimeData.overrideValues({
       searchboxDefaultIcon:
@@ -531,13 +531,13 @@ suite('NewTabPageRealboxTest', () => {
     assertEquals(1, testProxy.handler.getCallCount('queryAutocomplete'));
   });
 
-  test('empty input does not query autocomplete', async () => {
+  test('empty input does not query autocomplete', () => {
     realbox.$.input.value = '';
     realbox.$.input.dispatchEvent(new InputEvent('input'));
     assertEquals(0, testProxy.handler.getCallCount('queryAutocomplete'));
   });
 
-  test('typing space does not query autocomplete', async () => {
+  test('typing space does not query autocomplete', () => {
     realbox.$.input.value = ' ';
     realbox.$.input.dispatchEvent(new InputEvent('input'));
     assertEquals(0, testProxy.handler.getCallCount('queryAutocomplete'));
@@ -806,8 +806,8 @@ suite('NewTabPageRealboxTest', () => {
     assertTrue(await areMatchesShowing());
 
     assertEquals('hello', realbox.$.input.value);
-    const start = realbox.$.input.selectionStart!;
-    const end = realbox.$.input.selectionEnd!;
+    const start = realbox.$.input.selectionStart;
+    const end = realbox.$.input.selectionEnd;
     assertEquals('hell', realbox.$.input.value.substring(start, end));
   });
 
@@ -873,11 +873,66 @@ suite('NewTabPageRealboxTest', () => {
     assertEquals(2, matchEls.length);
   });
 
+  test('autocomplete should not query for empty inputs', async () => {
+    realbox.$.input.value = 'he';
+    realbox.$.input.dispatchEvent(new InputEvent('input'));
+
+    await testProxy.handler.whenCalled('queryAutocomplete');
+    assertEquals(1, testProxy.handler.getCallCount('queryAutocomplete'));
+
+    // Deleting a character still queries autocomplete.
+    realbox.$.input.value = 'h';
+    realbox.$.input.dispatchEvent(new InputEvent('input'));
+
+    await testProxy.handler.whenCalled('queryAutocomplete');
+    assertEquals(2, testProxy.handler.getCallCount('queryAutocomplete'));
+
+    // Deleting a character does not query autocomplete for empty input.
+    realbox.$.input.value = '';
+    realbox.$.input.dispatchEvent(new InputEvent('input'));
+    assertEquals(2, testProxy.handler.getCallCount('queryAutocomplete'));
+  });
+
+  test('query autocomplete for empty inputs when enabled', async () => {
+    // Arrange.
+    loadTimeData.overrideValues({
+      queryAutocompleteOnEmptyInput: true,
+    });
+    document.body.innerHTML = window.trustedTypes!.emptyHTML;
+    realbox = document.createElement('cr-searchbox');
+    document.body.appendChild(realbox);
+    await waitAfterNextRender(realbox);
+
+    realbox.$.input.value = 'he';
+    realbox.$.input.dispatchEvent(new InputEvent('input'));
+
+    await testProxy.handler.whenCalled('queryAutocomplete');
+    assertEquals(1, testProxy.handler.getCallCount('queryAutocomplete'));
+
+    // Deleting a character queries autocomplete for non-empty input.
+    realbox.$.input.value = 'h';
+    realbox.$.input.dispatchEvent(new InputEvent('input'));
+
+    await testProxy.handler.whenCalled('queryAutocomplete');
+    assertEquals(2, testProxy.handler.getCallCount('queryAutocomplete'));
+
+    // Deleting a character still queries autocomplete for empty input in lens
+    // searchboxes.
+    realbox.$.input.value = '';
+    realbox.$.input.dispatchEvent(new InputEvent('input'));
+    await testProxy.handler.whenCalled('queryAutocomplete');
+    assertEquals(3, testProxy.handler.getCallCount('queryAutocomplete'));
+    // Restore.
+    loadTimeData.overrideValues({
+      queryAutocompleteOnEmptyInput: false,
+    });
+  });
+
   //============================================================================
   // Test Cut/Copy
   //============================================================================
 
-  test('Copying or cutting empty input fails', async () => {
+  test('Copying or cutting empty input fails', () => {
     realbox.$.input.value = '';
 
     const copyEvent = createClipboardEvent('copy');
@@ -2110,6 +2165,7 @@ suite('NewTabPageRealboxTest', () => {
     // Restore.
     loadTimeData.overrideValues({
       searchboxDefaultIcon: 'search.svg',
+      isLensSearchbox: false,
     });
   });
 

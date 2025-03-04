@@ -10,7 +10,6 @@
 #include <string>
 #include <utility>
 
-#include "ash/components/arc/arc_util.h"
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_pref_names.h"
 #include "ash/constants/notifier_catalogs.h"
@@ -42,6 +41,7 @@
 #include "chromeos/ash/components/dbus/concierge/concierge_client.h"
 #include "chromeos/ash/components/disks/disk.h"
 #include "chromeos/ash/components/disks/disk_mount_manager.h"
+#include "chromeos/ash/experiences/arc/arc_util.h"
 #include "chromeos/constants/chromeos_features.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "components/vector_icons/vector_icons.h"
@@ -50,6 +50,7 @@
 #include "services/device/public/mojom/usb_enumeration_options.mojom.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/chromeos/styles/cros_tokens_color_mappings.h"
+#include "ui/gfx/paint_vector_icon.h"
 
 namespace ash {
 
@@ -63,6 +64,8 @@ const char16_t kParallelsName[] = u"Parallels Desktop";
 static CrosUsbDetector* g_cros_usb_detector = nullptr;
 
 const char kNotifierUsb[] = "crosusb.connected";
+
+const uint16_t kWacomVendorId = 0x056a;
 
 std::u16string ProductLabelFromDevice(
     const device::mojom::UsbDeviceInfo& device_info) {
@@ -99,6 +102,9 @@ uint32_t ClearMatchingInterfaces(
         }
         if (filter.has_protocol_code &&
             alternate_info->protocol_code != filter.protocol_code) {
+          continue;
+        }
+        if (filter.has_vendor_id && device_info.vendor_id != filter.vendor_id) {
           continue;
         }
         if (iface->interface_number >= 32) {
@@ -243,6 +249,13 @@ device::mojom::UsbDeviceFilterPtr UsbFilterByClassAndSubclassCode(
   filter->class_code = device_class;
   filter->has_subclass_code = true;
   filter->subclass_code = device_subclass;
+  return filter;
+}
+
+device::mojom::UsbDeviceFilterPtr UsbFilterByVendorId(uint16_t vendor_id) {
+  auto filter = device::mojom::UsbDeviceFilter::New();
+  filter->has_vendor_id = true;
+  filter->vendor_id = vendor_id;
   return filter;
 }
 
@@ -452,6 +465,14 @@ CrosUsbDetector::CrosUsbDetector() {
   // be shown.
   guest_os_usb_int_any_filter_.emplace_back(UsbFilterByClassAndSubclassCode(
       USB_CLASS_COMM, USB_COMM_SUBCLASS_ETHERNET));
+
+  // Wacom graphics tablets have a storage partition that is usually disabled
+  // when first used on other platforms with their driver. This causes them to
+  // have an interface with USB_CLASS_VENDOR_SPEC which causes the notification
+  // to show up. Their driver does not work on ChromeOS so this notification is
+  // shown every time the peripheral connects.
+  guest_os_usb_int_any_filter_.emplace_back(
+      UsbFilterByVendorId(kWacomVendorId));
 
   CiceroneClient::Get()->AddObserver(this);
   ConciergeClient::Get()->AddVmObserver(this);
@@ -1242,13 +1263,13 @@ void CrosUsbDetector::OnUsbDeviceDetachFinished(
     const std::string& vm_name,
     const std::string& guid,
     base::OnceCallback<void(bool success)> callback,
-    std::optional<vm_tools::concierge::DetachUsbDeviceResponse> response) {
+    std::optional<vm_tools::concierge::SuccessFailureResponse> response) {
   bool success = true;
   if (!response) {
     LOG(ERROR) << "Failed to detach USB device, empty dbus response";
     success = false;
   } else if (!response->success()) {
-    LOG(ERROR) << "Failed to detach USB device, " << response->reason();
+    LOG(ERROR) << "Failed to detach USB device, " << response->failure_reason();
     success = false;
   }
 

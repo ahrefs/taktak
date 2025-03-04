@@ -6,15 +6,14 @@
 
 #include "base/check_op.h"
 #include "base/test/metrics/histogram_tester.h"
-#include "base/test/scoped_feature_list.h"
 #include "chrome/browser/ui/autofill/payments/virtual_card_enroll_bubble_controller_impl_test_api.h"
 #include "chrome/browser/ui/browser_list.h"
 #include "chrome/test/base/browser_with_test_window_test.h"
 #include "chrome/test/base/chrome_render_view_host_test_harness.h"
-#include "components/autofill/core/browser/autofill_test_utils.h"
 #include "components/autofill/core/browser/payments/test_legal_message_line.h"
 #include "components/autofill/core/browser/payments/virtual_card_enrollment_flow.h"
 #include "components/autofill/core/browser/payments/virtual_card_enrollment_manager.h"
+#include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "content/public/browser/web_contents_user_data.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -179,8 +178,6 @@ class VirtualCardEnrollBubbleControllerImplBubbleViewTest
             browser()->tab_strip_model()->GetActiveWebContents()));
   }
   gfx::ImageSkia card_art_image_;
-  base::test::ScopedFeatureList features_{
-      features::kAutofillEnableVcnEnrollLoadingAndConfirmation};
   VirtualCardEnrollmentFields virtual_card_enrollment_fields_;
 };
 

@@ -15,9 +15,9 @@
 #include "chrome/browser/ui/browser_element_identifiers.h"
 #include "chrome/browser/ui/lens/lens_overlay_controller.h"
 #include "chrome/browser/ui/lens/lens_overlay_theme_utils.h"
-#include "chrome/browser/ui/webui/searchbox/realbox_handler.h"
-#include "chrome/browser/ui/webui/webui_util.h"
+#include "chrome/browser/ui/webui/searchbox/lens_searchbox_handler.h"
 #include "chrome/common/pref_names.h"
+#include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "chrome/grit/lens_shared_resources.h"
 #include "chrome/grit/lens_shared_resources_map.h"
@@ -29,6 +29,7 @@
 #include "content/public/browser/web_ui.h"
 #include "content/public/browser/web_ui_data_source.h"
 #include "ui/webui/color_change_listener/color_change_handler.h"
+#include "ui/webui/webui_util.h"
 
 namespace lens {
 
@@ -40,6 +41,8 @@ LensSidePanelUntrustedUI::LensSidePanelUntrustedUI(content::WebUI* web_ui)
           web_ui->GetWebContents()->GetBrowserContext(),
           chrome::kChromeUILensUntrustedSidePanelURL);
   html_source->AddLocalizedString("backButton", IDS_ACCNAME_BACK);
+  html_source->AddLocalizedString("dismiss",
+                                  IDS_LENS_OVERLAY_TOAST_DISMISS_MESSAGE);
   html_source->AddLocalizedString(
       "networkErrorPageTopLine",
       IDS_SIDE_PANEL_COMPANION_ERROR_PAGE_FIRST_LINE);
@@ -47,11 +50,19 @@ LensSidePanelUntrustedUI::LensSidePanelUntrustedUI(content::WebUI* web_ui)
       "networkErrorPageBottomLine",
       IDS_SIDE_PANEL_COMPANION_ERROR_PAGE_SECOND_LINE);
   html_source->AddLocalizedString(
-      "searchboxGhostLoaderHintTextPrimary",
+      "searchboxGhostLoaderHintTextPrimaryDefault",
       IDS_GOOGLE_SEARCH_BOX_CONTEXTUAL_LOADING_HINT_PRIMARY);
+  html_source->AddLocalizedString(
+      "searchboxGhostLoaderHintTextPrimaryPdf",
+      IDS_GOOGLE_SEARCH_BOX_CONTEXTUAL_LOADING_HINT_PRIMARY_PDF);
   html_source->AddLocalizedString(
       "searchboxGhostLoaderHintTextSecondary",
       IDS_GOOGLE_SEARCH_BOX_CONTEXTUAL_LOADING_HINT_SECONDARY);
+  html_source->AddLocalizedString("searchboxGhostLoaderErrorText",
+                                  IDS_GOOGLE_SEARCH_BOX_CONTEXTUAL_ERROR_TEXT);
+  html_source->AddLocalizedString(
+      "searchboxGhostLoaderNoSuggestText",
+      IDS_GOOGLE_SEARCH_BOX_CONTEXTUAL_NO_SUGGEST_TEXT);
 
   // Add finch flags
   html_source->AddString(
@@ -65,6 +76,14 @@ LensSidePanelUntrustedUI::LensSidePanelUntrustedUI(content::WebUI* web_ui)
           ThemeServiceFactory::GetForProfile(Profile::FromWebUI(web_ui))));
   html_source->AddBoolean("enableErrorPage",
                           lens::features::GetLensOverlayEnableErrorPage());
+  html_source->AddBoolean(
+      "showContextualSearchboxLoadingState",
+      lens::features::ShowContextualSearchboxGhostLoaderLoadingState());
+  html_source->AddLocalizedString("searchBoxHintContextualDefault",
+                                  IDS_GOOGLE_SEARCH_BOX_EMPTY_HINT_CONTEXTUAL);
+  html_source->AddLocalizedString(
+      "searchBoxHintContextualPdf",
+      IDS_GOOGLE_SEARCH_BOX_EMPTY_HINT_CONTEXTUAL_PDF);
 
   // Allow FrameSrc from all Google subdomains as redirects can occur.
   GURL results_side_panel_url =
@@ -86,13 +105,10 @@ LensSidePanelUntrustedUI::LensSidePanelUntrustedUI(content::WebUI* web_ui)
       "style-src 'self' chrome-untrusted://resources chrome-untrusted://theme");
 
   // Add required resources.
-  webui::SetupWebUIDataSource(
-      html_source,
-      base::make_span(kLensUntrustedResources, kLensUntrustedResourcesSize),
-      IDR_LENS_UNTRUSTED_SIDE_PANEL_SIDE_PANEL_HTML);
+  webui::SetupWebUIDataSource(html_source, kLensUntrustedResources,
+                              IDR_LENS_UNTRUSTED_SIDE_PANEL_SIDE_PANEL_HTML);
 
-  html_source->AddResourcePaths(
-      base::make_span(kLensSharedResources, kLensSharedResourcesSize));
+  html_source->AddResourcePaths(kLensSharedResources);
 
   // Add required resources for the searchbox.
   SearchboxHandler::SetupWebUIDataSource(html_source,
@@ -106,6 +122,7 @@ LensSidePanelUntrustedUI::LensSidePanelUntrustedUI(content::WebUI* web_ui)
   html_source->AddLocalizedString("searchBoxHintMultimodal",
                                   IDS_GOOGLE_SEARCH_BOX_EMPTY_HINT_MULTIMODAL);
   html_source->AddBoolean("isLensSearchbox", true);
+  html_source->AddBoolean("queryAutocompleteOnEmptyInput", true);
 }
 
 void LensSidePanelUntrustedUI::BindInterface(
@@ -116,22 +133,10 @@ void LensSidePanelUntrustedUI::BindInterface(
 }
 
 void LensSidePanelUntrustedUI::BindInterface(
-    mojo::PendingReceiver<searchbox::mojom::PageHandler> receiver) {
-  LensOverlayController* controller =
-      LensOverlayController::GetController(web_ui());
-  // TODO(crbug.com/360724768): This should not need to be null-checked and
-  // exists here as a temporary solution to handle situations where lens may be
-  // loaded in an unsupported context (e.g. browser tab). Remove this once work
-  // to restrict WebUI loading to relevant contexts has landed.
-  if (!controller) {
-    return;
-  }
-  auto handler = std::make_unique<RealboxHandler>(
-      std::move(receiver), Profile::FromWebUI(web_ui()),
-      web_ui()->GetWebContents(),
-      /*metrics_reporter=*/nullptr, /*lens_searchbox_client=*/controller,
-      /*omnibox_controller=*/nullptr);
-  controller->SetSidePanelSearchboxHandler(std::move(handler));
+    mojo::PendingReceiver<lens::mojom::LensGhostLoaderPageHandlerFactory>
+        receiver) {
+  lens_ghost_loader_page_factory_receiver_.reset();
+  lens_ghost_loader_page_factory_receiver_.Bind(std::move(receiver));
 }
 
 void LensSidePanelUntrustedUI::BindInterface(
@@ -140,21 +145,15 @@ void LensSidePanelUntrustedUI::BindInterface(
       web_ui()->GetWebContents(), std::move(receiver));
 }
 
-void LensSidePanelUntrustedUI::CreateSidePanelPageHandler(
-    mojo::PendingReceiver<lens::mojom::LensSidePanelPageHandler> receiver,
-    mojo::PendingRemote<lens::mojom::LensSidePanelPage> page) {
-  LensOverlayController* controller =
-      LensOverlayController::GetController(web_ui());
-  // TODO(crbug.com/360724768): This should not need to be null-checked and
-  // exists here as a temporary solution to handle situations where lens may be
-  // loaded in an unsupported context (e.g. browser tab). Remove this once work
-  // to restrict WebUI loading to relevant contexts has landed.
-  if (!controller) {
-    return;
-  }
-  // Once the interface is bound, we want to connect this instance with the
-  // appropriate instance of LensOverlayController.
-  controller->BindSidePanel(std::move(receiver), std::move(page));
+void LensSidePanelUntrustedUI::BindInterface(
+    mojo::PendingReceiver<searchbox::mojom::PageHandler> receiver) {
+  LensOverlayController& controller = GetLensOverlayController();
+
+  auto handler = std::make_unique<LensSearchboxHandler>(
+      std::move(receiver), Profile::FromWebUI(web_ui()),
+      web_ui()->GetWebContents(),
+      /*metrics_reporter=*/nullptr, /*lens_searchbox_client=*/&controller);
+  controller.SetSidePanelSearchboxHandler(std::move(handler));
 }
 
 void LensSidePanelUntrustedUI::BindInterface(
@@ -164,6 +163,32 @@ void LensSidePanelUntrustedUI::BindInterface(
     help_bubble_handler_factory_receiver_.reset();
   }
   help_bubble_handler_factory_receiver_.Bind(std::move(receiver));
+}
+
+LensOverlayController& LensSidePanelUntrustedUI::GetLensOverlayController() {
+  LensOverlayController* controller =
+      LensOverlayController::GetController(web_ui()->GetWebContents());
+  CHECK(controller);
+  return *controller;
+}
+
+void LensSidePanelUntrustedUI::CreateSidePanelPageHandler(
+    mojo::PendingReceiver<lens::mojom::LensSidePanelPageHandler> receiver,
+    mojo::PendingRemote<lens::mojom::LensSidePanelPage> page) {
+  LensOverlayController& controller = GetLensOverlayController();
+
+  // Once the interface is bound, we want to connect this instance with the
+  // appropriate instance of LensOverlayController.
+  controller.BindSidePanel(std::move(receiver), std::move(page));
+}
+
+void LensSidePanelUntrustedUI::CreateGhostLoaderPage(
+    mojo::PendingRemote<lens::mojom::LensGhostLoaderPage> page) {
+  LensOverlayController& controller = GetLensOverlayController();
+
+  // Once the interface is bound, we want to connect this instance with the
+  // appropriate instance of LensOverlayController.
+  controller.BindSidePanelGhostLoader(std::move(page));
 }
 
 void LensSidePanelUntrustedUI::CreateHelpBubbleHandler(

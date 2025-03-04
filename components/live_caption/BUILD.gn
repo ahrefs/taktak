@@ -12,6 +12,13 @@ if (!is_android && !is_ios) {
       "caption_bubble_context_remote.h",
       "caption_bubble_controller.h",
       "caption_bubble_session_observer.h",
+      "caption_bubble_settings.h",
+      "caption_controller_base.cc",
+      "caption_controller_base.h",
+      "live_caption_bubble_settings.cc",
+      "live_caption_bubble_settings.h",
+      "live_caption_controller.cc",
+      "live_caption_controller.h",
     ]
 
     deps = [
@@ -43,31 +50,20 @@ if (!is_android && !is_ios) {
       public_deps = [ "//ui/base/mojom:ui_base_types" ]
 
       deps += [
+        "//components/language/core/common",
         "//components/strings",
+        "//components/translate/core/browser",
         "//components/vector_icons",
         "//third_party/re2",
         "//ui/accessibility",
         "//ui/base",
         "//ui/compositor",
         "//ui/gfx",
+        "//ui/menus",
         "//ui/strings:ui_strings_grit",
         "//ui/views",
       ]
     }  # toolkit_views
-
-    if (is_chromeos_ash) {
-      sources += [
-        "live_caption_ui_remote_driver.cc",
-        "live_caption_ui_remote_driver.h",
-      ]
-    }  # is_chromeos_ash
-
-    if (!is_chromeos_lacros) {
-      sources += [
-        "live_caption_controller.cc",
-        "live_caption_controller.h",
-      ]
-    }
   }
 
   static_library("live_translate") {
@@ -94,6 +90,7 @@ if (!is_android && !is_ios) {
       "//google_apis:google_apis",
       "//media",
       "//media/mojo/mojom",
+      "//net",
       "//services/data_decoder/public/cpp:cpp",
       "//services/data_decoder/public/mojom:mojom",
       "//services/network/public/cpp",
@@ -105,13 +102,19 @@ if (!is_android && !is_ios) {
   source_set("unit_tests") {
     testonly = true
 
-    sources = [ "greedy_text_stabilizer_unittest.cc" ]
+    sources = [
+      "greedy_text_stabilizer_unittest.cc",
+      "live_caption_bubble_settings_unittest.cc",
+    ]
 
     deps = [
       ":live_caption",
       ":live_translate",
       "//base",
       "//base/test:test_support",
+      "//components/live_caption:constants",
+      "//components/prefs",
+      "//components/prefs:test_support",
       "//media/mojo/mojom:speech_recognition",
       "//mojo/public/cpp/bindings:bindings",
       "//testing/gmock",
@@ -119,7 +122,7 @@ if (!is_android && !is_ios) {
       "//ui/gfx/geometry:geometry",
     ]
 
-    if (is_chromeos_ash) {
+    if (is_chromeos) {
       sources += [
         "caption_bubble_context_remote_unittest.cc",
 
@@ -132,10 +135,9 @@ if (!is_android && !is_ios) {
         ":constants",
         "//ash/constants",
         "//components/pref_registry",
-        "//components/prefs",
-        "//components/prefs:test_support",
         "//components/soda",
         "//components/soda:constants",
+        "//ui/native_theme",
         "//ui/views",
       ]
     }

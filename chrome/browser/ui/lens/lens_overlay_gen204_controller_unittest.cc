@@ -4,6 +4,7 @@
 
 #include "lens_overlay_gen204_controller.h"
 
+#include "base/base64url.h"
 #include "base/containers/span.h"
 #include "base/strings/string_number_conversions.h"
 #include "chrome/browser/lens/core/mojom/lens.mojom-shared.h"
@@ -21,6 +22,8 @@
 
 namespace lens {
 
+using LatencyType = LensOverlayGen204Controller::LatencyType;
+
 // The gen204 id for testing.
 constexpr uint64_t kGen204Id = 0;
 
@@ -37,12 +40,14 @@ constexpr char kEncodedAnalyticsId[] = "test";
 
 // Query parameter keys.
 constexpr char kEncodedAnalyticsIdParameter[] = "cad";
+constexpr char kEncodedRequestIdParameter[] = "vsrid";
 constexpr char kGen204IdentifierQueryParameter[] = "plla";
 constexpr char kSemanticEventTimestampParameter[] = "zx";
-constexpr char kSemanticEventIdParameter[] = "rid";
 constexpr char kLatencyRequestTypeQueryParameter[] = "rt";
-constexpr char kUserActionIdParameter[] = "rcid";
+constexpr char kVisualInputTypeQueryParameter[] = "vit";
 constexpr char kUserActionParameter[] = "uact";
+// Event id param used for both semantic events and task completions.
+constexpr char kEventIdParameter[] = "rcid";
 
 // Task completion ids.
 constexpr int kCopyAsImageTaskCompletionID = 233325;
@@ -54,6 +59,24 @@ constexpr int kTranslateTaskCompletionID = 198158;
 // Semantic event ids.
 constexpr int kTextGleamsViewStartSemanticEventID = 234181;
 constexpr int kTextGleamsViewEndSemanticEventID = 234180;
+
+// Creates a dummy request id for testing.
+lens::LensOverlayRequestId CreateRequestId() {
+  lens::LensOverlayRequestId request_id;
+  request_id.set_image_sequence_id(10);
+  request_id.set_sequence_id(15);
+  return request_id;
+}
+
+std::string EncodeRequestId(const lens::LensOverlayRequestId& request_id) {
+  std::string serialized_request_id;
+  CHECK(request_id.SerializeToString(&serialized_request_id));
+  std::string encoded_request_id;
+  base::Base64UrlEncode(serialized_request_id,
+                        base::Base64UrlEncodePolicy::OMIT_PADDING,
+                        &encoded_request_id);
+  return encoded_request_id;
+}
 
 class LensOverlayGen204ControllerMock : public LensOverlayGen204Controller {
  public:
@@ -76,8 +99,8 @@ class LensOverlayGen204ControllerTest : public testing::Test {
  public:
   std::optional<lens::mojom::UserAction> GetTaskCompletionIdFromUrl(GURL url) {
     std::string event_id_param;
-    EXPECT_TRUE(net::GetValueForKeyInQuery(url, kUserActionIdParameter,
-                                           &event_id_param));
+    EXPECT_TRUE(
+        net::GetValueForKeyInQuery(url, kEventIdParameter, &event_id_param));
     int event_id;
     base::StringToInt(event_id_param, &event_id);
     switch (event_id) {
@@ -103,8 +126,8 @@ class LensOverlayGen204ControllerTest : public testing::Test {
 
   std::optional<lens::mojom::SemanticEvent> GetSemanticEventFromUrl(GURL url) {
     std::string event_id_param;
-    EXPECT_TRUE(net::GetValueForKeyInQuery(url, kSemanticEventIdParameter,
-                                           &event_id_param));
+    EXPECT_TRUE(
+        net::GetValueForKeyInQuery(url, kEventIdParameter, &event_id_param));
     int event_id;
     base::StringToInt(event_id_param, &event_id);
     switch (event_id) {
@@ -140,8 +163,11 @@ TEST_F(LensOverlayGen204ControllerTest,
   auto gen204_controller = std::make_unique<LensOverlayGen204ControllerMock>();
   gen204_controller->OnQueryFlowStart(kInvocationSource, profile(), kGen204Id);
   gen204_controller->SendLatencyGen204IfEnabled(
-      kRequestLatency, /*cluster_info_latency=*/std::nullopt,
-      /*is_translate_query=*/false);
+      LatencyType::kFullPageObjectsRequestFetchLatency, kRequestLatency,
+      /*vit_query_param_value=*/"image",
+      /*cluster_info_latency=*/std::nullopt,
+      /*encoded_analytics_id=*/std::nullopt,
+      /*request_id=*/std::nullopt);
 
   auto url = gen204_controller->last_url_sent_;
 
@@ -156,12 +182,21 @@ TEST_F(LensOverlayGen204ControllerTest,
                                          &request_type_param));
   ASSERT_EQ(request_type_param, "fpof.100");
 
+  // Check that the visual input type param is present.
+  std::string visual_input_type_param;
+  EXPECT_TRUE(net::GetValueForKeyInQuery(url, kVisualInputTypeQueryParameter,
+                                         &visual_input_type_param));
+  ASSERT_EQ(visual_input_type_param, "image");
+
   ASSERT_EQ(gen204_controller->num_gen204s_sent_, 1);
 
   // Send a translate query.
   gen204_controller->SendLatencyGen204IfEnabled(
-      kRequestLatency, /*cluster_info_latency=*/std::nullopt,
-      /*is_translate_query=*/true);
+      LatencyType::kFullPageTranslateRequestFetchLatency, kRequestLatency,
+      /*vit_query_param_value=*/"pdf",
+      /*cluster_info_latency=*/std::nullopt,
+      /*encoded_analytics_id=*/std::nullopt,
+      /*request_id=*/std::nullopt);
 
   // Check that the new request type param is present and contains the latency.
   EXPECT_TRUE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
@@ -169,21 +204,69 @@ TEST_F(LensOverlayGen204ControllerTest,
                                          &request_type_param));
   ASSERT_EQ(request_type_param, "fptf.100");
 
+  // Check that the visual input type param is present.
+  EXPECT_TRUE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
+                                         kVisualInputTypeQueryParameter,
+                                         &visual_input_type_param));
+  ASSERT_EQ(visual_input_type_param, "pdf");
+
   ASSERT_EQ(gen204_controller->num_gen204s_sent_, 2);
 
   // Send an objects query with cluster info.
   gen204_controller->SendLatencyGen204IfEnabled(
-      kRequestLatency,
+      LatencyType::kFullPageObjectsRequestFetchLatency, kRequestLatency,
+      /*vit_query_param_value=*/"wp",
       std::make_optional<base::TimeDelta>(kClusterInfoLatency),
-      /*is_translate_query=*/false);
+      /*encoded_analytics_id=*/std::nullopt,
+      /*request_id=*/std::nullopt);
 
   // Check that the new request type param is present and contains the latency.
   EXPECT_TRUE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
                                          kLatencyRequestTypeQueryParameter,
                                          &request_type_param));
-  ASSERT_EQ(request_type_param, "fpof.100,sct.200");
+  ASSERT_EQ(request_type_param, "fpof.100,sctr.200");
+
+  // Check that the visual input type param is present.
+  EXPECT_TRUE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
+                                         kVisualInputTypeQueryParameter,
+                                         &visual_input_type_param));
+  ASSERT_EQ(visual_input_type_param, "wp");
 
   ASSERT_EQ(gen204_controller->num_gen204s_sent_, 3);
+
+  // Send an objects query with an encoded analytics id.
+  gen204_controller->SendLatencyGen204IfEnabled(
+      LatencyType::kFullPageObjectsRequestFetchLatency, kRequestLatency,
+      /*vit_query_param_value=*/"wp",
+      std::make_optional<base::TimeDelta>(kClusterInfoLatency),
+      std::make_optional<std::string>(kEncodedAnalyticsId),
+      /*request_id=*/std::nullopt);
+
+  // Check that the encoded analytics id param is present.
+  std::string encoded_analytics_id_param;
+  EXPECT_TRUE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
+                                         kEncodedAnalyticsIdParameter,
+                                         &encoded_analytics_id_param));
+  ASSERT_EQ(encoded_analytics_id_param, kEncodedAnalyticsId);
+
+  ASSERT_EQ(gen204_controller->num_gen204s_sent_, 4);
+
+  // Send an objects query with a request id.
+  gen204_controller->SendLatencyGen204IfEnabled(
+      LatencyType::kFullPageObjectsRequestFetchLatency, kRequestLatency,
+      /*vit_query_param_value=*/"wp",
+      std::make_optional<base::TimeDelta>(kClusterInfoLatency),
+      std::make_optional<std::string>(kEncodedAnalyticsId),
+      std::make_optional<lens::LensOverlayRequestId>(CreateRequestId()));
+
+  // Check that the encoded request id param is present.
+  std::string encoded_request_id_param;
+  EXPECT_TRUE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
+                                         kEncodedRequestIdParameter,
+                                         &encoded_request_id_param));
+  ASSERT_EQ(encoded_request_id_param, EncodeRequestId(CreateRequestId()));
+
+  ASSERT_EQ(gen204_controller->num_gen204s_sent_, 5);
 }
 
 TEST_F(LensOverlayGen204ControllerTest,
@@ -191,7 +274,8 @@ TEST_F(LensOverlayGen204ControllerTest,
   auto gen204_controller = std::make_unique<LensOverlayGen204ControllerMock>();
   gen204_controller->OnQueryFlowStart(kInvocationSource, profile(), kGen204Id);
   gen204_controller->SendTaskCompletionGen204IfEnabled(
-      kEncodedAnalyticsId, lens::mojom::UserAction::kCopyText);
+      kEncodedAnalyticsId, lens::mojom::UserAction::kCopyText,
+      CreateRequestId());
 
   auto url = gen204_controller->last_url_sent_;
   EXPECT_THAT(GetTaskCompletionIdFromUrl(url),
@@ -214,6 +298,12 @@ TEST_F(LensOverlayGen204ControllerTest,
                                          &encoded_analytics_id_param));
   EXPECT_EQ(encoded_analytics_id_param, kEncodedAnalyticsId);
 
+  // Check that the encoded request id param is correct.
+  std::string encoded_request_id_param;
+  EXPECT_TRUE(net::GetValueForKeyInQuery(url, kEncodedRequestIdParameter,
+                                         &encoded_request_id_param));
+  EXPECT_EQ(encoded_request_id_param, EncodeRequestId(CreateRequestId()));
+
   ASSERT_EQ(gen204_controller->num_gen204s_sent_, 1);
 }
 
@@ -223,29 +313,41 @@ TEST_F(LensOverlayGen204ControllerTest,
   gen204_controller->OnQueryFlowStart(kInvocationSource, profile(), kGen204Id);
 
   gen204_controller->SendTaskCompletionGen204IfEnabled(
-      kEncodedAnalyticsId, lens::mojom::UserAction::kCopyText);
+      kEncodedAnalyticsId, lens::mojom::UserAction::kCopyText,
+      CreateRequestId());
   EXPECT_THAT(GetTaskCompletionIdFromUrl(gen204_controller->last_url_sent_),
               testing::Optional(lens::mojom::UserAction::kCopyText));
 
   gen204_controller->SendTaskCompletionGen204IfEnabled(
-      kEncodedAnalyticsId, lens::mojom::UserAction::kTranslateText);
+      kEncodedAnalyticsId, lens::mojom::UserAction::kTranslateText,
+      CreateRequestId());
   EXPECT_THAT(GetTaskCompletionIdFromUrl(gen204_controller->last_url_sent_),
               testing::Optional(lens::mojom::UserAction::kTranslateText));
 
   gen204_controller->SendTaskCompletionGen204IfEnabled(
-      kEncodedAnalyticsId, lens::mojom::UserAction::kCopyAsImage);
+      kEncodedAnalyticsId, lens::mojom::UserAction::kCopyAsImage,
+      CreateRequestId());
   EXPECT_THAT(GetTaskCompletionIdFromUrl(gen204_controller->last_url_sent_),
               testing::Optional(lens::mojom::UserAction::kCopyAsImage));
 
   gen204_controller->SendTaskCompletionGen204IfEnabled(
-      kEncodedAnalyticsId, lens::mojom::UserAction::kSaveAsImage);
+      kEncodedAnalyticsId, lens::mojom::UserAction::kSaveAsImage,
+      CreateRequestId());
   EXPECT_THAT(GetTaskCompletionIdFromUrl(gen204_controller->last_url_sent_),
               testing::Optional(lens::mojom::UserAction::kSaveAsImage));
 
   gen204_controller->SendTaskCompletionGen204IfEnabled(
-      kEncodedAnalyticsId, lens::mojom::UserAction::kTextSelection);
+      kEncodedAnalyticsId, lens::mojom::UserAction::kTextSelection,
+      CreateRequestId());
   EXPECT_THAT(GetTaskCompletionIdFromUrl(gen204_controller->last_url_sent_),
               testing::Optional(lens::mojom::UserAction::kTextSelection));
+
+  // Check that the encoded request id param is present and correct.
+  std::string encoded_request_id_param;
+  EXPECT_TRUE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
+                                         kEncodedRequestIdParameter,
+                                         &encoded_request_id_param));
+  EXPECT_EQ(encoded_request_id_param, EncodeRequestId(CreateRequestId()));
 }
 
 TEST_F(LensOverlayGen204ControllerTest,
@@ -253,14 +355,15 @@ TEST_F(LensOverlayGen204ControllerTest,
   auto gen204_controller = std::make_unique<LensOverlayGen204ControllerMock>();
   gen204_controller->OnQueryFlowStart(kInvocationSource, profile(), kGen204Id);
   gen204_controller->SendSemanticEventGen204IfEnabled(
-      lens::mojom::SemanticEvent::kTextGleamsViewStart);
+      lens::mojom::SemanticEvent::kTextGleamsViewStart,
+      /*request_id=*/std::nullopt);
 
   EXPECT_THAT(
       GetSemanticEventFromUrl(gen204_controller->last_url_sent_),
       testing::Optional(lens::mojom::SemanticEvent::kTextGleamsViewStart));
   ASSERT_EQ(gen204_controller->num_gen204s_sent_, 1);
 
-  gen204_controller->OnQueryFlowEnd(kEncodedAnalyticsId);
+  gen204_controller->OnQueryFlowEnd();
 
   // The query flow ending should cause another gen204 event to fire.
   EXPECT_THAT(
@@ -274,7 +377,7 @@ TEST_F(LensOverlayGen204ControllerTest,
   auto gen204_controller = std::make_unique<LensOverlayGen204ControllerMock>();
   gen204_controller->OnQueryFlowStart(kInvocationSource, profile(), kGen204Id);
   gen204_controller->SendSemanticEventGen204IfEnabled(
-      lens::mojom::SemanticEvent::kTextGleamsViewStart);
+      lens::mojom::SemanticEvent::kTextGleamsViewStart, CreateRequestId());
 
   auto url = gen204_controller->last_url_sent_;
   EXPECT_THAT(
@@ -297,6 +400,12 @@ TEST_F(LensOverlayGen204ControllerTest,
   EXPECT_TRUE(net::GetValueForKeyInQuery(url, kGen204IdentifierQueryParameter,
                                          &gen204_id_param));
 
+  // Check that the encoded request id param is present and correct.
+  std::string encoded_request_id_param;
+  EXPECT_TRUE(net::GetValueForKeyInQuery(url, kEncodedRequestIdParameter,
+                                         &encoded_request_id_param));
+  EXPECT_EQ(encoded_request_id_param, EncodeRequestId(CreateRequestId()));
+
   ASSERT_EQ(gen204_controller->num_gen204s_sent_, 1);
 }
 
@@ -305,17 +414,33 @@ TEST_F(LensOverlayGen204ControllerTest,
   auto gen204_controller = std::make_unique<LensOverlayGen204ControllerMock>();
   gen204_controller->OnQueryFlowStart(kInvocationSource, profile(), kGen204Id);
 
+  // Send a text gleams view start event with an encoded request id.
   gen204_controller->SendSemanticEventGen204IfEnabled(
-      lens::mojom::SemanticEvent::kTextGleamsViewStart);
+      lens::mojom::SemanticEvent::kTextGleamsViewStart,
+      std::make_optional<lens::LensOverlayRequestId>(CreateRequestId()));
   EXPECT_THAT(
       GetSemanticEventFromUrl(gen204_controller->last_url_sent_),
       testing::Optional(lens::mojom::SemanticEvent::kTextGleamsViewStart));
 
+  // Check that the encoded request id param is present and correct.
+  std::string encoded_request_id_param;
+  EXPECT_TRUE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
+                                         kEncodedRequestIdParameter,
+                                         &encoded_request_id_param));
+  EXPECT_EQ(encoded_request_id_param, EncodeRequestId(CreateRequestId()));
+
+  // Send a text gleams view end event without an encoded request id.
   gen204_controller->SendSemanticEventGen204IfEnabled(
-      lens::mojom::SemanticEvent::kTextGleamsViewEnd);
+      lens::mojom::SemanticEvent::kTextGleamsViewEnd,
+      /*request_id=*/std::nullopt);
   EXPECT_THAT(
       GetSemanticEventFromUrl(gen204_controller->last_url_sent_),
       testing::Optional(lens::mojom::SemanticEvent::kTextGleamsViewEnd));
+
+  // Check that the encoded request id param is not present.
+  EXPECT_FALSE(net::GetValueForKeyInQuery(gen204_controller->last_url_sent_,
+                                          kEncodedRequestIdParameter,
+                                          &encoded_request_id_param));
 }
 
 }  // namespace lens

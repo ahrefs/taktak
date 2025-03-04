@@ -7,6 +7,7 @@
 #import <algorithm>
 #import <vector>
 
+#import "base/base_paths.h"
 #import "base/check_op.h"
 #import "base/command_line.h"
 #import "base/feature_list.h"
@@ -16,6 +17,7 @@
 #import "base/metrics/histogram_functions.h"
 #import "base/path_service.h"
 #import "base/strings/sys_string_conversions.h"
+#import "base/task/bind_post_task.h"
 #import "base/task/sequenced_task_runner.h"
 #import "base/task/thread_pool.h"
 #import "base/time/default_clock.h"
@@ -59,10 +61,10 @@
 #import "ios/chrome/browser/profile/model/profile_manager_ios_impl.h"
 #import "ios/chrome/browser/push_notification/model/push_notification_service.h"
 #import "ios/chrome/browser/shared/model/application_context/application_context.h"
-#import "ios/chrome/browser/shared/model/browser_state/incognito_session_tracker.h"
 #import "ios/chrome/browser/shared/model/paths/paths.h"
 #import "ios/chrome/browser/shared/model/prefs/browser_prefs.h"
 #import "ios/chrome/browser/shared/model/prefs/pref_names.h"
+#import "ios/chrome/browser/shared/model/profile/incognito_session_tracker.h"
 #import "ios/chrome/browser/shared/model/profile/profile_ios.h"
 #import "ios/chrome/browser/signin/model/account_profile_mapper.h"
 #import "ios/chrome/browser/update_client/model/ios_chrome_update_query_params_delegate.h"
@@ -91,38 +93,6 @@
 #import "components/optimization_guide/core/model_execution/on_device_model_component.h"  // nogncheck
 #import "ios/chrome/browser/optimization_guide/model/on_device_model_service_controller_ios.h"
 #endif  // BUILD_WITH_INTERNAL_OPTIMIZATION_GUIDE
-
-namespace {
-
-// Requests a network::mojom::ProxyResolvingSocketFactory on the UI thread.
-// Note that this cannot be called on a thread that is not the UI thread.
-void RequestProxyResolvingSocketFactoryOnUIThread(
-    ApplicationContextImpl* app_context,
-    mojo::PendingReceiver<network::mojom::ProxyResolvingSocketFactory>
-        receiver) {
-  network::mojom::NetworkContext* network_context =
-      app_context->GetSystemNetworkContext();
-  network_context->CreateProxyResolvingSocketFactory(std::move(receiver));
-}
-
-// Wrapper on top of the method above. This does a PostTask to the UI thread.
-void RequestProxyResolvingSocketFactory(
-    ApplicationContextImpl* app_context,
-    mojo::PendingReceiver<network::mojom::ProxyResolvingSocketFactory>
-        receiver) {
-  web::GetUIThreadTaskRunner({})->PostTask(
-      FROM_HERE, base::BindOnce(&RequestProxyResolvingSocketFactoryOnUIThread,
-                                app_context, std::move(receiver)));
-}
-
-// Passed to NetworkConnectionTracker to bind a NetworkChangeManager receiver.
-void BindNetworkChangeManagerReceiver(
-    network::NetworkChangeManager* network_change_manager,
-    mojo::PendingReceiver<network::mojom::NetworkChangeManager> receiver) {
-  network_change_manager->AddReceiver(std::move(receiver));
-}
-
-}  // namespace
 
 ApplicationContextImpl::ApplicationContextImpl(
     base::SequencedTaskRunner* local_state_task_runner,
@@ -215,7 +185,16 @@ void ApplicationContextImpl::StartTearDown() {
     safe_browsing_service_->ShutDown();
   }
 
-  // Need to clear profiles before the IO thread.
+  // Need to clear profiles before the IO thread. In detail:
+  // - First unload the profiles (which deallocate them), including their
+  // keyed services, which may depend on the AccountProfileMapper.
+  // - Then destroy the AccountProfileMapper, which depends on the
+  //   ProfileManagerIOS.
+  // - Finally destroy the ProfileManagerIOS.
+  if (profile_manager_) {
+    profile_manager_->UnloadAllProfiles();
+  }
+  account_profile_mapper_.reset();
   profile_manager_.reset();
 
   // The policy providers managed by `browser_policy_connector_` need to shut
@@ -243,6 +222,8 @@ void ApplicationContextImpl::StartTearDown() {
   application_breadcrumbs_logger_.reset();
 
   ios_chrome_io_thread_->NetworkTearDown();
+
+  additional_features_controller_->ShutDown();
 }
 
 void ApplicationContextImpl::PostDestroyThreads() {
@@ -268,7 +249,21 @@ void ApplicationContextImpl::OnAppEnterBackground() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   DCHECK(!tearing_down_);
 
-  OnAppEnterState(AppState::kBackground);
+  OnAppEnterState(AppState::kBackgroundFromActive);
+}
+
+void ApplicationContextImpl::OnAppStartedBackgroundProcessing() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  DCHECK(!tearing_down_);
+
+  OnAppEnterState(AppState::kBackgroundProcessing);
+}
+
+void ApplicationContextImpl::OnAppFinishedBackgroundProcessing() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  DCHECK(!tearing_down_);
+
+  OnAppEnterState(AppState::kBackgroundIdle);
 }
 
 bool ApplicationContextImpl::WasLastShutdownClean() {
@@ -438,6 +433,8 @@ SafeBrowsingService* ApplicationContextImpl::GetSafeBrowsingService() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   if (!safe_browsing_service_) {
     safe_browsing_service_ = base::MakeRefCounted<SafeBrowsingServiceImpl>();
+    safe_browsing_service_->Initialize(
+        base::PathService::CheckedGet(ios::DIR_USER_DATA));
   }
   return safe_browsing_service_.get();
 }
@@ -451,7 +448,7 @@ ApplicationContextImpl::GetNetworkConnectionTracker() {
         std::make_unique<network::NetworkChangeManager>(nullptr);
     network_connection_tracker_ =
         std::make_unique<network::NetworkConnectionTracker>(base::BindRepeating(
-            &BindNetworkChangeManagerReceiver,
+            &network::NetworkChangeManager::AddReceiver,
             base::Unretained(network_change_manager_.get())));
   }
   return network_connection_tracker_.get();
@@ -460,11 +457,15 @@ ApplicationContextImpl::GetNetworkConnectionTracker() {
 BrowserPolicyConnectorIOS* ApplicationContextImpl::GetBrowserPolicyConnector() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   if (!browser_policy_connector_.get()) {
+#if !BUILDFLAG(USE_BLINK)
     // Ensure that the ResourceBundle has already been initialized. If this
     // DCHECK ever fails, a call to
     // BrowserPolicyConnector::OnResourceBundleCreated() will need to be added
     // later in the startup sequence, after the ResourceBundle is initialized.
+    // Blink based startup will call OnResourceBundleCreated in
+    // IOSChromeMainParts::PreCreateThreads.
     DCHECK(ui::ResourceBundle::HasSharedInstance());
+#endif
     version_info::Channel channel = ::GetChannel();
     policy::ConfigurationPolicyProvider* test_policy_provider =
         tests_hook::GetOverriddenPlatformPolicyProvider();
@@ -588,7 +589,18 @@ void ApplicationContextImpl::OnAppEnterState(AppState app_state) {
           metrics_service->OnAppEnterForeground();
           break;
 
-        case AppState::kBackground:
+        case AppState::kBackgroundFromActive:
+          metrics_service->OnAppEnterBackground();
+          break;
+        case AppState::kBackgroundProcessing:
+          // Background processing should be tracked in metrcis, including
+          // specifically the clean exit beacon, as if it were foreground.
+          metrics_service->OnAppEnterForeground();
+          break;
+        case AppState::kBackgroundIdle:
+          // When background processing is complete, this state should be
+          // treated like normal backgrounding, including specifically the
+          // clean exit beacon.
           metrics_service->OnAppEnterBackground();
           break;
       }
@@ -601,7 +613,9 @@ void ApplicationContextImpl::OnAppEnterState(AppState app_state) {
           variations_service->OnAppEnterForeground();
           break;
 
-        case AppState::kBackground:
+        case AppState::kBackgroundFromActive:
+        case AppState::kBackgroundProcessing:
+        case AppState::kBackgroundIdle:
           // Nothing to do for VariationsService when entering background.
           break;
       }
@@ -614,8 +628,11 @@ void ApplicationContextImpl::OnAppEnterState(AppState app_state) {
           ukm_service->OnAppEnterForeground();
           break;
 
-        case AppState::kBackground:
+        case AppState::kBackgroundFromActive:
           ukm_service->OnAppEnterBackground();
+          break;
+        case AppState::kBackgroundProcessing:
+        case AppState::kBackgroundIdle:
           break;
       }
     }
@@ -631,12 +648,15 @@ void ApplicationContextImpl::OnAppEnterState(AppState app_state) {
           // Nothing extra to do when entering foreground.
           break;
 
-        case AppState::kBackground:
+        case AppState::kBackgroundFromActive:
           if (history::HistoryService* history_service =
-                  ios::HistoryServiceFactory::GetForProfileIfExists(
+                  ios::HistoryServiceFactory::GetForProfile(
                       profile, ServiceAccessType::EXPLICIT_ACCESS)) {
             history_service->HandleBackgrounding();
           }
+          break;
+        case AppState::kBackgroundProcessing:
+        case AppState::kBackgroundIdle:
           break;
       }
 
@@ -712,14 +732,27 @@ void ApplicationContextImpl::CreateGCMDriver() {
            base::TaskShutdownBehavior::SKIP_ON_SHUTDOWN}));
 
   gcm_driver_ = gcm::CreateGCMDriverDesktop(
-      base::WrapUnique(new gcm::GCMClientFactory), GetLocalState(), store_path,
-      // Because ApplicationContextImpl is destroyed after all WebThreads have
-      // been shut down, base::Unretained() is safe here.
-      base::BindRepeating(&RequestProxyResolvingSocketFactory,
-                          base::Unretained(this)),
+      std::make_unique<gcm::GCMClientFactory>(), GetLocalState(), store_path,
+      // This callback may be invoked on a background sequence, but it calls a
+      // method of ApplicationContextImpl which is a sequence-affine object,
+      // so wrap the call in BindPostTask(...) to ensure the method happens on
+      // the correct sequence.
+      base::BindPostTask(
+          base::SequencedTaskRunner::GetCurrentDefault(),
+          base::BindRepeating(
+              &ApplicationContextImpl::RequestProxyResolvingSocketFactory,
+              weak_ptr_factory_.GetWeakPtr())),
       GetSharedURLLoaderFactory(),
       GetApplicationContext()->GetNetworkConnectionTracker(), ::GetChannel(),
       IOSChromeGCMProfileServiceFactory::GetProductCategoryForSubtypes(),
       web::GetUIThreadTaskRunner({}), web::GetIOThreadTaskRunner({}),
       blocking_task_runner);
+}
+
+void ApplicationContextImpl::RequestProxyResolvingSocketFactory(
+    mojo::PendingReceiver<network::mojom::ProxyResolvingSocketFactory>
+        receiver) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  network::mojom::NetworkContext* network_context = GetSystemNetworkContext();
+  network_context->CreateProxyResolvingSocketFactory(std::move(receiver));
 }

@@ -69,7 +69,7 @@ bool ScanRun(VTTScanner& scanner, AlignSetting align) {
   return ScanRun(scanner, V8AlignSetting(align).AsString());
 }
 
-const auto kDisplayWritingModeMap = std::to_array<CSSValueID>(
+constexpr auto kDisplayWritingModeMap = std::to_array<CSSValueID>(
     {CSSValueID::kHorizontalTb, CSSValueID::kVerticalRl,
      CSSValueID::kVerticalLr});
 static_assert(std::size(kDisplayWritingModeMap) ==
@@ -77,7 +77,7 @@ static_assert(std::size(kDisplayWritingModeMap) ==
               "displayWritingModeMap should have the same number of elements "
               "as VTTCue::NumberOfWritingDirections");
 
-const auto kDisplayAlignmentMap = std::to_array<CSSValueID>(
+constexpr auto kDisplayAlignmentMap = std::to_array<CSSValueID>(
     {CSSValueID::kStart, CSSValueID::kCenter, CSSValueID::kEnd,
      CSSValueID::kLeft, CSSValueID::kRight});
 static_assert(std::size(kDisplayAlignmentMap) == V8AlignSetting::kEnumSize,
@@ -468,8 +468,7 @@ double VTTCue::CalculateComputedTextPosition() const {
     case AlignSetting::kCenter:
       return 50;
     default:
-      NOTREACHED_IN_MIGRATION();
-      return 0;
+      NOTREACHED();
   }
 }
 
@@ -531,7 +530,7 @@ VTTDisplayParameters VTTCue::CalculateDisplayParameters() const {
                        : (100 - computed_text_position);
     maximum_size = maximum_size * 2;
   } else {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   // 5. If the cue size is less than maximum size, then let size
@@ -560,7 +559,7 @@ VTTDisplayParameters VTTCue::CalculateDisplayParameters() const {
                                           display_parameters.size / 2);
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   } else {
     // Cases for writing_direction_ being kVerticalGrowing{Left|Right}
@@ -577,7 +576,7 @@ VTTDisplayParameters VTTCue::CalculateDisplayParameters() const {
                                           display_parameters.size / 2);
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 

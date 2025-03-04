@@ -82,15 +82,17 @@ InformedRestoreItemView::InformedRestoreItemView(
             .SetBetweenChildSpacing(informed_restore::kScreenshotFaviconSpacing)
             .Build());
   } else {
+    views::BoxLayoutView* inner_box;
     AddChildView(
         views::Builder<views::BoxLayoutView>()
+            .CopyAddressTo(&inner_box)
             .SetOrientation(views::BoxLayout::Orientation::kVertical)
             .SetCrossAxisAlignment(views::BoxLayout::CrossAxisAlignment::kStart)
             .SetBetweenChildSpacing(kTitleFaviconSpacing)
             .AddChildren(
                 views::Builder<views::Label>()
                     .CopyAddressTo(&title_label_view_)
-                    .SetEnabledColorId(informed_restore::kItemTextColorId)
+                    .SetEnabledColor(informed_restore::kItemTextColorId)
                     .SetHorizontalAlignment(gfx::ALIGN_LEFT)
                     .CustomConfigure(base::BindOnce(
                         [](const base::WeakPtr<InformedRestoreItemView>
@@ -111,6 +113,7 @@ InformedRestoreItemView::InformedRestoreItemView(
                         views::BoxLayout::CrossAxisAlignment::kCenter)
                     .SetBetweenChildSpacing(kBetweenFaviconSpacing))
             .Build());
+    SetFlexForView(inner_box, 1);
   }
 
   std::vector<GURL> favicons;
@@ -136,7 +139,7 @@ InformedRestoreItemView::InformedRestoreItemView(
   for (int i = 0; i < static_cast<int>(favicons.size()); ++i) {
     const GURL& url = favicons[i];
     delegate->GetFaviconForUrl(
-        url.spec(), /*lacros_profile_id=*/0,
+        url.spec(),
         base::BindOnce(&InformedRestoreItemView::OnOneFaviconLoaded,
                        GetWeakPtr(), barrier, i),
         &cancelable_favicon_task_tracker_);
@@ -153,10 +156,10 @@ void InformedRestoreItemView::OnOneFaviconLoaded(IndexedImageCallback callback,
 
 void InformedRestoreItemView::OnAllFaviconsLoaded(
     std::vector<IndexedImagePair> indexed_favicons) {
-  base::ranges::sort(indexed_favicons,
-                     [](const auto& element_a, const auto& element_b) {
-                       return element_a.first < element_b.first;
-                     });
+  std::ranges::sort(indexed_favicons,
+                    [](const auto& element_a, const auto& element_b) {
+                      return element_a.first < element_b.first;
+                    });
 
   bool needs_layout = false;
   const size_t elements = indexed_favicons.size();
@@ -192,8 +195,10 @@ void InformedRestoreItemView::OnAllFaviconsLoaded(
           .SetBackground(views::CreateThemedRoundedRectBackground(
               cros_tokens::kCrosSysPrimary, kFaviconPreferredSize.width()));
     } else {
-      builder.SetImage(gfx::ImageSkiaOperations::CreateResizedImage(
-          favicon, skia::ImageOperations::RESIZE_BEST, kFaviconPreferredSize));
+      builder.SetImage(ui::ImageModel::FromImageSkia(
+          gfx::ImageSkiaOperations::CreateResizedImage(
+              favicon, skia::ImageOperations::RESIZE_BEST,
+              kFaviconPreferredSize)));
     }
 
     favicon_container_view_->AddChildView(std::move(builder).Build());
@@ -215,7 +220,7 @@ void InformedRestoreItemView::OnAllFaviconsLoaded(
                 inside_screenshot_
                     ? informed_restore::kScreenshotIconRowImageViewSize
                     : kTabCountPreferredSize)
-            .SetEnabledColorId(cros_tokens::kCrosSysOnPrimaryContainer)
+            .SetEnabledColor(cros_tokens::kCrosSysOnPrimaryContainer)
             .SetBackground(views::CreateThemedRoundedRectBackground(
                 cros_tokens::kCrosSysPrimaryContainer,
                 inside_screenshot_

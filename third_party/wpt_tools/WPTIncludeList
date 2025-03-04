@@ -303,6 +303,7 @@
 ./tools/webdriver/webdriver/bidi/error.py
 ./tools/webdriver/webdriver/bidi/modules/__init__.py
 ./tools/webdriver/webdriver/bidi/modules/_module.py
+./tools/webdriver/webdriver/bidi/modules/bluetooth.py
 ./tools/webdriver/webdriver/bidi/modules/browser.py
 ./tools/webdriver/webdriver/bidi/modules/browsing_context.py
 ./tools/webdriver/webdriver/bidi/modules/input.py
@@ -311,6 +312,7 @@
 ./tools/webdriver/webdriver/bidi/modules/script.py
 ./tools/webdriver/webdriver/bidi/modules/session.py
 ./tools/webdriver/webdriver/bidi/modules/storage.py
+./tools/webdriver/webdriver/bidi/modules/web_extension.py
 ./tools/webdriver/webdriver/bidi/protocol.py
 ./tools/webdriver/webdriver/bidi/transport.py
 ./tools/webdriver/webdriver/bidi/undefined.py
@@ -404,6 +406,7 @@
 ./tools/wptrunner/wptrunner/executors/executorservodriver.py
 ./tools/wptrunner/wptrunner/executors/executorwebdriver.py
 ./tools/wptrunner/wptrunner/executors/executorwebkit.py
+./tools/wptrunner/wptrunner/executors/message-queue.js
 ./tools/wptrunner/wptrunner/executors/process.py
 ./tools/wptrunner/wptrunner/executors/protocol.py
 ./tools/wptrunner/wptrunner/executors/pytestrunner/__init__.py

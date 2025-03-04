@@ -13,6 +13,7 @@
 #include "ash/frame_sink/ui_resource_manager.h"
 #include "ash/rounded_display/rounded_display_gutter.h"
 #include "base/check.h"
+#include "base/feature_list.h"
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "components/viz/common/quads/compositor_frame.h"
@@ -23,6 +24,7 @@
 #include "components/viz/common/resources/transferable_resource.h"
 #include "gpu/command_buffer/client/client_shared_image.h"
 #include "gpu/command_buffer/client/shared_image_interface.h"
+#include "gpu/command_buffer/common/shared_image_capabilities.h"
 #include "gpu/command_buffer/common/shared_image_usage.h"
 #include "ipc/common/surface_handle.h"
 #include "ui/aura/env.h"
@@ -136,7 +138,7 @@ RoundedDisplayFrameFactory::CreateUiResource(const gfx::Size& size,
 
   gpu::SharedImageUsageSet usage = gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
 
-  if (is_overlay) {
+  if (is_overlay && sii->GetCapabilities().supports_scanout_shared_images) {
     usage |= gpu::SHARED_IMAGE_USAGE_SCANOUT;
   }
 
@@ -323,7 +325,6 @@ void RoundedDisplayFrameFactory::AppendQuad(
       /*premultiplied=*/true, /*uv_top_left=*/gfx::PointF(0, 0),
       /*uv_bottom_right=*/gfx::PointF(1, 1),
       /*background=*/SkColors::kTransparent,
-      /*flipped=*/false,
       /*nearest=*/false,
       /*secure_output=*/false, gfx::ProtectedVideoType::kClear);
 

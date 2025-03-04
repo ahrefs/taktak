@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "chrome/browser/ui/webui/version/version_ui.h"
 
 #include <memory>
@@ -21,11 +16,9 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process_impl.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/webui/version/version_handler.h"
-#include "chrome/browser/ui/webui/webui_util.h"
 #include "chrome/common/channel_info.h"
 #include "chrome/common/url_constants.h"
 #include "chrome/grit/branded_strings.h"
@@ -38,14 +31,14 @@
 #include "components/strings/grit/components_strings.h"
 #include "components/variations/service/variations_service.h"
 #include "components/version_info/version_info.h"
-#include "components/version_ui/version_handler_helper.h"
-#include "components/version_ui/version_ui_constants.h"
+#include "components/webui/version/version_handler_helper.h"
+#include "components/webui/version/version_ui_constants.h"
 #include "content/public/browser/url_data_source.h"
 #include "content/public/browser/web_ui.h"
 #include "content/public/browser/web_ui_data_source.h"
-#include "content/public/common/user_agent.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/webui/web_ui_util.h"
+#include "ui/webui/webui_util.h"
 #include "v8/include/v8-version-string.h"
 
 #if BUILDFLAG(IS_ANDROID)
@@ -100,27 +93,18 @@ void CreateAndAddVersionUIDataSource(Profile* profile) {
       {version_ui::kPlatform, IDS_PLATFORM_LABEL},
       {version_ui::kCustomizationId, IDS_VERSION_UI_CUSTOMIZATION_ID},
       {version_ui::kFirmwareVersion, IDS_VERSION_UI_FIRMWARE_VERSION},
-      {version_ui::kOsVersionHeaderText1, IDS_VERSION_UI_OS_TEXT1_LABEL},
-      {version_ui::kOsVersionHeaderText2, IDS_VERSION_UI_OS_TEXT2_LABEL},
-#endif  // BUILDFLAG(IS_CHROMEOS)
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#else
       {version_ui::kOSName, IDS_VERSION_UI_OS},
-#endif  // !BUILDFLAG(IS_CHROMEOS)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 #if BUILDFLAG(IS_ANDROID)
       {version_ui::kGmsName, IDS_VERSION_UI_GMS},
 #endif  // BUILDFLAG(IS_ANDROID)
   };
   html_source->AddLocalizedStrings(kStrings);
 
-#if BUILDFLAG(IS_CHROMEOS)
-  auto os_link = l10n_util::GetStringUTF16(IDS_VERSION_UI_OS_LINK);
-  html_source->AddString(version_ui::kOsVersionHeaderLink, os_link);
-#endif  // BUILDFLAG(IS_CHROMEOS)
-
   VersionUI::AddVersionDetailStrings(html_source);
 
-  html_source->AddResourcePaths(
-      base::make_span(kVersionUiResources, kVersionUiResourcesSize));
+  html_source->AddResourcePaths(kVersionUiResources);
   html_source->UseStringsJs();
 
 #if BUILDFLAG(IS_ANDROID)
@@ -138,9 +122,6 @@ std::string GetProductModifier() {
       !channel_name.empty()) {
     modifier_parts.push_back(std::move(channel_name));
   }
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  modifier_parts.emplace_back("lacros");
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 #if BUILDFLAG(DCHECK_IS_CONFIGURABLE)
   modifier_parts.emplace_back("dcheck");
 #endif  // BUILDFLAG(DCHECK_IS_CONFIGURABLE)
@@ -169,7 +150,7 @@ VersionUI::VersionUI(content::WebUI* web_ui)
   CreateAndAddVersionUIDataSource(profile);
 }
 
-VersionUI::~VersionUI() {}
+VersionUI::~VersionUI() = default;
 
 // static
 int VersionUI::VersionProcessorVariation() {
@@ -229,7 +210,7 @@ void VersionUI::AddVersionDetailStrings(content::WebUIDataSource* html_source) {
 
   // Data strings.
   html_source->AddString(version_ui::kVersion,
-                         std::string(version_info::GetVersionNumber()));
+                         version_info::GetVersionNumber());
 
   html_source->AddString(version_ui::kVersionModifier, GetProductModifier());
 
@@ -240,21 +221,19 @@ void VersionUI::AddVersionDetailStrings(content::WebUIDataSource* html_source) {
       base::i18n::MessageFormatter::FormatWithNumberedArgs(
           l10n_util::GetStringUTF16(IDS_ABOUT_VERSION_COPYRIGHT),
           base::Time::Now()));
-  html_source->AddString(version_ui::kCL,
-                         std::string(version_info::GetLastChange()));
+  html_source->AddString(version_ui::kCL, version_info::GetLastChange());
   html_source->AddString(version_ui::kUserAgent,
                          embedder_support::GetUserAgent());
   // Note that the executable path and profile path are retrieved asynchronously
   // and returned in VersionHandler::OnGotFilePaths. The area is initially
   // blank.
-  html_source->AddString(version_ui::kExecutablePath, std::string());
-  html_source->AddString(version_ui::kProfilePath, std::string());
+  html_source->AddString(version_ui::kExecutablePath, std::string_view());
+  html_source->AddString(version_ui::kProfilePath, std::string_view());
 
 #if BUILDFLAG(IS_MAC)
   html_source->AddString(version_ui::kOSType, base::mac::GetOSDisplayName());
-#elif !BUILDFLAG(IS_CHROMEOS_ASH)
-  html_source->AddString(version_ui::kOSType,
-                         std::string(version_info::GetOSType()));
+#elif !BUILDFLAG(IS_CHROMEOS)
+  html_source->AddString(version_ui::kOSType, version_info::GetOSType());
 #endif  // BUILDFLAG(IS_MAC)
 
 #if BUILDFLAG(IS_ANDROID)
@@ -284,10 +263,11 @@ void VersionUI::AddVersionDetailStrings(content::WebUIDataSource* html_source) {
           base::CommandLine::ForCurrentProcess()->GetCommandLineString()));
 #else
   std::string command_line;
-  typedef std::vector<std::string> ArgvList;
+  using ArgvList = std::vector<std::string>;
   const ArgvList& argv = base::CommandLine::ForCurrentProcess()->argv();
-  for (auto iter = argv.begin(); iter != argv.end(); iter++)
-    command_line += " " + *iter;
+  for (const auto& iter : argv) {
+    command_line += " " + iter;
+  }
   // TODO(viettrungluu): |command_line| could really have any encoding, whereas
   // below we assumes it's UTF-8.
   html_source->AddString(version_ui::kCommandLine, command_line);
@@ -310,7 +290,7 @@ void VersionUI::AddVersionDetailStrings(content::WebUIDataSource* html_source) {
           : std::string());
 
   html_source->AddString(version_ui::kSanitizer,
-                         std::string(version_info::GetSanitizerList()));
+                         version_info::GetSanitizerList());
 }
 
 #if !BUILDFLAG(IS_ANDROID)

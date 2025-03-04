@@ -48,7 +48,7 @@ struct InitialLengthData {
   int8_t value;
   uint8_t unit;
 };
-const auto g_initial_lengths_table = std::to_array<InitialLengthData>({
+constexpr auto g_initial_lengths_table = std::to_array<InitialLengthData>({
     {0, CAST_UNIT(kUserUnits)},
     {-10, CAST_UNIT(kPercentage)},
     {0, CAST_UNIT(kPercentage)},
@@ -344,7 +344,8 @@ void SVGLength::SetInitial(unsigned initial_value) {
 }
 
 bool SVGLength::IsNegativeNumericLiteral() const {
-  return value_->IsNegative() == CSSPrimitiveValue::BoolStatus::kTrue;
+  std::optional<double> value = value_->GetValueIfKnown();
+  return value && *value < 0.0;
 }
 
 }  // namespace blink

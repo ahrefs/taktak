@@ -8,6 +8,7 @@
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/scoped_refptr.h"
+#include "base/strings/stringprintf.h"
 #include "base/trace_event/memory_allocator_dump_guid.h"
 #include "base/trace_event/process_memory_dump.h"
 #include "components/viz/common/resources/shared_image_format.h"
@@ -65,11 +66,11 @@ constexpr bool kAllowShmOverlays = false;
 gpu::SharedImageUsageSet GetShmSharedImageUsage(SharedImageUsageSet usage) {
   if (kAllowShmOverlays) {
     return usage.Has(gpu::SHARED_IMAGE_USAGE_SCANOUT)
-               ? SHARED_IMAGE_USAGE_CPU_WRITE | SHARED_IMAGE_USAGE_SCANOUT
-               : SHARED_IMAGE_USAGE_CPU_WRITE;
+               ? SHARED_IMAGE_USAGE_CPU_WRITE_ONLY | SHARED_IMAGE_USAGE_SCANOUT
+               : SHARED_IMAGE_USAGE_CPU_WRITE_ONLY;
   }
 
-  return SHARED_IMAGE_USAGE_CPU_WRITE;
+  return SHARED_IMAGE_USAGE_CPU_WRITE_ONLY;
 }
 
 }  // namespace
@@ -256,14 +257,14 @@ class WrappedSkiaGraphiteCompoundImageRepresentation
                                           AccessMode::kWrite);
     return wrapped_->BeginWriteAccess(surface_props, update_rect);
   }
-  std::vector<skgpu::graphite::BackendTexture> BeginWriteAccess() final {
+  std::vector<scoped_refptr<GraphiteTextureHolder>> BeginWriteAccess() final {
     compound_backing()->NotifyBeginAccess(SharedImageAccessStream::kSkia,
                                           AccessMode::kWrite);
     return wrapped_->BeginWriteAccess();
   }
   void EndWriteAccess() final { wrapped_->EndWriteAccess(); }
 
-  std::vector<skgpu::graphite::BackendTexture> BeginReadAccess() final {
+  std::vector<scoped_refptr<GraphiteTextureHolder>> BeginReadAccess() final {
     compound_backing()->NotifyBeginAccess(SharedImageAccessStream::kSkia,
                                           AccessMode::kRead);
     return wrapped_->BeginReadAccess();
@@ -768,8 +769,7 @@ CompoundImageBacking::ElementHolder& CompoundImageBacking::GetElement(
       return element;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return elements_.back();
+  NOTREACHED();
 }
 
 SharedImageBacking* CompoundImageBacking::GetBacking(

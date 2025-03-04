@@ -16,12 +16,11 @@ import android.text.SpannableStringBuilder;
 import android.text.style.TextAppearanceSpan;
 import android.view.View;
 import android.view.Window;
-import android.widget.Button;
 
+import androidx.annotation.GravityInt;
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.ViewCompat;
 
 import org.jni_zero.CalledByNative;
@@ -136,9 +135,6 @@ public class PageInfoController
     // The controller for the cookies section of the page info.
     private PageInfoCookiesController mCookiesController;
 
-    // The controller for the tracking protection section of the page info. Replaces cookies.
-    private PageInfoTrackingProtectionController mTrackingProtectionController;
-
     // The controller for the tracking protection section for the 100% 3PCD launch UI.
     private PageInfoTrackingProtectionLaunchController mTrackingProtectionLaunchController;
 
@@ -158,6 +154,7 @@ public class PageInfoController
      * @param delegate The PageInfoControllerDelegate used to provide embedder-specific info.
      * @param pageInfoHighlight Providing the highlight row info related to this dialog.
      * @param source Determines the source that triggered the popup.
+     * @param dialogPosition The position of the dialog, either TOP or BOTTOM.
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     public PageInfoController(
@@ -166,7 +163,8 @@ public class PageInfoController
             String publisher,
             PageInfoControllerDelegate delegate,
             PageInfoHighlight pageInfoHighlight,
-            @OpenedFromSource int source) {
+            @OpenedFromSource int source,
+            @GravityInt int dialogPosition) {
         mWebContents = webContents;
         mSecurityLevel = securityLevel;
         mDelegate = delegate;
@@ -277,16 +275,11 @@ public class PageInfoController
                         mDelegate,
                         pageInfoHighlight.getHighlightedPermission());
         mSubpageControllers.add(mPermissionsController);
-        if (mDelegate.showTrackingProtectionACTFeaturesUI()) {
+        if (mDelegate.showTrackingProtectionActFeaturesUi()) {
             mTrackingProtectionLaunchController =
                     new PageInfoTrackingProtectionLaunchController(
                             this, mView.getCookiesRowView(), mDelegate);
             mSubpageControllers.add(mTrackingProtectionLaunchController);
-        } else if (mDelegate.showTrackingProtectionUI()) {
-            mTrackingProtectionController =
-                    new PageInfoTrackingProtectionController(
-                            this, mView.getCookiesRowView(), mDelegate);
-            mSubpageControllers.add(mTrackingProtectionController);
         } else {
             mCookiesController =
                     new PageInfoCookiesController(this, mView.getCookiesRowView(), mDelegate);
@@ -294,7 +287,7 @@ public class PageInfoController
         }
 
         if (source == OpenedFromSource.WEBAPK_SNACKBAR
-                && mDelegate.showTrackingProtectionACTFeaturesUI()) {
+                && mDelegate.showTrackingProtectionActFeaturesUi()) {
             mContainer.showPage(
                     mTrackingProtectionLaunchController.createViewForSubpage(mContainer),
                     null,
@@ -331,10 +324,7 @@ public class PageInfoController
                     }
 
                     @Override
-                    public void destroy() {
-                        super.destroy();
-                        // Force the dialog to close immediately in case the destroy was from Chrome
-                        // quitting.
+                    public void webContentsDestroyed() {
                         PageInfoController.this.destroy();
                     }
 
@@ -353,11 +343,17 @@ public class PageInfoController
                         webContents.getViewAndroidDelegate().getContainerView(),
                         isSheet(mContext),
                         delegate.getModalDialogManager(),
-                        this);
+                        this,
+                        dialogPosition);
         mDialog.show();
     }
 
     private void destroy() {
+        if (mWebContentsObserver != null) {
+            mWebContentsObserver.observe(null);
+            mWebContentsObserver = null;
+        }
+
         if (mDialog != null) {
             mDialog.destroy();
             mDialog = null;
@@ -366,10 +362,6 @@ public class PageInfoController
             mCookiesController.destroy();
             mCookiesController = null;
         }
-        if (mTrackingProtectionController != null) {
-            mTrackingProtectionController.destroy();
-            mTrackingProtectionController = null;
-        }
         if (mTrackingProtectionLaunchController != null) {
             mTrackingProtectionLaunchController.destroy();
             mTrackingProtectionLaunchController = null;
@@ -377,37 +369,6 @@ public class PageInfoController
         if (mForgetSiteDialog != null) {
             mForgetSiteDialog.dismiss();
             mForgetSiteDialog = null;
-        }
-    }
-
-    private void setupForgetSiteButton(Button button) {
-        button.setOnClickListener(
-                (View v) -> {
-                    recordAction(PageInfoAction.PAGE_INFO_FORGET_SITE_OPENED);
-                    mForgetSiteDialog =
-                            new AlertDialog.Builder(
-                                            mContext, R.style.ThemeOverlay_BrowserUI_AlertDialog)
-                                    .setTitle(R.string.page_info_forget_site_title)
-                                    .setMessage(R.string.page_info_forget_site_message)
-                                    .setPositiveButton(
-                                            R.string.page_info_forget_site_confirmation_button,
-                                            (dialog, which) -> {
-                                                clearData();
-                                            })
-                                    .setNegativeButton(
-                                            R.string.cancel,
-                                            (dialog, which) -> {
-                                                mForgetSiteDialog = null;
-                                            })
-                                    .show();
-                });
-        button.setVisibility(View.VISIBLE);
-    }
-
-    private void clearData() {
-        recordAction(PageInfoAction.PAGE_INFO_FORGET_SITE_CLEARED);
-        for (PageInfoSubpageController controller : mSubpageControllers) {
-            controller.clearData();
         }
     }
 
@@ -499,8 +460,9 @@ public class PageInfoController
             mCurrentSubpageController.onSubpageRemoved();
             mCurrentSubpageController = null;
         }
-        mWebContentsObserver.destroy();
-        mWebContentsObserver = null;
+
+        destroy();
+
         PageInfoControllerJni.get().destroy(mNativePageInfoController, PageInfoController.this);
         mNativePageInfoController = 0;
         mContext = null;
@@ -538,20 +500,23 @@ public class PageInfoController
         return !DeviceFormFactor.isNonMultiDisplayContextOnTablet(context);
     }
 
-    public View getPageInfoViewForTesting() {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    public View getPageInfoView() {
         return mContainer;
     }
 
-    public PageInfoTrackingProtectionController getTrackingProtectionControllerForTesting() {
-        return mTrackingProtectionController;
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    public PageInfoCookiesController getCookiesController() {
+        return mCookiesController;
     }
 
-    public PageInfoTrackingProtectionLaunchController
-            getTrackingProtectionLaunchControllerForTesting() {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    public PageInfoTrackingProtectionLaunchController getTrackingProtectionLaunchController() {
         return mTrackingProtectionLaunchController;
     }
 
-    public boolean isDialogShowingForTesting() {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    public boolean isDialogShowing() {
         return mDialog != null;
     }
 
@@ -573,7 +538,8 @@ public class PageInfoController
             final String contentPublisher,
             @OpenedFromSource int source,
             PageInfoControllerDelegate delegate,
-            PageInfoHighlight pageInfoHighlight) {
+            PageInfoHighlight pageInfoHighlight,
+            @GravityInt int dialogPosition) {
         // Don't show the dialog if this tab doesn't have an activity. See https://crbug.com/1267383
         if (activity == null) return;
         // If the activity's decor view is not attached to window, we don't show the dialog because
@@ -602,10 +568,12 @@ public class PageInfoController
                                 contentPublisher,
                                 delegate,
                                 pageInfoHighlight,
-                                source));
+                                source,
+                                dialogPosition));
     }
 
-    public static PageInfoController getLastPageInfoControllerForTesting() {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    public static PageInfoController getLastPageInfoController() {
         return sLastPageInfoControllerForTesting != null
                 ? sLastPageInfoControllerForTesting.get()
                 : null;
@@ -626,6 +594,11 @@ public class PageInfoController
     @Override
     public BrowserContextHandle getBrowserContext() {
         return mDelegate.getBrowserContext();
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    public PageInfoControllerDelegate getPageInfoControllerDelegate() {
+        return mDelegate;
     }
 
     /** Launches a subpage for the specified controller. */

@@ -53,8 +53,7 @@ String EncryptedMediaUtils::ConvertFromInitDataType(
       return String();
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return String();
+  NOTREACHED();
 }
 
 // static
@@ -79,36 +78,10 @@ String EncryptedMediaUtils::ConvertFromSessionType(
       return kPersistentLicense;
     case WebEncryptedMediaSessionType::kUnknown:
       // Unexpected session type from Chromium.
-      NOTREACHED_IN_MIGRATION();
-      return String();
+      NOTREACHED();
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return String();
-}
-
-// static
-String EncryptedMediaUtils::ConvertKeyStatusToString(
-    const WebEncryptedMediaKeyInformation::KeyStatus status) {
-  switch (status) {
-    case WebEncryptedMediaKeyInformation::KeyStatus::kUsable:
-      return "usable";
-    case WebEncryptedMediaKeyInformation::KeyStatus::kExpired:
-      return "expired";
-    case WebEncryptedMediaKeyInformation::KeyStatus::kReleased:
-      return "released";
-    case WebEncryptedMediaKeyInformation::KeyStatus::kOutputRestricted:
-      return "output-restricted";
-    case WebEncryptedMediaKeyInformation::KeyStatus::kOutputDownscaled:
-      return "output-downscaled";
-    case WebEncryptedMediaKeyInformation::KeyStatus::kStatusPending:
-      return "status-pending";
-    case WebEncryptedMediaKeyInformation::KeyStatus::kInternalError:
-      return "internal-error";
-  }
-
-  NOTREACHED_IN_MIGRATION();
-  return "internal-error";
+  NOTREACHED();
 }
 
 // static

@@ -7,8 +7,9 @@
  * 'privacy-guide-safe-browsing-fragment' is the fragment in a privacy
  * guide card that contains the safe browsing settings and their descriptions.
  */
+
+import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import '/shared/settings/prefs/prefs.js';
-import './privacy_guide_description_item.js';
 import './privacy_guide_fragment_shared.css.js';
 import '../../controls/settings_radio_group.js';
 import '../../privacy_page/collapse_radio_button.js';
@@ -107,7 +108,7 @@ export class PrivacyGuideSafeBrowsingFragmentElement extends
           PrivacyGuideSettingsStates.SAFE_BROWSING_STANDARD_TO_ENHANCED :
           PrivacyGuideSettingsStates.SAFE_BROWSING_STANDARD_TO_STANDARD;
     }
-    this.metricsBrowserProxy_.recordPrivacyGuideSettingsStatesHistogram(state!);
+    this.metricsBrowserProxy_.recordPrivacyGuideSettingsStatesHistogram(state);
   }
 
   private onSafeBrowsingEnhancedClick_() {

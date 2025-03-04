@@ -5,10 +5,9 @@
 #include <algorithm>
 
 #include "base/memory/raw_ptr.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/extensions/extension_browsertest.h"
 #include "chrome/browser/extensions/extension_service.h"
-#include "chrome/browser/ui/extensions/extension_install_ui.h"
+#include "chrome/browser/ui/extensions/extension_install_ui_desktop.h"
 #include "chrome/browser/ui/test/test_browser_dialog.h"
 #include "content/public/test/browser_test.h"
 #include "extensions/common/api/extension_action/action_info.h"
@@ -66,7 +65,7 @@ void ExtensionInstalledBubbleViewsBrowserTest::ShowUi(const std::string& name) {
       MakeExtensionOfType(name);
 
   views::Widget::Widgets old_widgets = views::test::WidgetTest::GetAllWidgets();
-  ExtensionInstallUI::ShowBubble(extension, browser(), SkBitmap());
+  ExtensionInstallUIDesktop::ShowBubble(extension, browser(), SkBitmap());
   views::Widget::Widgets new_widgets = views::test::WidgetTest::GetAllWidgets();
   views::Widget::Widgets added_widgets;
   std::set_difference(new_widgets.begin(), new_widgets.end(),
@@ -89,7 +88,7 @@ void ExtensionInstalledBubbleViewsBrowserTest::WaitForUserDismissal() {
   observer.Wait();
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // None of these tests work when run under Ash, because they need an
 // AuraTestHelper constructed at an inconvenient time in test setup, which
 // InProcessBrowserTest is not equipped to handle.

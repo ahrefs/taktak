@@ -49,8 +49,7 @@ import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.chrome.browser.tabmodel.TabWindowManager;
 import org.chromium.chrome.browser.ui.desktop_windowing.AppHeaderUtils;
 import org.chromium.chrome.browser.util.AndroidTaskUtils;
-import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateProvider;
-import org.chromium.components.cached_flags.IntCachedFieldTrialParameter;
+import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateManager;
 import org.chromium.components.ukm.UkmRecorder;
 import org.chromium.ui.display.DisplayAndroidManager;
 
@@ -63,17 +62,11 @@ import java.util.Locale;
 /**
  * Utilities for detecting multi-window/multi-instance support.
  *
- * Thread-safe: This class may be accessed from any thread.
+ * <p>Thread-safe: This class may be accessed from any thread.
  */
 public class MultiWindowUtils implements ActivityStateListener {
     public static final int INVALID_INSTANCE_ID = TabWindowManager.INVALID_WINDOW_INDEX;
     public static final int INVALID_TASK_ID = -1; // Defined in android.app.ActivityTaskManager.
-    public static final IntCachedFieldTrialParameter
-            BACK_TO_BACK_CTA_CREATION_TIMESTAMP_DIFF_THRESHOLD_MS =
-                    ChromeFeatureList.newIntCachedFieldTrialParameter(
-                            ChromeFeatureList.TAB_WINDOW_MANAGER_REPORT_INDICES_MISMATCH,
-                            "activity_creation_timestamp_diff_threshold_ms",
-                            1000);
 
     static final String HISTOGRAM_NUM_ACTIVITIES_DESKTOP_WINDOW =
             "Android.MultiInstance.NumActivities.DesktopWindow";
@@ -780,32 +773,31 @@ public class MultiWindowUtils implements ActivityStateListener {
 
         if (tab == null || tab.isIncognito() || tab.getWebContents() == null) return;
 
-        new UkmRecorder.Bridge()
-                .recordEventWithIntegerMetric(
-                        tab.getWebContents(),
-                        "Android.MultiWindowChangeActivity",
+        new UkmRecorder(tab.getWebContents(), "Android.MultiWindowChangeActivity")
+                .addMetric(
                         "ActivityType",
                         isInMultiWindowMode
                                 ? MultiWindowActivityType.ENTER
-                                : MultiWindowActivityType.EXIT);
+                                : MultiWindowActivityType.EXIT)
+                .record();
     }
 
     /**
      * Records the ukms about if the activity is in multi-window mode when the activity is shown.
+     *
      * @param activity The current Context, used to retrieve the ActivityManager system service.
      * @param tab The current activity {@link Tab}.
      */
     public void recordMultiWindowStateUkm(Activity activity, Tab tab) {
         if (tab == null || tab.isIncognito() || tab.getWebContents() == null) return;
 
-        new UkmRecorder.Bridge()
-                .recordEventWithIntegerMetric(
-                        tab.getWebContents(),
-                        "Android.MultiWindowState",
+        new UkmRecorder(tab.getWebContents(), "Android.MultiWindowState")
+                .addMetric(
                         "WindowState",
                         isInMultiWindowMode(activity)
                                 ? MultiWindowState.MULTI_WINDOW
-                                : MultiWindowState.SINGLE_WINDOW);
+                                : MultiWindowState.SINGLE_WINDOW)
+                .record();
     }
 
     /**
@@ -868,11 +860,11 @@ public class MultiWindowUtils implements ActivityStateListener {
      * @param isColdStart Whether app startup is a cold start.
      */
     public static void maybeRecordDesktopWindowCountHistograms(
-            @Nullable DesktopWindowStateProvider desktopWindowStateProvider,
+            @Nullable DesktopWindowStateManager desktopWindowStateManager,
             @InstanceAllocationType int instanceAllocationType,
             boolean isColdStart) {
         // Emit the histogram only for an activity that starts in a desktop window.
-        if (!AppHeaderUtils.isAppInDesktopWindow(desktopWindowStateProvider)) return;
+        if (!AppHeaderUtils.isAppInDesktopWindow(desktopWindowStateManager)) return;
 
         // Emit the histogram only for a newly created activity that is cold-started.
         if (!isColdStart) return;

@@ -218,7 +218,7 @@ class COMPONENT_EXPORT(AX_PLATFORM) BrowserAccessibilityManager
   // information about each of these actions.
   void ClearAccessibilityFocus(const BrowserAccessibility& node);
   void Decrement(const BrowserAccessibility& node);
-  void DoDefaultAction(const BrowserAccessibility& node);
+  virtual void DoDefaultAction(const BrowserAccessibility& node);
   void GetImageData(const BrowserAccessibility& node,
                     const gfx::Size& max_size);
   void Expand(const BrowserAccessibility& node);
@@ -416,12 +416,11 @@ class COMPONENT_EXPORT(AX_PLATFORM) BrowserAccessibilityManager
       const std::vector<AXTreeObserver::Change>& changes) override;
 
   // AXTreeManager overrides.
-  AXNode* GetNode(const AXNodeID node_id) const override;
+  AXNode* GetNode(AXNodeID node_id) const override;
   void UpdateAttributesOnParent(AXNode* parent) override;
 
   // AXPlatformTreeManager overrides.
-  AXPlatformNode* GetPlatformNodeFromTree(
-      const AXNodeID node_id) const override;
+  AXPlatformNode* GetPlatformNodeFromTree(AXNodeID node_id) const override;
   AXPlatformNode* GetPlatformNodeFromTree(const AXNode&) const override;
   AXPlatformNodeDelegate* RootDelegate() const override;
 
@@ -503,6 +502,9 @@ class COMPONENT_EXPORT(AX_PLATFORM) BrowserAccessibilityManager
   // Returns the unique identifier for `node` for exposure to the native
   // platform.
   AXPlatformNodeId GetNodeUniqueId(const BrowserAccessibility* node);
+
+  // Returns the global accessibility focus. Only relevant on a root manager.
+  BrowserAccessibility* GetAccessibilityFocus();
 
  protected:
   FRIEND_TEST_ALL_PREFIXES(content::BrowserAccessibilityManagerTest,
@@ -619,12 +621,23 @@ class COMPONENT_EXPORT(AX_PLATFORM) BrowserAccessibilityManager
   BrowserAccessibility* AXTreeHitTest(
       const gfx::Point& blink_screen_point) const;
 
+  // Updates global accessibility focus on platforms without an explicit
+  // accessibility focus API. Involves clearing pre-existing focus and setting
+  // the new focus.
+  void UpdateAccessibilityFocus(BrowserAccessibilityManager* manager,
+                                const BrowserAccessibility& node);
+
   // A delegate responsible for assigning window-unique identifiers for nodes.
   const raw_ref<AXNodeIdDelegate> node_id_delegate_;
 
   // Only used on the root node for AXTree hit testing as an alternative to
   // ApproximateHitTest when used without a renderer.
   std::unique_ptr<cc::RTree<AXNodeID>> cached_node_rtree_;
+
+  // Data tracking the global accessibility focus. Meant to be set on the root
+  // manager.
+  AXTreeID accessibility_focus_tree_id_;
+  AXNodeID accessibility_focus_node_id_ = AXNodeData::kInvalidAXID;
 };
 
 }  // namespace ui

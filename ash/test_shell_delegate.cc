@@ -5,7 +5,9 @@
 #include "ash/test_shell_delegate.h"
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "ash/accelerators/test_accelerator_prefs_delegate.h"
 #include "ash/accessibility/default_accessibility_delegate.h"
@@ -16,6 +18,7 @@
 #include "ash/game_dashboard/test_game_dashboard_delegate.h"
 #include "ash/public/cpp/desk_profiles_delegate.h"
 #include "ash/public/cpp/tab_strip_delegate.h"
+#include "ash/public/cpp/test/test_coral_delegate.h"
 #include "ash/public/cpp/test/test_desk_profiles_delegate.h"
 #include "ash/public/cpp/test/test_nearby_share_delegate.h"
 #include "ash/public/cpp/test/test_saved_desk_delegate.h"
@@ -55,7 +58,7 @@ TestShellDelegate::CreateClipboardHistoryControllerDelegate() const {
 }
 
 std::unique_ptr<CoralDelegate> TestShellDelegate::CreateCoralDelegate() const {
-  return nullptr;
+  return std::make_unique<TestCoralDelegate>();
 }
 
 std::unique_ptr<GameDashboardDelegate>
@@ -135,7 +138,7 @@ bool TestShellDelegate::CanGoBack(gfx::NativeWindow window) const {
   return can_go_back_;
 }
 
-void TestShellDelegate::SetTabScrubberChromeOSEnabled(bool enabled) {
+void TestShellDelegate::SetTabScrubberEnabled(bool enabled) {
   tab_scrubber_enabled_ = enabled;
 }
 
@@ -170,10 +173,6 @@ void TestShellDelegate::BindMultiDeviceSetup(
         receiver) {
   if (multidevice_setup_binder_)
     multidevice_setup_binder_.Run(std::move(receiver));
-}
-
-void TestShellDelegate::BindMultiCaptureService(
-    mojo::PendingReceiver<video_capture::mojom::MultiCaptureService> receiver) {
 }
 
 void TestShellDelegate::SetCanGoBack(bool can_go_back) {
@@ -211,6 +210,19 @@ void TestShellDelegate::OpenFeedbackDialog(
     const std::string& description_template,
     const std::string& category_tag) {
   ++open_feedback_dialog_call_count_;
+}
+
+bool TestShellDelegate::SendSpecializedFeatureFeedback(
+    const AccountId& account_id,
+    int product_id,
+    std::string description,
+    std::optional<std::string> image,
+    std::optional<std::string> image_mime_type) {
+  return send_specialized_feature_feedback_callback_
+             ? send_specialized_feature_feedback_callback_.Run(
+                   account_id, product_id, std::move(description),
+                   std::move(image), std::move(image_mime_type))
+             : true;
 }
 
 const GURL& TestShellDelegate::GetLastCommittedURLForWindowIfAny(

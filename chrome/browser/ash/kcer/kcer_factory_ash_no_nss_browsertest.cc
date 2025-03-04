@@ -4,8 +4,6 @@
 
 #include <memory>
 
-#include "ash/components/kcer/extra_instances.h"
-#include "ash/components/kcer/kcer.h"
 #include "ash/constants/ash_switches.h"
 #include "base/memory/weak_ptr.h"
 #include "base/test/test_future.h"
@@ -20,6 +18,8 @@
 #include "chrome/test/base/in_process_browser_test.h"
 #include "chrome/test/base/testing_profile.h"
 #include "chromeos/ash/components/browser_context_helper/browser_context_helper.h"
+#include "chromeos/ash/components/kcer/extra_instances.h"
+#include "chromeos/ash/components/kcer/kcer.h"
 #include "components/user_manager/scoped_user_manager.h"
 #include "content/public/test/browser_test.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -77,12 +77,7 @@ IN_PROC_BROWSER_TEST_F(KcerFactoryAshNoNssTestBase,
 // Test that Kcer for the sign in profile has correct tokens.
 IN_PROC_BROWSER_TEST_F(KcerFactoryAshNoNssTestBase,
                        SignInProfileGetsCorrectTokens) {
-  base::WeakPtr<Kcer> expected_kcer;
-  if (ash::switches::IsSigninFrameClientCertsEnabled()) {
-    expected_kcer = ExtraInstances::GetDeviceKcer();
-  } else {
-    expected_kcer = ExtraInstances::GetEmptyKcer();
-  }
+  base::WeakPtr<Kcer> expected_kcer = ExtraInstances::GetDeviceKcer();
 
   base::WeakPtr<Kcer> signin_kcer =
       KcerFactoryAsh::GetKcer(ash::ProfileHelper::GetSigninProfile());
@@ -98,12 +93,7 @@ IN_PROC_BROWSER_TEST_F(KcerFactoryAshNoNssTestBase,
           .SetPath(ash::ProfileHelper::GetLockScreenProfileDir())
           .Build();
 
-  base::WeakPtr<Kcer> expected_kcer;
-  if (ash::switches::IsSigninFrameClientCertsEnabled()) {
-    expected_kcer = ExtraInstances::GetDeviceKcer();
-  } else {
-    expected_kcer = ExtraInstances::GetEmptyKcer();
-  }
+  base::WeakPtr<Kcer> expected_kcer = ExtraInstances::GetDeviceKcer();
 
   base::WeakPtr<Kcer> lockscreen_kcer =
       KcerFactoryAsh::GetKcer(lockscreen_profile.get());

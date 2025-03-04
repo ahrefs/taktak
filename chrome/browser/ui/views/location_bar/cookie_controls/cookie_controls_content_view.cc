@@ -243,7 +243,7 @@ void CookieControlsContentView::AddDescriptionRow() {
   // TODO(https://b/344856056): Update this accessibility label for the new UI.
   // This function call is left in temporarily for testing.
   toggle_button_->GetViewAccessibility().SetName(
-      description_row_->title()->GetText());
+      std::u16string(description_row_->title()->GetText()));
 }
 
 const ui::ElementIdentifier CookieControlsContentView::GetFeatureIdentifier(
@@ -376,14 +376,13 @@ void CookieControlsContentView::AddFeedbackSection() {
           feedback_icon,
           l10n_util::GetStringUTF16(
               IDS_COOKIE_CONTROLS_BUBBLE_SEND_FEEDBACK_BUTTON_TITLE),
-          std::u16string(),
-          l10n_util::GetStringUTF16(
-              IDS_COOKIE_CONTROLS_BUBBLE_SEND_FEEDBACK_BUTTON_TITLE),
           l10n_util::GetStringUTF16(
               IDS_COOKIE_CONTROLS_BUBBLE_SEND_FEEDBACK_BUTTON_DESCRIPTION),
           launch_icon));
 
   feedback_button->SetProperty(views::kElementIdentifierKey, kFeedbackButton);
+  feedback_button->SetTooltipText(l10n_util::GetStringUTF16(
+      IDS_COOKIE_CONTROLS_BUBBLE_SEND_FEEDBACK_BUTTON_TITLE));
 }
 
 void CookieControlsContentView::UpdateContentLabels(

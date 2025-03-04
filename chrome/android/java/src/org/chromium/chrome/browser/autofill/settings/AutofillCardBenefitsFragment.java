@@ -31,7 +31,6 @@ import org.chromium.chrome.browser.autofill.AutofillUiUtils;
 import org.chromium.chrome.browser.autofill.PersonalDataManager;
 import org.chromium.chrome.browser.autofill.PersonalDataManager.CreditCard;
 import org.chromium.chrome.browser.autofill.PersonalDataManagerFactory;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.settings.ChromeBaseSettingsFragment;
 import org.chromium.components.autofill.ImageSize;
 import org.chromium.components.browser_ui.settings.ChromeBasePreference;
@@ -49,6 +48,8 @@ public class AutofillCardBenefitsFragment extends ChromeBaseSettingsFragment
                 Preference.OnPreferenceChangeListener {
     public static final String CARD_BENEFITS_LEARN_MORE_CLICKED_USER_ACTION =
             "CardBenefits_LearnMoreLinkClicked";
+    public static final String CARD_BENEFITS_TERMS_CLICKED_USER_ACTION =
+            "CardBenefits_TermsLinkClicked";
     public static final String CARD_BENEFITS_TOGGLED_OFF_USER_ACTION = "CardBenefits_ToggledOff";
     public static final String CARD_BENEFITS_TOGGLED_ON_USER_ACTION = "CardBenefits_ToggledOn";
     public static final String PREF_LIST_TERMS_URL = "card_benefits_terms_url";
@@ -184,8 +185,7 @@ public class AutofillCardBenefitsFragment extends ChromeBaseSettingsFragment
                             card.getCardArtUrl(),
                             card.getIssuerIconDrawableId(),
                             ImageSize.LARGE,
-                            ChromeFeatureList.isEnabled(
-                                    ChromeFeatureList.AUTOFILL_ENABLE_CARD_ART_IMAGE)));
+                            /* showCustomIcon= */ true));
 
             getPreferenceScreen().addPreference(cardPref);
         }
@@ -211,6 +211,7 @@ public class AutofillCardBenefitsFragment extends ChromeBaseSettingsFragment
     @Override
     public boolean onPreferenceClick(Preference preference) {
         openUrlInCct(preference.getExtras().getString(PREF_LIST_TERMS_URL));
+        RecordUserAction.record(CARD_BENEFITS_TERMS_CLICKED_USER_ACTION);
         return true;
     }
 

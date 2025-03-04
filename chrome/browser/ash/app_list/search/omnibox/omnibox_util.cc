@@ -11,11 +11,12 @@
 #include "base/functional/callback_helpers.h"
 #include "base/logging.h"
 #include "base/notreached.h"
+#include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/ash/app_list/search/omnibox/omnibox_result.h"
 #include "components/bookmarks/browser/bookmark_model.h"
 #include "components/omnibox/browser/autocomplete_controller.h"
 #include "components/omnibox/browser/favicon_cache.h"
-#include "components/omnibox/browser/omnibox_feature_configs.h"
+#include "components/omnibox/common/omnibox_feature_configs.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "url/gurl.h"
 
@@ -56,7 +57,6 @@ SearchResult::OmniboxType MatchTypeToOmniboxType(
     case AutocompleteMatchType::HISTORY_URL:
     case AutocompleteMatchType::HISTORY_TITLE:
     case AutocompleteMatchType::HISTORY_BODY:
-    case AutocompleteMatchType::HISTORY_KEYWORD:
     case AutocompleteMatchType::HISTORY_EMBEDDINGS:
     case AutocompleteMatchType::NAVSUGGEST:
     case AutocompleteMatchType::BOOKMARK_TITLE:
@@ -108,14 +108,14 @@ SearchResult::OmniboxType MatchTypeToOmniboxType(
                  << AutocompleteMatchType::ToString(type);
       return SearchResult::OmniboxType::kDomain;
 
+    // NUM_TYPES is not a valid enumerator value, so fall through below.
     case AutocompleteMatchType::NUM_TYPES:
-      // NUM_TYPES is not a valid enumerator value, so fall through below.
+    default:
       break;
   }
   // https://abseil.io/tips/147: Handle non-enumerator values.
-  NOTREACHED_IN_MIGRATION()
-      << "Unexpected AutocompleteMatchType value: " << static_cast<int>(type);
-  return SearchResult::OmniboxType::kDomain;
+  NOTREACHED() << "Unexpected AutocompleteMatchType value: "
+               << static_cast<int>(type);
 }
 
 SearchResult::MetricsType MatchTypeToMetricsType(
@@ -276,8 +276,7 @@ ui::PageTransition PageTransitionToUiPageTransition(
     case SearchResult::PageTransition::kGenerated:
       return ui::PAGE_TRANSITION_GENERATED;
     default:
-      NOTREACHED_IN_MIGRATION();
-      return ui::PAGE_TRANSITION_FIRST;
+      NOTREACHED();
   }
 }
 

@@ -55,9 +55,6 @@ class SVGPathByteStream {
 
   DataIterator begin() const { return data_.begin(); }
   DataIterator end() const { return data_.end(); }
-  void Append(const unsigned char* data, wtf_size_t data_size) {
-    data_.Append(data, data_size);
-  }
   void clear() { data_.clear(); }
   void ReserveInitialCapacity(wtf_size_t size) {
     data_.ReserveInitialCapacity(size);
@@ -69,9 +66,7 @@ class SVGPathByteStream {
   bool operator==(const SVGPathByteStream& other) const {
     return data_ == other.data_;
   }
-  unsigned Hash() const {
-    return StringHasher::HashMemory(data_.data(), data_.size());
-  }
+  unsigned Hash() const { return StringHasher::HashMemory(data_); }
 
  private:
   explicit SVGPathByteStream(const Data& data) : data_(data) {}

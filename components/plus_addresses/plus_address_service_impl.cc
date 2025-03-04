@@ -10,30 +10,37 @@
 
 #include "base/check_deref.h"
 #include "base/check_op.h"
-#include "base/containers/flat_set.h"
 #include "base/containers/to_vector.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
+#include "base/metrics/user_metrics.h"
+#include "base/metrics/user_metrics_action.h"
 #include "base/notimplemented.h"
 #include "base/notreached.h"
 #include "base/scoped_observation.h"
-#include "base/strings/string_split.h"
+#include "base/strings/to_string.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/task/sequenced_task_runner.h"
 #include "components/affiliations/core/browser/affiliation_utils.h"
-#include "components/autofill/core/browser/ui/suggestion.h"
-#include "components/autofill/core/browser/ui/suggestion_hiding_reason.h"
-#include "components/autofill/core/browser/ui/suggestion_type.h"
+#include "components/autofill/core/browser/data_quality/validation.h"
+#include "components/autofill/core/browser/field_types.h"
+#include "components/autofill/core/browser/filling/filling_product.h"
+#include "components/autofill/core/browser/suggestions/suggestion.h"
+#include "components/autofill/core/browser/suggestions/suggestion_hiding_reason.h"
+#include "components/autofill/core/browser/suggestions/suggestion_type.h"
 #include "components/autofill/core/common/aliases.h"
 #include "components/autofill/core/common/form_field_data.h"
+#include "components/autofill/core/common/plus_address_survey_type.h"
 #include "components/plus_addresses/features.h"
 #include "components/plus_addresses/metrics/plus_address_metrics.h"
 #include "components/plus_addresses/plus_address_allocator.h"
 #include "components/plus_addresses/plus_address_blocklist_data.h"
+#include "components/plus_addresses/plus_address_hats_utils.h"
 #include "components/plus_addresses/plus_address_http_client.h"
 #include "components/plus_addresses/plus_address_http_client_impl.h"
 #include "components/plus_addresses/plus_address_jit_allocator.h"
 #include "components/plus_addresses/plus_address_preallocator.h"
+#include "components/plus_addresses/plus_address_prefs.h"
 #include "components/plus_addresses/plus_address_suggestion_generator.h"
 #include "components/plus_addresses/plus_address_types.h"
 #include "components/plus_addresses/plus_address_ui_utils.h"
@@ -46,7 +53,6 @@
 #include "components/signin/public/identity_manager/identity_manager.h"
 #include "components/webdata/common/web_data_results.h"
 #include "google_apis/gaia/google_service_auth_error.h"
-#include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "net/http/http_status_code.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "url/origin.h"
@@ -61,24 +67,7 @@ using autofill::Suggestion;
 using autofill::SuggestionType;
 using PasswordFormClassification = autofill::PasswordFormClassification;
 
-// The number of `HTTP_FORBIDDEN` responses that the user may receive before
-// `this` is disabled for this session. If a user makes a single successful
-// call, this limit no longer applies.
-constexpr int kMaxHttpForbiddenResponses = 1;
-
-// Get the ETLD+1 of `origin`, which means any subdomain is treated
-// equivalently. See `GetDomainAndRegistry` for concrete examples.
-std::string GetEtldPlusOne(const url::Origin origin) {
-  return net::registry_controlled_domains::GetDomainAndRegistry(
-      origin, net::registry_controlled_domains::INCLUDE_PRIVATE_REGISTRIES);
-}
-
-// Get and parse the excluded sites.
-base::flat_set<std::string> GetAndParseExcludedSites() {
-  return base::MakeFlatSet<std::string>(
-      base::SplitString(features::kPlusAddressExcludedSites.Get(), ",",
-                        base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY));
-}
+constexpr char16_t kPlusAddressDomain[] = u"@grelay.com";
 
 affiliations::FacetURI OriginToFacet(const url::Origin& origin) {
   // For a valid `origin`, `origin.GetURL().spec()` is always a valid spec.
@@ -105,27 +94,21 @@ std::unique_ptr<PlusAddressAllocator> CreateAllocator(
 }
 
 // Returns `true` if the origin is part of the set of blocklisted domains and
-// `false` otherwise. If `kPlusAddressBlocklistEnabled` is enabled, this means
-// that the domain's origin matches the `exclusion_pattern` regex and does not
-// match the `exception_pattern` regex.
-bool IsSiteExcluded(const base::flat_set<std::string>& excluded_sites,
-                    const url::Origin& origin) {
-  if (base::FeatureList::IsEnabled(features::kPlusAddressBlocklistEnabled)) {
-    const PlusAddressBlocklistData& blocklist_data =
-        PlusAddressBlocklistData::GetInstance();
+// `false` otherwise. This means that the domain's origin matches the
+// `exclusion_pattern` regex and does not match the `exception_pattern` regex.
+bool IsSiteExcluded(const url::Origin& origin) {
+  const PlusAddressBlocklistData& blocklist_data =
+      PlusAddressBlocklistData::GetInstance();
 
-    const re2::RE2* exception_pattern = blocklist_data.GetExceptionPattern();
-    if (exception_pattern &&
-        RE2::PartialMatch(origin.host(), *exception_pattern)) {
-      return false;
-    }
-
-    const re2::RE2* exclusion_pattern = blocklist_data.GetExclusionPattern();
-    return exclusion_pattern &&
-           RE2::PartialMatch(origin.host(), *exclusion_pattern);
+  const re2::RE2* exception_pattern = blocklist_data.GetExceptionPattern();
+  if (exception_pattern &&
+      RE2::PartialMatch(origin.host(), *exception_pattern)) {
+    return false;
   }
 
-  return excluded_sites.contains(GetEtldPlusOne(origin));
+  const re2::RE2* exclusion_pattern = blocklist_data.GetExclusionPattern();
+  return exclusion_pattern &&
+         RE2::PartialMatch(origin.host(), *exclusion_pattern);
 }
 
 std::string GetPlusAddressFromPlusProfile(
@@ -166,14 +149,12 @@ PlusAddressServiceImpl::PlusAddressServiceImpl(
   if (webdata_service_) {
     webdata_service_observation_.Observe(webdata_service_.get());
     if (IsEnabled()) {
-      webdata_service_->GetPlusProfiles(this);
+      webdata_service_->GetPlusProfiles(
+          base::BindOnce(&PlusAddressServiceImpl::OnWebDataServiceRequestDone,
+                         weak_ptr_factory_.GetWeakPtr()));
     }
   }
   identity_manager_observation_.Observe(identity_manager);
-
-  if (!base::FeatureList::IsEnabled(features::kPlusAddressBlocklistEnabled)) {
-    excluded_sites_ = GetAndParseExcludedSites();
-  }
 }
 
 PlusAddressServiceImpl::~PlusAddressServiceImpl() {
@@ -296,15 +277,37 @@ bool PlusAddressServiceImpl::IsPlusAddress(
   return plus_address_cache_.IsPlusAddress(potential_plus_address);
 }
 
+bool PlusAddressServiceImpl::MatchesPlusAddressFormat(
+    const std::u16string& value) const {
+  return autofill::IsValidEmailAddress(value) &&
+         value.ends_with(kPlusAddressDomain);
+}
+
 bool PlusAddressServiceImpl::IsPlusAddressFillingEnabled(
     const url::Origin& origin) const {
   // Check that the feature is enabled and the origin is supported (not opaque,
-  // in the `excluded_sites_`, or is non http/https scheme)
+  // excluded, or is non http/https scheme)
   return IsEnabled() && IsSupportedOrigin(origin);
 }
 
 bool PlusAddressServiceImpl::IsPlusAddressFullFormFillingEnabled() const {
   return base::FeatureList::IsEnabled(features::kPlusAddressFullFormFill);
+}
+
+bool PlusAddressServiceImpl::IsFieldEligibleForPlusAddress(
+    const autofill::AutofillField& field) const {
+  autofill::FillingProduct filling_product =
+      autofill::GetFillingProductFromFieldTypeGroup(field.Type().group());
+
+  if (filling_product == autofill::FillingProduct::kAddress) {
+    return true;
+  }
+
+  return base::FeatureList::IsEnabled(
+             features::kPlusAddressSuggestionsOnUsernameFields) &&
+         (field.server_type() == autofill::FieldType::USERNAME ||
+          field.server_type() == autofill::FieldType::SINGLE_USERNAME) &&
+         field.heuristic_type() == autofill::FieldType::EMAIL_ADDRESS;
 }
 
 void PlusAddressServiceImpl::GetAffiliatedPlusAddresses(
@@ -329,10 +332,10 @@ std::vector<Suggestion> PlusAddressServiceImpl::GetSuggestionsFromPlusAddresses(
     const url::Origin& origin,
     bool is_off_the_record,
     const autofill::FormData& focused_form,
+    const autofill::FormFieldData& focused_field,
     const base::flat_map<autofill::FieldGlobalId, autofill::FieldTypeGroup>&
         form_field_type_groups,
     const autofill::PasswordFormClassification& focused_form_classification,
-    const autofill::FieldGlobalId& focused_field_id,
     AutofillSuggestionTriggerSource trigger_source) {
   if (!IsPlusAddressFillingEnabled(origin)) {
     return {};
@@ -341,12 +344,12 @@ std::vector<Suggestion> PlusAddressServiceImpl::GetSuggestionsFromPlusAddresses(
   const bool is_creation_enabled =
       IsPlusAddressCreationEnabled(origin, is_off_the_record);
   std::vector<Suggestion> suggestions =
-      PlusAddressSuggestionGenerator(
-          &setting_service_.get(), plus_address_allocator_.get(),
-          std::move(origin), GetPrimaryEmail().value_or(""))
+      PlusAddressSuggestionGenerator(&setting_service_.get(),
+                                     plus_address_allocator_.get(),
+                                     std::move(origin))
           .GetSuggestions(plus_addresses, is_creation_enabled, focused_form,
-                          form_field_type_groups, focused_form_classification,
-                          focused_field_id, trigger_source);
+                          focused_field, form_field_type_groups,
+                          focused_form_classification, trigger_source);
   const autofill::DenseSet<SuggestionType> suggestion_types(suggestions,
                                                             &Suggestion::type);
 
@@ -377,7 +380,8 @@ void PlusAddressServiceImpl::ReservePlusAddress(
   plus_address_allocator_->AllocatePlusAddress(
       origin, PlusAddressAllocator::AllocationMode::kAny,
       base::BindOnce(&PlusAddressServiceImpl::HandleCreateOrConfirmResponse,
-                     base::Unretained(this), origin, std::move(on_completed)));
+                     base::Unretained(this))
+          .Then(std::move(on_completed)));
 }
 
 void PlusAddressServiceImpl::RefreshPlusAddress(
@@ -392,7 +396,8 @@ void PlusAddressServiceImpl::RefreshPlusAddress(
   plus_address_allocator_->AllocatePlusAddress(
       origin, PlusAddressAllocator::AllocationMode::kNewPlusAddress,
       base::BindOnce(&PlusAddressServiceImpl::HandleCreateOrConfirmResponse,
-                     base::Unretained(this), origin, std::move(on_completed)));
+                     base::Unretained(this))
+          .Then(std::move(on_completed)));
 }
 
 bool PlusAddressServiceImpl::IsRefreshingSupported(const url::Origin& origin) {
@@ -424,24 +429,16 @@ void PlusAddressServiceImpl::ConfirmPlusAddress(
   plus_address_http_client_->ConfirmPlusAddress(
       origin, plus_address,
       base::BindOnce(&PlusAddressServiceImpl::HandleCreateOrConfirmResponse,
-                     base::Unretained(this), origin, std::move(on_completed)));
+                     base::Unretained(this))
+          .Then(std::move(on_completed)));
 }
 
-void PlusAddressServiceImpl::HandleCreateOrConfirmResponse(
-    const url::Origin& origin,
-    PlusAddressRequestCallback callback,
+const PlusProfileOrError& PlusAddressServiceImpl::HandleCreateOrConfirmResponse(
     const PlusProfileOrError& maybe_profile) {
-  if (maybe_profile.has_value()) {
-    account_is_forbidden_ = false;
-    if (maybe_profile->is_confirmed) {
-      SavePlusProfile(*maybe_profile);
-    }
-  } else {
-    HandlePlusAddressRequestError(maybe_profile.error());
+  if (maybe_profile.has_value() && maybe_profile->is_confirmed) {
+    SavePlusProfile(*maybe_profile);
   }
-
-  // Run callback last in case it's dependent on above changes.
-  std::move(callback).Run(maybe_profile);
+  return maybe_profile;
 }
 
 std::optional<std::string> PlusAddressServiceImpl::GetPrimaryEmail() {
@@ -456,10 +453,6 @@ std::optional<std::string> PlusAddressServiceImpl::GetPrimaryEmail() {
 }
 
 bool PlusAddressServiceImpl::IsEnabled() const {
-  if (features::kDisableForForbiddenUsers.Get() &&
-      account_is_forbidden_.has_value() && account_is_forbidden_.value()) {
-    return false;
-  }
   if (!feature_enabled_for_profile_check_.Run(
           features::kPlusAddressesEnabled) ||
       features::kEnterprisePlusAddressServerUrl.Get().empty()) {
@@ -530,21 +523,6 @@ void PlusAddressServiceImpl::OnWebDataServiceRequestDone(
   }
 }
 
-void PlusAddressServiceImpl::HandlePlusAddressRequestError(
-    const PlusAddressRequestError& error) {
-  if (!features::kDisableForForbiddenUsers.Get() ||
-      error.type() != PlusAddressRequestErrorType::kNetworkError) {
-    return;
-  }
-  if (account_is_forbidden_ || !error.http_response_code() ||
-      *error.http_response_code() != net::HTTP_FORBIDDEN) {
-    return;
-  }
-  if (++http_forbidden_responses_ > kMaxHttpForbiddenResponses) {
-    account_is_forbidden_ = true;
-  }
-}
-
 void PlusAddressServiceImpl::OnPrimaryAccountChanged(
     const signin::PrimaryAccountChangeEvent& event) {
   signin::PrimaryAccountChangeEvent::Type type =
@@ -576,7 +554,7 @@ void PlusAddressServiceImpl::HandleSignout() {
 
 bool PlusAddressServiceImpl::IsSupportedOrigin(
     const url::Origin& origin) const {
-  if (origin.opaque() || IsSiteExcluded(excluded_sites_, origin)) {
+  if (origin.opaque() || IsSiteExcluded(origin)) {
     return false;
   }
 
@@ -587,6 +565,47 @@ bool PlusAddressServiceImpl::IsSupportedOrigin(
 void PlusAddressServiceImpl::RecordAutofillSuggestionEvent(
     SuggestionEvent suggestion_event) {
   metrics::RecordAutofillSuggestionEvent(suggestion_event);
+
+  using enum autofill::AutofillPlusAddressDelegate::SuggestionEvent;
+  switch (suggestion_event) {
+    case kRefreshPlusAddressInlineClicked:
+      base::RecordAction(base::UserMetricsAction("PlusAddresses.Refreshed"));
+      return;
+    case kExistingPlusAddressSuggested:
+      base::RecordAction(base::UserMetricsAction(
+          "PlusAddresses.StandaloneFillSuggestionShown"));
+      return;
+    case kCreateNewPlusAddressSuggested: {
+      if (setting_service_->GetHasAcceptedNotice()) {
+        base::RecordAction(
+            base::UserMetricsAction("PlusAddresses.CreateSuggestionShown"));
+      } else {
+        base::RecordAction(base::UserMetricsAction(
+            "PlusAddresses.CreateSuggestionFirstTimeNoticeShown"));
+      }
+      return;
+    }
+    case kCreateNewPlusAddressInlineSuggested:
+      base::RecordAction(
+          base::UserMetricsAction("PlusAddresses.CreateSuggestionShown"));
+      return;
+    case kExistingPlusAddressChosen:
+      base::RecordAction(base::UserMetricsAction(
+          "PlusAddresses.FillStandaloneSuggestionAccepted"));
+      return;
+    case kCreateNewPlusAddressChosen:
+      base::RecordAction(
+          base::UserMetricsAction("PlusAddresses.CreateSuggestionAccepted"));
+      return;
+    case kCreateNewPlusAddressInlineChosen:
+      base::RecordAction(
+          base::UserMetricsAction("PlusAddresses.OfferedPlusAddressAccepted"));
+      return;
+    case kErrorDuringReserve:
+    case kCreateNewPlusAddressInlineReserveLoadingStateShown:
+      return;
+  }
+  NOTREACHED();
 }
 
 void PlusAddressServiceImpl::OnPlusAddressSuggestionShown(
@@ -602,6 +621,14 @@ void PlusAddressServiceImpl::OnPlusAddressSuggestionShown(
       /*plus_address_count=*/plus_address_cache_.Size());
 }
 
+void PlusAddressServiceImpl::DidFillPlusAddress() {
+  pref_service_->SetTime(prefs::kLastPlusAddressFillingTime, base::Time::Now());
+}
+
+size_t PlusAddressServiceImpl::GetPlusAddressesCount() {
+  return GetPlusProfiles().size();
+}
+
 void PlusAddressServiceImpl::OnClickedRefreshInlineSuggestion(
     const url::Origin& last_committed_primary_main_frame_origin,
     base::span<const autofill::Suggestion> current_suggestions,
@@ -613,9 +640,9 @@ void PlusAddressServiceImpl::OnClickedRefreshInlineSuggestion(
       SuggestionEvent::kRefreshPlusAddressInlineClicked);
   std::vector<Suggestion> updated_suggestions(current_suggestions.begin(),
                                               current_suggestions.end());
-  PlusAddressSuggestionGenerator(
-      &setting_service_.get(), plus_address_allocator_.get(),
-      last_committed_primary_main_frame_origin, GetPrimaryEmail().value_or(""))
+  PlusAddressSuggestionGenerator(&setting_service_.get(),
+                                 plus_address_allocator_.get(),
+                                 last_committed_primary_main_frame_origin)
       .RefreshPlusAddressForSuggestion(
           updated_suggestions[current_suggestion_index]);
   std::move(update_suggestions_callback)
@@ -712,6 +739,25 @@ void PlusAddressServiceImpl::OnAcceptedInlineSuggestion(
                      std::move(show_affiliation_error_dialog),
                      std::move(show_error_dialog),
                      std::move(reshow_suggestions), requested_plus_address));
+}
+
+std::map<std::string, std::string>
+PlusAddressServiceImpl::GetPlusAddressHatsData() const {
+  auto time_pref_to_string = [&](std::string_view pref) {
+    const base::Time time = pref_service_->GetTime(pref);
+    if (time.is_null()) {
+      return std::string("-1");
+    }
+    const base::TimeDelta delta = base::Time::Now() - time;
+    return delta.is_positive() ? base::ToString(delta.InSeconds())
+                               : std::string("-1");
+  };
+
+  return {{hats::kPlusAddressesCount, base::ToString(GetPlusProfiles().size())},
+          {hats::kFirstPlusAddressCreationTime,
+           time_pref_to_string(prefs::kFirstPlusAddressCreationTime)},
+          {hats::kLastPlusAddressFillingTime,
+           time_pref_to_string(prefs::kLastPlusAddressFillingTime)}};
 }
 
 void PlusAddressServiceImpl::OnConfirmInlineCreation(

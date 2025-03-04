@@ -10,9 +10,11 @@
 
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "build/build_config.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "ui/base/mojom/ui_base_types.mojom-shared.h"
 #include "ui/base/mojom/window_show_state.mojom-forward.h"
+#include "ui/color/color_provider_key.h"
 #include "ui/views/widget/native_widget_private.h"
 
 namespace views {
@@ -68,11 +70,13 @@ class MockNativeWidget : public internal::NativeWidgetPrivate {
               (const gfx::ImageSkia& window_icon,
                const gfx::ImageSkia& app_icon),
               (override));
-  MOCK_METHOD(const gfx::ImageSkia*, GetWindowIcon, (), (override));
-  MOCK_METHOD(const gfx::ImageSkia*, GetWindowAppIcon, (), (override));
   MOCK_METHOD(void,
               InitModalType,
               (ui::mojom::ModalType modal_type),
+              (override));
+  MOCK_METHOD(void,
+              SetColorMode,
+              (ui::ColorProviderKey::ColorMode),
               (override));
   MOCK_METHOD(gfx::Rect, GetWindowBoundsInScreen, (), (const override));
   MOCK_METHOD(gfx::Rect, GetClientAreaBoundsInScreen, (), (const override));
@@ -105,6 +109,9 @@ class MockNativeWidget : public internal::NativeWidgetPrivate {
   MOCK_METHOD(bool, IsActive, (), (const override));
   MOCK_METHOD(void, SetZOrderLevel, (ui::ZOrderLevel order), (override));
   MOCK_METHOD(ui::ZOrderLevel, GetZOrderLevel, (), (const override));
+#if BUILDFLAG(IS_MAC)
+  MOCK_METHOD(void, SetActivationIndependence, (bool independence), (override));
+#endif
   MOCK_METHOD(void,
               SetVisibleOnAllWorkspaces,
               (bool always_visible),

@@ -10,7 +10,6 @@
 
 #include "ash/constants/ash_switches.h"
 #include "base/command_line.h"
-#include "base/feature_list.h"
 #include "base/functional/callback.h"
 #include "base/functional/callback_helpers.h"
 #include "base/strings/string_number_conversions.h"
@@ -21,7 +20,6 @@
 #include "chrome/browser/media/router/discovery/access_code/access_code_cast_feature.h"
 #include "chrome/browser/media/router/media_router_feature.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/ui/ui_features.h"
 #include "chrome/common/url_constants.h"
 #include "components/media_router/browser/media_router.h"
 #include "components/media_router/browser/media_router_factory.h"
@@ -38,12 +36,14 @@ namespace {
 std::optional<media_router::MediaRouter*> g_media_router_for_test;
 
 Profile* GetProfile() {
-  if (!user_manager::UserManager::IsInitialized())
+  if (!user_manager::UserManager::IsInitialized()) {
     return nullptr;
+  }
 
   auto* user = user_manager::UserManager::Get()->GetPrimaryUser();
-  if (!user)
+  if (!user) {
     return nullptr;
+  }
 
   return ash::ProfileHelper::Get()->GetProfileByUser(user);
 }
@@ -56,8 +56,9 @@ media_router::MediaRouter* GetMediaRouter() {
   }
 
   Profile* profile = GetProfile();
-  if (!profile || !media_router::MediaRouterEnabled(profile))
+  if (!profile || !media_router::MediaRouterEnabled(profile)) {
     return nullptr;
+  }
 
   auto* router =
       media_router::MediaRouterFactory::GetApiForBrowserContext(profile);
@@ -128,8 +129,9 @@ void CastDeviceCache::OnSinksReceived(const MediaSinks& sinks) {
     // The media router adds a MediaSink instance that doesn't have a name. Make
     // sure to filter that sink out from the UI so it is not rendered, as it
     // will be a line that only has a icon with no apparent meaning.
-    if (sink.name().empty())
+    if (sink.name().empty()) {
       continue;
+    }
 
     sinks_.push_back(sink);
   }
@@ -220,8 +222,9 @@ bool CastConfigControllerMediaRouter::HasSinksAndRoutes() const {
 
 bool CastConfigControllerMediaRouter::HasActiveRoute() const {
   for (const auto& device : devices_) {
-    if (device.route.is_local_source && !device.route.title.empty())
+    if (device.route.is_local_source && !device.route.title.empty()) {
       return true;
+    }
   }
 
   return false;
@@ -229,20 +232,24 @@ bool CastConfigControllerMediaRouter::HasActiveRoute() const {
 
 bool CastConfigControllerMediaRouter::AccessCodeCastingEnabled() const {
   Profile* profile = GetProfile();
-  return base::FeatureList::IsEnabled(::features::kAccessCodeCastUI) &&
-         profile && media_router::GetAccessCodeCastEnabledPref(profile);
+  return profile && media_router::GetAccessCodeCastEnabledPref(profile);
 }
 
 void CastConfigControllerMediaRouter::RequestDeviceRefresh() {
   // The media router component isn't ready yet.
-  if (!device_cache())
+  if (!device_cache()) {
     return;
+  }
 
   // Build the old-style SinkAndRoute set out of the MediaRouter
   // source/sink/route setup. We first map the existing sinks, and then we
   // update those sinks with activity information.
   StopObservingMirroringMediaControllerHosts();
   UpdateDevices();
+
+  if (!IsAccessCodeCastFreezeUiEnabled()) {
+    return;
+  }
 
   for (auto& device : devices_) {
     if (device.route.id.size() > 0) {
@@ -381,8 +388,9 @@ void CastConfigControllerMediaRouter::UpdateDevices() {
     }
   }
 
-  for (auto& observer : observers_)
+  for (auto& observer : observers_) {
     observer.OnDevicesUpdated(devices_);
+  }
 }
 
 #if !defined(OFFICIAL_BUILD)

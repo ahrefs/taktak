@@ -218,9 +218,14 @@ void IOSTabGroupSyncDelegate::CloseLocalTabGroup(
                            WebStateList::CLOSE_NO_FLAGS);
 }
 
+void IOSTabGroupSyncDelegate::ConnectLocalTabGroup(
+    const SavedTabGroup& saved_tab_group) {
+  // Do nothing because iOS doesn't support connecting/disconnecting groups.
+}
+
 void IOSTabGroupSyncDelegate::DisconnectLocalTabGroup(
     const LocalTabGroupID& local_id) {
-  NOTIMPLEMENTED();
+  // Do nothing because iOS doesn't support connecting/disconnecting groups.
 }
 
 void IOSTabGroupSyncDelegate::UpdateLocalTabGroup(
@@ -352,18 +357,45 @@ std::vector<LocalTabID> IOSTabGroupSyncDelegate::GetLocalTabIdsForTabGroup(
   return local_tab_ids;
 }
 
-void IOSTabGroupSyncDelegate::CreateRemoteTabGroup(
-    const LocalTabGroupID& local_tab_group_id) {
-  if (sync_service_->GetGroup(local_tab_group_id)) {
-    // The group already exists.
-    return;
+std::set<LocalTabID> IOSTabGroupSyncDelegate::GetSelectedTabs() {
+  std::set<LocalTabID> selected_tab_ids;
+  for (Browser* browser :
+       browser_list_->BrowsersOfType(BrowserList::BrowserType::kRegular)) {
+    WebStateList* web_state_list = browser->GetWebStateList();
+    web::WebState* active_web_state = web_state_list->GetActiveWebState();
+    if (active_web_state) {
+      selected_tab_ids.insert(
+          active_web_state->GetUniqueIdentifier().identifier());
+    }
   }
 
+  return selected_tab_ids;
+}
+
+std::u16string IOSTabGroupSyncDelegate::GetTabTitle(
+    const LocalTabID& local_tab_id) {
+  for (Browser* browser :
+       browser_list_->BrowsersOfType(BrowserList::BrowserType::kRegular)) {
+    WebStateList* web_state_list = browser->GetWebStateList();
+    for (int index = 0; index < web_state_list->count(); ++index) {
+      web::WebState* web_state = web_state_list->GetWebStateAt(index);
+      if (local_tab_id == web_state->GetUniqueIdentifier().identifier()) {
+        return web_state->GetTitle();
+      }
+    }
+  }
+
+  return std::u16string();
+}
+
+std::unique_ptr<SavedTabGroup>
+IOSTabGroupSyncDelegate::CreateSavedTabGroupFromLocalGroup(
+    const LocalTabGroupID& local_tab_group_id) {
   LocalTabGroupInfo tab_group_info =
       GetLocalTabGroupInfo(browser_list_, local_tab_group_id);
   if (!tab_group_info.tab_group) {
     // This group doesn't exists locally.
-    return;
+    return nullptr;
   }
 
   const TabGroup* tab_group = tab_group_info.tab_group;
@@ -388,11 +420,10 @@ void IOSTabGroupSyncDelegate::CreateRemoteTabGroup(
     saved_tabs.push_back(saved_tab);
   }
 
-  SavedTabGroup saved_group(base::SysNSStringToUTF16(tab_group->GetRawTitle()),
-                            tab_group->visual_data().color(), saved_tabs,
-                            /*position=*/std::nullopt, saved_tab_group_id,
-                            tab_group->tab_group_id());
-  sync_service_->AddGroup(saved_group);
+  return std::make_unique<SavedTabGroup>(
+      base::SysNSStringToUTF16(tab_group->GetRawTitle()),
+      tab_group->visual_data().color(), saved_tabs,
+      /*position=*/std::nullopt, saved_tab_group_id, tab_group->tab_group_id());
 }
 
 Browser* IOSTabGroupSyncDelegate::GetMostActiveSceneBrowser() {

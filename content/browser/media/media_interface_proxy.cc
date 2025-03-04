@@ -18,7 +18,6 @@
 #include "base/time/time.h"
 #include "base/unguessable_token.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "content/browser/media/cdm_storage_common.h"
 #include "content/browser/renderer_host/render_frame_host_delegate.h"
 #include "content/browser/renderer_host/render_frame_host_impl.h"
@@ -51,7 +50,6 @@
 #include "base/feature_list.h"
 #include "base/metrics/histogram_macros.h"
 #include "content/browser/media/cdm_storage_manager.h"
-#include "content/browser/media/media_license_manager.h"
 #include "media/base/key_system_names.h"
 #include "media/mojo/mojom/cdm_service.mojom.h"
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
@@ -392,7 +390,7 @@ void MediaInterfaceProxy::CreateMediaPlayerRenderer(
   media::MojoRendererService::Create(
       nullptr,
       std::make_unique<MediaPlayerRenderer>(
-          render_frame_host().GetProcess()->GetID(),
+          render_frame_host().GetProcess()->GetDeprecatedID(),
           render_frame_host().GetRoutingID(),
           WebContents::FromRenderFrameHost(&render_frame_host()),
           std::move(renderer_extension_receiver),
@@ -438,13 +436,7 @@ void MediaInterfaceProxy::CreateCdm(const media::CdmConfig& cdm_config,
 
   // Handle `use_hw_secure_codecs` cases first.
 #if BUILDFLAG(USE_CHROMEOS_PROTECTED_MEDIA)
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  bool enable_cdm_factory_daemon =
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kLacrosUseChromeosProtectedMedia);
-#else   // BUILDFLAG(IS_CHROMEOS_LACROS)
   bool enable_cdm_factory_daemon = true;
-#endif  // else BUILDFLAG(IS_CHROMEOS_LACROS)
 #if defined(ARCH_CPU_ARM_FAMILY)
   if (!base::FeatureList::IsEnabled(media::kEnableArmHwdrm)) {
     enable_cdm_factory_daemon = false;
@@ -547,8 +539,9 @@ void MediaInterfaceProxy::ConnectToMediaFoundationService(
   DVLOG(1) << __func__ << ": this=" << this << ", cdm_path=" << cdm_path;
   DCHECK(!mf_interface_factory_remote_);
 
+  // Passing an empty CdmType since it is not needed in this scenario.
   auto& mf_service = GetMediaFoundationService(
-      render_frame_host().GetBrowserContext(),
+      media::CdmType(), render_frame_host().GetBrowserContext(),
       render_frame_host().GetSiteInstance()->GetSiteURL(), cdm_path);
 
   // Passing an empty CdmType as MediaFoundation-based CDMs don't use CdmStorage
@@ -586,16 +579,15 @@ media::mojom::CdmFactory* MediaInterfaceProxy::GetCdmFactory(
   auto cdm_info = CdmRegistryImpl::GetInstance()->GetCdmInfo(
       key_system, CdmInfo::Robustness::kSoftwareSecure);
   if (!cdm_info) {
-    NOTREACHED_IN_MIGRATION() << "No valid CdmInfo for " << key_system;
+    DLOG(ERROR) << "No valid CdmInfo for " << key_system;
     return nullptr;
   }
+
   if (cdm_info->path.empty()) {
-    NOTREACHED_IN_MIGRATION() << "CDM path for " << key_system << " is empty";
-    return nullptr;
+    NOTREACHED() << "CDM path for " << key_system << " is empty";
   }
   if (!IsValidCdmDisplayName(cdm_info->name)) {
-    NOTREACHED_IN_MIGRATION() << "Invalid CDM display name " << cdm_info->name;
-    return nullptr;
+    NOTREACHED() << "Invalid CDM display name " << cdm_info->name;
   }
 
   auto& cdm_type = cdm_info->type;

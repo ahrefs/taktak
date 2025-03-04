@@ -4,15 +4,20 @@
 
 package org.chromium.chrome.browser.contextmenu;
 
+import static org.chromium.build.NullUtil.assumeNonNull;
+
 import android.graphics.Bitmap;
 import android.net.Uri;
 
 import androidx.annotation.VisibleForTesting;
 
 import org.jni_zero.CalledByNative;
+import org.jni_zero.JniType;
 import org.jni_zero.NativeMethods;
 
 import org.chromium.base.Callback;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.share.ShareImageFileUtils;
 import org.chromium.components.embedder_support.contextmenu.ContextMenuImageFormat;
 import org.chromium.components.embedder_support.contextmenu.ContextMenuNativeDelegate;
@@ -20,6 +25,7 @@ import org.chromium.components.embedder_support.contextmenu.ContextMenuParams;
 import org.chromium.content_public.browser.RenderFrameHost;
 import org.chromium.content_public.browser.WebContents;
 
+@NullMarked
 class ContextMenuNativeDelegateImpl implements ContextMenuNativeDelegate {
     private static final int MAX_SHARE_DIMEN_PX = 2048;
 
@@ -28,9 +34,9 @@ class ContextMenuNativeDelegateImpl implements ContextMenuNativeDelegate {
     private long mNativePtr;
 
     /** See function for details. */
-    private static byte[] sHardcodedImageBytesForTesting;
+    private static byte @Nullable [] sHardcodedImageBytesForTesting;
 
-    private static String sHardcodedImageExtensionForTesting;
+    private static @Nullable String sHardcodedImageExtensionForTesting;
 
     /**
      * The tests trigger the context menu via JS rather than via a true native call which means
@@ -133,13 +139,15 @@ class ContextMenuNativeDelegateImpl implements ContextMenuNativeDelegate {
     }
 
     private static ImageCallbackResult createImageCallbackResultForTesting() {
+        assumeNonNull(sHardcodedImageBytesForTesting);
+        assumeNonNull(sHardcodedImageExtensionForTesting);
         return new ImageCallbackResult(
                 sHardcodedImageBytesForTesting, sHardcodedImageExtensionForTesting);
     }
 
     @CalledByNative
     private static ImageCallbackResult createImageCallbackResult(
-            byte[] imageData, String extension) {
+            byte[] imageData, @JniType("std::string") String extension) {
         return new ImageCallbackResult(imageData, extension);
     }
 

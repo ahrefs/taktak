@@ -206,9 +206,7 @@ class ManualFillingMediator
         mActivity.findViewById(android.R.id.content).addOnLayoutChangeListener(this);
         mBackPressManager = backPressManager;
         mBackPressChangedSupplier.set(shouldHideOnBackPress());
-        if (BackPressManager.isEnabled()) {
-            mBackPressManager.addHandler(this, Type.MANUAL_FILLING);
-        }
+        mBackPressManager.addHandler(this, Type.MANUAL_FILLING);
         mEdgeToEdgeControllerSupplier = edgeToEdgeControllerSupplier;
 
         mTabModelObserver =
@@ -220,8 +218,7 @@ class ManualFillingMediator
                     }
 
                     @Override
-                    public void tabClosureCommitted(Tab tab) {
-                        super.tabClosureCommitted(tab);
+                    public void onFinishingTabClosure(Tab tab) {
                         mObservedTabs.remove(tab);
                         tab.removeObserver(
                                 mTabObserver); // Fails silently if observer isn't registered.

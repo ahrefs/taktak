@@ -83,7 +83,7 @@ public class IncognitoNewTabPage extends BasicNativePage
 
         mIncognitoNewTabPageManager = createIncognitoNewTabPageManager();
 
-        mTitle = host.getContext().getResources().getString(R.string.new_incognito_tab_title);
+        mTitle = host.getContext().getString(R.string.new_incognito_tab_title);
 
         LayoutInflater inflater = LayoutInflater.from(host.getContext());
         mIncognitoNewTabPageView =
@@ -156,7 +156,7 @@ public class IncognitoNewTabPage extends BasicNativePage
 
     @Override
     public boolean supportsEdgeToEdge() {
-        return !EdgeToEdgeUtils.DISABLE_INCOGNITO_NTP_E2E.getValue();
+        return !ChromeFeatureList.sDrawKeyNativeEdgeToEdgeDisableIncognitoNtpE2e.getValue();
     }
 
     // InvalidationAwareThumbnailProvider
@@ -211,7 +211,9 @@ public class IncognitoNewTabPage extends BasicNativePage
             @Override
             public boolean shouldShowTrackingProtectionNtp() {
                 return UserPrefs.get(mProfile).getBoolean(Pref.TRACKING_PROTECTION3PCD_ENABLED)
-                        || ChromeFeatureList.isEnabled(ChromeFeatureList.TRACKING_PROTECTION_3PCD);
+                        || ChromeFeatureList.isEnabled(ChromeFeatureList.TRACKING_PROTECTION_3PCD)
+                        || ChromeFeatureList.isEnabled(
+                                ChromeFeatureList.ALWAYS_BLOCK_3PCS_INCOGNITO);
             }
 
             @Override

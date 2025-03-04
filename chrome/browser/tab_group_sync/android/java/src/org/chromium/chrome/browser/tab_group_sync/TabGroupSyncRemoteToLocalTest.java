@@ -43,7 +43,6 @@ import org.chromium.ui.base.DeviceFormFactor;
 @CommandLineFlags.Add({ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE})
 @EnableFeatures({
     ChromeFeatureList.TAB_GROUP_SYNC_ANDROID,
-    ChromeFeatureList.TAB_GROUP_PARITY_ANDROID,
     ChromeFeatureList.TAB_GROUP_PANE_ANDROID
 })
 @Restriction({DeviceFormFactor.PHONE, Restriction.RESTRICTION_TYPE_NON_LOW_END_DEVICE})
@@ -76,7 +75,7 @@ public class TabGroupSyncRemoteToLocalTest {
     public void setUp() {
         setUpUrlConstants();
         mHelper = new TabGroupSyncIntegrationTestHelper(mSyncTestRule);
-        mSyncTestRule.setUpAccountAndEnableSyncForTesting();
+        mSyncTestRule.setUpAccountAndEnableHistorySync();
         SyncTestUtil.waitForHistorySyncEnabled();
         mHelper.assertSyncEntityCount(0);
 
@@ -134,6 +133,7 @@ public class TabGroupSyncRemoteToLocalTest {
     @Test
     @LargeTest
     @Feature({"Sync"})
+    @DisabledTest(message = "crbug.com/390146523")
     public void testTwoGroups() {
         GroupInfo[] groups =
                 TabGroupSyncIntegrationTestHelper.createGroupInfos(

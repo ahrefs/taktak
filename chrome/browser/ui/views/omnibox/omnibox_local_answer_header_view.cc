@@ -16,26 +16,49 @@
 #include "ui/gfx/geometry/insets.h"
 #include "ui/views/controls/image_view.h"
 #include "ui/views/controls/label.h"
+#include "ui/views/controls/throbber.h"
 #include "ui/views/layout/box_layout.h"
 #include "ui/views/style/typography_provider.h"
 #include "ui/views/view.h"
 
+namespace {
+// Width/height of icon and throbber.
+static constexpr int kIconSize = 20;
+}  // namespace
+
 OmniboxLocalAnswerHeaderView::OmniboxLocalAnswerHeaderView() {
+  // The vertical insets are chosen so that this `OmniboxLocalAnswerHeaderView`
+  // is the same `kRowHeight` that 1-line matches are. Thus, when the owning
+  // `OmniboxResultView` hides its `OmniboxMatchCellView`, e.g. because it's
+  // empty, the header-only `OmniboxResultView` will be the same height as
+  // 1-line matches.
   SetLayoutManager(std::make_unique<views::BoxLayout>(
       views::BoxLayout::Orientation::kHorizontal,
-      gfx::Insets::TLBR(25, 21, 2, 0), 8));
+      gfx::Insets::TLBR(10, 21, 10, 0), 8));
+  throbber_ = AddChildView(std::make_unique<views::Throbber>(kIconSize));
   icon_ = AddChildView(std::make_unique<views::ImageView>());
   text_ = AddChildView(std::make_unique<views::Label>());
   text_->SetFontList(views::TypographyProvider::Get().GetFont(
       CONTEXT_OMNIBOX_POPUP, STYLE_SMALL));
+  SetThrobberVisibility(false);
 }
 
 void OmniboxLocalAnswerHeaderView::OnThemeChanged() {
   views::View::OnThemeChanged();
-  icon_->SetImage(ui::ImageModel::FromVectorIcon(omnibox::kSummarizeAutoIcon,
-                                                 kColorOmniboxResultsIcon, 20));
+  icon_->SetImage(ui::ImageModel::FromVectorIcon(
+      omnibox::kSummarizeAutoIcon, kColorOmniboxResultsIcon, kIconSize));
   text_->SetEnabledColor(
       GetColorProvider()->GetColor(kColorOmniboxResultsTextDimmed));
+}
+
+void OmniboxLocalAnswerHeaderView::SetThrobberVisibility(bool visible) {
+  if (visible) {
+    throbber_->Start();
+  } else {
+    throbber_->Stop();
+  }
+  throbber_->SetVisible(visible);
+  icon_->SetVisible(!visible);
 }
 
 void OmniboxLocalAnswerHeaderView::SetText(const std::u16string& text) {

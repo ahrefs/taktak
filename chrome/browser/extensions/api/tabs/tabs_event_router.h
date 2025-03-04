@@ -70,8 +70,10 @@ class TabsEventRouter : public TabStripModelObserver,
   void TabPinnedStateChanged(TabStripModel* tab_strip_model,
                              content::WebContents* contents,
                              int index) override;
-  void TabGroupedStateChanged(std::optional<tab_groups::TabGroupId> group,
-                              tabs::TabModel* tab,
+  void TabGroupedStateChanged(TabStripModel* tab_strip_model,
+                              std::optional<tab_groups::TabGroupId> old_group,
+                              std::optional<tab_groups::TabGroupId> new_group,
+                              tabs::TabInterface* tab,
                               int index) override;
 
   // ZoomObserver:
@@ -88,11 +90,13 @@ class TabsEventRouter : public TabStripModelObserver,
                         const gfx::Image& image) override;
 
   // resource_coordinator::TabLifecycleObserver:
-  void OnDiscardedStateChange(content::WebContents* contents,
-                              ::mojom::LifecycleUnitDiscardReason reason,
-                              bool is_discarded) override;
-  void OnAutoDiscardableStateChange(content::WebContents* contents,
-                                    bool is_auto_discardable) override;
+  void OnTabLifecycleStateChange(
+      content::WebContents* contents,
+      ::mojom::LifecycleUnitState previous_state,
+      ::mojom::LifecycleUnitState new_state,
+      std::optional<LifecycleUnitDiscardReason> discard_reason) override;
+  void OnTabAutoDiscardableStateChange(content::WebContents* contents,
+                                       bool is_auto_discardable) override;
 
  private:
   // Methods called from OnTabStripModelChanged.

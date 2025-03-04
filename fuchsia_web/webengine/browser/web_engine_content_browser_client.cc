@@ -10,6 +10,7 @@
 #include "base/command_line.h"
 #include "base/functional/callback.h"
 #include "base/i18n/rtl.h"
+#include "base/memory/raw_ptr.h"
 #include "base/strings/string_split.h"
 #include "build/chromecast_buildflags.h"
 #include "components/embedder_support/user_agent_utils.h"
@@ -104,7 +105,7 @@ class DevToolsManagerDelegate final : public content::DevToolsManagerDelegate {
   }
 
  private:
-  WebEngineBrowserMainParts* const main_parts_;
+  const raw_ptr<WebEngineBrowserMainParts> main_parts_;
 };
 
 std::vector<std::string> GetCorsExemptHeaders() {
@@ -189,8 +190,9 @@ blink::UserAgentMetadata WebEngineContentBrowserClient::GetUserAgentMetadata() {
   return embedder_support::GetUserAgentMetadata();
 }
 
-void WebEngineContentBrowserClient::OverrideWebkitPrefs(
+void WebEngineContentBrowserClient::OverrideWebPreferences(
     content::WebContents* web_contents,
+    content::SiteInstance& main_frame_site,
     blink::web_pref::WebPreferences* web_prefs) {
   // Disable WebSQL support since it is being removed from the web platform
   // and does not work. See crbug.com/1317431.

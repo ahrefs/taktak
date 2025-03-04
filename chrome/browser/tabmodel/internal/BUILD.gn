@@ -5,7 +5,11 @@
 import("//build/config/android/rules.gni")
 
 android_library("java") {
-  visibility = [ "//chrome/android:*" ]
+  visibility = [
+    "//chrome/android:*",
+    "//chrome/android/javatests:*",
+    "//chrome/android/junit:*",
+  ]
 
   # This target is currently used to ensure that we avoid regressing the Kotlin
   # support added in http://go/crrv/c/4179272.
@@ -32,5 +36,6 @@ android_library("java") {
     "//components/cached_flags:java",
     "//third_party/androidx:androidx_annotation_annotation_java",
     "//third_party/kotlin_stdlib:kotlin_stdlib_java",
+    "//ui/android:ui_java",
   ]
 }

@@ -226,9 +226,6 @@
         "test_id_prefix": "ninja://third_party/boringssl:boringssl_ssl_tests/"
       },
       {
-        "args": [
-          "--disable-features=WebRTC-H264WithOpenH264FFmpeg"
-        ],
         "isolate_profile_data": true,
         "merge": {
           "script": "//testing/merge_scripts/standard_gtest_merge.py"
@@ -436,9 +433,6 @@
         "test_id_prefix": "ninja://ui/compositor:compositor_unittests/"
       },
       {
-        "args": [
-          "--disable-features=WebRTC-H264WithOpenH264FFmpeg"
-        ],
         "isolate_profile_data": true,
         "merge": {
           "script": "//testing/merge_scripts/standard_gtest_merge.py"
@@ -1532,7 +1526,8 @@
             "cpu": "x86-64",
             "os": "Windows-10-19045"
           },
-          "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
+          "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
+          "shards": 2
         },
         "test": "updater_tests",
         "test_id_prefix": "ninja://chrome/updater:updater_tests/"
@@ -1550,7 +1545,7 @@
           },
           "hard_timeout": 7200,
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
-          "shards": 2
+          "shards": 4
         },
         "test": "updater_tests_system",
         "test_id_prefix": "ninja://chrome/updater:updater_tests_system/"
@@ -1797,7 +1792,7 @@
             "os": "Windows-10-19045"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
-          "shards": 18
+          "shards": 7
         },
         "test": "blink_wpt_tests",
         "test_id_prefix": "ninja://:blink_wpt_tests/"
@@ -1978,7 +1973,7 @@
           "crashtest",
           "print-reftest",
           "--inverted-test-launcher-filter-file=../../third_party/blink/web_tests/TestLists/chrome.filter",
-          "--test-launcher-filter-file=../../third_party/blink/web_tests/TestLists/headless_shell.filter"
+          "--inverted-test-launcher-filter-file=../../third_party/blink/web_tests/TestLists/content_shell.filter"
         ],
         "isolate_profile_data": true,
         "merge": {
@@ -1998,7 +1993,8 @@
             "cpu": "x86-64",
             "os": "Windows-10-19045"
           },
-          "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
+          "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
+          "shards": 15
         },
         "test": "headless_shell_wpt",
         "test_id_prefix": "ninja://:headless_shell_wpt/"
@@ -2147,6 +2143,22 @@
         "merge": {
           "script": "//testing/merge_scripts/standard_isolated_script_merge.py"
         },
+        "name": "webui_resources_tools_python_unittests",
+        "swarming": {
+          "dimensions": {
+            "cpu": "x86-64",
+            "os": "Windows-10-19045"
+          },
+          "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
+        },
+        "test": "webui_resources_tools_python_unittests",
+        "test_id_prefix": "ninja://ui/webui/resources/tools:webui_resources_tools_python_unittests/"
+      },
+      {
+        "isolate_profile_data": true,
+        "merge": {
+          "script": "//testing/merge_scripts/standard_isolated_script_merge.py"
+        },
         "name": "xvfb_py_unittests",
         "resultdb": {
           "enable": true
@@ -2174,7 +2186,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2190,7 +2202,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2206,7 +2218,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2223,7 +2235,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2239,7 +2251,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2255,7 +2267,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2271,7 +2283,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2287,7 +2299,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2303,7 +2315,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2327,7 +2339,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2343,7 +2355,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2359,7 +2371,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2367,9 +2379,6 @@
         "test_id_prefix": "ninja://third_party/boringssl:boringssl_ssl_tests/"
       },
       {
-        "args": [
-          "--disable-features=WebRTC-H264WithOpenH264FFmpeg"
-        ],
         "isolate_profile_data": true,
         "merge": {
           "script": "//testing/merge_scripts/standard_gtest_merge.py"
@@ -2378,7 +2387,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
           "shards": 15
@@ -2398,7 +2407,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2414,7 +2423,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2430,7 +2439,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2446,7 +2455,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2462,7 +2471,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2478,7 +2487,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2494,7 +2503,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2510,7 +2519,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
           "shards": 3
@@ -2527,7 +2536,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2535,9 +2544,6 @@
         "test_id_prefix": "ninja://ui/compositor:compositor_unittests/"
       },
       {
-        "args": [
-          "--disable-features=WebRTC-H264WithOpenH264FFmpeg"
-        ],
         "isolate_profile_data": true,
         "merge": {
           "script": "//testing/merge_scripts/standard_gtest_merge.py"
@@ -2546,7 +2552,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
           "shards": 8
@@ -2563,7 +2569,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2579,7 +2585,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2595,7 +2601,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2611,7 +2617,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2627,7 +2633,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2643,7 +2649,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2659,7 +2665,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2675,7 +2681,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2691,7 +2697,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2707,7 +2713,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2724,7 +2730,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2740,7 +2746,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2756,7 +2762,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2772,7 +2778,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2788,7 +2794,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2804,7 +2810,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2820,7 +2826,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2836,7 +2842,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2852,7 +2858,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2868,7 +2874,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2884,7 +2890,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2900,7 +2906,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2916,7 +2922,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2932,7 +2938,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2948,7 +2954,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2964,7 +2970,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2981,7 +2987,7 @@
           "dimensions": {
             "cpu": "x86-64",
             "integrity": "high",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -2997,7 +3003,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
           "shards": 3
@@ -3014,7 +3020,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3030,7 +3036,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3047,7 +3053,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3063,7 +3069,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3079,7 +3085,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3095,7 +3101,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3111,7 +3117,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3127,7 +3133,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3143,7 +3149,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3159,7 +3165,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3175,7 +3181,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3191,7 +3197,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3207,7 +3213,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3223,7 +3229,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3239,7 +3245,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3256,7 +3262,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3272,7 +3278,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3289,7 +3295,7 @@
           "dimensions": {
             "cpu": "x86-64",
             "integrity": "high",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3305,7 +3311,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3321,7 +3327,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3337,7 +3343,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3354,7 +3360,7 @@
           "dimensions": {
             "cpu": "x86-64",
             "integrity": "high",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3370,7 +3376,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3386,7 +3392,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3402,7 +3408,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3418,7 +3424,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3434,7 +3440,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3450,7 +3456,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
           "shards": 3
@@ -3467,7 +3473,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3483,7 +3489,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3499,7 +3505,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3515,7 +3521,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3531,7 +3537,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3547,7 +3553,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "hard_timeout": 7200,
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
@@ -3565,7 +3571,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3589,7 +3595,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3605,7 +3611,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3621,7 +3627,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3637,7 +3643,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3653,7 +3659,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3669,7 +3675,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3685,7 +3691,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3701,7 +3707,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3717,7 +3723,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3738,7 +3744,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3766,7 +3772,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
           "shards": 12
@@ -3795,10 +3801,10 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
-          "shards": 18
+          "shards": 7
         },
         "test": "blink_wpt_tests",
         "test_id_prefix": "ninja://:blink_wpt_tests/"
@@ -3823,7 +3829,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3845,7 +3851,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3867,7 +3873,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3883,7 +3889,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3905,7 +3911,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3925,7 +3931,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3945,7 +3951,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3964,7 +3970,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -3979,7 +3985,7 @@
           "crashtest",
           "print-reftest",
           "--inverted-test-launcher-filter-file=../../third_party/blink/web_tests/TestLists/chrome.filter",
-          "--test-launcher-filter-file=../../third_party/blink/web_tests/TestLists/headless_shell.filter"
+          "--inverted-test-launcher-filter-file=../../third_party/blink/web_tests/TestLists/content_shell.filter"
         ],
         "isolate_profile_data": true,
         "merge": {
@@ -3997,9 +4003,10 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
-          "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
+          "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com",
+          "shards": 18
         },
         "test": "headless_shell_wpt",
         "test_id_prefix": "ninja://:headless_shell_wpt/"
@@ -4014,7 +4021,7 @@
           "dimensions": {
             "cpu": "x86-64",
             "integrity": "high",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -4033,7 +4040,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -4050,7 +4057,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -4075,7 +4082,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },
@@ -4094,7 +4101,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "idempotent": false,
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
@@ -4117,7 +4124,7 @@
         "swarming": {
           "dimensions": {
             "cpu": "x86-64",
-            "os": "Windows-11-22000"
+            "os": "Windows-11-22631"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
         },

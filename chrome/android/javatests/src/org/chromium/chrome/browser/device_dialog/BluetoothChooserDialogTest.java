@@ -28,14 +28,12 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.test.util.CommandLineFlags;
 import org.chromium.base.test.util.Criteria;
 import org.chromium.base.test.util.CriteriaHelper;
 import org.chromium.base.test.util.DisabledTest;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.base.test.util.MaxAndroidSdkLevel;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
 import org.chromium.chrome.browser.profiles.ProfileManager;
@@ -81,8 +79,6 @@ public class BluetoothChooserDialogTest {
     public final BlankCTATabInitialStateRule mInitialStateRule =
             new BlankCTATabInitialStateRule(sActivityTestRule, false);
 
-    @Rule public JniMocker mocker = new JniMocker();
-
     private ActivityWindowAndroid mWindowAndroid;
     private FakeLocationUtils mLocationUtils;
     private BluetoothChooserDialog mChooserDialog;
@@ -90,11 +86,6 @@ public class BluetoothChooserDialogTest {
     private int mFinishedEventType = -1;
     private String mFinishedDeviceId;
     private int mRestartSearchCount;
-
-    // Unused member variables to avoid Java optimizer issues with Mockito.
-    @Mock ModalDialogManager mMockModalDialogManager;
-    @Mock Activity mMockActivity;
-    @Mock WindowAndroid mMockWindowAndroid;
 
     private class TestBluetoothChooserDialogJni implements BluetoothChooserDialog.Natives {
         private BluetoothChooserDialog mBluetoothChooserDialog;
@@ -109,7 +100,7 @@ public class BluetoothChooserDialogTest {
             Assert.assertEquals(
                     nativeBluetoothChooserAndroid,
                     mBluetoothChooserDialog.mNativeBluetoothChooserDialogPtr);
-            Assert.assertEquals(mFinishedEventType, -1);
+            Assert.assertEquals(-1, mFinishedEventType);
             mFinishedEventType = eventType;
             mFinishedDeviceId = deviceId;
             // The native code calls closeDialog() when OnDialogFinished is called.
@@ -146,8 +137,7 @@ public class BluetoothChooserDialogTest {
         mLocationUtils = new FakeLocationUtils();
         LocationUtils.setFactory(() -> mLocationUtils);
         mChooserDialog = createDialog();
-        mocker.mock(
-                BluetoothChooserDialogJni.TEST_HOOKS,
+        BluetoothChooserDialogJni.setInstanceForTesting(
                 new TestBluetoothChooserDialogJni(mChooserDialog));
     }
 
@@ -622,7 +612,7 @@ public class BluetoothChooserDialogTest {
                                     "https://origin.example.com/",
                                     ConnectionSecurityLevel.SECURE,
                                     /* delegate= */ null,
-                                    /* nativeUsbChooserDialogPtr= */ 42);
+                                    /* nativeBluetoothChooserDialogPtr= */ 42);
                         });
         Assert.assertNull(dialog);
     }

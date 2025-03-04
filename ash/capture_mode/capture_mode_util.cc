@@ -6,7 +6,6 @@
 
 #include "ash/accessibility/accessibility_controller.h"
 #include "ash/capture_mode/capture_mode_camera_controller.h"
-#include "ash/capture_mode/capture_mode_constants.h"
 #include "ash/capture_mode/capture_mode_controller.h"
 #include "ash/capture_mode/capture_mode_session.h"
 #include "ash/capture_mode/capture_mode_types.h"
@@ -16,6 +15,7 @@
 #include "ash/public/cpp/window_finder.h"
 #include "ash/resources/vector_icons/vector_icons.h"
 #include "ash/root_window_controller.h"
+#include "ash/session/session_controller_impl.h"
 #include "ash/shell.h"
 #include "ash/strings/grit/ash_strings.h"
 #include "ash/style/ash_color_id.h"
@@ -25,6 +25,7 @@
 #include "base/notreached.h"
 #include "base/task/single_thread_task_runner.h"
 #include "chromeos/ui/frame/frame_header.h"
+#include "components/prefs/pref_service.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/models/image_model.h"
 #include "ui/chromeos/styles/cros_tokens_color_mappings.h"
@@ -149,6 +150,15 @@ void FadeOutWidget(views::Widget* widget,
 }
 
 }  // namespace
+
+PrefService* GetActiveUserPrefService() {
+  DCHECK(Shell::Get()->session_controller()->IsActiveUserSessionStarted());
+
+  auto* pref_service =
+      Shell::Get()->session_controller()->GetActivePrefService();
+  DCHECK(pref_service);
+  return pref_service;
+}
 
 bool IsCaptureModeActive() {
   return CaptureModeController::Get()->IsActive();
@@ -309,8 +319,8 @@ std::unique_ptr<views::View> CreateClipboardShortcutView() {
   views::Label* shortcut_label =
       clipboard_shortcut_view->AddChildView(std::make_unique<views::Label>());
   shortcut_label->SetText(label_text);
-  shortcut_label->SetBackgroundColorId(cros_tokens::kCrosSysPrimary);
-  shortcut_label->SetEnabledColorId(cros_tokens::kCrosSysOnPrimary);
+  shortcut_label->SetBackgroundColor(cros_tokens::kCrosSysPrimary);
+  shortcut_label->SetEnabledColor(cros_tokens::kCrosSysOnPrimary);
   ash::TypographyProvider::Get()->StyleLabel(ash::TypographyToken::kCrosBody2,
                                              *shortcut_label);
   return clipboard_shortcut_view;
@@ -339,9 +349,9 @@ std::unique_ptr<views::View> CreateBannerView() {
   views::Label* label = banner_view->AddChildView(
       std::make_unique<views::Label>(l10n_util::GetStringUTF16(
           IDS_ASH_SCREEN_CAPTURE_SCREENSHOT_COPIED_TO_CLIPBOARD)));
-  label->SetBackgroundColorId(kColorAshControlBackgroundColorActive);
+  label->SetBackgroundColor(kColorAshControlBackgroundColorActive);
   label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
-  label->SetEnabledColorId(cros_tokens::kCrosSysOnPrimary);
+  label->SetEnabledColor(cros_tokens::kCrosSysOnPrimary);
   ash::TypographyProvider::Get()->StyleLabel(ash::TypographyToken::kCrosBody2,
                                              *label);
 
@@ -482,7 +492,7 @@ aura::Window* GetPreferredRootWindow(
 }
 
 void ConfigLabelView(views::Label* label_view) {
-  label_view->SetEnabledColorId(kColorAshTextColorPrimary);
+  label_view->SetEnabledColor(kColorAshTextColorPrimary);
   label_view->SetBackgroundColor(SK_ColorTRANSPARENT);
   label_view->SetHorizontalAlignment(gfx::ALIGN_LEFT);
   label_view->SetVerticalAlignment(gfx::VerticalAlignment::ALIGN_MIDDLE);
@@ -588,11 +598,35 @@ gfx::Rect GetEffectivePartialRegionBounds(
 void AddActionButton(views::Button::PressedCallback callback,
                      std::u16string text,
                      const gfx::VectorIcon* icon,
-                     const ActionButtonRank rank) {
+                     const ActionButtonRank rank,
+                     ActionButtonViewID id) {
   if (auto* controller = CaptureModeController::Get(); controller->IsActive()) {
     controller->capture_mode_session()->AddActionButton(std::move(callback),
-                                                        text, icon, rank);
+                                                        text, icon, rank, id);
   }
+}
+
+void AnimateToOpacity(views::Widget* widget,
+                      const float opacity,
+                      const base::TimeDelta duration) {
+  ui::Layer* layer = widget->GetLayer();
+  if (layer->GetTargetOpacity() == opacity) {
+    return;
+  }
+
+  // If the target opacity is 0.f, disable events on the widget.
+  const bool visible = opacity != 0.f;
+  widget->GetContentsView()->SetCanProcessEventsWithinSubtree(visible);
+  widget->GetNativeWindow()->SetEventTargetingPolicy(
+      visible ? aura::EventTargetingPolicy::kTargetAndDescendants
+              : aura::EventTargetingPolicy::kNone);
+
+  views::AnimationBuilder()
+      .SetPreemptionStrategy(
+          ui::LayerAnimator::IMMEDIATELY_ANIMATE_TO_NEW_TARGET)
+      .Once()
+      .SetDuration(duration)
+      .SetOpacity(layer, opacity, gfx::Tween::FAST_OUT_SLOW_IN);
 }
 
 }  // namespace ash::capture_mode_util

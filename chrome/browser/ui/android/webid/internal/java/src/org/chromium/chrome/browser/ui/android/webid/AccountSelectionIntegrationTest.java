@@ -27,6 +27,7 @@ import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.Espresso;
 import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.filters.MediumTest;
@@ -36,6 +37,8 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import org.chromium.base.test.params.ParameterAnnotations;
 import org.chromium.base.test.params.ParameterSet;
@@ -50,7 +53,7 @@ import org.chromium.blink.mojom.RpMode;
 import org.chromium.chrome.browser.IntentHandler;
 import org.chromium.chrome.browser.customtabs.CustomTabActivity;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
-import org.chromium.chrome.browser.ui.android.webid.data.IdentityCredentialTokenError;
+import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.HeaderProperties.HeaderType;
 import org.chromium.chrome.test.ChromeJUnit4RunnerDelegate;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
@@ -92,10 +95,6 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
                         : BottomSheetController.SheetState.FULL;
     }
 
-    private static final String TEST_ERROR_CODE = "invalid_request";
-    private static final IdentityCredentialTokenError TOKEN_ERROR =
-            new IdentityCredentialTokenError(TEST_ERROR_CODE, TEST_URL);
-
     @Test
     @MediumTest
     public void testBackDismissesAndCallsCallback() {
@@ -103,9 +102,8 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
                 () -> {
                     mAccountSelection.showAccounts(
                             EXAMPLE_ETLD_PLUS_ONE,
-                            TEST_ETLD_PLUS_ONE_2,
-                            Arrays.asList(RETURNING_ANA, NEW_BOB),
-                            mIdpData,
+                            Arrays.asList(mReturningAna, mNewBob),
+                            Arrays.asList(mIdpData),
                             /* isAutoReauthn= */ false,
                             /* newAccounts= */ Collections.EMPTY_LIST);
                 });
@@ -114,7 +112,7 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
         Espresso.pressBack();
 
         waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.BACK_PRESS);
-        verify(mMockBridge, never()).onAccountSelected(any(), any());
+        verify(mMockBridge, never()).onAccountSelected(any());
     }
 
     @Test
@@ -124,9 +122,8 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
                 () -> {
                     mAccountSelection.showAccounts(
                             EXAMPLE_ETLD_PLUS_ONE,
-                            TEST_ETLD_PLUS_ONE_2,
-                            Arrays.asList(RETURNING_ANA, NEW_BOB),
-                            mIdpData,
+                            Arrays.asList(mReturningAna, mNewBob),
+                            Arrays.asList(mIdpData),
                             /* isAutoReauthn= */ false,
                             /* newAccounts= */ Collections.EMPTY_LIST);
                 });
@@ -137,7 +134,7 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
                     sheetSupport.suppressSheet(BottomSheetController.StateChangeReason.SWIPE);
                 });
         waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.SWIPE);
-        verify(mMockBridge, never()).onAccountSelected(any(), any());
+        verify(mMockBridge, never()).onAccountSelected(any());
     }
 
     private void testClickOnConsentLink(int linkIndex, String expectedUrl) {
@@ -145,9 +142,8 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
                 () -> {
                     mAccountSelection.showAccounts(
                             EXAMPLE_ETLD_PLUS_ONE,
-                            TEST_ETLD_PLUS_ONE_2,
-                            Arrays.asList(NEW_BOB),
-                            mIdpData,
+                            Arrays.asList(mNewBob),
+                            Arrays.asList(mIdpData),
                             /* isAutoReauthn= */ false,
                             /* newAccounts= */ Collections.EMPTY_LIST);
                 });
@@ -219,14 +215,13 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
                 () -> {
                     mAccountSelection.showAccounts(
                             EXAMPLE_ETLD_PLUS_ONE,
-                            TEST_ETLD_PLUS_ONE_2,
-                            Arrays.asList(RETURNING_ANA, NEW_BOB),
-                            mIdpData,
+                            Arrays.asList(mReturningAna, mNewBob),
+                            Arrays.asList(mIdpData),
                             /* isAutoReauthn= */ false,
                             /* newAccounts= */ Collections.EMPTY_LIST);
                 });
         waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.OTHER);
-        verify(mMockBridge, never()).onAccountSelected(any(), any());
+        verify(mMockBridge, never()).onAccountSelected(any());
         Espresso.onView(withText("Another bottom sheet content")).check(matches(isDisplayed()));
 
         runOnUiThreadBlocking(
@@ -252,7 +247,7 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
         Espresso.pressBack();
 
         waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.BACK_PRESS);
-        verify(mMockBridge, never()).onAccountSelected(any(), any());
+        verify(mMockBridge, never()).onAccountSelected(any());
     }
 
     @Test
@@ -273,7 +268,7 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
                     sheetSupport.suppressSheet(BottomSheetController.StateChangeReason.SWIPE);
                 });
         waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.SWIPE);
-        verify(mMockBridge, never()).onAccountSelected(any(), any());
+        verify(mMockBridge, never()).onAccountSelected(any());
     }
 
     @Test
@@ -341,7 +336,7 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
                 });
         CriteriaHelper.pollUiThread(() -> activity.isDestroyed());
         waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.OTHER);
-        verify(mMockBridge, never()).onAccountSelected(any(), any());
+        verify(mMockBridge, never()).onAccountSelected(any());
     }
 
     @Test
@@ -361,43 +356,51 @@ public class AccountSelectionIntegrationTest extends AccountSelectionIntegration
 
     @Test
     @MediumTest
-    public void testErrorDialogBackDismissesAndCallsCallback() {
+    public void testDismissAddAccountCctReopensAccountChooser() {
         runOnUiThreadBlocking(
                 () -> {
-                    mAccountSelection.showErrorDialog(
+                    mAccountSelection.showAccounts(
                             EXAMPLE_ETLD_PLUS_ONE,
-                            TEST_ETLD_PLUS_ONE_2,
-                            IDP_METADATA,
-                            RpContext.SIGN_IN,
-                            TOKEN_ERROR);
+                            Arrays.asList(mNewBobWithAddAccount, mReturningAnaWithAddAccount),
+                            Arrays.asList(mIdpDataWithAddAccount),
+                            /* isAutoReauthn= */ false,
+                            /* newAccounts= */ Collections.EMPTY_LIST);
+                    mAccountSelection.getMediator().setComponentShowTime(-1000);
                 });
         pollUiThread(() -> getBottomSheetState() == mExpectedSheetState);
 
-        Espresso.pressBack();
+        View contentView = mBottomSheetController.getCurrentSheetContent().getContentView();
+        assertNotNull(contentView);
 
-        waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.BACK_PRESS);
-        verify(mMockBridge, never()).onAccountSelected(any(), any());
-    }
+        RecyclerView accountsList = contentView.findViewById(R.id.sheet_item_list);
+        assertEquals(3, accountsList.getChildCount());
+        assertEquals(
+                AccountSelectionProperties.ITEM_TYPE_ADD_ACCOUNT,
+                accountsList.getAdapter().getItemViewType(2));
 
-    @Test
-    @MediumTest
-    public void testErrorDialogSwipeDismissesAndCallsCallback() {
+        // Close the use other account CCT when it is opened.
+        doAnswer(
+                        new Answer<Void>() {
+                            @Override
+                            public Void answer(InvocationOnMock invocation) {
+                                mAccountSelection
+                                        .getMediator()
+                                        .onDismissed(IdentityRequestDialogDismissReason.OTHER);
+                                return null;
+                            }
+                        })
+                .when(mMockBridge)
+                .onLoginToIdP(any(), any());
+
+        // Click "Use a different account".
         runOnUiThreadBlocking(
                 () -> {
-                    mAccountSelection.showErrorDialog(
-                            EXAMPLE_ETLD_PLUS_ONE,
-                            TEST_ETLD_PLUS_ONE_2,
-                            IDP_METADATA,
-                            RpContext.SIGN_IN,
-                            TOKEN_ERROR);
+                    accountsList.getChildAt(2).performClick();
                 });
-        pollUiThread(() -> getBottomSheetState() == mExpectedSheetState);
-        BottomSheetTestSupport sheetSupport = new BottomSheetTestSupport(mBottomSheetController);
-        runOnUiThreadBlocking(
-                () -> {
-                    sheetSupport.suppressSheet(BottomSheetController.StateChangeReason.SWIPE);
-                });
-        waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.SWIPE);
-        verify(mMockBridge, never()).onAccountSelected(any(), any());
+
+        // Verify that account chooser remains open.
+        assertEquals(HeaderType.SIGN_IN, mAccountSelection.getMediator().getHeaderType());
+        waitForEvent(mMockBridge).onDismissed(IdentityRequestDialogDismissReason.OTHER);
+        verify(mMockBridge, never()).onAccountSelected(any());
     }
 }

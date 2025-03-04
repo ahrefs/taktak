@@ -26,7 +26,6 @@ namespace resource_coordinator {
 class TabLifecycleObserver;
 class TabLifecycleStateObserver;
 class TabLifecycleUnitExternal;
-class UsageClock;
 
 // Creates and destroys LifecycleUnits as tabs are created and destroyed.
 class TabLifecycleUnitSource : public BrowserListObserver,
@@ -36,7 +35,7 @@ class TabLifecycleUnitSource : public BrowserListObserver,
   class TabLifecycleUnit;
   class LifecycleStateObserver;
 
-  explicit TabLifecycleUnitSource(UsageClock* usage_clock);
+  TabLifecycleUnitSource();
 
   TabLifecycleUnitSource(const TabLifecycleUnitSource&) = delete;
   TabLifecycleUnitSource& operator=(const TabLifecycleUnitSource&) = delete;
@@ -77,6 +76,7 @@ class TabLifecycleUnitSource : public BrowserListObserver,
   FRIEND_TEST_ALL_PREFIXES(TabManagerTest, TabManagerWasDiscarded);
   FRIEND_TEST_ALL_PREFIXES(TabManagerTest,
                            TabManagerWasDiscardedCrossSiteSubFrame);
+  FRIEND_TEST_ALL_PREFIXES(TabLifecycleUnitSourceTest, Freeze);
 
   // Returns the TabLifecycleUnit instance associated with |web_contents|, or
   // nullptr if |web_contents| isn't a tab.
@@ -146,9 +146,6 @@ class TabLifecycleUnitSource : public BrowserListObserver,
   // changes.
   base::ObserverList<TabLifecycleObserver>::UncheckedAndDanglingUntriaged
       tab_lifecycle_observers_;
-
-  // A clock that advances when Chrome is in use.
-  const raw_ptr<UsageClock> usage_clock_;
 
   // The enterprise policy for setting a limit on total physical memory usage.
   bool memory_limit_enterprise_policy_ = false;

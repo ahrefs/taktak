@@ -78,6 +78,7 @@ component("app_shim") {
     "//mojo/public/cpp/bindings",
     "//net",
     "//ui/accelerated_widget_mac",
+    "//ui/accessibility",
     "//ui/base",
     "//ui/base/dragdrop:types",
     "//ui/base/emoji",
@@ -85,6 +86,7 @@ component("app_shim") {
     "//ui/events",
     "//ui/gfx",
     "//ui/gfx/geometry",
+    "//ui/menus",
     "//ui/strings:ui_strings_grit",
   ]
   frameworks = [

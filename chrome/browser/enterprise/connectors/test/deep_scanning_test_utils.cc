@@ -41,11 +41,9 @@ namespace enterprise_connectors::test {
 
 EventReportValidator::EventReportValidator(
     policy::MockCloudPolicyClient* client)
-    : client_(client) {}
+    : EventReportValidatorBase(client) {}
 
-EventReportValidator::~EventReportValidator() {
-  testing::Mock::VerifyAndClearExpectations(client_);
-}
+EventReportValidator::~EventReportValidator() = default;
 
 void EventReportValidator::ExpectUnscannedFileEvent(
     const std::string& expected_url,
@@ -463,79 +461,6 @@ void EventReportValidator::ExpectDangerousDownloadEvent(
           });
 }
 
-void EventReportValidator::ExpectLoginEvent(
-    const std::string& expected_url,
-    const bool expected_is_federated,
-    const std::string& expected_federated_origin,
-    const std::string& expected_profile_username,
-    const std::string& expected_profile_identifier,
-    const std::u16string& expected_login_username) {
-  event_key_ = enterprise_connectors::kKeyLoginEvent;
-  url_ = expected_url;
-  is_federated_ = expected_is_federated;
-  federated_origin_ = expected_federated_origin;
-  username_ = expected_profile_username;
-  profile_identifier_ = expected_profile_identifier;
-  login_user_name_ = expected_login_username;
-  EXPECT_CALL(*client_, UploadSecurityEventReport)
-      .WillOnce(
-          [this](bool include_device_info, base::Value::Dict report,
-                 base::OnceCallback<void(policy::CloudPolicyClient::Result)>
-                     callback) {
-            ValidateReport(&report);
-            if (!done_closure_.is_null()) {
-              done_closure_.Run();
-            }
-          });
-}
-
-void EventReportValidator::ExpectPasswordBreachEvent(
-    const std::string& expected_trigger,
-    const std::vector<std::pair<std::string, std::u16string>>&
-        expected_identities,
-    const std::string& expected_profile_username,
-    const std::string& expected_profile_identifier) {
-  event_key_ = enterprise_connectors::kKeyPasswordBreachEvent;
-  trigger_ = expected_trigger;
-  password_breach_identities_ = expected_identities;
-  username_ = expected_profile_username;
-  profile_identifier_ = expected_profile_identifier;
-  EXPECT_CALL(*client_, UploadSecurityEventReport)
-      .WillOnce(
-          [this](bool include_device_info, base::Value::Dict report,
-                 base::OnceCallback<void(policy::CloudPolicyClient::Result)>
-                     callback) {
-            ValidateReport(&report);
-            if (!done_closure_.is_null()) {
-              done_closure_.Run();
-            }
-          });
-}
-
-void EventReportValidator::ExpectURLFilteringInterstitialEvent(
-    const std::string& expected_url,
-    const std::string& expected_event_result,
-    const std::string& expected_profile_username,
-    const std::string& expected_profile_identifier,
-    safe_browsing::RTLookupResponse expected_rt_lookup_response) {
-  event_key_ = enterprise_connectors::kKeyUrlFilteringInterstitialEvent;
-  url_ = expected_url;
-  url_filtering_event_result_ = expected_event_result;
-  username_ = expected_profile_username;
-  profile_identifier_ = expected_profile_identifier;
-  rt_lookup_response_ = expected_rt_lookup_response;
-  EXPECT_CALL(*client_, UploadSecurityEventReport)
-      .WillOnce(
-          [this](bool include_device_info, base::Value::Dict report,
-                 base::OnceCallback<void(policy::CloudPolicyClient::Result)>
-                     callback) {
-            ValidateReport(&report);
-            if (!done_closure_.is_null()) {
-              done_closure_.Run();
-            }
-          });
-}
-
 void EventReportValidator::ValidateReport(const base::Value::Dict* report) {
   DCHECK(report);
 
@@ -584,21 +509,10 @@ void EventReportValidator::ValidateReport(const base::Value::Dict* report) {
   ValidateFederatedOrigin(event);
   ValidateIdentities(event);
   ValidateMimeType(event);
-  ValidateRTLookupResponse(event);
   ValidateDataControlsAttributes(event);
 #if BUILDFLAG(ENABLE_EXTENSIONS)
   ValidateDataMaskingAttributes(event);
 #endif  // BUILDFLAG(ENABLE_EXTENSIONS)
-
-  // This field is checked using other members for non URLF events, so
-  // `url_filtering_event_result_` is always expected to be empty in other
-  // cases and shouldn't be used to validate `kKeyEventResult`.
-  if (rt_lookup_response_) {
-    ValidateField(event, SafeBrowsingPrivateEventRouter::kKeyEventResult,
-                  url_filtering_event_result_);
-  } else {
-    EXPECT_FALSE(url_filtering_event_result_);
-  }
 }
 
 void EventReportValidator::ValidateFederatedOrigin(
@@ -682,40 +596,6 @@ void EventReportValidator::ValidateDlpRule(
                 expected_rule.rule_id());
 }
 
-void EventReportValidator::ValidateRTLookupResponse(
-    const base::Value::Dict* value) {
-  if (rt_lookup_response_) {
-    const base::Value::List* triggered_rules =
-        value->FindList(SafeBrowsingPrivateEventRouter::kKeyTriggeredRuleInfo);
-    ASSERT_TRUE(triggered_rules);
-    ASSERT_EQ(
-        base::checked_cast<size_t>(rt_lookup_response_->threat_info_size()),
-        triggered_rules->size());
-    for (size_t i = 0; i < triggered_rules->size(); ++i) {
-      const base::Value::Dict& rule = (*triggered_rules)[i].GetDict();
-      ValidateThreatInfo(&rule, rt_lookup_response_->threat_info(i));
-    }
-  }
-}
-
-void EventReportValidator::ValidateThreatInfo(
-    const base::Value::Dict* value,
-    const safe_browsing::RTLookupResponse::ThreatInfo& expected_threat_info) {
-  ValidateField(value, SafeBrowsingPrivateEventRouter::kKeyTriggeredRuleName,
-                expected_threat_info.matched_url_navigation_rule().rule_name());
-  ValidateField(value, SafeBrowsingPrivateEventRouter::kKeyTriggeredRuleId,
-                expected_threat_info.matched_url_navigation_rule().rule_id());
-  ValidateField(value, SafeBrowsingPrivateEventRouter::kKeyUrlCategory,
-                expected_threat_info.matched_url_navigation_rule()
-                    .matched_url_category());
-
-  if (expected_threat_info.matched_url_navigation_rule()
-          .has_watermark_message()) {
-    ValidateField(value, SafeBrowsingPrivateEventRouter::kKeyHasWatermarking,
-                  std::optional<bool>(true));
-  }
-}
-
 void EventReportValidator::ValidateFilenameMappedAttributes(
     const base::Value::Dict* value) {
   if (filenames_and_hashes_.empty()) {
@@ -765,60 +645,6 @@ void EventReportValidator::ValidateFilenameMappedAttributes(
       ValidateDlpVerdict(value, dlp_verdicts_[filename]);
     }
   }
-}
-
-void EventReportValidator::ValidateField(
-    const base::Value::Dict* value,
-    const std::string& field_key,
-    const std::optional<std::string>& expected_value) {
-  if (expected_value.has_value()) {
-    ASSERT_EQ(*value->FindString(field_key), expected_value.value())
-        << "Mismatch in field " << field_key
-        << "\nActual value: " << value->FindString(field_key)
-        << "\nExpected value: " << expected_value.value();
-  } else {
-    ASSERT_EQ(nullptr, value->FindString(field_key))
-        << "Field " << field_key << " should not be populated. It has value "
-        << *value->FindString(field_key);
-  }
-}
-
-void EventReportValidator::ValidateField(
-    const base::Value::Dict* value,
-    const std::string& field_key,
-    const std::optional<std::u16string>& expected_value) {
-  const std::string* s = value->FindString(field_key);
-  if (expected_value.has_value()) {
-    const std::u16string actual_string_value = base::UTF8ToUTF16(*s);
-    ASSERT_EQ(actual_string_value, expected_value.value())
-        << "Mismatch in field " << field_key
-        << "\nActual value: " << actual_string_value
-        << "\nExpected value: " << expected_value.value();
-  } else {
-    ASSERT_EQ(nullptr, s) << "Field " << field_key
-                          << " should not be populated. It has value "
-                          << *value->FindString(field_key);
-  }
-}
-
-void EventReportValidator::ValidateField(
-    const base::Value::Dict* value,
-    const std::string& field_key,
-    const std::optional<int>& expected_value) {
-  ASSERT_EQ(value->FindInt(field_key), expected_value)
-      << "Mismatch in field " << field_key
-      << "\nActual value: " << value->FindInt(field_key).value()
-      << "\nExpected value: " << expected_value.value();
-}
-
-void EventReportValidator::ValidateField(
-    const base::Value::Dict* value,
-    const std::string& field_key,
-    const std::optional<bool>& expected_value) {
-  ASSERT_EQ(value->FindBool(field_key), expected_value)
-      << "Mismatch in field " << field_key
-      << "\nActual value: " << value->FindBool(field_key).value()
-      << "\nExpected value: " << expected_value.value();
 }
 
 void EventReportValidator::ValidateDataControlsAttributes(
@@ -871,10 +697,6 @@ void EventReportValidator::ValidateDataMaskingAttributes(
 }
 #endif  // BUILDFLAG(ENABLE_EXTENSIONS)
 
-void EventReportValidator::ExpectNoReport() {
-  EXPECT_CALL(*client_, UploadSecurityEventReport).Times(0);
-}
-
 void EventReportValidator::SetDoneClosure(base::RepeatingClosure closure) {
   done_closure_ = std::move(closure);
 }
@@ -922,25 +744,6 @@ EventReportValidator EventReportValidatorHelper::CreateValidator() {
   return EventReportValidator(client_.get());
 }
 
-base::Value::List CreateOptInEventsList(
-    const std::map<std::string, std::vector<std::string>>&
-        enabled_opt_in_events) {
-  base::Value::List enabled_opt_in_events_list;
-  for (const auto& enabled_opt_in_event : enabled_opt_in_events) {
-    base::Value::Dict event_value;
-    event_value.Set(kKeyOptInEventName, enabled_opt_in_event.first);
-
-    base::Value::List url_patterns_list;
-    for (const auto& url_pattern : enabled_opt_in_event.second) {
-      url_patterns_list.Append(url_pattern);
-    }
-    event_value.Set(kKeyOptInEventUrlPatterns, std::move(url_patterns_list));
-
-    enabled_opt_in_events_list.Append(std::move(event_value));
-  }
-  return enabled_opt_in_events_list;
-}
-
 #if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
 void SetAnalysisConnector(PrefService* prefs,
                           AnalysisConnector connector,
@@ -957,43 +760,6 @@ void SetAnalysisConnector(PrefService* prefs,
       machine_scope ? policy::POLICY_SCOPE_MACHINE : policy::POLICY_SCOPE_USER);
 }
 
-void SetOnSecurityEventReporting(
-    PrefService* prefs,
-    bool enabled,
-    const std::set<std::string>& enabled_event_names,
-    const std::map<std::string, std::vector<std::string>>&
-        enabled_opt_in_events,
-    bool machine_scope) {
-  ScopedListPrefUpdate settings_list(prefs, kOnSecurityEventPref);
-  settings_list->clear();
-  prefs->ClearPref(kOnSecurityEventScopePref);
-  if (!enabled) {
-    return;
-  }
-
-  base::Value::Dict settings;
-
-  settings.Set(kKeyServiceProvider, base::Value("google"));
-  if (!enabled_event_names.empty()) {
-    base::Value::List enabled_event_name_list;
-    for (const auto& enabled_event_name : enabled_event_names) {
-      enabled_event_name_list.Append(enabled_event_name);
-    }
-    settings.Set(kKeyEnabledEventNames, std::move(enabled_event_name_list));
-  }
-
-  if (!enabled_opt_in_events.empty()) {
-    settings.Set(kKeyEnabledOptInEvents,
-                 CreateOptInEventsList(enabled_opt_in_events));
-  }
-
-  settings_list->Append(std::move(settings));
-
-  prefs->SetInteger(
-      kOnSecurityEventScopePref,
-      machine_scope ? policy::POLICY_SCOPE_MACHINE : policy::POLICY_SCOPE_USER);
-}
-
 void ClearAnalysisConnector(PrefService* prefs, AnalysisConnector connector) {
   ScopedListPrefUpdate settings_list(prefs, AnalysisConnectorPref(connector));
   settings_list->clear();
@@ -1001,7 +767,7 @@ void ClearAnalysisConnector(PrefService* prefs, AnalysisConnector connector) {
 }
 #endif  // BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS)
 void SetProfileDMToken(Profile* profile, const std::string& dm_token) {
   auto policy_data = std::make_unique<enterprise_management::PolicyData>();
   policy_data->set_request_token(dm_token);
@@ -1013,13 +779,8 @@ void SetProfileDMToken(Profile* profile, const std::string& dm_token) {
   auto client = std::make_unique<policy::MockCloudPolicyClient>();
   client->SetDMToken(dm_token);
 
-// crbug.com/1230268 The main profile in Lacros doesn't have a
-// CloudPolicyManager, but we might want to apply the code if it's a secondary
-// profile.
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
   profile->GetUserCloudPolicyManager()->Connect(
       g_browser_process->local_state(), std::move(client));
-#endif
 }
 #endif
 

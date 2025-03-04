@@ -7,13 +7,13 @@
 #include <vector>
 
 #include "base/functional/bind.h"
+#include "chrome/browser/ui/actions/chrome_action_id.h"
 #include "chrome/browser/ui/actions/chrome_actions.h"
 #include "chrome/browser/ui/browser_actions.h"
 #include "chrome/browser/ui/browser_element_identifiers.h"
 #include "chrome/browser/ui/toolbar/pinned_toolbar/pinned_toolbar_actions_model.h"
 #include "chrome/browser/ui/toolbar/pinned_toolbar/pinned_toolbar_actions_model_factory.h"
 #include "chrome/browser/ui/toolbar/toolbar_pref_names.h"
-#include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/frame/test_with_browser_view.h"
 #include "chrome/browser/ui/views/toolbar/pinned_action_toolbar_button.h"
@@ -39,7 +39,6 @@
 class PinnedToolbarActionsContainerTest : public TestWithBrowserView {
  public:
   void SetUp() override {
-    feature_list_.InitAndEnableFeature(features::kToolbarPinning);
     InitializeActionIdStringMapping();
     TestWithBrowserView::SetUp();
     AddTab(browser_view()->browser(), GURL("http://foo1.com"));
@@ -99,16 +98,16 @@ class PinnedToolbarActionsContainerTest : public TestWithBrowserView {
     auto* container =
         browser_view()->toolbar()->pinned_toolbar_actions_container();
     if (should_be_popped_out) {
-      ASSERT_NE(base::ranges::find(container->popped_out_buttons_, id,
-                                   [](PinnedActionToolbarButton* button) {
-                                     return button->GetActionId();
-                                   }),
+      ASSERT_NE(std::ranges::find(container->popped_out_buttons_, id,
+                                  [](PinnedActionToolbarButton* button) {
+                                    return button->GetActionId();
+                                  }),
                 container->popped_out_buttons_.end());
     } else {
-      ASSERT_EQ(base::ranges::find(container->popped_out_buttons_, id,
-                                   [](PinnedActionToolbarButton* button) {
-                                     return button->GetActionId();
-                                   }),
+      ASSERT_EQ(std::ranges::find(container->popped_out_buttons_, id,
+                                  [](PinnedActionToolbarButton* button) {
+                                    return button->GetActionId();
+                                  }),
                 container->popped_out_buttons_.end());
     }
   }
@@ -117,16 +116,16 @@ class PinnedToolbarActionsContainerTest : public TestWithBrowserView {
     auto* container =
         browser_view()->toolbar()->pinned_toolbar_actions_container();
     if (should_be_pinned) {
-      ASSERT_NE(base::ranges::find(container->pinned_buttons_, id,
-                                   [](PinnedActionToolbarButton* button) {
-                                     return button->GetActionId();
-                                   }),
+      ASSERT_NE(std::ranges::find(container->pinned_buttons_, id,
+                                  [](PinnedActionToolbarButton* button) {
+                                    return button->GetActionId();
+                                  }),
                 container->pinned_buttons_.end());
     } else {
-      ASSERT_EQ(base::ranges::find(container->pinned_buttons_, id,
-                                   [](PinnedActionToolbarButton* button) {
-                                     return button->GetActionId();
-                                   }),
+      ASSERT_EQ(std::ranges::find(container->pinned_buttons_, id,
+                                  [](PinnedActionToolbarButton* button) {
+                                    return button->GetActionId();
+                                  }),
                 container->pinned_buttons_.end());
     }
   }
@@ -179,9 +178,6 @@ class PinnedToolbarActionsContainerTest : public TestWithBrowserView {
     view->OnKeyReleased(ui::KeyEvent(ui::EventType::kKeyPressed, code, flags,
                                      ui::EventTimeForNow()));
   }
-
- protected:
-  base::test::ScopedFeatureList feature_list_;
 
  private:
   raw_ptr<PinnedToolbarActionsModel> model_;
@@ -608,9 +604,9 @@ TEST_F(PinnedToolbarActionsContainerTest, ActiveActionSkipsExecution) {
   EXPECT_FALSE(pinned_button->ShouldSkipExecutionForTesting());
 
   pinned_button->SetIsActionShowingBubble(true);
-  ui::MouseEvent press_event(ui::EventType::kMousePressed, gfx::Point(), gfx::Point(),
-                             ui::EventTimeForNow(), ui::EF_LEFT_MOUSE_BUTTON,
-                             0);
+  ui::MouseEvent press_event(ui::EventType::kMousePressed, gfx::Point(),
+                             gfx::Point(), ui::EventTimeForNow(),
+                             ui::EF_LEFT_MOUSE_BUTTON, 0);
   ui::MouseEvent release_event(ui::EventType::kMouseReleased, gfx::Point(),
                                gfx::Point(), ui::EventTimeForNow(),
                                ui::EF_LEFT_MOUSE_BUTTON, 0);

@@ -8,11 +8,10 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.chromium.base.Callback;
 import org.chromium.base.supplier.Supplier;
 import org.chromium.chrome.browser.magic_stack.ModuleDelegate;
 import org.chromium.chrome.browser.magic_stack.ModuleProvider;
-import org.chromium.chrome.browser.preferences.PrefChangeRegistrar;
+import org.chromium.chrome.browser.preferences.PrefServiceUtil;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.components.user_prefs.UserPrefs;
@@ -28,8 +27,7 @@ class SafetyHubMagicStackCoordinator implements ModuleProvider {
             @NonNull Profile profile,
             @NonNull TabModelSelector tabModelSelector,
             @NonNull ModuleDelegate moduleDelegate,
-            @NonNull Supplier<ModalDialogManager> modalDialogManagerSupplier,
-            @NonNull Callback<String> showSurveyCallback) {
+            @NonNull Supplier<ModalDialogManager> modalDialogManagerSupplier) {
         PropertyModel model = new PropertyModel(SafetyHubMagicStackViewProperties.ALL_KEYS);
         mMediator =
                 new SafetyHubMagicStackMediator(
@@ -40,9 +38,9 @@ class SafetyHubMagicStackCoordinator implements ModuleProvider {
                         MagicStackBridge.getForProfile(profile),
                         tabModelSelector,
                         moduleDelegate,
-                        new PrefChangeRegistrar(),
+                        PrefServiceUtil.createFor(profile),
                         modalDialogManagerSupplier,
-                        showSurveyCallback);
+                        SafetyHubHatsHelper.getForProfile(profile));
     }
 
     @Override

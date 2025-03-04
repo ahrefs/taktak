@@ -253,7 +253,7 @@ public class OfflinePageBridgeTest {
 
     @Test
     @MediumTest
-    public void testOfflinePageBridgeDisabled_InIncognitoCCT() throws Exception {
+    public void testOfflinePageBridgeDisabled_InIncognitoCct() throws Exception {
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
                     OtrProfileId otrProfileId = OtrProfileId.createUnique("CCT:Incognito");
@@ -270,7 +270,7 @@ public class OfflinePageBridgeTest {
 
     @Test
     @MediumTest
-    public void testOfflinePageBridgeForProfileKeyDisabled_InIncognitoCCT() throws Exception {
+    public void testOfflinePageBridgeForProfileKeyDisabled_InIncognitoCct() throws Exception {
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
                     OtrProfileId otrProfileId = OtrProfileId.createUnique("CCT:Incognito");
@@ -669,13 +669,6 @@ public class OfflinePageBridgeTest {
                 });
         Assert.assertTrue(semaphore.tryAcquire(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         return result;
-    }
-
-    private void forceConnectivityStateOnUiThread(final boolean state) {
-        ThreadUtils.runOnUiThreadBlocking(
-                () -> {
-                    NetworkChangeNotifier.forceConnectivityState(state);
-                });
     }
 
     private Set<String> getUrlsExistOfflineFromSet(final Set<String> query)

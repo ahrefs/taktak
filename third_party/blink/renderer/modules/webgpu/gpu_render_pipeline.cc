@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "third_party/blink/renderer/modules/webgpu/gpu_render_pipeline.h"
 
 #include "third_party/blink/renderer/bindings/core/v8/native_value_traits_impl.h"
@@ -195,6 +190,8 @@ wgpu::MultisampleState AsDawnType(const GPUMultisampleState* webgpu_desc) {
   return dawn_desc;
 }
 
+// TODO(crbug.com/351564777): should be UNSAFE_BUFFER_USAGE
+// or avoid UNSAFE entirely (maybe possible using HeapArray)
 void AsDawnVertexBufferLayouts(GPUDevice* device,
                                const GPUVertexState* descriptor,
                                OwnedVertexState* dawn_desc_info) {
@@ -221,19 +218,13 @@ void AsDawnVertexBufferLayouts(GPUDevice* device,
       std::make_unique<std::unique_ptr<wgpu::VertexAttribute[]>[]>(
           dawn_vertex->bufferCount);
   for (wtf_size_t i = 0; i < dawn_vertex->bufferCount; ++i) {
-    const auto& maybe_buffer = descriptor->buffers()[i];
-    if (!maybe_buffer) {
-      // This buffer layout is empty.
-      // Explicitly set VertexBufferNotUsed step mode to represent
-      // this slot is empty for Dawn, and continue the loop.
-      dawn_desc_info->buffers[i].stepMode =
-          wgpu::VertexStepMode::VertexBufferNotUsed;
-      continue;
+    if (const auto* buffer = descriptor->buffers()[i].Get()) {
+      UNSAFE_TODO(dawn_desc_info->attributes.get()[i]) =
+          AsDawnType(buffer->attributes());
+      wgpu::VertexBufferLayout* dawn_buffer = &dawn_desc_info->buffers[i];
+      dawn_buffer->attributes =
+          UNSAFE_TODO(dawn_desc_info->attributes.get()[i].get());
     }
-    const GPUVertexBufferLayout* buffer = maybe_buffer.Get();
-    dawn_desc_info->attributes.get()[i] = AsDawnType(buffer->attributes());
-    wgpu::VertexBufferLayout* dawn_buffer = &dawn_desc_info->buffers[i];
-    dawn_buffer->attributes = dawn_desc_info->attributes.get()[i].get();
   }
 }
 
@@ -390,14 +381,12 @@ GPURenderPipeline* GPURenderPipeline::Create(
   DCHECK(webgpu_desc);
 
   v8::Isolate* isolate = script_state->GetIsolate();
-  ExceptionState exception_state(isolate, v8::ExceptionContext::kConstructor,
-                                 "GPURenderPipeline");
-
   GPURenderPipeline* pipeline;
   OwnedRenderPipelineDescriptor dawn_desc_info;
   ConvertToDawnType(isolate, device, webgpu_desc, &dawn_desc_info,
-                    exception_state);
-  if (exception_state.HadException()) {
+                    PassThroughException(isolate));
+
+  if (isolate->HasPendingException()) {
     return nullptr;
   }
 

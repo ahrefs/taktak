@@ -12,54 +12,37 @@ BASE_FEATURE(kDeferredSyncStartupCustomDelay,
              "DeferredSyncStartupCustomDelay",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
+BASE_FEATURE(kSyncAutofillLoyaltyCard,
+             "SyncAutofillLoyaltyCard",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
 #if BUILDFLAG(IS_ANDROID)
 BASE_FEATURE(kEnableBatchUploadFromSettings,
              "EnableBatchUploadFromSettings",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kUnoPhase2FollowUp,
              "UnoPhase2FollowUp",
              base::FEATURE_DISABLED_BY_DEFAULT);
 #endif  // BUILDFLAG(IS_ANDROID)
 
-BASE_FEATURE(kSyncAutofillWalletUsageData,
-             "SyncAutofillWalletUsageData",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
 BASE_FEATURE(kSyncAutofillWalletCredentialData,
              "SyncAutofillWalletCredentialData",
+#if BUILDFLAG(IS_IOS)
              base::FEATURE_DISABLED_BY_DEFAULT);
-
-BASE_FEATURE(kSyncPlusAddressSetting,
-             "SyncPlusAddressSetting",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+#else
+             base::FEATURE_ENABLED_BY_DEFAULT);
+#endif
 
 #if BUILDFLAG(IS_CHROMEOS)
-BASE_FEATURE(kSyncChromeOSExplicitPassphraseSharing,
-             "SyncChromeOSExplicitPassphraseSharing",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 BASE_FEATURE(kSyncChromeOSAppsToggleSharing,
              "SyncChromeOSAppsToggleSharing",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
-BASE_FEATURE(kChromeOSSyncedSessionSharing,
-             "ChromeOSSyncedSessionSharing",
              base::FEATURE_ENABLED_BY_DEFAULT);
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 BASE_FEATURE(kSkipInvalidationOptimizationsWhenDeviceInfoUpdated,
              "SkipInvalidationOptimizationsWhenDeviceInfoUpdated",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
-BASE_FEATURE(kSyncEnableContactInfoDataTypeInTransportMode,
-             "SyncEnableContactInfoDataTypeInTransportMode",
-#if BUILDFLAG(IS_IOS) || BUILDFLAG(IS_ANDROID)
-             base::FEATURE_ENABLED_BY_DEFAULT
-#else
-             base::FEATURE_DISABLED_BY_DEFAULT
-#endif
-);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kSyncEnableContactInfoDataTypeForCustomPassphraseUsers,
              "SyncEnableContactInfoDataTypeForCustomPassphraseUsers",
@@ -83,32 +66,12 @@ BASE_FEATURE(kSyncEnableContactInfoDataTypeForDasherUsers,
              "SyncEnableContactInfoDataTypeForDasherUsers",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-BASE_FEATURE(kEnablePreferencesAccountStorage,
-             "EnablePreferencesAccountStorage",
-#if BUILDFLAG(IS_IOS) || BUILDFLAG(IS_ANDROID)
-             base::FEATURE_ENABLED_BY_DEFAULT
-#else
-             base::FEATURE_DISABLED_BY_DEFAULT
-#endif
-);
-
-#if !BUILDFLAG(IS_ANDROID)
-BASE_FEATURE(kSyncWebauthnCredentials,
-             "SyncWebauthnCredentials",
-#if BUILDFLAG(IS_IOS)
-             base::FEATURE_DISABLED_BY_DEFAULT
-#else
-             base::FEATURE_ENABLED_BY_DEFAULT
-#endif
-);
-#endif  // !BUILDFLAG(IS_ANDROID)
-
-BASE_FEATURE(kSyncIgnoreGetUpdatesRetryDelay,
-             "SyncIgnoreGetUpdatesRetryDelay",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
 BASE_FEATURE(kTabGroupsSaveNudgeDelay,
              "TabGroupsSaveNudgeDelay",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+BASE_FEATURE(kSeparateLocalAndAccountSearchEngines,
+             "SeparateLocalAndAccountSearchEngines",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 BASE_FEATURE(kReplaceSyncPromosWithSignInPromos,
@@ -120,34 +83,21 @@ BASE_FEATURE(kReplaceSyncPromosWithSignInPromos,
 #endif
 );
 
-BASE_FEATURE(kSyncEnableBookmarksInTransportMode,
-             "SyncEnableBookmarksInTransportMode",
-#if BUILDFLAG(IS_IOS) || BUILDFLAG(IS_ANDROID)
-             base::FEATURE_ENABLED_BY_DEFAULT
-#else
-             base::FEATURE_DISABLED_BY_DEFAULT
-#endif  // BUILDFLAG(IS_IOS)
-);
-
 BASE_FEATURE(kEnableBookmarksSelectedTypeOnSigninForTesting,
              "EnableBookmarksSelectedTypeOnSigninForTesting",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-#if !BUILDFLAG(IS_IOS)
+#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)
 BASE_FEATURE(kReadingListEnableSyncTransportModeUponSignIn,
              "ReadingListEnableSyncTransportModeUponSignIn",
-#if BUILDFLAG(IS_ANDROID)
-             base::FEATURE_ENABLED_BY_DEFAULT
-#else
              base::FEATURE_DISABLED_BY_DEFAULT
-#endif
 );
 
 bool IsReadingListAccountStorageEnabled() {
   return base::FeatureList::IsEnabled(
       syncer::kReadingListEnableSyncTransportModeUponSignIn);
 }
-#endif  // !BUILDFLAG(IS_IOS)
+#endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)
 
 BASE_FEATURE(kSyncSharedTabGroupDataInTransportMode,
              "SyncSharedTabGroupDataInTransportMode",
@@ -171,25 +121,27 @@ BASE_FEATURE(kSyncEnableWalletOfferInTransportMode,
 #endif
 );
 
-BASE_FEATURE(kSyncEntityMetadataRecordDeletedByVersionOnLocalDeletion,
-             "SyncEntityMetadataRecordDeletedByVersionOnLocalDeletion",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 BASE_FEATURE(kSyncPasswordCleanUpAccidentalBatchDeletions,
              "SyncPasswordCleanUpAccidentalBatchDeletions",
              base::FEATURE_DISABLED_BY_DEFAULT);
+
+#if BUILDFLAG(IS_IOS) || BUILDFLAG(IS_ANDROID)
+BASE_FEATURE(kMigrateAccountPrefs,
+             "MigrateAccountPrefs",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+#endif  // BUILDFLAG(IS_IOS) || BUILDFLAG(IS_ANDROID)
 
 BASE_FEATURE(kSeparateLocalAndAccountThemes,
              "SeparateLocalAndAccountThemes",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
+BASE_FEATURE(kThemesBatchUpload,
+             "ThemesBatchUpload",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
 BASE_FEATURE(kSyncIncreaseNudgeDelayForSingleClient,
              "SyncIncreaseNudgeDelayForSingleClient",
              base::FEATURE_DISABLED_BY_DEFAULT);
-
-BASE_FEATURE(kTrustedVaultAutoUpgradeSyntheticFieldTrial,
-             "TrustedVaultAutoUpgradeSyntheticFieldTrial",
-             base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kMoveThemePrefsToSpecifics,
              "MoveThemePrefsToSpecifics",
@@ -201,8 +153,14 @@ BASE_FEATURE(kWebApkBackupAndRestoreBackend,
              base::FEATURE_DISABLED_BY_DEFAULT);
 #endif  // BUILDFLAG(IS_ANDROID)
 
-BASE_FEATURE(kSyncEnableExtensionsInTransportMode,
-             "kSyncEnableExtensionsInTransportMode",
+#if BUILDFLAG(IS_ANDROID)
+BASE_FEATURE(kSyncEnablePasswordsSyncErrorMessageAlternative,
+             "SyncEnablePasswordsSyncErrorMessageAlternative",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+#endif  // BUILDFLAG(IS_ANDROID)
+
+BASE_FEATURE(kSyncSimulateBookmarksPingPongForTesting,
+             "SyncSimulateBookmarksPingPongForTesting",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 }  // namespace syncer

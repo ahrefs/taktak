@@ -19,7 +19,7 @@
 #include "base/time/time.h"
 #include "base/values.h"
 #include "base/version.h"
-#include "build/chromeos_buildflags.h"
+#include "build/build_config.h"
 #include "chrome/browser/web_applications/features.h"
 #include "chrome/browser/web_applications/isolated_web_apps/isolated_web_app_integrity_block_data.h"
 #include "chrome/browser/web_applications/isolated_web_apps/isolated_web_app_storage_location.h"
@@ -33,23 +33,23 @@
 #include "chrome/browser/web_applications/web_app_chromeos_data.h"
 #include "chrome/browser/web_applications/web_app_constants.h"
 #include "chrome/browser/web_applications/web_app_install_info.h"
+#include "chrome/browser/web_applications/web_app_management_type.h"
 #include "components/services/app_service/public/cpp/file_handler.h"
 #include "components/services/app_service/public/cpp/icon_info.h"
 #include "components/services/app_service/public/cpp/protocol_handler_info.h"
 #include "components/services/app_service/public/cpp/share_target.h"
-#include "components/services/app_service/public/cpp/url_handler_info.h"
 #include "components/sync/model/string_ordinal.h"
 #include "components/sync/protocol/web_app_specifics.pb.h"
 #include "components/webapps/common/web_app_id.h"
+#include "services/network/public/cpp/permissions_policy/permissions_policy_declaration.h"
 #include "third_party/blink/public/common/manifest/manifest.h"
-#include "third_party/blink/public/common/permissions_policy/permissions_policy_declaration.h"
 #include "third_party/blink/public/mojom/manifest/capture_links.mojom-shared.h"
 #include "third_party/blink/public/mojom/manifest/display_mode.mojom-shared.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "url/gurl.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ash/system_web_apps/types/system_web_app_data.h"
+#if BUILDFLAG(IS_CHROMEOS)
+#include "chromeos/ash/experiences/system_web_apps/types/system_web_app_data.h"
 #endif
 
 namespace webapps {
@@ -57,6 +57,7 @@ enum class WebappInstallSource;
 }
 
 namespace web_app {
+class TabbedModeScopeMatcher;
 
 class WebApp {
  public:
@@ -130,7 +131,7 @@ class WebApp {
     ClientData(const ClientData& client_data);
     base::Value AsDebugValue() const;
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     std::optional<ash::SystemWebAppData> system_web_app_data;
 #endif
   };
@@ -222,8 +223,6 @@ class WebApp {
     return note_taking_new_note_url_;
   }
 
-  const apps::UrlHandlers& url_handlers() const { return url_handlers_; }
-
   const base::flat_set<ScopeExtensionInfo>& scope_extensions() const {
     return scope_extensions_;
   }
@@ -273,7 +272,7 @@ class WebApp {
     return parent_app_id_;
   }
 
-  const blink::ParsedPermissionsPolicy& permissions_policy() const {
+  const network::ParsedPermissionsPolicy& permissions_policy() const {
     return permissions_policy_;
   }
 
@@ -329,6 +328,10 @@ class WebApp {
     return tab_strip_;
   }
 
+  // Returns the list of patterns to match URLs against for tabbed mode home
+  // tab navigations.
+  const std::vector<TabbedModeScopeMatcher>& GetTabbedModeHomeScope() const;
+
   // Only used on Mac.
   bool always_show_toolbar_in_fullscreen() const {
     return always_show_toolbar_in_fullscreen_;
@@ -361,6 +364,13 @@ class WebApp {
 
   bool is_diy_app() const { return is_diy_app_; }
 
+  bool was_shortcut_app() const { return was_shortcut_app_; }
+
+  const std::vector<blink::Manifest::RelatedApplication>& related_applications()
+      const {
+    return related_applications_;
+  }
+
   // A Web App can be installed from multiple sources simultaneously. Installs
   // add a source to the app. Uninstalls remove a source from the app.
   void AddSource(WebAppManagement::Type source);
@@ -392,8 +402,6 @@ class WebApp {
   void SetLaunchQueryParams(std::optional<std::string> launch_query_params);
   // Sets the scope after clearing the query and fragment from the scope url, as
   // per spec. This call will check-fail if the scope is not valid.
-  // TODO(crbug.com/339718933): Remove allowing an empty scope after shortcut
-  // apps are removed.
   void SetScope(const GURL& scope);
   void SetThemeColor(std::optional<SkColor> theme_color);
   void SetDarkModeThemeColor(std::optional<SkColor> theme_color);
@@ -426,7 +434,6 @@ class WebApp {
       base::flat_set<std::string> allowed_launch_protocols);
   void SetDisallowedLaunchProtocols(
       base::flat_set<std::string> disallowed_launch_protocols);
-  void SetUrlHandlers(apps::UrlHandlers url_handlers);
   void SetScopeExtensions(base::flat_set<ScopeExtensionInfo> scope_extensions);
   void SetValidatedScopeExtensions(
       base::flat_set<ScopeExtensionInfo> validated_scope_extensions);
@@ -444,7 +451,8 @@ class WebApp {
   void SetWindowControlsOverlayEnabled(bool enabled);
   void SetLaunchHandler(std::optional<LaunchHandler> launch_handler);
   void SetParentAppId(const std::optional<webapps::AppId>& parent_app_id);
-  void SetPermissionsPolicy(blink::ParsedPermissionsPolicy permissions_policy);
+  void SetPermissionsPolicy(
+      network::ParsedPermissionsPolicy permissions_policy);
   void SetLatestInstallSource(
       std::optional<webapps::WebappInstallSource> latest_install_source);
   void SetAppSizeInBytes(std::optional<int64_t> app_size_in_bytes);
@@ -460,6 +468,9 @@ class WebApp {
   void SetSupportedLinksOfferIgnoreCount(int ignore_count);
   void SetSupportedLinksOfferDismissCount(int dismiss_count);
   void SetIsDiyApp(bool is_diy_app);
+  void SetWasShortcutApp(bool was_shortcut_app);
+  void SetRelatedApplications(
+      std::vector<blink::Manifest::RelatedApplication> related_applications);
 
   void AddPlaceholderInfoToManagementExternalConfigMap(
       WebAppManagement::Type source_type,
@@ -508,7 +519,7 @@ class WebApp {
   webapps::AppId app_id_;
 
   // This set always contains at least one source.
-  WebAppManagementTypes sources_{};
+  WebAppManagementTypes sources_;
 
   std::string name_;
   std::string description_;
@@ -542,8 +553,6 @@ class WebApp {
   std::vector<apps::ProtocolHandlerInfo> protocol_handlers_;
   base::flat_set<std::string> allowed_launch_protocols_;
   base::flat_set<std::string> disallowed_launch_protocols_;
-  // TODO(crbug.com/40127045): No longer aiming to ship, remove.
-  apps::UrlHandlers url_handlers_;
   base::flat_set<ScopeExtensionInfo> scope_extensions_;
   base::flat_set<ScopeExtensionInfo> validated_scope_extensions_;
   GURL lock_screen_start_url_;
@@ -565,7 +574,7 @@ class WebApp {
   bool window_controls_overlay_enabled_ = false;
   std::optional<LaunchHandler> launch_handler_;
   std::optional<webapps::AppId> parent_app_id_;
-  blink::ParsedPermissionsPolicy permissions_policy_;
+  network::ParsedPermissionsPolicy permissions_policy_;
   // The source of the latest install. WebAppRegistrar provides range
   // validation. Optional only to support legacy installations, since this used
   // to be tracked as a pref. It might also be null if the value read from the
@@ -601,6 +610,10 @@ class WebApp {
 
   bool is_diy_app_ = false;
 
+  bool was_shortcut_app_ = false;
+
+  std::vector<blink::Manifest::RelatedApplication> related_applications_;
+
   // New fields must be added to:
   //  - |operator==|
   //  - AsDebugValue()
@@ -613,6 +626,29 @@ class WebApp {
   //  - SetWebAppManifestFields()
   // If the field relates to the app icons, add revert logic for it in:
   // - ManifestUpdateCheckCommand::RevertIdentityChangesIfNeeded()
+
+  // Some data is derived from other fields in this class but can be somewhat
+  // expensive to calculate and/or might not be copyable. That data can be
+  // lazily calculated and stored in this struct. When the WebApp instance is
+  // copied the cached derived data is not copied.
+  struct CachedDerivedData {
+    CachedDerivedData();
+    ~CachedDerivedData();
+    CachedDerivedData(CachedDerivedData&&);
+    CachedDerivedData& operator=(CachedDerivedData&&);
+    CachedDerivedData(const CachedDerivedData&);
+    CachedDerivedData& operator=(const CachedDerivedData&);
+
+    // Lazily initialized list of patterns to match URLs against for tabbed mode
+    // home tab navigations. If a URL matches any pattern in this list, it is
+    // considered within home tab scope.
+    //
+    // An empty list means there is no home tab scope to match against (i.e.
+    // nothing matches), whereas an uninitialized list means it has not yet been
+    // needed.
+    std::optional<std::vector<TabbedModeScopeMatcher>> home_tab_scope;
+  };
+  mutable CachedDerivedData cached_derived_data_;
 };
 
 // For logging and debug purposes.
@@ -637,7 +673,7 @@ bool operator!=(const WebAppOsIntegrationState& os_integration_state1,
 }  // namespace proto
 
 std::vector<std::string> GetSerializedAllowedOrigins(
-    const blink::ParsedPermissionsPolicyDeclaration
+    const network::ParsedPermissionsPolicyDeclaration
         permissions_policy_declaration);
 
 }  // namespace web_app

@@ -58,11 +58,11 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.robolectric.annotation.Config;
 
 import org.chromium.base.test.BaseRobolectricTestRunner;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.autofill.AutofillAddress;
 import org.chromium.chrome.browser.autofill.AutofillProfileBridge;
@@ -82,6 +82,7 @@ import org.chromium.components.autofill.AutofillProfile;
 import org.chromium.components.autofill.FieldType;
 import org.chromium.components.autofill.RecordType;
 import org.chromium.components.signin.base.CoreAccountInfo;
+import org.chromium.components.signin.base.GaiaId;
 import org.chromium.components.signin.identitymanager.IdentityManager;
 import org.chromium.components.sync.SyncService;
 import org.chromium.components.sync.UserSelectableType;
@@ -161,7 +162,7 @@ public class AddressEditorTest {
                     .setLanguageCode("en-US")
                     .build();
 
-    @Rule public JniMocker mJniMocker = new JniMocker();
+    @Rule public MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     @Rule
     public ActivityScenarioRule<TestActivity> mActivityScenarioRule =
@@ -181,7 +182,7 @@ public class AddressEditorTest {
     @Captor private ArgumentCaptor<AutofillAddress> mAddressCapture;
 
     private final CoreAccountInfo mAccountInfo =
-            CoreAccountInfo.createFromEmailAndGaiaId(USER_EMAIL, "gaia_id");
+            CoreAccountInfo.createFromEmailAndGaiaId(USER_EMAIL, new GaiaId("gaia_id"));
     // Note: can't initialize this list statically because of how Robolectric
     // initializes Android library dependencies.
     private final List<DropdownKeyValue> mSupportedCountries =
@@ -197,11 +198,10 @@ public class AddressEditorTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
         Locale.setDefault(Locale.US);
         mActivityScenarioRule.getScenario().onActivity(activity -> mActivity = activity);
 
-        mJniMocker.mock(AutofillProfileBridgeJni.TEST_HOOKS, mAutofillProfileBridgeJni);
+        AutofillProfileBridgeJni.setInstanceForTesting(mAutofillProfileBridgeJni);
         doAnswer(
                         invocation -> {
                             List<Integer> requiredFields =
@@ -216,7 +216,7 @@ public class AddressEditorTest {
                         })
                 .when(mAutofillProfileBridgeJni)
                 .getRequiredFields(anyString(), anyList());
-        mJniMocker.mock(PhoneNumberUtilJni.TEST_HOOKS, mPhoneNumberUtilJni);
+        PhoneNumberUtilJni.setInstanceForTesting(mPhoneNumberUtilJni);
         when(mPhoneNumberUtilJni.isPossibleNumber(anyString(), anyString())).thenReturn(true);
 
         IdentityServicesProvider.setInstanceForTests(mIdentityServicesProvider);
@@ -356,14 +356,14 @@ public class AddressEditorTest {
         // Fields obtained from backend must be placed after the country dropdown.
         validateTextField(
                 editorFields.get(1),
-                profile.getFullName(),
+                profile.getInfo(FieldType.NAME_FULL),
                 FieldType.NAME_FULL,
                 /* label= */ "full name label",
                 shouldMarkFieldsRequired,
                 /* isFullLine= */ true);
         validateTextField(
                 editorFields.get(2),
-                profile.getRegion(),
+                profile.getInfo(FieldType.ADDRESS_HOME_STATE),
                 FieldType.ADDRESS_HOME_STATE,
                 /* label= */ "admin area label",
                 /* isRequired= */ false,
@@ -371,7 +371,7 @@ public class AddressEditorTest {
         // Locality field is forced to occupy full line.
         validateTextField(
                 editorFields.get(3),
-                profile.getLocality(),
+                profile.getInfo(FieldType.ADDRESS_HOME_CITY),
                 FieldType.ADDRESS_HOME_CITY,
                 /* label= */ "locality label",
                 shouldMarkFieldsRequired,
@@ -383,7 +383,7 @@ public class AddressEditorTest {
         // profiles.
         validateTextField(
                 editorFields.get(4),
-                profile.getDependentLocality(),
+                profile.getInfo(FieldType.ADDRESS_HOME_DEPENDENT_LOCALITY),
                 FieldType.ADDRESS_HOME_DEPENDENT_LOCALITY,
                 /* label= */ "dependent locality label",
                 shouldMarkFieldsRequiredWhenAddressFieldEmpty,
@@ -391,7 +391,7 @@ public class AddressEditorTest {
 
         validateTextField(
                 editorFields.get(5),
-                profile.getCompanyName(),
+                profile.getInfo(FieldType.COMPANY_NAME),
                 FieldType.COMPANY_NAME,
                 /* label= */ "organization label",
                 /* isRequired= */ false,
@@ -399,21 +399,21 @@ public class AddressEditorTest {
 
         validateTextField(
                 editorFields.get(6),
-                profile.getSortingCode(),
+                profile.getInfo(FieldType.ADDRESS_HOME_SORTING_CODE),
                 FieldType.ADDRESS_HOME_SORTING_CODE,
                 /* label= */ "sorting code label",
                 /* isRequired= */ false,
                 /* isFullLine= */ false);
         validateTextField(
                 editorFields.get(7),
-                profile.getPostalCode(),
+                profile.getInfo(FieldType.ADDRESS_HOME_ZIP),
                 FieldType.ADDRESS_HOME_ZIP,
                 /* label= */ "postal code label",
                 shouldMarkFieldsRequired,
                 /* isFullLine= */ false);
         validateTextField(
                 editorFields.get(8),
-                profile.getStreetAddress(),
+                profile.getInfo(FieldType.ADDRESS_HOME_STREET_ADDRESS),
                 FieldType.ADDRESS_HOME_STREET_ADDRESS,
                 /* label= */ "street address label",
                 shouldMarkFieldsRequired,
@@ -464,7 +464,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_NewAddressProfile() {
+    public void validateUiStrings_NewAddressProfile() {
         setUpAddressUiComponents(new ArrayList());
         mAddressEditor =
                 new AddressEditorCoordinator(
@@ -487,7 +487,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_NewAddressProfile_EligibleForAddressAccountStorage() {
+    public void validateUiStrings_NewAddressProfile_EligibleForAddressAccountStorage() {
         setUpAddressUiComponents(new ArrayList());
         when(mPersonalDataManager.isEligibleForAddressAccountStorage()).thenReturn(true);
         mAddressEditor =
@@ -518,7 +518,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_LocalOrSyncAddressProfile_AddressSyncDisabled() {
+    public void validateUiStrings_LocalOrSyncAddressProfile_AddressSyncDisabled() {
         setUpAddressUiComponents(new ArrayList());
         mAddressEditor =
                 new AddressEditorCoordinator(
@@ -546,7 +546,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_LocalOrSyncAddressProfile_AddressSyncEnabled() {
+    public void validateUiStrings_LocalOrSyncAddressProfile_AddressSyncEnabled() {
         setUpAddressUiComponents(new ArrayList());
         when(mSyncService.getSelectedTypes())
                 .thenReturn(Collections.singleton(UserSelectableType.AUTOFILL));
@@ -577,7 +577,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_UpdateLocalOrSyncAddressProfile_AddressSyncDisabled() {
+    public void validateUiStrings_UpdateLocalOrSyncAddressProfile_AddressSyncDisabled() {
         setUpAddressUiComponents(new ArrayList());
         mAddressEditor =
                 new AddressEditorCoordinator(
@@ -605,7 +605,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_UpdateLocalOrSyncAddressProfile_AddressSyncEnabled() {
+    public void validateUiStrings_UpdateLocalOrSyncAddressProfile_AddressSyncEnabled() {
         setUpAddressUiComponents(new ArrayList());
         when(mSyncService.getSelectedTypes())
                 .thenReturn(Collections.singleton(UserSelectableType.AUTOFILL));
@@ -636,7 +636,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_LocalAddressProfile_MigrationToAccount() {
+    public void validateUiStrings_LocalAddressProfile_MigrationToAccount() {
         setUpAddressUiComponents(new ArrayList());
         mAddressEditor =
                 new AddressEditorCoordinator(
@@ -672,7 +672,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_SyncAddressProfile_MigrationToAccount() {
+    public void validateUiStrings_SyncAddressProfile_MigrationToAccount() {
         setUpAddressUiComponents(new ArrayList());
         when(mSyncService.getSelectedTypes())
                 .thenReturn(Collections.singleton(UserSelectableType.AUTOFILL));
@@ -710,7 +710,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_AccountAddressProfile_SaveInAccountFlow() {
+    public void validateUiStrings_AccountAddressProfile_SaveInAccountFlow() {
         setUpAddressUiComponents(new ArrayList());
         mAddressEditor =
                 new AddressEditorCoordinator(
@@ -745,7 +745,7 @@ public class AddressEditorTest {
 
     @Test
     @SmallTest
-    public void validateUIStrings_AccountAddressProfile_UpdateAccountProfileFlow() {
+    public void validateUiStrings_AccountAddressProfile_UpdateAccountProfileFlow() {
         setUpAddressUiComponents(new ArrayList());
         mAddressEditor =
                 new AddressEditorCoordinator(
@@ -1114,9 +1114,11 @@ public class AddressEditorTest {
         verify(mDelegate, times(0)).onCancel();
         AutofillAddress address = mAddressCapture.getValue();
         assertNotNull(address);
-        assertEquals("New locality", address.getProfile().getLocality());
-        assertEquals("New dependent locality", address.getProfile().getDependentLocality());
-        assertEquals("New organization", address.getProfile().getCompanyName());
+        assertEquals("New locality", address.getProfile().getInfo(FieldType.ADDRESS_HOME_CITY));
+        assertEquals(
+                "New dependent locality",
+                address.getProfile().getInfo(FieldType.ADDRESS_HOME_DEPENDENT_LOCALITY));
+        assertEquals("New organization", address.getProfile().getInfo(FieldType.COMPANY_NAME));
     }
 
     @Test
@@ -1157,11 +1159,11 @@ public class AddressEditorTest {
         AutofillAddress address = mAddressCapture.getValue();
         assertNotNull(address);
         AutofillProfile profile = address.getProfile();
-        assertEquals(profile.getStreetAddress(), "111 First St");
-        assertEquals(profile.getDependentLocality(), "");
-        assertEquals(profile.getCompanyName(), "Google");
-        assertEquals(profile.getPostalCode(), "90291");
-        assertEquals(profile.getSortingCode(), "");
+        assertEquals("111 First St", profile.getInfo(FieldType.ADDRESS_HOME_STREET_ADDRESS));
+        assertEquals("", profile.getInfo(FieldType.ADDRESS_HOME_DEPENDENT_LOCALITY));
+        assertEquals("Google", profile.getInfo(FieldType.COMPANY_NAME));
+        assertEquals("90291", profile.getInfo(FieldType.ADDRESS_HOME_ZIP));
+        assertEquals("", profile.getInfo(FieldType.ADDRESS_HOME_SORTING_CODE));
     }
 
     @Test

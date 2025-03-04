@@ -5,6 +5,8 @@
 #ifndef CHROME_BROWSER_UI_VIEWS_WEBAUTHN_PASSKEY_NOT_ACCEPTED_BUBBLE_VIEW_H_
 #define CHROME_BROWSER_UI_VIEWS_WEBAUTHN_PASSKEY_NOT_ACCEPTED_BUBBLE_VIEW_H_
 
+#include <string>
+
 #include "chrome/browser/ui/views/passwords/password_bubble_view_base.h"
 #include "chrome/browser/ui/webauthn/passkey_not_accepted_bubble_controller.h"
 #include "ui/base/metadata/metadata_header_macros.h"
@@ -29,7 +31,8 @@ class PasskeyNotAcceptedBubbleView : public PasswordBubbleViewBase {
  public:
   PasskeyNotAcceptedBubbleView(content::WebContents* web_contents,
                                views::View* anchor_view,
-                               DisplayReason display_reason);
+                               DisplayReason display_reason,
+                               std::string passkey_rp_id);
   ~PasskeyNotAcceptedBubbleView() override;
   PasskeyNotAcceptedBubbleView(const PasskeyNotAcceptedBubbleView&) = delete;
   PasskeyNotAcceptedBubbleView& operator=(const PasskeyNotAcceptedBubbleView&) =

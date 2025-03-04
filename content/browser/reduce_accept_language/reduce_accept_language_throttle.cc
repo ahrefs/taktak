@@ -7,11 +7,11 @@
 #include <algorithm>
 
 #include "base/metrics/histogram_functions.h"
-#include "content/browser/reduce_accept_language/reduce_accept_language_utils.h"
 #include "content/browser/renderer_host/frame_tree_node.h"
 #include "content/browser/renderer_host/navigation_request.h"
 #include "content/public/browser/origin_trials_controller_delegate.h"
 #include "content/public/browser/reduce_accept_language_controller_delegate.h"
+#include "content/public/browser/reduce_accept_language_utils.h"
 #include "services/network/public/cpp/features.h"
 #include "third_party/blink/public/common/loader/url_loader_throttle.h"
 
@@ -48,7 +48,9 @@ ReduceAcceptLanguageThrottle::ReduceAcceptLanguageThrottle(
       origin_trials_delegate_(origin_trials_delegate),
       frame_tree_node_id_(frame_tree_node_id) {
   DCHECK(
-      base::FeatureList::IsEnabled(network::features::kReduceAcceptLanguage));
+      base::FeatureList::IsEnabled(network::features::kReduceAcceptLanguage) ||
+      base::FeatureList::IsEnabled(
+          network::features::kReduceAcceptLanguageHTTP));
   LogAcceptLanguageStatus(AcceptLanguageNegotiationRestart::kNavigationStarted);
 }
 

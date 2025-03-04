@@ -7,12 +7,12 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "base/check.h"
 #include "base/containers/contains.h"
 #include "base/files/file_path.h"
 #include "base/strings/utf_string_conversions.h"
-#include "build/chromeos_buildflags.h"
 #include "net/base/filename_util.h"
 #include "ui/base/clipboard/clipboard_format_type.h"
 #include "ui/base/clipboard/file_info.h"
@@ -61,16 +61,16 @@ bool OSExchangeDataProviderNonBacked::IsFromPrivileged() const {
   return is_from_privileged_;
 }
 
-void OSExchangeDataProviderNonBacked::SetString(const std::u16string& data) {
+void OSExchangeDataProviderNonBacked::SetString(std::u16string_view data) {
   if (HasString())
     return;
 
-  string_ = data;
+  string_ = std::u16string(data);
   formats_ |= OSExchangeData::STRING;
 }
 
 void OSExchangeDataProviderNonBacked::SetURL(const GURL& url,
-                                             const std::u16string& title) {
+                                             std::u16string_view title) {
   url_ = url;
   title_ = title;
   formats_ |= OSExchangeData::URL;

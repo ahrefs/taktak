@@ -37,9 +37,6 @@ class OnDeviceModelAccessController {
   // Called if using the gpu is blocked.
   void OnGpuBlocked();
 
-  // Called if the session times out.
-  void OnSessionTimedOut();
-
   bool ShouldValidateModel(std::string_view model_version);
   void OnValidationFinished(OnDeviceModelValidationResult result);
 

@@ -11,9 +11,7 @@
 // We add nognchecks on these includes so that Android bots do not fail
 // dependency checks.
 #if !BUILDFLAG(IS_ANDROID)
-#include "chrome/browser/ui/tabs/public/tab_features.h"   // nogncheck
 #include "chrome/browser/ui/tabs/public/tab_interface.h"  // nogncheck
-#include "chrome/browser/ui/views/webid/fedcm_account_selection_view_controller.h"  // nogncheck
 #include "chrome/browser/ui/views/webid/fedcm_account_selection_view_desktop.h"  // nogncheck
 #endif
 
@@ -26,7 +24,7 @@ IdentityDialogController::IdentityDialogController(
     content::WebContents* rp_web_contents)
     : rp_web_contents_(rp_web_contents) {}
 
-IdentityDialogController::~IdentityDialogController() {}
+IdentityDialogController::~IdentityDialogController() = default;
 
 int IdentityDialogController::GetBrandIconMinimumSize(
     blink::mojom::RpMode rp_mode) {
@@ -132,8 +130,10 @@ void IdentityDialogController::OnAccountsDisplayed() {
   std::move(on_accounts_displayed_).Run();
 }
 
-void IdentityDialogController::OnAccountSelected(const GURL& idp_config_url,
-                                                 const Account& account) {
+void IdentityDialogController::OnAccountSelected(
+    const GURL& idp_config_url,
+    const std::string& account_id,
+    const content::IdentityRequestAccount::LoginState& login_state) {
   CHECK(on_account_selection_);
 
   // We only allow dismiss after account selection on active modes and not on
@@ -145,9 +145,8 @@ void IdentityDialogController::OnAccountSelected(const GURL& idp_config_url,
   }
 
   std::move(on_account_selection_)
-      .Run(idp_config_url, account.id,
-           account.login_state ==
-               content::IdentityRequestAccount::LoginState::kSignIn);
+      .Run(idp_config_url, account_id,
+           login_state == content::IdentityRequestAccount::LoginState::kSignIn);
 }
 
 void IdentityDialogController::OnDismiss(DismissReason dismiss_reason) {
@@ -247,12 +246,14 @@ bool IdentityDialogController::TrySetAccountView() {
 #else
   tabs::TabInterface* tab =
       tabs::TabInterface::MaybeGetFromContents(rp_web_contents_);
-  if (!tab) {
+  // FedCM is supported in general web content, but not in chrome UI. Of the
+  // BrowserWindow types, devtools show Chrome UI and the rest show general web
+  // content.
+  if (!tab || tab->GetBrowserWindowInterface()->GetType() ==
+                  BrowserWindowInterface::Type::TYPE_DEVTOOLS) {
     return false;
   }
-  account_view_ = tab->GetTabFeatures()
-                      ->fedcm_account_selection_view_controller()
-                      ->CreateAccountSelectionView(this);
+  account_view_ = std::make_unique<webid::FedCmAccountSelectionView>(this, tab);
 #endif
   return true;
 }

@@ -8,7 +8,6 @@ import static org.mockito.Mockito.doReturn;
 
 import static org.chromium.chrome.browser.history.HistoryTestUtils.checkAdapterContents;
 
-import android.view.View;
 import android.widget.TextView;
 
 import org.junit.Assert;
@@ -23,6 +22,7 @@ import org.chromium.base.ContextUtils;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.history.AppFilterCoordinator.AppInfo;
+import org.chromium.chrome.browser.ui.signin.signin_promo.SigninPromoCoordinator;
 import org.chromium.components.browser_ui.widget.MoreProgressButton;
 import org.chromium.components.browser_ui.widget.chips.ChipView;
 
@@ -40,20 +40,17 @@ public class HistoryAdapterTest {
     @Mock private HistoryContentManager mContentManager;
     @Mock private ChipView mAppFilterChip;
     @Mock private TextView mTextView;
-    @Mock private View mAppFilterContainer;
+    @Mock private SigninPromoCoordinator mHistorySyncPromoCoordinator;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         mHistoryProvider = new StubbedHistoryProvider();
-        mAdapter = new HistoryAdapter(mContentManager, mHistoryProvider);
+        mAdapter =
+                new HistoryAdapter(mContentManager, mHistoryProvider, mHistorySyncPromoCoordinator);
         mAdapter.generateHeaderItemsForTest();
         mAdapter.generateFooterItemsForTest(mMockButton);
         doReturn(mTextView).when(mAppFilterChip).getPrimaryTextView();
-    }
-
-    private void initializeAdapter() {
-        mAdapter.startLoadingItems();
     }
 
     private boolean showSourceApp() {
@@ -104,7 +101,8 @@ public class HistoryAdapterTest {
     public void testShowSourceAppInBrAppHistory() {
         // Reinstantiate HistoryAdapter with |showAppFilter| flag on. Now we're in BrApp.
         doReturn(true).when(mContentManager).showAppFilter();
-        mAdapter = new HistoryAdapter(mContentManager, mHistoryProvider);
+        mAdapter =
+                new HistoryAdapter(mContentManager, mHistoryProvider, mHistorySyncPromoCoordinator);
 
         mAdapter.generateHeaderItemsForTest();
         mAdapter.generateFooterItemsForTest(mMockButton);

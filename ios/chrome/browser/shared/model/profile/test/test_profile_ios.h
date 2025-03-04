@@ -30,9 +30,6 @@ namespace policy {
 class UserCloudPolicyManager;
 }
 
-class EnterprisePolicyTestHelper;
-class TestProfileManagerIOS;
-
 // This class is the implementation of ProfileIOS used for testing.
 class TestProfileIOS final : public ProfileIOS {
  public:
@@ -97,6 +94,7 @@ class TestProfileIOS final : public ProfileIOS {
 
   // BrowserState:
   bool IsOffTheRecord() const override;
+  const base::Uuid& GetWebKitStorageID() const override;
 
   // ProfileIOS:
   ProfileIOS* GetOriginalProfile() override;
@@ -196,9 +194,8 @@ class TestProfileIOS final : public ProfileIOS {
     //      }});
     Builder& AddTestingFactories(TestingFactories testing_factories);
 
-    // Sets the name of the ProfileIOS. If not set, then will be
-    // derived from the path passed to `SetPath()` or use an arbitrary
-    // value if `SetPath()` is not called.
+    // Sets the name of the ProfileIOS. If not set, the profile will use an
+    // arbitrary name.
     Builder& SetName(const std::string& name);
 
     // Sets the PrefService to be used by the ProfileIOS.
@@ -213,20 +210,25 @@ class TestProfileIOS final : public ProfileIOS {
         std::unique_ptr<policy::UserCloudPolicyManager>
             user_cloud_policy_manager);
 
+    // Sets the Webkit storage identifier for test.
+    Builder& SetWebkitStorageId(const base::Uuid& webkit_storage_id);
+
+    // Returns the name passed to `SetName()`, or if that was not called, an
+    // arbitrary fallback value.
+    std::string GetEffectiveName() const;
+
     // Creates the TestProfileIOS using previously-set settings.
     std::unique_ptr<TestProfileIOS> Build() &&;
-
-   private:
-    friend class EnterprisePolicyTestHelper;
-    friend class TestProfileManagerIOS;
 
     // Creates the TestProfileIOS using `data_dir` as base directory
     // for the storage, and other previously-set settings.
     std::unique_ptr<TestProfileIOS> Build(const base::FilePath& data_dir) &&;
 
+   private:
     // Various staging variables where values are held until Build() is invoked.
     std::string profile_name_;
     std::unique_ptr<sync_preferences::PrefServiceSyncable> pref_service_;
+    base::Uuid webkit_storage_id_;
 
     std::unique_ptr<policy::UserCloudPolicyManager> user_cloud_policy_manager_;
     std::unique_ptr<ProfilePolicyConnector> policy_connector_;
@@ -240,6 +242,7 @@ class TestProfileIOS final : public ProfileIOS {
   // Used to create the principal TestProfileIOS.
   TestProfileIOS(const base::FilePath& state_path,
                  std::string_view profile_name,
+                 base::Uuid webkit_storage_id,
                  std::unique_ptr<sync_preferences::PrefServiceSyncable> prefs,
                  TestingFactories testing_factories,
                  std::unique_ptr<ProfilePolicyConnector> policy_connector,
@@ -261,6 +264,9 @@ class TestProfileIOS final : public ProfileIOS {
   std::unique_ptr<sync_preferences::PrefServiceSyncable> prefs_;
   raw_ptr<sync_preferences::TestingPrefServiceSyncable> testing_prefs_;
 
+  // The WebKit storage identifier. May be invalid.
+  const base::Uuid webkit_storage_id_;
+
   std::unique_ptr<policy::UserCloudPolicyManager> user_cloud_policy_manager_;
   std::unique_ptr<ProfilePolicyConnector> policy_connector_;
 
@@ -275,7 +281,5 @@ class TestProfileIOS final : public ProfileIOS {
 
   base::WeakPtrFactory<TestProfileIOS> weak_ptr_factory_{this};
 };
-
-using TestChromeBrowserState = TestProfileIOS;
 
 #endif  // IOS_CHROME_BROWSER_SHARED_MODEL_PROFILE_TEST_TEST_PROFILE_IOS_H_

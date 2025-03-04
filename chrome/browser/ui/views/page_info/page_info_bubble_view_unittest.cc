@@ -4,12 +4,13 @@
 
 #include "chrome/browser/ui/views/page_info/page_info_bubble_view.h"
 
+#include <string_view>
+
 #include "base/memory/raw_ptr.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/values_test_util.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
 #include "chrome/browser/content_settings/page_specific_content_settings_delegate.h"
@@ -26,6 +27,7 @@
 #include "chrome/browser/ui/views/controls/rich_hover_button.h"
 #include "chrome/browser/ui/views/page_info/chosen_object_view.h"
 #include "chrome/browser/ui/views/page_info/page_info_main_view.h"
+#include "chrome/browser/ui/views/page_info/page_info_permission_content_view.h"
 #include "chrome/browser/ui/views/page_info/page_info_security_content_view.h"
 #include "chrome/browser/ui/views/page_info/page_info_view_factory.h"
 #include "chrome/browser/ui/views/page_info/permission_toggle_row_view.h"
@@ -55,6 +57,7 @@
 #include "content/public/test/navigation_simulator.h"
 #include "content/public/test/test_renderer_host.h"
 #include "content/public/test/test_web_contents_factory.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "net/cert/cert_status_flags.h"
 #include "net/ssl/ssl_connection_status_flags.h"
@@ -72,6 +75,7 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/ui_base_features.h"
 #include "ui/events/event_utils.h"
+#include "ui/views/accessibility/view_accessibility.h"
 #include "ui/views/controls/button/toggle_button.h"
 #include "ui/views/controls/combobox/combobox.h"
 #include "ui/views/controls/label.h"
@@ -85,11 +89,11 @@
 #include "chrome/browser/plugins/chrome_plugin_service_filter.h"
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/ash/login/users/fake_chrome_user_manager.h"
 #include "components/account_id/account_id.h"
 #include "components/user_manager/scoped_user_manager.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 const char* kUrl = "http://www.example.com/index.html";
 const char* kSecureUrl = "https://www.example.com/index.html";
@@ -123,7 +127,7 @@ class PageInfoBubbleViewTestApi {
             base::DoNothing(),
             base::BindOnce(&PageInfoBubbleViewTestApi::OnPageInfoBubbleClosed,
                            base::Unretained(this), run_loop_.QuitClosure()),
-            /*allow_about_this_site=*/true));
+            /*allow_extended_site_info=*/true));
     presenter_ = bubble->presenter_for_testing();
     navigation_handler_ = bubble;
     bubble_delegate_ = bubble;
@@ -217,7 +221,7 @@ class PageInfoBubbleViewTestApi {
     return GetPermissionToggleRowAt(index)->state_label_;
   }
 
-  std::u16string GetTrackingProtectionSubpageTitle() {
+  std::u16string_view GetCookiesSubpageTitle() {
     navigation_handler()->OpenCookiesPage();
     auto* title_label = bubble_delegate_->GetViewByID(
         PageInfoViewFactory::VIEW_ID_PAGE_INFO_SUBPAGE_TITLE);
@@ -228,7 +232,7 @@ class PageInfoBubbleViewTestApi {
   std::u16string GetTextOnView(views::View* view) {
     EXPECT_TRUE(view);
     ui::AXNodeData data;
-    view->GetAccessibleNodeData(&data);
+    view->GetViewAccessibility().GetAccessibleNodeData(&data);
     const std::string& name =
         data.GetStringAttribute(ax::mojom::StringAttribute::kName);
     return base::ASCIIToUTF16(name);
@@ -239,44 +243,32 @@ class PageInfoBubbleViewTestApi {
   std::u16string GetCookiesLinkText() {
     EXPECT_TRUE(cookie_button());
     ui::AXNodeData data;
-    cookie_button()->GetAccessibleNodeData(&data);
+    cookie_button()->GetViewAccessibility().GetAccessibleNodeData(&data);
     const std::string& name =
         data.GetStringAttribute(ax::mojom::StringAttribute::kName);
     return base::ASCIIToUTF16(name);
   }
 
-  std::u16string GetSecurityInformationButtonText() {
+  std::u16string_view GetSecurityInformationButtonText() {
     auto* button = bubble_delegate_->GetViewByID(
         PageInfoViewFactory::
             VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_SECURITY_INFORMATION);
-    return static_cast<RichHoverButton*>(button)
-        ->GetTitleViewForTesting()
-        ->GetText();
+    return static_cast<RichHoverButton*>(button)->GetTitleText();
   }
 
-  std::u16string GetSecuritySummaryText() {
+  std::u16string_view GetSecuritySummaryText() {
     EXPECT_TRUE(security_summary_label());
     return static_cast<views::StyledLabel*>(security_summary_label())
         ->GetText();
   }
 
-  std::u16string GetTrackingProtectionButtonTitleText() {
+  std::u16string_view GetCookiesButtonTitleText() {
     auto* button = bubble_delegate_->GetViewByID(
         PageInfoViewFactory::VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_COOKIES_SUBPAGE);
-    return static_cast<RichHoverButton*>(button)
-        ->GetTitleViewForTesting()
-        ->GetText();
+    return static_cast<RichHoverButton*>(button)->GetTitleText();
   }
 
-  std::u16string GetTrackingProtectionButtonSubTitleText() {
-    auto* button = bubble_delegate_->GetViewByID(
-        PageInfoViewFactory::VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_COOKIES_SUBPAGE);
-    return static_cast<RichHoverButton*>(button)
-        ->GetSubTitleViewForTesting()
-        ->GetText();
-  }
-
-  std::u16string GetPermissionLabelTextAt(int index) {
+  std::u16string_view GetPermissionLabelTextAt(int index) {
     return GetPermissionToggleRowAt(index)->row_view_->GetTitleForTesting();
   }
 
@@ -296,8 +288,9 @@ class PageInfoBubbleViewTestApi {
 
     // Non-empty permission section has a reset all button
     // after all permission rows.
-    if (actual_count)
+    if (actual_count) {
       --actual_count;
+    }
 
     return actual_count;
   }
@@ -320,10 +313,9 @@ class PageInfoBubbleViewTestApi {
     CreateView();
   }
 
-  std::u16string GetCertificateButtonSubtitleText() const {
+  std::u16string_view GetCertificateButtonSubtitleText() const {
     EXPECT_TRUE(certificate_button());
-    EXPECT_TRUE(certificate_button()->GetSubTitleViewForTesting());
-    return certificate_button()->GetSubTitleViewForTesting()->GetText();
+    return certificate_button()->GetSubtitleText();
   }
 
   const views::View::Views& GetChosenObjectChildren() {
@@ -380,19 +372,19 @@ class ScopedWebContentsTestHelper {
  public:
   explicit ScopedWebContentsTestHelper(bool off_the_record)
       : testing_profile_manager_(TestingBrowserProcess::GetGlobal()) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     auto fake_user_manager = std::make_unique<ash::FakeChromeUserManager>();
     auto* fake_user_manager_ptr = fake_user_manager.get();
     scoped_user_manager_ = std::make_unique<user_manager::ScopedUserManager>(
         std::move(fake_user_manager));
 
-    constexpr char kTestUserGaiaId[] = "1111111111";
+    const GaiaId kTestUserGaiaId("1111111111");
     auto account_id =
         AccountId::FromUserEmailGaiaId(kTestUserEmail, kTestUserGaiaId);
     fake_user_manager_ptr->AddUserWithAffiliation(account_id,
                                                   /*is_affiliated=*/true);
     fake_user_manager_ptr->LoginUser(account_id);
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
     EXPECT_TRUE(testing_profile_manager_.SetUp());
     profile_ = testing_profile_manager_.CreateTestingProfile(
@@ -401,8 +393,9 @@ class ScopedWebContentsTestHelper {
                             HistoryServiceFactory::GetDefaultFactory()}});
     EXPECT_TRUE(profile_);
 
-    if (off_the_record)
+    if (off_the_record) {
       profile_ = profile_->GetPrimaryOTRProfile(/*create_if_needed=*/true);
+    }
     web_contents_ = factory_.CreateWebContents(profile_);
   }
 
@@ -419,7 +412,7 @@ class ScopedWebContentsTestHelper {
  private:
   content::BrowserTaskEnvironment task_environment_;
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   std::unique_ptr<user_manager::ScopedUserManager> scoped_user_manager_;
 #endif
 
@@ -438,6 +431,8 @@ class PageInfoBubbleViewTest : public testing::Test {
 
   // testing::Test:
   void SetUp() override {
+    TestingBrowserProcess::GetGlobal()->CreateGlobalFeaturesForTesting();
+
     if (!web_contents_helper_) {
       web_contents_helper_ =
           std::make_unique<ScopedWebContentsTestHelper>(false);
@@ -467,9 +462,7 @@ class PageInfoBubbleViewTest : public testing::Test {
         web_contents);
   }
 
-  void TearDown() override {
-    parent_window_->CloseNow();
-  }
+  void TearDown() override { parent_window_->CloseNow(); }
 
  protected:
   std::unique_ptr<ScopedWebContentsTestHelper> web_contents_helper_;
@@ -583,6 +576,33 @@ TEST_F(PageInfoBubbleViewTest, SetPermissionInfo) {
   // permission is not being omitted from the UI.
   api_->SetPermissionInfo(list);
   EXPECT_EQ(num_expected_children, api_->GetPermissionsCount());
+}
+
+TEST_F(PageInfoBubbleViewTest, CheckToggleSettingForCapturedSurfaceControl) {
+  PermissionInfoList list(1);
+  list.back().type = ContentSettingsType::CAPTURED_SURFACE_CONTROL;
+  api_->SetPermissionInfo(list);
+
+  EXPECT_EQ(l10n_util::GetStringUTF16(
+                IDS_SITE_SETTINGS_TYPE_CAPTURED_SURFACE_CONTROL_SHARED_TABS),
+            api_->GetPermissionLabelTextAt(0));
+  // Verifies that there is no toggle in the main page info.
+  EXPECT_EQ(api_->GetToggleViewAt(0), nullptr);
+
+  // Opens the submenu for Captured Surface Control permission.
+  api_->navigation_handler()->OpenPermissionPage(
+      ContentSettingsType::CAPTURED_SURFACE_CONTROL);
+  ASSERT_GE(api_->current_view()->children().size(), 2u);
+  auto* page_view = static_cast<PageInfoPermissionContentView*>(
+      api_->current_view()->children()[1]);
+  ASSERT_TRUE(page_view);
+#if !BUILDFLAG(IS_CHROMEOS)
+  EXPECT_EQ(l10n_util::GetStringUTF16(
+                IDS_SITE_SETTINGS_TYPE_CAPTURED_SURFACE_CONTROL_SUB_MENU),
+            page_view->GetTitleForTesting()->GetText());
+#endif
+  // Verifies that there is a toggle in the permission page view.
+  EXPECT_NE(page_view->GetToggleButtonForTesting(), nullptr);
 }
 
 class PageInfoBubbleViewOffTheRecordTest : public PageInfoBubbleViewTest {
@@ -1150,9 +1170,7 @@ class PageInfoBubbleViewCookies3pcdButtonTest
  public:
   PageInfoBubbleViewCookies3pcdButtonTest() {
     feature_list_.InitWithFeatures(
-        {content_settings::features::kTrackingProtection3pcd,
-         privacy_sandbox::kTrackingProtection3pcdUx},
-        {});
+        {content_settings::features::kTrackingProtection3pcd}, {});
     web_contents_helper_ =
         std::make_unique<ScopedWebContentsTestHelper>(GetParam());
   }
@@ -1181,71 +1199,40 @@ class PageInfoBubbleViewCookies3pcdButtonTest
   base::test::ScopedFeatureList feature_list_;
 };
 
-TEST_P(PageInfoBubbleViewCookies3pcdButtonTest,
-       DisplaysTrackingProtectionButtonLabelsWhen3pcLimited) {
-  EXPECT_EQ(api_->GetTrackingProtectionButtonTitleText(),
-            l10n_util::GetStringUTF16(
-                IDS_PAGE_INFO_TRACKING_PROTECTION_SITE_INFO_BUTTON_NAME));
-  // 3PC are blocked in incognito even if limited in regular profile
-  EXPECT_EQ(
-      api_->GetTrackingProtectionButtonSubTitleText(),
-      l10n_util::GetStringUTF16(
-          GetParam()
-              ? IDS_PAGE_INFO_TRACKING_PROTECTION_SITE_INFO_BUTTON_LABEL_BLOCKED
-              : IDS_PAGE_INFO_TRACKING_PROTECTION_SITE_INFO_BUTTON_LABEL_LIMITED));
-}
-
-TEST_P(PageInfoBubbleViewCookies3pcdButtonTest,
-       DisplaysTrackingProtectionButtonLabelsWhen3pcBlocked) {
+TEST_P(PageInfoBubbleViewCookies3pcdButtonTest, DisplaysCookiesButtonLabel) {
   // Block all 3PC
   web_contents_helper_->profile()->GetPrefs()->SetBoolean(
       prefs::kBlockAll3pcToggleEnabled, true);
   // Rerender with the new pref set
   api_->CreateView();
 
-  EXPECT_EQ(api_->GetTrackingProtectionButtonTitleText(),
-            l10n_util::GetStringUTF16(
-                IDS_PAGE_INFO_TRACKING_PROTECTION_SITE_INFO_BUTTON_NAME));
-  EXPECT_EQ(
-      api_->GetTrackingProtectionButtonSubTitleText(),
-      l10n_util::GetStringUTF16(
-          IDS_PAGE_INFO_TRACKING_PROTECTION_SITE_INFO_BUTTON_LABEL_BLOCKED));
-}
+  EXPECT_EQ(api_->GetCookiesButtonTitleText(),
+            l10n_util::GetStringUTF16(IDS_PAGE_INFO_COOKIES_HEADER));
 
-TEST_P(
-    PageInfoBubbleViewCookies3pcdButtonTest,
-    DisplaysTrackingProtectionButtonLabelsWhenCookiesAllowedViaSiteException) {
-  // Add a new cookies site exception for kUrl.
-  CreateCookieExceptionForSite(std::string("[*.]example.com"));
-  // Navigate to a page with the new site exception and rerender.
-  NavigateToPage(web_contents_helper_->web_contents(), kUrl);
+  // Turn off toggle
+  web_contents_helper_->profile()->GetPrefs()->SetBoolean(
+      prefs::kBlockAll3pcToggleEnabled, false);
+  // Rerender with the new pref set
   api_->CreateView();
 
-  EXPECT_EQ(api_->GetTrackingProtectionButtonTitleText(),
-            l10n_util::GetStringUTF16(
-                IDS_PAGE_INFO_TRACKING_PROTECTION_SITE_INFO_BUTTON_NAME));
-  EXPECT_EQ(
-      api_->GetTrackingProtectionButtonSubTitleText(),
-      l10n_util::GetStringUTF16(
-          IDS_PAGE_INFO_TRACKING_PROTECTION_SITE_INFO_BUTTON_LABEL_ALLOWED));
+  EXPECT_EQ(api_->GetCookiesButtonTitleText(),
+            l10n_util::GetStringUTF16(IDS_PAGE_INFO_COOKIES_HEADER));
 }
 
 INSTANTIATE_TEST_SUITE_P(All,
                          PageInfoBubbleViewCookies3pcdButtonTest,
                          /*is_otr*/ testing::Bool());
 
-class PageInfoBubbleViewTrackingProtectionSubpageTitleTest
+class PageInfoBubbleViewCookiesSubpageTitleTest
     : public PageInfoBubbleViewTest,
       public testing::WithParamInterface<
           testing::tuple</*protections_on*/ bool,
                          CookieBlocking3pcdStatus,
                          /*is_otr*/ bool>> {
  public:
-  PageInfoBubbleViewTrackingProtectionSubpageTitleTest() {
+  PageInfoBubbleViewCookiesSubpageTitleTest() {
     feature_list_.InitWithFeatures(
-        {content_settings::features::kTrackingProtection3pcd,
-         privacy_sandbox::kTrackingProtection3pcdUx},
-        {});
+        {content_settings::features::kTrackingProtection3pcd}, {});
     web_contents_helper_ = std::make_unique<ScopedWebContentsTestHelper>(
         testing::get<2>(GetParam()));
   }
@@ -1254,20 +1241,19 @@ class PageInfoBubbleViewTrackingProtectionSubpageTitleTest
   base::test::ScopedFeatureList feature_list_;
 };
 
-TEST_P(PageInfoBubbleViewTrackingProtectionSubpageTitleTest,
-       DisplaysTrackingProtectionTitle) {
+TEST_P(PageInfoBubbleViewCookiesSubpageTitleTest,
+       DisplaysCookiesAndSiteDataTitle) {
   PageInfoUI::CookiesNewInfo cookie_info;
   cookie_info.protections_on = testing::get<0>(GetParam());
   cookie_info.blocking_status = testing::get<1>(GetParam());
   api_->SetCookieInfo(cookie_info);
-  EXPECT_EQ(api_->GetTrackingProtectionSubpageTitle(),
-            l10n_util::GetStringUTF16(
-                IDS_PAGE_INFO_SUB_PAGE_VIEW_TRACKING_PROTECTION_HEADER));
+  EXPECT_EQ(api_->GetCookiesSubpageTitle(),
+            l10n_util::GetStringUTF16(IDS_PAGE_INFO_COOKIES_HEADER));
 }
 
 INSTANTIATE_TEST_SUITE_P(
     All,
-    PageInfoBubbleViewTrackingProtectionSubpageTitleTest,
+    PageInfoBubbleViewCookiesSubpageTitleTest,
     testing::Combine(/*protections_on*/ testing::Bool(),
                      testing::Values(CookieBlocking3pcdStatus::kNotIn3pcd,
                                      CookieBlocking3pcdStatus::kAll),

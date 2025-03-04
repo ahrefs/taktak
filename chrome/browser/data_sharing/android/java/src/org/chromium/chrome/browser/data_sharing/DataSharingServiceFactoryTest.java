@@ -86,20 +86,13 @@ public class DataSharingServiceFactoryTest {
                         Assert.assertFalse(dataSharingService.isEmptyService());
 
                         // TODO(ssid): Add tests with SDK delegate once available.
-                        dataSharingService.readAllGroups(
-                                result -> {
-                                    Assert.assertTrue(result.groupDataSet == null);
-                                    Assert.assertEquals(
-                                            result.actionFailure, PeopleGroupActionFailure.UNKNOWN);
-                                    callbackReceived();
-                                });
                         dataSharingService.readGroup(
                                 "bad_id",
                                 result -> {
                                     Assert.assertTrue(result.groupData == null);
                                     Assert.assertEquals(
-                                            result.actionFailure,
-                                            PeopleGroupActionFailure.TRANSIENT_FAILURE);
+                                            PeopleGroupActionFailure.TRANSIENT_FAILURE,
+                                            result.actionFailure);
                                     callbackReceived();
                                 });
                         dataSharingService.createGroup(
@@ -107,16 +100,8 @@ public class DataSharingServiceFactoryTest {
                                 result -> {
                                     Assert.assertTrue(result.groupData == null);
                                     Assert.assertEquals(
-                                            result.actionFailure,
-                                            PeopleGroupActionFailure.TRANSIENT_FAILURE);
-                                    callbackReceived();
-                                });
-                        dataSharingService.deleteGroup(
-                                "bad_id",
-                                result -> {
-                                    Assert.assertEquals(
-                                            result.intValue(),
-                                            PeopleGroupActionOutcome.TRANSIENT_FAILURE);
+                                            PeopleGroupActionFailure.TRANSIENT_FAILURE,
+                                            result.actionFailure);
                                     callbackReceived();
                                 });
                         dataSharingService.inviteMember(
@@ -124,8 +109,8 @@ public class DataSharingServiceFactoryTest {
                                 "bad_email",
                                 result -> {
                                     Assert.assertEquals(
-                                            result.intValue(),
-                                            PeopleGroupActionOutcome.TRANSIENT_FAILURE);
+                                            PeopleGroupActionOutcome.TRANSIENT_FAILURE,
+                                            result.intValue());
                                     callbackReceived();
                                 });
                         dataSharingService.addMember(
@@ -133,8 +118,8 @@ public class DataSharingServiceFactoryTest {
                                 "bad_token",
                                 result -> {
                                     Assert.assertEquals(
-                                            result.intValue(),
-                                            PeopleGroupActionOutcome.TRANSIENT_FAILURE);
+                                            PeopleGroupActionOutcome.TRANSIENT_FAILURE,
+                                            result.intValue());
                                     callbackReceived();
                                 });
                         dataSharingService.removeMember(
@@ -142,8 +127,8 @@ public class DataSharingServiceFactoryTest {
                                 "bad_email",
                                 result -> {
                                     Assert.assertEquals(
-                                            result.intValue(),
-                                            PeopleGroupActionOutcome.TRANSIENT_FAILURE);
+                                            PeopleGroupActionOutcome.TRANSIENT_FAILURE,
+                                            result.intValue());
                                     callbackReceived();
                                 });
                         dataSharingService.ensureGroupVisibility(
@@ -151,8 +136,8 @@ public class DataSharingServiceFactoryTest {
                                 result -> {
                                     Assert.assertTrue(result.groupData == null);
                                     Assert.assertEquals(
-                                            result.actionFailure,
-                                            PeopleGroupActionFailure.TRANSIENT_FAILURE);
+                                            PeopleGroupActionFailure.TRANSIENT_FAILURE,
+                                            result.actionFailure);
                                     callbackReceived();
                                 });
                     }

@@ -14,7 +14,8 @@ export {ActivityLogHistoryElement, ActivityLogPageState} from './activity_log/ac
 export {ActivityGroup, ActivityLogHistoryItemElement} from './activity_log/activity_log_history_item.js';
 export {ActivityLogStreamElement} from './activity_log/activity_log_stream.js';
 export {ActivityLogStreamItemElement, ARG_URL_PLACEHOLDER, StreamItem} from './activity_log/activity_log_stream_item.js';
-export {CodeSectionElement} from './code_section.js';
+export {asyncMap} from './async_map_directive.js';
+export {ExtensionsCodeSectionElement} from './code_section.js';
 export {ExtensionsDetailViewElement} from './detail_view.js';
 export {ErrorPageDelegate, ExtensionsErrorPageElement} from './error_page.js';
 export {ExtensionsHostPermissionsToggleListElement} from './host_permissions_toggle_list.js';
@@ -35,8 +36,6 @@ export {ExtensionsReviewPanelElement} from './review_panel.js';
 export {ExtensionsRuntimeHostPermissionsElement} from './runtime_host_permissions.js';
 export {ExtensionsRuntimeHostsDialogElement, getMatchingUserSpecifiedSites, getPatternFromSite} from './runtime_hosts_dialog.js';
 export {Service, ServiceInterface} from './service.js';
-export {ExtensionsShortcutInputElement} from './shortcut_input.js';
-export {isValidKeyCode, Key, keystrokeToString} from './shortcut_util.js';
 export {ExtensionsSidebarElement} from './sidebar.js';
 export {ExtensionsSitePermissionsElement} from './site_permissions/site_permissions.js';
 export {ExtensionsSitePermissionsBySiteElement} from './site_permissions/site_permissions_by_site.js';

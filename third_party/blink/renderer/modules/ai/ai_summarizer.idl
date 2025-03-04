@@ -11,7 +11,8 @@ dictionary AISummarizerSummarizeOptions {
 
 [
   Exposed=(Window,Worker),
-  RuntimeEnabled=AISummarizationAPI
+  RuntimeEnabled=AISummarizationAPI,
+  SecureContext
 ]
 interface AISummarizer {
   [
@@ -41,4 +42,10 @@ interface AISummarizer {
   readonly attribute AISummarizerFormat format;
   [Measure]
   readonly attribute AISummarizerLength length;
+  [Measure]
+  readonly attribute FrozenArray<DOMString>? expectedInputLanguages;
+  [Measure]
+  readonly attribute FrozenArray<DOMString>? expectedContextLanguages;
+  [Measure]
+  readonly attribute DOMString? outputLanguage;
 };

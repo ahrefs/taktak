@@ -39,6 +39,7 @@ import {routes} from '../route.js';
 import type {Route} from '../router.js';
 import {RouteObserverMixin, Router} from '../router.js';
 import {ContentSetting, ContentSettingsTypes, CookieControlsMode} from '../site_settings/constants.js';
+import {ThirdPartyCookieBlockingSetting} from '../site_settings/site_settings_prefs_browser_proxy.js';
 
 import {getTemplate} from './cookies_page.html.js';
 
@@ -85,6 +86,11 @@ export class SettingsCookiesPageElement extends SettingsCookiesPageElementBase {
         value: CookieControlsMode,
       },
 
+      thirdPartyCookieBlockingSettingEnum_: {
+        type: Object,
+        value: ThirdPartyCookieBlockingSetting,
+      },
+
       contentSetting_: {
         type: Object,
         value: ContentSetting,
@@ -118,15 +124,6 @@ export class SettingsCookiesPageElement extends SettingsCookiesPageElementBase {
             loadTimeData.getBoolean('is3pcdCookieSettingsRedesignEnabled'),
       },
 
-      isTrackingProtectionUxEnabled_: {
-        type: Boolean,
-        value() {
-          return loadTimeData.getBoolean(
-                     'is3pcdCookieSettingsRedesignEnabled') &&
-              loadTimeData.getBoolean('isTrackingProtectionUxEnabled');
-        },
-      },
-
       isIpProtectionAvailable_: {
         type: Boolean,
         value: () => loadTimeData.getBoolean('isIpProtectionUxEnabled'),
@@ -136,6 +133,12 @@ export class SettingsCookiesPageElement extends SettingsCookiesPageElementBase {
         type: Boolean,
         value: () =>
             loadTimeData.getBoolean('isFingerprintingProtectionUxEnabled'),
+      },
+
+      isAlwaysBlock3pcsIncognitoEnabled_: {
+        type: Boolean,
+        value: () =>
+            loadTimeData.getBoolean('isAlwaysBlock3pcsIncognitoEnabled'),
       },
     };
   }
@@ -148,7 +151,7 @@ export class SettingsCookiesPageElement extends SettingsCookiesPageElementBase {
   private is3pcdRedesignEnabled_: boolean;
   private isIpProtectionAvailable_: boolean;
   private isFingerprintingProtectionAvailable_: boolean;
-  private isTrackingProtectionUxEnabled_: boolean;
+  private isAlwaysBlock3pcsIncognitoEnabled_: boolean;
 
   private metricsBrowserProxy_: MetricsBrowserProxy =
       MetricsBrowserProxyImpl.getInstance();
@@ -161,23 +164,13 @@ export class SettingsCookiesPageElement extends SettingsCookiesPageElementBase {
       assert(toFocus);
       focusWithoutInk(toFocus);
     };
-    if (this.isTrackingProtectionUxEnabled_) {
-      this.focusConfig.set(
-          `${routes.SITE_SETTINGS_ALL.path}_${routes.TRACKING_PROTECTION.path}`,
-          selectSiteDataLinkRow);
-    } else {
-      this.focusConfig.set(
-          `${routes.SITE_SETTINGS_ALL.path}_${routes.COOKIES.path}`,
-          selectSiteDataLinkRow);
-    }
+    this.focusConfig.set(
+        `${routes.SITE_SETTINGS_ALL.path}_${routes.COOKIES.path}`,
+        selectSiteDataLinkRow);
   }
 
   override currentRouteChanged(route: Route) {
-    if (this.isTrackingProtectionUxEnabled_) {
-      if (route !== routes.TRACKING_PROTECTION) {
-        this.$.toast.hide();
-      }
-    } else if (route !== routes.COOKIES) {
+    if (route !== routes.COOKIES) {
       this.$.toast.hide();
     }
   }
@@ -206,6 +199,26 @@ export class SettingsCookiesPageElement extends SettingsCookiesPageElementBase {
         PrivacyElementInteractions.IP_PROTECTION);
   }
 
+  private showOrHideToast(switchedToBlock3pcs: boolean) {
+    // If this change resulted in the user now blocking 3P cookies where they
+    // previously were not, and any of privacy sandbox APIs are enabled,
+    // the privacy sandbox toast should be shown.
+    const areAnyPrivacySandboxApisEnabled =
+        this.getPref('privacy_sandbox.m1.topics_enabled').value ||
+        this.getPref('privacy_sandbox.m1.fledge_enabled').value ||
+        this.getPref('privacy_sandbox.m1.ad_measurement_enabled').value;
+
+    if (areAnyPrivacySandboxApisEnabled && switchedToBlock3pcs) {
+      if (!loadTimeData.getBoolean('isPrivacySandboxRestricted')) {
+        this.$.toast.show();
+      }
+      this.metricsBrowserProxy_.recordAction(
+          'Settings.PrivacySandbox.Block3PCookies');
+    } else {
+      this.$.toast.hide();
+    }
+  }
+
   private onCookieControlsModeChanged_() {
     // TODO(crbug.com/40244046): Use this.$.primarySettingGroup after the feature
     // is launched and element isn't in dom-if anymore.
@@ -224,38 +237,50 @@ export class SettingsCookiesPageElement extends SettingsCookiesPageElementBase {
           PrivacyElementInteractions.THIRD_PARTY_COOKIES_BLOCK);
     }
 
-    // If this change resulted in the user now blocking 3P cookies where they
-    // previously were not, and any of privacy sandbox APIs are enabled,
-    // the privacy sandbox toast should be shown.
     const currentCookieControlsMode =
         this.getPref('profile.cookie_controls_mode').value;
-    const areAnyPrivacySandboxApisEnabled =
-        this.getPref('privacy_sandbox.m1.topics_enabled').value ||
-        this.getPref('privacy_sandbox.m1.fledge_enabled').value ||
-        this.getPref('privacy_sandbox.m1.ad_measurement_enabled').value;
-    const areThirdPartyCookiesAllowed =
-        currentCookieControlsMode === CookieControlsMode.OFF ||
-        currentCookieControlsMode === CookieControlsMode.INCOGNITO_ONLY;
-
-    if (areAnyPrivacySandboxApisEnabled && areThirdPartyCookiesAllowed &&
-        selection === CookieControlsMode.BLOCK_THIRD_PARTY) {
-      if (!loadTimeData.getBoolean('isPrivacySandboxRestricted')) {
-        this.$.toast.show();
-      }
-      this.metricsBrowserProxy_.recordAction(
-          'Settings.PrivacySandbox.Block3PCookies');
-    } else {
-      this.$.toast.hide();
-    }
+    this.showOrHideToast(
+        (currentCookieControlsMode === CookieControlsMode.OFF ||
+         currentCookieControlsMode === CookieControlsMode.INCOGNITO_ONLY) &&
+        selection === CookieControlsMode.BLOCK_THIRD_PARTY);
 
     primarySettingGroup.sendPrefChange();
+  }
+
+  private onThirdPartyCookieBlockingSettingChanged_() {
+    const thirdPartyCookieBlockingSettingGroup: SettingsRadioGroupElement =
+        this.shadowRoot!.querySelector('#thirdPartyCookieBlockingSettingGroup')!
+        ;
+    const selection = Number(thirdPartyCookieBlockingSettingGroup.selected);
+    if (selection === ThirdPartyCookieBlockingSetting.INCOGNITO_ONLY) {
+      this.metricsBrowserProxy_.recordSettingsPageHistogram(
+          PrivacyElementInteractions.THIRD_PARTY_COOKIES_BLOCK_IN_INCOGNITO);
+      this.metricsBrowserProxy_.recordAction(
+            'Settings.ThirdPartyCookies.Allow');
+    } else {
+      assert(selection === ThirdPartyCookieBlockingSetting.BLOCK_THIRD_PARTY);
+      this.metricsBrowserProxy_.recordSettingsPageHistogram(
+          PrivacyElementInteractions.THIRD_PARTY_COOKIES_BLOCK);
+      this.metricsBrowserProxy_.recordAction(
+            'Settings.ThirdPartyCookies.Block');
+    }
+
+    const currentThirdPartyCookieBlockingSetting =
+        this.getPref('generated.third_party_cookie_blocking_setting').value;
+    this.showOrHideToast(
+        currentThirdPartyCookieBlockingSetting ===
+            ThirdPartyCookieBlockingSetting.INCOGNITO_ONLY &&
+        selection === ThirdPartyCookieBlockingSetting.BLOCK_THIRD_PARTY);
+
+    thirdPartyCookieBlockingSettingGroup.sendPrefChange();
   }
 
   private onPrivacySandboxClick_() {
     this.metricsBrowserProxy_.recordAction(
         'Settings.PrivacySandbox.OpenedFromCookiesPageToast');
     this.$.toast.hide();
-    // TODO(crbug.com/40162029): Replace this with an ordinary OpenWindowProxy call.
+    // TODO(crbug.com/40162029): Replace this with an ordinary OpenWindowProxy
+    // call.
     this.shadowRoot!.querySelector<HTMLAnchorElement>(
                         '#privacySandboxLink')!.click();
   }
@@ -265,12 +290,25 @@ export class SettingsCookiesPageElement extends SettingsCookiesPageElementBase {
         CookieControlsMode.BLOCK_THIRD_PARTY;
   }
 
+  private relatedWebsiteSetsToggle3pcSettingDisabled_() {
+    return this.getPref('generated.third_party_cookie_blocking_setting')
+               .value !== ThirdPartyCookieBlockingSetting.BLOCK_THIRD_PARTY;
+  }
+
   private getThirdPartyCookiesPageBlockThirdPartyIncognitoBulTwoLabel_():
       string {
     return this.i18n(
         this.enableFirstPartySetsUI_ ?
             'cookiePageBlockThirdIncognitoBulTwoRws' :
             'thirdPartyCookiesPageBlockIncognitoBulTwo');
+  }
+
+  private getThirdPartyCookiesPageDescription_():
+      string {
+    return this.i18n(
+        this.isAlwaysBlock3pcsIncognitoEnabled_ ?
+            'thirdPartyCookiesPageDescription' :
+            'thirdPartyCookiesAlignedPageDescription');
   }
 }
 

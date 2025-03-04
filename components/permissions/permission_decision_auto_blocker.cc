@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "components/permissions/permission_decision_auto_blocker.h"
 
 #include <algorithm>
@@ -29,10 +24,24 @@ namespace {
 
 using PermissionStatus = blink::mojom::PermissionStatus;
 
+// The number of times that users may explicitly dismiss a permission prompt
+// from an origin before it is automatically blocked.
 constexpr int kDefaultDismissalsBeforeBlock = 3;
+
+// The number of times that users may ignore a permission prompt from an origin
+// before it is automatically blocked.
 constexpr int kDefaultIgnoresBeforeBlock = 4;
+
+// The number of times that users may dismiss a permission prompt that uses the
+// quiet UI from an origin before it is automatically blocked.
 constexpr int kDefaultDismissalsBeforeBlockWithQuietUi = 1;
+
+// The number of times that users may ignore a permission prompt that uses the
+// quiet UI from an origin before it is automatically blocked.
 constexpr int kDefaultIgnoresBeforeBlockWithQuietUi = 2;
+
+// The number of days that an origin will stay under embargo for a requested
+// permission due to repeated ignores or dismissals.
 constexpr int kDefaultEmbargoDays = 7;
 
 // The number of times that users may explicitly dismiss a
@@ -40,12 +49,13 @@ constexpr int kDefaultEmbargoDays = 7;
 // automatically blocked.
 constexpr int kFederatedIdentityApiDismissalsBeforeBlock = 1;
 
-// The durations that an origin will stay under embargo for the
-// FEDERATED_IDENTITY_API permission due to the user explicitly dismissing the
-// permission prompt.
-constexpr base::TimeDelta kFederatedIdentityApiEmbargoDurationDismiss[] = {
-    base::Hours(2) /* 1st dismissal */, base::Days(1) /* 2nd dismissal */,
-    base::Days(7), base::Days(28)};
+// The number of times that users may ignore a FEDERATED_IDENTITY_API permission
+// prompt from an origin before it is automatically blocked.
+constexpr int kFederatedIdentityApiIgnoresBeforeBlock = 1;
+
+// The number of hours that an origin will stay under embargo for a requested
+// permission due to users ignoring the prompt.
+constexpr base::TimeDelta kFederatedIdentityApiIgnoresEmbargo = base::Hours(4);
 
 // The duration that an origin will stay under embargo for the
 // FEDERATED_IDENTITY_AUTO_REAUTHN_PERMISSION permission due to an auto re-authn
@@ -59,32 +69,6 @@ constexpr base::TimeDelta kFederatedIdentityAutoReauthnEmbargoDuration =
 // is applied.
 constexpr base::TimeDelta kSubAppInstallationPromptsFirstTimeEmbargoDuration =
     base::Minutes(10);
-
-// The number of times that users may explicitly dismiss a permission prompt
-// from an origin before it is automatically blocked.
-int g_dismissals_before_block = kDefaultDismissalsBeforeBlock;
-
-// The number of times that users may ignore a permission prompt from an origin
-// before it is automatically blocked.
-int g_ignores_before_block = kDefaultIgnoresBeforeBlock;
-
-// The number of times that users may dismiss a permission prompt that uses the
-// quiet UI from an origin before it is automatically blocked.
-int g_dismissals_before_block_with_quiet_ui =
-    kDefaultDismissalsBeforeBlockWithQuietUi;
-
-// The number of times that users may ignore a permission prompt that uses the
-// quiet UI from an origin before it is automatically blocked.
-int g_ignores_before_block_with_quiet_ui =
-    kDefaultIgnoresBeforeBlockWithQuietUi;
-
-// The number of days that an origin will stay under embargo for a requested
-// permission due to repeated dismissals.
-int g_dismissal_embargo_days = kDefaultEmbargoDays;
-
-// The number of days that an origin will stay under embargo for a requested
-// permission due to repeated ignores.
-int g_ignore_embargo_days = kDefaultEmbargoDays;
 
 std::string GetStringForContentType(ContentSettingsType content_type) {
   switch (content_type) {
@@ -162,7 +146,16 @@ int GetDismissalsBeforeBlockForContentSettingsType(
     ContentSettingsType permission) {
   return (permission == ContentSettingsType::FEDERATED_IDENTITY_API)
              ? kFederatedIdentityApiDismissalsBeforeBlock
-             : g_dismissals_before_block;
+             : kDefaultDismissalsBeforeBlock;
+}
+
+// Returns the number of times that users may ignore a permission prompt for an
+// origin for the passed-in |permission| before it is automatically blocked.
+int GetIgnoresBeforeBlockForContentSettingsType(
+    ContentSettingsType permission) {
+  return (permission == ContentSettingsType::FEDERATED_IDENTITY_API)
+             ? kFederatedIdentityApiIgnoresBeforeBlock
+             : kDefaultIgnoresBeforeBlock;
 }
 
 // The duration that an origin will stay under embargo for the passed-in
@@ -170,12 +163,26 @@ int GetDismissalsBeforeBlockForContentSettingsType(
 base::TimeDelta GetEmbargoDurationForContentSettingsType(
     ContentSettingsType permission,
     int dismiss_count) {
+  // The durations that an origin will stay under embargo for the
+  // FEDERATED_IDENTITY_API permission due to the user explicitly dismissing the
+  // permission prompt.
+  auto FederatedIdentityApiEmbargoDurationDismiss =
+      std::to_array<base::TimeDelta>(
+          {base::Hours(base::GetFieldTrialParamByFeatureAsInt(
+               features::kFedCmUpdatedCooldownPeriod, "FirstDismissal", 2)),
+           base::Days(base::GetFieldTrialParamByFeatureAsInt(
+               features::kFedCmUpdatedCooldownPeriod, "SecondDismissal", 1)),
+           base::Days(base::GetFieldTrialParamByFeatureAsInt(
+               features::kFedCmUpdatedCooldownPeriod, "ThirdDismissal", 7)),
+           base::Days(base::GetFieldTrialParamByFeatureAsInt(
+               features::kFedCmUpdatedCooldownPeriod, "FourthDismissal", 28))});
+
   if (permission == ContentSettingsType::FEDERATED_IDENTITY_API) {
-    int duration_index = std::clamp(
-        dismiss_count - 1, 0,
-        static_cast<int>(
-            std::size(kFederatedIdentityApiEmbargoDurationDismiss) - 1));
-    return kFederatedIdentityApiEmbargoDurationDismiss[duration_index];
+    int duration_index =
+        std::clamp(dismiss_count - 1, 0,
+                   static_cast<int>(
+                       FederatedIdentityApiEmbargoDurationDismiss.size() - 1));
+    return FederatedIdentityApiEmbargoDurationDismiss[duration_index];
   }
 
   if (permission ==
@@ -185,48 +192,43 @@ base::TimeDelta GetEmbargoDurationForContentSettingsType(
 
   if (permission == ContentSettingsType::SUB_APP_INSTALLATION_PROMPTS) {
     // If this is the first time this embargo is applied, be more forgiving.
-    if (dismiss_count == g_dismissals_before_block) {
+    if (dismiss_count == kDefaultDismissalsBeforeBlock) {
       return kSubAppInstallationPromptsFirstTimeEmbargoDuration;
     }
   }
 
-  return base::Days(g_dismissal_embargo_days);
+  return base::Days(kDefaultEmbargoDays);
+}
+
+// The duration that an origin will stay under embargo for the passed-in
+// |permission| due to the user ignoring the permission prompt.
+base::TimeDelta GetIgnoreEmbargoDurationForContentSettingsType(
+    ContentSettingsType permission) {
+  return (permission == ContentSettingsType::FEDERATED_IDENTITY_API)
+             ? kFederatedIdentityApiIgnoresEmbargo
+             : base::Days(kDefaultEmbargoDays);
 }
 
 base::Time GetEmbargoStartTime(base::Value::Dict* permission_dict,
-                               const base::Feature& feature,
                                const char* key) {
   std::optional<double> found = permission_dict->FindDouble(key);
-  if (found && base::FeatureList::IsEnabled(feature)) {
+  if (found) {
     return base::Time::FromDeltaSinceWindowsEpoch(base::Microseconds(*found));
   }
   return base::Time();
 }
 
 bool IsUnderEmbargo(base::Value::Dict* permission_dict,
-                    const base::Feature& feature,
                     const char* key,
                     base::Time current_time,
                     base::TimeDelta offset) {
   std::optional<double> found = permission_dict->FindDouble(key);
-  if (found && base::FeatureList::IsEnabled(feature) &&
-      current_time < base::Time::FromInternalValue(*found) + offset) {
+  if (found && current_time < base::Time::FromInternalValue(*found) + offset) {
     return true;
   }
 
   return false;
 }
-
-void UpdateValueFromVariation(const std::string& variation_value,
-                              int* value_store,
-                              const int default_value) {
-  int tmp_value = -1;
-  if (base::StringToInt(variation_value, &tmp_value) && tmp_value > 0)
-    *value_store = tmp_value;
-  else
-    *value_store = default_value;
-}
-
 }  // namespace
 
 // static
@@ -290,8 +292,8 @@ PermissionDecisionAutoBlocker::GetEmbargoResult(
 
   int dismiss_count = GetActionCount(request_origin, permission,
                                      kPromptDismissCountKey, settings_map);
-  if (IsUnderEmbargo(permission_dict, features::kBlockPromptsIfDismissedOften,
-                     kPermissionDismissalEmbargoKey, current_time,
+  if (IsUnderEmbargo(permission_dict, kPermissionDismissalEmbargoKey,
+                     current_time,
                      GetEmbargoDurationForContentSettingsType(permission,
                                                               dismiss_count))) {
     return content::PermissionResult(
@@ -299,17 +301,16 @@ PermissionDecisionAutoBlocker::GetEmbargoResult(
         content::PermissionStatusSource::MULTIPLE_DISMISSALS);
   }
 
-  if (IsUnderEmbargo(permission_dict, features::kBlockPromptsIfIgnoredOften,
-                     kPermissionIgnoreEmbargoKey, current_time,
-                     base::Days(g_ignore_embargo_days))) {
+  if (IsUnderEmbargo(
+          permission_dict, kPermissionIgnoreEmbargoKey, current_time,
+          GetIgnoreEmbargoDurationForContentSettingsType(permission))) {
     return content::PermissionResult(
         PermissionStatus::DENIED,
         content::PermissionStatusSource::MULTIPLE_IGNORES);
   }
 
-  if (IsUnderEmbargo(permission_dict,
-                     features::kBlockRepeatedAutoReauthnPrompts,
-                     kPermissionDisplayEmbargoKey, current_time,
+  if (IsUnderEmbargo(permission_dict, kPermissionDisplayEmbargoKey,
+                     current_time,
                      GetEmbargoDurationForContentSettingsType(
                          permission, /*dismiss_count=*/0))) {
     return content::PermissionResult(
@@ -318,48 +319,6 @@ PermissionDecisionAutoBlocker::GetEmbargoResult(
   }
 
   return std::nullopt;
-}
-
-// static
-void PermissionDecisionAutoBlocker::UpdateFromVariations() {
-  std::string dismissals_before_block_value =
-      base::GetFieldTrialParamValueByFeature(
-          features::kBlockPromptsIfDismissedOften, kPromptDismissCountKey);
-  std::string ignores_before_block_value =
-      base::GetFieldTrialParamValueByFeature(
-          features::kBlockPromptsIfIgnoredOften, kPromptIgnoreCountKey);
-  std::string dismissals_before_block_value_with_quiet_ui =
-      base::GetFieldTrialParamValueByFeature(
-          features::kBlockPromptsIfDismissedOften,
-          kPromptDismissCountWithQuietUiKey);
-  std::string ignores_before_block_value_with_quiet_ui =
-      base::GetFieldTrialParamValueByFeature(
-          features::kBlockPromptsIfIgnoredOften,
-          kPromptIgnoreCountWithQuietUiKey);
-  std::string dismissal_embargo_days_value =
-      base::GetFieldTrialParamValueByFeature(
-          features::kBlockPromptsIfDismissedOften,
-          kPermissionDismissalEmbargoKey);
-  std::string ignore_embargo_days_value =
-      base::GetFieldTrialParamValueByFeature(
-          features::kBlockPromptsIfIgnoredOften, kPermissionIgnoreEmbargoKey);
-
-  // If converting the value fails, revert to the original value.
-  UpdateValueFromVariation(dismissals_before_block_value,
-                           &g_dismissals_before_block,
-                           kDefaultDismissalsBeforeBlock);
-  UpdateValueFromVariation(ignores_before_block_value, &g_ignores_before_block,
-                           kDefaultIgnoresBeforeBlock);
-  UpdateValueFromVariation(dismissals_before_block_value_with_quiet_ui,
-                           &g_dismissals_before_block_with_quiet_ui,
-                           kDefaultDismissalsBeforeBlockWithQuietUi);
-  UpdateValueFromVariation(ignores_before_block_value_with_quiet_ui,
-                           &g_ignores_before_block_with_quiet_ui,
-                           kDefaultIgnoresBeforeBlockWithQuietUi);
-  UpdateValueFromVariation(dismissal_embargo_days_value,
-                           &g_dismissal_embargo_days, kDefaultEmbargoDays);
-  UpdateValueFromVariation(ignore_embargo_days_value, &g_ignore_embargo_days,
-                           kDefaultEmbargoDays);
 }
 
 bool PermissionDecisionAutoBlocker::IsEmbargoed(
@@ -389,11 +348,9 @@ base::Time PermissionDecisionAutoBlocker::GetEmbargoStartTime(
   // most recent. A permission will only actually be under one embargo, but
   // the record of embargo start will persist until explicitly deleted
   base::Time dismissal_start_time = permissions::GetEmbargoStartTime(
-      permission_dict, features::kBlockPromptsIfDismissedOften,
-      kPermissionDismissalEmbargoKey);
+      permission_dict, kPermissionDismissalEmbargoKey);
   base::Time ignore_start_time = permissions::GetEmbargoStartTime(
-      permission_dict, features::kBlockPromptsIfIgnoredOften,
-      kPermissionIgnoreEmbargoKey);
+      permission_dict, kPermissionIgnoreEmbargoKey);
 
   return dismissal_start_time > ignore_start_time ? dismissal_start_time
                                                   : ignore_start_time;
@@ -463,20 +420,18 @@ bool PermissionDecisionAutoBlocker::RecordDismissAndEmbargo(
   //    does not have a PermissionContextBase available
   // 2. Not calling RecordDismissAndEmbargo means no repeated dismissal metrics
   //    are recorded
-  if (base::FeatureList::IsEnabled(features::kBlockPromptsIfDismissedOften)) {
-    if (current_dismissal_count >=
-        GetDismissalsBeforeBlockForContentSettingsType(permission)) {
-      PlaceUnderEmbargo(url, permission, kPermissionDismissalEmbargoKey);
-      return true;
-    }
+  if (current_dismissal_count >=
+      GetDismissalsBeforeBlockForContentSettingsType(permission)) {
+    PlaceUnderEmbargo(url, permission, kPermissionDismissalEmbargoKey);
+    return true;
+  }
 
-    if (current_dismissal_count_with_quiet_ui >=
-        g_dismissals_before_block_with_quiet_ui) {
-      DCHECK(permission == ContentSettingsType::NOTIFICATIONS ||
-             permission == ContentSettingsType::GEOLOCATION);
-      PlaceUnderEmbargo(url, permission, kPermissionDismissalEmbargoKey);
-      return true;
-    }
+  if (current_dismissal_count_with_quiet_ui >=
+      kDefaultDismissalsBeforeBlockWithQuietUi) {
+    DCHECK(permission == ContentSettingsType::NOTIFICATIONS ||
+           permission == ContentSettingsType::GEOLOCATION);
+    PlaceUnderEmbargo(url, permission, kPermissionDismissalEmbargoKey);
+    return true;
   }
   return false;
 }
@@ -495,19 +450,18 @@ bool PermissionDecisionAutoBlocker::RecordIgnoreAndEmbargo(
                                           settings_map_)
           : -1;
 
-  if (base::FeatureList::IsEnabled(features::kBlockPromptsIfIgnoredOften)) {
-    if (current_ignore_count >= g_ignores_before_block) {
-      PlaceUnderEmbargo(url, permission, kPermissionIgnoreEmbargoKey);
-      return true;
-    }
+  if (current_ignore_count >=
+      GetIgnoresBeforeBlockForContentSettingsType(permission)) {
+    PlaceUnderEmbargo(url, permission, kPermissionIgnoreEmbargoKey);
+    return true;
+  }
 
-    if (current_ignore_count_with_quiet_ui >=
-        g_ignores_before_block_with_quiet_ui) {
-      DCHECK(permission == ContentSettingsType::NOTIFICATIONS ||
-             permission == ContentSettingsType::GEOLOCATION);
-      PlaceUnderEmbargo(url, permission, kPermissionIgnoreEmbargoKey);
-      return true;
-    }
+  if (current_ignore_count_with_quiet_ui >=
+      kDefaultIgnoresBeforeBlockWithQuietUi) {
+    DCHECK(permission == ContentSettingsType::NOTIFICATIONS ||
+           permission == ContentSettingsType::GEOLOCATION);
+    PlaceUnderEmbargo(url, permission, kPermissionIgnoreEmbargoKey);
+    return true;
   }
 
   return false;
@@ -518,12 +472,8 @@ bool PermissionDecisionAutoBlocker::RecordDisplayAndEmbargo(
     ContentSettingsType permission) {
   DCHECK_EQ(permission,
             ContentSettingsType::FEDERATED_IDENTITY_AUTO_REAUTHN_PERMISSION);
-  if (base::FeatureList::IsEnabled(
-          features::kBlockRepeatedAutoReauthnPrompts)) {
-    PlaceUnderEmbargo(url, permission, kPermissionDisplayEmbargoKey);
-    return true;
-  }
-  return false;
+  PlaceUnderEmbargo(url, permission, kPermissionDisplayEmbargoKey);
+  return true;
 }
 
 void PermissionDecisionAutoBlocker::RemoveEmbargoAndResetCounts(

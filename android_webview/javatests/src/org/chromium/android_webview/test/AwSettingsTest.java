@@ -51,6 +51,8 @@ import org.chromium.base.test.util.RequiresRestart;
 import org.chromium.base.test.util.TestFileUtil;
 import org.chromium.base.test.util.UrlUtils;
 import org.chromium.components.embedder_support.util.WebResourceResponseInfo;
+import org.chromium.content_public.browser.ContentFeatureList;
+import org.chromium.content_public.browser.ContentFeatureMap;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.content_public.browser.WebContentsObserver;
 import org.chromium.content_public.browser.test.util.HistoryUtils;
@@ -67,6 +69,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.URLEncoder;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -647,11 +650,11 @@ public class AwSettingsTest {
             mIframeContainerUrl = UrlUtils.getIsolatedTestFileUrl(TEST_CONTAINER_FILE);
             mIframeUrl = UrlUtils.getIsolatedTestFileUrl(TEST_FILE);
             // The value of the setting depends on the SDK version.
-            mAwSettings.setAllowUniversalAccessFromFileURLs(false);
+            mAwSettings.setAllowUniversalAccessFromFileUrls(false);
             // If universal access is true, the value of file access doesn't
             // matter. While if universal access is false, having file access
             // enabled will allow file loading.
-            mAwSettings.setAllowFileAccessFromFileURLs(false);
+            mAwSettings.setAllowFileAccessFromFileUrls(false);
         }
 
         @Override
@@ -666,12 +669,12 @@ public class AwSettingsTest {
 
         @Override
         protected Boolean getCurrentValue() {
-            return mAwSettings.getAllowUniversalAccessFromFileURLs();
+            return mAwSettings.getAllowUniversalAccessFromFileUrls();
         }
 
         @Override
         protected void setCurrentValue(Boolean value) {
-            mAwSettings.setAllowUniversalAccessFromFileURLs(value);
+            mAwSettings.setAllowUniversalAccessFromFileUrls(value);
         }
 
         @Override
@@ -700,9 +703,9 @@ public class AwSettingsTest {
             AwSettingsTest.assertFileIsReadable(UrlUtils.getIsolatedTestFilePath(TEST_FILE));
             mIframeContainerUrl = UrlUtils.getIsolatedTestFileUrl(TEST_CONTAINER_FILE);
             mIframeUrl = UrlUtils.getIsolatedTestFileUrl(TEST_FILE);
-            mAwSettings.setAllowUniversalAccessFromFileURLs(false);
+            mAwSettings.setAllowUniversalAccessFromFileUrls(false);
             // The value of the setting depends on the SDK version.
-            mAwSettings.setAllowFileAccessFromFileURLs(false);
+            mAwSettings.setAllowFileAccessFromFileUrls(false);
         }
 
         @Override
@@ -717,12 +720,12 @@ public class AwSettingsTest {
 
         @Override
         protected Boolean getCurrentValue() {
-            return mAwSettings.getAllowFileAccessFromFileURLs();
+            return mAwSettings.getAllowFileAccessFromFileUrls();
         }
 
         @Override
         protected void setCurrentValue(Boolean value) {
-            mAwSettings.setAllowFileAccessFromFileURLs(value);
+            mAwSettings.setAllowFileAccessFromFileUrls(value);
         }
 
         @Override
@@ -747,9 +750,9 @@ public class AwSettingsTest {
             super(containerView, contentViewClient, true);
             assertFileIsReadable(UrlUtils.getIsolatedTestFilePath(TEST_FILE));
             mXhrContainerUrl = UrlUtils.getIsolatedTestFileUrl(TEST_FILE);
-            mAwSettings.setAllowUniversalAccessFromFileURLs(false);
+            mAwSettings.setAllowUniversalAccessFromFileUrls(false);
             // The value of the setting depends on the SDK version.
-            mAwSettings.setAllowFileAccessFromFileURLs(false);
+            mAwSettings.setAllowFileAccessFromFileUrls(false);
         }
 
         @Override
@@ -764,12 +767,12 @@ public class AwSettingsTest {
 
         @Override
         protected Boolean getCurrentValue() {
-            return mAwSettings.getAllowFileAccessFromFileURLs();
+            return mAwSettings.getAllowFileAccessFromFileUrls();
         }
 
         @Override
         protected void setCurrentValue(Boolean value) {
-            mAwSettings.setAllowFileAccessFromFileURLs(value);
+            mAwSettings.setAllowFileAccessFromFileUrls(value);
         }
 
         @Override
@@ -1669,7 +1672,7 @@ public class AwSettingsTest {
                         getTitleOnUiThread());
             }
 
-            ThreadUtils.runOnUiThreadBlocking(() -> webContents.removeObserver(observer));
+            ThreadUtils.runOnUiThreadBlocking(() -> observer.observe(null));
         }
 
         private String getData() {
@@ -1721,8 +1724,8 @@ public class AwSettingsTest {
             AwActivityTestRule.enableJavaScriptOnUiThread(mAwContents);
             mAwSettings.setAllowFileAccess(true);
             mAwSettings.setAllowContentAccess(true);
-            mAwSettings.setAllowFileAccessFromFileURLs(false);
-            mAwSettings.setAllowUniversalAccessFromFileURLs(false);
+            mAwSettings.setAllowFileAccessFromFileUrls(false);
+            mAwSettings.setAllowUniversalAccessFromFileUrls(false);
 
             mContentMainUrl = TestContentProvider.createContentUrl(TEST_HTML_CONTENT_PATH);
             mFileMainUrl = UrlUtils.getIsolatedTestFileUrl(TEST_HTML_FILE_PATH);
@@ -1741,12 +1744,12 @@ public class AwSettingsTest {
             return mActivityTestRule.getTitleOnUiThread(mAwContents);
         }
 
-        public void allowFileAccessFromFileURLs() {
-            mAwSettings.setAllowFileAccessFromFileURLs(true);
+        public void allowFileAccessFromFileUrls() {
+            mAwSettings.setAllowFileAccessFromFileUrls(true);
         }
 
-        public void allowUniversalAccessFromFileURLs() {
-            mAwSettings.setAllowUniversalAccessFromFileURLs(true);
+        public void allowUniversalAccessFromFileUrls() {
+            mAwSettings.setAllowUniversalAccessFromFileUrls(true);
         }
 
         public void disallowFileAccess() {
@@ -1910,7 +1913,7 @@ public class AwSettingsTest {
         final AwContents awContents = testContainerView.getAwContents();
         AwSettings settings = mActivityTestRule.getAwSettingsOnUiThread(awContents);
         final String actualUserAgentString = settings.getUserAgentString();
-        Assert.assertEquals(actualUserAgentString, AwSettings.getDefaultUserAgent());
+        Assert.assertEquals(AwSettings.getDefaultUserAgent(), actualUserAgentString);
         final String patternString =
                 "Mozilla/5\\.0 \\(Linux;( U;)? Android ([^;]+);( (\\w+)-(\\w+);)?"
                         + "\\s?(.*)\\sBuild/(.+); wv\\) "
@@ -2177,7 +2180,8 @@ public class AwSettingsTest {
     @SmallTest
     @Feature({"AndroidWebView", "Preferences"})
     @RequiresRestart("setDatabaseEnabled is ignored after the first use of WebView in the process")
-    @CommandLineFlags.Add({"enable-features=kWebSQLAccess"})
+    @CommandLineFlags.Add({"enable-features=WebSQLWebViewAccess"})
+    // TODO(crbug.com/395838064): Cleanup test with WebSQLWebViewAccess flag removal.
     public void testDatabaseInitialValue() throws Throwable {
         TestAwContentsClient client = new TestAwContentsClient();
         final AwTestContainerView testContainerView =
@@ -2191,7 +2195,8 @@ public class AwSettingsTest {
     @SmallTest
     @Feature({"AndroidWebView", "Preferences"})
     @RequiresRestart("setDatabaseEnabled is ignored after the first use of WebView in the process")
-    @CommandLineFlags.Add({"enable-features=kWebSQLAccess"})
+    @CommandLineFlags.Add({"enable-features=WebSQLWebViewAccess"})
+    // TODO(crbug.com/395838064): Cleanup test with WebSQLWebViewAccess flag removal.
     public void testDatabaseEnabled() throws Throwable {
         TestAwContentsClient client = new TestAwContentsClient();
         final AwTestContainerView testContainerView =
@@ -2206,7 +2211,8 @@ public class AwSettingsTest {
     @SmallTest
     @Feature({"AndroidWebView", "Preferences"})
     @RequiresRestart("setDatabaseEnabled is ignored after the first use of WebView in the process")
-    @CommandLineFlags.Add({"enable-features=kWebSQLAccess"})
+    @CommandLineFlags.Add({"enable-features=WebSQLWebViewAccess"})
+    // TODO(crbug.com/395838064): Cleanup test with WebSQLWebViewAccess flag removal.
     public void testDatabaseDisabled() throws Throwable {
         TestAwContentsClient client = new TestAwContentsClient();
         final AwTestContainerView testContainerView =
@@ -2246,8 +2252,8 @@ public class AwSettingsTest {
         AwSettings settings = mActivityTestRule.getAwSettingsOnUiThread(awContents);
         settings.setJavaScriptEnabled(true);
         settings.setAllowFileAccess(true);
-        settings.setAllowUniversalAccessFromFileURLs(false);
-        settings.setAllowFileAccessFromFileURLs(false);
+        settings.setAllowUniversalAccessFromFileUrls(false);
+        settings.setAllowFileAccessFromFileUrls(false);
         mActivityTestRule.loadUrlSync(
                 awContents, contentClient.getOnPageFinishedHelper(), imageContainerUrl);
         Assert.assertEquals(imageHeight, mActivityTestRule.getTitleOnUiThread(awContents));
@@ -2404,7 +2410,7 @@ public class AwSettingsTest {
     @Feature({"AndroidWebView", "Preferences", "CORS"})
     public void testContentUrlMakesXhrRequestsWithAllowFileAccess() throws Throwable {
         final AwSettingsCorsTestHelper corsTestHelper = new AwSettingsCorsTestHelper();
-        corsTestHelper.allowFileAccessFromFileURLs();
+        corsTestHelper.allowFileAccessFromFileUrls();
 
         // Case a) content:// to content:// should pass.
         Assert.assertEquals(
@@ -2469,7 +2475,7 @@ public class AwSettingsTest {
     @Feature({"AndroidWebView", "Preferences", "CORS"})
     public void testContentUrlMakesXhrRequestsWithAllowUniversalAccess() throws Throwable {
         final AwSettingsCorsTestHelper corsTestHelper = new AwSettingsCorsTestHelper();
-        corsTestHelper.allowUniversalAccessFromFileURLs();
+        corsTestHelper.allowUniversalAccessFromFileUrls();
 
         // Case a) content:// to content:// should pass.
         Assert.assertEquals(
@@ -2535,8 +2541,8 @@ public class AwSettingsTest {
     public void testContentUrlMakesFetchRequestsWithoutFileAccess() throws Throwable {
         final AwSettingsCorsTestHelper corsTestHelper = new AwSettingsCorsTestHelper();
         // Run tests with the most relaxed settings.
-        corsTestHelper.allowFileAccessFromFileURLs();
-        corsTestHelper.allowUniversalAccessFromFileURLs();
+        corsTestHelper.allowFileAccessFromFileUrls();
+        corsTestHelper.allowUniversalAccessFromFileUrls();
 
         // Case a) content:// to content:// should fail.
         Assert.assertEquals(
@@ -2574,7 +2580,7 @@ public class AwSettingsTest {
         // if AllowFileAccess and AllowContentAccess are set to false.
         corsTestHelper.disallowFileAccess();
         corsTestHelper.disallowContentAccess();
-        corsTestHelper.allowFileAccessFromFileURLs();
+        corsTestHelper.allowFileAccessFromFileUrls();
 
         // Case c') file:///android_asset/ to content:// should fail as
         // content:// is still disallowed by AllowContentAccess.
@@ -2603,7 +2609,7 @@ public class AwSettingsTest {
                         AwSettingsCorsTestHelper.RESOURCE_IMAGE_URL));
 
         // AllowUniversalAccessFromFileURLs should not help.
-        corsTestHelper.allowUniversalAccessFromFileURLs();
+        corsTestHelper.allowUniversalAccessFromFileUrls();
 
         // Case c') file:///android_asset/ to content:// should fail as
         // content:// is still disallowed by AllowContentAccess.
@@ -2634,7 +2640,7 @@ public class AwSettingsTest {
         // file:///android_asset/ and file:///android_res can be accessible even
         // if AllowFileAccess is set to false.
         corsTestHelper.disallowFileAccess();
-        corsTestHelper.allowFileAccessFromFileURLs();
+        corsTestHelper.allowFileAccessFromFileUrls();
 
         // Case c') file:///android_asset/ to content:// should fail as
         // content:// is still accessible but CORS is not permitted.
@@ -2663,7 +2669,7 @@ public class AwSettingsTest {
                         AwSettingsCorsTestHelper.RESOURCE_IMAGE_URL));
 
         // AllowUniversalAccessFromFileURLs should not help.
-        corsTestHelper.allowUniversalAccessFromFileURLs();
+        corsTestHelper.allowUniversalAccessFromFileUrls();
 
         // Case c') file:///android_asset/ to content:// pass as CORS accesses
         // are permitted now.
@@ -3535,7 +3541,7 @@ public class AwSettingsTest {
     @Test
     @SmallTest
     @Feature({"AndroidWebView", "Preferences"})
-    public void testDefaultVideoPosterURL() throws Throwable {
+    public void testDefaultVideoPosterUrl() throws Throwable {
         final CallbackHelper videoPosterAccessedCallbackHelper = new CallbackHelper();
         final String defaultVideoPosterUrl = "http://default_video_poster/";
         TestAwContentsClient client =
@@ -3555,7 +3561,7 @@ public class AwSettingsTest {
                 .runOnMainSync(
                         () -> {
                             AwSettings awSettings = awContents.getSettings();
-                            awSettings.setDefaultVideoPosterURL(defaultVideoPosterUrl);
+                            awSettings.setDefaultVideoPosterUrl(defaultVideoPosterUrl);
                         });
         VideoTestWebServer webServer = new VideoTestWebServer();
         try {
@@ -3696,6 +3702,21 @@ public class AwSettingsTest {
     @Test
     @SmallTest
     @Feature({"AndroidWebView", "Preferences"})
+    @CommandLineFlags.Add({"enable-features=DIPS"})
+    public void testDipsSettingsForWebView() {
+        Map<String, String> mapDipsTtl =
+                ContentFeatureMap.getInstance()
+                        .getFieldTrialParamsForFeature(ContentFeatureList.DIPS_TTL);
+        Assert.assertTrue(mapDipsTtl.size() > 0);
+
+        String expectedTtl = "30d";
+        String gotDipsTtl = mapDipsTtl.get("interaction_ttl");
+        Assert.assertEquals(expectedTtl, gotDipsTtl);
+    }
+
+    @Test
+    @SmallTest
+    @Feature({"AndroidWebView", "Preferences"})
     public void testUpdatingUserAgentWhileLoadingCausesReload() throws Throwable {
         final TestAwContentsClient contentClient = new TestAwContentsClient();
         final AwTestContainerView testContainerView =
@@ -3750,7 +3771,7 @@ public class AwSettingsTest {
         public AwSettings createAwSettings(Context context, boolean supportsLegacyQuirks) {
             return new AwSettings(
                     context,
-                    /* isAccessFromFileURLsGrantedByDefault= */ false,
+                    /* isAccessFromFileUrlsGrantedByDefault= */ false,
                     supportsLegacyQuirks,
                     mAllow,
                     /* allowGeolocationOnInsecureOrigins= */ true,
@@ -3801,7 +3822,7 @@ public class AwSettingsTest {
     @Test
     @SmallTest
     @Feature({"AndroidWebView", "Preferences"})
-    public void testCSSHexAlphaColorEnabled() throws Throwable {
+    public void testCssHexAlphaColorEnabled() throws Throwable {
         final TestAwContentsClient client = new TestAwContentsClient();
         final AwTestContainerView view =
                 mActivityTestRule.createAwTestContainerViewOnMainSync(client);
@@ -3834,7 +3855,7 @@ public class AwSettingsTest {
         public AwSettings createAwSettings(Context context, boolean supportsLegacyQuirks) {
             return new AwSettings(
                     context,
-                    /* isAccessFromFileURLsGrantedByDefault= */ false,
+                    /* isAccessFromFileUrlsGrantedByDefault= */ false,
                     supportsLegacyQuirks,
                     /* allowEmptyDocumentPersistence= */ false,
                     /* allowGeolocationOnInsecureOrigins= */ true,
@@ -3940,7 +3961,7 @@ public class AwSettingsTest {
     @Test
     @SmallTest
     @Feature({"AndroidWebView", "Preferences"})
-    public void testGetUpdatedXRWAllowList() throws Throwable {
+    public void testGetUpdatedXrwAllowList() throws Throwable {
         TestAwContentsClient contentClient = new TestAwContentsClient();
         AwTestContainerView testContainerView =
                 mActivityTestRule.createAwTestContainerViewOnMainSync(contentClient);
@@ -4015,7 +4036,7 @@ public class AwSettingsTest {
         }
     }
 
-    /**
+    /*
      * Verifies the following statements about a setting:
      *  - initially, the setting has a default value;
      *  - the setting can be switched to an alternate value and back;
@@ -4095,7 +4116,7 @@ public class AwSettingsTest {
         }
     }
 
-    /**
+    /*
      * Verifies the number of resource requests made to the content provider.
      * @param resource Resource name
      * @param expectedCount Expected resource requests count

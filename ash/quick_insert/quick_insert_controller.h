@@ -38,6 +38,7 @@
 #include "ui/views/view_observer.h"
 #include "ui/views/widget/unique_widget_ptr.h"
 
+class PrefRegistrySimple;
 class PrefService;
 
 namespace input_method {
@@ -54,25 +55,26 @@ class SharedURLLoaderFactory;
 
 namespace ash {
 
-class PickerAssetFetcher;
-class PickerClient;
+class QuickInsertAssetFetcher;
+class QuickInsertClient;
 class QuickInsertModel;
-class PickerPasteRequest;
-class PickerActionOnNextFocusRequest;
+class QuickInsertPasteRequest;
+class QuickInsertActionOnNextFocusRequest;
 
-// Controls a Picker widget.
-class ASH_EXPORT PickerController : public PickerViewDelegate,
-                                    public views::ViewObserver,
-                                    public PickerAssetFetcherImplDelegate {
+// Controls a Quick Insert widget.
+class ASH_EXPORT QuickInsertController
+    : public QuickInsertViewDelegate,
+      public views::ViewObserver,
+      public QuickInsertAssetFetcherImplDelegate {
  public:
-  PickerController();
-  PickerController(const PickerController&) = delete;
-  PickerController& operator=(const PickerController&) = delete;
-  ~PickerController() override;
+  QuickInsertController();
+  QuickInsertController(const QuickInsertController&) = delete;
+  QuickInsertController& operator=(const QuickInsertController&) = delete;
+  ~QuickInsertController() override;
 
   // Maximum time to wait for focus to be regained after completing the feature
   // tour. If this timeout is reached, we stop waiting for focus and show the
-  // Picker widget regardless of the focus state.
+  // Quick Insert widget regardless of the focus state.
   static constexpr base::TimeDelta kShowWidgetPostFeatureTourTimeout =
       base::Seconds(2);
 
@@ -83,6 +85,9 @@ class ASH_EXPORT PickerController : public PickerViewDelegate,
   // published.
   static constexpr base::TimeDelta kBurnInPeriod = base::Milliseconds(200);
 
+  // Registers Quick Insert prefs to the provided `registry`.
+  static void RegisterProfilePrefs(PrefRegistrySimple* registry);
+
   // Sets the `client` used by this class and the widget to communicate with the
   // browser. `client` may be set to null, which will close the Widget if it's
   // open, and may call "stop search" methods on the PREVIOUS client.
@@ -90,12 +95,12 @@ class ASH_EXPORT PickerController : public PickerViewDelegate,
   // class, or until AFTER `SetClient` is called with a different client.
   // Caution: If `client` outlives this class, the client should avoid calling
   // this method on a destructed class instance to avoid a use after free.
-  void SetClient(PickerClient* client);
+  void SetClient(QuickInsertClient* client);
 
   // This should be run when the Prefs from the client is ready.
   void OnClientPrefsSet(PrefService* prefs);
 
-  // Toggles the visibility of the Picker widget.
+  // Toggles the visibility of the Quick Insert widget.
   // This must only be called after `SetClient` is called with a valid client.
   // `trigger_event_timestamp` is the timestamp of the event that triggered the
   // Widget to be toggled. For example, if the feature was triggered by a mouse
@@ -104,20 +109,21 @@ class ASH_EXPORT PickerController : public PickerViewDelegate,
   void ToggleWidget(
       base::TimeTicks trigger_event_timestamp = base::TimeTicks::Now());
 
-  // Returns the Picker widget for tests.
+  // Returns the Quick Insert widget for tests.
   views::Widget* widget_for_testing() { return widget_.get(); }
-  PickerFeatureTour& feature_tour_for_testing() { return feature_tour_; }
-  PickerCapsLockBubbleController& caps_lock_bubble_controller_for_testing() {
+  QuickInsertFeatureTour& feature_tour_for_testing() { return feature_tour_; }
+  QuickInsertCapsLockBubbleController&
+  caps_lock_bubble_controller_for_testing() {
     return caps_lock_bubble_controller_;
   }
 
-  // PickerViewDelegate:
-  std::vector<PickerCategory> GetAvailableCategories() override;
+  // QuickInsertViewDelegate:
+  std::vector<QuickInsertCategory> GetAvailableCategories() override;
   void GetZeroStateSuggestedResults(SuggestedResultsCallback callback) override;
-  void GetResultsForCategory(PickerCategory category,
+  void GetResultsForCategory(QuickInsertCategory category,
                              SearchResultsCallback callback) override;
   void StartSearch(std::u16string_view query,
-                   std::optional<PickerCategory> category,
+                   std::optional<QuickInsertCategory> category,
                    SearchResultsCallback callback) override;
   void StopSearch() override;
   void StartEmojiSearch(std::u16string_view,
@@ -130,19 +136,19 @@ class ASH_EXPORT PickerController : public PickerViewDelegate,
   void ShowEditor(std::optional<std::string> preset_query_id,
                   std::optional<std::string> freeform_text) override;
   void ShowLobster(std::optional<std::string> freeform_text) override;
-  PickerAssetFetcher* GetAssetFetcher() override;
-  PickerSessionMetrics& GetSessionMetrics() override;
-  PickerActionType GetActionForResult(
+  QuickInsertAssetFetcher* GetAssetFetcher() override;
+  QuickInsertSessionMetrics& GetSessionMetrics() override;
+  QuickInsertActionType GetActionForResult(
       const QuickInsertSearchResult& result) override;
   std::vector<QuickInsertEmojiResult> GetSuggestedEmoji() override;
   bool IsGifsEnabled() override;
-  PickerModeType GetMode() override;
-  PickerCapsLockPosition GetCapsLockPosition() override;
+  QuickInsertModeType GetMode() override;
+  QuickInsertCapsLockPosition GetCapsLockPosition() override;
 
   // views:ViewObserver:
   void OnViewIsDeleting(views::View* view) override;
 
-  // PickerAssetFetcherImplDelegate:
+  // QuickInsertAssetFetcherImplDelegate:
   scoped_refptr<network::SharedURLLoaderFactory> GetSharedURLLoaderFactory()
       override;
   void FetchFileThumbnail(const base::FilePath& path,
@@ -153,32 +159,32 @@ class ASH_EXPORT PickerController : public PickerViewDelegate,
   static void DisableFeatureTourForTesting();
 
  private:
-  // Trigger source for showing the Picker widget. This is used to determine
-  // how the widget should be shown on the screen.
+  // Trigger source for showing the Quick Insert widget. This is used to
+  // determine how the widget should be shown on the screen.
   enum class WidgetTriggerSource {
-    // The user triggered Picker as part of their usual user flow, e.g. toggled
-    // Picker with a key press.
+    // The user triggered Quick Insert as part of their usual user flow, e.g.
+    // toggled Quick Insert with a key press.
     kDefault,
-    // The user triggered Picker by completing the feature tour.
+    // The user triggered Quick Insert by completing the feature tour.
     kFeatureTour,
   };
 
-  // Active Picker session tied to the lifetime of the QuickInsertWidget.
+  // Active Quick Insert session tied to the lifetime of the QuickInsertWidget.
   struct Session {
     QuickInsertModel model;
-    PickerEmojiHistoryModel emoji_history_model;
-    PickerEmojiSuggester emoji_suggester;
-    PickerSessionMetrics session_metrics;
+    QuickInsertEmojiHistoryModel emoji_history_model;
+    QuickInsertEmojiSuggester emoji_suggester;
+    QuickInsertSessionMetrics session_metrics;
     // Periodically records usage metrics based on the Standard Feature Usage
     // Logging (SFUL) framework.
-    PickerFeatureUsageMetrics feature_usage_metrics;
+    QuickInsertFeatureUsageMetrics feature_usage_metrics;
 
     Session(PrefService* prefs,
             ui::TextInputClient* focused_client,
             input_method::ImeKeyboard* ime_keyboard,
             QuickInsertModel::EditorStatus editor_status,
             QuickInsertModel::LobsterStatus lobster_status,
-            PickerEmojiSuggester::GetNameCallback get_name);
+            QuickInsertEmojiSuggester::GetNameCallback get_name);
     ~Session();
   };
 
@@ -187,24 +193,24 @@ class ASH_EXPORT PickerController : public PickerViewDelegate,
   void CloseWidget();
   void ShowWidgetPostFeatureTour();
   void InsertResultOnNextFocus(const QuickInsertSearchResult& result);
-  void OnInsertCompleted(const PickerRichMedia& media,
-                         PickerInsertMediaRequest::Result result);
+  void OnInsertCompleted(const QuickInsertRichMedia& media,
+                         QuickInsertInsertMediaRequest::Result result);
   PrefService* GetPrefs();
 
-  std::optional<PickerWebPasteTarget> GetWebPasteTarget();
+  std::optional<QuickInsertWebPasteTarget> GetWebPasteTarget();
 
-  PickerFeatureTour feature_tour_;
-  PickerCapsLockBubbleController caps_lock_bubble_controller_;
+  QuickInsertFeatureTour feature_tour_;
+  QuickInsertCapsLockBubbleController caps_lock_bubble_controller_;
   std::unique_ptr<Session> session_;
   views::UniqueWidgetPtr widget_;
-  std::unique_ptr<PickerAssetFetcher> asset_fetcher_;
-  std::unique_ptr<PickerInsertMediaRequest> insert_media_request_;
-  std::unique_ptr<PickerPasteRequest> paste_request_;
-  std::unique_ptr<PickerActionOnNextFocusRequest> caps_lock_request_;
-  PickerSuggestionsController suggestions_controller_;
-  PickerSearchController search_controller_;
+  std::unique_ptr<QuickInsertAssetFetcher> asset_fetcher_;
+  std::unique_ptr<QuickInsertInsertMediaRequest> insert_media_request_;
+  std::unique_ptr<QuickInsertPasteRequest> paste_request_;
+  std::unique_ptr<QuickInsertActionOnNextFocusRequest> caps_lock_request_;
+  QuickInsertSuggestionsController suggestions_controller_;
+  QuickInsertSearchController search_controller_;
 
-  raw_ptr<PickerClient> client_ = nullptr;
+  raw_ptr<QuickInsertClient> client_ = nullptr;
 
   base::OnceCallback<void(std::optional<std::string> preset_query_id,
                           std::optional<std::string> freeform_text)>
@@ -219,7 +225,7 @@ class ASH_EXPORT PickerController : public PickerViewDelegate,
   base::ScopedObservation<views::View, views::ViewObserver> view_observation_{
       this};
 
-  base::WeakPtrFactory<PickerController> weak_ptr_factory_{this};
+  base::WeakPtrFactory<QuickInsertController> weak_ptr_factory_{this};
 };
 
 }  // namespace ash

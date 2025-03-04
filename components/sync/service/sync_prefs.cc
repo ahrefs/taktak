@@ -6,6 +6,7 @@
 
 #include <utility>
 
+#include "base/auto_reset.h"
 #include "base/base64.h"
 #include "base/check_op.h"
 #include "base/containers/contains.h"
@@ -16,7 +17,6 @@
 #include "base/observer_list.h"
 #include "base/values.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/pref_value_map.h"
@@ -24,6 +24,7 @@
 #include "components/saved_tab_groups/public/pref_names.h"
 #include "components/signin/public/base/gaia_id_hash.h"
 #include "components/signin/public/base/signin_pref_names.h"
+#include "components/signin/public/base/signin_prefs.h"
 #include "components/signin/public/base/signin_switches.h"
 #include "components/sync/base/account_pref_utils.h"
 #include "components/sync/base/features.h"
@@ -33,6 +34,7 @@
 #include "components/sync/protocol/nigori_specifics.pb.h"
 #include "components/sync/service/glue/sync_transport_data_prefs.h"
 #include "components/sync/service/sync_feature_status_for_migrations_recorder.h"
+#include "google_apis/gaia/gaia_id.h"
 
 namespace syncer {
 
@@ -124,21 +126,13 @@ SyncPrefs::SyncPrefs(PrefService* pref_service)
       prefs::internal::kSelectedTypesPerAccount,
       base::BindRepeating(&SyncPrefs::OnSelectedTypesPrefChanged,
                           base::Unretained(this)));
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  // On ChromeOS-Lacros, syncing of apps is determined by a special
-  // Ash-controlled pref.
-  pref_change_registrar_.Add(
-      prefs::internal::kSyncAppsEnabledByOs,
-      base::BindRepeating(&SyncPrefs::OnSelectedTypesPrefChanged,
-                          base::Unretained(this)));
-#endif
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS)
   pref_initial_sync_feature_setup_complete_.Init(
       prefs::internal::kSyncInitialSyncFeatureSetupComplete, pref_service_,
       base::BindRepeating(&SyncPrefs::OnFirstSetupCompletePrefChange,
                           base::Unretained(this)));
-#endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // !BUILDFLAG(IS_CHROMEOS)
 }
 
 SyncPrefs::~SyncPrefs() {
@@ -154,7 +148,7 @@ void SyncPrefs::RegisterProfilePrefs(PrefRegistrySimple* registry) {
   for (UserSelectableType type : UserSelectableTypeSet::All()) {
     RegisterTypeSelectedPref(registry, type);
   }
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   registry->RegisterBooleanPref(prefs::internal::kSyncDisabledViaDashboard,
                                 false);
   registry->RegisterBooleanPref(prefs::internal::kSyncAllOsTypes, true);
@@ -162,14 +156,10 @@ void SyncPrefs::RegisterProfilePrefs(PrefRegistrySimple* registry) {
   registry->RegisterBooleanPref(prefs::internal::kSyncOsPreferences, false);
   registry->RegisterBooleanPref(prefs::internal::kSyncWifiConfigurations,
                                 false);
-#else   // BUILDFLAG(IS_CHROMEOS_ASH)
+#else   // BUILDFLAG(IS_CHROMEOS)
   registry->RegisterBooleanPref(
       prefs::internal::kSyncInitialSyncFeatureSetupComplete, false);
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  registry->RegisterBooleanPref(prefs::internal::kSyncAppsEnabledByOs, false);
-#endif
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
   registry->RegisterBooleanPref(kObsoleteAutofillWalletImportEnabledMigrated,
                                 false);
@@ -189,6 +179,10 @@ void SyncPrefs::RegisterProfilePrefs(PrefRegistrySimple* registry) {
   // The encryption bootstrap token represents a user-entered passphrase.
   registry->RegisterStringPref(prefs::internal::kSyncEncryptionBootstrapToken,
                                std::string());
+
+  // Cached notion of whether or not a persistent auth error exists.
+  registry->RegisterBooleanPref(
+      prefs::internal::kSyncCachedPersistentAuthErrorForMetrics, false);
 
   // The encryption bootstrap token represents a user-entered passphrase per
   // account.
@@ -232,19 +226,19 @@ void SyncPrefs::RemoveObserver(SyncPrefObserver* sync_pref_observer) {
 
 bool SyncPrefs::IsInitialSyncFeatureSetupComplete() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   return true;
-#else   // BUILDFLAG(IS_CHROMEOS_ASH)
+#else   // BUILDFLAG(IS_CHROMEOS)
   return pref_service_->GetBoolean(
       prefs::internal::kSyncInitialSyncFeatureSetupComplete);
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 bool SyncPrefs::IsExplicitBrowserSignin() const {
   return pref_service_->GetBoolean(::prefs::kExplicitBrowserSignin);
 }
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS)
 void SyncPrefs::SetInitialSyncFeatureSetupComplete() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   pref_service_->SetBoolean(
@@ -256,7 +250,7 @@ void SyncPrefs::ClearInitialSyncFeatureSetupComplete() {
   pref_service_->ClearPref(
       prefs::internal::kSyncInitialSyncFeatureSetupComplete);
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // !BUILDFLAG(IS_CHROMEOS)
 
 bool SyncPrefs::HasKeepEverythingSynced() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
@@ -264,7 +258,9 @@ bool SyncPrefs::HasKeepEverythingSynced() const {
 }
 
 UserSelectableTypeSet SyncPrefs::GetSelectedTypesForAccount(
-    const signin::GaiaIdHash& gaia_id_hash) const {
+    const GaiaId& gaia_id) const {
+  const signin::GaiaIdHash gaia_id_hash =
+      signin::GaiaIdHash::FromGaiaId(gaia_id);
   UserSelectableTypeSet selected_types;
 
   for (UserSelectableType type : UserSelectableTypeSet::All()) {
@@ -318,9 +314,17 @@ UserSelectableTypeSet SyncPrefs::GetSelectedTypesForAccount(
           type_enabled = false;
         }
       } else if (type == UserSelectableType::kExtensions) {
-        // Extensions require an explicit sign in.
-        type_enabled =
-            pref_service_->GetBoolean(::prefs::kExplicitBrowserSignin);
+        // Extensions require a specific explicit sign in.
+        type_enabled = SigninPrefs(*pref_service_)
+                           .GetExtensionsExplicitBrowserSignin(gaia_id);
+      } else if (type == UserSelectableType::kPreferences ||
+                 type == UserSelectableType::kThemes) {
+#if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
+        type_enabled = true;
+#else
+        type_enabled = pref_service_->GetBoolean(
+            ::prefs::kPrefsThemesSearchEnginesAccountStorageEnabled);
+#endif
       } else {
         // All other types are always enabled by default.
         type_enabled = true;
@@ -405,25 +409,6 @@ bool SyncPrefs::IsTypeDisabledByUserForAccount(
   return false;
 }
 
-#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)
-int SyncPrefs::GetNumberOfAccountsWithPasswordsSelected() const {
-  int n_accounts = 0;
-  for (auto [serialized_gaia_id_hash, selected_types] :
-       pref_service_->GetDict(prefs::internal::kSelectedTypesPerAccount)) {
-    // `selected_types` should be a dict but doesn't hurt to check and be safe.
-    bool enabled =
-        selected_types.is_dict() &&
-        selected_types.GetDict()
-            .FindBool(GetPrefNameForType(UserSelectableType::kPasswords))
-            .value_or(false);
-    if (enabled) {
-      n_accounts++;
-    }
-  }
-  return n_accounts;
-}
-#endif
-
 void SyncPrefs::SetSelectedTypesForSyncingUser(
     bool keep_everything_synced,
     UserSelectableTypeSet registered_types,
@@ -482,7 +467,7 @@ void SyncPrefs::KeepAccountSettingsPrefsOnlyForUsers(
                                                           available_gaia_ids);
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 bool SyncPrefs::IsSyncFeatureDisabledViaDashboard() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   return pref_service_->GetBoolean(prefs::internal::kSyncDisabledViaDashboard);
@@ -510,7 +495,7 @@ UserSelectableOsTypeSet SyncPrefs::GetSelectedOsTypes() const {
   for (UserSelectableOsType type : UserSelectableOsTypeSet::All()) {
     const char* pref_name = GetPrefNameForOsType(type);
     DCHECK(pref_name);
-    // If the type is managed, |sync_all_os_types| is ignored for this type.
+    // If the type is managed, `sync_all_os_types` is ignored for this type.
     if (pref_service_->GetBoolean(pref_name) ||
         (sync_all_os_types && !IsOsTypeManagedByPolicy(type))) {
       selected_types.Put(type);
@@ -563,8 +548,7 @@ const char* SyncPrefs::GetPrefNameForOsType(UserSelectableOsType type) {
     case UserSelectableOsType::kOsWifiConfigurations:
       return prefs::internal::kSyncWifiConfigurations;
   }
-  NOTREACHED_IN_MIGRATION();
-  return nullptr;
+  NOTREACHED();
 }
 
 // static
@@ -574,20 +558,7 @@ void SyncPrefs::SetOsTypeDisabledByPolicy(PrefValueMap* policy_prefs,
   CHECK(pref_name);
   policy_prefs->SetValue(pref_name, base::Value(false));
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-bool SyncPrefs::IsAppsSyncEnabledByOs() const {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return pref_service_->GetBoolean(prefs::internal::kSyncAppsEnabledByOs);
-}
-
-void SyncPrefs::SetAppsSyncEnabledByOs(bool apps_sync_enabled) {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  pref_service_->SetBoolean(prefs::internal::kSyncAppsEnabledByOs,
-                            apps_sync_enabled);
-}
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 bool SyncPrefs::IsSyncClientDisabledByPolicy() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
@@ -609,6 +580,26 @@ void SyncPrefs::SetCachedPassphraseType(PassphraseType passphrase_type) {
 void SyncPrefs::ClearCachedPassphraseType() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   pref_service_->ClearPref(prefs::internal::kSyncCachedPassphraseType);
+}
+
+bool SyncPrefs::HasCachedPersistentAuthErrorForMetrics() const {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return pref_service_->GetBoolean(
+      prefs::internal::kSyncCachedPersistentAuthErrorForMetrics);
+}
+
+void SyncPrefs::SetHasCachedPersistentAuthErrorForMetrics(
+    bool has_persistent_auth_error) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  pref_service_->SetBoolean(
+      prefs::internal::kSyncCachedPersistentAuthErrorForMetrics,
+      has_persistent_auth_error);
+}
+
+void SyncPrefs::ClearCachedPersistentAuthErrorForMetrics() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  pref_service_->ClearPref(
+      prefs::internal::kSyncCachedPersistentAuthErrorForMetrics);
 }
 
 std::optional<sync_pb::TrustedVaultAutoUpgradeExperimentGroup>
@@ -717,8 +708,7 @@ const char* SyncPrefs::GetPrefNameForType(UserSelectableType type) {
     case UserSelectableType::kCookies:
       return prefs::internal::kSyncCookies;
   }
-  NOTREACHED_IN_MIGRATION();
-  return nullptr;
+  NOTREACHED();
 }
 
 // static
@@ -745,17 +735,26 @@ bool SyncPrefs::IsTypeSupportedInTransportMode(UserSelectableType type) {
   // Features to be enabled.
   switch (type) {
     case UserSelectableType::kBookmarks:
-      return base::FeatureList::IsEnabled(kSyncEnableBookmarksInTransportMode);
+      return base::FeatureList::IsEnabled(
+          switches::kSyncEnableBookmarksInTransportMode);
     case UserSelectableType::kReadingList:
       return syncer::IsReadingListAccountStorageEnabled();
     case UserSelectableType::kPreferences:
-      return base::FeatureList::IsEnabled(kReplaceSyncPromosWithSignInPromos) &&
-             base::FeatureList::IsEnabled(kEnablePreferencesAccountStorage);
+      if (!base::FeatureList::IsEnabled(
+              switches::kEnablePreferencesAccountStorage)) {
+        return false;
+      }
+#if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
+      return base::FeatureList::IsEnabled(kReplaceSyncPromosWithSignInPromos);
+#else
+      // Search engines are behind `UserSelectableType::kPreferences`.
+      return base::FeatureList::IsEnabled(
+          kSeparateLocalAndAccountSearchEngines);
+#endif
     case UserSelectableType::kPasswords:
       return true;
     case UserSelectableType::kAutofill:
-      return base::FeatureList::IsEnabled(
-          kSyncEnableContactInfoDataTypeInTransportMode);
+      return true;
     case UserSelectableType::kPayments:
       // Always supported, since AUTOFILL_WALLET_DATA is supported in
       // transport mode everywhere.
@@ -771,9 +770,17 @@ bool SyncPrefs::IsTypeSupportedInTransportMode(UserSelectableType type) {
     case UserSelectableType::kSavedTabGroups:
       return base::FeatureList::IsEnabled(kReplaceSyncPromosWithSignInPromos);
     case UserSelectableType::kExtensions:
-      return base::FeatureList::IsEnabled(kSyncEnableExtensionsInTransportMode);
-    case UserSelectableType::kApps:
+      return base::FeatureList::IsEnabled(
+          switches::kEnableExtensionsExplicitBrowserSignin);
     case UserSelectableType::kThemes:
+#if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
+      return false;
+#else
+      return base::FeatureList::IsEnabled(syncer::kMoveThemePrefsToSpecifics) &&
+             base::FeatureList::IsEnabled(
+                 syncer::kSeparateLocalAndAccountThemes);
+#endif
+    case UserSelectableType::kApps:
     case UserSelectableType::kCookies:
       // These types are not supported in transport mode yet.
       return false;
@@ -801,7 +808,7 @@ void SyncPrefs::OnSelectedTypesPrefChanged(const std::string& pref_name) {
   }
 }
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS)
 void SyncPrefs::OnFirstSetupCompletePrefChange() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   for (SyncPrefObserver& observer : sync_pref_observers_) {
@@ -809,7 +816,7 @@ void SyncPrefs::OnFirstSetupCompletePrefChange() {
         *pref_initial_sync_feature_setup_complete_);
   }
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // !BUILDFLAG(IS_CHROMEOS)
 
 // static
 void SyncPrefs::RegisterTypeSelectedPref(PrefRegistrySimple* registry,
@@ -951,7 +958,7 @@ void SyncPrefs::MaybeMigrateCustomPassphrasePref(
   pref_service_->SetBoolean(
       kSyncEncryptionBootstrapTokenPerAccountMigrationDone, true);
 
-  if (gaia_id_hash == signin::GaiaIdHash::FromGaiaId("")) {
+  if (gaia_id_hash == signin::GaiaIdHash::FromGaiaId(GaiaId())) {
     // Do not migrate if gaia_id is empty; no signed in user.
     return;
   }
@@ -1097,8 +1104,8 @@ void SyncPrefs::MaybeMigrateAutofillToPerAccountPref(
   }
   pref_service->SetBoolean(kAutofillPerAccountPrefMigrationDone, true);
 
-  std::string last_syncing_gaia_id =
-      pref_service->GetString(::prefs::kGoogleServicesLastSyncingGaiaId);
+  const GaiaId last_syncing_gaia_id(
+      pref_service->GetString(::prefs::kGoogleServicesLastSyncingGaiaId));
   if (last_syncing_gaia_id.empty()) {
     return;
   }

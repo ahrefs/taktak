@@ -29,6 +29,7 @@
 #include "content/test/test_web_contents.h"
 #include "net/ssl/ssl_connection_status_flags.h"
 #include "services/network/public/cpp/content_security_policy/content_security_policy.h"
+#include "services/network/public/cpp/features.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "third_party/blink/public/common/features.h"
 #include "third_party/blink/public/common/navigation/navigation_params.h"
@@ -479,8 +480,7 @@ TEST_F(NavigationRequestTest, WillFailRequestSetsSSLInfo) {
 TEST_F(NavigationRequestTest, SharedStorageWritable) {
   base::test::ScopedFeatureList feature_list;
   feature_list.InitWithFeatures(
-      /*enabled_features=*/{blink::features::kSharedStorageAPI,
-                            blink::features::kSharedStorageAPIM118,
+      /*enabled_features=*/{network::features::kSharedStorageAPI,
                             blink::features::kFencedFrames},
       /*disabled_features=*/{});
 
@@ -530,7 +530,7 @@ TEST_F(NavigationRequestTest, SharedStorageWritable) {
       static_cast<RenderFrameHostImpl*>(fenced_frame_root)->frame_tree_node();
   FencedFrameConfig new_config = FencedFrameConfig(GURL("about:blank"));
   new_config.AddEffectiveEnabledPermissionForTesting(
-      blink::mojom::PermissionsPolicyFeature::kSharedStorage);
+      network::mojom::PermissionsPolicyFeature::kSharedStorage);
   FencedFrameProperties new_props = FencedFrameProperties(new_config);
   fenced_frame_node->set_fenced_frame_properties(new_props);
   fenced_frame_root->ResetPermissionsPolicy({});
@@ -780,7 +780,7 @@ TEST_F(NavigationRequestTest, RuntimeFeatureStateStorageKey) {
 
     if (disable_sp) {
       request->GetMutableRuntimeFeatureStateContext()
-          .SetDisableThirdPartyStoragePartitioning2Enabled(true);
+          .SetDisableThirdPartyStoragePartitioning3Enabled(true);
     }
 
     navigation->ReadyToCommit();
@@ -1160,7 +1160,7 @@ class OriginTrialsControllerDelegateMock
       const base::span<const std::string> header_tokens,
       const base::Time current_time,
       std::optional<ukm::SourceId> source_id) override {
-    NOTREACHED_IN_MIGRATION() << "not used by test";
+    NOTREACHED() << "not used by test";
   }
   bool IsFeaturePersistedForOrigin(const url::Origin& origin,
                                    const url::Origin& partition_origin,
@@ -1227,8 +1227,6 @@ TEST_F(PersistentOriginTrialNavigationRequestTest,
       "SI"
       "6ICJGcm9idWxhdGVQZXJzaXN0ZW50IiwgImV4cGlyeSI6IDIwMDAwMDAwMDB9";
 
-  base::test::ScopedFeatureList scoped_feature_list;
-  scoped_feature_list.InitAndEnableFeature(features::kPersistentOriginTrials);
   blink::ScopedTestOriginTrialPolicy origin_trial_policy_;
 
   const GURL kUrl = GURL("https://example.com");

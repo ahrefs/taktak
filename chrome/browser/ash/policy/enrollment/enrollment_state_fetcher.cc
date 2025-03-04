@@ -853,8 +853,6 @@ class EnrollmentStateFetcherImpl : public EnrollmentStateFetcher {
 };
 
 // This implements a strict sequence of asynchronous calls:
-//   - synchronize clock
-//   - check embargo date
 //   - retrieve device identifiers (brand code and serial number)
 //   - PSM OPRF
 //   - PSM Query
@@ -889,6 +887,7 @@ class EnrollmentStateFetcherImpl::Sequence {
                                       context_.rlz_brand_code,
                                       context_.serial_number)) {
       // Skip enrollment if serial number or brand code are missing.
+      // This is expected to happen for prototype devices, for instance.
       return ReportResult(AutoEnrollmentResult::kNoEnrollment);
     }
 
@@ -903,6 +902,11 @@ class EnrollmentStateFetcherImpl::Sequence {
     ReportStepDurationAndResetTimer(kUMASuffixOwnershipCheck);
     base::UmaHistogramEnumeration(kUMAStateDeterminationOwnershipStatus,
                                   status);
+    if (local_state_->GetBoolean(prefs::kEnrollmentRecoveryRequired)) {
+      base::UmaHistogramEnumeration(
+          kUMAStateDeterminationOwnershipStatusDuringEnrollmentRecovery,
+          status);
+    }
     if (status ==
         ash::DeviceSettingsService::OwnershipStatus::kOwnershipUnknown) {
       LOG(ERROR) << "Device ownership is unknown. Skipping enrollment";
@@ -968,13 +972,13 @@ class EnrollmentStateFetcherImpl::Sequence {
       query_.StoreResponse(local_state_, result.value());
     }
 
-    if (AutoEnrollmentTypeChecker::IsFREEnabled()) {
+    if (AutoEnrollmentTypeChecker::AreFREStateKeysSupported()) {
       state_keys_.Retrieve(context_.state_key_broker,
                            base::BindOnce(&Sequence::OnStateKeyRetrieved,
                                           weak_factory_.GetWeakPtr()));
     } else {
-      LOG(WARNING) << "Forced re-enrollment is not enabled. No need to "
-                      "retrieve a re-enrollment (a.k.a. state) key.";
+      LOG(WARNING)
+          << "State keys are not supported, this is expected on ChromeOS Flex.";
       OnStateKeyRetrieved(std::nullopt);
     }
   }
@@ -989,26 +993,12 @@ class EnrollmentStateFetcherImpl::Sequence {
     if (state_key.has_value()) {
       context_.state_key = state_key.value();
     } else {
-      switch (state_key.error()) {
-        case ServerBackedStateKeysBroker::ErrorType::kMissingIdentifiers:
-          // Missing identifiers is typically a permanent error, hence we
-          // proceed to attempt state retrieval with just serial number
-          // and brand code.
-          LOG(WARNING)
-              << "Failed to obtain state keys due to missing identifiers";
-          context_.state_key.reset();
-          break;
-        case ServerBackedStateKeysBroker::ErrorType::kCommunicationError:
-        case ServerBackedStateKeysBroker::ErrorType::kInvalidResponse:
-          LOG(ERROR) << "Failed to obtain state keys. Error: "
-                     << static_cast<int>(state_key.error());
-          // These errors are typically transient, hence we block here to
-          // enforce a retry and avoid potential FRE escapes.
-          return ReportResult(
-              base::unexpected(AutoEnrollmentStateKeysRetrievalError{}));
-        case ServerBackedStateKeysBroker::ErrorType::kNoError:
-          NOTREACHED_IN_MIGRATION();
-      }
+      CHECK(state_key.error() !=
+            ServerBackedStateKeysBroker::ErrorType::kNoError);
+      LOG(ERROR) << "Failed to obtain state keys. Error: "
+                 << static_cast<int>(state_key.error());
+      return ReportResult(
+          base::unexpected(AutoEnrollmentStateKeysRetrievalError{}));
     }
     state_.Request(context_, base::BindOnce(&Sequence::OnStateRequestDone,
                                             weak_factory_.GetWeakPtr()));

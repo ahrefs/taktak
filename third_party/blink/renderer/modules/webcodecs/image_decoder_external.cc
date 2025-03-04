@@ -84,8 +84,8 @@ class ArrayBufferContentsSegmentReader : public SegmentReader {
                                     contents_.DataLength()))) {}
 
   size_t size() const override { return segment_reader_->size(); }
-  size_t GetSomeData(const char*& data, size_t position) const override {
-    return segment_reader_->GetSomeData(data, position);
+  base::span<const uint8_t> GetSomeData(size_t position) const override {
+    return segment_reader_->GetSomeData(position);
   }
   sk_sp<SkData> GetAsSkData() const override {
     return segment_reader_->GetAsSkData();
@@ -232,8 +232,7 @@ ImageDecoderExternal::ImageDecoderExternal(ScriptState* script_state,
       }
       break;
     case V8ImageBufferSource::ContentType::kReadableStream:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   auto buffer_contents =

@@ -4,9 +4,10 @@
 
 #include "components/segmentation_platform/public/features.h"
 
+#include "base/feature_list.h"
 #include "base/strings/strcat.h"
 #include "build/build_config.h"
-#include "components/segmentation_platform/embedder/home_modules/tips_ephemeral_module_constants.h"
+#include "components/segmentation_platform/embedder/home_modules/constants.h"
 
 namespace segmentation_platform::features {
 
@@ -150,7 +151,11 @@ BASE_FEATURE(kSegmentationPlatformComposePromotion,
 
 BASE_FEATURE(kSegmentationPlatformUmaFromSqlDb,
              "SegmentationPlatformUmaFromSqlDb",
+#if !BUILDFLAG(IS_IOS) && !BUILDFLAG(IS_CHROMEOS)
+             base::FEATURE_ENABLED_BY_DEFAULT);
+#else
              base::FEATURE_DISABLED_BY_DEFAULT);
+#endif
 
 BASE_FEATURE(kSegmentationPlatformIosModuleRankerSplitBySurface,
              "SegmentationPlatformIosModuleRankerSplitBySurface",
@@ -164,17 +169,24 @@ BASE_FEATURE(kSegmentationPlatformURLVisitResumptionRanker,
              "SegmentationPlatformURLVisitResumptionRanker",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
+BASE_FEATURE(kSegmentationPlatformEphemeralBottomRank,
+             "SegmentationPlatformEphemeralBottomRank",
+#if BUILDFLAG(IS_IOS)
+             base::FEATURE_DISABLED_BY_DEFAULT);
+#else
+             base::FEATURE_ENABLED_BY_DEFAULT);
+#endif
+
 const char kEphemeralCardRankerForceShowCardParam[] =
     "EphemeralCardRankerForceShowCardParam";
 const char kEphemeralCardRankerForceHideCardParam[] =
     "EphemeralCardRankerForceHideCardParam";
-const char kPriceTrackingPromoForceOverride[] = "price-tracking-promo";
 
 // Feature flag for enabling the Emphemeral Card ranker.
 BASE_FEATURE(kSegmentationPlatformEphemeralCardRanker,
              "SegmentationPlatformEphemeralCardRanker",
-#if BUILDFLAG(IS_IOS)
-             base::FEATURE_DISABLED_BY_DEFAULT);
+#if BUILDFLAG(IS_IOS) || BUILDFLAG(IS_ANDROID)
+             base::FEATURE_ENABLED_BY_DEFAULT);
 #else
              base::FEATURE_DISABLED_BY_DEFAULT);
 #endif
@@ -196,15 +208,19 @@ std::string TipsExperimentTrainEnabled() {
       segmentation_platform::features::kSegmentationPlatformTipsEphemeralCard,
       kTipsEphemeralCardExperimentTrainParam,
       /*default_value=*/
-      base::StrCat(
-          {segmentation_platform::home_modules::kTipsLensSearchVariation, ",",
-           segmentation_platform::home_modules::kTipsSavePasswordsVariation,
-           ",",
-           segmentation_platform::home_modules::
-               kTipsEnhancedSafeBrowsingVariation,
-           ",",
-           segmentation_platform::home_modules::
-               kTipsAddressBarPositionVariation}));
+      base::StrCat({kLensEphemeralModuleSearchVariation, ",",
+                    kSavePasswordsEphemeralModule, ",",
+                    kEnhancedSafeBrowsingEphemeralModule, ",",
+                    kAddressBarPositionEphemeralModule}));
+}
+
+const char kTipsEphemeralCardModuleMaxImpressionCount[] =
+    "TipsEphemeralCardModuleMaxImpressionCount";
+
+int GetTipsEphemeralCardModuleMaxImpressionCount() {
+  return base::GetFieldTrialParamByFeatureAsInt(
+      segmentation_platform::features::kSegmentationPlatformTipsEphemeralCard,
+      kTipsEphemeralCardModuleMaxImpressionCount, /*default_value=*/3);
 }
 
 BASE_FEATURE(kSegmentationSurveyPage,
@@ -218,10 +234,36 @@ BASE_FEATURE(kSegmentationSurveyPage,
 constexpr base::FeatureParam<bool> kSegmentationSurveyInternalsPage{
     &kSegmentationSurveyPage, "survey_internals_page", /*default_value=*/true};
 
-#if BUILDFLAG(IS_ANDROID)
 BASE_FEATURE(kEducationalTipModule,
              "EducationalTipModule",
              base::FEATURE_DISABLED_BY_DEFAULT);
-#endif  // BUILDFLAG(IS_ANDROID)
+constexpr base::FeatureParam<int> kMaxDefaultBrowserCardImpressions{
+    &kEducationalTipModule, "max_default_browser_card_impressions",
+    /*default_value=*/3};
+constexpr base::FeatureParam<int> kMaxTabGroupCardImpressions{
+    &kEducationalTipModule, "max_tab_group_card_impressions",
+    /*default_value=*/10};
+constexpr base::FeatureParam<int> kMaxTabGroupSyncCardImpressions{
+    &kEducationalTipModule, "max_tab_group_sync_card_impressions",
+    /*default_value=*/10};
+constexpr base::FeatureParam<int> kMaxQuickDeleteCardImpressions{
+    &kEducationalTipModule, "max_quick_delete_card_impressions",
+    /*default_value=*/10};
+
+BASE_FEATURE(kAndroidAppIntegrationModule,
+             "AndroidAppIntegrationModule",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+constexpr base::FeatureParam<bool> kMaxAuxiliarySearchForceShow{
+    &kAndroidAppIntegrationModule, "force_card_shown",
+    /*default_value=*/false};
+
+constexpr base::FeatureParam<int> kMaxAuxiliarySearchCardImpressions{
+    &kAndroidAppIntegrationModule, "max_auxiliary_search_card_impressions",
+    /*default_value=*/3};
+
+BASE_FEATURE(kSegmentationPlatformFedCmUser,
+             "SegmentationPlatformFedCmUser",
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 }  // namespace segmentation_platform::features

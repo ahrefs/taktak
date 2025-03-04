@@ -51,18 +51,22 @@ public class DownloadController {
                 downloadInfo.getFilePath(), downloadInfo.getMimeType());
         if (tab == null
                 || !PdfUtils.shouldOpenPdfInline(tab.isIncognito())
-                || !downloadInfo.getMimeType().equals(MimeTypeUtils.PDF_MIME_TYPE)) {
+                || !downloadInfo.getMimeType().equals(MimeTypeUtils.PDF_MIME_TYPE)
+                || !downloadInfo.getIsTransient()) {
             return;
         }
         NativePage nativePage = tab.getNativePage();
         if (nativePage == null || !nativePage.isPdf()) {
             return;
         }
-        assert nativePage instanceof PdfPage;
-        ((PdfPage) nativePage)
-                .onDownloadComplete(
-                        downloadInfo.getFileName(), downloadInfo.getFilePath(), isDownloadSafe);
-        tab.updateTitle();
+        // The PdfPage may become a FrozenNativePage while downloading.
+        // Need to check before cast to PdfPage.
+        if (nativePage instanceof PdfPage) {
+            ((PdfPage) nativePage)
+                    .onDownloadComplete(
+                            downloadInfo.getFileName(), downloadInfo.getFilePath(), isDownloadSafe);
+            tab.updateTitle();
+        }
     }
 
     /**
@@ -113,10 +117,10 @@ public class DownloadController {
     @CalledByNative
     private static void enqueueAndroidDownloadManagerRequest(
             GURL url,
-            String userAgent,
-            String fileName,
-            String mimeType,
-            String cookie,
+            @JniType("std::string") String userAgent,
+            @JniType("std::u16string") String fileName,
+            @JniType("std::string") String mimeType,
+            @JniType("std::string") String cookie,
             GURL referrer) {
         DownloadInfo downloadInfo =
                 new DownloadInfo.Builder()

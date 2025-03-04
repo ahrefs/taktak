@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 // This file contains some tests for TCPClientSocket.
 // transport_client_socket_unittest.cc contans some other tests that
 // are common for TCP and other types of sockets.
@@ -71,7 +76,9 @@ class TCPClientSocketTest
 #endif  // BUILDFLAG(IS_WIN)
   }
 
-  ~TCPClientSocketTest() override = default;
+  ~TCPClientSocketTest() override {
+    base::PowerMonitor::GetInstance()->ShutdownForTesting();
+  }
 
   void Suspend() { power_monitor_source_.Suspend(); }
   void Resume() { power_monitor_source_.Resume(); }

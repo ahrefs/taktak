@@ -19,13 +19,14 @@ import {I18nMixin} from 'chrome://resources/ash/common/cr_elements/i18n_mixin.js
 import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 
 import {DeepLinkingMixin} from '../common/deep_linking_mixin.js';
-import {isRevampWayfindingEnabled, shouldShowMultitaskingInPersonalization} from '../common/load_time_booleans.js';
 import {RouteObserverMixin} from '../common/route_observer_mixin.js';
 import {Section} from '../mojom-webui/routes.mojom-webui.js';
 import {Setting} from '../mojom-webui/setting.mojom-webui.js';
-import {Route, routes} from '../router.js';
+import type {Route} from '../router.js';
+import {routes} from '../router.js';
 
-import {PersonalizationHubBrowserProxy, PersonalizationHubBrowserProxyImpl} from './personalization_hub_browser_proxy.js';
+import type {PersonalizationHubBrowserProxy} from './personalization_hub_browser_proxy.js';
+import {PersonalizationHubBrowserProxyImpl} from './personalization_hub_browser_proxy.js';
 import {getTemplate} from './personalization_page.html.js';
 
 const SettingsPersonalizationPageElementBase =
@@ -49,20 +50,6 @@ export class SettingsPersonalizationPageElement extends
         readOnly: true,
       },
 
-      isRevampWayfindingEnabled_: {
-        type: Boolean,
-        value() {
-          return isRevampWayfindingEnabled();
-        },
-      },
-
-      shouldShowMultitaskingInPersonalization_: {
-        type: Boolean,
-        value() {
-          return shouldShowMultitaskingInPersonalization();
-        },
-      },
-
       /**
        * Used by DeepLinkingMixin to focus this page's deep links.
        */
@@ -75,8 +62,6 @@ export class SettingsPersonalizationPageElement extends
     };
   }
 
-  private isRevampWayfindingEnabled_: boolean;
-  private readonly shouldShowMultitaskingInPersonalization_: boolean;
   private personalizationHubBrowserProxy_: PersonalizationHubBrowserProxy;
   private section_: Section;
 
@@ -85,12 +70,6 @@ export class SettingsPersonalizationPageElement extends
 
     this.personalizationHubBrowserProxy_ =
         PersonalizationHubBrowserProxyImpl.getInstance();
-  }
-
-  private getPersonalizationRowIcon_(): string {
-    return this.isRevampWayfindingEnabled_ ?
-        'os-settings:personalization-revamp' :
-        '';
   }
 
   private openPersonalizationHub_(): void {

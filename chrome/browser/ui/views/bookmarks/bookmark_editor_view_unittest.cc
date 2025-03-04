@@ -6,8 +6,10 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "base/memory/raw_ptr.h"
+#include "base/strings/strcat.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/bind.h"
@@ -84,20 +86,18 @@ class BookmarkEditorViewTest : public testing::Test {
   }
 
   void SetURLText(const std::u16string& text) {
-    if (editor_->details_.type != BookmarkEditor::EditDetails::NEW_FOLDER)
+    if (editor_->details_.type != BookmarkEditor::EditDetails::NEW_FOLDER) {
       editor_->url_tf_->SetText(text);
+    }
   }
 
-  std::u16string GetURLText() const {
-    if (editor_->details_.type != BookmarkEditor::EditDetails::NEW_FOLDER)
-      return editor_->url_tf_->GetText();
-
-    return std::u16string();
+  std::u16string_view GetURLText() const {
+    return (editor_->details_.type == BookmarkEditor::EditDetails::NEW_FOLDER)
+               ? std::u16string_view()
+               : editor_->url_tf_->GetText();
   }
 
-  void ApplyEdits() {
-    editor_->ApplyEdits();
-  }
+  void ApplyEdits() { editor_->ApplyEdits(); }
 
   void ApplyEdits(BookmarkEditorView::EditorNode* node) {
     editor_->ApplyEdits(node);
@@ -113,14 +113,13 @@ class BookmarkEditorViewTest : public testing::Test {
   }
 
   bool URLTFHasParent() {
-    if (editor_->details_.type == BookmarkEditor::EditDetails::NEW_FOLDER)
+    if (editor_->details_.type == BookmarkEditor::EditDetails::NEW_FOLDER) {
       return false;
+    }
     return editor_->url_tf_->parent();
   }
 
-  void ExpandAndSelect() {
-    editor_->ExpandAndSelect();
-  }
+  void ExpandAndSelect() { editor_->ExpandAndSelect(); }
 
   void DeleteNode(base::OnceCallback<bool(const bookmarks::BookmarkNode* node)>
                       non_empty_folder_confirmation_cb) {
@@ -373,7 +372,7 @@ TEST_F(BookmarkEditorViewTest, EditKeepsScheme) {
                BookmarkEditorView::SHOW_TREE);
 
   // We expect only the trailing / to be trimmed when userinfo is present
-  EXPECT_EQ(ASCIIToUTF16(kUrl.spec()), GetURLText() + u"/");
+  EXPECT_EQ(ASCIIToUTF16(kUrl.spec()), base::StrCat({GetURLText(), u"/"}));
 
   const std::u16string& kTitle = u"EditingKeepsScheme";
   SetTitleText(kTitle);

@@ -12,7 +12,9 @@
 #include "base/token.h"
 #include "base/uuid.h"
 #include "build/build_config.h"
+#include "components/sync/base/collaboration_id.h"
 #include "components/tab_groups/tab_group_id.h"
+#include "google_apis/gaia/gaia_id.h"
 
 namespace tab_groups {
 
@@ -24,12 +26,16 @@ using LocalTabGroupID = base::Token;
 using LocalTabID = int;
 using LocalTabGroupID = tab_groups::TabGroupId;
 #else
-using LocalTabID = base::Token;
+using LocalTabID = int32_t;
 using LocalTabGroupID = tab_groups::TabGroupId;
 #endif
 
 typedef std::variant<base::Uuid, LocalTabGroupID> EitherGroupID;
 typedef std::variant<base::Uuid, LocalTabID> EitherTabID;
+
+// TODO(crbug.com/380406615): migrate to syncer::CollaborationId all the call
+// sites.
+using CollaborationId = syncer::CollaborationId;
 
 // Base context for tab group actions. Platforms can subclass this to pass
 // additional context such as a browser window.
@@ -41,11 +47,15 @@ struct TabGroupActionContext {
 // client.
 // GENERATED_JAVA_ENUM_PACKAGE: org.chromium.components.tab_group_sync
 enum class TriggerSource {
+  // The source is unknown. Typically the source is always known, but it might
+  // get lost during plumbing down the line in certain situations.
+  UNKNOWN = 0,
+
   // The source is a remote chrome client.
-  REMOTE = 0,
+  REMOTE = 1,
 
   // The source is the local chrome client.
-  LOCAL = 1,
+  LOCAL = 2,
 };
 
 // Whether the saved tab group is for share or for sync.
@@ -55,6 +65,25 @@ enum class SavedTabGroupType {
 
   // The tab group is shared.
   SHARED = 1,
+};
+
+// The state of the sync bridge wrt sign-in / sign-out, i.e. whether the bridge
+// has completed initial merge and isn't in the process of disabling sync.
+// Interested consumers might want to ignore the incoming updates from sync
+// based on this enum.
+enum class SyncBridgeUpdateType {
+  // The bridge is currently undergoing initial merge. After this stage, it will
+  // transition to `kDefaultState`.
+  kInitialMerge = 0,
+
+  // The bridge is currently in the process of disabling, i.e.
+  // ApplyDisableSyncChanges has been invoked. After this stage, it will
+  // transition to `kDefaultState`.
+  kDisableSync = 1,
+
+  // The bridge is not currently doing an initial merge or disable sync
+  // operation.
+  kDefaultState = 2,
 };
 
 // LINT.IfChange(OpeningSource)
@@ -83,10 +112,17 @@ enum class OpeningSource {
   // Desktop only. Triggered when a unsaved group from v1 implementation is
   // migrated to autosave.
   kAutoSaveOnSessionRestoreForV1Group = 7,
+  // The group was connected as a part of sharing a group.
+  kConnectOnGroupShare = 8,
+  // The group was connected as a part of un-sharing a group.
+  kConnectOnGroupUnShare = 9,
+  // Desktop only. The group was open from user clicking on the action button of
+  // the toast message.
+  kOpenedFromToastAction = 10,
 
-  kMaxValue = kAutoSaveOnSessionRestoreForV1Group,
+  kMaxValue = kOpenedFromToastAction,
 };
-// LINT.ThenChange(//tools/metrics/histograms/metadata/tab/enums.xml:GroupOpenReason)
+// LINT.ThenChange(//tools/metrics/histograms/metadata/tab/enums.xml:GroupOpeningSource)
 
 // LINT.IfChange(ClosingSource)
 // Specifies the source of an action that closed a tab group.
@@ -112,9 +148,15 @@ enum class ClosingSource {
   kCloseOtherTabs = 7,
   // iOS only. Triggered when user closes the last tab in a group in tab strip.
   kCloseLastTab = 8,
-  kMaxValue = kCloseLastTab,
+  // The local group was disconnected from its sync group because the group was
+  // shared.
+  kDisconnectOnGroupShared = 9,
+  // The local group was disconnected from its sync group because the group was
+  // un-shared.
+  kDisconnectOnGroupUnShared = 10,
+  kMaxValue = kDisconnectOnGroupUnShared,
 };
-// LINT.ThenChange(//tools/metrics/histograms/metadata/tab/enums.xml:GroupCloseReason)
+// LINT.ThenChange(//tools/metrics/histograms/metadata/tab/enums.xml:GroupClosingSource)
 
 // LINT.IfChange(TabGroupEvent)
 // Various types of mutation events associated with tab groups and tabs.
@@ -149,6 +191,15 @@ struct EventDetails {
   ~EventDetails();
   EventDetails(const EventDetails& other);
   EventDetails& operator=(const EventDetails& other);
+};
+
+// Struct to hold attribution information for a shared tab or tab group.
+struct SharedAttribution {
+  // Obfuscated Gaia ID of the user who created the group or tab.
+  GaiaId created_by;
+
+  // Obfuscated Gaia ID of the user who last updated the group or tab.
+  GaiaId updated_by;
 };
 
 }  // namespace tab_groups

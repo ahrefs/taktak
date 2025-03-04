@@ -16,7 +16,6 @@
 #include "ash/resources/vector_icons/vector_icons.h"
 #include "ash/strings/grit/ash_strings.h"
 #include "ash/style/ash_color_id.h"
-#include "ash/style/ash_color_provider.h"
 #include "ash/style/color_util.h"
 #include "ash/system/holding_space/holding_space_util.h"
 #include "base/functional/bind.h"
@@ -114,6 +113,8 @@ class BasePinButton : public views::View {
     SetPreferredSize(size);
     SetBackground(holding_space_util::CreateCircleBackground(
         cros_tokens::kCrosSysSystemBaseElevated, kButtonBackgroundDiameter));
+
+    SetTooltipText(accessible_name);
 
     auto layout = std::make_unique<views::BoxLayout>(
         views::BoxLayout::Orientation::kVertical);
@@ -245,7 +246,7 @@ class LoginPinView::DigitPinButton : public BasePinButton {
     label_->SetFontList(base_font_list.Derive(8 /*size_delta*/,
                                               gfx::Font::FontStyle::NORMAL,
                                               gfx::Font::Weight::NORMAL));
-    label_->SetEnabledColorId(kColorAshIconColorPrimary);
+    label_->SetEnabledColor(kColorAshIconColorPrimary);
 
     if (show_sub_label) {
       sub_label_ = AddChildView(new views::Label(
@@ -256,7 +257,7 @@ class LoginPinView::DigitPinButton : public BasePinButton {
       sub_label_->SetFontList(
           base_font_list.Derive(-1 /*size_delta*/, gfx::Font::FontStyle::NORMAL,
                                 gfx::Font::Weight::NORMAL));
-      sub_label_->SetEnabledColorId(kColorAshTextColorSecondary);
+      sub_label_->SetEnabledColor(kColorAshTextColorSecondary);
     }
   }
 
@@ -301,10 +302,6 @@ class LoginPinView::BackspacePinButton : public BasePinButton {
 
   views::View* GetTooltipHandlerForPoint(const gfx::Point& point) override {
     return this;
-  }
-
-  std::u16string GetTooltipText(const gfx::Point& p) const override {
-    return GetViewAccessibility().GetCachedName();
   }
 
   void OnEnabledChanged() {
@@ -544,11 +541,11 @@ LoginPinView::LoginPinView(Style keyboard_style,
 LoginPinView::~LoginPinView() = default;
 
 void LoginPinView::NotifyAccessibilityLocationChanged() {
-  this->NotifyAccessibilityEvent(ax::mojom::Event::kLocationChanged,
-                                 false /*send_native_event*/);
+  this->NotifyAccessibilityEventDeprecated(ax::mojom::Event::kLocationChanged,
+                                           false /*send_native_event*/);
   for (NonAccessibleView* row : rows_) {
-    row->NotifyAccessibilityEvent(ax::mojom::Event::kLocationChanged,
-                                  false /*send_native_event*/);
+    row->NotifyAccessibilityEventDeprecated(ax::mojom::Event::kLocationChanged,
+                                            false /*send_native_event*/);
   }
 }
 

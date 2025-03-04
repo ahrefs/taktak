@@ -59,9 +59,14 @@ void Me2MeHeartbeatServiceClient::CancelPendingRequests() {
 
 void Me2MeHeartbeatServiceClient::OnLegacyHeartbeatResponse(
     HeartbeatResponseCallback callback,
-    const ProtobufHttpStatus& status,
+    const HttpStatus& status,
     std::unique_ptr<apis::v1::HeartbeatResponse> response) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  if (!status.ok()) {
+    OnError(std::move(callback), status);
+    return;
+  }
 
   base::TimeDelta wait_interval =
       base::Seconds(response->set_interval_seconds());
@@ -85,9 +90,14 @@ void Me2MeHeartbeatServiceClient::OnLegacyHeartbeatResponse(
 
 void Me2MeHeartbeatServiceClient::OnSendHeartbeatResponse(
     HeartbeatResponseCallback callback,
-    const ProtobufHttpStatus& status,
+    const HttpStatus& status,
     std::unique_ptr<apis::v1::SendHeartbeatResponse> response) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  if (!status.ok()) {
+    OnError(std::move(callback), status);
+    return;
+  }
 
   base::TimeDelta wait_interval =
       base::Seconds(response->wait_interval_seconds());

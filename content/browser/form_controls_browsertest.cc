@@ -4,8 +4,8 @@
 
 #include "base/files/file_util.h"
 #include "base/path_service.h"
+#include "base/test/scoped_feature_list.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "cc/test/pixel_comparator.h"
 #include "content/public/browser/render_widget_host_view.h"
 #include "content/public/common/content_paths.h"
@@ -39,6 +39,15 @@ namespace content {
 
 class FormControlsBrowserTest : public ContentBrowserTest {
  public:
+  FormControlsBrowserTest() {
+#if BUILDFLAG(IS_ANDROID)
+    // TODO(crbug.com/391378106): On Android the graphite results are different
+    // enough to need separate expected images. Force using ganesh until either
+    // all Android bots are running graphite or these tests support skia gold.
+    feature_list_.InitAndDisableFeature(features::kSkiaGraphite);
+#endif
+  }
+
   void SetUp() override {
     EnablePixelOutput(/*force_device_scale_factor=*/1.f);
     ContentBrowserTest::SetUp();
@@ -140,6 +149,8 @@ class FormControlsBrowserTest : public ContentBrowserTest {
 #endif  // BUILDFLAG(IS_ANDROID)
     return false;
   }
+
+  base::test::ScopedFeatureList feature_list_;
 };
 
 // Checkbox renders differently on Android x86. crbug.com/1238283
@@ -148,7 +159,6 @@ class FormControlsBrowserTest : public ContentBrowserTest {
 #else
 #define MAYBE_Checkbox Checkbox
 #endif
-
 IN_PROC_BROWSER_TEST_F(FormControlsBrowserTest, MAYBE_Checkbox) {
   if (SkipTestForOldAndroidVersions())
     return;
@@ -329,7 +339,15 @@ IN_PROC_BROWSER_TEST_F(FormControlsBrowserTest, Select) {
           /* screenshot_height */ 200);
 }
 
-IN_PROC_BROWSER_TEST_F(FormControlsBrowserTest, MultiSelect) {
+// TODO(crbug.com/377986468) : Flaky on Windows. Seems to lose focus of top
+// <select> in some runs which causes the results to be different from
+// expectations.
+#if BUILDFLAG(IS_WIN)
+#define MAYBE_MultiSelect DISABLED_MultiSelect
+#else
+#define MAYBE_MultiSelect MultiSelect
+#endif
+IN_PROC_BROWSER_TEST_F(FormControlsBrowserTest, MAYBE_MultiSelect) {
   if (SkipTestForOldAndroidVersions())
     return;
 

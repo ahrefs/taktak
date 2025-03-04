@@ -139,10 +139,14 @@ class TabsCloserTest : public PlatformTest {
     TestProfileIOS::Builder builder;
     builder.AddTestingFactory(
         AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
     builder.AddTestingFactory(
         SessionRestorationServiceFactory::GetInstance(),
         TestSessionRestorationService::GetTestingFactory());
+    builder.AddTestingFactory(
+        tab_groups::TabGroupSyncServiceFactory::GetInstance(),
+        tab_groups::TabGroupSyncServiceFactory::GetDefaultFactory());
     builder.AddTestingFactory(IOSChromeTabRestoreServiceFactory::GetInstance(),
                               FakeTabRestoreService::GetTestingFactory());
     builder.AddTestingFactory(
@@ -152,10 +156,6 @@ class TabsCloserTest : public PlatformTest {
 
     fake_tab_group_service_ = static_cast<tab_groups::FakeTabGroupSyncService*>(
         tab_groups::TabGroupSyncServiceFactory::GetForProfile(profile_.get()));
-
-    // Initialize the AuthenticationService.
-    AuthenticationServiceFactory::CreateAndInitializeForBrowserState(
-        profile_.get(), std::make_unique<FakeAuthenticationServiceDelegate>());
 
     scene_state_ = OCMClassMock([SceneState class]);
     OCMStub([scene_state_ sceneSessionID]).andReturn(@(kSceneSessionID));
@@ -594,6 +594,16 @@ TEST_F(TabsCloserTest, GroupedTabs_ClosePolicyAllTabs) {
   WebStateListBuilderFromDescription builder(web_state_list);
   ASSERT_TRUE(builder.BuildWebStateListFromDescription(
       "a b | c [ 0 d e ] f [ 1 g h i ] j", browser()->GetProfile()));
+  tab_groups::TabGroupSyncService* sync_service =
+      tab_groups::TabGroupSyncServiceFactory::GetForProfile(
+          browser()->GetProfile());
+  for (const TabGroup* tab_group : web_state_list->GetGroups()) {
+    tab_groups::SavedTabGroup group(
+        u"title", tab_groups::TabGroupColorId::kBlue, {}, std::nullopt,
+        std::nullopt, tab_group->tab_group_id());
+    sync_service->AddGroup(group);
+  }
+
   // Store the initial groups visual data to compare after Undo.
   const tab_groups::TabGroupVisualData visual_data_0 =
       builder.GetTabGroupForIdentifier('0')->visual_data();
@@ -664,6 +674,16 @@ TEST_F(TabsCloserTest, GroupedTabs_ClosePolicyRegularTabs) {
   WebStateListBuilderFromDescription builder(web_state_list);
   ASSERT_TRUE(builder.BuildWebStateListFromDescription(
       "a b | c [ 0 d e ] f [ 1 g h i ] j", browser()->GetProfile()));
+
+  tab_groups::TabGroupSyncService* sync_service =
+      tab_groups::TabGroupSyncServiceFactory::GetForProfile(
+          browser()->GetProfile());
+  for (const TabGroup* tab_group : web_state_list->GetGroups()) {
+    tab_groups::SavedTabGroup group(
+        u"title", tab_groups::TabGroupColorId::kBlue, {}, std::nullopt,
+        std::nullopt, tab_group->tab_group_id());
+    sync_service->AddGroup(group);
+  }
   // Store the initial groups visual data to compare after Undo.
   const tab_groups::TabGroupVisualData visual_data_0 =
       builder.GetTabGroupForIdentifier('0')->visual_data();
@@ -750,6 +770,10 @@ TEST_F(TabsCloserTest, UndoCloseTabs_Reentrancy) {
 // Checks that close all/undo is correctly updating the TabGroupSyncService,
 // both when it hasn't been modified and when it has been modified.
 TEST_F(TabsCloserTest, UndoCloseTabs_SavedTabs) {
+  if (!IsTabGroupInGridEnabled()) {
+    // Disabled on iPadOS 16.
+    return;
+  }
   base::test::ScopedFeatureList feature_list;
   feature_list.InitWithFeatures(
       {kTabGroupsIPad, kModernTabStrip, kTabGroupSync}, {});

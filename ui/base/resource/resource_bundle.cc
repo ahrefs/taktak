@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include <algorithm>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -18,6 +19,7 @@
 #include <vector>
 
 #include "base/command_line.h"
+#include "base/containers/span.h"
 #include "base/debug/alias.h"
 #include "base/files/file.h"
 #include "base/files/file_util.h"
@@ -28,7 +30,6 @@
 #include "base/numerics/byte_conversions.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/path_service.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
@@ -90,7 +91,7 @@ const unsigned char kPngDataChunkType[4] = { 'I', 'D', 'A', 'T' };
 const char kPakFileExtension[] = ".pak";
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // Pointers to the functions |lottie::ParseLottieAsStillImage| and
 // |lottie::ParseLottieAsThemedStillImage|, so that dependencies used by those
 // functions do not need to be included directly in ui/base.
@@ -102,7 +103,6 @@ ResourceBundle::LottieThemedImageParseFunction
 
 ResourceBundle* g_shared_instance_ = nullptr;
 
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
 base::FilePath GetResourcesPakFilePath(const std::string& pak_name) {
   base::FilePath path;
   if (base::PathService::Get(base::DIR_ASSETS, &path))
@@ -115,22 +115,12 @@ base::FilePath GetResourcesPakFilePath(const std::string& pak_name) {
   return base::FilePath(pak_name.c_str());
 #endif  // BUILDFLAG(IS_WIN)
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_LACROS)
 
 SkBitmap CreateEmptyBitmap() {
   SkBitmap bitmap;
   bitmap.allocN32Pixels(32, 32);
   bitmap.eraseARGB(255, 255, 255, 0);
   return bitmap;
-}
-
-// Helper function for determining whether a resource is gzipped.
-bool HasGzipHeader(std::string_view data) {
-  net::GZipHeader header;
-  const char* header_end = nullptr;
-  net::GZipHeader::Status header_status =
-      header.ReadMore(data.data(), data.length(), &header_end);
-  return header_status == net::GZipHeader::COMPLETE_HEADER;
 }
 
 // Helper function for determining whether a resource is brotli compressed.
@@ -193,11 +183,12 @@ bool BrotliDecompress(std::string_view input, OutputBufferType output) {
 
 // Helper function for decompressing resource.
 void DecompressIfNeeded(std::string_view data, OutputBufferType output) {
-  if (!data.empty() && HasGzipHeader(data)) {
+  if (!data.empty() &&
+      net::GZipHeader::HasGZipHeader(base::as_byte_span(data))) {
     TRACE_EVENT0("ui", "DecompressIfNeeded::GzipUncompress");
     const uint32_t uncompressed_size = compression::GetUncompressedSize(data);
     bool success = compression::GzipUncompress(
-        base::as_bytes(base::make_span(data)),
+        base::as_byte_span(data),
         GetBufferForWriting(output, uncompressed_size));
     DCHECK(success);
   } else if (!data.empty() && HasBrotliHeader(data)) {
@@ -206,7 +197,7 @@ void DecompressIfNeeded(std::string_view data, OutputBufferType output) {
     DCHECK(success);
   } else {
     base::span<uint8_t> dest = GetBufferForWriting(output, data.size());
-    base::ranges::copy(data, dest.data());
+    std::ranges::copy(data, dest.data());
   }
 }
 
@@ -362,7 +353,7 @@ ResourceBundle& ResourceBundle::GetSharedInstance() {
   return *g_shared_instance_;
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // static
 void ResourceBundle::SetLottieParsingFunctions(
     LottieImageParseFunction parse_lottie_as_still_image,
@@ -478,7 +469,19 @@ std::string ResourceBundle::LoadLocaleResources(const std::string& pref_locale,
                   std::size(path_copy));
     base::debug::Alias(path_copy);
 #endif  // BUILDFLAG(IS_WIN)
-    CHECK(false);
+
+    // Collect diagnostic info for https://crbug.com/394631579 .
+#if BUILDFLAG(IS_MAC)
+    SCOPED_CRASH_KEY_STRING32("LoadLocaleResources", "pref_locale",
+                              pref_locale);
+    SCOPED_CRASH_KEY_STRING32("LoadLocaleResources", "app_locale", app_locale);
+    SCOPED_CRASH_KEY_STRING1024("LoadLocaleResources", "override_filepath",
+                                GetOverriddenPakPath().AsUTF8Unsafe());
+    SCOPED_CRASH_KEY_STRING1024("LoadLocaleResources", "locale_filepath",
+                                locale_file_path.AsUTF8Unsafe());
+#endif  // BUILDFLAG(IS_MAC)
+
+    NOTREACHED();
   }
 
   locale_resources_data_ = std::move(data_pack);
@@ -621,7 +624,7 @@ std::optional<ResourceBundle::LottieData> ResourceBundle::GetLottieData(
   return result;
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 const ui::ImageModel& ResourceBundle::GetThemedLottieImageNamed(
     int resource_id) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
@@ -684,7 +687,8 @@ base::RefCountedMemory* ResourceBundle::LoadDataResourceBytesForScale(
   if (data.empty())
     return nullptr;
 
-  if (HasGzipHeader(data) || HasBrotliHeader(data)) {
+  if (net::GZipHeader::HasGZipHeader(base::as_byte_span(data)) ||
+      HasBrotliHeader(data)) {
     base::RefCountedString* bytes_string = new base::RefCountedString();
     DecompressIfNeeded(data, &bytes_string->as_string());
     return bytes_string;
@@ -792,7 +796,7 @@ bool ResourceBundle::IsGzipped(int resource_id) const {
   if (!raw_data.data())
     return false;
 
-  return HasGzipHeader(raw_data);
+  return net::GZipHeader::HasGZipHeader(base::as_byte_span(raw_data));
 }
 
 bool ResourceBundle::IsBrotli(int resource_id) const {
@@ -986,12 +990,11 @@ void ResourceBundle::InitSharedInstance(Delegate* delegate) {
 
 void ResourceBundle::FreeImages() {
   images_.clear();
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   image_models_.clear();
 #endif
 }
 
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
 void ResourceBundle::LoadChromeResources() {
   // Always load the 1x data pack first as the 2x data pack contains both 1x and
   // 2x images. The 1x data pack only has 1x images, thus passes in an accurate
@@ -1006,7 +1009,6 @@ void ResourceBundle::LoadChromeResources() {
         GetResourcesPakFilePath("chrome_200_percent.pak"), k200Percent);
   }
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_LACROS)
 
 void ResourceBundle::AddDataPackFromPathInternal(
     const base::FilePath& path,
@@ -1069,7 +1071,7 @@ void ResourceBundle::InitDefaultFontList() {
 
 gfx::ImageSkia ResourceBundle::CreateImageSkia(int resource_id) {
   DCHECK(!resource_handles_.empty()) << "Missing call to SetResourcesDataDLL?";
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   std::optional<LottieData> data = GetLottieData(resource_id);
   if (data) {
     return (*g_parse_lottie_as_still_image_)(std::move(*data));
@@ -1164,7 +1166,7 @@ gfx::Image& ResourceBundle::GetEmptyImage() {
   return empty_image_;
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 const ui::ImageModel& ResourceBundle::GetEmptyImageModel() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 

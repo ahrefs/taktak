@@ -47,6 +47,7 @@ namespace content {
 class BrowserContext;
 class PageDelegate;
 class RenderFrameHostDelegate;
+class RenderFrameProxyHost;
 class RenderViewHostDelegate;
 class RenderViewHostImpl;
 class RenderFrameHostManager;
@@ -199,6 +200,16 @@ class CONTENT_EXPORT FrameTree {
     // Returns this FrameTree's opener if this FrameTree represents a
     // picture-in-picture window.
     virtual FrameTree* GetPictureInPictureOpenerFrameTree() = 0;
+
+    // Called when the visibility of the RenderFrameProxyHost changes.
+    // This method should only handle visibility for inner WebContents and
+    // will eventually notify all the RenderWidgetHostViews belonging to that
+    // WebContents. If this is not an inner WebContents or the inner WebContents
+    // FrameTree root does not match `render_frame_proxy_host` FrameTreeNode it
+    // should return false.
+    virtual bool OnRenderFrameProxyVisibilityChanged(
+        RenderFrameProxyHost* render_frame_proxy_host,
+        blink::mojom::FrameVisibility visibility) = 0;
   };
 
   // Type of FrameTree instance.
@@ -219,6 +230,14 @@ class CONTENT_EXPORT FrameTree {
     // frame will be kFencedFrame, but the RenderFrameHosts inside of it will
     // have their lifecycle state indicate that they are bfcached.
     kFencedFrame,
+
+    // This FrameTree is used to host the contents of a guest page. Guests are
+    // kinds of embedded pages, but their semantics are mostly delegated outside
+    // of the content/ layer. See components/guest_view/README.md.
+    // The implementation of guests is being migrated from using a separate
+    // WebContents to using this FrameTree Type. This type is used with the
+    // `features::kGuestViewMPArch` flag.
+    kGuest,
   };
 
   // A set of delegates are remembered here so that we can create
@@ -263,6 +282,7 @@ class CONTENT_EXPORT FrameTree {
   bool is_primary() const { return type_ == Type::kPrimary; }
   bool is_prerendering() const { return type_ == Type::kPrerender; }
   bool is_fenced_frame() const { return type_ == Type::kFencedFrame; }
+  bool is_guest() const { return type_ == Type::kGuest; }
 
   Delegate* delegate() { return delegate_; }
 
@@ -599,9 +619,8 @@ class CONTENT_EXPORT FrameTree {
   // A map to store RenderViewHosts, keyed by SiteInstanceGroup ID.
   // This map does not cover all RenderViewHosts in a FrameTree. See
   // `speculative_render_view_host_`.
-  using RenderViewHostMap = std::unordered_map<RenderViewHostMapId,
-                                               RenderViewHostImpl*,
-                                               RenderViewHostMapId::Hasher>;
+  using RenderViewHostMap =
+      std::unordered_map<RenderViewHostMapId, RenderViewHostImpl*>;
   // Map of RenderViewHostMapId to RenderViewHost. This allows us to look up the
   // RenderViewHost for a given SiteInstance when creating RenderFrameHosts.
   // Each RenderViewHost maintains a refcount and is deleted when there are no

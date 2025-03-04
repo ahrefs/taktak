@@ -30,10 +30,12 @@
 #import "components/sync/base/user_selectable_type.h"
 #import "components/sync/test/test_sync_service.h"
 #import "components/webauthn/core/browser/test_passkey_model.h"
+#import "google_apis/gaia/gaia_id.h"
 #import "ios/chrome/browser/credential_provider/model/credential_provider_util.h"
 #import "ios/chrome/browser/credential_provider/model/features.h"
 #import "ios/chrome/browser/favicon/model/favicon_loader.h"
 #import "ios/chrome/browser/shared/model/profile/test/test_profile_ios.h"
+#import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/common/app_group/app_group_constants.h"
 #import "ios/chrome/common/credential_provider/constants.h"
 #import "ios/chrome/common/credential_provider/credential.h"
@@ -156,6 +158,10 @@ class CredentialProviderServiceTest : public PlatformTest {
                                   /*affiliated_match_helper=*/nullptr);
     testing_pref_service_.registry()->RegisterBooleanPref(
         password_manager::prefs::kCredentialsEnableService, true);
+    testing_pref_service_.registry()->RegisterBooleanPref(
+        password_manager::prefs::kCredentialsEnablePasskeys, true);
+    testing_pref_service_.registry()->RegisterBooleanPref(
+        password_manager::prefs::kAutomaticPasskeyUpgrades, true);
   }
 
   void TearDown() override {
@@ -168,6 +174,11 @@ class CredentialProviderServiceTest : public PlatformTest {
   }
 
   void CreateCredentialProviderService(bool with_account_store = false) {
+    // Make sure to shut down the previous instance before creating a new one.
+    if (credential_provider_service_) {
+      credential_provider_service_->Shutdown();
+    }
+
     credential_provider_service_ = std::make_unique<CredentialProviderService>(
         &testing_pref_service_, password_store_,
         with_account_store ? account_password_store_ : nullptr,
@@ -299,6 +310,8 @@ TEST_F(CredentialProviderServiceTest, AccountChange) {
   CreateCredentialProviderService();
 
   EXPECT_FALSE([app_group::GetGroupUserDefaults()
+      stringForKey:AppGroupUserDefaultsCredentialProviderManagedUserID()]);
+  EXPECT_FALSE([app_group::GetGroupUserDefaults()
       stringForKey:AppGroupUserDefaultsCredentialProviderUserID()]);
 
   // Enable sync for managed account.
@@ -315,13 +328,22 @@ TEST_F(CredentialProviderServiceTest, AccountChange) {
                                                signin::ConsentLevel::kSync);
   base::RunLoop().RunUntilIdle();
 
+  EXPECT_NSEQ(
+      [app_group::GetGroupUserDefaults()
+          stringForKey:AppGroupUserDefaultsCredentialProviderManagedUserID()],
+      core_account.gaia.ToNSString());
   EXPECT_NSEQ([app_group::GetGroupUserDefaults()
                   stringForKey:AppGroupUserDefaultsCredentialProviderUserID()],
-              base::SysUTF8ToNSString(core_account.gaia));
+              core_account.gaia.ToNSString());
 
   identity_test_environment_.ClearPrimaryAccount();
   base::RunLoop().RunUntilIdle();
 
+  sync_service_.SetSignedOut();
+  sync_service_.FireStateChanged();
+
+  EXPECT_FALSE([app_group::GetGroupUserDefaults()
+      stringForKey:AppGroupUserDefaultsCredentialProviderManagedUserID()]);
   EXPECT_FALSE([app_group::GetGroupUserDefaults()
       stringForKey:AppGroupUserDefaultsCredentialProviderUserID()]);
 }
@@ -353,7 +375,7 @@ TEST_F(CredentialProviderServiceTest, PasswordCreationPreference) {
   // NSUserDefaults value is also true.
   EXPECT_TRUE([[app_group::GetGroupUserDefaults()
       objectForKey:
-          AppGroupUserDefaulsCredentialProviderSavingPasswordsEnabled()]
+          AppGroupUserDefaultsCredentialProviderSavingPasswordsEnabled()]
       boolValue]);
 
   // Change the pref value to false.
@@ -363,7 +385,7 @@ TEST_F(CredentialProviderServiceTest, PasswordCreationPreference) {
   // Make sure the NSUserDefaults value is now false.
   EXPECT_FALSE([[app_group::GetGroupUserDefaults()
       objectForKey:
-          AppGroupUserDefaulsCredentialProviderSavingPasswordsEnabled()]
+          AppGroupUserDefaultsCredentialProviderSavingPasswordsEnabled()]
       boolValue]);
 }
 
@@ -373,8 +395,8 @@ TEST_F(CredentialProviderServiceTest, PasswordSyncStoredEmail) {
   // Start by signing in and turning sync on.
   CoreAccountInfo account;
   account.email = "foo@gmail.com";
-  account.gaia = "gaia";
-  account.account_id = CoreAccountId::FromGaiaId("gaia");
+  account.gaia = GaiaId("gaia");
+  account.account_id = CoreAccountId::FromGaiaId(GaiaId("gaia"));
   sync_service_.SetSignedIn(signin::ConsentLevel::kSync, account);
 
   CreateCredentialProviderService();
@@ -403,8 +425,8 @@ TEST_F(CredentialProviderServiceTest, SignedInUserStoredEmail) {
   // Set up a signed in user with the flag enabled.
   CoreAccountInfo account;
   account.email = "foo@gmail.com";
-  account.gaia = "gaia";
-  account.account_id = CoreAccountId::FromGaiaId("gaia");
+  account.gaia = GaiaId("gaia");
+  account.account_id = CoreAccountId::FromGaiaId(GaiaId("gaia"));
   sync_service_.SetSignedIn(signin::ConsentLevel::kSignin, account);
 
   CreateCredentialProviderService();
@@ -425,6 +447,32 @@ TEST_F(CredentialProviderServiceTest, SignedInUserStoredEmail) {
 
   EXPECT_FALSE([app_group::GetGroupUserDefaults()
       stringForKey:AppGroupUserDefaultsCredentialProviderUserEmail()]);
+}
+
+// Tests that the CredentialProviderService correctly stores the enabled state
+// of the Passkeys M2 feature.
+TEST_F(CredentialProviderServiceTest, PasskeysM2Availability) {
+  {
+    // Enable the `kIOSPasskeysM2` feature.
+    base::test::ScopedFeatureList feature_list(kIOSPasskeysM2);
+
+    CreateCredentialProviderService();
+
+    EXPECT_TRUE([[app_group::GetGroupUserDefaults()
+        objectForKey:AppGroupUserDefaultsCredentialProviderPasskeysM2Enabled()]
+        boolValue]);
+  }
+  {
+    // Disable the `kIOSPasskeysM2` feature.
+    base::test::ScopedFeatureList feature_list;
+    feature_list.InitAndDisableFeature(kIOSPasskeysM2);
+
+    CreateCredentialProviderService();
+
+    EXPECT_FALSE([[app_group::GetGroupUserDefaults()
+        objectForKey:AppGroupUserDefaultsCredentialProviderPasskeysM2Enabled()]
+        boolValue]);
+  }
 }
 
 TEST_F(CredentialProviderServiceTest, AddCredentialsWithValidURL) {
@@ -815,6 +863,72 @@ TEST_F(CredentialProviderServiceTest, UpdatePasskey) {
               @"new_passkey_display_name");
   ASSERT_EQ(credential_store_.credentials[0].lastUsedTime,
             timestamp.ToDeltaSinceWindowsEpoch().InMicroseconds());
+}
+
+TEST_F(CredentialProviderServiceTest,
+       AutomaticPasskeyUpgradeDisabledsWithSavingPasswordsDisabled) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndEnableFeature(
+      kCredentialProviderAutomaticPasskeyUpgrade);
+  CreateCredentialProviderService();
+
+  // The test is initialized with the passkey preferences as true.
+  EXPECT_TRUE([[app_group::GetGroupUserDefaults()
+      objectForKey:
+          AppGroupUserDefaulsCredentialProviderAutomaticPasskeyUpgradeEnabled()]
+      boolValue]);
+
+  // Change the pref value to false and verify the NSUserDefaults value.
+  testing_pref_service_.SetBoolean(
+      password_manager::prefs::kCredentialsEnableService, false);
+  EXPECT_FALSE([[app_group::GetGroupUserDefaults()
+      objectForKey:
+          AppGroupUserDefaulsCredentialProviderAutomaticPasskeyUpgradeEnabled()]
+      boolValue]);
+}
+
+TEST_F(CredentialProviderServiceTest,
+       AutomaticPasskeyUpgradesDisabledWithSavingPasskeysDisabled) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndEnableFeature(
+      kCredentialProviderAutomaticPasskeyUpgrade);
+  CreateCredentialProviderService();
+
+  // The test is initialized with the passkey preferences as true.
+  EXPECT_TRUE([[app_group::GetGroupUserDefaults()
+      objectForKey:
+          AppGroupUserDefaulsCredentialProviderAutomaticPasskeyUpgradeEnabled()]
+      boolValue]);
+
+  // Change the pref value to false and verify the NSUserDefaults value.
+  testing_pref_service_.SetBoolean(
+      password_manager::prefs::kCredentialsEnablePasskeys, false);
+  EXPECT_FALSE([[app_group::GetGroupUserDefaults()
+      objectForKey:
+          AppGroupUserDefaulsCredentialProviderAutomaticPasskeyUpgradeEnabled()]
+      boolValue]);
+}
+
+TEST_F(CredentialProviderServiceTest,
+       AutomaticPasskeyUpgradesPreferenceDisabled) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndEnableFeature(
+      kCredentialProviderAutomaticPasskeyUpgrade);
+  CreateCredentialProviderService();
+
+  // The test is initialized with the passkey preferences as true.
+  EXPECT_TRUE([[app_group::GetGroupUserDefaults()
+      objectForKey:
+          AppGroupUserDefaulsCredentialProviderAutomaticPasskeyUpgradeEnabled()]
+      boolValue]);
+
+  // Change the pref value to false and verify the NSUserDefaults value.
+  testing_pref_service_.SetBoolean(
+      password_manager::prefs::kAutomaticPasskeyUpgrades, false);
+  EXPECT_FALSE([[app_group::GetGroupUserDefaults()
+      objectForKey:
+          AppGroupUserDefaulsCredentialProviderAutomaticPasskeyUpgradeEnabled()]
+      boolValue]);
 }
 
 }  // namespace

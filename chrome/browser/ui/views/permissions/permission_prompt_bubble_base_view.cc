@@ -168,7 +168,7 @@ void PermissionPromptBubbleBaseView::CreateExtraTextLabel(
                                          VIEW_ID_PERMISSION_PROMPT_EXTRA_TEXT)
                               .Build();
   extra_text_label->SetTextStyle(views::style::STYLE_BODY_3);
-  extra_text_label->SetEnabledColorId(kColorPermissionPromptRequestText);
+  extra_text_label->SetEnabledColor(kColorPermissionPromptRequestText);
   AddChildView(std::move(extra_text_label));
 }
 
@@ -242,7 +242,10 @@ void PermissionPromptBubbleBaseView::RunButtonCallback(int button_id) {
   if (browser_view && browser_view->GetLocationBarView()->GetChipController() &&
       browser_view->GetLocationBarView()
           ->GetChipController()
-          ->IsPermissionPromptChipVisible()) {
+          ->IsPermissionPromptChipVisible() &&
+      browser_view->GetLocationBarView()
+          ->GetChipController()
+          ->IsBubbleShowing()) {
     ChipController* chip_controller =
         browser_view->GetLocationBarView()->GetChipController();
     switch (button) {
@@ -272,7 +275,7 @@ void PermissionPromptBubbleBaseView::RunButtonCallback(int button_id) {
       delegate_->Deny();
       return;
   }
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 std::u16string PermissionPromptBubbleBaseView::GetPermissionFragmentForTesting()

@@ -4,8 +4,10 @@
 
 #include "chrome/enterprise_companion/dm_client.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 
@@ -15,7 +17,6 @@
 #include "base/functional/callback_helpers.h"
 #include "base/logging.h"
 #include "base/memory/scoped_refptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/sequence_checker.h"
 #include "base/strings/strcat.h"
 #include "base/strings/string_util.h"
@@ -27,33 +28,38 @@
 #include "chrome/enterprise_companion/enterprise_companion_version.h"
 #include "chrome/enterprise_companion/event_logger.h"
 #include "chrome/enterprise_companion/global_constants.h"
+#include "chrome/enterprise_companion/proto/enterprise_companion_event.pb.h"
+#include "chrome/enterprise_companion/telemetry_logger/telemetry_logger.h"
 #include "components/policy/core/common/cloud/client_data_delegate.h"
 #include "components/policy/core/common/cloud/cloud_policy_client.h"
 #include "components/policy/core/common/cloud/cloud_policy_constants.h"
 #include "components/policy/core/common/cloud/cloud_policy_util.h"
 #include "components/policy/core/common/cloud/cloud_policy_validator.h"
 #include "components/policy/core/common/cloud/device_management_service.h"
+#include "components/policy/core/common/cloud/policy_value_validator.h"
 #include "components/policy/core/common/policy_types.h"
 #include "components/policy/proto/device_management_backend.pb.h"
+#include "net/base/net_errors.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 
 namespace enterprise_companion {
 
 namespace {
 
-// Given the void-returning callbacks A and B with the same signature, return a
-// callback that invokes A and B in sequence with the same arguments.
-template <typename... Args>
-base::OnceCallback<void(Args...)> TeeOnceCallback(
-    base::OnceCallback<void(Args...)> a,
-    base::OnceCallback<void(Args...)> b) {
-  return base::BindOnce(
-      [](base::OnceCallback<void(Args...)> a,
-         base::OnceCallback<void(Args...)> b, Args... args) {
-        std::move(a).Run(args...);
-        std::move(b).Run(args...);
-      },
-      std::move(a), std::move(b));
+std::ostream& operator<<(std::ostream& os,
+                         const policy::CloudPolicyClient::Result& result) {
+  if (result.IsSuccess()) {
+    os << "Success";
+  } else if (result.IsClientNotRegisteredError()) {
+    os << "Client not registered";
+  } else if (result.IsDMServerError()) {
+    os << EnterpriseCompanionStatus::FromDeviceManagementStatus(
+              result.GetDMServerError())
+              .description();
+  } else if (result.GetNetError() != net::OK) {
+    os << "Network error: " << net::ErrorToString(result.GetNetError());
+  }
+  return os;
 }
 
 // Convert a CloudPolicyClient::ResponseMap to a DMPolicyMap by dropping the
@@ -61,7 +67,7 @@ base::OnceCallback<void(Args...)> TeeOnceCallback(
 device_management_storage::DMPolicyMap ToDMPolicyMap(
     const policy::CloudPolicyClient::ResponseMap& in) {
   device_management_storage::DMPolicyMap out;
-  base::ranges::transform(
+  std::ranges::transform(
       in, std::inserter(out, out.end()),
       [](const std::pair<std::pair<std::string, std::string>,
                          enterprise_management::PolicyFetchResponse> response) {
@@ -73,9 +79,6 @@ device_management_storage::DMPolicyMap ToDMPolicyMap(
 
 class DMConfiguration : public policy::DeviceManagementService::Configuration {
  public:
-  DMConfiguration() = default;
-  ~DMConfiguration() override = default;
-
   std::string GetDMServerUrl() const override {
     return GetGlobalConstants()->DeviceManagementServerURL().spec();
   }
@@ -103,9 +106,6 @@ class DMConfiguration : public policy::DeviceManagementService::Configuration {
 
 class ClientDataDelegate : public policy::ClientDataDelegate {
  public:
-  ClientDataDelegate() = default;
-  ~ClientDataDelegate() override = default;
-
   void FillRegisterBrowserRequest(
       enterprise_management::RegisterBrowserRequest* request,
       base::OnceClosure callback) const override {
@@ -173,8 +173,9 @@ class DMClientImpl : public DMClient, policy::CloudPolicyClient::Observer {
   ~DMClientImpl() override { cloud_policy_client_->RemoveObserver(this); }
 
   // Overrides for DMClient.
-  void RegisterPolicyAgent(scoped_refptr<EventLogger> event_logger,
-                           StatusCallback callback) override {
+  void RegisterPolicyAgent(
+      scoped_refptr<EnterpriseCompanionEventLogger> event_logger,
+      StatusCallback callback) override {
     DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
     CHECK(!pending_callback_);
 
@@ -184,21 +185,24 @@ class DMClientImpl : public DMClient, policy::CloudPolicyClient::Observer {
     }
 
     dm_storage_->RemoveAllPolicies();
-    pending_callback_ =
-        TeeOnceCallback(std::move(callback), event_logger->OnEnrollmentStart());
+    pending_callback_ = base::BindPostTaskToCurrentDefault(base::BindOnce(
+        &EnterpriseCompanionEventLogger::LogRegisterPolicyAgentEvent,
+        event_logger, base::Time::Now(), std::move(callback)));
     cloud_policy_client_->RegisterPolicyAgentWithEnrollmentToken(
         dm_storage_->GetEnrollmentToken(), dm_storage_->GetDeviceID(),
         client_data_delegate_);
   }
 
-  void FetchPolicies(scoped_refptr<EventLogger> event_logger,
+  void FetchPolicies(policy::PolicyFetchReason reason,
+                     scoped_refptr<EnterpriseCompanionEventLogger> event_logger,
                      StatusCallback callback) override {
     DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
     CHECK(!pending_callback_);
     // Wrap the callback with event logging early to ensure that precondition
     // errors are logged.
-    callback = TeeOnceCallback(std::move(callback),
-                               event_logger->OnPolicyFetchStart());
+    callback = base::BindPostTaskToCurrentDefault(
+        base::BindOnce(&EnterpriseCompanionEventLogger::LogPolicyFetchEvent,
+                       event_logger, base::Time::Now(), std::move(callback)));
 
     if (!cloud_policy_client_->is_registered()) {
       VLOG(1) << "Failed to fetch policies: client is not registered";
@@ -216,7 +220,7 @@ class DMClientImpl : public DMClient, policy::CloudPolicyClient::Observer {
 
     pending_callback_ = std::move(callback);
     UpdateCachedPolicyInfo();
-    cloud_policy_client_->FetchPolicy(policy::PolicyFetchReason::kUnspecified);
+    cloud_policy_client_->FetchPolicy(reason);
   }
 
   // Overrides for policy::CloudPolicyClient::Observer.
@@ -235,16 +239,26 @@ class DMClientImpl : public DMClient, policy::CloudPolicyClient::Observer {
       return;
     }
 
-    // Make a copy to reduce the surface of TOCTOU errors between validation and
-    // serialization.
     policy::CloudPolicyClient::ResponseMap responses =
         cloud_policy_client_->last_policy_fetch_responses();
-    FetchedPolicyValidator::Status validation_result =
+    FetchedPolicyValidator::ValidationResult validation_result =
         ValidatePolicyFetchResponses(responses);
-    if (validation_result != FetchedPolicyValidator::VALIDATION_OK) {
-      std::move(callback).Run(
-          EnterpriseCompanionStatus::FromCloudPolicyValidationResult(
-              validation_result));
+    if (validation_result.status != FetchedPolicyValidator::VALIDATION_OK) {
+      cloud_policy_client_->UploadPolicyValidationReport(
+          validation_result.status, validation_result.value_validation_issues,
+          policy::ValidationAction::kStore,
+          policy::dm_protocol::kGoogleUpdateMachineLevelAppsPolicyType,
+          validation_result.policy_token,
+          base::BindOnce(
+              [](policy::CloudPolicyClient::Result upload_report_result) {
+                VLOG_IF(1, !upload_report_result.IsSuccess())
+                    << "Failed to upload policy validation report: "
+                    << upload_report_result;
+              })
+              .Then(base::BindOnce(
+                  std::move(callback),
+                  EnterpriseCompanionStatus::FromCloudPolicyValidationResult(
+                      validation_result.status))));
       return;
     }
 
@@ -315,12 +329,9 @@ class DMClientImpl : public DMClient, policy::CloudPolicyClient::Observer {
     return false;
   }
 
-  // Validates all of the fetched policies. Returns the last encountered error
-  // or `VALIDATION_OK`.
-  FetchedPolicyValidator::Status ValidatePolicyFetchResponses(
+  // Validates all of the fetched policies.
+  FetchedPolicyValidator::ValidationResult ValidatePolicyFetchResponses(
       const policy::CloudPolicyClient::ResponseMap& responses) {
-    FetchedPolicyValidator::Status last_result =
-        FetchedPolicyValidator::VALIDATION_OK;
     for (const auto& [key, response] : responses) {
       std::unique_ptr<FetchedPolicyValidator::ValidationResult>
           validation_result = policy_fetch_response_validator_.Run(
@@ -329,14 +340,13 @@ class DMClientImpl : public DMClient, policy::CloudPolicyClient::Observer {
               cached_policy_info_->timestamp(), response);
       CHECK(validation_result) << "Policy validation result cannot be null";
       if (validation_result->status != FetchedPolicyValidator::VALIDATION_OK) {
-        LOG(ERROR) << "Policy validation failed for " << key.first
-                   << " response: "
-                   << FetchedPolicyValidator::StatusToString(
-                          validation_result->status);
-        last_result = validation_result->status;
+        VLOG(1) << "Policy validation failed for " << key.first << " response: "
+                << FetchedPolicyValidator::StatusToString(
+                       validation_result->status);
+        return *validation_result;
       }
     }
-    return last_result;
+    return FetchedPolicyValidator::ValidationResult();
   }
 
   // Update the cached policy information, configuring the CloudPolicyClient

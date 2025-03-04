@@ -16,11 +16,12 @@ import type {SettingsToggleButtonElement} from '../controls/settings_toggle_butt
 import type {MetricsBrowserProxy} from '../metrics_browser_proxy.js';
 import {AiPageHistorySearchInteractions, MetricsBrowserProxyImpl} from '../metrics_browser_proxy.js';
 
-import {AiPageActions, FeatureOptInState} from './constants.js';
+import {getAiLearnMoreUrl} from './ai_learn_more_url_util.js';
+import {isFeatureDisabledByPolicy} from './ai_policy_indicator.js';
+import {AiEnterpriseFeaturePrefName, AiPageActions, FeatureOptInState} from './constants.js';
 import {getTemplate} from './history_search_page.html.js';
 
 const SettingsHistorySearchPageElementBase = PrefsMixin(PolymerElement);
-
 export class SettingsHistorySearchPageElement extends
     SettingsHistorySearchPageElementBase {
   static get is() {
@@ -64,11 +65,33 @@ export class SettingsHistorySearchPageElement extends
               loadTimeData.getString('historySearchSettingSublabel');
         },
       },
+
+      toggleSubLabelV2_: {
+        type: String,
+        value: () => {
+          return (loadTimeData.getBoolean(
+                      'historyEmbeddingsAnswersFeatureEnabled') ?
+                      loadTimeData.getString(
+                          'historySearchWithAnswersSettingSublabelV2') :
+                      loadTimeData.getString(
+                          'historySearchSettingSublabelV2')) +
+              loadTimeData.getString('sentenceEnd') +
+              ' ';  // Whitespace is needed to separate the sub-label from the
+                    // following Learn More.
+        },
+      },
+
+      enterprisePref_: {
+        type: Object,
+        computed:
+            `computePref(prefs.${AiEnterpriseFeaturePrefName.HISTORY_SEARCH})`,
+      },
     };
   }
 
   private enableAiSettingsPageRefresh_: boolean;
   private numericUncheckedValues_: FeatureOptInState[];
+  private enterprisePref_: chrome.settingsPrivate.PrefObject;
   private metricsBrowserProxy_: MetricsBrowserProxy =
       MetricsBrowserProxyImpl.getInstance();
 
@@ -109,6 +132,17 @@ export class SettingsHistorySearchPageElement extends
     this.recordInteractionMetrics_(
         AiPageHistorySearchInteractions.HISTORY_SEARCH_DISABLED,
         AiPageActions.HISTORY_SEARCH_DISABLED);
+  }
+
+  private getLearnMoreUrl_(): string {
+    return getAiLearnMoreUrl(
+        this.enterprisePref_,
+        loadTimeData.getString('historySearchLearnMoreUrl'),
+        loadTimeData.getString('historySearchLearnMoreManagedUrl'));
+  }
+
+  private isDisabledByPolicy_(): boolean {
+    return isFeatureDisabledByPolicy(this.enterprisePref_);
   }
 }
 

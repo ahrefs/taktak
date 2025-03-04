@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "net/quic/quic_chromium_packet_writer.h"
 
 #include <string>
@@ -123,7 +128,7 @@ void QuicChromiumPacketWriter::SetPacket(const char* buffer, size_t buf_len) {
 quic::WriteResult QuicChromiumPacketWriter::WritePacket(
     const char* buffer,
     size_t buf_len,
-    const quic::QuicIpAddress& self_address,
+    const quiche::QuicheIpAddress& self_address,
     const quic::QuicSocketAddress& peer_address,
     quic::PerPacketOptions* /*options*/,
     const quic::QuicPacketWriterParams& /*params*/) {
@@ -275,7 +280,7 @@ bool QuicChromiumPacketWriter::SupportsEcn() const {
 }
 
 quic::QuicPacketBuffer QuicChromiumPacketWriter::GetNextWriteLocation(
-    const quic::QuicIpAddress& self_address,
+    const quiche::QuicheIpAddress& self_address,
     const quic::QuicSocketAddress& peer_address) {
   return {nullptr, nullptr};
 }

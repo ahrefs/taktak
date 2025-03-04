@@ -41,7 +41,14 @@ struct VectorIcon;
 }
 
 struct AccountInfo;
+class AuthenticatorRequestDialogViewController;
 class Profile;
+
+enum class EnclaveEnabledStatus {
+  kDisabled,
+  kEnabled,
+  kEnabledAndReauthNeeded,
+};
 
 //                ┌───────┐
 //                │ View  │
@@ -83,14 +90,11 @@ class Profile;
   /* powered. Valid action when at step: kBlePowerOnManual, */                \
   /* kBlePowerOnAutomatic. */                                                 \
   AUTHENTICATOR_REQUEST_EVENT_0(ContinueWithFlowAfterBleAdapterPowered)       \
-  /* Called when the enclave authenticator is available for a request. */     \
-  AUTHENTICATOR_REQUEST_EVENT_0(EnclaveEnabled)                               \
-  /* Called when the enclave authenticator needs a reauth before it is */     \
-  /* available for a request. */                                              \
-  AUTHENTICATOR_REQUEST_EVENT_0(EnclaveNeedsReauth)                           \
-  /* Called when the ChromeOS authenticator is ready to handle a pending */   \
+  /* Called when the enclave authenticator is available for a request or */   \
+  /* the enclave authenticator needs a reauth before it is available for a */ \
   /* request. */                                                              \
-  AUTHENTICATOR_REQUEST_EVENT_0(OnChromeOSGPMRequestReady)                    \
+  AUTHENTICATOR_REQUEST_EVENT_1(EnclaveEnabledStatusChanged,                  \
+                                EnclaveEnabledStatus)                         \
   AUTHENTICATOR_REQUEST_EVENT_0(OnBioEnrollmentDone)                          \
   /* Called when the power state of the Bluetooth adapter has changed. */     \
   AUTHENTICATOR_REQUEST_EVENT_0(OnBluetoothPoweredStateChanged)               \
@@ -112,8 +116,7 @@ class Profile;
   AUTHENTICATOR_REQUEST_EVENT_0(OnGPMConfirmOffTheRecordCreate)               \
   /* Called when the user clicks "Forgot PIN" during UV. */                   \
   AUTHENTICATOR_REQUEST_EVENT_0(OnForgotGPMPinPressed)                        \
-  /* Called when the user clicks “Manage Devices” to manage their */      \
-  /* phones. */                                                               \
+  /* Called when the user clicks Manage Devices to manage their phones. */    \
   AUTHENTICATOR_REQUEST_EVENT_0(OnManageDevicesClicked)                       \
   /* OnOffTheRecordInterstitialAccepted is called when the user accepts */    \
   /* the interstitial that warns that platform/caBLE authenticators may */    \
@@ -194,9 +197,14 @@ struct AuthenticatorRequestDialogModel
   enum class Step {
     // The UX flow has not started yet, the dialog should still be hidden.
     kNotStarted,
-    // Conditionally mediated UI. No dialog is shown, instead credentials are
-    // offered to the user on the password autofill prompt.
-    kConditionalMediation,
+    // Passkey autofill (i.e. WebAuthn get() with conditional mediation). No
+    // dialog is shown, instead credentials are offered to the user on the
+    // password autofill prompt.
+    kPasskeyAutofill,
+    // During passkey upgrade (i.e. WebAuthn create() with conditional
+    // mediation), the WebAuthn tab-modal dialog is not used. A separate dialog
+    // controller implements its own UI.
+    kPasskeyUpgrade,
     kMechanismSelection,
     // The request errored out before completing. Error will only be sent
     // after user interaction.
@@ -252,10 +260,7 @@ struct AuthenticatorRequestDialogModel
     // a single available credential and choosing one from a list of multiple
     // options.
     kSelectAccount,
-    kSelectSingleAccount,
     kPreSelectAccount,
-    // TODO(crbug.com/40284700): Merge with kSelectPriorityMechanism.
-    kPreSelectSingleAccount,
     // kSelectPriorityMechanism lets the user confirm a single "priority"
     // mechanism.
     kSelectPriorityMechanism,
@@ -282,7 +287,9 @@ struct AuthenticatorRequestDialogModel
     // Changing GPM PIN.
     kGPMReauthForPinReset,
     kGPMLockedPin,
-    kMaxValue = kGPMLockedPin,
+    // ChallengeUrl failure.
+    kErrorFetchingChallenge,
+    kMaxValue = kErrorFetchingChallenge,
   };
 
   // Views and controllers implement this interface to receive events, which
@@ -322,6 +329,7 @@ struct AuthenticatorRequestDialogModel
       const std::vector<uint8_t> user_id;
     };
     using Credential = base::StrongAlias<class CredentialTag, CredentialInfo>;
+    using Password = base::StrongAlias<class PasswordTag, absl::monostate>;
     using Transport =
         base::StrongAlias<class TransportTag, AuthenticatorTransport>;
     using WindowsAPI = base::StrongAlias<class WindowsAPITag, absl::monostate>;
@@ -333,6 +341,7 @@ struct AuthenticatorRequestDialogModel
     using SignInAgain =
         base::StrongAlias<class SignInAgainTag, absl::monostate>;
     using Type = absl::variant<Credential,
+                               Password,
                                Transport,
                                WindowsAPI,
                                Phone,
@@ -366,6 +375,12 @@ struct AuthenticatorRequestDialogModel
     CABLE_V2_SERVER_LINK,
     CABLE_V2_2ND_FACTOR,
   };
+
+  // Returns a user-friendly description for a |type|. If |type| is kPhone, a
+  // |phone_name| must be passed.
+  static std::u16string GetMechanismDescription(
+      const device::DiscoverableCredentialMetadata& cred,
+      const std::optional<std::string>& phone_name);
 
   explicit AuthenticatorRequestDialogModel(
       content::RenderFrameHost* render_frame_host);
@@ -443,6 +458,12 @@ struct AuthenticatorRequestDialogModel
   bool show_security_key_on_qr_sheet = false;
   bool is_off_the_record = false;
 
+  // Tracks whether the model is in the GPM onboarding state.
+  // This value is set/reset only in GPMEnclaveController::OnGPMSelected and
+  // read only to record metrics (WebAuthentication.OnboardingEvents) during the
+  // onboarding flow.
+  bool in_onboarding_flow = false;
+
   std::optional<int> max_bio_samples;
   std::optional<int> bio_samples_remaining;
   uint32_t min_pin_length = device::kMinPinLength;
@@ -499,6 +520,7 @@ struct AuthenticatorRequestDialogModel
 
   Step step_ = Step::kNotStarted;
   const std::optional<content::GlobalRenderFrameHostId> frame_host_id;
+  std::unique_ptr<AuthenticatorRequestDialogViewController> view_controller_;
 };
 
 std::ostream& operator<<(std::ostream& os,

@@ -327,8 +327,9 @@ FileSystemContext::GetCopyOrMoveFileValidatorFactory(
 FileSystemBackend* FileSystemContext::GetFileSystemBackend(
     FileSystemType type) const {
   auto found = backend_map_.find(type);
-  if (found != backend_map_.end())
+  if (found != backend_map_.end()) {
     return found->second;
+  }
   NOTREACHED() << "Unknown filesystem type: " << type;
 }
 
@@ -410,9 +411,8 @@ void FileSystemContext::OpenFileSystem(
   } else {
     // Ensure default bucket for `storage_key` exists so that Quota API
     // is aware of the usage.
-    quota_manager_proxy()->GetOrCreateBucketDeprecated(
-        BucketInitParams::ForDefaultBucket(storage_key),
-        FileSystemTypeToQuotaStorageType(type), io_task_runner_.get(),
+    quota_manager_proxy()->UpdateOrCreateBucket(
+        BucketInitParams::ForDefaultBucket(storage_key), io_task_runner_.get(),
         std::move(got_bucket));
   }
 }
@@ -538,9 +538,8 @@ void FileSystemContext::DeleteFileSystem(const blink::StorageKey& storage_key,
     return;
   }
 
-  quota_manager_proxy()->GetOrCreateBucketDeprecated(
-      BucketInitParams::ForDefaultBucket(storage_key),
-      FileSystemTypeToQuotaStorageType(type), io_task_runner_.get(),
+  quota_manager_proxy()->UpdateOrCreateBucket(
+      BucketInitParams::ForDefaultBucket(storage_key), io_task_runner_.get(),
       base::BindOnce(&FileSystemContext::OnGetBucketForDeleteFileSystem,
                      weak_factory_.GetWeakPtr(), type, std::move(callback)));
 }
@@ -655,7 +654,8 @@ FileSystemContext::QuotaManagedStorageTypes() {
       quota_storage_types.push_back(storage_type);
     }
   }
-  return base::MakeFlatSet<blink::mojom::StorageType>(quota_storage_types);
+  return base::flat_set<blink::mojom::StorageType>(
+      std::move(quota_storage_types));
 }
 
 std::unique_ptr<FileSystemOperation>

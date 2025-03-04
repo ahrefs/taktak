@@ -31,14 +31,13 @@ import type {PolymerElementProperties} from 'chrome://resources/polymer/v3_0/pol
 import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 
 import {DeepLinkingMixin} from '../common/deep_linking_mixin.js';
-import {isRevampWayfindingEnabled} from '../common/load_time_booleans.js';
 import {RouteObserverMixin} from '../common/route_observer_mixin.js';
 import type {MousePolicies} from '../mojom-webui/input_device_settings.mojom-webui.js';
 import {MouseSettingsObserverReceiver} from '../mojom-webui/input_device_settings_provider.mojom-webui.js';
 import {Setting} from '../mojom-webui/setting.mojom-webui.js';
 import {DisableTouchpadMode} from '../os_a11y_page/disable_touchpad_constants.js';
 import type {Route} from '../router.js';
-import {routes} from '../router.js';
+import {Router, routes} from '../router.js';
 
 import {FakeInputDeviceSettingsProvider} from './fake_input_device_settings_provider.js';
 import {getInputDeviceSettingsProvider} from './input_device_mojo_interface_provider.js';
@@ -181,13 +180,6 @@ export class SettingsPerDeviceTouchpadSubsectionElement extends
         readOnly: true,
       },
 
-      isRevampWayfindingEnabled_: {
-        type: Boolean,
-        value: () => {
-          return isRevampWayfindingEnabled();
-        },
-      },
-
       reverseScrollValue: {
         type: Boolean,
         value: false,
@@ -214,6 +206,7 @@ export class SettingsPerDeviceTouchpadSubsectionElement extends
           Setting.kTouchpadSpeed,
           Setting.kTouchpadHapticFeedback,
           Setting.kTouchpadHapticClickSensitivity,
+          Setting.kTouchpadSimulateRightClick,
         ]),
       },
 
@@ -282,7 +275,6 @@ export class SettingsPerDeviceTouchpadSubsectionElement extends
   private touchpadIndex: number;
   private isLastDevice: boolean;
   isAltClickAndSixPackCustomizationEnabled: boolean;
-  private isRevampWayfindingEnabled_: boolean;
   protected mice: Mouse[];
   private mouseSettingsObserverReceiver: MouseSettingsObserverReceiver;
 
@@ -411,27 +403,6 @@ export class SettingsPerDeviceTouchpadSubsectionElement extends
     return tempEl.innerHTML;
   }
 
-  private getTouchpadAccelerationDescription(): string {
-    if (this.isRevampWayfindingEnabled_) {
-      return this.i18n('touchpadAccelerationDescription');
-    }
-    return '';
-  }
-
-  private getTouchpadTapDraggingDescription(): string {
-    if (this.isRevampWayfindingEnabled_) {
-      return this.i18n('tapDraggingDescription');
-    }
-    return '';
-  }
-
-  private getTouchpadTapToClickDescription(): string {
-    if (this.isRevampWayfindingEnabled_) {
-      return this.i18n('touchpadTapToClickDescription');
-    }
-    return '';
-  }
-
   private isCompanionAppInstalled(): boolean {
     return this.touchpad.appInfo?.state === CompanionAppState.kInstalled;
   }
@@ -441,6 +412,15 @@ export class SettingsPerDeviceTouchpadSubsectionElement extends
         (trackpadMode === DisableTouchpadMode.ALWAYS ||
          (trackpadMode === DisableTouchpadMode.ON_MOUSE_CONNECTED &&
           this.isMouseConnected_()));
+  }
+
+  private onDisabledTouchpadSettingsClick_(): void {
+    const urlParams =
+        new URLSearchParams({settingId: Setting.kDisableTouchpad.toString()});
+    Router.getInstance().navigateTo(
+        routes.A11Y_CURSOR_AND_TOUCHPAD,
+        /* dynamicParams */ urlParams,
+    );
   }
 
   private isMouseConnected_(): boolean {

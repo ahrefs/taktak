@@ -25,8 +25,6 @@ import org.mockito.MockitoAnnotations;
 
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.chrome.browser.browserservices.ui.controller.CurrentPageVerifier.VerificationStatus;
-import org.chromium.chrome.browser.browserservices.ui.controller.trustedwebactivity.ClientPackageNameProvider;
-import org.chromium.chrome.browser.customtabs.BaseCustomTabActivity;
 import org.chromium.chrome.browser.customtabs.CustomTabIntentDataProvider;
 import org.chromium.chrome.browser.customtabs.content.CustomTabActivityTabProvider;
 import org.chromium.chrome.browser.customtabs.content.TabObserverRegistrar;
@@ -56,9 +54,7 @@ public class CurrentPageVerifierTest {
     @Mock CustomTabActivityTabProvider mTabProvider;
     @Mock CustomTabIntentDataProvider mIntentDataProvider;
     @Mock Tab mTab;
-    @Mock ClientPackageNameProvider mClientPackageNameProvider;
     @Captor ArgumentCaptor<CustomTabTabObserver> mTabObserverCaptor;
-    @Mock public BaseCustomTabActivity mActivity;
 
     TestVerifier mVerifierDelegate = new TestVerifier();
 
@@ -68,17 +64,18 @@ public class CurrentPageVerifierTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         when(mTabProvider.getTab()).thenReturn(mTab);
-        when(mClientPackageNameProvider.get()).thenReturn(PACKAGE_NAME);
         doNothing()
                 .when(mTabObserverRegistrar)
                 .registerActivityTabObserver(mTabObserverCaptor.capture());
         when(mIntentDataProvider.getTrustedWebActivityAdditionalOrigins())
                 .thenReturn(Collections.singletonList("https://www.origin2.com/"));
-        when(mActivity.getCustomTabActivityTabProvider()).thenReturn(mTabProvider);
-        when(mActivity.getTabObserverRegistrar()).thenReturn(mTabObserverRegistrar);
         mCurrentPageVerifier =
                 new CurrentPageVerifier(
-                        mLifecycleDispatcher, mActivity, mIntentDataProvider, mVerifierDelegate);
+                        mTabProvider,
+                        mIntentDataProvider,
+                        mVerifierDelegate,
+                        mTabObserverRegistrar,
+                        mLifecycleDispatcher);
         // TODO(peconn): Add check on permission updated being updated.
     }
 
@@ -179,7 +176,7 @@ public class CurrentPageVerifierTest {
                 NavigationHandle.createForTesting(
                         gurl,
                         /* isRendererInitiated= */ false,
-                        /* pageTransition= */ 0,
+                        /* transition= */ 0,
                         /* hasUserGesture= */ false);
         for (CustomTabTabObserver tabObserver : mTabObserverCaptor.getAllValues()) {
             tabObserver.onDidStartNavigationInPrimaryMainFrame(mTab, navigation);
@@ -189,12 +186,12 @@ public class CurrentPageVerifierTest {
                 gurl,
                 /* isErrorPage= */ false,
                 /* hasCommitted= */ true,
-                /* isFragmentNavigation= */ false,
+                /* isPrimaryMainFrameFragmentNavigation= */ false,
                 /* isDownload= */ false,
                 /* isValidSearchFormUrl= */ false,
-                /* pageTransition= */ 0,
+                /* transition= */ 0,
                 /* errorCode= */ 0,
-                /* httpStatusCode= */ 200,
+                /* httpStatuscode= */ 200,
                 /* isExternalProtocol= */ false,
                 /* isPdf= */ false,
                 /* mimeType= */ "",

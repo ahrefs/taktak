@@ -4,6 +4,7 @@
 
 #include "chromeos/ash/components/dbus/userdataauth/fake_userdataauth_client.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -23,7 +24,6 @@
 #include "base/logging.h"
 #include "base/notreached.h"
 #include "base/path_service.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/strcat.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
@@ -61,6 +61,7 @@ struct PinFactor {
   // This will be `std::nullopt` if auth checking hasn't been activated.
   std::optional<std::string> pin = std::nullopt;
   bool locked = false;
+  bool legacy = false;
 };
 
 struct RecoveryFactor {};
@@ -223,6 +224,9 @@ FakeAuthFactorToAuthFactorWithStatus(std::string label,
             factor->set_label(std::move(label));
             factor->set_type(user_data_auth::AUTH_FACTOR_TYPE_PIN);
             factor->mutable_pin_metadata();
+            factor->mutable_common_metadata()->set_lockout_policy(
+                pin.legacy ? user_data_auth::LOCKOUT_POLICY_ATTEMPT_LIMITED
+                           : user_data_auth::LOCKOUT_POLICY_TIME_LIMITED);
             return result;
           },
           [&](const RecoveryFactor&) {
@@ -315,8 +319,7 @@ std::pair<std::string, FakeAuthFactor> AuthFactorWithInputToFakeAuthFactor(
       return {label, SmartCardFactor{.public_key_spki_der = key}};
     }
     default:
-      NOTREACHED_IN_MIGRATION();
-      __builtin_unreachable();
+      NOTREACHED();
   }
 }
 
@@ -346,7 +349,7 @@ template <class FakeFactorType>
 bool ContainsFakeFactor(
     const base::flat_map<std::string, FakeAuthFactor>& factors) {
   const auto it =
-      base::ranges::find_if(factors, [](const auto label_factor_pair) {
+      std::ranges::find_if(factors, [](const auto label_factor_pair) {
         const FakeAuthFactor& fake_factor = label_factor_pair.second;
         return absl::get_if<FakeFactorType>(&fake_factor) != nullptr;
       });
@@ -500,6 +503,26 @@ void FakeUserDataAuthClient::TestApi::SetPinLocked(
   CHECK(pin_factor) << "Factor is not PIN: " << label;
 
   pin_factor->locked = locked;
+}
+
+void FakeUserDataAuthClient::TestApi::SetPinType(
+    const cryptohome::AccountIdentifier& account_id,
+    const std::string& label,
+    bool legacy_pin) {
+  auto user_it = FakeUserDataAuthClient::Get()->users_.find(account_id);
+  CHECK(user_it != FakeUserDataAuthClient::Get()->users_.end())
+      << "User does not exist: " << account_id.account_id();
+  UserCryptohomeState& user_state = user_it->second;
+
+  auto factor_it = user_state.auth_factors.find(label);
+  CHECK(factor_it != user_state.auth_factors.end())
+      << "Factor does not exist: " << label;
+  FakeAuthFactor& factor = factor_it->second;
+
+  PinFactor* pin_factor = absl::get_if<PinFactor>(&factor);
+  CHECK(pin_factor) << "Factor is not PIN: " << label;
+
+  pin_factor->legacy = legacy_pin;
 }
 
 void FakeUserDataAuthClient::TestApi::AddExistingUser(
@@ -1913,6 +1936,22 @@ void FakeUserDataAuthClient::SetUserDataStorageWriteEnabled(
     const ::user_data_auth::SetUserDataStorageWriteEnabledRequest& request,
     SetUserDataStorageWriteEnabledCallback callback) {
   ::user_data_auth::SetUserDataStorageWriteEnabledReply reply;
+  std::move(callback).Run(std::move(reply));
+}
+
+void FakeUserDataAuthClient::LockFactorUntilReboot(
+    const ::user_data_auth::LockFactorUntilRebootRequest& request,
+    LockFactorUntilRebootCallback callback) {
+  RememberRequest<Operation::kLockFactorUntilReboot>(request);
+  ::user_data_auth::LockFactorUntilRebootReply reply;
+
+  if (auto error = TakeOperationError(Operation::kLockFactorUntilReboot);
+      cryptohome::HasError(error)) {
+    SetErrorWrapperToReply(reply, error);
+    std::move(callback).Run(reply);
+    return;
+  }
+
   std::move(callback).Run(std::move(reply));
 }
 

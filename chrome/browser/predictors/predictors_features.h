@@ -50,9 +50,9 @@ bool ShouldUseOptimizationGuidePredictions();
 // even if local predictions are available for preconnect predictions.
 bool ShouldAlwaysRetrieveOptimizationGuidePredictions();
 
-BASE_DECLARE_FEATURE(kAvoidLoadingPredictorPrefetchDuringBrowserStartup);
-
 BASE_DECLARE_FEATURE(kLoadingPredictorLimitPreconnectSocketCount);
+
+BASE_DECLARE_FEATURE(kPrefetchManagerUseNetworkContextPrefetch);
 
 }  // namespace features
 

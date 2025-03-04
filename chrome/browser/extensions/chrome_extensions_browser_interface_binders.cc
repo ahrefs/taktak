@@ -11,6 +11,9 @@
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
+#include "extensions/browser/api/mime_handler_private/mime_handler_private.h"
+#include "extensions/browser/guest_view/mime_handler_view/mime_handler_view_guest.h"
+#include "extensions/common/api/mime_handler.mojom.h"
 #include "extensions/common/extension.h"
 #include "extensions/common/permissions/api_permission.h"
 #include "extensions/common/permissions/permissions_data.h"
@@ -49,6 +52,7 @@
 #endif
 
 #if BUILDFLAG(PLATFORM_CFM)
+#include "chrome/browser/ash/chromebox_for_meetings/meet_browser/meet_browser_service.h"
 #include "chrome/browser/ash/chromebox_for_meetings/xu_camera/xu_camera_service.h"
 #include "chromeos/ash/components/chromebox_for_meetings/features.h"
 #endif
@@ -124,9 +128,34 @@ void BindCfmServiceContext(
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   chromeos::cfm::ServiceConnection::GetInstance()->BindServiceContext(
       std::move(receiver));
+#if BUILDFLAG(PLATFORM_CFM)
+  ash::cfm::MeetBrowserService::Get()->SetMeetGlobalRenderFrameToken(
+      render_frame_host->GetGlobalFrameToken());
+#endif  // BUILDFLAG(PLATFORM_CFM)
 }
 
 #endif  // BUILDFLAG(IS_CHROMEOS)
+
+void BindMimeHandlerService(
+    content::RenderFrameHost* frame_host,
+    mojo::PendingReceiver<mime_handler::MimeHandlerService> receiver) {
+  auto* guest_view = MimeHandlerViewGuest::FromRenderFrameHost(frame_host);
+  if (!guest_view) {
+    return;
+  }
+  MimeHandlerServiceImpl::Create(guest_view->GetStreamWeakPtr(),
+                                 std::move(receiver));
+}
+
+void BindBeforeUnloadControl(
+    content::RenderFrameHost* frame_host,
+    mojo::PendingReceiver<mime_handler::BeforeUnloadControl> receiver) {
+  auto* guest_view = MimeHandlerViewGuest::FromRenderFrameHost(frame_host);
+  if (!guest_view) {
+    return;
+  }
+  guest_view->FuseBeforeUnloadControl(std::move(receiver));
+}
 
 }  // namespace
 
@@ -226,11 +255,11 @@ void PopulateChromeFrameBindersForExtension(
         base::BindRepeating(&BindCfmServiceContext));
 
 #if !BUILDFLAG(PLATFORM_CFM)
-// On first launch some older devices may be running on none-CfM
-// images. For those devices reject all requests until they are
-// rebooted to the CfM image variant for their device.
-// This applies to LaCrOS and none CfM Ash builds
-// TODO(b/341493979): Deprecate after CfM LaCrOS migration is completed.
+    // On first launch some older devices may be running on none-CfM
+    // images. For those devices reject all requests until they are
+    // rebooted to the CfM image variant for their device.
+    // This applies to LaCrOS and none CfM Ash builds
+    // TODO(crbug.com/341493979): Deprecate after CfM LaCrOS migration.
     binder_map->Add<ash::cfm::mojom::XuCamera>(base::BindRepeating(
         [](content::RenderFrameHost* frame_host,
            mojo::PendingReceiver<ash::cfm::mojom::XuCamera> receiver) {
@@ -243,6 +272,11 @@ void PopulateChromeFrameBindersForExtension(
 #endif  // BUILDFLAG(PLATFORM_CFM)
   }
 #endif  // BUILDFLAG(IS_CHROMEOS)
+
+  binder_map->Add<mime_handler::MimeHandlerService>(
+      base::BindRepeating(&BindMimeHandlerService));
+  binder_map->Add<mime_handler::BeforeUnloadControl>(
+      base::BindRepeating(&BindBeforeUnloadControl));
 }
 
 }  // namespace extensions

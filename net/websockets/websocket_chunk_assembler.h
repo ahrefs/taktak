@@ -8,14 +8,13 @@
 #include <memory>
 #include <vector>
 
-#include "base/containers/span.h"
 #include "base/types/expected.h"
 #include "net/base/net_errors.h"
 #include "net/websockets/websocket_frame.h"
 
 namespace net {
 
-class WebSocketChunkAssembler final {
+class NET_EXPORT WebSocketChunkAssembler final {
  public:
   WebSocketChunkAssembler();
   ~WebSocketChunkAssembler();

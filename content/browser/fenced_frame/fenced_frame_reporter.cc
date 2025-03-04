@@ -65,7 +65,6 @@
 #include "third_party/blink/public/common/features.h"
 #include "third_party/blink/public/common/fenced_frame/fenced_frame_utils.h"
 #include "third_party/blink/public/common/fenced_frame/redacted_fenced_frame_config.h"
-#include "third_party/blink/public/mojom/permissions_policy/permissions_policy_feature.mojom-shared.h"
 #include "url/gurl.h"
 #include "url/origin.h"
 #include "url/url_constants.h"
@@ -130,7 +129,7 @@ std::string_view ReportingDestinationAsString(
     case blink::FencedFrame::ReportingDestination::kDirectSeller:
       return "DirectSeller";
   }
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 std::string_view InvokingAPIAsString(
@@ -141,7 +140,7 @@ std::string_view InvokingAPIAsString(
     case PrivacySandboxInvokingAPI::kSharedStorage:
       return "Shared Storage";
   }
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 std::string AutomaticBeaconTypeAsString(
@@ -709,8 +708,11 @@ bool FencedFrameReporter::SendReportInternal(
     request->referrer = request_initiator.GetURL();
   }
   request->trusted_params = network::ResourceRequest::TrustedParams();
+  // We can't use the fenced frame's nonce here because it will force a
+  // transient opaque CookiePartitionKey as well. If we're enabling automatic
+  // beacon credentials, the correct credientials would not be attached.
   request->trusted_params->isolation_info =
-      net::IsolationInfo::CreateTransient();
+      net::IsolationInfo::CreateTransient(/*nonce=*/std::nullopt);
 
   // `attribution_reporting_data` is guaranteed to be set iff attribution
   // reporting is allowed in the initiator frame.

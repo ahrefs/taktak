@@ -25,6 +25,8 @@ WebGLSync::WebGLSync(WebGL2RenderingContextBase* ctx,
 WebGLSync::~WebGLSync() = default;
 
 void WebGLSync::UpdateCache(gpu::gles2::GLES2Interface* gl) {
+  // Context loss is checked at higher levels.
+
   if (sync_status_ == GL_SIGNALED) {
     return;
   }
@@ -57,8 +59,7 @@ GLint WebGLSync::GetCachedResult(GLenum pname) {
       return 0;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return 0;
+  NOTREACHED();
 }
 
 bool WebGLSync::IsSignaled() const {

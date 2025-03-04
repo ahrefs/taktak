@@ -161,6 +161,8 @@ class NET_EXPORT_PRIVATE URLRequestHttpJob : public URLRequestJob {
   int NotifyConnectedCallback(const TransportInfo& info,
                               CompletionOnceCallback callback);
 
+  void RestartTransaction();
+  void RestartTransactionForRefresh();
   void RestartTransactionWithAuth(const AuthCredentials& credentials);
 
   // Overridden from URLRequestJob:
@@ -251,9 +253,6 @@ class NET_EXPORT_PRIVATE URLRequestHttpJob : public URLRequestJob {
   // in a request.
   bool ShouldRecordPartitionedCookieUsage() const;
 
-  // Applies the relevant Sec-Fetch-Storage-Access header if needed.
-  void MaybeSetSecFetchStorageAccessHeader();
-
   RequestPriority priority_ = DEFAULT_PRIORITY;
 
   HttpRequestInfo request_info_;
@@ -329,6 +328,15 @@ class NET_EXPORT_PRIVATE URLRequestHttpJob : public URLRequestJob {
   // The First-Party Set metadata associated with this job. Set when the job is
   // started.
   FirstPartySetMetadata first_party_set_metadata_;
+
+  // The number of times this request was deferred due to a Device Bound
+  // Session.
+  size_t device_bound_session_deferral_count_ = 0;
+
+  // The time of the first deferral due to Device Bound Sessions. This
+  // is used to measure the total delay of Device Bound Session
+  // Deferral.
+  base::TimeTicks device_bound_session_first_deferral_;
 
   base::WeakPtrFactory<URLRequestHttpJob> weak_factory_{this};
 };

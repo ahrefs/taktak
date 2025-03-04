@@ -23,7 +23,7 @@ import org.chromium.chrome.browser.toolbar.BaseButtonDataProvider;
 import org.chromium.chrome.browser.toolbar.ButtonData.ButtonSpec;
 import org.chromium.chrome.browser.toolbar.adaptive.AdaptiveToolbarButtonVariant;
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
-import org.chromium.chrome.browser.user_education.IPHCommandBuilder;
+import org.chromium.chrome.browser.user_education.IphCommandBuilder;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController.SheetState;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetObserver;
@@ -87,8 +87,8 @@ public class PriceTrackingButtonController extends BaseButtonDataProvider {
                 new ButtonSpec(
                         /* drawable= */ AppCompatResources.getDrawable(
                                 context, R.drawable.price_tracking_enabled_filled),
-                        /* clickListener= */ this,
-                        /* longClickListener= */ null,
+                        /* onClickListener= */ this,
+                        /* onLongClickListener= */ null,
                         /* contentDescription= */ context.getString(
                                 R.string.disable_price_tracking_menu_item),
                         /* supportsTinting= */ true,
@@ -146,9 +146,9 @@ public class PriceTrackingButtonController extends BaseButtonDataProvider {
     }
 
     @Override
-    protected IPHCommandBuilder getIphCommandBuilder(Tab tab) {
-        IPHCommandBuilder iphCommandBuilder =
-                new IPHCommandBuilder(
+    protected IphCommandBuilder getIphCommandBuilder(Tab tab) {
+        IphCommandBuilder iphCommandBuilder =
+                new IphCommandBuilder(
                         tab.getContext().getResources(),
                         FeatureConstants.CONTEXTUAL_PAGE_ACTIONS_QUIET_VARIANT,
                         /* stringId= */ R.string.iph_price_tracking_menu_item,

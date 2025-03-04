@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "extensions/common/features/simple_feature.h"
 
 #include <algorithm>
@@ -17,6 +12,7 @@
 
 #include "base/command_line.h"
 #include "base/containers/contains.h"
+#include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
@@ -24,6 +20,7 @@
 #include "components/crx_file/id_util.h"
 #include "content/public/common/content_features.h"
 #include "extensions/common/extension_api.h"
+#include "extensions/common/extension_features.h"
 #include "extensions/common/extension_id.h"
 #include "extensions/common/features/feature.h"
 #include "extensions/common/features/feature_channel.h"
@@ -98,10 +95,9 @@ std::string GetDisplayName(Manifest::Type type) {
     case Manifest::TYPE_CHROMEOS_SYSTEM_EXTENSION:
       return "chromeos system extension";
     case Manifest::NUM_LOAD_TYPES:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 
 // Gets a human-readable name for the given context type, suitable for giving
@@ -128,15 +124,12 @@ std::string GetDisplayName(mojom::ContextType context) {
       return "webui";
     case mojom::ContextType::kUntrustedWebUi:
       return "webui untrusted";
-    case mojom::ContextType::kLockscreenExtension:
-      return "lock screen app";
     case mojom::ContextType::kOffscreenExtension:
       return "offscreen document";
     case mojom::ContextType::kUserScript:
       return "user script";
   }
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 
 std::string GetDisplayName(mojom::FeatureSessionType session_type) {
@@ -266,7 +259,7 @@ Feature::Availability SimpleFeature::IsAvailableToContextImpl(
         HasDelegatedAvailabilityCheckHandler()
             ? RunDelegatedAvailabilityCheck(extension, context, url, platform,
                                             context_id, check_developer_mode,
-                                            std::move(context_data))
+                                            context_data)
             : CreateAvailability(MISSING_DELEGATED_AVAILABILITY_CHECK);
 
     if (!delegated_availibility.is_available()) {
@@ -406,8 +399,7 @@ std::string SimpleFeature::GetAvailabilityMessage(
                                 name().c_str());
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return std::string();
+  NOTREACHED();
 }
 
 Feature::Availability SimpleFeature::CreateAvailability(
@@ -479,20 +471,6 @@ bool SimpleFeature::IsIdInAllowlist(const HashedExtensionId& hashed_id) const {
 }
 
 // static
-bool SimpleFeature::IsIdInArray(const ExtensionId& extension_id,
-                                const char* const array[],
-                                size_t array_length) {
-  if (!IsValidExtensionId(extension_id))
-    return false;
-
-  const char* const* start = array;
-  const char* const* end = array + array_length;
-
-  return ((std::find(start, end, extension_id) != end) ||
-          (std::find(start, end, HashedIdInHex(extension_id)) != end));
-}
-
-// static
 bool SimpleFeature::IsIdInList(const HashedExtensionId& hashed_id,
                                const std::vector<std::string>& list) {
   if (!IsValidHashedExtensionId(hashed_id))
@@ -515,8 +493,7 @@ bool SimpleFeature::MatchesManifestLocation(
     case SimpleFeature::UNPACKED_LOCATION:
       return Manifest::IsUnpackedLocation(manifest_location);
   }
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 bool SimpleFeature::MatchesSessionTypes(
@@ -663,8 +640,24 @@ Feature::Availability SimpleFeature::GetEnvironmentAvailability(
   if (!MatchesSessionTypes(session_type))
     return CreateAvailability(INVALID_SESSION_TYPE, session_type);
 
-  if (check_developer_mode &&
-      developer_mode_only_ && !GetCurrentDeveloperMode(context_id)) {
+  bool debugger_api_restricted = base::FeatureList::IsEnabled(
+      extensions_features::kDebuggerAPIRestrictedToDevMode);
+
+  if (check_developer_mode && developer_mode_only_ &&
+      !GetCurrentDeveloperMode(context_id)) {
+    // TODO(crbug.com/390138269): Once the kUserScriptUserExtensionToggle
+    // feature is default enabled, we should make the
+    // kDebuggerAPIRestrictedToDevMode feature control dev mode restriction
+    // entirely and no longer be specific to the debugger API (while also
+    // setting the debugger API to use dev mode in the features file so the dev
+    // mode restriction is continued to be tested).
+
+    // Restrict the debugger feature to dev mode if the extension feature is
+    // enabled. But if the feature is disabled, then we treat it like any other
+    // API.
+    if (name() == "debugger" && !debugger_api_restricted) {
+      return CreateAvailability(IS_AVAILABLE);
+    }
     return CreateAvailability(REQUIRES_DEVELOPER_MODE);
   }
 

@@ -30,7 +30,9 @@
               },
               "legacy_gclient_config": {
                 "apply_configs": [
-                  "android"
+                  "android",
+                  "chromium_with_telemetry_dependencies",
+                  "enable_wpr_tests"
                 ],
                 "config": "chromium"
               }
@@ -48,18 +50,17 @@
       "targets_spec_directory": "src/infra/config/generated/builders/try/android-pie-x86-rel/targets"
     }
   },
-  "$build/reclient": {
-    "instance": "rbe-chromium-untrusted",
-    "metrics_project": "chromium-reclient-metrics",
-    "scandeps_server": true
-  },
   "$build/siso": {
     "configs": [
-      "builder"
+      "builder",
+      "remote-link"
     ],
+    "enable_cloud_monitoring": true,
     "enable_cloud_profiler": true,
     "enable_cloud_trace": true,
     "experiments": [],
+    "metrics_project": "chromium-reclient-metrics",
+    "output_local_strategy": "greedy",
     "project": "rbe-chromium-untrusted",
     "remote_jobs": -1
   },

@@ -47,39 +47,39 @@ class MODULES_EXPORT InspectorAccessibilityAgent
   protocol::Response enable() override;
   protocol::Response disable() override;
   protocol::Response getPartialAXTree(
-      protocol::Maybe<int> dom_node_id,
-      protocol::Maybe<int> backend_node_id,
-      protocol::Maybe<String> object_id,
-      protocol::Maybe<bool> fetch_relatives,
+      std::optional<int> dom_node_id,
+      std::optional<int> backend_node_id,
+      std::optional<String> object_id,
+      std::optional<bool> fetch_relatives,
       std::unique_ptr<protocol::Array<protocol::Accessibility::AXNode>>*)
       override;
   protocol::Response getFullAXTree(
-      protocol::Maybe<int> depth,
-      protocol::Maybe<String> frame_id,
+      std::optional<int> depth,
+      std::optional<String> frame_id,
       std::unique_ptr<protocol::Array<protocol::Accessibility::AXNode>>*)
       override;
   protocol::Response getRootAXNode(
-      protocol::Maybe<String> frame_id,
+      std::optional<String> frame_id,
       std::unique_ptr<protocol::Accessibility::AXNode>* node) override;
   protocol::Response getAXNodeAndAncestors(
-      protocol::Maybe<int> dom_node_id,
-      protocol::Maybe<int> backend_node_id,
-      protocol::Maybe<String> object_id,
+      std::optional<int> dom_node_id,
+      std::optional<int> backend_node_id,
+      std::optional<String> object_id,
       std::unique_ptr<protocol::Array<protocol::Accessibility::AXNode>>*
           out_nodes) override;
   protocol::Response getChildAXNodes(
       const String& in_id,
-      protocol::Maybe<String> frame_id,
+      std::optional<String> frame_id,
       std::unique_ptr<protocol::Array<protocol::Accessibility::AXNode>>*
           out_nodes) override;
   // Invoked by CDP clients such as Puppeteer. See
   // third_party/blink/public/devtools_protocol/browser_protocol.pdl for me
   // details.
-  void queryAXTree(protocol::Maybe<int> dom_node_id,
-                   protocol::Maybe<int> backend_node_id,
-                   protocol::Maybe<String> object_id,
-                   protocol::Maybe<String> accessibleName,
-                   protocol::Maybe<String> role,
+  void queryAXTree(std::optional<int> dom_node_id,
+                   std::optional<int> backend_node_id,
+                   std::optional<String> object_id,
+                   std::optional<String> accessibleName,
+                   std::optional<String> role,
                    std::unique_ptr<QueryAXTreeCallback>) override;
   // An event was fired on the given AXObject, which should now also be
   // considered modified (as if AXObjectModified was called on it).
@@ -100,11 +100,11 @@ class MODULES_EXPORT InspectorAccessibilityAgent
   // (AXReadyCallback).
   struct AXQuery {
    public:
-    protocol::Maybe<int> dom_node_id;
-    protocol::Maybe<int> backend_node_id;
-    protocol::Maybe<String> object_id;
-    protocol::Maybe<String> accessible_name;
-    protocol::Maybe<String> role;
+    std::optional<int> dom_node_id;
+    std::optional<int> backend_node_id;
+    std::optional<String> object_id;
+    std::optional<String> accessible_name;
+    std::optional<String> role;
     std::unique_ptr<QueryAXTreeCallback> callback;
   };
 
@@ -163,29 +163,7 @@ class MODULES_EXPORT InspectorAccessibilityAgent
   // Unconditionally enables the agent, even if |enabled_.Get()==true|.
   // For idempotence, call enable().
   void EnableAndReset();
-  std::unique_ptr<protocol::Array<AXNode>> WalkAXNodesToDepth(
-      Document* document,
-      int max_depth);
-  std::unique_ptr<AXNode> BuildProtocolAXNodeForDOMNodeWithNoAXNode(
-      int backend_node_id) const;
-  std::unique_ptr<AXNode> BuildProtocolAXNodeForAXObject(
-      AXObject&,
-      bool force_name_and_role = false) const;
-  std::unique_ptr<AXNode> BuildProtocolAXNodeForIgnoredAXObject(
-      AXObject&,
-      bool force_name_and_role) const;
-  std::unique_ptr<AXNode> BuildProtocolAXNodeForUnignoredAXObject(
-      AXObject&) const;
-  void FillCoreProperties(AXObject&, AXNode*) const;
-  void AddAncestors(AXObject& first_ancestor,
-                    AXObject* inspected_ax_object,
-                    std::unique_ptr<protocol::Array<AXNode>>& nodes,
-                    AXObjectCacheImpl&) const;
-  void AddChildren(AXObject& ax_object,
-                   bool follow_ignored,
-                   std::unique_ptr<protocol::Array<AXNode>>& nodes,
-                   AXObjectCacheImpl&) const;
-  LocalFrame* FrameFromIdOrRoot(const protocol::Maybe<String>& frame_id);
+  LocalFrame* FrameFromIdOrRoot(const std::optional<String>& frame_id);
   void ScheduleAXChangeNotification(Document* document);
   AXObjectCacheImpl& AttachToAXObjectCache(Document*);
   void ProcessPendingQueries(Document&);

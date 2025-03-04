@@ -109,12 +109,7 @@ class CORE_EXPORT HTMLAnchorElementBase : public HTMLElement,
 
   void SendPings(const KURL& destination_url) const;
 
-  // Element overrides:
-  void SetHovered(bool hovered) override;
-
   Element* interestTargetElement() override;
-
-  AtomicString interestAction() const override;
 
   void Trace(Visitor*) const override;
 
@@ -131,7 +126,7 @@ class CORE_EXPORT HTMLAnchorElementBase : public HTMLElement,
   bool ShouldHaveFocusAppearance() const final;
   FocusableState IsFocusableState(
       UpdateBehavior update_behavior) const override;
-  bool IsKeyboardFocusable(UpdateBehavior update_behavior) const override;
+  bool IsKeyboardFocusableSlow(UpdateBehavior update_behavior) const override;
   void DefaultEventHandler(Event&) final;
   bool HasActivationBehavior() const override;
   void SetActive(bool active) final;
@@ -186,24 +181,13 @@ inline LinkHash HTMLAnchorElementBase::VisitedLinkHash() const {
 inline LinkHash HTMLAnchorElementBase::PartitionedVisitedLinkFingerprint()
     const {
   if (!cached_visited_link_hash_) {
-    // Obtain all three elements of the partition key.
-    // (1) Link URL (Base and Relative)
-    const KURL base_link_url = GetDocument().BaseURL();
-    const AtomicString relative_link_url =
-        FastGetAttribute(html_names::kHrefAttr);
-    // (2) Top-level Site
-    // NOTE: for all Documents which have a valid VisitedLinkState, we should
-    // not ever encounter an invalid TopFrameOrigin(), `window`, or
-    // SecurityOrigin().
-    DCHECK(GetDocument().TopFrameOrigin());
-    const net::SchemefulSite top_level_site(
-        GetDocument().TopFrameOrigin()->ToUrlOrigin());
-    // (3) Frame Origin
-    const LocalDOMWindow* window = GetDocument().domWindow();
-    DCHECK(window);
-    const SecurityOrigin* frame_origin = window->GetSecurityOrigin();
+    // Obtain all the elements of the partition key.
     cached_visited_link_hash_ = blink::PartitionedVisitedLinkFingerprint(
-        base_link_url, relative_link_url, top_level_site, frame_origin);
+        /*base_link_url=*/GetDocument().BaseURL(),
+        /*relative_link_url=*/FastGetAttribute(html_names::kHrefAttr),
+        /*top_level_site=*/
+        GetDocument().GetCachedTopFrameSite(Document::VisitedLinkPassKey()),
+        /*frame_origin=*/GetDocument().domWindow()->GetSecurityOrigin());
   }
   return cached_visited_link_hash_;
 }

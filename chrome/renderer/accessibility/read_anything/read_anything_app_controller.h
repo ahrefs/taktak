@@ -95,6 +95,95 @@ class ReadAnythingAppController
   void OnTreeAdded(ui::AXTree* tree) override;
   void OnTreeRemoved(ui::AXTree* tree) override;
 
+  // gin templates:
+  ui::AXNodeID RootId() const;
+  ui::AXNodeID StartNodeId() const;
+  int StartOffset() const;
+  ui::AXNodeID EndNodeId() const;
+  int EndOffset() const;
+  std::string FontName() const;
+  float FontSize() const;
+  bool LinksEnabled() const;
+  bool ImagesEnabled() const;
+  bool ImagesFeatureEnabled() const;
+  double SpeechRate() const;
+  void OnFontSizeChanged(bool increase);
+  void OnFontSizeReset();
+  void OnLinksEnabledToggled();
+  void OnImagesEnabledToggled();
+  int LetterSpacing() const;
+  int LineSpacing() const;
+  int ColorTheme() const;
+  int HighlightGranularity() const;
+  bool IsHighlightOn();
+  int StandardLineSpacing() const;
+  int LooseLineSpacing() const;
+  int VeryLooseLineSpacing() const;
+  int StandardLetterSpacing() const;
+  int WideLetterSpacing() const;
+  int VeryWideLetterSpacing() const;
+  int DefaultTheme() const;
+  int LightTheme() const;
+  int DarkTheme() const;
+  int YellowTheme() const;
+  int BlueTheme() const;
+  int AutoHighlighting() const;
+  int WordHighlighting() const;
+  int PhraseHighlighting() const;
+  int SentenceHighlighting() const;
+  int NoHighlighting() const;
+  std::string GetStoredVoice() const;
+  std::vector<std::string> GetLanguagesEnabledInPref() const;
+  std::vector<ui::AXNodeID> GetChildren(ui::AXNodeID ax_node_id) const;
+  std::string GetDataFontCss(ui::AXNodeID ax_node_id) const;
+  std::string GetHtmlTag(ui::AXNodeID ax_node_id) const;
+  std::string GetLanguage(ui::AXNodeID ax_node_id) const;
+  std::u16string GetTextContent(ui::AXNodeID ax_node_id) const;
+  std::string GetTextDirection(ui::AXNodeID ax_node_id) const;
+  std::string GetUrl(ui::AXNodeID ax_node_id) const;
+  std::string GetAltText(ui::AXNodeID ax_node_id) const;
+  // The results of these are sent back via UntrustedPage::OnGetVoicePackInfo.
+  void SendGetVoicePackInfoRequest(const std::string& language) const;
+  void SendInstallVoicePackRequest(const std::string& language) const;
+  void SendUninstallVoiceRequest(const std::string& language) const;
+
+  bool ShouldBold(ui::AXNodeID ax_node_id) const;
+  bool IsOverline(ui::AXNodeID ax_node_id) const;
+  bool IsLeafNode(ui::AXNodeID ax_node_id) const;
+  void OnConnected();
+  void OnCopy() const;
+  void OnScroll(bool on_selection) const;
+  void OnLinkClicked(ui::AXNodeID ax_node_id) const;
+  void OnSelectionChange(ui::AXNodeID anchor_node_id,
+                         int anchor_offset,
+                         ui::AXNodeID focus_node_id,
+                         int focus_offset) const;
+  void OnCollapseSelection() const;
+  bool IsGoogleDocs() const;
+  bool IsReadAloudEnabled() const;
+  bool IsChromeOsAsh() const;
+  bool IsPhraseHighlightingEnabled() const;
+  void OnLetterSpacingChange(int value);
+  void OnLineSpacingChange(int value);
+  void OnThemeChange(int value);
+  void OnFontChange(const std::string& font);
+  void OnSpeechRateChange(double rate);
+  void OnVoiceChange(const std::string& voice, const std::string& lang);
+  void OnLanguagePrefChange(const std::string& lang, bool enabled);
+  bool RequiresDistillation();
+  void OnHighlightGranularityChanged(int granularity);
+  double GetLineSpacingValue(int line_spacing) const;
+  double GetLetterSpacingValue(int letter_spacing) const;
+  std::vector<std::string> GetSupportedFonts();
+  void RequestImageDataUrl(ui::AXNodeID node_id) const;
+  std::string GetImageDataUrl(ui::AXNodeID node_id) const;
+  v8::Local<v8::Value> GetImageBitmap(ui::AXNodeID node_id);
+  void OnSpeechPlayingStateChanged(bool is_speech_active);
+  std::string GetValidatedFontName(const std::string& font) const;
+  std::vector<std::string> GetAllFonts() const;
+  void OnScrolledToBottom();
+  bool IsDocsLoadMoreButtonVisible() const;
+
  private:
   friend ReadAnythingAppControllerTest;
   friend ReadAnythingAppControllerScreen2xDataCollectionModeTest;
@@ -152,98 +241,9 @@ class ReadAnythingAppController
       read_anything::mojom::VoicePackInfoPtr voice_pack_info) override;
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   void OnDeviceLocked() override;
+#else
+  void OnTtsEngineInstalled() override;
 #endif
-
-  // gin templates:
-  ui::AXNodeID RootId() const;
-  ui::AXNodeID StartNodeId() const;
-  int StartOffset() const;
-  ui::AXNodeID EndNodeId() const;
-  int EndOffset() const;
-  std::string FontName() const;
-  float FontSize() const;
-  bool LinksEnabled() const;
-  bool ImagesEnabled() const;
-  bool ImagesFeatureEnabled() const;
-  double SpeechRate() const;
-  void OnFontSizeChanged(bool increase);
-  void OnFontSizeReset();
-  void OnLinksEnabledToggled();
-  void OnImagesEnabledToggled();
-  int LetterSpacing() const;
-  int LineSpacing() const;
-  int ColorTheme() const;
-  int HighlightGranularity() const;
-  bool IsHighlightOn();
-  int StandardLineSpacing() const;
-  int LooseLineSpacing() const;
-  int VeryLooseLineSpacing() const;
-  int StandardLetterSpacing() const;
-  int WideLetterSpacing() const;
-  int VeryWideLetterSpacing() const;
-  int DefaultTheme() const;
-  int LightTheme() const;
-  int DarkTheme() const;
-  int YellowTheme() const;
-  int BlueTheme() const;
-  int AutoHighlighting() const;
-  int WordHighlighting() const;
-  int PhraseHighlighting() const;
-  int SentenceHighlighting() const;
-  int NoHighlighting() const;
-  std::string GetStoredVoice() const;
-  std::vector<std::string> GetLanguagesEnabledInPref() const;
-  std::vector<ui::AXNodeID> GetChildren(ui::AXNodeID ax_node_id) const;
-  std::string GetDataFontCss(ui::AXNodeID ax_node_id) const;
-  std::string GetHtmlTag(ui::AXNodeID ax_node_id) const;
-  std::string GetLanguage(ui::AXNodeID ax_node_id) const;
-  std::u16string GetTextContent(ui::AXNodeID ax_node_id) const;
-  std::string GetTextDirection(ui::AXNodeID ax_node_id) const;
-  std::string GetUrl(ui::AXNodeID ax_node_id) const;
-  std::string GetAltText(ui::AXNodeID ax_node_id) const;
-  void SendGetVoicePackInfoRequest(const std::string& language) const;
-  void SendInstallVoicePackRequest(const std::string& language) const;
-  void OnInstallVoicePackResponse(
-      read_anything::mojom::VoicePackInfoPtr voice_pack_info);
-  bool ShouldBold(ui::AXNodeID ax_node_id) const;
-  bool IsOverline(ui::AXNodeID ax_node_id) const;
-  bool IsLeafNode(ui::AXNodeID ax_node_id) const;
-  void OnConnected();
-  void OnCopy() const;
-  void OnScroll(bool on_selection) const;
-  void OnLinkClicked(ui::AXNodeID ax_node_id) const;
-  void OnSelectionChange(ui::AXNodeID anchor_node_id,
-                         int anchor_offset,
-                         ui::AXNodeID focus_node_id,
-                         int focus_offset) const;
-  void OnCollapseSelection() const;
-  bool IsGoogleDocs() const;
-  bool IsReadAloudEnabled() const;
-  bool IsChromeOsAsh() const;
-  bool IsAutoVoiceSwitchingEnabled() const;
-  bool IsLanguagePackDownloadingEnabled() const;
-  bool IsAutomaticWordHighlightingEnabled() const;
-  bool IsPhraseHighlightingEnabled() const;
-  void OnLetterSpacingChange(int value);
-  void OnLineSpacingChange(int value);
-  void OnThemeChange(int value);
-  void OnFontChange(const std::string& font);
-  void OnSpeechRateChange(double rate);
-  void OnVoiceChange(const std::string& voice, const std::string& lang);
-  void OnLanguagePrefChange(const std::string& lang, bool enabled);
-  bool RequiresDistillation();
-  void OnHighlightGranularityChanged(int granularity);
-  double GetLineSpacingValue(int line_spacing) const;
-  double GetLetterSpacingValue(int letter_spacing) const;
-  std::vector<std::string> GetSupportedFonts();
-  void RequestImageDataUrl(ui::AXNodeID node_id) const;
-  std::string GetImageDataUrl(ui::AXNodeID node_id) const;
-  v8::Local<v8::Value> GetImageBitmap(ui::AXNodeID node_id);
-  void OnSpeechPlayingStateChanged(bool is_speech_active);
-  std::string GetValidatedFontName(const std::string& font) const;
-  std::vector<std::string> GetAllFonts();
-  void OnScrolledToBottom();
-  bool IsDocsLoadMoreButtonVisible() const;
 
   // The language code that should be used to determine which voices are
   // supported for speech.
@@ -257,9 +257,10 @@ class ReadAnythingAppController
       const std::string& locale,
       const std::string& display_locale) const;
 
-  void Distill();
+  void Distill(bool for_training_data);
   void Draw(bool recompute_display_nodes);
   void DrawSelection();
+  void DrawEmptyState();
 
   void ExecuteJavaScript(const std::string& script);
 
@@ -378,6 +379,13 @@ class ReadAnythingAppController
   void UpdateDependencyParserModel(base::File model_file);
 
   DependencyParserModel& GetDependencyParserModelForTesting();
+
+  // Stores a screenshot of the page and triggers distillation to record protos.
+  // This function is not used in production and is behind the disabled
+  // `DataCollectionModeForScreen2x` flag.
+  // This function is expected to be called just once. There would be a mismatch
+  // between the training protos and the screenshot if it runs more than once.
+  void DistillAndScreenshot();
 
   std::unique_ptr<AXTreeDistiller> distiller_;
   mojo::Remote<read_anything::mojom::UntrustedPageHandlerFactory>

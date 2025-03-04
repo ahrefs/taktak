@@ -45,6 +45,7 @@
 #import "components/translate/core/browser/translate_prefs.h"
 #import "components/translate/core/language_detection/language_detection_model.h"
 #import "ios/chrome/browser/bookmarks/model/bookmark_model_factory.h"
+#import "ios/chrome/browser/lens_overlay/coordinator/lens_overlay_availability.h"
 #import "ios/chrome/browser/overlays/model/public/overlay_presenter.h"
 #import "ios/chrome/browser/overlays/model/public/overlay_request.h"
 #import "ios/chrome/browser/overlays/model/public/overlay_request_queue.h"
@@ -78,12 +79,12 @@
 #import "ios/chrome/browser/signin/model/system_identity.h"
 #import "ios/chrome/browser/signin/model/system_identity_manager.h"
 #import "ios/chrome/browser/supervised_user/model/supervised_user_service_factory.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/test/toolbar_test_navigation_manager.h"
 #import "ios/chrome/browser/ui/popup_menu//overflow_menu/overflow_menu_orderer.h"
 #import "ios/chrome/browser/ui/popup_menu/overflow_menu/destination_usage_history/constants.h"
 #import "ios/chrome/browser/ui/popup_menu/overflow_menu/feature_flags.h"
 #import "ios/chrome/browser/ui/popup_menu/overflow_menu/overflow_menu_swift.h"
 #import "ios/chrome/browser/ui/popup_menu/popup_menu_constants.h"
-#import "ios/chrome/browser/ui/toolbar/test/toolbar_test_navigation_manager.h"
 #import "ios/chrome/browser/ui/whats_new/constants.h"
 #import "ios/chrome/browser/ui/whats_new/whats_new_util.h"
 #import "ios/chrome/browser/web/model/font_size/font_size_java_script_feature.h"
@@ -114,6 +115,8 @@ namespace {
 const int kNumberOfWebStates = 3;
 
 // Turns on Sync.
+// TODO(crbug.com/40066949): Remove Sync-the-feature related helper, and update
+// or remove related tests.
 void SetupSyncServiceEnabledExpectations(
     syncer::MockSyncService* sync_service) {
   ON_CALL(*sync_service, GetTransportState())
@@ -192,12 +195,10 @@ class OverflowMenuMediatorTest : public PlatformTest {
                             password_manager::MockPasswordStoreInterface>));
     builder.AddTestingFactory(
         AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
 
     profile_ = std::move(builder).Build();
-
-    AuthenticationServiceFactory::CreateAndInitializeForProfile(
-        profile_.get(), std::make_unique<FakeAuthenticationServiceDelegate>());
 
     web::test::OverrideJavaScriptFeatures(
         profile_.get(),
@@ -373,13 +374,15 @@ class OverflowMenuMediatorTest : public PlatformTest {
 
   bool HasItem(NSString* accessibility_identifier, BOOL enabled) {
     for (OverflowMenuDestination* destination in mediator_.model.destinations) {
-      if (destination.accessibilityIdentifier == accessibility_identifier)
+      if (destination.accessibilityIdentifier == accessibility_identifier) {
         return YES;
+      }
     }
     for (OverflowMenuActionGroup* group in mediator_.model.actionGroups) {
       for (OverflowMenuAction* action in group.actions) {
-        if (action.accessibilityIdentifier == accessibility_identifier)
+        if (action.accessibilityIdentifier == accessibility_identifier) {
           return action.enabled == enabled;
+        }
       }
     }
     return NO;
@@ -387,8 +390,9 @@ class OverflowMenuMediatorTest : public PlatformTest {
 
   bool HasEnterpriseInfoItem() {
     for (OverflowMenuActionGroup* group in mediator_.model.actionGroups) {
-      if (group.footer.accessibilityIdentifier == kTextMenuEnterpriseInfo)
+      if (group.footer.accessibilityIdentifier == kTextMenuEnterpriseInfo) {
         return YES;
+      }
     }
     return NO;
   }
@@ -430,7 +434,7 @@ class OverflowMenuMediatorTest : public PlatformTest {
     fake_system_identity_manager()->AddIdentityWithUnknownCapabilities(
         identity);
     AuthenticationServiceFactory::GetForProfile(profile_.get())
-        ->SignIn(identity, signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN);
+        ->SignIn(identity, signin_metrics::AccessPoint::kUnknown);
     CoreAccountInfo core_account_info =
         identity_manager()->GetPrimaryAccountInfo(
             signin::ConsentLevel::kSignin);
@@ -490,6 +494,10 @@ TEST_F(OverflowMenuMediatorTest, TestMenuItemsCount) {
   mediator_.model = model_;
 
   NSUInteger number_of_action_items = 6;
+
+  if (IsLensOverlayAvailable()) {
+    number_of_action_items++;
+  }
 
   if (ios::provider::IsTextZoomEnabled()) {
     number_of_action_items++;
@@ -655,9 +663,8 @@ TEST_F(OverflowMenuMediatorTest, TestEnterpriseInfoShownForUserLevelPolicies) {
       AuthenticationServiceFactory::GetForProfile(profile_.get());
   ChromeAccountManagerService* account_manager =
       ChromeAccountManagerServiceFactory::GetForProfile(profile_.get());
-  authentication_service->SignIn(
-      account_manager->GetDefaultIdentity(),
-      signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN);
+  authentication_service->SignIn(account_manager->GetDefaultIdentity(),
+                                 signin_metrics::AccessPoint::kUnknown);
   EXPECT_TRUE(authentication_service->HasPrimaryIdentityManaged(
       signin::ConsentLevel::kSignin));
 
@@ -937,16 +944,16 @@ TEST_F(OverflowMenuMediatorTest, TestNoEligibleIdentityErrorWhenSyncOff) {
 }
 
 // Tests that there is an error badge on the Settings destination when there is
-// a Sync error that will be indicated in the Settings menu. The account is
-// signed in and has Sync turned ON.
+// an account error that will be indicated in the Settings menu. The account is
+// signed.
 TEST_F(OverflowMenuMediatorTest, TestSyncError) {
   CreateMediator(/*is_incognito=*/NO);
 
   syncer::MockSyncService syncService;
   // Inject Sync error in Sync Service.
   ON_CALL(syncService, GetUserActionableError())
-      .WillByDefault(Return(kIneligibleIdentityErrorWhenSyncOff));
-  SetupSyncServiceEnabledExpectations(&syncService);
+      .WillByDefault(
+          Return(syncer::SyncService::UserActionableError::kNeedsPassphrase));
   mediator_.syncService = &syncService;
   CreateLocalStatePrefs();
   mediator_.localStatePrefs = localStatePrefs_.get();

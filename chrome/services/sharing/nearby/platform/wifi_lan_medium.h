@@ -83,16 +83,25 @@ class WifiLanMedium : public api::WifiLanMedium,
 
  private:
   // These values are persisted to logs. Entries should not be renumbered and
-  // numeric values should never be reused.
+  // numeric values should never be reused. Keep in sync with the
+  // NearbyConnectionsWifiLanConnectResult UMA enum defined in
+  // //tools/metrics/histograms/metadata/nearby/enums.xml.
+  //
+  // LINT.IfChange(NearbyConnectionsWifiLanConnectResult)
   enum class ConnectResult {
     kSuccess = 0,
     kCanceled = 1,
     kErrorFailedToCreateTcpSocket = 2,
     kMaxValue = kErrorFailedToCreateTcpSocket,
   };
+  // LINT.ThenChange(//tools/metrics/histograms/metadata/nearby/enums.xml:NearbyConnectionsWifiLanConnectResult)
 
   // These values are persisted to logs. Entries should not be renumbered and
-  // numeric values should never be reused.
+  // numeric values should never be reused. Keep in sync with the
+  // NearbyConnectionsWifiLanListenResult UMA enum defined in
+  // //tools/metrics/histograms/metadata/nearby/enums.xml.
+  //
+  // LINT.IfChange(NearbyConnectionsWifiLanListenResult)
   enum class ListenResult {
     kSuccess = 0,
     kCanceled = 1,
@@ -106,6 +115,7 @@ class WifiLanMedium : public api::WifiLanMedium,
     kErrorFailedToCreateFirewallHole = 9,
     kMaxValue = kErrorFailedToCreateFirewallHole,
   };
+  // LINT.ThenChange(//tools/metrics/histograms/metadata/nearby/enums.xml:NearbyConnectionsWifiLanListenResult)
 
   /*==========================================================================*/
   // ConnectToService() helpers: Connect to remote server socket.
@@ -191,8 +201,6 @@ class WifiLanMedium : public api::WifiLanMedium,
       cros_network_config_;
   mojo::SharedRemote<::sharing::mojom::FirewallHoleFactory>
       firewall_hole_factory_;
-  // Unlike other remotes, mdns_manager_ must be implicitly destructed
-  // instead of destructed on the task_runner_ sequence.
   mojo::SharedRemote<::sharing::mojom::MdnsManager> mdns_manager_;
   mojo::Receiver<::sharing::mojom::MdnsObserver> mdns_observer_{this};
 

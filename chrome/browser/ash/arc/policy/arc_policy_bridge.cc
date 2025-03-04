@@ -10,9 +10,6 @@
 #include <utility>
 
 #include "arc_policy_util.h"
-#include "ash/components/arc/arc_browser_context_keyed_service_factory_base.h"
-#include "ash/components/arc/arc_prefs.h"
-#include "ash/components/arc/session/arc_bridge_service.h"
 #include "ash/constants/ash_switches.h"
 #include "base/command_line.h"
 #include "base/functional/bind.h"
@@ -35,6 +32,9 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/pref_names.h"
+#include "chromeos/ash/experiences/arc/arc_browser_context_keyed_service_factory_base.h"
+#include "chromeos/ash/experiences/arc/arc_prefs.h"
+#include "chromeos/ash/experiences/arc/session/arc_bridge_service.h"
 #include "chromeos/components/onc/onc_utils.h"
 #include "components/onc/onc_constants.h"
 #include "components/policy/core/common/policy_map.h"
@@ -76,9 +76,7 @@ void MapBoolToBool(const std::string& arc_policy_name,
   const base::Value* const policy_value =
       policy_map.GetValue(policy_name, base::Value::Type::BOOLEAN);
   if (!policy_value) {
-    NOTREACHED_IN_MIGRATION()
-        << "Policy " << policy_name << " is not a boolean.";
-    return;
+    NOTREACHED() << "Policy " << policy_name << " is not a boolean.";
   }
   filtered_policies->Set(arc_policy_name,
                          policy_value->GetBool() != invert_bool_value);
@@ -98,9 +96,7 @@ void MapIntToBool(const std::string& arc_policy_name,
   const base::Value* const policy_value =
       policy_map.GetValue(policy_name, base::Value::Type::INTEGER);
   if (!policy_value) {
-    NOTREACHED_IN_MIGRATION()
-        << "Policy " << policy_name << " is not an integer.";
-    return;
+    NOTREACHED() << "Policy " << policy_name << " is not an integer.";
   }
   filtered_policies->Set(arc_policy_name, policy_value->GetInt() == int_true);
 }
@@ -135,9 +131,7 @@ void MapObjectToPresenceBool(const std::string& arc_policy_name,
   const base::Value* const policy_value =
       policy_map.GetValue(policy_name, base::Value::Type::DICT);
   if (!policy_value) {
-    NOTREACHED_IN_MIGRATION()
-        << "Policy " << policy_name << " is not an object.";
-    return;
+    NOTREACHED() << "Policy " << policy_name << " is not an object.";
   }
   for (const auto& field : fields) {
     if (!policy_value->GetDict().contains(field)) {
@@ -179,8 +173,8 @@ void AddOncCaCertsToPolicies(const policy::PolicyMap& policy_map,
     base::Value::Dict unused_global_network_config;
     if (!chromeos::onc::ParseAndValidateOncForImport(
             onc_blob, onc::ONCSource::ONC_SOURCE_USER_POLICY,
-            "" /* no passphrase */, &unused_network_configs,
-            &unused_global_network_config, &certificates)) {
+            &unused_network_configs, &unused_global_network_config,
+            &certificates)) {
       LOG(ERROR) << "Value of onc policy has invalid format =" << onc_blob;
     }
   }
@@ -209,7 +203,7 @@ void AddOncCaCertsToPolicies(const policy::PolicyMap& policy_map,
     bool web_trust_flag = false;
     for (const auto& list_val : *trust_list) {
       if (!list_val.is_string()) {
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
       }
 
       if (list_val.GetString() == ::onc::certificate::kWeb) {
@@ -345,6 +339,7 @@ void ConfigureRevenPolicies(base::Value::Dict* arc_policy) {
       "com.netskope.netskopeclient",
       "com.zimperium.zips",
       "com.fortinet.forticlient_vpn",
+      "com.fortinet.forticlient_fa",
       "com.forcepoint.sslvpn"};
 
   FilterApps(arc_policy, allowed_packages);
@@ -534,7 +529,7 @@ class ArcPolicyBridgeFactory
  private:
   friend base::DefaultSingletonTraits<ArcPolicyBridgeFactory>;
 
-  ArcPolicyBridgeFactory() {}
+  ArcPolicyBridgeFactory() = default;
   ~ArcPolicyBridgeFactory() override = default;
 };
 
@@ -780,6 +775,7 @@ void ArcPolicyBridge::OnReportComplianceParse(
 // static
 void ArcPolicyBridge::ActivateArcIfRequiredByPolicy(
     const policy::PolicyMap& policy_map) {
+  VLOG(1) << "ArcPolicyBridge::ActivateArcIfRequiredByPolicy";
   base::Value::Dict filtered_policies = ParseArcPoliciesToDict(policy_map);
   base::Value::List* apps =
       filtered_policies.FindList(policy_util::kArcPolicyKeyApplications);
@@ -792,6 +788,7 @@ void ArcPolicyBridge::ActivateArcIfRequiredByPolicy(
                kPolicyAppInstallTypeForceInstalled;
       });
   if (hasForceInstallApps) {
+    VLOG(1) << "Force install apps found, allowing ARC activation.";
     arc::ArcSessionManager::Get()->AllowActivation(
         arc::ArcSessionManager::AllowActivationReason::kForcedByPolicy);
   }

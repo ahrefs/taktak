@@ -49,7 +49,7 @@ void OnIsUserVerifyingComplete(ScriptPromiseResolver<IDLBoolean>* resolver,
   resolver->Resolve(available);
 }
 
-std::optional<std::string> AuthenticatorAttachmentToString(
+String AuthenticatorAttachmentToString(
     mojom::blink::AuthenticatorAttachment authenticator_attachment) {
   switch (authenticator_attachment) {
     case mojom::blink::AuthenticatorAttachment::PLATFORM:
@@ -57,7 +57,7 @@ std::optional<std::string> AuthenticatorAttachmentToString(
     case mojom::blink::AuthenticatorAttachment::CROSS_PLATFORM:
       return "cross-platform";
     case mojom::blink::AuthenticatorAttachment::NO_PREFERENCE:
-      return std::nullopt;
+      return g_null_atom;
   }
 }
 
@@ -68,15 +68,41 @@ void OnGetClientCapabilitiesComplete(
   for (const auto& capability : capabilities) {
     results.emplace_back(std::move(capability->name), capability->supported);
   }
-  // Add renderer computed capabilities.
-  // TODO(crbug.com/360327828): Update when supported.
-  results.emplace_back(kConditionalCreateCapability, false);
+  results.emplace_back(
+      kConditionalCreateCapability,
+      RuntimeEnabledFeatures::WebAuthenticationConditionalCreateEnabled());
 
   const bool report_enabled =
       RuntimeEnabledFeatures::CredentialManagerReportEnabled();
   results.emplace_back(kSignalAllAcceptedCredentials, report_enabled);
   results.emplace_back(kSignalCurrentUserDetails, report_enabled);
   results.emplace_back(kSignalUnknownCredential, report_enabled);
+
+  // Extensions are added from the AuthenticationExtensionsClientInputs
+  // dictionary defined in authentication_extensions_client_inputs.idl.
+  // According to the specification, we should include a key for each
+  // extension implemented by the client, formed by prefixing "extension:"
+  // to the extension identifier.
+  //
+  // Excluded extensions: cableAuthentication, uvm, remoteDesktopClientOverride,
+  // and supplementalPubKeys.
+  results.emplace_back("extension:appid", true);
+  results.emplace_back("extension:appidExclude", true);
+  results.emplace_back("extension:hmacCreateSecret", true);
+  results.emplace_back("extension:credentialProtectionPolicy", true);
+  results.emplace_back("extension:enforceCredentialProtectionPolicy", true);
+  results.emplace_back("extension:minPinLength", true);
+  results.emplace_back("extension:credProps", true);
+  results.emplace_back(
+      "extension:largeBlob",
+      RuntimeEnabledFeatures::WebAuthenticationLargeBlobExtensionEnabled());
+  results.emplace_back("extension:credBlob", true);
+  results.emplace_back("extension:getCredBlob", true);
+  results.emplace_back(
+      "extension:payment",
+      RuntimeEnabledFeatures::SecurePaymentConfirmationEnabled());
+  results.emplace_back("extension:prf",
+                       RuntimeEnabledFeatures::WebAuthenticationPRFEnabled());
 
   // Results should be sorted lexicographically based on the keys.
   std::sort(
@@ -133,7 +159,9 @@ PublicKeyCredential::getClientCapabilities(ScriptState* script_state) {
       ScriptPromiseResolver<IDLRecord<IDLString, IDLBoolean>>>(script_state);
   ScriptPromise promise = resolver->Promise();
 
-  // TODO(crbug.com/360327828): Add "UseCounter".
+  UseCounter::Count(resolver->GetExecutionContext(),
+                    WebFeature::kWebAuthnGetClientCapabilities);
+
   auto* authenticator =
       CredentialManagerProxy::From(script_state)->Authenticator();
   authenticator->GetClientCapabilities(WTF::BindOnce(
@@ -202,7 +230,7 @@ ScriptPromise<IDLBoolean> PublicKeyCredential::isConditionalMediationAvailable(
   return promise;
 }
 
-v8::Local<v8::Value> PublicKeyCredential::toJSON(
+v8::Local<v8::Object> PublicKeyCredential::toJSON(
     ScriptState* script_state) const {
   // PublicKeyCredential.response holds an AuthenticatorAttestationResponse, if
   // it was returned from a create call, or an AuthenticatorAssertionResponse
@@ -214,8 +242,6 @@ v8::Local<v8::Value> PublicKeyCredential::toJSON(
                 AuthenticatorAttestationResponseJSON*>
       response_json = response_->toJSON();
 
-  // The return type of `toJSON()` is `PublicKeyCredentialJSON` which just
-  // aliases `object`, and thus this method just returns a `Value`.
   v8::Local<v8::Value> result;
   absl::visit(
       base::Overloaded{
@@ -224,9 +250,9 @@ v8::Local<v8::Value> PublicKeyCredential::toJSON(
             registration_response->setId(id());
             registration_response->setRawId(WebAuthnBase64UrlEncode(rawId()));
             registration_response->setResponse(attestation_response);
-            if (authenticator_attachment_.has_value()) {
+            if (!authenticator_attachment_.IsNull()) {
               registration_response->setAuthenticatorAttachment(
-                  *authenticator_attachment_);
+                  authenticator_attachment_);
             }
             registration_response->setClientExtensionResults(
                 AuthenticationExtensionsClientOutputsToJSON(
@@ -240,9 +266,9 @@ v8::Local<v8::Value> PublicKeyCredential::toJSON(
             authentication_response->setId(id());
             authentication_response->setRawId(WebAuthnBase64UrlEncode(rawId()));
             authentication_response->setResponse(assertion_response);
-            if (authenticator_attachment_.has_value()) {
+            if (!authenticator_attachment_.IsNull()) {
               authentication_response->setAuthenticatorAttachment(
-                  *authenticator_attachment_);
+                  authenticator_attachment_);
             }
             authentication_response->setClientExtensionResults(
                 AuthenticationExtensionsClientOutputsToJSON(
@@ -251,7 +277,8 @@ v8::Local<v8::Value> PublicKeyCredential::toJSON(
             result = authentication_response->ToV8(script_state);
           }},
       response_json);
-  return result;
+  CHECK(result->IsObject());
+  return result.As<v8::Object>();
 }
 
 // static

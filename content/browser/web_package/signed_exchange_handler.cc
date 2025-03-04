@@ -42,6 +42,7 @@
 #include "content/public/common/content_features.h"
 #include "crypto/sha2.h"
 #include "mojo/public/cpp/bindings/callback_helpers.h"
+#include "net/base/host_port_pair.h"
 #include "net/base/io_buffer.h"
 #include "net/base/load_flags.h"
 #include "net/base/net_errors.h"
@@ -115,8 +116,9 @@ void VerifyCert(const scoped_refptr<net::X509Certificate>& certificate,
                           ->GetNetworkContext();
   }
 
-  network_context->VerifyCertForSignedExchange(
-      certificate, url, ocsp_result, sct_list, std::move(wrapped_callback));
+  network_context->VerifyCert(certificate, net::HostPortPair::FromURL(url),
+                              ocsp_result, sct_list,
+                              std::move(wrapped_callback));
 }
 
 std::string OCSPErrorToString(const bssl::OCSPVerifyResult& ocsp_result) {
@@ -147,15 +149,13 @@ std::string OCSPErrorToString(const bssl::OCSPVerifyResult& ocsp_result) {
 
   switch (ocsp_result.revocation_status) {
     case bssl::OCSPRevocationStatus::GOOD:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
     case bssl::OCSPRevocationStatus::REVOKED:
       return "OCSP response indicates that the certificate is revoked.";
     case bssl::OCSPRevocationStatus::UNKNOWN:
       return "OCSP responder doesn't know about the certificate.";
   }
-  NOTREACHED_IN_MIGRATION();
-  return std::string();
+  NOTREACHED();
 }
 
 }  // namespace
@@ -317,7 +317,7 @@ void SignedExchangeHandler::DidReadHeader(bool completed_syncly,
         result = ParseHeadersAndFetchCertificate();
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
     if (result != SignedExchangeLoadResult::kSuccess) {
       RunErrorCallback(result, net::ERR_INVALID_SIGNED_EXCHANGE);
@@ -348,7 +348,7 @@ SignedExchangeHandler::ParsePrologueBeforeFallbackUrl() {
 
   prologue_before_fallback_url_ =
       signed_exchange_prologue::BeforeFallbackUrl::Parse(
-          base::make_span(
+          base::span(
               header_buf_->bytes(),
               signed_exchange_prologue::BeforeFallbackUrl::kEncodedSizeInBytes),
           devtools_proxy_.get());
@@ -370,7 +370,7 @@ SignedExchangeHandler::ParsePrologueFallbackUrlAndAfter() {
 
   prologue_fallback_url_and_after_ =
       signed_exchange_prologue::FallbackUrlAndAfter::Parse(
-          base::make_span(
+          base::span(
               header_buf_->bytes(),
               prologue_before_fallback_url_.ComputeFallbackUrlAndAfterLength()),
           prologue_before_fallback_url_, devtools_proxy_.get());
@@ -410,13 +410,12 @@ SignedExchangeHandler::ParseHeadersAndFetchCertificate() {
 
   DCHECK(version_.has_value());
 
-  std::string_view data(header_buf_->data(), header_read_buf_->size());
-  std::string_view signature_header_field = data.substr(
-      0, prologue_fallback_url_and_after_.signature_header_field_length());
-  base::span<const uint8_t> cbor_header =
-      base::as_bytes(base::make_span(data.substr(
-          prologue_fallback_url_and_after_.signature_header_field_length(),
-          prologue_fallback_url_and_after_.cbor_header_length())));
+  base::span<const uint8_t> data = header_buf_->span();
+  std::string_view signature_header_field = base::as_string_view(data.first(
+      prologue_fallback_url_and_after_.signature_header_field_length()));
+  base::span<const uint8_t> cbor_header = data.subspan(
+      prologue_fallback_url_and_after_.signature_header_field_length(),
+      prologue_fallback_url_and_after_.cbor_header_length());
   envelope_ = SignedExchangeEnvelope::Parse(
       *version_, prologue_fallback_url_and_after_.fallback_url(),
       signature_header_field, cbor_header, devtools_proxy_.get());
@@ -587,13 +586,13 @@ bool SignedExchangeHandler::CheckOCSPStatus(
   // result here.
   UMA_HISTOGRAM_ENUMERATION(kHistogramOCSPResponseStatus,
                             ocsp_result.response_status,
-                            static_cast<base::HistogramBase::Sample>(
+                            static_cast<base::HistogramBase::Sample32>(
                                 bssl::OCSPVerifyResult::RESPONSE_STATUS_MAX) +
                                 1);
   if (ocsp_result.response_status == bssl::OCSPVerifyResult::PROVIDED) {
     UMA_HISTOGRAM_ENUMERATION(kHistogramOCSPRevocationStatus,
                               ocsp_result.revocation_status,
-                              static_cast<base::HistogramBase::Sample>(
+                              static_cast<base::HistogramBase::Sample32>(
                                   bssl::OCSPRevocationStatus::MAX_VALUE) +
                                   1);
     if (ocsp_result.revocation_status == bssl::OCSPRevocationStatus::GOOD) {
@@ -721,11 +720,14 @@ void SignedExchangeHandler::CheckAbsenceOfCookies(base::OnceClosure callback) {
           network::mojom::RestrictedCookieManagerRole::NETWORK,
           inner_url_origin, isolation_info,
           /* is_service_worker = */ false,
-          render_frame_host ? render_frame_host->GetProcess()->GetID() : -1,
+          render_frame_host ? render_frame_host->GetProcess()->GetDeprecatedID()
+                            : -1,
           render_frame_host ? render_frame_host->GetRoutingID()
                             : MSG_ROUTING_NONE,
+          /*cookie_setting_overrides=*/
           render_frame_host ? render_frame_host->GetCookieSettingOverrides()
                             : net::CookieSettingOverrides(),
+          /*devtools_cookie_setting_overrides=*/net::CookieSettingOverrides(),
           cookie_manager_.BindNewPipeAndPassReceiver(),
           render_frame_host ? render_frame_host->CreateCookieAccessObserver()
                             : mojo::NullRemote());
@@ -744,6 +746,7 @@ void SignedExchangeHandler::CheckAbsenceOfCookies(base::OnceClosure callback) {
       *isolation_info.top_frame_origin(),
       net::StorageAccessApiStatus::kAccessViaAPI, std::move(match_options),
       /*is_ad_tagged=*/false,
+      /*apply_devtools_overrides=*/false,
       /*force_disable_third_party_cookies=*/false,
       base::BindOnce(&SignedExchangeHandler::OnGetCookies,
                      weak_factory_.GetWeakPtr(), std::move(callback)));

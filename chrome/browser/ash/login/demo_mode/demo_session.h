@@ -16,6 +16,7 @@
 #include "base/scoped_multi_source_observation.h"
 #include "base/scoped_observation.h"
 #include "base/values.h"
+#include "chrome/browser/ash/login/demo_mode/demo_mode_idle_handler.h"
 #include "chrome/browser/ash/login/demo_mode/demo_mode_window_closer.h"
 #include "chromeos/dbus/power/power_manager_client.h"
 #include "components/component_updater/ash/component_manager_ash.h"
@@ -24,8 +25,6 @@
 #include "components/session_manager/core/session_manager_observer.h"
 #include "components/user_manager/user_manager.h"
 #include "extensions/browser/app_window/app_window_registry.h"
-
-class PrefRegistrySimple;
 
 namespace base {
 class OneShotTimer;
@@ -89,14 +88,6 @@ class DemoSession : public session_manager::SessionManagerObserver,
     kMaxValue = kAppListQuery
   };
 
-  // The list of countries that Demo Mode supports, ie the countries we have
-  // created OUs and admin users for in the admin console.
-  // Sorted by country code except US is first.
-  static constexpr char kSupportedCountries[][3] = {
-      "US", "AT", "AU", "BE", "BR", "CA", "DE", "DK", "ES",
-      "FI", "FR", "GB", "IE", "IN", "IT", "JP", "LU", "MX",
-      "NL", "NO", "NZ", "PL", "PT", "SE", "ZA"};
-
   static constexpr char kCountryNotSelectedId[] = "N/A";
 
   DemoSession(const DemoSession&) = delete;
@@ -153,8 +144,6 @@ class DemoSession : public session_manager::SessionManagerObserver,
   // `title`: The display name of the country in the current locale.
   // `selected`: Whether the country is currently selected.
   static base::Value::List GetCountryList();
-
-  static void RegisterLocalStatePrefs(PrefRegistrySimple* registry);
 
   // Records the launch of an app in Demo mode from the specified source.
   static void RecordAppLaunchSource(AppLaunchSource source);
@@ -251,6 +240,10 @@ class DemoSession : public session_manager::SessionManagerObserver,
 
   // Keep track of which app has been installed in demo mode.
   std::set<std::string> installed_app_;
+
+  // Handle device idle action for demo mode. Affect both MGS and demo account
+  // sessions. Constructed while demo app is available.
+  std::unique_ptr<DemoModeIdleHandler> idle_handler_;
 
   base::WeakPtrFactory<DemoSession> weak_ptr_factory_{this};
 };

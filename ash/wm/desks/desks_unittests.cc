@@ -40,6 +40,7 @@
 #include "ash/shelf/scrollable_shelf_view.h"
 #include "ash/shelf/shelf.h"
 #include "ash/shelf/shelf_layout_manager.h"
+#include "ash/shelf/shelf_navigation_widget.h"
 #include "ash/shelf/shelf_test_util.h"
 #include "ash/shelf/shelf_view.h"
 #include "ash/shelf/shelf_view_test_api.h"
@@ -478,9 +479,7 @@ class DesksTest : public AshTestBase,
 
     scoped_feature_list_.InitWithFeatureStates(
         {{features::kFeatureManagement16Desks, GetParam().use_16_desks},
-         {features::kPerDeskShelf, GetParam().per_desk_shelf},
-         {features::kDeskBarWindowOcclusionOptimization, true},
-         {chromeos::features::kOverviewSessionInitOptimizations, true}});
+         {features::kPerDeskShelf, GetParam().per_desk_shelf}});
 
     AshTestBase::SetUp();
     SetVirtualKeyboardEnabled(true);
@@ -580,28 +579,15 @@ TEST_P(DesksTest, DesksCreationAndRemoval) {
 TEST_P(DesksTest, DeskRemovalLifetimeHistogram) {
   base::HistogramTester histogram_tester;
 
-  constexpr std::string_view kHistogramNames[] = {
-      "Ash.Desks.DeskLifetime_2", "Ash.Desks.DeskLifetime_Profile_2"};
-
   auto* controller = DesksController::Get();
 
-  for (bool set_lacros_profile : {false, true}) {
-    std::string_view histogram = kHistogramNames[set_lacros_profile];
-    SCOPED_TRACE(histogram);
+  // Create a new desk and give it a creation time in the past.
+  NewDesk();
+  auto* desk = controller->desks().back().get();
+  desk->set_creation_time(base::Time::Now() - base::Hours(8));
 
-    // Create a new desk and give it a creation time in the past.
-    NewDesk();
-    auto* desk = controller->desks().back().get();
-    desk->set_creation_time(base::Time::Now() - base::Hours(8));
-
-    if (set_lacros_profile) {
-      desk->SetLacrosProfileId(GetDummyLacrosDeskProfileId(0),
-                               /*source=*/std::nullopt);
-    }
-
-    RemoveDesk(desk);
-    histogram_tester.ExpectBucketCount(histogram, 8, 1);
-  }
+  RemoveDesk(desk);
+  histogram_tester.ExpectBucketCount("Ash.Desks.DeskLifetime_2", 8, 1);
 }
 
 // Regression test for a crash reported at https://crbug.com/1267069. If a
@@ -671,10 +657,10 @@ TEST_P(DesksTest, DesksTextfieldAddTooltipText) {
   auto* desks_bar_view =
       GetOverviewGridForRoot(Shell::GetPrimaryRootWindow())->desks_bar_view();
   auto* desk_name_view1 = desks_bar_view->mini_views()[0]->desk_name_view();
-  EXPECT_TRUE(desk_name_view1->GetTooltipText(gfx::Point()).empty());
+  EXPECT_TRUE(desk_name_view1->GetRenderedTooltipText(gfx::Point()).empty());
 
   auto* desk_name_view2 = desks_bar_view->mini_views()[1]->desk_name_view();
-  EXPECT_EQ(desk_name2, desk_name_view2->GetTooltipText(gfx::Point()));
+  EXPECT_EQ(desk_name2, desk_name_view2->GetRenderedTooltipText(gfx::Point()));
 }
 
 TEST_P(DesksTest, DesksBarViewDeskCreation) {
@@ -2599,16 +2585,16 @@ TEST_P(DesksTest, LacrosProfileId) {
   TestDeskObserver desk_observer;
   desk->AddObserver(&desk_observer);
 
-  desk->SetLacrosProfileId(1001, /*source=*/std::nullopt);
+  desk->SetLacrosProfileId(1001);
   EXPECT_THAT(desk_observer.lacros_profile_id_updates(),
               testing::ElementsAre(1001));
 
   // Setting the same ID does not result in observer notifications.
-  desk->SetLacrosProfileId(1001, /*source=*/std::nullopt);
+  desk->SetLacrosProfileId(1001);
   EXPECT_THAT(desk_observer.lacros_profile_id_updates(),
               testing::ElementsAre(1001));
 
-  desk->SetLacrosProfileId(2001, /*source=*/std::nullopt);
+  desk->SetLacrosProfileId(2001);
   EXPECT_THAT(desk_observer.lacros_profile_id_updates(),
               testing::ElementsAre(1001, 2001));
 
@@ -4838,8 +4824,8 @@ class DesksMultiUserTest : public NoSessionAshTestBase,
   MultiUserWindowManager* multi_user_window_manager() {
     return multi_user_window_manager_.get();
   }
-  TestingPrefServiceSimple* user_1_prefs() { return user_1_prefs_; }
-  TestingPrefServiceSimple* user_2_prefs() { return user_2_prefs_; }
+  PrefService* user_1_prefs() { return user_1_prefs_; }
+  PrefService* user_2_prefs() { return user_2_prefs_; }
 
   // AshTestBase:
   void SetUp() override {
@@ -4848,30 +4834,19 @@ class DesksMultiUserTest : public NoSessionAshTestBase,
     TestSessionControllerClient* session_controller =
         GetSessionControllerClient();
     session_controller->Reset();
-
-    // Inject our own PrefServices for each user which enables us to setup the
-    // desks restore data before the user signs in.
-    auto user_1_prefs = std::make_unique<TestingPrefServiceSimple>();
-    user_1_prefs_ = user_1_prefs.get();
-    RegisterUserProfilePrefs(user_1_prefs_->registry(), /*country=*/"",
-                             /*for_test=*/true);
-    auto user_2_prefs = std::make_unique<TestingPrefServiceSimple>();
-    user_2_prefs_ = user_2_prefs.get();
-    RegisterUserProfilePrefs(user_2_prefs_->registry(), /*country=*/"",
-                             /*for_test=*/true);
     session_controller->AddUserSession(kUser1Email,
-                                       user_manager::UserType::kRegular,
-                                       /*provide_pref_service=*/false);
-    session_controller->SetUserPrefService(GetUser1AccountId(),
-                                           std::move(user_1_prefs));
+                                       user_manager::UserType::kRegular);
+    user_1_prefs_ = session_controller->GetUserPrefService(GetUser1AccountId());
+    CHECK(user_1_prefs_);
     session_controller->AddUserSession(kUser2Email,
-                                       user_manager::UserType::kRegular,
-                                       /*provide_pref_service=*/false);
-    session_controller->SetUserPrefService(GetUser2AccountId(),
-                                           std::move(user_2_prefs));
+                                       user_manager::UserType::kRegular);
+    user_2_prefs_ = session_controller->GetUserPrefService(GetUser2AccountId());
+    CHECK(user_1_prefs_);
   }
 
   void TearDown() override {
+    user_1_prefs_ = nullptr;
+    user_2_prefs_ = nullptr;
     multi_user_window_manager_.reset();
     NoSessionAshTestBase::TearDown();
   }
@@ -4928,8 +4903,8 @@ class DesksMultiUserTest : public NoSessionAshTestBase,
  private:
   std::unique_ptr<MultiUserWindowManager> multi_user_window_manager_;
 
-  raw_ptr<TestingPrefServiceSimple, DanglingUntriaged> user_1_prefs_ = nullptr;
-  raw_ptr<TestingPrefServiceSimple, DanglingUntriaged> user_2_prefs_ = nullptr;
+  raw_ptr<PrefService> user_1_prefs_ = nullptr;
+  raw_ptr<PrefService> user_2_prefs_ = nullptr;
 };
 
 TEST_F(DesksMultiUserTest, SwitchUsersBackAndForth) {
@@ -6968,7 +6943,7 @@ TEST_P(DesksTest, ZeroStateDeskButtonText) {
 
   desks_bar_view = GetOverviewGridForRoot(root_window)->desks_bar_view();
   auto* default_desk_button = desks_bar_view->default_desk_button();
-  std::u16string desk_button_text = default_desk_button->GetText();
+  std::u16string_view desk_button_text = default_desk_button->GetText();
   std::u16string expected_desk_name(DeskTextfield::kMaxLength, L'a');
   // Zero state desk button should show the elided name as the DeskNameView.
   EXPECT_EQ(expected_desk_name,
@@ -9105,12 +9080,9 @@ TEST_P(DesksTest, DeskLacrosIdPrefs) {
 
   auto* controller = DesksController::Get();
   // Set some lacros profile IDs for the three desks.
-  controller->GetDeskAtIndex(0)->SetLacrosProfileId(1001,
-                                                    /*source=*/std::nullopt);
-  controller->GetDeskAtIndex(1)->SetLacrosProfileId(2001,
-                                                    /*source=*/std::nullopt);
-  controller->GetDeskAtIndex(2)->SetLacrosProfileId(3001,
-                                                    /*source=*/std::nullopt);
+  controller->GetDeskAtIndex(0)->SetLacrosProfileId(1001);
+  controller->GetDeskAtIndex(1)->SetLacrosProfileId(2001);
+  controller->GetDeskAtIndex(2)->SetLacrosProfileId(3001);
   EXPECT_THAT(GetDeskRestoreLacrosProfileIds(GetPrimaryUserPrefService()),
               testing::ElementsAre(1001, 2001, 3001));
 
@@ -9778,6 +9750,7 @@ TEST_P(DeskBarTest, NewDeskButton) {
 
     EXPECT_TRUE(desks_controller->CanRemoveDesks());
     EXPECT_THAT(desks_controller->GetNumberOfDesks(), i);
+    views::test::RunScheduledLayout(desk_bar_view);
   }
 
   // The new desk button should be disabled.
@@ -10861,44 +10834,6 @@ TEST_P(DeskBarTest, CanUndoDeskClosureThroughKeyboardNavigation) {
   }
 }
 
-TEST_P(DeskBarTest, DeskProfilesUsageMetrics) {
-  base::HistogramTester histogram_tester;
-
-  OpenDeskBar();
-  // There's only one desk and regardless of whether the flag feature is enabled
-  // or not, conditions are not met.
-  histogram_tester.ExpectBucketCount(kDeskProfilesUsageStatusHistogramName,
-                                     DeskProfilesUsageStatus::kConditionsNotMet,
-                                     1);
-  CloseDeskBar();
-
-  NewDesk();
-  OpenDeskBar();
-  // Now there are two desks and we expect metrics depending on whether the
-  // feature is enabled or not.
-  if (use_desk_profiles_) {
-    histogram_tester.ExpectBucketCount(kDeskProfilesUsageStatusHistogramName,
-                                       DeskProfilesUsageStatus::kConditionsMet,
-                                       1);
-  } else {
-    histogram_tester.ExpectBucketCount(
-        kDeskProfilesUsageStatusHistogramName,
-        DeskProfilesUsageStatus::kConditionsNotMet, 2);
-  }
-  CloseDeskBar();
-
-  // Explicitly assign a profile to one of the desks.
-  if (use_desk_profiles_) {
-    DesksController::Get()->GetDeskAtIndex(0)->SetLacrosProfileId(
-        GetDummyLacrosDeskProfileId(0), /*source=*/std::nullopt);
-
-    OpenDeskBar();
-    histogram_tester.ExpectBucketCount(kDeskProfilesUsageStatusHistogramName,
-                                       DeskProfilesUsageStatus::kEnabled, 1);
-    CloseDeskBar();
-  }
-}
-
 TEST_P(DeskBarTest, DeskActionButtonTooltipForNewDesk) {
   OpenDeskBar();
 
@@ -11067,6 +11002,21 @@ class DeskButtonTest
  private:
   std::unique_ptr<ShelfViewTestAPI> shelf_test_api_;
 };
+
+TEST_P(DeskButtonTest, AccessiblePrevAndNextFocusWindow) {
+  NewDesk();
+  views::test::RunScheduledLayout(GetDeskButtonWidget());
+
+  auto* desk_button = GetDeskButton();
+  auto* shelf_widget =
+      Shelf::ForWindow(desk_button->GetWidget()->GetNativeWindow())
+          ->shelf_widget();
+
+  EXPECT_EQ(desk_button->GetViewAccessibility().GetPreviousWindowFocus(),
+            shelf_widget->navigation_widget());
+  EXPECT_EQ(desk_button->GetViewAccessibility().GetNextWindowFocus(),
+            shelf_widget);
+}
 
 // Tests functionalities for `DeskSwitchButton`s.
 TEST_P(DeskButtonTest, DeskSwitchButtons) {
@@ -11799,9 +11749,9 @@ TEST_F(DeskProfilesTest, RemoveProfile) {
   auto* desk1 = controller->GetDeskAtIndex(0);
   auto* desk2 = controller->GetDeskAtIndex(1);
   auto* desk3 = controller->GetDeskAtIndex(2);
-  desk1->SetLacrosProfileId(lacros_profile_id1, /*source=*/std::nullopt);
-  desk2->SetLacrosProfileId(lacros_profile_id2, /*source=*/std::nullopt);
-  desk3->SetLacrosProfileId(lacros_profile_id3, /*source=*/std::nullopt);
+  desk1->SetLacrosProfileId(lacros_profile_id1);
+  desk2->SetLacrosProfileId(lacros_profile_id2);
+  desk3->SetLacrosProfileId(lacros_profile_id3);
 
   EXPECT_EQ(desk1->lacros_profile_id(), lacros_profile_id1);
   EXPECT_EQ(desk2->lacros_profile_id(), lacros_profile_id2);
@@ -11814,39 +11764,6 @@ TEST_F(DeskProfilesTest, RemoveProfile) {
   EXPECT_EQ(desk1->lacros_profile_id(), lacros_profile_id1);
   EXPECT_EQ(desk2->lacros_profile_id(), lacros_profile_id2);
   EXPECT_EQ(desk3->lacros_profile_id(), lacros_profile_id1);
-}
-
-TEST_F(DeskProfilesTest, DeskProfilesButtonClickMetrics) {
-  // The desk profile button is visible when there are two or more profiles.
-  AddDummyLacrosDeskProfiles(2);
-
-  base::HistogramTester histogram_tester;
-  auto* desk_bar_controller = DesksController::Get()->desk_bar_controller();
-  desk_bar_controller->OpenDeskBar(Shell::Get()->GetPrimaryRootWindow());
-  auto* desk_bar_view =
-      desk_bar_controller->GetDeskBarView(Shell::Get()->GetPrimaryRootWindow());
-  views::test::RunScheduledLayout(desk_bar_view);
-  ASSERT_EQ(1u, desk_bar_view->mini_views().size());
-
-  DeskProfilesButton* desk_profile_button =
-      DesksTestApi::GetDeskProfileButton(desk_bar_view->mini_views()[0]);
-  ASSERT_NE(desk_profile_button, nullptr);
-
-  // Test desk profile button click metrics.
-  LeftClickOn(desk_profile_button);
-  histogram_tester.ExpectTotalCount(kDeskProfilesPressesHistogramName, 1);
-
-  // Test context menu profile manager click metrics.
-  DeskActionContextMenu* menu = desk_profile_button->menu();
-  ASSERT_NE(menu, nullptr);
-
-  views::MenuItemView* menu_item = DesksTestApi::GetDeskActionContextMenuItem(
-      menu, DeskActionContextMenu::kShowProfileManager);
-  ASSERT_NE(menu_item, nullptr);
-
-  LeftClickOn(menu_item);
-  histogram_tester.ExpectTotalCount(
-      kDeskProfilesOpenProfileManagerHistogramName, 1);
 }
 
 TEST_F(DeskProfilesTest, SelectProfile) {
@@ -11885,10 +11802,6 @@ TEST_F(DeskProfilesTest, SelectProfile) {
     ASSERT_TRUE(menu_item);
     LeftClickOn(menu_item);
 
-    histogram_tester.ExpectBucketCount(
-        kDeskProfilesSelectProfileHistogramName,
-        DeskProfilesSelectProfileSource::kDeskProfileButton, 1);
-
     // Verify that the profile has indeed been set on desk 2.
     EXPECT_EQ(desk2->lacros_profile_id(), GetDummyLacrosDeskProfileId(1));
   }
@@ -11904,10 +11817,6 @@ TEST_F(DeskProfilesTest, SelectProfile) {
         menu, DeskActionContextMenu::kDynamicProfileStart);
     ASSERT_TRUE(menu_item);
     LeftClickOn(menu_item);
-
-    histogram_tester.ExpectBucketCount(
-        kDeskProfilesSelectProfileHistogramName,
-        DeskProfilesSelectProfileSource::kDeskActionContextMenu, 1);
 
     // Verify that the profile has been updated on desk 2.
     EXPECT_EQ(desk2->lacros_profile_id(), GetDummyLacrosDeskProfileId(0));

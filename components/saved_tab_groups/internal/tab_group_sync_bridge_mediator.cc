@@ -6,14 +6,18 @@
 
 #include <iterator>
 #include <memory>
+#include <unordered_set>
 
 #include "base/functional/bind.h"
+#include "base/metrics/histogram_functions.h"
 #include "base/uuid.h"
 #include "components/prefs/pref_service.h"
 #include "components/saved_tab_groups/internal/saved_tab_group_model.h"
 #include "components/saved_tab_groups/internal/saved_tab_group_sync_bridge.h"
 #include "components/saved_tab_groups/internal/shared_tab_group_data_sync_bridge.h"
+#include "components/saved_tab_groups/internal/stats.h"
 #include "components/saved_tab_groups/internal/sync_data_type_configuration.h"
+#include "components/saved_tab_groups/public/pref_names.h"
 #include "components/saved_tab_groups/public/saved_tab_group.h"
 #include "components/saved_tab_groups/public/saved_tab_group_tab.h"
 #include "components/saved_tab_groups/public/utils.h"
@@ -56,6 +60,11 @@ TabGroupSyncBridgeMediator::TabGroupSyncBridgeMediator(
         std::move(shared_tab_group_configuration->change_processor),
         pref_service);
   }
+
+  // This new value is written after the old value is read inside the
+  // `shared_bridge_` constructor, hence there is no race.
+  pref_service->SetBoolean(prefs::kDidEnableSharedTabGroupsInLastSession,
+                           !!shared_bridge_);
 }
 
 TabGroupSyncBridgeMediator::~TabGroupSyncBridgeMediator() = default;
@@ -99,12 +108,18 @@ void TabGroupSyncBridgeMediator::InitializeModelIfReady() {
   }
   loaded_saved_groups_.clear();
 
+  // Keep track of which groups are affected by the duplicate tab filtering
+  // below so we can record later if they are emptied out.
+  std::unordered_set<base::Uuid, base::UuidHash> groups_with_filtered_tabs;
+
   // Add saved tabs with parent groups which don't have a duplicate shared tab
   // group, to avoid exposing saved tabs into shared tab group.
   for (SavedTabGroupTab& saved_tab : loaded_saved_tabs_) {
     if (shared_group_guids.contains(saved_tab.saved_group_guid())) {
       DVLOG(1)
           << "Ignore saved tab with parent having duplicate shared tab group";
+      // Don't add to `groups_with_filtered_tabs` here because the saved group
+      // will have been filtered out as a duplicate above.
       continue;
     }
     if (shared_tab_guids.contains(saved_tab.saved_tab_guid())) {
@@ -112,11 +127,15 @@ void TabGroupSyncBridgeMediator::InitializeModelIfReady() {
       // same GUID and ignore the saved tab. Note that normally this should
       // never happen.
       DVLOG(1) << "Ignore duplicate saved tab: " << saved_tab.saved_tab_guid();
+      groups_with_filtered_tabs.emplace(saved_tab.saved_group_guid());
       continue;
     }
     all_tabs.push_back(std::move(saved_tab));
   }
   loaded_saved_tabs_.clear();
+
+  stats::RecordEmptyGroupsMetricsOnLoad(all_groups, all_tabs,
+                                        groups_with_filtered_tabs);
 
   model_->LoadStoredEntries(std::move(all_groups), std::move(all_tabs));
   observation_.Observe(model_);
@@ -142,9 +161,20 @@ TabGroupSyncBridgeMediator::GetLocalCacheGuidForSavedBridge() const {
   return saved_bridge_->GetLocalCacheGuid();
 }
 
-std::optional<std::string>
-TabGroupSyncBridgeMediator::GetAccountIdForSavedBridge() const {
+std::optional<GaiaId> TabGroupSyncBridgeMediator::GetAccountIdForSavedBridge()
+    const {
   return saved_bridge_->GetTrackedAccountId();
+}
+
+std::optional<GaiaId>
+TabGroupSyncBridgeMediator::GetTrackingAccountIdForSharedBridge() const {
+  CHECK(shared_bridge_);
+  GaiaId tracked_account_id(
+      shared_bridge_->change_processor()->TrackedAccountId());
+  if (tracked_account_id.empty()) {
+    return std::nullopt;
+  }
+  return tracked_account_id;
 }
 
 void TabGroupSyncBridgeMediator::SavedTabGroupAddedLocally(
@@ -254,6 +284,12 @@ void TabGroupSyncBridgeMediator::SavedTabGroupLastUserInteractionTimeUpdated(
     CHECK(saved_bridge_);
     saved_bridge_->SavedTabGroupLastUserInteractionTimeUpdated(group_guid);
   }
+}
+
+void TabGroupSyncBridgeMediator::UntrackEntitiesForCollaboration(
+    const syncer::CollaborationId& collaboration_id) {
+  CHECK(shared_bridge_);
+  shared_bridge_->UntrackEntitiesForCollaboration(collaboration_id);
 }
 
 void TabGroupSyncBridgeMediator::OnSavedGroupsWithTabsLoaded(

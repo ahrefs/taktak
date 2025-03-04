@@ -14,7 +14,8 @@
 #import "base/time/time.h"
 #import "components/sessions/core/tab_restore_service_observer.h"
 #import "ios/chrome/browser/external_files/model/external_file_remover.h"
-#import "ios/chrome/browser/shared/model/profile/profile_ios_forward.h"
+
+class ProfileIOS;
 
 namespace sessions {
 class TabRestoreService;
@@ -48,15 +49,6 @@ class ExternalFileRemoverImpl : public ExternalFileRemover,
       sessions::TabRestoreService* service) override;
 
  private:
-  // Struct used to save information for delayed requests.
-  struct DelayedFileRemoveRequest {
-    bool remove_all_files;
-    base::ScopedClosureRunner closure_runner;
-  };
-  // Removes all files received from other apps if `all_files` is true.
-  // Otherwise, removes the unreferenced files only. `closure_runner` is called
-  // when the removal finishes.
-  void Remove(bool all_files, base::ScopedClosureRunner closure_runner);
   // Removes files received from other apps. If `all_files` is true, then
   // all files including files that may be referenced by tabs through restore
   // service or history. Otherwise, only the unreferenced files are removed.
@@ -64,8 +56,6 @@ class ExternalFileRemoverImpl : public ExternalFileRemover,
   void RemoveFiles(bool all_files, base::ScopedClosureRunner closure_runner);
   // Returns all Referenced External files.
   NSSet* GetReferencedExternalFiles();
-  // Vector used to store delayed requests.
-  std::vector<DelayedFileRemoveRequest> delayed_file_remove_requests_;
   // Pointer to the tab restore service.
   raw_ptr<sessions::TabRestoreService> tab_restore_service_ = nullptr;
   // ProfileIOS used to get the referenced files. Must outlive this

@@ -6,6 +6,7 @@
 
 #include "base/command_line.h"
 #include "base/memory/scoped_refptr.h"
+#include "components/embedder_support/switches.h"
 #include "content/browser/loader/url_loader_factory_utils.h"
 #include "content/browser/preloading/prefetch/prefetch_network_context_client.h"
 #include "content/browser/preloading/prefetch/prefetch_proxy_configurator.h"
@@ -36,7 +37,7 @@ PrefetchNetworkContext::PrefetchNetworkContext(
     bool use_isolated_network_context,
     const PrefetchType& prefetch_type,
     const GlobalRenderFrameHostId& referring_render_frame_host_id,
-    const url::Origin& referring_origin)
+    const std::optional<url::Origin>& referring_origin)
     : use_isolated_network_context_(use_isolated_network_context),
       prefetch_type_(prefetch_type),
       referring_render_frame_host_id_(referring_render_frame_host_id),
@@ -96,7 +97,7 @@ void PrefetchNetworkContext::CreateIsolatedURLLoaderFactory(
   context_params->file_paths = network::mojom::NetworkContextFilePaths::New();
   context_params->user_agent =
       GetReducedUserAgent(base::CommandLine::ForCurrentProcess()->HasSwitch(
-                              switches::kUseMobileUserAgent),
+                              embedder_support::kUseMobileUserAgent),
                           delegate ? delegate->GetMajorVersionNumber() : "");
   // The verifier created here does not have the same parameters as used in the
   // profile (where additional parameters are added in
@@ -188,7 +189,7 @@ PrefetchNetworkContext::CreateNewURLLoaderFactory(
         RenderFrameHost::LifecycleState::kPrerendering));
 
     referring_render_process_id =
-        referring_render_frame_host->GetProcess()->GetID();
+        referring_render_frame_host->GetProcess()->GetDeprecatedID();
     ukm_source_id = ukm::SourceIdObj::FromInt64(
         referring_render_frame_host->GetPageUkmSourceId());
   } else {
@@ -209,7 +210,8 @@ PrefetchNetworkContext::CreateNewURLLoaderFactory(
           url_loader_factory::HeaderClientOption::kAllow),
       url_loader_factory::ContentClientParams(
           browser_context, referring_render_frame_host,
-          referring_render_process_id, referring_origin_, net::IsolationInfo(),
+          referring_render_process_id,
+          referring_origin_.value_or(url::Origin()), net::IsolationInfo(),
           ukm_source_id, &bypass_redirect_checks));
 }
 

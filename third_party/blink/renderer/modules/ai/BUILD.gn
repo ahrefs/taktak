@@ -8,14 +8,20 @@ blink_modules_sources("ai") {
   sources = [
     "ai.cc",
     "ai.h",
-    "ai_assistant.cc",
-    "ai_assistant.h",
-    "ai_assistant_capabilities.cc",
-    "ai_assistant_capabilities.h",
-    "ai_assistant_factory.cc",
-    "ai_assistant_factory.h",
+    "ai_availability.cc",
+    "ai_availability.h",
     "ai_capability_availability.cc",
     "ai_capability_availability.h",
+    "ai_create_monitor.cc",
+    "ai_create_monitor.h",
+    "ai_language_model.cc",
+    "ai_language_model.h",
+    "ai_language_model_capabilities.cc",
+    "ai_language_model_capabilities.h",
+    "ai_language_model_factory.cc",
+    "ai_language_model_factory.h",
+    "ai_language_model_params.cc",
+    "ai_language_model_params.h",
     "ai_metrics.cc",
     "ai_metrics.h",
     "ai_mojo_client.h",
@@ -29,6 +35,8 @@ blink_modules_sources("ai") {
     "ai_summarizer_capabilities.h",
     "ai_summarizer_factory.cc",
     "ai_summarizer_factory.h",
+    "ai_utils.cc",
+    "ai_utils.h",
     "ai_writer.cc",
     "ai_writer.h",
     "ai_writer_factory.cc",
@@ -47,9 +55,20 @@ blink_modules_sources("ai") {
     "on_device_translation/ai_language_detector_factory.h",
     "on_device_translation/ai_translator.cc",
     "on_device_translation/ai_translator.h",
+    "on_device_translation/ai_translator_capabilities.cc",
+    "on_device_translation/ai_translator_capabilities.h",
     "on_device_translation/ai_translator_factory.cc",
     "on_device_translation/ai_translator_factory.h",
   ]
 
   public_deps = [ "//third_party/blink/public/mojom:mojom_modules_blink" ]
+
+  deps = [
+    "//components/language_detection/content/common",
+    "//components/language_detection/content/common:common_blink",
+    "//components/language_detection/content/renderer",
+    "//components/language_detection/core",
+    "//third_party/blink/renderer/modules/shapedetection",
+    "//third_party/blink/renderer/modules/webaudio",
+  ]
 }

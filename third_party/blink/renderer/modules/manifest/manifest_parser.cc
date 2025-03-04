@@ -15,17 +15,16 @@
 #include "base/metrics/histogram_functions.h"
 #include "net/base/mime_util.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
+#include "services/network/public/cpp/permissions_policy/origin_with_possible_wildcards.h"
+#include "services/network/public/cpp/permissions_policy/permissions_policy_declaration.h"
 #include "third_party/blink/public/common/features.h"
 #include "third_party/blink/public/common/manifest/manifest.h"
 #include "third_party/blink/public/common/manifest/manifest_util.h"
 #include "third_party/blink/public/common/mime_util/mime_util.h"
-#include "third_party/blink/public/common/permissions_policy/origin_with_possible_wildcards.h"
-#include "third_party/blink/public/common/permissions_policy/permissions_policy.h"
 #include "third_party/blink/public/common/safe_url_pattern.h"
 #include "third_party/blink/public/common/security/protocol_handler_security_level.h"
 #include "third_party/blink/public/mojom/manifest/manifest.mojom-blink-forward.h"
 #include "third_party/blink/public/mojom/manifest/manifest.mojom-blink.h"
-#include "third_party/blink/public/mojom/permissions_policy/permissions_policy.mojom-blink.h"
 #include "third_party/blink/public/platform/url_conversion.h"
 #include "third_party/blink/public/platform/web_icon_sizes_parser.h"
 #include "third_party/blink/public/platform/web_string.h"
@@ -55,10 +54,13 @@
 namespace blink {
 
 namespace {
-
+static constexpr char kScopeExtensionsMissingKeysErrorMessage[] =
+    "scope_extensions entry ignored, required properties 'type' and 'value' "
+    "are missing.";
+static constexpr char kScopeExtensionsTypeKey[] = "type";
+static constexpr char kScopeExtensionsValueKey[] = "value";
 static constexpr char kOriginWildcardPrefix[] = "%2A.";
 // Keep in sync with web_app_origin_association_task.cc.
-static wtf_size_t kMaxUrlHandlersSize = 10;
 static wtf_size_t kMaxScopeExtensionsSize = 10;
 static wtf_size_t kMaxShortcutsSize = 10;
 static wtf_size_t kMaxOriginLength = 2000;
@@ -342,7 +344,6 @@ bool ManifestParser::Parse() {
 
   manifest_->file_handlers = ParseFileHandlers(root_object.get());
   manifest_->protocol_handlers = ParseProtocolHandlers(root_object.get());
-  manifest_->url_handlers = ParseUrlHandlers(root_object.get());
   manifest_->scope_extensions = ParseScopeExtensions(root_object.get());
   manifest_->lock_screen = ParseLockScreen(root_object.get());
   manifest_->note_taking = ParseNoteTaking(root_object.get());
@@ -562,8 +563,7 @@ KURL ManifestParser::ParseURL(const JSONObject* object,
       return resolved;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return KURL();
+  NOTREACHED();
 }
 
 template <typename Enum>
@@ -813,7 +813,7 @@ KURL ManifestParser::ParseIconSrc(const JSONObject* icon) {
 
 String ManifestParser::ParseIconType(const JSONObject* icon) {
   std::optional<String> type = ParseString(icon, "type", Trim(true));
-  return type.has_value() ? *type : String("");
+  return type.value_or(g_empty_string);
 }
 
 Vector<gfx::Size> ManifestParser::ParseIconSizes(const JSONObject* icon) {
@@ -822,7 +822,7 @@ Vector<gfx::Size> ManifestParser::ParseIconSizes(const JSONObject* icon) {
     return Vector<gfx::Size>();
   }
 
-  WebVector<gfx::Size> web_sizes =
+  std::vector<gfx::Size> web_sizes =
       WebIconSizesParser::ParseIconSizes(WebString(*sizes_str));
   Vector<gfx::Size> sizes;
   for (auto& size : web_sizes) {
@@ -1097,13 +1097,13 @@ Vector<mojom::blink::ManifestShortcutItemPtr> ManifestParser::ParseShortcuts(
 String ManifestParser::ParseFileFilterName(const JSONObject* file) {
   if (!file->Get("name")) {
     AddErrorInfo("property 'name' missing.");
-    return String("");
+    return g_empty_string;
   }
 
   String value;
   if (!file->GetString("name", &value)) {
     AddErrorInfo("property 'name' ignored, type string expected.");
-    return String("");
+    return g_empty_string;
   }
   return value;
 }
@@ -1606,123 +1606,6 @@ ManifestParser::ParseProtocolHandler(const JSONObject* object) {
   return std::move(protocol_handler);
 }
 
-Vector<mojom::blink::ManifestUrlHandlerPtr> ManifestParser::ParseUrlHandlers(
-    const JSONObject* from) {
-  Vector<mojom::blink::ManifestUrlHandlerPtr> url_handlers;
-  const bool feature_enabled =
-      base::FeatureList::IsEnabled(blink::features::kWebAppEnableUrlHandlers) ||
-      RuntimeEnabledFeatures::WebAppUrlHandlingEnabled(execution_context_);
-  if (!feature_enabled || !from->Get("url_handlers")) {
-    return url_handlers;
-  }
-  JSONArray* handlers_list = from->GetArray("url_handlers");
-  if (!handlers_list) {
-    AddErrorInfo("property 'url_handlers' ignored, type array expected.");
-    return url_handlers;
-  }
-  for (wtf_size_t i = 0; i < handlers_list->size(); ++i) {
-    if (i == kMaxUrlHandlersSize) {
-      AddErrorInfo("property 'url_handlers' contains more than " +
-                   String::Number(kMaxUrlHandlersSize) +
-                   " valid elements, only the first " +
-                   String::Number(kMaxUrlHandlersSize) + " are parsed.");
-      break;
-    }
-
-    const JSONObject* handler_object = JSONObject::Cast(handlers_list->at(i));
-    if (!handler_object) {
-      AddErrorInfo("url_handlers entry ignored, type object expected.");
-      continue;
-    }
-
-    std::optional<mojom::blink::ManifestUrlHandlerPtr> url_handler =
-        ParseUrlHandler(handler_object);
-    if (!url_handler) {
-      continue;
-    }
-    url_handlers.push_back(std::move(url_handler.value()));
-  }
-  return url_handlers;
-}
-
-std::optional<mojom::blink::ManifestUrlHandlerPtr>
-ManifestParser::ParseUrlHandler(const JSONObject* object) {
-  DCHECK(
-      base::FeatureList::IsEnabled(blink::features::kWebAppEnableUrlHandlers) ||
-      RuntimeEnabledFeatures::WebAppUrlHandlingEnabled(execution_context_));
-  if (!object->Get("origin")) {
-    AddErrorInfo(
-        "url_handlers entry ignored, required property 'origin' is missing.");
-    return std::nullopt;
-  }
-  const std::optional<String> origin_string =
-      ParseString(object, "origin", Trim(true));
-  if (!origin_string.has_value()) {
-    AddErrorInfo(
-        "url_handlers entry ignored, required property 'origin' is invalid.");
-    return std::nullopt;
-  }
-
-  // TODO(crbug.com/1072058): pre-process for input without scheme.
-  // (eg. example.com instead of https://example.com) because we can always
-  // assume the use of https for URL handling. Remove this TODO if we decide
-  // to require fully specified https scheme in this origin input.
-
-  if (origin_string->length() > kMaxOriginLength) {
-    AddErrorInfo(
-        "url_handlers entry ignored, 'origin' exceeds maximum character length "
-        "of " +
-        String::Number(kMaxOriginLength) + " .");
-    return std::nullopt;
-  }
-
-  auto origin = SecurityOrigin::CreateFromString(*origin_string);
-  if (!origin || origin->IsOpaque()) {
-    AddErrorInfo(
-        "url_handlers entry ignored, required property 'origin' is invalid.");
-    return std::nullopt;
-  }
-  if (origin->Protocol() != url::kHttpsScheme) {
-    AddErrorInfo(
-        "url_handlers entry ignored, required property 'origin' must use the "
-        "https scheme.");
-    return std::nullopt;
-  }
-
-  String host = origin->Host();
-  auto url_handler = mojom::blink::ManifestUrlHandler::New();
-  // Check for wildcard *.
-  if (host.StartsWith(kOriginWildcardPrefix)) {
-    url_handler->has_origin_wildcard = true;
-    // Trim the wildcard prefix to get the effective host. Minus one to exclude
-    // the length of the null terminator.
-    host = host.Substring(sizeof(kOriginWildcardPrefix) - 1);
-  } else {
-    url_handler->has_origin_wildcard = false;
-  }
-
-  bool host_valid = IsHostValidForScopeExtension(host);
-  if (!host_valid) {
-    AddErrorInfo(
-        "url_handlers entry ignored, domain of required property 'origin' is "
-        "invalid.");
-    return std::nullopt;
-  }
-
-  if (url_handler->has_origin_wildcard) {
-    origin = SecurityOrigin::CreateFromValidTuple(origin->Protocol(), host,
-                                                  origin->Port());
-    if (!origin_string.has_value()) {
-      AddErrorInfo(
-          "url_handlers entry ignored, required property 'origin' is invalid.");
-      return std::nullopt;
-    }
-  }
-
-  url_handler->origin = origin;
-  return std::move(url_handler);
-}
-
 Vector<mojom::blink::ManifestScopeExtensionPtr>
 ManifestParser::ParseScopeExtensions(const JSONObject* from) {
   Vector<mojom::blink::ManifestScopeExtensionPtr> scope_extensions;
@@ -1740,7 +1623,6 @@ ManifestParser::ParseScopeExtensions(const JSONObject* from) {
     return scope_extensions;
   }
 
-  JSONValue::ValueType expected_entry_type = JSONValue::kTypeNull;
   for (wtf_size_t i = 0; i < extensions_list->size(); ++i) {
     if (i == kMaxScopeExtensionsSize) {
       AddErrorInfo("property 'scope_extensions' contains more than " +
@@ -1757,38 +1639,19 @@ ManifestParser::ParseScopeExtensions(const JSONObject* from) {
     }
 
     JSONValue::ValueType entry_type = extensions_entry->GetType();
-    if (entry_type != JSONValue::kTypeString &&
-        entry_type != JSONValue::kTypeObject) {
-      AddErrorInfo(
-          "scope_extensions entry ignored, type string or object expected.");
+    if (entry_type != JSONValue::kTypeObject) {
+      AddErrorInfo("scope_extensions entry ignored, type object expected.");
       continue;
-    }
-
-    // Check whether first scope extension entry in the list is a string or
-    // object to make sure that following entries have the same type, ignoring
-    // entries that are null or other types.
-    if (expected_entry_type != JSONValue::kTypeString &&
-        expected_entry_type != JSONValue::kTypeObject) {
-      expected_entry_type = entry_type;
     }
 
     std::optional<mojom::blink::ManifestScopeExtensionPtr> scope_extension =
         std::nullopt;
-    if (expected_entry_type == JSONValue::kTypeString) {
-      String scope_extension_origin;
-      if (!extensions_entry->AsString(&scope_extension_origin)) {
-        AddErrorInfo("scope_extensions entry ignored, type string expected.");
-        continue;
-      }
-      scope_extension = ParseScopeExtensionOrigin(scope_extension_origin);
-    } else {
-      const JSONObject* extension_object = JSONObject::Cast(extensions_entry);
-      if (!extension_object) {
-        AddErrorInfo("scope_extensions entry ignored, type object expected.");
-        continue;
-      }
-      scope_extension = ParseScopeExtension(extension_object);
+    const JSONObject* extension_object = JSONObject::Cast(extensions_entry);
+    if (!extension_object) {
+      AddErrorInfo("scope_extensions entry ignored, type object expected.");
+      continue;
     }
+    scope_extension = ParseScopeExtension(extension_object);
 
     if (!scope_extension) {
       continue;
@@ -1804,19 +1667,30 @@ ManifestParser::ParseScopeExtension(const JSONObject* object) {
       base::FeatureList::IsEnabled(
           blink::features::kWebAppEnableScopeExtensions) ||
       RuntimeEnabledFeatures::WebAppScopeExtensionsEnabled(execution_context_));
-  if (!object->Get("origin")) {
-    AddErrorInfo(
-        "scope_extensions entry ignored, required property 'origin' is "
-        "missing.");
+  if (!object->Get(kScopeExtensionsTypeKey) ||
+      !object->Get(kScopeExtensionsValueKey)) {
+    AddErrorInfo(kScopeExtensionsMissingKeysErrorMessage);
     return std::nullopt;
   }
-  const std::optional<String> origin_string =
-      ParseString(object, "origin", Trim(true));
-  if (!origin_string.has_value()) {
+  const std::optional<String> scope_extension_type =
+      ParseString(object, kScopeExtensionsTypeKey, Trim(true));
+  if (!scope_extension_type.has_value()) {
+    AddErrorInfo("Scope extension 'type' invalid.");
     return std::nullopt;
   }
-
-  return ParseScopeExtensionOrigin(*origin_string);
+  if (scope_extension_type.value() ==
+      ScopeExtensionTypeMap[static_cast<int>(ScopeExtensionType::kOrigin)]) {
+    const std::optional<String> origin_string =
+        ParseString(object, kScopeExtensionsValueKey, Trim(true));
+    if (!origin_string.has_value()) {
+      AddErrorInfo("Scope extension 'value' invalid.");
+      return std::nullopt;
+    }
+    return ParseScopeExtensionOrigin(*origin_string);
+  } else {
+    AddErrorInfo("Scope extension 'type' invalid.");
+    return std::nullopt;
+  }
 }
 
 std::optional<mojom::blink::ManifestScopeExtensionPtr>
@@ -2041,21 +1915,21 @@ String ManifestParser::ParseGCMSenderID(const JSONObject* object) {
   return gcm_sender_id.has_value() ? *gcm_sender_id : String();
 }
 
-Vector<blink::ParsedPermissionsPolicyDeclaration>
+Vector<network::ParsedPermissionsPolicyDeclaration>
 ManifestParser::ParseIsolatedAppPermissions(const JSONObject* object) {
   PermissionsPolicyParser::Node policy{
-      OriginWithPossibleWildcards::NodeType::kHeader};
+      network::OriginWithPossibleWildcards::NodeType::kHeader};
 
   JSONValue* json_value = object->Get("permissions_policy");
   if (!json_value) {
-    return Vector<blink::ParsedPermissionsPolicyDeclaration>();
+    return Vector<network::ParsedPermissionsPolicyDeclaration>();
   }
 
   JSONObject* permissions_dict = object->GetJSONObject("permissions_policy");
   if (!permissions_dict) {
     AddErrorInfo(
         "property 'permissions_policy' ignored, type object expected.");
-    return Vector<blink::ParsedPermissionsPolicyDeclaration>();
+    return Vector<network::ParsedPermissionsPolicyDeclaration>();
   }
 
   for (wtf_size_t i = 0; i < permissions_dict->size(); ++i) {
@@ -2104,12 +1978,12 @@ ManifestParser::ParseIsolatedAppPermissions(const JSONObject* object) {
 
   PolicyParserMessageBuffer logger(
       "Error with permissions_policy manifest field: ");
-  blink::ParsedPermissionsPolicy parsed_policy =
+  network::ParsedPermissionsPolicy parsed_policy =
       PermissionsPolicyParser::ParsePolicyFromNode(
           policy, SecurityOrigin::Create(manifest_url_), logger,
           execution_context_);
 
-  Vector<blink::ParsedPermissionsPolicyDeclaration> out;
+  Vector<network::ParsedPermissionsPolicyDeclaration> out;
   for (const auto& decl : parsed_policy) {
     out.push_back(std::move(decl));
   }
@@ -2177,8 +2051,7 @@ mojom::blink::ManifestLaunchHandlerPtr ManifestParser::ParseLaunchHandler(
   return mojom::blink::ManifestLaunchHandler::New(
       ParseFirstValidEnum<std::optional<ClientMode>>(
           launch_handler_object, "client_mode", &ClientModeFromString,
-          /*invalid_value=*/std::nullopt)
-          .value_or(ClientMode::kAuto));
+          /*invalid_value=*/std::nullopt));
 }
 
 HashMap<String, mojom::blink::ManifestTranslationItemPtr>

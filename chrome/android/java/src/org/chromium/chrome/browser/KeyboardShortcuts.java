@@ -13,12 +13,16 @@ import androidx.annotation.IntDef;
 
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.fullscreen.FullscreenManager;
 import org.chromium.chrome.browser.multiwindow.MultiWindowUtils;
 import org.chromium.chrome.browser.tab.Tab;
+import org.chromium.chrome.browser.tabmodel.TabClosureParams;
 import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.chrome.browser.tabmodel.TabModelUtils;
+import org.chromium.chrome.browser.task_manager.TaskManager;
+import org.chromium.chrome.browser.task_manager.TaskManagerFactory;
 import org.chromium.chrome.browser.toolbar.ToolbarManager;
 import org.chromium.components.browser_ui.widget.MenuOrKeyboardActionController;
 import org.chromium.content_public.browser.WebContents;
@@ -67,6 +71,16 @@ public class KeyboardShortcuts {
         KeyboardShortcutsSemanticMeaning.ZOOM_IN,
         KeyboardShortcutsSemanticMeaning.ZOOM_OUT,
         KeyboardShortcutsSemanticMeaning.ZOOM_RESET,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_FOCUS_SEARCH,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_RELOAD_BYPASSING_CACHE,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_SHOW_DOWNLOADS,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_TOGGLE_CARET_BROWSING,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_MOVE_TO_SPECIFIC_TAB_VIA_NUMPAD,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_MOVE_TO_LAST_TAB_VIA_NUMPAD,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_HELP,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_CLEAR_BROWSING_DATA,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_CLOSE_WINDOW,
+        KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_HOME,
         KeyboardShortcutsSemanticMeaning.MAX_VALUE
     })
     public @interface KeyboardShortcutsSemanticMeaning {
@@ -107,8 +121,20 @@ public class KeyboardShortcuts {
         int ZOOM_OUT = 23;
         int ZOOM_RESET = 24;
 
+        // Controls available in Desktop and other platforms but not implemented by Clank.
+        int NOT_IMPLEMENTED_FOCUS_SEARCH = 25;
+        int NOT_IMPLEMENTED_RELOAD_BYPASSING_CACHE = 26;
+        int NOT_IMPLEMENTED_SHOW_DOWNLOADS = 27;
+        int NOT_IMPLEMENTED_TOGGLE_CARET_BROWSING = 28;
+        int NOT_IMPLEMENTED_MOVE_TO_SPECIFIC_TAB_VIA_NUMPAD = 29;
+        int NOT_IMPLEMENTED_MOVE_TO_LAST_TAB_VIA_NUMPAD = 30;
+        int NOT_IMPLEMENTED_HELP = 31;
+        int NOT_IMPLEMENTED_CLEAR_BROWSING_DATA = 32;
+        int NOT_IMPLEMENTED_CLOSE_WINDOW = 33;
+        int NOT_IMPLEMENTED_HOME = 34;
+
         // Be sure to also update enums.xml when updating these values.
-        int MAX_VALUE = 25;
+        int MAX_VALUE = 35;
     }
 
     // LINT.ThenChange(/tools/metrics/histograms/metadata/accessibility/enums.xml:KeyboardShortcutsSemanticMeaning)
@@ -192,7 +218,7 @@ public class KeyboardShortcuts {
             case KeyEvent.KEYCODE_F3:
             case SHIFT | KeyEvent.KEYCODE_F3:
                 return KeyboardShortcutsSemanticMeaning.FIND_IN_PAGE;
-            case CTRL | SHIFT | KeyEvent.KEYCODE_B:
+            case CTRL | SHIFT | KeyEvent.KEYCODE_O:
                 return KeyboardShortcutsSemanticMeaning.OPEN_BOOKMARKS;
             case KeyEvent.KEYCODE_BOOKMARK:
             case CTRL | KeyEvent.KEYCODE_D:
@@ -216,6 +242,52 @@ public class KeyboardShortcuts {
                 return KeyboardShortcutsSemanticMeaning.ZOOM_OUT;
             case CTRL | KeyEvent.KEYCODE_0:
                 return KeyboardShortcutsSemanticMeaning.ZOOM_RESET;
+
+                // These are not implemented by Clank, but correspond to keyboard shortcuts that
+                // exist on Desktop or other platforms.
+            case CTRL | KeyEvent.KEYCODE_E:
+            case CTRL | KeyEvent.KEYCODE_K:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_FOCUS_SEARCH;
+            case CTRL | KeyEvent.KEYCODE_F5:
+            case CTRL | KeyEvent.KEYCODE_REFRESH:
+            case SHIFT | KeyEvent.KEYCODE_REFRESH:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_RELOAD_BYPASSING_CACHE;
+            case CTRL | KeyEvent.KEYCODE_J:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_SHOW_DOWNLOADS;
+            case CTRL | KeyEvent.KEYCODE_F7:
+            case KeyEvent.KEYCODE_F7:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_TOGGLE_CARET_BROWSING;
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_1:
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_2:
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_3:
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_4:
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_5:
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_6:
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_7:
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_8:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_1:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_2:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_3:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_4:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_5:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_6:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_7:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_8:
+                return KeyboardShortcutsSemanticMeaning
+                        .NOT_IMPLEMENTED_MOVE_TO_SPECIFIC_TAB_VIA_NUMPAD;
+            case CTRL | KeyEvent.KEYCODE_NUMPAD_9:
+            case ALT | KeyEvent.KEYCODE_NUMPAD_9:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_MOVE_TO_LAST_TAB_VIA_NUMPAD;
+            case KeyEvent.KEYCODE_F1:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_HELP;
+            case CTRL | SHIFT | KeyEvent.KEYCODE_DEL:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_CLEAR_BROWSING_DATA;
+            case CTRL | SHIFT | KeyEvent.KEYCODE_W:
+            case ALT | KeyEvent.KEYCODE_F4:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_CLOSE_WINDOW;
+            case ALT | KeyEvent.KEYCODE_HOME:
+            case KeyEvent.KEYCODE_HOME:
+                return KeyboardShortcutsSemanticMeaning.NOT_IMPLEMENTED_HOME;
         }
 
         return KeyboardShortcutsSemanticMeaning.UNKNOWN;
@@ -230,22 +302,24 @@ public class KeyboardShortcuts {
     /**
      * This should be called from the Activity's dispatchKeyEvent() to handle keyboard shortcuts.
      *
-     * Note: dispatchKeyEvent() is called before the active view or web page gets a chance to handle
-     * the key event. So the keys handled here cannot be overridden by any view or web page.
+     * <p>Note: dispatchKeyEvent() is called before the active view or web page gets a chance to
+     * handle the key event. So the keys handled here cannot be overridden by any view or web page.
      *
      * @param event The KeyEvent to handle.
      * @param uiInitialized Whether the UI has been initialized. If this is false, most keys will
-     *                      not be handled.
+     *     not be handled.
      * @param fullscreenManager Manages fullscreen state.
      * @param menuOrKeyboardActionController Controls keyboard actions.
+     * @param context The android context.
      * @return True if the event was handled. False if the event was ignored. Null if the event
-     *         should be handled by the activity's parent class.
+     *     should be handled by the activity's parent class.
      */
     public static Boolean dispatchKeyEvent(
             KeyEvent event,
             boolean uiInitialized,
             FullscreenManager fullscreenManager,
-            MenuOrKeyboardActionController menuOrKeyboardActionController) {
+            MenuOrKeyboardActionController menuOrKeyboardActionController,
+            Context context) {
         int keyCode = event.getKeyCode();
         if (!uiInitialized) {
             if (keyCode == KeyEvent.KEYCODE_SEARCH || keyCode == KeyEvent.KEYCODE_MENU) return true;
@@ -270,6 +344,12 @@ public class KeyboardShortcuts {
                 if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                     if (fullscreenManager.getPersistentFullscreenMode()) {
                         fullscreenManager.exitPersistentFullscreenMode();
+                        return true;
+                    }
+                    if (getMetaState(event) == CTRL
+                            && ChromeFeatureList.isEnabled(ChromeFeatureList.TASK_MANAGER_CLANK)) {
+                        TaskManager taskManager = TaskManagerFactory.createTaskManager();
+                        taskManager.launch(context);
                         return true;
                     }
                 }
@@ -372,7 +452,7 @@ public class KeyboardShortcuts {
                 context,
                 chromeFeatureShortcutGroup,
                 R.string.keyboard_shortcut_bookmark_manager,
-                KeyEvent.KEYCODE_B,
+                KeyEvent.KEYCODE_O,
                 ctrlShift);
         addShortcut(
                 context,
@@ -509,8 +589,8 @@ public class KeyboardShortcuts {
 
         RecordHistogram.recordEnumeratedHistogram(
                 AccessibilityState.isScreenReaderEnabled()
-                        ? "Accessibility.Android.KeyboardShortcut.ScreenReaderRunning"
-                        : "Accessibility.Android.KeyboardShortcut.NoScreenReader",
+                        ? "Accessibility.Android.KeyboardShortcut.ScreenReaderRunning2"
+                        : "Accessibility.Android.KeyboardShortcut.NoScreenReader2",
                 semanticMeaning,
                 KeyboardShortcuts.KeyboardShortcutsSemanticMeaning.MAX_VALUE);
 
@@ -578,7 +658,14 @@ public class KeyboardShortcuts {
                     }
                     return true;
                 case KeyboardShortcutsSemanticMeaning.CLOSE_TAB:
-                    TabModelUtils.closeCurrentTab(currentTabModel);
+                    Tab tab = TabModelUtils.getCurrentTab(currentTabModel);
+                    if (tab != null) {
+                        currentTabModel
+                                .getTabRemover()
+                                .closeTabs(
+                                        TabClosureParams.closeTab(tab).allowUndo(true).build(),
+                                        /* allowDialog= */ true);
+                    }
                     return true;
                 case KeyboardShortcutsSemanticMeaning.FIND_IN_PAGE:
                     menuOrKeyboardActionController.onMenuOrKeyboardAction(

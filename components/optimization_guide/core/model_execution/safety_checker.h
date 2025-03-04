@@ -10,12 +10,15 @@
 
 #include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
+#include "components/optimization_guide/core/model_execution/multimodal_message.h"
 #include "components/optimization_guide/core/model_execution/safety_config.h"
 #include "components/optimization_guide/core/model_execution/substitution.h"
+#include "components/optimization_guide/core/optimization_guide_enums.h"
 #include "components/optimization_guide/proto/model_quality_metadata.pb.h"
 #include "components/optimization_guide/proto/model_quality_service.pb.h"
 #include "components/optimization_guide/proto/text_safety_model_metadata.pb.h"
 #include "mojo/public/cpp/bindings/remote.h"
+#include "services/on_device_model/public/cpp/text_safety_assets.h"
 #include "services/on_device_model/public/mojom/on_device_model.mojom.h"
 
 namespace optimization_guide {
@@ -25,7 +28,8 @@ class TextSafetyClient {
  public:
   virtual ~TextSafetyClient() = 0;
   virtual mojo::Remote<on_device_model::mojom::TextSafetyModel>&
-  GetTextSafetyModelRemote() = 0;
+  GetTextSafetyModelRemote(
+      const on_device_model::TextSafetyLoaderParams& params) = 0;
 };
 
 // Performs safety checks according to a config against a text safety model.
@@ -49,31 +53,32 @@ class SafetyChecker final {
   };
   using ResultCallback = base::OnceCallback<void(Result)>;
 
-  // TODO(holte): Have this own a TextSafetyClient ref.
-  explicit SafetyChecker(SafetyConfig safety_cfg);
+  explicit SafetyChecker(base::WeakPtr<TextSafetyClient> client,
+                         on_device_model::TextSafetyLoaderParams params,
+                         SafetyConfig safety_cfg);
+  SafetyChecker(const SafetyChecker&);
   ~SafetyChecker();
 
   // Runs all of the configured request checks for a request.
-  void RunRequestChecks(TextSafetyClient& client,
-                        const google::protobuf::MessageLite& request_metadata,
+  void RunRequestChecks(const MultimodalMessage& request_metadata,
                         ResultCallback callback);
 
   // Runs the configured check (if any) for evaluating raw output.
-  void RunRawOutputCheck(TextSafetyClient& client,
-                         const std::string& raw_output,
+  void RunRawOutputCheck(const std::string& raw_output,
+                         ResponseCompleteness completeness,
                          ResultCallback callback);
 
   // Runs all of the configured checks for evaluating parsed responses.
-  void RunResponseChecks(TextSafetyClient& client,
-                         const google::protobuf::MessageLite& request,
+  void RunResponseChecks(const MultimodalMessage& request,
                          const proto::Any& response,
+                         ResponseCompleteness completeness,
                          ResultCallback callback);
 
   const SafetyConfig& safety_cfg() const { return safety_cfg_; }
 
-  size_t TokenInterval() const { return safety_cfg_.TokenInterval(); }
-
  private:
+  base::WeakPtr<TextSafetyClient> client_;
+  on_device_model::TextSafetyLoaderParams params_;
   SafetyConfig safety_cfg_;
   base::WeakPtrFactory<SafetyChecker> weak_ptr_factory_{this};
 };

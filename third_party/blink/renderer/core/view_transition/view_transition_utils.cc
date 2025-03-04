@@ -4,9 +4,9 @@
 
 #include "third_party/blink/renderer/core/view_transition/view_transition_utils.h"
 
-#include "third_party/blink/renderer/core/dom/node_computed_style.h"
 #include "third_party/blink/renderer/core/layout/layout_view.h"
 #include "third_party/blink/renderer/core/paint/paint_layer.h"
+#include "third_party/blink/renderer/core/style/computed_style.h"
 #include "third_party/blink/renderer/core/style/computed_style_constants.h"
 #include "third_party/blink/renderer/core/view_transition/view_transition.h"
 #include "third_party/blink/renderer/core/view_transition/view_transition_supplement.h"
@@ -102,13 +102,17 @@ bool ViewTransitionUtils::IsViewTransitionParticipantFromSupplement(
 }
 
 // static
+bool ViewTransitionUtils::UseLayeredCapture(const ComputedStyle& style) {
+  return RuntimeEnabledFeatures::ViewTransitionLayeredCaptureEnabled() &&
+         style.ViewTransitionCaptureMode() ==
+             StyleViewTransitionCaptureMode::kLayered;
+}
+
+// static
 bool ViewTransitionUtils::
     ShouldDelegateEffectsAndBoxDecorationsToViewTransitionGroup(
         const LayoutObject& object) {
-  const ComputedStyle& style = object.StyleRef();
-  return RuntimeEnabledFeatures::ViewTransitionLayeredCaptureEnabled() &&
-         style.ViewTransitionCaptureMode() ==
-             StyleViewTransitionCaptureMode::kLayered &&
+  return UseLayeredCapture(object.StyleRef()) &&
          IsViewTransitionParticipantFromSupplement(object);
 }
 

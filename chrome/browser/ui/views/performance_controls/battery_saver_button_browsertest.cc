@@ -15,7 +15,6 @@
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/performance_controls/battery_saver_bubble_view.h"
 #include "chrome/browser/ui/views/toolbar/toolbar_view.h"
-#include "chrome/browser/ui/views/user_education/browser_feature_promo_controller.h"
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/test/base/in_process_browser_test.h"
 #include "chrome/test/user_education/interactive_feature_promo_test.h"
@@ -24,8 +23,8 @@
 #include "components/feature_engagement/public/tracker.h"
 #include "components/performance_manager/public/features.h"
 #include "components/performance_manager/public/user_tuning/prefs.h"
-#include "components/user_education/views/help_bubble_factory_views.h"
 #include "components/user_education/views/help_bubble_view.h"
+#include "components/user_education/views/help_bubble_views.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/test_navigation_observer.h"
 #include "ui/views/bubble/bubble_dialog_model_host.h"
@@ -47,8 +46,8 @@ class BatterySaverHelpPromoTest
         button, ui::test::InteractionTestUtil::InputType::kMouse);
   }
 
-  BrowserFeaturePromoController* GetFeaturePromoController() {
-    return static_cast<BrowserFeaturePromoController*>(
+  user_education::FeaturePromoControllerCommon* GetFeaturePromoController() {
+    return static_cast<user_education::FeaturePromoControllerCommon*>(
         browser()->window()->GetFeaturePromoControllerForTesting());
   }
 };

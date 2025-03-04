@@ -31,7 +31,6 @@ mod ffi {
         fn list_append_list<'a>(
             self: &Functions,
             ctx: Pin<&'a mut ContextPointer>,
-            reserve: usize,
         ) -> Pin<&'a mut ContextPointer>;
         fn list_append_dict<'a>(
             self: &Functions,
@@ -47,7 +46,6 @@ mod ffi {
             self: &Functions,
             ctx: Pin<&'a mut ContextPointer>,
             key: &'f str,
-            reserve: usize,
         ) -> Pin<&'a mut ContextPointer>;
         fn dict_set_dict<'f, 'a>(
             self: &Functions,
@@ -134,7 +132,6 @@ pub fn decode_json(
     let mut deserializer = serde_json_lenient::Deserializer::new(SliceRead::new(
         if json.starts_with(&UTF8_BOM) { &json[3..] } else { json },
         options.replace_invalid_characters,
-
         // On the C++ side, allow_control_chars means "allow all control chars,
         // including \r and \n", while in serde_json_lenient,
         // allow_control_chars means "allow all controls chars, except \r and
@@ -171,12 +168,11 @@ pub fn decode_json(
         Err(err) => {
             error.as_mut().line = err.line().try_into().unwrap_or(-1);
             error.as_mut().column = err.column().try_into().unwrap_or(-1);
-            error.as_mut().message.clear();
             // The following line pulls in a lot of binary bloat, due to all the formatter
             // implementations required to stringify error messages. This error message is
             // used in only a couple of places outside unit tests so we could
             // consider trying to eliminate.
-            error.as_mut().message.push_str(&err.to_string());
+            error.as_mut().message = err.to_string();
             false
         }
     }

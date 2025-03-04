@@ -100,7 +100,7 @@ class TabStatsTracker : public TabStripModelObserver,
     TabStatsDailyObserver(const TabStatsDailyObserver&) = delete;
     TabStatsDailyObserver& operator=(const TabStatsDailyObserver&) = delete;
 
-    ~TabStatsDailyObserver() override {}
+    ~TabStatsDailyObserver() override = default;
 
     // Callback called when the daily event happen.
     void OnDailyEvent(DailyEvent::IntervalType type) override;
@@ -158,12 +158,11 @@ class TabStatsTracker : public TabStripModelObserver,
   void OnResume() override;
 
   // resource_coordinator::TabLifecycleObserver:
-  void OnDiscardedStateChange(content::WebContents* contents,
-                              ::mojom::LifecycleUnitDiscardReason reason,
-                              bool is_discarded) override;
-
-  void OnAutoDiscardableStateChange(content::WebContents* contents,
-                                    bool is_auto_discardable) override;
+  void OnTabLifecycleStateChange(
+      content::WebContents* contents,
+      mojom::LifecycleUnitState previous_state,
+      mojom::LifecycleUnitState new_state,
+      std::optional<LifecycleUnitDiscardReason> discard_reason) override;
 
   // Functions to call to start tracking a new tab.
   void OnInitialOrInsertedTab(content::WebContents* web_contents);
@@ -235,21 +234,31 @@ class TabStatsTracker::UmaStatsReportingDelegate {
   static const char kWindowWidthHistogramName[];
 
   // The names of the histograms that record daily discard/reload counts caused
-  // by external/urgent/proactive/suggested events.
+  // for each discard reason.
   static const char kDailyDiscardsExternalHistogramName[];
   static const char kDailyDiscardsUrgentHistogramName[];
   static const char kDailyDiscardsProactiveHistogramName[];
   static const char kDailyDiscardsSuggestedHistogramName[];
+  static const char kDailyDiscardsFrozenWithGrowingMemoryHistogramName[];
   static const char kDailyReloadsExternalHistogramName[];
   static const char kDailyReloadsUrgentHistogramName[];
   static const char kDailyReloadsProactiveHistogramName[];
   static const char kDailyReloadsSuggestedHistogramName[];
+  static const char kDailyReloadsFrozenWithGrowingMemoryHistogramName[];
 
   // The names of the histograms that record duplicate tab data.
   static const char kTabDuplicateCountSingleWindowHistogramName[];
   static const char kTabDuplicateCountAllProfileWindowsHistogramName[];
   static const char kTabDuplicatePercentageSingleWindowHistogramName[];
   static const char kTabDuplicatePercentageAllProfileWindowsHistogramName[];
+  static const char
+      kTabDuplicateExcludingFragmentsCountSingleWindowHistogramName[];
+  static const char
+      kTabDuplicateExcludingFragmentsCountAllProfileWindowsHistogramName[];
+  static const char
+      kTabDuplicateExcludingFragmentsPercentageSingleWindowHistogramName[];
+  static const char
+      kTabDuplicateExcludingFragmentsPercentageAllProfileWindowsHistogramName[];
 
   UmaStatsReportingDelegate() = default;
 
@@ -270,8 +279,10 @@ class TabStatsTracker::UmaStatsReportingDelegate {
 
   // Calculate and report the metrics related to tab duplicates, which are
   // re-calculated each time rather than cached like the other metrics due to
-  // their complexity.
-  void ReportTabDuplicateMetrics();
+  // their complexity. |exclude_fragments| will treat two tabs with the same
+  // URL apart from trailing fragments as duplicates, otherwise will only treat
+  // exact URL matches as duplicates.
+  void ReportTabDuplicateMetrics(bool exclude_fragments);
 
  protected:
   // Checks if Chrome is running in background with no visible windows, virtual

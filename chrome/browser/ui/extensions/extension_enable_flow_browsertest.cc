@@ -30,13 +30,13 @@ class TestManagementProvider : public extensions::ManagementPolicy::Provider {
   TestManagementProvider(const TestManagementProvider&) = delete;
   TestManagementProvider& operator=(const TestManagementProvider&) = delete;
 
-  ~TestManagementProvider() override {}
+  ~TestManagementProvider() override = default;
 
   // MananagementPolicy::Provider:
   std::string GetDebugPolicyProviderName() const override { return "test"; }
-  bool MustRemainDisabled(const extensions::Extension* extension,
-                          extensions::disable_reason::DisableReason* reason,
-                          std::u16string* error) const override {
+  bool MustRemainDisabled(
+      const extensions::Extension* extension,
+      extensions::disable_reason::DisableReason* reason) const override {
     return extension->id() == extension_id_;
   }
 

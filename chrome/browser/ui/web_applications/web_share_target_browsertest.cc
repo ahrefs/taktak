@@ -20,13 +20,20 @@
 #include "base/memory/raw_ptr.h"
 #include "base/strings/stringprintf.h"
 #include "base/test/bind.h"
-#include "build/chromeos_buildflags.h"
+#include "base/threading/thread_restrictions.h"
 #include "chrome/browser/apps/app_service/app_service_proxy.h"
 #include "chrome/browser/apps/app_service/app_service_proxy_factory.h"
 #include "chrome/browser/apps/app_service/browser_app_launcher.h"
 #include "chrome/browser/apps/app_service/intent_util.h"
 #include "chrome/browser/apps/app_service/launch_utils.h"
+#include "chrome/browser/apps/link_capturing/link_capturing_feature_test_support.h"
+#include "chrome/browser/ash/file_manager/fileapi_util.h"
+#include "chrome/browser/ash/file_manager/path_util.h"
+#include "chrome/browser/ash/fileapi/recent_file.h"
+#include "chrome/browser/ash/fileapi/recent_model.h"
+#include "chrome/browser/ash/fileapi/recent_model_factory.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/sharesheet/sharesheet_service.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "chrome/browser/ui/web_applications/test/web_app_browsertest_util.h"
@@ -44,31 +51,12 @@
 #include "net/base/filename_util.h"
 #include "net/test/embedded_test_server/embedded_test_server.h"
 #include "services/network/public/cpp/resource_request_body.h"
+#include "storage/browser/file_system/file_system_context.h"
 #include "ui/display/types/display_constants.h"
 #include "url/gurl.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "base/threading/thread_restrictions.h"
-#include "chrome/browser/ash/file_manager/fileapi_util.h"
-#include "chrome/browser/ash/file_manager/path_util.h"
-#include "chrome/browser/ash/fileapi/recent_file.h"
-#include "chrome/browser/ash/fileapi/recent_model.h"
-#include "chrome/browser/ash/fileapi/recent_model_factory.h"
-#include "chrome/browser/sharesheet/sharesheet_service.h"
-#include "storage/browser/file_system/file_system_context.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-#include "chromeos/crosapi/mojom/app_service_types.mojom.h"
-#include "chromeos/crosapi/mojom/sharesheet.mojom.h"
-#include "chromeos/crosapi/mojom/sharesheet_mojom_traits.h"
-#include "chromeos/lacros/lacros_service.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-
 namespace {
 
-// TODO(crbug.com/40776025): Support file sharing from Lacros.
-#if BUILDFLAG(IS_CHROMEOS_ASH)
 base::FilePath PrepareWebShareDirectory(Profile* profile) {
   constexpr base::FilePath::CharType kWebShareDirname[] =
       FILE_PATH_LITERAL(".WebShare");
@@ -86,7 +74,6 @@ void RemoveWebShareDirectory(const base::FilePath& directory) {
   base::ScopedAllowBlockingForTesting allow_blocking;
   EXPECT_TRUE(base::DeletePathRecursively(directory));
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
 base::FilePath StoreSharedFile(const base::FilePath& directory,
                                std::string_view name,
@@ -123,50 +110,19 @@ content::EvalJsResult ReadTextContent(content::WebContents* web_contents,
   return content::EvalJs(web_contents, script);
 }
 
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-class FakeSharesheet : public crosapi::mojom::Sharesheet {
- public:
-  FakeSharesheet() = default;
-  FakeSharesheet(const FakeSharesheet&) = delete;
-  FakeSharesheet& operator=(const FakeSharesheet&) = delete;
-  ~FakeSharesheet() override = default;
-
-  void set_profile(Profile* profile) { profile_ = profile; }
-
-  void set_selected_app_id(const webapps::AppId& app_id) {
-    selected_app_id_ = app_id;
-  }
-
- private:
-  // crosapi::mojom::Sharesheet:
-  void ShowBubble(
-      const std::string& window_id,
-      sharesheet::LaunchSource source,
-      crosapi::mojom::IntentPtr intent,
-      crosapi::mojom::Sharesheet::ShowBubbleCallback callback) override {
-    LaunchWebAppWithIntent(
-        profile_, selected_app_id_,
-        apps_util::CreateAppServiceIntentFromCrosapi(intent, profile_));
-  }
-  void ShowBubbleWithOnClosed(
-      const std::string& window_id,
-      sharesheet::LaunchSource source,
-      crosapi::mojom::IntentPtr intent,
-      crosapi::mojom::Sharesheet::ShowBubbleWithOnClosedCallback callback)
-      override {}
-  void CloseBubble(const std::string& window_id) override {}
-
-  raw_ptr<Profile, DanglingUntriaged> profile_ = nullptr;
-  webapps::AppId selected_app_id_;
-};
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-
 }  // namespace
 
 namespace web_app {
 
-class WebShareTargetBrowserTest : public WebAppBrowserTestBase {
+class WebShareTargetBrowserTest : public WebAppBrowserTestBase,
+                                  public testing::WithParamInterface<
+                                      apps::test::LinkCapturingFeatureVersion> {
  public:
+  WebShareTargetBrowserTest() {
+    scoped_feature_list_.InitWithFeaturesAndParameters(
+        apps::test::GetFeaturesToEnableLinkCapturingUX(GetParam()), {});
+  }
+
   GURL share_target_url() const {
     return embedded_test_server()->GetURL("/web_share_target/share.html");
   }
@@ -184,7 +140,6 @@ class WebShareTargetBrowserTest : public WebAppBrowserTestBase {
     return web_contents;
   }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
   unsigned NumRecentFiles(content::WebContents* contents) {
     unsigned result = std::numeric_limits<unsigned>::max();
     base::RunLoop run_loop;
@@ -210,27 +165,12 @@ class WebShareTargetBrowserTest : public WebAppBrowserTestBase {
     run_loop.Run();
     return result;
   }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  void SetUpOnMainThread() override {
-    WebAppBrowserTestBase::SetUpOnMainThread();
-
-    // Replace the production sharesheet with a fake for testing.
-    mojo::Remote<crosapi::mojom::Sharesheet>& remote =
-        chromeos::LacrosService::Get()->GetRemote<crosapi::mojom::Sharesheet>();
-    remote.reset();
-    service_.set_profile(profile());
-    receiver_.Bind(remote.BindNewPipeAndPassReceiver());
-  }
 
  private:
-  FakeSharesheet service_;
-  mojo::Receiver<crosapi::mojom::Sharesheet> receiver_{&service_};
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
+  base::test::ScopedFeatureList scoped_feature_list_;
 };
 
-IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, ShareUsingFileURL) {
+IN_PROC_BROWSER_TEST_P(WebShareTargetBrowserTest, ShareUsingFileURL) {
   ASSERT_TRUE(embedded_test_server()->Start());
   const GURL app_url =
       embedded_test_server()->GetURL("/web_share_target/charts.html");
@@ -268,8 +208,7 @@ IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, ShareUsingFileURL) {
   EXPECT_EQ("1,2,3,4,5 6,7,8,9,0", ReadTextContent(web_contents, "records"));
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, ShareImageWithText) {
+IN_PROC_BROWSER_TEST_P(WebShareTargetBrowserTest, ShareImageWithText) {
   ASSERT_TRUE(embedded_test_server()->Start());
   const GURL app_url =
       embedded_test_server()->GetURL("/web_share_target/charts.html");
@@ -302,7 +241,7 @@ IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, ShareImageWithText) {
   RemoveWebShareDirectory(directory);
 }
 
-IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, ShareAudio) {
+IN_PROC_BROWSER_TEST_P(WebShareTargetBrowserTest, ShareAudio) {
   ASSERT_TRUE(embedded_test_server()->Start());
   const GURL app_url =
       embedded_test_server()->GetURL("/web_share_target/charts.html");
@@ -335,9 +274,8 @@ IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, ShareAudio) {
 
   RemoveWebShareDirectory(directory);
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
-IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, PostBlank) {
+IN_PROC_BROWSER_TEST_P(WebShareTargetBrowserTest, PostBlank) {
   ASSERT_TRUE(embedded_test_server()->Start());
   const GURL app_url =
       embedded_test_server()->GetURL("/web_share_target/poster.html");
@@ -356,7 +294,7 @@ IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, PostBlank) {
   EXPECT_EQ("N/A", ReadTextContent(web_contents, "link"));
 }
 
-IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, PostLink) {
+IN_PROC_BROWSER_TEST_P(WebShareTargetBrowserTest, PostLink) {
   ASSERT_TRUE(embedded_test_server()->Start());
   const GURL app_url =
       embedded_test_server()->GetURL("/web_share_target/poster.html");
@@ -388,7 +326,7 @@ IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, PostLink) {
   EXPECT_EQ(shared_link, ReadTextContent(web_contents, "link"));
 }
 
-IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, GetLink) {
+IN_PROC_BROWSER_TEST_P(WebShareTargetBrowserTest, GetLink) {
   ASSERT_TRUE(embedded_test_server()->Start());
   const GURL app_url =
       embedded_test_server()->GetURL("/web_share_target/gatherer.html");
@@ -420,5 +358,12 @@ IN_PROC_BROWSER_TEST_F(WebShareTargetBrowserTest, GetLink) {
   EXPECT_EQ("N/A", ReadTextContent(web_contents, "author"));
   EXPECT_EQ(shared_link, ReadTextContent(web_contents, "link"));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    All,
+    WebShareTargetBrowserTest,
+    testing::Values(apps::test::LinkCapturingFeatureVersion::kV1DefaultOff,
+                    apps::test::LinkCapturingFeatureVersion::kV2DefaultOff),
+    apps::test::LinkCapturingVersionToString);
 
 }  // namespace web_app

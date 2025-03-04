@@ -20,7 +20,7 @@
 
 class TabGroupViewsTest : public ChromeViewsTestBase {
  public:
-  TabGroupViewsTest() {}
+  TabGroupViewsTest() = default;
   TabGroupViewsTest(const TabGroupViewsTest&) = delete;
   TabGroupViewsTest& operator=(const TabGroupViewsTest&) = delete;
   ~TabGroupViewsTest() override = default;
@@ -148,7 +148,7 @@ TEST_F(TabGroupViewsTest, UnderlineBoundsWhenTabsAreNotVisible) {
 // and the highlight should highlight it.
 TEST_F(TabGroupViewsTest, UnderlineBoundsHeaderDrag) {
   TabGroupHeader* header = group_views_->header();
-  drag_context_->AddChildView(header);
+  drag_context_->AddChildViewRaw(header);
   Tab* tab_1 = drag_context_->AddChildView(
       std::make_unique<Tab>(tab_slot_controller_.get()));
   tab_1->SetGroup(id_);

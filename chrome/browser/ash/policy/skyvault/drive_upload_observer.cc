@@ -229,13 +229,11 @@ void DriveUploadObserver::OnIOTaskStatus(
 
   switch (status.state) {
     case file_manager::io_task::State::kCancelled:
-      NOTREACHED_IN_MIGRATION()
-          << "Deletion of source or destination file should not have "
-             "been cancelled.";
-      ABSL_FALLTHROUGH_INTENDED;
+      NOTREACHED() << "Deletion of source or destination file should not have "
+                      "been cancelled.";
     case file_manager::io_task::State::kError:
       LOG(ERROR) << "Deleting the file from the local cache failed.";
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case file_manager::io_task::State::kSuccess:
       std::move(upload_callback_).Run(false);
       return;

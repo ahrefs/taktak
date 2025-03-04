@@ -56,6 +56,8 @@ OmniboxController::OmniboxController(
   }
 }
 
+constexpr bool is_ios = !!BUILDFLAG(IS_IOS);
+
 OmniboxController::~OmniboxController() = default;
 
 void OmniboxController::StartAutocomplete(
@@ -82,23 +84,17 @@ void OmniboxController::StartZeroSuggestPrefetch() {
     return;
   }
 
-  const bool is_ntp_page = omnibox::IsNTPPage(page_classification);
-  const bool interaction_clobber_focus_type = base::FeatureList::IsEnabled(
-      omnibox::kOmniboxOnClobberFocusTypeOnContent);
-
   GURL current_url = client_->GetURL();
   std::u16string text = base::UTF8ToUTF16(current_url.spec());
 
-  if (is_ntp_page || interaction_clobber_focus_type) {
+  if (omnibox::IsNTPPage(page_classification) || !is_ios) {
     text.clear();
   }
 
   AutocompleteInput input(text, page_classification,
                           client_->GetSchemeClassifier());
   input.set_current_url(current_url);
-  input.set_focus_type(interaction_clobber_focus_type && !is_ntp_page
-                           ? metrics::OmniboxFocusType::INTERACTION_CLOBBER
-                           : metrics::OmniboxFocusType::INTERACTION_FOCUS);
+  input.set_focus_type(metrics::OmniboxFocusType::INTERACTION_FOCUS);
   autocomplete_controller_->StartPrefetch(input);
 }
 
@@ -175,7 +171,7 @@ bool OmniboxController::IsSuggestionHidden(
     const AutocompleteMatch& match) const {
   if (OmniboxFieldTrial::IsStarterPackExpansionEnabled() &&
       match.from_keyword) {
-    TemplateURL* turl =
+    const TemplateURL* turl =
         match.GetTemplateURL(client_->GetTemplateURLService(), false);
     if (turl &&
         turl->starter_pack_id() == TemplateURLStarterPackData::kGemini) {

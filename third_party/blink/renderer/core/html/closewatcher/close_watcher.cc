@@ -135,7 +135,7 @@ void CloseWatcher::WatcherStack::Signal() {
   if (!watcher_groups_.empty()) {
     auto& group = watcher_groups_.back();
     for (auto& watcher : base::Reversed(group)) {
-      if (!watcher->requestClose()) {
+      if (!watcher->RequestClose(AllowCancel::kWithUserActivation)) {
         break;
       }
     }
@@ -203,14 +203,31 @@ CloseWatcher* CloseWatcher::CreateInternal(LocalDOMWindow& window,
 CloseWatcher::CloseWatcher(LocalDOMWindow& window)
     : ExecutionContextClient(&window) {}
 
-bool CloseWatcher::requestClose() {
+void CloseWatcher::requestCloseForBinding() {
+  // This behavior is being changes as part of the shipment of the dialog light
+  // dismiss feature, simply because it maintains the parallelism between
+  // dialog.requestClose() and closeWatcher.requestClose(). If there are compat
+  // problems, the flag will be disabled and this part can be rolled back.
+  RequestClose(RuntimeEnabledFeatures::HTMLDialogLightDismissEnabled()
+                   ? AllowCancel::kAlways
+                   : AllowCancel::kWithUserActivation);
+}
+
+bool CloseWatcher::RequestClose(AllowCancel allow_cancel) {
   if (IsClosed() || dispatching_cancel_ || !DomWindow()) {
     return true;
   }
+  if (!enabled_) {
+    CHECK(RuntimeEnabledFeatures::HTMLDialogLightDismissEnabled());
+    return true;
+  }
+  CHECK(allow_cancel == AllowCancel::kWithUserActivation ||
+        RuntimeEnabledFeatures::HTMLDialogLightDismissEnabled());
 
   WatcherStack& stack = *DomWindow()->closewatcher_stack();
   Event& cancel_event =
-      stack.CancelEventCanBeCancelable()
+      (allow_cancel == AllowCancel::kAlways ||
+       stack.CancelEventCanBeCancelable())
           ? *Event::CreateCancelable(event_type_names::kCancel)
           : *Event::Create(event_type_names::kCancel);
 
@@ -231,10 +248,11 @@ bool CloseWatcher::requestClose() {
 }
 
 void CloseWatcher::close() {
-  if (IsClosed()) {
+  if (IsClosed() || !DomWindow() || !DomWindow()->document()->IsActive()) {
     return;
   }
-  if (!DomWindow() || !DomWindow()->document()->IsActive()) {
+  if (!enabled_) {
+    CHECK(RuntimeEnabledFeatures::HTMLDialogLightDismissEnabled());
     return;
   }
 

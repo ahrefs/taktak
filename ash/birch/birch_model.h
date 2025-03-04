@@ -12,8 +12,8 @@
 #include "ash/ash_export.h"
 #include "ash/birch/birch_client.h"
 #include "ash/birch/birch_coral_item.h"
+#include "ash/birch/birch_coral_provider.h"
 #include "ash/birch/birch_item.h"
-#include "ash/public/cpp/coral_util.h"
 #include "ash/public/cpp/session/session_observer.h"
 #include "base/functional/callback.h"
 #include "base/memory/weak_ptr.h"
@@ -36,7 +36,8 @@ class CoralItemRemover;
 // different providers. Both data and prefs are associated with the primary user
 // account.
 class ASH_EXPORT BirchModel : public SessionObserver,
-                              public SimpleGeolocationProvider::Observer {
+                              public SimpleGeolocationProvider::Observer,
+                              public BirchCoralProvider::Observer {
  public:
   // The callback for lost media data changes. The argument is the updated lost
   // media item.
@@ -138,7 +139,7 @@ class ASH_EXPORT BirchModel : public SessionObserver,
   // Returns whether all data in the model is currently fresh.
   bool IsDataFresh();
 
-  // Add the BirchItem to the list of persistenly removed items.
+  // Adds the BirchItem to the list of persistently removed items.
   void RemoveItem(BirchItem* item);
 
   void SetLostMediaDataChangedCallback(LostMediaDataChangedCallback callback);
@@ -150,6 +151,11 @@ class ASH_EXPORT BirchModel : public SessionObserver,
 
   // SimpleGeolocationProvider::Observer:
   void OnGeolocationPermissionChanged(bool enabled) override;
+
+  // BirchCoralProvider::Observer:
+  void OnCoralGroupRemoved(const base::Token& group_id) override;
+  void OnCoralGroupTitleUpdated(const base::Token& group_id,
+                                const std::string& title) override;
 
   BirchDataProvider* GetWeatherProviderForTest();
   void OverrideWeatherProviderForTest(

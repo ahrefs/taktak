@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -19,12 +20,12 @@
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
-#include "base/notreached.h"
 #include "base/run_loop.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/task/task_traits.h"
 #include "base/task/thread_pool.h"
 #include "base/test/bind.h"
+#include "base/test/mock_callback.h"
 #include "base/test/scoped_path_override.h"
 #include "base/test/task_environment.h"
 #include "base/values.h"
@@ -69,14 +70,20 @@ auto MakeMockCallback() {
 
 // Makes factories for creating update checker instances. `UpdateClient` uses
 // the factory to make one update client checker for each update check. This
-// factory of factories counts instances of update checkers made.
+// factory of factories counts instances of update checkers made. The factory
+// scope must enclose the scope of its clients since the `num_calls_` member
+// is captured by the lambda.
 template <typename MockUpdateChecker>
 class MockUpdateCheckerFactory {
  public:
   typename MockUpdateChecker::Factory GetFactory() {
     return base::BindLambdaForTesting(
         [&](scoped_refptr<Configurator>) -> std::unique_ptr<UpdateChecker> {
-          return std::make_unique<MockUpdateChecker>(++num_calls_);
+          if constexpr (std::is_default_constructible_v<MockUpdateChecker>) {
+            return std::make_unique<MockUpdateChecker>();
+          } else {
+            return std::make_unique<MockUpdateChecker>(++num_calls_);
+          }
         });
   }
 
@@ -156,6 +163,21 @@ class MockCrxDownloaderFactory : public CrxDownloaderFactory {
 
   scoped_refptr<CrxDownloader> crx_downloader_;
 };
+
+// Mocks the completion callback.
+auto ExpectError(Error expected_error) {
+  return base::BindLambdaForTesting(
+      [=](Error actual_error) { EXPECT_EQ(expected_error, actual_error); });
+}
+
+auto ExpectErrorThenQuit(base::RunLoop& runloop, Error expected_error) {
+  return ExpectError(expected_error)
+      .Then(base::BindLambdaForTesting([&runloop]() { runloop.Quit(); }));
+}
+
+auto ExpectErrorThenQuit(auto quit, Error expected_error) {
+  return ExpectError(expected_error).Then(std::move(quit));
+}
 
 }  // namespace
 
@@ -269,22 +291,17 @@ const std::vector<base::Value::Dict>& MockPingManagerImpl::events() const {
 }
 
 class UpdateClientTest : public testing::Test {
- public:
-  UpdateClientTest(const UpdateClientTest&) = delete;
-  UpdateClientTest& operator=(const UpdateClientTest&) = delete;
+ private:
+  // Must be initialized before `runloop_`.
+  base::test::TaskEnvironment task_environment_;
 
  protected:
-  UpdateClientTest();
-  ~UpdateClientTest() override = default;
-
-  void RunThreads();
+  UpdateClientTest() {
+    RegisterPersistedDataPrefs(pref_->registry());
+    config_ = base::MakeRefCounted<TestConfigurator>(pref_.get());
+  }
 
   scoped_refptr<update_client::TestConfigurator> config() { return config_; }
-  update_client::PersistedData* metadata() { return metadata_.get(); }
-
-  [[nodiscard]] base::OnceClosure quit_closure() {
-    return runloop_.QuitClosure();
-  }
 
   // Injects the CrxDownloaderFactory in the test fixture.
   template <typename MockCrxDownloaderT>
@@ -294,26 +311,13 @@ class UpdateClientTest : public testing::Test {
             base::MakeRefCounted<MockCrxDownloaderT>()));
   }
 
- private:
-  base::test::TaskEnvironment task_environment_;
   base::RunLoop runloop_;
 
+ private:
   std::unique_ptr<TestingPrefServiceSimple> pref_ =
       std::make_unique<TestingPrefServiceSimple>();
   scoped_refptr<update_client::TestConfigurator> config_;
-  std::unique_ptr<update_client::PersistedData> metadata_;
 };
-
-UpdateClientTest::UpdateClientTest() {
-  RegisterPersistedDataPrefs(pref_->registry());
-  config_ = base::MakeRefCounted<TestConfigurator>(pref_.get());
-  metadata_ = CreatePersistedData(pref_.get(), nullptr);
-}
-
-void UpdateClientTest::RunThreads() {
-  runloop_.Run();
-  task_environment_.RunUntilIdle();
-}
 
 // Tests the scenario where one update check is done for one CRX. The CRX
 // has no update.
@@ -336,17 +340,9 @@ TEST_F(UpdateClientTest, OneCrxNoUpdate) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -378,13 +374,13 @@ TEST_F(UpdateClientTest, OneCrxNoUpdate) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -424,12 +420,12 @@ TEST_F(UpdateClientTest, OneCrxNoUpdate) {
           [&items](const CrxUpdateItem& item) { items.push_back(item); });
 
   update_client->AddObserver(&observer);
-  const std::vector<std::string> ids = {"jebgalgnebhfojomionfpkfelancnnkf"};
   update_client->Update(
-      ids, base::BindOnce(&DataCallbackMock::Callback),
+      {"jebgalgnebhfojomionfpkfelancnnkf"},
+      base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver), true,
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(2u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -469,17 +465,9 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoUpdate) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -495,7 +483,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoUpdate) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -530,7 +518,6 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoUpdate) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
 
@@ -559,7 +546,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoUpdate) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -679,8 +666,8 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoUpdate) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(9u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -744,17 +731,9 @@ TEST_F(UpdateClientTest, TwoCrxUpdateFirstServerIgnoresSecond) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -770,7 +749,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateFirstServerIgnoresSecond) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -802,7 +781,6 @@ TEST_F(UpdateClientTest, TwoCrxUpdateFirstServerIgnoresSecond) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
 
@@ -818,7 +796,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateFirstServerIgnoresSecond) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -938,8 +916,8 @@ TEST_F(UpdateClientTest, TwoCrxUpdateFirstServerIgnoresSecond) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(8u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -985,17 +963,9 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoCrxComponentData) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -1011,7 +981,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoCrxComponentData) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -1043,7 +1013,6 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoCrxComponentData) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
 
@@ -1059,7 +1028,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoCrxComponentData) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -1082,7 +1051,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoCrxComponentData) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -1172,8 +1141,8 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoCrxComponentData) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(7u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -1208,36 +1177,28 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoCrxComponentDataAtAll) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
         const base::flat_map<std::string, std::string>& additional_attributes,
         UpdateCheckCallback update_check_callback) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
     }
   };
   MockUpdateCheckerFactory<MockUpdateChecker> mock_update_checker_factory;
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -1286,8 +1247,8 @@ TEST_F(UpdateClientTest, TwoCrxUpdateNoCrxComponentDataAtAll) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(2u, items.size());
   EXPECT_EQ(ComponentState::kUpdateError, items[0].state);
@@ -1328,17 +1289,9 @@ TEST_F(UpdateClientTest, TwoCrxUpdateDownloadTimeout) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -1354,7 +1307,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateDownloadTimeout) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -1369,7 +1322,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateDownloadTimeout) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='ihfokbkgjpifnbbojhneepfflplebdkc_1.crx'
                          hash_sha256='8f5aa190311237cae00675af87ff457f278cd1a05
@@ -1402,7 +1355,6 @@ TEST_F(UpdateClientTest, TwoCrxUpdateDownloadTimeout) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       }
@@ -1423,7 +1375,6 @@ TEST_F(UpdateClientTest, TwoCrxUpdateDownloadTimeout) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       }
@@ -1437,7 +1388,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateDownloadTimeout) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -1471,7 +1422,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateDownloadTimeout) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -1587,8 +1538,8 @@ TEST_F(UpdateClientTest, TwoCrxUpdateDownloadTimeout) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(11u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -1640,10 +1591,12 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
       crx.crx_format_requirement = crx_file::VerifierFormat::CRX3;
       if (num_calls_ == 1) {
         crx.version = base::Version("0.8");
+        crx.fingerprint = "20";
       } else if (num_calls_ == 2) {
         crx.version = base::Version("1.0");
+        crx.fingerprint = "21";
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       std::move(callback).Run({crx});
@@ -1658,14 +1611,6 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
         base::MakeRefCounted<VersionedTestInstaller>();
   };
   auto data_callback_mock = MakeMockCallback<DataCallbackMock>();
-
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
 
   class MockUpdateChecker : public UpdateChecker {
    public:
@@ -1689,7 +1634,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
               <urls>
                 <url codebase='http://localhost/download/'/>
               </urls>
-              <manifest version='1.0' prodversionmin='11.0.1.0'>
+              <manifest version='1.0'>
                 <packages>
                   <package name='ihfokbkgjpifnbbojhneepfflplebdkc_1.crx'
                            hash_sha256='813c59747e139a608b3b5fc49633affc6db57437
@@ -1718,7 +1663,6 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       } else if (num_calls_ == 2) {
@@ -1732,7 +1676,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
                 <url codebase='http://localhost/download/'/>
                 <url codebasediff='http://localhost/download/'/>
               </urls>
-              <manifest version='2.0' prodversionmin='11.0.1.0'>
+              <manifest version='2.0'>
                 <packages>
                   <package name='ihfokbkgjpifnbbojhneepfflplebdkc_2.crx'
                            namediff='ihfokbkgjpifnbbojhneepfflplebdkc_1to2.crx'
@@ -1769,11 +1713,10 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
         result.crx_urls.emplace_back("http://localhost/download/");
         result.crx_diffurls.emplace_back("http://localhost/download/");
         result.manifest.version = "2.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -1788,7 +1731,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -1826,7 +1769,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE() << url.path();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -1925,17 +1868,17 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
         .Times(1);
     EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
                   return item.id == "ihfokbkgjpifnbbojhneepfflplebdkc" &&
-                         item.state == ComponentState::kDownloadingDiff;
+                         item.state == ComponentState::kDownloading;
                 })))
         .Times(AtLeast(1));
     EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
                   return item.id == "ihfokbkgjpifnbbojhneepfflplebdkc" &&
-                         item.state == ComponentState::kUpdatingDiff;
+                         item.state == ComponentState::kUpdating;
                 })))
         .Times(1);
     EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
                   return item.id == "ihfokbkgjpifnbbojhneepfflplebdkc" &&
-                         item.state == ComponentState::kUpdatingDiff;
+                         item.state == ComponentState::kUpdating;
                 })))
         .Times(3);
     EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
@@ -1958,11 +1901,8 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
-
     EXPECT_EQ(10u, items.size());
     EXPECT_EQ(ComponentState::kChecking, items[0].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[0].id.c_str());
@@ -1985,7 +1925,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
     EXPECT_EQ(ComponentState::kUpdated, items[9].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[9].id.c_str());
 
-    std::vector<int> samples = {-1, -1, -1, -1, -1, -1, -1, 50, 100, 100};
+    std::vector samples = {-1, -1, -1, -1, -1, -1, -1, 50, 100, 100};
     EXPECT_EQ(items.size(), samples.size());
     for (size_t i = 0; i != items.size(); ++i) {
       EXPECT_EQ(items[i].install_progress, samples[i]);
@@ -2003,9 +1943,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
 
     EXPECT_EQ(10u, items.size());
@@ -2013,19 +1951,19 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdate) {
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[0].id.c_str());
     EXPECT_EQ(ComponentState::kCanUpdate, items[1].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[1].id.c_str());
-    EXPECT_EQ(ComponentState::kDownloadingDiff, items[2].state);
+    EXPECT_EQ(ComponentState::kDownloading, items[2].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[2].id.c_str());
-    EXPECT_EQ(ComponentState::kDownloadingDiff, items[3].state);
+    EXPECT_EQ(ComponentState::kDownloading, items[3].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[3].id.c_str());
-    EXPECT_EQ(ComponentState::kDownloadingDiff, items[4].state);
+    EXPECT_EQ(ComponentState::kDownloading, items[4].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[4].id.c_str());
-    EXPECT_EQ(ComponentState::kUpdatingDiff, items[5].state);
+    EXPECT_EQ(ComponentState::kUpdating, items[5].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[5].id.c_str());
-    EXPECT_EQ(ComponentState::kUpdatingDiff, items[6].state);
+    EXPECT_EQ(ComponentState::kUpdating, items[6].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[6].id.c_str());
-    EXPECT_EQ(ComponentState::kUpdatingDiff, items[7].state);
+    EXPECT_EQ(ComponentState::kUpdating, items[7].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[7].id.c_str());
-    EXPECT_EQ(ComponentState::kUpdatingDiff, items[8].state);
+    EXPECT_EQ(ComponentState::kUpdating, items[8].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[8].id.c_str());
     EXPECT_EQ(ComponentState::kUpdated, items[9].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[9].id.c_str());
@@ -2112,17 +2050,9 @@ TEST_F(UpdateClientTest, OneCrxInstallError) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -2138,7 +2068,7 @@ TEST_F(UpdateClientTest, OneCrxInstallError) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -2167,7 +2097,6 @@ TEST_F(UpdateClientTest, OneCrxInstallError) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.packages.push_back(package);
 
       ProtocolParser::Results results;
@@ -2181,7 +2110,7 @@ TEST_F(UpdateClientTest, OneCrxInstallError) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -2281,8 +2210,8 @@ TEST_F(UpdateClientTest, OneCrxInstallError) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(6u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -2319,10 +2248,12 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
       crx.crx_format_requirement = crx_file::VerifierFormat::CRX3;
       if (num_calls_ == 1) {
         crx.version = base::Version("0.8");
+        crx.fingerprint = "20";
       } else if (num_calls_ == 2) {
         crx.version = base::Version("1.0");
+        crx.fingerprint = "21";
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       std::move(callback).Run({crx});
@@ -2337,14 +2268,6 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
         base::MakeRefCounted<VersionedTestInstaller>();
   };
   auto data_callback_mock = MakeMockCallback<DataCallbackMock>();
-
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
 
   class MockUpdateChecker : public UpdateChecker {
    public:
@@ -2368,7 +2291,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
               <urls>
                 <url codebase='http://localhost/download/'/>
               </urls>
-              <manifest version='1.0' prodversionmin='11.0.1.0'>
+              <manifest version='1.0'>
                 <packages>
                   <package name='ihfokbkgjpifnbbojhneepfflplebdkc_1.crx'
                            hash_sha256='813c59747e139a608b3b5fc49633affc6db57437
@@ -2395,7 +2318,6 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       } else if (num_calls_ == 2) {
@@ -2409,7 +2331,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
                 <url codebase='http://localhost/download/'/>
                 <url codebasediff='http://localhost/download/'/>
               </urls>
-              <manifest version='2.0' prodversionmin='11.0.1.0'>
+              <manifest version='2.0'>
                 <packages>
                   <package name='ihfokbkgjpifnbbojhneepfflplebdkc_2.crx'
                            namediff='ihfokbkgjpifnbbojhneepfflplebdkc_1to2.crx'
@@ -2445,11 +2367,10 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
         result.crx_urls.emplace_back("http://localhost/download/");
         result.crx_diffurls.emplace_back("http://localhost/download/");
         result.manifest.version = "2.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -2464,7 +2385,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -2600,7 +2521,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
         .Times(1);
     EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
                   return item.id == "ihfokbkgjpifnbbojhneepfflplebdkc" &&
-                         item.state == ComponentState::kDownloadingDiff;
+                         item.state == ComponentState::kDownloading;
                 })))
         .Times(AtLeast(1));
     EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
@@ -2635,9 +2556,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
     EXPECT_EQ(6u, items.size());
     EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -2665,9 +2584,7 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
 
     EXPECT_EQ(8u, items.size());
@@ -2675,9 +2592,9 @@ TEST_F(UpdateClientTest, OneCrxDiffUpdateFailsFullUpdateSucceeds) {
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[0].id.c_str());
     EXPECT_EQ(ComponentState::kCanUpdate, items[1].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[1].id.c_str());
-    EXPECT_EQ(ComponentState::kDownloadingDiff, items[2].state);
+    EXPECT_EQ(ComponentState::kDownloading, items[2].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[2].id.c_str());
-    EXPECT_EQ(ComponentState::kDownloadingDiff, items[3].state);
+    EXPECT_EQ(ComponentState::kDownloading, items[3].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[3].id.c_str());
     EXPECT_EQ(ComponentState::kDownloading, items[4].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[4].id.c_str());
@@ -2712,10 +2629,12 @@ TEST_F(UpdateClientTest,
       crx.crx_format_requirement = crx_file::VerifierFormat::CRX3;
       if (num_calls_ == 1) {
         crx.version = base::Version("0.8");
+        crx.fingerprint = "20";
       } else if (num_calls_ == 2) {
         crx.version = base::Version("1.0");
+        crx.fingerprint = "21";
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       std::move(callback).Run({crx});
@@ -2730,14 +2649,6 @@ TEST_F(UpdateClientTest,
         base::MakeRefCounted<VersionedTestInstaller>();
   };
   auto data_callback_mock = MakeMockCallback<DataCallbackMock>();
-
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
 
   class MockUpdateChecker : public UpdateChecker {
    public:
@@ -2761,7 +2672,7 @@ TEST_F(UpdateClientTest,
               <urls>
                 <url codebase='http://localhost/download/'/>
               </urls>
-              <manifest version='1.0' prodversionmin='11.0.1.0'>
+              <manifest version='1.0'>
                 <packages>
                   <package name='ihfokbkgjpifnbbojhneepfflplebdkc_1.crx'
                            hash_sha256='813c59747e139a608b3b5fc49633affc6db57437
@@ -2788,7 +2699,6 @@ TEST_F(UpdateClientTest,
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       } else if (num_calls_ == 2) {
@@ -2802,7 +2712,7 @@ TEST_F(UpdateClientTest,
                 <url codebase='http://localhost/download/'/>
                 <url codebasediff='http://localhost/download/'/>
               </urls>
-              <manifest version='2.0' prodversionmin='11.0.1.0'>
+              <manifest version='2.0'>
                 <packages>
                   <package name='ihfokbkgjpifnbbojhneepfflplebdkc_2.crx'
                            namediff='ihfokbkgjpifnbbojhneepfflplebdkc_1to2.crx'
@@ -2836,11 +2746,10 @@ TEST_F(UpdateClientTest,
         result.crx_urls.emplace_back("http://localhost/download/");
         result.crx_diffurls.emplace_back("http://localhost/download/");
         result.manifest.version = "2.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -2855,7 +2764,7 @@ TEST_F(UpdateClientTest,
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -2882,13 +2791,13 @@ TEST_F(UpdateClientTest,
         // A download error is injected on this execution path.
         download_metrics.url = url;
         download_metrics.downloader = DownloadMetrics::kNone;
-        download_metrics.error = -1;
+        download_metrics.error = 18;
         download_metrics.downloaded_bytes = 0;
         download_metrics.total_bytes = 2105;
         download_metrics.download_time_ms = 1000;
 
         // The response must not include a file path in the case of errors.
-        result.error = -1;
+        result.error = 18;
       } else if (url.path() ==
                  "/download/ihfokbkgjpifnbbojhneepfflplebdkc_2.crx") {
         download_metrics.url = url;
@@ -2939,7 +2848,7 @@ TEST_F(UpdateClientTest,
       EXPECT_EQ(0, static_cast<int>(ping_data[1].error_category));
       EXPECT_EQ(0, ping_data[1].error_code);
       EXPECT_TRUE(ping_data[1].diff_update_failed);
-      EXPECT_EQ(2, static_cast<int>(ping_data[1].diff_error_category));
+      EXPECT_EQ(1, static_cast<int>(ping_data[1].diff_error_category));
       EXPECT_EQ(18, ping_data[1].diff_error_code);
     }
   };
@@ -3021,9 +2930,7 @@ TEST_F(UpdateClientTest,
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
     EXPECT_EQ(6u, items.size());
     EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -3051,12 +2958,10 @@ TEST_F(UpdateClientTest,
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
 
-    EXPECT_EQ(6u, items.size());
+    EXPECT_EQ(8u, items.size());
     EXPECT_EQ(ComponentState::kChecking, items[0].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[0].id.c_str());
     EXPECT_EQ(ComponentState::kCanUpdate, items[1].state);
@@ -3065,10 +2970,14 @@ TEST_F(UpdateClientTest,
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[2].id.c_str());
     EXPECT_EQ(ComponentState::kDownloading, items[3].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[3].id.c_str());
-    EXPECT_EQ(ComponentState::kUpdating, items[4].state);
+    EXPECT_EQ(ComponentState::kDownloading, items[4].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[4].id.c_str());
-    EXPECT_EQ(ComponentState::kUpdated, items[5].state);
+    EXPECT_EQ(ComponentState::kDownloading, items[5].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[5].id.c_str());
+    EXPECT_EQ(ComponentState::kUpdating, items[6].state);
+    EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[6].id.c_str());
+    EXPECT_EQ(ComponentState::kUpdated, items[7].state);
+    EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[7].id.c_str());
   }
 
   update_client->RemoveObserver(&observer);
@@ -3095,30 +3004,9 @@ TEST_F(UpdateClientTest, OneCrxNoUpdateQueuedCall) {
     }
   };
 
-  class CompletionCallbackMock
-      : public base::RefCountedThreadSafe<CompletionCallbackMock> {
-   public:
-    void Callback(base::OnceClosure quit_closure, Error error) {
-      ++num_calls_;
-
-      EXPECT_EQ(Error::NONE, error);
-
-      if (num_calls_ == 2) {
-        std::move(quit_closure).Run();
-      }
-    }
-
-   private:
-    friend class base::RefCountedThreadSafe<CompletionCallbackMock>;
-    ~CompletionCallbackMock() = default;
-
-    int num_calls_ = 0;
-  };
-  auto completion_callback_mock = MakeMockCallback<CompletionCallbackMock>();
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -3149,13 +3037,13 @@ TEST_F(UpdateClientTest, OneCrxNoUpdateQueuedCall) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -3217,12 +3105,12 @@ TEST_F(UpdateClientTest, OneCrxNoUpdateQueuedCall) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver1),
-      false, base::BindOnce(completion_callback_mock, quit_closure()));
+      false, ExpectError(Error::NONE));
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver2),
-      false, base::BindOnce(completion_callback_mock, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(2u, items1.size());
   EXPECT_EQ(ComponentState::kChecking, items1[0].state);
@@ -3260,17 +3148,9 @@ TEST_F(UpdateClientTest, OneCrxInstall) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -3286,7 +3166,7 @@ TEST_F(UpdateClientTest, OneCrxInstall) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'
+            <manifest version='1.0'
               run='UpdaterSetup.exe' arguments='--arg1 --arg2'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
@@ -3316,7 +3196,6 @@ TEST_F(UpdateClientTest, OneCrxInstall) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.run = "UpdaterSetup.exe";
       result.manifest.arguments = "--arg1 --arg2";
       result.manifest.packages.push_back(package);
@@ -3336,7 +3215,7 @@ TEST_F(UpdateClientTest, OneCrxInstall) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -3359,7 +3238,7 @@ TEST_F(UpdateClientTest, OneCrxInstall) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -3455,8 +3334,8 @@ TEST_F(UpdateClientTest, OneCrxInstall) {
       std::string("jebgalgnebhfojomionfpkfelancnnkf"),
       base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(6u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -3499,36 +3378,28 @@ TEST_F(UpdateClientTest, OneCrxInstallNoCrxComponentData) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
         const base::flat_map<std::string, std::string>& additional_attributes,
         UpdateCheckCallback update_check_callback) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
     }
   };
   MockUpdateCheckerFactory<MockUpdateChecker> mock_update_checker_factory;
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -3582,8 +3453,8 @@ TEST_F(UpdateClientTest, OneCrxInstallNoCrxComponentData) {
       std::string("jebgalgnebhfojomionfpkfelancnnkf"),
       base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(1u, items.size());
   EXPECT_EQ(ComponentState::kUpdateError, items[0].state);
@@ -3611,33 +3482,9 @@ TEST_F(UpdateClientTest, ConcurrentInstallSameCRX) {
     }
   };
 
-  class CompletionCallbackMock
-      : public base::RefCountedThreadSafe<CompletionCallbackMock> {
-   public:
-    void Callback(base::OnceClosure quit_closure, Error error) {
-      ++num_calls_;
-      EXPECT_LE(num_calls_, 2);
-      if (num_calls_ == 1) {
-        EXPECT_EQ(Error::UPDATE_IN_PROGRESS, error);
-        return;
-      }
-      if (num_calls_ == 2) {
-        EXPECT_EQ(Error::NONE, error);
-        std::move(quit_closure).Run();
-      }
-    }
-
-   private:
-    friend class base::RefCountedThreadSafe<CompletionCallbackMock>;
-    ~CompletionCallbackMock() = default;
-
-    int num_calls_ = 0;
-  };
-  auto completion_callback_mock = MakeMockCallback<CompletionCallbackMock>();
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -3668,13 +3515,13 @@ TEST_F(UpdateClientTest, ConcurrentInstallSameCRX) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -3718,18 +3565,21 @@ TEST_F(UpdateClientTest, ConcurrentInstallSameCRX) {
       .WillRepeatedly(
           [&items2](const CrxUpdateItem& item) { items2.push_back(item); });
 
+  base::RepeatingClosure barrier_quit_closure =
+      BarrierClosure(2, runloop_.QuitClosure());
+
   update_client->AddObserver(&observer);
   update_client->Install(
       std::string("jebgalgnebhfojomionfpkfelancnnkf"),
       base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver1),
-      base::BindOnce(completion_callback_mock, quit_closure()));
+      ExpectErrorThenQuit(barrier_quit_closure, Error::NONE));
   update_client->Install(
       std::string("jebgalgnebhfojomionfpkfelancnnkf"),
       base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver2),
-      base::BindOnce(completion_callback_mock, quit_closure()));
-  RunThreads();
+      ExpectErrorThenQuit(barrier_quit_closure, Error::UPDATE_IN_PROGRESS));
+  runloop_.Run();
 
   EXPECT_EQ(2u, items1.size());
   EXPECT_EQ(ComponentState::kChecking, items1[0].state);
@@ -3755,35 +3605,27 @@ TEST_F(UpdateClientTest, EmptyIdList) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::INVALID_ARGUMENT, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
         const base::flat_map<std::string, std::string>& additional_attributes,
         UpdateCheckCallback update_check_callback) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
     }
   };
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -3805,10 +3647,10 @@ TEST_F(UpdateClientTest, EmptyIdList) {
           mock_update_checker_factory.GetFactory());
 
   const std::vector<std::string> empty_id_list;
-  update_client->Update(
-      empty_id_list, base::BindOnce(&DataCallbackMock::Callback), {}, false,
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+  update_client->Update(empty_id_list,
+                        base::BindOnce(&DataCallbackMock::Callback), {}, false,
+                        ExpectErrorThenQuit(runloop_, Error::INVALID_ARGUMENT));
+  runloop_.Run();
 }
 
 TEST_F(UpdateClientTest, DiskFull) {
@@ -3830,17 +3672,9 @@ TEST_F(UpdateClientTest, DiskFull) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -3856,7 +3690,7 @@ TEST_F(UpdateClientTest, DiskFull) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -3891,7 +3725,6 @@ TEST_F(UpdateClientTest, DiskFull) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
 
@@ -3907,13 +3740,13 @@ TEST_F(UpdateClientTest, DiskFull) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -3978,8 +3811,8 @@ TEST_F(UpdateClientTest, DiskFull) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(4u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -4015,10 +3848,12 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
       crx.crx_format_requirement = crx_file::VerifierFormat::CRX3;
       if (num_calls_ == 1) {
         crx.version = base::Version("0.8");
+        crx.fingerprint = "20";
       } else if (num_calls_ == 2) {
         crx.version = base::Version("1.0");
+        crx.fingerprint = "21";
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       std::move(callback).Run({crx});
@@ -4033,14 +3868,6 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
         base::MakeRefCounted<VersionedTestInstaller>();
   };
   auto data_callback_mock = MakeMockCallback<DataCallbackMock>();
-
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
 
   class MockUpdateChecker : public UpdateChecker {
    public:
@@ -4064,7 +3891,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
               <urls>
                 <url codebase='http://localhost/download/'/>
               </urls>
-              <manifest version='1.0' prodversionmin='11.0.1.0'>
+              <manifest version='1.0'>
                 <packages>
                   <package name='ihfokbkgjpifnbbojhneepfflplebdkc_1.crx'
                            hash_sha256='813c59747e139a608b3b5fc49633affc6db57437
@@ -4093,7 +3920,6 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       } else if (num_calls_ == 2) {
@@ -4107,7 +3933,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
                 <url codebase='http://localhost/download/'/>
                 <url codebasediff='http://localhost/download/'/>
               </urls>
-              <manifest version='2.0' prodversionmin='11.0.1.0'>
+              <manifest version='2.0'>
                 <packages>
                   <package name='ihfokbkgjpifnbbojhneepfflplebdkc_2.crx'
                            namediff='ihfokbkgjpifnbbojhneepfflplebdkc_1to2.crx'
@@ -4146,11 +3972,10 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
         result.crx_urls.emplace_back("http://localhost/download/");
         result.crx_diffurls.emplace_back("http://localhost/download/");
         result.manifest.version = "2.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -4165,7 +3990,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -4188,7 +4013,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -4280,7 +4105,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
         .Times(1);
     EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
                   return item.id == "ihfokbkgjpifnbbojhneepfflplebdkc" &&
-                         item.state == ComponentState::kDownloadingDiff;
+                         item.state == ComponentState::kDownloading;
                 })))
         .Times(AtLeast(1));
     EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
@@ -4308,9 +4133,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
 
     EXPECT_EQ(10u, items.size());
@@ -4335,7 +4158,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
     EXPECT_EQ(ComponentState::kUpdated, items[9].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[9].id.c_str());
 
-    std::vector<int> samples = {-1, -1, -1, -1, -1, -1, -1, 50, 100, 100};
+    std::vector samples = {-1, -1, -1, -1, -1, -1, -1, 50, 100, 100};
     EXPECT_EQ(items.size(), samples.size());
     for (size_t i = 0; i != items.size(); ++i) {
       EXPECT_EQ(items[i].install_progress, samples[i]);
@@ -4353,9 +4176,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
 
     EXPECT_EQ(5u, items.size());
@@ -4363,7 +4184,7 @@ TEST_F(UpdateClientTest, DiskFullDiff) {
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[0].id.c_str());
     EXPECT_EQ(ComponentState::kCanUpdate, items[1].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[1].id.c_str());
-    EXPECT_EQ(ComponentState::kDownloadingDiff, items[2].state);
+    EXPECT_EQ(ComponentState::kDownloading, items[2].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[2].id.c_str());
     EXPECT_EQ(ComponentState::kDownloading, items[3].state);
     EXPECT_STREQ("ihfokbkgjpifnbbojhneepfflplebdkc", items[3].id.c_str());
@@ -4400,23 +4221,16 @@ INSTANTIATE_TEST_SUITE_P(SendPingTestCases,
                               base::Version("1.2.3.4")},
                          }));
 
-TEST_P(SendPingTest, TestCases) {
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      std::move(quit_closure).Run();
-    }
-  };
-
+TEST_P(SendPingTest, SendPingTestCases) {
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
         const base::flat_map<std::string, std::string>& additional_attributes,
         UpdateCheckCallback update_check_callback) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
     }
   };
   MockUpdateCheckerFactory<MockUpdateChecker> mock_update_checker_factory;
@@ -4429,7 +4243,7 @@ TEST_P(SendPingTest, TestCases) {
       return nullptr;
     }
 
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -4475,15 +4289,13 @@ TEST_P(SendPingTest, TestCases) {
   crx.app_id = "jebgalgnebhfojomionfpkfelancnnkf";
   crx.name = "test_jebg";
   crx.version = GetParam().previous_version.value_or(base::Version("1.2.3.4"));
-  update_client->SendPing(
-      crx,
-      {.event_type = GetParam().event_type,
-       .result = GetParam().result,
-       .error_code = GetParam().error_code.value_or(0),
-       .extra_code1 = GetParam().extra_code1},
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-
-  RunThreads();
+  update_client->SendPing(crx,
+                          {.event_type = GetParam().event_type,
+                           .result = GetParam().result,
+                           .error_code = GetParam().error_code.value_or(0),
+                           .extra_code1 = GetParam().extra_code1},
+                          ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 }
 
 TEST_F(UpdateClientTest, RetryAfter) {
@@ -4504,41 +4316,9 @@ TEST_F(UpdateClientTest, RetryAfter) {
     }
   };
 
-  class CompletionCallbackMock
-      : public base::RefCountedThreadSafe<CompletionCallbackMock> {
-   public:
-    void Callback(base::OnceClosure quit_closure, Error error) {
-      ++num_calls_;
-      EXPECT_LE(num_calls_, 4);
-      if (num_calls_ == 1) {
-        EXPECT_EQ(Error::NONE, error);
-      } else if (num_calls_ == 2) {
-        // This request is throttled since the update engine received a
-        // positive |retry_after_sec| value in the update check response.
-        EXPECT_EQ(Error::RETRY_LATER, error);
-      } else if (num_calls_ == 3) {
-        // This request is a foreground Install, which is never throttled.
-        // The update engine received a |retry_after_sec| value of 0, which
-        // resets the throttling.
-        EXPECT_EQ(Error::NONE, error);
-      } else if (num_calls_ == 4) {
-        // This request succeeds since there is no throttling in effect.
-        EXPECT_EQ(Error::NONE, error);
-      }
-      std::move(quit_closure).Run();
-    }
-
-   private:
-    friend class base::RefCountedThreadSafe<CompletionCallbackMock>;
-    ~CompletionCallbackMock() = default;
-
-    int num_calls_ = 0;
-  };
-  auto completion_callback_mock = MakeMockCallback<CompletionCallbackMock>();
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int num_calls = 0) : num_calls_(num_calls) {}
+    explicit MockUpdateChecker(int num_calls) : num_calls_(num_calls) {}
 
    private:
     void CheckForUpdates(
@@ -4578,13 +4358,13 @@ TEST_F(UpdateClientTest, RetryAfter) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -4605,38 +4385,39 @@ TEST_F(UpdateClientTest, RetryAfter) {
           mock_update_checker_factory.GetFactory());
 
   MockObserver observer;
-
-  InSequence seq;
-  EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
-                return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
-                       item.state == ComponentState::kChecking;
-              })))
-      .Times(1);
-  EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
-                return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
-                       item.state == ComponentState::kUpToDate;
-              })))
-      .Times(1);
-  EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
-                return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
-                       item.state == ComponentState::kChecking;
-              })))
-      .Times(1);
-  EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
-                return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
-                       item.state == ComponentState::kUpToDate;
-              })))
-      .Times(1);
-  EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
-                return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
-                       item.state == ComponentState::kChecking;
-              })))
-      .Times(1);
-  EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
-                return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
-                       item.state == ComponentState::kUpToDate;
-              })))
-      .Times(1);
+  {
+    InSequence seq;
+    EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
+                  return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
+                         item.state == ComponentState::kChecking;
+                })))
+        .Times(1);
+    EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
+                  return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
+                         item.state == ComponentState::kUpToDate;
+                })))
+        .Times(1);
+    EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
+                  return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
+                         item.state == ComponentState::kChecking;
+                })))
+        .Times(1);
+    EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
+                  return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
+                         item.state == ComponentState::kUpToDate;
+                })))
+        .Times(1);
+    EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
+                  return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
+                         item.state == ComponentState::kChecking;
+                })))
+        .Times(1);
+    EXPECT_CALL(observer, OnEvent(Truly([](const CrxUpdateItem& item) {
+                  return item.id == "jebgalgnebhfojomionfpkfelancnnkf" &&
+                         item.state == ComponentState::kUpToDate;
+                })))
+        .Times(1);
+  }
 
   update_client->AddObserver(&observer);
 
@@ -4645,39 +4426,33 @@ TEST_F(UpdateClientTest, RetryAfter) {
     // The engine handles this Update call but responds with a valid
     // |retry_after_sec|, which causes subsequent calls to fail.
     base::RunLoop runloop;
-    update_client->Update(
-        ids, base::BindOnce(&DataCallbackMock::Callback), {}, false,
-        base::BindOnce(completion_callback_mock, runloop.QuitClosure()));
+    update_client->Update(ids, base::BindOnce(&DataCallbackMock::Callback), {},
+                          false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
   }
-
   {
     // This call will result in a completion callback invoked with
     // Error::ERROR_UPDATE_RETRY_LATER.
     base::RunLoop runloop;
-    update_client->Update(
-        ids, base::BindOnce(&DataCallbackMock::Callback), {}, false,
-        base::BindOnce(completion_callback_mock, runloop.QuitClosure()));
+    update_client->Update(ids, base::BindOnce(&DataCallbackMock::Callback), {},
+                          false,
+                          ExpectErrorThenQuit(runloop, Error::RETRY_LATER));
     runloop.Run();
   }
-
   {
     // The Install call is handled, and the throttling is reset due to
     // the value of |retry_after_sec| in the completion callback.
     base::RunLoop runloop;
-    update_client->Install(
-        std::string("jebgalgnebhfojomionfpkfelancnnkf"),
-        base::BindOnce(&DataCallbackMock::Callback), {},
-        base::BindOnce(completion_callback_mock, runloop.QuitClosure()));
+    update_client->Install(std::string("jebgalgnebhfojomionfpkfelancnnkf"),
+                           base::BindOnce(&DataCallbackMock::Callback), {},
+                           ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
   }
-
   {
     // This call succeeds.
     base::RunLoop runloop;
-    update_client->Update(
-        ids, base::BindOnce(&DataCallbackMock::Callback), {}, false,
-        base::BindOnce(completion_callback_mock, runloop.QuitClosure()));
+    update_client->Update(ids, base::BindOnce(&DataCallbackMock::Callback), {},
+                          false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
   }
 
@@ -4718,17 +4493,9 @@ TEST_F(UpdateClientTest, TwoCrxUpdateOneUpdateDisabled) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -4744,7 +4511,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateOneUpdateDisabled) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -4759,7 +4526,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateOneUpdateDisabled) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='ihfokbkgjpifnbbojhneepfflplebdkc_1.crx'
                          hash_sha256='8f5aa190311237cae00675af87ff457f278cd1a05
@@ -4792,7 +4559,6 @@ TEST_F(UpdateClientTest, TwoCrxUpdateOneUpdateDisabled) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       }
@@ -4813,7 +4579,6 @@ TEST_F(UpdateClientTest, TwoCrxUpdateOneUpdateDisabled) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
       }
@@ -4827,7 +4592,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateOneUpdateDisabled) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -4850,7 +4615,7 @@ TEST_F(UpdateClientTest, TwoCrxUpdateOneUpdateDisabled) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -4956,8 +4721,8 @@ TEST_F(UpdateClientTest, TwoCrxUpdateOneUpdateDisabled) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(9u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -5003,17 +4768,9 @@ TEST_F(UpdateClientTest, OneCrxUpdateDownloadTimeout) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -5029,7 +4786,7 @@ TEST_F(UpdateClientTest, OneCrxUpdateDownloadTimeout) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -5060,7 +4817,6 @@ TEST_F(UpdateClientTest, OneCrxUpdateDownloadTimeout) {
         result.status = "ok";
         result.crx_urls.emplace_back("http://localhost/download/");
         result.manifest.version = "1.0";
-        result.manifest.browser_min_version = "11.0.1.0";
         result.manifest.packages.push_back(package);
         results.list.push_back(result);
 
@@ -5076,7 +4832,7 @@ TEST_F(UpdateClientTest, OneCrxUpdateDownloadTimeout) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -5191,8 +4947,8 @@ TEST_F(UpdateClientTest, OneCrxUpdateDownloadTimeout) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(5u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -5227,17 +4983,9 @@ TEST_F(UpdateClientTest, OneCrxUpdateCheckFails) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::UPDATE_CHECK_ERROR, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -5258,13 +5006,13 @@ TEST_F(UpdateClientTest, OneCrxUpdateCheckFails) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -5316,8 +5064,8 @@ TEST_F(UpdateClientTest, OneCrxUpdateCheckFails) {
   update_client->Update(
       ids, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::UPDATE_CHECK_ERROR));
+  runloop_.Run();
 
   EXPECT_EQ(2u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -5382,17 +5130,9 @@ TEST_F(UpdateClientTest, OneCrxErrorUnknownApp) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -5429,13 +5169,13 @@ TEST_F(UpdateClientTest, OneCrxErrorUnknownApp) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -5534,15 +5274,13 @@ TEST_F(UpdateClientTest, OneCrxErrorUnknownApp) {
   }
 
   update_client->AddObserver(&observer);
-
   const std::vector<std::string> ids = {
       "jebgalgnebhfojomionfpkfelancnnkf", "abagagagagagagagagagagagagagagag",
       "ihfokbkgjpifnbbojhneepfflplebdkc", "gjpmebpgbhcamgdgjcmnjfhggjpgcimm"};
-  update_client->Update(
-      ids, base::BindOnce(&DataCallbackMock::Callback), {}, true,
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
+  update_client->Update(ids, base::BindOnce(&DataCallbackMock::Callback), {},
+                        true, ExpectErrorThenQuit(runloop_, Error::NONE));
 
-  RunThreads();
+  runloop_.Run();
 
   update_client->RemoveObserver(&observer);
 }
@@ -5551,7 +5289,7 @@ TEST_F(UpdateClientTest, OneCrxErrorUnknownApp) {
 TEST_F(UpdateClientTest, ActionRun_Install) {
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -5567,7 +5305,7 @@ TEST_F(UpdateClientTest, ActionRun_Install) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='runaction_test_win.crx3'
                          hash_sha256='89290a0d2ff21ca5b45e109c6cc859ab5fe294e19c102d54acd321429c372cea'
@@ -5599,7 +5337,6 @@ TEST_F(UpdateClientTest, ActionRun_Install) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.packages.push_back(package);
       result.action_run = "ChromeRecovery.crx3";
 
@@ -5615,7 +5352,7 @@ TEST_F(UpdateClientTest, ActionRun_Install) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -5638,7 +5375,7 @@ TEST_F(UpdateClientTest, ActionRun_Install) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -5726,15 +5463,8 @@ TEST_F(UpdateClientTest, ActionRun_Install) {
             crx.crx_format_requirement = crx_file::VerifierFormat::CRX3;
             std::move(callback).Run({crx});
           }),
-      {},
-      base::BindOnce(
-          [](base::OnceClosure quit_closure, Error error) {
-            EXPECT_EQ(Error::NONE, error);
-            std::move(quit_closure).Run();
-          },
-          quit_closure()));
-
-  RunThreads();
+      {}, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 }
 
 // Tests that a run action is invoked in an update scenario when there was
@@ -5742,7 +5472,7 @@ TEST_F(UpdateClientTest, ActionRun_Install) {
 TEST_F(UpdateClientTest, ActionRun_NoUpdate) {
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -5785,13 +5515,13 @@ TEST_F(UpdateClientTest, ActionRun_NoUpdate) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -5803,13 +5533,17 @@ TEST_F(UpdateClientTest, ActionRun_NoUpdate) {
 
    protected:
     ~MockPingManager() override {
-      EXPECT_EQ(1u, events().size());
+      EXPECT_EQ(2u, events().size());
 
       // "<event eventtype="42" eventresult="1" errorcode="1877345072"/>"
       const base::Value::Dict& event = events()[0];
       EXPECT_EQ(42, event.FindInt("eventtype"));
       EXPECT_EQ(1, event.FindInt("eventresult"));
       EXPECT_EQ(1877345072, event.FindInt("errorcode"));
+
+      // "<event eventtype="3" eventresult="1"/>"
+      EXPECT_EQ(3, events()[1].FindInt("eventtype"));
+      EXPECT_EQ(1, events()[1].FindInt("eventresult"));
     }
   };
 
@@ -5842,10 +5576,10 @@ TEST_F(UpdateClientTest, ActionRun_NoUpdate) {
 
   EXPECT_FALSE(unpack_path.empty());
   EXPECT_TRUE(base::DirectoryExists(unpack_path));
-  int64_t file_size = 0;
-  EXPECT_TRUE(base::GetFileSize(unpack_path.AppendASCII("ChromeRecovery.crx3"),
-                                &file_size));
-  EXPECT_EQ(44582, file_size);
+  std::optional<int64_t> file_size =
+      base::GetFileSize(unpack_path.AppendASCII("ChromeRecovery.crx3"));
+  EXPECT_TRUE(file_size.has_value());
+  EXPECT_EQ(44582, file_size.value());
 
   base::ScopedTempDir unpack_path_owner;
   EXPECT_TRUE(unpack_path_owner.Set(unpack_path));
@@ -5887,15 +5621,9 @@ TEST_F(UpdateClientTest, ActionRun_NoUpdate) {
             std::move(callback).Run({crx});
           },
           unpack_path),
-      {}, false,
-      base::BindOnce(
-          [](base::OnceClosure quit_closure, Error error) {
-            EXPECT_EQ(Error::NONE, error);
-            std::move(quit_closure).Run();
-          },
-          quit_closure()));
+      {}, false, ExpectErrorThenQuit(runloop_, Error::NONE));
 
-  RunThreads();
+  runloop_.Run();
 }
 
 // Tests that custom response attributes are visible to observers.
@@ -5918,17 +5646,9 @@ TEST_F(UpdateClientTest, CustomAttributeNoUpdate) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -5961,13 +5681,13 @@ TEST_F(UpdateClientTest, CustomAttributeNoUpdate) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -6009,14 +5729,10 @@ TEST_F(UpdateClientTest, CustomAttributeNoUpdate) {
 
   Observer observer(update_client);
   update_client->AddObserver(&observer);
-
   const std::vector<std::string> ids = {"jebgalgnebhfojomionfpkfelancnnkf"};
-  update_client->Update(
-      ids, base::BindOnce(&DataCallbackMock::Callback), {}, true,
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-
-  RunThreads();
-
+  update_client->Update(ids, base::BindOnce(&DataCallbackMock::Callback), {},
+                        true, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
   update_client->RemoveObserver(&observer);
 
   EXPECT_EQ(1, observer.calls);
@@ -6028,14 +5744,6 @@ TEST_F(UpdateClientTest, CustomAttributeNoUpdate) {
 // callback to include a specific error, and no other events and pings be
 // generated, since the update engine rejects the UpdateClient::Update call.
 TEST_F(UpdateClientTest, BadCrxDataCallback) {
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::BAD_CRX_DATA_CALLBACK, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockPingManager : public MockPingManagerImpl {
    public:
     explicit MockPingManager(scoped_refptr<Configurator> config)
@@ -6074,8 +5782,8 @@ TEST_F(UpdateClientTest, BadCrxDataCallback) {
             std::move(callback).Run({std::nullopt});
           }),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver), true,
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      ExpectErrorThenQuit(runloop_, Error::BAD_CRX_DATA_CALLBACK));
+  runloop_.Run();
 
   EXPECT_TRUE(items.empty());
   update_client->RemoveObserver(&observer);
@@ -6100,17 +5808,9 @@ TEST_F(UpdateClientTest, CancelInstallBeforeTaskStart) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::UPDATE_CANCELED, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -6133,7 +5833,6 @@ TEST_F(UpdateClientTest, CancelInstallBeforeTaskStart) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.run = "UpdaterSetup.exe";
       result.manifest.arguments = "--arg1 --arg2";
       result.manifest.packages.push_back(package);
@@ -6150,7 +5849,7 @@ TEST_F(UpdateClientTest, CancelInstallBeforeTaskStart) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -6173,7 +5872,7 @@ TEST_F(UpdateClientTest, CancelInstallBeforeTaskStart) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -6219,9 +5918,9 @@ TEST_F(UpdateClientTest, CancelInstallBeforeTaskStart) {
           std::string("jebgalgnebhfojomionfpkfelancnnkf"),
           base::BindOnce(&DataCallbackMock::Callback),
           base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-          base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()))
+          ExpectErrorThenQuit(runloop_, Error::UPDATE_CANCELED))
       .Run();
-  RunThreads();
+  runloop_.Run();
   EXPECT_EQ(0u, items.size());
 }
 
@@ -6244,17 +5943,9 @@ TEST_F(UpdateClientTest, CancelInstallBeforeInstall) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -6277,7 +5968,6 @@ TEST_F(UpdateClientTest, CancelInstallBeforeInstall) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.run = "UpdaterSetup.exe";
       result.manifest.arguments = "--arg1 --arg2";
       result.manifest.packages.push_back(package);
@@ -6294,7 +5984,7 @@ TEST_F(UpdateClientTest, CancelInstallBeforeInstall) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -6317,7 +6007,7 @@ TEST_F(UpdateClientTest, CancelInstallBeforeInstall) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -6397,8 +6087,8 @@ TEST_F(UpdateClientTest, CancelInstallBeforeInstall) {
       std::string("jebgalgnebhfojomionfpkfelancnnkf"),
       base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(5u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -6434,17 +6124,9 @@ TEST_F(UpdateClientTest, CancelInstallBeforeDownload) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -6467,7 +6149,6 @@ TEST_F(UpdateClientTest, CancelInstallBeforeDownload) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.run = "UpdaterSetup.exe";
       result.manifest.arguments = "--arg1 --arg2";
       result.manifest.packages.push_back(package);
@@ -6484,7 +6165,7 @@ TEST_F(UpdateClientTest, CancelInstallBeforeDownload) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -6507,7 +6188,7 @@ TEST_F(UpdateClientTest, CancelInstallBeforeDownload) {
         result.error = 0;
         result.response = path;
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
 
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
@@ -6582,8 +6263,8 @@ TEST_F(UpdateClientTest, CancelInstallBeforeDownload) {
       std::string("jebgalgnebhfojomionfpkfelancnnkf"),
       base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
 
   EXPECT_EQ(3u, items.size());
   EXPECT_EQ(ComponentState::kChecking, items[0].state);
@@ -6616,7 +6297,7 @@ TEST_F(UpdateClientTest, CheckForUpdate_NoUpdate) {
 
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -6648,13 +6329,13 @@ TEST_F(UpdateClientTest, CheckForUpdate_NoUpdate) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -6699,11 +6380,8 @@ TEST_F(UpdateClientTest, CheckForUpdate_NoUpdate) {
   update_client->CheckForUpdate(
       id, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      /*is_foreground=*/true, base::BindLambdaForTesting([&](Error error) {
-        EXPECT_EQ(error, Error::NONE);
-        quit_closure().Run();
-      }));
-  RunThreads();
+      /*is_foreground=*/true, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
   EXPECT_EQ(items.size(), 2u);
   EXPECT_EQ(items[0].state, ComponentState::kChecking);
   EXPECT_STREQ(items[0].id.c_str(), "jebgalgnebhfojomionfpkfelancnnkf");
@@ -6732,7 +6410,7 @@ TEST_F(UpdateClientTest, CheckForUpdate_UpdateAvailable) {
 
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -6746,7 +6424,7 @@ TEST_F(UpdateClientTest, CheckForUpdate_UpdateAvailable) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -6778,7 +6456,6 @@ TEST_F(UpdateClientTest, CheckForUpdate_UpdateAvailable) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.packages.push_back(package);
       results.list.push_back(result);
 
@@ -6793,13 +6470,13 @@ TEST_F(UpdateClientTest, CheckForUpdate_UpdateAvailable) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -6854,11 +6531,8 @@ TEST_F(UpdateClientTest, CheckForUpdate_UpdateAvailable) {
   update_client->CheckForUpdate(
       id, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      /*is_foreground=*/false, base::BindLambdaForTesting([&](Error error) {
-        EXPECT_EQ(error, Error::NONE);
-        quit_closure().Run();
-      }));
-  RunThreads();
+      /*is_foreground=*/false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
   EXPECT_EQ(items.size(), 2u);
   EXPECT_EQ(items[0].state, ComponentState::kChecking);
   EXPECT_STREQ(items[0].id.c_str(), "jebgalgnebhfojomionfpkfelancnnkf");
@@ -6887,7 +6561,7 @@ TEST_F(UpdateClientTest, CheckForUpdate_QueueChecks) {
 
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -6919,13 +6593,13 @@ TEST_F(UpdateClientTest, CheckForUpdate_QueueChecks) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -6977,25 +6651,21 @@ TEST_F(UpdateClientTest, CheckForUpdate_QueueChecks) {
 
   // Do two `CheckForUpdate` calls, expect the calls to be done in sequence.
   base::RepeatingClosure barrier_quit_closure =
-      BarrierClosure(2, quit_closure());
+      BarrierClosure(2, runloop_.QuitClosure());
   update_client->AddObserver(&observer);
   const std::string id = "jebgalgnebhfojomionfpkfelancnnkf";
   update_client->CheckForUpdate(
       id, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      /*is_foreground=*/true, base::BindLambdaForTesting([&](Error error) {
-        EXPECT_EQ(error, Error::NONE);
-        barrier_quit_closure.Run();
-      }));
+      /*is_foreground=*/true,
+      ExpectErrorThenQuit(barrier_quit_closure, Error::NONE));
   update_client->CheckForUpdate(
       id, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      /*is_foreground=*/true, base::BindLambdaForTesting([&](Error error) {
-        EXPECT_EQ(error, Error::NONE);
-        barrier_quit_closure.Run();
-      }));
+      /*is_foreground=*/true,
+      ExpectErrorThenQuit(barrier_quit_closure, Error::NONE));
   EXPECT_TRUE(update_client->IsUpdating(id));
-  RunThreads();
+  runloop_.Run();
   EXPECT_EQ(items.size(), 4u);
   EXPECT_EQ(items[0].state, ComponentState::kChecking);
   EXPECT_STREQ(items[0].id.c_str(), "jebgalgnebhfojomionfpkfelancnnkf");
@@ -7028,7 +6698,7 @@ TEST_F(UpdateClientTest, CheckForUpdate_Stop) {
 
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -7060,13 +6730,13 @@ TEST_F(UpdateClientTest, CheckForUpdate_Stop) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -7110,26 +6780,22 @@ TEST_F(UpdateClientTest, CheckForUpdate_Stop) {
   // Do two `CheckForUpdate` calls, expect the second call to be cancelled,
   // because `Stop` cancels the queued up subsequent call.
   base::RepeatingClosure barrier_quit_closure =
-      BarrierClosure(2, quit_closure());
+      BarrierClosure(2, runloop_.QuitClosure());
   update_client->AddObserver(&observer);
   const std::string id = "jebgalgnebhfojomionfpkfelancnnkf";
   update_client->CheckForUpdate(
       id, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      /*is_foreground=*/true, base::BindLambdaForTesting([&](Error error) {
-        EXPECT_EQ(error, Error::NONE);
-        barrier_quit_closure.Run();
-      }));
+      /*is_foreground=*/true,
+      ExpectErrorThenQuit(barrier_quit_closure, Error::NONE));
   update_client->CheckForUpdate(
       id, base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      /*is_foreground=*/true, base::BindLambdaForTesting([&](Error error) {
-        EXPECT_EQ(error, Error::UPDATE_CANCELED);
-        barrier_quit_closure.Run();
-      }));
+      /*is_foreground=*/true,
+      ExpectErrorThenQuit(barrier_quit_closure, Error::UPDATE_CANCELED));
   update_client->Stop();
   EXPECT_TRUE(update_client->IsUpdating(id));
-  RunThreads();
+  runloop_.Run();
   EXPECT_EQ(items.size(), 2u);
   EXPECT_EQ(items[0].state, ComponentState::kChecking);
   EXPECT_STREQ(items[0].id.c_str(), "jebgalgnebhfojomionfpkfelancnnkf");
@@ -7141,7 +6807,7 @@ TEST_F(UpdateClientTest, CheckForUpdate_Stop) {
 TEST_F(UpdateClientTest, CheckForUpdate_Errors) {
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -7152,13 +6818,13 @@ TEST_F(UpdateClientTest, CheckForUpdate_Errors) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -7195,21 +6861,20 @@ TEST_F(UpdateClientTest, CheckForUpdate_Errors) {
 
   // Tests some error cases when arguments are incorrect.
   base::RepeatingClosure barrier_quit_closure =
-      BarrierClosure(2, quit_closure());
+      BarrierClosure(2, runloop_.QuitClosure());
   update_client->AddObserver(&observer);
   const std::string id = "jebgalgnebhfojomionfpkfelancnnkf";
   update_client->CheckForUpdate(
-      "",
+      id,
       base::BindOnce(
-          [](const std::vector<std::string>&, /*ids*/ base::OnceCallback<void(
+          [](const std::vector<std::string>& /*ids*/,
+             base::OnceCallback<void(
                  const std::vector<std::optional<CrxComponent>>&)> callback) {
             std::move(callback).Run({});
           }),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      /*is_foreground=*/true, base::BindLambdaForTesting([&](Error error) {
-        EXPECT_EQ(error, Error::BAD_CRX_DATA_CALLBACK);
-        barrier_quit_closure.Run();
-      }));
+      /*is_foreground=*/true,
+      ExpectErrorThenQuit(barrier_quit_closure, Error::BAD_CRX_DATA_CALLBACK));
   update_client->CheckForUpdate(
       id,
       base::BindLambdaForTesting(
@@ -7222,12 +6887,10 @@ TEST_F(UpdateClientTest, CheckForUpdate_Errors) {
             std::move(callback).Run({std::nullopt});
           }),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      /*is_foreground=*/true, base::BindLambdaForTesting([&](Error error) {
-        EXPECT_EQ(error, Error::NONE);
-        barrier_quit_closure.Run();
-      }));
+      /*is_foreground=*/true,
+      ExpectErrorThenQuit(barrier_quit_closure, Error::NONE));
   EXPECT_TRUE(update_client->IsUpdating(id));
-  RunThreads();
+  runloop_.Run();
   EXPECT_EQ(items.size(), 1u);
   EXPECT_EQ(items[0].state, ComponentState::kUpdateError);
   EXPECT_STREQ(items[0].id.c_str(), "jebgalgnebhfojomionfpkfelancnnkf");
@@ -7257,17 +6920,9 @@ TEST_F(UpdateClientTest, UpdateCheck_UpdateDisabled) {
     }
   };
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -7283,7 +6938,7 @@ TEST_F(UpdateClientTest, UpdateCheck_UpdateDisabled) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                          hash_sha256='7ab32f071cd9b5ef8e0d7913be161f532d98b3e9f
@@ -7315,7 +6970,6 @@ TEST_F(UpdateClientTest, UpdateCheck_UpdateDisabled) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.packages.push_back(package);
       results.list.push_back(result);
 
@@ -7328,13 +6982,13 @@ TEST_F(UpdateClientTest, UpdateCheck_UpdateDisabled) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
 
     base::OnceClosure DoStartDownload(const GURL& url) override {
-      NOTREACHED_IN_MIGRATION();
+      ADD_FAILURE();
       return base::DoNothing();
     }
   };
@@ -7393,8 +7047,8 @@ TEST_F(UpdateClientTest, UpdateCheck_UpdateDisabled) {
       "jebgalgnebhfojomionfpkfelancnnkf",
       base::BindOnce(&DataCallbackMock::Callback),
       base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-      false, base::BindOnce(&CompletionCallbackMock::Callback, quit_closure()));
-  RunThreads();
+      false, ExpectErrorThenQuit(runloop_, Error::NONE));
+  runloop_.Run();
   EXPECT_EQ(items.size(), 3u);
   EXPECT_EQ(items[0].state, ComponentState::kChecking);
   EXPECT_STREQ(items[0].id.c_str(), "jebgalgnebhfojomionfpkfelancnnkf");
@@ -7431,7 +7085,7 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
       } else if (num_calls_ == 2) {
         installer->set_installer_progress_samples({-1, 50, 100});
       } else {
-        NOTREACHED_IN_MIGRATION();
+        ADD_FAILURE();
       }
       crx.installer = installer;
 
@@ -7446,17 +7100,9 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
   };
   auto data_callback_mock = MakeMockCallback<DataCallbackMock>();
 
-  class CompletionCallbackMock {
-   public:
-    static void Callback(base::OnceClosure quit_closure, Error error) {
-      EXPECT_EQ(Error::NONE, error);
-      std::move(quit_closure).Run();
-    }
-  };
-
   class MockUpdateChecker : public UpdateChecker {
    public:
-    explicit MockUpdateChecker(int) {}
+    MockUpdateChecker() = default;
 
     void CheckForUpdates(
         scoped_refptr<UpdateContext> context,
@@ -7471,7 +7117,7 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
             <urls>
               <url codebase='http://localhost/download/'/>
             </urls>
-            <manifest version='1.0' prodversionmin='11.0.1.0'>
+            <manifest version='1.0'>
               <packages>
                 <package name='jebgalgnebhfojomionfpkfelancnnkf.crx'
                           hash_sha256='813c59747e139a608b3b5fc49633affc6db57437
@@ -7503,7 +7149,6 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
       result.status = "ok";
       result.crx_urls.emplace_back("http://localhost/download/");
       result.manifest.version = "1.0";
-      result.manifest.browser_min_version = "11.0.1.0";
       result.manifest.packages.push_back(package);
 
       ProtocolParser::Results results;
@@ -7518,7 +7163,7 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
 
   class MockCrxDownloader : public CrxDownloader {
    public:
-    MockCrxDownloader() : CrxDownloader(nullptr) {}
+    MockCrxDownloader() = default;
 
    private:
     ~MockCrxDownloader() override = default;
@@ -7656,9 +7301,7 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
 
     EXPECT_EQ(8u, items.size());
@@ -7679,7 +7322,7 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
     EXPECT_EQ(ComponentState::kUpdateError, items[7].state);
     EXPECT_STREQ("jebgalgnebhfojomionfpkfelancnnkf", items[7].id.c_str());
 
-    std::vector<int> samples = {-1, -1, -1, -1, -1, -1, 25, 25};
+    std::vector samples = {-1, -1, -1, -1, -1, -1, 25, 25};
     EXPECT_EQ(items.size(), samples.size());
     for (size_t i = 0; i != items.size(); ++i) {
       EXPECT_EQ(items[i].install_progress, samples[i]);
@@ -7697,9 +7340,7 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
     update_client->Update(
         ids, data_callback_mock,
         base::BindRepeating(&MockCrxStateChangeReceiver::Receive, receiver),
-        false,
-        base::BindOnce(&CompletionCallbackMock::Callback,
-                       runloop.QuitClosure()));
+        false, ExpectErrorThenQuit(runloop, Error::NONE));
     runloop.Run();
 
     EXPECT_EQ(7u, items.size());
@@ -7718,7 +7359,7 @@ TEST_F(UpdateClientTest, OneCrxCachedUpdate) {
     EXPECT_EQ(ComponentState::kUpdated, items[6].state);
     EXPECT_STREQ("jebgalgnebhfojomionfpkfelancnnkf", items[6].id.c_str());
 
-    std::vector<int> samples = {-1, -1, -1, -1, 50, 100, 100};
+    std::vector samples = {-1, -1, -1, -1, 50, 100, 100};
     EXPECT_EQ(items.size(), samples.size());
     for (size_t i = 0; i != items.size(); ++i) {
       EXPECT_EQ(items[i].install_progress, samples[i]);

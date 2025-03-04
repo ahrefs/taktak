@@ -5,15 +5,14 @@
 #include "chrome/browser/ash/app_mode/startup_app_launcher.h"
 
 #include <memory>
-#include <utility>
-#include <vector>
+#include <optional>
+#include <string>
 
+#include "base/check.h"
+#include "base/check_op.h"
 #include "base/functional/bind.h"
-#include "base/functional/callback_forward.h"
-#include "base/location.h"
 #include "base/notreached.h"
 #include "base/syslog_logging.h"
-#include "base/task/single_thread_task_runner.h"
 #include "base/types/cxx23_to_underlying.h"
 #include "chrome/browser/ash/app_mode/kiosk_app_launch_error.h"
 #include "chrome/browser/ash/app_mode/kiosk_app_launcher.h"
@@ -22,6 +21,7 @@
 #include "chrome/browser/chromeos/app_mode/chrome_kiosk_app_launcher.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/crx_file/id_util.h"
+#include "net/base/backoff_entry.h"
 
 using chromeos::ChromeKioskAppInstaller;
 using chromeos::ChromeKioskAppLauncher;
@@ -175,6 +175,14 @@ void StartupAppLauncher::OnInstallComplete(
     case ChromeKioskAppInstaller::InstallResult::kSuccess:
       OnInstallSuccess();
       return;
+    case ChromeKioskAppInstaller::InstallResult::kPrimaryAppUpdateFailed:
+      SYSLOG(WARNING) << "Primary app update failed, proceeding anyways";
+      OnInstallSuccess();
+      return;
+    case ChromeKioskAppInstaller::InstallResult::kSecondaryAppUpdateFailed:
+      SYSLOG(WARNING) << "Secondary app update failed, proceeding anyways";
+      OnInstallSuccess();
+      return;
     case ChromeKioskAppInstaller::InstallResult::kPrimaryAppInstallFailed:
       OnLaunchFailure(KioskAppLaunchError::Error::kUnableToInstall);
       return;
@@ -202,8 +210,8 @@ void StartupAppLauncher::OnInstallSuccess() {
 
 void StartupAppLauncher::LaunchApp() {
   if (state_ != LaunchState::kReadyToLaunch) {
-    NOTREACHED_IN_MIGRATION();
     SYSLOG(ERROR) << "LaunchApp() called but launcher is not initialized.";
+    NOTREACHED();
   }
 
   launcher_ = std::make_unique<ChromeKioskAppLauncher>(

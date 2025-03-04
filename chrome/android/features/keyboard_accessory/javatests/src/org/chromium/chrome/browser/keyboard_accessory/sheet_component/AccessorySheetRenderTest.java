@@ -35,7 +35,6 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import org.chromium.base.Callback;
-import org.chromium.base.FeatureList;
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.test.BaseActivityTestRule;
 import org.chromium.base.test.params.ParameterAnnotations;
@@ -44,12 +43,11 @@ import org.chromium.base.test.params.ParameterizedRunner;
 import org.chromium.base.test.util.ApplicationTestUtils;
 import org.chromium.base.test.util.CommandLineFlags;
 import org.chromium.base.test.util.Feature;
-import org.chromium.base.test.util.Features.DisableFeatures;
 import org.chromium.chrome.browser.autofill.PersonalDataManager;
 import org.chromium.chrome.browser.autofill.PersonalDataManagerFactory;
 import org.chromium.chrome.browser.autofill.helpers.FaviconHelper;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
+import org.chromium.chrome.browser.keyboard_accessory.AccessorySuggestionType;
 import org.chromium.chrome.browser.keyboard_accessory.AccessoryTabType;
 import org.chromium.chrome.browser.keyboard_accessory.R;
 import org.chromium.chrome.browser.keyboard_accessory.data.KeyboardAccessoryData;
@@ -75,16 +73,13 @@ import org.chromium.ui.test.util.NightModeTestUtils;
 import org.chromium.ui.test.util.ViewUtils;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * These tests render screenshots of various accessory sheets and compare them to a gold standard.
  */
 @RunWith(ParameterizedRunner.class)
 @ParameterAnnotations.UseRunnerDelegate(ChromeJUnit4RunnerDelegate.class)
-@DisableFeatures(ChromeFeatureList.AUTOFILL_ENABLE_NEW_CARD_ART_AND_NETWORK_IMAGES)
 @CommandLineFlags.Add({ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE})
 public class AccessorySheetRenderTest {
     @ParameterAnnotations.ClassParameter
@@ -115,10 +110,6 @@ public class AccessorySheetRenderTest {
     @Mock private PersonalDataManager mPersonalDataManager;
 
     public AccessorySheetRenderTest(boolean nightModeEnabled, boolean useRtlLayout) {
-        Map<String, Boolean> featureMap = new HashMap<>();
-        featureMap.put(ChromeFeatureList.AUTOFILL_ENABLE_NEW_CARD_ART_AND_NETWORK_IMAGES, false);
-        FeatureList.setTestFeatures(featureMap);
-
         setRtlForTesting(useRtlLayout);
         NightModeTestUtils.setUpNightModeForBlankUiTestActivity(nightModeEnabled);
         mRenderTestRule.setNightModeEnabled(nightModeEnabled);
@@ -194,12 +185,22 @@ public class AccessorySheetRenderTest {
                 .add(new KeyboardAccessoryData.UserInfo("http://psl.origin.com/", true));
         sheet.getUserInfoList()
                 .get(0)
-                .addField(new UserInfoField("No username", "No username", "", false, null));
+                .addField(
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.CREDENTIAL_USERNAME)
+                                .setDisplayText("No username")
+                                .setA11yDescription("No username")
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField(
-                        new UserInfoField(
-                                "Password", "Password for No username", "", true, cb -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.CREDENTIAL_PASSWORD)
+                                .setDisplayText("Password")
+                                .setA11yDescription("Password for No username")
+                                .setIsObfuscated(true)
+                                .setCallback(cb -> {})
+                                .build());
         sheet.getFooterCommands()
                 .add(new KeyboardAccessoryData.FooterCommand("Suggest strong password", cb -> {}));
         sheet.getFooterCommands()
@@ -229,12 +230,12 @@ public class AccessorySheetRenderTest {
                 .add(
                         new KeyboardAccessoryData.PlusAddressInfo(
                                 /* origin= */ "google.com",
-                                new UserInfoField(
-                                        "example@gmail.com",
-                                        "example@gmail.com",
-                                        "",
-                                        false,
-                                        unused -> {})));
+                                new UserInfoField.Builder()
+                                        .setSuggestionType(AccessorySuggestionType.PLUS_ADDRESS)
+                                        .setDisplayText("example@gmail.com")
+                                        .setA11yDescription("example@gmail.com")
+                                        .setCallback(unused -> {})
+                                        .build()));
         sheet.getFooterCommands()
                 .add(new KeyboardAccessoryData.FooterCommand("Suggest strong password", cb -> {}));
         sheet.getFooterCommands()
@@ -266,27 +267,66 @@ public class AccessorySheetRenderTest {
         sheet.getUserInfoList()
                 .get(0)
                 .addField(
-                        new UserInfoField(
-                                "**** 9219", "Card for Todd Tester", "1", false, result -> {}));
-        sheet.getUserInfoList()
-                .get(0)
-                .addField(new UserInfoField("10", "10", "-1", false, result -> {}));
-        sheet.getUserInfoList()
-                .get(0)
-                .addField(new UserInfoField("2021", "2021", "-1", false, result -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.CREDIT_CARD_NUMBER)
+                                .setDisplayText("**** 9219")
+                                .setA11yDescription("Card for Todd Tester")
+                                .setId("1")
+                                .setCallback(result -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField(
-                        new UserInfoField("Todd Tester", "Todd Tester", "0", false, result -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(
+                                        AccessorySuggestionType.CREDIT_CARD_EXPIRATION_MONTH)
+                                .setDisplayText("10")
+                                .setA11yDescription("10")
+                                .setId("-1")
+                                .setCallback(result -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
-                .addField(new UserInfoField("123", "123", "-1", false, result -> {}));
+                .addField(
+                        new UserInfoField.Builder()
+                                .setSuggestionType(
+                                        AccessorySuggestionType.CREDIT_CARD_EXPIRATION_YEAR)
+                                .setDisplayText("2021")
+                                .setA11yDescription("2021")
+                                .setId("-1")
+                                .setCallback(result -> {})
+                                .build());
+        sheet.getUserInfoList()
+                .get(0)
+                .addField(
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.CREDIT_CARD_NAME_FULL)
+                                .setDisplayText("Todd Tester")
+                                .setA11yDescription("Todd Tester")
+                                .setId("0")
+                                .setCallback(result -> {})
+                                .build());
+        sheet.getUserInfoList()
+                .get(0)
+                .addField(
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.CREDIT_CARD_CVC)
+                                .setDisplayText("123")
+                                .setA11yDescription("123")
+                                .setId("-1")
+                                .setCallback(result -> {})
+                                .build());
         sheet.getPromoCodeInfoList().add(new KeyboardAccessoryData.PromoCodeInfo());
         sheet.getPromoCodeInfoList()
                 .get(0)
                 .setPromoCode(
-                        new UserInfoField(
-                                "50$OFF", "Promo Code for Todd Tester", "1", false, result -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.PROMO_CODE)
+                                .setDisplayText("50$OFF")
+                                .setA11yDescription("Promo Code for Todd Tester")
+                                .setId("1")
+                                .setCallback(result -> {})
+                                .build());
         sheet.getPromoCodeInfoList()
                 .get(0)
                 .setDetailsText("Get $50 off when you use this code at checkout.");
@@ -319,12 +359,12 @@ public class AccessorySheetRenderTest {
         sheet.getIbanInfoList()
                 .get(0)
                 .setValue(
-                        new UserInfoField(
-                                /* displayText= */ "CH56 •••• •••• •••• •800 9",
-                                /* a11yDescription= */ "",
-                                /* id= */ "123456",
-                                /* isObfuscated= */ false,
-                                result -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.CREDIT_CARD_NUMBER)
+                                .setDisplayText("CH56 •••• •••• •••• •800 9")
+                                .setId("123456")
+                                .setCallback(result -> {})
+                                .build());
         sheet.getFooterCommands()
                 .add(new KeyboardAccessoryData.FooterCommand("Manage payment methods", cb -> {}));
 
@@ -353,48 +393,89 @@ public class AccessorySheetRenderTest {
         sheet.getUserInfoList().add(new KeyboardAccessoryData.UserInfo("", true));
         sheet.getUserInfoList()
                 .get(0)
-                .addField(new UserInfoField("Todd Tester", "Todd Tester", "", false, item -> {}));
+                .addField(
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.NAME_FULL)
+                                .setDisplayText("Todd Tester")
+                                .setA11yDescription("Todd Tester")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField( // Unused company name field.
-                        new UserInfoField("", "", "", false, item -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.COMPANY_NAME)
+                                .setDisplayText("")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField(
-                        new UserInfoField(
-                                "112 Second Str", "112 Second Str", "", false, item -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.ADDRESS_LINE2)
+                                .setDisplayText("112 Second Str")
+                                .setA11yDescription("112 Second Str")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField( // Unused address line 2 field.
-                        new UserInfoField("", "", "", false, item -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.ADDRESS_LINE2)
+                                .setDisplayText("")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField( // Unused ZIP code field.
-                        new UserInfoField("", "", "", false, item -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.ZIP)
+                                .setDisplayText("")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
-                .addField(new UserInfoField("Budatest", "Budatest", "", false, item -> {}));
+                .addField(
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.CITY)
+                                .setDisplayText("Budatest")
+                                .setA11yDescription("Budatest")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField( // Unused state field.
-                        new UserInfoField("", "", "", false, item -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.STATE)
+                                .setDisplayText("")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField( // Unused country field.
-                        new UserInfoField("", "", "", false, item -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.COUNTRY)
+                                .setDisplayText("")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField(
-                        new UserInfoField("+088343188321", "+088343188321", "", false, item -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.PHONE_NUMBER)
+                                .setDisplayText("+088343188321")
+                                .setA11yDescription("+088343188321")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getUserInfoList()
                 .get(0)
                 .addField(
-                        new UserInfoField(
-                                "todd.tester@gmail.com",
-                                "todd.tester@gmail.com",
-                                "",
-                                false,
-                                item -> {}));
+                        new UserInfoField.Builder()
+                                .setSuggestionType(AccessorySuggestionType.EMAIL_ADDRESS)
+                                .setDisplayText("todd.tester@gmail.com")
+                                .setA11yDescription("todd.tester@gmail.com")
+                                .setCallback(item -> {})
+                                .build());
         sheet.getFooterCommands()
                 .add(new KeyboardAccessoryData.FooterCommand("Manage addresses", cb -> {}));
 
@@ -422,12 +503,12 @@ public class AccessorySheetRenderTest {
                 .add(
                         new KeyboardAccessoryData.PlusAddressInfo(
                                 /* origin= */ "google.com",
-                                new UserInfoField(
-                                        "example@gmail.com",
-                                        "example@gmail.com",
-                                        "",
-                                        false,
-                                        unused -> {})));
+                                new UserInfoField.Builder()
+                                        .setSuggestionType(AccessorySuggestionType.PLUS_ADDRESS)
+                                        .setDisplayText("example@gmail.com")
+                                        .setA11yDescription("example@gmail.com")
+                                        .setCallback(unused -> {})
+                                        .build()));
         sheet.getFooterCommands()
                 .add(new KeyboardAccessoryData.FooterCommand("Manage addresses", cb -> {}));
 

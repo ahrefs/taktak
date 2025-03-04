@@ -8,6 +8,7 @@
 #include "ash/wallpaper/wallpaper_utils/sea_pen_metadata_utils.h"
 #include "ash/webui/common/mojom/sea_pen.mojom.h"
 #include "ash/webui/personalization_app/test/personalization_app_mojom_banned_mocha_test_base.h"
+#include "base/containers/span.h"
 #include "base/functional/callback_helpers.h"
 #include "base/test/gtest_tags.h"
 #include "base/test/test_future.h"
@@ -30,9 +31,9 @@ namespace {
 std::string CreateJpgBytes() {
   SkBitmap bitmap = gfx::test::CreateBitmap(1);
   bitmap.allocN32Pixels(1, 1);
-  std::vector<unsigned char> data;
-  gfx::JPEGCodec::Encode(bitmap, /*quality=*/100, &data);
-  return std::string(data.begin(), data.end());
+  std::optional<std::vector<uint8_t>> data =
+      gfx::JPEGCodec::Encode(bitmap, /*quality=*/100);
+  return std::string(base::as_string_view(data.value()));
 }
 
 }  // namespace
@@ -110,7 +111,8 @@ class PersonalizationAppSeaPenBrowserTest
   base::test::ScopedFeatureList scoped_feature_list_;
 };
 
-IN_PROC_BROWSER_TEST_F(PersonalizationAppSeaPenBrowserTest, SeaPen) {
+// TODO(crbug.com/382330541): Fix this flaky test.
+IN_PROC_BROWSER_TEST_F(PersonalizationAppSeaPenBrowserTest, DISABLED_SeaPen) {
   RunTestWithoutTestLoader(
       "chromeos/personalization_app/personalization_app_test.js",
       "runMochaSuite('sea pen')");

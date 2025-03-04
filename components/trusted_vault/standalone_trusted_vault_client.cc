@@ -22,9 +22,9 @@
 #include "components/signin/public/identity_manager/accounts_in_cookie_jar_info.h"
 #include "components/trusted_vault/command_line_switches.h"
 #include "components/trusted_vault/proto/local_trusted_vault.pb.h"
-#include "components/trusted_vault/recovery_key_store_connection_impl.h"
-#include "components/trusted_vault/recovery_key_store_controller.h"
 #include "components/trusted_vault/standalone_trusted_vault_backend.h"
+#include "components/trusted_vault/standalone_trusted_vault_storage.h"
+#include "components/trusted_vault/standalone_trusted_vault_storage_impl.h"
 #include "components/trusted_vault/trusted_vault_access_token_fetcher_impl.h"
 #include "components/trusted_vault/trusted_vault_connection_impl.h"
 #include "components/trusted_vault/trusted_vault_server_constants.h"
@@ -244,31 +244,13 @@ class BackendDelegate : public StandaloneTrustedVaultBackend::Delegate {
   const base::RepeatingClosure notify_state_changed_cb_;
 };
 
-constexpr base::FilePath::CharType kChromeSyncTrustedVaultFilename[] =
-    FILE_PATH_LITERAL("trusted_vault.pb");
-constexpr base::FilePath::CharType kPasskeysTrustedVaultFilename[] =
-    FILE_PATH_LITERAL("passkeys_trusted_vault.pb");
-
-base::FilePath GetBackendFilePath(const base::FilePath& base_dir,
-                                  SecurityDomainId security_domain) {
-  switch (security_domain) {
-    case SecurityDomainId::kChromeSync:
-      return base_dir.Append(kChromeSyncTrustedVaultFilename);
-    case SecurityDomainId::kPasskeys:
-      return base_dir.Append(kPasskeysTrustedVaultFilename);
-  }
-  NOTREACHED();
-}
-
 }  // namespace
 
 StandaloneTrustedVaultClient::StandaloneTrustedVaultClient(
     SecurityDomainId security_domain,
     const base::FilePath& base_dir,
     signin::IdentityManager* identity_manager,
-    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
-    std::unique_ptr<RecoveryKeyStoreController::RecoveryKeyProvider>
-        recovery_key_provider)
+    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory)
     : backend_task_runner_(
           base::ThreadPool::CreateSequencedTaskRunner(kBackendTaskTraits)),
       access_token_fetcher_frontend_(identity_manager) {
@@ -283,17 +265,10 @@ StandaloneTrustedVaultClient::StandaloneTrustedVaultClient(
             access_token_fetcher_frontend_.GetWeakPtr()));
   }
 
-  std::unique_ptr<RecoveryKeyStoreConnection> recovery_key_store_connection;
-  if (recovery_key_provider) {
-    recovery_key_store_connection =
-        std::make_unique<RecoveryKeyStoreConnectionImpl>(
-            url_loader_factory->Clone(),
-            std::make_unique<TrustedVaultAccessTokenFetcherImpl>(
-                access_token_fetcher_frontend_.GetWeakPtr()));
-  }
-
   backend_ = base::MakeRefCounted<StandaloneTrustedVaultBackend>(
-      security_domain, GetBackendFilePath(base_dir, security_domain),
+      security_domain,
+      std::make_unique<StandaloneTrustedVaultStorageImpl>(base_dir,
+                                                          security_domain),
       std::make_unique<BackendDelegate>(
           base::BindPostTaskToCurrentDefault(
               base::BindRepeating(&StandaloneTrustedVaultClient::
@@ -302,8 +277,7 @@ StandaloneTrustedVaultClient::StandaloneTrustedVaultClient(
           base::BindPostTaskToCurrentDefault(base::BindRepeating(
               &StandaloneTrustedVaultClient::NotifyBackendStateChanged,
               weak_ptr_factory_.GetWeakPtr()))),
-      std::move(connection), std::move(recovery_key_provider),
-      std::move(recovery_key_store_connection));
+      std::move(connection));
   backend_task_runner_->PostTask(
       FROM_HERE,
       base::BindOnce(&StandaloneTrustedVaultBackend::ReadDataFromDisk,
@@ -317,17 +291,6 @@ StandaloneTrustedVaultClient::StandaloneTrustedVaultClient(
           base::Unretained(this)),
       identity_manager);
 }
-
-StandaloneTrustedVaultClient::StandaloneTrustedVaultClient(
-    SecurityDomainId security_domain,
-    const base::FilePath& base_dir,
-    signin::IdentityManager* identity_manager,
-    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory)
-    : StandaloneTrustedVaultClient(security_domain,
-                                   base_dir,
-                                   identity_manager,
-                                   url_loader_factory,
-                                   /*recovery_key_provider=*/nullptr) {}
 
 StandaloneTrustedVaultClient::~StandaloneTrustedVaultClient() {
   // |backend_| needs to be destroyed inside backend sequence, not the current
@@ -360,7 +323,7 @@ void StandaloneTrustedVaultClient::FetchKeys(
 }
 
 void StandaloneTrustedVaultClient::StoreKeys(
-    const std::string& gaia_id,
+    const GaiaId& gaia_id,
     const std::vector<std::vector<uint8_t>>& keys,
     int last_key_version) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
@@ -396,7 +359,7 @@ void StandaloneTrustedVaultClient::GetIsRecoverabilityDegraded(
 }
 
 void StandaloneTrustedVaultClient::AddTrustedRecoveryMethod(
-    const std::string& gaia_id,
+    const GaiaId& gaia_id,
     const std::vector<uint8_t>& public_key,
     int method_type_hint,
     base::OnceClosure cb) {
@@ -439,7 +402,7 @@ void StandaloneTrustedVaultClient::FetchBackendPrimaryAccountForTesting(
 }
 
 void StandaloneTrustedVaultClient::FetchIsDeviceRegisteredForTesting(
-    const std::string& gaia_id,
+    const GaiaId& gaia_id,
     base::OnceCallback<void(bool)> callback) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   DCHECK(backend_);
@@ -478,7 +441,7 @@ void StandaloneTrustedVaultClient::
 }
 
 void StandaloneTrustedVaultClient::GetLastKeyVersionForTesting(
-    const std::string& gaia_id,
+    const GaiaId& gaia_id,
     base::OnceCallback<void(int last_key_version)> callback) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   DCHECK(backend_);

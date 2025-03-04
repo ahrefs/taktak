@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
+#pragma allow_unsafe_buffers
+#endif
+
 #include "chrome/elevation_service/elevated_recovery_impl.h"
 
 #include <objbase.h>
@@ -148,8 +153,7 @@ HRESULT CopyFileImpersonated(const base::FilePath from,
       return E_UNEXPECTED;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return S_OK;
+  NOTREACHED();
 }
 
 // Validates the provided CRX using the |crx_hash|, and if validation succeeds,

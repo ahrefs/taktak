@@ -69,10 +69,11 @@ import org.chromium.chrome.browser.customtabs.features.toolbar.CustomTabToolbar.
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.multiwindow.MultiWindowUtils;
 import org.chromium.chrome.browser.omnibox.UrlBarData;
-import org.chromium.chrome.browser.omnibox.status.PageInfoIPHController;
+import org.chromium.chrome.browser.omnibox.status.PageInfoIphController;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.toolbar.LocationBarModel;
 import org.chromium.chrome.browser.toolbar.ToolbarDataProvider;
+import org.chromium.chrome.browser.toolbar.ToolbarProgressBar;
 import org.chromium.chrome.browser.toolbar.ToolbarTabController;
 import org.chromium.chrome.browser.toolbar.menu_button.MenuButtonCoordinator;
 import org.chromium.chrome.browser.toolbar.top.CaptureReadinessResult;
@@ -127,7 +128,7 @@ public class CustomTabToolbarUnitTest {
     @Mock Callback<Integer> mContainerVisibilityChangeObserver;
     @Mock View mParentView;
     @Mock WindowAndroid mWindowAndroid;
-    private @Mock PageInfoIPHController mPageInfoIPHController;
+    private @Mock PageInfoIphController mPageInfoIphController;
     @Mock private CustomTabFeatureOverridesManager mFeatureOverridesManager;
 
     private Activity mActivity;
@@ -137,6 +138,7 @@ public class CustomTabToolbarUnitTest {
     private TextView mUrlBar;
     private ImageButton mSecurityButton;
     private ImageButton mSecurityIcon;
+    private ToolbarProgressBar mToolbarProgressBar;
 
     @Before
     public void setup() {
@@ -161,6 +163,7 @@ public class CustomTabToolbarUnitTest {
                                 .inflate(R.layout.custom_tabs_toolbar, null, false);
         ObservableSupplierImpl<Tracker> trackerSupplier = new ObservableSupplierImpl<>();
         trackerSupplier.set(mTracker);
+        mToolbarProgressBar = new ToolbarProgressBar(mActivity, null);
         mToolbar.initialize(
                 mToolbarDataProvider,
                 mTabController,
@@ -170,7 +173,8 @@ public class CustomTabToolbarUnitTest {
                 mPartnerHomepageEnabledSupplier,
                 mOfflineDownloader,
                 mUserEducationHelper,
-                trackerSupplier);
+                trackerSupplier,
+                mToolbarProgressBar);
 
         when(mFeatureOverridesManager.isFeatureEnabled(anyString())).thenReturn(null);
         mToolbar.setFeatureOverridesManager(mFeatureOverridesManager);
@@ -187,7 +191,7 @@ public class CustomTabToolbarUnitTest {
         mUrlBar = mToolbar.findViewById(R.id.url_bar);
         mTitleBar = mToolbar.findViewById(R.id.title_bar);
         mLocationBar.setAnimDelegateForTesting(mAnimationDelegate);
-        mLocationBar.setIPHControllerForTesting(mPageInfoIPHController);
+        mLocationBar.setIphControllerForTesting(mPageInfoIphController);
         mSecurityButton = mToolbar.findViewById(R.id.security_button);
         mSecurityIcon = mToolbar.findViewById(R.id.security_icon);
     }
@@ -262,18 +266,18 @@ public class CustomTabToolbarUnitTest {
     public void testIsReadyForTextureCapture() {
         CaptureReadinessResult result = mToolbar.isReadyForTextureCapture();
         assertTrue(result.isReady);
-        assertEquals(result.snapshotDifference, ToolbarSnapshotDifference.NULL);
+        assertEquals(ToolbarSnapshotDifference.NULL, result.snapshotDifference);
 
         fakeTextureCapture();
         result = mToolbar.isReadyForTextureCapture();
-        assertEquals(result.snapshotDifference, ToolbarSnapshotDifference.NONE);
+        assertEquals(ToolbarSnapshotDifference.NONE, result.snapshotDifference);
         assertFalse(result.isReady);
 
         when(mToolbarDataProvider.getPrimaryColor()).thenReturn(Color.RED);
         mToolbar.onPrimaryColorChanged(false);
         result = mToolbar.isReadyForTextureCapture();
         assertTrue(result.isReady);
-        assertEquals(result.snapshotDifference, ToolbarSnapshotDifference.TINT);
+        assertEquals(ToolbarSnapshotDifference.TINT, result.snapshotDifference);
 
         fakeTextureCapture();
         when(mToolbarDataProvider.getTab()).thenReturn(mTab);
@@ -284,7 +288,7 @@ public class CustomTabToolbarUnitTest {
         mLocationBar.onUrlChanged();
         result = mToolbar.isReadyForTextureCapture();
         assertTrue(result.isReady);
-        assertEquals(result.snapshotDifference, ToolbarSnapshotDifference.URL_TEXT);
+        assertEquals(ToolbarSnapshotDifference.URL_TEXT, result.snapshotDifference);
 
         fakeTextureCapture();
         when(mLocationBarModel.hasTab()).thenReturn(true);
@@ -292,7 +296,7 @@ public class CustomTabToolbarUnitTest {
         mLocationBar.onTitleChanged();
         result = mToolbar.isReadyForTextureCapture();
         assertTrue(result.isReady);
-        assertEquals(result.snapshotDifference, ToolbarSnapshotDifference.TITLE_TEXT);
+        assertEquals(ToolbarSnapshotDifference.TITLE_TEXT, result.snapshotDifference);
 
         fakeTextureCapture();
         when(mLocationBarModel.getSecurityIconResource(anyBoolean()))
@@ -301,20 +305,20 @@ public class CustomTabToolbarUnitTest {
         mLocationBar.onSecurityStateChanged();
         result = mToolbar.isReadyForTextureCapture();
         assertTrue(result.isReady);
-        assertEquals(result.snapshotDifference, ToolbarSnapshotDifference.SECURITY_ICON);
+        assertEquals(ToolbarSnapshotDifference.SECURITY_ICON, result.snapshotDifference);
 
         fakeTextureCapture();
         when(mAnimationDelegate.isInAnimation()).thenReturn(true);
         result = mToolbar.isReadyForTextureCapture();
         assertTrue(result.isReady);
-        assertEquals(result.snapshotDifference, ToolbarSnapshotDifference.CCT_ANIMATION);
+        assertEquals(ToolbarSnapshotDifference.CCT_ANIMATION, result.snapshotDifference);
 
         when(mAnimationDelegate.isInAnimation()).thenReturn(false);
         fakeTextureCapture();
         mToolbar.layout(0, 0, 100, 100);
         result = mToolbar.isReadyForTextureCapture();
         assertTrue(result.isReady);
-        assertEquals(result.snapshotDifference, ToolbarSnapshotDifference.LOCATION_BAR_WIDTH);
+        assertEquals(ToolbarSnapshotDifference.LOCATION_BAR_WIDTH, result.snapshotDifference);
     }
 
     @Test
@@ -512,52 +516,52 @@ public class CustomTabToolbarUnitTest {
         mLocationBar.onHighlightCookieControl(true);
 
         verify(mAnimationDelegate, never()).updateSecurityButton(anyInt());
-        verify(mPageInfoIPHController, never()).showCookieControlsIPH(anyInt(), anyInt());
+        verify(mPageInfoIphController, never()).showCookieControlsIph(anyInt(), anyInt());
 
         mLocationBar.onPageLoadStopped();
         verify(mAnimationDelegate, times(1)).updateSecurityButton(R.drawable.ic_eye_crossed);
-        verify(mPageInfoIPHController, times(1)).showCookieControlsIPH(anyInt(), anyInt());
+        verify(mPageInfoIphController, times(1)).showCookieControlsIph(anyInt(), anyInt());
 
         mLocationBar.onHighlightCookieControl(false);
         mLocationBar.onPageLoadStopped();
         verify(mAnimationDelegate, times(1)).updateSecurityButton(R.drawable.ic_eye_crossed);
-        verify(mPageInfoIPHController, times(1)).showCookieControlsIPH(anyInt(), anyInt());
+        verify(mPageInfoIphController, times(1)).showCookieControlsIph(anyInt(), anyInt());
     }
 
     @Test
     public void
-            testCookieControlsIcon_trackingProtectionsEnabled_cookieBlockingDisabled_doesNotDisplayIPH() {
+            testCookieControlsIcon_trackingProtectionsEnabled_cookieBlockingDisabled_doesNotDisplayIph() {
         verify(mAnimationDelegate, never()).updateSecurityButton(anyInt());
 
         mLocationBar.onHighlightCookieControl(true);
         mLocationBar.onStatusChanged(
-                /* controls_visible= */ false,
-                /* protections_on= */ false,
+                /* controlsVisible= */ false,
+                /* protectionsOn= */ false,
                 /* enforcement= */ 0,
                 CookieBlocking3pcdStatus.LIMITED,
                 /* expiration= */ 0);
 
         // None of the IPHs should be shown.
         mLocationBar.onPageLoadStopped();
-        verify(mPageInfoIPHController, never()).showCookieControlsIPH(anyInt(), anyInt());
+        verify(mPageInfoIphController, never()).showCookieControlsIph(anyInt(), anyInt());
     }
 
     @Test
     public void
-            testCookieControlsIcon_trackingProtectionDisabled_cookieBlockingEnabled_displaysCookieControlsIPH() {
+            testCookieControlsIcon_trackingProtectionDisabled_cookieBlockingEnabled_displaysCookieControlsIph() {
         verify(mAnimationDelegate, never()).updateSecurityButton(anyInt());
 
         mLocationBar.onHighlightCookieControl(true);
         mLocationBar.onStatusChanged(
-                /* controls_visible= */ true,
-                /* protections_on= */ true,
+                /* controlsVisible= */ true,
+                /* protectionsOn= */ true,
                 /* enforcement= */ 0,
                 CookieBlocking3pcdStatus.NOT_IN3PCD,
                 /* expiration= */ 0);
 
         // Should show only the Cookie controls IPH.
         mLocationBar.onPageLoadStopped();
-        verify(mPageInfoIPHController, times(1)).showCookieControlsIPH(anyInt(), anyInt());
+        verify(mPageInfoIphController, times(1)).showCookieControlsIph(anyInt(), anyInt());
     }
 
     @Test
@@ -587,7 +591,7 @@ public class CustomTabToolbarUnitTest {
     })
     public void testSecurityIconHidden() {
         when(mLocationBarModel.getSecurityIconResource(anyBoolean()))
-                .thenReturn(R.drawable.omnibox_https_valid_refresh);
+                .thenReturn(R.drawable.omnibox_https_valid_page_info);
         when(mLocationBarModel.getSecurityLevel()).thenReturn(ConnectionSecurityLevel.SECURE);
 
         mLocationBar.onSecurityStateChanged();
@@ -602,12 +606,12 @@ public class CustomTabToolbarUnitTest {
     })
     public void testSecurityIconShown() {
         when(mLocationBarModel.getSecurityIconResource(anyBoolean()))
-                .thenReturn(R.drawable.omnibox_info);
-        when(mLocationBarModel.getSecurityLevel()).thenReturn(ConnectionSecurityLevel.NONE);
+                .thenReturn(R.drawable.omnibox_not_secure_warning);
+        when(mLocationBarModel.getSecurityLevel()).thenReturn(ConnectionSecurityLevel.WARNING);
 
         mLocationBar.onSecurityStateChanged();
 
-        verify(mAnimationDelegate).updateSecurityButton(R.drawable.omnibox_info);
+        verify(mAnimationDelegate).updateSecurityButton(R.drawable.omnibox_not_secure_warning);
     }
 
     private void assertUrlAndTitleVisible(boolean titleVisible, boolean urlVisible) {
@@ -620,7 +624,7 @@ public class CustomTabToolbarUnitTest {
     }
 
     private void assertUrlBarShowingText(String expectedString) {
-        assertEquals("URL bar is not visible.", mUrlBar.getVisibility(), View.VISIBLE);
+        assertEquals("URL bar is not visible.", View.VISIBLE, mUrlBar.getVisibility());
         assertEquals("URL bar text does not match.", expectedString, mUrlBar.getText().toString());
     }
 

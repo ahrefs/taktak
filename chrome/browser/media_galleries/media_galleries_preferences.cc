@@ -2,15 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "chrome/browser/media_galleries/media_galleries_preferences.h"
 
 #include <stddef.h>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -150,8 +146,7 @@ const char* TypeToStringValue(MediaGalleryPrefInfo::Type type) {
       result = kMediaGalleriesTypeRemovedScanValue;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
   return result;
 }
@@ -195,8 +190,7 @@ const char* DefaultGalleryTypeToStringValue(
       result = kMediaGalleriesDefaultGalleryTypeVideosDefaultValue;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
   return result;
 }
@@ -344,8 +338,7 @@ bool GetMediaGalleryPermissionFromDictionary(
     out_permission->has_permission = *has_permission;
     return true;
   }
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 // For a device with |device_name| and a relative path |sub_folder|, construct
@@ -374,7 +367,7 @@ MediaGalleryPrefInfo::MediaGalleryPrefInfo()
 MediaGalleryPrefInfo::MediaGalleryPrefInfo(const MediaGalleryPrefInfo& other) =
     default;
 
-MediaGalleryPrefInfo::~MediaGalleryPrefInfo() {}
+MediaGalleryPrefInfo::~MediaGalleryPrefInfo() = default;
 
 base::FilePath MediaGalleryPrefInfo::AbsolutePath() const {
   base::FilePath base_path = MediaStorageUtil::FindDevicePathById(device_id);
@@ -448,7 +441,8 @@ bool MediaGalleryPrefInfo::IsGalleryAvailable() const {
          MediaStorageUtil::IsRemovableStorageAttached(device_id);
 }
 
-MediaGalleriesPreferences::GalleryChangeObserver::~GalleryChangeObserver() {}
+MediaGalleriesPreferences::GalleryChangeObserver::~GalleryChangeObserver() =
+    default;
 
 MediaGalleriesPreferences::MediaGalleriesPreferences(Profile* profile)
     : initialized_(false),
@@ -486,14 +480,15 @@ bool MediaGalleriesPreferences::IsInitialized() const { return initialized_; }
 Profile* MediaGalleriesPreferences::profile() { return profile_; }
 
 void MediaGalleriesPreferences::AddDefaultGalleries() {
-  const struct DefaultTypes {
+  struct DefaultTypes {
     int directory_key;
     MediaGalleryPrefInfo::DefaultGalleryType default_gallery_type;
-  } kDirectories[] = {
-    {chrome::DIR_USER_MUSIC, MediaGalleryPrefInfo::kMusicDefault},
-    {chrome::DIR_USER_PICTURES, MediaGalleryPrefInfo::kPicturesDefault},
-    {chrome::DIR_USER_VIDEOS, MediaGalleryPrefInfo::kVideosDefault},
   };
+  const auto kDirectories = std::to_array<DefaultTypes>({
+      {chrome::DIR_USER_MUSIC, MediaGalleryPrefInfo::kMusicDefault},
+      {chrome::DIR_USER_PICTURES, MediaGalleryPrefInfo::kPicturesDefault},
+      {chrome::DIR_USER_VIDEOS, MediaGalleryPrefInfo::kVideosDefault},
+  });
 
   for (size_t i = 0; i < std::size(kDirectories); ++i) {
     base::FilePath path;
@@ -1021,8 +1016,7 @@ bool MediaGalleriesPreferences::NonAutoGalleryHasPermission(
 
   for (const auto iter : extensions) {
     if (!crx_file::id_util::IdIsValid(iter.first)) {
-      NOTREACHED_IN_MIGRATION();
-      continue;
+      NOTREACHED();
     }
     std::vector<MediaGalleryPermission> permissions =
         GetGalleryPermissionsFromPrefs(iter.first);
@@ -1071,7 +1065,7 @@ MediaGalleryPrefIdSet MediaGalleriesPreferences::GalleriesForExtension(
       if (!gallery->second.IsBlockListedType()) {
         result.insert(it->pref_id);
       } else {
-        NOTREACHED_IN_MIGRATION() << gallery->second.device_id;
+        NOTREACHED() << gallery->second.device_id;
       }
     }
   }
@@ -1229,8 +1223,7 @@ void MediaGalleriesPreferences::RemoveGalleryPermissionsFromPrefs(
 
   for (const auto iter : extensions) {
     if (!crx_file::id_util::IdIsValid(iter.first)) {
-      NOTREACHED_IN_MIGRATION();
-      continue;
+      NOTREACHED();
     }
     UnsetGalleryPermissionInPrefs(iter.first, gallery_id);
   }

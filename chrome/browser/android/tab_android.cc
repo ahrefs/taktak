@@ -19,6 +19,7 @@
 #include "cc/slim/layer.h"
 #include "chrome/browser/android/background_tab_manager.h"
 #include "chrome/browser/android/compositor/tab_content_manager.h"
+#include "chrome/browser/android/tab_features_android.h"
 #include "chrome/browser/android/tab_web_contents_delegate_android.h"
 #include "chrome/browser/browser_about_handler.h"
 #include "chrome/browser/browser_process.h"
@@ -211,10 +212,7 @@ bool TabAndroid::IsNativePage() const {
 
 std::u16string TabAndroid::GetTitle() const {
   JNIEnv* env = base::android::AttachCurrentThread();
-  ScopedJavaLocalRef<jstring> java_title =
-      Java_TabImpl_getTitle(env, weak_java_tab_.get(env));
-  return java_title ? base::android::ConvertJavaStringToUTF16(java_title)
-                    : std::u16string();
+  return Java_TabImpl_getTitle(env, weak_java_tab_.get(env));
 }
 
 GURL TabAndroid::GetURL() const {
@@ -324,6 +322,8 @@ void TabAndroid::InitWebContents(
   web_contents()->SetDelegate(web_contents_delegate_.get());
 
   AttachTabHelpers(web_contents_.get());
+  tab_features_ =
+      std::make_unique<TabFeaturesAndroid>(web_contents_.get(), profile());
   // When restoring a frame that was unloaded we re-create the TabAndroid and
   // its host. This triggers visibility changes in both the Browser and
   // Renderer. We need to start tracking the content-to-visible time now. On
@@ -393,18 +393,22 @@ void TabAndroid::UpdateDelegates(
 }
 
 namespace {
-void WillRemoveWebContentsFromTab(content::WebContents* contents) {
+void WillRemoveWebContentsFromTab(content::WebContents* contents,
+                                  bool clear_delegate) {
   DCHECK(contents);
 
-  if (contents->GetNativeView())
+  if (contents->GetNativeView()) {
     contents->GetNativeView()->GetLayer()->RemoveFromParent();
+  }
 
-  contents->SetDelegate(nullptr);
+  if (clear_delegate) {
+    contents->SetDelegate(nullptr);
+  }
 }
 }  // namespace
 
 void TabAndroid::DestroyWebContents(JNIEnv* env) {
-  WillRemoveWebContentsFromTab(web_contents());
+  WillRemoveWebContentsFromTab(web_contents(), /*clear_delegate=*/false);
 
   // Terminate the renderer process if this is the last tab.
   // If there's no unload listener, FastShutdownIfPossible kills the
@@ -418,16 +422,18 @@ void TabAndroid::DestroyWebContents(JNIEnv* env) {
   if (process)
     process->FastShutdownIfPossible(1, false);
 
+  tab_features_.reset();
   web_contents_.reset();
 
   synced_tab_delegate_->ResetWebContents();
 }
 
 void TabAndroid::ReleaseWebContents(JNIEnv* env) {
-  WillRemoveWebContentsFromTab(web_contents());
+  WillRemoveWebContentsFromTab(web_contents(), /*clear_delegate=*/true);
 
   // Ownership of |released_contents| is assumed by the code that initiated the
   // release.
+  tab_features_.reset();
   content::WebContents* released_contents = web_contents_.release();
   if (released_contents) {
     released_contents->SetOwnerLocationForDebug(std::nullopt);
@@ -438,6 +444,15 @@ void TabAndroid::ReleaseWebContents(JNIEnv* env) {
   TabAndroidHelper::SetTabForWebContents(released_contents, nullptr);
 
   synced_tab_delegate_->ResetWebContents();
+}
+
+bool TabAndroid::IsPhysicalBackingSizeEmpty(
+    JNIEnv* env,
+    const JavaParamRef<jobject>& jweb_contents) {
+  content::WebContents* web_contents =
+      content::WebContents::FromJavaWebContents(jweb_contents);
+  auto size = web_contents->GetNativeView()->GetPhysicalBackingSize();
+  return size.IsEmpty();
 }
 
 void TabAndroid::OnPhysicalBackingSizeChanged(
@@ -451,19 +466,10 @@ void TabAndroid::OnPhysicalBackingSizeChanged(
   web_contents->GetNativeView()->OnPhysicalBackingSizeChanged(size);
 }
 
-void TabAndroid::SetActiveNavigationEntryTitleForUrl(
-    JNIEnv* env,
-    const JavaParamRef<jstring>& jurl,
-    const JavaParamRef<jstring>& jtitle) {
+void TabAndroid::SetActiveNavigationEntryTitleForUrl(JNIEnv* env,
+                                                     std::string& url,
+                                                     std::u16string& title) {
   DCHECK(web_contents());
-
-  std::u16string title;
-  if (jtitle)
-    title = base::android::ConvertJavaStringToUTF16(env, jtitle);
-
-  std::string url;
-  if (jurl)
-    url = base::android::ConvertJavaStringToUTF8(env, jurl);
 
   content::NavigationEntry* entry =
       web_contents()->GetController().GetVisibleEntry();

@@ -42,8 +42,8 @@
 #include "content/public/common/content_features.h"
 #include "content/public/test/browser_test.h"
 #include "third_party/blink/public/common/features.h"
-#include "ui/base/models/simple_menu_model.h"
 #include "ui/display/display.h"
+#include "ui/menus/simple_menu_model.h"
 #include "ui/views/vector_icons.h"
 
 class AppServiceShelfContextMenuBrowserTest : public InProcessBrowserTest {
@@ -106,12 +106,13 @@ class AppServiceShelfContextMenuWebAppBrowserTest
   ~AppServiceShelfContextMenuWebAppBrowserTest() override = default;
 
   const gfx::VectorIcon& GetExpectedLaunchNewIcon(int command_id) {
-    if (command_id == ash::USE_LAUNCH_TYPE_REGULAR)
+    if (command_id == ash::USE_LAUNCH_TYPE_REGULAR) {
       return views::kNewTabIcon;
-    else if (command_id == ash::USE_LAUNCH_TYPE_WINDOW)
+    } else if (command_id == ash::USE_LAUNCH_TYPE_WINDOW) {
       return views::kNewWindowIcon;
-    else
+    } else {
       return views::kOpenIcon;
+    }
   }
 
   bool IsShortstandEnabled() { return GetParam(); }

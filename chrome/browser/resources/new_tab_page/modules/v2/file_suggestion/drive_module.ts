@@ -10,16 +10,12 @@ import {CrLitElement} from 'chrome://resources/lit/v3_0/lit.rollup.js';
 
 import type {File} from '../../../file_suggestion.mojom-webui.js';
 import {I18nMixinLit, loadTimeData} from '../../../i18n_setup.js';
-import {FileProxy} from '../../drive/file_module_proxy.js';
 import {ModuleDescriptor} from '../../module_descriptor.js';
 import type {MenuItem, ModuleHeaderElement} from '../module_header.js';
 
-import {getCss} from './drive_module.css.js';
 import {getHtml} from './drive_module.html.js';
+import {FileProxy} from './file_module_proxy.js';
 import type {FileSuggestionElement} from './file_suggestion.js';
-
-const DRIVE_ICON_BASE_URL: string =
-    'https://drive-thirdparty.googleusercontent.com/32/type/';
 
 export interface DriveModuleElement {
   $: {
@@ -39,10 +35,6 @@ export class DriveModuleElement extends DriveModuleElementBase {
     return 'ntp-drive-module-redesigned';
   }
 
-  static override get styles() {
-    return getCss();
-  }
-
   override render() {
     return getHtml.bind(this)();
   }
@@ -50,13 +42,11 @@ export class DriveModuleElement extends DriveModuleElementBase {
   static override get properties() {
     return {
       files: {type: Array},
-      imageSourceBaseUrl_: {type: String},
       showInfoDialog_: {type: Boolean},
     };
   }
 
   files: File[] = [];
-  protected imageSourceBaseUrl_: string = DRIVE_ICON_BASE_URL;
   protected showInfoDialog_: boolean = false;
 
   protected getMenuItemGroups_(): MenuItem[][] {
@@ -65,7 +55,9 @@ export class DriveModuleElement extends DriveModuleElementBase {
         {
           action: 'dismiss',
           icon: 'modules:visibility_off',
-          text: this.i18n('modulesDriveDismissButtonText'),
+          text: this.i18nRecursive(
+              '', 'modulesDismissForHoursButtonText',
+              'fileSuggestionDismissHours'),
         },
         {
           action: 'disable',
@@ -94,7 +86,7 @@ export class DriveModuleElement extends DriveModuleElementBase {
       detail: {
         message: loadTimeData.getStringF(
             'disableModuleToastMessage',
-            loadTimeData.getString('modulesDriveSentence2')),
+            loadTimeData.getString('modulesDriveSentence')),
       },
     });
     this.dispatchEvent(disableEvent);
@@ -108,7 +100,7 @@ export class DriveModuleElement extends DriveModuleElementBase {
       detail: {
         message: loadTimeData.getStringF(
             'dismissModuleToastMessage',
-            loadTimeData.getString('modulesDriveFilesSentence')),
+            loadTimeData.getString('modulesFilesSentence')),
         restoreCallback: () => FileProxy.getHandler().restoreModule(),
       },
     }));
@@ -120,10 +112,6 @@ export class DriveModuleElement extends DriveModuleElementBase {
 
   protected onInfoDialogClose_() {
     this.showInfoDialog_ = false;
-  }
-
-  protected onMenuButtonClick_(e: Event) {
-    this.$.moduleHeaderElementV2.showAt(e);
   }
 }
 

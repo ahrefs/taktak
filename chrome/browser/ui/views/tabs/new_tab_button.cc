@@ -9,7 +9,6 @@
 
 #include "base/strings/string_number_conversions.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/ui/browser_element_identifiers.h"
 #include "chrome/browser/ui/browser_list.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
@@ -119,10 +118,9 @@ void NewTabButton::RemoveLayerFromRegions(ui::Layer* old_layer) {
 }
 
 SkColor NewTabButton::GetForegroundColor() const {
-    return GetColorProvider()->GetColor(
-        GetWidget()->ShouldPaintAsActive()
-            ? foreground_frame_active_color_id_
-            : foreground_frame_inactive_color_id_);
+  return GetColorProvider()->GetColor(
+      GetWidget()->ShouldPaintAsActive() ? foreground_frame_active_color_id_
+                                         : foreground_frame_inactive_color_id_);
 }
 
 int NewTabButton::GetCornerRadius() const {

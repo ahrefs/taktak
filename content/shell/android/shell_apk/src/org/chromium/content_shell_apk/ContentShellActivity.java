@@ -55,7 +55,7 @@ public class ContentShellActivity extends Activity {
             }
         }
 
-        DeviceUtils.addDeviceSpecificUserAgentSwitch();
+        DeviceUtils.updateDeviceSpecificUserAgentSwitch(this);
 
         LibraryLoader.getInstance().ensureInitialized();
 
@@ -64,7 +64,12 @@ public class ContentShellActivity extends Activity {
         final boolean listenToActivityState = true;
         mIntentRequestTracker = IntentRequestTracker.createFromActivity(this);
         mWindowAndroid =
-                new ActivityWindowAndroid(this, listenToActivityState, mIntentRequestTracker);
+                new ActivityWindowAndroid(
+                        this,
+                        listenToActivityState,
+                        mIntentRequestTracker,
+                        /* insetObserver= */ null,
+                        /* trackOcclusion= */ true);
         mIntentRequestTracker.restoreInstanceState(savedInstanceState);
         mShellManager.setWindow(mWindowAndroid);
         // Set up the animation placeholder to be the SurfaceView. This disables the
@@ -169,6 +174,14 @@ public class ContentShellActivity extends Activity {
 
         WebContents webContents = getActiveWebContents();
         if (webContents != null) webContents.updateWebContentsVisibility(Visibility.VISIBLE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        WebContents webContents = getActiveWebContents();
+        if (webContents != null) webContents.updateWebContentsVisibility(Visibility.HIDDEN);
     }
 
     @Override

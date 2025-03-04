@@ -9,16 +9,6 @@
 #include <string>
 #include <utility>
 
-#include "ash/components/arc/app/arc_app_constants.h"
-#include "ash/components/arc/arc_features.h"
-#include "ash/components/arc/arc_prefs.h"
-#include "ash/components/arc/arc_util.h"
-#include "ash/components/arc/compat_mode/arc_resize_lock_manager.h"
-#include "ash/components/arc/mojom/compatibility_mode.mojom.h"
-#include "ash/components/arc/net/arc_net_host_impl.h"
-#include "ash/components/arc/session/arc_bridge_service.h"
-#include "ash/components/arc/session/arc_service_manager.h"
-#include "ash/components/arc/session/connection_holder.h"
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_pref_names.h"
 #include "ash/constants/ash_switches.h"
@@ -58,6 +48,16 @@
 #include "chrome/browser/ui/ash/shelf/chrome_shelf_controller.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/grit/generated_resources.h"
+#include "chromeos/ash/experiences/arc/app/arc_app_constants.h"
+#include "chromeos/ash/experiences/arc/arc_features.h"
+#include "chromeos/ash/experiences/arc/arc_prefs.h"
+#include "chromeos/ash/experiences/arc/arc_util.h"
+#include "chromeos/ash/experiences/arc/compat_mode/arc_resize_lock_manager.h"
+#include "chromeos/ash/experiences/arc/mojom/compatibility_mode.mojom.h"
+#include "chromeos/ash/experiences/arc/net/arc_net_host_impl.h"
+#include "chromeos/ash/experiences/arc/session/arc_bridge_service.h"
+#include "chromeos/ash/experiences/arc/session/arc_service_manager.h"
+#include "chromeos/ash/experiences/arc/session/connection_holder.h"
 #include "components/crx_file/id_util.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/scoped_user_pref_update.h"
@@ -484,17 +484,18 @@ void RecordAppCategoryDataSizeUma(const std::string& category,
 }  // namespace
 
 // static
-ArcAppListPrefs* ArcAppListPrefs::Create(Profile* profile) {
-  return new ArcAppListPrefs(profile, nullptr);
+std::unique_ptr<ArcAppListPrefs> ArcAppListPrefs::Create(Profile* profile) {
+  return std::make_unique<ArcAppListPrefs>(profile, nullptr);
 }
 
 // static
-ArcAppListPrefs* ArcAppListPrefs::Create(
+std::unique_ptr<ArcAppListPrefs> ArcAppListPrefs::Create(
     Profile* profile,
     arc::ConnectionHolder<arc::mojom::AppInstance, arc::mojom::AppHost>*
         app_connection_holder_for_testing) {
   DCHECK(app_connection_holder_for_testing);
-  return new ArcAppListPrefs(profile, app_connection_holder_for_testing);
+  return std::make_unique<ArcAppListPrefs>(profile,
+                                           app_connection_holder_for_testing);
 }
 
 // static
@@ -1170,8 +1171,7 @@ void ArcAppListPrefs::SetLaunchRequestTimeForTesting(const std::string& app_id,
 }
 void ArcAppListPrefs::SetLastLaunchTime(const std::string& app_id) {
   if (!IsRegistered(app_id)) {
-    NOTREACHED_IN_MIGRATION();
-    return;
+    NOTREACHED();
   }
 
   launch_request_times_[app_id] = base::Time::Now();
@@ -1233,8 +1233,7 @@ void ArcAppListPrefs::NotifyRegisteredApps() {
   for (const auto& app_id : app_ids) {
     std::unique_ptr<AppInfo> app_info = GetApp(app_id);
     if (!app_info) {
-      NOTREACHED_IN_MIGRATION();
-      continue;
+      NOTREACHED();
     }
 
     // Default apps are reported earlier.
@@ -1739,8 +1738,7 @@ void ArcAppListPrefs::AddAppAndShortcut(
     // TODO(b/154290639): Remove check for |IsDemoModeOfflineEnrolled| when
     //                    fixed in Play Store.
     if (arc::IsRobotOrOfflineDemoAccountMode() &&
-        !(ash::DemoSession::IsDeviceInDemoMode() &&
-          ash::features::ShouldShowPlayStoreInDemoMode())) {
+        !ash::DemoSession::IsDeviceInDemoMode()) {
       return;
     }
   }
@@ -2324,8 +2322,7 @@ std::unordered_set<std::string> ArcAppListPrefs::GetAppsAndShortcutsForPackage(
       continue;
 
     if (!app.second.is_dict()) {
-      NOTREACHED_IN_MIGRATION();
-      continue;
+      NOTREACHED();
     }
 
     const std::string* app_package =
@@ -2452,8 +2449,7 @@ void ArcAppListPrefs::OnNotificationsEnabledChanged(
   const base::Value::Dict& apps = prefs_->GetDict(arc::prefs::kArcApps);
   for (const auto app : apps) {
     if (!app.second.is_dict()) {
-      NOTREACHED_IN_MIGRATION();
-      continue;
+      NOTREACHED();
     }
     const std::string* app_package_name =
         app.second.GetDict().FindString(kPackageName);
@@ -2558,8 +2554,7 @@ std::vector<std::string> ArcAppListPrefs::GetPackagesFromPrefs(
       prefs_->GetDict(arc::prefs::kArcPackages);
   for (const auto package : package_prefs) {
     if (!package.second.is_dict()) {
-      NOTREACHED_IN_MIGRATION();
-      continue;
+      NOTREACHED();
     }
 
     const bool uninstalled =

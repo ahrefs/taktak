@@ -12,9 +12,7 @@ import android.view.ViewGroup;
 import androidx.activity.ComponentActivity;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.ColorInt;
-import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import org.chromium.base.supplier.OneshotSupplier;
 import org.chromium.base.supplier.Supplier;
@@ -24,8 +22,10 @@ import org.chromium.chrome.browser.signin.services.IdentityServicesProvider;
 import org.chromium.chrome.browser.signin.services.SigninManager;
 import org.chromium.chrome.browser.signin.services.SigninMetricsUtils;
 import org.chromium.chrome.browser.sync.SyncServiceFactory;
-import org.chromium.chrome.browser.ui.signin.account_picker.AccountPickerBottomSheetStrings;
+import org.chromium.chrome.browser.ui.signin.BottomSheetSigninAndHistorySyncConfig.NoAccountSigninMode;
+import org.chromium.chrome.browser.ui.signin.BottomSheetSigninAndHistorySyncConfig.WithAccountSigninMode;
 import org.chromium.chrome.browser.ui.signin.account_picker.AccountPickerLaunchMode;
+import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncConfig;
 import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncCoordinator;
 import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncHelper;
 import org.chromium.components.browser_ui.device_lock.DeviceLockActivityLauncher;
@@ -33,11 +33,11 @@ import org.chromium.components.browser_ui.styles.SemanticColorUtils;
 import org.chromium.components.browser_ui.widget.gesture.BackPressHandler.BackPressResult;
 import org.chromium.components.browser_ui.widget.scrim.ScrimProperties;
 import org.chromium.components.signin.AccountManagerFacadeProvider;
-import org.chromium.components.signin.base.CoreAccountId;
 import org.chromium.components.signin.base.CoreAccountInfo;
 import org.chromium.components.signin.identitymanager.ConsentLevel;
 import org.chromium.components.signin.identitymanager.IdentityManager;
 import org.chromium.components.signin.metrics.SigninAccessPoint;
+import org.chromium.components.signin.metrics.SyncButtonClicked;
 import org.chromium.components.sync.SyncService;
 import org.chromium.components.sync.UserSelectableType;
 import org.chromium.ui.base.WindowAndroid;
@@ -47,8 +47,6 @@ import org.chromium.ui.modaldialog.ModalDialogProperties;
 import org.chromium.ui.modaldialog.ModalDialogProperties.ButtonType;
 import org.chromium.ui.modelutil.PropertyModel;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 
 /** Responsible of showing the correct sub-component of the sign-in and history opt-in flow. */
@@ -65,18 +63,14 @@ public class BottomSheetSigninAndHistorySyncCoordinator
     private final OneshotSupplier<Profile> mProfileSupplier;
     private final @SigninAccessPoint int mSigninAccessPoint;
     private final Supplier<ModalDialogManager> mModalDialogManagerSupplier;
-
-    private final AccountPickerBottomSheetStrings mBottomSheetStrings;
-    private final @NoAccountSigninMode int mNoAccountSigninMode;
-    private final @WithAccountSigninMode int mWithAccountSigninMode;
-    private final @HistoryOptInMode int mHistoryOptInMode;
-    private final @Nullable CoreAccountId mCoreAccountId;
+    private final BottomSheetSigninAndHistorySyncConfig mConfig;
 
     private SigninAccountPickerCoordinator mAccountPickerCoordinator;
     private HistorySyncCoordinator mHistorySyncCoordinator;
     private PropertyModel mDialogModel;
     private boolean mDidShowSigninStep;
     private boolean mFlowInitialized;
+    private @ColorInt int mScrimStatusBarColor = ScrimProperties.INVALID_COLOR;
 
     /** This is a delegate that the embedder needs to implement. */
     public interface Delegate {
@@ -84,7 +78,7 @@ public class BottomSheetSigninAndHistorySyncCoordinator
         void addAccount();
 
         /** Called when the whole flow finishes. */
-        void onFlowComplete();
+        void onFlowComplete(@SigninAndHistorySyncCoordinator.Result int result);
 
         /**
          * Returns whether the history sync modal dialog is shown in full screen mode instead of
@@ -94,69 +88,6 @@ public class BottomSheetSigninAndHistorySyncCoordinator
 
         /** Called to change the status bar color. */
         void setStatusBarColor(int statusBarColor);
-    }
-
-    /** The sign-in step that should be shown to the user when there's no account on the device. */
-    @IntDef({
-        NoAccountSigninMode.BOTTOM_SHEET,
-        NoAccountSigninMode.ADD_ACCOUNT,
-        NoAccountSigninMode.NO_SIGNIN
-    })
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface NoAccountSigninMode {
-        /** Show the 0-account version of the sign-in bottom sheet. */
-        int BOTTOM_SHEET = 0;
-
-        /** Bring the user to GMS Core to add an account, then sign-in with the new account. */
-        int ADD_ACCOUNT = 1;
-
-        /** No sign-in should be done, the entry point should not be visible to the user. */
-        int NO_SIGNIN = 2;
-    }
-
-    /** The sign-in step that should be shown to the user when there's 1+ accounts on the device. */
-    @IntDef({
-        WithAccountSigninMode.DEFAULT_ACCOUNT_BOTTOM_SHEET,
-        WithAccountSigninMode.CHOOSE_ACCOUNT_BOTTOM_SHEET,
-    })
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface WithAccountSigninMode {
-        /** Show the "collapsed" sign-in bottom sheet containing the default account. */
-        int DEFAULT_ACCOUNT_BOTTOM_SHEET = 0;
-
-        /** Show the "expanded" sign-in bottom sheet containing the accounts list. */
-        int CHOOSE_ACCOUNT_BOTTOM_SHEET = 1;
-    }
-
-    /** The visibility rule to apply to the history opt-in step. */
-    @IntDef({HistoryOptInMode.NONE, HistoryOptInMode.OPTIONAL, HistoryOptInMode.REQUIRED})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface HistoryOptInMode {
-        /** Never show the history sync opt-in. */
-        int NONE = 0;
-
-        /** The history sync opt-in can be skipped (e.g. if the user declined too recently). */
-        int OPTIONAL = 1;
-
-        /** The history sync opt-in should always be shown. */
-        int REQUIRED = 2;
-    }
-
-    public static boolean willShowSigninUI(Profile profile) {
-        SigninManager signinManager = IdentityServicesProvider.get().getSigninManager(profile);
-        return signinManager.isSigninAllowed();
-    }
-
-    public static boolean willShowHistorySyncUI(
-            Profile profile, @HistoryOptInMode int historyOptInMode) {
-        IdentityManager identityManager =
-                IdentityServicesProvider.get().getIdentityManager(profile);
-        if (!willShowSigninUI(profile) && !identityManager.hasPrimaryAccount(ConsentLevel.SIGNIN)) {
-            // Signin is suppressed because of something other than the user being signed in. Since
-            // the user cannot sign in, we should not show history sync either.
-            return false;
-        }
-        return shouldShowHistorySync(profile, historyOptInMode);
     }
 
     /**
@@ -180,12 +111,8 @@ public class BottomSheetSigninAndHistorySyncCoordinator
             @NonNull DeviceLockActivityLauncher deviceLockActivityLauncher,
             @NonNull OneshotSupplier<Profile> profileSupplier,
             @NonNull Supplier<ModalDialogManager> modalDialogManagerSupplier,
-            @NonNull AccountPickerBottomSheetStrings bottomSheetStrings,
-            @NoAccountSigninMode int noAccountSigninMode,
-            @WithAccountSigninMode int withAccountSigninMode,
-            @HistoryOptInMode int historyOptInMode,
-            @SigninAccessPoint int signinAccessPoint,
-            @Nullable CoreAccountId accountId) {
+            @NonNull BottomSheetSigninAndHistorySyncConfig config,
+            @SigninAccessPoint int signinAccessPoint) {
         mWindowAndroid = windowAndroid;
         mActivity = activity;
         mDelegate = delegate;
@@ -193,12 +120,8 @@ public class BottomSheetSigninAndHistorySyncCoordinator
         mProfileSupplier = profileSupplier;
         mProfileSupplier.onAvailable(this::onProfileAvailable);
         mModalDialogManagerSupplier = modalDialogManagerSupplier;
-        mBottomSheetStrings = bottomSheetStrings;
-        mNoAccountSigninMode = noAccountSigninMode;
-        mWithAccountSigninMode = withAccountSigninMode;
-        mHistoryOptInMode = historyOptInMode;
+        mConfig = config;
         mSigninAccessPoint = signinAccessPoint;
-        mCoreAccountId = accountId;
         mContainerView =
                 (ViewGroup)
                         LayoutInflater.from(mActivity)
@@ -239,8 +162,8 @@ public class BottomSheetSigninAndHistorySyncCoordinator
             return;
         }
         final boolean isBottomSheetShown = mAccountPickerCoordinator != null;
-        if (!isBottomSheetShown && mNoAccountSigninMode == NoAccountSigninMode.ADD_ACCOUNT) {
-            onFlowComplete();
+        if (!isBottomSheetShown && mConfig.noAccountSigninMode == NoAccountSigninMode.ADD_ACCOUNT) {
+            onFlowComplete(SigninAndHistorySyncCoordinator.Result.INTERRUPTED);
         }
     }
 
@@ -256,7 +179,7 @@ public class BottomSheetSigninAndHistorySyncCoordinator
             // TODO(crbug.com/41493767): Select added account or sign in once done loading.
         }
         if (mAccountPickerCoordinator == null
-                && mNoAccountSigninMode == NoAccountSigninMode.ADD_ACCOUNT) {
+                && mConfig.noAccountSigninMode == NoAccountSigninMode.ADD_ACCOUNT) {
             // Show the bottom sheet to sign-in & show the sign-in spinner bottom sheet.
             showSigninBottomSheet();
         }
@@ -325,35 +248,57 @@ public class BottomSheetSigninAndHistorySyncCoordinator
 
         mAccountPickerCoordinator.destroy();
         mAccountPickerCoordinator = null;
-        onFlowComplete();
+        onFlowComplete(SigninAndHistorySyncCoordinator.Result.INTERRUPTED);
     }
 
     /** Implements {@link SigninAccountPickerCoordinator.Delegate}. */
     @Override
-    public void setScrimColor(@ColorInt int scrimColor) {
-        // INVALID_COLOR is set at the end of the bottom sheet scrim fade out animation. The status
-        // bar background should then be reset to match the history sync full screen dialog which
-        // may appear next.
-        // In case the history sync dialog is skipped, the activity will finish and the status bar
-        // color change is not shown to the user.
-        if (scrimColor != ScrimProperties.INVALID_COLOR) {
-            mDelegate.setStatusBarColor(scrimColor);
-            return;
+    public void setStatusBarColor(@ColorInt int color) {
+        // INVALID_COLOR is set at the start and end of the bottom sheet scrim fade out animation.
+        // After the scrim fades out, the status bar background needs to be reset to match the
+        // history sync full screen dialog if it's appearing next. In case the history sync dialog
+        // is skipped, the activity will finish and the status bar color change is not shown to the
+        // user.
+        if (color != ScrimProperties.INVALID_COLOR) {
+            mDelegate.setStatusBarColor(color);
+        } else if (mDialogModel != null && mScrimStatusBarColor != ScrimProperties.INVALID_COLOR) {
+            updateStatusBarColorForHistorySync();
         }
-
-        if (mDelegate.isHistorySyncShownFullScreen()) {
-            mDelegate.setStatusBarColor(getHistorySyncBackgroundColor());
-        }
+        mScrimStatusBarColor = color;
     }
 
     /** Implements {@link HistorySyncDelegate} */
     @Override
-    public void dismissHistorySync() {
+    public void dismissHistorySync(boolean isHistorySyncAccepted) {
         if (mHistorySyncCoordinator != null) {
             mHistorySyncCoordinator.destroy();
             mHistorySyncCoordinator = null;
         }
-        onFlowComplete();
+        @SigninAndHistorySyncCoordinator.Result
+        int flowResult =
+                isHistorySyncAccepted
+                        ? SigninAndHistorySyncCoordinator.Result.COMPLETED
+                        : SigninAndHistorySyncCoordinator.Result.INTERRUPTED;
+        onFlowComplete(flowResult);
+    }
+
+    /** Implements {@link HistorySyncDelegate} */
+    @Override
+    public void recordHistorySyncOptIn(int accessPoint, int syncButtonClicked) {
+        switch (syncButtonClicked) {
+            case SyncButtonClicked.HISTORY_SYNC_OPT_IN_EQUAL_WEIGHTED:
+            case SyncButtonClicked.HISTORY_SYNC_OPT_IN_NOT_EQUAL_WEIGHTED:
+                SigninMetricsUtils.logHistorySyncAcceptButtonClicked(
+                        accessPoint, syncButtonClicked);
+                break;
+            case SyncButtonClicked.HISTORY_SYNC_CANCEL_EQUAL_WEIGHTED:
+            case SyncButtonClicked.HISTORY_SYNC_CANCEL_NOT_EQUAL_WEIGHTED:
+                SigninMetricsUtils.logHistorySyncDeclineButtonClicked(
+                        accessPoint, syncButtonClicked);
+                break;
+            default:
+                throw new IllegalStateException("Unrecognized sync button type");
+        }
     }
 
     private void onProfileAvailable(Profile profile) {
@@ -388,7 +333,7 @@ public class BottomSheetSigninAndHistorySyncCoordinator
             return;
         }
 
-        switch (mNoAccountSigninMode) {
+        switch (mConfig.noAccountSigninMode) {
             case NoAccountSigninMode.BOTTOM_SHEET:
                 showSigninBottomSheet();
                 SigninMetricsUtils.logSigninStarted(mSigninAccessPoint);
@@ -400,7 +345,7 @@ public class BottomSheetSigninAndHistorySyncCoordinator
                 break;
             case NoAccountSigninMode.NO_SIGNIN:
                 // TODO(crbug.com/41493768): Implement the error state UI.
-                onFlowComplete();
+                onFlowComplete(SigninAndHistorySyncCoordinator.Result.INTERRUPTED);
                 break;
         }
     }
@@ -409,7 +354,7 @@ public class BottomSheetSigninAndHistorySyncCoordinator
         SigninManager signinManager =
                 IdentityServicesProvider.get().getSigninManager(mProfileSupplier.get());
         @AccountPickerLaunchMode int accountPickerMode = AccountPickerLaunchMode.DEFAULT;
-        switch (mWithAccountSigninMode) {
+        switch (mConfig.withAccountSigninMode) {
             case WithAccountSigninMode.DEFAULT_ACCOUNT_BOTTOM_SHEET:
                 accountPickerMode = AccountPickerLaunchMode.DEFAULT;
                 break;
@@ -425,20 +370,22 @@ public class BottomSheetSigninAndHistorySyncCoordinator
                         this,
                         mDeviceLockActivityLauncher,
                         signinManager,
-                        mBottomSheetStrings,
+                        mConfig.bottomSheetStrings,
                         accountPickerMode,
                         mSigninAccessPoint,
-                        mCoreAccountId);
+                        mConfig.selectedCoreAccountId);
         mDidShowSigninStep = true;
     }
 
     private void maybeShowHistoryOptInDialog() {
         Profile profile = mProfileSupplier.get();
         assert profile != null;
-        if (!shouldShowHistorySync(profile, mHistoryOptInMode)) {
+        if (!SigninAndHistorySyncCoordinator.shouldShowHistorySync(
+                profile, mConfig.historyOptInMode)) {
             HistorySyncHelper historySyncHelper = HistorySyncHelper.getForProfile(profile);
             historySyncHelper.recordHistorySyncNotShown(mSigninAccessPoint);
-            onFlowComplete();
+            // TODO(crbug.com/376469696): Differentiate the failure & completion case here.
+            onFlowComplete(SigninAndHistorySyncCoordinator.Result.COMPLETED);
             return;
         }
         ModalDialogManager manager = mModalDialogManagerSupplier.get();
@@ -463,9 +410,11 @@ public class BottomSheetSigninAndHistorySyncCoordinator
                                             PropertyModel model,
                                             @DialogDismissalCause int dismissalCause) {
                                         if (mHistorySyncCoordinator != null) {
-                                            dismissHistorySync();
+                                            dismissHistorySync(/* isHistorySyncAccepted= */ false);
                                         } else {
-                                            onFlowComplete();
+                                            onFlowComplete(
+                                                    SigninAndHistorySyncCoordinator.Result
+                                                            .INTERRUPTED);
                                         }
                                     }
                                 })
@@ -475,9 +424,11 @@ public class BottomSheetSigninAndHistorySyncCoordinator
                                     @Override
                                     public void handleOnBackPressed() {
                                         if (mHistorySyncCoordinator != null) {
-                                            dismissHistorySync();
+                                            dismissHistorySync(/* isHistorySyncAccepted= */ false);
                                         } else {
-                                            onFlowComplete();
+                                            onFlowComplete(
+                                                    SigninAndHistorySyncCoordinator.Result
+                                                            .INTERRUPTED);
                                         }
                                     }
                                 })
@@ -485,17 +436,25 @@ public class BottomSheetSigninAndHistorySyncCoordinator
 
         createHistorySyncCoordinator(profile);
         showDialogContentView();
+
+        // Updating the status bar color for the history sync view in case animations are disabled
+        // and the dialog model is created after the scrim animation finishes.
+        if (mScrimStatusBarColor == ScrimProperties.INVALID_COLOR) {
+            updateStatusBarColorForHistorySync();
+        }
     }
 
     private void createHistorySyncCoordinator(Profile profile) {
         assert mHistorySyncCoordinator == null;
         boolean shouldSignOutOnDecline =
-                mDidShowSigninStep && mHistoryOptInMode == HistoryOptInMode.REQUIRED;
+                mDidShowSigninStep
+                        && mConfig.historyOptInMode == HistorySyncConfig.OptInMode.REQUIRED;
         mHistorySyncCoordinator =
                 new HistorySyncCoordinator(
                         mActivity,
                         this,
                         profile,
+                        mConfig.historySyncConfig,
                         mSigninAccessPoint,
                         /* showEmailInFooter= */ !mDidShowSigninStep,
                         shouldSignOutOnDecline,
@@ -516,24 +475,17 @@ public class BottomSheetSigninAndHistorySyncCoordinator
                 ModalDialogManager.ModalDialogPriority.VERY_HIGH);
     }
 
-    private static boolean shouldShowHistorySync(
-            Profile profile, @HistoryOptInMode int historyOptInMode) {
-        HistorySyncHelper historySyncHelper = HistorySyncHelper.getForProfile(profile);
-        return switch (historyOptInMode) {
-            case HistoryOptInMode.NONE -> false;
-            case HistoryOptInMode.OPTIONAL -> !historySyncHelper.shouldSuppressHistorySync()
-                    && !historySyncHelper.isDeclinedOften();
-            case HistoryOptInMode.REQUIRED -> !historySyncHelper.shouldSuppressHistorySync();
-            default -> throw new IllegalArgumentException(
-                    "Unexpected value for historyOptInMode :" + historyOptInMode);
-        };
-    }
-
-    private void onFlowComplete() {
-        mDelegate.onFlowComplete();
+    private void onFlowComplete(@SigninAndHistorySyncCoordinator.Result int result) {
+        mDelegate.onFlowComplete(result);
     }
 
     private @ColorInt int getHistorySyncBackgroundColor() {
         return SemanticColorUtils.getDefaultBgColor(mActivity);
+    }
+
+    private void updateStatusBarColorForHistorySync() {
+        if (mDelegate.isHistorySyncShownFullScreen()) {
+            mDelegate.setStatusBarColor(getHistorySyncBackgroundColor());
+        }
     }
 }

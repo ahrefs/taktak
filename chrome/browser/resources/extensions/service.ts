@@ -36,6 +36,9 @@ export interface ServiceInterface extends ActivityLogDelegate,
   getExtensionSize(id: string): Promise<string>;
   dismissSafetyHubExtensionsMenuNotification(): void;
   dismissMv2DeprecationNotice(): void;
+  shouldIgnoreUpdate(
+      extensionId: string,
+      eventType: chrome.developerPrivate.EventType): boolean;
 }
 
 export class Service implements ServiceInterface {
@@ -204,13 +207,26 @@ export class Service implements ServiceInterface {
     chrome.metricsPrivate.recordUserAction(
         isEnabled ? 'Extensions.ExtensionEnabled' :
                     'Extensions.ExtensionDisabled');
-    chrome.management.setEnabled(id, isEnabled);
+    return chrome.management.setEnabled(id, isEnabled)
+        .catch(
+            _ => {
+                // The `setEnabled` call can reasonably fail for a number of
+                // reasons, including that the user chose to deny a re-enable
+                // dialog. Silently ignore these errors.
+            });
   }
 
   setItemAllowedIncognito(id: string, isAllowedIncognito: boolean) {
     chrome.developerPrivate.updateExtensionConfiguration({
       extensionId: id,
       incognitoAccess: isAllowedIncognito,
+    });
+  }
+
+  setItemAllowedUserScripts(id: string, isAllowedUserScripts: boolean) {
+    chrome.developerPrivate.updateExtensionConfiguration({
+      extensionId: id,
+      userScriptsAccess: isAllowedUserScripts,
     });
   }
 
@@ -274,7 +290,7 @@ export class Service implements ServiceInterface {
 
   showItemOptionsPage(extension: chrome.developerPrivate.ExtensionInfo): void {
     assert(extension && extension.optionsPage);
-    if (extension.optionsPage!.openInTab) {
+    if (extension.optionsPage.openInTab) {
       chrome.developerPrivate.showOptions(extension.id);
     } else {
       navigation.navigateTo({
@@ -512,6 +528,10 @@ export class Service implements ServiceInterface {
 
   dismissMv2DeprecationNoticeForExtension(id: string): Promise<void> {
     return chrome.developerPrivate.dismissMv2DeprecationNoticeForExtension(id);
+  }
+
+  uploadItemToAccount(id: string): Promise<void> {
+    return chrome.developerPrivate.uploadExtensionToAccount(id);
   }
 
   static getInstance(): ServiceInterface {

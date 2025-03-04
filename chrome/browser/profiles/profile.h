@@ -121,6 +121,7 @@ class Profile : public content::BrowserContext {
     }
 
     bool AllowsBrowserWindows() const;
+    bool IsDevTools() const;
 
 #if BUILDFLAG(IS_CHROMEOS)
     // Returns true if the OTR Profile was created for captive portal signin.
@@ -430,6 +431,10 @@ class Profile : public content::BrowserContext {
   // Returns whether it is a system profile.
   bool IsSystemProfile() const;
 
+  // Returns true if this OffTheRecord profile was created via the
+  // "createBrowsingContext" Chrome DevTools Protocol command.
+  bool IsDevToolsOTRProfile() const;
+
   bool CanUseDiskWhenOffTheRecord() override;
 
   // Did the user restore the last session? This is set by SessionRestore.
@@ -499,6 +504,9 @@ class Profile : public content::BrowserContext {
     return instant_service_;
   }
 
+  // Returns a debug information in std::string.
+  std::string ToDebugString();
+
 #if BUILDFLAG(IS_ANDROID)
   static Profile* FromJavaObject(const jni_zero::JavaRef<jobject>& obj);
   jni_zero::ScopedJavaLocalRef<jobject> GetJavaObject() const;
@@ -520,8 +528,13 @@ class Profile : public content::BrowserContext {
   // Returns whether the user has signed in this profile to an account.
   virtual bool IsSignedIn() = 0;
 
- protected:
   const std::optional<OTRProfileID> otr_profile_id_;
+
+#if BUILDFLAG(IS_CHROMEOS)
+  // TODO(40233408): Remove this when migration is completed.
+  // True if the guest profile uses BrowserProfileType::kGuest.
+  bool new_guest_profile_impl_;
+#endif
 
  private:
   bool restored_last_session_ = false;

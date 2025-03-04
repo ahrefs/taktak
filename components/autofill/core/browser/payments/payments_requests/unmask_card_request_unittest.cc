@@ -10,15 +10,16 @@
 #include "base/json/json_reader.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/scoped_feature_list.h"
-#include "components/autofill/core/browser/autofill_test_utils.h"
 #include "components/autofill/core/browser/payments/autofill_payments_feature_availability.h"
 #include "components/autofill/core/browser/payments/card_unmask_challenge_option.h"
+#include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "components/strings/grit/components_strings.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/base/l10n/l10n_util.h"
 
 namespace autofill::payments {
+namespace {
 
 // TODO(crbug.com/40241790): Extend tests in this file to all of the possible
 // card unmasking test cases. The cases that are not in this file are currently
@@ -166,7 +167,7 @@ TEST_F(UnmaskCardRequestTest, HasTimeoutWhenFlagSet) {
 class VirtualCardUnmaskCardRequestTest
     : public UnmaskCardRequestTest,
       public testing::WithParamInterface<
-          std::tuple<autofill::CardUnmaskChallengeOptionType, bool>> {
+          std::tuple<CardUnmaskChallengeOptionType, bool>> {
  public:
   VirtualCardUnmaskCardRequestTest() {
     if (IsCvcChallengeOption()) {
@@ -180,8 +181,7 @@ class VirtualCardUnmaskCardRequestTest
   ~VirtualCardUnmaskCardRequestTest() override = default;
 
   bool IsCvcChallengeOption() {
-    return std::get<0>(GetParam()) ==
-           autofill::CardUnmaskChallengeOptionType::kCvc;
+    return std::get<0>(GetParam()) == CardUnmaskChallengeOptionType::kCvc;
   }
 
   bool IsAutofillEnable3dsForVcnYellowPathTurnedOn() {
@@ -396,8 +396,65 @@ TEST_P(VirtualCardUnmaskCardRequestTest, IsRetryableFailure) {
 INSTANTIATE_TEST_SUITE_P(
     ,
     VirtualCardUnmaskCardRequestTest,
-    testing::Combine(
-        testing::Values(autofill::CardUnmaskChallengeOptionType::kCvc),
-        testing::Bool()));
+    testing::Combine(testing::Values(CardUnmaskChallengeOptionType::kCvc),
+                     testing::Bool()));
 
+class CardInfoRetrievalUnmaskCardRequestTest : public UnmaskCardRequestTest {
+ public:
+  CardInfoRetrievalUnmaskCardRequestTest() {
+    SetUpCardInfoRetrievalUnmaskCardRequestTest();
+  }
+  CardInfoRetrievalUnmaskCardRequestTest(
+      const CardInfoRetrievalUnmaskCardRequestTest&) = delete;
+  CardInfoRetrievalUnmaskCardRequestTest& operator=(
+      const CardInfoRetrievalUnmaskCardRequestTest&) = delete;
+  ~CardInfoRetrievalUnmaskCardRequestTest() override = default;
+
+  // Sets up `request_` specifically for the Card Info Retrieval Request test
+  // case.
+  void SetUpCardInfoRetrievalUnmaskCardRequestTest() {
+    UnmaskRequestDetails request_details;
+    request_details.billing_customer_number = 111222333444;
+    request_details.card =
+        test::GetMaskedServerCardEnrolledIntoRuntimeRetrieval();
+    request_details.card.set_server_id("test server id");
+    request_details.user_response.exp_month =
+        base::UTF8ToUTF16(test::NextMonth());
+    request_details.user_response.exp_year =
+        base::UTF8ToUTF16(test::NextYear());
+    request_details.user_response.cvc = u"123";
+    request_details.risk_data = "some risk data";
+    request_details.last_committed_primary_main_frame_origin =
+        GURL("https://example.com/");
+    request_details.context_token = "fake context token";
+    request_ = std::make_unique<UnmaskCardRequest>(
+        request_details, /*full_sync_enabled=*/true,
+        /*callback=*/base::DoNothing());
+  }
+};
+
+TEST_F(CardInfoRetrievalUnmaskCardRequestTest, GetRequestContent) {
+  EXPECT_EQ(GetRequest()->GetRequestUrlPath(),
+            "payments/apis-secure/creditcardservice/"
+            "getrealpan?s7e_suffix=chromewallet");
+  ASSERT_TRUE(!GetRequest()->GetRequestContentType().empty());
+  EXPECT_TRUE(IsIncludedInRequestContent("customer_context"));
+  EXPECT_TRUE(IsIncludedInRequestContent("credit_card_id"));
+  EXPECT_TRUE(IsIncludedInRequestContent("risk_data_encoded"));
+  EXPECT_TRUE(IsIncludedInRequestContent("billable_service"));
+  EXPECT_TRUE(IsIncludedInRequestContent("full_sync_enabled"));
+  EXPECT_TRUE(IsIncludedInRequestContent("chrome_user_context"));
+  EXPECT_TRUE(IsIncludedInRequestContent("context_token"));
+  EXPECT_TRUE(IsIncludedInRequestContent("expiration_month"));
+  EXPECT_TRUE(IsIncludedInRequestContent("expiration_year"));
+  EXPECT_TRUE(IsIncludedInRequestContent("opt_in_fido_auth"));
+  EXPECT_TRUE(IsIncludedInRequestContent("encrypted_cvc"));
+  EXPECT_TRUE(IsIncludedInRequestContent("&s7e_13_cvc=123"));
+  EXPECT_FALSE(IsIncludedInRequestContent("client_behavior_signals"));
+  EXPECT_TRUE(IsIncludedInRequestContent("card_retrieval_request_info"));
+  EXPECT_TRUE(IsIncludedInRequestContent("merchant_domain"));
+  EXPECT_TRUE(IsIncludedInRequestContent("https://example.com/"));
+}
+
+}  // namespace
 }  // namespace autofill::payments

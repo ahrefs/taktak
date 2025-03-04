@@ -8,7 +8,7 @@
 
 #include "ash/constants/ash_pref_names.h"
 #include "ash/constants/notifier_catalogs.h"
-#include "ash/focus_cycler.h"
+#include "ash/focus/focus_cycler.h"
 #include "ash/login/security_token_request_controller.h"
 #include "ash/login/ui/lock_screen.h"
 #include "ash/login/ui/login_data_dispatcher.h"
@@ -231,13 +231,6 @@ void LoginScreenController::OnMaxIncorrectPasswordAttempted(
     return;
   }
   client_->OnMaxIncorrectPasswordAttempted(account_id);
-}
-
-void LoginScreenController::FocusLockScreenApps(bool reverse) {
-  if (!client_) {
-    return;
-  }
-  client_->FocusLockScreenApps(reverse);
 }
 
 void LoginScreenController::ShowGaiaSignin(const AccountId& prefilled_account) {

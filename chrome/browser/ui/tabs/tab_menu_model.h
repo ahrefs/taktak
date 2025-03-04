@@ -7,7 +7,7 @@
 
 #include "base/memory/raw_ptr.h"
 #include "ui/base/interaction/element_identifier.h"
-#include "ui/base/models/simple_menu_model.h"
+#include "ui/menus/simple_menu_model.h"
 
 class TabStripModel;
 class TabMenuModelDelegate;
@@ -23,6 +23,7 @@ class TabMenuModelDelegate;
 // likely having to expand it later on:
 //   ExistingTabGroupSubMenuModel
 //   ExistingWindowSubMenuModel
+//   ExistingComparisonTableSubMenuModel
 class TabMenuModel : public ui::SimpleMenuModel {
  public:
   DECLARE_CLASS_ELEMENT_IDENTIFIER_VALUE(kAddANoteTabMenuItem);
@@ -43,6 +44,8 @@ class TabMenuModel : public ui::SimpleMenuModel {
 
   std::unique_ptr<ui::SimpleMenuModel> add_to_existing_group_submenu_;
   std::unique_ptr<ui::SimpleMenuModel> add_to_existing_window_submenu_;
+  std::unique_ptr<ui::SimpleMenuModel>
+      add_to_existing_comparison_table_submenu_;
 
   raw_ptr<TabMenuModelDelegate> tab_menu_model_delegate_;
 };

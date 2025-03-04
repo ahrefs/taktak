@@ -20,23 +20,24 @@
 #import "base/task/thread_pool/thread_pool_instance.h"
 #import "base/test/ios/wait_util.h"
 #import "base/test/scoped_feature_list.h"
-#import "components/autofill/core/browser/browser_autofill_manager.h"
+#import "components/autofill/core/browser/foundations/browser_autofill_manager.h"
+#import "components/autofill/core/browser/foundations/test_autofill_manager_waiter.h"
 #import "components/autofill/core/browser/heuristic_source.h"
-#import "components/autofill/core/browser/test_autofill_manager_waiter.h"
 #import "components/autofill/core/common/autofill_features.h"
 #import "components/autofill/core/common/autofill_payments_features.h"
+#import "components/autofill/core/common/autofill_test_utils.h"
 #import "components/autofill/core/common/unique_ids.h"
 #import "components/autofill/ios/browser/autofill_agent.h"
 #import "components/autofill/ios/browser/autofill_driver_ios.h"
 #import "components/autofill/ios/browser/autofill_driver_ios_factory.h"
 #import "components/autofill/ios/browser/autofill_util.h"
+#import "components/autofill/ios/browser/test_autofill_client_ios.h"
 #import "components/autofill/ios/browser/test_autofill_manager_injector.h"
 #import "components/password_manager/core/browser/password_manager_test_utils.h"
 #import "components/password_manager/core/browser/password_store/mock_password_store_interface.h"
 #import "components/sync_user_events/fake_user_event_service.h"
 #import "ios/chrome/browser/autofill/model/address_normalizer_factory.h"
 #import "ios/chrome/browser/autofill/model/form_suggestion_controller.h"
-#import "ios/chrome/browser/autofill/ui_bundled/chrome_autofill_client_ios.h"
 #import "ios/chrome/browser/infobars/model/infobar_manager_impl.h"
 #import "ios/chrome/browser/passwords/model/ios_chrome_profile_password_store_factory.h"
 #import "ios/chrome/browser/passwords/model/password_controller.h"
@@ -85,6 +86,7 @@ base::FilePath GetIOSInputDirectory() {
       .AppendASCII("input");
 }
 
+#if !BUILDFLAG(USE_INTERNAL_AUTOFILL_PATTERNS)
 base::FilePath GetIOSOutputDirectory() {
   base::FilePath dir;
   CHECK(base::PathService::Get(base::DIR_SRC_TEST_DATA_ROOT, &dir));
@@ -96,6 +98,7 @@ base::FilePath GetIOSOutputDirectory() {
       .Append(kTestName)
       .AppendASCII("output");
 }
+#endif
 
 const std::vector<base::FilePath> GetTestFiles() {
   base::FilePath dir(GetIOSInputDirectory());
@@ -129,18 +132,10 @@ class FormStructureBrowserTest
   FormStructureBrowserTest& operator=(const FormStructureBrowserTest&) = delete;
 
  protected:
-  class TestAutofillClient : public ChromeAutofillClientIOS {
-   public:
-    using ChromeAutofillClientIOS::ChromeAutofillClientIOS;
-    AutofillCrowdsourcingManager* GetCrowdsourcingManager() override {
-      return nullptr;
-    }
-  };
-
   class TestAutofillManager : public BrowserAutofillManager {
    public:
     explicit TestAutofillManager(AutofillDriverIOS* driver)
-        : BrowserAutofillManager(driver, "en-US") {}
+        : BrowserAutofillManager(driver) {}
 
     TestAutofillManagerWaiter& waiter() { return waiter_; }
 
@@ -169,9 +164,11 @@ class FormStructureBrowserTest
   IOSChromeScopedTestingLocalState scoped_testing_local_state_;
   web::ScopedTestingWebClient web_client_;
   web::WebTaskEnvironment task_environment_;
+  autofill::test::AutofillUnitTestEnvironment autofill_test_environment_{
+      {.disable_server_communication = true}};
   std::unique_ptr<TestProfileIOS> profile_;
   std::unique_ptr<web::WebState> web_state_;
-  std::unique_ptr<TestAutofillClient> autofill_client_;
+  std::unique_ptr<AutofillClient> autofill_client_;
   AutofillAgent* autofill_agent_;
   std::unique_ptr<TestAutofillManagerInjector<TestAutofillManager>>
       autofill_manager_injector_;
@@ -208,25 +205,15 @@ FormStructureBrowserTest::FormStructureBrowserTest()
           features::kAutofillEnableSupportForParsingWithSharedLabels,
           features::kAutofillPageLanguageDetection,
           features::kAutofillFixValueSemantics,
-          // TODO(crbug.com/40220393): Remove once launched.
-          features::kAutofillEnableSupportForPhoneNumberTrunkTypes,
-          features::kAutofillInferCountryCallingCode,
           // TODO(crbug.com/40266396): Remove once launched.
           features::kAutofillEnableExpirationDateImprovements,
       },
       // Disabled
       {
-          // TODO(crbug.com/40220393): Remove once launched.
-          // This feature is part of the AutofillRefinedPhoneNumberTypes
-          // rollout. As it is not supported on iOS yet, it is disabled.
-          features::kAutofillConsiderPhoneNumberSeparatorsValidLabels,
-          // TODO(crbug.com/40222716): Remove once launched. This feature is
-          // disabled since it is not supported on iOS.
-          features::kAutofillAlwaysParsePlaceholders,
-          // TODO(crbug.com/40285735): Remove when/if launched. This feature
-          // changes default parsing behavior, so must be disabled to avoid
-          // fieldtrial_testing_config interference.
-          features::kAutofillEnableEmailHeuristicOnlyAddressForms,
+          // TODO(crbug.com/320965828): This feature is not supported on the iOS
+          // renderer side and disabled to avoid too many differences between
+          // the expectations.
+          features::kAutofillBetterLocalHeuristicPlaceholderSupport,
       });
 }
 
@@ -250,14 +237,8 @@ void FormStructureBrowserTest::SetUp() {
                                                providers:@[ autofill_agent_ ]];
 
   InfoBarManagerImpl::CreateForWebState(web_state());
-  infobars::InfoBarManager* infobar_manager =
-      InfoBarManagerImpl::FromWebState(web_state());
-  autofill_client_ = std::make_unique<TestAutofillClient>(
-      profile_.get(), web_state(), infobar_manager, autofill_agent_);
-
-  std::string locale("en");
-  autofill::AutofillDriverIOSFactory::CreateForWebState(
-      web_state(), autofill_client_.get(), /*autofill_agent=*/nil, locale);
+  autofill_client_ =
+      std::make_unique<TestAutofillClientIOS>(web_state(), autofill_agent_);
 
   autofill_manager_injector_ =
       std::make_unique<TestAutofillManagerInjector<TestAutofillManager>>(
@@ -351,6 +332,7 @@ std::string FormStructureBrowserTest::FormStructuresToString(
 
 namespace {
 
+#if !BUILDFLAG(USE_INTERNAL_AUTOFILL_PATTERNS)
 // To disable a data driven test, please add the name of the test file
 // (i.e., "NNN_some_site.html") as a literal to the initializer_list given
 // to the failing_test_names constructor.
@@ -369,6 +351,16 @@ const auto& GetFailingTestNames() {
       "115_checkout_walgreens.com.html",
       "116_cc_checkout_walgreens.com.html",
       "150_checkout_venus.com_search_field.html",
+      // TODO(crbug.com/320965828): Infering labels from default options of
+      // <select> elements is not implemented on iOS.
+      "040_checkout_urbanoutfitters.com.html",
+      "061_register_myspace.com.html",
+      "105_checkout_m_lowes.com.html",
+      "106_checkout_m_amazon.com.html",
+      "109_checkout_m_nordstroms.com.html",
+      "112_checkout_m_llbean.com.html",
+      "132_bug_469012.html",
+      "144_cc_checkout_m_jcp.com.html",
       // TODO(crbug.com/360322019): Even though the page language detection
       // feature is enabled, is it not triggered properly for this test on iOS.
       "153_fmm-en_inm.gob.mx.html",
@@ -376,6 +368,7 @@ const auto& GetFailingTestNames() {
   };
   return failing_test_names;
 }
+#endif
 
 }  // namespace
 
@@ -383,16 +376,15 @@ const auto& GetFailingTestNames() {
 // to GetFailingTestNames(), directly above, instead of renaming the test to
 // DISABLED_DataDrivenHeuristics.
 TEST_P(FormStructureBrowserTest, DataDrivenHeuristics) {
-#if !BUILDFLAG(USE_INTERNAL_AUTOFILL_PATTERNS)
-  if (GetActiveHeuristicSource() != HeuristicSource::kLegacyRegexes) {
-    GTEST_SKIP() << "DataDrivenHeuristics tests are only supported with legacy "
-                    "parsing patterns";
-  }
-#endif
+#if BUILDFLAG(USE_INTERNAL_AUTOFILL_PATTERNS)
+  GTEST_SKIP() << "DataDrivenHeuristics tests are only supported with legacy "
+                  "parsing patterns";
+#else
   bool is_expected_to_pass =
       !base::Contains(GetFailingTestNames(), GetParam().BaseName().value());
   RunOneDataDrivenTest(GetParam(), GetIOSOutputDirectory(),
                        is_expected_to_pass);
+#endif
 }
 
 INSTANTIATE_TEST_SUITE_P(AllForms,

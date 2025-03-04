@@ -250,14 +250,6 @@ class GPU_IPC_SERVICE_EXPORT CommandBufferStub
 
   bool MakeCurrent();
 
-  bool offscreen() const {
-#if BUILDFLAG(IS_ANDROID)
-    return offscreen_;
-#else
-    return true;
-#endif
-  }
-
   // The lifetime of objects of this class is managed by a GpuChannel. The
   // GpuChannels destroy all the CommandBufferStubs that they own when
   // they are destroyed. So a raw pointer is safe.
@@ -265,11 +257,9 @@ class GPU_IPC_SERVICE_EXPORT CommandBufferStub
 
   ContextType context_type_;
   ContextUrl active_url_;
+  std::string context_label_;
 
   bool initialized_;
-#if BUILDFLAG(IS_ANDROID)
-  const bool offscreen_;
-#endif
   bool use_virtualized_gl_context_;
 
   std::unique_ptr<CommandBufferService> command_buffer_;

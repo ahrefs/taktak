@@ -53,17 +53,18 @@ class CheckFileSystemAccessWriteRequest
       const std::string& token,
       const ClientDownloadResponse::Verdict& verdict,
       const ClientDownloadResponse::TailoredVerdict& tailored_verdict) override;
+#if !BUILDFLAG(IS_ANDROID)
   void MaybeBeginFeedbackForDownload(DownloadCheckResult result,
                                      bool upload_requested,
                                      const std::string& request_data,
                                      const std::string& response_body) override;
+#endif
   std::optional<enterprise_connectors::AnalysisSettings> ShouldUploadBinary(
       DownloadCheckResultReason reason) override;
   void UploadBinary(DownloadCheckResult result,
                     DownloadCheckResultReason reason,
                     enterprise_connectors::AnalysisSettings settings) override;
-  bool ShouldImmediatelyDeepScan(bool server_requests_prompt,
-                                 bool log_metrics) const override;
+  bool ShouldImmediatelyDeepScan(bool server_requests_prompt) const override;
   bool ShouldPromptForDeepScanning(bool server_requests_prompt) const override;
   bool ShouldPromptForLocalDecryption(
       bool server_requests_prompt) const override;

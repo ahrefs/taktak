@@ -14,7 +14,6 @@ import type {PropertyValues} from 'chrome://resources/lit/v3_0/lit.rollup.js';
 import type {SkColor} from 'chrome://resources/mojo/skia/public/mojom/skcolor.mojom-webui.js';
 import type {Url} from 'chrome://resources/mojo/url/mojom/url.mojom-webui.js';
 
-import {loadTimeData} from './i18n_setup.js';
 import type {IframeElement} from './iframe.js';
 import {getCss} from './logo.css.js';
 import {getHtml} from './logo.html.js';
@@ -80,11 +79,6 @@ export class LogoElement extends CrLitElement {
       expanded_: {type: Boolean},
       showShareDialog_: {type: Boolean},
       imageDoodleTabIndex_: {type: Number},
-
-      reducedLogoSpaceEnabled_: {
-        type: Boolean,
-        reflect: true,
-      },
     };
   }
 
@@ -107,8 +101,6 @@ export class LogoElement extends CrLitElement {
   protected expanded_: boolean;
   protected showShareDialog_: boolean;
   protected imageDoodleTabIndex_: number;
-  protected reducedLogoSpaceEnabled_: boolean =
-      loadTimeData.getBoolean('reducedLogoSpaceEnabled');
 
   private eventTracker_: EventTracker = new EventTracker();
   private pageHandler_: PageHandlerRemote;
@@ -266,7 +258,7 @@ export class LogoElement extends CrLitElement {
         this.showAnimation_ ? DoodleImageType.kAnimation :
                               DoodleImageType.kStatic,
         null);
-    const onClickUrl = new URL(this.doodle_!.image!.onClickUrl!.url);
+    const onClickUrl = new URL(this.doodle_!.image!.onClickUrl.url);
     if (this.imageClickParams_) {
       for (const param of new URLSearchParams(this.imageClickParams_)) {
         onClickUrl.searchParams.append(param[0], param[1]);

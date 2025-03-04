@@ -8,13 +8,13 @@
 #import "components/content_settings/core/common/features.h"
 #import "components/strings/grit/components_strings.h"
 #import "ios/chrome/browser/drag_and_drop/model/url_drag_drop_handler.h"
+#import "ios/chrome/browser/ntp/ui_bundled/incognito/incognito_view_util.h"
+#import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_url_loader_delegate.h"
 #import "ios/chrome/browser/shared/ui/symbols/symbols.h"
 #import "ios/chrome/browser/shared/ui/util/rtl_geometry.h"
 #import "ios/chrome/browser/shared/ui/util/uikit_ui_util.h"
-#import "ios/chrome/browser/ntp/ui_bundled/incognito/incognito_view_util.h"
-#import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_url_loader_delegate.h"
-#import "ios/chrome/browser/ui/toolbar/public/toolbar_constants.h"
-#import "ios/chrome/browser/ui/toolbar/public/toolbar_utils.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/public/toolbar_constants.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/public/toolbar_utils.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_params.h"
 #import "ios/chrome/common/string_util.h"
 #import "ios/chrome/common/ui/colors/semantic_color_names.h"
@@ -277,8 +277,9 @@ NSAttributedString* FormatHTMLListForUILabel(NSString* listString) {
     ApplyVisualConstraints(constraints, viewsDictionary);
 
     if (@available(iOS 17, *)) {
-      NSArray<UITrait>* traits = TraitCollectionSetForTraits(
-          @[ UITraitVerticalSizeClass.self, UITraitHorizontalSizeClass.self ]);
+      NSArray<UITrait>* traits = TraitCollectionSetForTraits(@[
+        UITraitVerticalSizeClass.class, UITraitHorizontalSizeClass.class
+      ]);
       [self registerForTraitChanges:traits
                          withAction:@selector(updateToolbarMargins)];
     }

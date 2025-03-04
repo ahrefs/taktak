@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("//mojo/public/tools/bindings/mojom.gni")
+import("//pdf/features.gni")
 
 assert(!is_android && !is_fuchsia)
 
@@ -35,6 +36,7 @@ source_set("whats_new") {
       "//chrome/browser:browser_process",
       "//chrome/browser/ui/webui/whats_new:mojo_bindings",
       "//chrome/common:constants",
+      "//components/lens:features",
       "//components/prefs",
       "//components/user_education/webui",
       "//content/public/browser",
@@ -57,11 +59,16 @@ source_set("impl") {
     "//chrome/browser/ui:ui_features",
     "//chrome/common",
     "//chrome/common:version_header",
+    "//components/performance_manager",
     "//components/prefs",
     "//net",
     "//ui/base:features",
     "//url",
   ]
+
+  if (enable_pdf) {
+    deps += [ "//pdf:features" ]
+  }
 
   if (is_win || is_mac || is_linux) {
     sources += [
@@ -76,12 +83,12 @@ source_set("impl") {
       "//chrome/browser/resources/whats_new:resources",
       "//chrome/browser/ui:browser_list",
       "//chrome/browser/ui/hats",
-      "//chrome/browser/ui/webui:webui_util",
       "//chrome/common:version_header",
       "//components/bookmarks/common",
       "//components/history_embeddings",
       "//components/user_education/common",
       "//components/variations/service",
+      "//ui/webui",
     ]
   }
 }
@@ -93,7 +100,6 @@ if (is_linux || is_mac || is_win) {
       "whats_new_handler_unittest.cc",
       "whats_new_registrar_unittest.cc",
       "whats_new_storage_service_impl_unittest.cc",
-      "whats_new_util_unittest.cc",
     ]
     deps = [
       ":mojo_bindings",
@@ -111,6 +117,7 @@ if (is_linux || is_mac || is_win) {
       "//components/feature_engagement/public",
       "//components/user_education/common",
       "//components/user_education/webui",
+      "//components/user_education/webui:test_support",
       "//content/test:test_support",
       "//mojo/public/cpp/bindings",
       "//testing/gmock",

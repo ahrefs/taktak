@@ -14,6 +14,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.robolectric.Shadows.shadowOf;
@@ -34,18 +35,20 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
-import org.chromium.base.FeatureList;
+import org.chromium.base.FakeTimeTestRule;
+import org.chromium.base.FeatureOverrides;
 import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.Features;
 import org.chromium.base.test.util.HistogramWatcher;
 import org.chromium.chrome.browser.lifecycle.ActivityLifecycleDispatcher;
+import org.chromium.chrome.browser.lifecycle.PauseResumeWithNativeObserver;
 import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
 import org.chromium.chrome.browser.search_engines.choice_screen.ChoiceDialogCoordinator.DialogSuppressionStatus;
 import org.chromium.chrome.browser.search_engines.choice_screen.ChoiceDialogMediator.DialogType;
+import org.chromium.chrome.browser.search_engines.choice_screen.ChoiceDialogMediator.LaunchChoiceScreenTapHandlingStatus;
 import org.chromium.components.search_engines.SearchEngineChoiceService;
 import org.chromium.components.search_engines.SearchEnginesFeatures;
-import org.chromium.components.search_engines.test.util.SearchEnginesFeaturesTestUtil;
 import org.chromium.ui.modaldialog.DialogDismissalCause;
 import org.chromium.ui.modaldialog.ModalDialogManager;
 import org.chromium.ui.modaldialog.ModalDialogManager.ModalDialogManagerObserver;
@@ -55,12 +58,12 @@ import org.chromium.ui.modaldialog.ModalDialogProperties;
 import org.chromium.ui.modelutil.PropertyModel;
 
 import java.time.Duration;
-import java.util.Map;
 
 @RunWith(BaseRobolectricTestRunner.class)
 @Features.EnableFeatures({SearchEnginesFeatures.CLAY_BLOCKING})
 public class ChoiceDialogCoordinatorUnitTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+    public @Rule FakeTimeTestRule mFakeTimeRule = new FakeTimeTestRule();
 
     private @Mock Context mContext;
     private @Mock ChoiceDialogCoordinator.ViewHolder mViewHolder;
@@ -68,6 +71,7 @@ public class ChoiceDialogCoordinatorUnitTest {
     private @Mock ActivityLifecycleDispatcher mLifecycleDispatcher;
     private @Mock SearchEngineChoiceService mSearchEngineChoiceService;
     private @Captor ArgumentCaptor<PropertyModel> mModelCaptor;
+    private @Captor ArgumentCaptor<PauseResumeWithNativeObserver> mLifecycleObserverCaptor;
 
     @Before
     public void setUp() {
@@ -77,6 +81,12 @@ public class ChoiceDialogCoordinatorUnitTest {
 
     @Test
     public void testMaybeShow() {
+        // For code coverage.
+        FeatureOverrides.newBuilder()
+                .enable(SearchEnginesFeatures.CLAY_BLOCKING)
+                .param("enable_verbose_logging", true)
+                .apply();
+
         var histogramWatcher =
                 HistogramWatcher.newBuilder()
                         .expectIntRecord("Search.OsDefaultsChoice.DialogShownAttempt", 1)
@@ -145,8 +155,10 @@ public class ChoiceDialogCoordinatorUnitTest {
 
     @Test
     public void testMaybeShow_doesNotShowInDarkLaunchMode() {
-        SearchEnginesFeaturesTestUtil.configureClayBlockingFeatureParams(
-                Map.of("is_dark_launch", "true"));
+        FeatureOverrides.newBuilder()
+                .enable(SearchEnginesFeatures.CLAY_BLOCKING)
+                .param("is_dark_launch", true)
+                .apply();
 
         var histogramWatcher =
                 HistogramWatcher.newBuilder()
@@ -176,8 +188,10 @@ public class ChoiceDialogCoordinatorUnitTest {
 
     @Test
     public void testMaybeShow_doesNotShowEscapeHatch() {
-        SearchEnginesFeaturesTestUtil.configureClayBlockingFeatureParams(
-                Map.of("escape_hatch_block_limit", "1"));
+        FeatureOverrides.newBuilder()
+                .enable(SearchEnginesFeatures.CLAY_BLOCKING)
+                .param("escape_hatch_block_limit", 1)
+                .apply();
         var shouldShowSupplier = new ObservableSupplierImpl<>(true);
         doReturn(shouldShowSupplier)
                 .when(mSearchEngineChoiceService)
@@ -245,8 +259,10 @@ public class ChoiceDialogCoordinatorUnitTest {
 
     @Test
     public void testMaybeShow_showsAndBlocksAfterDelayedApproval() {
-        SearchEnginesFeaturesTestUtil.configureClayBlockingFeatureParams(
-                Map.of("silent_pending_duration_millis", "24"));
+        FeatureOverrides.newBuilder()
+                .enable(SearchEnginesFeatures.CLAY_BLOCKING)
+                .param("silent_pending_duration_millis", 24)
+                .apply();
 
         var pendingSupplier = new ObservableSupplierImpl<Boolean>(null);
         doReturn(pendingSupplier)
@@ -300,8 +316,10 @@ public class ChoiceDialogCoordinatorUnitTest {
 
     @Test
     public void testMaybeShow_showsAndUnblocksAfterDelayedDisapproval() {
-        SearchEnginesFeaturesTestUtil.configureClayBlockingFeatureParams(
-                Map.of("silent_pending_duration_millis", "24"));
+        FeatureOverrides.newBuilder()
+                .enable(SearchEnginesFeatures.CLAY_BLOCKING)
+                .param("silent_pending_duration_millis", 24)
+                .apply();
 
         var pendingSupplier = new ObservableSupplierImpl<Boolean>(null);
         doReturn(pendingSupplier)
@@ -401,18 +419,11 @@ public class ChoiceDialogCoordinatorUnitTest {
     public void testMaybeShow_dismissesDialogAfterTimeout() {
         int timeoutDuration = 24_000;
         int silentPendingDuration = 1_000;
-
-        var testFeatures = new FeatureList.TestValues();
-        testFeatures.addFeatureFlagOverride(SearchEnginesFeatures.CLAY_BLOCKING, true);
-        testFeatures.addFieldTrialParamOverride(
-                SearchEnginesFeatures.CLAY_BLOCKING,
-                "dialog_timeout_millis",
-                Long.toString(timeoutDuration));
-        testFeatures.addFieldTrialParamOverride(
-                SearchEnginesFeatures.CLAY_BLOCKING,
-                "silent_pending_duration_millis",
-                Long.toString(silentPendingDuration));
-        FeatureList.setTestValues(testFeatures);
+        FeatureOverrides.newBuilder()
+                .enable(SearchEnginesFeatures.CLAY_BLOCKING)
+                .param("dialog_timeout_millis", timeoutDuration)
+                .param("silent_pending_duration_millis", silentPendingDuration)
+                .apply();
 
         var pendingSupplier = new ObservableSupplierImpl<>();
         doReturn(pendingSupplier)
@@ -442,6 +453,120 @@ public class ChoiceDialogCoordinatorUnitTest {
         verify(mModalDialogManager).dismissDialog(any(), eq(DialogDismissalCause.UNKNOWN));
         verify(mSearchEngineChoiceService, never()).notifyDeviceChoiceBlockCleared();
         assertFalse(pendingSupplier.hasObservers()); // The dialog stopped observing.
+    }
+
+    @Test
+    public void testLaunchChoiceScreen_isDebounced() {
+        doReturn(new ObservableSupplierImpl<>(true))
+                .when(mSearchEngineChoiceService)
+                .getIsDeviceChoiceRequiredSupplier();
+        doReturn(true).when(mSearchEngineChoiceService).isDeviceChoiceDialogEligible();
+
+        assertTrue(ChoiceDialogCoordinator.maybeShowInternal(this::createCoordinatorWithMocks));
+        shadowOf(Looper.getMainLooper()).idle();
+        verify(mModalDialogManager)
+                .showDialog(
+                        mModelCaptor.capture(),
+                        eq(ModalDialogType.APP),
+                        eq(ModalDialogPriority.VERY_HIGH));
+        verify(mLifecycleDispatcher).register(mLifecycleObserverCaptor.capture());
+        verify(mViewHolder).updateViewForType(eq(DialogType.CHOICE_LAUNCH));
+
+        PropertyModel model = mModelCaptor.getValue();
+        ModalDialogProperties.Controller controller = model.get(ModalDialogProperties.CONTROLLER);
+
+        try (var histogramWatcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        "Search.OsDefaultsChoice.LaunchChoiceScreenTapHandlingStatus",
+                        LaunchChoiceScreenTapHandlingStatus.INITIAL_TAP)) {
+            controller.onClick(model, ModalDialogProperties.ButtonType.POSITIVE);
+
+            // First call to trigger the choice screen
+            verify(mSearchEngineChoiceService, times(1)).launchDeviceChoiceScreens();
+        }
+
+        try (var histogramWatcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        "Search.OsDefaultsChoice.LaunchChoiceScreenTapHandlingStatus",
+                        LaunchChoiceScreenTapHandlingStatus.SUPPRESSED_TAP)) {
+            controller.onClick(model, ModalDialogProperties.ButtonType.POSITIVE);
+
+            // No additional call
+            verify(mSearchEngineChoiceService, times(1)).launchDeviceChoiceScreens();
+        }
+
+        mFakeTimeRule.advanceMillis(ChoiceDialogMediator.DEBOUNCE_TIME_MILLIS + 1);
+
+        try (var histogramWatcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        "Search.OsDefaultsChoice.LaunchChoiceScreenTapHandlingStatus",
+                        LaunchChoiceScreenTapHandlingStatus.REPEATED_TAP)) {
+            controller.onClick(model, ModalDialogProperties.ButtonType.POSITIVE);
+
+            // Second call
+            verify(mSearchEngineChoiceService, times(2)).launchDeviceChoiceScreens();
+        }
+
+        try (var histogramWatcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        "Search.OsDefaultsChoice.LaunchChoiceScreenTapHandlingStatus",
+                        LaunchChoiceScreenTapHandlingStatus.SUPPRESSED_TAP)) {
+            controller.onClick(model, ModalDialogProperties.ButtonType.POSITIVE);
+
+            // No additional call
+            verify(mSearchEngineChoiceService, times(2)).launchDeviceChoiceScreens();
+        }
+    }
+
+    @Test
+    public void testLaunchChoiceScreen_pauseResumeRearmsDelay() {
+        doReturn(new ObservableSupplierImpl<>(true))
+                .when(mSearchEngineChoiceService)
+                .getIsDeviceChoiceRequiredSupplier();
+        doReturn(true).when(mSearchEngineChoiceService).isDeviceChoiceDialogEligible();
+
+        assertTrue(ChoiceDialogCoordinator.maybeShowInternal(this::createCoordinatorWithMocks));
+        shadowOf(Looper.getMainLooper()).idle();
+        verify(mModalDialogManager)
+                .showDialog(
+                        mModelCaptor.capture(),
+                        eq(ModalDialogType.APP),
+                        eq(ModalDialogPriority.VERY_HIGH));
+        verify(mLifecycleDispatcher).register(mLifecycleObserverCaptor.capture());
+        verify(mViewHolder).updateViewForType(eq(DialogType.CHOICE_LAUNCH));
+
+        PropertyModel model = mModelCaptor.getValue();
+        ModalDialogProperties.Controller controller = model.get(ModalDialogProperties.CONTROLLER);
+
+        try (var histogramWatcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        "Search.OsDefaultsChoice.LaunchChoiceScreenTapHandlingStatus",
+                        LaunchChoiceScreenTapHandlingStatus.INITIAL_TAP)) {
+            controller.onClick(model, ModalDialogProperties.ButtonType.POSITIVE);
+
+            // Call goes through
+            verify(mSearchEngineChoiceService, times(1)).launchDeviceChoiceScreens();
+        }
+
+        // Simulate the app being paused, which should trigger a recording of the delay.
+        try (var histogramWatcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        "Search.OsDefaultsChoice.LaunchChoiceScreenDelay")) {
+            mLifecycleObserverCaptor.getValue().onPauseWithNative();
+        }
+
+        // Clicking after this should lead to the action being processed normally instead of
+        // debounced.
+        mLifecycleObserverCaptor.getValue().onResumeWithNative();
+        try (var histogramWatcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        "Search.OsDefaultsChoice.LaunchChoiceScreenTapHandlingStatus",
+                        LaunchChoiceScreenTapHandlingStatus.INITIAL_TAP)) {
+            controller.onClick(model, ModalDialogProperties.ButtonType.POSITIVE);
+
+            // Calling is possible again.
+            verify(mSearchEngineChoiceService, times(2)).launchDeviceChoiceScreens();
+        }
     }
 
     private ChoiceDialogCoordinator createCoordinatorWithMocks(

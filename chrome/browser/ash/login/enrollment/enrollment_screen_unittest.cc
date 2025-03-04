@@ -44,6 +44,7 @@
 #include "chromeos/ash/components/system/fake_statistics_provider.h"
 #include "components/policy/core/common/cloud/cloud_policy_constants.h"
 #include "components/prefs/testing_pref_service.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace ash {
@@ -52,7 +53,7 @@ constexpr char kTestDomain[] = "test.org";
 constexpr char kTestAuthCode[] = "test_auth_code";
 constexpr char kTestDeviceId[] = "test_device_id";
 constexpr char kTestUserEmail[] = "user@test.org";
-constexpr char kTestUserGaiaId[] = "test_user_gaia_id";
+constexpr GaiaId::Literal kTestUserGaiaId("test_user_gaia_id");
 constexpr char kTestUserPassword[] = "test_password";
 constexpr char kTestRefreshToken[] = "test_refresh_token";
 
@@ -203,6 +204,13 @@ class EnrollmentScreenBaseTest : public testing::Test {
                                 policy::EnrollmentStatus::ForEnrollmentCode(
                                     policy::EnrollmentStatus::Code::kSuccess)))
         .WillOnce([this]() { enrollment_screen_->OnConfirmationClosed(); });
+  }
+
+  void ExpectSuccessScreenIsNotShown() {
+    EXPECT_CALL(mock_view_, ShowEnrollmentStatus(
+                                policy::EnrollmentStatus::ForEnrollmentCode(
+                                    policy::EnrollmentStatus::Code::kSuccess)))
+        .Times(0);
   }
 
   void ExpectErrorScreen(policy::EnrollmentStatus status) {
@@ -459,6 +467,24 @@ TEST_P(EnrollmentScreenManualFlowTest, ShouldFinishEnrollmentScreen) {
   EXPECT_EQ(local_state().GetInteger(prefs::kDeviceRegistered), 1);
 }
 
+TEST_P(EnrollmentScreenManualFlowTest, OobeConfigSkipEnrollmentSuccessScreen) {
+  wizard_context().configuration.Set(
+      configuration::kSkipEnrollmentSuccessScreen, true);
+  const policy::EnrollmentConfig config = GetEnrollmentConfig();
+
+  ExpectShowViewWithLogin();
+  ExpectManualEnrollmentAndReportEnrolled();
+  ExpectGetDeviceAttributeUpdatePermission(/*permission_granted=*/false);
+  ExpectSuccessScreenIsNotShown();
+  SetupClearAuthExpectationsOnSuccess();
+
+  SetUpEnrollmentScreen(config);
+  ShowEnrollmentScreen();
+
+  EXPECT_EQ(last_screen_result(), EnrollmentScreen::Result::COMPLETED);
+  EXPECT_EQ(local_state().GetInteger(prefs::kDeviceRegistered), 1);
+}
+
 TEST_P(EnrollmentScreenManualFlowTest, ShouldNotAutomaticallyRetryEnrollment) {
   const policy::EnrollmentConfig config = GetEnrollmentConfig();
 
@@ -699,7 +725,10 @@ TEST_P(EnrollmentScreenAttestationFlowTest, ShouldFinishEnrollmentScreen) {
 
   ExpectAttestationBasedEnrollmentAndReportEnrolled();
   ExpectGetDeviceAttributeUpdatePermission(/*permission_granted=*/false);
-  if (!IsRollbackFlow()) {
+
+  if (IsRollbackFlow()) {
+    ExpectSuccessScreenIsNotShown();
+  } else {
     ExpectSuccessScreen();
   }
   ExpectClearAuth();
@@ -888,10 +917,11 @@ class EnrollmentScreenTokenBasedEnrollmentTest
  protected:
   EnrollmentScreenTokenBasedEnrollmentTest() = default;
 
-  policy::EnrollmentConfig GetEnrollmentConfig() {
+  policy::EnrollmentConfig GetEnrollmentConfig(
+      policy::EnrollmentConfig::Mode mode = policy::EnrollmentConfig::
+          MODE_ENROLLMENT_TOKEN_INITIAL_SERVER_FORCED) {
     policy::EnrollmentConfig config;
-    config.mode =
-        policy::EnrollmentConfig::MODE_ENROLLMENT_TOKEN_INITIAL_SERVER_FORCED;
+    config.mode = mode;
     // The token isn't used directly by EnrollmentScreen, but let's set it here
     // for realism.
     config.enrollment_token = policy::test::kEnrollmentToken;
@@ -916,6 +946,42 @@ TEST_F(EnrollmentScreenTokenBasedEnrollmentTest, ShouldFinishEnrollmentScreen) {
   ExpectTokenBasedEnrollmentAndReportEnrolled();
   ExpectGetDeviceAttributeUpdatePermission(false);
   ExpectSuccessScreen();
+  ExpectClearAuth();
+
+  SetUpEnrollmentScreen(config);
+  ShowEnrollmentScreen();
+
+  EXPECT_EQ(last_screen_result(), EnrollmentScreen::Result::COMPLETED);
+}
+
+TEST_F(EnrollmentScreenTokenBasedEnrollmentTest,
+       ShouldFinishEnrollmentScreenRemoteDeployment) {
+  const policy::EnrollmentConfig config = GetEnrollmentConfig(
+      policy::EnrollmentConfig::MODE_REMOTE_DEPLOYMENT_SERVER_FORCED);
+  ExpectEnrollmentConfig(config.mode, config.enrollment_token);
+
+  ExpectTokenBasedEnrollmentAndReportEnrolled();
+  ExpectGetDeviceAttributeUpdatePermission(false);
+  ExpectSuccessScreen();
+  ExpectClearAuth();
+
+  SetUpEnrollmentScreen(config);
+  ShowEnrollmentScreen();
+
+  EXPECT_EQ(last_screen_result(), EnrollmentScreen::Result::COMPLETED);
+}
+
+TEST_F(EnrollmentScreenTokenBasedEnrollmentTest,
+       OobeConfigSkipEnrollmentSuccessScreen) {
+  wizard_context().configuration.Set(
+      configuration::kSkipEnrollmentSuccessScreen, true);
+  const policy::EnrollmentConfig config = GetEnrollmentConfig();
+
+  ExpectEnrollmentConfig(config.mode, config.enrollment_token);
+
+  ExpectTokenBasedEnrollmentAndReportEnrolled();
+  ExpectGetDeviceAttributeUpdatePermission(false);
+  ExpectSuccessScreenIsNotShown();
   ExpectClearAuth();
 
   SetUpEnrollmentScreen(config);
@@ -1043,6 +1109,44 @@ TEST_F(EnrollmentScreenTokenBasedEnrollmentTest,
   const policy::EnrollmentConfig initial_config = GetEnrollmentConfig();
   const policy::EnrollmentConfig fallback_config =
       GetEnrollmentConfigForManualFallback();
+  {
+    testing::InSequence s;
+    // First view is shown for token-based failure.
+    ExpectEnrollmentConfig(initial_config.mode,
+                           initial_config.enrollment_token);
+    ExpectShowView();
+    ExpectTokenBasedEnrollmentAndReportFailure();
+    ExpectErrorScreen();
+
+    // Second view is shown for manual fallback. This should be triggered after
+    // user decides to fallback.
+    ExpectEnrollmentConfig(fallback_config.mode,
+                           fallback_config.enrollment_token);
+    ExpectShowViewWithLogin();
+    ExpectManualEnrollmentAndReportEnrolled();
+    ExpectGetDeviceAttributeUpdatePermission(/*permission_granted=*/false);
+    ExpectSuccessScreen();
+  }
+
+  ExpectClearAuth();
+
+  SetUpEnrollmentScreen(initial_config);
+  ShowEnrollmentScreen();
+
+  EXPECT_FALSE(last_screen_result().has_value());
+
+  UserCancel();
+
+  EXPECT_EQ(last_screen_result(), EnrollmentScreen::Result::COMPLETED);
+}
+
+TEST_F(EnrollmentScreenTokenBasedEnrollmentTest,
+       RemoteDeploymentShouldFallbackToManualEnrollmentOnUserAction) {
+  const policy::EnrollmentConfig initial_config = GetEnrollmentConfig(
+      policy::EnrollmentConfig::MODE_REMOTE_DEPLOYMENT_SERVER_FORCED);
+  const policy::EnrollmentConfig fallback_config =
+      initial_config.GetManualFallbackConfig();
+  EXPECT_TRUE(fallback_config.is_manual_fallback());
   {
     testing::InSequence s;
     // First view is shown for token-based failure.

@@ -16,11 +16,11 @@
 #include "base/memory/weak_ptr.h"
 #include "base/values.h"
 #include "chrome/browser/ui/browser.h"
-#include "chrome/browser/web_applications/navigation_capturing_navigation_handle_user_data.h"
 #include "chrome/browser/web_applications/web_app_ui_manager.h"
 #include "components/services/app_service/public/cpp/app_launch_util.h"
 #include "components/webapps/common/web_app_id.h"
 #include "content/public/browser/navigation_handle.h"
+#include "third_party/blink/public/mojom/manifest/display_mode.mojom-shared.h"
 #include "ui/gfx/geometry/rect.h"
 
 class Profile;
@@ -60,29 +60,6 @@ enum class LaunchedAppType {
   kDiy = 0,
   kCrafted = 1,
   kMaxValue = kCrafted,
-};
-
-// Returns information useful for the browser to show UI affordances if a web
-// app handles the navigation.
-struct AppNavigationResult {
-  // The browser instance to perform navigation in, and the tab inside the
-  // browser if overridden by the web app system. If std::nullopt, performs the
-  // default navigation behavior in browser_navigator.cc.
-  std::optional<std::tuple<Browser*, int>> browser_tab_override;
-
-  // Set to true if web contents in navigation are found. This will perform
-  // tasks like enqueuing launch params and showing IPH bubble for
-  // navigation handling.
-  bool perform_app_handling_tasks_in_web_contents = false;
-
-  // Information necessary for handling redirection after a response is received
-  // as part of a navigation.
-  NavigationCapturingRedirectionInfo redirection_info;
-
-  // Debug information persisted to chrome://web-app-internals.
-  base::Value::Dict debug_value;
-
-  STACK_ALLOCATED();
 };
 
 std::optional<webapps::AppId> GetWebAppForActiveTab(const Browser* browser);
@@ -168,21 +145,6 @@ void LaunchWebApp(apps::AppLaunchParams params,
                   WithAppResources& app_resources,
                   LaunchWebAppDebugValueCallback callback);
 
-// Searches all browsers and tabs to find an applicable browser and (contained)
-// tab that matches the given `requested_display_mode`.
-std::optional<std::pair<Browser*, int>> GetAppHostForCapturing(
-    const Profile& profile,
-    const webapps::AppId& app_id,
-    const mojom::UserDisplayMode requested_display_mode);
-
-// Returns an AppNavigationResult with pertinent details on how to handle a
-// navigation if the web app system can do so. If not, the
-// `browser_tab_override` is set to be std::nullopt so that ::Navigate() inside
-// the browser_navigator code can pick this up. This function may create a
-// browser instance, an app window or a new tab as needed.
-AppNavigationResult MaybeHandleAppNavigation(
-    const NavigateParams& navigate_params);
-
 // Will enqueue the given url in the launch params for this web contents. Does
 // not check if the url is within scope of the app.
 void EnqueueLaunchParams(content::WebContents* contents,
@@ -190,15 +152,10 @@ void EnqueueLaunchParams(content::WebContents* contents,
                          const GURL& url,
                          bool wait_for_navigation_to_complete);
 
-// Handle navigation-related tasks for the app, like enqueuing launch params,
-// showing a navigation capturing IPH bubble and storing information necessary
-// for handling redirections in the current `WebContents` or `NavigationHandle`,
-// after the appropriate app-scoped `WebContents` has been identified and
-// prepared for navigation.
-void OnWebAppNavigationAfterWebContentsCreation(
-    web_app::AppNavigationResult app_navigation_result,
-    const NavigateParams& params,
-    base::WeakPtr<content::NavigationHandle> navigation_handle);
+// Focus the app container depending on whether the `browser` is an app window
+// or if it is a normal tabbed browser. `browser` shouldn't be a nullptr, and
+// the `tab_index` should be a valid index for a tab inside `browser`.
+void FocusAppContainer(Browser* browser, int tab_index);
 
 }  // namespace web_app
 

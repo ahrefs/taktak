@@ -9,10 +9,6 @@ import 'chrome://resources/ash/common/cr_elements/cr_dialog/cr_dialog.js';
 import 'chrome://resources/ash/common/cr_elements/cr_shared_vars.css.js';
 import './input_device_settings_shared.css.js';
 import '../settings_shared.css.js';
-// <if expr="_google_chrome" >
-import 'chrome://resources/ash/common/internal/ash_internal_icons.html.js';
-
-// </if>
 
 import type {CrDialogElement} from 'chrome://resources/ash/common/cr_elements/cr_dialog/cr_dialog.js';
 import {I18nMixin} from 'chrome://resources/ash/common/cr_elements/i18n_mixin.js';
@@ -174,8 +170,7 @@ export class KeyCombinationInputDialogElement extends
     }
     const prevKeyEvent: KeyEvent|undefined =
         this.buttonRemapping_.remappingAction?.keyEvent;
-    if (!prevKeyEvent ||
-        !keyEventsAreEqual(this.inputKeyEvent, prevKeyEvent!)) {
+    if (!prevKeyEvent || !keyEventsAreEqual(this.inputKeyEvent, prevKeyEvent)) {
       this.set(
           `buttonRemappingList.${this.remappingIndex}`,
           this.getUpdatedButtonRemapping_());

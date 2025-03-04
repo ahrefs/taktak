@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "components/autofill/core/common/aliases.h"
+#include "components/autofill/core/common/form_data.h"
 #include "components/autofill/core/common/form_field_data.h"
 #include "components/autofill/core/common/mojom/autofill_types.mojom-shared.h"
 #include "url/gurl.h"
@@ -38,6 +39,13 @@ void SetCheckStatus(FormFieldData* form_field_data,
                     bool isCheckable,
                     bool isChecked);
 
+// Returns the index of the shortest entry in the given select field of which
+// |value| is a substring. Returns -1 if no such entry exists.
+std::optional<size_t> FindShortestSubstringMatchInSelect(
+    const std::u16string& value,
+    bool ignore_whitespace,
+    base::span<const SelectOption> field_options);
+
 // Lowercases and tokenizes a given `attribute` string.
 // Considers any ASCII whitespace character as a possible separator.
 // Also ignores empty tokens, resulting in a collapsing of whitespace.
@@ -62,22 +70,15 @@ bool IsFillable(mojom::FocusedFieldType focused_field_type);
 mojom::SubmissionIndicatorEvent ToSubmissionIndicatorEvent(
     mojom::SubmissionSource source);
 
+// Strips any authentication data from `gurl`.
+GURL StripAuth(const GURL& gurl);
+
 // Strips any authentication data, as well as query and ref portions of URL.
 GURL StripAuthAndParams(const GURL& gurl);
 
 // Checks if the user triggered Autofill on a field manually through the Chrome
 // context menu.
 bool IsAutofillManuallyTriggered(
-    AutofillSuggestionTriggerSource trigger_source);
-
-// Checks if the user triggered address Autofill on a field manually through the
-// Chrome context menu.
-bool IsAddressAutofillManuallyTriggered(
-    AutofillSuggestionTriggerSource trigger_source);
-
-// Checks if the user triggered payments Autofill on a field manually through
-// the Chrome context menu.
-bool IsPaymentsAutofillManuallyTriggered(
     AutofillSuggestionTriggerSource trigger_source);
 
 // Checks if the user triggered passwords Autofill on a field manually through
@@ -94,6 +95,14 @@ bool IsPlusAddressesManuallyTriggered(
 // not.
 // TODO(crbug.com/339543182): Cleanup after launching on iOS.
 bool IsAddressFieldSwappingEnabled();
+
+// Returns whether the feature `kAutofillPaymentsFieldSwapping` is enabled
+// or not.
+// TODO(crbug.com/354175563): Remove when launched on all platforms.
+bool IsPaymentsFieldSwappingEnabled();
+
+// Extracts comma-separated strings from a ButtonTitleList.
+std::u16string GetButtonTitlesString(const ButtonTitleList& titles_list);
 
 }  // namespace autofill
 

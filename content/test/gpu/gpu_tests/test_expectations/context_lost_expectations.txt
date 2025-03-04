@@ -9,8 +9,8 @@
 #         win win8 win10 win11 ]
 # Devices
 # tags: [ android-nexus-5x android-pixel-2 android-pixel-4
-#             android-pixel-6 android-shield-android-tv android-sm-a135m
-#             android-sm-a235m android-sm-s911u1 android-moto-g-power-5g---2023
+#             android-pixel-6 android-shield-android-tv android-sm-a137f
+#             android-sm-a236b android-sm-s911u1
 #         chromeos-board-amd64-generic chromeos-board-eve chromeos-board-jacuzzi
 #             chromeos-board-octopus chromeos-board-volteer
 #         fuchsia-board-astro fuchsia-board-nelson fuchsia-board-sherlock
@@ -25,7 +25,6 @@
 #         release release-x64
 #         fuchsia-chrome
 #         web-engine-shell
-#         lacros-chrome
 #         cros-chrome ]
 # GPU
 # tags: [ amd amd-0x6613 amd-0x679e amd-0x67ef amd-0x6821 amd-0x7340
@@ -66,8 +65,6 @@
 # tags: [ asan no-asan ]
 # Display Server
 # tags: [ display-server-wayland display-server-x ]
-# OOP-Canvas
-# tags: [ oop-c no-oop-c ]
 # WebGPU Backend Validation
 # tags: [ dawn-backend-validation dawn-no-backend-validation ]
 # WebGPU Adapter
@@ -79,6 +76,8 @@
 #         webgpu-service-worker
 #         webgpu-dedicated-worker
 #         webgpu-shared-worker ]
+# WebGPU Compat context
+# tags: [ compat-default compat-min-es31 ]
 # Clang coverage
 # tags: [ clang-coverage no-clang-coverage ]
 # Skia Graphite
@@ -161,9 +160,6 @@ crbug.com/1327754 [ mac amd debug ] GpuCrash_InfoForDualHardwareGpus [ Skip ]
 # Vulkan enabled on linux, the crash fallback logic is different.
 crbug.com/1334650 [ linux ] GpuCrash_InfoForHardwareGpu [ Skip ]
 
-# Windows debug causes render process hangs due to slow gpu process restart.
-crbug.com/1416920 [ win debug ] GpuCrash_InfoForHardwareGpu [ Failure ]
-
 ###############################
 # Temporary Skip Expectations #
 ###############################
@@ -180,8 +176,6 @@ crbug.com/524808 [ win8 nvidia ] ContextLost_WebGLContextLostFromSelectElement [
 ###################
 # Non-"Skip" expectations go here to suppress regular flakes/failures.
 
-
-
 crbug.com/1419558 [ angle-swiftshader clang-coverage fuchsia fuchsia-board-qemu-x64 google-0xc0de ] ContextLost_WebGLContextLostFromQuantity [ Failure ]
 
 # Fails with Graphite on Windows and Mac
@@ -189,27 +183,37 @@ crbug.com/329145823 [ win release amd ] GpuCrash_InfoForHardwareGpu [ Failure ]
 crbug.com/329145823 [ win release intel ] GpuCrash_InfoForHardwareGpu [ Failure ]
 crbug.com/329145823 [ win release nvidia ] GpuCrash_InfoForHardwareGpu [ Failure ]
 crbug.com/329145823 [ win release qualcomm ] GpuCrash_InfoForHardwareGpu [ Failure ]
-crbug.com/329145823 [ mac release ] GpuCrash_InfoForHardwareGpu [ Failure ]
+crbug.com/329145823 [ angle-metal graphite-enabled mac release ] GpuCrash_InfoForHardwareGpu [ Failure ]
+crbug.com/329145823 [ angle-opengl bigsur graphite-disabled mac-x86_64 no-asan no-clang-coverage nvidia-0xfe9 release ] GpuCrash_InfoForHardwareGpu [ Failure ]
+crbug.com/329145823 [ asan graphite-disabled intel-0x3e9b mac-x86_64 no-clang-coverage release sonoma ] GpuCrash_InfoForHardwareGpu [ Failure ]
 crbug.com/329145823 [ angle-metal graphite-enabled intel-gen-9 mac no-asan release ] GpuCrash_InfoForDualHardwareGpus [ Failure ]
 
-# Flaky driver failure to create device
-crbug.com/329145623 [ linux angle-vulkan graphite-disabled nvidia-0x2184 passthrough release ] ContextLost_WebGPUStressRequestDeviceAndRemoveLoop [ Failure ]
-
-# Flaky failure to restore context
-crbug.com/338071088 [ amd-0x67ef angle-opengl graphite-disabled no-asan passthrough release sonoma ] ContextLost_WebGL2UnpackImageHeight [ Failure ]
-
-# Flaky timeout on Android
-crbug.com/353650054 [ android ] ContextLost_WorkerWebGLRAFAfterGPUCrash [ Failure ]
-
 # Flaky failure on Mac AMD ASAN - 3 GPU process crashes instead of 4
-crbug.com/354748640 [ mac amd asan release ] GpuCrash_InfoForDualHardwareGpus [ RetryOnFailure ]
+crbug.com/354748640 [ mac amd asan release ] GpuCrash_InfoForDualHardwareGpus [ Failure ]
 
 # Flaky failure on Mac release NVIDIA - 3 GPU process crashes instead of 4
 crbug.com/355923591 [ mac release nvidia ] GpuCrash_InfoForDualHardwareGpus [ RetryOnFailure ]
 
 # Flaky failure on Mac Intel ASAN - DevTools Serialization Crash
-crbug.com/338574390 [ mac intel asan ] ContextLost_WebGLContextRestoredInHiddenTab [ Failure ]
-crbug.com/338574390 [ mac intel asan ] ContextLost_WebGPUBlockedAfterJSNavigation [ Failure ]
+crbug.com/338574390 [ angle-metal asan intel mac ] ContextLost_WebGLContextRestoredInHiddenTab [ Failure ]
+crbug.com/338574390 [ angle-metal asan intel mac ] ContextLost_WebGPUBlockedAfterJSNavigation [ Failure ]
+
+# Windows debug causes render process hangs due to slow gpu process restart.
+crbug.com/1416920 [ win debug ] GpuCrash_InfoForHardwareGpu [ Failure ]
+
+# Flaky crash affects this test in particular for some reason
+crbug.com/365565140 [ win qualcomm ] ContextLost_WebGPUUnblockedAfterUserInitiatedReload [ Failure ]
+
+# Flaky Timed out while waiting 10s for IsJavaScriptExpressionTrue
+crbug.com/384605105 [ amd-0x7340 angle-opengl debug graphite-disabled no-asan no-clang-coverage sonoma ] ContextLost_WebGLContextRestoredInHiddenTab [ RetryOnFailure ]
+crbug.com/384605105 [ mac intel no-asan ] ContextLost_WebGLContextRestoredInHiddenTab [ RetryOnFailure ]
+crbug.com/384605105 [ intel-0x9bc5 win ] ContextLost_WebGLContextRestoredInHiddenTab [ RetryOnFailure ]
+crbug.com/384605105 [ win nvidia ] ContextLost_WebGLContextRestoredInHiddenTab [ RetryOnFailure ]
+
+# Flaky Timed out while waiting 60s for IsJavaScriptExpressionTrue
+crbug.com/365565140 [ mac ] ContextLost_WebGPUUnblockedAfterUserInitiatedReload [ Failure ]
+
+crbug.com/395919013 [ android android-sm-a236b ] GpuCrash_GPUProcessCrashesExactlyOnce_SurfaceControlDisabled [ RetryOnFailure ]
 
 #######################################################################
 # Automated Entries After This Point - Do Not Manually Add Below Here #

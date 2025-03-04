@@ -25,10 +25,10 @@
 #include "base/strings/string_util.h"
 #include "base/threading/thread_restrictions.h"
 #include "base/values.h"
+#include "build/android_buildflags.h"
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
 #include "build/buildflag.h"
-#include "build/chromeos_buildflags.h"
 #include "components/policy/core/common/mock_configuration_policy_provider.h"
 #include "components/policy/core/common/schema.h"
 #include "components/policy/policy_constants.h"
@@ -403,12 +403,14 @@ class PolicyTestCase {
   }
 
   bool IsOsSupported() const {
-#if BUILDFLAG(IS_ANDROID)
+#if BUILDFLAG(IS_DESKTOP_ANDROID)
+    // For prefs testing desktop Android is considered a separate OS because it
+    // registers some additional prefs (e.g. extensions prefs).
+    const std::string os("desktop_android");
+#elif BUILDFLAG(IS_ANDROID)
     const std::string os("android");
-#elif BUILDFLAG(IS_CHROMEOS_ASH)
+#elif BUILDFLAG(IS_CHROMEOS)
     const std::string os("chromeos_ash");
-#elif BUILDFLAG(IS_CHROMEOS_LACROS)
-    const std::string os("chromeos_lacros");
 #elif BUILDFLAG(IS_IOS)
     const std::string os("ios");
 #elif BUILDFLAG(IS_LINUX)
@@ -429,6 +431,11 @@ class PolicyTestCase {
 #if BUILDFLAG(IS_CHROMEOS)
     return base::Contains(supported_os_, "chromeos_ash") ||
            base::Contains(supported_os_, "chromeos_lacros");
+#elif BUILDFLAG(IS_ANDROID)
+    // Android policies that apply to desktop Android are covered as part of the
+    // desktop Android build because they may invoke desktop-only code.
+    return base::Contains(supported_os_, "android") ||
+           base::Contains(supported_os_, "desktop_android");
 #else
     return IsOsSupported();
 #endif
@@ -553,7 +560,7 @@ PolicySettings GetPolicySettings(const std::string& policy,
     else if (*source == "cloud_from_ash")
       settings.source = POLICY_SOURCE_CLOUD_FROM_ASH;
     else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
   }
 

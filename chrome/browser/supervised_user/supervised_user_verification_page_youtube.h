@@ -55,6 +55,7 @@ class SupervisedUserVerificationPageForYouTube
 
  private:
   void RecordReauthStatusMetrics(Status status) override;
+
   ukm::SourceId source_id_;
   bool is_main_frame_;
 };

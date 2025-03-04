@@ -12,30 +12,52 @@
 
 namespace optimization_guide {
 
-OnDeviceModelServiceControllerIOS::OnDeviceModelServiceControllerIOS(
-    base::WeakPtr<OnDeviceModelComponentStateManager>
-        on_device_component_state_manager)
-    : OnDeviceModelServiceController(
-          std::make_unique<OnDeviceModelAccessController>(
-              *GetApplicationContext()->GetLocalState()),
-          std::move(on_device_component_state_manager)) {}
+namespace {
 
-OnDeviceModelServiceControllerIOS::~OnDeviceModelServiceControllerIOS() {}
+// The instance of OnDeviceModelServiceControllerIOS.
+OnDeviceModelServiceControllerIOS* g_instance = nullptr;
 
-void OnDeviceModelServiceControllerIOS::LaunchService() {
-  receiver_ = service_remote_.BindNewPipeAndPassReceiver();
+// Launches the on-device model service.
+void LaunchService(
+    mojo::PendingReceiver<on_device_model::mojom::OnDeviceModelService>
+        pending_receiver) {
   scoped_refptr<base::SequencedTaskRunner> background_task_runner =
       base::ThreadPool::CreateSequencedTaskRunner(
           {base::MayBlock(), base::TaskPriority::BEST_EFFORT});
   background_task_runner->PostTask(
       FROM_HERE,
       base::BindOnce(&OnDeviceModelServiceControllerIOS::CreateModelService,
-                     weak_factory_.GetWeakPtr()));
+                     g_instance->GetWeakPtr(), std::move(pending_receiver)));
 }
 
-void OnDeviceModelServiceControllerIOS::CreateModelService() {
-  service_ =
-      on_device_model::OnDeviceModelService::Create(std::move(receiver_));
+}  // namespace
+
+OnDeviceModelServiceControllerIOS::OnDeviceModelServiceControllerIOS(
+    base::WeakPtr<OnDeviceModelComponentStateManager>
+        on_device_component_state_manager)
+    : OnDeviceModelServiceController(
+          std::make_unique<OnDeviceModelAccessController>(
+              *GetApplicationContext()->GetLocalState()),
+          std::move(on_device_component_state_manager),
+          base::BindRepeating(&LaunchService)) {
+  CHECK_EQ(nullptr, g_instance);
+  g_instance = this;
+}
+
+OnDeviceModelServiceControllerIOS::~OnDeviceModelServiceControllerIOS() {
+  g_instance = nullptr;
+}
+
+void OnDeviceModelServiceControllerIOS::CreateModelService(
+    mojo::PendingReceiver<on_device_model::mojom::OnDeviceModelService>
+        receiver) {
+  CHECK(g_instance);
+  service_ = on_device_model::OnDeviceModelService::Create(std::move(receiver));
+}
+
+base::WeakPtr<OnDeviceModelServiceControllerIOS>
+OnDeviceModelServiceControllerIOS::GetWeakPtr() {
+  return weak_factory_.GetWeakPtr();
 }
 
 }  // namespace optimization_guide

@@ -60,10 +60,10 @@
 #include "components/crash/core/app/crashpad.h"
 #endif  // BUILDFLAG(IS_WIN)
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/ash/settings/stats_reporting_controller.h"
-#include "components/metrics/structured/recorder.h"               // nogncheck
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#include "components/metrics/structured/recorder.h"
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 namespace metrics {
 namespace internal {
@@ -140,7 +140,7 @@ bool IsClientInSampleImpl(PrefService* local_state) {
       metrics::internal::kMetricsReportingFeature);
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // Callback to update the metrics reporting state when the Chrome OS metrics
 // reporting setting changes.
 void OnCrosMetricsReportingSettingChange(
@@ -172,7 +172,7 @@ class ChromeMetricsServicesManagerClient::ChromeEnabledStateProvider
   ChromeEnabledStateProvider& operator=(const ChromeEnabledStateProvider&) =
       delete;
 
-  ~ChromeEnabledStateProvider() override {}
+  ~ChromeEnabledStateProvider() override = default;
 
   bool IsConsentGiven() const override {
     return ChromeMetricsServiceAccessor::IsMetricsAndCrashReportingEnabled(
@@ -196,7 +196,8 @@ ChromeMetricsServicesManagerClient::ChromeMetricsServicesManagerClient(
   DCHECK(local_state);
 }
 
-ChromeMetricsServicesManagerClient::~ChromeMetricsServicesManagerClient() {}
+ChromeMetricsServicesManagerClient::~ChromeMetricsServicesManagerClient() =
+    default;
 
 metrics::MetricsStateManager*
 ChromeMetricsServicesManagerClient::GetMetricsStateManagerForTesting() {
@@ -274,7 +275,7 @@ bool ChromeMetricsServicesManagerClient::GetSamplingRatePerMille(int* rate) {
   return true;
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 void ChromeMetricsServicesManagerClient::OnCrosSettingsCreated() {
   // Listen for changes to metrics reporting state.
   reporting_setting_subscription_ =
@@ -324,7 +325,6 @@ ChromeMetricsServicesManagerClient::GetMetricsStateManager() {
     startup_visibility = metrics::StartupVisibility::kForeground;
 #endif  // BUILDFLAG(IS_ANDROID)
 
-    std::string client_id;
     metrics_state_manager_ = metrics::MetricsStateManager::Create(
         local_state_, enabled_state_provider_.get(), GetRegistryBackupKey(),
         user_data_dir, startup_visibility,
@@ -336,8 +336,7 @@ ChromeMetricsServicesManagerClient::GetMetricsStateManager() {
                     switches::kEnableGpuBenchmarking),
         },
         base::BindRepeating(&PostStoreMetricsClientInfo),
-        base::BindRepeating(&GoogleUpdateSettings::LoadMetricsClientInfo),
-        client_id);
+        base::BindRepeating(&GoogleUpdateSettings::LoadMetricsClientInfo));
   }
   return metrics_state_manager_.get();
 }

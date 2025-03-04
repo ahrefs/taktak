@@ -4,6 +4,7 @@
 
 #include "ash/quick_insert/search/quick_insert_search_aggregator.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <set>
@@ -23,7 +24,6 @@
 #include "base/location.h"
 #include "base/memory/weak_ptr.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "base/substring_set_matcher/matcher_string_pattern.h"
 #include "base/time/time.h"
 #include "base/types/cxx23_to_underlying.h"
@@ -33,25 +33,29 @@ namespace ash {
 
 namespace {
 
-PickerSectionType SectionTypeFromSearchSource(PickerSearchSource source) {
+QuickInsertSectionType SectionTypeFromSearchSource(
+    QuickInsertSearchSource source) {
   switch (source) {
-    case PickerSearchSource::kOmnibox:
-      return PickerSectionType::kLinks;
-    case PickerSearchSource::kDate:
-    case PickerSearchSource::kMath:
-      return PickerSectionType::kNone;
-    case PickerSearchSource::kClipboard:
-      return PickerSectionType::kClipboard;
-    case PickerSearchSource::kAction:
-      return PickerSectionType::kNone;
-    case PickerSearchSource::kLocalFile:
-      return PickerSectionType::kLocalFiles;
-    case PickerSearchSource::kDrive:
-      return PickerSectionType::kDriveFiles;
-    case PickerSearchSource::kEditorWrite:
-    case PickerSearchSource::kEditorRewrite:
-    case PickerSearchSource::kLobster:
-      return PickerSectionType::kContentEditor;
+    case QuickInsertSearchSource::kOmnibox:
+      return QuickInsertSectionType::kLinks;
+    case QuickInsertSearchSource::kDate:
+    case QuickInsertSearchSource::kMath:
+      return QuickInsertSectionType::kNone;
+    case QuickInsertSearchSource::kClipboard:
+      return QuickInsertSectionType::kClipboard;
+    case QuickInsertSearchSource::kAction:
+      return QuickInsertSectionType::kNone;
+    case QuickInsertSearchSource::kLocalFile:
+      return QuickInsertSectionType::kLocalFiles;
+    case QuickInsertSearchSource::kDrive:
+      return QuickInsertSectionType::kDriveFiles;
+    case QuickInsertSearchSource::kEditorWrite:
+    case QuickInsertSearchSource::kEditorRewrite:
+    case QuickInsertSearchSource::kLobsterWithNoSelectedText:
+    case QuickInsertSearchSource::kLobsterWithSelectedText:
+      return QuickInsertSectionType::kContentEditor;
+    case QuickInsertSearchSource::kGifs:
+      return QuickInsertSectionType::kSearchedGifs;
   }
 }
 
@@ -168,43 +172,44 @@ void DeduplicateDriveFilesFromLinks(std::vector<QuickInsertSearchResult>& files,
 
 }  // namespace
 
-PickerSearchAggregator::PickerSearchAggregator(
+QuickInsertSearchAggregator::QuickInsertSearchAggregator(
     base::TimeDelta burn_in_period,
-    PickerViewDelegate::SearchResultsCallback callback) {
+    QuickInsertViewDelegate::SearchResultsCallback callback) {
   current_callback_ = std::move(callback);
   CHECK(!current_callback_.is_null());
 
   // TODO: b/324154537 - Show a loading animation while waiting for results.
   burn_in_timer_.Start(FROM_HERE, burn_in_period, this,
-                       &PickerSearchAggregator::PublishBurnInResults);
+                       &QuickInsertSearchAggregator::PublishBurnInResults);
 }
 
-PickerSearchAggregator::~PickerSearchAggregator() = default;
+QuickInsertSearchAggregator::~QuickInsertSearchAggregator() = default;
 
-void PickerSearchAggregator::HandleSearchSourceResults(
-    PickerSearchSource source,
+void QuickInsertSearchAggregator::HandleSearchSourceResults(
+    QuickInsertSearchSource source,
     std::vector<QuickInsertSearchResult> results,
     bool has_more_results) {
   CHECK(!current_callback_.is_null())
       << "Results were obtained after \"no more results\"";
-  const PickerSectionType section_type = SectionTypeFromSearchSource(source);
+  const QuickInsertSectionType section_type =
+      SectionTypeFromSearchSource(source);
   UnpublishedResults& accumulated =
       accumulated_results_[base::to_underlying(section_type)];
   // Suggested results have multiple sources, which we store in any order and
   // explicitly do not append if post-burn-in.
-  if (section_type == PickerSectionType::kNone ||
-      section_type == PickerSectionType::kContentEditor) {
+  if (section_type == QuickInsertSectionType::kNone ||
+      section_type == QuickInsertSectionType::kContentEditor) {
     // Suggested results cannot have more results, since it's not a proper
     // category.
     CHECK(!has_more_results);
-    base::ranges::move(results, std::back_inserter(accumulated.results));
+    std::ranges::move(results, std::back_inserter(accumulated.results));
     return;
   }
 
   if (IsPostBurnIn()) {
     // Publish post-burn-in results and skip assignment.
     if (!results.empty()) {
-      if (section_type == PickerSectionType::kDriveFiles) {
+      if (section_type == QuickInsertSectionType::kDriveFiles) {
         if (std::holds_alternative<std::monostate>(link_drive_dedupe_state_)) {
           link_drive_dedupe_state_ = DriveIdsFromSearchResults(results);
         } else if (auto* links = std::get_if<std::vector<GURL>>(
@@ -214,7 +219,7 @@ void PickerSearchAggregator::HandleSearchSourceResults(
         } else {
           NOTREACHED();
         }
-      } else if (section_type == PickerSectionType::kLinks) {
+      } else if (section_type == QuickInsertSectionType::kLinks) {
         if (std::holds_alternative<std::monostate>(link_drive_dedupe_state_)) {
           link_drive_dedupe_state_ = LinksFromSearchResults(results);
         } else if (auto* drive_ids = std::get_if<std::vector<std::string>>(
@@ -226,7 +231,7 @@ void PickerSearchAggregator::HandleSearchSourceResults(
         }
       }
 
-      std::vector<PickerSearchResultsSection> sections;
+      std::vector<QuickInsertSearchResultsSection> sections;
       sections.emplace_back(section_type, std::move(results), has_more_results);
       current_callback_.Run(std::move(sections));
     }
@@ -237,7 +242,7 @@ void PickerSearchAggregator::HandleSearchSourceResults(
   accumulated = UnpublishedResults(std::move(results), has_more_results);
 }
 
-void PickerSearchAggregator::HandleNoMoreResults(bool interrupted) {
+void QuickInsertSearchAggregator::HandleNoMoreResults(bool interrupted) {
   // Only call the callback if it wasn't interrupted.
   if (!interrupted) {
     // We could get a "no more results" signal before burn-in finishes.
@@ -251,34 +256,35 @@ void PickerSearchAggregator::HandleNoMoreResults(bool interrupted) {
   current_callback_.Reset();
 }
 
-PickerSearchAggregator::UnpublishedResults::UnpublishedResults() = default;
+QuickInsertSearchAggregator::UnpublishedResults::UnpublishedResults() = default;
 
-PickerSearchAggregator::UnpublishedResults::UnpublishedResults(
+QuickInsertSearchAggregator::UnpublishedResults::UnpublishedResults(
     std::vector<QuickInsertSearchResult> results,
     bool has_more)
     : results(std::move(results)), has_more(has_more) {}
 
-PickerSearchAggregator::UnpublishedResults::UnpublishedResults(
+QuickInsertSearchAggregator::UnpublishedResults::UnpublishedResults(
     UnpublishedResults&& other) = default;
 
-PickerSearchAggregator::UnpublishedResults&
-PickerSearchAggregator::UnpublishedResults::operator=(
+QuickInsertSearchAggregator::UnpublishedResults&
+QuickInsertSearchAggregator::UnpublishedResults::operator=(
     UnpublishedResults&& other) = default;
 
-PickerSearchAggregator::UnpublishedResults::~UnpublishedResults() = default;
+QuickInsertSearchAggregator::UnpublishedResults::~UnpublishedResults() =
+    default;
 
-bool PickerSearchAggregator::IsPostBurnIn() const {
+bool QuickInsertSearchAggregator::IsPostBurnIn() const {
   return !burn_in_timer_.IsRunning();
 }
 
-void PickerSearchAggregator::PublishBurnInResults() {
+void QuickInsertSearchAggregator::PublishBurnInResults() {
   // This variable should only be set after burn-in.
   CHECK(std::holds_alternative<std::monostate>(link_drive_dedupe_state_));
 
   UnpublishedResults* link_results =
-      AccumulatedResultsForSection(PickerSectionType::kLinks);
+      AccumulatedResultsForSection(QuickInsertSectionType::kLinks);
   UnpublishedResults* drive_results =
-      AccumulatedResultsForSection(PickerSectionType::kDriveFiles);
+      AccumulatedResultsForSection(QuickInsertSectionType::kDriveFiles);
   if (link_results != nullptr && drive_results != nullptr) {
     DeduplicateDriveLinksFromIds(
         link_results->results,
@@ -292,27 +298,27 @@ void PickerSearchAggregator::PublishBurnInResults() {
         DriveIdsFromSearchResults(drive_results->results);
   }
 
-  std::vector<PickerSearchResultsSection> sections;
-  base::flat_set<PickerSectionType> published_types;
+  std::vector<QuickInsertSearchResultsSection> sections;
+  base::flat_set<QuickInsertSectionType> published_types;
 
   // The None section always goes first.
   if (UnpublishedResults* none_results =
-          AccumulatedResultsForSection(PickerSectionType::kNone)) {
-    sections.emplace_back(PickerSectionType::kNone,
+          AccumulatedResultsForSection(QuickInsertSectionType::kNone)) {
+    sections.emplace_back(QuickInsertSectionType::kNone,
                           std::move(none_results->results),
                           /*has_more=*/false);
-    published_types.insert(PickerSectionType::kNone);
+    published_types.insert(QuickInsertSectionType::kNone);
   }
 
   // User generated results can be ranked amongst themselves.
-  for (PickerSectionType type : {
-           PickerSectionType::kLinks,
-           PickerSectionType::kDriveFiles,
-           PickerSectionType::kLocalFiles,
-           PickerSectionType::kClipboard,
+  for (QuickInsertSectionType type : {
+           QuickInsertSectionType::kLinks,
+           QuickInsertSectionType::kDriveFiles,
+           QuickInsertSectionType::kLocalFiles,
+           QuickInsertSectionType::kClipboard,
        }) {
     if (UnpublishedResults* results = AccumulatedResultsForSection(type);
-        results && base::ranges::any_of(results->results, &ShouldPromote)) {
+        results && std::ranges::any_of(results->results, &ShouldPromote)) {
       sections.emplace_back(type, std::move(results->results),
                             results->has_more);
       published_types.insert(type);
@@ -320,12 +326,13 @@ void PickerSearchAggregator::PublishBurnInResults() {
   }
 
   // The remaining results are ranked based on a predefined order
-  for (PickerSectionType type : {
-           PickerSectionType::kLinks,
-           PickerSectionType::kDriveFiles,
-           PickerSectionType::kLocalFiles,
-           PickerSectionType::kClipboard,
-           PickerSectionType::kContentEditor,
+  for (QuickInsertSectionType type : {
+           QuickInsertSectionType::kLinks,
+           QuickInsertSectionType::kDriveFiles,
+           QuickInsertSectionType::kLocalFiles,
+           QuickInsertSectionType::kClipboard,
+           QuickInsertSectionType::kContentEditor,
+           QuickInsertSectionType::kSearchedGifs,
        }) {
     if (published_types.contains(type)) {
       continue;
@@ -340,12 +347,14 @@ void PickerSearchAggregator::PublishBurnInResults() {
   }
 }
 
-base::WeakPtr<PickerSearchAggregator> PickerSearchAggregator::GetWeakPtr() {
+base::WeakPtr<QuickInsertSearchAggregator>
+QuickInsertSearchAggregator::GetWeakPtr() {
   return weak_ptr_factory_.GetWeakPtr();
 }
 
-PickerSearchAggregator::UnpublishedResults*
-PickerSearchAggregator::AccumulatedResultsForSection(PickerSectionType type) {
+QuickInsertSearchAggregator::UnpublishedResults*
+QuickInsertSearchAggregator::AccumulatedResultsForSection(
+    QuickInsertSectionType type) {
   UnpublishedResults& accumulated =
       accumulated_results_[base::to_underlying(type)];
   if (accumulated.results.empty()) {

@@ -137,6 +137,15 @@ public class TabStateAttributes extends TabWebContentsUserData {
 
                     @Override
                     public void onLoadStopped(Tab tab, boolean toDifferentDocument) {
+                        // If the tab is a NTP without a navigation state, it may not be marked as
+                        // "UNTIDY" here.
+                        // We need to save the tab if it belongs to a tab group so set it directly
+                        // to "DIRTY".
+                        if (isNtpWithoutNavigationState(tab) && tab.getTabGroupId() != null) {
+                            updateIsDirtyNotCheckingNtp(DirtinessState.DIRTY);
+                            return;
+                        }
+
                         if (mDirtinessState != DirtinessState.UNTIDY) return;
 
                         if (toDifferentDocument) {
@@ -199,6 +208,12 @@ public class TabStateAttributes extends TabWebContentsUserData {
                         if (!tab.isInitialized()) return;
                         updateIsDirty(DirtinessState.UNTIDY);
                     }
+
+                    @Override
+                    public void onTabUnarchived(Tab tab) {
+                        if (!tab.isInitialized()) return;
+                        updateIsDirtyNotCheckingNtp(DirtinessState.DIRTY);
+                    }
                 });
     }
 
@@ -221,7 +236,7 @@ public class TabStateAttributes extends TabWebContentsUserData {
     @Override
     public void cleanupWebContents(WebContents webContents) {
         if (mWebContentsObserver != null) {
-            mWebContentsObserver.destroy();
+            mWebContentsObserver.observe(null);
             mWebContentsObserver = null;
         }
     }

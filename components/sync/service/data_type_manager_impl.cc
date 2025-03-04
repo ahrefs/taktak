@@ -10,6 +10,7 @@
 
 #include "base/barrier_callback.h"
 #include "base/containers/contains.h"
+#include "base/containers/enum_set.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
 #include "base/logging.h"
@@ -57,7 +58,7 @@ ConfigureReason GetReasonForProgrammaticReconfigure(
              : ConfigureReason::CONFIGURE_REASON_PROGRAMMATIC;
 }
 
-// Divides |types| into sets by their priorities and return the sets from
+// Divides `types` into sets by their priorities and return the sets from
 // high priority to low priority.
 base::queue<DataTypeSet> PrioritizeTypes(const DataTypeSet& types) {
   // Control types are usually configured before all other types during
@@ -330,7 +331,7 @@ void DataTypeManagerImpl::ConnectDataTypes() {
     CHECK_EQ(dtc->state(), DataTypeController::RUNNING);
 
     if (activation_response->skip_engine_connection) {
-      // |skip_engine_connection| means ConnectDataType() shouldn't be invoked
+      // `skip_engine_connection` means ConnectDataType() shouldn't be invoked
       // because the datatype has some alternative way to sync changes to the
       // server, without relying on this instance of the sync engine. This is
       // currently possible for PASSWORDS on Android.
@@ -423,13 +424,20 @@ TypeStatusMapForDebugging DataTypeManagerImpl::GetTypeStatusMapForDebugging(
 
 void DataTypeManagerImpl::GetAllNodesForDebugging(
     base::OnceCallback<void(base::Value::List)> callback) const {
-  // If the configurer isn't initialized yet, then there are no nodes to return.
-  if (!configurer_) {
+  const DataTypeSet active_types = GetActiveDataTypes();
+  if (active_types.empty()) {
+    // `GetAllNodesRequestBarrier` only supports waiting for a non-empty set of
+    // types, so return empty here if there are no active types. This can happen
+    // if `state_` is not CONFIGURED.
     std::move(callback).Run(base::Value::List());
     return;
   }
 
-  const DataTypeSet active_types = GetActiveDataTypes();
+  // If there are active types, the configurer must have been initialized and
+  // the configuration completed.
+  CHECK(configurer_);
+  CHECK_EQ(state_, CONFIGURED);
+
   auto barrier = base::MakeRefCounted<GetAllNodesRequestBarrier>(
       active_types, std::move(callback));
 
@@ -445,17 +453,14 @@ void DataTypeManagerImpl::GetAllNodesForDebugging(
     const std::unique_ptr<DataTypeController>& controller =
         controllers_.at(type);
 
-    if (controller->state() == DataTypeController::NOT_RUNNING) {
-      // In the NOT_RUNNING state it's not allowed to call GetAllNodes on the
-      // DataTypeController, so just return an empty result.
-      // This can happen e.g. if we're waiting for a custom passphrase to be
-      // entered - the data types are already considered active in this case,
-      // but their DataTypeControllers are still NOT_RUNNING.
-      barrier->OnReceivedNodesForType(type, base::Value::List());
-    } else {
-      controller->GetAllNodes(base::BindOnce(
-          &GetAllNodesRequestBarrier::OnReceivedNodesForType, barrier, type));
-    }
+    // An active type's controller must be RUNNING.
+    CHECK_EQ(controller->state(), DataTypeController::RUNNING,
+             base::NotFatalUntil::M134)
+        << " actual=" << DataTypeController::StateToString(controller->state())
+        << " for " << DataTypeToDebugString(type);
+
+    controller->GetAllNodesForDebugging(base::BindOnce(
+        &GetAllNodesRequestBarrier::OnReceivedNodesForType, barrier, type));
   }
 }
 
@@ -562,9 +567,9 @@ void DataTypeManagerImpl::OnAllDataTypesReadyForConfigure() {
     ProcessReconfigure();
     return;
   }
-  // TODO(pavely): By now some of datatypes in |configuration_types_queue_|
+  // TODO(pavely): By now some of datatypes in `configuration_types_queue_`
   // could have failed loading and should be excluded from configuration. I need
-  // to adjust |configuration_types_queue_| for such types.
+  // to adjust `configuration_types_queue_` for such types.
   ConnectDataTypes();
 
   StartNextConfiguration();
@@ -609,8 +614,7 @@ bool DataTypeManagerImpl::UpdatePreconditionError(DataType type) {
     }
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 void DataTypeManagerImpl::ProcessReconfigure() {
@@ -626,7 +630,7 @@ void DataTypeManagerImpl::ProcessReconfigure() {
 
   // An attempt was made to reconfigure while we were already configuring.
   // This can be because a passphrase was accepted or the user changed the
-  // set of desired types. Either way, |preferred_types_| will contain the most
+  // set of desired types. Either way, `preferred_types_` will contain the most
   // recent set of desired types, so we just call configure.
   // Note: we do this whether or not GetControllersNeedingStart is true,
   // because we may need to stop datatypes.
@@ -647,7 +651,7 @@ void DataTypeManagerImpl::ConfigurationCompleted(
     DataTypeSet failed_configuration_types) {
   DCHECK_EQ(CONFIGURING, state_);
 
-  // |succeeded_configuration_types| are the types that were actually downloaded
+  // `succeeded_configuration_types` are the types that were actually downloaded
   // just now (i.e. initial sync was just completed for them).
   downloaded_types_.PutAll(succeeded_configuration_types);
 
@@ -712,7 +716,7 @@ DataTypeManagerImpl::PrepareConfigureParams() {
 
   // All types to download are expected to be protocol types (proxy types should
   // have skipped full activation via
-  // |DataTypeActivationResponse::skip_engine_connection|).
+  // `DataTypeActivationResponse::skip_engine_connection`).
   DCHECK(ProtocolTypes().HasAll(types_to_download));
 
   // Assume that disabled types are not downloaded anymore - if they get
@@ -782,7 +786,7 @@ void DataTypeManagerImpl::Stop(SyncStopMetadataFate metadata_fate) {
   model_load_manager_.Stop(metadata_fate);
 
   // Individual data type controllers might still be STOPPING, but we don't
-  // reflect that in |state_| because, for all practical matters, the manager is
+  // reflect that in `state_` because, for all practical matters, the manager is
   // in a ready state and reconfguration can be triggered.
   // TODO(mastiz): Reconsider waiting in STOPPING state until all datatypes have
   // stopped.
@@ -953,6 +957,25 @@ void DataTypeManagerImpl::TriggerLocalDataMigration(DataTypeSet types) {
     controllers_.at(type)
         ->GetLocalDataBatchUploader()
         ->TriggerLocalDataMigration();
+  }
+}
+
+void DataTypeManagerImpl::TriggerLocalDataMigrationForItems(
+    std::map<DataType, std::vector<syncer::LocalDataItemModel::DataId>> items) {
+  DataTypeSet supported_types = base::Intersection(
+      GetDataTypesWithLocalDataBatchUploader(), GetActiveDataTypes());
+  for (auto it = items.cbegin(); it != items.cend(); /* no increment */) {
+    if (!supported_types.Has(it->first)) {
+      it = items.erase(it);  // `erase` returns the next element.
+    } else {
+      ++it;
+    }
+  }
+
+  for (auto& [type, item_list] : items) {
+    controllers_.at(type)
+        ->GetLocalDataBatchUploader()
+        ->TriggerLocalDataMigrationForItems(std::move(item_list));
   }
 }
 

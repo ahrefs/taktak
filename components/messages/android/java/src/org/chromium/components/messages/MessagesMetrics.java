@@ -4,17 +4,18 @@
 
 package org.chromium.components.messages;
 
-
 import androidx.annotation.IntDef;
 
 import org.chromium.base.Log;
 import org.chromium.base.TimeUtils;
 import org.chromium.base.metrics.RecordHistogram;
+import org.chromium.build.annotations.NullMarked;
 
 /**
  * Static utility methods for recording messages related metrics. TODO(crbug.com/40877562): remove
  * logs.
  */
+@NullMarked
 public class MessagesMetrics {
     private static final String TAG = "MessagesMetrics";
     private static final String ENQUEUED_HISTOGRAM_NAME = "Android.Messages.Enqueued";
@@ -409,10 +410,14 @@ public class MessagesMetrics {
                 return "TabRemovedThroughCollaboration";
             case MessageIdentifier.TAB_NAVIGATED_THROUGH_COLLABORATION:
                 return "TabNavigatedThroughCollaboration";
-            case MessageIdentifier.COLLABORATION_USER_JOINED:
-                return "CollaborationUserJoined";
+            case MessageIdentifier.COLLABORATION_MEMBER_ADDED:
+                return "CollaborationMemberAdded";
             case MessageIdentifier.COLLABORATION_REMOVED:
                 return "CollaborationRemoved";
+            case MessageIdentifier.CCT_ACCOUNT_MISMATCH_NOTICE:
+                return "CctAccountMismatchNotice";
+            case MessageIdentifier.PROMPT_HATS_CLEAR_BROWSING_DATA:
+                return "PromptHatsClearBrowsingData";
             default:
                 return "Unknown";
         }

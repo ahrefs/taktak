@@ -12,7 +12,7 @@
 #import "ios/chrome/browser/lens_overlay/ui/lens_overlay_bottom_sheet_presentation_delegate.h"
 #import "ios/chrome/browser/lens_overlay/ui/lens_overlay_result_consumer.h"
 #import "ios/chrome/browser/lens_overlay/ui/lens_toolbar_mutator.h"
-#import "ios/chrome/browser/ui/omnibox/omnibox_focus_delegate.h"
+#import "ios/chrome/browser/omnibox/ui_bundled/omnibox_focus_delegate.h"
 #import "ios/public/provider/chrome/browser/lens/lens_overlay_api.h"
 
 @protocol ApplicationCommands;
@@ -23,9 +23,6 @@ class LensOmniboxClient;
 @protocol LensToolbarConsumer;
 @class OmniboxCoordinator;
 class TemplateURLService;
-namespace web {
-class WebState;
-}  // namespace web
 
 /// Main mediator for Lens Overlay.
 /// Manages data flow between Selection, Omnibox and Results.
@@ -58,9 +55,6 @@ class WebState;
 /// Presentation delegate for requesting bottom sheet resizing.
 @property(nonatomic, weak) id<LensOverlayBottomSheetPresentationDelegate>
     presentationDelegate;
-
-/// Active`webState` observed by this mediator.
-@property(nonatomic, assign) web::WebState* webState;
 
 /// TemplateURLService to observe default search engine change.
 @property(nonatomic, assign) TemplateURLService* templateURLService;

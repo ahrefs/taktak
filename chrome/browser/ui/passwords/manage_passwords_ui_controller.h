@@ -10,7 +10,9 @@
 #include <optional>
 #include <vector>
 
+#include "base/auto_reset.h"
 #include "base/memory/raw_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "base/timer/timer.h"
 #include "chrome/browser/ui/passwords/manage_passwords_state.h"
 #include "chrome/browser/ui/passwords/passwords_client_ui_delegate.h"
@@ -106,9 +108,8 @@ class ManagePasswordsUIController
       const url::Origin& origin,
       base::span<const password_manager::PasswordForm> federated_matches)
       override;
-  void OnCredentialLeak(password_manager::CredentialLeakType leak_dialog_type,
-                        const GURL& url,
-                        const std::u16string& username) override;
+  void OnCredentialLeak(
+      password_manager::LeakedPasswordDetails details) override;
   void OnShowMoveToAccountBubble(
       std::unique_ptr<password_manager::PasswordFormManagerForUI> form_to_move)
       override;
@@ -121,10 +122,11 @@ class ManagePasswordsUIController
       const std::u16string& username,
       const password_manager::PasswordForm& form_to_update) override;
   void OnKeychainError() override;
-  void OnPasskeySaved(bool gpm_pin_created) override;
+  void OnPasskeySaved(bool gpm_pin_created, std::string passkey_rp_id) override;
   void OnPasskeyDeleted() override;
-  void OnPasskeyUpdated() override;
-  void OnPasskeyNotAccepted() override;
+  void OnPasskeyUpdated(std::string passkey_rp_id) override;
+  void OnPasskeyNotAccepted(std::string passkey_rp_id) override;
+  void OnPasskeyUpgrade(std::string passkey_rp_id) override;
 
   virtual void NotifyUnsyncedCredentialsWillBeDeleted(
       std::vector<password_manager::PasswordForm> unsynced_credentials);
@@ -140,6 +142,10 @@ class ManagePasswordsUIController
   // Set the state of the Omnibox icon, and possibly show the associated bubble
   // without user interaction.
   virtual void UpdateIconAndBubbleState(ManagePasswordsIconView* icon);
+
+  // Called if the password change flow finishes successfully. It ensures the
+  // correct state after the flow.
+  void OnPasswordChangeFinishedSuccessfully();
 
   // True iff the bubble is to be opened automatically.
   bool IsAutomaticallyOpeningBubble() const {
@@ -169,9 +175,9 @@ class ManagePasswordsUIController
   const password_manager::InteractionsStats* GetCurrentInteractionStats()
       const override;
   size_t GetTotalNumberCompromisedPasswords() const override;
-  bool DidAuthForAccountStoreOptInFail() const override;
   bool BubbleIsManualFallbackForSaving() const override;
   bool GpmPinCreatedDuringRecentPasskeyCreation() const override;
+  const std::string& PasskeyRpId() const override;
   void OnBubbleShown() override;
   void OnBubbleHidden() override;
   void OnNoInteraction() override;
@@ -190,7 +196,6 @@ class ManagePasswordsUIController
       password_manager::metrics_util::MoveToAccountStoreTrigger trigger)
       override;
   void BlockMovingPasswordToAccountStore() override;
-  void PromptSaveBubbleAfterDefaultStoreChanged() override;
   void ChooseCredential(
       const password_manager::PasswordForm& form,
       password_manager::CredentialType credential_type) override;
@@ -199,18 +204,12 @@ class ManagePasswordsUIController
   void NavigateToPasswordDetailsPageInPasswordManager(
       const std::string& password_domain_name,
       password_manager::ManagePasswordsReferrer referrer) override;
-  void NavigateToPasswordManagerSettingsAccountStoreToggle(
-      password_manager::ManagePasswordsReferrer referrer) override;
   void OnDialogHidden() override;
   void AuthenticateUserWithMessage(const std::u16string& message,
                                    AvailabilityCallback callback) override;
-  void AuthenticateUserForAccountStoreOptInAndSavePassword(
-      const std::u16string& username,
-      const std::u16string& password) override;
-  void AuthenticateUserForAccountStoreOptInAfterSavingLocallyAndMovePassword()
-      override;
   void MaybeShowIOSPasswordPromo() override;
   void RelaunchChrome() override;
+  void NavigateToPasswordChangeSettings() override;
   // Skips user os level authentication during the life time of the returned
   // object. To be used in tests of flows that require user authentication.
   [[nodiscard]] std::unique_ptr<base::AutoReset<bool>>
@@ -222,8 +221,9 @@ class ManagePasswordsUIController
   }
 #endif  // defined(UNIT_TEST)
 
-  // Hides the bubble if opened. Mocked in the tests.
+  // Hides/Shows the bubble if opened. Mocked in the tests.
   virtual void HidePasswordBubble();
+  virtual void ShowChangePasswordBubble();
 
   bool IsShowingBubble() const {
     return bubble_status_ == BubbleStatus::SHOWN ||
@@ -232,7 +232,6 @@ class ManagePasswordsUIController
 
  protected:
   explicit ManagePasswordsUIController(content::WebContents* web_contents);
-
 
   // Called when a PasswordForm is autofilled, when a new PasswordForm is
   // submitted, or when a navigation occurs to update the visibility of the
@@ -248,7 +247,7 @@ class ManagePasswordsUIController
       CredentialManagerDialogController* controller);
 
   // Called to create the credentials leaked dialog.
-  virtual CredentialLeakPrompt* CreateCredentialLeakPrompt(
+  virtual std::unique_ptr<CredentialLeakPrompt> CreateCredentialLeakPrompt(
       CredentialLeakDialogController* controller);
 
   // Check if |web_contents()| is attached to some Browser. Mocked in tests.
@@ -268,6 +267,10 @@ class ManagePasswordsUIController
   // content::WebContentsObserver:
   void PrimaryPageChanged(content::Page& page) override;
   void OnVisibilityChanged(content::Visibility visibility) override;
+
+  PasswordChangeDelegate* GetPasswordChangeDelegate() const override;
+
+  PasswordsLeakDialogDelegate* GetPasswordsLeakDialogDelegate() override;
 
  private:
   friend class content::WebContentsUserData<ManagePasswordsUIController>;
@@ -316,32 +319,11 @@ class ManagePasswordsUIController
   // content::WebContentsObserver:
   void WebContentsDestroyed() override;
 
-  // Gets invoked gaia reauth flow is finished. If the reauth was successful,
-  // and the |form_manager| is still the same, |username| and |password| are
-  // saved against the current origin. If the reauth was unsuccessful, it
-  // changes the default destination to profle store and reopens the save
-  // bubble.
-  void FinishSavingPasswordAfterAccountStoreOptInAuth(
-      const url::Origin& origin,
-      password_manager::PasswordFormManagerForUI* form_manager,
-      const std::u16string& username,
-      const std::u16string& password,
-      password_manager::PasswordManagerClient::ReauthSucceeded
-          reauth_succeeded);
-
   void OnTriggerPostSaveCompromisedBubble(
       password_manager::PostSaveCompromisedHelper::BubbleType type,
       size_t count_compromised_passwords_);
 
-  // Called from an opt-in/reauth flow that was triggered after a new
-  // account-storage-eligible user saved a password locally. If the opt-in was
-  // successful, this moves the just-saved password into the account store.
-  void MoveJustSavedPasswordAfterAccountStoreOptIn(
-      const password_manager::PasswordForm& form,
-      password_manager::PasswordManagerClient::ReauthSucceeded
-          reauth_succeeded);
-
-  void OnMoveJustSavedPasswordAfterAccountStoreOptInCompleted(
+  void OnMovePasswordToAccountStoreComplete(
       std::list<std::unique_ptr<
           password_manager::MovePasswordToAccountStoreHelper>>::iterator
           done_helper_it);
@@ -352,6 +334,9 @@ class ManagePasswordsUIController
   // Returns true if the password that is about to be changed was previously
   // phished.
   bool IsPendingPasswordPhished() const;
+
+  // Returns true if password changing is currently running.
+  bool IsPasswordChangeOngoing() const;
 
   // Timeout in seconds for the manual fallback for saving.
   static int save_fallback_timeout_in_seconds_;
@@ -384,7 +369,7 @@ class ManagePasswordsUIController
   // Used to bypass user authentication in integration tests.
   bool bypass_user_auth_for_testing_ = false;
 
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_CHROMEOS)
   bool was_biometric_authentication_for_filling_promo_shown_ = false;
 #endif
 

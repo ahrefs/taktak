@@ -4,13 +4,15 @@
 
 package org.chromium.chrome.browser.settings;
 
-import androidx.annotation.NonNull;
 import androidx.preference.PreferenceFragmentCompat;
 
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.feedback.HelpAndFeedbackLauncher;
 import org.chromium.chrome.browser.feedback.HelpAndFeedbackLauncherFactory;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.components.browser_ui.settings.EmbeddableSettingsPage;
+import org.chromium.components.browser_ui.settings.SettingsCustomTabLauncher;
 
 /**
  * Base class for settings in Chrome.
@@ -18,9 +20,13 @@ import org.chromium.components.browser_ui.settings.EmbeddableSettingsPage;
  * <p>Common dependencies needed by the vast majority of settings screens can be added here for
  * convenience.
  */
+@NullMarked
 public abstract class ChromeBaseSettingsFragment extends PreferenceFragmentCompat
-        implements EmbeddableSettingsPage, ProfileDependentSetting {
-    private Profile mProfile;
+        implements EmbeddableSettingsPage,
+                ProfileDependentSetting,
+                SettingsCustomTabLauncher.SettingsCustomTabLauncherClient {
+    private @Nullable Profile mProfile;
+    private @Nullable SettingsCustomTabLauncher mCustomTabLauncher;
 
     /**
      * @return The profile associated with the current Settings screen.
@@ -31,8 +37,13 @@ public abstract class ChromeBaseSettingsFragment extends PreferenceFragmentCompa
     }
 
     @Override
-    public void setProfile(@NonNull Profile profile) {
+    public void setProfile(Profile profile) {
         mProfile = profile;
+    }
+
+    @Override
+    public void setCustomTabLauncher(SettingsCustomTabLauncher customTabLauncher) {
+        mCustomTabLauncher = customTabLauncher;
     }
 
     /**
@@ -40,5 +51,12 @@ public abstract class ChromeBaseSettingsFragment extends PreferenceFragmentCompa
      */
     public HelpAndFeedbackLauncher getHelpAndFeedbackLauncher() {
         return HelpAndFeedbackLauncherFactory.getForProfile(mProfile);
+    }
+
+    /**
+     * @return The launcher for CCT.
+     */
+    public @Nullable SettingsCustomTabLauncher getCustomTabLauncher() {
+        return mCustomTabLauncher;
     }
 }

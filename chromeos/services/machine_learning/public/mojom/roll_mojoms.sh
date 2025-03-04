@@ -47,9 +47,6 @@ fi
 echo "Copying mojoms from Chrome OS side ..."
 cp $1/platform2/ml/mojom/*.mojom . || exit 1
 
-echo "Removing big_buffer.mojom ..."
-rm big_buffer.mojom || exit 1
-
 echo "Removing file_path.mojom ..."
 rm file_path.mojom || exit 1
 
@@ -61,9 +58,6 @@ rm shared_memory.mojom || exit 1
 
 echo "Removing time.mojom ..."
 rm time.mojom || exit 1
-
-echo "Removing web_platform_model.mojom ..."
-rm web_platform_model.mojom || exit 1
 
 echo "Changing import paths ..."
 sed --in-place --regexp-extended \

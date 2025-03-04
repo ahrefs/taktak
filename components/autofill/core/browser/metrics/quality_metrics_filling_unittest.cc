@@ -5,8 +5,9 @@
 #include "components/autofill/core/browser/metrics/quality_metrics_filling.h"
 
 #include "base/test/metrics/histogram_tester.h"
-#include "components/autofill/core/browser/autofill_form_test_utils.h"
+#include "components/autofill/core/browser/autofill_field.h"
 #include "components/autofill/core/browser/field_types.h"
+#include "components/autofill/core/browser/test_utils/autofill_form_test_utils.h"
 #include "components/autofill/core/common/autofill_test_utils.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -20,8 +21,7 @@ std::unique_ptr<FormStructure> GetFormStructure(
     const test::FormDescription& form_description) {
   auto form_structure =
       std::make_unique<FormStructure>(test::GetFormData(form_description));
-  form_structure->DetermineHeuristicTypes(GeoIpCountryCode(""), nullptr,
-                                          nullptr);
+  form_structure->DetermineHeuristicTypes(GeoIpCountryCode(""), nullptr);
   return form_structure;
 }
 
@@ -226,6 +226,16 @@ TEST_F(QualityMetricsFillingTest,
 
   histogram_tester_.ExpectUniqueSample(
       "Autofill.DataUtilization.ByPossibleType", (NAME_FIRST << 6) | 0, 1);
+  histogram_tester_.ExpectUniqueSample(
+      "Autofill.DataUtilization.NoPrediction.ByPossibleType",
+      (NAME_FIRST << 6) | 0, 1);
+  histogram_tester_.ExpectTotalCount(
+      "Autofill.DataUtilization.HadPrediction.ByPossibleType", 0);
+  histogram_tester_.ExpectUniqueSample(
+      "Autofill.DataUtilization.GarbageNoPrediction.ByPossibleType",
+      (NAME_FIRST << 6) | 0, 1);
+  histogram_tester_.ExpectTotalCount(
+      "Autofill.DataUtilization.GarbageHadPrediction.ByPossibleType", 0);
 
   EXPECT_TRUE(
       histogram_tester_
@@ -248,6 +258,31 @@ TEST_F(QualityMetricsFillingTest,
                   .empty());
 }
 
+// Tests that
+// "Autofill.DataUtilization.AutocompleteOffNoPrediction.ByPossibleType" is
+// emitted when the field has autocomplete="off".
+TEST_F(QualityMetricsFillingTest,
+       DataUtilizationEmittedWithVariantsAutocompleteOffAndNoPrediction) {
+  std::unique_ptr<FormStructure> form_structure =
+      GetFormStructure({.fields = {{.autocomplete_attribute = "off"}}});
+  form_structure->field(0)->set_possible_types({NAME_FIRST});
+  form_structure->field(0)->set_initial_value_changed(true);
+
+  LogFillingQualityMetrics(*form_structure);
+
+  histogram_tester_.ExpectUniqueSample(
+      "Autofill.DataUtilization.NoPrediction.ByPossibleType",
+      (NAME_FIRST << 6) | 0, 1);
+  histogram_tester_.ExpectTotalCount(
+      "Autofill.DataUtilization.HadPrediction.ByPossibleType", 0);
+  histogram_tester_.ExpectUniqueSample(
+      "Autofill.DataUtilization.AutocompleteOffNoPrediction.ByPossibleType",
+      (NAME_FIRST << 6) | 0, 1);
+  histogram_tester_.ExpectTotalCount(
+      "Autofill.DataUtilization.AutocompleteOffHadPrediction.ByPossibleType",
+      0);
+}
+
 // Tests that metrics "Autofill.DataUtilization.*.{Aggregate, HadPrediction}"
 // are recorded for a field with a `NAME_FIRST` field type prediction.
 TEST_F(QualityMetricsFillingTest,
@@ -255,7 +290,8 @@ TEST_F(QualityMetricsFillingTest,
   std::unique_ptr<FormStructure> form_structure =
       GetFormStructure({.fields = {{.is_autofilled = true}}});
   form_structure->field(0)->set_possible_types({NAME_FIRST});
-  form_structure->field(0)->SetTypeTo(AutofillType(NAME_FIRST));
+  form_structure->field(0)->SetTypeTo(AutofillType(NAME_FIRST),
+                                      AutofillPredictionSource::kHeuristics);
 
   LogFillingQualityMetrics(*form_structure);
 
@@ -275,6 +311,11 @@ TEST_F(QualityMetricsFillingTest,
 
   histogram_tester_.ExpectUniqueSample(
       "Autofill.DataUtilization.ByPossibleType", (NAME_FIRST << 6) | 1, 1);
+  histogram_tester_.ExpectUniqueSample(
+      "Autofill.DataUtilization.HadPrediction.ByPossibleType",
+      (NAME_FIRST << 6) | 1, 1);
+  histogram_tester_.ExpectTotalCount(
+      "Autofill.DataUtilization.NoPrediction.ByPossibleType", 0);
 
   EXPECT_TRUE(
       histogram_tester_
@@ -327,6 +368,11 @@ TEST_F(QualityMetricsFillingTest,
   histogram_tester_.ExpectUniqueSample(
       "Autofill.DataUtilization.ByPossibleType",
       (CREDIT_CARD_EXP_MONTH << 6) | 0, 1);
+  histogram_tester_.ExpectUniqueSample(
+      "Autofill.DataUtilization.NoPrediction.ByPossibleType",
+      (CREDIT_CARD_EXP_MONTH << 6) | 0, 1);
+  histogram_tester_.ExpectTotalCount(
+      "Autofill.DataUtilization.HadPrediction.ByPossibleType", 0);
 
   EXPECT_TRUE(
       histogram_tester_
@@ -375,7 +421,8 @@ TEST_F(QualityMetricsFillingTest,
   std::unique_ptr<FormStructure> form_structure =
       GetFormStructure({.fields = {{.autocomplete_attribute = "garbage"}}});
   form_structure->field(0)->set_possible_types({NAME_FIRST});
-  form_structure->field(0)->SetTypeTo(AutofillType(NAME_FIRST));
+  form_structure->field(0)->SetTypeTo(AutofillType(NAME_FIRST),
+                                      AutofillPredictionSource::kHeuristics);
 
   LogFillingQualityMetrics(*form_structure);
 
@@ -409,6 +456,11 @@ TEST_F(QualityMetricsFillingTest,
 
   histogram_tester_.ExpectUniqueSample(
       "Autofill.DataUtilization.ByPossibleType", (NAME_FIRST << 6) | 0, 1);
+  histogram_tester_.ExpectUniqueSample(
+      "Autofill.DataUtilization.HadPrediction.ByPossibleType",
+      (NAME_FIRST << 6) | 0, 1);
+  histogram_tester_.ExpectTotalCount(
+      "Autofill.DataUtilization.NoPrediction.ByPossibleType", 0);
 
   EXPECT_TRUE(
       histogram_tester_

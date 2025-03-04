@@ -343,7 +343,7 @@ public interface Tab extends TabLifecycle {
     long getTimestampMillis();
 
     /**
-     * Sets the last time this tab was shown. Used for delcutter to mark the tab as "active" after
+     * Sets the last time this tab was shown. Used for declutter to mark the tab as "active" after
      * it's restored, but not immediately shown.
      */
     void setTimestampMillis(long timestampMillis);
@@ -443,4 +443,7 @@ public interface Tab extends TabLifecycle {
      * @param contentIsSensitive True if the content is sensitive.
      */
     void setTabHasSensitiveContent(boolean contentIsSensitive);
+
+    /** Called when the tab is restored from the archived tab model. */
+    void onTabRestoredFromArchivedTabModel();
 }

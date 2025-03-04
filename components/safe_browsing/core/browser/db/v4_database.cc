@@ -66,12 +66,19 @@ FullHashToStoreAndHashPrefixesMap CheckStores(
     std::vector<std::pair<ListIdentifier, V4Store*>> stores) {
   FullHashToStoreAndHashPrefixesMap results;
   for (const auto& store : stores) {
+    base::TimeTicks start = base::TimeTicks::Now();
     for (const auto& full_hash : full_hashes) {
       HashPrefixStr hash_prefix =
           store.second->GetMatchingHashPrefix(full_hash);
       if (!hash_prefix.empty()) {
         results[full_hash].emplace_back(store.first, hash_prefix);
       }
+    }
+    if (store.first.threat_type() == ThreatType::HIGH_CONFIDENCE_ALLOWLIST) {
+      base::UmaHistogramTimes(
+          "SafeBrowsing.V4Store.DbThread."
+          "CheckHighConfidenceAllowlistStoreDuration",
+          base::TimeTicks::Now() - start);
     }
   }
   return results;
@@ -228,8 +235,7 @@ void V4Database::ApplyUpdate(
                                       std::move(store_ready_callback)));
       }
     } else {
-      NOTREACHED_IN_MIGRATION()
-          << "Got update for unexpected identifier: " << identifier;
+      NOTREACHED() << "Got update for unexpected identifier: " << identifier;
     }
   }
 
@@ -379,24 +385,6 @@ void V4Database::RecordFileSizeHistograms() {
       static_cast<int64_t>(db_size_kilobytes / 1024);
   UMA_HISTOGRAM_EXACT_LINEAR(kV4DatabaseSizeLinearMetric, db_size_megabytes,
                              50);
-}
-
-HashPrefixMap::MigrateResult V4Database::GetMigrateResult() {
-  HashPrefixMap::MigrateResult final_result =
-      HashPrefixMap::MigrateResult::kUnknown;
-  for (const auto& store_map_iter : *store_map_) {
-    auto result = store_map_iter.second->migrate_result();
-    if (result == HashPrefixMap::MigrateResult::kFailure) {
-      return result;
-    }
-
-    if (final_result == HashPrefixMap::MigrateResult::kUnknown) {
-      final_result = result;
-    } else if (result != final_result) {
-      return HashPrefixMap::MigrateResult::kUnknown;
-    }
-  }
-  return final_result;
 }
 
 void V4Database::RecordDatabaseUpdateLatency() {

@@ -75,6 +75,9 @@ class VideoTrackRecorder : public TrackRecorder<MediaStreamVideoSink> {
     kH264,
 #endif
     kAv1,
+#if BUILDFLAG(ENABLE_HEVC_PARSER_AND_HW_DECODER)
+    kHevc,
+#endif
     kLast
   };
 
@@ -104,7 +107,8 @@ class VideoTrackRecorder : public TrackRecorder<MediaStreamVideoSink> {
     CreateVideoEncoderMetricsProvider() = 0;
 
     // Called on encountering encoder errors.
-    virtual void OnVideoEncodingError() = 0;
+    virtual void OnVideoEncodingError(
+        const media::EncoderStatus& error_status) = 0;
 
     // Called when a track's ready state changes.
     virtual void OnSourceReadyStateChanged() = 0;
@@ -123,6 +127,14 @@ class VideoTrackRecorder : public TrackRecorder<MediaStreamVideoSink> {
     CodecProfile(CodecId codec_id,
                  media::VideoCodecProfile profile,
                  media::VideoCodecLevel level);
+
+    bool operator==(const CodecProfile& others) const {
+      return (codec_id == others.codec_id) && (profile == others.profile) &&
+             (level == others.level);
+    }
+    bool operator!=(const CodecProfile& others) const {
+      return !(*this == others);
+    }
   };
 
   using OnEncodedVideoCB = base::RepeatingCallback<void(
@@ -130,7 +142,7 @@ class VideoTrackRecorder : public TrackRecorder<MediaStreamVideoSink> {
       scoped_refptr<media::DecoderBuffer> encoded_data,
       std::optional<media::VideoEncoder::CodecDescription> codec_description,
       base::TimeTicks capture_timestamp)>;
-  using OnErrorCB = base::RepeatingClosure;
+  using OnErrorCB = base::RepeatingCallback<void(const media::EncoderStatus&)>;
 
   // MediaStreamVideoSink implementation
   double GetRequiredMinFramesPerSec() const override { return 1; }
@@ -396,7 +408,7 @@ class MODULES_EXPORT VideoTrackRecorderImpl : public VideoTrackRecorder {
       CodecProfile codec_profile,
       bool is_screencast,
       bool create_vea_encoder);
-  void OnHardwareEncoderError();
+  void OnHardwareEncoderError(const media::EncoderStatus& error_status);
 
   void ConnectToTrack(const VideoCaptureDeliverFrameCB& callback);
   void DisconnectFromTrack();
@@ -421,6 +433,8 @@ class MODULES_EXPORT VideoTrackRecorderImpl : public VideoTrackRecorder {
       GUARDED_BY_CONTEXT(main_sequence_checker_);
   bool encoder_support_known_ GUARDED_BY_CONTEXT(main_sequence_checker_) =
       false;
+  size_t num_video_transformation_changes_ = 0;
+  std::optional<media::VideoTransformation> last_transformation_ = std::nullopt;
   base::WeakPtrFactory<VideoTrackRecorderImpl> weak_factory_{this};
 };
 

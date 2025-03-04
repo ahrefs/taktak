@@ -2,7 +2,7 @@ Name: R8
 URL: https://r8.googlesource.com/r8
 Version: N/A
 Revision: DEPS
-License: BSD 3-Clause
+License: BSD-3-Clause
 License File: LICENSE
 Security Critical: no
 Shipped: no
@@ -47,7 +47,7 @@ cp out/Debug/obj/third_party/r8/custom_d8_java.javac.jar third_party/r8/custom_d
   * R8 is built daily and uploaded to CIPD.
   * New instances are uploaded by the packager bot:
     https://ci.chromium.org/p/chromium/builders/ci/3pp-linux-amd64-packager
-  * The bot autoruns every 6 hours. Ping a trooper or a clank build core dev to
+  * The bot autoruns every 6 hours. Ping a trooper or a Clank Commons dev to
     trigger it if you need it sooner:
     https://luci-scheduler.appspot.com/jobs/chromium/3pp-linux-amd64-packager
   * The autoroller runs automatically when a new cipd instance is uploaded.
@@ -75,12 +75,12 @@ tools/gradle.py r8
 java -jar build/libs/r8.jar --debug --classfile --output r8.jar \
     --lib $CHROMIUM_SRC/third_party/jdk/current --pg-conf src/main/keep.txt \
     --no-minification --no-desugaring build/libs/r8.jar
-mv $CHROMIUM_SRC/third_party/r8/lib/r8.jar{,.bak}
-cp r8.jar $CHROMIUM_SRC/third_party/r8/lib/r8.jar
+mv $CHROMIUM_SRC/third_party/r8/cipd/lib/r8.jar{,.bak}
+cp r8.jar $CHROMIUM_SRC/third_party/r8/cipd/lib/r8.jar
 
 * Update backported methods list (used by lint):
 cd $CHROMIUM_SRC
-java -cp third_party/r8/lib/r8.jar com.android.tools.r8.BackportedMethodList --min-api 26 > third_party/r8/backported_methods.txt
+java -cp third_party/r8/cipd/lib/r8.jar com.android.tools.r8.BackportedMethodList --min-api 26 > third_party/r8/backported_methods.txt
 
 How to file bugs against R8:
 * Create a dump (snapshot of R8 inputs):
@@ -99,9 +99,9 @@ Example R8 git-bisect script:
 set -x
 CHROMIUM_SRC=/media/mheikal/code/clankium/src
 tools/gradle.py r8 || exit -1
-chmod +r $CHROMIUM_SRC/third_party/r8/lib/r8.jar
-rm -f $CHROMIUM_SRC/third_party/r8/lib/r8.jar
-cp build/libs/r8.jar $CHROMIUM_SRC/third_party/r8/lib/r8.jar
+chmod +r $CHROMIUM_SRC/third_party/r8/cipd/lib/r8.jar
+rm -f $CHROMIUM_SRC/third_party/r8/cipd/lib/r8.jar
+cp build/libs/r8.jar $CHROMIUM_SRC/third_party/r8/cipd/lib/r8.jar
 
 cd $CHROMIUM_SRC
 exec tools/autotest.py --out-dir out/Release <Test Here>
@@ -115,7 +115,7 @@ git bisect run bash <path_to_script.sh>
 ```
 Tip: When you are done, you can delete the r8 jar and gclient sync to get back
      to ToT R8.
-     `rm -f $CHROMIUM_SRC/third_party/r8/lib/r8.jar && gclient sync`
+     `rm -f $CHROMIUM_SRC/third_party/r8/cipd/lib/r8.jar && gclient sync`
 
 How to submit CLs to R8:
 * Request to be added to their allowlist in order to upload CLs.

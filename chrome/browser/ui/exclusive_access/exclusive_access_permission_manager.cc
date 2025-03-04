@@ -100,6 +100,13 @@ void ExclusiveAccessPermissionManager::RequestPermissions(
   if (requests_it == pending_requests_.end()) {
     return;
   }
+
+  content::MediaSession* media_session =
+      content::MediaSession::GetIfExists(web_contents.get());
+  if (media_session) {
+    media_session->StartDucking();
+  }
+
   PendingRequests& requests = requests_it->second;
   requests.waiting_responses += requests.pending.size();
   for (PermissionRequest& request : requests.pending) {
@@ -120,11 +127,6 @@ void ExclusiveAccessPermissionManager::RequestPermissions(
   if (requests_it != pending_requests_.end()) {
     requests_it->second.pending.clear();
   }
-  content::MediaSession* media_session =
-      content::MediaSession::GetIfExists(web_contents.get());
-  if (media_session) {
-    media_session->StartDucking();
-  }
 }
 
 void ExclusiveAccessPermissionManager::HandleRequestResult(
@@ -135,8 +137,7 @@ void ExclusiveAccessPermissionManager::HandleRequestResult(
     const std::vector<blink::mojom::PermissionStatus>& status) {
   auto requests_it = pending_requests_.find(rfh_id);
   if (requests_it == pending_requests_.end()) {
-    NOTREACHED_IN_MIGRATION();
-    return;
+    NOTREACHED();
   }
   PendingRequests& requests = requests_it->second;
   CHECK_EQ(status.size(), 1u);

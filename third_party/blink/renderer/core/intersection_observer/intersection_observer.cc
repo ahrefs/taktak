@@ -197,8 +197,7 @@ Vector<Length> NormalizeMargins(const Vector<Length>& margins) {
       normalized_margins[3] = margins[3];
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   return normalized_margins;
@@ -221,7 +220,7 @@ String StringifyMargin(const Vector<Length>& margin) {
     if (length.IsPercent()) {
       string_builder.Append('%');
     } else {
-      string_builder.Append("px", 2);
+      string_builder.Append(base::byte_span_from_cstring("px"));
     }
   };
 
@@ -355,7 +354,8 @@ IntersectionObserver::IntersectionObserver(
       track_visibility_(params.track_visibility),
       track_fraction_of_root_(params.semantics == kFractionOfRoot),
       always_report_root_bounds_(params.always_report_root_bounds),
-      use_overflow_clip_edge_(params.use_overflow_clip_edge) {
+      use_overflow_clip_edge_(params.use_overflow_clip_edge),
+      expose_occluder_id_(params.expose_occluder_id) {
   if (params.root) {
     if (params.root->IsDocumentNode()) {
       To<Document>(params.root)

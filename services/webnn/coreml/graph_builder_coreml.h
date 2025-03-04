@@ -7,13 +7,16 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string_view>
 
 #include "base/containers/flat_map.h"
+#include "base/files/file.h"
 #include "base/files/file_path.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/stack_allocated.h"
 #include "base/numerics/checked_math.h"
+#include "base/time/time.h"
 #include "base/types/expected.h"
 #include "services/webnn/public/cpp/context_properties.h"
 #include "services/webnn/public/cpp/operand_descriptor.h"
@@ -40,7 +43,7 @@ template <typename T, typename... U>
 concept IsAnyOf = (std::same_as<T, U> || ...);
 template <typename T>
 concept IsSupportedTensorType =
-    IsAnyOf<T, Float16, float, int32_t, int8_t, char, bool>;
+    IsAnyOf<T, Float16, float, int32_t, int8_t, uint8_t, char, bool>;
 }  // namespace internal
 
 inline constexpr char kPlaceholderInputName[] = "placeholder";
@@ -108,6 +111,7 @@ class GraphBuilderCoreml {
   CreateAndBuild(
       const mojom::GraphInfo& graph_info,
       ContextProperties context_properties,
+      mojom::CreateContextOptions::Device,
       const base::flat_map<uint64_t, std::unique_ptr<WebNNConstantOperand>>&
           constant_operands,
       const base::FilePath& working_directory);
@@ -120,19 +124,89 @@ class GraphBuilderCoreml {
   ~GraphBuilderCoreml();
 
  private:
+  class WeightsFileHandle;
+  class ScopedWeightItem {
+   public:
+    ScopedWeightItem(WeightsFileHandle& weights_file_handle,
+                     size_t byte_size,
+                     uint64_t offset);
+    ~ScopedWeightItem();
+    ScopedWeightItem(const ScopedWeightItem&) = delete;
+    ScopedWeightItem& operator=(const ScopedWeightItem&) = delete;
+
+    base::expected<void, mojom::ErrorPtr> WriteBytes(
+        base::span<const uint8_t> bytes);
+
+    base::expected<void, mojom::ErrorPtr> Finalize();
+    uint64_t offset() { return offset_; }
+
+   private:
+    base::raw_ref<WeightsFileHandle> weights_file_handle_;
+    bool has_error_ = false;
+    bool finalized_ = false;
+    size_t byte_size_;
+    size_t size_written_ = 0;
+    const uint64_t offset_;
+  };
+
+  class WeightsFileHandle {
+   public:
+    static std::optional<std::unique_ptr<GraphBuilderCoreml::WeightsFileHandle>>
+    CreateWeightsHandle(const base::FilePath& weights_file_path);
+
+    WeightsFileHandle(base::File weights_file, uint64_t current_offset);
+    WeightsFileHandle(const WeightsFileHandle&) = delete;
+    WeightsFileHandle(WeightsFileHandle&&) = delete;
+    ~WeightsFileHandle();
+
+    // Write a single weight item.
+    base::expected<CoreML::Specification::MILSpec::Value, mojom::ErrorPtr>
+    Write(uint64_t operand_id,
+          const WebNNConstantOperand& constant_operand,
+          std::optional<base::span<const uint32_t>> reshape_dimensions =
+              std::nullopt);
+
+    base::expected<std::unique_ptr<ScopedWeightItem>, mojom::ErrorPtr>
+    CreateScopedWeightItem(OperandDataType data_type, size_t byte_size);
+
+    // Need to be called to update weight count after all weights are written.
+    base::expected<void, mojom::ErrorPtr> Finalize();
+
+    size_t GetByteSize(OperandDataType data_type);
+    friend class ScopedWeightItem;
+
+   private:
+    // `WeightItemInitialize` `WriteBytes`, `WriteItemFinalize` allows callers
+    // to make multiple partial writes then close of the weight item.
+    base::expected<uint64_t, mojom::ErrorPtr> WeightItemInitialize(
+        OperandDataType data_type,
+        size_t byte_size);
+    base::expected<void, mojom::ErrorPtr> WriteBytes(
+        base::span<const uint8_t> bytes);
+    base::expected<void, mojom::ErrorPtr> WeightItemFinalize(size_t byte_size);
+
+    base::File weights_file_;
+    uint64_t current_offset_ = 0;
+    uint32_t num_of_weights_ = 0;
+    base::TimeDelta weights_write_time_;
+    bool has_error_ = false;
+    bool finalized_ = false;
+    // Maps operand IDs to offsets in the weight file.
+    base::flat_map<uint64_t, uint64_t> constant_offsets_;
+  };
+
   GraphBuilderCoreml(
       const mojom::GraphInfo& graph_info,
       ContextProperties context_properties,
+      mojom::CreateContextOptions::Device device,
       const base::flat_map<uint64_t, std::unique_ptr<WebNNConstantOperand>>&
           constant_operands,
-      base::FilePath ml_package_dir);
+      base::FilePath ml_package_dir,
+      std::unique_ptr<WeightsFileHandle> weights_file_handle);
 
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> BuildCoreMLModel();
 
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> SerializeModel();
-
-  [[nodiscard]] base::expected<void, mojom::ErrorPtr> WriteWeightsToFile(
-      CoreML::Specification::MILSpec::Block& block);
 
   // No further methods may be called on this class after calling this method.
   [[nodiscard]] std::unique_ptr<Result> FinishAndTakeResult();
@@ -168,10 +242,11 @@ class GraphBuilderCoreml {
       uint64_t output_operand_id,
       CoreML::Specification::MILSpec::Block& block,
       std::string_view operand_op_name);
-  void AddUnaryOperation(std::string_view op_name,
-                         uint64_t input_operand_id,
-                         uint64_t output_operand_id,
-                         CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddUnaryOperation(
+      std::string_view op_name,
+      uint64_t input_operand_id,
+      uint64_t output_operand_id,
+      CoreML::Specification::MILSpec::Block& block);
   template <typename T>
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddUnaryOperation(
       SupportedDataType supported_data_type,
@@ -180,17 +255,20 @@ class GraphBuilderCoreml {
       CoreML::Specification::MILSpec::Block& block,
       std::string_view operand_op_name);
   template <typename T>
-  void AddUnaryOperation(std::string_view op_name,
-                         const T& operation,
-                         CoreML::Specification::MILSpec::Block& block);
-  void AddUnaryFloatsOperationWithEpsilon(
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddUnaryOperation(
+      std::string_view op_name,
+      const T& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddUnaryFloatsOperationWithEpsilon(
       std::string_view op_name,
       uint64_t input_operand_id,
       uint64_t output_operand_id,
       float epsilon,
       CoreML::Specification::MILSpec::Block& block);
   template <typename T>
-  void AddUnaryFloatsOperationWithEpsilon(
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddUnaryFloatsOperationWithEpsilon(
       std::string_view op_name,
       const T& operation,
       float epsilon,
@@ -205,21 +283,41 @@ class GraphBuilderCoreml {
   AddOperationForBatchNormalization(
       const mojom::BatchNormalization& operation,
       CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForCast(uint64_t input_operand_id,
-                           uint64_t output_operand_id,
-                           CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForClamp(const mojom::Clamp& operation,
-                            CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForConcat(const mojom::Concat& operation,
-                             CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForConv2d(const mojom::Conv2d& operation,
-                             CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForCumulativeSum(
-      const mojom::CumulativeSum& operation,
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForCast(
+      uint64_t input_operand_id,
+      uint64_t output_operand_id,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForClamp(
+      const mojom::Clamp& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForConcat(
+      base::span<const uint64_t> input_operand_ids,
+      uint64_t output_operand_id,
+      uint32_t axis,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForConcat(
+      const mojom::Concat& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForConv2d(
+      const mojom::Conv2d& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForCumulativeSum(const mojom::CumulativeSum& operation,
+                               CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForDequantizeLinear(const mojom::DequantizeLinear& operation,
+                                  CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForDequantizeLinearConst(
+      const mojom::DequantizeLinear& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForDequantizeLinearConstBlockwise(
+      const mojom::DequantizeLinear& operation,
       CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr>
   AddOperationForElementwiseBinary(
-      uint64_t lhs_operand_id,
+      std::variant<uint64_t, CoreML::Specification::MILSpec::Value> lhs_operand,
       std::variant<uint64_t, CoreML::Specification::MILSpec::Value> rhs_operand,
       uint64_t output_operand_id,
       const mojom::ElementWiseBinary::Kind kind,
@@ -235,21 +333,65 @@ class GraphBuilderCoreml {
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForExpand(
       const mojom::Expand& operation,
       CoreML::Specification::MILSpec::Block& block);
+  void AddOperationForFill(CoreML::Specification::MILSpec::Value value,
+                           uint64_t output_operand_id,
+                           CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForGather(
       const mojom::Gather& operation,
       CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForGelu(const mojom::Gelu& operation,
-                           CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForGatherElements(const mojom::GatherElements& operation,
+                                CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForGatherND(
+      const mojom::GatherND& operation,
+      CoreML::Specification::MILSpec::Block& block);
+
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForGelu(
+      const mojom::Gelu& operation,
+      CoreML::Specification::MILSpec::Block& block);
+
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForGemm(
+      uint64_t a_operand_id,
+      uint64_t b_operand_id,
+      std::optional<uint64_t> c_operand_id,
+      uint64_t output_operand_id,
+      CoreML::Specification::MILSpec::Block& block,
+      bool a_transpose = false,
+      bool b_transpose = false,
+      float alpha = 1.0f,
+      float beta = 1.0f);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForGemm(
       const mojom::Gemm& operation,
       CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForHardSigmoid(uint64_t input_operand_id,
-                                  float alpha,
-                                  float beta,
-                                  uint64_t output_operand_id,
-                                  CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForHardSigmoid(const mojom::HardSigmoid& operation,
-                                  CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForGru(
+      const mojom::Gru& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForGruCell(
+      const mojom::GruCell& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  base::expected<void, mojom::ErrorPtr> AddOperationForGruSingleStep(
+      uint64_t input_operand_id,
+      uint64_t hidden_state_operand_id,
+      uint64_t output_operand_id,
+      base::span<const uint64_t> weights,
+      base::span<const uint64_t> recurrent_weights,
+      std::optional<base::span<const uint64_t>> biases,
+      std::optional<base::span<const uint64_t>> recurrent_biases,
+      uint32_t hidden_size,
+      mojom::GruWeightLayout layout,
+      mojom::RecurrentNetworkActivation activation,
+      mojom::RecurrentNetworkActivation output_activation,
+      bool reset_after,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForHardSigmoid(uint64_t input_operand_id,
+                             float alpha,
+                             float beta,
+                             uint64_t output_operand_id,
+                             CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForHardSigmoid(const mojom::HardSigmoid& operation,
+                             CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForHardSwish(
       const mojom::HardSwish& operation,
       CoreML::Specification::MILSpec::Block& block);
@@ -267,25 +409,53 @@ class GraphBuilderCoreml {
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForLinear(
       const mojom::Linear& operation,
       CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForMatmul(uint64_t input_x_operand_id,
-                             uint64_t input_y_operand_id,
-                             bool transpose_x,
-                             bool transpose_y,
-                             uint64_t output_operand_id,
-                             CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForMatmul(const mojom::Matmul& operation,
-                             CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForLstm(
+      const mojom::Lstm& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForLstm(
+      uint64_t input_operand_id,
+      uint64_t weight_operand_id,
+      uint64_t recurrent_weight_operand_id,
+      uint32_t hidden_size,
+      std::optional<uint64_t> bias_operand_id,
+      std::optional<uint64_t> recurrent_bias_operand_id,
+      std::optional<uint64_t> peephole_weight_operand_id,
+      std::optional<uint64_t> initial_hidden_state_operand_id,
+      std::optional<uint64_t> initial_cell_state_operand_id,
+      bool return_sequence,
+      mojom::RecurrentNetworkDirection direction,
+      mojom::LstmWeightLayout layout,
+      base::span<const mojom::RecurrentNetworkActivation> activations,
+      base::span<const uint64_t> output_operand_ids,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForLstmCell(
+      const mojom::LstmCell& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForMatmul(
+      uint64_t input_x_operand_id,
+      uint64_t input_y_operand_id,
+      bool transpose_x,
+      bool transpose_y,
+      uint64_t output_operand_id,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForMatmul(
+      const mojom::Matmul& operation,
+      CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForPad(
       const mojom::Pad& operation,
       CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForPool2d(
       const mojom::Pool2d& operation,
       CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForQuantizeLinear(const mojom::QuantizeLinear& operation,
+                                CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForReduce(
       const mojom::Reduce& operation,
       CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForResample2d(const mojom::Resample2d& operation,
-                                 CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForResample2d(
+      const mojom::Resample2d& operation,
+      CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForReshape(
       uint64_t input_operand_id,
       uint64_t output_operand_id,
@@ -293,35 +463,65 @@ class GraphBuilderCoreml {
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForReshape(
       const mojom::Reshape& operation,
       CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForSlice(const mojom::Slice& operation,
-                            CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForSoftmax(const mojom::Softmax& operation,
-                              CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForSplit(const mojom::Split& operation,
-                            CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForTile(const mojom::Tile& operation,
-                           CoreML::Specification::MILSpec::Block& block);
-  void AddOperationForTranspose(const mojom::Transpose& operation,
-                                CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForReverse(
+      const mojom::Reverse& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForScatterElements(const mojom::ScatterElements& operation,
+                                 CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForScatterND(
+      uint64_t input_operand_id,
+      uint64_t indices_operand_id,
+      uint64_t updates_operand_id,
+      uint64_t output_operand_id,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForScatterND(
+      const mojom::ScatterND& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForSlice(
+      uint64_t input_operand_id,
+      uint64_t output_operand_id,
+      base::span<const int32_t> beginnings,
+      base::span<const int32_t> endings,
+      base::span<const int32_t> strides,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForSlice(
+      const mojom::Slice& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForSoftmax(
+      const mojom::Softmax& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForSplit(
+      uint64_t input_operand_id,
+      base::span<const uint64_t> output_operand_ids,
+      uint32_t axis,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForSplit(
+      const mojom::Split& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForTile(
+      const mojom::Tile& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForTranspose(
+      uint64_t input_operand_id,
+      uint64_t output_operand_id,
+      base::span<const uint32_t> permutation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForTranspose(
+      const mojom::Transpose& operation,
+      CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForTriangular(
       const mojom::Triangular& operation,
       CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForPrelu(
+      const mojom::Prelu& operation,
+      CoreML::Specification::MILSpec::Block& block);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  AddOperationForPreluEmulate(const mojom::Prelu& operation,
+                              CoreML::Specification::MILSpec::Block& block);
   [[nodiscard]] base::expected<void, mojom::ErrorPtr> AddOperationForWhere(
       const mojom::Where& operation,
       CoreML::Specification::MILSpec::Block& block);
-
-  // Add constants as immediate values in the model file.
-  void AddConstantImmediateValue(uint64_t constant_id,
-                                 CoreML::Specification::MILSpec::Block& block);
-  // Create a Value that points to an offset in weight file.
-  CoreML::Specification::MILSpec::Value CreateConstantFileValue(
-      uint64_t constant_id,
-      uint64_t offset);
-
-  // Populate generic fields that apply to all `const` operations.
-  void PopulateConstantOpFromOperand(
-      uint64_t constant_id,
-      CoreML::Specification::MILSpec::Operation& op);
 
   // Helpers.
   const mojom::Operand& GetOperand(uint64_t operand_id) const;
@@ -355,8 +555,6 @@ class GraphBuilderCoreml {
       CoreML::Specification::MILSpec::NamedValueType& named_value_type);
   // Update the `id_to_op_input_info_map_` to be used by ops later.
   void UpdateCoreMLInputInfoMap(uint64_t operand_id);
-  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
-  SetupMlPackageDirStructure();
 
   std::string GetCoreMLNameFromOperand(uint64_t operand_id);
   [[nodiscard]] base::expected<uint64_t, mojom::ErrorPtr>
@@ -364,15 +562,60 @@ class GraphBuilderCoreml {
       CoreML::Specification::MILSpec::DataType mil_data_type,
       base::span<const uint32_t> dimensions);
 
-  void SetInputFromOperand(
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr> SetInputFromOperand(
       google::protobuf::Map<std::string,
                             CoreML::Specification::MILSpec::Argument>& inputs,
       std::string_view key,
       uint64_t operand_id);
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  SetInputFromConstantOperand(
+      google::protobuf::Map<std::string,
+                            CoreML::Specification::MILSpec::Argument>& inputs,
+      std::string_view key,
+      uint64_t constant_operand_id,
+      std::optional<base::span<const uint32_t>> reshaped_dimensions =
+          std::nullopt);
 
-  // A reference to the WebNN compute graph that `this` instance is converting
-  // to CoreML model. The creator of `this` must ensure the GraphInfo reference
-  // passed into `CreateAndBuild()` is valid for as long as `this` exists.
+  // Helper function to return input[index] using squeeze(slice(input)).
+  base::expected<uint64_t, mojom::ErrorPtr> SliceFirstDimension(
+      uint64_t input_operand_id,
+      int32_t index,
+      CoreML::Specification::MILSpec::Block& block);
+
+  // Split to output operands and squeeze it.
+  base::expected<void, mojom::ErrorPtr> SplitAndSqueeze(
+      uint64_t input_operand_id,
+      base::span<uint64_t> output_operand_ids,
+      int32_t axis,
+      CoreML::Specification::MILSpec::Block& block);
+  // Set input from a constant operand with an alternative order. The reordered
+  // constant won't be re-used across operations.
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  SetInputFromConstantReordered(
+      google::protobuf::Map<std::string,
+                            CoreML::Specification::MILSpec::Argument>& inputs,
+      std::string_view key,
+      base::span<const uint8_t> bytes,
+      OperandDataType data_type,
+      base::span<const uint32_t> dimensions,
+      base::span<const std::pair<size_t, size_t>> new_order);
+  // Set input from two constants added up with an alternative order. The
+  // reordered constant won't be re-used across operations.
+  [[nodiscard]] base::expected<void, mojom::ErrorPtr>
+  SetInputFromTwoConstantsReordered(
+      google::protobuf::Map<std::string,
+                            CoreML::Specification::MILSpec::Argument>& inputs,
+      std::string_view key,
+      base::span<const uint8_t> a_bytes,
+      base::span<const uint8_t> b_bytes,
+      OperandDataType data_type,
+      base::span<const uint32_t> dimensions,
+      base::span<const std::pair<size_t, size_t>> new_order);
+
+  // A reference to the WebNN compute graph that `this` instance is
+  // converting to CoreML model. The creator of `this` must ensure the
+  // GraphInfo reference passed into `CreateAndBuild()` is valid for as long
+  // as `this` exists.
   base::raw_ref<const mojom::GraphInfo> graph_info_;
 
   base::raw_ref<
@@ -380,8 +623,7 @@ class GraphBuilderCoreml {
       constant_operands_;
 
   const ContextProperties context_properties_;
-
-  base::flat_map<uint64_t, uint64_t> constant_offsets_;
+  const mojom::CreateContextOptions::Device device_;
 
   // Used to generate unique names for internal operands generated for WebNN
   // operations that need to be decomposed into multiple CoreML operations.
@@ -389,6 +631,9 @@ class GraphBuilderCoreml {
 
   CoreML::Specification::Model ml_model_;
   raw_ptr<CoreML::Specification::MILSpec::Program> program_;
+  bool support_blockwise_dequantize_ = false;
+
+  std::unique_ptr<WeightsFileHandle> weights_file_handle_;
 
   std::unique_ptr<Result> result_;
 };

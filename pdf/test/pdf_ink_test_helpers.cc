@@ -4,9 +4,10 @@
 
 #include "pdf/test/pdf_ink_test_helpers.h"
 
-#include <string>
+#include <string_view>
 #include <utility>
 
+#include "base/notreached.h"
 #include "base/values.h"
 #include "pdf/pdf_ink_conversions.h"
 
@@ -26,21 +27,20 @@ std::optional<ink::StrokeInputBatch> CreateInkInputBatch(
 }
 
 base::Value::Dict CreateSetAnnotationBrushMessageForTesting(
-    const std::string& type,
-    double size,
+    std::string_view type,
     const TestAnnotationBrushMessageParams* params) {
   base::Value::Dict message;
   message.Set("type", "setAnnotationBrush");
 
   base::Value::Dict data;
   data.Set("type", type);
-  data.Set("size", size);
   if (params) {
     base::Value::Dict color;
     color.Set("r", params->color_r);
     color.Set("g", params->color_g);
     color.Set("b", params->color_b);
     data.Set("color", std::move(color));
+    data.Set("size", params->size);
   }
   message.Set("data", std::move(data));
   return message;
@@ -51,6 +51,24 @@ base::Value::Dict CreateSetAnnotationModeMessageForTesting(bool enable) {
   message.Set("type", "setAnnotationMode");
   message.Set("enable", enable);
   return message;
+}
+
+base::Value::Dict CreateSetAnnotationUndoRedoMessageForTesting(
+    TestAnnotationUndoRedoMessageType type) {
+  base::Value::Dict message;
+  switch (type) {
+    case TestAnnotationUndoRedoMessageType::kUndo:
+      message.Set("type", "annotationUndo");
+      return message;
+    case TestAnnotationUndoRedoMessageType::kRedo:
+      message.Set("type", "annotationRedo");
+      return message;
+  }
+  NOTREACHED();
+}
+
+base::FilePath GetInkTestDataFilePath(std::string_view filename) {
+  return base::FilePath(FILE_PATH_LITERAL("ink")).AppendASCII(filename);
 }
 
 }  // namespace chrome_pdf

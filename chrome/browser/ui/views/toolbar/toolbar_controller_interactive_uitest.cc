@@ -7,6 +7,7 @@
 
 #include "base/functional/overloaded.h"
 #include "base/strings/stringprintf.h"
+#include "base/strings/to_string.h"
 #include "base/test/metrics/user_action_tester.h"
 #include "build/build_config.h"
 #include "chrome/app/chrome_command_ids.h"
@@ -21,7 +22,6 @@
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_util.h"
-#include "chrome/browser/ui/views/toolbar/chrome_labs/chrome_labs_button.h"
 #include "chrome/browser/ui/views/toolbar/pinned_toolbar_actions_container.h"
 #include "chrome/browser/ui/views/toolbar/toolbar_controller.h"
 #include "chrome/browser/ui/views/toolbar/toolbar_view.h"
@@ -33,7 +33,7 @@
 #include "chrome/test/user_education/interactive_feature_promo_test.h"
 #include "components/feature_engagement/public/feature_constants.h"
 #include "components/feature_engagement/test/scoped_iph_feature_list.h"
-#include "components/user_education/common/feature_promo_result.h"
+#include "components/user_education/common/feature_promo/feature_promo_result.h"
 #include "components/user_education/views/help_bubble_view.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/browser_test_utils.h"
@@ -74,7 +74,6 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
         toolbar_controller_->toolbar_container_view_.get());
     overflow_button_ = toolbar_controller_->overflow_button_;
     dummy_button_size_ = overflow_button_->GetPreferredSize();
-    responsive_elements_ = toolbar_controller_->responsive_elements_;
     element_flex_order_start_ = toolbar_controller_->element_flex_order_start_;
     MaybeAddDummyButtonsToToolbarView();
     overflow_threshold_width_ = GetOverflowThresholdWidthInToolbarContainer();
@@ -142,10 +141,11 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
   }
 
   auto CheckIsManagedByController(ui::ElementIdentifier id) {
-    ToolbarController::ElementIdInfo d;
     return Check(
         [this, id]() {
-          for (const auto& el : responsive_elements_) {
+          const std::vector<ToolbarController::ResponsiveElementInfo>&
+              responsive_elements = get_responsive_elements();
+          for (const auto& el : responsive_elements) {
             if (const auto* info =
                     absl::get_if<ToolbarController::ElementIdInfo>(
                         &el.overflow_id)) {
@@ -162,7 +162,9 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
   auto CheckIsManagedByController(actions::ActionId id) {
     return Check(
         [this, id]() {
-          for (const auto& el : responsive_elements_) {
+          const std::vector<ToolbarController::ResponsiveElementInfo>&
+              responsive_elements = get_responsive_elements();
+          for (const auto& el : responsive_elements) {
             if (const auto* action =
                     absl::get_if<actions::ActionId>(&el.overflow_id)) {
               if (*action == id) {
@@ -179,17 +181,16 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
     return CheckResult([this, id]() { return delegate()->IsOverflowed(id); },
                        overflowed,
                        base::StringPrintf("CheckActionItemOverflowed(%s)",
-                                          overflowed ? "true" : "false"));
+                                          base::ToString(overflowed)));
   }
 
   // Forces `id` to overflow by filling toolbar with dummy buttons.
   auto AddDummyButtonsToToolbarTillElementOverflows(ui::ElementIdentifier id) {
-    auto result =
-        Steps(CheckIsManagedByController(id),
-              std::move(Do([this]() {
+    auto result = Steps(CheckIsManagedByController(id),
+                        Do([this]() {
                           SetBrowserWidth(kBrowserContentAllowedMinimumWidth);
-                        }).SetDescription("SetBrowserWidth()")),
-              std::move(Do([this, id]() {
+                        }).SetDescription("SetBrowserWidth()"),
+                        Do([this, id]() {
                           const auto* element =
                               toolbar_controller_->FindToolbarElementWithId(
                                   toolbar_container_view_, id);
@@ -199,30 +200,30 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
                                 CreateADummyButton());
                             views::test::RunScheduledLayout(browser_view_);
                           }
-                        }).SetDescription("ForceOverflow")),
-              WaitForShow(kToolbarOverflowButtonElementId), WaitForHide(id));
-    AddDescription(result,
-                   "AddDummyButtonsToToolbarTillElementOverflows( %s )");
+                        }).SetDescription("ForceOverflow"),
+                        WaitForShow(kToolbarOverflowButtonElementId),
+                        WaitForHide(id));
+    AddDescriptionPrefix(result,
+                         "AddDummyButtonsToToolbarTillElementOverflows()");
     return result;
   }
 
   auto AddDummyButtonsToToolbarTillElementOverflows(actions::ActionId id) {
-    auto result =
-        Steps(CheckIsManagedByController(id),
-              std::move(Do([this]() {
+    auto result = Steps(CheckIsManagedByController(id),
+                        Do([this]() {
                           SetBrowserWidth(kBrowserContentAllowedMinimumWidth);
-                        }).SetDescription("SetBrowserWidth()")),
-              std::move(Do([this, id]() {
+                        }).SetDescription("SetBrowserWidth()"),
+                        Do([this, id]() {
                           while (!delegate()->IsOverflowed(id)) {
                             toolbar_container_view_->AddChildView(
                                 CreateADummyButton());
                             views::test::RunScheduledLayout(browser_view_);
                           }
-                        }).SetDescription("ForceOverflow")),
-              WaitForShow(kToolbarOverflowButtonElementId),
-              CheckActionItemOverflowed(id, true));
-    AddDescription(result,
-                   "AddDummyButtonsToToolbarTillElementOverflows( %s )");
+                        }).SetDescription("ForceOverflow"),
+                        WaitForShow(kToolbarOverflowButtonElementId),
+                        CheckActionItemOverflowed(id, true));
+    AddDescriptionPrefix(result,
+                         "AddDummyButtonsToToolbarTillElementOverflows()");
     return result;
   }
 
@@ -233,8 +234,7 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
       const ui::SimpleMenuModel* menu = GetOverflowMenu();
       EXPECT_NE(menu, nullptr);
       EXPECT_GT(menu->GetItemCount(), size_t(0));
-      const auto& responsive_elements =
-          toolbar_controller_->responsive_elements_;
+      const auto& responsive_elements = get_responsive_elements();
       for (size_t i = 0; i < responsive_elements.size(); ++i) {
         if (toolbar_controller_->IsOverflowed(responsive_elements[i])) {
           if (toolbar_controller_->GetMenuText(responsive_elements[i]) !=
@@ -250,9 +250,11 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
   auto ActivateMenuItemWithElementId(
       absl::variant<ui::ElementIdentifier, actions::ActionId> id) {
     return Do([=, this]() {
+      const std::vector<ToolbarController::ResponsiveElementInfo>&
+          responsive_elements = get_responsive_elements();
       int command_id = -1;
-      for (size_t i = 0; i < responsive_elements_.size(); ++i) {
-        const auto& overflow_id = responsive_elements_[i].overflow_id;
+      for (size_t i = 0; i < responsive_elements.size(); ++i) {
+        const auto& overflow_id = responsive_elements[i].overflow_id;
         absl::visit(
             base::Overloaded(
                 [&](ToolbarController::ElementIdInfo overflow_id) {
@@ -364,8 +366,8 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
   const views::View* overflow_button() const { return overflow_button_; }
   int element_flex_order_start() const { return element_flex_order_start_; }
   const std::vector<ToolbarController::ResponsiveElementInfo>&
-  responsive_elements() const {
-    return responsive_elements_;
+  get_responsive_elements() const {
+    return toolbar_controller_->responsive_elements_;
   }
   int overflow_threshold_width() const { return overflow_threshold_width_; }
   std::vector<const ToolbarController::ResponsiveElementInfo*>
@@ -382,7 +384,6 @@ class ToolbarControllerUiTest : public InteractiveFeaturePromoTest {
   raw_ptr<ToolbarController> toolbar_controller_;
   raw_ptr<views::View> toolbar_container_view_;
   raw_ptr<views::View> overflow_button_;
-  std::vector<ToolbarController::ResponsiveElementInfo> responsive_elements_;
   int element_flex_order_start_;
   gfx::Size dummy_button_size_;
 
@@ -525,11 +526,9 @@ IN_PROC_BROWSER_TEST_F(ToolbarControllerUiTest, ActivateActionElementFromMenu) {
                 "ResponsiveToolbar.OverflowMenuItemActivated.ForwardButton"));
 }
 
-// TODO(crbug.com/360465388): Lacros failures are because resize doesn't
-// actually stick.
 // TODO(crbug/361296257): ActionItemsOverflowAndReappear is flaky on
 // linux64-rel-ready.
-#if BUILDFLAG(IS_CHROMEOS_LACROS) || BUILDFLAG(IS_LINUX)
+#if BUILDFLAG(IS_LINUX)
 #define MAYBE_ActionItemsOverflowAndReappear \
   DISABLED_ActionItemsOverflowAndReappear
 #else
@@ -552,32 +551,23 @@ IN_PROC_BROWSER_TEST_F(ToolbarControllerUiTest,
                       ChromeActionIds::kActionSidePanelShowBookmarks, false));
 }
 
-// TODO(crbug.com/360465388): Lacros failures are because resize doesn't
-// actually stick.
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-#define MAYBE_ActionItemsShowInMenuAndActivateFromMenu \
-  DISABLED_ActionItemsShowInMenuAndActivateFromMenu
-#else
-#define MAYBE_ActionItemsShowInMenuAndActivateFromMenu \
-  ActionItemsShowInMenuAndActivateFromMenu
-#endif
 IN_PROC_BROWSER_TEST_F(ToolbarControllerUiTest,
-                       MAYBE_ActionItemsShowInMenuAndActivateFromMenu) {
-  RunTestSequence(
-      PinBookmarkToToolbar(),
-      AddDummyButtonsToToolbarTillElementOverflows(
-          ChromeActionIds::kActionSidePanelShowBookmarks),
-      PressButton(kToolbarOverflowButtonElementId),
-      CheckMenuMatchesOverflowedElements(),
+                       ActionItemsShowInMenuAndActivateFromMenu) {
+  RunTestSequence(PinBookmarkToToolbar(),
+                  AddDummyButtonsToToolbarTillElementOverflows(
+                      ChromeActionIds::kActionSidePanelShowBookmarks),
+                  PressButton(kToolbarOverflowButtonElementId),
+                  CheckMenuMatchesOverflowedElements(),
 
-      // Check bookmark menu item is activated correctly.
-      ActivateMenuItemWithElementId(
-          ChromeActionIds::kActionSidePanelShowBookmarks),
-      WaitForShow(kSidePanelElementId), Check([this]() {
-        auto* coordinator = browser()->GetFeatures().side_panel_coordinator();
-        return coordinator->IsSidePanelEntryShowing(
-            SidePanelEntry::Key(SidePanelEntry::Id::kBookmarks));
-      }));
+                  // Check bookmark menu item is activated correctly.
+                  ActivateMenuItemWithElementId(
+                      ChromeActionIds::kActionSidePanelShowBookmarks),
+                  WaitForShow(kSidePanelElementId), Check([this]() {
+                    auto* coordinator =
+                        browser()->GetFeatures().side_panel_coordinator();
+                    return coordinator->IsSidePanelEntryShowing(
+                        SidePanelEntry::Key(SidePanelEntry::Id::kBookmarks));
+                  }));
 }
 
 IN_PROC_BROWSER_TEST_F(ToolbarControllerUiTest,
@@ -679,10 +669,8 @@ IN_PROC_BROWSER_TEST_F(ToolbarControllerUiTest,
                    ->is_animating());
 }
 
-// TODO(crbug.com/41495158): Flaky on Windows and fails on Lacros.
-// TODO(crbug.com/360465388): Lacros failures are because resize doesn't
-// actually stick.
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_CHROMEOS_LACROS)
+// TODO(crbug.com/41495158): Flaky on Windows.
+#if BUILDFLAG(IS_WIN)
 #define MAYBE_DoNotShowIphWhenOverflowed DISABLED_DoNotShowIphWhenOverflowed
 #else
 #define MAYBE_DoNotShowIphWhenOverflowed DoNotShowIphWhenOverflowed

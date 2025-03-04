@@ -11,6 +11,8 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/views/view.h"
 
+namespace webid {
+
 const std::u16string kRpETLDPlusOne = u"rp-example.com";
 const std::u16string kIdpETLDPlusOne = u"idp-example.com";
 const std::u16string kSecondIdpETLDPlusOne = u"idp2.com";
@@ -69,6 +71,11 @@ class AccountSelectionViewTestBase {
       size_t& accounts_index,
       bool expect_idp = false,
       bool is_modal_dialog = false);
+  void CheckHoverableAccountRow(views::View* account,
+                                const std::string& account_suffix,
+                                bool expect_idp = false,
+                                bool is_modal_dialog = false,
+                                bool is_disabled = false);
   void CheckDisclosureText(views::View* disclosure_text,
                            bool expect_terms_of_service,
                            bool expect_privacy_policy);
@@ -97,5 +104,7 @@ class AccountSelectionViewTestBase {
   views::View* GetViewWithClassName(views::View* parent,
                                     const std::string& class_name);
 };
+
+}  // namespace webid
 
 #endif  // CHROME_BROWSER_UI_VIEWS_WEBID_ACCOUNT_SELECTION_VIEW_TEST_BASE_H_

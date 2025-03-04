@@ -110,7 +110,6 @@
 #include "chrome/common/pref_names.h"
 #include "chrome/test/base/ui_test_utils.h"
 #include "chromeos/ash/components/file_manager/app_id.h"
-#include "chromeos/ash/components/standalone_browser/feature_refs.h"
 #include "chromeos/constants/chromeos_features.h"
 #include "components/app_constants/constants.h"
 #include "components/crx_file/id_util.h"
@@ -174,8 +173,9 @@ Browser* FindBrowserForApp(const std::string& app_name) {
   for (Browser* browser : *BrowserList::GetInstance()) {
     std::string browser_app_name =
         web_app::GetAppIdFromApplicationName(browser->app_name());
-    if (browser_app_name == app_name)
+    if (browser_app_name == app_name) {
       return browser;
+    }
   }
   return nullptr;
 }
@@ -324,7 +324,7 @@ class ShelfAppBrowserTest : public extensions::ExtensionBrowserTest {
   ShelfAppBrowserTest() = default;
   ShelfAppBrowserTest(const ShelfAppBrowserTest&) = delete;
   ShelfAppBrowserTest& operator=(const ShelfAppBrowserTest&) = delete;
-  ~ShelfAppBrowserTest() override {}
+  ~ShelfAppBrowserTest() override = default;
 
   ash::ShelfModel* shelf_model() { return controller_->shelf_model(); }
 
@@ -438,12 +438,12 @@ class ShelfAppBrowserTest : public extensions::ExtensionBrowserTest {
 
 class ShelfAppBrowserTestNoDefaultBrowser : public ShelfAppBrowserTest {
  protected:
-  ShelfAppBrowserTestNoDefaultBrowser() {}
+  ShelfAppBrowserTestNoDefaultBrowser() = default;
   ShelfAppBrowserTestNoDefaultBrowser(
       const ShelfAppBrowserTestNoDefaultBrowser&) = delete;
   ShelfAppBrowserTestNoDefaultBrowser& operator=(
       const ShelfAppBrowserTestNoDefaultBrowser&) = delete;
-  ~ShelfAppBrowserTestNoDefaultBrowser() override {}
+  ~ShelfAppBrowserTestNoDefaultBrowser() override = default;
 
   void SetUpCommandLine(base::CommandLine* command_line) override {
     ShelfAppBrowserTest::SetUpCommandLine(command_line);
@@ -1126,10 +1126,11 @@ IN_PROC_BROWSER_TEST_F(ShelfAppBrowserTest, LaunchUnpinned) {
   TabStripModel* tab_strip = browser()->tab_strip_model();
   int tab_count = tab_strip->count();
   LoadAndLaunchExtension(
-      "app1", apps::GetEventFlags(WindowOpenDisposition::NEW_FOREGROUND_TAB,
-                                  true /* prefer_containner */));
+      "app1_https",
+      apps::GetEventFlags(WindowOpenDisposition::NEW_FOREGROUND_TAB,
+                          true /* prefer_containner */));
   EXPECT_EQ(++tab_count, tab_strip->count());
-  ash::ShelfID shortcut_id = CreateShortcut("app1");
+  ash::ShelfID shortcut_id = CreateShortcut("app1_https");
   EXPECT_EQ(ash::STATUS_RUNNING, shelf_model()->ItemByID(shortcut_id)->status);
   WebContents* tab = tab_strip->GetActiveWebContents();
   content::WebContentsDestroyedWatcher destroyed_watcher(tab);
@@ -1167,7 +1168,7 @@ IN_PROC_BROWSER_TEST_F(ShelfAppBrowserTest, AppIDForUnpinnedHostedApp) {
 IN_PROC_BROWSER_TEST_F(ShelfAppBrowserTest, AppIDForPinnedHostedApp) {
   // Load and pin a hosted app.
   const Extension* extension =
-      LoadExtension(test_data_dir_.AppendASCII("app1/"));
+      LoadExtension(test_data_dir_.AppendASCII("app1_https/"));
   ASSERT_TRUE(extension);
   PinAppWithIDToShelf(extension->id());
 
@@ -1408,19 +1409,19 @@ IN_PROC_BROWSER_TEST_F(ShelfAppBrowserTest, DemoModeAppLaunchSourceReported) {
 // Confirm that a page can be navigated from and to while maintaining the
 // correct running state.
 IN_PROC_BROWSER_TEST_F(ShelfAppBrowserTest, Navigation) {
-  ash::ShelfID shortcut_id = CreateShortcut("app1");
+  ash::ShelfID shortcut_id = CreateShortcut("app1_https");
   EXPECT_EQ(ash::STATUS_CLOSED, shelf_model()->ItemByID(shortcut_id)->status);
   SelectItem(shortcut_id);
   EXPECT_EQ(ash::STATUS_RUNNING, shelf_model()->ItemByID(shortcut_id)->status);
 
   // Navigate away.
   ASSERT_TRUE(ui_test_utils::NavigateToURL(
-      browser(), GURL("http://www.example.com/path0/bar.html")));
+      browser(), GURL("https://www.example.com/path0/bar.html")));
   EXPECT_EQ(ash::STATUS_CLOSED, shelf_model()->ItemByID(shortcut_id)->status);
 
   // Navigate back.
   ASSERT_TRUE(ui_test_utils::NavigateToURL(
-      browser(), GURL("http://www.example.com/path1/foo.html")));
+      browser(), GURL("https://www.example.com/path1/foo.html")));
   EXPECT_EQ(ash::STATUS_RUNNING, shelf_model()->ItemByID(shortcut_id)->status);
 }
 
@@ -1499,14 +1500,14 @@ IN_PROC_BROWSER_TEST_F(ShelfAppBrowserTest, RefocusFilterLaunch) {
 IN_PROC_BROWSER_TEST_F(ShelfAppBrowserTest, AsyncActivationStateCheck) {
   TabStripModel* tab_strip = browser()->tab_strip_model();
 
-  ash::ShelfID shortcut_id = CreateShortcut("app1");
-  SetRefocusURL(shortcut_id, GURL("http://www.example.com/path1/*"));
+  ash::ShelfID shortcut_id = CreateShortcut("app1_https");
+  SetRefocusURL(shortcut_id, GURL("https://www.example.com/path1/*"));
 
   EXPECT_EQ(ash::STATUS_CLOSED, shelf_model()->ItemByID(shortcut_id)->status);
 
   // Create new tab which would be the running app.
   ui_test_utils::NavigateToURLWithDisposition(
-      browser(), GURL("http://www.example.com/path1/bar.html"),
+      browser(), GURL("https://www.example.com/path1/bar.html"),
       WindowOpenDisposition::NEW_FOREGROUND_TAB,
       ui_test_utils::BROWSER_TEST_WAIT_FOR_LOAD_STOP);
 
@@ -1993,8 +1994,8 @@ IN_PROC_BROWSER_TEST_F(ShelfAppBrowserTest, ActivateAfterSessionRestore) {
   Browser::CreateParams params = Browser::CreateParams(profile(), true);
   params.initial_show_state = ui::mojom::WindowShowState::kInactive;
   Browser* browser2 = Browser::Create(params);
-  SetRefocusURL(shortcut_id, GURL("http://www.example.com/path/*"));
-  std::string url = "http://www.example.com/path/bla";
+  SetRefocusURL(shortcut_id, GURL("https://www.example.com/path/*"));
+  std::string url = "https://www.example.com/path/bla";
   ui_test_utils::NavigateToURLWithDisposition(
       browser2, GURL(url), WindowOpenDisposition::NEW_FOREGROUND_TAB,
       ui_test_utils::BROWSER_TEST_WAIT_FOR_LOAD_STOP);
@@ -2320,8 +2321,9 @@ IN_PROC_BROWSER_TEST_F(ShelfWebAppBrowserTest, SettingsAndTaskManagerWindows) {
   EXPECT_EQ(item_count + 2, shelf_model()->item_count());
 
   // Validates that all items have valid app id.
-  for (const auto& item : shelf_model()->items())
+  for (const auto& item : shelf_model()->items()) {
     EXPECT_TRUE(crx_file::id_util::IdIsValid(item.id.app_id));
+  }
 
   // TODO(stevenjb): Test multiprofile on Chrome OS when test support is addded.
   // crbug.com/230464.
@@ -2331,7 +2333,7 @@ IN_PROC_BROWSER_TEST_F(ShelfWebAppBrowserTest, SettingsAndTaskManagerWindows) {
 IN_PROC_BROWSER_TEST_F(ShelfWebAppBrowserTest, TabbedHostedAndWebApps) {
   // Load and pin a hosted app.
   const Extension* hosted_app =
-      LoadExtension(test_data_dir_.AppendASCII("app1/"));
+      LoadExtension(test_data_dir_.AppendASCII("app1_https/"));
   ASSERT_TRUE(hosted_app);
   PinAppWithIDToShelf(hosted_app->id());
   const ash::ShelfID hosted_app_shelf_id(hosted_app->id());
@@ -2373,7 +2375,7 @@ IN_PROC_BROWSER_TEST_F(ShelfWebAppBrowserTest, TabbedHostedAndWebApps) {
 IN_PROC_BROWSER_TEST_F(ShelfWebAppBrowserTest, WindowedHostedAndWebApps) {
   // Load and pin a hosted app.
   const Extension* hosted_app =
-      LoadExtension(test_data_dir_.AppendASCII("app1/"));
+      LoadExtension(test_data_dir_.AppendASCII("app1_https/"));
   ASSERT_TRUE(hosted_app);
   PinAppWithIDToShelf(hosted_app->id());
   const ash::ShelfID hosted_app_shelf_id(hosted_app->id());
@@ -2957,8 +2959,9 @@ class PerDeskShelfAppBrowserTest : public ShelfAppBrowserTest,
 
  private:
   void OnAppMenuShown() {
-    if (run_loop_)
+    if (run_loop_) {
       std::move(run_loop_)->Quit();
+    }
   }
 
   raw_ptr<ash::ShelfView, DanglingUntriaged> shelf_view_ = nullptr;

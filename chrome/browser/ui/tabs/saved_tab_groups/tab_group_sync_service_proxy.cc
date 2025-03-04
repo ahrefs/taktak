@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "base/notimplemented.h"
+#include "base/notreached.h"
 #include "base/observer_list.h"
 #include "chrome/browser/favicon/favicon_utils.h"
 #include "chrome/browser/profiles/profile.h"
@@ -46,7 +47,7 @@ void TabGroupSyncServiceProxy::SetTabGroupSyncDelegate(
 }
 
 void TabGroupSyncServiceProxy::AddGroup(SavedTabGroup group) {
-  service_->model()->Add(std::move(group));
+  service_->model()->AddedLocally(std::move(group));
 }
 
 void TabGroupSyncServiceProxy::RemoveGroup(const LocalTabGroupID& local_id) {
@@ -54,14 +55,14 @@ void TabGroupSyncServiceProxy::RemoveGroup(const LocalTabGroupID& local_id) {
 }
 
 void TabGroupSyncServiceProxy::RemoveGroup(const base::Uuid& sync_id) {
-  service_->model()->Remove(sync_id);
+  service_->model()->RemovedLocally(sync_id);
 }
 
 void TabGroupSyncServiceProxy::UpdateVisualData(
     const LocalTabGroupID local_group_id,
     const TabGroupVisualData* visual_data) {
   service_->UpdateAttributions(local_group_id);
-  service_->model()->UpdateVisualData(local_group_id, visual_data);
+  service_->model()->UpdateVisualDataLocally(local_group_id, visual_data);
 
   std::optional<SavedTabGroup> group = GetGroup(local_group_id);
   CHECK(group.has_value());
@@ -89,7 +90,7 @@ void TabGroupSyncServiceProxy::UpdateGroupPosition(
 void TabGroupSyncServiceProxy::AddTab(const LocalTabGroupID& group_id,
                                       const LocalTabID& tab_id,
                                       const std::u16string& title,
-                                      GURL url,
+                                      const GURL& url,
                                       std::optional<size_t> position) {
   std::optional<SavedTabGroup> group = GetGroup(group_id);
   CHECK(group.has_value());
@@ -107,7 +108,27 @@ void TabGroupSyncServiceProxy::AddTab(const LocalTabGroupID& group_id,
   service_->OnTabAddedToGroupLocally(group->saved_guid());
 }
 
-void TabGroupSyncServiceProxy::UpdateTab(
+void TabGroupSyncServiceProxy::NavigateTab(const LocalTabGroupID& group_id,
+                                           const LocalTabID& tab_id,
+                                           const GURL& url,
+                                           const std::u16string& title) {
+  std::optional<SavedTabGroup> group = GetGroup(group_id);
+  CHECK(group.has_value());
+  SavedTabGroupTab* tab = group->GetTab(tab_id);
+  CHECK(tab);
+
+  SavedTabGroupTab updated_tab(*tab);
+  updated_tab.SetURL(url);
+  updated_tab.SetTitle(title);
+
+  service_->model()->UpdateTabInGroup(group->saved_guid(),
+                                      std::move(updated_tab),
+                                      /*notify_observers=*/true);
+
+  service_->OnTabNavigatedLocally(group->saved_guid(), tab->saved_tab_guid());
+}
+
+void TabGroupSyncServiceProxy::UpdateTabProperties(
     const LocalTabGroupID& group_id,
     const LocalTabID& tab_id,
     const SavedTabGroupTabBuilder& tab_builder) {
@@ -118,22 +139,8 @@ void TabGroupSyncServiceProxy::UpdateTab(
 
   service_->UpdateAttributions(group_id);
   service_->model()->UpdateTabInGroup(group->saved_guid(),
-                                      tab_builder.Build(*tab));
-
-  service_->OnTabNavigatedLocally(group->saved_guid(), tab->saved_tab_guid());
-}
-
-void TabGroupSyncServiceProxy::SetFaviconForTab(
-    const LocalTabGroupID& group_id,
-    const LocalTabID& tab_id,
-    std::optional<gfx::Image> favicon) {
-  std::optional<SavedTabGroup> group = GetGroup(group_id);
-  CHECK(group.has_value());
-  SavedTabGroupTab* tab = group->GetTab(tab_id);
-  CHECK(tab);
-
-  tab->SetFavicon(favicon);
-  service_->model()->UpdateTabInGroup(group->saved_guid(), *tab);
+                                      tab_builder.Build(*tab),
+                                      /*notify_observers=*/false);
 }
 
 void TabGroupSyncServiceProxy::RemoveTab(const LocalTabGroupID& group_id,
@@ -168,8 +175,10 @@ void TabGroupSyncServiceProxy::MoveTab(const LocalTabGroupID& group_id,
   service_->OnTabsReorderedLocally(group->saved_guid());
 }
 
-void TabGroupSyncServiceProxy::OnTabSelected(const LocalTabGroupID& group_id,
-                                             const LocalTabID& tab_id) {
+void TabGroupSyncServiceProxy::OnTabSelected(
+    const std::optional<LocalTabGroupID>& group_id,
+    const LocalTabID& tab_id,
+    const std::u16string& tab_title) {
   NOTIMPLEMENTED();
 }
 
@@ -183,30 +192,68 @@ void TabGroupSyncServiceProxy::UnsaveGroup(const LocalTabGroupID& local_id) {
 
 void TabGroupSyncServiceProxy::MakeTabGroupShared(
     const LocalTabGroupID& local_group_id,
-    std::string_view collaboration_id) {
-  service_->model()->MakeTabGroupShared(local_group_id,
-                                        std::string(collaboration_id));
+    std::string_view collaboration_id,
+    TabGroupSharingCallback callback) {
+  NOTIMPLEMENTED();
 }
 
-std::vector<SavedTabGroup> TabGroupSyncServiceProxy::GetAllGroups() {
+void TabGroupSyncServiceProxy::AboutToUnShareTabGroup(
+    const LocalTabGroupID& local_group_id,
+    base::OnceClosure on_complete_callback) {
+  NOTIMPLEMENTED();
+}
+
+void TabGroupSyncServiceProxy::OnTabGroupUnShareComplete(
+    const LocalTabGroupID& local_group_id,
+    bool success) {
+  NOTIMPLEMENTED();
+}
+
+void TabGroupSyncServiceProxy::OnCollaborationRemoved(
+    const syncer::CollaborationId& collaboration_id) {
+  NOTIMPLEMENTED();
+}
+
+std::vector<SavedTabGroup> TabGroupSyncServiceProxy::GetAllGroups() const {
   return service_->model()->saved_tab_groups();
 }
 
 std::optional<SavedTabGroup> TabGroupSyncServiceProxy::GetGroup(
-    const base::Uuid& guid) {
+    const base::Uuid& guid) const {
   const SavedTabGroup* group = service_->model()->Get(guid);
   return group ? std::optional<SavedTabGroup>(*group) : std::nullopt;
 }
 
 std::optional<SavedTabGroup> TabGroupSyncServiceProxy::GetGroup(
-    const LocalTabGroupID& local_id) {
+    const LocalTabGroupID& local_id) const {
   const SavedTabGroup* group = service_->model()->Get(local_id);
   return group ? std::optional<SavedTabGroup>(*group) : std::nullopt;
 }
 
-std::vector<LocalTabGroupID> TabGroupSyncServiceProxy::GetDeletedGroupIds() {
+std::optional<SavedTabGroup> TabGroupSyncServiceProxy::GetGroup(
+    const EitherGroupID& either_id) const {
+  const SavedTabGroup* group = nullptr;
+
+  if (std::holds_alternative<LocalTabGroupID>(either_id)) {
+    group = service_->model()->Get(std::get<LocalTabGroupID>(either_id));
+  } else {
+    group = service_->model()->Get(std::get<base::Uuid>(either_id));
+  }
+
+  return group ? std::make_optional<SavedTabGroup>(*group) : std::nullopt;
+}
+
+std::vector<LocalTabGroupID> TabGroupSyncServiceProxy::GetDeletedGroupIds()
+    const {
   NOTIMPLEMENTED();
   return std::vector<LocalTabGroupID>();
+}
+
+std::optional<std::u16string>
+TabGroupSyncServiceProxy::GetTitleForPreviouslyExistingSharedTabGroup(
+    const CollaborationId& collaboration_id) const {
+  NOTIMPLEMENTED();
+  return std::nullopt;
 }
 
 void TabGroupSyncServiceProxy::OpenTabGroup(
@@ -290,6 +337,12 @@ void TabGroupSyncServiceProxy::GetURLRestriction(
   std::move(callback).Run(std::nullopt);
 }
 
+std::unique_ptr<std::vector<SavedTabGroup>>
+TabGroupSyncServiceProxy::TakeSharedTabGroupsAvailableAtStartupForMessaging() {
+  // This method should only exist and be used in the underlying service.
+  NOTREACHED();
+}
+
 void TabGroupSyncServiceProxy::AddObserver(Observer* observer) {
   if (observers_.empty()) {
     service_->model()->AddObserver(this);
@@ -308,6 +361,15 @@ void TabGroupSyncServiceProxy::RemoveObserver(Observer* observer) {
 
 void TabGroupSyncServiceProxy::SetIsInitializedForTesting(bool initialized) {
   service_->model()->LoadStoredEntries({}, {});
+}
+
+std::u16string TabGroupSyncServiceProxy::GetTabTitle(
+    const LocalTabID& local_tab_id) {
+  return std::u16string();
+}
+
+SavedTabGroupModel* TabGroupSyncServiceProxy::GetModelForTesting() {
+  return service_->model();
 }
 
 void TabGroupSyncServiceProxy::SavedTabGroupModelLoaded() {

@@ -8,6 +8,7 @@
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/web_applications/test/web_app_install_test_utils.h"
 #include "chrome/browser/web_applications/test/web_app_test_utils.h"
+#include "chrome/browser/web_applications/web_app_management_type.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
 #include "chrome/browser/web_applications/web_app_registrar.h"
 #include "chrome/test/base/in_process_browser_test.h"
@@ -65,20 +66,25 @@ IN_PROC_BROWSER_TEST_F(AdobeExpressOemToDefaultMigrationTest,
   ASSERT_EQ(app_id, ash::kAdobeExpressAppId);
 
   auto* provider = WebAppProvider::GetForWebApps(profile());
-  ASSERT_EQ(provider->registrar_unsafe().GetAppById(app_id)->GetSources(),
-            WebAppManagementTypes({WebAppManagement::Type::kUserInstalled,
-                                   WebAppManagement::Type::kSync}));
+  WebAppManagementTypes sources =
+      provider->registrar_unsafe().GetAppById(app_id)->GetSources();
+  EXPECT_TRUE(WebAppManagementTypes(
+                  {WebAppManagement::kSync, WebAppManagement::kUserInstalled})
+                  .HasAll(sources))
+      << base::ToString(sources);
 }
 
 // Verifies that the user-installed app is not changed on next startup.
 IN_PROC_BROWSER_TEST_F(AdobeExpressOemToDefaultMigrationTest,
                        DoNotMigrateUserInstall) {
   auto* provider = WebAppProvider::GetForWebApps(profile());
-  ASSERT_EQ(provider->registrar_unsafe()
-                .GetAppById(ash::kAdobeExpressAppId)
-                ->GetSources(),
-            WebAppManagementTypes({WebAppManagement::Type::kUserInstalled,
-                                   WebAppManagement::Type::kSync}));
+  WebAppManagementTypes sources = provider->registrar_unsafe()
+                                      .GetAppById(ash::kAdobeExpressAppId)
+                                      ->GetSources();
+  EXPECT_TRUE(WebAppManagementTypes(
+                  {WebAppManagement::kSync, WebAppManagement::kUserInstalled})
+                  .HasAll(sources))
+      << base::ToString(sources);
 }
 
 }  // namespace

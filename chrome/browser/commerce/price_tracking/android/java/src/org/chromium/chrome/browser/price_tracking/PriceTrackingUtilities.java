@@ -7,11 +7,13 @@ package org.chromium.chrome.browser.price_tracking;
 import androidx.annotation.VisibleForTesting;
 
 import org.chromium.base.shared_preferences.SharedPreferencesManager;
+import org.chromium.build.annotations.NullMarked;
 import org.chromium.chrome.browser.preferences.ChromePreferenceKeys;
 import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
 import org.chromium.chrome.browser.profiles.Profile;
 
 /** Utility class for price tracking. */
+@NullMarked
 public class PriceTrackingUtilities {
     public static final String TRACK_PRICES_ON_TABS =
             ChromePreferenceKeys.PRICE_TRACKING_TRACK_PRICES_ON_TABS;
@@ -37,10 +39,10 @@ public class PriceTrackingUtilities {
      * @return Whether the track prices on tabs is turned on by users.
      */
     public static boolean isTrackPricesOnTabsEnabled(Profile profile) {
-        return PriceTrackingFeatures.isPriceTrackingEligible(profile)
+        return PriceTrackingFeatures.isPriceAnnotationsEligible(profile)
                 && SHARED_PREFERENCES_MANAGER.readBoolean(
                         TRACK_PRICES_ON_TABS,
-                        PriceTrackingFeatures.isPriceTrackingEnabled(profile));
+                        PriceTrackingFeatures.isPriceAnnotationsEnabled(profile));
     }
 
     /** Forbid showing the PriceWelcomeMessageCard any more. */
@@ -52,10 +54,10 @@ public class PriceTrackingUtilities {
      * @return Whether the PriceWelcomeMessageCard is enabled.
      */
     public static boolean isPriceWelcomeMessageCardEnabled(Profile profile) {
-        return PriceTrackingFeatures.isPriceTrackingEligible(profile)
+        return PriceTrackingFeatures.isPriceAnnotationsEligible(profile)
                 && SHARED_PREFERENCES_MANAGER.readBoolean(
                         PRICE_WELCOME_MESSAGE_CARD,
-                        PriceTrackingFeatures.isPriceTrackingEnabled(profile));
+                        PriceTrackingFeatures.isPriceAnnotationsEnabled(profile));
     }
 
     /**

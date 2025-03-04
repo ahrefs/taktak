@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "base/command_line.h"
@@ -25,7 +26,6 @@
 #include "base/threading/thread_restrictions.h"
 #include "build/build_config.h"
 #include "build/buildflag.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/password_manager/chrome_password_manager_client.h"
 #include "chrome/browser/password_manager/password_manager_test_base.h"
 #include "chrome/browser/password_manager/password_manager_uitest_util.h"
@@ -49,9 +49,9 @@
 #include "components/autofill/content/browser/test_autofill_client_injector.h"
 #include "components/autofill/content/common/mojom/autofill_driver.mojom-test-utils.h"
 #include "components/autofill/content/common/mojom/autofill_driver.mojom.h"
-#include "components/autofill/core/browser/autofill_test_utils.h"
 #include "components/autofill/core/browser/field_types.h"
 #include "components/autofill/core/browser/proto/api_v1.pb.h"
+#include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #include "components/autofill/core/common/autofill_features.h"
 #include "components/autofill/core/common/autofill_switches.h"
 #include "components/autofill/core/common/form_field_data.h"
@@ -92,6 +92,7 @@
 #include "content/public/test/prerender_test_util.h"
 #include "content/public/test/test_utils.h"
 #include "content/public/test/url_loader_interceptor.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "google_apis/gaia/gaia_switches.h"
 #include "net/base/filename_util.h"
 #include "net/dns/mock_host_resolver.h"
@@ -230,7 +231,7 @@ class MockHttpAuthObserver : public password_manager::HttpAuthObserver {
  public:
   MOCK_METHOD(void,
               OnAutofillDataAvailable,
-              (const std::u16string& username, const std::u16string& password),
+              (std::u16string_view username, std::u16string_view password),
               (override));
 
   MOCK_METHOD(void, OnLoginModelDestroying, (), (override));
@@ -4097,7 +4098,8 @@ class PasswordManagerBrowserTestWithSigninInterception
   // another dummy account in Chrome that acts as the primary.
   void SetupAccountsForSavingGaiaPassword() {
     CoreAccountId dummy_account = helper_.AddGaiaAccountToProfile(
-        browser()->profile(), "dummy_email@example.com", "dummy_gaia_id");
+        browser()->profile(), "dummy_email@example.com",
+        GaiaId("dummy_gaia_id"));
     IdentityManagerFactory::GetForProfile(browser()->profile())
         ->GetPrimaryAccountMutator()
         ->SetPrimaryAccount(dummy_account, signin::ConsentLevel::kSignin);
@@ -4144,8 +4146,7 @@ IN_PROC_BROWSER_TEST_F(PasswordManagerBrowserTestWithSigninInterception,
   DiceWebSigninInterceptor* signin_interceptor =
       helper_.GetSigninInterceptor(profile);
   signin_interceptor->MaybeInterceptWebSignin(
-      WebContents(), account_id,
-      signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN,
+      WebContents(), account_id, signin_metrics::AccessPoint::kUnknown,
       /*is_new_account=*/true,
       /*is_sync_signin=*/false);
   EXPECT_FALSE(signin_interceptor->is_interception_in_progress());
@@ -4175,8 +4176,7 @@ IN_PROC_BROWSER_TEST_F(PasswordManagerBrowserTestWithSigninInterception,
   DiceWebSigninInterceptor* signin_interceptor =
       helper_.GetSigninInterceptor(profile);
   signin_interceptor->MaybeInterceptWebSignin(
-      WebContents(), account_id,
-      signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN,
+      WebContents(), account_id, signin_metrics::AccessPoint::kUnknown,
       /*is_new_account=*/true,
       /*is_sync_signin=*/false);
   EXPECT_FALSE(signin_interceptor->is_interception_in_progress());
@@ -4208,8 +4208,7 @@ IN_PROC_BROWSER_TEST_F(PasswordManagerBrowserTestWithSigninInterception,
   DiceWebSigninInterceptor* signin_interceptor =
       helper_.GetSigninInterceptor(profile);
   signin_interceptor->MaybeInterceptWebSignin(
-      WebContents(), account_id,
-      signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN,
+      WebContents(), account_id, signin_metrics::AccessPoint::kUnknown,
       /*is_new_account=*/true,
       /*is_sync_signin=*/false);
   EXPECT_TRUE(signin_interceptor->is_interception_in_progress());
@@ -4233,8 +4232,7 @@ IN_PROC_BROWSER_TEST_F(PasswordManagerBrowserTestWithSigninInterception,
   DiceWebSigninInterceptor* signin_interceptor =
       helper_.GetSigninInterceptor(profile);
   signin_interceptor->MaybeInterceptWebSignin(
-      WebContents(), account_id,
-      signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN,
+      WebContents(), account_id, signin_metrics::AccessPoint::kUnknown,
       /*is_new_account=*/true,
       /*is_sync_signin=*/false);
   EXPECT_TRUE(signin_interceptor->is_interception_in_progress());
@@ -4309,12 +4307,6 @@ class MockPrerenderPasswordManagerDriver
               ShowPasswordSuggestions,
               (const autofill::PasswordSuggestionRequest&),
               (override));
-#if BUILDFLAG(IS_ANDROID)
-  MOCK_METHOD(void,
-              ShowKeyboardReplacingSurface,
-              (autofill::mojom::SubmissionReadinessState, bool),
-              (override));
-#endif
   MOCK_METHOD(void,
               CheckSafeBrowsingReputation,
               (const GURL& form_action, const GURL& frame_url),
@@ -4384,14 +4376,6 @@ class MockPrerenderPasswordManagerDriver
               copy.password_field_index = 0;
               impl_->ShowPasswordSuggestions(copy);
             });
-#if BUILDFLAG(IS_ANDROID)
-    ON_CALL(*this, ShowKeyboardReplacingSurface)
-        .WillByDefault([this](autofill::mojom::SubmissionReadinessState
-                                  submission_readiness) {
-          impl_->ShowKeyboardReplacingSurface(submission_readiness,
-                                              /*is_webauthn=*/false);
-        });
-#endif
     ON_CALL(*this, CheckSafeBrowsingReputation)
         .WillByDefault([this](const GURL& form_action, const GURL& frame_url) {
           impl_->CheckSafeBrowsingReputation(form_action, frame_url);

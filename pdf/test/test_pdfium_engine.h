@@ -88,6 +88,11 @@ class TestPDFiumEngine : public PDFiumEngine {
 
   MOCK_METHOD(gfx::Rect, GetPageScreenRect, (int), (const override));
 
+  MOCK_METHOD(std::optional<gfx::SizeF>,
+              GetPageSizeInPoints,
+              (int),
+              (const override));
+
   // Returns an empty bookmark list.
   base::Value::List GetBookmarks() override;
 
@@ -97,9 +102,38 @@ class TestPDFiumEngine : public PDFiumEngine {
 
   bool ReadLoadedBytes(uint32_t length, void* buffer) override;
 
+  MOCK_METHOD(void,
+              RequestThumbnail,
+              (int, float, SendThumbnailCallback),
+              (override));
+
 #if BUILDFLAG(ENABLE_PDF_INK2)
   MOCK_METHOD(gfx::Size, GetThumbnailSize, (int, float), (override));
-#endif
+
+  MOCK_METHOD(void,
+              ApplyStroke,
+              (int, InkStrokeId, const ink::Stroke&),
+              (override));
+
+  MOCK_METHOD(void, UpdateStrokeActive, (int, InkStrokeId, bool), (override));
+
+  MOCK_METHOD(void, DiscardStroke, (int, InkStrokeId), (override));
+
+  MOCK_METHOD(PDFLoadedWithV2InkAnnotations,
+              ContainsV2InkPath,
+              (const base::TimeDelta&),
+              (const override));
+
+  MOCK_METHOD((std::map<InkModeledShapeId, ink::PartitionedMesh>),
+              LoadV2InkPathsForPage,
+              (int),
+              (override));
+
+  MOCK_METHOD(void,
+              UpdateShapeActive,
+              (int, InkModeledShapeId, bool),
+              (override));
+#endif  // BUILDFLAG(ENABLE_PDF_INK2)
 
   std::vector<uint8_t> GetSaveData() override;
 
@@ -108,6 +142,11 @@ class TestPDFiumEngine : public PDFiumEngine {
   MOCK_METHOD(void, OnDocumentCanceled, (), (override));
 
   MOCK_METHOD(void, SetFormHighlight, (bool), (override));
+
+  MOCK_METHOD(void,
+              HighlightTextFragments,
+              (const base::span<const std::string>),
+              (override));
 
   MOCK_METHOD(void, ClearTextSelection, (), (override));
 

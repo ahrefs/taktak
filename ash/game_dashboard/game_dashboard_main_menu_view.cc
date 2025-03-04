@@ -14,6 +14,7 @@
 #include "ash/game_dashboard/game_dashboard_context.h"
 #include "ash/game_dashboard/game_dashboard_controller.h"
 #include "ash/game_dashboard/game_dashboard_metrics.h"
+#include "ash/game_dashboard/game_dashboard_network_view.h"
 #include "ash/game_dashboard/game_dashboard_utils.h"
 #include "ash/public/cpp/app_types_util.h"
 #include "ash/public/cpp/arc_compat_mode_util.h"
@@ -122,6 +123,8 @@ constexpr gfx::Insets kPrimaryTileIconPadding = gfx::Insets::TLBR(8, 20, 8, 8);
 constexpr gfx::Insets kPrimaryTileLabelPadding = gfx::Insets::TLBR(0, 0, 0, 15);
 // Clock View Padding.
 constexpr gfx::Insets kClockViewPadding = gfx::Insets::VH(10, 0);
+// Network View Padding.
+constexpr gfx::Insets kNetworkViewPadding = gfx::Insets::TLBR(10, 6, 10, 0);
 
 // Row corners used for the top row of a multi-feature row collection.
 constexpr gfx::RoundedCornersF kTopMultiRowCorners =
@@ -348,10 +351,10 @@ class FeatureHeader : public views::View {
                                      : cros_tokens::kCrosSysDisabled;
     icon_view_->SetImage(ui::ImageModel::FromVectorIcon(*vector_icon_, color_id,
                                                         /*icon_size=*/20));
-    title_->SetEnabledColorId(color_id);
-    sub_title_->SetEnabledColorId(is_enabled
-                                      ? cros_tokens::kCrosSysOnSurfaceVariant
-                                      : cros_tokens::kCrosSysDisabled);
+    title_->SetEnabledColor(color_id);
+    sub_title_->SetEnabledColor(is_enabled
+                                    ? cros_tokens::kCrosSysOnSurfaceVariant
+                                    : cros_tokens::kCrosSysDisabled);
   }
 
   void UpdateSubtitle(const std::u16string& text) {
@@ -811,7 +814,7 @@ GameDashboardMainMenuView::GameDashboardMainMenuView(
     : context_(context) {
   DCHECK(context_);
   DCHECK(context_->game_dashboard_button_widget());
-
+  set_background_color(cros_tokens::kCrosSysSystemBaseElevatedOpaque);
   SetBorder(views::CreateRoundedRectBorder(
       /*thickness=*/1, kBubbleCornerRadius,
       cros_tokens::kCrosSysSystemHighlight1));
@@ -1209,6 +1212,10 @@ void GameDashboardMainMenuView::AddUtilityFeatureViews(views::View* container) {
   clock_view_->SetAmPmClockType(base::AmPmClockType::kKeepAmPm);
   clock_view_->SetProperty(views::kMarginsKey, kClockViewPadding);
 
+  network_view_ =
+      container->AddChildView(std::make_unique<GameDashboardNetworkView>());
+  network_view_->SetProperty(views::kMarginsKey, kNetworkViewPadding);
+
   // Add battery view.
   battery_view_ =
       container->AddChildView(std::make_unique<GameDashboardBatteryView>());
@@ -1376,7 +1383,7 @@ void GameDashboardMainMenuView::AddWelcomeDialogSettingsRow() {
       std::make_unique<views::Label>(l10n_util::GetStringUTF16(
           IDS_ASH_GAME_DASHBOARD_SETTINGS_WELCOME_DIALOG_TITLE)));
   feature_title->SetAutoColorReadabilityEnabled(false);
-  feature_title->SetEnabledColorId(cros_tokens::kCrosSysOnSurface);
+  feature_title->SetEnabledColor(cros_tokens::kCrosSysOnSurface);
   feature_title->SetFontList(TypographyProvider::Get()->ResolveTypographyToken(
       TypographyToken::kCrosTitle2));
   feature_title->SetHorizontalAlignment(gfx::ALIGN_LEFT);
@@ -1431,12 +1438,6 @@ GameDashboardMainMenuView::GetGameControlsSetupNudgeForTesting() {
 const views::Label* GameDashboardMainMenuView::GetScreenSizeRowSubtitle() {
   return screen_size_row_ ? screen_size_row_->feature_header()->GetSubtitle()
                           : nullptr;
-}
-
-void GameDashboardMainMenuView::OnThemeChanged() {
-  views::View::OnThemeChanged();
-  set_color(GetColorProvider()->GetColor(
-      cros_tokens::kCrosSysSystemBaseElevatedOpaque));
 }
 
 BEGIN_METADATA(GameDashboardMainMenuView)

@@ -37,10 +37,7 @@ Destination DestinationForStringName(std::string destination) {
   } else if (destination == "overflow_menu::Destination::SpotlightDebugger") {
     return overflow_menu::Destination::SpotlightDebugger;
   } else {
-    NOTREACHED_IN_MIGRATION();
-    // Randomly chosen destination which should never be returned due to
-    // NOTREACHED() above.
-    return overflow_menu::Destination::Settings;
+    NOTREACHED();
   }
 }
 // LINT.ThenChange(:destinationToString)
@@ -114,11 +111,15 @@ ActionType ActionTypeForStringName(std::string action) {
     return overflow_menu::ActionType::EditActions;
   } else if (action == "LensOverlay") {
     return overflow_menu::ActionType::LensOverlay;
+  } else if (action == "AIPrototype") {
+    return overflow_menu::ActionType::AIPrototype;
+  } else if (action == "SetTabReminder") {
+    return overflow_menu::ActionType::SetTabReminder;
   } else {
     NOTREACHED();
   }
 }
-// LINT.ThenChange(:actionTypeToString)
+// LINT.ThenChange(/ios/chrome/browser/ui/popup_menu/overflow_menu/overflow_menu_constants.cc:actionTypeToString)
 
 // LINT.IfChange(actionTypeToString)
 std::string StringNameForActionType(ActionType action) {
@@ -157,9 +158,13 @@ std::string StringNameForActionType(ActionType action) {
       return "EditActions";
     case overflow_menu::ActionType::LensOverlay:
       return "LensOverlay";
+    case overflow_menu::ActionType::AIPrototype:
+      return "AIPrototype";
+    case overflow_menu::ActionType::SetTabReminder:
+      return "SetTabReminder";
   }
 }
-// LINT.ThenChange(:stringToActionType)
+// LINT.ThenChange(/ios/chrome/browser/ui/popup_menu/overflow_menu/overflow_menu_constants.cc:stringToActionType)
 
 // WARNING - PLEASE READ: Sadly, we cannot switch over strings in C++, so be
 // very careful when updating this method to ensure all enums are accounted for.

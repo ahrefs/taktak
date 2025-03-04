@@ -19,26 +19,23 @@ MIXIN_GROUPS = {
     'gpu': [
         # ChromeOS amd64-generic omitted since it is run on GCE instances.
         # ChromeOS volteer omitted since it runs in Skylab.
-        # gpu_samsung_a13_stable omitted until devices are available
-        # motorola_moto_g_power_5g omitted since the configuration has been
-        #    dropped
-        # win10_nvidia_rtx_4070_super_stable omitted until additional machines
-        #    are ready
         'chromium_nexus_5x_oreo',
         'chromium_pixel_2_pie',
         'gpu_nvidia_shield_tv_stable',
         'gpu_pixel_4_stable',
         'gpu_pixel_6_experimental',
         'gpu_pixel_6_stable',
+        'gpu_samsung_a13_stable',
         'gpu_samsung_a23_stable',
         'gpu_samsung_s23_stable',
         'gpu_samsung_s24_stable',
         'linux_amd_rx_5500_xt',
-        'linux_nvidia_gtx_1660_experimental',
-        'linux_nvidia_gtx_1660_stable',
+        'linux_amd_rx_7600_stable',
         'linux_intel_uhd_630_experimental',
         'linux_intel_uhd_630_stable',
         'linux_intel_uhd_770_stable',
+        'linux_nvidia_gtx_1660_experimental',
+        'linux_nvidia_gtx_1660_stable',
         'mac_arm64_apple_m1_gpu_experimental',
         'mac_arm64_apple_m1_gpu_stable',
         'mac_arm64_apple_m2_retina_gpu_experimental',
@@ -56,6 +53,8 @@ MIXIN_GROUPS = {
         'win10_intel_uhd_770_stable',
         'win10_nvidia_gtx_1660_experimental',
         'win10_nvidia_gtx_1660_stable',
+        'win11_amd_rx_7600_stable',
+        'win11_nvidia_rtx_4070_super_stable',
         'win11_qualcomm_adreno_690_stable',
     ],
 }
@@ -116,16 +115,25 @@ def ParseArgs() -> argparse.Namespace:
   detection_modifiers.add_argument(
       '--random-chance-probability-threshold',
       type=float,
-      default=0.005,
+      default=0.0005,
       help=('Used with the random chance detection method. Sets how unlikely '
             'it has to be that a bot randomly got at least as many failures as '
             'it did in order for it to be considered bad.'))
   detection_modifiers.add_argument(
       '--iqr-multiplier',
       type=float,
-      default=1.5,
+      default=3,
       help=('How many interquartile ranges a failure rate must be above the '
             'third quartile for it to be considered an outlier.'))
+  detection_modifiers.add_argument(
+      '--minimum-failed-tasks',
+      type=int,
+      default=5,
+      help=('Used with the stddev outlier and iqr detection methods. Bots '
+            'that have fewer than this number of failed tasks within the '
+            'sample period will not be reported. This helps avoid false '
+            'reports due to getting a small number of flakes in a small number '
+            'of total tasks.'))
 
   mixin_group = parser.add_mutually_exclusive_group(required=True)
   mixin_group.add_argument('--mixin',
@@ -155,6 +163,8 @@ def _VerifyArgs(parser: argparse.ArgumentParser,
     parser.error('--bug-id must be non-negative')
   if args.report_grace_period < 0:
     parser.error('--report-grace-period must be non-negative')
+  if args.minimum_failed_tasks < 0:
+    parser.error('--minimum-failed-tasks must be non-negative')
 
 
 def _SetLoggingVerbosity(args: argparse.Namespace) -> None:
@@ -190,13 +200,15 @@ def _AnalyzeMixin(mixin_stats: tasks.MixinStats, mixin_name: str,
                   args: argparse.Namespace) -> detection.BadMachineList:
   bad_machine_list = detection.BadMachineList()
   bad_machine_list.Merge(
-      detection.DetectViaStdDevOutlier(mixin_stats, args.stddev_multiplier))
+      detection.DetectViaStdDevOutlier(mixin_stats, args.stddev_multiplier,
+                                       args.minimum_failed_tasks))
   bad_machine_list.Merge(
       detection.DetectViaRandomChance(mixin_stats,
                                       args.random_chance_probability_threshold))
   bad_machine_list.Merge(
       detection.DetectViaInterquartileRange(mixin_stats, mixin_name,
-                                            args.iqr_multiplier))
+                                            args.iqr_multiplier,
+                                            args.minimum_failed_tasks))
   return bad_machine_list
 
 

@@ -21,6 +21,7 @@
 #include "components/viz/common/quads/compositor_frame.h"
 #include "components/viz/common/quads/texture_draw_quad.h"
 #include "gpu/command_buffer/client/client_shared_image.h"
+#include "gpu/command_buffer/common/shared_image_capabilities.h"
 #include "gpu/command_buffer/common/shared_image_usage.h"
 #include "ui/aura/window_tree_host.h"
 #include "ui/compositor/compositor.h"
@@ -70,11 +71,10 @@ void FastInkHost::Init(aura::Window* host_window) {
   FrameSinkHost::Init(host_window);
 }
 
-void FastInkHost::InitForTesting(
-    aura::Window* host_window,
-    std::unique_ptr<cc::LayerTreeFrameSink> layer_tree_frame_sink) {
+void FastInkHost::InitForTesting(aura::Window* host_window,
+                                 FrameSinkFactory frame_sink_factory) {
   InitBufferMetadata(host_window);
-  FrameSinkHost::InitForTesting(host_window, std::move(layer_tree_frame_sink));
+  FrameSinkHost::InitForTesting(host_window, std::move(frame_sink_factory));
 }
 
 std::unique_ptr<FastInkHost::ScopedPaint> FastInkHost::CreateScopedPaint(
@@ -135,10 +135,13 @@ void FastInkHost::InitializeFastInkBuffer(aura::Window* host_window) {
 
   // This SharedImage will be used by the display compositor, will be updated
   // in parallel with being read, and will potentially be used in overlays.
-  constexpr gpu::SharedImageUsageSet usage =
+  gpu::SharedImageUsageSet usage =
       gpu::SHARED_IMAGE_USAGE_DISPLAY_READ |
-      gpu::SHARED_IMAGE_USAGE_CONCURRENT_READ_WRITE |
-      gpu::SHARED_IMAGE_USAGE_SCANOUT;
+      gpu::SHARED_IMAGE_USAGE_CONCURRENT_READ_WRITE;
+
+  if (sii->GetCapabilities().supports_scanout_shared_images) {
+    usage |= gpu::SHARED_IMAGE_USAGE_SCANOUT;
+  }
 
   CHECK(!client_shared_image_);
   client_shared_image_ = fast_ink_internal::CreateMappableSharedImage(

@@ -31,7 +31,7 @@
 #include "third_party/blink/renderer/modules/xr/xr_graphics_binding.h"
 #include "third_party/blink/renderer/modules/xr/xr_input_source.h"
 #include "third_party/blink/renderer/modules/xr/xr_input_source_array.h"
-#include "third_party/blink/renderer/modules/xr/xr_layer_mailbox_manager.h"
+#include "third_party/blink/renderer/modules/xr/xr_layer_shared_image_manager.h"
 #include "third_party/blink/renderer/platform/heap/collection_support/heap_hash_map.h"
 #include "third_party/blink/renderer/platform/heap/collection_support/heap_hash_set.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
@@ -153,7 +153,9 @@ class XRSession final : public EventTarget,
   }
   V8XRVisibilityState visibilityState() const;
   std::optional<float> frameRate() const { return std::nullopt; }
-  DOMFloat32Array* supportedFrameRates() const { return nullptr; }
+  NotShared<DOMFloat32Array> supportedFrameRates() const {
+    return NotShared<DOMFloat32Array>();
+  }
   XRRenderState* renderState() const { return render_state_.Get(); }
 
   // ARCore by default returns textures in RGBA half-float HDR format and no
@@ -297,12 +299,15 @@ class XRSession final : public EventTarget,
   const AtomicString& InterfaceName() const override;
 
   void OnFocusChanged();
-  void OnFrame(
-      double timestamp,
-      const std::optional<gpu::MailboxHolder>& output_mailbox_holder,
-      const std::optional<gpu::MailboxHolder>& camera_image_mailbox_holder);
+  void OnFrame(double timestamp,
+               scoped_refptr<gpu::ClientSharedImage> output_shared_image,
+               const gpu::SyncToken& output_sync_token,
+               scoped_refptr<gpu::ClientSharedImage> camera_image_shared_image,
+               const gpu::SyncToken& camera_image_sync_token);
 
   const HeapVector<Member<XRViewData>>& views();
+
+  XRViewData* ViewDataForEye(device::mojom::blink::XREye eye);
 
   void AddTransientInputSource(XRInputSource* input_source);
   void RemoveTransientInputSource(XRInputSource* input_source);
@@ -411,8 +416,8 @@ class XRSession final : public EventTarget,
   uint64_t GetTraceId() const { return trace_id_; }
   base::TimeDelta TakeAnimationFrameTimerAverage();
 
-  const XRLayerMailboxManager& LayerMailboxManager() {
-    return layer_mailbox_manager_;
+  const XRLayerSharedImageManager& LayerSharedImageManager() {
+    return layer_shared_image_manager_;
   }
 
   uint32_t GetNextLayerId() { return ++last_layer_id_; }
@@ -624,6 +629,9 @@ class XRSession final : public EventTarget,
   // Viewer pose in mojo space.
   std::unique_ptr<gfx::Transform> mojo_from_viewer_;
 
+  // Location of the floor in mojo space.
+  std::optional<gfx::Transform> mojo_from_floor_;
+
   bool pending_frame_ = false;
   bool resolving_frame_ = false;
   bool frames_throttled_ = false;
@@ -659,7 +667,7 @@ class XRSession final : public EventTarget,
 
   AverageTimer page_animation_frame_timer_;
 
-  XRLayerMailboxManager layer_mailbox_manager_;
+  XRLayerSharedImageManager layer_shared_image_manager_;
 };
 
 }  // namespace blink

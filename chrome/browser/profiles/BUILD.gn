@@ -3,7 +3,9 @@
 # found in the LICENSE file.
 
 import("//build/config/chromeos/ui_mode.gni")
+import("//chrome/common/features.gni")
 import("//components/enterprise/buildflags/buildflags.gni")
+import("//components/services/on_device_translation/buildflags/features.gni")
 import("//extensions/buildflags/buildflags.gni")
 
 # This target should be the default place for adding public interface things
@@ -117,6 +119,7 @@ source_set("profile_util") {
     "//components/autofill/core/browser",
     "//components/browsing_data/core",
     "//components/enterprise/common/proto:connectors_proto",
+    "//components/enterprise/common/proto:upload_request_response",
     "//components/keyed_service/core",
     "//components/password_manager/core/browser/password_store:password_store_interface",
     "//components/user_annotations:user_annotations",
@@ -157,13 +160,14 @@ source_set("profile_util_impl") {
     "//chrome/app/vector_icons",
     "//chrome/browser:browser_process",
     "//chrome/browser/autofill",
+    "//chrome/browser/prefs",
     "//chrome/browser/safe_browsing",
     "//chrome/browser/ui:ui_features",
     "//chrome/common",
     "//chrome/common:constants",
     "//components/account_id",
     "//components/browsing_data/core",
-    "//components/embedder_support:browser_util",
+    "//components/embedder_support:user_agent",
     "//components/enterprise/common/proto:connectors_proto",
     "//components/keyed_service/content",
     "//components/policy/core/browser",
@@ -223,6 +227,7 @@ source_set("profiles_extra_parts_impl") {
     "//chrome/browser:font_pref",
     "//chrome/browser/ai",
     "//chrome/browser/autofill",
+    "//chrome/browser/background:background",
     "//chrome/browser/bitmap_fetcher",
     "//chrome/browser/breadcrumbs",
     "//chrome/browser/commerce",
@@ -236,7 +241,9 @@ source_set("profiles_extra_parts_impl") {
     "//chrome/browser/optimization_guide",
     "//chrome/browser/permissions",
     "//chrome/browser/persisted_state_db",
+    "//chrome/browser/prefs",
     "//chrome/browser/reading_list",
+    "//chrome/browser/regional_capabilities",
     "//chrome/browser/safe_browsing",
     "//chrome/browser/safe_browsing:advanced_protection",
     "//chrome/browser/safe_browsing:metrics_collector",
@@ -258,6 +265,7 @@ source_set("profiles_extra_parts_impl") {
     "//components/autofill/content/browser",
     "//components/breadcrumbs/core:status",
     "//components/captive_portal/core:buildflags",
+    "//components/commerce/core:cart_db_content_proto",
     "//components/commerce/core:commerce_subscription_db_content_proto",
     "//components/commerce/core:feature_list",
     "//components/commerce/core:persisted_state_db_content_proto",
@@ -285,12 +293,14 @@ source_set("profiles_extra_parts_impl") {
   if (is_android) {
     deps += [
       "//chrome/browser/commerce/merchant_viewer:merchant_viewer_data_manager",
+      "//chrome/browser/fast_checkout",
       "//components/commerce/core:merchant_signal_db_proto",
     ]
   } else {
     deps += [
       "//chrome/browser/apps/app_service",
       "//chrome/browser/autofill",
+      "//chrome/browser/contextual_cueing",
       "//chrome/browser/devtools",
       "//chrome/browser/feedback",
       "//chrome/browser/hid",
@@ -307,7 +317,6 @@ source_set("profiles_extra_parts_impl") {
       "//chrome/browser/ui/webui/signin",
       "//chrome/browser/ui/webui/signin:login",
       "//chrome/browser/user_annotations",
-      "//components/commerce/core:cart_db_content_proto",
     ]
   }
 
@@ -316,7 +325,6 @@ source_set("profiles_extra_parts_impl") {
       "//chrome/browser/apps/almanac_api_client",
       "//chrome/browser/apps/app_preload_service",
       "//chrome/browser/ash/app_list",
-      "//chrome/browser/ash/crosapi:browser_util",
       "//chrome/browser/ash/file_manager",
       "//chrome/browser/ash/floating_sso",
       "//chrome/browser/ash/input_method",
@@ -341,7 +349,10 @@ source_set("profiles_extra_parts_impl") {
   }
 
   if (enable_extensions_core) {
-    deps += [ "//extensions/browser" ]
+    deps += [
+      "//chrome/browser/extensions/keyed_services:keyed_service_factories",
+      "//extensions/browser",
+    ]
   }
 
   if (enable_extensions) {
@@ -350,7 +361,6 @@ source_set("profiles_extra_parts_impl") {
       "//chrome/browser/apps/platform_apps",
       "//chrome/browser/apps/platform_apps/api",
       "//chrome/browser/extensions",
-      "//chrome/browser/extensions:keyed_service_factories",
       "//chrome/browser/web_applications",
       "//components/omnibox/browser",
     ]
@@ -358,6 +368,14 @@ source_set("profiles_extra_parts_impl") {
 
   if (enterprise_data_controls) {
     deps += [ "//chrome/browser/enterprise/data_controls" ]
+  }
+
+  if (enable_glic) {
+    deps += [ "//chrome/browser/glic" ]
+  }
+
+  if (enable_on_device_translation) {
+    deps += [ "//chrome/browser/on_device_translation" ]
   }
 }
 

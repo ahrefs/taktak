@@ -9,7 +9,10 @@
 #include <optional>
 
 #include "chrome/browser/ui/tabs/tab_collection.h"
+#include "chrome/browser/ui/tabs/tab_group.h"
+#include "chrome/browser/ui/tabs/tab_group_controller.h"
 #include "components/tab_groups/tab_group_id.h"
+#include "components/tab_groups/tab_group_visual_data.h"
 
 namespace tab_groups {
 class TabGroupId;
@@ -22,7 +25,9 @@ class TabCollectionStorage;
 
 class TabGroupTabCollection : public TabCollection {
  public:
-  explicit TabGroupTabCollection(tab_groups::TabGroupId group_id);
+  TabGroupTabCollection(tab_groups::TabGroupId group_id,
+                        tab_groups::TabGroupVisualData visual_data,
+                        TabGroupController* controller);
   ~TabGroupTabCollection() override;
   TabGroupTabCollection(const TabGroupTabCollection&) = delete;
   TabGroupTabCollection& operator=(const TabGroupTabCollection&) = delete;
@@ -40,17 +45,20 @@ class TabGroupTabCollection : public TabCollection {
   void CloseTab(TabModel* tab_model);
 
   // Returns the `group_id_` this collection is associated with.
-  tab_groups::TabGroupId GetTabGroupId() const { return group_id_; }
+  tab_groups::TabGroupId GetTabGroupId() const { return group_->id(); }
+
+  // Returns the `group_` this collection is associated with.
+  TabGroup* GetTabGroup() const { return group_.get(); }
 
   // Returns the tab at a direct child index in this collection. If the index is
   // invalid it returns nullptr.
   tabs::TabModel* GetTabAtIndex(size_t index) const;
 
   // TabCollection:
-  bool ContainsTab(TabModel* tab_model) const override;
+  bool ContainsTab(const TabInterface* tab) const override;
   // This is non-recursive for grouped tab collection as it does not contain
   // another collection.
-  bool ContainsTabRecursive(TabModel* tab_model) const override;
+  bool ContainsTabRecursive(const TabInterface* tab) const override;
 
   // This is false as grouped tab collection does not contain another
   // collection.
@@ -59,7 +67,7 @@ class TabGroupTabCollection : public TabCollection {
   // This is non-recursive for grouped tab collection as it does not contain
   // another collection.
   std::optional<size_t> GetIndexOfTabRecursive(
-      const TabModel* tab_model) const override;
+      const TabInterface* tab) const override;
 
   // This is nullopt as grouped tab collection does not contain another
   // collection.
@@ -82,8 +90,8 @@ class TabGroupTabCollection : public TabCollection {
   }
 
  private:
-  // The group identifier of this collection.
-  const tab_groups::TabGroupId group_id_;
+  // Group metadata for this collection.
+  std::unique_ptr<TabGroup> group_;
 
   // Underlying implementation for the storage of children.
   const std::unique_ptr<TabCollectionStorage> impl_;

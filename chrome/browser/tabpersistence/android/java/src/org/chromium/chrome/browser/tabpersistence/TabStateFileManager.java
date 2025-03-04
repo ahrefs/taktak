@@ -27,7 +27,6 @@ import org.chromium.chrome.browser.tab.TabLaunchType;
 import org.chromium.chrome.browser.tab.TabState;
 import org.chromium.chrome.browser.tab.TabUserAgent;
 import org.chromium.chrome.browser.tab.WebContentsState;
-import org.chromium.components.cached_flags.BooleanCachedFieldTrialParameter;
 
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -82,10 +81,6 @@ public class TabStateFileManager {
     private static String sChannelNameOverrideForTest;
 
     private static final long NO_TAB_GROUP_ID = 0L;
-
-    public static final BooleanCachedFieldTrialParameter MIGRATE_STALE_TABS_CACHED_PARAM =
-            ChromeFeatureList.newBooleanCachedFieldTrialParameter(
-                    ChromeFeatureList.TAB_STATE_FLAT_BUFFER, "migrate_stale_tabs", false);
 
     /** Enum representing the exception that occurred during {@link restoreTabState}. */
     @IntDef({
@@ -197,6 +192,12 @@ public class TabStateFileManager {
         long startTime = SystemClock.elapsedRealtime();
         TabState tabState = restoreTabStateInternal(file, encrypted, cipherFactory);
         if (tabState != null) {
+            if (useFlatBuffer
+                    && ChromeFeatureList.sDeleteMigratedLegacyTabStateFilesAfterRestore
+                            .getValue()) {
+                tabState.legacyFileToDelete =
+                        getTabStateFile(stateFolder, id, encrypted, /* isFlatbuffer= */ false);
+            }
             RecordHistogram.recordTimesHistogram(
                     "Tabs.TabState.LoadTime", SystemClock.elapsedRealtime() - startTime);
         }
@@ -495,11 +496,25 @@ public class TabStateFileManager {
         // off.
         // We must always have a safe fallback to hand-written based TabState to be able to roll out
         // FlatBuffers safely.
+        // When ChromeFeatureList.sLegacyTabStateDeprecation is turned on, the default is to save
+        // to the FlatBuffer format and delete the corresponding legacy TabState file.
         saveStateInternal(
-                getTabStateFile(directory, tabId, isEncrypted, false),
+                getTabStateFile(
+                        directory,
+                        tabId,
+                        isEncrypted,
+                        ChromeFeatureList.sLegacyTabStateDeprecation.isEnabled()),
                 tabState,
                 isEncrypted,
                 cipherFactory);
+        if (ChromeFeatureList.sLegacyTabStateDeprecation.isEnabled()) {
+            PostTask.runOrPostTask(
+                    TaskTraits.BEST_EFFORT_MAY_BLOCK,
+                    () -> {
+                        ThreadUtils.assertOnBackgroundThread();
+                        deleteLegacyTabStateIfExists(directory, tabId, isEncrypted);
+                    });
+        }
     }
 
     /**
@@ -525,6 +540,8 @@ public class TabStateFileManager {
                     isEncrypted,
                     cipherFactory);
             return true;
+        } catch (OutOfMemoryError e) {
+            Log.d(TAG, "OutOfMemoryError while saving TabState FlatBuffer file", e);
         } catch (Exception e) {
             // TODO(crbug.com/341122002) Add in metrics
             Log.d(TAG, "Error saving TabState FlatBuffer file", e);
@@ -726,6 +743,11 @@ public class TabStateFileManager {
         }
     }
 
+    private static void deleteLegacyTabStateIfExists(File directory, int tabId, boolean encrypted) {
+        File file = getTabStateFile(directory, tabId, encrypted, /* isFlatbuffer= */ false);
+        if (file.exists() && !file.delete()) Log.e(TAG, "Failed to delete TabState: " + file);
+    }
+
     /**
      * Delete migrated TabState file for corresponding Tab
      *
@@ -869,6 +891,6 @@ public class TabStateFileManager {
     }
 
     private static boolean isMigrateStaleTabsToFlatBufferEnabled() {
-        return MIGRATE_STALE_TABS_CACHED_PARAM.getValue();
+        return ChromeFeatureList.sTabStateFlatBufferMigrateStaleTabs.getValue();
     }
 }

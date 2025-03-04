@@ -1455,8 +1455,7 @@
       {
         "args": [
           "--flag-specific=webgpu",
-          "--initialize-webgpu-adapter-at-startup-timeout-ms=60000",
-          "--target=Release_x64"
+          "--initialize-webgpu-adapter-at-startup-timeout-ms=60000"
         ],
         "isolate_profile_data": true,
         "merge": {
@@ -1471,8 +1470,9 @@
         },
         "swarming": {
           "dimensions": {
-            "gpu": "10de:2184-27.21.14.5638",
-            "os": "Windows-10-18363",
+            "display_attached": "1",
+            "gpu": "10de:2184-31.0.15.4601",
+            "os": "Windows-10-19045",
             "pool": "chromium.tests.gpu"
           },
           "service_account": "chromium-tester@chops-service-accounts.iam.gserviceaccount.com"
@@ -1603,8 +1603,9 @@
         },
         "swarming": {
           "dimensions": {
-            "gpu": "10de:2184-27.21.14.5638",
-            "os": "Windows-10-18363",
+            "display_attached": "1",
+            "gpu": "10de:2184-31.0.15.4601",
+            "os": "Windows-10-19045",
             "pool": "chromium.tests.gpu"
           },
           "idempotent": false,

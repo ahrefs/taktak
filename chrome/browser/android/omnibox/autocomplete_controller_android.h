@@ -37,6 +37,7 @@ class AutocompleteControllerAndroid : public AutocompleteController::Observer,
   AutocompleteControllerAndroid(const AutocompleteControllerAndroid&) = delete;
   AutocompleteControllerAndroid& operator=(
       const AutocompleteControllerAndroid&) = delete;
+  ~AutocompleteControllerAndroid() override;
 
   // Methods that forward to AutocompleteController:
   void Start(JNIEnv* env,
@@ -139,12 +140,11 @@ class AutocompleteControllerAndroid : public AutocompleteController::Observer,
     ~Factory() override;
 
     // BrowserContextKeyedServiceFactory
-    KeyedService* BuildServiceInstanceFor(
+    std::unique_ptr<KeyedService> BuildServiceInstanceForBrowserContext(
         content::BrowserContext* profile) const override;
   };
 
  private:
-  ~AutocompleteControllerAndroid() override;
 
   // AutocompleteController::Observer implementation.
   void OnResultChanged(AutocompleteController* controller,
@@ -158,6 +158,9 @@ class AutocompleteControllerAndroid : public AutocompleteController::Observer,
   // This call may get triggered multiple time during User interaction with the
   // Omnibox - these requests are deduplicated down the call chain.
   void WarmUpRenderProcess() const;
+
+  // Whether the current device is a low-memory device.
+  const bool is_low_memory_device_{};
 
   // Last input we sent to the autocomplete controller.
   AutocompleteInput input_{};

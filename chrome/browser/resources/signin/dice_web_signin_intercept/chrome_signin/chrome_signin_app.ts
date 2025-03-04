@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '../strings.m.js';
+import '/strings.m.js';
 import 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
+import 'chrome://resources/cr_elements/icons.html.js';
 
 import {I18nMixinLit} from 'chrome://resources/cr_elements/i18n_mixin_lit.js';
 import {WebUiListenerMixinLit} from 'chrome://resources/cr_elements/web_ui_listener_mixin_lit.js';
@@ -53,6 +53,7 @@ export class ChromeSigninAppElement extends ChromeSigninAppElementBase {
     email: '',
     pictureUrl: '',
     managedUserBadge: '',
+    userBadgeAltText: '',
   };
   private diceWebSigninInterceptBrowserProxy_:
       DiceWebSigninInterceptBrowserProxy =
@@ -94,8 +95,10 @@ export class ChromeSigninAppElement extends ChromeSigninAppElementBase {
     if (this.interceptionParameters_.email.length === 0) {
       return nothing;
     }
-    return this.i18n(
-        'acceptButtonAriaLabel', this.interceptionParameters_.email);
+
+    return this
+        .i18n('acceptButtonAriaLabel', this.interceptionParameters_.givenName)
+        .concat(' ', this.interceptionParameters_.email);
   }
 }
 

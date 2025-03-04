@@ -9,13 +9,13 @@
 
 #include "base/feature_list.h"
 #include "base/types/pass_key.h"
-#include "components/user_education/common/feature_promo_controller.h"
-#include "components/user_education/common/feature_promo_handle.h"
-#include "components/user_education/common/feature_promo_result.h"
-#include "components/user_education/common/new_badge_controller.h"
+#include "components/user_education/common/feature_promo/feature_promo_controller.h"
+#include "components/user_education/common/feature_promo/feature_promo_handle.h"
+#include "components/user_education/common/feature_promo/feature_promo_result.h"
+#include "components/user_education/common/new_badge/new_badge_controller.h"
 
 class AppMenuButton;
-class BrowserFeaturePromoController;
+class BrowserHelpBubble;
 class UserEducationInternalsPageHandlerImpl;
 
 namespace content {
@@ -57,13 +57,18 @@ class BrowserUserEducationInterface {
   // feature promo controller.
   template <typename T>
     requires std::same_as<T, AppMenuButton> ||
-             std::same_as<T, BrowserFeaturePromoController> ||
+             std::same_as<T, BrowserHelpBubble> ||
              std::same_as<T, UserEducationInternalsPageHandlerImpl> ||
              std::same_as<T, web_app::WebAppUiManagerImpl>
   user_education::FeaturePromoController* GetFeaturePromoController(
       base::PassKey<T>) {
     return GetFeaturePromoControllerImpl();
   }
+
+  // Returns whether `iph_feature` is queued to be shown. Promos can be queued
+  // for a period of time before they become active, if they are being held due
+  // to an incompatible UI state or a blocking IPH.
+  virtual bool IsFeaturePromoQueued(const base::Feature& iph_feature) const = 0;
 
   // Returns whether the promo associated with `iph_feature` is running.
   //
@@ -80,8 +85,7 @@ class BrowserUserEducationInterface {
   virtual user_education::FeaturePromoResult CanShowFeaturePromo(
       const base::Feature& iph_feature) const = 0;
 
-  // Maybe shows an in-product help promo. Returns true if the promo is shown.
-  // In cases where there is no promo controller, immediately returns false.
+  // Maybe shows an in-product help promo.
   //
   // If this feature promo is likely to be shown at browser startup, prefer
   // calling `MaybeShowStartupFeaturePromo()` instead.
@@ -94,19 +98,18 @@ class BrowserUserEducationInterface {
 
   // Maybe shows an in-product help promo at startup, whenever the Feature
   // Engagement system is fully initialized. If the promo cannot be queued for
-  // whatever reason, fails and returns false. The promo may still not run if it
-  // is excluded for other reasons (e.g. another promo starts first; its Feature
-  // Engagement conditions are not satisfied).
+  // whatever reason, `params.show_promo_result_callback` will be called with
+  // the appropriate error. The promo may still not run if it is excluded for
+  // other reasons (e.g. another promo starts first; its Feature Engagement
+  // conditions are not satisfied).
   //
   // On success, when the FE system is initialized (which might be immediately),
-  // `promo_callback` is called with the result of whether the promo was
-  // actually shown. Since `promo_callback` could be called any time, make sure
-  // that you will not experience any race conditions or UAFs if the calling
-  // object goes out of scope.
-  //
-  // If your promo is not likely to be shown at browser startup, prefer using
-  // MaybeShowFeaturePromo() - which always runs synchronously - instead.
-  virtual bool MaybeShowStartupFeaturePromo(
+  // or when the promo is determined to have failed to show for any reason,
+  // `show_promo_result_callback` is called with the result of whether the promo
+  // was actually shown. Since `show_promo_result_callback` could be called any
+  // time, make sure that you will not experience any race conditions or UAFs if
+  // the calling object goes out of scope.
+  virtual void MaybeShowStartupFeaturePromo(
       user_education::FeaturePromoParams params) = 0;
 
   // Aborts the in-product help promo for `iph_feature` if it is showing or

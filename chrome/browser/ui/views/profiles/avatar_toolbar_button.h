@@ -5,6 +5,7 @@
 #ifndef CHROME_BROWSER_UI_VIEWS_PROFILES_AVATAR_TOOLBAR_BUTTON_H_
 #define CHROME_BROWSER_UI_VIEWS_PROFILES_AVATAR_TOOLBAR_BUTTON_H_
 
+#include "base/auto_reset.h"
 #include "base/callback_list.h"
 #include "base/functional/callback_forward.h"
 #include "base/gtest_prod_util.h"
@@ -13,7 +14,6 @@
 #include "base/observer_list.h"
 #include "base/observer_list_types.h"
 #include "base/time/time.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/ui/views/toolbar/toolbar_button.h"
 #include "components/signin/public/base/signin_buildflags.h"
 #include "ui/base/metadata/metadata_header_macros.h"
@@ -23,6 +23,7 @@ class AvatarToolbarButtonDelegate;
 class Browser;
 class BrowserView;
 struct AccountInfo;
+class GaiaId;
 
 // Enum used for testing. It allows overriding different delay values based on
 // their usage in the `AvatarToolbarButton` through helper testing functions.
@@ -83,9 +84,11 @@ class AvatarToolbarButton : public ToolbarButton {
   // Attempts showing the In-Produce-Help for profile Switching.
   void MaybeShowProfileSwitchIPH();
 
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
   // Attempts showing the In-Produce-Help when a supervised user signs-in in a
   // profile.
   void MaybeShowSupervisedUserSignInIPH();
+#endif
 
   // Attempts showing the In-Product-Help in a subsequent web sign-in when the
   // explicit browser sign-in preference was remembered.
@@ -93,7 +96,7 @@ class AvatarToolbarButton : public ToolbarButton {
       const AccountInfo& account_info);
 
   // Attempts showing the In-Produce-Help for web sign out.
-  void MaybeShowWebSignoutIPH(const std::string& gaia_id);
+  void MaybeShowWebSignoutIPH(const GaiaId& gaia_id);
 
   // Returns true if a text is set and is visible.
   bool IsLabelPresentAndVisible() const;
@@ -111,7 +114,6 @@ class AvatarToolbarButton : public ToolbarButton {
   bool ShouldPaintBorder() const override;
   bool ShouldBlendHighlightColor() const override;
   void AddedToWidget() override;
-  void PaintButtonContents(gfx::Canvas* canvas) override;
 
   void ButtonPressed(bool is_source_accelerator = false);
 
@@ -120,7 +122,8 @@ class AvatarToolbarButton : public ToolbarButton {
   void RemoveObserver(Observer* observer);
 
   // Can be used in tests to reduce or remove the delay before showing the IPH.
-  static void SetIPHMinDelayAfterCreationForTesting(base::TimeDelta delay);
+  [[nodiscard]] static base::AutoReset<base::TimeDelta>
+  SetScopedIPHMinDelayAfterCreationForTesting(base::TimeDelta delay);
 
   // These helper functions allow tests to be time independent; tests that are
   // time dependent tend to create a lot of flakiness.

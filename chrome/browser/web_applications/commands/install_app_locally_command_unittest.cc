@@ -24,6 +24,7 @@
 #include "chrome/browser/web_applications/web_app_icon_generator.h"
 #include "chrome/browser/web_applications/web_app_install_info.h"
 #include "chrome/browser/web_applications/web_app_install_params.h"
+#include "chrome/browser/web_applications/web_app_management_type.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
 #include "chrome/browser/web_applications/web_app_registrar.h"
 #include "chrome/common/chrome_features.h"
@@ -155,8 +156,7 @@ class InstallAppLocallyCommandTest : public WebAppTest {
     EXPECT_TRUE(icon_color.has_value());
     return icon_color.value();
 #else
-    NOTREACHED_IN_MIGRATION() << "Shortcuts not supported for other OS";
-    return SK_ColorTRANSPARENT;
+    NOTREACHED() << "Shortcuts not supported for other OS";
 #endif
   }
 
@@ -228,9 +228,7 @@ TEST_F(InstallAppLocallyCommandTest, AppNotInRegistrar) {
   base::test::TestFuture<void> test_future;
   provider().scheduler().InstallAppLocally(app_id, test_future.GetCallback());
   EXPECT_TRUE(test_future.Wait());
-  EXPECT_FALSE(provider().registrar_unsafe().IsInstallState(
-      app_id, {proto::INSTALLED_WITHOUT_OS_INTEGRATION,
-               proto::INSTALLED_WITH_OS_INTEGRATION}));
+  EXPECT_FALSE(provider().registrar_unsafe().IsInRegistrar(app_id));
 }
 
 }  // namespace

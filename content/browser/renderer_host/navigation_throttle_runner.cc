@@ -55,8 +55,7 @@ NavigationThrottle::ThrottleCheckResult ExecuteNavigationEvent(
     case NavigationThrottleRunner::Event::kWillCommitWithoutUrlLoader:
       return throttle->WillCommitWithoutUrlLoader();
   }
-  NOTREACHED_IN_MIGRATION();
-  return NavigationThrottle::CANCEL_AND_IGNORE;
+  NOTREACHED();
 }
 
 const char* GetEventName(NavigationThrottleRunner::Event event) {
@@ -75,8 +74,7 @@ const char* GetEventName(NavigationThrottleRunner::Event event) {
     case NavigationThrottleRunner::Event::kWillCommitWithoutUrlLoader:
       return "NavigationThrottle::WillCommitWithoutUrlLoader";
   }
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 
 const char* GetEventNameForHistogram(NavigationThrottleRunner::Event event) {
@@ -95,8 +93,7 @@ const char* GetEventNameForHistogram(NavigationThrottleRunner::Event event) {
     case NavigationThrottleRunner::Event::kWillCommitWithoutUrlLoader:
       return "WillCommitWithoutUrlLoader";
   }
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 
 base::TimeDelta RecordHistogram(NavigationThrottleRunner::Event event,
@@ -140,7 +137,7 @@ NavigationThrottleRunner::~NavigationThrottleRunner() {
 }
 
 void NavigationThrottleRunner::ProcessNavigationEvent(Event event) {
-  DCHECK_NE(Event::kNoEvent, event);
+  CHECK_NE(Event::kNoEvent, event);
   current_event_ = event;
   next_index_ = 0;
   ProcessInternal();
@@ -148,7 +145,7 @@ void NavigationThrottleRunner::ProcessNavigationEvent(Event event) {
 
 void NavigationThrottleRunner::ResumeProcessingNavigationEvent(
     NavigationThrottle* deferring_throttle) {
-  DCHECK_EQ(GetDeferringThrottle(), deferring_throttle);
+  CHECK_EQ(GetDeferringThrottle(), deferring_throttle);
   base::TimeDelta defer_time =
       RecordDeferTimeHistogram(current_event_, defer_start_time_);
   total_defer_duration_time_ += defer_time;
@@ -258,12 +255,9 @@ void NavigationThrottleRunner::RegisterNavigationThrottles() {
   // Defer subframe navigation in bfcached page if it hasn't sent a network
   // request.
   // This must be the last throttle to run. See https://crrev.com/c/5316738.
-  if (base::FeatureList::IsEnabled(
-          features::kEnableBackForwardCacheForOngoingSubframeNavigation)) {
-    AddThrottle(
-        BackForwardCacheSubframeNavigationThrottle::MaybeCreateThrottleFor(
-            request));
-  }
+  AddThrottle(
+      BackForwardCacheSubframeNavigationThrottle::MaybeCreateThrottleFor(
+          request));
 
   // Add a throttle to manage top-frame navigations from a partitioned popin.
   // See https://explainers-by-googlers.github.io/partitioned-popins/
@@ -310,12 +304,9 @@ void NavigationThrottleRunner::
       PrerenderSubframeNavigationThrottle::MaybeCreateThrottleFor(request));
 
   // Defer subframe navigation in bfcached page.
-  if (base::FeatureList::IsEnabled(
-          features::kEnableBackForwardCacheForOngoingSubframeNavigation)) {
-    AddThrottle(
-        BackForwardCacheSubframeNavigationThrottle::MaybeCreateThrottleFor(
-            request));
-  }
+  AddThrottle(
+      BackForwardCacheSubframeNavigationThrottle::MaybeCreateThrottleFor(
+          request));
 
   AddThrottle(RendererCancellationThrottle::MaybeCreateThrottleFor(request));
 
@@ -344,7 +335,7 @@ void NavigationThrottleRunner::AddThrottle(
 
 void NavigationThrottleRunner::ProcessInternal() {
   TRACE_EVENT0("navigation", "NavigationThrottleRunner::ProcessInternal");
-  DCHECK_NE(Event::kNoEvent, current_event_);
+  CHECK_NE(Event::kNoEvent, current_event_);
   base::Time start_time = base::Time::Now();
   if (!event_process_start_time_.has_value()) {
     event_process_start_time_ = start_time;

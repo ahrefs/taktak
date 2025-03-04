@@ -5,6 +5,7 @@
 #import "ios/chrome/browser/badges/ui_bundled/badge_type_util.h"
 
 #import <ostream>
+
 #import "base/notreached.h"
 
 BadgeType BadgeTypeForInfobarType(InfobarType infobar_type) {
@@ -50,7 +51,6 @@ InfobarType InfobarTypeForBadgeType(BadgeType badge_type) {
     case kBadgeTypeParcelTracking:
       return InfobarType::kInfobarTypeParcelTracking;
     default:
-      NOTREACHED_IN_MIGRATION() << "Unsupported badge type.";
-      return InfobarType::kInfobarTypeConfirm;
+      NOTREACHED() << "Unsupported badge type.";
   }
 }

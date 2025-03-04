@@ -12,7 +12,6 @@
 #include "base/rand_util.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/time/time.h"
-#include "build/chromeos_buildflags.h"
 #include "cc/paint/paint_flags.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/themes/theme_properties.h"
@@ -34,7 +33,7 @@
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/feature_engagement/public/feature_constants.h"
-#include "components/user_education/common/feature_promo_controller.h"
+#include "components/user_education/common/feature_promo/feature_promo_controller.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/accessibility/ax_action_data.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -80,7 +79,7 @@ BrowserAppMenuButton::BrowserAppMenuButton(ToolbarView* toolbar_view)
   label()->SetSubpixelRenderingEnabled(false);
 }
 
-BrowserAppMenuButton::~BrowserAppMenuButton() {}
+BrowserAppMenuButton::~BrowserAppMenuButton() = default;
 
 void BrowserAppMenuButton::SetTypeAndSeverity(
     AppMenuIconController::TypeAndSeverity type_and_severity) {
@@ -89,8 +88,9 @@ void BrowserAppMenuButton::SetTypeAndSeverity(
 }
 
 void BrowserAppMenuButton::ShowMenu(int run_types) {
-  if (IsMenuShowing())
+  if (IsMenuShowing()) {
     return;
+  }
 
 #if BUILDFLAG(IS_CHROMEOS)
   if (auto* input_method = GetInputMethod()) {
@@ -117,8 +117,9 @@ AlertMenuItem BrowserAppMenuButton::GetAlertItemForRunningTutorial() {
   Browser* browser = toolbar_view_->browser();
   BrowserWindow* browser_window = browser->window();
 
-  if (browser_window == nullptr)
+  if (browser_window == nullptr) {
     return AlertMenuItem::kNone;
+  }
 
   auto* const service =
       UserEducationServiceFactory::GetForBrowserContext(browser->profile());
@@ -269,7 +270,8 @@ void BrowserAppMenuButton::OnTouchUiChanged() {
 }
 
 void BrowserAppMenuButton::ButtonPressed(const ui::Event& event) {
-  ShowMenu(event.IsKeyEvent() ? views::MenuRunner::SHOULD_SHOW_MNEMONICS
+  ShowMenu(event.IsKeyEvent() ? (views::MenuRunner::SHOULD_SHOW_MNEMONICS |
+                                 views::MenuRunner::INVOKED_FROM_KEYBOARD)
                               : views::MenuRunner::NO_FLAGS);
 }
 

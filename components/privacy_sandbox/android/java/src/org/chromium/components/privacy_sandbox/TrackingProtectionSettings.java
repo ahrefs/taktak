@@ -7,39 +7,29 @@ package org.chromium.components.privacy_sandbox;
 import static org.chromium.components.browser_ui.settings.SearchUtils.handleSearchNavigation;
 import static org.chromium.components.browser_ui.site_settings.WebsitePreferenceBridge.SITE_WILDCARD;
 
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Browser;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.VisibleForTesting;
-import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.preference.Preference;
 import androidx.preference.Preference.OnPreferenceClickListener;
-import androidx.preference.PreferenceFragmentCompat;
 
-import org.chromium.base.IntentUtils;
 import org.chromium.base.supplier.ObservableSupplier;
 import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
 import org.chromium.components.browser_ui.settings.CustomDividerFragment;
-import org.chromium.components.browser_ui.settings.EmbeddableSettingsPage;
 import org.chromium.components.browser_ui.settings.ExpandablePreferenceGroup;
 import org.chromium.components.browser_ui.settings.SearchUtils;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
 import org.chromium.components.browser_ui.settings.TextMessagePreference;
 import org.chromium.components.browser_ui.site_settings.AddExceptionPreference;
 import org.chromium.components.browser_ui.site_settings.AddExceptionPreference.SiteAddedCallback;
-import org.chromium.components.browser_ui.site_settings.BaseSiteSettingsFragment.CustomTabIntentHelper;
 import org.chromium.components.browser_ui.site_settings.SiteSettingsCategory;
 import org.chromium.components.browser_ui.site_settings.Website;
 import org.chromium.components.browser_ui.site_settings.WebsitePermissionsFetcher;
@@ -48,6 +38,7 @@ import org.chromium.components.browser_ui.styles.SemanticColorUtils;
 import org.chromium.components.browser_ui.util.TraceEventVectorDrawableCompat;
 import org.chromium.components.content_settings.ContentSettingValues;
 import org.chromium.components.content_settings.ContentSettingsType;
+import org.chromium.ui.text.ChromeClickableSpan;
 import org.chromium.ui.text.SpanApplier;
 import org.chromium.ui.widget.Toast;
 
@@ -57,18 +48,9 @@ import java.util.List;
 import java.util.Locale;
 
 /** Fragment to manage settings for tracking protection. */
-public class TrackingProtectionSettings extends PreferenceFragmentCompat
-        implements CustomDividerFragment,
-                OnPreferenceClickListener,
-                SiteAddedCallback,
-                EmbeddableSettingsPage {
+public class TrackingProtectionSettings extends PrivacySandboxBaseFragment
+        implements CustomDividerFragment, OnPreferenceClickListener, SiteAddedCallback {
     private static final String PREF_BLOCK_ALL_TOGGLE = "block_all_3pcd_toggle";
-    private static final String PREF_IP_PROTECTION_TOGGLE = "ip_protection_toggle";
-    private static final String PREF_IP_PROTECTION_LEARN_MORE = "ip_protection_learn_more";
-    private static final String PREF_FINGERPRINTING_PROTECTION_TOGGLE =
-            "fingerprinting_protection_toggle";
-    private static final String PREF_FINGERPRINTING_PROTECTION_LEARN_MORE =
-            "fingerprinting_protection_learn_more";
     private static final String PREF_BULLET_TWO = "bullet_point_two";
     private static final String ALLOWED_GROUP = "allowed_group";
     public static final String ADD_EXCEPTION_KEY = "add_exception";
@@ -91,18 +73,12 @@ public class TrackingProtectionSettings extends PreferenceFragmentCompat
 
     private TrackingProtectionDelegate mDelegate;
 
-    private CustomTabIntentHelper mCustomTabIntentHelper;
-
     private final ObservableSupplierImpl<String> mPageTitle = new ObservableSupplierImpl<>();
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         SettingsUtils.addPreferencesFromResource(this, R.xml.tracking_protection_preferences);
-        if (mDelegate.shouldShowTrackingProtectionBrandedUi()) {
-            mPageTitle.set(getString(R.string.privacy_sandbox_tracking_protection_title));
-        } else {
-            mPageTitle.set(getString(R.string.third_party_cookies_page_title));
-        }
+        mPageTitle.set(getString(R.string.third_party_cookies_page_title));
 
         setHasOptionsMenu(true);
 
@@ -117,101 +93,19 @@ public class TrackingProtectionSettings extends PreferenceFragmentCompat
                         new SpanApplier.SpanInfo(
                                 "<link>",
                                 "</link>",
-                                new ClickableSpan() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        onLearnMoreClicked();
-                                    }
-                                })));
+                                new ChromeClickableSpan(
+                                        getContext(), (view) -> onLearnMoreClicked()))));
 
-        ChromeSwitchPreference blockAll3PCookiesSwitch =
+        ChromeSwitchPreference blockAll3pCookiesSwitch =
                 (ChromeSwitchPreference) findPreference(PREF_BLOCK_ALL_TOGGLE);
-        ChromeSwitchPreference ipProtectionSwitch =
-                (ChromeSwitchPreference) findPreference(PREF_IP_PROTECTION_TOGGLE);
-        TextMessagePreference ipProtectionLearnMore =
-                (TextMessagePreference) findPreference(PREF_IP_PROTECTION_LEARN_MORE);
-        ChromeSwitchPreference fingerprintingProtectionSwitch =
-                (ChromeSwitchPreference) findPreference(PREF_FINGERPRINTING_PROTECTION_TOGGLE);
-        TextMessagePreference fingerprintingProtectionLearnMore =
-                (TextMessagePreference) findPreference(PREF_FINGERPRINTING_PROTECTION_LEARN_MORE);
-        ChromeSwitchPreference doNotTrackSwitch =
-                (ChromeSwitchPreference) findPreference(PREF_DNT_TOGGLE);
 
-        // Block all 3PCD switch.
-        blockAll3PCookiesSwitch.setChecked(mDelegate.isBlockAll3PCDEnabled());
-        blockAll3PCookiesSwitch.setOnPreferenceChangeListener(
+        // Block all 3rd party cookies switch.
+        blockAll3pCookiesSwitch.setChecked(mDelegate.isBlockAll3pcEnabled());
+        blockAll3pCookiesSwitch.setOnPreferenceChangeListener(
                 (preference, newValue) -> {
-                    mDelegate.setBlockAll3PCD((boolean) newValue);
+                    mDelegate.setBlockAll3pc((boolean) newValue);
                     return true;
                 });
-
-        // IP protection switch.
-        if (mDelegate.shouldDisplayIpProtection()) {
-            ipProtectionSwitch.setVisible(true);
-            ipProtectionSwitch.setChecked(mDelegate.isIpProtectionEnabled());
-            ipProtectionSwitch.setOnPreferenceChangeListener(
-                    (preference, newValue) -> {
-                        mDelegate.setIpProtection((boolean) newValue);
-                        return true;
-                    });
-            ipProtectionLearnMore.setVisible(true);
-            // TODO(b/330745124): Update the learn more action.
-            ipProtectionLearnMore.setSummary(
-                    SpanApplier.applySpans(
-                            getResources()
-                                    .getString(
-                                            R.string.tracking_protection_ip_protection_learn_more),
-                            new SpanApplier.SpanInfo(
-                                    "<link>",
-                                    "</link>",
-                                    new ClickableSpan() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            onLearnMoreClicked();
-                                        }
-                                    })));
-        }
-
-        // Fingerprinting protection switch.
-        if (mDelegate.shouldDisplayFingerprintingProtection()) {
-            fingerprintingProtectionSwitch.setVisible(true);
-            fingerprintingProtectionSwitch.setChecked(
-                    mDelegate.isFingerprintingProtectionEnabled());
-            fingerprintingProtectionSwitch.setOnPreferenceChangeListener(
-                    (preference, newValue) -> {
-                        mDelegate.setFingerprintingProtection((boolean) newValue);
-                        return true;
-                    });
-            fingerprintingProtectionLearnMore.setVisible(true);
-            // TODO(b/330745124): Update the learn more action.
-            fingerprintingProtectionLearnMore.setSummary(
-                    SpanApplier.applySpans(
-                            getResources()
-                                    .getString(
-                                            R.string
-                                                    .tracking_protection_fingerprinting_protection_learn_more),
-                            new SpanApplier.SpanInfo(
-                                    "<link>",
-                                    "</link>",
-                                    new ClickableSpan() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            onLearnMoreClicked();
-                                        }
-                                    })));
-        }
-
-        // Do not track switch.
-        if (mDelegate.shouldShowTrackingProtectionBrandedUi()) {
-            doNotTrackSwitch.setVisible(true);
-            doNotTrackSwitch.setChecked(mDelegate.isDoNotTrackEnabled());
-            doNotTrackSwitch.setOnPreferenceChangeListener(
-                    (preference, newValue) -> {
-                        mDelegate.setDoNotTrack((boolean) newValue);
-                        return true;
-                    });
-        }
-
         mAllowListExpanded = true;
         mAllowedSiteCount = 0;
         ExpandablePreferenceGroup allowedGroup =
@@ -403,25 +297,6 @@ public class TrackingProtectionSettings extends PreferenceFragmentCompat
     }
 
     private void onLearnMoreClicked() {
-        openUrlInCct(LEARN_MORE_URL);
-    }
-
-    public void setCustomTabIntentHelper(CustomTabIntentHelper helper) {
-        mCustomTabIntentHelper = helper;
-    }
-
-    private void openUrlInCct(String url) {
-        assert (mCustomTabIntentHelper != null)
-                : "CCT helpers must be set on TrackingProtectionSettings before opening a link";
-        CustomTabsIntent customTabIntent =
-                new CustomTabsIntent.Builder().setShowTitle(true).build();
-        customTabIntent.intent.setData(Uri.parse(url));
-        Intent intent =
-                mCustomTabIntentHelper.createCustomTabActivityIntent(
-                        getContext(), customTabIntent.intent);
-        intent.setPackage(getContext().getPackageName());
-        intent.putExtra(Browser.EXTRA_APPLICATION_ID, getContext().getPackageName());
-        IntentUtils.addTrustedIntentExtras(intent);
-        IntentUtils.safeStartActivity(getContext(), intent);
+        getCustomTabLauncher().openUrlInCct(getContext(), LEARN_MORE_URL);
     }
 }

@@ -61,7 +61,7 @@ public final class FeedFeatures {
         return getPrefService(profile).getBoolean(Pref.ENABLE_SNIPPETS_BY_DSE);
     }
 
-    public static boolean shouldUseWebFeedAwarenessIPH() {
+    public static boolean shouldUseWebFeedAwarenessIph() {
         String awarenessStyleParam =
                 ChromeFeatureList.getFieldTrialParamByFeature(
                         ChromeFeatureList.WEB_FEED_AWARENESS, "awareness_style");
@@ -152,9 +152,5 @@ public final class FeedFeatures {
         // called before getFeedTabIdToRestore, the value set here is taken into account in by the
         // latter at least for some of the restore logic atlernatives.
         getPrefService(profile).setInteger(Pref.LAST_SEEN_FEED_TYPE, tabId);
-    }
-
-    private static @StreamTabId int getLastSeenFeedTabId(Profile profile) {
-        return getPrefService(profile).getInteger(Pref.LAST_SEEN_FEED_TYPE);
     }
 }

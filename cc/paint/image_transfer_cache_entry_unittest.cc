@@ -247,20 +247,19 @@ TEST_P(ImageTransferCacheEntryTest, MAYBE_Deserialize) {
   ASSERT_TRUE(yuva_pixmaps.plane(0).erase(SkColors::kBlack, &top_color_rect));
 
   auto client_entry(std::make_unique<ClientImageTransferCacheEntry>(
-      ClientImageTransferCacheEntry::Image(yuva_pixmaps.planes().data(),
-                                           yuva_info,
+      ClientImageTransferCacheEntry::Image(yuva_pixmaps.planes(), yuva_info,
                                            nullptr /* decoded color space*/),
       true /* needs_mips */, std::nullopt));
   uint32_t size = client_entry->SerializedSize();
   auto data = PaintOpWriter::AllocateAlignedBuffer<uint8_t>(size);
   ASSERT_TRUE(client_entry->Serialize(
-      base::make_span(static_cast<uint8_t*>(data.get()), size)));
+      base::span(static_cast<uint8_t*>(data.get()), size)));
 
   // Create service-side entry from the client-side serialize info
   auto entry(std::make_unique<ServiceImageTransferCacheEntry>());
-  ASSERT_TRUE(entry->Deserialize(
-      gr_context(), /*graphite_recorder=*/nullptr,
-      base::make_span(static_cast<uint8_t*>(data.get()), size)));
+  ASSERT_TRUE(
+      entry->Deserialize(gr_context(), /*graphite_recorder=*/nullptr,
+                         base::span(static_cast<uint8_t*>(data.get()), size)));
   ASSERT_TRUE(entry->is_yuv());
 
   // Check color of pixels
@@ -404,12 +403,12 @@ TEST(ImageTransferCacheEntryTestNoYUV, CPUImageWithMips) {
       std::nullopt);
   const uint32_t storage_size = client_entry.SerializedSize();
   auto storage = PaintOpWriter::AllocateAlignedBuffer<uint8_t>(storage_size);
-  client_entry.Serialize(base::make_span(storage.get(), storage_size));
+  client_entry.Serialize(base::span(storage.get(), storage_size));
 
   ServiceImageTransferCacheEntry service_entry;
   service_entry.Deserialize(gr_context.get(),
                             /*graphite_recorder=*/nullptr,
-                            base::make_span(storage.get(), storage_size));
+                            base::span(storage.get(), storage_size));
   ASSERT_TRUE(service_entry.image());
   auto pre_mip_image = service_entry.image();
   EXPECT_FALSE(pre_mip_image->isTextureBacked());
@@ -434,12 +433,12 @@ TEST(ImageTransferCacheEntryTestNoYUV, CPUImageAddMipsLater) {
       std::nullopt);
   const uint32_t storage_size = client_entry.SerializedSize();
   auto storage = PaintOpWriter::AllocateAlignedBuffer<uint8_t>(storage_size);
-  client_entry.Serialize(base::make_span(storage.get(), storage_size));
+  client_entry.Serialize(base::span(storage.get(), storage_size));
 
   ServiceImageTransferCacheEntry service_entry;
   service_entry.Deserialize(gr_context.get(),
                             /*graphite_recorder=*/nullptr,
-                            base::make_span(storage.get(), storage_size));
+                            base::span(storage.get(), storage_size));
   ASSERT_TRUE(service_entry.image());
   auto pre_mip_image = service_entry.image();
   EXPECT_FALSE(pre_mip_image->isTextureBacked());

@@ -8,11 +8,13 @@
 
 #include "base/base_paths.h"
 #include "base/command_line.h"
+#include "base/files/scoped_temp_dir.h"
 #include "base/path_service.h"
 #include "base/strings/stringprintf.h"
 #include "base/test/icu_test_util.h"
 #include "base/test/run_until.h"
 #include "base/test/with_feature_override.h"
+#include "base/threading/thread_restrictions.h"
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
@@ -32,6 +34,7 @@
 #include "content/public/common/content_features.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/browser_test_utils.h"
+#include "content/public/test/file_system_chooser_test_helpers.h"
 #include "content/public/test/scoped_time_zone.h"
 #include "extensions/test/result_catcher.h"
 #include "net/test/embedded_test_server/embedded_test_server.h"
@@ -40,6 +43,7 @@
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "ui/shell_dialogs/select_file_dialog.h"
 #include "url/gurl.h"
 
 class PDFExtensionJSTestBase : public PDFExtensionTestBase {
@@ -232,6 +236,10 @@ IN_PROC_BROWSER_TEST_P(PDFExtensionJSTest, ViewerPasswordDialog) {
   RunTestsInJsModule("viewer_password_dialog_test.js", "encrypted.pdf");
 }
 
+IN_PROC_BROWSER_TEST_P(PDFExtensionJSTest, ViewerSearchify) {
+  RunTestsInJsModule("viewer_searchify_test.js", "test.pdf");
+}
+
 IN_PROC_BROWSER_TEST_P(PDFExtensionJSTest, ArrayBufferAllocator) {
   // Run several times to see if there are issues with unloading.
   RunTestsInJsModule("beep_test.js", "array_buffer.pdf");
@@ -318,6 +326,19 @@ IN_PROC_BROWSER_TEST_P(PDFExtensionJSTest, ViewerToolbarDropdown) {
   RunTestsInJsModule("viewer_toolbar_dropdown_test.js", "test.pdf");
 }
 #endif  // BUILDFLAG(ENABLE_INK)
+
+IN_PROC_BROWSER_TEST_P(PDFExtensionJSTest, ViewerFilePicker) {
+  base::ScopedAllowBlockingForTesting allow_blocking;
+
+  base::ScopedTempDir temp_dir;
+  ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
+  base::FilePath save_path = temp_dir.GetPath().AppendASCII("saved.pdf");
+
+  ui::SelectFileDialog::SetFactory(
+      std::make_unique<content::FakeSelectFileDialogFactory>(
+          std::vector<base::FilePath>{save_path}));
+  RunTestsInJsModule("viewer_file_picker_test.js", "test.pdf");
+}
 
 // PDFExtensionJSTest with forced Pacific Time Zone.
 class PDFExtensionPacificTimeZoneJSTest : public PDFExtensionJSTest {
@@ -501,7 +522,16 @@ IN_PROC_BROWSER_TEST_P(PDFExtensionServiceWorkerJSTest, Interception) {
 #if !BUILDFLAG(IS_CHROMEOS_ASH)
 // Test behavior when Ink2 and annotation mode are disabled for the PDF viewer.
 // Don't run this test on Ash, as annotation mode is always enabled there.
-IN_PROC_BROWSER_TEST_P(PDFExtensionJSTest, Ink2Disabled) {
+class PDFExtensionJSNoInk2Test : public PDFExtensionJSTest {
+ protected:
+  std::vector<base::test::FeatureRef> GetDisabledFeatures() const override {
+    auto disabled = PDFExtensionJSTest::GetDisabledFeatures();
+    disabled.push_back(chrome_pdf::features::kPdfInk2);
+    return disabled;
+  }
+};
+
+IN_PROC_BROWSER_TEST_P(PDFExtensionJSNoInk2Test, Ink2Disabled) {
   RunTestsInJsModule("ink2_disabled_test.js", "test.pdf");
 }
 #endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
@@ -517,6 +547,9 @@ class PDFExtensionJSInk2Test : public PDFExtensionJSTest {
 };
 
 IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2) {
+  // One of the tests checks if the side panel is visible, so make the window
+  // wide enough.
+  GetActiveWebContents()->Resize({0, 0, 960, 100});
   RunTestsInJsModule("ink2_test.js", "test.pdf");
 }
 
@@ -524,8 +557,32 @@ IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2Save) {
   RunTestsInJsModule("ink2_save_test.js", "test.pdf");
 }
 
+IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2BottomToolbar) {
+  // The window must be smaller than 960px to show the bottom toolbar.
+  GetActiveWebContents()->Resize({0, 0, 959, 100});
+  RunTestsInJsModule("ink2_bottom_toolbar_test.js", "test.pdf");
+}
+
+IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2BottomToolbarDropdown) {
+  RunTestsInJsModule("ink2_bottom_toolbar_dropdown_test.js", "test.pdf");
+}
+
 IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2SidePanel) {
+  // The window must be at least 960px to show the side panel.
+  GetActiveWebContents()->Resize({0, 0, 960, 100});
   RunTestsInJsModule("ink2_side_panel_test.js", "test.pdf");
+}
+
+IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2BrushSelector) {
+  RunTestsInJsModule("ink2_brush_selector_test.js", "test.pdf");
+}
+
+IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2ColorSelector) {
+  RunTestsInJsModule("ink2_color_selector_test.js", "test.pdf");
+}
+
+IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2SizeSelector) {
+  RunTestsInJsModule("ink2_size_selector_test.js", "test.pdf");
 }
 
 IN_PROC_BROWSER_TEST_P(PDFExtensionJSInk2Test, Ink2ViewerToolbar) {
@@ -563,4 +620,7 @@ INSTANTIATE_FEATURE_OVERRIDE_TEST_SUITE(PDFExtensionPacificTimeZoneJSTest);
 INSTANTIATE_FEATURE_OVERRIDE_TEST_SUITE(PDFExtensionContentSettingJSTest);
 INSTANTIATE_FEATURE_OVERRIDE_TEST_SUITE(PDFExtensionWebUICodeCacheJSTest);
 INSTANTIATE_FEATURE_OVERRIDE_TEST_SUITE(PDFExtensionServiceWorkerJSTest);
+#if !BUILDFLAG(IS_CHROMEOS_ASH)
+INSTANTIATE_FEATURE_OVERRIDE_TEST_SUITE(PDFExtensionJSNoInk2Test);
+#endif
 INSTANTIATE_FEATURE_OVERRIDE_TEST_SUITE(PDFExtensionJSInk2Test);

@@ -14,9 +14,9 @@
 #include "base/files/file_util.h"
 #include "base/json/json_writer.h"
 #include "base/memory/scoped_refptr.h"
-#include "base/notreached.h"
 #include "base/path_service.h"
 #include "base/strings/string_number_conversions.h"
+#include "base/strings/to_string.h"
 #include "base/test/test_switches.h"
 #include "base/time/time.h"
 #include "base/values.h"
@@ -49,7 +49,7 @@ std::string StringFromValue(const base::Value& value) {
 }
 
 std::string BoolToString(const bool value) {
-  return value ? "true" : "false";
+  return base::ToString(value);
 }
 
 std::string RegistrationRequestToString(
@@ -117,21 +117,24 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
                             const bool always_launch_cmd,
                             const bool verify_app_logo_loaded,
                             const bool expect_success,
-                            const bool wait_for_the_installer) const override {
+                            const bool wait_for_the_installer,
+                            const int expected_exit_code,
+                            const base::Value::List& additional_switches,
+                            const base::FilePath& updater_path) const override {
     RunCommand(
         "install_updater_and_app",
-        {
-            Param("app_id", app_id),
-            Param("is_silent_install", BoolToString(is_silent_install)),
-            Param("tag", tag),
-            Param("child_window_text_to_find", child_window_text_to_find),
-            Param("always_launch_cmd", BoolToString(always_launch_cmd)),
-            Param("verify_app_logo_loaded",
-                  BoolToString(verify_app_logo_loaded)),
-            Param("expect_success", BoolToString(expect_success)),
-            Param("wait_for_the_installer",
-                  BoolToString(wait_for_the_installer)),
-        });
+        {Param("app_id", app_id),
+         Param("is_silent_install", BoolToString(is_silent_install)),
+         Param("tag", tag),
+         Param("child_window_text_to_find", child_window_text_to_find),
+         Param("always_launch_cmd", BoolToString(always_launch_cmd)),
+         Param("verify_app_logo_loaded", BoolToString(verify_app_logo_loaded)),
+         Param("expect_success", BoolToString(expect_success)),
+         Param("wait_for_the_installer", BoolToString(wait_for_the_installer)),
+         Param("expected_exit_code", base::NumberToString(expected_exit_code)),
+         Param("additional_switches",
+               StringFromValue(base::Value(additional_switches.Clone()))),
+         Param("updater_path", updater_path.MaybeAsASCII())});
   }
 
   void ExpectInstalled() const override { RunCommand("expect_installed"); }
@@ -164,8 +167,8 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
 
   void ExitTestMode() const override { RunCommand("exit_test_mode"); }
 
-  void SetGroupPolicies(const base::Value::Dict& values) const override {
-    RunCommand("set_group_policies",
+  void SetDictPolicies(const base::Value::Dict& values) const override {
+    RunCommand("set_dict_policies",
                {Param("values", StringFromValue(base::Value(values.Clone())))});
   }
 
@@ -211,10 +214,11 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
       const std::string& app_id,
       UpdateService::Priority priority,
       const base::Version& from_version,
-      const base::Version& to_version) const override {
+      const base::Version& to_version,
+      const base::Version& updater_version) const override {
     updater::test::ExpectUpdateCheckSequence(updater_scope_, test_server,
                                              app_id, priority, from_version,
-                                             to_version);
+                                             to_version, updater_version);
   }
 
   void ExpectUpdateSequence(ScopedServer* test_server,
@@ -224,10 +228,13 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
                             const base::Version& from_version,
                             const base::Version& to_version,
                             bool do_fault_injection,
-                            bool skip_download) const override {
+                            bool skip_download,
+                            const base::Version& updater_version,
+                            const std::string& event_regex) const override {
     updater::test::ExpectUpdateSequence(
         updater_scope_, test_server, app_id, install_data_index, priority,
-        from_version, to_version, do_fault_injection, skip_download);
+        from_version, to_version, do_fault_injection, skip_download,
+        updater_version, event_regex);
   }
 
   void ExpectUpdateSequenceBadHash(
@@ -249,10 +256,18 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
                              const base::Version& from_version,
                              const base::Version& to_version,
                              bool do_fault_injection,
-                             bool skip_download) const override {
+                             bool skip_download,
+                             const base::Version& updater_version,
+                             const std::string& event_regex) const override {
     updater::test::ExpectInstallSequence(
         updater_scope_, test_server, app_id, install_data_index, priority,
-        from_version, to_version, do_fault_injection, skip_download);
+        from_version, to_version, do_fault_injection, skip_download,
+        updater_version, event_regex);
+  }
+
+  void ExpectEnterpriseCompanionAppOTAInstallSequence(
+      ScopedServer* test_server) const override {
+    updater::test::ExpectEnterpriseCompanionAppOTAInstallSequence(test_server);
   }
 
   void ExpectVersionActive(const std::string& version) const override {
@@ -280,8 +295,9 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
     RunCommand("setup_fake_updater_lower_version");
   }
 
-  void SetupRealUpdaterLowerVersion() const override {
-    RunCommand("setup_real_updater_lower_version");
+  void SetupRealUpdater(const base::FilePath& updater_path) const override {
+    RunCommand("setup_real_updater",
+               {Param("updater_path", updater_path.MaybeAsASCII())});
   }
 
   void SetExistenceCheckerPath(const std::string& app_id,
@@ -328,9 +344,11 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
     updater::test::SetActive(updater_scope_, app_id);
   }
 
-  void RunWake(int expected_exit_code) const override {
+  void RunWake(int expected_exit_code,
+               const base::Version& version) const override {
     RunCommand("run_wake",
-               {Param("exit_code", base::NumberToString(expected_exit_code))});
+               {Param("exit_code", base::NumberToString(expected_exit_code)),
+                Param("version", version.GetString())});
   }
 
   void RunWakeAll() const override { RunCommand("run_wake_all", {}); }
@@ -356,6 +374,12 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
 
   void CheckForUpdate(const std::string& app_id) const override {
     RunCommand("check_for_update", {Param("app_id", app_id)});
+  }
+
+  void ExpectCheckForUpdateOppositeScopeFails(
+      const std::string& app_id) const override {
+    RunCommand("expect_check_for_update_opposite_scope_fails",
+               {Param("app_id", app_id)});
   }
 
   void Update(const std::string& app_id,
@@ -441,6 +465,13 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
     RunCommand("expect_legacy_policy_status_succeeds");
   }
 
+  void LegacyInstallApp(const std::string& app_id,
+                        const base::Version& version) const override {
+    RunCommand(
+        "legacy_install_app",
+        {Param("app_id", app_id), Param("app_version", version.GetString())});
+  }
+
   void RunUninstallCmdLine() const override {
     RunCommand("run_uninstall_cmd_line");
   }
@@ -463,7 +494,7 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
   base::FilePath GetDifferentUserPath() const override {
     // On POSIX, the path may be chowned; so do not use a file not owned by the
     // test, nor the test executable itself.
-    NOTREACHED_IN_MIGRATION() << __func__ << ": not implemented.";
+    ADD_FAILURE() << __func__ << ": not implemented.";
     return base::FilePath();
   }
 
@@ -554,10 +585,12 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
   }
 
   void RunOfflineInstallOsNotSupported(bool is_legacy_install,
-                                       bool is_silent_install) override {
+                                       bool is_silent_install,
+                                       const std::string& language) override {
     RunCommand("run_offline_install_os_not_supported",
                {Param("legacy_install", BoolToString(is_legacy_install)),
-                Param("silent", BoolToString(is_silent_install))});
+                Param("silent", BoolToString(is_silent_install)),
+                Param("language", language)});
   }
 
   void DMPushEnrollmentToken(const std::string& enrollment_token) override {
@@ -624,14 +657,14 @@ class IntegrationTestCommandsSystem : public IntegrationTestCommands {
     base::CommandLine helper_command(path);
     helper_command.AppendSwitch(command_switch);
     for (const Param& param : params) {
-      helper_command.AppendSwitchASCII(param.name, param.value);
+      helper_command.AppendSwitchUTF8(param.name, param.value);
     }
 
     // Avoids the test runner banner about test debugging.
     helper_command.AppendSwitch("single-process-tests");
-    helper_command.AppendSwitchASCII("gtest_filter",
-                                     "TestHelperCommandRunner.Run");
-    helper_command.AppendSwitchASCII("gtest_brief", "1");
+    helper_command.AppendSwitchUTF8("gtest_filter",
+                                    "TestHelperCommandRunner.Run");
+    helper_command.AppendSwitchUTF8("gtest_brief", "1");
     for (const std::string& s :
          {switches::kUiTestActionTimeout, switches::kUiTestActionMaxTimeout,
           switches::kTestTinyTimeout, switches::kTestLauncherTimeout}) {

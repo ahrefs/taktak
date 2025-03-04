@@ -26,8 +26,9 @@ class AudioParameters;
 class Mp4MuxerDelegateFragment;
 enum VideoCodecProfile;
 
-#if BUILDFLAG(USE_PROPRIETARY_CODECS)
-class H264AnnexBToAvcBitstreamConverter;
+#if BUILDFLAG(USE_PROPRIETARY_CODECS) || \
+    BUILDFLAG(ENABLE_HEVC_PARSER_AND_HW_DECODER)
+class H26xAnnexBToBitstreamConverter;
 #endif
 
 class Mp4MuxerDelegateInterface {
@@ -59,8 +60,10 @@ class MEDIA_EXPORT Mp4MuxerDelegate : public Mp4MuxerDelegateInterface {
  public:
   Mp4MuxerDelegate(
       AudioCodec audio_codec,
-      std::optional<VideoCodecProfile> profile,
-      std::optional<VideoCodecLevel> level,
+      VideoCodec video_codec,
+      std::optional<VideoCodecProfile> video_profile,
+      std::optional<VideoCodecLevel> video_level,
+      bool add_parameter_sets_in_bitstream,
       Muxer::WriteDataCB write_callback,
       size_t audio_sample_count_per_fragment = kAudioFragmentCount);
   ~Mp4MuxerDelegate() override;
@@ -116,7 +119,8 @@ class MEDIA_EXPORT Mp4MuxerDelegate : public Mp4MuxerDelegateInterface {
   void MaybeFlushMoofAndMfraBoxes(size_t written_offset);
   size_t GetAudioOnlyFragmentCount() const;
 
-#if BUILDFLAG(USE_PROPRIETARY_CODECS)
+#if BUILDFLAG(USE_PROPRIETARY_CODECS) || \
+    BUILDFLAG(ENABLE_HEVC_PARSER_AND_HW_DECODER)
   scoped_refptr<DecoderBuffer> ConvertNALUData(
       scoped_refptr<DecoderBuffer> encoded_data);
 #endif
@@ -164,6 +168,8 @@ class MEDIA_EXPORT Mp4MuxerDelegate : public Mp4MuxerDelegateInterface {
   const std::optional<media::VideoCodecProfile> video_profile_;
   const std::optional<media::VideoCodecLevel> video_level_;
 
+  const bool add_parameter_sets_in_bitstream_ = false;
+
   // 1000 is a count that audio samples in the same fragment
   // when no video frame is added. In Windows, when video frames are present,
   // the audio counts per fragment is much less than it.
@@ -171,8 +177,9 @@ class MEDIA_EXPORT Mp4MuxerDelegate : public Mp4MuxerDelegateInterface {
 
   const size_t audio_sample_count_per_fragment_;
 
-#if BUILDFLAG(USE_PROPRIETARY_CODECS)
-  std::unique_ptr<media::H264AnnexBToAvcBitstreamConverter> h264_converter_;
+#if BUILDFLAG(USE_PROPRIETARY_CODECS) || \
+    BUILDFLAG(ENABLE_HEVC_PARSER_AND_HW_DECODER)
+  std::unique_ptr<H26xAnnexBToBitstreamConverter> h26x_converter_;
 #endif
 
   Muxer::WriteDataCB write_data_callback_ GUARDED_BY_CONTEXT(sequence_checker_);

@@ -23,11 +23,11 @@
 #include "third_party/blink/renderer/core/style/shadow_list.h"
 #include "third_party/blink/renderer/platform/fonts/font.h"
 #include "third_party/blink/renderer/platform/fonts/text_fragment_paint_info.h"
+#include "third_party/blink/renderer/platform/geometry/stroke_data.h"
 #include "third_party/blink/renderer/platform/graphics/draw_looper_builder.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_context.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_context_state_saver.h"
 #include "third_party/blink/renderer/platform/graphics/paint/paint_controller.h"
-#include "third_party/blink/renderer/platform/graphics/stroke_data.h"
 
 namespace blink {
 
@@ -172,9 +172,8 @@ void PrepareStrokeGeometry(const TextPainter::SvgTextPaintState& state,
         stroke_scale_factor = state.InlineText().ScalingFactor();
         break;
       case SvgPaintMode::kTextDecoration: {
-        Font scaled_font;
-        LayoutSVGInlineText::ComputeNewScaledFontForStyle(
-            layout_parent, stroke_scale_factor, scaled_font);
+        LayoutSVGInlineText::ComputeNewScaledFontForStyle(layout_parent,
+                                                          stroke_scale_factor);
         DCHECK(stroke_scale_factor);
         break;
       }

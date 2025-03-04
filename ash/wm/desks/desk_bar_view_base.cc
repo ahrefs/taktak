@@ -126,7 +126,8 @@ void MaybeSetupBackgroundView(DeskBarViewBase* bar_view) {
     return;
   }
 
-  if (features::IsBackgroundBlurEnabled()) {
+  if (features::IsBackgroundBlurEnabled() &&
+      chromeos::features::IsSystemBlurEnabled()) {
     layer->SetBackgroundBlur(ColorProvider::kBackgroundBlurSigma);
     layer->SetBackdropFilterQuality(ColorProvider::kBackgroundBlurQuality);
   }
@@ -137,8 +138,12 @@ void MaybeSetupBackgroundView(DeskBarViewBase* bar_view) {
   view->SetBorder(std::make_unique<views::HighlightBorder>(
       corner_radius, views::HighlightBorder::Type::kHighlightBorderNoShadow));
   layer->SetRoundedCornerRadius(gfx::RoundedCornersF(corner_radius));
-  view->SetBackground(
-      views::CreateThemedSolidBackground(kColorAshShieldAndBase80));
+
+  const ui::ColorId background_color_id =
+      chromeos::features::IsSystemBlurEnabled()
+          ? static_cast<ui::ColorId>(kColorAshShieldAndBase80)
+          : cros_tokens::kCrosSysSystemBaseElevatedOpaque;
+  view->SetBackground(views::CreateThemedSolidBackground(background_color_id));
 }
 
 }  // namespace
@@ -308,7 +313,7 @@ class DeskBarScrollViewLayout : public views::LayoutManager {
     // views before laying them out.
     const bool is_rtl = base::i18n::IsRTL();
     if (is_rtl) {
-      base::ranges::reverse(mini_views);
+      std::ranges::reverse(mini_views);
     }
 
     width_ = std::max(scroll_bounds.width(), contents_size.width());
@@ -739,7 +744,7 @@ class DeskBarViewBase::ScrollForActiveMiniView
   void Run() override {
     // When the bar is initialized, scroll to make active desk mini view
     // visible.
-    auto it = base::ranges::find_if(
+    auto it = std::ranges::find_if(
         bar_view_->mini_views_,
         [](DeskMiniView* mini_view) { return mini_view->desk()->is_active(); });
     if (it != bar_view_->mini_views_.end()) {
@@ -765,11 +770,7 @@ DeskBarViewBase::DeskBarViewBase(
 
   MaybeSetupBackgroundView(this);
 
-  if (chromeos::features::AreOverviewSessionInitOptimizationsEnabled()) {
-    contents_view_ = AddChildView(std::make_unique<views::View>());
-  } else {
-    InitScrolling();
-  }
+  contents_view_ = AddChildView(std::make_unique<views::View>());
 
   default_desk_button_ =
       contents_view_->AddChildView(std::make_unique<DefaultDeskButton>(this));
@@ -952,11 +953,6 @@ void DeskBarViewBase::Layout(PassKey) {
   // needed here.
   scroll_bounds.Inset(gfx::Insets::VH(0, horizontal_padding));
   GetTopLevelViewWithContents().SetBoundsRect(scroll_bounds);
-  if (!chromeos::features::AreOverviewSessionInitOptimizationsEnabled()) {
-    // When the bar reaches its max possible size, it's size does not change,
-    // but we still need to layout child UIs to their right positions.
-    GetTopLevelViewWithContents().DeprecatedLayoutImmediately();
-  }
 
   if (IsScrollingInitialized()) {
     UpdateScrollButtonsVisibility();
@@ -1010,8 +1006,6 @@ void DeskBarViewBase::Init(aura::Window* desk_bar_widget_window) {
 
   hover_observer_ =
       std::make_unique<DeskBarHoverObserver>(this, desk_bar_widget_window);
-
-  RecordDeskProfileAdoption();
 }
 
 bool DeskBarViewBase::IsZeroState() const {
@@ -1064,7 +1058,7 @@ DeskMiniView* DeskBarViewBase::FindMiniViewForDesk(const Desk* desk) const {
 }
 
 int DeskBarViewBase::GetMiniViewIndex(const DeskMiniView* mini_view) const {
-  auto iter = base::ranges::find(mini_views_, mini_view);
+  auto iter = std::ranges::find(mini_views_, mini_view);
   return (iter == mini_views_.cend())
              ? -1
              : std::distance(mini_views_.cbegin(), iter);
@@ -1150,10 +1144,7 @@ void DeskBarViewBase::UpdateLibraryButtonVisibility() {
     new_library_button_state = DeskIconButton::State::kExpanded;
   }
 
-  // Lazy initialization will be the default when
-  // `kOverviewSessionInitOptimizations` is launched.
-  if (!chromeos::features::AreOverviewSessionInitOptimizationsEnabled() ||
-      should_show_library_button) {
+  if (should_show_library_button) {
     GetOrCreateLibraryButton();
   }
 
@@ -1188,14 +1179,10 @@ void DeskBarViewBase::UpdateNewDeskButtonLabelVisibility(
     bool layout_if_changed) {
   const bool current_visibility =
       new_desk_button_label_ && new_desk_button_label_->GetVisible();
-  if (chromeos::features::AreOverviewSessionInitOptimizationsEnabled()) {
-    if (new_visibility) {
-      GetOrCreateNewDeskButtonLabel().SetVisible(true);
-    } else if (new_desk_button_label_) {
-      new_desk_button_label_->SetVisible(false);
-    }
-  } else {
-    GetOrCreateNewDeskButtonLabel().SetVisible(new_visibility);
+  if (new_visibility) {
+    GetOrCreateNewDeskButtonLabel().SetVisible(true);
+  } else if (new_desk_button_label_) {
+    new_desk_button_label_->SetVisible(false);
   }
 
   if (new_visibility != current_visibility && layout_if_changed) {
@@ -1244,7 +1231,8 @@ bool DeskBarViewBase::ShouldShowLibraryUi() {
       auto* desk_model = Shell::Get()->saved_desk_delegate()->GetDeskModel();
       CHECK(desk_model);
       size_t saved_desk_count = desk_model->GetDeskTemplateEntryCount() +
-                                desk_model->GetSaveAndRecallDeskEntryCount();
+                                desk_model->GetSaveAndRecallDeskEntryCount() +
+                                desk_model->GetCoralEntryCount();
       library_ui_visibility_ = saved_desk_count ? LibraryUiVisibility::kVisible
                                                 : LibraryUiVisibility::kHidden;
     }
@@ -1443,7 +1431,7 @@ void DeskBarViewBase::ContinueDragDesk(DeskMiniView* mini_view,
     return;
   }
 
-  const auto drag_view_iter = base::ranges::find(mini_views_, drag_view_);
+  const auto drag_view_iter = std::ranges::find(mini_views_, drag_view_);
   CHECK(drag_view_iter != mini_views_.cend());
 
   const int old_index = drag_view_iter - mini_views_.cbegin();
@@ -1519,7 +1507,7 @@ void DeskBarViewBase::OnDeskAdded(const Desk* desk, bool from_undo) {
 
 void DeskBarViewBase::OnDeskRemoved(const Desk* desk) {
   DeskNameView::CommitChanges(GetWidget());
-  auto iter = base::ranges::find_if(
+  auto iter = std::ranges::find_if(
       mini_views_,
       [desk](DeskMiniView* mini_view) { return mini_view->desk() == desk; });
 
@@ -1570,7 +1558,7 @@ void DeskBarViewBase::OnDeskReordered(int old_index, int new_index) {
   // Update the order of child views.
   auto* reordered_view = mini_views_[new_index].get();
   reordered_view->parent()->ReorderChildView(reordered_view, new_index);
-  reordered_view->parent()->NotifyAccessibilityEvent(
+  reordered_view->parent()->NotifyAccessibilityEventDeprecated(
       ax::mojom::Event::kTreeChanged, true);
 
   // Update the desk indices in the shortcut views.
@@ -1627,20 +1615,6 @@ void DeskBarViewBase::UpdateNewMiniViews(bool initializing_bar_view,
       new_mini_views.push_back(mini_view);
     }
     ++mini_view_index;
-  }
-
-  // Only record for `initializing_bar_view` since that's what impacts the
-  // presentation time and animation smoothness when entering overview.
-  if (initializing_bar_view && type_ == Type::kOverview) {
-    size_t total_layers_mirrored = 0;
-    for (const auto& mini_view : mini_views_) {
-      total_layers_mirrored +=
-          mini_view->desk_preview()->GetNumLayersMirrored();
-    }
-    // From local testing, 16 chrome browser windows (which metrics show is
-    // likely much more than what most users have) resulted in ~1000 layers.
-    base::UmaHistogramCounts1000("Ash.Overview.DeskBarNumLayersMirrored",
-                                 total_layers_mirrored);
   }
 
   if (expanding_bar_view) {
@@ -2103,29 +2077,6 @@ void DeskBarViewBase::MaybeRefreshOverviewGridBounds() {
     CHECK(overview_grid_);
     overview_grid_->RefreshGridBounds(/*animate=*/true);
   }
-}
-
-void DeskBarViewBase::RecordDeskProfileAdoption() {
-  // With regards to desk profiles, the user can be in one of these buckets:
-  //  1. Conditions for selecting a user profile have not been met.
-  //  2. Conditions are met, but the user has not actively selected a profile.
-  //  3. The user has selected a profile.
-  DeskProfilesUsageStatus status = DeskProfilesUsageStatus::kConditionsNotMet;
-  if (DesksController::Get()->GetNumberOfDesks() > 1) {
-    for (const auto& mini_view : mini_views_) {
-      if (mini_view->desk() && mini_view->desk()->lacros_profile_id()) {
-        // The user has actively selected a profile for at least one desk.
-        status = DeskProfilesUsageStatus::kEnabled;
-        break;
-      }
-      if (mini_view->desk_profiles_button()) {
-        // The user has the option to pick a profile.
-        status = DeskProfilesUsageStatus::kConditionsMet;
-      }
-    }
-  }
-
-  base::UmaHistogramEnumeration(kDeskProfilesUsageStatusHistogramName, status);
 }
 
 BEGIN_METADATA(DeskBarViewBase)

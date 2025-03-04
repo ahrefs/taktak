@@ -10,7 +10,6 @@
 
 #include "base/functional/callback_forward.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/ui/extensions/mv2_disabled_dialog_controller.h"
 #include "extensions/buildflags/buildflags.h"
 #include "extensions/common/extension_id.h"
@@ -19,13 +18,11 @@
 #include "ui/base/ui_base_types.h"
 #include "ui/gfx/native_widget_types.h"
 
-#if !BUILDFLAG(ENABLE_EXTENSIONS)
-#error "Extensions must be enabled"
-#endif
-
 #if BUILDFLAG(IS_CHROMEOS)
 #include "base/files/safe_base_name.h"
 #endif  // BUILDFLAG(IS_CHROMEOS)
+
+static_assert(BUILDFLAG(ENABLE_EXTENSIONS));
 
 class Browser;
 class SettingsOverriddenDialogController;
@@ -46,6 +43,14 @@ class ChooserController;
 namespace extensions {
 
 class Extension;
+
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kMv2DisabledDialogManageButtonElementId);
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kMv2DisabledDialogParagraphElementId);
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kMv2DisabledDialogRemoveButtonElementId);
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kMv2KeepDialogOkButtonElementId);
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kReloadPageDialogCancelButtonElementId);
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kReloadPageDialogOkButtonElementId);
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kParentBlockedDialogMessage);
 
 void ShowConstrainedDeviceChooserDialog(
     content::WebContents* web_contents,
@@ -125,8 +130,6 @@ enum class ExtensionInstalledBlockedByParentDialogAction {
   kEnable,  // The user attempted to enable the extension.
 };
 
-DECLARE_ELEMENT_IDENTIFIER_VALUE(kParentBlockedDialogMessage);
-
 // Displays a dialog to notify the user that the extension installation is
 // blocked by a parent
 void ShowExtensionInstallBlockedByParentDialog(
@@ -134,6 +137,12 @@ void ShowExtensionInstallBlockedByParentDialog(
     const Extension* extension,
     content::WebContents* web_contents,
     base::OnceClosure done_callback);
+
+// Shows a dialog when the user tries to upload an extension to their account.
+void ShowUploadExtensionToAccountDialog(Browser* browser,
+                                        const Extension& extension,
+                                        base::OnceClosure accept_callback,
+                                        base::OnceClosure cancel_callback);
 
 #if BUILDFLAG(IS_CHROMEOS)
 

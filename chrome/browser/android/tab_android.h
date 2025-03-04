@@ -25,6 +25,7 @@
 
 class GURL;
 class Profile;
+class TabFeaturesAndroid;
 
 namespace cc::slim {
 class Layer;
@@ -163,15 +164,17 @@ class TabAndroid : public TabAndroidDataProvider,
           jcontext_menu_populator_factory);
   void DestroyWebContents(JNIEnv* env);
   void ReleaseWebContents(JNIEnv* env);
+  bool IsPhysicalBackingSizeEmpty(
+      JNIEnv* env,
+      const base::android::JavaParamRef<jobject>& jweb_contents);
   void OnPhysicalBackingSizeChanged(
       JNIEnv* env,
       const base::android::JavaParamRef<jobject>& jweb_contents,
       jint width,
       jint height);
-  void SetActiveNavigationEntryTitleForUrl(
-      JNIEnv* env,
-      const base::android::JavaParamRef<jstring>& jurl,
-      const base::android::JavaParamRef<jstring>& jtitle);
+  void SetActiveNavigationEntryTitleForUrl(JNIEnv* env,
+                                           std::string& jurl,
+                                           std::u16string& jtitle);
 
   void LoadOriginalImage(JNIEnv* env);
   void OnShow(JNIEnv* env);
@@ -197,6 +200,10 @@ class TabAndroid : public TabAndroidDataProvider,
       web_contents_delegate_;
   scoped_refptr<content::DevToolsAgentHost> devtools_host_;
   std::unique_ptr<browser_sync::SyncedTabDelegateAndroid> synced_tab_delegate_;
+
+  // Holds tab-scoped state. Constructed after tab_helpers.
+  std::unique_ptr<TabFeaturesAndroid> tab_features_;
+
   base::ObserverList<Observer> observers_;
 
   const base::WeakPtr<Profile> profile_;

@@ -9,7 +9,6 @@
 #include "base/functional/callback.h"
 #include "base/memory/raw_ptr.h"
 #include "base/test/scoped_feature_list.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/search_engine_choice/search_engine_choice_service_factory.h"
 #include "chrome/browser/search_engines/template_url_service_factory.h"
@@ -83,8 +82,7 @@ class ZeroSuggestPrefetchTabHelperBrowserTestOnNTP
  public:
   ZeroSuggestPrefetchTabHelperBrowserTestOnNTP() {
     feature_list_.InitWithFeatures(
-        /*enabled_features=*/{omnibox::kZeroSuggestPrefetching,
-                              omnibox::kOmniboxOnClobberFocusTypeOnContent},
+        /*enabled_features=*/{omnibox::kZeroSuggestPrefetching},
         /*disabled_features=*/{omnibox::kZeroSuggestPrefetchingOnSRP,
                                omnibox::kZeroSuggestPrefetchingOnWeb});
   }
@@ -95,8 +93,7 @@ class ZeroSuggestPrefetchTabHelperBrowserTestOnSRP
  public:
   ZeroSuggestPrefetchTabHelperBrowserTestOnSRP() {
     feature_list_.InitWithFeatures(
-        /*enabled_features=*/{omnibox::kZeroSuggestPrefetchingOnSRP,
-                              omnibox::kOmniboxOnClobberFocusTypeOnContent},
+        /*enabled_features=*/{omnibox::kZeroSuggestPrefetchingOnSRP},
         /*disabled_features=*/{omnibox::kZeroSuggestPrefetching,
                                omnibox::kZeroSuggestPrefetchingOnWeb});
   }
@@ -107,8 +104,7 @@ class ZeroSuggestPrefetchTabHelperBrowserTestOnWeb
  public:
   ZeroSuggestPrefetchTabHelperBrowserTestOnWeb() {
     feature_list_.InitWithFeatures(
-        /*enabled_features=*/{omnibox::kZeroSuggestPrefetchingOnWeb,
-                              omnibox::kOmniboxOnClobberFocusTypeOnContent},
+        /*enabled_features=*/{omnibox::kZeroSuggestPrefetchingOnWeb},
         /*disabled_features=*/{omnibox::kZeroSuggestPrefetching,
                                omnibox::kZeroSuggestPrefetchingOnSRP});
   }
@@ -199,7 +195,7 @@ IN_PROC_BROWSER_TEST_F(ZeroSuggestPrefetchTabHelperBrowserTestOnSRP,
   auto input_is_correct = [](const AutocompleteInput& input) {
     return input.current_page_classification() ==
                metrics::OmniboxEventProto::SRP_ZPS_PREFETCH &&
-           input.focus_type() == metrics::OmniboxFocusType::INTERACTION_CLOBBER;
+           input.focus_type() == metrics::OmniboxFocusType::INTERACTION_FOCUS;
   };
 
   {
@@ -273,7 +269,7 @@ IN_PROC_BROWSER_TEST_F(ZeroSuggestPrefetchTabHelperBrowserTestOnWeb,
   auto input_is_correct = [](const AutocompleteInput& input) {
     return input.current_page_classification() ==
                metrics::OmniboxEventProto::OTHER_ZPS_PREFETCH &&
-           input.focus_type() == metrics::OmniboxFocusType::INTERACTION_CLOBBER;
+           input.focus_type() == metrics::OmniboxFocusType::INTERACTION_FOCUS;
   };
 
   {

@@ -139,12 +139,20 @@ def _compute_edits(
   bundle_builder = values.CallValueBuilder('targets.bundle',
                                            {'mixins': mixins_builder},
                                            output_empty=True)
+
+  skylab_mixin_builder = values.CallValueBuilder('targets.mixin')
+  skylab_bundle_builder = values.CallValueBuilder(
+      'targets.bundle', {'mixins': skylab_mixin_builder})
+
   settings_builder = values.CallValueBuilder('targets.settings')
 
   for key, value in builder_config.items():
     match key:
       case 'test_suites':
-        targets_builder = values.ListValueBuilder()
+        skylab_targets_builder = values.ListValueBuilder()
+        skylab_bundle_builder['targets'] = skylab_targets_builder
+
+        targets_builder = values.ListValueBuilder([skylab_bundle_builder])
         bundle_builder['targets'] = targets_builder
 
         for suite_type, suite in value.items():
@@ -155,10 +163,11 @@ def _compute_edits(
               targets_builder.append(f'"{suite}"')
 
             case 'skylab_tests' | 'skylab_gpu_telemetry_tests':
-              raise SkylabSuite(suite_type, suite)
+              skylab_targets_builder.append(f'"{suite}"')
+              settings_builder['use_swarming'] = 'False'
 
             case 'junit_tests' | _:
-              raise Exception(f'unhandled suite type: "{suite}"')
+              raise Exception(f'unhandled suite type: "{suite_type}"')
 
       case 'additional_compile_targets':
         bundle_builder[key] = values.convert_direct(value)
@@ -169,6 +178,10 @@ def _compute_edits(
       case 'mixins':
         for element in value:
           mixins_builder.append(f'"{element}"')
+
+      case 'cros_board':
+        skylab_mixin_builder['skylab'] = values.CallValueBuilder(
+            'targets.skylab', {key: f'"{value}"'})
 
       case 'browser_config':
         browser_config = _BROWSER_CONFIG_MAPPING[value]
@@ -245,6 +258,8 @@ def _update_starlark(
       ('targets.builder_defaults.set', targets_builder_defaults),
       ('targets.settings_defaults.set', targets_settings_defaults),
   ):
+    if not defaults:
+      continue
     defaults_target = create_defaults(kind)
     for attr, value in defaults.items():
       buildozer.run(f'set {attr} {_escape_spaces(value)}', defaults_target)
@@ -259,6 +274,7 @@ def main(argv: list[str]):
   parser = argparse.ArgumentParser()
   parser.add_argument('builder_group')
   parser.add_argument('builder', nargs='*', default=None)
+  parser.add_argument('--star-file', default=None)
   args = parser.parse_args(argv)
 
   builders = set(args.builder) or None
@@ -296,11 +312,15 @@ def main(argv: list[str]):
           if builders is not None and builder_name not in builders:
             continue
 
-          edits_by_builder[builder_name] = _compute_edits(
-              builder_name,
-              builder_config,
-              test_suite_exceptions,
-          )
+          try:
+            edits_by_builder[builder_name] = _compute_edits(
+                builder_name,
+                builder_config,
+                test_suite_exceptions,
+            )
+          except SkylabSuite:
+            if builders is not None:
+              raise
 
           if builders is not None:
             builders.remove(builder_name)
@@ -322,9 +342,16 @@ def main(argv: list[str]):
           file=sys.stderr)
     sys.exit(1)
 
-  bucket = 'try' if args.builder_group.startswith('tryserver.') else 'ci'
-  star_file = (_INFRA_CONFIG_DIR /
-               f'subprojects/chromium/{bucket}/{args.builder_group}.star')
+  if args.star_file:
+    if not os.path.exists(args.star_file):
+      print(f'The given starlark file does not exist: "{args.star_file}"',
+            file=sys.stderr)
+      sys.exit(1)
+    star_file = args.star_file
+  else:
+    bucket = 'try' if args.builder_group.startswith('tryserver.') else 'ci'
+    star_file = (_INFRA_CONFIG_DIR /
+                f'subprojects/chromium/{bucket}/{args.builder_group}.star')
 
   _update_starlark(
       args.builder_group,

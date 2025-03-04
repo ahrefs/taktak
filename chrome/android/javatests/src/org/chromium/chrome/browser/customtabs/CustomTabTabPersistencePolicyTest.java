@@ -50,6 +50,7 @@ import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.profiles.ProfileProvider;
 import org.chromium.chrome.browser.tab.MockTab;
 import org.chromium.chrome.browser.tab_ui.TabContentManager;
+import org.chromium.chrome.browser.tabmodel.PassthroughTabUngrouper;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.chrome.browser.tabmodel.TabModelSelectorImpl;
 import org.chromium.chrome.browser.tabmodel.TabPersistenceFileInfo;
@@ -57,6 +58,7 @@ import org.chromium.chrome.browser.tabmodel.TabPersistenceFileInfo.TabStateFileI
 import org.chromium.chrome.browser.tabmodel.TabPersistencePolicy;
 import org.chromium.chrome.browser.tabmodel.TabPersistentStore;
 import org.chromium.chrome.browser.tabmodel.TabPersistentStore.TabModelSelectorMetadata;
+import org.chromium.chrome.browser.tabmodel.TabUngrouperFactory;
 import org.chromium.chrome.browser.tabmodel.TestTabModelDirectory;
 import org.chromium.chrome.browser.tabpersistence.TabStateDirectory;
 import org.chromium.chrome.browser.tabpersistence.TabStateFileManager;
@@ -215,7 +217,7 @@ public class CustomTabTabPersistencePolicyTest {
         // Create an unreferenced tab state file and ensure it is marked for deletion.
         File tab999File =
                 TabStateFileManager.getTabStateFile(
-                        stateDirectory, 999, false, /* isFlatBuffer= */ false);
+                        stateDirectory, 999, false, /* isFlatbuffer= */ false);
         Assert.assertTrue(tab999File.createNewFile());
         policy.cleanupUnusedFiles(tabDataToDeleteCallback);
         callbackSignal.waitForCallback(1);
@@ -254,15 +256,15 @@ public class CustomTabTabPersistencePolicyTest {
         }
         File tab111File =
                 TabStateFileManager.getTabStateFile(
-                        stateDirectory, 111, false, /* isFlatBuffer= */ false);
+                        stateDirectory, 111, false, /* isFlatbuffer= */ false);
         Assert.assertTrue(tab111File.createNewFile());
         File tab222File =
                 TabStateFileManager.getTabStateFile(
-                        stateDirectory, 222, false, /* isFlatBuffer= */ false);
+                        stateDirectory, 222, false, /* isFlatbuffer= */ false);
         Assert.assertTrue(tab222File.createNewFile());
         File tab333File =
                 TabStateFileManager.getTabStateFile(
-                        stateDirectory, 333, false, /* isFlatBuffer= */ false);
+                        stateDirectory, 333, false, /* isFlatbuffer= */ false);
         Assert.assertTrue(tab333File.createNewFile());
         policy.cleanupUnusedFiles(tabDataToDeleteCallback);
         callbackSignal.waitForCallback(3);
@@ -435,6 +437,7 @@ public class CustomTabTabPersistencePolicyTest {
 
         CustomTabsTabModelOrchestrator orchestrator = new CustomTabsTabModelOrchestrator();
         orchestrator.createTabModels(
+                mAppContext,
                 profileProviderSupplier,
                 customTabActivity,
                 buildTestPersistencePolicy(),
@@ -442,7 +445,10 @@ public class CustomTabTabPersistencePolicyTest {
                 AsyncTabParamsManagerSingleton.getInstance(),
                 new CipherFactory());
         TabModelSelectorImpl selector = (TabModelSelectorImpl) orchestrator.getTabModelSelector();
-        selector.initializeForTesting(normalTabModel, incognitoTabModel);
+        TabUngrouperFactory factory =
+                (isIncognitoBranded, tabGroupModelFilterSupplier) ->
+                        new PassthroughTabUngrouper(tabGroupModelFilterSupplier);
+        selector.initializeForTesting(normalTabModel, incognitoTabModel, factory);
         ApplicationStatus.onStateChangeForTesting(customTabActivity, ActivityState.DESTROYED);
         ApplicationStatus.unregisterActivityStateListener(stateListener);
         return selector;

@@ -11,12 +11,14 @@
 #include "base/numerics/checked_math.h"
 #include "base/task/sequenced_task_runner.h"
 #include "net/base/io_buffer.h"
+#include "net/base/net_errors.h"
+#include "net/filter/source_stream_type.h"
 
 namespace network {
 
 DataPipeToSourceStream::DataPipeToSourceStream(
     mojo::ScopedDataPipeConsumerHandle body)
-    : net::SourceStream(net::SourceStream::TYPE_NONE),
+    : net::SourceStream(net::SourceStreamType::kNone),
       body_(std::move(body)),
       handle_watcher_(FROM_HERE,
                       mojo::SimpleWatcher::ArmingPolicy::MANUAL,
@@ -69,8 +71,7 @@ int DataPipeToSourceStream::Read(net::IOBuffer* buf,
       handle_watcher_.ArmOrNotify();
       return net::ERR_IO_PENDING;
   }
-  NOTREACHED_IN_MIGRATION() << static_cast<int>(result);
-  return net::ERR_UNEXPECTED;
+  NOTREACHED() << static_cast<int>(result);
 }
 
 void DataPipeToSourceStream::OnReadable(MojoResult unused) {
@@ -97,7 +98,7 @@ void DataPipeToSourceStream::OnReadable(MojoResult unused) {
       handle_watcher_.ArmOrNotify();
       return;
   }
-  NOTREACHED_IN_MIGRATION() << static_cast<int>(result);
+  NOTREACHED() << static_cast<int>(result);
 }
 
 void DataPipeToSourceStream::FinishReading() {

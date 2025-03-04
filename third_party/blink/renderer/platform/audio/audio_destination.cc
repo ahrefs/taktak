@@ -47,9 +47,9 @@
 #include "third_party/blink/public/platform/web_audio_latency_hint.h"
 #include "third_party/blink/public/platform/web_audio_sink_descriptor.h"
 #include "third_party/blink/renderer/platform/audio/audio_utilities.h"
-#include "third_party/blink/renderer/platform/audio/push_pull_fifo.h"
 #include "third_party/blink/renderer/platform/audio/vector_math.h"
 #include "third_party/blink/renderer/platform/instrumentation/tracing/trace_event.h"
+#include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 #include "third_party/blink/renderer/platform/scheduler/public/post_cross_thread_task.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_base.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_media.h"
@@ -79,7 +79,10 @@ const char* DeviceStateToString(AudioDestination::DeviceState state) {
 }
 
 bool BypassOutputBuffer(const WebAudioLatencyHint& latency_hint) {
-  if (!base::FeatureList::IsEnabled(features::kWebAudioBypassOutputBuffering)) {
+  if (RuntimeEnabledFeatures::WebAudioBypassOutputBufferingOptOutEnabled()) {
+    return false;
+  }
+  if (!RuntimeEnabledFeatures::WebAudioBypassOutputBufferingEnabled()) {
     return false;
   }
   switch (latency_hint.Category()) {
@@ -120,6 +123,7 @@ int AudioDestination::Render(base::TimeDelta delay,
                              base::TimeTicks delay_timestamp,
                              const media::AudioGlitchInfo& glitch_info,
                              media::AudioBus* dest) {
+  base::TimeTicks start_timestamp = base::TimeTicks::Now();
   const uint32_t number_of_frames = dest->frames();
 
   TRACE_EVENT("webaudio", "AudioDestination::Render", "frames",
@@ -170,10 +174,10 @@ int AudioDestination::Render(base::TimeDelta delay,
       output_buffer_bypass_wait_event_.Reset();
       PostCrossThreadTask(
           *worklet_task_runner_, FROM_HERE,
-          CrossThreadBindOnce(&AudioDestination::RequestRenderWait,
-                              WrapRefCounted(this), number_of_frames,
-                              frames_to_render, delay, delay_timestamp,
-                              glitch_info));
+          CrossThreadBindOnce(
+              &AudioDestination::RequestRenderWait, WrapRefCounted(this),
+              number_of_frames, frames_to_render, delay, delay_timestamp,
+              glitch_info, /*request_timestamp=*/base::TimeTicks::Now()));
       {
         TRACE_EVENT0("webaudio", "AudioDestination::Render waiting");
         base::ScopedAllowBaseSyncPrimitivesOutsideBlockingScope allow_wait;
@@ -196,11 +200,27 @@ int AudioDestination::Render(base::TimeDelta delay,
       }
     } else {
       // Otherwise use the single-thread rendering.
-      RequestRender(number_of_frames, frames_to_render, delay, delay_timestamp,
-                    glitch_info);
+      state_change_underrun_in_bypass_mode_ = !RequestRender(
+          number_of_frames, frames_to_render, delay, delay_timestamp,
+          glitch_info, /*request_timestamp=*/base::TimeTicks::Now());
     }
 
-    fifo_->Pull(output_bus_.get(), number_of_frames);
+    const uint32_t frames_after_render = fifo_->GetFramesAvailable();
+    if (frames_after_render < number_of_frames) {
+      // This can happen if the device has stopped or is stopping when
+      // `Render()` is called.
+      CHECK(state_change_underrun_in_bypass_mode_);
+      output_bus_->Zero();
+      fifo_->Pull(output_bus_.get(), frames_after_render);
+      uma_reporter_.AddRenderDuration(/*duration=*/base::TimeTicks::Now() -
+                                      start_timestamp);
+      return frames_after_render;
+    } else {
+      fifo_->Pull(output_bus_.get(), number_of_frames);
+      uma_reporter_.AddRenderDuration(/*duration=*/base::TimeTicks::Now() -
+                                      start_timestamp);
+      return number_of_frames;
+    }
 
   } else {
     // Fill the FIFO.
@@ -216,6 +236,7 @@ int AudioDestination::Render(base::TimeDelta delay,
                                              web_audio_device_->SampleRate());
 
       media::AudioGlitchInfo combined_glitch_info = glitch_info;
+      bool has_fifo_underrun_occurred = false;
       if (result.frames_provided < number_of_frames) {
         media::AudioGlitchInfo underrun{
             // FIFO contains audio at the output device sample rate.
@@ -225,14 +246,17 @@ int AudioDestination::Render(base::TimeDelta delay,
             .count = 1};
         underrun.MaybeAddTraceEvent();
         combined_glitch_info += underrun;
+        has_fifo_underrun_occurred = true;
       }
 
       PostCrossThreadTask(
           *worklet_task_runner_, FROM_HERE,
-          CrossThreadBindOnce(&AudioDestination::RequestRender,
+          CrossThreadBindOnce(IgnoreResult(&AudioDestination::RequestRender),
                               WrapRefCounted(this), number_of_frames,
                               result.frames_to_render, delay, delay_timestamp,
-                              combined_glitch_info));
+                              combined_glitch_info,
+                              /*request_timestamp=*/base::TimeTicks::Now(),
+                              has_fifo_underrun_occurred));
     } else {
       // Otherwise use the single-thread rendering.
       const size_t frames_to_render =
@@ -243,11 +267,12 @@ int AudioDestination::Render(base::TimeDelta delay,
       delay += audio_utilities::FramesToTime(number_of_frames,
                                              web_audio_device_->SampleRate());
       RequestRender(number_of_frames, frames_to_render, delay, delay_timestamp,
-                    glitch_info);
+                    glitch_info, /*request_timestamp=*/base::TimeTicks::Now());
     }
+    uma_reporter_.AddRenderDuration(/*duration=*/base::TimeTicks::Now() -
+                                    start_timestamp);
+    return number_of_frames;
   }
-
-  return number_of_frames;
 }
 
 void AudioDestination::OnRenderError() {
@@ -264,8 +289,8 @@ void AudioDestination::Start() {
   if (device_state_ != DeviceState::kStopped) {
     return;
   }
-  web_audio_device_->Start();
   SetDeviceState(DeviceState::kRunning);
+  web_audio_device_->Start();
 }
 
 void AudioDestination::Stop() {
@@ -306,8 +331,8 @@ void AudioDestination::Resume() {
   if (device_state_ != DeviceState::kPaused) {
     return;
   }
-  web_audio_device_->Resume();
   SetDeviceState(DeviceState::kRunning);
+  web_audio_device_->Resume();
 }
 
 void AudioDestination::SetWorkletTaskRunner(
@@ -324,6 +349,8 @@ void AudioDestination::SetWorkletTaskRunner(
   // accordingly.
   fifo_->SetEarmarkFrames(callback_buffer_size_);
   worklet_task_runner_ = std::move(worklet_task_runner);
+
+  uma_reporter_.UpdateMetricNameForDualThreadMode();
 }
 
 void AudioDestination::StartWithWorkletTaskRunner(
@@ -337,8 +364,8 @@ void AudioDestination::StartWithWorkletTaskRunner(
   }
 
   SetWorkletTaskRunner(worklet_task_runner);
-  web_audio_device_->Start();
   SetDeviceState(DeviceState::kRunning);
+  web_audio_device_->Start();
 }
 
 bool AudioDestination::IsPlaying() {
@@ -409,6 +436,10 @@ AudioDestination::AudioDestination(
       render_bus_(
           AudioBus::Create(number_of_output_channels, render_quantum_frames)),
       callback_(callback),
+      uma_reporter_(
+          AudioDestinationUmaReporter(latency_hint,
+                                      callback_buffer_size_,
+                                      web_audio_device_->SampleRate())),
       is_output_buffer_bypassed_(BypassOutputBuffer(latency_hint)) {
   CHECK(web_audio_device_);
 
@@ -461,10 +492,14 @@ AudioDestination::AudioDestination(
                                  CrossThreadUnretained(this)));
     resampler_bus_ =
         media::AudioBus::CreateWrapper(render_bus_->NumberOfChannels());
-    for (unsigned int i = 0; i < render_bus_->NumberOfChannels(); ++i) {
-      resampler_bus_->SetChannelData(i, render_bus_->Channel(i)->MutableData());
-    }
     resampler_bus_->set_frames(render_bus_->length());
+    for (unsigned int i = 0; i < render_bus_->NumberOfChannels(); ++i) {
+      // TODO(crbug.com/375449662): Spanify `AudioChannel::MuteableData`.
+      resampler_bus_->SetChannelData(
+          i, UNSAFE_TODO(base::span(
+                 render_bus_->Channel(i)->MutableData(),
+                 base::checked_cast<size_t>(render_bus_->length()))));
+    }
   } else {
     SendLogMessage(
         __func__,
@@ -515,19 +550,24 @@ void AudioDestination::RequestRenderWait(
     size_t frames_to_render,
     base::TimeDelta delay,
     base::TimeTicks delay_timestamp,
-    const media::AudioGlitchInfo& glitch_info) {
-  RequestRender(frames_requested, frames_to_render, delay, delay_timestamp,
-                glitch_info);
+    const media::AudioGlitchInfo& glitch_info,
+    base::TimeTicks request_timestamp) {
+  state_change_underrun_in_bypass_mode_ =
+      !RequestRender(frames_requested, frames_to_render, delay, delay_timestamp,
+                     glitch_info, request_timestamp);
   output_buffer_bypass_wait_event_.Signal();
 }
 
-void AudioDestination::RequestRender(
-    size_t frames_requested,
-    size_t frames_to_render,
-    base::TimeDelta delay,
-    base::TimeTicks delay_timestamp,
-    const media::AudioGlitchInfo& glitch_info) {
-
+bool AudioDestination::RequestRender(size_t frames_requested,
+                                     size_t frames_to_render,
+                                     base::TimeDelta delay,
+                                     base::TimeTicks delay_timestamp,
+                                     const media::AudioGlitchInfo& glitch_info,
+                                     base::TimeTicks request_timestamp,
+                                     bool has_fifo_underrun_occurred) {
+  base::TimeTicks start_timestamp = base::TimeTicks::Now();
+  uma_reporter_.AddRequestRenderGapDuration(start_timestamp -
+                                            request_timestamp);
   base::AutoTryLock locker(device_state_lock_);
 
   TRACE_EVENT("webaudio", "AudioDestination::RequestRender", "frames_requested",
@@ -540,11 +580,11 @@ void AudioDestination::RequestRender(
   // The state might be changing by ::Stop() call. If the state is locked, do
   // not touch the below.
   if (!locker.is_acquired()) {
-    return;
+    return false;
   }
 
   if (device_state_ != DeviceState::kRunning) {
-    return;
+    return false;
   }
 
   metric_reporter_.BeginTrace();
@@ -554,10 +594,14 @@ void AudioDestination::RequestRender(
   }
 
   // FIFO contains audio at the output device sample rate.
-  delay_to_report_ =
-      delay + audio_utilities::FramesToTime(fifo_->GetFramesAvailable(),
-                                            web_audio_device_->SampleRate());
+  base::TimeDelta fifo_delay = audio_utilities::FramesToTime(
+      fifo_->GetFramesAvailable(), web_audio_device_->SampleRate());
+  uma_reporter_.UpdateFifoDelay(fifo_delay);
+  if (has_fifo_underrun_occurred) {
+    uma_reporter_.IncreaseFifoUnderrunCount();
+  }
 
+  delay_to_report_ = delay + fifo_delay;
   glitch_info_to_report_.Add(glitch_info);
 
   output_position_.position =
@@ -601,7 +645,11 @@ void AudioDestination::RequestRender(
 
   frames_elapsed_ += frames_requested;
 
+  uma_reporter_.Report();
   metric_reporter_.EndTrace();
+  uma_reporter_.AddRequestRenderDuration(/*duration=*/base::TimeTicks::Now() -
+                                         start_timestamp);
+  return true;
 }
 
 void AudioDestination::ProvideResamplerInput(int resampler_frame_delay,
@@ -610,14 +658,14 @@ void AudioDestination::ProvideResamplerInput(int resampler_frame_delay,
   // resampling.
   TRACE_EVENT("webaudio", "AudioDestination::ProvideResamplerInput",
               "delay (frames)", resampler_frame_delay);
-  auto adjusted_delay =
-      delay_to_report_ + audio_utilities::FramesToTime(resampler_frame_delay,
-                                                       context_sample_rate_);
+  auto adjusted_delay = delay_to_report_ + audio_utilities::FramesToTime(
+      resampler_frame_delay, context_sample_rate_);;
   PullFromCallback(dest, adjusted_delay);
 }
 
 void AudioDestination::PullFromCallback(AudioBus* destination_bus,
                                         base::TimeDelta delay) {
+  uma_reporter_.UpdateTotalPlayoutDelay(delay);
   callback_->Render(destination_bus, render_quantum_frames_, output_position_,
                     metric_reporter_.GetMetric(), delay,
                     glitch_info_to_report_.GetAndReset());

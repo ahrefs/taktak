@@ -12,6 +12,7 @@
 #include <wrl/client.h>
 #include <wrl/implements.h>
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <string>
@@ -23,7 +24,6 @@
 #include "base/lazy_instance.h"
 #include "base/metrics/histogram_functions.h"
 #include "base/numerics/safe_conversions.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_number_conversions_win.h"
 #include "base/strings/string_util.h"
@@ -31,6 +31,10 @@
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/task/single_thread_task_runner.h"
+#include "base/trace_event/memory_allocator_dump.h"
+#include "base/trace_event/memory_dump_manager.h"
+#include "base/trace_event/memory_dump_provider.h"
+#include "base/trace_event/process_memory_dump.h"
 #include "base/trace_event/typed_macros.h"
 #include "base/values.h"
 #include "base/win/enum_variant.h"
@@ -222,6 +226,20 @@ namespace ui {
 
 namespace {
 
+// The number of platform nodes that have been created but are not referenced
+// (e.g., by an accessibility tool).
+size_t g_dormant_node_count_ = 0;
+
+// The number of platform nodes that are actively referenced (e.g., by an
+// accessibility tool).
+size_t g_live_node_count_ = 0;
+
+// The number of platform nodes for which their delegate has called `Destroy()`,
+// yet live on after `Dispose()` has been called. This can happen if one or more
+// references to the node remain outstanding (e.g., due to an accessibility
+// tool holding references).
+size_t g_ghost_node_count_ = 0;
+
 typedef std::unordered_set<AXPlatformNodeWin*> AXPlatformNodeWinSet;
 // Set of all AXPlatformNodeWin objects that were the target of an
 // alert event.
@@ -257,6 +275,66 @@ void PatternProvider(AXPlatformNodeWin* node, IUnknown** result) {
   *result = static_cast<T*>(node);
 }
 
+// Adds process-wide statistics about accessibility objects to traces.
+class AXPlatformNodeWinMemoryDumpProvider
+    : public base::trace_event::MemoryDumpProvider {
+ public:
+  AXPlatformNodeWinMemoryDumpProvider(
+      const AXPlatformNodeWinMemoryDumpProvider&) = delete;
+  AXPlatformNodeWinMemoryDumpProvider& operator=(
+      const AXPlatformNodeWinMemoryDumpProvider&) = delete;
+
+  // base::trace_event::MemoryDumpProvider:
+  bool OnMemoryDump(const base::trace_event::MemoryDumpArgs& args,
+                    base::trace_event::ProcessMemoryDump* pmd) override;
+
+ private:
+  friend class base::NoDestructor<AXPlatformNodeWinMemoryDumpProvider>;
+
+  AXPlatformNodeWinMemoryDumpProvider(const size_t& dormant_node_count,
+                                      const size_t& live_node_count,
+                                      const size_t& ghost_node_count);
+
+  ~AXPlatformNodeWinMemoryDumpProvider() override = default;
+
+  const raw_ref<const size_t> dormant_node_count_;
+  const raw_ref<const size_t> live_node_count_;
+  const raw_ref<const size_t> ghost_node_count_;
+};
+
+bool AXPlatformNodeWinMemoryDumpProvider::OnMemoryDump(
+    const base::trace_event::MemoryDumpArgs& args,
+    base::trace_event::ProcessMemoryDump* pmd) {
+  pmd->CreateAllocatorDump("accessibility/ax_platform_win_dormant_node")
+      ->AddScalar(base::trace_event::MemoryAllocatorDump::kNameObjectCount,
+                  base::trace_event::MemoryAllocatorDump::kUnitsObjects,
+                  *dormant_node_count_);
+  pmd->CreateAllocatorDump("accessibility/ax_platform_win_live_node")
+      ->AddScalar(base::trace_event::MemoryAllocatorDump::kNameObjectCount,
+                  base::trace_event::MemoryAllocatorDump::kUnitsObjects,
+                  *live_node_count_);
+  pmd->CreateAllocatorDump("accessibility/ax_platform_win_ghost_node")
+      ->AddScalar(base::trace_event::MemoryAllocatorDump::kNameObjectCount,
+                  base::trace_event::MemoryAllocatorDump::kUnitsObjects,
+                  *ghost_node_count_);
+  return true;
+}
+
+AXPlatformNodeWinMemoryDumpProvider::AXPlatformNodeWinMemoryDumpProvider(
+    const size_t& dormant_node_count,
+    const size_t& live_node_count,
+    const size_t& ghost_node_count)
+    : dormant_node_count_(dormant_node_count),
+      live_node_count_(live_node_count),
+      ghost_node_count_(ghost_node_count) {
+  // Skip this in tests that don't set up a task runner on the main thread.
+  if (base::SingleThreadTaskRunner::HasCurrentDefault()) {
+    base::trace_event::MemoryDumpManager::GetInstance()->RegisterDumpProvider(
+        this, "AXPlatformNodeWin",
+        base::SingleThreadTaskRunner::GetCurrentDefault());
+  }
+}
+
 }  // namespace
 
 void AXPlatformNodeWin::AddAttributeToList(const char* name,
@@ -277,9 +355,9 @@ const uint32_t kScreenReaderAccessibilityMode =
 // WinAccessibilityAPIUsageObserver
 //
 
-WinAccessibilityAPIUsageObserver::WinAccessibilityAPIUsageObserver() {}
+WinAccessibilityAPIUsageObserver::WinAccessibilityAPIUsageObserver() = default;
 
-WinAccessibilityAPIUsageObserver::~WinAccessibilityAPIUsageObserver() {}
+WinAccessibilityAPIUsageObserver::~WinAccessibilityAPIUsageObserver() = default;
 
 // static
 base::ObserverList<WinAccessibilityAPIUsageObserver>::Unchecked&
@@ -304,7 +382,8 @@ WinAccessibilityAPIUsageScopedUIAEventsNotifier::
 //
 
 // static
-AXPlatformNode* AXPlatformNode::Create(AXPlatformNodeDelegate* delegate) {
+AXPlatformNode::Pointer AXPlatformNode::Create(
+    AXPlatformNodeDelegate* delegate) {
   // Make sure ATL is initialized in this module.
   win::CreateATLModuleIfNeeded();
 
@@ -313,7 +392,7 @@ AXPlatformNode* AXPlatformNode::Create(AXPlatformNodeDelegate* delegate) {
   DCHECK(SUCCEEDED(hr));
   instance->Init(delegate);
   instance->AddRef();
-  return instance;
+  return Pointer(instance);
 }
 
 // static
@@ -330,13 +409,26 @@ AXPlatformNode* AXPlatformNode::FromNativeViewAccessible(
 // AXPlatformNodeWin
 //
 
-AXPlatformNodeWin::AXPlatformNodeWin() {}
+AXPlatformNodeWin::AXPlatformNodeWin() {
+  // All nodes are born dormant and remain so until referenced by something
+  // other than their `AXPlatformNodeDelegate`; see `InternalAddRef()`.
+  ++g_dormant_node_count_;
+}
 
 AXPlatformNodeWin::~AXPlatformNodeWin() {
+  TRACE_EVENT("accessibility", "~AXPlatformNodeWin",
+              perfetto::TerminatingFlow::FromPointer(this));
+
+  // This node is no longer a ghost (it became one in `Dispose()`).
+  --g_ghost_node_count_;
+
   ClearOwnRelations();
 }
 
 void AXPlatformNodeWin::Init(AXPlatformNodeDelegate* delegate) {
+  static base::NoDestructor<AXPlatformNodeWinMemoryDumpProvider> dump_provider(
+      g_dormant_node_count_, g_live_node_count_, g_ghost_node_count_);
+
   AXPlatformNodeBase::Init(delegate);
 }
 
@@ -498,7 +590,7 @@ SAFEARRAY* AXPlatformNodeWin::CreateUIAElementsArrayForReverseRelation(
       GetDelegate()->GetSourceNodesForReverseRelations(attribute);
 
   std::vector<int32_t> id_list;
-  base::ranges::transform(
+  std::ranges::transform(
       reverse_relations, std::back_inserter(id_list),
       [](AXPlatformNode* platform_node) {
         return static_cast<AXPlatformNodeWin*>(platform_node)->GetData().id;
@@ -597,7 +689,21 @@ gfx::Vector2d AXPlatformNodeWin::CalculateUIAScrollPoint(
 //
 
 void AXPlatformNodeWin::Dispose() {
-  Release();
+  TRACE_EVENT("accessibility", "Dispose", perfetto::Flow::FromPointer(this));
+
+  // A node becomes a ghost upon disposal until its destruction, which happens
+  // only when the last reference is released.
+  ++g_ghost_node_count_;
+  if (Release() != 0) {
+    // Something other than the node's delegate retains one or more references,
+    // so the node has transitioned from alive to being a ghost and will remain
+    // so until its destruction when its final reference is released.
+    --g_live_node_count_;
+  } else {
+    // Nothing aside from the node's delegate retains any references, so the
+    // node was previously dormant (and has now been destroyed).
+    --g_dormant_node_count_;
+  }
 }
 
 void AXPlatformNodeWin::Destroy() {
@@ -4324,10 +4430,7 @@ IFACEMETHODIMP AXPlatformNodeWin::get_caretOffset(LONG* offset) {
   if (!HasVisibleCaretOrSelection())
     return S_FALSE;
 
-  int selection_start, selection_end;
-  GetSelectionOffsets(&selection_start, &selection_end);
-  // The caret is always at the end of the selection.
-  *offset = selection_end;
+  *offset = GetCaretOffset();
   if (*offset < 0)
     return S_FALSE;
 
@@ -4564,7 +4667,7 @@ IFACEMETHODIMP AXPlatformNodeWin::get_offsetAtPoint(
     return S_FALSE;
   }
 
-  for (int i = 0, text_length = hit_child->GetTextContentUTF16().length();
+  for (int i = 0, text_length = hit_child->GetTextContentLengthUTF16();
        i < text_length; ++i) {
     gfx::Rect char_bounds =
         hit_child->GetDelegate()->GetInnerTextRangeBoundsRect(
@@ -4644,13 +4747,18 @@ AXPlatformNodeWin::get_selections(IA2TextSelection** selections,
 
   COM_OBJECT_VALIDATE_2_ARGS(selections, nSelections);
 
-  AXSelection unignored_selection = GetDelegate()->GetUnignoredSelection();
+  AXSelection unignored_selection = GetDelegate()->GetHypertextSelection();
 
   AXNodeID anchor_id = unignored_selection.anchor_object_id;
+  if (unignored_selection.anchor_offset == ax::mojom::kNoSelectionOffset) {
+    // This indicates there is no selection.
+    return S_FALSE;
+  }
   AXPlatformNodeWin* anchor_node =
       static_cast<AXPlatformNodeWin*>(GetDelegate()->GetFromNodeID(anchor_id));
-  if (!anchor_node)
+  if (!anchor_node) {
     return E_FAIL;
+  }
 
   // If the selection endpoint is inside this object and therefore, at least
   // from this side, we do not need to crop the selection. Simply convert
@@ -4662,7 +4770,7 @@ AXPlatformNodeWin::get_selections(IA2TextSelection** selections,
   // the method's declaration.
 
   int anchor_offset = unignored_selection.anchor_offset;
-  if (anchor_node->IsDescendant(this)) {
+  if (anchor_node->IsDescendantOf(this)) {
     anchor_offset =
         anchor_node->GetHypertextOffsetFromEndpoint(anchor_node, anchor_offset);
   } else {
@@ -4680,7 +4788,7 @@ AXPlatformNodeWin::get_selections(IA2TextSelection** selections,
     return E_FAIL;
 
   int focus_offset = unignored_selection.focus_offset;
-  if (focus_node->IsDescendant(this)) {
+  if (focus_node->IsDescendantOf(this)) {
     focus_offset =
         focus_node->GetHypertextOffsetFromEndpoint(focus_node, focus_offset);
   } else {
@@ -4690,9 +4798,6 @@ AXPlatformNodeWin::get_selections(IA2TextSelection** selections,
   DCHECK_GE(focus_offset, 0)
       << "This value is unexpected here, since we have already determined in "
          "this method that focus_object is in the accessibility tree.";
-
-  if (anchor_node == focus_node && anchor_offset == focus_offset)
-    return S_FALSE;  // No selection within this subtree.
 
   Microsoft::WRL::ComPtr<IAccessibleText> anchor_text_node;
   if (FAILED(anchor_node->QueryInterface(IID_PPV_ARGS(&anchor_text_node))))
@@ -4730,6 +4835,28 @@ IFACEMETHODIMP AXPlatformNodeWin::setSelections(LONG nSelections,
 
   COM_OBJECT_VALIDATE();
 
+  if (nSelections == 0) {
+    // Clear the selection by using an anchor offset of
+    // kNoSelectionOffset. If it's a plain textfield, this will
+    // collapse the selection to the caret, as plain textfields always need to
+    // have some selection.
+    AXActionData clear_action;
+    clear_action.action = ax::mojom::Action::kSetSelection;
+    clear_action.target_tree_id = GetDelegate()->GetTreeData().tree_id;
+    clear_action.anchor_node_id = GetData().id;
+    clear_action.focus_node_id = GetData().id;
+    if (GetData().IsAtomicTextField()) {
+      int caret_offset = GetCaretOffset();
+      clear_action.anchor_offset = caret_offset;
+      clear_action.focus_offset = caret_offset;
+    } else {
+      clear_action.anchor_offset = ax::mojom::kNoSelectionOffset;
+      clear_action.focus_offset = ax::mojom::kNoSelectionOffset;
+    }
+    return GetDelegate()->AccessibilityPerformAction(clear_action) ? S_OK
+                                                                   : S_FALSE;
+  }
+
   // Chromium does not currently support more than one selection.
   if (nSelections != 1 || !selections)
     return E_INVALIDARG;
@@ -4758,8 +4885,9 @@ IFACEMETHODIMP AXPlatformNodeWin::setSelections(LONG nSelections,
   AXPosition end_position =
       end_node->HypertextOffsetToEndpoint(selections->endOffset)
           ->AsDomSelectionPosition();
-  if (start_position->IsNullPosition() || end_position->IsNullPosition())
+  if (start_position->IsNullPosition() || end_position->IsNullPosition()) {
     return E_INVALIDARG;
+  }
 
   AXActionData action_data;
   action_data.action = ax::mojom::Action::kSetSelection;
@@ -4945,9 +5073,10 @@ IFACEMETHODIMP AXPlatformNodeWin::Navigate(
     NavigateDirection direction,
     IRawElementProviderFragment** element_provider) {
   WIN_ACCESSIBILITY_API_TRACE_EVENT("Navigate");
+  UIA_VALIDATE_CALL_1_ARG(element_provider);
   WIN_ACCESSIBILITY_API_HISTOGRAM(UMA_API_NAVIGATE);
   WIN_ACCESSIBILITY_API_PERF_HISTOGRAM(UMA_API_NAVIGATE);
-  UIA_VALIDATE_CALL_1_ARG(element_provider);
+  WIN_ACCESSIBILITY_SOURCE_API_PERF_HISTOGRAM(UMA_API_NAVIGATE);
 
   *element_provider = nullptr;
 
@@ -5043,8 +5172,7 @@ IFACEMETHODIMP AXPlatformNodeWin::Navigate(
       break;
 
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   if (neighbor) {
@@ -5112,10 +5240,10 @@ IFACEMETHODIMP AXPlatformNodeWin::GetRuntimeId(SAFEARRAY** runtime_id) {
 IFACEMETHODIMP AXPlatformNodeWin::get_BoundingRectangle(
     UiaRect* screen_physical_pixel_bounds) {
   WIN_ACCESSIBILITY_API_TRACE_EVENT("get_BoundingRectangle");
+  UIA_VALIDATE_CALL_1_ARG(screen_physical_pixel_bounds);
   WIN_ACCESSIBILITY_API_HISTOGRAM(UMA_API_GET_BOUNDINGRECTANGLE);
   WIN_ACCESSIBILITY_API_PERF_HISTOGRAM(UMA_API_GET_BOUNDINGRECTANGLE);
-
-  UIA_VALIDATE_CALL_1_ARG(screen_physical_pixel_bounds);
+  WIN_ACCESSIBILITY_SOURCE_API_PERF_HISTOGRAM(UMA_API_GET_BOUNDINGRECTANGLE);
 
   gfx::Rect bounds =
       delegate_->GetBoundsRect(AXCoordinateSystem::kScreenPhysicalPixels,
@@ -5178,8 +5306,10 @@ IFACEMETHODIMP AXPlatformNodeWin::get_FragmentRoot(
 IFACEMETHODIMP AXPlatformNodeWin::GetPatternProvider(PATTERNID pattern_id,
                                                      IUnknown** result) {
   WIN_ACCESSIBILITY_API_TRACE_EVENT("GetPatternProvider");
+  UIA_VALIDATE_CALL_1_ARG(result);
   WIN_ACCESSIBILITY_API_HISTOGRAM(UMA_API_GET_PATTERN_PROVIDER);
   WIN_ACCESSIBILITY_API_PERF_HISTOGRAM(UMA_API_GET_PATTERN_PROVIDER);
+  WIN_ACCESSIBILITY_SOURCE_API_PERF_HISTOGRAM(UMA_API_GET_PATTERN_PROVIDER);
   NotifyAPIObserverForPatternRequest(pattern_id);
   return GetPatternProviderImpl(pattern_id, result);
 }
@@ -5201,8 +5331,10 @@ HRESULT AXPlatformNodeWin::GetPatternProviderImpl(PATTERNID pattern_id,
 IFACEMETHODIMP AXPlatformNodeWin::GetPropertyValue(PROPERTYID property_id,
                                                    VARIANT* result) {
   WIN_ACCESSIBILITY_API_TRACE_EVENT("GetPropertyValue");
+  UIA_VALIDATE_CALL_1_ARG(result);
   WIN_ACCESSIBILITY_API_HISTOGRAM(UMA_API_GET_PROPERTY_VALUE);
   WIN_ACCESSIBILITY_API_PERF_HISTOGRAM(UMA_API_GET_PROPERTY_VALUE);
+  WIN_ACCESSIBILITY_SOURCE_API_PERF_HISTOGRAM(UMA_API_GET_PROPERTY_VALUE);
 
   constexpr LONG kFirstKnownUiaPropertyId = UIA_RuntimeIdPropertyId;
   constexpr LONG kLastKnownUiaPropertyId = UIA_IsDialogPropertyId;
@@ -5476,9 +5608,8 @@ HRESULT AXPlatformNodeWin::GetPropertyValueImpl(PROPERTYID property_id,
       if (SupportsOrientation(GetRole())) {
         if (HasState(ax::mojom::State::kHorizontal) &&
             HasState(ax::mojom::State::kVertical)) {
-          NOTREACHED_IN_MIGRATION()
-              << "An accessibility object cannot have a horizontal "
-                 "and a vertical orientation at the same time.";
+          NOTREACHED() << "An accessibility object cannot have a horizontal "
+                          "and a vertical orientation at the same time.";
         }
         if (HasState(ax::mojom::State::kHorizontal)) {
           result->vt = VT_I4;
@@ -5808,11 +5939,6 @@ IFACEMETHODIMP AXPlatformNodeWin::QueryService(REFGUID guidService,
   if (riid == IID_IAccessible2) {
     for (WinAccessibilityAPIUsageObserver& observer :
          GetWinAccessibilityAPIUsageObserverList()) {
-      if (!features::IsAccessibilityRestrictiveIA2AXModesEnabled()) {
-        observer.OnAdvancedIAccessible2Used();
-        continue;
-      }
-
       if (GetDelegate()->IsWebContent()) {
         observer.OnAdvancedIAccessible2Used();
       } else {
@@ -5862,6 +5988,9 @@ STDMETHODIMP AXPlatformNodeWin::InternalQueryInterface(
       reinterpret_cast<AXPlatformNodeWin*>(this_ptr);
   DCHECK(accessible);
 
+  // Note: Each inherited interface requires a hidden v-table pointer. It's
+  // therefore advantageous to not have objects that inherit from interfaces
+  // they'll never use.
   if (riid == IID_IAccessibleTable || riid == IID_IAccessibleTable2) {
     if (!IsTableLike(accessible->GetRole()))
       return E_NOINTERFACE;
@@ -5870,6 +5999,10 @@ STDMETHODIMP AXPlatformNodeWin::InternalQueryInterface(
       return E_NOINTERFACE;
   } else if (riid == IID_IAccessibleText || riid == IID_IAccessibleHypertext) {
     if (IsImageOrVideo(accessible->GetRole())) {
+      return E_NOINTERFACE;
+    }
+    // Text leaf nodes don't support these interfaces, their containers do.
+    if (ui::IsText(accessible->GetRole())) {
       return E_NOINTERFACE;
     }
   } else if (riid == IID_IAccessibleValue) {
@@ -6316,48 +6449,27 @@ AXPlatformNodeWin::GetMarkerTypeFromRange(
   std::sort(relevant_ranges.begin(), relevant_ranges.end(),
             sort_ranges_by_start_offset);
 
-  // Validate that the desired range has a contiguous MarkerType.
-  std::optional<std::pair<int, int>> contiguous_range;
+  // Validate that the desired range has instance of MarkerType.
+  int desired_start = start_offset.value_or(0);
+  int desired_end = end_offset.value_or(GetTextContentLengthUTF16());
   for (const std::pair<int, int>& range : relevant_ranges) {
-    if (end_offset && range.first > end_offset.value())
+    if (end_offset && range.first >= end_offset.value()) {
       break;
-    if (start_offset && range.second < start_offset.value())
-      continue;
-
-    if (!contiguous_range) {
-      contiguous_range = range;
+    }
+    if (start_offset && range.second <= start_offset.value()) {
       continue;
     }
 
-    // If there is a gap, then the range must be mixed.
-    if ((range.first - contiguous_range->second) > 1)
+    if (range.first <= desired_start && range.second >= desired_end) {
+      // Marker covers the desired range perfectly.
+      return MarkerTypeRangeResult::kMatch;
+    } else {
+      // Marker only partially covers the desired range.
       return MarkerTypeRangeResult::kMixed;
-
-    // Expand the range if possible.
-    contiguous_range->second = std::max(contiguous_range->second, range.second);
+    }
   }
 
-  // The desired range does not overlap with |marker_type|.
-  if (!contiguous_range)
-    return MarkerTypeRangeResult::kNone;
-
-  // If there is a partial overlap, then the desired range must be mixed.
-  // 1. The |start_offset| is not specified, treat it as offset 0.
-  if (!start_offset && contiguous_range->first > 0)
-    return MarkerTypeRangeResult::kMixed;
-  // 2. The |end_offset| is not specified, treat it as max text offset.
-  if (!end_offset &&
-      static_cast<size_t>(contiguous_range->second) < GetHypertext().length())
-    return MarkerTypeRangeResult::kMixed;
-  // 3. The |start_offset| is specified, but is before the first matching range.
-  if (start_offset && start_offset.value() < contiguous_range->first)
-    return MarkerTypeRangeResult::kMixed;
-  // 4. The |end_offset| is specified, but is after the last matching range.
-  if (end_offset && end_offset.value() > contiguous_range->second)
-    return MarkerTypeRangeResult::kMixed;
-
-  // The desired range is a complete match for |marker_type|.
-  return MarkerTypeRangeResult::kMatch;
+  return MarkerTypeRangeResult::kNone;
 }
 
 // IRawElementProviderSimple support methods.
@@ -7235,7 +7347,7 @@ std::wstring AXPlatformNodeWin::ComputeUIAProperties() {
         properties.emplace_back(L"pressed=mixed");
       } else if (GetRole() == ax::mojom::Role::kSwitch) {
         // This is disallowed both by the ARIA standard and by Blink.
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
       } else {
         properties.emplace_back(L"checked=mixed");
       }
@@ -7257,7 +7369,7 @@ std::wstring AXPlatformNodeWin::ComputeUIAProperties() {
 
   // aria-dropeffect is deprecated in WAI-ARIA 1.1.
   if (HasIntAttribute(ax::mojom::IntAttribute::kDropeffectDeprecated)) {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
   StateToUIAAriaProperty(properties, ax::mojom::State::kExpanded, "expanded");
 
@@ -7310,6 +7422,8 @@ std::wstring AXPlatformNodeWin::ComputeUIAProperties() {
       properties, ax::mojom::BoolAttribute::kSelected, "selected");
   IntAttributeToUIAAriaProperty(properties, ax::mojom::IntAttribute::kSetSize,
                                 "setsize");
+  StateToUIAAriaProperty(properties, ax::mojom::State::kHasActions,
+                         "hasactions");
 
   int32_t sort_direction;
   if (IsTableHeader(GetRole()) &&
@@ -7672,23 +7786,38 @@ bool AXPlatformNodeWin::ShouldHideChildrenForUIA() const {
 
 ULONG AXPlatformNodeWin::InternalAddRef() {
   // Instances of AXPlatformNodeWin hold a reference to themselves (acquired in
-  // `Create`; released in `Dispose`). When the refcount rises from 1 to 2
-  // before the node has been disposed, infer that the instance is being used
+  // `Create()` and released in `Dispose()`). When the refcount rises from 1 to
+  // 2 before the node has been disposed, infer that the instance is being used
   // for some COM-ish purpose; for example, being handed to an accessibility
   // tool via a WM_GETOBJECT message handler.
   const auto ref_count = SequenceAffineComObjectRoot::InternalAddRef();
-  if (delegate_ && ref_count == 2) {
-    OnReferenced();
+  if (delegate_) {
+    if (ref_count == 2) {
+      // This node is now referenced by something other than its delegate, so it
+      // has awoken from dormancy into life.
+      --g_dormant_node_count_;
+      ++g_live_node_count_;
+      OnReferenced();
+    }
+  } else {
+    // It is not possible for the refcount to go from 0 to 1 without a delegate.
+    CHECK_GT(ref_count, 1U);
   }
   return ref_count;
 }
 
 ULONG AXPlatformNodeWin::InternalRelease() {
   // As above, infer that the instance is no longer being used for some COM-ish
-  // purpose when the refcount drops back down to 1 (if it has yet to be
-  // disposed) or 0 (if it has been).
+  // purpose when the refcount drops back down to 1 if it has yet to be
+  // disposed. For cases where the instance was disposed while there were
+  // outstanding references, `OnDereferenced()` will not be called before
+  // destruction.
   const auto ref_count = SequenceAffineComObjectRoot::InternalRelease();
-  if (ref_count == (delegate_ ? 1 : 0)) {
+  if (delegate_ && ref_count == 1) {
+    // This node is no longer being referenced by something other than its
+    // delegate, so it has slipped back to dormancy.
+    --g_live_node_count_;
+    ++g_dormant_node_count_;
     OnDereferenced();
   }
   return ref_count;
@@ -7702,7 +7831,7 @@ void AXPlatformNodeWin::OnReferenced() {
 
 void AXPlatformNodeWin::OnDereferenced() {
   TRACE_EVENT("accessibility", "OnDereferenced",
-              perfetto::TerminatingFlow::FromPointer(this));
+              perfetto::Flow::FromPointer(this));
 }
 
 bool AXPlatformNodeWin::IsPlatformCheckable() const {
@@ -8001,6 +8130,13 @@ std::optional<PROPERTYID> AXPlatformNodeWin::MojoEventToUIAProperty(
     default:
       return std::nullopt;
   }
+}
+
+// static
+std::tuple<size_t, size_t, size_t, size_t>
+AXPlatformNodeWin::GetCountsForTesting() {
+  return {GetInstanceCountForTesting(), g_dormant_node_count_,
+          g_live_node_count_, g_ghost_node_count_};
 }
 
 // static
@@ -8402,8 +8538,7 @@ AXPlatformNodeWin* AXPlatformNodeWin::GetLowestAccessibleElementForUIA() {
     node = node->GetParentPlatformNodeWin();
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return nullptr;
+  NOTREACHED();
 }
 
 AXPlatformNodeWin* AXPlatformNodeWin::GetFirstTextOnlyDescendant() {
@@ -8429,12 +8564,10 @@ void AXPlatformNodeWin::NotifyObserverForMSAAUsage() const {
 
 void AXPlatformNodeWin::NotifyAddAXModeFlagsForIA2(
     const uint32_t ax_modes) const {
-  if (features::IsAccessibilityRestrictiveIA2AXModesEnabled()) {
-    // Non-web content is always enabled, if a client isn't looking for web
-    // content, don't enable.
-    if (!GetDelegate() || !GetDelegate()->IsWebContent()) {
-      return;
-    }
+  // Non-web content is always enabled, if a client isn't looking for web
+  // content, don't enable.
+  if (!GetDelegate() || !GetDelegate()->IsWebContent()) {
+    return;
   }
 
   AXPlatformNode::NotifyAddAXModeFlags(ax_modes);

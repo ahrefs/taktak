@@ -10,7 +10,6 @@
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/scoped_feature_list.h"
 #include "build/buildflag.h"
-#include "build/chromeos_buildflags.h"
 #include "components/signin/public/base/consent_level.h"
 #include "components/signin/public/base/signin_pref_names.h"
 #include "components/signin/public/base/signin_switches.h"
@@ -138,15 +137,13 @@ class SigninManagerTest
   void SigninImplicitlyWithAccount(
       const std::string& email,
       ConsentLevel consent_level = ConsentLevel::kSignin) {
-    Signin(email, signin_metrics::AccessPoint::ACCESS_POINT_WEB_SIGNIN,
-           consent_level);
+    Signin(email, signin_metrics::AccessPoint::kWebSignin, consent_level);
   }
 
   void SigninExplicitlyWithAccount(const std::string& email) {
     CHECK(base::FeatureList::IsEnabled(
         switches::kExplicitBrowserSigninUIOnDesktop));
-    Signin(email,
-           signin_metrics::AccessPoint::ACCESS_POINT_AVATAR_BUBBLE_SIGN_IN,
+    Signin(email, signin_metrics::AccessPoint::kAvatarBubbleSignIn,
            ConsentLevel::kSignin);
   }
 
@@ -211,7 +208,7 @@ class SigninManagerTest
   AccountInfo MakeAccountAvailableWithCookies(
       const std::string& email,
       signin_metrics::AccessPoint access_point =
-          signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN) {
+          signin_metrics::AccessPoint::kUnknown) {
     AccountAvailabilityOptionsBuilder builder =
         identity_test_env()
             ->CreateAccountAvailabilityOptionsBuilder()
@@ -282,11 +279,6 @@ TEST_P(
               CREDENTIALS_REJECTED_BY_CLIENT));
 
   if (is_signout_allowed()) {
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-    // Lacros token service does not check for the validity of tokens.
-    // Therefore, the primary account should not be removed.
-    EXPECT_TRUE(identity_manager()->HasPrimaryAccount(ConsentLevel::kSignin));
-#else
     ExpectUnconsentedPrimaryAccountClearedEvent(account);
     EXPECT_FALSE(identity_manager()->HasPrimaryAccount(ConsentLevel::kSignin));
     // Update with a valid token.
@@ -301,7 +293,6 @@ TEST_P(
           identity_manager()->GetPrimaryAccountInfo(ConsentLevel::kSignin),
           account);
     }
-#endif
   } else {
     EXPECT_TRUE(identity_manager()->HasPrimaryAccount(ConsentLevel::kSignin));
     EXPECT_EQ(identity_manager()->GetPrimaryAccountInfo(ConsentLevel::kSignin),
@@ -423,8 +414,6 @@ TEST_P(SigninManagerTest, UnconsentedPrimaryAccountNotChangedOnSignout) {
   EXPECT_EQ(account, event.GetCurrentState().primary_account);
 }
 
-// Lacros does not use the cookies to compute the primary account.
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
 TEST_P(SigninManagerTest,
        UnconsentedPrimaryAccountTokenRevokedWithStaleCookies) {
   // Prerequisite: add an unconsented primary account, incl. proper cookies.
@@ -503,7 +492,6 @@ TEST_P(SigninManagerTest,
   EXPECT_TRUE(identity_manager()->HasPrimaryAccount(ConsentLevel::kSignin));
   EXPECT_EQ(0U, observer().events().size());
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_LACROS)
 
 TEST_P(SigninManagerTest, UnconsentedPrimaryAccountDuringLoad) {
   // Pre-requisite: Add two accounts with cookies.
@@ -547,10 +535,6 @@ TEST_P(SigninManagerTest, UnconsentedPrimaryAccountDuringLoad) {
             identity_manager()->GetPrimaryAccountInfo(ConsentLevel::kSignin));
   EXPECT_TRUE(observer().events().empty());
 
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  // Assert secondary profile.
-  ASSERT_FALSE(client_.GetInitialPrimaryAccount().has_value());
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
   // Finish the token load should clear the primary account as the token of the
   // primary account was revoked.
   identity_test_env()->ReloadAccountsFromDisk();
@@ -606,19 +590,10 @@ TEST_P(SigninManagerTest,
   EXPECT_FALSE(identity_manager()->HasPrimaryAccount(ConsentLevel::kSync));
   EXPECT_TRUE(identity_manager()->HasPrimaryAccount(ConsentLevel::kSignin));
   EXPECT_EQ(
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-      // On Lacros, the UPA does not change on sync consent revoked.
-      second_account,
-#else
       is_signout_allowed() ? first_account : second_account,
-#endif
       identity_manager()->GetPrimaryAccountInfo(ConsentLevel::kSignin));
 
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  EXPECT_EQ(1U, observer().events().size());
-#else
   EXPECT_EQ(is_signout_allowed() ? 2U : 1U, observer().events().size());
-#endif
   event = observer().events()[0];
   EXPECT_EQ(PrimaryAccountChangeEvent::Type::kCleared,
             event.GetEventTypeFor(ConsentLevel::kSync));
@@ -627,7 +602,6 @@ TEST_P(SigninManagerTest,
   EXPECT_EQ(second_account, event.GetPreviousState().primary_account);
   EXPECT_EQ(second_account, event.GetCurrentState().primary_account);
 
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
   if (is_signout_allowed()) {
     event = observer().events()[1];
     EXPECT_EQ(PrimaryAccountChangeEvent::Type::kNone,
@@ -637,7 +611,6 @@ TEST_P(SigninManagerTest,
     EXPECT_EQ(second_account, event.GetPreviousState().primary_account);
     EXPECT_EQ(first_account, event.GetCurrentState().primary_account);
   }
-#endif
 }
 
 TEST_P(SigninManagerTest, UnconsentedPrimaryAccountUpdatedOnHandleDestroyed) {
@@ -645,7 +618,7 @@ TEST_P(SigninManagerTest, UnconsentedPrimaryAccountUpdatedOnHandleDestroyed) {
   AccountAvailabilityOptionsBuilder builder =
       identity_test_env()
           ->CreateAccountAvailabilityOptionsBuilder()
-          .WithAccessPoint(signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN);
+          .WithAccessPoint(signin_metrics::AccessPoint::kUnknown);
   AccountInfo first_account =
       identity_test_env()->MakeAccountAvailable(builder.Build(kTestEmail));
   AccountInfo second_account =
@@ -654,10 +627,10 @@ TEST_P(SigninManagerTest, UnconsentedPrimaryAccountUpdatedOnHandleDestroyed) {
       {{first_account.email, first_account.gaia},
        {second_account.email, second_account.gaia}});
   signin_metrics::AccessPoint access_point =
-      signin_metrics::AccessPoint::ACCESS_POINT_DESKTOP_SIGNIN_MANAGER;
+      signin_metrics::AccessPoint::kDesktopSigninManager;
   if (explicit_browser_signin()) {
     SigninImplicitlyWithAccount(first_account.email);
-    access_point = signin_metrics::AccessPoint::ACCESS_POINT_WEB_SIGNIN;
+    access_point = signin_metrics::AccessPoint::kWebSignin;
   }
   ASSERT_EQ(first_account,
             identity_manager()->GetPrimaryAccountInfo(ConsentLevel::kSignin));
@@ -684,7 +657,7 @@ TEST_P(SigninManagerTest, UnconsentedPrimaryAccountUpdatedOnHandleDestroyed) {
     // TODO(crbug.com/40202341): The change should be logged in some way.
     histogram_tester.ExpectUniqueSample(
         "Signin.SignIn.Completed",
-        signin_metrics::AccessPoint::ACCESS_POINT_DESKTOP_SIGNIN_MANAGER, 1);
+        signin_metrics::AccessPoint::kDesktopSigninManager, 1);
     histogram_tester.ExpectTotalCount("Signin.SignOut.Completed", 0);
   }
   observer().Reset();
@@ -696,29 +669,19 @@ TEST_P(SigninManagerTest, UnconsentedPrimaryAccountUpdatedOnHandleDestroyed) {
   base::RunLoop().RunUntilIdle();
 
   EXPECT_EQ(
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-      // On Lacros, the UPA is not computed based on cookies, so it won't be
-      // automatically reset to the "first" account.
-      second_account,
-#else
       is_signout_allowed() ? first_account : second_account,
-#endif
       identity_manager()->GetPrimaryAccountInfo(ConsentLevel::kSignin));
 
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  EXPECT_EQ(0U, observer().events().size());
-#else
   if (is_signout_allowed()) {
     ExpectUnconsentedPrimaryAccountChangedEvent(second_account, first_account);
   } else {
     EXPECT_EQ(0U, observer().events().size());
   }
-#endif
   // TODO(crbug.com/40202341): The change should be logged in some way.
   if (!explicit_browser_signin()) {
     histogram_tester.ExpectUniqueSample(
         "Signin.SignIn.Completed",
-        signin_metrics::AccessPoint::ACCESS_POINT_DESKTOP_SIGNIN_MANAGER, 1);
+        signin_metrics::AccessPoint::kDesktopSigninManager, 1);
     histogram_tester.ExpectTotalCount("Signin.SignOut.Completed", 0);
   }
 }
@@ -740,8 +703,6 @@ TEST_P(SigninManagerTest, ClearPrimaryAccountAndSignOut) {
   EXPECT_TRUE(event.GetCurrentState().primary_account.IsEmpty());
 }
 
-// Disabling `kSigninAllowed` is not supported on Lacros.
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
 TEST_P(SigninManagerTest,
        UnconsentedPrimaryAccountClearedWhenSigninDisallowed) {
   // Prerequisite: add an unconsented primary account.
@@ -765,7 +726,6 @@ TEST_P(SigninManagerTest,
   EXPECT_EQ(account, event.GetPreviousState().primary_account);
   EXPECT_TRUE(event.GetCurrentState().primary_account.IsEmpty());
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_LACROS)
 
 TEST_P(SigninManagerTest, SigninCompletedMetric) {
   if (explicit_browser_signin()) {
@@ -774,7 +734,7 @@ TEST_P(SigninManagerTest, SigninCompletedMetric) {
   base::HistogramTester histogram_tester;
 
   signin_metrics::AccessPoint access_point =
-      signin_metrics::AccessPoint::ACCESS_POINT_SETTINGS;
+      signin_metrics::AccessPoint::kSettings;
   AccountInfo account =
       MakeAccountAvailableWithCookies(kTestEmail, access_point);
   ExpectUnconsentedPrimaryAccountSetEvent(account);

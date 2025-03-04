@@ -116,7 +116,6 @@ gpu::ContextCreationAttribs GetCompositorContextAttributes() {
 }
 
 void CreateContextProviderAfterGpuChannelEstablished(
-    gpu::SurfaceHandle handle,
     gpu::SharedMemoryLimits shared_memory_limits,
     Compositor::ContextProviderCallback callback,
     scoped_refptr<gpu::GpuChannelHost> gpu_channel_host) {
@@ -137,7 +136,7 @@ void CreateContextProviderAfterGpuChannelEstablished(
 
   auto context_provider =
       base::MakeRefCounted<viz::ContextProviderCommandBuffer>(
-          std::move(gpu_channel_host), stream_id, stream_priority, handle,
+          std::move(gpu_channel_host), stream_id, stream_priority,
           GURL(std::string("chrome://gpu/Compositor::CreateContextProvider")),
           automatic_flushes, support_locking, shared_memory_limits, attributes,
           viz::command_buffer_metrics::ContextType::UNKNOWN);
@@ -207,12 +206,11 @@ void Compositor::Initialize() {
 
 // static
 void Compositor::CreateContextProvider(
-    gpu::SurfaceHandle handle,
     gpu::SharedMemoryLimits shared_memory_limits,
     ContextProviderCallback callback) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
   BrowserGpuChannelHostFactory::instance()->EstablishGpuChannel(
-      base::BindOnce(&CreateContextProviderAfterGpuChannelEstablished, handle,
+      base::BindOnce(&CreateContextProviderAfterGpuChannelEstablished,
                      shared_memory_limits, std::move(callback)));
 }
 
@@ -282,11 +280,12 @@ void CompositorImpl::SetRootWindow(gfx::NativeWindow root_window) {
   root_window_ = root_window;
   root_window_->SetLayer(root_layer ? root_layer : cc::slim::Layer::Create());
   root_window_->GetLayer()->SetBounds(size_);
-  root_window->AttachCompositor(this);
   if (!host_) {
     CreateLayerTreeHost();
     resource_manager_.Init(host_->GetUIResourceManager());
   }
+  // Attach compositor after `LayerTreeHost` has been created.
+  root_window->AttachCompositor(this);
   OnUpdateOverlayTransform();
   host_->SetRoot(root_window_->GetLayer());
   host_->SetViewportRectAndScale(gfx::Rect(size_), root_window_->GetDipScale(),
@@ -304,7 +303,7 @@ void CompositorImpl::SetRootLayer(scoped_refptr<cc::slim::Layer> root_layer) {
   }
 }
 
-void CompositorImpl::SetSurface(
+std::optional<gpu::SurfaceHandle> CompositorImpl::SetSurface(
     const base::android::JavaRef<jobject>& surface,
     bool can_be_used_with_surface_control,
     const base::android::JavaRef<jobject>& host_input_token) {
@@ -321,14 +320,17 @@ void CompositorImpl::SetSurface(
   gl::ScopedJavaSurface scoped_surface(surface, /*auto_release=*/false);
   gl::ScopedANativeWindow window(scoped_surface);
 
-  if (window) {
-    window_ = std::move(window);
-    // Register first, SetVisible() might create a LayerTreeFrameSink.
-    surface_handle_ = tracker->AddSurfaceForNativeWidget(
-        gpu::SurfaceRecord(std::move(scoped_surface),
-                           can_be_used_with_surface_control, host_input_token));
-    SetVisible(true);
+  if (!window) {
+    return std::nullopt;
   }
+
+  window_ = std::move(window);
+  // Register first, SetVisible() might create a LayerTreeFrameSink.
+  surface_handle_ = tracker->AddSurfaceForNativeWidget(
+      gpu::SurfaceRecord(std::move(scoped_surface),
+                         can_be_used_with_surface_control, host_input_token));
+  SetVisible(true);
+  return surface_handle_;
 }
 
 void CompositorImpl::SetBackgroundColor(int color) {
@@ -532,7 +534,6 @@ void CompositorImpl::OnGpuChannelEstablished(
   auto context_provider =
       base::MakeRefCounted<viz::ContextProviderCommandBuffer>(
           std::move(gpu_channel_host), stream_id, stream_priority,
-          gpu::kNullSurfaceHandle,
           GURL(std::string("chrome://gpu/CompositorImpl::") +
                std::string("CompositorContextProvider")),
           automatic_flushes, support_locking,
@@ -644,6 +645,10 @@ void CompositorImpl::SetNeedsAnimate() {
 
 viz::FrameSinkId CompositorImpl::GetFrameSinkId() {
   return frame_sink_id_;
+}
+
+gpu::SurfaceHandle CompositorImpl::GetSurfaceHandle() {
+  return surface_handle_;
 }
 
 void CompositorImpl::AddChildFrameSink(const viz::FrameSinkId& frame_sink_id) {
@@ -840,7 +845,7 @@ void CompositorImpl::OnFatalOrSurfaceContextCreationFailure(
 }
 
 void CompositorImpl::OnFirstSurfaceActivation(const viz::SurfaceInfo& info) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 void CompositorImpl::CacheBackBufferForCurrentSurface() {

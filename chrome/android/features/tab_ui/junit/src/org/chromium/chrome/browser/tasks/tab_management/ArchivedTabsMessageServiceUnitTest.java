@@ -6,6 +6,7 @@ package org.chromium.chrome.browser.tasks.tab_management;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -46,6 +47,7 @@ import org.chromium.chrome.browser.tabmodel.TabCreator;
 import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.browser.tasks.tab_management.MessageService.MessageType;
 import org.chromium.chrome.browser.tasks.tab_management.TabListCoordinator.TabListMode;
+import org.chromium.chrome.browser.ui.edge_to_edge.EdgeToEdgeController;
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
 import org.chromium.components.feature_engagement.Tracker;
 import org.chromium.ui.modaldialog.ModalDialogManager;
@@ -74,6 +76,7 @@ public class ArchivedTabsMessageServiceUnitTest {
     @Mock private Tracker mTracker;
     @Mock private Runnable mAppendMessageRunnable;
     @Mock private TabListCoordinator mTabListCoordinator;
+    @Mock private EdgeToEdgeController mEdgeToEdgeController;
     @Captor private ArgumentCaptor<TabArchiveSettings.Observer> mTabArchiveSettingsObserver;
 
     private Activity mActivity;
@@ -81,6 +84,8 @@ public class ArchivedTabsMessageServiceUnitTest {
     private ArchivedTabsMessageService mArchivedTabsMessageService;
     private ObservableSupplierImpl<Integer> mTabCountSupplier = new ObservableSupplierImpl<>();
     private ObservableSupplierImpl<TabListCoordinator> mTabListCoordinatorSupplier =
+            new ObservableSupplierImpl<>();
+    private ObservableSupplierImpl<EdgeToEdgeController> mEdgeToEdgeSupplier =
             new ObservableSupplierImpl<>();
 
     @Before
@@ -109,7 +114,8 @@ public class ArchivedTabsMessageServiceUnitTest {
                         mTracker,
                         mAppendMessageRunnable,
                         mTabListCoordinatorSupplier,
-                        /* desktopWindowStateProvider= */ null);
+                        /* desktopWindowStateManager= */ null,
+                        mEdgeToEdgeSupplier);
         mArchivedTabsMessageService.setArchivedTabsDialogCoordiantorForTesting(
                 mArchivedTabsDialogCoordinator);
         mArchivedTabsMessageService.addObserver(mMessageObserver);
@@ -201,10 +207,13 @@ public class ArchivedTabsMessageServiceUnitTest {
     @Test
     public void testDestroy() {
         createArchivedTabsMessageService();
+        assertTrue(mTabCountSupplier.hasObservers());
+
         mArchivedTabsMessageService.destroy();
         verify(mTabArchiveSettings).removeObserver(mTabArchiveSettingsObserver.getValue());
         verify(mArchivedTabsDialogCoordinator).destroy();
         verify(mTabListCoordinator).removeTabListItemSizeChangedObserver(any());
+        assertFalse(mTabCountSupplier.hasObservers());
     }
 
     @Test

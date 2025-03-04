@@ -85,7 +85,7 @@ class H264EncoderFixture : public ::testing::Test {
   H264EncoderFixture& operator=(const H264EncoderFixture&) = delete;
 
  protected:
-  void OnError() {
+  void OnError(const media::EncoderStatus& error_status) {
     DVLOG(4) << __func__ << " is called";
     on_error_called_ = true;
   }
@@ -129,14 +129,12 @@ class H264EncoderFixture : public ::testing::Test {
 
     const auto eProfileIdc = params.sSpatialLayers[0].uiProfileIdc;
     if (!kEProfileIdcToProfile.Contains(eProfileIdc)) {
-      NOTREACHED_IN_MIGRATION()
-          << "Failed to convert unknown EProfileIdc: " << eProfileIdc;
+      NOTREACHED() << "Failed to convert unknown EProfileIdc: " << eProfileIdc;
     }
 
     const auto eLevelIdc = params.sSpatialLayers[0].uiLevelIdc;
     if (!kELevelIdcToLevel.Contains(eLevelIdc)) {
-      NOTREACHED_IN_MIGRATION()
-          << "Failed to convert unknown ELevelIdc: " << eLevelIdc;
+      NOTREACHED() << "Failed to convert unknown ELevelIdc: " << eLevelIdc;
     }
     return {kEProfileIdcToProfile.find(eProfileIdc)->value,
             kELevelIdcToLevel.find(eLevelIdc)->value};

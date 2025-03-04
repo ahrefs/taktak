@@ -6,8 +6,9 @@
 #define CHROME_BROWSER_UI_AUTOFILL_PAYMENTS_IBAN_BUBBLE_CONTROLLER_H_
 
 #include <string>
+#include <string_view>
 
-#include "components/autofill/core/browser/autofill_client.h"
+#include "components/autofill/core/browser/foundations/autofill_client.h"
 #include "components/autofill/core/browser/payments/legal_message_line.h"
 #include "components/autofill/core/browser/ui/payments/payments_ui_closed_reasons.h"
 #include "components/autofill/core/browser/ui/payments/save_payment_method_and_virtual_card_enroll_confirmation_ui_params.h"
@@ -58,7 +59,7 @@ class IbanBubbleController {
   virtual AutofillBubbleBase* GetPaymentBubbleView() const = 0;
 
   // Interaction.
-  virtual void OnAcceptButton(const std::u16string& nickname) = 0;
+  virtual void OnAcceptButton(std::u16string_view nickname) = 0;
   virtual void OnLegalMessageLinkClicked(const GURL& url) = 0;
   virtual void OnManageSavedIbanExtraButtonClicked() = 0;
   virtual void OnBubbleClosed(PaymentsUiClosedReason closed_reason) = 0;

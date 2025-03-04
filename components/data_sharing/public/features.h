@@ -7,6 +7,7 @@
 
 #include "base/feature_list.h"
 #include "base/metrics/field_trial_params.h"
+#include "components/data_sharing/public/server_environment.h"
 
 namespace data_sharing::features {
 
@@ -18,7 +19,20 @@ BASE_DECLARE_FEATURE(kDataSharingFeature);
 // functionalities.
 BASE_DECLARE_FEATURE(kDataSharingJoinOnly);
 
+// Feature flag for server environment configuration based on string> By default
+// autopush server environment is set.
+BASE_DECLARE_FEATURE(kDataSharingNonProductionEnvironment);
+
 extern const base::FeatureParam<std::string> kDataSharingURL;
+extern const base::FeatureParam<std::string> kLearnMoreSharedTabGroupPageURL;
+extern const base::FeatureParam<std::string> kLearnAboutBlockedAccountsURL;
+extern const base::FeatureParam<std::string> kActivityLogsURL;
+
+// Controls how often the group data should be polled from the server in the
+// absence of any other updates (such as upon receiving a CollaboratioGroup
+// changes).
+extern const base::FeatureParam<base::TimeDelta>
+    kDataSharingGroupDataPeriodicPollingInterval;
 
 }  // namespace data_sharing::features
 

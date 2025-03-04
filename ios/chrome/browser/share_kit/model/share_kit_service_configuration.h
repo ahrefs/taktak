@@ -7,13 +7,21 @@
 
 #import "base/memory/raw_ptr.h"
 
-namespace signin {
-class IdentityManager;
-}  // namespace signin
+namespace collaboration {
+class CollaborationService;
+}  // namespace collaboration
 
 namespace data_sharing {
 class DataSharingService;
 }  // namespace data_sharing
+
+namespace signin {
+class IdentityManager;
+}  // namespace signin
+
+namespace tab_groups {
+class TabGroupSyncService;
+}  // namespace tab_groups
 
 class AuthenticationService;
 class TabGroupFaviconsGridConfigurator;
@@ -24,6 +32,8 @@ struct ShareKitServiceConfiguration {
       raw_ptr<signin::IdentityManager> identity_manager,
       raw_ptr<AuthenticationService> authentication_service,
       raw_ptr<data_sharing::DataSharingService> data_sharing_service,
+      raw_ptr<collaboration::CollaborationService> collaboration_service,
+      raw_ptr<tab_groups::TabGroupSyncService> sync_service,
       std::unique_ptr<TabGroupFaviconsGridConfigurator>
           favicons_grid_configurator);
   ShareKitServiceConfiguration(const ShareKitServiceConfiguration&) = delete;
@@ -39,6 +49,12 @@ struct ShareKitServiceConfiguration {
 
   // The data sharing service to handle link creation.
   raw_ptr<data_sharing::DataSharingService> data_sharing_service;
+
+  // The collaboration service.
+  raw_ptr<collaboration::CollaborationService> collaboration_service;
+
+  // The service to handle tab group sync.
+  raw_ptr<tab_groups::TabGroupSyncService> sync_service;
 
   // Configures favicons for TabGroupFaviconsGrid objects.
   std::unique_ptr<TabGroupFaviconsGridConfigurator> favicons_grid_configurator;

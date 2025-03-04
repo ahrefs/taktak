@@ -182,10 +182,10 @@ class MockOpenTabsUIDelegate : public sync_sessions::OpenTabsUIDelegate {
       std::vector<raw_ptr<const sync_sessions::SyncedSession,
                           VectorExperimental>>* sessions) override {
     *sessions = foreign_sessions_;
-    base::ranges::sort(*sessions, std::greater(),
-                       [](const sync_sessions::SyncedSession* session) {
-                         return session->GetModifiedTime();
-                       });
+    std::ranges::sort(*sessions, std::greater(),
+                      [](const sync_sessions::SyncedSession* session) {
+                        return session->GetModifiedTime();
+                      });
 
     return !sessions->empty();
   }
@@ -468,18 +468,17 @@ class BirchKeyedServiceTest : public BrowserWithTestWindowTest {
     BrowserWithTestWindowTest::TearDown();
   }
 
-  void LogIn(const std::string& email) override {
+  void LogIn(std::string_view email, const GaiaId& gaia_id) override {
     // TODO(crbug.com/40286020): merge into BrowserWithTestWindowTest.
-    const AccountId account_id(AccountId::FromUserEmail(email));
+    const AccountId account_id(AccountId::FromUserEmailGaiaId(email, gaia_id));
     fake_user_manager_->AddUser(account_id);
     fake_user_manager_->LoginUser(account_id);
-    GetSessionControllerClient()->AddUserSession(email);
-    GetSessionControllerClient()->SwitchActiveUser(account_id);
   }
 
   TestingProfile* CreateProfile(const std::string& profile_name) override {
-    return profile_manager()->CreateTestingProfile(
+    auto* testing_profile = profile_manager()->CreateTestingProfile(
         profile_name, {}, u"user_name", /*avatar_id=*/0, GetTestingFactories());
+    return testing_profile;
   }
 
   void SetUpReleaseNotesStorage() {
@@ -536,6 +535,7 @@ class BirchKeyedServiceTest : public BrowserWithTestWindowTest {
       case SecondaryIconType::kTabFromTablet:
       case SecondaryIconType::kTabFromPhone:
       case SecondaryIconType::kTabFromUnknown:
+      case SecondaryIconType::kSelfShareIcon:
       case SecondaryIconType::kNoIcon:
         state = media_session::mojom::MediaAudioVideoState::kDeprecatedUnknown;
         break;
@@ -755,6 +755,7 @@ TEST_F(BirchKeyedServiceTest, BirchFileSuggestProvider_NoFilesAvailable) {
   model->SetWeatherItems({});
   model->SetReleaseNotesItems({});
   model->SetAttachmentItems({});
+  model->SetCoralItems({});
 
   // Trigger a file update, with no available files.
   birch_keyed_service()
@@ -929,7 +930,7 @@ TEST_F(BirchKeyedServiceTest, SelfShareProvider_FromTablet) {
             SecondaryIconType::kTabFromTablet);
 
   // Mark Self Share Item as opened, the provider should now return zero items.
-  model->GetSelfShareItemsForTest()[0].PerformAction(/*is_post_login=*/false);
+  model->GetSelfShareItemsForTest()[0].PerformAction();
   self_share_provider->RequestBirchDataFetch();
   EXPECT_EQ(model->GetSelfShareItemsForTest().size(), 0u);
 }
@@ -956,7 +957,7 @@ TEST_F(BirchKeyedServiceTest, SelfShareProvider_FromPhone) {
             SecondaryIconType::kTabFromPhone);
 
   // Mark Self Share Item as opened, the provider should now return zero items.
-  model->GetSelfShareItemsForTest()[0].PerformAction(/*is_post_login=*/false);
+  model->GetSelfShareItemsForTest()[0].PerformAction();
   self_share_provider->RequestBirchDataFetch();
   EXPECT_EQ(model->GetSelfShareItemsForTest().size(), 0u);
 }
@@ -983,7 +984,7 @@ TEST_F(BirchKeyedServiceTest, SelfShareProvider_FromDesktop) {
             SecondaryIconType::kTabFromDesktop);
 
   // Mark Self Share Item as opened, the provider should now return zero items.
-  model->GetSelfShareItemsForTest()[0].PerformAction(/*is_post_login=*/false);
+  model->GetSelfShareItemsForTest()[0].PerformAction();
   self_share_provider->RequestBirchDataFetch();
   EXPECT_EQ(model->GetSelfShareItemsForTest().size(), 0u);
 }
@@ -1015,7 +1016,7 @@ TEST_F(BirchKeyedServiceTest, LostMediaProvider_AudioItem) {
             SecondaryIconType::kLostMediaAudio);
 
   // Media item should still show after activation.
-  lost_media_items[0].PerformAction(/*is_post_login=*/false);
+  lost_media_items[0].PerformAction();
   lost_media_items = model->GetLostMediaItemsForTest();
   lost_media_provider->RequestBirchDataFetch();
   EXPECT_EQ(lost_media_items.size(), 1u);
@@ -1115,7 +1116,7 @@ TEST_F(BirchKeyedServiceTest, LostMediaProvider_VideoItem) {
             SecondaryIconType::kLostMediaVideo);
 
   // Media item should still show after activation.
-  lost_media_items[0].PerformAction(/*is_post_login=*/false);
+  lost_media_items[0].PerformAction();
   lost_media_items = model->GetLostMediaItemsForTest();
   lost_media_provider->RequestBirchDataFetch();
   EXPECT_EQ(lost_media_items.size(), 1u);
@@ -1160,7 +1161,7 @@ TEST_F(BirchKeyedServiceTest, LostMediaProvider_VideoConferenceItem) {
             SecondaryIconType::kLostMediaVideoConference);
 
   // VC item still should show after activation.
-  lost_media_items[0].PerformAction(/*is_post_login=*/false);
+  lost_media_items[0].PerformAction();
   lost_media_items = model->GetLostMediaItemsForTest();
   lost_media_provider->RequestBirchDataFetch();
   model->SetCalendarItems(std::vector<BirchCalendarItem>());

@@ -69,9 +69,8 @@ WEB_CONTENTS_USER_DATA_KEY_IMPL(TabLifecycleUnitSource::TabLifecycleUnitHolder);
 // A very simple graph observer that forwards events over to the
 // TabLifecycleUnitSource on the UI thread. This is created on the UI thread
 // and ownership passed to the performance manager.
-class TabLifecycleStateObserver
-    : public performance_manager::PageNode::ObserverDefaultImpl,
-      public performance_manager::GraphOwned {
+class TabLifecycleStateObserver : public performance_manager::PageNodeObserver,
+                                  public performance_manager::GraphOwned {
  public:
   using Graph = performance_manager::Graph;
   using PageNode = performance_manager::PageNode;
@@ -96,7 +95,7 @@ class TabLifecycleStateObserver
     }
   }
 
-  // PageNode::ObserverDefaultImpl:
+  // PageNodeObserver:
   void OnPageLifecycleStateChanged(const PageNode* page_node) override {
     // Forward the notification over to the UI thread.
     content::GetUIThreadTaskRunner({})->PostTask(
@@ -115,10 +114,8 @@ class TabLifecycleStateObserver
   }
 };
 
-TabLifecycleUnitSource::TabLifecycleUnitSource(
-    UsageClock* usage_clock)
-    : browser_tab_strip_tracker_(this, nullptr),
-      usage_clock_(usage_clock) {
+TabLifecycleUnitSource::TabLifecycleUnitSource()
+    : browser_tab_strip_tracker_(this, nullptr) {
   // In unit tests, tabs might already exist when TabLifecycleUnitSource is
   // instantiated. No TabLifecycleUnit is created for these tabs.
 
@@ -134,8 +131,8 @@ void TabLifecycleUnitSource::Start() {
   // TODO(sebmarchand): Remove the "IsAvailable" check, or merge the TM into the
   // PM. The TM and PM must always exist together.
   if (performance_manager::PerformanceManager::IsAvailable()) {
-    performance_manager::PerformanceManager::PassToGraph(
-        FROM_HERE, std::make_unique<TabLifecycleStateObserver>());
+    performance_manager::PerformanceManager::GetGraph()->PassToGraph(
+        std::make_unique<TabLifecycleStateObserver>());
   }
 }
 
@@ -231,8 +228,7 @@ void TabLifecycleUnitSource::OnTabInserted(TabStripModel* tab_strip_model,
     TabLifecycleUnitHolder::CreateForWebContents(contents);
     auto* holder = TabLifecycleUnitHolder::FromWebContents(contents);
     holder->set_lifecycle_unit(std::make_unique<TabLifecycleUnit>(
-        this, &tab_lifecycle_observers_, usage_clock_, contents,
-        tab_strip_model));
+        this, &tab_lifecycle_observers_, contents, tab_strip_model));
     lifecycle_unit = holder->lifecycle_unit();
     if (GetFocusedTabStripModel() == tab_strip_model && foreground)
       UpdateFocusedTabTo(lifecycle_unit);

@@ -19,8 +19,10 @@
 #include "chrome/browser/ui/browser_element_identifiers.h"
 #include "chrome/browser/ui/lens/lens_overlay_controller.h"
 #include "chrome/browser/ui/lens/lens_overlay_gen204_controller.h"
+#include "chrome/browser/ui/lens/test_lens_overlay_query_controller.h"
 #include "chrome/browser/ui/tabs/public/tab_features.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
+#include "chrome/browser/ui/toolbar/app_menu_model.h"
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/test/base/search_test_utils.h"
 #include "chrome/test/interaction/interactive_browser_test.h"
@@ -29,88 +31,57 @@
 #include "components/lens/lens_features.h"
 #include "components/lens/lens_overlay_invocation_source.h"
 #include "components/lens/lens_overlay_permission_utils.h"
+#include "components/pdf/browser/pdf_document_helper.h"
 #include "components/prefs/pref_service.h"
 #include "components/search_engines/template_url_service.h"
 #include "components/user_education/views/help_bubble_view.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/test/browser_test.h"
 #include "media/base/media_switches.h"
+#include "net/base/mock_network_change_notifier.h"
+#include "net/base/network_change_notifier.h"
 #include "ui/base/clipboard/clipboard.h"
+#include "ui/base/clipboard/clipboard_format_type.h"
+#include "ui/events/keycodes/dom/dom_code.h"
 
 namespace {
+
+// The fake server session id.
+constexpr char kTestServerSessionId[] = "server_session_id";
+
+// The fake search session id.
+constexpr char kTestSearchSessionId[] = "search_session_id";
+
+// The fake suggest signals.
+constexpr char kTestSuggestSignals[] = "encoded_image_signals";
 
 constexpr char kDocumentWithNamedElement[] = "/select.html";
 constexpr char kDocumentWithImage[] = "/test_visual.html";
 constexpr char kDocumentWithVideo[] = "/media/bigbuck-player.html";
+constexpr char kPdfDocument[] = "/pdf/test.pdf";
 
-lens::mojom::TextPtr CreateTestText(const std::vector<std::string>& words) {
-  // Create a Line.
-  lens::mojom::LinePtr line = lens::mojom::Line::New();
+lens::Text CreateTestText(const std::vector<std::string>& words) {
+  lens::Text text;
+  text.set_content_language("es");
+  // Create a paragraph.
+  lens::TextLayout::Paragraph* paragraph =
+      text.mutable_text_layout()->add_paragraphs();
+  // Create a line.
+  lens::TextLayout::Line* line = paragraph->add_lines();
 
   for (size_t i = 0; i < words.size(); ++i) {
-    lens::mojom::WordPtr word = lens::mojom::Word::New();
-    word->plain_text = words[i];
-    word->text_separator = " ";
-    word->geometry = lens::mojom::Geometry::New(
-        lens::mojom::CenterRotatedBox::New(
-            gfx::RectF(0.1 * i, 0.1, 0.1, 0.1), 0.0,
-            lens::mojom::CenterRotatedBox_CoordinateType::kNormalized),
-        std::vector<lens::mojom::PolygonPtr>());
-
-    line->words.push_back(std::move(word));
+    lens::TextLayout::Word* word = line->add_words();
+    word->set_plain_text(words[i]);
+    word->set_text_separator(" ");
+    word->mutable_geometry()->mutable_bounding_box()->set_center_x(0.1 * i);
+    word->mutable_geometry()->mutable_bounding_box()->set_center_y(0.1);
+    word->mutable_geometry()->mutable_bounding_box()->set_width(0.1);
+    word->mutable_geometry()->mutable_bounding_box()->set_height(0.1);
+    word->mutable_geometry()->mutable_bounding_box()->set_coordinate_type(
+        lens::NORMALIZED);
   }
-
-  // Add line with words to a paragraph.
-  lens::mojom::ParagraphPtr paragraph = lens::mojom::Paragraph::New();
-  paragraph->lines.push_back(std::move(line));
-
-  // Create text with the paragraph.
-  lens::mojom::TextPtr text =
-      lens::mojom::Text::New(lens::mojom::TextLayout::New(), "es");
-  text->text_layout->paragraphs.push_back(std::move(paragraph));
   return text;
 }
-
-class LensOverlayQueryControllerFake : public lens::LensOverlayQueryController {
- public:
-  explicit LensOverlayQueryControllerFake(
-      lens::LensOverlayFullImageResponseCallback full_image_callback,
-      lens::LensOverlayUrlResponseCallback url_callback,
-      lens::LensOverlaySuggestInputsCallback suggest_inputs_callback,
-      lens::LensOverlayThumbnailCreatedCallback thumbnail_created_callback,
-      variations::VariationsClient* variations_client,
-      signin::IdentityManager* identity_manager,
-      Profile* profile,
-      lens::LensOverlayInvocationSource invocation_source,
-      bool use_dark_mode,
-      lens::LensOverlayGen204Controller* gen204_controller)
-      : LensOverlayQueryController(full_image_callback,
-                                   url_callback,
-                                   suggest_inputs_callback,
-                                   thumbnail_created_callback,
-                                   variations_client,
-                                   identity_manager,
-                                   profile,
-                                   invocation_source,
-                                   use_dark_mode,
-                                   gen204_controller) {}
-
-  void StartQueryFlow(
-      const SkBitmap& screenshot,
-      GURL page_url,
-      std::optional<std::string> page_title,
-      std::vector<lens::mojom::CenterRotatedBoxPtr> significant_region_boxes,
-      base::span<const uint8_t> underlying_content_bytes,
-      lens::PageContentMimeType underlying_content_type,
-      float ui_scale_factor) override {
-    // Send response for full image callback / HandleStartQueryResponse.
-    base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
-        FROM_HERE,
-        base::BindOnce(full_image_callback_,
-                       std::vector<lens::mojom::OverlayObjectPtr>(),
-                       CreateTestText({"This", "is", "test", "text."}),
-                       /*is_error=*/false));
-  }
-};
 
 // Stubs out network requests.
 class LensOverlayControllerFake : public LensOverlayController {
@@ -132,8 +103,10 @@ class LensOverlayControllerFake : public LensOverlayController {
   std::unique_ptr<lens::LensOverlayQueryController> CreateLensQueryController(
       lens::LensOverlayFullImageResponseCallback full_image_callback,
       lens::LensOverlayUrlResponseCallback url_callback,
+      lens::LensOverlayInteractionResponseCallback interaction_callback,
       lens::LensOverlaySuggestInputsCallback suggest_inputs_callback,
       lens::LensOverlayThumbnailCreatedCallback thumbnail_created_callback,
+      lens::UploadProgressCallback upload_progress_callback,
       variations::VariationsClient* variations_client,
       signin::IdentityManager* identity_manager,
       Profile* profile,
@@ -141,10 +114,31 @@ class LensOverlayControllerFake : public LensOverlayController {
       bool use_dark_mode,
       lens::LensOverlayGen204Controller* gen204_controller) override {
     auto fake_query_controller =
-        std::make_unique<LensOverlayQueryControllerFake>(
-            full_image_callback, url_callback, suggest_inputs_callback,
-            thumbnail_created_callback, variations_client, identity_manager,
+        std::make_unique<lens::TestLensOverlayQueryController>(
+            full_image_callback, url_callback, interaction_callback,
+            suggest_inputs_callback, thumbnail_created_callback,
+            upload_progress_callback, variations_client, identity_manager,
             profile, invocation_source, use_dark_mode, gen204_controller);
+
+    // Set up the fake responses for the query controller.
+    lens::LensOverlayServerClusterInfoResponse cluster_info_response;
+    cluster_info_response.set_server_session_id(kTestServerSessionId);
+    cluster_info_response.set_search_session_id(kTestSearchSessionId);
+    fake_query_controller->set_fake_cluster_info_response(
+        cluster_info_response);
+
+    lens::LensOverlayObjectsResponse objects_response;
+    objects_response.mutable_text()->CopyFrom(
+        CreateTestText({"This", "is", "test", "text."}));
+    objects_response.mutable_cluster_info()->set_server_session_id(
+        kTestServerSessionId);
+    objects_response.mutable_cluster_info()->set_search_session_id(
+        kTestSearchSessionId);
+    fake_query_controller->set_fake_objects_response(objects_response);
+
+    lens::LensOverlayInteractionResponse interaction_response;
+    interaction_response.set_encoded_response(kTestSuggestSignals);
+    fake_query_controller->set_fake_interaction_response(interaction_response);
     return fake_query_controller;
   }
 };
@@ -181,13 +175,22 @@ class LensOverlayControllerCUJTest : public InteractiveFeaturePromoTest {
   ~LensOverlayControllerCUJTest() override = default;
 
   void SetUp() override {
-    feature_list_.InitWithFeatures(
-        {lens::features::kLensOverlay,
-         lens::features::kLensOverlayTranslateButton,
-         media::kContextMenuSearchForVideoFrame},
-        {lens::features::kLensOverlayContextualSearchbox});
+    SetUpFeatureList();
     ASSERT_TRUE(embedded_test_server()->InitializeAndListen());
     InteractiveFeaturePromoTest::SetUp();
+  }
+
+  virtual void SetUpFeatureList() {
+    feature_list_.InitWithFeaturesAndParameters(
+        /*enabled_features=*/{{lens::features::kLensOverlay, {}},
+                              {lens::features::kLensOverlayTranslateButton, {}},
+                              {media::kContextMenuSearchForVideoFrame, {}},
+                              {lens::features::kLensOverlayContextualSearchbox,
+                               {{"use-pdfs-as-context", "true"},
+                                {"use-inner-html-as-context", "true"},
+                                {"auto-focus-searchbox", "false"}}}},
+        /*disabled_features=*/{
+            lens::features::kLensOverlaySimplifiedSelection});
   }
 
   void WaitForTemplateURLServiceToLoad() {
@@ -203,6 +206,7 @@ class LensOverlayControllerCUJTest : public InteractiveFeaturePromoTest {
     // Permits sharing the page screenshot by default.
     PrefService* prefs = browser()->profile()->GetPrefs();
     prefs->SetBoolean(lens::prefs::kLensSharingPageScreenshotEnabled, true);
+    prefs->SetBoolean(lens::prefs::kLensSharingPageContentEnabled, true);
   }
 
   void TearDownOnMainThread() override {
@@ -227,27 +231,15 @@ class LensOverlayControllerCUJTest : public InteractiveFeaturePromoTest {
         "body",
     };
 
-    DEFINE_LOCAL_STATE_IDENTIFIER_VALUE(ui::test::PollingStateObserver<bool>,
-                                        kFirstPaintState);
-    return Steps(
-        InstrumentTab(kActiveTab), NavigateWebContents(kActiveTab, url),
-        EnsurePresent(kActiveTab, kPathToBody),
-        // TODO(https://crbug.com/331859922): This functionality should be built
-        // into test framework.
-        PollState(kFirstPaintState,
-                  [this]() {
-                    return browser()
-                        ->tab_strip_model()
-                        ->GetActiveTab()
-                        ->contents()
-                        ->CompletedFirstVisuallyNonEmptyPaint();
-                  }),
-        WaitForState(kFirstPaintState, true),
-        MoveMouseTo(kActiveTab, kPathToBody), ClickMouse(ui_controls::RIGHT),
-        WaitForShow(RenderViewContextMenu::kRegionSearchItem),
-        // Required to fully render the menu before selection.
-        SelectMenuItem(RenderViewContextMenu::kRegionSearchItem,
-                       InputType::kMouse));
+    return Steps(InstrumentTab(kActiveTab),
+                 NavigateWebContents(kActiveTab, url),
+                 EnsurePresent(kActiveTab, kPathToBody),
+                 WaitForWebContentsPainted(kActiveTab),
+
+                 // Open the three dot menu and select the Lens Overlay option.
+                 PressButton(kToolbarAppMenuButtonElementId),
+                 WaitForShow(AppMenuModel::kShowLensOverlay),
+                 SelectMenuItem(AppMenuModel::kShowLensOverlay));
   }
 
   InteractiveTestApi::MultiStep OpenLensOverlayFromImage() {
@@ -271,7 +263,7 @@ class LensOverlayControllerCUJTest : public InteractiveFeaturePromoTest {
                     return browser()
                         ->tab_strip_model()
                         ->GetActiveTab()
-                        ->contents()
+                        ->GetContents()
                         ->CompletedFirstVisuallyNonEmptyPaint();
                   }),
         WaitForState(kFirstPaintState, true),
@@ -330,7 +322,7 @@ class LensOverlayControllerCUJTest : public InteractiveFeaturePromoTest {
                  WaitForStateChange(overlayId, screenshot_is_rendered));
   }
 
- private:
+ protected:
   base::test::ScopedFeatureList feature_list_;
 };
 
@@ -338,16 +330,7 @@ class LensOverlayControllerCUJTest : public InteractiveFeaturePromoTest {
 //  (1) User navigates to a website.
 //  (2) User opens lens overlay.
 //  (3) User clicks the "close" button to close lens overlay.
-// TODO(b/355224013): Disabled on mac because the mac interaction test
-// util implementation does not support setting the input (mouse / keyboard)
-// type for a context menu item selection.
-// TODO(b/340343342): Reenable on MSAN.
-#if defined(MEMORY_SANITIZER) || BUILDFLAG(IS_MAC)
-#define MAYBE_OpenAndClose DISABLED_OpenAndClose
-#else
-#define MAYBE_OpenAndClose OpenAndClose
-#endif
-IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, MAYBE_OpenAndClose) {
+IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, OpenAndClose) {
   WaitForTemplateURLServiceToLoad();
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlayId);
 
@@ -371,27 +354,24 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, MAYBE_OpenAndClose) {
       // The overlay controller is an independent floating widget associated
       // with a tab rather than a browser window, so by convention gets its own
       // element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
       // Wait for the webview to finish loading to prevent re-entrancy.
-      InSameContext(Steps(EnsurePresent(kOverlayId, kPathToCloseButton),
-                          ExecuteJsAt(kOverlayId, kPathToCloseButton, kClickFn,
-                                      ExecuteJsMode::kFireAndForget),
-                          WaitForHide(kOverlayId))));
+      InSameContext(EnsurePresent(kOverlayId, kPathToCloseButton),
+                    ExecuteJsAt(kOverlayId, kPathToCloseButton, kClickFn,
+                                ExecuteJsMode::kFireAndForget),
+                    WaitForHide(kOverlayId)));
 }
 
 // This tests the following CUJ:
 //  (1) User navigates to a website.
 //  (2) User opens lens overlay.
 //  (3) User presses the escape key to close lens overlay.
-// TODO(b/355224013): Disabled on mac because the mac interaction test
-// util implementation does not support setting the input (mouse / keyboard)
-// type for a context menu item selection.
-// TODO(b/340343342): Reenable on windows.
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || defined(MEMORY_SANITIZER)
+#if BUILDFLAG(IS_LINUX) && defined(ADDRESS_SANITIZER)
+// Flaky on ASAN on Linux.
 #define MAYBE_EscapeKeyClose DISABLED_EscapeKeyClose
 #else
 #define MAYBE_EscapeKeyClose EscapeKeyClose
@@ -415,14 +395,16 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, MAYBE_EscapeKeyClose) {
       // The overlay controller is an independent floating widget associated
       // with a tab rather than a browser window, so by convention gets its own
       // element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)),
+          WaitForWebContentsPainted(kOverlayId)),
       // Wait for the webview to finish loading to prevent re-entrancy.
-      InSameContext(Steps(SendAccelerator(kOverlayId, escape_key),
-                          WaitForHide(kOverlayId))));
+      InSameContext(FocusWebContents(kOverlayId),
+                    SendAccelerator(kOverlayId, escape_key),
+                    WaitForHide(kOverlayId)));
 }
 
 // This tests the following CUJ:
@@ -431,9 +413,15 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, MAYBE_EscapeKeyClose) {
 //  (3) User highlights some text.
 //  (4) User presses CTRL+C on some text.
 //  (5) Highlighted text gets copied.
-//  Disabled: apparent hang (crbug.com/347282479)
+// TODO(crbug.com/399520257): Fix test failure on Linux, and ASAN.
+#if BUILDFLAG(IS_LINUX) || defined(ADDRESS_SANITIZER)
+// Flaky on ASAN, and on Linux.
+#define MAYBE_CopyKeyCommandCopies DISABLED_CopyKeyCommandCopies
+#else
+#define MAYBE_CopyKeyCommandCopies CopyKeyCommandCopies
+#endif
 IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
-                       DISABLED_CopyKeyCommandCopies) {
+                       MAYBE_CopyKeyCommandCopies) {
   WaitForTemplateURLServiceToLoad();
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlayId);
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlaySidePanelWebViewId);
@@ -463,44 +451,48 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
       // The overlay controller is an independent floating widget associated
       // with a tab rather than a browser window, so by convention gets its own
       // element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
+
       // Wait for the webview to finish loading to prevent re-entrancy. Then
       // click a word to highlight it. Flush tasks after click to prevent
       // flakiness.
-      InSameContext(Steps(WaitForShow(LensOverlayController::kOverlayId),
-                          WaitForScreenshotRendered(kOverlayId),
-                          EnsurePresent(kOverlayId, kPathToWord),
-                          MoveMouseTo(kOverlayId, kPathToWord),
-                          ClickMouse(ui_controls::LEFT))),
+      InSameContext(WaitForShow(LensOverlayController::kOverlayId),
+                    WaitForScreenshotRendered(kOverlayId),
+                    EnsurePresent(kOverlayId, kPathToWord),
+                    MoveMouseTo(kOverlayId, kPathToWord),
+                    ClickMouse(ui_controls::LEFT)),
 
       // Clicking the text should have opened the side panel with the results
       // frame.
-      InAnyContext(Steps(InstrumentNonTabWebView(
-          kOverlaySidePanelWebViewId,
-          LensOverlayController::kOverlaySidePanelWebViewId))),
+      InAnyContext(InstrumentNonTabWebView(
+                       kOverlaySidePanelWebViewId,
+                       LensOverlayController::kOverlaySidePanelWebViewId),
+                   WaitForWebContentsReady(kOverlaySidePanelWebViewId),
+                   WaitForWebContentsPainted(kOverlaySidePanelWebViewId)),
 
       //   Press CTRL+C command and ensure the highlighted text is saved to
       //   clipboard. We send the command to the side panel web view because in
       //   actual usage, the side panel is the view with focus so it receives
       //   the event right after selecting text.
-      InAnyContext(
-          Steps(SendAccelerator(kOverlaySidePanelWebViewId, ctrl_c_accelerator),
-
-                PollState(kTextCopiedState,
-                          [&]() {
-                            ui::Clipboard* clipboard =
-                                ui::Clipboard::GetForCurrentThread();
-                            std::u16string clipboard_text;
-                            clipboard->ReadText(ui::ClipboardBuffer::kCopyPaste,
-                                                /* data_dst = */ nullptr,
-                                                &clipboard_text);
-                            return base::EqualsASCII(clipboard_text, "This");
-                          }),
-                WaitForState(kTextCopiedState, true))));
+      InSameContext(
+          WaitForShow(kOverlaySidePanelWebViewId),
+          FocusWebContents(kOverlaySidePanelWebViewId),
+          SendAccelerator(kOverlaySidePanelWebViewId, ctrl_c_accelerator),
+          PollState(kTextCopiedState,
+                    [&]() {
+                      ui::Clipboard* clipboard =
+                          ui::Clipboard::GetForCurrentThread();
+                      std::u16string clipboard_text;
+                      clipboard->ReadText(ui::ClipboardBuffer::kCopyPaste,
+                                          /* data_dst = */ nullptr,
+                                          &clipboard_text);
+                      return base::EqualsASCII(clipboard_text, "This");
+                    }),
+          WaitForState(kTextCopiedState, true)));
 }
 
 // This tests the following CUJ:
@@ -508,10 +500,8 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
 //  (2) User opens lens overlay.
 //  (3) User makes a selection that opens the results side panel.
 //  (4) User presses the escape key to close lens overlay.
-// TODO(crbug.com/340343342): Reenable on Windows, Mac, and Linux+ChromeOS Tests
-// (dbg).
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || defined(MEMORY_SANITIZER) || \
-    ((BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_ASH)) && !defined(NDEBUG))
+#if BUILDFLAG(IS_LINUX) && defined(ADDRESS_SANITIZER)
+// Flaky on ASAN on Linux.
 #define MAYBE_EscapeKeyCloseWithResultsPanel \
   DISABLED_EscapeKeyCloseWithResultsPanel
 #else
@@ -524,8 +514,6 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlaySidePanelWebViewId);
 
   const GURL url = embedded_test_server()->GetURL(kDocumentWithNamedElement);
-
-  auto* const browser_view = BrowserView::GetBrowserViewForBrowser(browser());
 
   // In kDocumentWithNamedElement.
   const DeepQuery kPathToBody{
@@ -542,12 +530,14 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
       "#results",
   };
 
-  auto off_center_point = base::BindLambdaForTesting([browser_view]() {
-    gfx::Point off_center =
-        browser_view->contents_web_view()->bounds().CenterPoint();
-    off_center.Offset(100, 100);
-    return off_center;
-  });
+  auto off_center_point =
+      base::BindLambdaForTesting([&](ui::TrackedElement* el) {
+        return el->AsA<views::TrackedElementViews>()
+                   ->view()
+                   ->GetBoundsInScreen()
+                   .CenterPoint() +
+               gfx::Vector2d(50, 50);
+      });
 
   const ui::Accelerator escape_key(ui::VKEY_ESCAPE, ui::EF_NONE);
 
@@ -557,32 +547,34 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
       // The overlay controller is an independent floating widget
       // associated with a tab rather than a browser window, so by
       // convention gets its own element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
       // Wait for the webview to finish loading to prevent re-entrancy. Then do
       // a drag offset from the center. Flush tasks after drag to prevent
       // flakiness.
-      InSameContext(Steps(WaitForShow(LensOverlayController::kOverlayId),
-                          WaitForScreenshotRendered(kOverlayId),
-                          EnsurePresent(kOverlayId, kPathToRegionSelection),
-                          MoveMouseTo(LensOverlayController::kOverlayId),
-                          DragMouseTo(off_center_point))),
+      InSameContext(
+          WaitForShow(LensOverlayController::kOverlayId),
+          WaitForScreenshotRendered(kOverlayId),
+          EnsurePresent(kOverlayId, kPathToRegionSelection),
+          MoveMouseTo(LensOverlayController::kOverlayId),
+          DragMouseTo(LensOverlayController::kOverlayId, off_center_point)),
 
       // The drag should have opened the side panel with the results frame.
-      InAnyContext(Steps(
-
+      InAnyContext(
           InstrumentNonTabWebView(
               kOverlaySidePanelWebViewId,
               LensOverlayController::kOverlaySidePanelWebViewId),
-
-          EnsurePresent(kOverlaySidePanelWebViewId, kPathToResultsFrame))),
+          WaitForWebContentsReady(kOverlaySidePanelWebViewId),
+          WaitForWebContentsPainted(kOverlaySidePanelWebViewId),
+          EnsurePresent(kOverlaySidePanelWebViewId, kPathToResultsFrame)),
       // Press the escape key to and ensure the overlay closes.
-      InSameContext(
-          Steps(SendAccelerator(kOverlaySidePanelWebViewId, escape_key),
-                WaitForHide(kOverlayId))));
+      InSameContext(WaitForShow(kOverlaySidePanelWebViewId),
+                    FocusWebContents(kOverlaySidePanelWebViewId),
+                    SendAccelerator(kOverlaySidePanelWebViewId, escape_key),
+                    WaitForHide(kOverlayId)));
 }
 
 // This tests the following CUJ:
@@ -590,15 +582,9 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
 //  (2) User opens lens overlay.
 //  (3) User drags to select a manual region on the overlay.
 //  (4) Side panel opens with results.
-// TODO(b/355224013): Disabled on mac because the mac interaction test
-// util implementation does not support setting the input (mouse / keyboard)
-// type for a context menu item selection.
-#if BUILDFLAG(IS_MAC)
-#define MAYBE_SelectManualRegion DISABLED_SelectManualRegion
-#else
-#define MAYBE_SelectManualRegion SelectManualRegion
-#endif
-IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, MAYBE_SelectManualRegion) {
+// TODO(crbug.com/355224013): Re-enable this test
+IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
+                       DISABLED_SelectManualRegion) {
   WaitForTemplateURLServiceToLoad();
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlayId);
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlaySidePanelWebViewId);
@@ -628,35 +614,33 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, MAYBE_SelectManualRegion) {
       // The overlay controller is an independent floating widget
       // associated with a tab rather than a browser window, so by
       // convention gets its own element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
       // Wait for the webview to finish loading to prevent re-entrancy. Then do
       // a drag offset from the center. Flush tasks after drag to prevent
       // flakiness.
-      InSameContext(Steps(WaitForShow(LensOverlayController::kOverlayId),
-                          WaitForScreenshotRendered(kOverlayId),
-                          EnsurePresent(kOverlayId, kPathToRegionSelection),
-                          MoveMouseTo(LensOverlayController::kOverlayId),
-                          DragMouseTo(off_center_point))),
+      InSameContext(WaitForShow(LensOverlayController::kOverlayId),
+                    WaitForScreenshotRendered(kOverlayId),
+                    EnsurePresent(kOverlayId, kPathToRegionSelection),
+                    MoveMouseTo(LensOverlayController::kOverlayId),
+                    DragMouseTo(off_center_point)),
 
       // The drag should have opened the side panel with the results frame.
-      InAnyContext(Steps(
-
+      InAnyContext(
           InstrumentNonTabWebView(
               kOverlaySidePanelWebViewId,
               LensOverlayController::kOverlaySidePanelWebViewId),
-
-          EnsurePresent(kOverlaySidePanelWebViewId, kPathToResultsFrame))));
+          EnsurePresent(kOverlaySidePanelWebViewId, kPathToResultsFrame)));
 }
 
 // This tests the following CUJ:
 //  (1) User navigates to a website.
 //  (2) User right-clicks an image and opens lens overlay.
 //  (3) Side panel opens with results.
-// TODO(b/355224013): Disabled on mac because the mac interaction test
+// Disabled on mac because the mac interaction test
 // util implementation does not support setting the input (mouse / keyboard)
 // type for a context menu item selection.
 #if BUILDFLAG(IS_MAC)
@@ -685,27 +669,25 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, MAYBE_SearchForImage) {
       // The overlay controller is an independent floating widget
       // associated with a tab rather than a browser window, so by
       // convention gets its own element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
 
       // The side panel should open with the results frame.
-      InAnyContext(Steps(
-
+      InAnyContext(
           InstrumentNonTabWebView(
               kOverlaySidePanelWebViewId,
               LensOverlayController::kOverlaySidePanelWebViewId),
-
-          EnsurePresent(kOverlaySidePanelWebViewId, kPathToResultsFrame))));
+          EnsurePresent(kOverlaySidePanelWebViewId, kPathToResultsFrame)));
 }
 
 // This tests the following CUJ:
 //  (1) User navigates to a website.
 //  (2) User right-clicks a video and opens "Search with Google Lens".
 //  (3) Side panel opens with results.
-// TODO(b/355224013): Disabled on mac because the mac interaction test
+// Disabled on mac because the mac interaction test
 // util implementation does not support setting the input (mouse / keyboard)
 // type for a context menu item selection.
 #if BUILDFLAG(IS_MAC)
@@ -735,20 +717,162 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest,
       // The overlay controller is an independent floating widget
       // associated with a tab rather than a browser window, so by
       // convention gets its own element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
 
       // The side panel should open with the results frame.
-      InAnyContext(Steps(
-
+      InAnyContext(
           InstrumentNonTabWebView(
               kOverlaySidePanelWebViewId,
               LensOverlayController::kOverlaySidePanelWebViewId),
+          EnsurePresent(kOverlaySidePanelWebViewId, kPathToResultsFrame)));
+}
 
-          EnsurePresent(kOverlaySidePanelWebViewId, kPathToResultsFrame))));
+// This tests the following CUJ:
+//  (1) User navigates to a PDF.
+//  (2) User opens lens overlay.
+//  (3) The CSB should say "Ask about this document"
+//  (3) User make a query
+//  (4) This side panel opens
+//  (5) The CSB should say "Ask about this document"
+//  (6) The user navigates to a webpage.
+//  (7) The CSB should say "Ask about this page"
+IN_PROC_BROWSER_TEST_F(LensOverlayControllerCUJTest, NavigationsUpdateCSB) {
+  WaitForTemplateURLServiceToLoad();
+  DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlayId);
+  DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlaySidePanelWebViewId);
+  DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kActiveTab);
+  DEFINE_LOCAL_CUSTOM_ELEMENT_EVENT_TYPE(kHintTextUpdatedEvent);
+
+  const GURL pdf_url = embedded_test_server()->GetURL(kPdfDocument);
+
+  // Paths to searchbox hint text.
+  const DeepQuery kPathToOverlaySearchboxInput{
+      "lens-overlay-app",
+      "cr-searchbox",
+      "input",
+  };
+  const DeepQuery kPathToSidePanelSearchboxInput{
+      "lens-side-panel-app",
+      "cr-searchbox",
+      "input",
+  };
+  const DeepQuery kPathToOverlayGhostLoaderText{
+      "lens-overlay-app", "cr-searchbox-ghost-loader", "#hint-text1"};
+  const DeepQuery kPathToSidePanelGhostLoaderText{
+      "lens-side-panel-app", "cr-searchbox-ghost-loader", "#hint-text1"};
+
+  // Helper function to check for specific text in an element.
+  auto CheckSearchboxHintText = [](ui::ElementIdentifier web_contents_id,
+                                   const DeepQuery& query,
+                                   const std::string& expected_text) {
+    return CheckJsResultAt(web_contents_id, query,
+                           base::StringPrintf("el => el.placeholder === '%s'",
+                                              expected_text.c_str()));
+  };
+  auto CheckGhostLoaderText = [](ui::ElementIdentifier web_contents_id,
+                                 const DeepQuery& query,
+                                 const std::string& expected_text) {
+    return CheckJsResultAt(
+        web_contents_id, query,
+        base::StringPrintf("el => el.innerText.trim() === '%s'",
+                           expected_text.c_str()));
+  };
+
+  // State change to wait for the hint text to update.
+  StateChange hint_text_updated;
+  hint_text_updated.event = kHintTextUpdatedEvent;
+  hint_text_updated.type = StateChange::Type::kExistsAndConditionTrue;
+  hint_text_updated.where = kPathToSidePanelSearchboxInput;
+  hint_text_updated.test_function =
+      "el => el.placeholder === 'Ask about this document'";
+
+  RunTestSequence(
+      // TODO(crbug.com/355224013): Ideally, this opens with a PDF to start,
+      // but the right click menu item is not accessible in the UI test on PDF.
+      // Once these tests can open without the rigth click menu, this should be
+      // updated to open a PDF.
+      OpenLensOverlay(),
+
+      // The overlay controller is an independent floating widget associated
+      // with a tab rather than a browser window, so by convention gets its own
+      // element context.
+      InAnyContext(
+          InstrumentNonTabWebView(kOverlayId,
+                                  LensOverlayController::kOverlayId),
+          WaitForWebContentsReady(
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
+
+      // The CSB should be in the overlay with the text "Ask about this
+      // document".
+      InSameContext(
+          WaitForShow(LensOverlayController::kOverlayId),
+          WaitForScreenshotRendered(kOverlayId),
+          CheckSearchboxHintText(kOverlayId, kPathToOverlaySearchboxInput,
+                                 "Ask about this page"),
+          CheckGhostLoaderText(kOverlayId, kPathToOverlayGhostLoaderText,
+                               "Generating suggestions for this page…")),
+
+      // The use makes a query in the searchbox and the side panel opens.
+      InSameContext(
+          // Focus the overlay to receive input events.
+          FocusWebContents(kOverlayId),
+
+          // Focus the searchbox.
+          ExecuteJsAt(kOverlayId, kPathToOverlaySearchboxInput,
+                      "(el) => { el.focus(); }",
+                      ExecuteJsMode::kWaitForCompletion),
+
+          // Emulate focus into the searchbox.
+          ExecuteJsAt(
+              kOverlayId, kPathToOverlaySearchboxInput,
+              base::StringPrintf(
+                  "(el) => { el.value = '%s'; el.dispatchEvent(new "
+                  "Event('input', { bubbles: true })); el.dispatchEvent(new "
+                  "Event('change', { bubbles: true }));}",
+                  "test query"),
+              ExecuteJsMode::kWaitForCompletion),
+
+          // Simulate the enter key being pressed.
+          ExecuteJsAt(
+              kOverlayId, kPathToOverlaySearchboxInput,
+              base::StringPrintf(
+                  "(el) => { el.dispatchEvent(new KeyboardEvent('keydown', { "
+                  "key:'%s', bubbles: true }));}",
+                  "Enter"),
+              ExecuteJsMode::kFireAndForget)),
+
+      // Side panel should open.
+      InAnyContext(InstrumentNonTabWebView(
+                       kOverlaySidePanelWebViewId,
+                       LensOverlayController::kOverlaySidePanelWebViewId),
+                   WaitForWebContentsReady(kOverlaySidePanelWebViewId)),
+
+      // The CSB in the side panel should say "Ask about this document"
+      InSameContext(
+          CheckSearchboxHintText(kOverlaySidePanelWebViewId,
+                                 kPathToSidePanelSearchboxInput,
+                                 "Ask about this page"),
+          CheckGhostLoaderText(kOverlaySidePanelWebViewId,
+                               kPathToSidePanelGhostLoaderText,
+                               "Generating suggestions for this page…")),
+
+      // The user navigates to a webpage.
+      InAnyContext(InstrumentTab(kActiveTab),
+                   NavigateWebContents(kActiveTab, pdf_url)),
+
+      // The CSB in the overlay should eventually say "Ask about this page"
+      InAnyContext(
+          WaitForStateChange(kOverlaySidePanelWebViewId, hint_text_updated),
+          CheckSearchboxHintText(kOverlaySidePanelWebViewId,
+                                 kPathToSidePanelSearchboxInput,
+                                 "Ask about this document"),
+          CheckGhostLoaderText(kOverlaySidePanelWebViewId,
+                               kPathToSidePanelGhostLoaderText,
+                               "Generating suggestions for this document…")));
 }
 
 class LensOverlayControllerPromoTest : public LensOverlayControllerCUJTest {
@@ -761,15 +885,7 @@ class LensOverlayControllerPromoTest : public LensOverlayControllerCUJTest {
   ~LensOverlayControllerPromoTest() override = default;
 };
 
-// TODO(b/355224013): Disabled on mac because the mac interaction test
-// util implementation does not support setting the input (mouse / keyboard)
-// type for a context menu item selection.
-#if BUILDFLAG(IS_MAC)
-#define MAYBE_ShowsPromo DISABLED_ShowsPromo
-#else
-#define MAYBE_ShowsPromo ShowsPromo
-#endif
-IN_PROC_BROWSER_TEST_F(LensOverlayControllerPromoTest, MAYBE_ShowsPromo) {
+IN_PROC_BROWSER_TEST_F(LensOverlayControllerPromoTest, ShowsPromo) {
   // Use the same setup and initial sequence as `SelectManualRegion` above in
   // order to trigger the side panel.
 
@@ -801,19 +917,19 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerPromoTest, MAYBE_ShowsPromo) {
       // The overlay controller is an independent floating widget
       // associated with a tab rather than a browser window, so by
       // convention gets its own element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
       // Wait for the webview to finish loading to prevent re-entrancy. Then do
       // a drag offset from the center. Flush tasks after drag to prevent
       // flakiness.
-      InSameContext(Steps(WaitForShow(LensOverlayController::kOverlayId),
-                          WaitForScreenshotRendered(kOverlayId),
-                          EnsurePresent(kOverlayId, kPathToRegionSelection),
-                          MoveMouseTo(LensOverlayController::kOverlayId),
-                          DragMouseTo(off_center_point))),
+      InSameContext(WaitForShow(LensOverlayController::kOverlayId),
+                    WaitForScreenshotRendered(kOverlayId),
+                    EnsurePresent(kOverlayId, kPathToRegionSelection),
+                    MoveMouseTo(LensOverlayController::kOverlayId),
+                    DragMouseTo(off_center_point)),
 
       // The drag should have opened the side panel with the results frame.
       WaitForShow(LensOverlayController::kOverlaySidePanelWebViewId),
@@ -847,20 +963,12 @@ class LensOverlayControllerTranslatePromoTest
   ~LensOverlayControllerTranslatePromoTest() override = default;
 };
 
-// TODO(crbug.com/355224013): Disabled on mac because the mac interaction test
-// util implementation does not support setting the input (mouse / keyboard)
-// type for a context menu item selection.
-#if BUILDFLAG(IS_MAC)
-#define MAYBE_ShowsTranslatePromo DISABLED_ShowsTranslatePromo
-#else
-#define MAYBE_ShowsTranslatePromo ShowsTranslatePromo
-#endif
 // This tests the following promo flow:
 //  (1) User opens the Lens Overlay.
 //  (2) Promo shows. After, user clicks the translate button.
 //  (3) Promo hides.
 IN_PROC_BROWSER_TEST_F(LensOverlayControllerTranslatePromoTest,
-                       MAYBE_ShowsTranslatePromo) {
+                       ShowsTranslatePromo) {
   WaitForTemplateURLServiceToLoad();
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlayId);
 
@@ -875,16 +983,16 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerTranslatePromoTest,
       // The overlay controller is an independent floating widget
       // associated with a tab rather than a browser window, so by
       // convention gets its own element context.
-      InAnyContext(Steps(
+      InAnyContext(
           InstrumentNonTabWebView(kOverlayId,
                                   LensOverlayController::kOverlayId),
           WaitForWebContentsReady(
-              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL)))),
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
 
       // Wait for the webview to finish loading to prevent re-entrancy.
-      InSameContext(Steps(WaitForShow(LensOverlayController::kOverlayId),
-                          WaitForScreenshotRendered(kOverlayId),
-                          EnsurePresent(kOverlayId, kPathToTranslateButton))),
+      InSameContext(WaitForShow(LensOverlayController::kOverlayId),
+                    WaitForScreenshotRendered(kOverlayId),
+                    EnsurePresent(kOverlayId, kPathToTranslateButton)),
 
       // Wait for the initial translate promo help bubble.
       WaitForPromo(feature_engagement::kIPHLensOverlayTranslateButtonFeature),
@@ -894,6 +1002,154 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerTranslatePromoTest,
 
       WaitForHide(
           user_education::HelpBubbleView::kHelpBubbleElementIdForTesting));
+}
+
+class LensPreselectionBubbleInteractiveUiTest
+    : public LensOverlayControllerCUJTest {
+ public:
+  LensPreselectionBubbleInteractiveUiTest() = default;
+  ~LensPreselectionBubbleInteractiveUiTest() override = default;
+  LensPreselectionBubbleInteractiveUiTest(
+      const LensPreselectionBubbleInteractiveUiTest&) = delete;
+  void operator=(const LensPreselectionBubbleInteractiveUiTest&) = delete;
+
+  auto SetConnectionOffline() {
+    return Do(base::BindLambdaForTesting([&]() {
+      // Set the network connection type to being offline.
+      scoped_mock_network_change_notifier =
+          std::make_unique<net::test::ScopedMockNetworkChangeNotifier>();
+      scoped_mock_network_change_notifier->mock_network_change_notifier()
+          ->SetConnectionType(net::NetworkChangeNotifier::CONNECTION_NONE);
+    }));
+  }
+
+  void TearDownOnMainThread() override {
+    scoped_mock_network_change_notifier.reset();
+  }
+
+ private:
+  base::test::ScopedFeatureList feature_list_;
+  raw_ptr<views::Widget> preselection_widget_;
+  std::unique_ptr<net::test::ScopedMockNetworkChangeNotifier>
+      scoped_mock_network_change_notifier;
+};
+
+// This tests the following CUJ:
+//  (1) User opens the Lens Overlay while offline..
+//  (2) The user presses the exit button in the preselection bubble.
+//  (3) The overlay should close.
+IN_PROC_BROWSER_TEST_F(LensPreselectionBubbleInteractiveUiTest,
+                       PermissionBubbleOffline) {
+  RunTestSequence(EnsureNotPresent(kLensPreselectionBubbleExitButtonElementId),
+                  SetConnectionOffline(), OpenLensOverlay(),
+                  WaitForShow(kLensPreselectionBubbleExitButtonElementId),
+                  PressButton(kLensPreselectionBubbleExitButtonElementId),
+                  WaitForHide(LensOverlayController::kOverlayId));
+}
+
+class LensOverlayControllerSimplifedSelectionCUJTest
+    : public LensOverlayControllerCUJTest {
+ public:
+  LensOverlayControllerSimplifedSelectionCUJTest() = default;
+  ~LensOverlayControllerSimplifedSelectionCUJTest() override = default;
+  LensOverlayControllerSimplifedSelectionCUJTest(
+      const LensOverlayControllerSimplifedSelectionCUJTest&) = delete;
+  void operator=(const LensOverlayControllerSimplifedSelectionCUJTest&) =
+      delete;
+
+  void SetUpFeatureList() override {
+    feature_list_.InitWithFeaturesAndParameters(
+        /*enabled_features=*/{{lens::features::kLensOverlay, {}},
+                              {lens::features::kLensOverlaySimplifiedSelection,
+                               {}},
+                              {lens::features::kLensOverlayContextualSearchbox,
+                               {{"use-pdfs-as-context", "true"},
+                                {"use-inner-html-as-context", "true"},
+                                {"auto-focus-searchbox", "false"}}}},
+        /*disabled_features=*/{lens::features::kLensOverlayTranslateButton});
+  }
+};
+
+// This tests the following CUJ:
+//  (1) User navigates to a website.
+//  (2) User opens lens overlay.
+//  (3) User highlights some region.
+//  (4) User presses CTRL+C.
+//  (5) Region gets copied.
+// TODO(crbug.com/399520257): Fix test failure on ChromeOS, and ASAN.
+#if BUILDFLAG(IS_CHROMEOS) || defined(ADDRESS_SANITIZER)
+// Flaky on ASAN, and on ChromeOS.
+#define MAYBE_CopyKeyCommandCopiesImage DISABLED_CopyKeyCommandCopiesImage
+#else
+#define MAYBE_CopyKeyCommandCopiesImage CopyKeyCommandCopiesImage
+#endif
+IN_PROC_BROWSER_TEST_F(LensOverlayControllerSimplifedSelectionCUJTest,
+                       MAYBE_CopyKeyCommandCopiesImage) {
+  WaitForTemplateURLServiceToLoad();
+  DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlayId);
+  DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlaySidePanelWebViewId);
+  DEFINE_LOCAL_STATE_IDENTIFIER_VALUE(ui::test::PollingStateObserver<bool>,
+                                      kRegionCopiedState);
+
+  const GURL url = embedded_test_server()->GetURL(kDocumentWithNamedElement);
+
+  // Path to region selection layer.
+  const DeepQuery kPathToRegionSelection{
+      "lens-overlay-app",
+      "lens-selection-overlay",
+      "region-selection",
+  };
+
+  const ui::Accelerator ctrl_c_accelerator(ui::VKEY_C, ui::EF_CONTROL_DOWN);
+
+  RunTestSequence(
+      OpenLensOverlay(),
+
+      // The overlay controller is an independent floating widget associated
+      // with a tab rather than a browser window, so by convention gets its own
+      // element context.
+      InAnyContext(
+          InstrumentNonTabWebView(kOverlayId,
+                                  LensOverlayController::kOverlayId),
+          WaitForWebContentsReady(
+              kOverlayId, GURL(chrome::kChromeUILensOverlayUntrustedURL))),
+
+      // Wait for the webview to finish loading to prevent re-entrancy. Then
+      // click the center of the region selection layer to select a region.
+      // Flush tasks after click to prevent flakiness.
+      InSameContext(WaitForShow(LensOverlayController::kOverlayId),
+                    WaitForScreenshotRendered(kOverlayId),
+                    EnsurePresent(kOverlayId, kPathToRegionSelection),
+                    MoveMouseTo(kOverlayId, kPathToRegionSelection),
+                    ClickMouse()),
+
+      // Clicking the overlay should have opened the side panel with the results
+      // frame.
+      InAnyContext(InstrumentNonTabWebView(
+                       kOverlaySidePanelWebViewId,
+                       LensOverlayController::kOverlaySidePanelWebViewId),
+                   WaitForWebContentsReady(kOverlaySidePanelWebViewId),
+                   WaitForWebContentsPainted(kOverlaySidePanelWebViewId)),
+
+      // Press CTRL+C command and ensure the selected region is saved to
+      // clipboard. Send the command to the side panel web view because in
+      // actual usage, the side panel is the view with focus so it receives
+      // the event right after selecting the region.
+      InSameContext(
+          WaitForShow(kOverlaySidePanelWebViewId),
+          FocusWebContents(kOverlaySidePanelWebViewId),
+          SendAccelerator(kOverlaySidePanelWebViewId, ctrl_c_accelerator),
+          PollState(kRegionCopiedState,
+                    [&]() {
+                      ui::Clipboard* clipboard =
+                          ui::Clipboard::GetForCurrentThread();
+                      std::string clipboard_data;
+                      clipboard->ReadData(ui::ClipboardFormatType::PngType(),
+                                          /*data_dst=*/nullptr,
+                                          &clipboard_data);
+                      return !clipboard_data.empty();
+                    }),
+          WaitForState(kRegionCopiedState, true)));
 }
 
 }  // namespace

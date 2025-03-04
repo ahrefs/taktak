@@ -7,7 +7,8 @@
 #include <memory>
 
 #include "base/feature_list.h"
-#include "base/strings/utf_string_conversions.h"
+#include "base/functional/callback_helpers.h"
+#include "base/test/bind.h"
 #include "base/test/scoped_feature_list.h"
 #include "chrome/browser/enterprise/signin/interstitials/managed_profile_required_controller_client.h"
 #include "chrome/browser/enterprise/signin/interstitials/managed_profile_required_page.h"
@@ -30,12 +31,16 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace {
+
+constexpr char16_t kEmail[] = u"user@email.com";
+
 bool Equals(content::NavigationThrottle::ThrottleCheckResult& expected,
             content::NavigationThrottle::ThrottleCheckResult&& actual) {
   return expected.action() == actual.action() &&
          expected.net_error_code() == actual.net_error_code() &&
          expected.error_page_content() == actual.error_page_content();
 }
+
 }  // namespace
 
 class ManagedProfileRequiredNavigationThrottleFeatureDisabledTest
@@ -43,7 +48,7 @@ class ManagedProfileRequiredNavigationThrottleFeatureDisabledTest
  public:
   ManagedProfileRequiredNavigationThrottleFeatureDisabledTest() {
     feature_list_.InitAndDisableFeature(
-        features::kEnterpriseUpdatedProfileCreationScreen);
+        features::kManagedProfileRequiredInterstitial);
   }
 
  private:
@@ -64,44 +69,16 @@ class ManagedProfileRequiredNavigationThrottleTest
     : public InProcessBrowserTest {
  private:
   base::test::ScopedFeatureList feature_list_{
-      features::kEnterpriseUpdatedProfileCreationScreen};
+      features::kManagedProfileRequiredInterstitial};
 };
-
-IN_PROC_BROWSER_TEST_F(ManagedProfileRequiredNavigationThrottleTest,
-                       ProceedsWhenNoForcedInterception) {
-  auto* web_contents = browser()->tab_strip_model()->GetActiveWebContents();
-  content::MockNavigationHandle mock_nav_handle(web_contents);
-
-  auto throttle =
-      ManagedProfileRequiredNavigationThrottle::MaybeCreateThrottleFor(
-          &mock_nav_handle);
-  ASSERT_TRUE(throttle);
-  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
-            throttle->WillStartRequest());
-  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
-            throttle->WillRedirectRequest());
-  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
-            throttle->WillProcessResponse());
-  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
-            throttle->WillFailRequest());
-}
 
 IN_PROC_BROWSER_TEST_F(ManagedProfileRequiredNavigationThrottleTest,
                        CancelsWithInterstitialWhenForcedInterception) {
   auto* web_contents = browser()->tab_strip_model()->GetActiveWebContents();
   content::MockNavigationHandle mock_nav_handle(web_contents);
 
-  auto* interceptor =
-      DiceWebSigninInterceptorFactory::GetForProfile(browser()->profile());
-
-  interceptor->Reset();
-  interceptor->state_->interception_type_ =
-      WebSigninInterceptor::SigninInterceptionType::kEnterpriseForced;
-  interceptor->state_->web_contents_ = web_contents->GetWeakPtr();
-
   auto managed_profile_required = std::make_unique<ManagedProfileRequiredPage>(
-      mock_nav_handle.GetWebContents(), mock_nav_handle.GetURL(), u"Manager",
-      base::UTF8ToUTF16(interceptor->intercepted_account_info().email),
+      mock_nav_handle.GetWebContents(), mock_nav_handle.GetURL(), kEmail,
       std::make_unique<ManagedProfileRequiredControllerClient>(
           mock_nav_handle.GetWebContents(), mock_nav_handle.GetURL()));
   std::string error_page_content = managed_profile_required->GetHTMLContents();
@@ -112,10 +89,82 @@ IN_PROC_BROWSER_TEST_F(ManagedProfileRequiredNavigationThrottleTest,
   auto throttle =
       ManagedProfileRequiredNavigationThrottle::MaybeCreateThrottleFor(
           &mock_nav_handle);
+  ASSERT_FALSE(throttle);
+
+  auto enable_navigations = ManagedProfileRequiredNavigationThrottle::
+      BlockNavigationUntilEnterpriseActionTaken(browser()->profile(),
+                                                web_contents, nullptr, kEmail);
+  throttle = ManagedProfileRequiredNavigationThrottle::MaybeCreateThrottleFor(
+      &mock_nav_handle);
   ASSERT_TRUE(throttle);
-  throttle->SetManagerForTesting(u"Manager");
   EXPECT_TRUE(Equals(expected_result, throttle->WillStartRequest()));
   EXPECT_TRUE(Equals(expected_result, throttle->WillRedirectRequest()));
   EXPECT_TRUE(Equals(expected_result, throttle->WillProcessResponse()));
   EXPECT_TRUE(Equals(expected_result, throttle->WillFailRequest()));
+
+  enable_navigations.RunAndReset();
+  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
+            throttle->WillStartRequest());
+  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
+            throttle->WillRedirectRequest());
+  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
+            throttle->WillProcessResponse());
+  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
+            throttle->WillFailRequest());
+}
+
+IN_PROC_BROWSER_TEST_F(
+    ManagedProfileRequiredNavigationThrottleTest,
+    CancelsWithInterstitialWhenForcedInterceptionAndRefreshesWebContent) {
+  auto* web_contents = browser()->tab_strip_model()->GetActiveWebContents();
+  content::MockNavigationHandle mock_nav_handle(web_contents);
+
+  auto managed_profile_required = std::make_unique<ManagedProfileRequiredPage>(
+      mock_nav_handle.GetWebContents(), mock_nav_handle.GetURL(), kEmail,
+      std::make_unique<ManagedProfileRequiredControllerClient>(
+          mock_nav_handle.GetWebContents(), mock_nav_handle.GetURL()));
+  std::string error_page_content = managed_profile_required->GetHTMLContents();
+  content::NavigationThrottle::ThrottleCheckResult expected_result(
+      content::NavigationThrottle::ThrottleAction::CANCEL,
+      net::ERR_BLOCKED_BY_CLIENT, error_page_content);
+
+  auto throttle =
+      ManagedProfileRequiredNavigationThrottle::MaybeCreateThrottleFor(
+          &mock_nav_handle);
+  ASSERT_FALSE(throttle);
+
+  auto enable_navigations = ManagedProfileRequiredNavigationThrottle::
+      BlockNavigationUntilEnterpriseActionTaken(browser()->profile(),
+                                                web_contents, nullptr, kEmail);
+  throttle = ManagedProfileRequiredNavigationThrottle::MaybeCreateThrottleFor(
+      &mock_nav_handle);
+  ASSERT_TRUE(throttle);
+  EXPECT_TRUE(Equals(expected_result, throttle->WillStartRequest()));
+  EXPECT_TRUE(Equals(expected_result, throttle->WillRedirectRequest()));
+  EXPECT_TRUE(Equals(expected_result, throttle->WillProcessResponse()));
+  EXPECT_TRUE(Equals(expected_result, throttle->WillFailRequest()));
+
+  base::RunLoop loop;
+  bool page_reloded = false;
+  // Ensures `web_contents` is reloaded
+  ManagedProfileRequiredNavigationThrottle::SetReloadRequired(
+      browser()->profile(), true,
+      base::BindLambdaForTesting([&](content::NavigationHandle&) {
+        page_reloded = true;
+        loop.Quit();
+      }));
+
+  enable_navigations.RunAndReset();
+  loop.Run();
+  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
+            throttle->WillStartRequest());
+  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
+            throttle->WillRedirectRequest());
+  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
+            throttle->WillProcessResponse());
+  EXPECT_EQ(content::NavigationThrottle::ThrottleAction::PROCEED,
+            throttle->WillFailRequest());
+
+  // `web_contents` has been reloaded once.
+  EXPECT_TRUE(page_reloded);
 }

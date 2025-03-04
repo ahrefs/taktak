@@ -8,6 +8,7 @@
 
 #include "base/test/protobuf_matchers.h"
 #include "base/test/scoped_feature_list.h"
+#include "components/sync/base/collaboration_id.h"
 #include "components/sync/base/features.h"
 #include "components/sync/base/unique_position.h"
 #include "components/sync/model/metadata_batch.h"
@@ -86,14 +87,15 @@ UpdateResponseData GenerateUpdate(const std::string& storage_key,
 EntityData GenerateSharedTabGroupDataEntityData(
     const std::string& storage_key,
     const ClientTagHash& client_tag_hash,
-    const std::string& collaboration_id) {
-  CHECK(!collaboration_id.empty());
+    const CollaborationId& collaboration_id) {
+  CHECK(!collaboration_id->empty());
   EntityData entity_data;
   entity_data.client_tag_hash = client_tag_hash;
   entity_data.creation_time = base::Time::Now();
   entity_data.modification_time = entity_data.creation_time;
   entity_data.name = storage_key;
-  entity_data.collaboration_id = collaboration_id;
+  entity_data.collaboration_metadata = CollaborationMetadata::ForLocalChange(
+      /*changed_by=*/GaiaId(), collaboration_id);
   // The tracker requires non-empty specifics with any data type.
   entity_data.specifics.mutable_shared_tab_group_data();
   return entity_data;
@@ -102,7 +104,7 @@ EntityData GenerateSharedTabGroupDataEntityData(
 UpdateResponseData GenerateSharedTabGroupDataUpdate(
     const std::string& storage_key,
     const ClientTagHash& client_tag_hash,
-    const std::string& collaboration_id) {
+    const CollaborationId& collaboration_id) {
   auto entity =
       std::make_unique<EntityData>(GenerateSharedTabGroupDataEntityData(
           storage_key, client_tag_hash, collaboration_id));
@@ -430,13 +432,14 @@ TEST_F(ProcessorEntityTrackerTest, ShouldRemoveInactiveCollaborations) {
   entity_tracker_.AddRemote(
       kStorageKey1,
       GenerateSharedTabGroupDataUpdate(kStorageKey1, kClientTagHash1,
-                                       "active_collaboration"),
+                                       CollaborationId("active_collaboration")),
       /*trimmed_specifics=*/{}, /*unique_position=*/std::nullopt);
-  entity_tracker_.AddRemote(
-      kStorageKey2,
-      GenerateSharedTabGroupDataUpdate(kStorageKey2, kClientTagHash2,
-                                       "inactive_collaboration"),
-      /*trimmed_specifics=*/{}, /*unique_position=*/std::nullopt);
+  entity_tracker_.AddRemote(kStorageKey2,
+                            GenerateSharedTabGroupDataUpdate(
+                                kStorageKey2, kClientTagHash2,
+                                CollaborationId("inactive_collaboration")),
+                            /*trimmed_specifics=*/{},
+                            /*unique_position=*/std::nullopt);
   ASSERT_EQ(entity_tracker_.size(), 2U);
 
   std::vector<std::string> removed_storage_keys =

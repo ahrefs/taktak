@@ -408,7 +408,7 @@ base::File::Error FakeProvidedFileSystem::DoDeleteEntry(
   // path in `entries_`.
   if (!recursive) {
     const Entries::const_iterator it =
-        base::ranges::find_if(entries_, [entry_path](auto& entry_it) {
+        std::ranges::find_if(entries_, [entry_path](auto& entry_it) {
           return entry_path.IsParent(entry_it.first);
         });
     if (it != entries_.end()) {
@@ -607,8 +607,7 @@ const ProvidedFileSystemInfo& FakeProvidedFileSystem::GetFileSystemInfo()
 }
 
 OperationRequestManager* FakeProvidedFileSystem::GetRequestManager() {
-  NOTREACHED_IN_MIGRATION();
-  return nullptr;
+  NOTREACHED();
 }
 
 Watchers* FakeProvidedFileSystem::GetWatchers() {
@@ -667,8 +666,7 @@ void FakeProvidedFileSystem::Notify(
 
 void FakeProvidedFileSystem::Configure(
     storage::AsyncFileUtil::StatusCallback callback) {
-  NOTREACHED_IN_MIGRATION();
-  std::move(callback).Run(base::File::FILE_ERROR_SECURITY);
+  NOTREACHED();
 }
 
 base::WeakPtr<ProvidedFileSystemInterface>

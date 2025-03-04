@@ -18,23 +18,31 @@
 #include "ash/quick_insert/views/quick_insert_view_delegate.h"
 #include "base/containers/span.h"
 #include "base/memory/raw_ref.h"
+#include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/time/time.h"
+#include "base/types/expected.h"
 #include "chromeos/ash/components/emoji/emoji_search.h"
+#include "chromeos/ash/components/emoji/gif_tenor_api_fetcher.h"
+#include "chromeos/ash/components/emoji/tenor_types.mojom.h"
 #include "components/prefs/pref_change_registrar.h"
 
 class PrefService;
 
 namespace ash {
 
-class PickerClient;
+class QuickInsertClient;
 
-class ASH_EXPORT PickerSearchController {
+class ASH_EXPORT QuickInsertSearchController {
  public:
-  explicit PickerSearchController(base::TimeDelta burn_in_period);
-  PickerSearchController(const PickerSearchController&) = delete;
-  PickerSearchController& operator=(const PickerSearchController&) = delete;
-  ~PickerSearchController();
+  using SearchGifsCallback =
+      base::OnceCallback<void(std::vector<QuickInsertGifResult> results)>;
+
+  explicit QuickInsertSearchController(base::TimeDelta burn_in_period);
+  QuickInsertSearchController(const QuickInsertSearchController&) = delete;
+  QuickInsertSearchController& operator=(const QuickInsertSearchController&) =
+      delete;
+  ~QuickInsertSearchController();
 
   // Adds emoji keywords for enabled languages in `prefs` and whenever the
   // enabled languages change. This does not unload any keywords loaded
@@ -44,27 +52,34 @@ class ASH_EXPORT PickerSearchController {
 
   // `client` must remain valid until `StopSearch` is called or until this
   // object is destroyed.
-  void StartSearch(PickerClient* client,
+  void StartSearch(QuickInsertClient* client,
                    std::u16string_view query,
-                   std::optional<PickerCategory> category,
-                   PickerSearchRequest::Options search_options,
-                   PickerViewDelegate::SearchResultsCallback callback);
+                   std::optional<QuickInsertCategory> category,
+                   base::span<const QuickInsertCategory> available_categories,
+                   bool caps_lock_state_to_search,
+                   bool search_case_transforms,
+                   QuickInsertViewDelegate::SearchResultsCallback callback);
 
   void StopSearch();
 
   void StartEmojiSearch(
       PrefService* prefs,
       std::u16string_view query,
-      PickerViewDelegate::EmojiSearchResultsCallback callback);
+      QuickInsertViewDelegate::EmojiSearchResultsCallback callback);
 
   // Gets the emoji name for the given emoji / emoticon / symbol.
   // Used for getting emoji tooltips for zero state emoji.
-  // TODO: b/358492493 - Refactor this out of `PickerSearchController`, as this
-  // is unrelated to search.
+  // TODO: b/358492493 - Refactor this out of `QuickInsertSearchController`, as
+  // this is unrelated to search.
   std::string GetEmojiName(std::string_view emoji);
 
  private:
   void LoadEmojiLanguages(PrefService* pref);
+  void OnGifSearchResponse(
+      SearchGifsCallback callback,
+      std::u16string gif_search_query,
+      base::expected<tenor::mojom::PaginatedGifResponsesPtr,
+                     GifTenorApiFetcher::Error> response);
 
   PrefChangeRegistrar pref_change_registrar_;
 
@@ -73,10 +88,10 @@ class ASH_EXPORT PickerSearchController {
   emoji::EmojiSearch emoji_search_;
   // The search request calls the aggregator, so the search request should be
   // destructed first.
-  std::unique_ptr<PickerSearchAggregator> aggregator_;
-  std::unique_ptr<PickerSearchRequest> search_request_;
+  std::unique_ptr<QuickInsertSearchAggregator> aggregator_;
+  std::unique_ptr<QuickInsertSearchRequest> search_request_;
 
-  base::WeakPtrFactory<PickerSearchController> weak_ptr_factory_{this};
+  base::WeakPtrFactory<QuickInsertSearchController> weak_ptr_factory_{this};
 };
 
 }  // namespace ash

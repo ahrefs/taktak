@@ -25,74 +25,80 @@
 #include "base/types/cxx23_to_underlying.h"
 #include "base/values.h"
 
+class EndpointFetcher;
+
 namespace ash {
 
-class PickerClient;
-class PickerClipboardHistoryProvider;
+class QuickInsertClient;
+class QuickInsertClipboardHistoryProvider;
 
-// Represents a single Picker search query. Constructing this class starts a
-// search, and destructing it stops the search.
-class ASH_EXPORT PickerSearchRequest {
+// Represents a single Quick Insert search query. Constructing this class starts
+// a search, and destructing it stops the search.
+class ASH_EXPORT QuickInsertSearchRequest {
  public:
   using SearchResultsCallback =
-      base::RepeatingCallback<void(PickerSearchSource source,
+      base::RepeatingCallback<void(QuickInsertSearchSource source,
                                    std::vector<QuickInsertSearchResult> results,
                                    bool has_more_results)>;
   using DoneCallback = base::OnceCallback<void(bool interrupted)>;
 
-  struct Options {
-    base::span<const PickerCategory> available_categories;
-    bool caps_lock_state_to_search = false;
-    bool search_case_transforms = false;
-  };
+  static constexpr base::TimeDelta kGifDebouncingDelay =
+      base::Milliseconds(200);
 
   // `done_closure` is guaranteed to be called strictly after the last call to
   // `callback`.
-  explicit PickerSearchRequest(std::u16string_view query,
-                               std::optional<PickerCategory> category,
-                               SearchResultsCallback callback,
-                               DoneCallback done_callback,
-                               PickerClient* client,
-                               const Options& options);
-  PickerSearchRequest(const PickerSearchRequest&) = delete;
-  PickerSearchRequest& operator=(const PickerSearchRequest&) = delete;
-  ~PickerSearchRequest();
+  QuickInsertSearchRequest(
+      std::u16string_view query,
+      std::optional<QuickInsertCategory> category,
+      SearchResultsCallback callback,
+      DoneCallback done_callback,
+      QuickInsertClient* client,
+      base::span<const QuickInsertCategory> available_categories = {},
+      bool caps_lock_state_to_search = false,
+      bool search_case_transforms = false);
+  QuickInsertSearchRequest(const QuickInsertSearchRequest&) = delete;
+  QuickInsertSearchRequest& operator=(const QuickInsertSearchRequest&) = delete;
+  ~QuickInsertSearchRequest();
 
  private:
-  void HandleSearchSourceResults(PickerSearchSource source,
+  void StartGifSearch(std::string_view query);
+  void HandleSearchSourceResults(QuickInsertSearchSource source,
                                  std::vector<QuickInsertSearchResult> results,
                                  bool has_more_results);
 
   void HandleActionSearchResults(std::vector<QuickInsertSearchResult> results);
-  void HandleCrosSearchResults(ash::AppListSearchResultType type,
+  void HandleCrosSearchResults(AppListSearchResultType type,
                                std::vector<QuickInsertSearchResult> results);
   void HandleDateSearchResults(std::vector<QuickInsertSearchResult> results);
   void HandleMathSearchResults(std::optional<QuickInsertSearchResult> result);
   void HandleClipboardSearchResults(
       std::vector<QuickInsertSearchResult> results);
-  void HandleEditorSearchResults(PickerSearchSource source,
+  void HandleEditorSearchResults(QuickInsertSearchSource source,
                                  std::optional<QuickInsertSearchResult> result);
   void HandleLobsterSearchResults(
-      PickerSearchSource source,
+      QuickInsertSearchSource source,
       std::optional<QuickInsertSearchResult> result);
+  void HandleGifSearchResponse(std::vector<QuickInsertSearchResult> results);
 
   // Sets the search for the source to be started right now.
   // `CHECK` fails if a search was already started.
-  void MarkSearchStarted(PickerSearchSource source);
+  void MarkSearchStarted(QuickInsertSearchSource source);
   // Sets the search for the source to be not started, and emits a metric for
   // the source.
   // `CHECK` fails if a search wasn't started.
-  void MarkSearchEnded(PickerSearchSource source);
+  void MarkSearchEnded(QuickInsertSearchSource source);
   std::optional<base::TimeTicks> SwapSearchStart(
-      PickerSearchSource source,
+      QuickInsertSearchSource source,
       std::optional<base::TimeTicks> new_value);
 
   void MaybeCallDoneClosure();
 
   bool is_category_specific_search_;
-  const raw_ref<PickerClient> client_;
+  const raw_ref<QuickInsertClient> client_;
 
-  std::unique_ptr<PickerClipboardHistoryProvider> clipboard_provider_;
+  std::unique_ptr<QuickInsertClipboardHistoryProvider> clipboard_provider_;
+  QuickInsertSearchDebouncer gif_search_debouncer_;
+  std::unique_ptr<EndpointFetcher> gif_fetcher_;
 
   SearchResultsCallback current_callback_;
   // Set to true once all the searches have started at the end of the ctor.
@@ -103,10 +109,10 @@ class ASH_EXPORT PickerSearchRequest {
   DoneCallback done_callback_;
 
   static constexpr size_t kNumSources =
-      base::to_underlying(PickerSearchSource::kMaxValue) + 1;
+      base::to_underlying(QuickInsertSearchSource::kMaxValue) + 1;
   std::array<std::optional<base::TimeTicks>, kNumSources> search_starts_;
 
-  base::WeakPtrFactory<PickerSearchRequest> weak_ptr_factory_{this};
+  base::WeakPtrFactory<QuickInsertSearchRequest> weak_ptr_factory_{this};
 };
 
 }  // namespace ash

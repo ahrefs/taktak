@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "ash/auth/views/active_session_auth_view.h"
 #include "ash/auth/views/auth_common.h"
@@ -217,7 +218,7 @@ void ActiveSessionAuthControllerImpl::TestApi::SetPinStatus(
   controller_->contents_view_->SetPinStatus(std::move(pin_status));
 }
 
-const std::u16string&
+std::u16string_view
 ActiveSessionAuthControllerImpl::TestApi::GetPinStatusMessage() const {
   return controller_->contents_view_->GetPinStatusMessage();
 }
@@ -313,13 +314,13 @@ void ActiveSessionAuthControllerImpl::OnAuthSessionStarted(
     }
   }
 
-  if (available_factors_.empty()) {
+  if (available_factors_.empty() && pin_factor == nullptr) {
     LOG(ERROR) << "No password/PIN found for user.";
     StartClose();
     return;
   }
 
-  uma_recorder_.RecordShow(auth_request_->GetAuthReason());
+  uma_recorder_.RecordShow(auth_request_->GetAuthReason(), available_factors_);
 
   MaybePrepareFingerprint(
       BindOnce(&ActiveSessionAuthControllerImpl::AuthFactorsAreReady,
@@ -452,9 +453,12 @@ void ActiveSessionAuthControllerImpl::StartClose() {
     uma_recorder_.RecordClose();
   }
   contents_view_observer_.Reset();
-  CHECK(contents_view_);
-  contents_view_->RemoveObserver(this);
-  contents_view_ = nullptr;
+  if (contents_view_) {
+    contents_view_->RemoveObserver(this);
+    contents_view_ = nullptr;
+  } else {
+    CHECK_EQ(state_, ActiveSessionAuthState::kWaitForInit);
+  }
   auth_session_broadcast_id_.clear();
 
   UserDataAuthClient::Get()->RemoveAuthFactorStatusUpdateObserver(this);
@@ -508,7 +512,7 @@ void ActiveSessionAuthControllerImpl::MoveToTheCenter() {
 }
 
 void ActiveSessionAuthControllerImpl::OnPasswordSubmit(
-    const std::u16string& password) {
+    std::u16string_view password) {
   if (IsSucceedState()) {
     return;
   }
@@ -527,7 +531,7 @@ void ActiveSessionAuthControllerImpl::OnPasswordSubmit(
                      weak_ptr_factory_.GetWeakPtr(), AuthInputType::kPassword));
 }
 
-void ActiveSessionAuthControllerImpl::OnPinSubmit(const std::u16string& pin) {
+void ActiveSessionAuthControllerImpl::OnPinSubmit(std::u16string_view pin) {
   if (IsSucceedState()) {
     return;
   }

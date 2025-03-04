@@ -9,6 +9,8 @@
 #import "base/test/scoped_feature_list.h"
 #import "base/test/task_environment.h"
 #import "components/commerce/core/mock_shopping_service.h"
+#import "components/metrics/metrics_state_manager.h"
+#import "components/metrics/test/test_enabled_state_provider.h"
 #import "components/variations/service/variations_service.h"
 #import "components/variations/service/variations_service_client.h"
 #import "components/variations/synthetic_trial_registry.h"
@@ -37,10 +39,10 @@
 #import "ios/chrome/browser/shared/model/profile/test/test_profile_manager_ios.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_opener.h"
+#import "ios/chrome/browser/shared/public/commands/application_commands.h"
 #import "ios/chrome/browser/shared/public/commands/command_dispatcher.h"
 #import "ios/chrome/browser/shared/public/commands/help_commands.h"
 #import "ios/chrome/browser/shared/public/commands/omnibox_commands.h"
-#import "ios/chrome/browser/shared/public/commands/parcel_tracking_opt_in_commands.h"
 #import "ios/chrome/browser/shared/public/commands/snackbar_commands.h"
 #import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/browser/signin/model/authentication_service.h"
@@ -49,12 +51,12 @@
 #import "ios/chrome/browser/signin/model/fake_system_identity.h"
 #import "ios/chrome/browser/signin/model/fake_system_identity_manager.h"
 #import "ios/chrome/browser/start_surface/ui_bundled/start_surface_recent_tab_browser_agent.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/public/fakebox_focuser.h"
 #import "ios/chrome/browser/ui/content_suggestions/cells/content_suggestions_most_visited_action_item.h"
 #import "ios/chrome/browser/ui/content_suggestions/cells/content_suggestions_most_visited_item.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_coordinator.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_mediator.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_view_controller.h"
-#import "ios/chrome/browser/ui/toolbar/public/fakebox_focuser.h"
 #import "ios/chrome/browser/url_loading/model/fake_url_loading_browser_agent.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_notifier_browser_agent.h"
 #import "ios/chrome/test/ios_chrome_scoped_testing_local_state.h"
@@ -79,6 +81,8 @@ using variations::VariationsServiceClient;
 namespace {
 
 // TODO(crbug.com/40742801): Remove when fake VariationsServiceClient created.
+// TODO(crbug.com/377275759): Check if TestVariationsServiceClient and
+// ScopedVariationsService can be consolidated with implementations elsewhere.
 class TestVariationsServiceClient : public VariationsServiceClient {
  public:
   TestVariationsServiceClient() = default;
@@ -118,11 +122,20 @@ class ScopedVariationsService {
     EXPECT_EQ(nullptr,
               TestingApplicationContext::GetGlobal()->GetVariationsService());
     synthetic_trial_registry_ = std::make_unique<SyntheticTrialRegistry>();
+    enabled_state_provider_ =
+        std::make_unique<metrics::TestEnabledStateProvider>(false, false);
+    metrics_state_manager_ = metrics::MetricsStateManager::Create(
+        TestingApplicationContext::GetGlobal()->GetLocalState(),
+        enabled_state_provider_.get(),
+        /*backup_registry_key=*/std::wstring(),
+        /*user_data_dir=*/base::FilePath(),
+        metrics::StartupVisibility::kUnknown);
 
     variations_service_ = VariationsService::Create(
         std::make_unique<TestVariationsServiceClient>(),
         TestingApplicationContext::GetGlobal()->GetLocalState(),
-        /*state_manager=*/nullptr, "dummy-disable-background-switch",
+        metrics_state_manager_.get(),
+        /*disable_network_switch=*/"dummy-disable-background-switch",
         UIStringOverrider(),
         network::TestNetworkConnectionTracker::CreateGetter(),
         synthetic_trial_registry_.get());
@@ -139,6 +152,8 @@ class ScopedVariationsService {
 
   VariationsService* Get() { return variations_service_.get(); }
 
+  std::unique_ptr<metrics::MetricsStateManager> metrics_state_manager_;
+  std::unique_ptr<metrics::TestEnabledStateProvider> enabled_state_provider_;
   std::unique_ptr<VariationsService> variations_service_;
   std::unique_ptr<SyntheticTrialRegistry> synthetic_trial_registry_;
 };
@@ -159,7 +174,8 @@ class NewTabPageCoordinatorTest : public PlatformTest {
         IOSChromeLargeIconServiceFactory::GetDefaultFactory());
     test_cbs_builder.AddTestingFactory(
         AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
     test_cbs_builder.AddTestingFactory(
         commerce::ShoppingServiceFactory::GetInstance(),
         base::BindRepeating(
@@ -178,8 +194,6 @@ class NewTabPageCoordinatorTest : public PlatformTest {
     profile_ =
         profile_manager_.AddProfileWithBuilder(std::move(test_cbs_builder));
 
-    AuthenticationServiceFactory::CreateAndInitializeForProfile(
-        GetProfile(), std::make_unique<FakeAuthenticationServiceDelegate>());
     toolbar_delegate_ =
         OCMProtocolMock(@protocol(NewTabPageControllerDelegate));
     histogram_tester_ = std::make_unique<base::HistogramTester>();
@@ -296,28 +310,28 @@ class NewTabPageCoordinatorTest : public PlatformTest {
   }
 
   void SetupCommandHandlerMocks() {
-    help_commands_handler_mock = OCMProtocolMock(@protocol(HelpCommands));
-    omnibox_commands_handler_mock = OCMProtocolMock(@protocol(OmniboxCommands));
-    snackbar_commands_handler_mock =
+    application_handler_mock_ = OCMProtocolMock(@protocol(ApplicationCommands));
+    help_commands_handler_mock_ = OCMProtocolMock(@protocol(HelpCommands));
+    omnibox_commands_handler_mock_ =
+        OCMProtocolMock(@protocol(OmniboxCommands));
+    snackbar_commands_handler_mock_ =
         OCMProtocolMock(@protocol(SnackbarCommands));
-    fakebox_focuser_handler_mock = OCMProtocolMock(@protocol(FakeboxFocuser));
-    parcel_tracking_commands_handler_mock_ =
-        OCMProtocolMock(@protocol(ParcelTrackingOptInCommands));
+    fakebox_focuser_handler_mock_ = OCMProtocolMock(@protocol(FakeboxFocuser));
     [browser_.get()->GetCommandDispatcher()
-        startDispatchingToTarget:help_commands_handler_mock
+        startDispatchingToTarget:application_handler_mock_
+                     forProtocol:@protocol(ApplicationCommands)];
+    [browser_.get()->GetCommandDispatcher()
+        startDispatchingToTarget:help_commands_handler_mock_
                      forProtocol:@protocol(HelpCommands)];
     [browser_.get()->GetCommandDispatcher()
-        startDispatchingToTarget:omnibox_commands_handler_mock
+        startDispatchingToTarget:omnibox_commands_handler_mock_
                      forProtocol:@protocol(OmniboxCommands)];
     [browser_.get()->GetCommandDispatcher()
-        startDispatchingToTarget:snackbar_commands_handler_mock
+        startDispatchingToTarget:snackbar_commands_handler_mock_
                      forProtocol:@protocol(SnackbarCommands)];
     [browser_.get()->GetCommandDispatcher()
-        startDispatchingToTarget:fakebox_focuser_handler_mock
+        startDispatchingToTarget:fakebox_focuser_handler_mock_
                      forProtocol:@protocol(FakeboxFocuser)];
-    [browser_.get()->GetCommandDispatcher()
-        startDispatchingToTarget:parcel_tracking_commands_handler_mock_
-                     forProtocol:@protocol(ParcelTrackingOptInCommands)];
   }
 
   // Dynamically calls a selector on an object.
@@ -349,7 +363,7 @@ class NewTabPageCoordinatorTest : public PlatformTest {
     DynamicallyCallSelector(coordinator_, coordinator_selector,
                             [coordinator_ class]);
 
-    [view_controller_mock verify];
+    EXPECT_OCMOCK_VERIFY(view_controller_mock);
     coordinator_.NTPViewController = original_vc;
   }
 
@@ -361,8 +375,7 @@ class NewTabPageCoordinatorTest : public PlatformTest {
             GetApplicationContext()->GetSystemIdentityManager());
     system_identity_manager->AddIdentity(fake_identity);
     AuthenticationServiceFactory::GetForProfile(GetProfile())
-        ->SignIn(fake_identity,
-                 signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN);
+        ->SignIn(fake_identity, signin_metrics::AccessPoint::kUnknown);
   }
 
   web::WebTaskEnvironment task_environment_;
@@ -378,11 +391,11 @@ class NewTabPageCoordinatorTest : public PlatformTest {
   NewTabPageMetricsRecorder* NTPMetricsRecorder_;
   id component_factory_mock_;
   UIViewController* base_view_controller_;
-  id help_commands_handler_mock;
-  id omnibox_commands_handler_mock;
-  id snackbar_commands_handler_mock;
-  id fakebox_focuser_handler_mock;
-  id parcel_tracking_commands_handler_mock_;
+  id application_handler_mock_;
+  id help_commands_handler_mock_;
+  id omnibox_commands_handler_mock_;
+  id snackbar_commands_handler_mock_;
+  id fakebox_focuser_handler_mock_;
   std::unique_ptr<base::HistogramTester> histogram_tester_;
   base::test::ScopedFeatureList scoped_feature_list_;
 };

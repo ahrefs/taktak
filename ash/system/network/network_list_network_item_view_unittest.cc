@@ -20,7 +20,6 @@
 #include "base/functional/bind.h"
 #include "base/i18n/number_formatting.h"
 #include "base/memory/raw_ptr.h"
-#include "base/test/scoped_feature_list.h"
 #include "chromeos/ash/services/network_config/public/cpp/cros_network_config_test_helper.h"
 #include "chromeos/constants/chromeos_features.h"
 #include "chromeos/services/network_config/public/mojom/cros_network_config.mojom.h"
@@ -243,7 +242,7 @@ TEST_F(NetworkListNetworkItemViewTest, HasCorrectCellularSublabel) {
                 IDS_ASH_STATUS_TRAY_NETWORK_STATUS_ACTIVATE_AFTER_DEVICE_SETUP),
             network_list_network_item_view()->sub_text_label()->GetText());
 
-  CreateUserSessions(/*session_count=*/1);
+  SimulateUserLogin(kDefaultUserEmail);
   base::RunLoop().RunUntilIdle();
 
   // Label for unactivated eSIM networks.
@@ -456,7 +455,7 @@ TEST_F(NetworkListNetworkItemViewTest, HasExpectedA11yText) {
           base::UTF8ToUTF16(kCellularName)),
       network_list_network_item_view()->GetViewAccessibility().GetCachedName());
 
-  CreateUserSessions(/*session_count=*/1);
+  SimulateUserLogin(kDefaultUserEmail);
   base::RunLoop().RunUntilIdle();
 
   // Contact carrier A11Y label is shown when a eSIM network is connected but
@@ -593,7 +592,7 @@ TEST_F(NetworkListNetworkItemViewTest, HasExpectedDescriptionForCellular) {
       l10n_util::GetStringUTF16(
           IDS_ASH_STATUS_TRAY_NETWORK_STATUS_ACTIVATE_AFTER_DEVICE_SETUP));
 
-  CreateUserSessions(/*session_count=*/1);
+  SimulateUserLogin(kDefaultUserEmail);
   base::RunLoop().RunUntilIdle();
 
   // Cellular is not activated and is an eSIM network.
@@ -797,7 +796,7 @@ TEST_F(NetworkListNetworkItemViewTest, NetworkIconAnimating) {
   // Override current icon with an empty icon, check it is updated when
   // animation starts.
   static_cast<views::ImageView*>(network_list_network_item_view()->left_view())
-      ->SetImage(gfx::ImageSkia());
+      ->SetImage(ui::ImageModel());
 
   EXPECT_TRUE(static_cast<views::ImageView*>(
                   network_list_network_item_view()->left_view())

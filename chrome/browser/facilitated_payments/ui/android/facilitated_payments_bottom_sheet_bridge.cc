@@ -9,8 +9,8 @@
 #include "chrome/browser/autofill/android/personal_data_manager_android.h"
 #include "chrome/browser/facilitated_payments/ui/android/facilitated_payments_controller.h"
 #include "chrome/browser/profiles/profile.h"
-#include "components/autofill/core/browser/data_model/bank_account.h"
-#include "components/autofill/core/browser/data_model/ewallet.h"
+#include "components/autofill/core/browser/data_model/payments/bank_account.h"
+#include "components/autofill/core/browser/data_model/payments/ewallet.h"
 #include "content/public/browser/web_contents.h"
 
 // Must come after all headers that specialize FromJniType() / ToJniType().
@@ -36,10 +36,10 @@ bool FacilitatedPaymentsBottomSheetBridge::IsInLandscapeMode() {
       env, GetJavaBridge());
 }
 
-bool FacilitatedPaymentsBottomSheetBridge::RequestShowContent(
+void FacilitatedPaymentsBottomSheetBridge::RequestShowContent(
     base::span<const autofill::BankAccount> bank_account_suggestions) {
   if (!GetJavaBridge()) {
-    return false;
+    return;
   }
 
   JNIEnv* env = base::android::AttachCurrentThread();
@@ -50,14 +50,14 @@ bool FacilitatedPaymentsBottomSheetBridge::RequestShowContent(
         autofill::PersonalDataManagerAndroid::CreateJavaBankAccountFromNative(
             env, bank_account));
   }
-  return Java_FacilitatedPaymentsPaymentMethodsViewBridge_requestShowContent(
+  Java_FacilitatedPaymentsPaymentMethodsViewBridge_requestShowContent(
       env, GetJavaBridge(), std::move(bank_accounts_array));
 }
 
-bool FacilitatedPaymentsBottomSheetBridge::RequestShowContentForEwallet(
+void FacilitatedPaymentsBottomSheetBridge::RequestShowContentForEwallet(
     base::span<const autofill::Ewallet> ewallet_suggestions) {
   if (!GetJavaBridge()) {
-    return false;
+    return;
   }
 
   JNIEnv* env = base::android::AttachCurrentThread();
@@ -68,7 +68,7 @@ bool FacilitatedPaymentsBottomSheetBridge::RequestShowContentForEwallet(
         autofill::PersonalDataManagerAndroid::CreateJavaEwalletFromNative(
             env, ewallet));
   }
-  return Java_FacilitatedPaymentsPaymentMethodsViewBridge_requestShowContentForEwallet(
+  Java_FacilitatedPaymentsPaymentMethodsViewBridge_requestShowContentForEwallet(
       env, GetJavaBridge(), std::move(ewallet_vector));
 }
 

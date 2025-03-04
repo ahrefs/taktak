@@ -37,6 +37,7 @@ include_rules = [
   "+chrome/browser/android/crypto/java/src/org/chromium/chrome/browser/crypto/CipherFactory.java",
   "+chrome/browser/android/content",
   "+chrome/browser/android/lifecycle",
+  "+chrome/browser/browser_controls/android/java",
   "+chrome/browser/commerce/price_tracking/android/java/src/org/chromium/chrome/browser/price_tracking/PriceTrackingFeatures.java",
   "+chrome/browser/contextmenu/java/src/org/chromium/chrome/browser/contextmenu/ChipDelegate.java",
   "+chrome/browser/contextmenu/java/src/org/chromium/chrome/browser/contextmenu/ContextMenuNativeDelegate.java",
@@ -73,12 +74,16 @@ specific_include_rules = {
     "+chrome/browser/tabmodel/android/java/src/org/chromium/chrome/browser/tabmodel/TabModelSelector.java",
     "+chrome/browser/tab_group/java/src/org/chromium/chrome/browser/tasks/tab_groups/TabGroupColorUtils.java",
     "+chrome/browser/tab_group/java/src/org/chromium/chrome/browser/tasks/tab_groups/TabGroupTitleUtils.java",
+    "+chrome/browser/tab_group_sync/android/java/src/org/chromium/chrome/browser/tab_group_sync/TabGroupSyncServiceFactory.java",
   ],
   'HistoricalTabSaver\.java': [
     "+chrome/browser/tabmodel/android/java/src/org/chromium/chrome/browser/tabmodel/TabModel.java",
   ],
   'HistoricalTabSaverImpl\.java': [
     "+chrome/browser/tabmodel/android/java/src/org/chromium/chrome/browser/tabmodel/TabModel.java",
+  ],
+  'InterceptNavigationDelegateClientImpl.java': [
+    "+chrome/browser/tabmodel/android/java/src/org/chromium/chrome/browser/tabmodel/TabClosureParams.java",
   ],
   'RedirectHandlerTabHelper\.java': [
     "+chrome/android/java/src/org/chromium/chrome/browser/IntentHandler.java",
@@ -88,8 +93,8 @@ specific_include_rules = {
   'RequestDesktopUtils\.java': [
     "+chrome/android/java/src/org/chromium/chrome/browser/page_info/SiteSettingsHelper.java",
   ],
-  'TabBrowserControlsConstraintsHelper\.java': [
-    "+chrome/browser/ui/android/toolbar/java/src/org/chromium/chrome/browser/toolbar/ToolbarFeatures.java",
+  'TabContextMenuItemDelegate\.java': [
+    "+chrome/browser/tabmodel/android/java/src/org/chromium/chrome/browser/tabmodel/TabGroupFeatureUtils.java",
   ],
   'TabImpl\.java': [
     "+chrome/android/features/vr/java/src/org/chromium/chrome/browser/vr/VrModuleProvider.java",
@@ -117,7 +122,7 @@ specific_include_rules = {
     "+components/navigation_interception/android/java/src/org/chromium/components/navigation_interception",
     "+components/prefs/android/java/src/org/chromium/components/prefs/PrefService.java",
     "+components/security_state/content/android/java/src/org/chromium/components/security_state/SecurityStateModel.java",
-    "+components/sensitive_content/android/java/src/org/chromium/chrome/browser/sensitive_content/SensitiveContentClient.java",
+    "+components/sensitive_content/android/java/src/org/chromium/components/sensitive_content/SensitiveContentClient.java",
     "+components/user_prefs/android/java/src/org/chromium/components/user_prefs/UserPrefs.java",
     "+components/version_info/android",
   ],
@@ -135,7 +140,7 @@ specific_include_rules = {
     "+chrome/android/java/src/org/chromium/chrome/browser/display_cutout/DisplayCutoutTabHelper.java",
     "+chrome/browser/ui/android/pdf/java/src/org/chromium/chrome/browser/pdf/PdfUtils.java",
   ],
-  'TabArchiver\.java': [
+  'TabArchiverImpl\.java': [
     "+chrome/android/java/src/org/chromium/chrome/browser/app/tab_activity_glue/ReparentingTask.java",
     "+chrome/browser/tabmodel/android/java/src/org/chromium/chrome/browser/tabmodel/AsyncTabParamsManager.java",
     "+chrome/browser/tabmodel/android/java/src/org/chromium/chrome/browser/tabmodel/TabClosureParams.java",

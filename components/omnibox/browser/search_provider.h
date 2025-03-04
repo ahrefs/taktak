@@ -109,7 +109,11 @@ class SearchProvider : public BaseSearchProvider,
   FRIEND_TEST_ALL_PREFIXES(SearchProviderRequestTest,
                            SendRequestWithLensInteractionResponse);
   FRIEND_TEST_ALL_PREFIXES(SearchProviderRequestTest,
-                           SendRequestWithoutLensInteractionResponse);
+                           LensContextualSearchboxSuggestRequest);
+  FRIEND_TEST_ALL_PREFIXES(SearchProviderRequestTest,
+                           LensContextualSearchboxNoSuggestRequest);
+  FRIEND_TEST_ALL_PREFIXES(SearchProviderOTRTest, DoesNotSendSuggestRequest);
+  FRIEND_TEST_ALL_PREFIXES(SearchProviderOTRTest, SendSuggestRequestForLens);
 
   // Manages the providers (TemplateURLs) used by SearchProvider. Two providers
   // may be used:
@@ -243,13 +247,6 @@ class SearchProvider : public BaseSearchProvider,
 
   // Stops |loader| if it's running.  This includes resetting the unique_ptr.
   void CancelLoader(std::unique_ptr<network::SimpleURLLoader>* loader);
-
-  // Returns true when the current query can be sent to at least one suggest
-  // service.  This will be false for example when suggest is disabled.  In
-  // the process, calculates whether the query may contain potentially
-  // private data and stores the result in |is_query_private|; such queries
-  // should not be sent to the default search engine.
-  bool IsQuerySuitableForSuggest(bool* query_is_private) const;
 
   // Returns true if sending the query to a suggest server may leak sensitive
   // information (and hence the suggest request shouldn't be sent).  In

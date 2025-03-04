@@ -288,6 +288,11 @@ class NetworkErrorLoggingServiceImpl : public NetworkErrorLoggingService {
     return reporting_service_;
   }
 
+  void LoadPoliciesForTesting(std::vector<NelPolicy> policies) override {
+    started_loading_policies_ = true;
+    OnPoliciesLoaded(policies);
+  }
+
  private:
   // Map from (NAK, origin) to owned policy.
   using PolicyMap = std::map<NelPolicyKey, NelPolicy>;
@@ -951,6 +956,17 @@ NetworkErrorLoggingService::RequestDetails::RequestDetails() = default;
 NetworkErrorLoggingService::RequestDetails::RequestDetails(
     const RequestDetails& other) = default;
 
+NetworkErrorLoggingService::RequestDetails::RequestDetails(
+    RequestDetails&& other) = default;
+
+NetworkErrorLoggingService::RequestDetails&
+NetworkErrorLoggingService::RequestDetails::operator=(
+    const RequestDetails& other) = default;
+
+NetworkErrorLoggingService::RequestDetails&
+NetworkErrorLoggingService::RequestDetails::operator=(RequestDetails&& other) =
+    default;
+
 NetworkErrorLoggingService::RequestDetails::~RequestDetails() = default;
 
 NetworkErrorLoggingService::SignedExchangeReportDetails::
@@ -959,6 +975,17 @@ NetworkErrorLoggingService::SignedExchangeReportDetails::
 NetworkErrorLoggingService::SignedExchangeReportDetails::
     SignedExchangeReportDetails(const SignedExchangeReportDetails& other) =
         default;
+
+NetworkErrorLoggingService::SignedExchangeReportDetails::
+    SignedExchangeReportDetails(SignedExchangeReportDetails&& other) = default;
+
+NetworkErrorLoggingService::SignedExchangeReportDetails&
+NetworkErrorLoggingService::SignedExchangeReportDetails::operator=(
+    const SignedExchangeReportDetails& other) = default;
+
+NetworkErrorLoggingService::SignedExchangeReportDetails&
+NetworkErrorLoggingService::SignedExchangeReportDetails::operator=(
+    SignedExchangeReportDetails&& other) = default;
 
 NetworkErrorLoggingService::SignedExchangeReportDetails::
     ~SignedExchangeReportDetails() = default;
@@ -1042,6 +1069,12 @@ NetworkErrorLoggingService::GetPersistentNelStoreForTesting() {
 ReportingService* NetworkErrorLoggingService::GetReportingServiceForTesting() {
   NOTIMPLEMENTED();
   return nullptr;
+}
+
+void NetworkErrorLoggingService::LoadPoliciesForTesting(
+    std::vector<NetworkErrorLoggingService::NelPolicy> policies) {
+  NOTIMPLEMENTED();
+  return;
 }
 
 NetworkErrorLoggingService::NetworkErrorLoggingService()

@@ -4,6 +4,7 @@
 
 #include "third_party/blink/renderer/core/paint/pre_paint_tree_walk.h"
 
+#include "base/debug/dump_without_crashing.h"
 #include "base/types/optional_util.h"
 #include "third_party/blink/renderer/core/dom/document_lifecycle.h"
 #include "third_party/blink/renderer/core/editing/frame_selection.h"
@@ -20,6 +21,7 @@
 #include "third_party/blink/renderer/core/layout/inline/inline_cursor.h"
 #include "third_party/blink/renderer/core/layout/layout_box_model_object.h"
 #include "third_party/blink/renderer/core/layout/layout_embedded_content.h"
+#include "third_party/blink/renderer/core/layout/layout_html_canvas.h"
 #include "third_party/blink/renderer/core/layout/layout_multi_column_flow_thread.h"
 #include "third_party/blink/renderer/core/layout/layout_shift_tracker.h"
 #include "third_party/blink/renderer/core/layout/layout_view.h"
@@ -28,6 +30,7 @@
 #include "third_party/blink/renderer/core/page/chrome_client.h"
 #include "third_party/blink/renderer/core/page/link_highlight.h"
 #include "third_party/blink/renderer/core/page/page.h"
+#include "third_party/blink/renderer/core/paint/clip_path_clipper.h"
 #include "third_party/blink/renderer/core/paint/object_paint_invalidator.h"
 #include "third_party/blink/renderer/core/paint/paint_layer.h"
 #include "third_party/blink/renderer/core/paint/paint_property_tree_printer.h"
@@ -188,8 +191,7 @@ bool HasBlockingEventHandlerHelper(const LocalFrame& frame,
         registry.EventHandlerTargets(EventHandlerRegistry::kWheelEventBlocking);
     return blocking->Contains(&target);
   }
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 bool HasBlockingEventHandlerHelper(const LayoutObject& object,
@@ -266,10 +268,6 @@ void PrePaintTreeWalk::InvalidatePaintForHitTesting(
   context.paint_invalidator_context.painting_layer->SetNeedsRepaint();
   // We record hit test data when the painting layer repaints. No need to
   // invalidate the display item client.
-  if (!RuntimeEnabledFeatures::HitTestOpaquenessEnabled()) {
-    ObjectPaintInvalidator(object).InvalidateDisplayItemClient(
-        object, PaintInvalidationReason::kHitTest);
-  }
 }
 
 bool PrePaintTreeWalk::NeedsTreeBuilderContextUpdate(
@@ -343,7 +341,7 @@ void PrePaintTreeWalk::CheckTreeBuilderContextState(
   DCHECK(!object.DescendantNeedsPaintPropertyUpdate());
   DCHECK(!object.DescendantShouldCheckLayoutForPaintInvalidation());
   DCHECK(!object.ShouldCheckLayoutForPaintInvalidation());
-  NOTREACHED_IN_MIGRATION() << "Unknown reason.";
+  NOTREACHED() << "Unknown reason.";
 }
 #endif
 
@@ -481,11 +479,9 @@ FragmentData* PrePaintTreeWalk::GetOrCreateFragmentData(
   }
 
   if (allow_update) {
-    fragment_data->SetFragmentID(pre_paint_info.fragmentainer_idx);
     if (needs_paint_properties)
       fragment_data->EnsurePaintProperties();
   } else {
-    DCHECK_EQ(fragment_data->FragmentID(), pre_paint_info.fragmentainer_idx);
     DCHECK(!needs_paint_properties || fragment_data->PaintProperties());
   }
 
@@ -1379,6 +1375,10 @@ void PrePaintTreeWalk::Walk(const LayoutObject& object,
   // Early out from the tree walk if possible.
   if (!needs_tree_builder_context_update && !ObjectRequiresPrePaint(object) &&
       !ContextRequiresChildPrePaint(parent_context)) {
+    if (!ClipPathClipper::ClipPathStatusResolved(object)) {
+      // crbug.com/374656290: Convert to CHECK or DCHECK when fix is confirmed.
+      base::debug::DumpWithoutCrashing();
+    }
     return;
   }
 

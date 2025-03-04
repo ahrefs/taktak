@@ -51,7 +51,7 @@ namespace updater {
 namespace {
 
 std::wstring GetCOMGroup(const std::wstring& prefix, UpdaterScope scope) {
-  return base::StrCat({prefix, base::ASCIIToWide(UpdaterScopeToString(scope))});
+  return base::StrCat({prefix, base::UTF8ToWide(UpdaterScopeToString(scope))});
 }
 
 std::wstring COMGroup(UpdaterScope scope) {
@@ -164,9 +164,9 @@ bool AddSwapGoogleUpdateWorkItems(UpdaterScope scope,
   list->AddSetRegValueWorkItem(
       root, GetAppClientStateKey(kLegacyGoogleUpdateAppID), KEY_WOW64_32KEY,
       kRegValuePV, kUpdaterVersionUtf16, true);
-  list->AddSetRegValueWorkItem(
-      root, google_update_appid_key, KEY_WOW64_32KEY, kRegValueName,
-      base::ASCIIToWide(PRODUCT_FULLNAME_STRING), true);
+  list->AddSetRegValueWorkItem(root, google_update_appid_key, KEY_WOW64_32KEY,
+                               kRegValueName,
+                               base::UTF8ToWide(PRODUCT_FULLNAME_STRING), true);
   list->AddSetRegValueWorkItem(
       root, UPDATER_KEY, KEY_WOW64_32KEY, kRegValueUninstallCmdLine,
       [scope, &updater_path] {
@@ -228,19 +228,6 @@ bool UninstallGoogleUpdate(UpdaterScope scope) {
 
 }  // namespace
 
-HRESULT IsCOMCallerAllowed() {
-  if (!IsSystemInstall()) {
-    return S_OK;
-  }
-
-  ASSIGN_OR_RETURN(const bool result, IsCOMCallerAdmin(), [](HRESULT error) {
-    LOG(ERROR) << "IsCOMCallerAdmin failed: " << std::hex << error;
-    return error;
-  });
-
-  return result ? S_OK : E_ACCESSDENIED;
-}
-
 scoped_refptr<App> MakeAppServer() {
   return GetAppServerWinInstance();
 }
@@ -254,8 +241,7 @@ scoped_refptr<AppServerWin> GetAppServerWinInstance() {
 
 AppServerWin::AppServerWin() = default;
 AppServerWin::~AppServerWin() {
-  NOTREACHED_IN_MIGRATION();  // The instance of this class is a leaky
-                              // singleton.
+  NOTREACHED();  // The instance of this class is a leaky singleton.
 }
 
 void AppServerWin::PostRpcTask(base::OnceClosure task) {

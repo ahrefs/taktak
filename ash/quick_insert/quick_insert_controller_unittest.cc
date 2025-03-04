@@ -15,6 +15,7 @@
 #include "ash/clipboard/test_support/mock_clipboard_history_controller.h"
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_pref_names.h"
+#include "ash/public/cpp/ash_prefs.h"
 #include "ash/public/cpp/clipboard_history_controller.h"
 #include "ash/public/cpp/system/toast_manager.h"
 #include "ash/public/cpp/test/test_new_window_delegate.h"
@@ -29,16 +30,20 @@
 #include "ash/quick_insert/views/quick_insert_search_bar_textfield.h"
 #include "ash/quick_insert/views/quick_insert_search_field_view.h"
 #include "ash/quick_insert/views/quick_insert_view.h"
+#include "ash/session/session_controller_impl.h"
 #include "ash/shell.h"
 #include "ash/test/ash_test_base.h"
 #include "ash/test/test_widget_builder.h"
 #include "ash/test/view_drawn_waiter.h"
+#include "base/files/scoped_temp_dir.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/scoped_observation.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/mock_callback.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/test_future.h"
+#include "components/history/core/browser/history_service.h"
+#include "components/history/core/test/history_service_test_util.h"
 #include "components/metrics/structured/structured_events.h"
 #include "components/metrics/structured/test/test_structured_metrics_recorder.h"
 #include "components/prefs/pref_registry_simple.h"
@@ -151,29 +156,31 @@ class MockNewWindowDelegate : public TestNewWindowDelegate {
   MOCK_METHOD(void, OpenFile, (const base::FilePath& file_path), (override));
 };
 
-// A PickerClient implementation used for testing.
+// A QuickInsertClient implementation used for testing.
 // Automatically sets itself as the client when it's created, and unsets itself
 // when it's destroyed.
-class TestPickerClient : public MockPickerClient {
+class TestQuickInsertClient : public MockQuickInsertClient {
  public:
-  TestPickerClient(PickerController* controller,
-                   sync_preferences::TestingPrefServiceSyncable* prefs)
-      : controller_(controller), prefs_(prefs) {
+  TestQuickInsertClient(QuickInsertController* controller, PrefService* prefs)
+      : controller_(controller) {
     controller_->SetClient(this);
+    CHECK(history_dir_.CreateUniqueTempDir());
+    history_service_ =
+        history::CreateHistoryService(history_dir_.GetPath(), true);
     // Set default behaviours. These can be overridden with `WillOnce` and
     // `WillRepeatedly`.
     ON_CALL(*this, GetSharedURLLoaderFactory)
         .WillByDefault(
             base::MakeRefCounted<network::TestSharedURLLoaderFactory>);
-    ON_CALL(*this, GetPrefs).WillByDefault(Return(prefs_));
+    ON_CALL(*this, GetHistoryService)
+        .WillByDefault(Return(history_service_.get()));
   }
-  ~TestPickerClient() override { controller_->SetClient(nullptr); }
-
-  PrefRegistrySimple* registry() { return prefs_->registry(); }
+  ~TestQuickInsertClient() override { controller_->SetClient(nullptr); }
 
  private:
-  raw_ptr<PickerController> controller_ = nullptr;
-  raw_ptr<sync_preferences::TestingPrefServiceSyncable> prefs_ = nullptr;
+  raw_ptr<QuickInsertController> controller_ = nullptr;
+  base::ScopedTempDir history_dir_;
+  std::unique_ptr<history::HistoryService> history_service_;
 };
 
 class QuickInsertControllerTest : public AshTestBase {
@@ -183,11 +190,11 @@ class QuickInsertControllerTest : public AshTestBase {
 
   void SetUp() override {
     AshTestBase::SetUp();
-    controller_ = std::make_unique<PickerController>();
-    client_ = std::make_unique<NiceMock<TestPickerClient>>(controller_.get(),
-                                                           &prefs_);
-    prefs_.registry()->RegisterDictionaryPref(prefs::kEmojiPickerHistory);
-    PickerSessionMetrics::RegisterProfilePrefs(prefs_.registry());
+    controller_ = std::make_unique<QuickInsertController>();
+    client_ = std::make_unique<NiceMock<TestQuickInsertClient>>(
+        controller_.get(), prefs());
+    // Disable the feature tour by default.
+    prefs()->SetBoolean(prefs::kQuickInsertFeatureTourCompletedPref, true);
     metrics_recorder_ =
         std::make_unique<metrics::structured::TestStructuredMetricsRecorder>();
     metrics_recorder_->Initialize();
@@ -204,11 +211,13 @@ class QuickInsertControllerTest : public AshTestBase {
     return new_window_delegate_;
   }
 
-  PickerController& controller() { return *controller_; }
+  QuickInsertController& controller() { return *controller_; }
 
-  NiceMock<TestPickerClient>& client() { return *client_; }
+  NiceMock<TestQuickInsertClient>& client() { return *client_; }
 
-  sync_preferences::TestingPrefServiceSyncable& prefs() { return prefs_; }
+  PrefService* prefs() {
+    return Shell::Get()->session_controller()->GetPrimaryUserPrefService();
+  }
 
   metrics::structured::TestStructuredMetricsRecorder& metrics_recorder() {
     return *metrics_recorder_;
@@ -216,9 +225,8 @@ class QuickInsertControllerTest : public AshTestBase {
 
  private:
   MockNewWindowDelegate new_window_delegate_;
-  sync_preferences::TestingPrefServiceSyncable prefs_;
-  std::unique_ptr<PickerController> controller_;
-  std::unique_ptr<NiceMock<TestPickerClient>> client_;
+  std::unique_ptr<QuickInsertController> controller_;
+  std::unique_ptr<NiceMock<TestQuickInsertClient>> client_;
   std::unique_ptr<metrics::structured::TestStructuredMetricsRecorder>
       metrics_recorder_;
 };
@@ -302,7 +310,7 @@ TEST_F(QuickInsertControllerTest, ToggleWidgetShowsWidgetIfOpenedThenClosed) {
 }
 
 TEST_F(QuickInsertControllerTest, ToggleWidgetShowsFeatureTourForFirstTime) {
-  PickerFeatureTour::RegisterProfilePrefs(client().registry());
+  prefs()->SetBoolean(prefs::kQuickInsertFeatureTourCompletedPref, false);
   controller().ToggleWidget();
 
   EXPECT_TRUE(controller().feature_tour_for_testing().widget_for_testing());
@@ -316,7 +324,7 @@ TEST_F(QuickInsertControllerTest,
   ASSERT_EQ(focus_controller->GetFocusedWindow(), nullptr);
 
   // Show the feature tour.
-  PickerFeatureTour::RegisterProfilePrefs(client().registry());
+  prefs()->SetBoolean(prefs::kQuickInsertFeatureTourCompletedPref, false);
   controller().ToggleWidget();
   auto& feature_tour = controller().feature_tour_for_testing();
   views::test::WidgetVisibleWaiter(feature_tour.widget_for_testing()).Wait();
@@ -334,13 +342,13 @@ TEST_F(QuickInsertControllerTest,
             controller().widget_for_testing()->GetNativeWindow());
   EXPECT_EQ(focus_controller->GetFocusedWindow(),
             controller().widget_for_testing()->GetNativeWindow());
-  auto* view = views::AsViewClass<PickerView>(
+  auto* view = views::AsViewClass<QuickInsertView>(
       controller().widget_for_testing()->widget_delegate()->GetContentsView());
   ASSERT_NE(view, nullptr);
   EXPECT_TRUE(
       view->search_field_view_for_testing().textfield_for_testing().HasFocus());
 
-  // Dismiss Picker.
+  // Dismiss Quick Insert.
   PressAndReleaseKey(ui::KeyboardCode::VKEY_ESCAPE, ui::EF_NONE);
   views::test::WidgetDestroyedWaiter(controller().widget_for_testing()).Wait();
   EXPECT_EQ(focus_controller->GetActiveWindow(), nullptr);
@@ -350,7 +358,7 @@ TEST_F(QuickInsertControllerTest,
 TEST_F(QuickInsertControllerTest,
        ToggleWidgetShowsWidgetAfterCompletingFeatureTourWithoutFocus) {
   std::unique_ptr<views::Widget> test_widget =
-      ash::TestWidgetBuilder()
+      TestWidgetBuilder()
           .SetWidgetType(views::Widget::InitParams::TYPE_WINDOW_FRAMELESS)
           .SetShow(true)
           .BuildClientOwnsWidget();
@@ -361,7 +369,7 @@ TEST_F(QuickInsertControllerTest,
             test_widget->GetNativeWindow());
 
   // Show the feature tour.
-  PickerFeatureTour::RegisterProfilePrefs(client().registry());
+  prefs()->SetBoolean(prefs::kQuickInsertFeatureTourCompletedPref, false);
   controller().ToggleWidget();
   auto& feature_tour = controller().feature_tour_for_testing();
   views::test::WidgetVisibleWaiter(feature_tour.widget_for_testing()).Wait();
@@ -379,13 +387,13 @@ TEST_F(QuickInsertControllerTest,
             controller().widget_for_testing()->GetNativeWindow());
   EXPECT_EQ(focus_controller->GetFocusedWindow(),
             controller().widget_for_testing()->GetNativeWindow());
-  auto* view = views::AsViewClass<PickerView>(
+  auto* view = views::AsViewClass<QuickInsertView>(
       controller().widget_for_testing()->widget_delegate()->GetContentsView());
   ASSERT_NE(view, nullptr);
   EXPECT_TRUE(
       view->search_field_view_for_testing().textfield_for_testing().HasFocus());
 
-  // Dismiss Picker.
+  // Dismiss Quick Insert.
   PressAndReleaseKey(ui::KeyboardCode::VKEY_ESCAPE, ui::EF_NONE);
   views::test::WidgetDestroyedWaiter(controller().widget_for_testing()).Wait();
   EXPECT_EQ(focus_controller->GetActiveWindow(),
@@ -397,7 +405,7 @@ TEST_F(QuickInsertControllerTest,
 TEST_F(QuickInsertControllerTest,
        ToggleWidgetShowsWidgetAfterCompletingFeatureTourWithFocus) {
   std::unique_ptr<views::Widget> textfield_widget =
-      ash::TestWidgetBuilder()
+      TestWidgetBuilder()
           .SetWidgetType(views::Widget::InitParams::TYPE_WINDOW_FRAMELESS)
           .SetShow(true)
           .BuildClientOwnsWidget();
@@ -413,7 +421,7 @@ TEST_F(QuickInsertControllerTest,
   ASSERT_TRUE(textfield->HasFocus());
 
   // Show the feature tour.
-  PickerFeatureTour::RegisterProfilePrefs(client().registry());
+  prefs()->SetBoolean(prefs::kQuickInsertFeatureTourCompletedPref, false);
   controller().ToggleWidget();
   auto& feature_tour = controller().feature_tour_for_testing();
   views::test::WidgetVisibleWaiter(feature_tour.widget_for_testing()).Wait();
@@ -433,13 +441,13 @@ TEST_F(QuickInsertControllerTest,
   EXPECT_EQ(focus_controller->GetFocusedWindow(),
             controller().widget_for_testing()->GetNativeWindow());
   EXPECT_FALSE(textfield->HasFocus());
-  auto* view = views::AsViewClass<PickerView>(
+  auto* view = views::AsViewClass<QuickInsertView>(
       controller().widget_for_testing()->widget_delegate()->GetContentsView());
   ASSERT_NE(view, nullptr);
   EXPECT_TRUE(
       view->search_field_view_for_testing().textfield_for_testing().HasFocus());
 
-  // Dismiss Picker.
+  // Dismiss Quick Insert.
   PressAndReleaseKey(ui::KeyboardCode::VKEY_ESCAPE, ui::EF_NONE);
   views::test::WidgetDestroyedWaiter(controller().widget_for_testing()).Wait();
   EXPECT_EQ(focus_controller->GetActiveWindow(),
@@ -450,7 +458,7 @@ TEST_F(QuickInsertControllerTest,
 }
 
 TEST_F(QuickInsertControllerTest, ToggleWidgetOpensUrlAfterLearnMore) {
-  PickerFeatureTour::RegisterProfilePrefs(client().registry());
+  prefs()->SetBoolean(prefs::kQuickInsertFeatureTourCompletedPref, false);
   controller().ToggleWidget();
   auto& feature_tour = controller().feature_tour_for_testing();
   views::test::WidgetVisibleWaiter(feature_tour.widget_for_testing()).Wait();
@@ -584,13 +592,13 @@ TEST_F(QuickInsertControllerTest,
       input_method,
       {.type = ui::TEXT_INPUT_TYPE_TEXT, .can_insert_image = false});
   input_method->SetFocusedTextInputClient(&input_field);
-  task_environment()->FastForwardBy(PickerController::kInsertMediaTimeout);
+  task_environment()->FastForwardBy(QuickInsertController::kInsertMediaTimeout);
 
   EXPECT_EQ(
       ReadHtmlFromClipboard(ui::Clipboard::GetForCurrentThread()),
       uR"html(<img src="http://foo.com/" referrerpolicy="no-referrer" alt="a gif" width="60" height="40"/>)html");
   EXPECT_TRUE(
-      ash::ToastManager::Get()->IsToastShown("picker_copy_to_clipboard"));
+      ToastManager::Get()->IsToastShown("quick_insert_copy_to_clipboard"));
 }
 
 TEST_F(QuickInsertControllerTest,
@@ -840,7 +848,7 @@ TEST_F(QuickInsertControllerTest, ShowEditorCallsCallbackFromClient) {
 
 TEST_F(QuickInsertControllerTest, ShowLobsterCallsCallbackFromClient) {
   base::test::TestFuture<std::optional<std::string>> show_lobster_future;
-  EXPECT_CALL(client(), GetShowLobsterCallback)
+  EXPECT_CALL(client(), CacheLobsterContext)
       .WillOnce(Return(show_lobster_future.GetCallback()));
 
   controller().ToggleWidget();
@@ -851,15 +859,10 @@ TEST_F(QuickInsertControllerTest, ShowLobsterCallsCallbackFromClient) {
 
 TEST_F(QuickInsertControllerTest,
        GetResultsForCategoryReturnsEmptyForEmptyResults) {
-  base::test::TestFuture<std::vector<PickerSearchResultsSection>> future;
-  EXPECT_CALL(client(), GetSuggestedLinkResults)
-      .WillRepeatedly([](size_t max_results,
-                         TestPickerClient::SuggestedLinksCallback callback) {
-        std::move(callback).Run({});
-      });
+  base::test::TestFuture<std::vector<QuickInsertSearchResultsSection>> future;
 
   controller().ToggleWidget();
-  controller().GetResultsForCategory(PickerCategory::kLinks,
+  controller().GetResultsForCategory(QuickInsertCategory::kLinks,
                                      future.GetRepeatingCallback());
 
   EXPECT_THAT(future.Take(), IsEmpty());
@@ -878,7 +881,7 @@ TEST_F(QuickInsertControllerTest,
   controller().ToggleWidget();
 
   EXPECT_THAT(controller().GetAvailableCategories(),
-              Contains(PickerCategory::kEditorWrite));
+              Contains(QuickInsertCategory::kEditorWrite));
 }
 
 TEST_F(QuickInsertControllerTest,
@@ -889,7 +892,7 @@ TEST_F(QuickInsertControllerTest,
   controller().ToggleWidget();
 
   EXPECT_THAT(controller().GetAvailableCategories(),
-              Not(Contains(PickerCategory::kEditorWrite)));
+              Not(Contains(QuickInsertCategory::kEditorWrite)));
 }
 
 TEST_F(QuickInsertControllerTest, SuggestedEmojiReturnsDefaultEmojisWhenEmpty) {
@@ -909,7 +912,7 @@ TEST_F(QuickInsertControllerTest,
   base::Value::List history_value;
   history_value.Append(base::Value::Dict().Set("text", "abc"));
   history_value.Append(base::Value::Dict().Set("text", "xyz"));
-  ScopedDictPrefUpdate update(client().GetPrefs(), prefs::kEmojiPickerHistory);
+  ScopedDictPrefUpdate update(prefs(), prefs::kEmojiPickerHistory);
   update->Set("emoji", std::move(history_value));
 
   controller().ToggleWidget();
@@ -927,7 +930,7 @@ TEST_F(QuickInsertControllerTest, AddsNewRecentEmoji) {
   base::Value::List history_value;
   history_value.Append(base::Value::Dict().Set("text", "abc"));
   history_value.Append(base::Value::Dict().Set("text", "xyz"));
-  ScopedDictPrefUpdate update(client().GetPrefs(), prefs::kEmojiPickerHistory);
+  ScopedDictPrefUpdate update(prefs(), prefs::kEmojiPickerHistory);
   update->Set("emoji", std::move(history_value));
 
   controller().ToggleWidget();
@@ -947,7 +950,7 @@ TEST_F(QuickInsertControllerTest, AddsExistingRecentEmoji) {
   base::Value::List history_value;
   history_value.Append(base::Value::Dict().Set("text", "abc"));
   history_value.Append(base::Value::Dict().Set("text", "xyz"));
-  ScopedDictPrefUpdate update(client().GetPrefs(), prefs::kEmojiPickerHistory);
+  ScopedDictPrefUpdate update(prefs(), prefs::kEmojiPickerHistory);
   update->Set("emoji", std::move(history_value));
 
   controller().ToggleWidget();
@@ -1053,7 +1056,7 @@ TEST_F(QuickInsertControllerTest,
       base::Value::Dict().Set("text", "symbol1").Set("timestamp", "15"));
   symbol_history_value.Append(
       base::Value::Dict().Set("text", "symbol2").Set("timestamp", "8"));
-  ScopedDictPrefUpdate update(client().GetPrefs(), prefs::kEmojiPickerHistory);
+  ScopedDictPrefUpdate update(prefs(), prefs::kEmojiPickerHistory);
   update->Set("emoji", std::move(emoji_history_value));
   update->Set("emoticon", std::move(emoticon_history_value));
   update->Set("symbol", std::move(symbol_history_value));
@@ -1070,7 +1073,8 @@ TEST_F(QuickInsertControllerTest,
 }
 
 TEST_F(QuickInsertControllerTest, SearchesCapsLockOnWhenCapsLockIsOff) {
-  base::test::TestFuture<std::vector<PickerSearchResultsSection>> search_future;
+  base::test::TestFuture<std::vector<QuickInsertSearchResultsSection>>
+      search_future;
 
   controller().ToggleWidget();
   controller().StartSearch(u"caps", /*category=*/{},
@@ -1078,14 +1082,15 @@ TEST_F(QuickInsertControllerTest, SearchesCapsLockOnWhenCapsLockIsOff) {
 
   EXPECT_THAT(search_future.Take(),
               Contains(Property(
-                  &PickerSearchResultsSection::results,
+                  &QuickInsertSearchResultsSection::results,
                   Contains(QuickInsertCapsLockResult(
                       /*enabled=*/true,
                       QuickInsertCapsLockResult::Shortcut::kAltLauncher)))));
 }
 
 TEST_F(QuickInsertControllerTest, SearchesCapsLockOffWhenCapsLockIsOn) {
-  base::test::TestFuture<std::vector<PickerSearchResultsSection>> search_future;
+  base::test::TestFuture<std::vector<QuickInsertSearchResultsSection>>
+      search_future;
   GetImeKeyboard()->SetCapsLockEnabled(true);
 
   controller().ToggleWidget();
@@ -1094,7 +1099,7 @@ TEST_F(QuickInsertControllerTest, SearchesCapsLockOffWhenCapsLockIsOn) {
 
   EXPECT_THAT(search_future.Take(),
               Contains(Property(
-                  &PickerSearchResultsSection::results,
+                  &QuickInsertSearchResultsSection::results,
                   Contains(QuickInsertCapsLockResult(
                       /*enabled=*/false,
                       QuickInsertCapsLockResult::Shortcut::kAltLauncher)))));
@@ -1107,12 +1112,12 @@ TEST_F(QuickInsertControllerTest,
   ui::FakeTextInputClient input_field(input_method,
                                       {.type = ui::TEXT_INPUT_TYPE_TEXT});
   input_method->SetFocusedTextInputClient(&input_field);
-  base::MockCallback<PickerController::SearchResultsCallback> callback;
+  base::MockCallback<QuickInsertController::SearchResultsCallback> callback;
 
   EXPECT_CALL(callback, Run(_)).Times(AnyNumber());
   EXPECT_CALL(callback,
               Run(Contains(Property(
-                  &PickerSearchResultsSection::results,
+                  &QuickInsertSearchResultsSection::results,
                   Contains(VariantWith<QuickInsertCaseTransformResult>(_))))))
       .Times(0);
 
@@ -1127,12 +1132,12 @@ TEST_F(QuickInsertControllerTest, SearchesCaseTransformWhenSelectedText) {
                                       {.type = ui::TEXT_INPUT_TYPE_TEXT});
   input_field.SetTextAndSelection(u"a", gfx::Range(0, 1));
   input_method->SetFocusedTextInputClient(&input_field);
-  base::MockCallback<PickerController::SearchResultsCallback> callback;
+  base::MockCallback<QuickInsertController::SearchResultsCallback> callback;
 
   EXPECT_CALL(callback, Run(_)).Times(AnyNumber());
   EXPECT_CALL(callback,
               Run(Contains(Property(
-                  &PickerSearchResultsSection::results,
+                  &QuickInsertSearchResultsSection::results,
                   Contains(VariantWith<QuickInsertCaseTransformResult>(
                       Field(&QuickInsertCaseTransformResult::type,
                             QuickInsertCaseTransformResult::kUpperCase)))))))
@@ -1159,48 +1164,51 @@ TEST_F(QuickInsertControllerTest, IsValidDuringWidgetClose) {
 
 TEST_F(QuickInsertControllerTest,
        ReturnsCapsLockPositionTopWhenCapsLockHasNotShownEnoughTimes) {
-  prefs().SetInteger(prefs::kPickerCapsLockDislayedCountPrefName, 4);
-  prefs().SetInteger(prefs::kPickerCapsLockSelectedCountPrefName, 0);
-  EXPECT_EQ(controller().GetCapsLockPosition(), PickerCapsLockPosition::kTop);
+  prefs()->SetInteger(prefs::kQuickInsertCapsLockDisplayedCountPrefName, 4);
+  prefs()->SetInteger(prefs::kQuickInsertLockSelectedCountPrefName, 0);
+  EXPECT_EQ(controller().GetCapsLockPosition(),
+            QuickInsertCapsLockPosition::kTop);
 }
 
 TEST_F(QuickInsertControllerTest,
        ReturnsCapsLockPositionTopWhenCapsLockIsAlwaysUsed) {
-  prefs().SetInteger(prefs::kPickerCapsLockDislayedCountPrefName, 15);
-  prefs().SetInteger(prefs::kPickerCapsLockSelectedCountPrefName, 14);
-  EXPECT_EQ(controller().GetCapsLockPosition(), PickerCapsLockPosition::kTop);
+  prefs()->SetInteger(prefs::kQuickInsertCapsLockDisplayedCountPrefName, 15);
+  prefs()->SetInteger(prefs::kQuickInsertLockSelectedCountPrefName, 14);
+  EXPECT_EQ(controller().GetCapsLockPosition(),
+            QuickInsertCapsLockPosition::kTop);
 }
 
 TEST_F(QuickInsertControllerTest,
        ReturnsCapsLockPositionMiddleWhenCapsLockIsSometimesUsed) {
-  prefs().SetInteger(prefs::kPickerCapsLockDislayedCountPrefName, 15);
-  prefs().SetInteger(prefs::kPickerCapsLockSelectedCountPrefName, 7);
+  prefs()->SetInteger(prefs::kQuickInsertCapsLockDisplayedCountPrefName, 15);
+  prefs()->SetInteger(prefs::kQuickInsertLockSelectedCountPrefName, 7);
   EXPECT_EQ(controller().GetCapsLockPosition(),
-            PickerCapsLockPosition::kMiddle);
+            QuickInsertCapsLockPosition::kMiddle);
 }
 
 TEST_F(QuickInsertControllerTest,
        ReturnsCapsLockPositionBottomWhenCapsLockIsNeverUsed) {
-  prefs().SetInteger(prefs::kPickerCapsLockDislayedCountPrefName, 15);
-  prefs().SetInteger(prefs::kPickerCapsLockSelectedCountPrefName, 0);
+  prefs()->SetInteger(prefs::kQuickInsertCapsLockDisplayedCountPrefName, 15);
+  prefs()->SetInteger(prefs::kQuickInsertLockSelectedCountPrefName, 0);
   EXPECT_EQ(controller().GetCapsLockPosition(),
-            PickerCapsLockPosition::kBottom);
+            QuickInsertCapsLockPosition::kBottom);
 }
 
 TEST_F(QuickInsertControllerTest,
        ReturnCapsLockPositionTopWhenCapsLockIsEnabled) {
-  prefs().SetInteger(prefs::kPickerCapsLockDislayedCountPrefName, 4);
-  prefs().SetInteger(prefs::kPickerCapsLockSelectedCountPrefName, 0);
+  prefs()->SetInteger(prefs::kQuickInsertCapsLockDisplayedCountPrefName, 4);
+  prefs()->SetInteger(prefs::kQuickInsertLockSelectedCountPrefName, 0);
   GetImeKeyboard()->SetCapsLockEnabled(true);
 
-  EXPECT_EQ(controller().GetCapsLockPosition(), PickerCapsLockPosition::kTop);
+  EXPECT_EQ(controller().GetCapsLockPosition(),
+            QuickInsertCapsLockPosition::kTop);
 }
 
 struct ActionTestCase {
   QuickInsertSearchResult result;
-  std::optional<PickerActionType> unfocused_action;
-  std::optional<PickerActionType> no_selection_action;
-  std::optional<PickerActionType> has_selection_action;
+  std::optional<QuickInsertActionType> unfocused_action;
+  std::optional<QuickInsertActionType> no_selection_action;
+  std::optional<QuickInsertActionType> has_selection_action;
 };
 
 class QuickInsertControllerActionTest
@@ -1251,23 +1259,23 @@ INSTANTIATE_TEST_SUITE_P(
     testing::ValuesIn<ActionTestCase>({
         {
             .result = QuickInsertTextResult(u""),
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
             .result = QuickInsertEmojiResult::Emoji(u""),
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
             .result = QuickInsertEmojiResult::Symbol(u""),
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
             .result = QuickInsertEmojiResult::Emoticon(u""),
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
             .result = QuickInsertClipboardResult(
@@ -1277,49 +1285,50 @@ INSTANTIATE_TEST_SUITE_P(
                 u"",
                 {},
                 false),
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
             .result = QuickInsertGifResult({}, {}, {}, {}, {}, u""),
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
             .result = QuickInsertBrowsingHistoryResult({}, u"", {}),
-            .unfocused_action = PickerActionType::kOpen,
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .unfocused_action = QuickInsertActionType::kOpen,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
             .result = QuickInsertLocalFileResult(u"", {}),
-            .unfocused_action = PickerActionType::kOpen,
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .unfocused_action = QuickInsertActionType::kOpen,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
             .result = QuickInsertDriveFileResult(std::nullopt, u"", {}, {}),
-            .unfocused_action = PickerActionType::kOpen,
-            .no_selection_action = PickerActionType::kInsert,
-            .has_selection_action = PickerActionType::kInsert,
+            .unfocused_action = QuickInsertActionType::kOpen,
+            .no_selection_action = QuickInsertActionType::kInsert,
+            .has_selection_action = QuickInsertActionType::kInsert,
         },
         {
-            .result = QuickInsertCategoryResult(PickerCategory::kEmojisGifs),
-            .unfocused_action = PickerActionType::kDo,
-            .no_selection_action = PickerActionType::kDo,
-            .has_selection_action = PickerActionType::kDo,
+            .result =
+                QuickInsertCategoryResult(QuickInsertCategory::kEmojisGifs),
+            .unfocused_action = QuickInsertActionType::kDo,
+            .no_selection_action = QuickInsertActionType::kDo,
+            .has_selection_action = QuickInsertActionType::kDo,
         },
         {
-            .result = QuickInsertCategoryResult(PickerCategory::kEmojis),
-            .unfocused_action = PickerActionType::kDo,
-            .no_selection_action = PickerActionType::kDo,
-            .has_selection_action = PickerActionType::kDo,
+            .result = QuickInsertCategoryResult(QuickInsertCategory::kEmojis),
+            .unfocused_action = QuickInsertActionType::kDo,
+            .no_selection_action = QuickInsertActionType::kDo,
+            .has_selection_action = QuickInsertActionType::kDo,
         },
         {
             .result = QuickInsertSearchRequestResult(u"", u"", {}),
-            .unfocused_action = PickerActionType::kDo,
-            .no_selection_action = PickerActionType::kDo,
-            .has_selection_action = PickerActionType::kDo,
+            .unfocused_action = QuickInsertActionType::kDo,
+            .no_selection_action = QuickInsertActionType::kDo,
+            .has_selection_action = QuickInsertActionType::kDo,
         },
         {
             .result =
@@ -1327,14 +1336,14 @@ INSTANTIATE_TEST_SUITE_P(
                                         u"",
                                         {},
                                         {}),
-            .unfocused_action = PickerActionType::kCreate,
-            .no_selection_action = PickerActionType::kCreate,
-            .has_selection_action = PickerActionType::kCreate,
+            .unfocused_action = QuickInsertActionType::kCreate,
+            .no_selection_action = QuickInsertActionType::kCreate,
+            .has_selection_action = QuickInsertActionType::kCreate,
         },
         {
             .result = QuickInsertNewWindowResult(
                 QuickInsertNewWindowResult::Type::kDoc),
-            .unfocused_action = PickerActionType::kDo,
+            .unfocused_action = QuickInsertActionType::kDo,
         },
     }));
 

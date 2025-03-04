@@ -17,11 +17,13 @@ DawnAHardwareBufferImageRepresentation::DawnAHardwareBufferImageRepresentation(
     AndroidImageBacking* backing,
     MemoryTypeTracker* tracker,
     wgpu::Device device,
+    wgpu::BackendType backend_type,
     wgpu::TextureFormat format,
     std::vector<wgpu::TextureFormat> view_formats,
     AHardwareBuffer* buffer)
     : DawnImageRepresentation(manager, backing, tracker),
       device_(std::move(device)),
+      backend_type_(backend_type),
       format_(format),
       view_formats_(std::move(view_formats)) {
   DCHECK(device_);
@@ -81,7 +83,9 @@ wgpu::Texture DawnAHardwareBufferImageRepresentation::BeginAccess(
   // TODO(crbug.com/327111284): Track layouts correctly.
   begin_layout.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   begin_layout.newLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  begin_access_desc.nextInChain = &begin_layout;
+  if (backend_type_ == wgpu::BackendType::Vulkan) {
+    begin_access_desc.nextInChain = &begin_layout;
+  }
 
   wgpu::SharedFence shared_fence;
   // Pass 1 as the signaled value for the binary semaphore
@@ -91,7 +95,7 @@ wgpu::Texture DawnAHardwareBufferImageRepresentation::BeginAccess(
   // If the semaphore from BeginWrite is valid then pass it to
   // SharedTextureMemory::BeginAccess() below.
   if (sync_fd.is_valid()) {
-    wgpu::SharedFenceVkSemaphoreSyncFDDescriptor sync_fd_desc;
+    wgpu::SharedFenceSyncFDDescriptor sync_fd_desc;
     // NOTE: There is no ownership transfer here, as Dawn internally dup()s the
     // passed-in handle.
     sync_fd_desc.handle = sync_fd.get();
@@ -158,7 +162,9 @@ void DawnAHardwareBufferImageRepresentation::EndAccess() {
 
   wgpu::SharedTextureMemoryEndAccessState end_access_desc = {};
   wgpu::SharedTextureMemoryVkImageLayoutEndState end_layout{};
-  end_access_desc.nextInChain = &end_layout;
+  if (backend_type_ == wgpu::BackendType::Vulkan) {
+    end_access_desc.nextInChain = &end_layout;
+  }
 
   if (shared_texture_memory_.EndAccess(texture_, &end_access_desc) !=
       wgpu::Status::Success) {
@@ -171,7 +177,7 @@ void DawnAHardwareBufferImageRepresentation::EndAccess() {
   }
 
   wgpu::SharedFenceExportInfo export_info;
-  wgpu::SharedFenceVkSemaphoreSyncFDExportInfo sync_fd_export_info;
+  wgpu::SharedFenceSyncFDExportInfo sync_fd_export_info;
   export_info.nextInChain = &sync_fd_export_info;
 
   // Note: Dawn may export zero fences if there were no begin fences,

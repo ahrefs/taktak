@@ -29,7 +29,7 @@ class TestInfoBarDelegate : public infobars::InfoBarDelegate {
 
 class InfoBarViewTest : public BrowserWithTestWindowTest {
  public:
-  InfoBarViewTest() {}
+  InfoBarViewTest() = default;
 
   InfoBarViewTest(const InfoBarViewTest&) = delete;
   InfoBarViewTest& operator=(const InfoBarViewTest&) = delete;
@@ -96,7 +96,7 @@ class InfoBarViewTest : public BrowserWithTestWindowTest {
 };
 
 TEST_F(InfoBarViewTest, AlertAccessibleEvent) {
-  views::test::AXEventCounter counter(views::AXEventManager::Get());
+  views::test::AXEventCounter counter(views::AXUpdateNotifier::Get());
   EXPECT_EQ(0, counter.GetCount(ax::mojom::Event::kAlert));
   TestInfoBarDelegate::Create(infobar_manager());
   EXPECT_EQ(1, counter.GetCount(ax::mojom::Event::kAlert));

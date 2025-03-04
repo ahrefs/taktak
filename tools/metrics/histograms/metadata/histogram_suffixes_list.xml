@@ -26,8 +26,6 @@ chromium-metrics-reviews@google.com.
   <suffix name="Addresses" label="Address suggestions."/>
   <suffix name="CreditCards" label="Payment suggestions."/>
   <suffix name="Passwords" label="Password suggestions and generation."/>
-  <affected-histogram
-      name="KeyboardAccessory.AccessorySheetSuggestionsSelected"/>
   <affected-histogram name="KeyboardAccessory.AccessorySheetTriggered"/>
 </histogram_suffixes>
 
@@ -57,6 +55,7 @@ chromium-metrics-reviews@google.com.
       label="Chrome starts up with intent to ChromeTabbedActivity"/>
   <suffix name="WebApk" label="Chrome starts up with intent to WebApkActivity"/>
   <affected-histogram name="Startup.Android.Cold.TimeToFirstContentfulPaint"/>
+  <affected-histogram name="Startup.Android.Cold.TimeToFirstContentfulPaint3"/>
   <affected-histogram name="Startup.Android.Cold.TimeToFirstNavigationCommit"/>
 </histogram_suffixes>
 
@@ -224,6 +223,7 @@ chromium-metrics-reviews@google.com.
   <suffix name="chrome" label="Chrome Module"/>
   <suffix name="dev_ui" label="Developer UI Module"/>
   <suffix name="feedv2" label="Feed V2 Module"/>
+  <suffix name="google3" label="Google3 Module"/>
   <suffix name="image_editor" label="Image Editor Module"/>
   <suffix name="read_aloud_playback" label="Read Aloud Playback Module"/>
   <suffix name="stack_unwinder" label="Stack Unwinder Module"/>
@@ -233,6 +233,9 @@ chromium-metrics-reviews@google.com.
   <suffix name="vr" label="Virtual Reality Module"/>
   <affected-histogram name="Android.IsolatedSplits.ClassLoaderReplaced"/>
   <affected-histogram name="Android.IsolatedSplits.ContextCreateTime"/>
+  <affected-histogram name="Android.IsolatedSplits.ContextCreateTime2"/>
+  <affected-histogram name="Android.IsolatedSplits.ContextCreateTime3"/>
+  <affected-histogram name="Android.IsolatedSplits.LoadFirstClassTime"/>
   <affected-histogram name="Android.IsolatedSplits.PreloadWaitTime"/>
 </histogram_suffixes>
 
@@ -332,13 +335,6 @@ chromium-metrics-reviews@google.com.
   <affected-histogram name="Autofill.DaysSinceLastUse.StoredCreditCard"/>
   <affected-histogram name="Autofill.StoredCreditCardCount"/>
   <affected-histogram name="Autofill.StoredCreditCardDisusedCount"/>
-</histogram_suffixes>
-
-<histogram_suffixes name="AutofillFrame" separator=".">
-  <suffix name="IsInIFrame" label="form is in an iframe"/>
-  <suffix name="IsInMainFrame" label="form is in the main frame"/>
-  <affected-histogram name="Autofill.FormEvents.Address"/>
-  <affected-histogram name="Autofill.FormEvents.CreditCard"/>
 </histogram_suffixes>
 
 <histogram_suffixes name="AutofillSaveCreditCardPromptWithMultipleLegalLines"
@@ -756,6 +752,10 @@ chromium-metrics-reviews@google.com.
   <suffix name="TemporaryAllowThirdParty"
       label="Third-party cookies temporarily allowed on a domain"/>
   <affected-histogram name="ContentSettings.RegularProfile.Exceptions.cookies"/>
+  <affected-histogram
+      name="ContentSettings.RegularProfile.Exceptions.javascript-jit"/>
+  <affected-histogram
+      name="ContentSettings.RegularProfile.Exceptions.javascript-optimizer"/>
   <affected-histogram name="ContentSettings.RegularProfile.Exceptions.popups"/>
   <affected-histogram
       name="ContentSettings.RegularProfile.Exceptions.storage-access"/>
@@ -834,8 +834,8 @@ chromium-metrics-reviews@google.com.
   <affected-histogram name="Cras.StreamCallbackThreshold.Output"/>
   <affected-histogram name="Cras.StreamChannelCount.Input"/>
   <affected-histogram name="Cras.StreamChannelCount.Output"/>
-  <affected-histogram name="Cras.StreamEffects.Input"/>
-  <affected-histogram name="Cras.StreamEffects.Output"/>
+  <affected-histogram name="Cras.StreamEffectsOnDestroy.Input"/>
+  <affected-histogram name="Cras.StreamEffectsOnDestroy.Output"/>
   <affected-histogram name="Cras.StreamFlags.Input"/>
   <affected-histogram name="Cras.StreamFlags.Output"/>
   <affected-histogram name="Cras.StreamOverrunCount"/>
@@ -853,7 +853,7 @@ chromium-metrics-reviews@google.com.
   <suffix name="Output" label="Playback"/>
   <affected-histogram name="Cras.StreamCallbackThreshold"/>
   <affected-histogram name="Cras.StreamChannelCount"/>
-  <affected-histogram name="Cras.StreamEffects"/>
+  <affected-histogram name="Cras.StreamEffectsOnDestroy"/>
   <affected-histogram name="Cras.StreamFlags"/>
   <affected-histogram name="Cras.StreamRuntime"/>
   <affected-histogram name="Cras.StreamSamplingFormat"/>
@@ -1047,28 +1047,6 @@ chromium-metrics-reviews@google.com.
   <suffix name="Upstream.Unknown.Cellular" label=""/>
   <suffix name="Upstream.Unknown.NotCellular" label=""/>
   <affected-histogram name="DataUse.TrafficSize.User"/>
-</histogram_suffixes>
-
-<histogram_suffixes name="DecodedImageType" separator=".">
-<!-- Name completed by histogram_suffixes name="RasterTaskType" -->
-
-  <suffix base="true" name="Avif"
-      label="This metric is for only Avif image types."/>
-  <suffix base="true" name="Bmp"
-      label="This metric is for only Bmp image types."/>
-  <suffix base="true" name="Gif"
-      label="This metric is for only Gif image types."/>
-  <suffix base="true" name="Ico"
-      label="This metric is for only Ico image types."/>
-  <suffix base="true" name="Jpeg"
-      label="This metric is for only Jpeg image types."/>
-  <suffix base="true" name="Other"
-      label="This metric is for non-codec-backed lazy images."/>
-  <suffix base="true" name="Png"
-      label="This metric is for only Png image types."/>
-  <suffix base="true" name="WebP"
-      label="This metric is for only WebP image types."/>
-  <affected-histogram name="Renderer4.ImageDecodeTaskDurationUs"/>
 </histogram_suffixes>
 
 <histogram_suffixes name="DetachedResourceRequestSource" separator=".">
@@ -1463,18 +1441,6 @@ chromium-metrics-reviews@google.com.
   <affected-histogram name="LevelDBEnv.MissingFiles"/>
 </histogram_suffixes>
 
-<histogram_suffixes name="LoadingPredictorHintOrigin" separator=".">
-  <suffix name="Navigation"
-      label="Prediction trigged at start of navigation based on what was
-             learned locally from previous navigations to the same origin."/>
-  <suffix name="OptimizationGuide"
-      label="Prediction triggered by Optimization Guide."/>
-  <affected-histogram name="LoadingPredictor.PreconnectLearningCount"/>
-  <affected-histogram name="LoadingPredictor.PreconnectLearningPrecision"/>
-  <affected-histogram name="LoadingPredictor.PreconnectLearningRecall"/>
-  <affected-histogram name="LoadingPredictor.PreconnectLearningRedirectStatus"/>
-</histogram_suffixes>
-
 <histogram_suffixes name="MacAudioInputVariants" separator="_">
   <suffix name="HighLatency"
       label="Measures the standard Mac audio driver (i.e. not low-latency)."/>
@@ -1490,6 +1456,7 @@ chromium-metrics-reviews@google.com.
   <suffix name="orientation" label=""/>
   <suffix name="protocol_handlers" label=""/>
   <suffix name="screenshots" label=""/>
+  <suffix name="share_target" label=""/>
   <suffix name="short_name" label=""/>
   <suffix name="start_url" label=""/>
   <affected-histogram name="Manifest.HasProperty"/>
@@ -1530,12 +1497,6 @@ chromium-metrics-reviews@google.com.
   <suffix name="TimelineSlider" label="Timeline slider"/>
   <suffix name="VolumeSlider" label="Volume slider"/>
   <affected-histogram name="Media.Controls.CTR"/>
-</histogram_suffixes>
-
-<histogram_suffixes name="MediaDecoderType" separator=".">
-  <suffix name="HW" label="Platform decoder"/>
-  <suffix name="SW" label="Software decoder"/>
-  <affected-histogram name="Media.PepperVideoDecoderOutputPictureCount"/>
 </histogram_suffixes>
 
 <histogram_suffixes name="MediaRebufferingCategories" separator=".">
@@ -2041,7 +2002,6 @@ chromium-metrics-reviews@google.com.
   <suffix name="IMAGE" label="IMAGE from clipboard."/>
   <suffix name="TEXT" label="Text from clipboard."/>
   <suffix name="URL" label="URL from clipboard."/>
-  <affected-histogram name="MobileOmnibox.LongPressPasteAge"/>
   <affected-histogram name="MobileOmnibox.PressedClipboardSuggestionAge"/>
   <affected-histogram name="Omnibox.ClipboardSuggestionRemovedAge"/>
   <affected-histogram name="Omnibox.ClipboardSuggestionShownAge"/>
@@ -2067,9 +2027,6 @@ chromium-metrics-reviews@google.com.
   <suffix name="OutOfRaster"
       label="Task was not performed as part of a raster task."/>
   <affected-histogram name="Renderer4.GpuImageDecodeState.FirstLockWasted"/>
-  <affected-histogram name="Renderer4.ImageDecodeTaskDurationUs"/>
-  <affected-histogram
-      name="Renderer4.SoftwareImageDecodeState.FirstLockWasted"/>
 </histogram_suffixes>
 
 <histogram_suffixes name="PageLoadBackgrounded2" separator=".">
@@ -3211,6 +3168,15 @@ chromium-metrics-reviews@google.com.
 <histogram_suffixes name="ProcessMemoryAllocatorCustom2" separator=".">
   <suffix name="AXPlatformNodeCount"
       label="Count of accessibility nodes in the browser process."/>
+  <suffix name="AXPlatformWinDormantNodeCount"
+      label="Count of dormant accessibility platform nodes in the browser
+             process."/>
+  <suffix name="AXPlatformWinGhostNodeCount"
+      label="Count of ghost accessibility platform nodes in the browser
+             process."/>
+  <suffix name="AXPlatformWinLiveNodeCount"
+      label="Count of live accessibility platform nodes in the browser
+             process."/>
   <suffix name="ServiceDiscardableManager"
       label="Only counting memory used by the gpu discardable cache."/>
   <suffix name="ServiceDiscardableManager.AvgImageSize"
@@ -3600,19 +3566,6 @@ chromium-metrics-reviews@google.com.
       name="Renderer4.Renderer.RasterTaskSchedulingDelayNoAtRasterDecodes"/>
 </histogram_suffixes>
 
-<histogram_suffixes name="RasterTaskType" separator=".">
-  <suffix base="true" name=""
-      label="This metric includes both gpu and software raster. Deprecated as
-             of 02/2018. Using suffix Gpu and Software instead."/>
-  <suffix name="Gpu" label="This metric is for only gpu raster."/>
-  <suffix name="Software" label="This metric is for only software raster."/>
-  <affected-histogram name="Renderer4.ImageDecodeTaskDurationUs"/>
-  <affected-histogram name="Renderer4.ImageDecodeTaskDurationUs.Jpeg"/>
-  <affected-histogram name="Renderer4.ImageDecodeTaskDurationUs.Other"/>
-  <affected-histogram name="Renderer4.ImageDecodeTaskDurationUs.OutOfRaster"/>
-  <affected-histogram name="Renderer4.ImageDecodeTaskDurationUs.WebP"/>
-</histogram_suffixes>
-
 <histogram_suffixes name="RasterTaskTypeGpu" separator=".">
   <suffix name="Gpu" label="This metric is for only gpu raster."/>
   <suffix name="Oop" label="This metric is for only oop raster."/>
@@ -3674,37 +3627,6 @@ chromium-metrics-reviews@google.com.
   <suffix name="Duration100MilliSecTo1Sec"
       label="remoting sessions have duration in (0.1, 1] seconds"/>
   <affected-histogram name="Media.Remoting.SessionStopTrigger"/>
-</histogram_suffixes>
-
-<histogram_suffixes name="RendererScheduler_MainThreadLoadSplit" separator=".">
-  <suffix name="Background"
-      label="Main thread load when the renderer is backgrounded. This does
-             not include extension renderers."/>
-  <suffix name="Background.AfterFifthMinute"
-      label="Main thread load when the renderer is backgrounded for longer
-             than five minutes. This does not include extension renderers."/>
-  <suffix name="Background.AfterFirstMinute"
-      label="Main thread load when the renderer is backgrounded for longer
-             than one minute. Most of loading tasks are expected to complete
-             by then. This does not include extension renderers."/>
-  <suffix name="Background.AfterTenthMinute"
-      label="Main thread load when the renderer is backgrounded for longer
-             than ten minutes. This does not include extension renderers."/>
-  <suffix name="Extension" label="This only includes extension renderers"/>
-  <suffix name="Extension.Background"
-      label="Main thread load when the renderer is backgrounded. This only
-             includes extension renderers."/>
-  <suffix name="Extension.Foreground"
-      label="Main thread load when the renderer is foregrounded. This only
-             includes extension renderers."/>
-  <suffix name="Foreground"
-      label="Main thread load when the renderer is foregrounded. This does
-             not include extension renderers."/>
-  <suffix name="Foreground.AfterFirstMinute"
-      label="Main thread load when the renderer is foregrounded for longer
-             than one minute. Most of loading tasks are expected to complete
-             by then. This does not include extension renderers."/>
-  <affected-histogram name="RendererScheduler.RendererMainThreadLoad5"/>
 </histogram_suffixes>
 
 <histogram_suffixes name="RendererThreadType" separator=".">
@@ -4247,23 +4169,6 @@ chromium-metrics-reviews@google.com.
   <affected-histogram name="Settings.TrackedPreferenceNullInitialized"/>
   <affected-histogram name="Settings.TrackedPreferenceTrustedInitialized"/>
   <affected-histogram name="Settings.TrackedPreferenceUnchanged"/>
-</histogram_suffixes>
-
-<histogram_suffixes name="TransactionalReauthEntryPoint" separator=".">
-  <suffix name="ToFillPassword"
-      label="The reauth happened to fill an account-stored password."/>
-  <suffix name="ToGeneratePassword"
-      label="The reauth happened to trigger the password generation."/>
-  <suffix name="ToManageInSettings"
-      label="The reauth happened to manage account-stored passwords in
-             settings."/>
-  <suffix name="ToSaveOrUpdatePassword"
-      label="The reauth happened to save a password to the account store."/>
-  <suffix name="ToSavePasswordLocallyThenMove"
-      label="The reauth happened to move a just-locally-saved password to the
-             account store."/>
-  <affected-histogram name="Signin.TransactionalReauthResult"/>
-  <affected-histogram name="Signin.TransactionalReauthUserAction"/>
 </histogram_suffixes>
 
 <histogram_suffixes name="TrustTokenOperationSuccess" separator=".">

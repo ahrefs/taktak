@@ -8,17 +8,18 @@
 #import "base/ios/block_types.h"
 #import "base/strings/sys_string_conversions.h"
 #import "components/strings/grit/components_strings.h"
+#import "ios/chrome/browser/download/ui_bundled/download_manager_constants.h"
+#import "ios/chrome/browser/download/ui_bundled/download_manager_view_controller+Testing.h"
+#import "ios/chrome/browser/download/ui_bundled/download_manager_view_controller_delegate.h"
+#import "ios/chrome/browser/download/ui_bundled/features.h"
+#import "ios/chrome/browser/download/ui_bundled/radial_progress_view.h"
+#import "ios/chrome/browser/fullscreen/ui_bundled/fullscreen_animator.h"
+#import "ios/chrome/browser/fullscreen/ui_bundled/fullscreen_ui_element.h"
+#import "ios/chrome/browser/fullscreen/ui_bundled/fullscreen_ui_updater.h"
 #import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/browser/shared/ui/symbols/symbols.h"
 #import "ios/chrome/browser/shared/ui/util/layout_guide_names.h"
 #import "ios/chrome/browser/shared/ui/util/util_swift.h"
-#import "ios/chrome/browser/download/ui_bundled/download_manager_constants.h"
-#import "ios/chrome/browser/download/ui_bundled/download_manager_view_controller_delegate.h"
-#import "ios/chrome/browser/download/ui_bundled/features.h"
-#import "ios/chrome/browser/download/ui_bundled/radial_progress_view.h"
-#import "ios/chrome/browser/ui/fullscreen/fullscreen_animator.h"
-#import "ios/chrome/browser/ui/fullscreen/fullscreen_ui_element.h"
-#import "ios/chrome/browser/ui/fullscreen/fullscreen_ui_updater.h"
 #import "ios/chrome/common/ui/colors/semantic_color_names.h"
 #import "ios/chrome/common/ui/util/constraints_ui_util.h"
 #import "ios/chrome/grit/ios_strings.h"
@@ -155,6 +156,8 @@ UIImageView* CreateProgressIcon(NSString* symbol_name) {
 
 @interface DownloadManagerViewController () <FullscreenUIElement> {
   NSString* _fileName;
+  NSString* _originatingHost;
+  BOOL _displayOriginatingHost;
   int64_t _countOfBytesReceived;
   int64_t _countOfBytesExpectedToReceive;
   float _progress;
@@ -238,7 +241,7 @@ UIImageView* CreateProgressIcon(NSString* symbol_name) {
   [self.downloadControlsRow addArrangedSubview:self.closeButton];
   [self.view addSubview:self.downloadControlsRow];
   if (@available(iOS 17, *)) {
-    [self registerForTraitChanges:@[ UITraitPreferredContentSizeCategory.self ]
+    [self registerForTraitChanges:@[ UITraitPreferredContentSizeCategory.class ]
                        withAction:@selector(updateActionButtonLayout)];
   }
 
@@ -359,6 +362,16 @@ UIImageView* CreateProgressIcon(NSString* symbol_name) {
     _fileName = [fileName copy];
     [self updateViews];
   }
+}
+
+- (void)setOriginatingHost:(NSString*)originatingHost display:(BOOL)display {
+  if ([_originatingHost isEqualToString:originatingHost] &&
+      _displayOriginatingHost == display) {
+    return;
+  }
+  _originatingHost = [originatingHost copy];
+  _displayOriginatingHost = display;
+  [self updateViews];
 }
 
 - (void)setCountOfBytesReceived:(int64_t)value {
@@ -829,16 +842,29 @@ UIImageView* CreateProgressIcon(NSString* symbol_name) {
   // Update status label text.
   self.statusLabel.text = [self localizedFileNameAndSizeWithPeriod:NO];
   // Update detail label text.
+  NSMutableArray* details = [NSMutableArray array];
+  if (_displayOriginatingHost) {
+    if ([_originatingHost length]) {
+      [details addObject:l10n_util::GetNSStringF(
+                             IDS_IOS_DOWNLOAD_MANAGER_ORIGIN_HOST_LABEL,
+                             base::SysNSStringToUTF16(_originatingHost))];
+    } else {
+      [details
+          addObject:l10n_util::GetNSString(
+                        IDS_IOS_DOWNLOAD_MANAGER_ORIGIN_HOST_UNKNOWN_LABEL)];
+    }
+  }
   if (self.incognito) {
-    self.detailLabel.text =
-        l10n_util::GetNSString(IDS_IOS_DOWNLOAD_INCOGNITO_WARNING_MESSAGE);
+    [details addObject:l10n_util::GetNSString(
+                           IDS_IOS_DOWNLOAD_INCOGNITO_WARNING_MESSAGE)];
+  }
+  if (details.count) {
     // Set to '0' to ensure the entire incognito warning is visible.
     self.detailLabel.numberOfLines = 0;
+    self.detailLabel.text = [details componentsJoinedByString:@"\n"];
   } else {
-    // The detail label has no text to display.
     self.detailLabel.text = nil;
   }
-
   // Update title and accessibility identifier of download button.
   UIButtonConfiguration* downloadButtonConfiguration =
       self.downloadButton.configuration;
@@ -1182,6 +1208,12 @@ UIImageView* CreateProgressIcon(NSString* symbol_name) {
       period ? IDS_IOS_DOWNLOAD_MANAGER_FILENAME_WITH_SIZE_PERIOD
              : IDS_IOS_DOWNLOAD_MANAGER_FILENAME_WITH_SIZE,
       base::SysNSStringToUTF16(_fileName), base::SysNSStringToUTF16(fileSize));
+}
+
+#pragma mark - Testing
+
+- (UIButton*)actionButton {
+  return [self currentVisibleButton];
 }
 
 @end

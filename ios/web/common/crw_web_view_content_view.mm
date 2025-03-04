@@ -5,6 +5,7 @@
 #import "ios/web/common/crw_web_view_content_view.h"
 
 #import <WebKit/WebKit.h>
+
 #import <cmath>
 #import <limits>
 
@@ -52,13 +53,11 @@ const CGFloat kBackgroundRGBComponents[] = {0.75f, 0.74f, 0.76f};
 }
 
 - (instancetype)initWithCoder:(NSCoder*)decoder {
-  NOTREACHED_IN_MIGRATION();
-  return nil;
+  NOTREACHED();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
-  NOTREACHED_IN_MIGRATION();
-  return nil;
+  NOTREACHED();
 }
 
 - (void)didMoveToSuperview {
@@ -85,8 +84,9 @@ const CGFloat kBackgroundRGBComponents[] = {0.75f, 0.74f, 0.76f};
 #pragma mark Layout
 
 - (void)setContentOffset:(CGPoint)contentOffset {
-  if (CGPointEqualToPoint(_contentOffset, contentOffset))
+  if (CGPointEqualToPoint(_contentOffset, contentOffset)) {
     return;
+  }
   _contentOffset = contentOffset;
   [self setNeedsLayout];
 }
@@ -102,8 +102,9 @@ const CGFloat kBackgroundRGBComponents[] = {0.75f, 0.74f, 0.76f};
                   std::fabs(oldInsets.left - contentInset.left) +
                   std::fabs(oldInsets.bottom - contentInset.bottom) +
                   std::fabs(oldInsets.right - contentInset.right);
-  if (delta <= std::numeric_limits<CGFloat>::epsilon())
+  if (delta <= std::numeric_limits<CGFloat>::epsilon()) {
     return;
+  }
   _contentInset = contentInset;
   if (self.shouldUseViewContentInset) {
     [_scrollView setContentInset:contentInset];

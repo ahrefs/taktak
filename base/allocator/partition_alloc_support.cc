@@ -4,6 +4,7 @@
 
 #include "base/allocator/partition_alloc_support.h"
 
+#include <algorithm>
 #include <array>
 #include <cinttypes>
 #include <cstdint>
@@ -31,7 +32,6 @@
 #include "base/metrics/histogram_macros.h"
 #include "base/no_destructor.h"
 #include "base/pending_task.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_split.h"
 #include "base/strings/stringprintf.h"
 #include "base/system/sys_info.h"
@@ -48,6 +48,7 @@
 #include "partition_alloc/memory_reclaimer.h"
 #include "partition_alloc/page_allocator.h"
 #include "partition_alloc/partition_alloc_base/debug/alias.h"
+#include "partition_alloc/partition_alloc_base/immediate_crash.h"
 #include "partition_alloc/partition_alloc_base/threading/platform_thread.h"
 #include "partition_alloc/partition_alloc_check.h"
 #include "partition_alloc/partition_alloc_config.h"
@@ -58,6 +59,7 @@
 #include "partition_alloc/pointers/raw_ptr.h"
 #include "partition_alloc/shim/allocator_shim.h"
 #include "partition_alloc/shim/allocator_shim_default_dispatch_to_partition_alloc.h"
+#include "partition_alloc/shim/allocator_shim_dispatch_to_noop_on_free.h"
 #include "partition_alloc/stack/stack.h"
 #include "partition_alloc/thread_cache.h"
 
@@ -105,12 +107,9 @@ BootloaderOverride GetBootloaderOverride() {
 }
 #endif
 
-// When under this experiment avoid running periodic purging or reclaim for the
-// first minute after the first attempt. This is based on the insight that
-// processes often don't live paste this minute.
-static BASE_FEATURE(kDelayFirstPeriodicPAPurgeOrReclaim,
-                    "DelayFirstPeriodicPAPurgeOrReclaim",
-                    base::FEATURE_ENABLED_BY_DEFAULT);
+// Avoid running periodic purging or reclaim for the first minute after the
+// first attempt. This is based on the insight that processes often don't live
+// paste this minute.
 constexpr base::TimeDelta kFirstPAPurgeOrReclaimDelay = base::Minutes(1);
 
 // This is defined in content/public/common/content_switches.h, which is not
@@ -169,6 +168,8 @@ void MemoryReclaimerSupport::Start(scoped_refptr<TaskRunner> task_runner) {
     return;
   }
 
+  task_runner_ = task_runner;
+
   // The caller of the API fully controls where running the reclaim.
   // However there are a few reasons to recommend that the caller runs
   // it on the main thread:
@@ -184,13 +185,7 @@ void MemoryReclaimerSupport::Start(scoped_refptr<TaskRunner> task_runner) {
   // seconds is useful. Since this is meant to run during idle time only, it is
   // a reasonable starting point balancing effectivenes vs cost. See
   // crbug.com/942512 for details and experimental results.
-  TimeDelta delay;
-  if (base::FeatureList::IsEnabled(kDelayFirstPeriodicPAPurgeOrReclaim)) {
-    delay = std::max(delay, kFirstPAPurgeOrReclaimDelay);
-  }
-
-  task_runner_ = task_runner;
-  MaybeScheduleTask(delay);
+  MaybeScheduleTask(kFirstPAPurgeOrReclaimDelay);
 }
 
 void MemoryReclaimerSupport::SetForegrounded(bool in_foreground) {
@@ -251,12 +246,9 @@ void MemoryReclaimerSupport::MaybeScheduleTask(TimeDelta delay) {
 
 void StartThreadCachePeriodicPurge() {
   auto& instance = ::partition_alloc::ThreadCacheRegistry::Instance();
-  TimeDelta delay =
-      Microseconds(instance.GetPeriodicPurgeNextIntervalInMicroseconds());
-
-  if (base::FeatureList::IsEnabled(kDelayFirstPeriodicPAPurgeOrReclaim)) {
-    delay = std::max(delay, kFirstPAPurgeOrReclaimDelay);
-  }
+  TimeDelta delay = std::max(
+      Microseconds(instance.GetPeriodicPurgeNextIntervalInMicroseconds()),
+      kFirstPAPurgeOrReclaimDelay);
 
   SingleThreadTaskRunner::GetCurrentDefault()->PostDelayedTask(
       FROM_HERE, BindOnce(RunThreadCachePeriodicPurge), delay);
@@ -463,7 +455,7 @@ std::string ExtractDanglingPtrSignature(std::string stacktrace) {
   size_t caller_index = 0;
   for (size_t i = 0; i < lines.size(); ++i) {
     for (const auto& patterns : callee_patterns) {
-      if (ranges::all_of(patterns, [&](std::string_view pattern) {
+      if (std::ranges::all_of(patterns, [&](std::string_view pattern) {
             return lines[i].find(pattern) != std::string_view::npos;
           })) {
         caller_index = i + 1;
@@ -586,38 +578,55 @@ void DanglingRawPtrReleased(uintptr_t id) {
 
   std::string dangling_signature = ExtractDanglingPtrSignature(
       free_info, stack_trace_release, task_trace_release);
-  static const char dangling_ptr_footer[] =
-      "\n"
-      "\n"
-      "Please check for more information on:\n"
-      "https://chromium.googlesource.com/chromium/src/+/main/docs/"
-      "dangling_ptr_guide.md\n"
-      "\n"
-      "Googlers: Please give us your feedback about the dangling pointer\n"
-      "          detector at:\n"
-      "          http://go/dangling-ptr-cq-survey\n";
-  if (free_info) {
-    LOG(ERROR) << "Detected dangling raw_ptr with id="
-               << StringPrintf("0x%016" PRIxPTR, id) << ":\n"
-               << dangling_signature << "\n\n"
-               << "The memory was freed at:\n"
-               << free_info->stack_trace << "\n"
-               << free_info->task_trace << "\n"
-               << "The dangling raw_ptr was released at:\n"
-               << stack_trace_release << "\n"
-               << task_trace_release << dangling_ptr_footer;
-  } else {
-    LOG(ERROR) << "Detected dangling raw_ptr with id="
-               << StringPrintf("0x%016" PRIxPTR, id) << ":\n\n"
-               << dangling_signature << "\n\n"
-               << "It was not recorded where the memory was freed.\n\n"
-               << "The dangling raw_ptr was released at:\n"
-               << stack_trace_release << "\n"
-               << task_trace_release << dangling_ptr_footer;
+
+  {
+    // Log the full error in a single LogMessage. Printing StackTrace is
+    // expensive, so we want to avoid interleaving the output with other logs.
+    logging::LogMessage log_message(__FILE__, __LINE__, logging::LOGGING_ERROR);
+    std::ostream& error = log_message.stream();
+
+    // The dangling signature can be used by script to locate the origin of
+    // every dangling pointers.
+    error << "\n\n"
+          << ExtractDanglingPtrSignature(free_info, stack_trace_release,
+                                         task_trace_release)
+          << "\n\n";
+
+    error << "[DanglingPtr](1/3) A raw_ptr/raw_ref is dangling.\n\n";
+
+    auto print_traces = [](debug::StackTrace stack_trace,
+                           debug::TaskTrace task_trace, std::ostream& error) {
+      error << "Stack trace:\n";
+      error << stack_trace << "\n";
+
+      // Printing "Task trace:" is implied by the TaskTrace itself.
+      if (!task_trace.empty()) {
+        error << task_trace << "\n";
+      }
+    };
+
+    error << "[DanglingPtr](2/3) ";
+    if (free_info) {
+      error << "First, the memory was freed at:\n\n";
+      print_traces(free_info->stack_trace, free_info->task_trace, error);
+    } else {
+      error << "It was not recorded where the memory was freed.\n";
+    }
+
+    error << "[DanglingPtr](3/3) Later, the dangling raw_ptr was released "
+             "at:\n\n";
+    print_traces(stack_trace_release, task_trace_release, error);
+
+    error << "Please check for more information on:\n";
+    error << "https://chromium.googlesource.com/chromium/src/+/main/docs/";
+    error << "dangling_ptr_guide.md\n";
+    error << "\n";
   }
 
   if constexpr (dangling_pointer_mode == features::DanglingPtrMode::kCrash) {
-    ImmediateCrash();
+    // We use `PA_IMMEDIATE_CRASH()` instead of base's ImmediateCrash() to avoid
+    // printing the raw_ptr release stack trace twice.
+    PA_IMMEDIATE_CRASH();
   }
 }
 
@@ -648,16 +657,16 @@ void CheckDanglingRawPtrBufferEmpty() {
     std::vector<std::array<const void*, 32>> stack_traces =
         internal::InstanceTracer::GetStackTracesForDanglingRefs(entry->id);
     for (const auto& raw_stack_trace : stack_traces) {
-      CHECK(ranges::is_partitioned(raw_stack_trace, is_frame_ptr_not_null))
+      CHECK(std::ranges::is_partitioned(raw_stack_trace, is_frame_ptr_not_null))
           << "`raw_stack_trace` is expected to be partitioned: non-null values "
              "at the begining followed by `nullptr`s.";
       LOG(ERROR) << "Dangling reference from:\n";
       LOG(ERROR) << debug::StackTrace(
                         // This call truncates the `nullptr` tail of the stack
                         // trace (see the `is_partitioned` CHECK above).
-                        make_span(raw_stack_trace.begin(),
-                                  ranges::partition_point(
-                                      raw_stack_trace, is_frame_ptr_not_null)))
+                        span(raw_stack_trace.begin(),
+                             std::ranges::partition_point(
+                                 raw_stack_trace, is_frame_ptr_not_null)))
                  << "\n";
     }
 #else
@@ -782,6 +791,22 @@ void ReconfigurePartitionForKnownProcess(const std::string& process_type) {
   // experiments.
 }
 
+void MakeFreeNoOp() {
+  // Ignoring `free()` during Shutdown would allow developers to introduce new
+  // dangling pointers. So we want to avoid ignoring free when it is enabled.
+  // Note: For now, the DanglingPointerDetector is only enabled on 5 bots, and
+  // on linux non-official configuration.
+#if PA_BUILDFLAG(ENABLE_DANGLING_RAW_PTR_CHECKS)
+  CHECK(base::FeatureList::GetInstance());
+  if (base::FeatureList::IsEnabled(features::kPartitionAllocDanglingPtr)) {
+    return;
+  }
+#endif  // PA_BUILDFLAG(ENABLE_DANGLING_RAW_PTR_CHECKS)
+#if PA_BUILDFLAG(USE_ALLOCATOR_SHIM)
+  allocator_shim::InsertNoOpOnFreeAllocatorShimOnShutDown();
+#endif  // PA_BUILDFLAG(USE_ALLOCATOR_SHIM)
+}
+
 PartitionAllocSupport* PartitionAllocSupport::Get() {
   static auto* singleton = new PartitionAllocSupport();
   return singleton;
@@ -845,36 +870,28 @@ PartitionAllocSupport::GetBrpConfiguration(const std::string& process_type) {
   // TODO(bartekn): Switch to DCHECK once confirmed there are no issues.
   CHECK(base::FeatureList::GetInstance());
 
-  bool process_affected_by_brp_flag = false;
-#if (PA_BUILDFLAG(USE_PARTITION_ALLOC_AS_MALLOC) &&          \
-     PA_BUILDFLAG(ENABLE_BACKUP_REF_PTR_SUPPORT) &&          \
-     !PA_BUILDFLAG(FORCE_DISABLE_BACKUP_REF_PTR_FEATURE)) || \
-    PA_BUILDFLAG(USE_ASAN_BACKUP_REF_PTR)
-  if (base::FeatureList::IsEnabled(
-          base::features::kPartitionAllocBackupRefPtr)) {
-    // No specified process type means this is the Browser process.
-    process_affected_by_brp_flag = ShouldEnableFeatureOnProcess(
-        base::features::kBackupRefPtrEnabledProcessesParam.Get(), process_type);
-  }
-#endif  // (PA_BUILDFLAG(USE_PARTITION_ALLOC_AS_MALLOC) &&
-        // PA_BUILDFLAG(ENABLE_BACKUP_REF_PTR_SUPPORT)&&
-        // !PA_BUILDFLAG(FORCE_DISABLE_BACKUP_REF_PTR_FEATURE)) ||
-        // PA_BUILDFLAG(USE_ASAN_BACKUP_REF_PTR)
-
-  const bool enable_brp =
 #if PA_BUILDFLAG(USE_PARTITION_ALLOC_AS_MALLOC) && \
-    PA_BUILDFLAG(ENABLE_BACKUP_REF_PTR_SUPPORT)
-      // kDisabled is equivalent to !IsEnabled(kPartitionAllocBackupRefPtr).
-      process_affected_by_brp_flag &&
+    PA_BUILDFLAG(ENABLE_BACKUP_REF_PTR_SUPPORT) && \
+    !PA_BUILDFLAG(FORCE_DISABLE_BACKUP_REF_PTR_FEATURE)
+
+  if (base::FeatureList::IsEnabled(
+          base::features::kPartitionAllocBackupRefPtr) &&
       base::features::kBackupRefPtrModeParam.Get() !=
-          base::features::BackupRefPtrMode::kDisabled;
-#else
-      false;
+          base::features::BackupRefPtrMode::kDisabled &&
+      ShouldEnableFeatureOnProcess(
+          base::features::kBackupRefPtrEnabledProcessesParam.Get(),
+          process_type)) {
+    return {
+        .enable_brp = true,
+        .extra_extras_size = static_cast<size_t>(
+            base::features::kBackupRefPtrExtraExtrasSizeParam.Get()),
+    };
+  }
 #endif
 
   return {
-      enable_brp,
-      process_affected_by_brp_flag,
+      .enable_brp = false,
+      .extra_extras_size = 0,
   };
 }
 
@@ -977,20 +994,26 @@ void PartitionAllocSupport::ReconfigureAfterFeatureListInit(
   [[maybe_unused]] BrpConfiguration brp_config =
       GetBrpConfiguration(process_type);
 
-#if PA_BUILDFLAG(USE_ASAN_BACKUP_REF_PTR)
-  if (brp_config.process_affected_by_brp_flag) {
-    base::RawPtrAsanService::GetInstance().Configure(
-        base::EnableDereferenceCheck(
-            base::features::kBackupRefPtrAsanEnableDereferenceCheckParam.Get()),
-        base::EnableExtractionCheck(
-            base::features::kBackupRefPtrAsanEnableExtractionCheckParam.Get()),
-        base::EnableInstantiationCheck(
-            base::features::kBackupRefPtrAsanEnableInstantiationCheckParam
-                .Get()));
+  // Configure ASAN hooks to report the `MiraclePtr status`. This is enabled
+  // only if BackupRefPtr is normally enabled in the current process for the
+  // current platform. Note that CastOS and iOS aren't protected by BackupRefPtr
+  // a the moment, so they are excluded.
+#if PA_BUILDFLAG(USE_ASAN_BACKUP_REF_PTR) && !PA_BUILDFLAG(IS_CASTOS) && \
+    !PA_BUILDFLAG(IS_IOS)
+  if (ShouldEnableFeatureOnProcess(
+          base::features::kBackupRefPtrEnabledProcessesParam.Get(),
+          process_type)) {
+    RawPtrAsanService::GetInstance().Configure(
+        EnableDereferenceCheck(
+            FeatureList::IsEnabled(features::kAsanBrpDereferenceCheck)),
+        EnableExtractionCheck(
+            FeatureList::IsEnabled(features::kAsanBrpExtractionCheck)),
+        EnableInstantiationCheck(
+            FeatureList::IsEnabled(features::kAsanBrpInstantiationCheck)));
   } else {
-    base::RawPtrAsanService::GetInstance().Configure(
-        base::EnableDereferenceCheck(false), base::EnableExtractionCheck(false),
-        base::EnableInstantiationCheck(false));
+    RawPtrAsanService::GetInstance().Configure(EnableDereferenceCheck(false),
+                                               EnableExtractionCheck(false),
+                                               EnableInstantiationCheck(false));
   }
 #endif  // PA_BUILDFLAG(USE_ASAN_BACKUP_REF_PTR)
 
@@ -1015,13 +1038,10 @@ void PartitionAllocSupport::ReconfigureAfterFeatureListInit(
               .Get());
   const bool zapping_by_free_flags = base::FeatureList::IsEnabled(
       base::features::kPartitionAllocZappingByFreeFlags);
-
-#if PA_BUILDFLAG(USE_FREELIST_DISPATCHER)
-  const bool use_pool_offset_freelists =
-      base::FeatureList::IsEnabled(base::features::kUsePoolOffsetFreelists);
-#else
-  const bool use_pool_offset_freelists = false;
-#endif  // PA_BUILDFLAG(USE_FREELIST_DISPATCHER)
+  const bool eventually_zero_freed_memory = base::FeatureList::IsEnabled(
+      base::features::kPartitionAllocEventuallyZeroFreedMemory);
+  const bool fewer_memory_regions = base::FeatureList::IsEnabled(
+      base::features::kPartitionAllocFewerMemoryRegions);
 
   bool enable_memory_tagging = false;
   partition_alloc::TagViolationReportingMode memory_tagging_reporting_mode =
@@ -1032,17 +1052,37 @@ void PartitionAllocSupport::ReconfigureAfterFeatureListInit(
   // check here too to wrap the GetMemoryTaggingModeForCurrentThread() call.
   if (!base::FeatureList::IsEnabled(
           base::features::kKillPartitionAllocMemoryTagging)) {
-    // If synchronous mode is enabled from startup it means this is a test and
-    // memory tagging should be enabled.
-    if (partition_alloc::internal::GetMemoryTaggingModeForCurrentThread() ==
+    // If synchronous mode is enabled from startup it means this is a test or it
+    // was force enabled in Chrome some how so honor that choice.
+    partition_alloc::TagViolationReportingMode
+        startup_memory_tagging_reporting_mode =
+            partition_alloc::internal::GetMemoryTaggingModeForCurrentThread();
+    if (startup_memory_tagging_reporting_mode ==
         partition_alloc::TagViolationReportingMode::kSynchronous) {
       enable_memory_tagging = true;
       memory_tagging_reporting_mode =
           partition_alloc::TagViolationReportingMode::kSynchronous;
+      // Not enabling permissive mode as this config is used to crash and detect
+      // bugs.
+      VLOG(1) << "PartitionAlloc: Memory tagging enabled in SYNC mode at "
+                 "startup (Process: "
+              << process_type << ")";
     } else {
       enable_memory_tagging = ShouldEnableMemoryTagging(process_type);
 #if BUILDFLAG(IS_ANDROID)
+      // Android Scudo does not allow MTE to be re-enabled if MTE was disabled.
+      if (enable_memory_tagging &&
+          startup_memory_tagging_reporting_mode ==
+              partition_alloc::TagViolationReportingMode::kDisabled) {
+        LOG(ERROR) << "PartitionAlloc: Failed to enable memory tagging due to "
+                      "MTE disabled at startup (Process: "
+                   << process_type << ")";
+        debug::DumpWithoutCrashing();
+        enable_memory_tagging = false;
+      }
+
       if (enable_memory_tagging) {
+        // Configure MTE.
         switch (base::features::kMemtagModeParam.Get()) {
           case base::features::MemtagMode::kSync:
             memory_tagging_reporting_mode =
@@ -1053,15 +1093,28 @@ void PartitionAllocSupport::ReconfigureAfterFeatureListInit(
                 partition_alloc::TagViolationReportingMode::kAsynchronous;
             break;
         }
-        partition_alloc::PermissiveMte::SetEnabled(base::FeatureList::IsEnabled(
-            base::features::kPartitionAllocPermissiveMte));
+        bool enable_permissive_mte = base::FeatureList::IsEnabled(
+            base::features::kPartitionAllocPermissiveMte);
+        partition_alloc::PermissiveMte::SetEnabled(enable_permissive_mte);
         CHECK(partition_alloc::internal::
                   ChangeMemoryTaggingModeForAllThreadsPerProcess(
                       memory_tagging_reporting_mode));
         CHECK_EQ(
             partition_alloc::internal::GetMemoryTaggingModeForCurrentThread(),
             memory_tagging_reporting_mode);
+        VLOG(1)
+            << "PartitionAlloc: Memory tagging enabled in "
+            << (memory_tagging_reporting_mode ==
+                        partition_alloc::TagViolationReportingMode::kSynchronous
+                    ? "SYNC"
+                    : "ASYNC")
+            << " mode (Process: " << process_type << ")";
+        if (enable_permissive_mte) {
+          VLOG(1) << "PartitionAlloc: Permissive MTE enabled (Process: "
+                  << process_type << ")";
+        }
       } else if (base::CPU::GetInstanceNoAllocation().has_mte()) {
+        // Disable MTE.
         memory_tagging_reporting_mode =
             partition_alloc::TagViolationReportingMode::kDisabled;
         CHECK(partition_alloc::internal::
@@ -1070,23 +1123,13 @@ void PartitionAllocSupport::ReconfigureAfterFeatureListInit(
         CHECK_EQ(
             partition_alloc::internal::GetMemoryTaggingModeForCurrentThread(),
             memory_tagging_reporting_mode);
+        VLOG(1) << "PartitionAlloc: Memory tagging disabled (Process: "
+                << process_type << ")";
       }
 #endif  // BUILDFLAG(IS_ANDROID)
     }
   }
 #endif  // PA_BUILDFLAG(HAS_MEMORY_TAGGING)
-
-  if (enable_memory_tagging) {
-    CHECK((memory_tagging_reporting_mode ==
-           partition_alloc::TagViolationReportingMode::kSynchronous) ||
-          (memory_tagging_reporting_mode ==
-           partition_alloc::TagViolationReportingMode::kAsynchronous));
-  } else {
-    CHECK((memory_tagging_reporting_mode ==
-           partition_alloc::TagViolationReportingMode::kUndefined) ||
-          (memory_tagging_reporting_mode ==
-           partition_alloc::TagViolationReportingMode::kDisabled));
-  }
 
   allocator_shim::UseSmallSingleSlotSpans use_small_single_slot_spans(
       base::FeatureList::IsEnabled(
@@ -1094,12 +1137,14 @@ void PartitionAllocSupport::ReconfigureAfterFeatureListInit(
 
   allocator_shim::ConfigurePartitions(
       allocator_shim::EnableBrp(brp_config.enable_brp),
+      brp_config.extra_extras_size,
       allocator_shim::EnableMemoryTagging(enable_memory_tagging),
       memory_tagging_reporting_mode, bucket_distribution,
       allocator_shim::SchedulerLoopQuarantine(scheduler_loop_quarantine),
       scheduler_loop_quarantine_branch_capacity_in_bytes,
       allocator_shim::ZappingByFreeFlags(zapping_by_free_flags),
-      allocator_shim::UsePoolOffsetFreelists(use_pool_offset_freelists),
+      allocator_shim::EventuallyZeroFreedMemory(eventually_zero_freed_memory),
+      allocator_shim::FewerMemoryRegions(fewer_memory_regions),
       use_small_single_slot_spans);
 
   const uint32_t extras_size = allocator_shim::GetMainPartitionRootExtrasSize();
@@ -1119,6 +1164,18 @@ void PartitionAllocSupport::ReconfigureAfterFeatureListInit(
           base::features::kPartitionAllocLargeEmptySlotSpanRing)) {
     allocator_shim::internal::PartitionAllocMalloc::Allocator()
         ->EnableLargeEmptySlotSpanRing();
+  }
+
+  if (process_type == "" &&
+      base::FeatureList::IsEnabled(
+          base::features::kPartitionAllocSchedulerLoopQuarantine)) {
+    // `ReconfigureAfterTaskRunnerInit()` is called on the UI thread.
+    const size_t capacity_in_bytes = static_cast<size_t>(
+        base::features::kPartitionAllocSchedulerLoopQuarantineBrowserUICapacity
+            .Get());
+    allocator_shim::internal::PartitionAllocMalloc::Allocator()
+        ->SetSchedulerLoopQuarantineThreadLocalBranchCapacity(
+            capacity_in_bytes);
   }
 
 #if PA_BUILDFLAG( \
@@ -1246,7 +1303,8 @@ void PartitionAllocSupport::ReconfigureAfterTaskRunnerInit(
   if (ShouldEnableShadowMetadata(process_type)) {
     partition_alloc::PartitionRoot::EnableShadowMetadata(
         partition_alloc::internal::PoolHandleMask::kRegular |
-        partition_alloc::internal::PoolHandleMask::kBRP);
+        partition_alloc::internal::PoolHandleMask::kBRP |
+        partition_alloc::internal::PoolHandleMask::kConfigurable);
   }
 #endif  // PA_CONFIG(ENABLE_SHADOW_METADATA)
 }

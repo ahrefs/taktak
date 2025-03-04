@@ -62,7 +62,7 @@ struct ImageInfo {
   ImageInfo(ImageInfo&&) = default;
   ImageInfo& operator=(ImageInfo&&) = default;
 
-  ~ImageInfo() {}
+  ~ImageInfo() = default;
 
   base::FilePath file_path;
   int pixels_per_side;
@@ -121,8 +121,7 @@ user_manager::UserImage::ImageFormat ChooseImageFormatFromCodec(
       // image format of the bytes representation is unknown.
       return user_manager::UserImage::FORMAT_UNKNOWN;
   }
-  NOTREACHED_IN_MIGRATION();
-  return user_manager::UserImage::FORMAT_UNKNOWN;
+  NOTREACHED();
 }
 
 // Handles the decoded image returned from ImageDecoder through the

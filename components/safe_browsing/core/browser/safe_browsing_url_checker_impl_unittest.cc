@@ -246,7 +246,8 @@ class FakeRealTimeUrlLookupService
       const GURL& gurl,
       RTLookupResponseCallback response_callback,
       scoped_refptr<base::SequencedTaskRunner> callback_task_runner,
-      SessionID tab_id) override {
+      SessionID tab_id,
+      std::optional<internal::ReferringAppInfo> referring_app_info) override {
     using enum SBThreatType;
 
     std::string url = gurl.spec();
@@ -278,10 +279,28 @@ class FakeRealTimeUrlLookupService
         threat_type = RTLookupResponse::ThreatInfo::THREAT_TYPE_UNSPECIFIED;
         verdict_type = RTLookupResponse::ThreatInfo::SUSPICIOUS;
         break;
-      default:
-        NOTREACHED_IN_MIGRATION();
-        threat_type = RTLookupResponse::ThreatInfo::THREAT_TYPE_UNSPECIFIED;
-        verdict_type = RTLookupResponse::ThreatInfo::SAFE;
+      case SB_THREAT_TYPE_UNUSED:
+      case SB_THREAT_TYPE_URL_MALWARE:
+      case SB_THREAT_TYPE_URL_UNWANTED:
+      case SB_THREAT_TYPE_URL_BINARY_MALWARE:
+      case SB_THREAT_TYPE_URL_CLIENT_SIDE_PHISHING:
+      case SB_THREAT_TYPE_EXTENSION:
+      case DEPRECATED_SB_THREAT_TYPE_URL_CLIENT_SIDE_MALWARE:
+      case SB_THREAT_TYPE_API_ABUSE:
+      case SB_THREAT_TYPE_SUBRESOURCE_FILTER:
+      case SB_THREAT_TYPE_CSD_ALLOWLIST:
+      case DEPRECATED_SB_THREAT_TYPE_URL_PASSWORD_PROTECTION_PHISHING:
+      case SB_THREAT_TYPE_SAVED_PASSWORD_REUSE:
+      case SB_THREAT_TYPE_SIGNED_IN_SYNC_PASSWORD_REUSE:
+      case SB_THREAT_TYPE_SIGNED_IN_NON_SYNC_PASSWORD_REUSE:
+      case SB_THREAT_TYPE_BLOCKED_AD_REDIRECT:
+      case SB_THREAT_TYPE_AD_SAMPLE:
+      case SB_THREAT_TYPE_BLOCKED_AD_POPUP:
+      case SB_THREAT_TYPE_ENTERPRISE_PASSWORD_REUSE:
+      case SB_THREAT_TYPE_BILLING:
+      case SB_THREAT_TYPE_APK_DOWNLOAD:
+      case SB_THREAT_TYPE_HIGH_CONFIDENCE_ALLOWLIST:
+        NOTREACHED();
     }
     threat_info.set_threat_type(threat_type);
     threat_info.set_verdict_type(verdict_type);
@@ -422,7 +441,7 @@ class SafeBrowsingUrlCheckerTest : public PlatformTest {
         hash_real_time_selection,
         /*is_async_check=*/false,
         optional_args.check_allowlist_before_hash_database,
-        SessionID::InvalidValue());
+        SessionID::InvalidValue(), /*referring_app_info=*/std::nullopt);
   }
 
  protected:
@@ -1675,7 +1694,8 @@ TEST_F(SafeBrowsingUrlCheckerTest,
       /*url_real_time_lookup_enabled=*/true,
       /*can_check_safe_browsing_db=*/true,
       /*hash_real_time_selection=*/
-      hash_realtime_utils::HashRealTimeSelection::kHashRealTimeService);
+      hash_realtime_utils::HashRealTimeSelection::
+          kHashRealTimeServiceBackgroundOnly);
 
   GURL url("https://example.test/");
   database_manager_->SetThreatTypeForUrl(url, SB_THREAT_TYPE_URL_PHISHING,
@@ -1764,7 +1784,8 @@ TEST_F(SafeBrowsingUrlCheckerTest,
       /*url_real_time_lookup_enabled=*/true,
       /*can_check_safe_browsing_db=*/true,
       /*hash_real_time_selection=*/
-      hash_realtime_utils::HashRealTimeSelection::kHashRealTimeService);
+      hash_realtime_utils::HashRealTimeSelection::
+          kHashRealTimeServiceBackgroundOnly);
 
   GURL url("https://example.test/");
   hash_realtime_service_->SetThreatTypeForUrl(url, SB_THREAT_TYPE_URL_PHISHING,
@@ -1831,7 +1852,8 @@ TEST_F(SafeBrowsingUrlCheckerTest,
       /*url_real_time_lookup_enabled=*/true,
       /*can_check_safe_browsing_db=*/true,
       /*hash_real_time_selection=*/
-      hash_realtime_utils::HashRealTimeSelection::kDatabaseManager);
+      hash_realtime_utils::HashRealTimeSelection::
+          kDatabaseManagerBackgroundOnly);
 
   GURL url("https://example.test/");
   database_manager_->SetThreatTypeForUrl(url, SB_THREAT_TYPE_SAFE,
@@ -1896,7 +1918,8 @@ TEST_F(SafeBrowsingUrlCheckerTest,
       /*url_real_time_lookup_enabled=*/true,
       /*can_check_safe_browsing_db=*/true,
       /*hash_real_time_selection=*/
-      hash_realtime_utils::HashRealTimeSelection::kHashRealTimeService);
+      hash_realtime_utils::HashRealTimeSelection::
+          kHashRealTimeServiceBackgroundOnly);
 
   GURL url("https://example.test/");
   hash_realtime_service_->SetThreatTypeForUrl(url, SB_THREAT_TYPE_URL_PHISHING,
@@ -1955,7 +1978,8 @@ TEST_F(SafeBrowsingUrlCheckerTest,
       /*url_real_time_lookup_enabled=*/true,
       /*can_check_safe_browsing_db=*/true,
       /*hash_real_time_selection=*/
-      hash_realtime_utils::HashRealTimeSelection::kHashRealTimeService);
+      hash_realtime_utils::HashRealTimeSelection::
+          kHashRealTimeServiceBackgroundOnly);
 
   GURL url("https://example.test/");
   hash_realtime_service_->SetThreatTypeForUrl(url, SB_THREAT_TYPE_URL_PHISHING,

@@ -13,6 +13,7 @@
 #include "gpu/command_buffer/common/shared_image_usage.h"
 #include "gpu/command_buffer/service/shared_image/shared_image_format_service_utils.h"
 #include "gpu/config/gpu_finch_features.h"
+#include "third_party/skia/include/core/SkColorSpace.h"
 #include "ui/gfx/geometry/skia_conversions.h"
 
 namespace gpu {
@@ -115,8 +116,7 @@ SkPixmap DawnFallbackImageRepresentation::MappedStagingBufferToPixmap(
 
   auto info =
       SkImageInfo::Make(gfx::SizeToSkISize(staging_buffer.plane_size),
-                        viz::ToClosestSkColorType(
-                            /*gpu_compositing=*/true, format(), plane_index),
+                        viz::ToClosestSkColorType(format(), plane_index),
                         alpha_type(), color_space().ToSkColorSpace());
   return SkPixmap(info, pixels_pointer, staging_buffer.bytes_per_row);
 }
@@ -167,7 +167,7 @@ bool DawnFallbackImageRepresentation::ReadbackFromBacking() {
     // Unmap the buffer.
     buffer.Unmap();
 
-    wgpu::ImageCopyBuffer buffer_copy = {
+    wgpu::TexelCopyBufferInfo buffer_copy = {
         .layout =
             {
                 .bytesPerRow = bytes_per_row,
@@ -180,7 +180,7 @@ bool DawnFallbackImageRepresentation::ReadbackFromBacking() {
          wgpu_format_ == wgpu::TextureFormat::R10X6BG10X6Biplanar420Unorm ||
          wgpu_format_ == wgpu::TextureFormat::R8BG8A8Triplanar420Unorm);
     // Get proper plane aspect for multiplanar textures.
-    wgpu::ImageCopyTexture texture_copy = {
+    wgpu::TexelCopyTextureInfo texture_copy = {
         .texture = texture_,
         .aspect = ToDawnTextureAspect(is_yuv_plane, plane_index),
     };
@@ -233,11 +233,11 @@ bool DawnFallbackImageRepresentation::UploadToBacking() {
          wgpu_format_ == wgpu::TextureFormat::R10X6BG10X6Biplanar420Unorm ||
          wgpu_format_ == wgpu::TextureFormat::R8BG8A8Triplanar420Unorm);
     // Get proper plane aspect for multiplanar textures.
-    wgpu::ImageCopyTexture texture_copy = {
+    wgpu::TexelCopyTextureInfo texture_copy = {
         .texture = texture_,
         .aspect = ToDawnTextureAspect(is_yuv_plane, plane_index),
     };
-    wgpu::ImageCopyBuffer buffer_copy = {
+    wgpu::TexelCopyBufferInfo buffer_copy = {
         .layout =
             {
                 .bytesPerRow = bytes_per_row,

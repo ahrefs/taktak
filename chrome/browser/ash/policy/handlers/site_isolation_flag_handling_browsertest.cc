@@ -29,7 +29,6 @@
 #include "chromeos/ash/components/cryptohome/cryptohome_parameters.h"
 #include "chromeos/ash/components/dbus/session_manager/fake_session_manager_client.h"
 #include "chromeos/ash/components/settings/cros_settings_names.h"
-#include "components/flags_ui/pref_service_flags_storage.h"
 #include "components/policy/core/browser/browser_policy_connector.h"
 #include "components/policy/core/common/mock_configuration_policy_provider.h"
 #include "components/policy/core/common/policy_map.h"
@@ -38,9 +37,11 @@
 #include "components/session_manager/core/session_manager.h"
 #include "components/session_manager/core/session_manager_observer.h"
 #include "components/user_manager/user_manager.h"
+#include "components/webui/flags/pref_service_flags_storage.h"
 #include "content/public/browser/child_process_security_policy.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/test/browser_test.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/cros_system_api/switches/chrome_switches.h"
 
@@ -176,7 +177,7 @@ class SiteIsolationFlagHandlingTest
  protected:
   SiteIsolationFlagHandlingTest()
       : account_id_(AccountId::FromUserEmailGaiaId("username@examle.com",
-                                                   "1111111111")) {}
+                                                   GaiaId("1111111111"))) {}
 
   void SetUpInProcessBrowserTestFixture() override {
     ash::SessionManagerClient::InitializeFakeInMemory();

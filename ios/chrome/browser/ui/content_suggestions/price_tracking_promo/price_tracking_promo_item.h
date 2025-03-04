@@ -8,6 +8,7 @@
 #import "ios/chrome/browser/ui/content_suggestions/magic_stack/magic_stack_module.h"
 
 @protocol PriceTrackingPromoCommands;
+@protocol PriceTrackingPromoFaviconConsumerSource;
 
 // Item containing the configurations for the Price Tracking Promo Module view.
 @interface PriceTrackingPromoItem : MagicStackModule
@@ -17,6 +18,13 @@
 
 // Serialized image data for the most recent price tracked product image.
 @property(nonatomic, strong) NSData* productImageData;
+
+// The favicon image of the product if any.
+@property(nonatomic, strong) UIImage* faviconImage;
+
+// The consumer source of the favicon image for the product.
+@property(nonatomic, strong) id<PriceTrackingPromoFaviconConsumerSource>
+    priceTrackingPromoFaviconConsumerSource;
 
 @end
 

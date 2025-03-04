@@ -14,7 +14,6 @@
 #include "base/strings/string_util.h"
 #include "base/supports_user_data.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/prefs/incognito_mode_prefs.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/signin/account_consistency_mode_manager.h"
@@ -35,10 +34,13 @@
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "google_apis/gaia/gaia_auth_util.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "net/http/http_response_headers.h"
 
 #if BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/signin/android/signin_bridge.h"
+#include "chrome/browser/ui/android/tab_model/tab_model.h"
+#include "chrome/browser/ui/android/tab_model/tab_model_list.h"
 #include "chrome/common/webui_url_constants.h"
 #include "ui/android/view_android.h"
 #else
@@ -174,6 +176,38 @@ class ManageAccountsHeaderReceivedUserData
     : public base::SupportsUserData::Data {};
 
 #if BUILDFLAG(ENABLE_MIRROR)
+bool IsWebContentsForemost(Profile* profile,
+                           content::WebContents* web_contents,
+                           GAIAServiceType service_type) {
+#if BUILDFLAG(IS_CHROMEOS)
+  Browser* browser = chrome::FindBrowserWithTab(web_contents);
+  // Do not do anything if the navigation happened in the "background".
+  if (!browser || !browser->window()->IsActive()) {
+    return false;
+  }
+
+  // Record the service type.
+  base::UmaHistogramEnumeration("AccountManager.ManageAccountsServiceType",
+                                service_type);
+
+  // Ignore response to background request from another profile, so dialogs are
+  // not displayed in the wrong profile when using ChromeOS multiprofile mode.
+  if (profile != ProfileManager::GetActiveUserProfile()) {
+    return false;
+  }
+  return true;
+#elif BUILDFLAG(IS_ANDROID)
+  if (!base::FeatureList::IsEnabled(kIgnoreMirrorHeadersInBackgoundTabs)) {
+    return true;
+  }
+  TabModel* tab_model = TabModelList::GetTabModelForWebContents(web_contents);
+  return tab_model && tab_model->IsActiveModel() &&
+         tab_model->GetActiveWebContents() == web_contents;
+#else
+  return true;  // Neither ChromeOS nor Android, always consider as foremost.
+#endif  // BUILDFLAG(IS_CHROMEOS)
+}
+
 // Processes the mirror response header on the UI thread. Currently depending
 // on the value of |header_value|, it either shows the profile avatar menu, or
 // opens an incognito window/tab.
@@ -222,26 +256,13 @@ void ProcessMirrorHeader(
       AccountReconcilorFactory::GetForProfile(profile);
   account_reconcilor->OnReceivedManageAccountsResponse(service_type);
 
-#if BUILDFLAG(IS_CHROMEOS)
   signin_metrics::LogAccountReconcilorStateOnGaiaResponse(
       account_reconcilor->GetState());
 
-  Browser* browser = chrome::FindBrowserWithTab(web_contents);
-  // Do not do anything if the navigation happened in the "background".
-  if (!browser || !browser->window()->IsActive()) {
+  if (!IsWebContentsForemost(profile, web_contents, service_type)) {
+    // Don't show any UIs if the header is received in background.
     return;
   }
-
-  // Record the service type.
-  base::UmaHistogramEnumeration("AccountManager.ManageAccountsServiceType",
-                                service_type);
-
-  // Ignore response to background request from another profile, so dialogs are
-  // not displayed in the wrong profile when using ChromeOS multiprofile mode.
-  if (profile != ProfileManager::GetActiveUserProfile()) {
-    return;
-  }
-#endif  // BUILDFLAG(IS_CHROMEOS)
 
   // At this point, all the early-returns have been passed, and the header is
   // actually going to be handled. So record it as such.
@@ -295,7 +316,7 @@ void ProcessMirrorHeader(
     // Display a re-authentication dialog.
     signin_ui_util::ShowReauthForAccount(
         profile, manage_accounts_params.email,
-        signin_metrics::AccessPoint::ACCESS_POINT_WEB_SIGNIN);
+        signin_metrics::AccessPoint::kWebSignin);
     return;
   }
 
@@ -382,20 +403,18 @@ void ProcessMirrorResponseHeaderIfExists(ResponseAdapter* response,
   if (!response_headers)
     return;
 
-  std::string header_value;
-  if (!response_headers->GetNormalizedHeader(kChromeManageAccountsHeader,
-                                             &header_value)) {
+  std::optional<std::string> header_value =
+      response_headers->GetNormalizedHeader(kChromeManageAccountsHeader);
+  if (!header_value) {
     return;
   }
 
   if (is_off_the_record) {
-    NOTREACHED_IN_MIGRATION()
-        << "Gaia should not send the X-Chrome-Manage-Accounts header "
-        << "in incognito.";
-    return;
+    NOTREACHED() << "Gaia should not send the X-Chrome-Manage-Accounts header "
+                    "in incognito.";
   }
 
-  ManageAccountsParams params = BuildManageAccountsParams(header_value);
+  ManageAccountsParams params = BuildManageAccountsParams(*header_value);
   // If the request does not have a response header or if the header contains
   // garbage, then |service_type| is set to |GAIA_SERVICE_TYPE_NONE|.
   if (params.service_type == GAIA_SERVICE_TYPE_NONE)
@@ -434,17 +453,20 @@ void ProcessDiceResponseHeaderIfExists(ResponseAdapter* response,
   if (!response_headers)
     return;
 
-  std::string header_value;
   DiceResponseParams params;
-  if (response_headers->GetNormalizedHeader(kDiceResponseHeader,
-                                            &header_value)) {
-    params = BuildDiceSigninResponseParams(header_value);
+  std::optional<std::string> header_value =
+      response_headers->GetNormalizedHeader(kDiceResponseHeader);
+  if (header_value) {
+    params = BuildDiceSigninResponseParams(*header_value);
     // The header must be removed for privacy reasons, so that renderers never
     // have access to the authorization code.
     response->RemoveHeader(kDiceResponseHeader);
-  } else if (response_headers->GetNormalizedHeader(kGoogleSignoutResponseHeader,
-                                                   &header_value)) {
-    params = BuildDiceSignoutResponseParams(header_value);
+  } else {
+    header_value =
+        response_headers->GetNormalizedHeader(kGoogleSignoutResponseHeader);
+    if (header_value) {
+      params = BuildDiceSignoutResponseParams(*header_value);
+    }
   }
 
   // If the request does not have a response header or if the header contains
@@ -460,28 +482,32 @@ void ProcessDiceResponseHeaderIfExists(ResponseAdapter* response,
 }
 #endif  // BUILDFLAG(ENABLE_DICE_SUPPORT)
 
-std::string ParseGaiaIdFromRemoveLocalAccountResponseHeader(
+GaiaId ParseGaiaIdFromRemoveLocalAccountResponseHeader(
     const net::HttpResponseHeaders* response_headers) {
-  if (!response_headers)
-    return std::string();
+  if (!response_headers) {
+    return GaiaId();
+  }
 
-  std::string header_value;
-  if (!response_headers->GetNormalizedHeader(
-          kGoogleRemoveLocalAccountResponseHeader, &header_value)) {
-    return std::string();
+  std::optional<std::string> header_value =
+      response_headers->GetNormalizedHeader(
+          kGoogleRemoveLocalAccountResponseHeader);
+  if (!header_value) {
+    return GaiaId();
   }
 
   const SigninHeaderHelper::ResponseHeaderDictionary header_dictionary =
-      SigninHeaderHelper::ParseAccountConsistencyResponseHeader(header_value);
+      SigninHeaderHelper::ParseAccountConsistencyResponseHeader(*header_value);
 
-  std::string gaia_id;
   const auto it =
       header_dictionary.find(kRemoveLocalAccountObfuscatedIDAttrName);
-  if (it != header_dictionary.end()) {
-    // The Gaia ID is wrapped in quotes.
-    base::TrimString(it->second, "\"", &gaia_id);
+  if (it == header_dictionary.end()) {
+    return GaiaId();
   }
-  return gaia_id;
+
+  // The Gaia ID is wrapped in quotes.
+  std::string gaia_id_str;
+  base::TrimString(it->second, "\"", &gaia_id_str);
+  return GaiaId(gaia_id_str);
 }
 
 void ProcessRemoveLocalAccountResponseHeaderIfExists(ResponseAdapter* response,
@@ -491,7 +517,7 @@ void ProcessRemoveLocalAccountResponseHeaderIfExists(ResponseAdapter* response,
   if (is_off_the_record)
     return;
 
-  const std::string gaia_id =
+  const GaiaId gaia_id =
       ParseGaiaIdFromRemoveLocalAccountResponseHeader(response->GetHeaders());
 
   if (gaia_id.empty())
@@ -539,11 +565,11 @@ void FixAccountConsistencyRequestHeader(
     ChromeRequestAdapter* request,
     const GURL& redirect_url,
     bool is_off_the_record,
-    int incognito_availibility,
+    int incognito_availability,
     AccountConsistencyMethod account_consistency,
-    const std::string& gaia_id,
+    const GaiaId& gaia_id,
     signin::Tribool is_child_account,
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     bool is_secondary_account_addition_allowed,
 #endif
 #if BUILDFLAG(ENABLE_DICE_SUPPORT)
@@ -560,13 +586,13 @@ void FixAccountConsistencyRequestHeader(
   // The Mirror header may be added on desktop platforms, for integration with
   // Google Drive.
   int profile_mode_mask = PROFILE_MODE_DEFAULT;
-  if (incognito_availibility ==
+  if (incognito_availability ==
           static_cast<int>(policy::IncognitoModeAvailability::kDisabled) ||
       IncognitoModePrefs::ArePlatformParentalControlsEnabled()) {
     profile_mode_mask |= PROFILE_MODE_INCOGNITO_DISABLED;
   }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   if (!is_secondary_account_addition_allowed) {
     account_consistency = AccountConsistencyMethod::kMirror;
     // Can't add new accounts.
@@ -621,7 +647,7 @@ void ProcessAccountConsistencyResponseHeaders(ResponseAdapter* response,
   ProcessRemoveLocalAccountResponseHeaderIfExists(response, is_off_the_record);
 }
 
-std::string ParseGaiaIdFromRemoveLocalAccountResponseHeaderForTesting(
+GaiaId ParseGaiaIdFromRemoveLocalAccountResponseHeaderForTesting(
     const net::HttpResponseHeaders* response_headers) {
   return ParseGaiaIdFromRemoveLocalAccountResponseHeader(response_headers);
 }

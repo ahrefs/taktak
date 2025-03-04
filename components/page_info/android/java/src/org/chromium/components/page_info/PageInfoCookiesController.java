@@ -9,6 +9,8 @@ import static org.chromium.components.content_settings.PrefNames.IN_CONTEXT_COOK
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.VisibleForTesting;
+
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.components.browser_ui.site_settings.SingleWebsiteSettings;
 import org.chromium.components.browser_ui.site_settings.SiteDataCleaner;
@@ -19,6 +21,7 @@ import org.chromium.components.browser_ui.site_settings.WebsitePermissionsFetche
 import org.chromium.components.browser_ui.site_settings.WebsitePreferenceBridge;
 import org.chromium.components.browsing_data.DeleteBrowsingDataAction;
 import org.chromium.components.content_settings.CookieControlsBridge;
+import org.chromium.components.content_settings.CookieControlsEnforcement;
 import org.chromium.components.content_settings.CookieControlsObserver;
 import org.chromium.components.embedder_support.util.Origin;
 import org.chromium.components.user_prefs.UserPrefs;
@@ -41,8 +44,12 @@ public class PageInfoCookiesController extends PageInfoPreferenceSubpageControll
     private long mExpiration;
     private boolean mShouldDisplaySiteBreakageString;
     private Website mWebsite;
-    private boolean mBlockAll3PC;
+    private boolean mBlockAll3pc;
     private boolean mIsIncognito;
+    private boolean mIsModeBUi;
+    private int mDaysUntilExpirationForTesting;
+    private boolean mFixedExpirationForTesting;
+    private Collection<Website> mRwsInfoForTesting;
 
     public PageInfoCookiesController(
             PageInfoMainController mainController,
@@ -50,13 +57,15 @@ public class PageInfoCookiesController extends PageInfoPreferenceSubpageControll
             PageInfoControllerDelegate delegate) {
         super(delegate);
 
-        mBlockAll3PC = delegate.allThirdPartyCookiesBlockedTrackingProtection();
+        mBlockAll3pc = delegate.allThirdPartyCookiesBlockedTrackingProtection();
         mIsIncognito = delegate.isIncognito();
+
+        mIsModeBUi = delegate.showTrackingProtectionUi();
 
         mMainController = mainController;
         mRowView = rowView;
         mFullUrl = mainController.getURL().getSpec();
-        mTitle = mRowView.getContext().getResources().getString(R.string.page_info_cookies_title);
+        mTitle = mRowView.getContext().getString(R.string.page_info_cookies_title);
         mBridge = delegate.createCookieControlsBridge(this);
 
         PageInfoRowView.ViewParams rowParams = new PageInfoRowView.ViewParams();
@@ -101,8 +110,11 @@ public class PageInfoCookiesController extends PageInfoPreferenceSubpageControll
         params.onFeedbackLinkClicked = getDelegate()::showCookieFeedback;
         params.disableCookieDeletion = isDeletionDisabled();
         params.hostName = mMainController.getURL().getHost();
-        params.blockAll3PC = mBlockAll3PC;
+        params.blockAll3pc = mBlockAll3pc;
         params.isIncognito = mIsIncognito;
+        params.fixedExpirationForTesting = mFixedExpirationForTesting;
+        params.daysUntilExpirationForTesting = mDaysUntilExpirationForTesting;
+        params.isModeBUi = mIsModeBUi;
         mSubPage.setParams(params);
         mSubPage.setCookieStatus(
                 mCookieControlsVisible, mThirdPartyCookiesBlocked, mEnforcement, mExpiration);
@@ -114,6 +126,9 @@ public class PageInfoCookiesController extends PageInfoPreferenceSubpageControll
         new WebsitePermissionsFetcher(getDelegate().getSiteSettingsDelegate())
                 .fetchPreferencesForCategoryAndPopulateRwsInfo(
                         storageCategory, this::onStorageFetched);
+        if (mRwsInfoForTesting != null) {
+            onStorageFetched(mRwsInfoForTesting);
+        }
 
         return view;
     }
@@ -128,11 +143,11 @@ public class PageInfoCookiesController extends PageInfoPreferenceSubpageControll
         if (mSubPage != null) {
             mSubPage.setStorageUsage(mWebsite.getTotalUsage());
 
-            boolean isRWSInfoShown =
-                    mSubPage.maybeShowRWSInfo(
-                            mWebsite.getRWSCookieInfo(), mWebsite.getAddress().getOrigin());
+            boolean isRwsInfoShown =
+                    mSubPage.maybeShowRwsInfo(
+                            mWebsite.getRwsCookieInfo(), mWebsite.getAddress().getOrigin());
             RecordHistogram.recordBooleanHistogram(
-                    "Security.PageInfo.Cookies.HasFPSInfo", isRWSInfoShown);
+                    "Security.PageInfo.Cookies.HasFPSInfo", isRwsInfoShown);
         }
     }
 
@@ -196,7 +211,9 @@ public class PageInfoCookiesController extends PageInfoPreferenceSubpageControll
 
     @Override
     public void onHighlightCookieControl(boolean shouldHighlight) {
-        mShouldDisplaySiteBreakageString = shouldHighlight;
+        if (!mIsModeBUi) {
+            mShouldDisplaySiteBreakageString = shouldHighlight;
+        }
         updateRowViewSubtitle();
     }
 
@@ -206,19 +223,59 @@ public class PageInfoCookiesController extends PageInfoPreferenceSubpageControll
     }
 
     private void updateRowViewSubtitle() {
+        if (mEnforcement == CookieControlsEnforcement.ENFORCED_BY_TPCD_GRANT) {
+            mRowView.updateSubtitle(
+                    mRowView.getContext().getString(R.string.page_info_cookies_subtitle_allowed));
+            return;
+        }
         if (!mCookieControlsVisible) return;
         if (!mThirdPartyCookiesBlocked) {
             mRowView.updateSubtitle(
                     mRowView.getContext().getString(R.string.page_info_cookies_subtitle_allowed));
             return;
         }
-        mRowView.updateSubtitle(
-                mRowView.getContext()
-                        .getString(
-                                mShouldDisplaySiteBreakageString
-                                        ? R.string
-                                                .page_info_cookies_subtitle_blocked_high_confidence
-                                        : R.string.page_info_cookies_subtitle_blocked));
+        if (!mIsModeBUi) {
+            mRowView.updateSubtitle(
+                    mRowView.getContext()
+                            .getString(
+                                    mShouldDisplaySiteBreakageString
+                                            ? R.string
+                                                    .page_info_cookies_subtitle_blocked_high_confidence
+                                            : R.string.page_info_cookies_subtitle_blocked));
+        } else {
+            mRowView.updateSubtitle(
+                    mRowView.getContext()
+                            .getString(
+                                    mBlockAll3pc
+                                            ? R.string.page_info_cookies_subtitle_blocked
+                                            : R.string
+                                                    .page_info_tracking_protection_subtitle_cookies_limited));
+        }
+    }
+
+    public void setDaysUntilExpirationForTesting(int days) {
+        mDaysUntilExpirationForTesting = days;
+    }
+
+    public void setFixedExceptionExpirationForTesting(boolean fixed) {
+        mFixedExpirationForTesting = fixed;
+    }
+
+    public void setEnforcementForTesting(@CookieControlsEnforcement int enforcement) {
+        mEnforcement = enforcement;
+    }
+
+    public void setIsIncognitoForTesting(boolean isIncognito) {
+        mIsIncognito = isIncognito;
+    }
+
+    public void setIsModeBUiForTesting(boolean isModeBUi) {
+        mIsModeBUi = isModeBUi;
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    public void setRwsInfoForTesting(Collection<Website> rwsInfoForTesting) {
+        mRwsInfoForTesting = rwsInfoForTesting;
     }
 
     void destroy() {

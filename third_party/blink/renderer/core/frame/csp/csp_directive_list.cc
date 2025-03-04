@@ -10,6 +10,7 @@
 #include "base/notreached.h"
 #include "services/network/public/cpp/content_security_policy/content_security_policy.h"
 #include "services/network/public/mojom/content_security_policy.mojom-blink.h"
+#include "services/network/public/mojom/integrity_algorithm.mojom-blink.h"
 #include "third_party/blink/renderer/core/dom/document.h"
 #include "third_party/blink/renderer/core/dom/space_split_string.h"
 #include "third_party/blink/renderer/core/execution_context/security_context.h"
@@ -24,6 +25,7 @@
 #include "third_party/blink/renderer/platform/crypto.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
 #include "third_party/blink/renderer/platform/instrumentation/use_counter.h"
+#include "third_party/blink/renderer/platform/loader/subresource_integrity.h"
 #include "third_party/blink/renderer/platform/weborigin/known_ports.h"
 #include "third_party/blink/renderer/platform/weborigin/kurl.h"
 #include "third_party/blink/renderer/platform/weborigin/reporting_disposition.h"
@@ -59,21 +61,6 @@ String GetSha256String(const String& content) {
   }
 
   return "sha256-" + Base64Encode(digest);
-}
-
-network::mojom::blink::CSPHashAlgorithm ConvertHashAlgorithmToCSPHashAlgorithm(
-    IntegrityAlgorithm algorithm) {
-  // TODO(antoniosartori): Consider merging these two enums.
-  switch (algorithm) {
-    case IntegrityAlgorithm::kSha256:
-      return network::mojom::blink::CSPHashAlgorithm::SHA256;
-    case IntegrityAlgorithm::kSha384:
-      return network::mojom::blink::CSPHashAlgorithm::SHA384;
-    case IntegrityAlgorithm::kSha512:
-      return network::mojom::blink::CSPHashAlgorithm::SHA512;
-  }
-  NOTREACHED_IN_MIGRATION();
-  return network::mojom::blink::CSPHashAlgorithm::None;
 }
 
 // IntegrityMetadata (from SRI) has base64-encoded digest values, but CSP uses
@@ -159,9 +146,11 @@ void ReportViolation(
   String message = CSPDirectiveListIsReportOnly(csp)
                        ? "[Report Only] " + console_message
                        : console_message;
+  auto error_level = CSPDirectiveListIsReportOnly(csp)
+                         ? mojom::blink::ConsoleMessageLevel::kInfo
+                         : mojom::blink::ConsoleMessageLevel::kError;
   policy->LogToConsole(MakeGarbageCollected<ConsoleMessage>(
-      mojom::ConsoleMessageSource::kSecurity,
-      mojom::ConsoleMessageLevel::kError, message));
+      mojom::ConsoleMessageSource::kSecurity, error_level, message));
   policy->ReportViolation(directive_text, effective_type, message, blocked_url,
                           csp.report_endpoints, csp.use_reporting_api,
                           csp.header->header_value, csp.header->type,
@@ -185,11 +174,14 @@ void ReportViolationWithLocation(
   String message = CSPDirectiveListIsReportOnly(csp)
                        ? "[Report Only] " + console_message
                        : console_message;
+  auto error_level = CSPDirectiveListIsReportOnly(csp)
+                         ? mojom::blink::ConsoleMessageLevel::kInfo
+                         : mojom::blink::ConsoleMessageLevel::kError;
   std::unique_ptr<SourceLocation> source_location =
       CaptureSourceLocation(context_url, context_line.OneBasedInt(), 0);
   policy->LogToConsole(MakeGarbageCollected<ConsoleMessage>(
-      mojom::ConsoleMessageSource::kSecurity,
-      mojom::ConsoleMessageLevel::kError, message, source_location->Clone()));
+      mojom::ConsoleMessageSource::kSecurity, error_level, message,
+      source_location->Clone()));
   policy->ReportViolation(directive_text, effective_type, message, blocked_url,
                           csp.report_endpoints, csp.use_reporting_api,
                           csp.header->header_value, csp.header->type,
@@ -209,6 +201,9 @@ void ReportEvalViolation(
     const String& content) {
   String report_message =
       CSPDirectiveListIsReportOnly(csp) ? "[Report Only] " + message : message;
+  auto error_level = CSPDirectiveListIsReportOnly(csp)
+                         ? mojom::blink::ConsoleMessageLevel::kInfo
+                         : mojom::blink::ConsoleMessageLevel::kError;
   // Print a console message if it won't be redundant with a
   // JavaScript exception that the caller will throw. (Exceptions will
   // never get thrown in report-only mode because the caller won't see
@@ -216,8 +211,7 @@ void ReportEvalViolation(
   if (CSPDirectiveListIsReportOnly(csp) ||
       exception_status == ContentSecurityPolicy::kWillNotThrowException) {
     auto* console_message = MakeGarbageCollected<ConsoleMessage>(
-        mojom::ConsoleMessageSource::kSecurity,
-        mojom::ConsoleMessageLevel::kError, report_message);
+        mojom::ConsoleMessageSource::kSecurity, error_level, report_message);
     policy->LogToConsole(console_message);
   }
   policy->ReportViolation(
@@ -238,14 +232,17 @@ void ReportWasmEvalViolation(
     const String& content) {
   String report_message =
       CSPDirectiveListIsReportOnly(csp) ? "[Report Only] " + message : message;
+  auto error_level = CSPDirectiveListIsReportOnly(csp)
+                         ? mojom::blink::ConsoleMessageLevel::kInfo
+                         : mojom::blink::ConsoleMessageLevel::kError;
   // Print a console message if it won't be redundant with a JavaScript
   // exception that the caller will throw. Exceptions will never get thrown in
   // report-only mode because the caller won't see a violation.
   if (CSPDirectiveListIsReportOnly(csp) ||
       exception_status == ContentSecurityPolicy::kWillNotThrowException) {
     auto* console_message = MakeGarbageCollected<ConsoleMessage>(
-        mojom::blink::ConsoleMessageSource::kSecurity,
-        mojom::blink::ConsoleMessageLevel::kError, report_message);
+        mojom::blink::ConsoleMessageSource::kSecurity, error_level,
+        report_message);
     policy->LogToConsole(console_message);
   }
   policy->ReportViolation(
@@ -318,22 +315,44 @@ bool IsMatchingNoncePresent(
   return directive && CSPSourceListAllowNonce(*directive, nonce);
 }
 
-bool AreAllMatchingHashesPresent(
+bool AreAllMatchingIntegrityChecksPresent(
     const network::mojom::blink::CSPSourceList* directive,
-    const IntegrityMetadataSet& hashes) {
-  if (!directive || hashes.empty())
+    const IntegrityMetadataSet& integrity_metadata) {
+  if (!directive || (integrity_metadata.hashes.empty() &&
+                     integrity_metadata.signatures.empty())) {
     return false;
-  for (const std::pair<String, IntegrityAlgorithm>& hash : hashes) {
+  }
+
+  // Check that all hashes present in the integrity metadata are allowed
+  // by the relevant policy:
+  for (const IntegrityMetadataPair& hash : integrity_metadata.hashes) {
     // Convert the hash from integrity metadata format to CSP format.
     network::mojom::blink::CSPHashSourcePtr csp_hash =
         network::mojom::blink::CSPHashSource::New();
-    csp_hash->algorithm = ConvertHashAlgorithmToCSPHashAlgorithm(hash.second);
+    csp_hash->algorithm = hash.second;
     if (!ParseBase64Digest(hash.first, csp_hash->value))
       return false;
     // All integrity hashes must be listed in the CSP.
     if (!CSPSourceListAllowHash(*directive, *csp_hash))
       return false;
   }
+
+  // Now check that all signatures present in the integrity metadata are
+  // allowed by the relevant policy:
+  for (const IntegrityMetadataPair& key : integrity_metadata.signatures) {
+    // Convert the hash from integrity metadata format to CSP format.
+    network::mojom::blink::CSPHashSourcePtr csp_hash =
+        network::mojom::blink::CSPHashSource::New();
+    csp_hash->algorithm = key.second;
+    if (!ParseBase64Digest(key.first, csp_hash->value)) {
+      return false;
+    }
+    // All integrity hashes must be listed in the CSP.
+    if (!CSPSourceListAllowHash(*directive, *csp_hash)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -529,14 +548,14 @@ void ReportViolationForCheckSource(
     case CSPDirectiveName::FrameSrc:
     case CSPDirectiveName::ReportTo:
     case CSPDirectiveName::ReportURI:
+    case CSPDirectiveName::RequireSRIFor:
     case CSPDirectiveName::RequireTrustedTypesFor:
     case CSPDirectiveName::Sandbox:
     case CSPDirectiveName::TreatAsPublicAddress:
     case CSPDirectiveName::TrustedTypes:
     case CSPDirectiveName::UpgradeInsecureRequests:
     case CSPDirectiveName::Unknown:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   String directive_name =
@@ -829,7 +848,7 @@ CSPCheckResult CSPDirectiveListAllowFromSource(
     ResourceRequest::RedirectStatus redirect_status,
     ReportingDisposition reporting_disposition,
     const String& nonce,
-    const IntegrityMetadataSet& hashes,
+    const IntegrityMetadataSet& integrity_metadata,
     ParserDisposition parser_disposition) {
   DCHECK(type == CSPDirectiveName::BaseURI ||
          type == CSPDirectiveName::ConnectSrc ||
@@ -872,8 +891,8 @@ CSPCheckResult CSPDirectiveListAllowFromSource(
         CSPDirectiveListAllowDynamic(csp, type)) {
       return CSPCheckResult::Allowed();
     }
-    if (AreAllMatchingHashesPresent(OperativeDirective(csp, type).source_list,
-                                    hashes)) {
+    if (AreAllMatchingIntegrityChecksPresent(
+            OperativeDirective(csp, type).source_list, integrity_metadata)) {
       return CSPCheckResult::Allowed();
     }
   }
@@ -921,6 +940,23 @@ bool CSPDirectiveListRequiresTrustedTypes(
     const network::mojom::blink::ContentSecurityPolicy& csp) {
   return csp.require_trusted_types_for ==
          network::mojom::blink::CSPRequireTrustedTypesFor::Script;
+}
+
+std::optional<HashAlgorithm> CSPDirectiveListHashToReport(
+    const network::mojom::blink::ContentSecurityPolicy& csp) {
+  if (!RuntimeEnabledFeatures::CSPReportHashEnabled()) {
+    return std::nullopt;
+  }
+  // Reporting hashes is needed if the most specific directive contains a
+  // relevant value.
+  CSPOperativeDirective directive =
+      OperativeDirective(csp, CSPDirectiveName::ScriptSrcElem);
+  if (!directive.source_list || !directive.source_list->report_hash_algorithm) {
+    return std::nullopt;
+  }
+
+  return SubresourceIntegrity::IntegrityAlgorithmToHashAlgorithm(
+      directive.source_list->report_hash_algorithm.value());
 }
 
 bool CSPDirectiveListAllowHash(

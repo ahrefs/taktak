@@ -6,12 +6,19 @@
 
 #import "base/ios/ios_util.h"
 #import "base/metrics/field_trial_params.h"
+#import "components/prefs/pref_service.h"
 #import "components/variations/service/variations_service.h"
+#import "ios/chrome/browser/authentication/ui_bundled/cells/signin_promo_view_constants.h"
 #import "ios/chrome/browser/shared/model/application_context/application_context.h"
 #import "ios/chrome/browser/shared/model/prefs/pref_names.h"
 #import "ios/chrome/browser/shared/public/features/features.h"
 
 #pragma mark - Constants
+
+const char kDeprecateFeedHeaderParameterRemoveLabel[] = "remove-feed-label";
+const char kDeprecateFeedHeaderParameterTopPadding[] = "top-padding";
+const char kDeprecateFeedHeaderParameterEnlargeLogoAndFakebox[] =
+    "enlarge-logo-n-fakebox";
 
 #pragma mark - Feature declarations
 
@@ -67,6 +74,10 @@ const char kFeedSettingTimeoutThresholdAfterClearBrowsingData[] =
 const char kFeedSettingDiscoverReferrerParameter[] =
     "DiscoverReferrerParameter";
 
+// Feature parameter for `kIdentityDiscAccountMenu`.
+const char kDisableAccountMenuEllipsisParam[] =
+    "identity-disc-account-menu-without-ellipsis";
+
 #pragma mark - Helpers
 
 bool IsNTPViewHierarchyRepairEnabled() {
@@ -97,4 +108,34 @@ bool IsSignedOutViewDemotionEnabled() {
 
 bool IsiPadFeedGhostCardsEnabled() {
   return base::FeatureList::IsEnabled(kEnableiPadFeedGhostCards);
+}
+
+bool ShouldRemoveDiscoverLabel(bool is_google_default_search_engine) {
+  return is_google_default_search_engine && ShouldDeprecateFeedHeader() &&
+         base::GetFieldTrialParamByFeatureAsBool(
+             kDeprecateFeedHeader, kDeprecateFeedHeaderParameterRemoveLabel,
+             false);
+}
+
+bool ShouldEnlargeLogoAndFakebox() {
+  return ShouldDeprecateFeedHeader() &&
+         base::GetFieldTrialParamByFeatureAsBool(
+             kDeprecateFeedHeader,
+             kDeprecateFeedHeaderParameterEnlargeLogoAndFakebox, false);
+}
+
+double TopPaddingToNTP() {
+  return ShouldDeprecateFeedHeader()
+             ? base::GetFieldTrialParamByFeatureAsDouble(
+                   kDeprecateFeedHeader,
+                   kDeprecateFeedHeaderParameterTopPadding, 0)
+             : 0;
+}
+
+bool IdentityDiscAccountMenuEnabledWithoutEllipsis() {
+  if (base::FeatureList::IsEnabled(kIdentityDiscAccountMenu)) {
+    return base::GetFieldTrialParamByFeatureAsBool(
+        kIdentityDiscAccountMenu, kDisableAccountMenuEllipsisParam, false);
+  }
+  return false;
 }

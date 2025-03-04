@@ -25,13 +25,12 @@
 #include "base/memory/weak_ptr.h"
 #include "base/metrics/histogram_functions.h"
 #include "base/scoped_observation.h"
+#include "base/strings/strcat.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/unguessable_token.h"
 #include "base/values.h"
-#include "chrome/browser/ash/crosapi/crosapi_ash.h"
-#include "chrome/browser/ash/crosapi/crosapi_manager.h"
 #include "chrome/browser/ash/magic_boost/magic_boost_controller_ash.h"
 #include "chrome/browser/ash/mahi/mahi_availability.h"
 #include "chrome/browser/ash/mahi/mahi_cache_manager.h"
@@ -250,6 +249,10 @@ GURL MahiManagerImpl::GetContentUrl() {
   return current_page_info_->url;
 }
 
+std::u16string MahiManagerImpl::GetSelectedText() {
+  return current_selected_text_.value_or(std::u16string());
+}
+
 void MahiManagerImpl::GetContent(MahiContentCallback callback) {
   if (!MaybeInitializeAndDiscardPendingRequests()) {
     std::move(callback).Run(u"", MahiGetContentResponseStatus::kUnknownError);
@@ -286,6 +289,9 @@ void MahiManagerImpl::GetContent(MahiContentCallback callback) {
 }
 
 void MahiManagerImpl::GetSummary(MahiSummaryCallback callback) {
+  // Resets latest_elucidation_ to avoid messing up the feedback body.
+  latest_elucidation_ = std::u16string();
+
   if (!MaybeInitializeAndDiscardPendingRequests()) {
     latest_response_status_ = MahiResponseStatus::kUnknownError;
     std::move(callback).Run(u"", latest_response_status_);
@@ -295,12 +301,14 @@ void MahiManagerImpl::GetSummary(MahiSummaryCallback callback) {
 
   current_panel_info_ = current_page_info_->Clone();
 
-  // Uses the summary if it is already in the cache.
-  const auto cached_summary =
-      cache_manager_->GetSummaryForUrl(current_panel_info_->url.spec());
   const auto cached_content =
       cache_manager_->GetPageContentForUrl(current_panel_info_->url.spec());
-  if (cached_summary.has_value()) {
+
+  // Uses the cached summary only if the request is for the whole page
+  // (`current_selected_text_` is nullopt).
+  const auto cached_summary =
+      cache_manager_->GetSummaryForUrl(current_panel_info_->url.spec());
+  if (current_selected_text_ == std::nullopt && cached_summary.has_value()) {
     current_panel_content_ = crosapi::mojom::MahiPageContent::New(
         /*client_id=*/base::UnguessableToken(),
         /*page_id=*/base::UnguessableToken(), cached_content);
@@ -345,6 +353,9 @@ void MahiManagerImpl::GetSummary(MahiSummaryCallback callback) {
 }
 
 void MahiManagerImpl::GetElucidation(MahiElucidationCallback callback) {
+  // Resets latest_summary_ to avoid messing up feedback.
+  latest_summary_ = std::u16string();
+
   if (!MaybeInitializeAndDiscardPendingRequests()) {
     latest_response_status_ = MahiResponseStatus::kUnknownError;
     std::move(callback).Run(u"", latest_response_status_);
@@ -354,23 +365,23 @@ void MahiManagerImpl::GetElucidation(MahiElucidationCallback callback) {
 
   current_panel_info_ = current_page_info_->Clone();
 
-  if (media_app_pdf_focused_) {
-    // TODO(b:372179217): obtain selected text from media app
-    current_selected_text_ = std::u16string();
-  } else {
-    current_selected_text_ =
-        chromeos::MahiWebContentsManager::Get()->GetSelectedText();
-    CHECK(!current_selected_text_.empty());
+  // Do not CHECK and crash here. It's true that Elucidation button should only
+  // show when the selected text passed the eligiblity check, but this may also
+  // be called by clicking `retry` link when error happens, and because of
+  // crbug.com/375292907, the current_selected_text may change and not eligible
+  // anymore (e.g. becomes empty). In such cases we returns an error.
+  if (current_selected_text_->empty()) {
+    std::move(callback).Run(u"", MahiResponseStatus::kInappropriate);
+    return;
   }
 
-  // TODO(b:372741602): maybe also query cached elucidation result
   const auto cached_content =
       cache_manager_->GetPageContentForUrl(current_panel_info_->url.spec());
 
   // Uses page content if it is already in the cache.
   if (!cached_content.empty()) {
     OnGetPageContentForElucidation(
-        current_selected_text_, current_panel_info_->Clone(),
+        current_selected_text_.value(), current_panel_info_->Clone(),
         std::move(callback),
         crosapi::mojom::MahiPageContent::New(
             /*client_id=*/base::UnguessableToken(),
@@ -381,10 +392,11 @@ void MahiManagerImpl::GetElucidation(MahiElucidationCallback callback) {
   }
 
   base::UmaHistogramEnumeration(kMahiCacheHit, CacheHit::kNoHit);
-  auto get_content_done_callback = base::BindOnce(
-      &MahiManagerImpl::OnGetPageContentForElucidation,
-      weak_ptr_factory_for_requests_.GetWeakPtr(), current_selected_text_,
-      current_panel_info_->Clone(), std::move(callback));
+  auto get_content_done_callback =
+      base::BindOnce(&MahiManagerImpl::OnGetPageContentForElucidation,
+                     weak_ptr_factory_for_requests_.GetWeakPtr(),
+                     current_selected_text_.value(),
+                     current_panel_info_->Clone(), std::move(callback));
 
   if (media_app_pdf_focused_) {
     chromeos::MahiMediaAppContentManager::Get()->GetContent(
@@ -468,8 +480,8 @@ void MahiManagerImpl::GetSuggestedQuestion(
 void MahiManagerImpl::SetCurrentFocusedPageInfo(
     crosapi::mojom::MahiPageInfoPtr info) {
   media_app_pdf_focused_ = false;
-  // TODO(b/318565610): consider adding default icon when there is no icon
-  // available.
+  // TODO(crbug.com/318565610): consider adding default icon when there is no
+  // icon available.
   current_page_info_ = std::move(info);
 
   const bool availability =
@@ -495,17 +507,33 @@ void MahiManagerImpl::OnContextMenuClicked(
 
   switch (action_type) {
     case MahiContextMenuActionType::kElucidation:
-      // TODO(b:372741602): Open Panel for elucidation
+      // Retrieves selected text from corresponding content manager, so that the
+      // result panel ui can get this info from Mahi Manager directly instead of
+      // contacting content managers.
+      UpdateCurrentSelectedText();
+
+      OpenMahiPanelForElucidation(
+          context_menu_request->display_id,
+          context_menu_request->mahi_menu_bounds.has_value()
+              ? context_menu_request->mahi_menu_bounds.value()
+              : gfx::Rect());
       return;
     case MahiContextMenuActionType::kSummary:
-    case MahiContextMenuActionType::kOutline:
-      // TODO(b/318565610): Update the behaviour of kOutline.
+      current_selected_text_ = std::nullopt;
+      OpenMahiPanel(context_menu_request->display_id,
+                    context_menu_request->mahi_menu_bounds.has_value()
+                        ? context_menu_request->mahi_menu_bounds.value()
+                        : gfx::Rect());
+      return;
+    case MahiContextMenuActionType::kSummaryOfSelection:
+      UpdateCurrentSelectedText();
       OpenMahiPanel(context_menu_request->display_id,
                     context_menu_request->mahi_menu_bounds.has_value()
                         ? context_menu_request->mahi_menu_bounds.value()
                         : gfx::Rect());
       return;
     case MahiContextMenuActionType::kQA:
+      current_selected_text_ = std::nullopt;
       OpenMahiPanel(context_menu_request->display_id,
                     context_menu_request->mahi_menu_bounds.has_value()
                         ? context_menu_request->mahi_menu_bounds.value()
@@ -546,23 +574,40 @@ void MahiManagerImpl::OnContextMenuClicked(
           chromeos::settings::mojom::Setting::kMahiOnOff);
       return;
     case MahiContextMenuActionType::kNone:
+    case MahiContextMenuActionType::kOutline:
+      // TODO(b/318565610): Update the behaviour of kOutline.
       return;
   }
 }
 
 void MahiManagerImpl::OpenFeedbackDialog() {
   std::string description_template = base::StringPrintf(
-      "#Mahi user feedback:\n\n-----------\nlatest status code: %d\nlatest "
-      "summary: %s",
-      static_cast<int>(latest_response_status_),
-      base::UTF16ToUTF8(latest_summary_).c_str());
+      "#Mahi user feedback:\n\n-----------\nlatest status code: %d",
+      static_cast<int>(latest_response_status_));
 
-  if (!current_panel_qa_.empty()) {
-    base::StringAppendF(&description_template, "\nQA history:");
-    for (const auto& [question, answer] : current_panel_qa_) {
-      base::StringAppendF(&description_template, "\nQ:%s\nA:%s\n",
-                          question.c_str(), answer.c_str());
+  if (!latest_summary_.empty()) {
+    base::StringAppendF(&description_template, "\nlatest summary: %s",
+                        base::UTF16ToUTF8(latest_summary_).c_str());
+
+    if (current_selected_text_ != std::nullopt) {
+      base::StringAppendF(
+          &description_template, "\n\nfor the selected text: %s",
+          base::UTF16ToUTF8(current_selected_text_.value()).c_str());
     }
+
+    if (!current_panel_qa_.empty()) {
+      base::StringAppendF(&description_template, "\n\nQA history:");
+      for (const auto& [question, answer] : current_panel_qa_) {
+        base::StringAppendF(&description_template, "\nQ:%s\nA:%s\n",
+                            question.c_str(), answer.c_str());
+      }
+    }
+  } else if (!latest_elucidation_.empty()) {
+    base::StringAppendF(
+        &description_template,
+        "\nlatest simplified text: %s\n\nfor the selected text: %s\n",
+        base::UTF16ToUTF8(latest_elucidation_).c_str(),
+        base::UTF16ToUTF8(current_selected_text_.value()).c_str());
   }
 
   base::Value::Dict ai_metadata;
@@ -582,7 +627,15 @@ void MahiManagerImpl::OpenFeedbackDialog() {
 
 void MahiManagerImpl::OpenMahiPanel(int64_t display_id,
                                     const gfx::Rect& mahi_menu_bounds) {
-  ui_controller_.OpenMahiPanel(display_id, mahi_menu_bounds);
+  ui_controller_.OpenMahiPanel(display_id, mahi_menu_bounds,
+                               /*elucidation_in_use=*/false);
+}
+
+void MahiManagerImpl::OpenMahiPanelForElucidation(
+    int64_t display_id,
+    const gfx::Rect& mahi_menu_bounds) {
+  ui_controller_.OpenMahiPanel(display_id, mahi_menu_bounds,
+                               /*elucidation_in_use=*/true);
 }
 
 bool MahiManagerImpl::IsEnabled() {
@@ -656,7 +709,12 @@ void MahiManagerImpl::ClearCache() {
 }
 
 void MahiManagerImpl::NotifyRefreshAvailability(bool available) {
-  if (ui_controller_.IsMahiPanelOpen()) {
+  // Do not notify if the result on the panel is based on the user selected
+  // text, because clicking the refresh banner will update the panel with
+  // summary of the new whole document, which is not consistent with the current
+  // purpose of the panel.
+  if (ui_controller_.IsMahiPanelOpen() &&
+      current_selected_text_ == std::nullopt) {
     ui_controller_.NotifyRefreshAvailabilityChanged(available);
   }
 
@@ -751,13 +809,12 @@ void MahiManagerImpl::InterrputRequestHandlingWithDisclaimerView(
               .Then(reset_observer_closure),
           /*on_declined_closure=*/reset_observer_closure);
 
-  crosapi::CrosapiManager::Get()
-      ->crosapi_ash()
-      ->magic_boost_controller_ash()
-      ->ShowDisclaimerUi(
-          display_id,
-          crosapi::mojom::MagicBoostController::TransitionAction::kDoNothing,
-          OptInFeatures::kOrcaAndHmr);
+  ash::MagicBoostControllerAsh::Get()->ShowDisclaimerUi(
+      display_id,
+      crosapi::mojom::MagicBoostController::TransitionAction::kDoNothing,
+      chromeos::MagicBoostState::Get()->ShouldIncludeOrcaInOptInSync()
+          ? OptInFeatures::kOrcaAndHmr
+          : OptInFeatures::kHmrOnly);
 }
 
 void MahiManagerImpl::OnGetPageContent(
@@ -792,13 +849,32 @@ void MahiManagerImpl::OnGetPageContentForSummary(
   // Assign current panel content and clear the current panel QA
   current_panel_content_ = std::move(mahi_content_ptr);
   current_panel_qa_.clear();
+
   CacheCurrentPanelContent(*request_page_info, *current_panel_content_);
 
-  CHECK(mahi_provider_);
+  // Summarizes the `current_selected_text_` if it's not null, otherwise
+  // summarizes the whole page content.
+  // Note: we get the page content even if the `current_selected_text_` is not
+  // null. The page content is not used for the summary request in such cases,
+  // but it's necessary to be present because questions sent from the result
+  // panel relies on it.
+  const std::u16string text_to_summary =
+      current_selected_text_.value_or(current_panel_content_->page_content);
+  if (text_to_summary.empty()) {
+    latest_response_status_ = MahiResponseStatus::kInappropriate;
+    std::move(callback).Run(u"", latest_response_status_);
+    return;
+  }
 
+  std::optional<std::string> context = std::nullopt;
+  if (current_selected_text_ != std::nullopt) {
+    context = base::UTF16ToUTF8(current_panel_content_->page_content);
+  }
+
+  CHECK(mahi_provider_);
   mahi_provider_->Summarize(
-      base::UTF16ToUTF8(current_panel_content_->page_content),
-      base::UTF16ToUTF8(request_page_info->title),
+      base::UTF16ToUTF8(text_to_summary),
+      base::UTF16ToUTF8(request_page_info->title), context,
       MaybeGetUrl(request_page_info),
       base::BindOnce(&MahiManagerImpl::OnMahiProviderSummaryResponse,
                      weak_ptr_factory_for_requests_.GetWeakPtr(),
@@ -883,8 +959,11 @@ void MahiManagerImpl::OnMahiProviderSummaryResponse(
     latest_response_status_ = MahiResponseStatus::kSuccess;
     latest_summary_ = base::UTF8ToUTF16(*text);
 
-    cache_manager_->TryToUpdateSummaryForUrl(request_page_info->url.spec(),
-                                             latest_summary_);
+    // Caches the summary if it is not for the selected text.
+    if (current_selected_text_ == std::nullopt) {
+      cache_manager_->TryToUpdateSummaryForUrl(request_page_info->url.spec(),
+                                               latest_summary_);
+    }
 
     std::move(summary_callback).Run(latest_summary_, latest_response_status_);
   } else {
@@ -892,6 +971,7 @@ void MahiManagerImpl::OnMahiProviderSummaryResponse(
     std::move(summary_callback)
         .Run(u"Cannot find output data", latest_response_status_);
   }
+
   base::UmaHistogramEnumeration(kMahiResponseStatus, latest_response_status_);
 }
 
@@ -901,7 +981,7 @@ void MahiManagerImpl::OnMahiProviderElucidationResponse(
     MahiElucidationCallback elucidation_callback,
     base::Value::Dict dict,
     manta::MantaStatus status) {
-  CHECK(current_selected_text_ == selected_text);
+  CHECK(current_selected_text_.value_or(u"") == selected_text);
 
   latest_elucidation_ = u"...";
   if (status.status_code != manta::MantaStatusCode::kOk) {
@@ -916,7 +996,6 @@ void MahiManagerImpl::OnMahiProviderElucidationResponse(
   if (auto* text = dict.FindString("outputData")) {
     latest_response_status_ = MahiResponseStatus::kSuccess;
     latest_elucidation_ = base::UTF8ToUTF16(*text);
-    // TODO(b:372741602): maybe also cache the elucidation result.
     std::move(elucidation_callback)
         .Run(latest_elucidation_, latest_response_status_);
   } else {
@@ -967,6 +1046,16 @@ void MahiManagerImpl::CacheCurrentPanelContent(
             mahi_content.page_content, request_page_info.favicon_image,
             /*summary=*/std::nullopt,
             /*previous_qa=*/{}));
+  }
+}
+
+void MahiManagerImpl::UpdateCurrentSelectedText() {
+  if (media_app_pdf_focused_) {
+    current_selected_text_ = base::UTF8ToUTF16(
+        chromeos::MahiMediaAppContentManager::Get()->GetSelectedText());
+  } else {
+    current_selected_text_ =
+        chromeos::MahiWebContentsManager::Get()->GetSelectedText();
   }
 }
 

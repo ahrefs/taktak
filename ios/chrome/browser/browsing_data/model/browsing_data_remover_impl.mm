@@ -18,9 +18,9 @@
 #import "base/metrics/user_metrics.h"
 #import "base/strings/sys_string_conversions.h"
 #import "base/task/sequenced_task_runner.h"
-#import "components/autofill/core/browser/address_data_manager.h"
-#import "components/autofill/core/browser/payments_data_manager.h"
-#import "components/autofill/core/browser/personal_data_manager.h"
+#import "components/autofill/core/browser/data_manager/addresses/address_data_manager.h"
+#import "components/autofill/core/browser/data_manager/payments/payments_data_manager.h"
+#import "components/autofill/core/browser/data_manager/personal_data_manager.h"
 #import "components/autofill/core/browser/strike_databases/strike_database.h"
 #import "components/autofill/core/browser/webdata/autofill_webdata_service.h"
 #import "components/autofill/core/common/autofill_payments_features.h"
@@ -343,7 +343,6 @@ void BrowsingDataRemoverImpl::RemoveInRange(base::Time start_time,
          (IsRemoveDataMaskSet(mask, BrowsingDataRemoveMask::CLOSE_TABS) &&
           !profile_->IsOffTheRecord()));
 
-  // browsing_data::RecordDeletionForPeriod(time_period);
   removal_queue_.emplace(start_time, end_time, mask, std::move(callback),
                          params);
 
@@ -605,6 +604,8 @@ void BrowsingDataRemoverImpl::RemoveImpl(base::Time delete_begin,
     if (web_data_service.get()) {
       web_data_service->RemoveFormElementsAddedBetween(delete_begin,
                                                        delete_end);
+      web_data_service->RemoveEntityInstancesModifiedBetween(delete_begin,
+                                                             delete_end);
 
       // Clear out the Autofill StrikeDatabase in its entirety.
       autofill::StrikeDatabase* strike_database =

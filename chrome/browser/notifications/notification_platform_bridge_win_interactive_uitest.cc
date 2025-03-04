@@ -71,9 +71,9 @@ Profile* CreateTestingProfile(const base::FilePath& path) {
   ProfileManager* profile_manager = g_browser_process->profile_manager();
   size_t starting_number_of_profiles = profile_manager->GetNumberOfProfiles();
 
-  if (!base::PathExists(path) && !base::CreateDirectory(path))
-    NOTREACHED_IN_MIGRATION()
-        << "Could not create directory at " << path.MaybeAsASCII();
+  if (!base::PathExists(path) && !base::CreateDirectory(path)) {
+    NOTREACHED() << "Could not create directory at " << path.MaybeAsASCII();
+  }
 
   std::unique_ptr<Profile> profile =
       Profile::CreateProfile(path, nullptr, Profile::CreateMode::kSynchronous);
@@ -167,9 +167,9 @@ class NotificationPlatformBridgeWinUITest : public InProcessBrowserTest {
   }
 
   void OnHistogramRecorded(const base::RepeatingClosure& quit_closure,
-                           const char* histogram_name,
+                           std::string_view histogram_name,
                            uint64_t name_hash,
-                           base::HistogramBase::Sample sample) {
+                           base::HistogramBase::Sample32 sample) {
     quit_closure.Run();
   }
 

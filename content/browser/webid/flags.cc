@@ -27,13 +27,6 @@ bool IsFedCmMultipleIdentityProvidersEnabled() {
       features::kFedCmMultipleIdentityProviders);
 }
 
-FedCmIdpSigninStatusMode GetFedCmIdpSigninStatusFlag() {
-  if (base::FeatureList::IsEnabled(features::kFedCmIdpSigninStatusEnabled)) {
-    return FedCmIdpSigninStatusMode::ENABLED;
-  }
-  return FedCmIdpSigninStatusMode::METRICS_ONLY;
-}
-
 bool IsFedCmMetricsEndpointEnabled() {
   return base::FeatureList::IsEnabled(features::kFedCmMetricsEndpoint);
 }
@@ -42,8 +35,8 @@ bool IsFedCmSelectiveDisclosureEnabled() {
   return base::FeatureList::IsEnabled(features::kFedCmSelectiveDisclosure);
 }
 
-bool IsFedCmSameSiteNoneEnabled() {
-  return base::FeatureList::IsEnabled(features::kFedCmSameSiteNone);
+bool IsFedCmDelegationEnabled() {
+  return base::FeatureList::IsEnabled(features::kFedCmDelegation);
 }
 
 bool IsFedCmIdPRegistrationEnabled() {
@@ -59,12 +52,15 @@ bool IsWebIdentityDigitalCredentialsEnabled() {
   return base::FeatureList::IsEnabled(features::kWebIdentityDigitalCredentials);
 }
 
-bool IsFedCmUseOtherAccountEnabled(bool is_active_mode) {
-  // TODO(crbug.com/328470597): this feature is bundled with the active mode at
-  // the moment. We should decouple them when supporting the feature in the
-  // passive flow.
+bool IsWebIdentityDigitalCredentialsCreationEnabled() {
+  return base::FeatureList::IsEnabled(
+      features::kWebIdentityDigitalCredentialsCreation);
+}
+
+bool IsFedCmUseOtherAccountEnabled() {
+  // The active mode origin trial can also enable this feature at this moment.
   return base::FeatureList::IsEnabled(features::kFedCmUseOtherAccount) ||
-         (IsFedCmActiveModeEnabled() && is_active_mode);
+         IsFedCmActiveModeEnabled();
 }
 
 bool IsFedCmActiveModeEnabled() {
@@ -79,4 +75,19 @@ bool IsFedCmFlexibleFieldsEnabled() {
   return base::FeatureList::IsEnabled(features::kFedCmFlexibleFields);
 }
 
+bool IsFedCmShowFilteredAccountsEnabled() {
+  return base::FeatureList::IsEnabled(features::kFedCmShowFilteredAccounts);
+}
+
+bool IsFedCmLightweightModeEnabled() {
+  return base::FeatureList::IsEnabled(features::kFedCmLightweightMode);
+}
+
+bool IsFedCmAlternativeIdentifiersEnabled() {
+  return base::FeatureList::IsEnabled(features::kFedCmAlternativeIdentifiers);
+}
+
+bool IsFedCmCooldownOnIgnoreEnabled() {
+  return base::FeatureList::IsEnabled(features::kFedCmCooldownOnIgnore);
+}
 }  // namespace content

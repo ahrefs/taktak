@@ -4,6 +4,7 @@
 
 #include "chrome/browser/ash/profiles/profile_helper.h"
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <string>
@@ -16,7 +17,6 @@
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
 #include "base/memory/raw_ptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/system/sys_info.h"
@@ -111,16 +111,6 @@ base::FilePath ProfileHelper::GetUserProfileDir(
 // static
 bool ProfileHelper::IsSigninProfile(const Profile* profile) {
   return ash::IsSigninBrowserContext(const_cast<Profile*>(profile));
-}
-
-// static
-bool ProfileHelper::IsLockScreenAppProfile(const Profile* profile) {
-  return ash::IsLockScreenAppBrowserContext(const_cast<Profile*>(profile));
-}
-
-// static
-base::FilePath ProfileHelper::GetLockScreenAppProfilePath() {
-  return BrowserContextHelper::Get()->GetLockScreenAppBrowserContextPath();
 }
 
 // static
@@ -227,7 +217,7 @@ const user_manager::User* ProfileHelperImpl::GetUserByProfile(
 
     // Walk through all users in UserManager.
     const std::string& user_name = profile->GetProfileUserName();
-    for (user_manager::User* user : user_manager->GetUsers()) {
+    for (user_manager::User* user : user_manager->GetPersistedUsers()) {
       if (user->GetAccountId().GetUserEmail() == user_name) {
         return user;
       }

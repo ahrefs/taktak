@@ -41,7 +41,7 @@ function validateBid(bid) {
 }
 
 function validateAuctionConfig(auctionConfig) {
-  if (Object.keys(auctionConfig).length !== 16) {
+  if (Object.keys(auctionConfig).length !== 17) {
     throw 'Wrong number of auctionConfig fields ' +
         JSON.stringify(auctionConfig);
   }
@@ -143,6 +143,11 @@ function validateAuctionConfig(auctionConfig) {
         JSON.stringify(perBuyerPrioritySignals);
   }
 
+  if (auctionConfig.sendCreativeScanningMetadata !== true) {
+    throw 'Wrong sendCreativeScanningMetadata ' +
+        JSON.stringify(auctionConfig.sendCreativeScanningMetadata);
+  }
+
   if ('componentAuctions' in auctionConfig) {
     throw 'Unexpected componentAuctions ' +
         JSON.stringify(auctionConfig.componentAuctions);
@@ -188,23 +193,35 @@ function validateBrowserSignals(browserSignals, isScoreAd) {
     throw 'Wrong dataVersion ' + browserSignals.dataVersion;
   if (browserSignals.bidCurrency !== 'USD')
     throw 'Wrong bidCurrency ' + browserSignals.bidCurrency;
+  if (!(browserSignals.decodeUtf8 instanceof Function))
+    throw 'Wrong decodeUtf8';
+  if (!(browserSignals.encodeUtf8 instanceof Function))
+    throw 'Wrong encodeUtf8';
 
   // Fields that vary by method.
   if (isScoreAd) {
-    if (Object.keys(browserSignals).length !== 9) {
+    if (Object.keys(browserSignals).length !== 13) {
       throw 'Wrong number of browser signals fields ' +
           JSON.stringify(browserSignals);
     }
     const adComponentsJSON = JSON.stringify(browserSignals.adComponents);
     if (adComponentsJSON !== '["https://example.com/render-component"]')
       throw 'Wrong adComponents ' + browserSignals.adComponents;
+    const componentsCreativeScanningMetadata =
+        JSON.stringify(browserSignals.adComponentsCreativeScanningMetadata);
+    if (componentsCreativeScanningMetadata !== '[null]')
+      throw 'Wrong adComponentsCreativeScanningMetadata ' +
+          componentsCreativeScanningMetadata;
     if (browserSignals.biddingDurationMsec < 0)
       throw 'Wrong biddingDurationMsec ' + browserSignals.biddingDurationMsec;
     if (browserSignals.forDebuggingOnlyInCooldownOrLockout)
       throw 'Wrong forDebuggingOnlyInCooldownOrLockout ' +
           browserSignals.forDebuggingOnlyInCooldownOrLockout;
+    if (browserSignals.forDebuggingOnlySampling)
+      throw 'Wrong forDebuggingOnlySampling ' +
+          browserSignals.forDebuggingOnlySampling;
   } else {
-    if (Object.keys(browserSignals).length !== 10) {
+    if (Object.keys(browserSignals).length !== 12) {
       throw 'Wrong number of browser signals fields ' +
           JSON.stringify(browserSignals);
     }

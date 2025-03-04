@@ -41,6 +41,7 @@ import {
 } from '../core/utils/assert.js';
 
 import {CraIconButton} from './cra/cra-icon-button.js';
+import {withTooltip} from './directives/with-tooltip.js';
 
 /**
  * The title suggestion popup in playback page of Recorder App.
@@ -129,11 +130,14 @@ export class RecordingTitleSuggestion extends ReactiveLitElement {
 
   static override properties: PropertyDeclarations = {
     suggestedTitles: {attribute: false},
+    transcription: {attribute: false},
     wordCount: {attribute: false},
   };
 
   suggestedTitles: ScopedAsyncComputed<ModelResponse<string[]>|null>|null =
     null;
+
+  transcription: string|null = null;
 
   wordCount = 0;
 
@@ -200,7 +204,7 @@ export class RecordingTitleSuggestion extends ReactiveLitElement {
     ></cros-chip>`;
   }
 
-  private renderSuggestionFooter() {
+  private renderSuggestionFooter(result: string) {
     return html`
       <div id="footer">
         ${i18n.genAiDisclaimerText}
@@ -212,8 +216,11 @@ export class RecordingTitleSuggestion extends ReactiveLitElement {
           ${i18n.genAiLearnMoreLink}
         </a>
       </div>
-      <genai-feedback-buttons .resultType=${GenaiResultType.TITLE_SUGGESTION}>
-      </genai-feedback-buttons>
+      <genai-feedback-buttons
+        .resultType=${GenaiResultType.TITLE_SUGGESTION}
+        .result=${result}
+        .transcription=${this.transcription}
+      ></genai-feedback-buttons>
     `;
   }
 
@@ -249,11 +256,13 @@ export class RecordingTitleSuggestion extends ReactiveLitElement {
           suggestedTitles.result,
           (s, index) => this.renderSuggestion(s, index),
         );
+        const concatenatedTitles =
+          suggestedTitles.result.map((title) => '- ' + title).join('\n');
         return html`<spoken-message role="status" aria-live="polite">
             ${i18n.titleSuggestionFinishedStatusMessage}
           </spoken-message>
           <div id="suggestions">${suggestions}</div>
-          ${this.renderSuggestionFooter()}`;
+          ${this.renderSuggestionFooter(concatenatedTitles)}`;
       }
       default:
         assertExhaustive(suggestedTitles);
@@ -282,6 +291,7 @@ export class RecordingTitleSuggestion extends ReactiveLitElement {
           @click=${this.onCloseClick}
           aria-label=${i18n.closeDialogButtonTooltip}
           ${ref(this.closeButtonRef)}
+          ${withTooltip()}
         >
           <cra-icon slot="icon" name="close"></cra-icon>
         </cra-icon-button>

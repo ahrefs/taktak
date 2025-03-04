@@ -9,10 +9,10 @@
 #import "base/strings/sys_string_conversions.h"
 #import "base/strings/utf_string_conversions.h"
 #import "build/branding_buildflags.h"
-#import "components/autofill/core/browser/data_model/credit_card.h"
+#import "components/autofill/core/browser/data_model/payments/credit_card.h"
 #import "components/autofill/core/browser/payments/autofill_payments_feature_availability.h"
 #import "components/autofill/core/browser/payments/payments_service_url.h"
-#import "components/autofill/core/browser/ui/suggestion.h"
+#import "components/autofill/core/browser/suggestions/suggestion.h"
 #import "components/autofill/core/common/autofill_payments_features.h"
 #import "components/autofill/ios/browser/form_suggestion.h"
 #import "components/grit/components_scaled_resources.h"
@@ -320,7 +320,7 @@ CGFloat GPayIconTopAnchorOffset() {
   // Create the UIViews, add them to the contentView.
   self.cardLabel = CreateLabel();
   self.cardIcon = [self createCardIcon];
-  self.overflowMenuButton = CreateOverflowMenuButton();
+  self.overflowMenuButton = CreateOverflowMenuButton(_cellIndex);
   self.headerView =
       CreateHeaderView(self.cardIcon, self.cardLabel, self.overflowMenuButton);
   [self.contentView addSubview:self.headerView];
@@ -462,25 +462,25 @@ CGFloat GPayIconTopAnchorOffset() {
       setLabelText:
           (card.recordType == kVirtualCard
                ? l10n_util::GetNSString(
-                     IDS_AUTOFILL_VIRTUAL_CARD_MANUAL_FALLBACK_BUBBLE_CARD_NUMBER_LABEL_IOS)
+                     IDS_AUTOFILL_FILLED_CARD_INFORMATION_BUBBLE_CARD_NUMBER_LABEL_VIRTUAL_CARD_IOS)
                : l10n_util::GetNSString(
                      IDS_AUTOFILL_REGULAR_CARD_MANUAL_FALLBACK_BUBBLE_CARD_NUMBER_LABEL_IOS))
       buttonTitles:@[ card.obfuscatedNumber ]];
   [self.expirationDateLabeledChip
       setLabelText:
           l10n_util::GetNSString(
-              IDS_AUTOFILL_VIRTUAL_CARD_MANUAL_FALLBACK_BUBBLE_EXP_DATE_LABEL_IOS)
+              IDS_AUTOFILL_FILLED_CARD_INFORMATION_BUBBLE_EXP_DATE_LABEL_VIRTUAL_CARD_IOS)
       buttonTitles:@[ card.expirationMonth, card.expirationYear ]];
   [self.cardholderLabeledChip
       setLabelText:
           l10n_util::GetNSString(
-              IDS_AUTOFILL_VIRTUAL_CARD_MANUAL_FALLBACK_BUBBLE_NAME_ON_CARD_LABEL_IOS)
+              IDS_AUTOFILL_FILLED_CARD_INFORMATION_BUBBLE_NAME_ON_CARD_LABEL_VIRTUAL_CARD_IOS)
       buttonTitles:@[ card.cardHolder ]];
   if (card.recordType == kVirtualCard) {
     [self.CVCLabeledChip
         setLabelText:
             l10n_util::GetNSString(
-                IDS_AUTOFILL_VIRTUAL_CARD_MANUAL_FALLBACK_BUBBLE_CVC_LABEL_IOS)
+                IDS_AUTOFILL_FILLED_CARD_INFORMATION_BUBBLE_CVC_LABEL_VIRTUAL_CARD_IOS)
         buttonTitles:@[ card.CVC ]];
   }
 
@@ -659,7 +659,7 @@ CGFloat GPayIconTopAnchorOffset() {
       base::UserMetricsAction("ManualFallback_CreditCard_SuggestionAccepted"));
 
   autofill::SuggestionType type =
-              [self.card recordType] == kVirtualCard
+      [self.card recordType] == kVirtualCard
           ? autofill::SuggestionType::kVirtualCreditCardEntry
           : autofill::SuggestionType::kCreditCardEntry;
   FormSuggestion* suggestion = [FormSuggestion
@@ -668,7 +668,7 @@ CGFloat GPayIconTopAnchorOffset() {
                displayDescription:nil
                              icon:nil
                              type:type
-                backendIdentifier:autofill::Suggestion::Guid(
+                          payload:autofill::Suggestion::Guid(
                                       base::SysNSStringToUTF8([self.card GUID]))
       fieldByFieldFillingTypeUsed:autofill::EMPTY_TYPE
                    requiresReauth:NO
@@ -799,6 +799,7 @@ CGFloat GPayIconTopAnchorOffset() {
   }
 }
 
+#if __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_17_0
 - (BOOL)textView:(UITextView*)textView
     shouldInteractWithURL:(NSURL*)URL
                   inRange:(NSRange)characterRange
@@ -812,6 +813,25 @@ CGFloat GPayIconTopAnchorOffset() {
         withTitle:[textView.text substringWithRange:characterRange]];
   }
   return NO;
+}
+#endif
+
+- (UIAction*)textView:(UITextView*)textView
+    primaryActionForTextItem:(UITextItem*)textItem
+               defaultAction:(UIAction*)defaultAction API_AVAILABLE(ios(17.0)) {
+  if (textView != self.virtualCardInstructionTextView) {
+    return defaultAction;
+  }
+
+  GURL URL = autofill::payments::GetVirtualCardEnrollmentSupportUrl();
+  NSString* text = textView.text;
+  NSRange range = textItem.range;
+  __weak __typeof(self) weakSelf = self;
+  return [UIAction actionWithHandler:^(UIAction* action) {
+    // The learn more link was clicked.
+    [weakSelf.navigationDelegate openURL:[[CrURL alloc] initWithGURL:URL]
+                               withTitle:[text substringWithRange:range]];
+  }];
 }
 
 // Creates and configures the GPay icon image view.

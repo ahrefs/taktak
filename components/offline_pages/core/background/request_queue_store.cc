@@ -364,8 +364,6 @@ UpdateRequestsResult StoreErrorForAllIds(const std::vector<int64_t>& item_ids) {
 }
 
 bool InitDatabaseSync(sql::Database* db, const base::FilePath& path) {
-  db->set_histogram_tag("BackgroundRequestQueue");
-
   if (path.empty()) {
     if (!db->OpenInMemory())
       return false;
@@ -376,7 +374,9 @@ bool InitDatabaseSync(sql::Database* db, const base::FilePath& path) {
     if (!db->Open(path))
       return false;
   }
-  db->Preload();
+  if (!base::FeatureList::IsEnabled(sql::features::kPreOpenPreloadDatabase)) {
+    db->Preload();
+  }
 
   return CreateSchemaSync(db);
 }
@@ -587,7 +587,9 @@ RequestQueueStore::~RequestQueueStore() {
 void RequestQueueStore::Initialize(InitializeCallback callback) {
   DCHECK(!db_);
   db_ = std::make_unique<sql::Database>(
-      sql::DatabaseOptions{.page_size = 4096, .cache_size = 500});
+      sql::DatabaseOptions().set_preload(
+          base::FeatureList::IsEnabled(sql::features::kPreOpenPreloadDatabase)),
+      sql::Database::Tag("BackgroundRequestQueue"));
 
   background_task_runner_->PostTaskAndReplyWithResult(
       FROM_HERE, base::BindOnce(&InitDatabaseSync, db_.get(), db_file_path_),

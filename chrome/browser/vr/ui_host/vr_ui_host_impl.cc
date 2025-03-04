@@ -137,9 +137,6 @@ VRUiHostImpl::VRUiHostImpl(
   CHECK(base::Contains(views, device::mojom::XREye::kRight,
                        &device::mojom::XRView::eye));
 
-  content::GetDeviceService().BindGeolocationConfig(
-      geolocation_config_.BindNewPipeAndPassReceiver());
-
   DesktopMediaPickerManager::Get()->AddObserver(this);
 
   VrTabHelper::SetIsContentDisplayedInHeadset(&contents, true);
@@ -328,11 +325,12 @@ void VRUiHostImpl::PollCapturingState() {
         indicator->IsCapturingDisplay(web_contents_.get());
 
     // Bluetooth.
-    active_capturing.bluetooth_connected =
-        web_contents_->IsConnectedToBluetoothDevice();
+    active_capturing.bluetooth_connected = web_contents_->IsCapabilityActive(
+        content::WebContentsCapabilityType::kBluetoothConnected);
 
     // USB.
-    active_capturing.usb_connected = web_contents_->IsConnectedToUsbDevice();
+    active_capturing.usb_connected = web_contents_->IsCapabilityActive(
+        content::WebContentsCapabilityType::kUSB);
   }
 
   auto capturing_switched_on =

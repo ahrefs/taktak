@@ -9,6 +9,24 @@
 #import "ios/chrome/credential_provider_extension/passkey_keychain_provider.h"
 #import "ios/chrome/credential_provider_extension/ui/credential_response_handler.h"
 
+// Delegate for the PasskeyKeychainProviderBridge.
+@protocol PasskeyKeychainProviderBridgeDelegate
+
+// Asks the user to reauthenticate if needed and calls the the completion block.
+- (void)performUserVerificationIfNeeded:(ProceduralBlock)completion;
+
+// Presents the passkey enrollment welcome screen.
+- (void)showEnrollmentWelcomeScreen:(ProceduralBlock)enrollBlock;
+
+// Presents the passkey "fix degraded recoverability state" welcome screen.
+- (void)showFixDegradedRecoverabilityWelcomeScreen:
+    (ProceduralBlock)fixDegradedRecoverabilityBlock;
+
+// Presents the passkey reauthentication weclome screen.
+- (void)showReauthenticationWelcomeScreen:(ProceduralBlock)reauthenticateBlock;
+
+@end
+
 // Class to bridge the CredentialProviderViewController with the
 // PasskeyKeychainProvider.
 @interface PasskeyKeychainProviderBridge : NSObject
@@ -16,23 +34,25 @@
 // Default initializer. `enableLogging` indicates whether metrics logging should
 // be enabled in the Credential Provider Extension.
 - (instancetype)initWithEnableLogging:(BOOL)enableLogging
+                 navigationController:
+                     (UINavigationController*)navigationController
+              navigationItemTitleView:(UIView*)navigationItemTitleView
     NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 
-// Fetches the Security Domain Secret and calls the completion block
-// with the Security Domain Secret as the input argument.
+@property(nonatomic, weak) id<PasskeyKeychainProviderBridgeDelegate> delegate;
+
+// Initiates the process to fetch the security domain secret and calls the
+// completion block with the security domain secret the input argument.
+// "credential" will be used to validate the security domain secret.
 - (void)fetchSecurityDomainSecretForGaia:(NSString*)gaia
-                    navigationController:
-                        (UINavigationController*)navigationController
+                              credential:(id<Credential>)credential
                                  purpose:(PasskeyKeychainProvider::
                                               ReauthenticatePurpose)purpose
-                              completion:(FetchKeyCompletionBlock)completion;
-
-// Marks the security domain secret vault keys as stale and calls the completion
-// block.
-- (void)markKeysAsStaleForGaia:(NSString*)gaia
-                    completion:(ProceduralBlock)completion;
+                              completion:
+                                  (FetchSecurityDomainSecretCompletionBlock)
+                                      fetchSecurityDomainSecretCompletion;
 
 @end
 

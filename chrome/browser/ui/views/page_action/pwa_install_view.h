@@ -8,7 +8,7 @@
 #include "base/memory/raw_ptr.h"
 #include "chrome/browser/ui/tabs/tab_strip_model_observer.h"
 #include "chrome/browser/ui/views/page_action/page_action_icon_view.h"
-#include "components/user_education/common/feature_promo_result.h"
+#include "components/user_education/common/feature_promo/feature_promo_result.h"
 #include "ui/base/metadata/metadata_header_macros.h"
 
 class Browser;
@@ -41,6 +41,8 @@ class PwaInstallView : public PageActionIconView, public TabStripModelObserver {
   // PageActionIconView:
   void UpdateImpl() override;
   void OnExecuting(PageActionIconView::ExecuteSource source) override;
+  // This returns nullptr, which helps decoupling the showing of the PWA's
+  // install dialog with the workings of the `PwaInstallView`.
   views::BubbleDialogDelegate* GetBubble() const override;
   const gfx::VectorIcon& GetVectorIcon() const override;
 

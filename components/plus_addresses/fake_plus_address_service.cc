@@ -10,11 +10,16 @@
 
 #include "base/feature_list.h"
 #include "base/functional/callback.h"
+#include "base/strings/to_string.h"
+#include "components/autofill/core/browser/autofill_field.h"
+#include "components/autofill/core/browser/filling/filling_product.h"
 #include "components/autofill/core/common/form_data.h"
 #include "components/feature_engagement/public/feature_constants.h"
 #include "components/plus_addresses/features.h"
 #include "components/plus_addresses/grit/plus_addresses_strings.h"
 #include "components/plus_addresses/mock_plus_address_http_client.h"
+#include "components/plus_addresses/plus_address_hats_utils.h"
+#include "components/plus_addresses/plus_address_prefs.h"
 #include "components/plus_addresses/plus_address_test_utils.h"
 #include "components/plus_addresses/plus_address_types.h"
 #include "testing/gmock/include/gmock/gmock.h"
@@ -45,10 +50,10 @@ FakePlusAddressService::GetSuggestionsFromPlusAddresses(
     const url::Origin& last_committed_primary_main_frame_origin,
     bool is_off_the_record,
     const autofill::FormData& focused_form,
+    const autofill::FormFieldData& focused_field,
     const base::flat_map<autofill::FieldGlobalId, autofill::FieldTypeGroup>&
         form_field_type_groups,
     const autofill::PasswordFormClassification& focused_form_classification,
-    const autofill::FieldGlobalId& focused_field_id,
     autofill::AutofillSuggestionTriggerSource trigger_source) {
   if (IsPlusAddressCreationEnabled(last_committed_primary_main_frame_origin,
                                    is_off_the_record)) {
@@ -58,8 +63,8 @@ FakePlusAddressService::GetSuggestionsFromPlusAddresses(
     suggestion.labels = {{Suggestion::Text(l10n_util::GetStringUTF16(
         IDS_PLUS_ADDRESS_CREATE_SUGGESTION_SECONDARY_TEXT))}};
     suggestion.icon = Suggestion::Icon::kPlusAddress;
-    suggestion.feature_for_iph =
-        &feature_engagement::kIPHPlusAddressCreateSuggestionFeature;
+    suggestion.iph_metadata = Suggestion::IPHMetadata(
+        &feature_engagement::kIPHPlusAddressCreateSuggestionFeature);
     return {suggestion};
   }
 
@@ -97,6 +102,14 @@ void FakePlusAddressService::OnPlusAddressSuggestionShown(
   NOTIMPLEMENTED();
 }
 
+void FakePlusAddressService::DidFillPlusAddress() {
+  did_fill_plus_address_suggestion_ = true;
+}
+
+size_t FakePlusAddressService::GetPlusAddressesCount() {
+  return plus_profiles_.size();
+}
+
 void FakePlusAddressService::OnClickedRefreshInlineSuggestion(
     const url::Origin& last_committed_primary_main_frame_origin,
     base::span<const autofill::Suggestion> current_suggestions,
@@ -125,6 +138,13 @@ void FakePlusAddressService::OnAcceptedInlineSuggestion(
   NOTIMPLEMENTED();
 }
 
+std::map<std::string, std::string>
+FakePlusAddressService::GetPlusAddressHatsData() const {
+  return {{hats::kPlusAddressesCount, base::ToString(GetPlusProfiles().size())},
+          {hats::kFirstPlusAddressCreationTime, "-1"},
+          {hats::kLastPlusAddressFillingTime, "-1"}};
+}
+
 bool FakePlusAddressService::IsPlusAddressFillingEnabled(
     const url::Origin& origin) const {
   return is_plus_address_filling_enabled_;
@@ -143,6 +163,26 @@ bool FakePlusAddressService::IsPlusAddressCreationEnabled(
 bool FakePlusAddressService::IsPlusAddress(
     const std::string& potential_plus_address) const {
   return potential_plus_address == plus_addresses::test::kFakePlusAddress;
+}
+
+bool FakePlusAddressService::IsFieldEligibleForPlusAddress(
+    const autofill::AutofillField& field) const {
+  autofill::FillingProduct filling_product =
+      autofill::GetFillingProductFromFieldTypeGroup(field.Type().group());
+  if (filling_product == autofill::FillingProduct::kAddress) {
+    return true;
+  }
+
+  return base::FeatureList::IsEnabled(
+             features::kPlusAddressSuggestionsOnUsernameFields) &&
+         (field.server_type() == autofill::FieldType::USERNAME ||
+          field.server_type() == autofill::FieldType::SINGLE_USERNAME) &&
+         field.heuristic_type() == autofill::FieldType::EMAIL_ADDRESS;
+}
+
+bool FakePlusAddressService::MatchesPlusAddressFormat(
+    const std::u16string& value) const {
+  return value.ends_with(u"@grelay.com");
 }
 
 void FakePlusAddressService::GetAffiliatedPlusProfiles(

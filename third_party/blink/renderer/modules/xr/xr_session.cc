@@ -11,6 +11,7 @@
 
 #include "base/auto_reset.h"
 #include "base/containers/contains.h"
+#include "base/dcheck_is_on.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/not_fatal_until.h"
 #include "base/trace_event/trace_event.h"
@@ -29,6 +30,7 @@
 #include "third_party/blink/renderer/core/frame/frame.h"
 #include "third_party/blink/renderer/core/frame/local_dom_window.h"
 #include "third_party/blink/renderer/core/frame/local_frame.h"
+#include "third_party/blink/renderer/core/html/canvas/html_canvas_element.h"
 #include "third_party/blink/renderer/core/inspector/console_message.h"
 #include "third_party/blink/renderer/core/probe/async_task_context.h"
 #include "third_party/blink/renderer/core/resize_observer/resize_observer.h"
@@ -138,8 +140,7 @@ std::optional<device::mojom::XRSessionFeature> MapReferenceSpaceTypeToFeature(
       return device::mojom::XRSessionFeature::REF_SPACE_UNBOUNDED;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return std::nullopt;
+  NOTREACHED();
 }
 
 std::unique_ptr<gfx::Transform> getPoseMatrix(
@@ -396,8 +397,8 @@ XRSession::XRSession(
       blend_mode_ = V8XREnvironmentBlendMode::Enum::kAlphaBlend;
       break;
     default:
-      NOTREACHED_IN_MIGRATION()
-          << "Unknown environment blend mode: " << environment_blend_mode;
+      NOTREACHED() << "Unknown environment blend mode: "
+                   << environment_blend_mode;
   }
 
   switch (interaction_mode) {
@@ -499,7 +500,7 @@ void XRSession::updateRenderState(XRRenderStateInit* init,
     return;
   }
 
-  if (RuntimeEnabledFeatures::WebXRLayersEnabled() && init->hasLayers() &&
+  if (RuntimeEnabledFeatures::WebXRLayersCommonEnabled() && init->hasLayers() &&
       init->layers() && !init->layers()->empty()) {
     // Validate that we don't have both layers and baseLayer set.
     if (init->hasBaseLayer() && init->baseLayer()) {
@@ -1739,7 +1740,7 @@ void XRSession::UpdatePresentationFrameState(
   // Update view related data.
   if (frame_data) {
     // Views need to be updated first, so that views() has valid data.
-    UpdateViews(std::move(frame_data->views));
+    UpdateViews(std::move(frame_data->render_info->views));
 
     // Apply dynamic viewport scaling if available.
     if (supports_viewport_scaling_) {
@@ -1764,9 +1765,22 @@ void XRSession::UpdatePresentationFrameState(
 
   // Update poses
   mojo_from_viewer_ =
-      frame_data ? getPoseMatrix(frame_data->mojo_from_viewer) : nullptr;
-  DVLOG(2) << __func__ << " : mojo_from_viewer_ valid? "
-           << (mojo_from_viewer_ ? true : false);
+      frame_data ? getPoseMatrix(frame_data->render_info->mojo_from_viewer)
+                 : nullptr;
+
+#if DCHECK_IS_ON()
+  if (frame_data && mojo_from_floor_ != frame_data->mojo_from_floor) {
+    gfx::Transform identity;
+    DVLOG(2) << __func__ << "mojo_from_floor_ changed! Now="
+             << frame_data->mojo_from_floor.value_or(identity).ToString()
+             << " Was=" << mojo_from_floor_.value_or(identity).ToString();
+  }
+#endif  // DCHECK_IS_ON()
+
+  mojo_from_floor_ = frame_data ? frame_data->mojo_from_floor : std::nullopt;
+
+  DVLOG(2) << __func__ << " : mojo_from_viewer_ valid? " << !!mojo_from_viewer_
+           << " mojo_from_floor_ valid? " << !!mojo_from_floor_;
   // TODO(https://crbug.com/1430868): We need to do this because inline sessions
   // don't have enough data to send up a mojo::XRView; but blink::XRViews rely
   // on having mojo_from_view set in a blink::XRViewData based upon the value
@@ -1963,8 +1977,10 @@ void XRSession::SetMetricsReporter(std::unique_ptr<MetricsReporter> reporter) {
 
 void XRSession::OnFrame(
     double timestamp,
-    const std::optional<gpu::MailboxHolder>& output_mailbox_holder,
-    const std::optional<gpu::MailboxHolder>& camera_image_mailbox_holder) {
+    scoped_refptr<gpu::ClientSharedImage> output_shared_image,
+    const gpu::SyncToken& output_sync_token,
+    scoped_refptr<gpu::ClientSharedImage> camera_image_shared_image,
+    const gpu::SyncToken& camera_image_sync_token) {
   TRACE_EVENT0("gpu", __func__);
   DVLOG(2) << __func__ << ": ended_=" << ended_
            << ", pending_frame_=" << pending_frame_;
@@ -1972,7 +1988,7 @@ void XRSession::OnFrame(
   if (ended_)
     return;
 
-  layer_mailbox_manager_.Reset();
+  layer_shared_image_manager_.Reset();
 
   if (pending_frame_) {
     pending_frame_ = false;
@@ -1986,9 +2002,9 @@ void XRSession::OnFrame(
       // submit a frame back to the runtime, as all "GetFrameData" calls need a
       // matching submit.
       if (prev_base_layer_) {
-        layer_mailbox_manager_.SetLayerMailboxes(prev_base_layer_,
-                                                 output_mailbox_holder,
-                                                 camera_image_mailbox_holder);
+        layer_shared_image_manager_.SetLayerSharedImages(
+            prev_base_layer_, output_shared_image, output_sync_token,
+            camera_image_shared_image, camera_image_sync_token);
 
         DVLOG(2) << __func__
                  << ": prev_base_layer_ is valid, submitting frame to it";
@@ -2009,8 +2025,9 @@ void XRSession::OnFrame(
     }
 
     XRLayer* frame_base_layer = render_state_->GetFirstLayer();
-    layer_mailbox_manager_.SetLayerMailboxes(
-        frame_base_layer, output_mailbox_holder, camera_image_mailbox_holder);
+    layer_shared_image_manager_.SetLayerSharedImages(
+        frame_base_layer, output_shared_image, output_sync_token,
+        camera_image_shared_image, camera_image_sync_token);
 
     frame_base_layer->OnFrameStart();
 
@@ -2046,10 +2063,7 @@ void XRSession::OnFrame(
     callback_collection_->ExecuteCallbacks(this, timestamp, presentation_frame);
     page_animation_frame_timer_.StopTimer();
 
-    // The session might have ended in the middle of the frame. Only call
-    // OnFrameEnd if it's still valid.
-    if (!ended_)
-      frame_base_layer->OnFrameEnd();
+    frame_base_layer->OnFrameEnd();
 
     // Ensure the XRFrame cannot be used outside the callbacks.
     presentation_frame->Deactivate();
@@ -2105,9 +2119,14 @@ std::optional<gfx::Transform> XRSession::GetMojoFrom(
       // equivalent to mojo space! Remove the assumption once the bug is fixed.
       return gfx::Transform();
     case device::mojom::blink::XRReferenceSpaceType::kLocalFloor:
+      return mojo_from_floor_;
     case device::mojom::blink::XRReferenceSpaceType::kBoundedFloor:
-      // Information about -floor spaces is currently stored elsewhere (in
-      // stage_parameters_). It probably should eventually move here.
+      // If we have stage_parameters_ MojoFrom(BoundedFloor) is the value of
+      // mojo_from_stage.
+      if (stage_parameters_) {
+        return stage_parameters_->mojo_from_stage;
+      }
+
       return std::nullopt;
   }
 }
@@ -2416,6 +2435,16 @@ bool XRSession::RemoveHitTestSource(
 
 const HeapVector<Member<XRViewData>>& XRSession::views() {
   return views_;
+}
+
+XRViewData* XRSession::ViewDataForEye(device::mojom::blink::XREye eye) {
+  switch (eye) {
+    case device::mojom::blink::XREye::kLeft:
+    case device::mojom::blink::XREye::kNone:
+      return views_[0].Get();
+    case device::mojom::blink::XREye::kRight:
+      return views_[1].Get();
+  }
 }
 
 bool XRSession::HasPendingActivity() const {

@@ -487,6 +487,8 @@ Called by update_bad_message_reasons.py.-->
   <int value="320"
       label="PSI_ADD_PAGE_EMBEDDED_PERMISSION_OBSERVER_WITHOUT_FEATURE"/>
   <int value="321" label="RFH_INITIATOR_BASE_URL_IS_EMPTY"/>
+  <int value="322" label="MDDH_SELECT_AUDIO_OUTPUT_WITHOUT_FEATURE"/>
+  <int value="323" label="MDDH_SET_PREFERRED_SINK_ID_WITHOUT_FEATURE"/>
 </enum>
 
 <enum name="BadMessageReasonExtensions">
@@ -529,6 +531,8 @@ Called by update_bad_message_reasons.py.-->
   <int value="31" label="EFH_NO_BACKGROUND_HOST_FOR_FRAME"/>
   <int value="32" label="LEGACY_IPC_MISMATCH"/>
   <int value="33" label="ER_SW_INVALID_LAZY_BACKGROUND_PARAM"/>
+  <int value="34" label="SWH_BAD_WORKER_THREAD_ID"/>
+  <int value="35" label="ER_INVALID_EXTENSION_ID_FOR_PROCESS"/>
 </enum>
 
 <enum name="BadMessageReasonGuestView">
@@ -571,6 +575,7 @@ Called by update_bad_message_reasons.py.-->
   <int value="13"
       label="CPMD_BAD_ORIGIN_GENERATION_AVAILABLE_FOR_FORM_OBSOLETE"/>
   <int value="14" label="CPMD_BAD_ORIGIN_PRERENDERING"/>
+  <int value="15" label="CPMD_BAD_ORIGIN_NO_GENERATED_PASSWORD_TO_EDIT"/>
 </enum>
 
 <enum name="BooleanHasPossibleExplanation">

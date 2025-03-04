@@ -13,7 +13,6 @@ import '/shared/settings/controls/cr_policy_pref_indicator.js';
 import 'chrome://resources/cr_elements/cr_shared_style.css.js';
 import 'chrome://resources/cr_elements/cr_shared_vars.css.js';
 import 'chrome://resources/cr_elements/cr_tooltip/cr_tooltip.js';
-import 'chrome://resources/polymer/v3_0/iron-flex-layout/iron-flex-layout-classes.js';
 import 'chrome://resources/polymer/v3_0/iron-list/iron-list.js';
 import '../settings_shared.css.js';
 import './add_site_dialog.js';
@@ -355,7 +354,7 @@ export class SiteListElement extends SiteListElementBase {
     const element: HTMLElement|null|undefined =
         this.shadowRoot?.querySelector(`#${elementId}`);
     if (element !== null && element !== undefined) {
-      element!.addEventListener('click', (me: MouseEvent) => {
+      element.addEventListener('click', (me: MouseEvent) => {
         this.onSystemPermissionSettingsLinkClick_(me);
       });
       // Set the correct aria label describing the link target.
@@ -490,8 +489,8 @@ export class SiteListElement extends SiteListElementBase {
   private setContentSettingForActionMenuSite_(contentSetting: ContentSetting) {
     assert(this.actionMenuSite_);
     this.browserProxy.setCategoryPermissionForPattern(
-        this.actionMenuSite_!.origin, this.actionMenuSite_!.embeddingOrigin,
-        this.category, contentSetting, this.actionMenuSite_!.incognito);
+        this.actionMenuSite_.origin, this.actionMenuSite_.embeddingOrigin,
+        this.category, contentSetting, this.actionMenuSite_.incognito);
   }
 
   private onAllowClick_() {

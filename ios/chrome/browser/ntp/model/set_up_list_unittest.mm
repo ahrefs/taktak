@@ -16,12 +16,14 @@
 #import "components/sync_preferences/testing_pref_service_syncable.h"
 #import "ios/chrome/browser/default_browser/model/utils.h"
 #import "ios/chrome/browser/default_browser/model/utils_test_support.h"
+#import "ios/chrome/browser/ntp/model/features.h"
 #import "ios/chrome/browser/ntp/model/set_up_list_delegate.h"
 #import "ios/chrome/browser/ntp/model/set_up_list_item.h"
 #import "ios/chrome/browser/ntp/model/set_up_list_item_type.h"
 #import "ios/chrome/browser/ntp/model/set_up_list_prefs.h"
 #import "ios/chrome/browser/policy/model/policy_util.h"
 #import "ios/chrome/browser/push_notification/model/constants.h"
+#import "ios/chrome/browser/push_notification/model/push_notification_util.h"
 #import "ios/chrome/browser/shared/model/application_context/application_context.h"
 #import "ios/chrome/browser/shared/model/prefs/pref_names.h"
 #import "ios/chrome/browser/shared/model/profile/profile_attributes_ios.h"
@@ -50,11 +52,10 @@ class SetUpListTest : public PlatformTest {
     TestProfileIOS::Builder builder;
     builder.AddTestingFactory(
         AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
     profile_ = profile_manager_.AddProfileWithBuilder(std::move(builder));
     prefs_ = GetProfile()->GetPrefs();
-    AuthenticationServiceFactory::CreateAndInitializeForProfile(
-        GetProfile(), std::make_unique<FakeAuthenticationServiceDelegate>());
     auth_service_ = AuthenticationServiceFactory::GetForProfile(GetProfile());
     content_notification_feature_enabled_ = false;
   }
@@ -88,20 +89,18 @@ class SetUpListTest : public PlatformTest {
         FakeSystemIdentityManager::FromSystemIdentityManager(
             GetApplicationContext()->GetSystemIdentityManager());
     system_identity_manager->AddIdentity(identity);
-    auth_service_->SignIn(identity,
-                          signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN);
-    auth_service_->GrantSyncConsent(
-        identity, signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN);
+    auth_service_->SignIn(identity, signin_metrics::AccessPoint::kUnknown);
+    auth_service_->GrantSyncConsent(identity,
+                                    signin_metrics::AccessPoint::kUnknown);
 
     profile_manager_.GetProfileAttributesStorage()
         ->UpdateAttributesForProfileWithName(
             profile_->GetProfileName(),
             base::BindOnce(
-                [](id<SystemIdentity> identity, ProfileAttributesIOS attr) {
+                [](id<SystemIdentity> identity, ProfileAttributesIOS& attr) {
                   attr.SetAuthenticationInfo(
-                      base::SysNSStringToUTF8(identity.gaiaID),
+                      GaiaId(identity.gaiaID),
                       base::SysNSStringToUTF8(identity.userEmail));
-                  return attr;
                 },
                 identity));
   }
@@ -274,6 +273,8 @@ TEST_F(SetUpListTest, BuildListWithAutofill) {
 // Tests that the SetUpList uses the correct criteria when including the
 // Notifications item and tips notification is enabled.
 TEST_F(SetUpListTest, BuildListWithNotifications_Tips) {
+  [PushNotificationUtil
+      updateAuthorizationStatusPref:UNAuthorizationStatusAuthorized];
   feature_list_.InitAndEnableFeature(kIOSTipsNotifications);
   SetTipsNotificationsEnabled(false);
   BuildSetUpList();
@@ -296,6 +297,8 @@ TEST_F(SetUpListTest, BuildListWithNotifications_Tips) {
 // Tests that the SetUpList uses the correct criteria when including the
 // Notifications item and content notifications is enabled.
 TEST_F(SetUpListTest, BuildListWithNotifications_Content) {
+  [PushNotificationUtil
+      updateAuthorizationStatusPref:UNAuthorizationStatusAuthorized];
   content_notification_feature_enabled_ = YES;
 
   SetContentNotificationsEnabled(false);
@@ -313,6 +316,57 @@ TEST_F(SetUpListTest, BuildListWithNotifications_Content) {
   BuildSetUpList();
   ExpectListToNotInclude(SetUpListItemType::kNotifications);
   EXPECT_EQ(GetItemState(SetUpListItemType::kNotifications),
+            SetUpListItemState::kCompleteNotInList);
+}
+
+// Tests that the SetUpList uses the correct criteria when including the
+// Docking item.
+TEST_F(SetUpListTest, BuildListWithDocking) {
+  feature_list_.InitAndEnableFeatureWithParameters(
+      set_up_list::kSetUpListInFirstRun,
+      {{set_up_list::kSetUpListInFirstRunParam, "1"}});
+  SetItemState(SetUpListItemType::kDocking, SetUpListItemState::kNotComplete);
+  BuildSetUpList();
+  ExpectListToInclude(SetUpListItemType::kDocking, NO);
+
+  SetItemState(SetUpListItemType::kDocking,
+               SetUpListItemState::kCompleteInList);
+  BuildSetUpList();
+  ExpectListToInclude(SetUpListItemType::kDocking, YES);
+  EXPECT_EQ(GetItemState(SetUpListItemType::kDocking),
+            SetUpListItemState::kCompleteInList);
+
+  SetItemState(SetUpListItemType::kDocking,
+               SetUpListItemState::kCompleteNotInList);
+  BuildSetUpList();
+  ExpectListToNotInclude(SetUpListItemType::kDocking);
+  EXPECT_EQ(GetItemState(SetUpListItemType::kDocking),
+            SetUpListItemState::kCompleteNotInList);
+}
+
+// Tests that the SetUpList uses the correct criteria when including the
+// Address Bar item.
+TEST_F(SetUpListTest, BuildListWithAddressBar) {
+  feature_list_.InitAndEnableFeatureWithParameters(
+      set_up_list::kSetUpListInFirstRun,
+      {{set_up_list::kSetUpListInFirstRunParam, "1"}});
+  SetItemState(SetUpListItemType::kAddressBar,
+               SetUpListItemState::kNotComplete);
+  BuildSetUpList();
+  ExpectListToInclude(SetUpListItemType::kAddressBar, NO);
+
+  SetItemState(SetUpListItemType::kAddressBar,
+               SetUpListItemState::kCompleteInList);
+  BuildSetUpList();
+  ExpectListToInclude(SetUpListItemType::kAddressBar, YES);
+  EXPECT_EQ(GetItemState(SetUpListItemType::kAddressBar),
+            SetUpListItemState::kCompleteInList);
+
+  SetItemState(SetUpListItemType::kAddressBar,
+               SetUpListItemState::kCompleteNotInList);
+  BuildSetUpList();
+  ExpectListToNotInclude(SetUpListItemType::kAddressBar);
+  EXPECT_EQ(GetItemState(SetUpListItemType::kAddressBar),
             SetUpListItemState::kCompleteNotInList);
 }
 

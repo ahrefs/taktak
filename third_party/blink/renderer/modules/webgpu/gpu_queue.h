@@ -7,6 +7,7 @@
 
 #include <optional>
 
+#include "base/containers/span.h"
 #include "third_party/blink/renderer/bindings/core/v8/script_promise.h"
 #include "third_party/blink/renderer/bindings/core/v8/script_promise_resolver.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_typedefs.h"
@@ -21,9 +22,9 @@ class ExceptionState;
 class GPUBuffer;
 class GPUCommandBuffer;
 class GPUImageCopyExternalImage;
-class GPUImageCopyTexture;
 class GPUImageCopyTextureTagged;
-class GPUImageDataLayout;
+class GPUTexelCopyBufferLayout;
+class GPUTexelCopyTextureInfo;
 class ScriptState;
 class StaticBitmapImage;
 struct ExternalTextureSource;
@@ -68,15 +69,15 @@ class GPUQueue : public DawnObject<wgpu::Queue> {
                    uint64_t byte_size,
                    ExceptionState& exception_state);
   void writeTexture(ScriptState* script_state,
-                    GPUImageCopyTexture* destination,
+                    GPUTexelCopyTextureInfo* destination,
                     const MaybeShared<DOMArrayBufferView>& data,
-                    GPUImageDataLayout* data_layout,
+                    GPUTexelCopyBufferLayout* data_layout,
                     const V8GPUExtent3D* write_size,
                     ExceptionState& exception_state);
   void writeTexture(ScriptState* script_state,
-                    GPUImageCopyTexture* destination,
+                    GPUTexelCopyTextureInfo* destination,
                     const DOMArrayBufferBase* data,
-                    GPUImageDataLayout* data_layout,
+                    GPUTexelCopyBufferLayout* data_layout,
                     const V8GPUExtent3D* write_size,
                     ExceptionState& exception_state);
   void copyExternalImageToTexture(GPUImageCopyExternalImage* copyImage,
@@ -89,31 +90,29 @@ class GPUQueue : public DawnObject<wgpu::Queue> {
                             const wgpu::Extent2D& video_frame_natural_size,
                             const wgpu::Origin2D& origin,
                             const wgpu::Extent3D& copy_size,
-                            const wgpu::ImageCopyTexture& destination,
+                            const wgpu::TexelCopyTextureInfo& destination,
                             bool dst_premultiplied_alpha,
                             PredefinedColorSpace dst_color_space,
                             bool flipY);
   bool CopyFromCanvasSourceImage(StaticBitmapImage* image,
                                  const wgpu::Origin2D& origin,
                                  const wgpu::Extent3D& copy_size,
-                                 const wgpu::ImageCopyTexture& destination,
+                                 const wgpu::TexelCopyTextureInfo& destination,
                                  bool dst_premultiplied_alpha,
                                  PredefinedColorSpace dst_color_space,
                                  bool flipY);
   void WriteBufferImpl(ScriptState* script_state,
                        GPUBuffer* buffer,
                        uint64_t buffer_offset,
-                       uint64_t data_byte_length,
-                       const void* data_base_ptr,
+                       base::span<const uint8_t> data,
                        unsigned data_bytes_per_element,
                        uint64_t data_byte_offset,
                        std::optional<uint64_t> byte_size,
                        ExceptionState& exception_state);
   void WriteTextureImpl(ScriptState* script_state,
-                        GPUImageCopyTexture* destination,
-                        const void* data,
-                        size_t dataSize,
-                        GPUImageDataLayout* data_layout,
+                        GPUTexelCopyTextureInfo* destination,
+                        base::span<const uint8_t> data,
+                        GPUTexelCopyBufferLayout* data_layout,
                         const V8GPUExtent3D* write_size,
                         ExceptionState& exception_state);
 

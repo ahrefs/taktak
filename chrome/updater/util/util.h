@@ -17,9 +17,11 @@
 #include "base/functional/callback_forward.h"
 #include "base/memory/ref_counted.h"
 #include "base/types/cxx23_to_underlying.h"
+#include "base/version.h"
 #include "build/build_config.h"
 #include "chrome/updater/tag.h"
 #include "chrome/updater/updater_scope.h"
+#include "chrome/updater/updater_version.h"
 
 class GURL;
 
@@ -27,7 +29,6 @@ namespace base {
 
 class CommandLine;
 class FilePath;
-class Version;
 
 // Enables insertion of optional `base` types. Must be in the `base` namespace
 // for insertion into gTest expectations to work.
@@ -78,17 +79,9 @@ std::optional<base::FilePath> GetVersionedInstallDirectory(UpdaterScope scope);
 // Does not create the directory if it does not exist.
 std::optional<base::FilePath> GetInstallDirectory(UpdaterScope scope);
 
-// Returns the base path for discardable caches. Deleting a discardable cache
-// between runs of the updater may impair performance, cause a redownload, etc.,
-// but otherwise not interfere with overall updater function. Cache contents
-// should only be stored in subpaths under this path. Does not create the
-// directory if it does not exist.
-std::optional<base::FilePath> GetCacheBaseDirectory(UpdaterScope scope);
-
-// Returns the path where CRXes cached for delta updates should be stored,
-// common to all versions of the updater. Does not create the directory if it
-// does not exist.
-std::optional<base::FilePath> GetCrxDiffCacheDirectory(UpdaterScope scope);
+// Returns the path where cached CRX files should be stored, common to all
+// versions of the updater. Does not create the directory if it does not exist.
+std::optional<base::FilePath> GetCrxCacheDirectory(UpdaterScope scope);
 
 #if BUILDFLAG(IS_MAC)
 // For example: ~/Library/Google/GoogleUpdater/88.0.4293.0/GoogleUpdater.app
@@ -142,6 +135,8 @@ TagParsingResult GetTagArgs();
 
 std::optional<tagging::AppArgs> GetAppArgs(const std::string& app_id);
 
+std::string GetTagLanguage();
+
 std::string GetDecodedInstallDataFromAppArgs(const std::string& app_id);
 
 std::string GetInstallDataIndexFromAppArgs(const std::string& app_id);
@@ -152,7 +147,8 @@ std::optional<base::FilePath> GetLogFilePath(UpdaterScope scope);
 void InitLogging(UpdaterScope updater_scope);
 
 // Returns HTTP user-agent value.
-std::string GetUpdaterUserAgent();
+std::string GetUpdaterUserAgent(
+    const base::Version& updater_version = base::Version(kUpdaterVersion));
 
 // Returns a new GURL by appending the given query parameter name and the
 // value. Unsafe characters in the name and the value are escaped like

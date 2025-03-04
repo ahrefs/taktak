@@ -8,17 +8,17 @@
 #include "ash/login/ui/login_pin_view.h"
 #include "ash/login/ui/pin_request_widget.h"
 #include "ash/public/cpp/shelf_config.h"
+#include "ash/public/cpp/style/color_provider.h"
 #include "ash/resources/vector_icons/vector_icons.h"
 #include "ash/shell.h"
 #include "ash/strings/grit/ash_strings.h"
-#include "ash/style/ash_color_id.h"
-#include "ash/style/ash_color_provider.h"
 #include "ash/style/icon_button.h"
 #include "ash/style/system_shadow.h"
 #include "ash/wallpaper/wallpaper_controller_impl.h"
 #include "base/functional/bind.h"
 #include "base/strings/strcat.h"
 #include "base/task/single_thread_task_runner.h"
+#include "chromeos/constants/chromeos_features.h"
 #include "ui/accessibility/ax_enums.mojom.h"
 #include "ui/accessibility/ax_node_data.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -186,8 +186,15 @@ PinRequestView::PinRequestView(PinRequest request, Delegate* delegate)
       views::BoxLayout::CrossAxisAlignment::kCenter);
   SetLayoutManager(std::move(layout));
   SetPaintToLayer();
-  layer()->SetBackgroundBlur(ShelfConfig::Get()->shelf_blur_radius());
-  ui::ColorId background_color_id = cros_tokens::kCrosSysSystemBaseElevated;
+  if (chromeos::features::IsSystemBlurEnabled()) {
+    layer()->SetBackgroundBlur(ShelfConfig::Get()->shelf_blur_radius());
+    layer()->SetBackdropFilterQuality(ColorProvider::kBackgroundBlurQuality);
+  }
+
+  const ui::ColorId background_color_id =
+      chromeos::features::IsSystemBlurEnabled()
+          ? cros_tokens::kCrosSysSystemBaseElevated
+          : cros_tokens::kCrosSysSystemBaseElevatedOpaque;
   SetBackground(views::CreateThemedRoundedRectBackground(
       background_color_id, kPinRequestViewRoundedCornerRadiusDp));
 
@@ -273,7 +280,7 @@ PinRequestView::PinRequestView(PinRequest request, Delegate* delegate)
     label->SetSubpixelRenderingEnabled(false);
     label->SetAutoColorReadabilityEnabled(false);
 
-    label->SetEnabledColorId(cros_tokens::kCrosSysOnSurface);
+    label->SetEnabledColor(cros_tokens::kCrosSysOnSurface);
     label->SetFocusBehavior(FocusBehavior::ACCESSIBLE_ONLY);
   };
 
@@ -287,7 +294,7 @@ PinRequestView::PinRequestView(PinRequest request, Delegate* delegate)
   title_label_->SetFontList(gfx::FontList().Derive(
       kTitleFontSizeDeltaDp, gfx::Font::NORMAL, gfx::Font::Weight::MEDIUM));
   decorate_label(title_label_);
-  title_label_->SetEnabledColorId(cros_tokens::kCrosSysOnSurface);
+  title_label_->SetEnabledColor(cros_tokens::kCrosSysOnSurface);
   AddChildView(title_label_.get());
 
   add_spacer(kTitleToDescriptionDistanceDp);
@@ -303,7 +310,7 @@ PinRequestView::PinRequestView(PinRequest request, Delegate* delegate)
   description_label_->SetFontList(
       gfx::FontList().Derive(kDescriptionFontSizeDeltaDp, gfx::Font::NORMAL,
                              gfx::Font::Weight::NORMAL));
-  description_label_->SetEnabledColorId(cros_tokens::kCrosSysOnSurface);
+  description_label_->SetEnabledColor(cros_tokens::kCrosSysOnSurface);
   decorate_label(description_label_);
   AddChildView(description_label_.get());
 
@@ -366,7 +373,7 @@ PinRequestView::PinRequestView(PinRequest request, Delegate* delegate)
   help_button_->SetPaintToLayer();
   help_button_->layer()->SetFillsBoundsOpaquely(false);
   help_button_->SetTextSubpixelRenderingEnabled(false);
-  help_button_->SetEnabledTextColorIds(cros_tokens::kCrosSysSecondary);
+  help_button_->SetEnabledTextColors(cros_tokens::kCrosSysSecondary);
   help_button_->SetVisible(request.help_button_enabled);
   footer->AddChildView(help_button_.get());
 
@@ -468,15 +475,16 @@ void PinRequestView::UpdateState(PinRequestViewState state,
     case PinRequestViewState::kNormal: {
       const ui::ColorId normal_color_id = cros_tokens::kCrosSysOnSurface;
       access_code_view_->SetInputColorId(normal_color_id);
-      title_label_->SetEnabledColorId(normal_color_id);
+      title_label_->SetEnabledColor(normal_color_id);
       return;
     }
     case PinRequestViewState::kError: {
       const ui::ColorId error_color_id = cros_tokens::kCrosSysError;
       access_code_view_->SetInputColorId(error_color_id);
-      title_label_->SetEnabledColorId(error_color_id);
+      title_label_->SetEnabledColor(error_color_id);
       // Read out the error.
-      title_label_->NotifyAccessibilityEvent(ax::mojom::Event::kAlert, true);
+      title_label_->NotifyAccessibilityEventDeprecated(ax::mojom::Event::kAlert,
+                                                       true);
       return;
     }
   }

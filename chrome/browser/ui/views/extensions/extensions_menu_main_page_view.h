@@ -5,10 +5,14 @@
 #ifndef CHROME_BROWSER_UI_VIEWS_EXTENSIONS_EXTENSIONS_MENU_MAIN_PAGE_VIEW_H_
 #define CHROME_BROWSER_UI_VIEWS_EXTENSIONS_EXTENSIONS_MENU_MAIN_PAGE_VIEW_H_
 
+#include <string_view>
+
 #include "base/memory/raw_ptr.h"
+#include "build/branding_buildflags.h"
 #include "chrome/browser/ui/toolbar/toolbar_actions_model.h"
 #include "chrome/browser/ui/views/extensions/extensions_menu_item_view.h"
 #include "ui/base/metadata/metadata_header_macros.h"
+#include "ui/views/layout/flex_layout_view.h"
 #include "ui/views/view.h"
 
 namespace content {
@@ -64,8 +68,9 @@ class ExtensionsMenuMainPageView : public views::View {
   // Updates the site settings views with the given parameters.
   void UpdateSiteSettings(const std::u16string& current_site,
                           int label_id,
-                          bool is_site_settings_toggle_visible,
-                          bool is_site_settings_toggle_on);
+                          bool is_tooltip_visible,
+                          bool is_toggle_visible,
+                          bool is_toggle_on);
 
   // Shows the reload section in the menu. Takes precedence over the requests
   // section.
@@ -93,7 +98,8 @@ class ExtensionsMenuMainPageView : public views::View {
 
   // Accessors used by tests:
   // Returns the currently-showing menu items.
-  const std::u16string& GetSiteSettingLabelForTesting() const;
+  std::u16string_view GetSiteSettingLabelForTesting() const;
+  const views::View* site_settings_tooltip() const;
   views::ToggleButton* GetSiteSettingsToggleForTesting() {
     return site_settings_toggle_;
   }
@@ -111,11 +117,39 @@ class ExtensionsMenuMainPageView : public views::View {
   views::View* GetExtensionRequestEntry(
       const extensions::ExtensionId& extension_id) const;
 
+  // Returns the header builder, which contains information about the site.
+  [[nodiscard]] views::Builder<views::FlexLayoutView> CreateHeaderBuilder(
+      gfx::Insets margins,
+      views::FlexSpecification stretch_specification);
+
+  // Returns the site settings section builder, which contains information and
+  // access controls for the site.
+  [[nodiscard]] views::Builder<views::FlexLayoutView> CreateSiteSettingsBuilder(
+      gfx::Insets margins,
+      views::FlexSpecification);
+
+  // Returns the contents builder, which contains the reload section, the access
+  // requests section and the menu items section on a scrollable view.
+  [[nodiscard]] views::Builder<views::ScrollView> CreateContentsBuilder(
+      gfx::Insets scroll_margins,
+      gfx::Insets contents_margins,
+      gfx::Insets reload_button_margins,
+      gfx::Insets menu_items_margins);
+
+#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
+  // Returns the webstore button builder.
+  [[nodiscard]] views::Builder<HoverButton> CreateWebstoreButtonBuilder();
+#endif
+
+  // Returns the manage extensions button builder.
+  [[nodiscard]] views::Builder<HoverButton> CreateManageButtonBuilder();
+
   const raw_ptr<Browser> browser_;
   const raw_ptr<ExtensionsMenuHandler> menu_handler_;
 
   // Site settings section.
   raw_ptr<views::Label> site_settings_label_;
+  raw_ptr<views::View> site_settings_tooltip_;
   raw_ptr<views::ToggleButton> site_settings_toggle_;
 
   // Reload section.

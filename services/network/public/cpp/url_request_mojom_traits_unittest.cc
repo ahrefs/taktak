@@ -12,7 +12,7 @@
 #include "mojo/public/cpp/test_support/test_utils.h"
 #include "net/base/isolation_info.h"
 #include "net/base/load_flags.h"
-#include "net/filter/source_stream.h"
+#include "net/filter/source_stream_type.h"
 #include "net/log/net_log.h"
 #include "net/log/net_log_source.h"
 #include "net/log/net_log_source_type.h"
@@ -24,6 +24,7 @@
 #include "services/network/public/mojom/chunked_data_pipe_getter.mojom.h"
 #include "services/network/public/mojom/cookie_access_observer.mojom.h"
 #include "services/network/public/mojom/data_pipe_getter.mojom.h"
+#include "services/network/public/mojom/device_bound_sessions.mojom.h"
 #include "services/network/public/mojom/devtools_observer.mojom.h"
 #include "services/network/public/mojom/trust_token_access_observer.mojom.h"
 #include "services/network/public/mojom/url_loader.mojom.h"
@@ -84,6 +85,7 @@ TEST(URLRequestMojomTraitsTest, Roundtrips_ResourceRequest) {
   original.credentials_mode = mojom::CredentialsMode::kInclude;
   original.redirect_mode = mojom::RedirectMode::kFollow;
   original.fetch_integrity = "dummy_fetch_integrity";
+  original.expected_signatures = {};
   original.keepalive = true;
   original.browsing_topics = true;
   original.ad_auction_headers = true;
@@ -107,11 +109,9 @@ TEST(URLRequestMojomTraitsTest, Roundtrips_ResourceRequest) {
       net::NetLogSourceType::URL_REQUEST, net::NetLog::Get()->NextID()));
   original.net_log_reference_info = std::make_optional(net::NetLogSource(
       net::NetLogSourceType::URL_REQUEST, net::NetLog::Get()->NextID()));
-  original.devtools_accepted_stream_types =
-      std::vector<net::SourceStream::SourceType>(
-          {net::SourceStream::SourceType::TYPE_BROTLI,
-           net::SourceStream::SourceType::TYPE_GZIP,
-           net::SourceStream::SourceType::TYPE_DEFLATE});
+  original.devtools_accepted_stream_types = std::vector<net::SourceStreamType>(
+      {net::SourceStreamType::kBrotli, net::SourceStreamType::kGzip,
+       net::SourceStreamType::kDeflate});
   original.target_ip_address_space = mojom::IPAddressSpace::kPrivate;
   original.storage_access_api_status =
       net::StorageAccessApiStatus::kAccessViaAPI;
@@ -135,7 +135,11 @@ TEST(URLRequestMojomTraitsTest, Roundtrips_ResourceRequest) {
       mojom::TrustTokenSignRequestData::kInclude;
   original.trust_token_params->additional_signed_headers.push_back(
       "some_header");
-
+#if BUILDFLAG(IS_ANDROID)
+  original.socket_tag = net::SocketTag(1, 2);
+#else
+  original.socket_tag = net::SocketTag();
+#endif
   network::ResourceRequest copied;
   EXPECT_TRUE(
       mojo::test::SerializeAndDeserialize<mojom::URLRequest>(original, copied));

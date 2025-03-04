@@ -16,7 +16,6 @@
 #include "base/containers/contains.h"
 #include "base/logging.h"
 #include "base/trace_event/trace_event.h"
-#include "build/chromeos_buildflags.h"
 #include "ui/events/devices/stylus_state.h"
 #include "ui/events/event.h"
 #include "ui/events/event_utils.h"
@@ -26,7 +25,7 @@
 #include "ui/events/ozone/evdev/numberpad_metrics.h"
 #include "ui/events/ozone/features.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "ui/events/ozone/evdev/numberpad_metrics.h"
 #endif
 
@@ -78,9 +77,12 @@ EventConverterEvdevImpl::EventConverterEvdevImpl(
       controller_(FROM_HERE),
       cursor_(cursor),
       dispatcher_(dispatcher) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   if (has_numberpad_)
     NumberpadMetricsRecorder::GetInstance()->AddDevice(input_device_);
+
+  microphone_mute_key_metrics_ = std::make_unique<MicrophoneMuteKeyMetrics>(
+      input_device_, devinfo.HasKeyboard());
 #endif
   // Converts unsigned long to uint64_t.
   const auto key_bits = devinfo.GetKeyBits();
@@ -97,7 +99,7 @@ EventConverterEvdevImpl::EventConverterEvdevImpl(
 }
 
 EventConverterEvdevImpl::~EventConverterEvdevImpl() {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   if (has_numberpad_)
     NumberpadMetricsRecorder::GetInstance()->RemoveDevice(input_device_);
 #endif
@@ -207,7 +209,7 @@ ui::StylusState EventConverterEvdevImpl::GetStylusSwitchState() {
   }
 
   // Prepare storage for SW_MAX bits
-  unsigned long array[EVDEV_BITS_TO_LONGS(SW_MAX)] = {0};
+  unsigned long array[EVDEV_BITS_TO_LONGS(SW_MAX)] = {};
   int result = ioctl(input_device_fd_.get(), EVIOCGSW(SW_MAX), array);
   if (result == -1) {
     return ui::StylusState::REMOVED;
@@ -286,18 +288,6 @@ void EventConverterEvdevImpl::OnKeyChange(unsigned int key,
   if (key > KEY_MAX)
     return;
 
-  // TODO: crbug.com/356306613 - Sync mute state between telephony devices and
-  // CrOS
-  if (block_telephony_device_phone_mute_) {
-    // Ignore Telephony Phone Mute scan code so that it does not toggle system
-    // mic mute to resolve user confusions. We don't want to block `KEY_MICMUTE`
-    // as there are other scan codes that map to the same key code. Not suitable
-    // to use `blocked_keys_`.
-    if (key == KEY_MICMUTE && last_scan_code_ == kTelephonyDevicePhoneMute) {
-      return;
-    }
-  }
-
   if (down == key_state_.test(key))
     return;
 
@@ -311,10 +301,24 @@ void EventConverterEvdevImpl::OnKeyChange(unsigned int key,
     return;
   }
 
+  GenerateKeyMetrics(key, down);
+
+  // TODO: crbug.com/356306613 - Sync mute state between telephony devices and
+  // CrOS
+  if (block_telephony_device_phone_mute_) {
+    // Ignore Telephony Phone Mute scan code so that it does not toggle system
+    // mic mute to resolve user confusions. We don't want to block `KEY_MICMUTE`
+    // as there are other scan codes that map to the same key code. Not suitable
+    // to use `blocked_keys_`.
+    if (key == KEY_MICMUTE && last_scan_code_ == kTelephonyDevicePhoneMute) {
+      return;
+    }
+  }
+
   // State transition: !(down) -> (down)
   key_state_.set(key, down);
 
-  GenerateKeyMetrics(key, down);
+  const double timestamp_in_seconds = ui::EventTimeStampToSeconds(timestamp);
 
   // Checks for a key press that could only have occurred from a non-imposter
   // keyboard. Disables Imposter flag and triggers a callback which will update
@@ -323,8 +327,15 @@ void EventConverterEvdevImpl::OnKeyChange(unsigned int key,
     bool was_suspected = IsSuspectedKeyboardImposter();
     SetSuspectedKeyboardImposter(false);
     if (was_suspected && received_valid_input_callback_) {
-      received_valid_input_callback_.Run(this);
+      received_valid_input_callback_.Run(this, timestamp_in_seconds);
     }
+  }
+
+  // For internal devices with with valid key presses trigger the valid input
+  // callback.
+  if (down && type() == InputDeviceType::INPUT_DEVICE_INTERNAL &&
+      received_valid_input_callback_) {
+    received_valid_input_callback_.Run(this, timestamp_in_seconds);
   }
 
   dispatcher_->DispatchKeyEvent(
@@ -333,7 +344,10 @@ void EventConverterEvdevImpl::OnKeyChange(unsigned int key,
 }
 
 void EventConverterEvdevImpl::GenerateKeyMetrics(unsigned int key, bool down) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
+  microphone_mute_key_metrics_->RecordMicMuteKeyMetrics(key, down,
+                                                        last_scan_code_);
+
   if (!has_numberpad_)
     return;
   NumberpadMetricsRecorder::GetInstance()->ProcessKey(key, down, input_device_);

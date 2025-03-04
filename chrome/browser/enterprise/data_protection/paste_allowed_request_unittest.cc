@@ -14,7 +14,6 @@
 #include "chrome/test/base/testing_browser_process.h"
 #include "chrome/test/base/testing_profile.h"
 #include "chrome/test/base/testing_profile_manager.h"
-#include "components/enterprise/data_controls/core/browser/features.h"
 #include "components/enterprise/data_controls/core/browser/test_utils.h"
 #include "content/public/browser/clipboard_types.h"
 #include "content/public/browser/render_frame_host.h"
@@ -107,8 +106,6 @@ class PasteAllowedRequestTest : public testing::Test {
       : profile_manager_(TestingBrowserProcess::GetGlobal()) {
     EXPECT_TRUE(profile_manager_.SetUp());
     profile_ = profile_manager_.CreateTestingProfile("test-user-1");
-    scoped_features_.InitAndEnableFeature(
-        data_controls::kEnableDesktopDataControls);
   }
 
   void SetUp() override {
@@ -161,7 +158,6 @@ class PasteAllowedRequestTest : public testing::Test {
  protected:
   content::BrowserTaskEnvironment task_environment_{
       base::test::TaskEnvironment::TimeSource::MOCK_TIME};
-  base::test::ScopedFeatureList scoped_features_;
   TestingProfileManager profile_manager_;
   raw_ptr<TestingProfile> profile_;
   std::unique_ptr<content::WebContents> main_web_contents_;
@@ -260,7 +256,6 @@ TEST_F(PasteAllowedRequestTest, IsObsolete) {
 TEST_F(PasteAllowedRequestTest, SameDestinationSource) {
   auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
       ui::ClipboardBuffer::kCopyPaste);
-  main_rfh().MarkClipboardOwner(seqno);
 
   const std::u16string kText = u"text";
   content::ClipboardPasteData clipboard_paste_data;
@@ -313,7 +308,6 @@ TEST_F(PasteAllowedRequestTest, SameDestinationSource_AfterReplacement) {
 
   auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
       ui::ClipboardBuffer::kCopyPaste);
-  main_rfh().MarkClipboardOwner(seqno);
 
   // After the data was replaced when initially copied, it should be put back
   // when pasting in the same tab.
@@ -335,7 +329,6 @@ TEST_F(PasteAllowedRequestTest, SameDestinationSource_AfterReplacement) {
 TEST_F(PasteAllowedRequestTest, DifferentDestinationSource) {
   auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
       ui::ClipboardBuffer::kCopyPaste);
-  secondary_rfh().MarkClipboardOwner(seqno);
 
   const std::u16string kText = u"text";
   content::ClipboardPasteData clipboard_paste_data;
@@ -357,7 +350,6 @@ TEST_F(PasteAllowedRequestTest,
   const std::u16string kText = u"text";
   auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
       ui::ClipboardBuffer::kCopyPaste);
-  secondary_rfh().MarkClipboardOwner(seqno);
 
   content::ClipboardPasteData clipboard_paste_data;
   clipboard_paste_data.text = kText;
@@ -385,7 +377,6 @@ TEST_F(PasteAllowedRequestTest,
        DifferentDestinationSource_BlockedWithCachedRequest) {
   auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
       ui::ClipboardBuffer::kCopyPaste);
-  secondary_rfh().MarkClipboardOwner(seqno);
 
   PasteAllowedRequest request;
   request.Complete(std::nullopt);
@@ -413,7 +404,6 @@ TEST_F(PasteAllowedRequestTest,
 TEST_F(PasteAllowedRequestTest, UnknownSource) {
   auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
       ui::ClipboardBuffer::kCopyPaste);
-  secondary_rfh().MarkClipboardOwner(seqno);
 
   const std::u16string kText = u"text";
   content::ClipboardPasteData clipboard_paste_data;
@@ -483,9 +473,6 @@ TEST_F(PasteAllowedRequestTest, EmptyData_SameSourceReplaced) {
   // seqno.
   ui::ClipboardMonitor::GetInstance()->NotifyClipboardDataChanged();
 
-  auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
-      ui::ClipboardBuffer::kCopyPaste);
-  main_rfh().MarkClipboardOwner(seqno);
   base::test::TestFuture<std::optional<content::ClipboardPasteData>> future;
   PasteAllowedRequest::StartPasteAllowedRequest(
       /*source*/ secondary_endpoint(),
@@ -533,9 +520,6 @@ TEST_F(PasteAllowedRequestTest, EmptyData_DifferentSourceReplaced) {
   // seqno.
   ui::ClipboardMonitor::GetInstance()->NotifyClipboardDataChanged();
 
-  auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
-      ui::ClipboardBuffer::kCopyPaste);
-  main_rfh().MarkClipboardOwner(seqno);
   base::test::TestFuture<std::optional<content::ClipboardPasteData>> future;
   PasteAllowedRequest::StartPasteAllowedRequest(
       /*source*/ main_endpoint(),
@@ -555,7 +539,6 @@ TEST_F(PasteAllowedRequestTest, EmptyData_DifferentSourceReplaced) {
 TEST_F(PasteAllowedRequestTest, CleanupObsoleteScanRequests) {
   auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
       ui::ClipboardBuffer::kCopyPaste);
-  secondary_rfh().MarkClipboardOwner(seqno);
 
   const std::u16string kText = u"text";
   content::ClipboardPasteData clipboard_paste_data;
@@ -577,34 +560,6 @@ TEST_F(PasteAllowedRequestTest, CleanupObsoleteScanRequests) {
       base::Microseconds(1));
   PasteAllowedRequest::CleanupObsoleteRequests();
   EXPECT_EQ(0u, PasteAllowedRequest::requests_count_for_testing());
-}
-
-TEST_F(PasteAllowedRequestScanningTest, SameDestinationSource) {
-  enterprise_connectors::ContentAnalysisDelegate::SetFactoryForTesting(
-      base::BindRepeating(&PasteTestContentAnalysisDelegate::Create,
-                          enterprise_connectors::ContentAnalysisResponse::
-                              Result::TriggeredRule::BLOCK));
-
-  auto validator = helper_->CreateValidator();
-  validator.ExpectNoReport();
-
-  auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
-      ui::ClipboardBuffer::kCopyPaste);
-  main_rfh().MarkClipboardOwner(seqno);
-
-  const std::u16string kText = u"text";
-  content::ClipboardPasteData clipboard_paste_data;
-  clipboard_paste_data.text = kText;
-
-  base::test::TestFuture<std::optional<content::ClipboardPasteData>> future;
-  PasteAllowedRequest::StartPasteAllowedRequest(
-      /*source*/ main_endpoint(), /*destination*/ main_endpoint(),
-      {.seqno = seqno}, clipboard_paste_data, future.GetCallback());
-
-  ASSERT_TRUE(future.Get());
-  ASSERT_EQ(future.Get()->text, kText);
-
-  EXPECT_EQ(1u, PasteAllowedRequest::requests_count_for_testing());
 }
 
 TEST_F(PasteAllowedRequestScanningTest, DifferentDestinationSource) {
@@ -633,7 +588,8 @@ TEST_F(PasteAllowedRequestScanningTest, DifferentDestinationSource) {
       }(),
       /*size*/ 4,
       /*result*/
-      safe_browsing::EventResultToString(safe_browsing::EventResult::BLOCKED),
+      enterprise_connectors::EventResultToString(
+          enterprise_connectors::EventResult::BLOCKED),
       /*username*/ "test-user@chromium.org",
       /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
       /*scan_id*/ kScanId,
@@ -642,7 +598,6 @@ TEST_F(PasteAllowedRequestScanningTest, DifferentDestinationSource) {
 
   auto seqno = ui::Clipboard::GetForCurrentThread()->GetSequenceNumber(
       ui::ClipboardBuffer::kCopyPaste);
-  secondary_rfh().MarkClipboardOwner(seqno);
 
   const std::u16string kText = u"text";
   content::ClipboardPasteData clipboard_paste_data;

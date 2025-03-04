@@ -28,7 +28,7 @@
 #include "ash/system/mahi/mahi_ui_controller.h"
 #include "ash/system/mahi/mahi_ui_update.h"
 #include "ash/system/mahi/mahi_utils.h"
-#include "ash/system/mahi/summary_outlines_section.h"
+#include "ash/system/mahi/summary_outlines_elucidation_section.h"
 #include "ash/wm/system_panel_view.h"
 #include "base/check.h"
 #include "base/check_is_test.h"
@@ -38,6 +38,7 @@
 #include "base/time/time.h"
 #include "chromeos/components/magic_boost/public/cpp/views/experiment_badge.h"
 #include "chromeos/components/mahi/public/cpp/mahi_manager.h"
+#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/ui/vector_icons/vector_icons.h"
 #include "components/vector_icons/vector_icons.h"
 #include "third_party/skia/include/core/SkPath.h"
@@ -50,6 +51,7 @@
 #include "ui/color/color_id.h"
 #include "ui/compositor/layer.h"
 #include "ui/gfx/geometry/insets.h"
+#include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/rounded_corners_f.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/gfx/text_constants.h"
@@ -91,6 +93,9 @@ constexpr int kAskQuestionContainerCornerRadius = 8;
 constexpr int kInputRowContainerBetweenChildSpacing = 8;
 constexpr gfx::Insets kInputTextfieldPadding = gfx::Insets::TLBR(0, 0, 0, 8);
 
+constexpr int kDragHandleIconSize = 12;
+constexpr gfx::Insets kDragHandleIconPadding = gfx::Insets::VH(6, 6);
+
 // The below constants for the feedback buttons and cutout dimensions refer to
 // the following spec, where an order is designated for the first, second, and
 // third curves of the cutout in the content section's bottom-right corner:
@@ -101,8 +106,6 @@ constexpr gfx::Insets kInfoSparkIconPadding = gfx::Insets::VH(0, 2);
 // There's an 8px extra spacing between the scroll view and the input textfield
 // (on top of the default 8px spacing for the whole panel).
 constexpr int kScrollViewAndAskQuestionSpacing = 8;
-
-constexpr int kFooterSpacing = 1;
 
 constexpr base::TimeDelta kPanelShowAnimationDelay = base::Milliseconds(50);
 constexpr base::TimeDelta kPanelShowAnimationDuration = base::Milliseconds(300);
@@ -260,7 +263,7 @@ class GoToSummaryOutlinesButton : public IconButton,
         return GetVisible();
       case VisibilityState::kQuestionAndAnswer:
         return true;
-      case VisibilityState::kSummaryAndOutlines:
+      case VisibilityState::kSummaryAndOutlinesAndElucidation:
         return false;
     }
   }
@@ -318,7 +321,7 @@ class GoToQuestionAndAnswerButton : public IconButton,
         return GetVisible();
       case VisibilityState::kQuestionAndAnswer:
         return false;
-      case VisibilityState::kSummaryAndOutlines:
+      case VisibilityState::kSummaryAndOutlinesAndElucidation:
         return question_answer_view_has_contents_;
     }
   }
@@ -337,12 +340,15 @@ class GoToQuestionAndAnswerButton : public IconButton,
       case MahiUiUpdateType::kAnswerLoaded:
       case MahiUiUpdateType::kErrorReceived:
       case MahiUiUpdateType::kOutlinesLoaded:
+      case MahiUiUpdateType::kPanelBoundsChanged:
       case MahiUiUpdateType::kQuestionAndAnswerViewNavigated:
       case MahiUiUpdateType::kQuestionReAsked:
       case MahiUiUpdateType::kRefreshAvailabilityUpdated:
       case MahiUiUpdateType::kSummaryAndOutlinesReloaded:
       case MahiUiUpdateType::kSummaryAndOutlinesSectionNavigated:
       case MahiUiUpdateType::kSummaryLoaded:
+      case MahiUiUpdateType::kElucidationRequested:
+      case MahiUiUpdateType::kElucidationLoaded:
         return;
     }
   }
@@ -449,11 +455,14 @@ class MahiScrollView : public views::ScrollView,
       case MahiUiUpdateType::kContentsRefreshInitiated:
       case MahiUiUpdateType::kErrorReceived:
       case MahiUiUpdateType::kOutlinesLoaded:
+      case MahiUiUpdateType::kPanelBoundsChanged:
       case MahiUiUpdateType::kQuestionAndAnswerViewNavigated:
       case MahiUiUpdateType::kQuestionReAsked:
       case MahiUiUpdateType::kRefreshAvailabilityUpdated:
       case MahiUiUpdateType::kSummaryAndOutlinesReloaded:
       case MahiUiUpdateType::kSummaryLoaded:
+      case MahiUiUpdateType::kElucidationRequested:
+      case MahiUiUpdateType::kElucidationLoaded:
         break;
     }
     if (old_scroll_position != default_scroll_position_) {
@@ -496,22 +505,46 @@ MahiPanelView::MahiPanelView(MahiUiController* ui_controller)
 
   SetID(mahi_constants::ViewId::kMahiPanelView);
   SetUseDefaultFillLayout(true);
+
+  const ui::ColorId background_color_id =
+      chromeos::features::IsSystemBlurEnabled()
+          ? cros_tokens::kCrosSysSystemBaseElevated
+          : cros_tokens::kCrosSysSystemBaseElevatedOpaque;
   SetBackground(views::CreateThemedRoundedRectBackground(
-      cros_tokens::kCrosSysSystemBaseElevated,
-      mahi_constants::kPanelCornerRadius));
+      background_color_id, mahi_constants::kPanelCornerRadius));
 
   // Create a layer for the view for background blur and rounded corners.
   SetPaintToLayer();
   layer()->SetRoundedCornerRadius(
       gfx::RoundedCornersF{mahi_constants::kPanelCornerRadius});
-  layer()->SetFillsBoundsOpaquely(false);
   layer()->SetIsFastRoundedCorner(true);
-  layer()->SetBackgroundBlur(ColorProvider::kBackgroundBlurSigma);
-  layer()->SetBackdropFilterQuality(ColorProvider::kBackgroundBlurQuality);
+
+  if (chromeos::features::IsSystemBlurEnabled()) {
+    layer()->SetFillsBoundsOpaquely(false);
+    layer()->SetBackgroundBlur(ColorProvider::kBackgroundBlurSigma);
+    layer()->SetBackdropFilterQuality(ColorProvider::kBackgroundBlurQuality);
+  }
   SetBorder(std::make_unique<views::HighlightBorder>(
       mahi_constants::kPanelCornerRadius,
       views::HighlightBorder::Type::kHighlightBorderOnShadow,
       /*insets_type=*/views::HighlightBorder::InsetsType::kHalfInsets));
+
+  // If resizing is enabled, display the drag handle icon at the bottom right
+  // corner of the panel.
+  if (base::FeatureList::IsEnabled(chromeos::features::kMahiPanelResizable)) {
+    AddChildView(
+        views::Builder<views::BoxLayoutView>()
+            .SetMainAxisAlignment(views::LayoutAlignment::kEnd)
+            .SetCrossAxisAlignment(views::LayoutAlignment::kEnd)
+            .AddChild(views::Builder<views::ImageView>()
+                          .SetID(mahi_constants::ViewId::kDragHandleIcon)
+                          .SetImage(ui::ImageModel::FromVectorIcon(
+                              kDragHandleIcon, cros_tokens::kCrosSysSecondary,
+                              kDragHandleIconSize))
+                          .SetBorder(
+                              views::CreateEmptyBorder(kDragHandleIconPadding)))
+            .Build());
+  }
 
   // The `main_container` is used to anchor the contents to the middle of the
   // panel when its size is animating. The anchoring to middle effect is
@@ -598,8 +631,9 @@ MahiPanelView::MahiPanelView(MahiUiController* ui_controller)
                               mahi_constants::kScrollContentsViewBottomPadding,
                               0))
                           .AddChildren(
-                              views::Builder<SummaryOutlinesSection>(
-                                  std::make_unique<SummaryOutlinesSection>(
+                              views::Builder<SummaryOutlinesElucidationSection>(
+                                  std::make_unique<
+                                      SummaryOutlinesElucidationSection>(
                                       ui_controller_))
                                   .SetID(mahi_constants::ViewId::
                                              kSummaryOutlinesSection)
@@ -698,48 +732,29 @@ MahiPanelView::MahiPanelView(MahiUiController* ui_controller)
   question_textfield_->RemoveHoverEffect();
   InstallTextfieldFocusRing(question_textfield_, send_button_);
 
-  std::unique_ptr<views::View> footer_view;
+  std::vector<size_t> offsets;
+  const std::u16string link_text =
+      l10n_util::GetStringUTF16(IDS_ASH_MAHI_LEARN_MORE_LINK_LABEL_TEXT);
+  std::u16string footer_text;
   if (mahi_utils::ShouldShowFeedbackButton()) {
-    footer_view =
-        views::Builder<views::BoxLayoutView>()
-            .SetOrientation(views::BoxLayout::Orientation::kHorizontal)
-            .SetMainAxisAlignment(views::BoxLayout::MainAxisAlignment::kCenter)
-            .SetBetweenChildSpacing(kFooterSpacing)
-            .AddChildren(views::Builder<views::Label>()
-                             .SetID(mahi_constants::ViewId::kFooterLabel)
-                             .SetText(l10n_util::GetStringUTF16(
-                                 IDS_ASH_MAHI_PANEL_DISCLAIMER)),
-                         views::Builder<views::Link>()
-                             .SetText(l10n_util::GetStringUTF16(
-                                 IDS_ASH_MAHI_LEARN_MORE_LINK_LABEL_TEXT))
-                             .SetAccessibleName(l10n_util::GetStringUTF16(
-                                 IDS_ASH_MAHI_LEARN_MORE_LINK_ACCESSIBLE_NAME))
-                             .SetCallback(base::BindRepeating(
-                                 &MahiPanelView::OnLearnMoreLinkClicked,
-                                 weak_ptr_factory_.GetWeakPtr()))
-                             .SetID(mahi_constants::ViewId::kLearnMoreLink))
-            .Build();
+    footer_text = l10n_util::GetStringFUTF16(IDS_ASH_MAHI_PANEL_DISCLAIMER,
+                                             {link_text}, &offsets);
   } else {
-    // Use `views::StyledLabel` here instead so that the learn more link can be
-    // displayed in the same row as the multilined footer text.
-    std::vector<size_t> offsets;
-    const std::u16string link_text =
-        l10n_util::GetStringUTF16(IDS_ASH_MAHI_LEARN_MORE_LINK_LABEL_TEXT);
-    const std::u16string footer_text = l10n_util::GetStringFUTF16(
+    footer_text = l10n_util::GetStringFUTF16(
         IDS_ASH_MAHI_PANEL_DISCLAIMER_FEEDBACK_DISABLED, {link_text}, &offsets);
-    footer_view =
-        views::Builder<views::StyledLabel>()
-            .SetID(mahi_constants::ViewId::kFooterLabel)
-            .SetText(footer_text)
-            .AddStyleRange(
-                gfx::Range(offsets.at(0), offsets.at(0) + link_text.length()),
-                GetLinkTextStyle(
-                    base::BindRepeating(&MahiPanelView::OnLearnMoreLinkClicked,
-                                        weak_ptr_factory_.GetWeakPtr())))
-            .SetHorizontalAlignment(gfx::HorizontalAlignment::ALIGN_CENTER)
-            .SetAutoColorReadabilityEnabled(false)
-            .Build();
   }
+  std::unique_ptr<views::View> footer_view =
+      views::Builder<views::StyledLabel>()
+          .SetID(mahi_constants::ViewId::kFooterLabel)
+          .SetText(footer_text)
+          .AddStyleRange(
+              gfx::Range(offsets.at(0), offsets.at(0) + link_text.length()),
+              GetLinkTextStyle(
+                  base::BindRepeating(&MahiPanelView::OnLearnMoreLinkClicked,
+                                      weak_ptr_factory_.GetWeakPtr())))
+          .SetHorizontalAlignment(gfx::HorizontalAlignment::ALIGN_CENTER)
+          .SetAutoColorReadabilityEnabled(false)
+          .Build();
 
   main_container_->AddChildView(std::move(footer_view));
 
@@ -803,10 +818,11 @@ std::unique_ptr<views::View> MahiPanelView::CreateHeaderRow() {
           // The Panel's title label
           views::Builder<views::Label>()
               .SetText(l10n_util::GetStringUTF16(IDS_ASH_MAHI_PANEL_TITLE))
+              .SetAccessibleRole(ax::mojom::Role::kHeading)
               .SetHorizontalAlignment(gfx::HorizontalAlignment::ALIGN_LEFT)
               .SetFontList(TypographyProvider::Get()->ResolveTypographyToken(
                   TypographyToken::kCrosButton1))
-              .SetEnabledColorId(cros_tokens::kCrosSysOnSurface),
+              .SetEnabledColor(cros_tokens::kCrosSysOnSurface),
           // Experimental badge
           views::Builder<views::View>(
               std::make_unique<chromeos::ExperimentBadge>())
@@ -876,11 +892,16 @@ void MahiPanelView::OnUpdated(const MahiUiUpdate& update) {
       thumbs_down_button_->SetToggled(false);
       return;
     }
+    case MahiUiUpdateType::kElucidationRequested: {
+      content_source_button_->RefreshContentSourceInfo();
+      return;
+    }
     case MahiUiUpdateType::kErrorReceived:
       // Input is re-enabled after backend returns an error.
       send_button_->SetEnabled(true);
       return;
     case MahiUiUpdateType::kOutlinesLoaded:
+    case MahiUiUpdateType::kPanelBoundsChanged:
     case MahiUiUpdateType::kQuestionAndAnswerViewNavigated:
     case MahiUiUpdateType::kQuestionPosted:
     case MahiUiUpdateType::kQuestionReAsked:
@@ -888,6 +909,7 @@ void MahiPanelView::OnUpdated(const MahiUiUpdate& update) {
     case MahiUiUpdateType::kSummaryLoaded:
     case MahiUiUpdateType::kSummaryAndOutlinesSectionNavigated:
     case MahiUiUpdateType::kSummaryAndOutlinesReloaded:
+    case MahiUiUpdateType::kElucidationLoaded:
       return;
   }
 }
@@ -933,6 +955,12 @@ void MahiPanelView::OnSendButtonPressed() {
         mahi_constants::kMahiButtonClickHistogramName,
         mahi_constants::PanelButton::kAskQuestionSendButton);
   }
+}
+
+void MahiPanelView::OnBoundsChanged(const gfx::Rect& previous_bounds) {
+  gfx::Rect panel_bounds = GetLocalBounds();
+  layer()->SetClipRect(panel_bounds);
+  ui_controller_->NotifyPanelBoundsChanged(panel_bounds);
 }
 
 void MahiPanelView::OnThumbsUpButtonActive() {

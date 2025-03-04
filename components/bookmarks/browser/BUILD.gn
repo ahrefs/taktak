@@ -66,6 +66,7 @@ static_library("browser") {
     "//components/pref_registry",
     "//components/prefs",
     "//components/query_parser",
+    "//components/signin/public/base",
     "//components/strings",
     "//components/sync/base:features",
     "//components/url_formatter",
@@ -148,7 +149,6 @@ source_set("unit_tests") {
     ":browser",
     ":unit_tests_bundle_data",
     "//base/test:test_support",
-    "//build:chromeos_buildflags",
     "//components/bookmarks/common",
     "//components/bookmarks/test",
     "//components/favicon_base",
@@ -156,6 +156,7 @@ source_set("unit_tests") {
     "//components/prefs",
     "//components/prefs:test_support",
     "//components/query_parser",
+    "//components/signin/public/base",
     "//components/sync/base:features",
     "//testing/gtest",
     "//ui/base",
@@ -166,7 +167,6 @@ source_set("unit_tests") {
 
   if (toolkit_views) {
     sources += [ "bookmark_node_data_unittest.cc" ]
-    deps += [ "//build:chromeos_buildflags" ]
   }
 }
 

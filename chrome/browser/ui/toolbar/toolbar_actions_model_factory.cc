@@ -4,9 +4,9 @@
 
 #include "chrome/browser/ui/toolbar/toolbar_actions_model_factory.h"
 
-#include "chrome/browser/extensions/api/extension_action/extension_action_api.h"
+#include "chrome/browser/extensions/chrome_extension_system_factory.h"
+#include "chrome/browser/extensions/extension_action_dispatcher.h"
 #include "chrome/browser/extensions/extension_management.h"
-#include "chrome/browser/extensions/extension_system_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/toolbar/toolbar_actions_model.h"
 #include "extensions/browser/extension_prefs.h"
@@ -40,10 +40,10 @@ ToolbarActionsModelFactory::ToolbarActionsModelFactory()
               // Ash Internals.
               .WithAshInternals(ProfileSelection::kOwnInstance)
               .Build()) {
-  DependsOn(extensions::ExtensionActionAPI::GetFactoryInstance());
+  DependsOn(extensions::ExtensionActionDispatcher::GetFactoryInstance());
   DependsOn(extensions::ExtensionPrefsFactory::GetInstance());
   DependsOn(extensions::ExtensionRegistryFactory::GetInstance());
-  DependsOn(extensions::ExtensionSystemFactory::GetInstance());
+  DependsOn(extensions::ChromeExtensionSystemFactory::GetInstance());
   DependsOn(extensions::ExtensionManagementFactory::GetInstance());
   DependsOn(extensions::PermissionsManager::GetFactory());
 }

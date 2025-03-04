@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import './ai_policy_indicator.js';
 import '../controls/settings_toggle_button.js';
 
 import {I18nMixin} from '//resources/cr_elements/i18n_mixin.js';
@@ -15,7 +16,8 @@ import {loadTimeData} from '../i18n_setup.js';
 import type {MetricsBrowserProxy} from '../metrics_browser_proxy.js';
 import {AiPageComposeInteractions, MetricsBrowserProxyImpl} from '../metrics_browser_proxy.js';
 
-import {AiPageActions} from './constants.js';
+import {getAiLearnMoreUrl} from './ai_learn_more_url_util.js';
+import {AiEnterpriseFeaturePrefName, AiPageActions} from './constants.js';
 import {getTemplate} from './offer_writing_help_page.html.js';
 
 export const COMPOSE_PROACTIVE_NUDGE_PREF = 'compose.proactive_nudge_enabled';
@@ -53,6 +55,10 @@ export class SettingsOfferWritingHelpPageElement extends
         type: String,
         computed: 'computeDisabledSitesLabel_(enableAiSettingsPageRefresh_)',
       },
+      enterprisePref_: {
+        type: Object,
+        computed: `computePref(prefs.${AiEnterpriseFeaturePrefName.COMPOSE})`,
+      },
     };
   }
 
@@ -65,6 +71,7 @@ export class SettingsOfferWritingHelpPageElement extends
   private enableAiSettingsPageRefresh_: boolean;
   private enableComposeProactiveNudge_: boolean;
   private disabledSitesLabel_: string;
+  private enterprisePref_: chrome.settingsPrivate.PrefObject;
 
   private metricsBrowserProxy_: MetricsBrowserProxy =
       MetricsBrowserProxyImpl.getInstance();
@@ -121,6 +128,12 @@ export class SettingsOfferWritingHelpPageElement extends
         this.enableAiSettingsPageRefresh_ ?
             'offerWritingHelpDisabledSitesLabelV2' :
             'offerWritingHelpDisabledSitesLabel');
+  }
+
+  private getLearnMoreUrl_(): string {
+    return getAiLearnMoreUrl(
+        this.enterprisePref_, loadTimeData.getString('composeLearnMorePageURL'),
+        loadTimeData.getString('composeLearnMorePageManagedURL'));
   }
 }
 

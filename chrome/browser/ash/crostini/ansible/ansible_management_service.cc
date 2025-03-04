@@ -41,7 +41,7 @@ AnsibleConfiguration::AnsibleConfiguration(
     base::OnceCallback<void(bool success)> callback)
     : AnsibleConfiguration("", path, std::move(callback)) {}
 
-AnsibleConfiguration::~AnsibleConfiguration() {}
+AnsibleConfiguration::~AnsibleConfiguration() = default;
 
 AnsibleManagementService::AnsibleManagementService(Profile* profile)
     : profile_(profile), weak_ptr_factory_(this) {}
@@ -167,7 +167,7 @@ void AnsibleManagementService::OnInstallLinuxPackageProgress(
       }
       return;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 }
 
@@ -289,7 +289,7 @@ void AnsibleManagementService::OnApplyAnsiblePlaybookProgress(
       }
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 }
 

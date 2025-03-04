@@ -137,6 +137,7 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
   }
   bool IsPaletteMixValue() const { return class_type_ == kPaletteMixClass; }
   bool IsPathValue() const { return class_type_ == kPathClass; }
+  bool IsShapeValue() const { return class_type_ == kShapeClass; }
   bool IsQuadValue() const { return class_type_ == kQuadClass; }
   bool IsRayValue() const { return class_type_ == kRayClass; }
   bool IsRadialGradientValue() const {
@@ -148,9 +149,11 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
   bool IsConstantGradientValue() const {
     return class_type_ == kConstantGradientClass;
   }
+  bool IsProgressValue() const { return class_type_ == kProgressClass; }
   bool IsReflectValue() const { return class_type_ == kReflectClass; }
   bool IsShadowValue() const { return class_type_ == kShadowClass; }
   bool IsStringValue() const { return class_type_ == kStringClass; }
+  bool IsSuperellipseValue() const { return class_type_ == kSuperellipseClass; }
   bool IsURIValue() const { return class_type_ == kURIClass; }
   bool IsLinearTimingFunctionValue() const {
     return class_type_ == kLinearTimingFunctionClass;
@@ -180,6 +183,9 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
   bool IsGridIntegerRepeatValue() const {
     return class_type_ == kGridIntegerRepeatClass;
   }
+  bool IsGridRepeatValue() const {
+    return IsGridAutoRepeatValue() || IsGridIntegerRepeatValue();
+  }
   bool IsPendingSubstitutionValue() const {
     return class_type_ == kPendingSubstitutionValueClass;
   }
@@ -205,9 +211,6 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
   bool IsLightDarkValuePair() const {
     return class_type_ == kLightDarkValuePairClass;
   }
-  bool IsAppearanceAutoBaseSelectValuePair() const {
-    return class_type_ == kAppearanceAutoBaseSelectValuePairClass;
-  }
 
   bool IsScrollValue() const { return class_type_ == kScrollClass; }
   bool IsViewValue() const { return class_type_ == kViewClass; }
@@ -217,6 +220,12 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
 
   bool IsRelativeColorValue() const {
     return class_type_ == kRelativeColorClass;
+  }
+
+  // NOTE: Relative colors can also be unresolved; this is about
+  // the specific case of unresolved absolute colors.
+  bool IsUnresolvedColorValue() const {
+    return class_type_ == kUnresolvedColorClass;
   }
 
   bool IsRepeatValue() const { return class_type_ == kRepeatClass; }
@@ -238,8 +247,6 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
   }
   bool IsScopedValue() const { return !needs_tree_scope_population_; }
 
-  const CSSValue* UntaintedCopy() const;
-
 #if DCHECK_IS_ON()
   WTF::String ClassTypeToString() const;
 #endif
@@ -257,6 +264,7 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
     kIdentifierClass,
     kScopedKeywordClass,
     kColorClass,
+    kUnresolvedColorClass,
     kColorMixClass,
     kCounterClass,
     kQuadClass,
@@ -265,7 +273,6 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
     kURIClass,
     kValuePairClass,
     kLightDarkValuePairClass,
-    kAppearanceAutoBaseSelectValuePairClass,
     kScrollClass,
     kViewClass,
     kRatioClass,
@@ -297,6 +304,8 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
     kCubicBezierTimingFunctionClass,
     kStepsTimingFunctionClass,
 
+    kProgressClass,
+
     // Other class types.
     kBorderImageSliceClass,
     kDynamicRangeLimitMixClass,
@@ -319,6 +328,7 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
     kGridTemplateAreasClass,
     kPaletteMixClass,
     kPathClass,
+    kShapeClass,
     kRayClass,
     kUnparsedDeclarationClass,
     kPendingSubstitutionValueClass,
@@ -337,6 +347,8 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
     kImageSetTypeClass,
 
     kRepeatStyleClass,
+
+    kSuperellipseClass,
 
     // List class types must appear after ValueListClass.
     kValueListClass,
@@ -391,9 +403,6 @@ class CORE_EXPORT CSSValue : public GarbageCollected<CSSValue> {
   // Used for use counting of such situations (to see if we can try to remove
   // the functionality).
   uint8_t was_quirky_ : 1 = false;
-
-  // See css_attr_value_tainting.h.
-  uint8_t attr_tainted_ : 1 = false;
 
  private:
   const uint8_t class_type_;  // ClassType

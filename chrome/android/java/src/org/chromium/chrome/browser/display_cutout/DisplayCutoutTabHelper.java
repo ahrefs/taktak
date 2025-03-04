@@ -61,6 +61,11 @@ public class DisplayCutoutTabHelper implements UserData {
 
                     mCutoutController.onActivityAttachmentChanged(window);
                 }
+
+                @Override
+                public void onContentChanged(Tab tab) {
+                    mCutoutController.onContentChanged();
+                }
             };
 
     public static DisplayCutoutTabHelper from(Tab tab) {
@@ -90,7 +95,7 @@ public class DisplayCutoutTabHelper implements UserData {
         }
 
         @Override
-        public InsetObserver getInsetObserver() {
+        public @Nullable InsetObserver getInsetObserver() {
             return mTab.getWindowAndroid().getInsetObserver();
         }
 
@@ -140,6 +145,15 @@ public class DisplayCutoutTabHelper implements UserData {
      */
     public void setViewportFit(@WebContentsObserver.ViewportFitType int value) {
         mCutoutController.setViewportFit(value);
+    }
+
+    /**
+     * Set whether there are safe area constraint on the current web page.
+     *
+     * @param hasConstraint Whether there are safe area constraint for the page.
+     */
+    public void setSafeAreaConstraint(boolean hasConstraint) {
+        mCutoutController.setSafeAreaConstraint(hasConstraint);
     }
 
     @Override

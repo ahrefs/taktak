@@ -32,6 +32,7 @@ namespace blink {
 
 template <typename IDLResolvedType>
 class ScriptPromiseResolver;
+class SourceLocation;
 
 // This class wraps v8::Promise::Resolver for easier use in blink.
 //
@@ -219,7 +220,7 @@ class CORE_EXPORT ScriptPromiseResolverBase
   Member<ScriptState> script_state_;
   TraceWrapperV8Reference<v8::Value> value_;
   const ExceptionContext exception_context_;
-  String script_url_;
+  std::unique_ptr<SourceLocation> source_location_;
 
 #if DCHECK_IS_ON()
   bool suppress_detach_check_ = false;
@@ -278,6 +279,15 @@ class ScriptPromiseResolver final : public ScriptPromiseResolverBase {
     }
     ResolveOrReject<IDLResolvedType, IDLResolvedType*>(
         MakeGarbageCollected<IDLResolvedType>(value));
+  }
+
+  // A promise may be resolved with another promise if they are the same type.
+  void Resolve(ScriptPromise<IDLResolvedType> promise) {
+    if (!PrepareToResolveOrReject<kResolving>()) {
+      return;
+    }
+    value_.Reset(script_state_->GetIsolate(), promise.V8Promise());
+    NotifyResolveOrReject();
   }
 
   // Many IDL-exposed promises with a type other than undefined nevertheless

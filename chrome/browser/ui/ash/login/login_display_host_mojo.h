@@ -50,7 +50,8 @@ class LoginDisplayHostMojo : public LoginDisplayHostCommon,
                              public views::ViewObserver,
                              public ui::UserActivityObserver {
  public:
-  explicit LoginDisplayHostMojo(DisplayedScreen displayed_screen);
+  LoginDisplayHostMojo(DisplayedScreen displayed_screen,
+                       bool update_geolocation_usage_allowed);
 
   LoginDisplayHostMojo(const LoginDisplayHostMojo&) = delete;
   LoginDisplayHostMojo& operator=(const LoginDisplayHostMojo&) = delete;
@@ -123,7 +124,6 @@ class LoginDisplayHostMojo : public LoginDisplayHostCommon,
       const AccountId& account_id,
       base::OnceCallback<void(bool)> callback) override;
   void HandleOnFocusPod(const AccountId& account_id) override;
-  bool HandleFocusLockScreenApps(bool reverse) override;
   void HandleFocusOobeDialog() override;
   void HandleLaunchPublicSession(const AccountId& account_id,
                                  const std::string& locale,

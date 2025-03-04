@@ -27,6 +27,14 @@
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/web_contents.h"
 
+namespace {
+
+// This represents the duration that the performance intervention button
+// should remain in the toolbar after the user dismisses the intervention
+// dialog without taking the suggested action.
+const base::TimeDelta kInterventionButtonTimeout = base::Seconds(10);
+}  // namespace
+
 PerformanceInterventionButtonController::
     PerformanceInterventionButtonController(
         PerformanceInterventionButtonControllerDelegate* delegate,
@@ -34,13 +42,16 @@ PerformanceInterventionButtonController::
     : browser_(browser) {
   CHECK(delegate);
   delegate_ = delegate;
-  CHECK(PerformanceDetectionManager::HasInstance());
-  PerformanceDetectionManager* const detection_manager =
-      PerformanceDetectionManager::GetInstance();
-  const PerformanceDetectionManager::ResourceTypeSet resource_types = {
-      PerformanceDetectionManager::ResourceType::kCpu};
-  detection_manager->AddActionableTabsObserver(resource_types, this);
-  browser->tab_strip_model()->AddObserver(this);
+
+  // The `PerformanceDetectionManager` is undefined in unit tests because it
+  // is constructed in `ChromeContentBrowserClient::CreateBrowserMainParts`.
+  if (PerformanceDetectionManager::HasInstance()) {
+    const PerformanceDetectionManager::ResourceTypeSet resource_types = {
+        PerformanceDetectionManager::ResourceType::kCpu};
+    PerformanceDetectionManager::GetInstance()->AddActionableTabsObserver(
+        resource_types, this);
+    browser->tab_strip_model()->AddObserver(this);
+  }
 }
 
 PerformanceInterventionButtonController::
@@ -127,8 +138,7 @@ void PerformanceInterventionButtonController::OnBubbleHidden() {
   // as the controller owns the timer and will exist for the lifetime of
   // the timer.
   hide_button_timer_.Start(
-      FROM_HERE,
-      performance_manager::features::kInterventionButtonTimeout.Get(),
+      FROM_HERE, kInterventionButtonTimeout,
       base::BindRepeating(
           &PerformanceInterventionButtonController::HideToolbarButton,
           base::Unretained(this)));
@@ -166,9 +176,7 @@ void PerformanceInterventionButtonController::MaybeShowUi(
   InterventionMessageTriggerResult trigger_result =
       InterventionMessageTriggerResult::kShown;
 
-  if (!performance_manager::features::kInterventionShowMixedProfileSuggestions
-           .Get() &&
-      ContainsNonLastActiveProfile(result)) {
+  if (ContainsNonLastActiveProfile(result)) {
     trigger_result = InterventionMessageTriggerResult::kMixedProfile;
   } else if (base::FeatureList::IsEnabled(
                  performance_manager::features::
@@ -203,7 +211,10 @@ bool PerformanceInterventionButtonController::ContainsNonLastActiveProfile(
   Profile* const profile = chrome::FindLastActive()->profile();
   for (const resource_attribution::PageContext& context : result) {
     content::WebContents* const web_content = context.GetWebContents();
-    CHECK(web_content);
+    if (!web_content) {
+      // Without a WebContents, we can't check if it's from a different profile.
+      return true;
+    }
     Profile* const content_profile =
         Profile::FromBrowserContext(web_content->GetBrowserContext());
     if (profile != content_profile) {

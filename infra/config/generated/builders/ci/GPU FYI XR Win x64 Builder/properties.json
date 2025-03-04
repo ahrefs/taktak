@@ -74,7 +74,8 @@
           "builder": "Win10 FYI x64 Release XR Perf (NVIDIA)",
           "project": "chromium"
         }
-      ]
+      ],
+      "targets_spec_directory": "src/infra/config/generated/builders/ci/GPU FYI XR Win x64 Builder/targets"
     }
   },
   "$build/reclient": {
@@ -90,7 +91,7 @@
     "enable_cloud_trace": true,
     "experiments": [],
     "project": "rbe-chromium-trusted",
-    "remote_jobs": 80
+    "remote_jobs": 250
   },
   "$recipe_engine/resultdb/test_presentation": {
     "column_keys": [],

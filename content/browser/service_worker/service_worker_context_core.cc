@@ -18,6 +18,7 @@
 #include "base/location.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/raw_ptr.h"
+#include "base/metrics/histogram_functions.h"
 #include "base/not_fatal_until.h"
 #include "base/strings/string_util.h"
 #include "base/task/single_thread_task_runner.h"
@@ -103,8 +104,9 @@ class RegistrationDeletionListener
   }
 
   void OnRegistrationDeleted(ServiceWorkerRegistration* registration) override {
-    if (callback_)
+    if (callback_) {
       std::move(callback_).Run();
+    }
   }
 
   scoped_refptr<ServiceWorkerRegistration> registration_;
@@ -193,8 +195,9 @@ class ClearAllServiceWorkersHelper
       const base::WeakPtr<ServiceWorkerContextCore>& context,
       blink::ServiceWorkerStatusCode status,
       const std::vector<ServiceWorkerRegistrationInfo>& registrations) {
-    if (!context || status != blink::ServiceWorkerStatusCode::kOk)
+    if (!context || status != blink::ServiceWorkerStatusCode::kOk) {
       return;
+    }
     // Make a copy of live versions map because StopWorker() removes the version
     // from it when we were starting up and don't have a process yet.
     const std::map<int64_t, raw_ptr<ServiceWorkerVersion, CtnExperimental>>
@@ -227,7 +230,7 @@ class ClearAllServiceWorkersHelper
 int GetWarmedUpServiceWorkerCount(
     const std::map<int64_t, raw_ptr<ServiceWorkerVersion, CtnExperimental>>&
         live_versions) {
-  return base::ranges::count_if(live_versions, [](const auto& iter) {
+  return std::ranges::count_if(live_versions, [](const auto& iter) {
     ServiceWorkerVersion& service_worker_version = *iter.second;
     return service_worker_version.IsWarmingUp() ||
            service_worker_version.IsWarmedUp();
@@ -379,8 +382,9 @@ ServiceWorkerContextCore::ServiceWorkerContextCore(
 
 ServiceWorkerContextCore::~ServiceWorkerContextCore() {
   DCHECK(registry_);
-  for (const auto& it : live_versions_)
+  for (const auto& it : live_versions_) {
     it.second->RemoveObserver(this);
+  }
 
   job_coordinator_->AbortAll();
 }
@@ -496,8 +500,9 @@ ServiceWorkerClient* ServiceWorkerClientOwner::GetServiceWorkerClientByClientID(
 ServiceWorkerClient* ServiceWorkerClientOwner::GetServiceWorkerClientByWindowId(
     const base::UnguessableToken& window_id) {
   for (auto& it : service_worker_clients_by_uuid_) {
-    if (it.second->fetch_request_window_id() == window_id)
+    if (it.second->fetch_request_window_id() == window_id) {
       return it.second.get();
+    }
   }
 
   return nullptr;
@@ -516,7 +521,8 @@ void ServiceWorkerContextCore::OnClientDestroyed(
       service_worker_client.container_host()
           ? service_worker_client.container_host()->ukm_source_id()
           : ukm::kInvalidSourceId,
-      service_worker_client.url(), service_worker_client.GetClientType());
+      service_worker_client.GetUrlForScopeMatch(),
+      service_worker_client.GetClientType());
 }
 
 void ServiceWorkerClientOwner::DestroyServiceWorkerClient(
@@ -694,7 +700,8 @@ void ServiceWorkerContextCore::NotifyClientIsExecutionReady(
   observer_list_->Notify(
       FROM_HERE, &ServiceWorkerContextCoreObserver::OnClientIsExecutionReady,
       service_worker_client.container_host()->ukm_source_id(),
-      service_worker_client.url(), service_worker_client.GetClientType());
+      service_worker_client.GetUrlForScopeMatch(),
+      service_worker_client.GetClientType());
 }
 
 bool ServiceWorkerContextCore::MaybeHasRegistrationForStorageKey(
@@ -711,8 +718,9 @@ bool ServiceWorkerContextCore::MaybeHasRegistrationForStorageKey(
 
 void ServiceWorkerContextCore::WaitForRegistrationsInitializedForTest() {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
-  if (registrations_initialized_)
+  if (registrations_initialized_) {
     return;
+  }
   base::RunLoop loop;
   on_registrations_initialized_for_test_ = loop.QuitClosure();
   loop.Run();
@@ -727,7 +735,7 @@ void ServiceWorkerContextCore::AddWarmUpRequest(
   static const size_t kRequestQueueLength =
       base::GetFieldTrialParamByFeatureAsInt(
           blink::features::kSpeculativeServiceWorkerWarmUp,
-          "sw_warm_up_request_queue_length", 1000);
+          "sw_warm_up_request_queue_length", 100);
 
   // Erase redundant warm-up requests.
   std::vector<ServiceWorkerContext::WarmUpServiceWorkerCallback>
@@ -763,10 +771,8 @@ ServiceWorkerContextCore::PopNextWarmUpRequest() {
     return std::nullopt;
   }
 
-  static const int kSpeculativeServiceWorkerWarmUpMaxCount =
-      blink::features::kSpeculativeServiceWorkerWarmUpMaxCount.Get();
   if (GetWarmedUpServiceWorkerCount(live_versions_) >=
-      kSpeculativeServiceWorkerWarmUpMaxCount) {
+      blink::features::kSpeculativeServiceWorkerWarmUpMaxCount.Get()) {
     warm_up_requests_.clear();
     return std::nullopt;
   }
@@ -892,8 +898,9 @@ bool ServiceWorkerContextCore::IsValidRegisterRequest(
   }
   std::vector<GURL> urls = {scope_url, script_url};
 
-  if (key.origin().opaque())
+  if (key.origin().opaque()) {
     return false;
+  }
 
   urls.push_back(key.origin().GetURL());
   if (!service_worker_security_utils::AllOriginsMatchAndCanAccessServiceWorkers(
@@ -1047,8 +1054,9 @@ void ServiceWorkerContextCore::ClearAllServiceWorkersForTest(
   // |callback| will be called in the destructor of |helper| on the UI thread.
   auto helper =
       base::MakeRefCounted<ClearAllServiceWorkersHelper>(std::move(callback));
-  if (!was_service_worker_registered_)
+  if (!was_service_worker_registered_) {
     return;
+  }
   was_service_worker_registered_ = false;
   registry()->GetAllRegistrationsInfos(
       base::BindOnce(&ClearAllServiceWorkersHelper::DidGetAllRegistrations,
@@ -1070,13 +1078,15 @@ void ServiceWorkerContextCore::UpdateVersionFailureCount(
     int64_t version_id,
     blink::ServiceWorkerStatusCode status) {
   // Don't count these, they aren't start worker failures.
-  if (status == blink::ServiceWorkerStatusCode::kErrorDisallowed)
+  if (status == blink::ServiceWorkerStatusCode::kErrorDisallowed) {
     return;
+  }
 
   auto it = failure_counts_.find(version_id);
   if (status == blink::ServiceWorkerStatusCode::kOk) {
-    if (it != failure_counts_.end())
+    if (it != failure_counts_.end()) {
       failure_counts_.erase(it);
+    }
     return;
   }
 
@@ -1097,8 +1107,9 @@ void ServiceWorkerContextCore::UpdateVersionFailureCount(
 
 int ServiceWorkerContextCore::GetVersionFailureCount(int64_t version_id) {
   auto it = failure_counts_.find(version_id);
-  if (it == failure_counts_.end())
+  if (it == failure_counts_.end()) {
     return 0;
+  }
   return it->second.count;
 }
 
@@ -1174,8 +1185,9 @@ void ServiceWorkerContextCore::OnNoControllees(ServiceWorkerVersion* version) {
 
   scoped_refptr<ServiceWorkerRegistration> registration =
       GetLiveRegistration(version->registration_id());
-  if (registration)
+  if (registration) {
     registration->OnNoControllees(version);
+  }
 
   observer_list_->Notify(
       FROM_HERE, &ServiceWorkerContextCoreObserver::OnNoControllees,
@@ -1228,6 +1240,14 @@ void ServiceWorkerContextCore::OnRunningStateChanged(
       observer_list_->Notify(FROM_HERE,
                              &ServiceWorkerContextCoreObserver::OnStopping,
                              version->version_id());
+      for (auto& observer : sync_observer_list_->observers) {
+        const std::optional<ServiceWorkerRunningInfo> running_info =
+            wrapper_->GetRunningServiceWorkerInfo(version->version_id());
+        if (running_info.has_value()) {
+          observer.OnStopping(version->version_id(),
+                              /*worker_info=*/running_info.value());
+        }
+      }
       break;
   }
 }
@@ -1251,8 +1271,9 @@ void ServiceWorkerContextCore::OnVersionStateChanged(
 void ServiceWorkerContextCore::OnDevToolsRoutingIdChanged(
     ServiceWorkerVersion* version) {
   DCHECK_EQ(this, version->context().get());
-  if (!version->embedded_worker())
+  if (!version->embedded_worker()) {
     return;
+  }
   observer_list_->Notify(
       FROM_HERE,
       &ServiceWorkerContextCoreObserver::OnVersionDevToolsRoutingIdChanged,
@@ -1350,14 +1371,16 @@ void ServiceWorkerContextCore::DidGetRegisteredStorageKeys(
     const std::vector<blink::StorageKey>& storage_keys) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
 
-  for (const blink::StorageKey& storage_key : storage_keys)
+  for (const blink::StorageKey& storage_key : storage_keys) {
     registered_storage_keys_.insert(storage_key);
+  }
 
   DCHECK(!registrations_initialized_);
   registrations_initialized_ = true;
 
-  if (on_registrations_initialized_for_test_)
+  if (on_registrations_initialized_for_test_) {
     std::move(on_registrations_initialized_for_test_).Run();
+  }
 
   if (!start_time.is_null()) {
     base::UmaHistogramMediumTimes(
@@ -1395,6 +1418,8 @@ ScopedServiceWorkerClient::CommitResponseAndRelease(
     const PolicyContainerPolicies& policy_container_policies,
     mojo::PendingRemote<network::mojom::CrossOriginEmbedderPolicyReporter>
         coep_reporter,
+    mojo::PendingRemote<network::mojom::DocumentIsolationPolicyReporter>
+        dip_reporter,
     ukm::SourceId ukm_source_id) {
   if (!service_worker_client_) {
     return {};
@@ -1404,7 +1429,7 @@ ScopedServiceWorkerClient::CommitResponseAndRelease(
       service_worker_client_->CommitResponse(
           base::PassKey<ScopedServiceWorkerClient>(), std::move(rfh_id),
           policy_container_policies, std::move(coep_reporter),
-          std::move(ukm_source_id));
+          std::move(dip_reporter), std::move(ukm_source_id));
 
   blink::mojom::ControllerServiceWorkerInfoPtr controller;
   if (service_worker_client_->controller()) {

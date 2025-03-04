@@ -4,7 +4,10 @@
 
 #include "chrome/browser/ui/views/autofill/payments/card_unmask_authentication_selection_dialog_view.h"
 
-#include "chrome/browser/ui/autofill/payments/view_factory.h"
+#include "chrome/browser/ui/autofill/payments/payments_view_factory.h"
+#include "chrome/browser/ui/tabs/public/tab_dialog_manager.h"
+#include "chrome/browser/ui/tabs/public/tab_features.h"
+#include "chrome/browser/ui/tabs/public/tab_interface.h"
 #include "chrome/browser/ui/views/autofill/payments/payments_view_util.h"
 #include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
@@ -23,6 +26,7 @@
 #include "ui/views/controls/label.h"
 #include "ui/views/layout/box_layout.h"
 #include "ui/views/layout/box_layout_view.h"
+#include "ui/views/layout/table_layout.h"
 #include "ui/views/style/typography.h"
 
 namespace autofill {
@@ -45,7 +49,7 @@ ui::ImageModel GetAuthenticationModeIcon(
     case CardUnmaskChallengeOptionType::kUnknownType:
       break;
   }
-  NOTREACHED_NORETURN();
+  NOTREACHED();
 }
 
 }  // namespace
@@ -243,8 +247,7 @@ void CardUnmaskAuthenticationSelectionDialogView::AddFooterText() {
 void CardUnmaskAuthenticationSelectionDialogView::
     ReplaceContentWithProgressThrobber() {
   RemoveAllChildViews();
-  AddChildView(std::make_unique<ProgressBarWithTextView>(
-      controller_->GetProgressLabel()));
+  AddChildView(CreateProgressBarWithTextView(controller_->GetProgressLabel()));
 }
 
 void CardUnmaskAuthenticationSelectionDialogView::OnChallengeOptionSelected(
@@ -275,7 +278,11 @@ CreateAndShowCardUnmaskAuthenticationSelectionDialog(
     CardUnmaskAuthenticationSelectionDialogController* controller) {
   CardUnmaskAuthenticationSelectionDialogView* dialog_view =
       new CardUnmaskAuthenticationSelectionDialogView(controller);
-  constrained_window::ShowWebModalDialogViews(dialog_view, web_contents);
+  auto* tab_interface = tabs::TabInterface::GetFromContents(web_contents);
+  tab_interface->GetTabFeatures()
+      ->tab_dialog_manager()
+      ->CreateShowDialogAndBlockTabInteraction(dialog_view)
+      .release();
   return dialog_view;
 }
 

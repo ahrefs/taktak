@@ -87,8 +87,8 @@ class SelectToSpeakTest : public AccessibilityFeatureBrowserTest {
   }
 
  protected:
-  SelectToSpeakTest() {}
-  ~SelectToSpeakTest() override {}
+  SelectToSpeakTest() = default;
+  ~SelectToSpeakTest() override = default;
 
   // Note that we do not enable Select to Speak in the SetUp method because
   // tests are less flaky if we load the page URL before loading up the
@@ -243,17 +243,6 @@ class SelectToSpeakTestWithVoiceSwitching : public SelectToSpeakTest {
     prefs->SetBoolean(prefs::kAccessibilitySelectToSpeakVoiceSwitching, true);
     SelectToSpeakTest::SetUpOnMainThread();
   }
-};
-
-class SelectToSpeakTestWithMagnifierFollowing : public SelectToSpeakTest {
- public:
-  void SetUpCommandLine(base::CommandLine* command_line) override {
-    scoped_feature_list_.InitAndEnableFeature(
-        ::features::kAccessibilityMagnifierFollowsSts);
-  }
-
- private:
-  base::test::ScopedFeatureList scoped_feature_list_;
 };
 
 IN_PROC_BROWSER_TEST_F(SelectToSpeakTest, SpeakStatusTray) {
@@ -650,7 +639,7 @@ IN_PROC_BROWSER_TEST_F(SelectToSpeakTest,
   EXPECT_GT(final_window_position.y(), initial_window_position.y());
 }
 
-IN_PROC_BROWSER_TEST_F(SelectToSpeakTestWithMagnifierFollowing,
+IN_PROC_BROWSER_TEST_F(SelectToSpeakTest,
                        FullscreenMagnifierFollowsTextBoundsWhenPrefOn) {
   sm_.send_word_events_and_wait_to_finish(true);
   Profile* profile = AccessibilityManager::Get()->profile();

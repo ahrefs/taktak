@@ -13,6 +13,11 @@
 
 namespace content {
 
+bool RenderWidgetHostDelegate::PreHandleMouseEvent(
+    const blink::WebMouseEvent& event) {
+  return false;
+}
+
 KeyboardEventProcessingResult RenderWidgetHostDelegate::PreHandleKeyboardEvent(
     const input::NativeWebKeyboardEvent& event) {
   return KeyboardEventProcessingResult::NOT_HANDLED;
@@ -47,7 +52,8 @@ bool RenderWidgetHostDelegate::PreHandleGestureEvent(
   return false;
 }
 
-double RenderWidgetHostDelegate::GetPendingPageZoomLevel() {
+double RenderWidgetHostDelegate::GetPendingZoomLevel(
+    RenderWidgetHostImpl* rwh) {
   return 0.0;
 }
 
@@ -61,7 +67,8 @@ RenderWidgetHostDelegate::GetOrCreateRootBrowserAccessibilityManager() {
   return nullptr;
 }
 
-uint32_t RenderWidgetHostDelegate::GetCompositorFrameSinkGroupingId() const {
+base::UnguessableToken
+RenderWidgetHostDelegate::GetCompositorFrameSinkGroupingId() const {
   NOTREACHED();  // Not implemented.
 }
 
@@ -178,6 +185,11 @@ int RenderWidgetHostDelegate::GetVirtualKeyboardResizeHeight() {
 
 bool RenderWidgetHostDelegate::ShouldDoLearning() {
   return true;
+}
+
+input::mojom::RenderInputRouterDelegate*
+RenderWidgetHostDelegate::GetRenderInputRouterDelegateRemote() {
+  return nullptr;
 }
 
 }  // namespace content

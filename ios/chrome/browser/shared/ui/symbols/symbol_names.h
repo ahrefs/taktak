@@ -55,13 +55,13 @@ extern NSString* const kChromiumSigninPromoLogoImage;
 
 // Custom symbol names.
 extern NSString* const kPrivacySymbol;
-extern NSString* const kSyncDisabledSymbol;
 extern NSString* const kSafetyCheckSymbol;
 extern NSString* const kArrowClockWiseSymbol;
 extern NSString* const kIncognitoSymbol;
 extern NSString* const kSquareNumberSymbol;
 extern NSString* const kTranslateSymbol;
 extern NSString* const kPasswordManagerSymbol;
+extern NSString* const kEnterpriseSigninBannerSymbol;
 extern NSString* const kEnterpriseSymbol;
 extern NSString* const kPopupBadgeMinusSymbol;
 extern NSString* const kPhotoSymbol;
@@ -231,6 +231,7 @@ extern NSString* const kShippingBoxSymbol;
 extern NSString* const kSliderHorizontalSymbol;
 extern NSString* const kMacbookAndIPhoneSymbol;
 extern NSString* const kCheckmarkShieldSymbol;
+extern NSString* const kListBulletSymbol;
 extern NSString* const kListBulletClipboardSymbol;
 extern NSString* const kListBulletRectangleSymbol;
 extern NSString* const kBoxTruckFillSymbol;
@@ -265,6 +266,10 @@ extern NSString* const kPlayButton;
 extern NSString* const kFolderSymbol;
 extern NSString* const kCartSymbol;
 extern NSString* const kArrowUTurnForwardSymbol;
+extern NSString* const kArrowUTurnForwardCircleFillSymbol;
+extern NSString* const kIPhoneAndArrowForwardSymbol;
+extern NSString* const kPersonPlusSymbol;
+extern NSString* const kArrowUpTrashSymbol;
 
 // Names of the default symbol being non-monochrome by default. When using them,
 // you probably want to set their color to monochrome.

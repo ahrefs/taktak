@@ -45,6 +45,7 @@ class ExceptionState;
 class FormAssociated;
 class HTMLFormElement;
 class KeyboardEvent;
+class PointerEvent;
 class TextControlElement;
 class V8UnionStringLegacyNullToEmptyStringOrTrustedScript;
 class V8UnionBooleanOrTogglePopoverOptions;
@@ -75,7 +76,6 @@ enum class PopoverTriggerAction {
   kToggle,
   kShow,
   kHide,
-  kHover,
 };
 
 enum class HidePopoverFocusBehavior {
@@ -107,10 +107,10 @@ class CORE_EXPORT HTMLElement : public Element {
   DEFINE_WRAPPERTYPEINFO();
 
  public:
-
   HTMLElement(const QualifiedName& tag_name, Document&, ConstructionType);
 
   bool HasTagName(const HTMLQualifiedName& name) const {
+    DCHECK_EQ(name.NamespaceURI(), namespaceURI());
     return HasLocalName(name.LocalName());
   }
 
@@ -244,9 +244,6 @@ class CORE_EXPORT HTMLElement : public Element {
   // Popover API related functions.
   void UpdatePopoverAttribute(const AtomicString&);
   bool HasPopoverAttribute() const;
-  // The IDL reflections:
-  AtomicString popover() const;
-  void setPopover(const AtomicString& value);
   PopoverValueType PopoverType() const;
   bool popoverOpen() const;
   // IsPopoverReady returns true if the popover is in a state where it can be
@@ -286,7 +283,8 @@ class CORE_EXPORT HTMLElement : public Element {
       Element& top_layer_element,
       TopLayerElementType top_layer_element_type);
 
-  static void HandlePopoverLightDismiss(const Event& event, const Node& node);
+  static void HandlePopoverLightDismiss(const PointerEvent& event,
+                                        const Node& node);
   void InvokePopover(Element& invoker);
   void SetPopoverFocusOnShow();
   // This hides all visible popovers up to, but not including,
@@ -295,10 +293,6 @@ class CORE_EXPORT HTMLElement : public Element {
                                    Document&,
                                    HidePopoverFocusBehavior,
                                    HidePopoverTransitionBehavior);
-  // Popover hover triggering behavior.
-  bool IsNodePopoverDescendant(const Node& node) const;
-  void MaybeQueuePopoverHideEvent();
-  static void HoveredElementChanged(Element* old_element, Element* new_element);
 
   void SetImplicitAnchor(Element* element);
   Element* implicitAnchor() const;
@@ -321,6 +315,8 @@ class CORE_EXPORT HTMLElement : public Element {
   // See: crbug.com/1490919, https://open-ui.org/components/invokers.explainer/
   bool IsValidBuiltinCommand(HTMLElement& invoker,
                              CommandEventType command) override;
+  bool IsValidBuiltinPopoverCommand(HTMLElement& invoker,
+                                    CommandEventType command);
   bool HandleCommandInternal(HTMLElement& invoker,
                              CommandEventType command) override;
 
@@ -336,16 +332,16 @@ class CORE_EXPORT HTMLElement : public Element {
 
   enum AllowPercentage { kDontAllowPercentageValues, kAllowPercentageValues };
   enum AllowZero { kDontAllowZeroValues, kAllowZeroValues };
-  void AddHTMLLengthToStyle(MutableCSSPropertyValueSet*,
+  void AddHTMLLengthToStyle(HeapVector<CSSPropertyValue, 8>&,
                             CSSPropertyID,
                             const String& value,
                             AllowPercentage = kAllowPercentageValues,
                             AllowZero = kAllowZeroValues);
-  void AddHTMLColorToStyle(MutableCSSPropertyValueSet*,
+  void AddHTMLColorToStyle(HeapVector<CSSPropertyValue, 8>&,
                            CSSPropertyID,
                            const String& color);
   void AddHTMLBackgroundImageToStyle(
-      MutableCSSPropertyValueSet*,
+      HeapVector<CSSPropertyValue, 8>&,
       const String& url_value,
       const AtomicString& initiator_name = g_null_atom);
 
@@ -355,18 +351,18 @@ class CORE_EXPORT HTMLElement : public Element {
   // https://html.spec.whatwg.org/multipage/rendering.html#map-to-the-aspect-ratio-property-(using-dimension-rules)
   void ApplyAspectRatioToStyle(const AtomicString& width,
                                const AtomicString& height,
-                               MutableCSSPropertyValueSet*);
+                               HeapVector<CSSPropertyValue, 8>&);
   // This corresponds to:
   //  'map to the aspect-ratio property'
   // described by:
   // https://html.spec.whatwg.org/multipage/rendering.html#map-to-the-aspect-ratio-property
   void ApplyIntegerAspectRatioToStyle(const AtomicString& width,
                                       const AtomicString& height,
-                                      MutableCSSPropertyValueSet*);
+                                      HeapVector<CSSPropertyValue, 8>&);
   void ApplyAlignmentAttributeToStyle(const AtomicString&,
-                                      MutableCSSPropertyValueSet*);
+                                      HeapVector<CSSPropertyValue, 8>&);
   void ApplyBorderAttributeToStyle(const AtomicString&,
-                                   MutableCSSPropertyValueSet*);
+                                   HeapVector<CSSPropertyValue, 8>&);
 
   void AttributeChanged(const AttributeModificationParams&) override;
   void ParseAttribute(const AttributeModificationParams&) override;
@@ -376,7 +372,7 @@ class CORE_EXPORT HTMLElement : public Element {
   void CollectStyleForPresentationAttribute(
       const QualifiedName&,
       const AtomicString&,
-      MutableCSSPropertyValueSet*) override;
+      HeapVector<CSSPropertyValue, 8>&) override;
   unsigned ParseBorderWidthAttribute(const AtomicString&) const;
 
   InsertionNotificationRequest InsertedInto(ContainerNode&) override;
@@ -394,7 +390,7 @@ class CORE_EXPORT HTMLElement : public Element {
 
   void ApplyAspectRatioToStyle(double width,
                                double height,
-                               MutableCSSPropertyValueSet* style);
+                               HeapVector<CSSPropertyValue, 8>& style);
 
   DocumentFragment* TextToFragment(const String&, ExceptionState&);
 
@@ -407,7 +403,7 @@ class CORE_EXPORT HTMLElement : public Element {
       HidePopoverFocusBehavior focus_behavior,
       HidePopoverTransitionBehavior transition_behavior);
 
-  static AttributeTriggers* TriggersForAttributeName(
+  static const AttributeTriggers* TriggersForAttributeName(
       const QualifiedName& attr_name);
 
   void OnDirAttrChanged(const AttributeModificationParams&);
@@ -415,6 +411,7 @@ class CORE_EXPORT HTMLElement : public Element {
   void OnLangAttrChanged(const AttributeModificationParams&);
   void OnNonceAttrChanged(const AttributeModificationParams&);
   void OnPopoverChanged(const AttributeModificationParams&);
+  void OnContainerTimingAttrChanged(const AttributeModificationParams&);
 
   int AdjustedOffsetForZoom(LayoutUnit);
   int OffsetTopOrLeft(bool top);

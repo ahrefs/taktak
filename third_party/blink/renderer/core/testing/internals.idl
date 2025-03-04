@@ -323,8 +323,8 @@ interface Internals {
 
     boolean isInCanvasFontCache(Document document, DOMString fontString);
     unsigned long canvasFontCacheMaxFonts();
-    void forceLoseCanvasContext(HTMLCanvasElement canvas, DOMString contextType);
-    void forceLoseCanvasContext(OffscreenCanvas offscreencanvas, DOMString context_type);
+    void forceLoseCanvasContext(CanvasRenderingContext2D ctx);
+    void forceLoseCanvasContext(OffscreenCanvasRenderingContext2D ctx);
     void disableCanvasAcceleration(HTMLCanvasElement canvas);
 
     DictionaryTest dictionaryTest();
@@ -333,6 +333,10 @@ interface Internals {
     UnionTypesTest unionTypesTest();
     InternalsUkmRecorder initializeUKMRecorder();
     CallbackFunctionTest callbackFunctionTest();
+    // Creates and returns an `NADCAttributeTest` object, which provides test
+    // functions to test attributes with the IDL extended attributei
+    // `NoAllocDirectCall`.
+    NADCAttributeTest nadcAttributeTest();
 
     DOMString selectedHTMLForClipboard();
     DOMString selectedTextForClipboard();
@@ -459,4 +463,7 @@ interface Internals {
     // NetworkContext. Intended to be used to allow remote context executors to
     // continue functioning in fenced frame WPTs after network is revoked.
     [CallWith=ScriptState] Promise<undefined> exemptUrlFromNetworkRevocation(USVString url);
+
+    DOMString lastCompiledScriptFileName(Document document);
+    boolean lastCompiledScriptUsedCodeCache(Document document);
 };

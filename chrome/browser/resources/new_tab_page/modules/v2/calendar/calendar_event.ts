@@ -139,13 +139,19 @@ export class CalendarEventElement extends CalendarEventElementBase {
         'modulesCalendarInXHr', Math.round(hoursUntilMeeting).toString());
   }
 
+  protected isAttachmentDisabled_(index: number): boolean {
+    return !this.event.attachments[index].resourceUrl?.url;
+  }
+
   protected openAttachment_(e: Event) {
     this.dispatchEvent(new Event('usage', {composed: true, bubbles: true}));
     recordCalendarAction(CalendarAction.ATTACHMENT_CLICKED, this.moduleName);
     const currentTarget = e.currentTarget as HTMLElement;
     const index = Number(currentTarget.dataset['index']);
-    WindowProxy.getInstance().navigate(
-        this.event.attachments[index]!.resourceUrl.url);
+    const resourceUrl = this.event.attachments[index].resourceUrl?.url;
+    if (resourceUrl) {
+      WindowProxy.getInstance().navigate(resourceUrl);
+    }
   }
 
   protected openVideoConference_() {
@@ -187,10 +193,10 @@ export class CalendarEventElement extends CalendarEventElementBase {
       return;
     }
     const scrollableRight =
-        (attachmentList!.scrollWidth - attachmentList!.scrollLeft -
-         kAttachmentScrollFadeBuffer) > attachmentList!.clientWidth;
+        (attachmentList.scrollWidth - attachmentList.scrollLeft -
+         kAttachmentScrollFadeBuffer) > attachmentList.clientWidth;
     const scrollableLeft =
-        attachmentList!.scrollLeft - kAttachmentScrollFadeBuffer > 0;
+        attachmentList.scrollLeft - kAttachmentScrollFadeBuffer > 0;
 
     if (scrollableRight && scrollableLeft) {
       this.attachmentListClass_ = 'scrollable';

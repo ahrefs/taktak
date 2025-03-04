@@ -15,10 +15,11 @@
 #include "base/memory/raw_ptr.h"
 #include "base/metrics/user_metrics.h"
 #include "base/notreached.h"
+#include "base/scoped_observation.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/time/time.h"
 #include "components/strings/grit/components_strings.h"
-#include "components/user_education/common/help_bubble_params.h"
+#include "components/user_education/common/help_bubble/help_bubble_params.h"
 #include "components/user_education/views/help_bubble_delegate.h"
 #include "components/user_education/views/help_bubble_event_relay.h"
 #include "components/variations/variations_associated_data.h"
@@ -68,6 +69,7 @@
 #include "ui/views/view_tracker.h"
 #include "ui/views/view_utils.h"
 #include "ui/views/widget/widget.h"
+#include "ui/views/widget/widget_observer.h"
 
 namespace user_education {
 
@@ -125,10 +127,10 @@ class MdIPHBubbleButton : public views::MdTextButton {
         is_default_button_
             ? delegate_->GetHelpBubbleDefaultButtonForegroundColorId()
             : delegate_->GetHelpBubbleForegroundColorId();
-    SetEnabledTextColorIds(foreground_color);
+    SetEnabledTextColors(foreground_color);
     // TODO(crbug.com/40709599): Temporary fix for Mac. Bubble shouldn't be in
     // inactive style when the bubble loses focus.
-    SetTextColorId(ButtonState::STATE_DISABLED, foreground_color);
+    SetTextColor(ButtonState::STATE_DISABLED, foreground_color);
 
     // The default behavior in 2023 refresh is for MD buttons is to have the
     // alpha baked into the color, but we currently don't have that yet, so
@@ -165,7 +167,7 @@ class MdIPHBubbleButton : public views::MdTextButton {
             : delegate_->GetHelpBubbleButtonBorderColorId());
     SetBackground(CreateBackgroundFromPainter(
         views::Painter::CreateRoundRectWith1PxBorderPainter(
-            background_color, stroke_color, GetCornerRadiusValue())));
+            background_color, stroke_color, GetCornerRadii())));
   }
 
  private:
@@ -294,6 +296,33 @@ DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(HelpBubbleView, kCloseButtonIdForTesting);
 DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(HelpBubbleView, kBodyTextIdForTesting);
 DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(HelpBubbleView, kTitleTextIdForTesting);
 
+// TODO(https://crbug.com/382611284): Temporarily handle the case when the
+// primary window is minimized by closing the help bubble. Remove this code when
+// the issue is solved at the Views framework level.
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
+class HelpBubbleView::PrimaryWidgetObserver : public views::WidgetObserver {
+ public:
+  explicit PrimaryWidgetObserver(HelpBubbleView& help_bubble)
+      : help_bubble_(help_bubble) {
+    observation_.Observe(help_bubble_->GetWidget()->GetPrimaryWindowWidget());
+  }
+  ~PrimaryWidgetObserver() override = default;
+
+ private:
+  void OnWidgetDestroying(views::Widget*) override { observation_.Reset(); }
+  void OnWidgetShowStateChanged(views::Widget* widget) override {
+    if (widget->IsMinimized()) {
+      help_bubble_->GetWidget()->CloseWithReason(
+          views::Widget::ClosedReason::kLostFocus);
+    }
+  }
+
+  const raw_ref<HelpBubbleView> help_bubble_;
+  base::ScopedObservation<views::Widget, views::WidgetObserver> observation_{
+      this};
+};
+#endif
+
 // Watches for the anchor view to be destroyed or removed from its widget.
 // Used in cases where the anchor element is not the same as the anchor view.
 // Prevents the help bubble from lingering after its anchor is invalid, which
@@ -343,6 +372,8 @@ HelpBubbleView::HelpBubbleView(
           true),
       delegate_(delegate),
       event_relay_(std::move(event_relay)) {
+  set_background_color(delegate_->GetHelpBubbleBackgroundColorId());
+
   if (anchor.rect.has_value()) {
     SetForceAnchorRect(anchor.rect.value());
     anchor_observer_ = std::make_unique<AnchorViewObserver>(anchor.view, this);
@@ -516,7 +547,7 @@ HelpBubbleView::HelpBubbleView(
 
     // Add the default button if there is one based on platform style.
     if (default_button) {
-      if (views::PlatformStyle::kIsOkButtonLeading) {
+      if constexpr (views::PlatformStyle::kIsOkButtonLeading) {
         default_button_ =
             button_container->AddChildViewAt(std::move(default_button), 0);
       } else {
@@ -743,6 +774,10 @@ HelpBubbleView::HelpBubbleView(
     event_relay_->Init(this);
   }
 
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
+  primary_widget_observer_ = std::make_unique<PrimaryWidgetObserver>(*this);
+#endif
+
   MaybeStartAutoCloseTimer();
 }
 
@@ -779,6 +814,7 @@ void HelpBubbleView::OnWidgetActivationChanged(views::Widget* widget,
     if (active) {
       ++activate_count_;
       auto_close_timer_.Stop();
+      widget->UpdateAccessibleNameForRootView();
     } else {
       MaybeStartAutoCloseTimer();
     }
@@ -789,10 +825,6 @@ void HelpBubbleView::OnThemeChanged() {
   views::BubbleDialogDelegateView::OnThemeChanged();
 
   const auto* color_provider = GetColorProvider();
-  const SkColor background_color =
-      color_provider->GetColor(delegate_->GetHelpBubbleBackgroundColorId());
-  set_color(background_color);
-
   const SkColor foreground_color =
       color_provider->GetColor(delegate_->GetHelpBubbleForegroundColorId());
   if (icon_view_) {
@@ -800,6 +832,8 @@ void HelpBubbleView::OnThemeChanged() {
         foreground_color, icon_view_->GetPreferredSize({}).height() / 2));
   }
 
+  const SkColor background_color =
+      color_provider->GetColor(delegate_->GetHelpBubbleBackgroundColorId());
   for (views::Label* label : labels_) {
     label->SetBackgroundColor(background_color);
     label->SetEnabledColor(foreground_color);

@@ -36,7 +36,12 @@ class NET_EXPORT RegistrationFetcherParam {
   RegistrationFetcherParam& operator=(const RegistrationFetcherParam&) = delete;
   ~RegistrationFetcherParam();
 
-  // Returns a vector of valid instances.
+  // Checks `headers` for any Sec-Session-Registration headers. Parses any
+  // valid ones that are found into `RegistrationFetcherParam` instances and
+  // returns a vector of these. `request_url` corresponds to the request that
+  // returned these headers; it is used to resolve any relative registration
+  // endpoints in the response headers and to validate that the scheme is
+  // appropriate.
   // TODO(chlily): Get IsolationInfo from the request as well
   static std::vector<RegistrationFetcherParam> CreateIfValid(
       const GURL& request_url,
@@ -61,6 +66,14 @@ class NET_EXPORT RegistrationFetcherParam {
 
   const std::optional<std::string>& authorization() const {
     return authorization_;
+  }
+
+  GURL TakeRegistrationEndpoint() { return std::move(registration_endpoint_); }
+
+  std::string TakeChallenge() { return std::move(challenge_); }
+
+  std::optional<std::string> TakeAuthorization() {
+    return std::move(authorization_);
   }
 
  private:

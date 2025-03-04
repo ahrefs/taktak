@@ -8,7 +8,7 @@
 #include "base/dcheck_is_on.h"
 #include "base/memory/scoped_refptr.h"
 #include "third_party/blink/renderer/bindings/core/v8/serialization/serialization_tag.h"
-#include "third_party/blink/renderer/bindings/core/v8/serialization/serialized_color_params.h"
+#include "third_party/blink/renderer/bindings/core/v8/serialization/serialized_params.h"
 #include "third_party/blink/renderer/bindings/core/v8/serialization/serialized_script_value.h"
 #include "third_party/blink/renderer/core/core_export.h"
 #include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
@@ -71,6 +71,16 @@ class CORE_EXPORT V8ScriptValueDeserializer
   bool ReadDouble(double* value) { return deserializer_.ReadDouble(value); }
   bool ReadRawBytes(size_t size, const void** data) {
     return deserializer_.ReadRawBytes(size, data);
+  }
+  bool ReadRawBytesToSpan(size_t size, base::span<const uint8_t>* out_span) {
+    const void* data = nullptr;
+    if (!deserializer_.ReadRawBytes(size, &data)) {
+      return false;
+    }
+    // SAFETY: ReadRawBytes() ensures `data` and `size` are safe.
+    *out_span = UNSAFE_BUFFERS(
+        base::span(reinterpret_cast<const uint8_t*>(data), size));
+    return true;
   }
   bool ReadUnguessableToken(base::UnguessableToken* token_out);
   bool ReadUTF8String(String* string_out);

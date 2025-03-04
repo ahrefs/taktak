@@ -17,7 +17,11 @@
 #include "third_party/blink/renderer/core/css/style_request.h"
 #include "third_party/blink/renderer/core/dom/document.h"
 #include "third_party/blink/renderer/core/dom/element.h"
+#include "third_party/blink/renderer/core/layout/geometry/box_strut.h"
+#include "third_party/blink/renderer/core/layout/geometry/physical_offset.h"
 #include "third_party/blink/renderer/core/layout/geometry/physical_rect.h"
+#include "third_party/blink/renderer/core/layout/geometry/physical_size.h"
+#include "third_party/blink/renderer/core/style/computed_style_base_constants.h"
 #include "third_party/blink/renderer/core/style/style_view_transition_group.h"
 #include "third_party/blink/renderer/platform/allow_discouraged_type.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_types.h"
@@ -26,6 +30,7 @@
 #include "third_party/blink/renderer/platform/heap/heap_traits.h"
 #include "third_party/blink/renderer/platform/wtf/text/atomic_string.h"
 #include "ui/gfx/geometry/transform.h"
+#include "ui/gfx/geometry/vector2d_f.h"
 
 namespace blink {
 
@@ -61,20 +66,40 @@ class ViewTransitionStyleTracker
  public:
   // Properties that transition on container elements.
   struct ContainerProperties {
-    bool operator==(const ContainerProperties& other) const {
-      return border_box_rect_in_css_space ==
-                 other.border_box_rect_in_css_space &&
-             snapshot_matrix == other.snapshot_matrix;
-    }
-    bool operator!=(const ContainerProperties& other) const {
-      return !(*this == other);
-    }
+    bool operator==(const ContainerProperties& other) const = default;
 
-    PhysicalRect border_box_rect_in_css_space;
+    // The rect used to compute the reference rect, which is what's eventually
+    // used fo the projecting the content to the coordinate space of the
+    // pseudo-element. It is in layer space, as the contents are captured in
+    // layer space.
+    PhysicalRect border_box_rect_in_enclosing_layer_css_space;
 
     // Transforms a point from local space into the snapshot viewport. For
     // details of the snapshot viewport, see README.md.
     gfx::Transform snapshot_matrix;
+
+    // Box geometry is present in layered capture mode. It is necessary for
+    // positioning the layer's content and nested descendants correctly given
+    // that the padding, borders and box sizing are captured as style.
+    struct BoxGeometry {
+      PhysicalRect content_box;
+      PhysicalRect padding_box;
+      EBoxSizing box_sizing;
+      bool operator==(const BoxGeometry& other) const = default;
+    };
+
+    std::optional<BoxGeometry> box_geometry;
+
+    PhysicalSize GroupSize() const {
+      return box_geometry && box_geometry->box_sizing == EBoxSizing::kContentBox
+                 ? box_geometry->content_box.size
+                 : border_box_rect_in_enclosing_layer_css_space.size;
+    }
+
+    gfx::Vector2dF BorderOffset() const {
+      return box_geometry ? gfx::Vector2dF(box_geometry->padding_box.offset)
+                          : gfx::Vector2dF();
+    }
   };
 
   explicit ViewTransitionStyleTracker(
@@ -230,7 +255,7 @@ class ViewTransitionStyleTracker
       const AtomicString& name,
       const StyleViewTransitionGroup& group) const;
 
-  AtomicString GenerateAutoName(Element&, const TreeScope*);
+  AtomicString GenerateAutoName(Element&, const TreeScope*, bool allow_from_id);
 
   struct ElementData : public GarbageCollected<ElementData> {
     void Trace(Visitor* visitor) const;
@@ -238,7 +263,10 @@ class ViewTransitionStyleTracker
     // Returns the intrinsic size for the element's snapshot.
     gfx::RectF GetInkOverflowRect(bool use_cached_data) const;
     gfx::RectF GetCapturedSubrect(bool use_cached_data) const;
-    gfx::RectF GetBorderBoxRect(bool use_cached_data,
+
+    // This is the geometry of the snapshot, in layer coordinate space, that is
+    // going to be mapped to the old/new pseudo-element's content rect.
+    gfx::RectF GetReferenceRect(bool use_cached_data,
                                 float device_scale_factor) const;
 
     bool ShouldPropagateVisualOverflowRectAsMaxExtentsRect() const;
@@ -252,8 +280,8 @@ class ViewTransitionStyleTracker
 
     // Computed info for each element participating in the transition for the
     // |target_element|. This information is mirrored into the UA stylesheet.
-    // This is stored in a vector to be able to stack animations.
-    Vector<ContainerProperties> container_properties;
+    // It is std::nullopt before it is populated for the first time.
+    std::optional<ContainerProperties> container_properties;
 
     // Computed info cached before the DOM switches to the new state.
     ContainerProperties cached_container_properties;
@@ -297,6 +325,15 @@ class ViewTransitionStyleTracker
     Vector<AtomicString> class_list;
 
     AtomicString containing_group_name;
+
+    // Whether effects and box decorations are captured as style or as part of
+    // the snapshot. See https://github.com/w3c/csswg-drafts/issues/10585
+    bool use_layered_capture;
+
+    // Whether this name was auto-generated via auto/match-element.
+    // Auto-generated names do not appear in reflection methods such as
+    // getAnimations.
+    bool is_generated_name;
   };
 
   // In physical pixels. Returns the snapshot root rect, relative to the
@@ -339,7 +376,8 @@ class ViewTransitionStyleTracker
       PhysicalRect& visual_overflow_rect_in_layout_space,
       std::optional<gfx::RectF>& captured_rect_in_layout_space) const;
 
-  viz::ViewTransitionElementResourceId GenerateResourceId() const;
+  viz::ViewTransitionElementResourceId GenerateResourceId(
+      bool for_subframe_snapshot = false) const;
 
   void SnapBrowserControlsToFullyShown();
 

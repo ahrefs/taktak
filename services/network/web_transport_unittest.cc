@@ -57,8 +57,7 @@ class HostResolverFactory final : public net::HostResolver::Factory {
       const net::HostResolver::ManagerOptions& options,
       std::string_view host_mapping_rules,
       bool enable_caching) override {
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
+    NOTREACHED();
   }
 
  private:
@@ -331,7 +330,7 @@ class WebTransportTest : public testing::TestWithParam<std::string_view> {
         quic::QuicCryptoServerConfig::ConfigOptions(),
         quic::AllSupportedVersions(), &backend_);
     EXPECT_TRUE(http_server_->CreateUDPSocketAndListen(quic::QuicSocketAddress(
-        quic::QuicSocketAddress(quic::QuicIpAddress::Any6(), /*port=*/0))));
+        quic::QuicSocketAddress(quiche::QuicheIpAddress::Any6(), /*port=*/0))));
 
     auto* quic_context =
         network_context_->url_request_context()->quic_context();
@@ -491,7 +490,7 @@ TEST_F(WebTransportTest, SendDatagram) {
         static_cast<uint8_t>(base::RandInt(0, 255)),
         static_cast<uint8_t>(base::RandInt(0, 255)),
     };
-    transport_remote->SendDatagram(base::make_span(data),
+    transport_remote->SendDatagram(base::span(data),
                                    base::BindLambdaForTesting([&](bool r) {
                                      result = r;
                                      run_loop_for_datagram.Quit();
@@ -528,7 +527,7 @@ TEST_F(WebTransportTest, SendToolargeDatagram) {
   mojo::Remote<mojom::WebTransport> transport_remote(
       test_handshake_client.PassTransport());
 
-  transport_remote->SendDatagram(base::make_span(data),
+  transport_remote->SendDatagram(base::span(data),
                                  base::BindLambdaForTesting([&](bool r) {
                                    result = r;
                                    run_loop_for_datagram.Quit();

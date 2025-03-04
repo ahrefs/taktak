@@ -30,7 +30,6 @@
 #include "ash/wm/overview/overview_window_drag_controller.h"
 #include "ash/wm/overview/scoped_overview_animation_settings.h"
 #include "ash/wm/overview/scoped_overview_hide_windows.h"
-#include "ash/wm/raster_scale/raster_scale_controller.h"
 #include "ash/wm/snap_group/snap_group_controller.h"
 #include "ash/wm/splitview/layout_divider_controller.h"
 #include "ash/wm/splitview/split_view_constants.h"
@@ -228,15 +227,11 @@ void OverviewItem::OnFocusedViewClosed() {
 }
 
 void OverviewItem::UpdateRoundedCorners() {
-  // TODO(sammiequon): Clean up this function.
-
-  // Do not show the rounded corners and the shadow if overview is shutting
-  // down or we're currently in entering overview animation. Also don't update
-  // or animate the window's frame header clip under these conditions. If the
-  // feature ContinuousOverviewScrollAnimation is enabled, always show rounded
-  // corners for minimized windows, and show rounded corners for non-minimized
-  // windows after the continuous scroll has ended.
   OverviewController* overview_controller = OverviewController::Get();
+
+  // If the feature ContinuousOverviewScrollAnimation is enabled, always show
+  // rounded corners for minimized windows, and show rounded corners for
+  // non-minimized windows after the continuous scroll has ended.
   bool show_rounded_corners_for_start_animation = false;
   if (features::IsContinuousOverviewScrollAnimationEnabled() &&
       !display::Screen::GetScreen()->InTabletMode()) {
@@ -248,6 +243,9 @@ void OverviewItem::UpdateRoundedCorners() {
         !overview_controller->IsInStartAnimation();
   }
 
+  // Do not show the rounded corners and the shadow if overview is shutting
+  // down or we're currently in entering overview animation. Also don't update
+  // or animate the window's frame header clip under these conditions.
   const bool is_shutting_down =
       !overview_controller || !overview_controller->InOverviewSession();
   const bool should_show_rounded_corners =
@@ -384,12 +382,6 @@ OverviewItem* OverviewItem::GetLeafItemForWindow(aura::Window* window) {
 
 void OverviewItem::SetBounds(const gfx::RectF& target_bounds,
                              OverviewAnimationType animation_type) {
-  // Pause raster scale updates during SetBounds. For example, if we perform an
-  // item spawned animation, we set the initial transform but immediately start
-  // an animation, so we don't want to trigger a raster scale update for the
-  // initial transform.
-  ScopedPauseRasterScaleUpdates scoped_pause;
-
   if (in_bounds_update_ || transform_window_.is_restoring() ||
       !OverviewController::Get()->InOverviewSession()) {
     return;
@@ -941,11 +933,8 @@ const gfx::RoundedCornersF OverviewItem::GetRoundedCorners() const {
   }
 
   const aura::Window* window = transform_window_.window();
-
-  const auto header_rounded_corners = overview_item_view_->header_view()
-                                          ->GetBackground()
-                                          ->GetRoundedCornerRadii()
-                                          .value_or(gfx::RoundedCornersF());
+  const auto header_rounded_corners =
+      overview_item_view_->header_view()->layer()->rounded_corner_radii();
   const auto* layer = window->layer();
   const gfx::RoundedCornersF& transform_window_rounded_corners =
       layer->rounded_corner_radii();
@@ -986,6 +975,10 @@ void OverviewItem::OnWindowParentChanged(aura::Window* window,
         /*restack=*/true, /*use_spawn_animation=*/true);
     window_destruction_delegate_->OnOverviewItemWindowDestroying(
         this, /*reposition=*/true);
+  } else if (parent != item_widget_->GetNativeWindow()->parent()) {
+    // The window may stay on the same root, but changed parent by changing
+    // desks. Move `item_widget_` so it has the same parent as `window`.
+    parent->AddChild(item_widget_->GetNativeWindow());
   }
 }
 
@@ -1130,6 +1123,7 @@ void OverviewItem::CreateItemWidget(
   views::Widget::InitParams params = CreateOverviewItemWidgetParams(
       GetWindow()->parent(), "OverviewItemWidget",
       /*accept_events=*/true);
+
   // The key is not needed for all `OverviewItemBase` objects, such as the drop
   // target.
   params.init_properties_container.SetProperty(kIsOverviewItemKey, true);
@@ -1284,21 +1278,6 @@ void OverviewItem::SetItemBounds(const gfx::RectF& target_bounds,
                                  OverviewAnimationType animation_type,
                                  bool is_first_update) {
   aura::Window* window = GetWindow();
-
-  // TODO(michelefan): Remove the crash keys when http://b/320479135 is fixed.
-  SCOPED_CRASH_KEY_STRING32("b/320479135", "win_title",
-                            base::UTF16ToUTF8(window->GetTitle()));
-
-  SCOPED_CRASH_KEY_NUMBER(
-      "b/320479135", "win_type",
-      static_cast<int>(window->GetProperty(chromeos::kAppTypeKey)));
-
-  SCOPED_CRASH_KEY_STRING32("b/320479135", "rw_bounds",
-                            root_window_->GetBoundsInScreen().ToString());
-
-  SCOPED_CRASH_KEY_STRING32(
-      "b/320479135", "win_get_rw_bounds",
-      window->GetRootWindow()->GetBoundsInScreen().ToString());
 
   CHECK_EQ(root_window_, window->GetRootWindow());
 

@@ -122,7 +122,7 @@ class TtsUtteranceClientImpl : public ax::mojom::TtsUtteranceClient {
 
   TtsUtteranceClientImpl(const TtsUtteranceClientImpl&) = delete;
   TtsUtteranceClientImpl& operator=(const TtsUtteranceClientImpl&) = delete;
-  ~TtsUtteranceClientImpl() override {}
+  ~TtsUtteranceClientImpl() override = default;
 
   void OnEvent(ax::mojom::TtsEventPtr event) override {
     callback_.Run(std::move(event));
@@ -247,10 +247,6 @@ class MockTtsPlatformImpl : public content::TtsPlatform {
   }
 
   void RefreshVoices() override {}
-
-  content::ExternalPlatformDelegate* GetExternalPlatformDelegate() override {
-    return nullptr;
-  }
 
   // Methods for testing.
   void SendEvent(content::TtsEventType event_type,
@@ -380,8 +376,7 @@ class AccessibilityServiceClientTest : public InProcessBrowserTest {
   void TurnOnAccessibilityService(AssistiveTechnologyType type) {
     switch (type) {
       case ax::mojom::AssistiveTechnologyType::kUnknown:
-        NOTREACHED_IN_MIGRATION() << "Unknown AT type";
-        break;
+        NOTREACHED() << "Unknown AT type";
       case ax::mojom::AssistiveTechnologyType::kChromeVox:
         Client()->SetChromeVoxEnabled(true);
         break;

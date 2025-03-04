@@ -29,8 +29,8 @@
 #include "mojo/public/cpp/bindings/remote.h"
 #include "mojo/public/cpp/bindings/tests/union_unittest.test-mojom.h"
 #include "mojo/public/cpp/test_support/test_utils.h"
-#include "mojo/public/interfaces/bindings/tests/test_structs.mojom.h"
-#include "mojo/public/interfaces/bindings/tests/test_unions.mojom.h"
+#include "mojo/public/interfaces/bindings/tests/test_structs.test-mojom.h"
+#include "mojo/public/interfaces/bindings/tests/test_unions.test-mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -288,6 +288,9 @@ TEST(UnionTest, SerializeNotNull) {
 }
 
 TEST(UnionTest, SerializeIsNullInlined) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndDisableFeature(kMojoMessageAlwaysUseLatestVersion);
+
   base::MetricsSubSampler::ScopedNeverSampleForTesting no_subsampling_;
   PodUnionPtr pod;
 
@@ -1176,6 +1179,19 @@ TEST(UnionTest, InlineUnionAllocationWithNonPODFirstField) {
   // Regression test for https://crbug.com/1114366. Should not crash.
   UnionWithStringForFirstFieldPtr u;
   u = UnionWithStringForFirstField::NewS("hey");
+}
+
+TEST(UnionTest, UnionObjectHash) {
+  constexpr size_t kTestSeed = 31;
+  UnionWithStringForFirstFieldPtr union1(
+      UnionWithStringForFirstField::NewS("hello world"));
+  UnionWithStringForFirstFieldPtr union2(
+      UnionWithStringForFirstField::NewS("hello world"));
+
+  EXPECT_EQ(union1->Hash(kTestSeed), union2->Hash(kTestSeed));
+
+  union2->set_s("hello universe");
+  EXPECT_NE(union1->Hash(kTestSeed), union2->Hash(kTestSeed));
 }
 
 class ExtensibleTestUnionExchange

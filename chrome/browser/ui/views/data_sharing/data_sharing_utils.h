@@ -9,6 +9,8 @@
 
 #include "base/uuid.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/ui/webui/data_sharing/data_sharing.mojom.h"
+#include "components/data_sharing/public/data_sharing_service.h"
 #include "components/data_sharing/public/group_data.h"
 #include "components/saved_tab_groups/public/types.h"
 
@@ -19,6 +21,7 @@ inline std::string_view kQueryParamFlow = "flow";
 inline std::string_view kQueryParamGroupId = "group_id";
 inline std::string_view kQueryParamTokenSecret = "token_secret";
 inline std::string_view kQueryParamTabGroupId = "tab_group_id";
+inline std::string_view kQueryParamTabGroupTitle = "tab_group_title";
 
 // Possible values of kQueryParamFlow in url.
 inline std::string_view kFlowShare = "share";
@@ -42,6 +45,16 @@ GURL GetShareLink(const std::string& group_id,
                   const std::string& access_token,
                   Profile* profile);
 
+void ProcessPreviewOutcome(
+    data_sharing::mojom::PageHandler::GetTabGroupPreviewCallback callback,
+    const data_sharing::DataSharingService::SharedDataPreviewOrFailureOutcome&
+        outcome);
+
+void GetTabGroupPreview(
+    const std::string& group_id,
+    const std::string& access_token,
+    Profile* profile,
+    data_sharing::mojom::PageHandler::GetTabGroupPreviewCallback callback);
 }  // namespace data_sharing
 
 #endif  // CHROME_BROWSER_UI_VIEWS_DATA_SHARING_DATA_SHARING_UTILS_H_

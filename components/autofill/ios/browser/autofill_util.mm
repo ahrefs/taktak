@@ -33,11 +33,14 @@
 #import "url/gurl.h"
 #import "url/origin.h"
 
+namespace autofill {
+
+namespace {
+
 using autofill::FormControlType;
 using base::NumberToString;
 using base::StringToUint;
 
-namespace {
 // The timeout for any JavaScript call in this file.
 const int64_t kJavaScriptExecutionTimeoutInSeconds = 5;
 
@@ -67,8 +70,6 @@ void ConvertValueToBool(base::OnceCallback<void(BOOL)> callback,
 }
 
 }  // namespace
-
-namespace autofill {
 
 bool IsContextSecureForWebState(web::WebState* web_state) {
   // This implementation differs slightly from other platforms. Other platforms'
@@ -120,7 +121,7 @@ std::optional<std::vector<FormData>> ExtractFormsData(
     bool filtered,
     const std::u16string& form_name,
     const GURL& main_frame_url,
-    const GURL& frame_origin,
+    const url::Origin& frame_origin,
     const FieldDataManager& field_data_manager,
     const std::string& frame_id,
     LocalFrameToken host_frame) {
@@ -159,7 +160,7 @@ std::optional<FormData> ExtractFormData(
     bool filtered,
     const std::u16string& form_name,
     const GURL& main_frame_url,
-    const GURL& form_frame_origin,
+    const url::Origin& form_frame_origin,
     const FieldDataManager& field_data_manager,
     const std::string& frame_id,
     LocalFrameToken host_frame) {
@@ -183,16 +184,15 @@ std::optional<FormData> ExtractFormData(
 
   // Use GURL object to verify origin of host frame URL.
   form_data.set_url(GURL(origin));
-  if (form_data.url().DeprecatedGetOriginAsURL() != form_frame_origin) {
+  if (!form_frame_origin.IsSameOriginWith(form_data.url())) {
     return std::nullopt;
   }
 
-  bool include_frame_metadata = base::FeatureList::IsEnabled(
-      autofill::features::kAutofillAcrossIframesIos);
+  bool include_frame_metadata =
+      base::FeatureList::IsEnabled(features::kAutofillAcrossIframesIos);
 
   const url::Origin frame_origin_object =
-      include_frame_metadata ? url::Origin::Create(form_frame_origin)
-                             : url::Origin();
+      include_frame_metadata ? form_frame_origin : url::Origin();
 
   // Frame ID of the frame containing this form is mandatory.
   const std::string* host_frame_param = form.FindString("host_frame");
@@ -212,8 +212,7 @@ std::optional<FormData> ExtractFormData(
     return std::nullopt;
   }
 
-  if (base::FeatureList::IsEnabled(
-          autofill::features::kAutofillAcrossIframesIos) &&
+  if (base::FeatureList::IsEnabled(features::kAutofillAcrossIframesIos) &&
       *host_frame_param != frame_id) {
     // Invalidate parsing when the the frame for which extraction was done
     // doesn't correspond to the frame where extraction actually happened.
@@ -252,9 +251,9 @@ std::optional<FormData> ExtractFormData(
     // Child frame tokens, optional.
     if (const base::Value::List* child_frames_list =
             form.FindList("child_frames")) {
-      std::vector<autofill::FrameTokenWithPredecessor> child_frames;
+      std::vector<FrameTokenWithPredecessor> child_frames;
       for (const auto& frame_dict : *child_frames_list) {
-        autofill::FrameTokenWithPredecessor token;
+        FrameTokenWithPredecessor token;
         if (frame_dict.is_dict() &&
             ExtractRemoteFrameToken(frame_dict.GetDict(), &token)) {
           child_frames.push_back(std::move(token));
@@ -272,7 +271,7 @@ std::optional<FormData> ExtractFormData(
   std::vector<FormFieldData> fields;
   fields.reserve(fields_list->size());
   for (const auto& field_dict : *fields_list) {
-    autofill::FormFieldData field_data;
+    FormFieldData field_data;
     if (field_dict.is_dict() &&
         ExtractFormFieldData(field_dict.GetDict(), field_data_manager,
                              &field_data)) {
@@ -304,18 +303,22 @@ std::optional<FormData> ExtractFormData(
 
 bool ExtractFormFieldData(const base::Value::Dict& field,
                           const FieldDataManager& field_data_manager,
-                          autofill::FormFieldData* field_data) {
+                          FormFieldData* field_data) {
   const std::string* name;
-  const std::string* form_control_type;
+  const std::string* form_control_type_string;
   if (!(name = field.FindString("name")) ||
-      !(form_control_type = field.FindString("form_control_type"))) {
+      !(form_control_type_string = field.FindString("form_control_type"))) {
+    return false;
+  }
+
+  std::optional<FormControlType> form_control_type =
+      StringToFormControlTypeDiscouraged(*form_control_type_string);
+  if (!form_control_type) {
     return false;
   }
 
   field_data->set_name(base::UTF8ToUTF16(*name));
-  field_data->set_form_control_type(
-      autofill::StringToFormControlTypeDiscouraged(*form_control_type,
-                                                   /*fallback=*/std::nullopt));
+  field_data->set_form_control_type(*form_control_type);
 
   const std::string* renderer_id = field.FindString("renderer_id");
   if (renderer_id && !renderer_id->empty()) {
@@ -348,21 +351,26 @@ bool ExtractFormFieldData(const base::Value::Dict& field,
           field.FindString("autocomplete_attribute")) {
     field_data->set_autocomplete_attribute(*autocomplete_attribute);
   }
-  if (std::optional<int> max_length = field.FindInt("max_length")) {
-    field_data->set_max_length(*max_length);
+  if (std::optional<double> max_length = field.FindDouble("max_length")) {
+    field_data->set_max_length(((int)*max_length));
   }
   field_data->set_parsed_autocomplete(
       ParseAutocompleteAttribute(field_data->autocomplete_attribute()));
 
   // TODO(crbug.com/40391162): Extract |is_checked|.
   bool is_checkable = field.FindBool("is_checkable").value_or(false);
-  autofill::SetCheckStatus(field_data, is_checkable, false);
+  SetCheckStatus(field_data, is_checkable, false);
 
   field_data->set_is_focusable(
       field.FindBool("is_focusable").value_or(field_data->is_focusable()));
   field_data->set_should_autocomplete(
       field.FindBool("should_autocomplete")
           .value_or(field_data->should_autocomplete()));
+
+  if (const std::string* pattern_attribute =
+          field.FindString("pattern_attribute")) {
+    field_data->set_pattern(base::UTF8ToUTF16(*pattern_attribute));
+  }
 
   if (const std::string* placeholder_attribute =
           field.FindString("placeholder_attribute")) {

@@ -3,10 +3,11 @@
 // found in the LICENSE file.
 
 #ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
 #endif
 
+#include <array>
 #include <memory>
 #include <string_view>
 #include <utility>
@@ -45,7 +46,6 @@
 #include "base/time/default_tick_clock.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/chrome_content_browser_client.h"
@@ -120,9 +120,6 @@
 #include "components/security_state/content/security_state_tab_helper.h"
 #include "components/security_state/core/security_state.h"
 #include "components/strings/grit/components_strings.h"
-#include "components/variations/variations_associated_data.h"
-#include "components/variations/variations_params_manager.h"
-#include "components/variations/variations_switches.h"
 #include "components/web_modal/web_contents_modal_dialog_manager.h"
 #include "content/public/browser/back_forward_cache.h"
 #include "content/public/browser/browser_context.h"
@@ -159,6 +156,7 @@
 #include "content/public/test/url_loader_interceptor.h"
 #include "crypto/sha2.h"
 #include "extensions/browser/event_router.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "mojo/public/cpp/bindings/associated_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
@@ -221,7 +219,7 @@
 #include "net/cert/x509_util_nss.h"
 #endif  // BUILDFLAG(USE_NSS_CERTS)
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "ash/constants/ash_switches.h"
 #include "base/path_service.h"
 #include "chrome/browser/ash/profiles/profile_helper.h"
@@ -230,7 +228,8 @@
 #include "components/policy/core/common/policy_namespace.h"
 #include "components/policy/core/common/policy_service.h"
 #include "components/session_manager/core/session_manager.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#include "components/user_manager/test_helper.h"
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 using content::WebContents;
 namespace AuthState = ssl_test_util::AuthState;
@@ -325,15 +324,16 @@ class SSLInterstitialTimerObserver {
 class ChromeContentBrowserClientForMixedContentTest
     : public ChromeContentBrowserClient {
  public:
-  ChromeContentBrowserClientForMixedContentTest() {}
+  ChromeContentBrowserClientForMixedContentTest() = default;
 
   ChromeContentBrowserClientForMixedContentTest(
       const ChromeContentBrowserClientForMixedContentTest&) = delete;
   ChromeContentBrowserClientForMixedContentTest& operator=(
       const ChromeContentBrowserClientForMixedContentTest&) = delete;
 
-  void OverrideWebkitPrefs(
+  void OverrideWebPreferences(
       content::WebContents* web_contents,
+      content::SiteInstance& main_frame_site,
       blink::web_pref::WebPreferences* web_prefs) override {
     web_prefs->allow_running_insecure_content = allow_running_insecure_content_;
     web_prefs->strict_mixed_content_checking = strict_mixed_content_checking_;
@@ -556,7 +556,7 @@ class SSLUITestBase : public InProcessBrowserTest,
       default: {
         // Other values in the enum are not used by these tests, and don't
         // have a Javascript equivalent that can be called here.
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
       }
     }
     ASSERT_TRUE(content::ExecJs(tab, javascript));
@@ -844,21 +844,6 @@ class SSLUITestIgnoreLocalhostCertErrors : public SSLUITest {
   }
 };
 
-class SSLUITestWithExtendedReporting : public SSLUITest {
- public:
-  SSLUITestWithExtendedReporting() : SSLUITest() {
-    // CertReportHelper::ShouldReportCertificateError checks the value of this
-    // variation. Ensure reporting is enabled.
-    variations::testing::VariationParamsManager::SetVariationParams(
-        "ReportCertificateErrors", "ShowAndPossiblySend",
-        {{"sendingThreshold", "1.0"}});
-  }
-
-  void SetUpCommandLine(base::CommandLine* command_line) override {
-    SSLUITest::SetUpCommandLine(command_line);
-  }
-};
-
 class SSLUITestHSTS : public SSLUITest {
  public:
   void SetUpOnMainThread() override {
@@ -1049,7 +1034,7 @@ class SameDocumentNavigationObserver : public content::WebContentsObserver {
  public:
   explicit SameDocumentNavigationObserver(WebContents* web_contents)
       : WebContentsObserver(web_contents) {}
-  ~SameDocumentNavigationObserver() override {}
+  ~SameDocumentNavigationObserver() override = default;
 
   void WaitForSameDocumentNavigation() { run_loop_.Run(); }
 
@@ -1607,7 +1592,7 @@ IN_PROC_BROWSER_TEST_F(SSLUITest, TestWSSInvalidCertAndClose) {
   GURL wss_loop_url(wss_loop_url_path);
 
   // Create tabs and visit pages which keep on creating wss connections.
-  WebContents* tabs[16];
+  std::array<WebContents*, 16> tabs;
   for (int i = 0; i < 16; ++i) {
     tabs[i] = chrome::AddSelectedTabWithURL(browser(), wss_loop_url,
                                             ui::PAGE_TRANSITION_LINK);
@@ -1671,11 +1656,6 @@ IN_PROC_BROWSER_TEST_F(SSLUITest, MarkDataAsNonSecure) {
   EXPECT_EQ(security_state::WARNING, helper->GetSecurityLevel());
 }
 
-// TODO(crbug.com/40156980): This class directly calls
-// `UnsafelyGetNSSCertDatabaseForTesting()` that causes crash at the moment
-// and is never called from Lacros-Chrome. This should be revisited when there
-// is a solution for the client certificates settings page on Lacros-Chrome.
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
 #if BUILDFLAG(USE_NSS_CERTS)
 class SSLUITestWithClientCert : public SSLUITestBase {
  public:
@@ -1769,7 +1749,6 @@ IN_PROC_BROWSER_TEST_F(SSLUITestWithClientCert, DISABLED_TestWSSClientCert) {
   EXPECT_TRUE(base::EqualsCaseInsensitiveASCII(result, "pass"));
 }
 #endif  // BUILDFLAG(USE_NSS_CERTS)
-#endif  // !BUILDFLAG(IS_CHROMEOS_LACROS)
 
 // A stub ClientCertStore that returns a FakeClientCertIdentity.
 class ClientCertStoreStub : public net::ClientCertStore {
@@ -1777,7 +1756,7 @@ class ClientCertStoreStub : public net::ClientCertStore {
   explicit ClientCertStoreStub(net::ClientCertIdentityList list)
       : list_(std::move(list)) {}
 
-  ~ClientCertStoreStub() override {}
+  ~ClientCertStoreStub() override = default;
 
   // net::ClientCertStore:
   void GetClientCerts(
@@ -2609,8 +2588,7 @@ IN_PROC_BROWSER_TEST_F(SSLUITest, TestRefNavigation) {
 // crash the browser (crbug.com/1966).
 // TODO(crbug.com/1119359, crbug.com/1338068): Test is flaky on Linux and Chrome
 // OS.
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || \
-    BUILDFLAG(IS_CHROMEOS_LACROS)
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
 #define MAYBE_TestCloseTabWithUnsafePopup DISABLED_TestCloseTabWithUnsafePopup
 #else
 #define MAYBE_TestCloseTabWithUnsafePopup TestCloseTabWithUnsafePopup
@@ -3067,7 +3045,7 @@ class SSLUIWorkerFetchTest
   SSLUIWorkerFetchTest(const SSLUIWorkerFetchTest&) = delete;
   SSLUIWorkerFetchTest& operator=(const SSLUIWorkerFetchTest&) = delete;
 
-  ~SSLUIWorkerFetchTest() override {}
+  ~SSLUIWorkerFetchTest() override = default;
 
   void SetUpOnMainThread() override { SSLUITestBase::SetUpOnMainThread(); }
 
@@ -3715,7 +3693,7 @@ IN_PROC_BROWSER_TEST_F(SSLUITestIgnoreCertErrors, TestWSS) {
 // Visit a page and establish a WebSocket connection over bad https with
 // --ignore-certificate-errors-spki-list. The connection should be established
 // without interstitial page showing.
-#if !BUILDFLAG(IS_CHROMEOS_ASH)  // Chrome OS does not support the flag.
+#if !BUILDFLAG(IS_CHROMEOS)  // Chrome OS does not support the flag.
 IN_PROC_BROWSER_TEST_F(SSLUITestIgnoreCertErrorsBySPKIWSS, TestWSSExpired) {
   ASSERT_TRUE(wss_server_expired_.Start());
 
@@ -3738,11 +3716,11 @@ IN_PROC_BROWSER_TEST_F(SSLUITestIgnoreCertErrorsBySPKIWSS, TestWSSExpired) {
   const std::u16string result = watcher.WaitAndGetTitle();
   EXPECT_TRUE(base::EqualsCaseInsensitiveASCII(result, "pass"));
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // !BUILDFLAG(IS_CHROMEOS)
 
 // Test that HTTPS pages with a bad certificate don't show an interstitial if
 // the public key matches a value from --ignore-certificate-errors-spki-list.
-#if !BUILDFLAG(IS_CHROMEOS_ASH)  // Chrome OS does not support the flag.
+#if !BUILDFLAG(IS_CHROMEOS)  // Chrome OS does not support the flag.
 IN_PROC_BROWSER_TEST_F(SSLUITestIgnoreCertErrorsBySPKIHTTPS, TestHTTPS) {
   ASSERT_TRUE(https_server_mismatched_.Start());
 
@@ -3759,11 +3737,11 @@ IN_PROC_BROWSER_TEST_F(SSLUITestIgnoreCertErrorsBySPKIHTTPS, TestHTTPS) {
   ui_test_utils::GetCurrentTabTitle(browser(), &title);
   EXPECT_EQ(title, u"This script has loaded");
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // !BUILDFLAG(IS_CHROMEOS)
 
 // Test subresources from an origin with a bad certificate are loaded if the
 // public key matches a value from --ignore-certificate-errors-spki-list.
-#if !BUILDFLAG(IS_CHROMEOS_ASH)  // Chrome OS does not support the flag.
+#if !BUILDFLAG(IS_CHROMEOS)  // Chrome OS does not support the flag.
 IN_PROC_BROWSER_TEST_F(SSLUITestIgnoreCertErrorsBySPKIHTTPS,
                        TestInsecureSubresource) {
   ASSERT_TRUE(https_server_.Start());
@@ -3783,7 +3761,7 @@ IN_PROC_BROWSER_TEST_F(SSLUITestIgnoreCertErrorsBySPKIHTTPS,
   // The actual image (Google logo) is 276 pixels wide.
   EXPECT_GT(content::EvalJs(tab, "ImageWidth();"), 200);
 }
-#endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // !BUILDFLAG(IS_CHROMEOS)
 
 // Verifies that the interstitial can proceed, even if JavaScript is disabled.
 IN_PROC_BROWSER_TEST_F(SSLUITest, TestInterstitialJavaScriptProceeds) {
@@ -4734,10 +4712,6 @@ class CommonNameMismatchBrowserTest : public CertVerifierBrowserTest {
                                            "Enabled");
   }
 
-  void SetUpCommandLine(base::CommandLine* command_line) override {
-    CertVerifierBrowserTest::SetUpCommandLine(command_line);
-  }
-
   void SetUpOnMainThread() override {
     CertVerifierBrowserTest::SetUpOnMainThread();
     host_resolver()->AddRule("*", "127.0.0.1");
@@ -5590,12 +5564,24 @@ IN_PROC_BROWSER_TEST_F(SSLUITest, DISABLED_PushStateSSLState) {
   ssl_test_util::CheckAuthenticatedState(tab, AuthState::NONE);
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 
 class SSLUITestNoCert : public SSLUITest,
                         public CertificateManagerModel::Observer {
  public:
-  SSLUITestNoCert() = default;
+  SSLUITestNoCert() {
+    // These tests are specifically for the ChromeOS NSS database integration.
+    // On ChromeOS, once the kEnableCertManagementUIV2Write feature is launched
+    // NSS is no longer used and the equivalent functionality is provided by
+    // ServerCertificateDatabaseService and is tested by
+    // cert_verifier_service_browsertest.cc.
+    feature_list_.InitWithFeatures(
+        /*enabled_features=*/{},
+        /*disabled_features=*/
+        {features::kEnableCertManagementUIV2,
+         features::kEnableCertManagementUIV2Write,
+         features::kEnableCertManagementUIV2EditCerts});
+  }
   ~SSLUITestNoCert() override = default;
 
   void SetUp() override {
@@ -5605,6 +5591,9 @@ class SSLUITestNoCert : public SSLUITest,
 
   // CertificateManagerModel::Observer implementation:
   void CertificatesRefreshed() override {}
+
+ private:
+  base::test::ScopedFeatureList feature_list_;
 };
 
 class TestCertDatabaseObserver : public net::CertDatabase::Observer {
@@ -5675,6 +5664,13 @@ IN_PROC_BROWSER_TEST_F(SSLUITestNoCert, NewCertificateAuthority) {
 // into their NSS databases.
 class SSLUITestCustomCACerts : public SSLUITestNoCert {
  public:
+  static inline constexpr char kPrimaryUserAccount[] = "test1@test.com";
+  static inline constexpr GaiaId::Literal kPrimaryUserGaiaId{"1234567890"};
+  static inline constexpr char kPrimaryUserHash[] = "test1-hash";
+  static inline constexpr char kSecondaryUserAccount[] = "test2@test.com";
+  static inline constexpr GaiaId::Literal kSecondaryUserGaiaId{"9876543210"};
+  static inline constexpr char kSecondaryUserHash[] = "test2-hash";
+
   SSLUITestCustomCACerts() = default;
 
   SSLUITestCustomCACerts(const SSLUITestCustomCACerts&) = delete;
@@ -5688,6 +5684,23 @@ class SSLUITestCustomCACerts : public SSLUITestNoCert {
     // code knows not to expect cached policy for the secondary profile.
     command_line->AppendSwitchASCII(ash::switches::kProfileRequiresPolicy,
                                     "false");
+
+    command_line->AppendSwitchASCII(ash::switches::kLoginUser,
+                                    kPrimaryUserAccount);
+    command_line->AppendSwitchASCII(ash::switches::kLoginProfile,
+                                    kPrimaryUserHash);
+  }
+
+  void SetUpLocalStatePrefService(PrefService* local_state) override {
+    SSLUITestNoCert::SetUpLocalStatePrefService(local_state);
+
+    // Register a persisted user.
+    user_manager::TestHelper::RegisterPersistedUser(
+        *local_state, AccountId::FromUserEmailGaiaId(kPrimaryUserAccount,
+                                                     kPrimaryUserGaiaId));
+    user_manager::TestHelper::RegisterPersistedUser(
+        *local_state, AccountId::FromUserEmailGaiaId(kSecondaryUserAccount,
+                                                     kSecondaryUserGaiaId));
   }
 
   void SetUpOnMainThread() override {
@@ -5697,10 +5710,6 @@ class SSLUITestCustomCACerts : public SSLUITestNoCert {
 
     // Create a second profile.
     {
-      static const char kSecondProfileAccount[] = "profile2@test.com";
-      static const char kSecondProfileGaiaId[] = "9876543210";
-      static const char kSecondProfileHash[] = "testProfile2";
-
       ON_CALL(policy_for_profile_2_, IsInitializationComplete(testing::_))
           .WillByDefault(testing::Return(true));
       ON_CALL(policy_for_profile_2_, IsFirstPolicyLoadComplete(testing::_))
@@ -5711,12 +5720,13 @@ class SSLUITestCustomCACerts : public SSLUITestNoCert {
       base::FilePath user_data_directory;
       base::PathService::Get(chrome::DIR_USER_DATA, &user_data_directory);
       session_manager::SessionManager::Get()->CreateSession(
-          AccountId::FromUserEmailGaiaId(kSecondProfileAccount,
-                                         kSecondProfileGaiaId),
-          kSecondProfileHash, false);
+          AccountId::FromUserEmailGaiaId(kSecondaryUserAccount,
+                                         kSecondaryUserGaiaId),
+          kSecondaryUserHash, /*new_user=*/false,
+          /*has_active_session=*/false);
       // Set up the secondary profile.
       base::FilePath profile_dir = user_data_directory.Append(
-          ash::ProfileHelper::GetUserProfileDir(kSecondProfileHash).BaseName());
+          ash::ProfileHelper::GetUserProfileDir(kSecondaryUserHash).BaseName());
       profile_2_ =
           g_browser_process->profile_manager()->GetProfile(profile_dir);
     }
@@ -5833,7 +5843,7 @@ IN_PROC_BROWSER_TEST_F(SSLUITestCustomCACerts,
   ssl_test_util::CheckAuthenticatedState(tab_for_profile_2, AuthState::NONE);
 }
 
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 // Regression test for http://crbug.com/635833 (crash when a window with no
 // NavigationEntry commits).
@@ -5899,50 +5909,6 @@ IN_PROC_BROWSER_TEST_F(SSLUITest, OSReportsCaptivePortal) {
       browser(), https_server_mismatched_.GetURL("/ssl/blank_page.html")));
   ASSERT_TRUE(chrome_browser_interstitials::IsShowingSSLInterstitial(tab));
   EXPECT_TRUE(netwok_connectivity_reported);
-}
-
-class SSLUITestWithCaptivePortalInterstitialDisabled : public SSLUITest {
- public:
-  SSLUITestWithCaptivePortalInterstitialDisabled() {
-    feature_list_.InitWithFeatures({} /* enabled */,
-                                   {kCaptivePortalInterstitial} /* disabled */);
-  }
-
- private:
-  base::test::ScopedFeatureList feature_list_;
-};
-
-// Tests the scenario where the OS reports a captive portal but captive portal
-// interstitial feature is disabled. A captive portal interstitial should not be
-// displayed.
-IN_PROC_BROWSER_TEST_F(SSLUITestWithCaptivePortalInterstitialDisabled,
-                       OSReportsCaptivePortal_FeatureDisabled) {
-  ASSERT_TRUE(https_server_mismatched_.Start());
-  base::HistogramTester histograms;
-
-  SSLErrorHandler::SetOSReportsCaptivePortalForTesting(true);
-
-  // Navigate to an unsafe page on the server.
-  WebContents* tab = browser()->tab_strip_model()->GetActiveWebContents();
-  SSLInterstitialTimerObserver interstitial_timer_observer(tab);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(
-      browser(), https_server_mismatched_.GetURL("/ssl/blank_page.html")));
-
-  ASSERT_TRUE(chrome_browser_interstitials::IsShowingSSLInterstitial(tab));
-  EXPECT_FALSE(interstitial_timer_observer.timer_started());
-
-  // Check that the histogram for the SSL interstitial was recorded.
-  histograms.ExpectTotalCount(SSLErrorHandler::GetHistogramNameForTesting(), 2);
-  histograms.ExpectBucketCount(SSLErrorHandler::GetHistogramNameForTesting(),
-                               SSLErrorHandler::HANDLE_ALL, 1);
-  histograms.ExpectBucketCount(
-      SSLErrorHandler::GetHistogramNameForTesting(),
-      SSLErrorHandler::SHOW_SSL_INTERSTITIAL_OVERRIDABLE, 1);
-  histograms.ExpectBucketCount(
-      SSLErrorHandler::GetHistogramNameForTesting(),
-      SSLErrorHandler::SHOW_CAPTIVE_PORTAL_INTERSTITIAL_OVERRIDABLE, 0);
-  histograms.ExpectBucketCount(SSLErrorHandler::GetHistogramNameForTesting(),
-                               SSLErrorHandler::OS_REPORTS_CAPTIVE_PORTAL, 0);
 }
 
 // Tests that the committed interstitial flag triggers the code path to show an
@@ -6548,7 +6514,7 @@ class SSLUIMITMSoftwareTest : public CertVerifierBrowserTest {
   SSLUIMITMSoftwareTest(const SSLUIMITMSoftwareTest&) = delete;
   SSLUIMITMSoftwareTest& operator=(const SSLUIMITMSoftwareTest&) = delete;
 
-  ~SSLUIMITMSoftwareTest() override {}
+  ~SSLUIMITMSoftwareTest() override = default;
 
   void SetUpOnMainThread() override {
     CertVerifierBrowserTest::SetUpOnMainThread();
@@ -6683,7 +6649,7 @@ class SSLUIMITMSoftwareEnabledTest : public SSLUIMITMSoftwareTest {
   SSLUIMITMSoftwareEnabledTest& operator=(const SSLUIMITMSoftwareEnabledTest&) =
       delete;
 
-  ~SSLUIMITMSoftwareEnabledTest() override {}
+  ~SSLUIMITMSoftwareEnabledTest() override = default;
 
   void SetUpOnMainThread() override {
     SSLUIMITMSoftwareTest::SetUpOnMainThread();
@@ -6704,7 +6670,7 @@ class SSLUIMITMSoftwareDisabledTest : public SSLUIMITMSoftwareTest {
   SSLUIMITMSoftwareDisabledTest& operator=(
       const SSLUIMITMSoftwareDisabledTest&) = delete;
 
-  ~SSLUIMITMSoftwareDisabledTest() override {}
+  ~SSLUIMITMSoftwareDisabledTest() override = default;
 
   void SetUpOnMainThread() override {
     SSLUIMITMSoftwareTest::SetUpOnMainThread();
@@ -7065,7 +7031,7 @@ class SSLUIDynamicInterstitialTest : public CertVerifierBrowserTest {
   SSLUIDynamicInterstitialTest& operator=(const SSLUIDynamicInterstitialTest&) =
       delete;
 
-  ~SSLUIDynamicInterstitialTest() override {}
+  ~SSLUIDynamicInterstitialTest() override = default;
 
   void SetUpCertVerifier() {
     scoped_refptr<net::X509Certificate> cert(https_server_.GetCertificate());

@@ -11,7 +11,6 @@
 #include "ash/constants/ash_switches.h"
 #include "base/command_line.h"
 #include "base/logging.h"
-#include "base/metrics/histogram_functions.h"
 #include "base/notreached.h"
 #include "base/values.h"
 #include "chrome/browser/ash/login/configuration_keys.h"
@@ -32,16 +31,6 @@
 namespace policy {
 namespace {
 
-const char kRecoveryHistogram[] = "EnterpriseCheck.EnrollementRecoveryOnBoot";
-
-// Do not reorder or delete entries because it is used in UMA.
-enum class EnrollmentRecoveryOnBootUma {
-  kForced = 0,
-  kFalseFlag = 1,
-  kNoSerialNumber = 2,
-  kMaxValue = kNoSerialNumber,
-};
-
 std::string GetString(const base::Value::Dict& dict, std::string_view key) {
   const std::string* value = dict.FindString(key);
   return value ? *value : std::string();
@@ -58,22 +47,22 @@ bool IsEnrollingAfterRollback() {
 
 // Returns the license type to use based on the license type, assigned
 // upgrade type and the license packaged from device state.
-LicenseType GetLicenseTypeToUse(const std::string license_type,
-                                const bool is_license_packaged_with_device,
-                                const std::string assigned_upgrade_type) {
+LicenseType GetLicenseTypeToUse(const std::string& license_type,
+                                bool is_license_packaged_with_device,
+                                const std::string& assigned_upgrade_type) {
   if (license_type == kDeviceStateLicenseTypeEnterprise) {
     return LicenseType::kEnterprise;
-  } else if (license_type == kDeviceStateLicenseTypeEducation) {
+  }
+  if (license_type == kDeviceStateLicenseTypeEducation) {
     return LicenseType::kEducation;
-  } else if (license_type == kDeviceStateLicenseTypeTerminal) {
+  }
+  if (license_type == kDeviceStateLicenseTypeTerminal) {
     return LicenseType::kTerminal;
   }
-
   if (!is_license_packaged_with_device &&
       assigned_upgrade_type == kDeviceStateAssignedUpgradeTypeKiosk) {
     return LicenseType::kTerminal;
   }
-
   return LicenseType::kNone;
 }
 
@@ -102,6 +91,8 @@ std::string_view ToStringView(EnrollmentConfig::Mode mode) {
     CASE(MODE_ATTESTATION_ROLLBACK_MANUAL_FALLBACK);
     CASE(MODE_ENROLLMENT_TOKEN_INITIAL_SERVER_FORCED);
     CASE(MODE_ENROLLMENT_TOKEN_INITIAL_MANUAL_FALLBACK);
+    CASE(MODE_REMOTE_DEPLOYMENT_SERVER_FORCED);
+    CASE(MODE_REMOTE_DEPLOYMENT_MANUAL_FALLBACK);
   }
 
   NOTREACHED();
@@ -125,9 +116,6 @@ EnrollmentConfig GetPrescribedRecoveryConfig(
       ash::DeviceSettingsService::Get()->HasDmToken()) {
     LOG(WARNING) << "False recovery flag.";
     local_state->ClearPref(::prefs::kEnrollmentRecoveryRequired);
-    base::UmaHistogramEnumeration(kRecoveryHistogram,
-                                  EnrollmentRecoveryOnBootUma::kFalseFlag);
-
     return recovery_config;
   }
 
@@ -135,14 +123,10 @@ EnrollmentConfig GetPrescribedRecoveryConfig(
   const auto serial_number = statistics_provider->GetMachineID();
   if (!serial_number || serial_number->empty()) {
     LOG(WARNING) << "Postponing recovery because machine id is missing.";
-    base::UmaHistogramEnumeration(kRecoveryHistogram,
-                                  EnrollmentRecoveryOnBootUma::kNoSerialNumber);
     return recovery_config;
   }
 
   recovery_config.mode = EnrollmentConfig::MODE_RECOVERY;
-  base::UmaHistogramEnumeration(kRecoveryHistogram,
-                                EnrollmentRecoveryOnBootUma::kForced);
 
   return recovery_config;
 }
@@ -172,6 +156,8 @@ EnrollmentConfig::Mode GetManualFallbackMode(
       return EnrollmentConfig::MODE_ATTESTATION_ROLLBACK_MANUAL_FALLBACK;
     case EnrollmentConfig::MODE_ENROLLMENT_TOKEN_INITIAL_SERVER_FORCED:
       return EnrollmentConfig::MODE_ENROLLMENT_TOKEN_INITIAL_MANUAL_FALLBACK;
+    case EnrollmentConfig::MODE_REMOTE_DEPLOYMENT_SERVER_FORCED:
+      return EnrollmentConfig::MODE_REMOTE_DEPLOYMENT_MANUAL_FALLBACK;
     case EnrollmentConfig::MODE_NONE:
     case EnrollmentConfig::MODE_MANUAL:
     case EnrollmentConfig::MODE_MANUAL_REENROLLMENT:
@@ -187,8 +173,9 @@ EnrollmentConfig::Mode GetManualFallbackMode(
     case EnrollmentConfig::MODE_ATTESTATION_INITIAL_MANUAL_FALLBACK:
     case EnrollmentConfig::MODE_ATTESTATION_ROLLBACK_MANUAL_FALLBACK:
     case EnrollmentConfig::MODE_ENROLLMENT_TOKEN_INITIAL_MANUAL_FALLBACK:
-      NOTREACHED_NORETURN()
-          << "Mode does not have manual fallback: " << attestation_mode;
+    case EnrollmentConfig::MODE_REMOTE_DEPLOYMENT_MANUAL_FALLBACK:
+      NOTREACHED() << "Mode does not have manual fallback: "
+                   << attestation_mode;
   }
 }
 
@@ -250,13 +237,23 @@ EnrollmentConfig::PrescribedConfig::GetPrescribedConfig(
     // TODO(b/329271128): CHECK to ensure enrollment_token always has value
     // after this bug is fixed.
     if (enrollment_token.has_value()) {
-      const std::string* oobe_config_source =
+      OOBEConfigSource oobe_config_source = ConvertToOOBEConfigSource(
           oobe_configuration->configuration().FindString(
-              ash::configuration::kSource);
-      return {
-          .mode = EnrollmentConfig::MODE_ENROLLMENT_TOKEN_INITIAL_SERVER_FORCED,
-          .enrollment_token = std::move(enrollment_token.value()),
-          .oobe_config_source = ConvertToOOBEConfigSource(oobe_config_source)};
+              ash::configuration::kSource));
+      EnrollmentConfig::Mode mode;
+      switch (oobe_config_source) {
+        case policy::OOBEConfigSource::kRemoteDeployment:
+          mode = MODE_REMOTE_DEPLOYMENT_SERVER_FORCED;
+          break;
+        case policy::OOBEConfigSource::kPackagingTool:
+        case policy::OOBEConfigSource::kUnknown:
+        case policy::OOBEConfigSource::kNone:
+          mode = MODE_ENROLLMENT_TOKEN_INITIAL_SERVER_FORCED;
+          break;
+      }
+      return {.mode = mode,
+              .enrollment_token = std::move(enrollment_token.value()),
+              .oobe_config_source = oobe_config_source};
     } else {
       return {.mode = EnrollmentConfig::MODE_NONE};
     }

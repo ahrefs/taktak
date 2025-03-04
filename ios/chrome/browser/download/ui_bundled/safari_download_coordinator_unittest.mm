@@ -13,11 +13,11 @@
 #import "base/test/scoped_feature_list.h"
 #import "base/test/task_environment.h"
 #import "ios/chrome/browser/download/model/download_test_util.h"
-#import "ios/chrome/browser/download/model/mime_type_util.h"
 #import "ios/chrome/browser/download/model/safari_download_tab_helper.h"
 #import "ios/chrome/browser/download/model/safari_download_tab_helper_delegate.h"
 #import "ios/chrome/browser/shared/model/browser/test/test_browser.h"
 #import "ios/chrome/browser/shared/model/profile/test/test_profile_ios.h"
+#import "ios/chrome/browser/shared/model/utils/mime_type_util.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_opener.h"
 #import "ios/chrome/test/scoped_key_window.h"
@@ -28,8 +28,8 @@
 #import "net/test/embedded_test_server/http_response.h"
 #import "testing/platform_test.h"
 
-using base::test::ios::WaitUntilConditionOrTimeout;
 using base::test::ios::kWaitForUIElementTimeout;
+using base::test::ios::WaitUntilConditionOrTimeout;
 
 namespace {
 
@@ -56,6 +56,15 @@ base::FilePath GetCalendarFilePath() {
   base::FilePath file_path;
   base::PathService::Get(base::DIR_ASSETS, &file_path);
   file_path = file_path.Append(FILE_PATH_LITERAL(testing::kCalendarFilePath));
+  return file_path;
+}
+
+// Returns the absolute path for the .order file in the test data directory.
+base::FilePath GetAppleWalletOrderFilePath() {
+  base::FilePath file_path;
+  base::PathService::Get(base::DIR_ASSETS, &file_path);
+  file_path =
+      file_path.Append(FILE_PATH_LITERAL(testing::kAppleWalletOrderFilePath));
   return file_path;
 }
 
@@ -139,7 +148,7 @@ TEST_F(SafariDownloadCoordinatorTest, ValidMobileConfigFile) {
 
   histogram_tester_.ExpectUniqueSample(
       kUmaDownloadMobileConfigFileUI,
-      static_cast<base::HistogramBase::Sample>(
+      static_cast<base::HistogramBase::Sample32>(
           SafariDownloadFileUI::kWarningAlertIsPresented),
       1);
 }
@@ -155,7 +164,7 @@ TEST_F(SafariDownloadCoordinatorTest, InvalidMobileConfigFile) {
 
   histogram_tester_.ExpectUniqueSample(
       kUmaDownloadMobileConfigFileUI,
-      static_cast<base::HistogramBase::Sample>(
+      static_cast<base::HistogramBase::Sample32>(
           SafariDownloadFileUI::kWarningAlertIsPresented),
       0);
 }
@@ -175,7 +184,7 @@ TEST_F(SafariDownloadCoordinatorTest, ValidCalendarFile) {
 
   histogram_tester_.ExpectUniqueSample(
       kUmaDownloadCalendarFileUI,
-      static_cast<base::HistogramBase::Sample>(
+      static_cast<base::HistogramBase::Sample32>(
           SafariDownloadFileUI::kWarningAlertIsPresented),
       1);
 }
@@ -191,7 +200,43 @@ TEST_F(SafariDownloadCoordinatorTest, InvalidCalendarFile) {
 
   histogram_tester_.ExpectUniqueSample(
       kUmaDownloadCalendarFileUI,
-      static_cast<base::HistogramBase::Sample>(
+      static_cast<base::HistogramBase::Sample32>(
+          SafariDownloadFileUI::kWarningAlertIsPresented),
+      0);
+}
+
+// Tests presenting an UI alert before downloading a valid .order file.
+TEST_F(SafariDownloadCoordinatorTest, ValidAppleWalletOrderFile) {
+  base::FilePath path = GetAppleWalletOrderFilePath();
+  NSURL* fileURL =
+      [NSURL fileURLWithPath:base::SysUTF8ToNSString(path.value())];
+
+  [tab_helper()->delegate() presentAppleWalletOrderAlertFromURL:fileURL];
+
+  EXPECT_TRUE(WaitUntilConditionOrTimeout(kWaitForUIElementTimeout, ^{
+    return [base_view_controller_.presentedViewController class] ==
+           [UIAlertController class];
+  }));
+
+  histogram_tester_.ExpectUniqueSample(
+      kUmaDownloadAppleWalletOrderFileUI,
+      static_cast<base::HistogramBase::Sample32>(
+          SafariDownloadFileUI::kWarningAlertIsPresented),
+      1);
+}
+
+// Tests attempting to download an invalid .order file.
+TEST_F(SafariDownloadCoordinatorTest, InvalidAppleWalletOrderFile) {
+  [tab_helper()->delegate() presentAppleWalletOrderAlertFromURL:nil];
+
+  EXPECT_FALSE(WaitUntilConditionOrTimeout(kWaitForUIElementTimeout, ^{
+    return [base_view_controller_.presentedViewController class] ==
+           [UIAlertController class];
+  }));
+
+  histogram_tester_.ExpectUniqueSample(
+      kUmaDownloadAppleWalletOrderFileUI,
+      static_cast<base::HistogramBase::Sample32>(
           SafariDownloadFileUI::kWarningAlertIsPresented),
       0);
 }

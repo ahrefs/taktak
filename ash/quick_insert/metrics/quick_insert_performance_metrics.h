@@ -20,8 +20,9 @@ class Widget;
 
 namespace ash {
 
-// Records performance metrics for a session of using Picker, such as latency.
-class ASH_EXPORT PickerPerformanceMetrics {
+// Records performance metrics for a session of using Quick Insert, such as
+// latency.
+class ASH_EXPORT QuickInsertPerformanceMetrics {
  public:
   enum class SearchResultsUpdate {
     // Stale search results were cleared to an empty list of results.
@@ -35,23 +36,23 @@ class ASH_EXPORT PickerPerformanceMetrics {
   };
 
   // `trigger_event_timestamp` is the timestamp of the event that triggered the
-  // session. By default, this uses the time PickerPerformanceMetrics is
+  // session. By default, this uses the time QuickInsertPerformanceMetrics is
   // created. Call `StartRecording` to start recording metrics for the session.
-  PickerPerformanceMetrics(
+  QuickInsertPerformanceMetrics(
       base::TimeTicks trigger_start_timestamp = base::TimeTicks::Now());
-  ~PickerPerformanceMetrics();
+  ~QuickInsertPerformanceMetrics();
 
   // Starts recording metrics for this session.
-  // `widget` is the widget that contains the Picker UI. It must outlive this
-  // class.
+  // `widget` is the widget that contains the Quick Insert UI. It must outlive
+  // this class.
   void StartRecording(views::Widget& widget);
 
   // Stops recording metrics for this session.
-  // This should be called, for example, when the widget containing the Picker
-  // UI is destroyed.
+  // This should be called, for example, when the widget containing the Quick
+  // Insert UI is destroyed.
   void StopRecording();
 
-  // Marks a focus event on the picker search field.
+  // Marks a focus event on the Quick Insert search field.
   void MarkInputFocus();
 
   // Marks that the search field contents changed.

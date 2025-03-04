@@ -12,6 +12,9 @@
 namespace viz {
 
 RenderInputRouterSupportBase::~RenderInputRouterSupportBase() {
+  TRACE_EVENT_INSTANT(
+      "input", "RenderInputRouterSupportBase::~RenderInputRouterSupportBase");
+  rir_->SetView(nullptr);
   NotifyObserversAboutShutdown();
 }
 
@@ -24,6 +27,7 @@ RenderInputRouterSupportBase::RenderInputRouterSupportBase(
       "input", "RenderInputRouterSupportBase::RenderInputRouterSupportBase",
       "frame_sink_id", frame_sink_id);
   CHECK(delegate_);
+  rir_->SetView(this);
 }
 
 bool RenderInputRouterSupportBase::ShouldInitiateStylusWriting() {
@@ -88,14 +92,32 @@ RenderInputRouterSupportBase* RenderInputRouterSupportBase::GetRootView() {
   return this;
 }
 
+const LocalSurfaceId& RenderInputRouterSupportBase::GetLocalSurfaceId() const {
+  // Not needed for input handling on Viz with InputVizard.
+  NOTREACHED();
+}
+
 const FrameSinkId& RenderInputRouterSupportBase::GetFrameSinkId() const {
   return frame_sink_id_;
+}
+
+gfx::Size RenderInputRouterSupportBase::GetVisibleViewportSize() {
+  auto* metadata = delegate_->GetLastActivatedFrameMetadata(GetFrameSinkId());
+  if (!metadata) {
+    return gfx::Size();
+  }
+  return metadata->visible_viewport_size;
 }
 
 void RenderInputRouterSupportBase::OnAutoscrollStart() {
   // Related to mouse events handling which on VizCompositor which is out of
   // scope currently for InputVizard.
   NOTREACHED();
+}
+
+const DisplayHitTestQueryMap&
+RenderInputRouterSupportBase::GetDisplayHitTestQuery() const {
+  return delegate_->GetDisplayHitTestQuery();
 }
 
 float RenderInputRouterSupportBase::GetDeviceScaleFactor() const {

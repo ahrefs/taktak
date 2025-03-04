@@ -95,6 +95,21 @@ TEST_F(MahiContentSourceButtonTest, ContentSourceTitleAfterRefresh) {
   EXPECT_EQ(content_source_button.GetText(), kRefreshedTitle);
 }
 
+// Tests that when mahi manager `GetSelectedText()` returns non empty value, the
+// content source button should use it as the text.
+TEST_F(MahiContentSourceButtonTest, ContentSourceTitleSelectedText) {
+  ON_CALL(mock_mahi_manager(), GetContentTitle)
+      .WillByDefault(Return(u"Initial content title"));
+  MahiContentSourceButton content_source_button;
+
+  const std::u16string kSelectedText(u"web selected text");
+  ON_CALL(mock_mahi_manager(), GetSelectedText)
+      .WillByDefault(Return(kSelectedText));
+  content_source_button.RefreshContentSourceInfo();
+
+  EXPECT_EQ(content_source_button.GetText(), kSelectedText);
+}
+
 TEST_F(MahiContentSourceButtonTest, InitialContentSourceIcon) {
   const auto kInitialIcon =
       gfx::test::CreateImageSkia(/*size=*/128, SK_ColorRED);

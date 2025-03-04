@@ -10,10 +10,10 @@
 #include <vector>
 
 #include "base/check.h"
-#include "components/autofill/core/browser/data_model/autofill_data_model.h"
-#include "components/autofill/core/browser/data_model/autofill_profile.h"
-#include "components/autofill/core/browser/data_model/credit_card.h"
-#include "components/autofill/core/browser/data_model/iban.h"
+#include "components/autofill/core/browser/data_model/addresses/autofill_profile.h"
+#include "components/autofill/core/browser/data_model/autofill_ai/entity_instance.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card.h"
+#include "components/autofill/core/browser/data_model/payments/iban.h"
 #include "components/autofill/core/browser/webdata/autocomplete/autocomplete_entry.h"
 #include "components/autofill/core/browser/webdata/payments/payments_autofill_table.h"
 #include "third_party/abseil-cpp/absl/types/variant.h"
@@ -43,7 +43,9 @@ using AutocompleteChangeList = std::vector<AutocompleteChange>;
 // TODO(crbug.com/40928146): Update the name for `AutofillDataModelChange` as it
 // now captures non data model changes.
 template <typename DataType, typename KeyType>
-  requires std::derived_from<DataType, AutofillDataModel> ||
+  requires std::same_as<DataType, AutofillProfile> ||
+           std::same_as<DataType, std::optional<EntityInstance>> ||
+           std::same_as<DataType, CreditCard> || std::same_as<DataType, Iban> ||
            std::same_as<DataType, ServerCvc>
 class AutofillDataModelChange {
  public:
@@ -74,6 +76,9 @@ class AutofillDataModelChange {
       // TODO(crbug.com/40927747): Use `instrument_id()` for credit cards and
       // merge the `Iban` and `CreditCard` cases.
       CHECK(data_model_.guid() == key_ || data_model_.server_id() == key_);
+    } else if constexpr (std::same_as<DataType,
+                                      std::optional<EntityInstance>>) {
+      CHECK(data_model_ && data_model_->guid() == key_);
     } else {
       CHECK(data_model_.guid() == key_);
     }
@@ -100,6 +105,11 @@ class AutofillDataModelChange {
 // Identified by `AutofillProfile::guid()`.
 using AutofillProfileChange =
     AutofillDataModelChange<AutofillProfile, std::string>;
+
+// Identified by `EntityInstance::guid()`. The EntityInstance is present for
+// `ADD` and `UPDATE` operations but absent for `REMOVE` operations.
+using EntityInstanceChange =
+    AutofillDataModelChange<std::optional<EntityInstance>, base::Uuid>;
 
 // Identified by `CreditCard::guid()` for local cards and
 // `CreditCard::server_id()` for server cards.

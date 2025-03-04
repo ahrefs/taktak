@@ -101,6 +101,11 @@ struct BidderWorkletBid {
   // `modelingSignals` returned by generateBid, if any.
   uint16? modeling_signals;
 
+  // `aggregateWinSignals` returned by `generateBid`, if present. This field
+  // allows the bidder to pass arbitrary JSON-serializable data that can be
+  // accessed within the `reportAggregateWin()` javascript function.
+  string? aggregate_win_signals;
+
   // How long it took to run the generateBid() script.
   mojo_base.mojom.TimeDelta bid_duration;
 };
@@ -423,6 +428,9 @@ interface BidderWorklet {
   //  `browser_signal_recency` The duration of time from when this device
   //  joined this interest group until now, rounded to the nearest 100ms.
   //
+  //  `browser_signal_for_debugging_only_sampling` Whether the browser has fDO
+  //  sampling enabled.
+  //
   // `bidding_browser_signals` See BiddingBrowserSignals.
   //
   // `auction_start_time` The time the auction started, used to ensure the
@@ -458,6 +466,7 @@ interface BidderWorklet {
       url.mojom.Origin browser_signal_seller_origin,
       url.mojom.Origin? browser_signal_top_level_seller_origin,
       mojo_base.mojom.TimeDelta browser_signal_recency,
+      bool browser_signal_for_debugging_only_sampling,
       blink.mojom.BiddingBrowserSignals bidding_browser_signals,
       mojo_base.mojom.Time auction_start_time,
       blink.mojom.AdSize? requested_ad_size,
@@ -596,6 +605,10 @@ interface BidderWorklet {
   // `bidding_signals_data_version` The value of the Data-Version header served
   //  with the trusted bidding signals.
   //
+  // `aggregate_win_signals`:  The value of a JSON serializable object for
+  // `reportAggregateWin()`. Note that this is passed along with `reportWin()`,
+  // but is not a visible argument within the JavaScript function.
+  //
   // `trace_id` ID of a nestable asynchronous trace event of category `fledge`
   //  to use with tracing calls.
   //
@@ -649,6 +662,7 @@ interface BidderWorklet {
       url.mojom.Origin? browser_signal_top_level_seller_origin,
       mojo_base.mojom.TimeDelta? browser_signal_reporting_timeout,
       uint32? bidding_signals_data_version,
+      string? aggregate_win_signals,
       uint64 trace_id) => (
           url.mojom.Url? report_url,
           map<string, url.mojom.Url> ad_beacon_map,

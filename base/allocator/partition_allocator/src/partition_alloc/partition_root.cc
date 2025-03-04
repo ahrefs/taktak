@@ -105,6 +105,10 @@ PtrPosWithinAlloc IsPtrWithinSameAlloc(uintptr_t orig_address,
 
 namespace partition_alloc {
 
+#if PA_CONFIG(ENABLE_SHADOW_METADATA)
+internal::SharedMutex PartitionRoot::g_shadow_metadata_init_mutex_;
+#endif  // PA_CONFIG(ENABLE_SHADOW_METADATA)
+
 #if PA_CONFIG(USE_PARTITION_ROOT_ENUMERATOR)
 
 namespace {
@@ -1148,6 +1152,10 @@ void PartitionRoot::Init(PartitionOptions opts) {
     PA_DCHECK(!settings.use_configurable_pool || IsConfigurablePoolAvailable());
     settings.zapping_by_free_flags =
         opts.zapping_by_free_flags == PartitionOptions::kEnabled;
+    settings.eventually_zero_freed_memory =
+        opts.eventually_zero_freed_memory == PartitionOptions::kEnabled;
+    settings.fewer_memory_regions =
+        opts.fewer_memory_regions == PartitionOptions::kEnabled;
 
     settings.scheduler_loop_quarantine =
         opts.scheduler_loop_quarantine == PartitionOptions::kEnabled;
@@ -1204,7 +1212,7 @@ void PartitionRoot::Init(PartitionOptions opts) {
 #if PA_CONFIG(EXTRAS_REQUIRED)
     settings.extras_size = 0;
 
-    if (settings.use_cookie) {
+    if (Settings::use_cookie) {
       settings.extras_size += internal::kPartitionCookieSizeAdjustment;
     }
 
@@ -1212,6 +1220,7 @@ void PartitionRoot::Init(PartitionOptions opts) {
     if (brp_enabled()) {
       settings.in_slot_metadata_size = internal::kInSlotMetadataSizeAdjustment;
       settings.extras_size += internal::kInSlotMetadataSizeAdjustment;
+      settings.extras_size += opts.backup_ref_ptr_extra_extras_size;
 #if PA_CONFIG(MAYBE_ENABLE_MAC11_MALLOC_SIZE_HACK)
       EnableMac11MallocSizeHackIfNeeded();
 #endif
@@ -1345,6 +1354,9 @@ void PartitionRoot::EnableThreadCacheIfSupported() {
       thread_caches_being_constructed_.fetch_add(1, std::memory_order_acquire);
   PA_CHECK(before == 0);
   ThreadCache::Init(this);
+  // Create thread cache for this thread so that we can start using it right
+  // after.
+  ThreadCache::Create(this);
   thread_caches_being_constructed_.fetch_sub(1, std::memory_order_release);
   settings.with_thread_cache = true;
 #endif  // PA_CONFIG(THREAD_CACHE_SUPPORTED)
@@ -1470,7 +1482,7 @@ bool PartitionRoot::TryReallocInPlaceForDirectMap(
   }
 
   // Write a new trailing cookie.
-  if (settings.use_cookie) {
+  if (Settings::use_cookie) {
     auto* object = static_cast<unsigned char*>(SlotStartToObject(slot_start));
     internal::PartitionCookieWriteValue(object + GetSlotUsableSize(slot_span));
   }
@@ -1519,7 +1531,7 @@ bool PartitionRoot::TryReallocInPlaceForNormalBuckets(
         // PA_BUILDFLAG(DCHECKS_ARE_ON)
     // Write a new trailing cookie only when it is possible to keep track
     // raw size (otherwise we wouldn't know where to look for it later).
-    if (settings.use_cookie) {
+    if (Settings::use_cookie) {
       internal::PartitionCookieWriteValue(static_cast<unsigned char*>(object) +
                                           GetSlotUsableSize(slot_span));
     }
@@ -1964,6 +1976,7 @@ void PartitionRoot::EnableShadowMetadata(internal::PoolHandleMask mask) {
   // This is required to enable ShadowMetadata on utility processes.
   { close(memfd_create("module_cache", MFD_CLOEXEC)); }
 #endif
+  internal::UniqueLock unique_lock(g_shadow_metadata_init_mutex_);
 
   internal::ScopedGuard guard(g_root_enumerator_lock);
   // Must lock all PartitionRoot-s and ThreadCache.

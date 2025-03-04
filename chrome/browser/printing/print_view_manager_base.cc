@@ -620,10 +620,7 @@ void PrintViewManagerBase::DidPrintDocument(
 
   const mojom::DidPrintContentParams& content = *params->content;
   if (!content.metafile_data_region.IsValid()) {
-    NOTREACHED_IN_MIGRATION() << "invalid memory handle";
-    web_contents()->Stop();
-    OnDidPrintDocument(std::move(callback), /*succeeded=*/false);
-    return;
+    NOTREACHED() << "invalid memory handle";
   }
 
   if (IsOopifEnabled() && print_job_->document()->settings().is_modifiable()) {
@@ -641,10 +638,7 @@ void PrintViewManagerBase::DidPrintDocument(
   auto data = base::RefCountedSharedMemoryMapping::CreateFromWholeRegion(
       content.metafile_data_region);
   if (!data) {
-    NOTREACHED_IN_MIGRATION() << "couldn't map";
-    web_contents()->Stop();
-    OnDidPrintDocument(std::move(callback), /*succeeded=*/false);
-    return;
+    NOTREACHED() << "couldn't map";
   }
 
   PrintDocument(data, params->page_size, params->content_area,
@@ -1315,7 +1309,7 @@ void PrintViewManagerBase::CompleteScriptedPrint(
   content::RenderProcessHost* render_process_host = rfh->GetProcess();
   auto callback_wrapper = base::BindOnce(
       &PrintViewManagerBase::ScriptedPrintReply, weak_ptr_factory_.GetWeakPtr(),
-      std::move(callback), render_process_host->GetID());
+      std::move(callback), render_process_host->GetDeprecatedID());
 #if BUILDFLAG(IS_WIN) && BUILDFLAG(GOOGLE_CHROME_BRANDING)
   DisableThirdPartyBlocking();
 #endif

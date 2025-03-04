@@ -36,6 +36,38 @@
 namespace ash::babelorca {
 namespace {
 
+constexpr net::NetworkTrafficAnnotationTag kTrafficAnnotation =
+    net::DefineNetworkTrafficAnnotation("ash_babelorca_transcript_sender_impl",
+                                        R"(
+        semantics {
+          sender: "School Tools"
+          description: "Sends user speech captions to School Tool session "
+                        "members."
+          trigger: "User enables sending speech captions during a School Tools "
+                    "session."
+          data: "User email for sender verification, user speech captions and "
+                "oauth token for using the instant messaging service."
+          user_data {
+            type: ACCESS_TOKEN
+            type: EMAIL
+            type: USER_CONTENT
+          }
+          destination: GOOGLE_OWNED_SERVICE
+          internal {
+            contacts {
+              email: "cros-edu-eng@google.com"
+            }
+          }
+          last_reviewed: "2024-10-17"
+        }
+        policy {
+          cookies_allowed: NO
+          setting: "This request cannot be stopped in settings, but will not "
+                    "be sent if the user does not enable sending captions in "
+                    "School Tools session."
+          policy_exception_justification: "Not implemented."
+        })");
+
 int GetTranscriptPartIndex(const std::string& current_text,
                            const std::string& new_text,
                            size_t max_allowed_char) {
@@ -90,13 +122,11 @@ TranscriptSenderImpl::TranscriptSenderImpl(
     TachyonAuthedClient* authed_client,
     TachyonRequestDataProvider* request_data_provider,
     base::Time init_timestamp,
-    const net::NetworkTrafficAnnotationTag& network_traffic_annotation,
     Options options,
     base::OnceClosure failure_cb)
     : authed_client_(authed_client),
       request_data_provider_(request_data_provider),
       init_timestamp_ms_(init_timestamp.InMillisecondsSinceUnixEpoch()),
-      network_traffic_annotation_(network_traffic_annotation),
       options_(std::move(options)),
       failure_cb_(std::move(failure_cb)) {}
 
@@ -116,6 +146,14 @@ void TranscriptSenderImpl::SendTranscriptionUpdate(
       !request_data_provider_->sender_email().has_value() ||
       !request_data_provider_->tachyon_token().has_value() ||
       !request_data_provider_->group_id().has_value()) {
+    LOG(ERROR) << "Session Id is set: "
+               << request_data_provider_->session_id().has_value()
+               << ", sender email is set: "
+               << request_data_provider_->sender_email().has_value()
+               << ", tachyon token is set: "
+               << request_data_provider_->tachyon_token().has_value()
+               << ", group id is set: "
+               << request_data_provider_->group_id().has_value();
     failed_ = true;
     std::move(failure_cb_).Run();
     return;
@@ -206,7 +244,7 @@ void TranscriptSenderImpl::Send(int max_retries, std::string request_string) {
       &TranscriptSenderImpl::OnSendResponse, weak_ptr_factory.GetWeakPtr());
   authed_client_->StartAuthedRequestString(
       std::make_unique<RequestDataWrapper>(
-          network_traffic_annotation_, kSendMessageUrl, max_retries,
+          kTrafficAnnotation, kSendMessageUrl, max_retries,
           std::move(response_callback_wrapper)),
       std::move(request_string));
 }
@@ -218,6 +256,7 @@ void TranscriptSenderImpl::OnSendResponse(TachyonResponse response) {
     return;
   }
   ++errors_num_;
+  VLOG(1) << "Send request failed";
   if (errors_num_ >= options_.max_errors_num && failure_cb_) {
     failed_ = true;
     std::move(failure_cb_).Run();

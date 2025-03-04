@@ -43,6 +43,7 @@
 #include "net/base/ip_endpoint.h"
 #include "net/cert/ct_sct_to_string.h"
 #include "net/cert/x509_util.h"
+#include "net/filter/source_stream_type.h"
 #include "net/http/http_status_code.h"
 #include "net/ssl/ssl_cipher_suite_names.h"
 #include "net/ssl/ssl_connection_status_flags.h"
@@ -156,8 +157,7 @@ bool LoadsFromCacheOnly(const ResourceRequest& request) {
     case mojom::FetchCacheMode::kUnspecifiedForceCacheMiss:
       return true;
   }
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 protocol::Network::CertificateTransparencyCompliance
@@ -175,11 +175,9 @@ SerializeCTPolicyCompliance(net::ct::CTPolicyCompliance ct_compliance) {
         CT_POLICY_COMPLIANCE_DETAILS_NOT_AVAILABLE:
       return protocol::Network::CertificateTransparencyComplianceEnum::Unknown;
     case net::ct::CTPolicyCompliance::CT_POLICY_COUNT:
-      NOTREACHED_IN_MIGRATION();
-      // Fallthrough to default.
+      NOTREACHED();
   }
-  NOTREACHED_IN_MIGRATION();
-  return protocol::Network::CertificateTransparencyComplianceEnum::Unknown;
+  NOTREACHED();
 }
 
 static std::unique_ptr<protocol::Network::Headers> BuildObjectForHeaders(
@@ -387,8 +385,7 @@ String ResourcePriorityJSON(ResourceLoadPriority priority) {
     case ResourceLoadPriority::kUnresolved:
       break;
   }
-  NOTREACHED_IN_MIGRATION();
-  return protocol::Network::ResourcePriorityEnum::Medium;
+  NOTREACHED();
 }
 
 String BuildBlockedReason(ResourceRequestBlockedReason reason) {
@@ -430,21 +427,21 @@ String BuildBlockedReason(ResourceRequestBlockedReason reason) {
           CorpNotSameOriginAfterDefaultedToSameOriginByCoepAndDip;
     case blink::ResourceRequestBlockedReason::kCorpNotSameSite:
       return protocol::Network::BlockedReasonEnum::CorpNotSameSite;
+    case blink::ResourceRequestBlockedReason::kSRIMessageSignatureMismatch:
+      return protocol::Network::BlockedReasonEnum::SriMessageSignatureMismatch;
     case ResourceRequestBlockedReason::kConversionRequest:
       // This is actually never reached, as the conversion request
       // is marked as successful and no blocking reason is reported.
-      NOTREACHED_IN_MIGRATION();
-      return protocol::Network::BlockedReasonEnum::Other;
+      NOTREACHED();
   }
-  NOTREACHED_IN_MIGRATION();
-  return protocol::Network::BlockedReasonEnum::Other;
+  NOTREACHED();
 }
 
-Maybe<String> BuildBlockedReason(const ResourceError& error) {
+std::optional<String> BuildBlockedReason(const ResourceError& error) {
   int error_code = error.ErrorCode();
   if (error_code != net::ERR_BLOCKED_BY_CLIENT &&
       error_code != net::ERR_BLOCKED_BY_RESPONSE) {
-    return Maybe<String>();
+    return std::nullopt;
   }
 
   std::optional<ResourceRequestBlockedReason> resource_request_blocked_reason =
@@ -749,19 +746,18 @@ String AcceptedEncodingFromProtocol(
   return result;
 }
 
-using SourceTypeEnum = net::SourceStream::SourceType;
+using SourceTypeEnum = net::SourceStreamType;
 SourceTypeEnum SourceTypeFromString(const String& type) {
   if (type == ContentEncodingEnum::Gzip)
-    return SourceTypeEnum::TYPE_GZIP;
+    return SourceTypeEnum::kGzip;
   if (type == ContentEncodingEnum::Deflate)
-    return SourceTypeEnum::TYPE_DEFLATE;
+    return SourceTypeEnum::kDeflate;
   if (type == ContentEncodingEnum::Br)
-    return SourceTypeEnum::TYPE_BROTLI;
+    return SourceTypeEnum::kBrotli;
   if (type == ContentEncodingEnum::Zstd) {
-    return SourceTypeEnum::TYPE_ZSTD;
+    return SourceTypeEnum::kZstd;
   }
-  NOTREACHED_IN_MIGRATION();
-  return SourceTypeEnum::TYPE_UNKNOWN;
+  NOTREACHED();
 }
 
 }  // namespace
@@ -1315,7 +1311,7 @@ void InspectorNetworkAgent::WillSendRequestInternal(
   String documentURL = loader
                            ? UrlWithoutFragment(loader->Url()).GetString()
                            : UrlWithoutFragment(fetch_context_url).GetString();
-  Maybe<String> maybe_frame_id;
+  std::optional<String> maybe_frame_id;
   if (!frame_id.empty())
     maybe_frame_id = frame_id;
   if (loader && loader->GetFrame() && loader->GetFrame()->GetDocument()) {
@@ -1361,6 +1357,17 @@ void InspectorNetworkAgent::WillSendNavigationRequest(
   resources_data_->ResourceCreated(request_id, loader_id, url, post_data);
   resources_data_->SetResourceType(request_id,
                                    InspectorPageAgent::kDocumentResource);
+}
+
+void InspectorNetworkAgent::WillSendWorkerMainRequest(uint64_t identifier,
+                                                      const KURL& url) {
+  CHECK(worker_or_worklet_global_scope_);
+  String request_id = RequestId(nullptr, identifier);
+  String loader_id;                          // No loader for worker requests.
+  scoped_refptr<EncodedFormData> post_data;  // No post data.
+  resources_data_->ResourceCreated(request_id, loader_id, url, post_data);
+  resources_data_->SetResourceType(request_id,
+                                   InspectorPageAgent::kScriptResource);
 }
 
 // This method was pulled out of PrepareRequest(), because we want to be able
@@ -1438,12 +1445,11 @@ void InspectorNetworkAgent::PrepareRequest(DocumentLoader* loader,
     }
   }
   if (!accepted_encodings_.IsEmpty()) {
-    scoped_refptr<
-        base::RefCountedData<base::flat_set<net::SourceStream::SourceType>>>
+    scoped_refptr<base::RefCountedData<base::flat_set<net::SourceStreamType>>>
         accepted_stream_types = request.GetDevToolsAcceptedStreamTypes();
     if (!accepted_stream_types) {
-      accepted_stream_types = base::MakeRefCounted<base::RefCountedData<
-          base::flat_set<net::SourceStream::SourceType>>>();
+      accepted_stream_types = base::MakeRefCounted<
+          base::RefCountedData<base::flat_set<net::SourceStreamType>>>();
     }
     if (!accepted_encodings_.Get("none")) {
       for (auto key : accepted_encodings_.Keys())
@@ -1508,21 +1514,6 @@ void InspectorNetworkAgent::DidReceiveResourceResponse(
     type = saved_type;
   }
 
-  // Main Worker requests are initiated in the browser, so saved_type will not
-  // be found. We therefore must explicitly set it.
-  if (worker_or_worklet_global_scope_ &&
-      worker_or_worklet_global_scope_->IsWorkerGlobalScope()) {
-    WorkerGlobalScope* worker_global_scope =
-        To<WorkerGlobalScope>(worker_or_worklet_global_scope_.Get());
-    auto main_resource_identifier =
-        worker_global_scope->MainResourceIdentifier();
-
-    if (main_resource_identifier == identifier) {
-      DCHECK(saved_type == InspectorPageAgent::kOtherResource);
-      type = InspectorPageAgent::kScriptResource;
-    }
-  }
-
   // Resources are added to NetworkResourcesData as a WeakMember here and
   // removed in willDestroyResource() called in the prefinalizer of Resource.
   // Because NetworkResourceData retains weak references only, it
@@ -1544,7 +1535,7 @@ void InspectorNetworkAgent::DidReceiveResourceResponse(
   if (IsNavigation(loader, identifier))
     return;
   if (resource_response && !resource_is_empty) {
-    Maybe<String> maybe_frame_id;
+    std::optional<String> maybe_frame_id;
     if (!frame_id.empty())
       maybe_frame_id = frame_id;
     GetFrontend()->responseReceived(
@@ -1598,7 +1589,7 @@ void InspectorNetworkAgent::DidReceiveData(uint64_t identifier,
                                            DocumentLoader* loader,
                                            base::SpanOrSize<const char> data) {
   String request_id = RequestId(loader, identifier);
-  Maybe<protocol::Binary> binary_data;
+  std::optional<protocol::Binary> binary_data;
 
   if (auto data_span = data.span(); data_span) {
     NetworkResourcesData::ResourceData const* resource_data =
@@ -1711,9 +1702,9 @@ void InspectorNetworkAgent::DidFailLoading(
 
   bool canceled = error.IsCancellation();
 
-  protocol::Maybe<String> blocked_reason = BuildBlockedReason(error);
+  std::optional<String> blocked_reason = BuildBlockedReason(error);
   auto cors_error_status = error.CorsErrorStatus();
-  protocol::Maybe<protocol::Network::CorsErrorStatus>
+  std::unique_ptr<protocol::Network::CorsErrorStatus>
       protocol_cors_error_status;
   if (cors_error_status) {
     protocol_cors_error_status = BuildCorsErrorStatus(*cors_error_status);
@@ -2075,9 +2066,9 @@ void InspectorNetworkAgent::WebTransportClosed(uint64_t transport_id) {
 }
 
 protocol::Response InspectorNetworkAgent::enable(
-    Maybe<int> total_buffer_size,
-    Maybe<int> resource_buffer_size,
-    Maybe<int> max_post_data_size) {
+    std::optional<int> total_buffer_size,
+    std::optional<int> resource_buffer_size,
+    std::optional<int> max_post_data_size) {
   total_buffer_size_.Set(total_buffer_size.value_or(kDefaultTotalBufferSize));
   resource_buffer_size_.Set(
       resource_buffer_size.value_or(kDefaultResourceBufferSize));
@@ -2269,10 +2260,10 @@ protocol::Response InspectorNetworkAgent::emulateNetworkConditions(
     double latency,
     double download_throughput,
     double upload_throughput,
-    Maybe<String> connection_type,
-    Maybe<double> packet_loss,
-    Maybe<int> packet_queue_length,
-    Maybe<bool> packet_reordering) {
+    std::optional<String> connection_type,
+    std::optional<double> packet_loss,
+    std::optional<int> packet_queue_length,
+    std::optional<bool> packet_reordering) {
   WebConnectionType type = kWebConnectionTypeUnknown;
   if (connection_type.has_value()) {
     type = ToWebConnectionType(connection_type.value());
@@ -2396,8 +2387,8 @@ protocol::Response InspectorNetworkAgent::GetResponseBody(
   }
 
   if (resource_data->CachedResource() &&
-      InspectorPageAgent::CachedResourceContent(resource_data->CachedResource(),
-                                                content, base64_encoded)) {
+      InspectorPageAgent::CachedResourceContent(
+          resource_data->CachedResource(), content, base64_encoded, nullptr)) {
     return protocol::Response::Success();
   }
 
@@ -2408,8 +2399,8 @@ protocol::Response InspectorNetworkAgent::GetResponseBody(
 protocol::Response InspectorNetworkAgent::searchInResponseBody(
     const String& request_id,
     const String& query,
-    Maybe<bool> case_sensitive,
-    Maybe<bool> is_regex,
+    std::optional<bool> case_sensitive,
+    std::optional<bool> is_regex,
     std::unique_ptr<
         protocol::Array<v8_inspector::protocol::Debugger::API::SearchMatch>>*
         matches) {
@@ -2440,10 +2431,12 @@ bool InspectorNetworkAgent::FetchResourceContent(Document* document,
   Resource* cached_resource = document->Fetcher()->CachedResource(url);
   if (!cached_resource) {
     cached_resource = MemoryCache::Get()->ResourceForURL(
-        url, document->Fetcher()->GetCacheIdentifier(url));
+        url, document->Fetcher()->GetCacheIdentifier(
+                 url, /*skip_service_worker=*/false));
   }
-  if (cached_resource && InspectorPageAgent::CachedResourceContent(
-                             cached_resource, content, base64_encoded)) {
+  if (cached_resource &&
+      InspectorPageAgent::CachedResourceContent(cached_resource, content,
+                                                base64_encoded, nullptr)) {
     *loadingFailed = cached_resource->ErrorOccurred();
     return true;
   }
@@ -2479,7 +2472,7 @@ String InspectorNetworkAgent::NavigationInitiatorInfo(LocalFrame* frame) {
   }
   std::vector<uint8_t> json;
   ConvertCBORToJSON(SpanFrom(cbor), &json);
-  return String(reinterpret_cast<const char*>(json.data()), json.size());
+  return String(base::span(json));
 }
 
 InspectorNetworkAgent::InspectorNetworkAgent(
@@ -2560,6 +2553,13 @@ ExecutionContext* InspectorNetworkAgent::GetTargetExecutionContext() const {
 void InspectorNetworkAgent::IsCacheDisabled(bool* is_cache_disabled) const {
   if (cache_disabled_.Get())
     *is_cache_disabled = true;
+}
+
+void InspectorNetworkAgent::ShouldApplyDevtoolsCookieSettingOverrides(
+    bool* should_apply_devtools_overrides) const {
+  if (enabled_.Get()) {
+    *should_apply_devtools_overrides = true;
+  }
 }
 
 }  // namespace blink

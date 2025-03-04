@@ -19,7 +19,7 @@ import org.chromium.chrome.browser.readaloud.ReadAloudMiniPlayerSceneLayer;
 import org.chromium.chrome.browser.readaloud.player.PlayerCoordinator;
 import org.chromium.chrome.browser.readaloud.player.R;
 import org.chromium.chrome.browser.readaloud.player.VisibilityState;
-import org.chromium.chrome.browser.user_education.IPHCommandBuilder;
+import org.chromium.chrome.browser.user_education.IphCommandBuilder;
 import org.chromium.chrome.browser.user_education.UserEducationHelper;
 import org.chromium.components.feature_engagement.FeatureConstants;
 import org.chromium.ui.modelutil.PropertyModel;
@@ -95,6 +95,10 @@ public class MiniPlayerCoordinator {
         }
         mPlayerCoordinator = playerCoordinator;
         mUserEducationHelper = userEducationHelper;
+
+        // TODO(crbug.com/383544537) These should be CompositorModelChangeProcessors. The miniplayer
+        // currently relies on other objects to request a new frame. If no new frame is requested,
+        // changes to these models won't be reflected on the screen.
         PropertyModelChangeProcessor.create(
                 sharedModel, mLayout, MiniPlayerViewBinder::bindPlayerProperties);
         PropertyModelChangeProcessor.create(
@@ -136,8 +140,8 @@ public class MiniPlayerCoordinator {
     void onShown(@Nullable View iphAnchorView) {
         if (iphAnchorView != null) {
 
-            mUserEducationHelper.requestShowIPH(
-                    new IPHCommandBuilder(
+            mUserEducationHelper.requestShowIph(
+                    new IphCommandBuilder(
                                     mContext.getResources(),
                                     FeatureConstants.READ_ALOUD_EXPANDED_PLAYER_FEATURE,
                                     /* stringId= */ R.string.readaloud_expanded_player_iph,

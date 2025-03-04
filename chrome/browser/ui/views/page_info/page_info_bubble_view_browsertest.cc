@@ -66,10 +66,13 @@
 #include "components/password_manager/core/browser/password_manager_metrics_util.h"
 #include "components/permissions/features.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
+#include "components/privacy_sandbox/tracking_protection_prefs.h"
 #include "components/safe_browsing/content/browser/password_protection/password_protection_test_util.h"
 #include "components/safe_browsing/core/common/features.h"
+#include "components/safe_browsing/core/common/proto/csd.pb.h"
 #include "components/security_state/content/security_state_tab_helper.h"
 #include "components/strings/grit/components_strings.h"
+#include "components/strings/grit/privacy_sandbox_strings.h"
 #include "components/ukm/test_ukm_recorder.h"
 #include "content/public/browser/file_system_access_permission_context.h"
 #include "content/public/browser/navigation_handle.h"
@@ -184,6 +187,26 @@ void AddHintForTesting(Browser* browser,
       url, optimization_guide::proto::ABOUT_THIS_SITE, optimization_metadata);
 }
 
+// A WebContentsObserver to allow waiting on a change in visible security state.
+class SecurityStyleTestObserver : public content::WebContentsObserver {
+ public:
+  explicit SecurityStyleTestObserver(content::WebContents* web_contents)
+      : content::WebContentsObserver(web_contents) {}
+
+  SecurityStyleTestObserver(const SecurityStyleTestObserver&) = delete;
+  SecurityStyleTestObserver& operator=(const SecurityStyleTestObserver&) =
+      delete;
+
+  ~SecurityStyleTestObserver() override = default;
+
+  void DidChangeVisibleSecurityState() override { run_loop_.Quit(); }
+
+  void WaitForDidChangeVisibleSecurityState() { run_loop_.Run(); }
+
+ private:
+  base::RunLoop run_loop_;
+};
+
 }  // namespace
 
 class PageInfoBubbleViewBrowserTest : public InProcessBrowserTest {
@@ -263,22 +286,22 @@ class PageInfoBubbleViewBrowserTest : public InProcessBrowserTest {
     presenter->ui_for_testing()->SetIdentityInfo(identity_info);
   }
 
-  std::u16string GetCertificateButtonTitle() const {
+  std::u16string_view GetCertificateButtonTitle() const {
     // Only PageInfoBubbleViewBrowserTest can access certificate_button_ in
     // PageInfoBubbleView, or title() in HoverButton.
     auto* certificate_button = static_cast<RichHoverButton*>(
         PageInfoBubbleView::GetPageInfoBubbleForTesting()->GetViewByID(
             PageInfoViewFactory::
                 VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_CERTIFICATE_VIEWER));
-    return certificate_button->GetTitleViewForTesting()->GetText();
+    return certificate_button->GetTitleText();
   }
 
-  std::u16string GetCertificateButtonSubtitle() const {
+  std::u16string_view GetCertificateButtonSubtitle() const {
     auto* certificate_button = static_cast<RichHoverButton*>(
         PageInfoBubbleView::GetPageInfoBubbleForTesting()->GetViewByID(
             PageInfoViewFactory::
                 VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_CERTIFICATE_VIEWER));
-    return certificate_button->GetSubTitleViewForTesting()->GetText();
+    return certificate_button->GetSubtitleText();
   }
 
   const std::u16string GetPageInfoBubbleViewDetailText() {
@@ -295,14 +318,12 @@ class PageInfoBubbleViewBrowserTest : public InProcessBrowserTest {
     return static_cast<views::StyledLabel*>(label)->GetText();
   }
 
-  const std::u16string GetSecurityInformationButtonText() {
+  std::u16string_view GetSecurityInformationButtonText() {
     auto* button =
         PageInfoBubbleView::GetPageInfoBubbleForTesting()->GetViewByID(
             PageInfoViewFactory::
                 VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_SECURITY_INFORMATION);
-    return static_cast<RichHoverButton*>(button)
-        ->GetTitleViewForTesting()
-        ->GetText();
+    return static_cast<RichHoverButton*>(button)->GetTitleText();
   }
 
   void SetupSentimentServiceExpectations(bool interacted) {
@@ -393,10 +414,10 @@ IN_PROC_BROWSER_TEST_F(PageInfoBubbleViewBrowserTest, SiteSettingsLink) {
 // an origin and does punycode conversion as well as URL canonicalization.
 IN_PROC_BROWSER_TEST_F(PageInfoBubbleViewBrowserTest,
                        SiteSettingsLinkWithNonAsciiUrl) {
-  GURL url = GURL("http://🥄.ws/other/stuff.htm");
+  GURL url = GURL("https://🥄.ws/other/stuff.htm");
   std::string expected_url =
       base::StrCat({chrome::kChromeUISettingsURL, chrome::kSiteDetailsSubpage});
-  std::string expected_query = "?site=http%3A%2F%2Fxn--9q9h.ws";
+  std::string expected_query = "?site=https%3A%2F%2Fxn--9q9h.ws";
   EXPECT_EQ(GURL(expected_url + expected_query),
             OpenSiteSettingsForUrl(browser(), url));
 }
@@ -1131,6 +1152,28 @@ class PageInfoBubbleViewAboutThisSiteBrowserTest : public InProcessBrowserTest {
     return site_info;
   }
 
+  content::WebContents* web_contents() {
+    return browser()->tab_strip_model()->GetActiveWebContents();
+  }
+
+  void TriggerSafeBrowsingWarning() {
+    safe_browsing::ChromePasswordProtectionService* service =
+        safe_browsing::ChromePasswordProtectionService::
+            GetPasswordProtectionService(browser()->profile());
+    safe_browsing::ReusedPasswordAccountType reused_password_account_type;
+    reused_password_account_type.set_account_type(
+        safe_browsing::ReusedPasswordAccountType::NON_GAIA_ENTERPRISE);
+    service->set_reused_password_account_type_for_last_shown_warning(
+        reused_password_account_type);
+
+    scoped_refptr<safe_browsing::PasswordProtectionRequest> request =
+        safe_browsing::CreateDummyRequest(web_contents());
+    service->ShowModalWarning(
+        request.get(),
+        safe_browsing::LoginReputationClientResponse::VERDICT_TYPE_UNSPECIFIED,
+        "unused_token", reused_password_account_type);
+  }
+
  protected:
   net::EmbeddedTestServer https_server_{net::EmbeddedTestServer::TYPE_HTTPS};
   base::test::ScopedFeatureList feature_list_;
@@ -1290,6 +1333,38 @@ IN_PROC_BROWSER_TEST_F(PageInfoBubbleViewAboutThisSiteBrowserTest,
   base::RunLoop().RunUntilIdle();
 }
 
+IN_PROC_BROWSER_TEST_F(PageInfoBubbleViewAboutThisSiteBrowserTest,
+                       AboutThisSiteNotSecureAsync) {
+  auto url = https_server_.GetURL("a.test", "/title1.html");
+  AddHintForTesting(browser(), url, CreateValidSiteInfo());
+
+  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  OpenPageInfoBubble(browser());
+  auto* page_info = PageInfoBubbleView::GetPageInfoBubbleForTesting();
+  // The button is shown because connection is secure.
+  EXPECT_TRUE(
+      page_info
+          ->GetViewByID(
+              PageInfoViewFactory::VIEW_ID_PAGE_INFO_EXTENDED_SITE_INFO_SECTION)
+          ->GetVisible());
+
+  // Connection state changed to insecure.
+  SecurityStyleTestObserver observer(web_contents());
+  TriggerSafeBrowsingWarning();
+  observer.WaitForDidChangeVisibleSecurityState();
+
+  // The button isn't shown because connection now isn't secure.
+  EXPECT_FALSE(
+      page_info
+          ->GetViewByID(
+              PageInfoViewFactory::VIEW_ID_PAGE_INFO_EXTENDED_SITE_INFO_SECTION)
+          ->GetVisible());
+
+  page_info->GetWidget()->CloseWithReason(
+      views::Widget::ClosedReason::kEscKeyPressed);
+  base::RunLoop().RunUntilIdle();
+}
+
 // Test that no info is shown and "kNotShownOptimizationGuideNotAllowed" is
 // logged when hints fetching is disabled.
 class PageInfoBubbleViewAboutThisSiteDisabledBrowserTest
@@ -1351,12 +1426,13 @@ class PageInfoBubbleViewBrowserTestCookiesSubpage
  public:
   PageInfoBubbleViewBrowserTestCookiesSubpage() {
     std::vector<base::test::FeatureRef>
-        enabled_features = {privacy_sandbox::kPrivacySandboxFirstPartySetsUI},
+        enabled_features =
+            {privacy_sandbox::kPrivacySandboxFirstPartySetsUI,
+             privacy_sandbox::kPrivacySandboxRelatedWebsiteSetsUi},
         disabled_features = {};
     if (GetParam()) {
       enabled_features.push_back(
           content_settings::features::kTrackingProtection3pcd);
-      disabled_features.push_back(privacy_sandbox::kTrackingProtection3pcdUx);
     } else {
       disabled_features.push_back(
           content_settings::features::kTrackingProtection3pcd);
@@ -1476,8 +1552,14 @@ IN_PROC_BROWSER_TEST_P(PageInfoBubbleViewBrowserTestCookiesSubpage,
   EXPECT_EQ(kExpectedChildren, cookies_buttons_container->children().size());
   EXPECT_TRUE(GetView(
       PageInfoViewFactory::VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_COOKIE_DIALOG));
-  auto* rws_button = GetView(
-      PageInfoViewFactory::VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_RWS_SETTINGS);
+  auto* rws_button = static_cast<RichHoverButton*>(GetView(
+      PageInfoViewFactory::VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_RWS_SETTINGS));
+
+  EXPECT_EQ(rws_button->GetTitleText(),
+            l10n_util::GetStringUTF16(IDS_PAGE_INFO_RWS_ENHANCED_BUTTON_TITLE));
+  EXPECT_EQ(rws_button->GetSubtitleText(),
+            l10n_util::GetStringFUTF16(
+                IDS_PAGE_INFO_RWS_ENHANCED_BUTTON_SUBTITLE, rws_owner));
 
   // Checking if rws button opens correct page and records correctly user
   // actions.
@@ -1583,12 +1665,13 @@ class PageInfoBubbleViewBrowserTestTrackingProtectionSubpage
   PageInfoBubbleViewBrowserTestTrackingProtectionSubpage() {
     std::vector<base::test::FeatureRef>
         enabled_features =
-            {privacy_sandbox::kFingerprintingProtectionUserBypass},
+            {privacy_sandbox::kTrackingProtectionContentSettingUbControl,
+             privacy_sandbox::kActUserBypassUx,
+             privacy_sandbox::kFingerprintingProtectionUx},
         disabled_features = {};
     if (GetParam()) {
       enabled_features.push_back(
           content_settings::features::kTrackingProtection3pcd);
-      disabled_features.push_back(privacy_sandbox::kTrackingProtection3pcdUx);
     } else {
       disabled_features.push_back(
           content_settings::features::kTrackingProtection3pcd);
@@ -1603,10 +1686,15 @@ class PageInfoBubbleViewBrowserTestTrackingProtectionSubpage
 IN_PROC_BROWSER_TEST_P(
     PageInfoBubbleViewBrowserTestTrackingProtectionSubpage,
     ToggleForBlockingThirdPartyCookiesUpdatesTrackingProtectionException) {
+  profile_metrics::SetBrowserProfileType(
+      browser()->profile(), profile_metrics::BrowserProfileType::kIncognito);
+
   GURL url_example = GURL("http://example/other/stuff.htm");
   ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url_example));
 
   SetCookieControlsMode(content_settings::CookieControlsMode::kBlockThirdParty);
+  browser()->profile()->GetPrefs()->SetBoolean(
+      prefs::kFingerprintingProtectionEnabled, true);
 
   OpenPageInfoAndGoToCookiesSubpage(/*rws_owner =*/{});
 
@@ -1628,6 +1716,10 @@ IN_PROC_BROWSER_TEST_P(
       host_content_settings_map()->GetContentSetting(
           GURL(), url_example, ContentSettingsType::TRACKING_PROTECTION, &info),
       CONTENT_SETTING_BLOCK);
+
+  // Reset browser profile before teardown to avoid profile_destroyer errors.
+  profile_metrics::SetBrowserProfileType(
+      browser()->profile(), profile_metrics::BrowserProfileType::kRegular);
 }
 
 INSTANTIATE_TEST_SUITE_P(All,

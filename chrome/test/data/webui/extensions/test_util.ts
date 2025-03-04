@@ -98,8 +98,11 @@ export class MockItemDelegate extends ClickMock implements ItemDelegate {
     return Promise.resolve();
   }
   setItemSafetyCheckWarningAcknowledged(_id: string) {}
-  setItemEnabled(_id: string, _isEnabled: boolean) {}
+  setItemEnabled(_id: string, _isEnabled: boolean) {
+    return Promise.resolve();
+  }
   setItemAllowedIncognito(_id: string, _isAllowedIncognito: boolean) {}
+  setItemAllowedUserScripts(_id: string, _isAllowedUserScripts: boolean) {}
   setItemAllowedOnFileUrls(_id: string, _isAllowedOnFileUrls: boolean) {}
   setItemHostAccess(
       _id: string, _hostAccess: chrome.developerPrivate.HostAccess) {}
@@ -107,6 +110,9 @@ export class MockItemDelegate extends ClickMock implements ItemDelegate {
   setItemPinnedToToolbar(_id: string, _pinnedToToolbar: boolean) {}
   inspectItemView(_id: string, _view: chrome.developerPrivate.ExtensionView) {}
   openUrl(_url: string) {}
+  uploadItemToAccount(_id: string) {
+    return Promise.resolve();
+  }
 
 
   reloadItem(_id: string) {

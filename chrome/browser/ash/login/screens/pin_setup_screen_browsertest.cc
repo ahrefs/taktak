@@ -16,11 +16,13 @@
 #include "base/functional/callback_helpers.h"
 #include "base/metrics/histogram_base.h"
 #include "base/run_loop.h"
+#include "base/test/bind.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/scoped_command_line.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/test_future.h"
 #include "chrome/browser/ash/login/screen_manager.h"
+#include "chrome/browser/ash/login/test/auth_ui_utils.h"
 #include "chrome/browser/ash/login/test/cryptohome_mixin.h"
 #include "chrome/browser/ash/login/test/js_checker.h"
 #include "chrome/browser/ash/login/test/login_manager_mixin.h"
@@ -35,6 +37,7 @@
 #include "chrome/browser/ui/ash/login/login_display_host.h"
 #include "chrome/browser/ui/webui/ash/login/cryptohome_recovery_setup_screen_handler.h"
 #include "chrome/browser/ui/webui/ash/login/fingerprint_setup_screen_handler.h"
+#include "chrome/browser/ui/webui/ash/login/local_password_setup_handler.h"
 #include "chrome/browser/ui/webui/ash/login/password_selection_screen_handler.h"
 #include "chrome/browser/ui/webui/ash/login/pin_setup_screen_handler.h"
 #include "chrome/grit/generated_resources.h"
@@ -43,6 +46,7 @@
 #include "chromeos/ash/components/osauth/public/auth_session_storage.h"
 #include "components/user_manager/user_type.h"
 #include "content/public/test/browser_test.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/chromeos/devicetype_utils.h"
@@ -72,11 +76,19 @@ const test::UIPath kPinKeyboardInput = {kPinSetupScreen, "pinKeyboard",
 const test::UIPath kSetupTitle = {kPinSetupScreen, "setupTitle"};
 const test::UIPath kSetupSubtitle = {kPinSetupScreen, "setupSubtitle"};
 
+const test::UIPath kPinInputField = {kPinSetupScreen, "pinKeyboard",
+                                     "pinKeyboard", "pinInput"};
+
+const test::UIPath kShowHidePinButton = {kPinSetupScreen, "pinKeyboard",
+                                         "pinKeyboard", "showPinButton"};
+
 // PasswordSelectionScreen elements.
 const test::UIPath kGaiaPasswordButton = {"password-selection",
                                           "gaiaPasswordButton"};
 const test::UIPath kNextButtonPasswordSelection = {"password-selection",
                                                    "nextButton"};
+const test::UIPath kBackButtonPasswordSelection = {"password-selection",
+                                                   "backButton"};
 
 enum class PinPolicy {
   kUnlock,
@@ -109,6 +121,80 @@ void SetPinPolicy(PinPolicy policy, AllowlistStatus desired_status) {
                                     : prefs::kQuickUnlockModeAllowlist;
   prefs->SetList(associated_pref, std::move(allowlist_status));
 }
+
+PinSetupScreen* GetScreen() {
+  return WizardController::default_controller()->GetScreen<PinSetupScreen>();
+}
+
+FingerprintSetupScreen* GetFingerprintScreen() {
+  return WizardController::default_controller()
+      ->GetScreen<FingerprintSetupScreen>();
+}
+
+CryptohomeRecoverySetupScreen* GetCryptohomeSetupScreen() {
+  return WizardController::default_controller()
+      ->GetScreen<CryptohomeRecoverySetupScreen>();
+}
+
+void TapSkipButton() {
+  test::OobeJS().TapOnPath(kSkipButton);
+}
+
+void TapNextButton() {
+  test::OobeJS().TapOnPath(kNextButton);
+}
+
+void TapDoneButton() {
+  test::OobeJS().CreateVisibilityWaiter(true, kPinSetupScreenDoneStep)->Wait();
+  test::OobeJS().TapOnPath(kDoneButton);
+}
+
+void EnterPin() {
+  test::OobeJS().TypeIntoPath("654321", kPinKeyboardInput);
+}
+
+void InsertAndConfirmPin() {
+  EnterPin();
+  TapNextButton();
+  // Wait until the back button is visible to ensure that the UI is showing
+  // the 'confirmation' step.
+  test::OobeJS().CreateVisibilityWaiter(true, kBackButton)->Wait();
+  EnterPin();
+  TapNextButton();
+  TapDoneButton();
+}
+
+void HandlePasswordSelectionScreen() {
+  OobeScreenWaiter(PasswordSelectionScreenView::kScreenId).Wait();
+  test::OobeJS().ClickOnPath(kGaiaPasswordButton);
+  test::OobeJS().ClickOnPath(kNextButtonPasswordSelection);
+}
+
+void WaitForSetupTitleAndSubtitle(int title_msg_id,
+                                  int subtitle_msg_id,
+                                  bool subtitle_has_device_name = false) {
+  auto expected_title = l10n_util::GetStringUTF8(title_msg_id);
+  auto expected_subtitle =
+      subtitle_has_device_name
+          ? l10n_util::GetStringFUTF8(subtitle_msg_id,
+                                      ui::GetChromeOSDeviceName())
+          : l10n_util::GetStringUTF8(subtitle_msg_id);
+
+  test::OobeJS()
+      .CreateElementTextContentWaiter(expected_title, kSetupTitle)
+      ->Wait();
+  test::OobeJS()
+      .CreateElementTextContentWaiter(expected_subtitle, kSetupSubtitle)
+      ->Wait();
+}
+
+void ExpectExtraFactorsTokenPresence(bool present) {
+  EXPECT_EQ(LoginDisplayHost::default_host()
+                ->GetWizardContextForTesting()
+                ->extra_factors_token.has_value(),
+            present);
+}
+
 }  // namespace
 
 // Base class for testing the PIN setup screen. By default, this class simulates
@@ -134,19 +220,37 @@ class PinSetupScreenTest : public OobeBaseTest {
     ShellTestApi().SetTabletModeEnabledForTest(in_tablet_mode);
   }
 
+  void SetAllowPinUnlockPolicyForEnterpriseUsers() {
+    enterprise_management::CloudPolicySettings* policy =
+        user_policy_mixin_.RequestPolicyUpdate()->policy_payload();
+    policy->mutable_quickunlockmodeallowlist()->mutable_value()->add_entries(
+        "PIN");
+    policy_server_.UpdateUserPolicy(*policy, FakeGaiaMixin::kEnterpriseUser1);
+  }
+
   void SetUpOnMainThread() override {
     OobeBaseTest::SetUpOnMainThread();
 
-    original_callback_ = GetScreen()->get_exit_callback_for_testing();
-    GetScreen()->set_exit_callback_for_testing(base::BindRepeating(
-        &PinSetupScreenTest::HandleScreenExit, base::Unretained(this)));
+    // PinSetupScren exit result manipulation.
+    PinSetupScreen::ScreenExitCallback original_callback =
+        GetScreen()->get_exit_callback_for_testing();
+    GetScreen()->set_exit_callback_for_testing(
+        base::BindLambdaForTesting([&, callback = std::move(original_callback)](
+                                       PinSetupScreen::Result result) {
+          // Save the result and trigger the original callback. This ensures
+          // that metrics are properly recorded after the screen exits.
+          std::move(screen_exit_result_waiter_.GetRepeatingCallback())
+              .Run(result);
+          callback.Run(result);
+        }));
 
+    // FingerprintSetupScreen exit result manipulation.
     original_fingerprint_callback_ =
         GetFingerprintScreen()->get_exit_callback_for_testing();
     GetFingerprintScreen()->set_exit_callback_for_testing(
-        base::BindRepeating(&PinSetupScreenTest::HandleFingerprintScreenExit,
-                            base::Unretained(this)));
+        fingerprint_result_waiter_.GetRepeatingCallback());
 
+    // CryptohomeRecoverySetupScreen exit result manipulation.
     cryptohome_recovery_setup_callback_ =
         GetCryptohomeSetupScreen()->get_exit_callback_for_testing();
     GetCryptohomeSetupScreen()->set_exit_callback_for_testing(
@@ -164,41 +268,27 @@ class PinSetupScreenTest : public OobeBaseTest {
       ASSERT_TRUE(user_policy_mixin_.RequestPolicyUpdate());
       login_manager_mixin_.LoginAsNewEnterpriseUser();
     } else {
-      login_manager_mixin_.LoginAsNewRegularUser();
+      if (simulate_passwordless_signin_) {
+        auto user_context = LoginManagerMixin::CreateDefaultUserContext(
+            LoginManagerMixin::TestUserInfo(
+                AccountId::FromUserEmailGaiaId(test::kTestEmail,
+                                               GaiaId(test::kTestGaiaId)),
+                /*factors=*/{}));
+        login_manager_mixin_.LoginAsNewRegularUser(std::move(user_context));
+      } else {
+        login_manager_mixin_.LoginAsNewRegularUser();
+      }
     }
 
     ASSERT_TRUE(cryptohome_recovery_setup_result_waiter_.Wait());
     context->skip_post_login_screens_for_tests = false;
   }
 
-  void SetAllowPinUnlockPolicyForEnterpriseUsers() {
-    enterprise_management::CloudPolicySettings* policy =
-        user_policy_mixin_.RequestPolicyUpdate()->policy_payload();
-    policy->mutable_quickunlockmodeallowlist()->mutable_value()->add_entries(
-        "PIN");
-    policy_server_.UpdateUserPolicy(*policy, FakeGaiaMixin::kEnterpriseUser1);
-  }
-
+  // Unblocks the CryptohomeRecoverySetup screen exit and continues the flow.
   void CryptohomeRecoverySetupContinue() {
     cryptohome_recovery_setup_callback_.Run(
         cryptohome_recovery_setup_result_waiter_.Take());
   }
-
-  PinSetupScreen* GetScreen() {
-    return WizardController::default_controller()->GetScreen<PinSetupScreen>();
-  }
-
-  FingerprintSetupScreen* GetFingerprintScreen() {
-    return WizardController::default_controller()
-        ->GetScreen<FingerprintSetupScreen>();
-  }
-
-  CryptohomeRecoverySetupScreen* GetCryptohomeSetupScreen() {
-    return WizardController::default_controller()
-        ->GetScreen<CryptohomeRecoverySetupScreen>();
-  }
-
-  void EnterPin() { test::OobeJS().TypeIntoPath("654321", kPinKeyboardInput); }
 
   // Logs in and moves the flow to the point where the PinSetupScreen would be
   // shown.
@@ -219,48 +309,17 @@ class PinSetupScreenTest : public OobeBaseTest {
     OobeScreenWaiter(PinSetupScreenView::kScreenId).Wait();
   }
 
-  void TapSkipButton() { test::OobeJS().TapOnPath(kSkipButton); }
-
-  void TapNextButton() { test::OobeJS().TapOnPath(kNextButton); }
-
-  void TapDoneButton() {
-    test::OobeJS()
-        .CreateVisibilityWaiter(true, kPinSetupScreenDoneStep)
-        ->Wait();
-    test::OobeJS().TapOnPath(kDoneButton);
-  }
-
-  void InsertAndConfirmPin() {
-    EnterPin();
-    TapNextButton();
-    // Wait until the back button is visible to ensure that the UI is showing
-    // the 'confirmation' step.
-    test::OobeJS().CreateVisibilityWaiter(true, kBackButton)->Wait();
-    EnterPin();
-    TapNextButton();
-    TapDoneButton();
-  }
-
-  void HandlePasswordSelectionScreen() {
-    OobeScreenWaiter(PasswordSelectionScreenView::kScreenId).Wait();
-    test::OobeJS().ClickOnPath(kGaiaPasswordButton);
-    test::OobeJS().ClickOnPath(kNextButtonPasswordSelection);
-  }
-
-  void WaitForScreenExit() {
-    if (screen_exited_)
-      return;
-    base::RunLoop run_loop;
-    screen_exit_callback_ = run_loop.QuitClosure();
-    run_loop.Run();
-  }
+  void WaitForScreenExit() { ASSERT_TRUE(screen_exit_result_waiter_.Wait()); }
 
   void WaitForFingerprintScreenExit() {
-    if (!fingerprint_screen_result_.has_value()) {
-      base::RunLoop run_loop;
-      fingerprint_screen_exit_callback_ = run_loop.QuitClosure();
-      run_loop.Run();
-    }
+    ASSERT_TRUE(fingerprint_result_waiter_.Wait());
+  }
+
+  void ExpectFingerprintScreenExitedAndContinue() {
+    EXPECT_EQ(fingerprint_result_waiter_.Get(),
+              FingerprintSetupScreen::Result::NOT_APPLICABLE);
+    original_fingerprint_callback_.Run(
+        FingerprintSetupScreen::Result::NOT_APPLICABLE);
   }
 
   void CheckCredentialsWereCleared() {
@@ -271,21 +330,20 @@ class PinSetupScreenTest : public OobeBaseTest {
     ExpectExtraFactorsTokenPresence(/*present=*/true);
   }
 
-  void ExpectExtraFactorsTokenPresence(bool present) {
-    EXPECT_EQ(LoginDisplayHost::default_host()
-                  ->GetWizardContextForTesting()
-                  ->extra_factors_token.has_value(),
-              present);
-  }
-
   void ExpectUserActionMetric(PinSetupScreen::UserAction user_action) {
     EXPECT_THAT(
         histogram_tester_.GetAllSamples(kPinSetupScreenUserAction),
         ElementsAre(base::Bucket(static_cast<int>(user_action), /*count=*/1)));
   }
 
+  void ExpectExitResult(PinSetupScreen::Result result) {
+    EXPECT_EQ(screen_exit_result_waiter_.Get(), result);
+    // Clear the result so that it can be used if the screen is surfaced again.
+    screen_exit_result_waiter_.Clear();
+  }
+
   void ExpectExitResultAndMetric(PinSetupScreen::Result result) {
-    EXPECT_EQ(screen_result_.value(), result);
+    ExpectExitResult(result);
 
     if (result == PinSetupScreen::Result::kNotApplicable ||
         result == PinSetupScreen::Result::kNotApplicableAsPrimaryFactor) {
@@ -306,77 +364,39 @@ class PinSetupScreenTest : public OobeBaseTest {
     EXPECT_EQ(GetScreen()->get_skip_reason_for_testing().value(), reason);
   }
 
-  void ExpectFingerprintScreenExitedAndContinue() {
-    EXPECT_EQ(fingerprint_screen_result_.value(),
-              FingerprintSetupScreen::Result::NOT_APPLICABLE);
-    original_fingerprint_callback_.Run(
-        FingerprintSetupScreen::Result::NOT_APPLICABLE);
-  }
-
-  void WaitForSetupTitleAndSubtitle(int title_msg_id,
-                                    int subtitle_msg_id,
-                                    bool subtitle_has_device_name = false) {
-    auto expected_title = l10n_util::GetStringUTF8(title_msg_id);
-    auto expected_subtitle =
-        subtitle_has_device_name
-            ? l10n_util::GetStringFUTF8(subtitle_msg_id,
-                                        ui::GetChromeOSDeviceName())
-            : l10n_util::GetStringUTF8(subtitle_msg_id);
-
-    test::OobeJS()
-        .CreateElementTextContentWaiter(expected_title, kSetupTitle)
-        ->Wait();
-    test::OobeJS()
-        .CreateElementTextContentWaiter(expected_subtitle, kSetupSubtitle)
-        ->Wait();
-  }
-
-  std::optional<PinSetupScreen::Result> screen_result_;
-  std::optional<FingerprintSetupScreen::Result> fingerprint_screen_result_;
-  base::HistogramTester histogram_tester_;
-  bool screen_exited_ = false;
-
+ protected:
+  // Whether to login as a regular user, or as an enterprise user.
   bool login_as_enterprise_ = false;
-  EmbeddedPolicyTestServerMixin policy_server_{&mixin_host_};
-  UserPolicyMixin user_policy_mixin_{
-      &mixin_host_,
-      AccountId::FromUserEmailGaiaId(FakeGaiaMixin::kEnterpriseUser1,
-                                     FakeGaiaMixin::kEnterpriseUser1GaiaId),
-      &policy_server_};
 
-  LoginManagerMixin login_manager_mixin_{&mixin_host_};
-  CryptohomeMixin cryptohome_{&mixin_host_};
+  // Used for simulating that the user went through Gaia signin using a
+  // passwordless method.
+  bool simulate_passwordless_signin_ = false;
 
-  // For manipulating the flow just before the first AuthFactor is setup.
+  base::test::ScopedFeatureList scoped_feature_list_;
+
+ private:
+  base::test::TestFuture<PinSetupScreen::Result> screen_exit_result_waiter_;
+
+  FingerprintSetupScreen::ScreenExitCallback original_fingerprint_callback_;
+  base::test::TestFuture<FingerprintSetupScreen::Result>
+      fingerprint_result_waiter_;
+
   CryptohomeRecoverySetupScreen::ScreenExitCallback
       cryptohome_recovery_setup_callback_;
   base::test::TestFuture<CryptohomeRecoverySetupScreen::Result>
       cryptohome_recovery_setup_result_waiter_;
 
-  base::test::ScopedFeatureList scoped_feature_list_;
-
- private:
-  void HandleScreenExit(PinSetupScreen::Result result) {
-    screen_exited_ = true;
-    screen_result_ = result;
-    original_callback_.Run(result);
-    if (screen_exit_callback_)
-      std::move(screen_exit_callback_).Run();
-  }
-
-  void HandleFingerprintScreenExit(FingerprintSetupScreen::Result result) {
-    fingerprint_screen_result_ = result;
-    if (fingerprint_screen_exit_callback_) {
-      std::move(fingerprint_screen_exit_callback_).Run();
-    }
-  }
-
-  PinSetupScreen::ScreenExitCallback original_callback_;
-  base::RepeatingClosure screen_exit_callback_;
-
-  // For inspecting the exit behavior of the fingerprint setup screen.
-  FingerprintSetupScreen::ScreenExitCallback original_fingerprint_callback_;
-  base::RepeatingClosure fingerprint_screen_exit_callback_;
+  // Utilities and Mixins
+  base::HistogramTester histogram_tester_;
+  EmbeddedPolicyTestServerMixin policy_server_{&mixin_host_};
+  UserPolicyMixin user_policy_mixin_{
+      &mixin_host_,
+      AccountId::FromUserEmailGaiaId(
+          FakeGaiaMixin::kEnterpriseUser1,
+          GaiaId(FakeGaiaMixin::kEnterpriseUser1GaiaId)),
+      &policy_server_};
+  LoginManagerMixin login_manager_mixin_{&mixin_host_};
+  CryptohomeMixin cryptohome_{&mixin_host_};
 };
 
 class PinSetupScreenTestAsSecondaryFactor : public PinSetupScreenTest {
@@ -682,20 +702,18 @@ IN_PROC_BROWSER_TEST_F(PinSetupScreenTestAsMainFactor, MainFactorSet) {
   ExpectExitResultAndMetric(PinSetupScreen::Result::kDoneAsMainFactor);
   ExpectFingerprintScreenExitedAndContinue();
 
-  // When the PIN is surfaced at the end of the flow for a second time, it exits
-  // properly, since a PIN has already been set.
-  ExpectSkipReason(PinSetupScreen::SkipReason::kPinAlreadySet);
-  EXPECT_EQ(screen_result_.value(), PinSetupScreen::Result::kNotApplicable);
+  // Flow must have finished.
   CheckCredentialsWereCleared();
 }
 
-// PIN is offered as an additional factor at the end of the auth factor setup
-// flow when the user chooses not to use it as a main factor.
+// PIN is not offered as a second factor when the user explicitly chooses a
+// password.
 IN_PROC_BROWSER_TEST_F(PinSetupScreenTestAsMainFactor,
-                       SkippingLeadsToPinBeingOfferedAsSecondaryFactor) {
+                       NoAdditionalPinOfferingWhenUserChoosesPassword) {
   ShowPinSetupScreen();
   WaitForScreenShown();
 
+  // "Use password instead"
   TapSkipButton();
 
   // The flow leads to the password selection screen. Ensure that the
@@ -708,10 +726,7 @@ IN_PROC_BROWSER_TEST_F(PinSetupScreenTestAsMainFactor,
   WaitForFingerprintScreenExit();
   ExpectFingerprintScreenExitedAndContinue();
 
-  // Skip offering to set a PIN as an additional factor.
-  WaitForScreenShown();
-  TapSkipButton();
-  EXPECT_EQ(screen_result_.value(), PinSetupScreen::Result::kUserSkip);
+  // PIN is not offered again.
   CheckCredentialsWereCleared();
 }
 
@@ -727,6 +742,56 @@ IN_PROC_BROWSER_TEST_F(PinSetupScreenTestAsMainFactor,
       LoginDisplayHost::default_host()
           ->GetWizardContext()
           ->extra_factors_token.value()));
+}
+
+// Ensures that the 'eye' icon for showing/hiding the PIN works.
+IN_PROC_BROWSER_TEST_F(PinSetupScreenTestAsMainFactor, ShowHidePin) {
+  ShowPinSetupScreen();
+  WaitForScreenShown();
+
+  test::OobeJS().CreateVisibilityWaiter(true, kShowHidePinButton)->Wait();
+
+  // Input field should have the 'password' type by default.
+  test::OobeJS().ExpectAttributeEQ("type", kPinInputField,
+                                   std::string{"password"});
+  // Clicking should make the PIN visible.
+  test::OobeJS().ClickOnPath(kShowHidePinButton);
+  test::OobeJS().ExpectAttributeEQ("type", kPinInputField, std::string{"text"});
+
+  // Back to hidden
+  test::OobeJS().ClickOnPath(kShowHidePinButton);
+  test::OobeJS().ExpectAttributeEQ("type", kPinInputField,
+                                   std::string{"password"});
+}
+
+// Tests that the 'Back' button logic on the PasswordSelectionScreen can bring
+// the user back to PIN as a main factor setup.
+IN_PROC_BROWSER_TEST_F(PinSetupScreenTestAsMainFactor, BackButtonLogicWorks) {
+  ShowPinSetupScreen();
+  WaitForScreenShown();
+
+  // Skip the screen manually.
+  TapSkipButton();
+  ExpectExitResult(PinSetupScreen::Result::kUserChosePassword);
+
+  // PasswordSelectionScreen should show a back button. Click on it.
+  OobeScreenWaiter(PasswordSelectionScreenView::kScreenId).Wait();
+  test::OobeJS()
+      .CreateVisibilityWaiter(true, kBackButtonPasswordSelection)
+      ->Wait();
+  test::OobeJS().ClickOnPath(kBackButtonPasswordSelection);
+
+  // Wait for the PinSetupScreen to be shown again for main factor setup. Check
+  // that this is indeed the main factor setup step by verifying the strings and
+  // the screen exit result. Wait for PasswordSelection to be shown again.
+  WaitForScreenShown();
+  WaitForSetupTitleAndSubtitle(
+      IDS_DISCOVER_PIN_SETUP_PIN_AS_MAIN_FACTOR_TITLE,
+      IDS_DISCOVER_PIN_SETUP_PIN_AS_MAIN_FACTOR_SUBTITLE,
+      /*subtitle_has_device_name=*/true);
+  TapSkipButton();
+  ExpectExitResult(PinSetupScreen::Result::kUserChosePassword);
+  OobeScreenWaiter(PasswordSelectionScreenView::kScreenId).Wait();
 }
 
 class PinSetupScreenTestAsMainFactorWithoutLoginSupport
@@ -791,6 +856,78 @@ IN_PROC_BROWSER_TEST_F(PinSetupScreenTestAsMainFactorEnterprise,
   TapSkipButton();
   ExpectExitResultAndMetric(PinSetupScreen::Result::kUserSkip);
   CheckCredentialsWereCleared();
+}
+
+class PinSetupScreenTestAsMainFactorPasswordlessSignin
+    : public PinSetupScreenTestAsMainFactor {
+ public:
+  PinSetupScreenTestAsMainFactorPasswordlessSignin() {
+    simulate_passwordless_signin_ = true;
+  }
+  ~PinSetupScreenTestAsMainFactorPasswordlessSignin() override = default;
+};
+
+// Tests that the 'Back' button logic on the LocalPasswordSetupScreen can bring
+// the user back to PIN as a main factor setup when the user did not have an
+// opportunity to choose between an online vs. local password. This is the case
+// when the user goes through Gaia using a passwordless method.
+IN_PROC_BROWSER_TEST_F(PinSetupScreenTestAsMainFactorPasswordlessSignin,
+                       BackButtonLogicWorks) {
+  ShowPinSetupScreen();
+  WaitForScreenShown();
+
+  // Skip the screen manually.
+  TapSkipButton();
+  ExpectExitResult(PinSetupScreen::Result::kUserChosePassword);
+
+  // The user did not go through Gaia using a password, thus they do not have
+  // the option to choose between an online vs. local password and land on the
+  // LocalPasswordSetupScreen directly.
+  OobeScreenWaiter(LocalPasswordSetupView::kScreenId).Wait();
+  test::OobeJS()
+      .CreateVisibilityWaiter(/*visibility=*/true,
+                              test::LocalPasswordSetupBackActionPath())
+      ->Wait();
+
+  // Clicking on 'Back' should bring us back to main factor PIN setup.
+  test::LocalPasswordSetupBackAction();
+  WaitForScreenShown();
+
+  // Skip again and verify the proper exit result and transition.
+  TapSkipButton();
+  ExpectExitResult(PinSetupScreen::Result::kUserChosePassword);
+  OobeScreenWaiter(LocalPasswordSetupView::kScreenId).Wait();
+}
+
+class PinSetupScreenTestAsMainFactorWithoutLoginSupportPasswordlessSignin
+    : public PinSetupScreenTestAsMainFactorWithoutLoginSupport {
+ public:
+  PinSetupScreenTestAsMainFactorWithoutLoginSupportPasswordlessSignin() {
+    simulate_passwordless_signin_ = true;
+  }
+
+  ~PinSetupScreenTestAsMainFactorWithoutLoginSupportPasswordlessSignin()
+      override = default;
+};
+
+// Without hardware support, the PIN screen is not shown for setting up a PIN
+// as the main factor. Additionally, when the user goes through Gaia without
+// using a password, they land directly on the LocalPasswordSetupScreen. In that
+// case, there isn't a back button.
+IN_PROC_BROWSER_TEST_F(
+    PinSetupScreenTestAsMainFactorWithoutLoginSupportPasswordlessSignin,
+    NoBackButtonOnLocalPasswordSetup) {
+  ShowPinSetupScreen();
+  WaitForScreenExit();
+
+  // Wait for the password selection screen to be surfaced.
+  ExpectSkipReason(PinSetupScreen::SkipReason::kUsupportedHardware);
+  ExpectExitResultAndMetric(
+      PinSetupScreen::Result::kNotApplicableAsPrimaryFactor);
+  OobeScreenWaiter(LocalPasswordSetupView::kScreenId).Wait();
+
+  // Expect the back button to be hidden.
+  test::OobeJS().ExpectHiddenPath(test::LocalPasswordSetupBackActionPath());
 }
 
 }  // namespace ash

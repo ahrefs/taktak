@@ -9,14 +9,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import static org.chromium.chrome.browser.tasks.tab_management.TabGroupRowProperties.CLUSTER_DATA;
-import static org.chromium.chrome.browser.tasks.tab_management.TabGroupRowProperties.COLOR_INDEX;
 import static org.chromium.chrome.browser.tasks.tab_management.TabGroupRowProperties.DESTROYABLE;
 import static org.chromium.chrome.browser.tasks.tab_management.TabGroupRowProperties.DISPLAY_AS_SHARED;
 import static org.chromium.chrome.browser.tasks.tab_management.TabGroupRowProperties.SHARED_IMAGE_TILES_VIEW;
+import static org.chromium.components.data_sharing.SharedGroupTestHelper.COLLABORATION_ID1;
+import static org.chromium.components.data_sharing.SharedGroupTestHelper.GROUP_MEMBER1;
+import static org.chromium.components.data_sharing.SharedGroupTestHelper.GROUP_MEMBER2;
+import static org.chromium.components.tab_group_sync.SyncedGroupTestHelper.SYNC_GROUP_ID1;
 
 import android.content.Context;
 import android.view.ContextThemeWrapper;
@@ -28,174 +30,109 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import org.chromium.base.Callback;
 import org.chromium.base.ContextUtils;
-import org.chromium.base.supplier.LazyOneshotSupplierImpl;
 import org.chromium.base.test.BaseRobolectricTestRunner;
-import org.chromium.base.test.util.Features.DisableFeatures;
 import org.chromium.base.test.util.Features.EnableFeatures;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.hub.PaneManager;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
 import org.chromium.chrome.browser.tasks.tab_management.TabGroupFaviconCluster.ClusterData;
+import org.chromium.components.collaboration.CollaborationService;
+import org.chromium.components.collaboration.ServiceStatus;
 import org.chromium.components.data_sharing.DataSharingService;
-import org.chromium.components.data_sharing.DataSharingService.GroupDataOrFailureOutcome;
-import org.chromium.components.data_sharing.GroupData;
-import org.chromium.components.data_sharing.GroupMember;
-import org.chromium.components.data_sharing.PeopleGroupActionFailure;
-import org.chromium.components.data_sharing.member_role.MemberRole;
-import org.chromium.components.signin.base.CoreAccountInfo;
+import org.chromium.components.data_sharing.DataSharingUIDelegate;
+import org.chromium.components.data_sharing.SharedGroupTestHelper;
 import org.chromium.components.tab_group_sync.SavedTabGroup;
-import org.chromium.components.tab_group_sync.SavedTabGroupTab;
+import org.chromium.components.tab_group_sync.SyncedGroupTestHelper;
 import org.chromium.components.tab_group_sync.TabGroupSyncService;
 import org.chromium.components.tab_group_sync.TabGroupUiActionHandler;
-import org.chromium.components.tab_groups.TabGroupColorId;
 import org.chromium.ui.modaldialog.ModalDialogManager;
 import org.chromium.ui.modelutil.PropertyModel;
 import org.chromium.url.GURL;
 import org.chromium.url.JUnitTestGURLs;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 /** Tests for {@link TabGroupRowMediator}. */
 @RunWith(BaseRobolectricTestRunner.class)
-@EnableFeatures({ChromeFeatureList.TAB_GROUP_PARITY_ANDROID, ChromeFeatureList.DATA_SHARING})
+@EnableFeatures({ChromeFeatureList.DATA_SHARING})
 public class TabGroupRowMediatorUnitTest {
-    private static final String COLLABORATION_ID1 = "collaborationId1";
-    private static final String EMAIL1 = "one@gmail.com";
-    private static final String EMAIL2 = "two@gmail.com";
-    private static final String GAIA_ID1 = "gaiaId1";
-    private static final String GAIA_ID2 = "gaiaId2";
-    private static final String SYNC_GROUP_ID1 = "syncGroup1";
-    private static final GroupMember GROUP_MEMBER1 =
-            newGroupMember(GAIA_ID1, EMAIL1, MemberRole.OWNER);
-    private static final GroupMember GROUP_MEMBER2 =
-            newGroupMember(GAIA_ID2, EMAIL2, MemberRole.MEMBER);
-
-    private static GroupMember newGroupMember(
-            String gaiaId, String email, @MemberRole int memberRole) {
-        return new GroupMember(
-                gaiaId,
-                /* displayName= */ null,
-                email,
-                memberRole,
-                /* avatarUrl= */ null,
-                /* givenName= */ null);
-    }
 
     @Rule public MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     @Mock private TabGroupModelFilter mTabGroupModelFilter;
     @Mock private TabGroupSyncService mTabGroupSyncService;
     @Mock private DataSharingService mDataSharingService;
+    @Mock private DataSharingUIDelegate mDataSharingUiDelegate;
+    @Mock private CollaborationService mCollaborationService;
+    @Mock private ServiceStatus mServiceStatus;
     @Mock private PaneManager mPaneManager;
     @Mock private TabGroupUiActionHandler mTabGroupUiActionHandler;
     @Mock private ModalDialogManager mModalDialogManager;
     @Mock private ActionConfirmationManager mActionConfirmationManager;
     @Mock private FaviconResolver mFaviconResolver;
-    @Mock private CoreAccountInfo mCoreAccountInfo;
     @Mock private Supplier<Integer> mFetchGroupState;
 
-    @Captor private ArgumentCaptor<Callback<GroupDataOrFailureOutcome>> mReadGroupCallbackCaptor;
-
-    private SavedTabGroupTab mTab1;
-    private SavedTabGroupTab mTab2;
-    private SavedTabGroupTab mTab3;
-    private SavedTabGroupTab mTab4;
-    private SavedTabGroupTab mTab5;
+    private GURL mUrl1;
+    private GURL mUrl2;
+    private GURL mUrl3;
+    private GURL mUrl4;
+    private GURL mUrl5;
+    private SharedGroupTestHelper mSharedGroupTestHelper;
+    private Context mContext;
 
     @Before
     public void setUp() {
         // Cannot initialize even test GURLs too early.
-        mTab1 = newTab(JUnitTestGURLs.URL_1);
-        mTab2 = newTab(JUnitTestGURLs.URL_2);
-        mTab3 = newTab(JUnitTestGURLs.URL_3);
-        mTab4 = newTab(JUnitTestGURLs.BLUE_1);
-        mTab5 = newTab(JUnitTestGURLs.BLUE_2);
-    }
-
-    private PropertyModel buildTestModel(List<SavedTabGroupTab> savedTabs) {
-        return buildTestModel(savedTabs, /* isShared= */ false);
-    }
-
-    private PropertyModel buildTestModel(List<SavedTabGroupTab> savedTabs, boolean isShared) {
-        SavedTabGroup group = newGroup(savedTabs, isShared ? COLLABORATION_ID1 : null);
-        Context context =
+        mUrl1 = JUnitTestGURLs.URL_1;
+        mUrl2 = JUnitTestGURLs.URL_2;
+        mUrl3 = JUnitTestGURLs.URL_3;
+        mUrl4 = JUnitTestGURLs.BLUE_1;
+        mUrl5 = JUnitTestGURLs.BLUE_2;
+        mSharedGroupTestHelper =
+                new SharedGroupTestHelper(mDataSharingService, mCollaborationService);
+        mContext =
                 new ContextThemeWrapper(
                         ContextUtils.getApplicationContext(), R.style.Theme_BrowserUI_DayNight);
+
+        when(mCollaborationService.getServiceStatus()).thenReturn(mServiceStatus);
+        when(mServiceStatus.isAllowedToJoin()).thenReturn(true);
+        when(mDataSharingService.getUiDelegate()).thenReturn(mDataSharingUiDelegate);
+    }
+
+    private PropertyModel buildTestModel(GURL... urls) {
+        return buildTestModel(/* isShared= */ false, urls);
+    }
+
+    private PropertyModel buildTestModel(boolean isShared, GURL... urls) {
+        SavedTabGroup group = new SavedTabGroup();
+        group.syncId = SYNC_GROUP_ID1;
+        group.collaborationId = isShared ? COLLABORATION_ID1 : null;
+        group.title = "Title";
+        group.savedTabs = SyncedGroupTestHelper.tabsFromUrls(urls);
         TabGroupRowMediator mediator =
                 new TabGroupRowMediator(
-                        context,
+                        mContext,
                         group,
                         mTabGroupModelFilter,
                         mTabGroupSyncService,
                         mDataSharingService,
+                        mCollaborationService,
                         mPaneManager,
                         mTabGroupUiActionHandler,
                         mModalDialogManager,
                         mActionConfirmationManager,
                         mFaviconResolver,
-                        new LazyOneshotSupplierImpl<>() {
-                            @Override
-                            public void doSet() {
-                                set(mCoreAccountInfo);
-                            }
-                        },
                         mFetchGroupState);
         return mediator.getModel();
-    }
-
-    private SavedTabGroupTab newTab(GURL url) {
-        SavedTabGroupTab tab = new SavedTabGroupTab();
-        tab.url = url;
-        return tab;
-    }
-
-    private SavedTabGroup newGroup(List<SavedTabGroupTab> savedTabs, String collaborationId) {
-        SavedTabGroup group = new SavedTabGroup();
-        group.syncId = SYNC_GROUP_ID1;
-        group.title = "Title";
-        group.color = TabGroupColorId.BLUE;
-        group.savedTabs = savedTabs;
-        group.collaborationId = collaborationId;
-        return group;
-    }
-
-    private void respondToReadGroup(GroupMember[] members) {
-        verify(mDataSharingService)
-                .readGroup(eq(COLLABORATION_ID1), mReadGroupCallbackCaptor.capture());
-        GroupData groupData =
-                new GroupData(
-                        COLLABORATION_ID1,
-                        /* displayName= */ null,
-                        members,
-                        /* groupToken= */ null);
-        GroupDataOrFailureOutcome outcome =
-                new GroupDataOrFailureOutcome(groupData, PeopleGroupActionFailure.UNKNOWN);
-        mReadGroupCallbackCaptor.getValue().onResult(outcome);
-    }
-
-    @Test
-    @SmallTest
-    @DisableFeatures(ChromeFeatureList.TAB_GROUP_PARITY_ANDROID)
-    public void testNoParity() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(new SavedTabGroupTab()));
-        // 0 is the default value.
-        assertEquals(0, propertyModel.get(COLOR_INDEX));
     }
 
     @Test
     @SmallTest
     public void testFavicons_zero() {
-        PropertyModel propertyModel = buildTestModel(Collections.emptyList());
+        PropertyModel propertyModel = buildTestModel();
         ClusterData clusterData = propertyModel.get(CLUSTER_DATA);
         assertEquals(0, clusterData.totalCount);
         assertEquals(0, clusterData.firstUrls.size());
@@ -204,7 +141,7 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testFavicons_one() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(mTab1));
+        PropertyModel propertyModel = buildTestModel(mUrl1);
         ClusterData clusterData = propertyModel.get(CLUSTER_DATA);
         assertEquals(1, clusterData.totalCount);
         assertEquals(1, clusterData.firstUrls.size());
@@ -214,7 +151,7 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testFavicons_two() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(mTab1, mTab2));
+        PropertyModel propertyModel = buildTestModel(mUrl1, mUrl2);
         ClusterData clusterData = propertyModel.get(CLUSTER_DATA);
         assertEquals(2, clusterData.totalCount);
         assertEquals(2, clusterData.firstUrls.size());
@@ -225,7 +162,7 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testFavicons_three() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(mTab1, mTab2, mTab3));
+        PropertyModel propertyModel = buildTestModel(mUrl1, mUrl2, mUrl3);
         ClusterData clusterData = propertyModel.get(CLUSTER_DATA);
         assertEquals(3, clusterData.totalCount);
         assertEquals(3, clusterData.firstUrls.size());
@@ -237,7 +174,7 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testFavicons_four() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(mTab1, mTab2, mTab3, mTab4));
+        PropertyModel propertyModel = buildTestModel(mUrl1, mUrl2, mUrl3, mUrl4);
         ClusterData clusterData = propertyModel.get(CLUSTER_DATA);
         assertEquals(4, clusterData.totalCount);
         assertEquals(4, clusterData.firstUrls.size());
@@ -250,8 +187,7 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testFavicons_five() {
-        List<SavedTabGroupTab> tabs = Arrays.asList(mTab1, mTab2, mTab3, mTab4, mTab5);
-        PropertyModel propertyModel = buildTestModel(tabs);
+        PropertyModel propertyModel = buildTestModel(mUrl1, mUrl2, mUrl3, mUrl4, mUrl5);
         ClusterData clusterData = propertyModel.get(CLUSTER_DATA);
         assertEquals(5, clusterData.totalCount);
         assertEquals(4, clusterData.firstUrls.size());
@@ -264,7 +200,7 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testNotShared() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(mTab1), /* isShared= */ false);
+        PropertyModel propertyModel = buildTestModel(/* isShared= */ false, mUrl1);
         assertFalse(propertyModel.get(DISPLAY_AS_SHARED));
         assertNull(propertyModel.get(SHARED_IMAGE_TILES_VIEW));
     }
@@ -272,8 +208,8 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testCollaborationButOnlyOneUser() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(mTab1), /* isShared= */ true);
-        respondToReadGroup(new GroupMember[] {GROUP_MEMBER1});
+        mSharedGroupTestHelper.respondToReadGroup(COLLABORATION_ID1, GROUP_MEMBER1);
+        PropertyModel propertyModel = buildTestModel(/* isShared= */ true, mUrl1);
 
         assertFalse(propertyModel.get(DISPLAY_AS_SHARED));
         assertNull(propertyModel.get(SHARED_IMAGE_TILES_VIEW));
@@ -282,8 +218,8 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testShared() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(mTab1), /* isShared= */ true);
-        respondToReadGroup(new GroupMember[] {GROUP_MEMBER1, GROUP_MEMBER2});
+        mSharedGroupTestHelper.respondToReadGroup(COLLABORATION_ID1, GROUP_MEMBER1, GROUP_MEMBER2);
+        PropertyModel propertyModel = buildTestModel(/* isShared= */ true, mUrl1);
 
         assertTrue(propertyModel.get(DISPLAY_AS_SHARED));
         assertNotNull(propertyModel.get(SHARED_IMAGE_TILES_VIEW));
@@ -292,13 +228,10 @@ public class TabGroupRowMediatorUnitTest {
     @Test
     @SmallTest
     public void testDestroyable() {
-        PropertyModel propertyModel = buildTestModel(Arrays.asList(mTab1), /* isShared= */ true);
+        mSharedGroupTestHelper.respondToReadGroup(COLLABORATION_ID1, GROUP_MEMBER1, GROUP_MEMBER2);
+        PropertyModel propertyModel = buildTestModel(/* isShared= */ true, mUrl1);
 
-        assertFalse(propertyModel.get(DISPLAY_AS_SHARED));
+        assertTrue(propertyModel.get(DISPLAY_AS_SHARED));
         propertyModel.get(DESTROYABLE).destroy();
-
-        respondToReadGroup(new GroupMember[] {GROUP_MEMBER1, GROUP_MEMBER2});
-        assertFalse(propertyModel.get(DISPLAY_AS_SHARED));
-        assertNull(propertyModel.get(SHARED_IMAGE_TILES_VIEW));
     }
 }

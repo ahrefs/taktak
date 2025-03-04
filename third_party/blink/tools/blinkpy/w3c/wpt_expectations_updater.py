@@ -52,8 +52,8 @@ class WPTExpectationsUpdater:
         self.git = self.host.git(self.finder.chromium_base())
         self.patchset = None
         self.wpt_manifests = (
-            wpt_manifests or
-            [self.port.wpt_manifest(d) for d in self.port.WPT_DIRS])
+            wpt_manifests
+            or [self.port.wpt_manifest(d) for d in self.port.wpt_dirs()])
 
         # Get options from command line arguments.
         parser = argparse.ArgumentParser(description=__doc__)
@@ -160,7 +160,7 @@ class WPTExpectationsUpdater:
         # here. See https://crbug.com/1154650 .
         self.port.wpt_manifest.cache_clear()
 
-        resolver = BuildResolver(self.host,
+        resolver = BuildResolver(self.host.web,
                                  self.git_cl,
                                  can_trigger_jobs=False)
         builds = [Build(builder) for builder in self._get_try_bots()]

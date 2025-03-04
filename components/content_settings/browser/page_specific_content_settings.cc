@@ -7,6 +7,7 @@
 #include <list>
 #include <vector>
 
+#include "base/auto_reset.h"
 #include "base/command_line.h"
 #include "base/functional/overloaded.h"
 #include "base/lazy_instance.h"
@@ -15,7 +16,6 @@
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "components/browsing_data/content/cookie_helper.h"
 #include "components/content_settings/common/content_settings_agent.mojom.h"
 #include "components/content_settings/core/browser/content_settings_info.h"
@@ -24,6 +24,7 @@
 #include "components/content_settings/core/common/content_settings.h"
 #include "components/content_settings/core/common/content_settings_pattern_parser.h"
 #include "components/content_settings/core/common/content_settings_types.h"
+#include "components/content_settings/core/common/content_settings_types.mojom-shared.h"
 #include "components/content_settings/core/common/content_settings_utils.h"
 #include "components/content_settings/core/common/features.h"
 #include "components/privacy_sandbox/canonical_topic.h"
@@ -50,10 +51,6 @@
 #include "third_party/blink/public/mojom/navigation/renderer_content_settings.mojom.h"
 #include "url/gurl.h"
 #include "url/origin.h"
-
-#if !BUILDFLAG(IS_ANDROID)
-#include "components/page_info/core/features.h"
-#endif
 
 using content::BrowserThread;
 using StorageType =
@@ -104,6 +101,8 @@ class InflightNavigationContentSettings
       service_worker_accesses;
   std::vector<network::mojom::SharedDictionaryAccessDetailsPtr>
       shared_dictionary_accesses;
+  std::vector<net::device_bound_sessions::SessionAccess>
+      device_bound_session_accesses;
 
  private:
   explicit InflightNavigationContentSettings(
@@ -188,6 +187,12 @@ class WebContentsHandler
   void OnSharedDictionaryAccessed(
       content::RenderFrameHost* rfh,
       const network::mojom::SharedDictionaryAccessDetails& details) override;
+  void OnDeviceBoundSessionAccessed(
+      content::NavigationHandle* navigation,
+      const net::device_bound_sessions::SessionAccess& details) override;
+  void OnDeviceBoundSessionAccessed(
+      content::RenderFrameHost* rfh,
+      const net::device_bound_sessions::SessionAccess& details) override;
   void WebContentsDestroyed() override;
 
   std::unique_ptr<Delegate> delegate_;
@@ -275,6 +280,10 @@ void WebContentsHandler::TransferNavigationContentSettingsToCommittedDocument(
   for (const auto& shared_dictionary_access :
        navigation_settings.shared_dictionary_accesses) {
     OnSharedDictionaryAccessed(rfh, *shared_dictionary_access);
+  }
+  for (const auto& device_bound_session_access :
+       navigation_settings.device_bound_session_accesses) {
+    OnDeviceBoundSessionAccessed(rfh, device_bound_session_access);
   }
 }
 
@@ -388,6 +397,35 @@ void WebContentsHandler::OnSharedDictionaryAccessed(
       rfh, details.isolation_key,
       BrowsingDataModel::StorageType::kSharedDictionary, details.is_blocked);
 }
+
+void WebContentsHandler::OnDeviceBoundSessionAccessed(
+    content::NavigationHandle* navigation,
+    const net::device_bound_sessions::SessionAccess& details) {
+  if (WillNavigationCreateNewPageSpecificContentSettingsOnCommit(navigation)) {
+    auto* inflight_navigation_settings =
+        content::NavigationHandleUserData<InflightNavigationContentSettings>::
+            GetOrCreateForNavigationHandle(*navigation);
+    inflight_navigation_settings->device_bound_session_accesses.emplace_back(
+        details);
+    return;
+  }
+  // All accesses during main frame navigations should enter the block above and
+  // not reach here. We also don't expect any accesses to be made during page
+  // activations or same-document navigations.
+  DCHECK(navigation->GetParentFrame());
+  OnDeviceBoundSessionAccessed(navigation->GetParentFrame()->GetMainFrame(),
+                               details);
+}
+
+void WebContentsHandler::OnDeviceBoundSessionAccessed(
+    content::RenderFrameHost* rfh,
+    const net::device_bound_sessions::SessionAccess& details) {
+  PageSpecificContentSettings::BrowsingDataAccessed(
+      rfh, details.session_key,
+      BrowsingDataModel::StorageType::kDeviceBoundSession,
+      /*blocked=*/false);
+}
+
 void WebContentsHandler::ReadyToCommitNavigation(
     content::NavigationHandle* navigation_handle) {
   content::RenderFrameHost* rfh = navigation_handle->GetRenderFrameHost();
@@ -597,13 +635,14 @@ PageSpecificContentSettings::~PageSpecificContentSettings() {
     switch (last_used_entry.first) {
       case ContentSettingsType::MEDIASTREAM_MIC:
       case ContentSettingsType::MEDIASTREAM_CAMERA:
+      case ContentSettingsType::SMART_CARD_GUARD:
         map_->UpdateLastUsedTime(media_stream_access_origin_,
                                  media_stream_access_origin_,
                                  last_used_entry.first, last_used_entry.second);
         break;
       default:
         // Currently, only camera and mic permissions are supported.
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 }
@@ -988,7 +1027,7 @@ void PageSpecificContentSettings::OnTwoSitePermissionChanged(
       break;
     }
     default:
-      NOTREACHED_IN_MIGRATION() << content_setting;
+      NOTREACHED() << content_setting;
   }
 
   if (access_changed) {
@@ -1251,8 +1290,6 @@ void PageSpecificContentSettings::OnMediaStreamPermissionSet(
     MaybeUpdateLocationBar();
   }
 
-  if (base::FeatureList::IsEnabled(
-          content_settings::features::kImprovedSemanticsActivityIndicators)) {
     // Camera and/or Mic is blocked, start a blocked indicator's dismiss timer.
     if (microphone_camera_state_.Has(kMicrophoneBlocked)) {
       StartBlockedIndicatorTimer(ContentSettingsType::MEDIASTREAM_MIC);
@@ -1260,7 +1297,6 @@ void PageSpecificContentSettings::OnMediaStreamPermissionSet(
     if (microphone_camera_state_.Has(kCameraBlocked)) {
       StartBlockedIndicatorTimer(ContentSettingsType::MEDIASTREAM_CAMERA);
     }
-  }
 }
 
 void PageSpecificContentSettings::AddPermissionUsageObserver(
@@ -1549,6 +1585,23 @@ void PageSpecificContentSettings::OnCapturingStateChanged(
       OnCapturingStateChangedInternal(type, /*is_capturing=*/false);
     }
   }
+}
+
+void PageSpecificContentSettings::OnDeviceUsed(ContentSettingsType type) {
+  // For now, only smart card permissions are supported.
+  CHECK_EQ(ContentSettingsType::SMART_CARD_GUARD, type);
+  last_used_time_[type] = base::Time::Now();
+  if (in_use_.insert(type).second) {
+    MaybeUpdateLocationBar();
+  }
+}
+
+void PageSpecificContentSettings::OnLastDeviceConnectionLost(
+    ContentSettingsType type) {
+  // For now, only smart card permissions are supported.
+  CHECK_EQ(mojom::ContentSettingsType::SMART_CARD_GUARD, type);
+  in_use_.erase(type);
+  MaybeUpdateLocationBar();
 }
 
 void PageSpecificContentSettings::OnCapturingStateChangedInternal(

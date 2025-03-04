@@ -14,7 +14,6 @@ import static org.chromium.components.omnibox.GroupConfigTestSupport.SECTION_QUE
 import org.mockito.Mock;
 
 import org.chromium.base.ThreadUtils;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.chrome.browser.omnibox.suggestions.AutocompleteController;
 import org.chromium.chrome.browser.omnibox.suggestions.AutocompleteControllerJni;
 import org.chromium.components.omnibox.AutocompleteMatch;
@@ -39,25 +38,15 @@ public class FakeOmniboxSuggestions {
 
     private AutocompleteController.OnSuggestionsReceivedListener mListener;
 
-    public FakeOmniboxSuggestions(JniMocker jniMocker) {
+    public FakeOmniboxSuggestions() {
         if (sInstance != null) {
             throw new IllegalStateException("Do not create more than one FakeOmniboxSuggestions");
         }
         sInstance = this;
-        mController = mock(AutocompleteController.class);
-        mControllerJni = mock(AutocompleteControllerJni.class);
-        jniMocker.mock(AutocompleteControllerJni.TEST_HOOKS, mControllerJni);
+    }
 
-        when(mControllerJni.getForProfile(any())).thenReturn(mController);
-        doAnswer(
-                        inv -> {
-                            // Currently supports only one listener, assert if this changes.
-                            assert mListener == null || mListener == inv.getArgument(0);
-                            mListener = inv.getArgument(0);
-                            return null;
-                        })
-                .when(mController)
-                .addOnSuggestionsReceivedListener(any());
+    public void destroy() {
+        sInstance = null;
     }
 
     /**
@@ -83,5 +72,22 @@ public class FakeOmniboxSuggestions {
     private void simulateSuggestionsReceived(AutocompleteResult result) {
         ThreadUtils.runOnUiThreadBlocking(
                 () -> mListener.onSuggestionsReceived(result, /* isFinal= */ true));
+    }
+
+    public void initMocks() {
+        mController = mock(AutocompleteController.class);
+        mControllerJni = mock(AutocompleteControllerJni.class);
+        AutocompleteControllerJni.setInstanceForTesting(mControllerJni);
+
+        when(mControllerJni.getForProfile(any())).thenReturn(mController);
+        doAnswer(
+                        inv -> {
+                            // Currently supports only one listener, assert if this changes.
+                            assert mListener == null || mListener == inv.getArgument(0);
+                            mListener = inv.getArgument(0);
+                            return null;
+                        })
+                .when(mController)
+                .addOnSuggestionsReceivedListener(any());
     }
 }

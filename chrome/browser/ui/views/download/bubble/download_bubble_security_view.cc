@@ -578,7 +578,7 @@ void DownloadBubbleSecurityView::UpdateButton(
     bubble_delegate_->SetButtonEnabled(button_type, true);
     views::LabelButton* button = bubble_delegate_->GetCancelButton();
     if (button_info.text_color) {
-      button->SetEnabledTextColorIds(*button_info.text_color);
+      button->SetEnabledTextColors(*button_info.text_color);
     }
   } else {
     bubble_delegate_->SetAcceptCallbackWithClose(callback);
@@ -813,7 +813,7 @@ void DownloadBubbleSecurityView::OnInfoChanged() {
   // is otherwise no longer dangerous, we return to the primary dialog. Note
   // that we want this behavior even if this is a different download, e.g.
   // user clicks on a different download via entry point external to the
-  // download bubble (e.g. notification on Lacros).
+  // download bubble.
   if (ShouldReturnToPrimaryDialog(info_.get())) {
     navigation_handler_->OpenPrimaryDialog();
     // No need to update views here because we're resetting and returning to

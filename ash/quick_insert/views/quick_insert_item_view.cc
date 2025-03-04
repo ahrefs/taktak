@@ -40,7 +40,7 @@ namespace {
 constexpr float kPseudoFocusClipInset =
     views::FocusRing::kDefaultHaloInset * -1.0f + 2.0f;
 
-constexpr auto kPickerItemFocusIndicatorMargins = gfx::Insets::VH(6, 0);
+constexpr auto kQuickInsertItemFocusIndicatorMargins = gfx::Insets::VH(6, 0);
 
 }  // namespace
 
@@ -82,9 +82,9 @@ void QuickInsertItemView::PaintButtonContents(gfx::Canvas* canvas) {
 
   if (focus_indicator_style_ == FocusIndicatorStyle::kFocusBar &&
       item_state_ == ItemState::kPseudoFocused) {
-    PaintPickerFocusIndicator(
-        canvas, gfx::Point(0, kPickerItemFocusIndicatorMargins.top()),
-        height() - kPickerItemFocusIndicatorMargins.height(),
+    PaintQuickInsertFocusIndicator(
+        canvas, gfx::Point(0, kQuickInsertItemFocusIndicatorMargins.top()),
+        height() - kQuickInsertItemFocusIndicatorMargins.height(),
         GetColorProvider()->GetColor(cros_tokens::kCrosSysFocusRing));
   }
 }
@@ -114,12 +114,12 @@ void QuickInsertItemView::SetCornerRadius(int corner_radius) {
   UpdateBackground();
 }
 
-PickerSubmenuController* QuickInsertItemView::GetSubmenuController() {
+QuickInsertSubmenuController* QuickInsertItemView::GetSubmenuController() {
   return submenu_controller_;
 }
 
 void QuickInsertItemView::SetSubmenuController(
-    PickerSubmenuController* submenu_controller) {
+    QuickInsertSubmenuController* submenu_controller) {
   submenu_controller_ = submenu_controller;
 }
 

@@ -48,6 +48,7 @@
 #include "components/enterprise/connectors/core/connectors_prefs.h"
 #include "components/policy/core/common/cloud/dm_token.h"
 #include "components/policy/core/common/cloud/mock_cloud_policy_client.h"
+#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "components/safe_browsing/core/common/features.h"
@@ -759,7 +760,9 @@ TEST_F(DeepScanningReportingTest, ProcessesResponseCorrectly) {
         /*dlp_verdict*/ *dlp_result,
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
-        /*result*/ EventResultToString(EventResult::WARNED),
+        /*result*/
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::WARNED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*scan_id*/ kScanId,
@@ -833,7 +836,9 @@ TEST_F(DeepScanningReportingTest, ProcessesResponseCorrectly) {
         /*dlp_verdict*/ *dlp_result,
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
-        /*result*/ EventResultToString(EventResult::WARNED),
+        /*result*/
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::WARNED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*scan_id*/ kScanId,
@@ -897,7 +902,8 @@ TEST_F(DeepScanningReportingTest, ProcessesResponseCorrectly) {
         /*dlp_verdict*/ *dlp_result,
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
-        EventResultToString(EventResult::BLOCKED),
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::BLOCKED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*scan_id*/ kScanId,
@@ -962,7 +968,8 @@ TEST_F(DeepScanningReportingTest, ProcessesResponseCorrectly) {
         /*dlp_verdict*/ *dlp_result,
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
-        EventResultToString(EventResult::WARNED),
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::WARNED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*scan_id*/ kScanId,
@@ -1031,7 +1038,8 @@ TEST_F(DeepScanningReportingTest, ProcessesResponseCorrectly) {
         /*dlp_verdict*/ *dlp_result,
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
-        EventResultToString(EventResult::BLOCKED),
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::BLOCKED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*scan_id*/ kScanId,
@@ -1092,7 +1100,8 @@ TEST_F(DeepScanningReportingTest, ProcessesResponseCorrectly) {
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
         /*result*/
-        EventResultToString(EventResult::ALLOWED),
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::ALLOWED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*content_transfer_method*/ std::nullopt);
@@ -1151,7 +1160,8 @@ TEST_F(DeepScanningReportingTest, ProcessesResponseCorrectly) {
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
         /*result*/
-        EventResultToString(EventResult::ALLOWED),
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::ALLOWED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*content_transfer_method*/ std::nullopt);
@@ -1215,7 +1225,8 @@ TEST_F(DeepScanningReportingTest, ProcessesResponseCorrectly) {
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
         /*result*/
-        EventResultToString(EventResult::WARNED),
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::WARNED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*content_transfer_reason*/ std::nullopt);
@@ -1488,7 +1499,9 @@ TEST_F(DeepScanningReportingTest, MultipleFiles) {
         /*reason*/ "MALWARE_SCAN_FAILED",
         /*mimetypes*/ TxtMimeTypes(),
         /*size*/ std::string("foo.exe").size(),
-        /*result*/ EventResultToString(EventResult::ALLOWED),
+        /*result*/
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::ALLOWED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*content_transfer_reason*/ std::nullopt);
@@ -1593,8 +1606,10 @@ TEST_F(DeepScanningReportingTest, MultipleFiles) {
         // Both results are BLOCKED since the highest precedence result will
         // determine Chrome's UX for a given download.
         /*results*/
-        {EventResultToString(EventResult::BLOCKED),
-         EventResultToString(EventResult::BLOCKED)},
+        {enterprise_connectors::EventResultToString(
+             enterprise_connectors::EventResult::BLOCKED),
+         enterprise_connectors::EventResultToString(
+             enterprise_connectors::EventResult::BLOCKED)},
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*scan IDs*/
@@ -1655,7 +1670,8 @@ TEST_F(DeepScanningReportingTest, Timeout) {
       /*mimetypes*/ ExeMimeTypes(),
       /*size*/ std::string("download contents").size(),
       /*result*/
-      EventResultToString(EventResult::ALLOWED),
+      enterprise_connectors::EventResultToString(
+          enterprise_connectors::EventResult::ALLOWED),
       /*username*/ kUserName,
       /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
       /*content_transfer_reason*/ std::nullopt);
@@ -1744,51 +1760,53 @@ TEST_P(DeepScanningDownloadFailClosedTest, HandlesDefaultActionCorrectly) {
 
 class DeepScanningDownloadRestrictionsTest
     : public DeepScanningReportingTest,
-      public testing::WithParamInterface<DownloadPrefs::DownloadRestriction> {
+      public testing::WithParamInterface<policy::DownloadRestriction> {
  public:
   void SetUp() override {
     DeepScanningReportingTest::SetUp();
-    profile_->GetPrefs()->SetInteger(prefs::kDownloadRestrictions,
-                                     static_cast<int>(download_restriction()));
+    profile_->GetPrefs()->SetInteger(
+        policy::policy_prefs::kDownloadRestrictions,
+        static_cast<int>(download_restriction()));
   }
 
-  DownloadPrefs::DownloadRestriction download_restriction() const {
+  policy::DownloadRestriction download_restriction() const {
     return GetParam();
   }
 
-  EventResult expected_event_result_for_malware() const {
+  enterprise_connectors::EventResult expected_event_result_for_malware() const {
     switch (download_restriction()) {
-      case DownloadPrefs::DownloadRestriction::NONE:
-        return EventResult::WARNED;
-      case DownloadPrefs::DownloadRestriction::DANGEROUS_FILES:
-      case DownloadPrefs::DownloadRestriction::MALICIOUS_FILES:
-      case DownloadPrefs::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES:
-      case DownloadPrefs::DownloadRestriction::ALL_FILES:
-        return EventResult::BLOCKED;
+      case policy::DownloadRestriction::NONE:
+        return enterprise_connectors::EventResult::WARNED;
+      case policy::DownloadRestriction::DANGEROUS_FILES:
+      case policy::DownloadRestriction::MALICIOUS_FILES:
+      case policy::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES:
+      case policy::DownloadRestriction::ALL_FILES:
+        return enterprise_connectors::EventResult::BLOCKED;
     }
   }
 
-  EventResult expected_event_result_for_safe_large_file() const {
+  enterprise_connectors::EventResult expected_event_result_for_safe_large_file()
+      const {
     switch (download_restriction()) {
-      case DownloadPrefs::DownloadRestriction::NONE:
-      case DownloadPrefs::DownloadRestriction::DANGEROUS_FILES:
-      case DownloadPrefs::DownloadRestriction::MALICIOUS_FILES:
-      case DownloadPrefs::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES:
-        return EventResult::ALLOWED;
-      case DownloadPrefs::DownloadRestriction::ALL_FILES:
-        return EventResult::BLOCKED;
+      case policy::DownloadRestriction::NONE:
+      case policy::DownloadRestriction::DANGEROUS_FILES:
+      case policy::DownloadRestriction::MALICIOUS_FILES:
+      case policy::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES:
+        return enterprise_connectors::EventResult::ALLOWED;
+      case policy::DownloadRestriction::ALL_FILES:
+        return enterprise_connectors::EventResult::BLOCKED;
     }
   }
 
   enterprise_connectors::ContentAnalysisAcknowledgement::FinalAction
   expected_final_action() const {
     switch (download_restriction()) {
-      case DownloadPrefs::DownloadRestriction::NONE:
+      case policy::DownloadRestriction::NONE:
         return enterprise_connectors::ContentAnalysisAcknowledgement::WARN;
-      case DownloadPrefs::DownloadRestriction::DANGEROUS_FILES:
-      case DownloadPrefs::DownloadRestriction::MALICIOUS_FILES:
-      case DownloadPrefs::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES:
-      case DownloadPrefs::DownloadRestriction::ALL_FILES:
+      case policy::DownloadRestriction::DANGEROUS_FILES:
+      case policy::DownloadRestriction::MALICIOUS_FILES:
+      case policy::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES:
+      case policy::DownloadRestriction::ALL_FILES:
         return enterprise_connectors::ContentAnalysisAcknowledgement::BLOCK;
     }
   }
@@ -1797,12 +1815,11 @@ class DeepScanningDownloadRestrictionsTest
 INSTANTIATE_TEST_SUITE_P(
     ,
     DeepScanningDownloadRestrictionsTest,
-    testing::Values(
-        DownloadPrefs::DownloadRestriction::NONE,
-        DownloadPrefs::DownloadRestriction::DANGEROUS_FILES,
-        DownloadPrefs::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES,
-        DownloadPrefs::DownloadRestriction::ALL_FILES,
-        DownloadPrefs::DownloadRestriction::MALICIOUS_FILES));
+    testing::Values(policy::DownloadRestriction::NONE,
+                    policy::DownloadRestriction::DANGEROUS_FILES,
+                    policy::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES,
+                    policy::DownloadRestriction::ALL_FILES,
+                    policy::DownloadRestriction::MALICIOUS_FILES));
 
 TEST_P(DeepScanningDownloadRestrictionsTest, GeneratesCorrectReport) {
   enterprise_connectors::test::SetAnalysisConnector(
@@ -1859,7 +1876,9 @@ TEST_P(DeepScanningDownloadRestrictionsTest, GeneratesCorrectReport) {
         extensions::SafeBrowsingPrivateEventRouter::kTriggerFileDownload,
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
-        /*result*/ EventResultToString(expected_event_result_for_malware()),
+        /*result*/
+        enterprise_connectors::EventResultToString(
+            expected_event_result_for_malware()),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*scan_id*/ kScanId);
@@ -1922,7 +1941,9 @@ TEST_P(DeepScanningDownloadRestrictionsTest, GeneratesCorrectReport) {
         extensions::SafeBrowsingPrivateEventRouter::kTriggerFileDownload,
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
-        /*result*/ EventResultToString(EventResult::WARNED),
+        /*result*/
+        enterprise_connectors::EventResultToString(
+            enterprise_connectors::EventResult::WARNED),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*scan_id*/ kScanId);
@@ -1977,7 +1998,8 @@ TEST_P(DeepScanningDownloadRestrictionsTest, GeneratesCorrectReport) {
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
         /*result*/
-        EventResultToString(expected_event_result_for_safe_large_file()),
+        enterprise_connectors::EventResultToString(
+            expected_event_result_for_safe_large_file()),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*content_transfer_reason*/ std::nullopt);
@@ -2037,7 +2059,9 @@ TEST_P(DeepScanningDownloadRestrictionsTest, GeneratesCorrectReport) {
         /*reason*/ "FILE_TOO_LARGE",
         /*mimetypes*/ ExeMimeTypes(),
         /*size*/ std::string("download contents").size(),
-        /*result*/ EventResultToString(expected_event_result_for_malware()),
+        /*result*/
+        enterprise_connectors::EventResultToString(
+            expected_event_result_for_malware()),
         /*username*/ kUserName,
         /*profile_identifier*/ profile_->GetPath().AsUTF8Unsafe(),
         /*content_transfer_reason*/ std::nullopt);

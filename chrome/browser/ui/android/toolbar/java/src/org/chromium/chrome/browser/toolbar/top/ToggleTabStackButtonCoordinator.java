@@ -31,7 +31,7 @@ import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.chrome.browser.toolbar.R;
 import org.chromium.chrome.browser.toolbar.TabSwitcherDrawable;
-import org.chromium.chrome.browser.user_education.IPHCommandBuilder;
+import org.chromium.chrome.browser.user_education.IphCommandBuilder;
 import org.chromium.chrome.browser.user_education.UserEducationHelper;
 import org.chromium.components.browser_ui.widget.highlight.ViewHighlighter.HighlightParams;
 import org.chromium.components.browser_ui.widget.highlight.ViewHighlighter.HighlightShape;
@@ -114,18 +114,23 @@ public class ToggleTabStackButtonCoordinator {
      * @param tabCountSupplier Supplier for current tab count to show in view.
      * @param archivedTabCountSupplier Supplies the current archived tab count, used for displaying
      *     the associated IPH.
+     * @param tabModelNotificationDotSupplier Supplies whether to show the notification dot on the
+     *     tab switcher button.
      * @param archivedTabsIphShownCallback Callback for when the archived tabs iph is shown.
+     * @param archivedTabsIphDismissedCallback Callback for when the archived tabs iph is dismissed.
      */
     public void initializeWithNative(
             OnClickListener onClickListener,
             OnLongClickListener onLongClickListener,
             ObservableSupplier<Integer> tabCountSupplier,
             @Nullable ObservableSupplier<Integer> archivedTabCountSupplier,
+            ObservableSupplier<Boolean> tabModelNotificationDotSupplier,
             @NonNull Runnable archivedTabsIphShownCallback,
             @NonNull Runnable archivedTabsIphDismissedCallback) {
         mToggleTabStackButton.setOnClickListener(onClickListener);
         mToggleTabStackButton.setOnLongClickListener(onLongClickListener);
-        mToggleTabStackButton.setTabCountSupplier(tabCountSupplier, mIsIncognitoSupplier);
+        mToggleTabStackButton.setSuppliers(
+                tabCountSupplier, tabModelNotificationDotSupplier, mIsIncognitoSupplier);
 
         mArchivedTabCountSupplier = archivedTabCountSupplier;
         if (mArchivedTabCountSupplier != null) {
@@ -241,14 +246,14 @@ public class ToggleTabStackButtonCoordinator {
 
         HighlightParams params = new HighlightParams(HighlightShape.CIRCLE);
         params.setBoundsRespectPadding(true);
-        IPHCommandBuilder builder = null;
+        IphCommandBuilder builder = null;
         if (ChromeFeatureList.sTabStripIncognitoMigration.isEnabled()
                 && mTabModelSelectorSupplier.hasValue()) {
             TabModelSelector selector = mTabModelSelectorSupplier.get();
             // When in Incognito, show IPH to switch out.
             if (selector.getCurrentModel().isIncognitoBranded()) {
                 builder =
-                        new IPHCommandBuilder(
+                        new IphCommandBuilder(
                                 mContext.getResources(),
                                 FeatureConstants.TAB_SWITCHER_BUTTON_SWITCH_INCOGNITO,
                                 R.string.iph_tab_switcher_switch_out_of_incognito_text,
@@ -257,17 +262,20 @@ public class ToggleTabStackButtonCoordinator {
             } else if (selector.getModel(true).getCount() > 0) {
                 // When in standard model with incognito tabs, show IPH to switch into incognito.
                 builder =
-                        new IPHCommandBuilder(
+                        new IphCommandBuilder(
                                 mContext.getResources(),
                                 FeatureConstants.TAB_SWITCHER_BUTTON_SWITCH_INCOGNITO,
                                 R.string.iph_tab_switcher_switch_into_incognito_text,
                                 R.string.iph_tab_switcher_switch_into_incognito_accessibility_text);
             }
-        } else if (!mIsIncognitoSupplier.get()
+        }
+
+        if (builder == null
+                && !mIsIncognitoSupplier.get()
                 && mPromoShownOneshotSupplier.hasValue()
                 && !mPromoShownOneshotSupplier.get()) {
             builder =
-                    new IPHCommandBuilder(
+                    new IphCommandBuilder(
                             mContext.getResources(),
                             FeatureConstants.TAB_SWITCHER_BUTTON_FEATURE,
                             R.string.iph_tab_switcher_text,
@@ -275,7 +283,7 @@ public class ToggleTabStackButtonCoordinator {
         }
 
         if (builder != null) {
-            mUserEducationHelper.requestShowIPH(
+            mUserEducationHelper.requestShowIph(
                     builder.setAnchorView(mToggleTabStackButton)
                             .setOnShowCallback(this::handleShowCallback)
                             .setOnDismissCallback(this::handleDismissCallback)
@@ -313,8 +321,8 @@ public class ToggleTabStackButtonCoordinator {
 
         HighlightParams params = new HighlightParams(HighlightShape.CIRCLE);
         params.setBoundsRespectPadding(true);
-        mUserEducationHelper.requestShowIPH(
-                new IPHCommandBuilder(
+        mUserEducationHelper.requestShowIph(
+                new IphCommandBuilder(
                                 mContext.getResources(),
                                 FeatureConstants.ANDROID_TAB_DECLUTTER_FEATURE,
                                 R.string.iph_android_tab_declutter_text,

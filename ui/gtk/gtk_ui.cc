@@ -48,6 +48,7 @@
 #include "ui/color/color_provider_manager.h"
 #include "ui/display/display.h"
 #include "ui/events/keycodes/dom/dom_code.h"
+#include "ui/events/keycodes/dom/dom_keyboard_layout.h"
 #include "ui/events/keycodes/dom/dom_keyboard_layout_manager.h"
 #include "ui/events/keycodes/dom/keycode_converter.h"
 #include "ui/gfx/animation/animation.h"
@@ -170,8 +171,7 @@ std::unique_ptr<GtkUiPlatform> CreateGtkUiPlatform(ui::LinuxUiBackend backend) {
       return std::make_unique<GtkUiPlatformWayland>();
 #endif  // BUILDFLAG(IS_OZONE_WAYLAND)
     default:
-      NOTREACHED_IN_MIGRATION();
-      return nullptr;
+      NOTREACHED();
   }
 }
 
@@ -584,11 +584,12 @@ std::unique_ptr<ui::NavButtonProvider> GtkUi::CreateNavButtonProvider() {
 }
 
 ui::WindowFrameProvider* GtkUi::GetWindowFrameProvider(bool solid_frame,
-                                                       bool tiled) {
-  auto& provider = frame_providers_[solid_frame][tiled];
+                                                       bool tiled,
+                                                       bool maximized) {
+  auto& provider = frame_providers_[solid_frame][tiled][maximized];
   if (!provider) {
-    provider =
-        std::make_unique<gtk::WindowFrameProviderGtk>(solid_frame, tiled);
+    provider = std::make_unique<gtk::WindowFrameProviderGtk>(solid_frame, tiled,
+                                                             maximized);
   }
   return provider.get();
 }
@@ -616,9 +617,7 @@ base::flat_map<std::string, std::string> GtkUi::GetKeyboardLayoutMap() {
   auto layouts = std::make_unique<ui::DomKeyboardLayoutManager>();
   auto map = base::flat_map<std::string, std::string>();
 
-  for (unsigned int i_domcode = 0;
-       i_domcode < ui::kWritingSystemKeyDomCodeEntries; ++i_domcode) {
-    ui::DomCode domcode = ui::writing_system_key_domcodes[i_domcode];
+  for (const ui::DomCode domcode : ui::kWritingSystemKeyDomCodes) {
     guint16 keycode = ui::KeycodeConverter::DomCodeToNativeKeycode(domcode);
     GdkKeymapKey* keys = nullptr;
     guint* keyvals = nullptr;

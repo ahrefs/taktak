@@ -7,7 +7,7 @@
 #include "base/feature_list.h"
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "content/public/common/content_features.h"
-#include "third_party/blink/public/mojom/permissions_policy/permissions_policy.mojom.h"
+#include "services/network/public/mojom/permissions_policy/permissions_policy_feature.mojom.h"
 
 namespace permissions {
 
@@ -17,7 +17,7 @@ CapturedSurfaceControlPermissionContext::
     : PermissionContextBase(
           browser_context,
           ContentSettingsType::CAPTURED_SURFACE_CONTROL,
-          blink::mojom::PermissionsPolicyFeature::kCapturedSurfaceControl),
+          network::mojom::PermissionsPolicyFeature::kCapturedSurfaceControl),
       sticky_permissions_(base::FeatureList::IsEnabled(
           features::kCapturedSurfaceControlStickyPermissions)) {}
 

@@ -12,10 +12,13 @@ import androidx.annotation.DimenRes;
 
 import com.google.android.material.color.MaterialColors;
 
+import org.chromium.build.annotations.NullMarked;
+
 /**
  * Provides semantic color values, typically in place of <macro>s which currently cannot be used in
  * Java code, or for surface colors that must be calculated to Java code.
  */
+@NullMarked
 public class SemanticColorUtils {
     private static final String TAG = "SemanticColorUtils";
 
@@ -164,6 +167,11 @@ public class SemanticColorUtils {
     public static @ColorInt int getDefaultTextColorLink(Context context) {
         final @ColorInt int fallback = context.getColor(R.color.default_text_color_link_baseline);
         return MaterialColors.getColor(context, R.attr.globalLinkTextColor, fallback);
+    }
+
+    /** Returns the semantic color value that corresponds to menu_bg_color. */
+    public static @ColorInt int getMenuBgColor(Context context) {
+        return resolveSurfaceColorElev(R.dimen.menu_bg_color_elev, context);
     }
 
     /** Returns the semantic color values that corresponds to colorPrimaryContainer. */

@@ -82,10 +82,9 @@ CastDialogView::~CastDialogView() {
   if (controller_) {
     controller_->RemoveObserver(this);
   }
-  if (features::IsToolbarPinningEnabled()) {
-    if (action_item_) {
-      action_item_->SetIsShowingBubble(false);
-    }
+
+  if (action_item_) {
+    action_item_->SetIsShowingBubble(false);
   }
 }
 
@@ -122,9 +121,10 @@ void CastDialogView::OnModelUpdated(const CastDialogModel& model) {
   // If access code casting is enabled, the sources button needs to be enabled
   // so that user can set the source before invoking the access code casting
   // flow.
-  if (sources_button_)
+  if (sources_button_) {
     sources_button_->SetEnabled(!model.media_sinks().empty() ||
                                 IsAccessCodeCastingEnabled());
+  }
 
   dialog_title_ = model.dialog_header();
   MaybeSizeToContents();
@@ -185,8 +185,9 @@ void CastDialogView::WindowClosing() {
 }
 
 void CastDialogView::ShowAccessCodeCastDialog() {
-  if (!controller_)
+  if (!controller_) {
     return;
+  }
 
   CastModeSet cast_mode_set;
   switch (selected_source_) {
@@ -206,8 +207,9 @@ void CastDialogView::ShowAccessCodeCastDialog() {
 }
 
 void CastDialogView::MaybeShowAccessCodeCastButton() {
-  if (!IsAccessCodeCastingEnabled())
+  if (!IsAccessCodeCastingEnabled()) {
     return;
+  }
 
   auto callback = base::BindRepeating(&CastDialogView::ShowAccessCodeCastDialog,
                                       base::Unretained(this));
@@ -217,8 +219,9 @@ void CastDialogView::MaybeShowAccessCodeCastButton() {
 }
 
 void CastDialogView::ShowNoSinksView() {
-  if (no_sinks_view_)
+  if (no_sinks_view_) {
     return;
+  }
   ResetViews();
   no_sinks_view_ = AddChildView(std::make_unique<CastDialogNoSinksView>(
       profile_, /*permission_rejected*/ false));
@@ -235,8 +238,9 @@ void CastDialogView::ShowPermissionRejectedView() {
 }
 
 void CastDialogView::ShowScrollView() {
-  if (scroll_view_)
+  if (scroll_view_) {
     return;
+  }
   ResetViews();
   scroll_view_ = AddChildView(std::make_unique<views::ScrollView>());
   constexpr int kSinkButtonHeight = 56;
@@ -348,8 +352,9 @@ void CastDialogView::SelectSource(SourceType source) {
 }
 
 void CastDialogView::SinkPressed(size_t index) {
-  if (!controller_)
+  if (!controller_) {
     return;
+  }
 
   selected_sink_index_ = index;
   // sink() may get invalidated during CastDialogController::StartCasting()
@@ -416,8 +421,9 @@ void CastDialogView::FreezePressed(size_t index) {
 
 void CastDialogView::MaybeSizeToContents() {
   // The widget may be null if this is called while the dialog is opening.
-  if (GetWidget())
+  if (GetWidget()) {
     SizeToContents();
+  }
 }
 
 std::optional<MediaCastMode> CastDialogView::GetCastModeToUse(
@@ -426,14 +432,17 @@ std::optional<MediaCastMode> CastDialogView::GetCastModeToUse(
   // supported and selected.
   switch (selected_source_) {
     case SourceType::kTab:
-      if (base::Contains(sink.cast_modes, PRESENTATION))
+      if (base::Contains(sink.cast_modes, PRESENTATION)) {
         return std::make_optional<MediaCastMode>(PRESENTATION);
-      if (base::Contains(sink.cast_modes, TAB_MIRROR))
+      }
+      if (base::Contains(sink.cast_modes, TAB_MIRROR)) {
         return std::make_optional<MediaCastMode>(TAB_MIRROR);
+      }
       break;
     case SourceType::kDesktop:
-      if (base::Contains(sink.cast_modes, DESKTOP_MIRROR))
+      if (base::Contains(sink.cast_modes, DESKTOP_MIRROR)) {
         return std::make_optional<MediaCastMode>(DESKTOP_MIRROR);
+      }
       break;
   }
   return std::nullopt;
@@ -466,8 +475,7 @@ void CastDialogView::RecordSinkCount() {
 }
 
 bool CastDialogView::IsAccessCodeCastingEnabled() const {
-  return base::FeatureList::IsEnabled(features::kAccessCodeCastUI) &&
-         GetAccessCodeCastEnabledPref(profile_);
+  return GetAccessCodeCastEnabledPref(profile_);
 }
 
 BEGIN_METADATA(CastDialogView)

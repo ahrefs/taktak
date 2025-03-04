@@ -233,7 +233,7 @@ TEST_F(DownloadBubbleSecurityViewInfoTestGM3, InterruptedInfo) {
   }
 }
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
+#if BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION)
 // Test file type warning where verdict was obtained.
 TEST_F(DownloadBubbleSecurityViewInfoTest,
        FileTypeWarning_HasSafeBrowsingVerdict) {
@@ -369,9 +369,9 @@ TEST_F(DownloadBubbleSecurityViewInfoTest,
   // There is no learn more link because the user cannot turn on SB.
   EXPECT_FALSE(info().learn_more_link().has_value());
 }
-#endif  // BUILDFLAG(FULL_SAFE_BROWSING)
+#endif  // BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION)
 
-#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
 class DownloadBubbleSecurityViewInfoTailoredWarningTest
     : public DownloadBubbleSecurityViewInfoTest {
  public:
@@ -475,4 +475,4 @@ TEST_F(DownloadBubbleSecurityViewInfoTailoredWarningTest,
   EXPECT_EQ(info().warning_summary(),
             u"This file can harm your personal and social network accounts");
 }
-#endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)

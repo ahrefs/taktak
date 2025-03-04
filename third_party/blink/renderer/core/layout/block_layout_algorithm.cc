@@ -133,8 +133,7 @@ inline const LayoutResult* LayoutInflow(
 AdjoiningObjectTypes ToAdjoiningObjectTypes(EClear clear) {
   switch (clear) {
     default:
-      NOTREACHED_IN_MIGRATION();
-      [[fallthrough]];
+      NOTREACHED();
     case EClear::kNone:
       return kAdjoiningNone;
     case EClear::kLeft:
@@ -304,9 +303,7 @@ BlockLayoutAlgorithm::BlockLayoutAlgorithm(const LayoutAlgorithmParams& params)
       fit_all_lines_(false),
       is_resuming_(IsBreakInside(params.break_token)),
       abort_when_bfc_block_offset_updated_(false),
-      has_break_opportunity_before_next_child_(false),
-      should_text_box_trim_start_(params.space.ShouldTextBoxTrimStart()),
-      should_text_box_trim_end_(params.space.ShouldTextBoxTrimEnd()) {
+      has_break_opportunity_before_next_child_(false) {
   container_builder_.SetExclusionSpace(params.space.GetExclusionSpace());
 
   child_percentage_size_ = CalculateChildPercentageSize(
@@ -326,12 +323,7 @@ BlockLayoutAlgorithm::BlockLayoutAlgorithm(const LayoutAlgorithmParams& params)
     }
   }
 
-  // Initialize `text-box-trim` flags from the `ComputedStyle`.
-  const ComputedStyle& style = Node().Style();
-  if (style.TextBoxTrim() != ETextBoxTrim::kNone) [[unlikely]] {
-    should_text_box_trim_start_ |= style.ShouldTextBoxTrimStart();
-    should_text_box_trim_end_ |= style.ShouldTextBoxTrimEnd();
-  }
+  container_builder_.SetInitialTextBoxTrim();
 }
 
 // Define the destructor here, so that we can forward-declare more in the
@@ -350,36 +342,42 @@ void BlockLayoutAlgorithm::SetupRelayoutData(
   } else if (relayout_type == kRelayoutWithLineClampBlockSize) {
     line_clamp_data_.data.state = LineClampData::kClampByLines;
     line_clamp_data_.data.lines_until_clamp =
-        previous.line_clamp_data_.data.lines_until_clamp;
-    line_clamp_data_.end_margin_strut =
-        previous.line_clamp_data_.end_margin_strut;
-  } else {
-    line_clamp_data_.data.state = previous.line_clamp_data_.data.state;
+        line_clamp_data_.initial_lines_until_clamp =
+            previous.line_clamp_data_.data.lines_until_clamp;
+  } else if (previous.line_clamp_data_.data.state ==
+             LineClampData::kClampByLines) {
+    line_clamp_data_.data.state = LineClampData::kClampByLines;
     line_clamp_data_.data.lines_until_clamp =
-        previous.line_clamp_data_.data.lines_until_clamp;
-    line_clamp_data_.end_margin_strut =
-        previous.line_clamp_data_.end_margin_strut;
+        line_clamp_data_.initial_lines_until_clamp =
+            previous.line_clamp_data_.initial_lines_until_clamp;
+  } else if (previous.line_clamp_data_.data.state ==
+             LineClampData::kDontTruncate) {
+    line_clamp_data_.data.state = LineClampData::kDontTruncate;
   }
 
   if (relayout_type == kRelayoutForTextBoxTrim) {
-    if (previous.last_non_empty_inflow_child_) {
-      // If there is at least one non-empty inflow child, re-layout by applying
-      // the `text-box-trim: end` to the `last_non_empty_inflow_child_`.
-      override_text_box_trim_end_child_ = previous.last_non_empty_inflow_child_;
-      override_text_box_trim_end_break_token_ =
-          previous.last_non_empty_break_token_;
-    } else {
-      DCHECK(!previous.GetConstraintSpace().ShouldTextBoxTrimEnd());
-      // If there are no more ancestors to propagate, re-layout by ignoring the
-      // `text-box-trim: end`.
-      should_text_box_trim_end_ = false;
-    }
+    DCHECK(previous.last_non_empty_inflow_child_);
+    // If there is at least one non-empty inflow child, re-layout by applying
+    // the `text-box-trim: end` to the `last_non_empty_inflow_child_`.
+    override_text_box_trim_end_child_ = previous.last_non_empty_inflow_child_;
+    override_text_box_trim_end_break_token_ =
+        previous.last_non_empty_break_token_;
   } else {
     override_text_box_trim_end_child_ =
         previous.override_text_box_trim_end_child_;
     override_text_box_trim_end_break_token_ =
         previous.override_text_box_trim_end_break_token_;
-    should_text_box_trim_end_ = previous.should_text_box_trim_end_;
+    container_builder_.SetShouldTextBoxTrimNodeEnd(
+        previous.container_builder_.ShouldTextBoxTrimNodeEnd());
+
+    if (relayout_mode_ & kRelayoutForTextBoxTrim) {
+      // Text box end trimming was done in a previous relayout pass. Make sure
+      // that it's re-applied.
+      override_text_box_trim_end_child_ =
+          previous.override_text_box_trim_end_child_;
+      override_text_box_trim_end_break_token_ =
+          previous.override_text_box_trim_end_break_token_;
+    }
   }
 }
 
@@ -671,14 +669,9 @@ BlockLayoutAlgorithm::RelayoutWithLineClampBlockSize(int lines_until_clamp) {
   return Relayout<BlockLayoutAlgorithm>(kRelayoutWithLineClampBlockSize);
 }
 
-// Re-layout when the `child` failed to apply `text-box-trim: end`.
 NOINLINE const LayoutResult* BlockLayoutAlgorithm::RelayoutForTextBoxTrimEnd() {
-  if (last_non_empty_inflow_child_ ||
-      !GetConstraintSpace().ShouldTextBoxTrimEnd()) {
-    return Relayout<BlockLayoutAlgorithm>(kRelayoutForTextBoxTrim);
-  }
-
-  return container_builder_.Abort(LayoutResult::kTextBoxTrimEndDidNotApply);
+  DCHECK(last_non_empty_inflow_child_);
+  return Relayout<BlockLayoutAlgorithm>(kRelayoutForTextBoxTrim);
 }
 
 inline const LayoutResult* BlockLayoutAlgorithm::Layout(
@@ -806,7 +799,6 @@ inline const LayoutResult* BlockLayoutAlgorithm::Layout(
   // C: We're resuming layout from a break token. Margin struts cannot pass from
   //    one fragment to another if they are generated by the same block; they
   //    must be dealt with at the first fragment.
-  // D: We're forced to stop margin collapsing by a CSS property
   //
   // In all those cases we can and must resolve the BFC block offset now.
   if (content_edge || is_resuming_ ||
@@ -1070,11 +1062,16 @@ const LayoutResult* BlockLayoutAlgorithm::FinishLayout(
     return container_builder_.Abort(LayoutResult::kNeedsLineClampRelayout);
   }
 
-  if (constraint_space.ShouldTextBoxTrimEnd() &&
-      !container_builder_.IsBlockEndTrimmed()) [[unlikely]] {
-    // The `text-box-trim: end` should apply to the last inflow child. If that
-    // turned out to be empty, it should be applied to the previous child
-    // instead.
+  if (container_builder_.ShouldTextBoxTrimEnd() &&
+      last_non_empty_inflow_child_ &&
+      !line_clamp_data_.previous_inflow_position_when_clamped.has_value())
+      [[unlikely]] {
+    // The `text-box-trim: trim-end` should apply to the last inflow child, but
+    // which child this was isn't always something we can tell up-front, e.g. if
+    // the last formatted line is inside a block-in-inline, and we moved past it
+    // with no trimming.
+    // We ignore this if we have line-clamped, because the trim-end would have
+    // applied to the last line before clamp regardless.
     return container_builder_.Abort(LayoutResult::kTextBoxTrimEndDidNotApply);
   }
 
@@ -1415,9 +1412,9 @@ bool BlockLayoutAlgorithm::TryReuseFragmentsFromCache(
   FragmentItemsBuilder* items_builder = container_builder_.ItemsBuilder();
   const auto& space = GetConstraintSpace();
   DCHECK_EQ(items_builder->GetWritingDirection(), space.GetWritingDirection());
-  const auto result =
-      items_builder->AddPreviousItems(previous_fragment, *previous_items,
-                                      &container_builder_, end_item, max_lines);
+  const auto result = items_builder->AddPreviousItems(
+      previous_fragment, *previous_items, *end_item, &container_builder_,
+      max_lines);
   if (!result.succeeded) [[unlikely]] {
     DCHECK_EQ(children.size(), children_before);
     DCHECK(!result.used_block_size);
@@ -1444,7 +1441,7 @@ bool BlockLayoutAlgorithm::TryReuseFragmentsFromCache(
 
   // |AddPreviousItems| may have added more than one lines. Propagate baselines
   // from them.
-  for (const auto& child : base::make_span(children).subspan(children_before)) {
+  for (const auto& child : base::span(children).subspan(children_before)) {
     DCHECK(child.fragment->IsLineBox());
     PropagateBaselineFromLineBox(*child.fragment, child.offset.block_offset);
   }
@@ -1834,6 +1831,12 @@ LayoutResult::EStatus BlockLayoutAlgorithm::HandleNewFormattingContext(
     return LayoutResult::kNeedsLineClampRelayout;
   }
 
+  if (container_builder_.ShouldTextBoxTrim()) {
+    UpdateTextBoxTrim(child, child_break_token,
+                      /*outgoing_inline_break_token=*/nullptr, layout_result,
+                      previous_inflow_position);
+  }
+
   if (constraint_space.HasBlockFragmentation() &&
       !has_break_opportunity_before_next_child_) {
     has_break_opportunity_before_next_child_ =
@@ -2063,8 +2066,7 @@ const LayoutResult* BlockLayoutAlgorithm::LayoutNewFormattingContext(
     return layout_result;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return nullptr;
+  NOTREACHED();
 }
 
 LayoutResult::EStatus BlockLayoutAlgorithm::HandleInflow(
@@ -2116,11 +2118,9 @@ LayoutResult::EStatus BlockLayoutAlgorithm::HandleInflow(
     //
     // Set the forced BFC block-offset to the appropriate clearance offset to
     // force this placement of this child.
-    if (has_clearance_past_adjoining_floats) {
-      forced_bfc_block_offset =
-          GetExclusionSpace().ClearanceOffset(child.Style().Clear(Style()));
-      is_pushed_by_floats = true;
-    }
+    forced_bfc_block_offset =
+        GetExclusionSpace().ClearanceOffset(child.Style().Clear(Style()));
+    is_pushed_by_floats = true;
   }
 
   // Perform layout on the child.
@@ -2157,16 +2157,6 @@ LayoutResult::EStatus BlockLayoutAlgorithm::FinishInflow(
     PreviousInflowPosition* previous_inflow_position,
     InlineChildLayoutContext* inline_child_layout_context,
     const InlineBreakToken** previous_inline_break_token) {
-  if (layout_result->Status() == LayoutResult::kTextBoxTrimEndDidNotApply ||
-      (child_space.ShouldTextBoxTrimEnd() &&
-       layout_result->Status() == LayoutResult::kSuccess &&
-       !layout_result->GetPhysicalFragment().GetBreakToken() &&
-       !layout_result->IsBlockEndTrimmed())) [[unlikely]] {
-    // If the child algorithm couldn't apply `text-box-trim: end` to the last
-    // fragment, block or line, try to apply to the previous child.
-    return LayoutResult::kTextBoxTrimEndDidNotApply;
-  }
-
   // If a kNeedsLineClampRelayout layout result was not handled in
   // HandleNonSuccessfulLayoutResult, it needs to be propagated upwards until
   // the BFC root.
@@ -2419,9 +2409,29 @@ LayoutResult::EStatus BlockLayoutAlgorithm::FinishInflow(
           child, layout_result_to_use, previous_inflow_position,
           line_box_bfc_block_offset.value_or(*child_bfc_block_offset),
           has_container_separation);
+
+      if (child_space.ShouldForceTextBoxTrimEnd()) {
+        // This is the line that we decided to come back to and trim, as an
+        // attempt to fit it in the fragmentainer. This may or may not have
+        // succeeded, but in any case, we can stop looking for a place to trim.
+        container_builder_.ClearShouldTextBoxTrimEnd();
+      }
+
       if (break_status == BreakStatus::kBrokeBefore) {
+        // The line didn't fit, but if trimming is enabled, try again by
+        // trimming the block-end side of the line box. It might fit
+        // then. Otherwise we'll get here again and break before it.
+        if (container_builder_.ShouldTextBoxTrimFragmentainerEnd() &&
+            child.IsInline() && !child_space.ShouldForceTextBoxTrimEnd()) {
+          last_non_empty_inflow_child_ = To<InlineNode>(child);
+          last_non_empty_break_token_ = child_break_token;
+          return LayoutResult::kTextBoxTrimEndDidNotApply;
+        } else {
+          container_builder_.ClearShouldTextBoxTrimEnd();
+        }
         return LayoutResult::kSuccess;
       }
+
       if (break_status == BreakStatus::kNeedsEarlierBreak) {
         return LayoutResult::kNeedsEarlierBreak;
       }
@@ -2507,12 +2517,12 @@ LayoutResult::EStatus BlockLayoutAlgorithm::FinishInflow(
         self_collapsing_child_had_clearance);
   }
 
+  const InlineBreakToken* outgoing_inline_break_token = nullptr;
   if (child.IsInline()) {
-    *previous_inline_break_token =
+    outgoing_inline_break_token =
         To<InlineBreakToken>(physical_fragment.GetBreakToken());
-  } else {
-    *previous_inline_break_token = nullptr;
   }
+  *previous_inline_break_token = outgoing_inline_break_token;
 
   // Update |line_clamp_data_| from the LayoutResult, and abort if needed.
   // If the BFC block offset hasn't been resolved, the child we just laid out
@@ -2527,34 +2537,9 @@ LayoutResult::EStatus BlockLayoutAlgorithm::FinishInflow(
     }
   }
 
-  if (should_text_box_trim_start_ || should_text_box_trim_end_) [[unlikely]] {
-    // Update `should_text_box_trim_{start,end}_` if the child `layout_result`
-    // has applied `text-box-trim`.
-    if (should_text_box_trim_start_ && layout_result->IsBlockStartTrimmed()) {
-      should_text_box_trim_start_ = false;
-      container_builder_.SetIsBlockStartTrimmed();
-    }
-    if (should_text_box_trim_end_ &&
-        line_clamp_data_.data.state ==
-            LineClampData::kMeasureLinesUntilBfcOffset &&
-        layout_result->GetPhysicalFragment().GetBreakToken()) {
-      // If we trimmed the end only because we're in the first layout of a
-      // line-clamp: auto context, and we might not trim in the relayout, then
-      // we don't reset should_text_box_trim_end_, and we add the trim length to
-      // the logical block offset so next lines are set in the right position.
-      DCHECK(layout_result->TrimBlockEndBy());
-      previous_inflow_position->logical_block_offset +=
-          *layout_result->TrimBlockEndBy();
-    } else if (should_text_box_trim_end_) {
-      if (layout_result->IsBlockEndTrimmed()) {
-        should_text_box_trim_end_ = false;
-        container_builder_.SetIsBlockEndTrimmed();
-      } else if (!layout_result->IsSelfCollapsing()) {
-        // Keep the last non-empty child for `RelayoutForTextBoxTrimEnd`.
-        last_non_empty_inflow_child_ = child;
-        last_non_empty_break_token_ = child_break_token;
-      }
-    }
+  if (container_builder_.ShouldTextBoxTrim()) [[unlikely]] {
+    UpdateTextBoxTrim(child, child_break_token, outgoing_inline_break_token,
+                      layout_result, previous_inflow_position);
   }
 
   if (GetConstraintSpace().HasBlockFragmentation() &&
@@ -2565,6 +2550,44 @@ LayoutResult::EStatus BlockLayoutAlgorithm::FinishInflow(
   }
 
   return LayoutResult::kSuccess;
+}
+
+void BlockLayoutAlgorithm::UpdateTextBoxTrim(
+    LayoutInputNode child,
+    const BreakToken* incoming_child_break_token,
+    const InlineBreakToken* outgoing_inline_break_token,
+    const LayoutResult* layout_result,
+    PreviousInflowPosition* previous_inflow_position) {
+  container_builder_.ClearShouldTextBoxTrimFragmentainerStart();
+  // Update text box trimming flags if the child `layout_result` has applied
+  // `text-box-trim`, or was meant to apply it.
+  if (container_builder_.ShouldTextBoxTrimNodeStart()) {
+    if (!child.IsInline() || !outgoing_inline_break_token ||
+        outgoing_inline_break_token->IsPastFirstFormattedLine()) {
+      container_builder_.ClearShouldTextBoxTrimNodeStart();
+    }
+  }
+  if (container_builder_.ShouldTextBoxTrimNodeEnd()) {
+    if (line_clamp_data_.data.state ==
+            LineClampData::kMeasureLinesUntilBfcOffset &&
+        layout_result->TrimBlockEndBy() &&
+        layout_result->GetPhysicalFragment().GetBreakToken()) {
+      // If we trimmed the end only because we're in the first layout of a
+      // line-clamp: auto context, and we might not trim in the relayout, then
+      // we don't clear ShouldTextBoxTrimNodeEnd, and we add the trim length to
+      // the logical block offset so next lines are set in the right position.
+      previous_inflow_position->logical_block_offset +=
+          *layout_result->TrimBlockEndBy();
+    } else if (layout_result->IsBlockEndTrimmableLine() ||
+               (child.IsBlock() && IsLastInflowChild(*child.GetLayoutBox()))) {
+      container_builder_.ClearShouldTextBoxTrimEnd();
+    } else if (!layout_result->IsSelfCollapsing() && child.IsInline() &&
+               !override_text_box_trim_end_child_) {
+      // Keep the last non-empty child for `RelayoutForTextBoxTrimEnd`.
+      last_non_empty_inflow_child_ = To<InlineNode>(child);
+      last_non_empty_break_token_ = incoming_child_break_token;
+    }
+  }
 }
 
 InflowChildData BlockLayoutAlgorithm::ComputeChildData(
@@ -2982,7 +3005,14 @@ BreakStatus BlockLayoutAlgorithm::BreakBeforeChildIfNeeded(
           // (if at all possible), which means that lines that could fit in the
           // current fragment (that we have already laid out) may have to be
           // saved for the next fragment.
-          return BreakStatus::kContinue;
+          //
+          // However, any text box block-end trimming must take place before
+          // calculating widows, since we might fit an additional line by
+          // trimming.
+          if (!container_builder_.ShouldTextBoxTrimFragmentainerEnd() ||
+              override_text_box_trim_end_child_) {
+            return BreakStatus::kContinue;
+          }
         }
 
         // We have determined that there are plenty of lines for the next
@@ -3148,30 +3178,35 @@ ConstraintSpace BlockLayoutAlgorithm::CreateConstraintSpaceForChild(
     SetOrthogonalFallbackInlineSize(Style(), child, &builder);
   }
 
-  const bool has_auto_margins =
-      child_style.MarginInlineStartUsing(Style()).IsAuto() ||
-      child_style.MarginInlineEndUsing(Style()).IsAuto();
+  if (child.IsInline()) {
+    if (is_in_parallel_flow) {
+      builder.SetInlineAutoBehavior(AutoSizeBehavior::kStretchImplicit);
+    }
+  } else {
+    const bool has_auto_margins =
+        child_style.MarginInlineStartUsing(Style()).IsAuto() ||
+        child_style.MarginInlineEndUsing(Style()).IsAuto();
 
-  const bool justify_self_affects_sizing =
-      RuntimeEnabledFeatures::LayoutJustifySelfForBlocksEnabled() &&
-      !has_auto_margins;
+    const bool justify_self_affects_sizing =
+        RuntimeEnabledFeatures::LayoutJustifySelfForBlocksEnabled() &&
+        !has_auto_margins;
 
-  const ItemPosition justify_self =
-      child_style
-          .ResolvedJustifySelf(
-              {ItemPosition::kNormal, OverflowAlignment::kDefault}, &Style())
-          .GetPosition();
+    const ItemPosition justify_self =
+        child_style
+            .ResolvedJustifySelf(
+                {ItemPosition::kNormal, OverflowAlignment::kDefault}, &Style())
+            .GetPosition();
 
-  if (justify_self_affects_sizing && justify_self == ItemPosition::kStretch) {
-    builder.SetInlineAutoBehavior(AutoSizeBehavior::kStretchExplicit);
-  } else if (justify_self_affects_sizing &&
-             justify_self != ItemPosition::kNormal) {
-    builder.SetInlineAutoBehavior(AutoSizeBehavior::kFitContent);
-  } else if (is_in_parallel_flow &&
-             (child.IsInline() ||
-              ShouldBlockContainerChildStretchAutoInlineSize(
-                  To<BlockNode>(child)))) {
-    builder.SetInlineAutoBehavior(AutoSizeBehavior::kStretchImplicit);
+    if (justify_self_affects_sizing && justify_self == ItemPosition::kStretch) {
+      builder.SetInlineAutoBehavior(AutoSizeBehavior::kStretchExplicit);
+    } else if (justify_self_affects_sizing &&
+               justify_self != ItemPosition::kNormal) {
+      builder.SetInlineAutoBehavior(AutoSizeBehavior::kFitContent);
+    } else if (is_in_parallel_flow &&
+               ShouldBlockContainerChildStretchAutoInlineSize(
+                   To<BlockNode>(child))) {
+      builder.SetInlineAutoBehavior(AutoSizeBehavior::kStretchImplicit);
+    }
   }
 
   if (line_clamp_data_.ShouldHideForPaint()) [[unlikely]] {
@@ -3293,45 +3328,34 @@ ConstraintSpace BlockLayoutAlgorithm::CreateConstraintSpaceForChild(
     builder.SetLineClampData(line_clamp_data_.data);
     builder.SetLineClampEndMarginStrut(line_clamp_data_.end_margin_strut);
     builder.SetLineClampEndPadding(Padding().block_end);
+    builder.SetShouldTextBoxTrimInsideWhenLineClamp(
+        line_clamp_data_.data.IsLineClampContext() &&
+        (constraint_space.ShouldTextBoxTrimInsideWhenLineClamp() ||
+         container_builder_.ShouldTextBoxTrimNodeEnd()));
   }
   builder.SetBlockStartAnnotationSpace(block_start_annotation_space);
 
-  // Propagate `text-box-trim` only for in-flow children. Check the
-  // `LayoutObject` tree, because `InlineNode` synthesizes these flags.
-  if ((should_text_box_trim_start_ || should_text_box_trim_end_) &&
-      !child.GetLayoutBox()->IsFloatingOrOutOfFlowPositioned()) [[unlikely]] {
-    if (should_text_box_trim_start_) {
-      builder.SetShouldTextBoxTrimStart();
-    }
-    if (should_text_box_trim_end_) {
-      if (child.IsInline()) {
-        // For an inline child, always set the flag. The `InlineLayoutAlgorithm`
-        // can determine if it's the last line or not rather quickly. It can
-        // still fail for empty lines, which is handled by
-        // `RelayoutForTextBoxTrimEnd()`.
-        builder.SetShouldTextBoxTrimEnd();
-        if (child == override_text_box_trim_end_child_ &&
-            InlineBreakToken::IsStartEqual(
-                To<InlineBreakToken>(override_text_box_trim_end_break_token_),
-                To<InlineBreakToken>(child_break_token))) {
-          builder.SetShouldForceTextBoxTrimEnd();
-        }
-      } else if (IsLastInflowChild(*child.GetLayoutBox()) ||
-                 child == override_text_box_trim_end_child_) {
-        // For a block child, set the flag only for the last inflow child,
-        // because `IsLastInflowChild` can determine the last inflow child
-        // rather quickly. It can still fail for empty children, which is
-        // handled by `RelayoutForTextBoxTrimEnd()`.
-        builder.SetShouldTextBoxTrimEnd();
+  // Propagate `text-box-trim` only for in-flow children.
+  if (container_builder_.ShouldTextBoxTrim() &&
+      !child.IsFloatingOrOutOfFlowPositioned()) [[unlikely]] {
+    // For inline children we cannot determine here whether this will be the
+    // last line or not. However, `InlineLayoutAlgorithm` can determine if it's
+    // the last line or not rather quickly in most cases. If it fails to apply
+    // end trimming when it should (happens for block-in-inline), this is
+    // handled by `RelayoutForTextBoxTrimEnd()`.
+    bool known_to_have_successive_content =
+        !child.IsInline() && !IsLastInflowChild(*child.GetLayoutBox());
+
+    SetTextBoxTrimOnChildSpaceBuilder(
+        container_builder_, known_to_have_successive_content, &builder);
+    if (container_builder_.ShouldTextBoxTrimEnd()) {
+      if (child.IsInline() && child == override_text_box_trim_end_child_ &&
+          InlineBreakToken::IsStartEqual(
+              To<InlineBreakToken>(override_text_box_trim_end_break_token_),
+              To<InlineBreakToken>(child_break_token))) {
+        builder.SetShouldForceTextBoxTrimEnd();
       }
     }
-
-    // Propagate `text-box-edge` if this box has non-initial `text-box-trim`.
-    const ComputedStyle& style = Node().Style();
-    builder.SetEffectiveTextBoxEdge(
-        style.TextBoxTrim() != ETextBoxTrim::kNone
-            ? style.GetTextBoxEdge()
-            : constraint_space.EffectiveTextBoxEdge());
   }
 
   if (constraint_space.HasBlockFragmentation()) {

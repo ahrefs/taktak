@@ -36,12 +36,11 @@
 #include "third_party/blink/renderer/core/svg/graphics/svg_image_for_container.h"
 #include "third_party/blink/renderer/platform/bindings/enumeration_base.h"
 #include "third_party/blink/renderer/platform/graphics/accelerated_static_bitmap_image.h"
-#include "third_party/blink/renderer/platform/graphics/canvas_color_params.h"
 #include "third_party/blink/renderer/platform/graphics/canvas_resource_provider.h"
 #include "third_party/blink/renderer/platform/graphics/gpu/shared_gpu_context.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_context.h"
+#include "third_party/blink/renderer/platform/graphics/graphics_types.h"
 #include "third_party/blink/renderer/platform/graphics/image.h"
-#include "third_party/blink/renderer/platform/graphics/skia/skia_utils.h"
 #include "third_party/blink/renderer/platform/graphics/static_bitmap_image_transform.h"
 #include "third_party/blink/renderer/platform/graphics/unaccelerated_static_bitmap_image.h"
 #include "third_party/blink/renderer/platform/graphics/video_frame_image_util.h"
@@ -51,6 +50,7 @@
 #include "third_party/blink/renderer/platform/scheduler/public/main_thread.h"
 #include "third_party/blink/renderer/platform/scheduler/public/post_cross_thread_task.h"
 #include "third_party/blink/renderer/platform/scheduler/public/worker_pool.h"
+#include "third_party/blink/renderer/platform/transforms/affine_transform.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_base.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_gfx.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_skia.h"
@@ -136,7 +136,7 @@ ImageBitmap::ParsedOptions ParseOptions(const ImageBitmapOptions* options,
       (options->colorSpaceConversion() != kImageBitmapOptionNone);
   if (options->colorSpaceConversion() != kImageBitmapOptionNone &&
       options->colorSpaceConversion() != kImageBitmapOptionDefault) {
-    NOTREACHED_IN_MIGRATION()
+    NOTREACHED()
         << "Invalid ImageBitmap creation attribute colorSpaceConversion: "
         << IDLEnumAsString(options->colorSpaceConversion());
   }
@@ -200,11 +200,9 @@ ImageBitmap::ParsedOptions ParseOptions(
     const ImageBitmapOptions* options,
     std::optional<gfx::Rect> crop_rect,
     scoped_refptr<StaticBitmapImage> input) {
-  auto info = input->GetSkImageInfo();
-  return ParseOptions(options, crop_rect,
-                      gfx::Size(info.width(), info.height()),
+  return ParseOptions(options, crop_rect, input->GetSize(),
                       input->CurrentFrameOrientation(),
-                      info.alphaType() == kUnpremul_SkAlphaType);
+                      input->GetAlphaType() == kUnpremul_SkAlphaType);
 }
 
 // The function dstBufferSizeHasOverflow() is being called at the beginning of
@@ -246,7 +244,7 @@ scoped_refptr<StaticBitmapImage> ApplyTransformsFromOptions(
   params.force_copy = force_copy;
   params.flip_y = options.flip_y;
   params.premultiply_alpha = options.premultiply_alpha;
-  params.has_color_space_conversion = options.has_color_space_conversion;
+  params.reinterpret_as_srgb = !options.has_color_space_conversion;
   params.orientation_from_image = options.orientation_from_image;
   params.sampling = options.sampling;
   params.source_rect = options.source_rect;
@@ -389,9 +387,8 @@ ImageBitmap::ImageBitmap(HTMLCanvasElement* canvas,
                          std::optional<gfx::Rect> crop_rect,
                          const ImageBitmapOptions* options) {
   SourceImageStatus status;
-  scoped_refptr<Image> image_input =
-      canvas->GetSourceImageForCanvas(FlushReason::kCreateImageBitmap, &status,
-                                      gfx::SizeF(), kPremultiplyAlpha);
+  scoped_refptr<Image> image_input = canvas->GetSourceImageForCanvas(
+      FlushReason::kCreateImageBitmap, &status, gfx::SizeF(), kDontChangeAlpha);
   if (status != kNormalSourceImageStatus)
     return;
   DCHECK(IsA<StaticBitmapImage>(image_input.get()));
@@ -416,7 +413,7 @@ ImageBitmap::ImageBitmap(OffscreenCanvas* offscreen_canvas,
   SourceImageStatus status;
   scoped_refptr<Image> raw_input = offscreen_canvas->GetSourceImageForCanvas(
       FlushReason::kCreateImageBitmap, &status,
-      gfx::SizeF(offscreen_canvas->Size()));
+      gfx::SizeF(offscreen_canvas->Size()), kDontChangeAlpha);
   DCHECK(IsA<StaticBitmapImage>(raw_input.get()));
   scoped_refptr<StaticBitmapImage> input =
       static_cast<StaticBitmapImage*>(raw_input.get());
@@ -453,10 +450,9 @@ ImageBitmap::ImageBitmap(const SkPixmap& pixmap,
 ImageBitmap::ImageBitmap(ImageData* data,
                          std::optional<gfx::Rect> crop_rect,
                          const ImageBitmapOptions* options) {
-  const ParsedOptions parsed_options =
-      ParseOptions(options, crop_rect, data->BitmapSourceSize(),
-                   ImageOrientationEnum::kOriginTopLeft,
-                   /*source_is_unpremul=*/true);
+  const ParsedOptions parsed_options = ParseOptions(
+      options, crop_rect, data->Size(), ImageOrientationEnum::kOriginTopLeft,
+      /*source_is_unpremul=*/true);
   if (DstBufferSizeHasOverflow(parsed_options))
     return;
 
@@ -671,7 +667,7 @@ ScriptPromise<ImageBitmap> ImageBitmap::CreateAsync(
     auto affineTransform =
         input->CurrentFrameOrientation().TransformFromDefault(
             gfx::SizeF(draw_dst_rect.size()));
-    canvas->concat(AffineTransformToSkM44(affineTransform));
+    canvas->concat(affineTransform.ToSkM44());
     if (input->CurrentFrameOrientation().UsesWidthAsHeight()) {
       draw_dst_rect.set_size(gfx::TransposeSize(draw_dst_rect.size()));
     }
@@ -752,6 +748,13 @@ gfx::Size ImageBitmap::Size() const {
   DCHECK_GT(image_->width(), 0);
   DCHECK_GT(image_->height(), 0);
   return image_->PreferredDisplaySize();
+}
+
+ImageBitmapSourceStatus ImageBitmap::CheckUsability() const {
+  if (is_neutered_) {
+    return base::unexpected(ImageBitmapSourceError::kInvalid);
+  }
+  return base::ok();
 }
 
 ScriptPromise<ImageBitmap> ImageBitmap::CreateImageBitmap(

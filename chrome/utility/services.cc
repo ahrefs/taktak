@@ -15,8 +15,6 @@
 #include "components/password_manager/services/csv_password/csv_password_parser_impl.h"
 #include "components/password_manager/services/csv_password/public/mojom/csv_password_parser.mojom.h"
 #include "components/safe_browsing/buildflags.h"
-#include "components/services/language_detection/language_detection_service_impl.h"
-#include "components/services/language_detection/public/mojom/language_detection.mojom.h"
 #include "components/services/on_device_translation/buildflags/buildflags.h"
 #include "components/services/patch/file_patcher_impl.h"
 #include "components/services/patch/public/mojom/file_patcher.mojom.h"
@@ -71,7 +69,9 @@
 #include "media/mojo/mojom/speech_recognition_service.mojom.h"  // nogncheck
 #endif  // BUILDFLAG(ENABLE_BROWSER_SPEECH_SERVICE)
 
-#if BUILDFLAG(FULL_SAFE_BROWSING) || BUILDFLAG(IS_CHROMEOS_ASH)
+#if (BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION) && \
+     !BUILDFLAG(IS_ANDROID)) ||                      \
+    BUILDFLAG(IS_CHROMEOS_ASH)
 #include "chrome/services/file_util/file_util_service.h"  // nogncheck
 #endif
 
@@ -156,13 +156,6 @@ auto RunFilePatcher(mojo::PendingReceiver<patch::mojom::FilePatcher> receiver) {
 
 auto RunUnzipper(mojo::PendingReceiver<unzip::mojom::Unzipper> receiver) {
   return std::make_unique<unzip::UnzipperImpl>(std::move(receiver));
-}
-
-auto RunLanguageDetectionService(
-    mojo::PendingReceiver<language_detection::mojom::LanguageDetectionService>
-        receiver) {
-  return std::make_unique<language_detection::LanguageDetectionServiceImpl>(
-      std::move(receiver));
 }
 
 auto RunWebAppOriginAssociationParser(
@@ -283,7 +276,9 @@ auto RunCupsIppParser(
 }
 #endif
 
-#if BUILDFLAG(FULL_SAFE_BROWSING) || BUILDFLAG(IS_CHROMEOS_ASH)
+#if (BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION) && \
+     !BUILDFLAG(IS_ANDROID)) ||                      \
+    BUILDFLAG(IS_CHROMEOS_ASH)
 auto RunFileUtil(
     mojo::PendingReceiver<chrome::mojom::FileUtilService> receiver) {
   return std::make_unique<FileUtilService>(std::move(receiver));
@@ -469,7 +464,6 @@ void RegisterElevatedMainThreadServices(mojo::ServiceFactory& services) {
 void RegisterMainThreadServices(mojo::ServiceFactory& services) {
   services.Add(RunFilePatcher);
   services.Add(RunUnzipper);
-  services.Add(RunLanguageDetectionService);
   services.Add(RunWebAppOriginAssociationParser);
   services.Add(RunCSVPasswordParser);
 
@@ -503,7 +497,9 @@ void RegisterMainThreadServices(mojo::ServiceFactory& services) {
   services.Add(RunMacNotificationService);
 #endif  // BUILDFLAG(IS_MAC)
 
-#if BUILDFLAG(FULL_SAFE_BROWSING) || BUILDFLAG(IS_CHROMEOS_ASH)
+#if (BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION) && \
+     !BUILDFLAG(IS_ANDROID)) ||                      \
+    BUILDFLAG(IS_CHROMEOS_ASH)
   services.Add(RunFileUtil);
 #endif
 

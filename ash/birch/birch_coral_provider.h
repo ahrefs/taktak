@@ -7,41 +7,83 @@
 
 #include "ash/ash_export.h"
 #include "ash/birch/birch_data_provider.h"
-#include "ash/public/cpp/coral_util.h"
+#include "ash/public/cpp/session/session_observer.h"
 #include "ash/public/cpp/tab_cluster/tab_cluster_ui_controller.h"
 #include "ash/wm/coral/coral_controller.h"
+#include "ash/wm/overview/overview_controller.h"
+#include "ash/wm/overview/overview_observer.h"
 #include "base/containers/flat_map.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "base/scoped_multi_source_observation.h"
+#include "base/token.h"
+#include "chromeos/ash/services/coral/public/mojom/coral_service.mojom.h"
+#include "ui/aura/window_observer.h"
+
+class PrefRegistrySimple;
 
 namespace ash {
 
-class BirchModel;
 class CoralItemRemover;
+class Desk;
 
 class ASH_EXPORT BirchCoralProvider : public BirchDataProvider,
-                                      public TabClusterUIController::Observer {
+                                      public TabClusterUIController::Observer,
+                                      public coral::mojom::TitleObserver,
+                                      public SessionObserver,
+                                      public aura::WindowObserver,
+                                      public OverviewObserver {
  public:
-  explicit BirchCoralProvider(BirchModel* birch_model);
+  class Observer : public base::CheckedObserver {
+   public:
+    Observer();
+    Observer(const Observer&) = delete;
+    Observer& operator=(const Observer&) = delete;
+    ~Observer() override;
+
+    virtual void OnCoralGroupRemoved(const base::Token& group_id);
+    virtual void OnCoralEntityRemoved(const base::Token& group_id,
+                                      std::string_view identifier);
+    virtual void OnCoralGroupTitleUpdated(const base::Token& group_id,
+                                          const std::string& title);
+  };
+
+  BirchCoralProvider();
   BirchCoralProvider(const BirchCoralProvider&) = delete;
   BirchCoralProvider& operator=(const BirchCoralProvider&) = delete;
   ~BirchCoralProvider() override;
 
+  const Desk* in_session_source_desk() const { return in_session_source_desk_; }
+
   static BirchCoralProvider* Get();
+
+  static void RegisterProfilePrefs(PrefRegistrySimple* registry);
 
   // Gets a group reference with given group ID. This operation will not remove
   // the group from the `response_`.
-  const coral::mojom::GroupPtr& GetGroupById(int group_id) const;
+  const coral::mojom::GroupPtr& GetGroupById(const base::Token& group_id) const;
 
   // Extracts a group from the response with given group ID. This operation will
   // remove the group from the `response_`.
-  coral::mojom::GroupPtr ExtractGroupById(int group_id);
+  coral::mojom::GroupPtr ExtractGroupById(const base::Token& group_id);
 
-  // Add all items in group `group_id` to the coral item remover blocklist.
-  void RemoveGroup(int group_id);
+  // Removes the group with `group_id` from the `response_` and adds all items
+  // in the group to the coral item remover blocklist.
+  void RemoveGroup(const base::Token& group_id);
 
-  // Removes an item with `identifier` from the group with group_id.
-  void RemoveItemFromGroup(const int group_id, const std::string& identifier);
+  // Removes an item with `identifier` from the group with `group_id`.
+  void RemoveItemFromGroup(const base::Token& group_id,
+                           const std::string& identifier);
+
+  void OnPostLoginClusterRestored();
+
+  mojo::PendingRemote<coral::mojom::TitleObserver> BindRemote();
+
+  void AddObserver(Observer* observer);
+  void RemoveObserver(Observer* observer);
+
+  // Gets if the primary user meets GenAI's age and location requirement.
+  bool GetGenAIAvailability();
 
   // BirchDataProvider:
   void RequestBirchDataFetch() override;
@@ -50,6 +92,21 @@ class ASH_EXPORT BirchCoralProvider : public BirchDataProvider,
   void OnTabItemAdded(TabClusterUIItem* tab_item) override;
   void OnTabItemUpdated(TabClusterUIItem* tab_item) override;
   void OnTabItemRemoved(TabClusterUIItem* tab_item) override;
+
+  // coral::mojom::TitleObserver:
+  void TitleUpdated(const base::Token& id, const std::string& title) override;
+
+  // SessionObserver:
+  void OnSessionStateChanged(session_manager::SessionState state) override;
+  void OnActiveUserSessionChanged(const AccountId& account_id) override;
+
+  // aura::WindowObserver:
+  void OnWindowDestroyed(aura::Window* window) override;
+  void OnWindowParentChanged(aura::Window* window,
+                             aura::Window* parent) override;
+
+  // OverviewObserver:
+  void OnOverviewModeEnded() override;
 
   const CoralRequest& GetCoralRequestForTest() const { return request_; }
 
@@ -84,8 +141,9 @@ class ASH_EXPORT BirchCoralProvider : public BirchDataProvider,
   void HandleCoralResponse(std::unique_ptr<CoralResponse> response);
 
   // Erases from the ContentItem list any items which have been removed by the
-  // user. The list is mutated in place.
-  void FilterCoralContentItems(std::vector<coral::mojom::EntityPtr>* items);
+  // user and the items with an empty title. The list is mutated in place.
+  void FilterCoralContentItems(std::vector<coral::mojom::EntityPtr>* items,
+                               CoralSource source);
 
   // Only cache embeddings for valid tabs/windows.
   void MaybeCacheTabEmbedding(TabClusterUIItem* tab_item);
@@ -93,15 +151,36 @@ class ASH_EXPORT BirchCoralProvider : public BirchDataProvider,
   // Sends a request to the coral backend to cache the embedding for `tab_item`.
   void CacheTabEmbedding(TabClusterUIItem* tab_item);
 
-  void HandleEmbeddingResult(bool success);
+  // Observes all the valid app and browser windows associated with `response_`.
+  void ObserveAllWindowsInResponse();
 
-  const raw_ptr<BirchModel> birch_model_;
+  // Called when the `tab_item` is removed or moved from its source desk.
+  void OnTabRemovedFromSourceDesk(TabClusterUIItem* tab_item);
+
+  // Called when an `app_window` is removed or moved from its source desk.
+  void OnAppWindowRemovedFromSourceDesk(aura::Window* app_window);
+
+  // Removes the entity corresponding to the given `entity_identifier` from
+  // current in-session `response_`.
+  void RemoveEntity(std::string_view entity_identifier);
+
+  // Resets raw pointers and window observations when exiting Overview mode.
+  void Reset();
+
+  // GenAI age availability inquiry callback.
+  void OnGenAIAgeAvailabilityReceived(bool allow);
 
   // The request sent to the coral backend.
   CoralRequest request_;
 
-  // Timestamp for when a post login coral response was received.
-  base::Time post_login_response_timestamp_;
+  // Timestamp for when post login coral response expires.
+  base::TimeTicks post_login_response_expiration_timestamp_;
+
+  // Indicates if primary user's age availability checked.
+  bool is_gen_ai_age_availability_checked_ = false;
+
+  // Indicates if primary user's location is allowed by GenAI.
+  std::optional<bool> is_gen_ai_location_allow_;
 
   // Response generated by the coral backend.
   std::unique_ptr<CoralResponse> response_;
@@ -112,6 +191,25 @@ class ASH_EXPORT BirchCoralProvider : public BirchDataProvider,
   // Used to filter out coral items which have been removed by the user in
   // the current session.
   std::unique_ptr<CoralItemRemover> coral_item_remover_;
+
+  mojo::Receiver<coral::mojom::TitleObserver> receiver_{this};
+
+  ScopedSessionObserver session_observer_{this};
+
+  // Observe the windows related to the in-session group entities.
+  base::ScopedMultiSourceObservation<aura::Window, aura::WindowObserver>
+      windows_observation_{this};
+
+  base::ScopedObservation<OverviewController, OverviewObserver>
+      overview_observation_{this};
+
+  // The source desk of the in-session groups. It will be set to the current
+  // active desk once in-session groups are generated. It will be reset when the
+  // in-session groups are extracted, e.g. launched or hidden by user, or all of
+  // the group entities are removed, e.g. the source desk is closed or merged.
+  raw_ptr<const Desk> in_session_source_desk_ = nullptr;
+
+  base::ObserverList<Observer> observers_;
 
   base::WeakPtrFactory<BirchCoralProvider> weak_ptr_factory_{this};
 };

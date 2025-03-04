@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <algorithm>
 #include <map>
 #include <unordered_map>
 #include <utility>
@@ -14,7 +15,6 @@
 #include "base/containers/contains.h"
 #include "base/memory/raw_ptr_exclusion.h"
 #include "base/not_fatal_until.h"
-#include "base/ranges/algorithm.h"
 #include "base/trace_event/trace_event.h"
 #include "base/trace_event/trace_id_helper.h"
 #include "base/trace_event/typed_macros.h"
@@ -84,9 +84,9 @@ class DependentIterator {
     } while (graph_->edges[current_index_].task != task_);
 
     // Now find the node for the dependent of this edge.
-    auto it = base::ranges::find(graph_->nodes,
-                                 graph_->edges[current_index_].dependent.get(),
-                                 &TaskGraph::Node::task);
+    auto it = std::ranges::find(graph_->nodes,
+                                graph_->edges[current_index_].dependent.get(),
+                                &TaskGraph::Node::task);
     CHECK(it != graph_->nodes.end(), base::NotFatalUntil::M130);
     current_node_ = &(*it);
 
@@ -182,8 +182,8 @@ void TaskGraphWorkQueue::ScheduleTasks(NamespaceToken token, TaskGraph* graph) {
     // Remove any old nodes that are associated with this task. The result is
     // that the old graph is left with all nodes not present in this graph,
     // which we use below to determine what tasks need to be canceled.
-    auto old_it = base::ranges::find(task_namespace.graph.nodes, node.task,
-                                     &TaskGraph::Node::task);
+    auto old_it = std::ranges::find(task_namespace.graph.nodes, node.task,
+                                    &TaskGraph::Node::task);
     if (old_it != task_namespace.graph.nodes.end()) {
       std::swap(*old_it, task_namespace.graph.nodes.back());
       // If old task is scheduled to run again and not yet started running,
@@ -301,9 +301,28 @@ TaskGraphWorkQueue::PrioritizedTask TaskGraphWorkQueue::GetNextTaskToRun(
   return task;
 }
 
+bool TaskGraphWorkQueue::ExternalDependencyCompletedForTask(
+    NamespaceToken token,
+    scoped_refptr<Task> task) {
+  TaskNamespace* task_namespace = GetNamespaceForToken(token);
+  CHECK(task_namespace || task->state().IsCanceled());
+  if (task_namespace) {
+    auto iter = std::ranges::find(task_namespace->graph.nodes, task.get(),
+                                  &TaskGraph::Node::task);
+    if (iter == task_namespace->graph.nodes.end()) {
+      return false;
+    }
+    iter->has_external_dependency = false;
+    return DecrementNodeDependencies(*iter, task_namespace,
+                                     /*rebuild_heap*/ true);
+  }
+  return false;
+}
+
 bool TaskGraphWorkQueue::DecrementNodeDependencies(
     TaskGraph::Node& node,
-    TaskNamespace* task_namespace) {
+    TaskNamespace* task_namespace,
+    bool rebuild_heap) {
   DCHECK_LT(0u, node.dependencies);
   node.dependencies--;
   // Task is ready if it has no dependencies and is in the new state, Add it
@@ -326,7 +345,23 @@ bool TaskGraphWorkQueue::DecrementNodeDependencies(
           ready_to_run_namespaces_[node.category];
 
       DCHECK(!base::Contains(ready_to_run_namespaces, task_namespace));
+      // TODO(paint-dev): The following line could be:
+      //   if (rebuild_heap) {
+      //     ready_to_run_namspaces.push_heap();
+      //     rebuild_heap = false;
+      //   } else {
+      //     ready_to_run_namespaces.push_back();
+      //   }
       ready_to_run_namespaces.push_back(task_namespace);
+    }
+    if (rebuild_heap) {
+      // TODO(paint-dev): it's only necessary to rebuild the namespace heap if
+      // the sorting value for `task_namespace` changed (i.e., if the
+      // newly-ready-to-run task has a higher priority than any other
+      // ready-to-run task in the namespace. We should check for that.
+      auto& category_namespaces = ready_to_run_namespaces_[node.category];
+      std::make_heap(category_namespaces.begin(), category_namespaces.end(),
+                     CompareTaskNamespacePriority(node.category));
     }
     return true;
   }
@@ -338,8 +373,8 @@ void TaskGraphWorkQueue::CompleteTask(PrioritizedTask completed_task) {
   scoped_refptr<Task> task(std::move(completed_task.task));
 
   // Remove task from |running_tasks|.
-  auto it = base::ranges::find(task_namespace->running_tasks, task,
-                               &CategorizedTask::second);
+  auto it = std::ranges::find(task_namespace->running_tasks, task,
+                              &CategorizedTask::second);
   CHECK(it != task_namespace->running_tasks.end(), base::NotFatalUntil::M130);
   std::swap(*it, task_namespace->running_tasks.back());
   task_namespace->running_tasks.pop_back();
@@ -349,8 +384,10 @@ void TaskGraphWorkQueue::CompleteTask(PrioritizedTask completed_task) {
   bool ready_to_run_namespaces_has_heap_properties = true;
   for (DependentIterator dependent_it(&task_namespace->graph, task.get());
        dependent_it; ++dependent_it) {
-    ready_to_run_namespaces_has_heap_properties &=
-        !DecrementNodeDependencies(*dependent_it, task_namespace);
+    // rebuild_heap=false to avoid rebuilding the heap on every iteration; just
+    // do it once at the end if necessary.
+    ready_to_run_namespaces_has_heap_properties &= !DecrementNodeDependencies(
+        *dependent_it, task_namespace, false /*rebuild_heap*/);
   }
 
   // Rearrange the task namespaces in |ready_to_run_namespaces_| in such a way
@@ -386,13 +423,18 @@ void TaskGraphWorkQueue::CollectCompletedTasks(NamespaceToken token,
 
 bool TaskGraphWorkQueue::DependencyMismatch(const TaskGraph* graph) {
   // Value storage will be 0-initialized.
-  std::unordered_map<const Task*, size_t> dependents;
+  std::unordered_map<const Task*, size_t> dependencies;
   for (const TaskGraph::Edge& edge : graph->edges)
-    dependents[edge.dependent]++;
+    dependencies[edge.dependent]++;
 
   for (const TaskGraph::Node& node : graph->nodes) {
-    if (dependents[node.task.get()] != node.dependencies)
+    size_t graph_dependency_count = dependencies[node.task.get()];
+    if (node.has_external_dependency) {
+      graph_dependency_count++;
+    }
+    if (graph_dependency_count != node.dependencies) {
       return true;
+    }
   }
 
   return false;

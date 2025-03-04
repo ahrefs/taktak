@@ -36,7 +36,7 @@ float GetOpacity(PdfInkBrush::Type type) {
     case PdfInkBrush::Type::kHighlighter:
       // LINT.IfChange(HighlighterOpacity)
       return 0.4f;
-      // LINT.ThenChange(//chrome/browser/resources/pdf/elements/ink_color_selector.ts:HighlighterOpacity)
+      // LINT.ThenChange(//chrome/browser/resources/pdf/pdf_viewer_utils.ts:HighlighterOpacity)
     case PdfInkBrush::Type::kPen:
       return 1.0f;
   }
@@ -99,6 +99,17 @@ std::optional<PdfInkBrush::Type> PdfInkBrush::StringToType(
     return Type::kPen;
   }
   return std::nullopt;
+}
+
+// static
+std::string PdfInkBrush::TypeToString(Type brush_type) {
+  switch (brush_type) {
+    case Type::kHighlighter:
+      return "highlighter";
+    case Type::kPen:
+      return "pen";
+  }
+  NOTREACHED();
 }
 
 // static

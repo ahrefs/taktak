@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "base/apple/dispatch_source_mach.h"
+#include "base/apple/dispatch_source.h"
 #include "base/apple/scoped_mach_port.h"
 #include "base/base_export.h"
 #include "base/containers/buffer_iterator.h"
@@ -25,7 +25,6 @@
 #include "build/ios_buildflags.h"
 
 #if BUILDFLAG(IS_MAC)
-#include "base/apple/scoped_dispatch_object.h"
 #include "base/environment.h"
 #include "base/mac/process_requirement.h"
 #endif
@@ -100,7 +99,7 @@ class BASE_EXPORT MachPortRendezvousServerBase {
   apple::ScopedMachReceiveRight server_port_;
 
   // Mach message dispatch source for |server_port_|.
-  std::unique_ptr<apple::DispatchSourceMach> dispatch_source_;
+  std::unique_ptr<apple::DispatchSource> dispatch_source_;
 
   // Ask for the associated ports associated with `audit_token`.
   // Return `std::nullopt` if the client is not authorized to
@@ -206,6 +205,8 @@ class BASE_EXPORT MachPortRendezvousServerMac final
   // registered.
   Lock& GetLock() LOCK_RETURNED(lock_) { return lock_; }
 
+  void ClearClientDataForTesting() EXCLUSIVE_LOCKS_REQUIRED(GetLock());
+
  protected:
   // Returns the registered collection of ports for the specified `audit_token`.
   // `std::nullopt` indicates that the client is not authorized to retrieve the
@@ -225,18 +226,7 @@ class BASE_EXPORT MachPortRendezvousServerMac final
   MachPortRendezvousServerMac();
   ~MachPortRendezvousServerMac() override;
 
-  struct ClientData {
-    ClientData();
-    ClientData(ClientData&&);
-    ~ClientData();
-
-    // A DISPATCH_SOURCE_TYPE_PROC / DISPATCH_PROC_EXIT dispatch source. When
-    // the source is triggered, it calls OnClientExited().
-    apple::ScopedDispatchObject<dispatch_source_t> exit_watcher;
-
-    MachPortsForRendezvous ports;
-    std::optional<mac::ProcessRequirement> requirement;
-  };
+  struct ClientData;
 
   // Returns the `ClientData` for `pid`, creating it if necessary.
   // It will be cleaned up automatically when `pid` exits.

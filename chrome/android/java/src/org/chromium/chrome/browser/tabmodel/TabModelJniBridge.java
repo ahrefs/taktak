@@ -123,7 +123,17 @@ public abstract class TabModelJniBridge implements TabModelInternal {
     public abstract Tab getTabAt(int index);
 
     /**
+     * Closes all tabs. This bypasses protections for shared tab groups where placeholder tabs are
+     * created to ensure collaboration data is not destroyed. Prefer {@link #closeTabAt()} to ensure
+     * collaboration data is not destroyed by mistake. This is primarily intended for test usage
+     * where the loss of collaboration data is acceptable.
+     */
+    @CalledByNative
+    protected abstract void forceCloseAllTabs();
+
+    /**
      * Closes the Tab at a particular index.
+     *
      * @param index Index of the tab to close.
      * @return Whether the was successfully closed.
      */
@@ -185,6 +195,21 @@ public abstract class TabModelJniBridge implements TabModelInternal {
         return filter.isTabInTabGroup(tab);
     }
 
+    /**
+     * Returns the count of non-custom tabs that have a {@link
+     * Tab#getLastNavigationCommittedTimestampMillis()} within the time range [beginTimeMs,
+     * endTimeMs).
+     */
+    @CalledByNative
+    protected abstract int getTabCountNavigatedInTimeWindow(long beginTimeMs, long endTimeMs);
+
+    /**
+     * Closes non-custom tabs that have a {@link Tab#getLastNavigationCommittedTimestampMillis()}
+     * within the time range [beginTimeMs, endTimeMs).
+     */
+    @CalledByNative
+    protected abstract void closeTabsNavigatedInTimeWindow(long beginTimeMs, long endTimeMs);
+
     @Override
     @CalledByNative
     public abstract int getCount();
@@ -203,14 +228,6 @@ public abstract class TabModelJniBridge implements TabModelInternal {
 
     @Override
     public abstract void setActive(boolean active);
-
-    @Override
-    @CalledByNative
-    public abstract int getTabCountNavigatedInTimeWindow(long beginTimeMs, long endTimeMs);
-
-    @Override
-    @CalledByNative
-    public abstract void closeTabsNavigatedInTimeWindow(long beginTimeMs, long endTimeMs);
 
     @NativeMethods
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)

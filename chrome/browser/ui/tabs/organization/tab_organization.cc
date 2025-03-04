@@ -10,6 +10,7 @@
 
 #include "base/debug/dump_without_crashing.h"
 #include "chrome/browser/ui/tabs/organization/tab_data.h"
+#include "chrome/browser/ui/tabs/public/tab_interface.h"
 #include "chrome/browser/ui/tabs/tab_group.h"
 #include "chrome/browser/ui/tabs/tab_group_model.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
@@ -19,7 +20,7 @@
 namespace {
 constexpr int kMinValidTabsForOrganizing = 2;
 int kNextOrganizationID = 1;
-}
+}  // namespace
 
 TabOrganization::TabOrganization(
     TabDatas tab_datas,
@@ -38,7 +39,7 @@ TabOrganization::TabOrganization(
   kNextOrganizationID++;
 
   // TabDatas must not be duplicates, immediately destroy TabDatas that are.
-  std::vector<const tabs::TabModel*> existing_tabs;
+  std::vector<const tabs::TabInterface*> existing_tabs;
   for (auto& tab_data : tab_datas) {
     if (!base::Contains(existing_tabs, tab_data->tab())) {
       existing_tabs.emplace_back(tab_data->tab());
@@ -150,12 +151,12 @@ void TabOrganization::Accept() {
   TabStripModel* tab_strip_model = tab_datas_[0]->original_tab_strip_model();
   CHECK(tab_strip_model);
   std::vector<int> valid_indices;
-  std::unordered_set<raw_ptr<const tabs::TabModel>> tab_data_tabs;
+  std::unordered_set<raw_ptr<const tabs::TabInterface>> tab_data_tabs;
   for (const std::unique_ptr<TabData>& tab_data : tab_datas_) {
     // Individual tabs may become invalid. in those cases, where the tab is
     // invalid but the organization is not, do not include the tab in the
     // organization, but still create the organization.
-    const tabs::TabModel* tab = tab_data->tab();
+    const tabs::TabInterface* tab = tab_data->tab();
     tab_data_tabs.insert(tab);
     const int index = tab_strip_model->GetIndexOfTab(tab);
     if (tab_data->IsValidForOrganizing() &&
@@ -173,8 +174,7 @@ void TabOrganization::Accept() {
   // the tab strip and therefore causes |this| to be deleted. So we keep
   // a WeakPtr to |this| to detect this case and avoid accessing member
   // variables, just in case.
-  base::WeakPtr<TabOrganization> this_weak_ref =
-      weak_ptr_factory_.GetWeakPtr();
+  base::WeakPtr<TabOrganization> this_weak_ref = weak_ptr_factory_.GetWeakPtr();
 
   if (group_id_.has_value()) {
     CHECK(tab_strip_model->group_model()->ContainsTabGroup(group_id_.value()));
@@ -189,7 +189,8 @@ void TabOrganization::Accept() {
     std::vector<int> indices_to_remove;
     for (size_t grouped_tab_index = tab_indices.start();
          grouped_tab_index < tab_indices.end(); grouped_tab_index++) {
-      tabs::TabModel* tab = tab_strip_model->GetTabAtIndex(grouped_tab_index);
+      const tabs::TabInterface* const tab =
+          tab_strip_model->GetTabAtIndex(grouped_tab_index);
       if (!tab_data_tabs.contains(tab)) {
         indices_to_remove.emplace_back(grouped_tab_index);
       }

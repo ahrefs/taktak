@@ -14,6 +14,7 @@
 #include "components/sync/base/sync_stop_metadata_fate.h"
 #include "components/sync/engine/configure_reason.h"
 #include "components/sync/model/type_entities_count.h"
+#include "components/sync/service/local_data_description.h"
 #include "components/sync/service/sync_error.h"
 #include "components/sync/service/type_status_map_for_debugging.h"
 
@@ -22,7 +23,6 @@ namespace syncer {
 struct ConfigureContext;
 class DataTypeConfigurer;
 class DataTypeController;
-struct LocalDataDescription;
 
 // This interface is for managing the start up and shut down life cycle
 // of many different syncable data types.
@@ -79,7 +79,7 @@ class DataTypeManager {
 
   // Informs the data type manager that the ready-for-start status of a
   // controller has changed. If the controller is not ready any more, it will
-  // stop |type|. Otherwise, it will trigger reconfiguration so that |type| gets
+  // stop `type`. Otherwise, it will trigger reconfiguration so that `type` gets
   // started again. No-op if the type's state didn't actually change.
   virtual void DataTypePreconditionChanged(DataType type) = 0;
 
@@ -91,7 +91,7 @@ class DataTypeManager {
   // Synchronously stops all registered data types. If called after Configure()
   // is called but before it finishes, it will abort the configure and any data
   // types that have been started will be stopped. If called with metadata fate
-  // |CLEAR_METADATA|, clears sync data for all datatypes.
+  // `CLEAR_METADATA`, clears sync data for all datatypes.
   virtual void Stop(SyncStopMetadataFate metadata_fate) = 0;
 
   // Returns the set of data types that are supported in principle, possibly
@@ -152,6 +152,17 @@ class DataTypeManager {
   // Note: Only data types that are enabled and support this functionality are
   // triggered for upload.
   virtual void TriggerLocalDataMigration(DataTypeSet types) = 0;
+
+  // Requests sync service to move the local data to account for `types` data
+  // types that matches the `syncer::LocalDataItemModel::DataId` in `items`.
+  // This is an asynchronous method which moves the local data for all `types`
+  // to the account store locally. Upload to the server will happen as part of
+  // the regular commit process, and is NOT part of this method. Note: Only data
+  // types that are enabled and support this functionality are triggered for
+  // upload.
+  virtual void TriggerLocalDataMigrationForItems(
+      std::map<DataType, std::vector<syncer::LocalDataItemModel::DataId>>
+          items) = 0;
 
   // The current state of the data type manager.
   virtual State state() const = 0;

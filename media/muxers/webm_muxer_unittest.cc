@@ -4,6 +4,7 @@
 
 #include "media/muxers/webm_muxer.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -14,7 +15,6 @@
 #include "base/location.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted.h"
-#include "base/ranges/algorithm.h"
 #include "base/test/bind.h"
 #include "base/test/task_environment.h"
 #include "base/time/time.h"
@@ -212,8 +212,8 @@ TEST_P(WebmMuxerTest, OnEncodedVideoTwoAlphaFrames) {
   const auto encoded_data = media::DecoderBuffer::CopyFrom(
       base::as_byte_span("abcdefghijklmnopqrstuvwxyz"));
   const uint8_t alpha_data[] = "ijklmnopqrstuvwxyz";
-  encoded_data->WritableSideData().alpha_data.assign(std::begin(alpha_data),
-                                                     std::end(alpha_data));
+  encoded_data->WritableSideData().alpha_data =
+      base::HeapArray<uint8_t>::CopiedFrom(alpha_data);
 
   InSequence s;
   EXPECT_CALL(*this, WriteCallback(_))
@@ -243,10 +243,10 @@ TEST_P(WebmMuxerTest, OnEncodedVideoTwoAlphaFrames) {
   const uint32_t kBlockGroupSize = 2u;
   const uint32_t kSimpleBlockSize = 6u;
   const uint32_t kAdditionsSize = 13u;
-  EXPECT_EQ(static_cast<int64_t>(begin_of_second_block + kBlockGroupSize +
-                                 kSimpleBlockSize + encoded_data->size() +
-                                 kAdditionsSize +
-                                 encoded_data->side_data()->alpha_data.size()),
+  EXPECT_EQ(static_cast<int64_t>(
+                begin_of_second_block + kBlockGroupSize + kSimpleBlockSize +
+                encoded_data->size() + kAdditionsSize +
+                encoded_data->side_data()->alpha_data.as_span().size_bytes()),
             accumulated_position_);
 }
 
@@ -374,6 +374,11 @@ const TestParams kTestCases[] = {
     {VideoCodec::kAV1, AudioCodec::kOpus, 1, 0},
     {VideoCodec::kAV1, AudioCodec::kOpus, 0, 1},
     {VideoCodec::kAV1, AudioCodec::kOpus, 1, 1},
+#if BUILDFLAG(ENABLE_HEVC_PARSER_AND_HW_DECODER)
+    {VideoCodec::kHEVC, AudioCodec::kOpus, 1, 0},
+    {VideoCodec::kHEVC, AudioCodec::kOpus, 0, 1},
+    {VideoCodec::kHEVC, AudioCodec::kOpus, 1, 1},
+#endif
 };
 
 INSTANTIATE_TEST_SUITE_P(All, WebmMuxerTest, ValuesIn(kTestCases));
@@ -419,7 +424,7 @@ class WebmMuxerTestUnparametrized : public testing::Test {
         base::BindRepeating(&WebmMuxerTestUnparametrized::OnEndMediaSegment,
                             base::Unretained(this)),
         &media_log_);
-    if (!parser.AppendToParseBuffer(base::make_span(muxed_data_))) {
+    if (!parser.AppendToParseBuffer(base::span(muxed_data_))) {
       return false;
     }
 
@@ -487,7 +492,7 @@ class WebmMuxerTestUnparametrized : public testing::Test {
 
   void SaveChunkAndInvokeWriteCallback(base::span<const uint8_t> chunk) {
     OnWrite();
-    base::ranges::copy(chunk, std::back_inserter(muxed_data_));
+    std::ranges::copy(chunk, std::back_inserter(muxed_data_));
   }
 
   // Muxed data gets saved here. The content is guaranteed to be finalized first

@@ -5,6 +5,8 @@
 #ifndef CHROME_BROWSER_PERFORMANCE_MANAGER_TEST_SUPPORT_PAGE_DISCARDING_UTILS_H_
 #define CHROME_BROWSER_PERFORMANCE_MANAGER_TEST_SUPPORT_PAGE_DISCARDING_UTILS_H_
 
+#include <vector>
+
 #include "base/memory/raw_ptr.h"
 #include "chrome/browser/performance_manager/mechanisms/page_discarder.h"
 #include "chrome/browser/performance_manager/policies/page_discarding_helper.h"
@@ -35,11 +37,9 @@ class LenientMockPageDiscarder
   MOCK_METHOD1(DiscardPageNodeImpl, bool(const PageNode* page_node));
 
  private:
-  void DiscardPageNodes(
+  std::vector<DiscardEvent> DiscardPageNodes(
       const std::vector<const PageNode*>& page_nodes,
-      ::mojom::LifecycleUnitDiscardReason discard_reason,
-      base::OnceCallback<void(const std::vector<DiscardEvent>&)>
-          post_discard_cb) override;
+      ::mojom::LifecycleUnitDiscardReason discard_reason) override;
 };
 using MockPageDiscarder = ::testing::StrictMock<LenientMockPageDiscarder>;
 
@@ -58,6 +58,9 @@ class GraphTestHarnessWithMockDiscarder : public GraphTestHarness {
   void TearDown() override;
 
  protected:
+  // Deletes and recreates page/process/frame nodes.
+  void RecreateNodes();
+
   PageNodeImpl* page_node() { return page_node_.get(); }
   ProcessNodeImpl* process_node() { return process_node_.get(); }
   FrameNodeImpl* frame_node() { return main_frame_node_.get(); }

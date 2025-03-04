@@ -2,31 +2,33 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_switches.h"
+#include "ash/shell.h"
 #include "ash/webui/help_app_ui/buildflags.h"
 #include "ash/webui/help_app_ui/help_app_manager.h"
 #include "ash/webui/help_app_ui/help_app_manager_factory.h"
+#include "ash/webui/help_app_ui/help_app_prefs.h"
 #include "ash/webui/help_app_ui/search/search.mojom.h"
 #include "ash/webui/help_app_ui/search/search_handler.h"
 #include "ash/webui/help_app_ui/url_constants.h"
 #include "ash/webui/web_applications/test/sandboxed_web_ui_test_base.h"
 #include "base/command_line.h"
 #include "base/containers/to_vector.h"
-#include "base/ranges/algorithm.h"
 #include "base/run_loop.h"
 #include "base/test/bind.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/metrics/user_action_tester.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/test_future.h"
+#include "base/values.h"
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/apps/app_service/app_install/app_install_service_ash.h"
 #include "chrome/browser/apps/app_service/app_launch_params.h"
 #include "chrome/browser/apps/app_service/app_service_proxy.h"
@@ -60,6 +62,7 @@
 #include "chrome/test/base/ui_test_utils.h"
 #include "chromeos/constants/chromeos_features.h"
 #include "components/language/core/browser/pref_names.h"
+#include "components/prefs/pref_test_utils.h"
 #include "components/services/app_service/public/cpp/app_launch_util.h"
 #include "components/services/app_service/public/cpp/package_id.h"
 #include "components/supervised_user/core/common/pref_names.h"
@@ -80,6 +83,7 @@
 #include "ui/display/screen.h"
 #include "ui/display/types/display_constants.h"
 #include "ui/events/keycodes/keyboard_codes.h"
+#include "ui/events/test/event_generator.h"
 #include "ui/gfx/color_palette.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
@@ -127,6 +131,20 @@ class HelpAppIntegrationTestWithAutoTriggerDisabled
   HelpAppIntegrationTestWithAutoTriggerDisabled() {
     scoped_feature_list_.InitAndDisableFeature(
         features::kHelpAppAutoTriggerInstallDialog);
+  }
+
+ private:
+  base::test::ScopedFeatureList scoped_feature_list_;
+};
+
+class HelpAppIntegrationTestWithAppMallEnabled : public HelpAppIntegrationTest {
+ public:
+  HelpAppIntegrationTestWithAppMallEnabled() {
+    scoped_feature_list_.InitWithFeatures(
+        {
+            chromeos::features::kCrosMall,
+        },
+        {});
   }
 
  private:
@@ -282,9 +300,10 @@ IN_PROC_BROWSER_TEST_P(HelpAppAllProfilesIntegrationTest, HelpAppV2ShowHelp) {
 #endif
 }
 
+// TODO(crbug.com/394677144): Enable test
 // Test that first run experience opens Help App with launch source query param.
 IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTestWithFirstRunEnabled,
-                       HelpAppV2FirstRunLaunch) {
+                       DISABLED_HelpAppV2FirstRunLaunch) {
   WaitForTestSystemAppInstall();
   base::HistogramTester histogram_tester;
   GURL expected_trusted_frame_url =
@@ -673,6 +692,59 @@ IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest, HelpAppV2OpenSettings) {
   EXPECT_EQ(expected_url, GetActiveWebContents()->GetVisibleURL());
 }
 
+// Test that the Help App can call setHasCompletedNewDeviceChecklist to update
+// the pref.
+IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest,
+                       HelpAppV2SetHasCompletedNewDeviceChecklist) {
+  WaitForTestSystemAppInstall();
+  profile()->GetPrefs()->SetBoolean(
+      help_app::prefs::kHelpAppHasCompletedNewDeviceChecklist, false);
+  content::WebContents* web_contents = LaunchApp(SystemWebAppType::HELP);
+
+  constexpr char kScript[] = R"(
+    (() => {
+      window.customLaunchData.delegate.setHasCompletedNewDeviceChecklist();
+    })();
+  )";
+  // Trigger the script. Use ExecJs instead of EvalJsInAppFrame because the
+  // script needs to run in the same world as the page's code.
+  EXPECT_TRUE(content::ExecJs(
+      SandboxedWebUiAppTestBase::GetAppFrame(web_contents), kScript));
+  WaitForPrefValue(profile()->GetPrefs(),
+                   help_app::prefs::kHelpAppHasCompletedNewDeviceChecklist,
+                   base::Value(true));
+
+  EXPECT_EQ(profile()->GetPrefs()->GetBoolean(
+                help_app::prefs::kHelpAppHasCompletedNewDeviceChecklist),
+            true);
+}
+
+// Test that the Help App can call setHasVisitedHowToPage to update the pref.
+IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest,
+                       HelpAppV2SetHasVisitedHowToPage) {
+  WaitForTestSystemAppInstall();
+  profile()->GetPrefs()->SetBoolean(
+      help_app::prefs::kHelpAppHasVisitedHowToPage, false);
+  content::WebContents* web_contents = LaunchApp(SystemWebAppType::HELP);
+
+  constexpr char kScript[] = R"(
+    (() => {
+      window.customLaunchData.delegate.setHasVisitedHowToPage();
+    })();
+  )";
+  // Trigger the script. Use ExecJs instead of EvalJsInAppFrame because the
+  // script needs to run in the same world as the page's code.
+  EXPECT_TRUE(content::ExecJs(
+      SandboxedWebUiAppTestBase::GetAppFrame(web_contents), kScript));
+  WaitForPrefValue(profile()->GetPrefs(),
+                   help_app::prefs::kHelpAppHasVisitedHowToPage,
+                   base::Value(true));
+
+  EXPECT_EQ(profile()->GetPrefs()->GetBoolean(
+                help_app::prefs::kHelpAppHasVisitedHowToPage),
+            true);
+}
+
 // Test that the Help App can open the on device app controls part section in OS
 // Settings.
 IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest,
@@ -733,6 +805,38 @@ IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest, HelpAppV2ShowParentalControls) {
   navigation_observer.Wait();
 
   // Settings should be active in a new window.
+  EXPECT_EQ(3u, chrome::GetTotalBrowserCount());
+  EXPECT_EQ(expected_url, GetActiveWebContents()->GetVisibleURL());
+}
+
+// Test that the Help App's `openAppMallPath` opens the App Mall SWA.
+IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTestWithAppMallEnabled,
+                       HelpAppV2ShowAppMallSWA) {
+  WaitForTestSystemAppInstall();
+  content::WebContents* web_contents = LaunchApp(SystemWebAppType::HELP);
+
+  // There should be two browser windows, one regular and one for the newly
+  // opened help app.
+  EXPECT_EQ(2u, chrome::GetTotalBrowserCount());
+
+  const GURL expected_url("chrome://mall/");
+  content::TestNavigationObserver navigation_observer(expected_url);
+  navigation_observer.StartWatchingNewWebContents();
+
+  // Script that tells the Help App to show parental controls.
+  constexpr char kScript[] = R"(
+    (async () => {
+      await window.customLaunchData.delegate.openAppMallPath('');
+    })();
+  )";
+  // Trigger the script, then wait for settings to open. Use ExecJs
+  // instead of EvalJsInAppFrame because the script needs to run in the same
+  // world as the page's code.
+  EXPECT_TRUE(content::ExecJs(
+      SandboxedWebUiAppTestBase::GetAppFrame(web_contents), kScript));
+  navigation_observer.Wait();
+
+  // The app mall should be active in a new window.
   EXPECT_EQ(3u, chrome::GetTotalBrowserCount());
   EXPECT_EQ(expected_url, GetActiveWebContents()->GetVisibleURL());
 }
@@ -812,12 +916,8 @@ IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest,
   content::TestNavigationObserver navigation_observer(test_url);
   navigation_observer.StartWatchingNewWebContents();
 
-  std::string dialog_name =
-      base::FeatureList::IsEnabled(::features::kWebAppUniversalInstall)
-          ? "WebAppSimpleInstallDialog"
-          : "PWAConfirmationBubbleView";
   views::NamedWidgetShownWaiter waiter(views::test::AnyWidgetTestPasskey(),
-                                       dialog_name);
+                                       "WebAppSimpleInstallDialog");
 
   // Script that tells the Help App to call the
   // OpenUrlInBrowserAndTriggerInstallDialog Mojo function.
@@ -1078,7 +1178,7 @@ IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest,
   auto& tasks = GetManager().GetBackgroundTasksForTesting();
 
   // Find the help app's background task.
-  const auto& help_task = base::ranges::find(
+  const auto& help_task = std::ranges::find(
       tasks, bg_task_url, &SystemWebAppBackgroundTask::url_for_testing);
   ASSERT_NE(help_task, tasks.end());
 
@@ -1126,26 +1226,6 @@ IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest,
                    }));
   search_run_loop.Run();
 #endif
-}
-
-IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest, HelpAppV2CanOpenAlmanacScheme) {
-  WaitForTestSystemAppInstall();
-  content::WebContents* web_contents = LaunchApp(SystemWebAppType::HELP);
-
-  base::test::TestFuture<apps::PackageId> future;
-  apps::AppInstallServiceAsh::InstallAppCallbackForTesting() =
-      future.GetCallback();
-  constexpr char kScript[] = R"(
-    (() => {
-      location.href = 'almanac://install-app?package_id=web:test';
-      return true;
-    })();
-  )";
-  EXPECT_EQ(true,
-            content::EvalJs(
-                SandboxedWebUiAppTestBase::GetAppFrame(web_contents), kScript));
-  EXPECT_EQ(future.Get<apps::PackageId>(),
-            apps::PackageId::FromString("web:test"));
 }
 
 IN_PROC_BROWSER_TEST_P(HelpAppIntegrationTest, HelpAppV2CanOpenCrosAppsScheme) {
@@ -1202,9 +1282,8 @@ IN_PROC_BROWSER_TEST_P(HelpAppAllProfilesIntegrationTest,
 #endif
   content::TestNavigationObserver navigation_observer(expected_url);
   navigation_observer.StartWatchingNewWebContents();
-  ASSERT_TRUE(ui_test_utils::SendKeyPressSync(
-      browser(), ui::VKEY_OEM_2, /*control=*/true,
-      /*shift=*/false, /*alt=*/false, /*command=*/false));
+  ui::test::EventGenerator generator(ash::Shell::GetPrimaryRootWindow());
+  generator.PressKeyAndModifierKeys(ui::VKEY_OEM_2, ui::EF_CONTROL_DOWN);
   navigation_observer.Wait();
 
 #if BUILDFLAG(ENABLE_CROS_HELP_APP)
@@ -1263,4 +1342,7 @@ INSTANTIATE_SYSTEM_WEB_APP_MANAGER_TEST_SUITE_REGULAR_PROFILE_P(
 
 INSTANTIATE_SYSTEM_WEB_APP_MANAGER_TEST_SUITE_REGULAR_PROFILE_P(
     HelpAppIntegrationTestWithBirchFeatureEnabled);
+
+INSTANTIATE_SYSTEM_WEB_APP_MANAGER_TEST_SUITE_REGULAR_PROFILE_P(
+    HelpAppIntegrationTestWithAppMallEnabled);
 }  // namespace ash

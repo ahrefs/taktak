@@ -87,6 +87,10 @@ class PersistedData : public base::RefCountedThreadSafe<PersistedData>,
   std::string GetAPKey(const std::string& id) const;
   void SetAPKey(const std::string& id, const std::string& value);
 
+  // These functions access the `lang` for the specified id.
+  std::string GetLang(const std::string& id);
+  void SetLang(const std::string& id, const std::string& lang);
+
   // This function sets any non-empty field in the registration request object
   // into the persistent data store.
   void RegisterApp(const RegistrationRequest& rq);
@@ -167,6 +171,9 @@ class PersistedData : public base::RefCountedThreadSafe<PersistedData>,
                        base::OnceClosure callback) override;
   int GetInstallDate(const std::string& id) const override;
   void SetInstallDate(const std::string& id, int install_date) override;
+  std::string GetInstallId(const std::string& app_id) const override;
+  void SetInstallId(const std::string& app_id,
+                    const std::string& install_id) override;
   void GetActiveBits(const std::vector<std::string>& ids,
                      base::OnceCallback<void(const std::set<std::string>&)>
                          callback) const override;

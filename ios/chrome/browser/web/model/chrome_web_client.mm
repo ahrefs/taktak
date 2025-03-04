@@ -33,6 +33,7 @@
 #import "components/translate/ios/browser/translate_java_script_feature.h"
 #import "components/version_info/version_info.h"
 #import "ios/chrome/browser/autofill/model/bottom_sheet/autofill_bottom_sheet_java_script_feature.h"
+#import "ios/chrome/browser/browser_container/model/edit_menu_tab_helper.h"
 #import "ios/chrome/browser/content_settings/model/host_content_settings_map_factory.h"
 #import "ios/chrome/browser/flags/chrome_switches.h"
 #import "ios/chrome/browser/follow/model/follow_java_script_feature.h"
@@ -253,8 +254,21 @@ ChromeWebClient::ChromeWebClient() {}
 ChromeWebClient::~ChromeWebClient() {}
 
 std::unique_ptr<web::WebMainParts> ChromeWebClient::CreateWebMainParts() {
+#if BUILDFLAG(USE_BLINK)
+  CHECK(main_parts_);
+  return std::move(main_parts_);
+#else
   return std::make_unique<IOSChromeMainParts>(
       *base::CommandLine::ForCurrentProcess());
+#endif
+}
+
+void ChromeWebClient::InitializeFieldTrialAndFeatureList() {
+#if BUILDFLAG(USE_BLINK)
+  main_parts_ = std::make_unique<IOSChromeMainParts>(
+      *base::CommandLine::ForCurrentProcess());
+  main_parts_->InitializeFieldTrialAndFeatureList();
+#endif
 }
 
 void ChromeWebClient::PreWebViewCreation() const {}
@@ -284,13 +298,15 @@ std::string ChromeWebClient::GetUserAgent(web::UserAgentType type) const {
       command_line->HasSwitch(switches::kUserAgent)) {
     std::string user_agent =
         command_line->GetSwitchValueASCII(switches::kUserAgent);
-    if (net::HttpUtil::IsValidHeaderValue(user_agent))
+    if (net::HttpUtil::IsValidHeaderValue(user_agent)) {
       return user_agent;
+    }
     LOG(WARNING) << "Ignored invalid value for flag --" << switches::kUserAgent;
   }
 
-  if (type == web::UserAgentType::DESKTOP)
+  if (type == web::UserAgentType::DESKTOP) {
     return web::BuildDesktopUserAgent(GetDesktopProduct());
+  }
   return web::BuildMobileUserAgent(GetMobileProduct());
 }
 
@@ -559,4 +575,12 @@ bool ChromeWebClient::IsInsecureFormWarningEnabled(
   }
   return base::FeatureList::IsEnabled(
       security_interstitials::features::kInsecureFormSubmissionInterstitial);
+}
+
+void ChromeWebClient::BuildEditMenu(web::WebState* web_state,
+                                    id<UIMenuBuilder> builder) const {
+  EditMenuTabHelper* tab_helper = EditMenuTabHelper::FromWebState(web_state);
+  if (tab_helper) {
+    tab_helper->BuildEditMenu(builder);
+  }
 }

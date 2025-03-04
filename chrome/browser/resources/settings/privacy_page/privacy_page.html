@@ -1,4 +1,4 @@
-    <style include="cr-shared-style cr-hidden-style settings-shared iron-flex">
+    <style include="cr-shared-style cr-hidden-style settings-shared">
       .content-settings-header,
       .radio-group {
         padding: 0 var(--cr-section-padding);
@@ -24,9 +24,16 @@
       }
     </style>
     <template is="dom-if" if="[[showClearBrowsingDataDialog_]]" restamp>
-      <settings-clear-browsing-data-dialog prefs="{{prefs}}"
-          on-close="onCbdDialogClosed_">
-      </settings-clear-browsing-data-dialog>
+      <template is="dom-if" if="[[!enableDeleteBrowsingDataRevamp_]]" restamp>
+        <settings-clear-browsing-data-dialog prefs="{{prefs}}"
+            on-close="onCbdDialogClosed_">
+        </settings-clear-browsing-data-dialog>
+      </template>
+      <template is="dom-if" if="[[enableDeleteBrowsingDataRevamp_]]" restamp>
+        <settings-clear-browsing-data-dialog-v2 prefs="{{prefs}}"
+            on-close="onCbdDialogClosed_">
+        </settings-clear-browsing-data-dialog-v2>
+      </template>
     </template>
     <template is="dom-if" if="[[showPrivacyGuideDialog_]]" restamp>
       <settings-privacy-guide-dialog id="privacyGuideDialog" prefs="{{prefs}}"
@@ -50,27 +57,16 @@
               role-description="$i18n{subpageArrowRoleDescription}">
           </cr-link-row>
         </template>
-        <template is="dom-if" if="[[is3pcdRedesignEnabled_]]">
-          <cr-link-row id="trackingProtectionLinkRow"
-              start-icon="settings:visibility-off"
-              class="hr" label="$i18n{trackingProtectionLinkRowLabel}"
-              sub-label="$i18n{trackingProtectionLinkRowSubLabel}"
-              on-click="onTrackingProtectionClick_"
-              role-description="$i18n{subpageArrowRoleDescription}">
-          </cr-link-row>
-        </template>
-        <template is="dom-if" if="[[!is3pcdRedesignEnabled_]]">
-          <cr-link-row id="thirdPartyCookiesLinkRow"
-              start-icon="privacy:cookie"
-              class="hr" label="$i18n{thirdPartyCookiesLinkRowLabel}"
-              sub-label="[[computeThirdPartyCookiesSublabel_(
-                  prefs.profile.cookie_controls_mode.*,
-                  prefs.tracking_protection.block_all_3pc_toggle_enabled.*
-                  )]]"
-              on-click="onCookiesClick_"
-              role-description="$i18n{subpageArrowRoleDescription}">
-          </cr-link-row>
-        </template>
+        <cr-link-row id="thirdPartyCookiesLinkRow"
+            start-icon="privacy:cookie"
+            class="hr" label="$i18n{thirdPartyCookiesLinkRowLabel}"
+            sub-label="[[computeThirdPartyCookiesSublabel_(
+                prefs.profile.cookie_controls_mode.*,
+                prefs.tracking_protection.block_all_3pc_toggle_enabled.*
+                )]]"
+            on-click="onCookiesClick_"
+            role-description="$i18n{subpageArrowRoleDescription}">
+        </cr-link-row>
         <template is="dom-if" if=
             "[[shouldShowAdPrivacy_(
                 isPrivacySandboxRestricted_,
@@ -157,11 +153,13 @@
         </template>
       </template>
 
-      <template is="dom-if" route-path="/securityKeys/phones">
-        <settings-subpage associated-control="[[$$('#securityLinkRow')]]"
-            page-title="$i18n{securityKeysPhonesManage}">
-          <security-keys-phones-subpage></security-keys-phones-subpage>
-        </settings-subpage>
+      <template is="dom-if" if="[[enableManagePhones_]]">
+        <template is="dom-if" route-path="/securityKeys/phones">
+          <settings-subpage associated-control="[[$$('#securityLinkRow')]]"
+              page-title="$i18n{securityKeysPhonesManage}">
+            <security-keys-phones-subpage></security-keys-phones-subpage>
+          </settings-subpage>
+        </template>
       </template>
 
       <template is="dom-if" route-path="/content">
@@ -176,7 +174,7 @@
         </settings-subpage>
       </template>
 
-      <template is="dom-if" if="[[enableSafetyHub_]]">
+      <template is="dom-if" if="[[shouldShowSafetyHub_]]">
         <template is="dom-if" route-path="/safetyCheck">
           <!-- TODO(crbug.com/40267370): Make the page searchable.-->
           <settings-subpage id="safetyHub" page-title="$i18n{safetyHub}"
@@ -373,35 +371,18 @@
           </category-setting-exceptions>
         </settings-subpage>
       </template>
-      <template is="dom-if" if="[[is3pcdRedesignEnabled_]]">
-        <template is="dom-if" route-path="/trackingProtection">
-          <settings-subpage id="trackingProtection"
-              page-title="$i18n{trackingProtectionPageTitle}"
-              learn-more-url="$i18n{trackingProtectionHelpCenterURL}"
-              search-label="$i18n{siteSettingsAllSitesSearch}"
-              search-term="{{searchFilter_}}"
-              associated-control="[[$$('#trackingProtectionLinkRow')]]">
-            <settings-cookies-page prefs="{{prefs}}"
-                focus-config="[[focusConfig_]]"
-                search-term="[[searchFilter_]]">
-            </settings-cookies-page>
-          </settings-subpage>
-        </template>
-      </template>
-      <template is="dom-if" if="[[!is3pcdRedesignEnabled_]]">
-        <template is="dom-if" route-path="/cookies">
-          <settings-subpage id="cookies"
-              page-title="$i18n{thirdPartyCookiesPageTitle}"
-              learn-more-url="$i18n{cookiesSettingsHelpCenterURL}"
-              search-label="$i18n{siteSettingsAllSitesSearch}"
-              search-term="{{searchFilter_}}"
-              associated-control="[[$$('#thirdPartyCookiesLinkRow')]]">
-            <settings-cookies-page prefs="{{prefs}}"
-                focus-config="[[focusConfig_]]"
-                search-term="[[searchFilter_]]">
-            </settings-cookies-page>
-          </settings-subpage>
-        </template>
+      <template is="dom-if" route-path="/cookies">
+        <settings-subpage id="cookies"
+            page-title="$i18n{thirdPartyCookiesPageTitle}"
+            learn-more-url="$i18n{cookiesSettingsHelpCenterURL}"
+            search-label="$i18n{siteSettingsAllSitesSearch}"
+            search-term="{{searchFilter_}}"
+            associated-control="[[$$('#thirdPartyCookiesLinkRow')]]">
+          <settings-cookies-page prefs="{{prefs}}"
+              focus-config="[[focusConfig_]]"
+              search-term="[[searchFilter_]]">
+          </settings-cookies-page>
+        </settings-subpage>
       </template>
       <template is="dom-if" route-path="/content/images" no-search>
         <settings-subpage page-title="$i18n{siteSettingsCategoryImages}"
@@ -510,28 +491,31 @@
                 $i18n{siteSettingsLocationAllowed}
               </cr-radio-button>
 
-              <settings-radio-group
-                  pref="{{prefs.generated.geolocation}}"
-                  selectable-elements="cr-radio-button"
-                  hidden$="[[!isLocationAllowed_]]">
-                <cr-radio-button class="padded-radio-section"
-                    name="[[settingsStateEnum_.QUIET]]"
-                    pref="[[prefs.generated.geolocation]]"
-                    label="$i18n{siteSettingsLocationAskQuiet}">
-                </cr-radio-button>
+              <template is="dom-if"
+                  if="[[!enablePermissionSiteSettingsRadioButton_]]">
+                <settings-radio-group
+                    pref="{{prefs.generated.geolocation}}"
+                    selectable-elements="cr-radio-button"
+                    hidden$="[[!isLocationAllowed_]]">
+                  <cr-radio-button class="padded-radio-section"
+                      name="[[settingsStateEnum_.QUIET]]"
+                      pref="[[prefs.generated.geolocation]]"
+                      label="$i18n{siteSettingsLocationAskQuiet}">
+                  </cr-radio-button>
 
-                <cr-radio-button class="padded-radio-section"
-                    name="[[settingsStateEnum_.CPSS]]"
-                    pref="[[prefs.generated.geolocation]]"
-                    label="$i18n{siteSettingsLocationAskCPSS}">
-                </cr-radio-button>
+                  <cr-radio-button class="padded-radio-section"
+                      name="[[settingsStateEnum_.CPSS]]"
+                      pref="[[prefs.generated.geolocation]]"
+                      label="$i18n{siteSettingsLocationAskCPSS}">
+                  </cr-radio-button>
 
-                <cr-radio-button class="padded-radio-section"
-                    name="[[settingsStateEnum_.LOUD]]"
-                    pref="[[prefs.generated.geolocation]]"
-                    label="$i18n{siteSettingsLocationAskLoud}">
-                </cr-radio-button>
-              </settings-radio-group>
+                  <cr-radio-button class="padded-radio-section"
+                      name="[[settingsStateEnum_.LOUD]]"
+                      pref="[[prefs.generated.geolocation]]"
+                      label="$i18n{siteSettingsLocationAskLoud}">
+                  </cr-radio-button>
+                </settings-radio-group>
+              </template>
 
               <cr-radio-button class="two-line"
                   name="location-block-radio-button"
@@ -542,6 +526,35 @@
               </cr-radio-button>
             </cr-radio-group>
           </div>
+
+          <template is="dom-if"
+              if="[[enablePermissionSiteSettingsRadioButton_]]">
+            <div class="radio-group"
+                hidden$="[[!isLocationAllowed_]]">
+              <h2>$i18n{siteSettingsHowToShowRequests}</h2>
+              <settings-radio-group
+                  pref="{{prefs.generated.geolocation}}"
+                  selectable-elements="cr-radio-button">
+                <cr-radio-button
+                    name="[[settingsStateEnum_.QUIET]]"
+                    pref="[[prefs.generated.geolocation]]"
+                    label="$i18n{siteSettingsLocationAskQuiet}">
+                </cr-radio-button>
+
+                <cr-radio-button
+                    name="[[settingsStateEnum_.CPSS]]"
+                    pref="[[prefs.generated.geolocation]]"
+                    label="$i18n{siteSettingsLocationAskCPSS}">
+                </cr-radio-button>
+
+                <cr-radio-button
+                    name="[[settingsStateEnum_.LOUD]]"
+                    pref="[[prefs.generated.geolocation]]"
+                    label="$i18n{siteSettingsLocationAskLoud}">
+                </cr-radio-button>
+              </settings-radio-group>
+            </div>
+          </template>
 
           <category-setting-exceptions
               category="[[contentSettingsTypesEnum_.GEOLOCATION]]"
@@ -652,12 +665,10 @@
           </category-setting-exceptions>
         </settings-subpage>
       </template>
-      <template is="dom-if" if="[[privateStateTokensEnabled_]]">
-        <template is="dom-if" route-path="/content/autoVerify" no-search>
-          <settings-subpage page-title="$i18n{siteSettingsAntiAbuse}">
-            <settings-anti-abuse-page></settings-anti-abuse-page>
-          </settings-subpage>
-        </template>
+      <template is="dom-if" route-path="/content/autoVerify" no-search>
+        <settings-subpage page-title="$i18n{siteSettingsAntiAbuse}">
+          <settings-anti-abuse-page></settings-anti-abuse-page>
+        </settings-subpage>
       </template>
       <template is="dom-if" route-path="/content/microphone" no-search>
         <settings-subpage page-title="$i18n{siteSettingsCategoryMicrophone}"
@@ -708,14 +719,21 @@
               search-filter="[[searchFilter_]]">
           </category-setting-exceptions>
         </settings-subpage>
-     </template>
+      </template>
       <template is="dom-if" route-path="/content/notifications" no-search>
         <settings-subpage page-title="$i18n{siteSettingsCategoryNotifications}"
             search-label="$i18n{siteSettingsAllSitesSearch}"
             search-term="{{searchFilter_}}">
+          <template is="dom-if"
+              if="[[enablePermissionSiteSettingsRadioButton_]]">
+            <div class="content-settings-header secondary">
+              $i18n{siteSettingsNotificationsDescription}
+            </div>
+          </template>
+
           <div id="notificationRadioGroup" class="radio-group">
             <template is="dom-if" if="[[showNotificationPermissionsReview_]]">
-              <template is="dom-if" if="[[enableSafetyHub_]]">
+              <template is="dom-if" if="[[shouldShowSafetyHub_]]">
                 <h2>$i18n{safetyHub}</h2>
                 <settings-safety-hub-module id="safetyHubEntryPoint"
                     header="[[notificationPermissionsReviewHeader_]]"
@@ -727,16 +745,24 @@
                   </cr-button>
                 </settings-safety-hub-module>
               </template>
-              <template is="dom-if" if="[[!enableSafetyHub_]]">
-                <review-notification-permissions>
-                </review-notification-permissions>
-              </template>
             </template>
             <h2>$i18n{siteSettingsDefaultBehavior}</h2>
-            <div id="notificationSubHeading"
-              class="secondary radio-sub-heading">
-              $i18n{siteSettingsNotificationsDefaultBehaviorDescription}
-            </div>
+
+            <template is="dom-if"
+                if="[[enablePermissionSiteSettingsRadioButton_]]">
+              <div id="notificationSubHeading"
+                  class="secondary radio-sub-heading">
+                $i18n{siteSettingsDefaultBehaviorDescription}
+              </div>
+            </template>
+
+            <template is="dom-if"
+                if="[[!enablePermissionSiteSettingsRadioButton_]]">
+              <div id="notificationSubHeading"
+                  class="secondary radio-sub-heading">
+                $i18n{siteSettingsNotificationsDefaultBehaviorDescription}
+              </div>
+            </template>
 
             <cr-radio-group
                 on-selected-changed="onNotificationTopLevelRadioChanged_">
@@ -748,31 +774,34 @@
                 $i18n{siteSettingsNotificationsAskState}
               </cr-radio-button>
 
-              <settings-radio-group
-                  pref="{{prefs.generated.notification}}"
-                  selectable-elements="cr-radio-button"
-                  hidden$="[[!isNotificationAllowed_]]">
-                <cr-radio-button class="padded-radio-section"
-                    id="notification-ask-quiet"
-                    name="[[settingsStateEnum_.QUIET]]"
-                    pref="[[prefs.generated.notification]]"
-                    label="$i18n{siteSettingsNotificationsAskQuiet}">
-                </cr-radio-button>
+              <template is="dom-if"
+                  if="[[!enablePermissionSiteSettingsRadioButton_]]">
+                <settings-radio-group
+                    pref="{{prefs.generated.notification}}"
+                    selectable-elements="cr-radio-button"
+                    hidden$="[[!isNotificationAllowed_]]">
+                  <cr-radio-button class="padded-radio-section"
+                      id="notification-ask-quiet"
+                      name="[[settingsStateEnum_.QUIET]]"
+                      pref="[[prefs.generated.notification]]"
+                      label="$i18n{siteSettingsNotificationsAskQuiet}">
+                  </cr-radio-button>
 
-                <cr-radio-button class="padded-radio-section"
-                    id="notification-ask-cpss"
-                    name="[[settingsStateEnum_.CPSS]]"
-                    pref="[[prefs.generated.notification]]"
-                    label="$i18n{siteSettingsNotificationsAskCPSS}">
-                </cr-radio-button>
+                  <cr-radio-button class="padded-radio-section"
+                      id="notification-ask-cpss"
+                      name="[[settingsStateEnum_.CPSS]]"
+                      pref="[[prefs.generated.notification]]"
+                      label="$i18n{siteSettingsNotificationsAskCPSS}">
+                  </cr-radio-button>
 
-                <cr-radio-button class="padded-radio-section"
-                    id="notification-ask-loud"
-                    name="[[settingsStateEnum_.LOUD]]"
-                    pref="[[prefs.generated.notification]]"
-                    label="$i18n{siteSettingsNotificationsAskLoud}">
-                </cr-radio-button>
-              </settings-radio-group>
+                  <cr-radio-button class="padded-radio-section"
+                      id="notification-ask-loud"
+                      name="[[settingsStateEnum_.LOUD]]"
+                      pref="[[prefs.generated.notification]]"
+                      label="$i18n{siteSettingsNotificationsAskLoud}">
+                  </cr-radio-button>
+                </settings-radio-group>
+              </template>
 
               <cr-radio-button class="two-line"
                   id="notification-block"
@@ -784,6 +813,39 @@
               </cr-radio-button>
             </cr-radio-group>
           </div>
+
+          <template is="dom-if"
+              if="[[enablePermissionSiteSettingsRadioButton_]]">
+            <div class="radio-group"
+                hidden$="[[!isNotificationAllowed_]]">
+              <h2>$i18n{siteSettingsHowToShowRequests}</h2>
+              <settings-radio-group
+                  pref="{{prefs.generated.notification}}"
+                  selectable-elements="cr-radio-button">
+                <cr-radio-button
+                    id="notification-ask-quiet"
+                    name="[[settingsStateEnum_.QUIET]]"
+                    pref="[[prefs.generated.notification]]"
+                    label="$i18n{siteSettingsNotificationsAskQuiet}">
+                </cr-radio-button>
+
+                <cr-radio-button
+                    id="notification-ask-cpss"
+                    name="[[settingsStateEnum_.CPSS]]"
+                    pref="[[prefs.generated.notification]]"
+                    label="$i18n{siteSettingsNotificationsAskCPSS}">
+                </cr-radio-button>
+
+                <cr-radio-button
+                    id="notification-ask-loud"
+                    name="[[settingsStateEnum_.LOUD]]"
+                    pref="[[prefs.generated.notification]]"
+                    label="$i18n{siteSettingsNotificationsAskLoud}">
+                </cr-radio-button>
+              </settings-radio-group>
+            </div>
+          </template>
+
           <category-setting-exceptions
               category="[[contentSettingsTypesEnum_.NOTIFICATIONS]]"
               allow-header="$i18n{siteSettingsNotificationsAllowedExceptions}"
@@ -1363,16 +1425,19 @@
           </settings-subpage>
        </template>
       </template>
-      <template is="dom-if" if="[[enableSmartCardReadersContentSetting_]]">
-        <template is="dom-if" route-path="/content/smartCardReaders" no-search>
-          <settings-subpage page-title="$i18n{siteSettingsSmartCardReaders}"
-              search-label="$i18n{siteSettingsAllSitesSearch}"
-              search-term="{{searchFilter_}}">
-            <settings-smart-card-readers-page filter="[[searchFilter_]]">
-            </settings-smart-card-readers-page>
-          </settings-subpage>
-       </template>
-      </template>
+      <if expr="is_chromeos">
+        <template is="dom-if" if="[[enableSmartCardReadersContentSetting_]]">
+          <template is="dom-if"
+                route-path="/content/smartCardReaders" no-search>
+            <settings-subpage page-title="$i18n{siteSettingsSmartCardReaders}"
+                search-label="$i18n{siteSettingsAllSitesSearch}"
+                search-term="{{searchFilter_}}">
+              <settings-smart-card-readers-page filter="[[searchFilter_]]">
+              </settings-smart-card-readers-page>
+            </settings-subpage>
+        </template>
+        </template>
+      </if>
       <template is="dom-if" if="[[enableAutomaticFullscreenContentSetting_]]">
         <template is="dom-if" route-path="/content/automaticFullScreen"
             no-search>
@@ -1394,7 +1459,7 @@
           </settings-subpage>
         </template>
       </template>
-      <template is="dom-if" if="[[enableKeyboardAndPointerLockPrompt_]]">
+      <template is="dom-if" if="[[enableKeyboardLockPrompt_]]">
         <template is="dom-if" route-path="/content/keyboardLock" no-search>
           <settings-subpage page-title="$i18n{siteSettingsKeyboardLock}"
               search-label="$i18n{siteSettingsAllSitesSearch}"
@@ -1416,31 +1481,6 @@
                     "$i18n{siteSettingsKeyboardLockAllowedExceptions}"
                 block-header=
                     "$i18n{siteSettingsKeyboardLockBlockedExceptions}"
-                search-filter="[[searchFilter_]]">
-            </category-setting-exceptions>
-          </settings-subpage>
-        </template>
-        <template is="dom-if" route-path="/content/pointerLock" no-search>
-          <settings-subpage page-title="$i18n{siteSettingsPointerLock}"
-              search-label="$i18n{siteSettingsAllSitesSearch}"
-              search-term="{{searchFilter_}}">
-            <div class="content-settings-header secondary">
-              $i18n{siteSettingsPointerLockDescription}
-            </div>
-            <settings-category-default-radio-group
-                category="[[contentSettingsTypesEnum_.POINTER_LOCK]]"
-                allow-option-label=
-                    "$i18n{siteSettingsPointerLockAllowed}"
-                allow-option-icon="settings20:pointer-lock"
-                block-option-label="$i18n{siteSettingsPointerLockBlocked}"
-                block-option-icon="settings20:pointer-lock-off">
-            </settings-category-default-radio-group>
-            <category-setting-exceptions
-                category="[[contentSettingsTypesEnum_.POINTER_LOCK]]"
-                allow-header=
-                    "$i18n{siteSettingsPointerLockAllowedExceptions}"
-                block-header=
-                    "$i18n{siteSettingsPointerLockBlockedExceptions}"
                 search-filter="[[searchFilter_]]">
             </category-setting-exceptions>
           </settings-subpage>

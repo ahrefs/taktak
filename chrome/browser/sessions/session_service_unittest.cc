@@ -24,7 +24,6 @@
 #include "base/threading/platform_thread.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/buildflags.h"
 #include "chrome/browser/defaults.h"
@@ -910,8 +909,8 @@ TEST_F(SessionServiceTest, KeepPostDataWithoutPasswords) {
   entry1->SetURL(GURL("http://google.com"));
   entry1->SetTitle(u"title1");
   entry1->SetHasPostData(true);
-  entry1->SetPostData(network::ResourceRequestBody::CreateFromBytes(
-      post_data.data(), post_data.size()));
+  entry1->SetPostData(network::ResourceRequestBody::CreateFromCopyOfBytes(
+      base::as_byte_span(post_data)));
   SerializedNavigationEntry nav1 =
       sessions::ContentSerializedNavigationBuilder::FromNavigationEntry(
           0 /* == index*/, entry1.get());
@@ -1184,9 +1183,14 @@ TEST_F(SessionServiceTest, TabGroupMetadataSaved) {
     const SessionID tab_id =
         CreateTabWithTestNavigationData(window_id, group_ndx);
     service()->SetTabGroup(window_id, tab_id, group_ids[group_ndx]);
+
+    if (saved_guids[group_ndx]) {
+      service()->AddSavedTabGroupsMapping(group_ids[group_ndx],
+                                          saved_guids[group_ndx].value());
+    }
+
     service()->SetTabGroupMetadata(window_id, group_ids[group_ndx],
-                                   &visual_data[group_ndx],
-                                   saved_guids[group_ndx]);
+                                   &visual_data[group_ndx]);
   }
 
   std::vector<std::unique_ptr<sessions::SessionWindow>> windows;
@@ -1457,12 +1461,12 @@ TEST_F(SessionServiceTest, DisableSaving) {
 #if BUILDFLAG(IS_CHROMEOS)
 class SessionServiceKioskTest : public SessionServiceTest {
  public:
-  void LogIn(const std::string& email) override {
-    chromeos::SetUpFakeKioskSession(email);
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-    ash_test_helper()->test_session_controller_client()->AddUserSession(
-        email, user_manager::UserType::kKioskApp);
-#endif
+  std::optional<std::string> GetDefaultProfileName() override {
+    return "test@kiosk-apps.device-local.localhost";
+  }
+
+  void LogIn(std::string_view email, const GaiaId& gaia_id) override {
+    chromeos::SetUpFakeKioskSession(std::string(email));
   }
 };
 

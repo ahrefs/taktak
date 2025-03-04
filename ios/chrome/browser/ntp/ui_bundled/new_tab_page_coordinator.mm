@@ -30,6 +30,7 @@
 #import "ios/chrome/app/profile/profile_init_stage.h"
 #import "ios/chrome/app/profile/profile_state.h"
 #import "ios/chrome/app/profile/profile_state_observer.h"
+#import "ios/chrome/browser/authentication/ui_bundled/enterprise/enterprise_utils.h"
 #import "ios/chrome/browser/bubble/ui_bundled/bubble_view_controller_presenter.h"
 #import "ios/chrome/browser/context_menu/ui_bundled/link_preview/link_preview_coordinator.h"
 #import "ios/chrome/browser/discover_feed/model/discover_feed_observer_bridge.h"
@@ -100,6 +101,8 @@
 #import "ios/chrome/browser/shared/ui/util/layout_guide_names.h"
 #import "ios/chrome/browser/shared/ui/util/snackbar_util.h"
 #import "ios/chrome/browser/shared/ui/util/util_swift.h"
+#import "ios/chrome/browser/sharing/ui_bundled/sharing_coordinator.h"
+#import "ios/chrome/browser/sharing/ui_bundled/sharing_params.h"
 #import "ios/chrome/browser/signin/model/authentication_service.h"
 #import "ios/chrome/browser/signin/model/authentication_service_factory.h"
 #import "ios/chrome/browser/signin/model/authentication_service_observer_bridge.h"
@@ -110,15 +113,12 @@
 #import "ios/chrome/browser/signin/model/system_identity_manager.h"
 #import "ios/chrome/browser/supervised_user/model/family_link_user_capabilities_observer_bridge.h"
 #import "ios/chrome/browser/sync/model/sync_service_factory.h"
-#import "ios/chrome/browser/ui/authentication/enterprise/enterprise_utils.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/public/fakebox_focuser.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/tab_groups/coordinator/tab_group_indicator_coordinator.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_collection_utils.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_coordinator.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_delegate.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_mediator.h"
-#import "ios/chrome/browser/ui/sharing/sharing_coordinator.h"
-#import "ios/chrome/browser/ui/sharing/sharing_params.h"
-#import "ios/chrome/browser/ui/toolbar/public/fakebox_focuser.h"
-#import "ios/chrome/browser/ui/toolbar/tab_groups/coordinator/tab_group_indicator_coordinator.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_browser_agent.h"
 #import "ios/chrome/common/material_timing.h"
 #import "ios/chrome/common/ui/util/constraints_ui_util.h"
@@ -280,6 +280,10 @@
   TabGroupIndicatorCoordinator* _tabGroupIndicatorCoordinator;
   // Indicates whether the fakebox was tapped as part of an omnibox focus event.
   BOOL _fakeboxTapped;
+  // Whether the account menu is displayed on top of this NTP.
+  BOOL _showAccountMenuInProgress;
+  // Whether the signin menu is displayed on top of this NTP.
+  BOOL _showSigninCommandInProgress;
 }
 
 // Synthesize NewTabPageConfiguring properties.
@@ -374,7 +378,7 @@
   [self configureContentSuggestionsCoordinator];
   [self configureFeedMetricsRecorder];
   [self configureNTPViewController];
-  if (IsTabGroupIndicatorEnabled()) {
+  if (IsTabGroupInGridEnabled()) {
     [self configureTabGroupIndicator];
   }
 
@@ -402,10 +406,8 @@
 
   [sceneState.profileState removeObserver:self];
 
-  if (IsTabGroupIndicatorEnabled()) {
-    [_tabGroupIndicatorCoordinator stop];
-    _tabGroupIndicatorCoordinator = nil;
-  }
+  [_tabGroupIndicatorCoordinator stop];
+  _tabGroupIndicatorCoordinator = nil;
 
   [self.feedManagementCoordinator stop];
   self.feedManagementCoordinator = nil;
@@ -760,7 +762,7 @@
   [self.headerViewController setLogoVendor:self.logoVendor];
 }
 
-// Configures `self.contentSuggestionsCoordiantor`.
+// Configures `self.contentSuggestionsCoordinator`.
 - (void)configureContentSuggestionsCoordinator {
   self.contentSuggestionsCoordinator.webState = self.webState;
   self.contentSuggestionsCoordinator.delegate = self;
@@ -833,6 +835,8 @@
   _tabGroupIndicatorCoordinator = [[TabGroupIndicatorCoordinator alloc]
       initWithBaseViewController:self.NTPViewController
                          browser:self.browser];
+  _tabGroupIndicatorCoordinator.parentViewController =
+      self.headerViewController;
   _tabGroupIndicatorCoordinator.toolbarHeightDelegate = nil;
   _tabGroupIndicatorCoordinator.displayedOnNTP = YES;
   [_tabGroupIndicatorCoordinator start];
@@ -894,6 +898,10 @@
 }
 
 - (void)identityDiscWasTapped:(UIView*)identityDisc {
+  if (_showAccountMenuInProgress || _showSigninCommandInProgress) {
+    // Double tap, or tap before dismissing of the previous one is complete.
+    return;
+  }
   if (IsHomeCustomizationEnabled()) {
     [self dismissCustomizationMenu];
   }
@@ -907,15 +915,30 @@
     [handler showSettingsFromViewController:self.baseViewController];
   } else if (isSignedIn) {
     if (base::FeatureList::IsEnabled(kIdentityDiscAccountMenu)) {
-      [handler showAccountMenuWithAnchorView:identityDisc];
+      _showAccountMenuInProgress = YES;
+      __weak __typeof(self) weakSelf = self;
+      [handler showAccountMenuWithAnchorView:identityDisc
+                        skipIfUINotAvailable:NO
+                                  completion:^{
+                                    [weakSelf showAccountMenuDidFinish];
+                                  }];
+
     } else {
       [handler showSettingsFromViewController:self.baseViewController];
     }
   } else {
+    __weak __typeof(self) weakSelf = self;
+    _showSigninCommandInProgress = YES;
     ShowSigninCommand* const showSigninCommand = [[ShowSigninCommand alloc]
         initWithOperation:AuthenticationOperation::kSheetSigninAndHistorySync
-              accessPoint:signin_metrics::AccessPoint::
-                              ACCESS_POINT_NTP_SIGNED_OUT_ICON];
+                 identity:nil
+              accessPoint:signin_metrics::AccessPoint::kNtpSignedOutIcon
+              promoAction:signin_metrics::PromoAction::
+                              PROMO_ACTION_NO_SIGNIN_PROMO
+               completion:^(SigninCoordinatorResult result,
+                            id<SystemIdentity> completionIdentity) {
+                 [weakSelf showSigninCommandDidFinish];
+               }];
     [handler showSignin:showSigninCommand
         baseViewController:self.baseViewController];
   }
@@ -929,15 +952,16 @@
     return;
   }
 
-  if (self.prefService->GetInteger(
+  PrefService* localState = GetApplicationContext()->GetLocalState();
+  if (localState->GetInteger(
           prefs::kNTPHomeCustomizationNewBadgeImpressionCount) <=
       kCustomizationNewBadgeMaxImpressionCount) {
     base::RecordAction(
         base::UserMetricsAction(kNTPCustomizationNewBadgeTappedAction));
     // Set the new badge impression count to `INT_MAX` to ensure it isn't shown
     // again, even if we increase the max impression count.
-    self.prefService->SetInteger(
-        prefs::kNTPHomeCustomizationNewBadgeImpressionCount, INT_MAX);
+    localState->SetInteger(prefs::kNTPHomeCustomizationNewBadgeImpressionCount,
+                           INT_MAX);
 
     [self.headerViewController hideBadgeOnCustomizationMenu];
   }
@@ -1128,63 +1152,63 @@
 
 #pragma mark - FeedSignInPromoDelegate
 
-- (void)showSignInPromoUI {
-  // Both possible flows (sign-in only and sign-in + sync) involve sign-in. So
-  // they shouldn't be offered if sign-in is disallowed.
-  if (![self isSignInAllowed]) {
-    [self showSignInDisableMessage];
-    [self.feedMetricsRecorder recordShowSignInRelatedUIWithType:
-                                  feed::FeedSignInUI::kShowSignInDisableToast];
+- (void)showSignInUIFromSource:(FeedSignInPromoSource)source {
+  // If the user is already signed in, do nothing.
+  if (self.authService &&
+      self.authService->HasPrimaryIdentity(signin::ConsentLevel::kSignin)) {
     return;
   }
-
-  BOOL hasUserIdentities = ChromeAccountManagerServiceFactory::GetForProfile(
-                               self.browser->GetProfile())
-                               ->HasIdentities();
-  id<ApplicationCommands> handler = HandlerForProtocol(
-      self.browser->GetCommandDispatcher(), ApplicationCommands);
-  ShowSigninCommand* command = [[ShowSigninCommand alloc]
-      initWithOperation:AuthenticationOperation::kSigninOnly
-            accessPoint:signin_metrics::AccessPoint::
-                            ACCESS_POINT_NTP_FEED_CARD_MENU_PROMO];
-  [handler showSignin:command baseViewController:self.NTPViewController];
-  [self.feedMetricsRecorder recordShowSignInRelatedUIWithType:
-                                feed::FeedSignInUI::kShowSignInOnlyFlow];
-  [self.feedMetricsRecorder recordShowSignInOnlyUIWithUserId:hasUserIdentities];
-  signin_metrics::RecordSigninUserActionForAccessPoint(
-      signin_metrics::AccessPoint::ACCESS_POINT_NTP_FEED_CARD_MENU_PROMO);
-}
-
-- (void)showSignInUI {
-  // Both possible flows (sign-in only and sign-in + sync) involve sign-in. So
-  // they shouldn't be offered if sign-in is disallowed.
+  // This flow shouldn't be offered if sign-in is disallowed.
+  // In theory, the flow should not even have been offered to the user.
   if (![self isSignInAllowed]) {
     [self showSignInDisableMessage];
     [self.feedMetricsRecorder recordShowSyncnRelatedUIWithType:
                                   feed::FeedSyncPromo::kShowDisableToast];
     return;
   }
+  if (_showAccountMenuInProgress || _showSigninCommandInProgress) {
+    return;
+  }
+  BOOL hasUserIdentities = [self hasIdentitiesOnDevice];
 
-  ProfileIOS* profile = self.browser->GetProfile();
+  signin_metrics::AccessPoint accessPoint =
+      signin_metrics::AccessPoint::kNtpFeedCardMenuPromo;
   id<ApplicationCommands> handler = HandlerForProtocol(
       self.browser->GetCommandDispatcher(), ApplicationCommands);
   // If there are 0 identities, kInstantSignin requires less taps.
-  auto operation = ChromeAccountManagerServiceFactory::GetForProfile(profile)
-                           ->HasIdentities()
-                       ? AuthenticationOperation::kSigninOnly
-                       : AuthenticationOperation::kInstantSignin;
+  AuthenticationOperation operation =
+      (hasUserIdentities) ? AuthenticationOperation::kSigninOnly
+                          : AuthenticationOperation::kInstantSignin;
+  switch (source) {
+    case FeedSignInCommandSourceBottom:
+      // TODO(crbug.com/40066051): Strictly speaking this should record a bucket
+      // other than kShowSyncFlow. But I don't think we care too much about this
+      // particular histogram, just rename the bucket after launch.
+      [self.feedMetricsRecorder
+          recordShowSyncnRelatedUIWithType:feed::FeedSyncPromo::kShowSyncFlow];
+      break;
+    case FeedSignInCommandSourceCardMenu:
+      accessPoint = signin_metrics::AccessPoint::kNtpFeedBottomPromo;
+      [self.feedMetricsRecorder recordShowSignInRelatedUIWithType:
+                                    feed::FeedSignInUI::kShowSignInOnlyFlow];
+      [self.feedMetricsRecorder
+          recordShowSignInOnlyUIWithUserId:hasUserIdentities];
+      break;
+  }
+  __weak __typeof(self) weakSelf = self;
+  _showSigninCommandInProgress = YES;
   ShowSigninCommand* command = [[ShowSigninCommand alloc]
       initWithOperation:operation
-            accessPoint:signin_metrics::AccessPoint::
-                            ACCESS_POINT_NTP_FEED_BOTTOM_PROMO];
+               identity:nil
+            accessPoint:accessPoint
+            promoAction:signin_metrics::PromoAction::
+                            PROMO_ACTION_NO_SIGNIN_PROMO
+             completion:^(SigninCoordinatorResult result,
+                          id<SystemIdentity> completionIdentity) {
+               [weakSelf showSigninCommandDidFinish];
+             }];
   [handler showSignin:command baseViewController:self.NTPViewController];
-  // TODO(crbug.com/40066051): Strictly speaking this should record a bucket
-  // other than kShowSyncFlow. But I don't think we care too much about this
-  // particular histogram, just rename the bucket after launch.
-  [self.feedMetricsRecorder
-      recordShowSyncnRelatedUIWithType:feed::FeedSyncPromo::kShowSyncFlow];
-  signin_metrics::RecordSigninUserActionForAccessPoint(
-      signin_metrics::AccessPoint::ACCESS_POINT_NTP_FEED_BOTTOM_PROMO);
+  signin_metrics::RecordSigninUserActionForAccessPoint(accessPoint);
 }
 
 #pragma mark - FeedWrapperViewControllerDelegate
@@ -1215,7 +1239,8 @@
   id<FakeboxFocuser> fakeboxFocuserHandler =
       HandlerForProtocol(self.browser->GetCommandDispatcher(), FakeboxFocuser);
   [fakeboxFocuserHandler focusOmniboxFromFakebox:_fakeboxTapped
-                                          pinned:[self isFakeboxPinned]];
+                                          pinned:[self isFakeboxPinned]
+                  fakeboxButtonsSnapshotProvider:self.headerViewController];
 }
 
 - (void)refreshNTPContent {
@@ -1323,8 +1348,9 @@
 
   // Return an empty list if the BrowserAgent is null (which can happen
   // if e.g. the Browser is off-the-record).
-  if (!followBrowserAgent)
+  if (!followBrowserAgent) {
     return @[];
+  }
 
   return followBrowserAgent->GetFollowedWebSites();
 }
@@ -1571,6 +1597,32 @@
 }
 
 #pragma mark - Private
+
+- (bool)hasIdentitiesOnDevice {
+  ProfileIOS* profile = self.browser->GetProfile();
+  if (IsUseAccountListFromIdentityManagerEnabled()) {
+    return !IdentityManagerFactory::GetForProfile(profile)
+                ->GetAccountsOnDevice()
+                .empty();
+  } else {
+    return ChromeAccountManagerServiceFactory::GetForProfile(profile)
+        ->HasIdentities();
+  }
+}
+
+// Update the state, to take into account that the account menu coordinator is
+// stopped.
+- (void)showAccountMenuDidFinish {
+  CHECK(_showAccountMenuInProgress, base::NotFatalUntil::M135);
+  _showAccountMenuInProgress = NO;
+}
+
+// Update the state, to take into account that the signin coordinator
+// coordinator is stopped.
+- (void)showSigninCommandDidFinish {
+  CHECK(_showSigninCommandInProgress, base::NotFatalUntil::M135);
+  _showSigninCommandInProgress = NO;
+}
 
 // Updates the feed visibility or content based on the supervision state
 // of the account defined in `value`.
@@ -1899,7 +1951,7 @@
     return IOSNTPImpressionCustomizationState::kFeedEnabled;
   }
 
-  NOTREACHED_NORETURN();
+  NOTREACHED();
 }
 
 // Presents the Fakebox Lens icon IPH bubble without checking scroll position.
@@ -1936,7 +1988,6 @@
   if (!_customizationCoordinator) {
     return;
   }
-  [self.NTPViewController dismissViewControllerAnimated:YES completion:nil];
   [_customizationCoordinator stop];
   _customizationCoordinator = nil;
 }

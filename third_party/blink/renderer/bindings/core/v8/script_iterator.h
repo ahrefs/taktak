@@ -18,7 +18,6 @@ namespace blink {
 class ExceptionContext;
 class ExceptionState;
 class ExecutionContext;
-class ScriptPromiseUntyped;
 template <typename IDLResolvedType>
 class ScriptPromise;
 
@@ -38,9 +37,6 @@ class ScriptPromise;
 // This class resembles ECMAScript's `GetIterator(obj, kind)` [3] abstract
 // operation, whose `kind` argument is either ASYNC or SYNC, directing the
 // operation as to which iterator type to try and obtain from the ES object.
-//
-// In general, this class should be preferred over using the
-// GetEsIteratorMethod() and GetEsIteratorWithMethod() functions directly.
 //
 // [1]: https://tc39.es/ecma262/#sec-iterator-records
 // [2]: https://tc39.es/ecma262/#table-async-iterator-required
@@ -90,14 +86,14 @@ class ScriptPromise;
 //
 //       // `on_fulfilled` fulfills to an Iterator Result, and calls
 //       // `GetNextValue()` again if the result is not done.
-//       ScriptFunction* on_fulfilled = ...;
-//       ScriptFunction* on_rejected = ...;
-//       next_promise_.Then(on_fulfilled, on_rejected);
+//       ThenCallableDerived* on_fulfilled = ...;
+//       ThenCallableDerived* on_rejected = ...;
+//       next_promise_.Then(script_State, on_fulfilled, on_rejected);
 //     }
 //
 //    private:
 //     ScriptIterator iterator_;
-//     ScriptPromiseUntyped next_promise_;
+//     ScriptPromise<IDLAny> next_promise_;
 //   };
 //
 // Sync iterable usage:

@@ -6,6 +6,7 @@
 
 #include <optional>
 
+#include "base/auto_reset.h"
 #include "base/check_op.h"
 #include "base/feature_list.h"
 #include "base/functional/bind.h"
@@ -19,7 +20,6 @@
 #include "base/task/single_thread_task_runner.h"
 #include "base/time/time.h"
 #include "base/timer/timer.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/enterprise/util/managed_browser_utils.h"
@@ -40,7 +40,6 @@
 #include "chrome/browser/ui/color/chrome_color_id.h"
 #include "chrome/browser/ui/profiles/profile_colors_util.h"
 #include "chrome/browser/ui/ui_features.h"
-#include "chrome/browser/ui/views/dotted_icon.h"
 #include "chrome/browser/ui/views/profiles/avatar_toolbar_button.h"
 #include "chrome/browser/ui/web_applications/app_browser_controller.h"
 #include "chrome/common/pref_names.h"
@@ -58,6 +57,7 @@
 #include "components/signin/public/identity_manager/primary_account_change_event.h"
 #include "components/sync/base/features.h"
 #include "components/sync/service/sync_service.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "google_apis/gaia/google_service_auth_error.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/resource/resource_bundle.h"
@@ -71,18 +71,12 @@ namespace {
 // test the behaviors while a delay is ongoing.
 constexpr base::TimeDelta kInfiniteTimeForTesting = base::TimeDelta::Max();
 
-constexpr float kAvatarIconSigninPendingShrinkRatio = 0.75;
-
 constexpr base::TimeDelta kShowNameDuration = base::Seconds(3);
 static std::optional<base::TimeDelta> g_show_name_duration_for_testing;
 
 constexpr base::TimeDelta kShowSigninPendingTextDelay = base::Minutes(50);
 static std::optional<base::TimeDelta>
     g_show_signin_pending_text_delay_for_testing;
-
-// Enterprise custom labels have a limmit of 16 characters, so they will be cut
-// at the 17th characters.
-constexpr int kMaximumEnterpriseCustomLabelLengthCutOff = 17;
 
 ProfileAttributesStorage& GetProfileAttributesStorage() {
   return g_browser_process->profile_manager()->GetProfileAttributesStorage();
@@ -105,23 +99,6 @@ gfx::Image GetGaiaAccountImage(Profile* profile) {
         .account_image;
   }
   return gfx::Image();
-}
-
-// Expected to be called when Management is set and enterprise badging is
-// enabled. Returns:
-// - true for Work.
-// - false for School.
-bool IsManagementWork(Profile* profile) {
-  CHECK(enterprise_util::CanShowEnterpriseBadgingForAvatar(profile));
-  auto* identity_manager = IdentityManagerFactory::GetForProfile(profile);
-  auto management_environment = enterprise_util::GetManagementEnvironment(
-      profile, identity_manager->FindExtendedAccountInfoByAccountId(
-                   identity_manager->GetPrimaryAccountId(
-                       signin::ConsentLevel::kSignin)));
-  CHECK_NE(management_environment,
-           enterprise_util::ManagementEnvironment::kNone);
-  return management_environment ==
-         enterprise_util::ManagementEnvironment::kWork;
 }
 
 }  // namespace
@@ -423,6 +400,12 @@ class ShowIdentityNameStateProvider : public StateProvider,
   // Shows the name in the identity pill. If the name is already showing, this
   // extends the duration.
   void ShowIdentityName() {
+    // Do not show the identity name if the enterprise badging is enabled for
+    // the avatar.
+    if (enterprise_util::CanShowEnterpriseBadgingForAvatar(&profile_.get())) {
+      return;
+    }
+
     ++show_identity_request_count_;
     waiting_for_image_ = false;
 
@@ -498,6 +481,13 @@ class ShowIdentityNameStateProvider : public StateProvider,
 class SyncErrorStateProvider : public StateProvider,
                                public syncer::SyncServiceObserver {
  public:
+  struct AvatarError {
+    AvatarSyncErrorType avatar_error = AvatarSyncErrorType::kUpgradeClientError;
+    std::string email;
+
+    friend bool operator==(const AvatarError&, const AvatarError&) = default;
+  };
+
   explicit SyncErrorStateProvider(
       StateObserver& state_observer,
       Profile& profile,
@@ -505,7 +495,7 @@ class SyncErrorStateProvider : public StateProvider,
       : StateProvider(state_observer),
         profile_(profile),
         sync_error_type_(sync_error_type),
-        last_avatar_error_(::GetAvatarSyncErrorType(&profile)) {
+        last_avatar_error_(GetAvatarError(&profile)) {
     if (auto* sync_service = SyncServiceFactory::GetForProfile(&profile)) {
       sync_service_observation_.Observe(sync_service);
     }
@@ -521,17 +511,37 @@ class SyncErrorStateProvider : public StateProvider,
   // std::nullopt if there is no error or if the error does not match
   // `sync_error_type_`.
   std::optional<AvatarSyncErrorType> GetLastAvatarSyncErrorType() const {
+    return HasError(last_avatar_error_) ? std::optional<AvatarSyncErrorType>(
+                                              last_avatar_error_->avatar_error)
+                                        : std::nullopt;
+  }
+
+  std::optional<AvatarError> GetLastAvatarSyncError() const {
     return HasError(last_avatar_error_) ? last_avatar_error_ : std::nullopt;
   }
 
  private:
+  // Computes the current avatar error.
+  static std::optional<AvatarError> GetAvatarError(Profile* profile) {
+    std::optional<AvatarSyncErrorType> error_type =
+        ::GetAvatarSyncErrorType(profile);
+    if (!error_type) {
+      return std::nullopt;
+    }
+
+    const syncer::SyncService* service =
+        SyncServiceFactory::GetForProfile(profile);
+    CHECK(service);
+
+    return AvatarError{error_type.value(), service->GetAccountInfo().email};
+  }
+
   // StateProvider:
   void accept(StateVisitor& visitor) const override { visitor.visit(this); }
 
   // syncer::SyncServiceObserver:
   void OnStateChanged(syncer::SyncService*) override {
-    const std::optional<AvatarSyncErrorType> error =
-        ::GetAvatarSyncErrorType(&profile_.get());
+    const std::optional<AvatarError> error = GetAvatarError(&profile_.get());
     if (last_avatar_error_ == error) {
       return;
     }
@@ -554,13 +564,13 @@ class SyncErrorStateProvider : public StateProvider,
   // Returns true if `avatar_sync_error` has a value and the value matches
   // `sync_error_type_`. If `sync_error_type_` is std::nullopt then any
   // non-nullopt `avatar_sync_error` is a match.
-  bool HasError(
-      const std::optional<AvatarSyncErrorType>& avatar_sync_error) const {
+  bool HasError(const std::optional<AvatarError>& avatar_sync_error) const {
     if (!avatar_sync_error) {
       return false;  // No sync error.
     }
 
-    if (sync_error_type_.has_value() && avatar_sync_error != sync_error_type_) {
+    if (sync_error_type_.has_value() &&
+        avatar_sync_error->avatar_error != sync_error_type_) {
       return false;  // Error has the wrong type.
     }
 
@@ -574,7 +584,7 @@ class SyncErrorStateProvider : public StateProvider,
 
   // Caches the value of the last error so the class can detect when it
   // changes and notify changes.
-  std::optional<AvatarSyncErrorType> last_avatar_error_;
+  std::optional<AvatarError> last_avatar_error_;
 
   base::ScopedObservation<syncer::SyncService, syncer::SyncServiceObserver>
       sync_service_observation_{this};
@@ -972,11 +982,10 @@ class StateManager : public StateObserver,
                 avatar_toolbar_button_.get());
       }
 
-      if (switches::IsExplicitBrowserSigninUIOnDesktopEnabled()) {
-        states_[ButtonState::kSigninPending] =
-            std::make_unique<SigninPendingStateProvider>(
-                /*state_observer=*/*this, *profile, *avatar_toolbar_button_);
-      }
+      states_[ButtonState::kSigninPending] =
+          std::make_unique<SigninPendingStateProvider>(
+              /*state_observer=*/*this, *profile, *avatar_toolbar_button_);
+
 #endif
 
       signin::IdentityManager* identity_manager =
@@ -1047,8 +1056,7 @@ class StateManager : public StateObserver,
       }
     }
 
-    NOTREACHED_IN_MIGRATION()
-        << "There should at least be one active state in the map.";
+    NOTREACHED() << "There should at least be one active state in the map.";
   }
 
   // `AvatarToolbarButton::UpdateIcon()` will notify observers, the
@@ -1131,19 +1139,14 @@ AvatarToolbarButtonDelegate::AvatarToolbarButtonDelegate(
   if (identity_manager_) {
     identity_manager_observation_.Observe(identity_manager_);
   }
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // On CrOS this button should only show as badging for Incognito, Guest and
   // captivie portal signin. It's only enabled for non captive portal Incognito
   // where a menu is available for closing all Incognito windows.
   avatar_toolbar_button_->SetEnabled(
       profile_->IsOffTheRecord() && !profile_->IsGuestSession() &&
       !profile_->GetOTRProfileID().IsCaptivePortal());
-#elif BUILDFLAG(IS_CHROMEOS_LACROS)
-  // On Lacros we need to disable the button for captivie portal signin.
-  avatar_toolbar_button_->SetEnabled(
-      !profile_->IsOffTheRecord() || profile_->IsGuestSession() ||
-      !profile_->GetOTRProfileID().IsCaptivePortal());
-#endif  // !BUILDFLAG(IS_CHROMEOS)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 AvatarToolbarButtonDelegate::~AvatarToolbarButtonDelegate() = default;
@@ -1279,7 +1282,7 @@ base::ScopedClosureRunner AvatarToolbarButtonDelegate::ShowExplicitText(
 
 std::pair<std::u16string, std::optional<SkColor>>
 AvatarToolbarButtonDelegate::GetTextAndColor(
-    const ui::ColorProvider* const color_provider) const {
+    const ui::ColorProvider* color_provider) const {
   std::optional<SkColor> color =
       color_provider->GetColor(kColorAvatarButtonHighlightDefault);
   std::u16string text;
@@ -1295,10 +1298,8 @@ AvatarToolbarButtonDelegate::GetTextAndColor(
       break;
     }
     case ButtonState::kShowIdentityName:
-      text = switches::IsExplicitBrowserSigninUIOnDesktopEnabled()
-                 ? l10n_util::GetStringFUTF16(IDS_AVATAR_BUTTON_GREETING,
-                                              GetShortProfileName())
-                 : GetShortProfileName();
+      text = l10n_util::GetStringFUTF16(IDS_AVATAR_BUTTON_GREETING,
+                                        GetShortProfileName());
       break;
     case ButtonState::kExplicitTextShowing: {
       const internal::ExplicitStateProvider* explicit_state =
@@ -1348,7 +1349,7 @@ AvatarToolbarButtonDelegate::GetTextAndColor(
       }
     } break;
     case ButtonState::kGuestSession: {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
       // On ChromeOS all windows are either Guest or not Guest and the Guest
       // avatar button is not actionable. Showing the number of open windows is
       // not as helpful as on other desktop platforms. Please see
@@ -1365,19 +1366,7 @@ AvatarToolbarButtonDelegate::GetTextAndColor(
       break;
     }
     case ButtonState::kManagement: {
-      const std::string enterprise_custom_label =
-          profile_->GetPrefs()->GetString(
-              prefs::kEnterpriseCustomLabelForProfile);
-      if (!enterprise_custom_label.empty()) {
-        text = gfx::TruncateString(base::UTF8ToUTF16(enterprise_custom_label),
-                                   kMaximumEnterpriseCustomLabelLengthCutOff,
-                                   gfx::CHARACTER_BREAK);
-      } else if (IsManagementWork(profile_)) {
-        text = l10n_util::GetStringUTF16(IDS_AVATAR_BUTTON_WORK);
-      } else {
-        // School.
-        text = l10n_util::GetStringUTF16(IDS_AVATAR_BUTTON_SCHOOL);
-      }
+      text = enterprise_util::GetEnterpriseLabel(profile_, /*truncated=*/true);
       color = color_provider->GetColor(kColorAvatarButtonHighlightNormal);
       break;
     }
@@ -1429,7 +1418,7 @@ AvatarToolbarButtonDelegate::GetAccessibilityLabel() const {
 }
 
 SkColor AvatarToolbarButtonDelegate::GetHighlightTextColor(
-    const ui::ColorProvider* const color_provider) const {
+    const ui::ColorProvider* color_provider) const {
   switch (state_manager_->GetButtonActiveState()) {
     case ButtonState::kIncognitoProfile:
       return color_provider->GetColor(
@@ -1475,15 +1464,16 @@ std::u16string AvatarToolbarButtonDelegate::GetAvatarTooltipText() const {
               *state_manager_->GetActiveStateProvider())
               .AsSyncError();
       CHECK(sync_error_state);
-      std::optional<AvatarSyncErrorType> sync_error =
-          sync_error_state->GetLastAvatarSyncErrorType();
+      std::optional<internal::SyncErrorStateProvider::AvatarError> sync_error =
+          sync_error_state->GetLastAvatarSyncError();
       CHECK(sync_error.has_value());
       return l10n_util::GetStringFUTF16(
           IDS_AVATAR_BUTTON_SYNC_ERROR_TOOLTIP, GetShortProfileName(),
           GetAvatarSyncErrorDescription(
-              *sync_error,
+              sync_error->avatar_error,
               IdentityManagerFactory::GetForProfile(profile_)
-                  ->HasPrimaryAccount(signin::ConsentLevel::kSync)));
+                  ->HasPrimaryAccount(signin::ConsentLevel::kSync),
+              sync_error->email));
     }
     case ButtonState::kSigninPending:
     case ButtonState::kExplicitTextShowing:
@@ -1530,7 +1520,8 @@ AvatarToolbarButtonDelegate::GetInkdropColors() const {
 
 ui::ImageModel AvatarToolbarButtonDelegate::GetAvatarIcon(
     int icon_size,
-    SkColor icon_color) const {
+    SkColor icon_color,
+    const ui::ColorProvider* color_provider) const {
   switch (state_manager_->GetButtonActiveState()) {
     case ButtonState::kIncognitoProfile:
       return ui::ImageModel::FromVectorIcon(kIncognitoRefreshMenuIcon,
@@ -1559,20 +1550,16 @@ ui::ImageModel AvatarToolbarButtonDelegate::GetAvatarIcon(
     case ButtonState::kPassphraseError:
     case ButtonState::kUpgradeClientError:
     case ButtonState::kSigninPending:
-      // First shrink the icon from it's regular size in order to accommodate
-      // for the dotted circle that is drawn around it in `PaintIcon()`.
-      int shrunk_icon_size = icon_size * kAvatarIconSigninPendingShrinkRatio;
-      gfx::Image shrunk_image = profiles::GetSizedAvatarIcon(
-          GetProfileAvatarImage(icon_size), shrunk_icon_size, shrunk_icon_size,
-          profiles::SHAPE_CIRCLE);
-      // Then add a transparent background to the image, with the original size.
-      // This way the whole image is the same as the regular one (so that it
-      // does not affect it's position or other elements such as the text next
-      // to it). The transparent background will have the dotted paint on top of
-      // it in `PaintIcon()`.
-      return ui::ImageModel::FromImageSkia(
-          gfx::ImageSkiaOperations::CreateImageWithCircleBackground(
-              icon_size / 2, SK_ColorTRANSPARENT, shrunk_image.AsImageSkia()));
+      // Square image with a dotted ring.
+      gfx::ImageSkia image_with_ring = profiles::GetAvatarWithDottedRing(
+          ui::ImageModel::FromImage(GetProfileAvatarImage(icon_size)),
+          icon_size, /*has_padding=*/false, /*has_background=*/false,
+          avatar_toolbar_button_->GetColorProvider());
+      // Crop to a circle.
+      return ui::ImageModel::FromImage(profiles::GetSizedAvatarIcon(
+          gfx::Image(image_with_ring), image_with_ring.size().width(),
+          image_with_ring.size().height(),
+          profiles::AvatarShape::SHAPE_CIRCLE));
   }
 }
 
@@ -1600,11 +1587,11 @@ void AvatarToolbarButtonDelegate::OnPrimaryAccountChanged(
   if (event_details.GetEventTypeFor(signin::ConsentLevel::kSignin) !=
           signin::PrimaryAccountChangeEvent::Type::kSet ||
       event_details.GetSetPrimaryAccountAccessPoint() !=
-          signin_metrics::AccessPoint::ACCESS_POINT_SIGNIN_CHOICE_REMEMBERED) {
+          signin_metrics::AccessPoint::kSigninChoiceRemembered) {
     return;
   }
 
-  std::string gaia_id = event_details.GetCurrentState().primary_account.gaia;
+  GaiaId gaia_id = event_details.GetCurrentState().primary_account.gaia;
   const SigninPrefs signin_prefs(*profile_->GetPrefs());
   std::optional<base::Time> last_signout_time =
       signin_prefs.GetChromeLastSignoutTime(gaia_id);
@@ -1628,7 +1615,7 @@ void AvatarToolbarButtonDelegate::OnExtendedAccountInfoUpdated(
     const AccountInfo& info) {
   if (info.gaia == gaia_id_for_signin_choice_remembered_ &&
       !info.given_name.empty()) {
-    gaia_id_for_signin_choice_remembered_.clear();
+    gaia_id_for_signin_choice_remembered_ = GaiaId();
     avatar_toolbar_button_
         ->MaybeShowExplicitBrowserSigninPreferenceRememberedIPH(info);
   }
@@ -1649,37 +1636,6 @@ void AvatarToolbarButtonDelegate::OnErrorStateOfRefreshTokenUpdatedForAccount(
       token_operation_source == signin_metrics::SourceForRefreshTokenOperation::
                                     kDiceResponseHandler_Signout) {
     avatar_toolbar_button_->MaybeShowWebSignoutIPH(account_info.gaia);
-  }
-}
-
-void AvatarToolbarButtonDelegate::PaintIcon(
-    gfx::Canvas* canvas,
-    const gfx::Rect& icon_bounds) const {
-  switch (state_manager_->GetButtonActiveState()) {
-    case ButtonState::kGuestSession:
-    case ButtonState::kShowIdentityName:
-    case ButtonState::kNormal:
-    case ButtonState::kIncognitoProfile:
-    case ButtonState::kExplicitTextShowing:
-    case ButtonState::kManagement:
-    case ButtonState::kSyncPaused:
-      return;
-    case ButtonState::kSyncError:
-      if (IdentityManagerFactory::GetForProfile(profile_)->HasPrimaryAccount(
-              signin::ConsentLevel::kSync) ||
-          !switches::IsImprovedSigninUIOnDesktopEnabled()) {
-        return;
-      }
-      [[fallthrough]];
-    case ButtonState::kSigninPending:
-    case ButtonState::kUpgradeClientError:
-    case ButtonState::kPassphraseError:
-      // Paints the dotted circle around the shrunk icon (from
-      // `GetAvatarIcon()`).
-      PaintRingDottedPath(canvas, icon_bounds,
-                          avatar_toolbar_button_->GetColorProvider()->GetColor(
-                              kColorTabDiscardRingFrameActive));
-      return;
   }
 }
 

@@ -24,7 +24,6 @@
 #include "base/metrics/user_metrics.h"
 #include "base/threading/scoped_blocking_call.h"
 #include "cc/input/android/offset_tag_android.h"
-#include "cc/input/browser_controls_offset_tags_info.h"
 #include "content/browser/android/java/gin_java_bridge_dispatcher_host.h"
 #include "content/browser/media/media_web_contents_observer.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
@@ -42,11 +41,12 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/isolated_world_ids.h"
-#include "third_party/blink/public/mojom/input/input_handler.mojom-blink.h"
+#include "third_party/blink/public/mojom/input/input_handler.mojom.h"
 #include "ui/accessibility/ax_assistant_structure.h"
 #include "ui/accessibility/ax_node_data.h"
 #include "ui/accessibility/ax_tree_update.h"
 #include "ui/accessibility/mojom/ax_assistant_structure.mojom.h"
+#include "ui/android/browser_controls_offset_tag_definitions.h"
 #include "ui/android/overscroll_refresh_handler.h"
 #include "ui/android/window_android.h"
 #include "ui/gfx/android/java_bitmap.h"
@@ -374,7 +374,7 @@ ScopedJavaLocalRef<jobject> WebContentsAndroid::GetRenderFrameHostFromId(
 ScopedJavaLocalRef<jobjectArray> WebContentsAndroid::GetAllRenderFrameHosts(
     JNIEnv* env) const {
   std::vector<RenderFrameHost*> frames;
-  web_contents_->ForEachRenderFrameHost(
+  web_contents_->ForEachRenderFrameHostImpl(
       [&frames](RenderFrameHostImpl* rfh) { frames.push_back(rfh); });
   ScopedJavaLocalRef<jobjectArray> jframes =
       Java_WebContentsImpl_createRenderFrameHostArray(env, frames.size());
@@ -826,11 +826,11 @@ void WebContentsAndroid::SetSize(JNIEnv* env, jint width, jint height) {
 }
 
 int WebContentsAndroid::GetWidth(JNIEnv* env) {
-  return web_contents_->GetNativeView()->GetSize().width();
+  return web_contents_->GetNativeView()->GetSizeDIPs().width();
 }
 
 int WebContentsAndroid::GetHeight(JNIEnv* env) {
-  return web_contents_->GetNativeView()->GetSize().height();
+  return web_contents_->GetNativeView()->GetSizeDIPs().height();
 }
 
 ScopedJavaLocalRef<jobject> WebContentsAndroid::GetOrCreateEventForwarder(
@@ -867,12 +867,6 @@ void WebContentsAndroid::OnFinishDownloadImage(
   }
   Java_WebContentsImpl_onDownloadImageFinished(
       env, obj, callback, id, http_status_code, jurl, jbitmaps, jsizes);
-}
-
-void WebContentsAndroid::SetMediaSession(
-    const ScopedJavaLocalRef<jobject>& j_media_session) {
-  JNIEnv* env = base::android::AttachCurrentThread();
-  Java_WebContentsImpl_setMediaSession(env, obj_, j_media_session);
 }
 
 void WebContentsAndroid::SendOrientationChangeEvent(JNIEnv* env,
@@ -950,16 +944,21 @@ void WebContentsAndroid::SetLongPressLinkSelectText(JNIEnv* env,
   web_contents_->SetLongPressLinkSelectText((bool)enabled);
 }
 
-void WebContentsAndroid::NotifyControlsConstraintsChanged(
+void WebContentsAndroid::SetSupportsForwardTransitionAnimation(
     JNIEnv* env,
-    const base::android::JavaParamRef<jobject>& jold_tags_info,
-    const base::android::JavaParamRef<jobject>& jtags_info) {
-  cc::BrowserControlsOffsetTagsInfo tags_info =
-      cc::android::FromJavaBrowserControlsOffsetTagsInfo(env, jtags_info);
+    jboolean supports) {
+  web_contents_->SetSupportsForwardTransitionAnimation(supports);
+}
+
+void WebContentsAndroid::UpdateOffsetTagDefinitions(
+    JNIEnv* env,
+    const base::android::JavaParamRef<jobject>& jtag_definitions) {
+  ui::BrowserControlsOffsetTagDefinitions tag_definitions =
+      ui::FromJavaBrowserControlsOffsetTagDefinitions(env, jtag_definitions);
   if (!offset_tag_mediator_) {
     Init();
   }
-  offset_tag_mediator_->SetOffsetTagsInfo(tags_info);
+  offset_tag_mediator_->SetOffsetTagDefinitions(tag_definitions);
 }
 
 WebContentsAndroid::BrowserControlsOffsetTagMediator::
@@ -969,24 +968,25 @@ WebContentsAndroid::BrowserControlsOffsetTagMediator::
 WebContentsAndroid::BrowserControlsOffsetTagMediator::
     ~BrowserControlsOffsetTagMediator() = default;
 
-void WebContentsAndroid::BrowserControlsOffsetTagMediator::SetOffsetTagsInfo(
-    const cc::BrowserControlsOffsetTagsInfo& new_offset_tags_info) {
+void WebContentsAndroid::BrowserControlsOffsetTagMediator::
+    SetOffsetTagDefinitions(const ui::BrowserControlsOffsetTagDefinitions&
+                                new_offset_tag_definitions) {
   if (rwhva_) {
-    rwhva_->UnregisterOffsetTags(offset_tags_info_);
-    rwhva_->RegisterOffsetTags(new_offset_tags_info);
+    rwhva_->UnregisterOffsetTags(offset_tag_definitions_.tags);
+    rwhva_->RegisterOffsetTags(new_offset_tag_definitions);
   }
 
-  offset_tags_info_ = new_offset_tags_info;
+  offset_tag_definitions_ = new_offset_tag_definitions;
 }
 
 void WebContentsAndroid::BrowserControlsOffsetTagMediator::
     UpdateRenderProcessConnection(RenderWidgetHostViewAndroid* old_rwhva,
                                   RenderWidgetHostViewAndroid* new_rwhva) {
   if (old_rwhva) {
-    old_rwhva->UnregisterOffsetTags(offset_tags_info_);
+    old_rwhva->UnregisterOffsetTags(offset_tag_definitions_.tags);
   }
   if (new_rwhva) {
-    new_rwhva->RegisterOffsetTags(offset_tags_info_);
+    new_rwhva->RegisterOffsetTags(offset_tag_definitions_);
   }
   rwhva_ = new_rwhva;
 }

@@ -282,10 +282,10 @@ void SyncEngineBackend::ShutdownOnUIThread() {
 void SyncEngineBackend::DoShutdown(ShutdownReason reason) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
-  // |sync_manager_| and |nigori_controller_| may be null if DoInitialize() was
+  // `sync_manager_` and `nigori_controller_` may be null if DoInitialize() was
   // never called.
   if (sync_manager_) {
-    // However, |sync_manager_| and |nigori_controller_| are always either both
+    // However, `sync_manager_` and `nigori_controller_` are always either both
     // null or both non-null.
     DCHECK(nigori_controller_);
 
@@ -457,7 +457,7 @@ void SyncEngineBackend::DoClearNigoriDataForMigration() {
 
 void SyncEngineBackend::GetNigoriNodeForDebugging(AllNodesCallback callback) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  nigori_controller_->GetAllNodes(std::move(callback));
+  nigori_controller_->GetAllNodesForDebugging(std::move(callback));
 }
 
 void SyncEngineBackend::RecordNigoriMemoryUsageAndCountsHistograms() {

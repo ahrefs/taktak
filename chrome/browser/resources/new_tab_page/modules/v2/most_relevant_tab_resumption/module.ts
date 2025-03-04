@@ -8,6 +8,7 @@ import './page_favicon.js';
 import '../icons.html.js';
 
 import {CrLitElement} from 'chrome://resources/lit/v3_0/lit.rollup.js';
+import type {PropertyValues} from 'chrome://resources/lit/v3_0/lit.rollup.js';
 
 import {I18nMixinLit, loadTimeData} from '../../../i18n_setup.js';
 import {recordOccurence as recordOccurrence} from '../../../metrics_utils.js';
@@ -56,6 +57,12 @@ export class ModuleElement extends I18nMixinLit
       urlVisits: {type: Object},
 
       /**
+       * To determine whether the favicon service should use the host if
+       * the url does not produce a match.
+       */
+      fallbackToHost_: {type: Boolean},
+
+      /**
        * To determine whether to show the module with the device icon.
        */
       shouldShowDeviceIcon_: {
@@ -64,14 +71,37 @@ export class ModuleElement extends I18nMixinLit
       },
 
       showInfoDialog_: {type: Boolean},
+
+      useIsKnownToSync_: {type: Boolean},
     };
   }
 
   format: string = 'wide';
   urlVisits: URLVisit[] = [];
+  protected fallbackToHost_: boolean =
+      loadTimeData.getBoolean('mostRelevantTabResumptionModuleFallbackToHost');
   protected shouldShowDeviceIcon_: boolean =
     loadTimeData.getBoolean('mostRelevantTabResumptionDeviceIconEnabled');
   protected showInfoDialog_: boolean = false;
+  protected useIsKnownToSync_:
+    boolean =
+        loadTimeData.getBoolean('mostRelevantTabResumptionUseIsKnownToSync');
+
+  override willUpdate(changedProperties: PropertyValues<this>) {
+    super.willUpdate(changedProperties);
+    if (changedProperties.has('urlVisits') && this.urlVisits.length === 0) {
+      const urlVisit = changedProperties.get('urlVisits')![0];
+      this.fire('dismiss-module-instance', {
+        message: loadTimeData.getString('modulesTabResumptionSingleDismiss'),
+        restoreCallback: () => {
+          MostRelevantTabResumptionProxyImpl.getInstance()
+              .handler.restoreURLVisit(urlVisit);
+          this.urlVisits = [urlVisit];
+        },
+      });
+    }
+  }
+
 
   protected getMenuItemGroups_(): MenuItem[][] {
     return [
@@ -115,9 +145,7 @@ export class ModuleElement extends I18nMixinLit
     MostRelevantTabResumptionProxyImpl.getInstance().handler.dismissModule(
         this.urlVisits);
     this.fire('dismiss-module-instance', {
-      message: loadTimeData.getStringF(
-          'dismissModuleToastMessage',
-          loadTimeData.getString('modulesTabResumptionSentence')),
+      message: loadTimeData.getString('modulesTabResumptionMultiDismiss'),
       restoreCallback: () => MostRelevantTabResumptionProxyImpl.getInstance()
                                  .handler.restoreModule(this.urlVisits),
     });
@@ -131,30 +159,33 @@ export class ModuleElement extends I18nMixinLit
   protected onDismissButtonClick_(e: Event) {
     e.preventDefault();   // Stop navigation
     e.stopPropagation();  // Stop firing of click handler
-    const urlVisit = (e.target! as HTMLElement).parentElement!;
-    const index = Number(urlVisit.dataset['index']);
+    const urlVisitElem = (e.target! as HTMLElement).parentElement!;
+    const index = Number(urlVisitElem.dataset['index']);
+    const urlVisit = this.urlVisits[index];
+
     chrome.metricsPrivate.recordSmallCount(
         'NewTabPage.TabResumption.VisitDismissIndex', index);
-    urlVisit!.remove();
     MostRelevantTabResumptionProxyImpl.getInstance().handler.dismissURLVisit(
         this.urlVisits[index]);
-    this.fire('dismiss-module-element', {
-      message: loadTimeData.getStringF(
-          'dismissModuleToastMessage',
-          loadTimeData.getString('modulesTabResumptionSentence')),
-      restoreCallback: () => {
-        chrome.metricsPrivate.recordSmallCount(
-            'NewTabPage.TabResumption.VisitRestoreIndex', index);
-        this.$.urlVisits.insertBefore(
-            urlVisit, this.$.urlVisits.childNodes[index]);
-        MostRelevantTabResumptionProxyImpl.getInstance()
-            .handler.restoreURLVisit(this.urlVisits[index]);
-      },
-    });
-  }
 
-  protected onMenuButtonClick_(e: Event) {
-    this.$.moduleHeaderElementV2.showAt(e);
+    this.urlVisits =
+      [...this.urlVisits.slice(0, index), ...this.urlVisits.slice(index + 1)];
+    if (this.urlVisits.length > 0) {
+      this.fire('dismiss-module-element', {
+        message: loadTimeData.getString('modulesTabResumptionSingleDismiss'),
+        restoreCallback: () => {
+          chrome.metricsPrivate.recordSmallCount(
+              'NewTabPage.TabResumption.VisitRestoreIndex', index);
+          this.urlVisits = [
+            ...this.urlVisits.slice(0, index),
+            urlVisit,
+            ...this.urlVisits.slice(index),
+          ];
+          MostRelevantTabResumptionProxyImpl.getInstance()
+              .handler.restoreURLVisit(this.urlVisits[index]);
+        },
+      });
+    }
   }
 
   protected onUrlVisitClick_(e: Event) {
@@ -210,10 +241,7 @@ export class ModuleElement extends I18nMixinLit
   }
 
   protected computeDeviceName_(urlVisit: URLVisit): string|null {
-    return loadTimeData.getBoolean('modulesRedesignedEnabled') ?
-        urlVisit.sessionName :
-        this.i18n('modulesTabResumptionDevicePrefix') +
-            ` ${urlVisit.sessionName}`;
+    return urlVisit.sessionName;
   }
 
   protected computeShouldShowDeviceName_(urlVisit: URLVisit): boolean {

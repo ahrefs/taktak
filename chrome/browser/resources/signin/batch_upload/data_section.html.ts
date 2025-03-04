@@ -13,14 +13,18 @@ export function getHtml(this: DataSectionElement) {
       <div class="data-section-header">
         <h2 id="sectionTitle">${this.title_}</h2>
         <cr-expand-button id="expandButton" no-hover
-            ?hidden="${this.disabled_}"
+            ?hidden="${this.disabled_ || this.isThemeSection()}"
             ?expanded="${this.expanded_}"
-            @expanded-changed="${this.onExpandChanged_}">
+            @expanded-changed="${this.onExpandChanged_}"
+            aria-label="${this.titleWithoutCount_}">
         </cr-expand-button>
-        <div id="separator" ?hidden="${this.disabled_}"></div>
+        <div id="separator"
+            ?hidden="${this.disabled_ || this.isThemeSection()}">
+        </div>
         <cr-toggle id="toggle"
             @checked-changed=${this.onToggleChanged_}
-            ?checked="${!this.disabled_}">
+            ?checked="${!this.disabled_}"
+            aria-label="${this.getToggleAriaLabel_()}">
         </cr-toggle>
       </div>
       <cr-collapse id="collapse" .opened="${this.expanded_}">
@@ -31,13 +35,23 @@ export function getHtml(this: DataSectionElement) {
             <cr-checkbox class="item-checkbox"
                 data-id="${item.id}"
                 ?checked="${this.isCheckboxChecked_(item.id)}"
-                @change="${this.onCheckedChanged_}"/>
+                @change="${this.onCheckedChanged_}"
+                @focus="${this.onCheckboxFocused_}">
+                ${item.title}, ${item.subtitle}
+            </cr-checkbox>
             <div class="data-item-content">
-              <img class="item-icon"
-                  ?hidden="${this.isStrEmpty_(item.iconUrl)}"
-                  alt="Item icon" src="${item.iconUrl}">
-              <div class="item-title">${item.title}</div>
-              <div class="item-subtitle">${item.subtitle}</div>
+              <div class="item-icon-container"
+                  ?hidden="${this.isStrEmpty_(item.iconUrl)}">
+                <img class="item-icon" alt="" src="${item.iconUrl}">
+              </div>
+              <div class="item-info">
+                <div class="item-title text-elide" aria-hidden="true">
+                  ${item.title}
+                </div>
+                <div class="item-subtitle text-elide" aria-hidden="true">
+                  ${item.subtitle}
+                </div>
+              </div>
             </div>
           </div>
           `)}

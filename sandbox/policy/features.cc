@@ -6,7 +6,6 @@
 
 #include "base/feature_list.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "sandbox/features.h"
 
 #if BUILDFLAG(IS_WIN)
@@ -49,21 +48,11 @@ BASE_FEATURE(kWinSboxDisableExtensionPoints,
              "WinSboxDisableExtensionPoint",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-// Enables GPU AppContainer sandbox on Windows.
-BASE_FEATURE(kGpuAppContainer,
-             "GpuAppContainer",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
-// Enables GPU Low Privilege AppContainer when combined with kGpuAppContainer.
-BASE_FEATURE(kGpuLPAC,
-             "GpuLPAC",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 // Enables Print Compositor Low Privilege AppContainer. Note, this might be
 // overridden and disabled by policy.
 BASE_FEATURE(kPrintCompositorLPAC,
              "PrintCompositorLPAC",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Enables Renderer AppContainer
 BASE_FEATURE(kRendererAppContainer,
@@ -117,33 +106,35 @@ BASE_FEATURE(kWinSboxRestrictCoreSharingOnRenderer,
              "WinSboxRestrictCoreSharingOnRenderer",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-// Enables parallel process launching using the thread pool.
+// Enables parallel process launching using the thread pool. Flag retained
+// as a kill-switch.
 BASE_FEATURE(kWinSboxParallelProcessLaunch,
              "WinSboxParallelProcessLaunch",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+// Enables Csrss lockdown in supported processes by closing all ALPC
+// ports before sandbox lockdown. See crbug.com/40408399 for details.
+BASE_FEATURE(kEnableCsrssLockdown,
+             "EnableCsrssLockdown",
              base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Filters most environment variables out for kService and kServiceWithJit
+// sandboxed processes. Flag retained as a kill-switch.
+BASE_FEATURE(kWinSboxFilterServiceEnvironment,
+             "WinSboxFilterServiceEnvironment",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 #endif  // BUILDFLAG(IS_WIN)
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // Controls whether the Spectre variant 2 mitigation is enabled. We use a USE
 // flag on some Chrome OS boards to disable the mitigation by disabling this
 // feature in exchange for system performance.
 BASE_FEATURE(kSpectreVariant2Mitigation,
              "SpectreVariant2Mitigation",
              base::FEATURE_ENABLED_BY_DEFAULT);
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
-// Enabling the kNetworkServiceSandbox feature automatically enables Spectre
-// variant 2 mitigations in the network service. This can lead to performance
-// regressions, so enabling this feature will turn off the Spectre Variant 2
-// mitigations.
-//
-// On ChromeOS Ash, this overrides the system-wide kSpectreVariant2Mitigation
-// feature above.
-BASE_FEATURE(kForceDisableSpectreVariant2MitigationInNetworkService,
-             "kForceDisableSpectreVariant2MitigationInNetworkService",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
 // Increase the renderer sandbox memory limit. As of 2023, there are no limits
 // on macOS, and a 1TiB limit on Windows. There are reports of users bumping
 // into the limit. This increases the limit by 2x compared to the default

@@ -367,10 +367,9 @@ bool DisplayProfileInUseError(const base::FilePath& lock_path,
 #elif BUILDFLAG(IS_MAC)
   // On Mac, always usurp the lock.
   return true;
+#else
+  NOTREACHED();
 #endif
-
-  NOTREACHED_IN_MIGRATION();
-  return false;
 }
 
 bool IsChromeProcess(pid_t pid) {
@@ -940,9 +939,7 @@ ProcessSingleton::NotifyResult ProcessSingleton::NotifyOtherProcessWithTimeout(
     return PROCESS_NOTIFIED;
   }
 
-  NOTREACHED_IN_MIGRATION()
-      << "The other process returned unknown message: " << buf;
-  return PROCESS_NOTIFIED;
+  NOTREACHED() << "The other process returned unknown message: " << buf;
 }
 
 ProcessSingleton::NotifyResult ProcessSingleton::NotifyOtherProcessOrCreate() {
@@ -1101,9 +1098,9 @@ bool ProcessSingleton::Create() {
     return false;
   }
 
-  if (listen(sock_, 5) < 0)
-    NOTREACHED_IN_MIGRATION()
-        << "listen failed: " << base::safe_strerror(errno);
+  if (listen(sock_, 5) < 0) {
+    NOTREACHED() << "listen failed: " << base::safe_strerror(errno);
+  }
 
   return true;
 }

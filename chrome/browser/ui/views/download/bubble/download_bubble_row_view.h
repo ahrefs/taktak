@@ -5,6 +5,8 @@
 #ifndef CHROME_BROWSER_UI_VIEWS_DOWNLOAD_BUBBLE_DOWNLOAD_BUBBLE_ROW_VIEW_H_
 #define CHROME_BROWSER_UI_VIEWS_DOWNLOAD_BUBBLE_DOWNLOAD_BUBBLE_ROW_VIEW_H_
 
+#include <string_view>
+
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/task/cancelable_task_tracker.h"
@@ -45,18 +47,16 @@ class DownloadBubbleUIController;
 class DownloadBubbleRowView : public views::View,
                               public views::ContextMenuController,
                               public views::FocusChangeListener,
-                              public views::ViewTargeterDelegate,
                               public DownloadBubbleRowViewInfoObserver {
   METADATA_HEADER(DownloadBubbleRowView, views::View)
 
  public:
-  explicit DownloadBubbleRowView(
+  DownloadBubbleRowView(
       const DownloadBubbleRowViewInfo& info,
       base::WeakPtr<DownloadBubbleUIController> bubble_controller,
       base::WeakPtr<DownloadBubbleNavigationHandler> navigation_handler,
       base::WeakPtr<Browser> browser,
-      int fixed_width,
-      bool is_in_partial_view = false);
+      int fixed_width);
   DownloadBubbleRowView(const DownloadBubbleRowView&) = delete;
   DownloadBubbleRowView& operator=(const DownloadBubbleRowView&) = delete;
   ~DownloadBubbleRowView() override;
@@ -97,7 +97,7 @@ class DownloadBubbleRowView : public views::View,
   // Returns the transparent button that is activated when the row is clicked.
   views::Button* transparent_button() { return transparent_button_; }
 
-  const std::u16string& GetSecondaryLabelTextForTesting();
+  std::u16string_view GetSecondaryLabelTextForTesting();
 
   DownloadUIModel* model() { return info_->model(); }
   const DownloadBubbleRowViewInfo& info() const { return *info_; }
@@ -109,9 +109,6 @@ class DownloadBubbleRowView : public views::View,
   void SetInputProtectorForTesting(
       std::unique_ptr<views::InputEventActivationProtector> input_protector);
 
-  // views::ViewTargeterDelegate
-  View* TargetForRect(View* root, const gfx::Rect& rect) override;
-
  protected:
   // Overrides ui::LayerDelegate:
   void OnDeviceScaleFactorChanged(float old_device_scale_factor,
@@ -120,9 +117,7 @@ class DownloadBubbleRowView : public views::View,
  private:
   void AddMainPageButton(DownloadCommands::Command command,
                          const std::u16string& button_string);
-  views::ImageButton* AddQuickAction(DownloadCommands::Command command);
-  views::ImageButton* GetActionButtonForCommand(
-      DownloadCommands::Command command);
+  void AddQuickAction(DownloadCommands::Command command);
   std::u16string GetAccessibleNameForQuickAction(
       DownloadCommands::Command command);
   std::u16string GetAccessibleNameForMainPageButton(
@@ -135,7 +130,6 @@ class DownloadBubbleRowView : public views::View,
   void UpdateButtons();
   void UpdateProgressBar();
   void UpdateLabels();
-  void UpdateDeepScanNotice();
   void RecordMetricsOnUpdate();
   void RecordDownloadDisplayed();
 
@@ -193,11 +187,8 @@ class DownloadBubbleRowView : public views::View,
       main_page_buttons_;
 
   // Quick Actions on the main page.
-  raw_ptr<views::ImageButton> resume_action_ = nullptr;
-  raw_ptr<views::ImageButton> pause_action_ = nullptr;
-  raw_ptr<views::ImageButton> show_in_folder_action_ = nullptr;
-  raw_ptr<views::ImageButton> cancel_action_ = nullptr;
-  raw_ptr<views::ImageButton> open_when_complete_action_ = nullptr;
+  base::flat_map<DownloadCommands::Command, raw_ptr<views::ImageButton>>
+      quick_actions_;
 
   // Holder for the main button.
   raw_ptr<views::FlexLayoutView> main_button_holder_ = nullptr;
@@ -236,10 +227,6 @@ class DownloadBubbleRowView : public views::View,
 
   raw_ptr<views::InkDropContainerView> inkdrop_container_;
 
-#if !BUILDFLAG(IS_CHROMEOS)
-  raw_ptr<views::View> deep_scan_notice_;
-#endif
-
   // Drag and drop:
   // Whether we are dragging the download bubble row.
   bool dragging_ = false;
@@ -258,11 +245,6 @@ class DownloadBubbleRowView : public views::View,
 
   // Mitigates the risk of clickjacking by enforcing a delay in click input.
   std::unique_ptr<views::InputEventActivationProtector> input_protector_;
-
-  // Used for metrics to study clickjacking potential.
-  const base::Time shown_time_;
-  // False in tests.
-  const bool is_in_partial_view_ = false;
 
   // TODO(crbug.com/40233803): The size constraint is not passed down from the
   // views tree in the first round of layout, so setting a fixed width to bound

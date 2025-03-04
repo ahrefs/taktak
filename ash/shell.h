@@ -201,6 +201,7 @@ class MessageCenterController;
 class MouseCursorEventFilter;
 class MouseKeysController;
 class MruWindowTracker;
+class MultiCaptureService;
 class MultiDeviceNotificationPresenter;
 class MultiDisplayMetricsController;
 class NearbyShareControllerImpl;
@@ -214,7 +215,6 @@ class PciePeripheralNotificationController;
 class PeripheralBatteryListener;
 class PeripheralBatteryNotifier;
 class PersistentWindowController;
-class PickerController;
 class PipController;
 class PolicyRecommendationRestorer;
 class PostLoginGlanceablesMetricsRecorder;
@@ -225,8 +225,8 @@ class PrivacyHubController;
 class PrivacyScreenController;
 class ProjectingObserver;
 class ProjectorControllerImpl;
+class QuickInsertController;
 class RapidKeySequenceRecorder;
-class RasterScaleController;
 class RefreshRateController;
 class ResizeShadowController;
 class ResolutionNotificationController;
@@ -269,7 +269,6 @@ class ToastManagerImpl;
 class ToplevelWindowEventHandler;
 class ClipboardHistoryControllerImpl;
 class TouchDevicesController;
-class TrayAction;
 class UserEducationController;
 class UserMetricsRecorder;
 class VideoActivityNotifier;
@@ -281,7 +280,6 @@ class WindowTilingController;
 class WindowTreeHostManager;
 class WmModeController;
 class ArcInputMethodBoundsTracker;
-class MultiCaptureServiceClient;
 
 enum class LoginStatus;
 
@@ -377,6 +375,10 @@ class ASH_EXPORT Shell : public SessionObserver,
 
   // Returns true if a system-modal dialog window is currently open.
   static bool IsSystemModalWindowOpen();
+
+  // Updates next focus of status area widget delegate when lock screen or login
+  // screen is visible.
+  static void UpdateAccessibilityForStatusAreaWidget();
 
   // Track/Untrack InputMethod bounds.
   void TrackInputMethodBounds(ArcInputMethodBoundsTracker* tracker);
@@ -698,7 +700,9 @@ class ASH_EXPORT Shell : public SessionObserver,
   PeripheralBatteryListener* peripheral_battery_listener() {
     return peripheral_battery_listener_.get();
   }
-  PickerController* picker_controller() { return picker_controller_.get(); }
+  QuickInsertController* quick_insert_controller() {
+    return quick_insert_controller_.get();
+  }
   InformedRestoreController* informed_restore_controller() {
     return informed_restore_controller_.get();
   }
@@ -721,11 +725,8 @@ class ASH_EXPORT Shell : public SessionObserver,
   quick_pair::Mediator* quick_pair_mediator() {
     return quick_pair_mediator_.get();
   }
-  MultiCaptureServiceClient* multi_capture_service_client() {
-    return multi_capture_service_client_.get();
-  }
-  RasterScaleController* raster_scale_controller() {
-    return raster_scale_controller_.get();
+  MultiCaptureService* multi_capture_service() {
+    return multi_capture_service_.get();
   }
   ResizeShadowController* resize_shadow_controller() {
     return resize_shadow_controller_.get();
@@ -817,8 +818,6 @@ class ASH_EXPORT Shell : public SessionObserver,
   AshTouchTransformController* touch_transformer_controller() {
     return touch_transformer_controller_.get();
   }
-  TrayAction* tray_action() { return tray_action_.get(); }
-
   UserMetricsRecorder* metrics() { return user_metrics_recorder_.get(); }
 
   VideoDetector* video_detector() { return video_detector_.get(); }
@@ -1064,9 +1063,6 @@ class ASH_EXPORT Shell : public SessionObserver,
   std::unique_ptr<DesksController> desks_controller_;
   std::unique_ptr<SavedDeskController> saved_desk_controller_;
   std::unique_ptr<SavedDeskDelegate> saved_desk_delegate_;
-  std::unique_ptr<DetachableBaseHandler> detachable_base_handler_;
-  std::unique_ptr<DetachableBaseNotificationController>
-      detachable_base_notification_controller_;
   std::unique_ptr<diagnostics::DiagnosticsLogController>
       diagnostics_log_controller_;
   std::unique_ptr<DisplayHighlightController> display_highlight_controller_;
@@ -1124,12 +1120,11 @@ class ASH_EXPORT Shell : public SessionObserver,
   std::unique_ptr<ActiveSessionAuthController> active_session_auth_controller_;
   std::unique_ptr<PciePeripheralNotificationController>
       pcie_peripheral_notification_controller_;
-  std::unique_ptr<PickerController> picker_controller_;
+  std::unique_ptr<QuickInsertController> quick_insert_controller_;
   std::unique_ptr<PrivacyHubController> privacy_hub_controller_;
   std::unique_ptr<UsbPeripheralNotificationController>
       usb_peripheral_notification_controller_;
   std::unique_ptr<RgbKeyboardManager> rgb_keyboard_manager_;
-  std::unique_ptr<RasterScaleController> raster_scale_controller_;
   std::unique_ptr<ResizeShadowController> resize_shadow_controller_;
   std::unique_ptr<SessionControllerImpl> session_controller_;
   std::unique_ptr<FeatureDiscoveryDurationReporterImpl>
@@ -1140,6 +1135,7 @@ class ASH_EXPORT Shell : public SessionObserver,
   std::unique_ptr<PipController> pip_controller_;
   std::unique_ptr<PrivacyScreenController> privacy_screen_controller_;
   std::unique_ptr<PolicyRecommendationRestorer> policy_recommendation_restorer_;
+  // Must be after `session_controller_`.
   std::unique_ptr<ScannerController> scanner_controller_;
   std::unique_ptr<ScreenSwitchCheckController> screen_switch_check_controller_;
   std::unique_ptr<ShelfConfig> shelf_config_;
@@ -1151,6 +1147,9 @@ class ASH_EXPORT Shell : public SessionObserver,
   std::unique_ptr<AcceleratorTracker> accelerator_tracker_;
   std::unique_ptr<ShutdownControllerImpl> shutdown_controller_;
   std::unique_ptr<SystemNotificationController> system_notification_controller_;
+  std::unique_ptr<DetachableBaseHandler> detachable_base_handler_;
+  std::unique_ptr<DetachableBaseNotificationController>
+      detachable_base_notification_controller_;
   std::unique_ptr<SystemNudgePauseManagerImpl> system_nudge_pause_manager_;
   std::unique_ptr<SystemTrayModel> system_tray_model_;
   std::unique_ptr<SystemTrayNotifier> system_tray_notifier_;
@@ -1159,7 +1158,6 @@ class ASH_EXPORT Shell : public SessionObserver,
   std::unique_ptr<ToastManagerImpl> toast_manager_;
   std::unique_ptr<ClipboardHistoryControllerImpl> clipboard_history_controller_;
   std::unique_ptr<TouchDevicesController> touch_devices_controller_;
-  std::unique_ptr<TrayAction> tray_action_;
   std::unique_ptr<UserEducationController> user_education_controller_;
   std::unique_ptr<TabStripDelegate> tab_strip_delegate_;
   std::unique_ptr<WallpaperControllerImpl> wallpaper_controller_;
@@ -1300,7 +1298,7 @@ class ASH_EXPORT Shell : public SessionObserver,
 
   std::unique_ptr<OcclusionTrackerPauser> occlusion_tracker_pauser_;
 
-  std::unique_ptr<MultiCaptureServiceClient> multi_capture_service_client_;
+  std::unique_ptr<MultiCaptureService> multi_capture_service_;
 
   std::unique_ptr<federated::FederatedServiceControllerImpl>
       federated_service_controller_;

@@ -357,6 +357,8 @@ declare namespace chrome {
       EXPANDED = 'expanded',
       FOCUSABLE = 'focusable',
       FOCUSED = 'focused',
+      HAS_ACTIONS = 'hasActions',
+      HAS_INTEREST_TARGET = 'hasInterestTarget',
       HORIZONTAL = 'horizontal',
       HOVERED = 'hovered',
       IGNORED = 'ignored',
@@ -630,7 +632,7 @@ declare namespace chrome {
     export interface AutomationIntent {
       command: IntentCommandType;
       textBoundary: IntentTextBoundaryType;
-      moveDirection: IntentMoveDirectionType;
+      moveDirection?: IntentMoveDirectionType;
     }
 
     export interface AutomationEvent {

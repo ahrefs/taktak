@@ -7,6 +7,7 @@
 #include <string>
 #include <type_traits>
 
+#include "base/auto_reset.h"
 #include "base/metrics/user_metrics.h"
 #include "base/strings/strcat.h"
 #include "chrome/app/vector_icons/vector_icons.h"
@@ -16,15 +17,16 @@
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/customize_chrome/side_panel_controller.h"
 #include "chrome/browser/ui/tabs/public/tab_features.h"
-#include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_action_callback.h"
 #include "chrome/browser/ui/views/toolbar/pinned_toolbar_actions_container.h"
 #include "chrome/browser/ui/views/toolbar/pinned_toolbar_actions_container_layout.h"
 #include "chrome/browser/ui/views/toolbar/pinned_toolbar_button_status_indicator.h"
 #include "chrome/browser/ui/views/toolbar/toolbar_button.h"
 #include "chrome/browser/ui/views/toolbar/toolbar_ink_drop_util.h"
+#include "chrome/browser/ui/web_applications/app_browser_controller.h"
 #include "chrome/grit/generated_resources.h"
 #include "ui/actions/action_id.h"
+#include "ui/actions/action_utils.h"
 #include "ui/actions/actions.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
 #include "ui/base/models/menu_separator_types.h"
@@ -36,10 +38,6 @@
 #include "ui/views/controls/button/button_controller.h"
 #include "ui/views/view_class_properties.h"
 #include "ui/views/view_utils.h"
-
-namespace {
-const gfx::VectorIcon kEmptyIcon;
-}  // namespace
 
 DEFINE_UI_CLASS_PROPERTY_TYPE(PinnedToolbarActionFlexPriority)
 DEFINE_UI_CLASS_PROPERTY_KEY(
@@ -90,6 +88,12 @@ PinnedActionToolbarButton::PinnedActionToolbarButton(
   // buttons.
   GetViewAccessibility().SetRole(ax::mojom::Role::kToggleButton);
   GetViewAccessibility().SetCheckedState(ax::mojom::CheckedState::kFalse);
+
+  if (web_app::AppBrowserController::IsWebApp(browser_)) {
+    SetLayoutInsets(gfx::Insets());
+    SetHorizontalAlignment(gfx::ALIGN_CENTER);
+    SetAppearDisabledInInactiveWidget(true);
+  }
 }
 
 PinnedActionToolbarButton::~PinnedActionToolbarButton() {
@@ -266,12 +270,11 @@ PinnedActionToolbarButton::CreateMenuModel() {
       IDC_UPDATE_SIDE_PANEL_PIN_STATE,
       IDS_SIDE_PANEL_TOOLBAR_BUTTON_CXMENU_UNPIN,
       ui::ImageModel::FromVectorIcon(kKeepOffIcon, ui::kColorIcon, 16));
-  if (features::IsToolbarPinningEnabled()) {
-    model->AddSeparator(ui::NORMAL_SEPARATOR);
-    model->AddItemWithStringIdAndIcon(
-        IDC_SHOW_CUSTOMIZE_CHROME_TOOLBAR, IDS_SHOW_CUSTOMIZE_CHROME_TOOLBAR,
-        ui::ImageModel::FromVectorIcon(kSettingsMenuIcon, ui::kColorIcon, 16));
-  }
+  model->AddSeparator(ui::NORMAL_SEPARATOR);
+  model->AddItemWithStringIdAndIcon(
+      IDC_SHOW_CUSTOMIZE_CHROME_TOOLBAR, IDS_SHOW_CUSTOMIZE_CHROME_TOOLBAR,
+      ui::ImageModel::FromVectorIcon(kSettingsMenuIcon, ui::kColorIcon, 16));
+
   return model;
 }
 
@@ -343,9 +346,9 @@ bool PinnedActionToolbarButton::IsCommandIdEnabled(int command_id) const {
     return browser_->profile()->IsRegularProfile() && is_pinnable_;
   }
   if (command_id == IDC_SHOW_CUSTOMIZE_CHROME_TOOLBAR) {
-    tabs::TabModel* tab = browser_->tab_strip_model()->GetActiveTab();
+    tabs::TabInterface* tab = browser_->tab_strip_model()->GetActiveTab();
     customize_chrome::SidePanelController* side_panel_controller =
-        tab->tab_features()->customize_chrome_side_panel_controller();
+        tab->GetTabFeatures()->customize_chrome_side_panel_controller();
     return side_panel_controller &&
            side_panel_controller->IsCustomizeChromeEntryAvailable();
   }
@@ -364,14 +367,10 @@ void PinnedActionToolbarButton::UpdatePinnedStateForContextMenu() {
       base::StrCat({"Actions.PinnedToolbarButton.",
                     updated_pin_state ? "Pinned" : "Unpinned",
                     ".ByContextMenu.", metrics_name.value()}));
-  if (features::IsToolbarPinningEnabled()) {
-    GetViewAccessibility().AnnounceText(l10n_util::GetStringUTF16(
-        updated_pin_state ? IDS_TOOLBAR_BUTTON_PINNED
-                          : IDS_TOOLBAR_BUTTON_UNPINNED));
-  } else {
-    GetViewAccessibility().AnnounceText(l10n_util::GetStringUTF16(
-        updated_pin_state ? IDS_SIDE_PANEL_PINNED : IDS_SIDE_PANEL_UNPINNED));
-  }
+  GetViewAccessibility().AnnounceText(l10n_util::GetStringUTF16(
+      updated_pin_state ? IDS_TOOLBAR_BUTTON_PINNED
+                        : IDS_TOOLBAR_BUTTON_UNPINNED));
+
   actions_model->UpdatePinnedState(action_id_, updated_pin_state);
 }
 
@@ -390,13 +389,27 @@ void PinnedActionToolbarButtonActionViewInterface::ActionItemChangedImpl(
     actions::ActionItem* action_item) {
   ButtonActionViewInterface::ActionItemChangedImpl(action_item);
 
+  if (action_view_->IsIconVisible() &&
+      actions::IsActionItemClass<actions::StatefulImageActionItem>(
+          action_item)) {
+    auto* stateful_action_item =
+        static_cast<actions::StatefulImageActionItem*>(action_item);
+    if (stateful_action_item->GetStatefulImage().IsVectorIcon()) {
+      action_view_->SetVectorIcon(*stateful_action_item->GetStatefulImage()
+                                       .GetVectorIcon()
+                                       .vector_icon());
+    }
+  }
+
   // Update whether the action is engaged before updating the view.
   action_view_->SetActionEngaged(
       action_item->GetProperty(kActionItemUnderlineIndicatorKey));
 
   OnViewChangedImpl(action_item);
   action_view_->SetIsPinnable(
-      action_item->GetProperty(actions::kActionItemPinnableKey));
+      action_item->GetProperty(actions::kActionItemPinnableKey) ==
+      std::underlying_type_t<actions::ActionPinnableState>(
+          actions::ActionPinnableState::kPinnable));
   action_view_->SetIsActionShowingBubble(action_item->GetIsShowingBubble());
 }
 
@@ -408,9 +421,13 @@ void PinnedActionToolbarButtonActionViewInterface::InvokeActionImpl(
   CHECK(action_id.has_value());
   const std::optional<std::string> metrics_name =
       actions::ActionIdMap::ActionIdToString(action_id.value());
-  CHECK(metrics_name.has_value());
-  base::RecordComputedAction(base::StrCat(
-      {"Actions.PinnedToolbarButtonActivation.", metrics_name.value()}));
+  // ActionIdToStringMappings are not initialized in unit tests, therefore will
+  // not have a value. In the normal case, `metrics_name` should always have a
+  // value.
+  if (metrics_name.has_value()) {
+    base::RecordComputedAction(base::StrCat(
+        {"Actions.PinnedToolbarButtonActivation.", metrics_name.value()}));
+  }
 
   base::AutoReset<bool> needs_delayed_destruction =
       action_view_->SetNeedsDelayedDestruction(true);
@@ -425,29 +442,36 @@ void PinnedActionToolbarButtonActionViewInterface::InvokeActionImpl(
 
 void PinnedActionToolbarButtonActionViewInterface::OnViewChangedImpl(
     actions::ActionItem* action_item) {
-  // Update the button's icon.
-  if (action_item->GetImage().IsVectorIcon()) {
-    action_view_->SetVectorIcon(
-        action_view_->IsIconVisible()
-            ? *action_item->GetImage().GetVectorIcon().vector_icon()
-            : kEmptyIcon);
+  // Update the button's icon. If the action item is a stateful image action
+  // item, use the stateful image. Otherwise, use the action item's image.
+  ui::ImageModel image_model;
+
+  if (IsActionItemClass<actions::StatefulImageActionItem>(action_item)) {
+    image_model = static_cast<actions::StatefulImageActionItem*>(action_item)
+                      ->GetStatefulImage();
   } else {
-    action_view_->SetImageModel(views::Button::STATE_NORMAL,
-                                action_view_->IsIconVisible()
-                                    ? action_item->GetImage()
-                                    : ui::ImageModel());
+    image_model = action_item->GetImage();
+  }
+
+  if (image_model.IsVectorIcon()) {
+    action_view_->SetVectorIcon(action_view_->IsIconVisible()
+                                    ? *image_model.GetVectorIcon().vector_icon()
+                                    : gfx::VectorIcon::EmptyIcon());
+  } else {
+    action_view_->SetImageModel(
+        views::Button::STATE_NORMAL,
+        action_view_->IsIconVisible() ? image_model : ui::ImageModel());
   }
   // Set the accessible name. Fall back to the tooltip if one is not provided.
   // If pinned, the pinned state is added to the accessible name.
-  auto accessible_name = action_item->GetAccessibleName().empty()
-                             ? action_view_->GetTooltipText(gfx::Point())
-                             : action_item->GetAccessibleName();
-  auto stateful_accessible_name =
+  const std::u16string accessible_name(action_item->GetAccessibleName().empty()
+                                           ? action_view_->GetTooltipText()
+                                           : action_item->GetAccessibleName());
+  action_view_->GetViewAccessibility().SetName(
       action_view_->IsPinned()
           ? l10n_util::GetStringFUTF16(
                 IDS_PINNED_ACTION_BUTTON_ACCESSIBLE_TITLE, accessible_name)
-          : accessible_name;
-  action_view_->GetViewAccessibility().SetName(stateful_accessible_name);
+          : accessible_name);
   action_view_->UpdateStatusIndicator();
 }
 

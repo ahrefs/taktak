@@ -11,24 +11,19 @@ import org.chromium.blink.mojom.DisplayMode;
 import org.chromium.cc.input.BrowserControlsState;
 import org.chromium.chrome.browser.browserservices.intents.BrowserServicesIntentDataProvider;
 import org.chromium.chrome.browser.browserservices.intents.WebappExtras;
-import org.chromium.chrome.browser.customtabs.BaseCustomTabActivity;
 import org.chromium.chrome.browser.customtabs.CloseButtonVisibilityManager;
 import org.chromium.chrome.browser.customtabs.content.CustomTabActivityTabProvider;
 import org.chromium.chrome.browser.customtabs.content.TabObserverRegistrar;
 import org.chromium.chrome.browser.customtabs.content.TabObserverRegistrar.CustomTabTabObserver;
 import org.chromium.chrome.browser.customtabs.features.toolbar.CustomTabToolbarCoordinator;
-import org.chromium.chrome.browser.dependency_injection.ActivityScope;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.components.security_state.ConnectionSecurityLevel;
 import org.chromium.components.security_state.SecurityStateModel;
-
-import javax.inject.Inject;
 
 /**
  * Updates the browser controls state based on whether the browser is in TWA mode and the page's
  * security level.
  */
-@ActivityScope
 public class TrustedWebActivityBrowserControlsVisibilityManager {
     static final @BrowserControlsState int DEFAULT_BROWSER_CONTROLS_STATE =
             BrowserControlsState.BOTH;
@@ -59,14 +54,14 @@ public class TrustedWebActivityBrowserControlsVisibilityManager {
                 }
             };
 
-    @Inject
     public TrustedWebActivityBrowserControlsVisibilityManager(
-            BaseCustomTabActivity activity,
+            TabObserverRegistrar tabObserverRegistrar,
+            CustomTabActivityTabProvider tabProvider,
             CustomTabToolbarCoordinator toolbarCoordinator,
             CloseButtonVisibilityManager closeButtonVisibilityManager,
             BrowserServicesIntentDataProvider intentDataProvider) {
-        mTabObserverRegistrar = activity.getTabObserverRegistrar();
-        mTabProvider = activity.getCustomTabActivityTabProvider();
+        mTabObserverRegistrar = tabObserverRegistrar;
+        mTabProvider = tabProvider;
         mToolbarCoordinator = toolbarCoordinator;
         mCloseButtonVisibilityManager = closeButtonVisibilityManager;
 

@@ -41,10 +41,13 @@ For [*every new incoming security bug*](#Every-New-Incoming-Security-Bug):
 * Make sure the report is [*valid and actionable*](#Confirm-Valid-and-Actionable)
   * Ideally, you’ll be able to do this by [reproducing the bug](#Reproduce-the-bug),
     more ideally, [with ClusterFuzz](clusterfuzz-for-shepherds.md).
-* Set [*severity*](#Set-severity).
-* Set [*oldest impacted active release channel*](#Set-oldest-impacted-active-release-channel) – AKA FoundIn.
-* Set [*impacted-operating-systems*](#Set-impacted-operating-systems).
 * [*Assign*](#Assign) to an appropriate or suitable owner or engineering team.
+* Set [*severity*](#Set-severity).
+
+For every new incoming security bug that is S2 or more severe:
+* Set [*oldest impacted active release channel*](#Set-oldest-impacted-active-release-channel) – AKA FoundIn.
+* Set [*impacted-operating-systems*](#Set-impacted-operating-systems). If the bug is known or
+understood to impact only specific platforms, set the OS field regardless of severity.
 
 All of the above should be completed as soon as possible during your shift,
 and at least, by the [shift-handoff](#shift-handoff).
@@ -88,6 +91,7 @@ during your shepherding shift:
 * [Reference for questions related to security fix merge process](https://chromium.googlesource.com/chromium/src/+/HEAD/docs/process/merge_request.md#Security-merge-triage)
   for answering questions (you do not need to approve merges).
 * [Shepherding Handoff Log](https://goto.google.com/chrome-security-shepherd-handoff)
+* [GPU for dummies](https://goto.google.com/gpu-for-dummies)
 
 ### Every New Incoming Security Bug
 
@@ -358,12 +362,13 @@ pass it along to / include someone who can direct it more precisely.
       Googlers can look at
       [the V8 security bug triage instructions](https://goto.google.com/v8-security-issue-triage-how-to)
       for lists of component owners, but this shouldn't normally be necessary.
-* **V8 Sandbox bypasses**. The V8 Sandbox is still under development, but V8
-  has begun accepting bypass submissions as low-severity security bugs with
-  specific submission rules. That being said, Chrome Shepherds are not expected
+* **V8 Sandbox bypasses**. The V8 Sandbox is still under development, however
+  V8 sandbox bypasses, both VRP and ClusterFuzz reported, should be handled as
+  security bugs. That being said, Chrome Security Shepherds are not expected to
   to fully triage these reports. You do not need to submit the sandbox bypasses
   to Clusterfuzz. If the report is clearly a V8 sandbox bypass, simply:
-    * Set a provisional severity of Low (S3).
+    * Set a provisional severity of Medium (S2).
+    * Set a provisional priority of P1.
     * Assign to the current [V8
       Sheriff](https://goto.google.com/current-v8-sheriff).
     * Apply the `Security_Impact-None` hotlist (hotlistID:5433277).
@@ -378,12 +383,14 @@ pass it along to / include someone who can direct it more precisely.
   [go/url-spoofs](http://go/url-spoofs) for a guide to triaging these.
 * **SQLite bugs** can be assigned to an owner from //third_party/sqlite/OWNERS.
   CC drhsqlite@ for upstream issues.
-* **Fullscreen bugs** the Open Screen team is taking ownership of Full Screen
-  issues, including security bugs. Please assign Full Screen security issues to
-  takumif@chromium.org and cc: atadres@chromium.org, muyaoxu@google.com, and
-  mfoltz@chromium.org. They are also working on holistic solutions to improving
-  the security of fullscreen, so please remember to look for potential
-  duplicates of ongoing work.
+* **Fullscreen bugs** There is ongoing and planned work to make overall
+  improvements to the security and functionality of Fullscreen. As of January
+  2025 and until [crbug.com/391919449](https://crbug.com/391919449) is closed,
+  new reports of Fullscreen issues should be merged into
+  [crbug.com/391919449](https://crbug.com/391919449) as a Duplicate. In general,
+  the Open Screen team has taken ownership of Fullscreen issues, including
+  security bugs. When necessary, Fullscreen security issues should be assigned
+  muyaoxu@ and cc: liberato@ and mfoltz@.
 * **BoringSSL** the BoringSSL project has moved into the Chromium tracker.
   BoringSSL is a library, so security bugs that do not impact Chrome may still
   be meaningful (e.g. server-side bugs). BoringSSL security issues should be
@@ -396,6 +403,12 @@ pass it along to / include someone who can direct it more precisely.
       Add owners to cc: on the bug to ensure visibility.
     * Add `Security_Impact-None` hotlist; owner will update if this issue
       does impact Chrome.
+* **Bugs in DevTools**: reproduction and validation should still be performed to
+  find the best owner for a bug in DevTools. When cc'ing individual DevTools
+  engineers for visibility and triage, please use the DevTools
+  [ENG_REVIEW_OWNERS](https://source.chromium.org/chromium/chromium/src/+/main:third_party/devtools-frontend/src/config/owner/ENG_REVIEW_OWNERS)
+  file and/or assign to the current DevTools [triage
+  gardeners](https://rotations.corp.google.com/rotation/3493019).
 * Report suspected malicious URLs to SafeBrowsing:
   * Public URLs:
     * [Report malware](https://safebrowsing.google.com/safebrowsing/report_badware/?hl=en)
@@ -418,7 +431,7 @@ pass it along to / include someone who can direct it more precisely.
 * For vulnerabilities in services Chrome uses (e.g. Omaha, Chrome Web Store,
   SafeBrowsing), make sure the affected team is informed and has access to the
   necessary bugs.
-* Chrome for iOS - bugs suspected to be in **WebKit**:
+* **Chrome for iOS - bugs suspected to be in **WebKit**:
     * Reproduce using an iOS device or desktop Safari.
     * Set Severity, Found In, and set Component Tags fields.
     * If the issue is in Webkit
@@ -431,7 +444,22 @@ pass it along to / include someone who can direct it more precisely.
       cc:chrome-ios-security-bugs@google.com. This alias is monitored by the iOS
       Chrome team so they can be notified when the WebKit bug is fixed.
         * Note the WebKit bug ID in the Chromium issue report.
-    * All security issues need owners, the WebKit ones can be assigned to ajuma@.
+    * All security issues need owners, the WebKit ones can be assigned to michaeldo@.
+* **GPU driver bugs** - bugs in GPU drivers that reachable from a renderer process
+   and triggerable through Chrome, such as bugs in Mesa or Mali drivers,
+   should be assigned to the appropriate Chrome engineering team, such as WebGL
+   or WebGPU, to determine if a shader workaround is appropriate. The report
+   should include a valid test case that demonstrates reachability in an active
+   release channel of Chrome on a supported platform.
+   * Because these driver bugs also impact Android, Pixel, and ChromeOS
+     platforms, we do also want to provide those teams visibility. If deemed
+     necessary they can create a bug in their tracker, that should be tracked as
+     a child bug to the original report we received in the Chromium tracker.
+   * For Mesa driver bugs, please cc: robdclark@ and msturner@ for visibility for
+     ChromeOS.
+   * For Mali driver bugs, please cc: aygupta@, bcreasey@, asdl-kfc@ from
+     Android, mjstokes@ and layog@ from Pixel GPU, and robdclark@ and msturner@
+     from ChromeOS GPU.
 
 ### Shift handoff
 

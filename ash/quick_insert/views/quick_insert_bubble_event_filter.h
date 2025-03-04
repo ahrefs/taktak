@@ -20,16 +20,17 @@ class Widget;
 
 namespace ash {
 
-// Handles outside clicks for the Picker widget.
+// Handles outside clicks for the Quick Insert widget.
 // It closes the given widget if clicking outside of the widget or any of its
 // children.
-class ASH_EXPORT PickerBubbleEventFilter : public BubbleEventFilter {
+class ASH_EXPORT QuickInsertBubbleEventFilter : public BubbleEventFilter {
  public:
   // `widget` must outlive this class.
-  explicit PickerBubbleEventFilter(views::Widget* widget);
-  PickerBubbleEventFilter(const PickerBubbleEventFilter&) = delete;
-  PickerBubbleEventFilter& operator=(const PickerBubbleEventFilter&) = delete;
-  ~PickerBubbleEventFilter() override;
+  explicit QuickInsertBubbleEventFilter(views::Widget* widget);
+  QuickInsertBubbleEventFilter(const QuickInsertBubbleEventFilter&) = delete;
+  QuickInsertBubbleEventFilter& operator=(const QuickInsertBubbleEventFilter&) =
+      delete;
+  ~QuickInsertBubbleEventFilter() override;
 
   // BubbleEventFilter:
   bool ShouldRunOnClickOutsideCallback(const ui::LocatedEvent& event) override;

@@ -11,7 +11,6 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/notreached.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "components/permissions/features.h"
 #include "components/permissions/permission_request.h"
@@ -22,9 +21,10 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/content_features.h"
+#include "services/network/public/mojom/permissions_policy/permissions_policy_feature.mojom.h"
+#include "third_party/blink/public/common/features.h"
 #include "third_party/blink/public/common/permissions/permission_utils.h"
 #include "third_party/blink/public/common/web_preferences/web_preferences.h"
-#include "third_party/blink/public/mojom/permissions_policy/permissions_policy_feature.mojom.h"
 #include "url/gurl.h"
 #include "url/origin.h"
 
@@ -87,7 +87,7 @@ PermissionRequestGestureType PermissionUtil::GetGestureType(bool user_gesture) {
                       : PermissionRequestGestureType::NO_GESTURE;
 }
 
-std::optional<blink::mojom::PermissionsPolicyFeature>
+std::optional<network::mojom::PermissionsPolicyFeature>
 PermissionUtil::GetPermissionsPolicyFeature(ContentSettingsType permission) {
   PermissionType permission_type;
   bool success =
@@ -229,6 +229,26 @@ bool PermissionUtil::IsLowPriorityPermissionRequest(
          request->request_type() == RequestType::kGeolocation;
 }
 
+bool PermissionUtil::ShouldCurrentRequestUsePermissionElementSecondaryUI(
+    PermissionPrompt::Delegate* delegate) {
+  if (!base::FeatureList::IsEnabled(blink::features::kPermissionElement)) {
+    return false;
+  }
+
+  std::vector<raw_ptr<permissions::PermissionRequest, VectorExperimental>>
+      requests = delegate->Requests();
+  return std::ranges::all_of(
+      requests, [](permissions::PermissionRequest* request) {
+        return (request->request_type() ==
+                    permissions::RequestType::kCameraStream ||
+                request->request_type() ==
+                    permissions::RequestType::kGeolocation ||
+                request->request_type() ==
+                    permissions::RequestType::kMicStream) &&
+               request->IsEmbeddedPermissionElementInitiated();
+      });
+}
+
 bool PermissionUtil::IsGuardContentSetting(ContentSettingsType type) {
   switch (type) {
     case ContentSettingsType::USB_GUARD:
@@ -284,7 +304,7 @@ GURL PermissionUtil::GetLastCommittedOriginAsURL(
   return render_frame_host->GetLastCommittedOrigin().GetURL();
 }
 
-ContentSettingsType PermissionUtil::PermissionTypeToContentSettingTypeSafe(
+ContentSettingsType PermissionUtil::PermissionTypeToContentSettingsTypeSafe(
     PermissionType permission) {
   switch (permission) {
     case PermissionType::MIDI:
@@ -371,17 +391,17 @@ ContentSettingsType PermissionUtil::PermissionTypeToContentSettingTypeSafe(
   return ContentSettingsType::DEFAULT;
 }
 
-ContentSettingsType PermissionUtil::PermissionTypeToContentSettingType(
+ContentSettingsType PermissionUtil::PermissionTypeToContentSettingsType(
     PermissionType permission) {
   ContentSettingsType content_setting =
-      PermissionTypeToContentSettingTypeSafe(permission);
+      PermissionTypeToContentSettingsTypeSafe(permission);
   DCHECK_NE(content_setting, ContentSettingsType::DEFAULT)
       << "Unknown content setting for permission "
       << static_cast<int>(permission);
   return content_setting;
 }
 
-PermissionType PermissionUtil::ContentSettingTypeToPermissionType(
+PermissionType PermissionUtil::ContentSettingsTypeToPermissionType(
     ContentSettingsType permission) {
   PermissionType permission_type;
   bool success =
@@ -402,9 +422,6 @@ ContentSetting PermissionUtil::PermissionStatusToContentSetting(
     default:
       return CONTENT_SETTING_BLOCK;
   }
-
-  NOTREACHED_IN_MIGRATION();
-  return CONTENT_SETTING_DEFAULT;
 }
 
 blink::mojom::PermissionStatus PermissionUtil::ContentSettingToPermissionStatus(
@@ -423,8 +440,7 @@ blink::mojom::PermissionStatus PermissionUtil::ContentSettingToPermissionStatus(
       break;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return blink::mojom::PermissionStatus::DENIED;
+  NOTREACHED();
 }
 
 bool PermissionUtil::IsPermissionBlockedInPartition(
@@ -501,7 +517,7 @@ bool PermissionUtil::CanPermissionRequestIgnoreStatus(
       return true;
   }
 
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 // static

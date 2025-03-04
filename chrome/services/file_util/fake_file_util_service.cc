@@ -10,7 +10,7 @@ FakeFileUtilService::FakeFileUtilService(
 
 FakeFileUtilService::~FakeFileUtilService() = default;
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
+#if BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION) && !BUILDFLAG(IS_ANDROID)
 MockSafeArchiveAnalyzer& FakeFileUtilService::GetSafeArchiveAnalyzer() {
   return safe_archive_analyzer_;
 }
@@ -19,11 +19,11 @@ MockSafeArchiveAnalyzer& FakeFileUtilService::GetSafeArchiveAnalyzer() {
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 void FakeFileUtilService::BindZipFileCreator(
     mojo::PendingReceiver<chrome::mojom::ZipFileCreator> receiver) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 #endif
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
+#if BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION) && !BUILDFLAG(IS_ANDROID)
 void FakeFileUtilService::BindSafeArchiveAnalyzer(
     mojo::PendingReceiver<chrome::mojom::SafeArchiveAnalyzer> receiver) {
   safe_archive_analyzer_.Bind(std::move(receiver));
@@ -33,16 +33,16 @@ void FakeFileUtilService::BindSafeArchiveAnalyzer(
 #if BUILDFLAG(ENABLE_EXTRACTORS)
 void FakeFileUtilService::BindSingleFileTarXzFileExtractor(
     mojo::PendingReceiver<chrome::mojom::SingleFileExtractor> receiver) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 void FakeFileUtilService::BindSingleFileTarFileExtractor(
     mojo::PendingReceiver<chrome::mojom::SingleFileExtractor> receiver) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 #endif
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
+#if BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION) && !BUILDFLAG(IS_ANDROID)
 MockSafeArchiveAnalyzer::MockSafeArchiveAnalyzer() = default;
 MockSafeArchiveAnalyzer::~MockSafeArchiveAnalyzer() = default;
 void MockSafeArchiveAnalyzer::Bind(

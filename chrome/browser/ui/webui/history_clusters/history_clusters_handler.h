@@ -35,6 +35,10 @@ namespace content {
 class WebContents;
 }  // namespace content
 
+namespace ui {
+class SimpleMenuModel;
+}  // namespace ui
+
 namespace history_clusters {
 
 class QueryClustersState;
@@ -85,6 +89,11 @@ class HistoryClustersHandler : public mojom::PageHandler,
 
   void SetSidePanelUIEmbedder(
       base::WeakPtr<TopChromeWebUIController::Embedder> side_panel_embedder);
+
+  using ContextInterface =
+      absl::variant<BrowserWindowInterface*, tabs::TabInterface*>;
+  void SetContextInterface(ContextInterface interface);
+
   // Used to set the in-page query from the browser.
   void SetQuery(const std::string& query);
 
@@ -109,7 +118,7 @@ class HistoryClustersHandler : public mojom::PageHandler,
                   HideVisitsCallback callback) override;
   void OpenVisitUrlsInTabGroup(
       std::vector<mojom::URLVisitPtr> visits,
-      const std::optional<std::string>& tab_group_name = std::nullopt) override;
+      const std::optional<std::string>& tab_group_name) override;
   void RecordVisitAction(mojom::VisitAction visit_action,
                          uint32_t visit_index,
                          mojom::VisitType visit_type) override;
@@ -131,6 +140,11 @@ class HistoryClustersHandler : public mojom::PageHandler,
   void HistoryDeleted() override;
   Profile* GetProfile() override;
 
+  std::unique_ptr<ui::SimpleMenuModel>
+  CreateHistoryClustersSidePanelContextMenuForTesting(
+      ContextInterface interface,
+      GURL url);
+
  private:
   // Common initialization code shared by constructors.
   void CommonInit();
@@ -149,7 +163,7 @@ class HistoryClustersHandler : public mojom::PageHandler,
   raw_ptr<Profile> profile_;
   raw_ptr<content::WebContents> web_contents_;
 
-  absl::variant<BrowserWindowInterface*, tabs::TabInterface*> interface_;
+  ContextInterface interface_;
 
   // Used to observe the service.
   base::ScopedObservation<HistoryClustersService,

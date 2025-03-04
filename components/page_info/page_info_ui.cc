@@ -16,7 +16,6 @@
 #include "base/feature_list.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "components/content_settings/core/common/content_settings.h"
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "components/page_info/core/features.h"
@@ -229,7 +228,7 @@ base::span<const PageInfoUI::PermissionUIInfo> GetContentSettingsUIInfo() {
        IDS_SITE_SETTINGS_TYPE_AUTO_PICTURE_IN_PICTURE,
        IDS_SITE_SETTINGS_TYPE_AUTO_PICTURE_IN_PICTURE_MID_SENTENCE},
       {ContentSettingsType::CAPTURED_SURFACE_CONTROL,
-       IDS_SITE_SETTINGS_TYPE_CAPTURED_SURFACE_CONTROL,
+       IDS_SITE_SETTINGS_TYPE_CAPTURED_SURFACE_CONTROL_SHARED_TABS,
        IDS_SITE_SETTINGS_TYPE_CAPTURED_SURFACE_CONTROL_MID_SENTENCE},
       {ContentSettingsType::KEYBOARD_LOCK, IDS_SITE_SETTINGS_TYPE_KEYBOARD_LOCK,
        IDS_SITE_SETTINGS_TYPE_KEYBOARD_LOCK_MID_SENTENCE},
@@ -291,7 +290,7 @@ CreateSecurityDescriptionForSafetyTip(
   return security_description;
 }
 
-// Gets the actual setting for a ContentSettingType, taking into account what
+// Gets the actual setting for a ContentSettingsType, taking into account what
 // the default setting value is and whether Html5ByDefault is enabled.
 ContentSetting GetEffectiveSetting(ContentSettingsType type,
                                    ContentSetting setting,
@@ -417,7 +416,7 @@ std::u16string GetPermissionAskStateString(ContentSettingsType type) {
       break;
 #endif
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   if (message_id == kInvalidResourceID)
@@ -493,9 +492,9 @@ PageInfoUI::GetSecurityDescription(const IdentityInfo& identity_info) const {
           SecurityDescriptionType::SAFE_BROWSING);
       security_description->details = identity_info.safe_browsing_details;
       return security_description;
+#else
+      NOTREACHED();
 #endif
-      NOTREACHED_IN_MIGRATION();
-      break;
     }
     case PageInfo::SAFE_BROWSING_STATUS_SIGNED_IN_SYNC_PASSWORD_REUSE:
     case PageInfo::SAFE_BROWSING_STATUS_SIGNED_IN_NON_SYNC_PASSWORD_REUSE:
@@ -506,9 +505,9 @@ PageInfoUI::GetSecurityDescription(const IdentityInfo& identity_info) const {
           SecurityDescriptionType::SAFE_BROWSING);
       security_description->details = identity_info.safe_browsing_details;
       return security_description;
+#else
+      NOTREACHED();
 #endif
-      NOTREACHED_IN_MIGRATION();
-      break;
     }
     case PageInfo::SAFE_BROWSING_STATUS_BILLING:
       return CreateSecurityDescription(SecuritySummaryColor::RED,
@@ -578,8 +577,7 @@ PageInfoUI::GetSecurityDescription(const IdentityInfo& identity_info) const {
     case PageInfo::SITE_IDENTITY_STATUS_INTERNAL_PAGE:
       // Internal pages on desktop have their own UI implementations which
       // should never call this function.
-      NOTREACHED_IN_MIGRATION();
-      [[fallthrough]];
+      NOTREACHED();
     case PageInfo::SITE_IDENTITY_STATUS_EV_CERT:
     case PageInfo::SITE_IDENTITY_STATUS_CERT:
     case PageInfo::SITE_IDENTITY_STATUS_ADMIN_PROVIDED_CERT:
@@ -634,8 +632,7 @@ std::u16string PageInfoUI::PermissionTypeToUIString(ContentSettingsType type) {
     if (info.type == type)
       return l10n_util::GetStringUTF16(info.string_id);
   }
-  NOTREACHED_IN_MIGRATION();
-  return std::u16string();
+  NOTREACHED();
 }
 
 // static
@@ -645,8 +642,7 @@ std::u16string PageInfoUI::PermissionTypeToUIStringMidSentence(
     if (info.type == type)
       return l10n_util::GetStringUTF16(info.string_id_mid_sentence);
   }
-  NOTREACHED_IN_MIGRATION();
-  return std::u16string();
+  NOTREACHED();
 }
 
 // static
@@ -729,8 +725,7 @@ std::u16string PageInfoUI::PermissionActionToUIString(
     case SettingSource::kAllowList:
     case SettingSource::kNone:
     default:
-      NOTREACHED_IN_MIGRATION();
-      return std::u16string();
+      NOTREACHED();
   }
   int button_text_id = button_text_ids[effective_setting];
 
@@ -796,7 +791,7 @@ std::u16string PageInfoUI::PermissionStateToUIString(
     case CONTENT_SETTING_ASK:
       return GetPermissionAskStateString(permission.type);
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   return l10n_util::GetStringUTF16(message_id);
@@ -873,7 +868,7 @@ std::u16string PageInfoUI::PermissionAutoBlockedToUIString(
         PermissionStatus::ASK, content::PermissionStatusSource::UNSPECIFIED);
     if (permissions::PermissionUtil::IsPermission(permission.type)) {
       blink::PermissionType permission_type =
-          permissions::PermissionUtil::ContentSettingTypeToPermissionType(
+          permissions::PermissionUtil::ContentSettingsTypeToPermissionType(
               permission.type);
       permission_result = delegate->GetPermissionResult(permission_type);
     } else if (permission.type == ContentSettingsType::FEDERATED_IDENTITY_API) {
@@ -936,8 +931,7 @@ void PageInfoUI::ToggleBetweenAllowAndBlock(
       permission.setting = CONTENT_SETTING_BLOCK;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 
@@ -975,8 +969,7 @@ void PageInfoUI::ToggleBetweenRememberAndForget(
       }
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 

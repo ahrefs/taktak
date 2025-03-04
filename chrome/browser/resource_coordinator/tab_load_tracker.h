@@ -129,6 +129,7 @@ class TabLoadTracker {
   // a call to StopTracking(), RenderProcessGone() or OnPageStoppedLoading().
   void PrimaryPageChanged(content::WebContents* web_contents);
   void DidStopLoading(content::WebContents* web_contents);
+  void WasDiscarded(content::WebContents* web_contents);
   void RenderProcessGone(content::WebContents* web_contents,
                          base::TerminationStatus status);
 
@@ -150,6 +151,10 @@ class TabLoadTracker {
   // Helper function for determining the current state of a |web_contents|.
   LoadingState DetermineLoadingState(content::WebContents* web_contents);
 
+  // Transitions a web contents to the unloaded state, if not already in that
+  // state.
+  void TransitionToUnloaded(content::WebContents* web_contents);
+
   // Transitions a web contents to the given state. This updates the various
   // |state_counts_| and |tabs_| data. Setting |validate_transition| to false
   // means that valid state machine transitions aren't enforced via checks; this
@@ -160,7 +165,7 @@ class TabLoadTracker {
   TabMap tabs_;
 
   // The counts of tabs in each state.
-  size_t state_counts_[static_cast<size_t>(LoadingState::kMaxValue) + 1] = {0};
+  size_t state_counts_[static_cast<size_t>(LoadingState::kMaxValue) + 1] = {};
 
   base::ObserverList<Observer>::UncheckedAndDanglingUntriaged observers_;
 

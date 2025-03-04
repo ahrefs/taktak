@@ -45,8 +45,6 @@ import org.chromium.base.test.util.Criteria;
 import org.chromium.base.test.util.CriteriaHelper;
 import org.chromium.base.test.util.DisabledTest;
 import org.chromium.base.test.util.DoNotBatch;
-import org.chromium.base.test.util.Features.DisableFeatures;
-import org.chromium.base.test.util.Features.EnableFeatures;
 import org.chromium.base.test.util.Restriction;
 import org.chromium.chrome.browser.ChromeTabbedActivity;
 import org.chromium.chrome.browser.app.ChromeActivity;
@@ -339,7 +337,8 @@ public class LocationBarTest {
     @MediumTest
     public void testEditingText() {
         testEditingText(
-                /* expectRetainOmniboxOnFocus= */ OmniboxFeatures.shouldRetainOmniboxOnFocus());
+                /* expectRetainOmniboxOnFocus= */ ThreadUtils.runOnUiThreadBlocking(
+                        OmniboxFeatures::shouldRetainOmniboxOnFocus));
     }
 
     @Test
@@ -637,7 +636,8 @@ public class LocationBarTest {
     @Restriction(DeviceFormFactor.TABLET)
     public void testFocusLogic_buttonVisibilityTablet() {
         testFocusLogic_buttonVisibilityTablet(
-                /* expectRetainOmniboxOnFocus= */ OmniboxFeatures.shouldRetainOmniboxOnFocus());
+                /* expectRetainOmniboxOnFocus= */ ThreadUtils.runOnUiThreadBlocking(
+                        OmniboxFeatures::shouldRetainOmniboxOnFocus));
     }
 
     @Test
@@ -680,8 +680,15 @@ public class LocationBarTest {
                 .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
         onView(withId(R.id.bookmark_button))
                 .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)));
-        onView(withId(R.id.save_offline_button))
-                .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)));
+
+        // TODO(crbug.com/393394998): Remove all instances of this view after launching the feature.
+        if (ChromeFeatureList.sHideTabletToolbarDownloadButton.isEnabled()) {
+            onView(withId(R.id.save_offline_button))
+                    .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
+        } else {
+            onView(withId(R.id.save_offline_button))
+                    .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)));
+        }
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
@@ -737,23 +744,8 @@ public class LocationBarTest {
     /** Test that back press should make the omnibox unfocused. */
     @Test
     @MediumTest
-    @DisableFeatures(ChromeFeatureList.BACK_GESTURE_REFACTOR)
     @Restriction(DeviceFormFactor.PHONE)
     public void testFocusLogic_backPress() {
-        startActivityNormally();
-
-        mOmnibox.requestFocus();
-        mOmnibox.checkFocus(true);
-        ThreadUtils.runOnUiThreadBlocking(() -> mLocationBarMediator.backKeyPressed());
-        mOmnibox.checkFocus(false);
-    }
-
-    /** Same with {@link #testFocusLogic_backPress()}, but with predictive back gesture enabled. */
-    @Test
-    @MediumTest
-    @EnableFeatures(ChromeFeatureList.BACK_GESTURE_REFACTOR)
-    @Restriction(DeviceFormFactor.PHONE)
-    public void testFocusLogic_backPress_Refactored() {
         startActivityNormally();
 
         mOmnibox.requestFocus();

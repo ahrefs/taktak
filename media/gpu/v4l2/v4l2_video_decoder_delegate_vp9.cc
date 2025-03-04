@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/40285824): Remove this and spanify to fix the errors.
+#pragma allow_unsafe_buffers
+#endif
+
 #include "media/gpu/v4l2/v4l2_video_decoder_delegate_vp9.h"
 
 #include <linux/v4l2-controls.h>
@@ -272,7 +277,7 @@ DecodeStatus V4L2VideoDecoderDelegateVP9::SubmitDecode(
           v4l2_frame_params.alt_frame_ts = ref_surface->GetReferenceID();
           break;
         default:
-          NOTREACHED_IN_MIGRATION() << "Invalid reference frame index";
+          NOTREACHED() << "Invalid reference frame index";
       }
     }
   }

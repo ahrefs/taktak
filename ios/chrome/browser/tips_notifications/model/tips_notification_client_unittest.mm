@@ -124,8 +124,8 @@ class TipsNotificationClientTest : public PlatformTest {
 
   // Returns a mock UNNotification for the given notification `type`.
   id MockNotification(TipsNotificationType type) {
-    UNNotificationRequest* request =
-        TipsNotificationRequest(type, TipsNotificationUserType::kUnknown);
+    UNNotificationRequest* request = TipsNotificationRequest(
+        type, false, TipsNotificationUserType::kUnknown);
     id mock_notification = OCMClassMock([UNNotification class]);
     OCMStub([mock_notification request]).andReturn(request);
     return mock_notification;
@@ -329,7 +329,7 @@ TEST_F(TipsNotificationClientTest, DefaultBrowserHandle) {
 TEST_F(TipsNotificationClientTest, WhatsNewRequest) {
   WriteFirstRunSentinel();
   SetTrueChromeLikelyDefaultBrowser();
-  SetSentNotifications({TipsNotificationType::kSetUpListContinuation});
+  SetSentNotifications({TipsNotificationType::kEnhancedSafeBrowsing});
 
   StubGetPendingRequests(nil);
   ExpectNotificationRequest(TipsNotificationType::kWhatsNew);
@@ -361,6 +361,10 @@ TEST_F(TipsNotificationClientTest, WhatsNewHandle) {
 TEST_F(TipsNotificationClientTest, SetUpListContinuationRequest) {
   WriteFirstRunSentinel();
   StubGetPendingRequests(nil);
+  SetSentNotifications({TipsNotificationType::kEnhancedSafeBrowsing,
+                        TipsNotificationType::kWhatsNew,
+                        TipsNotificationType::kLens,
+                        TipsNotificationType::kOmniboxPosition});
   ExpectNotificationRequest(TipsNotificationType::kSetUpListContinuation);
 
   base::RunLoop run_loop;
@@ -392,11 +396,11 @@ TEST_F(TipsNotificationClientTest, SetUpListContinuationHandle) {
 // Tests that the client can register a Docking promo notification.
 TEST_F(TipsNotificationClientTest, DockingRequest) {
   WriteFirstRunSentinel();
-  SetSentNotifications({TipsNotificationType::kSetUpListContinuation,
+  SetSentNotifications({TipsNotificationType::kEnhancedSafeBrowsing,
                         TipsNotificationType::kWhatsNew,
                         TipsNotificationType::kLens,
                         TipsNotificationType::kOmniboxPosition,
-                        TipsNotificationType::kEnhancedSafeBrowsing,
+                        TipsNotificationType::kSetUpListContinuation,
                         TipsNotificationType::kDefaultBrowser});
   StubGetPendingRequests(nil);
   ExpectNotificationRequest(TipsNotificationType::kDocking);
@@ -414,7 +418,8 @@ TEST_F(TipsNotificationClientTest, DockingRequest) {
 TEST_F(TipsNotificationClientTest, DockingHandle) {
   StubPrepareToPresentModal();
   id mock_handler = MockHandler(@protocol(DockingPromoCommands));
-  OCMExpect([mock_handler showDockingPromo:YES]);
+  OCMExpect([mock_handler
+      showDockingPromoWithTrigger:DockingPromoTrigger::kTipsModule]);
 
   id mock_response = MockRequestResponse(TipsNotificationType::kDocking);
   client_->HandleNotificationInteraction(mock_response);
@@ -432,9 +437,9 @@ TEST_F(TipsNotificationClientTest, OmniboxPositionRequest) {
   }
 
   WriteFirstRunSentinel();
-  SetSentNotifications({TipsNotificationType::kSetUpListContinuation,
-                        TipsNotificationType::kLens,
-                        TipsNotificationType::kWhatsNew});
+  SetSentNotifications({TipsNotificationType::kEnhancedSafeBrowsing,
+                        TipsNotificationType::kWhatsNew,
+                        TipsNotificationType::kLens});
   StubGetPendingRequests(nil);
   ExpectNotificationRequest(TipsNotificationType::kOmniboxPosition);
 
@@ -473,12 +478,6 @@ TEST_F(TipsNotificationClientTest, OmniboxPositionHandle) {
 // notification.
 TEST_F(TipsNotificationClientTest, EnhancedSafeBrowsingRequest) {
   WriteFirstRunSentinel();
-  SetSentNotifications({
-      TipsNotificationType::kLens,
-      TipsNotificationType::kWhatsNew,
-      TipsNotificationType::kSetUpListContinuation,
-      TipsNotificationType::kOmniboxPosition,
-  });
   StubGetPendingRequests(nil);
   ExpectNotificationRequest(TipsNotificationType::kEnhancedSafeBrowsing);
 
@@ -502,15 +501,9 @@ TEST_F(TipsNotificationClientTest,
   SetFalseChromeLikelyDefaultBrowser();
   ClearDefaultBrowserPromoLastAction();
   WriteFirstRunSentinel();
-  SetSentNotifications({
-      TipsNotificationType::kLens,
-      TipsNotificationType::kWhatsNew,
-      TipsNotificationType::kSetUpListContinuation,
-      TipsNotificationType::kOmniboxPosition,
-  });
   StubGetPendingRequests(nil);
   // Expect to skip over ESB and send the next notification.
-  ExpectNotificationRequest(TipsNotificationType::kDefaultBrowser);
+  ExpectNotificationRequest(TipsNotificationType::kWhatsNew);
 
   base::RunLoop run_loop;
   client_->OnSceneActiveForegroundBrowserReady(run_loop.QuitClosure());
@@ -554,18 +547,11 @@ TEST_F(TipsNotificationClientTest, LensHandle) {
 TEST_F(TipsNotificationClientTest, ClassifyUserActiveSeeker) {
   base::ScopedMockClockOverride clock;
   WriteFirstRunSentinel();
-  SetSentNotifications({
-      TipsNotificationType::kWhatsNew,
-      TipsNotificationType::kOmniboxPosition,
-      TipsNotificationType::kDefaultBrowser,
-      TipsNotificationType::kDocking,
-      TipsNotificationType::kSignin,
-  });
   StubPrepareToPresentModal();
   EXPECT_EQ(GetUserType(), TipsNotificationUserType::kUnknown);
 
   StubGetPendingRequests(nil);
-  ExpectNotificationRequest(TipsNotificationType::kSetUpListContinuation);
+  ExpectNotificationRequest(TipsNotificationType::kEnhancedSafeBrowsing);
   base::RunLoop run_loop;
   client_->OnSceneActiveForegroundBrowserReady(run_loop.QuitClosure());
   run_loop.Run();
@@ -584,19 +570,12 @@ TEST_F(TipsNotificationClientTest, ClassifyUserActiveSeeker) {
 TEST_F(TipsNotificationClientTest, ClassifyUserLessEngaged) {
   base::ScopedMockClockOverride clock;
   WriteFirstRunSentinel();
-  SetSentNotifications({
-      TipsNotificationType::kWhatsNew,
-      TipsNotificationType::kOmniboxPosition,
-      TipsNotificationType::kDefaultBrowser,
-      TipsNotificationType::kDocking,
-      TipsNotificationType::kSignin,
-  });
   StubPrepareToPresentModal();
 
   EXPECT_EQ(GetUserType(), TipsNotificationUserType::kUnknown);
 
   StubGetPendingRequests(nil);
-  ExpectNotificationRequest(TipsNotificationType::kSetUpListContinuation);
+  ExpectNotificationRequest(TipsNotificationType::kEnhancedSafeBrowsing);
   base::RunLoop run_loop;
   client_->OnSceneActiveForegroundBrowserReady(run_loop.QuitClosure());
   run_loop.Run();
@@ -610,14 +589,15 @@ TEST_F(TipsNotificationClientTest, ClassifyUserLessEngaged) {
 // Tests that the correct trigger time is used, depending on the user's
 // classification.
 TEST_F(TipsNotificationClientTest, TestTriggerTimeDeltas) {
-  EXPECT_EQ(TipsNotificationTriggerDelta(TipsNotificationUserType::kUnknown),
-            base::Days(3));
   EXPECT_EQ(
-      TipsNotificationTriggerDelta(TipsNotificationUserType::kLessEngaged),
-      base::Days(21));
-  EXPECT_EQ(
-      TipsNotificationTriggerDelta(TipsNotificationUserType::kActiveSeeker),
-      base::Days(7));
+      TipsNotificationTriggerDelta(false, TipsNotificationUserType::kUnknown),
+      base::Days(3));
+  EXPECT_EQ(TipsNotificationTriggerDelta(
+                false, TipsNotificationUserType::kLessEngaged),
+            base::Days(21));
+  EXPECT_EQ(TipsNotificationTriggerDelta(
+                false, TipsNotificationUserType::kActiveSeeker),
+            base::Days(7));
 
   // Verify that the feature params can set the trigger delta.
   base::test::ScopedFeatureList feature_list;
@@ -628,14 +608,26 @@ TEST_F(TipsNotificationClientTest, TestTriggerTimeDeltas) {
           {kIOSTipsNotificationsLessEngagedTriggerTimeParam, "2d"},
           {kIOSTipsNotificationsActiveSeekerTriggerTimeParam, "3d"},
       });
-  EXPECT_EQ(TipsNotificationTriggerDelta(TipsNotificationUserType::kUnknown),
-            base::Days(1));
   EXPECT_EQ(
-      TipsNotificationTriggerDelta(TipsNotificationUserType::kLessEngaged),
-      base::Days(2));
+      TipsNotificationTriggerDelta(false, TipsNotificationUserType::kUnknown),
+      base::Days(1));
+  EXPECT_EQ(TipsNotificationTriggerDelta(
+                false, TipsNotificationUserType::kLessEngaged),
+            base::Days(2));
+  EXPECT_EQ(TipsNotificationTriggerDelta(
+                false, TipsNotificationUserType::kActiveSeeker),
+            base::Days(3));
+
+  // Verify that the Reactivation feature param can set the trigger delta.
+  feature_list.Reset();
+  feature_list.InitAndEnableFeatureWithParameters(
+      kIOSReactivationNotifications,
+      {
+          {kIOSReactivationNotificationsTriggerTimeParam, "30s"},
+      });
   EXPECT_EQ(
-      TipsNotificationTriggerDelta(TipsNotificationUserType::kActiveSeeker),
-      base::Days(3));
+      TipsNotificationTriggerDelta(true, TipsNotificationUserType::kUnknown),
+      base::Seconds(30));
 }
 
 // Tests that the order of notification types changes correctly when the feature
@@ -647,7 +639,7 @@ TEST_F(TipsNotificationClientTest, TestOrderParam) {
       kIOSTipsNotifications, {
                                  {kIOSTipsNotificationsOrderParam, "1"},
                              });
-  std::vector<TipsNotificationType> order = TipsNotificationsTypesOrder();
+  std::vector<TipsNotificationType> order = TipsNotificationsTypesOrder(false);
   EXPECT_EQ(order[0], TipsNotificationType::kSetUpListContinuation);
   EXPECT_EQ(order[1], TipsNotificationType::kWhatsNew);
 
@@ -657,7 +649,7 @@ TEST_F(TipsNotificationClientTest, TestOrderParam) {
       kIOSTipsNotifications, {
                                  {kIOSTipsNotificationsOrderParam, "2"},
                              });
-  order = TipsNotificationsTypesOrder();
+  order = TipsNotificationsTypesOrder(false);
   EXPECT_EQ(order[0], TipsNotificationType::kLens);
   EXPECT_EQ(order[1], TipsNotificationType::kWhatsNew);
 
@@ -667,7 +659,7 @@ TEST_F(TipsNotificationClientTest, TestOrderParam) {
       kIOSTipsNotifications, {
                                  {kIOSTipsNotificationsOrderParam, "3"},
                              });
-  order = TipsNotificationsTypesOrder();
+  order = TipsNotificationsTypesOrder(false);
   EXPECT_EQ(order[0], TipsNotificationType::kEnhancedSafeBrowsing);
   EXPECT_EQ(order[1], TipsNotificationType::kWhatsNew);
 
@@ -677,8 +669,15 @@ TEST_F(TipsNotificationClientTest, TestOrderParam) {
       kIOSTipsNotifications, {
                                  {kIOSTipsNotificationsOrderParam, "4"},
                              });
-  order = TipsNotificationsTypesOrder();
+  order = TipsNotificationsTypesOrder(false);
   EXPECT_EQ(order[0], TipsNotificationType::kLens);
   EXPECT_EQ(order[1], TipsNotificationType::kOmniboxPosition);
+  EXPECT_EQ(order[2], TipsNotificationType::kEnhancedSafeBrowsing);
+
+  // Test Reactivation notifications order.
+  order = TipsNotificationsTypesOrder(true);
+  EXPECT_EQ(order.size(), 3u);
+  EXPECT_EQ(order[0], TipsNotificationType::kLens);
+  EXPECT_EQ(order[1], TipsNotificationType::kWhatsNew);
   EXPECT_EQ(order[2], TipsNotificationType::kEnhancedSafeBrowsing);
 }

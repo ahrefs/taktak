@@ -17,43 +17,49 @@
 namespace ash {
 namespace {
 
-const gfx::VectorIcon& GetVectorIconForPickerCategory(PickerCategory category) {
+const gfx::VectorIcon& GetVectorIconForQuickInsertCategory(
+    QuickInsertCategory category) {
   switch (category) {
-    case PickerCategory::kEditorWrite:
+    case QuickInsertCategory::kEditorWrite:
       // TODO: b/322926823 - Use correct icons.
       return kPencilIcon;
-    case PickerCategory::kEditorRewrite:
+    case QuickInsertCategory::kEditorRewrite:
       // TODO: b/322926823 - Use correct icons.
       return kPencilIcon;
-    case PickerCategory::kLobster:
+    case QuickInsertCategory::kLobsterWithNoSelectedText:
+    case QuickInsertCategory::kLobsterWithSelectedText:
 #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
       return kLobsterIcon;
 #else
       return kPencilIcon;
 #endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING)
-    case PickerCategory::kEmojisGifs:
-    case PickerCategory::kEmojis:
-      return kPickerEmojiIcon;
-    case PickerCategory::kLinks:
-      return kPickerBrowsingHistoryIcon;
-    case PickerCategory::kClipboard:
-      return kPickerClipboardIcon;
-    case PickerCategory::kDriveFiles:
-      return kPickerDriveFilesIcon;
-    case PickerCategory::kLocalFiles:
+    case QuickInsertCategory::kEmojisGifs:
+    case QuickInsertCategory::kEmojis:
+      return kQuickInsertEmojiIcon;
+    case QuickInsertCategory::kGifs:
+      // GIFs category has no icon.
+      NOTREACHED();
+    case QuickInsertCategory::kLinks:
+      return kQuickInsertBrowsingHistoryIcon;
+    case QuickInsertCategory::kClipboard:
+      return kQuickInsertClipboardIcon;
+    case QuickInsertCategory::kDriveFiles:
+      return kQuickInsertDriveFilesIcon;
+    case QuickInsertCategory::kLocalFiles:
       return kFilesAppIcon;
-    case PickerCategory::kDatesTimes:
-      return kPickerCalendarIcon;
-    case PickerCategory::kUnitsMaths:
-      return kPickerUnitsMathsIcon;
+    case QuickInsertCategory::kDatesTimes:
+      return kQuickInsertCalendarIcon;
+    case QuickInsertCategory::kUnitsMaths:
+      return kQuickInsertUnitsMathsIcon;
   }
 }
 
 }  // namespace
 
-ui::ImageModel GetIconForPickerCategory(PickerCategory category) {
+ui::ImageModel GetIconForQuickInsertCategory(QuickInsertCategory category) {
   return ui::ImageModel::FromVectorIcon(
-      GetVectorIconForPickerCategory(category), cros_tokens::kCrosSysOnSurface);
+      GetVectorIconForQuickInsertCategory(category),
+      cros_tokens::kCrosSysOnSurface);
 }
 
 }  // namespace ash

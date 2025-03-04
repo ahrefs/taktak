@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,17 +30,17 @@ import org.mockito.junit.MockitoRule;
 import org.chromium.base.Token;
 import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.base.test.BaseRobolectricTestRunner;
+import org.chromium.chrome.browser.collaboration.messaging.MessagingBackendServiceFactory;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.tab.Tab;
-import org.chromium.chrome.browser.tab_group_sync.messaging.MessagingBackendServiceFactory;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
+import org.chromium.components.collaboration.messaging.MessageAttribution;
+import org.chromium.components.collaboration.messaging.MessagingBackendService;
+import org.chromium.components.collaboration.messaging.MessagingBackendService.PersistentMessageObserver;
+import org.chromium.components.collaboration.messaging.PersistentMessage;
+import org.chromium.components.collaboration.messaging.PersistentNotificationType;
+import org.chromium.components.collaboration.messaging.TabGroupMessageMetadata;
 import org.chromium.components.tab_group_sync.LocalTabGroupId;
-import org.chromium.components.tab_group_sync.messaging.MessageAttribution;
-import org.chromium.components.tab_group_sync.messaging.MessagingBackendService;
-import org.chromium.components.tab_group_sync.messaging.MessagingBackendService.PersistentMessageObserver;
-import org.chromium.components.tab_group_sync.messaging.PersistentMessage;
-import org.chromium.components.tab_group_sync.messaging.PersistentNotificationType;
-import org.chromium.components.tab_group_sync.messaging.TabGroupMessageMetadata;
 
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,8 @@ public class TabGroupLabellerUnitTest {
     @Rule public final MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     private static final Token GROUP_ID1 = new Token(1L, 11L);
+    private static final int ROOT_ID1 = 0;
+    private static final int TAB_ID0 = 0;
     private static final int TAB_ID1 = 1;
 
     @Mock private Profile mProfile;
@@ -71,7 +74,8 @@ public class TabGroupLabellerUnitTest {
         MessagingBackendServiceFactory.setForTesting(mMessagingBackendService);
         mContext = ApplicationProvider.getApplicationContext();
         mTabGroupModelFilterSupplier.set(mTabGroupModelFilter);
-        when(mTabGroupModelFilter.getRootIdFromStableId(GROUP_ID1)).thenReturn(TAB_ID1);
+        when(mTabGroupModelFilter.getRootIdFromTabGroupId(GROUP_ID1)).thenReturn(ROOT_ID1);
+        when(mTabGroupModelFilter.getGroupLastShownTabId(ROOT_ID1)).thenReturn(TAB_ID1);
         mTabGroupLabeller =
                 new TabGroupLabeller(
                         mProfile, mTabListNotificationHandler, mTabGroupModelFilterSupplier);
@@ -122,7 +126,8 @@ public class TabGroupLabellerUnitTest {
 
     @Test
     public void testShowAll_WrongTabModel() {
-        when(mTabGroupModelFilter.getRootIdFromStableId(any())).thenReturn(Tab.INVALID_TAB_ID);
+        when(mTabGroupModelFilter.getRootIdFromTabGroupId(any())).thenReturn(Tab.INVALID_TAB_ID);
+        when(mTabGroupModelFilter.getGroupLastShownTabId(anyInt())).thenReturn(Tab.INVALID_TAB_ID);
         List<PersistentMessage> messageList = List.of(makeStandardMessage());
         when(mMessagingBackendService.getMessages(any())).thenReturn(messageList);
 

@@ -1,0 +1,141 @@
+<style include="cr-shared-style settings-shared settings-columned-section">
+  .flex {
+    flex: 1;
+  }
+
+  .item-label {
+    font-size: 11px;
+    line-height: 11px;
+  }
+
+  #entries {
+    margin-block-end: 0;
+    margin-block-start: 0;
+  }
+
+  /* If the user is not eligible for Autofill with Ai, the top section should
+   * look like it is disabled. */
+  :host([ineligible-user]) #topSection {
+    opacity: 50%;
+  }
+</style>
+<div id="topSection">
+   <!-- 'label=" "'' is intentional here to avoid dropping the sub-label. -->
+   <!-- Disabled: If the user is not eligible for Autofill with Ai, the user
+        should not be able to switch this toggle. This toggle is used for opting
+        in and out of Autofill with Ai. -->
+   <settings-toggle-button
+       id="prefToggle" disabled$="[[ineligibleUser]]"
+       no-extension-indicator label=" "
+       sub-label-with-link="$i18n{autofillAiToggleSubLabel}"
+       on-sub-label-link-clicked="onToggleSubLabelLinkClick_"
+       pref="{{prefs.autofill.prediction_improvements.enabled}}">
+   </settings-toggle-button>
+   <div class="settings-columned-section">
+     <div class="column">
+       <h3 class="description-header">$i18n{columnHeadingWhenOn}</h3>
+       <ul class="icon-bulleted-list">
+         <li>
+           <cr-icon icon="settings20:sync-saved-locally"></cr-icon>
+           <div class="cr-secondary-text">
+             $i18n{autofillAiWhenOnSavedInfo}
+           </div>
+         </li>
+         <li>
+           <cr-icon icon="settings20:text-analysis"></cr-icon>
+           <div class="cr-secondary-text">
+             $i18n{autofillAiUseToFill}
+           </div>
+         </li>
+       </ul>
+     </div>
+     <div class="column">
+       <h3 class="description-header">
+         $i18n{columnHeadingConsider}
+       </h3>
+       <ul class="icon-bulleted-list">
+         <li>
+           <cr-icon icon="settings20:psychiatry"></cr-icon>
+           <div class="cr-secondary-text">
+             $i18n{autofillAiNewFeature}
+           </div>
+         </li>
+         <li>
+           <cr-icon icon="settings20:googleg"></cr-icon>
+           <div class="cr-secondary-text">
+             $i18n{autofillAiToConsiderDataUsage}
+           </div>
+         </li>
+         <li>
+           <cr-icon icon="settings20:file-save"></cr-icon>
+           <div class="cr-secondary-text">
+             $i18n{autofillAiToConsiderDataStorage}
+           </div>
+         </li>
+         <li>
+           <cr-icon icon="settings20:account-box"></cr-icon>
+           <div class="cr-secondary-text">
+             $i18n{autofillAiToConsiderDataImprovement}
+           </div>
+         </li>
+       </ul>
+     </div>
+   </div>
+ </div>
+
+<div id="entriesHeader" class="cr-row">
+  <h2 class="flex">
+    <span id="entriesHeaderTitle">
+      $i18n{autofillAiUserAnnotationsHeader}</span>
+  </h2>
+  <!-- Disabled: If the user is not eligible for Autofill with Ai, the user
+       should not be able to add entities. -->
+  <!-- TODO(crbug.com/393318914): Disable also if the toggle is turned off. -->
+  <cr-button id="addEntity" class="header-aligned-button"
+      disabled$="[[ineligibleUser]]" on-click="onAddEntityClick_">
+    <!-- TODO(crbug.com/393318914): Use settings localized strings provider. -->
+    Add
+  </cr-button>
+</div>
+<ul id="entries" class="list-frame vertical-list">
+  <template is="dom-repeat" items="[[entityInstances_]]">
+    <li class="list-item">
+      <div class="start">
+        [[item.entityLabel]]
+        <div class="cr-secondary-text">[[item.entitySubLabel]]</div>
+      </div>
+      <!-- TODO(crbug.com/393318914): Add title. -->
+      <cr-icon-button id="moreButton" class="icon-more-vert"
+          on-click="onMoreButtonClick_" title="">
+      </cr-icon-button>
+    </li>
+  </template>
+  <li id="entriesNone" class="list-item" hidden="[[entityInstances_.length]]">
+    $i18n{autofillAiUserAnnotationsNone}
+  </li>
+</ul>
+
+<cr-lazy-render id="actionMenu">
+  <template>
+    <cr-action-menu role-description="$i18n{menu}">
+      <button id="menuEditEntity" class="dropdown-item"
+          on-click="onMenuEditEntityClick_">$i18n{edit}</button>
+      <button id="menuRemoveEntity" class="dropdown-item"
+          on-click="onMenuRemoveEntityClick_">$i18n{delete}</button>
+    </cr-action-menu>
+  </template>
+</cr-lazy-render>
+
+<template is="dom-if" if="[[showRemoveEntityDialog_]]" restamp>
+  <!-- TODO(crbug.com/393318914): Confirm the body text string with UX and
+       potentially use settings localized strings provider for the body
+       text. -->
+  <settings-simple-confirmation-dialog id="removeEntityDialog"
+      title-text="$i18n{autofillAiDeleteEntryDialogTitle}"
+      body-text="Autofill will have less info for filling out forms."
+      confirm-text="$i18n{delete}"
+      on-close="onRemoveEntityDialogClose_">
+  </settings-simple-confirmation-dialog>
+</template>
+
+<!-- TODO(crbug.com/393319296): Add dialog for adding and editing entities. -->

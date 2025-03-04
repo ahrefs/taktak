@@ -10,7 +10,6 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/values.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/policy/extension_developer_mode_policy_handler.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
@@ -158,14 +157,13 @@ Availability GetDevToolsAvailability(const PrefService* pref_sevice) {
     // only set by DeveloperToolsPolicyHandler which validates the value range.
     // If it is not set, it will have its default value which is also valid, see
     // |RegisterProfilePrefs|.
-    NOTREACHED_IN_MIGRATION();
-    return Availability::kAllowed;
+    NOTREACHED();
   }
 
   return static_cast<Availability>(value);
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 
 // Returns true if developer tools availability is set by an active policy in
 // |pref_service|.
@@ -281,7 +279,7 @@ DeveloperToolsPolicyHandler::GetEffectiveAvailability(Profile* profile) {
 #endif
 
   Availability availability = GetDevToolsAvailability(profile->GetPrefs());
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // Do not create DevTools if it's disabled for primary profile.
   Profile* primary_profile = ProfileManager::GetPrimaryUserProfile();
   if (primary_profile &&

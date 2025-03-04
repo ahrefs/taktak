@@ -4,6 +4,7 @@
 
 #include "chrome/browser/ui/webui/ash/settings/pages/printing/cups_printers_handler.h"
 
+#include <algorithm>
 #include <optional>
 #include <set>
 #include <utility>
@@ -21,7 +22,6 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/path_service.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "base/task/thread_pool.h"
@@ -89,12 +89,6 @@ void RecordIppQueryResult(const PrinterQueryResult& result) {
   bool reachable = result != PrinterQueryResult::kHostnameResolution &&
                    result != PrinterQueryResult::kUnreachable;
   UMA_HISTOGRAM_BOOLEAN("Printing.CUPS.IppDeviceReachable", reachable);
-
-  if (reachable) {
-    // Only record whether the query was successful if we reach the printer.
-    bool query_success = (result == PrinterQueryResult::kSuccess);
-    UMA_HISTOGRAM_BOOLEAN("Printing.CUPS.IppAttributesSuccess", query_success);
-  }
 }
 
 // Query an IPP printer to check for autoconf support where the printer is
@@ -211,7 +205,7 @@ void SetPpdReference(const Printer::PpdReference& ppd_ref,
   } else if (!ppd_ref.effective_make_and_model.empty()) {
     info->Set("ppdRefEffectiveMakeAndModel", ppd_ref.effective_make_and_model);
   } else {  // Must be autoconf, shouldn't be possible
-    NOTREACHED_IN_MIGRATION() << "Succeeded in PPD matching without emm";
+    NOTREACHED() << "Succeeded in PPD matching without emm";
   }
 }
 
@@ -626,20 +620,17 @@ void CupsPrintersHandler::HandleRemoveCupsPrinter(
 
 void CupsPrintersHandler::HandleGetPrinterInfo(const base::Value::List& args) {
   if (args.empty() || !args[0].is_string()) {
-    NOTREACHED_IN_MIGRATION() << "Expected request for a promise";
-    return;
+    NOTREACHED() << "Expected request for a promise";
   }
   const std::string& callback_id = args[0].GetString();
 
   if (args.size() < 2u) {
-    NOTREACHED_IN_MIGRATION() << "Dictionary missing";
-    return;
+    NOTREACHED() << "Dictionary missing";
   }
 
   const base::Value& printer_value = args[1];
   if (!printer_value.is_dict()) {
-    NOTREACHED_IN_MIGRATION() << "Dictionary missing";
-    return;
+    NOTREACHED() << "Dictionary missing";
   }
   const base::Value::Dict& printer_dict = printer_value.GetDict();
 
@@ -648,8 +639,7 @@ void CupsPrintersHandler::HandleGetPrinterInfo(const base::Value::List& args) {
   const std::string* printer_address =
       printer_dict.FindString("printerAddress");
   if (!printer_address) {
-    NOTREACHED_IN_MIGRATION() << "Address missing";
-    return;
+    NOTREACHED() << "Address missing";
   }
 
   std::string printer_queue;
@@ -664,8 +654,7 @@ void CupsPrintersHandler::HandleGetPrinterInfo(const base::Value::List& args) {
   const std::string* printer_protocol =
       printer_dict.FindString("printerProtocol");
   if (!printer_protocol) {
-    NOTREACHED_IN_MIGRATION() << "Protocol missing";
-    return;
+    NOTREACHED() << "Protocol missing";
   }
 
   DCHECK(*printer_protocol == chromeos::kIppScheme ||
@@ -929,7 +918,7 @@ void CupsPrintersHandler::AddOrReconfigurePrinter(const base::Value::List& args,
   } else {
     // TODO(https://crbug.com/738514): Support PPD guessing for non-autoconf
     // printers. i.e. !autoconf && !manufacturer.empty() && !model.empty()
-    NOTREACHED_IN_MIGRATION()
+    NOTREACHED()
         << "A configuration option must have been selected to add a printer";
   }
 
@@ -1411,9 +1400,8 @@ void CupsPrintersHandler::HandleGetEulaUrl(const base::Value::List& args) {
   const PpdProvider::ResolvedPrintersList& printers_for_manufacturer =
       resolved_printers_it->second;
 
-  auto printer_it =
-      base::ranges::find(printers_for_manufacturer, ppd_model,
-                         &PpdProvider::ResolvedPpdReference::name);
+  auto printer_it = std::ranges::find(printers_for_manufacturer, ppd_model,
+                                      &PpdProvider::ResolvedPpdReference::name);
 
   if (printer_it == printers_for_manufacturer.end()) {
     // Unable to find the PpdReference, resolve promise with empty string.

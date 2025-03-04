@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 
+#include "base/containers/heap_array.h"
 #include "base/files/file_path.h"
 #include "base/path_service.h"
 #include "base/test/mock_callback.h"
@@ -34,60 +35,57 @@ const base::FilePath TestFile(const std::string& file) {
 class ServiceMainTest : public testing::Test {
  protected:
   ServiceMainTest() = default;
-  ~ServiceMainTest() override {
-    SetModuleReleasedCallback({});
-    service_main_.UnregisterClassObjects();
-  }
+  ~ServiceMainTest() override { Service::UnregisterClassObjects(cookies_); }
 
   void SetUp() override {
     ASSERT_TRUE(com_initializer_.Succeeded());
 
-    ASSERT_HRESULT_SUCCEEDED(service_main_.RegisterClassObjects());
+    ASSERT_HRESULT_SUCCEEDED(Service::RegisterClassObjects(
+        service_delegate_, module_released_callback_.Get(), cookies_));
   }
 
-  Service& service_main() { return service_main_; }
+  base::MockCallback<base::OnceClosure>& mock_module_released_callback() {
+    return module_released_callback_;
+  }
 
  private:
   base::win::ScopedCOMInitializer com_initializer_;
+  ::testing::NiceMock<base::MockCallback<base::OnceClosure>>
+      module_released_callback_;
   elevation_service::Delegate service_delegate_;
-  Service service_main_{service_delegate_};
+  base::HeapArray<DWORD> cookies_;
 };
 
 TEST_F(ServiceMainTest, ExitSignalTest) {
-  ::testing::StrictMock<base::MockCallback<base::OnceClosure>>
-      module_released_callback;
-  SetModuleReleasedCallback(module_released_callback.Get());
+  auto& module_released_callback = mock_module_released_callback();
+  ScopedMockContext mock_context;
+  ASSERT_TRUE(mock_context.Succeeded());
 
-  {
-    ScopedMockContext mock_context;
-    ASSERT_TRUE(mock_context.Succeeded());
+  Microsoft::WRL::ComPtr<IUnknown> unknown;
+  ASSERT_HRESULT_SUCCEEDED(
+      ::CoCreateInstance(install_static::GetElevatorClsid(), nullptr,
+                         CLSCTX_LOCAL_SERVER, IID_PPV_ARGS(&unknown)));
 
-    Microsoft::WRL::ComPtr<IUnknown> unknown;
-    ASSERT_HRESULT_SUCCEEDED(
-        ::CoCreateInstance(install_static::GetElevatorClsid(), nullptr,
-                           CLSCTX_LOCAL_SERVER, IID_PPV_ARGS(&unknown)));
+  Microsoft::WRL::ComPtr<IElevator> elevator;
+  ASSERT_HRESULT_SUCCEEDED(unknown.As(&elevator));
+  unknown.Reset();
 
-    Microsoft::WRL::ComPtr<IElevator> elevator;
-    ASSERT_HRESULT_SUCCEEDED(unknown.As(&elevator));
-    unknown.Reset();
+  ULONG_PTR proc_handle = 0;
+  EXPECT_EQ(CRYPT_E_NO_MATCH,
+            elevator->RunRecoveryCRXElevated(
+                TestFile("ChromeRecovery.crx3").value().c_str(),
+                L"{c49ab053-2387-4809-b188-1902648802e1}", L"57.8.0.1",
+                L"{c49ab053-2387-4809-b188-1902648802e1}",
+                ::GetCurrentProcessId(), &proc_handle));
 
-    ULONG_PTR proc_handle = 0;
-    EXPECT_EQ(CRYPT_E_NO_MATCH,
-              elevator->RunRecoveryCRXElevated(
-                  TestFile("ChromeRecovery.crx3").value().c_str(),
-                  L"{c49ab053-2387-4809-b188-1902648802e1}", L"57.8.0.1",
-                  L"{c49ab053-2387-4809-b188-1902648802e1}",
-                  ::GetCurrentProcessId(), &proc_handle));
+  // An object instance has been created upon the request, and is held by the
+  // server module. Therefore, the callback has not yet run.
+  ::testing::Mock::VerifyAndClearExpectations(&module_released_callback);
 
-    // An object instance has been created upon the request, and is held by the
-    // server module. Therefore, the callback has not yet run.
-    ::testing::Mock::VerifyAndClearExpectations(&module_released_callback);
-
-    // Release the instance object. Now that the last (and the only) instance
-    // object of the module is released, the event becomes signaled.
-    EXPECT_CALL(module_released_callback, Run());
-    elevator.Reset();
-  }
+  // Release the instance object. Now that the last (and the only) instance
+  // object of the module is released, the event becomes signaled.
+  EXPECT_CALL(module_released_callback, Run());
+  elevator.Reset();
 }
 
 TEST_F(ServiceMainTest, EncryptDecryptTest) {

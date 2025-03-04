@@ -26,9 +26,9 @@
 #include "chrome/browser/ash/app_mode/kiosk_chrome_app_manager.h"
 #include "chrome/browser/ash/app_mode/kiosk_controller.h"
 #include "chrome/browser/ash/app_mode/kiosk_test_helper.h"
+#include "chrome/browser/ash/app_mode/test/kiosk_session_initialized_waiter.h"
 #include "chrome/browser/ash/login/app_mode/network_ui_controller.h"
 #include "chrome/browser/ash/login/app_mode/test/kiosk_apps_mixin.h"
-#include "chrome/browser/ash/login/app_mode/test/kiosk_test_helpers.h"
 #include "chrome/browser/ash/login/startup_utils.h"
 #include "chrome/browser/ash/login/test/js_checker.h"
 #include "chrome/browser/ash/login/test/oobe_base_test.h"
@@ -87,18 +87,18 @@ int KioskBaseTest::WaitForWidthChange(content::DOMMessageQueue* message_queue,
                                       int current_width) {
   std::string message;
   while (message_queue->WaitForMessage(&message)) {
-    std::optional<base::Value> message_value = base::JSONReader::Read(message);
-    if (!message_value || !message_value->is_dict()) {
+    std::optional<base::Value::Dict> message_value =
+        base::JSONReader::ReadDict(message);
+    if (!message_value) {
       continue;
     }
 
-    const base::Value::Dict& message_dict = message_value->GetDict();
-    const std::string* name = message_dict.FindString("name");
+    const std::string* name = message_value->FindString("name");
     if (!name || *name != kSizeChangedMessage) {
       continue;
     }
 
-    const std::optional<int> data = message_dict.FindInt("data");
+    const std::optional<int> data = message_value->FindInt("data");
     if (!data || data == current_width) {
       continue;
     }

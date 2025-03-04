@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import './strings.m.js';
+import '/strings.m.js';
 import 'chrome://resources/cr_components/history_clusters/browser_proxy.js';
 import 'chrome://resources/cr_components/history_clusters/clusters.js';
 import 'chrome://resources/cr_components/history_embeddings/history_embeddings.js';
@@ -46,6 +46,8 @@ export class HistoryClustersAppElement extends CrLitElement {
     return {
       enableHistoryEmbeddings_: {type: Boolean, reflect: true},
 
+      hasHistoryEmbeddingsResults_: {type: Boolean, reflect: true},
+
       historyEmbeddingsDisclaimerLinkClicked_: {type: Boolean},
 
       nonEmbeddingsResultClicked_: {type: Boolean},
@@ -72,9 +74,10 @@ export class HistoryClustersAppElement extends CrLitElement {
   // Properties
   //============================================================================
 
-  protected enableHistoryEmbeddings_ =
+  protected enableHistoryEmbeddings_: boolean =
       loadTimeData.getBoolean('enableHistoryEmbeddings');
-  protected historyEmbeddingsDisclaimerLinkClicked_ = false;
+  protected hasHistoryEmbeddingsResults_: boolean = false;
+  protected historyEmbeddingsDisclaimerLinkClicked_: boolean = false;
   query: string = '';
   protected nonEmbeddingsResultClicked_: boolean = false;
   protected numCharsTypedInSearch_: number = 0;
@@ -155,6 +158,11 @@ export class HistoryClustersAppElement extends CrLitElement {
           x: event.detail.x,
           y: event.detail.y,
         });
+  }
+
+  protected onHistoryEmbeddingsIsEmptyChanged_(
+      e: CustomEvent<{value: boolean}>) {
+    this.hasHistoryEmbeddingsResults_ = !e.detail.value;
   }
 
   protected onHistoryEmbeddingsItemRemoveClick_(

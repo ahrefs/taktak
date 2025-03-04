@@ -31,11 +31,12 @@
 #include "components/history/core/browser/in_memory_database.h"
 #include "components/history/core/browser/keyword_search_term.h"
 #include "components/history/core/browser/keyword_search_term_util.h"
+#include "components/lens/lens_features.h"
+#include "components/omnibox/browser/autocomplete_input.h"
 #include "components/omnibox/browser/autocomplete_provider_client.h"
 #include "components/omnibox/browser/autocomplete_provider_listener.h"
 #include "components/omnibox/browser/autocomplete_result.h"
 #include "components/omnibox/browser/keyword_provider.h"
-#include "components/omnibox/browser/omnibox_feature_configs.h"
 #include "components/omnibox/browser/omnibox_field_trial.h"
 #include "components/omnibox/browser/omnibox_triggered_feature_service.h"
 #include "components/omnibox/browser/page_classification_functions.h"
@@ -43,6 +44,7 @@
 #include "components/omnibox/browser/search_scoring_signals_annotator.h"
 #include "components/omnibox/browser/suggestion_answer.h"
 #include "components/omnibox/browser/url_prefix.h"
+#include "components/omnibox/common/omnibox_feature_configs.h"
 #include "components/omnibox/common/omnibox_features.h"
 #include "components/search/search.h"
 #include "components/search_engines/template_url_service.h"
@@ -236,8 +238,8 @@ void SearchProvider::Start(const AutocompleteInput& input,
 
   keyword_input_ = input;
   const TemplateURL* keyword_provider =
-      KeywordProvider::GetSubstitutingTemplateURLForInput(model,
-                                                          &keyword_input_);
+      AutocompleteInput::GetSubstitutingTemplateURLForInput(model,
+                                                            &keyword_input_);
   if (keyword_provider == nullptr)
     keyword_input_.Clear();
   else if (keyword_input_.text().empty())
@@ -465,9 +467,6 @@ void SearchProvider::UpdateMatchContentsClass(
     const std::u16string& input_text,
     SearchSuggestionParser::Results* results) {
   std::u16string trimmed_input = base::CollapseWhitespace(input_text, false);
-  if (base::FeatureList::IsEnabled(omnibox::kNormalizeSearchSuggestions)) {
-    trimmed_input = base::i18n::ToLower(trimmed_input);
-  }
   for (auto& suggest_result : results->suggest_results)
     suggest_result.ClassifyMatchContents(false, trimmed_input);
   for (auto& navigation_result : results->navigation_results)
@@ -698,8 +697,26 @@ base::TimeDelta SearchProvider::GetSuggestQueryDelay() const {
 }
 
 void SearchProvider::StartOrStopSuggestQuery(bool minimal_changes) {
-  bool query_is_private = false;
-  if (!IsQuerySuitableForSuggest(&query_is_private)) {
+  // Since there is currently no contextual search suggest, lens contextual
+  // searchboxes, shouldn't query suggest and only the verbatim matches should
+  // be shown.
+  if (omnibox::IsLensContextualSearchbox(
+          input_.current_page_classification()) &&
+      !lens::features::ShowContextualSearchboxSearchSuggest()) {
+    return;
+  }
+  // Make sure the current query can be sent to at least one suggest service.
+  // Don't send potentially private data to the default search provider. It's
+  // okay to send potentially private data to a keyword suggest server, if any.
+  const bool query_is_private = IsQueryPotentiallyPrivate();
+  const auto page_classification = input_.current_page_classification();
+  const TemplateURL* default_turl = providers_.GetDefaultProviderURL();
+  const TemplateURL* keyword_turl = providers_.GetKeywordProviderURL();
+  const bool can_send_any_suggest_request =
+      (!query_is_private &&
+       CanSendSuggestRequest(page_classification, default_turl, client())) ||
+      CanSendSuggestRequest(page_classification, keyword_turl, client());
+  if (!can_send_any_suggest_request) {
     StopSuggest();
     ClearAllResults();
     return;
@@ -750,30 +767,6 @@ void SearchProvider::CancelLoader(
     LogOmniboxSuggestRequest(RemoteRequestEvent::kRequestInvalidated);
     loader->reset();
   }
-}
-
-bool SearchProvider::IsQuerySuitableForSuggest(bool* query_is_private) const {
-  *query_is_private = IsQueryPotentiallyPrivate();
-
-  // Don't make a suggest request if in incognito mode.
-  if (client()->IsOffTheRecord()) {
-    return false;
-  }
-
-  // Don't make a suggest request if suggest is not enabled; unless for the Lens
-  // searchboxes which have their own privacy model.
-  if (!client()->SearchSuggestEnabled() &&
-      !omnibox::IsLensSearchbox(input_.current_page_classification())) {
-    return false;
-  }
-
-  // Don't send potentially private data to the default search provider. It's
-  // okay to send explicit keyword input to a keyword suggest server, if any.
-  const TemplateURL* default_url = providers_.GetDefaultProviderURL();
-  const TemplateURL* keyword_url = providers_.GetKeywordProviderURL();
-  return ((default_url && !default_url->suggestions_url().empty() &&
-           !*query_is_private) ||
-          (keyword_url && !keyword_url->suggestions_url().empty()));
 }
 
 bool SearchProvider::IsQueryPotentiallyPrivate() const {
@@ -879,19 +872,9 @@ void SearchProvider::ApplyCalculatedNavigationRelevance(
 std::unique_ptr<network::SimpleURLLoader> SearchProvider::CreateSuggestLoader(
     const TemplateURL* template_url,
     const AutocompleteInput& input) {
-  if (!template_url || template_url->suggestions_url().empty())
+  if (!template_url) {
     return nullptr;
-
-  // Setting SuggestUrl the same as SearchUrl is a typical misconfiguration.
-  // It's not possible for a URL to both provide a search results page and
-  // suggested queries response (at least they have different format).  Most
-  // like the user set the search URL correctly; it would be obvious if they did
-  // not. Thus, it's likely that the suggest URL is wrong.  Because it would not
-  // give a valid query suggestion response, don't bother sending queries to it
-  // (otherwise user will quickly hit rate-limit for search queries, that will
-  // harm valid search queries as well).
-  if (template_url->suggestions_url() == template_url->url())
-    return nullptr;
+  }
 
   TemplateURLRef::SearchTermsArgs search_term_args(input.text());
   search_term_args.input_type = input.type();
@@ -928,8 +911,10 @@ std::unique_ptr<network::SimpleURLLoader> SearchProvider::CreateSuggestLoader(
   // If the request is from omnibox focus, send empty search term args. The
   // purpose of such a request is to signal the server to warm up; no info
   // is required.
-  // Request for suggestions in OTR contexts is not allowed.
-  DCHECK(!client()->IsOffTheRecord());
+  // Request for suggestions in OTR contexts is not allowed; except for the Lens
+  // searchboxes.
+  DCHECK(!client()->IsOffTheRecord() ||
+         omnibox::IsLensSearchbox(input.current_page_classification()));
   return client()
       ->GetRemoteSuggestionsService(/*create_if_necessary=*/true)
       ->StartSuggestionsRequest(
@@ -991,12 +976,7 @@ void SearchProvider::ConvertResultsToAutocompleteMatches() {
         /*input_text=*/trimmed_verbatim);
     if (match_with_answer) {
       verbatim.SetAnswerType(match_with_answer->answer_type);
-      if (match_with_answer->answer) {
-        verbatim.SetAnswer(*match_with_answer->answer);
-      }
-      if (match_with_answer->answer_template) {
-        verbatim.SetRichAnswerTemplate(*match_with_answer->answer_template);
-      }
+      verbatim.SetRichAnswerTemplate(*match_with_answer->answer_template);
     }
     AddMatchToMap(verbatim, GetInput(verbatim.from_keyword()),
                   GetTemplateURL(verbatim.from_keyword()),
@@ -1124,7 +1104,6 @@ void SearchProvider::RemoveExtraAnswers(ACMatches* matches) {
         answer_seen = true;
       } else {
         it->answer_type = omnibox::ANSWER_TYPE_UNSPECIFIED;
-        it->answer.reset();
         it->answer_template.reset();
       }
     }
@@ -1132,7 +1111,7 @@ void SearchProvider::RemoveExtraAnswers(ACMatches* matches) {
 }
 
 void SearchProvider::DuplicateCardAnswer(ACMatches* matches) {
-  auto iter = base::ranges::find_if(*matches, [](const auto& match) {
+  auto iter = std::ranges::find_if(*matches, [](const auto& match) {
     return match.answer_template.has_value();
   });
 
@@ -1145,6 +1124,7 @@ void SearchProvider::DuplicateCardAnswer(ACMatches* matches) {
 
   auto& copy = matches->emplace_back(*iter);
   copy.answer_template.reset();
+  copy.answer_type = omnibox::ANSWER_TYPE_UNSPECIFIED;
   copy.actions.clear();
   copy.allowed_to_be_default_match = orig_allowed_to_be_default_match;
   copy.suggestion_group_id = omnibox::GROUP_SEARCH;
@@ -1206,14 +1186,9 @@ SearchProvider::ScoreHistoryResultsHelper(const HistoryResults& results,
   // True if the user has asked this exact query previously.
   bool found_what_you_typed_match = false;
   std::u16string trimmed_input = base::CollapseWhitespace(input_text, false);
-  if (base::FeatureList::IsEnabled(omnibox::kNormalizeSearchSuggestions)) {
-    trimmed_input = base::i18n::ToLower(trimmed_input);
-  }
   for (const auto& result : results) {
     const std::u16string& trimmed_suggestion =
-        base::FeatureList::IsEnabled(omnibox::kNormalizeSearchSuggestions)
-            ? result->normalized_term
-            : base::CollapseWhitespace(result->term, false);
+        base::CollapseWhitespace(result->term, false);
 
     // Don't autocomplete multi-word queries that have only been seen once
     // unless the user has typed more than one word.
@@ -1392,8 +1367,7 @@ int SearchProvider::CalculateRelevanceForVerbatimIgnoringKeywordModeState()
       return 850;
 
     default:
-      NOTREACHED_IN_MIGRATION();
-      return 0;
+      NOTREACHED();
   }
 }
 
@@ -1593,11 +1567,9 @@ void SearchProvider::PrefetchImages(SearchSuggestionParser::Results* results) {
     }
 
     GURL answer_image_url =
-        omnibox_feature_configs::SuggestionAnswerMigration::Get().enabled &&
-                suggestion.answer_template()
+        suggestion.answer_template()
             ? GURL(suggestion.answer_template()->answers(0).image().url())
-            : ((suggestion.answer() ? suggestion.answer()->image_url()
-                                    : GURL()));
+            : GURL();
     if (answer_image_url.is_valid()) {
       prefetch_image_urls.push_back(std::move(answer_image_url));
     }

@@ -27,3 +27,7 @@ cr-icon {
 .link-text {
   text-decoration: underline;
 }
+
+#price {
+  color: var(--cr-secondary-text-color);
+}

@@ -21,14 +21,12 @@ class SearchPrefetchServiceFactory : public ProfileKeyedServiceFactory {
  public:
   // Gets the SearchPrefetchService for the profile.
   //
-  // Returns null if the features if not enabled or incognito.
-  static SearchPrefetchService* GetForProfile(Profile* profile);
-
-  // Gets the SearchPrefetchService for the profile.
+  // Returns null if the features is not enabled.
   //
-  // Returns null if the features if not enabled, incognito, or the service
-  // hasn't been created before.
-  static SearchPrefetchService* GetForProfileIfExists(Profile* profile);
+  // Note it also returns null for Incognito by default, but returns
+  // SearchPrefetchService if the Incognito support is enabled via the feature
+  // param. See crbug.com/394716358.
+  static SearchPrefetchService* GetForProfile(Profile* profile);
 
   // Gets the LazyInstance that owns all SearchPrefetchService(s).
   static SearchPrefetchServiceFactory* GetInstance();

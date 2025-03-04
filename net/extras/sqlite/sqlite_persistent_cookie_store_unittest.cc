@@ -34,8 +34,7 @@
 #include "base/test/scoped_feature_list.h"
 #include "base/threading/thread_restrictions.h"
 #include "base/time/time.h"
-#include "crypto/encryptor.h"
-#include "crypto/symmetric_key.h"
+#include "crypto/aes_cbc.h"
 #include "net/base/features.h"
 #include "net/base/test_completion_callback.h"
 #include "net/cookies/canonical_cookie.h"
@@ -50,6 +49,7 @@
 #include "sql/database.h"
 #include "sql/meta_table.h"
 #include "sql/statement.h"
+#include "sql/test/test_helpers.h"
 #include "sql/transaction.h"
 #include "testing/gmock/include/gmock/gmock-matchers.h"
 #include "testing/gmock/include/gmock/gmock.h"
@@ -85,22 +85,22 @@ class CookieCryptor : public CookieCryptoDelegate {
   bool init_ GUARDED_BY_CONTEXT(sequence_checker_) = false;
   bool initing_ GUARDED_BY_CONTEXT(sequence_checker_) = false;
   base::OnceClosureList callbacks_ GUARDED_BY_CONTEXT(sequence_checker_);
-  std::unique_ptr<crypto::SymmetricKey> key_;
-  crypto::Encryptor encryptor_;
   SEQUENCE_CHECKER(sequence_checker_);
 
   base::WeakPtrFactory<CookieCryptor> weak_ptr_factory_{this};
 };
 
-CookieCryptor::CookieCryptor()
-    : key_(crypto::SymmetricKey::DeriveKeyFromPasswordUsingPbkdf2(
-          crypto::SymmetricKey::AES,
-          "password",
-          "saltiest",
-          1000,
-          256)) {
-  std::string iv("the iv: 16 bytes");
-  encryptor_.Init(key_.get(), crypto::Encryptor::CBC, iv);
+constexpr std::array<uint8_t, 32> kFixedKey{
+    'c', 'o', 'o', 'k', 'i', 'e', 'c', 'r', 'y', 'p', 't',
+    'o', 'r', 'i', 's', 'a', 'u', 's', 'e', 'f', 'u', 'l',
+    't', 'e', 's', 't', 'c', 'l', 'a', 's', 's', '!',
+};
+constexpr std::array<uint8_t, 16> kFixedIv{
+    't', 'h', 'e', ' ', 'i', 'v', ':', ' ',
+    '1', '6', ' ', 'b', 'y', 't', 'e', 's',
+};
+
+CookieCryptor::CookieCryptor() {
   DETACH_FROM_SEQUENCE(sequence_checker_);
 }
 
@@ -142,7 +142,10 @@ bool CookieCryptor::EncryptString(const std::string& plaintext,
     ciphertext->clear();
     return true;
   }
-  return encryptor_.Encrypt(plaintext, ciphertext);
+  auto result = crypto::aes_cbc::Encrypt(kFixedKey, kFixedIv,
+                                         base::as_byte_span(plaintext));
+  ciphertext->assign(result.begin(), result.end());
+  return true;
 }
 
 bool CookieCryptor::DecryptString(const std::string& ciphertext,
@@ -155,7 +158,14 @@ bool CookieCryptor::DecryptString(const std::string& ciphertext,
     plaintext->clear();
     return true;
   }
-  return encryptor_.Decrypt(ciphertext, plaintext);
+  auto result = crypto::aes_cbc::Decrypt(kFixedKey, kFixedIv,
+                                         base::as_byte_span(ciphertext));
+  if (result.has_value()) {
+    plaintext->assign(result->begin(), result->end());
+    return true;
+  }
+
+  return false;
 }
 
 void CookieCryptor::InitComplete() {
@@ -353,7 +363,7 @@ TEST_F(SQLitePersistentCookieStoreTest, TestInvalidVersionRecovery) {
 
   // Now make the version too old to initialize from.
   {
-    sql::Database db;
+    sql::Database db(sql::test::kTestTag);
     ASSERT_TRUE(db.Open(temp_dir_.GetPath().Append(kCookieFilename)));
     sql::MetaTable meta_table;
     ASSERT_TRUE(meta_table.Init(&db, 1, 1));
@@ -395,7 +405,7 @@ TEST_F(SQLitePersistentCookieStoreTest, TestInvalidMetaTableRecovery) {
 
   // Now corrupt the meta table.
   {
-    sql::Database db;
+    sql::Database db(sql::test::kTestTag);
     ASSERT_TRUE(db.Open(temp_dir_.GetPath().Append(kCookieFilename)));
     sql::MetaTable meta_table;
     ASSERT_TRUE(meta_table.Init(&db, 1, 1));
@@ -759,7 +769,8 @@ TEST_F(SQLitePersistentCookieStoreTest, FilterBadCookiesAndFixupDb) {
 
   // Add some cookies in by hand.
   base::FilePath store_name(temp_dir_.GetPath().Append(kCookieFilename));
-  std::unique_ptr<sql::Database> db(std::make_unique<sql::Database>());
+  std::unique_ptr<sql::Database> db(
+      std::make_unique<sql::Database>(sql::test::kTestTag));
   ASSERT_TRUE(db->Open(store_name));
   sql::Statement stmt(db->GetUniqueStatement(
       "INSERT INTO cookies (creation_utc, host_key, top_frame_site_key, name, "
@@ -821,7 +832,7 @@ TEST_F(SQLitePersistentCookieStoreTest, FilterBadCookiesAndFixupDb) {
   DestroyStore();
 
   // Make sure that we only have one row left.
-  db = std::make_unique<sql::Database>();
+  db = std::make_unique<sql::Database>(sql::test::kTestTag);
   ASSERT_TRUE(db->Open(store_name));
   sql::Statement verify_stmt(db->GetUniqueStatement("SELECT * FROM COOKIES"));
   ASSERT_TRUE(verify_stmt.is_valid());
@@ -1025,7 +1036,7 @@ TEST_F(SQLitePersistentCookieStoreTest, SameSiteExtendedTreatedAsUnspecified) {
   DestroyStore();
 
   // Open db.
-  sql::Database connection;
+  sql::Database connection(sql::test::kTestTag);
   ASSERT_TRUE(connection.Open(temp_dir_.GetPath().Append(kCookieFilename)));
   std::string update_stmt(
       "UPDATE cookies SET samesite=3"  // 3 is Extended.
@@ -1141,7 +1152,7 @@ TEST_F(SQLitePersistentCookieStoreTest, UpdateToEncryption) {
   DestroyStore();
 
   // Examine the real record to make sure plaintext version doesn't exist.
-  sql::Database db;
+  sql::Database db(sql::test::kTestTag);
   sql::Statement smt;
 
   ASSERT_TRUE(db.Open(temp_dir_.GetPath().Append(kCookieFilename)));
@@ -1167,7 +1178,9 @@ TEST_F(SQLitePersistentCookieStoreTest, UpdateToEncryption) {
 
 bool CompareCookies(const std::unique_ptr<CanonicalCookie>& a,
                     const std::unique_ptr<CanonicalCookie>& b) {
-  return a->PartialCompare(*b);
+  CHECK(a);
+  CHECK(b);
+  return *a < *b;
 }
 
 // Confirm the store can handle having cookies with identical creation
@@ -2166,7 +2179,7 @@ void ConfirmCookiesAfterMigrationTest(
 
 void ConfirmDatabaseVersionAfterMigration(const base::FilePath path,
                                           int version) {
-  sql::Database connection;
+  sql::Database connection(sql::test::kTestTag);
   ASSERT_TRUE(connection.Open(path));
   ASSERT_GE(GetDBCurrentVersionNumber(&connection), version);
 }
@@ -2176,7 +2189,7 @@ TEST_F(SQLitePersistentCookieStoreTest, UpgradeToSchemaVersion19) {
   const base::FilePath database_path =
       temp_dir_.GetPath().Append(kCookieFilename);
   {
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     ASSERT_TRUE(CreateV18Schema(&connection));
     ASSERT_EQ(GetDBCurrentVersionNumber(&connection), 18);
@@ -2199,7 +2212,7 @@ TEST_F(SQLitePersistentCookieStoreTest, UpgradeToSchemaVersion20) {
   const base::FilePath database_path =
       temp_dir_.GetPath().Append(kCookieFilename);
   {
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     // V19's schema is the same as V18, so we can reuse the creation function.
     ASSERT_TRUE(CreateV18Schema(&connection));
@@ -2223,7 +2236,7 @@ TEST_F(SQLitePersistentCookieStoreTest, UpgradeToSchemaVersion21) {
   const base::FilePath database_path =
       temp_dir_.GetPath().Append(kCookieFilename);
   {
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     ASSERT_TRUE(CreateV20Schema(&connection));
     ASSERT_EQ(GetDBCurrentVersionNumber(&connection), 20);
@@ -2246,7 +2259,7 @@ TEST_F(SQLitePersistentCookieStoreTest, UpgradeToSchemaVersion22) {
   const base::FilePath database_path =
       temp_dir_.GetPath().Append(kCookieFilename);
   {
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     ASSERT_TRUE(CreateV21Schema(&connection));
     ASSERT_EQ(GetDBCurrentVersionNumber(&connection), 21);
@@ -2269,7 +2282,7 @@ TEST_F(SQLitePersistentCookieStoreTest, UpgradeToSchemaVersion23) {
   const base::FilePath database_path =
       temp_dir_.GetPath().Append(kCookieFilename);
   {
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     ASSERT_TRUE(CreateV22Schema(&connection));
     ASSERT_EQ(GetDBCurrentVersionNumber(&connection), 22);
@@ -2315,7 +2328,7 @@ TEST_P(SQLitePersistentCookieStorev24UpgradeTest, UpgradeToSchemaVersion24) {
   const base::FilePath database_path =
       temp_dir_.GetPath().Append(kCookieFilename);
   {
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     ASSERT_TRUE(CreateV23Schema(&connection));
     ASSERT_EQ(GetDBCurrentVersionNumber(&connection), 23);
@@ -2353,7 +2366,7 @@ TEST_P(SQLitePersistentCookieStorev24UpgradeTest, UpgradeToSchemaVersion24) {
       // decrypted - kNoCrypto. Functionality for an already-migrated store (v24
       // and above) with both plaintext and encrypted values is tested in the
       // `OverridePlaintextValue` test below.
-      const base::Histogram::Sample expected_bucket =
+      const base::Histogram::Sample32 expected_bucket =
           drop_dup_values && place_unencrypted_too
               ? /*CookieLoadProblem::kValuesExistInBothEncryptedAndPlaintext*/ 8
               : /*CookieLoadProblem::kNoCrypto*/ 7;
@@ -2392,7 +2405,7 @@ TEST_F(SQLitePersistentCookieStoreTest, CannotModifyHostName) {
         temp_dir_.GetPath().Append(kCookieFilename);
     // Simulate an attacker modifying hostname to attacker controlled, to
     // perform a cookie replay attack.
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     sql::Transaction transaction(&connection);
     ASSERT_TRUE(transaction.Begin());
@@ -2443,7 +2456,7 @@ TEST_F(SQLitePersistentCookieStoreTest, ShortHash) {
         temp_dir_.GetPath().Append(kCookieFilename);
     // Simulate an attacker modifying hostname to attacker controlled, to
     // perform a cookie replay attack.
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     sql::Transaction transaction(&connection);
     sql::Statement set_encrypted_value(connection.GetUniqueStatement(
@@ -2509,7 +2522,7 @@ TEST_F(SQLitePersistentCookieStoreTest,
 
   // Open database, populate and close db.
   {
-    sql::Database db;
+    sql::Database db(sql::test::kTestTag);
     ASSERT_TRUE(db.Open(database_path));
     ASSERT_TRUE(CreateV22Schema(&db));
     ASSERT_EQ(GetDBCurrentVersionNumber(&db), 22);
@@ -2522,7 +2535,7 @@ TEST_F(SQLitePersistentCookieStoreTest,
   EXPECT_EQ(read_in_cookies.size(), cookies.size());
 
   // Reopen database for testing.
-  sql::Database connection;
+  sql::Database connection(sql::test::kTestTag);
   ASSERT_TRUE(connection.Open(database_path));
   ASSERT_GE(GetDBCurrentVersionNumber(&connection), 23);
   for (const auto& cookie : cookies) {
@@ -2698,7 +2711,8 @@ TEST_F(SQLitePersistentCookieStoreTest, LoadingPartitionedCookies) {
 
   // Insert a partitioned cookie into the database manually.
   base::FilePath store_name(temp_dir_.GetPath().Append(kCookieFilename));
-  std::unique_ptr<sql::Database> db(std::make_unique<sql::Database>());
+  std::unique_ptr<sql::Database> db(
+      std::make_unique<sql::Database>(sql::test::kTestTag));
   ASSERT_TRUE(db->Open(store_name));
 
   sql::Statement stmt(db->GetUniqueStatement(
@@ -2825,7 +2839,7 @@ TEST_F(SQLitePersistentCookieStoreTest,
   }
   // Open database, populate and close db.
   {
-    sql::Database db;
+    sql::Database db(sql::test::kTestTag);
     ASSERT_TRUE(db.Open(database_path));
     ASSERT_TRUE(CreateV22Schema(&db));
     ASSERT_EQ(GetDBCurrentVersionNumber(&db), 22);
@@ -2838,7 +2852,7 @@ TEST_F(SQLitePersistentCookieStoreTest,
   EXPECT_EQ(read_in_cookies.size(), cookies.size());
 
   // Reopen database for testing.
-  sql::Database connection;
+  sql::Database connection(sql::test::kTestTag);
   ASSERT_TRUE(connection.Open(database_path));
   ASSERT_GE(GetDBCurrentVersionNumber(&connection), 23);
 
@@ -2886,7 +2900,7 @@ TEST_F(SQLitePersistentCookieStoreTest,
                            /*restore_old_session_cookies=*/false);
   EXPECT_EQ(cookies_.size(), cookies_and_expected_values.size());
 
-  sql::Database connection;
+  sql::Database connection(sql::test::kTestTag);
   ASSERT_TRUE(connection.Open(temp_dir_.GetPath().Append(kCookieFilename)));
   ASSERT_GT(GetDBCurrentVersionNumber(&connection), 23);
 
@@ -2986,7 +3000,7 @@ TEST_P(SQLitePersistentCookieStoreTestWithDropDupDataFeature,
   {
     const base::FilePath database_path =
         temp_dir_.GetPath().Append(kCookieFilename);
-    sql::Database connection;
+    sql::Database connection(sql::test::kTestTag);
     ASSERT_TRUE(connection.Open(database_path));
     sql::Transaction transaction(&connection);
     ASSERT_TRUE(transaction.Begin());

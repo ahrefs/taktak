@@ -234,7 +234,7 @@ export class OsSettingsInputPageElement extends OsSettingsInputPageElementBase {
         this.metaKey_ = metaKey;
       });
 
-      this.acceleratorFetcher!.observeAcceleratorChanges(
+      this.acceleratorFetcher.observeAcceleratorChanges(
           [
             AcceleratorAction.kSwitchToLastUsedIme,
             AcceleratorAction.kSwitchToNextIme,
@@ -309,6 +309,30 @@ export class OsSettingsInputPageElement extends OsSettingsInputPageElementBase {
     const allowedInputMethodsPref =
         this.getPref('settings.language.allowed_input_methods');
     return !!allowedInputMethodsPref && allowedInputMethodsPref.value.length;
+  }
+
+  private inputMethodsEnabledByPolicy_(): boolean {
+    const allowedInputMethodsForceEnabled =
+        this.getPref('settings.language.allowed_input_methods_force_enabled');
+    return !!allowedInputMethodsForceEnabled &&
+        allowedInputMethodsForceEnabled.value;
+  }
+
+  private addInputMethodButtonDisabled_(): boolean {
+    // Disable if all input methods are enabled by policy.
+    if (this.inputMethodsEnabledByPolicy_()) {
+      return true;
+    }
+    // Disable if all allowed input methods are already enabled.
+    if (this.languages &&
+        !this.languages.inputMethods!.supported
+             .filter(
+                 inputMethod =>
+                     !this.languageHelper.isInputMethodEnabled(inputMethod.id))
+             .some(inputMethod => !inputMethod.isProhibitedByPolicy)) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -455,6 +479,10 @@ export class OsSettingsInputPageElement extends OsSettingsInputPageElementBase {
 
   private disableRemoveInputMethod_(
       targetInputMethod: chrome.languageSettingsPrivate.InputMethod): boolean {
+    if (this.inputMethodsEnabledByPolicy_()) {
+      return true;
+    }
+
     // Third-party IMEs can always be removed.
     if (!this.languageHelper.isComponentIme(targetInputMethod)) {
       return false;

@@ -9,10 +9,10 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/branding_buildflags.h"
-#include "components/autofill/core/browser/autofill_client.h"
-#include "components/autofill/core/browser/autofill_test_utils.h"
+#include "components/autofill/core/browser/foundations/autofill_client.h"
 #include "components/autofill/core/browser/payments/payments_autofill_client.h"
 #include "components/autofill/core/browser/payments/test_legal_message_line.h"
+#include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "components/autofill/core/common/credit_card_network_identifiers.h"
 #include "components/grit/components_scaled_resources.h"
@@ -71,11 +71,7 @@ TEST(AutofillSaveCardUiInfoTestForLocalSave, VerifyCommonAttributes) {
   card.SetNickname(u"My Card");
   auto ui_info =
       AutofillSaveCardUiInfo::CreateForLocalSave(/*options=*/{}, card);
-  EXPECT_EQ(ui_info.issuer_icon_id,
-            base::FeatureList::IsEnabled(
-                features::kAutofillEnableNewCardArtAndNetworkImages)
-                ? IDR_AUTOFILL_METADATA_CC_VISA
-                : IDR_AUTOFILL_CC_VISA);
+  EXPECT_EQ(ui_info.issuer_icon_id, IDR_AUTOFILL_METADATA_CC_VISA);
   EXPECT_THAT(base::UTF16ToUTF8(ui_info.card_label),
               testing::AllOf(testing::HasSubstr("My Card"),
                              testing::HasSubstr("1111")));
@@ -106,11 +102,16 @@ TEST(AutofillSaveCardUiInfoTestForLocalSave,
       test::GetCreditCard());
 
   EXPECT_EQ(ui_info.logo_icon_id, IDR_INFOBAR_AUTOFILL_CC);
+  EXPECT_EQ(ui_info.logo_icon_description, u"");
   EXPECT_EQ(ui_info.title_text, l10n_util::GetStringUTF16(
                                     IDS_AUTOFILL_SAVE_CARD_PROMPT_TITLE_LOCAL));
-  EXPECT_EQ(ui_info.description_text, u"");
-  EXPECT_EQ(ui_info.confirm_text,
-            l10n_util::GetStringUTF16(IDS_AUTOFILL_SAVE_CARD_INFOBAR_ACCEPT));
+  EXPECT_EQ(ui_info.description_text,
+#if BUILDFLAG(IS_IOS)
+            u"");
+#else
+            l10n_util::GetStringUTF16(
+                IDS_AUTOFILL_SAVE_CARD_ONLY_PROMPT_EXPLANATION_LOCAL));
+#endif
 }
 
 #if BUILDFLAG(IS_ANDROID)
@@ -214,11 +215,7 @@ TEST_P(AutofillSaveCardUiInfoTestForUploadSave, VerifyCommonAttributes) {
   auto ui_info = AutofillSaveCardUiInfo::CreateForUploadSave(
       /*options=*/{}, card, legal_message_lines, account_info,
       /*is_google_pay_branding_enabled=*/is_gpay_branded());
-  EXPECT_EQ(ui_info.issuer_icon_id,
-            base::FeatureList::IsEnabled(
-                features::kAutofillEnableNewCardArtAndNetworkImages)
-                ? IDR_AUTOFILL_METADATA_CC_VISA
-                : IDR_AUTOFILL_CC_VISA);
+  EXPECT_EQ(ui_info.issuer_icon_id, IDR_AUTOFILL_METADATA_CC_VISA);
   EXPECT_THAT(base::UTF16ToUTF8(ui_info.card_label),
               testing::AllOf(testing::HasSubstr("My Card"),
                              testing::HasSubstr("1111")));
@@ -252,6 +249,13 @@ TEST_P(AutofillSaveCardUiInfoTestForUploadSave,
 
   EXPECT_EQ(ui_info.logo_icon_id, is_gpay_branded() ? IDR_AUTOFILL_GOOGLE_PAY
                                                     : IDR_INFOBAR_AUTOFILL_CC);
+#if BUILDFLAG(IS_IOS)
+  EXPECT_EQ(ui_info.logo_icon_description,
+            is_gpay_branded()
+                ? l10n_util::GetStringUTF16(
+                      IDS_AUTOFILL_GOOGLE_PAY_LOGO_ACCESSIBLE_NAME)
+                : u"");
+#endif
   EXPECT_EQ(
       ui_info.title_text,
       l10n_util::GetStringUTF16(

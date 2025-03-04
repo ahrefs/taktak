@@ -5,6 +5,9 @@
 #ifndef CHROME_BROWSER_UI_LENS_LENS_OVERLAY_REQUEST_ID_GENERATOR_H_
 #define CHROME_BROWSER_UI_LENS_LENS_OVERLAY_REQUEST_ID_GENERATOR_H_
 
+#include <optional>
+
+#include "third_party/lens_server_proto/lens_overlay_routing_info.pb.h"
 #include "third_party/lens_server_proto/lens_overlay_server.pb.h"
 #include "third_party/lens_server_proto/lens_overlay_service_deps.pb.h"
 
@@ -12,19 +15,29 @@ namespace lens {
 
 // The update modes for the request id generator.
 enum class RequestIdUpdateMode {
-  // Indicates that the request id should not be modified.
-  kNone = 0,
   // Indicates that the request id should be modified for a full image request,
   // i.e. incrementing the image sequence, sequence id, and creating a new
   // analytics id.
-  kFullImageRequest = 1,
+  kFullImageRequest = 0,
+  // Indicates that the request id should be modified for a page content
+  // request, i.e. incrementing the sequence id and creating a new analytics
+  // id.
+  kPageContentRequest = 1,
+  // Indicates that the request id should be modified for a partial page content
+  // request, i.e. incrementing the sequence id and creating a new analytics
+  // id.
+  kPartialPageContentRequest = 2,
   // Indicates that the request id should be modified for an interaction
   // request, i.e. incrementing the sequence id and creating a new analytics
   // id.
-  kInteractionRequest = 2,
+  kInteractionRequest = 3,
   // Indicates that the request id should be modified for a search url.
   // i.e. just incrementing the sequence id.
-  kSearchUrl = 3,
+  kSearchUrl = 4,
+  // Indicates that the request id should be modified for opening in a new tab.
+  // i.e. just creating a new analytics id, but not storing it for future
+  // updates.
+  kOpenInNewTab = 5,
 };
 
 // Manages creating lens overlay request IDs. Owned by a single Lens overlay
@@ -46,6 +59,11 @@ class LensOverlayRequestIdGenerator {
   // Returns the current analytics id as a base32 encoded string.
   std::string GetBase32EncodedAnalyticsId();
 
+  // Sets the routing info to be included in the request id.
+  void SetRoutingInfo(lens::LensOverlayRoutingInfo routing_info);
+
+  bool HasRoutingInfo() { return routing_info_.has_value(); }
+
  private:
   // The current uuid. Valid for the duration of a Lens overlay session.
   uint64_t uuid_;
@@ -59,6 +77,10 @@ class LensOverlayRequestIdGenerator {
 
   // The current image sequence id.
   int image_sequence_id_;
+
+  // The current routing info. Not guaranteed to exist if not returned from the
+  // server.
+  std::optional<lens::LensOverlayRoutingInfo> routing_info_;
 };
 
 }  // namespace lens

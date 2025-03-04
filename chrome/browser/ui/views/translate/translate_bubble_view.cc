@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -37,6 +38,7 @@
 #include "chrome/common/url_constants.h"
 #include "chrome/grit/generated_resources.h"
 #include "chrome/grit/theme_resources.h"
+#include "components/language_detection/core/constants.h"
 #include "components/prefs/pref_service.h"
 #include "components/strings/grit/components_strings.h"
 #include "components/translate/core/browser/translate_download_manager.h"
@@ -44,7 +46,6 @@
 #include "components/translate/core/browser/translate_metrics_logger.h"
 #include "components/translate/core/browser/translate_prefs.h"
 #include "components/translate/core/browser/translate_ui_delegate.h"
-#include "components/translate/core/common/translate_constants.h"
 #include "components/vector_icons/vector_icons.h"
 #include "content/public/browser/web_contents.h"
 #include "ui/base/interaction/element_identifier.h"
@@ -100,13 +101,10 @@ std::unique_ptr<views::View> CreateWordmarkView() {
   view->SetLayoutManager(std::make_unique<views::BoxLayout>());
 
   // Translate icon
-  const int translate_icon_id = IDR_TRANSLATE_TAB_WORDMARK;
   std::unique_ptr<views::ImageView> translate_icon =
       std::make_unique<views::ImageView>();
-  gfx::ImageSkia* translate_icon_image =
-      ui::ResourceBundle::GetSharedInstance().GetImageSkiaNamed(
-          translate_icon_id);
-  translate_icon->SetImage(*translate_icon_image);
+  translate_icon->SetImage(
+      ui::ImageModel::FromResourceId(IDR_TRANSLATE_TAB_WORDMARK));
   view->AddChildView(std::move(translate_icon));
 
   return view;
@@ -139,12 +137,25 @@ void OpenLanguageSettings(TranslateBubbleModel* model_,
 
 TranslateBubbleView::~TranslateBubbleView() {
   // A child view could refer to a model which is owned by this class when
-  // the child view is destructed. For example, |source_language_combobx_model_|
-  // is referred by Combobox's destructor. Before destroying the models,
-  // removing the child views is needed.
+  // the child view is destructed. For example, `source_language_combobox_` has
+  // a pointer to `model_`. Before destroying the models, removing the child
+  // views is needed.
+  translate_view_ = nullptr;
+  error_view_ = nullptr;
+  advanced_view_source_ = nullptr;
+  advanced_view_target_ = nullptr;
+  source_language_combobox_ = nullptr;
+  target_language_combobox_ = nullptr;
+  always_translate_checkbox_ = nullptr;
+  advanced_always_translate_checkbox_ = nullptr;
+  tabbed_pane_ = nullptr;
+  advanced_reset_button_source_ = nullptr;
+  advanced_reset_button_target_ = nullptr;
+  advanced_done_button_source_ = nullptr;
+  advanced_done_button_target_ = nullptr;
   RemoveAllChildViews();
-  if (features::IsToolbarPinningEnabled() && translate_action_item_) {
-    translate_action_item_->SetIsShowingBubble(false);
+  if (translate_action_item_.get()) {
+    translate_action_item_.get()->SetIsShowingBubble(false);
   }
 }
 
@@ -203,14 +214,15 @@ void TranslateBubbleView::Init() {
     model_->ShowError(error_type_);
   }
 
-  if (features::IsToolbarPinningEnabled()) {
-    Browser* browser = chrome::FindLastActive();
-    if (browser) {
-      translate_action_item_ = actions::ActionManager::Get().FindAction(
-          kActionShowTranslate, browser->browser_actions()->root_action_item());
-      CHECK(translate_action_item_);
-      translate_action_item_->SetIsShowingBubble(true);
-    }
+  Browser* browser = chrome::FindLastActive();
+  if (browser) {
+    translate_action_item_ =
+        actions::ActionManager::Get()
+            .FindAction(kActionShowTranslate,
+                        browser->browser_actions()->root_action_item())
+            ->GetAsWeakPtr();
+    CHECK(translate_action_item_.get());
+    translate_action_item_.get()->SetIsShowingBubble(true);
   }
 }
 
@@ -327,14 +339,14 @@ void TranslateBubbleView::ShowOptionsMenu(views::Button* source) {
   // Don't show "Always translate <language>" in incognito mode, because it
   // doesn't do anything anyways. Don't show if the source language is unknown.
   if (!is_in_incognito_window_ &&
-      source_language_code != translate::kUnknownLanguageCode) {
+      source_language_code != language_detection::kUnknownLanguageCode) {
     options_menu_model_->AddCheckItem(
         OptionsMenuItem::ALWAYS_TRANSLATE_LANGUAGE,
         l10n_util::GetStringFUTF16(IDS_TRANSLATE_BUBBLE_ALWAYS_TRANSLATE_LANG,
                                    source_language));
   }
 
-  if (source_language_code != translate::kUnknownLanguageCode) {
+  if (source_language_code != language_detection::kUnknownLanguageCode) {
     options_menu_model_->AddCheckItem(
         OptionsMenuItem::NEVER_TRANSLATE_LANGUAGE,
         l10n_util::GetStringFUTF16(IDS_TRANSLATE_BUBBLE_NEVER_TRANSLATE_LANG,
@@ -497,9 +509,7 @@ TranslateBubbleView::TranslateBubbleView(
 views::View* TranslateBubbleView::GetCurrentView() const {
   switch (GetViewState()) {
     case TranslateBubbleModel::VIEW_STATE_BEFORE_TRANSLATE:
-      return translate_view_;
     case TranslateBubbleModel::VIEW_STATE_TRANSLATING:
-      return translate_view_;
     case TranslateBubbleModel::VIEW_STATE_AFTER_TRANSLATE:
       return translate_view_;
     case TranslateBubbleModel::VIEW_STATE_ERROR:
@@ -631,7 +641,7 @@ std::unique_ptr<views::View> TranslateBubbleView::CreateView() {
       views::CreateEmptyBorder(gfx::Insets::VH(2, 20)));
   tabbed_pane_->GetTabAt(1)->SetBorder(
       views::CreateEmptyBorder(gfx::Insets::VH(2, 20)));
-  tabbed_pane_->set_listener(this);
+  tabbed_pane_->SetListener(this);
 
   auto* padding_view =
       horizontal_view->AddChildView(std::make_unique<views::View>());
@@ -642,7 +652,7 @@ std::unique_ptr<views::View> TranslateBubbleView::CreateView() {
   // unknown.
   auto source_language_code = model_->GetSourceLanguageCode();
   if (model_->ShouldShowAlwaysTranslateShortcut() &&
-      source_language_code != translate::kUnknownLanguageCode) {
+      source_language_code != language_detection::kUnknownLanguageCode) {
     auto before_always_translate_checkbox = std::make_unique<views::Checkbox>(
         l10n_util::GetStringFUTF16(
             IDS_TRANSLATE_BUBBLE_ALWAYS_TRANSLATE_LANG,
@@ -780,7 +790,7 @@ std::unique_ptr<views::View> TranslateBubbleView::CreateViewAdvancedSource() {
   std::unique_ptr<views::Checkbox> advanced_always_translate_checkbox;
   auto source_language_code = model_->GetSourceLanguageCode();
   if (!is_in_incognito_window_ &&
-      source_language_code != translate::kUnknownLanguageCode) {
+      source_language_code != language_detection::kUnknownLanguageCode) {
     advanced_always_translate_checkbox = std::make_unique<views::Checkbox>(
         l10n_util::GetStringUTF16(IDS_TRANSLATE_BUBBLE_ALWAYS),
         base::BindRepeating(&TranslateBubbleView::AlwaysTranslatePressed,
@@ -1083,9 +1093,9 @@ void TranslateBubbleView::SwitchTabForViewState(
     // other than user interaction, |this| needs to unregister from listening
     // to the tabbed pane events otherwise it'll trigger an additional
     // translation as if the user had clicked the tabs.
-    tabbed_pane_->set_listener(nullptr);
+    tabbed_pane_->SetListener(nullptr);
     tabbed_pane_->SelectTabAt(1, false);
-    tabbed_pane_->set_listener(this);
+    tabbed_pane_->SetListener(this);
   } else if (view_state == TranslateBubbleModel::VIEW_STATE_BEFORE_TRANSLATE &&
              tabbed_pane_->GetSelectedTabIndex() != 0) {
     tabbed_pane_->SelectTabAt(0);

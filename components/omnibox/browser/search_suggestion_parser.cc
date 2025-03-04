@@ -6,6 +6,7 @@
 
 #include <stddef.h>
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string_view>
@@ -19,7 +20,6 @@
 #include "base/json/json_reader.h"
 #include "base/json/json_writer.h"
 #include "base/metrics/histogram_functions.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
@@ -29,10 +29,10 @@
 #include "components/omnibox/browser/autocomplete_input.h"
 #include "components/omnibox/browser/autocomplete_match_classification.h"
 #include "components/omnibox/browser/autocomplete_provider.h"
-#include "components/omnibox/browser/omnibox_feature_configs.h"
 #include "components/omnibox/browser/omnibox_field_trial.h"
 #include "components/omnibox/browser/suggestion_group_util.h"
 #include "components/omnibox/browser/url_prefix.h"
+#include "components/omnibox/common/omnibox_feature_configs.h"
 #include "components/omnibox/common/omnibox_features.h"
 #include "components/strings/grit/components_strings.h"
 #include "components/url_formatter/url_fixer.h"
@@ -281,7 +281,7 @@ SearchSuggestionParser::Result::Result(
 
 SearchSuggestionParser::Result::Result(const Result& other) = default;
 
-SearchSuggestionParser::Result::~Result() {}
+SearchSuggestionParser::Result::~Result() = default;
 
 // SearchSuggestionParser::SuggestResult ---------------------------------------
 
@@ -356,7 +356,7 @@ SearchSuggestionParser::SuggestResult::SuggestResult(
 SearchSuggestionParser::SuggestResult::SuggestResult(
     const SuggestResult& result) = default;
 
-SearchSuggestionParser::SuggestResult::~SuggestResult() {}
+SearchSuggestionParser::SuggestResult::~SuggestResult() = default;
 
 SearchSuggestionParser::SuggestResult&
 SearchSuggestionParser::SuggestResult::operator=(const SuggestResult& rhs) =
@@ -389,9 +389,9 @@ void SearchSuggestionParser::SuggestResult::ClassifyMatchContents(
     }
   }
   // Do a case-insensitive search for |lookup_text|.
-  std::u16string::const_iterator lookup_position = base::ranges::search(
-      match_contents_, lookup_text, SimpleCaseInsensitiveCompareUCS2());
-  if (!allow_bolding_all && (lookup_position == match_contents_.end())) {
+  auto lookup_result = std::ranges::search(match_contents_, lookup_text,
+                                           SimpleCaseInsensitiveCompareUCS2());
+  if (!allow_bolding_all && lookup_result.empty()) {
     // Bail if the code below to update the bolding would bold the whole
     // string.  Note that the string may already be entirely bolded; if
     // so, leave it as is.
@@ -401,11 +401,6 @@ void SearchSuggestionParser::SuggestResult::ClassifyMatchContents(
   // Note we discard our existing match_contents_class_ with this call.
   match_contents_class_ =
       ClassifyAllMatchesInString(input_text, match_contents_, true);
-}
-
-void SearchSuggestionParser::SuggestResult::SetAnswer(
-    const SuggestionAnswer& answer) {
-  answer_ = answer;
 }
 
 void SearchSuggestionParser::SuggestResult::SetRichAnswerTemplate(
@@ -475,7 +470,7 @@ SearchSuggestionParser::NavigationResult::NavigationResult(
 SearchSuggestionParser::NavigationResult::NavigationResult(
     const NavigationResult& other) = default;
 
-SearchSuggestionParser::NavigationResult::~NavigationResult() {}
+SearchSuggestionParser::NavigationResult::~NavigationResult() = default;
 
 void SearchSuggestionParser::NavigationResult::
     CalculateAndClassifyMatchContents(const bool allow_bolding_nothing,
@@ -546,7 +541,7 @@ SearchSuggestionParser::Results::Results()
       field_trial_triggered(false),
       relevances_from_server(false) {}
 
-SearchSuggestionParser::Results::~Results() {}
+SearchSuggestionParser::Results::~Results() = default;
 
 void SearchSuggestionParser::Results::Clear() {
   suggest_results.clear();
@@ -685,6 +680,14 @@ bool SearchSuggestionParser::ParseSuggestResults(
     if (std::optional<int> relevance =
             extras.FindInt("google:verbatimrelevance")) {
       results->verbatim_relevance = *relevance;
+    }
+
+    if (const std::string* gws_event_id_hash_str =
+            extras.FindString("google:suggesteventid")) {
+      int64_t gws_event_id_hash;
+      if (base::StringToInt64(*gws_event_id_hash_str, &gws_event_id_hash)) {
+        results->gws_event_id_hashes.push_back(gws_event_id_hash);
+      }
     }
 
     // Check if the active suggest field trial (if any) has triggered either
@@ -858,7 +861,6 @@ bool SearchSuggestionParser::ParseSuggestResults(
       std::optional<int> suggestion_group_id;
       bool answer_parsed_successfully = false;
       omnibox::RichAnswerTemplate answer_template;
-      SuggestionAnswer answer;
       omnibox::AnswerType answer_type = omnibox::ANSWER_TYPE_UNSPECIFIED;
 
       if (suggestion_details && (*suggestion_details)[index].is_dict() &&
@@ -913,15 +915,9 @@ bool SearchSuggestionParser::ParseSuggestResults(
             answer_parsed_successfully = answer_template.answers_size() > 0;
           } else if (const auto* answer_json =
                          suggestion_detail.FindDict("ansa")) {
-            if (omnibox_feature_configs::SuggestionAnswerMigration::Get()
-                    .enabled) {
               answer_parsed_successfully =
                   omnibox::answer_data_parser::ParseJsonToAnswerData(
                       *answer_json, &answer_template);
-            } else {
-              answer_parsed_successfully = SuggestionAnswer::ParseAnswer(
-                  *answer_json, answer_type, &answer);
-            }
           }
           base::UmaHistogramBoolean("Omnibox.AnswerParseSuccess",
                                     answer_parsed_successfully);
@@ -939,13 +935,10 @@ bool SearchSuggestionParser::ParseSuggestResults(
                         should_prefetch, should_prerender, trimmed_input));
 
       if (answer_parsed_successfully) {
+        // Ensure `answer_template` has an answer.
+        DCHECK(answer_template.answers_size() > 0);
         results->suggest_results.back().SetAnswerType(answer_type);
-        if (omnibox_feature_configs::SuggestionAnswerMigration::Get().enabled) {
-          results->suggest_results.back().SetRichAnswerTemplate(
-              answer_template);
-        } else {
-          results->suggest_results.back().SetAnswer(answer);
-        }
+        results->suggest_results.back().SetRichAnswerTemplate(answer_template);
       }
 
       if (suggestion_group_id) {

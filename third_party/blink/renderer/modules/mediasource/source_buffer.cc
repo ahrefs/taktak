@@ -155,7 +155,7 @@ scoped_refptr<media::StreamParserBuffer> MakeAudioStreamParserBuffer(
       kWebCodecsAudioTrackId);
 
   // Currently, we do not populate any side_data in these converters.
-  DCHECK(!stream_parser_buffer->has_side_data());
+  DCHECK(!stream_parser_buffer->side_data());
 
   stream_parser_buffer->set_timestamp(audio_chunk.buffer()->timestamp());
   // TODO(crbug.com/1144908): Get EncodedAudioChunk to have an optional duration
@@ -180,7 +180,7 @@ scoped_refptr<media::StreamParserBuffer> MakeVideoStreamParserBuffer(
       kWebCodecsVideoTrackId);
 
   // Currently, we do not populate any side_data in these converters.
-  DCHECK(!stream_parser_buffer->has_side_data());
+  DCHECK(!stream_parser_buffer->side_data());
 
   stream_parser_buffer->set_timestamp(video_chunk.buffer()->timestamp());
   // TODO(crbug.com/1144908): Get EncodedVideoChunk to have an optional decode
@@ -1395,7 +1395,7 @@ AtomicString SourceBuffer::DefaultTrackLanguage(
 }
 
 void SourceBuffer::AddPlaceholderCrossThreadTracks(
-    const WebVector<MediaTrackInfo>& new_tracks,
+    const std::vector<MediaTrackInfo>& new_tracks,
     scoped_refptr<MediaSourceAttachmentSupplement> attachment) {
   // TODO(https://crbug.com/878133): Complete the MSE-in-Workers function
   // necessary to enable successful experimental usage of AudioVideoTracks
@@ -1491,7 +1491,7 @@ void SourceBuffer::RemovePlaceholderCrossThreadTracks(
 }
 
 bool SourceBuffer::InitializationSegmentReceived(
-    const WebVector<MediaTrackInfo>& new_tracks) {
+    const std::vector<MediaTrackInfo>& new_tracks) {
   DVLOG(3) << __func__ << " this=" << this << " tracks=" << new_tracks.size();
   DCHECK(source_);
   source_->AssertAttachmentsMutexHeldIfCrossThreadForDebugging();
@@ -1535,10 +1535,10 @@ bool SourceBuffer::InitializationSegmentReceived(
       if (first_initialization_segment_received_)
         track = FindExistingTrackById(videoTracks(), track_info.id);
     } else {
-      DVLOG(3) << __func__ << " this=" << this
-               << " failed: unsupported track type " << track_info.track_type;
       // TODO(servolk): Add handling of text tracks.
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED() << __func__ << " this=" << this
+                   << " failed: unsupported track type "
+                   << track_info.track_type;
     }
     if (first_initialization_segment_received_ && !track) {
       DVLOG(3) << __func__ << " this=" << this

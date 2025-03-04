@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/40285824): Remove this and spanify to fix the errors.
+#pragma allow_unsafe_buffers
+#endif
+
 #include "media/gpu/v4l2/test/vp9_decoder.h"
 
 #include <linux/v4l2-controls.h>
@@ -384,7 +389,7 @@ void Vp9Decoder::SetupFrameParams(
         v4l2_frame_params->alt_frame_ts = reference_id;
         break;
       default:
-        NOTREACHED_IN_MIGRATION() << "Invalid reference frame index";
+        NOTREACHED() << "Invalid reference frame index";
     }
   }
 

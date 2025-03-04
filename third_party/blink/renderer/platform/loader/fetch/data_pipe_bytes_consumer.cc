@@ -96,8 +96,6 @@ BytesConsumer::Result DataPipeBytesConsumer::BeginRead(
       SetError(Error("error"));
       return Result::kError;
   }
-
-  NOTREACHED_IN_MIGRATION();
 }
 
 BytesConsumer::Result DataPipeBytesConsumer::EndRead(size_t read) {

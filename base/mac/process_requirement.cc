@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <sys/errno.h>
 
+#include <algorithm>
 #include <optional>
 
 #include "base/apple/mach_logging.h"
@@ -28,7 +29,6 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/no_destructor.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/strcat.h"
 #include "base/strings/string_util.h"
 #include "base/task/thread_pool.h"
@@ -246,7 +246,7 @@ ProcessRequirement::Builder ProcessRequirement::Builder::Identifier(
 ProcessRequirement::Builder ProcessRequirement::Builder::IdentifierIsOneOf(
     std::vector<std::string> identifiers) && {
   CHECK(identifiers.size());
-  CHECK(base::ranges::all_of(identifiers, &std::string::size));
+  CHECK(std::ranges::all_of(identifiers, &std::string::size));
   CHECK(identifiers_.empty());
   identifiers_ = std::move(identifiers);
   return std::move(*this);
@@ -317,7 +317,7 @@ ProcessRequirement::Builder::HasSameCertificateType() && {
 ProcessRequirement::Builder ProcessRequirement::Builder::TeamIdentifier(
     std::string team_identifier) && {
   CHECK(team_identifier_.empty());
-  CHECK(base::ranges::all_of(team_identifier, base::IsAsciiAlphaNumeric<char>));
+  CHECK(std::ranges::all_of(team_identifier, base::IsAsciiAlphaNumeric<char>));
   team_identifier_ = std::move(team_identifier);
   has_same_team_identifier_called_ = false;
   return std::move(*this);
@@ -485,7 +485,7 @@ ScopedCFTypeRef<SecRequirementRef> ProcessRequirement::AsSecRequirement()
 
   if (team_identifier_.size()) {
     clauses.push_back(
-        StrCat({"certificate leaf[subject.OU] = ", team_identifier_}));
+        StrCat({"certificate leaf[subject.OU] = \"", team_identifier_, "\""}));
   }
 
   clauses.push_back(
@@ -646,42 +646,6 @@ void ProcessRequirement::GatherMetrics() {
     RecordHasExpectedValueHistogram(
         "FallbackValidationCategory",
         fallback_validation_category_has_expected_value);
-  }
-
-  bool all_fields_have_expected_values =
-      team_id_has_expected_value &&
-      fallback_validation_category_has_expected_value;
-  if (CSOpsProvider()->SupportsValidationCategory()) {
-    all_fields_have_expected_values = all_fields_have_expected_values &&
-                                      validation_category_has_expected_value;
-  }
-
-  if (!all_fields_have_expected_values) {
-    // Use `DumpWithoutCrashing` to understand unexpected values, except in
-    // specific situations where "unexpected" values are expected.
-    if (fallback_validation_category == ValidationCategory::None &&
-        (team_id == base::unexpected(ENOENT) ||
-         team_id == base::unexpected(EINVAL))) {
-      // A build with Chrome branding that is unsigned or ad-hoc signed,
-      // such as for local development.
-    } else if (team_id_has_expected_value &&
-               fallback_validation_category ==
-                   ValidationCategory::Development) {
-      // A build with Chrome branding signed with the development identity.
-    } else if (validation_category == ValidationCategory::Platform) {
-      // Being reported as a platform binary indicates that
-      // `amfi_get_out_of_my_way=1` is set in the boot arguments.
-    } else {
-      SCOPED_CRASH_KEY_STRING32("ProcessRequirement", "TeamIdentifier",
-                                StringForCrashKey(team_id));
-      SCOPED_CRASH_KEY_STRING32("ProcessRequirement", "Category",
-                                StringForCrashKey(validation_category));
-      SCOPED_CRASH_KEY_STRING32(
-          "ProcessRequirement", "FallbackCategory",
-          StringForCrashKey(fallback_validation_category));
-
-      debug::DumpWithoutCrashing();
-    }
   }
 #endif
 

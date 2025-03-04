@@ -29,6 +29,7 @@ class DOMWrapperWorld;
 class InputDeviceCapabilitiesConstants;
 class LocalDOMWindow;
 class Location;
+class ScriptObject;
 class ScriptValue;
 class SecurityOrigin;
 class SerializedScriptValue;
@@ -114,7 +115,7 @@ class CORE_EXPORT DOMWindow : public WindowProperties {
   void postMessage(v8::Isolate*,
                    const ScriptValue& message,
                    const String& target_origin,
-                   HeapVector<ScriptValue>& transfer,
+                   HeapVector<ScriptObject> transfer,
                    ExceptionState&);
 
   void postMessage(v8::Isolate*,
@@ -167,10 +168,8 @@ class CORE_EXPORT DOMWindow : public WindowProperties {
   // marked as "CrossOrigin" in the window.idl.
   void ReportCoopAccess(const char* property_name);
 
-  // Records metrics for cross-origin access to the WindowProxy properties,
+  // Records metrics for access to the cross-origin WindowProxy properties.
   void RecordWindowProxyAccessMetrics(
-      mojom::blink::WebFeature property_access,
-      mojom::blink::WebFeature property_access_from_other_page,
       mojom::blink::WindowProxyAccessType access_type) const;
 
   // We need to check proxy access to see if it's blocked, and if so whether

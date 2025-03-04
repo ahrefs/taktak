@@ -2,11 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
+#include "components/content_settings/core/browser/host_content_settings_map.h"
 
+#include <array>
 #include <memory>
 #include <string>
 #include <utility>
@@ -37,7 +35,6 @@
 #include "components/content_settings/core/browser/content_settings_uma_util.h"
 #include "components/content_settings/core/browser/content_settings_utils.h"
 #include "components/content_settings/core/browser/cookie_settings.h"
-#include "components/content_settings/core/browser/host_content_settings_map.h"
 #include "components/content_settings/core/browser/user_modifiable_provider.h"
 #include "components/content_settings/core/browser/website_settings_info.h"
 #include "components/content_settings/core/browser/website_settings_registry.h"
@@ -49,7 +46,9 @@
 #include "components/content_settings/core/common/features.h"
 #include "components/content_settings/core/common/host_indexed_content_settings.h"
 #include "components/content_settings/core/common/pref_names.h"
+#include "components/content_settings/core/test/content_settings_mock_provider.h"
 #include "components/content_settings/core/test/content_settings_test_utils.h"
+#include "components/keyed_service/core/refcounted_keyed_service.h"
 #include "components/permissions/features.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
@@ -69,12 +68,6 @@ using ::testing::MockFunction;
 using ::testing::Return;
 
 namespace {
-
-bool MatchPrimaryPattern(const ContentSettingsPattern& expected_primary,
-                         const ContentSettingsPattern& primary_pattern,
-                         const ContentSettingsPattern& secondary_pattern) {
-  return expected_primary == primary_pattern;
-}
 
 base::Time GetSettingLastModifiedDate(HostContentSettingsMap* map,
                                       GURL primary_url,
@@ -184,7 +177,7 @@ class TesterForType {
         break;
       default:
         // Add support as needed.
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 
@@ -224,6 +217,24 @@ class TesterForType {
   raw_ptr<HostContentSettingsMap> host_content_settings_map_;
   ContentSettingsType content_type_;
   const char* policy_default_setting_;
+};
+
+// For building HostContentSettingsMap without HostContentSettingsMapFactory.
+// Shuts down HostContentSettingsMap properly on destruction.
+class ScopedMapNoFactoryTester {
+ public:
+  scoped_refptr<HostContentSettingsMap> map;
+
+  explicit ScopedMapNoFactoryTester(TestingProfile& profile) {
+    map = base::MakeRefCounted<HostContentSettingsMap>(
+        profile.GetPrefs(),
+        /*is_off_the_record=*/false,
+        /*store_last_modified=*/false,
+        /*restore_session=*/false,
+        /*should_record_metrics=*/false);
+  }
+
+  ~ScopedMapNoFactoryTester() { map->ShutdownOnUIThread(); }
 };
 
 TEST_F(HostContentSettingsMapTest, DefaultValues) {
@@ -312,7 +323,8 @@ TEST_F(HostContentSettingsMapTest, IndividualSettings) {
 
 TEST_F(HostContentSettingsMapTest, GetWebsiteSettingsForOneType) {
   TestingProfile profile;
-  GURL hosts[] = {GURL("https://example1.com/"), GURL("https://example2.com/")};
+  auto hosts = std::to_array<GURL>(
+      {GURL("https://example1.com/"), GURL("https://example2.com/")});
   HostContentSettingsMap* host_content_settings_map =
       HostContentSettingsMapFactory::GetForProfile(&profile);
 
@@ -473,8 +485,11 @@ TEST_F(HostContentSettingsMapTest, Origins) {
 
 TEST_F(HostContentSettingsMapTest, Observer) {
   TestingProfile profile;
-  HostContentSettingsMap* host_content_settings_map =
-      HostContentSettingsMapFactory::GetForProfile(&profile);
+  // Use ScopedMapNoFactoryTester in order to enable the test to ignore
+  // UnusedSitePermissionsService and
+  // ContentSettingsType::REVOKED_UNUSED_SITE_PERMISSIONS.
+  ScopedMapNoFactoryTester map_tester(profile);
+  HostContentSettingsMap* host_content_settings_map = map_tester.map.get();
   MockSettingsObserver observer(host_content_settings_map);
 
   GURL host("http://example.com/");
@@ -1208,6 +1223,74 @@ TEST_F(HostContentSettingsMapTest, GetUserModifiableContentSetting) {
             map->GetContentSetting(url, url, ContentSettingsType::COOKIES));
 }
 
+/**
+ * Test that HostContentSettingsMap::GetUserModifiableContentSetting() ignores
+ * the relative int value of the providers when determining whether a provider
+ * is user-modifiable.
+ */
+TEST_F(HostContentSettingsMapTest,
+       GetUserModifiableContentSetting_IndependentOfProviderEnumValues) {
+  EXPECT_LT(content_settings::ProviderType::kPolicyProvider,
+            content_settings::ProviderType::kPrefProvider);
+  EXPECT_LT(content_settings::ProviderType::kPrefProvider,
+            content_settings::ProviderType::kProviderForTests);
+
+  // Arbitrarily using cookies as content type to test.
+  GURL url("http://user_exception_allow.com");
+  {
+    TestingProfile profile;
+    ScopedMapNoFactoryTester map_tester(profile);
+
+    profile.GetTestingPrefService()->SetManagedPref(
+        prefs::kManagedDefaultCookiesSetting,
+        std::make_unique<base::Value>(CONTENT_SETTING_BLOCK));
+
+    scoped_refptr<HostContentSettingsMap> map = map_tester.map;
+    map->SetContentSettingDefaultScope(url, url, ContentSettingsType::COOKIES,
+                                       CONTENT_SETTING_ALLOW);
+
+    EXPECT_EQ(CONTENT_SETTING_ALLOW,
+              map->GetUserModifiableContentSetting(
+                  url, url, ContentSettingsType::COOKIES));
+    content_settings::SettingInfo info;
+    EXPECT_EQ(
+        CONTENT_SETTING_BLOCK,
+        map->GetContentSetting(url, url, ContentSettingsType::COOKIES, &info));
+    // Check that the setting came from ProviderType::kPolicyProvider.
+    EXPECT_EQ(content_settings::SettingSource::kPolicy, info.source);
+  }
+
+  {
+    TestingProfile profile;
+
+    // Use ScopedMapNoFactoryTester so that
+    // HostContentSettingsMap::RegisterProvider() is called immediately after
+    // building the HostContentSettingsMap and avoid any calls on
+    // HostContentSettingsMap from TestingProfile initializing. This is required
+    // due to the thread assertions in
+    // HostContentSettingsMap::RegisterProvider().
+    ScopedMapNoFactoryTester map_tester(profile);
+    auto mock_provider = std::make_unique<content_settings::MockProvider>(
+        /*read_only=*/false);
+    mock_provider->SetWebsiteSetting(
+        ContentSettingsPattern::Wildcard(), ContentSettingsPattern::Wildcard(),
+        ContentSettingsType::COOKIES, base::Value(CONTENT_SETTING_BLOCK));
+    map_tester.map->RegisterProvider(
+        content_settings::ProviderType::kProviderForTests,
+        std::move(mock_provider));
+
+    EXPECT_EQ(CONTENT_SETTING_ALLOW,
+              map_tester.map->GetUserModifiableContentSetting(
+                  url, url, ContentSettingsType::COOKIES));
+    content_settings::SettingInfo info;
+    EXPECT_EQ(CONTENT_SETTING_BLOCK,
+              map_tester.map->GetContentSetting(
+                  url, url, ContentSettingsType::COOKIES, &info));
+    // Check that the setting came from ProviderType::kProviderForTests.
+    EXPECT_EQ(content_settings::SettingSource::kTest, info.source);
+  }
+}
+
 // For a single Unicode encoded pattern, check if it gets converted to punycode
 // and old pattern gets deleted.
 TEST_F(HostContentSettingsMapTest, CanonicalizeExceptionsUnicodeOnly) {
@@ -1526,7 +1609,6 @@ TEST_F(HostContentSettingsMapTest, GuestProfileDefaultSetting) {
               host_content_settings_map->GetContentSetting(
                   host, host, ContentSettingsType::COOKIES));
 }
-
 #endif  // !BUILDFLAG(IS_ANDROID)
 
 TEST_F(HostContentSettingsMapTest, InvalidPattern) {
@@ -1576,8 +1658,10 @@ TEST_F(HostContentSettingsMapTest, ClearSettingsForOneTypeWithPredicate) {
 
   // First, test that we clear only COOKIES (not APP_BANNER), and pattern2.
   host_content_settings_map->ClearSettingsForOneTypeWithPredicate(
-      ContentSettingsType::COOKIES, base::Time(), base::Time::Max(),
-      base::BindRepeating(&MatchPrimaryPattern, pattern2));
+      ContentSettingsType::COOKIES,
+      [&](const ContentSettingPatternSource& setting) {
+        return setting.primary_pattern == pattern2;
+      });
   ContentSettingsForOneType host_settings =
       host_content_settings_map->GetSettingsForOneType(
           ContentSettingsType::COOKIES);
@@ -1622,8 +1706,10 @@ TEST_F(HostContentSettingsMapTest, ClearSettingsForOneTypeWithPredicate) {
   ContentSettingsPattern http_pattern =
       ContentSettingsPattern::FromURLNoWildcard(url3_origin_only);
   host_content_settings_map->ClearSettingsForOneTypeWithPredicate(
-      ContentSettingsType::SITE_ENGAGEMENT, base::Time(), base::Time::Max(),
-      base::BindRepeating(&MatchPrimaryPattern, http_pattern));
+      ContentSettingsType::SITE_ENGAGEMENT,
+      [&](const ContentSettingPatternSource& setting) {
+        return setting.primary_pattern == http_pattern;
+      });
   // Verify we only have one, and it's url1.
   host_settings = host_content_settings_map->GetSettingsForOneType(
       ContentSettingsType::SITE_ENGAGEMENT);
@@ -2087,7 +2173,13 @@ TEST_F(HostContentSettingsMapTest, IncognitoChangesDoNotPersist) {
 
 // Validate that a content setting that uses a different scope/constraint can
 // co-exist with another setting
-TEST_F(HostContentSettingsMapTest, MixedScopeSettings) {
+// TODO(crbug.com/398993133): Fix flakes on some Android builders.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_MixedScopeSettings DISABLED_MixedScopeSettings
+#else
+#define MAYBE_MixedScopeSettings MixedScopeSettings
+#endif
+TEST_F(HostContentSettingsMapTest, MAYBE_MixedScopeSettings) {
   TestingProfile profile;
   HostContentSettingsMap* map =
       HostContentSettingsMapFactory::GetForProfile(&profile);
@@ -2148,7 +2240,16 @@ TEST_F(HostContentSettingsMapTest, MixedScopeSettings) {
 // We should act like no preference is specified if the value is
 // SessionModel::None; otherwise, only the preferences from the specified
 // scope should be returned (if any).
-TEST_F(HostContentSettingsMapTest, GetSettingsForOneTypeWithSessionModel) {
+// TODO(crbug.com/399254058): flaky on Android
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_GetSettingsForOneTypeWithSessionModel \
+  DISABLED_GetSettingsForOneTypeWithSessionModel
+#else
+#define MAYBE_GetSettingsForOneTypeWithSessionModel \
+  GetSettingsForOneTypeWithSessionModel
+#endif
+TEST_F(HostContentSettingsMapTest,
+       MAYBE_GetSettingsForOneTypeWithSessionModel) {
   TestingProfile profile;
   HostContentSettingsMap* map =
       HostContentSettingsMapFactory::GetForProfile(&profile);
@@ -2247,8 +2348,14 @@ INSTANTIATE_TEST_SUITE_P(All,
 // Validate that the settings array retrieved correctly carries the expiry data
 // for settings and they can detect if and when they expire.
 // GetSettingsForOneType should also omit any settings that are already expired.
+// TODO(crbug.com/398993133): Fix flakes on some Android builders.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_GetSettingsForOneTypeWithExpiryAndVerifyUmaHistograms DISABLED_GetSettingsForOneTypeWithExpiryAndVerifyUmaHistograms
+#else
+#define MAYBE_GetSettingsForOneTypeWithExpiryAndVerifyUmaHistograms GetSettingsForOneTypeWithExpiryAndVerifyUmaHistograms
+#endif
 TEST_P(HostContentSettingsMapActiveExpirationTest,
-       GetSettingsForOneTypeWithExpiryAndVerifyUmaHistograms) {
+       MAYBE_GetSettingsForOneTypeWithExpiryAndVerifyUmaHistograms) {
   base::HistogramTester t;
   TestingProfile profile;
   HostContentSettingsMap* map =
@@ -2256,8 +2363,6 @@ TEST_P(HostContentSettingsMapActiveExpirationTest,
 
   content_settings::ContentSettingsRegistry::GetInstance()->ResetForTest();
   ReloadProviders(profile.GetPrefs(), map);
-  const std::string kActiveExpiryHistogramName =
-      "ContentSettings.ActiveExpiry.PrefProvider.ContentSettingsType";
 
   // The following type is used as a sample of the persistent permission
   // type. It can be replaced with any other type if required.
@@ -2323,7 +2428,6 @@ TEST_P(HostContentSettingsMapActiveExpirationTest,
 
   RunExpirationMechanismIfFeatureEnabled(map,
                                          ContentSettingsType::STORAGE_ACCESS);
-  t.ExpectTotalCount(kActiveExpiryHistogramName, 0);
 
   // If we Fastforward by 101 seconds we should see only our first setting is
   // expired, we now retrieve 1 less setting and the rest are okay.
@@ -2337,13 +2441,6 @@ TEST_P(HostContentSettingsMapActiveExpirationTest,
       persistent_type, content_settings::mojom::SessionModel::USER_SESSION);
   ASSERT_EQ(2u, settings.size());
 
-  t.ExpectTotalCount(kActiveExpiryHistogramName, GetParam() ? 1 : 0);
-  t.ExpectUniqueSample(
-      kActiveExpiryHistogramName,
-      content_settings_uma_util::ContentSettingTypeToHistogramValue(
-          ContentSettingsType::STORAGE_ACCESS),
-      GetParam() ? 1 : 0);
-
   // If we fast forward again we should expire our second setting and drop if
   // from our retrieval list now.
   FastForwardTime(base::Seconds(101));
@@ -2356,14 +2453,6 @@ TEST_P(HostContentSettingsMapActiveExpirationTest,
       persistent_type, content_settings::mojom::SessionModel::USER_SESSION);
   ASSERT_EQ(1u, settings.size());
 
-  t.ExpectTotalCount(kActiveExpiryHistogramName, GetParam() ? 2 : 0);
-
-  t.ExpectUniqueSample(
-      kActiveExpiryHistogramName,
-      content_settings_uma_util::ContentSettingTypeToHistogramValue(
-          ContentSettingsType::STORAGE_ACCESS),
-      GetParam() ? 2 : 0);
-
   // If we fast forwarding much further it shouldn't make a difference as our
   // last setting and the default setting should never expire.
   FastForwardTime(base::Minutes(100));
@@ -2375,13 +2464,6 @@ TEST_P(HostContentSettingsMapActiveExpirationTest,
   settings = map->GetSettingsForOneType(
       persistent_type, content_settings::mojom::SessionModel::USER_SESSION);
   ASSERT_EQ(1u, settings.size());
-
-  t.ExpectTotalCount(kActiveExpiryHistogramName, GetParam() ? 2 : 0);
-  t.ExpectUniqueSample(
-      kActiveExpiryHistogramName,
-      content_settings_uma_util::ContentSettingTypeToHistogramValue(
-          ContentSettingsType::STORAGE_ACCESS),
-      GetParam() ? 2 : 0);
 }
 
 TEST_F(HostContentSettingsMapTest, StorageAccessMetrics) {
@@ -2415,7 +2497,13 @@ TEST_F(HostContentSettingsMapTest, StorageAccessMetrics) {
   t.ExpectUniqueSample(base_histogram + ".MaxTopLevel", 4, 1);
 }
 
-TEST_F(HostContentSettingsMapTest, RenewContentSetting) {
+// TODO(crbug.com/398993133): Fix flakes on some Android builders.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_RenewContentSetting DISABLED_RenewContentSetting
+#else
+#define MAYBE_RenewContentSetting RenewContentSetting
+#endif
+TEST_F(HostContentSettingsMapTest, MAYBE_RenewContentSetting) {
   TestingProfile profile;
   const base::Time now = base::Time::Now();
   const base::Time plus_1_hour = now + base::Hours(1);
@@ -2549,7 +2637,8 @@ TEST_F(HostContentSettingsMapTest, TrackingProtectionMetrics) {
       "ContentSettings.RegularProfile.Exceptions.tracking-protection", 3, 1);
 }
 
-// File access is not implemented on Android. Luckily we don't need it for DevTools.
+// File access is not implemented on Android. Luckily we don't need it for
+// DevTools.
 #if !BUILDFLAG(IS_ANDROID)
 TEST_F(HostContentSettingsMapTest, DevToolsFileAccess) {
   TestingProfile profile;

@@ -28,12 +28,12 @@ GIN_EXPORT extern const base::FeatureParam<int>
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8BaselineBatchCompilation);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8CodeMemoryWriteProtection);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8ConcurrentSparkplugHighPriorityThreads);
-GIN_EXPORT BASE_DECLARE_FEATURE(kV8CppGCEnableLargerCage);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8DelayMemoryReducer);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8ConcurrentMarkingHighPriorityThreads);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8DecommitPooledPages);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8ExperimentalRegexpEngine);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8ExternalMemoryAccountedInGlobalLimit);
+GIN_EXPORT BASE_DECLARE_FEATURE(kV8GCSpeedUsesCounters);
 GIN_EXPORT extern const base::FeatureParam<int> kV8FlushBytecodeOldAge;
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8FlushBaselineCode);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8FlushBytecode);
@@ -59,7 +59,6 @@ GIN_EXPORT BASE_DECLARE_FEATURE(kV8PerContextMarkingWorklist);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8ReduceConcurrentMarkingTasks);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8ScavengerHigherCapacity);
 GIN_EXPORT extern const base::FeatureParam<int> kV8ScavengerMaxCapacity;
-GIN_EXPORT BASE_DECLARE_FEATURE(kV8SeparateGCPhases);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8ShortBuiltinCalls);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8SideStepTransitions);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8SingleThreadedGCInBackground);
@@ -81,12 +80,10 @@ GIN_EXPORT BASE_DECLARE_FEATURE(kV8Turbofan);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8Turboshaft);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8TurboshaftInstructionSelection);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8TurboFastApiCalls);
-GIN_EXPORT BASE_DECLARE_FEATURE(kV8UpdateLimitAfterLoading);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8UseLibmTrigFunctions);
 GIN_EXPORT BASE_DECLARE_FEATURE(kV8UseOriginalMessageForStackTrace);
 GIN_EXPORT extern const base::FeatureParam<base::TimeDelta>
     kV8MemoryReducerStartDelay;
-GIN_EXPORT BASE_DECLARE_FEATURE(kJavaScriptCompileHintsMagic);
 GIN_EXPORT BASE_DECLARE_FEATURE(kJavaScriptIteratorHelpers);
 GIN_EXPORT BASE_DECLARE_FEATURE(kJavaScriptPromiseWithResolvers);
 GIN_EXPORT BASE_DECLARE_FEATURE(kJavaScriptRegExpModifiers);
@@ -96,20 +93,9 @@ GIN_EXPORT BASE_DECLARE_FEATURE(kJavaScriptRegExpDuplicateNamedGroups);
 GIN_EXPORT BASE_DECLARE_FEATURE(kJavaScriptPromiseTry);
 GIN_EXPORT BASE_DECLARE_FEATURE(kWebAssemblyDeopt);
 GIN_EXPORT BASE_DECLARE_FEATURE(kWebAssemblyInliningCallIndirect);
-GIN_EXPORT BASE_DECLARE_FEATURE(kWebAssemblyLiftoffCodeFlushing);
 GIN_EXPORT BASE_DECLARE_FEATURE(kWebAssemblyMultipleMemories);
 GIN_EXPORT BASE_DECLARE_FEATURE(kWebAssemblyTurboshaft);
 GIN_EXPORT BASE_DECLARE_FEATURE(kWebAssemblyTurboshaftInstructionSelection);
-
-// Feature for more aggressive code caching (https://crbug.com/v8/14411) and
-// three parameters to control caching behavior.
-GIN_EXPORT BASE_DECLARE_FEATURE(kWebAssemblyMoreAggressiveCodeCaching);
-GIN_EXPORT extern const base::FeatureParam<int>
-    kWebAssemblyMoreAggressiveCodeCachingThreshold;
-GIN_EXPORT extern const base::FeatureParam<int>
-    kWebAssemblyMoreAggressiveCodeCachingTimeoutMs;
-GIN_EXPORT extern const base::FeatureParam<int>
-    kWebAssemblyMoreAggressiveCodeCachingHardThreshold;
 
 }  // namespace features
 

@@ -17,22 +17,23 @@
 #include "base/strings/string_util.h"
 #include "base/synchronization/waitable_event.h"
 #include "build/build_config.h"
-#include "components/autofill/core/browser/autofill_client.h"
-#include "components/autofill/core/browser/autofill_experiments.h"
 #include "components/autofill/core/browser/autofill_progress_dialog_type.h"
-#include "components/autofill/core/browser/data_model/credit_card.h"
+#include "components/autofill/core/browser/data_manager/payments/payments_data_manager.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card.h"
+#include "components/autofill/core/browser/foundations/autofill_client.h"
 #include "components/autofill/core/browser/metrics/autofill_metrics.h"
 #include "components/autofill/core/browser/metrics/payments/better_auth_metrics.h"
 #include "components/autofill/core/browser/payments/payments_autofill_client.h"
 #include "components/autofill/core/browser/payments/payments_network_interface.h"
 #include "components/autofill/core/browser/payments/payments_service_url.h"
-#include "components/autofill/core/browser/personal_data_manager.h"
 #include "components/autofill/core/browser/strike_databases/payments/fido_authentication_strike_database.h"
+#include "components/autofill/core/browser/studies/autofill_experiments.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "components/autofill/core/common/autofill_prefs.h"
 #include "components/signin/public/identity_manager/account_info.h"
 #include "device/fido/authenticator_selection_criteria.h"
 #include "device/fido/fido_types.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "third_party/blink/public/mojom/webauthn/authenticator.mojom.h"
 #include "url/gurl.h"
 #include "url/origin.h"
@@ -177,9 +178,11 @@ UserOptInIntention CreditCardFidoAuthenticator::GetUserOptInIntention(
   user_is_opted_in_ = IsUserOptedIn();
   bool user_local_opt_in_status = IsUserOptedIn();
 
-  // If payments is offering to opt-in, then that means user is not opted in
-  // from Payments. Only take action if the local pref mismatches.
-  if (unmask_details.offer_fido_opt_in && user_local_opt_in_status) {
+  // If payments is offering FIDO opt-in, then that means the user is not opted
+  // in payments, but is eligible for opt-in. Only take action if the local pref
+  // mismatches.
+  if (unmask_details.server_denotes_fido_eligible_but_not_opted_in &&
+      user_local_opt_in_status) {
 #if BUILDFLAG(IS_ANDROID)
     // For Android, if local pref says user is opted in while payments not, it
     // denotes that user intended to opt in from settings page. We will opt user
@@ -353,8 +356,7 @@ void CreditCardFidoAuthenticator::MakeCredential(
 void CreditCardFidoAuthenticator::OptChange(
     base::Value::Dict authenticator_response) {
   payments::OptChangeRequestDetails request_details;
-  request_details.app_locale =
-      autofill_client_->GetPersonalDataManager()->app_locale();
+  request_details.app_locale = payments_data_manager().app_locale();
 
   switch (current_flow_) {
     case OPT_IN_WITH_CHALLENGE_FLOW:
@@ -371,8 +373,7 @@ void CreditCardFidoAuthenticator::OptChange(
           payments::OptChangeRequestDetails::ADD_CARD_FOR_FIDO_AUTH;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   // If |authenticator_response| is set, that means the user just signed a
@@ -567,11 +568,10 @@ CreditCardFidoAuthenticator::ParseCreationOptions(
       relying_party_name ? *relying_party_name : kGooglePaymentsRpName;
 
   const CoreAccountInfo account_info =
-      autofill_client_->GetPersonalDataManager()
-          ->payments_data_manager()
-          .GetAccountInfoForPaymentsServer();
-  options->user.id =
-      std::vector<uint8_t>(account_info.gaia.begin(), account_info.gaia.end());
+      payments_data_manager().GetAccountInfoForPaymentsServer();
+  const std::string& gaia_id_str = account_info.gaia.ToString();
+  options->user.id = options->user.id =
+      std::vector<uint8_t>(gaia_id_str.begin(), gaia_id_str.end());
   options->user.name = account_info.email;
   options->user.display_name = autofill_client_->GetIdentityManager()
                                    ->FindExtendedAccountInfo(account_info)
@@ -604,7 +604,7 @@ CreditCardFidoAuthenticator::ParseCreationOptions(
   } else if (base::EqualsCaseInsensitiveASCII(*attestation, "DIRECT")) {
     options->attestation = device::AttestationConveyancePreference::kDirect;
   } else {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   // Only allow user-verifying platform authenticators.
@@ -712,8 +712,7 @@ void CreditCardFidoAuthenticator::LogWebauthnResult(
                   : autofill_metrics::WebauthnFlowEvent::kCheckoutOptIn;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      return;
+      NOTREACHED();
   }
 
   // TODO(crbug.com/40621544): Add metrics for revoked pending WebAuthn
@@ -744,12 +743,8 @@ void CreditCardFidoAuthenticator::HandleGetAssertionSuccess(
     case AUTHENTICATION_FLOW: {
       base::Value::Dict response =
           ParseAssertionResponse(std::move(assertion_response));
-      full_card_request_ = std::make_unique<payments::FullCardRequest>(
-          autofill_client_,
-          autofill_client_->GetPaymentsAutofillClient()
-              ->GetPaymentsNetworkInterface(),
-          autofill_client_->GetPersonalDataManager());
-
+      full_card_request_ =
+          std::make_unique<payments::FullCardRequest>(autofill_client_);
       std::optional<GURL> last_committed_primary_main_frame_origin;
       if (card_->record_type() == CreditCard::RecordType::kVirtualCard &&
           autofill_client_->GetLastCommittedPrimaryMainFrameURL().is_valid()) {
@@ -786,8 +781,7 @@ void CreditCardFidoAuthenticator::HandleGetAssertionSuccess(
     case NONE_FLOW:
     case OPT_IN_FETCH_CHALLENGE_FLOW:
     case OPT_OUT_FLOW: {
-      NOTREACHED_IN_MIGRATION();
-      return;
+      NOTREACHED();
     }
   }
 
@@ -838,8 +832,7 @@ void CreditCardFidoAuthenticator::HandleGetAssertionFailure() {
     case NONE_FLOW:
     case OPT_IN_FETCH_CHALLENGE_FLOW:
     case OPT_OUT_FLOW: {
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
     }
   }
   current_flow_ = NONE_FLOW;

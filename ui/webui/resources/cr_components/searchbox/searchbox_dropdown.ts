@@ -4,7 +4,6 @@
 
 import './searchbox_match.js';
 import './searchbox_dropdown_shared_style.css.js';
-import '//resources/polymer/v3_0/iron-selector/iron-selector.js';
 import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import '//resources/cr_elements/cr_icons.css.js';
 
@@ -129,14 +128,16 @@ export class SearchboxDropdownElement extends PolymerElement {
     };
   }
 
-  canShowSecondarySide: boolean;
-  hadSecondarySide: boolean;
-  hasSecondarySide: boolean;
-  result: AutocompleteResult;
-  selectedMatchIndex: number;
-  private hiddenGroupIds_: number[];
-  private selectableMatchElements_: SearchboxMatchElement[];
-  private showSecondarySide_: boolean;
+  declare canShowSecondarySide: boolean;
+  declare hadSecondarySide: boolean;
+  declare hasSecondarySide: boolean;
+  declare hasEmptyInput: boolean;
+  declare result: AutocompleteResult;
+  declare selectedMatchIndex: number;
+  declare showThumbnail: boolean;
+  declare private hiddenGroupIds_: number[];
+  declare private selectableMatchElements_: SearchboxMatchElement[];
+  declare private showSecondarySide_: boolean;
   private resizeObserver_: ResizeObserver|null = null;
   private pageHandler_: PageHandlerInterface;
 

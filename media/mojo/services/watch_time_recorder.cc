@@ -4,13 +4,13 @@
 
 #include "media/mojo/services/watch_time_recorder.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "base/containers/contains.h"
 #include "base/containers/flat_set.h"
 #include "base/hash/hash.h"
 #include "base/metrics/histogram_functions.h"
-#include "base/ranges/algorithm.h"
 #include "media/base/limits.h"
 #include "media/base/video_codecs.h"
 #include "media/base/video_decoder.h"
@@ -63,11 +63,14 @@ WatchTimeRecorder::WatchTimeUkmRecord::WatchTimeUkmRecord(
 
 WatchTimeRecorder::WatchTimeUkmRecord::~WatchTimeUkmRecord() = default;
 
-WatchTimeRecorder::WatchTimeRecorder(mojom::PlaybackPropertiesPtr properties,
-                                     ukm::SourceId source_id,
-                                     bool is_top_frame,
-                                     uint64_t player_id)
-    : properties_(std::move(properties)),
+WatchTimeRecorder::WatchTimeRecorder(
+    PictureInPictureEventsInfo::AutoPipReasonCallback auto_pip_reason_cb,
+    mojom::PlaybackPropertiesPtr properties,
+    ukm::SourceId source_id,
+    bool is_top_frame,
+    uint64_t player_id)
+    : auto_pip_reason_cb_(std::move(auto_pip_reason_cb)),
+      properties_(std::move(properties)),
       source_id_(source_id),
       is_top_frame_(is_top_frame),
       player_id_(player_id),
@@ -120,8 +123,8 @@ void WatchTimeRecorder::FinalizeWatchTime(
       if (kv.second >= kMinimumElapsedWatchTime) {
         RecordWatchTimeInternal(key_str, kv.second);
       } else if (kv.second.is_positive()) {
-        auto it = base::ranges::find(extended_metrics_keys_, kv.first,
-                                     &ExtendedMetricsKeyMap::watch_time_key);
+        auto it = std::ranges::find(extended_metrics_keys_, kv.first,
+                                    &ExtendedMetricsKeyMap::watch_time_key);
         if (it != extended_metrics_keys_.end())
           RecordDiscardedWatchTime(it->discard_key, kv.second);
       }

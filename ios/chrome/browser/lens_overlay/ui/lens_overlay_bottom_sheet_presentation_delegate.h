@@ -5,6 +5,8 @@
 #ifndef IOS_CHROME_BROWSER_LENS_OVERLAY_UI_LENS_OVERLAY_BOTTOM_SHEET_PRESENTATION_DELEGATE_H_
 #define IOS_CHROME_BROWSER_LENS_OVERLAY_UI_LENS_OVERLAY_BOTTOM_SHEET_PRESENTATION_DELEGATE_H_
 
+#import <Foundation/Foundation.h>
+
 // Presentation delegate for the bottom sheet.
 // Bottom sheet content may request the container to be maximized or minimized,
 // e.g. when the user selects a result that opens an image viewer.
@@ -16,8 +18,17 @@
 // Request resizing the bottom sheet to minimum size.
 - (void)requestMinimizeBottomSheet;
 
-// Whether to restrict sheet to stay into the large detent.
-- (void)restrictSheetToLargeDetent:(BOOL)restrictToLargeDetent;
+// Handle a selection result loaded in the bottom sheet.
+- (void)didLoadSelectionResult;
+
+// Handle a translation result loaded in the bottom sheet.
+- (void)didLoadTranslateResult;
+
+// Hides the bottom sheet without destroying the presentation.
+- (void)hideBottomSheet;
+
+// Reveals the hidden bottom sheet.
+- (void)revealBottomSheetIfHidden;
 
 @end
 

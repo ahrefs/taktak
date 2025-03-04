@@ -35,12 +35,12 @@
 #include "media/gpu/v4l2/v4l2_video_decoder_backend_stateless.h"
 #include "mojo/public/cpp/bindings/callback_helpers.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // gn check does not account for BUILDFLAG(), so including this header will
-// make gn check fail for builds other than ash-chrome. See gn help nogncheck
+// make gn check fail for builds other than ChromeOS. See gn help nogncheck
 // for more information.
 #include "chromeos/components/cdm_factory_daemon/chromeos_cdm_context.h"  // nogncheck
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 // TODO(jkardatzke): Remove these once they are in linux/videodev2.h.
 #define V4L2_CID_MPEG_MTK_BASE (0x00990000 | 0x2000)
@@ -243,7 +243,7 @@ void V4L2VideoDecoder::Initialize(const VideoDecoderConfig& config,
   cdm_context_ref_ = nullptr;
 
   if (config.is_encrypted()) {
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS)
     VLOGF(1) << "Encrypted content is not supported";
     std::move(init_cb).Run(DecoderStatus::Codes::kUnsupportedEncryptionMode);
     return;
@@ -365,9 +365,7 @@ void V4L2VideoDecoder::Initialize(const VideoDecoderConfig& config,
 
 bool V4L2VideoDecoder::NeedsBitstreamConversion() const {
   DCHECK(output_cb_) << "V4L2VideoDecoder hasn't been initialized";
-  NOTREACHED_IN_MIGRATION();
-  return (profile_ >= H264PROFILE_MIN && profile_ <= H264PROFILE_MAX) ||
-         (profile_ >= HEVCPROFILE_MIN && profile_ <= HEVCPROFILE_MAX);
+  NOTREACHED();
 }
 
 bool V4L2VideoDecoder::CanReadWithoutStalling() const {
@@ -501,7 +499,7 @@ V4L2Status V4L2VideoDecoder::InitializeBackend() {
 
 void V4L2VideoDecoder::AllocateSecureBuffer(uint32_t size,
                                             SecureBufferAllocatedCB callback) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   pending_secure_allocate_callbacks_++;
   // Wrap this with a default handler if it gets dropped somehow or otherwise we
   // could hang waiting to finish init.
@@ -515,8 +513,8 @@ void V4L2VideoDecoder::AllocateSecureBuffer(uint32_t size,
                   weak_this_for_callbacks_.GetWeakPtr(), std::move(callback))),
               mojo::PlatformHandle()));
 #else
-  NOTREACHED_IN_MIGRATION();
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+  NOTREACHED();
+#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 void V4L2VideoDecoder::AllocateSecureBufferCB(SecureBufferAllocatedCB callback,

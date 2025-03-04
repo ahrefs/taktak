@@ -7,10 +7,10 @@
 
 #import <UIKit/UIKit.h>
 
-#import "ios/chrome/browser/ui/content_suggestions/send_tab_to_self/send_tab_promo_delegate.h"
+#import "ios/chrome/browser/ui/content_suggestions/standalone_module_delegate.h"
 
 class FaviconLoader;
-@protocol NotificationsModuleDelegate;
+@protocol MagicStackModuleContainerDelegate;
 class PrefService;
 @class SendTabPromoItem;
 
@@ -21,11 +21,14 @@ class PrefService;
 // devices.
 - (void)sentTabReceived;
 
+// Signals that the Send Tab Promo Module should be removed.
+- (void)removeSendTabPromoModule;
+
 @end
 
 // Mediator for managing the state of the Send Tab to Self Promo Magic Stack
 // module.
-@interface SendTabPromoMediator : NSObject <SendTabPromoDelegate>
+@interface SendTabPromoMediator : NSObject <StandaloneModuleDelegate>
 
 // Delegate used to communicate events back to the owner of this
 // class.
@@ -33,7 +36,7 @@ class PrefService;
 
 // Delegate used to communicate notification events back to the owner of this
 // class.
-@property(nonatomic, weak) id<NotificationsModuleDelegate>
+@property(nonatomic, weak) id<MagicStackModuleContainerDelegate>
     notificationsDelegate;
 
 // Default initializer.
@@ -42,6 +45,9 @@ class PrefService;
     NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
+
+// Hides the send tab promo module.
+- (void)dismissModule;
 
 - (void)disconnect;
 

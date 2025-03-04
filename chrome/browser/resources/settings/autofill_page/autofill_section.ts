@@ -13,7 +13,6 @@ import 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import 'chrome://resources/cr_elements/cr_toggle/cr_toggle.js';
 import 'chrome://resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import 'chrome://resources/cr_elements/cr_shared_style.css.js';
-import 'chrome://resources/polymer/v3_0/iron-flex-layout/iron-flex-layout-classes.js';
 import '../settings_shared.css.js';
 import '/shared/settings/controls/extension_controlled_indicator.js';
 import '../controls/settings_toggle_button.js';
@@ -124,7 +123,8 @@ export class SettingsAutofillSectionElement extends
           this.accountInfo_ = accountInfo || null;
         };
     const setPersonalDataListener: PersonalDataChangedListener =
-        (addressList, _cardList, _ibans, accountInfo?) => {
+        (addressList, _cardList, _ibans, _payOverTimeIssuerList,
+         accountInfo?) => {
           this.addresses = addressList;
           this.accountInfo_ = accountInfo || null;
         };
@@ -204,7 +204,7 @@ export class SettingsAutofillSectionElement extends
         focusWithoutInk(this.$.addAddress);
       } else {
         const lastIndex = this.addresses.length - 1;
-        if (this.activeAddress!.guid === this.addresses[lastIndex]!.guid) {
+        if (this.activeAddress!.guid === this.addresses[lastIndex].guid) {
           focusWithoutInk(this.$.addressList.querySelectorAll<HTMLElement>(
               '.address-menu')[lastIndex - 1]);
         }
@@ -261,11 +261,6 @@ export class SettingsAutofillSectionElement extends
       return false;
     }
 
-    if (!loadTimeData.getBoolean(
-            'syncEnableContactInfoDataTypeInTransportMode')) {
-      return false;
-    }
-
     // Local profile of a logged-in user with disabled address sync and
     // enabled feature.
     return true;
@@ -299,6 +294,8 @@ export class SettingsAutofillSectionElement extends
   }
 
   private onPlusAddressClick_() {
+    chrome.metricsPrivate.recordUserAction(
+        'Settings.ManageOptionOnSettingsSelected');
     OpenWindowProxyImpl.getInstance().openUrl(
         loadTimeData.getString('plusAddressManagementUrl'));
   }

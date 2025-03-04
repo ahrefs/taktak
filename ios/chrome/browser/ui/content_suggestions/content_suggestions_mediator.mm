@@ -11,6 +11,7 @@
 #import "base/apple/foundation_util.h"
 #import "base/functional/bind.h"
 #import "base/functional/callback.h"
+#import "base/ios/block_types.h"
 #import "base/ios/ios_util.h"
 #import "base/memory/raw_ptr.h"
 #import "base/metrics/histogram_macros.h"
@@ -33,7 +34,6 @@
 #import "ios/chrome/browser/shared/model/prefs/pref_names.h"
 #import "ios/chrome/browser/shared/model/url/chrome_url_constants.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list.h"
-#import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/browser/shared/public/features/system_flags.h"
 #import "ios/chrome/browser/shared/ui/util/uikit_ui_util.h"
 #import "ios/chrome/browser/ui/content_suggestions/cells/most_visited_tiles_config.h"
@@ -99,8 +99,12 @@
 }
 
 - (void)magicStackRankingModel:(MagicStackRankingModel*)model
-                 didRemoveItem:(MagicStackModule*)item {
-  [self.magicStackConsumer removeItem:item];
+                 didRemoveItem:(MagicStackModule*)item
+                       animate:(BOOL)animate
+                withCompletion:(ProceduralBlock)completion {
+  [self.magicStackConsumer removeItem:item
+                              animate:animate
+                       withCompletion:completion];
 }
 
 - (void)magicStackRankingModel:(MagicStackRankingModel*)model
@@ -114,10 +118,10 @@
   if (!self.consumer) {
     return;
   }
-  if (!ShouldPutMostVisitedSitesInMagicStack() &&
-      self.mostVisitedTilesMediator.mostVisitedConfig) {
-    [self.consumer setMostVisitedTilesConfig:self.mostVisitedTilesMediator
-                                                 .mostVisitedConfig];
+  MostVisitedTilesConfig* mvtConfig =
+      self.mostVisitedTilesMediator.mostVisitedConfig;
+  if (mvtConfig && !mvtConfig.inMagicStack) {
+    [self.consumer setMostVisitedTilesConfig:mvtConfig];
   }
 }
 

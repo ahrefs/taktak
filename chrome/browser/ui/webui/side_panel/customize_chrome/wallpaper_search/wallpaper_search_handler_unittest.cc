@@ -39,7 +39,6 @@
 #include "chrome/test/base/testing_profile.h"
 #include "components/image_fetcher/core/mock_image_decoder.h"
 #include "components/optimization_guide/core/model_execution/feature_keys.h"
-#include "components/optimization_guide/core/model_quality/feature_type_map.h"
 #include "components/optimization_guide/core/model_quality/model_quality_log_entry.h"
 #include "components/optimization_guide/core/model_quality/test_model_quality_logs_uploader_service.h"
 #include "components/optimization_guide/core/optimization_guide_features.h"
@@ -158,7 +157,6 @@ class WallpaperSearchHandlerTest : public testing::Test {
       : profile_(
             MakeTestingProfile(test_url_loader_factory_.GetSafeWeakWrapper(),
                                &local_state_)),
-        logs_uploader_(&local_state_),
         mock_optimization_guide_keyed_service_(
             static_cast<MockOptimizationGuideKeyedService*>(
                 OptimizationGuideKeyedServiceFactory::GetForProfile(
@@ -180,6 +178,12 @@ class WallpaperSearchHandlerTest : public testing::Test {
                               optimization_guide::features::
                                   kOptimizationGuideModelExecution},
         /*disabled_features=*/{});
+
+    auto logs_uploader = std::make_unique<
+        optimization_guide::TestModelQualityLogsUploaderService>(&local_state_);
+    mock_optimization_guide_keyed_service_
+        ->SetModelQualityLogsUploaderServiceForTesting(
+            std::move(logs_uploader));
   }
 
   void TearDown() override {
@@ -260,11 +264,18 @@ class WallpaperSearchHandlerTest : public testing::Test {
   }
 
   std::unique_ptr<ModelQualityLogEntry> ModelQuality() {
-    return std::make_unique<ModelQualityLogEntry>(logs_uploader_.GetWeakPtr());
+    return std::make_unique<ModelQualityLogEntry>(
+        mock_optimization_guide_keyed_service_
+            ->GetModelQualityLogsUploaderService()
+            ->GetWeakPtr());
   }
 
   const std::vector<std::unique_ptr<LogAiDataRequest>>& uploaded_logs() {
-    return logs_uploader_.uploaded_logs();
+    return static_cast<
+               optimization_guide::TestModelQualityLogsUploaderService*>(
+               mock_optimization_guide_keyed_service_
+                   ->GetModelQualityLogsUploaderService())
+        ->uploaded_logs();
   }
 
   base::HistogramTester& histogram_tester() { return histogram_tester_; }
@@ -300,7 +311,6 @@ class WallpaperSearchHandlerTest : public testing::Test {
   TestingPrefServiceSimple local_state_;
   std::unique_ptr<TestingProfile> profile_;
   base::test::ScopedFeatureList feature_list_;
-  optimization_guide::TestModelQualityLogsUploaderService logs_uploader_;
   raw_ptr<MockOptimizationGuideKeyedService>
       mock_optimization_guide_keyed_service_;
   image_fetcher::MockImageDecoder mock_image_decoder_;
@@ -746,7 +756,10 @@ TEST_F(WallpaperSearchHandlerTest, GetWallpaperSearchResults_Success) {
   // Advance clock to test request latency.
   task_environment().AdvanceClock(base::Milliseconds(321));
 
-  std::move(done_callback).Run(base::ok(result), ModelQuality());
+  std::move(done_callback)
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::ok(result), nullptr),
+           ModelQuality());
 
   // Advance clock to test processing latency.
   task_environment().AdvanceClock(base::Milliseconds(345));
@@ -853,7 +866,10 @@ TEST_F(WallpaperSearchHandlerTest, GetWallpaperSearchResults_MultipleRequests) {
   // Advance clock to test request latency.
   task_environment().AdvanceClock(base::Milliseconds(321));
 
-  std::move(done_callback1).Run(base::ok(result1), ModelQuality());
+  std::move(done_callback1)
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::ok(result1), nullptr),
+           ModelQuality());
 
   ASSERT_EQ(status1,
             side_panel::customize_chrome::mojom::WallpaperSearchStatus::kError);
@@ -914,7 +930,10 @@ TEST_F(WallpaperSearchHandlerTest, GetWallpaperSearchResults_MultipleRequests) {
   // Advance clock to test request latency.
   task_environment().AdvanceClock(base::Milliseconds(456));
 
-  std::move(done_callback2).Run(base::ok(result2), ModelQuality());
+  std::move(done_callback2)
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::ok(result2), nullptr),
+           ModelQuality());
 
   ASSERT_EQ(status2,
             side_panel::customize_chrome::mojom::WallpaperSearchStatus::kError);
@@ -1067,13 +1086,15 @@ TEST_F(WallpaperSearchHandlerTest, GetWallpaperSearchResults_NoResponse) {
   task_environment().AdvanceClock(base::Milliseconds(321));
 
   std::move(done_callback)
-      .Run(
-          base::unexpected(
-              optimization_guide::OptimizationGuideModelExecutionError::
-                  FromModelExecutionError(
-                      optimization_guide::OptimizationGuideModelExecutionError::
-                          ModelExecutionError::kGenericFailure)),
-          ModelQuality());
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::unexpected(
+                   optimization_guide::OptimizationGuideModelExecutionError::
+                       FromModelExecutionError(
+                           optimization_guide::
+                               OptimizationGuideModelExecutionError::
+                                   ModelExecutionError::kGenericFailure)),
+               nullptr),
+           ModelQuality());
 
   EXPECT_EQ(status,
             side_panel::customize_chrome::mojom::WallpaperSearchStatus::kError);
@@ -1141,7 +1162,10 @@ TEST_F(WallpaperSearchHandlerTest, GetWallpaperSearchResults_NoImages) {
   // Advance clock to test request latency.
   task_environment().AdvanceClock(base::Milliseconds(321));
 
-  std::move(done_callback).Run(base::ok(result), ModelQuality());
+  std::move(done_callback)
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::ok(result), nullptr),
+           ModelQuality());
 
   EXPECT_EQ(status,
             side_panel::customize_chrome::mojom::WallpaperSearchStatus::kError);
@@ -1203,13 +1227,15 @@ TEST_F(WallpaperSearchHandlerTest, GetWallpaperSearchResults_RequestThrottled) {
   task_environment().AdvanceClock(base::Milliseconds(321));
 
   std::move(done_callback)
-      .Run(
-          base::unexpected(
-              optimization_guide::OptimizationGuideModelExecutionError::
-                  FromModelExecutionError(
-                      optimization_guide::OptimizationGuideModelExecutionError::
-                          ModelExecutionError::kRequestThrottled)),
-          ModelQuality());
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::unexpected(
+                   optimization_guide::OptimizationGuideModelExecutionError::
+                       FromModelExecutionError(
+                           optimization_guide::
+                               OptimizationGuideModelExecutionError::
+                                   ModelExecutionError::kRequestThrottled)),
+               nullptr),
+           ModelQuality());
 
   EXPECT_EQ(status, side_panel::customize_chrome::mojom::WallpaperSearchStatus::
                         kRequestThrottled);
@@ -1432,7 +1458,10 @@ TEST_F(WallpaperSearchHandlerTest, SetBackgroundToWallpaperSearchResult) {
   // Advance clock to test request latency.
   task_environment().AdvanceClock(base::Milliseconds(321));
 
-  std::move(done_callback).Run(base::ok(result), ModelQuality());
+  std::move(done_callback)
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::ok(result), nullptr),
+           ModelQuality());
   std::move(decoder_callback1).Run(gfx::Image::CreateFrom1xBitmap(bitmap1));
   std::move(decoder_callback2).Run(gfx::Image::CreateFrom1xBitmap(bitmap2));
 
@@ -1556,7 +1585,10 @@ TEST_F(WallpaperSearchHandlerTest, SetUserFeedback) {
   optimization_guide::proto::Any result1;
   result1.set_value(serialized_metadata1);
   result1.set_type_url("type.googleapis.com/" + response1.GetTypeName());
-  std::move(done_callback1).Run(base::ok(result1), ModelQuality());
+  std::move(done_callback1)
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::ok(result1), nullptr),
+           ModelQuality());
 #if BUILDFLAG(IS_CHROMEOS)
   // The feedback dialog on CrOS & LaCrOS happens at the system level.
   // This can cause the unittest to crash. LaCrOS has a separate feedback
@@ -1602,7 +1634,10 @@ TEST_F(WallpaperSearchHandlerTest, SetUserFeedback) {
   result2.set_value(serialized_metadata2);
   result2.set_type_url("type.googleapis.com/" + response2.GetTypeName());
 
-  std::move(done_callback2).Run(base::ok(result2), ModelQuality());
+  std::move(done_callback2)
+      .Run(optimization_guide::OptimizationGuideModelExecutionResult(
+               base::ok(result2), nullptr),
+           ModelQuality());
   handler->SetUserFeedback(
       side_panel::customize_chrome::mojom::UserFeedback::kThumbsUp);
 

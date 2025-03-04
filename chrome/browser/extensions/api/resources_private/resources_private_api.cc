@@ -61,9 +61,11 @@ bool IsPdfAnnotationsEnabled(content::BrowserContext* context) {
 
 namespace get_strings = api::resources_private::GetStrings;
 
-ResourcesPrivateGetStringsFunction::ResourcesPrivateGetStringsFunction() {}
+ResourcesPrivateGetStringsFunction::ResourcesPrivateGetStringsFunction() =
+    default;
 
-ResourcesPrivateGetStringsFunction::~ResourcesPrivateGetStringsFunction() {}
+ResourcesPrivateGetStringsFunction::~ResourcesPrivateGetStringsFunction() =
+    default;
 
 ExtensionFunction::ResponseAction ResourcesPrivateGetStringsFunction::Run() {
   std::optional<get_strings::Params> params =
@@ -91,7 +93,7 @@ ExtensionFunction::ResponseAction ResourcesPrivateGetStringsFunction::Run() {
       break;
     }
     case api::resources_private::Component::kNone:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   std::string app_locale =

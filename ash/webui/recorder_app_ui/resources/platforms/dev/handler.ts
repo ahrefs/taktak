@@ -25,13 +25,15 @@ import {
   Model,
   ModelLoader,
   ModelResponse,
+  ModelResponseError,
   ModelState,
 } from '../../core/on_device_model/types.js';
 import {PerfLogger} from '../../core/perf.js';
 import {
   PlatformHandler as PlatformHandlerBase,
 } from '../../core/platform_handler.js';
-import {computed, signal} from '../../core/reactive/signal.js';
+import {computed, Signal, signal} from '../../core/reactive/signal.js';
+import {LangPackInfo, LanguageCode} from '../../core/soda/language_info.js';
 import {
   HypothesisPart,
   SodaEvent,
@@ -84,7 +86,10 @@ class SummaryModelDev implements Model<string> {
 }
 
 class ModelLoaderDev<T> extends ModelLoader<T> {
-  constructor(private readonly model: Model<T>) {
+  constructor(
+    private readonly model: Model<T>,
+    private readonly platformHandler: PlatformHandler,
+  ) {
     super();
   }
 
@@ -110,10 +115,17 @@ class ModelLoaderDev<T> extends ModelLoader<T> {
     return this.model;
   }
 
-  override async loadAndExecute(content: string): Promise<ModelResponse<T>> {
+  override async loadAndExecute(
+    content: string,
+    language: LanguageCode,
+  ): Promise<ModelResponse<T>> {
+    // TODO: b/357526521 - Create and use `UNSUPPORTED_LANGUAGE` error.
+    if (!this.platformHandler.getLangPackInfo(language).isGenAiSupported) {
+      return {kind: 'error', error: ModelResponseError.GENERAL};
+    }
     const model = await this.load();
     try {
-      return await model.execute(content);
+      return await model.execute(content, language);
     } finally {
       model.close();
     }
@@ -277,8 +289,9 @@ class SodaSessionDev implements SodaSession {
     }
   }
 
-  async start(): Promise<void> {
+  start(): Promise<void> {
     console.info('Soda session started');
+    return Promise.resolve();
   }
 
   addAudio(samples: Float32Array): void {
@@ -292,9 +305,10 @@ class SodaSessionDev implements SodaSession {
     }
   }
 
-  async stop(): Promise<void> {
+  stop(): Promise<void> {
     console.info('Soda session stopped');
     this.emitSodaNextWord(true);
+    return Promise.resolve();
   }
 
   subscribeEvent(observer: Observer<SodaEvent>): Unsubscribe {
@@ -335,7 +349,9 @@ function substituteI18nString(label: string, ...args: Array<number|string>):
 export class PlatformHandler extends PlatformHandlerBase {
   override readonly quietMode = signal(false);
 
-  override readonly sodaState = signal<ModelState>({kind: 'notInstalled'});
+  private readonly sodaStates = new Map<LanguageCode, Signal<ModelState>>();
+
+  private readonly langPacks = new Map<LanguageCode, LangPackInfo>();
 
   override readonly canUseSpeakerLabel = computed(
     () => devSettings.value.canUseSpeakerLabel,
@@ -357,29 +373,68 @@ export class PlatformHandler extends PlatformHandlerBase {
     () => devSettings.value.canCaptureSystemAudioWithLoopback,
   );
 
-  override async init(): Promise<void> {
+  private readonly forceLanguageSelection = computed(
+    () => devSettings.value.forceLanguageSelection,
+  );
+
+  override init(): Promise<void> {
     document.body.appendChild(this.errorView);
     settingsInit();
+    const sodaState = signal<ModelState>({kind: 'notInstalled'});
+    this.sodaStates.set(LanguageCode.EN_US, sodaState);
     if (devSettings.value.sodaInstalled) {
       // TODO(pihsun): Remember the whole state in devSettings instead?
-      this.sodaState.value = {kind: 'installed'};
+      sodaState.value = {kind: 'installed'};
     }
+    this.langPacks.set(LanguageCode.EN_US, {
+      languageCode: LanguageCode.EN_US,
+      displayName: 'English',
+      isGenAiSupported: true,
+      isSpeakerLabelSupported: true,
+    });
+
+    this.initPerfEventWatchers();
+    return Promise.resolve();
   }
 
-  override summaryModelLoader = new ModelLoaderDev(new SummaryModelDev());
+  override getLangPackList(): readonly LangPackInfo[] {
+    return Array.from(this.langPacks.values());
+  }
+
+  override getLangPackInfo(language: LanguageCode): LangPackInfo {
+    return assertExists(this.langPacks.get(language));
+  }
+
+  override isMultipleLanguageAvailable(): boolean {
+    if (this.forceLanguageSelection.value) {
+      return true;
+    }
+
+    let count = 0;
+    for (const state of this.sodaStates.values()) {
+      if (state.value.kind !== 'unavailable') {
+        count += 1;
+      }
+    }
+    return count > 1;
+  }
+
+  override summaryModelLoader = new ModelLoaderDev(new SummaryModelDev(), this);
 
   override titleSuggestionModelLoader = new ModelLoaderDev(
     new TitleSuggestionModelDev(),
+    this,
   );
 
   override eventsSender = new EventsSender();
 
   override perfLogger = new PerfLogger(this.eventsSender);
 
-  override installSoda(): void {
-    console.log('SODA installation requested');
-    if (this.sodaState.value.kind === 'notInstalled') {
-      this.sodaState.value = {kind: 'installing', progress: 0};
+  override installSoda(language: LanguageCode): Promise<void> {
+    console.log(`SODA lang pack ${language} installation requested`);
+    const sodaState = this.getSodaState(language);
+    if (sodaState.value.kind === 'notInstalled') {
+      sodaState.value = {kind: 'installing', progress: 0};
       // Simulate the loading of SODA model.
       // Not awaiting the async block should be fine since this is only for
       // dev, and no two async block of this will run at the same time.
@@ -393,23 +448,32 @@ export class PlatformHandler extends PlatformHandlerBase {
             devSettings.mutate((s) => {
               s.sodaInstalled = true;
             });
-            this.sodaState.value = {kind: 'installed'};
+            sodaState.value = {kind: 'installed'};
             return;
           }
-          this.sodaState.value = {kind: 'installing', progress};
+          sodaState.value = {kind: 'installing', progress};
         }
       })();
     }
+    return Promise.resolve();
   }
 
-  override async newSodaSession(): Promise<SodaSession> {
-    return new SodaSessionDev();
+  override isSodaAvailable(): boolean {
+    return true;
   }
 
-  override async getMicrophoneInfo(
+  override getSodaState(language: LanguageCode): Signal<ModelState> {
+    return assertExists(this.sodaStates.get(language));
+  }
+
+  override newSodaSession(_language: LanguageCode): Promise<SodaSession> {
+    return Promise.resolve(new SodaSessionDev());
+  }
+
+  override getMicrophoneInfo(
     _deviceId: string,
   ): Promise<InternalMicInfo> {
-    return {isDefault: false, isInternal: false};
+    return Promise.resolve({isDefault: false, isInternal: false});
   }
 
   override renderDevUi(): RenderResult {
@@ -431,6 +495,12 @@ export class PlatformHandler extends PlatformHandlerBase {
       const target = assertInstanceof(ev.target, CrosSwitch);
       devSettings.mutate((s) => {
         s.canCaptureSystemAudioWithLoopback = target.selected;
+      });
+    }
+    function handleForceLanguageSelectionChange(ev: Event) {
+      const target = assertInstanceof(ev.target, CrosSwitch);
+      devSettings.mutate((s) => {
+        s.forceLanguageSelection = target.selected;
       });
     }
     // TODO(pihsun): Move the dev toggle to a separate component, so we don't
@@ -486,6 +556,20 @@ export class PlatformHandler extends PlatformHandlerBase {
           >
           </cros-switch>
           Toggle can capture system audio via getDisplayMedia
+        </label>
+      </div>
+      <div class="section">
+        <label style=${styleMap(labelStyle)}>
+          <!--
+            TODO(hsuanling): cros-switch doesn't automatically makes clicking
+            the surrounding label toggles the switch, unlike md-switch.
+          -->
+          <cros-switch
+            @change=${handleForceLanguageSelectionChange}
+            .selected=${this.forceLanguageSelection.value}
+          >
+          </cros-switch>
+          Toggle can force language selection display
         </label>
       </div>
     `;

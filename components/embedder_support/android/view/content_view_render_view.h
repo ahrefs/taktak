@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "base/android/jni_android.h"
 #include "base/android/jni_weak_ref.h"
 #include "content/public/browser/android/compositor_client.h"
 #include "ui/gfx/native_widget_types.h"
@@ -14,6 +15,7 @@
 namespace content {
 class Compositor;
 }  // namespace content
+   //
 
 namespace embedder_support {
 
@@ -42,7 +44,7 @@ class ContentViewRenderView : public content::CompositorClient {
                       const base::android::JavaParamRef<jobject>& obj);
   void SurfaceDestroyed(JNIEnv* env,
                         const base::android::JavaParamRef<jobject>& obj);
-  void SurfaceChanged(
+  std::optional<int> SurfaceChanged(
       JNIEnv* env,
       const base::android::JavaParamRef<jobject>& obj,
       jint format,

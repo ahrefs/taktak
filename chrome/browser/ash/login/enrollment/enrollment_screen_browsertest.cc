@@ -14,6 +14,7 @@
 #include "base/notreached.h"
 #include "base/path_service.h"
 #include "base/run_loop.h"
+#include "chrome/browser/ash/login/configuration_keys.h"
 #include "chrome/browser/ash/login/oobe_screen.h"
 #include "chrome/browser/ash/login/startup_utils.h"
 #include "chrome/browser/ash/login/test/device_state_mixin.h"
@@ -37,6 +38,7 @@
 #include "chromeos/test/chromeos_test_utils.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/test_utils.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "google_apis/gaia/gaia_urls.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -53,7 +55,7 @@ const test::UIPath kEnterpriseEnrollmentDialogue = {kEnterpriseEnrollment,
                                                     "step-signin"};
 
 constexpr char kTestUserEmail[] = "testuser@test.com";
-constexpr char kTestUserGaiaId[] = "test_user_gaia_id";
+constexpr GaiaId::Literal kTestUserGaiaId("test_user_gaia_id");
 constexpr char kTestUserPassword[] = "test_user_password";
 
 const test::UIPath kEnterpriseEnrollmentSkipDialogue = {
@@ -546,6 +548,31 @@ IN_PROC_BROWSER_TEST_F(EnrollmentScreenTest, TokenBasedEnrollmentSuccess) {
   EXPECT_TRUE(StartupUtils::IsDeviceRegistered());
 }
 
+IN_PROC_BROWSER_TEST_F(
+    EnrollmentScreenTest,
+    TokenBasedEnrollmentOobeConfigSkipEnrollmentSuccessScreen) {
+  enrollment_ui_.SetExitHandler();
+  policy::EnrollmentConfig enrollment_config;
+  enrollment_config.mode =
+      policy::EnrollmentConfig::MODE_ENROLLMENT_TOKEN_INITIAL_SERVER_FORCED;
+  enrollment_config.enrollment_token = kTestEnrollmentToken;
+
+  enrollment_helper_.ExpectEnrollmentTokenConfig(kTestEnrollmentToken);
+  enrollment_helper_.ExpectTokenBasedEnrollmentSuccess();
+  enrollment_helper_.DisableAttributePromptUpdate();
+  enrollment_helper_.SetupClearAuth();
+
+  enrollment_screen()->SetEnrollmentConfig(enrollment_config);
+
+  WizardContext context;
+  context.configuration.Set(configuration::kSkipEnrollmentSuccessScreen, true);
+  enrollment_screen()->Show(&context);
+
+  enrollment_ui_.WaitForScreenExit();
+
+  EXPECT_TRUE(StartupUtils::IsDeviceRegistered());
+}
+
 // TODO(b/320497330): Add more browser tests for token-based kiosk enrollment
 // and non-fallback error handling.
 IN_PROC_BROWSER_TEST_F(EnrollmentScreenTest,
@@ -636,6 +663,8 @@ class EnrollmentErrorScreenTest
           MODE_ENROLLMENT_TOKEN_INITIAL_SERVER_FORCED:
       case policy::EnrollmentConfig::
           MODE_ENROLLMENT_TOKEN_INITIAL_MANUAL_FALLBACK:
+      case policy::EnrollmentConfig::MODE_REMOTE_DEPLOYMENT_SERVER_FORCED:
+      case policy::EnrollmentConfig::MODE_REMOTE_DEPLOYMENT_MANUAL_FALLBACK:
         return false;
     }
   }

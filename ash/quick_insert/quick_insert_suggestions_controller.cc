@@ -4,7 +4,6 @@
 
 #include "ash/quick_insert/quick_insert_suggestions_controller.h"
 
-#include "ash/constants/ash_features.h"
 #include "ash/quick_insert/model/quick_insert_mode_type.h"
 #include "ash/quick_insert/model/quick_insert_model.h"
 #include "ash/quick_insert/quick_insert_category.h"
@@ -14,7 +13,11 @@
 #include "ash/quick_insert/quick_insert_shortcuts.h"
 #include "ash/quick_insert/search/quick_insert_date_search.h"
 #include "ash/quick_insert/search/quick_insert_math_search.h"
+#include "base/containers/to_vector.h"
 #include "base/feature_list.h"
+#include "base/strings/utf_string_conversions.h"
+#include "chromeos/ash/components/emoji/gif_tenor_api_fetcher.h"
+#include "services/network/public/cpp/shared_url_loader_factory.h"
 
 namespace ash {
 namespace {
@@ -23,10 +26,31 @@ constexpr int kMaxRecentFiles = 10;
 constexpr int kMaxRecentLinks = 10;
 constexpr base::TimeDelta kMaxLocalFileSuggestionRecencyDelta = base::Days(30);
 constexpr base::TimeDelta kMaxLocalFileCategoryRecencyDelta = base::Days(3652);
+
+std::vector<QuickInsertSearchResult> ConvertToSearchResults(
+    base::expected<tenor::mojom::PaginatedGifResponsesPtr,
+                   GifTenorApiFetcher::Error> response) {
+  if (!response.has_value()) {
+    // TODO: b/325368650 - Add better handling of errors.
+    return {};
+  }
+  size_t rank = 0;
+  return base::ToVector(
+      (*response)->results, [&rank](tenor::mojom::GifResponsePtr& result) {
+        CHECK(result);
+        tenor::mojom::GifUrlsPtr& urls = result->url;
+        CHECK(urls);
+        return QuickInsertSearchResult(QuickInsertGifResult(
+            std::move(urls->preview), std::move(urls->preview_image),
+            result->preview_size, std::move(urls->full), result->full_size,
+            base::UTF8ToUTF16(result->content_description), rank++));
+      });
+}
+
 }  // namespace
 
-PickerSuggestionsController::PickerSuggestionsController() = default;
-PickerSuggestionsController::~PickerSuggestionsController() = default;
+QuickInsertSuggestionsController::QuickInsertSuggestionsController() = default;
+QuickInsertSuggestionsController::~QuickInsertSuggestionsController() = default;
 
 std::vector<QuickInsertSearchResult> GetMostRecentResults(
     size_t n,
@@ -37,10 +61,11 @@ std::vector<QuickInsertSearchResult> GetMostRecentResults(
   return results;
 }
 
-void PickerSuggestionsController::GetSuggestions(PickerClient& client,
-                                                 const QuickInsertModel& model,
-                                                 SuggestionsCallback callback) {
-  if (model.GetMode() == PickerModeType::kUnfocused) {
+void QuickInsertSuggestionsController::GetSuggestions(
+    QuickInsertClient& client,
+    const QuickInsertModel& model,
+    SuggestionsCallback callback) {
+  if (model.GetMode() == QuickInsertModeType::kUnfocused) {
     std::vector<QuickInsertSearchResult> new_window_results;
     for (QuickInsertNewWindowResult::Type type : {
              QuickInsertNewWindowResult::Type::kDoc,
@@ -53,24 +78,24 @@ void PickerSuggestionsController::GetSuggestions(PickerClient& client,
     callback.Run(std::move(new_window_results));
   }
 
-  if (model.GetMode() == PickerModeType::kUnfocused ||
-      model.GetMode() == PickerModeType::kNoSelection) {
-    callback.Run({QuickInsertCapsLockResult(!model.is_caps_lock_enabled(),
-                                            GetPickerShortcutForCapsLock())});
+  if (model.GetMode() == QuickInsertModeType::kUnfocused ||
+      model.GetMode() == QuickInsertModeType::kNoSelection) {
+    callback.Run({QuickInsertCapsLockResult(
+        !model.is_caps_lock_enabled(), GetQuickInsertShortcutForCapsLock())});
   }
 
   if (base::Contains(model.GetAvailableCategories(),
-                     PickerCategory::kEditorRewrite)) {
+                     QuickInsertCategory::kEditorRewrite)) {
     client.GetSuggestedEditorResults(callback);
   }
 
   if (base::Contains(model.GetAvailableCategories(),
-                     PickerCategory::kLobster) &&
-      model.GetMode() == PickerModeType::kHasSelection) {
-    callback.Run({QuickInsertLobsterResult(/*display_name=*/u"")});
+                     QuickInsertCategory::kLobsterWithSelectedText)) {
+    callback.Run({QuickInsertLobsterResult(
+        QuickInsertLobsterResult::Mode::kWithSelection, /*display_name=*/u"")});
   }
 
-  if (model.GetMode() == PickerModeType::kHasSelection) {
+  if (model.GetMode() == QuickInsertModeType::kHasSelection) {
     std::vector<QuickInsertSearchResult> case_transform_results;
     for (QuickInsertCaseTransformResult::Type type : {
              QuickInsertCaseTransformResult::Type::kUpperCase,
@@ -83,7 +108,7 @@ void PickerSuggestionsController::GetSuggestions(PickerClient& client,
   }
 
   // TODO: b/344685737 - Rank and collect suggestions in a more intelligent way.
-  for (PickerCategory category : model.GetRecentResultsCategories()) {
+  for (QuickInsertCategory category : model.GetRecentResultsCategories()) {
     // Special case certain categories where we can save computation by only
     // asking for 1 result.
     // TODO: b/357740941: Request only one Drive file once directory filtering
@@ -91,24 +116,21 @@ void PickerSuggestionsController::GetSuggestions(PickerClient& client,
     // TODO: b/366237507 - Request only one Link result once HistoryService
     // supports filtering.
     switch (category) {
-      case PickerCategory::kLinks:
-        client.GetSuggestedLinkResults(
-            /*max_results=*/base::FeatureList::IsEnabled(
-                ash::features::kPickerFilterLinks)
-                ? 10
-                : 1,
+      case QuickInsertCategory::kLinks:
+        link_suggester_.GetSuggestedLinks(
+            client.GetHistoryService(), client.GetFaviconService(),
+            /*max_results=*/10,
             base::BindRepeating(&GetMostRecentResults, 1).Then(callback));
         break;
-      case PickerCategory::kLocalFiles: {
-        const size_t max_results =
-            base::FeatureList::IsEnabled(ash::features::kPickerGrid) ? 3 : 1;
+      case QuickInsertCategory::kLocalFiles: {
+        const size_t max_results = 3;
         client.GetRecentLocalFileResults(
             max_results, kMaxLocalFileSuggestionRecencyDelta,
             base::BindRepeating(&GetMostRecentResults, max_results)
                 .Then(callback));
         break;
       }
-      case PickerCategory::kDriveFiles:
+      case QuickInsertCategory::kDriveFiles:
         client.GetRecentDriveFileResults(
             /*max_results=*/5,
             base::BindRepeating(&GetMostRecentResults, 1).Then(callback));
@@ -122,45 +144,47 @@ void PickerSuggestionsController::GetSuggestions(PickerClient& client,
   }
 }
 
-void PickerSuggestionsController::GetSuggestionsForCategory(
-    PickerClient& client,
-    PickerCategory category,
+void QuickInsertSuggestionsController::GetSuggestionsForCategory(
+    QuickInsertClient& client,
+    QuickInsertCategory category,
     SuggestionsCallback callback) {
   switch (category) {
-    case PickerCategory::kEditorWrite:
-    case PickerCategory::kEditorRewrite:
-    case PickerCategory::kLobster:
-      NOTREACHED_NORETURN();
-    case PickerCategory::kLinks:
+    case QuickInsertCategory::kEditorWrite:
+    case QuickInsertCategory::kEditorRewrite:
+    case QuickInsertCategory::kLobsterWithNoSelectedText:
+    case QuickInsertCategory::kLobsterWithSelectedText:
+      NOTREACHED();
+    case QuickInsertCategory::kLinks:
       // TODO: b/366237507 - Request only kMaxRecentLinks results once
       // HistoryService supports filtering.
-      client.GetSuggestedLinkResults(
-          base::FeatureList::IsEnabled(ash::features::kPickerFilterLinks)
-              ? kMaxRecentLinks * 3
-              : kMaxRecentLinks,
-          std::move(callback));
+      link_suggester_.GetSuggestedLinks(
+          client.GetHistoryService(), client.GetFaviconService(),
+          kMaxRecentLinks * 3, std::move(callback));
       return;
-    case PickerCategory::kEmojisGifs:
-    case PickerCategory::kEmojis:
-      NOTREACHED_NORETURN();
-    case PickerCategory::kDriveFiles:
+    case QuickInsertCategory::kEmojisGifs:
+    case QuickInsertCategory::kEmojis:
+      NOTREACHED();
+    case QuickInsertCategory::kGifs:
+      GifTenorApiFetcher::FetchFeaturedGifs(
+          client.GetSharedURLLoaderFactory(),
+          /*=*/std::nullopt,
+          base::BindOnce(ConvertToSearchResults).Then(std::move(callback)));
+      return;
+    case QuickInsertCategory::kDriveFiles:
       client.GetRecentDriveFileResults(kMaxRecentFiles, std::move(callback));
       return;
-    case PickerCategory::kLocalFiles:
-      client.GetRecentLocalFileResults(
-          kMaxRecentFiles,
-          base::FeatureList::IsEnabled(ash::features::kPickerRecentFiles)
-              ? kMaxLocalFileCategoryRecencyDelta
-              : kMaxLocalFileSuggestionRecencyDelta,
-          std::move(callback));
+    case QuickInsertCategory::kLocalFiles:
+      client.GetRecentLocalFileResults(kMaxRecentFiles,
+                                       kMaxLocalFileCategoryRecencyDelta,
+                                       std::move(callback));
       return;
-    case PickerCategory::kDatesTimes:
-      std::move(callback).Run(PickerSuggestedDateResults());
+    case QuickInsertCategory::kDatesTimes:
+      std::move(callback).Run(QuickInsertSuggestedDateResults());
       break;
-    case PickerCategory::kUnitsMaths:
-      std::move(callback).Run(PickerMathExamples());
+    case QuickInsertCategory::kUnitsMaths:
+      std::move(callback).Run(QuickInsertMathExamples());
       break;
-    case PickerCategory::kClipboard:
+    case QuickInsertCategory::kClipboard:
       clipboard_provider_.FetchResults(std::move(callback));
       return;
   }

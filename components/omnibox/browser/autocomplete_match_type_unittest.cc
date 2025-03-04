@@ -11,8 +11,8 @@
 #include "components/omnibox/browser/actions/omnibox_action.h"
 #include "components/omnibox/browser/actions/omnibox_pedal.h"
 #include "components/omnibox/browser/autocomplete_match.h"
-#include "components/omnibox/browser/omnibox_feature_configs.h"
 #include "components/omnibox/browser/suggestion_answer.h"
+#include "components/omnibox/common/omnibox_feature_configs.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/omnibox_proto/rich_answer_template.pb.h"
 #include "url/gurl.h"
@@ -86,12 +86,13 @@ namespace {
 
 bool ParseJsonToAnswerData(const std::string& answer_json,
                            omnibox::RichAnswerTemplate* answer_template) {
-  std::optional<base::Value> value = base::JSONReader::Read(answer_json);
-  if (!value || !value->is_dict()) {
+  std::optional<base::Value::Dict> value =
+      base::JSONReader::ReadDict(answer_json);
+  if (!value) {
     return false;
   }
 
-  return omnibox::answer_data_parser::ParseJsonToAnswerData(value->GetDict(),
+  return omnibox::answer_data_parser::ParseJsonToAnswerData(*value,
                                                             answer_template);
 }
 

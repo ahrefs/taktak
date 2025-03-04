@@ -11,14 +11,13 @@
 #include <string_view>
 #include <utility>
 #include <variant>
-#include <vector>
 
 #include "ash/public/cpp/new_window_delegate.h"
-#include "ash/public/cpp/scanner/scanner_action.h"
 #include "ash/scanner/scanner_command.h"
 #include "ash/scanner/scanner_command_delegate.h"
 #include "base/check.h"
 #include "base/containers/span.h"
+#include "base/containers/to_vector.h"
 #include "base/files/file.h"
 #include "base/files/file_path.h"
 #include "base/files/scoped_temp_file.h"
@@ -30,15 +29,19 @@
 #include "base/memory/weak_ptr.h"
 #include "base/strings/escape.h"
 #include "base/strings/strcat.h"
-#include "base/strings/string_util.h"
 #include "base/task/task_traits.h"
 #include "base/task/thread_pool.h"
+#include "base/types/expected.h"
 #include "components/drive/drive_api_util.h"
 #include "components/drive/service/drive_api_service.h"
 #include "components/drive/service/drive_service_interface.h"
 #include "components/manta/proto/scanner.pb.h"
 #include "google_apis/common/api_error_codes.h"
+#include "google_apis/common/request_sender.h"
 #include "google_apis/drive/drive_api_parser.h"
+#include "google_apis/people/people_api_request_types.h"
+#include "google_apis/people/people_api_requests.h"
+#include "google_apis/people/people_api_response_types.h"
 #include "third_party/abseil-cpp/absl/cleanup/cleanup.h"
 #include "ui/base/clipboard/clipboard_data.h"
 #include "url/gurl.h"
@@ -46,6 +49,12 @@
 namespace ash {
 
 namespace {
+
+// The prefix that all `Person.resourceName`s from the People API should start
+// with.
+constexpr std::string_view kPersonResourceNamePrefix = "people/";
+// The path for the Contacts web UI that displays a Person.
+constexpr std::string_view kPersonContactsWebUiPath = "/person/";
 
 const GURL& GetCalendarEventTemplateUrl() {
   // Required to delay the creation of this GURL to avoid hitting the
@@ -55,9 +64,9 @@ const GURL& GetCalendarEventTemplateUrl() {
   return kGoogleCalendarEventTemplateUrl;
 }
 
-const GURL& GetGoogleContactsNewUrl() {
-  static GURL kGoogleContactsNewUrl("https://contacts.google.com/new");
-  return kGoogleContactsNewUrl;
+const GURL& GetGoogleContactsBaseUrl() {
+  static GURL kGoogleContactsBaseUrl("https://contacts.google.com/");
+  return kGoogleContactsBaseUrl;
 }
 
 GURL GetCalendarEventUrl(const manta::proto::NewEventAction& event) {
@@ -86,44 +95,31 @@ GURL GetCalendarEventUrl(const manta::proto::NewEventAction& event) {
   return GetCalendarEventTemplateUrl().ReplaceComponents(replacements);
 }
 
-GURL GetContactUrl(const manta::proto::NewContactAction& contact) {
-  CHECK(GetGoogleContactsNewUrl().query_piece().empty());
-
-  // Unlike the calendar event URL, the new contact URL template does not have a
-  // query.
-  // Because of this, we can't always prepend a '&' to every query parameter -
-  // only the query parameters after the first.
-  // Use `base::JoinString` to simplify this logic.
-  std::vector<std::string> query_params;
-  if (!contact.given_name().empty()) {
-    query_params.push_back(base::StrCat({
-        "givenname=",
-        base::EscapeQueryParamValue(contact.given_name(), /*use_plus=*/true),
-    }));
+// Given a resource name of a Person from the People API, returns a URL to the
+// "edit" view of that Person in the Google Contacts web interface.
+// Returns an invalid GURL if the resource name is invalid.
+GURL GetEditContactUrl(std::string_view resource_name) {
+  if (!resource_name.starts_with(kPersonResourceNamePrefix)) {
+    // Resource names are guaranteed by the People API documentation to start
+    // with the prefix ("people/");
+    return GURL();
   }
-  if (!contact.family_name().empty()) {
-    query_params.push_back(base::StrCat({
-        "familyname=",
-        base::EscapeQueryParamValue(contact.family_name(), /*use_plus=*/true),
-    }));
-  }
-  if (!contact.email().empty()) {
-    query_params.push_back(base::StrCat({
-        "email=",
-        base::EscapeQueryParamValue(contact.email(), /*use_plus=*/true),
-    }));
-  }
-  if (!contact.phone().empty()) {
-    query_params.push_back(base::StrCat({
-        "phone=",
-        base::EscapeQueryParamValue(contact.phone(), /*use_plus=*/true),
-    }));
-  }
-
+  resource_name.remove_prefix(kPersonResourceNamePrefix.size());
   GURL::Replacements replacements;
-  std::string query = base::JoinString(std::move(query_params), "&");
-  replacements.SetQueryStr(query);
-  return GetGoogleContactsNewUrl().ReplaceComponents(replacements);
+  std::string path = base::StrCat({kPersonContactsWebUiPath, resource_name});
+  replacements.SetPathStr(path);
+  replacements.SetQueryStr("edit=1");
+  GURL edit_contact_url =
+      GetGoogleContactsBaseUrl().ReplaceComponents(replacements);
+
+  if (!edit_contact_url.path_piece().starts_with(kPersonContactsWebUiPath)) {
+    // The resulting URL's path should always start with the given Contacts web
+    // UI path.
+    // This may be indicative of a path traversal attack.
+    return GURL();
+  }
+
+  return edit_contact_url;
 }
 
 // Opens the supplied URL in a browser tab using the provided
@@ -191,7 +187,11 @@ void OnTempFileUploaded(base::WeakPtr<ScannerCommandDelegate> delegate,
         base::DoNothingWithBoundArgs(std::move(temp_file)));
   };
 
-  if (error != google_apis::ApiErrorCode::HTTP_CREATED) {
+  // `FakeDriveService` returns `HTTP_CREATED` when multipart files are uploaded
+  // successfully. The real API returns `HTTP_SUCCESS`.
+  // Either one indicates a successful upload.
+  if (error != google_apis::ApiErrorCode::HTTP_SUCCESS &&
+      error != google_apis::ApiErrorCode::HTTP_CREATED) {
     std::move(callback).Run(false);
     return;
   }
@@ -258,72 +258,154 @@ void HandleDriveUploadCommand(base::WeakPtr<ScannerCommandDelegate> delegate,
 }
 
 std::unique_ptr<ui::ClipboardData> ClipboardDataFromAction(
-    CopyToClipboardAction action) {
+    manta::proto::CopyToClipboardAction action) {
   auto data = std::make_unique<ui::ClipboardData>();
-  if (!action.plain_text.empty()) {
-    data->set_text(std::move(action.plain_text));
+  if (!action.plain_text().empty()) {
+    data->set_text(std::move(*action.mutable_plain_text()));
   }
-  if (!action.html_text.empty()) {
-    data->set_markup_data(std::move(action.html_text));
+  if (!action.html_text().empty()) {
+    data->set_markup_data(std::move(*action.mutable_html_text()));
   }
   return data;
 }
 
+// Returns the `google_apis::people::Contact` from the given new contact action.
+google_apis::people::Contact ContactFromAction(
+    manta::proto::NewContactAction action) {
+  google_apis::people::Contact contact;
+
+  // `google_apis::people::Name` will not be serialised if all field are empty,
+  // so if the action's name fields are not set, the below would be a no-op.
+  contact.name.family_name = std::move(*action.mutable_family_name());
+  contact.name.given_name = std::move(*action.mutable_given_name());
+
+  if (action.email_addresses_size() > 0) {
+    contact.email_addresses = base::ToVector(
+        *action.mutable_email_addresses(),
+        [](manta::proto::NewContactAction::EmailAddress& proto_email) {
+          google_apis::people::EmailAddress email_address;
+          email_address.value = std::move(*proto_email.mutable_value());
+          email_address.type = std::move(*proto_email.mutable_type());
+          return email_address;
+        });
+  } else if (!action.email().empty()) {
+    google_apis::people::EmailAddress email_address;
+    email_address.value = std::move(*action.mutable_email());
+    contact.email_addresses.push_back(std::move(email_address));
+  }
+
+  if (action.phone_numbers_size() > 0) {
+    contact.phone_numbers = base::ToVector(
+        *action.mutable_phone_numbers(),
+        [](manta::proto::NewContactAction::PhoneNumber& proto_phone) {
+          google_apis::people::PhoneNumber phone_number;
+          phone_number.value = std::move(*proto_phone.mutable_value());
+          phone_number.type = std::move(*proto_phone.mutable_type());
+          return phone_number;
+        });
+  } else if (!action.phone().empty()) {
+    google_apis::people::PhoneNumber phone_number;
+    phone_number.value = std::move(*action.mutable_phone());
+    contact.phone_numbers.push_back(std::move(phone_number));
+  }
+
+  return contact;
+}
+
+// Run when the create contact request to the People API finishes.
+void OnContactCreated(base::WeakPtr<ScannerCommandDelegate> delegate,
+                      ScannerCommandCallback callback,
+                      base::expected<google_apis::people::Person,
+                                     google_apis::ApiErrorCode> result) {
+  if (!result.has_value()) {
+    std::move(callback).Run(false);
+    return;
+  }
+
+  GURL edit_contact_url = GetEditContactUrl(result->resource_name);
+  if (!edit_contact_url.is_valid()) {
+    std::move(callback).Run(false);
+    return;
+  }
+
+  OpenInBrowserTab(std::move(delegate), edit_contact_url, std::move(callback));
+}
+
 }  // namespace
 
-ScannerCommand ScannerActionToCommand(ScannerAction action) {
-  return std::visit(
-      base::Overloaded{
-          [&](manta::proto::NewEventAction& action) -> ScannerCommand {
-            return OpenUrlCommand(GetCalendarEventUrl(action));
-          },
-          [&](manta::proto::NewContactAction& action) -> ScannerCommand {
-            return OpenUrlCommand(GetContactUrl(action));
-          },
-          [&](NewGoogleDocAction& action) -> ScannerCommand {
-            return DriveUploadCommand(
-                std::move(action.title), std::move(action.html_contents),
-                /*contents_mime_type=*/"text/html",
-                /*converted_mime_type=*/drive::util::kGoogleDocumentMimeType);
-          },
-          [&](NewGoogleSheetAction& action) -> ScannerCommand {
-            return DriveUploadCommand(std::move(action.title),
-                                      std::move(action.csv_contents),
-                                      /*contents_mime_type=*/"text/csv",
-                                      /*converted_mime_type=*/
-                                      drive::util::kGoogleSpreadsheetMimeType);
-          },
-          [&](CopyToClipboardAction& action) -> ScannerCommand {
-            return std::move(action);
-          },
-      },
-      action);
+ScannerCommand ScannerActionToCommand(manta::proto::ScannerAction action) {
+  switch (action.action_case()) {
+    case manta::proto::ScannerAction::kNewEvent:
+      return OpenUrlCommand(
+          GetCalendarEventUrl(std::move(*action.mutable_new_event())));
+
+    case manta::proto::ScannerAction::kNewContact:
+      return CreateContactCommand(
+          ContactFromAction(std::move(*action.mutable_new_contact())));
+
+    case manta::proto::ScannerAction::kNewGoogleDoc:
+      return DriveUploadCommand(
+          std::move(*action.mutable_new_google_doc()->mutable_title()),
+          std::move(*action.mutable_new_google_doc()->mutable_html_contents()),
+          /*contents_mime_type=*/"text/html",
+          /*converted_mime_type=*/drive::util::kGoogleDocumentMimeType);
+
+    case manta::proto::ScannerAction::kNewGoogleSheet:
+      return DriveUploadCommand(
+          std::move(*action.mutable_new_google_sheet()->mutable_title()),
+          std::move(*action.mutable_new_google_sheet()->mutable_csv_contents()),
+          /*contents_mime_type=*/"text/csv",
+          /*converted_mime_type=*/
+          drive::util::kGoogleSpreadsheetMimeType);
+
+    case manta::proto::ScannerAction::kCopyToClipboard:
+      return CopyToClipboardCommand(ClipboardDataFromAction(
+          std::move(*action.mutable_copy_to_clipboard())));
+
+    case manta::proto::ScannerAction::ACTION_NOT_SET:
+      NOTREACHED();
+  }
 }
 
 void HandleScannerCommand(base::WeakPtr<ScannerCommandDelegate> delegate,
                           ScannerCommand command,
                           ScannerCommandCallback callback) {
-  std::visit(base::Overloaded{
-                 [&](OpenUrlCommand& command) {
-                   OpenInBrowserTab(std::move(delegate), command.url,
-                                    std::move(callback));
-                 },
-                 [&](DriveUploadCommand& command) {
-                   HandleDriveUploadCommand(std::move(delegate),
-                                            std::move(command),
-                                            std::move(callback));
-                 },
-                 [&](CopyToClipboardAction& action) {
-                   if (delegate == nullptr) {
-                     std::move(callback).Run(false);
-                     return;
-                   }
-                   delegate->SetClipboard(
-                       ClipboardDataFromAction(std::move(action)));
-                   std::move(callback).Run(true);
-                 },
-             },
-             command);
+  if (delegate == nullptr) {
+    std::move(callback).Run(false);
+    return;
+  }
+
+  std::visit(
+      base::Overloaded{
+          [&](OpenUrlCommand& command) {
+            OpenInBrowserTab(std::move(delegate), command.url,
+                             std::move(callback));
+          },
+          [&](DriveUploadCommand& command) {
+            HandleDriveUploadCommand(std::move(delegate), std::move(command),
+                                     std::move(callback));
+          },
+          [&](CopyToClipboardCommand& command) {
+            delegate->SetClipboard(std::move(command.clipboard_data));
+            std::move(callback).Run(true);
+          },
+          [&](CreateContactCommand& command) {
+            google_apis::RequestSender* request_sender =
+                delegate->GetGoogleApisRequestSender();
+
+            if (request_sender == nullptr) {
+              std::move(callback).Run(false);
+              return;
+            }
+
+            request_sender->StartRequestWithAuthRetry(
+                std::make_unique<google_apis::people::CreateContactRequest>(
+                    request_sender, std::move(command.contact),
+                    base::BindOnce(&OnContactCreated, std::move(delegate),
+                                   std::move(callback))));
+          },
+      },
+      command);
 }
 
 }  // namespace ash

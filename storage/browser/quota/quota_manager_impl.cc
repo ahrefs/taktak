@@ -66,6 +66,7 @@
 #include "storage/browser/quota/quota_manager_proxy.h"
 #include "storage/browser/quota/quota_override_handle.h"
 #include "storage/browser/quota/quota_temporary_storage_evictor.h"
+#include "storage/browser/quota/storage_directory_util.h"
 #include "storage/browser/quota/usage_tracker.h"
 #include "third_party/blink/public/common/storage_key/storage_key.h"
 #include "third_party/blink/public/mojom/quota/quota_types.mojom-shared.h"
@@ -98,6 +99,11 @@ constexpr double kStoragePressureThresholdRatio = 0.02;
 constexpr base::TimeDelta kStoragePressureCheckDiskStatsInterval =
     base::Minutes(5);
 
+// The path where media license data is persisted on disk, relative to the path
+// for the respective storage bucket.
+constexpr base::FilePath::CharType kMediaLicenseDirectory[] =
+    FILE_PATH_LITERAL("Media Licenses");
+
 bool IsSupportedType(StorageType type) {
   return type == StorageType::kTemporary || type == StorageType::kSyncable;
 }
@@ -129,6 +135,12 @@ void DidGetUsageAndQuotaStripOverride(
     blink::mojom::UsageBreakdownPtr usage_breakdown) {
   DCHECK(callback);
   std::move(callback).Run(status, usage, quota, std::move(usage_breakdown));
+}
+
+base::FilePath CreateMediaLicenseBucketPath(const base::FilePath& profile_path,
+                                            const BucketLocator& bucket) {
+  base::FilePath bucket_directory = CreateBucketPath(profile_path, bucket);
+  return bucket_directory.Append(kMediaLicenseDirectory);
 }
 
 }  // namespace
@@ -1287,6 +1299,36 @@ void QuotaManagerImpl::GetUsageAndQuotaWithBreakdown(
       base::BindOnce(&DidGetUsageAndQuotaStripOverride, std::move(callback)));
 }
 
+void QuotaManagerImpl::GetUsageAndReportedQuotaWithBreakdown(
+    const StorageKey& storage_key,
+    StorageType type,
+    UsageAndQuotaWithBreakdownCallback callback) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  DCHECK(callback);
+
+  if (base::FeatureList::IsEnabled(storage::features::kStaticStorageQuota) &&
+      !IsStorageUnlimited(storage_key, type)) {
+    GetUsageAndQuotaForDevtools(
+        storage_key, type,
+        base::BindOnce(
+            [](UsageAndQuotaWithBreakdownCallback callback,
+               blink::mojom::QuotaStatusCode status, int64_t usage,
+               int64_t quota, bool is_override_enabled,
+               blink::mojom::UsageBreakdownPtr usage_breakdown) {
+              DCHECK(callback);
+              int64_t reported_quota = usage + 10 * QuotaManagerImpl::kGBytes;
+              std::move(callback).Run(status, usage, reported_quota,
+                                      std::move(usage_breakdown));
+            },
+            std::move(callback)));
+    return;
+  }
+
+  GetUsageAndQuotaForDevtools(
+      storage_key, type,
+      base::BindOnce(&DidGetUsageAndQuotaStripOverride, std::move(callback)));
+}
+
 void QuotaManagerImpl::GetUsageAndQuotaForDevtools(
     const StorageKey& storage_key,
     StorageType type,
@@ -1335,6 +1377,59 @@ void QuotaManagerImpl::GetBucketUsageAndQuota(BucketId id,
   GetBucketById(
       id, base::BindOnce(&QuotaManagerImpl::DidGetBucketForUsageAndQuota,
                          weak_factory_.GetWeakPtr(), std::move(callback)));
+}
+
+void QuotaManagerImpl::GetBucketUsageAndReportedQuota(
+    BucketId id,
+    UsageAndQuotaCallback callback) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  if (base::FeatureList::IsEnabled(storage::features::kStaticStorageQuota)) {
+    GetBucketById(
+        id,
+        base::BindOnce(
+            [](base::WeakPtr<QuotaManagerImpl> weak_this,
+               UsageAndQuotaCallback callback,
+               QuotaErrorOr<BucketInfo> result) {
+              if (!weak_this || !result.has_value()) {
+                std::move(callback).Run(blink::mojom::QuotaStatusCode::kUnknown,
+                                        0, 0);
+                return;
+              }
+
+              const BucketInfo& bucket = result.value();
+              bool is_storage_unlimited = weak_this->IsStorageUnlimited(
+                  bucket.storage_key, StorageType::kTemporary);
+
+              UsageAndQuotaInfoGatherer* helper = new UsageAndQuotaInfoGatherer(
+                  weak_this.get(), bucket, weak_this->is_incognito_,
+                  base::BindOnce(
+                      [](UsageAndQuotaCallback callback,
+                         const BucketInfo& bucket, bool is_storage_unlimited,
+                         blink::mojom::QuotaStatusCode status, int64_t usage,
+                         int64_t quota, bool is_override_enabled,
+                         blink::mojom::UsageBreakdownPtr usage_breakdown) {
+                        DCHECK(callback);
+
+                        // For limited storage cases, return static quota for
+                        // buckets with default quota, otherwise return the
+                        // requested quota regardless of if it was capped at the
+                        // StorageKey quota or not.
+                        int64_t reported_quota = is_storage_unlimited ? quota
+                                                 : bucket.quota > 0
+                                                     ? bucket.quota
+                                                     : usage + 10 * kGBytes;
+
+                        std::move(callback).Run(status, usage, reported_quota);
+                      },
+                      std::move(callback), bucket, is_storage_unlimited));
+              helper->Start();
+            },
+            weak_factory_.GetWeakPtr(), std::move(callback)));
+    return;
+  }
+
+  GetBucketUsageAndQuota(id, std::move(callback));
 }
 
 void QuotaManagerImpl::GetBucketSpaceRemaining(
@@ -1823,6 +1918,39 @@ void QuotaManagerImpl::EnsureDatabaseOpened() {
   }
 
   MaybeBootstrapDatabase();
+  MaybeRemoveMediaLicenseDatabases();
+}
+
+void QuotaManagerImpl::MaybeRemoveMediaLicenseDatabases() {
+  db_runner_->PostTaskAndReplyWithResult(
+      FROM_HERE,
+      base::BindOnce(&QuotaDatabase::IsMediaLicenseDatabaseRemoved,
+                     base::Unretained(database_.get())),
+      base::BindOnce(&QuotaManagerImpl::DidGetMediaLicenseDatabaseRemovalFlag,
+                     weak_factory_.GetWeakPtr()));
+}
+
+void QuotaManagerImpl::DidGetMediaLicenseDatabaseRemovalFlag(
+    bool is_media_license_database_removed) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  if (!is_media_license_database_removed) {
+    RemoveMediaLicenseDatabases();
+  }
+}
+
+void QuotaManagerImpl::RemoveMediaLicenseDatabases() {
+  base::SequencedTaskRunner::GetCurrentDefault()->PostDelayedTask(
+      FROM_HERE,
+      base::BindOnce(&QuotaManagerImpl::DeleteMediaLicenseDatabase,
+                     weak_factory_.GetWeakPtr()),
+      kMinutesAfterStartupToBeginMediaLicenseDatabaseDeletion);
+
+  PostTaskAndReplyWithResultForDBThread(
+      base::BindOnce([](QuotaDatabase* database) {
+        DCHECK(database);
+        return database->SetIsMediaLicenseDatabaseRemoved(true);
+      }),
+      base::DoNothing(), FROM_HERE);
 }
 
 void QuotaManagerImpl::MaybeBootstrapDatabase() {
@@ -1921,6 +2049,13 @@ void QuotaManagerImpl::DidSetDatabaseBootstrapped(QuotaError error) {
       base::BindOnce(&QuotaManagerImpl::StartEviction,
                      weak_factory_.GetWeakPtr()),
       kMinutesAfterStartupToBeginEviction);
+
+  // Schedule the MediaLicenseDatabase deletion task.
+  base::SequencedTaskRunner::GetCurrentDefault()->PostDelayedTask(
+      FROM_HERE,
+      base::BindOnce(&QuotaManagerImpl::DeleteMediaLicenseDatabase,
+                     weak_factory_.GetWeakPtr()),
+      kMinutesAfterStartupToBeginMediaLicenseDatabaseDeletion);
 }
 
 void QuotaManagerImpl::RunDatabaseCallbacks() {
@@ -2204,6 +2339,38 @@ void QuotaManagerImpl::StartEviction() {
         std::make_unique<QuotaTemporaryStorageEvictor>(this, kEvictionInterval);
   }
   temporary_storage_evictor_->Start();
+}
+
+void QuotaManagerImpl::DeleteMediaLicenseDatabase() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  GetBucketsModifiedBetween(
+      StorageType::kTemporary, base::Time::Min(), base::Time::Max(),
+      base::BindOnce(&QuotaManagerImpl::DidGetBucketsForMediaLicenseDeletion,
+                     weak_factory_.GetWeakPtr()));
+}
+
+void QuotaManagerImpl::DidGetBucketsForMediaLicenseDeletion(
+    const std::set<BucketLocator>& buckets) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  std::vector<base::FilePath> media_license_dir_paths;
+
+  for (const BucketLocator& bucket : buckets) {
+    if (bucket.storage_key.IsFirstPartyContext()) {
+      media_license_dir_paths.push_back(
+          CreateMediaLicenseBucketPath(profile_path_, bucket));
+    }
+  }
+
+  db_runner_->PostTask(FROM_HERE,
+                       base::BindOnce(
+                           [](std::vector<base::FilePath> file_paths) {
+                             for (base::FilePath& path : file_paths) {
+                               base::DeletePathRecursively(path);
+                             }
+                           },
+                           std::move(media_license_dir_paths)));
 }
 
 void QuotaManagerImpl::DeleteBucketFromDatabase(

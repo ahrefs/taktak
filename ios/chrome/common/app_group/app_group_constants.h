@@ -49,6 +49,10 @@ extern NSString* const kChromeCapabilitiesPreference;
 // Show default browser promo capability.
 extern NSString* const kChromeShowDefaultBrowserPromoCapability;
 
+// Capability declaring a list of supported bundle IDs that can open incognito
+// links in chrome.
+extern NSString* const kChromeSupportOpenLinksParametersFromCapability;
+
 // The x-callback-url indicating that an application in the group requires a
 // command.
 extern const char kChromeAppGroupXCallbackCommand[];
@@ -128,10 +132,6 @@ extern const char kChromeAppGroupIsGoogleDefaultSearchEngine[];
 // provider.
 extern const char kChromeAppGroupEnableLensInWidget[];
 
-// The key of a preference containing whether the home screen widget should show
-// the color Lens and voice icons if Lens is shown.
-extern const char kChromeAppGroupEnableColorLensAndVoiceIconsInWidget[];
-
 // The key of a preference containing Chrome client ID reported in the metrics
 // client ID. If the user does not opt in, this value must be cleared from the
 // shared user defaults.
@@ -162,12 +162,18 @@ extern NSString* const kOpenCommandSourceShareExtension;
 extern NSString* const kOpenCommandSourceCredentialsExtension;
 extern NSString* const kOpenCommandSourceOpenExtension;
 
-// The value of the key for the sharedDefaults used by the Content Widget.
+// The value of the key for the sharedDefaults used by the Shortcuts Widget.
 extern NSString* const kSuggestedItems;
-
 // The value of the key for the sharedDefaults last modification date used by
 // the Shortcuts Widget.
 extern NSString* const kSuggestedItemsLastModificationDate;
+
+// NSUserDefaults key containing a dictionary with most visited sites data for a
+// given gaiaID. Used by the Shortcuts Widget.
+extern NSString* const kSuggestedItemsForMultiprofile;
+// NSUserDefaults key containing the last modification date. Used by
+// the Shortcuts Widget.
+extern NSString* const kSuggestedItemsLastModificationDateForMultiprofile;
 
 // The current epoch time, on the first run of chrome on this machine. It is set
 // once and must be attached to metrics reports forever thereafter.
@@ -190,6 +196,15 @@ extern NSString* const kOpenExtensionOutcomeFailureUnsupportedScheme;
 // the outcomes of the Open Extension.
 extern NSString* const kOpenExtensionOutcomes;
 
+// Name of NSUserDefault key containing info about registered profiles to be
+// passed to widgets.
+extern NSString* const kAccountsOnDevice;
+// Names of keys in dictionary saved in kAccountsOnDevice.
+extern NSString* const kEmail;
+
+// Supported bundle IDs for opening incognito links in Chrome.
+extern NSString* const kYoutubeBundleID;
+
 // Conversion helpers between keys and OpenExtensionOutcome.
 NSString* KeyForOpenExtensionOutcomeType(OpenExtensionOutcome);
 OpenExtensionOutcome OutcomeTypeFromKey(NSString*);
@@ -209,9 +224,13 @@ NSURL* LegacyShareExtensionItemsFolder();
 // Gets the shared folder URL containing commands from other applications.
 NSURL* ExternalCommandsItemsFolder();
 
-// Gets the shared folder URL in which favicons used by the content widget are
+// Gets the shared folder URL in which favicons used by the shortcuts widget are
 // stored.
-NSURL* ContentWidgetFaviconsFolder();
+NSURL* ShortcutsWidgetFaviconsFolder();
+
+// Gets the shared folder URL in which avatar used by the widgets are
+// stored.
+NSURL* WidgetsAvatarFolder();
 
 // Gets the shared folder URL in which favicon attributes used by the credential
 // provider extensions are stored.

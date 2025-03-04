@@ -5,7 +5,7 @@
 import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import '//resources/cr_elements/cr_lazy_render/cr_lazy_render_lit.js';
 import '//resources/cr_elements/cr_icon/cr_icon.js';
-import '//resources/cr_elements/icons_lit.html.js';
+import '//resources/cr_elements/icons.html.js';
 import '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
 import '//resources/cr_elements/cr_lazy_render/cr_lazy_render.js';
 import './language_menu.js';
@@ -18,7 +18,7 @@ import {loadTimeData} from '//resources/js/load_time_data.js';
 import type {PropertyValues} from '//resources/lit/v3_0/lit.rollup.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
 
-import {openMenu, ToolbarEvent} from './common.js';
+import {openMenu, spinnerDebounceTimeout, ToolbarEvent} from './common.js';
 import type {LanguageMenuElement} from './language_menu.js';
 import {ReadAloudSettingsChange} from './metrics_browser_proxy.js';
 import {ReadAnythingLogger} from './read_anything_logger.js';
@@ -44,7 +44,12 @@ interface VoiceDropdownItem {
   title: string;
   voice: SpeechSynthesisVoice;
   selected: boolean;
-  previewPlaying: boolean;
+  // If a preview has been initiated on a voice. This may be true before
+  // the speech engine actually starts playing the preview.
+  previewInitiated: boolean;
+  // If a preview has actually begun playing, corresponding to .onstart
+  // being called on the preview in app.ts.
+  previewActuallyPlaying: boolean;
   // This ID is currently just used for testing purposes and does not ensure
   // uniqueness
   id: string;
@@ -73,6 +78,7 @@ export class VoiceSelectionMenuElement extends VoiceSelectionMenuElementBase
       enabledLangs: {type: Array},
       previewVoicePlaying: {type: Object},
       currentNotifications_: {type: Object},
+      previewVoiceInitiated: {type: Object},
       isSpeechActive: {type: Boolean},
       localeToDisplayName: {type: Object},
       showLanguageMenuDialog_: {type: Boolean},
@@ -91,6 +97,7 @@ export class VoiceSelectionMenuElement extends VoiceSelectionMenuElementBase
   // The current notifications that should be used in the voice menu.
   private currentNotifications_: {[language: string]: NotificationType} = {};
 
+  private previewVoiceInitiated?: SpeechSynthesisVoice;
   protected errorMessages_: string[] = [];
   protected downloadingMessages_: string[] = [];
   protected voiceGroups_: VoiceDropdownGroup[] = [];
@@ -107,23 +114,35 @@ export class VoiceSelectionMenuElement extends VoiceSelectionMenuElementBase
   override willUpdate(changedProperties: PropertyValues<this>) {
     super.willUpdate(changedProperties);
 
+    if (changedProperties.has('previewVoicePlaying') &&
+        (this.previewVoicePlaying !== this.previewVoiceInitiated)) {
+      // When the preview stops, the voice is set to null in app.ts, so
+      // we should update the preview voice to null here as well to clear the
+      // voice.
+      this.previewVoiceInitiated = this.previewVoicePlaying;
+    }
+    const changedPrivateProperties =
+        changedProperties as Map<PropertyKey, unknown>;
+
     if (changedProperties.has('selectedVoice') ||
         changedProperties.has('availableVoices') ||
         changedProperties.has('enabledLangs') ||
+        changedPrivateProperties.has('previewVoiceInitiated') ||
         changedProperties.has('previewVoicePlaying') ||
         changedProperties.has('localeToDisplayName')) {
       this.voiceGroups_ = this.computeVoiceDropdown_();
     }
 
-    const changedPrivateProperties =
-        changedProperties as Map<PropertyKey, unknown>;
     if (changedPrivateProperties.has('currentNotifications_')) {
       this.errorMessages_ = this.computeErrorMessages_();
       this.downloadingMessages_ = this.computeDownloadingMessages_();
     }
   }
 
-  notify(language: string, type: NotificationType) {
+  notify(type: NotificationType, language?: string) {
+    if (!language) {
+      return;
+    }
     this.currentNotifications_ = {
       ...this.currentNotifications_,
       [language]: type,
@@ -179,7 +198,9 @@ export class VoiceSelectionMenuElement extends VoiceSelectionMenuElementBase
             voice,
             id: this.stringToHtmlTestId_(voice.name),
             selected: areVoicesEqual(this.selectedVoice, voice),
-            previewPlaying: areVoicesEqual(this.previewVoicePlaying, voice),
+            previewActuallyPlaying:
+                areVoicesEqual(this.previewVoicePlaying, voice),
+            previewInitiated: areVoicesEqual(this.previewVoiceInitiated, voice),
           };
 
           const lang = this.getLangDisplayName(voice.lang);
@@ -234,12 +255,23 @@ export class VoiceSelectionMenuElement extends VoiceSelectionMenuElementBase
     e.stopImmediatePropagation();
 
     const dropdownItem = this.getVoiceItemForEvent_(e);
+
+    // Set a small timeout to ensure we're not showing the spinner too
+    // frequently. If speech starts fairly quickly after the button is
+    // pressed, there's no need for a spinner. This timeout should only be
+    // set if the preview is starting, not when a preview is stopped.
+    if (!dropdownItem.previewActuallyPlaying) {
+      setTimeout(() => {
+        this.previewVoiceInitiated = dropdownItem.voice;
+      }, spinnerDebounceTimeout);
+    }
     this.fire(
         ToolbarEvent.PLAY_PREVIEW,
         // If preview is currently playing, we pass null to indicate the audio
         // should be paused.
-        dropdownItem.previewPlaying ? null :
-                                      {previewVoice: dropdownItem.voice});
+        dropdownItem.previewActuallyPlaying ?
+            null :
+            {previewVoice: dropdownItem.voice});
   }
 
   protected openLanguageMenu_() {
@@ -267,22 +299,43 @@ export class VoiceSelectionMenuElement extends VoiceSelectionMenuElementBase
     }));
   }
 
+  private shouldAllowPropagation_(
+      e: KeyboardEvent, currentElement: HTMLElement): boolean {
+    // Always allow propagation for keys other than Tab.
+    if (e.key !== 'Tab') {
+      return true;
+    }
+
+    // If the shift key is not pressed with the tab, only allow propagation on
+    // the language menu button.
+    if (!e.shiftKey) {
+      return currentElement.classList.contains('language-menu-button');
+    }
+
+    // In the case that shift is pressed, only allow propagation on the first
+    // voice option.
+    const targetIsVoiceOption =
+        currentElement.classList.contains('dropdown-voice-selection-button');
+    return targetIsVoiceOption &&
+        Number.parseInt(currentElement.dataset['groupIndex']!) === 0 &&
+        Number.parseInt(currentElement.dataset['voiceIndex']!) === 0;
+  }
+
   protected onVoiceMenuKeyDown_(e: KeyboardEvent) {
     const currentElement = e.target as HTMLElement;
     assert(currentElement, 'no key target');
-    // Prevent closing the menu unless tabbing on the language menu button.
-    if (e.key === 'Tab' &&
-        !currentElement.classList.contains('language-menu-button')) {
+
+    // Allowing propagation on Tab closes the menu. We want to stop that
+    // propagation unless we're tabbing forward on the last item or tabbing
+    // backward on the first item.
+    if (!this.shouldAllowPropagation_(e, currentElement)) {
       e.stopImmediatePropagation();
       return;
     }
 
     const targetIsVoiceOption =
-        (currentElement.classList.contains('dropdown-voice-selection-button')) ?
-        true :
-        false;
-    const targetIsPreviewButton =
-        (currentElement.id === 'preview-icon') ? true : false;
+        currentElement.classList.contains('dropdown-voice-selection-button');
+    const targetIsPreviewButton = currentElement.id === 'preview-icon';
 
     // For voice options, only handle the right arrow - everything else is
     // default
@@ -306,7 +359,7 @@ export class VoiceSelectionMenuElement extends VoiceSelectionMenuElementBase
       const visiblePreviewButton =
           currentElement.querySelector<HTMLElement>('#preview-icon');
       assert(visiblePreviewButton, 'can\'t find preview button');
-      visiblePreviewButton!.focus();
+      visiblePreviewButton.focus();
     }
     // This action is also handled by the menu itself
     // For left arrow, this takes us to the voice being previewed,
@@ -323,22 +376,26 @@ export class VoiceSelectionMenuElement extends VoiceSelectionMenuElementBase
     }
   }
 
-  protected previewAriaLabel_(previewPlaying: boolean, voiceName: string):
-      string {
-    let nameSuffix = '';
-    if (voiceName.length > 0) {
-      nameSuffix = ' ' + voiceName;
-    }
-    if (previewPlaying) {
-      return loadTimeData.getString('stopLabel') + nameSuffix;
-    } else {
-      return loadTimeData.getStringF(
-          'previewVoiceAccessibilityLabel', nameSuffix);
-    }
+  protected hideSpinner_(voiceDropdown: VoiceDropdownItem): boolean {
+    return !(
+        voiceDropdown.previewInitiated &&
+        !voiceDropdown.previewActuallyPlaying);
   }
 
-  protected previewIcon_(previewPlaying: boolean): string {
-    if (previewPlaying) {
+  protected voiceLabel_(selected: boolean, voiceName: string) {
+    const selectedPrefix = selected ? loadTimeData.getString('selected') : '';
+    return selectedPrefix + ' ' +
+        loadTimeData.getStringF('readingModeLanguageMenuItemLabel', voiceName);
+  }
+
+  protected shouldDisableButton_(voiceDropdown: VoiceDropdownItem) {
+    return (
+        voiceDropdown.previewInitiated &&
+        !voiceDropdown.previewActuallyPlaying);
+  }
+
+  protected previewIcon_(previewInitiated: boolean): string {
+    if (previewInitiated) {
       return 'read-anything-20:stop-circle';
     } else {
       return 'read-anything-20:play-circle';

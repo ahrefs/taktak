@@ -4,6 +4,7 @@
 
 #include "third_party/blink/renderer/core/paint/highlight_painter.h"
 
+#include "base/auto_reset.h"
 #include "base/not_fatal_until.h"
 #include "third_party/blink/renderer/core/dom/node.h"
 #include "third_party/blink/renderer/core/editing/editor.h"
@@ -95,7 +96,7 @@ bool HasNonTrivialSpellingGrammarStyles(const FragmentItem& fragment_item,
     // or ‘-webkit-text-stroke-width’ differs from the originating style.
     Color pseudo_color = HighlightStyleUtils::ResolveColor(
         document, originating_style, pseudo_style, pseudo,
-        GetCSSPropertyColor(), {}, SearchTextIsCurrent::kNo);
+        GetCSSPropertyColor(), {}, SearchTextIsActiveMatch::kNo);
     if (pseudo_color !=
         originating_style.VisitedDependentColor(GetCSSPropertyColor())) {
       return true;
@@ -103,7 +104,7 @@ bool HasNonTrivialSpellingGrammarStyles(const FragmentItem& fragment_item,
     if (HighlightStyleUtils::ResolveColor(document, originating_style,
                                           pseudo_style, pseudo,
                                           GetCSSPropertyWebkitTextFillColor(),
-                                          {}, SearchTextIsCurrent::kNo) !=
+                                          {}, SearchTextIsActiveMatch::kNo) !=
         originating_style.VisitedDependentColor(
             GetCSSPropertyWebkitTextFillColor())) {
       return true;
@@ -111,7 +112,7 @@ bool HasNonTrivialSpellingGrammarStyles(const FragmentItem& fragment_item,
     if (HighlightStyleUtils::ResolveColor(document, originating_style,
                                           pseudo_style, pseudo,
                                           GetCSSPropertyWebkitTextStrokeColor(),
-                                          {}, SearchTextIsCurrent::kNo) !=
+                                          {}, SearchTextIsActiveMatch::kNo) !=
         originating_style.VisitedDependentColor(
             GetCSSPropertyWebkitTextStrokeColor())) {
       return true;
@@ -121,7 +122,7 @@ bool HasNonTrivialSpellingGrammarStyles(const FragmentItem& fragment_item,
     // If there is a background color.
     if (!HighlightStyleUtils::ResolveColor(
              document, originating_style, pseudo_style, pseudo,
-             GetCSSPropertyBackgroundColor(), {}, SearchTextIsCurrent::kNo)
+             GetCSSPropertyBackgroundColor(), {}, SearchTextIsActiveMatch::kNo)
              .IsFullyTransparent()) {
       return true;
     }
@@ -153,9 +154,10 @@ bool HasNonTrivialSpellingGrammarStyles(const FragmentItem& fragment_item,
     // TODO(crbug.com/1147859) clean up when spec issue is resolved again
     // https://github.com/w3c/csswg-drafts/issues/7101
     if (originating_style.GetTextEmphasisMark() != TextEmphasisMark::kNone &&
-        HighlightStyleUtils::ResolveColor(
-            document, originating_style, pseudo_style, pseudo,
-            GetCSSPropertyTextEmphasisColor(), {}, SearchTextIsCurrent::kNo) !=
+        HighlightStyleUtils::ResolveColor(document, originating_style,
+                                          pseudo_style, pseudo,
+                                          GetCSSPropertyTextEmphasisColor(), {},
+                                          SearchTextIsActiveMatch::kNo) !=
             originating_style.VisitedDependentColor(
                 GetCSSPropertyTextEmphasisColor())) {
       return true;
@@ -305,7 +307,7 @@ void HighlightPainter::SelectionPaintState::ComputeSelectionStyle(
       node, style, kPseudoIdSelection);
   selection_style_ = HighlightStyleUtils::HighlightPaintingStyle(
       document, style, pseudo_style, node, kPseudoIdSelection, text_style,
-      paint_info, SearchTextIsCurrent::kNo);
+      paint_info, SearchTextIsActiveMatch::kNo);
   paint_selected_text_only_ =
       (paint_info.phase == PaintPhase::kSelectionDragImage);
 }
@@ -343,7 +345,7 @@ void HighlightPainter::SelectionPaintState::PaintSelectionBackground(
     const std::optional<AffineTransform>& rotation) {
   const Color color = HighlightStyleUtils::HighlightBackgroundColor(
       document, style, node, selection_style_.style.current_color,
-      kPseudoIdSelection, SearchTextIsCurrent::kNo);
+      kPseudoIdSelection, SearchTextIsActiveMatch::kNo);
   HighlightPainter::PaintHighlightBackground(context, style, color,
                                              PhysicalSelectionRect(), rotation);
 }
@@ -355,10 +357,10 @@ void HighlightPainter::SelectionPaintState::PaintSelectedText(
     const TextPaintStyle& text_style,
     DOMNodeId node_id,
     const AutoDarkMode& auto_dark_mode) {
-  text_painter.PaintSelectedText(fragment_paint_info, selection_status_.start,
-                                 selection_status_.end, text_style,
-                                 selection_style_.style, LineRelativeSelectionRect(),
-                                 node_id, auto_dark_mode);
+  text_painter.PaintSelectedText(
+      fragment_paint_info, selection_status_.start, selection_status_.end,
+      text_style, selection_style_.style, LineRelativeSelectionRect(), node_id,
+      auto_dark_mode);
 }
 
 // Paint the given text range in the given style, suppressing the text proper
@@ -595,7 +597,7 @@ void HighlightPainter::PaintNonCssMarkers(Phase phase) {
         }
         if (StyleableMarkerPainter::ShouldPaintUnderline(styleable_marker)) {
           const SimpleFontData* font_data =
-              originating_style_.GetFont().PrimaryFont();
+              originating_style_.GetFont()->PrimaryFont();
           StyleableMarkerPainter::PaintUnderline(
               styleable_marker, paint_info_.context, box_origin_,
               originating_style_,
@@ -616,8 +618,7 @@ void HighlightPainter::PaintNonCssMarkers(Phase phase) {
       case DocumentMarker::kGrammar:
       case DocumentMarker::kTextFragment:
       case DocumentMarker::kCustomHighlight:
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
     }
   }
 }
@@ -718,7 +719,7 @@ void HighlightPainter::PaintOneSpellingGrammarDecoration(
           HighlightStyleUtils::HighlightPaintingStyle(
               node_->GetDocument(), originating_style_, pseudo_style, node_,
               PseudoFor(type), originating_text_style_, paint_info_,
-              SearchTextIsCurrent::kNo)
+              SearchTextIsActiveMatch::kNo)
               .style;
       PaintOneSpellingGrammarDecoration(type, text, paint_start_offset,
                                         paint_end_offset, *pseudo_style,
@@ -791,8 +792,7 @@ Vector<LayoutSelectionStatus> HighlightPainter::GetHighlights(
   const auto* text_node = DynamicTo<Text>(node_);
   switch (layer.type) {
     case HighlightLayerType::kOriginating:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
     case HighlightLayerType::kCustom: {
       DCHECK(text_node);
       const MarkerRangeMappingContext mapping_context(*text_node,
@@ -859,13 +859,14 @@ Vector<LayoutSelectionStatus> HighlightPainter::GetHighlights(
       break;
     }
     case HighlightLayerType::kSearchText:
-    case HighlightLayerType::kSearchTextCurrent: {
+    case HighlightLayerType::kSearchTextActiveMatch: {
       DCHECK(text_node);
       const MarkerRangeMappingContext mapping_context(*text_node,
                                                       *fragment_dom_offsets_);
       for (const auto& marker : search_) {
         auto* text_match_marker = To<TextMatchMarker>(marker.Get());
-        bool is_current = layer.type == HighlightLayerType::kSearchTextCurrent;
+        bool is_current =
+            layer.type == HighlightLayerType::kSearchTextActiveMatch;
         if (text_match_marker->IsActiveMatch() != is_current) {
           continue;
         }
@@ -1051,8 +1052,8 @@ void HighlightPainter::PaintHighlightOverlays(
       fragment_paint_info_.shape_result->ExpandRangeToIncludePartialGlyphs(
           &start, &end);
 
-      text_painter_.Paint(fragment_paint_info_.Slice(start, end),
-                          part.style, node_id, foreground_auto_dark_mode_,
+      text_painter_.Paint(fragment_paint_info_.Slice(start, end), part.style,
+                          node_id, foreground_auto_dark_mode_,
                           TextPainter::kTextProperOnly);
     }
 
@@ -1093,8 +1094,7 @@ PseudoId HighlightPainter::PseudoFor(DocumentMarker::MarkerType type) {
     case DocumentMarker::kTextFragment:
       return kPseudoIdTargetText;
     default:
-      NOTREACHED_IN_MIGRATION();
-      return {};
+      NOTREACHED();
   }
 }
 
@@ -1105,8 +1105,7 @@ TextDecorationLine HighlightPainter::LineFor(DocumentMarker::MarkerType type) {
     case DocumentMarker::kGrammar:
       return TextDecorationLine::kGrammarError;
     default:
-      NOTREACHED_IN_MIGRATION();
-      return {};
+      NOTREACHED();
   }
 }
 
@@ -1117,8 +1116,7 @@ Color HighlightPainter::ColorFor(DocumentMarker::MarkerType type) {
     case DocumentMarker::kGrammar:
       return LayoutTheme::GetTheme().PlatformGrammarMarkerUnderlineColor();
     default:
-      NOTREACHED_IN_MIGRATION();
-      return {};
+      NOTREACHED();
   }
 }
 

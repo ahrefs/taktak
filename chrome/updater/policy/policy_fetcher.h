@@ -17,12 +17,19 @@
 #include "chrome/updater/policy/service.h"
 #include "url/gurl.h"
 
+namespace policy {
+enum class PolicyFetchReason;
+}  // namespace policy
+
 namespace updater {
+
+class PersistedData;
 
 // Base class for the policy fetchers.
 class PolicyFetcher : public base::RefCountedThreadSafe<PolicyFetcher> {
  public:
   virtual void FetchPolicies(
+      policy::PolicyFetchReason reason,
       base::OnceCallback<void(int, scoped_refptr<PolicyManagerInterface>)>
           callback) = 0;
 
@@ -43,12 +50,14 @@ class FallbackPolicyFetcher : public PolicyFetcher {
 
   // Overrides of `PolicyFetcher`.
   void FetchPolicies(
+      policy::PolicyFetchReason reason,
       base::OnceCallback<void(int, scoped_refptr<PolicyManagerInterface>)>
           callback) override;
 
  private:
   ~FallbackPolicyFetcher() override;
-  void PolicyFetched(int result,
+  void PolicyFetched(policy::PolicyFetchReason reason,
+                     int result,
                      scoped_refptr<PolicyManagerInterface> policy_manager);
 
   SEQUENCE_CHECKER(sequence_checker_);
@@ -61,7 +70,7 @@ class FallbackPolicyFetcher : public PolicyFetcher {
 // Creates an out-of-process policy fetcher that delegates fetch tasks to the
 // enterprise companion app.
 [[nodiscard]] scoped_refptr<PolicyFetcher> CreateOutOfProcessPolicyFetcher(
-    bool usage_stats_enabled,
+    scoped_refptr<PersistedData> persisted_data,
     std::optional<bool> override_is_managed_device,
     base::TimeDelta override_ceca_connection_timeout);
 

@@ -13,9 +13,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelUuid;
 import android.test.mock.MockContext;
+import android.util.ArraySet;
 import android.util.SparseArray;
 
 import org.jni_zero.CalledByNative;
@@ -26,20 +28,32 @@ import org.chromium.base.Log;
 import org.chromium.components.location.LocationUtils;
 import org.chromium.device.bluetooth.test.TestRSSI;
 import org.chromium.device.bluetooth.test.TestTxPower;
+import org.chromium.device.bluetooth.wrapper.BluetoothAdapterWrapper;
+import org.chromium.device.bluetooth.wrapper.BluetoothDeviceWrapper;
+import org.chromium.device.bluetooth.wrapper.BluetoothGattCallbackWrapper;
+import org.chromium.device.bluetooth.wrapper.BluetoothGattCharacteristicWrapper;
+import org.chromium.device.bluetooth.wrapper.BluetoothGattDescriptorWrapper;
+import org.chromium.device.bluetooth.wrapper.BluetoothGattServiceWrapper;
+import org.chromium.device.bluetooth.wrapper.BluetoothGattWrapper;
+import org.chromium.device.bluetooth.wrapper.BluetoothLeScannerWrapper;
+import org.chromium.device.bluetooth.wrapper.DeviceBondStateReceiverWrapper;
+import org.chromium.device.bluetooth.wrapper.ScanCallbackWrapper;
+import org.chromium.device.bluetooth.wrapper.ScanResultWrapper;
+import org.chromium.device.bluetooth.wrapper.ThreadUtilsWrapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * Fake implementations of android.bluetooth.* classes for testing.
  *
- * Fakes are contained in a single file to simplify code. Only one C++ file may
- * access a Java file via JNI, and all of these classes are accessed by
- * bluetooth_test_android.cc. The alternative would be a C++ .h, .cc file for
- * each of these classes.
+ * <p>Fakes are contained in a single file to simplify code. Only one C++ file may access a Java
+ * file via JNI, and all of these classes are accessed by bluetooth_test_android.cc. The alternative
+ * would be a C++ .h, .cc file for each of these classes.
  */
 @JNINamespace("device")
 class Fakes {
@@ -80,14 +94,26 @@ class Fakes {
      */
     @CalledByNative
     public static void initFakeThreadUtilsWrapper(final long nativeBluetoothTestAndroid) {
-        Wrappers.ThreadUtilsWrapper.setFactory(
-                new Wrappers.ThreadUtilsWrapper.Factory() {
+        ThreadUtilsWrapper.setFactory(
+                new ThreadUtilsWrapper.Factory() {
                     @Override
-                    public Wrappers.ThreadUtilsWrapper create() {
-                        return new Wrappers.ThreadUtilsWrapper() {
+                    public ThreadUtilsWrapper create() {
+                        return new ThreadUtilsWrapper() {
                             @Override
                             public void runOnUiThread(Runnable r) {
                                 FakesJni.get().postTaskFromJava(nativeBluetoothTestAndroid, r);
+                            }
+
+                            @Override
+                            public void postOnUiThread(Runnable r) {
+                                FakesJni.get().postTaskFromJava(nativeBluetoothTestAndroid, r);
+                            }
+
+                            @Override
+                            public void postOnUiThreadDelayed(Runnable r, long delayMillis) {
+                                FakesJni.get()
+                                        .postDelayedTaskFromJava(
+                                                nativeBluetoothTestAndroid, r, delayMillis);
                             }
                         };
                     }
@@ -100,10 +126,13 @@ class Fakes {
     }
 
     /** Fakes android.bluetooth.BluetoothAdapter. */
-    static class FakeBluetoothAdapter extends Wrappers.BluetoothAdapterWrapper {
+    static class FakeBluetoothAdapter extends BluetoothAdapterWrapper {
         private final FakeContext mFakeContext;
         private final FakeBluetoothLeScanner mFakeScanner;
         private boolean mPowered = true;
+        private int mEnabledDeviceTransport = BluetoothDevice.DEVICE_TYPE_DUAL;
+        private final ArraySet<BluetoothDeviceWrapper> mFakePairedDevices = new ArraySet();
+        private DeviceBondStateReceiverWrapper.Callback mDeviceBondStateCallback;
         final long mNativeBluetoothTestAndroid;
 
         /** Creates a FakeBluetoothAdapter. */
@@ -114,15 +143,28 @@ class Fakes {
         }
 
         private FakeBluetoothAdapter(long nativeBluetoothTestAndroid) {
-            super(null, new FakeContext());
+            super(
+                    null,
+                    new FakeContext(),
+                    /* hasBluetoothFeature= */ true,
+                    /* hasLowEnergyFeature= */ true);
             mNativeBluetoothTestAndroid = nativeBluetoothTestAndroid;
             mFakeContext = (FakeContext) mContext;
             mFakeScanner = new FakeBluetoothLeScanner();
         }
 
         @CalledByNative("FakeBluetoothAdapter")
-        public void setFakeContextLocationPermission(boolean enabled) {
-            mFakeContext.setLocationPermission(enabled);
+        public void setFakePermission(boolean enabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                mFakeContext.setBluetoothPermission(enabled);
+            } else {
+                mFakeContext.setLocationPermission(enabled);
+            }
+        }
+
+        @CalledByNative("FakeBluetoothAdapter")
+        public void setEnabledTransport(int enabledTransport) {
+            mEnabledDeviceTransport = enabledTransport;
         }
 
         /** Creates and discovers a new device. */
@@ -151,7 +193,11 @@ class Fakes {
                                 ScanSettings.CALLBACK_TYPE_ALL_MATCHES,
                                 new FakeScanResult(
                                         new FakeBluetoothDevice(
-                                                this, "01:00:00:90:1E:BE", "FakeBluetoothDevice"),
+                                                this,
+                                                "01:00:00:90:1E:BE",
+                                                "FakeBluetoothDevice",
+                                                BluetoothDevice.DEVICE_TYPE_LE,
+                                                /* uuid= */ null),
                                         "FakeBluetoothDevice",
                                         TestRSSI.LOWEST,
                                         4,
@@ -182,7 +228,11 @@ class Fakes {
                                 ScanSettings.CALLBACK_TYPE_ALL_MATCHES,
                                 new FakeScanResult(
                                         new FakeBluetoothDevice(
-                                                this, "01:00:00:90:1E:BE", "FakeBluetoothDevice"),
+                                                this,
+                                                "01:00:00:90:1E:BE",
+                                                "FakeBluetoothDevice",
+                                                BluetoothDevice.DEVICE_TYPE_LE,
+                                                /* uuid= */ null),
                                         "Local Device Name",
                                         TestRSSI.LOWER,
                                         5,
@@ -198,7 +248,12 @@ class Fakes {
                         mFakeScanner.mScanCallback.onScanResult(
                                 ScanSettings.CALLBACK_TYPE_ALL_MATCHES,
                                 new FakeScanResult(
-                                        new FakeBluetoothDevice(this, "01:00:00:90:1E:BE", ""),
+                                        new FakeBluetoothDevice(
+                                                this,
+                                                "01:00:00:90:1E:BE",
+                                                "",
+                                                BluetoothDevice.DEVICE_TYPE_LE,
+                                                /* uuid= */ null),
                                         "Local Device Name",
                                         TestRSSI.LOW,
                                         -1,
@@ -215,7 +270,12 @@ class Fakes {
                         mFakeScanner.mScanCallback.onScanResult(
                                 ScanSettings.CALLBACK_TYPE_ALL_MATCHES,
                                 new FakeScanResult(
-                                        new FakeBluetoothDevice(this, "02:00:00:8B:74:63", ""),
+                                        new FakeBluetoothDevice(
+                                                this,
+                                                "02:00:00:8B:74:63",
+                                                "",
+                                                BluetoothDevice.DEVICE_TYPE_LE,
+                                                /* uuid= */ null),
                                         "Local Device Name",
                                         TestRSSI.MEDIUM,
                                         -1,
@@ -232,7 +292,12 @@ class Fakes {
                         mFakeScanner.mScanCallback.onScanResult(
                                 ScanSettings.CALLBACK_TYPE_ALL_MATCHES,
                                 new FakeScanResult(
-                                        new FakeBluetoothDevice(this, "01:00:00:90:1E:BE", null),
+                                        new FakeBluetoothDevice(
+                                                this,
+                                                "01:00:00:90:1E:BE",
+                                                null,
+                                                BluetoothDevice.DEVICE_TYPE_LE,
+                                                /* uuid= */ null),
                                         "Local Device Name",
                                         TestRSSI.HIGH,
                                         -1,
@@ -248,7 +313,12 @@ class Fakes {
                         mFakeScanner.mScanCallback.onScanResult(
                                 ScanSettings.CALLBACK_TYPE_ALL_MATCHES,
                                 new FakeScanResult(
-                                        new FakeBluetoothDevice(this, "02:00:00:8B:74:63", null),
+                                        new FakeBluetoothDevice(
+                                                this,
+                                                "02:00:00:8B:74:63",
+                                                null,
+                                                BluetoothDevice.DEVICE_TYPE_DUAL,
+                                                /* uuid= */ null),
                                         "Local Device Name",
                                         TestRSSI.LOWEST,
                                         -1,
@@ -272,7 +342,11 @@ class Fakes {
                                 ScanSettings.CALLBACK_TYPE_ALL_MATCHES,
                                 new FakeScanResult(
                                         new FakeBluetoothDevice(
-                                                this, "01:00:00:90:1E:BE", "U2F FakeDevice"),
+                                                this,
+                                                "01:00:00:90:1E:BE",
+                                                "U2F FakeDevice",
+                                                BluetoothDevice.DEVICE_TYPE_LE,
+                                                /* uuid= */ null),
                                         "Local Device Name",
                                         TestRSSI.LOWEST,
                                         -1,
@@ -286,10 +360,58 @@ class Fakes {
         }
 
         @CalledByNative("FakeBluetoothAdapter")
+        public void simulatePairedClassicDevice(int deviceOrdinal) {
+            final FakeBluetoothDevice device;
+            switch (deviceOrdinal) {
+                case 0:
+                    device =
+                            new FakeBluetoothDevice(
+                                    this,
+                                    "03:00:00:17:C0:57",
+                                    "FakeBluetoothDevice",
+                                    BluetoothDevice.DEVICE_TYPE_CLASSIC,
+                                    /* uuid= */ null);
+                    break;
+                case 1:
+                    device =
+                            new FakeBluetoothDevice(
+                                    this,
+                                    "01:00:00:90:1E:BE",
+                                    "Fake classic device 1",
+                                    BluetoothDevice.DEVICE_TYPE_CLASSIC,
+                                    "00001101-0000-1000-8000-00805F9B34FB");
+                    break;
+                case 2:
+                    device =
+                            new FakeBluetoothDevice(
+                                    this,
+                                    "02:00:00:8B:74:63",
+                                    "Fake classic device 2",
+                                    BluetoothDevice.DEVICE_TYPE_CLASSIC,
+                                    "00001101-0000-1000-8000-00805F9B34FB");
+                    break;
+                default:
+                    throw new IllegalArgumentException();
+            }
+
+            mFakePairedDevices.add(device);
+            if (mDeviceBondStateCallback != null) {
+                mDeviceBondStateCallback.onDeviceBondStateChanged(
+                        device, BluetoothDevice.BOND_BONDED);
+            }
+        }
+
+        @CalledByNative("FakeBluetoothAdapter")
         public void forceIllegalStateException() {
             if (mFakeScanner != null) {
                 mFakeScanner.forceIllegalStateException();
             }
+        }
+
+        @CalledByNative("FakeBluetoothAdapter")
+        public void failCurrentLeScan(int errorCode) {
+            mFakeScanner.mScanCallback.onScanFailed(errorCode);
+            mFakeScanner.mScanCallback = null;
         }
 
         // -----------------------------------------------------------------------------------------
@@ -339,8 +461,11 @@ class Fakes {
         }
 
         @Override
-        public Wrappers.BluetoothLeScannerWrapper getBluetoothLeScanner() {
-            if (isEnabled()) {
+        public BluetoothLeScannerWrapper getBluetoothLeScanner() {
+            final boolean isLeEnabled =
+                    (mEnabledDeviceTransport & BluetoothDevice.DEVICE_TYPE_LE)
+                            == BluetoothDevice.DEVICE_TYPE_LE;
+            if (isEnabled() && isLeEnabled) {
                 return mFakeScanner;
             }
             return null;
@@ -365,19 +490,49 @@ class Fakes {
         public boolean isDiscovering() {
             return false;
         }
+
+        @Override
+        public boolean hasBluetoothFeature() {
+            return (mEnabledDeviceTransport & BluetoothDevice.DEVICE_TYPE_CLASSIC)
+                    == BluetoothDevice.DEVICE_TYPE_CLASSIC;
+        }
+
+        @Override
+        public Set<BluetoothDeviceWrapper> getBondedDevices() {
+            if (!isEnabled() || !hasBluetoothFeature()) {
+                return null;
+            }
+
+            return mFakePairedDevices;
+        }
+
+        @Override
+        public DeviceBondStateReceiverWrapper createDeviceBondStateReceiver(
+                DeviceBondStateReceiverWrapper.Callback callback) {
+            mDeviceBondStateCallback = callback;
+            return super.createDeviceBondStateReceiver(callback);
+        }
     }
 
     /** Fakes android.content.Context by extending MockContext. */
     static class FakeContext extends MockContext {
-        private boolean mLocationPermission;
+        private int mLocationPermission;
+        private int mBluetoothPermission;
 
         public FakeContext() {
             super();
-            mLocationPermission = true;
+            mLocationPermission = PackageManager.PERMISSION_GRANTED;
+            mBluetoothPermission = PackageManager.PERMISSION_GRANTED;
         }
 
         public void setLocationPermission(boolean enabled) {
-            mLocationPermission = enabled;
+            mLocationPermission = (enabled ? PackageManager.PERMISSION_GRANTED
+                                           : PackageManager.PERMISSION_DENIED);
+        }
+
+        public void setBluetoothPermission(boolean enabled) {
+            mBluetoothPermission = (enabled ? PackageManager.PERMISSION_GRANTED
+                                            : PackageManager.PERMISSION_DENIED);
         }
 
         @Override
@@ -404,19 +559,23 @@ class Fakes {
 
         @Override
         public int checkCallingOrSelfPermission(String permission) {
+            final boolean isBluetoothPermissionSOrAbove =
+                permission.equals(Manifest.permission.BLUETOOTH_SCAN)
+                    || permission.equals(Manifest.permission.BLUETOOTH_CONNECT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isBluetoothPermissionSOrAbove) {
+                return mBluetoothPermission;
+            }
             if (permission.equals(Manifest.permission.ACCESS_FINE_LOCATION)
                     || permission.equals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
-                return mLocationPermission
-                        ? PackageManager.PERMISSION_GRANTED
-                        : PackageManager.PERMISSION_DENIED;
+                return mLocationPermission;
             }
             return PackageManager.PERMISSION_DENIED;
         }
     }
 
     /** Fakes android.bluetooth.le.BluetoothLeScanner. */
-    static class FakeBluetoothLeScanner extends Wrappers.BluetoothLeScannerWrapper {
-        public Wrappers.ScanCallbackWrapper mScanCallback;
+    static class FakeBluetoothLeScanner extends BluetoothLeScannerWrapper {
+        public ScanCallbackWrapper mScanCallback;
         private boolean mThrowException;
 
         private FakeBluetoothLeScanner() {
@@ -427,7 +586,7 @@ class Fakes {
         public void startScan(
                 List<ScanFilter> filters,
                 int scanSettingsScanMode,
-                Wrappers.ScanCallbackWrapper callback) {
+                ScanCallbackWrapper callback) {
             if (mScanCallback != null) {
                 throw new IllegalArgumentException(
                         "FakeBluetoothLeScanner does not support multiple scans.");
@@ -439,7 +598,7 @@ class Fakes {
         }
 
         @Override
-        public void stopScan(Wrappers.ScanCallbackWrapper callback) {
+        public void stopScan(ScanCallbackWrapper callback) {
             if (mScanCallback != callback) {
                 throw new IllegalArgumentException("No scan in progress.");
             }
@@ -455,7 +614,7 @@ class Fakes {
     }
 
     /** Fakes android.bluetooth.le.ScanResult */
-    static class FakeScanResult extends Wrappers.ScanResultWrapper {
+    static class FakeScanResult implements ScanResultWrapper {
         private final FakeBluetoothDevice mDevice;
         private final String mLocalName;
         private final int mRssi;
@@ -474,7 +633,6 @@ class Fakes {
                 int txPower,
                 Map<ParcelUuid, byte[]> serviceData,
                 SparseArray<byte[]> manufacturerData) {
-            super(null);
             mDevice = device;
             mLocalName = localName;
             mRssi = rssi;
@@ -486,7 +644,7 @@ class Fakes {
         }
 
         @Override
-        public Wrappers.BluetoothDeviceWrapper getDevice() {
+        public BluetoothDeviceWrapper getDevice() {
             return mDevice;
         }
 
@@ -527,20 +685,25 @@ class Fakes {
     }
 
     /** Fakes android.bluetooth.BluetoothDevice. */
-    static class FakeBluetoothDevice extends Wrappers.BluetoothDeviceWrapper {
+    static class FakeBluetoothDevice extends BluetoothDeviceWrapper {
         final FakeBluetoothAdapter mAdapter;
-        private String mAddress;
-        private String mName;
+        private final String mAddress;
+        private final String mName;
+        private final int mType;
+        private final String mUuid;
         final FakeBluetoothGatt mGatt;
-        private Wrappers.BluetoothGattCallbackWrapper mGattCallback;
+        private BluetoothGattCallbackWrapper mGattCallback;
 
         static FakeBluetoothDevice sRememberedDevice;
 
-        public FakeBluetoothDevice(FakeBluetoothAdapter adapter, String address, String name) {
+        public FakeBluetoothDevice(
+                FakeBluetoothAdapter adapter, String address, String name, int type, String uuid) {
             super(null);
             mAdapter = adapter;
             mAddress = address;
             mName = name;
+            mType = type;
+            mUuid = uuid;
             mGatt = new FakeBluetoothGatt(this);
         }
 
@@ -596,13 +759,13 @@ class Fakes {
         }
 
         // -----------------------------------------------------------------------------------------
-        // Wrappers.BluetoothDeviceWrapper overrides:
+        // BluetoothDeviceWrapper overrides:
 
         @Override
-        public Wrappers.BluetoothGattWrapper connectGatt(
+        public BluetoothGattWrapper connectGatt(
                 Context context,
                 boolean autoConnect,
-                Wrappers.BluetoothGattCallbackWrapper callback,
+                BluetoothGattCallbackWrapper callback,
                 int transport) {
             if (mGattCallback != null && mGattCallback != callback) {
                 throw new IllegalArgumentException(
@@ -622,24 +785,57 @@ class Fakes {
 
         @Override
         public int getBluetoothClass_getDeviceClass() {
-            return Wrappers.DEVICE_CLASS_UNSPECIFIED;
+            return DEVICE_CLASS_UNSPECIFIED;
         }
 
         @Override
         public int getBondState() {
-            return BluetoothDevice.BOND_NONE;
+            if (mType == BluetoothDevice.DEVICE_TYPE_LE) {
+                return BluetoothDevice.BOND_NONE;
+            } else {
+                return BluetoothDevice.BOND_BONDED;
+            }
         }
 
         @Override
         public String getName() {
             return mName;
         }
+
+        @Override
+        public int getType() {
+            return mType;
+        }
+
+        @Override
+        public ParcelUuid[] getUuids() {
+            if (mUuid == null) {
+                return null;
+            }
+
+            return new ParcelUuid[] {
+                ParcelUuid.fromString(mUuid) // Serial UUID
+            };
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof FakeBluetoothDevice) {
+                return mAddress.equals(((FakeBluetoothDevice) o).mAddress);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return mAddress.hashCode();
+        }
     }
 
     /** Fakes android.bluetooth.BluetoothGatt. */
-    static class FakeBluetoothGatt extends Wrappers.BluetoothGattWrapper {
+    static class FakeBluetoothGatt extends BluetoothGattWrapper {
         final FakeBluetoothDevice mDevice;
-        final ArrayList<Wrappers.BluetoothGattServiceWrapper> mServices;
+        final ArrayList<BluetoothGattServiceWrapper> mServices;
         boolean mReadCharacteristicWillFailSynchronouslyOnce;
         boolean mSetCharacteristicNotificationWillFailSynchronouslyOnce;
         boolean mWriteCharacteristicWillFailSynchronouslyOnce;
@@ -649,7 +845,7 @@ class Fakes {
         public FakeBluetoothGatt(FakeBluetoothDevice device) {
             super(null, null);
             mDevice = device;
-            mServices = new ArrayList<Wrappers.BluetoothGattServiceWrapper>();
+            mServices = new ArrayList<>();
         }
 
         @Override
@@ -676,12 +872,12 @@ class Fakes {
         }
 
         @Override
-        public List<Wrappers.BluetoothGattServiceWrapper> getServices() {
+        public List<BluetoothGattServiceWrapper> getServices() {
             return mServices;
         }
 
         @Override
-        boolean readCharacteristic(Wrappers.BluetoothGattCharacteristicWrapper characteristic) {
+        public boolean readCharacteristic(BluetoothGattCharacteristicWrapper characteristic) {
             if (mReadCharacteristicWillFailSynchronouslyOnce) {
                 mReadCharacteristicWillFailSynchronouslyOnce = false;
                 return false;
@@ -693,8 +889,8 @@ class Fakes {
         }
 
         @Override
-        boolean setCharacteristicNotification(
-                Wrappers.BluetoothGattCharacteristicWrapper characteristic, boolean enable) {
+        public boolean setCharacteristicNotification(
+                BluetoothGattCharacteristicWrapper characteristic, boolean enable) {
             if (mSetCharacteristicNotificationWillFailSynchronouslyOnce) {
                 mSetCharacteristicNotificationWillFailSynchronouslyOnce = false;
                 return false;
@@ -706,7 +902,7 @@ class Fakes {
         }
 
         @Override
-        boolean writeCharacteristic(Wrappers.BluetoothGattCharacteristicWrapper characteristic) {
+        public boolean writeCharacteristic(BluetoothGattCharacteristicWrapper characteristic) {
             if (mWriteCharacteristicWillFailSynchronouslyOnce) {
                 mWriteCharacteristicWillFailSynchronouslyOnce = false;
                 return false;
@@ -719,7 +915,7 @@ class Fakes {
         }
 
         @Override
-        boolean readDescriptor(Wrappers.BluetoothGattDescriptorWrapper descriptor) {
+        public boolean readDescriptor(BluetoothGattDescriptorWrapper descriptor) {
             if (mReadDescriptorWillFailSynchronouslyOnce) {
                 mReadDescriptorWillFailSynchronouslyOnce = false;
                 return false;
@@ -731,7 +927,7 @@ class Fakes {
         }
 
         @Override
-        boolean writeDescriptor(Wrappers.BluetoothGattDescriptorWrapper descriptor) {
+        public boolean writeDescriptor(BluetoothGattDescriptorWrapper descriptor) {
             if (mWriteDescriptorWillFailSynchronouslyOnce) {
                 mWriteDescriptorWillFailSynchronouslyOnce = false;
                 return false;
@@ -744,18 +940,18 @@ class Fakes {
     }
 
     /** Fakes android.bluetooth.BluetoothGattService. */
-    static class FakeBluetoothGattService extends Wrappers.BluetoothGattServiceWrapper {
+    static class FakeBluetoothGattService extends BluetoothGattServiceWrapper {
         final FakeBluetoothDevice mDevice;
         final int mInstanceId;
         final UUID mUuid;
-        final ArrayList<Wrappers.BluetoothGattCharacteristicWrapper> mCharacteristics;
+        final ArrayList<BluetoothGattCharacteristicWrapper> mCharacteristics;
 
         public FakeBluetoothGattService(FakeBluetoothDevice device, UUID uuid, int instanceId) {
             super(null, null);
             mDevice = device;
             mUuid = uuid;
             mInstanceId = instanceId;
-            mCharacteristics = new ArrayList<Wrappers.BluetoothGattCharacteristicWrapper>();
+            mCharacteristics = new ArrayList<>();
         }
 
         // Create a characteristic and add it to this service.
@@ -767,7 +963,7 @@ class Fakes {
             UUID uuid = UUID.fromString(uuidString);
 
             int countOfDuplicateUUID = 0;
-            for (Wrappers.BluetoothGattCharacteristicWrapper characteristic :
+            for (BluetoothGattCharacteristicWrapper characteristic :
                     fakeService.mCharacteristics) {
                 if (characteristic.getUuid().equals(uuid)) {
                     countOfDuplicateUUID++;
@@ -779,10 +975,10 @@ class Fakes {
         }
 
         // -----------------------------------------------------------------------------------------
-        // Wrappers.BluetoothGattServiceWrapper overrides:
+        // BluetoothGattServiceWrapper overrides:
 
         @Override
-        public List<Wrappers.BluetoothGattCharacteristicWrapper> getCharacteristics() {
+        public List<BluetoothGattCharacteristicWrapper> getCharacteristics() {
             return mCharacteristics;
         }
 
@@ -799,7 +995,7 @@ class Fakes {
 
     /** Fakes android.bluetooth.BluetoothGattCharacteristic. */
     static class FakeBluetoothGattCharacteristic
-            extends Wrappers.BluetoothGattCharacteristicWrapper {
+            extends BluetoothGattCharacteristicWrapper {
         final FakeBluetoothGattService mService;
         final int mInstanceId;
         final int mProperties;
@@ -807,7 +1003,7 @@ class Fakes {
         byte[] mValue;
         int mWriteType;
         static FakeBluetoothGattCharacteristic sRememberedCharacteristic;
-        final ArrayList<Wrappers.BluetoothGattDescriptorWrapper> mDescriptors;
+        final ArrayList<BluetoothGattDescriptorWrapper> mDescriptors;
 
         public FakeBluetoothGattCharacteristic(
                 FakeBluetoothGattService service, int instanceId, int properties, UUID uuid) {
@@ -817,7 +1013,7 @@ class Fakes {
             mProperties = properties;
             mUuid = uuid;
             mValue = new byte[0];
-            mDescriptors = new ArrayList<Wrappers.BluetoothGattDescriptorWrapper>();
+            mDescriptors = new ArrayList<>();
         }
 
         // Simulate a characteristic value notified as changed.
@@ -943,10 +1139,10 @@ class Fakes {
         }
 
         // -----------------------------------------------------------------------------------------
-        // Wrappers.BluetoothGattCharacteristicWrapper overrides:
+        // BluetoothGattCharacteristicWrapper overrides:
 
         @Override
-        public List<Wrappers.BluetoothGattDescriptorWrapper> getDescriptors() {
+        public List<BluetoothGattDescriptorWrapper> getDescriptors() {
             return mDescriptors;
         }
 
@@ -983,7 +1179,7 @@ class Fakes {
     }
 
     /** Fakes android.bluetooth.BluetoothGattDescriptor. */
-    static class FakeBluetoothGattDescriptor extends Wrappers.BluetoothGattDescriptorWrapper {
+    static class FakeBluetoothGattDescriptor extends BluetoothGattDescriptorWrapper {
         final FakeBluetoothGattCharacteristic mCharacteristic;
         final UUID mUuid;
         byte[] mValue;
@@ -1072,10 +1268,10 @@ class Fakes {
         }
 
         // -----------------------------------------------------------------------------------------
-        // Wrappers.BluetoothGattDescriptorWrapper overrides:
+        // BluetoothGattDescriptorWrapper overrides:
 
         @Override
-        public Wrappers.BluetoothGattCharacteristicWrapper getCharacteristic() {
+        public BluetoothGattCharacteristicWrapper getCharacteristic() {
             return mCharacteristic;
         }
 
@@ -1103,6 +1299,9 @@ class Fakes {
 
         // Bind to BluetoothTestAndroid::PostTaskFromJava.
         void postTaskFromJava(long nativeBluetoothTestAndroid, Runnable r);
+
+        // Bind to BluetoothTestAndroid::PostDelayedTaskFromJava.
+        void postDelayedTaskFromJava(long nativeBluetoothTestAndroid, Runnable r, long delayMillis);
 
         // Binds to BluetoothTestAndroid::OnFakeAdapterStateChanged.
         void onFakeAdapterStateChanged(long nativeBluetoothTestAndroid, boolean powered);

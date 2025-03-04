@@ -8,7 +8,6 @@
 #include "base/metrics/single_sample_metrics.h"
 #include "base/values.h"
 #include "chrome/common/read_anything/read_anything.mojom.h"
-#include "chrome/common/read_anything/read_anything_constants.h"
 #include "chrome/renderer/accessibility/phrase_segmentation/dependency_parser_model.h"
 #include "chrome/renderer/accessibility/read_anything/read_aloud_traversal_utils.h"
 #include "ui/accessibility/ax_node_position.h"
@@ -87,7 +86,8 @@ class ReadAloudAppModel {
                                bool is_docs,
                                const std::set<ui::AXNodeID>* current_nodes);
 
-  void PreprocessPhrasesForText(DependencyParserModel& dependency_parser_model);
+  // Get the dependency parsing model for this renderer process.
+  DependencyParserModel& GetDependencyParserModel();
 
   // Increments the processed_granularity_index_, updating ReadAloud's state of
   // the current granularity to refer to the next granularity. The current
@@ -241,15 +241,26 @@ class ReadAloudAppModel {
   //      still needs to be read.
   bool NoValidTextRemainingInCurrentNode(bool is_pdf, bool is_docs) const;
 
-  // Segment the given granularity into phrases with the given model.
-  void CalculatePhrases(DependencyParserModel& dependency_parser_model,
-                        a11y::ReadAloudCurrentGranularity& granularity);
+  // Asynchronously segment the given granularity into phrases. Once the phrases
+  // are calculated, `UpdatePhraseBoundaries` will be called.
+  void CalculatePhrases(a11y::ReadAloudCurrentGranularity& granularity);
+
+  // Once the phrase segmentation has completed for a given sentence, update the
+  // granularity with the phrase boundaries, and calculate phrases for the next
+  // sentence.
+  // TODO(crbug.com/384820795): Investigate if a UID or hash
+  // can be used to avoid passing around the tokens.
+  void UpdatePhraseBoundaries(std::vector<std::string> tokens,
+                              std::vector<size_t> heads);
+
+  // Initiate phrase calculation from the first sentence.
+  void StartPhraseCalculation();
 
   // Whether Read Aloud speech is currently playing or not.
   bool speech_playing_ = false;
 
   // The current speech rate for reading aloud.
-  double speech_rate_ = kReadAnythingDefaultSpeechRate;
+  double speech_rate_ = 1.0;
 
   // The languages that the user has enabled for reading aloud.
   base::Value::List languages_enabled_in_pref_;
@@ -292,6 +303,14 @@ class ReadAloudAppModel {
   // The current text index within the given node.
   int current_text_index_ = 0;
 
+  // Whether a phrase calculation for a sentence is currently underway. (We
+  // do not initiate a second calculation before the first has completed.)
+  bool is_calculating_phrases = false;
+
+  // Which sentence (index into `processed_granularities_on_current_page`) is
+  // currently being processed for phrases. -1 if none.
+  int current_phrase_calculation_index_ = -1;
+
   // TODO(crbug.com/40927698): Clear this when granularity changes.
   // TODO(crbug.com/40927698): Use this to assist in navigating forwards /
   // backwards.
@@ -300,6 +319,8 @@ class ReadAloudAppModel {
       processed_granularities_on_current_page_;
 
   const ui::AXMovementOptions sentence_movement_options_;
+
+  base::WeakPtrFactory<ReadAloudAppModel> weak_ptr_factory_{this};
 };
 
 #endif  // CHROME_RENDERER_ACCESSIBILITY_READ_ANYTHING_READ_ALOUD_APP_MODEL_H_

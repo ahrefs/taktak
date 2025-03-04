@@ -2,12 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "extensions/browser/image_sanitizer.h"
+
+#include <optional>
 
 #include "base/debug/dump_without_crashing.h"
 #include "base/files/file_util.h"
@@ -33,12 +30,13 @@ std::tuple<std::vector<uint8_t>, bool, bool> ReadAndDeleteBinaryFile(
     const base::FilePath& path) {
   std::vector<uint8_t> contents;
   bool read_success = false;
-  int64_t file_size;
-  if (base::GetFileSize(path, &file_size)) {
-    contents.resize(file_size);
+  std::optional<int64_t> file_size = base::GetFileSize(path);
+  if (file_size.has_value()) {
+    int64_t size = file_size.value();
+    contents.resize(size);
     read_success =
-        base::ReadFile(path, reinterpret_cast<char*>(contents.data()),
-                       file_size) == file_size;
+        base::ReadFile(path, reinterpret_cast<char*>(contents.data()), size) ==
+        size;
   }
   bool delete_success = base::DeleteFile(path);
   return std::make_tuple(std::move(contents), read_success, delete_success);
@@ -155,14 +153,9 @@ void ImageSanitizer::ImageDecoded(const base::FilePath& image_path,
     return;
   }
 
-  // TODO(https://crbug.com/370696612): Remove this disambiguating cast when the
-  // deprecated APIs are removed.
-  using NonDeprecatedVersion =
-      std::optional<std::vector<uint8_t>> (*)(const SkBitmap&, bool);
   io_task_runner_->PostTaskAndReplyWithResult(
       FROM_HERE,
-      base::BindOnce((NonDeprecatedVersion)gfx::PNGCodec::EncodeBGRASkBitmap,
-                     decoded_image,
+      base::BindOnce(gfx::PNGCodec::EncodeBGRASkBitmap, decoded_image,
                      /*discard_transparency=*/false),
       base::BindOnce(&ImageSanitizer::ImageReencoded,
                      weak_factory_.GetWeakPtr(), image_path));

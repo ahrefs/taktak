@@ -5,6 +5,7 @@
 #include "chrome/browser/ui/views/payments/secure_payment_confirmation_dialog_view.h"
 
 #include "base/metrics/histogram_functions.h"
+#include "base/task/single_thread_task_runner.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/extensions/security_dialog_tracker.h"
@@ -142,6 +143,7 @@ void SecurePaymentConfirmationDialogView::ShowDialog(
   views::Widget* widget =
       constrained_window::ShowWebModalDialogViews(this, web_contents);
   extensions::SecurityDialogTracker::GetInstance()->AddSecurityDialog(widget);
+  occlusion_observation_.Observe(widget);
 
   // The progress bar doesn't exist until after ShowWebModalDialogViews, so we
   // have to update it here in case it starts visible.
@@ -149,8 +151,9 @@ void SecurePaymentConfirmationDialogView::ShowDialog(
                              model_->progress_bar_visible());
 
   // ui_observer_for_test_ is used in platform browsertests.
-  if (ui_observer_for_test_)
+  if (ui_observer_for_test_) {
     ui_observer_for_test_->OnUIDisplayed();
+  }
 }
 
 void SecurePaymentConfirmationDialogView::OnDialogAccepted() {
@@ -248,13 +251,15 @@ void SecurePaymentConfirmationDialogView::UpdateLabelView(
 }
 
 void SecurePaymentConfirmationDialogView::HideDialog() {
-  if (GetWidget())
+  if (GetWidget()) {
     GetWidget()->Close();
+  }
 }
 
 bool SecurePaymentConfirmationDialogView::ClickOptOutForTesting() {
-  if (!model_->opt_out_visible())
+  if (!model_->opt_out_visible()) {
     return false;
+  }
   OnOptOutClicked();
   return true;
 }
@@ -511,6 +516,17 @@ std::unique_ptr<views::View> SecurePaymentConfirmationDialogView::CreateRowView(
   row->AddChildView(std::move(value_text));
 
   return row;
+}
+
+void SecurePaymentConfirmationDialogView::OnOcclusionStateChanged(
+    bool occluded) {
+  if (occluded) {
+    SetEnabled(false);
+    base::SingleThreadTaskRunner::GetCurrentDefault()->PostTask(
+        FROM_HERE,
+        base::BindOnce(&SecurePaymentConfirmationDialogView::HideDialog,
+                       weak_ptr_factory_.GetWeakPtr()));
+  }
 }
 
 BEGIN_METADATA(SecurePaymentConfirmationDialogView)

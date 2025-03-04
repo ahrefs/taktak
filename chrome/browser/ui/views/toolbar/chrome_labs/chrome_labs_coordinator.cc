@@ -5,22 +5,20 @@
 #include "chrome/browser/ui/views/toolbar/chrome_labs/chrome_labs_coordinator.h"
 
 #include "base/metrics/histogram_functions.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/about_flags.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/ui/actions/chrome_action_id.h"
 #include "chrome/browser/ui/browser.h"
-#include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/toolbar/chrome_labs/chrome_labs_bubble_view.h"
-#include "chrome/browser/ui/views/toolbar/chrome_labs/chrome_labs_button.h"
 #include "chrome/browser/ui/views/toolbar/chrome_labs/chrome_labs_view_controller.h"
 #include "chrome/browser/ui/views/toolbar/pinned_toolbar_actions_container.h"
 #include "chrome/browser/ui/views/toolbar/toolbar_view.h"
-#include "components/flags_ui/pref_service_flags_storage.h"
+#include "components/webui/flags/pref_service_flags_storage.h"
 #include "ui/views/bubble/bubble_dialog_delegate_view.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "ash/constants/ash_switches.h"
 #include "base/system/sys_info.h"
 #include "chrome/browser/ash/ownership/owner_settings_service_ash.h"
@@ -53,7 +51,7 @@ bool ChromeLabsCoordinator::BubbleExists() {
 }
 
 void ChromeLabsCoordinator::Show(ShowUserType user_type) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // Bypass possible incognito profile same as chrome://flags does.
   Profile* original_profile = browser_->profile()->GetOriginalProfile();
   if (user_type == ShowUserType::kChromeOsOwnerUserType) {
@@ -69,16 +67,14 @@ void ChromeLabsCoordinator::Show(ShowUserType user_type) {
 #else
   flags_storage_ = std::make_unique<flags_ui::PrefServiceFlagsStorage>(
       g_browser_process->local_state());
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
   flags_state_ = about_flags::GetCurrentFlagsState();
 
-  if (features::IsToolbarPinningEnabled()) {
-    BrowserView::GetBrowserViewForBrowser(browser_)
-        ->toolbar()
-        ->pinned_toolbar_actions_container()
-        ->ShowActionEphemerallyInToolbar(kActionShowChromeLabs, true);
-  }
+  BrowserView::GetBrowserViewForBrowser(browser_)
+      ->toolbar()
+      ->pinned_toolbar_actions_container()
+      ->ShowActionEphemerallyInToolbar(kActionShowChromeLabs, true);
 
   auto chrome_labs_bubble_view =
       std::make_unique<ChromeLabsBubbleView>(GetChromeLabsButton(), browser_);
@@ -96,12 +92,8 @@ void ChromeLabsCoordinator::Show(ShowUserType user_type) {
       std::move(chrome_labs_bubble_view));
   widget->Show();
 
-  // TODO(b/354207075): Figure out how to get the dot indicator to show on the
-  // pinned toolbar button.
-  // Hide dot indicator once bubble has been shown.
-  if (!features::IsToolbarPinningEnabled()) {
-    static_cast<ChromeLabsButton*>(GetChromeLabsButton())->HideDotIndicator();
-  }
+  // TODO(crbug.com/354207075): Hide the dot indicator here once the bubble has
+  // been shown. Wait for bug to be fixed before doing this.
 }
 
 void ChromeLabsCoordinator::Hide() {
@@ -117,7 +109,7 @@ void ChromeLabsCoordinator::Hide() {
 }
 
 void ChromeLabsCoordinator::ShowOrHide() {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   if (is_waiting_to_show_) {
     return;
   }
@@ -130,7 +122,7 @@ void ChromeLabsCoordinator::ShowOrHide() {
   // ChromeOS verifying if the owner is signed in is async operation.
   // Asynchronously check if the user is the owner and show the Chrome Labs
   // bubble only after we have this information.
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // Bypass possible incognito profile same as chrome://flags does.
   Profile* original_profile = browser_->profile()->GetOriginalProfile();
   if ((base::SysInfo::IsRunningOnChromeOS() ||
@@ -162,16 +154,14 @@ void ChromeLabsCoordinator::ShowOrHide() {
 }
 
 views::Button* ChromeLabsCoordinator::GetChromeLabsButton() {
-  views::Button* button;
   ToolbarView* toolbar =
       BrowserView::GetBrowserViewForBrowser(browser_)->toolbar();
+  CHECK(toolbar);
 
-  if (features::IsToolbarPinningEnabled()) {
-    button = toolbar->pinned_toolbar_actions_container()->GetButtonFor(
-        kActionShowChromeLabs);
-  } else {
-    button = toolbar->chrome_labs_button();
-  }
+  // Null when the labs action is not visible in the container.
+  views::Button* button =
+      toolbar->pinned_toolbar_actions_container()->GetButtonFor(
+          kActionShowChromeLabs);
 
   return button;
 }

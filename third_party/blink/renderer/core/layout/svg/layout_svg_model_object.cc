@@ -120,8 +120,7 @@ bool LayoutSVGModelObject::CheckForImplicitTransformChange(
     case ETransformBox::kBorderBox:
       return bbox_changed;
   }
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 void LayoutSVGModelObject::ImageChanged(WrappedImagePtr image,
@@ -182,10 +181,12 @@ void LayoutSVGModelObject::StyleDidChange(StyleDifference diff,
 void LayoutSVGModelObject::InsertedIntoTree() {
   NOT_DESTROYED();
   LayoutObject::InsertedIntoTree();
-  // Ensure that the viewport dependency flag gets set on the ancestor chain.
-  if (SVGSelfOrDescendantHasViewportDependency()) {
-    ClearSVGSelfOrDescendantHasViewportDependency();
-    SetSVGSelfOrDescendantHasViewportDependency();
+  if (!RuntimeEnabledFeatures::SvgViewportOptimizationEnabled()) {
+    // Ensure that the viewport dependency flag gets set on the ancestor chain.
+    if (SVGSelfOrDescendantHasViewportDependency()) {
+      ClearSVGSelfOrDescendantHasViewportDependency();
+      SetSVGSelfOrDescendantHasViewportDependency();
+    }
   }
   LayoutSVGResourceContainer::MarkForLayoutAndParentResourceInvalidation(*this,
                                                                          false);

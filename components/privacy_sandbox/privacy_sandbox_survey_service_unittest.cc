@@ -4,8 +4,10 @@
 
 #include "components/privacy_sandbox/privacy_sandbox_survey_service.h"
 
+#include "base/test/metrics/histogram_tester.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/task_environment.h"
+#include "base/version_info/channel.h"
 #include "components/prefs/testing_pref_service.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
 #include "components/signin/public/identity_manager/identity_test_environment.h"
@@ -54,6 +56,7 @@ class PrivacySandboxSurveyServiceTest : public testing::Test {
 
   TestingPrefServiceSimple* prefs() { return &prefs_; }
 
+  base::HistogramTester histogram_tester_;
   std::unique_ptr<signin::IdentityTestEnvironment> identity_test_env_;
   TestingPrefServiceSimple prefs_;
   std::unique_ptr<PrivacySandboxSurveyService> survey_service_;
@@ -73,43 +76,6 @@ class PrivacySandboxSurveyServiceFeatureDisabledTest
 
 TEST_F(PrivacySandboxSurveyServiceFeatureDisabledTest, SurveyDoesNotShow) {
   EXPECT_FALSE(survey_service()->ShouldShowSentimentSurvey());
-}
-
-class PrivacySandboxSurveyServiceCooldownTest
-    : public PrivacySandboxSurveyServiceTest {};
-
-TEST_F(PrivacySandboxSurveyServiceCooldownTest, SurveyShownByDefault) {
-  // By default the survey should be shown.
-  EXPECT_TRUE(survey_service()->ShouldShowSentimentSurvey());
-}
-
-TEST_F(PrivacySandboxSurveyServiceCooldownTest,
-       SurveyNotShownWithActiveCooldown) {
-  EXPECT_TRUE(survey_service()->ShouldShowSentimentSurvey());
-  survey_service()->OnSuccessfulSentimentSurvey();
-  // We just showed the survey, so the cooldown prevents showing it again.
-  EXPECT_FALSE(survey_service()->ShouldShowSentimentSurvey());
-}
-
-TEST_F(PrivacySandboxSurveyServiceCooldownTest,
-       SurveyShownWhenCooldownExpires) {
-  EXPECT_TRUE(survey_service()->ShouldShowSentimentSurvey());
-  survey_service()->OnSuccessfulSentimentSurvey();
-  // We just showed the survey, so the cooldown prevents showing it again.
-  EXPECT_FALSE(survey_service()->ShouldShowSentimentSurvey());
-  task_env_.FastForwardBy(base::Days(180));
-  EXPECT_TRUE(survey_service()->ShouldShowSentimentSurvey());
-}
-
-class PrivacySandboxSurveyServiceOnSuccessfulSentimentSurveyTest
-    : public PrivacySandboxSurveyServiceTest {};
-
-TEST_F(PrivacySandboxSurveyServiceOnSuccessfulSentimentSurveyTest,
-       SetsPrefToCurrentTime) {
-  base::Time current_time = base::Time::Now();
-  survey_service()->OnSuccessfulSentimentSurvey();
-  EXPECT_EQ(prefs()->GetTime(prefs::kPrivacySandboxSentimentSurveyLastSeen),
-            current_time);
 }
 
 class PrivacySandboxSurveyServiceSentimentSurveyPsbTest
@@ -147,6 +113,58 @@ INSTANTIATE_TEST_SUITE_P(PrivacySandboxSurveyServiceSentimentSurveyPsbTest,
                                           testing::Bool(),
                                           testing::Bool(),
                                           testing::Bool()));
+
+class PrivacySandboxSurveyServiceSentimentSurveyPsdTest
+    : public PrivacySandboxSurveyServiceTest,
+      public testing::WithParamInterface<
+          testing::tuple<version_info::Channel, std::string>> {};
+
+TEST_P(PrivacySandboxSurveyServiceSentimentSurveyPsdTest, SetsPsd) {
+  std::map<std::string, std::string> expected_map = {
+      {"Channel", testing::get<1>(GetParam())},
+  };
+
+  EXPECT_THAT(
+      survey_service()->GetSentimentSurveyPsd(testing::get<0>(GetParam())),
+      ContainerEq(expected_map));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    PrivacySandboxSurveyServiceSentimentSurveyPsdTest,
+    PrivacySandboxSurveyServiceSentimentSurveyPsdTest,
+    testing::Values(
+        testing::make_tuple(version_info::Channel::UNKNOWN, "unknown"),
+        testing::make_tuple(version_info::Channel::STABLE, "stable"),
+        testing::make_tuple(version_info::Channel::BETA, "beta"),
+        testing::make_tuple(version_info::Channel::DEV, "dev"),
+        testing::make_tuple(version_info::Channel::CANARY, "canary")));
+
+class PrivacySandboxSurveyServiceSentimentSurveyStatusHistogramTest
+    : public PrivacySandboxSurveyServiceTest,
+      public testing::WithParamInterface<
+          PrivacySandboxSurveyService::PrivacySandboxSentimentSurveyStatus> {};
+
+TEST_P(PrivacySandboxSurveyServiceSentimentSurveyStatusHistogramTest,
+       EmitsHistogram) {
+  survey_service()->RecordSentimentSurveyStatus(GetParam());
+  histogram_tester_.ExpectBucketCount("PrivacySandbox.SentimentSurvey.Status",
+                                      GetParam(), 1);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    PrivacySandboxSurveyServiceSentimentSurveyStatusHistogramTest,
+    PrivacySandboxSurveyServiceSentimentSurveyStatusHistogramTest,
+    testing::Values(
+        PrivacySandboxSurveyService::PrivacySandboxSentimentSurveyStatus::
+            kSurveyShown,
+        PrivacySandboxSurveyService::PrivacySandboxSentimentSurveyStatus::
+            kFeatureDisabled,
+        PrivacySandboxSurveyService::PrivacySandboxSentimentSurveyStatus::
+            kHatsServiceFailed,
+        PrivacySandboxSurveyService::PrivacySandboxSentimentSurveyStatus::
+            kSurveyLaunchFailed,
+        PrivacySandboxSurveyService::PrivacySandboxSentimentSurveyStatus::
+            kInvalidSurveyConfig));
 
 }  // namespace
 }  // namespace privacy_sandbox

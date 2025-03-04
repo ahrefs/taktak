@@ -7,6 +7,10 @@
 
 #include <string>
 #include <variant>
+#include <vector>
+
+#include "services/on_device_model/ml/chrome_ml_audio_buffer.h"
+#include "third_party/skia/include/core/SkBitmap.h"
 
 namespace ml {
 
@@ -21,7 +25,26 @@ enum class Token {
   kEnd,
 };
 
-using InputPiece = std::variant<Token, std::string>;
+// If an InputPiece holds a `bool`, then the operation should fail. This means
+// the input came from a future client version and can't be handled in the
+// current library version.
+using InputPiece =
+    std::variant<Token, std::string, SkBitmap, AudioBuffer, bool>;
+
+// Options for specifying the performance characteristics of the model to load.
+enum class ModelPerformanceHint {
+  kHighestQuality,
+  kFastestInference,
+};
+
+// Type of the backend to run the model.
+enum ModelBackendType {
+  // The default WebGPU backend.
+  kGpuBackend = 0,
+  // The APU accelerator backend. Only available on devices with APU, and need
+  // special APU model files.
+  kApuBackend = 1,
+};
 
 }  // namespace ml
 

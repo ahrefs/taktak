@@ -8,7 +8,6 @@
 #include <ostream>
 
 #include "base/notreached.h"
-#include "build/chromeos_buildflags.h"
 #include "components/sync/base/data_type.h"
 
 namespace syncer {
@@ -41,8 +40,8 @@ constexpr char kProductComparisonTypeName[] = "productComparison";
 constexpr char kCookiesTypeName[] = "cookies";
 
 UserSelectableTypeInfo GetUserSelectableTypeInfo(UserSelectableType type) {
-  static_assert(53 == syncer::GetNumDataTypes(),
-                "Almost always when adding a new DataType, you must tie it to "
+  static_assert(54 == syncer::GetNumDataTypes(),
+                "Almost always when adding a new Data, you must tie it to "
                 "a UserSelectableType below (new or existing) so the user can "
                 "disable syncing of that data. Today you must also update the "
                 "UI code yourself; crbug.com/1067282 and related bugs will "
@@ -76,8 +75,8 @@ UserSelectableTypeInfo GetUserSelectableTypeInfo(UserSelectableType type) {
       return {
           kExtensionsTypeName, EXTENSIONS, {EXTENSIONS, EXTENSION_SETTINGS}};
     case UserSelectableType::kApps:
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-      // In Ash, "Apps" part of Chrome OS settings.
+#if BUILDFLAG(IS_CHROMEOS)
+      // In Chrome OS, "Apps" is a sub-item of OS settings.
       return {kAppsTypeName, UNSPECIFIED};
 #else
       return {kAppsTypeName, APPS, {APPS, APP_SETTINGS, WEB_APPS, WEB_APKS}};
@@ -115,18 +114,17 @@ UserSelectableTypeInfo GetUserSelectableTypeInfo(UserSelectableType type) {
               AUTOFILL_WALLET_DATA,
               {AUTOFILL_WALLET_CREDENTIAL, AUTOFILL_WALLET_DATA,
                AUTOFILL_WALLET_METADATA, AUTOFILL_WALLET_OFFER,
-               AUTOFILL_WALLET_USAGE}};
+               AUTOFILL_WALLET_USAGE, AUTOFILL_LOYALTY_CARD}};
     case UserSelectableType::kProductComparison:
       return {
           kProductComparisonTypeName, PRODUCT_COMPARISON, {PRODUCT_COMPARISON}};
     case UserSelectableType::kCookies:
       return {kCookiesTypeName, COOKIES, {COOKIES}};
   }
-  NOTREACHED_IN_MIGRATION();
-  return {nullptr, UNSPECIFIED, {}};
+  NOTREACHED();
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 constexpr char kOsAppsTypeName[] = "osApps";
 constexpr char kOsPreferencesTypeName[] = "osPreferences";
 constexpr char kOsWifiConfigurationsTypeName[] = "osWifiConfigurations";
@@ -151,7 +149,7 @@ UserSelectableTypeInfo GetUserSelectableOsTypeInfo(UserSelectableOsType type) {
               {WIFI_CONFIGURATIONS}};
   }
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 }  // namespace
 
@@ -225,7 +223,23 @@ DataType UserSelectableTypeToCanonicalDataType(UserSelectableType type) {
   return GetUserSelectableTypeInfo(type).canonical_data_type;
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+std::optional<UserSelectableType> GetUserSelectableTypeFromDataType(
+    DataType data_type) {
+  std::optional<UserSelectableType> selectable_type;
+
+  for (const auto type : UserSelectableTypeSet::All()) {
+    if (GetUserSelectableTypeInfo(type).data_type_group.Has(data_type)) {
+      CHECK(!selectable_type.has_value())
+          << "Data type " << DataTypeToDebugString(data_type)
+          << " corresponds to multiple user selectable types.";
+      selectable_type = type;
+    }
+  }
+
+  return selectable_type;
+}
+
+#if BUILDFLAG(IS_CHROMEOS)
 const char* GetUserSelectableOsTypeName(UserSelectableOsType type) {
   return GetUserSelectableOsTypeInfo(type).type_name;
 }
@@ -278,7 +292,7 @@ DataTypeSet UserSelectableOsTypeToAllDataTypes(UserSelectableOsType type) {
 DataType UserSelectableOsTypeToCanonicalDataType(UserSelectableOsType type) {
   return GetUserSelectableOsTypeInfo(type).canonical_data_type;
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 std::ostream& operator<<(std::ostream& stream, const UserSelectableType& type) {
   return stream << GetUserSelectableTypeName(type);

@@ -8,9 +8,10 @@
 #include <utility>
 #include <vector>
 
+#include "base/check_is_test.h"
 #include "base/files/file_path.h"
 #include "base/memory/ptr_util.h"
-#include "build/chromeos_buildflags.h"
+#include "build/build_config.h"
 #include "chrome/browser/web_applications/web_app_registrar.h"
 #include "content/public/browser/file_system_access_entry_factory.h"
 #include "content/public/browser/navigation_handle.h"
@@ -36,7 +37,7 @@ namespace {
 // updates `entry_path` to the path that should be used by the File System
 // Access implementation.
 content::PathInfo GetPathInfo(const base::FilePath& entry_path) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   base::FilePath virtual_path;
   auto* external_mount_points =
       storage::ExternalMountPoints::GetSystemInstance();
@@ -61,7 +62,9 @@ class EntriesBuilder {
                      url::Origin::Create(launch_url)),
                  launch_url,
                  content::GlobalRenderFrameHostId(
-                     web_contents->GetPrimaryMainFrame()->GetProcess()->GetID(),
+                     web_contents->GetPrimaryMainFrame()
+                         ->GetProcess()
+                         ->GetDeprecatedID(),
                      web_contents->GetPrimaryMainFrame()->GetRoutingID())) {
     entries_.reserve(expected_number_of_entries);
   }
@@ -88,7 +91,6 @@ class EntriesBuilder {
   content::FileSystemAccessEntryFactory::BindingContext context_;
 };
 
-// TODO(crbug.com/40169582): Add Lacros support.
 // TODO(crbug.com/40169582): Consider adding an {extension, pwa} enum to
 // `launch_params` instead of checking the scheme specifically for extensions?
 bool IsExtensionURL(const GURL& gurl) {
@@ -140,6 +142,16 @@ bool WebAppLaunchQueue::IsInScope(const WebAppLaunchParams& launch_params,
   // don't have a concept of scope.
   return IsExtensionURL(current_url) ||
          registrar_->IsUrlInAppExtendedScope(current_url, launch_params.app_id);
+}
+
+void WebAppLaunchQueue::FlushForTesting() const {
+  CHECK_IS_TEST();
+  mojo::AssociatedRemote<blink::mojom::WebLaunchService> launch_service;
+  web_contents()
+      ->GetPrimaryMainFrame()
+      ->GetRemoteAssociatedInterfaces()
+      ->GetInterface(&launch_service);
+  launch_service.FlushForTesting();  // IN-TEST
 }
 
 void WebAppLaunchQueue::Reset() {

@@ -6,8 +6,8 @@
 #define IOS_CHROME_BROWSER_NTP_UI_BUNDLED_NEW_TAB_PAGE_FEATURE_H_
 
 #include "base/feature_list.h"
-#include "components/prefs/pref_service.h"
-#import "ios/chrome/browser/ui/authentication/cells/signin_promo_view_constants.h"
+
+class PrefService;
 
 #pragma mark - Feature declarations
 
@@ -73,6 +73,20 @@ extern const char kFeedSettingTimeoutThresholdAfterClearBrowsingData[];
 // A parameter value for the feed referrer.
 extern const char kFeedSettingDiscoverReferrerParameter[];
 
+// Parameters for the `kDeprecateFeedHeader` feature.
+//
+// A parameter to indicate whether the label should be removed from the discover
+// feed header.
+extern const char kDeprecateFeedHeaderParameterRemoveLabel[];
+// A parameter to indicate whether the top padding above the Doodle should be
+// increased.
+extern const char kDeprecateFeedHeaderParameterTopPadding[];
+// A parameter to indicate whether we should enlarge the Doodle and the fakebox.
+extern const char kDeprecateFeedHeaderParameterEnlargeLogoAndFakebox[];
+
+// Parameter to remove the three-dot menu from the account menu.
+extern const char kDisableAccountMenuEllipsisParam[];
+
 #pragma mark - Helpers
 
 // Whether the NTP view hierarchy repair is enabled.
@@ -92,5 +106,16 @@ bool IsSignedOutViewDemotionEnabled();
 
 // Whether ghost cards are enabled on the iPad feeds.
 bool IsiPadFeedGhostCardsEnabled();
+
+// YES if the NTP and feed header elements should be re-positioned as described.
+bool ShouldRemoveDiscoverLabel(bool is_google_default_search_engine);
+bool ShouldEnlargeLogoAndFakebox();
+
+// Top padding that should be added to the top of the NTP. Returns 0 if the NTP
+// should not be padded.
+double TopPaddingToNTP();
+
+// YES if the account menu is enabled without the three-dot menu.
+bool IdentityDiscAccountMenuEnabledWithoutEllipsis();
 
 #endif  // IOS_CHROME_BROWSER_NTP_UI_BUNDLED_NEW_TAB_PAGE_FEATURE_H_

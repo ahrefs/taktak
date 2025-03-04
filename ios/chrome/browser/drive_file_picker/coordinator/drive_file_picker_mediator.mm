@@ -4,13 +4,19 @@
 
 #import "ios/chrome/browser/drive_file_picker/coordinator/drive_file_picker_mediator.h"
 
+#import <queue>
+#import <unordered_set>
+
 #import "base/apple/foundation_util.h"
+#import "base/cancelable_callback.h"
 #import "base/files/file_path.h"
 #import "base/files/file_util.h"
 #import "base/notreached.h"
 #import "base/strings/sys_string_conversions.h"
 #import "base/timer/timer.h"
 #import "components/image_fetcher/core/image_data_fetcher.h"
+#import "components/signin/public/identity_manager/identity_manager.h"
+#import "ios/chrome/browser/authentication/ui_bundled/signin/signin_utils.h"
 #import "ios/chrome/browser/drive/model/drive_file_downloader.h"
 #import "ios/chrome/browser/drive/model/drive_list.h"
 #import "ios/chrome/browser/drive/model/drive_service.h"
@@ -20,11 +26,11 @@
 #import "ios/chrome/browser/drive_file_picker/ui/drive_file_picker_constants.h"
 #import "ios/chrome/browser/drive_file_picker/ui/drive_file_picker_consumer.h"
 #import "ios/chrome/browser/drive_file_picker/ui/drive_file_picker_item.h"
+#import "ios/chrome/browser/menu/ui_bundled/browser_action_factory.h"
 #import "ios/chrome/browser/shared/public/commands/command_dispatcher.h"
 #import "ios/chrome/browser/shared/public/commands/drive_file_picker_commands.h"
 #import "ios/chrome/browser/signin/model/chrome_account_manager_service.h"
 #import "ios/chrome/browser/signin/model/system_identity.h"
-#import "ios/chrome/browser/ui/menu/browser_action_factory.h"
 #import "ios/chrome/browser/web/model/choose_file/choose_file_tab_helper.h"
 #import "ios/chrome/common/ui/util/image_util.h"
 #import "ios/chrome/grit/ios_strings.h"
@@ -53,6 +59,8 @@ constexpr int kThumbnailResizeDimension = 64;
 // Prefix of links to icons in the Drive third-party icon repository.
 NSString* kDriveIconRepositoryPrefix =
     @"https://drive-thirdparty.googleusercontent.com/";
+// MIME type for folder items.
+NSString* kFolderMIMEType = @"application/vnd.google-apps.folder";
 
 }  // namespace
 
@@ -72,6 +80,7 @@ NSString* kDriveIconRepositoryPrefix =
   // If `_collectionType` is `kFolder`, identifier of that folder.
   NSString* _folderIdentifier;
   std::vector<DriveItem> _fetchedDriveItems;
+  raw_ptr<signin::IdentityManager> _identityManager;
   raw_ptr<ChromeAccountManagerService> _accountManagerService;
   // The service responsible for fetching a `DriveFilePickerItem`'s image data.
   std::unique_ptr<image_fetcher::ImageDataFetcher> _imageFetcher;
@@ -81,22 +90,31 @@ NSString* kDriveIconRepositoryPrefix =
   __weak NSCache<NSString*, UIImage*>* _imageCache;
   // JavaScript image transcoder to locally re-encode icons, thumbnails, etc.
   std::unique_ptr<web::JavaScriptImageTranscoder> _imageTranscoder;
-  // File URL to which the selected file is being downloaded.
-  NSURL* _selectedFileDestinationURL;
-  // The selected drive item. This comes from `_fetchedDriveItems` but is not
+  // The selected files. These come from `_fetchedDriveItems` but are not
   // necessarily contained in `_fetchedDriveItems` at all times.
-  std::optional<DriveItem> _selectedFile;
-  // Identifier of the download for the current selected item.
-  NSString* _selectedFileDownloadID;
-  // If `_selectedFile` is not nullopt, then this indicates whether it was
-  // selected from search items or not.
-  BOOL _selectedFileIsSearchItem;
+  std::unordered_set<DriveItem> _selectedFiles;
+  // Download ID file being downloaded.
+  NSString* _downloadingFileDownloadID;
+  // Identifier of the file being downloaded.
+  NSString* _downloadingFileIdentifier;
+  // Queue of files to download. A file is added to the queue when it is added
+  // to the current selection, and removed when a local copy of the file is
+  // ready to be passed to the WebState.
+  std::queue<DriveItem> _downloadingQueue;
+  // Callback used to determine if a local copy of a file is already on disk
+  // before performing any attempt to download it.
+  base::CancelableOnceCallback<void(bool)> _fileVersionReadyCallback;
+  // If `_selectedFiles` is not empty, then this indicates whether the files are
+  // search items or not.
+  BOOL _selectedFilesAreSearchItems;
   // If this is true, all downloadable files can be selected regardless of type.
   BOOL _ignoreAcceptedTypes;
   // Filter used to only show items matching a certain type.
   DriveFilePickerFilter _filter;
   // Types accepted by the WebState.
   NSArray<UTType*>* _acceptedTypes;
+  // Whether the WebState accepts multiple files.
+  BOOL _allowsMultipleSelection;
   // Sorting criteria.
   DriveItemsSortingType _sortingCriteria;
   // Sorting direction.
@@ -143,6 +161,7 @@ NSString* kDriveIconRepositoryPrefix =
           sortingCriteria:(DriveItemsSortingType)sortingCriteria
          sortingDirection:(DriveItemsSortingOrder)sortingDirection
              driveService:(drive::DriveService*)driveService
+          identityManager:(signin::IdentityManager*)identityManager
     accountManagerService:(ChromeAccountManagerService*)accountManagerService
              imageFetcher:
                  (std::unique_ptr<image_fetcher::ImageDataFetcher>)imageFetcher
@@ -152,12 +171,14 @@ NSString* kDriveIconRepositoryPrefix =
     CHECK(webState);
     CHECK(identity);
     CHECK(driveService);
+    CHECK(identityManager);
     CHECK(accountManagerService);
     CHECK(imagesPending);
     CHECK(imageCache);
     _webState = webState->GetWeakPtr();
     _identity = identity;
     _driveService = driveService;
+    _identityManager = identityManager;
     _accountManagerService = accountManagerService;
     _title = [title copy];
     _collectionType = collectionType;
@@ -176,6 +197,7 @@ NSString* kDriveIconRepositoryPrefix =
     CHECK(tab_helper->IsChoosingFiles());
     const ChooseFileEvent& event = tab_helper->GetChooseFileEvent();
     _acceptedTypes = UTTypesAcceptedForEvent(event);
+    _allowsMultipleSelection = event.allow_multiple_files;
     _driveList = _driveService->CreateList(_identity);
     _driveDownloader = _driveService->CreateFileDownloader(_identity);
     _imageTranscoder = std::make_unique<web::JavaScriptImageTranscoder>();
@@ -198,7 +220,7 @@ NSString* kDriveIconRepositoryPrefix =
     }
   }
   // Clear selection on shutdown (stops download, allows dismissal, etc...)
-  [self setSelectedFile:std::nullopt];
+  [self setSelectedFiles:{}];
   _timerBeforeFetch.Stop();
   _timerAfterFetchBeforeClearItems.Stop();
   _webState = nullptr;
@@ -206,6 +228,7 @@ NSString* kDriveIconRepositoryPrefix =
   _driveList = nullptr;
   _driveDownloader = nullptr;
   _accountManagerService = nullptr;
+  _identityManager = nullptr;
   _imageFetcher = nullptr;
   _imageTranscoder = nullptr;
 }
@@ -223,6 +246,7 @@ NSString* kDriveIconRepositoryPrefix =
                                     DriveFilePickerCollectionType::kRoot];
   [_consumer setFilterMenuEnabled:[self filterMenuShouldBeEnabled]];
   [_consumer setSortingMenuEnabled:[self sortingMenuShouldBeEnabled]];
+  [_consumer setAllowsMultipleSelection:_allowsMultipleSelection];
 }
 
 - (void)setSelectedIdentity:(id<SystemIdentity>)selectedIdentity {
@@ -232,7 +256,7 @@ NSString* kDriveIconRepositoryPrefix =
   _identity = selectedIdentity;
 
   [self setShouldShowSearchItems:NO];
-  [self setSelectedFile:std::nullopt];
+  [self setSelectedFiles:{}];
   _searchBarFocused = NO;
   _searchText = nil;
   [_consumer setSelectedUserIdentityEmail:_identity.userEmail];
@@ -286,26 +310,55 @@ NSString* kDriveIconRepositoryPrefix =
 
 #pragma mark - DriveFilePickerMutator
 
-- (void)selectDriveItem:(NSString*)driveItemIdentifier {
+- (void)selectOrDeselectDriveItem:(NSString*)driveItemIdentifier {
+  // `driveItem` is null if the `DriveFilePickerItem` that was selected does not
+  // correspond to a `DriveItem` that was fetched i.e. it corresponds to a
+  // virtual collection.
   std::optional<DriveItem> driveItem =
       FindDriveItemFromIdentifier(_fetchedDriveItems, driveItemIdentifier);
-  // If this is a real file, select and download it.
-  if (driveItem && !driveItem->is_folder && !driveItem->is_shared_drive) {
+  BOOL driveItemIsShortcutToFolder =
+      driveItem && driveItem->is_shortcut &&
+      [driveItem->shortcut_target_mime_type isEqualToString:kFolderMIMEType];
+
+  // Types of items are handled in the following order:
+  // I. Real items (items for which `driveItem` is not null)
+  //    1. Files and shortcuts to files are handled first,
+  //    2. Real collections i.e. shared drives, folders or shortcuts to folders.
+  // II. Virtual items
+  //    1. Virtual collections i.e. "My Drive", "Starred items", etc.
+
+  // I.1. If this is a file or shortcut to a file, select and download it.
+  if (driveItem && !driveItem->is_folder && !driveItem->is_shared_drive &&
+      !driveItemIsShortcutToFolder) {
     // Unfocusing the search bar so the confirmation button can become visible.
     _searchBarFocused = NO;
     [self.consumer setSearchBarFocused:NO searchText:_searchText];
-    [self setSelectedFile:driveItem];
+    [self selectOrDeselectFile:*driveItem];
     return;
   }
 
   // If the user tries to browse into a folder or other type of collection while
   // an item is already selected, clear the selection.
-  [self setSelectedFile:std::nullopt];
+  [self setSelectedFiles:{}];
 
-  if (driveItem && (driveItem->is_folder || driveItem->is_shared_drive)) {
+  // I.2. Handle real collections i.e. shared drives, folders or shortcuts to
+  // folders.
+  if (driveItem && (driveItem->is_folder || driveItem->is_shared_drive ||
+                    driveItemIsShortcutToFolder)) {
     if (_collectionType == DriveFilePickerCollectionType::kRoot &&
         _shouldShowSearchItems) {
       _metricsHelper.firstLevelItem = DriveFilePickerFirstLevel::kSearch;
+    }
+    NSString* folderIdentifier = nil;
+    if (driveItem->is_folder || driveItem->is_shared_drive) {
+      folderIdentifier = driveItem->identifier;
+    } else if (driveItemIsShortcutToFolder) {
+      folderIdentifier = driveItem->shortcut_target_identifier;
+    }
+    if (!folderIdentifier) {
+      // If no appropriate folder identifier could be retrieved from `driveItem`
+      // then do nothing.
+      return;
     }
     // If this is a real folder or shared drive, then open it.
     [self.delegate
@@ -314,7 +367,7 @@ NSString* kDriveIconRepositoryPrefix =
                             imagesPending:_imagesPending
                                imageCache:_imageCache
                            collectionType:DriveFilePickerCollectionType::kFolder
-                         folderIdentifier:driveItem->identifier
+                         folderIdentifier:folderIdentifier
                                    filter:_filter
                       ignoreAcceptedTypes:_ignoreAcceptedTypes
                           sortingCriteria:_sortingCriteria
@@ -322,7 +375,7 @@ NSString* kDriveIconRepositoryPrefix =
     return;
   }
 
-  // Handle browsing to virtual collections.
+  // II.1. Handle browsing to virtual collections.
   DriveFilePickerItem* myDriveItem = [DriveFilePickerItem myDriveItem];
   DriveFilePickerItem* starredItem = [DriveFilePickerItem starredItem];
   DriveFilePickerItem* recentItem = [DriveFilePickerItem recentItem];
@@ -494,9 +547,17 @@ NSString* kDriveIconRepositoryPrefix =
     [self.driveFilePickerHandler hideDriveFilePicker];
     return;
   }
-  _metricsHelper.submitted = YES;
-  CHECK(_selectedFileDestinationURL);
-  tab_helper->StopChoosingFiles(@[ _selectedFileDestinationURL ], nil, nil);
+  NSMutableArray<NSURL*>* fileURLs = [NSMutableArray array];
+  for (const DriveItem& selectedFile : _selectedFiles) {
+    std::optional<base::FilePath> selectedFilePath =
+        DriveFilePickerGenerateDownloadFilePath(
+            _webState->GetUniqueIdentifier(), selectedFile.identifier,
+            selectedFile.name);
+    [fileURLs addObject:base::apple::FilePathToNSURL(*selectedFilePath)];
+  }
+  CHECK(fileURLs.count > 0);
+  _metricsHelper.submittedFiles = fileURLs;
+  tab_helper->StopChoosingFiles(fileURLs, nil, nil);
   [self.delegate mediatorDidStopFileSelection:self];
 }
 
@@ -613,11 +674,15 @@ NSString* kDriveIconRepositoryPrefix =
   }
   [self.consumer setEnabledItems:enabledItemsIdentifiers];
   [self.consumer setAllFilesEnabled:_ignoreAcceptedTypes];
-  // If the currently selected item is not part of enabled items, unselect it.
-  if (_selectedFile &&
-      ![enabledItemsIdentifiers containsObject:_selectedFile->identifier]) {
-    [self setSelectedFile:std::nullopt];
+  // Update selected files to exclude items which should not be enabled.
+  std::unordered_set<DriveItem> enabledSelectedFiles;
+  for (const DriveItem& selectedFile : _selectedFiles) {
+    if (DriveFilePickerItemShouldBeEnabled(selectedFile, _acceptedTypes,
+                                           _ignoreAcceptedTypes)) {
+      enabledSelectedFiles.insert(selectedFile);
+    }
   }
+  [self setSelectedFiles:enabledSelectedFiles];
 }
 
 // Populates the consumer with root items e.g. "My Drive", "Shared Drives", etc.
@@ -660,10 +725,11 @@ NSString* kDriveIconRepositoryPrefix =
   // showing search items and showing non-search items.
   _shouldShowSearchItems = shouldShowSearchItems;
   [self.delegate mediator:self didActivateSearch:shouldShowSearchItems];
-  if (_selectedFile && _selectedFileIsSearchItem && !_shouldShowSearchItems) {
-    // If the selected item was a search item and search items are hidden, clear
-    // the selection.
-    [self setSelectedFile:std::nullopt];
+  if (!_selectedFiles.empty() && _selectedFilesAreSearchItems &&
+      !_shouldShowSearchItems) {
+    // If the selected items were search items and search items are hidden,
+    // clear the selection.
+    [self setSelectedFiles:{}];
   }
   if (!_shouldShowSearchItems) {
     // If search items are hidden, then ensure the search bar is defocused and
@@ -679,6 +745,16 @@ NSString* kDriveIconRepositoryPrefix =
     _metricsHelper.searchingState = DriveFilePickerSearchState::kSearchRecent;
   }
 
+  if (_shouldShowSearchItems == _selectedFilesAreSearchItems) {
+    NSMutableSet<NSString*>* selectedFilesIdentifiers = [NSMutableSet set];
+    for (const DriveItem& selectedFile : _selectedFiles) {
+      [selectedFilesIdentifiers addObject:selectedFile.identifier];
+    }
+    [self.consumer setSelectedItemIdentifiers:selectedFilesIdentifiers];
+  } else {
+    [self.consumer setSelectedItemIdentifiers:nil];
+  }
+
   // When switching between search items and non-search items, the list of items
   // is cleared and the loading indicator is presented.
   [self clearItemsAndShowLoadingIndicator];
@@ -688,50 +764,200 @@ NSString* kDriveIconRepositoryPrefix =
   [self loadItemsAppending:NO delayed:NO animated:YES];
 }
 
-// Sets the selected item (can be none), cancels any previously started download
-// and potentially starts a new download. Updates the consumer accordingly.
-- (void)setSelectedFile:(std::optional<DriveItem>)item {
-  NSString* itemIdentifier = item ? item->identifier : nil;
-  NSString* selectedItemIdentifier =
-      _selectedFile ? _selectedFile->identifier : nil;
-  if (selectedItemIdentifier == itemIdentifier ||
-      [selectedItemIdentifier isEqualToString:itemIdentifier]) {
-    // If the item is already selected, do nothing.
+- (void)selectOrDeselectFile:(const DriveItem&)file {
+  if (_shouldShowSearchItems && !_selectedFilesAreSearchItems) {
+    // If the file picker is now in search mode but the selected files come from
+    // outside search mode, reset the selection before editing it further. This
+    // is unnecessary in the other direction since the selection is already
+    // cleared when exiting search mode if files were selected from search mode.
+    [self setSelectedFiles:{}];
+  }
+
+  const std::unordered_set<DriveItem>& oldSelectedFiles = _selectedFiles;
+  bool fileWasAlreadySelected = oldSelectedFiles.contains(file);
+
+  // If multiple file selection is allowed, the file selected is toggled.
+  if (_allowsMultipleSelection) {
+    if (fileWasAlreadySelected) {
+      // If the file was selected, deselect it.
+      [self deselectFile:file];
+    } else {
+      // If the file was not selected, add it to the selection.
+      std::unordered_set<DriveItem> newSelectedFiles = oldSelectedFiles;
+      newSelectedFiles.insert(file);
+      [self setSelectedFiles:newSelectedFiles];
+    }
     return;
   }
 
-  // Clean-up any already existing download.
-  if (_selectedFile && _selectedFileDownloadID) {
-    _driveDownloader->CancelDownload(_selectedFileDownloadID);
-    _selectedFileDownloadID = nil;
+  // Otherwise if only one file can be selected...
+  if (fileWasAlreadySelected) {
+    // ... if it is already selected, return early.
+    return;
   }
 
-  // Update selected item and status in the consumer.
-  _selectedFile = item;
-  _selectedFileIsSearchItem = _selectedFile ? _shouldShowSearchItems : NO;
-  [self.consumer setSelectedItemIdentifier:itemIdentifier];
-  [self.consumer setDownloadStatus:item ? DriveFileDownloadStatus::kInProgress
-                                        : DriveFileDownloadStatus::kNotStarted];
+  // If the file was not selected, select it.
+  [self setSelectedFiles:{file}];
+}
+
+- (void)deselectFile:(const DriveItem&)file {
+  std::unordered_set<DriveItem> newSelectedFiles = _selectedFiles;
+  newSelectedFiles.erase(file);
+  [self setSelectedFiles:newSelectedFiles];
+}
+
+// Sets the selected files (can be empty), cancels started downloads if the
+// files are not longer selected and potentially starts a new download. Updates
+// the consumer accordingly.
+- (void)setSelectedFiles:(std::unordered_set<DriveItem>)newSelectedFiles {
+  const std::unordered_set<DriveItem>& oldSelectedFiles = _selectedFiles;
+
+  if (oldSelectedFiles == newSelectedFiles &&
+      _shouldShowSearchItems == _selectedFilesAreSearchItems) {
+    // If the selection is the same, do nothing.
+    return;
+  }
+
+  if (!_fileVersionReadyCallback.IsCancelled()) {
+    // If there is a running task to retrieve a local copy of
+    // `_downloadingQueue.front()` then cancel that task for now.
+    _fileVersionReadyCallback.Cancel();
+  }
+
+  // If there is a file being downloaded which is no longer selected, cancel the
+  // download.
+  if (_downloadingFileDownloadID) {
+    CHECK(!_downloadingQueue.empty());
+    CHECK([_downloadingFileIdentifier
+        isEqualToString:_downloadingQueue.front().identifier]);
+    if (oldSelectedFiles.contains(_downloadingQueue.front()) &&
+        !newSelectedFiles.contains(_downloadingQueue.front())) {
+      _driveDownloader->CancelDownload(_downloadingFileDownloadID);
+      _downloadingFileDownloadID = nil;
+      _downloadingFileIdentifier = nil;
+      _downloadingQueue.pop();
+    }
+  }
+
+  // Add all newly selected files to the downloading queue.
+  for (const DriveItem& newSelectedFile : newSelectedFiles) {
+    if (!oldSelectedFiles.contains(newSelectedFile)) {
+      _downloadingQueue.push(newSelectedFile);
+    }
+  }
+
+  _selectedFiles = std::move(newSelectedFiles);
+  _selectedFilesAreSearchItems =
+      _selectedFiles.empty() ? NO : _shouldShowSearchItems;
+  NSMutableSet<NSString*>* selectedFilesIdentifiers = [NSMutableSet set];
+  for (const DriveItem& selectedFile : _selectedFiles) {
+    [selectedFilesIdentifiers addObject:selectedFile.identifier];
+  }
+  [self.consumer setSelectedItemIdentifiers:selectedFilesIdentifiers];
   // Allow/forbid file picker dismissal.
-  [self.delegate mediator:self didAllowDismiss:(_selectedFile == std::nullopt)];
-  _metricsHelper.selectedFile = _selectedFile.has_value();
-  // If there is a new selected item, start to download it.
-  if (!item) {
+  [self.delegate mediator:self didAllowDismiss:_selectedFiles.empty()];
+  _metricsHelper.selectedFile = !_selectedFiles.empty();
+  [self processDownloadingQueue];
+}
+
+// Dequeues files from `_downloadingQueue` by discarding them if they are not
+// part of the selection, or otherwise downloading them. Updates the consumer
+// with the current download status accordingly.
+- (void)processDownloadingQueue {
+  if (!_webState || _webState->IsBeingDestroyed()) {
+    // If the WebState was or is being destroyed, do nothing.
     return;
   }
-  NSURL* fileURL = DriveFilePickerGenerateDownloadFileURL(
-      _webState->GetUniqueIdentifier(), item->name);
+
+  if (_downloadingFileDownloadID || !_fileVersionReadyCallback.IsCancelled()) {
+    // If there is an ongoing download, or if there is a running task to
+    // retrieve a local copy of `_downloadingQueue.front()`, wait for its
+    // completion and do nothing for now.
+    return;
+  }
+
+  // Dequeue all unselected items.
+  while (!_downloadingQueue.empty() &&
+         !_selectedFiles.contains(_downloadingQueue.front())) {
+    _downloadingQueue.pop();
+  }
+
+  // If the queue is empty, then update the consumer and stop.
+  if (_downloadingQueue.empty()) {
+    DriveFileDownloadStatus newDownloadStatus =
+        _selectedFiles.empty() ? DriveFileDownloadStatus::kNotStarted
+                               : DriveFileDownloadStatus::kSuccess;
+    [self.consumer setDownloadStatus:newDownloadStatus];
+    return;
+  }
+
+  // Get the file at the front of the queue.
+  const DriveItem& fileToDownload = _downloadingQueue.front();
+  std::optional<base::FilePath> filePath =
+      DriveFilePickerGenerateDownloadFilePath(_webState->GetUniqueIdentifier(),
+                                              fileToDownload.identifier,
+                                              fileToDownload.name);
+  NSURL* fileURL = base::apple::FilePathToNSURL(*filePath);
   CHECK(fileURL);
+
+  // Check if a local copy of this version of the file is ready.
   __weak __typeof(self) weakSelf = self;
-  _selectedFileDownloadID = _driveDownloader->DownloadFile(
-      *item, fileURL,
-      base::BindRepeating(
-          ^(DriveFilePickerMetricsHelper* metricsHelper,
-            DriveFileDownloadID driveFileDownloadID,
-            const DriveFileDownloadProgress& progress) {
-            metricsHelper.fileSize = progress.total_bytes_written;
-          },
-          _metricsHelper),
+  _fileVersionReadyCallback.Reset(base::BindOnce(
+      [](DriveFilePickerMediator* mediator, NSURL* fileURL,
+         NSString* fileIdentifier, bool fileURLReady) {
+        [mediator handleFileURL:fileURL
+              readyForSelection:fileURLReady
+                 fileIdentifier:fileIdentifier];
+      },
+      weakSelf, fileURL, fileToDownload.identifier));
+  ChooseFileTabHelper* tabHelper =
+      ChooseFileTabHelper::GetOrCreateForWebState(_webState.get());
+  tabHelper->CheckFileUrlReadyForSelection(
+      fileURL, fileToDownload.modified_time,
+      _fileVersionReadyCallback.callback());
+}
+
+// Called when a local copy of the correct version of the file with identifier
+// `fileIdentifier` has been found to exist at URL `fileURL`. If
+// `readyForSelection` is false then it means there is no local copy ready for
+// selection, in which case the file should be downloaded.
+- (void)handleFileURL:(NSURL*)fileURL
+    readyForSelection:(BOOL)readyForSelection
+       fileIdentifier:(NSString*)fileIdentifier {
+  if (!_webState || _webState->IsBeingDestroyed()) {
+    // If the WebState was or is being destroyed, do nothing.
+    return;
+  }
+  CHECK(!_downloadingQueue.empty());
+  const DriveItem& fileToDequeue = _downloadingQueue.front();
+  CHECK([fileIdentifier isEqualToString:fileToDequeue.identifier]);
+
+  if (readyForSelection) {
+    // If there is a copy of the file ready, dequeue the file.
+    _downloadingQueue.pop();
+    [self processDownloadingQueue];
+    return;
+  }
+
+  // Otherwise, download the file at the front of the queue.
+  [self.consumer setDownloadStatus:DriveFileDownloadStatus::kInProgress];
+  __weak __typeof(self) weakSelf = self;
+  _downloadingFileIdentifier = [fileIdentifier copy];
+
+  // The file to download might be different from the file in the queue i.e. if
+  // the file in the queue is a shortcut to a real file, then the real file
+  // should be downloaded instead. Only the identifier should matter to use the
+  // downloader so a new DriveItem is created with only `identifier` set to the
+  // correct value.
+  DriveItem fileToDownload;
+  fileToDownload.identifier = fileToDequeue.is_shortcut
+                                  ? fileToDequeue.shortcut_target_identifier
+                                  : fileToDequeue.identifier;
+  _downloadingFileDownloadID = _driveDownloader->DownloadFile(
+      fileToDownload, fileURL,
+      base::BindRepeating(^(DriveFileDownloadID driveFileDownloadID,
+                            const DriveFileDownloadProgress& progress){
+      }),
       base::BindOnce(
           [](DriveFilePickerMediator* mediator, NSURL* downloadFileURL,
              DriveFileDownloadID driveFileDownloadID, BOOL success,
@@ -741,34 +967,62 @@ NSString* kDriveIconRepositoryPrefix =
                                      fileURL:downloadFileURL];
           },
           weakSelf, fileURL));
+  // Inform the WebState that the destination URL isn't ready for selection yet.
+  ChooseFileTabHelper* tabHelper =
+      ChooseFileTabHelper::GetOrCreateForWebState(_webState.get());
+  tabHelper->RemoveFileUrlReadyForSelection(fileURL);
 }
 
+// Called when a file was downloaded at `fileURL`. If `error` is nil then it
+// means the download was successful. It is expected that the file associated
+// with `fileURL` is the file at the front of `_downloadingQueue`.
 - (void)handleDownloadResponse:(DriveFileDownloadID)driveFileDownloadID
                          error:(NSError*)error
                        fileURL:(NSURL*)fileURL {
-  CHECK(_selectedFile);
+  if (!_webState || _webState->IsBeingDestroyed()) {
+    return;
+  }
+  CHECK(!_downloadingQueue.empty());
+  CHECK([driveFileDownloadID isEqualToString:_downloadingFileDownloadID]);
+  CHECK([_downloadingFileIdentifier
+      isEqualToString:_downloadingQueue.front().identifier]);
   // Reset the download ID to indicate that there is no ongoing download
   // anymore.
-  _selectedFileDownloadID = nil;
+  _downloadingFileIdentifier = nil;
+  _downloadingFileDownloadID = nil;
   if (error) {
     _metricsHelper.hasError = YES;
     // If there is a download error, prepare a callback to optionally try again.
     __weak __typeof(self) weakSelf = self;
-    auto retrySelectCallback = base::BindOnce(
-        [](DriveFilePickerMediator* mediator, std::optional<DriveItem> file) {
-          [mediator setSelectedFile:std::move(file)];
+    auto retryCallback = base::BindOnce(
+        [](DriveFilePickerMediator* mediator, const DriveItem& file) {
+          [mediator processDownloadingQueue];
         },
-        weakSelf, _selectedFile);
-    // Then clear the selection.
-    [self setSelectedFile:std::nullopt];
+        weakSelf, _downloadingQueue.front());
+    auto cancelCallback = base::BindOnce(
+        [](DriveFilePickerMediator* mediator, const DriveItem& file) {
+          [mediator deselectFile:file];
+          [mediator processDownloadingQueue];
+        },
+        weakSelf, _downloadingQueue.front());
     // Then present an alert to ask the user whether to try again.
     [self.consumer
-        showDownloadFailureAlertWithRetryBlock:base::CallbackToBlock(std::move(
-                                                   retrySelectCallback))];
+        showDownloadFailureAlertForFileName:_downloadingQueue.front().name
+                                 retryBlock:base::CallbackToBlock(
+                                                std::move(retryCallback))
+                                cancelBlock:base::CallbackToBlock(
+                                                std::move(cancelCallback))];
     return;
   }
-  [self.consumer setDownloadStatus:DriveFileDownloadStatus::kSuccess];
-  _selectedFileDestinationURL = fileURL;
+  // If the download was successful, add it to the set of files ready for
+  // selection, pop the file from the queue and continue processing the download
+  // queue.
+  ChooseFileTabHelper* tabHelper =
+      ChooseFileTabHelper::GetOrCreateForWebState(_webState.get());
+  tabHelper->AddFileUrlReadyForSelection(
+      fileURL, _downloadingQueue.front().modified_time);
+  _downloadingQueue.pop();
+  [self processDownloadingQueue];
 }
 
 // If root items should be loaded, then there are no items to fetch so this
@@ -982,8 +1236,9 @@ NSString* kDriveIconRepositoryPrefix =
   };
   // TODO(crbug.com/344812396): Add the identites block.
   UIMenuElement* identitiesMenu = [actionFactory
-      menuToSelectDriveIdentityWithIdentities:_accountManagerService
-                                                  ->GetAllIdentities()
+      menuToSelectDriveIdentityWithIdentities:signin::GetIdentitiesOnDevice(
+                                                  _identityManager,
+                                                  _accountManagerService)
                               currentIdentity:_identity
                                         block:actionResult];
   // TODO(crbug.com/344812396): Add the new account block.
@@ -1130,9 +1385,10 @@ NSString* kDriveIconRepositoryPrefix =
 // Helper function to compute whether the filter menu should be enabled.
 - (BOOL)filterMenuShouldBeEnabled {
   if (_shouldShowSearchItems) {
-    return YES;
+    return _searchText.length > 0;
   }
   return _collectionType != DriveFilePickerCollectionType::kRoot &&
+         _collectionType != DriveFilePickerCollectionType::kRecent &&
          _collectionType != DriveFilePickerCollectionType::kSharedDrives;
 }
 
@@ -1144,6 +1400,7 @@ NSString* kDriveIconRepositoryPrefix =
 
   return _collectionType != DriveFilePickerCollectionType::kRoot &&
          _collectionType != DriveFilePickerCollectionType::kRecent &&
+         _collectionType != DriveFilePickerCollectionType::kSharedWithMe &&
          _collectionType != DriveFilePickerCollectionType::kSharedDrives;
 }
 

@@ -6,18 +6,20 @@
 
 #include <utility>
 
+#include "base/check.h"
 #include "base/containers/contains.h"
 #include "base/dcheck_is_on.h"
 #include "base/functional/bind.h"
 #include "base/functional/overloaded.h"
 #include "base/memory/raw_ptr.h"
 #include "components/performance_manager/graph/graph_impl.h"
-#include "components/performance_manager/graph/initializing_frame_node_observer.h"
 #include "components/performance_manager/graph/page_node_impl.h"
 #include "components/performance_manager/graph/process_node_impl.h"
 #include "components/performance_manager/graph/worker_node_impl.h"
 #include "components/performance_manager/public/v8_memory/web_memory.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/common/content_features.h"
+#include "mojo/public/cpp/bindings/message.h"
 #include "third_party/blink/public/common/features.h"
 #include "third_party/blink/public/mojom/frame/lifecycle.mojom.h"
 #include "third_party/blink/public/mojom/frame/viewport_intersection_state.mojom.h"
@@ -50,14 +52,14 @@ FrameNodeImpl::FrameNodeImpl(
     ProcessNodeImpl* process_node,
     PageNodeImpl* page_node,
     FrameNodeImpl* parent_frame_node,
-    FrameNodeImpl* outer_document_for_fenced_frame,
+    FrameNodeImpl* outer_document_for_inner_frame_root,
     int render_frame_id,
     const blink::LocalFrameToken& frame_token,
     content::BrowsingInstanceId browsing_instance_id,
     content::SiteInstanceGroupId site_instance_group_id,
     bool is_current)
     : parent_frame_node_(parent_frame_node),
-      outer_document_for_fenced_frame_(outer_document_for_fenced_frame),
+      outer_document_for_inner_frame_root_(outer_document_for_inner_frame_root),
       page_node_(page_node),
       process_node_(process_node),
       render_frame_id_(render_frame_id),
@@ -68,17 +70,11 @@ FrameNodeImpl::FrameNodeImpl(
           process_node->GetRenderProcessHostId().value(),
           render_frame_id)),
       is_current_(is_current) {
-  // Nodes are created on the UI thread, then accessed on the PM sequence.
-  // `weak_this_` can be returned from GetWeakPtrOnUIThread() and dereferenced
-  // on the PM sequence.
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  DETACH_FROM_SEQUENCE(sequence_checker_);
-  weak_this_ = weak_factory_.GetWeakPtr();
-
   DCHECK(process_node);
   DCHECK(page_node);
-  // A <fencedframe> has no parent node.
-  CHECK(!outer_document_for_fenced_frame || !parent_frame_node_);
+  // A <fencedframe>, MPArch <webview> has no parent node.
+  CHECK(!outer_document_for_inner_frame_root_ || !parent_frame_node_);
 }
 
 FrameNodeImpl::~FrameNodeImpl() {
@@ -162,6 +158,11 @@ void FrameNodeImpl::OnWebMemoryMeasurementRequested(
       std::move(callback), mojo::GetBadMessageCallback());
 }
 
+void FrameNodeImpl::OnFreezingOriginTrialOptOut() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  document_.has_freezing_origin_trial_opt_out.SetAndMaybeNotify(this, true);
+}
+
 const blink::LocalFrameToken& FrameNodeImpl::GetFrameToken() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   return frame_token_;
@@ -231,9 +232,9 @@ bool FrameNodeImpl::IsHoldingWebLock() const {
   return is_holding_weblock_.value();
 }
 
-bool FrameNodeImpl::IsHoldingIndexedDBLock() const {
+bool FrameNodeImpl::IsHoldingBlockingIndexedDBLock() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return is_holding_indexeddb_lock_.value();
+  return is_holding_blocking_indexeddb_lock_.value();
 }
 
 bool FrameNodeImpl::UsesWebRTC() const {
@@ -264,6 +265,11 @@ bool FrameNodeImpl::IsAudible() const {
 bool FrameNodeImpl::IsCapturingMediaStream() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   return is_capturing_media_stream_.value();
+}
+
+bool FrameNodeImpl::HasFreezingOriginTrialOptOut() const {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return document_.has_freezing_origin_trial_opt_out.value();
 }
 
 std::optional<ViewportIntersection> FrameNodeImpl::GetViewportIntersection()
@@ -315,8 +321,8 @@ FrameNodeImpl* FrameNodeImpl::parent_or_outer_document_or_embedder() const {
     return parent_frame_node_;
   }
 
-  if (outer_document_for_fenced_frame_) {
-    return outer_document_for_fenced_frame_;
+  if (outer_document_for_inner_frame_root_) {
+    return outer_document_for_inner_frame_root_;
   }
 
   if (page_node()->embedder_frame_node()) {
@@ -420,10 +426,13 @@ void FrameNodeImpl::SetIsHoldingWebLock(bool is_holding_weblock) {
   is_holding_weblock_.SetAndMaybeNotify(this, is_holding_weblock);
 }
 
-void FrameNodeImpl::SetIsHoldingIndexedDBLock(bool is_holding_indexeddb_lock) {
+void FrameNodeImpl::SetIsHoldingBlockingIndexedDBLock(
+    bool is_holding_blocking_indexeddb_lock) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  DCHECK_NE(is_holding_indexeddb_lock, is_holding_indexeddb_lock_.value());
-  is_holding_indexeddb_lock_.SetAndMaybeNotify(this, is_holding_indexeddb_lock);
+  DCHECK_NE(is_holding_blocking_indexeddb_lock,
+            is_holding_blocking_indexeddb_lock_.value());
+  is_holding_blocking_indexeddb_lock_.SetAndMaybeNotify(
+      this, is_holding_blocking_indexeddb_lock);
 }
 
 void FrameNodeImpl::SetIsAudible(bool is_audible) {
@@ -527,6 +536,7 @@ void FrameNodeImpl::OnNavigationCommitted(
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   if (same_document) {
+    DCHECK(CanSetAndNotifyProperty());
     url = std::exchange(document_.url, std::move(url));
 
     if (url != document_.url) {
@@ -574,6 +584,28 @@ void FrameNodeImpl::OnNavigationCommitted(
   document_.Reset(this, std::move(url), std::move(origin));
 }
 
+void FrameNodeImpl::OnPrimaryPageAboutToBeDiscarded() {
+  // When a page is discarded by the browser, it is immediately marked as
+  // discarded and kicks off an async process to install a new empty document,
+  // clearing the existing frame tree.
+  //
+  // Close `receiver_` to ensure that messages queued by the previous document
+  // before the discard are dropped.
+  receiver_.reset();
+
+  for (const Node* child_frame_node : child_frame_nodes_) {
+    FrameNodeImpl::FromNode(child_frame_node)
+        ->OnPrimaryPageAboutToBeDiscarded();
+  }
+
+  for (const Node* embedded_page_node : embedded_page_nodes_) {
+    if (FrameNodeImpl* main_frame_node =
+            PageNodeImpl::FromNode(embedded_page_node)->main_frame_node()) {
+      main_frame_node->OnPrimaryPageAboutToBeDiscarded();
+    }
+  }
+}
+
 void FrameNodeImpl::AddChildWorker(WorkerNodeImpl* worker_node) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   bool inserted = child_worker_nodes_.insert(worker_node).second;
@@ -598,11 +630,6 @@ void FrameNodeImpl::SetPriorityAndReason(
     return;
   }
   priority_and_reason_.SetAndMaybeNotify(this, priority_and_reason);
-}
-
-base::WeakPtr<FrameNodeImpl> FrameNodeImpl::GetWeakPtrOnUIThread() {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  return weak_this_;
 }
 
 base::WeakPtr<FrameNodeImpl> FrameNodeImpl::GetWeakPtr() {
@@ -666,45 +693,51 @@ void FrameNodeImpl::SetViewportIntersectionForTesting(
 
 const FrameNode* FrameNodeImpl::GetParentFrameNode() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return parent_frame_node();
+  return graph()->NodeEdgesArePublic(this) ? parent_frame_node() : nullptr;
 }
 
 const FrameNode* FrameNodeImpl::GetParentOrOuterDocumentOrEmbedder() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return parent_or_outer_document_or_embedder();
+  return graph()->NodeEdgesArePublic(this)
+             ? parent_or_outer_document_or_embedder()
+             : nullptr;
 }
 
 const PageNode* FrameNodeImpl::GetPageNode() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return page_node();
+  return graph()->NodeEdgesArePublic(this) ? page_node() : nullptr;
 }
 
 const ProcessNode* FrameNodeImpl::GetProcessNode() const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return process_node();
+  return graph()->NodeEdgesArePublic(this) ? process_node() : nullptr;
 }
 
 FrameNode::NodeSetView<const FrameNode*> FrameNodeImpl::GetChildFrameNodes()
     const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  CHECK(graph()->NodeEdgesArePublic(this) || child_frame_nodes_.empty());
   return NodeSetView<const FrameNode*>(child_frame_nodes_);
 }
 
 FrameNode::NodeSetView<const PageNode*> FrameNodeImpl::GetOpenedPageNodes()
     const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  CHECK(graph()->NodeEdgesArePublic(this) || opened_page_nodes_.empty());
   return NodeSetView<const PageNode*>(opened_page_nodes_);
 }
 
 FrameNode::NodeSetView<const PageNode*> FrameNodeImpl::GetEmbeddedPageNodes()
     const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  CHECK(graph()->NodeEdgesArePublic(this) || embedded_page_nodes_.empty());
   return NodeSetView<const PageNode*>(embedded_page_nodes_);
 }
 
 FrameNode::NodeSetView<const WorkerNode*> FrameNodeImpl::GetChildWorkerNodes()
     const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  CHECK(graph()->NodeEdgesArePublic(this) || child_worker_nodes_.empty());
   return NodeSetView<const WorkerNode*>(child_worker_nodes_);
 }
 
@@ -732,23 +765,18 @@ void FrameNodeImpl::RemoveChildFrame(FrameNodeImpl* child_frame_node) {
   DCHECK_EQ(1u, removed);
 }
 
-void FrameNodeImpl::OnJoiningGraph() {
+void FrameNodeImpl::OnInitializingProperties() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-
-  // Make sure all weak pointers, even `weak_this_` that was created on the UI
-  // thread in the constructor, can only be dereferenced on the graph sequence.
-  weak_factory_.BindToCurrentSequence(
-      base::subtle::BindWeakPtrFactoryPassKey());
-
   NodeAttachedDataStorage::Create(this);
   execution_context::FrameExecutionContext::Create(this, this);
 
   // Enable querying this node using process and frame routing ids.
   graph()->RegisterFrameNodeForId(process_node_->GetRenderProcessHostId(),
                                   render_frame_id_, this);
+}
 
-  // Notify the initializing observers.
-  graph()->NotifyFrameNodeInitializing(this);
+void FrameNodeImpl::OnInitializingEdges() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   // Wire this up to the other nodes in the graph.
   if (parent_frame_node_)
@@ -763,6 +791,12 @@ void FrameNodeImpl::OnBeforeLeavingGraph() {
   DCHECK(child_frame_nodes_.empty());
 
   SeverPageRelationshipsAndMaybeReparent();
+}
+
+void FrameNodeImpl::OnUninitializingEdges() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  DCHECK(child_frame_nodes_.empty());
 
   // Leave the page.
   DCHECK(graph()->NodeInGraph(page_node_));
@@ -777,17 +811,15 @@ void FrameNodeImpl::OnBeforeLeavingGraph() {
   // And leave the process.
   DCHECK(graph()->NodeInGraph(process_node_));
   process_node_->RemoveFrame(this);
+}
 
-  // Notify the initializing observers for cleanup.
-  graph()->NotifyFrameNodeTearingDown(this);
+void FrameNodeImpl::CleanUpNodeState() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   // Disable querying this node using process and frame routing ids.
   graph()->UnregisterFrameNodeForId(process_node_->GetRenderProcessHostId(),
                                     render_frame_id_, this);
-}
 
-void FrameNodeImpl::RemoveNodeAttachedData() {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   DestroyNodeInlineDataStorage();
 }
 
@@ -874,7 +906,12 @@ void FrameNodeImpl::SetViewportIntersectionImpl(bool is_intersecting_viewport) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   // The outermost main frame or embedder is always fully intersecting with the
   // viewport, so it is not tracked.
-  CHECK(parent_or_outer_document_or_embedder());
+  if (!parent_or_outer_document_or_embedder()) {
+    mojo::ReportBadMessage(
+        "The viewport intersection is never sent for the outermost main "
+        "frame.");
+    return;
+  }
 
   ViewportIntersection viewport_intersection = [&, this]() {
     if (is_intersecting_viewport) {
@@ -893,7 +930,6 @@ void FrameNodeImpl::SetViewportIntersectionImpl(bool is_intersecting_viewport) {
 void FrameNodeImpl::SetViewportIntersectionImpl(
     ViewportIntersection viewport_intersection) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-
   // Nothing to do if the value didn't change.
   if (GetViewportIntersection() &&
       GetViewportIntersection().value() == viewport_intersection) {
@@ -942,9 +978,11 @@ void FrameNodeImpl::SetInheritedIsIntersectingLargeArea(
 FrameNodeImpl::DocumentProperties::DocumentProperties() = default;
 FrameNodeImpl::DocumentProperties::~DocumentProperties() = default;
 
+// LINT.IfChange(document_prop_reset)
 void FrameNodeImpl::DocumentProperties::Reset(FrameNodeImpl* frame_node,
                                               GURL url_in,
                                               url::Origin origin_in) {
+  DCHECK(frame_node->CanSetAndNotifyProperty());
   // Update the URL and origin properties.
   url_in = std::exchange(url, std::move(url_in));
 
@@ -972,6 +1010,9 @@ void FrameNodeImpl::DocumentProperties::Reset(FrameNodeImpl* frame_node,
   network_almost_idle.SetAndMaybeNotify(frame_node, false);
   had_form_interaction.SetAndMaybeNotify(frame_node, false);
   had_user_edits.SetAndMaybeNotify(frame_node, false);
+  uses_web_rtc.SetAndMaybeNotify(frame_node, false);
+  has_freezing_origin_trial_opt_out.SetAndMaybeNotify(frame_node, false);
 }
+// LINT.ThenChange()
 
 }  // namespace performance_manager

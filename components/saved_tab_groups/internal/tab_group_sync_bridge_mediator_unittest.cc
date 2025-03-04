@@ -66,6 +66,10 @@ class TabGroupSyncBridgeMediatorTest : public testing::Test {
             syncer::DataTypeStoreTestUtil::CreateInMemoryStoreForTest()) {
     pref_service_.registry()->RegisterBooleanPref(
         prefs::kSavedTabGroupSpecificsToDataMigration, false);
+    pref_service_.registry()->RegisterBooleanPref(
+        prefs::kDidEnableSharedTabGroupsInLastSession, true);
+    ON_CALL(mock_shared_processor_, IsTrackingMetadata)
+        .WillByDefault(Return(true));
     InitializeModelAndMediator();
   }
 
@@ -86,7 +90,7 @@ class TabGroupSyncBridgeMediatorTest : public testing::Test {
       // Use the same metadata for all the tabs and the group itself.
       sync_pb::EntityMetadata metadata;
       metadata.mutable_collaboration()->set_collaboration_id(
-          group->collaboration_id().value());
+          group->collaboration_id()->value());
       metadata_change_list->UpdateMetadata(group_storage_key, metadata);
       for (const SavedTabGroupTab& tab : group->saved_tabs()) {
         const std::string tab_storage_key =
@@ -150,7 +154,7 @@ class TabGroupSyncBridgeMediatorTest : public testing::Test {
     return mock_shared_processor_;
   }
 
- private:
+ protected:
   // Simulate browser shutdown and reset the bridges and the model.
   void Reset() {
     // Store sync metadata before cleaning up the model.
@@ -184,6 +188,8 @@ TEST_F(TabGroupSyncBridgeMediatorTest, ShouldInitializeEmptySavedTabGroups) {
   // The same but with disabled shared tab group data.
   InitializeModelAndMediator(/*initialize_shared_tab_group=*/false);
   EXPECT_TRUE(model().is_loaded());
+  EXPECT_FALSE(
+      pref_service_.GetBoolean(prefs::kDidEnableSharedTabGroupsInLastSession));
 }
 
 TEST_F(TabGroupSyncBridgeMediatorTest, ShouldInitializeModelAfterRestart) {
@@ -195,11 +201,13 @@ TEST_F(TabGroupSyncBridgeMediatorTest, ShouldInitializeModelAfterRestart) {
   group.AddTabLocally(SavedTabGroupTab(GURL("https://google.com"), u"tab title",
                                        group.saved_guid(),
                                        /*position=*/std::nullopt));
-  model().Add(std::move(group));
+  model().AddedLocally(std::move(group));
 
   InitializeModelAndMediator();
   EXPECT_TRUE(model().is_loaded());
   EXPECT_EQ(model().Count(), 1);
+  EXPECT_TRUE(
+      pref_service_.GetBoolean(prefs::kDidEnableSharedTabGroupsInLastSession));
 }
 
 TEST_F(TabGroupSyncBridgeMediatorTest, ShouldReturnSavedBridgeSyncing) {
@@ -234,7 +242,7 @@ TEST_F(TabGroupSyncBridgeMediatorTest, ShouldResolveDuplicatesOnLoad) {
   SavedTabGroup shared_group_1(u"shared group 1",
                                tab_groups::TabGroupColorId::kBlue, /*urls=*/{},
                                /*position=*/std::nullopt);
-  shared_group_1.SetCollaborationId(kCollaborationId);
+  shared_group_1.SetCollaborationId(CollaborationId(kCollaborationId));
   SavedTabGroupTab shared_tab_1(GURL("http://google.com/1"), u"shared tab 1",
                                 shared_group_1.saved_guid(),
                                 /*position=*/std::nullopt);
@@ -243,16 +251,16 @@ TEST_F(TabGroupSyncBridgeMediatorTest, ShouldResolveDuplicatesOnLoad) {
                                 /*position=*/std::nullopt);
   shared_group_1.AddTabLocally(shared_tab_1);
   shared_group_1.AddTabLocally(shared_tab_2);
-  model().Add(shared_group_1);
+  model().AddedLocally(shared_group_1);
   SavedTabGroup shared_group_2(u"shared group 2",
                                tab_groups::TabGroupColorId::kBlue, /*urls=*/{},
                                /*position=*/std::nullopt);
-  shared_group_2.SetCollaborationId(kCollaborationId);
+  shared_group_2.SetCollaborationId(CollaborationId(kCollaborationId));
   SavedTabGroupTab shared_tab_3(GURL("http://google.com/3"), u"shared tab 3",
                                 shared_group_2.saved_guid(),
                                 /*position=*/std::nullopt);
   shared_group_2.AddTabLocally(shared_tab_3);
-  model().Add(shared_group_2);
+  model().AddedLocally(shared_group_2);
 
   // Restart with only saved tab groups enabled to create duplicates.
   InitializeModelAndMediator(/*initialize_shared_tab_group=*/false);
@@ -270,7 +278,7 @@ TEST_F(TabGroupSyncBridgeMediatorTest, ShouldResolveDuplicatesOnLoad) {
       GURL("http://google.com/2"), u"saved tab 2",
       group_1_saved_copy.saved_guid(),
       /*position=*/std::nullopt, shared_tab_2.saved_tab_guid()));
-  model().Add(group_1_saved_copy);
+  model().AddedLocally(group_1_saved_copy);
 
   // Add duplicate tab to a new saved tab group.
   SavedTabGroup saved_group(u"saved group", tab_groups::TabGroupColorId::kGreen,
@@ -282,7 +290,7 @@ TEST_F(TabGroupSyncBridgeMediatorTest, ShouldResolveDuplicatesOnLoad) {
   saved_group.AddTabLocally(SavedTabGroupTab(
       GURL("http://google.com/4"), u"saved tab 4", saved_group.saved_guid(),
       /*position=*/std::nullopt));
-  model().Add(saved_group);
+  model().AddedLocally(saved_group);
 
   // Restart the bridge with both types enabled, and verify the result.
   InitializeModelAndMediator(/*initialize_shared_tab_group=*/true);

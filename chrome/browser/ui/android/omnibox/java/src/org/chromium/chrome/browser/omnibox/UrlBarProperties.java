@@ -15,7 +15,6 @@ import org.chromium.chrome.browser.omnibox.UrlBar.ScrollType;
 import org.chromium.chrome.browser.omnibox.UrlBar.UrlBarDelegate;
 import org.chromium.chrome.browser.omnibox.UrlBar.UrlBarTextContextMenuDelegate;
 import org.chromium.chrome.browser.omnibox.UrlBarCoordinator.SelectionState;
-import org.chromium.ui.base.WindowDelegate;
 import org.chromium.ui.modelutil.PropertyKey;
 import org.chromium.ui.modelutil.PropertyModel.WritableBooleanPropertyKey;
 import org.chromium.ui.modelutil.PropertyModel.WritableIntPropertyKey;
@@ -108,6 +107,9 @@ class UrlBarProperties {
     /** Whether focus should be allowed on the view. */
     public static final WritableBooleanPropertyKey ALLOW_FOCUS = new WritableBooleanPropertyKey();
 
+    /** Whether UrlBar is running in Cct. */
+    public static final WritableBooleanPropertyKey IS_IN_CCT = new WritableBooleanPropertyKey();
+
     /** Specified the autocomplete text to be shown to the user. */
     public static final WritableObjectPropertyKey<AutocompleteText> AUTOCOMPLETE_TEXT =
             new WritableObjectPropertyKey<>();
@@ -160,10 +162,6 @@ class UrlBarProperties {
     public static final WritableBooleanPropertyKey INCOGNITO_COLORS_ENABLED =
             new WritableBooleanPropertyKey();
 
-    /** The delegate that provides Window capabilities to the view. */
-    public static final WritableObjectPropertyKey<WindowDelegate> WINDOW_DELEGATE =
-            new WritableObjectPropertyKey<>();
-
     /** Specifies whether suggestions are showing below the URL bar. */
     public static final WritableBooleanPropertyKey HAS_URL_SUGGESTIONS =
             new WritableBooleanPropertyKey();
@@ -183,6 +181,7 @@ class UrlBarProperties {
             new PropertyKey[] {
                 ACTION_MODE_CALLBACK,
                 ALLOW_FOCUS,
+                IS_IN_CCT,
                 AUTOCOMPLETE_TEXT,
                 DELEGATE,
                 FOCUS_CHANGE_CALLBACK,
@@ -194,7 +193,6 @@ class UrlBarProperties {
                 TYPING_STARTED_LISTENER,
                 KEY_DOWN_LISTENER,
                 INCOGNITO_COLORS_ENABLED,
-                WINDOW_DELEGATE,
                 HAS_URL_SUGGESTIONS,
                 TEXT_COLOR,
                 HINT_TEXT_COLOR,

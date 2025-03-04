@@ -13,6 +13,7 @@
 #import "base/memory/weak_ptr.h"
 #import "base/strings/sys_string_conversions.h"
 #import "components/autofill/core/browser/autofill_progress_dialog_type.h"
+#import "components/autofill/core/browser/data_manager/payments/payments_data_manager.h"
 #import "components/autofill/core/browser/metrics/payments/credit_card_save_metrics.h"
 #import "components/autofill/core/browser/payments/autofill_error_dialog_context.h"
 #import "components/autofill/core/browser/payments/autofill_save_card_delegate.h"
@@ -71,7 +72,7 @@ IOSChromePaymentsAutofillClient::IOSChromePaymentsAutofillClient(
               base::MakeRefCounted<network::WeakWrapperSharedURLLoaderFactory>(
                   web_state->GetBrowserState()->GetURLLoaderFactory()),
               client->GetIdentityManager(),
-              &client->GetPersonalDataManager()->payments_data_manager(),
+              &client->GetPersonalDataManager().payments_data_manager(),
               web_state->GetBrowserState()->IsOffTheRecord())),
       pref_service_(pref_service),
       web_state_(web_state) {}
@@ -120,12 +121,6 @@ void IOSChromePaymentsAutofillClient::CreditCardUploadCompleted(
     std::optional<OnConfirmationClosedCallback>
         on_confirmation_closed_callback) {
   const bool card_saved = result == PaymentsRpcResult::kSuccess;
-  if (!base::FeatureList::IsEnabled(
-          features::kAutofillEnableSaveCardLoadingAndConfirmation)) {
-    autofill_metrics::LogCreditCardUploadConfirmationViewShownMetric(
-        /*is_shown=*/false, card_saved);
-    return;
-  }
   if (client_->GetAutofillSaveCardInfoBarDelegateIOS()) {
     client_->GetAutofillSaveCardInfoBarDelegateIOS()->CreditCardUploadCompleted(
         card_saved, std::move(on_confirmation_closed_callback));
@@ -182,10 +177,7 @@ void IOSChromePaymentsAutofillClient::ShowVirtualCardEnrollDialog(
   std::unique_ptr<VirtualCardEnrollUiModel> model =
       std::make_unique<VirtualCardEnrollUiModel>(
           virtual_card_enrollment_fields);
-  if (base::FeatureList::IsEnabled(
-          features::kAutofillEnableVcnEnrollLoadingAndConfirmation)) {
-    virtual_card_enroll_ui_model_ = model->GetWeakPtr();
-  }
+  virtual_card_enroll_ui_model_ = model->GetWeakPtr();
   bottom_sheet_tab_helper->ShowVirtualCardEnrollmentBottomSheet(
       std::move(model),
       VirtualCardEnrollmentCallbacks(std::move(accept_virtual_card_callback),
@@ -194,10 +186,6 @@ void IOSChromePaymentsAutofillClient::ShowVirtualCardEnrollDialog(
 
 void IOSChromePaymentsAutofillClient::VirtualCardEnrollCompleted(
     PaymentsRpcResult result) {
-  if (!base::FeatureList::IsEnabled(
-          features::kAutofillEnableVcnEnrollLoadingAndConfirmation)) {
-    return;
-  }
   if (virtual_card_enroll_ui_model_) {
     virtual_card_enroll_ui_model_->SetEnrollmentProgress(
         result == PaymentsRpcResult::kSuccess
@@ -303,8 +291,7 @@ void IOSChromePaymentsAutofillClient::OnUnmaskVerificationResult(
       // Do nothing
       break;
     case PaymentsRpcResult::kNone:
-      NOTREACHED_IN_MIGRATION();
-      return;
+      NOTREACHED();
   }
 }
 
@@ -343,8 +330,8 @@ IOSChromePaymentsAutofillClient::GetVirtualCardEnrollmentManager() {
   if (!virtual_card_enrollment_manager_) {
     virtual_card_enrollment_manager_ =
         std::make_unique<VirtualCardEnrollmentManager>(
-            client_->GetPersonalDataManager(), GetPaymentsNetworkInterface(),
-            &client_.get());
+            &client_->GetPersonalDataManager().payments_data_manager(),
+            GetPaymentsNetworkInterface(), &client_.get());
   }
 
   return virtual_card_enrollment_manager_.get();
@@ -392,6 +379,10 @@ IOSChromePaymentsAutofillClient::GetOrCreatePaymentsMandatoryReauthManager() {
         std::make_unique<payments::MandatoryReauthManager>(&client_.get());
   }
   return payments_reauth_manager_.get();
+}
+
+PaymentsDataManager& IOSChromePaymentsAutofillClient::GetPaymentsDataManager() {
+  return client_->GetPersonalDataManager().payments_data_manager();
 }
 
 }  // namespace autofill::payments

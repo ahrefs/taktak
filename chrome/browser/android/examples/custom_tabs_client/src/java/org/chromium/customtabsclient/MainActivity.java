@@ -16,6 +16,7 @@ import static androidx.browser.customtabs.CustomTabsIntent.EXTRA_ACTIVITY_SIDE_S
 import static androidx.browser.customtabs.CustomTabsIntent.EXTRA_ACTIVITY_SIDE_SHEET_POSITION;
 import static androidx.browser.customtabs.CustomTabsIntent.EXTRA_ACTIVITY_SIDE_SHEET_ROUNDED_CORNERS_POSITION;
 import static androidx.browser.customtabs.CustomTabsIntent.EXTRA_CLOSE_BUTTON_POSITION;
+import static androidx.browser.customtabs.CustomTabsIntent.EXTRA_ENABLE_EPHEMERAL_BROWSING;
 import static androidx.browser.customtabs.CustomTabsIntent.EXTRA_INITIAL_ACTIVITY_HEIGHT_PX;
 import static androidx.browser.customtabs.CustomTabsIntent.EXTRA_TOOLBAR_CORNER_RADIUS_DP;
 
@@ -65,10 +66,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.Px;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.browser.auth.AuthTabColorSchemeParams;
 import androidx.browser.auth.AuthTabIntent;
 import androidx.browser.customtabs.CustomTabsCallback;
 import androidx.browser.customtabs.CustomTabsClient;
@@ -175,7 +178,7 @@ public class MainActivity extends AppCompatActivity
     private CheckBox mSideSheetMaxButtonCheckbox;
     private CheckBox mSideSheetRoundedCornerCheckbox;
     private CheckBox mContentScrollCheckbox;
-    private CheckBox mSearchInCCTCheckbox;
+    private CheckBox mSearchInCctCheckbox;
     private CheckBox mSendToExternalAppCheckbox;
     private CheckBox mShareIdentityCheckbox;
     private TextView mPcctBreakpointLabel;
@@ -703,8 +706,8 @@ public class MainActivity extends AppCompatActivity
         mContentScrollCheckbox = findViewById(R.id.content_scroll_checkbox);
         mContentScrollCheckbox.setChecked(
                 mSharedPref.getInt(SHARED_PREF_CONTENT_SCROLL, UNCHECKED) == CHECKED);
-        mSearchInCCTCheckbox = findViewById(R.id.search_in_cct_checkbox);
-        mSearchInCCTCheckbox.setChecked(mSharedPref.getBoolean(SHARED_PREF_SEARCH_IN_CCT, false));
+        mSearchInCctCheckbox = findViewById(R.id.search_in_cct_checkbox);
+        mSearchInCctCheckbox.setChecked(mSharedPref.getBoolean(SHARED_PREF_SEARCH_IN_CCT, false));
         mShareIdentityCheckbox = findViewById(R.id.share_identity_checkbox);
         mShareIdentityCheckbox.setChecked(
                 mSharedPref.getInt(SHARED_PREF_SHARE_IDENTITY, UNCHECKED) == CHECKED);
@@ -897,7 +900,7 @@ public class MainActivity extends AppCompatActivity
             editor.putBoolean(SHARED_PREF_MAY_LAUNCH_BUTTON, mMayLaunchButton.isEnabled());
             editor.putBoolean(
                     SHARED_PREF_ENGAGEMENT_SIGNALS_BUTTON, mEngagementSignalsButton.isEnabled());
-            editor.putBoolean(SHARED_PREF_SEARCH_IN_CCT, mSearchInCCTCheckbox.isChecked());
+            editor.putBoolean(SHARED_PREF_SEARCH_IN_CCT, mSearchInCctCheckbox.isChecked());
             editor.apply();
         }
         super.onDestroy();
@@ -990,8 +993,8 @@ public class MainActivity extends AppCompatActivity
         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder(session);
         prepareMenuItems(builder);
         prepareActionButton(builder);
-        boolean isPCCT = mCctType.equals(CCT_OPTION_PARTIAL);
-        prepareAesthetics(builder, isPCCT);
+        boolean isPcct = mCctType.equals(CCT_OPTION_PARTIAL);
+        prepareAesthetics(builder, isPcct);
 
         // @CloseButtonPosition
         int closeButtonPosition =
@@ -1017,7 +1020,7 @@ public class MainActivity extends AppCompatActivity
         CustomTabsIntent customTabsIntent;
         editor.putString(SHARED_PREF_CCT, mCctType);
 
-        if (isPCCT) {
+        if (isPcct) {
             int pcctInitialWidthPx = mPcctInitialWidthSlider.getProgress();
             if (pcctInitialWidthPx != 0) {
                 builder.setInitialActivityWidthPx(pcctInitialWidthPx);
@@ -1077,17 +1080,12 @@ public class MainActivity extends AppCompatActivity
                     "com.google.android.apps.chrome.EXTRA_OPEN_NEW_INCOGNITO_TAB",
                     mCctType.equals(CCT_OPTION_INCOGNITO));
             customTabsIntent.intent.putExtra(
-                    "androidx.browser.customtabs.extra.ENABLE_EPHEMERAL_BROWSING",
-                    mCctType.equals(CCT_OPTION_EPHEMERAL));
-            // TODO(crbug.com/358346921): Remove when crrev.com/c/5770644 lands.
-            customTabsIntent.intent.putExtra(
-                    "com.google.android.apps.chrome.EXTRA_OPEN_NEW_EPHEMERAL_TAB",
-                    mCctType.equals(CCT_OPTION_EPHEMERAL));
+                    EXTRA_ENABLE_EPHEMERAL_BROWSING, mCctType.equals(CCT_OPTION_EPHEMERAL));
 
             customTabsIntent.intent.putExtra(EXTRA_CLOSE_BUTTON_POSITION, closeButtonPosition);
         }
 
-        customTabsIntent.intent.putExtra(EXTRA_OMNIBOX_ENABLED, mSearchInCCTCheckbox.isChecked());
+        customTabsIntent.intent.putExtra(EXTRA_OMNIBOX_ENABLED, mSearchInCctCheckbox.isChecked());
 
         if (mCctType.equals(CCT_OPTION_AUTHTAB)) {
             launchAuthTab(url);
@@ -1126,7 +1124,27 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void launchAuthTab(String url) {
-        AuthTabIntent authIntent = new AuthTabIntent.Builder().build();
+        int colorScheme = getColorSchemeFromButton(null);
+        AuthTabColorSchemeParams.Builder builder = new AuthTabColorSchemeParams.Builder();
+        if (!TextUtils.isEmpty(mToolbarColor)) {
+            builder.setToolbarColor(Color.parseColor(mToolbarColor));
+        }
+        int closeButton = mCloseButtonIcon.getCheckedButtonId();
+        @DrawableRes int closeIconId;
+        if (closeButton == R.id.check_button) {
+            closeIconId = R.drawable.baseline_check_white;
+        } else if (closeButton == R.id.back_button) {
+            closeIconId = R.drawable.ic_arrow_back;
+        } else {
+            closeIconId = R.drawable.baseline_close_white;
+        }
+        Bitmap closeIcon = BitmapFactory.decodeResource(getResources(), closeIconId);
+        AuthTabIntent authIntent =
+                new AuthTabIntent.Builder()
+                        .setColorScheme(colorScheme)
+                        .setDefaultColorSchemeParams(builder.build())
+                        .setCloseButtonIcon(closeIcon)
+                        .build();
         authIntent.intent.setPackage(mPackageNameToBind);
         String scheme = ((EditText) findViewById(R.id.custom_scheme)).getText().toString();
         if (TextUtils.isEmpty(scheme)) {
@@ -1167,16 +1185,7 @@ public class MainActivity extends AppCompatActivity
             editor.putInt(SHARED_PREF_SHOW_TITLE, UNCHECKED);
         }
         int closeButton = mCloseButtonIcon.getCheckedButtonId();
-        int colorScheme = CustomTabsIntent.COLOR_SCHEME_SYSTEM;
-        if (mThemeButton.getCheckedButtonId() == R.id.light_button) {
-            colorScheme = CustomTabsIntent.COLOR_SCHEME_LIGHT;
-            editor.putInt(SHARED_PREF_THEME, CustomTabsIntent.COLOR_SCHEME_LIGHT);
-        } else if (mThemeButton.getCheckedButtonId() == R.id.dark_button) {
-            colorScheme = CustomTabsIntent.COLOR_SCHEME_DARK;
-            editor.putInt(SHARED_PREF_THEME, CustomTabsIntent.COLOR_SCHEME_DARK);
-        } else {
-            editor.putInt(SHARED_PREF_THEME, CustomTabsIntent.COLOR_SCHEME_SYSTEM);
-        }
+        int colorScheme = getColorSchemeFromButton(editor);
         if (!TextUtils.isEmpty(mToolbarColor)) {
             builder.setToolbarColor(Color.parseColor(mToolbarColor));
         }
@@ -1205,6 +1214,19 @@ public class MainActivity extends AppCompatActivity
             editor.putInt(SHARED_PREF_CLOSE_ICON, CLOSE_ICON_X);
         }
         editor.apply();
+    }
+
+    private int getColorSchemeFromButton(SharedPreferences.Editor editor) {
+        int colorScheme = CustomTabsIntent.COLOR_SCHEME_SYSTEM;
+        if (mThemeButton.getCheckedButtonId() == R.id.light_button) {
+            colorScheme = CustomTabsIntent.COLOR_SCHEME_LIGHT;
+        } else if (mThemeButton.getCheckedButtonId() == R.id.dark_button) {
+            colorScheme = CustomTabsIntent.COLOR_SCHEME_DARK;
+        }
+        if (editor != null) {
+            editor.putInt(SHARED_PREF_THEME, colorScheme);
+        }
+        return colorScheme;
     }
 
     private void prepareMenuItems(CustomTabsIntent.Builder builder) {

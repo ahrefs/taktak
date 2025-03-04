@@ -19,7 +19,6 @@
 #include "base/values.h"
 #include "chrome/browser/ash/login/app_mode/test/kiosk_apps_mixin.h"
 #include "chrome/browser/ash/login/app_mode/test/kiosk_base_test.h"
-#include "chrome/browser/ash/login/app_mode/test/kiosk_test_helpers.h"
 #include "chrome/browser/ash/login/app_mode/test/managed_guest_session_test_helpers.h"
 #include "chrome/browser/ash/login/test/login_manager_mixin.h"
 #include "chrome/browser/ash/login/test/session_manager_state_waiter.h"
@@ -49,6 +48,7 @@
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/browser_test_utils.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -63,10 +63,10 @@ namespace policy {
 namespace {
 
 constexpr char kUnaffiliatedUser[] = "user@gmail.com";
-constexpr char kUnaffiliatedGaiaID[] = "11111";
+constexpr GaiaId::Literal kUnaffiliatedGaiaID("11111");
 
 constexpr char kAffiliatedUser[] = "user@example.com";
-constexpr char kAffiliatedGaiaID[] = "22222";
+constexpr GaiaId::Literal kAffiliatedGaiaID("22222");
 
 // Use a number larger than int32 to catch truncation errors.
 const int64_t kInitialCommandId = (1LL << 35) + 1;
@@ -246,7 +246,7 @@ class DeviceCommandFetchSupportPacketBrowserTestParameterized
         ASSERT_NO_FATAL_FAILURE(LaunchMGS());
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 
@@ -261,8 +261,8 @@ class DeviceCommandFetchSupportPacketBrowserTestParameterized
     ash::FakeChromeUserManager* fake_user_manager =
         static_cast<ash::FakeChromeUserManager*>(
             user_manager::UserManager::Get());
-    fake_user_manager->SetUserAffiliationForTesting(user.account_id,
-                                                    is_affiliated);
+    fake_user_manager->SetUserPolicyStatus(user.account_id, /*is_managed=*/true,
+                                           is_affiliated);
   }
 
   void LaunchMGS() {

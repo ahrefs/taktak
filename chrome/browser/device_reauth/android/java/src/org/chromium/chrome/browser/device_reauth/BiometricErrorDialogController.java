@@ -14,19 +14,21 @@ import android.text.SpannableString;
 import android.view.LayoutInflater;
 import android.view.View;
 
+import org.chromium.build.annotations.NullMarked;
 import org.chromium.ui.modaldialog.ModalDialogManager;
 import org.chromium.ui.modaldialog.ModalDialogManager.ModalDialogType;
 import org.chromium.ui.modaldialog.ModalDialogProperties;
 import org.chromium.ui.modaldialog.SimpleModalDialogController;
 import org.chromium.ui.modelutil.PropertyModel;
 import org.chromium.ui.modelutil.PropertyModelChangeProcessor;
-import org.chromium.ui.text.NoUnderlineClickableSpan;
+import org.chromium.ui.text.ChromeClickableSpan;
 import org.chromium.ui.text.SpanApplier;
 
 /**
  * Shows a modal dialog describing the error encountered during mandatory biometric auth and steps
  * to solve it.
  */
+@NullMarked
 public class BiometricErrorDialogController {
     private final Activity mActivity;
     private final ModalDialogManager mModalDialogManager;
@@ -88,6 +90,6 @@ public class BiometricErrorDialogController {
                 new SpanApplier.SpanInfo(
                         "<link>",
                         "</link>",
-                        new NoUnderlineClickableSpan(mActivity, (View unused) -> {})));
+                        new ChromeClickableSpan(mActivity, (View unused) -> {})));
     }
 }

@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "base/test/test_future.h"
+#include "build/build_config.h"
 #include "chrome/browser/history/history_service_factory.h"
 #include "chrome/browser/history_embeddings/history_embeddings_service_factory.h"
 #include "chrome/browser/optimization_guide/browser_test_util.h"
@@ -15,11 +16,11 @@
 #include "components/history/core/browser/history_service.h"
 #include "components/history_embeddings/history_embeddings_features.h"
 #include "components/history_embeddings/history_embeddings_service.h"
-#include "components/history_embeddings/mock_embedder.h"
 #include "components/optimization_guide/core/test_model_info_builder.h"
 #include "components/page_content_annotations/core/page_content_annotations_features.h"
 #include "components/page_content_annotations/core/page_content_annotations_service.h"
 #include "components/page_content_annotations/core/test_page_content_annotator.h"
+#include "components/passage_embeddings/passage_embeddings_test_util.h"
 #include "content/public/test/browser_test.h"
 
 namespace {
@@ -45,11 +46,13 @@ class HistoryEmbeddingsInteractiveTest
   void SetUpOnMainThread() override {
     HistoryEmbeddingsServiceFactory::GetInstance()->SetTestingFactory(
         browser()->profile(),
-        base::BindLambdaForTesting([](content::BrowserContext* context) {
+        base::BindLambdaForTesting([this](content::BrowserContext* context) {
           return HistoryEmbeddingsServiceFactory::
               BuildServiceInstanceForBrowserContextForTesting(
-                  context, std::make_unique<history_embeddings::MockEmbedder>(),
-                  /*answerer=*/nullptr, /*intent_classfier=*/nullptr);
+                  context,
+                  passage_embeddings_test_env_.embedder_metadata_provider(),
+                  passage_embeddings_test_env_.embedder(),
+                  /*answerer=*/nullptr, /*intent_classifier=*/nullptr);
         }));
 
     InteractiveBrowserTest::SetUpOnMainThread();
@@ -58,11 +61,6 @@ class HistoryEmbeddingsInteractiveTest
  protected:
   history_embeddings::HistoryEmbeddingsService* service() {
     return HistoryEmbeddingsServiceFactory::GetForProfile(browser()->profile());
-  }
-
-  base::RepeatingCallback<void(history_embeddings::UrlPassages)>&
-  callback_for_tests() {
-    return service()->callback_for_tests_;
   }
 
   page_content_annotations::PageContentAnnotationsService*
@@ -89,13 +87,22 @@ class HistoryEmbeddingsInteractiveTest
  private:
   base::test::ScopedFeatureList scoped_feature_list_;
   page_content_annotations::TestPageContentAnnotator page_content_annotator_;
+  passage_embeddings::TestEnvironment passage_embeddings_test_env_;
 };
 
 // Opening the feedback dialog on CrOS & LaCrOS open a system level dialog,
 // which cannot be easily tested here. Instead, LaCrOS has a separate feedback
 // browser test which gives some coverage.
 #if !BUILDFLAG(IS_CHROMEOS)
-IN_PROC_BROWSER_TEST_F(HistoryEmbeddingsInteractiveTest, FeedbackDialog) {
+
+// TODO(crbug.com/374710231): Reenable - currently, this fails consistently on
+// Win11 ARM debug builds.
+#if BUILDFLAG(IS_WIN) && defined(ARCH_CPU_ARM64)
+#define MAYBE_FeedbackDialog DISABLED_FeedbackDialog
+#else
+#define MAYBE_FeedbackDialog FeedbackDialog
+#endif
+IN_PROC_BROWSER_TEST_F(HistoryEmbeddingsInteractiveTest, MAYBE_FeedbackDialog) {
   optimization_guide::EnableSigninAndModelExecutionCapability(
       browser()->profile());
   browser()->profile()->GetPrefs()->SetInteger(
@@ -109,8 +116,9 @@ IN_PROC_BROWSER_TEST_F(HistoryEmbeddingsInteractiveTest, FeedbackDialog) {
       {"A a B C b a 2 D", 0.99},
   });
   ASSERT_TRUE(embedded_test_server()->Start());
-  base::test::TestFuture<history_embeddings::UrlPassages> store_future;
-  callback_for_tests() = store_future.GetRepeatingCallback();
+  base::test::TestFuture<history_embeddings::UrlData> store_future;
+  service()->SetPassagesStoredCallbackForTesting(
+      store_future.GetRepeatingCallback());
   ASSERT_TRUE(ui_test_utils::NavigateToURL(
       browser(), embedded_test_server()->GetURL("/inner_text/test1.html")));
   EXPECT_TRUE(store_future.Wait());

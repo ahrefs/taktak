@@ -15,6 +15,7 @@
 #include "base/apple/foundation_util.h"
 #include "base/base_paths.h"
 #include "base/command_line.h"
+#include "base/file_version_info.h"
 #include "base/files/file_enumerator.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
@@ -28,6 +29,7 @@
 #include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
 #include "base/strings/sys_string_conversions.h"
+#include "base/strings/utf_string_conversions.h"
 #include "base/test/bind.h"
 #include "base/test/test_timeouts.h"
 #include "base/time/time.h"
@@ -114,11 +116,11 @@ void Clean(UpdaterScope scope) {
     EXPECT_TRUE(base::DeletePathRecursively(*keystone_path));
   }
 
-  std::optional<base::FilePath> cache_path = GetCacheBaseDirectory(scope);
-  EXPECT_TRUE(cache_path);
-  if (cache_path) {
-    EXPECT_TRUE(base::DeletePathRecursively(*cache_path));
-  }
+  // TODO(crbug.com/394302692): Delete after CIPD updater versions are M136+.
+  EXPECT_TRUE(base::DeletePathRecursively(
+      base::FilePath("/Library/Caches/")
+          .AppendASCII(MAC_BUNDLE_IDENTIFIER_STRING)));
+
   EXPECT_TRUE(RemoveWakeJobFromLaunchd(scope));
 
   // Also clean up any other versions of the updater that are around.
@@ -154,14 +156,6 @@ void ExpectClean(UpdaterScope scope) {
 
   // Files must not exist on the file system.
   EXPECT_FALSE(base::PathExists(*GetWakeTaskPlistPath(scope)));
-
-  // Caches must have been removed. On Mac, this is separate from other
-  // updater directories, so we can reliably remove it completely.
-  std::optional<base::FilePath> cache_path = GetCacheBaseDirectory(scope);
-  EXPECT_TRUE(cache_path);
-  if (cache_path) {
-    EXPECT_FALSE(base::PathExists(*cache_path));
-  }
 
   std::optional<base::FilePath> path = GetInstallDirectory(scope);
   EXPECT_TRUE(path);
@@ -279,28 +273,39 @@ bool WaitForUpdaterExit() {
       [&] { VLOG(0) << "Still waiting for updater to exit: " << last_found; });
 }
 
-base::FilePath GetRealUpdaterLowerVersionPath() {
+std::vector<TestUpdaterVersion> GetRealUpdaterLowerVersions(
+    const std::string& arch_suffix) {
   base::FilePath exe_path;
   EXPECT_TRUE(base::PathService::Get(base::DIR_EXE, &exe_path));
   base::FilePath old_updater_path =
       exe_path.Append(FILE_PATH_LITERAL("old_updater"));
 
+  std::string arch;
 #if BUILDFLAG(CHROMIUM_BRANDING)
 #if defined(ARCH_CPU_ARM64)
-  old_updater_path = old_updater_path.Append("chromium_mac_arm64");
+  arch = "chromium_mac_arm64";
 #elif defined(ARCH_CPU_X86_64)
-  old_updater_path = old_updater_path.Append("chromium_mac_amd64");
+  arch = "chromium_mac_amd64";
 #endif
 #elif BUILDFLAG(GOOGLE_CHROME_BRANDING)
-  old_updater_path = old_updater_path.Append("chrome_mac_universal");
+  arch = "chrome_mac_universal";
 #endif
+
+  old_updater_path = old_updater_path.Append(base::StrCat({arch, arch_suffix}));
+
 #if BUILDFLAG(CHROMIUM_BRANDING) || BUILDFLAG(GOOGLE_CHROME_BRANDING)
   old_updater_path = old_updater_path.Append("cipd");
 #endif
-  return old_updater_path.Append(PRODUCT_FULLNAME_STRING "_test.app")
-      .Append("Contents")
-      .Append("MacOS")
-      .Append(PRODUCT_FULLNAME_STRING "_test");
+
+  const base::FilePath updater_setup_path =
+      old_updater_path.Append(PRODUCT_FULLNAME_STRING "_test.app")
+          .Append("Contents")
+          .Append("MacOS")
+          .Append(PRODUCT_FULLNAME_STRING "_test");
+  return {{updater_setup_path,
+           base::Version(base::UTF16ToUTF8(
+               FileVersionInfo::CreateFileVersionInfo(updater_setup_path)
+                   ->file_version()))}};
 }
 
 void SetupFakeLegacyUpdater(UpdaterScope scope) {
@@ -329,7 +334,7 @@ void ExpectLegacyUpdaterMigrated(UpdaterScope scope) {
 
   // Keystone should not be migrated.
   EXPECT_FALSE(
-      persisted_data->GetProductVersion("com.google.keystone").IsValid());
+      persisted_data->GetProductVersion(LEGACY_GOOGLE_UPDATE_APPID).IsValid());
 
   // Uninstalled app should be migrated.
   EXPECT_TRUE(
@@ -402,7 +407,7 @@ base::CommandLine MakeElevated(base::CommandLine command_line) {
 }
 
 void SetPlatformPolicies(const base::Value::Dict& values) {
-  const CFStringRef domain = CFSTR("com.google.Keystone");
+  const CFStringRef domain = CFSTR(LEGACY_GOOGLE_UPDATE_APPID);
 
   // Synchronize just to be safe. Ignore spurious errors if the domain
   // does not yet exist.
@@ -428,7 +433,7 @@ void SetPlatformPolicies(const base::Value::Dict& values) {
     NSURL* const managed_preferences_url = base::apple::FilePathToNSURL(
         GetLibraryFolderPath(UpdaterScope::kSystem)
             ->AppendASCII("Managed Preferences")
-            .AppendASCII("com.google.Keystone.plist"));
+            .AppendASCII(LEGACY_GOOGLE_UPDATE_APPID ".plist"));
     ASSERT_TRUE([[NSDictionary dictionaryWithObject:all_policies
                                              forKey:@"updatePolicies"]
         writeToURL:managed_preferences_url
@@ -443,10 +448,10 @@ void SetPlatformPolicies(const base::Value::Dict& values) {
   if (!process.IsValid()) {
     VLOG(2) << "Failed to launch the process to refresh preferences.";
   }
-  int exit_code = -1;
-  EXPECT_TRUE(process.WaitForExitWithTimeout(TestTimeouts::action_timeout(),
-                                             &exit_code));
-  EXPECT_EQ(0, exit_code);
+  // Exit code is not checked because it is not 0 when `cfprefsd` is not
+  // found.
+  EXPECT_TRUE(
+      process.WaitForExitWithTimeout(TestTimeouts::action_timeout(), nullptr));
 }
 
 void PrivilegedHelperInstall(UpdaterScope scope) {
@@ -516,7 +521,7 @@ void ExpectKSAdminResult(UpdaterScope scope,
 
   base::CommandLine command_line(*ksadmin_path);
   for (const auto& [key, value] : switches) {
-    command_line.AppendSwitchASCII(key, value);
+    command_line.AppendSwitchUTF8(key, value);
   }
 
   ExpectCliResult(command_line, elevate, std::move(want_stdout),

@@ -12,7 +12,6 @@
 #include "base/memory/weak_ptr.h"
 #include "base/task/cancelable_task_tracker.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/certificate_manager_model.h"
 #include "chrome/browser/ui/webui/certificate_manager/certificate_manager_utils.h"
 #include "components/file_access/scoped_file_access.h"
@@ -190,10 +189,6 @@ class CertificatesHandler : public content::WebUIMessageHandler,
   CertificateManagerModel::CertInfo* GetCertInfoFromCallbackArgs(
       const base::Value::List& args,
       size_t arg_index);
-
-  // Returns true if it is allowed to display the list of client certificates
-  // for the current profile.
-  bool ShouldDisplayClientCertificates();
 
   // Returns true if the user may manage client certificates on |slot|.
   bool IsClientCertificateManagementAllowed(Slot slot);

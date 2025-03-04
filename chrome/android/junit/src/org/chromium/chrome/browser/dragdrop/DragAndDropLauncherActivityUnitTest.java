@@ -32,7 +32,6 @@ import org.chromium.chrome.browser.price_tracking.PriceTrackingFeatures;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.tab.MockTab;
 import org.chromium.chrome.browser.tab.Tab;
-import org.chromium.ui.dragdrop.DragDropMetricUtils.DragDropType;
 import org.chromium.ui.dragdrop.DragDropMetricUtils.UrlIntentSource;
 import org.chromium.url.JUnitTestGURLs;
 
@@ -52,7 +51,7 @@ public class DragAndDropLauncherActivityUnitTest {
         MultiWindowTestUtils.enableMultiInstance();
         mContext = ContextUtils.getApplicationContext();
         mLinkUrl = JUnitTestGURLs.HTTP_URL.getSpec();
-        PriceTrackingFeatures.setPriceTrackingEnabledForTesting(false);
+        PriceTrackingFeatures.setPriceAnnotationsEnabledForTesting(false);
     }
 
     @Test
@@ -103,11 +102,18 @@ public class DragAndDropLauncherActivityUnitTest {
     @Test
     public void testGetTabIntent_specificWindowId() {
         Tab tab = MockTab.createAndInitialize(1, mProfile);
-        int windowId = 2;
-        Intent intent = DragAndDropLauncherActivity.getTabIntent(mContext, tab, windowId);
+        int sourceWindowId = 1;
+        int destWindowId = 2;
+        Intent intent =
+                DragAndDropLauncherActivity.getTabIntent(
+                        mContext, tab, sourceWindowId, destWindowId);
+        assertEquals(
+                "The EXTRA_DRAGDROP_TAB_WINDOW_ID intent extra value should match.",
+                sourceWindowId,
+                intent.getIntExtra(IntentHandler.EXTRA_DRAGDROP_TAB_WINDOW_ID, -1));
         assertEquals(
                 "The EXTRA_WINDOW_ID intent extra value should match.",
-                windowId,
+                destWindowId,
                 intent.getIntExtra(IntentHandler.EXTRA_WINDOW_ID, -1));
         assertEquals(
                 "The EXTRA_URL_SOURCE intent extra value should match.",
@@ -118,9 +124,13 @@ public class DragAndDropLauncherActivityUnitTest {
     @Test
     public void testGetTabIntent_defaultWindowId() {
         Tab tab = MockTab.createAndInitialize(1, mProfile);
+        int sourceWindowId = 1;
         Intent intent =
                 DragAndDropLauncherActivity.getTabIntent(
-                        mContext, tab, MultiWindowUtils.INVALID_INSTANCE_ID);
+                        mContext,
+                        tab,
+                        sourceWindowId,
+                        /* destWindowId= */ MultiWindowUtils.INVALID_INSTANCE_ID);
         assertEquals(
                 "The intent action should be DragAndDropLauncherActivity.ACTION_DRAG_DROP_VIEW.",
                 DragAndDropLauncherActivity.ACTION_DRAG_DROP_VIEW,
@@ -135,6 +145,10 @@ public class DragAndDropLauncherActivityUnitTest {
         assertTrue(
                 "The intent should contain the CATEGORY_BROWSABLE category.",
                 intent.getCategories().contains(Intent.CATEGORY_BROWSABLE));
+        assertEquals(
+                "The EXTRA_DRAGDROP_TAB_WINDOW_ID intent extra value should match.",
+                sourceWindowId,
+                intent.getIntExtra(IntentHandler.EXTRA_DRAGDROP_TAB_WINDOW_ID, -1));
         assertFalse(
                 "Intent should not contain the EXTRA_WINDOW_ID.",
                 intent.hasExtra(IntentHandler.EXTRA_WINDOW_ID));
@@ -179,24 +193,5 @@ public class DragAndDropLauncherActivityUnitTest {
         assertFalse(
                 "The intent creation timestamp is missing.",
                 DragAndDropLauncherActivity.isIntentValid(intent));
-    }
-
-    @Test
-    public void testGetDragDropTypeFromIntent() {
-        testGetDragDropTypeFromIntent(UrlIntentSource.LINK, DragDropType.LINK_TO_NEW_INSTANCE);
-        testGetDragDropTypeFromIntent(
-                UrlIntentSource.TAB_IN_STRIP, DragDropType.TAB_STRIP_TO_NEW_INSTANCE);
-        testGetDragDropTypeFromIntent(
-                UrlIntentSource.UNKNOWN, DragDropType.UNKNOWN_TO_NEW_INSTANCE);
-    }
-
-    private void testGetDragDropTypeFromIntent(
-            @UrlIntentSource int intentSrc, @DragDropType int dragDropType) {
-        Intent intent = new Intent();
-        intent.putExtra(IntentHandler.EXTRA_URL_DRAG_SOURCE, intentSrc);
-        assertEquals(
-                "The DragDropType should match.",
-                dragDropType,
-                DragAndDropLauncherActivity.getDragDropTypeFromIntent(intent));
     }
 }

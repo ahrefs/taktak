@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#import "ios/components/security_interstitials/safe_browsing/safe_browsing_service_impl.h"
-
 #import "base/files/scoped_temp_dir.h"
 #import "base/memory/raw_ptr.h"
 #import "base/path_service.h"
@@ -35,6 +33,7 @@
 #import "components/unified_consent/unified_consent_service.h"
 #import "ios/components/security_interstitials/safe_browsing/fake_safe_browsing_client.h"
 #import "ios/components/security_interstitials/safe_browsing/safe_browsing_query_manager.h"
+#import "ios/components/security_interstitials/safe_browsing/safe_browsing_service_impl.h"
 #import "ios/components/security_interstitials/safe_browsing/safe_browsing_unsafe_resource_container.h"
 #import "ios/web/public/test/fakes/fake_browser_state.h"
 #import "ios/web/public/test/fakes/fake_web_state.h"
@@ -47,6 +46,10 @@
 #import "services/network/public/cpp/shared_url_loader_factory.h"
 #import "services/network/public/cpp/simple_url_loader.h"
 #import "testing/platform_test.h"
+
+namespace variations {
+class VariationsService;
+}
 
 namespace {
 
@@ -161,19 +164,18 @@ class SafeBrowsingServiceTest : public PlatformTest {
     safe_browsing::V4GetHashProtocolManager::RegisterFactory(
         base::WrapUnique(v4_get_hash_factory_.get()));
 
-    pref_service_ =
-        std::make_unique<sync_preferences::TestingPrefServiceSyncable>();
-    HostContentSettingsMap::RegisterProfilePrefs(pref_service_->registry());
-    safe_browsing::RegisterProfilePrefs(pref_service_->registry());
+    HostContentSettingsMap::RegisterProfilePrefs(pref_service_.registry());
+    safe_browsing::RegisterProfilePrefs(pref_service_.registry());
     unified_consent::UnifiedConsentService::RegisterPrefs(
-        pref_service_->registry());
+        pref_service_.registry());
 
     safe_browsing_service_ = base::MakeRefCounted<SafeBrowsingServiceImpl>();
+    safe_browsing_client_ =
+        std::make_unique<FakeSafeBrowsingClient>(&pref_service_);
 
     CHECK(temp_dir_.CreateUniqueTempDir());
-    safe_browsing_service_->Initialize(
-        pref_service_.get(), temp_dir_.GetPath(),
-        /*safe_browsing_metrics_collector=*/nullptr);
+    safe_browsing_service_->Initialize(temp_dir_.GetPath());
+    safe_browsing_service_->OnBrowserStateCreated(&pref_service_, nullptr);
     base::RunLoop().RunUntilIdle();
 
     SetupUrlLookupService();
@@ -228,10 +230,10 @@ class SafeBrowsingServiceTest : public PlatformTest {
 
   web::WebTaskEnvironment task_environment_{
       web::WebTaskEnvironment::MainThreadType::IO};
+  sync_preferences::TestingPrefServiceSyncable pref_service_;
   scoped_refptr<SafeBrowsingService> safe_browsing_service_;
   std::unique_ptr<web::FakeBrowserState> browser_state_;
-  std::unique_ptr<sync_preferences::TestingPrefServiceSyncable> pref_service_;
-  FakeSafeBrowsingClient safe_browsing_client_;
+  std::unique_ptr<FakeSafeBrowsingClient> safe_browsing_client_;
   safe_browsing::hash_realtime_utils::GoogleChromeBrandingPretenderForTesting
       apply_branding_;
   base::test::ScopedFeatureList scoped_feature_list_;
@@ -261,27 +263,31 @@ class SafeBrowsingServiceTest : public PlatformTest {
 
   void SetupUrlLookupService() {
     host_content_settings_map_ = base::MakeRefCounted<HostContentSettingsMap>(
-        pref_service_.get(), /*is_off_the_record=*/false,
+        &pref_service_, /*is_off_the_record=*/false,
         /*store_last_modified=*/false, /*restore_session=*/false,
         /*should_record_metrics=*/false);
     verdict_cache_manager_ =
         std::make_unique<safe_browsing::VerdictCacheManager>(
             /*history_service=*/nullptr, host_content_settings_map_.get(),
-            pref_service_.get(), /*sync_observer=*/nullptr);
+            &pref_service_, /*sync_observer=*/nullptr);
     lookup_service_ = std::make_unique<safe_browsing::RealTimeUrlLookupService>(
         safe_browsing_service_->GetURLLoaderFactory(),
         verdict_cache_manager_.get(), base::BindRepeating([] {
           safe_browsing::ChromeUserPopulation population;
           return population;
         }),
-        pref_service_.get(),
+        &pref_service_,
         /*token_fetcher=*/nullptr,
         base::BindRepeating([](bool) { return false; }),
         /*is_off_the_record=*/false,
-        /*variations_service=*/nullptr,
+        /*variations_service_getter=*/
+        base::BindRepeating(
+            []() -> variations::VariationsService* { return nullptr; }),
+        /*min_allowed_timestamp_for_referrer_chains_getter=*/
+        base::NullCallback(),
         /*referrer_chain_provider=*/nullptr,
         /*webui_delegate=*/nullptr);
-    safe_browsing_client_.set_real_time_url_lookup_service(
+    safe_browsing_client_->set_real_time_url_lookup_service(
         lookup_service_.get());
   }
 
@@ -303,7 +309,8 @@ TEST_F(SafeBrowsingServiceTest, SafeAndUnsafePages) {
   // Verify that queries to the Safe Browsing database owned by
   // SafeBrowsingService receive responses.
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
   GURL safe_url = GURL(kSafePage);
   client.CheckUrl(safe_url);
   EXPECT_TRUE(client.result_pending());
@@ -320,7 +327,7 @@ TEST_F(SafeBrowsingServiceTest, SafeAndUnsafePages) {
   EXPECT_TRUE(client.url_is_unsafe());
 
   // Disable Safe Browsing, and ensure that unsafe URLs are no longer flagged.
-  pref_service_->SetBoolean(prefs::kSafeBrowsingEnabled, false);
+  pref_service_.SetBoolean(prefs::kSafeBrowsingEnabled, false);
   client.CheckUrl(unsafe_url);
   EXPECT_FALSE(client.result_pending());
   EXPECT_FALSE(client.url_is_unsafe());
@@ -330,7 +337,8 @@ TEST_F(SafeBrowsingServiceTest, SafeAndUnsafePagesWithSyncChecker) {
   // Verify that queries to the Safe Browsing database owned by
   // SafeBrowsingService receive responses.
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
   GURL safe_url = GURL(kSafePage);
   client.CheckUrlWithSyncChecker(safe_url);
   EXPECT_TRUE(client.result_pending());
@@ -347,7 +355,7 @@ TEST_F(SafeBrowsingServiceTest, SafeAndUnsafePagesWithSyncChecker) {
   EXPECT_TRUE(client.url_is_unsafe());
 
   // Disable Safe Browsing, and ensure that unsafe URLs are no longer flagged.
-  pref_service_->SetBoolean(prefs::kSafeBrowsingEnabled, false);
+  pref_service_.SetBoolean(prefs::kSafeBrowsingEnabled, false);
   client.CheckUrlWithSyncChecker(unsafe_url);
   EXPECT_FALSE(client.result_pending());
   EXPECT_FALSE(client.url_is_unsafe());
@@ -357,7 +365,8 @@ TEST_F(SafeBrowsingServiceTest, SafeAndUnsafePagesWithAsyncChecker) {
   // Verify that queries to the Safe Browsing database owned by
   // SafeBrowsingService receive responses.
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
   GURL safe_url = GURL(kSafePage);
   client.CheckUrlWithAsyncChecker(safe_url);
   EXPECT_TRUE(client.result_pending());
@@ -374,7 +383,7 @@ TEST_F(SafeBrowsingServiceTest, SafeAndUnsafePagesWithAsyncChecker) {
   EXPECT_TRUE(client.url_is_unsafe());
 
   // Disable Safe Browsing, and ensure that unsafe URLs are no longer flagged.
-  pref_service_->SetBoolean(prefs::kSafeBrowsingEnabled, false);
+  pref_service_.SetBoolean(prefs::kSafeBrowsingEnabled, false);
   client.CheckUrlWithAsyncChecker(unsafe_url);
   EXPECT_FALSE(client.result_pending());
   EXPECT_FALSE(client.url_is_unsafe());
@@ -385,7 +394,8 @@ TEST_F(SafeBrowsingServiceTest, SafeAndUnsafePagesWithAsyncChecker) {
 // expected.
 TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePages) {
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
 
   // Wait for an initial result to make sure the Safe Browsing database has
   // been initialized, before calling into functions that mark URLs as safe
@@ -395,7 +405,7 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePages) {
   client.WaitForResult();
 
   // Opt into real-time checks.
-  pref_service_->SetBoolean(
+  pref_service_.SetBoolean(
       unified_consent::prefs::kUrlKeyedAnonymizedDataCollectionEnabled, true);
 
   MarkUrlAsRealTimeSafe(safe_url);
@@ -415,7 +425,7 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePages) {
 
   // Opt out of real-time checks, and ensure that unsafe URLs are no longer
   // flagged.
-  pref_service_->SetBoolean(
+  pref_service_.SetBoolean(
       unified_consent::prefs::kUrlKeyedAnonymizedDataCollectionEnabled, false);
   client.CheckUrl(unsafe_url);
   EXPECT_TRUE(client.result_pending());
@@ -429,7 +439,8 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePages) {
 // related to real time checks.
 TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePagesWithSyncChecker) {
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
 
   // Wait for an initial result to make sure the Safe Browsing database has
   // been initialized, before calling into functions that mark URLs as safe
@@ -439,7 +450,7 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePagesWithSyncChecker) {
   client.WaitForResult();
 
   // Opt into real-time checks.
-  pref_service_->SetBoolean(
+  pref_service_.SetBoolean(
       unified_consent::prefs::kUrlKeyedAnonymizedDataCollectionEnabled, true);
 
   MarkUrlAsRealTimeSafe(safe_url);
@@ -459,7 +470,7 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePagesWithSyncChecker) {
 
   // Opt out of real-time checks, and ensure that unsafe URLs continue to be
   // unflagged.
-  pref_service_->SetBoolean(
+  pref_service_.SetBoolean(
       unified_consent::prefs::kUrlKeyedAnonymizedDataCollectionEnabled, false);
   client.CheckUrlWithSyncChecker(unsafe_url);
   EXPECT_TRUE(client.result_pending());
@@ -473,7 +484,8 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePagesWithSyncChecker) {
 // time checks.
 TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePagesWithAsyncChecker) {
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
 
   // Wait for an initial result to make sure the Safe Browsing database has
   // been initialized, before calling into functions that mark URLs as safe
@@ -483,7 +495,7 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePagesWithAsyncChecker) {
   client.WaitForResult();
 
   // Opt into real-time checks.
-  pref_service_->SetBoolean(
+  pref_service_.SetBoolean(
       unified_consent::prefs::kUrlKeyedAnonymizedDataCollectionEnabled, true);
 
   MarkUrlAsRealTimeSafe(safe_url);
@@ -503,7 +515,7 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePagesWithAsyncChecker) {
 
   // Opt out of real-time checks, and ensure that unsafe URLs are no longer
   // flagged.
-  pref_service_->SetBoolean(
+  pref_service_.SetBoolean(
       unified_consent::prefs::kUrlKeyedAnonymizedDataCollectionEnabled, false);
   client.CheckUrlWithAsyncChecker(unsafe_url);
   EXPECT_TRUE(client.result_pending());
@@ -515,7 +527,8 @@ TEST_F(SafeBrowsingServiceTest, RealTimeSafeAndUnsafePagesWithAsyncChecker) {
 TEST_F(SafeBrowsingServiceTest,
        RealTimeSafeAndUnsafePagesWithEnhancedProtection) {
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
 
   // Wait for an initial result to make sure the Safe Browsing database has
   // been initialized, before calling into functions that mark URLs as safe
@@ -525,7 +538,7 @@ TEST_F(SafeBrowsingServiceTest,
   client.WaitForResult();
 
   // Opt into real-time checks.
-  pref_service_->SetBoolean(prefs::kSafeBrowsingEnhanced, true);
+  pref_service_.SetBoolean(prefs::kSafeBrowsingEnhanced, true);
 
   MarkUrlAsRealTimeSafe(safe_url);
   client.CheckUrl(safe_url);
@@ -544,7 +557,7 @@ TEST_F(SafeBrowsingServiceTest,
 
   // Opt out of real-time checks, and ensure that unsafe URLs are no longer
   // flagged.
-  pref_service_->SetBoolean(prefs::kSafeBrowsingEnhanced, false);
+  pref_service_.SetBoolean(prefs::kSafeBrowsingEnhanced, false);
   client.CheckUrl(unsafe_url);
   EXPECT_TRUE(client.result_pending());
   client.WaitForResult();
@@ -693,8 +706,9 @@ TEST_F(SafeBrowsingServiceTest, HashPrefixEnabled) {
   scoped_feature_list_.InitAndEnableFeature(
       safe_browsing::kHashPrefixRealTimeLookups);
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
-  pref_service_->SetBoolean(prefs::kSafeBrowsingEnabled, true);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
+  pref_service_.SetBoolean(prefs::kSafeBrowsingEnabled, true);
 
   base::HistogramTester histogram_tester;
   GURL url = GURL(kMalwarePage);
@@ -721,9 +735,10 @@ TEST_F(SafeBrowsingServiceTest, HashPrefixDisabled) {
   scoped_feature_list_.InitAndDisableFeature(
       safe_browsing::kHashPrefixRealTimeLookups);
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
 
-  pref_service_->SetBoolean(prefs::kSafeBrowsingEnabled, true);
+  pref_service_.SetBoolean(prefs::kSafeBrowsingEnabled, true);
 
   base::HistogramTester histogram_tester;
   GURL url = GURL(kMalwarePage);
@@ -750,16 +765,17 @@ TEST_F(SafeBrowsingServiceTest, TestShouldCreateAsyncChecker) {
   scoped_feature_list_.InitAndEnableFeature(
       safe_browsing::kSafeBrowsingAsyncRealTimeCheck);
   TestUrlCheckerClient client(safe_browsing_service_.get(),
-                              browser_state_.get(), &safe_browsing_client_);
+                              browser_state_.get(),
+                              safe_browsing_client_.get());
   web_state_.SetBrowserState(browser_state_.get());
   EXPECT_TRUE(safe_browsing_service_->ShouldCreateAsyncChecker(
-      &web_state_, &safe_browsing_client_));
+      &web_state_, safe_browsing_client_.get()));
 
-  pref_service_->SetBoolean(prefs::kSafeBrowsingEnabled, false);
-  pref_service_->SetBoolean(
+  pref_service_.SetBoolean(prefs::kSafeBrowsingEnabled, false);
+  pref_service_.SetBoolean(
       unified_consent::prefs::kUrlKeyedAnonymizedDataCollectionEnabled, false);
   EXPECT_FALSE(safe_browsing_service_->ShouldCreateAsyncChecker(
-      &web_state_, &safe_browsing_client_));
+      &web_state_, safe_browsing_client_.get()));
 
   safe_browsing_service_->ShutDown();
 }
@@ -782,9 +798,8 @@ TEST_F(SafeBrowsingServiceInitializationTest, GetURLLoaderFactory) {
 
   scoped_refptr<SafeBrowsingService> safe_browsing_service =
       base::MakeRefCounted<SafeBrowsingServiceImpl>();
-  safe_browsing_service->Initialize(
-      prefs.get(), temp_dir.GetPath(),
-      /*safe_browsing_metrics_collector=*/nullptr);
+  safe_browsing_service->Initialize(temp_dir.GetPath());
+  safe_browsing_service->OnBrowserStateCreated(prefs.get(), nullptr);
 
   EXPECT_TRUE(safe_browsing_service->GetURLLoaderFactory());
 
@@ -812,9 +827,8 @@ TEST_F(SafeBrowsingServiceInitializationTest,
   prefs->SetBoolean(prefs::kSafeBrowsingEnabled, true);
   prefs->SetBoolean(prefs::kSafeBrowsingEnhanced, false);
   base::HistogramTester histogram_tester;
-  safe_browsing_service->Initialize(
-      prefs.get(), temp_dir.GetPath(),
-      /*safe_browsing_metrics_collector=*/nullptr);
+  safe_browsing_service->Initialize(temp_dir.GetPath());
+  safe_browsing_service->OnBrowserStateCreated(prefs.get(), nullptr);
   histogram_tester.ExpectUniqueSample(
       safe_browsing::kSafeBrowsingEnabledHistogramName, /*sample=*/1,
       /*count=*/1);
@@ -848,9 +862,8 @@ TEST_F(SafeBrowsingServiceInitializationTest,
   prefs->SetBoolean(prefs::kSafeBrowsingEnabled, true);
   prefs->SetBoolean(prefs::kSafeBrowsingEnhanced, true);
   base::HistogramTester histogram_tester;
-  safe_browsing_service->Initialize(
-      prefs.get(), temp_dir.GetPath(),
-      /*safe_browsing_metrics_collector=*/nullptr);
+  safe_browsing_service->Initialize(temp_dir.GetPath());
+  safe_browsing_service->OnBrowserStateCreated(prefs.get(), nullptr);
   histogram_tester.ExpectUniqueSample(
       safe_browsing::kSafeBrowsingEnabledHistogramName, /*sample=*/1,
       /*count=*/1);
@@ -883,9 +896,8 @@ TEST_F(SafeBrowsingServiceInitializationTest, PreferenceMetricsNoSafeBrowsing) {
   prefs->SetBoolean(prefs::kSafeBrowsingEnabled, false);
   prefs->SetBoolean(prefs::kSafeBrowsingEnhanced, false);
   base::HistogramTester histogram_tester;
-  safe_browsing_service->Initialize(
-      prefs.get(), temp_dir.GetPath(),
-      /*safe_browsing_metrics_collector=*/nullptr);
+  safe_browsing_service->Initialize(temp_dir.GetPath());
+  safe_browsing_service->OnBrowserStateCreated(prefs.get(), nullptr);
   histogram_tester.ExpectUniqueSample(
       safe_browsing::kSafeBrowsingEnabledHistogramName, /*sample=*/0,
       /*count=*/1);

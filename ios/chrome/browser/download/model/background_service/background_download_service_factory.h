@@ -9,8 +9,9 @@
 
 #import "base/no_destructor.h"
 #import "components/download/public/background_service/clients.h"
-#import "components/keyed_service/ios/browser_state_keyed_service_factory.h"
-#import "ios/chrome/browser/shared/model/profile/profile_ios_forward.h"
+#import "ios/chrome/browser/shared/model/profile/profile_keyed_service_factory_ios.h"
+
+class ProfileIOS;
 
 namespace download {
 class BackgroundDownloadService;
@@ -18,8 +19,7 @@ class BackgroundDownloadService;
 
 // Singleton that owns all BackgroundDownloadServiceFactory and associates them
 // with profiles.
-class BackgroundDownloadServiceFactory
-    : public BrowserStateKeyedServiceFactory {
+class BackgroundDownloadServiceFactory : public ProfileKeyedServiceFactoryIOS {
  public:
   static download::BackgroundDownloadService* GetForProfile(
       ProfileIOS* profile);
@@ -31,10 +31,6 @@ class BackgroundDownloadServiceFactory
 
   BackgroundDownloadServiceFactory();
   ~BackgroundDownloadServiceFactory() override;
-  BackgroundDownloadServiceFactory(const BackgroundDownloadServiceFactory&) =
-      delete;
-  BackgroundDownloadServiceFactory& operator=(
-      const BackgroundDownloadServiceFactory&) = delete;
 
   // BrowserStateKeyedServiceFactory implementation.
   std::unique_ptr<KeyedService> BuildServiceInstanceFor(

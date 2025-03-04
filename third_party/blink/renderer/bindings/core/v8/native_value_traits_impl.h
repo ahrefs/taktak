@@ -23,6 +23,7 @@
 #include "third_party/blink/renderer/core/trustedtypes/trusted_script.h"
 #include "third_party/blink/renderer/core/trustedtypes/trusted_script_url.h"
 #include "third_party/blink/renderer/core/trustedtypes/trusted_types_util.h"
+#include "third_party/blink/renderer/core/typed_arrays/array_buffer_view_helpers.h"
 #include "third_party/blink/renderer/core/typed_arrays/dom_data_view.h"
 #include "third_party/blink/renderer/core/typed_arrays/dom_typed_array.h"
 #include "third_party/blink/renderer/platform/bindings/bigint.h"
@@ -499,7 +500,7 @@ struct NativeValueTraits<IDLStringStringContextTrustedHTMLBase<mode>>
     auto&& string = NativeValueTraits<IDLStringBase<mode>>::NativeValue(
         isolate, value, exception_state);
     if (exception_state.HadException())
-      return String();
+      return g_null_atom;
     return TrustedTypesCheckForHTML(string, execution_context, interface_name,
                                     property_name, exception_state);
   }
@@ -541,7 +542,7 @@ struct NativeValueTraits<IDLStringStringContextTrustedScriptBase<mode>>
     auto&& string = NativeValueTraits<IDLStringBase<mode>>::NativeValue(
         isolate, value, exception_state);
     if (exception_state.HadException())
-      return String();
+      return g_null_atom;
     return TrustedTypesCheckForScript(string, execution_context, interface_name,
                                       property_name, exception_state);
   }
@@ -583,7 +584,7 @@ struct NativeValueTraits<IDLUSVStringStringContextTrustedScriptURLBase<mode>>
     auto&& string = NativeValueTraits<IDLUSVStringBase<mode>>::NativeValue(
         isolate, value, exception_state);
     if (exception_state.HadException())
-      return String();
+      return g_null_atom;
     return TrustedTypesCheckForScriptURL(string, execution_context,
                                          interface_name, property_name,
                                          exception_state);
@@ -864,54 +865,60 @@ struct NativeValueTraits<
 template <>
 struct CORE_EXPORT NativeValueTraits<IDLObject>
     : public NativeValueTraitsBase<IDLObject> {
-  static ScriptValue NativeValue(v8::Isolate* isolate,
-                                 v8::Local<v8::Value> value,
-                                 ExceptionState& exception_state) {
-    if (value->IsObject())
-      return ScriptValue(isolate, value);
+  static ScriptObject NativeValue(v8::Isolate* isolate,
+                                  v8::Local<v8::Value> value,
+                                  ExceptionState& exception_state) {
+    if (value->IsObject()) [[likely]] {
+      return ScriptObject(isolate, value);
+    }
     exception_state.ThrowTypeError(
         ExceptionMessages::FailedToConvertJSValue("object"));
-    return ScriptValue();
+    return ScriptObject();
   }
 
-  static ScriptValue ArgumentValue(v8::Isolate* isolate,
-                                   int argument_index,
-                                   v8::Local<v8::Value> value,
-                                   ExceptionState& exception_state) {
-    if (value->IsObject())
-      return ScriptValue(isolate, value);
+  static ScriptObject ArgumentValue(v8::Isolate* isolate,
+                                    int argument_index,
+                                    v8::Local<v8::Value> value,
+                                    ExceptionState& exception_state) {
+    if (value->IsObject()) [[likely]] {
+      return ScriptObject(isolate, value);
+    }
     exception_state.ThrowTypeError(
         ExceptionMessages::ArgumentNotOfType(argument_index, "object"));
-    return ScriptValue();
+    return ScriptObject();
   }
 };
 
 template <>
 struct CORE_EXPORT NativeValueTraits<IDLNullable<IDLObject>>
     : public NativeValueTraitsBase<IDLNullable<IDLObject>> {
-  static ScriptValue NativeValue(v8::Isolate* isolate,
-                                 v8::Local<v8::Value> value,
-                                 ExceptionState& exception_state) {
-    if (value->IsObject())
-      return ScriptValue(isolate, value);
-    if (value->IsNullOrUndefined())
-      return ScriptValue(isolate, v8::Null(isolate));
+  static ScriptObject NativeValue(v8::Isolate* isolate,
+                                  v8::Local<v8::Value> value,
+                                  ExceptionState& exception_state) {
+    if (value->IsObject()) {
+      return ScriptObject(isolate, value);
+    }
+    if (value->IsNullOrUndefined()) {
+      return ScriptObject::CreateNull(isolate);
+    }
     exception_state.ThrowTypeError(
         ExceptionMessages::FailedToConvertJSValue("object"));
-    return ScriptValue();
+    return ScriptObject();
   }
 
-  static ScriptValue ArgumentValue(v8::Isolate* isolate,
-                                   int argument_index,
-                                   v8::Local<v8::Value> value,
-                                   ExceptionState& exception_state) {
-    if (value->IsObject())
-      return ScriptValue(isolate, value);
-    if (value->IsNullOrUndefined())
-      return ScriptValue(isolate, v8::Null(isolate));
+  static ScriptObject ArgumentValue(v8::Isolate* isolate,
+                                    int argument_index,
+                                    v8::Local<v8::Value> value,
+                                    ExceptionState& exception_state) {
+    if (value->IsObject()) {
+      return ScriptObject(isolate, value);
+    }
+    if (value->IsNullOrUndefined()) {
+      return ScriptObject::CreateNull(isolate);
+    }
     exception_state.ThrowTypeError(
         ExceptionMessages::ArgumentNotOfType(argument_index, "object"));
-    return ScriptValue();
+    return ScriptObject();
   }
 };
 
@@ -1720,28 +1727,6 @@ struct NativeValueTraits<IDLOptional<T>>
   }
 };
 
-// Date
-template <>
-struct CORE_EXPORT NativeValueTraits<IDLDate>
-    : public NativeValueTraitsBase<IDLDate> {
-  // IDLDate must be always used as IDLNullable<IDLDate>.
-  static std::optional<base::Time> NativeValue(
-      v8::Isolate* isolate,
-      v8::Local<v8::Value> value,
-      ExceptionState& exception_state) = delete;
-};
-
-template <>
-struct CORE_EXPORT NativeValueTraits<IDLNullable<IDLDate>>
-    : public NativeValueTraitsBase<IDLNullable<IDLDate>> {
-  static std::optional<base::Time> NativeValue(
-      v8::Isolate* isolate,
-      v8::Local<v8::Value> value,
-      ExceptionState& exception_state) {
-    return ToCoreNullableDate(isolate, value, exception_state);
-  }
-};
-
 // EventHandler
 template <>
 struct CORE_EXPORT NativeValueTraits<IDLEventHandler>
@@ -1802,13 +1787,12 @@ struct NativeValueTraits<T> : public NativeValueTraitsBase<T> {
     if (value->IsArrayBufferView()) {
       v8::Local<v8::ArrayBufferView> view = value.As<v8::ArrayBufferView>();
       if (!T::allow_shared && view->HasBuffer() &&
-          view->Buffer()->GetBackingStore()->IsShared()) {
+          view->Buffer()->GetBackingStore()->IsShared()) [[unlikely]] {
         exception_state.ThrowTypeError(
             "The provided ArrayBufferView value must not be shared.");
         return result;
       }
-      result.Assign(
-          bindings::internal::GetViewData(view, result.GetInlineStorage()));
+      result.Assign(view->GetContents(result.GetInlineStorage()));
       return result;
     }
     exception_state.ThrowTypeError(
@@ -1832,16 +1816,15 @@ struct NativeValueTraits<T> : public NativeValueTraitsBase<T> {
                                               ExceptionState& exception_state) {
     typename T::ReturnType result;
     using Traits = bindings::internal::TypedArrayElementTraits<ElementType>;
-    if (Traits::IsViewOfType(value)) {
+    if (Traits::IsViewOfType(value)) [[likely]] {
       v8::Local<v8::ArrayBufferView> view = value.As<v8::ArrayBufferView>();
       if (!T::allow_shared && view->HasBuffer() &&
-          view->Buffer()->GetBackingStore()->IsShared()) {
+          view->Buffer()->GetBackingStore()->IsShared()) [[unlikely]] {
         exception_state.ThrowTypeError(
             "The provided ArrayBufferView value must not be shared.");
         return result;
       }
-      result.Assign(
-          bindings::internal::GetViewData(view, result.GetInlineStorage()));
+      result.Assign(view->GetContents(result.GetInlineStorage()));
       return result;
     }
     if constexpr (T::allow_sequence) {

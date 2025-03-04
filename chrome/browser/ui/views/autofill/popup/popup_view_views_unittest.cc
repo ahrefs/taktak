@@ -25,7 +25,6 @@
 #include "chrome/browser/ui/autofill/autofill_popup_view.h"
 #include "chrome/browser/ui/autofill/mock_autofill_popup_controller.h"
 #include "chrome/browser/ui/browser_element_identifiers.h"
-#include "chrome/browser/ui/views/autofill/popup/autofill_prediction_improvements/autofill_prediction_improvements_loading_state_view.h"
 #include "chrome/browser/ui/views/autofill/popup/popup_row_content_view.h"
 #include "chrome/browser/ui/views/autofill/popup/popup_row_view.h"
 #include "chrome/browser/ui/views/autofill/popup/popup_search_bar_view.h"
@@ -37,9 +36,9 @@
 #include "chrome/test/base/testing_profile.h"
 #include "chrome/test/views/chrome_views_test_base.h"
 #include "components/autofill/core/browser/metrics/autofill_metrics.h"
-#include "components/autofill/core/browser/ui/suggestion.h"
-#include "components/autofill/core/browser/ui/suggestion_hiding_reason.h"
-#include "components/autofill/core/browser/ui/suggestion_type.h"
+#include "components/autofill/core/browser/suggestions/suggestion.h"
+#include "components/autofill/core/browser/suggestions/suggestion_hiding_reason.h"
+#include "components/autofill/core/browser/suggestions/suggestion_type.h"
 #include "components/autofill/core/common/aliases.h"
 #include "components/feature_engagement/public/feature_constants.h"
 #include "components/input/native_web_keyboard_event.h"
@@ -64,7 +63,7 @@
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/vector2d.h"
-#include "ui/views/accessibility/ax_event_manager.h"
+#include "ui/views/accessibility/ax_update_notifier.h"
 #include "ui/views/accessibility/view_accessibility.h"
 #include "ui/views/bubble/bubble_border.h"
 #include "ui/views/bubble/bubble_border_arrow_utils.h"
@@ -101,10 +100,6 @@ const std::vector<SuggestionType> kClickableSuggestionTypes{
     SuggestionType::kDatalistEntry,
     SuggestionType::kScanCreditCard,
     SuggestionType::kAllSavedPasswordsEntry,
-    SuggestionType::kPasswordAccountStorageOptIn,
-    SuggestionType::kPasswordAccountStorageReSignin,
-    SuggestionType::kPasswordAccountStorageOptInAndGenerate,
-    SuggestionType::kPasswordAccountStorageEmpty,
     SuggestionType::kVirtualCreditCardEntry,
 };
 
@@ -460,7 +455,7 @@ TEST_F(PopupViewViewsTest, ShowViewWithOnlyFooterItemsShouldNotCrash) {
 }
 
 TEST_F(PopupViewViewsTest, AccessibilitySelectedEvent) {
-  views::test::AXEventCounter ax_counter(views::AXEventManager::Get());
+  views::test::AXEventCounter ax_counter(views::AXUpdateNotifier::Get());
   CreateAndShowView({SuggestionType::kAutocompleteEntry,
                      SuggestionType::kSeparator,
                      SuggestionType::kManageAddress});
@@ -576,7 +571,7 @@ TEST_F(PopupViewViewsTest, SelectionOnTouchAndUnselectionOnCancel) {
 TEST_F(PopupViewViewsTest, ClickDisabledEntry) {
   Suggestion opt_int_suggestion("dummy_main_text", "",
                                 Suggestion::Icon::kNoIcon,
-                                SuggestionType::kPasswordAccountStorageOptIn);
+                                SuggestionType::kWebauthnCredential);
   opt_int_suggestion.is_loading = Suggestion::IsLoading(true);
   controller().set_suggestions({opt_int_suggestion});
   CreateAndShowView();
@@ -646,14 +641,15 @@ TEST_F(PopupViewViewsTest, CursorUpWithNonSelectableCells) {
   // Set up the popup.
   Suggestion disabledSuggestion1 =
       CreateSuggestionWithChildren({Suggestion(u"Virtual Card #1")});
-  disabledSuggestion1.is_acceptable = false;
-  disabledSuggestion1.apply_deactivated_style = true;
+  disabledSuggestion1.acceptability =
+      Suggestion::Acceptability::kUnacceptableWithDeactivatedStyle;
   Suggestion acceptableSuggestion1 =
       CreateSuggestionWithChildren({Suggestion(u"Credit Card #1")});
   Suggestion disabledSuggestion2 =
       CreateSuggestionWithChildren({Suggestion(u"Virtual Card #2")});
-  disabledSuggestion2.is_acceptable = false;
-  disabledSuggestion2.apply_deactivated_style = true;
+  disabledSuggestion2.acceptability =
+      Suggestion::Acceptability::kUnacceptableWithDeactivatedStyle;
+
   Suggestion acceptableSuggestion2 =
       CreateSuggestionWithChildren({Suggestion(u"Credit Card #2")});
   Suggestion acceptableSuggestion3 =
@@ -688,14 +684,14 @@ TEST_F(PopupViewViewsTest, CursorDownWithNonSelectableCells) {
   // Set up the popup.
   Suggestion disabledSuggestion1 =
       CreateSuggestionWithChildren({Suggestion(u"Virtual Card #1")});
-  disabledSuggestion1.is_acceptable = false;
-  disabledSuggestion1.apply_deactivated_style = true;
+  disabledSuggestion1.acceptability =
+      Suggestion::Acceptability::kUnacceptableWithDeactivatedStyle;
   Suggestion acceptableSuggestion1 =
       CreateSuggestionWithChildren({Suggestion(u"Credit Card #1")});
   Suggestion disabledSuggestion2 =
       CreateSuggestionWithChildren({Suggestion(u"Virtual Card #2")});
-  disabledSuggestion2.is_acceptable = false;
-  disabledSuggestion2.apply_deactivated_style = true;
+  disabledSuggestion2.acceptability =
+      Suggestion::Acceptability::kUnacceptableWithDeactivatedStyle;
   Suggestion acceptableSuggestion2 =
       CreateSuggestionWithChildren({Suggestion(u"Credit Card #2")});
   Suggestion acceptableSuggestion3 =
@@ -725,14 +721,14 @@ TEST_F(PopupViewViewsTest, OverflowWithNonSelectableCells) {
   // Set up the popup.
   Suggestion disabledSuggestion1 =
       CreateSuggestionWithChildren({Suggestion(u"Virtual Card #1")});
-  disabledSuggestion1.is_acceptable = false;
-  disabledSuggestion1.apply_deactivated_style = true;
+  disabledSuggestion1.acceptability =
+      Suggestion::Acceptability::kUnacceptableWithDeactivatedStyle;
   Suggestion acceptableSuggestion1 =
       CreateSuggestionWithChildren({Suggestion(u"Credit Card #1")});
   Suggestion disabledSuggestion2 =
       CreateSuggestionWithChildren({Suggestion(u"Virtual Card #2")});
-  disabledSuggestion2.is_acceptable = false;
-  disabledSuggestion2.apply_deactivated_style = true;
+  disabledSuggestion2.acceptability =
+      Suggestion::Acceptability::kUnacceptableWithDeactivatedStyle;
   Suggestion acceptableSuggestion2 =
       CreateSuggestionWithChildren({Suggestion(u"Credit Card #2")});
   controller().set_suggestions({disabledSuggestion1, acceptableSuggestion1,
@@ -1244,8 +1240,9 @@ TEST_F(PopupViewViewsTest, ExpandableSuggestionA11yMessageTest) {
   // Set up the popup with suggestions.
   std::u16string address_line = u"Address line #1";
   Suggestion suggestion(address_line, SuggestionType::kAddressEntry);
-  suggestion.children = {Suggestion(SuggestionType::kFillFullAddress),
-                         Suggestion(SuggestionType::kFillFullName)};
+  suggestion.children = {
+      Suggestion(SuggestionType::kAddressFieldByFieldFilling),
+      Suggestion(SuggestionType::kAddressFieldByFieldFilling)};
   controller().set_suggestions({suggestion});
   CreateAndShowView();
 
@@ -1411,7 +1408,7 @@ TEST_F(PopupViewViewsTest, CellSubPopupResetAfterSuggestionsUpdates) {
 
 // TODO(crbug.com/41487832): Enable on ChromeOS when test setup in the death
 // subprocess is fixed.
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS)
 // `PopupViewViewsTest` is not used in death tests because it sets up a complex
 // environment (namely creates a `TestingProfile`) that fails to be created in
 // the sub-process (see `EXPECT_CHECK_DEATH_WITH` doc for details). This fail
@@ -1602,7 +1599,7 @@ TEST_F(PopupViewViewsTest, SubPopupOpensWithAutoselectByRightKey) {
 
 TEST_F(PopupViewViewsTest, SubPopupOpensForNonSelectableContentSelection) {
   Suggestion suggestion = CreateSuggestionWithChildren({Suggestion(u"Child")});
-  suggestion.is_acceptable = false;
+  suggestion.acceptability = Suggestion::Acceptability::kUnacceptable;
   controller().set_suggestions({suggestion});
   CreateAndShowView();
 
@@ -1615,7 +1612,7 @@ TEST_F(PopupViewViewsTest, SubPopupOpensForNonSelectableContentSelection) {
 
 TEST_F(PopupViewViewsTest, SubPopupNotOpenForSelectableContentSelection) {
   Suggestion suggestion = CreateSuggestionWithChildren({Suggestion(u"Child")});
-  suggestion.is_acceptable = true;
+  suggestion.acceptability = Suggestion::Acceptability::kAcceptable;
   controller().set_suggestions({suggestion});
   CreateAndShowView();
 
@@ -1629,8 +1626,8 @@ TEST_F(PopupViewViewsTest, SubPopupNotOpenForSelectableContentSelection) {
 TEST_F(PopupViewViewsTest,
        SubPopupNotOpenForMerchantOptedOutVcnContentSelection) {
   Suggestion suggestion = CreateSuggestionWithChildren({Suggestion(u"Child")});
-  suggestion.is_acceptable = false;
-  suggestion.apply_deactivated_style = true;
+  suggestion.acceptability =
+      Suggestion::Acceptability::kUnacceptableWithDeactivatedStyle;
   controller().set_suggestions({suggestion});
   CreateAndShowView();
 
@@ -1762,8 +1759,8 @@ TEST_F(PopupViewViewsTest, PopupPositioning) {
 
 TEST_F(PopupViewViewsTest, StandaloneCvcSuggestion_ElementId) {
   Suggestion suggestion(u"dummy_main_text");
-  suggestion.feature_for_iph =
-      &feature_engagement::kIPHAutofillVirtualCardCVCSuggestionFeature;
+  suggestion.iph_metadata = Suggestion::IPHMetadata(
+      &feature_engagement::kIPHAutofillVirtualCardCVCSuggestionFeature);
   controller().set_suggestions({suggestion});
   CreateAndShowView();
 
@@ -1773,8 +1770,8 @@ TEST_F(PopupViewViewsTest, StandaloneCvcSuggestion_ElementId) {
 
 TEST_F(PopupViewViewsTest, VirtualCardSuggestion_ElementId) {
   Suggestion suggestion(u"dummy_main_text");
-  suggestion.feature_for_iph =
-      &feature_engagement::kIPHAutofillVirtualCardSuggestionFeature;
+  suggestion.iph_metadata = Suggestion::IPHMetadata(
+      &feature_engagement::kIPHAutofillVirtualCardSuggestionFeature);
   controller().set_suggestions({suggestion});
   CreateAndShowView();
 
@@ -1782,13 +1779,8 @@ TEST_F(PopupViewViewsTest, VirtualCardSuggestion_ElementId) {
             kAutofillCreditCardSuggestionEntryElementId);
 }
 
-#if defined(MEMORY_SANITIZER) && BUILDFLAG(IS_CHROMEOS)
-#define MAYBE_ShowClickTest DISABLED_ShowClickTest
-#else
-#define MAYBE_ShowClickTest ShowClickTest
-#endif
 // Tests that (only) clickable items trigger an AcceptSuggestion event.
-TEST_P(PopupViewViewsTestWithAnySuggestionType, MAYBE_ShowClickTest) {
+TEST_P(PopupViewViewsTestWithAnySuggestionType, ShowClickTest) {
   CreateAndShowView({type()});
   EXPECT_CALL(controller(), AcceptSuggestion(0)).Times(IsClickable(type()));
   generator().MoveMouseTo(gfx::Point(1000, 1000));
@@ -1997,38 +1989,8 @@ TEST_F(PopupViewViewsTest, SearchBar_PressedKeysPassedToController) {
   generator().PressAndReleaseKey(ui::VKEY_DOWN);
 }
 
-TEST_F(PopupViewViewsTest, PredictionImprovementsLoadingOnShowA11yFocus) {
-  views::test::AXEventCounter counter(views::AXEventManager::Get());
-  CreateAndShowView({SuggestionType::kPredictionImprovementsLoadingState});
-
-  ASSERT_EQ(1u, test_api(view()).rows().size());
-  auto* const* row_view =
-      absl::get_if<autofill_prediction_improvements::
-                       PredictionImprovementsLoadingStateView*>(
-          &test_api(view()).rows()[0]);
-  ASSERT_TRUE(row_view);
-
-  EXPECT_EQ(1, counter.GetCount(ax::mojom::Event::kFocus, *row_view));
-}
-
-TEST_F(PopupViewViewsTest,
-       PredictionImprovementsLoadingOnSuggestionsChangedA11yFocus) {
-  views::test::AXEventCounter counter(views::AXEventManager::Get());
-  CreateAndShowView({SuggestionType::kFillPredictionImprovements});
-  UpdateSuggestions({SuggestionType::kPredictionImprovementsLoadingState});
-
-  ASSERT_EQ(1u, test_api(view()).rows().size());
-  auto* const* row_view =
-      absl::get_if<autofill_prediction_improvements::
-                       PredictionImprovementsLoadingStateView*>(
-          &test_api(view()).rows()[0]);
-  ASSERT_TRUE(row_view);
-
-  EXPECT_EQ(1, counter.GetCount(ax::mojom::Event::kFocus, *row_view));
-}
-
 TEST_F(PopupViewViewsTest, WarningOnShowA11yFocus) {
-  views::test::AXEventCounter counter(views::AXEventManager::Get());
+  views::test::AXEventCounter counter(views::AXUpdateNotifier::Get());
   CreateAndShowView({SuggestionType::kMixedFormMessage});
 
   ASSERT_EQ(1u, test_api(view()).rows().size());

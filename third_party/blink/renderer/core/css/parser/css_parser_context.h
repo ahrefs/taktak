@@ -114,12 +114,13 @@ class CORE_EXPORT CSSParserContext final
   }
 
   void Count(WebFeature) const;
+  void Count(WebDXFeature) const;
   void Count(CSSParserMode, CSSPropertyID) const;
   void CountDeprecation(WebFeature) const;
   bool IsUseCounterRecordingEnabled() const { return document_ != nullptr; }
   bool IsDocumentHandleEqual(const Document* other) const;
   const Document* GetDocument() const;
-  const ExecutionContext* GetExecutionContext() const;
+  ExecutionContext* GetExecutionContext() const;
 
   const DOMWrapperWorld* JavascriptWorld() const { return world_.Get(); }
 

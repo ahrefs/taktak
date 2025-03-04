@@ -41,6 +41,7 @@
 #include "ash/wm/float/float_controller.h"
 #include "ash/wm/overview/overview_controller.h"
 #include "ash/wm/overview/overview_grid.h"
+#include "ash/wm/overview/overview_grid_test_api.h"
 #include "ash/wm/overview/overview_session.h"
 #include "ash/wm/overview/overview_test_util.h"
 #include "ash/wm/overview/overview_utils.h"
@@ -159,7 +160,6 @@ constexpr char kTestAdminTemplateFormat[] =
     "\"created_time_usec\": \"1633535632\",\"updated_time_usec\": "
     "\"1633535632\",\"desk\":{}}]";
 constexpr char kTestTabGroupNameFormat[] = "test_tab_group_%u";
-constexpr char kTestAppName[] = "test_app_name";
 constexpr char kUnknownTestAppName[] = "unknown_test_app_name";
 constexpr char kUnknownTestAppId[] = "07eb07d7-f338-48aa-a996-7beb76a5042c";
 
@@ -514,8 +514,7 @@ class DesksClientTest : public extensions::PlatformAppBrowserTest {
  public:
   DesksClientTest() {
     std::vector<base::test::FeatureRef> enabled_features = {
-        ash::features::kDesksTemplates,
-        chromeos::features::kOverviewSessionInitOptimizations};
+        ash::features::kDesksTemplates};
     std::vector<base::test::FeatureRef> disabled_features = {
         ash::features::kDeskTemplateSync};
     scoped_feature_list_.InitWithFeatures(enabled_features, disabled_features);
@@ -883,7 +882,7 @@ IN_PROC_BROWSER_TEST_F(DesksClientTest, LaunchTemplateWithSystemApp) {
   // Verify that the settings window has been launched on the new desk (desk B).
   EXPECT_EQ(1, desks_controller->GetActiveDeskIndex());
   auto it =
-      base::ranges::find_if(*BrowserList::GetInstance(), [](Browser* browser) {
+      std::ranges::find_if(*BrowserList::GetInstance(), [](Browser* browser) {
         return ash::IsBrowserForSystemWebApp(browser,
                                              ash::SystemWebAppType::SETTINGS);
       });
@@ -1731,8 +1730,7 @@ IN_PROC_BROWSER_TEST_F(DesksClientTest, SystemUICaptureIncognitoBrowserTest) {
       ash::GetSavedDeskDialogAcceptButton();
   ASSERT_TRUE(dialog_accept_button);
   // MaterialNext uses PillButton instead of dialog buttons.
-  if (std::string_view(dialog_accept_button->GetClassName()) ==
-      std::string_view(ash::PillButton::kViewClassName)) {
+  if (dialog_accept_button->GetClassName() == ash::PillButton::kViewClassName) {
     ClickView(dialog_accept_button);
   } else {
     // Use a key press to accept the dialog instead of a click as
@@ -1898,13 +1896,10 @@ IN_PROC_BROWSER_TEST_F(DesksClientTest, SystemUILaunchTemplateWithSWAExisting) {
   // be [`new_browser_window`, `settings_window`, `help_window`].
   parent = settings_window->parent();
   aura::Window::Windows app_windows = parent->children();
-  app_windows.erase(
-      base::ranges::remove_if(app_windows,
-                              [](aura::Window* w) {
-                                return w->GetProperty(chromeos::kAppTypeKey) ==
-                                       chromeos::AppType::NON_APP;
-                              }),
-      app_windows.end());
+  auto to_remove = std::ranges::remove_if(app_windows, [](aura::Window* w) {
+    return w->GetProperty(chromeos::kAppTypeKey) == chromeos::AppType::NON_APP;
+  });
+  app_windows.erase(to_remove.begin(), to_remove.end());
   ASSERT_THAT(app_windows,
               ElementsAre(new_browser_window, settings_window, help_window));
 
@@ -2545,7 +2540,8 @@ IN_PROC_BROWSER_TEST_F(DesksClientTest,
   auto* overview_grid = ash::GetOverviewSession()->GetGridWithRootWindow(
       ash::Shell::GetPrimaryRootWindow());
   ASSERT_TRUE(overview_grid);
-  auto* save_desk_button = overview_grid->GetSaveDeskForLaterButton();
+  auto* save_desk_button =
+      ash::OverviewGridTestApi(overview_grid).GetSaveDeskForLaterButton();
   ASSERT_TRUE(save_desk_button);
 
   // Wait for the bounds to finish animating.
@@ -2901,7 +2897,6 @@ IN_PROC_BROWSER_TEST_F(DesksClientTest,
           .AddAppWindow(
               desks_storage::SavedDeskBrowserBuilder()
                   .SetIsApp(true)
-                  .SetIsLacros(false)
                   .SetUrls({GURL(kExampleUrl1)})
                   .SetGenericBuilder(desks_storage::SavedDeskGenericAppBuilder()
                                          .SetWindowId(kTestWindowId)
@@ -3057,7 +3052,6 @@ IN_PROC_BROWSER_TEST_F(SaveAndRecallBrowserTest,
   // We should be in overview mode.
   ASSERT_TRUE(ash::Shell::Get()->overview_controller()->overview_session());
 }
-// TODO(crbug.com/40228006): Add some tests to launch LaCros browser.
 
 using SnapGroupDesksClientTest = DesksClientTest;
 
@@ -3535,11 +3529,11 @@ IN_PROC_BROWSER_TEST_F(AdminTemplateTest, LaunchAdminTemplate) {
   // expect the new window to have an index that is higher than the old.
   const auto& container = new_browser_window_one->parent()->children();
   size_t new_index_one =
-      base::ranges::find(container, new_browser_window_one) - container.begin();
+      std::ranges::find(container, new_browser_window_one) - container.begin();
   size_t new_index_two =
-      base::ranges::find(container, new_browser_window_two) - container.begin();
+      std::ranges::find(container, new_browser_window_two) - container.begin();
   size_t old_index =
-      base::ranges::find(container, old_browser_window) - container.begin();
+      std::ranges::find(container, old_browser_window) - container.begin();
 
   EXPECT_GT(new_index_one, new_index_two);
   EXPECT_GT(new_index_two, old_index);

@@ -7,7 +7,6 @@ package org.chromium.chrome.browser.tasks.tab_management;
 import static org.chromium.chrome.browser.tasks.tab_management.TabListContainerProperties.BLOCK_TOUCH_INPUT;
 import static org.chromium.chrome.browser.tasks.tab_management.TabListContainerProperties.FOCUS_TAB_INDEX_FOR_ACCESSIBILITY;
 import static org.chromium.chrome.browser.tasks.tab_management.TabListContainerProperties.INITIAL_SCROLL_INDEX;
-import static org.chromium.chrome.browser.tasks.tab_management.TabListContainerProperties.MODE;
 
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +16,12 @@ import androidx.annotation.Nullable;
 
 import org.chromium.base.Callback;
 import org.chromium.base.ValueChangedCallback;
+import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.base.supplier.LazyOneshotSupplier;
 import org.chromium.base.supplier.ObservableSupplier;
 import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.base.supplier.TransitiveObservableSupplier;
-import org.chromium.chrome.browser.back_press.BackPressManager;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab_ui.TabSwitcherCustomViewManager;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
@@ -30,7 +29,6 @@ import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.browser.tabmodel.TabModelObserver;
 import org.chromium.chrome.browser.tasks.tab_management.PriceMessageService.PriceWelcomeMessageReviewActionProvider;
 import org.chromium.chrome.browser.tasks.tab_management.TabGridDialogMediator.DialogController;
-import org.chromium.chrome.browser.tasks.tab_management.TabListCoordinator.TabListMode;
 import org.chromium.chrome.browser.tasks.tab_management.TabListEditorCoordinator.TabListEditorController;
 import org.chromium.chrome.browser.tasks.tab_management.TabListMediator.GridCardOnClickListenerProvider;
 import org.chromium.chrome.browser.tasks.tab_management.TabListMediator.TabActionListener;
@@ -245,8 +243,7 @@ public class TabSwitcherPaneMediator
         }
 
         if (Boolean.FALSE.equals(mIsVisibleSupplier.get())) {
-            assert !BackPressManager.isEnabled()
-                    : "Invisible container backpress should be handled.";
+            assert false : "Invisible container backpress should be handled.";
             return BackPressResult.FAILURE;
         }
 
@@ -286,6 +283,13 @@ public class TabSwitcherPaneMediator
         TabGroupModelFilter filter = mTabGroupModelFilterSupplier.get();
         TabModel tabModel = filter.getTabModel();
         Tab tab = tabModel.getTabById(tabId);
+
+        // TODO(crbug.com/375309394): Figure out why the tab is null here and prevent it.
+        boolean hasTab = tab != null;
+        RecordHistogram.recordBooleanHistogram(
+                "Tabs.GridTabSwitcher.ScrollToTabById.HasTab", hasTab);
+        if (!hasTab) return;
+
         if (filter.isTabInTabGroup(tab)) {
             tab = tabModel.getTabById(tab.getRootId());
         }
@@ -393,11 +397,7 @@ public class TabSwitcherPaneMediator
         return false;
     }
 
-    private @TabListMode int getMode() {
-        return mContainerViewModel.get(MODE);
-    }
-
-    private TabListEditorController getTabListEditorController() {
+    TabListEditorController getTabListEditorController() {
         return mTabListEditorControllerSupplier == null
                 ? null
                 : mTabListEditorControllerSupplier.get();

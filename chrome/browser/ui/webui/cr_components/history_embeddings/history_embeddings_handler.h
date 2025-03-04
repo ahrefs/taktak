@@ -18,7 +18,10 @@
 #include "ui/webui/resources/cr_components/history_embeddings/history_embeddings.mojom.h"
 
 // These values are persisted to logs. Entries should not be renumbered and
-// numeric values should never be reused.
+// numeric values should never be reused. Update `HistoryEmbeddingsUserActions`
+// enum `END` in ui/webui/resources/cr_components/history/constants.ts if any
+// values are added. If that `END` value is too low, it will prevent correct
+// recording of the metric.
 enum class HistoryEmbeddingsUserActions {
   kNonEmptyQueryHistorySearch = 0,
   kEmbeddingsSearch = 1,
@@ -50,7 +53,8 @@ class HistoryEmbeddingsHandler : public history_embeddings::mojom::PageHandler {
                                   bool user_clicked_results,
                                   bool answer_shown,
                                   bool answer_citation_clicked,
-                                  bool other_history_result_clicked) override;
+                                  bool other_history_result_clicked,
+                                  uint32_t query_word_count) override;
   void SetUserFeedback(
       history_embeddings::mojom::UserFeedback user_feedback) override;
   void MaybeShowFeaturePromo() override;

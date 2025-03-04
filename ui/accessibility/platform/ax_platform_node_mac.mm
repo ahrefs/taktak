@@ -45,10 +45,11 @@ void NotifyMacEvent(AXPlatformNodeCocoa* target, ax::mojom::Event event_type) {
 namespace ui {
 
 // static
-AXPlatformNode* AXPlatformNode::Create(AXPlatformNodeDelegate* delegate) {
+AXPlatformNode::Pointer AXPlatformNode::Create(
+    AXPlatformNodeDelegate* delegate) {
   AXPlatformNode* node = new AXPlatformNodeMac();
   node->Init(delegate);
-  return node;
+  return Pointer(node);
 }
 
 // static
@@ -170,7 +171,7 @@ bool IsNameExposedInAXValueForRole(ax::mojom::Role role) {
 void AXPlatformNodeMac::AddAttributeToList(const char* name,
                                            const char* value,
                                            PlatformAttributeList* attributes) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 }  // namespace ui

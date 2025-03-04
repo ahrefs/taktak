@@ -7,13 +7,12 @@
 #include <memory>
 
 #include "base/files/file_path.h"
+#include "base/functional/callback_helpers.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/task_environment.h"
 #include "base/test/test.pb.h"
 #include "base/test/test_future.h"
-#include "components/optimization_guide/core/model_execution/model_execution_features.h"
-#include "components/optimization_guide/core/model_execution/model_execution_prefs.h"
 #include "components/optimization_guide/core/model_execution/on_device_model_access_controller.h"
 #include "components/optimization_guide/core/model_execution/on_device_model_service_controller.h"
 #include "components/optimization_guide/core/model_execution/test/request_builder.h"
@@ -54,88 +53,22 @@ proto::ExecuteResponse BuildComposeResponse(const std::string& output) {
   return execute_response;
 }
 
-class FakeServiceController : public OnDeviceModelServiceController {
- public:
-  FakeServiceController() : OnDeviceModelServiceController(nullptr, nullptr) {}
-
-  void LaunchService() override {}
-
-  void MaybeUpdateSafetyModel(
-      base::optional_ref<const ModelInfo> model_info) override {
-    received_safety_info_ = true;
-  }
-
-  bool received_safety_info() const { return received_safety_info_; }
-
-  std::optional<base::FilePath> language_detection_model_path() {
-    return OnDeviceModelServiceController::language_detection_model_path();
-  }
-
- private:
-  ~FakeServiceController() override = default;
-
-  bool received_safety_info_ = false;
-};
-
-class FakeModelProvider : public TestOptimizationGuideModelProvider {
- public:
-  void AddObserverForOptimizationTargetModel(
-      proto::OptimizationTarget optimization_target,
-      const std::optional<optimization_guide::proto::Any>& model_metadata,
-      OptimizationTargetModelObserver* observer) override {
-    switch (optimization_target) {
-      case proto::OPTIMIZATION_TARGET_TEXT_SAFETY:
-        registered_for_text_safety_ = true;
-        break;
-
-      case proto::OPTIMIZATION_TARGET_LANGUAGE_DETECTION:
-        registered_for_language_detection_ = true;
-        break;
-
-      default:
-        NOTREACHED_IN_MIGRATION();
-    }
-  }
-
-  void Reset() {
-    registered_for_text_safety_ = false;
-    registered_for_language_detection_ = false;
-  }
-
-  bool was_registered() const {
-    return registered_for_text_safety_ && registered_for_language_detection_;
-  }
-
- private:
-  bool registered_for_text_safety_ = false;
-  bool registered_for_language_detection_ = false;
-};
-
 class ModelExecutionManagerTest : public testing::Test {
  public:
-  ModelExecutionManagerTest() {
-    scoped_feature_list_.InitWithFeatures(
-        {}, {features::kTextSafetyClassifier,
-             features::internal::kModelAdaptationCompose});
-  }
+  ModelExecutionManagerTest() = default;
   ~ModelExecutionManagerTest() override = default;
 
+  // Sets up most of the fields except `model_execution_manager_` and
+  // `component_manager_`, which are left to the test cases to set up.
   void SetUp() override {
     url_loader_factory_ =
         base::MakeRefCounted<network::WeakWrapperSharedURLLoaderFactory>(
             &test_url_loader_factory_);
-    local_state_ = std::make_unique<TestingPrefServiceSimple>();
-    model_execution::prefs::RegisterLocalStatePrefs(local_state_->registry());
-    service_controller_ = base::MakeRefCounted<FakeServiceController>();
-    CreateModelExecutionManager();
-  }
-
-  void CreateModelExecutionManager() {
+    service_controller_ = base::MakeRefCounted<OnDeviceModelServiceController>(
+        nullptr, nullptr, base::DoNothing());
     model_execution_manager_ = std::make_unique<ModelExecutionManager>(
-        url_loader_factory_, local_state_.get(),
-        identity_test_env_.identity_manager(), service_controller_,
-        &model_provider_, /*on_device_component_state_manager=*/nullptr,
-        &optimization_guide_logger_, nullptr);
+        url_loader_factory_, identity_test_env_.identity_manager(),
+        service_controller_, &optimization_guide_logger_, nullptr);
   }
 
   bool SimulateResponse(const std::string& content,
@@ -167,9 +100,7 @@ class ModelExecutionManagerTest : public testing::Test {
     return model_execution_manager_.get();
   }
 
-  FakeModelProvider* model_provider() { return &model_provider_; }
-
-  FakeServiceController* service_controller() {
+  OnDeviceModelServiceController* service_controller() {
     return service_controller_.get();
   }
 
@@ -187,21 +118,16 @@ class ModelExecutionManagerTest : public testing::Test {
     return &test_url_loader_factory_;
   }
 
-  PrefService* local_state() { return local_state_.get(); }
-
-  void Reset() { model_execution_manager_ = nullptr; }
-
  private:
-  base::test::TaskEnvironment task_environment_;
+  base::test::TaskEnvironment task_environment_{
+      base::test::TaskEnvironment::TimeSource::MOCK_TIME};
   base::test::ScopedFeatureList scoped_feature_list_;
-  std::unique_ptr<TestingPrefServiceSimple> local_state_;
   signin::IdentityTestEnvironment identity_test_env_;
   variations::ScopedVariationsIdsProvider scoped_variations_ids_provider_{
       variations::VariationsIdsProvider::Mode::kUseSignedInState};
   scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory_;
   network::TestURLLoaderFactory test_url_loader_factory_;
-  scoped_refptr<FakeServiceController> service_controller_;
-  FakeModelProvider model_provider_;
+  scoped_refptr<OnDeviceModelServiceController> service_controller_;
   OptimizationGuideLogger optimization_guide_logger_;
   std::unique_ptr<ModelExecutionManager> model_execution_manager_;
 };
@@ -236,14 +162,6 @@ TEST_F(ModelExecutionManagerTest, ExecuteModelWithUserSignIn) {
   EXPECT_TRUE(response_holder.GetFinalStatus());
   EXPECT_EQ("foo response", response_holder.value());
   EXPECT_NE(response_holder.log_entry(), nullptr);
-  EXPECT_TRUE(response_holder.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_request());
-  EXPECT_TRUE(response_holder.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_response());
   EXPECT_EQ(response_holder.log_entry()
                 ->log_ai_data_request()
                 ->model_execution_info()
@@ -359,14 +277,6 @@ TEST_F(ModelExecutionManagerTest, ExecuteModelExecutionModeSetToServerOnly) {
   EXPECT_TRUE(response_holder.GetFinalStatus());
   EXPECT_EQ("foo response", response_holder.value());
   EXPECT_NE(response_holder.log_entry(), nullptr);
-  EXPECT_TRUE(response_holder.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_request());
-  EXPECT_TRUE(response_holder.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_response());
 
   histogram_tester.ExpectUniqueSample(
       "OptimizationGuide.ModelExecution.SessionUsedRemoteExecution.Compose",
@@ -399,14 +309,6 @@ TEST_F(ModelExecutionManagerTest,
   EXPECT_TRUE(response_holder.GetFinalStatus());
   EXPECT_EQ("foo response", response_holder.value());
   EXPECT_NE(response_holder.log_entry(), nullptr);
-  EXPECT_TRUE(response_holder.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_request());
-  EXPECT_TRUE(response_holder.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_response());
 
   histogram_tester.ExpectUniqueSample(
       "OptimizationGuide.ModelExecution.SessionUsedRemoteExecution.Compose",
@@ -436,14 +338,6 @@ TEST_F(ModelExecutionManagerTest, ExecuteModelWithPassthroughSession) {
   EXPECT_TRUE(response_holder.GetFinalStatus());
   EXPECT_EQ("foo response", response_holder.value());
   EXPECT_NE(response_holder.log_entry(), nullptr);
-  EXPECT_TRUE(response_holder.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_request());
-  EXPECT_TRUE(response_holder.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_response());
 
   histogram_tester.ExpectUniqueSample(
       "OptimizationGuide.ModelExecution.SessionUsedRemoteExecution.Compose",
@@ -565,14 +459,6 @@ TEST_F(ModelExecutionManagerTest, TestMultipleParallelRequests) {
   EXPECT_TRUE(response_holder2.GetFinalStatus());
   EXPECT_EQ("foo response", response_holder2.value());
   EXPECT_NE(response_holder2.log_entry(), nullptr);
-  EXPECT_TRUE(response_holder2.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_request());
-  EXPECT_TRUE(response_holder2.log_entry()
-                  ->log_ai_data_request()
-                  ->mutable_compose()
-                  ->has_response());
   EXPECT_EQ(response_holder2.log_entry()
                 ->log_ai_data_request()
                 ->model_execution_info()
@@ -589,74 +475,6 @@ TEST_F(ModelExecutionManagerTest, TestMultipleParallelRequests) {
       "OptimizationGuide.ModelExecution.Result.Compose", true, 1);
   histogram_tester.ExpectBucketCount(
       "OptimizationGuide.ModelExecution.Result.Compose", false, 1);
-}
-
-TEST_F(ModelExecutionManagerTest, DoesNotRegisterTextSafetyIfNotEnabled) {
-  EXPECT_FALSE(model_provider()->was_registered());
-}
-
-class ModelExecutionManagerSafetyEnabledTest
-    : public ModelExecutionManagerTest {
- public:
-  ModelExecutionManagerSafetyEnabledTest() {
-    scoped_feature_list_.InitWithFeatures(
-        {features::kTextSafetyClassifier},
-        {features::internal::kModelAdaptationCompose});
-  }
-
- private:
-  base::test::ScopedFeatureList scoped_feature_list_;
-};
-
-TEST_F(ModelExecutionManagerSafetyEnabledTest,
-       RegistersTextSafetyModelIfEnabled) {
-  EXPECT_TRUE(model_provider()->was_registered());
-}
-
-TEST_F(ModelExecutionManagerSafetyEnabledTest,
-       DoesNotNotifyServiceControllerWrongTarget) {
-  std::unique_ptr<ModelInfo> model_info =
-      TestModelInfoBuilder().SetVersion(123).Build();
-  model_execution_manager()->OnModelUpdated(
-      proto::OPTIMIZATION_TARGET_PAGE_ENTITIES, *model_info);
-
-  EXPECT_FALSE(service_controller()->received_safety_info());
-}
-
-TEST_F(ModelExecutionManagerSafetyEnabledTest, NotifiesServiceController) {
-  std::unique_ptr<ModelInfo> model_info =
-      TestModelInfoBuilder().SetVersion(123).Build();
-  model_execution_manager()->OnModelUpdated(
-      proto::OPTIMIZATION_TARGET_TEXT_SAFETY, *model_info);
-
-  EXPECT_TRUE(service_controller()->received_safety_info());
-}
-
-TEST_F(ModelExecutionManagerSafetyEnabledTest, UpdateLanguageDetection) {
-  const base::FilePath kTestPath{FILE_PATH_LITERAL("foo")};
-  std::unique_ptr<ModelInfo> model_info = TestModelInfoBuilder()
-                                              .SetVersion(123)
-                                              .SetModelFilePath(kTestPath)
-                                              .Build();
-  model_execution_manager()->OnModelUpdated(
-      proto::OPTIMIZATION_TARGET_LANGUAGE_DETECTION, *model_info);
-  EXPECT_EQ(kTestPath, service_controller()->language_detection_model_path());
-}
-
-TEST_F(ModelExecutionManagerSafetyEnabledTest,
-       NotRegisteredWhenDisabledByEnterprisePolicy) {
-  model_provider()->Reset();
-  local_state()->SetInteger(
-      model_execution::prefs::localstate::
-          kGenAILocalFoundationalModelEnterprisePolicySettings,
-      static_cast<int>(model_execution::prefs::
-                           GenAILocalFoundationalModelEnterprisePolicySettings::
-                               kDisallowed));
-  CreateModelExecutionManager();
-  EXPECT_FALSE(model_provider()->was_registered());
-
-  // Reset manager to make sure removing observer doesn't crash.
-  Reset();
 }
 
 }  // namespace

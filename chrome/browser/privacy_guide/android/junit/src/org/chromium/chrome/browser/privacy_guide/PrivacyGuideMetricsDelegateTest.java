@@ -22,7 +22,6 @@ import org.mockito.junit.MockitoRule;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.Features.EnableFeatures;
 import org.chromium.base.test.util.HistogramWatcher;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.base.test.util.UserActionTester;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.preferences.Pref;
@@ -45,12 +44,9 @@ import java.util.Set;
 
 /** JUnit tests of the class {@link PrivacyGuideMetricsDelegate}. */
 @RunWith(BaseRobolectricTestRunner.class)
-@EnableFeatures({ChromeFeatureList.REPLACE_SYNC_PROMOS_WITH_SIGN_IN_PROMOS})
 public class PrivacyGuideMetricsDelegateTest {
     private static final String SETTINGS_STATES_HISTOGRAM = "Settings.PrivacyGuide.SettingsStates";
     private static final String NEXT_NAVIGATION_HISTOGRAM = "Settings.PrivacyGuide.NextNavigation";
-
-    @Rule public JniMocker mocker = new JniMocker();
     @Rule public MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     @Mock private Profile mProfile;
@@ -69,11 +65,11 @@ public class PrivacyGuideMetricsDelegateTest {
     public void setUp() {
         mPrivacyGuideMetricsDelegate = new PrivacyGuideMetricsDelegate(mProfile);
 
-        mocker.mock(UnifiedConsentServiceBridgeJni.TEST_HOOKS, mNativeMock);
+        UnifiedConsentServiceBridgeJni.setInstanceForTesting(mNativeMock);
         SyncServiceFactory.setInstanceForTesting(mSyncService);
         when(mSyncService.getSelectedTypes()).thenReturn(mSyncTypes);
-        mocker.mock(SafeBrowsingBridgeJni.TEST_HOOKS, mSafeBrowsingNativeMock);
-        mocker.mock(UserPrefsJni.TEST_HOOKS, mUserPrefsNativesMock);
+        SafeBrowsingBridgeJni.setInstanceForTesting(mSafeBrowsingNativeMock);
+        UserPrefsJni.setInstanceForTesting(mUserPrefsNativesMock);
         when(mUserPrefsNativesMock.get(mProfile)).thenReturn(mPrefServiceMock);
     }
 
@@ -338,6 +334,7 @@ public class PrivacyGuideMetricsDelegateTest {
 
     @Test
     @SmallTest
+    @EnableFeatures({ChromeFeatureList.ALWAYS_BLOCK_3PCS_INCOGNITO})
     public void testCookies_block3PIncognitoTo3PSettingsStatesHistogram() {
         mockCookieControlsMode(
                 CookieControlsMode.INCOGNITO_ONLY, CookieControlsMode.BLOCK_THIRD_PARTY);
@@ -351,6 +348,7 @@ public class PrivacyGuideMetricsDelegateTest {
 
     @Test
     @SmallTest
+    @EnableFeatures({ChromeFeatureList.ALWAYS_BLOCK_3PCS_INCOGNITO})
     public void testCookies_block3PTo3PIncognitoSettingsStatesHistogram() {
         mockCookieControlsMode(
                 CookieControlsMode.BLOCK_THIRD_PARTY, CookieControlsMode.INCOGNITO_ONLY);
@@ -364,12 +362,39 @@ public class PrivacyGuideMetricsDelegateTest {
 
     @Test
     @SmallTest
+    @EnableFeatures({ChromeFeatureList.ALWAYS_BLOCK_3PCS_INCOGNITO})
     public void testCookies_block3PTo3PSettingsStatesHistogram() {
         mockCookieControlsMode(
                 CookieControlsMode.BLOCK_THIRD_PARTY, CookieControlsMode.BLOCK_THIRD_PARTY);
         HistogramWatcher watcher =
                 HistogramWatcher.newSingleRecordWatcher(
                         SETTINGS_STATES_HISTOGRAM, PrivacyGuideSettingsStates.BLOCK3P_TO3P);
+        triggerMetricsOnNext(PrivacyGuideFragment.FragmentType.COOKIES);
+        watcher.assertExpected();
+    }
+
+    @Test
+    @SmallTest
+    @EnableFeatures({ChromeFeatureList.ALWAYS_BLOCK_3PCS_INCOGNITO})
+    public void testCookies_offTo3PSettingsStatesHistogram() {
+        mockCookieControlsMode(CookieControlsMode.OFF, CookieControlsMode.BLOCK_THIRD_PARTY);
+        HistogramWatcher watcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        SETTINGS_STATES_HISTOGRAM,
+                        PrivacyGuideSettingsStates.BLOCK3P_INCOGNITO_TO3P);
+        triggerMetricsOnNext(PrivacyGuideFragment.FragmentType.COOKIES);
+        watcher.assertExpected();
+    }
+
+    @Test
+    @SmallTest
+    @EnableFeatures({ChromeFeatureList.ALWAYS_BLOCK_3PCS_INCOGNITO})
+    public void testCookies_offTo3PIncognitoSettingsStatesHistogram() {
+        mockCookieControlsMode(CookieControlsMode.OFF, CookieControlsMode.INCOGNITO_ONLY);
+        HistogramWatcher watcher =
+                HistogramWatcher.newSingleRecordWatcher(
+                        SETTINGS_STATES_HISTOGRAM,
+                        PrivacyGuideSettingsStates.BLOCK3P_INCOGNITO_TO3P_INCOGNITO);
         triggerMetricsOnNext(PrivacyGuideFragment.FragmentType.COOKIES);
         watcher.assertExpected();
     }

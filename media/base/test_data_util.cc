@@ -10,14 +10,18 @@
 #include "media/base/test_data_util.h"
 
 #include <stdint.h>
+
+#include <optional>
 #include <ostream>
 
 #include "base/check_op.h"
 #include "base/containers/flat_map.h"
 #include "base/files/file_util.h"
+#include "base/memory/scoped_refptr.h"
 #include "base/no_destructor.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/path_service.h"
+#include "media/base/decoder_buffer.h"
 
 namespace media {
 
@@ -72,6 +76,7 @@ using FileToMimeTypeMap = base::flat_map<std::string, std::string>;
 // main profile, a new mime type should be added.
 const FileToMimeTypeMap& GetFileToMimeTypeMap() {
   static const base::NoDestructor<FileToMimeTypeMap> kFileToMimeTypeMap({
+      {"bear-1280x720-av_frag.mp4", kMp4AacAudioAvc1Video},
       {"bear-1280x720-a_frag-cenc-key_rotation.mp4", kMp4AacAudio},
       {"bear-1280x720-a_frag-cenc.mp4", kMp4AacAudio},
       {"bear-1280x720-a_frag-cenc_clear-all.mp4", kMp4AacAudio},
@@ -146,16 +151,13 @@ const FileToMimeTypeMap& GetFileToMimeTypeMap() {
       {"bear-vp8a.webm", kWebMVp8Video},
       {"bear-vp9-blockgroup.webm", kWebMVp9Video},
       {"bear-vp9.webm", kWebMVp9Video},
-      {"color_pattern_24_dvhe05_1920x1080__dvh1_st-3sec-frag-cenc.mp4",
+      {"color_pattern_24_dvhe_05_1920x1080-3sec-frag-cenc.mp4",
        kMp4DolbyVisionProfile5},
-      {"color_pattern_24_dvhe05_1920x1080__dvh1_st-3sec-frag-cenc-clearlead-"
-       "2sec.mp4",
+      {"color_pattern_24_dvhe_05_1920x1080-3sec-frag-cenc-clearlead-2sec.mp4",
        kMp4DolbyVisionProfile5},
-      {"color_pattern_24_dvhe081_compressed_rpu_1920x1080__dvh1_st-3sec-frag-"
-       "cenc.mp4",
+      {"color_pattern_24_dvhe_081_1920x1080-3sec-frag-cenc.mp4",
        kMp4DolbyVisionProfile8x},
-      {"color_pattern_24_dvhe081_compressed_rpu_1920x1080__dvh1_st-3sec-frag-"
-       "cenc-clearlead-2sec.mp4",
+      {"color_pattern_24_dvhe_081_1920x1080-3sec-frag-cenc-clearlead-2sec.mp4",
        kMp4DolbyVisionProfile8x},
       {"frame_size_change-av_enc-v.webm", kWebMVorbisAudioVp8Video},
       {"icy_sfx.mp3", kMp3Audio},
@@ -233,13 +235,12 @@ std::string GetURLQueryString(const base::StringPairs& query_params) {
 scoped_refptr<DecoderBuffer> ReadTestDataFile(std::string_view name) {
   base::FilePath file_path = GetTestDataFilePath(name);
 
-  int64_t tmp = 0;
-  CHECK(base::GetFileSize(file_path, &tmp))
-      << "Failed to get file size for '" << name << "'";
+  std::optional<int64_t> tmp = base::GetFileSize(file_path);
+  CHECK(tmp.has_value()) << "Failed to get file size for '" << name << "'";
 
-  int file_size = base::checked_cast<int>(tmp);
+  int file_size = base::checked_cast<int>(tmp.value());
 
-  scoped_refptr<DecoderBuffer> buffer(new DecoderBuffer(file_size));
+  auto buffer = base::MakeRefCounted<DecoderBuffer>(file_size);
   auto* data = reinterpret_cast<char*>(buffer->writable_data());
   CHECK_EQ(file_size, base::ReadFile(file_path, data, file_size))
       << "Failed to read '" << name << "'";

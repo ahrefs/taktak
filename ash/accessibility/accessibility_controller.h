@@ -55,6 +55,7 @@ namespace ash {
 class AccessibilityConfirmationDialog;
 class AccessibilityControllerClient;
 class AccessibilityEventRewriter;
+class AccessibilityFeatureDisableDialog;
 class AccessibilityHighlightController;
 class AccessibilityObserver;
 enum class AccessibilityPanelState;
@@ -65,6 +66,7 @@ enum class DictationBubbleIconType;
 enum class DictationNotificationType;
 class DisableTouchpadEventRewriter;
 enum class DisableTouchpadMode;
+class DragEventRewriter;
 class FaceGazeBubbleController;
 class FilterKeysEventRewriter;
 class FlashScreenController;
@@ -253,7 +255,9 @@ class ASH_EXPORT AccessibilityController
   base::WeakPtr<AccessibilityController> GetWeakPtr();
 
   // Getters for the corresponding features.
+  Feature& always_show_scrollbar() const;
   Feature& autoclick() const;
+  Feature& bounce_keys() const;
   Feature& caret_highlight() const;
   Feature& color_correction() const;
   Feature& cursor_color() const;
@@ -271,6 +275,7 @@ class ASH_EXPORT AccessibilityController
   Feature& reduced_animations() const;
   Feature& spoken_feedback() const;
   Feature& select_to_speak() const;
+  Feature& slow_keys() const;
   Feature& sticky_keys() const;
   Feature& switch_access() const;
   Feature& virtual_keyboard() const;
@@ -360,6 +365,8 @@ class ASH_EXPORT AccessibilityController
 
   bool IsReducedAnimationsSettingVisibleInTray();
   bool IsEnterpriseIconVisibleForReducedAnimations();
+
+  bool IsTouchpadDisabled();
 
   void OnTouchpadNotificationClicked(std::optional<int> button_index);
 
@@ -597,7 +604,7 @@ class ASH_EXPORT AccessibilityController
       const std::optional<std::vector<DictationBubbleHintType>>& hints);
 
   // Updates the FaceGaze UI bubble.
-  void UpdateFaceGazeBubble(const std::u16string& text);
+  void UpdateFaceGazeBubble(const std::u16string& text, bool is_warning);
 
   // Shows a notification notifying the user about the FaceGaze DLC download.
   void ShowNotificationForFaceGaze(FaceGazeNotificationType type);
@@ -627,14 +634,22 @@ class ASH_EXPORT AccessibilityController
   // pointer in the variable |confirmation_dialog_| below.
   // This is also used to show the dialog for Select to Speak's enhanced network
   // voices.
-  void ShowConfirmationDialog(const std::u16string& title,
-                              const std::u16string& description,
-                              const std::u16string& confirm_name,
-                              const std::u16string& cancel_name,
-                              base::OnceClosure on_accept_callback,
-                              base::OnceClosure on_cancel_callback,
-                              base::OnceClosure on_close_callback);
+  void ShowConfirmationDialog(
+      const std::u16string& title,
+      const std::u16string& description,
+      const std::u16string& confirm_name,
+      const std::u16string& cancel_name,
+      base::OnceClosure on_accept_callback,
+      base::OnceClosure on_cancel_callback,
+      base::OnceClosure on_close_callback,
+      std::optional<int> timeout_seconds = std::nullopt);
   gfx::Rect GetConfirmationDialogBoundsInScreen();
+
+  // Shows a dialog to disable a feature with the given text, and calls the
+  // relevant callback when the dialog is accepted or cancelled.
+  void ShowFeatureDisableDialog(int window_title_text_id,
+                                base::OnceClosure on_accept_callback,
+                                base::OnceClosure on_cancel_callback);
 
   void PreviewFlashNotification() const;
 
@@ -671,6 +686,9 @@ class ASH_EXPORT AccessibilityController
   AccessibilityConfirmationDialog* GetConfirmationDialogForTest() {
     return confirmation_dialog_.get();
   }
+  AccessibilityFeatureDisableDialog* GetFeatureDisableDialogForTest() {
+    return disable_dialog_.get();
+  }
 
   bool enable_chromevox_volume_slide_gesture() {
     return enable_chromevox_volume_slide_gesture_;
@@ -683,6 +701,10 @@ class ASH_EXPORT AccessibilityController
   DictationBubbleController* GetDictationBubbleControllerForTest();
 
   FaceGazeBubbleController* GetFaceGazeBubbleControllerForTest();
+
+  DragEventRewriter* GetDragEventRewriterForTest() const {
+    return drag_event_rewriter_.get();
+  }
 
   bool IsDictationKeyboardDialogShowingForTesting() {
     return dictation_keyboard_dialog_showing_for_testing_;
@@ -704,6 +726,9 @@ class ASH_EXPORT AccessibilityController
       base::RepeatingCallback<void(AccessibilityToastType)> callback);
 
   void AddShowConfirmationDialogCallbackForTesting(
+      base::RepeatingCallback<void()> callback);
+
+  void AddFeatureDisableDialogCallbackForTesting(
       base::RepeatingCallback<void()> callback);
 
   bool VerifyFeaturesDataForTesting();
@@ -728,6 +753,10 @@ class ASH_EXPORT AccessibilityController
     input_device_settings_observer_.Reset();
   }
 
+  // Enables the drag event rewriter, which is used by features like FaceGaze
+  // and Autoclick.
+  void EnableDragEventRewriter(bool enabled);
+
  private:
   // Populate |features_| with the feature of the correct type.
   void CreateAccessibilityFeatures();
@@ -751,6 +780,8 @@ class ASH_EXPORT AccessibilityController
   void UpdateAutoclickStabilizePositionFromPref();
   void UpdateAutoclickMovementThresholdFromPref();
   void UpdateAutoclickMenuPositionFromPref();
+  void UpdateBounceKeysDelayFromPref();
+  void UpdateSlowKeysDelayFromPref();
   void UpdateMouseKeysDisableInTextFieldsFromPref();
   void UpdateMouseKeysAccelerationFromPref();
   void UpdateMouseKeysMaxSpeedFromPref();
@@ -765,6 +796,7 @@ class ASH_EXPORT AccessibilityController
   void UpdateDisableTouchpadFromPrefs(bool notify);
   void UpdateColorCorrectionFromPrefs();
   void UpdateCaretBlinkIntervalFromPrefs() const;
+  void UpdateUseOverlayScrollbarFromPref() const;
   void UpdateSwitchAccessKeyCodesFromPref(SwitchAccessCommand command);
   void UpdateSwitchAccessAutoScanEnabledFromPref();
   void UpdateSwitchAccessAutoScanSpeedFromPref();
@@ -793,6 +825,12 @@ class ASH_EXPORT AccessibilityController
   void OnDisableTouchpadDialogAccepted();
   void OnDisableTouchpadDialogDismissed();
   void ExternalDeviceConnected();
+
+  void OnFaceGazeSentinelChanged(const std::string& sentinel_pref,
+                                 const std::string& behavior_pref);
+  void OnFaceGazeDisableDialogClosed(const std::string& sentinel_pref,
+                                     const std::string& behavior_pref,
+                                     bool dialog_accepted);
 
   void RecordSelectToSpeakSpeechDuration(SelectToSpeakState old_state,
                                          SelectToSpeakState new_state);
@@ -865,6 +903,9 @@ class ASH_EXPORT AccessibilityController
   // Used to control the FaceGaze bubble UI.
   std::unique_ptr<FaceGazeBubbleController> facegaze_bubble_controller_;
 
+  // Used to support drag-and-drop for features, including FaceGaze.
+  std::unique_ptr<DragEventRewriter> drag_event_rewriter_;
+
   // Used to control accessibility-related notifications.
   std::unique_ptr<AccessibilityNotificationController>
       accessibility_notification_controller_;
@@ -889,6 +930,11 @@ class ASH_EXPORT AccessibilityController
 
   base::RepeatingCallback<void()>
       show_confirmation_dialog_callback_for_testing_;
+
+  // The current AccessibilityFeatureDisableDialog, if one exists.
+  base::WeakPtr<AccessibilityFeatureDisableDialog> disable_dialog_;
+
+  base::RepeatingCallback<void()> show_disable_dialog_callback_for_testing_;
 
   base::Time select_to_speak_speech_start_time_;
 

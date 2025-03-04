@@ -46,17 +46,17 @@ const ComputedStyle& LineTruncator::EllipsisStyle() const {
 }
 
 void LineTruncator::SetupEllipsis() {
-  const Font& font = EllipsisStyle().GetFont();
-  ellipsis_font_data_ = font.PrimaryFont();
+  const Font* font = EllipsisStyle().GetFont();
+  ellipsis_font_data_ = font->PrimaryFont();
   DCHECK(ellipsis_font_data_);
   ellipsis_text_ =
       ellipsis_font_data_ && ellipsis_font_data_->GlyphForCharacter(
                                  kHorizontalEllipsisCharacter)
-          ? String(&kHorizontalEllipsisCharacter, 1u)
+          ? String(base::span_from_ref(kHorizontalEllipsisCharacter))
           : String(u"...");
   HarfBuzzShaper shaper(ellipsis_text_);
   ellipsis_shape_result_ =
-      ShapeResultView::Create(shaper.Shape(&font, line_direction_));
+      ShapeResultView::Create(shaper.Shape(font, line_direction_));
   ellipsis_width_ = ellipsis_shape_result_->SnappedWidth();
 }
 
@@ -430,7 +430,7 @@ void LineTruncator::HideChild(LogicalLineItem* child) {
     return;
   }
 
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 // Return the offset to place the ellipsis.

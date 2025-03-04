@@ -6,6 +6,7 @@
 
 #include <stddef.h>
 
+#include <algorithm>
 #include <utility>
 
 #include "base/check.h"
@@ -17,11 +18,9 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/task/thread_pool.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
@@ -33,6 +32,7 @@
 #include "ui/accessibility/platform/ax_platform_node.h"
 #include "ui/events/base_event_utils.h"
 #include "ui/gfx/color_utils.h"
+#include "ui/native_theme/native_theme.h"
 
 namespace content {
 
@@ -190,9 +190,9 @@ BrowserAccessibilityStateImpl* BrowserAccessibilityStateImpl::GetInstance() {
   return g_instance;
 }
 
-// On Android, Mac, Lacros, and Windows there are platform-specific subclasses.
+// On Android, Mac, Windows and Linux there are platform-specific subclasses.
 #if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_WIN) && !BUILDFLAG(IS_MAC) && \
-    !BUILDFLAG(IS_CHROMEOS_LACROS)
+    !BUILDFLAG(IS_LINUX) && !BUILDFLAG(IS_CHROMEOS)
 // static
 std::unique_ptr<BrowserAccessibilityStateImpl>
 BrowserAccessibilityStateImpl::Create() {
@@ -304,9 +304,31 @@ void BrowserAccessibilityStateImpl::OnScreenReaderStopped() {
       base::Seconds(kDisableAccessibilitySupportDelaySecs));
 }
 
+void BrowserAccessibilityStateImpl::SetKnownScreenReaderAppActive(
+    bool is_active) {
+  // Currently only meaningful on macOS, for VoiceOver detection,
+  // and ChromeOS for ChromeVox detection.
+  // Other platforms detect specific, known screen reader apps in the
+  // OS-specific subclass.
+  NOTREACHED();
+}
+
+bool BrowserAccessibilityStateImpl::IsKnownScreenReaderAppActive() {
+  return false;
+}
+
 void BrowserAccessibilityStateImpl::EnableAccessibility() {
   if (!allow_ax_mode_changes_) {
     return;
+  }
+
+  // Track the time since start-up before the kWebContents mode was enabled,
+  // ensuring we record this value only one time.
+  if (!has_enabled_accessibility_in_session_ &&
+      GetAccessibilityMode().has_mode(ui::AXMode::kWebContents)) {
+    has_enabled_accessibility_in_session_ = true;
+    UMA_HISTOGRAM_LONG_TIMES_100("Accessibility.EngineUse.TimeUntilStart",
+                                 timer_.Elapsed());
   }
 
   // Enabling accessibility is generally the result of an accessibility API
@@ -399,6 +421,14 @@ void BrowserAccessibilityStateImpl::UpdateHistogramsOnUIThread() {
   UMA_HISTOGRAM_BOOLEAN(
       "Accessibility.ManuallyEnabled",
       !GetAccessibilityMode().is_mode_off() && !allow_ax_mode_changes_);
+
+#if BUILDFLAG(IS_WIN)
+  base::UmaHistogramEnumeration(
+      "Accessibility.WinHighContrastTheme",
+      ui::NativeTheme::GetInstanceForNativeUi()
+          ->GetPlatformHighContrastColorScheme(),
+      ui::NativeTheme::PlatformHighContrastColorScheme::kMaxValue);
+#endif
 
   ui_thread_done_ = true;
   if (other_thread_done_ && background_thread_done_callback_) {
@@ -518,6 +548,13 @@ bool BrowserAccessibilityStateImpl::IsAXModeChangeAllowed() const {
   return allow_ax_mode_changes_;
 }
 
+void BrowserAccessibilityStateImpl::NotifyWebContentsPreferencesChanged()
+    const {
+  for (WebContentsImpl* wc : WebContentsImpl::GetAllWebContents()) {
+    wc->OnWebPreferencesChanged();
+  }
+}
+
 void BrowserAccessibilityStateImpl::AddAccessibilityModeFlags(ui::AXMode mode) {
   if (!allow_ax_mode_changes_) {
     return;
@@ -594,6 +631,7 @@ void BrowserAccessibilityStateImpl::OnAccessibilityApiUsage() {
 }
 
 void BrowserAccessibilityStateImpl::OnInputEvent(
+    const RenderWidgetHost& widget,
     const blink::WebInputEvent& event) {
   // |this| observer cares about user input events (specifically keyboard,
   // mouse & touch events) to decide if the accessibility APIs can be disabled.
@@ -628,7 +666,7 @@ void BrowserAccessibilityStateImpl::OnModeChangedForProcess(
 
   // Combine the new mode for the process with the effective mode for each
   // WebContents and its associated BrowserContext.
-  base::ranges::for_each(
+  std::ranges::for_each(
       WebContentsImpl::GetAllWebContents(),
       [new_mode](WebContentsImpl* web_contents) {
         if (!web_contents->IsBeingDestroyed()) {
@@ -677,7 +715,7 @@ void BrowserAccessibilityStateImpl::OnModeChangedForBrowserContext(
 
   // Combine this with the effective mode for each WebContents associated with
   // `browser_context`.
-  base::ranges::for_each(
+  std::ranges::for_each(
       WebContentsImpl::GetAllWebContents(),
       [browser_context, mode_for_context](WebContentsImpl* web_contents) {
         if (!web_contents->IsBeingDestroyed() &&

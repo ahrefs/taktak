@@ -31,10 +31,12 @@ SECTION_HEADER = re.compile('^/\\* ([^ ]*) \\*/$')
 # Name of the section containing informational messages that can be ignored.
 NOTICE_SECTION = 'com.apple.actool.compilation-results'
 
+# App icon asset type.
+APP_ICON_ASSET_TYPE = '.appiconset'
+
 # Map special type of asset catalog to the corresponding command-line
 # parameter that need to be passed to actool.
 ACTOOL_FLAG_FOR_ASSET_TYPE = {
-    '.appiconset': '--app-icon',
     '.launchimage': '--launch-image',
 }
 
@@ -102,7 +104,8 @@ def FilterCompilerOutput(compiler_output, relative_paths):
 
 def CompileAssetCatalog(output, platform, target_environment, product_type,
                         min_deployment_target, possibly_zipped_inputs,
-                        compress_pngs, partial_info_plist, temporary_dir):
+                        compress_pngs, partial_info_plist, app_icon,
+                        include_all_app_icons, temporary_dir):
   """Compile the .xcassets bundles to an asset catalog using actool.
 
   Args:
@@ -167,6 +170,28 @@ def CompileAssetCatalog(output, platform, target_environment, product_type,
           '--ui-framework-family',
           'uikit',
       ])
+    else:
+      sys.stderr.write('Unsupported ios environment: %s' % target_environment)
+      sys.exit(1)
+  elif platform == 'watchos':
+    if target_environment == 'simulator':
+      command.extend([
+          '--platform',
+          'watchsimulator',
+          '--target-device',
+          'watch',
+      ])
+    elif target_environment == 'device':
+      command.extend([
+          '--platform',
+          'watchos',
+          '--target-device',
+          'watch',
+      ])
+    else:
+      sys.stderr.write(
+        'Unsupported watchos environment: %s' % target_environment)
+      sys.exit(1)
 
   # Unzip any input zipfiles to a temporary directory.
   inputs = []
@@ -199,10 +224,26 @@ def CompileAssetCatalog(output, platform, target_environment, product_type,
         continue
 
       asset_name, asset_type = os.path.splitext(file_or_dir_name)
+
+      # If the asset is an app icon, and the caller has specified an app icon
+      # to use, then skip this asset as it will be included in the app icon
+      # set. Otherwise, add the asset to the command-line.
+      if asset_type == APP_ICON_ASSET_TYPE:
+        if app_icon:
+          continue
+        else:
+          command.extend(['--app-icon', asset_name])
+
       if asset_type not in ACTOOL_FLAG_FOR_ASSET_TYPE:
         continue
 
       command.extend([ACTOOL_FLAG_FOR_ASSET_TYPE[asset_type], asset_name])
+
+  if app_icon:
+    command.extend(['--app-icon', app_icon])
+
+  if include_all_app_icons:
+    command.extend(['--include-all-app-icons'])
 
   # Always ask actool to generate a partial Info.plist file. If no path
   # has been given by the caller, use a temporary file name.
@@ -267,7 +308,7 @@ def Main():
   parser.add_argument('--platform',
                       '-p',
                       required=True,
-                      choices=('mac', 'ios'),
+                      choices=('mac', 'ios', 'watchos'),
                       help='target platform for the compiled assets catalog')
   parser.add_argument('--target-environment',
                       '-e',
@@ -294,6 +335,14 @@ def Main():
   parser.add_argument('--partial-info-plist',
                       '-P',
                       help='path to partial info plist to create')
+  parser.add_argument('--app-icon',
+                      '-A',
+                      help='name of an app icon set for the target’s default app icon')
+  parser.add_argument('--include-all-app-icons',
+                      '-I',
+                      action='store_true',
+                      default=False,
+                      help='include all app icons in the compiled assets catalog')
   parser.add_argument('inputs',
                       nargs='+',
                       help='path to input assets catalog sources')
@@ -314,7 +363,8 @@ def Main():
     CompileAssetCatalog(args.output, args.platform, args.target_environment,
                         args.product_type, args.minimum_deployment_target,
                         args.inputs, args.compress_pngs,
-                        args.partial_info_plist, temporary_dir)
+                        args.partial_info_plist, args.app_icon,
+                        args.include_all_app_icons, temporary_dir)
 
 
 if __name__ == '__main__':

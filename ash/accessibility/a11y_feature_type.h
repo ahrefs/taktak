@@ -11,7 +11,9 @@ namespace ash {
 
 // The type of each accessibility feature.
 enum class A11yFeatureType {
-  kAutoclick = 0,
+  kAlwaysShowScrollbar = 0,
+  kAutoclick,
+  kBounceKeys,
   kCaretHighlight,
   kColorCorrection,
   kCursorColor,
@@ -31,6 +33,7 @@ enum class A11yFeatureType {
   kMouseKeys,
   kReducedAnimations,
   kSelectToSpeak,
+  kSlowKeys,
   kSpokenFeedback,
   kStickyKeys,
   kSwitchAccess,

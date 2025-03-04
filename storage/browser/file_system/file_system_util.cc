@@ -4,6 +4,8 @@
 
 #include "storage/browser/file_system/file_system_util.h"
 
+#include "base/feature_list.h"
+#include "storage/browser/file_system/file_system_features.h"
 #include "storage/common/file_system/file_system_types.h"
 #include "third_party/blink/public/mojom/quota/quota_types.mojom.h"
 
@@ -14,10 +16,9 @@ blink::mojom::StorageType FileSystemTypeToQuotaStorageType(
   switch (type) {
     case kFileSystemTypeTemporary:
     case kFileSystemTypePersistent:
-      return blink::mojom::StorageType::kTemporary;
     case kFileSystemTypeSyncable:
     case kFileSystemTypeSyncableForInternalSync:
-      return blink::mojom::StorageType::kSyncable;
+      return blink::mojom::StorageType::kTemporary;
     default:
       return blink::mojom::StorageType::kUnknown;
   }

@@ -42,14 +42,6 @@ class FirmwareUpdateNotificationControllerTest : public AshTestBase {
       const FirmwareUpdateNotificationControllerTest&) = delete;
   ~FirmwareUpdateNotificationControllerTest() override = default;
 
-  void SetUp() override {
-    AshTestBase::SetUp();
-    // Call NotifyFirstSessionReady to cause FirmwareUpdateManager to be
-    // initialized since it is only meant to be initialized after core startup
-    // tasks have been completed.
-    Shell::Get()->session_controller()->NotifyFirstSessionReady();
-  }
-
   FirmwareUpdateNotificationController* controller() {
     return Shell::Get()->firmware_update_notification_controller();
   }
@@ -117,10 +109,10 @@ class FirmwareUpdateStartupNotificationTest : public NoSessionAshTestBase {
 
   void SetUp() override {
     network_handler_test_helper_.RegisterPrefs(profile_prefs_.registry(),
-                                               local_state_.registry());
+                                               local_state()->registry());
 
     network_handler_test_helper_.InitializePrefs(&profile_prefs_,
-                                                 &local_state_);
+                                                 local_state());
     FwupdClient::InitializeFake();
     dbus_client_ = FwupdClient::Get();
     firmware_update_manager_ = std::make_unique<FirmwareUpdateManager>();
@@ -166,7 +158,6 @@ class FirmwareUpdateStartupNotificationTest : public NoSessionAshTestBase {
   raw_ptr<FwupdClient, DanglingUntriaged> dbus_client_ = nullptr;
   NetworkHandlerTestHelper network_handler_test_helper_;
   TestingPrefServiceSimple profile_prefs_;
-  TestingPrefServiceSimple local_state_;
   std::unique_ptr<FirmwareUpdateManager> firmware_update_manager_;
   std::unique_ptr<FirmwareUpdateNotificationController>
       firmware_update_notification_controller_;

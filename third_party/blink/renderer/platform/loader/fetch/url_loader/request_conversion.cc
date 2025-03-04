@@ -11,7 +11,7 @@
 #include "mojo/public/cpp/system/data_pipe.h"
 #include "net/base/load_flags.h"
 #include "net/base/request_priority.h"
-#include "net/filter/source_stream.h"
+#include "net/filter/source_stream_type.h"
 #include "net/http/http_request_headers.h"
 #include "net/http/http_util.h"
 #include "services/network/public/cpp/is_potentially_trustworthy.h"
@@ -154,12 +154,10 @@ mojom::ResourceType RequestContextToResourceType(
     case mojom::blink::RequestContextType::LOCATION:
     case mojom::blink::RequestContextType::FRAME:
     case mojom::blink::RequestContextType::IFRAME:
-      NOTREACHED_IN_MIGRATION();
-      return mojom::ResourceType::kSubResource;
+      NOTREACHED();
 
     default:
-      NOTREACHED_IN_MIGRATION();
-      return mojom::ResourceType::kSubResource;
+      NOTREACHED();
   }
 }
 
@@ -168,7 +166,7 @@ void PopulateResourceRequestBody(const EncodedFormData& src,
   for (const auto& element : src.Elements()) {
     switch (element.type_) {
       case FormDataElement::kData:
-        dest->AppendBytes(element.data_.data(), element.data_.size());
+        dest->AppendCopyOfBytes(base::as_byte_span(element.data_));
         break;
       case FormDataElement::kEncodedFile:
         if (element.file_length_ == -1) {
@@ -264,10 +262,9 @@ void PopulateResourceRequest(const ResourceRequestHead& src,
   dest->upgrade_if_insecure = src.UpgradeIfInsecure();
   dest->is_revalidating = src.IsRevalidating();
   if (src.GetDevToolsAcceptedStreamTypes()) {
-    dest->devtools_accepted_stream_types =
-        std::vector<net::SourceStream::SourceType>(
-            src.GetDevToolsAcceptedStreamTypes()->data.begin(),
-            src.GetDevToolsAcceptedStreamTypes()->data.end());
+    dest->devtools_accepted_stream_types = std::vector<net::SourceStreamType>(
+        src.GetDevToolsAcceptedStreamTypes()->data.begin(),
+        src.GetDevToolsAcceptedStreamTypes()->data.end());
   }
   if (src.RequestorOrigin()->ToString() == "null") {
     // "file:" origin is treated like an opaque unique origin when
@@ -328,6 +325,10 @@ void PopulateResourceRequest(const ResourceRequestHead& src,
   dest->credentials_mode = src.GetCredentialsMode();
   dest->redirect_mode = src.GetRedirectMode();
   dest->fetch_integrity = src.GetFetchIntegrity().Utf8();
+  dest->expected_signatures.reserve(src.GetExpectedSignatures().size());
+  for (const String& signature : src.GetExpectedSignatures()) {
+    dest->expected_signatures.push_back(signature.Utf8());
+  }
   if (src.GetWebBundleTokenParams().has_value()) {
     dest->web_bundle_token_params =
         std::make_optional(network::ResourceRequest::WebBundleTokenParams(
@@ -418,6 +419,8 @@ void PopulateResourceRequest(const ResourceRequestHead& src,
       src.GetAttributionReportingEligibility();
 
   dest->attribution_reporting_src_token = src.GetAttributionSrcToken();
+
+  dest->keepalive_token = src.GetKeepaliveToken();
 
   dest->shared_dictionary_writer_enabled = src.SharedDictionaryWriterEnabled();
 

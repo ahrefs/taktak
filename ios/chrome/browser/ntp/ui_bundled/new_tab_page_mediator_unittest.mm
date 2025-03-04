@@ -11,7 +11,7 @@
 #import "base/test/metrics/histogram_tester.h"
 #import "base/test/scoped_feature_list.h"
 #import "components/feed/core/v2/public/common_enums.h"
-#import "components/search_engines/search_engines_switches.h"
+#import "components/regional_capabilities/regional_capabilities_switches.h"
 #import "components/search_engines/template_url.h"
 #import "components/search_engines/template_url_data.h"
 #import "components/search_engines/template_url_service.h"
@@ -19,6 +19,13 @@
 #import "components/sync/test/test_sync_service.h"
 #import "ios/chrome/browser/discover_feed/model/discover_feed_service_factory.h"
 #import "ios/chrome/browser/ntp/model/new_tab_page_tab_helper.h"
+#import "ios/chrome/browser/ntp/shared/metrics/feed_metrics_constants.h"
+#import "ios/chrome/browser/ntp/shared/metrics/feed_metrics_recorder.h"
+#import "ios/chrome/browser/ntp/ui_bundled/feed_control_delegate.h"
+#import "ios/chrome/browser/ntp/ui_bundled/logo_vendor.h"
+#import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_consumer.h"
+#import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_header_consumer.h"
+#import "ios/chrome/browser/regional_capabilities/model/regional_capabilities_service_factory.h"
 #import "ios/chrome/browser/search_engines/model/template_url_service_factory.h"
 #import "ios/chrome/browser/shared/model/browser/browser.h"
 #import "ios/chrome/browser/shared/model/browser/test/test_browser.h"
@@ -29,16 +36,10 @@
 #import "ios/chrome/browser/signin/model/chrome_account_manager_service_factory.h"
 #import "ios/chrome/browser/signin/model/fake_authentication_service_delegate.h"
 #import "ios/chrome/browser/signin/model/identity_manager_factory.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/test/toolbar_test_navigation_manager.h"
 #import "ios/chrome/browser/ui/content_suggestions/cells/content_suggestions_most_visited_item.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_mediator.h"
 #import "ios/chrome/browser/ui/content_suggestions/user_account_image_update_delegate.h"
-#import "ios/chrome/browser/ntp/ui_bundled/feed_control_delegate.h"
-#import "ios/chrome/browser/ntp/ui_bundled/logo_vendor.h"
-#import "ios/chrome/browser/ntp/shared/metrics/feed_metrics_constants.h"
-#import "ios/chrome/browser/ntp/shared/metrics/feed_metrics_recorder.h"
-#import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_consumer.h"
-#import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_header_consumer.h"
-#import "ios/chrome/browser/ui/toolbar/test/toolbar_test_navigation_manager.h"
 #import "ios/chrome/browser/url_loading/model/fake_url_loading_browser_agent.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_notifier_browser_agent.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_params.h"
@@ -68,10 +69,9 @@ class NewTabPageMediatorTest : public PlatformTest {
         ios::TemplateURLServiceFactory::GetDefaultFactory());
     test_cbs_builder.AddTestingFactory(
         AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
     profile_ = std::move(test_cbs_builder).Build();
-    AuthenticationServiceFactory::CreateAndInitializeForProfile(
-        profile_.get(), std::make_unique<FakeAuthenticationServiceDelegate>());
     browser_ = std::make_unique<TestBrowser>(profile_.get());
 
     std::unique_ptr<ToolbarTestNavigationManager> navigation_manager =
@@ -85,9 +85,7 @@ class NewTabPageMediatorTest : public PlatformTest {
     url_loader_ = FakeUrlLoadingBrowserAgent::FromUrlLoadingBrowserAgent(
         UrlLoadingBrowserAgent::FromBrowser(browser_.get()));
 
-    auth_service_ = static_cast<AuthenticationService*>(
-        AuthenticationServiceFactory::GetInstance()->GetForProfile(
-            profile_.get()));
+    auth_service_ = AuthenticationServiceFactory::GetForProfile(profile_.get());
     identity_manager_ = IdentityManagerFactory::GetForProfile(profile_.get());
     ChromeAccountManagerService* account_manager_service =
         ChromeAccountManagerServiceFactory::GetForProfile(profile_.get());
@@ -97,18 +95,20 @@ class NewTabPageMediatorTest : public PlatformTest {
         DiscoverFeedServiceFactory::GetForProfile(profile_.get());
     PrefService* prefs = profile_->GetPrefs();
     mediator_ = [[NewTabPageMediator alloc]
-        initWithTemplateURLService:ios::TemplateURLServiceFactory::
-                                       GetForProfile(profile_.get())
-                         URLLoader:url_loader_
-                       authService:auth_service_
-                   identityManager:identity_manager_
-             accountManagerService:account_manager_service
-          identityDiscImageUpdater:image_updater_
-                       isIncognito:is_incognito
-               discoverFeedService:discover_feed_service
-                       prefService:prefs
-                       syncService:&test_sync_service_
-                        isSafeMode:NO];
+         initWithTemplateURLService:ios::TemplateURLServiceFactory::
+                                        GetForProfile(profile_.get())
+                          URLLoader:url_loader_
+                        authService:auth_service_
+                    identityManager:identity_manager_
+              accountManagerService:account_manager_service
+           identityDiscImageUpdater:image_updater_
+                        isIncognito:is_incognito
+                discoverFeedService:discover_feed_service
+                        prefService:prefs
+                        syncService:&test_sync_service_
+        regionalCapabilitiesService:ios::RegionalCapabilitiesServiceFactory::
+                                        GetForProfile(profile_.get())
+                         isSafeMode:NO];
     header_consumer_ = OCMProtocolMock(@protocol(NewTabPageHeaderConsumer));
     mediator_.headerConsumer = header_consumer_;
     feed_metrics_recorder_ =

@@ -34,9 +34,11 @@
 #include <array>
 #include <utility>
 
+#include "base/types/zip.h"
 #include "third_party/blink/renderer/core/css/css_property_value_set.h"
 #include "third_party/blink/renderer/core/css/properties/css_property_ref.h"
 #include "third_party/blink/renderer/core/css/resolver/style_resolver_state.h"
+#include "third_party/blink/renderer/core/dom/shadow_root.h"
 #include "third_party/blink/renderer/core/style/computed_style.h"
 #include "third_party/blink/renderer/platform/heap/visitor.h"
 #include "third_party/blink/renderer/platform/wtf/text/string_hasher.h"
@@ -44,6 +46,7 @@
 namespace blink {
 
 static unsigned ComputeMatchedPropertiesHash(const MatchResult& result) {
+  DCHECK(result.IsCacheable());
   const MatchedPropertiesHashVector& hashes = result.GetMatchedPropertiesHash();
   DCHECK(!std::any_of(hashes.begin(), hashes.end(),
                       [](const MatchedPropertiesHash& hash) {
@@ -51,8 +54,15 @@ static unsigned ComputeMatchedPropertiesHash(const MatchResult& result) {
                                WTF::HashTraits<unsigned>::DeletedValue();
                       }))
       << "This should have been checked in AddMatchedProperties()";
-  return StringHasher::HashMemory(hashes.data(),
-                                  sizeof(hashes[0]) * hashes.size());
+  unsigned hash = StringHasher::HashMemory(base::as_byte_span(hashes));
+
+  // See CSSPropertyValueSet::ComputeHash() for asserts that this is safe.
+  if (hash == WTF::HashTraits<unsigned>::EmptyValue() ||
+      hash == WTF::HashTraits<unsigned>::DeletedValue()) {
+    hash ^= 0x80000000;
+  }
+
+  return hash;
 }
 
 CachedMatchedProperties::CachedMatchedProperties(
@@ -60,76 +70,17 @@ CachedMatchedProperties::CachedMatchedProperties(
     const ComputedStyle* parent_style,
     const MatchedPropertiesVector& properties,
     unsigned clock)
-    : computed_style(style),
-      parent_computed_style(parent_style),
-      last_used(clock) {
+    : entries({Entry{style, parent_style, clock}}) {
   matched_properties.ReserveInitialCapacity(properties.size());
-  matched_properties_metadata.ReserveInitialCapacity(properties.size());
   for (const auto& new_matched_properties : properties) {
-    matched_properties.push_back(new_matched_properties.properties);
-    matched_properties_metadata.push_back(new_matched_properties.data_);
-  }
-}
-
-void CachedMatchedProperties::Set(const ComputedStyle* style,
-                                  const ComputedStyle* parent_style,
-                                  const MatchedPropertiesVector& properties,
-                                  unsigned clock) {
-  computed_style = style;
-  parent_computed_style = parent_style;
-  last_used = clock;
-
-  matched_properties.clear();
-  matched_properties_metadata.clear();
-  for (const auto& new_matched_properties : properties) {
-    matched_properties.push_back(new_matched_properties.properties);
-    matched_properties_metadata.push_back(new_matched_properties.data_);
+    matched_properties.emplace_back(new_matched_properties.properties,
+                                    new_matched_properties.data_);
   }
 }
 
 void CachedMatchedProperties::Clear() {
   matched_properties.clear();
-  matched_properties_metadata.clear();
-  computed_style = nullptr;
-  parent_computed_style = nullptr;
-}
-
-bool CachedMatchedProperties::DependenciesEqual(
-    const StyleResolverState& state) const {
-  if (!state.ParentStyle()) {
-    return false;
-  }
-  if ((parent_computed_style->IsEnsuredInDisplayNone() ||
-       computed_style->IsEnsuredOutsideFlatTree()) &&
-      !state.ParentStyle()->IsEnsuredInDisplayNone() &&
-      !state.IsOutsideFlatTree()) {
-    // If we cached a ComputedStyle in a display:none subtree, or outside the
-    // flat tree,  we would not have triggered fetches for external resources
-    // and have StylePendingImages in the ComputedStyle. Instead of having to
-    // inspect the cached ComputedStyle for such resources, don't use a cached
-    // ComputedStyle when it was cached in display:none but is now rendered.
-    return false;
-  }
-
-  if (parent_computed_style->GetWritingMode() !=
-      state.ParentStyle()->GetWritingMode()) {
-    return false;
-  }
-  if (parent_computed_style->Direction() != state.ParentStyle()->Direction()) {
-    return false;
-  }
-  if (parent_computed_style->UsedColorScheme() !=
-      state.ParentStyle()->UsedColorScheme()) {
-    return false;
-  }
-  if (computed_style->HasVariableReferenceFromNonInheritedProperty()) {
-    if (!base::ValuesEquivalent(parent_computed_style->InheritedVariables(),
-                                state.ParentStyle()->InheritedVariables())) {
-      return false;
-    }
-  }
-
-  return true;
+  entries.clear();
 }
 
 MatchedPropertiesCache::MatchedPropertiesCache() = default;
@@ -142,11 +93,9 @@ MatchedPropertiesCache::Key::Key(const MatchResult& result)
 MatchedPropertiesCache::Key::Key(const MatchResult& result, unsigned hash)
     : result_(result), hash_(hash) {}
 
-const CachedMatchedProperties* MatchedPropertiesCache::Find(
+const CachedMatchedProperties::Entry* MatchedPropertiesCache::Find(
     const Key& key,
     const StyleResolverState& style_resolver_state) {
-  DCHECK(key.IsValid());
-
   // Matches the corresponding test in IsStyleCacheable().
   if (style_resolver_state.TextAutosizingMultiplier() != 1.0f) {
     return nullptr;
@@ -157,27 +106,59 @@ const CachedMatchedProperties* MatchedPropertiesCache::Find(
     return nullptr;
   }
   CachedMatchedProperties* cache_item = it->value.Get();
-  if (!cache_item) {
-    return nullptr;
-  }
   if (!cache_item->CorrespondsTo(key.result_.GetMatchedProperties())) {
+    // A hash collision (rare), or the key is not usable anymore.
+    // Take out the existing entry entirely and start anew.
+    // (We could possibly have reused its memory, but for simplicity,
+    // we just treat it as a miss.)
+    if (it->value) {
+      cache_entries_ -= it->value->entries.size();
+    }
+    cache_.erase(it);
     return nullptr;
   }
-  if (IsAtShadowBoundary(&style_resolver_state.GetElement()) &&
-      cache_item->parent_computed_style->UserModify() !=
-          ComputedStyleInitialValues::InitialUserModify()) {
-    // An element at a shadow boundary will reset UserModify() back to its
-    // initial value for inheritance. If the cached item was computed for an
-    // element not at a shadow boundary, the cached computed style will not
-    // have that reset, and we cannot use it as a cache hit unless the parent
-    // UserModify() is the initial value.
-    return nullptr;
+  for (CachedMatchedProperties::Entry& entry : cache_item->entries) {
+    if (IsAtShadowBoundary(&style_resolver_state.GetElement()) &&
+        entry.parent_computed_style->UserModify() !=
+            ComputedStyleInitialValues::InitialUserModify()) {
+      // An element at a shadow boundary will reset UserModify() back to its
+      // initial value for inheritance. If the cached item was computed for an
+      // element not at a shadow boundary, the cached computed style will not
+      // have that reset, and we cannot use it as a cache hit unless the parent
+      // UserModify() is the initial value.
+      continue;
+    }
+    if ((entry.parent_computed_style->IsEnsuredInDisplayNone() ||
+         entry.computed_style->IsEnsuredOutsideFlatTree()) &&
+        !style_resolver_state.ParentStyle()->IsEnsuredInDisplayNone() &&
+        !style_resolver_state.IsOutsideFlatTree()) {
+      // If we cached a ComputedStyle in a display:none subtree, or outside the
+      // flat tree,  we would not have triggered fetches for external resources
+      // and have StylePendingImages in the ComputedStyle. Instead of having to
+      // inspect the cached ComputedStyle for such resources, don't use a cached
+      // ComputedStyle when it was cached in display:none but is now rendered.
+      continue;
+    }
+    if (style_resolver_state.ParentStyle()->InheritedDataShared(
+            *entry.parent_computed_style)) {
+      entry.last_used = clock_++;
+
+      // Since we have a cache hit, refresh it using the most recent property
+      // sets (in case they have differing pointers but same content); the key
+      // is weak, and using more recently seen sets make it less likely that
+      // they will go away and GC the entry.
+      //
+      // Ideally, we would not be using weak pointers in the MPC at all,
+      // but CSSValues keep StyleImages alive (see
+      // StyleImageCacheTest.WeakReferenceGC), so if we used regular pointers,
+      // we'd need to find some other way of making sure these images do not
+      // live forever in the cache.
+      cache_item->RefreshKey(key.result_.GetMatchedProperties());
+
+      return &entry;
+    }
   }
-  if (!cache_item->DependenciesEqual(style_resolver_state)) {
-    return nullptr;
-  }
-  cache_item->last_used = clock_++;
-  return cache_item;
+  return nullptr;
 }
 
 bool CachedMatchedProperties::CorrespondsTo(
@@ -185,18 +166,11 @@ bool CachedMatchedProperties::CorrespondsTo(
   if (lookup_properties.size() != matched_properties.size()) {
     return false;
   }
-  CHECK_EQ(matched_properties.size(), matched_properties_metadata.size());
 
-  // These incantations are to make Clang realize it does not have to
-  // bounds-check.
-  auto lookup_it = lookup_properties.begin();
-  auto cached_it = matched_properties.begin();
-  auto metadata_it = matched_properties_metadata.begin();
-  for (; lookup_it != lookup_properties.end(); std::advance(lookup_it, 1),
-                                               std::advance(cached_it, 1),
-                                               std::advance(metadata_it, 1)) {
-    CSSPropertyValueSet* cached_properties = *cached_it;
-    DCHECK(!lookup_it->properties->ModifiedSinceHashing())
+  for (const auto [lookup_it, cached_it] :
+       base::zip(lookup_properties, matched_properties)) {
+    CSSPropertyValueSet* cached_properties = cached_it.first.Get();
+    DCHECK(!lookup_it.properties->ModifiedSinceHashing())
         << "This should have been checked in AddMatchedProperties()";
     if (cached_properties->ModifiedSinceHashing()) {
       // These properties were mutated as some point after original
@@ -208,21 +182,30 @@ bool CachedMatchedProperties::CorrespondsTo(
       // a hash collision.
       return false;
     }
-    if (!lookup_it->properties->Equals(*cached_properties)) {
+    if (!lookup_it.properties->Equals(*cached_properties)) {
       return false;
     }
-    if (lookup_it->data_ != *metadata_it) {
+    if (lookup_it.data_ != cached_it.second) {
       return false;
     }
   }
   return true;
 }
 
+void CachedMatchedProperties::RefreshKey(
+    const MatchedPropertiesVector& lookup_properties) {
+  DCHECK(CorrespondsTo(lookup_properties));
+  auto lookup_it = lookup_properties.begin();
+  auto cached_it = matched_properties.begin();
+  for (; lookup_it != lookup_properties.end();
+       std::advance(lookup_it, 1), std::advance(cached_it, 1)) {
+    cached_it->first = lookup_it->properties;
+  }
+}
+
 void MatchedPropertiesCache::Add(const Key& key,
                                  const ComputedStyle* style,
                                  const ComputedStyle* parent_style) {
-  DCHECK(key.IsValid());
-
   Member<CachedMatchedProperties>& cache_item =
       cache_.insert(key.hash_, nullptr).stored_value->value;
 
@@ -230,9 +213,9 @@ void MatchedPropertiesCache::Add(const Key& key,
     cache_item = MakeGarbageCollected<CachedMatchedProperties>(
         style, parent_style, key.result_.GetMatchedProperties(), clock_++);
   } else {
-    cache_item->Set(style, parent_style, key.result_.GetMatchedProperties(),
-                    clock_++);
+    cache_item->entries.emplace_back(style, parent_style, clock_++);
   }
+  ++cache_entries_;
 }
 
 void MatchedPropertiesCache::Clear() {
@@ -245,22 +228,18 @@ void MatchedPropertiesCache::Clear() {
     }
   }
   cache_.clear();
+  cache_entries_ = 0;
 }
 
 void MatchedPropertiesCache::ClearViewportDependent() {
-  Vector<unsigned, 16> to_remove;
-  for (const auto& cache_entry : cache_) {
-    CachedMatchedProperties* cache_item = cache_entry.value.Get();
-    if (cache_item && cache_item->computed_style->HasViewportUnits()) {
-      to_remove.push_back(cache_entry.key);
-    }
-  }
-  cache_.RemoveAll(to_remove);
+  EraseEntriesIf([](const CachedMatchedProperties::Entry& entry) {
+    return entry.computed_style->HasViewportUnits();
+  });
 }
 
 bool MatchedPropertiesCache::IsStyleCacheable(
     const ComputedStyleBuilder& builder) {
-  // Content property with attr() values depend on the attribute value of the
+  // Properties with attr() values depend on the attribute value of the
   // originating element, thus we cannot cache based on the matched properties
   // because the value of content is retrieved from the attribute at apply time.
   if (builder.HasAttrFunction()) {
@@ -280,11 +259,22 @@ bool MatchedPropertiesCache::IsStyleCacheable(
     // the 'anchor' attribute on the element.
     return false;
   }
+  if (builder.HasSiblingFunctions()) {
+    // The result of sibling-index() and sibling-count() depends on the
+    // element's position in the DOM.
+    return false;
+  }
   // Avoiding cache for ::highlight styles, and the originating styles they are
   // associated with, because the style depends on the highlight names involved
   // and they're not cached.
   if (builder.HasPseudoElementStyle(kPseudoIdHighlight) ||
       builder.StyleType() == kPseudoIdHighlight) {
+    return false;
+  }
+  // Functional media queries cause the style to depend directly on
+  // the current MediaValues, without going through RuleSet invalidation.
+  // These values are not captured by the MatchResult.
+  if (builder.AffectedByFunctionalMedia()) {
     return false;
   }
   return true;
@@ -352,11 +342,6 @@ bool MatchedPropertiesCache::IsCacheable(const StyleResolverState& state) {
     return false;
   }
 
-  if (state.HasAttrFunction()) {
-    DCHECK(RuntimeEnabledFeatures::CSSAdvancedAttrFunctionEnabled());
-    return false;
-  }
-
   return true;
 }
 
@@ -369,12 +354,35 @@ void MatchedPropertiesCache::Trace(Visitor* visitor) const {
 
 static inline bool ShouldRemoveMPCEntry(CachedMatchedProperties& value,
                                         const LivenessBroker& info) {
-  return std::any_of(value.matched_properties.begin(),
-                     value.matched_properties.end(),
-                     [&info](const CSSPropertyValueSet* properties) {
-                       return !info.IsHeapObjectAlive(properties) ||
-                              properties->ModifiedSinceHashing();
-                     });
+  for (const auto& [properties, metadata] : value.matched_properties) {
+    if (!info.IsHeapObjectAlive(properties) ||
+        properties->ModifiedSinceHashing()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Erase all MPC entries where the given predicate returns true,
+// and updates the counter. Removes all keys that have no entries left.
+template <class Predicate>
+void MatchedPropertiesCache::EraseEntriesIf(Predicate&& pred) {
+  cache_.erase_if([inner_pred{std::forward<Predicate>(pred)},
+                   this](const auto& entry_pair) {
+    if (!entry_pair.value) {
+      return false;
+    }
+    HeapVector<CachedMatchedProperties::Entry, 4>& entries =
+        entry_pair.value->entries;
+    auto new_end = std::remove_if(entries.begin(), entries.end(), inner_pred);
+    cache_entries_ -= entries.end() - new_end;
+    if (new_end == entries.begin()) {
+      return true;
+    } else {
+      entries.erase(new_end, entries.end());
+      return false;
+    }
+  });
 }
 
 void MatchedPropertiesCache::CleanMatchedPropertiesCache(
@@ -382,28 +390,25 @@ void MatchedPropertiesCache::CleanMatchedPropertiesCache(
   constexpr unsigned kCacheLimit = 500;
   constexpr unsigned kPruneCacheTarget = 300;
 
-  if (cache_.size() <= kCacheLimit) {
+  if (cache_entries_ <= kCacheLimit) {
     // Fast path with no LRU pruning.
-    Vector<unsigned> to_remove;
-    for (const auto& entry_pair : cache_) {
-      // A nullptr value indicates that the entry is currently being created;
-      // see |MatchedPropertiesCache::Add|. Keep such entries.
+    cache_.erase_if([&info, this](const auto& entry_pair) {
+      // A nullptr value indicates that the entry is currently being
+      // created; see |MatchedPropertiesCache::Add|. Keep such entries.
       if (!entry_pair.value) {
-        continue;
+        return false;
       }
       if (ShouldRemoveMPCEntry(*entry_pair.value, info)) {
-        to_remove.push_back(entry_pair.key);
+        cache_entries_ -= entry_pair.value->entries.size();
+        return true;
       }
-    }
+      return false;
+    });
     // Allocation of Oilpan memory is forbidden during executing weak callbacks,
     // so the data structure will not be rehashed here (ShouldShrink() internal
     // to the map returns false during such callbacks). The next
     // insertion/deletion from regular code will take care of shrinking
     // accordingly.
-    //
-    // We would prefer simply use cache_.erase(it++) from inside the loop,
-    // but this hits DCHECKs with WTF::Vector.
-    cache_.RemoveAll(to_remove);
     return;
   }
 
@@ -414,19 +419,24 @@ void MatchedPropertiesCache::CleanMatchedPropertiesCache(
   // call, we don't prune down to the cap (500 entries), but a little
   // further (300 entries).
 
-  Vector<unsigned> to_remove;
-  Vector<std::pair<unsigned, unsigned>> live_entries;
-  live_entries.ReserveInitialCapacity(cache_.size());
-  for (const auto& entry_pair : cache_) {
+  Vector<unsigned> live_entries;
+  live_entries.ReserveInitialCapacity(cache_entries_);
+  cache_.erase_if([&info, &live_entries, this](const auto& entry_pair) {
     if (!entry_pair.value) {
-      continue;
+      return false;
     }
     if (ShouldRemoveMPCEntry(*entry_pair.value, info)) {
-      to_remove.push_back(entry_pair.key);
+      cache_entries_ -= entry_pair.value->entries.size();
+      return true;
     } else {
-      live_entries.emplace_back(entry_pair.value->last_used, entry_pair.key);
+      for (const auto& entry : entry_pair.value->entries) {
+        live_entries.emplace_back(entry.last_used);
+      }
+      return false;
     }
-  }
+  });
+
+  DCHECK_EQ(live_entries.size(), cache_entries_);
 
   // If removals didn't take us back under the pruning limit,
   // remove everything older than the 300th newest LRU entry.
@@ -436,16 +446,13 @@ void MatchedPropertiesCache::CleanMatchedPropertiesCache(
     std::nth_element(live_entries.begin(),
                      UNSAFE_BUFFERS(live_entries.begin() + cutoff_idx),
                      live_entries.end());
-    unsigned min_last_used = live_entries[cutoff_idx].first;
+    unsigned min_last_used = live_entries[cutoff_idx];
 
-    for (const auto& [last_used, key] : live_entries) {
-      if (last_used <= min_last_used) {
-        to_remove.push_back(key);
-      }
-    }
+    EraseEntriesIf(
+        [min_last_used](const CachedMatchedProperties::Entry& entry) {
+          return entry.last_used <= min_last_used;
+        });
   }
-
-  cache_.RemoveAll(to_remove);
 }
 
 std::ostream& operator<<(std::ostream& stream,

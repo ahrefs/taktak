@@ -2,15 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "chrome/browser/profile_resetter/profile_resetter.h"
 
 #include <stddef.h>
 
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
@@ -59,9 +55,12 @@
 #include "extensions/common/manifest.h"
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
+#include "chrome/browser/ash/input_method/input_method_manager_impl.h"
 #include "chromeos/ash/components/network/managed_network_configuration_handler.h"
 #include "chromeos/ash/components/network/network_state_handler.h"
+#include "components/language/core/browser/pref_names.h"
 #include "components/proxy_config/proxy_config_pref_names.h"
+#include "components/spellcheck/browser/pref_names.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
 #if BUILDFLAG(IS_WIN)
@@ -183,10 +182,11 @@ void ProfileResetter::ResetSettingsImpl(
   // These flags are set to false by the individual reset functions.
   pending_reset_flags_ = resettable_flags;
 
-  struct {
+  struct FlagToMethod {
     Resettable flag;
     void (ProfileResetter::*method)();
-  } flagToMethod[] = {
+  };
+  auto flagToMethod = std::to_array<FlagToMethod>({
       // Ordering of resets does matter here, extensions resets should
       // always precede DNS and proxy resets as the former can impact
       // the latter.
@@ -203,8 +203,9 @@ void ProfileResetter::ResetSettingsImpl(
 #if BUILDFLAG(IS_CHROMEOS_ASH)
       {DNS_CONFIGURATIONS, &ProfileResetter::ResetDnsConfigurations},
       {PROXY_SETTINGS, &ProfileResetter::ResetProxySettings},
+      {KEYBOARD_SETTINGS, &ProfileResetter::ResetKeyboardInputSettings},
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-  };
+  });
 
   ResettableFlags reset_triggered_for_flags = 0;
   for (size_t i = 0; i < std::size(flagToMethod); ++i) {
@@ -515,6 +516,43 @@ void ProfileResetter::ResetProxySettings() {
   // Command-line Prefs (command-line overrides)
   prefs->SetBoolean(proxy_config::prefs::kUseSharedProxies, false);
   MarkAsDone(PROXY_SETTINGS);
+}
+
+void ProfileResetter::ResetKeyboardInputSettings() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  // Since spellcheck settings depend on preferred languages, user language
+  // preferences need to be reset beforehand.
+  CHECK(!(pending_reset_flags_ & LANGUAGES));
+
+  PrefService* prefs = profile_->GetPrefs();
+  CHECK(prefs);
+
+  // 1. Call to reset the language of the Input methods, from the current device
+  // language.
+  if (g_browser_process && g_browser_process->local_state()) {
+    // Assume that the session will use the current UI locale.
+    std::string locale = g_browser_process->GetApplicationLocale();
+
+    // Derive kLanguagePreloadEngines from `locale`.
+    // Uses the first input method as the most popular one.
+    std::vector<std::string> input_method_ids;
+    ash::input_method::InputMethodManager* manager =
+        ash::input_method::InputMethodManager::Get();
+    manager->GetInputMethodUtil()->GetInputMethodIdsFromLanguageCode(
+        locale, ash::input_method::kAllInputMethods, &input_method_ids);
+    // Save the input method in the user's preference kLanguagePreloadEngines.
+    prefs->SetString(prefs::kLanguagePreloadEngines, input_method_ids.empty()
+                                                         ? std::string()
+                                                         : input_method_ids[0]);
+  }
+
+  // 2. Call to reset spell check languages, matching the default language and
+  // clearing the other options.
+  prefs->SetList(spellcheck::prefs::kSpellCheckDictionaries,
+                 base::Value::List().Append(
+                     prefs->GetString(language::prefs::kPreferredLanguages)));
+
+  MarkAsDone(KEYBOARD_SETTINGS);
 }
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 

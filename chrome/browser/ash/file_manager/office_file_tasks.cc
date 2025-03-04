@@ -4,13 +4,13 @@
 
 #include "chrome/browser/ash/file_manager/office_file_tasks.h"
 
+#include <algorithm>
 #include <initializer_list>
 #include <string_view>
 
 #include "base/metrics/histogram_macros.h"
 #include "base/no_destructor.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
 #include "base/types/cxx23_to_underlying.h"
 #include "chrome/browser/apps/app_service/app_service_proxy.h"
@@ -112,7 +112,7 @@ DriveConnectionStatusToFallbackReason(
 bool AnyFileNeedsUploadToDrive(
     Profile* profile,
     const std::vector<storage::FileSystemURL>& file_urls) {
-  return !base::ranges::all_of(file_urls, [profile](const auto& url) {
+  return !std::ranges::all_of(file_urls, [profile](const auto& url) {
     return ash::cloud_upload::PathIsOnDriveFS(profile, url.path());
   });
 }
@@ -268,8 +268,7 @@ void LogOneDriveMetricsAfterFallback(
     case ash::office_fallback::FallbackReason::kDisableDrivePreferenceSet:
     case ash::office_fallback::FallbackReason::kDriveDisabledForAccountType:
     case ash::office_fallback::FallbackReason::kWaitingForUpload:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
   cloud_open_metrics->LogTaskResult(task_result);
 }
@@ -316,7 +315,7 @@ void LogGoogleDriveMetricsAfterFallback(
     case ash::office_fallback::FallbackReason::kWaitingForUpload:
     case ash::office_fallback::FallbackReason::
         kAndroidOneDriveUnsupportedLocation:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
   cloud_open_metrics->LogTaskResult(task_result);
 }

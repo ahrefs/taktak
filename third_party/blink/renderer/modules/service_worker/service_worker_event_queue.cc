@@ -5,7 +5,6 @@
 #include "third_party/blink/renderer/modules/service_worker/service_worker_event_queue.h"
 
 #include "base/containers/contains.h"
-#include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/time/default_tick_clock.h"
@@ -14,13 +13,6 @@
 #include "third_party/blink/renderer/platform/wtf/functional.h"
 
 namespace blink {
-
-// This feature flag enables a new behavior that waits
-// processing events until the top-level script is evaluated.
-// See: https://crbug.com/1462568
-BASE_FEATURE(kServiceWorkerEventQueueWaitForScriptEvaluation,
-             "ServiceWorkerEventQueueWaitForScriptEvaluation",
-             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // static
 constexpr base::TimeDelta ServiceWorkerEventQueue::kEventTimeout;
@@ -59,12 +51,7 @@ ServiceWorkerEventQueue::ServiceWorkerEventQueue(
     const base::TickClock* tick_clock)
     : task_runner_(std::move(task_runner)),
       idle_callback_(std::move(idle_callback)),
-      tick_clock_(tick_clock) {
-  if (!base::FeatureList::IsEnabled(
-          kServiceWorkerEventQueueWaitForScriptEvaluation)) {
-    is_ready_for_processing_events_ = true;
-  }
-}
+      tick_clock_(tick_clock) {}
 
 ServiceWorkerEventQueue::~ServiceWorkerEventQueue() {
   // Abort all callbacks.
@@ -79,15 +66,9 @@ void ServiceWorkerEventQueue::Start() {
   timer_.Start(FROM_HERE, kUpdateInterval,
                WTF::BindRepeating(&ServiceWorkerEventQueue::UpdateStatus,
                                   WTF::Unretained(this)));
-  if (base::FeatureList::IsEnabled(
-          kServiceWorkerEventQueueWaitForScriptEvaluation)) {
-    is_ready_for_processing_events_ = true;
-    ResetIdleTimeout();
-    ProcessEvents();
-  } else if (!HasInflightEvent() && !HasScheduledIdleCallback()) {
-    // If no event happens until Start(), the idle callback should be scheduled.
-    OnNoInflightEvent();
-  }
+  is_ready_for_processing_events_ = true;
+  ResetIdleTimeout();
+  ProcessEvents();
 }
 
 void ServiceWorkerEventQueue::EnqueueNormal(
@@ -296,7 +277,24 @@ void ServiceWorkerEventQueue::TriggerIdleCallback() {
 
 void ServiceWorkerEventQueue::OnNoInflightEvent() {
   DCHECK(!HasInflightEvent());
-  CHECK(queued_online_events_.empty());
+  if (!queued_online_events_.empty()) {
+    // The comment before offline queue removal
+    // https://chromium-review.googlesource.com/c/chromium/src/+/5847475 said:
+    //
+    // > There might be events in the queue because offline (or non-offline)
+    // > events can be enqueued during running non-offline (or offline) events.
+    //
+    // But also there can be events in the online queue even without offline
+    // queue interaction (crbug.com/373051915), perhaps the comment was
+    // obsolete.
+    //
+    // Call `ProcessEvents()` to anyway preserve the behavior before the offline
+    // queue removal.
+    //
+    // TODO(crbug.com/374797728): Investigate why the queue can be non-empty.
+    ProcessEvents();
+    return;
+  }
   last_no_inflight_event_time_ = tick_clock_->NowTicks();
   ScheduleIdleCallback(idle_delay_);
 }

@@ -16,9 +16,12 @@
 #include <vector>
 
 #include "base/component_export.h"
+#include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/observer_list.h"
+#include "base/timer/elapsed_timer.h"
 #include "base/win/atl.h"
+#include "third_party/abseil-cpp/absl/cleanup/cleanup.h"
 #include "third_party/iaccessible2/ia2_api_all.h"
 #include "ui/accessibility/ax_enums.mojom-forward.h"
 #include "ui/accessibility/platform/ax_platform_node_base.h"
@@ -313,6 +316,21 @@ enum {
   SCOPED_UMA_HISTOGRAM_TIMER_MICROS(                     \
       "Accessibility.Performance.WinAPIs." #enum_value)
 
+// Macro to record performance metrics for Windows Accessibility APIs.
+#define WIN_ACCESSIBILITY_SOURCE_API_PERF_HISTOGRAM(enum_value)          \
+  DCHECK(GetDelegate());                                                 \
+  absl::Cleanup record_metric =                                          \
+      [node = (GetDelegate() ? GetDelegate()->node() : nullptr),         \
+       timer = base::ElapsedTimer()] {                                   \
+        base::UmaHistogramMicrosecondsTimes(                             \
+            node && !node->IsView()                                      \
+                ? std::string_view("Accessibility.Performance.WinAPIs2." \
+                                   "WebContents." #enum_value)           \
+                : std::string_view("Accessibility.Performance.WinAPIs2." \
+                                   "View." #enum_value),                 \
+            timer.Elapsed());                                            \
+      }
+
 //
 // Macros to use at the top of any AXPlatformNodeWin (or derived class) method
 // that implements a UIA COM interface. The error code UIA_E_ELEMENTNOTAVAILABLE
@@ -479,8 +497,10 @@ class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
   // consumer.
   virtual void OnReferenced();
 
-  // Invoked when the instance is fully dereferenced. This generally means that
-  // an accessibility consumer has released its last reference to the instance.
+  // Invoked when the instance loses its last reference before being disposed.
+  // This generally means that an accessibility consumer has released its last
+  // reference to the instance. This method will not be called if external
+  // references are held when the instance is disposed.
   virtual void OnDereferenced();
 
   //
@@ -1197,6 +1217,15 @@ class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
   static std::optional<PROPERTYID> MojoEventToUIAProperty(
       ax::mojom::Event event);
 
+  // Returns
+  // 1. The AXPlatformNodeBase instance count (expected to equal the dormant +
+  //    live counts).
+  // 2. The number of dormant platform nodes.
+  // 3. The number of live platform nodes.
+  // 4. The number of ghost platform nodes.
+  // See the comments in ax_platform_node_win.cc for descriptions of 2-4.
+  static std::tuple<size_t, size_t, size_t, size_t> GetCountsForTesting();
+
  protected:
   AXPlatformNodeWin();
 
@@ -1559,7 +1588,7 @@ class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
   // Start and end offsets of an active composition
   gfx::Range active_composition_range_;
 
-  friend AXPlatformNode* AXPlatformNode::Create(
+  friend AXPlatformNode::Pointer AXPlatformNode::Create(
       AXPlatformNodeDelegate* delegate);
 };
 

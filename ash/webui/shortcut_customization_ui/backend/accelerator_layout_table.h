@@ -11,6 +11,7 @@
 #include <optional>
 #include <string>
 
+#include "ash/public/cpp/accelerator_actions.h"
 #include "ash/public/cpp/accelerators.h"
 #include "ash/public/mojom/accelerator_info.mojom.h"
 #include "ash/strings/grit/ash_strings.h"
@@ -263,6 +264,7 @@ constexpr auto kAshAcceleratorsWithoutLayout =
         AcceleratorAction::kPrintUiHierarchies,
         AcceleratorAction::kRestoreTab,
         AcceleratorAction::kRotateWindow,
+        AcceleratorAction::kToggleGameDashboard,
         AcceleratorAction::kToggleProjectorMarker,
         AcceleratorAction::kToggleWifi,
         AcceleratorAction::kTouchHudClear,
@@ -293,6 +295,8 @@ inline constexpr uint32_t kAcceleratorLayouts[] = {
     AcceleratorAction::kSwitchToNextUser,
     AcceleratorAction::kSwitchToPreviousUser,
     AcceleratorAction::kStartAssistant,
+    AcceleratorAction::kToggleDoNotDisturb,
+    AcceleratorAction::kToggleCameraAllowed,
 
     // General > Apps
     AcceleratorAction::kOpenFileManager,
@@ -308,6 +312,7 @@ inline constexpr uint32_t kAcceleratorLayouts[] = {
     AcceleratorAction::kToggleResizeLockMenu,
     AcceleratorAction::kShowTaskManager,
     AcceleratorAction::kOpenCrosh,
+    AcceleratorAction::kToggleGeminiApp,
 
     // Device
     // Device > Media

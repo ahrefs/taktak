@@ -6,24 +6,20 @@
 
 #include <stddef.h>
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include "ash/components/arc/arc_prefs.h"
-#include "ash/components/arc/session/arc_bridge_service.h"
-#include "ash/components/arc/session/arc_service_manager.h"
-#include "ash/components/arc/test/connection_holder_util.h"
-#include "ash/components/arc/test/fake_file_system_instance.h"
 #include "ash/constants/ash_switches.h"
 #include "base/containers/contains.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
 #include "base/memory/weak_ptr.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/strcat.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/scoped_command_line.h"
@@ -38,15 +34,22 @@
 #include "chrome/browser/ash/file_system_provider/service.h"
 #include "chrome/browser/ash/login/users/fake_chrome_user_manager.h"
 #include "chrome/browser/ash/profiles/profile_helper.h"
+#include "chrome/browser/download/download_dir_util.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/test/base/scoped_testing_local_state.h"
 #include "chrome/test/base/testing_browser_process.h"
 #include "chrome/test/base/testing_profile.h"
+#include "chrome/test/base/testing_profile_manager.h"
 #include "chromeos/ash/components/dbus/cros_disks/cros_disks_client.h"
 #include "chromeos/ash/components/disks/disk.h"
 #include "chromeos/ash/components/disks/disk_mount_manager.h"
 #include "chromeos/ash/components/disks/fake_disk_mount_manager.h"
+#include "chromeos/ash/experiences/arc/arc_prefs.h"
+#include "chromeos/ash/experiences/arc/session/arc_bridge_service.h"
+#include "chromeos/ash/experiences/arc/session/arc_service_manager.h"
+#include "chromeos/ash/experiences/arc/test/connection_holder_util.h"
+#include "chromeos/ash/experiences/arc/test/fake_file_system_instance.h"
 #include "chromeos/components/disks/disks_prefs.h"
 #include "chromeos/dbus/power/fake_power_manager_client.h"
 #include "chromeos/dbus/power_manager/suspend.pb.h"
@@ -60,6 +63,7 @@
 #include "extensions/browser/extension_registry.h"
 #include "services/device/public/mojom/mtp_storage_info.mojom.h"
 #include "storage/browser/file_system/external_mount_points.h"
+#include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace file_manager {
@@ -71,16 +75,47 @@ using ::ash::disks::Disk;
 using ::ash::disks::DiskMountManager;
 using ::ash::disks::FakeDiskMountManager;
 using base::FilePath;
+using ::testing::UnorderedElementsAre;
 
 std::vector<std::string> arc_volume_ids = {
     arc::kImagesRootId, arc::kVideosRootId, arc::kAudioRootId,
     arc::kDocumentsRootId, "android_files:0"};
+
+const char kAllowlistedVendorId[] = "A123";
+const char kAllowlistedProductId[] = "456B";
+const policy::DeviceId kAllowlistedDeviceId{0xA123, 0x456B};
+
+// Adds `kAllowlistedDeviceId` to ExternalStorageAllowlist.
+void SetExternalStorageAllowlist(PrefService* pref_service) {
+  pref_service->SetList(
+      disks::prefs::kExternalStorageAllowlist,
+      base::Value::List().Append(kAllowlistedDeviceId.ToDict()));
+}
+
+std::unique_ptr<Disk> CreateAllowlistedDisk(const std::string& disk_path) {
+  return Disk::Builder()
+      .SetDevicePath(disk_path)
+      .SetVendorId(kAllowlistedVendorId)
+      .SetProductId(kAllowlistedProductId)
+      .SetHasMedia(true)
+      .Build();
+}
+
+device::mojom::MtpStorageInfoPtr CreateAllowlistedMtpStorageInfo(
+    std::string_view storage_name) {
+  auto mtp_storage_info = device::mojom::MtpStorageInfo::New();
+  mtp_storage_info->vendor_id = kAllowlistedDeviceId.vid;
+  mtp_storage_info->product_id = kAllowlistedDeviceId.pid;
+  mtp_storage_info->storage_name = storage_name;
+  return mtp_storage_info;
+}
 
 class LoggingObserver : public VolumeManagerObserver {
  public:
   struct Event {
     enum EventType {
       DISK_ADDED,
+      DISK_ADD_BLOCKED_BY_POLICY,
       DISK_REMOVED,
       DEVICE_ADDED,
       DEVICE_REMOVED,
@@ -92,7 +127,7 @@ class LoggingObserver : public VolumeManagerObserver {
       PARTITION_COMPLETED,
       RENAME_STARTED,
       RENAME_COMPLETED
-    } type;
+    } type{};
 
     // Available on DEVICE_ADDED, DEVICE_REMOVED, VOLUME_MOUNTED,
     // VOLUME_UNMOUNTED, FORMAT_STARTED, FORMAT_COMPLETED. PARTITION_STARTED,
@@ -107,14 +142,14 @@ class LoggingObserver : public VolumeManagerObserver {
     std::string volume_id;
 
     // Available on DISK_ADDED.
-    bool mounting;
+    bool mounting = false;
 
     // Available on VOLUME_MOUNTED and VOLUME_UNMOUNTED.
-    ash::MountError mount_error;
+    ash::MountError mount_error{};
 
     // Available on FORMAT_STARTED and FORMAT_COMPLETED, PARTITION_STARTED,
     // PARTITION_COMPLETED.
-    bool success;
+    bool success = false;
   };
 
   LoggingObserver() = default;
@@ -132,6 +167,13 @@ class LoggingObserver : public VolumeManagerObserver {
     event.type = Event::DISK_ADDED;
     event.device_path = disk.device_path();  // Keep only device_path.
     event.mounting = mounting;
+    events_.push_back(event);
+  }
+
+  void OnDiskAddBlockedByPolicy(const std::string& device_path) override {
+    Event event;
+    event.type = Event::DISK_ADD_BLOCKED_BY_POLICY;
+    event.device_path = device_path;
     events_.push_back(event);
   }
 
@@ -247,11 +289,32 @@ class LoggingObserver : public VolumeManagerObserver {
     // by the time VolumeManager shuts down, and this handler is never reached.
     // In fact, it's more likely for UAF crash to happen before this code is
     // reached.
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
  private:
   std::vector<Event> events_;
+};
+
+// TODO(isandrk, b/383308221): Roll into LoggingObserver and update file.
+class ScopedLoggingObserver {
+ public:
+  explicit ScopedLoggingObserver(VolumeManager* volume_manager)
+      : volume_manager_(volume_manager) {
+    volume_manager_->AddObserver(&logging_observer_);
+  }
+
+  ~ScopedLoggingObserver() {
+    volume_manager_->RemoveObserver(&logging_observer_);
+  }
+
+  const std::vector<LoggingObserver::Event>& events() const {
+    return logging_observer_.events();
+  }
+
+ private:
+  const raw_ptr<VolumeManager> volume_manager_;
+  LoggingObserver logging_observer_;
 };
 
 }  // namespace
@@ -267,22 +330,21 @@ class VolumeManagerTest : public testing::Test {
   // Helper class that contains per-profile objects.
   class ProfileEnvironment {
    public:
-    ProfileEnvironment(std::unique_ptr<TestingProfile> profile,
-                       DiskMountManager* disk_manager)
-        : profile_(std::move(profile)),
+    ProfileEnvironment(TestingProfile* profile, DiskMountManager* disk_manager)
+        : profile_(profile),
           extension_registry_(
-              std::make_unique<extensions::ExtensionRegistry>(profile_.get())),
+              std::make_unique<extensions::ExtensionRegistry>(profile_)),
           file_system_provider_service_(
               std::make_unique<ash::file_system_provider::Service>(
-                  profile_.get(),
+                  profile_,
                   extension_registry_.get())),
           drive_integration_service_(
               std::make_unique<drive::DriveIntegrationService>(
-                  profile_.get(),
+                  profile_,
                   std::string(),
                   base::FilePath())),
           volume_manager_(std::make_unique<VolumeManager>(
-              profile_.get(),
+              profile_,
               drive_integration_service_.get(),  // DriveIntegrationService
               chromeos::PowerManagerClient::Get(),
               disk_manager,
@@ -298,22 +360,31 @@ class VolumeManagerTest : public testing::Test {
       extension_registry_->Shutdown();
     }
 
-    Profile* profile() const { return profile_.get(); }
+    TestingProfile* profile() const { return profile_; }
     VolumeManager* volume_manager() const { return volume_manager_.get(); }
+
+    void SetFakeMtpStorageInfo(
+        device::mojom::MtpStorageInfoPtr fake_mtp_storage_info) {
+      fake_mtp_storage_info_ = std::move(fake_mtp_storage_info);
+    }
 
    private:
     void GetFakeMtpStorageInfo(
         const std::string& storage_name,
         device::mojom::MtpManager::GetStorageInfoCallback callback) {
-      std::move(callback).Run(device::mojom::MtpStorageInfo::New());
+      if (!fake_mtp_storage_info_) {
+        fake_mtp_storage_info_ = device::mojom::MtpStorageInfo::New();
+      }
+      std::move(callback).Run(std::move(fake_mtp_storage_info_));
     }
 
-    std::unique_ptr<TestingProfile> profile_;
+    const raw_ptr<TestingProfile> profile_;
     std::unique_ptr<extensions::ExtensionRegistry> extension_registry_;
     std::unique_ptr<ash::file_system_provider::Service>
         file_system_provider_service_;
     std::unique_ptr<drive::DriveIntegrationService> drive_integration_service_;
     std::unique_ptr<VolumeManager> volume_manager_;
+    device::mojom::MtpStorageInfoPtr fake_mtp_storage_info_;
   };
 
   void SetUp() override {
@@ -325,6 +396,10 @@ class VolumeManagerTest : public testing::Test {
     disk_mount_manager_ = std::make_unique<FakeDiskMountManager>();
     fake_user_manager_.Reset(std::make_unique<ash::FakeChromeUserManager>());
 
+    testing_profile_manager_ = std::make_unique<TestingProfileManager>(
+        TestingBrowserProcess::GetGlobal());
+    ASSERT_TRUE(testing_profile_manager_->SetUp());
+
     primary_profile_ = std::make_unique<ProfileEnvironment>(
         AddLoggedInUser(AccountId::FromUserEmail("primary@test")),
         disk_mount_manager_.get());
@@ -333,6 +408,7 @@ class VolumeManagerTest : public testing::Test {
   void TearDown() override {
     task_environment_.RunUntilIdle();
     primary_profile_.reset();
+    testing_profile_manager_->DeleteAllTestingProfiles();
 
     disk_mount_manager_.reset();
     chromeos::PowerManagerClient::Shutdown();
@@ -343,22 +419,22 @@ class VolumeManagerTest : public testing::Test {
     storage::ExternalMountPoints::GetSystemInstance()->RevokeAllFileSystems();
   }
 
-  virtual std::unique_ptr<TestingProfile> AddLoggedInUser(
-      const AccountId& account_id) {
+  virtual TestingProfile* AddLoggedInUser(const AccountId& account_id) {
     fake_user_manager_->AddUser(account_id);
     fake_user_manager_->LoginUser(account_id);
-    std::unique_ptr<TestingProfile> profile =
-        std::make_unique<TestingProfile>();
+    TestingProfile* profile = testing_profile_manager_->CreateTestingProfile(
+        account_id.GetUserEmail());
     ash::ProfileHelper::Get()->SetUserToProfileMappingForTesting(
-        fake_user_manager_->FindUserAndModify(account_id), profile.get());
+        fake_user_manager_->FindUserAndModify(account_id), profile);
     return profile;
   }
 
   // Accessors to the primary profile.
-  Profile* profile() const { return primary_profile_->profile(); }
+  TestingProfile* profile() const { return primary_profile_->profile(); }
   VolumeManager* volume_manager() const {
     return primary_profile_->volume_manager();
   }
+  ProfileEnvironment* primary_profile() { return primary_profile_.get(); }
 
   base::test::ScopedCommandLine scoped_command_line_;
   content::BrowserTaskEnvironment task_environment_;
@@ -366,6 +442,7 @@ class VolumeManagerTest : public testing::Test {
   user_manager::TypedScopedUserManager<ash::FakeChromeUserManager>
       fake_user_manager_;
   std::unique_ptr<ProfileEnvironment> primary_profile_;
+  std::unique_ptr<TestingProfileManager> testing_profile_manager_;
 };
 
 TEST(VolumeTest, CreateForRemovable) {
@@ -468,10 +545,6 @@ TEST_F(VolumeManagerTest, OnAutoMountableDiskEvent_Hidden) {
 }
 
 TEST_F(VolumeManagerTest, OnAutoMountableDiskEvent_Added) {
-  // Enable external storage.
-  profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageDisabled,
-                                    false);
-
   LoggingObserver observer;
   volume_manager()->AddObserver(&observer);
 
@@ -502,10 +575,6 @@ TEST_F(VolumeManagerTest, OnAutoMountableDiskEvent_Added) {
 }
 
 TEST_F(VolumeManagerTest, OnAutoMountableDiskEvent_AddedNonMounting) {
-  // Enable external storage.
-  profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageDisabled,
-                                    false);
-
   // Device which is already mounted.
   {
     LoggingObserver observer;
@@ -549,28 +618,41 @@ TEST_F(VolumeManagerTest, OnAutoMountableDiskEvent_AddedNonMounting) {
 
     volume_manager()->RemoveObserver(&observer);
   }
+}
 
-  // External storage is disabled.
+TEST_F(VolumeManagerTest, OnAutoMountableDiskEvent_ExternalStoragePolicy) {
+  std::unique_ptr<const Disk> media_disk = CreateAllowlistedDisk("device1");
+
+  // Disable external storage by policy.
+  profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageDisabled,
+                                    true);
+
+  // Disk mounting is blocked by policy.
   {
-    profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageDisabled,
-                                      true);
+    ScopedLoggingObserver observer(volume_manager());
+    volume_manager()->OnAutoMountableDiskEvent(DiskMountManager::DISK_ADDED,
+                                               *media_disk);
+    ASSERT_EQ(1U, observer.events().size());
+    const LoggingObserver::Event& event = observer.events()[0];
+    EXPECT_EQ(LoggingObserver::Event::DISK_ADD_BLOCKED_BY_POLICY, event.type);
+    EXPECT_EQ("device1", event.device_path);
+    ASSERT_EQ(0U, disk_mount_manager_->mount_requests().size());
+  }
 
-    LoggingObserver observer;
-    volume_manager()->AddObserver(&observer);
+  // Set the external storage allowlist.
+  SetExternalStorageAllowlist(profile()->GetPrefs());
 
-    std::unique_ptr<const Disk> media_disk =
-        Disk::Builder().SetDevicePath("device1").SetHasMedia(true).Build();
+  // Disk mounting is not blocked because of the allowlist.
+  {
+    ScopedLoggingObserver observer(volume_manager());
     volume_manager()->OnAutoMountableDiskEvent(DiskMountManager::DISK_ADDED,
                                                *media_disk);
     ASSERT_EQ(1U, observer.events().size());
     const LoggingObserver::Event& event = observer.events()[0];
     EXPECT_EQ(LoggingObserver::Event::DISK_ADDED, event.type);
     EXPECT_EQ("device1", event.device_path);
-    EXPECT_FALSE(event.mounting);
-
-    ASSERT_EQ(0U, disk_mount_manager_->mount_requests().size());
-
-    volume_manager()->RemoveObserver(&observer);
+    EXPECT_TRUE(event.mounting);
+    ASSERT_EQ(1U, disk_mount_manager_->mount_requests().size());
   }
 }
 
@@ -724,6 +806,42 @@ TEST_F(VolumeManagerTest, OnMountEvent_MountingAndUnmounting) {
   EXPECT_EQ(ash::MountError::kSuccess, event.mount_error);
 
   volume_manager()->RemoveObserver(&observer);
+}
+
+TEST_F(VolumeManagerTest, OnMountEvent_ExternalStoragePolicy) {
+  disk_mount_manager_->AddDiskForTest(CreateAllowlistedDisk("device1"));
+  const DiskMountManager::MountPoint kMountPoint{"device1", "mount1",
+                                                 ash::MountType::kDevice};
+
+  // Disable external storage by policy.
+  profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageDisabled,
+                                    true);
+
+  // Disk mounting is blocked by policy.
+  {
+    ScopedLoggingObserver observer(volume_manager());
+    volume_manager()->OnMountEvent(DiskMountManager::MOUNTING,
+                                   ash::MountError::kSuccess, kMountPoint);
+    ASSERT_EQ(1U, observer.events().size());
+    LoggingObserver::Event event = observer.events()[0];
+    EXPECT_EQ(LoggingObserver::Event::DISK_ADD_BLOCKED_BY_POLICY, event.type);
+    EXPECT_EQ("device1", event.device_path);
+  }
+
+  // Set the external storage allowlist.
+  SetExternalStorageAllowlist(profile()->GetPrefs());
+
+  // Disk mounting is not blocked because of the allowlist.
+  {
+    ScopedLoggingObserver observer(volume_manager());
+    volume_manager()->OnMountEvent(DiskMountManager::MOUNTING,
+                                   ash::MountError::kSuccess, kMountPoint);
+    ASSERT_EQ(1U, observer.events().size());
+    LoggingObserver::Event event = observer.events()[0];
+    EXPECT_EQ(LoggingObserver::Event::VOLUME_MOUNTED, event.type);
+    EXPECT_EQ("device1", event.device_path);
+    EXPECT_EQ(ash::MountError::kSuccess, event.mount_error);
+  }
 }
 
 TEST_F(VolumeManagerTest, OnMountEvent_Remounting) {
@@ -958,7 +1076,14 @@ TEST_F(VolumeManagerTest, OnPartitionEvent_CompletedFailed) {
 }
 
 TEST_F(VolumeManagerTest, OnExternalStorageDisabledChanged) {
-  // Here create four mount points.
+  // Set up ExternalStorageAllowlist.
+  disk_mount_manager_->AddDiskForTest(CreateAllowlistedDisk("mount1"));
+  SetExternalStorageAllowlist(profile()->GetPrefs());
+
+  // Subscribe to pref changes.
+  volume_manager()->Initialize();
+
+  // Create four mount points (first one is allowlisted).
   disk_mount_manager_->MountPath("mount1", "", "", {}, ash::MountType::kDevice,
                                  ash::MountAccessMode::kReadWrite,
                                  base::DoNothing());
@@ -978,38 +1103,26 @@ TEST_F(VolumeManagerTest, OnExternalStorageDisabledChanged) {
   ASSERT_EQ(4U, disk_mount_manager_->mount_points().size());
   ASSERT_EQ(0U, disk_mount_manager_->unmount_requests().size());
 
-  // Emulate to set kExternalStorageDisabled to false.
+  // Set kExternalStorageDisabled to false and expect no effects.
   profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageDisabled,
                                     false);
-  volume_manager()->OnExternalStorageDisabledChanged();
-
-  // Expect no effects.
   EXPECT_EQ(4U, disk_mount_manager_->mount_points().size());
   EXPECT_EQ(0U, disk_mount_manager_->unmount_requests().size());
 
-  // Emulate to set kExternalStorageDisabled to true.
+  // Set kExternalStorageDisabled to true.
   profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageDisabled,
                                     true);
-  volume_manager()->OnExternalStorageDisabledChanged();
 
   // Wait until all unmount request finishes, so that callback chain to unmount
   // all the mount points will be invoked.
   disk_mount_manager_->FinishAllUnmountPathRequests();
 
-  // The external media mount points should be unmounted. Other mount point
-  // types should remain. The failing unmount should also remain.
-  EXPECT_EQ(2U, disk_mount_manager_->mount_points().size());
-
-  std::set<std::string> expected_unmount_requests = {
-      "mount1",
-      "mount2",
-      "failed_unmount",
-  };
-  for (const auto& request : disk_mount_manager_->unmount_requests()) {
-    EXPECT_TRUE(base::Contains(expected_unmount_requests, request));
-    expected_unmount_requests.erase(request);
-  }
-  EXPECT_TRUE(expected_unmount_requests.empty());
+  // External media mount points which are not allowlisted should be unmounted.
+  // Other mount point types should remain. The failing unmount should also
+  // remain.
+  EXPECT_EQ(3U, disk_mount_manager_->mount_points().size());
+  EXPECT_THAT(disk_mount_manager_->unmount_requests(),
+              UnorderedElementsAre("mount2", "failed_unmount"));
 }
 
 TEST_F(VolumeManagerTest, ExternalStorageDisabledPolicyMultiProfile) {
@@ -1063,22 +1176,35 @@ TEST_F(VolumeManagerTest, ExternalStorageDisabledPolicyMultiProfile) {
 }
 
 TEST_F(VolumeManagerTest, OnExternalStorageReadOnlyChanged) {
-  // Emulate updates of kExternalStorageReadOnly (change to true, then false).
+  // This subscribes to pref changes.
+  volume_manager()->Initialize();
+
+  // Set up some disks (first one is allowlisted).
+  disk_mount_manager_->AddDiskForTest(CreateAllowlistedDisk("device1"));
+  disk_mount_manager_->AddDiskForTest(
+      Disk::Builder().SetDevicePath("device2").Build());
+
+  // Trigger pref updates.
   profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageReadOnly,
                                     true);
-  volume_manager()->OnExternalStorageReadOnlyChanged();
+  SetExternalStorageAllowlist(profile()->GetPrefs());
   profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageReadOnly,
                                     false);
-  volume_manager()->OnExternalStorageReadOnlyChanged();
 
-  // Verify that remount of removable disks is triggered for each update.
-  ASSERT_EQ(2U, disk_mount_manager_->remount_all_requests().size());
-  const FakeDiskMountManager::RemountAllRequest& remount_request1 =
-      disk_mount_manager_->remount_all_requests()[0];
-  EXPECT_EQ(ash::MountAccessMode::kReadOnly, remount_request1.access_mode);
-  const FakeDiskMountManager::RemountAllRequest& remount_request2 =
-      disk_mount_manager_->remount_all_requests()[1];
-  EXPECT_EQ(ash::MountAccessMode::kReadWrite, remount_request2.access_mode);
+  // Verify that removable disk remounts are triggered.
+  using ash::MountAccessMode;
+  std::vector<FakeDiskMountManager::RemountRequest> expected = {
+      // ExternalStorageReadOnly set to true.
+      {"device1", MountAccessMode::kReadOnly},
+      {"device2", MountAccessMode::kReadOnly},
+      // ExternalStorageAllowlist set to device1.
+      {"device1", MountAccessMode::kReadWrite},
+      {"device2", MountAccessMode::kReadOnly},
+      // ExternalStorageReadOnly set to false.
+      {"device1", MountAccessMode::kReadWrite},
+      {"device2", MountAccessMode::kReadWrite},
+  };
+  EXPECT_EQ(expected, disk_mount_manager_->remount_requests());
 }
 
 TEST_F(VolumeManagerTest, GetVolumeList) {
@@ -1096,7 +1222,7 @@ TEST_F(VolumeManagerTest, VolumeManagerInitializeMyFilesVolume) {
       volume_manager()->GetVolumeList();
   ASSERT_GT(volume_list.size(), 0u);
   auto volume =
-      base::ranges::find(volume_list, "downloads:MyFiles", &Volume::volume_id);
+      std::ranges::find(volume_list, "downloads:MyFiles", &Volume::volume_id);
   EXPECT_FALSE(volume == volume_list.end());
   EXPECT_EQ(VOLUME_TYPE_DOWNLOADS_DIRECTORY, (*volume)->type());
 }
@@ -1248,6 +1374,49 @@ TEST_F(VolumeManagerTest, MTPPlugAndUnplug) {
   volume_manager()->RemoveObserver(&observer);
 }
 
+TEST_F(VolumeManagerTest, MTP_ExternalStoragePolicy) {
+  storage_monitor::StorageInfo info(
+      storage_monitor::StorageInfo::MakeDeviceId(
+          storage_monitor::StorageInfo::MTP_OR_PTP, "dummy-device-id"),
+      FILE_PATH_LITERAL("/dummy/device/location"), u"label", u"vendor",
+      u"model", 12345 /* size */);
+
+  // Disable external storage by policy.
+  profile()->GetPrefs()->SetBoolean(disks::prefs::kExternalStorageDisabled,
+                                    true);
+
+  // Attach is blocked by policy.
+  {
+    ScopedLoggingObserver observer(volume_manager());
+    primary_profile()->SetFakeMtpStorageInfo(
+        CreateAllowlistedMtpStorageInfo("dummy/device/location"));
+    volume_manager()->OnRemovableStorageAttached(info);
+    ASSERT_EQ(1u, observer.events().size());
+    const LoggingObserver::Event& event = observer.events()[0];
+    EXPECT_EQ(LoggingObserver::Event::DISK_ADD_BLOCKED_BY_POLICY, event.type);
+    EXPECT_EQ("/dummy/device/location", event.device_path);
+  }
+
+  // Set the external storage allowlist.
+  SetExternalStorageAllowlist(profile()->GetPrefs());
+
+  // Attach is not blocked because of the allowlist.
+  {
+    ScopedLoggingObserver observer(volume_manager());
+    primary_profile()->SetFakeMtpStorageInfo(
+        CreateAllowlistedMtpStorageInfo("dummy/device/location"));
+    volume_manager()->OnRemovableStorageAttached(info);
+    ASSERT_EQ(2u, observer.events().size());
+    EXPECT_EQ(LoggingObserver::Event::VOLUME_MOUNTED,
+              observer.events()[0].type);
+    EXPECT_EQ(LoggingObserver::Event::VOLUME_MOUNTED,
+              observer.events()[1].type);
+  }
+
+  // Cleanup. Detach storage, otherwise crashes in ~MTPDeviceMapService.
+  volume_manager()->OnRemovableStorageDetached(info);
+}
+
 TEST_F(VolumeManagerTest, OnRenameEvent_Started) {
   LoggingObserver observer;
   volume_manager()->AddObserver(&observer);
@@ -1330,9 +1499,38 @@ TEST_F(VolumeManagerTest, OnRenameEvent_CompletedFailed) {
   volume_manager()->RemoveObserver(&observer);
 }
 
+TEST_F(VolumeManagerTest, VolumeManagerInitializeForMultiProfiles) {
+  auto secondary_profile = std::make_unique<ProfileEnvironment>(
+      AddLoggedInUser(AccountId::FromUserEmail("secondary@test")),
+      disk_mount_manager_.get());
+
+  volume_manager()->Initialize();
+  secondary_profile->volume_manager()->Initialize();
+
+  // Different profiles' shared cache and download volumes
+  // should have different `mount_name`, see crbug.com/365173555.
+  std::vector<storage::MountPoints::MountPointInfo> mount_point_infos;
+  storage::ExternalMountPoints::GetSystemInstance()->AddMountPointInfosTo(
+      &mount_point_infos);
+
+  std::unordered_set<std::string> mount_point_names;
+  for (const auto& mount_point_info : mount_point_infos) {
+    mount_point_names.insert(mount_point_info.name);
+  }
+
+  ASSERT_THAT(mount_point_names, testing::SizeIs(4));
+  EXPECT_THAT(
+      mount_point_names,
+      testing::UnorderedElementsAre(
+          util::GetDownloadsMountPointName(profile()),
+          util::GetDownloadsMountPointName(secondary_profile->profile()),
+          util::GetShareCacheMountPointName(profile()),
+          util::GetShareCacheMountPointName(secondary_profile->profile())));
+}
+
 // Test fixture for VolumeManager tests with ARC enabled.
 class VolumeManagerArcTest : public VolumeManagerTest {
- public:
+ protected:
   void SetUp() override {
     scoped_command_line_.GetProcessCommandLine()->AppendSwitchASCII(
         ash::switches::kArcAvailability, "officially-supported");
@@ -1346,18 +1544,17 @@ class VolumeManagerArcTest : public VolumeManagerTest {
     VolumeManagerTest::TearDown();
   }
 
-  std::unique_ptr<TestingProfile> AddLoggedInUser(
-      const AccountId& account_id) override {
-    auto profile = VolumeManagerTest::AddLoggedInUser(account_id);
+  TestingProfile* AddLoggedInUser(const AccountId& account_id) override {
+    TestingProfile* profile = VolumeManagerTest::AddLoggedInUser(account_id);
 
     // Set up an Arc service manager with a fake file system. This must be done
     // before initializing VolumeManager() to make its dependency
     // DocumentsProviderRootManager work.
     CHECK(!arc_service_manager_);
     arc_service_manager_ = std::make_unique<arc::ArcServiceManager>();
-    arc_service_manager_->set_browser_context(profile.get());
+    arc_service_manager_->set_browser_context(profile);
     arc::ArcFileSystemOperationRunner::GetFactory()->SetTestingFactoryAndUse(
-        profile.get(),
+        profile,
         base::BindRepeating(&CreateFileSystemOperationRunnerForTesting));
     arc_service_manager_->arc_bridge_service()->file_system()->SetInstance(
         &file_system_instance_);
@@ -1462,19 +1659,23 @@ TEST_F(VolumeManagerArcTest, ShouldAlwaysMountAndroidVolumesInFilesForTesting) {
 // Tests VolumeManager with the LocalUserFilesAllowed policy.
 class VolumeManagerLocalUserFilesTest : public VolumeManagerArcTest {
  public:
-  VolumeManagerLocalUserFilesTest()
-      : scoped_testing_local_state_(TestingBrowserProcess::GetGlobal()) {}
-
   void SetUp() override {
-    scoped_feature_list_.InitAndEnableFeature(features::kSkyVault);
+    scoped_feature_list_.InitWithFeatures(
+        {features::kSkyVault, features::kSkyVaultV2}, {});
     VolumeManagerArcTest::SetUp();
   }
 
   void TearDown() override { VolumeManagerArcTest::TearDown(); }
 
   void SetLocalUserFilesPolicy(bool allowed) {
-    scoped_testing_local_state_.Get()->SetBoolean(prefs::kLocalUserFilesAllowed,
-                                                  allowed);
+    testing_profile_manager_->local_state()->Get()->SetBoolean(
+        prefs::kLocalUserFilesAllowed, allowed);
+  }
+
+  void SetLocalUserFilesMigrationPolicy(const std::string& destination) {
+    testing_profile_manager_->local_state()->Get()->SetString(
+        prefs::kLocalUserFilesMigrationDestination, destination);
+    volume_manager()->OnMigrationSucceededForTesting();
   }
 
   bool ContainsDownloads() {
@@ -1483,8 +1684,8 @@ class VolumeManagerLocalUserFilesTest : public VolumeManagerArcTest {
     if (volume_list.size() == 0u) {
       return false;
     }
-    auto volume = base::ranges::find(volume_list, "downloads:MyFiles",
-                                     &Volume::volume_id);
+    auto volume =
+        std::ranges::find(volume_list, "downloads:MyFiles", &Volume::volume_id);
     return volume != volume_list.end() &&
            (*volume)->type() == VOLUME_TYPE_DOWNLOADS_DIRECTORY;
   }
@@ -1496,13 +1697,12 @@ class VolumeManagerLocalUserFilesTest : public VolumeManagerArcTest {
       return false;
     }
     auto volume =
-        base::ranges::find(volume_list, "android_files:0", &Volume::volume_id);
+        std::ranges::find(volume_list, "android_files:0", &Volume::volume_id);
     return volume != volume_list.end() &&
            (*volume)->type() == VOLUME_TYPE_ANDROID_FILES;
   }
 
  private:
-  ScopedTestingLocalState scoped_testing_local_state_;
   base::test::ScopedFeatureList scoped_feature_list_;
 };
 
@@ -1517,8 +1717,13 @@ TEST_F(VolumeManagerLocalUserFilesTest, DisableEnable) {
   EXPECT_TRUE(ContainsDownloads());
   EXPECT_TRUE(ContainsPlayFiles());
 
-  // Setting the policy to false removes local volumes.
+  // Setting the policy to false removes only "Play Files".
   SetLocalUserFilesPolicy(/*allowed=*/false);
+  EXPECT_TRUE(ContainsDownloads());
+  EXPECT_FALSE(ContainsPlayFiles());
+
+  // Setting the migration policy removes also "Downloads".
+  SetLocalUserFilesMigrationPolicy(download_dir_util::kLocationGoogleDrive);
   EXPECT_FALSE(ContainsDownloads());
   EXPECT_FALSE(ContainsPlayFiles());
 

@@ -72,10 +72,6 @@ BASE_FEATURE(kComposeTextOutputAnimation,
              "ComposeTextOutputAnimation",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-BASE_FEATURE(kComposeTextSelection,
-             "ComposeTextSelection",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 BASE_FEATURE(kComposeRequestLatencyTimeout,
              "ComposeRequestLatencyTimeout",
              base::FEATURE_ENABLED_BY_DEFAULT);
@@ -106,6 +102,6 @@ BASE_FEATURE(kComposeAllowOnDeviceExecution,
 
 BASE_FEATURE(kComposeUpfrontInputModes,
              "ComposeUpfrontInputModes",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 }  // namespace compose::features

@@ -183,7 +183,8 @@ export class SettingsSecurityPageElement extends
           // The phones subpage is linked from the security keys subpage, if
           // it exists. Thus the phones subpage is only linked from this page
           // if the security keys subpage is disabled.
-          return !loadTimeData.getBoolean('enableSecurityKeysSubpage');
+          return !loadTimeData.getBoolean('enableSecurityKeysSubpage') &&
+              loadTimeData.getBoolean('enableSecurityKeysManagePhones');
         },
       },
       // </if>
@@ -214,6 +215,13 @@ export class SettingsSecurityPageElement extends
           return loadTimeData.getBoolean(
                      'extendedReportingRemovePrefDependency') &&
               loadTimeData.getBoolean('hashPrefixRealTimeLookupsSamplePing');
+        },
+      },
+
+      enablePasswordLeakToggleMove_: {
+        type: Boolean,
+        value() {
+          return loadTimeData.getBoolean('enablePasswordLeakToggleMove');
         },
       },
 
@@ -269,6 +277,7 @@ export class SettingsSecurityPageElement extends
   private eventTracker_: EventTracker = new EventTracker();
   private enableEsbAiStringUpdate_: boolean;
   private hideExtendedReportingRadioButton_: boolean;
+  private enablePasswordLeakToggleMove_: boolean;
 
   private browserProxy_: PrivacyPageBrowserProxy =
       PrivacyPageBrowserProxyImpl.getInstance();
@@ -277,7 +286,6 @@ export class SettingsSecurityPageElement extends
 
   private focusConfigChanged_(_newConfig: FocusConfig, oldConfig: FocusConfig) {
     assert(!oldConfig);
-    // TODO(crbug.com/40928765): fix this for new cert management UI.
     // <if expr="use_nss_certs">
     if (routes.CERTIFICATES) {
       this.focusConfig.set(routes.CERTIFICATES.path, () => {
@@ -489,6 +497,15 @@ export class SettingsSecurityPageElement extends
       }
     }
     return subLabel;
+  }
+
+  private computeSecureDnsSettingClass_(): string {
+    return this.enablePasswordLeakToggleMove_ ? 'hr' : 'no-hr';
+  }
+
+  private computeSafeBrowsingStandardNoCollapse_(): boolean {
+    return this.hideExtendedReportingRadioButton_ &&
+        this.enablePasswordLeakToggleMove_;
   }
 
   // Conversion helper for binding Integer pref values as String values.

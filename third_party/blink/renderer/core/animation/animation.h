@@ -142,8 +142,8 @@ class CORE_EXPORT Animation : public EventTarget,
 
   std::optional<AnimationTimeDelta> UnlimitedCurrentTime() const;
 
-  // https://drafts.csswg.org/web-animations-2/#the-progress-of-an-animation
-  std::optional<double> progress() const;
+  // https://drafts.csswg.org/web-animations-2/#the-overall-progress-of-an-animation
+  std::optional<double> overallProgress() const;
 
   // https://w3.org/TR/web-animations-1/#play-states
   V8AnimationPlayState::Enum CalculateAnimationPlayState() const;
@@ -181,6 +181,18 @@ class CORE_EXPORT Animation : public EventTarget,
                V8AnimationPlayState::Enum::kRunning &&
            !Limited() && !is_paused_for_testing_;
   }
+
+  // Differs from Playing() in the case of a non-monotonic timeline outside the
+  // active range. A finished animation is not Playing since no update is
+  // required due to passage of time. This behavior also works for scroll-linked
+  // animations since until the animation exits the finished state, no updates
+  // are required.  When in the before phase, the normal passage of time will
+  // trigger an effect change; however, the same is not true for scroll-linked
+  // animations.
+  bool EffectivelyPlaying() const;
+
+  // Notification that the animation is entering or exiting the active phase.
+  void OnActivePhaseStateChange(bool in_active_phase);
 
   bool Limited() const { return Limited(CurrentTimeInternal()); }
   bool FinishedInternal() const { return finished_; }
@@ -286,16 +298,6 @@ class CORE_EXPORT Animation : public EventTarget,
   void SetOutdated();
   bool Outdated() { return outdated_; }
 
-  CompositorAnimations::FailureReasons CheckCanStartAnimationOnCompositor(
-      const PaintArtifactCompositor* paint_artifact_compositor,
-      PropertyHandleSet* unsupported_properties = nullptr) const;
-  void StartAnimationOnCompositor(
-      const PaintArtifactCompositor* paint_artifact_compositor);
-  void CancelAnimationOnCompositor();
-  void RestartAnimationOnCompositor();
-  void CancelIncompatibleAnimationsOnCompositor();
-  bool HasActiveAnimationsOnCompositor();
-
   enum class CompositorPendingReason {
     kPendingUpdate,        // Update due to an API call that may affect
                            // play state or start time.
@@ -303,9 +305,29 @@ class CORE_EXPORT Animation : public EventTarget,
                            // including keyframes or active interval.
     kPendingCancel,        // Animation has been canceled, but could restart
                            // conditions permitting.
-    kPendingRestart        // Animation is to be restarted.
+    kPendingRestart,       // Animation is to be restarted.
+    kPendingSafeRestart,   // Animation is to be restarted. We can be certain
+                           // that the CompositorPaintStatus won't change.  A compositing decision made in PrePaint for a native-paint-worklet is still valid.
+    kPaintWorkletImageCreated,  // A compositable animation was held in limbo
+                                // awaiting paint of the paint worklet image. It
+                                // can now be started on the compositor.
+    kPendingDowngrade  // Paint is forcing the animation to downgrade to
+                       // run on the main thread.
   };
+
   void SetCompositorPending(CompositorPendingReason reason);
+
+  CompositorAnimations::FailureReasons CheckCanStartAnimationOnCompositor(
+      const PaintArtifactCompositor* paint_artifact_compositor,
+      PropertyHandleSet* unsupported_properties = nullptr) const;
+  void StartAnimationOnCompositor(
+      const PaintArtifactCompositor* paint_artifact_compositor);
+  void CancelAnimationOnCompositor();
+  void RestartAnimationOnCompositor(
+      CompositorPendingReason reason =
+          CompositorPendingReason::kPendingRestart);
+  void CancelIncompatibleAnimationsOnCompositor();
+  bool HasActiveAnimationsOnCompositor();
 
   void NotifyReady(AnimationTimeDelta ready_time);
   void CommitPendingPlay(AnimationTimeDelta ready_time);
@@ -381,6 +403,11 @@ class CORE_EXPORT Animation : public EventTarget,
   }
   bool AnimationHasNoEffect() const { return animation_has_no_effect_; }
 
+  // A native paint worklet animation has no visible effect until the deferred
+  // paint image has been generated. If the animation is not currently
+  // composited we need to restart it on the compositor.
+  void OnPaintWorkletImageCreated();
+
   bool WaitingOnDeferredStartTime() {
     return !start_time_ && (pending_play_ || pending_pause_);
   }
@@ -392,6 +419,15 @@ class CORE_EXPORT Animation : public EventTarget,
       AnimationTimeDelta start_time = AnimationTimeDelta()) {
     start_time_ = start_time;
   }
+
+  enum NativePaintWorkletProperties {
+    kNoPaintWorklet = 0,
+    kBackgroundColorPaintWorklet = 1,
+    kClipPathPaintWorklet = 2
+  };
+
+  using NativePaintWorkletReasons = uint32_t;
+  NativePaintWorkletReasons GetNativePaintWorkletReasons() const;
 
  protected:
   DispatchEventResult DispatchEventInternal(Event&) override;
@@ -583,6 +619,16 @@ class CORE_EXPORT Animation : public EventTarget,
 
   Member<Event> pending_remove_event_;
 
+  // Cache whether animation can potentially have native paint worklets.
+  // In the event of the keyframes changing, we need a new evaluation, of
+  // the composited status for native paint worklet eligible properties.
+  // A change in the playState can also necessitate a composited style update.
+  mutable std::optional<NativePaintWorkletReasons>
+      native_paint_worklet_reasons_;
+  mutable std::optional<NativePaintWorkletReasons>
+      prior_native_paint_worklet_reasons_;
+  Member<Element> prior_native_paint_worklet_target_;
+
   // TODO(crbug.com/960944): Consider reintroducing kPause and cleanup use of
   // mutually exclusive pending_play_ and pending_pause_ flags.
   enum class CompositorAction { kNone, kStart, kCancel };
@@ -591,25 +637,17 @@ class CORE_EXPORT Animation : public EventTarget,
     USING_FAST_MALLOC(CompositorState);
 
    public:
-    // TODO(https://crbug.com/1166397): Convert composited animations to use
-    // AnimationTimeDelta for start_time_ and hold_time_.
     explicit CompositorState(Animation& animation)
-        : start_time(animation.start_time_
-                         ? std::make_optional(
-                               animation.start_time_.value().InSecondsF())
-                         : std::nullopt),
-          hold_time(animation.hold_time_
-                        ? std::make_optional(
-                              animation.hold_time_.value().InSecondsF())
-                        : std::nullopt),
+        : start_time(animation.start_time_),
+          hold_time(animation.hold_time_),
           playback_rate(animation.EffectivePlaybackRate()),
           pending_action(animation.start_time_ ? CompositorAction::kNone
                                                : CompositorAction::kStart) {}
     CompositorState(const CompositorState&) = delete;
     CompositorState& operator=(const CompositorState&) = delete;
 
-    std::optional<double> start_time;
-    std::optional<double> hold_time;
+    std::optional<AnimationTimeDelta> start_time;
+    std::optional<AnimationTimeDelta> hold_time;
     double playback_rate;
     bool effect_changed = false;
     CompositorAction pending_action;

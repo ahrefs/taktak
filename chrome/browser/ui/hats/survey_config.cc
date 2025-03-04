@@ -9,12 +9,18 @@
 #include "base/feature_list.h"
 #include "base/features.h"
 #include "base/strings/string_util.h"
+#include "chrome/browser/metrics/variations/google_groups_manager_factory.h"
+#include "chrome/browser/profiles/profile.h"
 #include "chrome/common/chrome_features.h"
 #include "components/autofill/core/common/autofill_features.h"
 #include "components/lens/lens_features.h"
+#include "components/page_info/core/features.h"
 #include "components/permissions/features.h"
 #include "components/permissions/permission_hats_trigger_helper.h"
+#include "components/plus_addresses/features.h"
+#include "components/plus_addresses/plus_address_hats_utils.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
+#include "components/variations/service/google_groups_manager.h"
 
 #if !BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/download/download_warning_desktop_hats_utils.h"
@@ -35,6 +41,8 @@
 constexpr char kHatsSurveyTriggerAutofillAddress[] = "autofill-address";
 constexpr char kHatsSurveyTriggerAutofillAddressUserPerception[] =
     "autofill-address-users-perception";
+constexpr char kHatsSurveyTriggerAutofillAddressUserDeclinedSuggestion[] =
+    "autofill-address-users-perception";
 constexpr char kHatsSurveyTriggerAutofillCreditCardUserPerception[] =
     "autofill-credit-card-users-perception";
 constexpr char kHatsSurveyTriggerAutofillPasswordUserPerception[] =
@@ -53,12 +61,8 @@ constexpr char kHatsSurveyTriggerDownloadWarningPageHeed[] =
     "download-warning-page-heed";
 constexpr char kHatsSurveyTriggerDownloadWarningPageIgnore[] =
     "download-warning-page-ignore";
+constexpr char kHatsSurveyTriggerHistoryEmbeddings[] = "history-embeddings";
 constexpr char kHatsSurveyTriggerLensOverlayResults[] = "lens-overlay-results";
-constexpr char kHatsSurveyTriggerM1AdPrivacyPage[] = "m1-ad-privacy-page";
-constexpr char kHatsSurveyTriggerM1TopicsSubpage[] = "m1-topics-subpage";
-constexpr char kHatsSurveyTriggerM1FledgeSubpage[] = "m1-fledge-subpage";
-constexpr char kHatsSurveyTriggerM1AdMeasurementSubpage[] =
-    "m1-ad-measurement-subpage";
 constexpr char kHatsSurveyTriggerNtpModules[] = "ntp-modules";
 constexpr char kHatsSurveyTriggerNtpPhotosModuleOptOut[] =
     "ntp-photos-module-opt-out";
@@ -84,14 +88,6 @@ constexpr char kHatsSurveyTriggerSafetyHubOneOffExperimentInteraction[] =
 constexpr char kHatsSurveyTriggerSettings[] = "settings";
 constexpr char kHatsSurveyTriggerSettingsPrivacy[] = "settings-privacy";
 constexpr char kHatsSurveyTriggerSettingsSecurity[] = "settings-security";
-constexpr char kHatsSurveyTriggerTrustSafetyPrivacySandbox4ConsentAccept[] =
-    "ts-ps4-consent-accept";
-constexpr char kHatsSurveyTriggerTrustSafetyPrivacySandbox4ConsentDecline[] =
-    "ts-ps4-consent-decline";
-constexpr char kHatsSurveyTriggerTrustSafetyPrivacySandbox4NoticeOk[] =
-    "ts-ps4-notice-ok";
-constexpr char kHatsSurveyTriggerTrustSafetyPrivacySandbox4NoticeSettings[] =
-    "ts-ps4-notice-settings";
 constexpr char kHatsSurveyTriggerTrustSafetyPrivacySettings[] =
     "ts-privacy-settings";
 constexpr char kHatsSurveyTriggerTrustSafetyTrustedSurface[] =
@@ -118,14 +114,6 @@ constexpr char kHatsSurveyTriggerTrustSafetyV2TrustedSurface[] =
     "ts-v2-trusted-surface";
 constexpr char kHatsSurveyTriggerTrustSafetyV2PrivacyGuide[] =
     "ts-v2-privacy-guide";
-constexpr char kHatsSurveyTriggerTrustSafetyV2PrivacySandbox4ConsentAccept[] =
-    "ts-v2-ps4-consent-accept";
-constexpr char kHatsSurveyTriggerTrustSafetyV2PrivacySandbox4ConsentDecline[] =
-    "ts-v2-ps4-consent-decline";
-constexpr char kHatsSurveyTriggerTrustSafetyV2PrivacySandbox4NoticeOk[] =
-    "ts-v2-ps4-notice-ok";
-constexpr char kHatsSurveyTriggerTrustSafetyV2PrivacySandbox4NoticeSettings[] =
-    "ts-v2-ps4-notice-settings";
 constexpr char kHatsSurveyTriggerTrustSafetyV2SafeBrowsingInterstitial[] =
     "ts-v2-safe-browsing-interstitial";
 constexpr char kHatsSurveyTriggerWallpaperSearch[] = "wallpaper-search";
@@ -133,8 +121,12 @@ constexpr char kHatsSurveyTriggerWallpaperSearch[] = "wallpaper-search";
 #else   // BUILDFLAG(IS_ANDROID)
 constexpr char kHatsSurveyTriggerAndroidStartupSurvey[] = "startup_survey";
 constexpr char kHatsSurveyTriggerQuickDelete[] = "quick_delete_survey";
+constexpr char kHatsSurveyTriggerClearBrowsingData[] =
+    "clear_browsing_data_survey";
 constexpr char kHatsSurveyTriggerSafetyHubAndroid[] =
     "safety_hub_android_survey";
+constexpr char kHatsSurveyOrganicTriggerSafetyHubAndroid[] =
+    "safety_hub_android_organic_survey";
 #endif  // #if !BUILDFLAG(IS_ANDROID)
 
 #if BUILDFLAG(ENABLE_COMPOSE)
@@ -150,8 +142,32 @@ constexpr char kHatsNextSurveyTriggerIDTesting[] =
     "HLpeYy5Av0ugnJ3q1cK0XzzA8UHv";
 
 constexpr char kHatsSurveyTriggerPermissionsPrompt[] = "permissions-prompt";
+constexpr char kHatsSurveyTriggerPlusAddressAcceptedFirstTimeCreate[] =
+    "plus-address-accepted-first-time-create";
+constexpr char kHatsSurveyTriggerPlusAddressCreatedMultiplePlusAddresses[] =
+    "plus-address-created-multiple-plus_addresses";
+constexpr char
+    kHatsSurveyTriggerPlusAddressCreatedPlusAddressViaManualFallback[] =
+        "plus-address-created-plus-address-via-manual-fallback";
+constexpr char kHatsSurveyTriggerPlusAddressDeclinedFirstTimeCreate[] =
+    "plus-address-declined-first-time-create";
+constexpr char
+    kHatsSurveyTriggerPlusAddressDidChooseEmailOverPlusAddressSurvey[] =
+        "plus-address-did-choose-email-over-plus-address";
+constexpr char
+    kHatsSurveyTriggerPlusAddressDidChoosePlusAddressOverEmailSurvey[] =
+        "plus-address-did-choose-plus-address-over-email";
+constexpr char
+    kHatsSurveyTriggerPlusAddressFilledPlusAddressViaManualFallback[] =
+        "plus-address-filled-plus-address-via-manual-fallback";
 constexpr char kHatsSurveyTriggerPrivacySandboxSentimentSurvey[] =
     "privacy-sandbox-sentiment-survey";
+constexpr char kHatsSurveyTriggerMerchantTrustEvaluationControlSurvey[] =
+    "merchant-trust-evaluation-control-survey";
+constexpr char kHatsSurveyTriggerMerchantTrustEvaluationExperimentSurvey[] =
+    "merchant-trust-evaluation-experiment-survey";
+constexpr char kHatsSurveyTriggerMerchantTrustLearnSurvey[] =
+    "merchant-trust-learn-survey";
 
 namespace {
 
@@ -205,7 +221,8 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
       /*product_specific_bits_data_fields=*/
       std::vector<std::string>{"Topics enabled", "Protected audience enabled",
                                "Measurement enabled", "Signed in"},
-      /*product_specific_string_data_fields=*/std::vector<std::string>{},
+      /*product_specific_string_data_fields=*/
+      std::vector<std::string>{"Channel"},
       /*log_responses_to_uma=*/true,
       /*log_responses_to_ukm=*/true);
 
@@ -243,42 +260,28 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
       /*presupplied_trigger_id=*/
       features::kHappinessTrackingSurveysForSecurityPageTriggerId.Get(),
       std::vector<std::string>{},
-      std::vector<std::string>{
-          "Security Page User Action", "Safe Browsing Setting Before Trigger",
-          "Safe Browsing Setting After Trigger", "Client Channel",
-          "Time On Page", "Friendlier Safe Browsing Settings"});
+      std::vector<std::string>{"Security Page User Action",
+                               "Safe Browsing Setting Before Trigger",
+                               "Safe Browsing Setting After Trigger",
+                               "Client Channel", "Time On Page"});
   survey_configs.emplace_back(
       &features::kHappinessTrackingSurveysForDesktopPrivacyGuide,
       kHatsSurveyTriggerPrivacyGuide);
-
-  const auto ad_privacy_product_specific_bits_data =
-      std::vector<std::string>{"3P cookies blocked", "Topics enabled",
-                               "Fledge enabled", "Ad Measurement enabled"};
-  survey_configs.emplace_back(
-      &features::kHappinessTrackingSurveysForDesktopM1AdPrivacyPage,
-      kHatsSurveyTriggerM1AdPrivacyPage,
-      /*presupplied_trigger_id=*/std::nullopt,
-      ad_privacy_product_specific_bits_data);
-  survey_configs.emplace_back(
-      &features::kHappinessTrackingSurveysForDesktopM1TopicsSubpage,
-      kHatsSurveyTriggerM1TopicsSubpage,
-      /*presupplied_trigger_id=*/std::nullopt,
-      ad_privacy_product_specific_bits_data);
-  survey_configs.emplace_back(
-      &features::kHappinessTrackingSurveysForDesktopM1FledgeSubpage,
-      kHatsSurveyTriggerM1FledgeSubpage,
-      /*presupplied_trigger_id=*/std::nullopt,
-      ad_privacy_product_specific_bits_data);
-  survey_configs.emplace_back(
-      &features::kHappinessTrackingSurveysForDesktopM1AdMeasurementSubpage,
-      kHatsSurveyTriggerM1AdMeasurementSubpage,
-      /*presupplied_trigger_id=*/std::nullopt,
-      ad_privacy_product_specific_bits_data);
 
   // NTP modules survey.
   survey_configs.emplace_back(
       &features::kHappinessTrackingSurveysForDesktopNtpModules,
       kHatsSurveyTriggerNtpModules);
+
+  // History embeddings survey.
+  survey_configs.emplace_back(
+      &features::kHappinessTrackingSurveysForHistoryEmbeddings,
+      kHatsSurveyTriggerHistoryEmbeddings,
+      /*presupplied_trigger_id=*/std::nullopt,
+      std::vector<std::string>{"non empty results",
+                               "best matches result clicked", "result clicked",
+                               "answer shown", "answer citation clicked"},
+      std::vector<std::string>{"query word count"});
 
   // NTP Photos module opt-out survey.
   survey_configs.emplace_back(
@@ -301,28 +304,6 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
       kHatsSurveyTriggerTrustSafetyTransactions,
       features::kTrustSafetySentimentSurveyTransactionsTriggerId.Get(),
       std::vector<std::string>{"Saved password"});
-  survey_configs.emplace_back(
-      &features::kTrustSafetySentimentSurvey,
-      kHatsSurveyTriggerTrustSafetyPrivacySandbox4ConsentAccept,
-      features::kTrustSafetySentimentSurveyPrivacySandbox4ConsentAcceptTriggerId
-          .Get());
-  survey_configs.emplace_back(
-      &features::kTrustSafetySentimentSurvey,
-      kHatsSurveyTriggerTrustSafetyPrivacySandbox4ConsentDecline,
-      features::
-          kTrustSafetySentimentSurveyPrivacySandbox4ConsentDeclineTriggerId
-              .Get());
-  survey_configs.emplace_back(
-      &features::kTrustSafetySentimentSurvey,
-      kHatsSurveyTriggerTrustSafetyPrivacySandbox4NoticeOk,
-      features::kTrustSafetySentimentSurveyPrivacySandbox4NoticeOkTriggerId
-          .Get());
-  survey_configs.emplace_back(
-      &features::kTrustSafetySentimentSurvey,
-      kHatsSurveyTriggerTrustSafetyPrivacySandbox4NoticeSettings,
-      features::
-          kTrustSafetySentimentSurveyPrivacySandbox4NoticeSettingsTriggerId
-              .Get());
 
   // Trust & Safety Sentiment surveys - Version 2.
   survey_configs.emplace_back(
@@ -397,29 +378,6 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
       features::kTrustSafetySentimentSurveyV2PrivacyGuideTriggerId.Get());
   survey_configs.emplace_back(
       &features::kTrustSafetySentimentSurveyV2,
-      kHatsSurveyTriggerTrustSafetyV2PrivacySandbox4ConsentAccept,
-      features::
-          kTrustSafetySentimentSurveyV2PrivacySandbox4ConsentAcceptTriggerId
-              .Get());
-  survey_configs.emplace_back(
-      &features::kTrustSafetySentimentSurveyV2,
-      kHatsSurveyTriggerTrustSafetyV2PrivacySandbox4ConsentDecline,
-      features::
-          kTrustSafetySentimentSurveyV2PrivacySandbox4ConsentDeclineTriggerId
-              .Get());
-  survey_configs.emplace_back(
-      &features::kTrustSafetySentimentSurveyV2,
-      kHatsSurveyTriggerTrustSafetyV2PrivacySandbox4NoticeOk,
-      features::kTrustSafetySentimentSurveyV2PrivacySandbox4NoticeOkTriggerId
-          .Get());
-  survey_configs.emplace_back(
-      &features::kTrustSafetySentimentSurveyV2,
-      kHatsSurveyTriggerTrustSafetyV2PrivacySandbox4NoticeSettings,
-      features::
-          kTrustSafetySentimentSurveyV2PrivacySandbox4NoticeSettingsTriggerId
-              .Get());
-  survey_configs.emplace_back(
-      &features::kTrustSafetySentimentSurveyV2,
       kHatsSurveyTriggerTrustSafetyV2SafeBrowsingInterstitial,
       features::kTrustSafetySentimentSurveyV2SafeBrowsingInterstitialTriggerId
           .Get(),
@@ -432,7 +390,7 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
   survey_configs.emplace_back(
       &::autofill::features::kAutofillAddressUserPerceptionSurvey,
       kHatsSurveyTriggerAutofillAddressUserPerception, std::nullopt,
-      std::vector<std::string>{"granular filling available"},
+      std::vector<std::string>{},
       std::vector<std::string>{
           "Accepted fields", "Corrected to same type",
           "Corrected to a different type", "Corrected to an unknown type",
@@ -441,6 +399,10 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
           "Manually filled to an unknown type", "Total corrected",
           "Total filled", "Total unfilled", "Total manually filled",
           "Total number of fields"});
+
+  survey_configs.emplace_back(
+      &::autofill::features::kAutofillAddressUserDeclinedSuggestionSurvey,
+      kHatsSurveyTriggerAutofillAddressUserDeclinedSuggestion, std::nullopt);
 
   survey_configs.emplace_back(
       &::autofill::features::kAutofillCreditCardUserPerceptionSurvey,
@@ -613,8 +575,32 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
   survey_configs.emplace_back(
       &lens::features::kLensOverlaySurvey, kHatsSurveyTriggerLensOverlayResults,
       /*presupplied_trigger_id=*/std::nullopt, std::vector<std::string>{},
-      std::vector<std::string>{"Lens request flow ID"});
+      std::vector<std::string>{"ID that's tied to your Google Lens session"});
 
+  // Merchant trust surveys
+  survey_configs.emplace_back(
+      &page_info::kMerchantTrustEvaluationControlSurvey,
+      kHatsSurveyTriggerMerchantTrustEvaluationControlSurvey);
+
+  survey_configs.emplace_back(
+      &page_info::kMerchantTrustEvaluationExperimentSurvey,
+      kHatsSurveyTriggerMerchantTrustEvaluationExperimentSurvey);
+
+  // The reason for this survey params being set here instead of in a finch
+  // config is that our MerchantTrust config has 2 HaTS surveys, one manually
+  // triggered and one pop-up (default HaTS behavior), and the finch config only
+  // supports one HaTS survey per study group. e.g. There can't be 2
+  // features with same param names within the same group, hence we need to set
+  // the one of the surveys params here.
+  hats::SurveyConfig merchant_trust_learn_survey_config(
+      &page_info::kMerchantTrustLearnSurvey,
+      kHatsSurveyTriggerMerchantTrustLearnSurvey,
+      page_info::kMerchantTrustLearnSurveyTriggerId.Get());
+  merchant_trust_learn_survey_config.user_prompted =
+      page_info::kMerchantTrustLearnSurveyUserPrompted.Get();
+  merchant_trust_learn_survey_config.probability =
+      page_info::kMerchantTrustLearnSurveyProbability.Get();
+  survey_configs.push_back(merchant_trust_learn_survey_config);
 #else
   survey_configs.emplace_back(&chrome::android::kChromeSurveyNextAndroid,
                               kHatsSurveyTriggerAndroidStartupSurvey);
@@ -624,12 +610,172 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
       kHatsSurveyTriggerQuickDelete,
       chrome::android::kQuickDeleteAndroidSurveyTriggerId.Get());
 
+  survey_configs.emplace_back(&chrome::android::kClearBrowsingDataAndroidSurvey,
+                              kHatsSurveyTriggerClearBrowsingData);
+
+  std::vector<std::string> product_specific_bits_data_fields =
+      std::vector<std::string>{"Tapped card", "Has visited"};
+  std::vector<std::string> product_specific_string_data =
+      std::vector<std::string>{"Notification module type", "Global state"};
   survey_configs.emplace_back(
       &features::kSafetyHubAndroidSurvey, kHatsSurveyTriggerSafetyHubAndroid,
       features::kSafetyHubAndroidTriggerId.Get(),
-      /*product_specific_bits_data_fields=*/std::vector<std::string>{},
-      std::vector<std::string>{"Notification module type"});
+      product_specific_bits_data_fields, product_specific_string_data);
+  survey_configs.emplace_back(&features::kSafetyHubAndroidOrganicSurvey,
+                              kHatsSurveyOrganicTriggerSafetyHubAndroid,
+                              features::kSafetyHubAndroidOrganicTriggerId.Get(),
+                              product_specific_bits_data_fields,
+                              product_specific_string_data);
+
+  survey_configs.emplace_back(
+      &privacy_sandbox::kPrivacySandboxCctAdsNoticeSurvey,
+      "privacy-sandbox-cct-ads-notice-eea-control",
+      privacy_sandbox::kPrivacySandboxCctAdsNoticeSurveyControlEeaTriggerId
+          .Get());
+
+  survey_configs.emplace_back(
+      &privacy_sandbox::kPrivacySandboxCctAdsNoticeSurvey,
+      "privacy-sandbox-cct-ads-notice-eea-accepted",
+      privacy_sandbox::kPrivacySandboxCctAdsNoticeSurveyAcceptedEeaTriggerId
+          .Get());
+
+  survey_configs.emplace_back(
+      &privacy_sandbox::kPrivacySandboxCctAdsNoticeSurvey,
+      "privacy-sandbox-cct-ads-notice-eea-declined",
+      privacy_sandbox::kPrivacySandboxCctAdsNoticeSurveyDeclinedEeaTriggerId
+          .Get());
+
+  survey_configs.emplace_back(
+      &privacy_sandbox::kPrivacySandboxCctAdsNoticeSurvey,
+      "privacy-sandbox-cct-ads-notice-row-control",
+      privacy_sandbox::kPrivacySandboxCctAdsNoticeSurveyControlRowTriggerId
+          .Get());
+
+  survey_configs.emplace_back(
+      &privacy_sandbox::kPrivacySandboxCctAdsNoticeSurvey,
+      "privacy-sandbox-cct-ads-notice-row-acknowledged",
+      privacy_sandbox::kPrivacySandboxCctAdsNoticeSurveyAcknowledgedRowTriggerId
+          .Get());
+
 #endif  // #if !BUILDFLAG(IS_ANDROID)
+
+  survey_configs.emplace_back(
+      &autofill::features::kPlusAddressAcceptedFirstTimeCreateSurvey,
+      kHatsSurveyTriggerPlusAddressAcceptedFirstTimeCreate,
+      /*presupplied_trigger_id=*/std::nullopt,
+      /*product_specific_bits_data_fields=*/std::vector<std::string>{},
+      /*product_specific_string_data_fields=*/
+      std::vector<std::string>{
+          plus_addresses::hats::kPlusAddressesCount,
+          plus_addresses::hats::kFirstPlusAddressCreationTime,
+          plus_addresses::hats::kLastPlusAddressFillingTime});
+  survey_configs.back().SetCooldownPeriodOverride(base::Days(
+      base::FeatureParam<int>(
+          &autofill::features::kPlusAddressAcceptedFirstTimeCreateSurvey,
+          plus_addresses::hats::kCooldownOverrideDays, 0)
+          .Get()));
+
+  survey_configs.emplace_back(
+      &autofill::features::kPlusAddressDeclinedFirstTimeCreateSurvey,
+      kHatsSurveyTriggerPlusAddressDeclinedFirstTimeCreate,
+      /*presupplied_trigger_id=*/std::nullopt,
+      /*product_specific_bits_data_fields=*/std::vector<std::string>{},
+      /*product_specific_string_data_fields=*/
+      std::vector<std::string>{
+          plus_addresses::hats::kPlusAddressesCount,
+          plus_addresses::hats::kFirstPlusAddressCreationTime,
+          plus_addresses::hats::kLastPlusAddressFillingTime});
+  survey_configs.back().SetCooldownPeriodOverride(base::Days(
+      base::FeatureParam<int>(
+          &autofill::features::kPlusAddressDeclinedFirstTimeCreateSurvey,
+          plus_addresses::hats::kCooldownOverrideDays, 0)
+          .Get()));
+
+  survey_configs.emplace_back(
+      &autofill::features::kPlusAddressUserCreatedMultiplePlusAddressesSurvey,
+      kHatsSurveyTriggerPlusAddressCreatedMultiplePlusAddresses,
+      /*presupplied_trigger_id=*/std::nullopt,
+      /*product_specific_bits_data_fields=*/std::vector<std::string>{},
+      /*product_specific_string_data_fields=*/
+      std::vector<std::string>{
+          plus_addresses::hats::kPlusAddressesCount,
+          plus_addresses::hats::kFirstPlusAddressCreationTime,
+          plus_addresses::hats::kLastPlusAddressFillingTime});
+  survey_configs.back().SetCooldownPeriodOverride(
+      base::Days(base::FeatureParam<int>(
+                     &autofill::features::
+                         kPlusAddressUserCreatedMultiplePlusAddressesSurvey,
+                     plus_addresses::hats::kCooldownOverrideDays, 0)
+                     .Get()));
+
+  survey_configs.emplace_back(
+      &autofill::features::
+          kPlusAddressUserCreatedPlusAddressViaManualFallbackSurvey,
+      kHatsSurveyTriggerPlusAddressCreatedPlusAddressViaManualFallback,
+      /*presupplied_trigger_id=*/std::nullopt,
+      /*product_specific_bits_data_fields=*/std::vector<std::string>{},
+      /*product_specific_string_data_fields=*/
+      std::vector<std::string>{
+          plus_addresses::hats::kPlusAddressesCount,
+          plus_addresses::hats::kFirstPlusAddressCreationTime,
+          plus_addresses::hats::kLastPlusAddressFillingTime});
+  survey_configs.back().SetCooldownPeriodOverride(base::Days(
+      base::FeatureParam<int>(
+          &autofill::features::
+              kPlusAddressUserCreatedPlusAddressViaManualFallbackSurvey,
+          plus_addresses::hats::kCooldownOverrideDays, 0)
+          .Get()));
+
+  survey_configs.emplace_back(
+      &autofill::features::kPlusAddressUserDidChoosePlusAddressOverEmailSurvey,
+      kHatsSurveyTriggerPlusAddressDidChoosePlusAddressOverEmailSurvey,
+      /*presupplied_trigger_id=*/std::nullopt,
+      /*product_specific_bits_data_fields=*/std::vector<std::string>{},
+      /*product_specific_string_data_fields=*/
+      std::vector<std::string>{
+          plus_addresses::hats::kPlusAddressesCount,
+          plus_addresses::hats::kFirstPlusAddressCreationTime,
+          plus_addresses::hats::kLastPlusAddressFillingTime});
+  survey_configs.back().SetCooldownPeriodOverride(
+      base::Days(base::FeatureParam<int>(
+                     &autofill::features::
+                         kPlusAddressUserDidChoosePlusAddressOverEmailSurvey,
+                     plus_addresses::hats::kCooldownOverrideDays, 0)
+                     .Get()));
+
+  survey_configs.emplace_back(
+      &autofill::features::kPlusAddressUserDidChooseEmailOverPlusAddressSurvey,
+      kHatsSurveyTriggerPlusAddressDidChooseEmailOverPlusAddressSurvey,
+      /*presupplied_trigger_id=*/std::nullopt,
+      /*product_specific_bits_data_fields=*/std::vector<std::string>{},
+      /*product_specific_string_data_fields=*/
+      std::vector<std::string>{
+          plus_addresses::hats::kPlusAddressesCount,
+          plus_addresses::hats::kFirstPlusAddressCreationTime,
+          plus_addresses::hats::kLastPlusAddressFillingTime});
+  survey_configs.back().SetCooldownPeriodOverride(
+      base::Days(base::FeatureParam<int>(
+                     &autofill::features::
+                         kPlusAddressUserDidChooseEmailOverPlusAddressSurvey,
+                     plus_addresses::hats::kCooldownOverrideDays, 0)
+                     .Get()));
+
+  survey_configs.emplace_back(
+      &autofill::features::kPlusAddressFilledPlusAddressViaManualFallbackSurvey,
+      kHatsSurveyTriggerPlusAddressFilledPlusAddressViaManualFallback,
+      /*presupplied_trigger_id=*/std::nullopt,
+      /*product_specific_bits_data_fields=*/std::vector<std::string>{},
+      /*product_specific_string_data_fields=*/
+      std::vector<std::string>{
+          plus_addresses::hats::kPlusAddressesCount,
+          plus_addresses::hats::kFirstPlusAddressCreationTime,
+          plus_addresses::hats::kLastPlusAddressFillingTime});
+  survey_configs.back().SetCooldownPeriodOverride(
+      base::Days(base::FeatureParam<int>(
+                     &autofill::features::
+                         kPlusAddressFilledPlusAddressViaManualFallbackSurvey,
+                     plus_addresses::hats::kCooldownOverrideDays, 0)
+                     .Get()));
 
   return survey_configs;
 }
@@ -652,7 +798,8 @@ SurveyConfig::SurveyConfig(
     bool log_responses_to_ukm)
     : trigger(trigger),
       product_specific_bits_data_fields(product_specific_bits_data_fields),
-      product_specific_string_data_fields(product_specific_string_data_fields) {
+      product_specific_string_data_fields(product_specific_string_data_fields),
+      survey_feature(feature) {
   enabled = base::FeatureList::IsEnabled(*feature);
   if (!enabled) {
     return;
@@ -705,6 +852,38 @@ std::optional<uint64_t> SurveyConfig::ValidateHatsSurveyUkmId(
   return hats_survey_ukm_id.has_value() && hats_survey_ukm_id.value() > 0
              ? hats_survey_ukm_id
              : std::nullopt;
+}
+
+void SurveyConfig::SetCooldownPeriodOverride(
+    const base::TimeDelta& cooldown_period_override) {
+  if (!cooldown_period_override.is_zero()) {
+    cooldown_period_override_ = cooldown_period_override;
+  }
+}
+
+std::optional<base::TimeDelta> SurveyConfig::GetCooldownPeriodOverride(
+    Profile* profile) const {
+  if (!cooldown_period_override_) {
+    return std::nullopt;
+  }
+
+  GoogleGroupsManager* groups_manager =
+      GoogleGroupsManagerFactory::GetForBrowserContext(profile);
+
+  if (!groups_manager) {
+    return std::nullopt;
+  }
+
+  if (!groups_manager->IsFeatureEnabledForProfile(*survey_feature) ||
+      !groups_manager->IsFeatureGroupControlled(*survey_feature)) {
+    return std::nullopt;
+  }
+
+  return cooldown_period_override_;
+}
+
+bool SurveyConfig::IsCooldownOverrideEnabled(Profile* profile) const {
+  return GetCooldownPeriodOverride(profile).has_value();
 }
 
 void GetActiveSurveyConfigs(SurveyConfigs& survey_configs_by_triggers_) {

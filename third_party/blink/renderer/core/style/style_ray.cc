@@ -5,7 +5,7 @@
 #include "third_party/blink/renderer/core/style/style_ray.h"
 
 #include "third_party/blink/renderer/core/style/basic_shapes.h"
-#include "third_party/blink/renderer/platform/graphics/path.h"
+#include "third_party/blink/renderer/platform/geometry/path.h"
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size_f.h"
@@ -47,7 +47,7 @@ bool StyleRay::IsEqualAssumingSameType(const BasicShape& o) const {
 void StyleRay::GetPath(Path&, const gfx::RectF&, float) const {
   // ComputedStyle::ApplyMotionPathTransform cannot call GetPath
   // for rays as they may have infinite length.
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 namespace {

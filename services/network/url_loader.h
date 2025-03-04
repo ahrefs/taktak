@@ -33,6 +33,7 @@
 #include "net/base/upload_progress.h"
 #include "net/cookies/cookie_setting_override.h"
 #include "net/cookies/cookie_util.h"
+#include "net/socket/socket_tag.h"
 #include "net/traffic_annotation/network_traffic_annotation.h"
 #include "net/url_request/url_request.h"
 #include "services/network/attribution/attribution_request_helper.h"
@@ -46,6 +47,7 @@
 #include "services/network/public/mojom/accept_ch_frame_observer.mojom.h"
 #include "services/network/public/mojom/cookie_access_observer.mojom.h"
 #include "services/network/public/mojom/cross_origin_embedder_policy.mojom-forward.h"
+#include "services/network/public/mojom/device_bound_sessions.mojom.h"
 #include "services/network/public/mojom/devtools_observer.mojom.h"
 #include "services/network/public/mojom/fetch_api.mojom.h"
 #include "services/network/public/mojom/ip_address_space.mojom-forward.h"
@@ -134,43 +136,22 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
     base::WeakPtr<mojom::URLLoaderClient> sync_client_;
   };
 
-  // A subset of the fields in mojom::LoadInfo.
-  struct PartialLoadInfo final {
-    PartialLoadInfo() = default;
-    PartialLoadInfo(net::LoadStateWithParam load_state,
-                    net::UploadProgress upload_progress);
-
-    // Avoid accidentally copying this object as `load_state` contains a string.
-    PartialLoadInfo(const PartialLoadInfo&) = delete;
-    PartialLoadInfo& operator=(const PartialLoadInfo&) = delete;
-
-    // Moving it is good.
-    PartialLoadInfo(PartialLoadInfo&&) = default;
-    PartialLoadInfo& operator=(PartialLoadInfo&&) = default;
-
-    net::LoadStateWithParam load_state;
-    net::UploadProgress upload_progress;
-  };
-
-  // |delete_callback| tells the URLLoader's owner to destroy the URLLoader.
+  // `delete_callback` tells the URLLoader's owner to destroy the URLLoader.
   //
-  // |trust_token_helper_factory| must be non-null exactly when the request has
+  // `trust_token_helper_factory` must be non-null exactly when the request has
   // Trust Tokens parameters.
   //
   // The caller needs to guarantee that the pointers/references in the
-  // |context| will live longer than the constructed URLLoader.  One
+  // `context` will live longer than the constructed URLLoader.  One
   // (incomplete) reason why this guarantee is true in production code is that
-  // |context| is implemented by URLLoaderFactory which outlives the lifecycle
-  // of the URLLoader (and some pointers in |context| point to objects owned by
+  // `context` is implemented by URLLoaderFactory which outlives the lifecycle
+  // of the URLLoader (and some pointers in `context` point to objects owned by
   // URLLoaderFactory).
   //
-  // Pointers from the |url_loader_context| will be used if
-  // |dev_tools_observer|, |cookie_access_observer| or
-  // |url_loader_network_observer| are not provided.
-  //
-  // |third_party_cookies_enabled| is also false if all cookies are disabled.
-  // The mojom::kURLLoadOptionBlockThirdPartyCookies can be set or unset
-  // independently of this option.
+  // Pointers from the `url_loader_context` will be used if
+  // `dev_tools_observer`, `cookie_access_observer`,
+  // `url_loader_network_observer`, or `device_bound_session_observer`
+  // are not provided.
   URLLoader(
       URLLoaderContext& context,
       DeleteCallback delete_callback,
@@ -192,6 +173,8 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
       mojo::PendingRemote<mojom::URLLoaderNetworkServiceObserver>
           url_loader_network_observer,
       mojo::PendingRemote<mojom::DevToolsObserver> devtools_observer,
+      mojo::PendingRemote<mojom::DeviceBoundSessionAccessObserver>
+          device_bound_session_access_observer,
       mojo::PendingRemote<mojom::AcceptCHFrameObserver>
           accept_ch_frame_observer,
       std::unique_ptr<AttributionRequestHelper> attribution_request_helper,
@@ -210,8 +193,6 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
       const std::optional<GURL>& new_url) override;
   void SetPriority(net::RequestPriority priority,
                    int32_t intra_priority_value) override;
-  void PauseReadingBodyFromNet() override;
-  void ResumeReadingBodyFromNet() override;
 
   // net::URLRequest::Delegate implementation:
   int OnConnected(net::URLRequest* url_request,
@@ -314,14 +295,6 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
 
   void SetEnableReportingRawHeaders(bool enable);
 
-  // Returns a subset of the info in mojom::LoadInfo. This is sufficient to make
-  // a decision on whether to call CreateLoadInfo() for this loader.
-  PartialLoadInfo GetPartialLoadInfo() const;
-
-  // Returns a mojom::LoadInfo, reusing the data returned by
-  // GetPartialLoadInfo().
-  mojom::LoadInfoPtr CreateLoadInfo(const PartialLoadInfo& partial_load_info);
-
   // Gets the URLLoader associated with this request.
   static URLLoader* ForRequest(const net::URLRequest& request);
 
@@ -334,9 +307,13 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
       bool automatically_assign_isolation_info,
       const ResourceRequest& request);
 
+  // Computes the CookieSettingOverrides to use for a given `ResourceRequest`.
+  // May also emit to histograms.
   static net::CookieSettingOverrides CalculateCookieSettingOverrides(
       net::CookieSettingOverrides factory_overrides,
-      const ResourceRequest& request);
+      net::CookieSettingOverrides devtools_overrides,
+      const ResourceRequest& request,
+      bool emit_metrics);
 
  private:
   // This class is used to set the URLLoader as user data on a URLRequest. This
@@ -385,14 +362,15 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
       bool force_main_frame_for_same_site_cookies,
       net::SecureDnsPolicy secure_dns_policy,
       net::HttpRequestHeaders extra_request_headers,
-      const std::optional<std::vector<net::SourceStream::SourceType>>&
+      const std::optional<std::vector<net::SourceStreamType>>&
           accepted_stream_types,
       const std::optional<url::Origin>& initiator,
       net::RedirectInfo::FirstPartyURLPolicy first_party_url_policy,
       int request_load_flags,
       bool priority_incremental,
       net::CookieSettingOverrides cookie_setting_overrides,
-      std::optional<net::SharedDictionaryGetter> shared_dictionary_getter);
+      std::optional<net::SharedDictionaryGetter> shared_dictionary_getter,
+      net::SocketTag socket_tag);
 
   void OpenFilesForUpload(const ResourceRequest& request);
   void SetUpUpload(const ResourceRequest& request,
@@ -544,9 +522,35 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
   // concluding the request's Trust Tokens, Attribution, and/or Shared Storage
   // operations.
   void ContinueOnResponseStarted();
+  // Invoked either by the pipe creation success callback, or by
+  // `ContinueOnResponseStarted` when no mojo pipe is needed (thus no need to
+  // use to wait on it).
+  void ContinueOnResponseStartedImmediately();
   void MaybeSendTrustTokenOperationResultToDevTools();
 
   void ScheduleStart();
+
+  using PrepareDataPipeSuccessCallback =
+      base::OnceCallback<void(mojo::ScopedDataPipeProducerHandle,
+                              mojo::ScopedDataPipeConsumerHandle)>;
+  // Prepares the mojo data pipe that will be used to send the body data to the
+  // URLLoaderClient. Can be invoked on any sequence.
+  static void PrepareDataPipe(PrepareDataPipeSuccessCallback success_cb,
+                              base::OnceClosure error_cb);
+  // Invoked by `PrepareDataPipe`. Should run on the sequence where `this`
+  // lives.
+  void OnPrepareDataPipeSuccess(
+      mojo::ScopedDataPipeProducerHandle producer_handle,
+      mojo::ScopedDataPipeConsumerHandle consumer_handle);
+  // Invoked by `PrepareDataPipe`. Should run on the sequence where `this`
+  // lives.
+  void OnPrepareDataPipeError();
+  // Sets up this object's pipe handles. Invoked from `OnPrepareDataPipeSuccess`
+  // or `ContinueOnResponseStarted`, whichever comes last.
+  void SetupPipeHandlesAndWatchers(
+      mojo::ScopedDataPipeProducerHandle producer_handle,
+      mojo::ScopedDataPipeConsumerHandle consumer_handle);
+
   void ReadMore();
   void DidRead(int num_bytes,
                bool completed_synchronously,
@@ -652,7 +656,6 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
   const raw_ptr<mojom::NetworkContextClient> network_context_client_;
   DeleteCallback delete_callback_;
 
-  int32_t options_;
   const int resource_type_;
   const bool is_load_timing_enabled_;
   bool has_received_response_ = false;
@@ -660,8 +663,9 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
   // URLLoaderFactory is guaranteed to outlive URLLoader, so it is safe to
   // store a raw pointer to mojom::URLLoaderFactoryParams.
   const raw_ref<const mojom::URLLoaderFactoryParams> factory_params_;
-  // This also belongs to URLLoaderFactory and outlives this loader.
+  // The following also belong to URLLoaderFactory and outlives this loader.
   const raw_ptr<mojom::CrossOriginEmbedderPolicyReporter> coep_reporter_;
+  const raw_ptr<mojom::DocumentIsolationPolicyReporter> dip_reporter_;
 
   const int32_t request_id_;
   const int keepalive_request_size_;
@@ -728,9 +732,7 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
   // renderer.
   const std::optional<std::string> devtools_request_id_;
 
-  bool should_pause_reading_body_ = false;
-  // The response body stream is open, but transferring data is paused.
-  bool paused_reading_body_ = false;
+  const int32_t options_;
 
   // This is used to compute the delta since last time received
   // encoded body size was reported to the client.
@@ -743,6 +745,8 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
 
   const mojom::RequestDestination request_destination_ =
       mojom::RequestDestination::kEmpty;
+
+  const std::vector<std::string> expected_signatures_ = {};
 
   scoped_refptr<ResourceSchedulerClient> resource_scheduler_client_;
 
@@ -831,6 +835,10 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
       url_loader_network_observer_ = nullptr;
   const mojo::Remote<mojom::DevToolsObserver> devtools_observer_remote_;
   const raw_ptr<mojom::DevToolsObserver> devtools_observer_ = nullptr;
+  const mojo::Remote<mojom::DeviceBoundSessionAccessObserver>
+      device_bound_session_observer_remote_;
+  const raw_ptr<mojom::DeviceBoundSessionAccessObserver>
+      device_bound_session_observer_ = nullptr;
 
   // Request helper responsible for processing Shared Storage headers
   // (https://github.com/WICG/shared-storage#from-response-headers).
@@ -865,6 +873,23 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) URLLoader
 
   // Keeps the result of IsSharedDictionaryReadAllowed(). Used only for metrics.
   bool shared_dictionary_allowed_check_passed_ = false;
+
+  // True if the async data pipe creation experiment is enabled.
+  bool create_data_pipe_async_ = false;
+
+  // Set to `true` once ContinueAndResponseStarted() is called. If
+  // OnPrepareDataPipeSuccess() finds that
+  // `was_continue_and_response_started_called_` is true it will call
+  // SetupPipeHandleAndWatchers() and ContinueOnResponseStartedImmediately().
+  bool was_continue_and_response_started_called_ = false;
+
+  // Stores the `consumer_handle` and the `produced_handle` if they become
+  // available while `was_continue_and_response_started_called_` is still
+  // false. If ContinueAndResponseStarted() finds that `pending_pipe_handles_`
+  // is set it will call SetupPipeHandlesAndWatches().
+  std::optional<std::pair<mojo::ScopedDataPipeProducerHandle,
+                          mojo::ScopedDataPipeConsumerHandle>>
+      pending_pipe_handles_;
 
   base::WeakPtrFactory<URLLoader> weak_ptr_factory_{this};
 };

@@ -56,7 +56,7 @@ network::mojom::blink::CSPSourceListPtr CSPSourceListIsolatedCopy(
       std::move(hashes), in->allow_self, in->allow_star, in->allow_inline,
       in->allow_inline_speculation_rules, in->allow_eval, in->allow_wasm_eval,
       in->allow_wasm_unsafe_eval, in->allow_dynamic, in->allow_unsafe_hashes,
-      in->report_sample);
+      in->report_sample, in->report_hash_algorithm);
 }
 
 HashMap<network::mojom::blink::CSPDirectiveName,
@@ -88,7 +88,7 @@ ContentSecurityPolicyIsolatedCopy(
           csp->header->type, csp->header->source),
       csp->use_reporting_api,
       CrossThreadCopier<Vector<String>>::Copy(csp->report_endpoints),
-      csp->require_trusted_types_for,
+      csp->require_sri_for, csp->require_trusted_types_for,
       csp->trusted_types ? network::mojom::blink::CSPTrustedTypes::New(
                                CrossThreadCopier<Vector<String>>::Copy(
                                    csp->trusted_types->list),

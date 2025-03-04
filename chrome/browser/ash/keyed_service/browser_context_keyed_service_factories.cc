@@ -11,7 +11,6 @@
 #include "chrome/browser/apps/app_discovery_service/app_discovery_service_factory.h"
 #include "chrome/browser/apps/app_service/publishers/arc_apps_factory.h"
 #include "chrome/browser/ash/accessibility/live_caption/system_live_caption_service_factory.h"
-#include "chrome/browser/ash/accessibility/live_caption/user_microphone_caption_service_factory.h"
 #include "chrome/browser/ash/account_manager/account_apps_availability_factory.h"
 #include "chrome/browser/ash/account_manager/account_manager_policy_controller_factory.h"
 #include "chrome/browser/ash/android_sms/android_sms_service_factory.h"
@@ -38,7 +37,6 @@
 #include "chrome/browser/ash/child_accounts/screen_time_controller_factory.h"
 #include "chrome/browser/ash/concierge_helper/concierge_helper_service.h"
 #include "chrome/browser/ash/crosapi/keystore_service_factory_ash.h"
-#include "chrome/browser/ash/crosapi/persistent_forced_extension_keep_alive.h"
 #include "chrome/browser/ash/crostini/ansible/ansible_management_service_factory.h"
 #include "chrome/browser/ash/crostini/crostini_export_import_factory.h"
 #include "chrome/browser/ash/crostini/crostini_installer_factory.h"
@@ -67,7 +65,6 @@
 #include "chrome/browser/ash/kcer/kcer_factory_ash.h"
 #include "chrome/browser/ash/kcer/nssdb_migration/pkcs12_migrator.h"
 #include "chrome/browser/ash/kerberos/kerberos_credentials_manager_factory.h"
-#include "chrome/browser/ash/lock_screen_apps/lock_screen_apps.h"
 #include "chrome/browser/ash/login/extensions/login_screen_extensions_content_script_manager_factory.h"
 #include "chrome/browser/ash/login/extensions/login_screen_extensions_lifetime_manager_factory.h"
 #include "chrome/browser/ash/login/lock/online_reauth/lock_screen_reauth_manager_factory.h"
@@ -111,10 +108,8 @@
 #include "chrome/browser/ash/scanning/scan_service_factory.h"
 #include "chrome/browser/ash/secure_channel/nearby_connector_factory.h"
 #include "chrome/browser/ash/smb_client/smb_service_factory.h"
-#include "chrome/browser/ash/sparky/sparky_manager_service_factory.h"
 #include "chrome/browser/ash/sync/sync_appsync_service_factory.h"
 #include "chrome/browser/ash/sync/sync_error_notifier_factory.h"
-#include "chrome/browser/ash/sync/sync_mojo_service_factory_ash.h"
 #include "chrome/browser/ash/system_web_apps/apps/personalization_app/personalization_app_manager_factory.h"
 #include "chrome/browser/ash/system_web_apps/system_web_app_manager_factory.h"
 #include "chrome/browser/ash/tether/tether_service_factory.h"
@@ -142,7 +137,6 @@ void EnsureBrowserContextKeyedServiceFactoriesBuilt() {
   AccountManagerPolicyControllerFactory::GetInstance();
   AdminTemplateServiceFactory::GetInstance();
   ash::AlwaysOnVpnPreConnectUrlAllowlistServiceFactory::GetInstance();
-  ash::SparkyManagerServiceFactory::GetInstance();
   android_sms::AndroidSmsServiceFactory::GetInstance();
   ApkWebAppServiceFactory::GetInstance();
   app_list::ArcVpnProviderManagerFactory::GetInstance();
@@ -167,7 +161,6 @@ void EnsureBrowserContextKeyedServiceFactoriesBuilt() {
   ChildUserServiceFactory::GetInstance();
   ConciergeHelperServiceFactory::GetInstance();
   crosapi::KeystoreServiceFactoryAsh::GetInstance();
-  crosapi::PersistentForcedExtensionKeepAliveFactory::GetInstance();
   CrosSpeechRecognitionServiceFactory::EnsureFactoryBuilt();
   crostini::AnsibleManagementServiceFactory::GetInstance();
   crostini::CrostiniExportImportFactory::GetInstance();
@@ -208,7 +201,6 @@ void EnsureBrowserContextKeyedServiceFactoriesBuilt() {
   kcer::Pkcs12MigratorFactory::GetInstance();
   KerberosCredentialsManagerFactory::GetInstance();
   KioskAppUpdateServiceFactory::GetInstance();
-  LockScreenAppsFactory::GetInstance();
   LockScreenReauthManagerFactory::GetInstance();
   LockedSessionWindowTrackerFactory::GetInstance();
   login::SecurityTokenSessionControllerFactory::GetInstance();
@@ -259,13 +251,11 @@ void EnsureBrowserContextKeyedServiceFactoriesBuilt() {
   SyncAppsyncServiceFactory::GetInstance();
   SyncedPrintersManagerFactory::GetInstance();
   SyncErrorNotifierFactory::GetInstance();
-  SyncMojoServiceFactoryAsh::GetInstance();
   SystemLiveCaptionServiceFactory::GetInstance();
   SystemWebAppManagerFactory::GetInstance();
   tether::TetherServiceFactory::GetInstance();
   TokenHandleFetcher::EnsureFactoryBuilt();
   TtsEngineExtensionObserverChromeOSFactory::GetInstance();
-  UserMicrophoneCaptionServiceFactory::GetInstance();
 }
 
 }  // namespace ash

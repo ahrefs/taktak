@@ -183,6 +183,13 @@ export enum MacroName {
   // Takes a screenshot.
   KEY_PRESS_SCREENSHOT = 52,
 
+  // Generates a synthetic triple left click event.
+  MOUSE_CLICK_LEFT_TRIPLE = 53,
+
+  // Toggles precision click. Note that this macro is not exposed to the user
+  // via FaceGaze settings, as it's a macro that we run under the hood.
+  TOGGLE_PRECISION_CLICK = 54,
+
   // Any new actions should match with Voice Access's semantic tags where
   // possible.
 }

@@ -5,9 +5,11 @@
 #include "chrome/browser/ui/views/webauthn/sheet_view_factory.h"
 
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "base/check.h"
+#include "base/feature_list.h"
 #include "base/notreached.h"
 #include "build/build_config.h"
 #include "chrome/browser/ui/autofill/payments/webauthn_dialog_model.h"
@@ -16,22 +18,23 @@
 #include "chrome/browser/ui/views/webauthn/authenticator_create_user_sheet_view.h"
 #include "chrome/browser/ui/views/webauthn/authenticator_gpm_arbitrary_pin_sheet_view.h"
 #include "chrome/browser/ui/views/webauthn/authenticator_gpm_pin_sheet_view.h"
+#include "chrome/browser/ui/views/webauthn/authenticator_hybrid_and_security_key_sheet_view.h"
 #include "chrome/browser/ui/views/webauthn/authenticator_multi_source_picker_sheet_view.h"
 #include "chrome/browser/ui/views/webauthn/authenticator_priority_mechanism_sheet_view.h"
-#include "chrome/browser/ui/views/webauthn/authenticator_qr_sheet_view.h"
 #include "chrome/browser/ui/views/webauthn/authenticator_request_sheet_view.h"
 #include "chrome/browser/ui/views/webauthn/authenticator_select_account_sheet_view.h"
 #include "chrome/browser/ui/views/webauthn/hover_list_view.h"
 #include "chrome/browser/ui/views/webauthn/passkey_detail_view.h"
 #include "chrome/browser/ui/webauthn/sheet_models.h"
 #include "chrome/browser/ui/webauthn/transport_hover_list_model.h"
-#include "chrome/browser/ui/webauthn/user_actions.h"
 #include "chrome/browser/webauthn/authenticator_request_dialog_model.h"
 #include "device/fido/features.h"
+#include "device/fido/fido_constants.h"
 #include "ui/gfx/text_constants.h"
 #include "ui/views/controls/label.h"
 #include "ui/views/layout/box_layout.h"
 #include "ui/views/layout/box_layout_view.h"
+#include "ui/views/style/typography.h"
 
 #if BUILDFLAG(IS_MAC)
 #include "chrome/browser/ui/views/webauthn/authenticator_touch_id_view.h"
@@ -219,8 +222,10 @@ std::unique_ptr<AuthenticatorRequestSheetView> CreateSheetViewForCurrentStepOf(
           std::make_unique<AuthenticatorPaaskSheetModel>(dialog_model));
       break;
     case Step::kCableV2QRCode:
-      sheet_view = std::make_unique<AuthenticatorQRSheetView>(
-          std::make_unique<AuthenticatorQRSheetModel>(dialog_model));
+      sheet_view =
+          std::make_unique<AuthenticatorHybridAndSecurityKeySheetView>(
+              std::make_unique<AuthenticatorHybridAndSecurityKeySheetModel>(
+                  dialog_model));
       break;
     case Step::kCableV2Connecting:
       sheet_view = std::make_unique<AuthenticatorRequestSheetView>(
@@ -293,29 +298,13 @@ std::unique_ptr<AuthenticatorRequestSheetView> CreateSheetViewForCurrentStepOf(
       sheet_view = std::make_unique<AuthenticatorSelectAccountSheetView>(
           std::make_unique<AuthenticatorSelectAccountSheetModel>(
               dialog_model,
-              AuthenticatorSelectAccountSheetModel::kPostUserVerification,
-              AuthenticatorSelectAccountSheetModel::kMultipleAccounts));
-      break;
-    case Step::kSelectSingleAccount:
-      sheet_view = std::make_unique<AuthenticatorSelectAccountSheetView>(
-          std::make_unique<AuthenticatorSelectAccountSheetModel>(
-              dialog_model,
-              AuthenticatorSelectAccountSheetModel::kPostUserVerification,
-              AuthenticatorSelectAccountSheetModel::kSingleAccount));
+              AuthenticatorSelectAccountSheetModel::kPostUserVerification));
       break;
     case Step::kPreSelectAccount:
       sheet_view = std::make_unique<AuthenticatorSelectAccountSheetView>(
           std::make_unique<AuthenticatorSelectAccountSheetModel>(
               dialog_model,
-              AuthenticatorSelectAccountSheetModel::kPreUserVerification,
-              AuthenticatorSelectAccountSheetModel::kMultipleAccounts));
-      break;
-    case Step::kPreSelectSingleAccount:
-      sheet_view = std::make_unique<AuthenticatorSelectAccountSheetView>(
-          std::make_unique<AuthenticatorSelectAccountSheetModel>(
-              dialog_model,
-              AuthenticatorSelectAccountSheetModel::kPreUserVerification,
-              AuthenticatorSelectAccountSheetModel::kSingleAccount));
+              AuthenticatorSelectAccountSheetModel::kPreUserVerification));
       break;
     case Step::kSelectPriorityMechanism:
       sheet_view = std::make_unique<AuthenticatorPriorityMechanismSheetView>(
@@ -397,8 +386,14 @@ std::unique_ptr<AuthenticatorRequestSheetView> CreateSheetViewForCurrentStepOf(
       sheet_view = std::make_unique<AuthenticatorRequestSheetView>(
           std::make_unique<AuthenticatorGPMLockedPinSheetModel>(dialog_model));
       break;
+    case Step::kErrorFetchingChallenge:
+      sheet_view = std::make_unique<AuthenticatorRequestSheetView>(
+          std::make_unique<AuthenticatorChallengeFetchErrorModel>(
+              dialog_model));
+      break;
     case Step::kNotStarted:
-    case Step::kConditionalMediation:
+    case Step::kPasskeyAutofill:
+    case Step::kPasskeyUpgrade:
     case Step::kClosed:
     case Step::kRecoverSecurityDomain:
     case Step::kGPMReauthForPinReset:

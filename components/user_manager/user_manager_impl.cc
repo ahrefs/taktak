@@ -6,6 +6,7 @@
 
 #include <stddef.h>
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <set>
@@ -26,7 +27,6 @@
 #include "base/memory/ptr_util.h"
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/system/sys_info.h"
@@ -36,22 +36,18 @@
 #include "chromeos/ash/components/install_attributes/install_attributes.h"
 #include "chromeos/ash/components/settings/cros_settings.h"
 #include "chromeos/ash/components/settings/cros_settings_names.h"
+#include "chromeos/ash/components/settings/user_login_permission_tracker.h"
 #include "components/crash/core/common/crash_key.h"
-#include "components/pref_registry/pref_registry_syncable.h"
-#include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "components/user_manager/known_user.h"
 #include "components/user_manager/multi_user/multi_user_sign_in_policy.h"
-#include "components/user_manager/multi_user/multi_user_sign_in_policy_controller.h"
 #include "components/user_manager/user_directory_integrity_manager.h"
 #include "components/user_manager/user_manager_pref_names.h"
 #include "components/user_manager/user_names.h"
 #include "components/user_manager/user_type.h"
 #include "google_apis/gaia/gaia_auth_util.h"
 #include "ui/base/l10n/l10n_util.h"
-#include "ui/base/resource/resource_bundle.h"
-#include "ui/chromeos/resources/grit/ui_chromeos_resources.h"
 #include "ui/gfx/image/image_skia.h"
 
 namespace user_manager {
@@ -86,12 +82,6 @@ UserType GetStoredUserType(const base::Value::Dict& prefs_user_types,
   return static_cast<UserType>(int_user_type);
 }
 
-std::unique_ptr<UserImage> CreateStubImage() {
-  return std::make_unique<user_manager::UserImage>(
-      *ui::ResourceBundle::GetSharedInstance().GetImageSkiaNamed(
-          IDR_LOGIN_DEFAULT_USER));
-}
-
 bool IsDeviceLocalAccountChanged(
     const UserList& users,
     const base::span<UserManager::DeviceLocalAccountInfo>&
@@ -124,10 +114,6 @@ bool IsDeviceLocalAccountChanged(
 // static
 const char UserManagerImpl::kLegacySupervisedUsersHistogramName[] =
     "ChromeOS.LegacySupervisedUsers.HiddenFromLoginScreen";
-// static
-BASE_FEATURE(kRemoveLegacySupervisedUsersOnStartup,
-             "RemoveLegacySupervisedUsersOnStartup",
-             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // static
 const char UserManagerImpl::kDeprecatedArcKioskUsersHistogramName[] =
@@ -137,54 +123,17 @@ BASE_FEATURE(kRemoveDeprecatedArcKioskUsersOnStartup,
              "RemoveDeprecatedArcKioskUsersOnStartup",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
-// static
-void UserManagerImpl::RegisterPrefs(PrefRegistrySimple* registry) {
-  registry->RegisterListPref(prefs::kRegularUsersPref);
-  registry->RegisterStringPref(prefs::kLastLoggedInGaiaUser, std::string());
-  registry->RegisterDictionaryPref(prefs::kUserDisplayName);
-  registry->RegisterDictionaryPref(prefs::kUserGivenName);
-  registry->RegisterDictionaryPref(prefs::kUserDisplayEmail);
-  registry->RegisterDictionaryPref(prefs::kUserOAuthTokenStatus);
-  registry->RegisterDictionaryPref(prefs::kUserForceOnlineSignin);
-  registry->RegisterDictionaryPref(prefs::kUserType);
-  registry->RegisterStringPref(prefs::kLastActiveUser, std::string());
-  registry->RegisterDictionaryPref(prefs::kOwnerAccount);
-
-  registry->RegisterListPref(prefs::kDeviceLocalAccountsWithSavedData);
-  registry->RegisterStringPref(prefs::kDeviceLocalAccountPendingDataRemoval,
-                               std::string());
-
-  UserDirectoryIntegrityManager::RegisterLocalStatePrefs(registry);
-  KnownUser::RegisterPrefs(registry);
-  MultiUserSignInPolicyController::RegisterPrefs(registry);
-}
-
-// static
-void UserManagerImpl::RegisterProfilePrefs(PrefRegistrySimple* registry) {
-  registry->RegisterStringPref(prefs::kMultiProfileUserBehaviorPref,
-                               std::string(MultiUserSignInPolicyToPrefValue(
-                                   MultiUserSignInPolicy::kUnrestricted)));
-  registry->RegisterBooleanPref(
-      prefs::kMultiProfileNeverShowIntro, false,
-      user_prefs::PrefRegistrySyncable::SYNCABLE_OS_PREF);
-  registry->RegisterBooleanPref(
-      prefs::kMultiProfileWarningShowDismissed, false,
-      user_prefs::PrefRegistrySyncable::SYNCABLE_OS_PREF);
-}
-
-UserManagerImpl::UserManagerImpl(
-    std::unique_ptr<Delegate> delegate,
-    PrefService* local_state,
-    ash::CrosSettings* cros_settings)
+UserManagerImpl::UserManagerImpl(std::unique_ptr<Delegate> delegate,
+                                 PrefService* local_state,
+                                 ash::CrosSettings* cros_settings)
     : delegate_(std::move(delegate)),
       local_state_(local_state),
-      cros_settings_(cros_settings),
-      multi_user_sign_in_policy_controller_(local_state, this) {
+      cros_settings_(cros_settings) {
   // |local_state| can be nullptr only for testing.
   if (!local_state) {
     CHECK_IS_TEST();
   }
-  UpdateCrashKey(0, std::nullopt);
+  UpdateNumLoggedInUsersCrashKey(0);
 }
 
 UserManagerImpl::~UserManagerImpl() = default;
@@ -193,8 +142,8 @@ void UserManagerImpl::Shutdown() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 }
 
-const UserList& UserManagerImpl::GetUsers() const {
-  return users_;
+const UserList& UserManagerImpl::GetPersistedUsers() const {
+  return persisted_users_;
 }
 
 UserList UserManagerImpl::GetUsersAllowedForMultiUserSignIn() const {
@@ -211,7 +160,7 @@ UserList UserManagerImpl::GetUsersAllowedForMultiUserSignIn() const {
   }
 
   user_manager::UserList result;
-  for (user_manager::User* user : GetUsers()) {
+  for (user_manager::User* user : persisted_users_) {
     if (user->GetType() == UserType::kRegular && !user->is_logged_in()) {
       // Users with a policy that prevents them being added to a session will be
       // shown in login UI but will be grayed out.
@@ -284,7 +233,7 @@ UserList UserManagerImpl::GetUnlockUsers() const {
     if (policy == MultiUserSignInPolicy::kUnrestricted && user->CanLock()) {
       unlock_users.push_back(user);
     } else if (policy == MultiUserSignInPolicy::kPrimaryOnly) {
-      NOTREACHED_IN_MIGRATION()
+      NOTREACHED()
           << "Spotted primary-only multi-user policy for non-primary user";
     }
   }
@@ -324,100 +273,122 @@ void UserManagerImpl::UserLoggedIn(const AccountId& account_id,
     last_session_active_account_id_initialized_ = true;
   }
 
-  User* user = FindUserInListAndModify(account_id);
+  bool is_primary_login = logged_in_users_.empty();
+  // For primary login case, i.e., there was no previous login, so there should
+  // be no active user. Otherwise, there was some previous login, so there
+  // should be an active user.
+  CHECK_EQ(!active_user_, is_primary_login);
 
-  const UserType user_type =
-      CalculateUserType(account_id, user, browser_restart, is_child);
-  if (active_user_ && user) {
-    user->set_is_logged_in(true);
-    user->set_username_hash(username_hash);
-    logged_in_users_.push_back(user);
-    lru_logged_in_users_.push_back(user);
+  User* user = FindUserAndModify(account_id);
+  CHECK(user);
+  OnUserLoggedIn(*user, username_hash);
 
-    // Reset the new user flag if the user already exists.
-    SetIsCurrentUserNew(false);
-    UpdateCrashKey(logged_in_users_.size(), std::nullopt);
+  if (is_primary_login) {
+    OnPrimaryUserLoggedIn(*user);
+    OnActiveUserSwitched(*user);
+
+    local_state_->CommitPendingWrite();
+    NotifyOnLogin();
+  } else {
     SendMultiUserSignInMetrics();
-
-    // Special case for user session restoration after browser crash.
-    // We don't switch to each user session that has been restored as once all
-    // session will be restored we'll switch to the session that has been used
-    // before the crash.
-    if (!delegate_->IsUserSessionRestoreInProgress()) {
-      pending_user_switch_ = account_id;
-    }
     NotifyUserAddedToSession(user);
-
-    return;
   }
+}
 
+bool UserManagerImpl::EnsureUser(const AccountId& account_id,
+                                 UserType user_type,
+                                 bool is_ephemeral) {
+  User* user = FindUserInListAndModify(account_id);
   switch (user_type) {
     case UserType::kRegular:
-      [[fallthrough]];
     case UserType::kChild:
-      if (account_id != GetOwnerAccountId() && !user &&
-          (IsEphemeralAccountId(account_id) || browser_restart)) {
-        RegularUserLoggedInAsEphemeral(account_id, user_type);
-      } else {
-        RegularUserLoggedIn(account_id, user_type);
+      if (user) {
+        KnownUser known_user(local_state_.get());
+        // There already is a registered User, update the type as needed.
+        if (user->GetType() != user_type) {
+          user->SetType(user_type);
+          SaveUserType(user);
+          // Clear information about profile policy requirements to enforce
+          // setting it again for the new account type.
+          known_user.ClearProfileRequiresPolicy(account_id);
+        }
+        break;
       }
-      break;
+
+      // Ensure User is created.
+      if (is_ephemeral) {
+        user = AddEphemeralUser(account_id, user_type);
+      } else {
+        user = AddGaiaUser(account_id, user_type);
+      }
+      return true;
 
     case UserType::kGuest:
-      GuestUserLoggedIn();
-      break;
+      CHECK(!user);
+      user = AddGuestUser();
+      return true;
 
     case UserType::kPublicAccount:
       if (!user) {
-        user = User::CreatePublicAccountUser(account_id);
-        user_storage_.emplace_back(user);
+        user = AddPublicAccountUser(account_id);
+        return true;
       }
-      PublicAccountUserLoggedIn(user);
       break;
 
     case UserType::kKioskApp:
     case UserType::kWebKioskApp:
     case UserType::kKioskIWA:
-      KioskAppLoggedIn(user);
+      // Do nothing. User should be already there.
       break;
 
     default:
-      NOTREACHED_IN_MIGRATION() << "Unhandled usert type " << user_type;
+      NOTREACHED() << "Unhandled usert type " << user_type;
   }
+  CHECK(user);
+  return false;
+}
 
-  DCHECK(active_user_);
-  active_user_->set_is_logged_in(true);
-  active_user_->set_is_active(true);
-  active_user_->set_username_hash(username_hash);
+void UserManagerImpl::OnUserLoggedIn(User& user,
+                                     std::string_view username_hash) {
+  user.set_is_logged_in(true);
+  user.set_username_hash(username_hash);
+  logged_in_users_.push_back(&user);
+  UpdateNumLoggedInUsersCrashKey(logged_in_users_.size());
+  lru_logged_in_users_.push_back(&user);
+}
 
-  logged_in_users_.push_back(active_user_.get());
-  SetLRUUser(active_user_);
+void UserManagerImpl::OnPrimaryUserLoggedIn(User& user) {
+  CHECK(!primary_user_);
+  primary_user_ = &user;
 
-  if (!primary_user_) {
-    primary_user_ = active_user_;
-    delegate_->OverrideDirHome(*primary_user_);
-    if (primary_user_->HasGaiaAccount()) {
-      SendGaiaUserLoginMetrics(account_id);
+  const auto& account_id = user.GetAccountId();
+  delegate_->OverrideDirHome(user);
+  if (user.HasGaiaAccount()) {
+    // Move the user to the front of the list.
+    auto it = std::ranges::find(persisted_users_, account_id,
+                                [](auto& ptr) { return ptr->GetAccountId(); });
+    if (it != persisted_users_.end()) {
+      std::rotate(persisted_users_.begin(), it, it + 1);
+      ScopedListPrefUpdate prefs_users_update(local_state_.get(),
+                                              prefs::kRegularUsersPref);
+      prefs_users_update->clear();
+      for (const User* u : persisted_users_) {
+        if (u->HasGaiaAccount()) {
+          prefs_users_update->Append(u->GetAccountId().GetUserEmail());
+        }
+      }
     }
-  } else if (primary_user_ != active_user_) {
-    // This is only needed for tests where a new user session is created
-    // for non-existent user. The new user is created and automatically set
-    // to active and there will be no pending user switch in such case.
-    SetIsCurrentUserNew(true);
-    NotifyUserAddedToSession(active_user_);
+    SendGaiaUserLoginMetrics(account_id);
   }
 
-  base::UmaHistogramEnumeration("UserManager.LoginUserType",
-                                active_user_->GetType());
-
-  UpdateCrashKey(logged_in_users_.size(), active_user_->GetType());
+  base::UmaHistogramEnumeration("UserManager.LoginUserType", user.GetType());
+  UpdateSessionTypeCrashKey(user.GetType());
 
   local_state_->SetString(
       prefs::kLastLoggedInGaiaUser,
-      active_user_->HasGaiaAccount() ? account_id.GetUserEmail() : "");
+      user.HasGaiaAccount() ? account_id.GetUserEmail() : "");
 
-  delegate_->CheckProfileOnLogin(*active_user_);
-  NotifyOnLogin();
+  delegate_->CheckProfileOnLogin(user);
 }
 
 void UserManagerImpl::SwitchActiveUser(const AccountId& account_id) {
@@ -446,12 +417,7 @@ void UserManagerImpl::SwitchActiveUser(const AccountId& account_id) {
   }
 
   DCHECK(active_user_);
-  active_user_->set_is_active(false);
-  user->set_is_active(true);
-  active_user_ = user;
-
-  // Move the user to the front.
-  SetLRUUser(active_user_);
+  OnActiveUserSwitched(*user);
 
   NotifyActiveUserChanged(active_user_);
   NotifyLoginStateUpdated();
@@ -496,19 +462,19 @@ bool UserManagerImpl::UpdateDeviceLocalAccountUser(
   }
 
   // If the list of device local accounts has not changed, return.
-  if (!IsDeviceLocalAccountChanged(users_, device_local_accounts)) {
+  if (!IsDeviceLocalAccountChanged(persisted_users_, device_local_accounts)) {
     return false;
   }
 
   // Remove the old device local accounts from the user list.
   // Take snapshot because RemoveUserFromListImpl will update |user_|.
-  std::vector<User*> users(users_.begin(), users_.end());
+  std::vector<User*> users(persisted_users_.begin(), persisted_users_.end());
   for (User* user : users) {
     if (!user->IsDeviceLocalAccount()) {
       // Non device local account is not a target to be removed.
       continue;
     }
-    if (base::ranges::any_of(
+    if (std::ranges::any_of(
             device_local_accounts, [user](const DeviceLocalAccountInfo& info) {
               return info.user_id == user->GetAccountId().GetUserEmail() &&
                      info.type == user->GetType();
@@ -521,7 +487,7 @@ bool UserManagerImpl::UpdateDeviceLocalAccountUser(
       // pending removal, so it will be removed in the next turn.
       GetLocalState()->SetString(prefs::kDeviceLocalAccountPendingDataRemoval,
                                  user->GetAccountId().GetUserEmail());
-      std::erase(users_, user);
+      std::erase(persisted_users_, user);
       continue;
     }
 
@@ -535,20 +501,22 @@ bool UserManagerImpl::UpdateDeviceLocalAccountUser(
   for (size_t i = 0; i < device_local_accounts.size(); ++i) {
     const DeviceLocalAccountInfo& account = device_local_accounts[i];
     auto iter = std::find_if(
-        users_.begin() + i, users_.end(), [&account](const User* user) {
+        persisted_users_.begin() + i, persisted_users_.end(),
+        [&account](const User* user) {
           return user->GetAccountId().GetUserEmail() == account.user_id &&
                  user->GetType() == account.type;
         });
-    if (iter != users_.end()) {
-      // Found the instance. Rotate the `users_` to place the found user at
-      // the i-th position.
-      std::rotate(users_.begin() + i, iter, iter + 1);
+    if (iter != persisted_users_.end()) {
+      // Found the instance. Rotate the `persisted_users_` to place the found
+      // user at the i-th position.
+      std::rotate(persisted_users_.begin() + i, iter, iter + 1);
     } else {
       // Not found so create an instance.
       // Using `new` to access a non-public constructor.
       user_storage_.push_back(base::WrapUnique(
           new User(AccountId::FromUserEmail(account.user_id), account.type)));
-      users_.insert(users_.begin() + i, user_storage_.back().get());
+      persisted_users_.insert(persisted_users_.begin() + i,
+                              user_storage_.back().get());
     }
     if (account.display_name) {
       SaveUserDisplayName(AccountId::FromUserEmail(account.user_id),
@@ -568,7 +536,7 @@ void UserManagerImpl::RemoveUser(const AccountId& account_id,
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   UserDirectoryIntegrityManager integrity_manager(local_state_.get());
-  // Misconfigured user would not be included in GetUsers(),
+  // Misconfigured user would not be included in GetPersistedUsers(),
   // account for them separately.
   if (!CanUserBeRemoved(FindUser(account_id)) &&
       !integrity_manager.IsUserMisconfigured(account_id)) {
@@ -620,7 +588,7 @@ bool UserManagerImpl::RemoveStaleEphemeralUsers() {
   const auto owner_id = GetOwnerAccountId();
 
   // Take snapshot because DeleteUser called in the loop will update it.
-  std::vector<User*> users(users_.begin(), users_.end());
+  std::vector<User*> users(persisted_users_.begin(), persisted_users_.end());
   for (user_manager::User* user : users) {
     const AccountId account_id = user->GetAccountId();
     if (user->HasGaiaAccount() && account_id != owner_id &&
@@ -701,18 +669,22 @@ bool UserManagerImpl::IsKnownUser(const AccountId& account_id) const {
 
 const User* UserManagerImpl::FindUser(const AccountId& account_id) const {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  if (active_user_ && active_user_->GetAccountId() == account_id) {
-    return active_user_;
+  for (auto& user : user_storage_) {
+    if (user->GetAccountId() == account_id) {
+      return user.get();
+    }
   }
-  return FindUserInList(account_id);
+  return nullptr;
 }
 
 User* UserManagerImpl::FindUserAndModify(const AccountId& account_id) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  if (active_user_ && active_user_->GetAccountId() == account_id) {
-    return active_user_;
+  for (auto& user : user_storage_) {
+    if (user->GetAccountId() == account_id) {
+      return user.get();
+    }
   }
-  return FindUserInListAndModify(account_id);
+  return nullptr;
 }
 
 const User* UserManagerImpl::GetActiveUser() const {
@@ -1047,8 +1019,8 @@ bool UserManagerImpl::IsUserNonCryptohomeDataEphemeral(
 
   // Even though device-local accounts might be ephemeral (e.g. kiosk accounts),
   // non-cryptohome data of device-local accounts should be non-ephemeral.
-  if (const User* user = FindUser(account_id);
-      user && user->IsDeviceLocalAccount()) {
+  const User* user = FindUser(account_id);
+  if (user && user->IsDeviceLocalAccount()) {
     return false;
   }
 
@@ -1057,9 +1029,12 @@ bool UserManagerImpl::IsUserNonCryptohomeDataEphemeral(
   //    policy was enabled.
   //    - or -
   // b) The user logged into any other account type.
-  if (IsUserLoggedIn() && (account_id == GetActiveUser()->GetAccountId()) &&
-      (is_current_user_ephemeral_regular_user_ ||
-       !IsLoggedInAsUserWithGaiaAccount())) {
+  // TODO(crbug.com/278643115): The first condition may be redundant, because
+  // we already check it in UserExistsInList above.
+  if (user && user == active_user_ &&
+      ((user->GetType() == UserType::kRegular &&
+        std::ranges::find(persisted_users_, user) == persisted_users_.end()) ||
+       !user->HasGaiaAccount())) {
     return true;
   }
 
@@ -1100,8 +1075,7 @@ bool UserManagerImpl::IsEphemeralAccountId(const AccountId& account_id) const {
   }
 
   const bool device_is_owned =
-      ash::InstallAttributes::Get()->IsEnterpriseManaged() ||
-      GetOwnerAccountId().is_valid();
+      IsEnterpriseManaged() || GetOwnerAccountId().is_valid();
 
   return device_is_owned &&
          GetEphemeralModeConfig().IsAccountIdIncluded(account_id);
@@ -1217,8 +1191,8 @@ bool UserManagerImpl::IsGuestSessionAllowed() const {
 
 bool UserManagerImpl::IsGaiaUserAllowed(const User& user) const {
   DCHECK(user.HasGaiaAccount());
-  return cros_settings()->IsUserAllowlisted(user.GetAccountId().GetUserEmail(),
-                                            nullptr, user.GetType());
+  return ash::UserLoginPermissionTracker::Get()->IsUserAllowlisted(
+      user.GetAccountId().GetUserEmail(), nullptr, user.GetType());
 }
 
 bool UserManagerImpl::IsUserAllowed(const User& user) const {
@@ -1255,8 +1229,7 @@ bool UserManagerImpl::CanUserBeRemoved(const User* user) const {
   // in order not to remove an owner. However due to non-instant nature of
   // ownership assignment this later check may sometimes fail.
   // See http://crosbug.com/12723
-  if (users_.size() < 2 &&
-      !ash::InstallAttributes::Get()->IsEnterpriseManaged()) {
+  if (persisted_users_.size() < 2 && !IsEnterpriseManaged()) {
     return false;
   }
 
@@ -1293,12 +1266,6 @@ void UserManagerImpl::SetOwnerId(const AccountId& owner_account_id) {
   owner_account_id_ = owner_account_id;
   pending_owner_callbacks_.Notify(owner_account_id);
   NotifyLoginStateUpdated();
-}
-
-void UserManagerImpl::ProcessPendingUserSwitchId() {
-  if (pending_user_switch_.is_valid()) {
-    SwitchActiveUser(std::exchange(pending_user_switch_, EmptyAccountId()));
-  }
 }
 
 void UserManagerImpl::EnsureUsersLoaded() {
@@ -1355,10 +1322,10 @@ void UserManagerImpl::EnsureUsersLoaded() {
     user->set_using_saml(known_user.IsUsingSAML(*it));
 
     user_storage_.emplace_back(user);
-    users_.push_back(user);
+    persisted_users_.push_back(user);
   }
 
-  for (user_manager::User* user : users_) {
+  for (user_manager::User* user : persisted_users_) {
     auto& account_id = user->GetAccountId();
     const std::string* display_name =
         prefs_display_names.FindString(account_id.GetUserEmail());
@@ -1401,13 +1368,12 @@ void UserManagerImpl::LoadDeviceLocalAccounts(
     auto type =
         delegate_->GetDeviceLocalAccountUserType(account_id.GetUserEmail());
     if (!type.has_value()) {
-      NOTREACHED_IN_MIGRATION();
-      continue;
+      NOTREACHED();
     }
 
     // Using `new` to access a non-public constructor.
     user_storage_.push_back(base::WrapUnique(new User(account_id, *type)));
-    users_.push_back(user_storage_.back().get());
+    persisted_users_.push_back(user_storage_.back().get());
   }
 }
 
@@ -1430,14 +1396,13 @@ void UserManagerImpl::RemovePendingDeviceLocalAccount() {
 }
 
 UserList& UserManagerImpl::GetUsersAndModify() {
-  return users_;
+  return persisted_users_;
 }
 
 const User* UserManagerImpl::FindUserInList(const AccountId& account_id) const {
-  const UserList& users = GetUsers();
-  for (UserList::const_iterator it = users.begin(); it != users.end(); ++it) {
-    if ((*it)->GetAccountId() == account_id) {
-      return *it;
+  for (const User* user : persisted_users_) {
+    if (user->GetAccountId() == account_id) {
+      return user;
     }
   }
   return nullptr;
@@ -1465,85 +1430,52 @@ User* UserManagerImpl::FindUserInListAndModify(const AccountId& account_id) {
   return nullptr;
 }
 
-void UserManagerImpl::GuestUserLoggedIn() {
+// TODO(crbug.com/278643115): Verify AccountId uniqueness in the following
+// User creation methods.
+
+User* UserManagerImpl::AddGaiaUser(const AccountId& account_id,
+                                   UserType user_type) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  auto* user = User::CreateGuestUser(GuestAccountId());
-  user->SetStubImage(CreateStubImage(), UserImage::Type::kInvalid,
-                     /*is_loading=*/false);
-  user_storage_.emplace_back(user);
-  active_user_ = user;
-}
-
-void UserManagerImpl::AddUserRecord(User* user) {
-  // Add the user to the front of the user list.
-  ScopedListPrefUpdate prefs_users_update(local_state_.get(),
-                                          prefs::kRegularUsersPref);
-  prefs_users_update->Insert(prefs_users_update->begin(),
-                             base::Value(user->GetAccountId().GetUserEmail()));
-  users_.insert(users_.begin(), user);
-}
-
-void UserManagerImpl::RegularUserLoggedIn(const AccountId& account_id,
-                                          const UserType user_type) {
-  // Remove the user from the user list.
-  active_user_ =
-      RemoveRegularOrSupervisedUserFromList(account_id, false /* notify */);
-  KnownUser known_user(local_state_.get());
-
-  if (active_user_ && active_user_->GetType() != user_type) {
-    active_user_->UpdateType(user_type);
-    // Clear information about profile policy requirements to enforce setting it
-    // again for the new account type.
-    known_user.ClearProfileRequiresPolicy(account_id);
-  }
-
-  // If the user was not found on the user list, create a new user.
-  SetIsCurrentUserNew(!active_user_);
-  if (IsCurrentUserNew()) {
-    auto* user = User::CreateRegularUser(account_id, user_type);
-    user_storage_.emplace_back(user);
-    active_user_ = user;
-    SaveUserType(active_user_);
-
-    active_user_->set_oauth_token_status(LoadUserOAuthStatus(account_id));
-    SaveUserDisplayName(active_user_->GetAccountId(),
-                        base::UTF8ToUTF16(active_user_->GetAccountName(true)));
-  } else {
-    SaveUserType(active_user_);
-  }
-
-  AddUserRecord(active_user_);
-  known_user.SetIsEphemeralUser(active_user_->GetAccountId(), false);
-
-  // Make sure that new data is persisted to Local State.
-  local_state_->CommitPendingWrite();
-}
-
-void UserManagerImpl::RegularUserLoggedInAsEphemeral(
-    const AccountId& account_id,
-    const UserType user_type) {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  SetIsCurrentUserNew(true);
-  is_current_user_ephemeral_regular_user_ = true;
   auto* user = User::CreateRegularUser(account_id, user_type);
   user_storage_.emplace_back(user);
-  active_user_ = user;
-  KnownUser(local_state_.get())
-      .SetIsEphemeralUser(active_user_->GetAccountId(), true);
+  SaveUserType(user);
+
+  user->set_oauth_token_status(LoadUserOAuthStatus(account_id));
+  SaveUserDisplayName(account_id,
+                      base::UTF8ToUTF16(user->GetAccountName(
+                          /*use_display_email=*/true)));
+
+  // Add to the persisted list.
+  persisted_users_.push_back(user);
+  ScopedListPrefUpdate prefs_users_update(local_state_.get(),
+                                          prefs::kRegularUsersPref);
+  prefs_users_update->Append(base::Value(account_id.GetUserEmail()));
+
+  return user;
 }
 
-void UserManagerImpl::PublicAccountUserLoggedIn(user_manager::User* user) {
+User* UserManagerImpl::AddEphemeralUser(const AccountId& account_id,
+                                        UserType user_type) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  SetIsCurrentUserNew(true);
-  active_user_ = user;
+  auto* user = User::CreateRegularUser(account_id, user_type);
+  user_storage_.emplace_back(user);
+
+  return user;
 }
 
-void UserManagerImpl::KioskAppLoggedIn(user_manager::User* user) {
+User* UserManagerImpl::AddGuestUser() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  auto* user = User::CreateGuestUser(GuestAccountId());
+  user_storage_.emplace_back(user);
+  return user;
+}
 
-  user->SetStubImage(CreateStubImage(), UserImage::Type::kInvalid,
-                     /*is_loading=*/false);
-  active_user_ = user;
+User* UserManagerImpl::AddPublicAccountUser(const AccountId& account_id) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  auto* user = User::CreatePublicAccountUser(account_id);
+  user_storage_.emplace_back(user);
+
+  return user;
 }
 
 bool UserManagerImpl::OnUserProfileCreated(const AccountId& account_id,
@@ -1551,8 +1483,8 @@ bool UserManagerImpl::OnUserProfileCreated(const AccountId& account_id,
   // Find a User from `user_storage_`.
   // FindUserAndModify may overlook some existing User instance, because
   // the list may not contain ephemeral users that are getting stale.
-  auto it = base::ranges::find(user_storage_, account_id,
-                               [](auto& ptr) { return ptr->GetAccountId(); });
+  auto it = std::ranges::find(user_storage_, account_id,
+                              [](auto& ptr) { return ptr->GetAccountId(); });
   auto* user = it == user_storage_.end() ? nullptr : it->get();
   CHECK(user);
   if (user->is_profile_created()) {
@@ -1564,19 +1496,15 @@ bool UserManagerImpl::OnUserProfileCreated(const AccountId& account_id,
     return false;
   }
 
+  // Update `user` profile profs before profile created notification so that
+  // observers could get profile prefs via `user`.
   CHECK(!user->GetProfilePrefs());
-  user->SetProfileIsCreated();
   user->SetProfilePrefs(prefs);
 
-  if (IsUserLoggedIn() && !IsLoggedInAsGuest() && !IsLoggedInAsAnyKioskApp()) {
-    multi_user_sign_in_policy_controller_.StartObserving(user);
-  }
+  user->SetProfileIsCreated();
 
-  for (auto& observer : observer_list_) {
-    observer.OnUserProfileCreated(*user);
-  }
+  observer_list_.Notify(&UserManager::Observer::OnUserProfileCreated, *user);
 
-  ProcessPendingUserSwitchId();
   return true;
 }
 
@@ -1584,12 +1512,13 @@ void UserManagerImpl::OnUserProfileWillBeDestroyed(
     const AccountId& account_id) {
   // Find from user_stroage_. See OnUserProfileCreated for the reason why not
   // using FindUserAndModify.
-  auto it = base::ranges::find(user_storage_, account_id,
-                               [](auto& ptr) { return ptr->GetAccountId(); });
+  auto it = std::ranges::find(user_storage_, account_id,
+                              [](auto& ptr) { return ptr->GetAccountId(); });
   auto* user = it == user_storage_.end() ? nullptr : it->get();
   CHECK(user);
 
-  multi_user_sign_in_policy_controller_.StopObserving(user);
+  observer_list_.Notify(&UserManager::Observer::OnUserProfileWillBeDestroyed,
+                        *user);
 
   user->SetProfilePrefs(nullptr);
 }
@@ -1612,6 +1541,8 @@ void UserManagerImpl::NotifyOnLogin() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   DCHECK(active_user_);
 
+  // TODO(crbug.com/278643115): Migrate into ActiveUserChanged
+  // and UserAddedToSession calls.
   for (auto& observer : observer_list_) {
     observer.OnUserLoggedIn(*active_user_);
   }
@@ -1646,9 +1577,6 @@ bool UserManagerImpl::LoadForceOnlineSignin(const AccountId& account_id) const {
 }
 
 void UserManagerImpl::RemoveNonCryptohomeData(const AccountId& account_id) {
-  multi_user_sign_in_policy_controller_.RemoveCachedValues(
-      account_id.GetUserEmail());
-
   ScopedDictPrefUpdate(local_state_.get(), prefs::kUserDisplayName)
       ->Remove(account_id.GetUserEmail());
 
@@ -1680,10 +1608,11 @@ User* UserManagerImpl::RemoveRegularOrSupervisedUserFromList(
                                           prefs::kRegularUsersPref);
   prefs_users_update->clear();
   User* user = nullptr;
-  for (UserList::iterator it = users_.begin(); it != users_.end();) {
+  for (UserList::iterator it = persisted_users_.begin();
+       it != persisted_users_.end();) {
     if ((*it)->GetAccountId() == account_id) {
       user = *it;
-      it = users_.erase(it);
+      it = persisted_users_.erase(it);
     } else {
       if ((*it)->HasGaiaAccount()) {
         const std::string user_email = (*it)->GetAccountId().GetUserEmail();
@@ -1714,13 +1643,14 @@ bool UserManagerImpl::IsFirstExecAfterBoot() const {
       ash::switches::kFirstExecAfterBoot);
 }
 
-void UserManagerImpl::SetUserAffiliated(const AccountId& account_id,
-                                        bool is_affiliated) {
+void UserManagerImpl::SetUserPolicyStatus(const AccountId& account_id,
+                                          bool is_managed,
+                                          bool is_affiliated) {
   User* user = FindUserAndModify(account_id);
   if (!user) {
     return;
   }
-  user->SetAffiliated(is_affiliated);
+  user->SetUserPolicyStatus(is_managed, is_affiliated);
   NotifyUserAffiliationUpdated(*user);
 }
 
@@ -1730,18 +1660,12 @@ bool UserManagerImpl::HasBrowserRestarted() const {
              ash::switches::kLoginUser);
 }
 
-MultiUserSignInPolicyController*
-UserManagerImpl::GetMultiUserSignInPolicyController() {
-  return &multi_user_sign_in_policy_controller_;
-}
-
 void UserManagerImpl::Initialize() {
   UserManager::Initialize();
   if (!HasBrowserRestarted()) {
     // local_state may be null in unit tests.
     if (local_state_) {
       KnownUser known_user(local_state_.get());
-      known_user.CleanEphemeralUsers();
       known_user.CleanObsoletePrefs();
     }
   }
@@ -1749,37 +1673,33 @@ void UserManagerImpl::Initialize() {
   NotifyLoginStateUpdated();
 }
 
-const User* UserManagerImpl::AddKioskAppUserForTesting(
-    const AccountId& account_id,
-    const std::string& username_hash) {
-  User* user = User::CreateKioskAppUser(account_id);
-  user->set_username_hash(username_hash);
-  user_storage_.emplace_back(user);
-  users_.push_back(user);
-  return user;
-}
+void UserManagerImpl::OnActiveUserSwitched(User& new_active_user) {
+  if (active_user_) {
+    active_user_->set_is_active(false);
+  }
+  active_user_ = &new_active_user;
+  active_user_->set_is_active(true);
 
-void UserManagerImpl::SetLRUUser(User* user) {
   local_state_->SetString(prefs::kLastActiveUser,
-                          user->GetAccountId().GetUserEmail());
+                          active_user_->GetAccountId().GetUserEmail());
   local_state_->CommitPendingWrite();
 
-  UserList::iterator it = base::ranges::find(lru_logged_in_users_, user);
-  if (it != lru_logged_in_users_.end()) {
-    lru_logged_in_users_.erase(it);
-  }
-  lru_logged_in_users_.insert(lru_logged_in_users_.begin(), user);
+  // Move the user to the front of the list.
+  UserList::iterator it = std::ranges::find(lru_logged_in_users_, active_user_);
+  CHECK(it != lru_logged_in_users_.end());
+  std::rotate(lru_logged_in_users_.begin(), it, it + 1);
 }
 
-void UserManagerImpl::UpdateCrashKey(int num_users,
-                                     std::optional<UserType> active_user_type) {
+// static
+void UserManagerImpl::UpdateNumLoggedInUsersCrashKey(size_t num_users) {
   static crash_reporter::CrashKeyString<64> crash_key("num-users");
-  crash_key.Set(base::NumberToString(GetLoggedInUsers().size()));
+  crash_key.Set(base::NumberToString(num_users));
+}
 
+// static
+void UserManagerImpl::UpdateSessionTypeCrashKey(UserType active_user_type) {
   static crash_reporter::CrashKeyString<32> session_type("session-type");
-  if (active_user_type.has_value()) {
-    session_type.Set(UserTypeToString(active_user_type.value()));
-  }
+  session_type.Set(UserTypeToString(active_user_type));
 }
 
 void UserManagerImpl::SendGaiaUserLoginMetrics(const AccountId& account_id) {
@@ -1852,7 +1772,7 @@ void UserManagerImpl::DeleteUser(User* user) {
   if (primary_user_ == user) {
     primary_user_ = nullptr;
   }
-  std::erase(users_, user);
+  std::erase(persisted_users_, user);
   std::erase(logged_in_users_, user);
   std::erase(lru_logged_in_users_, user);
 
@@ -1864,18 +1784,13 @@ void UserManagerImpl::DeleteUser(User* user) {
 // devices in the wild, remove this.
 void UserManagerImpl::RemoveLegacySupervisedUser(const AccountId& account_id) {
   DCHECK(IsDeprecatedSupervisedAccountId(account_id));
-  if (base::FeatureList::IsEnabled(kRemoveLegacySupervisedUsersOnStartup)) {
-    // Since we skip adding legacy supervised users to the users list,
-    // FindUser(account_id) returns nullptr and CanUserBeRemoved() returns
-    // false. This is why we call RemoveUserInternal() directly instead of
-    // RemoveUser().
-    RemoveUserInternal(account_id, UserRemovalReason::UNKNOWN);
-    base::UmaHistogramEnumeration(kLegacySupervisedUsersHistogramName,
-                                  LegacySupervisedUserStatus::kLSUDeleted);
-  } else {
-    base::UmaHistogramEnumeration(kLegacySupervisedUsersHistogramName,
-                                  LegacySupervisedUserStatus::kLSUHidden);
-  }
+  // Since we skip adding legacy supervised users to the users list,
+  // FindUser(account_id) returns nullptr and CanUserBeRemoved() returns
+  // false. This is why we call RemoveUserInternal() directly instead of
+  // RemoveUser().
+  RemoveUserInternal(account_id, UserRemovalReason::UNKNOWN);
+  base::UmaHistogramEnumeration(kLegacySupervisedUsersHistogramName,
+                                LegacySupervisedUserStatus::kLSUDeleted);
 }
 
 bool UserManagerImpl::IsDeprecatedArcKioskAccountId(
@@ -1896,6 +1811,16 @@ void UserManagerImpl::RemoveDeprecatedArcKioskUser(
     base::UmaHistogramEnumeration(kDeprecatedArcKioskUsersHistogramName,
                                   DeprecatedArcKioskUserStatus::kHidden);
   }
+}
+
+bool UserManagerImpl::IsEnterpriseManaged() const {
+  if (!ash::InstallAttributes::IsInitialized()) {
+    // In unit tests, InstallAttributes may not be initialized.
+    // For enterprise test cases, it must be.
+    CHECK_IS_TEST();
+    return false;
+  }
+  return ash::InstallAttributes::Get()->IsEnterpriseManaged();
 }
 
 }  // namespace user_manager

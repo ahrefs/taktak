@@ -15,9 +15,11 @@
 #include "base/check_deref.h"
 #include "base/containers/adapters.h"
 #include "base/logging.h"
+#include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/metrics/user_metrics.h"
 #include "base/no_destructor.h"
+#include "base/notreached.h"
 #include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
 #include "ui/accessibility/ax_common.h"
@@ -29,7 +31,6 @@
 #include "ui/accessibility/platform/ax_node_id_delegate.h"
 #include "ui/accessibility/platform/ax_platform.h"
 #include "ui/base/buildflags.h"
-
 
 namespace ui {
 
@@ -432,8 +433,7 @@ bool BrowserAccessibilityManager::OnAccessibilityEvents(
       CHECK(!ax_tree()->error().empty())
           << "A failed serialization didn't supply the error via "
              "AXTree::RecordError().";
-      if (!delegate_)
-        CHECK(false) << ax_tree()->error();
+      CHECK(delegate_) << ax_tree()->error();
       return false;
     }
 
@@ -467,7 +467,7 @@ bool BrowserAccessibilityManager::OnAccessibilityEvents(
   DCHECK(root_manager) << "Cannot have detached document here, as "
                           "CanFireEvents() must return false in that case.";
 
-#if defined(AX_FAIL_FAST_BUILD)
+#if AX_FAIL_FAST_BUILD()
   AXTreeID parent_id = GetParentTreeID();
   bool has_parent_id = parent_id != AXTreeIDUnknown();
   BrowserAccessibilityManager* parent_manager =
@@ -655,6 +655,19 @@ void BrowserAccessibilityManager::OnLocationChanges(
   SCOPED_UMA_HISTOGRAM_TIMER_MICROS(
       "Accessibility.Performance.BrowserAccessibilityManager::"
       "OnLocationChanges");
+
+  // Track as both a location change and a deserialization, so that we 'get
+  // credit' for the performance moving location-only changes to this
+  // lightweight code path (average time of OnAccessibilityEvents will go down).
+  TRACE_EVENT0(
+      "accessibility",
+      is_post_load_
+          ? "BrowserAccessibilityManager::OnAccessibilityEvents"
+          : "BrowserAccessibilityManager::OnAccessibilityEventsLoading");
+  SCOPED_UMA_HISTOGRAM_TIMER_MICROS(
+      "Accessibility.Performance.BrowserAccessibilityManager::"
+      "OnAccessibilityEvents2");
+
   bool can_fire_events = CanFireEvents();
   for (auto& change : changes.scroll_changes) {
     BrowserAccessibility* obj = GetFromID(change.id);
@@ -928,11 +941,16 @@ void BrowserAccessibilityManager::Decrement(const BrowserAccessibility& node) {
 
 void BrowserAccessibilityManager::DoDefaultAction(
     const BrowserAccessibility& node) {
-  DCHECK(node.node()->data().GetDefaultActionVerb() !=
-         ax::mojom::DefaultActionVerb::kNone);
-
-  if (!delegate_)
+  // AXPlatformNodeDelegate::GetSupportedActions adds kDoDefault unconditionally, but
+  // perhaps it should not. Return silently if the node doesn't have a default action.
+  // See crbug.com/348328060 for more details.
+  if (!node.HasDefaultAction()) {
     return;
+  }
+
+  if (!delegate_) {
+    return;
+  }
 
   base::RecordAction(
       base::UserMetricsAction("Accessibility.NativeApi.DoDefault"));
@@ -1027,8 +1045,7 @@ void BrowserAccessibilityManager::Scroll(const BrowserAccessibility& node,
     case ax::mojom::Action::kScrollRight:
       break;
     default:
-      NOTREACHED_IN_MIGRATION()
-          << "Cannot call Scroll with action=" << scroll_action;
+      NOTREACHED() << "Cannot call Scroll with action=" << scroll_action;
   }
   AXActionData action_data;
   action_data.action = scroll_action;
@@ -1061,6 +1078,16 @@ void BrowserAccessibilityManager::ScrollToMakeVisible(
   action_data.scroll_behavior = scroll_behavior;
   delegate_->AccessibilityPerformAction(action_data);
   AXPlatform::GetInstance().NotifyAccessibilityApiUsage();
+
+  // Android has an official api for accessibility focus.
+#if !BUILDFLAG(IS_ANDROID)
+  // Update our notion of accessibility focus on the root browser accessibility
+  // manager.
+  BrowserAccessibilityManager* root_manager = GetManagerForRootFrame();
+  if (root_manager) {
+    UpdateAccessibilityFocus(this, node);
+  }
+#endif
 }
 
 void BrowserAccessibilityManager::ScrollToPoint(
@@ -1427,7 +1454,7 @@ std::u16string BrowserAccessibilityManager::GetTextForRange(
     const BrowserAccessibility& start_object,
     const BrowserAccessibility& end_object) {
   return GetTextForRange(start_object, 0, end_object,
-                         end_object.GetTextContentUTF16().length());
+                         end_object.GetTextContentLengthUTF16());
 }
 
 // static
@@ -1444,9 +1471,9 @@ std::u16string BrowserAccessibilityManager::GetTextForRange(
       std::swap(start_offset, end_offset);
 
     if (start_offset >=
-            static_cast<int>(start_object.GetTextContentUTF16().length()) ||
+            static_cast<int>(start_object.GetTextContentLengthUTF16()) ||
         end_offset >
-            static_cast<int>(start_object.GetTextContentUTF16().length())) {
+            static_cast<int>(start_object.GetTextContentLengthUTF16())) {
       return std::u16string();
     }
 
@@ -1466,9 +1493,9 @@ std::u16string BrowserAccessibilityManager::GetTextForRange(
 
     const BrowserAccessibility* text_object = text_only_objects[0];
     if (start_offset <
-            static_cast<int>(text_object->GetTextContentUTF16().length()) &&
+            static_cast<int>(text_object->GetTextContentLengthUTF16()) &&
         end_offset <=
-            static_cast<int>(text_object->GetTextContentUTF16().length())) {
+            static_cast<int>(text_object->GetTextContentLengthUTF16())) {
       return text_object->GetTextContentUTF16().substr(
           start_offset, end_offset - start_offset);
     }
@@ -1497,7 +1524,7 @@ std::u16string BrowserAccessibilityManager::GetTextForRange(
 
   const BrowserAccessibility* end_text_object = text_only_objects.back();
   if (end_offset <=
-      static_cast<int>(end_text_object->GetTextContentUTF16().length())) {
+      static_cast<int>(end_text_object->GetTextContentLengthUTF16())) {
     text += end_text_object->GetTextContentUTF16().substr(0, end_offset);
   } else {
     text += end_text_object->GetTextContentUTF16();
@@ -1520,9 +1547,9 @@ gfx::Rect BrowserAccessibilityManager::GetRootFrameInnerTextRangeBoundsRect(
       std::swap(start_offset, end_offset);
 
     if (start_offset >=
-            static_cast<int>(start_object.GetTextContentUTF16().length()) ||
+            static_cast<int>(start_object.GetTextContentLengthUTF16()) ||
         end_offset >
-            static_cast<int>(start_object.GetTextContentUTF16().length())) {
+            static_cast<int>(start_object.GetTextContentLengthUTF16())) {
       return gfx::Rect();
     }
 
@@ -1549,7 +1576,7 @@ gfx::Rect BrowserAccessibilityManager::GetRootFrameInnerTextRangeBoundsRect(
   const BrowserAccessibility* current = first;
   do {
     if (current->IsText()) {
-      int len = static_cast<int>(current->GetTextContentUTF16().size());
+      int len = static_cast<int>(current->GetTextContentLengthUTF16());
       int start_char_index = 0;
       int end_char_index = len;
       if (current == first)
@@ -1631,7 +1658,7 @@ void BrowserAccessibilityManager::OnAtomicUpdateFinished(
   }
 }
 
-AXNode* BrowserAccessibilityManager::GetNode(const AXNodeID node_id) const {
+AXNode* BrowserAccessibilityManager::GetNode(AXNodeID node_id) const {
   // This does not use ax_tree()->FromID(), because that uses a different map
   // that does not contain extra mac nodes from AXTableInfo.
   BrowserAccessibility* browser_accessibility = GetFromID(node_id);
@@ -1639,7 +1666,7 @@ AXNode* BrowserAccessibilityManager::GetNode(const AXNodeID node_id) const {
 }
 
 AXPlatformNode* BrowserAccessibilityManager::GetPlatformNodeFromTree(
-    const AXNodeID node_id) const {
+    AXNodeID node_id) const {
   BrowserAccessibility* wrapper = GetFromID(node_id);
   if (wrapper)
     return wrapper->GetAXPlatformNode();
@@ -1967,8 +1994,7 @@ BrowserAccessibilityManager::RetargetBrowserAccessibilityForEvents(
     // ClusterFuzz was able to come up with a reliably-reproducible test case
     // which can be seen in https://crbug.com/1362230. This needs to be
     // investigated further.
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
+    NOTREACHED();
   }
   return GetFromAXNode(RetargetForEvents(node->node(), event_type));
 }
@@ -1978,6 +2004,23 @@ AXPlatformNodeId BrowserAccessibilityManager::GetNodeUniqueId(
   return node_id_delegate_->GetOrCreateAXNodeUniqueId(node->node()->id());
 }
 
+BrowserAccessibility* BrowserAccessibilityManager::GetAccessibilityFocus() {
+  if (accessibility_focus_tree_id_ == AXTreeIDUnknown() ||
+      accessibility_focus_node_id_ == AXNodeData::kInvalidAXID) {
+    return nullptr;
+  }
+
+  BrowserAccessibilityManager* manager =
+      BrowserAccessibilityManager::FromID(accessibility_focus_tree_id_);
+
+  BrowserAccessibility* node = nullptr;
+  if (manager) {
+    node = manager->GetFromID(accessibility_focus_node_id_);
+  }
+
+  return node;
+}
+
 float BrowserAccessibilityManager::device_scale_factor() const {
   return device_scale_factor_;
 }
@@ -1985,6 +2028,30 @@ float BrowserAccessibilityManager::device_scale_factor() const {
 void BrowserAccessibilityManager::UpdateDeviceScaleFactor() {
   if (delegate_)
     device_scale_factor_ = delegate_->AccessibilityGetDeviceScaleFactor();
+}
+
+void BrowserAccessibilityManager::UpdateAccessibilityFocus(
+    BrowserAccessibilityManager* manager,
+    const BrowserAccessibility& node) {
+  BrowserAccessibilityManager* prior_manager = nullptr;
+  BrowserAccessibility* prior_node = GetAccessibilityFocus();
+  if (prior_node) {
+    prior_manager = prior_node->manager();
+  }
+
+  // Focus didn't change.
+  if (prior_manager && prior_node && prior_node->GetId() == node.GetId() &&
+      manager->GetTreeID() == prior_manager->GetTreeID()) {
+    return;
+  }
+
+  if (prior_node) {
+    prior_manager->ClearAccessibilityFocus(*prior_node);
+  }
+
+  manager->SetAccessibilityFocus(node);
+  accessibility_focus_tree_id_ = manager->GetTreeID();
+  accessibility_focus_node_id_ = node.GetId();
 }
 
 }  // namespace ui

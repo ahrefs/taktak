@@ -97,26 +97,16 @@ export class SettingsDisplayAndMagnificationSubpageElement extends
       },
 
       /**
-       * Whether the overlay scrollbars is enabled.
+       * Whether the always show scrollbars feature is enabled.
        */
-      isAccessibilityOverlayScrollbarEnabled_: {
+      isAccessibilityAlwaysShowScrollbarsEnabled_: {
         type: Boolean,
         value() {
           return loadTimeData.getBoolean(
-            'isAccessibilityOverlayScrollbarEnabled');
+            'isAccessibilityAlwaysShowScrollbarsEnabled');
         },
       },
-      /**
-       * Whether the magnifier following select to speak words feature is
-       * enabled.
-       */
-      isAccessibilityMagnifierFollowsStsEnabled_: {
-        type: Boolean,
-        value() {
-          return loadTimeData.getBoolean(
-              'isAccessibilityMagnifierFollowsStsEnabled');
-        },
-      },
+
       /**
        * Whether the magnifier following ChromeVox focus feature is
        * enabled.
@@ -172,7 +162,7 @@ export class SettingsDisplayAndMagnificationSubpageElement extends
           Setting.kFullscreenMagnifierFocusFollowing,
           Setting.kMagnifierFollowsChromeVox,
           Setting.kReducedAnimationsEnabled,
-          Setting.kOverlayScrollbarEnabled,
+          Setting.kAlwaysShowScrollbarsEnabled,
         ]),
       },
     };
@@ -182,8 +172,7 @@ export class SettingsDisplayAndMagnificationSubpageElement extends
   private screenMagnifierMouseFollowingModePrefValues_: {[key: string]: number};
   private screenMagnifierZoomOptions_: Array<{value: number, name: string}>;
   private isAccessibilityReducedAnimationsEnabled_: boolean;
-  private isAccessibilityOverlayScrollbarEnabled_: boolean;
-  private isAccessibilityMagnifierFollowsStsEnabled_: boolean;
+  private isAccessibilityAlwaysShowScrollbarsEnabled_: boolean;
   private isAccessibilityMagnifierFollowsChromeVoxEnabled_: boolean;
 
 

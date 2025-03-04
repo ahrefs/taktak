@@ -5,7 +5,8 @@
 #import "ios/chrome/test/earl_grey/chrome_matchers.h"
 
 #import "base/strings/sys_string_conversions.h"
-#import "ios/chrome/browser/ui/browser_container/edit_menu_app_interface.h"
+#import "ios/chrome/browser/browser_container/ui_bundled/edit_menu_app_interface.h"
+#import "ios/chrome/browser/settings/ui_bundled/settings_root_table_constants.h"
 #import "ios/chrome/test/earl_grey/chrome_matchers_app_interface.h"
 #import "ios/testing/earl_grey/earl_grey_test.h"
 
@@ -141,6 +142,10 @@ id<GREYMatcher> CancelButton() {
 
 id<GREYMatcher> NavigationBarCancelButton() {
   return [ChromeMatchersAppInterface navigationBarCancelButton];
+}
+
+id<GREYMatcher> NavigationBarSaveButton() {
+  return [ChromeMatchersAppInterface navigationBarSaveButton];
 }
 
 id<GREYMatcher> ForwardButton() {
@@ -375,6 +380,14 @@ id<GREYMatcher> FakeAddAccountScreenCancelButton() {
   return [ChromeMatchersAppInterface fakeFakeAddAccountScreenCancelButton];
 }
 
+id<GREYMatcher> PromoScreenPrimaryButtonMatcher() {
+  return [ChromeMatchersAppInterface promoScreenPrimaryButtonMatcher];
+}
+
+id<GREYMatcher> PromoScreenSecondaryButtonMatcher() {
+  return [ChromeMatchersAppInterface promoScreenSecondaryButtonMatcher];
+}
+
 id<GREYMatcher> SettingsAccountButton() {
   return [ChromeMatchersAppInterface settingsAccountButton];
 }
@@ -417,10 +430,6 @@ id<GREYMatcher> ContentSettingsButton() {
 
 id<GREYMatcher> GoogleServicesSettingsButton() {
   return [ChromeMatchersAppInterface googleServicesSettingsButton];
-}
-
-id<GREYMatcher> ManageSyncSettingsButton() {
-  return [ChromeMatchersAppInterface manageSyncSettingsButton];
 }
 
 id<GREYMatcher> InactiveTabsSettingsButton() {
@@ -812,6 +821,10 @@ id<GREYMatcher> SettingsToolbarAddButton() {
   return [ChromeMatchersAppInterface settingsToolbarAddButton];
 }
 
+id<GREYMatcher> SettingsToolbarEditButton() {
+  return grey_accessibilityID(kSettingsToolbarEditButtonId);
+}
+
 id<GREYMatcher> CellCanBeSwipedToDismissed() {
   return [ChromeMatchersAppInterface cellCanBeSwipedToDismissed];
 }
@@ -1045,6 +1058,46 @@ id<GREYMatcher> DeleteGroupConfirmationButton() {
 
 id<GREYMatcher> CloseGroupButton() {
   return [ChromeMatchersAppInterface closeGroupButton];
+}
+
+id<GREYMatcher> ShareGroupButton() {
+  return [ChromeMatchersAppInterface shareGroupButton];
+}
+
+id<GREYMatcher> ManageGroupButton() {
+  return [ChromeMatchersAppInterface manageGroupButton];
+}
+
+id<GREYMatcher> LeaveSharedGroupButton() {
+  return [ChromeMatchersAppInterface leaveSharedGroupButton];
+}
+
+id<GREYMatcher> LeaveSharedGroupConfirmationButton() {
+  return [ChromeMatchersAppInterface leaveSharedGroupConfirmationButton];
+}
+
+id<GREYMatcher> DeleteSharedGroupButton() {
+  return [ChromeMatchersAppInterface deleteSharedGroupButton];
+}
+
+id<GREYMatcher> DeleteSharedConfirmationButton() {
+  return [ChromeMatchersAppInterface deleteSharedConfirmationButton];
+}
+
+id<GREYMatcher> KeepSharedConfirmationButton() {
+  return [ChromeMatchersAppInterface keepSharedConfirmationButton];
+}
+
+id<GREYMatcher> FakeShareFlowView() {
+  return [ChromeMatchersAppInterface fakeShareFlowView];
+}
+
+id<GREYMatcher> FakeManageFlowView() {
+  return [ChromeMatchersAppInterface fakeManageFlowView];
+}
+
+id<GREYMatcher> FakeJoinFlowView() {
+  return [ChromeMatchersAppInterface fakeJoinFlowView];
 }
 
 #pragma mark - Tab Groups Panel

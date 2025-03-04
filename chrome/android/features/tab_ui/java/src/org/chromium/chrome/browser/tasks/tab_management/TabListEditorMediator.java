@@ -29,8 +29,8 @@ import org.chromium.chrome.browser.tasks.tab_management.TabUiMetricsHelper.TabLi
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 import org.chromium.components.browser_ui.desktop_windowing.AppHeaderState;
-import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateProvider;
-import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateProvider.AppHeaderObserver;
+import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateManager;
+import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateManager.AppHeaderObserver;
 import org.chromium.components.browser_ui.styles.ChromeColors;
 import org.chromium.components.browser_ui.widget.selectable_list.SelectionDelegate;
 import org.chromium.ui.modelutil.ListModelChangeProcessor;
@@ -64,7 +64,7 @@ class TabListEditorMediator
             new ObservableSupplierImpl<>();
     private final List<Tab> mVisibleTabs = new ArrayList<>();
     private final TabListEditorLayout mTabListEditorLayout;
-    private final @Nullable DesktopWindowStateProvider mDesktopWindowStateProvider;
+    private final @Nullable DesktopWindowStateManager mDesktopWindowStateManager;
 
     private @Nullable TabListCoordinator mTabListCoordinator;
     private @Nullable TabListEditorCoordinator.ResetHandler mResetHandler;
@@ -97,7 +97,7 @@ class TabListEditorMediator
             BottomSheetController bottomSheetController,
             TabListEditorLayout tabListEditorLayout,
             @TabActionState int initialTabActionState,
-            @Nullable DesktopWindowStateProvider desktopWindowStateProvider) {
+            @Nullable DesktopWindowStateManager desktopWindowStateManager) {
         mContext = context;
         mCurrentTabGroupModelFilterSupplier = currentTabGroupModelFilterSupplier;
         mModel = model;
@@ -107,7 +107,7 @@ class TabListEditorMediator
         mBottomSheetController = bottomSheetController;
         mTabListEditorLayout = tabListEditorLayout;
         mTabActionState = initialTabActionState;
-        mDesktopWindowStateProvider = desktopWindowStateProvider;
+        mDesktopWindowStateManager = desktopWindowStateManager;
 
         mTabModelObserver =
                 new TabModelObserver() {
@@ -159,10 +159,10 @@ class TabListEditorMediator
                         mBackPressChangedSupplier.set(isEditorVisible());
                     }
                 });
-        if (mDesktopWindowStateProvider != null) {
-            mDesktopWindowStateProvider.addObserver(this);
-            if (mDesktopWindowStateProvider.getAppHeaderState() != null) {
-                onAppHeaderStateChanged(mDesktopWindowStateProvider.getAppHeaderState());
+        if (mDesktopWindowStateManager != null) {
+            mDesktopWindowStateManager.addObserver(this);
+            if (mDesktopWindowStateManager.getAppHeaderState() != null) {
+                onAppHeaderStateChanged(mDesktopWindowStateManager.getAppHeaderState());
             }
         }
     }
@@ -331,6 +331,11 @@ class TabListEditorMediator
     }
 
     @Override
+    public boolean needsCleanUp() {
+        return false;
+    }
+
+    @Override
     public void setToolbarTitle(String title) {
         mModel.set(TabListEditorProperties.TOOLBAR_TITLE, title);
     }
@@ -399,6 +404,10 @@ class TabListEditorMediator
     public void destroy() {
         removeTabGroupModelFilterObserver(mCurrentTabGroupModelFilterSupplier.get());
         mCurrentTabGroupModelFilterSupplier.removeObserver(mOnTabGroupModelFilterChanged);
+
+        if (mDesktopWindowStateManager != null) {
+            mDesktopWindowStateManager.removeObserver(this);
+        }
     }
 
     private void onTabGroupModelFilterChanged(

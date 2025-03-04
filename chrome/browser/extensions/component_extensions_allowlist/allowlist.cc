@@ -48,6 +48,10 @@ bool IsComponentExtensionAllowlisted(const std::string& extension_id) {
 #endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING)
 #endif  // BUILDFLAG(IS_CHROMEOS)
       extension_misc::kReadingModeGDocsHelperExtensionId,
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
+      extension_misc::kTTSEngineExtensionId,
+      extension_misc::kComponentUpdaterTTSEngineExtensionId,
+#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
   });
 
   if (kAllowed.contains(extension_id)) {
@@ -67,8 +71,8 @@ bool IsComponentExtensionAllowlisted(const std::string& extension_id) {
 #endif  // BUILDFLAG(IS_CHROMEOS)
   LOG(ERROR) << "Component extension with id " << extension_id << " not in "
              << "allowlist and is not being loaded as a result.";
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED() << "Component extension with id " << extension_id << " not in "
+               << "allowlist and is not being loaded as a result.";
 }
 
 bool IsComponentExtensionAllowlisted(int manifest_resource_id) {
@@ -79,7 +83,11 @@ bool IsComponentExtensionAllowlisted(int manifest_resource_id) {
     case IDR_HANGOUT_SERVICES_MANIFEST_V3:
 #endif
     case IDR_NETWORK_SPEECH_SYNTHESIS_MANIFEST:
+    case IDR_NETWORK_SPEECH_SYNTHESIS_MANIFEST_MV3:
     case IDR_READING_MODE_GDOCS_HELPER_MANIFEST:
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
+    case IDR_TTS_ENGINE_MANIFEST:
+#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
     case IDR_WEBSTORE_MANIFEST:
 
 #if BUILDFLAG(IS_CHROMEOS)
@@ -101,8 +109,9 @@ bool IsComponentExtensionAllowlisted(int manifest_resource_id) {
   LOG(ERROR) << "Component extension with manifest resource id "
              << manifest_resource_id << " not in allowlist and is not being "
              << "loaded as a result.";
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED() << "Component extension with manifest resource id "
+               << manifest_resource_id << " not in allowlist and is not being "
+               << "loaded as a result.";
 }
 
 #if BUILDFLAG(IS_CHROMEOS)

@@ -16,6 +16,7 @@ import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bu
 
 import {DeepLinkingMixin} from '../common/deep_linking_mixin.js';
 import {RouteObserverMixin} from '../common/route_observer_mixin.js';
+import {Setting} from '../mojom-webui/setting.mojom-webui.js';
 import type {Route} from '../router.js';
 import {routes} from '../router.js';
 
@@ -45,13 +46,20 @@ export class SettingsFaceGazeSubpageElement extends
       toggleLabel_: {
         type: String,
         computed:
-            'getToggleLabel_(prefs.settings.a11y.face_gaze.enabled.value)',
+            'getToggleLabel_(prefs.settings.a11y.face_gaze.enabled_sentinel.value)',
+      },
+
+      supportedSettingIds: {
+        type: Object,
+        value: () => new Set<Setting>([
+          Setting.kFaceGaze,
+        ]),
       },
     };
   }
 
   private getToggleLabel_(): string {
-    return this.getPref('settings.a11y.face_gaze.enabled').value ?
+    return this.getPref('settings.a11y.face_gaze.enabled_sentinel').value ?
         this.i18n('deviceOn') :
         this.i18n('deviceOff');
   }

@@ -241,6 +241,14 @@ class OptimizationGuideKeyedServiceBrowserTest
     InProcessBrowserTest::SetUp();
   }
 
+  void SetUpBrowserContextKeyedServices(
+      content::BrowserContext* context) override {
+    OptimizationGuideKeyedServiceDisabledBrowserTest::
+        SetUpBrowserContextKeyedServices(context);
+    IdentityTestEnvironmentProfileAdaptor::
+        SetIdentityTestEnvironmentFactoriesOnBrowserContext(context);
+  }
+
   void SetUpOnMainThread() override {
     OptimizationGuideKeyedServiceDisabledBrowserTest::SetUpOnMainThread();
 
@@ -265,22 +273,6 @@ class OptimizationGuideKeyedServiceBrowserTest
             browser()->profile());
   }
 
-  void SetUpInProcessBrowserTestFixture() override {
-    create_services_subscription_ =
-        BrowserContextDependencyManager::GetInstance()
-            ->RegisterCreateServicesCallbackForTesting(
-                base::BindRepeating(&OptimizationGuideKeyedServiceBrowserTest::
-                                        OnWillCreateBrowserContextServices,
-                                    base::Unretained(this)));
-  }
-
-  virtual void OnWillCreateBrowserContextServices(
-      content::BrowserContext* context) {
-    IdentityTestEnvironmentProfileAdaptor::
-        SetIdentityTestEnvironmentFactoriesOnBrowserContext(context);
-  }
-
-  base::CallbackListSubscription create_services_subscription_;
   void TearDownOnMainThread() override {
     EXPECT_TRUE(https_server_->ShutdownAndWaitUntilComplete());
 
@@ -492,10 +484,10 @@ class DogfoodOptimizationGuideKeyedServiceBrowserTest
 
   ~DogfoodOptimizationGuideKeyedServiceBrowserTest() override = default;
 
-  void OnWillCreateBrowserContextServices(
+  void SetUpBrowserContextKeyedServices(
       content::BrowserContext* context) override {
-    OptimizationGuideKeyedServiceBrowserTest::
-        OnWillCreateBrowserContextServices(context);
+    OptimizationGuideKeyedServiceBrowserTest::SetUpBrowserContextKeyedServices(
+        context);
     SetIsDogfoodClient(true);
   }
 };
@@ -1041,80 +1033,6 @@ IN_PROC_BROWSER_TEST_F(OptimizationGuideKeyedServiceBrowserTest,
       UserVisibleFeatureKey::kCompose));
 }
 
-// Verifies that Model Execution Features Controller updates feature prefs
-// correctly when the main toggle pref changes.
-IN_PROC_BROWSER_TEST_F(OptimizationGuideKeyedServiceBrowserTest,
-                       MainToggleUpdatesSettingsCorrectly) {
-  OptimizationGuideKeyedService* ogks =
-      OptimizationGuideKeyedServiceFactory::GetForProfile(browser()->profile());
-
-  EnableSignIn();
-
-  TestSettingsEnabledObserver wallpaper_search_observer(
-      UserVisibleFeatureKey::kWallpaperSearch);
-  TestSettingsEnabledObserver compose_observer(UserVisibleFeatureKey::kCompose);
-  TestSettingsEnabledObserver tab_observer(
-      UserVisibleFeatureKey::kTabOrganization);
-
-  ogks->AddModelExecutionSettingsEnabledObserver(&wallpaper_search_observer);
-  ogks->AddModelExecutionSettingsEnabledObserver(&compose_observer);
-  ogks->AddModelExecutionSettingsEnabledObserver(&tab_observer);
-
-  EXPECT_FALSE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kWallpaperSearch));
-
-  EXPECT_FALSE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kTabOrganization));
-
-  EXPECT_FALSE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kCompose));
-
-  // Enable the main feature toggle. This should enable the compose and tab
-  // organizer features on restart.
-  auto* prefs = browser()->profile()->GetPrefs();
-  prefs->SetInteger(prefs::kModelExecutionMainToggleSettingState,
-                    static_cast<int>(prefs::FeatureOptInState::kEnabled));
-  // Visibility of tab organizer feature is enabled via finch. Only tab
-  // organizer feature should be enabled.
-  EXPECT_EQ(1, wallpaper_search_observer.count_feature_enabled_state_changes_);
-  EXPECT_TRUE(wallpaper_search_observer.is_currently_enabled_);
-  EXPECT_EQ(1, compose_observer.count_feature_enabled_state_changes_);
-  EXPECT_TRUE(compose_observer.is_currently_enabled_);
-  EXPECT_EQ(1, tab_observer.count_feature_enabled_state_changes_);
-  EXPECT_TRUE(tab_observer.is_currently_enabled_);
-
-  EXPECT_TRUE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kWallpaperSearch));
-
-  EXPECT_TRUE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kTabOrganization));
-
-  EXPECT_TRUE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kCompose));
-
-  // Disable main toggle. The tab organizer feature should be disabled on
-  // restart.
-  prefs->SetInteger(prefs::kModelExecutionMainToggleSettingState,
-                    static_cast<int>(prefs::FeatureOptInState::kDisabled));
-  base::RunLoop().RunUntilIdle();
-
-  EXPECT_EQ(2, wallpaper_search_observer.count_feature_enabled_state_changes_);
-  EXPECT_FALSE(wallpaper_search_observer.is_currently_enabled_);
-  EXPECT_EQ(2, compose_observer.count_feature_enabled_state_changes_);
-  EXPECT_FALSE(compose_observer.is_currently_enabled_);
-  EXPECT_EQ(2, tab_observer.count_feature_enabled_state_changes_);
-  EXPECT_FALSE(tab_observer.is_currently_enabled_);
-
-  EXPECT_FALSE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kWallpaperSearch));
-
-  EXPECT_FALSE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kTabOrganization));
-
-  EXPECT_FALSE(ogks->ShouldFeatureBeCurrentlyEnabledForUser(
-      UserVisibleFeatureKey::kCompose));
-}
-
 // Verifies that Model Execution Features Controller returns null for incognito
 // profiles.
 IN_PROC_BROWSER_TEST_F(OptimizationGuideKeyedServiceBrowserTest,
@@ -1158,9 +1076,6 @@ IN_PROC_BROWSER_TEST_F(OptimizationGuideKeyedServiceBrowserTest,
 
   histogram_tester()->ExpectTotalCount(
       "OptimizationGuide.ModelExecution.OnDeviceModelPerformanceClass", 1);
-  histogram_tester()->ExpectBucketCount(
-      "OptimizationGuide.ModelExecution.OnDeviceModelPerformanceClass",
-      OnDeviceModelPerformanceClass::kServiceCrash, 0);
 }
 
 // Creating multiple profiles isn't supported easily on ash and android.
@@ -1270,7 +1185,9 @@ IN_PROC_BROWSER_TEST_P(
     SettingsNotVisible) {
   EnableSignIn();
 
-  EXPECT_FALSE(IsSettingVisible(UserVisibleFeatureKey::kWallpaperSearch));
+  EXPECT_EQ(
+      ShouldFeatureBeEnabled() && features::IsAiSettingsPageRefreshEnabled(),
+      IsSettingVisible(UserVisibleFeatureKey::kWallpaperSearch));
 
   EXPECT_EQ(ShouldFeatureBeEnabled(),
             IsSettingVisible(UserVisibleFeatureKey::kTabOrganization));

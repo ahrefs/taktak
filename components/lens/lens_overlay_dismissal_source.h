@@ -118,7 +118,15 @@ enum class LensOverlayDismissalSource {
   // becomes unresponsive with slow connection).
   kNetworkIssue = 29,
 
-  kMaxValue = kNetworkIssue
+  // The user pressed the escape key while focused on the preselection toast.
+  // Only used on Desktop.
+  kPreselectionToastEscapeKeyPress = 30,
+
+  // The user chose to switch the mode to "Search with camera", causing the
+  // overlay to close.
+  kSearchWithCameraRequested = 31,
+
+  kMaxValue = kSearchWithCameraRequested
 };
 // LINT.ThenChange(//tools/metrics/histograms/metadata/lens/enums.xml:LensOverlayDismissalSource)
 

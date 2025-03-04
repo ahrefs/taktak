@@ -9,8 +9,8 @@ import android.graphics.Bitmap;
 import androidx.annotation.Nullable;
 
 import org.chromium.base.Token;
-import org.chromium.cc.input.BrowserControlsOffsetTagsInfo;
 import org.chromium.cc.input.BrowserControlsState;
+import org.chromium.chrome.browser.browser_controls.BrowserControlsOffsetTagsInfo;
 import org.chromium.chrome.browser.tab.Tab.LoadUrlResult;
 import org.chromium.components.find_in_page.FindMatchRectsDetails;
 import org.chromium.components.find_in_page.FindNotificationDetails;
@@ -415,9 +415,18 @@ public interface TabObserver {
     /**
      * Called when the animation state for the back forward session history navigation has changed.
      * Retrieve the current animation state using the Tab's WebContents.
+     *
+     * @param tab The {@link Tab} whose back forward transition animation state is updated.
      */
-    default void didBackForwardTransitionAnimationChange() {}
+    default void didBackForwardTransitionAnimationChange(Tab tab) {}
 
     /** Called when the content sensitivity of the tab changes. */
     default void onTabContentSensitivityChanged(Tab tab, boolean contentIsSensitive) {}
+
+    /**
+     * Called when the tab is unarchived from archived tab model.
+     *
+     * @param tab the {@link Tab} has been unarchived
+     */
+    default void onTabUnarchived(Tab tab) {}
 }

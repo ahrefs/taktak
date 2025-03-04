@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import './strings.m.js';
+import '/strings.m.js';
 
 import {assertNotReached} from 'chrome://resources/js/assert.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
@@ -43,6 +43,9 @@ export enum UserAction {
   SPECIFIC_TOGGLED_OFF = 'Extensions.Settings.HostList.SpecificHostToggledOff',
   LEARN_MORE = 'Extensions.Settings.HostList.LearnMoreActivated',
 }
+
+// Duration of the toast shown.
+export const TOAST_DURATION_MS = 3000;
 
 // Values for logging Extension Safety Hub metrics.
 export const SAFETY_HUB_EXTENSION_KEPT_HISTOGRAM_NAME =
@@ -89,7 +92,8 @@ export function userCanChangeEnablement(
       item.disableReasons.suspiciousInstall ||
       item.disableReasons.updateRequired ||
       item.disableReasons.publishedInStoreRequired ||
-      item.disableReasons.blockedByPolicy) {
+      item.disableReasons.blockedByPolicy ||
+      item.disableReasons.unsupportedDeveloperExtension) {
     return false;
   }
   // Item is disabled when MV2 deprecation is on 'unsupported' experiment stage
@@ -302,6 +306,7 @@ export function createDummyExtensionInfo():
     chrome.developerPrivate.ExtensionInfo {
   return {
     commands: [],
+    isCommandRegistrationHandledExternally: false,
     dependentExtensions: [],
     description: '',
     disableReasons: {
@@ -314,6 +319,7 @@ export function createDummyExtensionInfo():
       custodianApprovalRequired: false,
       parentDisabledPermissions: false,
       unsupportedManifestVersion: false,
+      unsupportedDeveloperExtension: false,
     },
     errorCollection: {isEnabled: false, isActive: false},
     fileAccess: {isEnabled: false, isActive: false},
@@ -321,6 +327,7 @@ export function createDummyExtensionInfo():
     iconUrl: '',
     id: '',
     incognitoAccess: {isEnabled: false, isActive: false},
+    userScriptsAccess: {isEnabled: false, isActive: false},
     installWarnings: [],
     location: chrome.developerPrivate.Location.UNKNOWN,
     manifestErrors: [],
@@ -344,5 +351,6 @@ export function createDummyExtensionInfo():
         chrome.developerPrivate.SafetyCheckWarningReason.UNPUBLISHED,
     isAffectedByMV2Deprecation: false,
     didAcknowledgeMV2DeprecationNotice: false,
+    canUploadAsAccountExtension: false,
   };
 }

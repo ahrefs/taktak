@@ -293,14 +293,14 @@ jboolean FaviconHelper::GetForeignFaviconImageForURL(
   }
   history_ui_favicon_request_handler->GetRawFaviconForPageURL(
       page_url, static_cast<int>(j_desired_size_in_pixel),
+      /*fallback_to_host=*/true,
       base::BindOnce(&FaviconHelper::OnFaviconBitmapResultAvailable,
                      weak_ptr_factory_.GetWeakPtr(),
-                     ScopedJavaGlobalRef<jobject>(j_favicon_image_callback)),
-      favicon::HistoryUiFaviconRequestOrigin::kRecentTabs);
+                     ScopedJavaGlobalRef<jobject>(j_favicon_image_callback)));
   return true;
 }
 
-FaviconHelper::~FaviconHelper() {}
+FaviconHelper::~FaviconHelper() = default;
 
 // Return the index of |sizes| whose area is largest but not exceeds int type
 // range. If all |sizes|'s area exceed int type range, return the first one.

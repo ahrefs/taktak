@@ -81,6 +81,13 @@ AttributionResolverDelegateImpl::GetDeleteExpiredRateLimitsFrequency() const {
   return base::Minutes(5);
 }
 
+base::TimeDelta
+AttributionResolverDelegateImpl::GetDeleteExpiredOsRegistrationsFrequency()
+    const {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return base::Minutes(5);
+}
+
 base::Time AttributionResolverDelegateImpl::GetEventLevelReportTime(
     const attribution_reporting::EventReportWindows& event_report_windows,
     base::Time source_time,
@@ -152,18 +159,6 @@ void AttributionResolverDelegateImpl::ShuffleReports(
     case AttributionNoiseMode::kNone:
       break;
   }
-}
-
-std::optional<double>
-AttributionResolverDelegateImpl::GetRandomizedResponseRate(
-    const attribution_reporting::TriggerSpecs& trigger_specs,
-    attribution_reporting::EventLevelEpsilon epsilon) const {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  const auto num_states = GetNumStates(trigger_specs);
-  if (!num_states.has_value()) {
-    return std::nullopt;
-  }
-  return attribution_reporting::GetRandomizedResponseRate(*num_states, epsilon);
 }
 
 AttributionResolverDelegate::GetRandomizedResponseResult

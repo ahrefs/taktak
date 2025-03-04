@@ -110,6 +110,39 @@ export const FacialGesturesToMediapipeGestures = new Map([
   ],
 ]);
 
+/**
+ * Mapping of gestures supported by FaceGaze to mediapipe gestures that should
+ * not be present in order to confidently trigger the supported gesture, so as
+ * to reduce triggering gestures with involuntary facial movement like blinking.
+ */
+const FacialGesturesToExcludedMediapipeGestures = new Map([
+  [
+    FacialGesture.EYE_SQUINT_LEFT,
+    [
+      MediapipeFacialGesture.EYE_BLINK_RIGHT,
+      MediapipeFacialGesture.EYE_SQUINT_RIGHT,
+    ],
+  ],
+  [
+    FacialGesture.EYE_SQUINT_RIGHT,
+    [
+      MediapipeFacialGesture.EYE_BLINK_LEFT,
+      MediapipeFacialGesture.EYE_SQUINT_LEFT,
+    ],
+  ],
+]);
+
+/**
+ * The confidence level at which a detected gesture B should disqualify a
+ * different gesture A from being triggered if A relies on B not being
+ * present. For example, if EYE_SQUINT_LEFT is detected but EYE_SQUINT_RIGHT
+ * is also detected at confidence > EXCLUDED_GESTURE_THRESHOLD, then the
+ * gesture was likely involuntary blinking and EYE_SQUINT_LEFT should not be
+ * triggered. A confidence level of 0.5 seems to be the approximate confidence
+ * that occurs for most involuntary blinking.
+ */
+const EXCLUDED_GESTURE_THRESHOLD = 0.5;
+
 export class GestureDetector {
   private static mediapipeFacialGestureSet_ =
       new Set(Object.values(MediapipeFacialGesture));
@@ -171,6 +204,26 @@ export class GestureDetector {
         score = Math.max(score, recognizedGestures.get(mediapipeGesture));
       }
       if (!hasCompoundGesture) {
+        continue;
+      }
+
+      let hasExcludedGesture = false;
+      const excludedGestures =
+          FacialGesturesToExcludedMediapipeGestures.get(faceGazeGesture);
+
+      // Check for gestures that should not be present in order to confidently
+      // register this gesture.
+      if (excludedGestures) {
+        for (const excludedGesture of excludedGestures) {
+          if (recognizedGestures.has(excludedGesture) &&
+              recognizedGestures.get(excludedGesture) >
+                  EXCLUDED_GESTURE_THRESHOLD) {
+            hasExcludedGesture = true;
+          }
+        }
+      }
+
+      if (hasExcludedGesture) {
         continue;
       }
 

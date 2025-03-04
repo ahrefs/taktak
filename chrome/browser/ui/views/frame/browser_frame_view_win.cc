@@ -65,7 +65,7 @@ namespace {
 
 // Converts the |image| to a Windows icon and returns the corresponding HICON
 // handle. |image| is resized to desired |width| and |height| if needed.
-base::win::ScopedHICON CreateHICONFromSkBitmapSizedTo(
+base::win::ScopedGDIObject<HICON> CreateHICONFromSkBitmapSizedTo(
     const gfx::ImageSkia& image,
     int width,
     int height) {
@@ -321,7 +321,9 @@ int BrowserFrameViewWin::NonClientHitTest(const gfx::Point& point) {
   // pixels at the end of the top and bottom edges trigger diagonal resizing.
   constexpr int kResizeCornerWidth = 16;
 
-  const int top_border_thickness = GetLayoutConstant(TAB_STRIP_PADDING);
+  const int top_border_thickness = browser_view()->GetIsWebAppType()
+                                       ? FrameTopBorderThickness(false)
+                                       : GetLayoutConstant(TAB_STRIP_PADDING);
 
   const int window_component = GetHTComponentForFrame(
       point, gfx::Insets::TLBR(top_border_thickness, 0, 0, 0),
@@ -400,13 +402,8 @@ int BrowserFrameViewWin::NonClientHitTest(const gfx::Point& point) {
     }
   }
 
-  if (window_component != HTNOWHERE) {
-    return window_component;
-  }
-
   // Fall back to the caption if no other component matches.
-  TabStripRegionView::ReportCaptionHitTestInReservedGrabHandleSpace(false);
-  return HTCAPTION;
+  return (window_component == HTNOWHERE) ? HTCAPTION : window_component;
 }
 
 void BrowserFrameViewWin::UpdateWindowIcon() {
@@ -445,7 +442,7 @@ bool BrowserFrameViewWin::ShouldTabIconViewAnimate() const {
   }
 
   content::WebContents* current_tab = browser_view()->GetActiveWebContents();
-  return current_tab && current_tab->IsLoading();
+  return current_tab && current_tab->ShouldShowLoadingUI();
 }
 
 ui::ImageModel BrowserFrameViewWin::GetFaviconForTabIconView() {
@@ -850,8 +847,8 @@ void BrowserFrameViewWin::StopThrobber() {
   if (throbber_running_) {
     throbber_running_ = false;
 
-    base::win::ScopedHICON previous_small_icon;
-    base::win::ScopedHICON previous_big_icon;
+    base::win::ScopedGDIObject<HICON> previous_small_icon;
+    base::win::ScopedGDIObject<HICON> previous_big_icon;
     HICON small_icon = nullptr;
     HICON big_icon = nullptr;
 

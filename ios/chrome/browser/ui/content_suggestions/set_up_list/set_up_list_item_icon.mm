@@ -275,6 +275,17 @@ UIView* IconInSquare(NSString* symbol,
                        : IconInCircle(kBellBadgeSymbol, _compactLayout,
                                       kPink500Color);
     }
+    case SetUpListItemType::kDocking: {
+      return _inSquare ? IconInSquare(kMovePlatterToBottomPhoneSymbol, NO,
+                                      kPurple600Color)
+                       : IconInCircle(kMovePlatterToBottomPhoneSymbol,
+                                      _compactLayout, kPurple600Color);
+    }
+    case SetUpListItemType::kAddressBar: {
+      return _inSquare ? IconInSquare(kGlobeAmericasSymbol, NO, kPurple600Color)
+                       : IconInCircle(kGlobeAmericasSymbol, _compactLayout,
+                                      kPurple600Color);
+    }
     case SetUpListItemType::kAllSet: {
       return IconForSymbol(
           kCheckmarkSealFillSymbol, _compactLayout,
@@ -282,8 +293,7 @@ UIView* IconInSquare(NSString* symbol,
     }
     case SetUpListItemType::kFollow:
       // TODO(crbug.com/40262090): Add a Follow item to the Set Up List.
-      NOTREACHED_IN_MIGRATION();
-      return nil;
+      NOTREACHED();
   }
 }
 

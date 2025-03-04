@@ -4,13 +4,13 @@
 
 #include "chrome/browser/ui/web_applications/web_app_run_on_os_login_notification.h"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
 #include "base/functional/callback_forward.h"
 #include "base/i18n/message_formatter.h"
 #include "base/memory/weak_ptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
 #include "chrome/browser/notifications/notification_display_service.h"
@@ -30,7 +30,7 @@
 #include "ui/gfx/text_elider.h"
 #include "ui/message_center/public/cpp/notification_delegate.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "ash/constants/notifier_catalogs.h"
 #endif
 
@@ -82,7 +82,7 @@ message_center::Notification CreateNotification(
           "NUM_ROOL_APPS", 1, "APP_NAME", truncated_app_name);
     }
   } else {
-    if (base::ranges::any_of(apps, [](const auto& app) {
+    if (std::ranges::any_of(apps, [](const auto& app) {
           return app.second.is_prevent_close_enabled;
         })) {
       message = base::i18n::MessageFormatter::FormatWithNamedArgs(
@@ -101,7 +101,7 @@ message_center::Notification CreateNotification(
   notification_data.buttons.emplace_back(
       l10n_util::GetStringUTF16(IDS_RUN_ON_OS_LOGIN_ENABLED_LEARN_MORE));
 
-#if (BUILDFLAG(IS_CHROMEOS_ASH))
+#if BUILDFLAG(IS_CHROMEOS)
   message_center::NotifierId notifier_id =
       message_center::NotifierId(message_center::NotifierType::SYSTEM_COMPONENT,
                                  web_app::kRunOnOsLoginNotifierId,
@@ -110,7 +110,7 @@ message_center::Notification CreateNotification(
   message_center::NotifierId notifier_id =
       message_center::NotifierId(message_center::NotifierType::SYSTEM_COMPONENT,
                                  web_app::kRunOnOsLoginNotifierId);
-#endif  // (BUILDFLAG(IS_CHROMEOS_ASH))
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
   auto click_callback = base::BindRepeating(
       [](base::WeakPtr<Profile> profile, std::optional<int> index) -> void {

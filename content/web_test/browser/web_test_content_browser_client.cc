@@ -14,13 +14,13 @@
 #include "base/command_line.h"
 #include "base/functional/bind.h"
 #include "base/no_destructor.h"
+#include "base/notreached.h"
 #include "base/path_service.h"
 #include "base/strings/pattern.h"
 #include "base/strings/stringprintf.h"
 #include "base/task/single_thread_task_runner.h"
 #include "build/build_config.h"
 #include "cc/base/switches.h"
-#include "components/origin_trials/common/features.h"
 #include "content/browser/renderer_host/render_frame_host_impl.h"
 #include "content/public/browser/browser_child_process_observer.h"
 #include "content/public/browser/browser_context.h"
@@ -39,7 +39,7 @@
 #include "content/shell/browser/shell_browser_context.h"
 #include "content/shell/browser/shell_content_browser_client.h"
 #include "content/test/data/mojo_bindings_web_test.test-mojom.h"
-#include "content/test/data/mojo_web_test_helper_test.mojom.h"
+#include "content/test/data/mojo_web_test_helper.test-mojom.h"
 #include "content/test/mock_badge_service.h"
 #include "content/test/mock_clipboard_host.h"
 #include "content/web_test/browser/fake_bluetooth_chooser.h"
@@ -149,6 +149,10 @@ class BoundsMatchVideoSizeOverlayWindow : public VideoOverlayWindow {
   void SetHangUpButtonVisibility(bool is_visible) override {}
   void SetNextSlideButtonVisibility(bool is_visible) override {}
   void SetPreviousSlideButtonVisibility(bool is_visible) override {}
+  void SetMediaPosition(const media_session::MediaPosition&) override {}
+  void SetSourceTitle(const std::u16string& source_title) override {}
+  void SetFaviconImages(
+      const std::vector<media_session::MediaImage>& images) override {}
   void SetSurfaceId(const viz::SurfaceId& surface_id) override {}
 
  private:
@@ -169,11 +173,10 @@ void CreateChildProcessCrashWatcher() {
         const ChildProcessData& data,
         const ChildProcessTerminationInfo& info) override {
       // Child processes should not crash in web tests.
-      LOG(ERROR) << "Child process crashed with\n"
-                    "   process_type: "
-                 << data.process_type << "\n"
-                 << "   name: " << data.name;
-      CHECK(false);
+      NOTREACHED() << "Child process crashed with\n"
+                      "   process_type: "
+                   << data.process_type << "\n"
+                   << "   name: " << data.name;
     }
   };
 
@@ -199,8 +202,13 @@ class MojoWebTestCounterImpl : public mojo_bindings_test::mojom::Counter {
   }
 
   // mojo_bindings_test::mojom::Counter:
-  void AddObserver(
+  void AddObserver1(
       mojo::PendingAssociatedRemote<CounterObserver> observer) override {
+    observers_.Add(std::move(observer));
+  }
+
+  void AddObserver2(mojo::PendingAssociatedRemote<CounterObserver> observer,
+                    int unused) override {
     observers_.Add(std::move(observer));
   }
 
@@ -212,7 +220,12 @@ class MojoWebTestCounterImpl : public mojo_bindings_test::mojom::Counter {
 
   void RemoveAllObservers() override { observers_.Clear(); }
 
-  void Clone(mojo::PendingAssociatedReceiver<Counter> receiver) override {
+  void Clone1(mojo::PendingAssociatedReceiver<Counter> receiver) override {
+    additional_receivers_.Add(this, std::move(receiver));
+  }
+
+  void Clone2(mojo::PendingAssociatedReceiver<Counter> receiver,
+              int unused) override {
     additional_receivers_.Add(this, std::move(receiver));
   }
 
@@ -381,7 +394,7 @@ void WebTestContentBrowserClient::
   associated_registry.AddInterface<mojom::WebTestControlHost>(
       base::BindRepeating(&WebTestContentBrowserClient::BindWebTestControlHost,
                           base::Unretained(this),
-                          render_frame_host.GetProcess()->GetID()));
+                          render_frame_host.GetProcess()->GetDeprecatedID()));
 }
 
 void WebTestContentBrowserClient::BindPermissionAutomation(
@@ -397,11 +410,12 @@ void WebTestContentBrowserClient::BindStorageAccessAutomation(
       std::move(receiver));
 }
 
-void WebTestContentBrowserClient::OverrideWebkitPrefs(
+void WebTestContentBrowserClient::OverrideWebPreferences(
     WebContents* web_contents,
+    SiteInstance& main_frame_site,
     blink::web_pref::WebPreferences* prefs) {
   if (WebTestControlHost::Get())
-    WebTestControlHost::Get()->OverrideWebkitPrefs(prefs);
+    WebTestControlHost::Get()->OverrideWebPreferences(prefs);
 }
 
 std::vector<std::unique_ptr<content::NavigationThrottle>>
@@ -410,12 +424,12 @@ WebTestContentBrowserClient::CreateThrottlesForNavigation(
   std::vector<std::unique_ptr<content::NavigationThrottle>> throttles =
       ShellContentBrowserClient::CreateThrottlesForNavigation(
           navigation_handle);
-  if (origin_trials::features::IsPersistentOriginTrialsEnabled()) {
-    throttles.push_back(std::make_unique<WebTestOriginTrialThrottle>(
-        navigation_handle, navigation_handle->GetWebContents()
-                               ->GetBrowserContext()
-                               ->GetOriginTrialsControllerDelegate()));
-  }
+
+  throttles.push_back(std::make_unique<WebTestOriginTrialThrottle>(
+      navigation_handle, navigation_handle->GetWebContents()
+                             ->GetBrowserContext()
+                             ->GetOriginTrialsControllerDelegate()));
+
   return throttles;
 }
 
@@ -664,15 +678,16 @@ void WebTestContentBrowserClient::BindWebPressureManagerAutomation(
 
 std::unique_ptr<LoginDelegate> WebTestContentBrowserClient::CreateLoginDelegate(
     const net::AuthChallengeInfo& auth_info,
-    content::WebContents* web_contents,
-    content::BrowserContext* browser_context,
-    const content::GlobalRequestID& request_id,
+    WebContents* web_contents,
+    BrowserContext* browser_context,
+    const GlobalRequestID& request_id,
     bool is_request_for_primary_main_frame_navigation,
     bool is_request_for_navigation,
     const GURL& url,
     scoped_refptr<net::HttpResponseHeaders> response_headers,
     bool first_auth_attempt,
-    LoginAuthRequiredCallback auth_required_callback) {
+    GuestPageHolder* guest,
+    LoginDelegate::LoginAuthRequiredCallback auth_required_callback) {
   return nullptr;
 }
 

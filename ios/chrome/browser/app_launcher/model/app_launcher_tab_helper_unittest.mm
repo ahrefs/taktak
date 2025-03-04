@@ -23,6 +23,7 @@
 #import "ios/chrome/browser/app_launcher/model/fake_app_launcher_abuse_detector.h"
 #import "ios/chrome/browser/policy/model/enterprise_policy_test_helper.h"
 #import "ios/chrome/browser/policy_url_blocking/model/policy_url_blocking_service.h"
+#import "ios/chrome/browser/policy_url_blocking/model/policy_url_blocking_service_factory.h"
 #import "ios/chrome/browser/reading_list/model/reading_list_model_factory.h"
 #import "ios/chrome/browser/reading_list/model/reading_list_test_utils.h"
 #import "ios/chrome/browser/shared/model/profile/test/test_profile_ios.h"
@@ -701,6 +702,12 @@ TEST_F(AppLauncherTabHelperTest, ShouldAllowRequestWithNonAppUrl) {
                                      /*is_user_initiated=*/true,
                                      /*user_tapped_recently=*/true));
   EXPECT_TRUE(TestShouldAllowRequest(@"blob://test",
+                                     /*target_frame_is_main=*/false,
+                                     /*target_frame_is_cross_origin=*/false,
+                                     /*target_window_is_cross_origin=*/false,
+                                     /*is_user_initiated=*/true,
+                                     /*user_tapped_recently=*/true));
+  EXPECT_TRUE(TestShouldAllowRequest(@"marketplace-kit://test",
                                      /*target_frame_is_main=*/false,
                                      /*target_frame_is_cross_origin=*/false,
                                      /*target_window_is_cross_origin=*/false,

@@ -19,7 +19,6 @@ static_library("renderer_context_menu") {
 
   deps = [
     "//base",
-    "//build:chromeos_buildflags",
     "//components/search_engines",
     "//components/vector_icons",
     "//content/public/browser",
@@ -28,6 +27,7 @@ static_library("renderer_context_menu") {
     "//printing/buildflags",
     "//third_party/blink/public:blink_headers",
     "//ui/base",
+    "//ui/menus",
   ]
 
   if (toolkit_views) {

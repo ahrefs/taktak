@@ -31,20 +31,19 @@ class OnDeviceModelServiceControllerIOS
       base::WeakPtr<OnDeviceModelComponentStateManager>
           on_device_component_state_manager);
 
+  // Creates the on-device model service.
+  void CreateModelService(
+      mojo::PendingReceiver<on_device_model::mojom::OnDeviceModelService>
+          receiver);
+
+  // Returns a weak pointer of this object.
+  base::WeakPtr<OnDeviceModelServiceControllerIOS> GetWeakPtr();
+
  private:
   ~OnDeviceModelServiceControllerIOS() override;
 
-  // Launches the on-device model service.
-  void LaunchService() override;
-
-  // Creates the on-device model service.
-  void CreateModelService();
-
   // The on-device model service.
   std::unique_ptr<on_device_model::mojom::OnDeviceModelService> service_;
-
-  // Receives interface messages.
-  mojo::PendingReceiver<on_device_model::mojom::OnDeviceModelService> receiver_;
 
   // Note: This should remain the last member so it'll be destroyed and
   // invalidate the weak pointers before any other members are destroyed.

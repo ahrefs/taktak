@@ -61,11 +61,10 @@ class NotificationChannelsBridgeImpl
     JNIEnv* env = AttachCurrentThread();
     ScopedJavaLocalRef<jobject> jchannel =
         Java_NotificationSettingsBridge_createChannel(
-            env, ConvertUTF8ToJavaString(env, origin),
-            timestamp.ToInternalValue(), enabled);
+            env, origin, timestamp.ToInternalValue(), enabled);
     return NotificationChannel(
-        ConvertJavaStringToUTF8(Java_SiteChannel_getId(env, jchannel)),
-        ConvertJavaStringToUTF8(Java_SiteChannel_getOrigin(env, jchannel)),
+        Java_SiteChannel_getId(env, jchannel),
+        Java_SiteChannel_getOrigin(env, jchannel),
         base::Time::FromInternalValue(
             Java_SiteChannel_getTimestamp(env, jchannel)),
         static_cast<NotificationChannelStatus>(
@@ -74,8 +73,7 @@ class NotificationChannelsBridgeImpl
 
   void DeleteChannel(const std::string& origin) override {
     JNIEnv* env = AttachCurrentThread();
-    Java_NotificationSettingsBridge_deleteChannel(
-        env, ConvertUTF8ToJavaString(env, origin));
+    Java_NotificationSettingsBridge_deleteChannel(env, origin);
   }
 
   void GetChannels(NotificationChannelsProviderAndroid::GetChannelsCallback
@@ -108,7 +106,7 @@ ContentSetting ChannelStatusToContentSetting(NotificationChannelStatus status) {
     case NotificationChannelStatus::BLOCKED:
       return CONTENT_SETTING_BLOCK;
     case NotificationChannelStatus::UNAVAILABLE:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
   return CONTENT_SETTING_DEFAULT;
 }
@@ -153,13 +151,12 @@ static void JNI_NotificationSettingsBridge_OnGetSiteChannelsDone(
     const JavaParamRef<jobjectArray>& j_channels) {
   std::vector<NotificationChannel> channels;
   for (auto jchannel : j_channels.ReadElements<jobject>()) {
-    channels.emplace_back(
-        ConvertJavaStringToUTF8(Java_SiteChannel_getId(env, jchannel)),
-        ConvertJavaStringToUTF8(Java_SiteChannel_getOrigin(env, jchannel)),
-        base::Time::FromInternalValue(
-            Java_SiteChannel_getTimestamp(env, jchannel)),
-        static_cast<NotificationChannelStatus>(
-            Java_SiteChannel_getStatus(env, jchannel)));
+    channels.emplace_back(Java_SiteChannel_getId(env, jchannel),
+                          Java_SiteChannel_getOrigin(env, jchannel),
+                          base::Time::FromInternalValue(
+                              Java_SiteChannel_getTimestamp(env, jchannel)),
+                          static_cast<NotificationChannelStatus>(
+                              Java_SiteChannel_getStatus(env, jchannel)));
   }
 
   // Convert java long long int to c++ pointer, take ownership.
@@ -236,7 +233,7 @@ void NotificationChannelsProviderAndroid::MigrateToChannelsIfNecessaryImpl(
   {
     std::unique_ptr<content_settings::RuleIterator> it(
         pref_provider->GetRuleIterator(
-            ContentSettingsType::NOTIFICATIONS, false /* incognito */,
+            ContentSettingsType::NOTIFICATIONS, false /* off_the_record */,
             content_settings::PartitionKey::WipGetDefault()));
 
     while (it && it->HasNext()) {
@@ -301,9 +298,9 @@ void NotificationChannelsProviderAndroid::ClearBlockedChannelsIfNecessaryImpl(
 std::unique_ptr<content_settings::RuleIterator>
 NotificationChannelsProviderAndroid::GetRuleIterator(
     ContentSettingsType content_type,
-    bool incognito,
+    bool off_the_record,
     const content_settings::PartitionKey& partition_key) const {
-  if (content_type != ContentSettingsType::NOTIFICATIONS || incognito) {
+  if (content_type != ContentSettingsType::NOTIFICATIONS || off_the_record) {
     return nullptr;
   }
 
@@ -402,8 +399,7 @@ void NotificationChannelsProviderAndroid::UpdateChannelForWebsiteImpl(
     }
     default:
       // We rely on notification settings being one of ALLOW/BLOCK/DEFAULT.
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 
@@ -522,8 +518,7 @@ void NotificationChannelsProviderAndroid::CreateChannelForRule(
       break;
     default:
       // We assume notification preferences are either ALLOW/BLOCK.
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 

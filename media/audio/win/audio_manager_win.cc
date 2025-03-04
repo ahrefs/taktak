@@ -212,6 +212,11 @@ AudioParameters AudioManagerWin::GetInputStreamParameters(
   if (user_buffer_size)
     parameters.set_frames_per_buffer(user_buffer_size);
 
+  if (IsEchoCancellationSupported(device_id)) {
+    parameters.set_effects(parameters.effects() |
+                           AudioParameters::ECHO_CANCELLER);
+  }
+
   return parameters;
 }
 
@@ -322,6 +327,20 @@ std::string AudioManagerWin::GetCommunicationsInputDeviceID() {
 
 std::string AudioManagerWin::GetCommunicationsOutputDeviceID() {
   return CoreAudioUtil::GetCommunicationsOutputDeviceID();
+}
+
+bool AudioManagerWin::IsEchoCancellationSupported(
+    const std::string& audio_device_id) {
+  if (!media::IsSystemEchoCancellationEnforced()) {
+    return false;
+  }
+
+  if (AudioDeviceDescription::IsLoopbackDevice(audio_device_id)) {
+    VLOG(1) << "Native system AEC can't be applied for loopback devices";
+    return false;
+  }
+
+  return true;
 }
 
 AudioParameters AudioManagerWin::GetPreferredOutputStreamParameters(

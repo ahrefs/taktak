@@ -20,7 +20,7 @@ bool LayoutBlockFlow::CreatesNewFormattingContext() const {
   NOT_DESTROYED();
   if (IsInline() || IsFloatingOrOutOfFlowPositioned() || IsScrollContainer() ||
       IsFlexItem() || IsCustomItem() || IsDocumentElement() || IsGridItem() ||
-      IsWritingModeRoot() || IsMathItem() ||
+      IsMasonryItem() || IsWritingModeRoot() || IsMathItem() ||
       StyleRef().Display() == EDisplay::kFlowRoot ||
       StyleRef().Display() == EDisplay::kFlowRootListItem ||
       ShouldApplyPaintContainment() || ShouldApplyLayoutContainment() ||
@@ -74,6 +74,12 @@ void LayoutBlockFlow::StyleDidChange(StyleDifference diff,
         // multicol container. We need to notify them.
         flow_thread->ColumnRuleStyleDidChange();
       }
+    }
+    // We either gained or lost ::column style, trigger relayout to determine,
+    // if column pseudo elements are needed.
+    if (old_style->CanGeneratePseudoElement(kPseudoIdColumn) !=
+        StyleRef().CanGeneratePseudoElement(kPseudoIdColumn)) {
+      SetNeedsLayout(layout_invalidation_reason::kStyleChange);
     }
   }
 

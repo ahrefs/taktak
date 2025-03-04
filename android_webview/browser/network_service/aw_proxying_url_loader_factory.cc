@@ -4,6 +4,7 @@
 
 #include "android_webview/browser/network_service/aw_proxying_url_loader_factory.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
@@ -16,6 +17,7 @@
 #include "android_webview/browser/aw_contents_client_bridge.h"
 #include "android_webview/browser/aw_contents_io_thread_client.h"
 #include "android_webview/browser/aw_contents_origin_matcher.h"
+#include "android_webview/browser/aw_contents_statics.h"
 #include "android_webview/browser/aw_cookie_access_policy.h"
 #include "android_webview/browser/aw_settings.h"
 #include "android_webview/browser/cookie_manager.h"
@@ -35,7 +37,7 @@
 #include "base/memory/scoped_refptr.h"
 #include "base/metrics/histogram_functions.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
+#include "base/time/time.h"
 #include "base/trace_event/base_tracing.h"
 #include "components/embedder_support/android/util/input_stream.h"
 #include "components/embedder_support/android/util/response_delegate_impl.h"
@@ -63,7 +65,7 @@
 #include "services/network/public/mojom/fetch_api.mojom.h"
 #include "services/network/public/mojom/restricted_cookie_manager.mojom.h"
 #include "third_party/blink/public/mojom/loader/resource_load_info.mojom-shared.h"
-#include "third_party/blink/public/mojom/origin_trial_feature/origin_trial_feature.mojom-shared.h"
+#include "third_party/blink/public/mojom/origin_trials/origin_trial_feature.mojom-shared.h"
 #include "url/gurl.h"
 #include "url/origin.h"
 
@@ -165,8 +167,6 @@ class InterceptedRequest : public network::mojom::URLLoader,
       const std::optional<GURL>& new_url) override;
   void SetPriority(net::RequestPriority priority,
                    int32_t intra_priority_value) override;
-  void PauseReadingBodyFromNet() override;
-  void ResumeReadingBodyFromNet() override;
 
   void ContinueAfterIntercept();
   void ContinueAfterInterceptWithOverride(
@@ -382,6 +382,9 @@ InterceptedRequest::InterceptedRequest(
       &InterceptedRequest::OnURLLoaderClientError, base::Unretained(this)));
   proxied_loader_receiver_.set_disconnect_with_reason_handler(base::BindOnce(
       &InterceptedRequest::OnURLLoaderError, base::Unretained(this)));
+
+  // Update the resource request with the socketTag
+  request_.socket_tag = GetDefaultSocketTag();
 }
 
 InterceptedRequest::~InterceptedRequest() {
@@ -564,8 +567,8 @@ void InterceptedRequest::Restart(std::optional<bool> xrw_enabled) {
         intercept_response_received_args, arg_ready_closure);
 
     auto done = base::BindOnce(
-        &InterceptedRequest::InterceptWithCookieHeader, base::Unretained(this),
-        xrw_enabled,
+        &InterceptedRequest::InterceptWithCookieHeader,
+        weak_factory_.GetWeakPtr(), xrw_enabled,
         base::BindOnce(&OnShouldInterceptRequestAsyncResult,
                        base::Unretained(intercept_response_received_args),
                        arg_ready_closure));
@@ -821,10 +824,11 @@ void InterceptedRequest::OnReceiveResponse(
   if (request_.destination == network::mojom::RequestDestination::kDocument) {
     // Check for x-auto-login-header
     HeaderData header_data;
-    std::string header_string;
-    if (head->headers && head->headers->GetNormalizedHeader(
-                             kAutoLoginHeaderName, &header_string)) {
-      if (ParseHeader(header_string, ALLOW_ANY_REALM, &header_data)) {
+    if (head->headers) {
+      std::optional<std::string> header_string =
+          head->headers->GetNormalizedHeader(kAutoLoginHeaderName);
+      if (header_string &&
+          ParseHeader(*header_string, ALLOW_ANY_REALM, &header_data)) {
         // TODO(timvolodine): consider simplifying this and above callback
         // code, crbug.com/897149.
         content::GetUIThreadTaskRunner({})->PostTask(
@@ -898,16 +902,6 @@ void InterceptedRequest::SetPriority(net::RequestPriority priority,
                                      int32_t intra_priority_value) {
   if (target_loader_)
     target_loader_->SetPriority(priority, intra_priority_value);
-}
-
-void InterceptedRequest::PauseReadingBodyFromNet() {
-  if (target_loader_)
-    target_loader_->PauseReadingBodyFromNet();
-}
-
-void InterceptedRequest::ResumeReadingBodyFromNet() {
-  if (target_loader_)
-    target_loader_->ResumeReadingBodyFromNet();
 }
 
 std::unique_ptr<AwContentsIoThreadClient>
@@ -1166,9 +1160,18 @@ void AwProxyingURLLoaderFactory::CreateLoaderAndStart(
   bool third_party_cookie_policy =
       global_cookie_policy && io_thread_client->ShouldAcceptThirdPartyCookies();
 
+  // WebView treats cookie access on a per request basis and so we have to
+  // essentially let the rest of the network stack know if we want to allow
+  // unpartitioned cookie access or not.
+  // We can handle this by allowing 3PCs in the case where we have given access
+  // to storage access.
+  bool hasStorageAccess = request.storage_access_api_status ==
+                          net::StorageAccessApiStatus::kAccessViaAPI;
+
   if (!global_cookie_policy) {
     options |= network::mojom::kURLLoadOptionBlockAllCookies;
-  } else if (!third_party_cookie_policy && !request.url.SchemeIsFile()) {
+  } else if (!third_party_cookie_policy && !request.url.SchemeIsFile() &&
+             !hasStorageAccess) {
     // Special case: if the application has asked that we allow file:// scheme
     // URLs to set cookies, we need to avoid setting a cookie policy (as file://
     // scheme URLs are third-party to everything).
@@ -1193,8 +1196,7 @@ void AwProxyingURLLoaderFactory::CreateLoaderAndStart(
   // manager. In this case, it will not be bound so we move on.
   OptionalGetCookie get_cookie_header = std::nullopt;
   OptionalSetCookie set_cookie_header = std::nullopt;
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kWebViewInterceptedCookieHeader) &&
+  if (base::FeatureList::IsEnabled(features::kWebViewInterceptedCookieHeader) &&
       cookie_manager_.is_bound()) {
     get_cookie_header = base::BindRepeating(
         &AwProxyingURLLoaderFactory::GetCookieHeader, base::Unretained(this));
@@ -1249,15 +1251,12 @@ void AwProxyingURLLoaderFactory::GetCookieHeader(
     bool is_3pc_allowed,
     const network::ResourceRequest& request,
     base::OnceCallback<void(std::string)> callback) {
+  base::TimeTicks start = base::TimeTicks::Now();
   DCHECK(cookie_manager_.is_bound() && cookie_access_policy_ != nullptr);
 
   auto isolation_info = GetIsolationInfo(request);
 
   net::CookieOptions options = net::CookieOptions::MakeAllInclusive();
-
-  net::SchemefulSite site_to_partition =
-      isolation_info.network_isolation_key().GetTopFrameSite().value_or(
-          net::SchemefulSite());
 
   PrivacySetting privacy_setting = cookie_access_policy_->CanAccessCookies(
       request.url, isolation_info.site_for_cookies(), is_3pc_allowed,
@@ -1274,7 +1273,7 @@ void AwProxyingURLLoaderFactory::GetCookieHeader(
       net::CookiePartitionKeyCollection::FromOptional(
           GetPartitionKey(isolation_info, request)),
       base::BindOnce(
-          [](PrivacySetting privacy_setting,
+          [](PrivacySetting privacy_setting, base::TimeTicks start,
              base::OnceCallback<void(std::string)> callback,
              const net::CookieAccessResultList& results,
              const net::CookieAccessResultList& excluded_cookies) {
@@ -1287,16 +1286,26 @@ void AwProxyingURLLoaderFactory::GetCookieHeader(
               }
             }
 
-            std::move(callback).Run(
-                net::CanonicalCookie::BuildCookieLine(cookies));
+            // TODO(crbug.com/384986095): Provide real cookie values
+            std::string cookie_line = "";
+            if (base::FeatureList::IsEnabled(
+                    features::kWebViewInterceptedCookieHeaderReadWrite)) {
+              cookie_line = net::CanonicalCookie::BuildCookieLine(cookies);
+            }
+            std::move(callback).Run(cookie_line);
+            UMA_HISTOGRAM_TIMES(
+                "Android.WebView.ShouldInterceptRequest.GetCookieHeader."
+                "PostMojo.TimeToRun",
+                base::TimeTicks::Now() - start);
           },
-          std::move(privacy_setting), std::move(callback)));
+          std::move(privacy_setting), start, std::move(callback)));
 }
 
 void AwProxyingURLLoaderFactory::SetCookieHeader(
     const network::ResourceRequest& request,
-    const std::string& cookie_string,
+    std::string_view cookie_string,
     const std::optional<base::Time>& server_time) {
+  base::TimeTicks start = base::TimeTicks::Now();
   DCHECK(cookie_manager_.is_bound());
   auto isolation_info = GetIsolationInfo(request);
 
@@ -1307,9 +1316,17 @@ void AwProxyingURLLoaderFactory::SetCookieHeader(
       GetPartitionKey(isolation_info, request), net::CookieSourceType::kHTTP,
       &returned_status);
 
-  cookie_manager_->SetCanonicalCookie(*cookie, request.url,
-                                      net::CookieOptions::MakeAllInclusive(),
-                                      base::DoNothing());
+  // TODO(crbug.com/384986095): Provide real cookie values
+  if (cookie && base::FeatureList::IsEnabled(
+                    features::kWebViewInterceptedCookieHeaderReadWrite)) {
+    cookie_manager_->SetCanonicalCookie(*cookie, request.url,
+                                        net::CookieOptions::MakeAllInclusive(),
+                                        base::DoNothing());
+  }
+
+  UMA_HISTOGRAM_TIMES(
+      "Android.WebView.ShouldInterceptRequest.SetCookieHeader.TimeToRun",
+      base::TimeTicks::Now() - start);
 }
 
 net::IsolationInfo AwProxyingURLLoaderFactory::GetIsolationInfo(

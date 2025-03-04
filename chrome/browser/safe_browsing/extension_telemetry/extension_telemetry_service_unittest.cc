@@ -40,6 +40,7 @@
 #include "extensions/browser/disable_reason.h"
 #include "extensions/browser/extension_prefs.h"
 #include "extensions/browser/extension_registry.h"
+#include "extensions/browser/install_prefs_helper.h"
 #include "extensions/browser/pref_names.h"
 #include "extensions/common/extension.h"
 #include "extensions/common/extension_builder.h"
@@ -203,8 +204,7 @@ ExtensionTelemetryServiceTest::ExtensionTelemetryServiceTest(
     base::test::TaskEnvironment::TimeSource time_source)
     : task_environment_{time_source} {
   scoped_feature_list_.InitWithFeatures(
-      /*enabled_features=*/{kExtensionTelemetryDisableOffstoreExtensions,
-                            kExtensionTelemetryFileDataForCommandLineExtensions,
+      /*enabled_features=*/{kExtensionTelemetryFileDataForCommandLineExtensions,
                             kExtensionTelemetryForEnterprise},
       /*disabled_features=*/{});
 
@@ -389,7 +389,7 @@ TEST_F(ExtensionTelemetryServiceTest, ProcessesSignal) {
   EXPECT_EQ(info->name(), kExtensionName[0]);
   EXPECT_EQ(info->version(), kExtensionVersion);
   EXPECT_EQ(info->install_timestamp_msec(),
-            extension_prefs_->GetLastUpdateTime(kExtensionId[0])
+            GetLastUpdateTime(extension_prefs_, kExtensionId[0])
                 .InMillisecondsSinceUnixEpoch());
 }
 
@@ -410,7 +410,7 @@ TEST_F(ExtensionTelemetryServiceTest, ProcessesSignalForEnterprise) {
   EXPECT_EQ(info->name(), kExtensionName[0]);
   EXPECT_EQ(info->version(), kExtensionVersion);
   EXPECT_EQ(info->install_timestamp_msec(),
-            extension_prefs_->GetLastUpdateTime(kExtensionId[0])
+            GetLastUpdateTime(extension_prefs_, kExtensionId[0])
                 .InMillisecondsSinceUnixEpoch());
 }
 
@@ -508,7 +508,7 @@ TEST_F(ExtensionTelemetryServiceTest, GeneratesTelemetryReportWithNoSignals) {
               kExtensionVersion);
     EXPECT_EQ(
         telemetry_report_pb->reports(i).extension().install_timestamp_msec(),
-        extension_prefs_->GetLastUpdateTime(kExtensionId[i])
+        GetLastUpdateTime(extension_prefs_, kExtensionId[i])
             .InMillisecondsSinceUnixEpoch());
     // Verify that there is no signal data associated with the extension.
     EXPECT_EQ(telemetry_report_pb->reports(i).signals().size(), 0);
@@ -548,7 +548,7 @@ TEST_F(ExtensionTelemetryServiceTest,
               kExtensionVersion);
     EXPECT_EQ(
         telemetry_report_pb->reports(i).extension().install_timestamp_msec(),
-        extension_prefs_->GetLastUpdateTime(kExtensionId[i])
+        GetLastUpdateTime(extension_prefs_, kExtensionId[i])
             .InMillisecondsSinceUnixEpoch());
   }
 
@@ -594,7 +594,7 @@ TEST_F(ExtensionTelemetryServiceTest,
             kExtensionVersion);
   EXPECT_EQ(
       telemetry_report_pb->reports(0).extension().install_timestamp_msec(),
-      extension_prefs_->GetLastUpdateTime(kExtensionId[0])
+      GetLastUpdateTime(extension_prefs_, kExtensionId[0])
           .InMillisecondsSinceUnixEpoch());
 
   // Verify that first extension's report has signal data.
@@ -810,6 +810,16 @@ TEST_F(ExtensionTelemetryServiceTest, TestExtensionInfoProtoConstruction) {
     EXPECT_EQ(extension_pb->install_location(), ExtensionInfo::UNPACKED);
   }
 
+  auto validate_disable_reasons_list =
+      [](const ExtensionInfo& extension_pb,
+         const base::flat_set<int>& expected_reasons) {
+        base::flat_set<int> actual_reasons;
+        for (int i = 0; i < extension_pb.disable_reasons_list_size(); ++i) {
+          actual_reasons.insert(extension_pb.disable_reasons_list(i));
+        }
+        EXPECT_EQ(actual_reasons, expected_reasons);
+      };
+
   {
     // Test the disable reasons field.
     scoped_refptr<const Extension> extension =
@@ -818,7 +828,7 @@ TEST_F(ExtensionTelemetryServiceTest, TestExtensionInfoProtoConstruction) {
             .Build();
     add_extension(extension.get());
     extension_prefs_->SetExtensionDisabled(
-        extension->id(), extensions::disable_reason::DISABLE_USER_ACTION);
+        extension->id(), {extensions::disable_reason::DISABLE_USER_ACTION});
     {
       std::unique_ptr<ExtensionInfo> extension_pb =
           GetExtensionInfo(*extension);
@@ -826,6 +836,8 @@ TEST_F(ExtensionTelemetryServiceTest, TestExtensionInfoProtoConstruction) {
       EXPECT_EQ(extension_pb->disable_reasons(),
                 static_cast<uint32_t>(
                     extensions::disable_reason::DISABLE_USER_ACTION));
+      validate_disable_reasons_list(
+          *extension_pb, {extensions::disable_reason::DISABLE_USER_ACTION});
     }
     // Adding additional disable reasons should result in all reasons being
     // reported.
@@ -839,6 +851,31 @@ TEST_F(ExtensionTelemetryServiceTest, TestExtensionInfoProtoConstruction) {
                 static_cast<uint32_t>(
                     extensions::disable_reason::DISABLE_USER_ACTION |
                     extensions::disable_reason::DISABLE_CORRUPTED));
+      validate_disable_reasons_list(
+          *extension_pb, {extensions::disable_reason::DISABLE_USER_ACTION,
+                          extensions::disable_reason::DISABLE_CORRUPTED});
+    }
+    // Unknown disable reasons should also be reported.
+    constexpr int kUnknownDisableReason =
+        extensions::disable_reason::DISABLE_REASON_LAST << 1;
+    ASSERT_FALSE(extensions::IsValidDisableReason(kUnknownDisableReason));
+
+    extensions::ExtensionPrefs::DisableReasonRawManipulationPasskey passkey;
+    extension_prefs_->AddRawDisableReasons(passkey, extension->id(),
+                                           {kUnknownDisableReason});
+    {
+      std::unique_ptr<ExtensionInfo> extension_pb =
+          GetExtensionInfo(*extension);
+      EXPECT_TRUE(extension_pb->has_disable_reasons());
+      EXPECT_EQ(extension_pb->disable_reasons(),
+                static_cast<uint32_t>(
+                    extensions::disable_reason::DISABLE_USER_ACTION |
+                    extensions::disable_reason::DISABLE_CORRUPTED |
+                    kUnknownDisableReason));
+      validate_disable_reasons_list(
+          *extension_pb, {extensions::disable_reason::DISABLE_USER_ACTION,
+                          extensions::disable_reason::DISABLE_CORRUPTED,
+                          kUnknownDisableReason});
     }
   }
 
@@ -1304,7 +1341,7 @@ TEST_F(ExtensionTelemetryServiceTest,
   // same as the timestamp set in extension prefs from a previous install.
   EXPECT_EQ(cmdline_extension.install_timestamp_msec(), 0);
   EXPECT_NE(cmdline_extension.install_timestamp_msec(),
-            extension_prefs_->GetLastUpdateTime(cmdline_extension.id())
+            GetLastUpdateTime(extension_prefs_, cmdline_extension.id())
                 .InMillisecondsSinceUnixEpoch());
   // Verify that cmdline extension file data stored in prefs matches that in the
   // telemetry report.

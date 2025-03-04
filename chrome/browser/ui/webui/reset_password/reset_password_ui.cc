@@ -14,9 +14,10 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/values.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/safe_browsing/chrome_password_protection_service.h"
 #include "chrome/browser/ui/webui/reset_password/reset_password.mojom.h"
-#include "chrome/browser/ui/webui/webui_util.h"
 #include "chrome/common/url_constants.h"
+#include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/browser_resources.h"
 #include "components/safe_browsing/content/browser/password_protection/password_protection_service.h"
 #include "components/safe_browsing/core/browser/password_protection/metrics_util.h"
@@ -30,8 +31,10 @@
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui_data_source.h"
+#include "content/public/common/url_constants.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "ui/webui/webui_util.h"
 
 using safe_browsing::LoginReputationClientResponse;
 using safe_browsing::RequestOutcome;
@@ -61,7 +64,7 @@ class ResetPasswordHandlerImpl : public mojom::ResetPasswordHandler {
   ResetPasswordHandlerImpl(const ResetPasswordHandlerImpl&) = delete;
   ResetPasswordHandlerImpl& operator=(const ResetPasswordHandlerImpl&) = delete;
 
-  ~ResetPasswordHandlerImpl() override {}
+  ~ResetPasswordHandlerImpl() override = default;
 
   // mojom::ResetPasswordHandler overrides:
   void HandlePasswordReset() override {
@@ -90,8 +93,9 @@ class ResetPasswordHandlerImpl : public mojom::ResetPasswordHandler {
 PasswordType GetPasswordType(content::WebContents* web_contents) {
   content::NavigationEntry* nav_entry =
       web_contents->GetController().GetPendingEntry();
-  if (!nav_entry || !nav_entry->GetHasPostData() || !nav_entry->GetPostData())
+  if (!nav_entry || !nav_entry->GetHasPostData() || !nav_entry->GetPostData()) {
     return PasswordType::PASSWORD_TYPE_UNKNOWN;
+  }
   auto& post_data = nav_entry->GetPostData()->elements()->at(0);
   if (post_data.type() == network::DataElement::Tag::kBytes) {
     int post_data_int = -1;
@@ -108,12 +112,17 @@ PasswordType GetPasswordType(content::WebContents* web_contents) {
 // Properly format host name based on text direction.
 std::u16string GetFormattedHostName(const std::string host_name) {
   std::u16string host = url_formatter::IDNToUnicode(host_name);
-  if (base::i18n::IsRTL())
+  if (base::i18n::IsRTL()) {
     base::i18n::WrapStringWithLTRFormatting(&host);
+  }
   return host;
 }
 
 }  // namespace
+
+ResetPasswordUIConfig::ResetPasswordUIConfig()
+    : DefaultWebUIConfig(content::kChromeUIScheme,
+                         chrome::kChromeUIResetPasswordHost) {}
 
 ResetPasswordUI::ResetPasswordUI(content::WebUI* web_ui)
     : ui::MojoWebUIController(web_ui),
@@ -132,7 +141,7 @@ ResetPasswordUI::ResetPasswordUI(content::WebUI* web_ui)
 
 WEB_UI_CONTROLLER_TYPE_IMPL(ResetPasswordUI)
 
-ResetPasswordUI::~ResetPasswordUI() {}
+ResetPasswordUI::~ResetPasswordUI() = default;
 
 void ResetPasswordUI::BindInterface(
     mojo::PendingReceiver<mojom::ResetPasswordHandler> receiver) {

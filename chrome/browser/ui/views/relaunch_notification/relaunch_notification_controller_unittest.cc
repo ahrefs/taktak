@@ -20,7 +20,6 @@
 #include "base/time/tick_clock.h"
 #include "base/time/time.h"
 #include "base/values.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/ui/browser_list.h"
 #include "chrome/browser/upgrade_detector/upgrade_detector.h"
 #include "chrome/common/pref_names.h"
@@ -29,7 +28,7 @@
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "ash/shell.h"
 #include "ash/test/ash_test_helper.h"
 #include "chrome/browser/ash/login/users/fake_chrome_user_manager.h"
@@ -42,7 +41,7 @@
 #else
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/frame/test_with_browser_view.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 using ::testing::_;
 using ::testing::Eq;
@@ -905,7 +904,7 @@ TEST_F(RelaunchNotificationControllerTest, NotifyAllWithShortestPeriod) {
   ::testing::Mock::VerifyAndClearExpectations(&mock_controller_delegate);
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 
 class RelaunchNotificationControllerPlatformImplTest : public ::testing::Test {
  protected:
@@ -917,21 +916,24 @@ class RelaunchNotificationControllerPlatformImplTest : public ::testing::Test {
   void SetUp() override {
     ash::AshTestHelper::InitParams init_params;
     init_params.start_session = false;
-    ash_test_helper_.SetUp(std::move(init_params));
+    ash_test_helper_ = std::make_unique<ash::AshTestHelper>();
+    ash_test_helper_->SetUp(std::move(init_params));
 
-    user_manager_ = new ash::FakeChromeUserManager();
-    scoped_user_manager_ = std::make_unique<user_manager::ScopedUserManager>(
-        base::WrapUnique(user_manager_.get()));
+    user_manager_.Reset(std::make_unique<ash::FakeChromeUserManager>());
+    auto* session_manager = session_manager::SessionManager::Get();
+    session_manager->OnUserManagerCreated(user_manager_.Get());
 
     const char test_user_email[] = "test_user@example.com";
     const AccountId test_account_id(AccountId::FromUserEmail(test_user_email));
-    user_manager_->AddUser(test_account_id);
+    auto* user = user_manager_->AddUser(test_account_id);
     user_manager_->LoginUser(test_account_id);
 
     // SessionManager is created by
     // |AshTestHelper::bluetooth_config_test_helper()|.
     session_manager::SessionManager::Get()->CreateSession(
-        test_account_id, test_user_email, false);
+        user->GetAccountId(), test_user_email,
+        /*new_user=*/false,
+        /*has_active_session=*/false);
     session_manager::SessionManager::Get()->SetSessionState(
         session_manager::SessionState::ACTIVE);
 
@@ -941,6 +943,16 @@ class RelaunchNotificationControllerPlatformImplTest : public ::testing::Test {
     ash::Shell::Get()->display_configurator()->SetDelegateForTesting(
         std::unique_ptr<display::NativeDisplayDelegate>(
             native_display_delegate_));
+  }
+
+  void TearDown() override {
+    native_display_delegate_ = nullptr;
+    logger_.reset();
+    ash_test_helper_->TearDown();
+    ash_test_helper_.reset();
+    // UserManager needs to be removed after ash_test_helper_, because it holds
+    // SessionManager instance, which needs to be destroyed before UserManager.
+    user_manager_.Reset();
   }
 
   void LockScreen() {
@@ -971,9 +983,9 @@ class RelaunchNotificationControllerPlatformImplTest : public ::testing::Test {
  private:
   content::BrowserTaskEnvironment task_environment_;
   RelaunchNotificationControllerPlatformImpl impl_;
-  ash::AshTestHelper ash_test_helper_;
-  raw_ptr<ash::FakeChromeUserManager, DanglingUntriaged> user_manager_;
-  std::unique_ptr<user_manager::ScopedUserManager> scoped_user_manager_;
+  std::unique_ptr<ash::AshTestHelper> ash_test_helper_;
+  user_manager::TypedScopedUserManager<ash::FakeChromeUserManager>
+      user_manager_;
   std::unique_ptr<display::test::ActionLogger> logger_;
   raw_ptr<display::NativeDisplayDelegate> native_display_delegate_;
 };
@@ -1122,12 +1134,12 @@ TEST_F(RelaunchNotificationControllerPlatformImplTest,
             base::Seconds(1));
 }
 
-#else  // BUILDFLAG(IS_CHROMEOS_ASH)
+#else  // BUILDFLAG(IS_CHROMEOS)
 
 class RelaunchNotificationControllerPlatformImplTest
     : public TestWithBrowserView {
  protected:
-  RelaunchNotificationControllerPlatformImplTest() : TestWithBrowserView() {}
+  RelaunchNotificationControllerPlatformImplTest() = default;
 
   void SetUp() override {
     TestWithBrowserView::SetUp();
@@ -1135,10 +1147,11 @@ class RelaunchNotificationControllerPlatformImplTest
   }
 
   void SetVisibility(bool is_visible) {
-    if (is_visible)
+    if (is_visible) {
       browser_view()->Show();
-    else
+    } else {
       browser_view()->Hide();
+    }
 
     // Allow UI tasks to run so that the browser becomes fully active/inactive.
     task_environment()->RunUntilIdle();
@@ -1195,15 +1208,7 @@ TEST_F(RelaunchNotificationControllerPlatformImplTest, MAYBE_DeferredDeadline) {
   // The query should happen once the notification is potentially seen.
   EXPECT_CALL(callback, Run()).WillOnce(Return(deadline));
   ASSERT_NO_FATAL_FAILURE(SetVisibility(true));
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  // We should not depend on BrowserView::Show() (called by SetVisibility(true))
-  // to call BrowserList::SetLastActive() to set the associated browser to be
-  // last active one. We are planning to remove that call for Lacros to make
-  // updating of last active browser completely asynchronous (b/325634285).
-  // Therefore, for the unit test depending on browser() to be set as the last
-  // active one, we need to explicit set it as the last active one.
-  BrowserList::GetInstance()->SetLastActive(browser());
-#endif
+
   ::testing::Mock::VerifyAndClearExpectations(&callback);
 
   ASSERT_NO_FATAL_FAILURE(SetVisibility(false));
@@ -1218,4 +1223,4 @@ TEST_F(RelaunchNotificationControllerPlatformImplTest, MAYBE_DeferredDeadline) {
   ::testing::Mock::VerifyAndClearExpectations(&callback);
 }
 
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)

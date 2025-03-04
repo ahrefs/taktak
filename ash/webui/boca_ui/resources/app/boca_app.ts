@@ -12,6 +12,7 @@
  * Declare tab information
  */
 export declare interface TabInfo {
+  id?: number;
   title: string;
   url: string;
   favicon: string;
@@ -45,6 +46,25 @@ export declare interface Course {
 }
 
 /**
+ * Declare a classroom course assignment information
+ */
+export declare interface Assignment {
+  title: string;
+  url: string;
+  lastUpdateTime: Date;
+  materials: Material[];
+  type: AssignmentType;
+}
+
+/**
+ * Declare an assignment material information
+ */
+export declare interface Material {
+  title: string;
+  type: MaterialType;
+}
+
+/**
  * Declare navigation enum type
  */
 export enum NavigationType {
@@ -53,11 +73,85 @@ export enum NavigationType {
   BLOCK = 2,
   DOMAIN = 3,
   LIMITED = 4,
+  SAME_DOMAIN_OPEN_OTHER_DOMAIN_LIMITED = 5
 }
 
 export enum JoinMethod {
   ROSTER = 0,
   ACCESS_CODE = 1,
+}
+
+export enum SubmitAccessCodeResult {
+  UNKNOWN = 0,
+  SUCCESS = 1,
+  INVALID_CODE = 2,
+}
+
+/**
+ * Declare network state enum type
+ */
+export enum NetworkState {
+  ONLINE = 0,
+  CONNECTED = 1,
+  PORTAL = 2,
+  CONNECTING = 3,
+  NOTCONNECTED = 4,
+}
+
+/**
+ * Declare network type enum type
+ */
+export enum NetworkType {
+  CELLULAR = 0,
+  ETHERNET = 1,
+  WIFI = 2,
+  UNSUPPORTED = 3,
+}
+
+/**
+ * Declare permission type enum type
+ */
+export enum Permission {
+  MICROPHONE = 0,
+  CAMERA = 1,
+}
+
+/**
+ * Declare permission setting type enum type
+ */
+export enum PermissionSetting {
+  ALLOW = 0,
+  ASK = 1,
+  BLOCK = 2,
+}
+
+/**
+ * Declare boca user pref type.
+ */
+export enum BocaValidPref {
+  NAVIGATION_SETTING = 0,
+  CAPTION_ENABLEMENT_SETTING = 1,
+}
+
+/**
+ * Declare course assignment material type enum type
+ */
+export enum MaterialType {
+  UNKNOWN = 0,
+  SHARED_DRIVE_FILE = 1,
+  YOUTUBE_VIDEO = 2,
+  LINK = 3,
+  FORM = 4,
+}
+
+/**
+ * Declare course assignment type enum type
+ */
+export enum AssignmentType {
+  UNSPECIFIED = 0,
+  ASSIGNMENT = 1,
+  SHORT_ANSWER_QUESTION = 2,
+  MULTIPLE_CHOICE_QUESTION = 3,
 }
 
 /**
@@ -92,9 +186,11 @@ export declare interface SessionConfig {
   sessionStartTime?: Date;
   sessionDurationInMinutes: number;
   students: Identity[];
+  studentsJoinViaCode?: Identity[];
   teacher?: Identity;
   onTaskConfig: OnTaskConfig;
   captionConfig: CaptionConfig;
+  accessCode?: string;
 }
 
 /**
@@ -118,6 +214,7 @@ export declare interface StudentActivity {
   // TODO(b/365191878): Remove this after refactoring existing schema to support
   // multi-group.
   joinMethod: JoinMethod;
+  viewScreenSessionCode?: string;
 }
 
 /**
@@ -129,9 +226,24 @@ export declare interface IdentifiedActivity {
 }
 
 /**
+ * Declare NetworkInfo
+ */
+export declare interface NetworkInfo {
+  networkState: NetworkState;
+  networkType: NetworkType;
+  name: string;
+  signalStrength: number;
+}
+
+/**
  * The delegate which exposes privileged function to App
  */
 export declare interface ClientApiDelegate {
+  /**
+   * Request authentication for the webview.
+   */
+  authenticateWebview(): Promise<boolean>;
+
   /**
    * Get a list of Window tabs opened on device.
    */
@@ -146,6 +258,11 @@ export declare interface ClientApiDelegate {
    * Get list of students in a course.
    */
   getStudentList(courseId: string): Promise<Identity[]>;
+
+  /**
+   * Get list of assignments in a course.
+   */
+  getAssignmentList(courseId: string): Promise<Assignment[]>;
 
   /**
    * Create a new session.
@@ -165,6 +282,12 @@ export declare interface ClientApiDelegate {
    * End the current session
    */
   endSession(): Promise<boolean>;
+
+  /**
+   * Extend session duration
+   */
+  extendSessionDuration(extendDurationInMinutes: number): Promise<boolean>;
+
   /**
    * Update on task config
    */
@@ -174,6 +297,55 @@ export declare interface ClientApiDelegate {
    * Update caption config
    */
   updateCaptionConfig(captionConfig: CaptionConfig): Promise<boolean>;
+  /**
+   * Set float mode
+   */
+  setFloatMode(isFloatMode: boolean): Promise<boolean>;
+
+  /**
+   * Submit an access code for student to join the session.
+   */
+  submitAccessCode(accessCode: string): Promise<SubmitAccessCodeResult>;
+
+  /**
+   * Request to view the screen of the student with the given id.
+   */
+  viewStudentScreen(id: string): Promise<boolean>;
+
+  /**
+   * Request to end the view screen session of the student with the given id.
+   */
+  endViewScreenSession(id: string): Promise<boolean>;
+
+  /**
+   * Request to set the view screen session to active for the student with the
+   * given id.
+   */
+  setViewScreenSessionActive(id: string): Promise<boolean>;
+
+  /**
+   * Get the value of a boca specific user pref.
+   */
+  getUserPref(pref: BocaValidPref): Promise<any>;
+
+  /**
+   * Set the value of a boca specific user pref.
+   */
+  setUserPref(pref: BocaValidPref, value: any): Promise<void>;
+
+  /**
+   * Set the permission of a site.
+   */
+  setSitePermission(
+      url: string, permission: Permission,
+      setting: PermissionSetting): Promise<boolean>;
+
+  /**
+   * Close the tab with tabId.
+   */
+  closeTab(tabId: number): Promise<boolean>;
+
+  openFeedbackDialog(): Promise<void>;
 }
 
 /**
@@ -197,4 +369,16 @@ export declare interface ClientApi {
    * The entire payload would be sent.
    */
   onStudentActivityUpdated(studentActivity: IdentifiedActivity[]): void;
+
+  /**
+   * Notify the app that the active networks has been updated.
+   */
+  onActiveNetworkStateChanged(activeNetworks: NetworkInfo[]): void;
+
+  /**
+   * Notify the app that the local captions has been turned off from the caption
+   * bubble or by another mean from chrome. This can be called during a session
+   * or outside of a session in the teacher case.
+   */
+  onLocalCaptionDisabled(): void;
 }

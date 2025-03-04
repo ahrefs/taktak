@@ -100,7 +100,7 @@ void NullCaptureModeSession::OnCameraPreviewBoundsOrVisibilityChanged(
 
 void NullCaptureModeSession::OnCameraPreviewDestroyed() {}
 
-void NullCaptureModeSession::MaybeDismissUserNudgeForever() {}
+void NullCaptureModeSession::MaybeDismissSunfishRegionNudgeForever() {}
 
 void NullCaptureModeSession::MaybeChangeRoot(aura::Window* new_root,
                                              bool root_window_will_shutdown) {
@@ -113,19 +113,49 @@ NullCaptureModeSession::GetWindowsToIgnoreFromWidgets() {
   return std::set<aura::Window*>();
 }
 
-void NullCaptureModeSession::ShowSearchResultsPanel(
-    const gfx::ImageSkia& image) {}
+void NullCaptureModeSession::OnPerformCaptureForSearchStarting(
+    PerformCaptureType capture_type) {}
 
-void NullCaptureModeSession::AddActionButton(
+void NullCaptureModeSession::OnPerformCaptureForSearchEnded(
+    PerformCaptureType capture_type) {}
+
+base::WeakPtr<BaseCaptureModeSession>
+NullCaptureModeSession::GetImageSearchToken() {
+  return nullptr;
+}
+
+ActionButtonView* NullCaptureModeSession::AddActionButton(
     views::Button::PressedCallback callback,
     std::u16string text,
     const gfx::VectorIcon* icon,
-    const ActionButtonRank rank) {}
+    const ActionButtonRank rank,
+    ActionButtonViewID id) {
+  return nullptr;
+}
+
+void NullCaptureModeSession::AddSmartActionsButton() {}
+
+void NullCaptureModeSession::MaybeShowScannerDisclaimer(
+    base::RepeatingClosure accept_callback,
+    base::RepeatingClosure decline_callback) {}
+
+void NullCaptureModeSession::OnScannerActionsFetched(
+    ScannerSession::FetchActionsResponse actions_response) {}
+
+void NullCaptureModeSession::ShowActionContainerError(
+    const std::u16string& error_message) {}
 
 void NullCaptureModeSession::InitInternal() {
   layer()->SetName("NullCaptureModeSession");
 }
 
 void NullCaptureModeSession::ShutdownInternal() {}
+
+gfx::Rect NullCaptureModeSession::GetFeedbackWidgetScreenBounds() const {
+  return gfx::Rect();
+}
+
+void NullCaptureModeSession::OnSearchResultsPanelCreated(
+    views::Widget* panel_widget) {}
 
 }  // namespace ash

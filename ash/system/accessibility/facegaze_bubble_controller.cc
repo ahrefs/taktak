@@ -6,6 +6,7 @@
 
 #include "ash/system/accessibility/facegaze_bubble_view.h"
 #include "ash/wm/collision_detection/collision_detection_utils.h"
+#include "base/functional/bind.h"
 #include "ui/display/screen.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
@@ -14,12 +15,14 @@
 namespace ash {
 
 namespace {
+constexpr base::TimeDelta kShowTimeout = base::Seconds(1);
 constexpr int kMarginFromTopDip = 8;
 }  // namespace
 
 FaceGazeBubbleController::FaceGazeBubbleController() = default;
 
 FaceGazeBubbleController::~FaceGazeBubbleController() {
+  show_timer_.Stop();
   if (widget_ && !widget_->IsClosed()) {
     widget_->CloseNow();
   }
@@ -30,15 +33,19 @@ void FaceGazeBubbleController::OnViewIsDeleting(views::View* observed_view) {
     return;
   }
 
+  show_timer_.Stop();
   facegaze_bubble_view_->views::View::RemoveObserver(this);
   facegaze_bubble_view_ = nullptr;
   widget_ = nullptr;
 }
 
-void FaceGazeBubbleController::UpdateBubble(const std::u16string& text) {
+void FaceGazeBubbleController::UpdateBubble(const std::u16string& text,
+                                            bool is_warning) {
   MaybeInitialize();
-  Update(text);
-  widget_->Show();
+  Update(text, is_warning);
+  if (!show_timer_.IsRunning()) {
+    widget_->Show();
+  }
 }
 
 void FaceGazeBubbleController::MaybeInitialize() {
@@ -46,7 +53,8 @@ void FaceGazeBubbleController::MaybeInitialize() {
     return;
   }
 
-  facegaze_bubble_view_ = new FaceGazeBubbleView();
+  facegaze_bubble_view_ = new FaceGazeBubbleView(base::BindRepeating(
+      &FaceGazeBubbleController::OnMouseEntered, GetWeakPtr()));
   facegaze_bubble_view_->views::View::AddObserver(this);
 
   widget_ =
@@ -56,12 +64,13 @@ void FaceGazeBubbleController::MaybeInitialize() {
       CollisionDetectionUtils::RelativePriority::kFaceGazeBubble);
 }
 
-void FaceGazeBubbleController::Update(const std::u16string& text) {
+void FaceGazeBubbleController::Update(const std::u16string& text,
+                                      bool is_warning) {
   if (!facegaze_bubble_view_) {
     return;
   }
 
-  facegaze_bubble_view_->Update(text);
+  facegaze_bubble_view_->Update(text, is_warning);
 
   const gfx::Rect primary_work_area =
       display::Screen::GetScreen()->GetPrimaryDisplay().work_area();
@@ -76,6 +85,17 @@ void FaceGazeBubbleController::Update(const std::u16string& text) {
                primary_work_area.x();
   int top = primary_work_area.y() + kMarginFromTopDip;
   facegaze_bubble_view_->SetAnchorRect(gfx::Rect(center, top, 0, 0));
+}
+
+void FaceGazeBubbleController::OnMouseEntered() {
+  widget_->Hide();
+  show_timer_.Start(FROM_HERE, kShowTimeout,
+                    base::BindRepeating(&FaceGazeBubbleController::OnShowTimer,
+                                        GetWeakPtr()));
+}
+
+void FaceGazeBubbleController::OnShowTimer() {
+  widget_->Show();
 }
 
 }  // namespace ash

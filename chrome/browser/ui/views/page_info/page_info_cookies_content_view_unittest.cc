@@ -5,6 +5,7 @@
 #include "chrome/browser/ui/views/page_info/page_info_cookies_content_view.h"
 
 #include <memory>
+#include <string_view>
 
 #include "base/test/scoped_feature_list.h"
 #include "chrome/browser/ui/layout_constants.h"
@@ -15,6 +16,7 @@
 #include "components/content_settings/core/common/cookie_blocking_3pcd_status.h"
 #include "components/content_settings/core/common/features.h"
 #include "components/page_info/page_info.h"
+#include "components/privacy_sandbox/privacy_sandbox_features.h"
 #include "components/strings/grit/components_strings.h"
 #include "components/strings/grit/privacy_sandbox_strings.h"
 #include "components/vector_icons/vector_icons.h"
@@ -24,23 +26,21 @@
 #include "ui/views/test/widget_test.h"
 #include "ui/views/vector_icons.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/ash/login/users/fake_chrome_user_manager.h"
 #include "components/user_manager/scoped_user_manager.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 namespace {
 
 using Status = ::content_settings::TrackingProtectionBlockingStatus;
 using FeatureType = ::content_settings::TrackingProtectionFeatureType;
 
-std::u16string GetManageButtonSubtitle(views::View* content_view) {
+std::u16string_view GetManageButtonSubtitle(views::View* content_view) {
   auto* manage_button = content_view->GetViewByID(
       PageInfoViewFactory::VIEW_ID_PAGE_INFO_LINK_OR_BUTTON_COOKIE_DIALOG);
   EXPECT_TRUE(manage_button);
-  auto* managed_button_subtitle =
-      static_cast<RichHoverButton*>(manage_button)->GetSubTitleViewForTesting();
-  return managed_button_subtitle->GetText();
+  return static_cast<RichHoverButton*>(manage_button)->GetSubtitleText();
 }
 
 const char* GetVectorIconName(views::ImageView* image_view) {
@@ -59,7 +59,7 @@ PageInfoCookiesContentView::CookiesNewInfo DefaultCookieInfoForTests(
   cookie_info.protections_on = true;
   cookie_info.enforcement = CookieControlsEnforcement::kNoEnforcement;
   cookie_info.blocking_status = CookieBlocking3pcdStatus::kNotIn3pcd;
-  cookie_info.is_otr = false;
+  cookie_info.is_incognito = false;
   cookie_info.features = {{FeatureType::kThirdPartyCookies,
                            CookieControlsEnforcement::kNoEnforcement,
                            Status::kAllowed}};
@@ -97,16 +97,13 @@ class PageInfoCookiesContentViewBaseTestClass : public TestWithBrowserView {
     TestWithBrowserView::TearDown();
   }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  void LogIn(const std::string& email) override {
-    const AccountId account_id = AccountId::FromUserEmail(email);
-    user_manager()->AddUserWithAffiliation(account_id, /*is_affiliated=*/true);
-    ash_test_helper()->test_session_controller_client()->AddUserSession(email);
-    user_manager()->UserLoggedIn(
-        account_id,
-        user_manager::FakeUserManager::GetFakeUsernameHash(account_id),
-        /*browser_restart=*/false,
-        /*is_child=*/false);
+#if BUILDFLAG(IS_CHROMEOS)
+  void LogIn(std::string_view email, const GaiaId& gaia_id) override {
+    BrowserWithTestWindowTest::LogIn(email, gaia_id);
+    user_manager()->SetUserPolicyStatus(
+        AccountId::FromUserEmailGaiaId(email, gaia_id),
+        /*is_managed=*/true,
+        /*is_affiliated=*/true);
   }
 #endif
 
@@ -606,7 +603,7 @@ TEST_F(PageInfoCookiesContentView3pcdTitleAndDescriptionTest,
   PageInfoCookiesContentView::CookiesNewInfo cookie_info =
       DefaultCookieInfoForTests();
   cookie_info.blocking_status = CookieBlocking3pcdStatus::kAll;
-  cookie_info.is_otr = true;
+  cookie_info.is_incognito = true;
   cookie_info.features = GetTrackingProtectionFeatures(cookie_info);
   content_view()->SetCookieInfo(cookie_info);
 
@@ -631,7 +628,7 @@ TEST_F(PageInfoCookiesContentView3pcdTitleAndDescriptionTest,
       DefaultCookieInfoForTests();
   cookie_info.protections_on = false;
   cookie_info.blocking_status = CookieBlocking3pcdStatus::kAll;
-  cookie_info.is_otr = true;
+  cookie_info.is_incognito = true;
   cookie_info.features = GetTrackingProtectionFeatures(cookie_info);
   content_view()->SetCookieInfo(cookie_info);
 
@@ -708,6 +705,35 @@ INSTANTIATE_TEST_SUITE_P(All,
                          testing::Values(CookieBlocking3pcdStatus::kLimited,
                                          CookieBlocking3pcdStatus::kAll));
 
+class PageInfoCookiesContentViewAlwaysBlock3pcsIncognito
+    : public PageInfoCookiesContentViewBaseTestClass {
+  std::vector<base::test::FeatureRefAndParams> EnabledFeatures() override {
+    return {{privacy_sandbox::kAlwaysBlock3pcsIncognito, {}}};
+  }
+};
+
+TEST_F(PageInfoCookiesContentViewAlwaysBlock3pcsIncognito,
+       DisplaysIncognitoDescriptionWhenInIncognito) {
+  PageInfoCookiesContentView::CookiesNewInfo cookie_info =
+      DefaultCookieInfoForTests();
+  cookie_info.is_incognito = true;
+  content_view()->SetCookieInfo(cookie_info);
+  EXPECT_EQ(
+      third_party_cookies_description_label()->GetText(),
+      l10n_util::GetStringFUTF16(
+          IDS_PAGE_INFO_COOKIES_DESCRIPTION,
+          l10n_util::GetStringUTF16(IDS_PAGE_INFO_COOKIES_SETTINGS_LINK)));
+}
+
+TEST_F(PageInfoCookiesContentViewAlwaysBlock3pcsIncognito,
+       DisplaysStandardDescriptionWhenInRegularMode) {
+  EXPECT_EQ(
+      third_party_cookies_description_label()->GetText(),
+      l10n_util::GetStringFUTF16(
+          IDS_PAGE_INFO_COOKIES_DESCRIPTION,
+          l10n_util::GetStringUTF16(IDS_PAGE_INFO_COOKIES_SETTINGS_LINK)));
+}
+
 class PageInfoCookiesContentView3pcdCookieToggleTest
     : public PageInfoCookiesContentViewBaseTestClass,
       public testing::WithParamInterface<CookieBlocking3pcdStatus> {};
@@ -757,7 +783,7 @@ TEST_F(PageInfoCookiesContentView3pcdCookieToggleTest,
   PageInfoCookiesContentView::CookiesNewInfo cookie_info =
       DefaultCookieInfoForTests();
   cookie_info.blocking_status = CookieBlocking3pcdStatus::kAll;
-  cookie_info.is_otr = true;
+  cookie_info.is_incognito = true;
   cookie_info.features = GetTrackingProtectionFeatures(cookie_info);
   content_view()->SetCookieInfo(cookie_info);
 
@@ -779,7 +805,7 @@ TEST_F(PageInfoCookiesContentView3pcdCookieToggleTest,
       DefaultCookieInfoForTests();
   cookie_info.protections_on = false;
   cookie_info.blocking_status = CookieBlocking3pcdStatus::kAll;
-  cookie_info.is_otr = true;
+  cookie_info.is_incognito = true;
   cookie_info.features = GetTrackingProtectionFeatures(cookie_info);
   content_view()->SetCookieInfo(cookie_info);
 

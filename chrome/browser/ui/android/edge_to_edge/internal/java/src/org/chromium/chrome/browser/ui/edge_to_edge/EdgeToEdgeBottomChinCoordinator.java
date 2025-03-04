@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 package org.chromium.chrome.browser.ui.edge_to_edge;
 
+import android.graphics.Color;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -35,10 +36,9 @@ public class EdgeToEdgeBottomChinCoordinator implements Destroyable, SystemBarCo
      * @param keyboardVisibilityDelegate A {@link KeyboardVisibilityDelegate} for watching keyboard
      *     visibility events.
      * @param layoutManager The {@link LayoutManager} for adding new scene overlays.
+     * @param requestRenderRunnable Runnable that requests a re-render of the scene overlay.
      * @param edgeToEdgeController The {@link EdgeToEdgeController} for observing the edge-to-edge
      *     status and window bottom insets.
-     * @param navigationBarColorProvider The {@link NavigationBarColorProvider} for observing the
-     *     color for the navigation bar.
      * @param bottomControlsStacker The {@link BottomControlsStacker} for observing and changing
      *     browser controls heights.
      * @param fullscreenManager The {@link FullscreenManager} for provide the fullscreen state.
@@ -47,8 +47,8 @@ public class EdgeToEdgeBottomChinCoordinator implements Destroyable, SystemBarCo
             View androidView,
             @NonNull KeyboardVisibilityDelegate keyboardVisibilityDelegate,
             @NonNull LayoutManager layoutManager,
+            @NonNull Runnable requestRenderRunnable,
             @NonNull EdgeToEdgeController edgeToEdgeController,
-            @NonNull NavigationBarColorProvider navigationBarColorProvider,
             @NonNull BottomControlsStacker bottomControlsStacker,
             @NonNull FullscreenManager fullscreenManager) {
         this(
@@ -56,9 +56,8 @@ public class EdgeToEdgeBottomChinCoordinator implements Destroyable, SystemBarCo
                 keyboardVisibilityDelegate,
                 layoutManager,
                 edgeToEdgeController,
-                navigationBarColorProvider,
                 bottomControlsStacker,
-                new EdgeToEdgeBottomChinSceneLayer(),
+                new EdgeToEdgeBottomChinSceneLayer(requestRenderRunnable),
                 fullscreenManager);
     }
 
@@ -68,19 +67,18 @@ public class EdgeToEdgeBottomChinCoordinator implements Destroyable, SystemBarCo
             @NonNull KeyboardVisibilityDelegate keyboardVisibilityDelegate,
             @NonNull LayoutManager layoutManager,
             @NonNull EdgeToEdgeController edgeToEdgeController,
-            @NonNull NavigationBarColorProvider navigationBarColorProvider,
             @NonNull BottomControlsStacker bottomControlsStacker,
             @NonNull EdgeToEdgeBottomChinSceneLayer sceneLayer,
             @NonNull FullscreenManager fullscreenManager) {
         mLayoutManager = layoutManager;
         mSceneLayer = sceneLayer;
 
-        int initNavBarColor = navigationBarColorProvider.getNavigationBarColor();
         PropertyModel model =
                 new PropertyModel.Builder(EdgeToEdgeBottomChinProperties.ALL_KEYS)
                         .with(EdgeToEdgeBottomChinProperties.CAN_SHOW, false)
-                        .with(EdgeToEdgeBottomChinProperties.COLOR, initNavBarColor)
-                        .with(EdgeToEdgeBottomChinProperties.DIVIDER_COLOR, initNavBarColor)
+                        .with(EdgeToEdgeBottomChinProperties.COLOR, Color.TRANSPARENT)
+                        .with(EdgeToEdgeBottomChinProperties.DIVIDER_COLOR, Color.TRANSPARENT)
+                        .with(EdgeToEdgeBottomChinProperties.Y_OFFSET, 0)
                         .build();
         PropertyModelChangeProcessor.create(
                 model,
@@ -95,7 +93,6 @@ public class EdgeToEdgeBottomChinCoordinator implements Destroyable, SystemBarCo
                         keyboardVisibilityDelegate,
                         mLayoutManager,
                         edgeToEdgeController,
-                        navigationBarColorProvider,
                         bottomControlsStacker,
                         fullscreenManager);
 
@@ -112,15 +109,20 @@ public class EdgeToEdgeBottomChinCoordinator implements Destroyable, SystemBarCo
     // SystemBarColorHelper
 
     @Override
+    public boolean canSetStatusBarColor() {
+        return false;
+    }
+
+    @Override
     public void setStatusBarColor(int color) {}
 
     @Override
     public void setNavigationBarColor(int color) {
-        mMediator.onNavigationBarColorChanged(color);
+        mMediator.changeBottomChinColor(color);
     }
 
     @Override
     public void setNavigationBarDividerColor(int dividerColor) {
-        mMediator.onNavigationBarDividerChanged(dividerColor);
+        mMediator.changeBottomChinDividerColor(dividerColor);
     }
 }

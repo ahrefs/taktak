@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!DOCTYPE translationbundle>
 <translationbundle lang="hi">
-<translation id="1066101356081285416">Chrome, उन साइटों पर ट्रैकिंग नंबरों का पता लगाएगा जिन पर आपने विज़िट किया है और आपको 'नया टैब' पेज पर पैकेज के अपडेट दिखाएगा. यह सुविधा उपलब्ध कराने के लिए, पैकेज ट्रैकिंग नंबर और वेबसाइट का नाम Google को भेजा जाएगा. इससे, Google Shopping से जुड़ी सुविधाओं को सभी के लिए बेहतर बनाया जा सकेगा. <ph name="BEGIN_LINK" />पैकेज ट्रैकिंग से जुड़ी सेटिंग<ph name="END_LINK" /> में जाकर, इसे कभी भी अपडेट किया जा सकता है.</translation>
+<translation id="1076643793026027628">YouTube के गुप्त मोड वाले लिंक, Chrome के गुप्त मोड में अपने-आप खुल जाते हैं.</translation>
 <translation id="1086486568852410168">Google Lens की मदद से खोजें</translation>
 <translation id="1143896152279775643"><ph name="EMAIL" /> के लिए आपके पासवर्ड को Google पासवर्ड मैनेजर में सेव किया जाएगा.</translation>
 <translation id="1146503048444965320">Chrome में नया टैब खोलें</translation>
@@ -11,7 +11,6 @@
 <translation id="1200396280085622191">मैसेज और अन्य ऐप्लिकेशन में मिले लिंक पर टैप करके, किसी भी समय Chrome का इस्तेमाल करें.</translation>
 <translation id="1229222343402087523">Chrome में ${searchPhrase} खोजें</translation>
 <translation id="1237769345474105984">Chrome की मदद से दिखाया गया पेज</translation>
-<translation id="1240190568154816272">Chrome से जुड़ी सलाह</translation>
 <translation id="124228879633599436">आपके Chrome का वर्शन पुराना है. सुरक्षित रहने के लिए इसे अपडेट करें.</translation>
 <translation id="1333745675627230582">Chrome Dino गेम खेलें</translation>
 <translation id="1352919863522755794">Google Password Manager आपके पासवर्ड की जांच नहीं कर सका. कृपया अपना इंटरनेट कनेक्शन जांचें.</translation>
@@ -38,9 +37,11 @@
 <translation id="1646463005043273333">इससे Chrome को डिफ़ॉल्ट ब्राउज़र के तौर पर सेट करने के लिए, Chrome की सेटिंग खुल जाती है.</translation>
 <translation id="1670609221633730681">Chrome के बारे में सलाह: पता बार की जगह चुनें</translation>
 <translation id="1759842336958782510">Chrome</translation>
+<translation id="1784567647421309104">अपने पासवर्ड Chrome में सेव करें</translation>
 <translation id="1790080846677398234">डाले गए यूआरएल को Chrome में आपके बुकमार्क में जोड़ता है.</translation>
 <translation id="1799920918471566157">Chrome से जुड़ी सलाह</translation>
 <translation id="1830634592642484976">फ़िलहाल, यह पता Chrome में सेव है. Google के सभी प्रॉडक्ट पर इस्तेमाल करने के लिए, इसे अपने Google खाते, <ph name="USER_EMAIL" /> में सेव करें.</translation>
+<translation id="1891812034154776216">Chrome को बंद करते समय, खुले हुए गुप्त टैब छिपाएं</translation>
 <translation id="1917964099031477364">इस डिवाइस पर यह खाता और वह डेटा जो सेव नहीं है, Chrome और दूसरे Google ऐप्लिकेशन से हटा दिए जाएंगे.</translation>
 <translation id="1919130412786645364">Chrome में साइन-इन करने दें</translation>
 <translation id="1965935827552890526">आप दूसरी Chrome विंडो में जो काम कर रहे हैं उसे पूरा करें.</translation>
@@ -66,7 +67,6 @@
 <translation id="2574249610672786438">जिन डिवाइसों पर Chrome का इस्तेमाल किया जाता है उन सभी पर खोले गए टैब देखने के लिए, अपने सभी डिवाइस पर साइन इन करें</translation>
 <translation id="2576431527583832481">Chrome अब बेहतर हो गया है! एक नया वर्शन उपलब्ध है.</translation>
 <translation id="257708665678654955">क्या आप चाहते हैं कि Google Chrome अगली बार इस साइट के <ph name="LANGUAGE_NAME" /> पेजों का अनुवाद करने का ऑफ़र दे?</translation>
-<translation id="2650286135394207535">Chrome को आपके पैकेज ट्रैक करने में मदद करने दें</translation>
 <translation id="2668242166988961773">Chrome में बोलकर खोजें.</translation>
 <translation id="2671426118752779020">Google पासवर्ड मैनेजर में सेव किए गए पासवर्ड का इस्तेमाल, iPhone में मौजूद दूसरे ऐप्लिकेशन के लिए किया जा सकता है.</translation>
 <translation id="2689064829982324496">सभी वेबसाइटों पर, अपने Google खाते से साइन आउट करने के लिए, <ph name="BEGIN_LINK" />Chrome से साइन आउट करें<ph name="END_LINK" />.</translation>
@@ -108,6 +108,7 @@
 <translation id="3655656110921623717">इसका मतलब है कि Chrome हर बार, साइट के मोबाइल वर्शन का अनुरोध करेगा.</translation>
 <translation id="3740397331642243698">यह डाले गए यूआरएल को Google Chrome में, गुप्त मोड में खोलता है.</translation>
 <translation id="3741995255368156336">Chrome की रीडिंग लिस्ट को खोलता है.</translation>
+<translation id="3808570423967020928">अपने होम स्क्रीन डॉक से Chrome को तेज़ी से ऐक्सेस करें.</translation>
 <translation id="3827545470516145620">आपको इस डिवाइस पर मानक सुरक्षा दी जा रही है</translation>
 <translation id="384394811301901750">Google Chrome इस समय आपके कैमरे का उपयोग नहीं कर सकता</translation>
 <translation id="3863841106411295595">डाले गए यूआरएल को Chrome में आपकी रीडिंग लिस्ट में जोड़ता है.</translation>
@@ -118,12 +119,14 @@
 <translation id="4064699917955374540">अपने Google खाते में Chrome डेटा का इस्तेमाल करने और उसे सेव करने के लिए, अपनी पहचान की पुष्टि करें.</translation>
 <translation id="417201473131094001">यह सुविधा Chrome के कैनरी वर्शन पर काम नहीं करती</translation>
 <translation id="424864128008805179">Chrome से साइन आउट करें?</translation>
+<translation id="4430797724889237570">Gmail, Maps, YouTube, और अन्य ऐप्लिकेशन के लिंक, Chrome में खोलें</translation>
 <translation id="447252321002412580">Chrome की सुविधाओं और परफ़ॉर्मेंस को बेहतर बनाने में मदद करें</translation>
 <translation id="4523886039239821078">कुछ ऐड-ऑन के कारण Chrome बंद हो जा रहा है. कृपया उन्हें अनइंस्टॉल करें:</translation>
 <translation id="4633328489441962921">Chrome अपडेट की जांच नहीं कर सका</translation>
 <translation id="4636900170638246267">इस साइट और Chrome में साइन इन करें.</translation>
 <translation id="4646014602299206846">Chrome, उन साइटों पर पैकेज ट्रैकिंग नंबरों का पता लगाएगा जिन पर आपने विज़िट किया है और आपको 'नया टैब' पेज पर पैकेज के अपडेट दिखाएगा. Google के साथ आपका डेटा शेयर किया जाएगा, ताकि आपको यह सुविधा दी जा सके और Shopping को सभी के लिए बेहतर बनाया जा सके.</translation>
 <translation id="4647910807533196601">Chrome में, पिछली बार खोला गया मेरा टैब खोलें.</translation>
+<translation id="4693084815234024320">Chrome का गुप्त मोड खुला है</translation>
 <translation id="4724297637870447613">Chrome का सभी जगह इस्तेमाल करें</translation>
 <translation id="4738647308035481133">Google Chrome पेज</translation>
 <translation id="4742795653798179840">Chrome का डेटा मिटाया गया</translation>
@@ -133,7 +136,6 @@
 <translation id="4830799082179398588">क्या आपको Chrome को अपना डिफ़ॉल्ट ब्राउज़र बनाना है?</translation>
 <translation id="484033449593719797">यह सुविधा Chrome के बीटा वर्शन पर काम नहीं करती</translation>
 <translation id="4840404732697892756">अपने Google खाते से साइन इन करने पर ही, Google Password Manager आपके पासवर्ड की जांच कर सकता है.</translation>
-<translation id="4860330141789125848">{COUNT,plural, =1{Chrome इस पैकेज को 'नया टैब' पेज पर ट्रैक करने में आपकी मदद कर सकता है.}one{Chrome इस पैकेज को 'नया टैब' पेज पर ट्रैक करने में आपकी मदद कर सकता है.}other{Chrome इन पैकेज को 'नया टैब' पेज पर ट्रैक करने में आपकी मदद कर सकता है.}}</translation>
 <translation id="4903674399067644695">यह कार्ड आपको Chrome का ज़्यादा से ज़्यादा फ़ायदा पाने के सुझाव दिखाता है.</translation>
 <translation id="49200511069271369">आपका संगठन <ph name="DOMAIN" />, उस खाते को मैनेज करता है जिसमें आपने साइन इन किया है. साथ ही, वह Chrome इस्तेमाल करने के तरीके को मैनेज करता है. आपका एडमिन कुछ सुविधाओं को सेट अप या सीमित कर सकता है.</translation>
 <translation id="4925322001044117929">iPad पर Chrome को डिफ़ॉल्ट ब्राउज़र के तौर पर सेट करें</translation>
@@ -152,10 +154,9 @@
 <translation id="5389212809648216794">Google Chrome आपके कैमरे का उपयोग नहीं कर सकता क्योंकि दूसरा ऐप्लिकेशन उसका उपयोग कर रहा है</translation>
 <translation id="5395376160638294582">यह पक्का करें कि आप जब चाहें, अपने Google खाते में Chrome के डेटा का इस्तेमाल कर सकें</translation>
 <translation id="5404252374083197467">क्या Chrome को डिफ़ॉल्ट ब्राउज़र के तौर पर सेट करना है?</translation>
-<translation id="5439191312780166229">यह सुविधा स्टैंडर्ड सुरक्षा मोड की तुलना में ज़्यादा डेटा का विश्लेषण करके, आपको ऐसी खतरनाक साइटों के बारे में चेतावनी देती है जिनके बारे में Google को पहले से नहीं पता था. Chrome की चेतावनियों को अनदेखा किया जा सकता है.</translation>
+<translation id="5439191312780166229">स्टैंडर्ड सुरक्षा मोड की तुलना में ज़्यादा डेटा का विश्लेषण किया जाता है. इससे आपको ऐसी खतरनाक साइटों के बारे में भी चेतावनी मिलती है जिनके बारे में Google को पहले नहीं पता था. Chrome की चेतावनियों को अनदेखा किया जा सकता है.</translation>
 <translation id="5442013002200339429">अगर "<ph name="MODULE_NAME" />" को छिपाया जाता है, तो Chrome आपके आने वाले पैकेज को ऑटोमैटिक तरीके से ट्रैक नहीं करेगा. साथ ही, पैकेज ट्रैकिंग से जुड़ा आपका पुराना डेटा मिटा देगा.</translation>
 <translation id="5460571915754665838">4. Chrome चुनें</translation>
-<translation id="546541279759910616">{COUNT,plural, =1{Chrome इस पैकेज को 'नया टैब' पेज पर ट्रैक करने में मदद करेगा.}one{Chrome इस पैकेज को 'नया टैब' पेज पर ट्रैक करने में मदद करेगा.}other{Chrome इन पैकेज को 'नया टैब' पेज पर ट्रैक करने में मदद करेगा.}}</translation>
 <translation id="5492504007368565877">Google Password Manager आपके पासवर्ड की जांच नहीं कर सका.</translation>
 <translation id="5525095647255982834">इस टैब को किसी दूसरे डिवाइस पर भेजने के लिए, उस डिवाइस पर जाकर Chrome में साइन इन करें.</translation>
 <translation id="5527026824954593399">“Chrome पर Google Maps की मदद से देखें” पर टैप करें.</translation>
@@ -165,11 +166,13 @@
 <translation id="5639704535586432836">सेटिंग &gt; निजता &gt; कैमरा &gt; Google Chrome खोलें और कैमरा चालू करें.</translation>
 <translation id="5642200033778930880">Google Chrome स्प्लिट व्यू मोड में आपके कैमरे का इस्तेमाल नहीं कर सकता</translation>
 <translation id="5661521615548540542">Google Password Manager सभी पासवर्ड की जांच नहीं कर सका. कृपया कुछ देर बाद कोशिश करें.</translation>
+<translation id="5681291952421236520">Chrome की सेटिंग को टॉगल करें</translation>
 <translation id="5690398455483874150">{count,plural, =1{अभी 1 Chrome विंडो दिख रही है}one{अभी {count} Chrome विंडो दिख रही है}other{अभी {count} Chrome विंडो दिख रही हैं}}</translation>
 <translation id="5690427481109656848">Google LLC</translation>
 <translation id="5709557627224531708">Chrome को अपने डिफ़ॉल्ट ब्राउज़र के तौर पर सेट करें</translation>
 <translation id="571296537125272375">Chrome अपडेट की जांच नहीं कर सका, क्योंकि आप ऑफ़लाइन हैं</translation>
 <translation id="5716154293141027663">जब भी आप अन्य ऐप्लिकेशन में लिंक पर क्लिक करें, तो उसे Chrome में खोलें</translation>
+<translation id="5752489513673657785">आपके हिसाब से Google का बनाया गया एक फ़ीड</translation>
 <translation id="5772407442571703917">Chrome यहां से डाउनलोड करें.</translation>
 <translation id="5779767936254214055">Chrome से बाहर निकलने या किसी दूसरे ऐप्लिकेशन पर स्विच करने पर, अपने गुप्त टैब लॉक करें.</translation>
 <translation id="5808435672482059465">अपना 'Chrome इतिहास' देखें</translation>
@@ -178,7 +181,6 @@
 <translation id="5998675059699164418">आपके संगठन के मुताबिक, यह ज़रूरी है कि Chrome का इस्तेमाल करने के लिए आप साइन इन करें.</translation>
 <translation id="6021312115739110405">आपके हिसाब से Google का बनाया गया एक फ़ीड. इसमें खबरें, खेल-कूद, और मौसम की जानकारी शामिल होती है.</translation>
 <translation id="6022659036123304283">Chrome को अपने मुताबिक बनाएं</translation>
-<translation id="6110625574506755980">Chrome की कुछ सुविधाएं अब उपलब्ध नहीं होंगी.</translation>
 <translation id="6132149203299792222">अपने पासवर्ड, बुकमार्क वगैरह को सिंक करने के लिए, अपने Google खाते से साइन इन करें.</translation>
 <translation id="6145223986912084844">chrome</translation>
 <translation id="6177442314419606057">Chrome में खोजें</translation>
@@ -200,8 +202,9 @@
 <translation id="6484712497741564393"><ph name="EMAIL" /> के तौर पर साइन इन किया गया.
 
 आपका डेटा, आपके लंबे पासवर्ड से एन्क्रिप्ट (सुरक्षित) किया जाता है. अपने Google खाते में Chrome डेटा सेव करने और इस्तेमाल करने के लिए इसे डालें.</translation>
+<translation id="6533470733797826516">Chrome में मौजूद, जानकारी ऑटोमैटिक भरने की सुविधा से चुटकियों में साइन इन करें</translation>
+<translation id="6536544321553662809">लिंक आसानी से खोलने और शेयर करने के लिए, Chrome को अपने डिफ़ॉल्ट ब्राउज़र के तौर पर सेट करें</translation>
 <translation id="6545449117344801102">Chrome, पतों को खोजता है और आपको रास्ते बताने और स्थानीय जानकारी देने के लिए, Google Maps का इस्तेमाल करता है.</translation>
-<translation id="6634107063912726160">साइन आउट करने पर, Chrome आपके Google खाते में नए डेटा को सिंक नहीं करेगा. पहले सिंक किया गया डेटा, खाते में सेव रहेगा.</translation>
 <translation id="6636941099779251629">आपके संगठन के मुताबिक, यह ज़रूरी है कि Chrome का इस्तेमाल करने के लिए आप साइन इन करें. <ph name="BEGIN_LINK" />ज़्यादा जानें<ph name="END_LINK" /></translation>
 <translation id="6646696210740573446">यह आपके आईपी पते को छिपाने वाले निजी सर्वर की मदद से, Google को यूआरएल का अस्पष्ट हिस्सा भेजता है. अगर कोई साइट आपका पासवर्ड चुराने की कोशिश करती है या अगर आपने अनजाने में नुकसान पहुंचाने वाली कोई फ़ाइल डाउनलोड की है, तो Chrome उनके यूआरएल Google को भेज सकता है. यूआरएल के साथ-साथ पेज का कुछ कॉन्टेंट भी भेजा जाता है.</translation>
 <translation id="6647304104688527905">इससे Chrome में नया टैब खुलता है.</translation>
@@ -218,9 +221,12 @@
 
 Chrome के अनुभव को बेहतर बनाने के लिए, डेटा का इस्तेमाल करने वाली अन्य सेटिंग के लिए, <ph name="BEGIN_LINK" />Google की सेवाएं<ph name="END_LINK" /> पर जाएं.</translation>
 <translation id="6922332667202044570">Chrome से ब्राउज़िंग डेटा मिटाएं.</translation>
+<translation id="6924922227983877439">लिंक, डिफ़ॉल्ट रूप से Chrome में खोलें</translation>
+<translation id="6931601805528922498">साइन इन करने पर, Chrome में आपका खाता जोड़ दिया जाता है, ताकि आप काम से जुड़ी ब्राउज़िंग आसानी से कर पाएं.</translation>
 <translation id="6975725306479268850">AutoFill के लिए Chrome चुनें</translation>
 <translation id="7056826488869329999">इससे Chrome में सुरक्षा जांच की सुविधा खुलती है और चालू होती है.</translation>
 <translation id="7061455974939528301">Chrome आइकॉन को दबाकर रखें और "Edit home screen" पर क्लिक करें</translation>
+<translation id="7065813315247345131">Chrome को डॉक पर मूव करें</translation>
 <translation id="7124339256045485976">Chrome को अप-टू-डेट रखें</translation>
 <translation id="7161390184744336561">Google Chrome का यह वर्शन पुराना हो गया है</translation>
 <translation id="7165736900384873061">Google Chrome QR स्कैनर उपयोग शुरू करें</translation>
@@ -261,11 +267,11 @@ Chrome के अनुभव को बेहतर बनाने के ल�
 <translation id="778855399387580014">नए Chrome टैब में खोज शुरू करें.</translation>
 <translation id="7792140019572081272">Chrome, Face ID की मदद से आपकी संवेदनशील जानकारी को सुरक्षित रखता है.</translation>
 <translation id="7855730255114109580">Google Chrome अप टू डेट है</translation>
-<translation id="7861998090118873450">Chrome पर अपने पासवर्ड सेव करें</translation>
 <translation id="7897703007638178753">Chrome में हाल ही के टैब देखें</translation>
 <translation id="7948283758957877064">Chrome में नया क्या है</translation>
 <translation id="8000174216052461231">Chrome की सलाह: Chrome की बेहतरीन सुरक्षा सुविधा पाएं</translation>
 <translation id="8006014511203279255">मैसेज या अन्य ऐप्लिकेशन में मिले लिंक पर टैप करने पर, Chrome का इस्तेमाल करें.</translation>
+<translation id="8014670471808569312">Chrome आपको पासवर्ड सेव करने का विकल्प देगा.</translation>
 <translation id="8018153653741938705">Google Chrome के साथ सुरक्षित रहें</translation>
 <translation id="8022947259858476807">कोई भी लिंक खोलने, किसी भी विजेट से खोज करने, और किसी भी अन्य ऐप्लिकेशन में पासवर्ड अपने-आप (ऑटोमैटिक) भरने की सुविधा इस्तेमाल करने के लिए Chrome को डिफ़ॉल्ट रूप से इस्तेमाल करें.</translation>
 <translation id="804638182476029347">Chrome की सूचनाओं में कीमत में कमी होने से जुड़ी सूचनाएं दिखाने की अनुमति दें</translation>
@@ -280,10 +286,10 @@ Chrome के अनुभव को बेहतर बनाने के ल�
 <translation id="8317674518145175158">पेमेंट के तरीके और पते एन्क्रिप्ट नहीं किए जाएंगे. Chrome के ब्राउज़िंग इतिहास को सिंक नहीं किया जाएगा.
 
 आपका एन्क्रिप्ट किया गया डेटा, सिर्फ़ वही व्यक्ति देख सकता है जिसके पास आपका लंबा पासवर्ड है. Google को लंबा पासवर्ड नहीं भेजा जाता और न ही Google इसे सेव करता है. अगर आपको अपना लंबा पासवर्ड याद नहीं है या आपको यह सेटिंग बदलनी है, तो <ph name="BEGIN_LINK" />अपने खाते में मौजूद Chrome का डेटा मिटाएं<ph name="END_LINK" />.</translation>
-<translation id="8357607116237445042">चुनें कि आप इस डिवाइस से अपना Chrome डेटा मिटाना चाहते हैं या सेव रखना चाहते हैं</translation>
 <translation id="8370517070665726704">कॉपीराइट <ph name="YEAR" /> Google LLC. सर्वाधिकार सुरक्षित.</translation>
 <translation id="8371138994040262994">इससे Chrome में सेटिंग खुलती है.</translation>
 <translation id="8387459386171870978">Chrome को इस्तेमाल करना जारी रखें</translation>
+<translation id="8392023217086447677">Chrome के गुप्त मोड में खोला गया</translation>
 <translation id="840168496893712993">कुछ ऐड-ऑन के कारण Chrome क्रैश हो जाता है. कृपया उन्हें अनइंस्टॉल करके देखें.</translation>
 <translation id="8413500425974960807">Chrome के बारे में सलाह: Chrome को डॉक पर मूव करें</translation>
 <translation id="8413795581997394485">यह मोड, खतरनाक या नुकसान पहुंचाने वाली साइटों, डाउनलोड, और एक्सटेंशन से सुरक्षित रखता है. जब उपयोगकर्ता किसी साइट पर जाता है, तो Chrome निजी सर्वर के ज़रिए Google को उस साइट के यूआरएल का अस्पष्ट हिस्सा भेजता है. यह सर्वर, आपके आईपी पते को छिपा देता है. अगर साइट पर कुछ संदिग्ध गतिविधि मिलती है, तो साइट का पूरा यूआरएल और पेज का कुछ कॉन्टेंट भी भेजा जाता है.</translation>
@@ -316,7 +322,6 @@ Chrome के अनुभव को बेहतर बनाने के ल�
 <translation id="9122931302567044771">इसका मतलब है कि Chrome हर बार, साइट के डेस्कटॉप वर्शन का अनुरोध करेगा.</translation>
 <translation id="9176561303811134420">Chrome में पेमेंट का तरीका मैनेज करें</translation>
 <translation id="9181628561061032322">Chrome में हाल ही के टैब खोलता है.</translation>
-<translation id="9194404253580584015">आपके हिसाब से Google का बनाया गया एक फ़ीड.</translation>
 <translation id="948597495737267756">इससे आपका Chrome इतिहास पेज खुलता है.</translation>
 <translation id="97300214378190234">अन्य ऐप्लिकेशन में मिले लिंक पर टैप करके, किसी भी समय Chrome का इस्तेमाल करें.</translation>
 <translation id="998677222109959694">Chrome की सेटिंग मैनेज करें</translation>

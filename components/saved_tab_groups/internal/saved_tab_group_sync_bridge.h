@@ -10,6 +10,7 @@
 #include <optional>
 #include <vector>
 
+#include "base/functional/callback_helpers.h"
 #include "base/memory/scoped_refptr.h"
 #include "components/saved_tab_groups/internal/saved_tab_group_model.h"
 #include "components/saved_tab_groups/proto/saved_tab_group_data.pb.h"
@@ -19,6 +20,7 @@
 #include "components/sync/model/data_type_store.h"
 #include "components/sync/model/data_type_sync_bridge.h"
 #include "components/sync/protocol/saved_tab_group_specifics.pb.h"
+#include "google_apis/gaia/gaia_id.h"
 
 class PrefService;
 
@@ -94,7 +96,7 @@ class SavedTabGroupSyncBridge : public syncer::DataTypeSyncBridge {
 
   // Returns the account ID from the change processor if metadata is tracked,
   // otherwise returns a nullopt.
-  std::optional<std::string> GetTrackedAccountId() const;
+  std::optional<GaiaId> GetTrackedAccountId() const;
 
   // Whether the sync is currently enabled and syncing for saved tab groups.
   // False before bridge initialization is completed.
@@ -122,6 +124,9 @@ class SavedTabGroupSyncBridge : public syncer::DataTypeSyncBridge {
   // Updates and/or adds the specifics into the DataTypeStore.
   void UpsertEntitySpecific(const proto::SavedTabGroupData& data,
                             syncer::DataTypeStore::WriteBatch* write_batch);
+  void UpsertEntitySpecific(const proto::SavedTabGroupData& data,
+                            syncer::DataTypeStore::WriteBatch* write_batch,
+                            bool send_to_sync);
 
   // Removes the specifics pointed to by `guid` from the DataTypeStore.
   void RemoveEntitySpecific(const base::Uuid& guid,
@@ -202,8 +207,42 @@ class SavedTabGroupSyncBridge : public syncer::DataTypeSyncBridge {
   // based on the group's cache guid.
   bool IsRemoteGroup(const SavedTabGroup& group);
 
+  // Creates `ongoing_write_batch_` if needed and returns a scoped closure
+  // runner that will destroy the batch if needed when it goes out of scope.
+  // When `commit_write_batch_on_destroy` is false, the write batch is not
+  // committed to the store when destroyed, and the caller is responsible for
+  // committing it when needed by calling CommitOngoingWriteBatch().
+  // `commit_write_batch_on_destroy` has no impact if there is an ongoing write
+  // batch (i.e. this method is called reentrantly).
+  base::ScopedClosureRunner MaybeCreateScopedWriteBatch(
+      bool commit_write_batch_on_destroy);
+
+  // Commits the ongoing write batch to the store. This method should only be
+  // called after `MaybeCreateScopedWriteBatch()` and when the current scope is
+  // not reentrant (normally, only within ApplyIncrementalSyncChanges() or
+  // MergeFullSyncData()).
+  void CommitOngoingWriteBatch();
+
+  // Destroys the ongoing write batch and commits it to the store if
+  // `commit_write_batch_on_destroy` is true. This method should not be called
+  // directly, use CommitOngoingWriteBatch() instead.
+  void DestroyOngoingWriteBatch(bool commit_write_batch_on_destroy);
+
   // The DataTypeStore used for local storage.
   std::unique_ptr<syncer::DataTypeStore> store_;
+
+  // The write batch used to allow reentrancy calls during the processing of
+  // remote updates. If `ongoing_write_batch_` is not null, it means that there
+  // is likely an ongoing remote update processing. In this case methods should
+  // reuse this object instead of creating a new write batch. Otherwise, the
+  // write batch from processing remote updates may overwrite the changes once
+  // committed.
+  //
+  // Use CreateWriteBatchWithDestroyClosure() to create this object because it
+  // returns a scoped closure runner that will destroy the batch when it goes
+  // out of scope. DestroyOngoingWriteBatch() can be called to destroy the batch
+  // explicitly, but this is normally required only during remote updates.
+  std::unique_ptr<syncer::DataTypeStore::WriteBatch> ongoing_write_batch_;
 
   // Tab groups model wrapper used to access and modify SavedTabGroupModel.
   raw_ptr<SyncBridgeTabGroupModelWrapper> model_wrapper_;

@@ -13,10 +13,17 @@ BASE_FEATURE(kPrefetchUseContentRefactor,
 
 BASE_FEATURE(kPrefetchReusable,
              "PrefetchReusable",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
+// 4MiB, 2**20 * 4.
 const base::FeatureParam<int> kPrefetchReusableBodySizeLimit{
-    &kPrefetchReusable, "prefetch_reusable_body_size_limit", 65536};
+    &kPrefetchReusable, "prefetch_reusable_body_size_limit", 4194304};
+
+BASE_FEATURE_PARAM(bool,
+                   kPrefetchReusableUseNewWaitLoop,
+                   &kPrefetchReusable,
+                   "PrefetchReusableUseNewWaitLoop",
+                   false);
 
 BASE_FEATURE(kPrefetchNIKScope,
              "PrefetchNIKScope",
@@ -24,10 +31,6 @@ BASE_FEATURE(kPrefetchNIKScope,
 
 BASE_FEATURE(kPrefetchClientHints,
              "PrefetchClientHints",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
-BASE_FEATURE(kPrefetchXClientDataHeader,
-             "PrefetchXClientDataHeader",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
 constexpr base::FeatureParam<PrefetchClientHintsCrossSiteBehavior>::Option
@@ -62,6 +65,10 @@ BASE_FEATURE(kPrefetchNewLimits,
 
 BASE_FEATURE(kPrefetchNewWaitLoop,
              "PrefetchNewWaitLoop",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+BASE_FEATURE(kPrefetchServiceWorkerNoFetchHandlerFix,
+             "PrefetchServiceWorkerNoFetchHandlerFix",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 }  // namespace features

@@ -48,7 +48,7 @@ class SyncServiceFactoryTest : public PlatformTest {
  protected:
   // Returns the collection of default datatypes.
   syncer::DataTypeSet DefaultDatatypes() {
-    static_assert(53 == syncer::GetNumDataTypes(),
+    static_assert(54 == syncer::GetNumDataTypes(),
                   "When adding a new type, you probably want to add it here as "
                   "well (assuming it is already enabled).");
 
@@ -91,13 +91,14 @@ class SyncServiceFactoryTest : public PlatformTest {
       datatypes.Put(syncer::COLLABORATION_GROUP);
       datatypes.Put(syncer::SHARED_TAB_GROUP_DATA);
     }
-    // syncer::PLUS_ADDRESS is excluded because GoogleGroupsManagerFactory is
-    // null for testing and hence no controller gets instantiated for the type.
-    if (base::FeatureList::IsEnabled(syncer::kSyncPlusAddressSetting)) {
-      datatypes.Put(syncer::PLUS_ADDRESS_SETTING);
-    }
-    if (base::FeatureList::IsEnabled(syncer::kSyncWebauthnCredentials)) {
+    // syncer::PLUS_ADDRESS and syncer::PLUS_ADDRESS_SETTING are excluded
+    // because GoogleGroupsManagerFactory is null for testing and hence no
+    // controller gets instantiated for the type.
+    if (syncer::IsWebauthnCredentialSyncEnabled()) {
       datatypes.Put(syncer::WEBAUTHN_CREDENTIAL);
+    }
+    if (base::FeatureList::IsEnabled(syncer::kSyncAutofillLoyaltyCard)) {
+      datatypes.Put(syncer::AUTOFILL_LOYALTY_CARD);
     }
     return datatypes;
   }
@@ -120,8 +121,7 @@ TEST_F(SyncServiceFactoryTest, DisableSyncFlag) {
 // and properly initialized.
 TEST_F(SyncServiceFactoryTest, CreateSyncServiceImplDefault) {
   syncer::SyncServiceImpl* sync_service =
-      SyncServiceFactory::GetAsSyncServiceImplForBrowserStateForTesting(
-          profile());
+      SyncServiceFactory::GetForProfileAsSyncServiceImplForTesting(profile());
   syncer::DataTypeSet types = sync_service->GetRegisteredDataTypesForTest();
   const syncer::DataTypeSet default_types = DefaultDatatypes();
   EXPECT_EQ(default_types.size(), types.size());

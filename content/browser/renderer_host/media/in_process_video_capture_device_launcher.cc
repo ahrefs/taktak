@@ -4,6 +4,7 @@
 
 #include "content/browser/renderer_host/media/in_process_video_capture_device_launcher.h"
 
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -16,14 +17,13 @@
 #include "base/task/single_thread_task_runner.h"
 #include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "content/browser/media/capture/native_screen_capture_picker.h"
 #include "content/browser/renderer_host/media/in_process_launched_video_capture_device.h"
 #include "content/browser/renderer_host/media/video_capture_controller.h"
-#include "content/common/buildflags.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/desktop_media_id.h"
+#include "content/public/common/buildflags.h"
 #include "content/public/common/content_features.h"
 #include "media/base/media_switches.h"
 #include "media/capture/video/fake_video_capture_device.h"
@@ -53,19 +53,19 @@
 #endif
 #endif  // BUILDFLAG(ENABLE_SCREEN_CAPTURE)
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "content/browser/gpu/chromeos/video_capture_dependencies.h"
 #include "media/capture/video/chromeos/scoped_video_capture_jpeg_decoder.h"
 #include "media/capture/video/chromeos/video_capture_jpeg_decoder_impl.h"
 #elif BUILDFLAG(IS_WIN)
 #include "media/capture/video/win/video_capture_device_factory_win.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 namespace content {
 
 namespace {
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 std::unique_ptr<media::VideoCaptureJpegDecoder> CreateGpuJpegDecoder(
     media::VideoCaptureJpegDecoder::DecodeDoneCB decode_done_cb,
     base::RepeatingCallback<void(const std::string&)> send_log_message_cb) {
@@ -78,7 +78,7 @@ std::unique_ptr<media::VideoCaptureJpegDecoder> CreateGpuJpegDecoder(
           std::move(send_log_message_cb)),
       io_task_runner);
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if BUILDFLAG(ENABLE_SCREEN_CAPTURE)
 
@@ -88,20 +88,8 @@ std::unique_ptr<media::VideoCaptureJpegDecoder> CreateGpuJpegDecoder(
 const int kMaxNumberOfBuffers = media::kVideoCaptureDefaultMaxBufferPoolSize;
 
 #if BUILDFLAG(IS_MAC)
-BASE_FEATURE(kScreenCaptureKitMac,
-             "ScreenCaptureKitMac",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
-// If this feature is enabled, ScreenCaptureKit will be used for window
-// capturing even if kScreenCaptureKitMac is disabled. Please note that this
-// feature has no effect if kScreenCaptureKitMac is enabled.
-BASE_FEATURE(kScreenCaptureKitMacWindow,
-             "ScreenCaptureKitMacWindow",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 // If this feature is enabled, ScreenCaptureKit will be used for screen
-// capturing even if kScreenCaptureKitMac is disabled. Please note that this
-// feature has no effect if kScreenCaptureKitMac is enabled.
+// capturing.
 BASE_FEATURE(kScreenCaptureKitMacScreen,
              "ScreenCaptureKitMacScreen",
              base::FEATURE_ENABLED_BY_DEFAULT);
@@ -125,8 +113,7 @@ void IncrementDesktopCaptureCounters(const DesktopMediaID& device_id) {
                                 : TAB_VIDEO_CAPTURER_CREATED_WITHOUT_AUDIO);
       break;
     case DesktopMediaID::TYPE_NONE:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 
@@ -200,9 +187,7 @@ DesktopCaptureImplementation CreatePlatformDependentVideoCaptureDevice(
 
   // Prefer using ScreenCaptureKit. After that try DesktopCaptureDeviceMac, and
   // if both fail, use the generic DesktopCaptureDevice.
-  if (base::FeatureList::IsEnabled(kScreenCaptureKitMac) ||
-      (desktop_id.type == DesktopMediaID::TYPE_WINDOW &&
-       base::FeatureList::IsEnabled(kScreenCaptureKitMacWindow)) ||
+  if (desktop_id.type == DesktopMediaID::TYPE_WINDOW ||
       (desktop_id.type == DesktopMediaID::TYPE_SCREEN &&
        base::FeatureList::IsEnabled(kScreenCaptureKitMacScreen))) {
     device_out = CreateScreenCaptureKitDeviceMac(desktop_id);
@@ -245,7 +230,9 @@ void InProcessVideoCaptureDeviceLauncher::LaunchDeviceAsync(
     Callbacks* callbacks,
     base::OnceClosure done_cb,
     mojo::PendingRemote<video_effects::mojom::VideoEffectsProcessor>
-        video_effects_processor) {
+        video_effects_processor,
+    mojo::PendingRemote<media::mojom::ReadonlyVideoEffectsManager>
+        readonly_video_effects_manager) {
   DCHECK_CURRENTLY_ON(BrowserThread::IO);
   DCHECK(state_ == State::READY_TO_LAUNCH);
 
@@ -362,13 +349,17 @@ void InProcessVideoCaptureDeviceLauncher::LaunchDeviceAsync(
 #endif  // BUILDFLAG(ENABLE_SCREEN_CAPTURE)
 
     default:
-      NOTREACHED_IN_MIGRATION() << "unsupported stream type=" << stream_type;
-      start_capture_closure =
-          base::BindOnce(std::move(after_start_capture_callback), nullptr);
+      NOTREACHED() << "unsupported stream type=" << stream_type;
   }
 
+// TODO(pbos): Should this entire method be gone when
+// !BUILDFLAG(ENABLE_SCREEN_CAPTURE)? Right now we're getting dead-code warnings
+// if we include below code outside ENABLE_SCREEN_CAPTURE builds as all cases
+// above are NOTREACHED() then.
+#if BUILDFLAG(ENABLE_SCREEN_CAPTURE)
   state_ = State::DEVICE_START_IN_PROGRESS;
   device_task_runner_->PostTask(FROM_HERE, std::move(start_capture_closure));
+#endif
 }
 
 void InProcessVideoCaptureDeviceLauncher::AbortLaunch() {
@@ -397,7 +388,7 @@ InProcessVideoCaptureDeviceLauncher::CreateDeviceClient(
           requested_buffer_type, buffer_pool_max_buffer_count);
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   return std::make_unique<media::VideoCaptureDeviceClient>(
       std::move(receiver), std::move(buffer_pool),
       base::BindRepeating(
@@ -408,9 +399,8 @@ InProcessVideoCaptureDeviceLauncher::CreateDeviceClient(
                               receiver_on_io_thread)));
 #else
   return std::make_unique<media::VideoCaptureDeviceClient>(
-      std::move(receiver), std::move(buffer_pool),
-      media::VideoEffectsContext({}));
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+      std::move(receiver), std::move(buffer_pool), std::nullopt);
+#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 void InProcessVideoCaptureDeviceLauncher::OnDeviceStarted(

@@ -74,6 +74,9 @@ export class CertificateListV2Element extends CertificateListV2ElementBase {
       // non-collapsible.
       hideHeader: Boolean,
 
+      // True if the cert metadata is editable
+      certMetadataEditable: Boolean,
+
       inSubpage: Boolean,
       expanded_: Boolean,
       certificates_: Array,
@@ -90,6 +93,7 @@ export class CertificateListV2Element extends CertificateListV2ElementBase {
 
   certSource: CertificateSource;
   headerText: string;
+  certMetadataEditable: boolean = false;
   showImport: boolean = false;
   showImportAndBind: boolean = false;
   hideExport: boolean = false;
@@ -111,6 +115,16 @@ export class CertificateListV2Element extends CertificateListV2ElementBase {
     }
     if (this.inSubpage) {
       this.$.listHeader.classList.add('subpage-padding');
+    }
+
+    const proxy = CertificatesV2BrowserProxy.getInstance();
+    proxy.callbackRouter.triggerReload.addListener(
+        this.onRefreshRequested_.bind(this));
+  }
+
+  private onRefreshRequested_(certSources: CertificateSource[]) {
+    if (certSources.includes(this.certSource)) {
+      this.refreshCertificates();
     }
   }
 
@@ -160,6 +174,7 @@ export class CertificateListV2Element extends CertificateListV2ElementBase {
     if (result !== null && result.success !== undefined) {
       // On successful deletion, refresh the certificate list.
       this.refreshCertificates();
+      this.$.importCert.focus();
     }
   }
 

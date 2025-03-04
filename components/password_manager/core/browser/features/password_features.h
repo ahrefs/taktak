@@ -30,7 +30,8 @@ BASE_DECLARE_FEATURE(kAutoApproveSharedPasswordUpdatesFromSameSender);
 // across quarters.
 BASE_DECLARE_FEATURE(kAutofillPasswordUserPerceptionSurvey);
 // Moves the "Use a passkey / Use a different passkey" to the context menu from
-// the autofill dropdown.
+// the autofill dropdown. This is now decoupled from
+// "PasswordManualFallbackAvailable" flag.
 BASE_DECLARE_FEATURE(kWebAuthnUsePasskeyFromAnotherDeviceInContextMenu);
 #endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)
 
@@ -54,8 +55,23 @@ BASE_DECLARE_FEATURE(kFillOnAccountSelect);
 
 #if BUILDFLAG(IS_IOS)
 
+// Enables the clean up of hanging form extraction requests made by the
+// password suggestion helper. This is to fix the cases where the suggestions
+// pipeline is broken because the pipeline is waiting for password suggestions
+// that are never provided.
+BASE_DECLARE_FEATURE(kIosCleanupHangingPasswordFormExtractionRequests);
+
+// The feature parameter that determines the minimal period of time in
+// milliseconds before the form extraction request times out.
+extern const base::FeatureParam<int>
+    kIosPasswordFormExtractionRequestsTimeoutMs;
+
 // Enable saving username in UFF on iOS.
 BASE_DECLARE_FEATURE(kIosDetectUsernameInUff);
+
+// Enables improving detecting the password fields when retrieving password
+// suggestions for filling.
+BASE_DECLARE_FEATURE(kIOSImprovePasswordFieldDetectionForFilling);
 
 // Enables the second version of the bottom sheet to fix a few bugs that we've
 // seen in production since the launch of the V1 of the feature.
@@ -70,19 +86,16 @@ BASE_DECLARE_FEATURE(kIOSProactivePasswordGenerationBottomSheet);
 // Enables saving enterprise password hashes to a local state preference.
 BASE_DECLARE_FEATURE(kLocalStateEnterprisePasswordHashes);
 
+// Enables running the clientside form classifier to parse password forms.
+BASE_DECLARE_FEATURE(kPasswordFormClientsideClassifier);
+
 // Enables offering credentials for filling across grouped domains.
 BASE_DECLARE_FEATURE(kPasswordFormGroupedAffiliations);
 
 #if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)  // Desktop
-
 // Enables "chunking" generated passwords by adding hyphens every 4 characters
 // to make them more readable.
 BASE_DECLARE_FEATURE(kPasswordGenerationChunking);
-
-// Enables updated password generation UI with a prominent button and previewing
-// the generated password on focus.
-BASE_DECLARE_FEATURE(kPasswordGenerationSoftNudge);
-
 #endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)
 
 // Enables logging the content of chrome://password-manager-internals to the
@@ -100,16 +113,14 @@ BASE_DECLARE_FEATURE(kReuseDetectionBasedOnPasswordHashes);
 BASE_DECLARE_FEATURE(kRestartToGainAccessToKeychain);
 #endif  // BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
 
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_CHROMEOS_ASH)
-// Enables promo card in settings encouraging users to enable screenlock reauth
-// before filling passwords.
-BASE_DECLARE_FEATURE(kScreenlockReauthPromoCard);
-#endif  // BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_CHROMEOS_ASH)
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // Enables biometric authentication on for Password Autofill on ChromeOS.
 BASE_DECLARE_FEATURE(kBiometricsAuthForPwdFill);
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
+
+// Sets request criticality when calling leak check service to detect leaked
+// passwords.
+BASE_DECLARE_FEATURE(kSetLeakCheckRequestCriticality);
 
 // Displays at least the decryptable and never saved logins in the password
 // manager
@@ -120,7 +131,6 @@ BASE_DECLARE_FEATURE(kSkipUndecryptablePasswords);
 BASE_DECLARE_FEATURE(kTriggerPasswordResyncAfterDeletingUndecryptablePasswords);
 
 #if BUILDFLAG(IS_ANDROID)
-
 // Enables showing various warnings for password manager users not yet enrolled
 // into the new experience of storing passwords in GMSCore.
 BASE_DECLARE_FEATURE(
@@ -143,9 +153,19 @@ inline constexpr base::FeatureParam<bool> kSimulateFailedMigration = {
 // authentication mandatory before password filling in untrusted locations.
 BASE_DECLARE_FEATURE(kBiometricAuthIdentityCheck);
 
-// Enables clearing the login database for the users who already migrated their
-// credentials to GMS Core.
-BASE_DECLARE_FEATURE(kClearLoginDatabaseForAllMigratedUPMUsers);
+// If enabled, the profile login db will no longer be renamed to account
+// login db upon UPM with split stores activation. The db is cleared on
+// the following run anyway.
+BASE_DECLARE_FEATURE(kDropLoginDbRenameForUpmSyncingUsers);
+
+// If enabled, the password store no longer uses the Login DB as a backend.
+// Instead, it either uses the Android-specific storage or an empty backend
+// if the client isn't eligible for the former.
+BASE_DECLARE_FEATURE(kLoginDbDeprecationAndroid);
+
+inline constexpr base::FeatureParam<int> kLoginDbDeprecationExportDelay = {
+    &kLoginDbDeprecationAndroid,
+    /*name=*/"login-db-deprecation-export-delay-seconds", /*default_value=*/15};
 #endif  // BUILDFLAG(IS_ANDROID)
 
 // Improves PSL matching capabilities by utilizing PSL-extension list from
@@ -153,29 +173,26 @@ BASE_DECLARE_FEATURE(kClearLoginDatabaseForAllMigratedUPMUsers);
 // websites like slack.com.
 BASE_DECLARE_FEATURE(kUseExtensionListForPSLMatching);
 
-// Enables support of sending additional votes on username first flow. The votes
-// are sent on single password forms and contain information about preceding
-// single username forms.
-// TODO(crbug.com/40626063): Clean up if the main crowdsourcing is good enough
-// and we don't need additional signals.
-BASE_DECLARE_FEATURE(kUsernameFirstFlowFallbackCrowdsourcing);
-
 // Enables new prediction that is based on votes from Username First Flow with
 // Intermediate Values.
 BASE_DECLARE_FEATURE(kUsernameFirstFlowWithIntermediateValuesPredictions);
 
-// Enables voting for more text fields outside of the password form in Username
-// First Flow.
-BASE_DECLARE_FEATURE(kUsernameFirstFlowWithIntermediateValuesVoting);
-
-// Enables async implementation of OSCrypt inside LoginDatabase.
+// Enables async implementation of OSCrypt inside LoginDatabase (Stage 1).
 BASE_DECLARE_FEATURE(kUseAsyncOsCryptInLoginDatabase);
 
-// Enables async implementation of OSCrypt inside LoginDatabase.
+// Enables new encryption method of OSCrypt inside LoginDatabase (Stage 2).
 BASE_DECLARE_FEATURE(kUseNewEncryptionMethod);
 
-// Enables re-encryption of all passwords. Done separately for each store.
+// Enables re-encryption of all passwords. Done separately for each store
+// (Stage 3).
 BASE_DECLARE_FEATURE(kEncryptAllPasswordsWithOSCryptAsync);
+
+// Marks all submitted credentials as leaked, useful for testing of a password
+// leak dialog.
+BASE_DECLARE_FEATURE(kMarkAllCredentialsAsLeaked);
+
+// Enables improvements to password change functionality.
+BASE_DECLARE_FEATURE(kImprovedPasswordChangeService);
 
 // All features parameters in alphabetical order.
 }  // namespace password_manager::features

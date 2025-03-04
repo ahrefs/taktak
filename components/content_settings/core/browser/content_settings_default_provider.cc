@@ -14,11 +14,11 @@
 #include "base/trace_event/trace_event.h"
 #include "build/blink_buildflags.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "components/content_settings/core/browser/content_settings_info.h"
 #include "components/content_settings/core/browser/content_settings_registry.h"
 #include "components/content_settings/core/browser/content_settings_rule.h"
 #include "components/content_settings/core/browser/content_settings_utils.h"
+#include "components/content_settings/core/browser/single_value_wildcard_rule_iterator.h"
 #include "components/content_settings/core/browser/website_settings_info.h"
 #include "components/content_settings/core/browser/website_settings_registry.h"
 #include "components/content_settings/core/common/content_settings.h"
@@ -90,33 +90,6 @@ const std::string& GetPrefName(ContentSettingsType type) {
       ->Get(type)
       ->default_value_pref_name();
 }
-
-class DefaultRuleIterator : public RuleIterator {
- public:
-  explicit DefaultRuleIterator(base::Value value) {
-    if (!value.is_none())
-      value_ = std::move(value);
-    else
-      is_done_ = true;
-  }
-
-  DefaultRuleIterator(const DefaultRuleIterator&) = delete;
-  DefaultRuleIterator& operator=(const DefaultRuleIterator&) = delete;
-
-  bool HasNext() const override { return !is_done_; }
-
-  std::unique_ptr<Rule> Next() override {
-    DCHECK(HasNext());
-    is_done_ = true;
-    return std::make_unique<Rule>(ContentSettingsPattern::Wildcard(),
-                                  ContentSettingsPattern::Wildcard(),
-                                  std::move(value_), RuleMetaData{});
-  }
-
- private:
-  bool is_done_ = false;
-  base::Value value_;
-};
 
 }  // namespace
 
@@ -246,10 +219,9 @@ std::unique_ptr<RuleIterator> DefaultProvider::GetRuleIterator(
   base::AutoLock lock(lock_);
   const auto it = default_settings_.find(content_type);
   if (it == default_settings_.end()) {
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
+    NOTREACHED();
   }
-  return std::make_unique<DefaultRuleIterator>(it->second.Clone());
+  return std::make_unique<SingleValueWildcardRuleIterator>(it->second.Clone());
 }
 
 std::unique_ptr<Rule> DefaultProvider::GetRule(
@@ -266,8 +238,7 @@ std::unique_ptr<Rule> DefaultProvider::GetRule(
   base::AutoLock lock(lock_);
   const auto it = default_settings_.find(content_type);
   if (it == default_settings_.end()) {
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
+    NOTREACHED();
   }
 
   if (it->second.is_none()) {
@@ -349,10 +320,9 @@ void DefaultProvider::OnPreferenceChanged(const std::string& name) {
   }
 
   if (content_type == ContentSettingsType::DEFAULT) {
-    NOTREACHED_IN_MIGRATION() << "A change of the preference " << name
-                              << " was observed, but the preference could not "
-                                 "be mapped to a content settings type.";
-    return;
+    NOTREACHED() << "A change of the preference " << name
+                 << " was observed, but the preference could not be mapped to "
+                    "a content settings type.";
   }
 
   {
@@ -505,6 +475,11 @@ void DefaultProvider::RecordHistogramMetrics() {
       "ContentSettings.RegularProfile.DefaultAutoVerifySetting",
       IntToContentSetting(
           prefs_->GetInteger(GetPrefName(ContentSettingsType::ANTI_ABUSE))),
+      CONTENT_SETTING_NUM_SETTINGS);
+  base::UmaHistogramEnumeration(
+      "ContentSettings.RegularProfile.DefaultJavaScriptOptimizationSetting",
+      IntToContentSetting(prefs_->GetInteger(
+          GetPrefName(ContentSettingsType::JAVASCRIPT_OPTIMIZER))),
       CONTENT_SETTING_NUM_SETTINGS);
 #endif
 

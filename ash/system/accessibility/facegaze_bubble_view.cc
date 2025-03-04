@@ -5,6 +5,7 @@
 #include "ash/system/accessibility/facegaze_bubble_view.h"
 
 #include <memory>
+#include <string_view>
 
 #include "ash/ash_element_identifiers.h"
 #include "ash/public/cpp/shell_window_ids.h"
@@ -17,7 +18,10 @@
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/color/color_id.h"
 #include "ui/color/color_provider.h"
+#include "ui/events/event.h"
 #include "ui/views/accessibility/view_accessibility.h"
+#include "ui/views/background.h"
+#include "ui/views/bubble/bubble_frame_view.h"
 #include "ui/views/controls/image_view.h"
 #include "ui/views/controls/label.h"
 #include "ui/views/layout/box_layout.h"
@@ -27,8 +31,12 @@ namespace ash {
 
 namespace {
 
-constexpr ui::ColorId kBackgroundColor =
+constexpr ui::ColorId kBackgroundColorId =
     cros_tokens::kCrosSysSystemBaseElevatedOpaque;
+constexpr ui::ColorId kWarningBackgroundColor =
+    cros_tokens::kCrosSysWarningContainer;
+constexpr ui::ColorId kWarningForegroundColor =
+    cros_tokens::kCrosSysOnWarningContainer;
 constexpr int kIconSizeDip = 24;
 constexpr int kLeftRightMarginDip = 20;
 constexpr int kRoundedCornerRadius = 24.f;
@@ -46,7 +54,7 @@ std::unique_ptr<views::Label> CreateLabelView(
   return views::Builder<views::Label>()
       .CopyAddressTo(destination_view)
       .SetText(text)
-      .SetEnabledColorId(enabled_color_id)
+      .SetEnabledColor(enabled_color_id)
       .SetHorizontalAlignment(gfx::HorizontalAlignment::ALIGN_CENTER)
       .SetMultiLine(false)
       .SetFontList(rb->GetFontList(kKeyLabelFontStyle))
@@ -65,7 +73,10 @@ std::unique_ptr<views::ImageView> CreateImageView(
 
 }  // namespace
 
-FaceGazeBubbleView::FaceGazeBubbleView() {
+FaceGazeBubbleView::FaceGazeBubbleView(
+    const base::RepeatingCallback<void()>& on_mouse_entered)
+    : on_mouse_entered_(std::move(on_mouse_entered)) {
+  set_background_color(kBackgroundColorId);
   set_parent_window(
       Shell::GetContainer(Shell::GetPrimaryRootWindow(),
                           kShellWindowId_AccessibilityBubbleContainer));
@@ -82,6 +93,7 @@ FaceGazeBubbleView::FaceGazeBubbleView() {
   set_corner_radius(kRoundedCornerRadius);
   set_highlight_button_when_shown(false);
   SetCanActivate(false);
+  SetNotifyEnterExitOnChild(true);
   GetViewAccessibility().SetRole(ax::mojom::Role::kGenericContainer);
   SetButtons(static_cast<int>(ui::mojom::DialogButton::kNone));
   SetProperty(views::kElementIdentifierKey, kFaceGazeBubbleElementId);
@@ -93,18 +105,39 @@ FaceGazeBubbleView::FaceGazeBubbleView() {
 
 FaceGazeBubbleView::~FaceGazeBubbleView() = default;
 
-void FaceGazeBubbleView::Update(const std::u16string& text) {
+void FaceGazeBubbleView::Update(const std::u16string& text, bool is_warning) {
+  UpdateColor(is_warning);
   label_->SetVisible(text != u"");
   label_->SetText(text);
   SizeToContents();
 }
 
-void FaceGazeBubbleView::OnThemeChanged() {
-  BubbleDialogDelegateView::OnThemeChanged();
-  set_color(GetColorProvider()->GetColor(kBackgroundColor));
+void FaceGazeBubbleView::OnMouseEntered(const ui::MouseEvent& event) {
+  on_mouse_entered_.Run();
 }
 
-const std::u16string& FaceGazeBubbleView::GetTextForTesting() const {
+void FaceGazeBubbleView::UpdateColor(bool is_warning) {
+  ui::ColorId background_color_id =
+      is_warning ? kWarningBackgroundColor : kBackgroundColorId;
+  SkColor background_color = GetColorProvider()->GetColor(background_color_id);
+  ui::ColorId foreground_color =
+      is_warning ? kWarningForegroundColor : kColorAshTextColorPrimary;
+
+  set_background_color(background_color_id);
+  View* const contents_view = GetContentsView();
+  DCHECK(contents_view);
+  contents_view->SetBackground(
+      (views::CreateSolidBackground(background_color)));
+  views::BubbleFrameView* frame_view = GetBubbleFrameView();
+  if (frame_view) {
+    frame_view->SetBackgroundColor(background_color);
+  }
+  image_->SetImage(ui::ImageModel::FromVectorIcon(
+      kFacegazeIcon, foreground_color, kIconSizeDip));
+  label_->SetEnabledColor(GetColorProvider()->GetColor(foreground_color));
+}
+
+std::u16string_view FaceGazeBubbleView::GetTextForTesting() const {
   return label_->GetText();
 }
 

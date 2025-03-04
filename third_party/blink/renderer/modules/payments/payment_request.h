@@ -35,6 +35,7 @@ class ExceptionState;
 class ExecutionContext;
 class PaymentAddress;
 class PaymentDetailsInit;
+class PaymentDetailsUpdate;
 class PaymentRequestUpdateEvent;
 class PaymentResponse;
 class ScriptState;
@@ -51,6 +52,9 @@ class MODULES_EXPORT PaymentRequest final
   USING_PRE_FINALIZER(PaymentRequest, ClearResolversAndCloseMojoConnection);
 
  public:
+  static ScriptPromise<IDLBoolean> isSecurePaymentConfirmationAvailable(
+      ScriptState* script_state);
+
   static PaymentRequest* Create(ExecutionContext*,
                                 const HeapVector<Member<PaymentMethodData>>&,
                                 const PaymentDetailsInit*,
@@ -76,7 +80,7 @@ class MODULES_EXPORT PaymentRequest final
 
   ScriptPromise<PaymentResponse> show(ScriptState*, ExceptionState&);
   ScriptPromise<PaymentResponse> show(ScriptState*,
-                                      ScriptPromiseUntyped details_promise,
+                                      ScriptPromise<PaymentDetailsUpdate>,
                                       ExceptionState&);
   ScriptPromise<IDLUndefined> abort(ScriptState*, ExceptionState&);
 
@@ -111,7 +115,7 @@ class MODULES_EXPORT PaymentRequest final
                                     ExceptionState&) override;
 
   // PaymentRequestDelegate:
-  void OnUpdatePaymentDetails(const ScriptValue& details_script_value) override;
+  void OnUpdatePaymentDetails(PaymentDetailsUpdate*) override;
   void OnUpdatePaymentDetailsFailure(const String& error) override;
   bool IsInteractive() const override;
 

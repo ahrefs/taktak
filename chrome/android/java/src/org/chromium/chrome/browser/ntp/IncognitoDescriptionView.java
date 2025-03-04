@@ -10,9 +10,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.text.SpannableString;
-import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
-import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -29,10 +27,12 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.widget.SwitchCompat;
 
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.tab.TabLaunchType;
 import org.chromium.chrome.browser.tabmodel.document.ChromeAsyncTabLauncher;
 import org.chromium.components.content_settings.CookieControlsEnforcement;
 import org.chromium.ui.base.ViewUtils;
+import org.chromium.ui.text.ChromeClickableSpan;
 import org.chromium.ui.text.SpanApplier;
 import org.chromium.ui.text.SpanApplier.SpanInfo;
 import org.chromium.ui.widget.ChromeBulletSpan;
@@ -133,23 +133,27 @@ public class IncognitoDescriptionView extends LinearLayout {
             return;
         }
 
-        String text =
-                context.getResources()
-                        .getString(R.string.new_tab_otr_third_party_blocked_cookie_part_two);
-        ClickableSpan span =
-                new ClickableSpan() {
-                    @Override
-                    public void onClick(View view) {
-                        new ChromeAsyncTabLauncher(/* incognito= */ true)
-                                .launchUrl(TRACKING_PROTECTION_URL, TabLaunchType.FROM_CHROME_UI);
-                    }
+        String text = context.getString(R.string.new_tab_otr_third_party_blocked_cookie_part_two);
 
-                    @Override
-                    public void updateDrawState(TextPaint textPaint) {
-                        super.updateDrawState(textPaint);
-                        textPaint.setColor(context.getColor(R.color.default_text_color_link_light));
-                    }
-                };
+        if (ChromeFeatureList.isEnabled(ChromeFeatureList.ALWAYS_BLOCK_3PCS_INCOGNITO)) {
+            TextView title = layout.findViewById(R.id.tracking_protection_card_title);
+            title.setText(
+                    context.getString(R.string.incognito_ntp_block_third_party_cookies_header));
+            layout.findViewById(R.id.tracking_protection_description_one).setVisibility(View.GONE);
+            text =
+                    context.getString(
+                            R.string.incognito_ntp_block_third_party_cookies_description_android);
+        }
+
+        ChromeClickableSpan span =
+                new ChromeClickableSpan(
+                        getContext(),
+                        R.color.default_text_color_link_light,
+                        (unused) -> {
+                            new ChromeAsyncTabLauncher(/* incognito= */ true)
+                                    .launchUrl(
+                                            TRACKING_PROTECTION_URL, TabLaunchType.FROM_CHROME_UI);
+                        });
         view.setText(
                 SpanApplier.applySpans(text, new SpanApplier.SpanInfo("<link>", "</link>", span)));
         view.setMovementMethod(LinkMovementMethod.getInstance());
@@ -177,7 +181,7 @@ public class IncognitoDescriptionView extends LinearLayout {
 
     @NonNull
     static SpannableString getSpannedBulletText(Context context, @StringRes int content) {
-        String text = context.getResources().getString(content);
+        String text = context.getString(content);
         // Some translations don't have a line break between list entries.
         text = text.replaceAll("([^\n ]) *(<li>|</?ul>)", "$1\n$2");
 
@@ -200,7 +204,7 @@ public class IncognitoDescriptionView extends LinearLayout {
                 "Format error. Locale: "
                         + context.getResources().getConfiguration().getLocales()
                         + " \nstring: "
-                        + context.getResources().getString(content);
+                        + context.getString(content);
         assert text.contains("<li1>") : error;
         assert text.contains("<li2>") : error;
         assert text.contains("<li3>") : error;
@@ -353,24 +357,13 @@ public class IncognitoDescriptionView extends LinearLayout {
     /** Adjust the "Learn More" link. */
     private void adjustLearnMore() {
         final String subtitleText =
-                getContext()
-                        .getResources()
-                        .getString(R.string.new_tab_otr_subtitle_with_reading_list);
+                getContext().getString(R.string.new_tab_otr_subtitle_with_reading_list);
 
-        final ClickableSpan learnMoreSpan =
-                new ClickableSpan() {
-                    @Override
-                    public void onClick(View view) {
-                        mLearnMore.callOnClick();
-                    }
-
-                    @Override
-                    public void updateDrawState(TextPaint textPaint) {
-                        super.updateDrawState(textPaint);
-                        textPaint.setColor(
-                                getContext().getColor(R.color.default_text_color_link_light));
-                    }
-                };
+        final ChromeClickableSpan learnMoreSpan =
+                new ChromeClickableSpan(
+                        getContext(),
+                        R.color.default_text_color_link_light,
+                        (view) -> mLearnMore.callOnClick());
 
         boolean learnMoreInSubtitle = mWidthDp > WIDE_LAYOUT_THRESHOLD_DP;
         mLearnMore.setVisibility(learnMoreInSubtitle ? View.GONE : View.VISIBLE);
@@ -378,7 +371,7 @@ public class IncognitoDescriptionView extends LinearLayout {
         if (!learnMoreInSubtitle) {
             // Format the "Learn more" link.
             SpannableString learnMoreLink =
-                    new SpannableString(getContext().getResources().getString(R.string.learn_more));
+                    new SpannableString(getContext().getString(R.string.learn_more));
             learnMoreLink.setSpan(learnMoreSpan, 0, learnMoreLink.length(), /* flags= */ 0);
             mLearnMore.setText(learnMoreLink);
 
@@ -392,7 +385,7 @@ public class IncognitoDescriptionView extends LinearLayout {
         StringBuilder concatenatedText = new StringBuilder();
         concatenatedText.append(subtitleText);
         concatenatedText.append(" ");
-        concatenatedText.append(getContext().getResources().getString(R.string.learn_more));
+        concatenatedText.append(getContext().getString(R.string.learn_more));
         SpannableString textWithLearnMoreLink = new SpannableString(concatenatedText.toString());
 
         textWithLearnMoreLink.setSpan(

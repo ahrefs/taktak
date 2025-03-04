@@ -1,5 +1,5 @@
 // META: title=test WebNN API gather operation
-// META: global=window,dedicatedworker
+// META: global=window
 // META: variant=?cpu
 // META: variant=?gpu
 // META: variant=?npu
@@ -968,7 +968,7 @@ const gatherTests = [
 if (navigator.ml) {
   gatherTests.forEach((test) => {
     webnn_conformance_test(
-        buildGraphAndCompute, getGatherPrecisionTolerance, test);
+        buildAndExecuteGraph, getGatherPrecisionTolerance, test);
   });
 } else {
   test(() => assert_implements(navigator.ml, 'missing navigator.ml'));

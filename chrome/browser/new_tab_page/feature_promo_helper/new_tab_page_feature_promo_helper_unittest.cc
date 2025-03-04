@@ -13,13 +13,13 @@
 #include "components/feature_engagement/public/event_constants.h"
 #include "components/feature_engagement/public/feature_constants.h"
 #include "components/feature_engagement/test/scoped_iph_feature_list.h"
-#include "components/user_education/common/feature_promo_controller.h"
+#include "components/user_education/common/feature_promo/feature_promo_controller.h"
 #include "components/user_education/test/mock_feature_promo_controller.h"
 #include "testing/gmock/include/gmock/gmock.h"
 
 class NewTabPageFeaturePromoHelperTest : public BrowserWithTestWindowTest {
  protected:
-  NewTabPageFeaturePromoHelperTest() {}
+  NewTabPageFeaturePromoHelperTest() = default;
 
   void SetUp() override {
     BrowserWithTestWindowTest::SetUp();

@@ -8,10 +8,10 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <string_view>
 
 #include "base/component_export.h"
 #include "base/pickle.h"
-#include "build/chromeos_buildflags.h"
 #include "ui/base/clipboard/file_info.h"
 #include "ui/base/dragdrop/os_exchange_data_provider.h"
 #include "ui/gfx/geometry/vector2d.h"
@@ -47,8 +47,8 @@ class COMPONENT_EXPORT(UI_BASE) OSExchangeDataProviderNonBacked
   std::optional<url::Origin> GetRendererTaintedOrigin() const override;
   void MarkAsFromPrivileged() override;
   bool IsFromPrivileged() const override;
-  void SetString(const std::u16string& data) override;
-  void SetURL(const GURL& url, const std::u16string& title) override;
+  void SetString(std::u16string_view data) override;
+  void SetURL(const GURL& url, std::u16string_view title) override;
   void SetFilename(const base::FilePath& path) override;
   void SetFilenames(const std::vector<FileInfo>& filenames) override;
   void SetPickledData(const ClipboardFormatType& format,

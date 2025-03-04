@@ -113,18 +113,14 @@ ScriptPromise<IDLBoolean> PushSubscription::unsubscribe(
     ScriptState* script_state) {
   auto* resolver =
       MakeGarbageCollected<ScriptPromiseResolver<IDLBoolean>>(script_state);
-  auto promise = resolver->Promise();
-
   PushProvider* push_provider =
       PushProvider::From(service_worker_registration_);
   DCHECK(push_provider);
-  push_provider->Unsubscribe(
-      std::make_unique<CallbackPromiseAdapter<IDLBoolean, DOMException>>(
-          resolver));
-  return promise;
+  push_provider->Unsubscribe(resolver);
+  return resolver->Promise();
 }
 
-ScriptValue PushSubscription::toJSONForBinding(ScriptState* script_state) {
+ScriptObject PushSubscription::toJSONForBinding(ScriptState* script_state) {
   DCHECK(p256dh_);
 
   V8ObjectBuilder result(script_state);
@@ -142,7 +138,7 @@ ScriptValue PushSubscription::toJSONForBinding(ScriptState* script_state) {
 
   result.Add("keys", keys);
 
-  return result.GetScriptValue();
+  return result.ToScriptObject();
 }
 
 void PushSubscription::Trace(Visitor* visitor) const {

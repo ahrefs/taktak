@@ -9,13 +9,15 @@
 
 #import "base/memory/raw_ptr.h"
 #import "components/autofill/ios/form_util/child_frame_registrar.h"
-#import "ios/chrome/browser/shared/model/profile/profile_ios_forward.h"
 #import "ios/web/public/web_state_observer.h"
 #import "ios/web/public/web_state_user_data.h"
 
 @class AutofillAgent;
+@protocol AutofillAgentDelegate;
 @protocol AutofillCommands;
 @protocol FormSuggestionProvider;
+class ProfileIOS;
+@protocol SnackbarCommands;
 @class UIViewController;
 
 namespace autofill {
@@ -35,7 +37,8 @@ class AutofillTabHelper : public web::WebStateObserver,
   // Sets a weak reference to the view controller used to present UI.
   void SetBaseViewController(UIViewController* base_view_controller);
 
-  void SetCommandsHandler(id<AutofillCommands> commands_handler);
+  void SetAutofillHandler(id<AutofillCommands> autofill_handler);
+  void SetSnackbarHandler(id<SnackbarCommands> snackbar_handler);
 
   // Returns an object that can provide Autofill suggestions.
   id<FormSuggestionProvider> GetSuggestionProvider();
@@ -57,6 +60,9 @@ class AutofillTabHelper : public web::WebStateObserver,
 
   // The BrowserState associated with this WebState.
   raw_ptr<ProfileIOS> profile_;
+
+  // The delegate for the AutofillAgent.
+  __strong id<AutofillAgentDelegate> autofill_agent_delegate_;
 
   // The Objective-C AutofillAgent instance.
   __strong AutofillAgent* autofill_agent_;

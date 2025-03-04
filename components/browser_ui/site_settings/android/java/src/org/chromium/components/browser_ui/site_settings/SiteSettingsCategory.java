@@ -4,6 +4,7 @@
 
 package org.chromium.components.browser_ui.site_settings;
 
+import static org.chromium.build.NullUtil.assumeNonNull;
 import static org.chromium.components.content_settings.PrefNames.COOKIE_CONTROLS_MODE;
 
 import android.content.Context;
@@ -20,11 +21,11 @@ import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 
 import androidx.annotation.IntDef;
-import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 
 import org.chromium.base.ApiCompatibilityUtils;
-import org.chromium.base.PackageManagerUtils;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.styles.SemanticColorUtils;
 import org.chromium.components.content_settings.ContentSettingsType;
 import org.chromium.components.permissions.PermissionUtil;
@@ -39,6 +40,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /** A base class for dealing with website settings categories. */
+@NullMarked
 public class SiteSettingsCategory {
     @IntDef({
         Type.ALL_SITES,
@@ -74,6 +76,7 @@ public class SiteSettingsCategory {
         Type.STORAGE_ACCESS,
         Type.TRACKING_PROTECTION,
         Type.FILE_EDITING,
+        Type.JAVASCRIPT_OPTIMIZER,
         Type.NUM_ENTRIES
     })
     @Retention(RetentionPolicy.SOURCE)
@@ -113,9 +116,10 @@ public class SiteSettingsCategory {
         int TRACKING_PROTECTION = 30;
         int HAND_TRACKING = 31;
         int FILE_EDITING = 32;
+        int JAVASCRIPT_OPTIMIZER = 33;
 
         /** Number of handled categories used for calculating array sizes. */
-        int NUM_ENTRIES = 33;
+        int NUM_ENTRIES = 34;
     }
 
     private final BrowserContextHandle mBrowserContextHandle;
@@ -158,8 +162,7 @@ public class SiteSettingsCategory {
         } else if (type == Type.AUGMENTED_REALITY) {
             permission = android.Manifest.permission.CAMERA;
         } else if (type == Type.HAND_TRACKING
-                && PackageManagerUtils.hasSystemFeature(
-                        PackageManagerUtils.XR_IMMERSIVE_FEATURE_NAME)) {
+                && PermissionUtil.handTrackingNeedsAdditionalPermissions()) {
             permission = PermissionUtil.ANDROID_PERMISSION_HAND_TRACKING;
         } else {
             permission = "";
@@ -167,7 +170,7 @@ public class SiteSettingsCategory {
         return new SiteSettingsCategory(browserContextHandle, type, permission);
     }
 
-    public static SiteSettingsCategory createFromContentSettingsType(
+    public static @Nullable SiteSettingsCategory createFromContentSettingsType(
             BrowserContextHandle browserContextHandle,
             @ContentSettingsType.EnumType int contentSettingsType) {
         assert contentSettingsType != -1;
@@ -180,7 +183,7 @@ public class SiteSettingsCategory {
         return null;
     }
 
-    public static SiteSettingsCategory createFromPreferenceKey(
+    public static @Nullable SiteSettingsCategory createFromPreferenceKey(
             BrowserContextHandle browserContextHandle, String preferenceKey) {
         assert Type.ALL_SITES == 0;
         for (@Type int i = Type.ALL_SITES; i < Type.NUM_ENTRIES; i++) {
@@ -232,6 +235,8 @@ public class SiteSettingsCategory {
                 return ContentSettingsType.IDLE_DETECTION;
             case Type.JAVASCRIPT:
                 return ContentSettingsType.JAVASCRIPT;
+            case Type.JAVASCRIPT_OPTIMIZER:
+                return ContentSettingsType.JAVASCRIPT_OPTIMIZER;
             case Type.MICROPHONE:
                 return ContentSettingsType.MEDIASTREAM_MIC;
             case Type.NFC:
@@ -317,6 +322,8 @@ public class SiteSettingsCategory {
                 return "idle_detection";
             case Type.JAVASCRIPT:
                 return "javascript";
+            case Type.JAVASCRIPT_OPTIMIZER:
+                return "javascript_optimizer";
             case Type.MICROPHONE:
                 return "microphone";
             case Type.NFC:
@@ -464,6 +471,7 @@ public class SiteSettingsCategory {
             osWarningExtra.setTitle(unsupportedMessage);
             osWarningExtra.setIcon(getDisabledInAndroidIcon(context));
         } else if (globalIntent != null) {
+            assumeNonNull(globalMessage);
             SpannableString messageWithLink =
                     SpanApplier.applySpans(
                             globalMessage, new SpanInfo("<link>", "</link>", linkSpan));
@@ -506,8 +514,7 @@ public class SiteSettingsCategory {
     }
 
     /** Returns the message to display when permission is not supported. */
-    @Nullable
-    protected String getMessageIfNotSupported(Context context) {
+    protected @Nullable String getMessageIfNotSupported(Context context) {
         return null;
     }
 
@@ -548,7 +555,7 @@ public class SiteSettingsCategory {
      * already enabled. Android M and above provides two ways of doing this for some permissions,
      * most notably Location, one that is per-app and another that is global.
      */
-    private Intent getIntentToEnableOsPerAppPermission(Context context) {
+    private @Nullable Intent getIntentToEnableOsPerAppPermission(Context context) {
         if (enabledForChrome(context)) return null;
         return getAppInfoIntent(context);
     }
@@ -558,7 +565,7 @@ public class SiteSettingsCategory {
      * permission. Android M and above provides two ways of doing this for some permissions, most
      * notably Location, one that is per-app and another that is global.
      */
-    protected Intent getIntentToEnableOsGlobalPermission(Context context) {
+    protected @Nullable Intent getIntentToEnableOsGlobalPermission(Context context) {
         return null;
     }
 
@@ -584,14 +591,12 @@ public class SiteSettingsCategory {
         } else if (type == ContentSettingsType.NOTIFICATIONS) {
             permission_string = R.string.android_notifications_permission_off;
         }
-        return context.getResources()
-                .getString(
-                        plural ? R.string.android_permission_off_plural : permission_string,
-                        appName);
+        return context.getString(
+                plural ? R.string.android_permission_off_plural : permission_string, appName);
     }
 
     /** Returns the message to display when per-app permission is blocked. */
-    protected String getMessageForEnablingOsGlobalPermission(Context context) {
+    protected @Nullable String getMessageForEnablingOsGlobalPermission(Context context) {
         return null;
     }
 

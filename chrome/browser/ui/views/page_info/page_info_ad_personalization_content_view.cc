@@ -33,6 +33,11 @@ PageInfoAdPersonalizationContentView::PageInfoAdPersonalizationContentView(
       layout_provider->GetInsetsMetric(INSETS_PAGE_INFO_HOVER_BUTTON);
   const int vertical_distance =
       layout_provider->GetDistanceMetric(DISTANCE_CONTROL_LIST_VERTICAL);
+  const int bottom_margin =
+      layout_provider->GetDistanceMetric(DISTANCE_CONTENT_LIST_VERTICAL_MULTI);
+  // The last view is a RichHoverButton, which overrides the bottom
+  // dialog inset in favor of its own.
+  SetProperty(views::kMarginsKey, gfx::Insets::TLBR(0, 0, bottom_margin, 0));
 
   SetOrientation(views::LayoutOrientation::kVertical);
 
@@ -56,13 +61,9 @@ PageInfoAdPersonalizationContentView::PageInfoAdPersonalizationContentView(
           PageInfoViewFactory::GetSiteSettingsIcon(),
           l10n_util::GetStringUTF16(
               IDS_PAGE_INFO_AD_PRIVACY_SUBPAGE_MANAGE_BUTTON),
-          std::u16string(),
-          /*tooltip_text=*/std::u16string(), std::u16string(),
-          PageInfoViewFactory::GetLaunchIcon()));
-  manage_ad_privacy_button->title()->SetTextStyle(
-      views::style::STYLE_BODY_3_MEDIUM);
-  manage_ad_privacy_button->title()->SetEnabledColorId(
-      kColorPageInfoForeground);
+          std::u16string(), PageInfoViewFactory::GetLaunchIcon()));
+  manage_ad_privacy_button->SetTitleTextStyleAndColor(
+      views::style::STYLE_BODY_3_MEDIUM, kColorPageInfoForeground);
 
   presenter_->InitializeUiState(this, base::DoNothing());
 }
@@ -88,7 +89,7 @@ void PageInfoAdPersonalizationContentView::SetAdPersonalizationInfo(
           l10n_util::GetStringUTF16(message_id), views::style::CONTEXT_LABEL,
           views::style::STYLE_BODY_3));
   description_label->SetMultiLine(true);
-  description_label->SetEnabledColorId(kColorPageInfoForeground);
+  description_label->SetEnabledColor(kColorPageInfoForeground);
   description_label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
   // TODO(crbug.com/40244046): Figure out why without additional horizontal
   // margin the size is being calculated incorrectly and the topics labels are
@@ -109,7 +110,7 @@ void PageInfoAdPersonalizationContentView::SetAdPersonalizationInfo(
               topic.GetLocalizedRepresentation(), views::style::CONTEXT_LABEL,
               views::style::STYLE_BODY_4));
       topic_label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
-      topic_label->SetEnabledColorId(kColorPageInfoSubtitleForeground);
+      topic_label->SetEnabledColor(kColorPageInfoSubtitleForeground);
     }
   }
 

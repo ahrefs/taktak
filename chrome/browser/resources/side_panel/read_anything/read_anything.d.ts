@@ -65,14 +65,6 @@ declare namespace chrome {
     // Whether the Read Aloud feature flag is enabled.
     let isReadAloudEnabled: boolean;
 
-    // Whether the automatic voice switching feature flag is enabled.
-    let isAutoVoiceSwitchingEnabled: boolean;
-
-    // Whether the language pack download feature flag is enabled.
-    let isLanguagePackDownloadingEnabled: boolean;
-
-    let isAutomaticWordHighlightingEnabled: boolean;
-
     // Whether the phrase highlighting feature flag is enabled.
     let isPhraseHighlightingEnabled: boolean;
 
@@ -286,12 +278,12 @@ declare namespace chrome {
     // Read Aloud state should be updated if the lock screen state changes.
     function onLockScreen(): void;
 
-    // Called with the response of sendGetVoicePackInfoRequest()
-    function updateVoicePackStatus(lang: string, status: string): void;
+    // Ping that a new tts engine has installed.
+    function onTtsEngineInstalled(): void;
 
-    // Called with the response of sendInstallVoicePackRequest()
-    function updateVoicePackStatusFromInstallResponse(
-        lang: string, status: string): void;
+    // Called with the response of sendGetVoicePackInfoRequest() or
+    // sendInstallVoicePackRequest()
+    function updateVoicePackStatus(lang: string, status: string): void;
 
     // Ping that the theme choices of the user have been retrieved from
     // preferences and can be used to set up the page.
@@ -365,12 +357,18 @@ declare namespace chrome {
     // Sends an async request to get the status of a Natural voice pack for a
     // specific language. The response is sent back to the UI via
     // updateVoicePackStatus()
+    // TODO(crbug.com/377697173) Rename `VoicePack` to `Voice`
     function sendGetVoicePackInfoRequest(language: string): void;
 
-    // Sends an async request to install a  Natural voice pack for a
+    // Sends an async request to install a Natural voice pack for a
     // specific language. The response is sent back to the UI via
-    // updateVoicePackStatusFromInstallResponse()
+    // updateVoicePackStatus()
+    // TODO(crbug.com/377697173) Rename `VoicePack` to `Voice`
     function sendInstallVoicePackRequest(language: string): void;
+
+    // Sends an async request to uninstall a Natural voice for a specific
+    // language.
+    function sendUninstallVoiceRequest(language: string): void;
 
     // Log UmaHistogramCount
     function incrementMetricCount(metricName: string): void;

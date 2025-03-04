@@ -83,7 +83,7 @@ import './screens/oobe/oobe_network.js';
 import './screens/oobe/packaged_license.js';
 import './screens/oobe/update.js';
 
-import {OobeTypes} from './components/oobe_types.js';
+import type {OobeTypes} from './components/oobe_types.js';
 
 /**
  * List of screens that are used for both `oobe` and `login` flows.
@@ -144,11 +144,7 @@ export const commonScreensList: OobeTypes.ScreensList = [
     condition: 'isOobeGaiaInfoScreenEnabled',
   },
   {tag: 'gaia-signin-element', id: 'gaia-signin'},
-  {
-    tag: 'gemini-intro-element',
-    id: 'gemini-intro',
-    condition: 'isOobeGeminiIntroEnabled',
-  },
+  {tag: 'gemini-intro-element', id: 'gemini-intro'},
   {tag: 'gesture-navigation-element', id: 'gesture-navigation'},
   {tag: 'guest-tos-element', id: 'guest-tos'},
   {tag: 'hw-data-collection-element', id: 'hw-data-collection'},

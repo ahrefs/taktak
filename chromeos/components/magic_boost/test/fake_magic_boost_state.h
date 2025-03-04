@@ -18,7 +18,15 @@ class FakeMagicBoostState : public chromeos::MagicBoostState {
   void AsyncWriteConsentStatus(
       chromeos::HMRConsentStatus consent_status) override;
   void AsyncWriteHMREnabled(bool enabled) override;
+  bool ShouldIncludeOrcaInOptInSync() override;
   void DisableOrcaFeature() override {}
+  void DisableLobsterSettings() override {}
+
+  void SetMagicBoostAvailability(bool available);
+  void SetMagicBoostEnabled(bool enabled);
+
+ private:
+  bool is_magic_boost_available_ = true;
 };
 
 }  // namespace test

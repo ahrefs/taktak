@@ -46,6 +46,7 @@ class MahiManagerImpl : public chromeos::MahiManager,
   std::u16string GetContentTitle() override;
   gfx::ImageSkia GetContentIcon() override;
   GURL GetContentUrl() override;
+  std::u16string GetSelectedText() override;
   void GetContent(MahiContentCallback callback) override;
   void GetSummary(MahiSummaryCallback callback) override;
   void GetElucidation(MahiElucidationCallback callback) override;
@@ -104,6 +105,9 @@ class MahiManagerImpl : public chromeos::MahiManager,
 
   void MaybeObserveHistoryService();
 
+  void OpenMahiPanelForElucidation(int64_t display_id,
+                                   const gfx::Rect& mahi_menu_bounds);
+
   void OnGetPageContent(crosapi::mojom::MahiPageInfoPtr request_page_info,
                         MahiContentCallback callback,
                         crosapi::mojom::MahiPageContentPtr mahi_content_ptr);
@@ -148,6 +152,10 @@ class MahiManagerImpl : public chromeos::MahiManager,
   void CacheCurrentPanelContent(crosapi::mojom::MahiPageInfo request_page_info,
                                 crosapi::mojom::MahiPageContent mahi_content);
 
+  // Updates `current_selected_text_` from web contents manager or media app
+  // content manager.
+  void UpdateCurrentSelectedText();
+
   base::ScopedObservation<chromeos::MagicBoostState,
                           chromeos::MagicBoostState::Observer>
       magic_boost_state_observation_{this};
@@ -165,8 +173,17 @@ class MahiManagerImpl : public chromeos::MahiManager,
       crosapi::mojom::MahiPageInfo::New();
 
   // Stores current selected text when the user triggers feature that works for
-  // selected text, e.g. Elucidation.
-  std::u16string current_selected_text_;
+  // selected text, e.g. Elucidation, or Summary for selection.
+  // Unlike `current_page_info_` that may change when the user activates another
+  // browser tab, therefore we need `current_panel_info_` to keep track of the
+  // page info used by the existing result panel for future interactions
+  // launched from the panel (e.g. QA), `current_selected_text_` is only updated
+  // when user explicitly triggers Mahi functions from the widget, therefore it
+  // is always the source of truth if an existing result panel is based on user
+  // selected text.
+  // That's to say, if `current_selected_text_` is not nullopt, the existing
+  // result panel must be based on it. We rely on this fact for a few checks.
+  std::optional<std::u16string> current_selected_text_;
 
   // Pair of question and their corresponding answer for the current panel
   // content

@@ -18,17 +18,17 @@
 
 namespace ash {
 
-enum class PickerActionType;
-enum class PickerCapsLockPosition;
-class PickerAssetFetcher;
-class PickerSearchResultsSection;
-class PickerSessionMetrics;
+enum class QuickInsertActionType;
+enum class QuickInsertCapsLockPosition;
+class QuickInsertAssetFetcher;
+class QuickInsertSearchResultsSection;
+class QuickInsertSessionMetrics;
 
-// Delegate for `PickerView`.
-class ASH_EXPORT PickerViewDelegate {
+// Delegate for `QuickInsertView`.
+class ASH_EXPORT QuickInsertViewDelegate {
  public:
   using SearchResultsCallback = base::RepeatingCallback<void(
-      std::vector<PickerSearchResultsSection> results)>;
+      std::vector<QuickInsertSearchResultsSection> results)>;
   using EmojiSearchResultsCallback =
       base::OnceCallback<void(std::vector<QuickInsertEmojiResult> results)>;
   using SuggestedEditorResultsCallback =
@@ -36,9 +36,9 @@ class ASH_EXPORT PickerViewDelegate {
   using SuggestedResultsCallback = base::RepeatingCallback<void(
       std::vector<QuickInsertSearchResult> results)>;
 
-  virtual ~PickerViewDelegate() {}
+  virtual ~QuickInsertViewDelegate() {}
 
-  virtual std::vector<PickerCategory> GetAvailableCategories() = 0;
+  virtual std::vector<QuickInsertCategory> GetAvailableCategories() = 0;
 
   // Gets suggested results for the zero-state. Results will be returned via
   // `callback`, which may be called multiples times to update the results.
@@ -47,7 +47,7 @@ class ASH_EXPORT PickerViewDelegate {
 
   // Gets initially suggested results for category. Results will be returned via
   // `callback`, which may be called multiples times to update the results.
-  virtual void GetResultsForCategory(PickerCategory category,
+  virtual void GetResultsForCategory(QuickInsertCategory category,
                                      SearchResultsCallback callback) = 0;
 
   // Starts a search for `query`. Results will be returned via `callback`,
@@ -55,7 +55,7 @@ class ASH_EXPORT PickerViewDelegate {
   // If `callback` is called with empty results, then it will never be called
   // again (i.e. all search results have been returned).
   virtual void StartSearch(std::u16string_view query,
-                           std::optional<PickerCategory> category,
+                           std::optional<QuickInsertCategory> category,
                            SearchResultsCallback callback) = 0;
 
   // Stops the previous search, if any.
@@ -85,12 +85,12 @@ class ASH_EXPORT PickerViewDelegate {
   virtual void ShowLobster(std::optional<std::string> freeform_text) = 0;
 
   // Returns the current action for `result`.
-  virtual PickerActionType GetActionForResult(
+  virtual QuickInsertActionType GetActionForResult(
       const QuickInsertSearchResult& result) = 0;
 
-  virtual PickerAssetFetcher* GetAssetFetcher() = 0;
+  virtual QuickInsertAssetFetcher* GetAssetFetcher() = 0;
 
-  virtual PickerSessionMetrics& GetSessionMetrics() = 0;
+  virtual QuickInsertSessionMetrics& GetSessionMetrics() = 0;
 
   // Gets suggested emoji results.
   virtual std::vector<QuickInsertEmojiResult> GetSuggestedEmoji() = 0;
@@ -98,9 +98,9 @@ class ASH_EXPORT PickerViewDelegate {
   // Whether GIFs are enabled or not.
   virtual bool IsGifsEnabled() = 0;
 
-  virtual PickerModeType GetMode() = 0;
+  virtual QuickInsertModeType GetMode() = 0;
 
-  virtual PickerCapsLockPosition GetCapsLockPosition() = 0;
+  virtual QuickInsertCapsLockPosition GetCapsLockPosition() = 0;
 };
 
 }  // namespace ash

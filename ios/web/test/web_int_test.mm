@@ -50,9 +50,7 @@ class IntTestWebStateObserver : public WebStateObserver {
     page_loaded_ = true;
   }
 
-  void WebStateDestroyed(web::WebState* web_state) override {
-    NOTREACHED_IN_MIGRATION();
-  }
+  void WebStateDestroyed(web::WebState* web_state) override { NOTREACHED(); }
 
  private:
   GURL expected_url_;
@@ -168,8 +166,9 @@ void WebIntTest::RemoveWKWebViewCreatedData(WKWebsiteDataStore* data_store,
 NSInteger WebIntTest::GetIndexOfNavigationItem(
     const web::NavigationItem* item) {
   for (NSInteger i = 0; i < navigation_manager()->GetItemCount(); ++i) {
-    if (navigation_manager()->GetItemAtIndex(i) == item)
+    if (navigation_manager()->GetItemAtIndex(i) == item) {
       return i;
+    }
   }
   return NSNotFound;
 }

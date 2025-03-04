@@ -15,7 +15,7 @@
 #include "base/memory/raw_ptr.h"
 #include "base/path_service.h"
 #include "base/test/scoped_feature_list.h"
-#include "chrome/common/read_anything/read_anything_constants.h"
+#include "chrome/common/read_anything/read_anything_util.h"
 #include "chrome/renderer/accessibility/ax_tree_distiller.h"
 #include "chrome/renderer/accessibility/phrase_segmentation/dependency_parser_model.h"
 #include "chrome/renderer/accessibility/read_anything/read_anything_test_utils.h"
@@ -60,6 +60,9 @@ base::File GetValidModelFile() {
   return file;
 }
 
+int kSecondsElapsedSincePageLoadForDataCollection = 30;
+int kSecondsElapsedSinceTreeChangedForDataCollection = 30;
+
 }  // namespace
 
 class MockAXTreeDistiller : public AXTreeDistiller {
@@ -85,14 +88,13 @@ class MockReadAnythingUntrustedPageHandler
               (override));
   MOCK_METHOD(void,
               GetVoicePackInfo,
-              (const std::string& language,
-               GetVoicePackInfoCallback mojo_callback),
+              (const std::string& language),
               (override));
   MOCK_METHOD(void,
               InstallVoicePack,
-              (const std::string& language,
-               InstallVoicePackCallback mojo_callback),
+              (const std::string& language),
               (override));
+  MOCK_METHOD(void, UninstallVoice, (const std::string& language), (override));
   MOCK_METHOD(void,
               OnLinkClicked,
               (const ui::AXTreeID& target_tree_id, ui::AXNodeID target_node_id),
@@ -206,6 +208,9 @@ class ReadAnythingAppControllerTest : public ChromeRenderViewTest {
     OnAXTreeDistilled({});
     Mock::VerifyAndClearExpectations(distiller_);
   }
+
+  ReadAnythingAppController& controller() { return *controller_; }
+  ReadAnythingAppModel& model() { return controller_->model_; }
 
   void SetIsPdf() {
     // Call OnActiveAXTreeIDChanged() to set is_pdf_ state.
@@ -394,8 +399,6 @@ class ReadAnythingAppControllerTest : public ChromeRenderViewTest {
   int LetterSpacing() { return controller_->LetterSpacing(); }
 
   int ColorTheme() { return controller_->ColorTheme(); }
-
-  void OnFontSizeReset() { controller_->OnFontSizeReset(); }
 
   void OnLinksEnabledToggled() { controller_->OnLinksEnabledToggled(); }
 
@@ -718,13 +721,15 @@ TEST_F(ReadAnythingAppControllerTest, GetValidatedFontName_FontWithoutQuotes) {
 }
 
 TEST_F(ReadAnythingAppControllerTest, GetValidatedFontName_InvalidFont) {
-  std::string expected_font = string_constants::kReadAnythingDefaultFont;
+  // All languages have the same default font.
+  std::string expected_font = GetSupportedFonts("en").front();
   std::string actual_font = GetValidatedFont("not a real font");
   ASSERT_EQ(actual_font, expected_font);
 }
 
 TEST_F(ReadAnythingAppControllerTest, GetValidatedFontName_UnsupportedFont) {
-  std::string expected_font = string_constants::kReadAnythingDefaultFont;
+  // All languages have the same default font.
+  std::string expected_font = GetSupportedFonts("en").front();
   std::string actual_font = GetValidatedFont("Times New Roman");
   ASSERT_EQ(actual_font, expected_font);
 }
@@ -751,8 +756,7 @@ TEST_F(ReadAnythingAppControllerTest, OnLanguagePrefChange) {
   ASSERT_FALSE(base::Contains(EnabledLanguages(), disabled_lang));
 }
 
-TEST_F(ReadAnythingAppControllerTest,
-       GetStoredVoice_NoAutoSwitching_ReturnsLatestVoice) {
+TEST_F(ReadAnythingAppControllerTest, GetStoredVoice_ReturnsLatestVoice) {
   std::string current_lang = "it-IT";
   std::string current_voice = "Italian voice 3";
   std::string previous_voice = "Dutch voice 1";
@@ -765,9 +769,8 @@ TEST_F(ReadAnythingAppControllerTest,
   ASSERT_EQ(GetStoredVoice(), current_voice);
 }
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
 TEST_F(ReadAnythingAppControllerTest,
-       GetStoredVoice_NoAutoSwitching_ReturnsLatestVoiceRegardlessOfLang) {
+       GetStoredVoice_ReturnsPreferredVoiceForLang) {
   std::string current_lang = "it-IT";
   std::string other_lang = "de-DE";
   std::string current_voice = "Italian voice 3";
@@ -778,9 +781,12 @@ TEST_F(ReadAnythingAppControllerTest,
   OnVoiceChange(current_voice, other_lang);
 
   EXPECT_CALL(page_handler_, OnVoiceChange).Times(2);
-  ASSERT_EQ(GetStoredVoice(), current_voice);
+
+  // Even though the current language is Italian, the preferred voice for
+  // Italian was selected as the Dutch voice, so this is the voice that should
+  // be used.
+  ASSERT_EQ(GetStoredVoice(), previous_voice);
 }
-#endif  // !IS_CHROMEOS_ASH
 
 TEST_F(ReadAnythingAppControllerTest, GetStoredVoice_NoVoices_ReturnsEmpty) {
   scoped_feature_list_.InitWithFeatures({features::kReadAnythingReadAloud}, {});
@@ -845,7 +851,7 @@ TEST_F(ReadAnythingAppControllerTest, OnSettingsRestoredFromPrefs) {
   auto line_spacing = read_anything::mojom::LineSpacing::kVeryLoose;
   auto letter_spacing = read_anything::mojom::LetterSpacing::kVeryWide;
   std::string font_name = "Roboto";
-  double font_size = 18.0;
+  double font_size = 3.0;
   bool links_enabled = false;
   bool images_enabled = true;
   auto color = read_anything::mojom::Colors::kDefaultValue;
@@ -2398,16 +2404,16 @@ TEST_F(ReadAnythingAppControllerTest, Selection_IsCollapsed) {
 }
 
 TEST_F(ReadAnythingAppControllerTest, OnFontSizeReset_SetsFontSizeToDefault) {
-  EXPECT_CALL(page_handler_, OnFontSizeChange(kReadAnythingDefaultFontScale))
-      .Times(1);
-  OnFontSizeReset();
+  model().ResetTextSize();
+  const double default_font_size = model().font_size();
+  EXPECT_CALL(page_handler_, OnFontSizeChange(default_font_size)).Times(1);
+  controller().OnFontSizeReset();
 }
 
 TEST_F(ReadAnythingAppControllerTest,
        OnLinksEnabledChanged_SetsEnabledToFalse) {
-  EXPECT_CALL(page_handler_,
-              OnLinksEnabledChanged(!kReadAnythingDefaultLinksEnabled))
-      .Times(1);
+  const bool links_enabled = model().links_enabled();
+  EXPECT_CALL(page_handler_, OnLinksEnabledChanged(!links_enabled)).Times(1);
   OnLinksEnabledToggled();
 }
 
@@ -4459,7 +4465,6 @@ TEST_F(
     GetHighlightForCurrentSegmentIndex_PhrasesEnabled_NoModel_SentenceSpansMultipleNodes_ReturnsCorrectNodes) {
   scoped_feature_list_.InitWithFeatures(
       {features::kReadAnythingReadAloud,
-       features::kReadAnythingReadAloudAutomaticWordHighlighting,
        features::kReadAnythingReadAloudPhraseHighlighting},
       {});
 
@@ -4538,7 +4543,6 @@ TEST_F(
     GetHighlightForCurrentSegmentIndex_PhrasesEnabled_ValidModel_SentenceSpansMultipleNodes_ReturnsCorrectNodes) {
   scoped_feature_list_.InitWithFeatures(
       {features::kReadAnythingReadAloud,
-       features::kReadAnythingReadAloudAutomaticWordHighlighting,
        features::kReadAnythingReadAloudPhraseHighlighting},
       {});
 
@@ -4564,6 +4568,9 @@ TEST_F(
 
   InitializeWithAndProcessNodes({static_text1, static_text2, static_text3});
   PreprocessTextForSpeech();
+
+  // Wait till all async calculations complete.
+  task_environment_.RunUntilIdle();
 
   std::vector<ui::AXNodeID> node_ids = GetCurrentText();
   EXPECT_EQ((int)node_ids.size(), 3);
@@ -4686,7 +4693,8 @@ TEST_F(ReadAnythingAppControllerScreen2xDataCollectionModeTest,
   EXPECT_CALL(page_handler_, OnScreenshotRequested).Times(1);
   SetScreenAIServiceReady();
   OnActiveAXTreeIDChanged(tree_id_);
-  task_environment_.FastForwardBy(base::Seconds(31));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSincePageLoadForDataCollection + 1));
   Mock::VerifyAndClearExpectations(distiller_);
 }
 
@@ -4695,7 +4703,8 @@ TEST_F(ReadAnythingAppControllerScreen2xDataCollectionModeTest,
   // When the AXTreeID changes, and 30s pass, the controller calls
   // distiller_->Distill() once the screenAI service is ready.
   OnActiveAXTreeIDChanged(tree_id_);
-  task_environment_.FastForwardBy(base::Seconds(31));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSincePageLoadForDataCollection + 1));
 
   EXPECT_CALL(*distiller_, Distill).Times(1);
   EXPECT_CALL(page_handler_, OnScreenshotRequested).Times(1);
@@ -4710,12 +4719,15 @@ TEST_F(ReadAnythingAppControllerScreen2xDataCollectionModeTest,
   EXPECT_CALL(*distiller_, Distill).Times(0);
   EXPECT_CALL(page_handler_, OnScreenshotRequested).Times(0);
   OnActiveAXTreeIDChanged(tree_id_);
-  task_environment_.FastForwardBy(base::Seconds(31));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSincePageLoadForDataCollection + 1));
   Mock::VerifyAndClearExpectations(distiller_);
 }
 
+// TODO(crbug.com/355925253): Update the test when time constants are finalized.
+// This test is not meaningful now that the constants are equal.
 TEST_F(ReadAnythingAppControllerScreen2xDataCollectionModeTest,
-       DistillsAfterDelayWhenTreeIsStable) {
+       DISABLED_DistillsAfterDelayWhenTreeIsStable) {
   ui::AXTreeUpdate update;
   SetUpdateTreeID(&update);
   ui::AXNodeData root;
@@ -4726,15 +4738,45 @@ TEST_F(ReadAnythingAppControllerScreen2xDataCollectionModeTest,
   update.nodes = {root, node};
   update.root_id = root.id;
 
-  // When the load complete event is received, and the tree is stable for 10s,
-  // the controller calls distiller_->Distill().
-  EXPECT_CALL(*distiller_, Distill).Times(1);
-  EXPECT_CALL(page_handler_, OnScreenshotRequested).Times(1);
+  // TODO(crbug.com/355925253): Update all comments with time after time
+  // constants are finalized.
+  // When the tree is stable for 10s, the controller still waits for 30s after
+  // page load completion.
+  EXPECT_CALL(*distiller_, Distill).Times(0);
+  EXPECT_CALL(page_handler_, OnScreenshotRequested).Times(0);
   SetScreenAIServiceReady();
   ui::AXEvent load_complete(0, ax::mojom::Event::kLoadComplete);
   OnActiveAXTreeIDChanged(tree_id_);
   AccessibilityEventReceived({update}, {load_complete});
-  task_environment_.FastForwardBy(base::Seconds(11));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSinceTreeChangedForDataCollection + 1));
+  Mock::VerifyAndClearExpectations(distiller_);
+}
+
+TEST_F(ReadAnythingAppControllerScreen2xDataCollectionModeTest,
+       DistillsAfterDelayWhenTreeIsNotStable) {
+  ui::AXTreeUpdate update;
+  SetUpdateTreeID(&update);
+  ui::AXNodeData root;
+  root.id = 1;
+  ui::AXNodeData node;
+  node.id = 2;
+  root.child_ids = {node.id};
+  update.nodes = {root, node};
+  update.root_id = root.id;
+
+  // If the tree changes in the 30s after page load completion, distillation is
+  // delayed for another 10s.
+  EXPECT_CALL(*distiller_, Distill).Times(0);
+  EXPECT_CALL(page_handler_, OnScreenshotRequested).Times(0);
+  SetScreenAIServiceReady();
+  OnActiveAXTreeIDChanged(tree_id_);
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSincePageLoadForDataCollection - 1));
+  ui::AXEvent load_complete(0, ax::mojom::Event::kLoadComplete);
+  AccessibilityEventReceived({update}, {load_complete});
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSinceTreeChangedForDataCollection - 1));
   Mock::VerifyAndClearExpectations(distiller_);
 }
 
@@ -4765,10 +4807,12 @@ TEST_F(ReadAnythingAppControllerScreen2xDataCollectionModeTest,
   ui::AXEvent load_complete(0, ax::mojom::Event::kLoadComplete);
   AccessibilityEventReceived({updates[0]}, {load_complete});
   OnActiveAXTreeIDChanged(tree_id_);
-  task_environment_.FastForwardBy(base::Seconds(9));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSinceTreeChangedForDataCollection - 1));
 
   AccessibilityEventReceived({updates[1]});
-  task_environment_.FastForwardBy(base::Seconds(5));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSinceTreeChangedForDataCollection / 2));
 
   Mock::VerifyAndClearExpectations(distiller_);
 }
@@ -4800,16 +4844,20 @@ TEST_F(ReadAnythingAppControllerScreen2xDataCollectionModeTest,
   ui::AXEvent load_complete(0, ax::mojom::Event::kLoadComplete);
   AccessibilityEventReceived({updates[0]}, {load_complete});
   OnActiveAXTreeIDChanged(tree_id_);
-  task_environment_.FastForwardBy(base::Seconds(9));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSinceTreeChangedForDataCollection - 1));
 
   AccessibilityEventReceived({updates[1]});
-  task_environment_.FastForwardBy(base::Seconds(9));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSinceTreeChangedForDataCollection - 1));
 
   AccessibilityEventReceived({updates[2]});
-  task_environment_.FastForwardBy(base::Seconds(9));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSinceTreeChangedForDataCollection - 1));
 
   AccessibilityEventReceived({updates[3]});
-  task_environment_.FastForwardBy(base::Seconds(4));
+  task_environment_.FastForwardBy(
+      base::Seconds(kSecondsElapsedSinceTreeChangedForDataCollection + 1));
 
   Mock::VerifyAndClearExpectations(distiller_);
 }

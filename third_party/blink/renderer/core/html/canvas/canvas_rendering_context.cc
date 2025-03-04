@@ -36,13 +36,53 @@
 
 namespace blink {
 
+namespace {
+
+// Serves as killswitch for changing CanCreateCanvasResourceProvider() to
+// create resource provider internally rather than Canvas2DLayerBridge.
+// TODO(crbug.com/40280152): Eliminate post safe-rollout.
+BASE_FEATURE(kAdjustCanCreateCanvas2dResourceProvider,
+             "AdjustCanCreateCanvas2dResourceProvider",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+// Serves as killswitch for migrating CanvasRenderingContext2D::IsPaintable()
+// from checking the existence of the canvas' Canvas2DLayerBridge to checking
+// for the existence of its resource provider.
+// NOTE: Do not check this feature directly: Check
+// CheckProviderInCanvas2DRenderingContextIsPaintable() instead.
+// TODO(crbug.com/40280152): Eliminate post safe-rollout.
+BASE_FEATURE(kIsPaintableChecksResourceProviderInsteadOfBridge,
+             "IsPaintableChecksResourceProviderInsteadOfBridge",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+}  // namespace
+
+bool CanvasRenderingContext::
+    CheckProviderInCanCreateCanvas2dResourceProvider() {
+  return base::FeatureList::IsEnabled(kAdjustCanCreateCanvas2dResourceProvider);
+}
+
+// static
+bool CanvasRenderingContext::
+    CheckProviderInCanvas2DRenderingContextIsPaintable() {
+  // The change to IsPaintable() is safe only if the below feature is enabled,
+  // as (a) our reasoning about the IsPaintable() change is built on the
+  // behavior enabled by this feature, and (b) if we were to ever disable this
+  // feature but leave the IsPaintable() change in place we would be putting
+  // the codebase in an untested state.
+  if (!CheckProviderInCanCreateCanvas2dResourceProvider()) {
+    return false;
+  }
+
+  return base::FeatureList::IsEnabled(
+      kIsPaintableChecksResourceProviderInsteadOfBridge);
+}
+
 CanvasRenderingContext::CanvasRenderingContext(
     CanvasRenderingContextHost* host,
     const CanvasContextCreationAttributesCore& attrs,
     CanvasRenderingAPI canvas_rendering_API)
     : ActiveScriptWrappable<CanvasRenderingContext>({}),
       host_(host),
-      color_params_(attrs.color_space, attrs.pixel_format, attrs.alpha),
       creation_attributes_(attrs),
       canvas_rendering_type_(canvas_rendering_API) {
   // The following check is for investigating crbug.com/1470622
@@ -55,11 +95,6 @@ CanvasRenderingContext::CanvasRenderingContext(
   // the problem has to do with a pre-finalizer being called
   // prematurely.
   CHECK(host_);
-}
-
-SkColorInfo CanvasRenderingContext::CanvasRenderingContextSkColorInfo() const {
-  return SkColorInfo(kN32_SkColorType, kPremul_SkAlphaType,
-                     SkColorSpace::MakeSRGB());
 }
 
 void CanvasRenderingContext::Dispose() {
@@ -123,9 +158,6 @@ void CanvasRenderingContext::RecordUMACanvasRenderingAPI() {
     WebFeature feature;
     if (host->IsOffscreenCanvas()) {
       switch (canvas_rendering_type_) {
-        default:
-          NOTREACHED_IN_MIGRATION();
-          [[fallthrough]];
         case CanvasRenderingContext::CanvasRenderingAPI::k2D:
           feature = WebFeature::kOffscreenCanvas_2D;
           break;
@@ -141,12 +173,11 @@ void CanvasRenderingContext::RecordUMACanvasRenderingAPI() {
         case CanvasRenderingContext::CanvasRenderingAPI::kWebgpu:
           feature = WebFeature::kOffscreenCanvas_WebGPU;
           break;
+        default:
+          NOTREACHED();
       }
     } else {
       switch (canvas_rendering_type_) {
-        default:
-          NOTREACHED_IN_MIGRATION();
-          [[fallthrough]];
         case CanvasRenderingContext::CanvasRenderingAPI::k2D:
           feature = WebFeature::kHTMLCanvasElement_2D;
           break;
@@ -162,6 +193,8 @@ void CanvasRenderingContext::RecordUMACanvasRenderingAPI() {
         case CanvasRenderingContext::CanvasRenderingAPI::kWebgpu:
           feature = WebFeature::kHTMLCanvasElement_WebGPU;
           break;
+        default:
+          NOTREACHED();
       }
     }
     UseCounter::Count(window->document(), feature);

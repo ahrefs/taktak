@@ -4,9 +4,10 @@
 
 #include "components/history_embeddings/ml_answerer.h"
 
+#include <algorithm>
+
 #include "base/barrier_callback.h"
 #include "base/memory/scoped_refptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/stringprintf.h"
 #include "components/history_embeddings/history_embeddings_features.h"
 #include "components/optimization_guide/core/optimization_guide_model_executor.h"
@@ -37,7 +38,7 @@ std::string GetPassageIdStr(size_t id) {
 }
 
 float GetMlAnswerScoreThreshold() {
-  return kMlAnswererMinScore.Get();
+  return GetFeatureParameters().ml_answerer_min_score;
 }
 
 }  // namespace
@@ -71,6 +72,9 @@ class MlAnswerer::SessionManager {
         weak_ptr_factory_(this) {}
 
   ~SessionManager() {
+    // Explicitly invalidate weak pointers to prevent callbacks that may be
+    // triggered by the destructor logic.
+    weak_ptr_factory_.InvalidateWeakPtrs();
     // Run the existing callback if not called yet with canceled status.
     if (!callback_.is_null()) {
       FinishAndResetSessions(AnswererResult(
@@ -101,6 +105,7 @@ class MlAnswerer::SessionManager {
       sessions_[s_index]->Score(
           kPassageIdToken, base::BindOnce(
                                [](size_t index, std::optional<float> score) {
+                                 VLOG(3) << "Score complete for " << index;
                                  return std::make_tuple(index, score);
                                },
                                s_index)
@@ -127,6 +132,7 @@ class MlAnswerer::SessionManager {
     FinishCallback(std::move(answer_result));
 
     // Destroy all existing sessions.
+    VLOG(3) << "Sessions cleared.";
     sessions_.clear();
     urls_.clear();
   }
@@ -141,14 +147,13 @@ class MlAnswerer::SessionManager {
                              base::OnceCallback<void(int)> session_added_cb,
                              std::vector<ModelInput> inputs) {
     HistoryAnswerRequest request;
-    // TODO(crbug.com/372535307): use actual model limit.
-    int token_limit = 1024;
+    int token_limit = session->GetTokenLimits().min_context_tokens;
     // Reserve space for preamble text.
     int token_count = kPreambleTokenBufferSize;
 
     // Sort the inputs according to their indices in the original vector, so
     // we prioritize passages that are more relevant.
-    base::ranges::sort(
+    std::ranges::sort(
         inputs.begin(), inputs.end(),
         [](ModelInput& i1, ModelInput& i2) { return i1.index < i2.index; });
 
@@ -186,7 +191,8 @@ class MlAnswerer::SessionManager {
       if (error == ModelExecutionError::kFiltered) {
         status = ComputeAnswerStatus::kFiltered;
       }
-      FinishCallback(AnswererResult(status, query_, Answer()));
+      FinishCallback(AnswererResult(status, query_, Answer(),
+                                    std::move(result.log_entry), "", {}));
     } else if (result.response->is_complete) {
       auto response = optimization_guide::ParsedAnyMetadata<
           optimization_guide::proto::HistoryAnswerResponse>(
@@ -316,6 +322,7 @@ void MlAnswerer::StartAndAddSession(
 
   const auto make_model_input = [](std::string text, size_t index,
                                    uint32_t token_count) {
+    VLOG(3) << "Created model input for " << index;
     return ModelInput{text, index, token_count};
   };
 

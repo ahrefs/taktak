@@ -12,7 +12,7 @@
 #include "chrome/browser/ui/views/autofill/payments/payments_view_util.h"
 #include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
-#include "components/autofill/core/browser/data_model/credit_card.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card.h"
 #include "components/autofill/core/browser/metrics/autofill_metrics.h"
 #include "components/autofill/core/browser/payments/legal_message_line.h"
 #include "components/autofill/core/browser/ui/payments/payments_ui_closed_reasons.h"
@@ -94,8 +94,9 @@ void SaveCardBubbleViews::AddedToWidget() {
   // Use a custom title container if offering to upload a server card.
   // Done when this view is added to the widget, so the bubble frame
   // view is guaranteed to exist.
-  if (!controller_->IsUploadSave())
+  if (!controller_->IsUploadSave()) {
     return;
+  }
 
   GetBubbleFrameView()->SetTitleView(
       std::make_unique<TitleWithIconAfterLabelView>(
@@ -252,11 +253,13 @@ std::unique_ptr<views::View> SaveCardBubbleViews::GetCardIdentifierView() {
 
 void SaveCardBubbleViews::AssignIdsToDialogButtons() {
   auto* ok_button = GetOkButton();
-  if (ok_button)
+  if (ok_button) {
     ok_button->SetID(DialogViewId::OK_BUTTON);
+  }
   auto* cancel_button = GetCancelButton();
-  if (cancel_button)
+  if (cancel_button) {
     cancel_button->SetID(DialogViewId::CANCEL_BUTTON);
+  }
 }
 
 void SaveCardBubbleViews::Init() {

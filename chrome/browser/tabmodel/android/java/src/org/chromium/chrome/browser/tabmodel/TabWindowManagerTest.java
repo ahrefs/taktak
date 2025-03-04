@@ -45,6 +45,7 @@ import org.chromium.chrome.browser.tab.MockTab;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tabmodel.NextTabPolicy.NextTabPolicySupplier;
 import org.chromium.chrome.test.util.browser.tabmodel.MockTabModelSelector;
+import org.chromium.ui.modaldialog.ModalDialogManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,7 @@ public class TabWindowManagerTest {
     @Mock private Profile mProfile;
     @Mock private Profile mIncognitoProfile;
     @Mock private TabModelSelector mArchivedTabModelSelector;
+    @Mock private ModalDialogManager mModalDialogManager;
     private NextTabPolicySupplier mNextTabPolicySupplier = () -> NextTabPolicy.HIERARCHICAL;
     private OneshotSupplierImpl<ProfileProvider> mProfileProviderSupplier =
             new OneshotSupplierImpl<>();
@@ -82,6 +84,7 @@ public class TabWindowManagerTest {
                     @Override
                     public TabModelSelector buildSelector(
                             Context context,
+                            ModalDialogManager modalDialogManager,
                             OneshotSupplier<ProfileProvider> profileProviderSupplier,
                             TabCreatorManager tabCreatorManager,
                             NextTabPolicySupplier nextTabPolicySupplier) {
@@ -124,6 +127,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -152,6 +156,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -160,6 +165,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment1 =
                 mSubject.requestSelector(
                         activity1,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -193,6 +199,7 @@ public class TabWindowManagerTest {
                     "Could not build selector",
                     mSubject.requestSelector(
                             c.get(),
+                            mModalDialogManager,
                             mProfileProviderSupplier,
                             mTabCreatorManager,
                             mNextTabPolicySupplier,
@@ -206,6 +213,7 @@ public class TabWindowManagerTest {
                 "Built selectors past the max number supported",
                 mSubject.requestSelector(
                         activityController.get(),
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -234,6 +242,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -243,6 +252,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment1 =
                 mSubject.requestSelector(
                         activity1,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -277,6 +287,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -286,6 +297,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment1 =
                 mSubject.requestSelector(
                         activity1,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -316,6 +328,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -347,6 +360,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -369,6 +383,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment1 =
                 mSubject.requestSelector(
                         activity1,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -400,6 +415,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -408,6 +424,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment1 =
                 mSubject.requestSelector(
                         activity1,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -433,6 +450,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment2 =
                 mSubject.requestSelector(
                         activity2,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -460,6 +478,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -468,6 +487,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment1 =
                 mSubject.requestSelector(
                         activity1,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -511,6 +531,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -519,6 +540,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment1 =
                 mSubject.requestSelector(
                         activity1,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -562,6 +584,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -570,6 +593,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment1 =
                 mSubject.requestSelector(
                         activity1,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -599,6 +623,7 @@ public class TabWindowManagerTest {
         Activity activity0 = activityController0.get();
         mSubject.requestSelector(
                 activity0,
+                mModalDialogManager,
                 mProfileProviderSupplier,
                 mTabCreatorManager,
                 mNextTabPolicySupplier,
@@ -614,6 +639,7 @@ public class TabWindowManagerTest {
                                         .ASSERT_INDICES_MATCH_HISTOGRAM_SUFFIX_NOT_REASSIGNED)) {
             mSubject.requestSelector(
                     activity1,
+                    mModalDialogManager,
                     mProfileProviderSupplier,
                     mTabCreatorManager,
                     mNextTabPolicySupplier,
@@ -625,8 +651,13 @@ public class TabWindowManagerTest {
 
         String umaPreExistingActivityDestroyed =
                 "Android.MultiWindowMode.AssertIndicesMatch.PreExistingActivityDestroyed";
+        String umaTimeToPreExistingActivityDestruction =
+                "Android.MultiWindowMode.MismatchedIndices.TimeToPreExistingActivityDestruction";
         try (var ignored =
-                HistogramWatcher.newSingleRecordWatcher(umaPreExistingActivityDestroyed)) {
+                HistogramWatcher.newBuilder()
+                        .expectAnyRecord(umaPreExistingActivityDestroyed)
+                        .expectAnyRecord(umaTimeToPreExistingActivityDestruction)
+                        .build()) {
             destroyActivity(activityController0);
         }
     }
@@ -644,6 +675,7 @@ public class TabWindowManagerTest {
         Activity activity0 = activityController0.get();
         mSubject.requestSelector(
                 activity0,
+                mModalDialogManager,
                 mProfileProviderSupplier,
                 mTabCreatorManager,
                 mNextTabPolicySupplier,
@@ -662,6 +694,7 @@ public class TabWindowManagerTest {
             var assignment =
                     mSubject.requestSelector(
                             activity1,
+                            mModalDialogManager,
                             mProfileProviderSupplier,
                             mTabCreatorManager,
                             mNextTabPolicySupplier,
@@ -707,6 +740,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -755,7 +789,8 @@ public class TabWindowManagerTest {
                 HistogramWatcher.newSingleRecordWatcher(
                         "Tabs.TabStateCleanupAbortedByArchive", false);
         doReturn(tab1).when(mArchivedTabModelSelector).getTabById(tab1.getId());
-        selector0.closeTab(tab1);
+        selector0.tryCloseTab(
+                TabClosureParams.closeTab(tab1).allowUndo(false).build(), /* allowDialog= */ false);
         assertFalse(mSubject.canTabStateBeDeleted(tab1.getId()));
         histogramWatcher.assertExpected();
 
@@ -771,6 +806,7 @@ public class TabWindowManagerTest {
         Pair<Integer, TabModelSelector> assignment0 =
                 mSubject.requestSelector(
                         activity0,
+                        mModalDialogManager,
                         mProfileProviderSupplier,
                         mTabCreatorManager,
                         mNextTabPolicySupplier,
@@ -819,7 +855,8 @@ public class TabWindowManagerTest {
                 HistogramWatcher.newSingleRecordWatcher(
                         "Tabs.TabThumbnailCleanupAbortedByArchive", false);
         doReturn(tab1).when(mArchivedTabModelSelector).getTabById(tab1.getId());
-        selector0.closeTab(tab1);
+        selector0.tryCloseTab(
+                TabClosureParams.closeTab(tab1).allowUndo(false).build(), /* allowDialog= */ false);
         assertFalse(mSubject.canTabThumbnailBeDeleted(tab1.getId()));
         histogramWatcher.assertExpected();
 

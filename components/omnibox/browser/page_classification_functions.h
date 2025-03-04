@@ -21,6 +21,10 @@ bool IsSearchResultsPage(
 bool IsOtherWebPage(
     ::metrics::OmniboxEventProto::PageClassification classification);
 
+// Return true, if supplied page classification is a Lens contextual searchbox.
+bool IsLensContextualSearchbox(
+    ::metrics::OmniboxEventProto::PageClassification classification);
+
 // Return true, if supplied page classification is a Lens unimodal, multimodal,
 // or contextual searchbox.
 bool IsLensSearchbox(
@@ -32,6 +36,12 @@ bool IsCustomTab(
 
 // Return true, if supplied page classification is the Android Hub searchbox.
 bool IsAndroidHub(
+    ::metrics::OmniboxEventProto::PageClassification classification);
+
+// Return true, if page classification is a WebUI searchbox. This is specific
+// to WebUI searchboxes that don't use the omnibox popup view (the WebUI
+// Omnibox is not included in this).
+bool IsWebUISearchbox(
     ::metrics::OmniboxEventProto::PageClassification classification);
 
 // Checks (and asserts in development builds) if Page Classification is

@@ -13,6 +13,7 @@
 #include "ash/constants/ash_switches.h"
 #include "base/base64.h"
 #include "base/command_line.h"
+#include "base/containers/enum_set.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/json/json_reader.h"
@@ -40,6 +41,9 @@ namespace {
 
 CampaignsManager* g_instance = nullptr;
 
+static constexpr auto kAllSlotsSet =
+    base::EnumSet<Slot, Slot::kMinValue, Slot::kMaxValue>::All();
+
 inline constexpr char kCampaignFileName[] = "campaigns.json";
 
 inline constexpr char kEventKey[] = "event_to_be_cleared";
@@ -55,17 +59,20 @@ inline constexpr char kGrowthStudyName[] = "CrOSGrowthStudy";
 // will be unique for different groups.
 inline constexpr char kGrowthGroupName[] = "CampaignId";
 
+inline constexpr char kPayloadPath[] = "payload";
+
 std::optional<base::Value::Dict> ParseCampaignsFile(
     const std::string& campaigns_data) {
-  std::optional<base::Value> value(base::JSONReader::Read(campaigns_data));
-  if (!value || !value->is_dict()) {
+  std::optional<base::Value::Dict> value =
+      base::JSONReader::ReadDict(campaigns_data);
+  if (!value) {
     CAMPAIGNS_LOG(ERROR) << "Failed to parse campaigns file.";
     CAMPAIGNS_LOG(VLOG) << "Malformed campaigns file: " << campaigns_data;
     RecordCampaignsManagerError(CampaignsManagerError::kCampaignsParsingFail);
     return std::nullopt;
   }
 
-  return std::move(value->GetDict());
+  return value;
 }
 
 std::optional<base::Value::Dict> ReadCampaignsFile(
@@ -200,6 +207,9 @@ void CampaignsManager::LoadCampaigns(base::OnceClosure load_callback,
 const Campaign* CampaignsManager::GetCampaignBySlot(Slot slot) const {
   CHECK(campaigns_loaded_)
       << "Getting campaign before campaigns finish loading";
+
+  RecordGetCampaignBySlotAttempt(slot);
+
   const auto match_start = base::TimeTicks::Now();
   auto* match_result = matcher_.GetCampaignBySlot(slot);
   RecordCampaignMatchDuration(base::TimeTicks::Now() - match_start);
@@ -209,12 +219,14 @@ const Campaign* CampaignsManager::GetCampaignBySlot(Slot slot) const {
     return nullptr;
   }
 
-  CAMPAIGNS_LOG(DEBUG) << "Campaign: "
-                       << growth::GetCampaignId(match_result).value()
+  int campaign_id = growth::GetCampaignId(match_result).value();
+  CAMPAIGNS_LOG(DEBUG) << "Campaign: " << campaign_id
                        << " is selected for slot " << static_cast<int>(slot);
-  RecordGetCampaignBySlot(slot);
+
+  RecordGetCampaignBySlot(slot, campaign_id);
   LogCampaignInSystemLog(match_result, slot);
   RegisterTrialForCampaign(match_result);
+  MaybeRecordImpressionForControl(match_result);
   return match_result;
 }
 
@@ -315,6 +327,52 @@ void CampaignsManager::ClearEvent(std::string_view event) {
   client_->ClearConfig(conditions_params);
 }
 
+void CampaignsManager::ClearAllEvents() {
+  if (!ash::features::IsGrowthInternalsEnabled()) {
+    return;
+  }
+
+  for (const auto slot : kAllSlotsSet) {
+    const auto* targeted_campaigns = GetCampaignsBySlot(&campaigns_, slot);
+    if (!targeted_campaigns) {
+      continue;
+    }
+
+    for (auto& campaign_value : *targeted_campaigns) {
+      const auto* campaign = campaign_value.GetIfDict();
+      if (!campaign) {
+        continue;
+      }
+
+      const auto campaign_id = GetCampaignId(campaign);
+      if (!campaign_id) {
+        continue;
+      }
+
+      const auto* targetings = GetTargetings(campaign);
+      if (!targetings || targetings->empty()) {
+        continue;
+      }
+
+      for (const auto& targeting : *targetings) {
+        const auto* target = targeting.GetIfDict();
+        if (!target) {
+          continue;
+        }
+
+        const auto events_targeting =
+            RuntimeTargeting(target).GetEventsTargeting();
+        if (!events_targeting) {
+          continue;
+        }
+
+        ClearEventsByTargeting(*events_targeting, campaign_id.value(),
+                               GetCampaignGroupId(campaign));
+      }
+    }
+  }
+}
+
 void CampaignsManager::RecordEvent(const std::string& event,
                                    bool trigger_campaigns) {
   const bool should_trigger_campaigns =
@@ -401,8 +459,8 @@ void CampaignsManager::OnCampaignsLoaded(
 
   campaigns_loaded_ = true;
 
-  std::move(load_callback).Run();
   RecordQueuedEventsAndMaybeTrigger();
+  std::move(load_callback).Run();
   NotifyCampaignsLoaded();
 }
 
@@ -494,6 +552,33 @@ std::optional<base::Time> CampaignsManager::GetRegisteredTimeForTesting() {
   return std::nullopt;
 }
 
+void CampaignsManager::MaybeRecordImpressionForControl(
+    const Campaign* campaign) const {
+  if (!campaign) {
+    return;
+  }
+
+  const auto* payload = campaign->FindDict(kPayloadPath);
+  if (payload->empty()) {
+    // Record impression for campaign that has empty payload which is usually
+    // counterfactual control campaign.
+    // This is needed to avoid imbalance between experiment group and
+    // counterfactual control group that caused by impression cap.
+    std::optional<int> campaign_id = growth::GetCampaignId(campaign);
+    if (!campaign_id) {
+      // TODO(crbug.com/308684443): Add error metrics in a second CL.
+      CAMPAIGNS_LOG(ERROR) << "Growth campaign id not found";
+      return;
+    }
+
+    CAMPAIGNS_LOG(DEBUG) << "Record impression events for counterfactual "
+                         << "campaign: " << campaign_id.value();
+
+    client_->RecordImpressionEvents(campaign_id.value(),
+                                    GetCampaignGroupId(campaign));
+  }
+}
+
 void CampaignsManager::RegisterTrialForCampaign(
     const Campaign* campaign) const {
   if (!campaign) {
@@ -540,6 +625,65 @@ void CampaignsManager::RegisterTrialForCampaign(
   CHECK(!GetTrigger().events.empty());
   group_name += GetTrigger().events[0];
   client_->RegisterSyntheticFieldTrial(trial_name, group_name);
+}
+
+void CampaignsManager::ClearEventsByTargeting(
+    const EventsTargeting& events_targeting,
+    int campaign_id,
+    std::optional<int> group_id) {
+  if (!ash::features::IsGrowthInternalsEnabled()) {
+    return;
+  }
+
+  std::map<std::string, std::string> conditions_params =
+      CreateBasicConditionParams();
+
+  // Clear group impression and dismissal events.
+  if (group_id) {
+    // The cap value can be any number. The string here will be parsed as an
+    // EventConfig and only the name of the EventConfig is used to clear the
+    // database.
+    conditions_params[kEventKey] = CreateConditionParamForCap(
+        "Group", group_id.value(), "Impression",
+        events_targeting.GetGroupImpressionCap().value_or(1));
+    client_->ClearConfig(conditions_params);
+
+    conditions_params[kEventKey] = CreateConditionParamForCap(
+        "Group", group_id.value(), "Dismissed",
+        events_targeting.GetGroupDismissalCap().value_or(1));
+    client_->ClearConfig(conditions_params);
+  }
+
+  // Clear campaign impression and dismissal events.
+  conditions_params[kEventKey] =
+      CreateConditionParamForCap("Campaign", campaign_id, "Impression",
+                                 events_targeting.GetImpressionCap());
+  client_->ClearConfig(conditions_params);
+
+  conditions_params[kEventKey] = CreateConditionParamForCap(
+      "Campaign", campaign_id, "Dismissed", events_targeting.GetDismissalCap());
+  client_->ClearConfig(conditions_params);
+
+  // Clear events used by the campaign targeting.
+  const base::Value::List* conditions = events_targeting.GetEventsConditions();
+  if (!conditions) {
+    return;
+  }
+
+  for (const auto& condition : *conditions) {
+    if (!condition.is_list()) {
+      continue;
+    }
+
+    for (const auto& param : condition.GetList()) {
+      if (!param.is_string()) {
+        continue;
+      }
+
+      conditions_params[kEventKey] = param.GetString();
+      client_->ClearConfig(conditions_params);
+    }
+  }
 }
 
 }  // namespace growth

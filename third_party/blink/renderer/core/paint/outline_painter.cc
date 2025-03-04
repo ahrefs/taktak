@@ -14,13 +14,13 @@
 #include "third_party/blink/renderer/core/paint/rounded_border_geometry.h"
 #include "third_party/blink/renderer/core/style/border_edge.h"
 #include "third_party/blink/renderer/core/style/computed_style.h"
+#include "third_party/blink/renderer/platform/geometry/path.h"
+#include "third_party/blink/renderer/platform/geometry/stroke_data.h"
 #include "third_party/blink/renderer/platform/graphics/color.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_context.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_context_state_saver.h"
 #include "third_party/blink/renderer/platform/graphics/paint/drawing_recorder.h"
-#include "third_party/blink/renderer/platform/graphics/path.h"
 #include "third_party/blink/renderer/platform/graphics/skia/skia_utils.h"
-#include "third_party/blink/renderer/platform/graphics/stroke_data.h"
 #include "third_party/blink/renderer/platform/graphics/styled_stroke_data.h"
 #include "ui/gfx/geometry/point_conversions.h"
 #include "ui/gfx/geometry/rect.h"
@@ -151,7 +151,7 @@ void IterateRightAnglePath(const SkPath& path, const Action& contour_action) {
         break;
       }
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 }
@@ -506,7 +506,7 @@ class ComplexOutlinePainter {
                                   outline_style_ == EBorderStyle::kInset);
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
 
     if (use_alpha_layer)
@@ -751,7 +751,9 @@ FloatRoundedRect::Radii GetFocusRingCornerRadii(
     const PhysicalRect& reference_border_rect,
     const LayoutObject::OutlineInfo& info) {
   if (style.HasBorderRadius() &&
-      (!style.HasEffectiveAppearance() || style.HasAuthorBorderRadius())) {
+      ((style.HasEffectiveAppearance() &&
+        style.EffectiveAppearance() == AppearanceValue::kBaseSelect) ||
+       style.HasAuthorBorderRadius())) {
     auto radii = ComputeCornerRadii(style, reference_border_rect, info.offset);
     radii.SetMinimumRadius(DefaultFocusRingCornerRadius(style));
     return radii;
@@ -763,20 +765,20 @@ FloatRoundedRect::Radii GetFocusRingCornerRadii(
     // drawing the element.
     std::optional<ui::NativeTheme::Part> part;
     switch (style.EffectiveAppearance()) {
-      case kCheckboxPart:
+      case AppearanceValue::kCheckbox:
         part = ui::NativeTheme::kCheckbox;
         break;
-      case kRadioPart:
+      case AppearanceValue::kRadio:
         part = ui::NativeTheme::kRadio;
         break;
-      case kPushButtonPart:
-      case kSquareButtonPart:
-      case kButtonPart:
+      case AppearanceValue::kPushButton:
+      case AppearanceValue::kSquareButton:
+      case AppearanceValue::kButton:
         part = ui::NativeTheme::kPushButton;
         break;
-      case kTextFieldPart:
-      case kTextAreaPart:
-      case kSearchFieldPart:
+      case AppearanceValue::kTextField:
+      case AppearanceValue::kTextArea:
+      case AppearanceValue::kSearchField:
         part = ui::NativeTheme::kTextField;
         break;
       default:
@@ -920,6 +922,9 @@ void OutlinePainter::PaintOutlineRects(
 void OutlinePainter::PaintFocusRingPath(GraphicsContext& context,
                                         const Path& focus_ring_path,
                                         const ComputedStyle& style) {
+  if (!style.OutlineStyleIsAuto()) {
+    return;
+  }
   // TODO(crbug/251206): Implement outline-offset and double focus rings like
   // right angle focus rings, which requires SkPathOps to support expanding and
   // shrinking generic paths.

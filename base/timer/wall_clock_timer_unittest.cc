@@ -24,8 +24,9 @@ class WallClockTimerTest : public ::testing::Test {
   // suspended.
   // Power event will be triggered if |with_power| is set to false.
   void FastForwardBy(base::TimeDelta delay, bool with_power = true) {
-    if (!with_power)
+    if (!with_power) {
       fake_power_monitor_source_.Suspend();
+    }
 
     clock_.Advance(delay);
 
@@ -248,12 +249,6 @@ TEST_F(WallClockTimerTest, NonStopTickClockWithLongPause) {
   clock_.SetNow(clock_.Now() + past_time);
   task_environment_.FastForwardBy(past_time);
   fake_power_monitor_source_.Resume();
-
-  // The WallClockTimer restarts its task with a shorter timeout when the system
-  // resumes, so it needs to be taken out of the queue and executed. In this
-  // case, the time is already elapsed, so fast forwarding by 0 to pump the task
-  // without advancing time.
-  task_environment_.FastForwardBy(base::TimeDelta());
 
   ::testing::Mock::VerifyAndClearExpectations(&callback);
   EXPECT_FALSE(wall_clock_timer.IsRunning());

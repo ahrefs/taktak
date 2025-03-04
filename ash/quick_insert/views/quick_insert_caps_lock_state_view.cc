@@ -48,7 +48,7 @@ views::BubbleBorder::Arrow GetArrowForTextDirection(
 
 }  // namespace
 
-PickerCapsLockStateView::PickerCapsLockStateView(
+QuickInsertCapsLockStateView::QuickInsertCapsLockStateView(
     gfx::NativeView parent,
     bool enabled,
     gfx::Rect caret_bounds,
@@ -59,7 +59,7 @@ PickerCapsLockStateView::PickerCapsLockStateView(
   DCHECK(parent);
   set_parent_window(parent);
   set_margins(gfx::Insets());
-  set_corner_radius(kPickerContainerBorderRadius);
+  set_corner_radius(kQuickInsertContainerBorderRadius);
   SetButtons(static_cast<int>(ui::mojom::DialogButton::kNone));
   SetCanActivate(false);
   views::BoxLayout* layout =
@@ -69,29 +69,29 @@ PickerCapsLockStateView::PickerCapsLockStateView(
 
   icon_view_ = AddChildView(
       std::make_unique<views::ImageView>(ui::ImageModel::FromVectorIcon(
-          enabled ? kPickerCapsLockOnIcon : kPickerCapsLockOffIcon,
+          enabled ? kQuickInsertCapsLockOnIcon : kQuickInsertCapsLockOffIcon,
           cros_tokens::kCrosSysOnSurface)));
 
   BubbleDialogDelegateView::CreateBubble(this);
 
   SetBackground(views::CreateThemedRoundedRectBackground(
-      kPickerContainerBackgroundColor, kPickerContainerBorderRadius));
+      kQuickInsertContainerBackgroundColor, kQuickInsertContainerBorderRadius));
 
   caret_bounds.Outset(kArrowGap);
   SetAnchorRect(caret_bounds);
 }
 
-PickerCapsLockStateView::~PickerCapsLockStateView() = default;
+QuickInsertCapsLockStateView::~QuickInsertCapsLockStateView() = default;
 
-void PickerCapsLockStateView::Close() {
+void QuickInsertCapsLockStateView::Close() {
   GetWidget()->Close();
 }
 
-void PickerCapsLockStateView::Show() {
+void QuickInsertCapsLockStateView::Show() {
   GetWidget()->Show();
 }
 
-BEGIN_METADATA(PickerCapsLockStateView)
+BEGIN_METADATA(QuickInsertCapsLockStateView)
 END_METADATA
 
 }  // namespace ash

@@ -202,7 +202,6 @@ class NonMainThreadImpl;
 }
 }  // namespace blink
 namespace cc {
-class CategorizedWorkerPoolImpl;
 class CategorizedWorkerPoolJob;
 class CategorizedWorkerPool;
 class CompletionEvent;
@@ -217,7 +216,6 @@ class CrashUtil;
 }
 namespace chromeos {
 class BlockingMethodCaller;
-class ChromeOsCdmFactory;
 namespace system {
 bool IsCoreSchedulingAvailable();
 int NumberOfPhysicalCores();
@@ -260,9 +258,6 @@ namespace cronet {
 class CronetPrefsManager;
 class CronetContext;
 }  // namespace cronet
-namespace crosapi {
-class LacrosThreadTypeDelegate;
-}  // namespace crosapi
 namespace crypto {
 class ScopedAllowBlockingForNSS;
 }
@@ -287,6 +282,9 @@ namespace enterprise_connectors {
 class LinuxKeyRotationCommand;
 }  // namespace enterprise_connectors
 namespace extensions {
+// TODO(https://crbug.com/356905053): Remove DesktopAndroidExtensionSystem
+// from here once ExtensionService is enabled for desktop android.
+class DesktopAndroidExtensionSystem;
 class InstalledLoader;
 class UnpackedInstaller;
 }  // namespace extensions
@@ -375,7 +373,7 @@ class ScopedAllowBlockingForSettingGetter;
 namespace internal {
 class AddressTrackerLinux;
 class PemFileCertStore;
-}
+}  // namespace internal
 }  // namespace net
 namespace printing {
 class LocalPrinterHandlerDefault;
@@ -537,15 +535,9 @@ class BooleanWithOptionalStack {
 #endif
 };
 
-namespace internal {
-
-// Asserts that blocking calls are allowed in the current scope. This is an
-// internal call, external code should use ScopedBlockingCall instead, which
-// serves as a precise annotation of the scope that may/will block.
+// Asserts that blocking calls are allowed in the current scope.
 NOT_TAIL_CALLED BASE_EXPORT void AssertBlockingAllowed();
 NOT_TAIL_CALLED BASE_EXPORT void AssertBlockingDisallowedForTesting();
-
-}  // namespace internal
 
 // Disallows blocking on the current thread.
 NOT_TAIL_CALLED BASE_EXPORT void DisallowBlocking();
@@ -620,9 +612,9 @@ class BASE_EXPORT ScopedAllowBlocking {
   friend class content::WebContentsViewMac;
   friend class cronet::CronetContext;
   friend class cronet::CronetPrefsManager;
-  friend class crosapi::LacrosThreadTypeDelegate;
   friend class crypto::ScopedAllowBlockingForNSS;  // http://crbug.com/59847
   friend class drive::FakeDriveService;
+  friend class extensions::DesktopAndroidExtensionSystem;
   friend class extensions::InstalledLoader;
   friend class extensions::UnpackedInstaller;
   friend class font_service::internal::MappedFontFile;
@@ -662,7 +654,7 @@ class BASE_EXPORT ScopedAllowBlocking {
 #if BUILDFLAG(IS_WIN)
   friend class base::win::OSInfo;
   friend class content::SlowWebPreferenceCache;  // http://crbug.com/1262162
-  friend class media::GpuMojoMediaClientWin;  // https://crbug.com/360642944
+  friend class media::GpuMojoMediaClientWin;     // https://crbug.com/360642944
 #endif
 #if BUILDFLAG(IS_IOS)
   friend class ::BrowserStateDirectoryBuilder;
@@ -759,7 +751,6 @@ class BASE_EXPORT ScopedAllowBaseSyncPrimitives {
   friend class blink::VideoTrackRecorderImplContextProvider;
   friend class blink::WorkerThread;
   friend class blink::scheduler::NonMainThreadImpl;
-  friend class cc::CategorizedWorkerPoolImpl;
   friend class cc::CategorizedWorkerPoolJob;
   friend class content::BrowserMainLoop;
   friend class content::BrowserProcessIOThread;
@@ -803,10 +794,9 @@ class BASE_EXPORT ScopedAllowBaseSyncPrimitives {
   friend class android_webview::
       OverlayProcessorWebView;                     // http://crbug.com/341151462
   friend class blink::VideoFrameResourceProvider;  // http://crbug.com/878070
-  friend class chromeos::ChromeOsCdmFactory;       // http://crbug.com/368792274
   friend class viz::
-      DisplayCompositorMemoryAndTaskController;  // http://crbug.com/341151462
-  friend class viz::SkiaOutputSurfaceImpl;       // http://crbug.com/341151462
+      DisplayCompositorMemoryAndTaskController;    // http://crbug.com/341151462
+  friend class viz::SkiaOutputSurfaceImpl;         // http://crbug.com/341151462
   friend class viz::SharedImageInterfaceProvider;  // http://crbug.com/341151462
 
   ScopedAllowBaseSyncPrimitives();
@@ -856,7 +846,6 @@ class BASE_EXPORT
   friend class blink::RTCVideoDecoderAdapter;
   friend class blink::RTCVideoEncoder;
   friend class blink::WebRtcVideoFrameAdapter;
-  friend class cc::CategorizedWorkerPoolImpl;
   friend class cc::CategorizedWorkerPoolJob;
   friend class cc::CategorizedWorkerPool;
   friend class cc::TileTaskManagerImpl;
@@ -889,14 +878,14 @@ class BASE_EXPORT
   friend class base::Thread;                      // http://crbug.com/918039
   friend class cc::CompletionEvent;               // http://crbug.com/902653
   friend class content::
-      BrowserGpuChannelHostFactory;                 // http://crbug.com/125248
-  friend class content::TextInputClientMac;         // http://crbug.com/121917
-  friend class dbus::Bus;                           // http://crbug.com/125222
+      BrowserGpuChannelHostFactory;          // http://crbug.com/125248
+  friend class content::TextInputClientMac;  // http://crbug.com/121917
+  friend class dbus::Bus;                    // http://crbug.com/125222
   friend class discardable_memory::
-      ClientDiscardableSharedMemoryManager;         // http://crbug.com/1396355
-  friend class disk_cache::BackendImpl;             // http://crbug.com/74623
-  friend class disk_cache::InFlightIO;              // http://crbug.com/74623
-  friend class midi::TaskService;                   // https://crbug.com/796830
+      ClientDiscardableSharedMemoryManager;  // http://crbug.com/1396355
+  friend class disk_cache::BackendImpl;      // http://crbug.com/74623
+  friend class disk_cache::InFlightIO;       // http://crbug.com/74623
+  friend class midi::TaskService;            // https://crbug.com/796830
   friend class net::
       MultiThreadedProxyResolverScopedAllowJoinOnIO;  // http://crbug.com/69710
   friend class net::NetworkChangeNotifierApple;       // http://crbug.com/125097

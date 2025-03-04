@@ -24,30 +24,31 @@
 
 namespace ash {
 
-// Aggregates search results for a single Picker search request, including
+// Aggregates search results for a single Quick Insert search request, including
 // managing the order of search results and managing when to publish search
 // results (with burn-in logic).
 // Call `HandleSearchSourceResults` with new results once they arrive.
 // Call `HandleNoMoreResults` once `HandleSearchSourceResults` will never be
 // called again in the future.
 // Any timers start immediately once this class is constructed.
-class ASH_EXPORT PickerSearchAggregator {
+class ASH_EXPORT QuickInsertSearchAggregator {
  public:
   // If `callback` is called with empty results, then it will never be called
   // again (i.e. all search results have been returned).
-  explicit PickerSearchAggregator(
+  explicit QuickInsertSearchAggregator(
       base::TimeDelta burn_in_period,
-      PickerViewDelegate::SearchResultsCallback callback);
-  PickerSearchAggregator(const PickerSearchAggregator&) = delete;
-  PickerSearchAggregator& operator=(const PickerSearchAggregator&) = delete;
-  ~PickerSearchAggregator();
+      QuickInsertViewDelegate::SearchResultsCallback callback);
+  QuickInsertSearchAggregator(const QuickInsertSearchAggregator&) = delete;
+  QuickInsertSearchAggregator& operator=(const QuickInsertSearchAggregator&) =
+      delete;
+  ~QuickInsertSearchAggregator();
 
-  void HandleSearchSourceResults(PickerSearchSource source,
+  void HandleSearchSourceResults(QuickInsertSearchSource source,
                                  std::vector<QuickInsertSearchResult> results,
                                  bool has_more_results);
   void HandleNoMoreResults(bool interrupted);
 
-  base::WeakPtr<PickerSearchAggregator> GetWeakPtr();
+  base::WeakPtr<QuickInsertSearchAggregator> GetWeakPtr();
 
  private:
   struct UnpublishedResults {
@@ -68,14 +69,14 @@ class ASH_EXPORT PickerSearchAggregator {
   void PublishBurnInResults();
 
   // Returns nullptr if there are no accumulated results for the section type.
-  UnpublishedResults* AccumulatedResultsForSection(PickerSectionType type);
+  UnpublishedResults* AccumulatedResultsForSection(QuickInsertSectionType type);
 
   base::OneShotTimer burn_in_timer_;
 
-  PickerViewDelegate::SearchResultsCallback current_callback_;
+  QuickInsertViewDelegate::SearchResultsCallback current_callback_;
 
   static constexpr size_t kNumSections =
-      base::to_underlying(PickerSectionType::kMaxValue) + 1;
+      base::to_underlying(QuickInsertSectionType::kMaxValue) + 1;
   // Unpublished results that are accumulated before burn-in.
   // Results are only published after burn-in if the `results` vector is not
   // empty.
@@ -87,7 +88,7 @@ class ASH_EXPORT PickerSearchAggregator {
                    /*post_burnin_and_drive_only=*/std::vector<std::string>>;
   LinkDriveDedupeState link_drive_dedupe_state_;
 
-  base::WeakPtrFactory<PickerSearchAggregator> weak_ptr_factory_{this};
+  base::WeakPtrFactory<QuickInsertSearchAggregator> weak_ptr_factory_{this};
 };
 
 }  // namespace ash

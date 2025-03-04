@@ -32,6 +32,7 @@
 #include "ash/webui/personalization_app/mojom/personalization_app.mojom.h"
 #include "ash/webui/personalization_app/mojom/personalization_app_mojom_traits.h"
 #include "ash/webui/personalization_app/proto/backdrop_wallpaper.pb.h"
+#include "base/containers/span.h"
 #include "base/debug/crash_logging.h"
 #include "base/debug/dump_without_crashing.h"
 #include "base/files/file_path.h"
@@ -43,6 +44,7 @@
 #include "chrome/browser/ash/system_web_apps/apps/personalization_app/personalization_app_manager_factory.h"
 #include "chrome/browser/ash/system_web_apps/apps/personalization_app/personalization_app_utils.h"
 #include "chrome/browser/ash/wallpaper/wallpaper_enumerator.h"
+#include "chrome/browser/ash/wallpaper_handlers/google_photos_wallpaper_handlers.h"
 #include "chrome/browser/ash/wallpaper_handlers/wallpaper_fetcher_delegate.h"
 #include "chrome/browser/ash/wallpaper_handlers/wallpaper_handlers.h"
 #include "chrome/browser/profiles/profile.h"
@@ -90,13 +92,13 @@ const std::string GetOnlineWallpaperKey(ash::WallpaperInfo info) {
 }
 
 GURL GetBitmapJpegDataUrl(const SkBitmap& bitmap) {
-  std::vector<unsigned char> output;
-  if (!gfx::JPEGCodec::Encode(bitmap, /*quality=*/100, &output)) {
+  std::optional<std::vector<uint8_t>> output =
+      gfx::JPEGCodec::Encode(bitmap, /*quality=*/100);
+  if (!output) {
     LOG(ERROR) << "Unable to encode bitmap";
     return GURL();
   }
-  GURL data_url =
-      GetJpegDataUrl({reinterpret_cast<char*>(output.data()), output.size()});
+  GURL data_url = GetJpegDataUrl(base::as_string_view(output.value()));
   // @see `url.mojom` warning about dropping urls that are too long.
   DCHECK_LT(data_url.spec().size(), url::mojom::kMaxURLChars);
   return data_url;
@@ -859,11 +861,11 @@ void PersonalizationAppWallpaperProviderImpl::OnFetchCollectionImages(
   std::optional<std::vector<backdrop::Image>> result;
   if (success && !images.empty()) {
     // Do first pass to clear all unit_id associated with the images.
-    base::ranges::for_each(images, [&](auto& proto_image) {
+    std::ranges::for_each(images, [&](auto& proto_image) {
       image_unit_id_map_.erase(proto_image.unit_id());
     });
     // Do second pass to repopulate the map with fresh data.
-    base::ranges::for_each(images, [&](auto& proto_image) {
+    std::ranges::for_each(images, [&](auto& proto_image) {
       if (proto_image.has_asset_id() && proto_image.has_unit_id() &&
           proto_image.has_image_url()) {
         image_unit_id_map_[proto_image.unit_id()].push_back(
@@ -1132,7 +1134,7 @@ void PersonalizationAppWallpaperProviderImpl::SendGooglePhotosAttribution(
     } else if (info.type == WallpaperType::kDailyGooglePhotos) {
       UpdateDailyRefreshWallpaper(/*callback=*/base::DoNothing());
     } else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
     return;
   }

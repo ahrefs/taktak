@@ -31,6 +31,7 @@
 #include "net/filter/brotli_source_stream.h"
 #include "net/filter/filter_source_stream.h"
 #include "net/filter/source_stream.h"
+#include "net/filter/source_stream_type.h"
 #include "net/filter/zstd_source_stream.h"
 #include "net/http/http_request_info.h"
 #include "net/http/structured_headers.h"
@@ -47,7 +48,7 @@ namespace {
 class ProxyingSourceStream : public SourceStream {
  public:
   explicit ProxyingSourceStream(HttpTransaction* transaction)
-      : SourceStream(SourceStream::TYPE_NONE), transaction_(transaction) {}
+      : SourceStream(SourceStreamType::kNone), transaction_(transaction) {}
 
   ProxyingSourceStream(const ProxyingSourceStream&) = delete;
   ProxyingSourceStream& operator=(const ProxyingSourceStream&) = delete;
@@ -132,8 +133,9 @@ int SharedDictionaryNetworkTransaction::Start(const HttpRequestInfo* request,
 SharedDictionaryNetworkTransaction::SharedDictionaryEncodingType
 SharedDictionaryNetworkTransaction::ParseSharedDictionaryEncodingType(
     const HttpResponseHeaders& headers) {
-  std::string content_encoding;
-  if (!headers.GetNormalizedHeader("Content-Encoding", &content_encoding)) {
+  std::optional<std::string> content_encoding =
+      headers.GetNormalizedHeader("Content-Encoding");
+  if (!content_encoding) {
     return SharedDictionaryEncodingType::kNotUsed;
   } else if (content_encoding ==
              shared_dictionary::kSharedBrotliContentEncodingName) {
@@ -192,14 +194,14 @@ void SharedDictionaryNetworkTransaction::ModifyRequestHeaders(
   if (!IsLocalhost(request_url)) {
     if (!base::FeatureList::IsEnabled(
             features::kCompressionDictionaryTransportOverHttp1) &&
-        negotiated_protocol_ != kProtoHTTP2 &&
-        negotiated_protocol_ != kProtoQUIC) {
+        negotiated_protocol_ != NextProto::kProtoHTTP2 &&
+        negotiated_protocol_ != NextProto::kProtoQUIC) {
       shared_dictionary_.reset();
       return;
     }
     if (!base::FeatureList::IsEnabled(
             features::kCompressionDictionaryTransportOverHttp2) &&
-        negotiated_protocol_ == kProtoHTTP2) {
+        negotiated_protocol_ == NextProto::kProtoHTTP2) {
       shared_dictionary_.reset();
       return;
     }
@@ -483,7 +485,7 @@ int SharedDictionaryNetworkTransaction::ResumeNetworkStart() {
 void SharedDictionaryNetworkTransaction::SetModifyRequestHeadersCallback(
     base::RepeatingCallback<void(HttpRequestHeaders*)> callback) {
   // This method should not be called for this class.
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 void SharedDictionaryNetworkTransaction::

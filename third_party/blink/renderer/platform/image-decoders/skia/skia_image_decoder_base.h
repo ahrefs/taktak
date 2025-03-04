@@ -11,6 +11,8 @@
 #include "third_party/blink/renderer/platform/image-decoders/image_decoder.h"
 #include "third_party/skia/include/codec/SkCodec.h"
 
+class SkStream;
+
 namespace blink {
 
 class SegmentStream;
@@ -23,7 +25,10 @@ class PLATFORM_EXPORT SkiaImageDecoderBase : public ImageDecoder {
   SkiaImageDecoderBase(AlphaOption,
                        ColorBehavior,
                        wtf_size_t max_decoded_bytes,
-                       wtf_size_t reading_offset = kNoReadingOffset);
+                       wtf_size_t reading_offset = kNoReadingOffset,
+                       HighBitDepthDecodingOption bit_depth_option =
+                           HighBitDepthDecodingOption::kDefaultBitDepth);
+
   SkiaImageDecoderBase(const SkiaImageDecoderBase&) = delete;
   SkiaImageDecoderBase& operator=(const SkiaImageDecoderBase&) = delete;
   ~SkiaImageDecoderBase() override;
@@ -41,13 +46,13 @@ class PLATFORM_EXPORT SkiaImageDecoderBase : public ImageDecoder {
 
  protected:
   // OnCreateSkCodec needs to read enough of the image to get the image size.
-  virtual std::unique_ptr<SkCodec> OnCreateSkCodec(
-      std::unique_ptr<SegmentStream>,
-      SkCodec::Result* result) = 0;
+  virtual std::unique_ptr<SkCodec> OnCreateSkCodec(std::unique_ptr<SkStream>,
+                                                   SkCodec::Result* result) = 0;
 
  private:
   // ImageDecoder:
   void DecodeSize() final {}
+  bool ImageIsHighBitDepth() final;
   wtf_size_t DecodeFrameCount() final;
   void InitializeNewFrame(wtf_size_t) final;
   void Decode(wtf_size_t) final;
@@ -70,6 +75,10 @@ class PLATFORM_EXPORT SkiaImageDecoderBase : public ImageDecoder {
 
   // Returns whether decoding of the current frame has failed.
   bool IsFailedFrameIndex(wtf_size_t index) const;
+
+  // Translates `SkCodec`'s values into Blink API values, but leaves field-based
+  // statefulness to the non-internal `RepetitionCount`.
+  int RepetitionCountInternal() const;
 
   std::unique_ptr<SkCodec> codec_;
 

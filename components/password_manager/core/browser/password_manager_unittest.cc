@@ -20,14 +20,16 @@
 #include "base/test/gmock_move_support.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/metrics/user_action_tester.h"
+#include "base/test/run_until.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/task_environment.h"
 #include "base/test/test_mock_time_task_runner.h"
+#include "base/types/expected.h"
 #include "build/build_config.h"
 #include "components/affiliations/core/browser/fake_affiliation_service.h"
-#include "components/autofill/core/browser/autofill_test_utils.h"
 #include "components/autofill/core/browser/autofill_type.h"
 #include "components/autofill/core/browser/field_types.h"
+#include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #include "components/autofill/core/common/field_data_manager.h"
 #include "components/autofill/core/common/form_data.h"
 #include "components/autofill/core/common/form_data_test_api.h"
@@ -147,6 +149,7 @@ class FakeNetworkContext : public network::TestNetworkContext {
  public:
   FakeNetworkContext() = default;
   void IsHSTSActiveForHost(const std::string& host,
+                           bool is_top_level_nav,
                            IsHSTSActiveForHostCallback callback) override {
     std::move(callback).Run(true);
   }
@@ -185,7 +188,9 @@ class MockPasswordManagerClient : public StubPasswordManagerClient {
     ON_CALL(*this, GetWebAuthnCredentialsDelegateForDriver)
         .WillByDefault(Return(&webauthn_credentials_delegate_));
     ON_CALL(webauthn_credentials_delegate_, GetPasskeys)
-        .WillByDefault(ReturnRef(passkeys_));
+        .WillByDefault(Return(
+            base::unexpected(WebAuthnCredentialsDelegate::
+                                 PasskeysUnavailableReason::kNotReceived)));
     ON_CALL(webauthn_credentials_delegate_, IsSecurityKeyOrHybridFlowAvailable)
         .WillByDefault(Return(true));
   }
@@ -294,7 +299,6 @@ class MockPasswordManagerClient : public StubPasswordManagerClient {
   mutable FakeNetworkContext network_context_;
   testing::NiceMock<MockStoreResultFilter> filter_;
   MockWebAuthnCredentialsDelegate webauthn_credentials_delegate_;
-  std::optional<std::vector<PasskeyCredential>> passkeys_;
 };
 
 class MockPasswordManagerDriver : public StubPasswordManagerDriver {
@@ -1755,6 +1759,66 @@ TEST_P(PasswordManagerTest,
   // destroy the manager prior to store destruction.
   manager_.reset();
   store->ShutdownOnUIThread();
+}
+
+TEST_P(PasswordManagerTest,
+       MetricsReportedLogInFailedWithPasswordChangeSubmission) {
+  ukm::TestAutoSetUkmRecorder test_ukm_recorder;
+  base::HistogramTester histogram_tester;
+  PasswordForm form(MakeSimpleForm());
+  form.type = PasswordForm::Type::kChangeSubmission;
+  store_->AddLogin(form);
+
+  FormData observed_form = form.form_data;
+  manager()->OnPasswordFormsParsed(&driver_, {observed_form});
+  manager()->OnPasswordFormsRendered(&driver_, {observed_form});
+  task_environment_.RunUntilIdle();
+
+  manager()->OnPasswordFormSubmitted(&driver_, observed_form);
+  manager()->OnPasswordFormsRendered(&driver_, {observed_form});
+  manager()->DidNavigateMainFrame(true);
+  manager()->OnPasswordFormsParsed(&driver_, {observed_form});
+  histogram_tester.ExpectUniqueSample(
+      "PasswordManager.LogInWithPasswordChangeSubmission", false, 1);
+
+  ukm::TestUkmRecorder::ExpectEntryMetric(
+      GetMetricEntry(
+          test_ukm_recorder,
+          ukm::builders::PasswordManager_ChangeSubmission::kEntryName),
+      ukm::builders::PasswordManager_ChangeSubmission::
+          kLogInWithPasswordChangeSubmissionName,
+      0);
+}
+
+TEST_P(PasswordManagerTest, MetricsReportedLogInWithPasswordChangeSubmission) {
+  ukm::TestAutoSetUkmRecorder test_ukm_recorder;
+
+  base::HistogramTester histogram_tester;
+  PasswordForm form(MakeSimpleForm());
+  form.type = PasswordForm::Type::kChangeSubmission;
+  store_->AddLogin(form);
+
+  std::vector<FormData> observed = {form.form_data};
+  manager()->OnPasswordFormsParsed(&driver_, observed);
+  manager()->OnPasswordFormsRendered(&driver_, observed);
+  task_environment_.RunUntilIdle();
+
+  OnPasswordFormSubmitted(form.form_data);
+  observed.clear();
+  manager()->DidNavigateMainFrame(true);
+  manager()->OnPasswordFormsParsed(&driver_, observed);
+  manager()->OnPasswordFormsRendered(&driver_, observed);
+
+  histogram_tester.ExpectUniqueSample(
+      "PasswordManager.LogInWithPasswordChangeSubmission", true, 1);
+
+  ukm::TestUkmRecorder::ExpectEntryMetric(
+      GetMetricEntry(
+          test_ukm_recorder,
+          ukm::builders::PasswordManager_ChangeSubmission::kEntryName),
+      ukm::builders::PasswordManager_ChangeSubmission::
+          kLogInWithPasswordChangeSubmissionName,
+      1);
 }
 
 #if BUILDFLAG(IS_ANDROID)
@@ -5365,6 +5429,58 @@ TEST_P(PasswordManagerTest,
   manager()->OnPasswordFormCleared(&driver_, form_data);
 }
 
+#if !BUILDFLAG(IS_IOS)
+// Expect no automatic save prompt when user fills grouped match credentials.
+TEST_P(PasswordManagerTest, NoAutomaticPromptOnGroupedMatchSave) {
+  base::test::ScopedFeatureList feature_list{
+      password_manager::features::kPasswordFormGroupedAffiliations};
+
+  PasswordForm saved_match(MakeSavedForm());
+  saved_match.signon_realm = "https://affiliated.example.com/";
+  saved_match.url = GURL(saved_match.signon_realm);
+  store_->AddLogin(saved_match);
+  EXPECT_CALL(client_, IsSavingAndFillingEnabled).WillRepeatedly(Return(true));
+
+  PasswordForm password_form(MakeSimpleForm());
+  test_api(password_form.form_data)
+      .field(0)
+      .set_value(saved_match.username_value);
+  test_api(password_form.form_data)
+      .field(1)
+      .set_value(saved_match.password_value);
+
+  // `saved_match` credential will be considered as a grouped match.
+  mock_match_helper_->ExpectCallToGetAffiliatedAndGrouped(
+      PasswordFormDigest(password_form),
+      /*affiliated_realms=*/{password_form.signon_realm},
+      /*grouped_realms=*/{saved_match.signon_realm, password_form.signon_realm},
+      /*repeatedly=*/true);
+
+  manager()->OnPasswordFormsParsed(&driver_, {password_form.form_data});
+  manager()->OnPasswordFormsRendered(&driver_, {password_form.form_data});
+  // Load the credentials from `PasswordStore`.
+  task_environment_.RunUntilIdle();
+
+  // After user input `password_form` becomes available for submission from
+  // `PasswordManager` perspective.
+  manager()->OnInformAboutUserInput(&driver_, password_form.form_data);
+
+  EXPECT_CALL(client_, PromptUserToSaveOrUpdatePassword).Times(0);
+
+  // Form is submitted and credentials are added to `PasswordStore`.
+  manager()->OnPasswordFormsRendered(&driver_, {});
+  // Wait for `PasswordStore` to get updated.
+  task_environment_.RunUntilIdle();
+
+  EXPECT_THAT(
+      store_->stored_passwords(),
+      UnorderedElementsAre(
+          Pair(saved_match.signon_realm, ElementsAre(FormMatches(saved_match))),
+          Pair(password_form.signon_realm,
+               ElementsAre(FormMatches(password_form)))));
+}
+#endif  // !BUILDFLAG(IS_IOS)
+
 // Similar test as above with fields that have empty names.
 TEST_P(PasswordManagerTest, SubmissionDetectedOnClearedNamelessForm) {
   constexpr char16_t kEmptyName[] = u"";
@@ -5928,6 +6044,198 @@ TEST_P(PasswordManagerTest, ParsingDifferenceFillingAndSavingUKM) {
       test_ukm_recorder, ukm::builders::PasswordForm::kEntryName,
       ukm::builders::PasswordForm::kParsingDiffFillingAndSavingName,
       PasswordFormMetricsRecorder::ParsingDifference::kNone);
+}
+
+// Check that cached model predictions are cleared after a navigation.
+TEST_P(PasswordManagerTest, ModelPredictions_ClearedTimely) {
+  FormData form_data(MakeSimpleFormData());
+  manager()->OnPasswordFormsParsed(&driver_, {form_data});
+  manager()->OnPasswordFormsRendered(&driver_, {form_data});
+
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form_data,
+      {{form_data.fields()[0].global_id(), FieldType::USERNAME},
+       {form_data.fields()[1].global_id(), FieldType::PASSWORD}});
+  EXPECT_EQ(manager()->GetClassifierModelPredictionsForTesting().size(), 1u);
+
+  manager()->DidNavigateMainFrame(/*form_may_be_submitted=*/false);
+  EXPECT_TRUE(manager()->GetClassifierModelPredictionsForTesting().empty());
+}
+
+// Checks that a password form can be parsed using model predictions.
+TEST_P(PasswordManagerTest, ProcessingModelPredictions) {
+  EXPECT_CALL(client_, IsSavingAndFillingEnabled).WillRepeatedly(Return(true));
+
+  // Create a simple form that has a username and a password field, so should be
+  // parsed as a login form (containing username and current password) normally.
+  PasswordForm form(MakeSimpleForm());
+  store_->AddLogin(form);
+
+  manager()->OnPasswordFormsParsed(&driver_, {form.form_data});
+  manager()->OnPasswordFormsRendered(&driver_, {form.form_data});
+
+  // Create model predictions indicating it's a sign-up form (containing
+  // username and account creation password).
+  const FieldGlobalId username_field = form.form_data.fields()[0].global_id();
+  const FieldGlobalId password_field = form.form_data.fields()[1].global_id();
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form.form_data,
+      {{username_field, FieldType::USERNAME},
+       {password_field, FieldType::ACCOUNT_CREATION_PASSWORD}});
+
+  ASSERT_TRUE(base::test::RunUntil([&]() {
+    return manager()->GetParsedObservedForm(
+               &driver_, username_field.renderer_id) != nullptr;
+  }));
+  const PasswordForm* parsed_form =
+      manager()->GetParsedObservedForm(&driver_, username_field.renderer_id);
+  // Check that the form was parsed according to the model predictions.
+  EXPECT_EQ(parsed_form->username_element_renderer_id,
+            username_field.renderer_id);
+  EXPECT_EQ(parsed_form->new_password_element_renderer_id,
+            password_field.renderer_id);
+}
+
+// Checks that if the model predictions are received before the form is found
+// during PasswordManager parsing, these model predictions are still used for
+// parsing.
+TEST_P(PasswordManagerTest, ProcessModelPredictionBeforeFormIsParsed) {
+  EXPECT_CALL(client_, IsSavingAndFillingEnabled).WillRepeatedly(Return(true));
+
+  // Create a simple form that has a username and a password field, so should be
+  // parsed as a login form (containing username and current password) normally.
+  PasswordForm form(MakeSimpleForm());
+  store_->AddLogin(form);
+
+  // Create model predictions indicating it's a sign-up form (containing
+  // username and account creation password).
+  const FieldGlobalId username_field = form.form_data.fields()[0].global_id();
+  const FieldGlobalId password_field = form.form_data.fields()[1].global_id();
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form.form_data,
+      {{username_field, FieldType::USERNAME},
+       {password_field, FieldType::ACCOUNT_CREATION_PASSWORD}});
+
+  manager()->OnPasswordFormsParsed(&driver_, {form.form_data});
+  ASSERT_TRUE(base::test::RunUntil([&]() {
+    return manager()->GetParsedObservedForm(
+               &driver_, username_field.renderer_id) != nullptr;
+  }));
+  const PasswordForm* parsed_form =
+      manager()->GetParsedObservedForm(&driver_, username_field.renderer_id);
+  // Check that the form was parsed according to the model predictions.
+  EXPECT_EQ(parsed_form->username_element_renderer_id,
+            username_field.renderer_id);
+  EXPECT_EQ(parsed_form->new_password_element_renderer_id,
+            password_field.renderer_id);
+}
+
+// Checks that a password form can be parsed using model predictions even if
+// it's not recognized by the renderer.
+TEST_P(PasswordManagerTest,
+       ProcessingModelPredictions_NonRendererRecognizedForm) {
+  EXPECT_CALL(client_, IsSavingAndFillingEnabled).WillRepeatedly(Return(true));
+  ASSERT_TRUE(manager()->form_managers().empty());
+
+  FormData form_data = MakeSingleUsernameFormData();
+  const FieldGlobalId username_field = form_data.fields()[0].global_id();
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form_data, {{username_field, FieldType::USERNAME}});
+
+  // Check that a form manager is created.
+  ASSERT_EQ(manager()->form_managers().size(), 1u);
+
+  // Check that the form is parsed according to the model predictions.
+  ASSERT_TRUE(base::test::RunUntil([&]() {
+    return manager()->GetParsedObservedForm(
+               &driver_, username_field.renderer_id) != nullptr;
+  }));
+  const PasswordForm* parsed_form =
+      manager()->GetParsedObservedForm(&driver_, username_field.renderer_id);
+  EXPECT_EQ(parsed_form->username_element_renderer_id,
+            username_field.renderer_id);
+}
+
+// Checks that a form manager is not created for the form if the model
+// predictions indicate it's not related to passwords.
+TEST_P(PasswordManagerTest, ProcessingModelPredictions_IrrelevantForm) {
+  EXPECT_CALL(client_, IsSavingAndFillingEnabled).WillRepeatedly(Return(true));
+  ASSERT_TRUE(manager()->form_managers().empty());
+
+  FormData form_data = MakeSingleUsernameFormData();
+  const FieldGlobalId username_field = form_data.fields()[0].global_id();
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form_data, {{username_field, FieldType::UNKNOWN_TYPE}});
+
+  // Check that a form manager was not created.
+  ASSERT_TRUE(manager()->form_managers().empty());
+}
+
+TEST_P(PasswordManagerTest, PasswordVsOtpMetric_PasswordForm) {
+  base::HistogramTester histogram_tester;
+  ukm::TestAutoSetUkmRecorder test_ukm_recorder;
+  FormData form_data(MakeSimpleFormData());
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form_data,
+      {{form_data.fields()[0].global_id(), FieldType::USERNAME},
+       {form_data.fields()[1].global_id(), FieldType::PASSWORD}});
+  histogram_tester.ExpectUniqueSample("PasswordManager.ParsedFormIsOtpForm2",
+                                      PasswordVsOtpFormType::kPassword, 1);
+  CheckMetricHasValue(
+      test_ukm_recorder,
+      ukm::builders::PasswordManager_Classification::kEntryName,
+      ukm::builders::PasswordManager_Classification::kPasswordVsOtpFormTypeName,
+      PasswordVsOtpFormType::kPassword);
+}
+
+TEST_P(PasswordManagerTest, PasswordVsOtpMetric_OtpForm) {
+  base::HistogramTester histogram_tester;
+  ukm::TestAutoSetUkmRecorder test_ukm_recorder;
+  FormData form_data(MakeSimpleFormData());
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form_data,
+      {{form_data.fields()[0].global_id(), FieldType::ONE_TIME_CODE}});
+  histogram_tester.ExpectUniqueSample("PasswordManager.ParsedFormIsOtpForm2",
+                                      PasswordVsOtpFormType::kOtp, 1);
+  CheckMetricHasValue(
+      test_ukm_recorder,
+      ukm::builders::PasswordManager_Classification::kEntryName,
+      ukm::builders::PasswordManager_Classification::kPasswordVsOtpFormTypeName,
+      PasswordVsOtpFormType::kOtp);
+}
+
+TEST_P(PasswordManagerTest, ModelPredictionsEmptyMetric_Empty) {
+  base::HistogramTester histogram_tester;
+  ukm::TestAutoSetUkmRecorder test_ukm_recorder;
+  FormData form_data(MakeSimpleFormData());
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form_data,
+      {{form_data.fields()[0].global_id(), FieldType::NO_SERVER_DATA},
+       {form_data.fields()[1].global_id(), FieldType::NO_SERVER_DATA}});
+  histogram_tester.ExpectUniqueSample("PasswordManager.ModelPredictions.Empty",
+                                      true, 1);
+  CheckMetricHasValue(
+      test_ukm_recorder,
+      ukm::builders::PasswordManager_Classification::kEntryName,
+      ukm::builders::PasswordManager_Classification::kModelPredictionsEmptyName,
+      true);
+}
+
+TEST_P(PasswordManagerTest, ModelPredictionsEmptyMetric_NonEmpty) {
+  base::HistogramTester histogram_tester;
+  ukm::TestAutoSetUkmRecorder test_ukm_recorder;
+  FormData form_data(MakeSimpleFormData());
+  manager()->ProcessClassificationModelPredictions(
+      &driver_, form_data,
+      {{form_data.fields()[0].global_id(), FieldType::USERNAME},
+       {form_data.fields()[1].global_id(), FieldType::PASSWORD}});
+  histogram_tester.ExpectUniqueSample("PasswordManager.ModelPredictions.Empty",
+                                      false, 1);
+  CheckMetricHasValue(
+      test_ukm_recorder,
+      ukm::builders::PasswordManager_Classification::kEntryName,
+      ukm::builders::PasswordManager_Classification::kModelPredictionsEmptyName,
+      false);
 }
 
 #if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)

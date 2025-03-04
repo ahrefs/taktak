@@ -14,6 +14,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <list>
 #include <memory>
@@ -32,7 +34,6 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/not_fatal_until.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/stringprintf.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/time/default_tick_clock.h"
@@ -387,7 +388,8 @@ void CopyRowsToP010Buffer(int first_row,
   DCHECK_NE(dest_stride_uv, 0);
   DCHECK_EQ(0, first_row % 2);
   DCHECK_EQ(source_frame->format(), PIXEL_FORMAT_YUV420P10);
-  DCHECK_LE(width * 2, source_frame->stride(VideoFrame::Plane::kY));
+  DCHECK_LE(static_cast<size_t>(width * 2),
+            source_frame->stride(VideoFrame::Plane::kY));
 
   const uint16_t* y_plane = reinterpret_cast<const uint16_t*>(
       source_frame->visible_data(VideoFrame::Plane::kY) +
@@ -475,7 +477,8 @@ void CopyRowsToNV12Buffer(int first_row,
         dest_uv + first_row / 2 * dest_stride_uv, dest_stride_uv,
         bytes_per_row_y, rows_y);
   } else {
-    DCHECK_LE(width * 2, source_frame->stride(VideoFrame::Plane::kY));
+    DCHECK_LE(static_cast<size_t>(width * 2),
+              source_frame->stride(VideoFrame::Plane::kY));
 
     const uint16_t* y_plane = reinterpret_cast<const uint16_t*>(
         source_frame->visible_data(VideoFrame::Plane::kY) +
@@ -580,7 +583,7 @@ gfx::Size CodedSize(const VideoFrame* video_frame,
       output = gfx::Size(base::bits::AlignUp(width, size_t{2}), height);
       break;
     case GpuVideoAcceleratorFactories::OutputFormat::UNDEFINED:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
   DCHECK(gfx::Rect(video_frame->coded_size()).Contains(gfx::Rect(output)));
   return output;
@@ -919,9 +922,11 @@ void GpuMemoryBufferVideoFramePool::PoolImpl::CopyRowsToBuffer(
 
       VideoPixelFormat pixel_format = VideoFormat(output_format);
       for (int dst_plane = 0; dst_plane < 3; ++dst_plane) {
-        static constexpr VideoFrame::Plane kSrcPlanes[3] = {
-            VideoFrame::Plane::kY, VideoFrame::Plane::kV,
-            VideoFrame::Plane::kU};
+        constexpr static std::array<VideoFrame::Plane, 3> kSrcPlanes = {
+            VideoFrame::Plane::kY,
+            VideoFrame::Plane::kV,
+            VideoFrame::Plane::kU,
+        };
         VideoFrame::Plane src_plane = kSrcPlanes[dst_plane];
 
         const size_t plane_row_start =
@@ -964,7 +969,7 @@ void GpuMemoryBufferVideoFramePool::PoolImpl::CopyRowsToBuffer(
     }
 
     case GpuVideoAcceleratorFactories::OutputFormat::UNDEFINED:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 }
 
@@ -977,7 +982,7 @@ void GpuMemoryBufferVideoFramePool::PoolImpl::OnCopiesDoneOnMediaThread(
     // Drop the resource if there was an error with it. If we're not in
     // shutdown we also need to remove the pool entry for the resource.
     if (!in_shutdown_) {
-      auto it = base::ranges::find(resources_pool_, frame_resource);
+      auto it = std::ranges::find(resources_pool_, frame_resource);
       CHECK(it != resources_pool_.end(), base::NotFatalUntil::M130);
       resources_pool_.erase(it);
     }
@@ -1086,13 +1091,6 @@ scoped_refptr<VideoFrame> GpuMemoryBufferVideoFramePool::PoolImpl::
 
   if (ycbcr_info) {
     frame->set_ycbcr_info(ycbcr_info);
-  }
-
-  frame->set_shared_image_format_type(
-      SharedImageFormatType::kSharedImageFormat);
-  if (frame_resource->shared_image->format().PrefersExternalSampler()) {
-    frame->set_shared_image_format_type(
-        SharedImageFormatType::kSharedImageFormatExternalSampler);
   }
 
   bool allow_overlay = false;
@@ -1208,35 +1206,26 @@ GpuMemoryBufferVideoFramePool::PoolImpl::GetOrCreateFrameResource(
                                         gpu::SHARED_IMAGE_USAGE_RASTER_READ |
                                         gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
 
-    bool add_scanout_usage = true;
-
-    // SCANOUT usage was historically added unconditionally. However, it
-    // actually should be added only if scanout of SharedImages for this use
-    // case is supported.
-    // TODO(crbug.com/330865436): Remove killswitch post-safe rollout.
-    if (base::FeatureList::IsEnabled(
-            features::
-                kSWVideoFrameAddScanoutUsageOnlyIfSupportedBySharedImage)) {
-      auto si_caps = sii->GetCapabilities();
-
+    // SCANOUT usage should be added only if scanout of SharedImages for this
+    // use case is supported.
+    auto si_caps = sii->GetCapabilities();
 #if BUILDFLAG(IS_WIN)
-      // On Windows, overlays are in general not supported. However, in some
-      // cases they are supported for the software video frame use case in
-      // particular. This cap details whether that support is present.
-      add_scanout_usage =
-          si_caps.supports_scanout_shared_images_for_software_video_frames;
+    // On Windows, overlays are in general not supported. However, in some
+    // cases they are supported for the software video frame use case in
+    // particular. This cap details whether that support is present.
+    bool add_scanout_usage =
+        si_caps.supports_scanout_shared_images_for_software_video_frames;
 #else
-      // On all other platforms, whether scanout for SharedImages is supported
-      // for this particular use case is no different than the general case.
-      add_scanout_usage = si_caps.supports_scanout_shared_images;
+    // On all other platforms, whether scanout for SharedImages is supported
+    // for this particular use case is no different than the general case.
+    bool add_scanout_usage = si_caps.supports_scanout_shared_images;
 #endif
-    }
 
     if (add_scanout_usage) {
       si_usage |= gpu::SHARED_IMAGE_USAGE_SCANOUT;
     }
 
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC)
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
     // TODO(crbug.com/40194712): Always add the flag once the
     // OzoneImageBacking is by default turned on.
     if (base::CommandLine::ForCurrentProcess()->HasSwitch(
@@ -1244,6 +1233,9 @@ GpuMemoryBufferVideoFramePool::PoolImpl::GetOrCreateFrameResource(
       // This SharedImage may be used for zero-copy import into WebGPU.
       si_usage |= gpu::SHARED_IMAGE_USAGE_WEBGPU_READ;
     }
+#elif BUILDFLAG(IS_MAC)
+    // This SharedImage may be used for zero-copy import into WebGPU.
+    si_usage |= gpu::SHARED_IMAGE_USAGE_WEBGPU_READ;
 #endif
     // Create a Mappable shared image.
     frame_resource->shared_image =

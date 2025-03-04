@@ -31,6 +31,7 @@
 #include "ui/base/ui_base_features.h"
 #include "ui/base/ui_base_switches.h"
 #include "ui/native_theme/native_theme_features.h"
+#include "ui/native_theme/native_theme_utils.h"
 #include "ui/native_theme/overlay_scrollbar_constants_aura.h"
 
 namespace blink {
@@ -235,8 +236,6 @@ cc::LayerTreeSettings GenerateLayerTreeSettings(
   settings.enable_synchronized_scrolling =
       base::FeatureList::IsEnabled(::features::kSynchronizedScrolling);
   Platform* platform = Platform::Current();
-  settings.percent_based_scrolling =
-      ::features::IsPercentBasedScrollingEnabled();
 
   settings.commit_to_active_tree = !is_threaded;
   settings.is_for_embedded_frame = is_for_embedded_frame;
@@ -466,7 +465,6 @@ cc::LayerTreeSettings GenerateLayerTreeSettings(
       base::SysInfo::IsLowEndDevice() && !IsSmallScreen(screen_size) &&
       !platform->IsSynchronousCompositingEnabledForAndroidWebView();
 
-  settings.use_stream_video_draw_quad = true;
   settings.using_synchronous_renderer_compositor = use_synchronous_compositor;
   if (use_synchronous_compositor) {
     // Root frame in Android WebView uses system scrollbars, so make ours
@@ -514,12 +512,18 @@ cc::LayerTreeSettings GenerateLayerTreeSettings(
           ui::kFluentOverlayScrollbarThinningDuration;
       if (WebTestSupport::IsRunningWebTest()) {
         settings.scrollbar_thinning_duration = base::Milliseconds(0);
-        settings.scrollbar_fade_delay = base::Milliseconds(0);
+        settings.scrollbar_fade_delay = base::TimeDelta::Max();
         settings.scrollbar_fade_duration = base::Milliseconds(0);
       }
     }
   }
 #endif  // BUILDFLAG(IS_ANDROID)
+
+  if (!base::FeatureList::IsEnabled(::features::kScrollbarAnimations)) {
+    settings.scrollbar_thinning_duration = base::TimeDelta();
+    settings.scrollbar_fade_delay = base::TimeDelta::Max();
+    settings.scrollbar_fade_duration = base::TimeDelta();
+  }
 
   settings.decoded_image_working_set_budget_bytes =
       cc::ImageDecodeCacheUtils::GetWorkingSetBytesForImageDecode(
@@ -532,10 +536,14 @@ cc::LayerTreeSettings GenerateLayerTreeSettings(
     //  - If we are not running in a WebView, where 4444 isn't supported.
     //  - If we are not using vulkan, since some GPU drivers don't support
     //    using RGBA4444 as color buffer.
+    //  - If we are not using Skia's Graphite-Dawn backend, since dawn does not
+    //  support RGBA_4444 formats.
     // TODO(penghuang): query supported formats from GPU process.
     if (!cmd.HasSwitch(switches::kDisableRGBA4444Textures) &&
         base::SysInfo::AmountOfPhysicalMemoryMB() <= 512 &&
-        !::features::IsUsingVulkan()) {
+        !::features::IsUsingVulkan() &&
+        !::features::IsSkiaGraphiteEnabled(
+            base::CommandLine::ForCurrentProcess())) {
       settings.use_rgba_4444 = true;
 
       // If we are going to unpremultiply and dither these tiles, we need to
@@ -590,8 +598,7 @@ cc::LayerTreeSettings GenerateLayerTreeSettings(
   settings.disable_frame_rate_limit =
       cmd.HasSwitch(::switches::kDisableFrameRateLimit);
 
-  settings.enable_hit_test_opaqueness =
-      RuntimeEnabledFeatures::HitTestOpaquenessEnabled();
+  settings.enable_hit_test_opaqueness = true;
 
   settings.enable_variable_refresh_rate =
       ::features::IsVariableRefreshRateAlwaysOn();
@@ -599,6 +606,9 @@ cc::LayerTreeSettings GenerateLayerTreeSettings(
   std::tie(settings.tiling_interest_area_padding,
            settings.skewport_extrapolation_limit_in_screen_pixels) =
       GetTilingInterestAreaSizes();
+
+  settings.dynamic_safe_area_insets_on_scroll_enabled =
+      RuntimeEnabledFeatures::DynamicSafeAreaInsetsOnScrollEnabled();
   return settings;
 }
 

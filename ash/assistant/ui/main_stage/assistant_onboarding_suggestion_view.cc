@@ -9,6 +9,8 @@
 
 #include "ash/assistant/ui/main_stage/assistant_onboarding_suggestion_view.h"
 
+#include <string_view>
+
 #include "ash/assistant/ui/assistant_ui_constants.h"
 #include "ash/assistant/ui/assistant_view_delegate.h"
 #include "ash/assistant/ui/assistant_view_ids.h"
@@ -162,10 +164,11 @@ void AssistantOnboardingSuggestionView::OnThemeChanged() {
   label_->SetEnabledColor(GetForegroundColor(index_));
 
   if (assistant::util::IsResourceLinkType(url_, ResourceLinkType::kIcon)) {
-    icon_->SetImage(assistant::util::CreateVectorIcon(
-        assistant::util::AppendOrReplaceColorParam(url_,
-                                                   GetForegroundColor(index_)),
-        kIconSizeDip));
+    icon_->SetImage(
+        ui::ImageModel::FromImageSkia(assistant::util::CreateVectorIcon(
+            assistant::util::AppendOrReplaceColorParam(
+                url_, GetForegroundColor(index_)),
+            kIconSizeDip)));
   }
 }
 
@@ -173,7 +176,7 @@ gfx::ImageSkia AssistantOnboardingSuggestionView::GetIcon() const {
   return icon_->GetImage();
 }
 
-const std::u16string& AssistantOnboardingSuggestionView::GetText() const {
+std::u16string_view AssistantOnboardingSuggestionView::GetText() const {
   return label_->GetText();
 }
 
@@ -263,7 +266,7 @@ void AssistantOnboardingSuggestionView::InitLayout(
 
 void AssistantOnboardingSuggestionView::UpdateIcon(const gfx::ImageSkia& icon) {
   if (!icon.isNull())
-    icon_->SetImage(icon);
+    icon_->SetImage(ui::ImageModel::FromImageSkia(icon));
 }
 
 void AssistantOnboardingSuggestionView::OnButtonPressed() {

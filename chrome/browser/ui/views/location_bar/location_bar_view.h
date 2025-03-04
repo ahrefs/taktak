@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "base/gtest_prod_util.h"
@@ -22,6 +23,7 @@
 #include "chrome/browser/ui/page_action/page_action_icon_type.h"
 #include "chrome/browser/ui/views/location_bar/content_setting_image_view.h"
 #include "chrome/browser/ui/views/location_bar/location_icon_view.h"
+#include "chrome/browser/ui/views/location_bar/merchant_trust_chip_button_controller.h"
 #include "chrome/browser/ui/views/page_action/page_action_icon_view.h"
 #include "chrome/browser/ui/views/permissions/chip/chip_controller.h"
 #include "chrome/browser/ui/views/permissions/chip/permission_dashboard_controller.h"
@@ -54,11 +56,16 @@ class LocationIconView;
 enum class OmniboxPart;
 class OmniboxPopupView;
 class OmniboxViewViews;
+class OmniboxChipButton;
 class PageActionIconController;
 class PageActionIconContainerView;
 class PermissionDashboardView;
 class Profile;
 class SelectedKeywordView;
+
+namespace page_actions {
+class PageActionContainerView;
+}  // namespace page_actions
 
 namespace views {
 class ImageButton;
@@ -106,7 +113,7 @@ class LocationBarView
     GetContentSettingBubbleModelDelegate() = 0;
 
    protected:
-    virtual ~Delegate() {}
+    virtual ~Delegate() = default;
   };
 
   LocationBarView(Browser* browser,
@@ -144,6 +151,10 @@ class LocationBarView
     return page_action_icon_controller_;
   }
 
+  page_actions::PageActionContainerView* page_action_container() {
+    return page_action_container_;
+  }
+
   // Returns the screen coordinates of the omnibox (where the URL text appears,
   // not where the icons are shown).
   gfx::Point GetOmniboxViewOrigin() const;
@@ -151,15 +162,15 @@ class LocationBarView
   // Shows |text| as an inline autocompletion.  This is useful for IMEs, where
   // we can't show the autocompletion inside the actual OmniboxView.  See
   // comments on |ime_inline_autocomplete_view_|.
-  void SetImePrefixAutocompletion(const std::u16string& text);
-  std::u16string GetImePrefixAutocompletion() const;
-  void SetImeInlineAutocompletion(const std::u16string& text);
-  std::u16string GetImeInlineAutocompletion() const;
+  void SetImePrefixAutocompletion(std::u16string_view text);
+  std::u16string_view GetImePrefixAutocompletion() const;
+  void SetImeInlineAutocompletion(std::u16string_view text);
+  std::u16string_view GetImeInlineAutocompletion() const;
 
   // Sets the additional omnibox text. E.g. the title corresponding to the URL
   // displayed in the OmniboxView.
-  void SetOmniboxAdditionalText(const std::u16string& text);
-  std::u16string GetOmniboxAdditionalText() const;
+  void SetOmniboxAdditionalText(std::u16string_view text);
+  std::u16string_view GetOmniboxAdditionalText() const;
 
   // Select all of the text. Needed when the user tabs through controls
   // in the toolbar in full keyboard accessibility mode.
@@ -253,6 +264,14 @@ class LocationBarView
   // |is_hovering| should be true when mouse is in omnibox; false when exited.
   void OnOmniboxHovered(bool is_hovering);
 
+  // `browser_` returned here may be nullptr. There are two known cases.
+  //
+  // 1. simple_web_view_dialog, which is used to show captive portal page on
+  // signin screen on ChromeOS, passes in nullptr while constructing its
+  // location_bar_view_. See crbug.com/379534750.
+  //
+  // 2. presentation_receiver_window_view is the other known case. However,
+  // presentation_receiver_window_view is about to be sunsetted in a year or so.
   Browser* browser() { return browser_; }
   Profile* profile() { return profile_; }
 
@@ -313,6 +332,10 @@ class LocationBarView
   // actions are available on the current page.
   void RefreshPageActionIconViews();
 
+  // Updates PageActionContainerView's action controller to the active tab's
+  // controller.
+  void RefreshPageActionContainerView();
+
   // Updates the color of the icon for the "clear all" button.
   void RefreshClearAllButtonIcon();
 
@@ -330,7 +353,7 @@ class LocationBarView
   // Helper to set the texts of labels adjacent to the omnibox:
   // `ime_prefix_autocomplete_view_`, `ime_inline_autocomplete_view_`, and
   // `omnibox_additional_text_view_`.
-  void SetOmniboxAdjacentText(views::Label* label, const std::u16string& text);
+  void SetOmniboxAdjacentText(views::Label* label, std::u16string_view text);
 
   // LocationBar:
   void FocusSearch() override;
@@ -387,9 +410,6 @@ class LocationBarView
   // being displayed
   bool ShouldChipOverrideLocationIcon();
 
-  // Called with an async fetched for the keyword view.
-  void OnKeywordFaviconFetched(const gfx::Image& icon);
-
   // Updates the visibility of the QR Code Generator icon.
   void UpdateQRCodeGeneratorIcon();
 
@@ -397,8 +417,8 @@ class LocationBarView
   // Returns true if visibility changed.
   bool UpdateSendTabToSelfIcon();
 
-  // Updates the visibility of the permission chip when omnibox is in the edit
-  // mode.
+  // Updates the visibility of the permission chip and merchant trust chip when
+  // omnibox is in the edit mode.
   void UpdateChipVisibility();
 
   // Adjusts |event|'s location to be relative to |omnibox_view_|'s origin; used
@@ -449,6 +469,13 @@ class LocationBarView
       permission_dashboard_controller_;
   raw_ptr<PermissionDashboardView> permission_dashboard_view_;
 
+  // A merchant trust omnibox chip button.
+  raw_ptr<OmniboxChipButton> merchant_trust_chip_;
+
+  // A controller for a merchant chip button view.
+  std::unique_ptr<MerchantTrustChipButtonController>
+      merchant_trust_chip_controller_;
+
   // An icon to the left of the edit field: the HTTPS lock, blank page icon,
   // search icon, EV HTTPS bubble, etc.
   raw_ptr<LocationIconView> location_icon_view_ = nullptr;
@@ -484,6 +511,8 @@ class LocationBarView
 
   // The container for page action icons.
   raw_ptr<PageActionIconContainerView> page_action_icon_container_ = nullptr;
+  raw_ptr<page_actions::PageActionContainerView> page_action_container_ =
+      nullptr;
 
   // An [x] that appears in touch mode (when the OSK is visible) and allows the
   // user to clear all text.

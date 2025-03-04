@@ -18,6 +18,7 @@
 #include "base/one_shot_event.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/syslog_logging.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/time/time.h"
@@ -25,7 +26,6 @@
 #include "chrome/browser/extensions/extension_service.h"
 #include "chrome/browser/extensions/extension_util.h"
 #include "chrome/browser/extensions/install_tracker.h"
-#include "chrome/browser/extensions/pending_extension_manager.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/crx_file/id_util.h"
 #include "content/public/browser/browser_context.h"
@@ -143,7 +143,7 @@ ExtensionGarbageCollector::ExtensionGarbageCollector(
   InstallTracker::Get(context_)->AddObserver(this);
 }
 
-ExtensionGarbageCollector::~ExtensionGarbageCollector() {}
+ExtensionGarbageCollector::~ExtensionGarbageCollector() = default;
 
 // static
 ExtensionGarbageCollector* ExtensionGarbageCollector::Get(
@@ -178,6 +178,10 @@ void ExtensionGarbageCollector::GarbageCollectExtensionsOnFileThread(
     unpacked ? CheckUnpackedExtensionDirectory(extension_path, extension_paths)
              : CheckExtensionDirectory(extension_path, extension_paths);
   }
+  // TODO(crbug.com/379867155) Remove this after chrome app kiosk crash recovery
+  // is independent of extensions garbage collection.
+  SYSLOG(INFO)
+      << "Garbage collection for extensions on file thread is complete.";
 }
 
 void ExtensionGarbageCollector::GarbageCollectExtensions() {
@@ -227,28 +231,28 @@ void ExtensionGarbageCollector::GarbageCollectExtensions() {
           FROM_HERE, base::BindOnce(&GarbageCollectExtensionsOnFileThread,
                                     service->install_directory(),
                                     extension_paths, /*unpacked=*/false))) {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   if (!GetExtensionFileTaskRunner()->PostTask(
           FROM_HERE, base::BindOnce(&GarbageCollectExtensionsOnFileThread,
                                     service->unpacked_install_directory(),
                                     extension_paths, /*unpacked=*/true))) {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 }
 
 void ExtensionGarbageCollector::OnBeginCrxInstall(
     content::BrowserContext* context,
-    const CrxInstaller& installer,
     const ExtensionId& extension_id) {
   crx_installs_in_progress_++;
 }
 
 void ExtensionGarbageCollector::OnFinishCrxInstall(
     content::BrowserContext* context,
-    const CrxInstaller& installer,
+    const base::FilePath& source_file,
     const ExtensionId& extension_id,
+    const Extension* extension,
     bool success) {
   crx_installs_in_progress_--;
   if (crx_installs_in_progress_ < 0) {

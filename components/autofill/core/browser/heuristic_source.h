@@ -22,10 +22,10 @@ enum class HeuristicSource {
   // Corresponds to regexes from the default file, but with at least one
   // `RegexFeature` enabled.
   kExperimentalRegexes,
-  kPredictionImprovementRegexes,
 #endif
-  kMachineLearning,
-  kMaxValue = kMachineLearning
+  kAutofillMachineLearning,
+  kPasswordManagerMachineLearning,
+  kMaxValue = kPasswordManagerMachineLearning
 };
 
 // The active heuristic sources depend on the build config and Finch configs.

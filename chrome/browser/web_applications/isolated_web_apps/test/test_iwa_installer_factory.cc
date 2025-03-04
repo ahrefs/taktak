@@ -20,7 +20,10 @@ namespace web_app {
 
 TestIwaInstallerFactory::TestIwaInstallerFactory() = default;
 
-TestIwaInstallerFactory::~TestIwaInstallerFactory() = default;
+TestIwaInstallerFactory::~TestIwaInstallerFactory() {
+  IwaInstallerFactory::GetIwaInstallerFactory() =
+      IwaInstallerFactory::GetDefaultIwaInstallerFactory();
+}
 
 void TestIwaInstallerFactory::SetUp(Profile* profile) {
   IwaInstallerFactory::GetIwaInstallerFactory() =
@@ -51,6 +54,7 @@ void TestIwaInstallerFactory::SetInstallCompletedClosure(
 std::unique_ptr<IwaInstaller> TestIwaInstallerFactory::CreateIwaInstaller(
     Profile* profile,
     IsolatedWebAppExternalInstallOptions install_options,
+    IwaInstaller::InstallSourceType install_source_type,
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
     base::Value::List& log,
     WebAppProvider* provider,
@@ -64,8 +68,8 @@ std::unique_ptr<IwaInstaller> TestIwaInstallerFactory::CreateIwaInstaller(
           profile, provider, command_behavior.first, command_behavior.second);
   latest_install_wrappers_[app_id] = install_command_wrapper.get();
   return std::make_unique<IwaInstaller>(
-      std::move(install_options), std::move(url_loader_factory),
-      std::move(install_command_wrapper), log,
+      std::move(install_options), install_source_type,
+      std::move(url_loader_factory), std::move(install_command_wrapper), log,
       base::BindOnce(
           [](TestIwaInstallerFactory* installer_instance,
              IwaInstaller::ResultCallback callback, webapps::AppId app_id,

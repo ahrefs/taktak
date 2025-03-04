@@ -6,6 +6,7 @@
 #define CONTENT_BROWSER_PRIVATE_AGGREGATION_PRIVATE_AGGREGATION_TEST_UTILS_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <optional>
 #include <set>
@@ -86,6 +87,7 @@ class MockPrivateAggregationHost : public PrivateAggregationHost {
                std::optional<base::TimeDelta>,
                std::optional<url::Origin>,
                size_t,
+               std::optional<size_t>,
                mojo::PendingReceiver<blink::mojom::PrivateAggregationHost>),
               (override));
 
@@ -115,6 +117,7 @@ class MockPrivateAggregationManagerImpl : public PrivateAggregationManagerImpl {
                std::optional<base::TimeDelta>,
                std::optional<url::Origin>,
                size_t,
+               std::optional<size_t>,
                mojo::PendingReceiver<blink::mojom::PrivateAggregationHost>),
               (override));
 
@@ -156,6 +159,13 @@ class MockPrivateAggregationContentBrowserClientBase : public SuperClass {
                const url::Origin& accessing_origin,
                std::string* out_debug_message,
                bool* out_block_is_site_setting_specific),
+              (override));
+  MOCK_METHOD(bool,
+              IsFencedStorageReadAllowed,
+              (content::BrowserContext * browser_context,
+               content::RenderFrameHost* rfh,
+               const url::Origin& top_frame_origin,
+               const url::Origin& accessing_origin),
               (override));
   MOCK_METHOD(bool,
               IsPrivacySandboxReportingDestinationAttested,

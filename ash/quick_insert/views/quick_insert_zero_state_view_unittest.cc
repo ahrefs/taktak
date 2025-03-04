@@ -12,7 +12,6 @@
 #include "ash/clipboard/clipboard_history_item.h"
 #include "ash/clipboard/test_support/clipboard_history_item_builder.h"
 #include "ash/clipboard/test_support/mock_clipboard_history_controller.h"
-#include "ash/constants/ash_features.h"
 #include "ash/quick_insert/mock_quick_insert_asset_fetcher.h"
 #include "ash/quick_insert/model/quick_insert_caps_lock_position.h"
 #include "ash/quick_insert/quick_insert_category.h"
@@ -32,12 +31,13 @@
 #include "ash/style/ash_color_provider.h"
 #include "ash/style/pill_button.h"
 #include "ash/test/view_drawn_waiter.h"
+#include "base/containers/span.h"
 #include "base/functional/callback_helpers.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/task_environment.h"
 #include "base/test/test_future.h"
 #include "build/branding_buildflags.h"
-#include "chromeos/components/editor_menu/public/cpp/preset_text_query.h"
+#include "chromeos/ash/components/editor_menu/public/cpp/preset_text_query.h"
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/testing_pref_service.h"
 #include "testing/gmock/include/gmock/gmock-matchers.h"
@@ -71,7 +71,7 @@ using ::testing::Property;
 using ::testing::Return;
 using ::testing::VariantWith;
 
-constexpr int kPickerWidth = 320;
+constexpr int kQuickInsertWidth = 320;
 
 template <class V, class Matcher>
 auto AsView(Matcher matcher) {
@@ -81,22 +81,24 @@ auto AsView(Matcher matcher) {
       Pointee(matcher));
 }
 
-constexpr base::span<const PickerCategory> kAllCategories = {(PickerCategory[]){
-    PickerCategory::kEditorWrite,
-    PickerCategory::kEditorRewrite,
-    PickerCategory::kLobster,
-    PickerCategory::kLinks,
-    PickerCategory::kEmojisGifs,
-    PickerCategory::kClipboard,
-    PickerCategory::kDriveFiles,
-    PickerCategory::kLocalFiles,
-    PickerCategory::kDatesTimes,
-    PickerCategory::kUnitsMaths,
-}};
+constexpr base::span<const QuickInsertCategory> kAllCategories = {
+    (QuickInsertCategory[]){
+        QuickInsertCategory::kEditorWrite,
+        QuickInsertCategory::kEditorRewrite,
+        QuickInsertCategory::kLobsterWithNoSelectedText,
+        QuickInsertCategory::kLobsterWithSelectedText,
+        QuickInsertCategory::kLinks,
+        QuickInsertCategory::kEmojisGifs,
+        QuickInsertCategory::kClipboard,
+        QuickInsertCategory::kDriveFiles,
+        QuickInsertCategory::kLocalFiles,
+        QuickInsertCategory::kDatesTimes,
+        QuickInsertCategory::kUnitsMaths,
+    }};
 
-class MockZeroStateViewDelegate : public PickerZeroStateViewDelegate {
+class MockZeroStateViewDelegate : public QuickInsertZeroStateViewDelegate {
  public:
-  MOCK_METHOD(void, SelectZeroStateCategory, (PickerCategory), (override));
+  MOCK_METHOD(void, SelectZeroStateCategory, (QuickInsertCategory), (override));
   MOCK_METHOD(void,
               SelectZeroStateResult,
               (const QuickInsertSearchResult&),
@@ -106,12 +108,12 @@ class MockZeroStateViewDelegate : public PickerZeroStateViewDelegate {
               (SuggestedResultsCallback),
               (override));
   MOCK_METHOD(void, RequestPseudoFocus, (views::View*), (override));
-  MOCK_METHOD(PickerActionType,
+  MOCK_METHOD(QuickInsertActionType,
               GetActionForResult,
               (const QuickInsertSearchResult& result),
               (override));
   MOCK_METHOD(void, OnZeroStateViewHeightChanged, (), (override));
-  MOCK_METHOD(PickerCapsLockPosition, GetCapsLockPosition, (), (override));
+  MOCK_METHOD(QuickInsertCapsLockPosition, GetCapsLockPosition, (), (override));
   MOCK_METHOD(void, SetCapsLockDisplayed, (bool), (override));
 };
 
@@ -122,9 +124,9 @@ class QuickInsertZeroStateViewTest : public views::ViewsTestBase {
             base::test::TaskEnvironment::TimeSource::MOCK_TIME) {}
 
  protected:
-  MockPickerAssetFetcher asset_fetcher_;
-  PickerSubmenuController submenu_controller_;
-  PickerPreviewBubbleController preview_controller_;
+  MockQuickInsertAssetFetcher asset_fetcher_;
+  QuickInsertSubmenuController submenu_controller_;
+  QuickInsertPreviewBubbleController preview_controller_;
 
  private:
   AshColorProvider ash_color_provider_;
@@ -132,14 +134,14 @@ class QuickInsertZeroStateViewTest : public views::ViewsTestBase {
 
 TEST_F(QuickInsertZeroStateViewTest, CreatesCategorySections) {
   MockZeroStateViewDelegate mock_delegate;
-  PickerZeroStateView view(&mock_delegate, kAllCategories, kPickerWidth,
-                           &asset_fetcher_, &submenu_controller_,
-                           &preview_controller_);
+  QuickInsertZeroStateView view(&mock_delegate, kAllCategories,
+                                kQuickInsertWidth, &asset_fetcher_,
+                                &submenu_controller_, &preview_controller_);
 
   EXPECT_THAT(view.category_section_views_for_testing(),
-              ElementsAre(Key(PickerCategoryType::kEditorWrite),
-                          Key(PickerCategoryType::kGeneral),
-                          Key(PickerCategoryType::kMore)));
+              ElementsAre(Key(QuickInsertCategoryType::kEditorWrite),
+                          Key(QuickInsertCategoryType::kGeneral),
+                          Key(QuickInsertCategoryType::kMore)));
 }
 
 TEST_F(QuickInsertZeroStateViewTest, LeftClickSelectsCategory) {
@@ -147,25 +149,27 @@ TEST_F(QuickInsertZeroStateViewTest, LeftClickSelectsCategory) {
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   widget->SetFullscreen(true);
   MockZeroStateViewDelegate mock_delegate;
-  auto* view = widget->SetContentsView(std::make_unique<PickerZeroStateView>(
-      &mock_delegate, std::vector<PickerCategory>{PickerCategory::kEmojisGifs},
-      kPickerWidth, &asset_fetcher_, &submenu_controller_,
-      &preview_controller_));
+  auto* view =
+      widget->SetContentsView(std::make_unique<QuickInsertZeroStateView>(
+          &mock_delegate,
+          std::vector<QuickInsertCategory>{QuickInsertCategory::kEmojisGifs},
+          kQuickInsertWidth, &asset_fetcher_, &submenu_controller_,
+          &preview_controller_));
   widget->Show();
   ASSERT_THAT(view->category_section_views_for_testing(),
-              Contains(Key(PickerCategoryType::kGeneral)));
+              Contains(Key(QuickInsertCategoryType::kGeneral)));
   ASSERT_THAT(view->category_section_views_for_testing()
-                  .find(PickerCategoryType::kGeneral)
+                  .find(QuickInsertCategoryType::kGeneral)
                   ->second->item_views_for_testing(),
               Not(IsEmpty()));
 
   EXPECT_CALL(mock_delegate,
-              SelectZeroStateCategory(PickerCategory::kEmojisGifs))
+              SelectZeroStateCategory(QuickInsertCategory::kEmojisGifs))
       .Times(1);
 
   QuickInsertItemView* category_view =
       view->category_section_views_for_testing()
-          .find(PickerCategoryType::kGeneral)
+          .find(QuickInsertCategoryType::kGeneral)
           ->second->item_views_for_testing()[0];
   ViewDrawnWaiter().Wait(category_view);
   LeftClickOn(*category_view);
@@ -186,16 +190,16 @@ TEST_F(QuickInsertZeroStateViewTest, ShowsSuggestedResults) {
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   widget->SetFullscreen(true);
   base::test::TestFuture<const QuickInsertSearchResult&> future;
-  auto* view = widget->SetContentsView(std::make_unique<PickerZeroStateView>(
-      &mock_delegate, kAllCategories, kPickerWidth, &asset_fetcher_,
-      &submenu_controller_, &preview_controller_));
+  auto* view =
+      widget->SetContentsView(std::make_unique<QuickInsertZeroStateView>(
+          &mock_delegate, kAllCategories, kQuickInsertWidth, &asset_fetcher_,
+          &submenu_controller_, &preview_controller_));
   widget->Show();
 
   EXPECT_CALL(
       mock_delegate,
-      SelectZeroStateResult(VariantWith<ash::QuickInsertDriveFileResult>(
-          Field("title", &ash::QuickInsertDriveFileResult::title,
-                u"test drive file"))))
+      SelectZeroStateResult(VariantWith<QuickInsertDriveFileResult>(Field(
+          "title", &QuickInsertDriveFileResult::title, u"test drive file"))))
       .Times(1);
 
   ASSERT_THAT(
@@ -209,7 +213,6 @@ TEST_F(QuickInsertZeroStateViewTest, ShowsSuggestedResults) {
 
 TEST_F(QuickInsertZeroStateViewTest,
        ShowsSuggestedLocalFileResultsInRowFormat) {
-  base::test::ScopedFeatureList feature_list(features::kPickerGrid);
   MockZeroStateViewDelegate mock_delegate;
   EXPECT_CALL(mock_delegate, GetZeroStateSuggestedResults(_))
       .WillOnce(
@@ -222,35 +225,34 @@ TEST_F(QuickInsertZeroStateViewTest,
   std::unique_ptr<views::Widget> widget =
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   widget->SetFullscreen(true);
-  auto* view = widget->SetContentsView(std::make_unique<PickerZeroStateView>(
-      &mock_delegate, kAllCategories, kPickerWidth, &asset_fetcher_,
-      &submenu_controller_, &preview_controller_));
+  auto* view =
+      widget->SetContentsView(std::make_unique<QuickInsertZeroStateView>(
+          &mock_delegate, kAllCategories, kQuickInsertWidth, &asset_fetcher_,
+          &submenu_controller_, &preview_controller_));
   widget->Show();
 
-  EXPECT_CALL(
-      mock_delegate,
-      SelectZeroStateResult(VariantWith<ash::QuickInsertLocalFileResult>(_)))
+  EXPECT_CALL(mock_delegate,
+              SelectZeroStateResult(VariantWith<QuickInsertLocalFileResult>(_)))
       .Times(1);
 
   ASSERT_THAT(
       view->primary_section_view_for_testing()->item_views_for_testing(),
       IsSupersetOf({
-          AsView<PickerImageItemView>(
+          AsView<QuickInsertImageItemView>(
               Property(&QuickInsertListItemView::GetAccessibleName, u"a")),
-          AsView<PickerImageItemView>(
+          AsView<QuickInsertImageItemView>(
               Property(&QuickInsertListItemView::GetAccessibleName, u"b")),
-          AsView<PickerImageItemView>(
+          AsView<QuickInsertImageItemView>(
               Property(&QuickInsertListItemView::GetAccessibleName, u"c")),
       }));
   QuickInsertItemView* item_view =
       view->primary_section_view_for_testing()->item_views_for_testing()[0];
-  ASSERT_TRUE(views::IsViewClass<PickerImageItemView>(item_view));
+  ASSERT_TRUE(views::IsViewClass<QuickInsertImageItemView>(item_view));
   ViewDrawnWaiter().Wait(item_view);
   LeftClickOn(*item_view);
 }
 
 TEST_F(QuickInsertZeroStateViewTest, ShowsMoreItemsButtonForLocalFiles) {
-  base::test::ScopedFeatureList feature_list(features::kPickerGrid);
   MockZeroStateViewDelegate mock_delegate;
   EXPECT_CALL(mock_delegate, GetZeroStateSuggestedResults(_))
       .WillOnce(
@@ -261,13 +263,14 @@ TEST_F(QuickInsertZeroStateViewTest, ShowsMoreItemsButtonForLocalFiles) {
   std::unique_ptr<views::Widget> widget =
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   widget->SetFullscreen(true);
-  auto* view = widget->SetContentsView(std::make_unique<PickerZeroStateView>(
-      &mock_delegate, kAllCategories, kPickerWidth, &asset_fetcher_,
-      &submenu_controller_, &preview_controller_));
+  auto* view =
+      widget->SetContentsView(std::make_unique<QuickInsertZeroStateView>(
+          &mock_delegate, kAllCategories, kQuickInsertWidth, &asset_fetcher_,
+          &submenu_controller_, &preview_controller_));
   widget->Show();
 
   EXPECT_CALL(mock_delegate,
-              SelectZeroStateCategory(PickerCategory::kLocalFiles))
+              SelectZeroStateCategory(QuickInsertCategory::kLocalFiles))
       .Times(1);
 
   views::View* more_items_button = view->primary_section_view_for_testing()
@@ -297,8 +300,8 @@ TEST_F(QuickInsertZeroStateViewTest,
   std::unique_ptr<views::Widget> widget =
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   widget->SetFullscreen(true);
-  widget->SetContentsView(std::make_unique<PickerZeroStateView>(
-      &mock_delegate, kAllCategories, kPickerWidth, &asset_fetcher_,
+  widget->SetContentsView(std::make_unique<QuickInsertZeroStateView>(
+      &mock_delegate, kAllCategories, kQuickInsertWidth, &asset_fetcher_,
       &submenu_controller_, &preview_controller_));
   widget->Show();
 }
@@ -307,7 +310,7 @@ TEST_F(QuickInsertZeroStateViewTest,
        PutsCapsLockAtTheEndOfSuggestedResultsForMiddleCase) {
   MockZeroStateViewDelegate mock_delegate;
   EXPECT_CALL(mock_delegate, GetCapsLockPosition)
-      .WillOnce(Return(PickerCapsLockPosition::kMiddle));
+      .WillOnce(Return(QuickInsertCapsLockPosition::kMiddle));
   EXPECT_CALL(mock_delegate, GetZeroStateSuggestedResults(_))
       .WillOnce(
           [](MockZeroStateViewDelegate::SuggestedResultsCallback callback) {
@@ -324,20 +327,20 @@ TEST_F(QuickInsertZeroStateViewTest,
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   widget->SetFullscreen(true);
   base::test::TestFuture<const QuickInsertSearchResult&> future;
-  auto* view = widget->SetContentsView(std::make_unique<PickerZeroStateView>(
-      &mock_delegate,
-      std::vector<PickerCategory>{PickerCategory::kDatesTimes,
-                                  PickerCategory::kUnitsMaths},
-      kPickerWidth, &asset_fetcher_, &submenu_controller_,
-      &preview_controller_));
+  auto* view =
+      widget->SetContentsView(std::make_unique<QuickInsertZeroStateView>(
+          &mock_delegate,
+          std::vector<QuickInsertCategory>{QuickInsertCategory::kDatesTimes,
+                                           QuickInsertCategory::kUnitsMaths},
+          kQuickInsertWidth, &asset_fetcher_, &submenu_controller_,
+          &preview_controller_));
   widget->Show();
   task_environment()->AdvanceClock(base::Seconds(1));
   task_environment()->RunUntilIdle();
 
-  EXPECT_CALL(
-      mock_delegate,
-      SelectZeroStateResult(VariantWith<ash::QuickInsertCapsLockResult>(
-          Field("enabled", &ash::QuickInsertCapsLockResult::enabled, true))))
+  EXPECT_CALL(mock_delegate,
+              SelectZeroStateResult(VariantWith<QuickInsertCapsLockResult>(
+                  Field("enabled", &QuickInsertCapsLockResult::enabled, true))))
       .Times(1);
 
   QuickInsertItemView* item_view =
@@ -349,7 +352,7 @@ TEST_F(QuickInsertZeroStateViewTest,
 TEST_F(QuickInsertZeroStateViewTest, PutsCapsLockInMoreCategoryForBottomCase) {
   MockZeroStateViewDelegate mock_delegate;
   EXPECT_CALL(mock_delegate, GetCapsLockPosition)
-      .WillOnce(Return(PickerCapsLockPosition::kBottom));
+      .WillOnce(Return(QuickInsertCapsLockPosition::kBottom));
   EXPECT_CALL(mock_delegate, GetZeroStateSuggestedResults(_))
       .WillOnce(
           [](MockZeroStateViewDelegate::SuggestedResultsCallback callback) {
@@ -366,22 +369,22 @@ TEST_F(QuickInsertZeroStateViewTest, PutsCapsLockInMoreCategoryForBottomCase) {
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   widget->SetFullscreen(true);
   base::test::TestFuture<const QuickInsertSearchResult&> future;
-  auto* view = widget->SetContentsView(std::make_unique<PickerZeroStateView>(
-      &mock_delegate,
-      std::vector<PickerCategory>{PickerCategory::kDatesTimes,
-                                  PickerCategory::kUnitsMaths},
-      kPickerWidth, &asset_fetcher_, &submenu_controller_,
-      &preview_controller_));
+  auto* view =
+      widget->SetContentsView(std::make_unique<QuickInsertZeroStateView>(
+          &mock_delegate,
+          std::vector<QuickInsertCategory>{QuickInsertCategory::kDatesTimes,
+                                           QuickInsertCategory::kUnitsMaths},
+          kQuickInsertWidth, &asset_fetcher_, &submenu_controller_,
+          &preview_controller_));
   widget->Show();
 
-  EXPECT_CALL(
-      mock_delegate,
-      SelectZeroStateResult(VariantWith<ash::QuickInsertCapsLockResult>(
-          Field("enabled", &ash::QuickInsertCapsLockResult::enabled, true))))
+  EXPECT_CALL(mock_delegate,
+              SelectZeroStateResult(VariantWith<QuickInsertCapsLockResult>(
+                  Field("enabled", &QuickInsertCapsLockResult::enabled, true))))
       .Times(1);
 
   QuickInsertItemView* item_view = view->category_section_views_for_testing()
-                                       .find(PickerCategoryType::kMore)
+                                       .find(QuickInsertCategoryType::kMore)
                                        ->second->item_views_for_testing()[2];
   ViewDrawnWaiter().Wait(item_view);
   LeftClickOn(*item_view);
@@ -395,9 +398,10 @@ TEST_F(QuickInsertZeroStateViewTest,
           [](MockZeroStateViewDelegate::SuggestedResultsCallback callback) {
             std::move(callback).Run({});
           });
-  PickerZeroStateView view(&mock_delegate, {{PickerCategory::kEditorRewrite}},
-                           kPickerWidth, &asset_fetcher_, &submenu_controller_,
-                           &preview_controller_);
+  QuickInsertZeroStateView view(
+      &mock_delegate, base::span_from_ref(QuickInsertCategory::kEditorRewrite),
+      kQuickInsertWidth, &asset_fetcher_, &submenu_controller_,
+      &preview_controller_);
 
   EXPECT_THAT(view.primary_section_view_for_testing(), IsNull());
 }
@@ -423,9 +427,10 @@ TEST_F(QuickInsertZeroStateViewTest,
                     "query_b"),
             });
           });
-  PickerZeroStateView view(&mock_delegate, {{PickerCategory::kEditorRewrite}},
-                           kPickerWidth, &asset_fetcher_, &submenu_controller_,
-                           &preview_controller_);
+  QuickInsertZeroStateView view(
+      &mock_delegate, base::span_from_ref(QuickInsertCategory::kEditorRewrite),
+      kQuickInsertWidth, &asset_fetcher_, &submenu_controller_,
+      &preview_controller_);
 
   EXPECT_THAT(
       view.primary_section_view_for_testing(),
@@ -462,69 +467,72 @@ TEST_F(QuickInsertZeroStateViewTest, ShowsEditorSuggestionsBehindSubmenu) {
                     "emojify"),
             });
           });
-  PickerZeroStateView view(&mock_delegate, {{PickerCategory::kEditorRewrite}},
-                           kPickerWidth, &asset_fetcher_, &submenu_controller_,
-                           &preview_controller_);
+  QuickInsertZeroStateView view(
+      &mock_delegate, base::span_from_ref(QuickInsertCategory::kEditorRewrite),
+      kQuickInsertWidth, &asset_fetcher_, &submenu_controller_,
+      &preview_controller_);
 
   EXPECT_THAT(
       view.primary_section_view_for_testing(),
       Pointee(AllOf(
           Property("GetVisible", &views::View::GetVisible, true),
-          Property(
-              "item_views_for_testing",
-              &QuickInsertSectionView::item_views_for_testing,
-              ElementsAre(AsView<PickerItemWithSubmenuView>(Property(
-                              &PickerItemWithSubmenuView::GetTextForTesting,
-                              l10n_util::GetStringUTF16(
-                                  IDS_PICKER_CHANGE_LENGTH_MENU_LABEL))),
-                          AsView<PickerItemWithSubmenuView>(Property(
-                              &PickerItemWithSubmenuView::GetTextForTesting,
-                              l10n_util::GetStringUTF16(
-                                  IDS_PICKER_CHANGE_TONE_MENU_LABEL))))))));
+          Property("item_views_for_testing",
+                   &QuickInsertSectionView::item_views_for_testing,
+                   ElementsAre(
+                       AsView<QuickInsertItemWithSubmenuView>(Property(
+                           &QuickInsertItemWithSubmenuView::GetTextForTesting,
+                           l10n_util::GetStringUTF16(
+                               IDS_PICKER_CHANGE_LENGTH_MENU_LABEL))),
+                       AsView<QuickInsertItemWithSubmenuView>(Property(
+                           &QuickInsertItemWithSubmenuView::GetTextForTesting,
+                           l10n_util::GetStringUTF16(
+                               IDS_PICKER_CHANGE_TONE_MENU_LABEL))))))));
 }
 
 TEST_F(QuickInsertZeroStateViewTest,
-       DoesntShowLobsterCategoryForEmptySuggestions) {
+       DoesntShowLobsterWithTextSelectionCategoryForEmptySuggestions) {
   MockZeroStateViewDelegate mock_delegate;
   EXPECT_CALL(mock_delegate, GetZeroStateSuggestedResults)
       .WillOnce(
           [](MockZeroStateViewDelegate::SuggestedResultsCallback callback) {
             std::move(callback).Run({});
           });
-  PickerZeroStateView view(&mock_delegate, {{PickerCategory::kLobster}},
-                           kPickerWidth, &asset_fetcher_, &submenu_controller_,
-                           &preview_controller_);
+  QuickInsertZeroStateView view(
+      &mock_delegate,
+      base::span_from_ref(QuickInsertCategory::kLobsterWithSelectedText),
+      kQuickInsertWidth, &asset_fetcher_, &submenu_controller_,
+      &preview_controller_);
 
-  EXPECT_THAT(view.primary_section_view_for_testing(), IsNull());
+  EXPECT_THAT(view.category_section_views_for_testing(), IsEmpty());
 }
 
-TEST_F(QuickInsertZeroStateViewTest, ShowLobsterCategoryAsItemWithSubMenu) {
+TEST_F(QuickInsertZeroStateViewTest, ShowLobsterCategoryAsListItem) {
   MockZeroStateViewDelegate mock_delegate;
   EXPECT_CALL(mock_delegate, GetZeroStateSuggestedResults)
       .WillOnce(
           [](MockZeroStateViewDelegate::SuggestedResultsCallback callback) {
             std::move(callback).Run({QuickInsertLobsterResult(
+                QuickInsertLobsterResult::Mode::kWithSelection,
                 /*display_name=*/u"lobster")});
           });
-  PickerZeroStateView view(&mock_delegate, {{PickerCategory::kLobster}},
-                           kPickerWidth, &asset_fetcher_, &submenu_controller_,
-                           &preview_controller_);
+  QuickInsertZeroStateView view(
+      &mock_delegate,
+      base::span_from_ref(QuickInsertCategory::kLobsterWithSelectedText),
+      kQuickInsertWidth, &asset_fetcher_, &submenu_controller_,
+      &preview_controller_);
 
   EXPECT_THAT(
-      view.primary_section_view_for_testing(),
-      Pointee(AllOf(
-          Property("GetVisible", &views::View::GetVisible, true),
-          Property(
-              "item_views_for_testing",
-              &QuickInsertSectionView::item_views_for_testing,
-              ElementsAre(AsView<QuickInsertListItemView>(Property(
-                  &QuickInsertListItemView::GetPrimaryTextForTesting,
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
-                  l10n_util::GetStringUTF16(IDS_PICKER_LOBSTER_SELECTION_LABEL)
-#else
-                  u""
-#endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING)
-                      )))))));
+      view.category_section_views_for_testing(),
+      ElementsAre(Pair(
+          QuickInsertCategoryType::kLobster,
+          Pointee(AllOf(
+              Property("GetVisible", &views::View::GetVisible, true),
+              Property("item_views_for_testing",
+                       &QuickInsertSectionView::item_views_for_testing,
+                       ElementsAre(AsView<QuickInsertListItemView>(Property(
+                           &QuickInsertListItemView::GetPrimaryTextForTesting,
+                           l10n_util::GetStringUTF16(
+                               IDS_LOBSTER_SELECTION_LABEL))))))))));
 }
 
 TEST_F(QuickInsertZeroStateViewTest, ShowsCaseTransformationBehindSubmenu) {
@@ -541,20 +549,21 @@ TEST_F(QuickInsertZeroStateViewTest, ShowsCaseTransformationBehindSubmenu) {
                     QuickInsertCaseTransformResult::kTitleCase),
             });
           });
-  PickerZeroStateView view(&mock_delegate, {}, kPickerWidth, &asset_fetcher_,
-                           &submenu_controller_, &preview_controller_);
+  QuickInsertZeroStateView view(&mock_delegate, {}, kQuickInsertWidth,
+                                &asset_fetcher_, &submenu_controller_,
+                                &preview_controller_);
 
   EXPECT_THAT(
       view.category_section_views_for_testing(),
       ElementsAre(Pair(
-          PickerCategoryType::kCaseTransformations,
+          QuickInsertCategoryType::kCaseTransformations,
           Pointee(AllOf(
               Property("GetVisible", &views::View::GetVisible, true),
               Property(
                   "item_views_for_testing",
                   &QuickInsertSectionView::item_views_for_testing,
-                  ElementsAre(AsView<PickerItemWithSubmenuView>(Property(
-                      &PickerItemWithSubmenuView::GetTextForTesting,
+                  ElementsAre(AsView<QuickInsertItemWithSubmenuView>(Property(
+                      &QuickInsertItemWithSubmenuView::GetTextForTesting,
                       l10n_util::GetStringUTF16(
                           IDS_PICKER_CHANGE_CAPITALIZATION_MENU_LABEL))))))))));
 }
@@ -562,7 +571,7 @@ TEST_F(QuickInsertZeroStateViewTest, ShowsCaseTransformationBehindSubmenu) {
 TEST_F(QuickInsertZeroStateViewTest,
        RequestsPseudoFocusAfterGettingSuggestedItems) {
   MockZeroStateViewDelegate mock_delegate;
-  PickerZeroStateViewDelegate::SuggestedResultsCallback
+  QuickInsertZeroStateViewDelegate::SuggestedResultsCallback
       suggested_results_callback;
   EXPECT_CALL(mock_delegate, GetZeroStateSuggestedResults(_))
       .WillOnce(
@@ -572,8 +581,8 @@ TEST_F(QuickInsertZeroStateViewTest,
   std::unique_ptr<views::Widget> widget =
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   widget->SetFullscreen(true);
-  widget->SetContentsView(std::make_unique<PickerZeroStateView>(
-      &mock_delegate, kAllCategories, kPickerWidth, &asset_fetcher_,
+  widget->SetContentsView(std::make_unique<QuickInsertZeroStateView>(
+      &mock_delegate, kAllCategories, kQuickInsertWidth, &asset_fetcher_,
       &submenu_controller_, &preview_controller_));
   widget->Show();
 

@@ -52,7 +52,14 @@ class CORE_EXPORT HTMLButtonElement final : public HTMLFormControlElement {
   // Invoker Commands (https://github.com/whatwg/html/pull/9841)
   Element* commandForElement();
   AtomicString command() const;
-  CommandEventType GetCommandEventType() const;
+  void setCommand(const AtomicString& type);
+  CommandEventType GetCommandEventType(const AtomicString& type) const;
+
+  // Override for inertness in order to make customizable <select> button inert.
+  // TODO(crbug.com/1511354): Replace this with interactivity:inert in
+  // UA stylesheet after CSSInert feature has been enabled by default and remove
+  // virtual from HTMLElement::IsInertRoot.
+  bool IsInertRoot() const override;
 
  private:
   // The type attribute of HTMLButtonElement is an enumerated attribute:

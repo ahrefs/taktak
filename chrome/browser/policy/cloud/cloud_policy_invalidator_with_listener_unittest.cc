@@ -60,9 +60,15 @@ namespace {
 const invalidation::Topic kTopicA = "topic_a";
 const invalidation::Topic kTopicB = "topic_b";
 
-constexpr char kFakeSenderId[] = "fake_sender_id";
+constexpr int64_t kFakeProjectNumber = 1234567890;
+constexpr char kFakeProjectNumberStr[] = "1234567890";
 constexpr char kTestLogPrefix[] = "test";
 constexpr char kFakeRegistrationToken[] = "fake_registration_token";
+
+std::string GetGcmAppId(auto project_number) {
+  return base::StrCat(
+      {invalidation::InvalidationListener::kFmAppId, "-", project_number});
+}
 }  // namespace
 
 class FakeRegistrationTokenHandler
@@ -140,7 +146,7 @@ class CloudPolicyInvalidatorWithListenerTestBase : public testing::Test {
 
   void SetUp() override {
     ON_CALL(mock_instance_id_driver_,
-            GetInstanceID(invalidation::InvalidationListener::kFmAppId))
+            GetInstanceID(GetGcmAppId(kFakeProjectNumberStr)))
         .WillByDefault(Return(&mock_instance_id_));
   }
 
@@ -162,12 +168,13 @@ class CloudPolicyInvalidatorWithListenerTestBase : public testing::Test {
 
   void SetRegistrationTokenFetchState(const std::string& registration_token,
                                       instance_id::InstanceID::Result result) {
-    ON_CALL(mock_instance_id_, GetToken(/*authorized_entity=*/kFakeSenderId,
-                                        /*scope=*/instance_id::kGCMScope,
-                                        /*time_to_live=*/
-                                        invalidation::InvalidationListenerImpl::
-                                            kRegistrationTokenTimeToLive,
-                                        /*flags=*/_, /*callback=*/_))
+    ON_CALL(mock_instance_id_,
+            GetToken(/*authorized_entity=*/kFakeProjectNumberStr,
+                     /*scope=*/instance_id::kGCMScope,
+                     /*time_to_live=*/
+                     invalidation::InvalidationListenerImpl::
+                         kRegistrationTokenTimeToLive,
+                     /*flags=*/_, /*callback=*/_))
         .WillByDefault(
             // Call the callback with `registration_token` and `result` as
             // arguments.
@@ -357,7 +364,8 @@ void CloudPolicyInvalidatorWithListenerTestBase::StartInvalidator(
 
 void CloudPolicyInvalidatorWithListenerTestBase::InitializeInvalidator() {
   invalidation_listener_ = invalidation::InvalidationListener::Create(
-      &gcmDriver, &mock_instance_id_driver_, kFakeSenderId, kTestLogPrefix);
+      &gcmDriver, &mock_instance_id_driver_, kFakeProjectNumber,
+      kTestLogPrefix);
   invalidator_->Initialize(invalidation_listener_.get());
 }
 
@@ -815,8 +823,8 @@ class CloudPolicyInvalidatorWithListenerUserTypedTest
  protected:
   CloudPolicyInvalidatorWithListenerUserTypedTest() = default;
 
-  base::HistogramBase::Count GetCount(MetricPolicyRefresh metric);
-  base::HistogramBase::Count GetInvalidationCount(PolicyInvalidationType type);
+  base::HistogramBase::Count32 GetCount(MetricPolicyRefresh metric);
+  base::HistogramBase::Count32 GetInvalidationCount(PolicyInvalidationType type);
 
  private:
   // CloudPolicyInvalidatorWithListenerTest:
@@ -825,7 +833,7 @@ class CloudPolicyInvalidatorWithListenerUserTypedTest
   base::HistogramTester histogram_tester_;
 };
 
-base::HistogramBase::Count
+base::HistogramBase::Count32
 CloudPolicyInvalidatorWithListenerUserTypedTest::GetCount(
     MetricPolicyRefresh metric) {
   const char* metric_name = CloudPolicyInvalidator::GetPolicyRefreshMetricName(
@@ -834,7 +842,7 @@ CloudPolicyInvalidatorWithListenerUserTypedTest::GetCount(
       ->GetCount(metric);
 }
 
-base::HistogramBase::Count
+base::HistogramBase::Count32
 CloudPolicyInvalidatorWithListenerUserTypedTest::GetInvalidationCount(
     PolicyInvalidationType type) {
   const char* metric_name =

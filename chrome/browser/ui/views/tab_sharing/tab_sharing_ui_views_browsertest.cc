@@ -6,12 +6,12 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 
 #include "base/functional/callback.h"
 #include "base/memory/raw_ptr.h"
 #include "base/run_loop.h"
 #include "base/test/scoped_feature_list.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_features.h"
 #include "chrome/browser/favicon/favicon_utils.h"
 #include "chrome/browser/media/webrtc/media_capture_devices_dispatcher.h"
@@ -22,6 +22,7 @@
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "chrome/browser/ui/tabs/tab_strip_user_gesture_details.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
+#include "chrome/browser/ui/views/tab_sharing/tab_sharing_infobar.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/generated_resources.h"
@@ -73,13 +74,18 @@ infobars::ContentInfoBarManager* GetInfoBarManager(Browser* browser, int tab) {
       GetWebContents(browser, tab));
 }
 
-TabSharingInfoBarDelegate* GetDelegate(Browser* browser, int tab) {
-  return static_cast<TabSharingInfoBarDelegate*>(
-      GetInfoBarManager(browser, tab)->infobars()[0]->delegate());
+TabSharingInfoBar* GetInfoBar(Browser* browser, int tab) {
+  return static_cast<TabSharingInfoBar*>(
+      GetInfoBarManager(browser, tab)->infobars()[0]);
 }
 
-std::u16string GetInfobarMessageText(Browser* browser, int tab) {
-  return GetDelegate(browser, tab)->GetMessageText();
+TabSharingInfoBarDelegate* GetDelegate(Browser* browser, int tab) {
+  return static_cast<TabSharingInfoBarDelegate*>(
+      GetInfoBar(browser, tab)->delegate());
+}
+
+std::u16string_view GetInfobarMessageText(Browser* browser, int tab) {
+  return GetInfoBar(browser, tab)->label_for_testing()->GetText();
 }
 
 bool HasShareThisTabInsteadButton(Browser* browser, int tab) {
@@ -157,8 +163,9 @@ content::DesktopMediaID GetDesktopMediaID(Browser* browser, int tab) {
   return content::DesktopMediaID(
       content::DesktopMediaID::TYPE_WEB_CONTENTS,
       content::DesktopMediaID::kNullId,
-      content::WebContentsMediaCaptureId(main_frame->GetProcess()->GetID(),
-                                         main_frame->GetRoutingID()));
+      content::WebContentsMediaCaptureId(
+          main_frame->GetProcess()->GetDeprecatedID(),
+          main_frame->GetRoutingID()));
 }
 
 views::Widget* GetContentsBorder(Browser* browser) {
@@ -891,8 +898,9 @@ class MultipleTabSharingUIViewsBrowserTest : public InProcessBrowserTest {
   }
 
   void AddTabs(Browser* browser, int tab_count) {
-    for (int i = 0; i < tab_count; ++i)
+    for (int i = 0; i < tab_count; ++i) {
       AddBlankTabAndShow(browser);
+    }
   }
 
  private:
@@ -912,14 +920,16 @@ IN_PROC_BROWSER_TEST_F(MultipleTabSharingUIViewsBrowserTest, VerifyUi) {
   // Check that all tabs have 3 infobars corresponding to the 3 sharing
   // sessions.
   int tab_count = browser()->tab_strip_model()->count();
-  for (int i = 0; i < tab_count; ++i)
+  for (int i = 0; i < tab_count; ++i) {
     EXPECT_EQ(3u, GetInfoBarManager(browser(), i)->infobars().size());
+  }
 
   // Check that all shared tabs display a tab capture indicator.
   auto capture_indicator = GetCaptureIndicator();
-  for (int i = 1; i < tab_count; ++i)
+  for (int i = 1; i < tab_count; ++i) {
     ASSERT_TRUE(
         capture_indicator->IsBeingMirrored(GetWebContents(browser(), i)));
+  }
 
   views::Widget* contents_border = GetContentsBorder(browser());
   // The capturing tab, which is not itself being captured, does not have
@@ -944,9 +954,10 @@ IN_PROC_BROWSER_TEST_F(MultipleTabSharingUIViewsBrowserTest, StopSharing) {
   size_t shared_tab_count = 3;
   while (shared_tab_count) {
     tab_sharing_ui_views(--shared_tab_count)->StopSharing();
-    for (int j = 0; j < browser()->tab_strip_model()->count(); ++j)
+    for (int j = 0; j < browser()->tab_strip_model()->count(); ++j) {
       ASSERT_EQ(shared_tab_count,
                 GetInfoBarManager(browser(), j)->infobars().size());
+    }
   }
 }
 
@@ -960,15 +971,15 @@ IN_PROC_BROWSER_TEST_F(MultipleTabSharingUIViewsBrowserTest, CloseTabs) {
   TabStripModel* tab_strip_model = browser()->tab_strip_model();
   while (tab_strip_model->count() > 1) {
     tab_strip_model->CloseWebContentsAt(1, TabCloseTypes::CLOSE_NONE);
-    for (int i = 0; i < tab_strip_model->count(); ++i)
+    for (int i = 0; i < tab_strip_model->count(); ++i) {
       ASSERT_EQ(tab_strip_model->count() - 1u,
                 GetInfoBarManager(browser(), i)->infobars().size());
+    }
   }
 }
 
 // TODO(crbug.com/40267838): Enable on CrOS.
-#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS_ASH) && \
-    !BUILDFLAG(IS_CHROMEOS_LACROS)
+#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
 IN_PROC_BROWSER_TEST_F(
     MultipleTabSharingUIViewsBrowserTest,
     NormalModeCapturerDoesNotProduceInfobarInGuestModeTabOpenedBeforeCapture) {
@@ -984,7 +995,7 @@ IN_PROC_BROWSER_TEST_F(
 
   // Start a capture in the normal-mode capture.
   CreateUIsAndStartSharing(main_browser, /*capturing_tab=*/0,
-                           /*captured_tab=*/1);
+                           /*captured_tab_first=*/1);
 
   // Expectation #1: The capture infobar is created in the profile
   // where capture is happening.
@@ -1007,7 +1018,7 @@ IN_PROC_BROWSER_TEST_F(
 
   // Start a capture in the normal-mode capture.
   CreateUIsAndStartSharing(main_browser, /*capturing_tab=*/0,
-                           /*captured_tab=*/1);
+                           /*captured_tab_first=*/1);
 
   // Create a guest-mode browser.
   Browser* const guest_browser = CreateGuestBrowser();
@@ -1040,7 +1051,7 @@ IN_PROC_BROWSER_TEST_F(
 
   // Start a capture in the guest-mode browser.
   CreateUIsAndStartSharing(guest_browser, /*capturing_tab=*/0,
-                           /*captured_tab=*/1);
+                           /*captured_tab_first=*/1);
 
   // Expectation #1: The capture infobar is created in the profile
   // where capture is happening.
@@ -1063,7 +1074,7 @@ IN_PROC_BROWSER_TEST_F(
 
   // Start a capture in the guest-mode browser.
   CreateUIsAndStartSharing(guest_browser, /*capturing_tab=*/0,
-                           /*captured_tab=*/1);
+                           /*captured_tab_first=*/1);
 
   // Create a normal-mode browser.
   Browser* const main_browser = CreateBrowser(browser()->profile());
@@ -1090,7 +1101,7 @@ IN_PROC_BROWSER_TEST_F(MultipleTabSharingUIViewsBrowserTest,
 
   // Start a capture in the guest-mode browser.
   CreateUIsAndStartSharing(guest_browser, /*capturing_tab=*/0,
-                           /*captured_tab=*/1);
+                           /*captured_tab_first=*/1);
 
   // Sanity - existing tabs have an infobar.
   ASSERT_EQ(GetInfoBarManager(guest_browser, /*tab=*/0)->infobars().size(), 1u);
@@ -1134,8 +1145,9 @@ class TabSharingUIViewsPreferCurrentTabBrowserTest
   }
 
   void AddTabs(Browser* browser, int tab_count) {
-    for (int i = 0; i < tab_count; ++i)
+    for (int i = 0; i < tab_count; ++i) {
       AddBlankTabAndShow(browser);
+    }
   }
 
   void SourceChange(const content::DesktopMediaID& media_id,

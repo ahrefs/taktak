@@ -5,8 +5,11 @@
 #include "components/password_manager/core/browser/password_credential_filler_impl.h"
 
 #include <string>
+#include <utility>
 
 #include "base/check.h"
+#include "base/functional/bind.h"
+#include "base/functional/callback_helpers.h"
 #include "components/autofill/core/common/mojom/autofill_types.mojom-shared.h"
 #include "components/password_manager/core/browser/password_manager_client.h"
 #include "components/password_manager/core/common/password_manager_features.h"
@@ -43,10 +46,6 @@ bool CalculateTriggerSubmission(SubmissionReadinessState submission_readiness) {
 // PasswordSuggestionBottomSheetV2 is launched.
 SubmissionReadinessState CalculateSubmissionReadiness(
     const password_manager::PasswordFillingParams& params) {
-  if (!base::FeatureList::IsEnabled(
-          password_manager::features::kPasswordSuggestionBottomSheetV2)) {
-    return params.submission_readiness;
-  }
   const autofill::FormData& form_data = params.form;
   uint64_t username_index = params.username_field_index;
   uint64_t password_index = params.password_field_index;
@@ -132,7 +131,8 @@ PasswordCredentialFillerImpl::~PasswordCredentialFillerImpl() = default;
 
 void PasswordCredentialFillerImpl::FillUsernameAndPassword(
     const std::u16string& username,
-    const std::u16string& password) {
+    const std::u16string& password,
+    base::OnceCallback<void(bool)> callback) {
   if (!driver_) {
     // If `driver_` (per frame) was destroyed, it means a navigation happened
     // and the filling data doesn't apply to the new page. The correct behavior
@@ -146,14 +146,18 @@ void PasswordCredentialFillerImpl::FillUsernameAndPassword(
     return;
   }
 
-  if (!base::FeatureList::IsEnabled(
-          features::kPasswordSuggestionBottomSheetV2)) {
-    driver_->KeyboardReplacingSurfaceClosed(ToShowVirtualKeyboard(false));
-  }
+  driver_->FillSuggestion(
+      username, password,
+      base::BindOnce(&PasswordCredentialFillerImpl::TryTriggerSubmission,
+                     weak_ptr_factory_.GetWeakPtr(), std::move(callback),
+                     username));
+}
 
-  driver_->FillSuggestion(username, password);
-
-  trigger_submission_ &= !username.empty();
+void PasswordCredentialFillerImpl::TryTriggerSubmission(
+    base::OnceCallback<void(bool)> callback,
+    const std::u16string& username,
+    bool was_filling_successful) {
+  trigger_submission_ &= !username.empty() && was_filling_successful;
 
   if (trigger_submission_) {
     // TODO(crbug.com/40209736): As auto-submission has been launched, measuring
@@ -162,6 +166,7 @@ void PasswordCredentialFillerImpl::FillUsernameAndPassword(
     // all that for new launches, e.g. crbug.com/1393043.
     driver_->TriggerFormSubmission();
   }
+  std::move(callback).Run(trigger_submission_);
 }
 
 void PasswordCredentialFillerImpl::UpdateTriggerSubmission(bool new_value) {
@@ -179,17 +184,6 @@ PasswordCredentialFillerImpl::GetSubmissionReadinessState() const {
 
 GURL PasswordCredentialFillerImpl::GetFrameUrl() const {
   return driver_ ? driver_->GetLastCommittedURL() : GURL();
-}
-
-void PasswordCredentialFillerImpl::Dismiss(ToShowVirtualKeyboard should_show) {
-  // TODO(crbug.com/40274966): Remove this function once the feature is enabled.
-  if (base::FeatureList::IsEnabled(
-          features::kPasswordSuggestionBottomSheetV2) ||
-      !driver_) {
-    return;
-  }
-  // TODO(crbug.com/40264656): Avoid using KeyboardReplacingSurfaceClosed.
-  driver_->KeyboardReplacingSurfaceClosed(should_show);
 }
 
 base::WeakPtr<PasswordCredentialFiller>

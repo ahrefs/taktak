@@ -6,13 +6,12 @@ package org.chromium.chrome.browser.webapps;
 
 import static org.junit.Assert.assertEquals;
 
-import static org.chromium.base.ApplicationState.HAS_DESTROYED_ACTIVITIES;
-import static org.chromium.base.ApplicationState.HAS_PAUSED_ACTIVITIES;
-import static org.chromium.base.ApplicationState.HAS_STOPPED_ACTIVITIES;
-
 import android.app.Instrumentation.ActivityMonitor;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.util.Base64;
@@ -27,12 +26,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import org.chromium.base.ApiCompatibilityUtils;
-import org.chromium.base.ApplicationStatus;
 import org.chromium.base.CommandLine;
+import org.chromium.base.ContextUtils;
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.test.util.CommandLineFlags;
 import org.chromium.base.test.util.Criteria;
@@ -45,21 +43,12 @@ import org.chromium.blink.mojom.DisplayMode;
 import org.chromium.cc.input.BrowserControlsState;
 import org.chromium.chrome.browser.ChromeTabbedActivity;
 import org.chromium.chrome.browser.app.ChromeActivity;
-import org.chromium.chrome.browser.browserservices.intents.BrowserServicesIntentDataProvider;
 import org.chromium.chrome.browser.browserservices.intents.WebappConstants;
-import org.chromium.chrome.browser.crypto.CipherFactory;
-import org.chromium.chrome.browser.customtabs.BaseCustomTabActivity;
-import org.chromium.chrome.browser.customtabs.CustomTabNightModeStateController;
-import org.chromium.chrome.browser.customtabs.DefaultBrowserProviderImpl;
-import org.chromium.chrome.browser.customtabs.FakeDefaultBrowserProviderImpl;
-import org.chromium.chrome.browser.customtabs.content.CustomTabIntentHandler;
-import org.chromium.chrome.browser.customtabs.dependency_injection.BaseCustomTabActivityModule;
-import org.chromium.chrome.browser.dependency_injection.ModuleOverridesRule;
+import org.chromium.chrome.browser.customtabs.CustomTabsTestUtils;
 import org.chromium.chrome.browser.firstrun.FirstRunStatus;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.test.MockCertVerifierRuleAndroid;
-import org.chromium.chrome.browser.theme.TopUiThemeColorProvider;
 import org.chromium.chrome.test.ChromeActivityTestRule;
 import org.chromium.chrome.test.ChromeJUnit4ClassRunner;
 import org.chromium.chrome.test.R;
@@ -75,6 +64,7 @@ import org.chromium.net.test.EmbeddedTestServer;
 import org.chromium.ui.base.DeviceFormFactor;
 import org.chromium.ui.base.PageTransition;
 import org.chromium.ui.modaldialog.ModalDialogManager;
+import org.chromium.ui.test.util.DeviceRestriction;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -89,37 +79,28 @@ public class WebappNavigationTest {
     public MockCertVerifierRuleAndroid mCertVerifierRule =
             new MockCertVerifierRuleAndroid(0 /* net::OK */);
 
-    private final TestRule mModuleOverridesRule =
-            new ModuleOverridesRule()
-                    .setOverride(
-                            BaseCustomTabActivityModule.Factory.class,
-                            (BrowserServicesIntentDataProvider intentDataProvider,
-                                    CustomTabNightModeStateController nightModeController,
-                                    CustomTabIntentHandler.IntentIgnoringCriterion
-                                            intentIgnoringCriterion,
-                                    TopUiThemeColorProvider topUiThemeColorProvider,
-                                    DefaultBrowserProviderImpl customTabDefaultBrowserProvider,
-                                    CipherFactory cipherFactory,
-                                    BaseCustomTabActivity activity) ->
-                                    new BaseCustomTabActivityModule(
-                                            intentDataProvider,
-                                            nightModeController,
-                                            intentIgnoringCriterion,
-                                            topUiThemeColorProvider,
-                                            new FakeDefaultBrowserProviderImpl(),
-                                            cipherFactory,
-                                            activity));
-
     @Rule
     public RuleChain mRuleChain =
-            RuleChain.emptyRuleChain()
-                    .around(mActivityTestRule)
-                    .around(mCertVerifierRule)
-                    .around(mModuleOverridesRule);
+            RuleChain.emptyRuleChain().around(mActivityTestRule).around(mCertVerifierRule);
+
+    private static class TestContext extends ContextWrapper {
+        public TestContext(Context baseContext) {
+            super(baseContext);
+        }
+
+        @Override
+        public PackageManager getPackageManager() {
+            return CustomTabsTestUtils.getDefaultBrowserOverridingPackageManager(
+                    getPackageName(), super.getPackageManager());
+        }
+    }
 
     @Before
     public void setUp() {
         NativeLibraryTestUtils.loadNativeLibraryNoBrowserProcess();
+
+        TestContext testContext = new TestContext(ContextUtils.getApplicationContext());
+        ContextUtils.initApplicationContextForTests(testContext);
 
         mActivityTestRule.getEmbeddedTestServerRule().setServerUsesHttps(true);
         Uri mapToUri =
@@ -189,7 +170,7 @@ public class WebappNavigationTest {
                         .createIntent()
                         .putExtra(WebappConstants.EXTRA_THEME_COLOR, (long) Color.CYAN);
         mActivityTestRule.addTwaExtrasToIntent(launchIntent);
-        String url = WebappTestPage.getServiceWorkerUrl(mActivityTestRule.getTestServer());
+        String url = WebappTestPage.getTestUrl(mActivityTestRule.getTestServer());
         CommandLine.getInstance()
                 .appendSwitchWithValue(ChromeSwitches.DISABLE_DIGITAL_ASSET_LINK_VERIFICATION, url);
         mActivityTestRule.startWebappActivity(
@@ -267,8 +248,7 @@ public class WebappNavigationTest {
     @Feature({"Webapps"})
     @DisabledTest(message = "Flaky, see crbug.com/352075550")
     public void testInScopeNewTabLinkShowsToolbar() throws Exception {
-        String inScopeUrl =
-                WebappTestPage.getNonServiceWorkerUrl(mActivityTestRule.getTestServer());
+        String inScopeUrl = WebappTestPage.getTestUrl(mActivityTestRule.getTestServer());
         runWebappActivityAndWaitForIdle(mActivityTestRule.createIntent());
         addAnchorAndClick(inScopeUrl, "_blank");
         ChromeActivity activity = mActivityTestRule.getActivity();
@@ -293,8 +273,7 @@ public class WebappNavigationTest {
     @Restriction(DeviceFormFactor.PHONE)
     public void testInScopeNavigationStaysInWebapp() throws Exception {
         WebappActivity activity = runWebappActivityAndWaitForIdle(mActivityTestRule.createIntent());
-        String otherPageUrl =
-                WebappTestPage.getNonServiceWorkerUrl(mActivityTestRule.getTestServer());
+        String otherPageUrl = WebappTestPage.getTestUrl(mActivityTestRule.getTestServer());
         addAnchorAndClick(otherPageUrl, "_self");
         ChromeTabUtils.waitForTabPageLoaded(activity.getActivityTab(), otherPageUrl);
 
@@ -333,6 +312,7 @@ public class WebappNavigationTest {
     @Test
     @SmallTest
     @Feature({"Webapps"})
+    @Restriction(DeviceRestriction.RESTRICTION_TYPE_NON_AUTO) // Flaky, see crbug.com/393521531
     public void testOpenInChromeFromCustomMenuTabbedChrome() {
         WebappActivity activity =
                 runWebappActivityAndWaitForIdle(
@@ -344,14 +324,14 @@ public class WebappNavigationTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    activity.getComponent().resolveNavigationController().openCurrentUrlInBrowser();
+                    activity.getCustomTabActivityNavigationController().openCurrentUrlInBrowser();
                 });
 
         ChromeTabbedActivity tabbedChrome =
                 ChromeActivityTestRule.waitFor(ChromeTabbedActivity.class);
         ChromeTabUtils.waitForTabPageLoaded(
                 tabbedChrome.getActivityTab(),
-                WebappTestPage.getServiceWorkerUrl(mActivityTestRule.getTestServer()));
+                WebappTestPage.getTestUrl(mActivityTestRule.getTestServer()));
     }
 
     @Test
@@ -361,8 +341,7 @@ public class WebappNavigationTest {
         WebappActivity activity = runWebappActivityAndWaitForIdle(mActivityTestRule.createIntent());
         Tab tab = activity.getActivityTab();
 
-        String otherInScopeUrl =
-                WebappTestPage.getNonServiceWorkerUrl(mActivityTestRule.getTestServer());
+        String otherInScopeUrl = WebappTestPage.getTestUrl(mActivityTestRule.getTestServer());
         mActivityTestRule.loadUrlInTab(otherInScopeUrl, PageTransition.LINK, tab);
         assertEquals(otherInScopeUrl, ChromeTabUtils.getUrlStringOnUiThread(tab));
 
@@ -403,7 +382,7 @@ public class WebappNavigationTest {
         WebappActivity activity = runWebappActivityAndWaitForIdle(launchIntent);
 
         EmbeddedTestServer testServer = mActivityTestRule.getTestServer();
-        String initialInScopeUrl = WebappTestPage.getServiceWorkerUrl(testServer);
+        String initialInScopeUrl = WebappTestPage.getTestUrl(testServer);
         ChromeTabUtils.waitForTabPageLoaded(activity.getActivityTab(), initialInScopeUrl);
 
         final String redirectingUrl =
@@ -480,7 +459,7 @@ public class WebappNavigationTest {
 
     private WebappActivity runWebappActivityAndWaitForIdle(Intent intent) {
         return runWebappActivityAndWaitForIdleWithUrl(
-                intent, WebappTestPage.getServiceWorkerUrl(mActivityTestRule.getTestServer()));
+                intent, WebappTestPage.getTestUrl(mActivityTestRule.getTestServer()));
     }
 
     private WebappActivity runWebappActivityAndWaitForIdleWithUrl(Intent intent, String url) {
@@ -515,17 +494,5 @@ public class WebappNavigationTest {
     private void addAnchorAndClick(String url, String target) throws Exception {
         addAnchor("testId", url, target);
         clickNodeWithId("testId");
-    }
-
-    private void waitForExternalAppOrIntentPicker() {
-        CriteriaHelper.pollUiThread(
-                () -> {
-                    Criteria.checkThat(
-                            ApplicationStatus.getStateForApplication(),
-                            Matchers.isOneOf(
-                                    HAS_PAUSED_ACTIVITIES,
-                                    HAS_STOPPED_ACTIVITIES,
-                                    HAS_DESTROYED_ACTIVITIES));
-                });
     }
 }

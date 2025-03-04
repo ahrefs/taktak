@@ -5,15 +5,18 @@
 #import "ios/chrome/browser/location_bar/ui_bundled/location_bar_mediator.h"
 
 #import "base/memory/ptr_util.h"
+#import "components/google/core/common/google_util.h"
+#import "components/lens/lens_url_utils.h"
 #import "ios/chrome/browser/lens_overlay/coordinator/lens_overlay_availability.h"
 #import "ios/chrome/browser/location_bar/ui_bundled/location_bar_consumer.h"
 #import "ios/chrome/browser/ntp/model/new_tab_page_util.h"
+#import "ios/chrome/browser/omnibox/ui_bundled/omnibox_util.h"
 #import "ios/chrome/browser/search_engines/model/search_engine_observer_bridge.h"
 #import "ios/chrome/browser/search_engines/model/search_engines_util.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list_observer_bridge.h"
+#import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/browser/shared/ui/util/uikit_ui_util.h"
-#import "ios/chrome/browser/ui/omnibox/omnibox_util.h"
 #import "ios/chrome/grit/ios_theme_resources.h"
 #import "ios/web/public/navigation/navigation_item.h"
 #import "ios/web/public/navigation/navigation_manager.h"
@@ -144,21 +147,36 @@
   if (!IsLensOverlayAvailable()) {
     return;
   }
-  if (!_isIncognito && ![self isNTP] &&
-      search_engines::SupportsSearchImageWithLens(self.templateURLService)) {
+  if ([self isLensOverlayEntrypointAvailable]) {
     [self.consumer setPlaceholderType:LocationBarPlaceholderType::kLensOverlay];
   } else {
     [self.consumer setPlaceholderType:LocationBarPlaceholderType::kNone];
   }
 }
 
-/// Returns YES if the active web state is a New Tab Page.
-- (BOOL)isNTP {
-  if (!_webStateList) {
+/// Whether the lens overlay entrypoint should be available.
+- (BOOL)isLensOverlayEntrypointAvailable {
+  if (!IsLensOverlayAvailable() ||
+      !base::FeatureList::IsEnabled(kLensOverlayEnableLocationBarEntrypoint) ||
+      _isIncognito ||
+      !search_engines::SupportsSearchImageWithLens(self.templateURLService)) {
     return NO;
   }
-  web::WebState* webState = _webStateList->GetActiveWebState();
-  return webState ? IsURLNewTabPage(webState->GetVisibleURL()) : NO;
+  GURL visibleURL = GURL();
+  if (_webStateList) {
+    web::WebState* webState = _webStateList->GetActiveWebState();
+    if (webState) {
+      visibleURL = webState->GetVisibleURL();
+    }
+  }
+
+  if (!base::FeatureList::IsEnabled(
+          kLensOverlayEnableLocationBarEntrypointOnSRP) &&
+      google_util::IsGoogleSearchUrl(visibleURL)) {
+    return NO;
+  }
+
+  return !IsURLNewTabPage(visibleURL) && !lens::IsLensMWebResult(visibleURL);
 }
 
 @end

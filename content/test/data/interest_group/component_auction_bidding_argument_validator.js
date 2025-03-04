@@ -192,9 +192,13 @@ function validateBrowserSignals(browserSignals, isGenerateBid) {
     throw 'Wrong seller ' + browserSignals.seller;
   if (!browserSignals.topLevelSeller.startsWith('https://b.test'))
     throw 'Wrong topLevelSeller ' + browserSignals.topLevelSeller;
+  if (!(browserSignals.decodeUtf8 instanceof Function))
+    throw 'Wrong decodeUtf8';
+  if (!(browserSignals.encodeUtf8 instanceof Function))
+    throw 'Wrong encodeUtf8';
 
   if (isGenerateBid) {
-    if (Object.keys(browserSignals).length !== 11) {
+    if (Object.keys(browserSignals).length !== 14) {
       throw 'Wrong number of browser signals fields ' +
           JSON.stringify(browserSignals);
     }
@@ -211,16 +215,13 @@ function validateBrowserSignals(browserSignals, isGenerateBid) {
     if (browserSignals.forDebuggingOnlyInCooldownOrLockout)
       throw 'Wrong forDebuggingOnlyInCooldownOrLockout ' +
           browserSignals.forDebuggingOnlyInCooldownOrLockout;
+    if (browserSignals.forDebuggingOnlySampling)
+      throw 'Wrong forDebuggingOnlySampling ' +
+          browserSignals.forDebuggingOnlySampling;
     if (browserSignals.multiBidLimit !== 1)
       throw 'Wrong multiBidLimit ' + browserSignals.multiBidLimit;
   } else {
-    // FledgePassKAnonStatusToReportWin feature adds a new parameter
-    // KAnonStatus to reportWin(), which is under a Finch trial for some enabled
-    // tests.
-    // TODO(xtlsheep): Check length only equals to 17 after
-    // FledgePassKAnonStatusToReportWin is completely turned on.
-    if (Object.keys(browserSignals).length !== 16 &&
-        Object.keys(browserSignals).length !== 17) {
+    if (Object.keys(browserSignals).length !== 19) {
       throw 'Wrong number of browser signals fields ' +
           JSON.stringify(browserSignals);
     }

@@ -10,10 +10,12 @@ import android.net.Uri;
 import androidx.annotation.Nullable;
 
 import org.jni_zero.CalledByNative;
+import org.jni_zero.JniType;
 
 import org.chromium.base.ServiceLoaderUtil;
 import org.chromium.base.supplier.ObservableSupplier;
 import org.chromium.base.supplier.ObservableSupplierImpl;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.password_check.PasswordCheckFactory;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.settings.SettingsNavigationFactory;
@@ -27,7 +29,7 @@ import org.chromium.ui.modaldialog.ModalDialogManager;
 public class PasswordCheckupLauncher {
     @CalledByNative
     private static void launchCheckupOnlineWithWindowAndroid(
-            String checkupUrl, WindowAndroid windowAndroid) {
+            @JniType("std::string") String checkupUrl, WindowAndroid windowAndroid) {
         if (windowAndroid.getContext().get() == null) return; // Window not available yet/anymore.
         launchCheckupOnlineWithActivity(checkupUrl, windowAndroid.getActivity().get());
     }
@@ -40,9 +42,22 @@ public class PasswordCheckupLauncher {
             @Nullable String accountEmail) {
         assert accountEmail == null || !accountEmail.isEmpty();
         if (windowAndroid.getContext().get() == null) return; // Window not available yet/anymore.
-
         assert profile != null;
+
         PasswordManagerHelper passwordManagerHelper = PasswordManagerHelper.getForProfile(profile);
+        if (ChromeFeatureList.isEnabled(ChromeFeatureList.LOGIN_DB_DEPRECATION_ANDROID)) {
+            // This is invoked from the leak dialog if the compromised password is saved for other
+            // sites. After the login DB deprecation, this code path is guaranteed to only be
+            // executed for users with access to UPM, since they are the only ones with saved
+            // passwords.
+            passwordManagerHelper.showPasswordCheckup(
+                    windowAndroid.getContext().get(),
+                    passwordCheckReferrer,
+                    getModalDialogManagerSupplier(windowAndroid),
+                    accountEmail);
+            return;
+        }
+
         // Force instantiation of GMSCore password check if GMSCore update is required. Password
         // check launch will fail and instead show the blocking dialog with the suggestion to
         // update.
@@ -62,7 +77,8 @@ public class PasswordCheckupLauncher {
     }
 
     @CalledByNative
-    private static void launchCheckupOnlineWithActivity(String checkupUrl, Activity activity) {
+    private static void launchCheckupOnlineWithActivity(
+            @JniType("std::string") String checkupUrl, Activity activity) {
         if (tryLaunchingNativePasswordCheckup(activity)) return;
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(checkupUrl));
         intent.setPackage(activity.getPackageName());
@@ -77,10 +93,10 @@ public class PasswordCheckupLauncher {
     }
 
     private static boolean tryLaunchingNativePasswordCheckup(Activity activity) {
-        GooglePasswordManagerUIProvider googlePasswordManagerUIProvider =
+        GooglePasswordManagerUIProvider googlePasswordManagerUiProvider =
                 ServiceLoaderUtil.maybeCreate(GooglePasswordManagerUIProvider.class);
-        if (googlePasswordManagerUIProvider == null) return false;
-        return googlePasswordManagerUIProvider.launchPasswordCheckup(activity);
+        if (googlePasswordManagerUiProvider == null) return false;
+        return googlePasswordManagerUiProvider.launchPasswordCheckup(activity);
     }
 
     private static ObservableSupplier<ModalDialogManager> getModalDialogManagerSupplier(

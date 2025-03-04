@@ -344,7 +344,7 @@ void D3D11VideoDecoder::Initialize(const VideoDecoderConfig& config,
   // If we don't have support support for a given codec, try to initialize
   // anyways -- otherwise we're certain to fail playback.
   if (gpu_workarounds_.disable_d3d11_video_decoder ||
-      (!is_supported && IsBuiltInVideoCodec(config.codec()))) {
+      (!is_supported && IsDecoderBuiltInVideoCodec(config.codec()))) {
     return PostDecoderStatus(
         DecoderStatus(DecoderStatus::Codes::kUnsupportedConfig)
             .WithData("config", config));
@@ -500,7 +500,7 @@ void D3D11VideoDecoder::Decode(scoped_refptr<DecoderBuffer> buffer,
   }
 
   const bool is_spatial_layer_buffer =
-      !buffer->end_of_stream() && buffer->has_side_data() &&
+      !buffer->end_of_stream() && buffer->side_data() &&
       !buffer->side_data()->spatial_layers.empty();
 
   input_buffer_queue_.push_back(
@@ -562,6 +562,11 @@ void D3D11VideoDecoder::DoDecode() {
       }
       // Pictures out output synchronously during Flush.  Signal the decode
       // cb now.
+      std::move(current_decode_cb_).Run(DecoderStatus::Codes::kOk);
+      return;
+    } else if (current_buffer_->empty()) {
+      // Treat an empty buffer as no-op.
+      current_buffer_ = nullptr;
       std::move(current_decode_cb_).Run(DecoderStatus::Codes::kOk);
       return;
     }
@@ -916,9 +921,6 @@ bool D3D11VideoDecoder::OutputResult(const CodecPicture* picture,
     frame->set_hdr_metadata(picture->hdr_metadata() ? picture->hdr_metadata()
                                                     : config_.hdr_metadata());
   }
-
-  frame->set_shared_image_format_type(
-      SharedImageFormatType::kSharedImageFormat);
 
   frame->metadata().is_webgpu_compatible = use_shared_handle_;
 

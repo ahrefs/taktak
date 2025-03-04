@@ -79,7 +79,7 @@ AddUserButton::AddUserButton(UserChooserDetailedViewController* controller)
 
   auto* label = AddChildView(std::make_unique<views::Label>(
       l10n_util::GetStringUTF16(IDS_ASH_STATUS_TRAY_SIGN_IN_ANOTHER_ACCOUNT)));
-  label->SetEnabledColorId(cros_tokens::kCrosSysOnSurface);
+  label->SetEnabledColor(cros_tokens::kCrosSysOnSurface);
   TypographyProvider::Get()->StyleLabel(TypographyToken::kCrosButton2, *label);
   label->SetAutoColorReadabilityEnabled(false);
   label->SetSubpixelRenderingEnabled(false);
@@ -119,7 +119,7 @@ END_METADATA
 
 views::View* CreateAddUserErrorView(const std::u16string& message) {
   auto* label = new views::Label(message);
-  label->SetEnabledColorId(cros_tokens::kCrosSysOnSurface);
+  label->SetEnabledColor(cros_tokens::kCrosSysOnSurface);
   label->SetAutoColorReadabilityEnabled(false);
   label->SetSubpixelRenderingEnabled(false);
   label->SetBorder(views::CreateEmptyBorder(kUnifiedTopShortcutSpacing));
@@ -218,14 +218,14 @@ UserItemButton::UserItemButton(PressedCallback callback,
       Shell::Get()->session_controller()->GetUserSession(user_index);
 
   name_->SetText(base::UTF8ToUTF16(user_session->user_info.display_name));
-  name_->SetEnabledColorId(cros_tokens::kCrosSysOnSurface);
+  name_->SetEnabledColor(cros_tokens::kCrosSysOnSurface);
   TypographyProvider::Get()->StyleLabel(TypographyToken::kCrosButton2, *name_);
   name_->SetAutoColorReadabilityEnabled(false);
   name_->SetSubpixelRenderingEnabled(false);
   vertical_labels->AddChildView(name_.get());
 
   email_->SetText(base::UTF8ToUTF16(user_session->user_info.display_email));
-  email_->SetEnabledColorId(cros_tokens::kCrosSysOnSurfaceVariant);
+  email_->SetEnabledColor(cros_tokens::kCrosSysOnSurfaceVariant);
   TypographyProvider::Get()->StyleLabel(TypographyToken::kCrosAnnotation1,
                                         *email_);
   email_->SetAutoColorReadabilityEnabled(false);
@@ -262,7 +262,13 @@ UserItemButton::UserItemButton(PressedCallback callback,
   GetViewAccessibility().SetRole(user_index_ == 0 ? ax::mojom::Role::kLabelText
                                                   : ax::mojom::Role::kButton);
   GetViewAccessibility().SetName(GetUserItemAccessibleString(user_index_));
+  UpdateTooltipText();
+
+  name_observation_.Observe(name_);
+  email_observation_.Observe(email_);
 }
+
+UserItemButton::~UserItemButton() = default;
 
 void UserItemButton::SetCaptureState(MediaCaptureState capture_state) {
   capture_icon_->SetVisible(capture_state != MediaCaptureState::kNone);
@@ -287,15 +293,36 @@ void UserItemButton::SetCaptureState(MediaCaptureState capture_state) {
   }
 }
 
-std::u16string UserItemButton::GetTooltipText(const gfx::Point& p) const {
+std::u16string UserItemButton::GetAlternativeAccessibleName() const {
+  if (!suppressed_tooltip_text_.empty()) {
+    return suppressed_tooltip_text_;
+  }
+
+  return Button::GetAlternativeAccessibleName();
+}
+
+void UserItemButton::OnViewPreferredSizeChanged(View* observed_view) {
+  UpdateTooltipText();
+}
+
+void UserItemButton::OnBoundsChanged(const gfx::Rect& previous_bounds) {
+  UpdateTooltipText();
+}
+
+void UserItemButton::UpdateTooltipText() {
   // If both of them are full shown, hide the tooltip.
   if (name_->GetPreferredSize(views::SizeBounds(name_->width(), {})).width() <=
           name_->width() &&
       email_->GetPreferredSize(views::SizeBounds(email_->width(), {}))
               .width() <= email_->width()) {
-    return std::u16string();
+    suppressed_tooltip_text_ = GetTooltipText();
+    SetTooltipText(std::u16string());
+  } else {
+    if (GetTooltipText().empty()) {
+      SetTooltipText(suppressed_tooltip_text_);
+    }
+    suppressed_tooltip_text_ = std::u16string();
   }
-  return views::Button::GetTooltipText(p);
 }
 
 BEGIN_METADATA(UserItemButton)
@@ -346,10 +373,6 @@ UserChooserView::UserChooserView(
       AddChildView(CreateAddUserErrorView(l10n_util::GetStringUTF16(
           IDS_ASH_STATUS_TRAY_MESSAGE_NOT_ALLOWED_PRIMARY_USER)));
       break;
-    case AddUserSessionPolicy::ERROR_LACROS_ENABLED:
-      AddChildView(CreateAddUserErrorView(l10n_util::GetStringUTF16(
-          IDS_ASH_STATUS_TRAY_MESSAGE_NOT_ALLOWED_LACROS)));
-      break;
   }
 
   Shell::Get()->media_controller()->AddObserver(this);
@@ -374,6 +397,11 @@ void UserChooserView::OnMediaCaptureChanged(
       user_item_buttons_[i]->SetCaptureState(matched->second);
     }
   }
+}
+
+std::u16string UserChooserView::GetUserItemAccessibleStringForTesting(
+    int user_index) {
+  return GetUserItemAccessibleString(user_index);
 }
 
 BEGIN_METADATA(UserChooserView)

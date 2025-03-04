@@ -19,6 +19,9 @@ export default [
       // No point linting auto-generated files.
       'tools/typescript/definitions/**/*',
 
+      // Ignore generated checked-in JS file.
+      'ios/tools/documents_statistics_viewer/tsc/viewer.js',
+
       // ESLint is disabled for camera_app_ui and recorder_app_ui as they used
       // a custom eslint plugin that does not work with the latest eslint, and
       // they had complex eslint rc files that have not been updated to the
@@ -30,17 +33,12 @@ export default [
       // which is no longer supported. TODO(https://crbug.com/369766161):
       // Bring directories into conformance to re-enable linting.
       'ash/webui/**/*',
-      'chrome/browser/resources/ash/**/*.[jt]s',
       'chrome/browser/resources/chromeos/**/*',
-      'chrome/test/data/webui/chromeos/**/*',
+      'chrome/test/data/webui/chromeos/**/*.js',
 
       // TODO(https://crbug.com/41446521): Bring extension test files into
       // conformance.
       'chrome/test/data/extensions/**/*',
-
-      // TODO(https://crbug.com/370730323): 1-month exception. This can be
-      // removed in November 2024.
-      '!chrome/browser/resources/ash/settings/**/*',
     ],
   },
   {
@@ -149,6 +147,11 @@ export default [
               'TSNonNullExpression > CallExpression > MemberExpression[property.name=/^querySelectorAll$/]',
           message:
               'Remove unnecessary "!" non-null operator after querySelectorAll(). It always returns a non-null result',
+        },
+        {
+          // Prevent unnecessary usage of dispatchEvent(new Event('click'))
+          'selector': 'NewExpression[callee.name=Event][arguments.0.type=Literal][arguments.0.value=click]',
+          'message': 'Don\'t use dispatchEvent(new Event(\'click\')) for click events. Use the click() method instead.',
         },
         {
           // https://google.github.io/styleguide/jsguide.html#es-module-imports
@@ -322,6 +325,12 @@ export default [
         {
           selector: 'classProperty',
           format: ['camelCase'],
+          modifiers: ['protected'],
+          trailingUnderscore: 'allow',
+        },
+        {
+          selector: 'classProperty',
+          format: ['camelCase'],
           modifiers: ['private'],
           trailingUnderscore: 'allow',
         },
@@ -428,40 +437,4 @@ export default [
       ]
     }
   },
-  {
-    // 1-month exception for //ui/file_manager. This can be removed in November
-    // 2024. http://b/370371134.
-    files: ['ui/file_manager/**/*.[jt]s'],
-
-    rules: {
-      'no-console': 'off',
-      'no-restricted-syntax': 'off',
-    },
-  },
-  {
-    // 1-month exception for //chrome/browser/resources/ash/settings. This can
-    // be removed November 15 2024.
-    files: ['chrome/browser/resources/ash/settings/**/*.[jt]s'],
-
-    rules: {
-      '@typescript-eslint/consistent-type-imports': 'off',
-
-      '@typescript-eslint/explicit-function-return-type': [
-        'error', {
-          allowExpressions: true,
-          allowedNames: ['is', 'template', 'properties', 'observers'],
-        }
-      ],
-
-      '@typescript-eslint/no-inferrable-types': [
-        'error', {
-          ignoreParameters: true,
-          ignoreProperties: true,
-        }
-      ],
-
-      'prefer-arrow-callback': 'error',
-      'quote-props': ['error', 'consistent-as-needed'],
-    },
-  }
 ];

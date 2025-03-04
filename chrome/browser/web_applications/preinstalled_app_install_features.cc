@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 
+#include "base/auto_reset.h"
 #include "base/feature_list.h"
 #include "base/memory/raw_ref.h"
 #include "build/build_config.h"
@@ -61,8 +62,6 @@ constexpr const FeatureWithEnabledFunction
 #if BUILDFLAG(IS_CHROMEOS)
         {raw_ref(chromeos::features::kCloudGamingDevice),
          &chromeos::features::IsCloudGamingDeviceEnabled},
-        {raw_ref(chromeos::features::kCrosMall),
-         &chromeos::features::IsCrosMallWebAppEnabled},
         {raw_ref(chromeos::features::kGeminiAppPreinstall),
          &chromeos::features::IsGeminiAppPreinstallEnabled}
 #endif

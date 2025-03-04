@@ -94,11 +94,17 @@ TEST(ContentUriUtilsTest, GetFileInfo) {
       *test::android::GetContentUriFromCacheDirFilePath(file);
   FilePath content_uri_dir =
       *test::android::GetContentUriFromCacheDirFilePath(dir);
+  FilePath content_uri_document =
+      *test::android::GetInMemoryContentDocumentUriFromCacheDirFilePath(file);
+  FilePath content_uri_tree =
+      *test::android::GetInMemoryContentTreeUriFromCacheDirDirectory(dir);
   FilePath content_uri_not_exists =
       *test::android::GetContentUriFromCacheDirFilePath(not_exists);
 
   EXPECT_TRUE(PathExists(content_uri_file));
   EXPECT_TRUE(PathExists(content_uri_dir));
+  EXPECT_TRUE(PathExists(content_uri_document));
+  EXPECT_TRUE(PathExists(content_uri_tree));
   EXPECT_FALSE(PathExists(content_uri_not_exists));
 
   File::Info info;
@@ -109,7 +115,18 @@ TEST(ContentUriUtilsTest, GetFileInfo) {
   EXPECT_FALSE(content_uri_info.is_directory);
   EXPECT_EQ(content_uri_info.last_modified, info.last_modified);
 
+  EXPECT_TRUE(GetFileInfo(content_uri_document, &content_uri_info));
+  EXPECT_FALSE(content_uri_info.is_directory);
+  // Java DocumentProvider only does resolution to seconds.
+  EXPECT_EQ(content_uri_info.last_modified.ToTimeT(),
+            info.last_modified.ToTimeT());
+
   EXPECT_TRUE(GetFileInfo(dir, &info));
+  EXPECT_TRUE(GetFileInfo(content_uri_tree, &content_uri_info));
+  EXPECT_TRUE(content_uri_info.is_directory);
+  EXPECT_EQ(content_uri_info.last_modified.ToTimeT(),
+            info.last_modified.ToTimeT());
+
   EXPECT_TRUE(GetFileInfo(content_uri_dir, &content_uri_info));
   EXPECT_TRUE(content_uri_info.is_directory);
   EXPECT_EQ(content_uri_info.last_modified, info.last_modified);
@@ -138,6 +155,68 @@ TEST(ContentUriUtilsTest, ContentUriBuildDocumentUriUsingTree) {
             "content://authority/tree/foo/document/doc%EF%BF%BD");
   EXPECT_EQ(ContentUriBuildDocumentUriUsingTree(tree_uri, "doc%xy").value(),
             "content://authority/tree/foo/document/doc%EF%BF%BD%00y");
+}
+
+TEST(ContentUriUtilsTest, GetOrCreateByDisplayName) {
+  ScopedTempDir temp_dir;
+  ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
+  FilePath dir = temp_dir.GetPath().Append("dir");
+  ASSERT_TRUE(base::CreateDirectory(dir));
+  FilePath child1 = dir.Append("child1.txt");
+  FilePath child2 = dir.Append("child2.txt");
+  ASSERT_TRUE(WriteFile(child1, "1"));
+  FilePath parent =
+      *test::android::GetInMemoryContentTreeUriFromCacheDirDirectory(dir);
+
+  // If there is a match, the result should be the valid tree URI.
+  bool is_directory = false;
+  bool create = false;
+  FilePath child = ContentUriGetChildDocumentOrQuery(
+      parent, "child1.txt", "text/plain", is_directory, create);
+  EXPECT_EQ(child.value(),
+            "content://org.chromium.native_test.docprov/tree/" +
+                temp_dir.GetPath().BaseName().value() + "%2Fdir/document/" +
+                temp_dir.GetPath().BaseName().value() + "%2Fdir%2Fchild1.txt");
+  EXPECT_FALSE(ContentUriIsCreateChildDocumentQuery(child));
+  EXPECT_TRUE(internal::ContentUriExists(child));
+
+  // If there is not a match, and create is not set, the result should be empty.
+  child = ContentUriGetChildDocumentOrQuery(parent, "child2.txt", "text/plain",
+                                            is_directory, create);
+  EXPECT_TRUE(child.empty());
+  EXPECT_FALSE(ContentUriIsCreateChildDocumentQuery(child));
+  EXPECT_FALSE(internal::ContentUriExists(child));
+
+  // If create is set the result should be a create-child-document query.
+  create = true;
+  FilePath query = ContentUriGetChildDocumentOrQuery(
+      parent, "child2.txt", "text/plain", is_directory, create);
+  EXPECT_EQ(query.value(),
+            "content://org.chromium.native_test.docprov/create-child-document/"
+            "tree/" +
+                temp_dir.GetPath().BaseName().value() + "%2Fdir/document/" +
+                temp_dir.GetPath().BaseName().value() +
+                "%2Fdir/mime-type/text%2Fplain/display-name/child2.txt");
+  EXPECT_TRUE(ContentUriIsCreateChildDocumentQuery(query));
+  EXPECT_FALSE(internal::ContentUriExists(query));
+
+  // Lookup should fail when create is false if doc does not exist.
+  create = false;
+  child = ContentUriGetDocumentFromQuery(query, create);
+  EXPECT_TRUE(child.empty());
+  EXPECT_FALSE(base::PathExists(child2));
+
+  // Lookup should create the document, and return the valid URI when create is
+  // set.
+  create = true;
+  child = ContentUriGetDocumentFromQuery(query, create);
+  EXPECT_EQ(child.value(),
+            "content://org.chromium.native_test.docprov/tree/" +
+                temp_dir.GetPath().BaseName().value() + "%2Fdir/document/" +
+                temp_dir.GetPath().BaseName().value() + "%2Fdir%2Fchild2.txt");
+  EXPECT_FALSE(ContentUriIsCreateChildDocumentQuery(child));
+  EXPECT_TRUE(internal::ContentUriExists(child));
+  EXPECT_TRUE(base::PathExists(child2));
 }
 
 }  // namespace base

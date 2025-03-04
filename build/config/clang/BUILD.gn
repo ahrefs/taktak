@@ -7,7 +7,7 @@ import("//build/config/rust.gni")
 import("clang.gni")
 
 if (is_ios) {
-  import("//build/config/ios/config.gni")  # For `target_environment`
+  import("//build/config/apple/mobile_config.gni")  # For `target_environment`
 }
 
 # Helper function for adding cflags to use a clang plugin.
@@ -62,7 +62,10 @@ clang_plugin("raw_ptr_check") {
     ]
 
     if (enable_check_raw_ptr_fields) {
-      plugin_arguments += [ "check-raw-ptr-fields" ]
+      plugin_arguments += [
+        "check-raw-ptr-fields",
+        "check-span-fields",
+      ]
     }
 
     if (enable_check_raw_ref_fields) {

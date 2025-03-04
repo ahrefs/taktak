@@ -94,7 +94,7 @@ suite('ExtensionErrorPageTest', function() {
     assertTrue(testIsVisible('#heading'));
     assertTrue(testIsVisible('#errorsList'));
 
-    let errorElements = errorPage.shadowRoot!.querySelectorAll('.error-item');
+    let errorElements = errorPage.shadowRoot.querySelectorAll('.error-item');
     assertEquals(1, errorElements.length);
     let error = errorElements[0]!;
     assertEquals(
@@ -117,7 +117,7 @@ suite('ExtensionErrorPageTest', function() {
     errorPage.data = newData;
     await microtasksFinished();
 
-    errorElements = errorPage.shadowRoot!.querySelectorAll('.error-item');
+    errorElements = errorPage.shadowRoot.querySelectorAll('.error-item');
     assertEquals(2, errorElements.length);
     error = errorElements[0]!;
     assertEquals(
@@ -152,8 +152,8 @@ suite('ExtensionErrorPageTest', function() {
         await microtasksFinished();
         assertEquals(
             code,
-            errorPage.shadowRoot!.querySelector(
-                                     'extensions-code-section')!.code);
+            errorPage.shadowRoot.querySelector(
+                                    'extensions-code-section')!.code);
       });
 
   test('ErrorSelection', async () => {
@@ -182,9 +182,9 @@ suite('ExtensionErrorPageTest', function() {
     errorPage.data = dataWithNextError;
     await microtasksFinished();
 
-    const errorElements = errorPage.shadowRoot!.querySelectorAll<HTMLElement>(
+    const errorElements = errorPage.shadowRoot.querySelectorAll<HTMLElement>(
         '.error-item .start');
-    const crCollapses = errorPage.shadowRoot!.querySelectorAll('cr-collapse');
+    const crCollapses = errorPage.shadowRoot.querySelectorAll('cr-collapse');
     assertEquals(2, errorElements.length);
     assertEquals(2, crCollapses.length);
 
@@ -248,9 +248,9 @@ suite('ExtensionErrorPageTest', function() {
     await microtasksFinished();
 
     // Check the element is still displayed and opened.
-    const errorElements = errorPage.shadowRoot!.querySelectorAll<HTMLElement>(
+    const errorElements = errorPage.shadowRoot.querySelectorAll<HTMLElement>(
         '.error-item .start');
-    const crCollapses = errorPage.shadowRoot!.querySelectorAll('cr-collapse');
+    const crCollapses = errorPage.shadowRoot.querySelectorAll('cr-collapse');
     assertEquals(1, errorElements.length);
     assertEquals(
         'message',
@@ -263,7 +263,9 @@ suite('ExtensionErrorPageTest', function() {
         'Unknown',
         crCollapses[0]!.querySelector<HTMLElement>(
                            '.context-url')!.textContent!.trim());
-    assertEquals(1, errorPage.getSelectedError().id);
+    const error = errorPage.getSelectedError();
+    assertTrue(!!error);
+    assertEquals(1, error.id);
   });
 
   // Test that the reload button is only shown for unpacked extensions in dev
@@ -282,8 +284,8 @@ suite('ExtensionErrorPageTest', function() {
     assertTrue(isVisible('#dev-reload-button'));
 
     await mockDelegate.testClickingCalls(
-        errorPage.shadowRoot!.querySelector('#dev-reload-button')!,
-        'reloadItem', [errorPage.data.id], Promise.resolve());
+        errorPage.shadowRoot.querySelector('#dev-reload-button')!, 'reloadItem',
+        [errorPage.data.id], Promise.resolve());
 
     // Disable the extension. The button should now be hidden.
     const disabledExtensionData = structuredClone(errorPage.data);

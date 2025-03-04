@@ -8,7 +8,7 @@
 # http://go/chromium-cq#internal-builders-on-the-cq.
 
 load("//lib/branches.star", "branches")
-load("//lib/try.star", "default_location_filters", "try_")
+load("//lib/try.star", "default_location_filters", "default_owner_whitelist_group_for_cq_bots", "try_")
 load("//project.star", "settings")
 
 def chrome_internal_verifier(
@@ -37,16 +37,14 @@ def chrome_internal_verifier(
             location_filters = location_filters,
             mode_allowlist = tryjob.custom_cq_run_modes,
             result_visibility = cq.COMMENT_LEVEL_RESTRICTED,
+            **kwargs
         )
     else:
         branches.cq_tryjob_verifier(
             builder = "{}:try/{}".format(settings.chrome_project, builder),
             cq_group = "cq",
             includable_only = True,
-            owner_whitelist = [
-                "googlers",
-                "project-chromium-robot-committers",
-            ],
+            owner_whitelist = default_owner_whitelist_group_for_cq_bots(settings.chrome_project),
             result_visibility = cq.COMMENT_LEVEL_RESTRICTED,
             **kwargs
         )
@@ -103,6 +101,10 @@ chrome_internal_verifier(
 )
 
 chrome_internal_verifier(
+    builder = "android-internal-unpublished-dbg",
+)
+
+chrome_internal_verifier(
     branch_selector = branches.selector.ANDROID_BRANCHES,
     builder = "android-arm-rel-ready",
 )
@@ -126,12 +128,6 @@ chrome_internal_verifier(
 
 chrome_internal_verifier(
     builder = "chromeos-brya-chrome",
-)
-
-# TODO(b/339354038): Remove once migration to un-suffixed try biulder
-# completes.
-chrome_internal_verifier(
-    builder = "chromeos-brya-chrome-skylab",
 )
 
 chrome_internal_verifier(
@@ -167,19 +163,15 @@ chrome_internal_verifier(
 )
 
 chrome_internal_verifier(
+    builder = "fuchsia-ava-astro",
+)
+
+chrome_internal_verifier(
     builder = "fuchsia-ava-nelson",
 )
 
 chrome_internal_verifier(
-    builder = "fuchsia-cast-astro",
-)
-
-chrome_internal_verifier(
-    builder = "fuchsia-cast-nelson",
-)
-
-chrome_internal_verifier(
-    builder = "fuchsia-cast-sherlock",
+    builder = "fuchsia-ava-sherlock",
 )
 
 chrome_internal_verifier(
@@ -216,6 +208,22 @@ chrome_internal_verifier(
 
 chrome_internal_verifier(
     builder = "fuchsia-smoke-sherlock-roller",
+)
+
+chrome_internal_verifier(
+    builder = "fuchsia-webgl-astro",
+)
+
+chrome_internal_verifier(
+    builder = "fuchsia-webgl-nelson",
+)
+
+chrome_internal_verifier(
+    builder = "fuchsia-webgl-sherlock",
+)
+
+chrome_internal_verifier(
+    builder = "fuchsia-webgl-sherlock-qemu",
 )
 
 chrome_internal_verifier(
@@ -291,11 +299,39 @@ chrome_internal_verifier(
 )
 
 chrome_internal_verifier(
+    builder = "optimization_guide-ios-device",
+)
+
+chrome_internal_verifier(
+    builder = "optimization_guide-ios-simulator",
+)
+
+chrome_internal_verifier(
     builder = "optimization_guide-linux",
+    owner_whitelist = [
+        "google/optimization-guide-try-opt-in@google.com",
+    ],
+    tryjob = try_.job(
+        location_filters = [
+            "chrome/browser/ai/.+",
+            "components/optimization_guide/.+",
+            "services/on_device_model/.+",
+        ],
+    ),
 )
 
 chrome_internal_verifier(
     builder = "optimization_guide-mac-arm64",
+    owner_whitelist = [
+        "google/optimization-guide-try-opt-in@google.com",
+    ],
+    tryjob = try_.job(
+        location_filters = [
+            "chrome/browser/ai/.+",
+            "components/optimization_guide/.+",
+            "services/on_device_model/.+",
+        ],
+    ),
 )
 
 chrome_internal_verifier(
@@ -308,6 +344,16 @@ chrome_internal_verifier(
 
 chrome_internal_verifier(
     builder = "optimization_guide-win64",
+    owner_whitelist = [
+        "google/optimization-guide-try-opt-in@google.com",
+    ],
+    tryjob = try_.job(
+        location_filters = [
+            "chrome/browser/ai/.+",
+            "components/optimization_guide/.+",
+            "services/on_device_model/.+",
+        ],
+    ),
 )
 
 chrome_internal_verifier(

@@ -4,9 +4,12 @@
 
 package org.chromium.chrome.browser.privacy_guide;
 
+import android.content.Context;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 
 import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
@@ -97,22 +100,22 @@ public class PrivacyGuideBottomSheetView implements BottomSheetContent {
     }
 
     @Override
-    public int getSheetContentDescriptionStringId() {
-        return R.string.privacy_guide_explanation_content_description;
+    public @NonNull String getSheetContentDescription(Context context) {
+        return context.getString(R.string.privacy_guide_explanation_content_description);
     }
 
     @Override
-    public int getSheetClosedAccessibilityStringId() {
+    public @StringRes int getSheetClosedAccessibilityStringId() {
         return R.string.privacy_guide_explanation_closed_description;
     }
 
     @Override
-    public int getSheetHalfHeightAccessibilityStringId() {
+    public @StringRes int getSheetHalfHeightAccessibilityStringId() {
         return R.string.privacy_guide_explanation_opened_half;
     }
 
     @Override
-    public int getSheetFullHeightAccessibilityStringId() {
+    public @StringRes int getSheetFullHeightAccessibilityStringId() {
         return R.string.privacy_guide_explanation_opened_full;
     }
 }

@@ -22,6 +22,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Px;
 import androidx.annotation.VisibleForTesting;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -72,7 +73,7 @@ class KeyboardAccessoryView extends LinearLayout {
                 public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                     if (newState != RecyclerView.SCROLL_STATE_IDLE) {
                         mBarItemsView.removeOnScrollListener(mScrollingIphCallback);
-                        KeyboardAccessoryIPHUtils.emitScrollingEvent(mFeatureEngagementTracker);
+                        KeyboardAccessoryIphUtils.emitScrollingEvent(mFeatureEngagementTracker);
                     }
                 }
             };
@@ -359,7 +360,7 @@ class KeyboardAccessoryView extends LinearLayout {
                                     mAnimationListener.onFadeInEnd();
                                     mRunningAnimation = null;
                                 });
-        announceForAccessibility(getContentDescription());
+        ViewCompat.setAccessibilityPaneTitle(this, getContentDescription());
         TraceEvent.end("KeyboardAccessoryView#show");
     }
 

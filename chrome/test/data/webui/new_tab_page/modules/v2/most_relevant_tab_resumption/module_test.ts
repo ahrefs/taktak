@@ -33,6 +33,7 @@ function createSampleURLVisit(
           displayString: 'You visited 0 seconds ago',
         },
         formFactor: FormFactor.kDesktop,
+        isKnownToSync: false,
         sessionName: 'Test Device',
         url: {url: 'https://www.foo.com'},
         urlKey: '',
@@ -123,7 +124,7 @@ suite('NewTabPageModulesMostRelevantTabResumptionModuleTest', () => {
       assertTrue(!!headerElement);
       const infoButton = $$<HTMLElement>(headerElement, '#info');
       assertTrue(!!infoButton);
-      infoButton!.click();
+      infoButton.click();
       await microtasksFinished();
 
       assertTrue(!!$$(moduleElement, 'ntp-info-dialog'));
@@ -141,7 +142,7 @@ suite('NewTabPageModulesMostRelevantTabResumptionModuleTest', () => {
       assertTrue(!!dismissButton);
       const waitForDismissEvent =
           eventToPromise('dismiss-module-instance', moduleElement);
-      dismissButton!.click();
+      dismissButton.click();
       await microtasksFinished();
 
       const dismissEvent: DismissModuleInstanceEvent =
@@ -156,7 +157,7 @@ suite('NewTabPageModulesMostRelevantTabResumptionModuleTest', () => {
 
     test('Tab dismiss button dispatches dismiss tab event', async () => {
       // Arrange.
-      const moduleElement = await initializeModule(createSampleURLVisits(1));
+      const moduleElement = await initializeModule(createSampleURLVisits(2));
 
       // Assert.
       assertTrue(!!moduleElement);
@@ -164,13 +165,14 @@ suite('NewTabPageModulesMostRelevantTabResumptionModuleTest', () => {
           eventToPromise('dismiss-module-element', moduleElement);
       const dismissButton = $$<HTMLElement>(moduleElement, 'cr-icon-button');
       assertTrue(!!dismissButton);
-      dismissButton!.click();
+      dismissButton.click();
       await microtasksFinished();
 
       const dismissEvent: DismissModuleElementEvent = await waitForDismissEvent;
-      assertEquals(`Tabs hidden`, dismissEvent.detail.message);
+      assertEquals(`Tab hidden`, dismissEvent.detail.message);
       assertEquals(
           1, metrics.count(`NewTabPage.TabResumption.VisitDismissIndex`, 0));
+      assertEquals(1, handler.getCallCount(`dismissURLVisit`));
 
       // Act.
       const restoreCallback = dismissEvent.detail.restoreCallback!;
@@ -189,8 +191,8 @@ suite('NewTabPageModulesMostRelevantTabResumptionModuleTest', () => {
       const urlVisitElement = $$<HTMLElement>(moduleElement, '.url-visit');
       assertTrue(!!urlVisitElement);
       const waitForUsageEvent = eventToPromise('usage', moduleElement);
-      urlVisitElement!.removeAttribute('href');
-      urlVisitElement!.click();
+      urlVisitElement.removeAttribute('href');
+      urlVisitElement.click();
       await microtasksFinished();
       assertEquals(1, metrics.count(`NewTabPage.TabResumption.ClickIndex`));
       assertEquals(
@@ -217,8 +219,8 @@ suite('NewTabPageModulesMostRelevantTabResumptionModuleTest', () => {
               '#seeMoreButtonContainer'))!.querySelector<HTMLElement>('a');
       assertTrue(!!seeMoreButtonElement);
       const waitForUsageEvent = eventToPromise('usage', moduleElement);
-      seeMoreButtonElement!.removeAttribute('href');
-      seeMoreButtonElement!.click();
+      seeMoreButtonElement.removeAttribute('href');
+      seeMoreButtonElement.click();
       assertEquals(1, metrics.count(`NewTabPage.TabResumption.SeeMoreClick`));
       await waitForUsageEvent;
     });

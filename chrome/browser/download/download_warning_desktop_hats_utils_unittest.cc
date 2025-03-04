@@ -26,7 +26,7 @@
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
+#if BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION)
 #include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
 #endif
 
@@ -118,6 +118,11 @@ class DownloadWarningDesktopHatsUtilsTest : public ::testing::Test {
         .WillByDefault(ReturnRefOfCopy(GURL(kReferrerUrl)));
     ON_CALL(*item, GetFileNameToReportUser())
         .WillByDefault(Return(base::FilePath(kFilename)));
+    ON_CALL(*item, IsDangerous()).WillByDefault(Return(true));
+    ON_CALL(*item, GetDangerType())
+        .WillByDefault(
+            Return(download::DownloadDangerType::
+                       DOWNLOAD_DANGER_TYPE_DANGEROUS_ACCOUNT_COMPROMISE));
 
     // Set up the time since download started.
     base::Time start_time = base::Time::Now();
@@ -138,13 +143,8 @@ class DownloadWarningDesktopHatsUtilsTest : public ::testing::Test {
         DownloadItemWarningData::WarningAction::CLOSE);
 
     ON_CALL(*item, IsDone()).WillByDefault(Return(false));
-    ON_CALL(*item, IsDangerous()).WillByDefault(Return(true));
-    ON_CALL(*item, GetDangerType())
-        .WillByDefault(
-            Return(download::DownloadDangerType::
-                       DOWNLOAD_DANGER_TYPE_DANGEROUS_ACCOUNT_COMPROMISE));
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
+#if BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION)
     // Set tailored verdict for cookie theft with account info.
     safe_browsing::ClientDownloadResponse::TailoredVerdict tailored_verdict;
     tailored_verdict.set_tailored_verdict_type(
@@ -155,7 +155,7 @@ class DownloadWarningDesktopHatsUtilsTest : public ::testing::Test {
         item, "token",
         safe_browsing::ClientDownloadResponse::DANGEROUS_ACCOUNT_COMPROMISE,
         std::move(tailored_verdict));
-#endif  // BUILDFLAG(FULL_SAFE_BROWSING)
+#endif  // BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION)
 
     ON_CALL(*item, HasUserGesture()).WillByDefault(Return(true));
   }

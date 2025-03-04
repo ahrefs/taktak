@@ -17,6 +17,7 @@
 #include "base/values.h"
 #include "chrome/browser/extensions/extension_util.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/regional_capabilities/regional_capabilities_service_factory.h"
 #include "chrome/browser/search_engine_choice/search_engine_choice_service_factory.h"
 #include "chrome/browser/search_engines/template_url_service_factory.h"
 #include "chrome/browser/search_engines/ui_thread_search_terms_data.h"
@@ -27,6 +28,7 @@
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/prefs/pref_service.h"
+#include "components/regional_capabilities/regional_capabilities_service.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_service.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_utils.h"
 #include "components/search_engines/search_engines_pref_names.h"
@@ -38,7 +40,7 @@
 #include "extensions/browser/management_policy.h"
 #include "extensions/common/extension.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "ash/public/cpp/new_window_delegate.h"
 #endif
 
@@ -107,7 +109,7 @@ void SearchEnginesHandler::RegisterMessages() {
       base::BindRepeating(
           &SearchEnginesHandler::HandleSearchEngineEditCompleted,
           base::Unretained(this)));
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   web_ui()->RegisterMessageCallback(
       "openBrowserSearchSettings",
       base::BindRepeating(
@@ -229,16 +231,17 @@ base::Value::Dict SearchEnginesHandler::CreateDictionaryForEngine(
   dict.Set("urlLocked", ((template_url->prepopulate_id() > 0) ||
                          (template_url->starter_pack_id() > 0)));
   GURL icon_url = template_url->favicon_url();
-  if (icon_url.is_valid())
+  if (icon_url.is_valid()) {
     dict.Set("iconURL", icon_url.spec());
+  }
 
   // The icons that are used for search engines in the EEA region are bundled
   // with Chrome. We use the favicon service for countries outside the EEA
   // region to guarantee having icons for all search engines.
-  search_engines::SearchEngineChoiceService* search_engine_choice_service =
-      search_engines::SearchEngineChoiceServiceFactory::GetForProfile(profile);
-  const bool is_eea_region = search_engines::IsEeaChoiceCountry(
-      search_engine_choice_service->GetCountryId());
+  regional_capabilities::RegionalCapabilitiesService* regional_capabilities =
+      regional_capabilities::RegionalCapabilitiesServiceFactory::GetForProfile(
+          profile);
+  const bool is_eea_region = regional_capabilities->IsInEeaCountry();
   if (is_eea_region && template_url->prepopulate_id() != 0) {
     std::string_view icon_path =
         GetSearchEngineGeneratedIconPath(template_url->keyword());
@@ -402,10 +405,11 @@ void SearchEnginesHandler::OnEditedKeyword(TemplateURL* template_url,
                                            const std::u16string& keyword,
                                            const std::string& url) {
   DCHECK(!url.empty());
-  if (template_url)
+  if (template_url) {
     list_controller_.ModifyTemplateURL(template_url, title, keyword, url);
-  else
+  } else {
     list_controller_.AddTemplateURL(title, keyword, url);
+  }
 
   edit_controller_.reset();
 }
@@ -423,34 +427,38 @@ void SearchEnginesHandler::HandleValidateSearchEngineInput(
 
 bool SearchEnginesHandler::CheckFieldValidity(const std::string& field_name,
                                               const std::string& field_value) {
-  if (!edit_controller_.get())
+  if (!edit_controller_.get()) {
     return false;
+  }
 
   bool is_valid = false;
-  if (field_name.compare(kSearchEngineField) == 0)
+  if (field_name.compare(kSearchEngineField) == 0) {
     is_valid = edit_controller_->IsTitleValid(base::UTF8ToUTF16(field_value));
-  else if (field_name.compare(kKeywordField) == 0)
+  } else if (field_name.compare(kKeywordField) == 0) {
     is_valid = edit_controller_->IsKeywordValid(base::UTF8ToUTF16(field_value));
-  else if (field_name.compare(kQueryUrlField) == 0)
+  } else if (field_name.compare(kQueryUrlField) == 0) {
     is_valid = edit_controller_->IsURLValid(field_value);
-  else
-    NOTREACHED_IN_MIGRATION();
+  } else {
+    NOTREACHED();
+  }
 
   return is_valid;
 }
 
 void SearchEnginesHandler::HandleSearchEngineEditCancelled(
     const base::Value::List& args) {
-  if (!edit_controller_.get())
+  if (!edit_controller_.get()) {
     return;
+  }
   edit_controller_->CleanUpCancelledAdd();
   edit_controller_.reset();
 }
 
 void SearchEnginesHandler::HandleSearchEngineEditCompleted(
     const base::Value::List& args) {
-  if (!edit_controller_.get())
+  if (!edit_controller_.get()) {
     return;
+  }
 
   CHECK_EQ(3U, args.size());
   const std::string& search_engine = args[0].GetString();
@@ -467,7 +475,7 @@ void SearchEnginesHandler::HandleSearchEngineEditCompleted(
   }
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 void SearchEnginesHandler::HandleOpenBrowserSearchSettings(
     const base::Value::List& args) {
   ash::NewWindowDelegate::GetPrimary()->OpenUrl(

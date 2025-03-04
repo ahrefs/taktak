@@ -7,6 +7,7 @@
 #include <deque>
 #include <memory>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include "base/containers/linked_list.h"
@@ -29,6 +30,7 @@
 #include "net/dns/host_cache.h"
 #include "net/dns/host_resolver.h"
 #include "net/dns/host_resolver_dns_task.h"
+#include "net/dns/host_resolver_internal_result.h"
 #include "net/dns/host_resolver_manager.h"
 #include "net/dns/host_resolver_manager_request_impl.h"
 #include "net/dns/host_resolver_manager_service_endpoint_request_impl.h"
@@ -295,6 +297,7 @@ void HostResolverManager::Job::AddServiceEndpointRequest(
 
 void HostResolverManager::Job::CancelServiceEndpointRequest(
     ServiceEndpointRequestImpl* request) {
+  CHECK(!service_endpoint_requests_.empty());
   CancelRequestCommon(request->priority(), request->net_log());
 
   if (num_active_requests() > 0) {
@@ -372,12 +375,18 @@ void HostResolverManager::Job::OnEvicted() {
 
 bool HostResolverManager::Job::ServeFromHosts() {
   DCHECK_GT(num_active_requests(), 0u);
-  std::optional<HostCache::Entry> results = resolver_->ServeFromHosts(
-      key_.host.GetHostnameWithoutBrackets(), key_.query_types,
-      key_.flags & HOST_RESOLVER_DEFAULT_FAMILY_SET_DUE_TO_NO_IPV6, tasks_);
-  if (results) {
+  std::set<std::unique_ptr<HostResolverInternalResult>> results =
+      resolver_->ServeFromHosts(
+          key_.host.GetHostnameWithoutBrackets(), key_.query_types,
+          key_.flags & HOST_RESOLVER_DEFAULT_FAMILY_SET_DUE_TO_NO_IPV6, tasks_);
+  if (!results.empty() && std::ranges::any_of(results, [](const auto& result) {
+        return result->type() == HostResolverInternalResult::Type::kData;
+      })) {
+    HostCache::Entry legacy_results(results, base::Time::Now(),
+                                    tick_clock_->NowTicks(),
+                                    HostCache::Entry::SOURCE_HOSTS);
     // This will destroy the Job.
-    CompleteRequests(results.value(), base::TimeDelta(), true /* allow_cache */,
+    CompleteRequests(legacy_results, base::TimeDelta(), true /* allow_cache */,
                      true /* secure */, TaskType::HOSTS);
     return true;
   }
@@ -385,13 +394,13 @@ bool HostResolverManager::Job::ServeFromHosts() {
 }
 
 void HostResolverManager::Job::OnAddedToJobMap(JobMap::iterator iterator) {
-  DCHECK(!self_iterator_);
+  CHECK(!self_iterator_);
   CHECK(iterator != resolver_->jobs_.end(), base::NotFatalUntil::M130);
   self_iterator_ = iterator;
 }
 
 void HostResolverManager::Job::OnRemovedFromJobMap() {
-  DCHECK(self_iterator_);
+  CHECK(self_iterator_);
   self_iterator_ = std::nullopt;
 }
 
@@ -476,8 +485,7 @@ void HostResolverManager::Job::RunNextTask() {
     case TaskType::HOSTS:
       // These task types should have been handled synchronously in
       // ResolveLocally() prior to Job creation.
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 
@@ -551,7 +559,7 @@ void HostResolverManager::Job::ReduceByOneJobSlot() {
     }
     --num_occupied_job_slots_;
   } else {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 }
 
@@ -768,25 +776,30 @@ void HostResolverManager::Job::OnDnsTaskFailure(
   RunNextTask();
 }
 
-void HostResolverManager::Job::OnDnsTaskComplete(base::TimeTicks start_time,
-                                                 bool allow_fallback,
-                                                 HostCache::Entry results,
-                                                 bool secure) {
+void HostResolverManager::Job::OnDnsTaskComplete(
+    base::TimeTicks start_time,
+    bool allow_fallback,
+    HostResolverDnsTask::Results results,
+    bool secure) {
   DCHECK(dns_task_);
+
+  HostCache::Entry legacy_results(results, base::Time::Now(),
+                                  tick_clock_->NowTicks(),
+                                  HostCache::Entry::SOURCE_DNS);
 
   // Tasks containing address queries are only considered successful overall
   // if they find address results. However, DnsTask may claim success if any
   // transaction, e.g. a supplemental HTTPS transaction, finds results.
   DCHECK(!key_.query_types.Has(DnsQueryType::UNSPECIFIED));
-  if (HasAddressType(key_.query_types) && results.error() == OK &&
-      results.ip_endpoints().empty()) {
-    results.set_error(ERR_NAME_NOT_RESOLVED);
+  if (HasAddressType(key_.query_types) && legacy_results.error() == OK &&
+      legacy_results.ip_endpoints().empty()) {
+    legacy_results.set_error(ERR_NAME_NOT_RESOLVED);
   }
 
   base::TimeDelta duration = tick_clock_->NowTicks() - start_time;
-  if (results.error() != OK) {
-    OnDnsTaskFailure(dns_task_->AsWeakPtr(), duration, allow_fallback, results,
-                     secure);
+  if (legacy_results.error() != OK) {
+    OnDnsTaskFailure(dns_task_->AsWeakPtr(), duration, allow_fallback,
+                     legacy_results, secure);
     return;
   }
 
@@ -802,15 +815,15 @@ void HostResolverManager::Job::OnDnsTaskComplete(base::TimeTicks start_time,
   }
 
   base::TimeDelta bounded_ttl =
-      std::max(results.ttl(), base::Seconds(kMinimumTTLSeconds));
+      std::max(legacy_results.ttl(), base::Seconds(kMinimumTTLSeconds));
 
-  if (ContainsIcannNameCollisionIp(results.ip_endpoints())) {
+  if (ContainsIcannNameCollisionIp(legacy_results.ip_endpoints())) {
     CompleteRequestsWithError(ERR_ICANN_NAME_COLLISION,
                               secure ? TaskType::SECURE_DNS : TaskType::DNS);
     return;
   }
 
-  CompleteRequests(results, bounded_ttl, true /* allow_cache */, secure,
+  CompleteRequests(legacy_results, bounded_ttl, true /* allow_cache */, secure,
                    secure ? TaskType::SECURE_DNS : TaskType::DNS);
 }
 
@@ -849,7 +862,7 @@ void HostResolverManager::Job::OnIntermediateTransactionsComplete(
   if (dns_task_results_manager_ && single_transaction_results.has_value()) {
     dns_task_results_manager_->ProcessDnsTransactionResults(
         single_transaction_results->query_type,
-        single_transaction_results->results);
+        std::move(single_transaction_results->results));
     // `this` may be deleted. Do not add code below.
   }
 }
@@ -900,15 +913,19 @@ void HostResolverManager::Job::OnMdnsTaskComplete() {
   DCHECK(mdns_task_);
   // TODO(crbug.com/40577881): Consider adding MDNS-specific logging.
 
-  HostCache::Entry results = mdns_task_->GetResults();
+  std::set<std::unique_ptr<HostResolverInternalResult>> results =
+      mdns_task_->GetResults();
+  HostCache::Entry legacy_results(results, base::Time::Now(),
+                                  tick_clock_->NowTicks(),
+                                  HostCache::Entry::SOURCE_UNKNOWN);
 
-  if (ContainsIcannNameCollisionIp(results.ip_endpoints())) {
+  if (ContainsIcannNameCollisionIp(legacy_results.ip_endpoints())) {
     CompleteRequestsWithError(ERR_ICANN_NAME_COLLISION, TaskType::MDNS);
     return;
   }
   // MDNS uses a separate cache, so skip saving result to cache.
   // TODO(crbug.com/40611558): Consider merging caches.
-  CompleteRequestsWithoutCache(results, std::nullopt /* stale_info */,
+  CompleteRequestsWithoutCache(legacy_results, /*stale_info=*/std::nullopt,
                                TaskType::MDNS);
 }
 

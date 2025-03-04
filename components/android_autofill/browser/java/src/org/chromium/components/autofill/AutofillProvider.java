@@ -30,6 +30,7 @@ import org.chromium.base.ResettersForTesting;
 import org.chromium.base.StrictModeContext;
 import org.chromium.base.metrics.ScopedSysTraceEvent;
 import org.chromium.base.version_info.VersionConstants;
+import org.chromium.build.annotations.NullUnmarked;
 import org.chromium.components.autofill.AutofillRequest.FocusField;
 import org.chromium.content_public.browser.RenderCoordinates;
 import org.chromium.content_public.browser.WebContents;
@@ -51,6 +52,7 @@ import org.chromium.ui.display.DisplayAndroid;
  * AwContents.java in //android_webview), and AndroidAutofillProvider is owned by the
  * embedder-specific C++ WebContents wrapper (e.g., native AwContents in //android_webview).
  */
+@NullUnmarked
 @JNINamespace("autofill")
 public class AutofillProvider {
     /**
@@ -71,7 +73,7 @@ public class AutofillProvider {
     private AutofillRequest mRequest;
     private long mNativeAutofillProvider;
     private AutofillProviderUMA mAutofillUMA;
-    private AutofillManagerWrapper.InputUIObserver mInputUIObserver;
+    private AutofillManagerWrapper.InputUiObserver mInputUiObserver;
     private long mAutofillTriggeredTimeMillis;
     private Context mContext;
     private AutofillPopup mDatalistPopup;
@@ -102,10 +104,10 @@ public class AutofillProvider {
                             context,
                             mAutofillManager.isAwGCurrentAutofillService(),
                             mAutofillManager.getPackageName());
-            mInputUIObserver =
-                    new AutofillManagerWrapper.InputUIObserver() {
+            mInputUiObserver =
+                    new AutofillManagerWrapper.InputUiObserver() {
                         @Override
-                        public void onInputUIShown() {
+                        public void onInputUiShown() {
                             // Not need to report suggestion window displayed if there is no live
                             // autofill session.
                             if (mRequest == null) return;
@@ -113,7 +115,7 @@ public class AutofillProvider {
                                     System.currentTimeMillis() - mAutofillTriggeredTimeMillis);
                         }
                     };
-            mAutofillManager.addInputUIObserver(mInputUIObserver);
+            mAutofillManager.addInputUiObserver(mInputUiObserver);
             mContext = context;
         }
         initializeNativeAutofillProvider(webContents);
@@ -197,7 +199,7 @@ public class AutofillProvider {
     public boolean shouldQueryAutofillSuggestion() {
         return mRequest != null
                 && mRequest.getFocusField() != null
-                && !mAutofillManager.isAutofillInputUIShowing();
+                && !mAutofillManager.isAutofillInputUiShowing();
     }
 
     public void queryAutofillSuggestion() {
@@ -577,7 +579,7 @@ public class AutofillProvider {
                             .setSubLabel(datalistLabels[i])
                             .setItemTag("")
                             .setSuggestionType(SuggestionType.DATALIST_ENTRY)
-                            .setFeatureForIPH("")
+                            .setFeatureForIph("")
                             .build();
         }
         if (mWebContentsAccessibility == null) {

@@ -15,6 +15,7 @@
 #include <utility>
 
 #include "base/types/supports_ostream_operator.h"
+#include "base/types/supports_to_string.h"
 
 namespace base {
 
@@ -22,9 +23,6 @@ template <typename... Ts>
 std::string ToString(const Ts&... values);
 
 namespace internal {
-
-template <typename T>
-concept SupportsToString = requires(const T& t) { t.ToString(); };
 
 // I/O manipulators are function pointers, but should be sent directly to the
 // `ostream` instead of being cast to `const void*` like other function
@@ -36,7 +34,7 @@ template <typename T>
 constexpr bool IsIomanip<T&(T&)> = true;
 
 // Function pointers implicitly convert to `bool`, so use this to avoid printing
-// function pointers as 1 or 0.
+// function pointers as "true"/"false".
 template <typename T>
 concept WillBeIncorrectlyStreamedAsBool =
     std::is_function_v<std::remove_pointer_t<T>> &&
@@ -51,6 +49,15 @@ struct ToStringHelper {
     // char-like types.
     ss << "[" << sizeof(v) << "-byte object at 0x"
        << static_cast<const void*>(std::addressof(v)) << "]";
+  }
+};
+
+// Boolean values. (Handled explicitly so as to not rely on the behavior of
+// std::boolalpha.)
+template <>
+struct ToStringHelper<bool> {
+  static void Stringify(const bool& v, std::ostringstream& ss) {
+    ss << (v ? "true" : "false");
   }
 };
 

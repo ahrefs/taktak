@@ -18,7 +18,6 @@
 #include "chrome/browser/feedback/show_feedback_page.h"
 #include "chrome/browser/ui/settings_window_manager_chromeos.h"
 #include "chrome/browser/ui/views/borealis/borealis_disallowed_dialog.h"
-#include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
 #include "chrome/grit/generated_resources.h"
 #include "chromeos/dbus/power/power_manager_client.h"
@@ -83,7 +82,7 @@ class BorealisLaunchErrorDialog : public DialogDelegate {
     SetModalType(ui::mojom::ModalType::kNone);
     SetOwnedByWidget(true);
     SetShowCloseButton(false);
-    set_fixed_width(ChromeLayoutProvider::Get()->GetDistanceMetric(
+    set_fixed_width(views::LayoutProvider::Get()->GetDistanceMetric(
         views::DISTANCE_MODAL_DIALOG_PREFERRED_WIDTH));
   }
 
@@ -186,20 +185,20 @@ class BorealisLaunchErrorDialog : public DialogDelegate {
           profile, chromeos::settings::mojom::kStorageSubpagePath);
     } else if (failure_ == FailureType::FAILURE_RETRY) {
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
-          FROM_HERE, base::BindOnce(
-                         [](Profile* profile) {
-                           // Technically "retry" should re-do whatever the user
-                           // originally tried. For simplicity we just retry the
-                           // client app.
-                           ::borealis::BorealisServiceFactory::GetForProfile(
-                               profile)
-                               ->AppLauncher()
-                               .Launch(::borealis::kClientAppId,
-                                       ::borealis::BorealisLaunchSource::
-                                           kErrorDialogRetryButton,
-                                       base::DoNothing());
-                         },
-                         profile));
+          FROM_HERE,
+          base::BindOnce(
+              [](Profile* profile) {
+                // Technically "retry" should re-do whatever the user
+                // originally tried. For simplicity we just retry the
+                // client app.
+                ::borealis::BorealisServiceFactory::GetForProfile(profile)
+                    ->AppLauncher()
+                    .Launch(::borealis::kClientAppId,
+                            ::borealis::BorealisLaunchSource::
+                                kErrorDialogRetryButton,
+                            base::DoNothing());
+              },
+              profile));
     }
   }
 

@@ -32,7 +32,6 @@
 #include "third_party/blink/renderer/bindings/modules/v8/v8_gpu_texture_view_dimension.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_gpu_vertex_format.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_gpu_vertex_step_mode.h"
-#include "third_party/blink/renderer/bindings/modules/v8/v8_wgsl_feature_name.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_types.h"
 
 namespace blink {
@@ -123,6 +122,8 @@ V8GPUQueryType FromDawnEnum(wgpu::QueryType dawn_enum) {
       return V8GPUQueryType(V8GPUQueryType::Enum::kOcclusion);
     case wgpu::QueryType::Timestamp:
       return V8GPUQueryType(V8GPUQueryType::Enum::kTimestamp);
+    default:
+      break;
   }
   NOTREACHED();
 }
@@ -338,6 +339,20 @@ wgpu::TextureFormat AsDawnEnum(const V8GPUTextureFormat& webgpu_enum) {
       return wgpu::TextureFormat::ASTC12x12Unorm;
     case V8GPUTextureFormat::Enum::kAstc12X12UnormSrgb:
       return wgpu::TextureFormat::ASTC12x12UnormSrgb;
+
+      // R/RG/RGBA16 norm texture formats
+    case V8GPUTextureFormat::Enum::kR16Unorm:
+      return wgpu::TextureFormat::R16Unorm;
+    case V8GPUTextureFormat::Enum::kRg16Unorm:
+      return wgpu::TextureFormat::RG16Unorm;
+    case V8GPUTextureFormat::Enum::kRgba16Unorm:
+      return wgpu::TextureFormat::RGBA16Unorm;
+    case V8GPUTextureFormat::Enum::kR16Snorm:
+      return wgpu::TextureFormat::R16Snorm;
+    case V8GPUTextureFormat::Enum::kRg16Snorm:
+      return wgpu::TextureFormat::RG16Snorm;
+    case V8GPUTextureFormat::Enum::kRgba16Snorm:
+      return wgpu::TextureFormat::RGBA16Snorm;
   }
   NOTREACHED();
 }
@@ -554,6 +569,20 @@ V8GPUTextureFormat FromDawnEnum(wgpu::TextureFormat dawn_enum) {
       return V8GPUTextureFormat(V8GPUTextureFormat::Enum::kAstc12X12Unorm);
     case wgpu::TextureFormat::ASTC12x12UnormSrgb:
       return V8GPUTextureFormat(V8GPUTextureFormat::Enum::kAstc12X12UnormSrgb);
+
+    // R/RG/RGBA16 norm texture formats
+    case wgpu::TextureFormat::R16Unorm:
+      return V8GPUTextureFormat(V8GPUTextureFormat::Enum::kR16Unorm);
+    case wgpu::TextureFormat::RG16Unorm:
+      return V8GPUTextureFormat(V8GPUTextureFormat::Enum::kRg16Unorm);
+    case wgpu::TextureFormat::RGBA16Unorm:
+      return V8GPUTextureFormat(V8GPUTextureFormat::Enum::kRgba16Unorm);
+    case wgpu::TextureFormat::R16Snorm:
+      return V8GPUTextureFormat(V8GPUTextureFormat::Enum::kR16Snorm);
+    case wgpu::TextureFormat::RG16Snorm:
+      return V8GPUTextureFormat(V8GPUTextureFormat::Enum::kRg16Snorm);
+    case wgpu::TextureFormat::RGBA16Snorm:
+      return V8GPUTextureFormat(V8GPUTextureFormat::Enum::kRgba16Snorm);
     default:
       break;
   }
@@ -580,7 +609,7 @@ V8GPUTextureDimension FromDawnEnum(wgpu::TextureDimension dawn_enum) {
       return V8GPUTextureDimension(V8GPUTextureDimension::Enum::k2D);
     case wgpu::TextureDimension::e3D:
       return V8GPUTextureDimension(V8GPUTextureDimension::Enum::k3d);
-    case wgpu::TextureDimension::Undefined:
+    default:
       break;
   }
   NOTREACHED();
@@ -676,11 +705,6 @@ wgpu::FeatureName AsDawnEnum(const V8GPUFeatureName& webgpu_enum) {
       return wgpu::FeatureName::Depth32FloatStencil8;
     case V8GPUFeatureName::Enum::kIndirectFirstInstance:
       return wgpu::FeatureName::IndirectFirstInstance;
-    case V8GPUFeatureName::Enum::kChromiumExperimentalSubgroups:
-      return wgpu::FeatureName::ChromiumExperimentalSubgroups;
-    case V8GPUFeatureName::Enum::
-        kChromiumExperimentalSubgroupUniformControlFlow:
-      return wgpu::FeatureName::ChromiumExperimentalSubgroupUniformControlFlow;
     case V8GPUFeatureName::Enum::kRg11B10UfloatRenderable:
       return wgpu::FeatureName::RG11B10UfloatRenderable;
     case V8GPUFeatureName::Enum::kBgra8UnormStorage:
@@ -695,12 +719,14 @@ wgpu::FeatureName AsDawnEnum(const V8GPUFeatureName& webgpu_enum) {
       return wgpu::FeatureName::DualSourceBlending;
     case V8GPUFeatureName::Enum::kSubgroups:
       return wgpu::FeatureName::Subgroups;
-    case V8GPUFeatureName::Enum::kSubgroupsF16:
-      return wgpu::FeatureName::SubgroupsF16;
     case V8GPUFeatureName::Enum::kClipDistances:
       return wgpu::FeatureName::ClipDistances;
     case V8GPUFeatureName::Enum::kChromiumExperimentalMultiDrawIndirect:
       return wgpu::FeatureName::MultiDrawIndirect;
+    case V8GPUFeatureName::Enum::kChromiumExperimentalUnorm16TextureFormats:
+      return wgpu::FeatureName::Unorm16TextureFormats;
+    case V8GPUFeatureName::Enum::kChromiumExperimentalSnorm16TextureFormats:
+      return wgpu::FeatureName::Snorm16TextureFormats;
   }
 }
 
@@ -787,38 +813,56 @@ wgpu::VertexStepMode AsDawnEnum(const V8GPUVertexStepMode& webgpu_enum) {
 
 wgpu::VertexFormat AsDawnEnum(const V8GPUVertexFormat& webgpu_enum) {
   switch (webgpu_enum.AsEnum()) {
+    case V8GPUVertexFormat::Enum::kUint8:
+      return wgpu::VertexFormat::Uint8;
     case V8GPUVertexFormat::Enum::kUint8X2:
       return wgpu::VertexFormat::Uint8x2;
     case V8GPUVertexFormat::Enum::kUint8X4:
       return wgpu::VertexFormat::Uint8x4;
+    case V8GPUVertexFormat::Enum::kSint8:
+      return wgpu::VertexFormat::Sint8;
     case V8GPUVertexFormat::Enum::kSint8X2:
       return wgpu::VertexFormat::Sint8x2;
     case V8GPUVertexFormat::Enum::kSint8X4:
       return wgpu::VertexFormat::Sint8x4;
+    case V8GPUVertexFormat::Enum::kUnorm8:
+      return wgpu::VertexFormat::Unorm8;
     case V8GPUVertexFormat::Enum::kUnorm8X2:
       return wgpu::VertexFormat::Unorm8x2;
     case V8GPUVertexFormat::Enum::kUnorm8X4:
       return wgpu::VertexFormat::Unorm8x4;
+    case V8GPUVertexFormat::Enum::kSnorm8:
+      return wgpu::VertexFormat::Snorm8;
     case V8GPUVertexFormat::Enum::kSnorm8X2:
       return wgpu::VertexFormat::Snorm8x2;
     case V8GPUVertexFormat::Enum::kSnorm8X4:
       return wgpu::VertexFormat::Snorm8x4;
+    case V8GPUVertexFormat::Enum::kUint16:
+      return wgpu::VertexFormat::Uint16;
     case V8GPUVertexFormat::Enum::kUint16X2:
       return wgpu::VertexFormat::Uint16x2;
     case V8GPUVertexFormat::Enum::kUint16X4:
       return wgpu::VertexFormat::Uint16x4;
+    case V8GPUVertexFormat::Enum::kSint16:
+      return wgpu::VertexFormat::Sint16;
     case V8GPUVertexFormat::Enum::kSint16X2:
       return wgpu::VertexFormat::Sint16x2;
     case V8GPUVertexFormat::Enum::kSint16X4:
       return wgpu::VertexFormat::Sint16x4;
+    case V8GPUVertexFormat::Enum::kUnorm16:
+      return wgpu::VertexFormat::Unorm16;
     case V8GPUVertexFormat::Enum::kUnorm16X2:
       return wgpu::VertexFormat::Unorm16x2;
     case V8GPUVertexFormat::Enum::kUnorm16X4:
       return wgpu::VertexFormat::Unorm16x4;
+    case V8GPUVertexFormat::Enum::kSnorm16:
+      return wgpu::VertexFormat::Snorm16;
     case V8GPUVertexFormat::Enum::kSnorm16X2:
       return wgpu::VertexFormat::Snorm16x2;
     case V8GPUVertexFormat::Enum::kSnorm16X4:
       return wgpu::VertexFormat::Snorm16x4;
+    case V8GPUVertexFormat::Enum::kFloat16:
+      return wgpu::VertexFormat::Float16;
     case V8GPUVertexFormat::Enum::kFloat16X2:
       return wgpu::VertexFormat::Float16x2;
     case V8GPUVertexFormat::Enum::kFloat16X4:
@@ -849,6 +893,8 @@ wgpu::VertexFormat AsDawnEnum(const V8GPUVertexFormat& webgpu_enum) {
       return wgpu::VertexFormat::Sint32x4;
     case V8GPUVertexFormat::Enum::kUnorm1010102:
       return wgpu::VertexFormat::Unorm10_10_10_2;
+    case V8GPUVertexFormat::Enum::kUnorm8X4Bgra:
+      return wgpu::VertexFormat::Unorm8x4BGRA;
   }
   NOTREACHED();
 }
@@ -939,6 +985,8 @@ V8GPUBufferMapState FromDawnEnum(wgpu::BufferMapState dawn_enum) {
       return V8GPUBufferMapState(V8GPUBufferMapState::Enum::kPending);
     case wgpu::BufferMapState::Mapped:
       return V8GPUBufferMapState(V8GPUBufferMapState::Enum::kMapped);
+    default:
+      break;
   }
   NOTREACHED();
 }
@@ -963,6 +1011,8 @@ const char* FromDawnEnum(wgpu::BackendType dawn_enum) {
       return "openGL";
     case wgpu::BackendType::OpenGLES:
       return "openGLES";
+    default:
+      break;
   }
   NOTREACHED();
 }
@@ -977,53 +1027,39 @@ const char* FromDawnEnum(wgpu::AdapterType dawn_enum) {
       return "CPU";
     case wgpu::AdapterType::Unknown:
       return "unknown";
+    default:
+      break;
   }
   NOTREACHED();
 }
 
-bool FromDawnEnum(wgpu::WGSLFeatureName dawn_enum, V8WGSLFeatureName* result) {
+const char* FromDawnEnum(wgpu::WGSLLanguageFeatureName dawn_enum) {
   switch (dawn_enum) {
-    case wgpu::WGSLFeatureName::ReadonlyAndReadwriteStorageTextures:
-      *result = V8WGSLFeatureName(
-          V8WGSLFeatureName::Enum::kReadonlyAndReadwriteStorageTextures);
-      return true;
-    case wgpu::WGSLFeatureName::Packed4x8IntegerDotProduct:
-      *result = V8WGSLFeatureName(
-          V8WGSLFeatureName::Enum::kPacked4X8IntegerDotProduct);
-      return true;
-    case wgpu::WGSLFeatureName::UnrestrictedPointerParameters:
-      *result = V8WGSLFeatureName(
-          V8WGSLFeatureName::Enum::kUnrestrictedPointerParameters);
-      return true;
-    case wgpu::WGSLFeatureName::PointerCompositeAccess:
-      *result =
-          V8WGSLFeatureName(V8WGSLFeatureName::Enum::kPointerCompositeAccess);
-      return true;
+    case wgpu::WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures:
+      return "readonly_and_readwrite_storage_textures";
+    case wgpu::WGSLLanguageFeatureName::Packed4x8IntegerDotProduct:
+      return "packed_4x8_integer_dot_product";
+    case wgpu::WGSLLanguageFeatureName::UnrestrictedPointerParameters:
+      return "unrestricted_pointer_parameters";
+    case wgpu::WGSLLanguageFeatureName::PointerCompositeAccess:
+      return "pointer_composite_access";
 
-    case wgpu::WGSLFeatureName::ChromiumTestingUnimplemented:
-      *result = V8WGSLFeatureName(
-          V8WGSLFeatureName::Enum::kChromiumTestingUnimplemented);
-      return true;
-    case wgpu::WGSLFeatureName::ChromiumTestingUnsafeExperimental:
-      *result = V8WGSLFeatureName(
-          V8WGSLFeatureName::Enum::kChromiumTestingUnsafeExperimental);
-      return true;
-    case wgpu::WGSLFeatureName::ChromiumTestingExperimental:
-      *result = V8WGSLFeatureName(
-          V8WGSLFeatureName::Enum::kChromiumTestingExperimental);
-      return true;
-    case wgpu::WGSLFeatureName::ChromiumTestingShippedWithKillswitch:
-      *result = V8WGSLFeatureName(
-          V8WGSLFeatureName::Enum::kChromiumTestingShippedWithKillswitch);
-      return true;
-    case wgpu::WGSLFeatureName::ChromiumTestingShipped:
-      *result =
-          V8WGSLFeatureName(V8WGSLFeatureName::Enum::kChromiumTestingShipped);
-      return true;
+    // Non-standard.
+    case wgpu::WGSLLanguageFeatureName::ChromiumTestingUnimplemented:
+      return "chromium_testing_unimplemented";
+    case wgpu::WGSLLanguageFeatureName::ChromiumTestingUnsafeExperimental:
+      return "chromium_testing_unsafe_experimental";
+    case wgpu::WGSLLanguageFeatureName::ChromiumTestingExperimental:
+      return "chromium_testing_experimental";
+    case wgpu::WGSLLanguageFeatureName::ChromiumTestingShippedWithKillswitch:
+      return "chromium_testing_shipped_with_killswitch";
+    case wgpu::WGSLLanguageFeatureName::ChromiumTestingShipped:
+      return "chromium_testing_shipped";
 
     default:
-      return false;
+      break;
   }
+  return nullptr;
 }
 
 }  // namespace blink

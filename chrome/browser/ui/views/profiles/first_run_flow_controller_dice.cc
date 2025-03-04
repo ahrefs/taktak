@@ -50,7 +50,7 @@ namespace {
 constexpr base::TimeDelta kDefaultBrowserCheckTimeout = base::Seconds(2);
 
 const signin_metrics::AccessPoint kAccessPoint =
-    signin_metrics::AccessPoint::ACCESS_POINT_FOR_YOU_FRE;
+    signin_metrics::AccessPoint::kForYouFre;
 
 enum class ShowDefaultBrowserStep {
   // The default browser step should be shown as appropriate.
@@ -468,8 +468,7 @@ FirstRunFlowControllerDice::~FirstRunFlowControllerDice() {
   }
 }
 
-void FirstRunFlowControllerDice::Init(
-    StepSwitchFinishedCallback step_switch_finished_callback) {
+void FirstRunFlowControllerDice::Init() {
   RegisterStep(
       Step::kIntro,
       CreateIntroStep(host(),
@@ -477,10 +476,11 @@ void FirstRunFlowControllerDice::Init(
                           &FirstRunFlowControllerDice::HandleIntroSigninChoice,
                           weak_ptr_factory_.GetWeakPtr()),
                       /*enable_animations=*/true));
-  SwitchToStep(Step::kIntro, /*reset_state=*/true,
-               std::move(step_switch_finished_callback));
+  SwitchToStep(Step::kIntro, /*reset_state=*/true);
 
-  signin_metrics::LogSignInOffered(kAccessPoint);
+  signin_metrics::LogSignInOffered(
+      kAccessPoint, signin_metrics::PromoAction::
+                        PROMO_ACTION_NEW_ACCOUNT_NO_EXISTING_ACCOUNT);
 }
 
 void FirstRunFlowControllerDice::CancelPostSignInFlow() {
@@ -489,14 +489,18 @@ void FirstRunFlowControllerDice::CancelPostSignInFlow() {
   // accepted before we show the prompt. So here we need to revert it.
   // Currently we remove the account to match the behaviour from the profile
   // creation flow.
-  // TODO(crbug.com/40067597): Refactor ProfilePickerSignedInFlowController
-  // to split the lacros and dice behaviours more and remove the need for such
-  // hacky workarounds. Look into letting the user keep their account.
+  // TODO(crbug.com/40067597): Look into letting the user keep their account.
   signin::ClearProfileWithManagedAccounts(profile_);
 
   HandleIdentityStepsCompleted(profile_, PostHostClearedCallback(),
                                /*is_continue_callback=*/false,
                                StepSwitchFinishedCallback());
+}
+
+void FirstRunFlowControllerDice::PickProfile(
+    const base::FilePath& profile_path,
+    ProfilePicker::ProfilePickingArgs args) {
+  NOTREACHED() << "FRE is not expected to handle this flow";
 }
 
 bool FirstRunFlowControllerDice::PreFinishWithBrowser() {

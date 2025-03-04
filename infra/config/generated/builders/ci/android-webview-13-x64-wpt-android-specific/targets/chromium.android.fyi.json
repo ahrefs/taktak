@@ -3,6 +3,8 @@
     "isolated_scripts": [
       {
         "args": [
+          "--skipped",
+          "always",
           "--avd-config=../../tools/android/avd/proto/android_33_google_apis_x64.textpb"
         ],
         "description": "Run with android_33_google_apis_x64",
@@ -12,7 +14,7 @@
           ],
           "script": "//third_party/blink/tools/merge_web_test_results.py"
         },
-        "name": "webview_blink_wpt_tests",
+        "name": "android_webview_wpt_tests",
         "resultdb": {
           "enable": true,
           "has_native_resultdb_integration": true

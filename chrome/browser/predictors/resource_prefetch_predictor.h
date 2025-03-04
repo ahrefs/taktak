@@ -82,7 +82,6 @@ struct PreconnectRequest {
 
 struct PrefetchRequest {
   PrefetchRequest(const GURL& url,
-                  const net::NetworkAnonymizationKey& network_anonymization_key,
                   network::mojom::RequestDestination destination);
 
   PrefetchRequest(const PrefetchRequest&) = default;
@@ -91,7 +90,6 @@ struct PrefetchRequest {
   PrefetchRequest& operator=(PrefetchRequest&&) = default;
 
   GURL url;
-  net::NetworkAnonymizationKey network_anonymization_key;
   network::mojom::RequestDestination destination;
 };
 
@@ -212,6 +210,11 @@ class ResourcePrefetchPredictor : public history::HistoryServiceObserver {
   std::optional<LcppStat> GetLcppStat(
       const std::optional<url::Origin>& initiator_origin,
       const GURL& url) const;
+
+  void GetPreconnectAndPrefetchRequest(
+      const std::optional<url::Origin>& initiator_origin,
+      const GURL& url,
+      PreconnectPrediction& prediction);
 
  private:
   friend class LoadingPredictor;

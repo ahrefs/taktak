@@ -359,8 +359,7 @@ public class NewTabPageLayout extends LinearLayout {
         Callback<LoadUrlParams> logoClickedCallback =
                 mCallbackController.makeCancelable(
                         (urlParams) -> {
-                            mManager.getNativePageHost()
-                                    .loadUrl(urlParams, /* isIncognito= */ false);
+                            mManager.getNativePageHost().loadUrl(urlParams, /* incognito= */ false);
                             BrowserUiUtils.recordModuleClickHistogram(
                                     ModuleTypeOnStartAndNtp.DOODLE);
                         });
@@ -376,13 +375,11 @@ public class NewTabPageLayout extends LinearLayout {
 
         mLogoView = findViewById(R.id.search_provider_logo);
 
-        // TODO(crbug.com/361120351): Clean up LogoCoordinator.
         mLogoCoordinator =
                 new LogoCoordinator(
                         mContext,
                         logoClickedCallback,
                         mLogoView,
-                        /* shouldFetchDoodle= */ true,
                         mOnLogoAvailableCallback,
                         /* visibilityObserver= */ null,
                         mIsLogoPolishFlagEnabled);
@@ -845,7 +842,7 @@ public class NewTabPageLayout extends LinearLayout {
         if (!mHasShownView) {
             mHasShownView = true;
             onInitializationProgressChanged();
-            TraceEvent.instant("NewTabPageSearchAvailable)");
+            TraceEvent.instant("NewTabPageSearchAvailable");
         }
     }
 

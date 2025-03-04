@@ -89,7 +89,6 @@ class Tab : public gfx::AnimationDelegate,
   void OnMouseEntered(const ui::MouseEvent& event) override;
   void OnMouseExited(const ui::MouseEvent& event) override;
   void OnGestureEvent(ui::GestureEvent* event) override;
-  std::u16string GetTooltipText(const gfx::Point& p) const override;
   gfx::Size CalculatePreferredSize(
       const views::SizeBounds& available_size) const override;
   void PaintChildren(const views::PaintInfo& info) override;
@@ -103,6 +102,9 @@ class Tab : public gfx::AnimationDelegate,
   TabSizeInfo GetTabSizeInfo() const override;
   void SetGroup(std::optional<tab_groups::TabGroupId> group) override;
   void UpdateAccessibleName();
+
+  void OnAXNameChanged(ax::mojom::StringAttribute attribute,
+                       const std::optional<std::string>& name);
 
   TabSlotController* controller() const { return controller_; }
 
@@ -199,7 +201,7 @@ class Tab : public gfx::AnimationDelegate,
   friend class AlertIndicatorButtonTest;
   friend class TabTest;
   friend class TabStripTestBase;
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   FRIEND_TEST_ALL_PREFIXES(TabStripTest, CloseButtonHiddenWhenLockedForOnTask);
 #endif
   FRIEND_TEST_ALL_PREFIXES(TabStripTest, TabCloseButtonVisibility);
@@ -290,12 +292,20 @@ class Tab : public gfx::AnimationDelegate,
   // the view bounds.
   bool mouse_hovered_ = false;
 
+  // Whether the shift key was pressed at the start of the click. Used on mouse
+  // up.
+  bool shift_pressed_on_mouse_down_ = false;
+
   std::unique_ptr<TabCloseButtonObserver> tab_close_button_observer_;
 
   // Freezing vote held while the tab is collapsed.
   std::optional<performance_manager::freezing::FreezingVote> freezing_vote_;
 
   base::CallbackListSubscription paint_as_active_subscription_;
+
+  base::CallbackListSubscription root_name_changed_subscription_;
+
+  base::WeakPtrFactory<Tab> weak_ptr_factory_{this};
 };
 
 #endif  // CHROME_BROWSER_UI_VIEWS_TABS_TAB_H_

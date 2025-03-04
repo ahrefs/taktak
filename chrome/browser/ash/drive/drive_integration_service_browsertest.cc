@@ -414,7 +414,7 @@ class DriveIntegrationBrowserTestWithMirrorSyncEnabled
   DriveIntegrationBrowserTestWithMirrorSyncEnabled& operator=(
       const DriveIntegrationBrowserTestWithMirrorSyncEnabled&) = delete;
 
-  ~DriveIntegrationBrowserTestWithMirrorSyncEnabled() override {}
+  ~DriveIntegrationBrowserTestWithMirrorSyncEnabled() override = default;
 
   void SetUpOnMainThread() override { MockGetSyncingPaths(); }
 
@@ -446,9 +446,7 @@ class DriveIntegrationBrowserTestWithBulkPinningEnabled
  public:
   DriveIntegrationBrowserTestWithBulkPinningEnabled() {
     scoped_feature_list_.InitWithFeatures(
-        {ash::features::kDriveFsBulkPinning,
-         ash::features::kFeatureManagementDriveFsBulkPinning},
-        {});
+        {ash::features::kFeatureManagementDriveFsBulkPinning}, {});
   }
 
  private:

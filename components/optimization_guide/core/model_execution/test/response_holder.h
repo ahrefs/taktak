@@ -25,8 +25,8 @@ class ResponseHolder {
   bool GetFinalStatus() { return final_status_future_.Get(); }
 
   const std::optional<std::string>& value() const { return response_received_; }
-  const std::vector<std::string>& streamed() const {
-    return streamed_responses_;
+  const std::vector<std::string>& partials() const {
+    return partial_responses_;
   }
   const std::optional<
       OptimizationGuideModelExecutionError::ModelExecutionError>&
@@ -37,6 +37,9 @@ class ResponseHolder {
     return provided_by_on_device_;
   }
   ModelQualityLogEntry* log_entry() { return log_entry_received_.get(); }
+  proto::ModelExecutionInfo* model_execution_info() {
+    return model_execution_info_received_.get();
+  }
   const auto& logged_executions() {
     return log_entry()
         ->log_ai_data_request()
@@ -45,7 +48,10 @@ class ResponseHolder {
         .execution_infos();
   }
 
-  void ClearLogEntry() { log_entry_received_.reset(); }
+  void ClearLogEntry() {
+    log_entry_received_.reset();
+    model_execution_info_received_.reset();
+  }
 
  private:
   void Clear();
@@ -55,10 +61,11 @@ class ResponseHolder {
       OptimizationGuideModelStreamingExecutionResult result);
 
   base::test::TestFuture<bool> final_status_future_;
-  std::vector<std::string> streamed_responses_;
+  std::vector<std::string> partial_responses_;
   std::optional<std::string> response_received_;
   std::optional<bool> provided_by_on_device_;
   std::unique_ptr<ModelQualityLogEntry> log_entry_received_;
+  std::unique_ptr<proto::ModelExecutionInfo> model_execution_info_received_;
   std::optional<OptimizationGuideModelExecutionError::ModelExecutionError>
       response_error_;
   base::WeakPtrFactory<ResponseHolder> weak_ptr_factory_;

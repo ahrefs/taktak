@@ -20,12 +20,13 @@ enum class SafeBrowsingSafetyCheckState;
 
 namespace experimental_flags {
 
-// NSUserDefaults key to display an experimental "switch profile" entry in
-// settings. For historic reasons, this is int-valued.
-extern NSString* const kDisplaySwitchProfile;
-
 // Whether the First Run UI will always be displayed.
 bool AlwaysDisplayFirstRun();
+
+// Whether the First Run UI will never be displayed. Useful when running
+// automated testing on the "chrome" build target which otherwise cannot skip
+// the FRE using tests_hook::DisableDefaultFirstRun
+bool NeverDisplayFirstRun();
 
 // Whether the Upgrade Promo UI will always be displayed.
 bool AlwaysDisplayUpgradePromo();
@@ -140,16 +141,15 @@ std::string GetSegmentForForcedDeviceSwitcherExperience();
 // former takes precedence.
 std::string GetSegmentForForcedShopperExperience();
 
-// Whether a phone backup/restore state should be simulated.
+// Whether a phone backup/restore state should be simulated due to experimental
+// settings. Uses `tests_hook::SimulatePostDeviceRestore()` to check whether
+// this feature should be enabled for EG tests.
 bool SimulatePostDeviceRestore();
 
 // In production, the history sync opt-in isn't shown if it was declined too
 // recently or too many consecutive times. If this function is true, those
 // limits are suppressed for simpler testing.
 bool ShouldIgnoreHistorySyncDeclineLimits();
-
-// Whether the developer-mode Switch Profile UI will be be displayed.
-bool DisplaySwitchProfile();
 
 // Returns the inactivity threshold to be used for displaying Safety Check
 // notifications, overriding the default value stored in the code or any value
@@ -165,9 +165,29 @@ std::optional<int> GetForcedTipsMagicStackState();
 // image.
 bool ShouldDisplayLensShopTipWithImage();
 
+// Whether Inactive Tabs should be in Demo mode, where tabs are
+// considered inactive after a minute.
+bool ShouldUseInactiveTabsDemoThreshold();
+
+// Whether Inactive Tabs should be in Automated Testing mode, where
+// tabs are immediately considered inactive.
+bool ShouldUseInactiveTabsTestThreshold();
+
 // Returns the override for Tab Resumption decoration.
 // Returns nil is not set.
 NSString* GetTabResumptionDecorationOverride();
+
+// Whether the first party incognito experience should be simulated.
+bool ShouldOpenInIncognitoOverride();
+
+// Whether the a delay should be added to the asynchronous startup.
+bool ShouldDelayAsyncStartup();
+
+// Whether to always show the first party incognito experience UI.
+bool AlwaysShowTheFirstPartyIncognitoUI();
+
+// Enables the AI menu, which is a tool for debugging LLM queries.
+bool EnableAIPrototypingMenu();
 
 }  // namespace experimental_flags
 

@@ -35,6 +35,17 @@ public abstract class TabWebContentsDelegateAndroid extends WebContentsDelegateA
             boolean userGesture);
 
     /**
+     * Repositions the window containing this tab to given bounds. Applicable
+     * only for multi-window mode in Android.
+     *
+     * @param source Source WebContents which requested the repositioning.
+     * @param bounds Rectangle specifying desired bounds in global work area coordinate system.
+     */
+    protected void setContentsBounds(WebContents source, Rect bounds) {
+        // Do nothing.
+    }
+
+    /**
      * Sets the overlay mode.
      * Overlay mode means that we are currently using AndroidOverlays to display video, and
      * that the compositor's surface should support alpha and not be marked as opaque.
@@ -116,6 +127,11 @@ public abstract class TabWebContentsDelegateAndroid extends WebContentsDelegateA
      * @return true if the WebContents is a TWA.
      */
     public boolean isTrustedWebActivity(WebContents webContents) {
+        return false;
+    }
+
+    /** Return if dynamically change safe area insets as browser controls scroll. */
+    protected boolean isDynamicSafeAreaInsetsEnabled() {
         return false;
     }
 }

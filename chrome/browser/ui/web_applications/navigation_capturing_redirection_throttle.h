@@ -39,8 +39,6 @@ class NavigationCapturingRedirectionThrottle
  private:
   explicit NavigationCapturingRedirectionThrottle(
       content::NavigationHandle* navigation_handle);
-
-  ThrottleCheckResult HandleRequest();
 };
 
 }  // namespace web_app

@@ -5,6 +5,7 @@
 #include "chrome/browser/ui/webui/cr_components/history_embeddings/history_embeddings_handler.h"
 
 #include "base/i18n/time_formatting.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/mock_callback.h"
 #include "base/test/scoped_feature_list.h"
@@ -15,6 +16,10 @@
 #include "chrome/browser/optimization_guide/optimization_guide_keyed_service_factory.h"
 #include "chrome/browser/page_content_annotations/page_content_annotations_service_factory.h"
 #include "chrome/browser/ui/browser_commands.h"
+#include "chrome/browser/ui/hats/hats_service_factory.h"
+#include "chrome/browser/ui/hats/mock_hats_service.h"
+#include "chrome/browser/ui/hats/survey_config.h"
+#include "chrome/common/chrome_features.h"
 #include "chrome/test/base/browser_with_test_window_test.h"
 #include "chrome/test/base/testing_browser_process.h"
 #include "chrome/test/base/testing_profile.h"
@@ -22,8 +27,8 @@
 #include "components/history_embeddings/answerer.h"
 #include "components/history_embeddings/history_embeddings_features.h"
 #include "components/history_embeddings/history_embeddings_service.h"
-#include "components/history_embeddings/mock_embedder.h"
 #include "components/page_content_annotations/core/test_page_content_annotations_service.h"
+#include "components/passage_embeddings/passage_embeddings_test_util.h"
 #include "components/user_education/test/mock_feature_promo_controller.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/test/test_web_ui.h"
@@ -59,12 +64,15 @@ class MockPage : public history_embeddings::mojom::Page {
 }  // namespace
 
 std::unique_ptr<KeyedService> BuildTestHistoryEmbeddingsService(
+    passage_embeddings::TestEnvironment* passage_embeddings_test_env,
     content::BrowserContext* browser_context) {
   return HistoryEmbeddingsServiceFactory::
       BuildServiceInstanceForBrowserContextForTesting(
-          browser_context, std::make_unique<history_embeddings::MockEmbedder>(),
+          browser_context,
+          passage_embeddings_test_env->embedder_metadata_provider(),
+          passage_embeddings_test_env->embedder(),
           /*answerer=*/nullptr,
-          /*intent_classfier=*/nullptr);
+          /*intent_classifier=*/nullptr);
 }
 
 std::unique_ptr<KeyedService> BuildTestPageContentAnnotationsService(
@@ -89,7 +97,10 @@ class HistoryEmbeddingsHandlerTest : public BrowserWithTestWindowTest {
   void SetUp() override {
     BrowserWithTestWindowTest::SetUp();
     feature_list_.InitWithFeaturesAndParameters(
-        /*enabled_features=*/{{history_embeddings::kHistoryEmbeddings, {}},
+        /*enabled_features=*/{{history_embeddings::kHistoryEmbeddings,
+                               {
+                                   {"TrimAfterHostInResults", "true"},
+                               }},
                               {history_embeddings::kHistoryEmbeddingsAnswers,
                                {}},
                               {feature_engagement::kIPHHistorySearchFeature,
@@ -111,7 +122,8 @@ class HistoryEmbeddingsHandlerTest : public BrowserWithTestWindowTest {
                 HistoryServiceFactory::GetDefaultFactory()},
             TestingProfile::TestingFactory{
                 HistoryEmbeddingsServiceFactory::GetInstance(),
-                base::BindRepeating(&BuildTestHistoryEmbeddingsService)},
+                base::BindRepeating(&BuildTestHistoryEmbeddingsService,
+                                    &passage_embeddings_test_env_)},
             TestingProfile::TestingFactory{
                 PageContentAnnotationsServiceFactory::GetInstance(),
                 base::BindRepeating(&BuildTestPageContentAnnotationsService)},
@@ -128,6 +140,9 @@ class HistoryEmbeddingsHandlerTest : public BrowserWithTestWindowTest {
 
     static_cast<TestBrowserWindow*>(window())->SetFeaturePromoController(
         std::make_unique<user_education::test::MockFeaturePromoController>());
+    mock_hats_service_ = static_cast<MockHatsService*>(
+        HatsServiceFactory::GetInstance()->SetTestingFactoryAndUse(
+            profile_, base::BindRepeating(&BuildMockHatsService)));
 
     handler_ = std::make_unique<HistoryEmbeddingsHandler>(
         mojo::PendingReceiver<history_embeddings::mojom::PageHandler>(),
@@ -137,6 +152,7 @@ class HistoryEmbeddingsHandlerTest : public BrowserWithTestWindowTest {
 
   void TearDown() override {
     browser()->tab_strip_model()->CloseAllTabs();
+    mock_hats_service_ = nullptr;
     web_contents_.reset();
     handler_.reset();
     MockOptimizationGuideKeyedService::ResetForTesting();
@@ -157,8 +173,10 @@ class HistoryEmbeddingsHandlerTest : public BrowserWithTestWindowTest {
   base::test::ScopedFeatureList feature_list_;
   std::unique_ptr<content::WebContents> web_contents_;
   content::TestWebUI web_ui_;
+  passage_embeddings::TestEnvironment passage_embeddings_test_env_;
   std::unique_ptr<HistoryEmbeddingsHandler> handler_;
   testing::NiceMock<MockPage> page_;
+  raw_ptr<MockHatsService> mock_hats_service_;
   base::HistogramTester histogram_tester_;
 };
 
@@ -175,12 +193,13 @@ TEST_F(HistoryEmbeddingsHandlerTest, Searches) {
 
 TEST_F(HistoryEmbeddingsHandlerTest, FormatsMojoResults) {
   history_embeddings::ScoredUrlRow scored_url_row(
-      history_embeddings::ScoredUrl(0, 0, {}, .5));
-  scored_url_row.row = history::URLRow{GURL{"https://google.com"}};
+      history_embeddings::ScoredUrl(0, 0, {}, 0.5f, 0.2f));
+  scored_url_row.row = history::URLRow{GURL{"https://google.com/search"}};
   scored_url_row.row.set_title(u"my title");
   scored_url_row.row.set_last_visit(base::Time::Now() - base::Hours(1));
   history_embeddings::ScoredUrlRow other_scored_url_row = scored_url_row;
   other_scored_url_row.row = history::URLRow(GURL("http://other.com"));
+  other_scored_url_row.is_url_known_to_sync = true;
 
   history_embeddings::SearchResult embeddings_result;
   embeddings_result.scored_url_rows = {
@@ -206,7 +225,7 @@ TEST_F(HistoryEmbeddingsHandlerTest, FormatsMojoResults) {
   EXPECT_EQ(mojo_result->answer, "the answer");
   ASSERT_EQ(mojo_result->items.size(), 2u);
   EXPECT_EQ(mojo_result->items[0]->title, "my title");
-  EXPECT_EQ(mojo_result->items[0]->url.spec(), "https://google.com/");
+  EXPECT_EQ(mojo_result->items[0]->url.spec(), "https://google.com/search");
   EXPECT_EQ(mojo_result->items[0]->relative_time,
             base::UTF16ToUTF8(ui::TimeFormat::Simple(
                 ui::TimeFormat::FORMAT_ELAPSED, ui::TimeFormat::LENGTH_SHORT,
@@ -218,6 +237,7 @@ TEST_F(HistoryEmbeddingsHandlerTest, FormatsMojoResults) {
             scored_url_row.row.last_visit().InMillisecondsFSinceUnixEpoch());
   EXPECT_EQ(mojo_result->items[0]->url_for_display, "google.com");
   EXPECT_EQ(mojo_result->items[0]->answer_data.is_null(), true);
+  EXPECT_EQ(mojo_result->items[0]->is_url_known_to_sync, false);
   EXPECT_EQ(mojo_result->items[1]->url.spec(), "http://other.com/");
   EXPECT_EQ(mojo_result->items[1]->url_for_display, "other.com");
   EXPECT_EQ(mojo_result->items[1]->answer_data.is_null(), false);
@@ -225,10 +245,11 @@ TEST_F(HistoryEmbeddingsHandlerTest, FormatsMojoResults) {
             1u);
   EXPECT_EQ(mojo_result->items[1]->answer_data->answer_text_directives[0],
             "text fragment");
+  EXPECT_EQ(mojo_result->items[1]->is_url_known_to_sync, true);
 }
 
 TEST_F(HistoryEmbeddingsHandlerTest, RecordsMetrics) {
-  handler_->RecordSearchResultsMetrics(false, false, false, false, false);
+  handler_->RecordSearchResultsMetrics(false, false, false, false, false, 2);
   histogram_tester().ExpectBucketCount(
       "History.Embeddings.UserActions",
       HistoryEmbeddingsUserActions::kEmbeddingsSearch, 1);
@@ -248,7 +269,7 @@ TEST_F(HistoryEmbeddingsHandlerTest, RecordsMetrics) {
       "History.Embeddings.UserActions",
       HistoryEmbeddingsUserActions::kOtherHistoryResultClicked, 0);
 
-  handler_->RecordSearchResultsMetrics(true, true, true, true, true);
+  handler_->RecordSearchResultsMetrics(true, true, true, true, true, 2);
   histogram_tester().ExpectBucketCount(
       "History.Embeddings.UserActions",
       HistoryEmbeddingsUserActions::kEmbeddingsSearch, 2);
@@ -294,4 +315,34 @@ TEST_F(HistoryEmbeddingsHandlerTest, ShowsPromo) {
                   feature_engagement::kIPHHistorySearchFeature)))
       .Times(1);
   handler_->MaybeShowFeaturePromo();
+}
+
+TEST_F(HistoryEmbeddingsHandlerTest, LaunchesDelayedHaTSSurvey) {
+  base::test::ScopedFeatureList features;
+  features.InitWithFeatures(
+      {features::kHappinessTrackingSurveysForHistoryEmbeddings}, {});
+
+  bool non_empty_results = true;
+  bool user_clicked_results = true;
+  bool answer_shown = true;
+  bool answer_citation_clicked = false;
+  bool other_history_result_clicked = false;
+  const SurveyBitsData survey_bits_data = {
+      {"non empty results", non_empty_results},
+      {"best matches result clicked", user_clicked_results},
+      {"result clicked", other_history_result_clicked},
+      {"answer shown", answer_shown},
+      {"answer citation clicked", answer_citation_clicked},
+  };
+  int query_word_count = 2;
+  const SurveyStringData product_specific_string_data = {
+      {"query word count", base::NumberToString(query_word_count)}};
+  EXPECT_CALL(
+      *mock_hats_service_,
+      LaunchDelayedSurvey(kHatsSurveyTriggerHistoryEmbeddings, testing::_,
+                          survey_bits_data, product_specific_string_data))
+      .Times(1);
+  handler_->RecordSearchResultsMetrics(
+      non_empty_results, user_clicked_results, answer_shown,
+      answer_citation_clicked, other_history_result_clicked, query_word_count);
 }

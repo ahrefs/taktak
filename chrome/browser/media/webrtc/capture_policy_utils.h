@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "chrome/browser/media/webrtc/desktop_media_list.h"
+#include "content/public/common/buildflags.h"
 
 class GURL;
 class PrefRegistrySimple;
@@ -39,11 +40,9 @@ namespace capture_policy {
 
 extern const char kManagedAccessToGetAllScreensMediaAllowedForUrls[];
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-extern const char kManagedMultiScreenCaptureAllowedForUrls[];
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
 #if BUILDFLAG(IS_CHROMEOS)
+extern const char kManagedMultiScreenCaptureAllowedForUrls[];
+
 // Sets a multi capture service mock for testing.
 void SetMultiCaptureServiceForTesting(
     crosapi::mojom::MultiCaptureService* service);
@@ -91,10 +90,10 @@ void CheckGetAllScreensMediaAllowedForAnyOrigin(
     content::BrowserContext* context,
     base::OnceCallback<void(bool)> callback);
 
-#if !BUILDFLAG(IS_ANDROID)
+#if BUILDFLAG(ENABLE_SCREEN_CAPTURE)
 bool IsTransientActivationRequiredForGetDisplayMedia(
     content::WebContents* contents);
-#endif  // !BUILDFLAG(IS_ANDROID)
+#endif  // BUILDFLAG(ENABLE_SCREEN_CAPTURE)
 
 }  // namespace capture_policy
 

@@ -18,7 +18,6 @@
 #include "third_party/blink/renderer/core/animation/timing.h"
 #include "third_party/blink/renderer/core/animation/worklet_animation_controller.h"
 #include "third_party/blink/renderer/core/dom/node.h"
-#include "third_party/blink/renderer/core/dom/node_computed_style.h"
 #include "third_party/blink/renderer/core/frame/frame_console.h"
 #include "third_party/blink/renderer/core/frame/local_dom_window.h"
 #include "third_party/blink/renderer/core/frame/local_frame.h"
@@ -95,8 +94,7 @@ bool IsActive(V8AnimationPlayState::Enum state) {
       return true;
     default:
       // kUnset and kFinished are not used in WorkletAnimation.
-      NOTREACHED_IN_MIGRATION();
-      return false;
+      NOTREACHED();
   }
 }
 
@@ -125,8 +123,7 @@ AnimationTimeline* ConvertAnimationTimeline(
     case V8UnionDocumentTimelineOrScrollTimeline::ContentType::kScrollTimeline:
       return timeline->GetAsScrollTimeline();
   }
-  NOTREACHED_IN_MIGRATION();
-  return nullptr;
+  NOTREACHED();
 }
 
 void StartEffectOnCompositor(CompositorAnimation* animation,

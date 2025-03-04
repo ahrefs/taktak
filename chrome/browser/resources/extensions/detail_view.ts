@@ -4,17 +4,17 @@
 
 import 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import 'chrome://resources/cr_elements/cr_icon_button/cr_icon_button.js';
-import 'chrome://resources/cr_elements/cr_icons.css.js';
 import 'chrome://resources/cr_elements/cr_link_row/cr_link_row.js';
 import 'chrome://resources/cr_elements/cr_toggle/cr_toggle.js';
 import 'chrome://resources/cr_elements/cr_tooltip/cr_tooltip.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
+import 'chrome://resources/cr_elements/icons.html.js';
 import 'chrome://resources/cr_elements/policy/cr_tooltip_icon.js';
 import 'chrome://resources/js/action_link.js';
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import './host_permissions_toggle_list.js';
+import './icons.html.js';
 import './runtime_host_permissions.js';
-import './strings.m.js';
+import '/strings.m.js';
 import './toggle_row.js';
 
 import {AnchorAlignment} from 'chrome://resources/cr_elements/cr_action_menu/cr_action_menu.js';
@@ -195,8 +195,8 @@ export class ExtensionsDetailViewElement extends
     navigation.navigateTo({page: Page.ACTIVITY_LOG, extensionId: this.data.id});
   }
 
-  protected getDescription_(description: string, fallback: string): string {
-    return description || fallback;
+  protected getDescription_(): string {
+    return this.data.description || loadTimeData.getString('noDescription');
   }
 
   protected getBackButtonAriaLabel_(): string {
@@ -238,24 +238,28 @@ export class ExtensionsDetailViewElement extends
   protected hasSevereWarnings_(): boolean {
     return this.data.disableReasons.corruptInstall ||
         this.data.disableReasons.suspiciousInstall ||
-        this.data.disableReasons.updateRequired || !!this.data.blocklistText ||
         this.data.disableReasons.publishedInStoreRequired ||
+        this.data.disableReasons.unsupportedDeveloperExtension ||
+        this.data.disableReasons.updateRequired || !!this.data.blocklistText ||
         this.data.runtimeWarnings.length > 0;
   }
 
-  protected computeDevReloadButtonHidden_(): boolean {
-    return !this.canReloadItem();
+  protected showAccountUploadButton_(): boolean {
+    return this.data.canUploadAsAccountExtension;
+  }
+
+  protected showDevReloadButton_(): boolean {
+    return this.canReloadItem();
   }
 
   protected computeEnabledStyle_(): string {
     return this.isEnabled_() ? 'enabled-text' : '';
   }
 
-  protected computeEnabledText_(
-      state: chrome.developerPrivate.ExtensionState, onText: string,
-      offText: string): string {
+  protected computeEnabledText_(): string {
     // TODO(devlin): Get the full spectrum of these strings from bettes.
-    return isEnabled(state) ? onText : offText;
+    return loadTimeData.getString(
+        isEnabled(this.data.state) ? 'itemOn' : 'itemOff');
   }
 
   protected computeInspectLabel_(view: chrome.developerPrivate.ExtensionView):
@@ -280,6 +284,10 @@ export class ExtensionsDetailViewElement extends
     return this.data.incognitoAccess.isEnabled && this.incognitoAvailable;
   }
 
+  protected showUserScriptSectionToggle_(): boolean {
+    return this.data.userScriptsAccess.isEnabled;
+  }
+
   protected onEnableToggleChange_() {
     this.delegate.setItemEnabled(this.data.id, this.$.enableToggle.checked);
     this.$.enableToggle.checked = this.isEnabled_();
@@ -296,6 +304,10 @@ export class ExtensionsDetailViewElement extends
 
   protected onReloadClick_() {
     this.reloadItem().catch((loadError) => this.fire('load-error', loadError));
+  }
+
+  protected onUploadClick_() {
+    this.delegate.uploadItemToAccount(this.data.id);
   }
 
   protected onRemoveClick_() {
@@ -365,7 +377,7 @@ export class ExtensionsDetailViewElement extends
   protected onPinnedToToolbarChange_() {
     this.delegate.setItemPinnedToToolbar(
         this.data.id,
-        this.shadowRoot!
+        this.shadowRoot
             .querySelector<ExtensionsToggleRowElement>(
                 '#pin-to-toolbar')!.checked);
   }
@@ -373,15 +385,23 @@ export class ExtensionsDetailViewElement extends
   protected onAllowIncognitoChange_() {
     this.delegate.setItemAllowedIncognito(
         this.data.id,
-        this.shadowRoot!
+        this.shadowRoot
             .querySelector<ExtensionsToggleRowElement>(
                 '#allow-incognito')!.checked);
+  }
+
+  protected onAllowUserScriptsChange_() {
+    this.delegate.setItemAllowedUserScripts(
+        this.data.id,
+        this.shadowRoot
+            .querySelector<ExtensionsToggleRowElement>(
+                '#allow-user-scripts')!.checked);
   }
 
   protected onAllowOnFileUrlsChange_() {
     this.delegate.setItemAllowedOnFileUrls(
         this.data.id,
-        this.shadowRoot!
+        this.shadowRoot
             .querySelector<ExtensionsToggleRowElement>(
                 '#allow-on-file-urls')!.checked);
   }
@@ -389,7 +409,7 @@ export class ExtensionsDetailViewElement extends
   protected onCollectErrorsChange_() {
     this.delegate.setItemCollectsErrors(
         this.data.id,
-        this.shadowRoot!
+        this.shadowRoot
             .querySelector<ExtensionsToggleRowElement>(
                 '#collect-errors')!.checked);
   }
@@ -464,7 +484,7 @@ export class ExtensionsDetailViewElement extends
 
   protected onShowAccessRequestsChange_() {
     const showAccessRequestsToggle =
-        this.shadowRoot!.querySelector<ExtensionsToggleRowElement>(
+        this.shadowRoot.querySelector<ExtensionsToggleRowElement>(
             '#show-access-requests-toggle');
     assert(showAccessRequestsToggle);
     this.delegate.setShowAccessRequestsInToolbar(
@@ -476,9 +496,6 @@ export class ExtensionsDetailViewElement extends
   }
 
   private computeShowSafetyCheck_(): boolean {
-    if (!loadTimeData.getBoolean('safetyCheckShowReviewPanel')) {
-      return false;
-    }
     const ExtensionType = chrome.developerPrivate.ExtensionType;
     // Check to make sure this is an extension and not a Chrome app.
     if (!(this.data.type === ExtensionType.EXTENSION ||
@@ -581,6 +598,15 @@ export class ExtensionsDetailViewElement extends
     return !this.showSafetyCheck_ && !!this.data.blocklistText;
   }
 
+  /**
+   * Shows only one text if both unsupported developer extension and safety
+   * check texts are present. Safety check text takes precedence.
+   */
+  protected shouldShowUnsupportedDeveloperExtensionText_(): boolean {
+    return !this.showSafetyCheck_ &&
+        this.data.disableReasons.unsupportedDeveloperExtension;
+  }
+
   protected showRepairButton_(): boolean {
     return getEnableControl(this.data) === EnableControl.REPAIR;
   }
@@ -667,7 +693,7 @@ export class ExtensionsDetailViewElement extends
   /**
    * Returns the HTML representation of the Manifest V2 deprecation message
    * subtitle string. We need the HTML representation instead of the string
-   * since the string holds a link.
+   * since the string holds substitutions.
    */
   protected getMv2DeprecationMessageSubtitle_(): TrustedHTML {
     switch (this.mv2ExperimentStage_) {
@@ -675,8 +701,11 @@ export class ExtensionsDetailViewElement extends
         return window.trustedTypes!.emptyHTML;
       case Mv2ExperimentStage.WARNING:
         return this.i18nAdvanced('mv2DeprecationMessageWarningSubtitle', {
-          substitutions:
-              ['https://chromewebstore.google.com/category/extensions'],
+          substitutions: [
+            'https://chromewebstore.google.com/category/extensions',
+            this.i18n('opensInNewTab'),
+          ],
+          attrs: ['aria-description'],
         });
       case Mv2ExperimentStage.DISABLE_WITH_REENABLE:
       case Mv2ExperimentStage.UNSUPPORTED:
@@ -684,7 +713,9 @@ export class ExtensionsDetailViewElement extends
           substitutions: [
             'https://support.google.com/chrome_webstore' +
                 '?p=unsupported_extensions',
+            this.i18n('opensInNewTab'),
           ],
+          attrs: ['aria-description'],
         });
       default:
         assertNotReached();
@@ -713,9 +744,6 @@ export class ExtensionsDetailViewElement extends
         'mv2DeprecationPanelExtensionActionMenuLabel', this.data.name);
   }
 }
-
-// Exported for use in the autogenerated Lit template file.
-export type DetailViewElement = ExtensionsDetailViewElement;
 
 declare global {
   interface HTMLElementTagNameMap {

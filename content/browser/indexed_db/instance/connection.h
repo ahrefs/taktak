@@ -119,6 +119,10 @@ class CONTENT_EXPORT Connection : public blink::mojom::IDBDatabase {
   static bool HasHigherPriorityThan(const PartitionedLockHolder* this_one,
                                     const PartitionedLockHolder& other);
 
+  // Returns true if any of the connection's transactions is holding one of the
+  // lock IDs.
+  bool IsHoldingLocks(const std::vector<PartitionedLockId>& lock_ids) const;
+
  private:
   friend class TransactionTest;
   FRIEND_TEST_ALL_PREFIXES(DatabaseTest, ForcedClose);
@@ -147,8 +151,9 @@ class CONTENT_EXPORT Connection : public blink::mojom::IDBDatabase {
               int64_t object_store_id,
               int64_t index_id,
               const blink::IndexedDBKeyRange& key_range,
-              bool key_only,
+              blink::mojom::IDBGetAllResultType result_type,
               int64_t max_count,
+              blink::mojom::IDBCursorDirection direction,
               blink::mojom::IDBDatabase::GetAllCallback callback) override;
   void SetIndexKeys(
       int64_t transaction_id,

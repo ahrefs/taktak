@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
@@ -75,16 +76,18 @@ import org.chromium.ui.modelutil.PropertyModelChangeProcessor;
 import org.chromium.ui.resources.ResourceManager;
 import org.chromium.ui.resources.dynamics.DynamicResourceLoader;
 import org.chromium.ui.util.TokenHolder;
+import org.chromium.ui.util.XrUtils;
 import org.chromium.url.GURL;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * A class that is responsible for managing an active {@link Layout} to show to the screen.  This
- * includes lifecycle managment like showing/hiding this {@link Layout}.
+ * A class that is responsible for managing an active {@link Layout} to show to the screen. This
+ * includes lifecycle management like showing/hiding this {@link Layout}.
  */
 public class LayoutManagerImpl
         implements ManagedLayoutManager, LayoutUpdateHost, LayoutProvider, BackPressHandler {
@@ -345,13 +348,13 @@ public class LayoutManagerImpl
                     // transition, the toolbar will move up and cover the tab strip.
                     StripLayoutHelperManager.class,
                     TopToolbarOverlayCoordinator.class,
-                    EdgeToEdgeBottomChinSceneLayer.class,
                     // StripLayoutHelperManager should be updated before
                     // ScrollingBottomViewSceneLayer Since ScrollingBottomViewSceneLayer change
                     // the container size, it causes relocation tab strip scene layer.
                     ScrollingBottomViewSceneLayer.class,
-                    StatusIndicatorCoordinator.getSceneOverlayClass(),
                     ContextualSearchPanel.class,
+                    EdgeToEdgeBottomChinSceneLayer.class,
+                    StatusIndicatorCoordinator.getSceneOverlayClass(),
                     ReadAloudMiniPlayerSceneLayer.class
                 };
 
@@ -535,12 +538,13 @@ public class LayoutManagerImpl
 
     /**
      * Updates the state of the layout.
+     *
      * @param timeMs The time in milliseconds.
-     * @param dtMs   The delta time since the last update in milliseconds.
-     * @return       Whether or not the {@link LayoutManagerImpl} needs more updates.
+     * @param dtMs The delta time since the last update in milliseconds.
+     * @return Whether or not the {@link LayoutManagerImpl} needs more updates.
      */
     @VisibleForTesting
-    boolean onUpdate(long timeMs, long dtMs) {
+    public boolean onUpdate(long timeMs, long dtMs) {
         if (!mUpdateRequested) {
             mFrameRequestSupplier.set(timeMs);
             return false;
@@ -594,7 +598,7 @@ public class LayoutManagerImpl
             @Nullable ControlContainer controlContainer,
             DynamicResourceLoader dynamicResourceLoader,
             TopUiThemeColorProvider topUiColorProvider,
-            Supplier<Integer> bottomControlsOffsetSupplier) {
+            ObservableSupplier<Integer> bottomControlsOffsetSupplier) {
         LayoutRenderHost renderHost = mHost.getLayoutRenderHost();
 
         mBrowserControlsStateProvider = mHost.getBrowserControlsManager();
@@ -610,7 +614,8 @@ public class LayoutManagerImpl
                         selector,
                         mTabContentManagerSupplier.get(),
                         mBrowserControlsStateProvider,
-                        mTopUiThemeColorProvider);
+                        mTopUiThemeColorProvider,
+                        !hasTabletUi());
 
         setNextLayout(null, true);
 
@@ -709,6 +714,18 @@ public class LayoutManagerImpl
                 model, view, viewBinder, mFrameRequestSupplier, true);
     }
 
+    @Override
+    public <V extends SceneLayer>
+            CompositorModelChangeProcessor<V> createCompositorMCPWithExclusions(
+                    PropertyModel model,
+                    V view,
+                    PropertyModelChangeProcessor.ViewBinder<PropertyModel, V, PropertyKey>
+                            viewBinder,
+                    Set<PropertyKey> exclusions) {
+        return CompositorModelChangeProcessor.create(
+                model, view, viewBinder, mFrameRequestSupplier, true, exclusions);
+    }
+
     /**
      * @param observer Adds {@code observer} to be notified when the active {@code Layout} changes.
      */
@@ -745,17 +762,19 @@ public class LayoutManagerImpl
                         : mBrowserControlsStateProvider.getTopControlOffset();
 
         for (int i = 0; i < mSceneOverlays.size(); i++) {
+            SceneOverlay overlay = mSceneOverlays.get(i);
             // If the SceneOverlay is not showing, don't bother adding it to the tree.
-            if (!mSceneOverlays.get(i).isSceneOverlayTreeShowing()) continue;
+            if (!overlay.isSceneOverlayTreeShowing()) {
+                overlay.removeFromParent();
+                continue;
+            }
 
             SceneOverlayLayer overlayLayer =
-                    mSceneOverlays
-                            .get(i)
-                            .getUpdatedSceneOverlayTree(
-                                    mCachedWindowViewport,
-                                    mCachedVisibleViewport,
-                                    resourceManager,
-                                    offsetPx * mPxToDp);
+                    overlay.getUpdatedSceneOverlayTree(
+                            mCachedWindowViewport,
+                            mCachedVisibleViewport,
+                            resourceManager,
+                            offsetPx * mPxToDp);
 
             overlayLayer.setContentTree(layer);
             layer = overlayLayer;
@@ -990,8 +1009,7 @@ public class LayoutManagerImpl
     }
 
     @Override
-    public LayoutTab createLayoutTab(
-            int id, boolean incognito, float maxContentWidth, float maxContentHeight) {
+    public LayoutTab createLayoutTab(int id, boolean incognito) {
         LayoutTab tab = mTabCache.get(id);
         if (tab == null) {
             tab = new LayoutTab(id, incognito, mHost.getWidth(), mHost.getHeight());
@@ -999,9 +1017,6 @@ public class LayoutManagerImpl
         } else {
             tab.init(mHost.getWidth(), mHost.getHeight());
         }
-        if (maxContentWidth > 0.f) tab.setMaxContentWidth(maxContentWidth);
-        if (maxContentHeight > 0.f) tab.setMaxContentHeight(maxContentHeight);
-
         return tab;
     }
 
@@ -1123,6 +1138,10 @@ public class LayoutManagerImpl
     @Override
     public void showLayout(int layoutType, boolean animate) {
         Layout activeLayout = getActiveLayout();
+        // On XR devices the layout transition animations are not required.
+        if (XrUtils.isXrDevice()) {
+            animate = false;
+        }
         if (activeLayout != null && !activeLayout.isStartingToHide()) {
             setNextLayout(getLayoutForType(layoutType), animate);
             activeLayout.startHiding();
@@ -1222,12 +1241,13 @@ public class LayoutManagerImpl
     /**
      * Sets the next {@link Layout} to show after the current {@link Layout} is finished and is done
      * hiding.
+     *
      * @param layout The new {@link Layout} to show.
      * @param animate Whether the next layout should be animated.
      */
     protected void setNextLayout(Layout layout, boolean animate) {
         mNextActiveLayout = (layout == null) ? getDefaultLayout() : layout;
-        mAnimateNextLayout = animate;
+        mAnimateNextLayout = XrUtils.isXrDevice() ? false : animate;
     }
 
     @Override
@@ -1332,6 +1352,11 @@ public class LayoutManagerImpl
         }
 
         mSceneOverlays.add(index, overlay);
+        overlay.onSizeChanged(
+                mCachedWindowViewport.width() * mPxToDp,
+                mCachedWindowViewport.height() * mPxToDp,
+                mCachedVisibleViewport.top,
+                getOrientation());
         overlay.getHandleBackPressChangedSupplier().addObserver((v) -> onBackPressStateChanged());
     }
 
@@ -1361,11 +1386,16 @@ public class LayoutManagerImpl
         return mTabCache.get(tabId);
     }
 
+    public @NonNull ViewGroup getContentContainer() {
+        return mContentContainer;
+    }
+
     /**
      * Should be called when a tab switch event is triggered, only can switch to the Tab which in
      * the current TabModel.
-     * @param tab        The tab that will be switched to.
-     * @param lastTabId  The id of the tab that was switched from.
+     *
+     * @param tab The tab that will be switched to.
+     * @param lastTabId The id of the tab that was switched from.
      */
     protected void switchToTab(Tab tab, int lastTabId) {
         tabSelected(tab.getId(), lastTabId, tab.isIncognito());
@@ -1395,5 +1425,9 @@ public class LayoutManagerImpl
     @Override
     public void removeObserver(LayoutStateObserver listener) {
         mLayoutObservers.removeObserver(listener);
+    }
+
+    public boolean hasTabletUi() {
+        return false;
     }
 }

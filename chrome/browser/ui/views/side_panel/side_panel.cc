@@ -233,8 +233,8 @@ class ContentParentView : public views::View {
  public:
   ContentParentView() {
     SetUseDefaultFillLayout(true);
-    SetBackground(views::CreateThemedSolidBackground(
-        /*kColorSidePanelBackground*/ kColorTabGroupDialogRed));
+    SetBackground(
+        views::CreateThemedSolidBackground(kColorSidePanelBackground));
     SetProperty(
         views::kFlexBehaviorKey,
         views::FlexSpecification(views::MinimumFlexSizeRule::kScaleToZero,
@@ -350,6 +350,21 @@ SidePanel::~SidePanel() = default;
 void SidePanel::SetPanelWidth(int width) {
   // Only the width is used by BrowserViewLayout.
   SetPreferredSize(gfx::Size(width, 1));
+}
+
+bool SidePanel::ShouldRestrictMaxWidth() const {
+  // TODO(crbug.com/394339052): Only restricting width for only non-read
+  // anything content is a temporary solution and UX will investigate a better
+  // long term solution.
+  SidePanelUI* coordinator =
+      browser_view_->browser()->GetFeatures().side_panel_ui();
+  if (!coordinator) {
+    return true;
+  }
+  std::optional<SidePanelEntry::Id> side_panel_entry_id =
+      coordinator->GetCurrentEntryId();
+  return !side_panel_entry_id.has_value() ||
+         side_panel_entry_id.value() != SidePanelEntryId::kReadAnything;
 }
 
 void SidePanel::SetBackgroundRadii(const gfx::RoundedCornersF& radii) {
@@ -593,6 +608,7 @@ views::View* SidePanel::GetContentParentView() {
 }
 
 void SidePanel::UpdateVisibility(bool should_be_open, bool animate_transition) {
+  animate_transition &= ShouldShowAnimation();
   if (should_be_open) {
     state_ = animate_transition ? State::kOpening : State::kOpen;
   } else {
@@ -633,7 +649,7 @@ void SidePanel::UpdateVisibility(bool should_be_open, bool animate_transition) {
       border_view_->DestroyLayer();
     }
   }
-  if (ShouldShowAnimation() && animate_transition) {
+  if (animate_transition) {
     if (should_be_open) {
       // If the side panel should remain open but there are views to hide, hide
       // them immediately.

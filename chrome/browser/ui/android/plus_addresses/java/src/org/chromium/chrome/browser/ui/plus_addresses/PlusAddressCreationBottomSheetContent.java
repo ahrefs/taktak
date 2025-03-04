@@ -5,6 +5,7 @@
 package org.chromium.chrome.browser.ui.plus_addresses;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
@@ -16,7 +17,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
@@ -24,7 +27,7 @@ import org.chromium.components.browser_ui.bottomsheet.BottomSheetController.Shee
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController.StateChangeReason;
 import org.chromium.components.browser_ui.bottomsheet.EmptyBottomSheetObserver;
 import org.chromium.ui.base.LocalizationUtils;
-import org.chromium.ui.text.NoUnderlineClickableSpan;
+import org.chromium.ui.text.ChromeClickableSpan;
 import org.chromium.ui.text.SpanApplier;
 import org.chromium.ui.widget.LoadingView;
 import org.chromium.ui.widget.TextViewWithClickableSpans;
@@ -104,10 +107,10 @@ public class PlusAddressCreationBottomSheetContent extends EmptyBottomSheetObser
         mProposedPlusAddressLoadingView.addObserver(
                 new LoadingView.Observer() {
                     @Override
-                    public void onShowLoadingUIComplete() {}
+                    public void onShowLoadingUiComplete() {}
 
                     @Override
-                    public void onHideLoadingUIComplete() {
+                    public void onHideLoadingUiComplete() {
                         if (mDelegate != null) {
                             mContentView.post(mDelegate::onPlusAddressLoadingViewHidden);
                         }
@@ -131,10 +134,10 @@ public class PlusAddressCreationBottomSheetContent extends EmptyBottomSheetObser
         mLoadingView.addObserver(
                 new LoadingView.Observer() {
                     @Override
-                    public void onShowLoadingUIComplete() {}
+                    public void onShowLoadingUiComplete() {}
 
                     @Override
-                    public void onHideLoadingUIComplete() {
+                    public void onHideLoadingUiComplete() {
                         if (mDelegate != null) {
                             mDelegate.onConfirmationLoadingViewHidden();
                         }
@@ -166,8 +169,8 @@ public class PlusAddressCreationBottomSheetContent extends EmptyBottomSheetObser
     }
 
     void setOnboardingNotice(String notice, GURL learnMoreUrl) {
-        NoUnderlineClickableSpan settingsLink =
-                new NoUnderlineClickableSpan(
+        ChromeClickableSpan settingsLink =
+                new ChromeClickableSpan(
                         mContext,
                         v -> {
                             mDelegate.openUrl(learnMoreUrl);
@@ -193,9 +196,9 @@ public class PlusAddressCreationBottomSheetContent extends EmptyBottomSheetObser
 
     void setPlusAddressLoadingViewVisible(boolean visible) {
         if (visible) {
-            mProposedPlusAddressLoadingView.showLoadingUI(/* skipDelay= */ true);
+            mProposedPlusAddressLoadingView.showLoadingUi(/* skipDelay= */ true);
         } else {
-            mProposedPlusAddressLoadingView.hideLoadingUI();
+            mProposedPlusAddressLoadingView.hideLoadingUi();
         }
     }
 
@@ -238,9 +241,9 @@ public class PlusAddressCreationBottomSheetContent extends EmptyBottomSheetObser
             // We skip the delay because otherwise the height of the bottomsheet
             // is adjusted once on hiding the confirm button and then again after
             // the loading view appears.
-            mLoadingView.showLoadingUI(/* skipDelay= */ true);
+            mLoadingView.showLoadingUi(/* skipDelay= */ true);
         } else {
-            mLoadingView.hideLoadingUI();
+            mLoadingView.hideLoadingUi();
         }
     }
 
@@ -292,25 +295,25 @@ public class PlusAddressCreationBottomSheetContent extends EmptyBottomSheetObser
     }
 
     @Override
-    public int getSheetContentDescriptionStringId() {
+    public @NonNull String getSheetContentDescription(Context context) {
         // TODO(crbug.com/40276862): Replace with final version.
-        return R.string.plus_address_bottom_sheet_content_description;
+        return context.getString(R.string.plus_address_bottom_sheet_content_description);
     }
 
     @Override
-    public int getSheetHalfHeightAccessibilityStringId() {
+    public @StringRes int getSheetHalfHeightAccessibilityStringId() {
         assert false : "This method will not be called.";
-        return 0;
+        return Resources.ID_NULL;
     }
 
     @Override
-    public int getSheetFullHeightAccessibilityStringId() {
+    public @StringRes int getSheetFullHeightAccessibilityStringId() {
         // TODO(crbug.com/40276862): Replace with final version.
         return R.string.plus_address_bottom_sheet_content_description;
     }
 
     @Override
-    public int getSheetClosedAccessibilityStringId() {
+    public @StringRes int getSheetClosedAccessibilityStringId() {
         // TODO(crbug.com/40276862): Replace with final version.
         return R.string.plus_address_bottom_sheet_content_description;
     }

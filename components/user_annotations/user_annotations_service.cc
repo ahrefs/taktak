@@ -14,11 +14,12 @@
 #include "base/task/task_traits.h"
 #include "base/task/thread_pool.h"
 #include "base/types/expected.h"
-#include "components/autofill/core/browser/data_model/autofill_profile.h"
+#include "components/autofill/core/browser/data_model/addresses/autofill_profile.h"
 #include "components/autofill/core/browser/field_types.h"
 #include "components/autofill/core/browser/form_processing/optimization_guide_proto_util.h"
 #include "components/autofill/core/browser/form_structure.h"
 #include "components/autofill/core/browser/geo/phone_number_i18n.h"
+#include "components/optimization_guide/core/model_quality/model_quality_logs_uploader_service.h"
 #include "components/optimization_guide/core/optimization_guide_decider.h"
 #include "components/optimization_guide/core/optimization_guide_model_executor.h"
 #include "components/optimization_guide/core/optimization_guide_proto_util.h"
@@ -58,15 +59,19 @@ void RecordUserAnnotationsFormImportResult(
   base::UmaHistogramEnumeration("UserAnnotations.FormImportResult", result);
 }
 
+void RecordMemoryCountEntriesResult(int result) {
+  base::UmaHistogramCounts1000("UserAnnotations.EntryCount", result);
+}
+
 void ProcessEntryRetrieval(
     base::OnceCallback<void(UserAnnotationsEntries)> callback,
     UserAnnotationsEntryRetrievalResult user_annotations) {
-  // TODO: b/36169665 - Record the entry retrieval result metrics.
+  RecordMemoryCountEntriesResult(user_annotations->size());
   if (!user_annotations.has_value()) {
     std::move(callback).Run({});
     return;
   }
-  std::move(callback).Run(user_annotations.value());
+  std::move(callback).Run(std::move(user_annotations).value());
 }
 
 void RecordRemoveEntryResult(UserAnnotationsExecutionResult result) {
@@ -123,30 +128,18 @@ void NotifyAutofillProfileSaved(
 
 UserAnnotationsService::UserAnnotationsService(
     optimization_guide::OptimizationGuideModelExecutor* model_executor,
+    optimization_guide::ModelQualityLogsUploaderService* logs_uploader,
     const base::FilePath& storage_dir,
     os_crypt_async::OSCryptAsync* os_crypt_async,
     optimization_guide::OptimizationGuideDecider* optimization_guide_decider)
     : model_executor_(model_executor),
+      logs_uploader_(logs_uploader->GetWeakPtr()),
       optimization_guide_decider_(optimization_guide_decider),
       allowed_hosts_for_forms_annotations_(
           GetAllowedHostsForFormsAnnotations()) {
-  if (ShouldPersistUserAnnotations()) {
-    encryptor_ready_subscription_ = os_crypt_async->GetInstance(
-        base::BindOnce(&UserAnnotationsService::OnOsCryptAsyncReady,
-                       weak_ptr_factory_.GetWeakPtr(), storage_dir));
-  }
-
-  std::optional<optimization_guide::proto::FormsAnnotationsResponse>
-      manual_entries = switches::ParseFormsAnnotationsFromCommandLine();
-  if (manual_entries) {
-    entries_.clear();
-    entry_id_counter_ = 0;
-    for (auto entry : manual_entries->upserted_entries()) {
-      EntryID entry_id = ++entry_id_counter_;
-      entries_.push_back(
-          {.entry_id = entry_id, .entry_proto = std::move(entry)});
-    }
-  }
+  encryptor_ready_subscription_ = os_crypt_async->GetInstance(
+      base::BindOnce(&UserAnnotationsService::OnOsCryptAsyncReady,
+                     weak_ptr_factory_.GetWeakPtr(), storage_dir));
 
   if (optimization_guide_decider_) {
     optimization_guide_decider_->RegisterOptimizationTypes(
@@ -161,6 +154,11 @@ UserAnnotationsService::~UserAnnotationsService() = default;
 bool UserAnnotationsService::ShouldAddFormSubmissionForURL(const GURL& url) {
   if (base::Contains(allowed_hosts_for_forms_annotations_, url.host())) {
     return true;
+  }
+
+  // Only allow HTTPS sites.
+  if (!url.SchemeIs("https")) {
+    return false;
   }
 
   // Fall back to optimization guide if not in override list.
@@ -194,23 +192,13 @@ void UserAnnotationsService::AddFormSubmission(
 
 void UserAnnotationsService::RetrieveAllEntries(
     base::OnceCallback<void(UserAnnotationsEntries)> callback) {
-  if (ShouldPersistUserAnnotations()) {
-    if (!user_annotations_database_) {
-      // TODO: b/361696651 - Record the failure.
-      return;
-    }
-    user_annotations_database_
-        .AsyncCall(&UserAnnotationsDatabase::RetrieveAllEntries)
-        .Then(base::BindOnce(ProcessEntryRetrieval, std::move(callback)));
+  if (!user_annotations_database_) {
+    // TODO: b/361696651 - Record the failure.
     return;
   }
-
-  UserAnnotationsEntries entries_protos;
-  entries_protos.reserve(entries_.size());
-  for (const auto& entry : entries_) {
-    entries_protos.push_back(entry.entry_proto);
-  }
-  std::move(callback).Run(std::move(entries_protos));
+  user_annotations_database_
+      .AsyncCall(&UserAnnotationsDatabase::RetrieveAllEntries)
+      .Then(base::BindOnce(ProcessEntryRetrieval, std::move(callback)));
 }
 
 void UserAnnotationsService::OnOsCryptAsyncReady(
@@ -226,6 +214,17 @@ void UserAnnotationsService::OnOsCryptAsyncReady(
           {base::MayBlock(), base::TaskPriority::USER_BLOCKING,
            base::TaskShutdownBehavior::BLOCK_SHUTDOWN}),
       storage_dir, std::move(encryptor));
+
+  if (auto manual_entries = switches::ParseFormsAnnotationsFromCommandLine()) {
+    RemoveAllEntries(base::BindOnce(
+        &UserAnnotationsService::InitializeFormsAnnotationsFromCommandLine,
+        weak_ptr_factory_.GetWeakPtr(), *manual_entries));
+  }
+}
+
+void UserAnnotationsService::InitializeFormsAnnotationsFromCommandLine(
+    const optimization_guide::proto::FormsAnnotationsResponse& manual_entries) {
+  SaveEntries(manual_entries);
 }
 
 void UserAnnotationsService::Shutdown() {}
@@ -236,31 +235,15 @@ bool UserAnnotationsService::IsDatabaseReady() {
 
 void UserAnnotationsService::SaveEntries(
     const optimization_guide::proto::FormsAnnotationsResponse& entries) {
-  if (ShouldPersistUserAnnotations()) {
-    DCHECK(user_annotations_database_);
+  DCHECK(user_annotations_database_);
 
-    UserAnnotationsEntries upserted_entries = UserAnnotationsEntries(
-        entries.upserted_entries().begin(), entries.upserted_entries().end());
-    std::set<EntryID> deleted_entry_ids(entries.deleted_entry_ids().begin(),
-                                        entries.deleted_entry_ids().end());
-    user_annotations_database_
-        .AsyncCall(&UserAnnotationsDatabase::UpdateEntries)
-        .WithArgs(upserted_entries, deleted_entry_ids)
-        .Then(base::BindOnce(RecordUserAnnotationsFormImportResult));
-    return;
-  }
-
-  for (const auto& entry : entries.upserted_entries()) {
-    EntryID entry_id = ++entry_id_counter_;
-    optimization_guide::proto::UserAnnotationsEntry entry_proto;
-    entry_proto.set_entry_id(entry_id);
-    entry_proto.set_key(entry.key());
-    entry_proto.set_value(entry.value());
-    entries_.push_back(
-        {.entry_id = entry_id, .entry_proto = std::move(entry_proto)});
-  }
-  RecordUserAnnotationsFormImportResult(
-      UserAnnotationsExecutionResult::kSuccess);
+  UserAnnotationsEntries upserted_entries = UserAnnotationsEntries(
+      entries.upserted_entries().begin(), entries.upserted_entries().end());
+  std::set<EntryID> deleted_entry_ids(entries.deleted_entry_ids().begin(),
+                                      entries.deleted_entry_ids().end());
+  user_annotations_database_.AsyncCall(&UserAnnotationsDatabase::UpdateEntries)
+      .WithArgs(upserted_entries, deleted_entry_ids)
+      .Then(base::BindOnce(RecordUserAnnotationsFormImportResult));
 }
 
 void UserAnnotationsService::SaveAutofillProfile(
@@ -268,26 +251,11 @@ void UserAnnotationsService::SaveAutofillProfile(
     base::OnceCallback<void(UserAnnotationsExecutionResult)> callback) {
   const UserAnnotationsEntries entries =
       ConvertAutofillProfileToEntries(autofill_profile);
-  if (ShouldPersistUserAnnotations()) {
-    DCHECK(user_annotations_database_);
+  DCHECK(user_annotations_database_);
 
-    user_annotations_database_
-        .AsyncCall(&UserAnnotationsDatabase::UpdateEntries)
-        .WithArgs(entries, std::set<EntryID>{})
-        .Then(base::BindOnce(NotifyAutofillProfileSaved, std::move(callback)));
-    return;
-  }
-
-  for (const auto& entry : entries) {
-    EntryID entry_id = ++entry_id_counter_;
-    optimization_guide::proto::UserAnnotationsEntry entry_proto;
-    entry_proto.set_entry_id(entry_id);
-    entry_proto.set_key(entry.key());
-    entry_proto.set_value(entry.value());
-    entries_.push_back(
-        {.entry_id = entry_id, .entry_proto = std::move(entry_proto)});
-  }
-  std::move(callback).Run(UserAnnotationsExecutionResult::kSuccess);
+  user_annotations_database_.AsyncCall(&UserAnnotationsDatabase::UpdateEntries)
+      .WithArgs(entries, std::set<EntryID>{})
+      .Then(base::BindOnce(NotifyAutofillProfileSaved, std::move(callback)));
 }
 
 void UserAnnotationsService::OnFormSubmissionComplete() {
@@ -304,14 +272,6 @@ void UserAnnotationsService::ProcessNextFormSubmission() {
 
 void UserAnnotationsService::RemoveEntry(EntryID entry_id,
                                          base::OnceClosure callback) {
-  if (!ShouldPersistUserAnnotations()) {
-    std::erase_if(entries_, [entry_id](const Entry& entry) {
-      return entry.entry_id == entry_id;
-    });
-    RecordRemoveEntryResult(UserAnnotationsExecutionResult::kSuccess);
-    std::move(callback).Run();
-    return;
-  }
   if (!user_annotations_database_) {
     RecordRemoveEntryResult(
         UserAnnotationsExecutionResult::kCryptNotInitialized);
@@ -331,12 +291,6 @@ void UserAnnotationsService::RemoveEntry(EntryID entry_id,
 }
 
 void UserAnnotationsService::RemoveAllEntries(base::OnceClosure callback) {
-  if (!ShouldPersistUserAnnotations()) {
-    entries_.clear();
-    RecordRemoveAllEntriesResult(UserAnnotationsExecutionResult::kSuccess);
-    std::move(callback).Run();
-    return;
-  }
   if (!user_annotations_database_) {
     RecordRemoveAllEntriesResult(
         UserAnnotationsExecutionResult::kCryptNotInitialized);
@@ -370,14 +324,6 @@ void UserAnnotationsService::GetCountOfValuesContainedBetween(
     base::Time begin,
     base::Time end,
     base::OnceCallback<void(int)> callback) {
-  if (!ShouldPersistUserAnnotations()) {
-    RecordCountEntriesResult(UserAnnotationsExecutionResult::kSuccess);
-    // This code path will get removed soon but given no annotations are removed
-    // when a specific range is selected in this code path, also do not indicate
-    // we are removing entries here.
-    std::move(callback).Run(0);
-    return;
-  }
   if (!user_annotations_database_) {
     RecordCountEntriesResult(
         UserAnnotationsExecutionResult::kCryptNotInitialized);

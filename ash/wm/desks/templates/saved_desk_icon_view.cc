@@ -118,8 +118,8 @@ void SavedDeskIconView::CreateCountLabelChildView(bool show_plus,
                        .SetBorder(views::CreateEmptyBorder(gfx::Insets::TLBR(
                            kCountLabelInsetSize, kCountLabelInsetSize,
                            kCountLabelInsetSize, inset_size)))
-                       .SetEnabledColorId(cros_tokens::kCrosSysSecondary)
-                       .SetBackgroundColorId(cros_tokens::kCrosSysSystemOnBase)
+                       .SetEnabledColor(cros_tokens::kCrosSysSecondary)
+                       .SetBackgroundColor(cros_tokens::kCrosSysSystemOnBase)
                        .SetAutoColorReadabilityEnabled(false)
                        .Build());
 }
@@ -241,7 +241,7 @@ void SavedDeskRegularIconView::CreateChildViews(
   }
 
   delegate->GetFaviconForUrl(
-      icon_identifier_.url_or_id, icon_identifier_.lacros_profile_id,
+      icon_identifier_.url_or_id,
       base::BindOnce(&SavedDeskRegularIconView::OnIconLoaded,
                      weak_ptr_factory_.GetWeakPtr()),
       &cancelable_task_tracker_);

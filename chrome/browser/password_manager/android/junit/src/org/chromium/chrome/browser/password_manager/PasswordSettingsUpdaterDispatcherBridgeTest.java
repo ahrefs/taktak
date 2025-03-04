@@ -14,11 +14,13 @@ import static org.chromium.base.ThreadUtils.hasSubtleSideEffectsSetThreadAsserts
 import android.accounts.Account;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.robolectric.annotation.Config;
 
 import org.chromium.base.Callback;
@@ -38,6 +40,8 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
     private static final Optional<Account> sTestAccount =
             Optional.of(AccountUtils.createAccountFromName(sTestAccountEmail));
 
+    @Rule public MockitoRule mMockitoRule = MockitoJUnit.rule();
+
     @Mock private PasswordSettingsAccessor mAccessorMock;
     @Mock private PasswordSettingsUpdaterReceiverBridge mReceiverBridgeMock;
 
@@ -48,7 +52,6 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
         // Dispatcher bridge checks it is used on the background thread. Disable this check for this
         // test.
         hasSubtleSideEffectsSetThreadAssertsDisabledForTesting(true);
-        MockitoAnnotations.initMocks(this);
         mDispatcherBridge =
                 new PasswordSettingsUpdaterDispatcherBridge(mReceiverBridgeMock, mAccessorMock);
     }
@@ -73,10 +76,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(Optional.of(true)),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS);
+                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -99,10 +102,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(Optional.empty()),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS);
+                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -126,10 +129,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(expectedException),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS);
+                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -150,10 +153,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(Optional.of(true)),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.AUTO_SIGN_IN);
+                PasswordManagerSetting.AUTO_SIGN_IN,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -174,10 +177,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(Optional.empty()),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.AUTO_SIGN_IN);
+                PasswordManagerSetting.AUTO_SIGN_IN,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -199,10 +202,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(expectedException),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.AUTO_SIGN_IN);
+                PasswordManagerSetting.AUTO_SIGN_IN,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -224,10 +227,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "SetSettingValue");
+        assertEquals("SetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS);
+                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -252,10 +255,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(expectedException),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "SetSettingValue");
+        assertEquals("SetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS);
+                PasswordManagerSetting.OFFER_TO_SAVE_PASSWORDS,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -275,10 +278,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                 .onSettingValueSet(
                         eq(PasswordManagerSetting.AUTO_SIGN_IN), metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "SetSettingValue");
+        assertEquals("SetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.AUTO_SIGN_IN);
+                PasswordManagerSetting.AUTO_SIGN_IN,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -302,10 +305,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(expectedException),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "SetSettingValue");
+        assertEquals("SetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.AUTO_SIGN_IN);
+                PasswordManagerSetting.AUTO_SIGN_IN,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -327,10 +330,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(Optional.of(true)),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.BIOMETRIC_REAUTH_BEFORE_PWD_FILLING);
+                PasswordManagerSetting.BIOMETRIC_REAUTH_BEFORE_PWD_FILLING,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -352,10 +355,10 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(Optional.empty()),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.BIOMETRIC_REAUTH_BEFORE_PWD_FILLING);
+                PasswordManagerSetting.BIOMETRIC_REAUTH_BEFORE_PWD_FILLING,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 
     @Test
@@ -378,9 +381,9 @@ public class PasswordSettingsUpdaterDispatcherBridgeTest {
                         eq(expectedException),
                         metricsRecorder.capture());
 
-        assertEquals(metricsRecorder.getValue().getFunctionSuffixForTesting(), "GetSettingValue");
+        assertEquals("GetSettingValue", metricsRecorder.getValue().getFunctionSuffixForTesting());
         assertEquals(
-                metricsRecorder.getValue().getSettingForTesting(),
-                PasswordManagerSetting.BIOMETRIC_REAUTH_BEFORE_PWD_FILLING);
+                PasswordManagerSetting.BIOMETRIC_REAUTH_BEFORE_PWD_FILLING,
+                metricsRecorder.getValue().getSettingForTesting());
     }
 }

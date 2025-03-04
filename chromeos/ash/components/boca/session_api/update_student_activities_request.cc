@@ -13,6 +13,7 @@
 #include "chromeos/ash/components/boca/session_api/constants.h"
 #include "google_apis/common/api_error_codes.h"
 #include "google_apis/common/base_requests.h"
+#include "google_apis/gaia/gaia_id.h"
 
 namespace ash::boca {
 
@@ -26,8 +27,9 @@ bool ParseResponse(std::string json) {
 
 UpdateStudentActivitiesRequest::UpdateStudentActivitiesRequest(
     google_apis::RequestSender* sender,
+    std::string base_url,
     std::string session_id,
-    std::string gaia_id,
+    GaiaId gaia_id,
     std::string device_id,
     UpdateStudentActivitiesCallback callback)
     : UrlFetchRequestBase(sender,
@@ -36,14 +38,14 @@ UpdateStudentActivitiesRequest::UpdateStudentActivitiesRequest(
       session_id_(std::move(session_id)),
       gaia_id_(std::move(gaia_id)),
       device_id_(std::move(device_id)),
-      url_base_(kSchoolToolsApiBaseUrl),
+      url_base_(std::move(base_url)),
       callback_(std::move(callback)) {}
 
 UpdateStudentActivitiesRequest ::~UpdateStudentActivitiesRequest() = default;
 
 GURL UpdateStudentActivitiesRequest::GetURL() const {
   auto url = GURL(url_base_).Resolve(base::ReplaceStringPlaceholders(
-      kInsertStudentActivity, {session_id_, gaia_id_, device_id_},
+      kInsertStudentActivity, {session_id_, gaia_id_.ToString(), device_id_},
       /*=offsets*/ nullptr));
   return url;
 }

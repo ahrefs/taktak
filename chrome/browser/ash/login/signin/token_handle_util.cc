@@ -54,8 +54,7 @@ bool MaybeReturnCachedStatus(
     return true;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 bool IsReauthRequired(const TokenHandleUtil::Status& status,
@@ -71,8 +70,7 @@ bool IsReauthRequired(const TokenHandleUtil::Status& status,
       // only if the user is using their Gaia password for logging in.
       return user_has_gaia_password;
   }
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 void FinishWithStatus(TokenHandleUtil::TokenValidationCallback callback,
@@ -143,7 +141,7 @@ TokenHandleUtil::TokenHandleUtil()
 TokenHandleUtil::~TokenHandleUtil() = default;
 
 // static
-bool TokenHandleUtil::HasToken(const AccountId& account_id) {
+bool TokenHandleUtil::HasToken(const AccountId& account_id) const {
   user_manager::KnownUser known_user(g_browser_process->local_state());
   const std::string* token =
       known_user.FindStringPath(account_id, kTokenHandlePref);
@@ -151,7 +149,7 @@ bool TokenHandleUtil::HasToken(const AccountId& account_id) {
 }
 
 // static
-bool TokenHandleUtil::IsRecentlyChecked(const AccountId& account_id) {
+bool TokenHandleUtil::IsRecentlyChecked(const AccountId& account_id) const {
   user_manager::KnownUser known_user(g_browser_process->local_state());
   const base::Value* value =
       known_user.FindPath(account_id, kTokenHandleLastCheckedPref);
@@ -167,11 +165,10 @@ bool TokenHandleUtil::IsRecentlyChecked(const AccountId& account_id) {
 }
 
 // static
-bool TokenHandleUtil::ShouldObtainHandle(const AccountId& account_id) {
+bool TokenHandleUtil::ShouldObtainHandle(const AccountId& account_id) const {
   return !HasToken(account_id) || HasTokenStatusInvalid(account_id);
 }
 
-// static
 void TokenHandleUtil::IsReauthRequired(
     const AccountId& account_id,
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,

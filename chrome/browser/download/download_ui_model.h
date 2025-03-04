@@ -229,6 +229,10 @@ class DownloadUIModel {
   // total size of the download is not known. Virtual for testing.
   virtual int64_t GetTotalBytes() const;
 
+  // Returns the total number of bytes uploaded to the cloud. Returns 0 if the
+  // upload has not started.
+  virtual int64_t GetUploadedBytes() const;
+
   // Rough percent complete. Returns -1 if the progress is unknown.
   virtual int PercentComplete() const;
 
@@ -335,7 +339,7 @@ class DownloadUIModel {
   // ShouldPreferOpeningInBrowser().
   virtual void OpenUsingPlatformHandler();
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // Returns the Media App action (open or edit) we should show for the item if
   // one should be shown.
   virtual std::optional<DownloadCommands::Command> MaybeGetMediaAppAction()
@@ -492,7 +496,7 @@ class DownloadUIModel {
   virtual bool IsEphemeralWarning() const;
 #endif
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
+#if BUILDFLAG(SAFE_BROWSING_DOWNLOAD_PROTECTION)
   // Complete the Safe Browsing scan early.
   virtual void CompleteSafeBrowsingScan();
 

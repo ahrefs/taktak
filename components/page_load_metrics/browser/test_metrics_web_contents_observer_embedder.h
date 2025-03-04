@@ -32,9 +32,11 @@ class TestMetricsWebContentsObserverEmbedder
   std::unique_ptr<base::OneShotTimer> CreateTimer() override;
   bool IsNoStatePrefetch(content::WebContents* web_contents) override;
   bool IsExtensionUrl(const GURL& url) override;
-  bool IsNonTabWebUI() override;
+  bool IsNonTabWebUI(const GURL& url) override;
+  bool ShouldObserveScheme(std::string_view scheme) override;
   PageLoadMetricsMemoryTracker* GetMemoryTrackerForBrowserContext(
       content::BrowserContext* browser_context) override;
+  bool IsIncognito(content::WebContents* web_contents) override;
 
   void set_is_ntp(bool is_ntp) { is_ntp_ = is_ntp; }
 

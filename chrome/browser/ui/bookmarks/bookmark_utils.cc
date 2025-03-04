@@ -13,7 +13,6 @@
 #include "base/notreached.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/bookmarks/bookmark_merged_surface_service.h"
 #include "chrome/browser/bookmarks/bookmark_merged_surface_service_factory.h"
 #include "chrome/browser/bookmarks/bookmark_model_factory.h"
@@ -41,6 +40,7 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/pointer/touch_ui_controller.h"
 #include "ui/base/ui_base_features.h"
+#include "ui/color/color_variant.h"
 
 #if defined(TOOLKIT_VIEWS)
 #include "chrome/grit/theme_resources.h"
@@ -142,8 +142,9 @@ bool IsValidBookmarkDropLocation(
 
 GURL GetURLToBookmark(content::WebContents* web_contents) {
   DCHECK(web_contents);
-  if (search::IsInstantNTP(web_contents))
+  if (search::IsInstantNTP(web_contents)) {
     return GURL(kChromeUINewTabURL);
+  }
   // Users cannot bookmark Reader Mode pages directly, so the bookmark
   // interaction is as if it were with the original page.
   if (dom_distiller::url_utils::IsDistilledPage(
@@ -158,8 +159,9 @@ bool GetURLAndTitleToBookmark(content::WebContents* web_contents,
                               GURL* url,
                               std::u16string* title) {
   GURL u = GetURLToBookmark(web_contents);
-  if (!u.is_valid())
+  if (!u.is_valid()) {
     return false;
+  }
   *url = u;
   if (dom_distiller::url_utils::IsDistilledPage(
           web_contents->GetVisibleURL())) {
@@ -173,8 +175,9 @@ bool GetURLAndTitleToBookmark(content::WebContents* web_contents,
   }
 
   // Use "New tab" as title if the current page is NTP even in incognito mode.
-  if (u == GURL(chrome::kChromeUINewTabURL))
+  if (u == GURL(chrome::kChromeUINewTabURL)) {
     *title = l10n_util::GetStringUTF16(IDS_NEW_TAB_TITLE);
+  }
 
   return true;
 }
@@ -199,8 +202,9 @@ std::u16string FormatBookmarkURLForDisplay(const GURL& url) {
 
   // If username is present, we must not omit the scheme because FixupURL() will
   // subsequently interpret the username as a scheme. crbug.com/639126
-  if (url.has_username())
+  if (url.has_username()) {
     format_types &= ~url_formatter::kFormatUrlOmitHTTP;
+  }
 
   return url_formatter::FormatUrl(url, format_types, base::UnescapeRule::SPACES,
                                   nullptr, nullptr, nullptr);
@@ -237,22 +241,27 @@ int GetBookmarkDragOperation(content::BrowserContext* browser_context,
       model->client()->IsNodeManaged(node)) {
     move = ui::DragDropTypes::DRAG_NONE;
   }
-  if (node->is_url())
+  if (node->is_url()) {
     return ui::DragDropTypes::DRAG_COPY | ui::DragDropTypes::DRAG_LINK | move;
+  }
   return ui::DragDropTypes::DRAG_COPY | move;
 }
 
 DragOperation GetPreferredBookmarkDropOperation(int source_operations,
                                                 int operations) {
   int common_ops = (source_operations & operations);
-  if (!common_ops)
+  if (!common_ops) {
     return DragOperation::kNone;
-  if (ui::DragDropTypes::DRAG_COPY & common_ops)
+  }
+  if (ui::DragDropTypes::DRAG_COPY & common_ops) {
     return DragOperation::kCopy;
-  if (ui::DragDropTypes::DRAG_LINK & common_ops)
+  }
+  if (ui::DragDropTypes::DRAG_LINK & common_ops) {
     return DragOperation::kLink;
-  if (ui::DragDropTypes::DRAG_MOVE & common_ops)
+  }
+  if (ui::DragDropTypes::DRAG_MOVE & common_ops) {
     return DragOperation::kMove;
+  }
   return DragOperation::kNone;
 }
 
@@ -312,7 +321,7 @@ bool CanAllBeEditedByUser(
 
 gfx::ImageSkia GetBookmarkFolderImageFromVectorIcon(
     BookmarkFolderIconType icon_type,
-    absl::variant<ui::ColorId, SkColor> color,
+    ui::ColorVariant color,
     const ui::ColorProvider* color_provider) {
   const gfx::VectorIcon* id;
   gfx::ImageSkia folder;
@@ -321,17 +330,16 @@ gfx::ImageSkia GetBookmarkFolderImageFromVectorIcon(
   } else {
     id = &vector_icons::kFolderManagedRefreshIcon;
   }
+
   const ui::ThemedVectorIcon icon =
-      absl::holds_alternative<SkColor>(color)
-          ? ui::ThemedVectorIcon(id, absl::get<SkColor>(color))
-          : ui::ThemedVectorIcon(id, absl::get<ui::ColorId>(color));
+      color.GetSkColor() ? ui::ThemedVectorIcon(id, *color.GetSkColor())
+                         : ui::ThemedVectorIcon(id, *color.GetColorId());
   folder = icon.GetImageSkia(color_provider);
   return folder;
 }
 
-ui::ImageModel GetBookmarkFolderIcon(
-    BookmarkFolderIconType icon_type,
-    absl::variant<ui::ColorId, SkColor> color) {
+ui::ImageModel GetBookmarkFolderIcon(BookmarkFolderIconType icon_type,
+                                     ui::ColorVariant color) {
   int default_id = IDR_FOLDER_CLOSED;
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
   // This block must be #ifdefed because only these platforms actually have this
@@ -341,7 +349,7 @@ ui::ImageModel GetBookmarkFolderIcon(
   }
 #endif
   const auto generator = [](int default_id, BookmarkFolderIconType icon_type,
-                            absl::variant<ui::ColorId, SkColor> color,
+                            ui::ColorVariant color,
                             const ui::ColorProvider* color_provider) {
     gfx::ImageSkia folder;
     folder =

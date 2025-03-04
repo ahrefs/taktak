@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+load("//console-header.star", "DEV_HEADER")
 load("//lib/branches.star", "branches")
 load("//lib/builders.star", "builders", "cpu", "siso")
 load("//lib/ci.star", "ci")
@@ -149,6 +150,19 @@ luci.gitiles_poller(
     ("mirrors", "{} CQ Mirrors Console".format(settings.project_title)),
 )]
 
+# TODO(crbug.com/40873502): Replace the header of this and the
+# register_gardener_rotation_consoles with the default header when it's verified
+# the name should also be changed to a shared constant with console-header
+consoles.console_view(name = "Tree Closers", branch_selector = branches.selector.MAIN, header = DEV_HEADER)
+
+def register_gardener_rotation_consoles():
+    rotations = [getattr(builders.gardener_rotations, a) for a in dir(builders.gardener_rotations)]
+    for rotation in rotations:
+        if rotation and len(rotation) > 0:
+            consoles.console_view(name = builders.gardener_rotation_name(rotation[0]), header = DEV_HEADER)
+
+register_gardener_rotation_consoles()
+
 # The main console includes some entries for builders from the chrome project
 [branches.console_view_entry(
     console_view = "main",
@@ -163,15 +177,13 @@ luci.gitiles_poller(
     ("win64-chrome", "win"),
 )]
 
-# Any builders that should be monitored by the Chrome-Fuchsia Gardener
-# should be in the "gardener" group.
+# Any builders that should not be monitored by the Chrome-Fuchsia Gardener
+# should be in the "fyi" group.
 consoles.console_view(
     name = "sheriff.fuchsia",
     title = "Fuchsia Sheriff Console",
     ordering = {
-        None: ["gardener", "fyi"],
-        "gardener": ["ci", "fuchsia ci", "p/chrome", "hardware"],
-        "fyi": ["arm64", "x64", "clang", "hardware"],
+        None: ["ci", "fuchsia ci", "p/chrome", "hardware", "fyi"],
     },
 )
 
@@ -182,26 +194,29 @@ consoles.console_view(
     category = category,
     short_name = short_name,
 ) for name, category, short_name in (
-    ("fuchsia-arm64-rel-ready", "gardener|p/chrome|arm64", "rel-ready"),
-    ("fuchsia-arm64-nest-sd", "gardener|p/chrome|arm64", "nest-arm"),
-    ("fuchsia-ava-nelson", "gardener|hardware|ava", "nsn"),
-    ("fuchsia-builder-perf-arm64", "gardener|p/chrome|arm64", "perf-arm"),
-    ("fuchsia-cast-astro", "gardener|hardware|cast", "ast"),
-    ("fuchsia-cast-nelson", "gardener|hardware|cast", "nsn"),
-    ("fuchsia-cast-sherlock", "gardener|hardware|cast", "sher"),
-    ("fuchsia-fyi-arm64-size", "gardener|p/chrome|arm64", "size"),
-    ("fuchsia-fyi-astro", "gardener|hardware", "ast"),
-    ("fuchsia-fyi-nelson", "gardener|hardware", "nsn"),
-    ("fuchsia-fyi-sherlock", "gardener|hardware", "sher"),
-    ("fuchsia-fyi-sherlock-qemu", "gardener|hardware|emu", "sher"),
-    ("fuchsia-smoke-astro", "gardener|hardware|smoke", "ast"),
-    ("fuchsia-smoke-nelson", "gardener|hardware|smoke", "nsn"),
-    ("fuchsia-smoke-sherlock", "gardener|hardware|smoke", "sher"),
-    ("fuchsia-smoke-sherlock-roller", "gardener|hardware|smoke", "roll"),
-    ("fuchsia-perf-nsn", "gardener|hardware|perf", "nsn"),
-    ("fuchsia-perf-shk", "gardener|hardware|perf", "sher"),
-    ("fuchsia-x64", "gardener|p/chrome|x64", "rel"),
-    ("fuchsia-x64-nest-sd", "gardener|p/chrome|x64", "nest-x64"),
+    ("fuchsia-arm64-rel-ready", "p/chrome|arm64", "rel-ready"),
+    ("fuchsia-arm64-nest-sd", "p/chrome|official", "nest-arm"),
+    ("fuchsia-ava-astro", "hardware|ava", "ast"),
+    ("fuchsia-ava-nelson", "hardware|ava", "nsn"),
+    ("fuchsia-ava-sherlock", "hardware|ava", "sher"),
+    ("fuchsia-builder-perf-arm64", "p/chrome|arm64", "perf-arm"),
+    ("fuchsia-fyi-arm64-size", "p/chrome|arm64", "size"),
+    ("fuchsia-fyi-astro", "hardware", "ast"),
+    ("fuchsia-fyi-nelson", "hardware", "nsn"),
+    ("fuchsia-fyi-sherlock", "hardware", "sher"),
+    ("fuchsia-fyi-sherlock-qemu", "hardware", "emu-sher"),
+    ("fuchsia-smoke-astro", "hardware|smoke", "ast"),
+    ("fuchsia-smoke-nelson", "hardware|smoke", "nsn"),
+    ("fuchsia-smoke-sherlock", "hardware|smoke", "sher"),
+    ("fuchsia-smoke-sherlock-roller", "hardware|smoke", "roll"),
+    ("fuchsia-perf-nsn", "hardware|perf", "nsn"),
+    ("fuchsia-perf-shk", "hardware|perf", "sher"),
+    ("fuchsia-webgl-astro", "hardware|webgl", "ast"),
+    ("fuchsia-webgl-nelson", "hardware|webgl", "nsn"),
+    ("fuchsia-webgl-sherlock", "hardware|webgl", "sher"),
+    ("fuchsia-webgl-sherlock-qemu", "hardware|webgl", "emu-sher"),
+    ("fuchsia-x64", "p/chrome|official", "x64"),
+    ("fuchsia-x64-nest-sd", "p/chrome|official", "nest-x64"),
 )]
 
 exec("./ci/blink.infra.star")
@@ -209,8 +224,9 @@ exec("./ci/checks.star")
 exec("./ci/chromium.star")
 exec("./ci/chromium.accessibility.star")
 exec("./ci/chromium.android.star")
-exec("./ci/chromium.android.desktop.star")
 exec("./ci/chromium.android.fyi.star")
+exec("./ci/chromium.android.desktop.star")
+exec("./ci/chromium.android.desktop.fyi.star")
 exec("./ci/chromium.angle.star")
 exec("./ci/chromium.cft.star")
 exec("./ci/chromium.chromiumos.star")

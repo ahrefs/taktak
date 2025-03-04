@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "media/renderers/video_renderer_impl.h"
+
 #include <stdint.h>
 
 #include <memory>
@@ -14,6 +16,8 @@
 #include "base/functional/callback_helpers.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/raw_ptr.h"
+#include "base/memory/scoped_refptr.h"
+#include "base/notreached.h"
 #include "base/run_loop.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
@@ -33,7 +37,6 @@
 #include "media/base/test_helpers.h"
 #include "media/base/video_frame.h"
 #include "media/base/wall_clock_time_source.h"
-#include "media/renderers/video_renderer_impl.h"
 #include "media/video/mock_gpu_memory_buffer_video_frame_pool.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -184,7 +187,7 @@ class VideoRendererImplTest : public testing::Test {
       }
     }
 
-    scoped_refptr<DecoderBuffer> decoder_buffer(new DecoderBuffer(0));
+    auto decoder_buffer = base::MakeRefCounted<DecoderBuffer>(0);
 
     // Set |decoder_buffer| timestamp such that it won't match any of the
     // times provided to QueueFrames(). Otherwise the default timestamp of 0 may
@@ -256,7 +259,7 @@ class VideoRendererImplTest : public testing::Test {
         continue;
       }
 
-      CHECK(false) << "Unrecognized decoder buffer token: " << token;
+      NOTREACHED() << "Unrecognized decoder buffer token: " << token;
     }
   }
 

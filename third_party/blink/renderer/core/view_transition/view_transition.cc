@@ -4,9 +4,10 @@
 
 #include "third_party/blink/renderer/core/view_transition/view_transition.h"
 
+#include <algorithm>
 #include <vector>
 
-#include "base/ranges/algorithm.h"
+#include "base/auto_reset.h"
 #include "base/time/time.h"
 #include "base/trace_event/trace_event.h"
 #include "cc/trees/layer_tree_host.h"
@@ -103,41 +104,41 @@ const char* ViewTransition::StateToString(State state) {
     case State::kTransitionStateCallbackDispatched:
       return "TransitionStateCallbackDispatched";
   };
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 
 // static
 ViewTransition* ViewTransition::CreateFromScript(
-    Document* document,
+    Element* element,
     V8ViewTransitionCallback* callback,
     const std::optional<Vector<String>>& types,
     Delegate* delegate) {
-  CHECK(document->GetExecutionContext());
-  return MakeGarbageCollected<ViewTransition>(PassKey(), document, callback,
+  CHECK(element->GetExecutionContext());
+  return MakeGarbageCollected<ViewTransition>(PassKey(), element, callback,
                                               types, delegate);
 }
 
 ViewTransition* ViewTransition::CreateSkipped(
-    Document* document,
+    Element* element,
     V8ViewTransitionCallback* callback) {
-  return MakeGarbageCollected<ViewTransition>(PassKey(), document, callback);
+  return MakeGarbageCollected<ViewTransition>(PassKey(), element, callback);
 }
 
 ViewTransition::ViewTransition(PassKey,
-                               Document* document,
+                               Element* element,
                                V8ViewTransitionCallback* update_dom_callback,
                                const std::optional<Vector<String>>& types,
                                Delegate* delegate)
-    : ExecutionContextLifecycleObserver(document->GetExecutionContext()),
+    : ExecutionContextLifecycleObserver(element->GetExecutionContext()),
       creation_type_(CreationType::kScript),
-      document_(document),
+      document_(element->GetDocument()),
+      scope_(element),
       delegate_(delegate),
       style_tracker_(
           MakeGarbageCollected<ViewTransitionStyleTracker>(*document_,
                                                            transition_token_)),
       script_delegate_(MakeGarbageCollected<DOMViewTransition>(
-          *document->GetExecutionContext(),
+          *element->GetExecutionContext(),
           *this,
           update_dom_callback)) {
   InitTypes(types.value_or(Vector<String>()));
@@ -151,13 +152,14 @@ ViewTransition::ViewTransition(PassKey,
 }
 
 ViewTransition::ViewTransition(PassKey,
-                               Document* document,
+                               Element* element,
                                V8ViewTransitionCallback* update_dom_callback)
-    : ExecutionContextLifecycleObserver(document->GetExecutionContext()),
+    : ExecutionContextLifecycleObserver(element->GetExecutionContext()),
       creation_type_(CreationType::kScript),
-      document_(document),
+      document_(element->GetDocument()),
+      scope_(element),
       script_delegate_(MakeGarbageCollected<DOMViewTransition>(
-          *document->GetExecutionContext(),
+          *element->GetExecutionContext(),
           *this,
           update_dom_callback)) {
   SkipTransition();
@@ -184,6 +186,7 @@ ViewTransition::ViewTransition(PassKey,
     : ExecutionContextLifecycleObserver(document->GetExecutionContext()),
       creation_type_(CreationType::kForSnapshot),
       document_(document),
+      scope_(document->documentElement()),
       delegate_(delegate),
       transition_token_(transition_token),
       style_tracker_(
@@ -215,6 +218,7 @@ ViewTransition::ViewTransition(PassKey,
     : ExecutionContextLifecycleObserver(document->GetExecutionContext()),
       creation_type_(CreationType::kFromSnapshot),
       document_(document),
+      scope_(document->documentElement()),
       delegate_(delegate),
       transition_token_(transition_state.transition_token),
       style_tracker_(MakeGarbageCollected<ViewTransitionStyleTracker>(
@@ -232,6 +236,7 @@ ViewTransition::ViewTransition(PassKey,
 
 void ViewTransition::SkipTransition(PromiseResponse response) {
   DCHECK_NE(response, PromiseResponse::kResolve);
+  pending_skip_view_transitions_ = false;
   if (IsTerminalState(state_))
     return;
 
@@ -279,6 +284,10 @@ void ViewTransition::SkipTransition(PromiseResponse response) {
   // This should be the last call in this function to avoid erroneously checking
   // the `state_` against the wrong state.
   AdvanceTo(State::kAborted);
+}
+
+void ViewTransition::SkipTransitionSoon() {
+  pending_skip_view_transitions_ = true;
 }
 
 bool ViewTransition::AdvanceTo(State state) {
@@ -357,8 +366,7 @@ bool ViewTransition::CanAdvanceTo(State state) const {
     case State::kTimedOut:
       return false;
   }
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 // static
@@ -386,8 +394,7 @@ bool ViewTransition::StateRunsInViewTransitionStepsDuringMainFrame(
     case State::kTransitionStateCallbackDispatched:
       return false;
   }
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 // static
@@ -629,13 +636,12 @@ ViewTransitionTypeSet* ViewTransition::Types() {
 }
 
 void ViewTransition::InitTypes(const Vector<String>& types) {
-  if (RuntimeEnabledFeatures::ViewTransitionTypesEnabled()) {
-    types_ = MakeGarbageCollected<ViewTransitionTypeSet>(this, types);
-  }
+  types_ = MakeGarbageCollected<ViewTransitionTypeSet>(this, types);
 }
 
 void ViewTransition::Trace(Visitor* visitor) const {
   visitor->Trace(document_);
+  visitor->Trace(scope_);
   visitor->Trace(style_tracker_);
   visitor->Trace(script_delegate_);
   visitor->Trace(types_);
@@ -652,13 +658,11 @@ bool ViewTransition::MatchForOnlyChild(
 }
 
 bool ViewTransition::MatchForActiveViewTransition() {
-  CHECK(RuntimeEnabledFeatures::ViewTransitionTypesEnabled());
   return !IsTerminalState(state_);
 }
 
 bool ViewTransition::MatchForActiveViewTransitionType(
     const Vector<AtomicString>& pseudo_types) {
-  CHECK(RuntimeEnabledFeatures::ViewTransitionTypesEnabled());
   if (IsTerminalState(state_)) {
     return false;
   }
@@ -671,7 +675,7 @@ bool ViewTransition::MatchForActiveViewTransitionType(
   }
 
   // At least one pseudo type has to match at least one of the transition types.
-  return base::ranges::any_of(pseudo_types, [&](const String& pseudo_type) {
+  return std::ranges::any_of(pseudo_types, [&](const String& pseudo_type) {
     return ViewTransitionTypeSet::IsValidType(pseudo_type) &&
            types_->Contains(pseudo_type);
   });
@@ -813,8 +817,9 @@ void ViewTransition::RunViewTransitionStepsOutsideMainFrame() {
          DocumentLifecycle::kPrePaintClean);
   DCHECK(!in_main_lifecycle_update_);
 
-  if (state_ == State::kAnimating && style_tracker_ &&
-      !style_tracker_->RunPostPrePaintSteps()) {
+  if (pending_skip_view_transitions_ ||
+      (state_ == State::kAnimating && style_tracker_ &&
+       !style_tracker_->RunPostPrePaintSteps())) {
     SkipTransition(PromiseResponse::kRejectInvalidState);
   }
 }
@@ -830,9 +835,10 @@ void ViewTransition::RunViewTransitionStepsDuringMainFrame() {
   if (StateRunsInViewTransitionStepsDuringMainFrame(state_))
     ProcessCurrentState();
 
-  if (style_tracker_ &&
-      document_->Lifecycle().GetState() >= DocumentLifecycle::kPrePaintClean &&
-      !style_tracker_->RunPostPrePaintSteps()) {
+  if (pending_skip_view_transitions_ ||
+      (style_tracker_ &&
+       document_->Lifecycle().GetState() >= DocumentLifecycle::kPrePaintClean &&
+       !style_tracker_->RunPostPrePaintSteps())) {
     SkipTransition(PromiseResponse::kRejectInvalidState);
   }
 }

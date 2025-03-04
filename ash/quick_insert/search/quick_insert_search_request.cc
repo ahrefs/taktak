@@ -33,6 +33,7 @@
 #include "base/containers/fixed_flat_set.h"
 #include "base/containers/flat_set.h"
 #include "base/containers/span.h"
+#include "base/containers/to_vector.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_forward.h"
 #include "base/functional/callback_helpers.h"
@@ -40,10 +41,13 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/notreached.h"
 #include "base/parameter_pack.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
 #include "base/types/cxx23_to_underlying.h"
+#include "chromeos/ash/components/emoji/gif_tenor_api_fetcher.h"
+#include "chromeos/ash/components/emoji/tenor_types.mojom.h"
+#include "components/endpoint_fetcher/endpoint_fetcher.h"
+#include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "url/gurl.h"
 
 namespace ash {
@@ -54,27 +58,32 @@ namespace {
 constexpr auto kGoogleCorpGotoHosts = base::MakeFixedFlatSet<std::string_view>(
     {"goto2.corp.google.com", "goto.corp.google.com", "goto.google.com", "go"});
 
-const char* SearchSourceToHistogram(PickerSearchSource source) {
+constexpr int kMaxGifsToSearch = 25;
+
+const char* SearchSourceToHistogram(QuickInsertSearchSource source) {
   switch (source) {
-    case PickerSearchSource::kOmnibox:
+    case QuickInsertSearchSource::kOmnibox:
       return "Ash.Picker.Search.OmniboxProvider.QueryTime";
-    case PickerSearchSource::kDate:
+    case QuickInsertSearchSource::kDate:
       return "Ash.Picker.Search.DateProvider.QueryTime";
-    case PickerSearchSource::kAction:
+    case QuickInsertSearchSource::kAction:
       return "Ash.Picker.Search.CategoryProvider.QueryTime";
-    case PickerSearchSource::kLocalFile:
+    case QuickInsertSearchSource::kLocalFile:
       return "Ash.Picker.Search.FileProvider.QueryTime";
-    case PickerSearchSource::kDrive:
+    case QuickInsertSearchSource::kDrive:
       return "Ash.Picker.Search.DriveProvider.QueryTime";
-    case PickerSearchSource::kMath:
+    case QuickInsertSearchSource::kMath:
       return "Ash.Picker.Search.MathProvider.QueryTime";
-    case PickerSearchSource::kClipboard:
+    case QuickInsertSearchSource::kClipboard:
       return "Ash.Picker.Search.ClipboardProvider.QueryTime";
-    case PickerSearchSource::kEditorWrite:
-    case PickerSearchSource::kEditorRewrite:
+    case QuickInsertSearchSource::kEditorWrite:
+    case QuickInsertSearchSource::kEditorRewrite:
       return "Ash.Picker.Search.EditorProvider.QueryTime";
-    case PickerSearchSource::kLobster:
+    case QuickInsertSearchSource::kLobsterWithNoSelectedText:
+    case QuickInsertSearchSource::kLobsterWithSelectedText:
       return "Ash.Picker.Search.LobsterProvider.QueryTime";
+    case QuickInsertSearchSource::kGifs:
+      return "Ash.Picker.Search.Gifs.QueryTime";
   }
   NOTREACHED() << "Unexpected search source " << base::to_underlying(source);
 }
@@ -108,106 +117,153 @@ DeduplicateGoogleCorpGotoDomains(
   return deduped_results;
 }
 
+std::vector<QuickInsertSearchResult> ConvertGifResponse(
+    base::expected<tenor::mojom::PaginatedGifResponsesPtr,
+                   GifTenorApiFetcher::Error> response) {
+  if (!response.has_value()) {
+    // TODO: b/325368650 - Add better handling of errors.
+    return {};
+  }
+
+  size_t rank = 0;
+  return base::ToVector(
+      (*response)->results,
+      [&rank](const tenor::mojom::GifResponsePtr& result) {
+        CHECK(result);
+        const tenor::mojom::GifUrlsPtr& urls = result->url;
+        CHECK(urls);
+        return QuickInsertSearchResult(QuickInsertGifResult(
+            urls->preview, urls->preview_image, result->preview_size,
+            urls->full, result->full_size,
+            base::UTF8ToUTF16(result->content_description), rank++));
+      });
+}
+
 }  // namespace
 
-PickerSearchRequest::PickerSearchRequest(std::u16string_view query,
-                                         std::optional<PickerCategory> category,
-                                         SearchResultsCallback callback,
-                                         DoneCallback done_callback,
-                                         PickerClient* client,
-                                         const Options& options)
+QuickInsertSearchRequest::QuickInsertSearchRequest(
+    std::u16string_view query,
+    std::optional<QuickInsertCategory> category,
+    SearchResultsCallback callback,
+    DoneCallback done_callback,
+    QuickInsertClient* client,
+    base::span<const QuickInsertCategory> available_categories,
+    bool caps_lock_state_to_search,
+    bool search_case_transforms)
     : is_category_specific_search_(category.has_value()),
       client_(CHECK_DEREF(client)),
+      gif_search_debouncer_(kGifDebouncingDelay),
       current_callback_(std::move(callback)),
       done_callback_(std::move(done_callback)) {
   CHECK(!current_callback_.is_null());
   CHECK(!done_callback_.is_null());
-  base::span<const PickerCategory> available_categories =
-      options.available_categories;
   std::string utf8_query = base::UTF16ToUTF8(query);
 
-  std::vector<PickerSearchSource> cros_search_sources;
+  std::vector<QuickInsertSearchSource> cros_search_sources;
   cros_search_sources.reserve(3);
-  if ((!category.has_value() || category == PickerCategory::kLinks) &&
-      base::Contains(available_categories, PickerCategory::kLinks)) {
-    cros_search_sources.push_back(PickerSearchSource::kOmnibox);
+  if ((!category.has_value() || category == QuickInsertCategory::kLinks) &&
+      base::Contains(available_categories, QuickInsertCategory::kLinks)) {
+    cros_search_sources.push_back(QuickInsertSearchSource::kOmnibox);
   }
-  if ((!category.has_value() || category == PickerCategory::kLocalFiles) &&
-      base::Contains(available_categories, PickerCategory::kLocalFiles)) {
-    cros_search_sources.push_back(PickerSearchSource::kLocalFile);
+  if ((!category.has_value() || category == QuickInsertCategory::kLocalFiles) &&
+      base::Contains(available_categories, QuickInsertCategory::kLocalFiles)) {
+    cros_search_sources.push_back(QuickInsertSearchSource::kLocalFile);
   }
-  if ((!category.has_value() || category == PickerCategory::kDriveFiles) &&
-      base::Contains(available_categories, PickerCategory::kDriveFiles)) {
-    cros_search_sources.push_back(PickerSearchSource::kDrive);
+  if ((!category.has_value() || category == QuickInsertCategory::kDriveFiles) &&
+      base::Contains(available_categories, QuickInsertCategory::kDriveFiles)) {
+    cros_search_sources.push_back(QuickInsertSearchSource::kDrive);
   }
 
   if (!cros_search_sources.empty()) {
     // TODO: b/326166751 - Use `available_categories_` to decide what searches
     // to do.
-    for (PickerSearchSource source : cros_search_sources) {
+    for (QuickInsertSearchSource source : cros_search_sources) {
       MarkSearchStarted(source);
     }
     client_->StartCrosSearch(
         std::u16string(query), category,
-        base::BindRepeating(&PickerSearchRequest::HandleCrosSearchResults,
+        base::BindRepeating(&QuickInsertSearchRequest::HandleCrosSearchResults,
                             weak_ptr_factory_.GetWeakPtr()));
   }
 
-  if ((!category.has_value() || category == PickerCategory::kClipboard) &&
-      base::Contains(available_categories, PickerCategory::kClipboard)) {
-    clipboard_provider_ = std::make_unique<PickerClipboardHistoryProvider>();
-    MarkSearchStarted(PickerSearchSource::kClipboard);
+  if ((!category.has_value() || category == QuickInsertCategory::kClipboard) &&
+      base::Contains(available_categories, QuickInsertCategory::kClipboard)) {
+    clipboard_provider_ =
+        std::make_unique<QuickInsertClipboardHistoryProvider>();
+    MarkSearchStarted(QuickInsertSearchSource::kClipboard);
     clipboard_provider_->FetchResults(
-        base::BindOnce(&PickerSearchRequest::HandleClipboardSearchResults,
+        base::BindOnce(&QuickInsertSearchRequest::HandleClipboardSearchResults,
                        weak_ptr_factory_.GetWeakPtr()),
         query);
   }
 
-  if ((!category.has_value() || category == PickerCategory::kDatesTimes) &&
-      base::Contains(available_categories, PickerCategory::kDatesTimes)) {
-    MarkSearchStarted(PickerSearchSource::kDate);
+  if ((!category.has_value() || category == QuickInsertCategory::kDatesTimes) &&
+      base::Contains(available_categories, QuickInsertCategory::kDatesTimes)) {
+    MarkSearchStarted(QuickInsertSearchSource::kDate);
     // Date results is currently synchronous.
-    HandleDateSearchResults(PickerDateSearch(base::Time::Now(), query));
+    HandleDateSearchResults(QuickInsertDateSearch(base::Time::Now(), query));
   }
 
-  if ((!category.has_value() || category == PickerCategory::kUnitsMaths) &&
-      base::Contains(available_categories, PickerCategory::kUnitsMaths)) {
-    MarkSearchStarted(PickerSearchSource::kMath);
+  if ((!category.has_value() || category == QuickInsertCategory::kUnitsMaths) &&
+      base::Contains(available_categories, QuickInsertCategory::kUnitsMaths)) {
+    MarkSearchStarted(QuickInsertSearchSource::kMath);
     // Math results is currently synchronous.
-    HandleMathSearchResults(PickerMathSearch(query));
+    HandleMathSearchResults(QuickInsertMathSearch(query));
+  }
+
+  if (category == QuickInsertCategory::kGifs) {
+    MarkSearchStarted(QuickInsertSearchSource::kGifs);
+    gif_search_debouncer_.RequestSearch(base::BindOnce(
+        &QuickInsertSearchRequest::StartGifSearch,
+        weak_ptr_factory_.GetWeakPtr(), base::UTF16ToUTF8(query)));
   }
 
   // These searches do not have category-specific search.
   if (!category.has_value()) {
-    MarkSearchStarted(PickerSearchSource::kAction);
+    MarkSearchStarted(QuickInsertSearchSource::kAction);
     // Action results are currently synchronous.
-    HandleActionSearchResults(PickerActionSearch(
-        {.available_categories = available_categories,
-         .caps_lock_state_to_search = options.caps_lock_state_to_search,
-         .search_case_transforms = options.search_case_transforms},
-        query));
+    HandleActionSearchResults(
+        QuickInsertActionSearch(available_categories, caps_lock_state_to_search,
+                                search_case_transforms, query));
 
-    if (base::Contains(available_categories, PickerCategory::kEditorWrite)) {
+    if (base::Contains(available_categories,
+                       QuickInsertCategory::kEditorWrite)) {
       // Editor results are currently synchronous.
-      MarkSearchStarted(PickerSearchSource::kEditorWrite);
+      MarkSearchStarted(QuickInsertSearchSource::kEditorWrite);
       HandleEditorSearchResults(
-          PickerSearchSource::kEditorWrite,
-          PickerEditorSearch(QuickInsertEditorResult::Mode::kWrite, query));
+          QuickInsertSearchSource::kEditorWrite,
+          QuickInsertEditorSearch(QuickInsertEditorResult::Mode::kWrite,
+                                  query));
     }
 
-    if (base::Contains(available_categories, PickerCategory::kEditorRewrite)) {
+    if (base::Contains(available_categories,
+                       QuickInsertCategory::kEditorRewrite)) {
       // Editor results are currently synchronous.
-      MarkSearchStarted(PickerSearchSource::kEditorRewrite);
+      MarkSearchStarted(QuickInsertSearchSource::kEditorRewrite);
       HandleEditorSearchResults(
-          PickerSearchSource::kEditorRewrite,
-          PickerEditorSearch(QuickInsertEditorResult::Mode::kRewrite, query));
+          QuickInsertSearchSource::kEditorRewrite,
+          QuickInsertEditorSearch(QuickInsertEditorResult::Mode::kRewrite,
+                                  query));
     }
 
-    if (base::Contains(available_categories, PickerCategory::kLobster)) {
-      // Editor results are currently synchronous.
-      MarkSearchStarted(PickerSearchSource::kLobster);
-      HandleLobsterSearchResults(PickerSearchSource::kLobster,
-                                 PickerLobsterSearch(query));
+    if (base::Contains(available_categories,
+                       QuickInsertCategory::kLobsterWithNoSelectedText)) {
+      // Lobster results are currently synchronous.
+      MarkSearchStarted(QuickInsertSearchSource::kLobsterWithNoSelectedText);
+      HandleLobsterSearchResults(
+          QuickInsertSearchSource::kLobsterWithNoSelectedText,
+          QuickInsertLobsterSearch(QuickInsertLobsterResult::Mode::kNoSelection,
+                                   query));
+    }
+
+    if (base::Contains(available_categories,
+                       QuickInsertCategory::kLobsterWithSelectedText)) {
+      // Lobster results are currently synchronous.
+      MarkSearchStarted(QuickInsertSearchSource::kLobsterWithSelectedText);
+      HandleLobsterSearchResults(
+          QuickInsertSearchSource::kLobsterWithSelectedText,
+          QuickInsertLobsterSearch(
+              QuickInsertLobsterResult::Mode::kWithSelection, query));
     }
   }
 
@@ -215,7 +271,7 @@ PickerSearchRequest::PickerSearchRequest(std::u16string_view query,
   MaybeCallDoneClosure();
 }
 
-PickerSearchRequest::~PickerSearchRequest() {
+QuickInsertSearchRequest::~QuickInsertSearchRequest() {
   // Ensure that any bound callbacks to `Handle*SearchResults` - and therefore
   // `current_callback_` - will not get called by stopping searches.
   weak_ptr_factory_.InvalidateWeakPtrs();
@@ -226,8 +282,18 @@ PickerSearchRequest::~PickerSearchRequest() {
   client_->StopCrosQuery();
 }
 
-void PickerSearchRequest::HandleSearchSourceResults(
-    PickerSearchSource source,
+void QuickInsertSearchRequest::StartGifSearch(std::string_view query) {
+  gif_fetcher_ = GifTenorApiFetcher::FetchGifSearchCancellable(
+      client_->GetSharedURLLoaderFactory(), query, std::nullopt,
+      kMaxGifsToSearch,
+      base::BindOnce(ConvertGifResponse)
+          .Then(
+              base::BindOnce(&QuickInsertSearchRequest::HandleGifSearchResponse,
+                             weak_ptr_factory_.GetWeakPtr())));
+}
+
+void QuickInsertSearchRequest::HandleSearchSourceResults(
+    QuickInsertSearchSource source,
     std::vector<QuickInsertSearchResult> results,
     bool has_more_results) {
   MarkSearchEnded(source);
@@ -243,14 +309,15 @@ void PickerSearchRequest::HandleSearchSourceResults(
   MaybeCallDoneClosure();
 }
 
-void PickerSearchRequest::HandleActionSearchResults(
+void QuickInsertSearchRequest::HandleActionSearchResults(
     std::vector<QuickInsertSearchResult> results) {
-  HandleSearchSourceResults(PickerSearchSource::kAction, std::move(results),
+  HandleSearchSourceResults(QuickInsertSearchSource::kAction,
+                            std::move(results),
                             /*has_more_results*/ false);
 }
 
-void PickerSearchRequest::HandleCrosSearchResults(
-    ash::AppListSearchResultType type,
+void QuickInsertSearchRequest::HandleCrosSearchResults(
+    AppListSearchResultType type,
     std::vector<QuickInsertSearchResult> results) {
   switch (type) {
     case AppListSearchResultType::kOmnibox: {
@@ -260,7 +327,7 @@ void PickerSearchRequest::HandleCrosSearchResults(
                                      : std::max<size_t>(results.size(), 3) - 3;
       results.erase(results.end() - results_to_remove, results.end());
 
-      HandleSearchSourceResults(PickerSearchSource::kOmnibox,
+      HandleSearchSourceResults(QuickInsertSearchSource::kOmnibox,
                                 std::move(results),
                                 /*has_more_results=*/results_to_remove > 0);
       break;
@@ -271,7 +338,8 @@ void PickerSearchRequest::HandleCrosSearchResults(
                                    : std::max<size_t>(results.size(), 3) - 3;
       results.erase(results.end() - files_to_remove, results.end());
 
-      HandleSearchSourceResults(PickerSearchSource::kDrive, std::move(results),
+      HandleSearchSourceResults(QuickInsertSearchSource::kDrive,
+                                std::move(results),
                                 /*has_more_results=*/files_to_remove > 0);
       break;
     }
@@ -281,7 +349,7 @@ void PickerSearchRequest::HandleCrosSearchResults(
                                    : std::max<size_t>(results.size(), 3) - 3;
       results.erase(results.end() - files_to_remove, results.end());
 
-      HandleSearchSourceResults(PickerSearchSource::kLocalFile,
+      HandleSearchSourceResults(QuickInsertSearchSource::kLocalFile,
                                 std::move(results),
                                 /*has_more_results=*/files_to_remove > 0);
       break;
@@ -293,14 +361,14 @@ void PickerSearchRequest::HandleCrosSearchResults(
   }
 }
 
-void PickerSearchRequest::HandleDateSearchResults(
+void QuickInsertSearchRequest::HandleDateSearchResults(
     std::vector<QuickInsertSearchResult> results) {
   // Date results are never truncated.
-  HandleSearchSourceResults(PickerSearchSource::kDate, std::move(results),
+  HandleSearchSourceResults(QuickInsertSearchSource::kDate, std::move(results),
                             /*has_more_results=*/false);
 }
 
-void PickerSearchRequest::HandleMathSearchResults(
+void QuickInsertSearchRequest::HandleMathSearchResults(
     std::optional<QuickInsertSearchResult> result) {
   std::vector<QuickInsertSearchResult> results;
   if (result.has_value()) {
@@ -308,19 +376,20 @@ void PickerSearchRequest::HandleMathSearchResults(
   }
 
   // Math results are never truncated.
-  HandleSearchSourceResults(PickerSearchSource::kMath, std::move(results),
+  HandleSearchSourceResults(QuickInsertSearchSource::kMath, std::move(results),
                             /*has_more_results=*/false);
 }
 
-void PickerSearchRequest::HandleClipboardSearchResults(
+void QuickInsertSearchRequest::HandleClipboardSearchResults(
     std::vector<QuickInsertSearchResult> results) {
   // Clipboard results are never truncated.
-  HandleSearchSourceResults(PickerSearchSource::kClipboard, std::move(results),
+  HandleSearchSourceResults(QuickInsertSearchSource::kClipboard,
+                            std::move(results),
                             /*has_more_results=*/false);
 }
 
-void PickerSearchRequest::HandleEditorSearchResults(
-    PickerSearchSource source,
+void QuickInsertSearchRequest::HandleEditorSearchResults(
+    QuickInsertSearchSource source,
     std::optional<QuickInsertSearchResult> result) {
   std::vector<QuickInsertSearchResult> results;
   if (result.has_value()) {
@@ -332,8 +401,8 @@ void PickerSearchRequest::HandleEditorSearchResults(
                             /*has_more_results=*/false);
 }
 
-void PickerSearchRequest::HandleLobsterSearchResults(
-    PickerSearchSource source,
+void QuickInsertSearchRequest::HandleLobsterSearchResults(
+    QuickInsertSearchSource source,
     std::optional<QuickInsertSearchResult> result) {
   std::vector<QuickInsertSearchResult> results;
   if (result.has_value()) {
@@ -345,13 +414,14 @@ void PickerSearchRequest::HandleLobsterSearchResults(
                             /*has_more_results=*/false);
 }
 
-void PickerSearchRequest::MarkSearchStarted(PickerSearchSource source) {
+void QuickInsertSearchRequest::MarkSearchStarted(
+    QuickInsertSearchSource source) {
   CHECK(!SwapSearchStart(source, base::TimeTicks::Now()).has_value())
       << "search_starts_ enum " << base::to_underlying(source)
       << " was already set";
 }
 
-void PickerSearchRequest::MarkSearchEnded(PickerSearchSource source) {
+void QuickInsertSearchRequest::MarkSearchEnded(QuickInsertSearchSource source) {
   std::optional<base::TimeTicks> start = SwapSearchStart(source, std::nullopt);
   CHECK(start.has_value()) << "search_starts_ enum "
                            << base::to_underlying(source) << " was not set";
@@ -360,26 +430,33 @@ void PickerSearchRequest::MarkSearchEnded(PickerSearchSource source) {
   base::UmaHistogramTimes(SearchSourceToHistogram(source), elapsed);
 }
 
-std::optional<base::TimeTicks> PickerSearchRequest::SwapSearchStart(
-    PickerSearchSource source,
+std::optional<base::TimeTicks> QuickInsertSearchRequest::SwapSearchStart(
+    QuickInsertSearchSource source,
     std::optional<base::TimeTicks> new_value) {
   return std::exchange(search_starts_[base::to_underlying(source)],
                        std::move(new_value));
 }
 
-void PickerSearchRequest::MaybeCallDoneClosure() {
+void QuickInsertSearchRequest::MaybeCallDoneClosure() {
   if (!can_call_done_closure_) {
     return;
   }
-  if (base::ranges::any_of(search_starts_,
-                           [](std::optional<base::TimeTicks>& start) {
-                             return start.has_value();
-                           })) {
+  if (std::ranges::any_of(search_starts_,
+                          [](std::optional<base::TimeTicks>& start) {
+                            return start.has_value();
+                          })) {
     return;
   }
 
   std::move(done_callback_).Run(/*interrupted=*/false);
   current_callback_.Reset();
+}
+
+void QuickInsertSearchRequest::HandleGifSearchResponse(
+    std::vector<QuickInsertSearchResult> results) {
+  // GIF results are never truncated.
+  HandleSearchSourceResults(QuickInsertSearchSource::kGifs, std::move(results),
+                            /*has_more_results=*/false);
 }
 
 }  // namespace ash

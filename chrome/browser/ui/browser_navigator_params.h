@@ -238,8 +238,17 @@ struct NavigateParams {
   // `disposition` should be NEW_POPUP.
   bool is_tab_modal_popup = false;
 
-  // If false then the navigation was not initiated by a user gesture.
+  // If false then the navigation was not initiated by a user gesture. This
+  // variable will be set to true for popups to get windows focus even if
+  // the navigation was not triggered by user gesture.
   bool user_gesture = true;
+
+  // Whether the navigation was initiated by a user gesture. Unlike
+  // `user_gesture`, this value will not change during the course of the
+  // navigation.
+  // TODO(https://crbug.com/394614633): remove this once the user gesture hack
+  // is fixed.
+  bool original_user_gesture = true;
 
   // What to do with the path component of the URL for singleton navigations.
   enum PathBehavior {
@@ -267,6 +276,13 @@ struct NavigateParams {
 
   // The group the caller would like the tab to be added to.
   std::optional<tab_groups::TabGroupId> group;
+
+  // True if the navigation was initiated in response to a sync message. This is
+  // used in tab group sync to identify the sync initiated navigations and
+  // blocking them from sending back to sync which would otherwise cause
+  // ping-pong issue. They will still be allowed to load locally like a normal
+  // navigation.
+  bool navigation_initiated_from_sync = false;
 
   // A bitmask of values defined in TabStripModel::AddTabTypes. Helps
   // determine where to insert a new tab and whether or not it should be
@@ -350,6 +366,14 @@ struct NavigateParams {
   // overridden by other factors.
   blink::mojom::SystemEntropy suggested_system_entropy =
       blink::mojom::SystemEntropy::kNormal;
+
+  // This option forces PWA navigation capturing (which captures some
+  // navigations into PWA windows or tabs) off. This is only recommended to be
+  // used if the navigation MUST not be captured. See
+  // https://bit.ly/pwa-navigation-capturing for a description about what PWA
+  // navigation capturing does. Setting this field to `true` will disable all of
+  // the behaviors listed in that document.
+  bool pwa_navigation_capturing_force_off = false;
 
  private:
   NavigateParams();

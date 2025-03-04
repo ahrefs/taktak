@@ -76,6 +76,8 @@ public class ContextualSearchTabHelper extends EmptyTabObserver
     /** The ReadAloudController supplier to get the active playback tab supplier when available. */
     private ObservableSupplier<ReadAloudController> mReadAloudControllerSupplier;
 
+    private final Callback<Tab> mActivePlaybackTabCallback = this::onActivePlaybackTabUpdated;
+
     /** To listen for when the current tab has an active ReadAloud playback. */
     private ObservableSupplier<Tab> mReadAloudActivePlaybackTab;
 
@@ -130,7 +132,7 @@ public class ContextualSearchTabHelper extends EmptyTabObserver
             mReadAloudActivePlaybackTab = readAloudController.getActivePlaybackTabSupplier();
         }
         if (mReadAloudActivePlaybackTab != null) {
-            mReadAloudActivePlaybackTab.addObserver(this::onActivePlaybackTabUpdated);
+            mReadAloudActivePlaybackTab.addObserver(mActivePlaybackTabCallback);
         }
     }
 
@@ -173,6 +175,9 @@ public class ContextualSearchTabHelper extends EmptyTabObserver
         }
         if (NetworkChangeNotifier.isInitialized()) {
             NetworkChangeNotifier.removeConnectionTypeObserver(this);
+        }
+        if (mReadAloudActivePlaybackTab != null) {
+            mReadAloudActivePlaybackTab.removeObserver(mActivePlaybackTabCallback);
         }
         removeContextualSearchHooks(mWebContents);
         mWebContents = null;
@@ -464,10 +469,10 @@ public class ContextualSearchTabHelper extends EmptyTabObserver
      * coordinates.
      */
     @CalledByNative
-    void onShowUnhandledTapUIIfNeeded(int x, int y) {
+    void onShowUnhandledTapUiIfNeeded(int x, int y) {
         // Only notify the manager if we currently have a valid listener.
         if (mGestureStateListener != null && getContextualSearchManager(mTab) != null) {
-            getContextualSearchManager(mTab).onShowUnhandledTapUIIfNeeded(x, y);
+            getContextualSearchManager(mTab).onShowUnhandledTapUiIfNeeded(x, y);
         }
     }
 

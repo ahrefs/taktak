@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include <algorithm>
 #include <string>
 #include <utility>
 
@@ -18,7 +19,6 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/not_fatal_until.h"
-#include "base/ranges/algorithm.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/task/bind_post_task.h"
 #include "base/task/sequenced_task_runner.h"
@@ -495,7 +495,16 @@ void WebMediaPlayerMSCompositor::EnqueueFrame(
   // Note 2: `EnqueueFrame` may drop the frame instead of enqueuing it for many
   // reasons, so if this happens drop our info entry. These dropped frames will
   // be accounted for during the next Render() call.
-  if (pending_frames_info_.size() != rendering_frame_buffer_->frames_queued()) {
+  //
+  // The LowLatencyVideoRendererAlgorithm algorithm does not drop frames during
+  // EnqueueFrame. It drops them during Render. This algorithm is enabled if the
+  // maximum_composition_delay_in_frames field is set in the video frame
+  // metadata. See  VideoReceiveStream2::UpdatePlayoutDelays() for how this
+  // value is computed.
+  if ((rendering_frame_buffer_->renderer_algorithm() !=
+       VideoRendererAlgorithmWrapper::kLowLatency) &&
+      (pending_frames_info_.size() !=
+       rendering_frame_buffer_->frames_queued())) {
     pending_frames_info_.pop_back();
     DCHECK_EQ(pending_frames_info_.size(),
               rendering_frame_buffer_->frames_queued());
@@ -980,15 +989,15 @@ WebMediaPlayerMSCompositor::GetLastPresentedFrameMetadata() {
     frame_metadata->presentation_time = last_presentation_time_;
     frame_metadata->expected_display_time = last_expected_display_time_;
     frame_metadata->presented_frames = static_cast<uint32_t>(presented_frames_);
-
     frame_metadata->average_frame_duration = last_preferred_render_interval_;
     frame_metadata->rendering_interval = last_render_length_;
   }
 
-  frame_metadata->width = last_frame->visible_rect().width();
-  frame_metadata->height = last_frame->visible_rect().height();
-
-  frame_metadata->media_time = last_frame->timestamp();
+  if (last_frame) {
+    frame_metadata->width = last_frame->visible_rect().width();
+    frame_metadata->height = last_frame->visible_rect().height();
+    frame_metadata->media_time = last_frame->timestamp();
+  }
 
   frame_metadata->metadata.MergeMetadataFrom(last_frame->metadata());
 

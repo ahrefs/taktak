@@ -65,36 +65,16 @@ from update_rust import (RUST_REVISION, RUST_TOOLCHAIN_OUT_DIR,
                          GetRustClangRevision)
 
 EXCLUDED_TESTS = [
-    # https://github.com/rust-lang/rust/issues/45222 which appears to have
-    # regressed as of a recent LLVM update. This test is purely performance
-    # related, not correctness.
-    os.path.join('tests', 'codegen', 'issue-45222.rs'),
-    # https://github.com/rust-lang/rust/issues/96497
-    os.path.join('tests', 'codegen', 'issue-96497-slice-size-nowrap.rs'),
-    # TODO(crbug.com/342026487): benign failure; remove when fixed.
-    os.path.join('tests', 'codegen', 'vec-in-place.rs'),
-    # TODO(crbug.com/360916952): Benign, remove when fixed.
-    os.path.join('tests', 'assembly', 'x86_64-cmp.rs'),
-    os.path.join('tests', 'assembly', 'x86_64-cmp.rs#OPTIM'),
-    os.path.join('tests', 'codegen', 'integer-cmp.rs'),
-    os.path.join('tests', 'codegen', 'comparison-operators-2-tuple.rs'),
+    # Temporarily disabled due to https://crbug.com/396424971
+    os.path.join('tests', 'codegen', 'common_prim_int_ptr.rs'),
 ]
 EXCLUDED_TESTS_WINDOWS = [
-    # https://github.com/rust-lang/rust/issues/96464
-    os.path.join('tests', 'codegen', 'vec-shrink-panik.rs'),
+    # Temporarily disabled due to https://crbug.com/379308086
+    os.path.join('tests', 'ui', 'sanitizer', 'asan_odr_windows.rs'),
 ]
 EXCLUDED_TESTS_MAC = [
-    # https://crbug.com/1521497 These fail on Mac.
-    os.path.join('tests', 'ui', 'abi', 'stack-probes-lto.rs#x64'),
-    os.path.join('tests', 'ui', 'abi', 'stack-probes.rs#x64'),
 ]
 EXCLUDED_TESTS_MAC_ARM64 = [
-    # https://crbug.com/1519640 This fails on Mac/ARM64. We didn't even run it
-    # until recently, so ignore it for now.
-    os.path.join('tests', 'ui', 'extern',
-                 'issue-64655-extern-rust-must-allow-unwind.rs#fat0'),
-    os.path.join('tests', 'ui', 'extern',
-                 'issue-64655-extern-rust-must-allow-unwind.rs#thin0'),
 ]
 
 CLANG_SCRIPTS_DIR = os.path.join(CHROMIUM_DIR, 'tools', 'clang', 'scripts')
@@ -370,6 +350,12 @@ class XPy:
             self._env['CFLAGS'] += f' {sysroot_cflag}'
             self._env['CXXFLAGS'] += f' {sysroot_cflag}'
             self._env['LDFLAGS'] += f' {sysroot_cflag}'
+            # TODO(https://crbug.com/395891130): remove
+            # C/CXXFLAGS_x86_64_unknown_linux_gnu workaround after upstream
+            # issue is properly fixed.
+            self._env['CFLAGS_x86_64_unknown_linux_gnu'] += f' {sysroot_cflag}'
+            self._env[
+                'CXXFLAGS_x86_64_unknown_linux_gnu'] += f' {sysroot_cflag}'
 
             self._env['RUSTFLAGS_BOOTSTRAP'] += f' -Clink-arg={sysroot_cflag}'
             self._env[
@@ -604,17 +590,6 @@ def GitApplyCherryPicks():
     # cherry-pick fixes into it, then point RUST_SRC_DIR at that fork
     # with `GitMoveSubmoduleBranch()`.
     #############################
-
-    # TODO(crbug.com/363219692): Remove once we roll past this revision.
-    GitCherryPick(RUST_SRC_DIR, 'https://github.com/rust-lang/rust.git',
-                  'edb669350a59ce48586152cf87b1d1f2841cea62')
-
-    # TODO(crbug.com/373552119): Remove once
-    # https://github.com/rust-lang/rust/pull/131805 lands and we roll past it.
-    GitCherryPick(RUST_SRC_DIR, 'https://github.com/rust-lang/rust.git',
-                  '6de277c03922fd67ad5d13daa9325357e7a02ac7')
-    GitCherryPick(RUST_SRC_DIR, 'https://github.com/rust-lang/rust.git',
-                  '18bbf5f118e721477fec1cde3c11d3fd2faebcd3')
 
     print('Finished applying cherry-picks.')
 

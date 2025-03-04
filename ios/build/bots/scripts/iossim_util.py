@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from collections import OrderedDict
 import json
 import logging
 import os
@@ -14,7 +15,6 @@ import test_runner
 import test_runner_errors
 import mac_util
 
-from collections import OrderedDict
 
 LOGGER = logging.getLogger(__name__)
 
@@ -452,9 +452,9 @@ def override_default_iphonesim_runtime(runtime_id, ios_version):
 
 
 def add_simulator_runtime(runtime_dmg_path):
-  cmd = ['xcrun', 'simctl', 'runtime', 'add', runtime_dmg_path]
+  cmd = ['xcrun', 'simctl', 'runtime', 'add', runtime_dmg_path, '--verbose']
   LOGGER.debug('Adding runtime with command %s' % cmd)
-  return subprocess.check_output(cmd).decode('utf-8')
+  return subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf-8')
 
 
 def delete_simulator_runtime(runtime_id, should_wait=False):
@@ -524,17 +524,6 @@ def delete_simulator_runtime_and_wait(ios_version):
     return
 
   delete_simulator_runtime(runtime_to_delete['identifier'], True)
-
-
-def delete_other_ios18_runtimes(current_runtime_build_id: str):
-  LOGGER.info(f'Deleting other iOS18 runtimes, i.e. with runtime identifier '
-              f'{IOS18_SIM_RUNTIME_ID} and build NOT equal to '
-              f'{current_runtime_build_id}')
-  runtimes = get_simulator_runtime_list()
-  for runtime in runtimes.values():
-    if (runtime['runtimeIdentifier'] == IOS18_SIM_RUNTIME_ID and
-        runtime['build'] != current_runtime_build_id):
-      delete_simulator_runtime(runtime['identifier'], True)
 
 
 def disable_hardware_keyboard(udid: str) -> None:

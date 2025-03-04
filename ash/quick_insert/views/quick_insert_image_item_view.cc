@@ -21,11 +21,11 @@
 namespace ash {
 namespace {
 
-constexpr int kPickerImageItemCornerRadius = 8;
+constexpr int kQuickInsertImageItemCornerRadius = 8;
 
 }  // namespace
 
-PickerImageItemView::PickerImageItemView(
+QuickInsertImageItemView::QuickInsertImageItemView(
     std::unique_ptr<views::ImageView> image,
     std::u16string accessible_name,
     SelectItemCallback select_item_callback)
@@ -33,39 +33,48 @@ PickerImageItemView::PickerImageItemView(
                           FocusIndicatorStyle::kFocusRingWithInsetGap),
       accessible_name_(std::move(accessible_name)) {
   SetUseDefaultFillLayout(true);
-  SetCornerRadius(kPickerImageItemCornerRadius);
+  SetCornerRadius(kQuickInsertImageItemCornerRadius);
   GetViewAccessibility().SetName(accessible_name_);
   SetProperty(views::kElementIdentifierKey,
-              kPickerSearchResultsImageItemElementId);
+              kQuickInsertSearchResultsImageItemElementId);
 
   image_view_ = AddChildView(std::move(image));
   image_view_->SetCanProcessEventsWithinSubtree(false);
 }
 
-PickerImageItemView::~PickerImageItemView() = default;
+QuickInsertImageItemView::~QuickInsertImageItemView() = default;
 
-void PickerImageItemView::SetAction(PickerActionType action) {
+void QuickInsertImageItemView::SetAction(QuickInsertActionType action) {
   switch (action) {
-    case PickerActionType::kDo:
+    case QuickInsertActionType::kDo:
       GetViewAccessibility().SetName(accessible_name_);
       break;
-    case PickerActionType::kInsert:
+    case QuickInsertActionType::kInsert:
       GetViewAccessibility().SetName(l10n_util::GetStringFUTF16(
           IDS_PICKER_LIST_ITEM_INSERT_ACTION_ACCESSIBLE_NAME,
           accessible_name_));
       break;
-    case PickerActionType::kOpen:
+    case QuickInsertActionType::kOpen:
       GetViewAccessibility().SetName(l10n_util::GetStringFUTF16(
           IDS_PICKER_LIST_ITEM_OPEN_ACTION_ACCESSIBLE_NAME, accessible_name_));
       break;
-    case PickerActionType::kCreate:
+    case QuickInsertActionType::kCreate:
       // TODO: b/345303965 - Add internal strings for Create.
       GetViewAccessibility().SetName(accessible_name_);
       break;
   }
 }
 
-BEGIN_METADATA(PickerImageItemView)
+void QuickInsertImageItemView::FitToWidth(int width) {
+  const gfx::Size original_dimensions = image_view_->GetImageBounds().size();
+  const int height = original_dimensions.width() == 0
+                         ? 0
+                         : (width * original_dimensions.height()) /
+                               original_dimensions.width();
+  image_view_->SetImageSize(gfx::Size(width, height));
+}
+
+BEGIN_METADATA(QuickInsertImageItemView)
 END_METADATA
 
 }  // namespace ash

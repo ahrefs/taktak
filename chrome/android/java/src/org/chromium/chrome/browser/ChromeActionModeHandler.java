@@ -23,6 +23,7 @@ import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.base.supplier.Supplier;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider;
 import org.chromium.chrome.browser.firstrun.FirstRunStatus;
 import org.chromium.chrome.browser.locale.LocaleManager;
 import org.chromium.chrome.browser.readaloud.ReadAloudController;
@@ -33,7 +34,7 @@ import org.chromium.chrome.browser.share.ShareDelegate.ShareOrigin;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab.TabUtils;
 import org.chromium.chrome.browser.tab.TabWebContentsObserver;
-import org.chromium.chrome.browser.user_education.IPHCommandBuilder;
+import org.chromium.chrome.browser.user_education.IphCommandBuilder;
 import org.chromium.chrome.browser.user_education.UserEducationHelper;
 import org.chromium.components.browser_ui.share.ShareParams;
 import org.chromium.components.feature_engagement.FeatureConstants;
@@ -60,12 +61,15 @@ public class ChromeActionModeHandler {
      * @param searchCallback Callback to run when search action is selected in the action mode.
      * @param shareDelegateSupplier The {@link Supplier} of the {@link ShareDelegate} that will be
      *     notified when a share action is performed.
+     * @param controlsState Provides browser controls visibility state.
+     * @param readAloudControllerSupplier Supplies {@link ReadAloudController}.
      */
     public ChromeActionModeHandler(
             ActivityTabProvider activityTabProvider,
             Callback<String> searchCallback,
             boolean showWebSearch,
             Supplier<ShareDelegate> shareDelegateSupplier,
+            BrowserControlsStateProvider controlsState,
             Supplier<ReadAloudController> readAloudControllerSupplier) {
         mInitWebContentsObserver =
                 (webContents) -> {
@@ -78,6 +82,7 @@ public class ChromeActionModeHandler {
                                     searchCallback,
                                     showWebSearch,
                                     shareDelegateSupplier,
+                                    controlsState,
                                     readAloudControllerSupplier));
                     spc.setDropdownMenuDelegate(new ChromeSelectionDropdownMenuDelegate());
                 };
@@ -124,6 +129,7 @@ public class ChromeActionModeHandler {
         private final boolean mShowWebSearch;
         private final Supplier<ShareDelegate> mShareDelegateSupplier;
         private final Supplier<ReadAloudController> mReadAloudControllerSupplier;
+        private final BrowserControlsStateProvider mControlsState;
 
         // Used for recording UMA histograms.
         private long mContextMenuStartTime;
@@ -134,12 +140,14 @@ public class ChromeActionModeHandler {
                 Callback<String> searchCallback,
                 boolean showWebSearch,
                 Supplier<ShareDelegate> shareDelegateSupplier,
+                BrowserControlsStateProvider controlsState,
                 Supplier<ReadAloudController> readAloudControllerSupplier) {
             mTab = tab;
             mHelper = getActionModeCallbackHelper(webContents);
             mShowWebSearch = showWebSearch;
             mSearchCallback = searchCallback;
             mShareDelegateSupplier = shareDelegateSupplier;
+            mControlsState = controlsState;
             mReadAloudControllerSupplier = readAloudControllerSupplier;
         }
 
@@ -202,8 +210,8 @@ public class ChromeActionModeHandler {
             UserEducationHelper mUserEducationHelper =
                     new UserEducationHelper(
                             TabUtils.getActivity(mTab), mTab.getProfile(), new Handler());
-            mUserEducationHelper.requestShowIPH(
-                    new IPHCommandBuilder(
+            mUserEducationHelper.requestShowIph(
+                    new IphCommandBuilder(
                                     view.getResources(),
                                     FeatureConstants.SHARED_HIGHLIGHTING_BUILDER_FEATURE,
                                     R.string.iph_shared_highlighting_builder,
@@ -262,8 +270,8 @@ public class ChromeActionModeHandler {
                         .share(
                                 new ShareParams.Builder(
                                                 mTab.getWindowAndroid(),
-                                                /* url= */ "",
-                                                /* title= */ "")
+                                                /* title= */ "",
+                                                /* url= */ "")
                                         .setText(sanitizeTextForShare(mHelper.getSelectedText()))
                                         .build(),
                                 new ChromeShareExtras.Builder()
@@ -287,6 +295,17 @@ public class ChromeActionModeHandler {
         @Override
         public void onGetContentRect(ActionMode mode, View view, Rect outRect) {
             mHelper.onGetContentRect(mode, view, outRect);
+            boolean controlsVisible = mControlsState.getBrowserControlHiddenRatio() < 1.f;
+            int controlsHeight = mControlsState.getTopControlsHeight();
+            if (controlsVisible && outRect.top < 2 * controlsHeight) {
+                // Make |outRect| taller to so the framework thinks there is not enough space
+                // above the selected text to place the floating action mode. This helps the action
+                // mode and the top controls avoid overlapping - the action mode will be positioned
+                // below the text.
+                // The right condition should be |outRect.top < controlsHeight + actionModeHeight|
+                // but we do not know |actionModeHeight|. Assume actionModeHeight ~= controlsHeight.
+                outRect.top -= controlsHeight;
+            }
         }
 
         private Set<String> getPackageNames(List<ResolveInfo> list) {

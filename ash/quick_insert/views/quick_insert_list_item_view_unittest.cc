@@ -107,7 +107,7 @@ TEST_F(QuickInsertListItemViewTest, SetsLeadingIcon) {
 TEST_F(QuickInsertListItemViewTest, SetsShortcutHintView) {
   QuickInsertListItemView item_view(base::DoNothing());
 
-  item_view.SetShortcutHintView(std::make_unique<PickerShortcutHintView>(
+  item_view.SetShortcutHintView(std::make_unique<QuickInsertShortcutHintView>(
       QuickInsertCapsLockResult::Shortcut::kAltSearch));
 
   EXPECT_NE(item_view.shortcut_hint_view_for_testing(), nullptr);
@@ -150,7 +150,7 @@ TEST_F(QuickInsertListItemViewTest, DoesNotSetBadgeVisibleWithPrimaryImage) {
 TEST_F(QuickInsertListItemViewTest, SetBadgeActionDoHasNoLabelText) {
   QuickInsertListItemView item_view(base::DoNothing());
 
-  item_view.SetBadgeAction(PickerActionType::kDo);
+  item_view.SetBadgeAction(QuickInsertActionType::kDo);
 
   EXPECT_EQ(item_view.trailing_badge_for_testing().GetText(), u"");
 }
@@ -158,18 +158,18 @@ TEST_F(QuickInsertListItemViewTest, SetBadgeActionDoHasNoLabelText) {
 TEST_F(QuickInsertListItemViewTest, SetBadgeActionHasLabelText) {
   QuickInsertListItemView item_view(base::DoNothing());
 
-  item_view.SetBadgeAction(PickerActionType::kInsert);
+  item_view.SetBadgeAction(QuickInsertActionType::kInsert);
   EXPECT_NE(item_view.trailing_badge_for_testing().GetText(), u"");
 
-  item_view.SetBadgeAction(PickerActionType::kOpen);
+  item_view.SetBadgeAction(QuickInsertActionType::kOpen);
   EXPECT_NE(item_view.trailing_badge_for_testing().GetText(), u"");
 
-  item_view.SetBadgeAction(PickerActionType::kCreate);
+  item_view.SetBadgeAction(QuickInsertActionType::kCreate);
   EXPECT_NE(item_view.trailing_badge_for_testing().GetText(), u"");
 }
 
 TEST_F(QuickInsertListItemViewTest, SetPreviewUpdatesIconWithPlaceholder) {
-  PickerPreviewBubbleController preview_controller;
+  QuickInsertPreviewBubbleController preview_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -189,7 +189,7 @@ TEST_F(QuickInsertListItemViewTest, SetPreviewUpdatesIconWithPlaceholder) {
 
 TEST_F(QuickInsertListItemViewTest,
        SetPreviewUpdatesIconOncePreviewIconResolves) {
-  PickerPreviewBubbleController preview_controller;
+  QuickInsertPreviewBubbleController preview_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -218,7 +218,7 @@ TEST_F(QuickInsertListItemViewTest,
 }
 
 TEST_F(QuickInsertListItemViewTest, SetPreviewResolvesFileInfo) {
-  PickerPreviewBubbleController preview_controller;
+  QuickInsertPreviewBubbleController preview_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -235,7 +235,7 @@ TEST_F(QuickInsertListItemViewTest, SetPreviewResolvesFileInfo) {
 
 TEST_F(QuickInsertListItemViewTest,
        PseudofocusHidesLabelsBeforeFileInfoResolves) {
-  PickerPreviewBubbleController preview_controller;
+  QuickInsertPreviewBubbleController preview_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -249,7 +249,7 @@ TEST_F(QuickInsertListItemViewTest,
       base::FilePath(), base::DoNothing(), /*update_icon=*/true);
   item_view->SetItemState(QuickInsertItemView::ItemState::kPseudoFocused);
 
-  PickerPreviewBubbleView* bubble_view =
+  QuickInsertPreviewBubbleView* bubble_view =
       preview_controller.bubble_view_for_testing();
   ASSERT_FALSE(file_info_future.IsReady());
   ViewDrawnWaiter().Wait(bubble_view);
@@ -258,7 +258,7 @@ TEST_F(QuickInsertListItemViewTest,
 
 TEST_F(QuickInsertListItemViewTest,
        PseudofocusHidesPreviewLabelsAfterFileInfoResolvesWithNullFileInfo) {
-  PickerPreviewBubbleController preview_controller;
+  QuickInsertPreviewBubbleController preview_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -274,7 +274,7 @@ TEST_F(QuickInsertListItemViewTest,
       base::FilePath(), base::DoNothing(), /*update_icon=*/true);
   item_view->SetItemState(QuickInsertItemView::ItemState::kPseudoFocused);
 
-  PickerPreviewBubbleView* bubble_view =
+  QuickInsertPreviewBubbleView* bubble_view =
       preview_controller.bubble_view_for_testing();
   ASSERT_TRUE(file_info_future.Wait()) << "File info was never resolved";
   // `GetSequenceBoundCallback` allows this sequence to know when the callback
@@ -288,7 +288,7 @@ TEST_F(QuickInsertListItemViewTest,
 
 TEST_F(QuickInsertListItemViewTest,
        PseudofocusShowsPreviewLabelsWithValidFileInfo) {
-  PickerPreviewBubbleController preview_controller;
+  QuickInsertPreviewBubbleController preview_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -306,7 +306,7 @@ TEST_F(QuickInsertListItemViewTest,
                         /*update_icon=*/true);
   item_view->SetItemState(QuickInsertItemView::ItemState::kPseudoFocused);
 
-  PickerPreviewBubbleView* bubble_view =
+  QuickInsertPreviewBubbleView* bubble_view =
       preview_controller.bubble_view_for_testing();
   ASSERT_TRUE(file_info_future.Wait()) << "File info was never resolved";
   base::RunLoop().RunUntilIdle();
@@ -317,7 +317,7 @@ TEST_F(QuickInsertListItemViewTest,
 
 TEST_F(QuickInsertListItemViewTest,
        PseudofocusShowsPreviewUsingCachedFileInfo) {
-  PickerPreviewBubbleController preview_controller;
+  QuickInsertPreviewBubbleController preview_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -333,7 +333,7 @@ TEST_F(QuickInsertListItemViewTest,
                         base::FilePath(), base::DoNothing(),
                         /*update_icon=*/true);
   item_view->SetItemState(QuickInsertItemView::ItemState::kPseudoFocused);
-  PickerPreviewBubbleView* bubble_view =
+  QuickInsertPreviewBubbleView* bubble_view =
       preview_controller.bubble_view_for_testing();
   ASSERT_TRUE(file_info_future.Wait()) << "File info was never resolved";
   base::RunLoop().RunUntilIdle();
@@ -347,7 +347,7 @@ TEST_F(QuickInsertListItemViewTest,
 }
 
 TEST_F(QuickInsertListItemViewTest, ClosesPreviewBubbleAfterLosingPseudoFocus) {
-  PickerPreviewBubbleController preview_controller;
+  QuickInsertPreviewBubbleController preview_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -369,7 +369,7 @@ TEST_F(QuickInsertListItemViewTest, ClosesSubmenuOnEnter) {
       CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   anchor_widget->SetContentsView(std::make_unique<views::View>());
   anchor_widget->Show();
-  PickerSubmenuController submenu_controller;
+  QuickInsertSubmenuController submenu_controller;
   auto widget = CreateTestWidget(views::Widget::InitParams::CLIENT_OWNS_WIDGET);
   auto* item_view = widget->SetContentsView(
       std::make_unique<QuickInsertListItemView>(base::DoNothing()));
@@ -405,7 +405,7 @@ TEST_F(QuickInsertListItemViewTest,
        AccessibleNameUsesPrimaryTextAndBadgeActionDo) {
   QuickInsertListItemView view(base::DoNothing());
   view.SetPrimaryText(u"primary");
-  view.SetBadgeAction(PickerActionType::kDo);
+  view.SetBadgeAction(QuickInsertActionType::kDo);
 
   EXPECT_EQ(view.GetAccessibleName(), u"primary");
 }
@@ -414,7 +414,7 @@ TEST_F(QuickInsertListItemViewTest,
        AccessibleNameUsesPrimaryTextAndBadgeActionInsert) {
   QuickInsertListItemView view(base::DoNothing());
   view.SetPrimaryText(u"primary");
-  view.SetBadgeAction(PickerActionType::kInsert);
+  view.SetBadgeAction(QuickInsertActionType::kInsert);
 
   EXPECT_EQ(view.GetAccessibleName(), u"Insert primary");
 }
@@ -423,7 +423,7 @@ TEST_F(QuickInsertListItemViewTest,
        AccessibleNameUsesPrimaryTextAndBadgeActionOpen) {
   QuickInsertListItemView view(base::DoNothing());
   view.SetPrimaryText(u"primary");
-  view.SetBadgeAction(PickerActionType::kOpen);
+  view.SetBadgeAction(QuickInsertActionType::kOpen);
 
   EXPECT_EQ(view.GetAccessibleName(), u"Open primary");
 }
@@ -432,7 +432,7 @@ TEST_F(QuickInsertListItemViewTest,
        AccessibleNameUsesPrimaryTextAndBadgeActionCreate) {
   QuickInsertListItemView view(base::DoNothing());
   view.SetPrimaryText(u"primary");
-  view.SetBadgeAction(PickerActionType::kCreate);
+  view.SetBadgeAction(QuickInsertActionType::kCreate);
 
   EXPECT_EQ(view.GetAccessibleName(), u"primary");
 }
@@ -442,7 +442,7 @@ TEST_F(QuickInsertListItemViewTest,
   QuickInsertListItemView view(base::DoNothing());
   view.SetPrimaryText(u"primary");
   view.SetSecondaryText(u"secondary");
-  view.SetBadgeAction(PickerActionType::kDo);
+  view.SetBadgeAction(QuickInsertActionType::kDo);
 
   EXPECT_EQ(view.GetAccessibleName(), u"primary, secondary");
 }
@@ -452,7 +452,7 @@ TEST_F(QuickInsertListItemViewTest,
   QuickInsertListItemView view(base::DoNothing());
   view.SetPrimaryText(u"primary");
   view.SetSecondaryText(u"secondary");
-  view.SetBadgeAction(PickerActionType::kInsert);
+  view.SetBadgeAction(QuickInsertActionType::kInsert);
 
   EXPECT_EQ(view.GetAccessibleName(), u"Insert primary, secondary");
 }
@@ -462,7 +462,7 @@ TEST_F(QuickInsertListItemViewTest,
   QuickInsertListItemView view(base::DoNothing());
   view.SetPrimaryText(u"primary");
   view.SetSecondaryText(u"secondary");
-  view.SetBadgeAction(PickerActionType::kOpen);
+  view.SetBadgeAction(QuickInsertActionType::kOpen);
 
   EXPECT_EQ(view.GetAccessibleName(), u"Open primary, secondary");
 }
@@ -472,7 +472,7 @@ TEST_F(QuickInsertListItemViewTest,
   QuickInsertListItemView view(base::DoNothing());
   view.SetPrimaryText(u"primary");
   view.SetSecondaryText(u"secondary");
-  view.SetBadgeAction(PickerActionType::kCreate);
+  view.SetBadgeAction(QuickInsertActionType::kCreate);
 
   EXPECT_EQ(view.GetAccessibleName(), u"primary, secondary");
 }

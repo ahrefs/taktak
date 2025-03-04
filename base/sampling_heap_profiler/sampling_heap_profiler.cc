@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40284755): Remove this and spanify to fix the errors.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "base/sampling_heap_profiler/sampling_heap_profiler.h"
 
 #include <algorithm>
@@ -17,10 +12,8 @@
 #include "base/compiler_specific.h"
 #include "base/containers/to_vector.h"
 #include "base/debug/stack_trace.h"
-#include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/logging.h"
-#include "base/metrics/histogram_functions.h"
 #include "base/no_destructor.h"
 #include "base/notreached.h"
 #include "base/sampling_heap_profiler/lock_free_address_hash_set.h"
@@ -28,8 +21,11 @@
 #include "base/threading/thread_local_storage.h"
 #include "base/trace_event/heap_profiler_allocation_context_tracker.h"  // no-presubmit-check
 #include "build/build_config.h"
-#include "partition_alloc/partition_alloc.h"
 #include "partition_alloc/shim/allocator_shim.h"
+
+#if PA_BUILDFLAG(USE_PARTITION_ALLOC)
+#include "partition_alloc/partition_alloc.h"  // nogncheck
+#endif
 
 #if BUILDFLAG(IS_APPLE)
 #include <pthread.h>
@@ -61,12 +57,6 @@ ThreadLocalData* GetThreadLocalData() {
 #endif
 }
 
-#if BUILDFLAG(CAN_UNWIND_WITH_FRAME_POINTERS)
-BASE_FEATURE(kAvoidFramePointers,
-             "AndroidHeapSamplerAvoidFramePointers",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-#endif
-
 using StackUnwinder = SamplingHeapProfiler::StackUnwinder;
 using base::allocator::dispatcher::AllocationSubsystem;
 
@@ -77,8 +67,9 @@ using base::allocator::dispatcher::AllocationSubsystem;
 const char* GetAndLeakThreadName() {
   const char* thread_name =
       base::ThreadIdNameManager::GetInstance()->GetNameForCurrentThread();
-  if (thread_name && *thread_name != '\0')
+  if (thread_name && *thread_name != '\0') {
     return thread_name;
+  }
 
   // prctl requires 16 bytes, snprintf requires 19, pthread_getname_np requires
   // 64 on macOS, see PlatformThread::SetName in platform_thread_apple.mm.
@@ -89,25 +80,28 @@ const char* GetAndLeakThreadName() {
   // not be set in cases where the thread started before heap profiling was
   // enabled.
   int err = prctl(PR_GET_NAME, name);
-  if (!err)
+  if (!err) {
     return strdup(name);
+  }
 #elif BUILDFLAG(IS_APPLE)
   int err = pthread_getname_np(pthread_self(), name, kBufferLen);
-  if (err == 0 && *name != '\0')
+  if (err == 0 && *name != '\0') {
     return strdup(name);
+  }
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) ||
         // BUILDFLAG(IS_ANDROID)
 
   // Use tid if we don't have a thread name.
   snprintf(name, sizeof(name), "Thread %lu",
-           static_cast<unsigned long>(base::PlatformThread::CurrentId()));
+           static_cast<unsigned long>(base::PlatformThread::CurrentId().raw()));
   return strdup(name);
 }
 
 const char* UpdateAndGetThreadName(const char* name) {
   ThreadLocalData* const thread_local_data = GetThreadLocalData();
-  if (name)
+  if (name) {
     thread_local_data->thread_name = name;
+  }
   if (!thread_local_data->thread_name) {
     thread_local_data->thread_name = GetAndLeakThreadName();
   }
@@ -126,11 +120,8 @@ const char* UpdateAndGetThreadName(const char* name) {
 StackUnwinder ChooseStackUnwinder() {
 #if BUILDFLAG(CAN_UNWIND_WITH_FRAME_POINTERS)
   // Use frame pointers if available, since they can be faster than the default.
-  if (!base::FeatureList::IsEnabled(kAvoidFramePointers)) {
-    return StackUnwinder::kFramePointers;
-  }
-#endif
-#if BUILDFLAG(IS_ANDROID)
+  return StackUnwinder::kFramePointers;
+#elif BUILDFLAG(IS_ANDROID)
   // Default unwind tables aren't always present on Android.
   return CheckForDefaultUnwindTables();
 #else
@@ -157,11 +148,6 @@ SamplingHeapProfiler::~SamplingHeapProfiler() {
 
 uint32_t SamplingHeapProfiler::Start() {
   const auto unwinder = ChooseStackUnwinder();
-#if BUILDFLAG(IS_ANDROID)
-  // Record which unwinder is in use on Android, since it's hard to keep track
-  // of which methods are available at runtime.
-  base::UmaHistogramEnumeration("HeapProfiling.AndroidStackUnwinder", unwinder);
-#endif
   if (unwinder == StackUnwinder::kUnavailable) {
     LOG(WARNING) << "Sampling heap profiler: Stack unwinding is not available.";
     return 0;
@@ -169,16 +155,18 @@ uint32_t SamplingHeapProfiler::Start() {
   unwinder_.store(unwinder, std::memory_order_release);
 
   AutoLock lock(start_stop_mutex_);
-  if (!running_sessions_++)
+  if (!running_sessions_++) {
     PoissonAllocationSampler::Get()->AddSamplesObserver(this);
+  }
   return last_sample_ordinal_.load(std::memory_order_acquire);
 }
 
 void SamplingHeapProfiler::Stop() {
   AutoLock lock(start_stop_mutex_);
   DCHECK_GT(running_sessions_, 0);
-  if (!--running_sessions_)
+  if (!--running_sessions_) {
     PoissonAllocationSampler::Get()->RemoveSamplesObserver(this);
+  }
 }
 
 void SamplingHeapProfiler::SetSamplingInterval(size_t sampling_interval_bytes) {
@@ -271,8 +259,9 @@ void SamplingHeapProfiler::CaptureNativeStack(const char* context,
   if (!context) {
     const auto* tracker =
         trace_event::AllocationContextTracker::GetInstanceForCurrentThread();
-    if (tracker)
+    if (tracker) {
       context = tracker->TaskContext();
+    }
   }
   sample->context = context;
 }
@@ -298,8 +287,9 @@ std::vector<SamplingHeapProfiler::Sample> SamplingHeapProfiler::GetSamples(
   samples.reserve(samples_.size());
   for (auto& it : samples_) {
     Sample& sample = it.second;
-    if (sample.ordinal > profile_id)
+    if (sample.ordinal > profile_id) {
       samples.push_back(sample);
+    }
   }
   return samples;
 }

@@ -11,7 +11,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,21 +19,19 @@ import static org.chromium.chrome.browser.ui.android.webid.AccountSelectionPrope
 import static org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.HeaderProperties.RP_BRAND_ICON;
 import static org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.HeaderProperties.TYPE;
 
-import android.graphics.Bitmap;
-import android.graphics.Color;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
-import org.chromium.base.Callback;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.blink.mojom.RpContext;
 import org.chromium.blink.mojom.RpMode;
+import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.AccountProperties;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.HeaderProperties.HeaderType;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.ItemProperties;
+import org.chromium.content.webid.IdentityRequestDialogDismissReason;
+import org.chromium.ui.modaldialog.ModalDialogManager;
+import org.chromium.ui.modaldialog.ModalDialogProperties;
 import org.chromium.ui.modelutil.PropertyModel;
 
 import java.util.Arrays;
@@ -58,9 +55,8 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
             mIdpData.setRpContext(rpContext);
             mMediator.showAccounts(
                     mTestEtldPlusOne,
-                    mTestEtldPlusOne2,
                     Arrays.asList(mNewUserAccount),
-                    mIdpData,
+                    Arrays.asList(mIdpData),
                     /* isAutoReauthn= */ false,
                     /* newAccounts= */ Collections.EMPTY_LIST);
             mMediator.showVerifySheet(mAnaAccount);
@@ -83,9 +79,8 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
             // showVerifySheet is called in showAccounts when isAutoReauthn is true
             mMediator.showAccounts(
                     mTestEtldPlusOne,
-                    mTestEtldPlusOne2,
                     Arrays.asList(mAnaAccount),
-                    mIdpData,
+                    Arrays.asList(mIdpData),
                     /* isAutoReauthn= */ true,
                     /* newAccounts= */ Collections.EMPTY_LIST);
 
@@ -112,9 +107,8 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
         // Switching to accounts dialog should disable the spinner.
         mMediator.showAccounts(
                 mTestEtldPlusOne,
-                mTestEtldPlusOne2,
                 Arrays.asList(mAnaAccount, mBobAccount),
-                mIdpData,
+                Arrays.asList(mIdpData),
                 /* isAutoReauthn= */ false,
                 /* newAccounts= */ Collections.EMPTY_LIST);
         assertEquals(HeaderType.SIGN_IN, mModel.get(ItemProperties.HEADER).get(TYPE));
@@ -129,12 +123,11 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
         when(mMockBottomSheetController.requestShowContent(any(), anyBoolean())).thenReturn(true);
         mMediator.showAccounts(
                 mTestEtldPlusOne,
-                mTestEtldPlusOne2,
                 Arrays.asList(mNewUserAccount),
-                mIdpData,
+                Arrays.asList(mIdpData),
                 /* isAutoReauthn= */ false,
                 /* newAccounts= */ Collections.EMPTY_LIST);
-        mMediator.showRequestPermissionSheet(mNewUserAccount);
+        mMediator.showRequestPermissionModalSheet(mNewUserAccount);
 
         // For request permission dialog, we expect header + account chip + disclosure text +
         // continue button.
@@ -142,36 +135,19 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
 
         // There is no sheet account items because the account is shown in an account chip instead.
         assertEquals(0, mSheetAccountItems.size());
-        assertEquals(HeaderType.REQUEST_PERMISSION, mModel.get(ItemProperties.HEADER).get(TYPE));
+        assertEquals(
+                HeaderType.REQUEST_PERMISSION_MODAL, mModel.get(ItemProperties.HEADER).get(TYPE));
         assertTrue(containsItemOfType(mModel, ItemProperties.ACCOUNT_CHIP));
         assertTrue(containsItemOfType(mModel, ItemProperties.DATA_SHARING_CONSENT));
         assertTrue(containsItemOfType(mModel, ItemProperties.CONTINUE_BUTTON));
     }
 
     @Test
-    public void testShowAccountsFetchesRpIcon() {
-        doAnswer(
-                        new Answer<Void>() {
-                            @Override
-                            public Void answer(InvocationOnMock invocation) {
-                                Callback<Bitmap> callback =
-                                        (Callback<Bitmap>) invocation.getArguments()[1];
-
-                                Bitmap brandIcon =
-                                        Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
-                                brandIcon.eraseColor(Color.RED);
-                                callback.onResult(brandIcon);
-                                return null;
-                            }
-                        })
-                .when(mMockImageFetcher)
-                .fetchImage(any(), any(Callback.class));
-
+    public void testShowAccountsUsesRpIcon() {
         mMediator.showAccounts(
                 mTestEtldPlusOne,
-                mTestEtldPlusOne2,
                 Arrays.asList(mAnaAccount),
-                mIdpData,
+                Arrays.asList(mIdpData),
                 /* isAutoReauthn= */ false,
                 /* newAccounts= */ Collections.EMPTY_LIST);
 
@@ -179,25 +155,11 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
     }
 
     @Test
-    public void testBrandIconDownloadFails() {
-        doAnswer(
-                        new Answer<Void>() {
-                            @Override
-                            public Void answer(InvocationOnMock invocation) {
-                                Callback<Bitmap> callback =
-                                        (Callback<Bitmap>) invocation.getArguments()[1];
-                                callback.onResult(null);
-                                return null;
-                            }
-                        })
-                .when(mMockImageFetcher)
-                .fetchImage(any(), any(Callback.class));
-
+    public void testBrandIconNotPresent() {
         mMediator.showAccounts(
                 mTestEtldPlusOne,
-                mTestEtldPlusOne2,
                 Arrays.asList(mAnaAccount),
-                mIdpData,
+                Arrays.asList(mIdpDataWithoutIcons),
                 /* isAutoReauthn= */ false,
                 /* newAccounts= */ Collections.EMPTY_LIST);
 
@@ -213,16 +175,17 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
         mMediator.showLoadingDialog(mTestEtldPlusOne, mTestEtldPlusOne2, RpContext.SIGN_IN);
         mMediator.showAccounts(
                 mTestEtldPlusOne,
-                mTestEtldPlusOne2,
                 Arrays.asList(),
-                mIdpData,
+                Arrays.asList(mIdpData),
                 /* isAutoReauthn= */ false,
                 mNewAccountsSingleNewAccount);
 
-        // Request permission dialog is NOT skipped for a single newly signed-in new account. Since
+        // Request permission modal dialog is NOT skipped for a single newly signed-in new account.
+        // Since
         // this is a new account and request permission is true, we need to show the request
-        // permission dialog to gather permission from the user.
-        assertEquals(HeaderType.REQUEST_PERMISSION, mModel.get(ItemProperties.HEADER).get(TYPE));
+        // permission modal dialog to gather permission from the user.
+        assertEquals(
+                HeaderType.REQUEST_PERMISSION_MODAL, mModel.get(ItemProperties.HEADER).get(TYPE));
     }
 
     @Test
@@ -231,9 +194,8 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
         mIdpData.setDisclosureFields(new int[0]);
         mMediator.showAccounts(
                 mTestEtldPlusOne,
-                mTestEtldPlusOne2,
                 Arrays.asList(),
-                mIdpData,
+                Arrays.asList(mIdpData),
                 /* isAutoReauthn= */ false,
                 mNewAccountsSingleNewAccount);
 
@@ -241,6 +203,8 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
         // permission is false. Since this is a new account and request permission is false, we need
         // to show UI without disclosure text so we show the account chooser.
         assertEquals(HeaderType.SIGN_IN, mModel.get(ItemProperties.HEADER).get(TYPE));
+        assertEquals(1, mSheetAccountItems.size());
+        assertNotNull(mSheetAccountItems.get(0).model.get(AccountProperties.ON_CLICK_LISTENER));
     }
 
     @Test
@@ -248,9 +212,8 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
         mMediator.showLoadingDialog(mTestEtldPlusOne, mTestEtldPlusOne2, RpContext.SIGN_IN);
         mMediator.showAccounts(
                 mTestEtldPlusOne,
-                mTestEtldPlusOne2,
                 Arrays.asList(),
-                mIdpData,
+                Arrays.asList(mIdpData),
                 /* isAutoReauthn= */ false,
                 mNewAccountsSingleReturningAccount);
 
@@ -258,5 +221,80 @@ public class AccountSelectionButtonModeControllerTest extends AccountSelectionJU
         // this is a returning account, we cannot skip directly to signing in because we have to
         // show browser UI in the flow so we show the account chooser.
         assertEquals(HeaderType.SIGN_IN, mModel.get(ItemProperties.HEADER).get(TYPE));
+        assertEquals(1, mSheetAccountItems.size());
+        assertNotNull(mSheetAccountItems.get(0).model.get(AccountProperties.ON_CLICK_LISTENER));
+    }
+
+    @Test
+    public void testShowErrorDialogClickGotIt() {
+        when(mMockBottomSheetController.requestShowContent(any(), anyBoolean())).thenReturn(true);
+        mMediator.showLoadingDialog(mTestEtldPlusOne, mTestEtldPlusOne2, RpContext.SIGN_IN);
+        mMediator.showAccounts(
+                mTestEtldPlusOne,
+                Arrays.asList(),
+                Arrays.asList(mIdpData),
+                /* isAutoReauthn= */ false,
+                mNewAccountsSingleReturningAccount);
+        mMediator.showErrorDialog(
+                mTestEtldPlusOne,
+                mTestEtldPlusOne2,
+                mIdpMetadata,
+                RpContext.SIGN_IN,
+                mTokenErrorEmptyUrl);
+
+        assertEquals(
+                ModalDialogManager.ModalDialogType.APP, mMockModalDialogManager.getDialogType());
+        final PropertyModel model = mMockModalDialogManager.getDialogModel();
+        assertNotNull(model);
+        assertEquals(
+                mContext.getString(R.string.signin_error_dialog_got_it_button),
+                model.get(ModalDialogProperties.POSITIVE_BUTTON_TEXT));
+        assertEquals(
+                ModalDialogProperties.ButtonStyles.PRIMARY_FILLED_NO_NEGATIVE,
+                model.get(ModalDialogProperties.BUTTON_STYLES));
+
+        // Do not let test inputs be ignored.
+        mMediator.setComponentShowTime(-1000);
+        mMockModalDialogManager.simulateButtonClick(ModalDialogProperties.ButtonType.POSITIVE);
+        assertNull(mMockModalDialogManager.getDialogModel());
+        assertEquals(-1, mMockModalDialogManager.getDialogType());
+        verify(mMockDelegate).onDismissed(IdentityRequestDialogDismissReason.GOT_IT_BUTTON);
+        assertTrue(mMediator.wasDismissed());
+    }
+
+    @Test
+    public void testShowErrorDialogClickMoreDetails() {
+        when(mMockBottomSheetController.requestShowContent(any(), anyBoolean())).thenReturn(true);
+        mMediator.showLoadingDialog(mTestEtldPlusOne, mTestEtldPlusOne1, RpContext.SIGN_IN);
+        mMediator.showAccounts(
+                mTestEtldPlusOne,
+                Arrays.asList(),
+                Arrays.asList(mIdpData),
+                /* isAutoReauthn= */ false,
+                mNewAccountsSingleReturningAccount);
+        mMediator.showErrorDialog(
+                mTestEtldPlusOne, mTestEtldPlusOne2, mIdpMetadata, RpContext.SIGN_IN, mTokenError);
+
+        assertEquals(
+                ModalDialogManager.ModalDialogType.APP, mMockModalDialogManager.getDialogType());
+        final PropertyModel model = mMockModalDialogManager.getDialogModel();
+        assertNotNull(model);
+        assertEquals(
+                mContext.getString(R.string.signin_error_dialog_got_it_button),
+                model.get(ModalDialogProperties.POSITIVE_BUTTON_TEXT));
+        assertEquals(
+                mContext.getString(R.string.signin_error_dialog_more_details_button),
+                model.get(ModalDialogProperties.NEGATIVE_BUTTON_TEXT));
+        assertEquals(
+                ModalDialogProperties.ButtonStyles.PRIMARY_FILLED_NEGATIVE_OUTLINE,
+                model.get(ModalDialogProperties.BUTTON_STYLES));
+
+        // Do not let test inputs be ignored.
+        mMediator.setComponentShowTime(-1000);
+        mMockModalDialogManager.simulateButtonClick(ModalDialogProperties.ButtonType.NEGATIVE);
+        assertNull(mMockModalDialogManager.getDialogModel());
+        assertEquals(-1, mMockModalDialogManager.getDialogType());
+        verify(mMockDelegate).onDismissed(IdentityRequestDialogDismissReason.MORE_DETAILS_BUTTON);
+        assertTrue(mMediator.wasDismissed());
     }
 }

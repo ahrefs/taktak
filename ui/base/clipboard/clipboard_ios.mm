@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
+#pragma allow_unsafe_buffers
+#endif
+
 #include "ui/base/clipboard/clipboard_ios.h"
 
 #import <UIKit/UIKit.h>
@@ -306,7 +311,7 @@ void ClipboardIOS::ReadFilenames(ClipboardBuffer buffer,
           base::apple::NSStringToFilePath(file_url.lastPathComponent));
     }
   }
-  base::ranges::move(files, std::back_inserter(*result));
+  std::ranges::move(files, std::back_inserter(*result));
 }
 
 // |data_dst| is not used. It's only passed to be consistent with other
@@ -354,6 +359,7 @@ void ClipboardIOS::ReadData(const ClipboardFormatType& format,
 void ClipboardIOS::WritePortableAndPlatformRepresentations(
     ClipboardBuffer buffer,
     const ObjectMap& objects,
+    const std::vector<RawData>& raw_objects,
     std::vector<Clipboard::PlatformRepresentation> platform_representations,
     std::unique_ptr<DataTransferEndpoint> data_src,
     uint32_t privacy_types) {
@@ -365,6 +371,9 @@ void ClipboardIOS::WritePortableAndPlatformRepresentations(
   DispatchPlatformRepresentations(std::move(platform_representations));
   for (const auto& object : objects) {
     DispatchPortableRepresentation(object.second);
+  }
+  for (const auto& raw_object : raw_objects) {
+    DispatchPortableRepresentation(raw_object);
   }
 }
 
@@ -397,8 +406,7 @@ void ClipboardIOS::WriteSvg(std::string_view markup) {
 }
 
 void ClipboardIOS::WriteRTF(std::string_view rtf) {
-  WriteData(ClipboardFormatType::RtfType(),
-            base::as_bytes(base::make_span(rtf)));
+  WriteData(ClipboardFormatType::RtfType(), base::as_byte_span(rtf));
 }
 
 void ClipboardIOS::WriteFilenames(std::vector<ui::FileInfo> filenames) {

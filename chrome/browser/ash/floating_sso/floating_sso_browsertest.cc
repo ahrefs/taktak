@@ -11,9 +11,11 @@
 #include "base/check_deref.h"
 #include "base/command_line.h"
 #include "base/containers/contains.h"
+#include "base/containers/enum_set.h"
 #include "base/notreached.h"
 #include "base/test/bind.h"
 #include "base/test/run_until.h"
+#include "base/test/scoped_chromeos_version_info.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/test_future.h"
 #include "chrome/browser/ash/floating_sso/cookie_sync_conversions.h"
@@ -41,6 +43,7 @@
 #include "components/sync/test/mock_data_type_local_change_processor.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/test/browser_test.h"
+#include "net/cookies/cookie_constants.h"
 #include "net/cookies/cookie_util.h"
 #include "services/network/public/mojom/cookie_manager.mojom.h"
 #include "services/network/public/mojom/network_context.mojom.h"
@@ -131,7 +134,7 @@ bool SetCookie(network::mojom::CookieManager* cookie_manager,
   auto cookie = net::CanonicalCookie::CreateForTesting(
       url, cookie_line, base::Time::Now(),
       /*server_time=*/std::nullopt,
-      /*cookie_partition_key=*/std::nullopt, net::CookieSourceType::kOther);
+      /*cookie_partition_key=*/std::nullopt, net::CookieSourceType::kHTTP);
 
   return SetCookie(cookie_manager, url, *cookie);
 }
@@ -212,8 +215,9 @@ class FloatingSsoTest : public policy::PolicyTest {
   }
 
   void EnableFloatingWorkspace() {
-    policy::PolicyTest::SetPolicy(
-        &policies_, policy::key::kFloatingWorkspaceEnabled, base::Value(true));
+    policy::PolicyTest::SetPolicy(&policies_,
+                                  policy::key::kFloatingWorkspaceV2Enabled,
+                                  base::Value(true));
     provider_.UpdateChromePolicy(policies_);
     ASSERT_TRUE(ash::floating_workspace_util::IsFloatingWorkspaceV2Enabled());
   }
@@ -331,6 +335,15 @@ class FloatingSsoTest : public policy::PolicyTest {
                                    net::CookieChangeCause::INSERTED)));
     commit_future.Get();
   }
+
+  // TODO(crbug.com/379092376): remove this once Floating SSO is out of beta.
+  // This will switch the channel to beta for branded builds, but will be a
+  // no-op for non-branded builds which are always set to
+  // `version_info::Channel::UNKNOWN`. CQ/CI builders which use branded Chrome
+  // rely on this field to set the beta channel, builders for non-branded Chrome
+  // rely on Floating SSO being allowed on unknown channel.
+  base::test::ScopedChromeOSVersionInfo scoped_channel_override_{
+      "CHROMEOS_RELEASE_TRACK=beta-channel", base::Time::Now()};
 
   mojo::Remote<network::mojom::CookieManager> cookie_manager_;
   base::test::ScopedFeatureList feature_list_;
@@ -482,6 +495,35 @@ IN_PROC_BROWSER_TEST_F(FloatingSsoTest, FiltersOutSessionCookies) {
   // Cookie is not added to store.
   auto store_entries = GetStoreEntries();
   EXPECT_EQ(store_entries.size(), 0u);
+}
+
+IN_PROC_BROWSER_TEST_F(FloatingSsoTest, FiltersOutCookiesWithNonHttpSource) {
+  auto& service = floating_sso_service();
+  EnableAllFloatingSsoSettings();
+  ASSERT_TRUE(service.IsBoundToCookieManagerForTesting());
+
+  const auto& store_entries = GetStoreEntries();
+  ASSERT_EQ(store_entries.size(), 0u);
+
+  // For every source type different from `net::CookieSourceType::kHTTP`, add a
+  // cookie with such source type to the browser, and verify that it's not being
+  // synced.
+  for (net::CookieSourceType source :
+       base::EnumSet<net::CookieSourceType, net::CookieSourceType::kUnknown,
+                     net::CookieSourceType::kMaxValue>::All()) {
+    if (source == net::CookieSourceType::kHTTP) {
+      continue;
+    }
+    const GURL url("https://example.com");
+    std::unique_ptr<net::CanonicalCookie> cookie =
+        net::CanonicalCookie::CreateForTesting(
+            url, kStandardCookieLine, base::Time::Now(),
+            /*server_time=*/std::nullopt,
+            /*cookie_partition_key=*/std::nullopt, source);
+    ASSERT_TRUE(SetCookie(cookie_manager(), url, *cookie));
+    // Verify that nothing is added to Sync store.
+    EXPECT_EQ(store_entries.size(), 0u);
+  }
 }
 
 IN_PROC_BROWSER_TEST_F(FloatingSsoTest,
@@ -777,7 +819,8 @@ IN_PROC_BROWSER_TEST_F(FloatingSsoTest, ApplyingChangesFromSync) {
   // Deletion of a cookie we added at the start of the test. We expect it to
   // eventually generate a `net::CookieChangeCause::EXPLICIT` event.
   change_list.push_back(syncer::EntityChange::CreateDelete(
-      existing_local_cookie_specifics.unique_key()));
+      existing_local_cookie_specifics.unique_key(),
+      CreateEntityDataForTest(sync_pb::CookieSpecifics())));
   // Addition of a new persistent cookie: we expect it to pass our filters and
   // eventually generate a `net::CookieChangeCause::INSERTED` event.
   change_list.push_back(syncer::EntityChange::CreateAdd(
@@ -843,21 +886,17 @@ class MockFloatingSsoSyncBridge : public FloatingSsoSyncBridge {
 
 class FloatingSsoWithMockedBridgeTest : public FloatingSsoTest {
  public:
-  void SetUpInProcessBrowserTestFixture() override {
-    FloatingSsoTest::SetUpInProcessBrowserTestFixture();
-    create_services_subscription_ =
-        BrowserContextDependencyManager::GetInstance()
-            ->RegisterCreateServicesCallbackForTesting(
-                base::BindRepeating(&FloatingSsoWithMockedBridgeTest::
-                                        OnWillCreateBrowserContextServices,
-                                    base::Unretained(this)));
-  }
-
-  void OnWillCreateBrowserContextServices(content::BrowserContext* context) {
+  void SetUpBrowserContextKeyedServices(
+      content::BrowserContext* context) override {
+    FloatingSsoTest::SetUpBrowserContextKeyedServices(context);
     FloatingSsoServiceFactory::GetInstance()->SetTestingFactory(
         context, base::BindOnce([](content::BrowserContext* context)
                                     -> std::unique_ptr<KeyedService> {
           Profile* profile = Profile::FromBrowserContext(context);
+          auto cookie_manager_getter = base::BindLambdaForTesting([profile]() {
+            return profile->GetDefaultStoragePartition()
+                ->GetCookieManagerForBrowserProcess();
+          });
           return std::make_unique<FloatingSsoService>(
               profile->GetPrefs(),
               std::make_unique<testing::NiceMock<MockFloatingSsoSyncBridge>>(
@@ -865,8 +904,7 @@ class FloatingSsoWithMockedBridgeTest : public FloatingSsoTest {
                       syncer::COOKIES, base::DoNothing()),
                   DataTypeStoreServiceFactory::GetForProfile(profile)
                       ->GetStoreFactory()),
-              profile->GetDefaultStoragePartition()
-                  ->GetCookieManagerForBrowserProcess());
+              cookie_manager_getter);
         }));
   }
 
@@ -903,8 +941,9 @@ class FloatingSsoWithMockedBridgeTest : public FloatingSsoTest {
                                   cookie_change_future.GetRepeatingCallback());
 
     syncer::EntityChangeList deletion_list;
-    deletion_list.push_back(
-        syncer::EntityChange::CreateDelete(specifics.unique_key()));
+    deletion_list.push_back(syncer::EntityChange::CreateDelete(
+        specifics.unique_key(),
+        CreateEntityDataForTest(sync_pb::CookieSpecifics())));
     bridge().ApplyIncrementalSyncChanges(bridge().CreateMetadataChangeList(),
                                          std::move(deletion_list));
 
@@ -917,9 +956,6 @@ class FloatingSsoWithMockedBridgeTest : public FloatingSsoTest {
     return static_cast<testing::NiceMock<MockFloatingSsoSyncBridge>&>(
         *floating_sso_service().GetBridgeForTesting());
   }
-
- private:
-  base::CallbackListSubscription create_services_subscription_;
 };
 
 IN_PROC_BROWSER_TEST_F(FloatingSsoWithMockedBridgeTest,

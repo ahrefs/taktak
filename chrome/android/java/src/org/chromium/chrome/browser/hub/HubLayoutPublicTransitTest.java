@@ -7,7 +7,6 @@ package org.chromium.chrome.browser.hub;
 import static org.junit.Assert.assertEquals;
 
 import static org.chromium.base.test.transit.TransitAsserts.assertFinalDestination;
-import static org.chromium.chrome.browser.flags.ChromeFeatureList.ANDROID_HUB_SEARCH;
 import static org.chromium.chrome.browser.flags.ChromeFeatureList.START_SURFACE_RETURN_TIME;
 
 import android.os.Build;
@@ -22,11 +21,10 @@ import org.junit.runner.RunWith;
 import org.chromium.base.test.transit.Station;
 import org.chromium.base.test.util.Batch;
 import org.chromium.base.test.util.CommandLineFlags;
-import org.chromium.base.test.util.Features.DisableFeatures;
 import org.chromium.base.test.util.Features.EnableFeatures;
 import org.chromium.chrome.browser.ChromeTabbedActivity;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
-import org.chromium.chrome.browser.tasks.ReturnToChromeUtil;
 import org.chromium.chrome.test.ChromeJUnit4ClassRunner;
 import org.chromium.chrome.test.ChromeTabbedActivityTestRule;
 import org.chromium.chrome.test.transit.BlankCTATabInitialStatePublicTransitRule;
@@ -42,7 +40,6 @@ import org.chromium.chrome.test.util.ChromeApplicationTestUtils;
 @RunWith(ChromeJUnit4ClassRunner.class)
 @CommandLineFlags.Add({ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE})
 @Batch(Batch.PER_CLASS)
-@DisableFeatures(ANDROID_HUB_SEARCH)
 public class HubLayoutPublicTransitTest {
     @ClassRule
     public static ChromeTabbedActivityTestRule sActivityTestRule =
@@ -91,8 +88,7 @@ public class HubLayoutPublicTransitTest {
     @LargeTest
     public void testChangeTabSwitcherPanes() {
         WebPageStation firstPage = mInitialStateRule.startOnBlankPage();
-        IncognitoNewTabPageStation incognitoNewTabPage =
-                firstPage.openGenericAppMenu().openNewIncognitoTab();
+        IncognitoNewTabPageStation incognitoNewTabPage = firstPage.openNewIncognitoTabFast();
 
         IncognitoTabSwitcherStation incognitoTabSwitcher =
                 incognitoNewTabPage.openIncognitoTabSwitcher();
@@ -114,10 +110,10 @@ public class HubLayoutPublicTransitTest {
     @LargeTest
     @EnableFeatures({START_SURFACE_RETURN_TIME})
     public void testExitHubOnStartSurfaceAsNtp() {
-        ReturnToChromeUtil.HOME_SURFACE_RETURN_TIME_SECONDS.setForTesting(0);
+        ChromeFeatureList.sStartSurfaceReturnTimeTabletSecs.setForTesting(0);
 
         WebPageStation blankPage = mInitialStateRule.startOnBlankPage();
-        RegularNewTabPageStation newTabPage = blankPage.openGenericAppMenu().openNewTab();
+        RegularNewTabPageStation newTabPage = blankPage.openNewTabFast();
         RegularTabSwitcherStation tabSwitcher = newTabPage.openRegularTabSwitcher();
         blankPage = tabSwitcher.selectTabAtIndex(0, WebPageStation.newBuilder());
         tabSwitcher = blankPage.openRegularTabSwitcher();

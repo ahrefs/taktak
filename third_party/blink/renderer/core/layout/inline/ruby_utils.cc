@@ -29,7 +29,7 @@ std::tuple<LayoutUnit, LayoutUnit> AdjustTextOverUnderOffsetsForEmHeight(
     const ComputedStyle& style,
     const ShapeResultView& shape_view) {
   DCHECK_LE(over, under);
-  const SimpleFontData* primary_font_data = style.GetFont().PrimaryFont();
+  const SimpleFontData* primary_font_data = style.GetFont()->PrimaryFont();
   if (!primary_font_data)
     return std::make_pair(over, under);
   const auto font_baseline = style.GetFontBaseline();
@@ -75,7 +75,7 @@ std::tuple<LayoutUnit, LayoutUnit> AdjustTextOverUnderOffsetsForEmHeight(
 FontHeight ComputeEmHeight(const LogicalLineItem& line_item) {
   if (const auto& shape_result_view = line_item.shape_result) {
     const ComputedStyle* style = line_item.Style();
-    const SimpleFontData* primary_font_data = style->GetFont().PrimaryFont();
+    const SimpleFontData* primary_font_data = style->GetFont()->PrimaryFont();
     if (!primary_font_data) {
       return FontHeight();
     }
@@ -126,14 +126,14 @@ FontHeight ComputeEmHeight(const LogicalLineItem& line_item) {
 
 }  // anonymous namespace
 
-RubyItemIndexes ParseRubyInInlineItems(const HeapVector<InlineItem>& items,
+RubyItemIndexes ParseRubyInInlineItems(const InlineItems& items,
                                        wtf_size_t start_item_index) {
   CHECK_LT(start_item_index, items.size());
-  CHECK_EQ(items[start_item_index].Type(), InlineItem::kOpenRubyColumn);
+  CHECK_EQ(items[start_item_index]->Type(), InlineItem::kOpenRubyColumn);
   RubyItemIndexes indexes = {start_item_index, WTF::kNotFound, WTF::kNotFound,
                              WTF::kNotFound};
   for (wtf_size_t i = start_item_index + 1; i < items.size(); ++i) {
-    const InlineItem& item = items[i];
+    const InlineItem& item = *items[i];
     if (item.Type() == InlineItem::kCloseRubyColumn) {
       if (indexes.base_end == WTF::kNotFound) {
         DCHECK_EQ(indexes.annotation_start, WTF::kNotFound);
@@ -156,33 +156,6 @@ RubyItemIndexes ParseRubyInInlineItems(const HeapVector<InlineItem>& items,
     }
   }
   NOTREACHED();
-}
-
-PhysicalRect AdjustTextRectForEmHeight(const PhysicalRect& rect,
-                                       const ComputedStyle& style,
-                                       const ShapeResultView* shape_view,
-                                       WritingMode writing_mode) {
-  if (!shape_view)
-    return rect;
-  const LayoutUnit line_height = IsHorizontalWritingMode(writing_mode)
-                                     ? rect.size.height
-                                     : rect.size.width;
-  auto [over, under] = AdjustTextOverUnderOffsetsForEmHeight(
-      LayoutUnit(), line_height, style, *shape_view);
-  const LayoutUnit over_diff = over;
-  const LayoutUnit under_diff = line_height - under;
-  const LayoutUnit new_line_height = under - over;
-
-  if (IsHorizontalWritingMode(writing_mode)) {
-    return {{rect.offset.left, rect.offset.top + over_diff},
-            PhysicalSize(rect.size.width, new_line_height)};
-  }
-  if (IsFlippedLinesWritingMode(writing_mode)) {
-    return {{rect.offset.left + under_diff, rect.offset.top},
-            PhysicalSize(new_line_height, rect.size.height)};
-  }
-  return {{rect.offset.left + over_diff, rect.offset.top},
-          PhysicalSize(new_line_height, rect.size.height)};
 }
 
 AnnotationOverhang GetOverhang(
@@ -262,7 +235,11 @@ bool CanApplyStartOverhang(const LineInfo& line_info,
   if (previous_item.item->Style()->FontSize() > ruby_style.FontSize()) {
     return false;
   }
-  start_overhang = std::min(start_overhang, previous_item.inline_size);
+  LayoutUnit text_inline_size = previous_item.inline_size;
+  if (RuntimeEnabledFeatures::RubyOverhangOverlapFixEnabled()) {
+    text_inline_size = text_inline_size / 2;
+  }
+  start_overhang = std::min(start_overhang, text_inline_size);
   return true;
 }
 
@@ -302,9 +279,13 @@ LayoutUnit CommitPendingEndOverhang(const InlineItem& text_item,
   // width of the InlineItem's ShapeResult. However it's impossible to compute
   // inline_size of |text_item| before calling BreakText(), and BreakText()
   // requires precise |position_| which takes |end_overhang| into account.
+  LayoutUnit text_inline_size =
+      LayoutUnit(text_item.TextShapeResult()->Width());
+  if (RuntimeEnabledFeatures::RubyOverhangOverlapFixEnabled()) {
+    text_inline_size = text_inline_size / 2;
+  }
   LayoutUnit end_overhang =
-      std::min(column_item.pending_end_overhang,
-               LayoutUnit(text_item.TextShapeResult()->Width()));
+      std::min(column_item.pending_end_overhang, text_inline_size);
   InlineItemResult& end_item =
       column_item.ruby_column->base_line.MutableResults()->back();
   DCHECK_EQ(end_item.item->Type(), InlineItem::kRubyLinePlaceholder);
@@ -399,8 +380,7 @@ std::pair<LayoutUnit, LayoutUnit> ApplyRubyAlign(LayoutUnit available_line_size,
     case ETextAlign::kStart:
     case ETextAlign::kEnd:
     case ETextAlign::kJustify:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
   return {LayoutUnit(), LayoutUnit()};
 }
@@ -526,9 +506,8 @@ void UpdateRubyColumnInlinePositions(
         inline_offset = inline_size;
       }
     } else {
-      NOTREACHED_IN_MIGRATION()
-          << " LogicalLineItems::size()=" << line_items.size()
-          << " LogicalRubyColumn::start_index=" << start_index;
+      NOTREACHED() << " LogicalLineItems::size()=" << line_items.size()
+                   << " LogicalRubyColumn::start_index=" << start_index;
     }
     // TODO(crbug.com/324111880): Handle overhang.
     column->annotation_items->MoveInInlineDirection(inline_offset);
@@ -632,8 +611,8 @@ RubyBlockPositionCalculator::RubyLine&
 RubyBlockPositionCalculator::EnsureRubyLine(const RubyLevel& level) {
   // We do linear search because ruby_lines_ typically has only two items.
   auto it =
-      base::ranges::find_if(ruby_lines_, [&](const Member<RubyLine>& line) {
-        return base::ranges::equal(line->Level(), level);
+      std::ranges::find_if(ruby_lines_, [&](const Member<RubyLine>& line) {
+        return std::ranges::equal(line->Level(), level);
       });
   if (it != ruby_lines_.end()) {
     return **it;
@@ -649,19 +628,19 @@ RubyBlockPositionCalculator& RubyBlockPositionCalculator::PlaceLines(
   annotation_metrics_ = FontHeight();
 
   // Sort `ruby_lines` from the lowest to the highest.
-  base::ranges::sort(ruby_lines_, [](const Member<RubyLine>& line1,
-                                     const Member<RubyLine>& line2) {
+  std::ranges::sort(ruby_lines_, [](const Member<RubyLine>& line1,
+                                    const Member<RubyLine>& line2) {
     return *line1 < *line2;
   });
 
-  auto base_iterator = base::ranges::find_if(
+  auto base_iterator = std::ranges::find_if(
       ruby_lines_,
       [](const Member<RubyLine>& line) { return line->Level().empty(); });
   CHECK_NE(base_iterator, ruby_lines_.end());
 
   // Place "under" annotations from the base level to the lowest one.
   if (base_iterator != ruby_lines_.begin()) {
-    auto first_under_iterator = base::ranges::find_if(
+    auto first_under_iterator = std::ranges::find_if(
         ruby_lines_.begin(), base_iterator,
         [](const Member<RubyLine>& line) { return line->IsFirstUnderLevel(); });
     FontHeight em_height = ComputeLogicalLineEmHeight(
@@ -685,7 +664,7 @@ RubyBlockPositionCalculator& RubyBlockPositionCalculator::PlaceLines(
 
   // Place "over" annotations from the base level to the highest one.
   if (std::next(base_iterator) != ruby_lines_.end()) {
-    auto first_over_iterator = base::ranges::find_if(
+    auto first_over_iterator = std::ranges::find_if(
         base_iterator, ruby_lines_.end(),
         [](const Member<RubyLine>& line) { return line->IsFirstOverLevel(); });
     FontHeight em_height = ComputeLogicalLineEmHeight(
@@ -770,11 +749,14 @@ FontHeight RubyBlockPositionCalculator::RubyLine::UpdateMetrics() {
     if (!margins.has_value()) {
       metrics_.Unite(ComputeLogicalLineEmHeight(*column->annotation_items));
     } else {
-      DCHECK_GT(column->annotation_items->size(), 0u);
-      const LogicalLineItem& item = (*column->annotation_items)[0];
-      DCHECK(item.IsPlaceholder());
-      metrics_.Unite({-item.BlockOffset() + margins->first,
-                      item.BlockEndOffset() + margins->second});
+      // A placeholder item is at [0] in LTR, but it's not at [0] in RTL.
+      for (const LogicalLineItem& item : *column->annotation_items) {
+        if (item.IsPlaceholder()) {
+          metrics_.Unite({-item.BlockOffset() + margins->first,
+                          item.BlockEndOffset() + margins->second});
+          break;
+        }
+      }
     }
   }
   return metrics_;

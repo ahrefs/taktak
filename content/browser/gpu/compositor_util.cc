@@ -24,7 +24,6 @@
 #include "base/system/sys_info.h"
 #include "base/values.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "cc/base/switches.h"
 #include "components/viz/common/features.h"
 #include "content/browser/compositor/image_transport_factory.h"
@@ -121,11 +120,6 @@ std::vector<GpuFeatureData> GetGpuFeatureData(
           "Accelerated 2D canvas is unavailable: either disabled "
           "via blocklist or the command line."),
       true);
-  features.emplace_back(
-      "canvas_oop_rasterization",
-      SafeGetFeatureStatus(
-          gpu_feature_info, gpu::GPU_FEATURE_TYPE_CANVAS_OOP_RASTERIZATION,
-          command_line.HasSwitch(switches::kDisableAccelerated2dCanvas)));
   features.emplace_back(
       "gpu_compositing",
       // TODO(rivr): Replace with a check to see which backend is used for
@@ -479,8 +473,6 @@ bool IsGpuMemoryBufferCompositorResourcesEnabled() {
 
 #if BUILDFLAG(IS_APPLE)
   return true;
-#elif BUILDFLAG(IS_CHROMEOS_LACROS)
-  return features::IsDelegatedCompositingEnabled();
 #elif BUILDFLAG(IS_WIN)
   return features::IsDelegatedCompositingEnabled() &&
          features::kDelegatedCompositingModeParam.Get() ==

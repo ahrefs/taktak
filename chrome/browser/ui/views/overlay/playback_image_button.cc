@@ -21,7 +21,6 @@
 
 namespace {
 
-constexpr int kPlaybackButtonSize = 48;
 constexpr int kPlaybackButtonIconSize = 24;
 
 }  // namespace
@@ -73,20 +72,12 @@ void PlaybackImageButton::OnBoundsChanged(const gfx::Rect& rect) {
 
 void PlaybackImageButton::SetPlaybackState(
     const VideoOverlayWindowViews::PlaybackState playback_state) {
-  if (playback_state_ == playback_state)
-    return;
-
-  playback_state_ = playback_state;
-  UpdateImageAndText();
-}
-
-void PlaybackImageButton::SetWindowSize(const gfx::Size& window_size) {
-  if (window_size_.has_value() && window_size_.value() == window_size) {
+  if (playback_state_ == playback_state) {
     return;
   }
 
-  window_size_ = window_size;
-  UpdatePosition();
+  playback_state_ = playback_state;
+  UpdateImageAndText();
 }
 
 void PlaybackImageButton::UpdateImageAndText() {
@@ -121,13 +112,6 @@ void PlaybackImageButton::UpdateImageAndText() {
   }
 
   SchedulePaint();
-}
-
-void PlaybackImageButton::UpdatePosition() {
-  CHECK(window_size_.has_value());
-
-  SetPosition(gfx::Point((window_size_->width() / 2) - (size().width() / 2),
-                         (window_size_->height() / 2) - (size().height() / 2)));
 }
 
 void PlaybackImageButton::SetPlayButtonBackground() {

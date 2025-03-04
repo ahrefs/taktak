@@ -11,7 +11,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import static org.chromium.chrome.browser.ntp.HomeSurfaceTestUtils.IMMEDIATE_RETURN_TEST_PARAMS;
+import static org.chromium.chrome.browser.ntp.HomeSurfaceTestUtils.START_SURFACE_RETURN_TIME_IMMEDIATE;
 import static org.chromium.chrome.browser.tasks.ReturnToChromeUtil.HOME_SURFACE_SHOWN_AT_STARTUP_UMA;
 import static org.chromium.chrome.browser.tasks.ReturnToChromeUtil.HOME_SURFACE_SHOWN_UMA;
 import static org.chromium.ui.test.util.ViewUtils.onViewWaiting;
@@ -43,6 +43,7 @@ import org.chromium.base.test.util.CriteriaNotSatisfiedException;
 import org.chromium.base.test.util.DisabledTest;
 import org.chromium.base.test.util.DoNotBatch;
 import org.chromium.base.test.util.Feature;
+import org.chromium.base.test.util.Features.DisableFeatures;
 import org.chromium.base.test.util.Features.EnableFeatures;
 import org.chromium.base.test.util.HistogramWatcher;
 import org.chromium.base.test.util.Restriction;
@@ -71,11 +72,8 @@ import java.util.concurrent.TimeoutException;
 /** Integration tests of showing a NTP with Start surface UI at startup. */
 @RunWith(ChromeJUnit4ClassRunner.class)
 @Restriction({Restriction.RESTRICTION_TYPE_NON_LOW_END_DEVICE})
-@EnableFeatures({ChromeFeatureList.START_SURFACE_RETURN_TIME + "<Study"})
-@CommandLineFlags.Add({
-    ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE,
-    "force-fieldtrials=Study/Group"
-})
+@EnableFeatures({ChromeFeatureList.START_SURFACE_RETURN_TIME})
+@CommandLineFlags.Add(ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE)
 @DoNotBatch(reason = "This test suite tests startup behaviors.")
 public class ShowNtpAtStartupTest {
     @Rule
@@ -87,7 +85,7 @@ public class ShowNtpAtStartupTest {
     @Test
     @MediumTest
     @Feature({"StartSurface"})
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures(START_SURFACE_RETURN_TIME_IMMEDIATE)
     public void testShowNtpAtStartup() throws IOException {
         HistogramWatcher histogram =
                 HistogramWatcher.newBuilder()
@@ -112,7 +110,7 @@ public class ShowNtpAtStartupTest {
     @Test
     @MediumTest
     @Feature({"StartSurface"})
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures(START_SURFACE_RETURN_TIME_IMMEDIATE)
     public void testShowNtpAtStartupWithNtpExist() throws IOException {
         // The existing NTP isn't the last active Tab.
         String modifiedNtpUrl = UrlConstants.NTP_URL + "/1";
@@ -140,7 +138,7 @@ public class ShowNtpAtStartupTest {
     @Test
     @MediumTest
     @Feature({"StartSurface"})
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures(START_SURFACE_RETURN_TIME_IMMEDIATE)
     public void testShowNtpAtStartupWithActiveNtpExist() throws IOException {
         // The existing NTP is set as the last active Tab.
         String modifiedNtpUrl = UrlConstants.NTP_URL + "/1";
@@ -169,8 +167,8 @@ public class ShowNtpAtStartupTest {
     @Test
     @MediumTest
     @Feature({"StartSurface"})
-    @EnableFeatures({ChromeFeatureList.MAGIC_STACK_ANDROID + "<Study"})
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures({START_SURFACE_RETURN_TIME_IMMEDIATE, ChromeFeatureList.MAGIC_STACK_ANDROID})
+    @DisableFeatures(ChromeFeatureList.TAB_RESUMPTION_MODULE_ANDROID)
     public void testSingleTabCardGoneAfterTabClosed_MagicStack() throws IOException {
         HomeSurfaceTestUtils.prepareTabStateMetadataFile(
                 new int[] {0, 1}, new String[] {TAB_URL, TAB_URL_1}, 0);
@@ -194,10 +192,12 @@ public class ShowNtpAtStartupTest {
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
                     cta.getCurrentTabModel()
+                            .getTabRemover()
                             .closeTabs(
                                     TabClosureParams.closeTab(lastActiveTab)
                                             .allowUndo(false)
-                                            .build());
+                                            .build(),
+                                    /* allowDialog= */ false);
                 });
         Assert.assertEquals(2, cta.getCurrentTabModel().getCount());
         Assert.assertFalse(ntp.isMagicStackVisibleForTesting());
@@ -213,10 +213,12 @@ public class ShowNtpAtStartupTest {
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
                     cta.getCurrentTabModel()
+                            .getTabRemover()
                             .closeTabs(
                                     TabClosureParams.closeTab(newTrackingTab)
                                             .allowUndo(false)
-                                            .build());
+                                            .build(),
+                                    /* allowDialog= */ false);
                 });
         Assert.assertEquals(1, cta.getCurrentTabModel().getCount());
         Assert.assertFalse(ntp.isMagicStackVisibleForTesting());
@@ -225,7 +227,8 @@ public class ShowNtpAtStartupTest {
     @Test
     @MediumTest
     @Feature({"StartSurface"})
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures(START_SURFACE_RETURN_TIME_IMMEDIATE)
+    @DisableFeatures(ChromeFeatureList.TAB_RESUMPTION_MODULE_ANDROID)
     public void testSingleTabModule() throws IOException {
         HomeSurfaceTestUtils.prepareTabStateMetadataFile(
                 new int[] {0, 1}, new String[] {TAB_URL, TAB_URL_1}, 0);
@@ -249,8 +252,8 @@ public class ShowNtpAtStartupTest {
     @Test
     @MediumTest
     @Feature({"StartSurface"})
-    @EnableFeatures({ChromeFeatureList.MAGIC_STACK_ANDROID + "<Study"})
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures({START_SURFACE_RETURN_TIME_IMMEDIATE, ChromeFeatureList.MAGIC_STACK_ANDROID})
+    @DisableFeatures(ChromeFeatureList.TAB_RESUMPTION_MODULE_ANDROID)
     public void testSingleTabModule_MagicStack() throws IOException {
         HomeSurfaceTestUtils.prepareTabStateMetadataFile(
                 new int[] {0, 1}, new String[] {TAB_URL, TAB_URL_1}, 0);
@@ -333,10 +336,8 @@ public class ShowNtpAtStartupTest {
     @Test
     @MediumTest
     @Feature({"StartSurface"})
-    @EnableFeatures({
-        ChromeFeatureList.MAGIC_STACK_ANDROID,
-    })
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures({START_SURFACE_RETURN_TIME_IMMEDIATE, ChromeFeatureList.MAGIC_STACK_ANDROID})
+    @DisableFeatures(ChromeFeatureList.TAB_RESUMPTION_MODULE_ANDROID)
     public void testClickSingleTabCardCloseNtpHomeSurface() throws IOException {
         HomeSurfaceTestUtils.prepareTabStateMetadataFile(new int[] {0}, new String[] {TAB_URL}, 0);
         HomeSurfaceTestUtils.startMainActivityFromLauncher(mActivityTestRule);
@@ -378,7 +379,7 @@ public class ShowNtpAtStartupTest {
     @Test
     @LargeTest
     @Feature({"StartSurface"})
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures(START_SURFACE_RETURN_TIME_IMMEDIATE)
     @DisabledTest(message = "b/353758883")
     public void testThumbnailRecaptureForSingleTabCardAfterMostRecentTabClosed()
             throws IOException {
@@ -410,10 +411,12 @@ public class ShowNtpAtStartupTest {
                 () -> {
                     cta.getTabModelSelector()
                             .getModel(false)
+                            .getTabRemover()
                             .closeTabs(
                                     TabClosureParams.closeTab(lastActiveTab)
                                             .allowUndo(false)
-                                            .build());
+                                            .build(),
+                                    /* allowDialog= */ false);
                 });
         assertTrue(
                 "The single tab card does not show that it is changed and needs a "
@@ -457,7 +460,7 @@ public class ShowNtpAtStartupTest {
     @MediumTest
     @Feature({"StartSurface"})
     @Restriction({DeviceFormFactor.TABLET})
-    @CommandLineFlags.Add({IMMEDIATE_RETURN_TEST_PARAMS})
+    @EnableFeatures(START_SURFACE_RETURN_TIME_IMMEDIATE)
     public void testMvtLayoutHorizontalMargin() {
         mActivityTestRule.startMainActivityWithURL(UrlConstants.NTP_URL);
         ChromeTabbedActivity cta = mActivityTestRule.getActivity();
@@ -534,7 +537,7 @@ public class ShowNtpAtStartupTest {
     private void verifyTabCountAndActiveTabUrl(
             ChromeTabbedActivity cta, int tabCount, String url, Boolean expectHomeSurfaceUiShown) {
         Assert.assertEquals(tabCount, cta.getCurrentTabModel().getCount());
-        Tab tab = HomeSurfaceTestUtils.getCurrentTabFromUIThread(cta);
+        Tab tab = HomeSurfaceTestUtils.getCurrentTabFromUiThread(cta);
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
                     Assert.assertTrue(TextUtils.equals(url, tab.getUrl().getSpec()));

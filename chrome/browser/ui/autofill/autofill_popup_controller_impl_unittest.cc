@@ -8,15 +8,14 @@
 
 #include "base/test/metrics/user_action_tester.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/ui/autofill/autofill_popup_controller.h"
 #include "chrome/browser/ui/autofill/autofill_popup_controller_impl_test_api.h"
 #include "chrome/browser/ui/autofill/autofill_suggestion_controller_test_base.h"
 #include "chrome/browser/ui/autofill/test_autofill_popup_controller_autofill_client.h"
+#include "components/autofill/core/browser/suggestions/suggestion.h"
+#include "components/autofill/core/browser/suggestions/suggestion_type.h"
 #include "components/autofill/core/browser/ui/popup_interaction.h"
-#include "components/autofill/core/browser/ui/suggestion.h"
 #include "components/autofill/core/browser/ui/suggestion_button_action.h"
-#include "components/autofill/core/browser/ui/suggestion_type.h"
 #include "components/autofill/core/common/aliases.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -29,9 +28,9 @@
 #include "ui/accessibility/platform/ax_platform_node_delegate.h"
 #include "ui/gfx/range/range.h"
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS)
 #include "content/public/test/scoped_accessibility_mode_override.h"
-#endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // !BUILDFLAG(IS_CHROMEOS)
 
 namespace autofill {
 namespace {
@@ -269,7 +268,7 @@ TEST_F(
   };
 
   ShowSuggestions(manager(), {SuggestionType::kAddressEntry},
-                  AutofillSuggestionTriggerSource::kTextFieldDidChange);
+                  AutofillSuggestionTriggerSource::kTextFieldValueChanged);
   assert_popup_interaction_metrics_are_empty();
 
   ShowSuggestions(
@@ -385,7 +384,7 @@ TEST_F(AutofillPopupControllerImplTest, PopupForwardsSuggestionPosition) {
 
 TEST_F(AutofillPopupControllerImplTest, DoesNotAcceptUnacceptableSuggestions) {
   Suggestion suggestion(u"Open the pod bay doors, HAL");
-  suggestion.is_acceptable = false;
+  suggestion.acceptability = Suggestion::Acceptability::kUnacceptable;
   ShowSuggestions(manager(), {std::move(suggestion)});
 
   EXPECT_CALL(manager().external_delegate(), DidAcceptSuggestion).Times(0);
@@ -395,7 +394,7 @@ TEST_F(AutofillPopupControllerImplTest, DoesNotAcceptUnacceptableSuggestions) {
 
 TEST_F(AutofillPopupControllerImplTest, DoesNotSelectUnacceptableSuggestions) {
   Suggestion suggestion(u"I'm sorry, Dave. I'm afraid I can't do that.");
-  suggestion.is_acceptable = false;
+  suggestion.acceptability = Suggestion::Acceptability::kUnacceptable;
   ShowSuggestions(manager(), {std::move(suggestion)});
 
   EXPECT_CALL(manager().external_delegate(), DidSelectSuggestion).Times(0);
@@ -405,8 +404,9 @@ TEST_F(AutofillPopupControllerImplTest, DoesNotSelectUnacceptableSuggestions) {
 
 TEST_F(AutofillPopupControllerImplTest,
        ManualFallBackTriggerSource_IgnoresClickOutsideCheck) {
-  ShowSuggestions(manager(), {SuggestionType::kAddressEntry},
-                  AutofillSuggestionTriggerSource::kManualFallbackAddress);
+  ShowSuggestions(
+      manager(), {SuggestionType::kAddressEntry},
+      AutofillSuggestionTriggerSource::kPlusAddressUpdatedInBrowserProcess);
 
   // Generate a popup, so it can be hidden later. It doesn't matter what the
   // external_delegate thinks is being shown in the process, since we are just
@@ -820,7 +820,7 @@ TEST_F(AutofillPopupControllerImplTest,
       "Autofill.Autocomplete.SingleEntryRemovalMethod",
       SingleEntryRemovalMethod::kKeyboardShiftDeletePressed, 0);
   histogram_tester.ExpectUniqueSample(
-      "Autocomplete.Events2",
+      "Autocomplete.Events3",
       AutofillMetrics::AutocompleteEvent::AUTOCOMPLETE_SUGGESTION_DELETED, 0);
 }
 
@@ -840,7 +840,7 @@ TEST_F(AutofillPopupControllerImplTest,
       "Autofill.Autocomplete.SingleEntryRemovalMethod",
       SingleEntryRemovalMethod::kKeyboardShiftDeletePressed, 1);
   histogram_tester.ExpectUniqueSample(
-      "Autocomplete.Events2",
+      "Autocomplete.Events3",
       AutofillMetrics::AutocompleteEvent::AUTOCOMPLETE_SUGGESTION_DELETED, 1);
   // Also no autofill metrics are emitted.
   histogram_tester.ExpectUniqueSample("Autofill.ProfileDeleted.Popup", 1, 0);
@@ -894,7 +894,7 @@ TEST_F(AutofillPopupControllerImplTest,
       "Autofill.Autocomplete.SingleEntryRemovalMethod",
       SingleEntryRemovalMethod::kKeyboardShiftDeletePressed, 0);
   histogram_tester.ExpectUniqueSample(
-      "Autocomplete.Events2",
+      "Autocomplete.Events3",
       AutofillMetrics::AutocompleteEvent::AUTOCOMPLETE_SUGGESTION_DELETED, 0);
 }
 
@@ -914,7 +914,7 @@ TEST_F(AutofillPopupControllerImplTest,
       "Autofill.Autocomplete.SingleEntryRemovalMethod",
       SingleEntryRemovalMethod::kKeyboardShiftDeletePressed, 0);
   histogram_tester.ExpectUniqueSample(
-      "Autocomplete.Events2",
+      "Autocomplete.Events3",
       AutofillMetrics::AutocompleteEvent::AUTOCOMPLETE_SUGGESTION_DELETED, 0);
   histogram_tester.ExpectUniqueSample("Autofill.ProfileDeleted.Popup", 1, 0);
   histogram_tester.ExpectUniqueSample(
@@ -927,7 +927,7 @@ TEST_F(AutofillPopupControllerImplTest, UnselectingClearsPreview) {
   client().popup_controller(manager()).UnselectSuggestion();
 }
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS)
 class MockAutofillDriver : public ContentAutofillDriver {
  public:
   using ContentAutofillDriver::ContentAutofillDriver;
@@ -959,10 +959,6 @@ class MockAxTreeManager : public ui::AXTreeManager {
   MockAxTreeManager& operator=(MockAxTreeManager&) = delete;
   ~MockAxTreeManager() override = default;
 
-  MOCK_METHOD(ui::AXNode*,
-              GetNodeFromTree,
-              (const ui::AXTreeID& tree_id, const int32_t node_id),
-              (const override));
   MOCK_METHOD(ui::AXPlatformNodeDelegate*,
               GetDelegate,
               (const ui::AXTreeID tree_id, const int32_t node_id),

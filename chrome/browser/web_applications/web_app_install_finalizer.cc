@@ -27,7 +27,6 @@
 #include "base/types/optional_ref.h"
 #include "base/values.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/web_applications/commands/web_app_uninstall_command.h"
 #include "chrome/browser/web_applications/isolated_web_apps/isolated_web_app_integrity_block_data.h"
@@ -40,6 +39,7 @@
 #include "chrome/browser/web_applications/os_integration/web_app_shortcuts_menu.h"
 #include "chrome/browser/web_applications/policy/web_app_policy_manager.h"
 #include "chrome/browser/web_applications/proto/web_app_install_state.pb.h"
+#include "chrome/browser/web_applications/scope_extension_info.h"
 #include "chrome/browser/web_applications/web_app.h"
 #include "chrome/browser/web_applications/web_app_command_manager.h"
 #include "chrome/browser/web_applications/web_app_constants.h"
@@ -49,6 +49,7 @@
 #include "chrome/browser/web_applications/web_app_install_info.h"
 #include "chrome/browser/web_applications/web_app_install_manager.h"
 #include "chrome/browser/web_applications/web_app_install_utils.h"
+#include "chrome/browser/web_applications/web_app_management_type.h"
 #include "chrome/browser/web_applications/web_app_origin_association_manager.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
 #include "chrome/browser/web_applications/web_app_registrar.h"
@@ -67,8 +68,8 @@
 #include "third_party/skia/include/core/SkColor.h"
 #include "url/origin.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ash/system_web_apps/types/system_web_app_data.h"
+#if BUILDFLAG(IS_CHROMEOS)
+#include "chromeos/ash/experiences/system_web_apps/types/system_web_app_data.h"
 #endif
 
 namespace web_app {
@@ -98,6 +99,8 @@ bool ShouldInstallOverwriteUserDisplayMode(
     case InstallSource::ALMANAC_INSTALL_APP_URI:
     case InstallSource::WEBAPK_RESTORE:
     case InstallSource::OOBE_APP_RECOMMENDATIONS:
+    case InstallSource::WEB_INSTALL:
+    case InstallSource::CHROMEOS_HELP_APP:
       return true;
     case InstallSource::DEVTOOLS:
     case InstallSource::MANAGEMENT_API:
@@ -119,8 +122,7 @@ bool ShouldInstallOverwriteUserDisplayMode(
     case InstallSource::MICROSOFT_365_SETUP:
       return false;
     case InstallSource::COUNT:
-      NOTREACHED_IN_MIGRATION();
-      return false;
+      NOTREACHED();
   }
 }
 
@@ -308,6 +310,12 @@ void WebAppInstallFinalizer::OnOriginAssociationValidated(
     web_app->SetManifestId(web_app_info.manifest_id());
   }
 
+  for (auto& scope_extension : validated_scope_extensions) {
+    // This is done to prune any queries or fragments from the scope URL which
+    // may have been skipped by WebAppOriginAssociationManager validation.
+    scope_extension = ScopeExtensionInfo::CreateForScope(
+        scope_extension.scope, scope_extension.has_origin_wildcard);
+  }
   web_app->SetValidatedScopeExtensions(validated_scope_extensions);
 
   const base::Time now_time = base::Time::Now();
@@ -362,7 +370,7 @@ void WebAppInstallFinalizer::OnOriginAssociationValidated(
     web_app->SetWebAppChromeOsData(std::move(cros_data));
   }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // `WebApp::system_web_app_data` has a default value already. Only override if
   // the caller provided a new value.
   if (options.system_web_app_data.has_value()) {
@@ -418,28 +426,6 @@ void WebAppInstallFinalizer::OnOriginAssociationValidated(
     CommitToSyncBridge(std::move(web_app), std::move(commit_callback),
                        /*success=*/true);
   }
-}
-
-bool WebAppInstallFinalizer::CanReparentTab(const webapps::AppId& app_id,
-                                            bool shortcut_created) const {
-  // Reparent the web contents into its own window only if that is the
-  // app's launch type.
-  DCHECK(provider_);
-  if (provider_->registrar_unsafe().GetAppUserDisplayMode(app_id) ==
-      mojom::UserDisplayMode::kBrowser) {
-    return false;
-  }
-
-  return provider_->ui_manager().CanReparentAppTabToWindow(app_id,
-                                                           shortcut_created);
-}
-
-void WebAppInstallFinalizer::ReparentTab(const webapps::AppId& app_id,
-                                         bool shortcut_created,
-                                         content::WebContents* web_contents) {
-  DCHECK(web_contents);
-  provider_->ui_manager().ReparentAppTabToWindow(web_contents, app_id,
-                                                 shortcut_created);
 }
 
 void WebAppInstallFinalizer::FinalizeUpdate(
@@ -665,8 +651,8 @@ void WebAppInstallFinalizer::OnInstallHooksFinished(
     webapps::AppId app_id) {
   // Only notify that os hooks were added if the installation was a 'full'
   // installation.
-  if (provider_->registrar_unsafe().IsInstallState(
-          app_id, {proto::InstallState::INSTALLED_WITH_OS_INTEGRATION})) {
+  if (provider_->registrar_unsafe().GetInstallState(app_id) ==
+      proto::InstallState::INSTALLED_WITH_OS_INTEGRATION) {
     callback = std::move(callback).Then(base::BindOnce(
         &WebAppInstallFinalizer::NotifyWebAppInstalledWithOsHooks,
         weak_ptr_factory_.GetWeakPtr(), app_id));
@@ -678,17 +664,6 @@ void WebAppInstallFinalizer::OnInstallHooksFinished(
 void WebAppInstallFinalizer::NotifyWebAppInstalledWithOsHooks(
     webapps::AppId app_id) {
   provider_->install_manager().NotifyWebAppInstalledWithOsHooks(app_id);
-}
-
-bool WebAppInstallFinalizer::ShouldUpdateOsHooks(const webapps::AppId& app_id) {
-#if BUILDFLAG(IS_CHROMEOS)
-  // OS integration should always be enabled on ChromeOS.
-  return true;
-#else
-  // If the app being updated was installed by default and not also manually
-  // installed by the user or an enterprise policy, disable os integration.
-  return !provider_->registrar_unsafe().WasInstalledByDefaultOnly(app_id);
-#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 void WebAppInstallFinalizer::OnDatabaseCommitCompletedForUpdate(
@@ -705,7 +680,17 @@ void WebAppInstallFinalizer::OnDatabaseCommitCompletedForUpdate(
     return;
   }
 
-  if (!ShouldUpdateOsHooks(app_id)) {
+  // OS integration should always be enabled on ChromeOS for manifest updates.
+  bool should_skip_os_integration_on_manifest_update = false;
+#if !BUILDFLAG(IS_CHROMEOS)
+  // If the app being updated was installed by default and not also manually
+  // installed by the user or an enterprise policy, disable os integration.
+  should_skip_os_integration_on_manifest_update =
+      provider_->registrar_unsafe().GetInstallState(app_id) ==
+      proto::InstallState::INSTALLED_WITHOUT_OS_INTEGRATION;
+#endif  // !BUILDFLAG(IS_CHROMEOS)
+
+  if (should_skip_os_integration_on_manifest_update) {
     provider_->install_manager().NotifyWebAppManifestUpdated(app_id);
     std::move(callback).Run(
         app_id, webapps::InstallResultCode::kSuccessAlreadyInstalled);

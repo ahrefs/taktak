@@ -11,14 +11,14 @@
 namespace ash {
 namespace {
 
-// Padding to separate the Picker window from the caret.
+// Padding to separate the Quick Insert window from the caret.
 constexpr gfx::Outsets kPaddingAroundCaret(4);
 
 }  // namespace
 
-gfx::Rect GetPickerAnchorBounds(const gfx::Rect& caret_bounds,
-                                const gfx::Point& cursor_point,
-                                const gfx::Rect& focused_window_bounds) {
+gfx::Rect GetQuickInsertAnchorBounds(const gfx::Rect& caret_bounds,
+                                     const gfx::Point& cursor_point,
+                                     const gfx::Rect& focused_window_bounds) {
   if (caret_bounds != gfx::Rect() &&
       focused_window_bounds.Contains(caret_bounds)) {
     gfx::Rect anchor_rect = caret_bounds;

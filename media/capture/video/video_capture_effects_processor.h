@@ -19,7 +19,11 @@
 #include "media/capture/video/video_capture_device.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/remote.h"
+#include "services/video_effects/public/cpp/buildflags.h"
 #include "services/video_effects/public/mojom/video_effects_processor.mojom.h"
+
+static_assert(BUILDFLAG(ENABLE_VIDEO_EFFECTS),
+              "enable_video_effects must be true.");
 
 namespace media {
 
@@ -92,6 +96,16 @@ class CAPTURE_EXPORT VideoCaptureEffectsProcessor {
       VideoCaptureDevice::Client::Buffer in_buffer,
       mojom::VideoFrameInfoPtr frame_info,
       VideoCaptureBufferType in_buffer_type,
+      VideoCaptureDevice::Client::Buffer out_buffer,
+      const VideoCaptureFormat& out_buffer_format,
+      VideoCaptureBufferType out_buffer_type,
+      VideoCaptureEffectsProcessor::PostProcessDoneCallback post_process_cb);
+
+  // On-GPU variant. Creates shared images backed by `in_buffer` and
+  // `out_buffer`. Invokes the processor. (Mainly used on MacOS)
+  void PostProcessExternalBuffer(
+      CapturedExternalVideoBuffer in_buffer,
+      mojom::VideoFrameInfoPtr frame_info,
       VideoCaptureDevice::Client::Buffer out_buffer,
       const VideoCaptureFormat& out_buffer_format,
       VideoCaptureBufferType out_buffer_type,

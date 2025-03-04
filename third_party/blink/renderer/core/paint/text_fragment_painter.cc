@@ -111,6 +111,10 @@ bool ShouldPaintEmphasisMark(const ComputedStyle& style,
   // emphasis mark at left/right side of |LayoutTextCombine|.
   DCHECK(!IsA<LayoutTextCombine>(layout_object.Parent()));
 
+  if (text_item.IsEllipsis()) {
+    return false;
+  }
+
   if (style.GetTextEmphasisLineLogicalSide() == LineLogicalSide::kOver) {
     return !text_item.HasOverAnnotation();
   }
@@ -125,9 +129,9 @@ PhysicalDirection GetDisclosureOrientation(const ComputedStyle& style,
 
 Path CreatePath(base::span<const gfx::PointF, 4> path) {
   Path result;
-  result.MoveTo(gfx::PointF(path[0].x(), path[0].y()));
-  for (int i = 1; i < 4; ++i) {
-    result.AddLineTo(gfx::PointF(path[i].x(), path[i].y()));
+  result.MoveTo(path[0]);
+  for (size_t i = 1; i < 4; ++i) {
+    result.AddLineTo(path[i]);
   }
   return result;
 }
@@ -205,7 +209,7 @@ void TextFragmentPainter::PaintSymbol(const LayoutObject* layout_object,
     path.Translate(gfx::Vector2dF(marker_rect.X(), marker_rect.Y()));
     context.FillPath(path, auto_dark_mode);
   } else {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 }
 
@@ -222,7 +226,7 @@ void TextFragmentPainter::Paint(const PaintInfo& paint_info,
     return;
 
   const ComputedStyle& style = text_item.Style();
-  if (style.UsedVisibility() != EVisibility::kVisible) {
+  if (style.Visibility() != EVisibility::kVisible) {
     return;
   }
 
@@ -244,11 +248,13 @@ void TextFragmentPainter::Paint(const PaintInfo& paint_info,
   }
 #endif
 
-  ObjectPainter object_painter(*layout_object);
-  if (object_painter.ShouldRecordSpecialHitTestData(paint_info)) {
-    object_painter.RecordHitTestData(paint_info,
-                                     ToPixelSnappedRect(physical_box),
-                                     *text_item.GetDisplayItemClient());
+  if (paint_info.phase == PaintPhase::kForeground) {
+    ObjectPainter object_painter(*layout_object);
+    if (object_painter.ShouldRecordSpecialHitTestData(paint_info)) {
+      object_painter.RecordHitTestData(paint_info,
+                                       ToPixelSnappedRect(physical_box),
+                                       *text_item.GetDisplayItemClient());
+    }
   }
 
   // Determine whether or not we’ll need a writing-mode rotation, but don’t
@@ -549,7 +555,7 @@ void TextFragmentPainter::Paint(const PaintInfo& paint_info,
         break;
       case HighlightPainter::kFastSpellingGrammar:
       case HighlightPainter::kNoHighlights:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 }

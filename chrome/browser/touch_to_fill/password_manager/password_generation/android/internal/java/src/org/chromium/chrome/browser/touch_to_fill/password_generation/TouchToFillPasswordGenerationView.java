@@ -5,6 +5,7 @@
 package org.chromium.chrome.browser.touch_to_fill.password_generation;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
@@ -12,12 +13,14 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 
-import org.chromium.base.Callback;
 import org.chromium.chrome.browser.password_manager.PasswordManagerResourceProviderFactory;
 import org.chromium.chrome.browser.touch_to_fill.common.TouchToFillUtil;
+import org.chromium.chrome.browser.touch_to_fill.password_generation.TouchToFillPasswordGenerationCoordinator.GenerationCallback;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 
 /**
@@ -80,12 +83,20 @@ class TouchToFillPasswordGenerationView implements BottomSheetContent {
                         generatedPassword));
     }
 
-    void setPasswordAcceptedCallback(Callback<String> callback) {
+    void setPasswordAcceptedCallback(GenerationCallback callback) {
         Button passwordAcceptedButton = mContent.findViewById(R.id.use_password_button);
         mPasswordView.setOnClickListener(
-                (v) -> callback.onResult(mPasswordView.getText().toString()));
+                (v) ->
+                        callback.onAccept(
+                                mPasswordView.getText().toString(),
+                                TouchToFillPasswordGenerationCoordinator.InteractionResult
+                                        .ACCEPTED_VIA_PASSWORD_VIEW));
         passwordAcceptedButton.setOnClickListener(
-                (v) -> callback.onResult(mPasswordView.getText().toString()));
+                (v) ->
+                        callback.onAccept(
+                                mPasswordView.getText().toString(),
+                                TouchToFillPasswordGenerationCoordinator.InteractionResult
+                                        .ACCEPTED_VIA_ACCEPT_BUTTON));
     }
 
     void setPasswordRejectedCallback(Runnable callback) {
@@ -123,24 +134,24 @@ class TouchToFillPasswordGenerationView implements BottomSheetContent {
     }
 
     @Override
-    public int getSheetContentDescriptionStringId() {
-        return R.string.password_generation_bottom_sheet_content_description;
+    public @NonNull String getSheetContentDescription(Context context) {
+        return context.getString(R.string.password_generation_bottom_sheet_content_description);
     }
 
     @Override
-    public int getSheetHalfHeightAccessibilityStringId() {
+    public @StringRes int getSheetHalfHeightAccessibilityStringId() {
         // Half-height is disabled so no need for an accessibility string.
         assert false : "This method should not be called";
-        return 0;
+        return Resources.ID_NULL;
     }
 
     @Override
-    public int getSheetFullHeightAccessibilityStringId() {
+    public @StringRes int getSheetFullHeightAccessibilityStringId() {
         return R.string.password_generation_bottom_sheet_content_description;
     }
 
     @Override
-    public int getSheetClosedAccessibilityStringId() {
+    public @StringRes int getSheetClosedAccessibilityStringId() {
         return R.string.password_generation_bottom_sheet_closed;
     }
 

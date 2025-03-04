@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/strings/strcat.h"
 #include "chromeos/ash/services/boca/babelorca/mojom/tachyon_parsing_service.mojom.h"
 #include "google_apis/gaia/gaia_auth_util.h"
@@ -31,11 +32,15 @@ std::vector<TranscriptBuilder::Result> TranscriptBuilder::GetTranscripts(
     mojom::BabelOrcaMessagePtr message) {
   // Discard message if not a valid session, not a valid sender, or it is an old
   // message.
-  if (message->session_id != session_id_ ||
-      !gaia::AreEmailsSame(sender_email_, message->sender_email.value_or("")) ||
+  bool valid_email =
+      gaia::AreEmailsSame(sender_email_, message->sender_email.value_or(""));
+  if (message->session_id != session_id_ || !valid_email ||
       message->init_timestamp_ms < init_timestamp_ms_ ||
       (message->init_timestamp_ms == init_timestamp_ms_ &&
        message->order <= order_)) {
+    VLOG_IF(1, message->session_id != session_id_)
+        << "Unexpected message session id";
+    VLOG_IF(1, !valid_email) << "Unexpected message sender email";
     return {};
   }
 
@@ -55,6 +60,15 @@ std::vector<TranscriptBuilder::Result> TranscriptBuilder::GetTranscripts(
     return results;
   }
 
+  // If transcript length decreased and it is final, it is possible that the
+  // removed part belongs to the next transcript, so discard the message and
+  // rely on the upcoming message's `previous_transcript` for update.
+  if (message->current_transcript->is_final &&
+      message->current_transcript->transcript_id == transcript_id_ &&
+      message->current_transcript->text.length() < text_.length()) {
+    return {};
+  }
+
   if (!message->previous_transcript.is_null() && !is_final_ &&
       message->previous_transcript->transcript_id == transcript_id_) {
     results = MaybeMergeTranscript(std::move(message->previous_transcript),
@@ -66,12 +80,11 @@ std::vector<TranscriptBuilder::Result> TranscriptBuilder::GetTranscripts(
   for (auto& result : current_results) {
     results.push_back(std::move(result));
   }
-  Update(std::move(message->current_transcript));
   return results;
 }
 
 std::vector<TranscriptBuilder::Result> TranscriptBuilder::MaybeMergeTranscript(
-    const mojom::TranscriptPartPtr& transcript_part,
+    mojom::TranscriptPartPtr transcript_part,
     bool is_previous) {
   std::vector<Result> results;
   if (transcript_part->transcript_id == transcript_id_ && !is_final_) {
@@ -98,6 +111,9 @@ std::vector<TranscriptBuilder::Result> TranscriptBuilder::MaybeMergeTranscript(
   }
   results.emplace_back(transcript_part->text, transcript_part->is_final,
                        transcript_part->language);
+  if (!is_previous) {
+    Update(std::move(transcript_part));
+  }
   return results;
 }
 

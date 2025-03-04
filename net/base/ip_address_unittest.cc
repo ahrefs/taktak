@@ -2,14 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40284755): Remove this and spanify to fix the errors.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "net/base/ip_address.h"
 
+#include <array>
 #include <optional>
+#include <tuple>
 #include <vector>
 
 #include "base/format_macros.h"
@@ -41,7 +38,7 @@ TEST(IPAddressBytesTest, ConstructEmpty) {
 }
 
 TEST(IPAddressBytesTest, ConstructIPv4) {
-  uint8_t data[] = {192, 168, 1, 1};
+  auto data = std::to_array<uint8_t>({192, 168, 1, 1});
   IPAddressBytes bytes(data);
   ASSERT_EQ(std::size(data), bytes.size());
   size_t i = 0;
@@ -51,7 +48,24 @@ TEST(IPAddressBytesTest, ConstructIPv4) {
 }
 
 TEST(IPAddressBytesTest, ConstructIPv6) {
-  uint8_t data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+  auto data = std::to_array<uint8_t>({
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+  });
   IPAddressBytes bytes(data);
   ASSERT_EQ(std::size(data), bytes.size());
   size_t i = 0;
@@ -928,6 +942,36 @@ TEST(IPAddressTest, IPv6Mask) {
   EXPECT_EQ("8000::", mask.ToString());
   EXPECT_TRUE(IPAddress::CreateIPv6Mask(&mask, 0));
   EXPECT_EQ("::", mask.ToString());
+}
+
+// Test that IPAddress can be created at compile time.
+template <size_t N>
+constexpr bool VerifyIPBytes(const IPAddress& addr,
+                             const std::array<uint8_t, N> ip_bytes) {
+  return std::ranges::equal(addr.bytes(), ip_bytes);
+}
+
+constexpr IPAddress CreateIPAddress(std::string_view ip_address) {
+  IPAddress addr;
+  std::ignore = addr.AssignFromIPLiteral(ip_address);
+  return addr;
+}
+
+constexpr std::array<uint8_t, 4> ipv4_bytes = {192, 168, 2, 3};
+constexpr auto ipv4_address = CreateIPAddress("192.168.2.3");
+static_assert(VerifyIPBytes(ipv4_address, ipv4_bytes));
+
+constexpr auto ipv6_address = CreateIPAddress("2001:0700:0300:1800::000f");
+constexpr std::array<uint8_t, 16> ipv6_bytes = {
+    0x20, 0x01, 0x07, 0x00, 0x03, 0x00, 0x18, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f};
+static_assert(VerifyIPBytes(ipv6_address, ipv6_bytes));
+
+// This test exists mainly to prevent the compiler from optimizing away
+// the compile-time checks above. All actual validation is done at compile time.
+TEST(IPAddressTest, VerifyIPAddressCreatedAtCompileTime) {
+  EXPECT_TRUE(VerifyIPBytes(ipv4_address, ipv4_bytes));
+  EXPECT_TRUE(VerifyIPBytes(ipv6_address, ipv6_bytes));
 }
 
 }  // anonymous namespace

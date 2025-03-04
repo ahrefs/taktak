@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "chrome/browser/ui/safety_hub/safety_hub_constants.h"
+
 #include "base/time/time.h"
 
 namespace safety_hub {
@@ -32,6 +33,7 @@ const char kAbusiveRevocationLifetimeKey[] = "abusiveRevocationLifetime";
 const char kRevokedStatusDictKeyStr[] = "revoked_status";
 const char kIgnoreStr[] = "ignore";
 const char kRevokeStr[] = "revoke";
+const char kProposedStr[] = "proposed";
 
 const char kOrigin[] = "origin";
 const char kUsername[] = "username";

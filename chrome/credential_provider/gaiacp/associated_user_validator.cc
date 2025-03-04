@@ -16,6 +16,7 @@
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/values.h"
+#include "base/win/ntsecapi_shim.h"
 #include "base/win/win_util.h"
 #include "chrome/credential_provider/common/gcp_strings.h"
 #include "chrome/credential_provider/gaiacp/gaia_credential_provider.h"
@@ -80,16 +81,16 @@ unsigned __stdcall CheckReauthStatus(void* param) {
     }
 
     std::string_view response_string(response.data(), response.size());
-    std::optional<base::Value> properties_val = base::JSONReader::Read(
+    std::optional<base::Value::Dict> properties = base::JSONReader::ReadDict(
         response_string, base::JSON_ALLOW_TRAILING_COMMAS);
-    if (!properties_val || !properties_val->is_dict()) {
-      LOGFN(ERROR) << "base::JSONReader::Read failed forcing reauth";
+    if (!properties) {
+      LOGFN(ERROR) << "base::JSONReader::ReadDict failed forcing reauth";
       return 0;
     }
 
-    const auto& properties = properties_val->GetDict();
-    std::optional<int> expires_in = properties.FindInt("expires_in");
-    if (properties.contains("error") || !expires_in || expires_in.value() < 0) {
+    std::optional<int> expires_in = properties->FindInt("expires_in");
+    if (properties->contains("error") || !expires_in ||
+        expires_in.value() < 0) {
       LOGFN(VERBOSE) << "Needs reauth sid=" << reauth_info->sid;
       return 0;
     }

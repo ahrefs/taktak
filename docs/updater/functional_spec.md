@@ -55,6 +55,22 @@ detect and properly represent any overinstallations of an application, which are
 done by users or third-party software on macOS (and don't otherwise interact
 with the updater).
 
+##### Install ID
+The tag may carry a unique identifier called an "install ID" or "iid". The
+install ID is transmitted back to the server as part of the install event
+associated with running the installer, and as part of the first update check
+for the app that reports activity. It is then deleted from the client. It is not
+sent as part of update event reports, nor as part of non-active update checks,
+nor as part of active update checks after the first.
+
+If a user runs an installer when the software is already installed, the install
+ID for the software will be updated to match, and the new value will be
+transmitted during the install event and the next active update check.
+
+The install ID is meant to enable the app distributor to correlate each
+installer's download with the outcome of running that particular installer, and
+whether or not the installed software is eventually actively used at least once.
+
 #### Elevation (Windows)
 The metainstaller parses its tag and re-launches itself at high integrity if
 it is being run at medium integrity with UAC on and installing an application
@@ -505,6 +521,20 @@ button. Clicking the help button opens a web page in the user's default browser.
 The page is opened with a query string:
 `?product={AppId}&errorcode={ErrorCode}`.
 
+### Periodic detection of over-installed apps
+
+The updater periodically checks if application versions persisted to the system
+match its built-in `pv` value. If different, the updater sends an installation
+ping for the application indicating the actually installed version and updates
+the internal `pv` value to match.
+
+The application's version persisted to the system is determined via:
+
+* The plist file and key indicated by the `pv_path` and `pv_key` in the app's
+  updater registration on MacOS.
+* The `pv` registry key as described by the "App Registration" section on
+  Windows.
+
 ## Updates
 There is no limit for the number of retries to update an application if the
 update fails repeatedly.
@@ -595,6 +625,8 @@ specifies the result type and how to determine success or failure:
       - if a launch command was provided via the installer API, the command will
         be launched and the updater UI will exit silently. Otherwise, the
         updater will show an install success dialog.
+  *   4, and the installer exits with a zero exit code - SUCCESS
+      Same as `0 - SUCCESS` above.
   *   All the error installer results below are treated the same.
       - if an installer error was not provided via the installer API or the exit
         code, generic error `kErrorApplicationInstallerFailed` will be reported.
@@ -604,7 +636,8 @@ specifies the result type and how to determine success or failure:
       *   1 - FAILED\_CUSTOM\_ERROR
       *   2 - FAILED\_MSI\_ERROR
       *   3 - FAILED\_SYSTEM\_ERROR
-      *   4 - FAILED\_EXIT\_CODE (default)
+      *   4 - FAILED\_EXIT\_CODE, where the installer exits with a non-zero exit
+              code.
 * `InstallerError` : Installer error, or 0 for success.
 * `InstallerExtraCode1` : Optional extra code.
 * `InstallerResultUIString` : A string to be displayed to the user, if
@@ -1020,7 +1053,7 @@ The updater fetches all machine level app CBCM policies and caches them in the
 file system.  The cached policy files are global readable for other apps to
 consume. Location of the policy cache folder:
 
-* **Windows**: `%PROGRAMFILESX86%\{COMPANY_SHORTNAME}\Policies`
+* **Windows**: `%PROGRAMFILES(X86)%\{COMPANY_SHORTNAME}\Policies`
 * **macOS**: `/Library/{COMPANY_SHORTNAME}/GoogleSoftwareUpdate/DeviceManagement`
 * **Linux**: `/opt/{COMPANY_SHORTNAME}/{PRODUCT_FULLNAME}/DeviceManagement`
 
@@ -1506,7 +1539,13 @@ any piece of software it manages is permitted to send usage stats.
 ### Telemetry
 When the updater installs an application (an installer is run) it sends an
 event with `"eventtype": 2` indicating the outcome of installation. The updater
-does not send such a ping for its own installation.
+does not send such a ping for its own successful installation, but if the
+updater installation fails, then the updater sends an error event with
+`"eventtype": 2`. For example:
+`"event":[{"errorcode":75075,"eventresult":0,"eventtype":2,`.
+
+Or for metainstaller errors in the 73000-73500 range:
+`"event":[{"errorcode":73118,"eventresult":0,"eventtype":2,`.
 
 When the updater updates an application (including itself) it sends an
 event with `"eventtype": 3` indicating the outcome of update operation.
@@ -1526,8 +1565,22 @@ in the order they are returned in the update response.
 
 The integrity of the payload is verified.
 
-There is no download cache. Payloads are re-downloaded for applications which
-fail to install.
+Downloads are cached in the `crx_cache` subdirectory of the program's install
+location. The cache contains at most one item per app ID, in a file named
+`A_F` where A is the app ID and F is the
+[differential update fingerprint](protocol_4.md#differential-updates) of the
+download.
+
+### Install location
+On Windows for system-scope updaters, the install location for both 32-bit and
+64-bit updaters is `%PROGRAMFILES(X86)%\{COMPANY_SHORTNAME}\{PRODUCT_FULLNAME}`.
+In addition to this, there is a legacy install location at
+`%PROGRAMFILES(X86)%\{COMPANY_SHORTNAME}\Update`.
+
+On Windows for user-scope updaters, the install location is
+`%LOCALAPPDATA%\{COMPANY_SHORTNAME}\{PRODUCT_FULLNAME}`. In addition to this,
+there is a legacy install location at
+`%LOCALAPPDATA%\{COMPANY_SHORTNAME}\Update`.
 
 ### Logging
 All updater logs are written to `{UPDATER_DATA_DIR}\updater.log`.
@@ -1543,8 +1596,7 @@ On macOS for user-scope updaters, `{UPDATER_DATA_DIR}` is
 `~/Library/Application Support/{COMPANY_SHORTNAME}/{PRODUCT_FULLNAME}`.
 
 On Windows for system-scope updaters, `{UPDATER_DATA_DIR}` is
-`%PROGRAMFILES%\{COMPANY_SHORTNAME}\{PRODUCT_FULLNAME}`. (A 32-bit updater uses
-use `%PROGRAMFILESX86%` if appropriate instead.)
+`%PROGRAMFILES(X86)%\{COMPANY_SHORTNAME}\{PRODUCT_FULLNAME}`.
 
 On Windows for user-scope updaters, `{UPDATER_DATA_DIR}` is
 `%LOCALAPPDATA%\{COMPANY_SHORTNAME}\{PRODUCT_FULLNAME}`.

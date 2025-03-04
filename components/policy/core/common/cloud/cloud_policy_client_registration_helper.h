@@ -76,6 +76,7 @@ class POLICY_EXPORT CloudPolicyClientRegistrationHelper
       const std::string& client_id,
       const std::string& state,
       const base::TimeDelta& timeout_duration,
+      bool is_token_encrypted,
       CloudPolicyClient::ResultCallback callback);
 
  private:
@@ -88,7 +89,6 @@ class POLICY_EXPORT CloudPolicyClientRegistrationHelper
   void OnGetUserInfoFailure(const GoogleServiceAuthError& error) override;
 
   // CloudPolicyClient::Observer implementation:
-  void OnPolicyFetched(CloudPolicyClient* client) override;
   void OnRegistrationStateChanged(CloudPolicyClient* client) override;
   void OnClientError(CloudPolicyClient* client) override;
 

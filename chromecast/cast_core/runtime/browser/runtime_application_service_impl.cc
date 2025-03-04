@@ -17,7 +17,6 @@
 #include "chromecast/browser/cast_web_view.h"
 #include "chromecast/cast_core/grpc/grpc_status_or.h"
 #include "chromecast/cast_core/runtime/browser/core_streaming_config_manager.h"
-#include "chromecast/cast_core/runtime/browser/grpc_webui_controller_factory.h"
 #include "chromecast/cast_core/runtime/browser/message_port_service_grpc.h"
 #include "chromecast/cast_core/runtime/browser/url_rewrite/url_request_rewrite_type_converters.h"
 #include "chromecast/common/feature_constants.h"
@@ -116,8 +115,8 @@ cast::common::StopReason::Type ToProtoType(
 const cast::common::Dictionary::Entry* FindEntry(
     const std::string& key,
     const cast::common::Dictionary& dict) {
-  auto iter = base::ranges::find(dict.entries(), key,
-                                 &cast::common::Dictionary::Entry::key);
+  auto iter = std::ranges::find(dict.entries(), key,
+                                &cast::common::Dictionary::Entry::key);
   if (iter == dict.entries().end()) {
     return nullptr;
   }
@@ -215,8 +214,12 @@ void RuntimeApplicationServiceImpl::Load(
     return;
   }
 
-  LOG(INFO) << "Runtime application server started: endpoint="
-            << request.runtime_application_service_info().grpc_endpoint();
+  LOG(INFO) << "Runtime application service started: app_id="
+            << request.application_config().app_id()
+#if DCHECK_IS_ON()
+            << ", endpoint=" << grpc_server_->endpoint()
+#endif  // DCHECK_IS_ON()
+      ;
 
   // TODO(vigeni): Consider extacting this into RuntimeApplicationBase as a
   // mojo.
@@ -228,6 +231,7 @@ void RuntimeApplicationServiceImpl::Load(
   cast_web_view_ = CreateCastWebView();
   metrics::CastMetricsHelper::GetInstance()->DidCompleteLoad(
       request.application_config().app_id(), request.cast_session_id());
+  SetApplicationMediaCapabilities();
   runtime_application_->Load(std::move(callback));
 }
 
@@ -331,7 +335,6 @@ CastWebView::Scoped RuntimeApplicationServiceImpl::CreateCastWebView() {
   params->handle_inner_contents = true;
   params->session_id = runtime_application_->GetCastSessionId();
   params->use_media_blocker = true;
-  params->keep_screen_on = false;
   params->gesture_priority = mojom::GesturePriority::MAIN_ACTIVITY;
   params->log_prefix =
       base::StringPrintf("Cast App (%s)", config_.app_id().c_str());
@@ -362,6 +365,9 @@ CastWebView::Scoped RuntimeApplicationServiceImpl::CreateCastWebView() {
 #endif  // BUILDFLAG(ENABLE_CAST_RECEIVER) && BUILDFLAG(IS_LINUX)
   params->turn_on_screen =
       GetFlagEntry(feature::kCastCoreTurnOnScreen, config_.extra_features(),
+                   /*default_value=*/false);
+  params->keep_screen_on =
+      GetFlagEntry(feature::kCastCoreKeepScreenOn, config_.extra_features(),
                    /*default_value=*/false);
   params->activity_id =
       params->is_remote_control_mode ? params->session_id : config_.app_id();
@@ -417,6 +423,47 @@ void RuntimeApplicationServiceImpl::SetMediaBlocking(
     default:
       NOTREACHED();
   }
+}
+
+void RuntimeApplicationServiceImpl::SetApplicationMediaCapabilities() {
+  const auto* codec_info = FindEntry(feature::kCastCoreBitstreamAudioCodecsInfo,
+                                     config_.extra_features());
+  if (!codec_info || !codec_info->value().has_dictionary()) {
+    LOG(WARNING) << "Missing BitstreamAudioCodecsInfo, failed to add "
+                    "Application Media Capabilities.";
+    return;
+  }
+
+  const auto* codecs =
+      FindEntry(feature::kCastCoreCodecs, codec_info->value().dictionary());
+  if (!codecs) {
+    LOG(WARNING)
+        << "Missing Codecs, failed to add Application Media Capabilities.";
+    return;
+  }
+
+  const auto* spatial_rendering = FindEntry(feature::kCastCoreSpatialRendering,
+                                            codec_info->value().dictionary());
+  if (!spatial_rendering) {
+    LOG(WARNING) << "Missing SpatialRendering, failed to add Application Media "
+                    "Capabilities.";
+    return;
+  }
+
+  BitstreamAudioCodecsInfo new_info{codecs->value().number(),
+                                    spatial_rendering->value().number()};
+
+  LOG(INFO) << "Adding Application Media Capabilities: "
+            << BitstreamAudioCodecsInfoToString(new_info);
+
+  auto* contents = cast_web_view_->cast_web_contents();
+  CHECK(contents);
+
+  InterfaceBundle* bundle = contents->local_interfaces();
+  CHECK(bundle);
+
+  bundle->AddInterface(&app_media_capabilities_);
+  app_media_capabilities_.SetSupportedBitstreamAudioCodecs(new_info);
 }
 
 void RuntimeApplicationServiceImpl::OnStreamingApplicationError(
@@ -574,15 +621,6 @@ cast_receiver::MessagePortService*
 RuntimeApplicationServiceImpl::GetMessagePortService() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   return GetMessagePortServiceGrpc();
-}
-
-std::unique_ptr<content::WebUIControllerFactory>
-RuntimeApplicationServiceImpl::CreateWebUIControllerFactory(
-    std::vector<std::string> hosts) {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  DCHECK(core_app_stub_);
-  return std::make_unique<GrpcWebUiControllerFactory>(std::move(hosts),
-                                                      &core_app_stub_.value());
 }
 
 content::WebContents* RuntimeApplicationServiceImpl::GetWebContents() {

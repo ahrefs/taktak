@@ -24,6 +24,7 @@ const std::string GetDecodeStatusString(const DecoderStatus& status) {
     STRINGIFY(DecoderStatus::Codes::kInvalidArgument);
     STRINGIFY(DecoderStatus::Codes::kInterrupted);
     STRINGIFY(DecoderStatus::Codes::kDisconnected);
+    STRINGIFY(DecoderStatus::Codes::kOutOfMemory);
     STRINGIFY(DecoderStatus::Codes::kNotInitialized);
     STRINGIFY(DecoderStatus::Codes::kMissingCDM);
     STRINGIFY(DecoderStatus::Codes::kFailedToGetVideoFrame);
@@ -42,6 +43,7 @@ const std::string GetDecodeStatusString(const DecoderStatus& status) {
     STRINGIFY(DecoderStatus::Codes::kMissingTimestamp);
     STRINGIFY(DecoderStatus::Codes::kTooManyDecoders);
     STRINGIFY(DecoderStatus::Codes::kMediaFoundationNotAvailable);
+    STRINGIFY(DecoderStatus::Codes::kElidedEndOfStreamForConfigChange);
   }
 #undef STRINGIFY
 }

@@ -67,7 +67,7 @@ size_t AXNode::GetChildCount() const {
   return children_.size();
 }
 
-#if DCHECK_IS_ON()
+#if AX_FAIL_FAST_BUILD()
 size_t AXNode::GetSubtreeCount() const {
   DCHECK(!tree_->GetTreeUpdateInProgressState());
   size_t count = 1;  // |this| counts as one.
@@ -76,7 +76,7 @@ size_t AXNode::GetSubtreeCount() const {
   }
   return count;
 }
-#endif  // DCHECK_IS_ON()
+#endif  // AX_FAIL_FAST_BUILD()
 
 size_t AXNode::GetChildCountCrossingTreeBoundary() const {
   DCHECK(!tree_->GetTreeUpdateInProgressState());
@@ -727,10 +727,8 @@ std::optional<int> AXNode::CompareTo(const AXNode& other) const {
     return 1;
 
   if (our_ancestors.empty() || other_ancestors.empty()) {
-    NOTREACHED_IN_MIGRATION()
-        << "The common ancestor should be followed by two uncommon "
-           "children in the two corresponding lists of ancestors.";
-    return std::nullopt;
+    NOTREACHED() << "The common ancestor should be followed by two uncommon "
+                    "children in the two corresponding lists of ancestors.";
   }
 
   size_t this_uncommon_ancestor_index = our_ancestors.top()->GetIndexInParent();
@@ -877,11 +875,11 @@ AXSelection AXNode::GetSelection() const {
   return tree()->GetSelection();
 }
 
-AXSelection AXNode::GetUnignoredSelection() const {
+AXSelection AXNode::GetUnignoredSelection(bool non_text_endpoints) const {
   DCHECK(tree()) << "Cannot retrieve the current selection if the node is not "
                     "attached to an accessibility tree.\n"
                  << *this;
-  AXSelection selection = tree()->GetUnignoredSelection();
+  AXSelection selection = tree()->GetUnignoredSelection(non_text_endpoints);
 
   // "selection.anchor_offset" and "selection.focus_ofset" might need to be
   // adjusted if the anchor or the focus nodes include ignored children.
@@ -1933,10 +1931,15 @@ bool AXNode::SetRoleMatchesItemRole(const AXNode* ordered_set) const {
 
 bool AXNode::IsIgnoredContainerForOrderedSet() const {
   return IsIgnored() || IsEmbeddedGroup() ||
+         GetRole() == ax::mojom::Role::kCell ||
          GetRole() == ax::mojom::Role::kDetails ||
          GetRole() == ax::mojom::Role::kLabelText ||
+         GetRole() == ax::mojom::Role::kLayoutTableCell ||
+         GetRole() == ax::mojom::Role::kLayoutTableRow ||
          GetRole() == ax::mojom::Role::kListItem ||
          GetRole() == ax::mojom::Role::kGenericContainer ||
+         GetRole() == ax::mojom::Role::kGridCell ||
+         GetRole() == ax::mojom::Role::kRow ||
          GetRole() == ax::mojom::Role::kScrollView ||
          GetRole() == ax::mojom::Role::kUnknown;
 }

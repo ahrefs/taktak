@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/auto_reset.h"
 #include "base/containers/contains.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
@@ -38,8 +39,10 @@
 #include "content/public/browser/browser_thread.h"
 #include "crypto/sha2.h"
 #include "extensions/browser/blocklist_extension_prefs.h"
+#include "extensions/browser/disable_reason.h"
 #include "extensions/browser/extension_file_task_runner.h"
 #include "extensions/browser/extension_prefs.h"
+#include "extensions/browser/extension_registrar.h"
 #include "extensions/browser/extension_registry.h"
 #include "extensions/browser/install/crx_install_error.h"
 #include "extensions/browser/pref_names.h"
@@ -167,6 +170,7 @@ ExtensionUpdater::ExtensionUpdater(
       prefs_(prefs),
       profile_(profile),
       registry_(ExtensionRegistry::Get(profile)),
+      registrar_(ExtensionRegistrar::Get(profile)),
       extension_cache_(cache) {
   DCHECK_LE(frequency_seconds, kMaxUpdateFrequencySeconds);
 #if defined(NDEBUG)
@@ -222,6 +226,7 @@ void ExtensionUpdater::Stop() {
   downloader_.reset();
   update_service_ = nullptr;
   registry_ = nullptr;
+  registrar_ = nullptr;
 }
 
 void ExtensionUpdater::ScheduleNextCheck() {
@@ -254,7 +259,7 @@ void ExtensionUpdater::CheckSoon() {
                                     weak_ptr_factory_.GetWeakPtr()))) {
     will_check_soon_ = true;
   } else {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 }
 
@@ -681,9 +686,10 @@ bool ExtensionUpdater::GetPingDataForExtension(const ExtensionId& id,
   DCHECK(alive_);
   ping_data->rollcall_days =
       CalculatePingDaysForExtension(extension_prefs_->LastPingDay(id));
-  ping_data->is_enabled = service_->IsExtensionEnabled(id);
-  if (!ping_data->is_enabled)
+  ping_data->is_enabled = registrar_->IsExtensionEnabled(id);
+  if (!ping_data->is_enabled) {
     ping_data->disable_reasons = extension_prefs_->GetDisableReasons(id);
+  }
   ping_data->active_days =
       CalculateActivePingDays(extension_prefs_->LastActivePingDay(id),
                               extension_prefs_->GetActiveBit(id));
@@ -756,7 +762,7 @@ void ExtensionUpdater::CleanUpCrxFileIfNeeded(const base::FilePath& crx_path,
   if (file_ownership_passed &&
       !GetExtensionFileTaskRunner()->PostTask(
           FROM_HERE, base::GetDeleteFileCallback(crx_path))) {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 }
 

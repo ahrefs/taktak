@@ -99,10 +99,11 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, BackForwardCacheFlush) {
   delete_observer_rfh_b.WaitUntilDeleted();
 }
 
-// Tests that |RenderFrameHost::ForEachRenderFrameHost| and
-// |WebContents::ForEachRenderFrameHost| behave correctly with bfcached
+// Tests that `RenderFrameHostImpl::ForEachRenderFrameHostImpl` and
+// `WebContentsImpl::ForEachRenderFrameHostImpl` behave correctly with bfcached
 // RenderFrameHosts.
-IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, ForEachRenderFrameHost) {
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
+                       ForEachRenderFrameHostImpl) {
   // There are sometimes unexpected messages from a renderer to the browser,
   // which caused test flakiness on macOS.
   // TODO(crbug.com/40800266): Fix the test flakiness.
@@ -164,12 +165,12 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, ForEachRenderFrameHost) {
       ::testing::UnorderedElementsAre(rfh_a, rfh_b, rfh_c, rfh_d, rfh_e));
 
   {
-    // If we stop iteration in |WebContents::ForEachRenderFrameHost|, we stop
-    // the entire iteration, not just iteration in the page being iterated at
-    // that point. In this case, if we stop iteration in the primary page, we do
-    // not continue to iterate in the bfcached page.
+    // If we stop iteration in `WebContentsImpl::ForEachRenderFrameHostImpl`, we
+    // stop the entire iteration, not just iteration in the page being iterated
+    // at that point. In this case, if we stop iteration in the primary page, we
+    // do not continue to iterate in the bfcached page.
     bool stopped = false;
-    web_contents()->ForEachRenderFrameHostWithAction(
+    web_contents()->ForEachRenderFrameHostImplWithAction(
         [&](RenderFrameHostImpl* rfh) {
           EXPECT_FALSE(stopped);
           stopped = true;
@@ -201,12 +202,12 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, ForEachRenderFrameHost) {
   EXPECT_EQ(rfh_e, rfh_e->GetOutermostMainFrameOrEmbedder());
 }
 
-// Tests that |RenderFrameHostImpl::ForEachRenderFrameHostIncludingSpeculative|
-// and |WebContentsImpl::ForEachRenderFrameHostIncludingSpeculative|
-// behave correctly when a FrameTreeNode has both a speculative RFH and a
-// bfcached RFH.
+// Tests that
+// `RenderFrameHostImpl::ForEachRenderFrameHostImplIncludingSpeculative` and
+// `WebContentsImpl::ForEachRenderFrameHostImplIncludingSpeculative` behave
+// correctly when a FrameTreeNode has both a speculative RFH and a bfcached RFH.
 IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
-                       ForEachRenderFrameHostWithSpeculative) {
+                       ForEachRenderFrameHostImplWithSpeculative) {
   IsolateAllSitesForTesting(base::CommandLine::ForCurrentProcess());
   ASSERT_TRUE(embedded_test_server()->Start());
   GURL url_a(embedded_test_server()->GetURL("a.com", "/title1.html"));
@@ -552,7 +553,7 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
   run_loop.Run();
 
   // 4) Check the histogram.
-  base::HistogramBase::Sample sample = base::HistogramBase::Sample(
+  base::HistogramBase::Sample32 sample = base::HistogramBase::Sample32(
       base::TaskAnnotator::ScopedSetIpcHash::MD5HashMetricName(
           "blink.mojom.LocalFrame"));
 
@@ -700,7 +701,9 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
                     FROM_HERE);
 }
 
-// Navigate from A(B)->C. Send postMessage from A to B upon pagehide, and
+// Navigate from A(B)->C. Send postMessage from A to B upon pagehide, and make
+// sure that the message is deferred. Then go back and make sure the message
+// gets delivered when the cached page is restored.
 IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, PostMessageDelivered) {
   ASSERT_TRUE(embedded_test_server()->Start());
   GURL url_a(embedded_test_server()->GetURL(
@@ -735,7 +738,8 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, PostMessageDelivered) {
   // evicted.
   EXPECT_TRUE(rfh_a->IsInBackForwardCache());
 
-  // 4) Go back to A(B). Make sure that JavaSc
+  // 4) Go back to A(B). Make sure that the message is delivered when the page
+  // is restored.
   ASSERT_TRUE(HistoryGoBack(web_contents()));
   ExpectRestored(FROM_HERE);
   EXPECT_EQ("dispatched",
@@ -2560,7 +2564,7 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
 
   ExpectBucketCount(
       "BackForwardCache.UnexpectedRendererToBrowserMessage.InterfaceName",
-      base::HistogramBase::Sample(
+      base::HistogramBase::Sample32(
           static_cast<int32_t>(base::HashMetricName(mojom::Echo::Name_))),
       1);
 }
@@ -2645,7 +2649,7 @@ IN_PROC_BROWSER_TEST_F(
 
   ExpectBucketCount(
       "BackForwardCache.UnexpectedRendererToBrowserMessage.InterfaceName",
-      base::HistogramBase::Sample(
+      base::HistogramBase::Sample32(
           static_cast<int32_t>(base::HashMetricName(mojom::Echo::Name_))),
       1);
 
@@ -3720,29 +3724,7 @@ IN_PROC_BROWSER_TEST_F(
   EXPECT_TRUE(ExecJs(rfh_a->child_at(0)->child_at(0), "true"));
 }
 
-class BackForwardCacheBrowserTestWithFlagForScreenReader
-    : public BackForwardCacheBrowserTest,
-      public ::testing::WithParamInterface<bool> {
- protected:
-  void SetUpCommandLine(base::CommandLine* command_line) override {
-    if (IsBackForwardCacheEnabledForScreenReader()) {
-      EnableFeatureAndSetParams(
-          features::kEnableBackForwardCacheForScreenReader, "", "true");
-    } else {
-      DisableFeature(features::kEnableBackForwardCacheForScreenReader);
-    }
-    BackForwardCacheBrowserTest::SetUpCommandLine(command_line);
-  }
-
-  bool IsBackForwardCacheEnabledForScreenReader() { return GetParam(); }
-};
-
-INSTANTIATE_TEST_SUITE_P(All,
-                         BackForwardCacheBrowserTestWithFlagForScreenReader,
-                         ::testing::Bool());
-
-IN_PROC_BROWSER_TEST_P(BackForwardCacheBrowserTestWithFlagForScreenReader,
-                       ScreenReaderOn) {
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, ScreenReaderOn) {
   ASSERT_TRUE(embedded_test_server()->Start());
   GURL url_a(embedded_test_server()->GetURL("a.com", "/title1.html"));
   GURL url_b(embedded_test_server()->GetURL("b.com", "/title1.html"));
@@ -3755,28 +3737,14 @@ IN_PROC_BROWSER_TEST_P(BackForwardCacheBrowserTestWithFlagForScreenReader,
   // Navigate to Page A.
   EXPECT_TRUE(NavigateToURL(shell(), url_a));
   RenderFrameHostImplWrapper rfh_a(current_frame_host());
-  int process_id = current_frame_host()->GetProcess()->GetID();
-  int routing_id = current_frame_host()->GetRoutingID();
 
   // Navigate away to Page B.
   EXPECT_TRUE(NavigateToURL(shell(), url_b));
-  if (IsBackForwardCacheEnabledForScreenReader()) {
-    EXPECT_TRUE(rfh_a.get());
-    EXPECT_TRUE(rfh_a->IsInBackForwardCache());
-    // Navigate back.
-    ASSERT_TRUE(HistoryGoBack(web_contents()));
-    ExpectRestored(FROM_HERE);
-  } else {
-    EXPECT_TRUE(rfh_a.WaitUntilRenderFrameDeleted());
-    // Navigate back.
-    ASSERT_TRUE(HistoryGoBack(web_contents()));
-    auto reason = BackForwardCacheDisable::DisabledReason(
-        BackForwardCacheDisable::DisabledReasonId::kScreenReader);
-    ExpectNotRestored({NotRestoredReason::kDisableForRenderFrameHostCalled}, {},
-                      {}, {reason}, {}, FROM_HERE);
-    EXPECT_TRUE(
-        tester.IsDisabledForFrameWithReason(process_id, routing_id, reason));
-  }
+  EXPECT_TRUE(rfh_a.get());
+  EXPECT_TRUE(rfh_a->IsInBackForwardCache());
+  // Navigate back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectRestored(FROM_HERE);
 }
 
 class BackForwardCacheBrowserTestWithFlagForAXEvents
@@ -3784,8 +3752,6 @@ class BackForwardCacheBrowserTestWithFlagForAXEvents
       public ::testing::WithParamInterface<bool> {
  protected:
   void SetUpCommandLine(base::CommandLine* command_line) override {
-    EnableFeatureAndSetParams(features::kEnableBackForwardCacheForScreenReader,
-                              "", "true");
     if (ShouldEvictOnAXEvents()) {
       EnableFeatureAndSetParams(features::kEvictOnAXEvents, "", "true");
     } else {
@@ -3884,8 +3850,6 @@ class BackForwardCacheBrowserTestWithFlagForAXLocationChange
       public ::testing::WithParamInterface<bool> {
  protected:
   void SetUpCommandLine(base::CommandLine* command_line) override {
-    EnableFeatureAndSetParams(features::kEnableBackForwardCacheForScreenReader,
-                              "", "true");
     if (ShouldEvictOnAXLocationChange()) {
       DisableFeature(features::kDoNotEvictOnAXLocationChange);
     } else {

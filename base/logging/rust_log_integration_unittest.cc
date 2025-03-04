@@ -20,8 +20,8 @@ class RustLogIntegrationTest : public testing::Test {
   base::test::MockLog log_;
 };
 
-// TODO(crbug.com/374023535): Re-enable test.
-#if BUILDFLAG(IS_WIN) && !defined(NDEBUG)
+// TODO(crbug.com/374023535): Logging does not work in component builds.
+#if defined(COMPONENT_BUILD)
 #define MAYBE_CheckAllSeverity DISABLED_CheckAllSeverity
 #else
 #define MAYBE_CheckAllSeverity CheckAllSeverity
@@ -56,6 +56,20 @@ TEST_F(RustLogIntegrationTest, MAYBE_CheckAllSeverity) {
   base::test::print_test_info_log();
   base::test::print_test_warning_log();
   base::test::print_test_error_log();
+}
+
+// TODO(crbug.com/374023535): Logging does not work in component builds.
+#if defined(COMPONENT_BUILD)
+#define MAYBE_Placeholders DISABLED_Placeholders
+#else
+#define MAYBE_Placeholders Placeholders
+#endif
+TEST_F(RustLogIntegrationTest, MAYBE_Placeholders) {
+  EXPECT_CALL(log_, Log(LOGGING_ERROR, _, _, _,
+                        testing::HasSubstr("test log with placeholder 2")))
+      .WillOnce(testing::Return(true));
+
+  base::test::print_test_error_log_with_placeholder(2);
 }
 
 }  // namespace

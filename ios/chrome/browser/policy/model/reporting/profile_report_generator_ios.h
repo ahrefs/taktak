@@ -11,7 +11,8 @@
 #import "components/enterprise/browser/reporting/profile_report_generator.h"
 #import "components/policy/core/browser/policy_conversions_client.h"
 #import "components/policy/proto/device_management_backend.pb.h"
-#import "ios/chrome/browser/shared/model/profile/profile_ios_forward.h"
+
+class ProfileIOS;
 
 namespace base {
 class FilePath;
@@ -20,7 +21,6 @@ class FilePath;
 namespace policy {
 class CloudPolicyManager;
 }
-
 
 namespace enterprise_reporting {
 
@@ -44,6 +44,10 @@ class ProfileReportGeneratorIOS : public ProfileReportGenerator::Delegate {
   void GetExtensionInfo(
       enterprise_management::ChromeUserProfileInfo* report) override;
   void GetExtensionRequest(
+      enterprise_management::ChromeUserProfileInfo* report) override;
+  void GetProfileId(
+      enterprise_management::ChromeUserProfileInfo* report) override;
+  void GetProfileName(
       enterprise_management::ChromeUserProfileInfo* report) override;
   std::unique_ptr<policy::PolicyConversionsClient> MakePolicyConversionsClient(
       bool is_machine_scope) override;

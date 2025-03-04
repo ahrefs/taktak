@@ -8,12 +8,13 @@
 #include <utility>
 
 #include "base/check_is_test.h"
+#include "base/metrics/histogram_functions.h"
 #include "base/types/expected_macros.h"
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
 #include "services/webnn/buildflags.h"
 #include "services/webnn/error.h"
 #include "services/webnn/public/cpp/context_properties.h"
-#include "services/webnn/public/mojom/webnn_context_provider.mojom-forward.h"
+#include "services/webnn/public/mojom/features.mojom.h"
 #include "services/webnn/public/mojom/webnn_context_provider.mojom.h"
 #include "services/webnn/public/mojom/webnn_error.mojom.h"
 #include "services/webnn/webnn_context_impl.h"
@@ -49,6 +50,33 @@ WebNNContextProviderImpl::BackendForTesting* g_backend_for_testing = nullptr;
 
 using webnn::mojom::CreateContextOptionsPtr;
 using webnn::mojom::WebNNContextProvider;
+
+// These values are persisted to logs. Entries should not be renumbered or
+// removed and numeric values should never be reused.
+// Please keep in sync with DeviceTypeUma in
+// //tools/metrics/histograms/metadata/webnn/enums.xml.
+enum class DeviceTypeUma {
+  kCpu = 0,
+  kGpu = 1,
+  kNpu = 2,
+  kMaxValue = kNpu,
+};
+
+void RecordDeviceType(const mojom::CreateContextOptions::Device device) {
+  DeviceTypeUma uma_value;
+  switch (device) {
+    case mojom::CreateContextOptions::Device::kCpu:
+      uma_value = DeviceTypeUma::kCpu;
+      break;
+    case mojom::CreateContextOptions::Device::kGpu:
+      uma_value = DeviceTypeUma::kGpu;
+      break;
+    case mojom::CreateContextOptions::Device::kNpu:
+      uma_value = DeviceTypeUma::kNpu;
+      break;
+  }
+  base::UmaHistogramEnumeration("WebNN.DeviceType", uma_value);
+}
 
 #if BUILDFLAG(IS_WIN)
 base::expected<scoped_refptr<dml::Adapter>, mojom::ErrorPtr> GetDmlGpuAdapter(
@@ -88,10 +116,12 @@ base::expected<scoped_refptr<dml::Adapter>, mojom::ErrorPtr> GetDmlGpuAdapter(
   CHECK_EQ(dxgi_device->GetAdapter(&dxgi_adapter), S_OK);
   return dml::Adapter::GetGpuInstance(std::move(dxgi_adapter));
 }
-#endif
 
-#if BUILDFLAG(IS_WIN)
 bool ShouldCreateDmlContext(const mojom::CreateContextOptions& options) {
+  if (!base::FeatureList::IsEnabled(mojom::features::kWebNNDirectML)) {
+    return false;
+  }
+
   switch (options.device) {
     case mojom::CreateContextOptions::Device::kCpu:
       return false;
@@ -135,7 +165,8 @@ void WebNNContextProviderImpl::BindWebNNContextProvider(
 // static
 void WebNNContextProviderImpl::CreateForTesting(
     mojo::PendingReceiver<mojom::WebNNContextProvider> receiver,
-    WebNNStatus status) {
+    WebNNStatus status,
+    LoseAllContextsCallback lose_all_contexts_callback) {
   CHECK_IS_TEST();
 
   gpu::GpuFeatureInfo gpu_feature_info;
@@ -157,7 +188,6 @@ void WebNNContextProviderImpl::CreateForTesting(
         DISABLE_WEBNN_FOR_NPU);
   }
 
-  LoseAllContextsCallback lose_all_contexts_callback = base::BindOnce([]() {});
   mojo::MakeSelfOwnedReceiver<WebNNContextProvider>(
       base::WrapUnique(new WebNNContextProviderImpl(
           /*shared_context_state=*/nullptr, std::move(gpu_feature_info),
@@ -201,6 +231,8 @@ void WebNNContextProviderImpl::CreateWebNNContext(
   WebNNContextImpl* context_impl = nullptr;
   mojo::PendingRemote<mojom::WebNNContext> remote;
   auto receiver = remote.InitWithNewPipeAndPassReceiver();
+
+  RecordDeviceType(options->device);
 
 #if BUILDFLAG(IS_WIN)
   if (ShouldCreateDmlContext(*options)) {
@@ -257,11 +289,11 @@ void WebNNContextProviderImpl::CreateWebNNContext(
 #endif  // BUILDFLAG(IS_WIN)
 
 #if BUILDFLAG(IS_MAC)
-  // TODO: crbug.com/325612086 - Consider using supporting older Macs either
-  // with TFLite or a more restrictive implementation on CoreML.
   if (__builtin_available(macOS 14, *)) {
-    context_impl = new coreml::ContextImplCoreml(std::move(receiver), this,
-                                                 std::move(options));
+    if (base::FeatureList::IsEnabled(mojom::features::kWebNNCoreML)) {
+      context_impl = new coreml::ContextImplCoreml(std::move(receiver), this,
+                                                   std::move(options));
+    }
   }
 #endif  // BUILDFLAG(IS_MAC)
 

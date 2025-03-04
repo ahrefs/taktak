@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//build/config/chromeos/ui_mode.gni")
 import("//components/enterprise/buildflags/buildflags.gni")
 
 source_set("test_support") {
@@ -13,6 +12,7 @@ source_set("test_support") {
     "fake_content_analysis_delegate.h",
     "fake_files_request_handler.h",
     "management_context_mixin.h",
+    "mock_realtime_reporting_client.h",
     "test_constants.h",
     "uploader_test_utils.h",
   ]
@@ -23,6 +23,7 @@ source_set("test_support") {
     "fake_content_analysis_delegate.cc",
     "fake_files_request_handler.cc",
     "management_context_mixin.cc",
+    "mock_realtime_reporting_client.cc",
     "test_constants.cc",
     "uploader_test_utils.cc",
   ]
@@ -48,6 +49,7 @@ source_set("test_support") {
     "//chrome/browser/profiles:profile",
     "//chrome/test:test_support",
     "//components/enterprise/connectors/core",
+    "//components/enterprise/connectors/core:test_support",
     "//components/enterprise/data_controls/core/browser",
     "//components/policy/core/browser",
     "//components/policy/core/common",
@@ -74,7 +76,7 @@ source_set("test_support") {
     ]
   }
 
-  if (is_win || is_linux || is_mac || is_chromeos_lacros) {
+  if (is_win || is_linux || is_mac) {
     public += [ "browser/management_context_mixin_browser.h" ]
     sources += [ "browser/management_context_mixin_browser.cc" ]
 
@@ -86,7 +88,7 @@ source_set("test_support") {
     ]
   }
 
-  if (is_chromeos_ash) {
+  if (is_chromeos) {
     public += [ "ash/management_context_mixin_ash.h" ]
     sources += [ "ash/management_context_mixin_ash.cc" ]
 

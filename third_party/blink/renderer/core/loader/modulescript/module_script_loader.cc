@@ -52,8 +52,7 @@ const char* ModuleScriptLoader::StateToString(ModuleScriptLoader::State state) {
     case State::kFinished:
       return "Finished";
   }
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 #endif
 
@@ -66,8 +65,7 @@ void ModuleScriptLoader::AdvanceState(ModuleScriptLoader::State new_state) {
       DCHECK_EQ(new_state, State::kFinished);
       break;
     case State::kFinished:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
 #if DCHECK_IS_ON()
@@ -197,8 +195,11 @@ void ModuleScriptLoader::FetchInternal(
   // <spec label="SMSR">... its integrity metadata to options's integrity
   // metadata, ...</spec>
   fetch_params.SetIntegrityMetadata(options_.GetIntegrityMetadata());
+
+  const FeatureContext* feature_context =
+      ExecutionContext::From(modulator_->GetScriptState());
   fetch_params.MutableResourceRequest().SetFetchIntegrity(
-      options_.GetIntegrityAttributeValue());
+      options_.GetIntegrityAttributeValue(), feature_context);
 
   // <spec label="SMSR">Set request's cryptographic nonce metadata to options's
   // cryptographic nonce, ...</spec>
@@ -343,7 +344,7 @@ void ModuleScriptLoader::NotifyFetchFinishedSuccess(
       module_script_ = JSModuleScript::Create(params, modulator_, options_);
       break;
     case ModuleType::kInvalid:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   AdvanceState(State::kFinished);

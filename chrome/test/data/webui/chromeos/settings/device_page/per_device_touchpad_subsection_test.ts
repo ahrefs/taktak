@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'chrome://os-settings/os_settings.js';
+import 'chrome://os-settings/lazy_load.js';
 
-import {DisableTouchpadMode} from 'chrome://os-settings/lazy_load.js'
-import {CrSettingsPrefs, CrToggleElement, FakeInputDeviceSettingsProvider, fakeMice, fakeTouchpads, Router, routes, setInputDeviceSettingsProviderForTesting, SettingsDropdownMenuElement, SettingsPerDeviceTouchpadSubsectionElement, SettingsPrefsElement, SettingsSliderElement, SettingsToggleButtonElement, SimulateRightClickModifier} from 'chrome://os-settings/os_settings.js';
+import type {SettingsPerDeviceTouchpadSubsectionElement} from 'chrome://os-settings/lazy_load.js';
+import {DisableTouchpadMode} from 'chrome://os-settings/lazy_load.js';
+import type {CrToggleElement, SettingsDropdownMenuElement, SettingsPrefsElement, SettingsSliderElement, SettingsToggleButtonElement} from 'chrome://os-settings/os_settings.js';
+import {CrSettingsPrefs, FakeInputDeviceSettingsProvider, fakeMice, fakeTouchpads, Router, routes, setInputDeviceSettingsProviderForTesting, SimulateRightClickModifier} from 'chrome://os-settings/os_settings.js';
 import {assert} from 'chrome://resources/js/assert.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 import {pressAndReleaseKeyOn} from 'chrome://resources/polymer/v3_0/iron-test-helpers/mock-interactions.js';
@@ -14,6 +16,7 @@ import {flushTasks, waitAfterNextRender} from 'chrome://webui-test/polymer_test_
 import {isVisible} from 'chrome://webui-test/test_util.js';
 
 const TOUCHPAD_SPEED_SETTING_ID = 405;
+const TOUCHPAD_SIMULATE_RIGHT_CLICK_ID = 446;
 
 suite('<settings-per-device-touchpad-subsection>', () => {
   let subsection: SettingsPerDeviceTouchpadSubsectionElement;
@@ -97,7 +100,7 @@ suite('<settings-per-device-touchpad-subsection>', () => {
     updatedTouchpads = await provider.getConnectedTouchpadSettings();
     assertEquals(
         updatedTouchpads[0]!.settings.sensitivity,
-        touchpadSensitivitySlider.pref!.value);
+        touchpadSensitivitySlider.pref.value);
 
     const touchpadHapticClickSensitivitySlider =
         subsection.shadowRoot!.querySelector<SettingsSliderElement>(
@@ -111,7 +114,7 @@ suite('<settings-per-device-touchpad-subsection>', () => {
     updatedTouchpads = await provider.getConnectedTouchpadSettings();
     assertEquals(
         updatedTouchpads[0]!.settings.hapticSensitivity,
-        touchpadHapticClickSensitivitySlider.pref!.value);
+        touchpadHapticClickSensitivitySlider.pref.value);
 
     const touchpadHapticFeedbackToggleButton =
         subsection.shadowRoot!.querySelector<CrToggleElement>(
@@ -161,14 +164,14 @@ suite('<settings-per-device-touchpad-subsection>', () => {
             '#touchpadSensitivity');
     assertEquals(
         fakeTouchpads[0]!.settings.sensitivity,
-        touchpadSensitivitySlider!.pref!.value);
+        touchpadSensitivitySlider!.pref.value);
     let touchpadHapticClickSensitivitySlider =
         subsection.shadowRoot!.querySelector<SettingsSliderElement>(
             '#touchpadHapticClickSensitivity');
     assertTrue(isVisible(touchpadHapticClickSensitivitySlider));
     assertEquals(
         fakeTouchpads[0]!.settings.hapticSensitivity,
-        touchpadHapticClickSensitivitySlider!.pref!.value);
+        touchpadHapticClickSensitivitySlider!.pref.value);
     let touchpadHapticFeedbackToggleButton =
         subsection.shadowRoot!.querySelector<CrToggleElement>(
             '#touchpadHapticFeedbackToggle');
@@ -202,7 +205,7 @@ suite('<settings-per-device-touchpad-subsection>', () => {
         subsection.shadowRoot!.querySelector('#touchpadSensitivity');
     assertEquals(
         fakeTouchpads[1]!.settings.sensitivity,
-        touchpadSensitivitySlider!.pref!.value);
+        touchpadSensitivitySlider!.pref.value);
     touchpadHapticClickSensitivitySlider =
         subsection.shadowRoot!.querySelector('#touchpadHapticClickSensitivity');
     assertFalse(isVisible(touchpadHapticClickSensitivitySlider));
@@ -269,6 +272,23 @@ suite('<settings-per-device-touchpad-subsection>', () => {
     await waitAfterNextRender(touchpadSensitivitySlider);
     assertEquals(
         touchpadSensitivitySlider, subsection.shadowRoot!.activeElement);
+  });
+
+  test('Simulate right click dropdown is deep-linkable', async () => {
+    subsection.set('touchpadIndex', 0);
+
+    const params = new URLSearchParams();
+    params.append('settingId', TOUCHPAD_SIMULATE_RIGHT_CLICK_ID.toString());
+    await Router.getInstance().navigateTo(routes.PER_DEVICE_TOUCHPAD, params);
+
+    const simulateRightClickDropdown =
+        subsection.shadowRoot!.querySelector<SettingsDropdownMenuElement>(
+            '#simulateRightClickDropdown');
+    assertTrue(!!simulateRightClickDropdown);
+
+    await waitAfterNextRender(simulateRightClickDropdown);
+    assertEquals(
+        simulateRightClickDropdown, subsection.shadowRoot!.activeElement);
   });
 
   /**

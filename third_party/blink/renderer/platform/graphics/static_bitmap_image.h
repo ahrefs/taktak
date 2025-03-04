@@ -7,10 +7,10 @@
 
 #include "base/memory/weak_ptr.h"
 #include "base/notreached.h"
+#include "components/viz/common/resources/shared_image_format_utils.h"
 #include "gpu/command_buffer/client/client_shared_image.h"
 #include "gpu/command_buffer/common/mailbox_holder.h"
 #include "gpu/command_buffer/common/shared_image_usage.h"
-#include "third_party/blink/renderer/platform/graphics/canvas_color_params.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_types.h"
 #include "third_party/blink/renderer/platform/graphics/image.h"
 #include "third_party/blink/renderer/platform/wtf/casting.h"
@@ -46,10 +46,6 @@ class PLATFORM_EXPORT StaticBitmapImage : public Image {
 
   gfx::Size SizeWithConfig(SizeConfig) const final;
 
-  virtual scoped_refptr<StaticBitmapImage> ConvertToColorSpace(
-      sk_sp<SkColorSpace>,
-      SkColorType = kN32_SkColorType) = 0;
-
   // Methods have common implementation for all sub-classes
   bool CurrentFrameIsComplete() override { return true; }
   void DestroyDecodedData() override {}
@@ -59,8 +55,6 @@ class PLATFORM_EXPORT StaticBitmapImage : public Image {
   virtual bool IsValid() const { return true; }
   virtual void Transfer() {}
   virtual bool IsOriginTopLeft() const { return true; }
-  virtual bool SupportsDisplayCompositing() const { return true; }
-  virtual bool IsOverlayCandidate() const { return false; }
 
   // Creates a non-gpu copy of the image, or returns this if image is already
   // non-gpu.
@@ -76,41 +70,25 @@ class PLATFORM_EXPORT StaticBitmapImage : public Image {
                              bool,
                              const gfx::Point&,
                              const gfx::Rect&) {
-    NOTREACHED_IN_MIGRATION();
-    return false;
+    NOTREACHED();
   }
 
   virtual bool CopyToResourceProvider(CanvasResourceProvider* resource_provider,
                                       const gfx::Rect& copy_rect) = 0;
 
-  virtual void EnsureSyncTokenVerified() { NOTREACHED_IN_MIGRATION(); }
-  virtual gpu::MailboxHolder GetMailboxHolder() const {
-    NOTREACHED_IN_MIGRATION();
-    return gpu::MailboxHolder();
-  }
+  virtual void EnsureSyncTokenVerified() { NOTREACHED(); }
+  virtual gpu::MailboxHolder GetMailboxHolder() const { NOTREACHED(); }
   virtual scoped_refptr<gpu::ClientSharedImage> GetSharedImage() const {
     NOTREACHED();
-    return nullptr;
   }
   virtual gpu::SyncToken GetSyncToken() const {
     NOTREACHED();
-    return gpu::SyncToken();
   }
-  virtual void UpdateSyncToken(const gpu::SyncToken&) {
-    NOTREACHED_IN_MIGRATION();
-  }
+  virtual void UpdateSyncToken(const gpu::SyncToken&) { NOTREACHED(); }
 
-  // For gpu based images the Usage is a bitmap indicating set of API(s) and
-  // underlying gpu::SharedImage may be used with.
-  // The gpu::SharedImageInterface is using uint32_t directly.
-  virtual gpu::SharedImageUsageSet GetUsage() const {
-    NOTREACHED_IN_MIGRATION();
-    return gpu::SharedImageUsageSet();
-  }
   bool IsPremultiplied() const {
-    return GetSkImageInfo().alphaType() == SkAlphaType::kPremul_SkAlphaType;
+    return GetAlphaType() == SkAlphaType::kPremul_SkAlphaType;
   }
-  SkColorInfo GetSkColorInfo() const { return GetSkImageInfo().colorInfo(); }
 
   // Methods have exactly the same implementation for all sub-classes
   bool OriginClean() const { return is_origin_clean_; }
@@ -135,8 +113,11 @@ class PLATFORM_EXPORT StaticBitmapImage : public Image {
   Vector<uint8_t> CopyImageData(const SkImageInfo& info,
                                 bool apply_orientation);
 
-  // Return the SkImageInfo of the internal representation of this image.
-  virtual SkImageInfo GetSkImageInfo() const = 0;
+  virtual gfx::Size GetSize() const = 0;
+  virtual SkAlphaType GetAlphaType() const = 0;
+  virtual SkColorType GetSkColorType() const = 0;
+  virtual sk_sp<SkColorSpace> GetSkColorSpace() const = 0;
+  virtual viz::SharedImageFormat GetSharedImageFormat() const = 0;
 
  protected:
   // Helper for sub-classes

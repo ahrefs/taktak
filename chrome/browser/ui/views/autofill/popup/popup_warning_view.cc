@@ -9,7 +9,7 @@
 
 #include "chrome/browser/ui/views/autofill/popup/popup_base_view.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
-#include "components/autofill/core/browser/ui/suggestion.h"
+#include "components/autofill/core/browser/suggestions/suggestion.h"
 #include "ui/accessibility/ax_enums.mojom.h"
 #include "ui/accessibility/ax_node_data.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
@@ -41,7 +41,7 @@ PopupWarningView::PopupWarningView(const Suggestion& suggestion) {
                    .SetTextStyle(ChromeTextStyle::STYLE_RED)
                    .SetMultiLine(true)
                    .SetHorizontalAlignment(gfx::HorizontalAlignment::ALIGN_LEFT)
-                   .SetEnabledColorId(ui::kColorAlertHighSeverity)
+                   .SetEnabledColor(ui::kColorAlertHighSeverity)
                    .Build());
 }
 

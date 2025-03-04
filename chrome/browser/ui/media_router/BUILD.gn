@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//build/config/chromeos/ui_mode.gni")
-
 assert(is_win || is_mac || is_linux || is_chromeos)
 
 source_set("media_router") {
@@ -78,7 +76,6 @@ source_set("impl") {
     "//media/remoting:remoting_device_capability",
     "//net",
     "//third_party/icu:icui18n",
-    "//third_party/icu:icui18n_hidden_visibility",
     "//ui/base",
     "//ui/display",
     "//ui/views",

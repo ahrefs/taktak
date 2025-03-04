@@ -63,8 +63,7 @@ SkColorType GetCompatibleSurfaceColorType(GrGLenum format) {
     case GL_SRGB8_ALPHA8:
       return kRGBA_8888_SkColorType;
     default:
-      NOTREACHED_IN_MIGRATION() << "Unknown format: " << format;
-      return kUnknown_SkColorType;
+      NOTREACHED() << "Unknown format: " << format;
   }
 }
 
@@ -120,7 +119,7 @@ sk_sp<SkSurface> CreateSkSurfaceWrappingGLTexture(
       dest_color_space, nullptr);
 }
 
-bool TryCopySubTextureINTERNALMemory(
+bool CopyPixelsToTexture(
     GLint xoffset,
     GLint yoffset,
     GLint x,
@@ -128,7 +127,6 @@ bool TryCopySubTextureINTERNALMemory(
     GLsizei width,
     GLsizei height,
     gfx::Rect dest_cleared_rect,
-    GLboolean unpack_flip_y,
     const Mailbox& source_mailbox,
     SkiaImageRepresentation* dest_shared_image,
     SkiaImageRepresentation::ScopedWriteAccess* dest_scoped_access,
@@ -136,13 +134,14 @@ bool TryCopySubTextureINTERNALMemory(
     SharedContextState* shared_context_state,
     const std::vector<GrBackendSemaphore>& begin_semaphores,
     std::vector<GrBackendSemaphore>& end_semaphores) {
-  if (unpack_flip_y) {
-    return false;
-  }
-
   auto source_shared_image =
       representation_factory->ProduceMemory(source_mailbox);
   if (!source_shared_image) {
+    return false;
+  }
+
+  if (source_shared_image->surface_origin() !=
+      dest_shared_image->surface_origin()) {
     return false;
   }
 
@@ -222,7 +221,6 @@ base::expected<void, GLError> CopySharedImageHelper::CopySharedImage(
     GLint y,
     GLsizei width,
     GLsizei height,
-    GLboolean unpack_flip_y,
     const volatile GLbyte* mailboxes) {
   Mailbox source_mailbox = Mailbox::FromVolatile(
       reinterpret_cast<const volatile Mailbox*>(mailboxes)[0]);
@@ -295,12 +293,12 @@ base::expected<void, GLError> CopySharedImageHelper::CopySharedImage(
          new_cleared_rect.Contains(old_cleared_rect));
 
   // Attempt to upload directly from CPU shared memory to destination texture.
-  if (TryCopySubTextureINTERNALMemory(
-          xoffset, yoffset, x, y, width, height, new_cleared_rect,
-          unpack_flip_y, source_mailbox, dest_shared_image.get(),
-          dest_scoped_access.get(), representation_factory_,
-          shared_context_state_, begin_semaphores, end_semaphores)) {
-    // Cancel cleanup as TryCopySubTextureINTERNALMemory already handles it.
+  if (CopyPixelsToTexture(xoffset, yoffset, x, y, width, height,
+                          new_cleared_rect, source_mailbox,
+                          dest_shared_image.get(), dest_scoped_access.get(),
+                          representation_factory_, shared_context_state_,
+                          begin_semaphores, end_semaphores)) {
+    // Cancel cleanup as CopyPixelsToTexture already handles it.
     std::move(cleanup).Cancel();
     return base::ok();
   }
@@ -364,9 +362,6 @@ base::expected<void, GLError> CopySharedImageHelper::CopySharedImage(
         GLError(GL_INVALID_VALUE, "glCopySubTexture",
                 "Couldn't create SkImage from source shared image."));
   } else {
-    // Skia will flip the image if the surface origins do not match.
-    DCHECK_EQ(unpack_flip_y, source_shared_image->surface_origin() !=
-                                 dest_shared_image->surface_origin());
     if (dest_format.is_single_plane()) {
       auto* canvas = dest_scoped_access->surface()->getCanvas();
 
@@ -663,6 +658,8 @@ base::expected<void, GLError> CopySharedImageHelper::WritePixelsYUV(
   absl::Cleanup cleanup = [&]() { dest_scoped_access.reset(); };
   viz::SharedImageFormat dest_format = dest_shared_image->format();
   auto* gr_context = shared_context_state_->gr_context();
+  const bool need_graphite_submit =
+      dest_scoped_access->NeedGraphiteContextSubmit();
   for (int plane = 0; plane < dest_format.NumberOfPlanes(); plane++) {
     bool written = false;
     if (gr_context) {
@@ -672,16 +669,22 @@ base::expected<void, GLError> CopySharedImageHelper::WritePixelsYUV(
           /*finishedProc=*/nullptr, /*finishedContext=*/nullptr);
     } else {
       CHECK(shared_context_state_->graphite_context());
-      written =
-          shared_context_state_->gpu_main_graphite_recorder()
-              ->updateBackendTexture(
-                  dest_scoped_access->graphite_texture(plane), &pixmaps[plane],
-                  /*numLevels=*/1);
+      auto graphite_texture_ref =
+          dest_scoped_access->graphite_texture_holder(plane);
+      auto* graphite_texture_ptr = graphite_texture_ref.release();
+      using graphite_texture_ptr_type = decltype(graphite_texture_ptr);
+      auto release_proc = [](void* context, skgpu::CallbackResult) {
+        static_cast<graphite_texture_ptr_type>(context)->Release();
+      };
+      written = shared_context_state_->gpu_main_graphite_recorder()
+                    ->updateBackendTexture(
+                        graphite_texture_ptr->texture(), &pixmaps[plane],
+                        /*numLevels=*/1, release_proc, graphite_texture_ptr);
     }
     if (!written) {
       dest_scoped_access->ApplyBackendSurfaceEndState();
       shared_context_state_->SubmitIfNecessary(std::move(end_semaphores),
-                                               /*need_graphite_submit=*/true);
+                                               need_graphite_submit);
       return base::unexpected(
           GLError(GL_INVALID_OPERATION, "glWritePixelsYUV",
                   "Failed to upload pixels to dest shared image"));
@@ -690,7 +693,7 @@ base::expected<void, GLError> CopySharedImageHelper::WritePixelsYUV(
 
   shared_context_state_->FlushWriteAccess(dest_scoped_access.get());
   shared_context_state_->SubmitIfNecessary(std::move(end_semaphores),
-                                           /*need_graphite_submit=*/true);
+                                           need_graphite_submit);
 
   if (!dest_shared_image->IsCleared()) {
     dest_shared_image->SetClearedRect(gfx::Rect(src_width, src_height));

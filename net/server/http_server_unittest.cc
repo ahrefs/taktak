@@ -222,11 +222,11 @@ class HttpServerTest : public TestWithTaskEnvironment,
 
   void OnWebSocketRequest(int connection_id,
                           const HttpServerRequestInfo& info) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   void OnWebSocketMessage(int connection_id, std::string data) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   void OnClose(int connection_id) override {
@@ -298,7 +298,7 @@ namespace {
 class WebSocketTest : public HttpServerTest {
   void OnHttpRequest(int connection_id,
                      const HttpServerRequestInfo& info) override {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   void OnWebSocketRequest(int connection_id,
@@ -1019,7 +1019,9 @@ class MockStreamSocket : public StreamSocket {
   }
   const NetLogWithSource& NetLog() const override { return net_log_; }
   bool WasEverUsed() const override { return true; }
-  NextProto GetNegotiatedProtocol() const override { return kProtoUnknown; }
+  NextProto GetNegotiatedProtocol() const override {
+    return NextProto::kProtoUnknown;
+  }
   bool GetSSLInfo(SSLInfo* ssl_info) override { return false; }
   int64_t GetTotalReceivedBytes() const override {
     NOTIMPLEMENTED();

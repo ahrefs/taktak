@@ -10,7 +10,6 @@
 #include "base/functional/bind.h"
 #include "base/logging.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "media/base/limits.h"
 #include "media/base/media_switches.h"
 #include "media/base/platform_features.h"
@@ -23,7 +22,7 @@ bool GetSpatialLayerFrameSize(const DecoderBuffer& decoder_buffer,
                               std::vector<uint32_t>& frame_sizes) {
   frame_sizes.clear();
 
-  if (!decoder_buffer.has_side_data() ||
+  if (!decoder_buffer.side_data() ||
       decoder_buffer.side_data()->spatial_layers.empty()) {
     return true;
   }
@@ -134,8 +133,7 @@ void VP9Decoder::SetStream(int32_t id, const DecoderBuffer& decoder_buffer) {
     SetError();
     return;
   }
-  if (decoder_buffer.has_side_data() &&
-      decoder_buffer.side_data()->secure_handle) {
+  if (decoder_buffer.side_data() && decoder_buffer.side_data()->secure_handle) {
     secure_handle_ = decoder_buffer.side_data()->secure_handle;
   } else {
     secure_handle_ = 0;

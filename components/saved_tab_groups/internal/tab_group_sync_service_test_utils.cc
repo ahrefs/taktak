@@ -12,7 +12,9 @@
 #include "components/saved_tab_groups/internal/sync_data_type_configuration.h"
 #include "components/saved_tab_groups/internal/tab_group_sync_metrics_logger_impl.h"
 #include "components/saved_tab_groups/internal/tab_group_sync_service_impl.h"
+#include "components/saved_tab_groups/public/collaboration_finder.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
+#include "components/sync/base/collaboration_id.h"
 #include "components/sync/base/data_type.h"
 #include "components/sync/base/report_unrecoverable_error.h"
 #include "components/sync/model/client_tag_based_data_type_processor.h"
@@ -37,8 +39,12 @@ std::unique_ptr<SyncDataTypeConfiguration>
 MaybeCreateSharedTabGroupDataTypeConfiguration(
     version_info::Channel channel,
     syncer::DataTypeStoreService* data_type_store_service) {
-  if (!base::FeatureList::IsEnabled(
-          data_sharing::features::kDataSharingFeature)) {
+  bool data_sharing_enabled =
+      base::FeatureList::IsEnabled(
+          data_sharing::features::kDataSharingFeature) ||
+      base::FeatureList::IsEnabled(
+          data_sharing::features::kDataSharingJoinOnly);
+  if (!data_sharing_enabled) {
     return nullptr;
   }
 
@@ -48,6 +54,31 @@ MaybeCreateSharedTabGroupDataTypeConfiguration(
           base::BindRepeating(&syncer::ReportUnrecoverableError, channel)),
       data_type_store_service->GetStoreFactory());
 }
+
+class EmptyCollaborationFinder : public CollaborationFinder {
+ public:
+  EmptyCollaborationFinder() = default;
+  ~EmptyCollaborationFinder() override = default;
+
+  // Disallow copy/assign.
+  EmptyCollaborationFinder(const EmptyCollaborationFinder&) = delete;
+  EmptyCollaborationFinder& operator=(const EmptyCollaborationFinder&) = delete;
+
+  // tab_groups::CollaborationFinder overrides.
+  void SetClient(Client* client) override {}
+  bool IsCollaborationAvailable(
+      const syncer::CollaborationId& collaboration_id) override {
+    return collaborations_available_.contains(collaboration_id);
+  }
+  void SetCollaborationAvailableForTesting(
+      const syncer::CollaborationId& collaboration_id) override {
+    collaborations_available_.insert(collaboration_id);
+  }
+
+ private:
+  std::set<syncer::CollaborationId> collaborations_available_;
+};
+
 }  // namespace
 
 std::unique_ptr<TabGroupSyncService> CreateTabGroupSyncService(
@@ -64,11 +95,12 @@ std::unique_ptr<TabGroupSyncService> CreateTabGroupSyncService(
       channel, data_type_store_service);
   auto shared_config = MaybeCreateSharedTabGroupDataTypeConfiguration(
       channel, data_type_store_service);
+  auto collaboration_finder = std::make_unique<EmptyCollaborationFinder>();
 
   return std::make_unique<TabGroupSyncServiceImpl>(
       std::move(model), std::move(saved_config), std::move(shared_config),
       pref_service, std::move(metrics_logger), optimization_guide,
-      identity_manager);
+      identity_manager, std::move(collaboration_finder));
 }
 
 }  // namespace tab_groups::test

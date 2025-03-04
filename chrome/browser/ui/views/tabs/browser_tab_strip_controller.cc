@@ -8,17 +8,16 @@
 #include <memory>
 #include <utility>
 
-#include "base/auto_reset.h"
 #include "base/command_line.h"
 #include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
+#include "base/functional/callback_forward.h"
 #include "base/memory/raw_ptr.h"
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/metrics/user_metrics.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/autocomplete/autocomplete_classifier_factory.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/favicon/favicon_utils.h"
@@ -28,8 +27,6 @@
 #include "chrome/browser/ui/browser_navigator_params.h"
 #include "chrome/browser/ui/browser_tabstrip.h"
 #include "chrome/browser/ui/tab_ui_helper.h"
-#include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_keyed_service.h"
-#include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_service_factory.h"
 #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_utils.h"
 #include "chrome/browser/ui/tabs/tab_enums.h"
 #include "chrome/browser/ui/tabs/tab_group.h"
@@ -43,8 +40,8 @@
 #include "chrome/browser/ui/tabs/tab_strip_user_gesture_details.h"
 #include "chrome/browser/ui/tabs/tab_utils.h"
 #include "chrome/browser/ui/ui_features.h"
+#include "chrome/browser/ui/views/tabs/dragging/tab_drag_controller.h"
 #include "chrome/browser/ui/views/tabs/tab.h"
-#include "chrome/browser/ui/views/tabs/tab_drag_controller.h"
 #include "chrome/browser/ui/views/tabs/tab_strip.h"
 #include "chrome/browser/ui/views/tabs/tab_strip_types.h"
 #include "chrome/browser/ui/web_applications/app_browser_controller.h"
@@ -58,6 +55,8 @@
 #include "components/omnibox/browser/autocomplete_match.h"
 #include "components/performance_manager/public/user_tuning/prefs.h"
 #include "components/saved_tab_groups/public/features.h"
+#include "components/saved_tab_groups/public/saved_tab_group.h"
+#include "components/saved_tab_groups/public/tab_group_sync_service.h"
 #include "components/tab_groups/tab_group_color.h"
 #include "components/tab_groups/tab_group_id.h"
 #include "components/tab_groups/tab_group_visual_data.h"
@@ -79,9 +78,14 @@
 #include "ui/views/widget/widget.h"
 #include "url/origin.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ash/system_web_apps/types/system_web_app_delegate.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
+#include "ash/public/cpp/window_properties.h"
+#include "chromeos/ash/experiences/system_web_apps/types/system_web_app_delegate.h"
+#endif  // BUILDFLAG(IS_CHROMEOS)
+
+#if defined(USE_AURA)
+#include "ui/aura/window.h"
+#endif
 
 using base::UserMetricsAction;
 using content::WebContents;
@@ -95,10 +99,29 @@ BrowserView* GetSourceBrowserViewInTabDragging() {
   if (source_context) {
     gfx::NativeWindow source_window =
         source_context->GetWidget()->GetNativeWindow();
-    if (source_window)
+    if (source_window) {
       return BrowserView::GetBrowserViewForNativeWindow(source_window);
+    }
   }
   return nullptr;
+}
+
+void DialogTimingToSource(
+    base::OnceCallback<void(CloseTabSource)> callback,
+    CloseTabSource source,
+    tab_groups::DeletionDialogController::DeletionDialogTiming timing) {
+  switch (timing) {
+    case tab_groups::DeletionDialogController::DeletionDialogTiming::
+        Synchronous: {
+      std::move(callback).Run(source);
+      return;
+    }
+    case tab_groups::DeletionDialogController::DeletionDialogTiming::
+        Asynchronous: {
+      std::move(callback).Run(CloseTabSource::kFromNonUIEvent);
+      return;
+    }
+  }
 }
 
 }  // namespace
@@ -125,8 +148,9 @@ class BrowserTabStripController::TabContextMenuContents
   void Cancel() { controller_ = nullptr; }
 
   void CloseMenu() {
-    if (menu_runner_)
+    if (menu_runner_) {
       menu_runner_->Cancel();
+    }
   }
 
   void RunMenuAt(const gfx::Point& point,
@@ -140,15 +164,14 @@ class BrowserTabStripController::TabContextMenuContents
   bool IsCommandIdChecked(int command_id) const override { return false; }
   bool IsCommandIdEnabled(int command_id) const override {
     return controller_->IsCommandEnabledForTab(
-        static_cast<TabStripModel::ContextMenuCommand>(command_id),
-        tab_);
+        static_cast<TabStripModel::ContextMenuCommand>(command_id), tab_);
   }
 
   bool IsCommandIdAlerted(int command_id) const override { return false; }
 
   bool GetAcceleratorForCommandId(int command_id,
                                   ui::Accelerator* accelerator) const override {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     auto* browser = controller_->browser_view_->browser();
     auto* system_app = browser->app_controller()
                            ? browser->app_controller()->system_app()
@@ -157,7 +180,7 @@ class BrowserTabStripController::TabContextMenuContents
                           browser->profile(), command_id)) {
       return false;
     }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
     int browser_cmd;
     return TabStripModel::ContextMenuCommandToBrowserCommand(command_id,
@@ -169,8 +192,7 @@ class BrowserTabStripController::TabContextMenuContents
     // Executing the command destroys |this|, and can also end up destroying
     // |controller_|. So stop the highlights before executing the command.
     controller_->ExecuteCommandForTab(
-        static_cast<TabStripModel::ContextMenuCommand>(command_id),
-        tab_);
+        static_cast<TabStripModel::ContextMenuCommand>(command_id), tab_);
   }
 
  private:
@@ -216,8 +238,9 @@ BrowserTabStripController::~BrowserTabStripController() {
   // When we get here the TabStrip is being deleted. We need to explicitly
   // cancel the menu, otherwise it may try to invoke something on the tabstrip
   // from its destructor.
-  if (context_menu_contents_.get())
+  if (context_menu_contents_.get()) {
     context_menu_contents_->Cancel();
+  }
 
   model_->RemoveObserver(this);
 }
@@ -227,8 +250,9 @@ void BrowserTabStripController::InitFromModel(TabStrip* tabstrip) {
 
   // Walk the model, calling our insertion observer method for each item within
   // it.
-  for (int i = 0; i < model_->count(); ++i)
+  for (int i = 0; i < model_->count(); ++i) {
     AddTab(model_->GetWebContentsAt(i), i);
+  }
 }
 
 bool BrowserTabStripController::IsCommandEnabledForTab(
@@ -244,21 +268,31 @@ void BrowserTabStripController::ExecuteCommandForTab(
     TabStripModel::ContextMenuCommand command_id,
     const Tab* tab) {
   const std::optional<int> model_index = tabstrip_->GetModelIndexOf(tab);
-  if (model_index.has_value())
+  if (model_index.has_value()) {
     model_->ExecuteContextMenuCommand(model_index.value(), command_id);
+  }
 }
 
 bool BrowserTabStripController::IsTabPinned(const Tab* tab) const {
   return IsTabPinned(tabstrip_->GetModelIndexOf(tab).value());
 }
 
-const ui::ListSelectionModel&
-BrowserTabStripController::GetSelectionModel() const {
+const ui::ListSelectionModel& BrowserTabStripController::GetSelectionModel()
+    const {
   return model_->selection_model();
 }
 
 int BrowserTabStripController::GetCount() const {
   return model_->count();
+}
+
+bool BrowserTabStripController::CanShowModalUI() const {
+  return model_->CanShowModalUI();
+}
+
+std::unique_ptr<ScopedTabStripModalUI>
+BrowserTabStripController::ShowModalUI() {
+  return model_->ShowModalUI();
 }
 
 bool BrowserTabStripController::IsValidIndex(int index) const {
@@ -271,8 +305,9 @@ bool BrowserTabStripController::IsActiveTab(int model_index) const {
 
 std::optional<int> BrowserTabStripController::GetActiveIndex() const {
   const int active_index = model_->active_index();
-  if (IsValidIndex(active_index))
+  if (IsValidIndex(active_index)) {
     return active_index;
+  }
   return std::nullopt;
 }
 
@@ -286,9 +321,9 @@ bool BrowserTabStripController::IsTabPinned(int model_index) const {
 
 void BrowserTabStripController::SelectTab(int model_index,
                                           const ui::Event& event) {
-  std::unique_ptr<input::PeakGpuMemoryTracker> tracker =
+  std::unique_ptr<viz::PeakGpuMemoryTracker> tracker =
       content::PeakGpuMemoryTrackerFactory::Create(
-          input::PeakGpuMemoryTracker::Usage::CHANGE_TAB);
+          viz::PeakGpuMemoryTracker::Usage::CHANGE_TAB);
 
   TabStripUserGestureDetails gesture_detail(
       TabStripUserGestureDetails::GestureType::kOther, event.time_stamp());
@@ -305,13 +340,44 @@ void BrowserTabStripController::SelectTab(int model_index,
   tabstrip_->GetWidget()
       ->GetCompositor()
       ->RequestSuccessfulPresentationTimeForNextFrame(base::BindOnce(
-          [](std::unique_ptr<input::PeakGpuMemoryTracker> tracker,
+          [](std::unique_ptr<viz::PeakGpuMemoryTracker> tracker,
              const viz::FrameTimingDetails& frame_timing_details) {
             // This callback will be ran once the ui::Compositor presents the
             // next frame for the |tabstrip_|. The destruction of |tracker| will
             // get the peak GPU memory and record a histogram.
           },
           std::move(tracker)));
+}
+
+void BrowserTabStripController::RecordMetricsOnTabSelectionChange(
+    std::optional<tab_groups::TabGroupId> group) {
+  base::UmaHistogramEnumeration("TabStrip.Tab.Views.ActivationAction",
+                                TabActivationTypes::kTab);
+
+  if (!group) {
+    return;
+  }
+
+  base::RecordAction(base::UserMetricsAction("TabGroups_SwitchGroupedTab"));
+
+  if (!tab_groups::SavedTabGroupUtils::SupportsSharedTabGroups()) {
+    return;
+  }
+
+  tab_groups::TabGroupSyncService* tab_group_service =
+      tab_groups::SavedTabGroupUtils::GetServiceForProfile(
+          browser_view_->GetProfile());
+
+  if (!tab_group_service) {
+    return;
+  }
+
+  std::optional<tab_groups::SavedTabGroup> saved_group =
+      tab_group_service->GetGroup(group.value());
+  if (saved_group && saved_group->collaboration_id()) {
+    base::RecordAction(
+        base::UserMetricsAction("TabGroups.Shared.SwitchGroupedTab"));
+  }
 }
 
 void BrowserTabStripController::ExtendSelectionTo(int model_index) {
@@ -329,12 +395,12 @@ void BrowserTabStripController::AddSelectionFromAnchorTo(int model_index) {
 void BrowserTabStripController::OnCloseTab(
     int model_index,
     CloseTabSource source,
-    base::OnceCallback<void()> callback) {
+    base::OnceCallback<void(CloseTabSource)> callback) {
   if (!web_app::IsTabClosable(model_, model_index)) {
     return;
   }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   // Tabs cannot be closed when the app is locked for OnTask. Only relevant for
   // non-web browser scenarios.
   if (browser_view_->browser()->IsLockedForOnTask()) {
@@ -349,13 +415,14 @@ void BrowserTabStripController::OnCloseTab(
     // to prompt the user before the browser is allowed to close.
     const Browser::WarnBeforeClosingResult result =
         browser_view_->browser()->MaybeWarnBeforeClosing(base::BindOnce(
-            [](TabStrip* tab_strip, int model_index, CloseTabSource source,
+            [](TabStrip* tab_strip, int model_index,
                Browser::WarnBeforeClosingResult result) {
               if (result == Browser::WarnBeforeClosingResult::kOkToClose) {
-                tab_strip->CloseTab(tab_strip->tab_at(model_index), source);
+                tab_strip->CloseTab(tab_strip->tab_at(model_index),
+                                    CloseTabSource::kFromNonUIEvent);
               }
             },
-            base::Unretained(tabstrip_), model_index, source));
+            base::Unretained(tabstrip_), model_index));
 
     if (result != Browser::WarnBeforeClosingResult::kOkToClose) {
       return;
@@ -366,17 +433,20 @@ void BrowserTabStripController::OnCloseTab(
   std::vector<tab_groups::TabGroupId> groups_to_delete =
       model_->GetGroupsDestroyedFromRemovingIndices({model_index});
 
-  if (tab_groups::IsTabGroupsSaveV2Enabled() && !groups_to_delete.empty()) {
-    // If the user is destroying the last tab in the group via the tabstrip, a
-    // dialog is shown that will decide whether to destroy the tab or not. It
-    // will first ungroup the tab, then close the tab.
-    tab_groups::SavedTabGroupUtils::MaybeShowSavedTabGroupDeletionDialog(
-        browser_view_->browser(),
-        tab_groups::DeletionDialogController::DialogType::CloseTabAndDelete,
-        groups_to_delete, std::move(callback));
-  } else {
-    std::move(callback).Run();
+  if (!tab_groups::IsTabGroupsSaveV2Enabled() || groups_to_delete.empty()) {
+    std::move(callback).Run(source);
+    return;
   }
+
+  auto timing_mapped_callback =
+      base::BindOnce(&DialogTimingToSource, std::move(callback), source);
+
+  // If the user is destroying the last tab in a saved or shared group via the
+  // tabstrip, a dialog is shown that will decide whether to destroy the tab or
+  // not. It will first ungroup the tab, then close the tab.
+  tab_groups::SavedTabGroupUtils::MaybeShowSavedTabGroupDeletionDialog(
+      browser_view_->browser(), tab_groups::GroupDeletionReason::ClosedLastTab,
+      groups_to_delete, std::move(timing_mapped_callback));
 }
 
 void BrowserTabStripController::CloseTab(int model_index) {
@@ -491,8 +561,9 @@ void BrowserTabStripController::ShowContextMenuForTab(
 }
 
 void BrowserTabStripController::CloseContextMenuForTesting() {
-  if (context_menu_contents_)
+  if (context_menu_contents_) {
     context_menu_contents_->CloseMenu();
+  }
 }
 
 int BrowserTabStripController::HasAvailableDragActions() const {
@@ -523,8 +594,9 @@ void BrowserTabStripController::CreateNewTabWithLocation(
   AutocompleteClassifierFactory::GetForProfile(GetProfile())
       ->Classify(location, false, false, metrics::OmniboxEventProto::BLANK,
                  &match, nullptr);
-  if (match.destination_url.is_valid())
+  if (match.destination_url.is_valid()) {
     model_->delegate()->AddTabAt(match.destination_url, -1, true);
+  }
 }
 
 void BrowserTabStripController::OnStartedDragging(bool dragging_window) {
@@ -543,8 +615,14 @@ void BrowserTabStripController::OnStartedDragging(bool dragging_window) {
   // We also use fast resize for the source browser window as the source browser
   // window may also change bounds during dragging.
   BrowserView* source_browser_view = GetSourceBrowserViewInTabDragging();
-  if (source_browser_view && source_browser_view != browser_view_)
+  if (source_browser_view && source_browser_view != browser_view_) {
     source_browser_view->frame()->SetTabDragKind(TabDragKind::kTab);
+  }
+
+#if BUILDFLAG(IS_CHROMEOS)
+  browser_view_->GetWidget()->GetNativeWindow()->SetProperty(
+      ash::kIsDraggingTabsKey, true);
+#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 void BrowserTabStripController::OnStoppedDragging() {
@@ -553,10 +631,17 @@ void BrowserTabStripController::OnStoppedDragging() {
   BrowserView* source_browser_view = GetSourceBrowserViewInTabDragging();
   // Only reset the source window's fast resize bit after the entire drag
   // ends.
-  if (browser_view_ != source_browser_view)
+  if (browser_view_ != source_browser_view) {
     browser_view_->frame()->SetTabDragKind(TabDragKind::kNone);
-  if (source_browser_view && !TabDragController::IsActive())
+  }
+  if (source_browser_view && !TabDragController::IsActive()) {
     source_browser_view->frame()->SetTabDragKind(TabDragKind::kNone);
+  }
+
+#if BUILDFLAG(IS_CHROMEOS)
+  browser_view_->GetWidget()->GetNativeWindow()->ClearProperty(
+      ash::kIsDraggingTabsKey);
+#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 void BrowserTabStripController::OnKeyboardFocusedTabChanged(
@@ -578,6 +663,11 @@ std::u16string BrowserTabStripController::GetGroupContentString(
 tab_groups::TabGroupColorId BrowserTabStripController::GetGroupColorId(
     const tab_groups::TabGroupId& group) const {
   return model_->group_model()->GetTabGroup(group)->visual_data()->color();
+}
+
+TabGroup* BrowserTabStripController::GetTabGroup(
+    const tab_groups::TabGroupId& group_id) const {
+  return model_->group_model()->GetTabGroup(group_id);
 }
 
 bool BrowserTabStripController::IsGroupCollapsed(
@@ -642,15 +732,20 @@ Profile* BrowserTabStripController::GetProfile() const {
   return model_->profile();
 }
 
+BrowserWindowInterface* BrowserTabStripController::GetBrowserWindowInterface() {
+  return browser_view_->browser();
+}
+
 const Browser* BrowserTabStripController::GetBrowser() const {
   return browser();
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 bool BrowserTabStripController::IsLockedForOnTask() {
   return browser_view_->browser()->IsLockedForOnTask();
 }
 #endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // BrowserTabStripController, TabStripModelObserver implementation:
 
@@ -695,8 +790,9 @@ void BrowserTabStripController::OnTabStripModelChanged(
       break;
   }
 
-  if (tab_strip_model->empty())
+  if (tab_strip_model->empty()) {
     return;
+  }
 
   if (selection.active_tab_changed()) {
     // It's possible for |new_contents| to be null when the final tab in a tab
@@ -710,8 +806,9 @@ void BrowserTabStripController::OnTabStripModelChanged(
     }
   }
 
-  if (selection.selection_changed())
+  if (selection.selection_changed()) {
     tabstrip_->SetSelection(selection.new_model);
+  }
 }
 
 void BrowserTabStripController::OnTabWillBeAdded() {
@@ -733,10 +830,6 @@ void BrowserTabStripController::OnTabGroupChanged(
     }
     case TabGroupChange::kEditorOpened: {
       tabstrip_->OnGroupEditorOpened(change.group);
-      break;
-    }
-    case TabGroupChange::kContentsChanged: {
-      tabstrip_->OnGroupContentsChanged(change.group);
       break;
     }
     case TabGroupChange::kVisualsChanged: {
@@ -796,10 +889,20 @@ void BrowserTabStripController::TabBlockedStateChanged(WebContents* contents,
 }
 
 void BrowserTabStripController::TabGroupedStateChanged(
-    std::optional<tab_groups::TabGroupId> group,
-    tabs::TabModel* tab,
+    TabStripModel* tab_strip_model,
+    std::optional<tab_groups::TabGroupId> old_group,
+    std::optional<tab_groups::TabGroupId> new_group,
+    tabs::TabInterface* tab,
     int index) {
-  tabstrip_->AddTabToGroup(std::move(group), index);
+  tabstrip_->AddTabToGroup(new_group, index);
+
+  if (old_group.has_value()) {
+    tabstrip_->OnGroupContentsChanged(old_group.value());
+  }
+
+  if (new_group.has_value()) {
+    tabstrip_->OnGroupContentsChanged(new_group.value());
+  }
 }
 
 void BrowserTabStripController::SetTabNeedsAttentionAt(int index,

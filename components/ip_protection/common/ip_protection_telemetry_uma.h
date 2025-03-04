@@ -5,13 +5,18 @@
 #ifndef COMPONENTS_IP_PROTECTION_COMMON_IP_PROTECTION_TELEMETRY_UMA_H_
 #define COMPONENTS_IP_PROTECTION_COMMON_IP_PROTECTION_TELEMETRY_UMA_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 
 #include "base/time/time.h"
-#include "components/ip_protection/common/ip_protection_data_types.h"
 #include "components/ip_protection/common/ip_protection_telemetry.h"
 
 namespace ip_protection {
+
+enum class TryGetAuthTokensResult;
+enum class TryGetAuthTokensAndroidResult;
+enum class ProxyLayer;
 
 // Implementation of IpProtectionTelemetry using UMA.
 class IpProtectionTelemetryUma final : public IpProtectionTelemetry {
@@ -31,6 +36,7 @@ class IpProtectionTelemetryUma final : public IpProtectionTelemetry {
                                 bool is_cache_empty,
                                 bool does_requested_geo_match_current) override;
   void TokenBatchGenerationComplete(base::TimeDelta duration) override;
+  void TryGetAuthTokensError(uint32_t hash) override;
   void GeoChangeTokenPresence(bool) override;
   void ProxyListRefreshComplete(
       GetProxyListResult result,
@@ -38,10 +44,13 @@ class IpProtectionTelemetryUma final : public IpProtectionTelemetry {
   void TokenSpendRate(ProxyLayer, int) override;
   void TokenExpirationRate(ProxyLayer, int) override;
   void MdlEstimatedMemoryUsage(size_t) override;
+  void MdlEstimatedDiskUsage(int64_t) override;
+  void MdlSize(int64_t) override;
   void AndroidAuthClientCreationTime(base::TimeDelta duration) override;
   void AndroidAuthClientGetInitialDataTime(base::TimeDelta duration) override;
   void AndroidAuthClientAuthAndSignTime(base::TimeDelta duration) override;
   void MdlFirstUpdateTime(base::TimeDelta duration) override;
+  void MdlMatchesTime(base::TimeDelta duration) override;
 };
 
 }  // namespace ip_protection

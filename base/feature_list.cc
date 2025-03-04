@@ -38,7 +38,6 @@
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 
 namespace base {
 
@@ -242,8 +241,8 @@ bool ParseEnableFeatures(const std::string& enable_features,
       force_fieldtrial_params_list.push_back(study + "." + group + ":" +
                                              feature_params);
     }
-    enable_features_list.push_back(
-        study.empty() ? feature_name : (feature_name + "<" + study));
+    enable_features_list.push_back(study.empty() ? std::move(feature_name)
+                                                 : feature_name + "<" + study);
   }
 
   *parsed_enable_features = JoinString(enable_features_list, ",");
@@ -334,7 +333,7 @@ void FeatureList::InitFromCommandLine(const std::string& enable_features,
   }
 
   // Process disabled features first, so that disabled ones take precedence over
-  // enabled ones (since RegisterOverride() uses insert()).
+  // enabled ones (since RegisterOverride() uses emplace()).
   RegisterOverridesFromCommandLine(disable_features, OVERRIDE_DISABLE_FEATURE);
   RegisterOverridesFromCommandLine(parsed_enable_features,
                                    OVERRIDE_ENABLE_FEATURE);
@@ -353,8 +352,9 @@ void FeatureList::InitFromSharedMemory(PersistentMemoryAllocator* allocator) {
 
     std::string_view feature_name;
     std::string_view trial_name;
-    if (!entry->GetFeatureAndTrialName(&feature_name, &trial_name))
+    if (!entry->GetFeatureAndTrialName(&feature_name, &trial_name)) {
       continue;
+    }
 
     FieldTrial* trial = FieldTrialList::Find(trial_name);
     RegisterOverride(feature_name, override_state, trial);
@@ -415,10 +415,11 @@ void FeatureList::RegisterFieldTrialOverride(const std::string& feature_name,
 }
 
 void FeatureList::RegisterExtraFeatureOverrides(
-    const std::vector<FeatureOverrideInfo>& extra_overrides) {
+    const std::vector<FeatureOverrideInfo>& extra_overrides,
+    bool replace_use_default_overrides) {
   for (const FeatureOverrideInfo& override_info : extra_overrides) {
     RegisterOverride(override_info.first.get().name, override_info.second,
-                     /* field_trial = */ nullptr);
+                     /*field_trial=*/nullptr, replace_use_default_overrides);
   }
 }
 
@@ -428,13 +429,15 @@ void FeatureList::AddFeaturesToAllocator(PersistentMemoryAllocator* allocator) {
   for (const auto& override : overrides_) {
     Pickle pickle;
     pickle.WriteString(override.first);
-    if (override.second.field_trial)
+    if (override.second.field_trial) {
       pickle.WriteString(override.second.field_trial->trial_name());
+    }
 
     size_t total_size = sizeof(FeatureEntry) + pickle.size();
     FeatureEntry* entry = allocator->New<FeatureEntry>(total_size);
-    if (!entry)
+    if (!entry) {
       return;
+    }
 
     entry->override_state = override.second.overridden_state;
     entry->pickle_size = pickle.size();
@@ -515,26 +518,29 @@ bool FeatureList::ParseEnableFeatureString(std::string_view enable_feature,
   // First, check whether ":" is present. If true, feature parameters were
   // set for this feature.
   std::string feature_params;
-  if (!SplitIntoTwo(enable_feature, ":", &first, &feature_params))
+  if (!SplitIntoTwo(enable_feature, ":", &first, &feature_params)) {
     return false;
+  }
   // Then, check whether "." is present. If true, a group was specified for
   // this feature.
   std::string group;
-  if (!SplitIntoTwo(first, ".", &first, &group))
+  if (!SplitIntoTwo(first, ".", &first, &group)) {
     return false;
+  }
   // Finally, check whether "<" is present. If true, a study was specified for
   // this feature.
   std::string study;
-  if (!SplitIntoTwo(first, "<", &first, &study))
+  if (!SplitIntoTwo(first, "<", &first, &study)) {
     return false;
+  }
 
   std::string enable_feature_name(first);
   // If feature params were set but group and study weren't, associate the
   // feature and its feature params to a synthetic field trial as the
   // feature params only make sense when it's combined with a field trial.
   if (!feature_params.empty()) {
-    study = study.empty() ? "Study" + enable_feature_name : study;
-    group = group.empty() ? "Group" + enable_feature_name : group;
+    study = study.empty() ? "Study" + enable_feature_name : std::move(study);
+    group = group.empty() ? "Group" + enable_feature_name : std::move(group);
   }
 
   feature_name->swap(enable_feature_name);
@@ -570,8 +576,9 @@ bool FeatureList::InitInstance(
   EarlyFeatureAccessTracker::GetInstance()->AssertNoAccess();
   bool instance_existed_before = false;
   if (g_feature_list_instance) {
-    if (g_feature_list_instance->initialized_from_command_line_)
+    if (g_feature_list_instance->initialized_from_command_line_) {
       return false;
+    }
 
     delete g_feature_list_instance;
     g_feature_list_instance = nullptr;
@@ -614,10 +621,6 @@ void FeatureList::SetInstance(std::unique_ptr<FeatureList> instance) {
 #if !BUILDFLAG(IS_NACL)
     // Configured first because it takes precedence over the getrandom() trial.
     internal::ConfigureBoringSSLBackedRandBytesFieldTrial();
-#endif
-
-#if BUILDFLAG(IS_ANDROID)
-    internal::ConfigureRandBytesFieldTrial();
 #endif
   }
 
@@ -689,8 +692,8 @@ void FeatureList::AddEarlyAllowedFeatureForTesting(std::string feature_name) {
 // static
 void FeatureList::VisitFeaturesAndParams(FeatureVisitor& visitor,
                                          std::string_view filter_prefix) {
-  // If there is no feature list, there are no overrides. This should only happen
-  // in tests.
+  // If there is no feature list, there are no overrides. This should only
+  // happen in tests.
   // TODO(leszeks): Add a CHECK_IS_TEST() to verify the above.
   if (!g_feature_list_instance) {
     return;
@@ -748,8 +751,9 @@ bool FeatureList::IsFeatureEnabled(const Feature& feature) const {
   OverrideState overridden_state = GetOverrideState(feature);
 
   // If marked as OVERRIDE_USE_DEFAULT, simply return the default state below.
-  if (overridden_state != OVERRIDE_USE_DEFAULT)
+  if (overridden_state != OVERRIDE_USE_DEFAULT) {
     return overridden_state == OVERRIDE_ENABLE_FEATURE;
+  }
 
   return feature.default_state == FEATURE_ENABLED_BY_DEFAULT;
 }
@@ -759,8 +763,9 @@ std::optional<bool> FeatureList::IsFeatureEnabledIfOverridden(
   OverrideState overridden_state = GetOverrideState(feature);
 
   // If marked as OVERRIDE_USE_DEFAULT, fall through to returning empty.
-  if (overridden_state != OVERRIDE_USE_DEFAULT)
+  if (overridden_state != OVERRIDE_USE_DEFAULT) {
     return overridden_state == OVERRIDE_ENABLE_FEATURE;
+  }
 
   return std::nullopt;
 }
@@ -781,8 +786,9 @@ FeatureList::OverrideState FeatureList::GetOverrideState(
 
   auto unpacked = UnpackFeatureCache(current_cache_value);
 
-  if (unpacked.second == caching_context_)
+  if (unpacked.second == caching_context_) {
     return unpacked.first;
+  }
 
   OverrideState state = GetOverrideStateByFeatureName(feature.name);
   uint32_t new_cache_value = PackFeatureCache(state, caching_context_);
@@ -906,7 +912,8 @@ void FeatureList::RegisterOverridesFromCommandLine(
 
 void FeatureList::RegisterOverride(std::string_view feature_name,
                                    OverrideState overridden_state,
-                                   FieldTrial* field_trial) {
+                                   FieldTrial* field_trial,
+                                   bool replace_use_default_overrides) {
   DCHECK(!initialized_);
   DCheckOverridesAllowed();
   if (field_trial) {
@@ -918,10 +925,24 @@ void FeatureList::RegisterOverride(std::string_view feature_name,
     overridden_state = OVERRIDE_USE_DEFAULT;
   }
 
+  // When `replace_use_default_overrides` is true, if an `OVERRIDE_USE_DEFAULT`
+  // entry exists, it should be replaced.
+  const std::string feature_name_str(feature_name);
+  if (replace_use_default_overrides) {
+    auto found = overrides_.find(feature_name_str);
+    if (found != overrides_.end() &&
+        found->second.overridden_state == OVERRIDE_USE_DEFAULT) {
+      // Also, keep the existing trial if a null trial was passed.
+      auto* trial = field_trial ? field_trial : &*found->second.field_trial;
+      found->second = OverrideEntry(overridden_state, trial);
+      return;
+    }
+  }
+
   // Note: The semantics of emplace() is that it does not overwrite the entry if
   // one already exists for the key. Thus, only the first override for a given
   // feature name takes effect.
-  overrides_.emplace(std::string(feature_name),
+  overrides_.emplace(feature_name_str,
                      OverrideEntry(overridden_state, field_trial));
 }
 
@@ -935,8 +956,9 @@ void FeatureList::GetFeatureOverridesImpl(std::string* enable_overrides,
   // active one. If not, it likely indicates that this FeatureList has override
   // entries from a freed FieldTrial, which may be caused by an incorrect test
   // set up.
-  if (field_trial_list_)
+  if (field_trial_list_) {
     DCHECK_EQ(field_trial_list_, FieldTrialList::GetInstance());
+  }
 
   enable_overrides->clear();
   disable_overrides->clear();
@@ -962,10 +984,12 @@ void FeatureList::GetFeatureOverridesImpl(std::string* enable_overrides,
         break;
     }
 
-    if (!target_list->empty())
+    if (!target_list->empty()) {
       target_list->push_back(',');
-    if (entry.second.overridden_state == OVERRIDE_USE_DEFAULT)
+    }
+    if (entry.second.overridden_state == OVERRIDE_USE_DEFAULT) {
       target_list->push_back('*');
+    }
     target_list->append(entry.first);
     if (entry.second.field_trial) {
       auto* const field_trial = entry.second.field_trial.get();

@@ -4,12 +4,12 @@
 
 #include "third_party/blink/renderer/platform/geometry/calculation_expression_node.h"
 
+#include <algorithm>
 #include <cfloat>
 #include <numeric>
 
 #include "base/memory/scoped_refptr.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "third_party/blink/renderer/platform/geometry/length.h"
 #include "third_party/blink/renderer/platform/geometry/length_functions.h"
 #include "third_party/blink/renderer/platform/geometry/math_functions.h"
@@ -107,7 +107,7 @@ float CalculationExpressionSizingKeywordNode::Evaluate(
       intrinsic_type =
           input.calc_size_keyword_behavior == CalcSizeKeywordBehavior::kAsAuto
               ? Length::Type::kAuto
-              : Length::Type::kStretch;
+              : Length::Type::kFillAvailable;
       break;
   }
 
@@ -408,8 +408,7 @@ CalculationExpressionOperationNode::CreateSimplified(Children&& children,
           std::move(children), op);
     }
     case CalculationOperator::kInvalid:
-      NOTREACHED_IN_MIGRATION();
-      return nullptr;
+      NOTREACHED();
   }
 }
 
@@ -562,8 +561,7 @@ float CalculationExpressionOperationNode::Evaluate(
       break;
       // TODO(crbug.com/1284199): Support other math functions.
   }
-  NOTREACHED_IN_MIGRATION();
-  return std::numeric_limits<float>::quiet_NaN();
+  NOTREACHED();
 }
 
 bool CalculationExpressionOperationNode::Equals(
@@ -576,7 +574,7 @@ bool CalculationExpressionOperationNode::Equals(
     return false;
   }
   using ValueType = Children::value_type;
-  return base::ranges::equal(
+  return std::ranges::equal(
       children_, other_operation->GetChildren(),
       [](const ValueType& a, const ValueType& b) { return *a == *b; });
 }
@@ -631,8 +629,7 @@ CalculationExpressionOperationNode::Zoom(double factor) const {
       return CreateSimplified(std::move(cloned_operands), operator_);
     }
     case CalculationOperator::kInvalid:
-      NOTREACHED_IN_MIGRATION();
-      return nullptr;
+      NOTREACHED();
   }
 }
 
@@ -740,8 +737,7 @@ CalculationExpressionOperationNode::ResolvedResultType() const {
     case CalculationOperator::kMediaProgress:
       return ResultType::kNumber;
     case CalculationOperator::kInvalid:
-      NOTREACHED_IN_MIGRATION();
-      return result_type_;
+      NOTREACHED();
   }
 }
 #endif

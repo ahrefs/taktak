@@ -21,9 +21,7 @@ component("codec") {
 
   deps = [
     "//skia",
-    "//skia:rusty_png_feature_detection",
     "//third_party/zlib",
-    "//ui/gfx:gfx_export",
     "//ui/gfx:gfx_skia",
     "//ui/gfx/geometry",
   ]

@@ -148,11 +148,11 @@ TEST_F(IOSChromeSyncedTabDelegateTest,
 
   // Create a BrowserState with the necessary services.
   TestProfileIOS::Builder builder;
-  builder.AddTestingFactory(AuthenticationServiceFactory::GetInstance(),
-                            AuthenticationServiceFactory::GetDefaultFactory());
+  builder.AddTestingFactory(
+      AuthenticationServiceFactory::GetInstance(),
+      AuthenticationServiceFactory::GetFactoryWithDelegate(
+          std::make_unique<FakeAuthenticationServiceDelegate>()));
   std::unique_ptr<TestProfileIOS> profile = std::move(builder).Build();
-  AuthenticationServiceFactory::CreateAndInitializeForBrowserState(
-      profile.get(), std::make_unique<FakeAuthenticationServiceDelegate>());
 
   const base::Time pre_signin_time = base::Time::Now();
 
@@ -164,8 +164,8 @@ TEST_F(IOSChromeSyncedTabDelegateTest,
   system_identity_manager->AddIdentity(identity);
   AuthenticationService* authentication_service =
       AuthenticationServiceFactory::GetForProfile(profile.get());
-  authentication_service->SignIn(
-      identity, signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN);
+  authentication_service->SignIn(identity,
+                                 signin_metrics::AccessPoint::kUnknown);
 
   // Create a navigation entry (so that there's something to sync).
   auto navigation_manager = std::make_unique<web::FakeNavigationManager>();

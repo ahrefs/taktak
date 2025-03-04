@@ -9,15 +9,15 @@
 
 #include "base/functional/callback.h"
 #include "components/autofill/core/browser/autofill_progress_dialog_type.h"
-#include "components/autofill/core/browser/data_model/credit_card.h"
-#include "components/autofill/core/browser/merchant_promo_code_manager.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card.h"
 #include "components/autofill/core/browser/payments/autofill_error_dialog_context.h"
 #include "components/autofill/core/browser/payments/card_unmask_challenge_option.h"
 #include "components/autofill/core/browser/payments/card_unmask_delegate.h"
 #include "components/autofill/core/browser/payments/virtual_card_enrollment_manager.h"
+#include "components/autofill/core/browser/single_field_fillers/payments/merchant_promo_code_manager.h"
+#include "components/autofill/core/browser/suggestions/suggestion.h"
 #include "components/autofill/core/browser/ui/payments/bubble_show_options.h"
 #include "components/autofill/core/browser/ui/payments/card_unmask_prompt_options.h"
-#include "components/autofill/core/browser/ui/suggestion.h"
 
 #if !BUILDFLAG(IS_IOS)
 #include "components/webauthn/core/browser/internal_authenticator.h"
@@ -105,8 +105,8 @@ void PaymentsAutofillClient::ShowVirtualCardEnrollDialog(
 void PaymentsAutofillClient::VirtualCardEnrollCompleted(
     PaymentsRpcResult result) {}
 
-void PaymentsAutofillClient::OnVirtualCardDataAvailable(
-    const VirtualCardManualFallbackBubbleOptions& options) {}
+void PaymentsAutofillClient::OnCardDataAvailable(
+    const FilledCardInformationBubbleOptions& options) {}
 
 void PaymentsAutofillClient::ConfirmSaveIbanLocally(
     const Iban& iban,
@@ -166,6 +166,8 @@ void PaymentsAutofillClient::ShowUnmaskPrompt(
 void PaymentsAutofillClient::OnUnmaskVerificationResult(
     PaymentsRpcResult result) {}
 
+void PaymentsAutofillClient::ShowBnplTos() {}
+
 VirtualCardEnrollmentManager*
 PaymentsAutofillClient::GetVirtualCardEnrollmentManager() {
   return nullptr;
@@ -219,18 +221,23 @@ const AutofillOfferManager* PaymentsAutofillClient::GetAutofillOfferManager()
 
 bool PaymentsAutofillClient::ShowTouchToFillCreditCard(
     base::WeakPtr<TouchToFillDelegate> delegate,
-    base::span<const autofill::CreditCard> cards_to_suggest,
+    base::span<const CreditCard> cards_to_suggest,
     base::span<const Suggestion> suggestions) {
   return false;
 }
 
 bool PaymentsAutofillClient::ShowTouchToFillIban(
     base::WeakPtr<TouchToFillDelegate> delegate,
-    base::span<const autofill::Iban> ibans_to_suggest) {
+    base::span<const Iban> ibans_to_suggest) {
   return false;
 }
 
 void PaymentsAutofillClient::HideTouchToFillPaymentMethod() {}
+
+const PaymentsDataManager& PaymentsAutofillClient::GetPaymentsDataManager()
+    const {
+  return const_cast<PaymentsAutofillClient*>(this)->GetPaymentsDataManager();
+}
 
 #if !BUILDFLAG(IS_IOS)
 std::unique_ptr<webauthn::InternalAuthenticator>
@@ -244,5 +251,11 @@ payments::MandatoryReauthManager*
 PaymentsAutofillClient::GetOrCreatePaymentsMandatoryReauthManager() {
   return nullptr;
 }
+
+payments::BnplManager* PaymentsAutofillClient::GetPaymentsBnplManager() {
+  return nullptr;
+}
+
+void PaymentsAutofillClient::ShowCreditCardSaveAndFillDialog() {}
 
 }  // namespace autofill::payments

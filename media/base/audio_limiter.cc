@@ -6,12 +6,8 @@
 
 #include <algorithm>
 
-#include "base/check_op.h"
-#include "base/containers/heap_array.h"
 #include "base/containers/span_reader.h"
 #include "base/functional/bind.h"
-#include "base/ranges/algorithm.h"
-#include "base/task/current_thread.h"
 #include "base/time/time.h"
 #include "media/base/audio_timestamp_helper.h"
 
@@ -48,6 +44,7 @@ AudioLimiter::AudioLimiter(int sample_rate, int channels)
       moving_max_(attack_frames_),
       initial_output_delay_in_frames_(attack_frames_) {
   CHECK(sample_rate);
+  CHECK(channels_);
 }
 
 AudioLimiter::~AudioLimiter() = default;
@@ -55,17 +52,26 @@ AudioLimiter::~AudioLimiter() = default;
 void AudioLimiter::LimitPeaks(const AudioBus& input,
                               const OutputChannels& output,
                               OutputFilledCB on_output_filled_cb) {
+  LimitPeaksPartial(input, input.frames(), output,
+                    std::move(on_output_filled_cb));
+}
+
+void AudioLimiter::LimitPeaksPartial(const AudioBus& input,
+                                     int num_frames,
+                                     const OutputChannels& output,
+                                     OutputFilledCB on_output_filled_cb) {
   CHECK(!was_flushed_);
-  CHECK_GT(input.frames(), 0);
+  CHECK_GT(num_frames, 0);
+  CHECK_LE(num_frames, input.frames());
   CHECK_EQ(input.channels(), channels_);
   CHECK_EQ(static_cast<size_t>(input.channels()), output.size());
   for (int ch = 0; ch < channels_; ++ch) {
-    CHECK_EQ(input.frames() * sizeof(float), output[ch].size_bytes());
+    CHECK_EQ(num_frames * sizeof(float), output[ch].size_bytes());
   }
 
   outputs_.emplace_back(std::move(output), std::move(on_output_filled_cb));
 
-  FeedInput(input);
+  FeedInput(input, num_frames);
 }
 
 void AudioLimiter::Flush() {
@@ -75,7 +81,7 @@ void AudioLimiter::Flush() {
   auto silence = AudioBus::Create(channels_, attack_frames_);
   silence->Zero();
 
-  FeedInput(*silence);
+  FeedInput(*silence, attack_frames_);
 
   // All outputs should have been filled.
   CHECK(outputs_.empty());
@@ -83,21 +89,21 @@ void AudioLimiter::Flush() {
   was_flushed_ = true;
 }
 
-void AudioLimiter::FeedInput(const AudioBus& input) {
+void AudioLimiter::FeedInput(const AudioBus& input, int num_frames) {
   CHECK_EQ(input.channels(), channels_);
 
   const uint32_t frame_size = channels_;
 
   std::vector<float> interleaved_input;
-  interleaved_input.resize(input.frames() * frame_size);
+  interleaved_input.resize(num_frames * frame_size);
 
-  input.ToInterleaved<Float32SampleTypeTraitsNoClip>(input.frames(),
+  input.ToInterleaved<Float32SampleTypeTraitsNoClip>(num_frames,
                                                      interleaved_input.data());
 
   // Sanitize the input, removing unusual values. This is a destructive
   // operation which changes the nature of the audio signal, but it avoids
   // undefined behavior.
-  base::ranges::for_each(interleaved_input, [](float& sample) {
+  std::ranges::for_each(interleaved_input, [](float& sample) {
     if (std::isnan(sample) || std::isinf(sample)) {
       sample = 0.0f;
     }
@@ -106,8 +112,8 @@ void AudioLimiter::FeedInput(const AudioBus& input) {
   delayed_interleaved_input_.reserve(delayed_interleaved_input_.size() +
                                      interleaved_input.size());
 
-  base::ranges::copy(interleaved_input,
-                     std::back_inserter(delayed_interleaved_input_));
+  std::ranges::copy(interleaved_input,
+                    std::back_inserter(delayed_interleaved_input_));
 
   base::SpanReader<float> input_reader(interleaved_input);
 
@@ -210,31 +216,27 @@ void AudioLimiter::WriteLimitedFrameToOutput() {
   CHECK(!output_channels.empty());
   CHECK(!output_channels[0].empty());
 
+  const auto copy_float_to_channel = [](float src, base::span<uint8_t>& ch) {
+    auto [dest, remainder] = ch.split_at<sizeof(float)>();
+    dest.copy_from(base::byte_span_from_ref(base::allow_nonunique_obj, src));
+    ch = remainder;
+  };
+
   if (smoothed_gain_ < 1.0) {
     // Apply gain reduction.
     for (int ch = 0; ch < channels_; ++ch) {
-      auto [dest, remainder] = output_channels[ch].split_at<4>();
-
       const float adjusted_sample = static_cast<float>(
           static_cast<double>(delayed_interleaved_input_.front()) *
           smoothed_gain_);
+      copy_float_to_channel(adjusted_sample, output_channels[ch]);
       delayed_interleaved_input_.pop_front();
-
-      dest.copy_from(base::byte_span_from_ref(adjusted_sample));
-
-      output_channels[ch] = remainder;
     }
   } else {
     // Passthrough.
     for (int ch = 0; ch < channels_; ++ch) {
-      auto [dest, remainder] = output_channels[ch].split_at<4>();
-
-      dest.copy_from(
-          base::byte_span_from_ref(delayed_interleaved_input_.front()));
-
+      copy_float_to_channel(delayed_interleaved_input_.front(),
+                            output_channels[ch]);
       delayed_interleaved_input_.pop_front();
-
-      output_channels[ch] = remainder;
     }
   }
 

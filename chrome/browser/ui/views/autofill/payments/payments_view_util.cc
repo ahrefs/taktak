@@ -4,10 +4,11 @@
 
 #include "chrome/browser/ui/views/autofill/payments/payments_view_util.h"
 
+#include <algorithm>
 #include <memory>
+#include <optional>
 
 #include "base/functional/bind.h"
-#include "base/ranges/algorithm.h"
 #include "build/branding_buildflags.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/profiles/profile_avatar_icon_util.h"
@@ -15,6 +16,7 @@
 #include "chrome/browser/ui/views/autofill/payments/dialog_view_ids.h"
 #include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
+#include "components/grit/components_scaled_resources.h"
 #include "components/strings/grit/components_strings.h"
 #include "components/vector_icons/vector_icons.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -24,11 +26,13 @@
 #include "ui/color/color_id.h"
 #include "ui/color/color_provider.h"
 #include "ui/gfx/color_palette.h"
+#include "ui/gfx/geometry/insets.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/gfx/image/image_skia.h"
 #include "ui/gfx/image/image_skia_operations.h"
 #include "ui/gfx/paint_vector_icon.h"
 #include "ui/gfx/text_constants.h"
+#include "ui/native_theme/native_theme.h"
 #include "ui/views/border.h"
 #include "ui/views/controls/image_view.h"
 #include "ui/views/controls/label.h"
@@ -51,13 +55,15 @@ namespace {
 constexpr int kGooglePayLogoWidth = 40;
 #endif
 constexpr int kIconHeight = 16;
+// The size of the icons in the view created by `CreateTextWithIconView()`.
+constexpr int kTextWithIconViewIconSize = 24;
 
 #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
 // kGooglePayLogoIcon is square overall, despite the drawn portion being a
 // rectangular area at the top. CreateTiledImage() will correctly clip it
 // whereas setting the icon size would rescale it incorrectly and keep the
 // bottom empty portion.
-gfx::ImageSkia CreateTiledIcon(const ui::ColorProvider* provider) {
+gfx::ImageSkia CreateTiledGooglePayLogo(const ui::ColorProvider* provider) {
   return gfx::ImageSkiaOperations::CreateTiledImage(
       gfx::CreateVectorIcon(vector_icons::kGooglePayLogoIcon,
                             provider->GetColor(kColorPaymentsGooglePayLogo)),
@@ -72,14 +78,38 @@ std::unique_ptr<views::ImageView> CreateIconView(
 #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
     case TitleWithIconAfterLabelView::Icon::GOOGLE_PAY:
       model = ui::ImageModel::FromImageGenerator(
-          base::BindRepeating(&CreateTiledIcon),
+          base::BindRepeating(&CreateTiledGooglePayLogo),
           gfx::Size(kGooglePayLogoWidth, kIconHeight));
+      break;
+    case TitleWithIconAfterLabelView::Icon::GOOGLE_PAY_AND_AFFIRM:
+      model = ui::ImageModel::FromImageSkia(
+          *ui::ResourceBundle::GetSharedInstance().GetImageSkiaNamed(
+              ui::NativeTheme::GetInstanceForNativeUi()->ShouldUseDarkColors()
+                  ? IDR_AUTOFILL_GOOGLE_PAY_AFFIRM_DARK
+                  : IDR_AUTOFILL_GOOGLE_PAY_AFFIRM));
+      break;
+    case TitleWithIconAfterLabelView::Icon::GOOGLE_PAY_AND_AFTERPAY:
+      model = ui::ImageModel::FromImageSkia(
+          *ui::ResourceBundle::GetSharedInstance().GetImageSkiaNamed(
+              ui::NativeTheme::GetInstanceForNativeUi()->ShouldUseDarkColors()
+                  ? IDR_AUTOFILL_GOOGLE_PAY_AFTERPAY_DARK
+                  : IDR_AUTOFILL_GOOGLE_PAY_AFTERPAY));
+      break;
+    case TitleWithIconAfterLabelView::Icon::GOOGLE_PAY_AND_ZIP:
+      model = ui::ImageModel::FromImageSkia(
+          *ui::ResourceBundle::GetSharedInstance().GetImageSkiaNamed(
+              ui::NativeTheme::GetInstanceForNativeUi()->ShouldUseDarkColors()
+                  ? IDR_AUTOFILL_GOOGLE_PAY_ZIP_DARK
+                  : IDR_AUTOFILL_GOOGLE_PAY_ZIP));
       break;
     case TitleWithIconAfterLabelView::Icon::GOOGLE_G: {
       const gfx::VectorIcon& icon = vector_icons::kGoogleGLogoIcon;
 #else
     case TitleWithIconAfterLabelView::Icon::GOOGLE_PAY:
-    case TitleWithIconAfterLabelView::Icon::GOOGLE_G: {
+    case TitleWithIconAfterLabelView::Icon::GOOGLE_G:
+    case TitleWithIconAfterLabelView::Icon::GOOGLE_PAY_AND_AFFIRM:
+    case TitleWithIconAfterLabelView::Icon::GOOGLE_PAY_AND_AFTERPAY:
+    case TitleWithIconAfterLabelView::Icon::GOOGLE_PAY_AND_ZIP: {
       const gfx::VectorIcon& icon = kCreditCardIcon;
 #endif
       model = ui::ImageModel::FromVectorIcon(icon, ui::kColorIcon, kIconHeight);
@@ -90,6 +120,15 @@ std::unique_ptr<views::ImageView> CreateIconView(
 }
 
 }  // namespace
+
+TextLinkInfo::TextLinkInfo() = default;
+
+TextLinkInfo::TextLinkInfo(const TextLinkInfo& other) = default;
+TextLinkInfo& TextLinkInfo::operator=(const TextLinkInfo& other) = default;
+TextLinkInfo::TextLinkInfo(TextLinkInfo&& other) = default;
+TextLinkInfo& TextLinkInfo::operator=(TextLinkInfo&& other) = default;
+
+TextLinkInfo::~TextLinkInfo() = default;
 
 ui::ImageModel GetProfileAvatar(const AccountInfo& account_info) {
   // Get the user avatar icon.
@@ -125,12 +164,19 @@ TitleWithIconAfterLabelView::TitleWithIconAfterLabelView(
 
   // Center the icon against the first line of the title label. This needs to be
   // done after we create the title label, so that we can use its preferred
-  // size.
+  // size. Depending on which height is larger, the inset will be applied to the
+  // view with the smaller height.
   const int title_label_height =
       title_label->GetPreferredSize(views::SizeBounds(title_label->width(), {}))
           .height();
-  icon_view->SetBorder(views::CreateEmptyBorder(
-      gfx::Insets::TLBR((title_label_height - kIconHeight) / 2, 0, 0, 0)));
+  const int icon_image_height = icon_view->GetImageModel().Size().height();
+  if (title_label_height > icon_image_height) {
+    icon_view->SetBorder(views::CreateEmptyBorder(
+        gfx::Insets().set_top((title_label_height - icon_image_height) / 2)));
+  } else {
+    title_label->SetBorder(views::CreateEmptyBorder(
+        gfx::Insets().set_top((icon_image_height - title_label_height) / 2)));
+  }
 
   // Flex |title_label| to fill up remaining space and tail align the GPay icon.
   SetFlexForView(title_label, 1);
@@ -148,57 +194,6 @@ gfx::Size TitleWithIconAfterLabelView::GetMinimumSize() const {
 }
 
 BEGIN_METADATA(TitleWithIconAfterLabelView)
-END_METADATA
-
-LegalMessageView::LegalMessageView(const LegalMessageLines& legal_message_lines,
-                                   const std::u16string& user_email,
-                                   const ui::ImageModel& user_avatar,
-                                   LinkClickedCallback callback) {
-  SetOrientation(views::BoxLayout::Orientation::kVertical);
-  SetBetweenChildSpacing(ChromeLayoutProvider::Get()->GetDistanceMetric(
-      DISTANCE_RELATED_CONTROL_VERTICAL_SMALL));
-  for (const LegalMessageLine& line : legal_message_lines) {
-    views::StyledLabel* label =
-        AddChildView(std::make_unique<views::StyledLabel>());
-    label->SetText(line.text());
-    label->SetTextContext(CONTEXT_DIALOG_BODY_TEXT_SMALL);
-    label->SetDefaultTextStyle(views::style::STYLE_SECONDARY);
-    for (const LegalMessageLine::Link& link : line.links()) {
-      label->AddStyleRange(link.range,
-                           views::StyledLabel::RangeStyleInfo::CreateForLink(
-                               base::BindRepeating(callback, link.url)));
-    }
-  }
-
-  if (user_email.empty() || user_avatar.IsEmpty()) {
-    return;
-  }
-
-  // Extra child view for user identity information including the avatar and
-  // the email.
-  views::View* user_info_view = AddChildView(std::make_unique<views::View>());
-
-  auto* const user_label_layout =
-      user_info_view->SetLayoutManager(std::make_unique<views::BoxLayout>(
-          views::BoxLayout::Orientation::kHorizontal));
-  user_label_layout->set_between_child_spacing(
-      ChromeLayoutProvider::Get()->GetDistanceMetric(
-          DISTANCE_RELATED_CONTROL_HORIZONTAL_SMALL));
-
-  user_info_view->AddChildView(std::make_unique<views::ImageView>(user_avatar));
-
-  views::Label* email_label =
-      user_info_view->AddChildView(std::make_unique<views::Label>());
-  email_label->SetText(user_email);
-  email_label->SetTextContext(CONTEXT_DIALOG_BODY_TEXT_SMALL);
-  email_label->SetTextStyle(views::style::STYLE_SECONDARY);
-
-  user_info_view->SetID(DialogViewId::USER_INFORMATION_VIEW);
-}
-
-LegalMessageView::~LegalMessageView() = default;
-
-BEGIN_METADATA(LegalMessageView)
 END_METADATA
 
 PaymentsUiClosedReason GetPaymentsUiClosedReasonFromWidget(
@@ -223,33 +218,113 @@ PaymentsUiClosedReason GetPaymentsUiClosedReasonFromWidget(
   }
 }
 
-ProgressBarWithTextView::ProgressBarWithTextView(
+std::unique_ptr<views::View> CreateLegalMessageView(
+    const LegalMessageLines& legal_message_lines,
+    const std::u16string& user_email,
+    const ui::ImageModel& user_avatar,
+    base::RepeatingCallback<void(const GURL&)> callback) {
+  auto result = views::Builder<views::BoxLayoutView>()
+                    .SetOrientation(views::BoxLayout::Orientation::kVertical)
+                    .SetBetweenChildSpacing(
+                        ChromeLayoutProvider::Get()->GetDistanceMetric(
+                            DISTANCE_RELATED_CONTROL_VERTICAL_SMALL))
+                    .Build();
+  for (const LegalMessageLine& line : legal_message_lines) {
+    auto label = views::Builder<views::StyledLabel>()
+                     .SetText(line.text())
+                     .SetTextContext(CONTEXT_DIALOG_BODY_TEXT_SMALL)
+                     .SetDefaultTextStyle(views::style::STYLE_SECONDARY)
+                     .Build();
+    for (const LegalMessageLine::Link& link : line.links()) {
+      label->AddStyleRange(link.range,
+                           views::StyledLabel::RangeStyleInfo::CreateForLink(
+                               base::BindRepeating(callback, link.url)));
+    }
+    result->AddChildView(std::move(label));
+  }
+
+  if (user_email.empty() || user_avatar.IsEmpty()) {
+    return result;
+  }
+
+  // Extra child view for user identity information including the avatar and
+  // the email.
+  result->AddChildView(
+      views::Builder<views::BoxLayoutView>()
+          .SetOrientation(views::BoxLayout::Orientation::kHorizontal)
+          .SetBetweenChildSpacing(
+              ChromeLayoutProvider::Get()->GetDistanceMetric(
+                  DISTANCE_RELATED_CONTROL_HORIZONTAL_SMALL))
+          .SetID(DialogViewId::USER_INFORMATION_VIEW)
+          .AddChildren(views::Builder<views::ImageView>().SetImage(user_avatar),
+                       views::Builder<views::Label>()
+                           .SetText(user_email)
+                           .SetTextContext(CONTEXT_DIALOG_BODY_TEXT_SMALL)
+                           .SetTextStyle(views::style::STYLE_SECONDARY))
+          .Build());
+  return result;
+}
+
+std::unique_ptr<views::View> CreateProgressBarWithTextView(
     const std::u16string& progress_bar_text) {
-  SetOrientation(views::BoxLayout::Orientation::kVertical);
-  SetBetweenChildSpacing(ChromeLayoutProvider::Get()->GetDistanceMetric(
-      views::DISTANCE_RELATED_CONTROL_VERTICAL));
-  SetCrossAxisAlignment(views::BoxLayout::CrossAxisAlignment::kCenter);
-  progress_throbber_ = AddChildView(std::make_unique<views::Throbber>());
-  progress_label_ =
-      AddChildView(std::make_unique<views::Label>(progress_bar_text));
+  views::Throbber* throbber = nullptr;
+  auto result =
+      views::Builder<views::BoxLayoutView>()
+          .SetOrientation(views::BoxLayout::Orientation::kVertical)
+          .SetBetweenChildSpacing(
+              ChromeLayoutProvider::Get()->GetDistanceMetric(
+                  views::DISTANCE_RELATED_CONTROL_VERTICAL))
+          .SetCrossAxisAlignment(views::BoxLayout::CrossAxisAlignment::kCenter)
+          .AddChildren(
+              views::Builder<views::Throbber>().CopyAddressTo(&throbber),
+              views::Builder<views::Label>()
+                  .SetText(progress_bar_text)
+                  .SetEnabledColor(ui::kColorThrobber))
+          .Build();
+  throbber->Start();
+  return result;
 }
 
-ProgressBarWithTextView::~ProgressBarWithTextView() = default;
+std::unique_ptr<views::View> CreateTextWithIconView(
+    const std::u16string& text,
+    std::optional<TextLinkInfo> text_link_info,
+    const gfx::VectorIcon& icon) {
+  ChromeLayoutProvider* chrome_layout_provider = ChromeLayoutProvider::Get();
 
-void ProgressBarWithTextView::OnThemeChanged() {
-  views::View::OnThemeChanged();
+  views::Builder<views::BoxLayoutView> view_builder =
+      views::Builder<views::BoxLayoutView>()
+          .SetOrientation(views::BoxLayout::Orientation::kHorizontal)
+          .SetBetweenChildSpacing(chrome_layout_provider->GetDistanceMetric(
+              views::DISTANCE_RELATED_LABEL_HORIZONTAL))
+          .AddChild(
+              views::Builder<views::ImageView>()
+                  .SetVerticalAlignment(views::ImageView::Alignment::kLeading)
+                  .SetBorder(views::CreateEmptyBorder(
+                      chrome_layout_provider->GetInsetsMetric(
+                          views::INSETS_LABEL_BUTTON)))
+                  .SetImage(ui::ImageModel::FromVectorIcon(
+                      icon, ui::kColorIcon, kTextWithIconViewIconSize)));
 
-  // We need to ensure |progress_label_|'s color matches the color of the
-  // throbber above it.
-  progress_label_->SetEnabledColor(
-      GetColorProvider()->GetColor(ui::kColorThrobber));
+  if (text_link_info.has_value()) {
+    view_builder.AddChild(
+        views::Builder<views::StyledLabel>()
+            .SetTextContext(views::style::CONTEXT_DIALOG_BODY_TEXT)
+            .SetDefaultTextStyle(views::style::STYLE_SECONDARY)
+            .SetText(text)
+            .AddStyleRange(text_link_info->offset,
+                           views::StyledLabel::RangeStyleInfo::CreateForLink(
+                               text_link_info->callback)));
+  } else {
+    view_builder.AddChild(
+        views::Builder<views::Label>()
+            .SetMultiLine(true)
+            .SetHorizontalAlignment(gfx::ALIGN_TO_HEAD)
+            .SetTextContext(views::style::CONTEXT_DIALOG_BODY_TEXT)
+            .SetTextStyle(views::style::STYLE_SECONDARY)
+            .SetText(text));
+  }
+
+  return std::move(view_builder).Build();
 }
-
-void ProgressBarWithTextView::AddedToWidget() {
-  progress_throbber_->Start();
-}
-
-BEGIN_METADATA(ProgressBarWithTextView)
-END_METADATA
 
 }  // namespace autofill

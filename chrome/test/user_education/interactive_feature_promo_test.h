@@ -8,12 +8,15 @@
 #include "base/feature_list.h"
 #include "base/functional/callback_forward.h"
 #include "base/functional/callback_helpers.h"
+#include "chrome/browser/browser_process.h"
 #include "chrome/test/base/in_process_browser_test.h"
 #include "chrome/test/interaction/interactive_browser_test.h"
 #include "chrome/test/user_education/interactive_feature_promo_test_common.h"
 #include "chrome/test/user_education/interactive_feature_promo_test_internal.h"
-#include "components/user_education/common/feature_promo_result.h"
-#include "components/user_education/common/feature_promo_specification.h"
+#include "components/prefs/pref_service.h"
+#include "components/user_education/common/feature_promo/feature_promo_result.h"
+#include "components/user_education/common/feature_promo/feature_promo_specification.h"
+#include "components/webui/chrome_urls/pref_names.h"
 
 // API class that provides both base browser Kombucha functionality and
 // additional logic for testing User Education experiences.
@@ -48,6 +51,9 @@ class InteractiveFeaturePromoTestApi
       InitialSessionState initial_session_state =
           InitialSessionState::kOutsideGracePeriod);
   ~InteractiveFeaturePromoTestApi() override;
+
+  // Changes the controller mode. Call before calling base class `SetUp()`.
+  void SetControllerMode(ControllerMode controller_mode);
 
   // Gets the mock tracker, if the tracker mode is `UseMockTracker`.
   MockTracker* GetMockTrackerFor(Browser* browser);
@@ -100,11 +106,37 @@ class InteractiveFeaturePromoTestApi
 
   // Waits for the given Views promo bubble to be shown and verifies that the
   // correct IPH is active.
+  //
+  // If this step is done `InAnyContext()` it will verify that the promo appears
+  // in at least one browser.
+  //
+  // IMPORTANT USAGE NOTE: if the browser the promo is shown from (by calling
+  // `MaybeShowFeaturePromo()` or using the `MaybeShowPromo()` action in this
+  // test API) is different from the window in which it actually appears, you
+  // MUST use `InAnyContext()` with this step, as otherwise it assumes that both
+  // are in the current/specified context - i.e. the same browser window.
+  // Failing to do so will cause either the check for the bubble or the step
+  // that verifies the correct promo is showing to fail.
+  //
+  // NOTE: the current context is potentially undefined after this step if it
+  // is run `InAnyContext()`; do not follow this step with `InSameContext()` in
+  // that case.
   [[nodiscard]] MultiStep WaitForPromo(const base::Feature& iph_feature);
 
-  // Checks that the promo `iph_feature` is active.
-  [[nodiscard]] StepBuilder CheckPromoIsActive(const base::Feature& iph_feature,
-                                               bool active = true);
+  // Checks that the promo `iph_feature` is has been requested and is either
+  // queued or showing. Does not handle the case where the promo has already
+  // been closed.
+  //
+  // If this step is done `InAnyContext()` it will verify that the promo is
+  // requested in at least one browser (or if `active` is false, that it is not
+  // requested in any browser.)
+  //
+  // NOTE: the current context is potentially undefined after this step if it
+  // is run `InAnyContext()`; do not follow this step with `InSameContext()` in
+  // that case.
+  [[nodiscard]] StepBuilder CheckPromoRequested(
+      const base::Feature& iph_feature,
+      bool requested = true);
 
   // Ends the specified promo via the API, with reason `kAborted`.
   [[nodiscard]] MultiStep AbortPromo(const base::Feature& iph_feature,
@@ -120,6 +152,11 @@ class InteractiveFeaturePromoTestApi
   // --------------------------------------------------------------------------
 
  private:
+  // Shared by CheckPromoRequested and some internal actions.
+  [[nodiscard]] StepBuilder CheckPromoImpl(const base::Feature& iph_feature,
+                                           bool requested,
+                                           bool include_queued);
+
   internal::InteractiveFeaturePromoTestPrivate& test_impl() {
     return static_cast<internal::InteractiveFeaturePromoTestPrivate&>(
         private_test_impl());
@@ -157,9 +194,25 @@ class InteractiveFeaturePromoTestT : public T,
   ~InteractiveFeaturePromoTestT() override = default;
 
  protected:
+  void SetUp() override {
+    static_cast<internal::InteractiveFeaturePromoTestPrivate&>(
+        private_test_impl())
+        .CommitControllerMode();
+    T::SetUp();
+  }
+
+  void TearDown() override {
+    T::TearDown();
+    static_cast<internal::InteractiveFeaturePromoTestPrivate&>(
+        private_test_impl())
+        .ResetControllerMode();
+  }
+
   void SetUpOnMainThread() override {
     T::SetUpOnMainThread();
     private_test_impl().DoTestSetUp();
+    g_browser_process->local_state()->SetBoolean(
+        chrome_urls::kInternalOnlyUisEnabled, true);
     if (Browser* browser = T::browser()) {
       SetContextWidget(
           BrowserView::GetBrowserViewForBrowser(browser)->GetWidget());

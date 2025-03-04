@@ -4,7 +4,8 @@
 
 #include "chrome/test/media_router/media_router_cast_ui_for_test.h"
 
-#include "base/ranges/algorithm.h"
+#include <algorithm>
+
 #include "base/run_loop.h"
 #include "chrome/browser/media/router/media_router_feature.h"
 #include "chrome/browser/ui/media_router/media_router_ui.h"
@@ -23,9 +24,7 @@ MediaRouterCastUiForTest::~MediaRouterCastUiForTest() {
   CHECK(!watch_callback_);
 }
 
-void MediaRouterCastUiForTest::SetUp() {
-  feature_list_.InitAndDisableFeature(kGlobalMediaControlsCastStartStop);
-}
+void MediaRouterCastUiForTest::SetUp() {}
 
 void MediaRouterCastUiForTest::ShowDialog() {
   dialog_controller_->ShowMediaRouterDialog(
@@ -78,7 +77,7 @@ void MediaRouterCastUiForTest::StopCasting(const std::string& sink_name) {
     ClickOnButton(sink_view->stop_button_for_test());
     return;
   }
-  NOTREACHED_IN_MIGRATION() << "No stop button found for sink " << sink_name;
+  NOTREACHED() << "No stop button found for sink " << sink_name;
 }
 
 MediaRoute::Id MediaRouterCastUiForTest::GetRouteIdForSink(
@@ -101,8 +100,7 @@ std::string MediaRouterCastUiForTest::GetIssueTextForSink(
   CastDialogSinkButton* sink_button =
       static_cast<CastDialogSinkButton*>(GetSinkButton(sink_name));
   if (!sink_button->sink().issue) {
-    NOTREACHED_IN_MIGRATION() << "Issue not found for sink " << sink_name;
-    return "";
+    NOTREACHED() << "Issue not found for sink " << sink_name;
   }
   return sink_button->sink().issue->info().title;
 }
@@ -154,7 +152,7 @@ void MediaRouterCastUiForTest::OnDialogModelUpdated(
 
   const std::vector<raw_ptr<CastDialogSinkView, DanglingUntriaged>>&
       sink_views = dialog_view->sink_views_for_test();
-  if (base::ranges::any_of(
+  if (std::ranges::any_of(
           sink_views, [&, this](CastDialogSinkView* sink_view) {
             switch (watch_type_) {
               case WatchType::kSink:
@@ -172,8 +170,7 @@ void MediaRouterCastUiForTest::OnDialogModelUpdated(
               case WatchType::kNone:
               case WatchType::kDialogShown:
               case WatchType::kDialogHidden:
-                NOTREACHED_IN_MIGRATION() << "Invalid WatchType";
-                return false;
+                NOTREACHED() << "Invalid WatchType";
             }
           })) {
     std::move(*watch_callback_).Run();
@@ -237,13 +234,12 @@ CastDialogSinkView* MediaRouterCastUiForTest::GetSinkView(
   CHECK(dialog_view);
   const std::vector<raw_ptr<CastDialogSinkView, DanglingUntriaged>>&
       sink_views = dialog_view->sink_views_for_test();
-  auto it = base::ranges::find(sink_views, base::UTF8ToUTF16(sink_name),
-                               [](CastDialogSinkView* sink_view) {
-                                 return sink_view->sink().friendly_name;
-                               });
+  auto it = std::ranges::find(sink_views, base::UTF8ToUTF16(sink_name),
+                              [](CastDialogSinkView* sink_view) {
+                                return sink_view->sink().friendly_name;
+                              });
   if (it == sink_views.end()) {
-    NOTREACHED_IN_MIGRATION() << "Sink view not found for sink: " << sink_name;
-    return nullptr;
+    NOTREACHED() << "Sink view not found for sink: " << sink_name;
   } else {
     return it->get();
   }

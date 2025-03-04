@@ -11,19 +11,19 @@
 
 namespace ash {
 
-class ASH_EXPORT MockPickerSearchResultsViewDelegate
-    : public PickerSearchResultsViewDelegate {
+class ASH_EXPORT MockQuickInsertSearchResultsViewDelegate
+    : public QuickInsertSearchResultsViewDelegate {
  public:
-  MockPickerSearchResultsViewDelegate();
-  ~MockPickerSearchResultsViewDelegate();
+  MockQuickInsertSearchResultsViewDelegate();
+  ~MockQuickInsertSearchResultsViewDelegate();
 
-  MOCK_METHOD(void, SelectMoreResults, (PickerSectionType), (override));
+  MOCK_METHOD(void, SelectMoreResults, (QuickInsertSectionType), (override));
   MOCK_METHOD(void,
               SelectSearchResult,
               (const QuickInsertSearchResult&),
               (override));
   MOCK_METHOD(void, RequestPseudoFocus, (views::View*), (override));
-  MOCK_METHOD(PickerActionType,
+  MOCK_METHOD(QuickInsertActionType,
               GetActionForResult,
               (const QuickInsertSearchResult& result),
               (override));

@@ -8,6 +8,10 @@
 #include "base/feature_list.h"
 #include "base/metrics/field_trial_params.h"
 
+#if BUILDFLAG(IS_IOS)
+#include "components/sync/base/ios_cpe_passkey_buildflag.h"
+#endif  // BUILDFLAG(IS_IOS)
+
 namespace syncer {
 
 // Customizes the delay of a deferred sync startup.
@@ -20,6 +24,9 @@ inline constexpr base::FeatureParam<int>
     kDeferredSyncStartupCustomDelayInSeconds{
         &kDeferredSyncStartupCustomDelay,
         "DeferredSyncStartupCustomDelayInSeconds", 1};
+
+// Enables syncing of Loyalty Cards coming from Google Wallet.
+BASE_DECLARE_FEATURE(kSyncAutofillLoyaltyCard);
 
 #if BUILDFLAG(IS_ANDROID)
 // Controls whether to show a batch upload card in Android unified settings
@@ -34,26 +41,12 @@ BASE_DECLARE_FEATURE(kEnableBatchUploadFromSettings);
 BASE_DECLARE_FEATURE(kUnoPhase2FollowUp);
 #endif  // BUILDFLAG(IS_ANDROID)
 
-// Controls whether to enable syncing of Autofill Wallet Usage Data.
-BASE_DECLARE_FEATURE(kSyncAutofillWalletUsageData);
-
 // Controls whether to enable syncing of Autofill Wallet Credential Data.
 BASE_DECLARE_FEATURE(kSyncAutofillWalletCredentialData);
 
-// Controls if the `PlusAddressSettingSyncBridge`, controlling
-// PLUS_ADDRESS_SETTING should be instantiated.
-// TODO(b/342089839): Cleanup when launched.
-BASE_DECLARE_FEATURE(kSyncPlusAddressSetting);
-
 #if BUILDFLAG(IS_CHROMEOS)
-// Whether explicit passphrase sharing between Ash and Lacros is enabled.
-BASE_DECLARE_FEATURE(kSyncChromeOSExplicitPassphraseSharing);
-
 // Whether Apps toggle value is exposed by Ash to Lacros.
 BASE_DECLARE_FEATURE(kSyncChromeOSAppsToggleSharing);
-
-// Whether SyncedSessions are updated by Lacros to Ash.
-BASE_DECLARE_FEATURE(kChromeOSSyncedSessionSharing);
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 // When enabled, optimization flags (single client and a list of FCM
@@ -61,7 +54,6 @@ BASE_DECLARE_FEATURE(kChromeOSSyncedSessionSharing);
 // DeviceInfo has been updated.
 BASE_DECLARE_FEATURE(kSkipInvalidationOptimizationsWhenDeviceInfoUpdated);
 
-BASE_DECLARE_FEATURE(kSyncEnableContactInfoDataTypeInTransportMode);
 BASE_DECLARE_FEATURE(kSyncEnableContactInfoDataTypeForCustomPassphraseUsers);
 BASE_DECLARE_FEATURE(kSyncEnableContactInfoDataTypeForDasherUsers);
 
@@ -74,23 +66,24 @@ BASE_DECLARE_FEATURE(kSyncEnableContactInfoDataTypeForDasherUsers);
 // - The account store is synced. When the flag is disabled, the profile one is.
 BASE_DECLARE_FEATURE(kEnablePasswordsAccountStorageForSyncingUsers);
 
-// Enables a separate account-scoped storage for preferences, for syncing users.
-// (Note that opposed to other "account storage" features, this one does not
-// have any effect for signed-in non-syncing users!)
-BASE_DECLARE_FEATURE(kEnablePreferencesAccountStorage);
-
-#if !BUILDFLAG(IS_ANDROID)
-// Enables syncing the WEBAUTHN_CREDENTIAL data type.
-// Enabled by default on M123. Remove on or after M126 on all platforms,
-// except on iOS, where it has not been enabled by default yet.
-BASE_DECLARE_FEATURE(kSyncWebauthnCredentials);
-#endif  // !BUILDFLAG(IS_ANDROID)
-
-// If enabled, ignore GetUpdates retry delay command from the server.
-BASE_DECLARE_FEATURE(kSyncIgnoreGetUpdatesRetryDelay);
+#if BUILDFLAG(IS_IOS)
+// On iOS, Webauthn Credential Sync is controlled by a build-time flag, because
+// these capabilities are linked to the Credential Provider Extension and must
+// be declared in its Info.plist (manifest).
+constexpr bool IsWebauthnCredentialSyncEnabled() {
+#if BUILDFLAG(IOS_PASSKEYS_ENABLED)
+  return true;
+#else
+  return false;
+#endif  // !BUILDFLAG(IOS_PASSKEYS_ENABLED)
+}
+#endif  // BUILDFLAG(IS_IOS)
 
 // Wrapper flag to control the nudge delay of the #tab-groups-save feature.
 BASE_DECLARE_FEATURE(kTabGroupsSaveNudgeDelay);
+
+// If enabled, keeps local and account search engines separate.
+BASE_DECLARE_FEATURE(kSeparateLocalAndAccountSearchEngines);
 
 // If provided, changes the amount of time before we send messages to the sync
 // service.
@@ -102,13 +95,6 @@ inline constexpr base::FeatureParam<base::TimeDelta>
 // Feature flag to replace all sync-related UI with sign-in ones.
 BASE_DECLARE_FEATURE(kReplaceSyncPromosWithSignInPromos);
 
-// This gates the new single-model approach where account bookmarks are stored
-// in separate permanent folders in BookmarkModel. The flag has to be in the
-// sync namespace as it controls whether BOOKMARKS datatype is enabled in the
-// transport mode.
-// TODO(crbug.com/40943550): Remove this.
-BASE_DECLARE_FEATURE(kSyncEnableBookmarksInTransportMode);
-
 // Normally, if kReplaceSyncPromosWithSignInPromos is disabled,
 // UserSelectableType::kBookmarks is disabled by default upon sign-in. This
 // flag makes the type enabled by default, for manual testing.
@@ -116,7 +102,7 @@ BASE_DECLARE_FEATURE(kEnableBookmarksSelectedTypeOnSigninForTesting);
 
 // Feature flag used for enabling sync (transport mode) for signed-in users that
 // haven't turned on full sync.
-#if !BUILDFLAG(IS_IOS)
+#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)
 BASE_DECLARE_FEATURE(kReadingListEnableSyncTransportModeUponSignIn);
 // Returns whether reading list storage related UI can be enabled, by testing
 // `kReadingListEnableSyncTransportModeUponSignIn`.
@@ -125,7 +111,7 @@ bool IsReadingListAccountStorageEnabled();
 constexpr bool IsReadingListAccountStorageEnabled() {
   return true;
 }
-#endif  // !BUILDFLAG(IS_IOS)
+#endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)
 
 // Flag to allow SHARED_TAB_GROUP_DATA to run in transport mode.
 BASE_DECLARE_FEATURE(kSyncSharedTabGroupDataInTransportMode);
@@ -134,9 +120,6 @@ BASE_DECLARE_FEATURE(kSyncSharedTabGroupDataInTransportMode);
 // respectively, to run in transport mode.
 BASE_DECLARE_FEATURE(kSyncEnableWalletMetadataInTransportMode);
 BASE_DECLARE_FEATURE(kSyncEnableWalletOfferInTransportMode);
-
-// Flag to enable setting `deleted_by_version` on a `EntityMetadata`.
-BASE_DECLARE_FEATURE(kSyncEntityMetadataRecordDeletedByVersionOnLocalDeletion);
 
 // Flag to enable clean up of password deletions that may be unintentional.
 BASE_DECLARE_FEATURE(kSyncPasswordCleanUpAccidentalBatchDeletions);
@@ -157,8 +140,17 @@ inline constexpr base::FeatureParam<base::TimeDelta>
 // sync metadata isn't available (i.e. initial sync never completed).
 BASE_DECLARE_FEATURE(kSyncAlwaysForceImmediateStartIfTransportDataMissing);
 
+#if BUILDFLAG(IS_IOS) || BUILDFLAG(IS_ANDROID)
+// If enabled, holds the account preference values under a dictionary in the
+// main preferences file.
+BASE_DECLARE_FEATURE(kMigrateAccountPrefs);
+#endif  // BUILDFLAG(IS_IOS) || BUILDFLAG(IS_ANDROID)
+
 // If enabled, distinguishes between local and account themes.
 BASE_DECLARE_FEATURE(kSeparateLocalAndAccountThemes);
+
+// If enabled, offers batch upload of local themes upon sign in.
+BASE_DECLARE_FEATURE(kThemesBatchUpload);
 
 // If enabled, the local change nudge delays for single-client users are
 // increased by some factor, specified via the FeatureParam below.
@@ -169,10 +161,6 @@ inline constexpr base::FeatureParam<double>
         &kSyncIncreaseNudgeDelayForSingleClient,
         "SyncIncreaseNudgeDelayForSingleClientFactor", 2.0};
 
-// Guards the registration of synthetic field trials based on information in
-// Nigori's TrustedVaultDebugInfo.
-BASE_DECLARE_FEATURE(kTrustedVaultAutoUpgradeSyntheticFieldTrial);
-
 // If enabled, uses new fields ThemeSpecifics to replace theme prefs, thus
 // avoiding use of preferences to sync themes.
 BASE_DECLARE_FEATURE(kMoveThemePrefsToSpecifics);
@@ -182,9 +170,21 @@ BASE_DECLARE_FEATURE(kMoveThemePrefsToSpecifics);
 BASE_DECLARE_FEATURE(kWebApkBackupAndRestoreBackend);
 #endif  // BUILDFLAG(IS_ANDROID)
 
-// Enables syncing for extensions when in transport mode (when a user is signed
-// in but has not turned on full sync).
-BASE_DECLARE_FEATURE(kSyncEnableExtensionsInTransportMode);
+#if BUILDFLAG(IS_ANDROID)
+// Flag to test different alternatives for the passwords sync error message
+// content.
+BASE_DECLARE_FEATURE(kSyncEnablePasswordsSyncErrorMessageAlternative);
+inline constexpr base::FeatureParam<int>
+    kSyncEnablePasswordsSyncErrorMessageAlternativeVersion{
+        &kSyncEnablePasswordsSyncErrorMessageAlternative, "version", 1};
+#endif  // BUILDFLAG(IS_ANDROID)
+
+// Test-only flag to simulate a ping-pong behavior for bookmarks: two clients
+// sync-ing to the same account, using a different value for this flag, will
+// produce an active ping-pong, where one of them will try to clear the
+// `unique_position` field in BookmarkSpecifics, whereas the other one will try
+// to ensure it is populated.
+BASE_DECLARE_FEATURE(kSyncSimulateBookmarksPingPongForTesting);
 
 }  // namespace syncer
 

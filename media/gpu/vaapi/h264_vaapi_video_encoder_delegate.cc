@@ -219,7 +219,6 @@ std::optional<H264RateControlConfigRTC> CreateRateControlConfig(
   rc_cfg.num_temporal_layers = num_temporal_layers;
   // Type of the video content (camera or display).
   rc_cfg.content_type = encode_params.content_type;
-  rc_cfg.fixed_delta_qp = false;
   rc_cfg.ease_hrd_reduction = true;
 
   // Fill temporal layers variables.
@@ -485,6 +484,11 @@ std::vector<gfx::Size> H264VaapiVideoEncoderDelegate::GetSVCLayerResolutions() {
 
 bool H264VaapiVideoEncoderDelegate::UseSoftwareRateController(
     const VideoEncodeAccelerator::Config& config) {
+  // Software bitrate controller is not supported on AMD backend,
+  // crbug.com/365106092.
+  const bool is_sw_bitrate_controller_supported =
+      VaapiWrapper::GetImplementationType() != VAImplementation::kMesaGallium;
+
   uint8_t num_temporal_layers = 1;
   if (config.HasTemporalLayer()) {
     DCHECK(!config.spatial_layers.empty());
@@ -496,8 +500,12 @@ bool H264VaapiVideoEncoderDelegate::UseSoftwareRateController(
 #else
       false;
 #endif  // BUILDFLAG(IS_CHROMEOS)
-  return num_temporal_layers <= kMaxSupportedH264TemporalLayersBySWBRC &&
-         is_sw_bitrate_controller_enabled;
+  const bool is_constant_bitrate_mode =
+      config.bitrate.mode() == Bitrate::Mode::kConstant;
+
+  return is_sw_bitrate_controller_supported &&
+         num_temporal_layers <= kMaxSupportedH264TemporalLayersBySWBRC &&
+         is_sw_bitrate_controller_enabled && is_constant_bitrate_mode;
 }
 
 BitstreamBufferMetadata H264VaapiVideoEncoderDelegate::GetMetadata(
@@ -768,8 +776,7 @@ void H264VaapiVideoEncoderDelegate::UpdateSPS() {
       current_sps_.cbr_flag[0] = false;
       break;
     case Bitrate::Mode::kExternal:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
   current_sps_.initial_cpb_removal_delay_length_minus_1 =
       H264SPS::kDefaultInitialCPBRemovalDelayLength - 1;
@@ -933,15 +940,15 @@ bool H264VaapiVideoEncoderDelegate::SubmitFrameParameters(
     // we use the peak, because it exists for variable bitrates.
     bitrate_bps = bitrate.peak_bps();
     DCHECK_NE(bitrate.peak_bps(), 0u);
-    base::CheckedNumeric<uint32_t> checked_percentage =
-        base::CheckDiv(base::CheckMul<uint32_t>(bitrate.target_bps(), 100u),
+    base::CheckedNumeric<uint64_t> checked_percentage =
+        base::CheckDiv(base::CheckMul<uint64_t>(bitrate.target_bps(), 100u),
                        bitrate.peak_bps());
     if (!checked_percentage.AssignIfValid(&target_percentage)) {
       DVLOGF(1)
           << "Integer overflow while computing target percentage for bitrate.";
       return false;
     }
-    target_percentage = checked_percentage.ValueOrDefault(100u);
+    DVLOGF(3) << "Target percentage: " << target_percentage;
   }
   VAEncSequenceParameterBufferH264 seq_param = {};
 
@@ -1099,7 +1106,7 @@ bool H264VaapiVideoEncoderDelegate::SubmitFrameParameters(
                           &packed_slice_param_buffer});
     va_buffers.push_back({VAEncPackedHeaderDataBufferType,
                           packed_slice_header.BytesInBuffer(),
-                          packed_slice_header.data()});
+                          packed_slice_header.data().data()});
   }
 
   return vaapi_wrapper_->SubmitBuffers(va_buffers);
@@ -1123,11 +1130,11 @@ bool H264VaapiVideoEncoderDelegate::SubmitPackedHeaders(
       {{VAEncPackedHeaderParameterBufferType, sizeof(packed_sps_param),
         &packed_sps_param},
        {VAEncPackedHeaderDataBufferType, packed_sps.BytesInBuffer(),
-        packed_sps.data()},
+        packed_sps.data().data()},
        {VAEncPackedHeaderParameterBufferType, sizeof(packed_pps_param),
         &packed_pps_param},
        {VAEncPackedHeaderDataBufferType, packed_pps.BytesInBuffer(),
-        packed_pps.data()}});
+        packed_pps.data().data()}});
 }
 
 void H264VaapiVideoEncoderDelegate::BitrateControlUpdate(

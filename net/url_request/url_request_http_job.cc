@@ -16,7 +16,6 @@
 #include "base/check_op.h"
 #include "base/command_line.h"
 #include "base/compiler_specific.h"
-#include "base/containers/adapters.h"
 #include "base/feature_list.h"
 #include "base/file_version_info.h"
 #include "base/functional/bind.h"
@@ -25,7 +24,6 @@
 #include "base/memory/ptr_util.h"
 #include "base/metrics/field_trial.h"
 #include "base/metrics/histogram_functions.h"
-#include "base/metrics/histogram_functions_internal_overloads.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/notreached.h"
 #include "base/numerics/safe_conversions.h"
@@ -63,11 +61,9 @@
 #include "net/cookies/cookie_store.h"
 #include "net/cookies/cookie_util.h"
 #include "net/cookies/parsed_cookie.h"
-#include "net/filter/brotli_source_stream.h"
 #include "net/filter/filter_source_stream.h"
-#include "net/filter/gzip_source_stream.h"
 #include "net/filter/source_stream.h"
-#include "net/filter/zstd_source_stream.h"
+#include "net/filter/source_stream_type.h"
 #include "net/first_party_sets/first_party_set_entry.h"
 #include "net/first_party_sets/first_party_set_metadata.h"
 #include "net/first_party_sets/first_party_sets_cache_filter.h"
@@ -251,6 +247,23 @@ enum class ContentEncodingType {
   kMaxValue = kZstd,
 };
 
+ContentEncodingType ToContentEncodingType(net::SourceStreamType type) {
+  switch (type) {
+    case net::SourceStreamType::kBrotli:
+      return ContentEncodingType::kBrotli;
+    case net::SourceStreamType::kDeflate:
+      return ContentEncodingType::kDeflate;
+    case net::SourceStreamType::kGzip:
+      return ContentEncodingType::kGZip;
+    case net::SourceStreamType::kZstd:
+      return ContentEncodingType::kZstd;
+    case net::SourceStreamType::kUnknown:
+      return ContentEncodingType::kUnknown;
+    case net::SourceStreamType::kNone:
+      return ContentEncodingType::kUnknown;
+  }
+}
+
 // These values are persisted to logs. Entries should not be renumbered and
 // numeric values should never be reused.
 enum class HttpRequestStsState {
@@ -329,18 +342,6 @@ void RecordSTSHistograms(net::SSLUpgradeDecision upgrade_decision,
       GetMetricForSSLUpgradeDecision(upgrade_decision, is_secure));
 }
 
-char const* GetSecFetchStorageAccessHeaderValue(
-    net::cookie_util::StorageAccessStatus storage_access_status) {
-  switch (storage_access_status) {
-    case net::cookie_util::StorageAccessStatus::kInactive:
-      return "inactive";
-    case net::cookie_util::StorageAccessStatus::kActive:
-      return "active";
-    case net::cookie_util::StorageAccessStatus::kNone:
-      return "none";
-  }
-}
-
 }  // namespace
 
 namespace net {
@@ -355,8 +356,11 @@ std::unique_ptr<URLRequestJob> URLRequestHttpJob::Create(URLRequest* request) {
   SSLUpgradeDecision upgrade_decision = SSLUpgradeDecision::kNoUpgrade;
   if (TransportSecurityState* hsts =
           request->context()->transport_security_state()) {
-    upgrade_decision =
-        hsts->GetSSLUpgradeDecision(url.host(), request->net_log());
+    upgrade_decision = hsts->GetSSLUpgradeDecision(
+        url.host(),
+        /*is_top_level_nav=*/
+        request->isolation_info().IsOutermostMainFrameRequest(),
+        request->net_log());
   }
 
   // Check for reasons not to return a URLRequestHttpJob. These don't apply to
@@ -481,15 +485,6 @@ bool ShouldBlockAllCookies(PrivacyMode privacy_mode) {
 
 }  // namespace
 
-void URLRequestHttpJob::MaybeSetSecFetchStorageAccessHeader() {
-  if (request_->storage_access_status()) {
-    request_info_.extra_headers.SetHeader(
-        HttpRequestHeaders::kSecFetchStorageAccess,
-        GetSecFetchStorageAccessHeaderValue(
-            request_->storage_access_status().value()));
-  }
-}
-
 void URLRequestHttpJob::OnGotFirstPartySetMetadata(
     FirstPartySetMetadata first_party_set_metadata,
     FirstPartySetsCacheFilter::MatchInfo match_info) {
@@ -598,8 +593,7 @@ PrivacyMode URLRequestHttpJob::DeterminePrivacyMode() const {
     case NetworkDelegate::PrivacySetting::kStateDisallowed:
       return PRIVACY_MODE_ENABLED;
   }
-  NOTREACHED_IN_MIGRATION();
-  return PRIVACY_MODE_ENABLED;
+  NOTREACHED();
 }
 
 void URLRequestHttpJob::NotifyHeadersComplete() {
@@ -791,7 +785,6 @@ void URLRequestHttpJob::AddExtraHeaders() {
           accept_language);
     }
   }
-  MaybeSetSecFetchStorageAccessHeader();
 }
 
 void URLRequestHttpJob::AddCookieHeaderAndStart() {
@@ -846,7 +839,7 @@ void URLRequestHttpJob::SetCookieHeaderAndStart(
     maybe_included_cookies.clear();
     for (auto& cookie : excluded_cookies) {
       cookie.access_result.status.AddExclusionReason(
-          CookieInclusionStatus::EXCLUDE_USER_PREFERENCES);
+          CookieInclusionStatus::ExclusionReason::EXCLUDE_USER_PREFERENCES);
     }
   } else {
     // Consult the delegate to ensure that they have the correct exclusion
@@ -952,6 +945,42 @@ void URLRequestHttpJob::SetCookieHeaderAndStart(
 
   request_->set_maybe_sent_cookies(std::move(maybe_sent_cookies));
 
+#if BUILDFLAG(ENABLE_DEVICE_BOUND_SESSIONS)
+  // Check if the right device bound cookies are set for the request, see
+  // https://wicg.github.io/dbsc/ for specification.
+  device_bound_sessions::SessionService* service =
+      request_->context()->device_bound_session_service();
+  if (service) {
+    std::optional<device_bound_sessions::SessionService::DeferralParams>
+        deferral = service->ShouldDefer(request_, first_party_set_metadata_);
+    // If the request needs to be deferred while waiting for refresh, do not
+    // start the transaction at this time. This may also kick off a refresh.
+    if (deferral) {
+      device_bound_session_deferral_count_++;
+      if (device_bound_session_deferral_count_ == 1) {
+        device_bound_session_first_deferral_ = base::TimeTicks::Now();
+      }
+      service->DeferRequestForRefresh(
+          request_, *deferral,
+          // restart with new cookies callback
+          base::BindOnce(&URLRequestHttpJob::RestartTransactionForRefresh,
+                         weak_factory_.GetWeakPtr()),
+          // continue callback
+          base::BindOnce(&URLRequestHttpJob::StartTransaction,
+                         weak_factory_.GetWeakPtr()));
+      return;
+    }
+
+    base::UmaHistogramCounts100("Net.DeviceBoundSessions.RequestDeferralCount",
+                                device_bound_session_deferral_count_);
+    if (device_bound_session_deferral_count_ > 0) {
+      base::UmaHistogramTimes(
+          "Net.DeviceBoundSessions.TotalRequestDeferredDuration",
+          base::TimeTicks::Now() - device_bound_session_first_deferral_);
+    }
+  }
+#endif  // BUILDFLAG(ENABLE_DEVICE_BOUND_SESSIONS)
+
   StartTransaction();
 }
 
@@ -1003,8 +1032,9 @@ void URLRequestHttpJob::SaveCookiesAndNotifyHeadersComplete(int result) {
   // If we're clearing the cookies as part of a clear-site-data header we must
   // not also write new ones in the same response.
   bool clear_site_data_prevents_cookies_from_being_stored = false;
-  std::string clear_site_data_header;
-  headers->GetNormalizedHeader(kClearSiteDataHeader, &clear_site_data_header);
+  std::string clear_site_data_header =
+      headers->GetNormalizedHeader(kClearSiteDataHeader)
+          .value_or(std::string());
   std::vector<std::string> clear_site_data_types =
       ClearSiteDataHeaderContents(clear_site_data_header);
   std::set<std::string> clear_site_data_set(clear_site_data_types.begin(),
@@ -1078,12 +1108,13 @@ void URLRequestHttpJob::SaveCookiesAndNotifyHeadersComplete(int result) {
       // in this case.
       if (returned_status.IsInclude()) {
         returned_status.AddExclusionReason(
-            net::CookieInclusionStatus::EXCLUDE_USER_PREFERENCES);
+            net::CookieInclusionStatus::ExclusionReason::
+                EXCLUDE_USER_PREFERENCES);
       }
     }
     if (clear_site_data_prevents_cookies_from_being_stored) {
       returned_status.AddExclusionReason(
-          CookieInclusionStatus::EXCLUDE_FAILURE_TO_STORE);
+          CookieInclusionStatus::ExclusionReason::EXCLUDE_FAILURE_TO_STORE);
     }
     if (!returned_status.IsInclude()) {
       OnSetCookieResult(options, cookie_to_return, std::move(cookie_string),
@@ -1115,7 +1146,8 @@ void URLRequestHttpJob::OnSetCookieResult(const CookieOptions& options,
         NetLogEventType::COOKIE_INCLUSION_STATUS,
         [&](NetLogCaptureMode capture_mode) {
           return CookieInclusionStatusNetLogParams(
-              "store", cookie ? cookie.value().Name() : "",
+              cookie && cookie->IsExpired(base::Time::Now()) ? "expire" : "store",
+              cookie ? cookie.value().Name() : "",
               cookie ? cookie.value().Domain() : "",
               cookie ? cookie.value().Path() : "",
               cookie ? cookie.value().PartitionKey() : std::nullopt,
@@ -1143,20 +1175,31 @@ void URLRequestHttpJob::ProcessDeviceBoundSessionsHeader() {
     return;
   }
 
+  // If response header Sec-Session-Registration is present and configured
+  // appropriately, trigger a registration request per header value to attempt
+  // to create a new session.
   const auto& request_url = request_->url();
   auto* headers = GetResponseHeaders();
   std::vector<device_bound_sessions::RegistrationFetcherParam> params =
       device_bound_sessions::RegistrationFetcherParam::CreateIfValid(
           request_url, headers);
   for (auto& param : params) {
-    service->RegisterBoundSession(std::move(param), request_->isolation_info());
+    service->RegisterBoundSession(
+        request_->device_bound_session_access_callback(), std::move(param),
+        request_->isolation_info(), request_->net_log(), request_->initiator());
   }
 
+  // If response header Sec-Session-Challenge is present and configured
+  // appropriately, for each header value, store the challenge in advance for
+  // the next relevant refresh request that gets triggered. This is to help
+  // avoid a round-trip for when the next refresh request is required.
   std::vector<device_bound_sessions::SessionChallengeParam> challenge_params =
       device_bound_sessions::SessionChallengeParam::CreateIfValid(request_url,
                                                                   headers);
   for (auto& param : challenge_params) {
-    service->SetChallengeForBoundSession(request_url, std::move(param));
+    service->SetChallengeForBoundSession(
+        request_->device_bound_session_access_callback(), request_url,
+        std::move(param));
   }
 }
 #endif  // BUILDFLAG(ENABLE_DEVICE_BOUND_SESSIONS)
@@ -1177,6 +1220,12 @@ void URLRequestHttpJob::ProcessStrictTransportSecurityHeader() {
   // Don't accept HSTS headers when the hostname is an IP address.
   if (request_info_.url.HostIsIPAddress())
     return;
+
+  // Don't accept HSTS headers for localhost. (crbug.com/41251622)
+  if (net::IsLocalHostname(request_info_.url.host()) &&
+      base::FeatureList::IsEnabled(features::kIgnoreHSTSForLocalhost)) {
+    return;
+  }
 
   // http://tools.ietf.org/html/draft-ietf-websec-strict-transport-sec:
   //
@@ -1320,18 +1369,13 @@ void URLRequestHttpJob::OnReadCompleted(int result) {
   ReadRawDataComplete(result);
 }
 
-void URLRequestHttpJob::RestartTransactionWithAuth(
-    const AuthCredentials& credentials) {
+void URLRequestHttpJob::RestartTransaction() {
   DCHECK(!override_response_info_);
-
-  auth_credentials_ = credentials;
 
   // These will be reset in OnStartCompleted.
   response_info_ = nullptr;
   override_response_headers_ = nullptr;  // See https://crbug.com/801237.
   receive_headers_end_ = base::TimeTicks();
-
-  ResetTimer();
 
   // Update the cookies, since the cookie store may have been updated from the
   // headers in the 401/407. Since cookies were already appended to
@@ -1351,6 +1395,17 @@ void URLRequestHttpJob::RestartTransactionWithAuth(
   } else {
     StartTransaction();
   }
+}
+
+void URLRequestHttpJob::RestartTransactionForRefresh() {
+  RestartTransaction();
+}
+
+void URLRequestHttpJob::RestartTransactionWithAuth(
+    const AuthCredentials& credentials) {
+  auth_credentials_ = credentials;
+  ResetTimer();
+  RestartTransaction();
 }
 
 void URLRequestHttpJob::SetUpload(UploadDataStream* upload) {
@@ -1449,71 +1504,17 @@ std::unique_ptr<SourceStream> URLRequestHttpJob::SetUpSourceStream() {
 
   std::unique_ptr<SourceStream> upstream = URLRequestJob::SetUpSourceStream();
   HttpResponseHeaders* headers = GetResponseHeaders();
-  std::vector<SourceStream::SourceType> types;
-  size_t iter = 0;
-  while (std::optional<std::string_view> type =
-             headers->EnumerateHeader(&iter, "Content-Encoding")) {
-    SourceStream::SourceType source_type =
-        FilterSourceStream::ParseEncodingType(*type);
-    switch (source_type) {
-      case SourceStream::TYPE_BROTLI:
-      case SourceStream::TYPE_DEFLATE:
-      case SourceStream::TYPE_GZIP:
-      case SourceStream::TYPE_ZSTD:
-        if (request_->accepted_stream_types() &&
-            !request_->accepted_stream_types()->contains(source_type)) {
-          // If the source type is disabled, we treat it
-          // in the same way as SourceStream::TYPE_UNKNOWN.
-          return upstream;
-        }
-        types.push_back(source_type);
-        break;
-      case SourceStream::TYPE_NONE:
-        // Identity encoding type. Pass through raw response body.
-        return upstream;
-      case SourceStream::TYPE_UNKNOWN:
-        // Unknown encoding type. Pass through raw response body.
-        // Request will not be canceled; though
-        // it is expected that user will see malformed / garbage response.
-        return upstream;
-    }
-  }
-
-  ContentEncodingType content_encoding_type = ContentEncodingType::kUnknown;
-
-  for (const auto& type : base::Reversed(types)) {
-    std::unique_ptr<FilterSourceStream> downstream;
-    switch (type) {
-      case SourceStream::TYPE_BROTLI:
-        downstream = CreateBrotliSourceStream(std::move(upstream));
-        content_encoding_type = ContentEncodingType::kBrotli;
-        break;
-      case SourceStream::TYPE_GZIP:
-      case SourceStream::TYPE_DEFLATE:
-        downstream = GzipSourceStream::Create(std::move(upstream), type);
-        content_encoding_type = type == SourceStream::TYPE_GZIP
-                                    ? ContentEncodingType::kGZip
-                                    : ContentEncodingType::kDeflate;
-        break;
-      case SourceStream::TYPE_ZSTD:
-        downstream = CreateZstdSourceStream(std::move(upstream));
-        content_encoding_type = ContentEncodingType::kZstd;
-        break;
-      case SourceStream::TYPE_NONE:
-      case SourceStream::TYPE_UNKNOWN:
-        NOTREACHED_IN_MIGRATION();
-        return nullptr;
-    }
-    if (downstream == nullptr)
-      return nullptr;
-    upstream = std::move(downstream);
-  }
-
+  const std::vector<SourceStreamType> types =
+      FilterSourceStream::GetContentEncodingTypes(
+          request_->accepted_stream_types(), *headers);
   // Note: If multiple encoding types were specified, this only records the last
   // encoding type.
-  UMA_HISTOGRAM_ENUMERATION("Net.ContentEncodingType", content_encoding_type);
-
-  return upstream;
+  UMA_HISTOGRAM_ENUMERATION(
+      "Net.ContentEncodingType2",
+      ToContentEncodingType(types.empty() ? SourceStreamType::kNone
+                                          : types[0]));
+  return FilterSourceStream::CreateDecodingSourceStream(std::move(upstream),
+                                                        types);
 }
 
 bool URLRequestHttpJob::CopyFragmentOnRedirect(const GURL& location) const {
@@ -1815,9 +1816,8 @@ IPEndPoint URLRequestHttpJob::GetResponseRemoteEndpoint() const {
 
 void URLRequestHttpJob::RecordTimer() {
   if (request_creation_time_.is_null()) {
-    NOTREACHED_IN_MIGRATION()
+    NOTREACHED()
         << "The same transaction shouldn't start twice without new timing.";
-    return;
   }
 
   base::TimeDelta to_start = base::Time::Now() - request_creation_time_;
@@ -1844,8 +1844,7 @@ void URLRequestHttpJob::RecordTimer() {
 
 void URLRequestHttpJob::ResetTimer() {
   if (!request_creation_time_.is_null()) {
-    NOTREACHED_IN_MIGRATION() << "The timer was reset before it was recorded.";
-    return;
+    NOTREACHED() << "The timer was reset before it was recorded.";
   }
   request_creation_time_ = base::Time::Now();
 }

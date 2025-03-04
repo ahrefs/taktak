@@ -64,10 +64,16 @@ int ToGestureEventType(WebInputEvent::Type type) {
       return ui::GESTURE_EVENT_TYPE_PINCH_BY;
     case WebInputEvent::Type::kGestureTwoFingerTap:
     default:
-      NOTREACHED_IN_MIGRATION()
-          << "Invalid source gesture type: " << WebInputEvent::GetName(type);
-      return -1;
+      NOTREACHED() << "Invalid source gesture type: "
+                   << WebInputEvent::GetName(type);
   }
+}
+
+bool IsUserInteractionInputType(WebInputEvent::Type event_type) {
+  return event_type == WebInputEvent::Type::kGestureTap ||
+         event_type == WebInputEvent::Type::kGestureLongTap ||
+         event_type == WebInputEvent::Type::kGestureLongPress ||
+         event_type == WebInputEvent::Type::kMouseDown;
 }
 
 }  // namespace
@@ -114,10 +120,13 @@ GestureListenerManager::GestureListenerManager(JNIEnv* env,
   RenderFrameHost* host = web_contents->GetPrimaryMainFrame();
   if (host) {
     host->GetRenderWidgetHost()->AddInputEventObserver(this);
+    observed_render_frames_.insert(host->GetGlobalId());
   }
 }
 
 GestureListenerManager::~GestureListenerManager() {
+  UnobserveRenderFrames();
+
   JNIEnv* env = AttachCurrentThread();
   ScopedJavaLocalRef<jobject> j_obj = java_ref_.get(env);
   if (j_obj.is_null())
@@ -158,19 +167,31 @@ void GestureListenerManager::SetRootScrollOffsetUpdateFrequency(
     rwhva_->UpdateRootScrollOffsetUpdateFrequency();
 }
 
+void GestureListenerManager::RenderFrameDeleted(
+    RenderFrameHost* render_frame_host) {
+  if (static_cast<RenderFrameHostImpl*>(render_frame_host)->is_local_root() &&
+      observed_render_frames_.erase(render_frame_host->GetGlobalId())) {
+    render_frame_host->GetRenderWidgetHost()->RemoveInputEventObserver(this);
+  }
+}
+
 void GestureListenerManager::RenderFrameHostChanged(RenderFrameHost* old_host,
                                                     RenderFrameHost* new_host) {
-  if (old_host && old_host->GetVisibilityState() ==
-                      blink::mojom::PageVisibilityState::kHidden) {
-    old_host->GetRenderWidgetHost()->RemoveInputEventObserver(this);
-  }
-  if (new_host) {
+  if (new_host &&
+      static_cast<RenderFrameHostImpl*>(new_host)->is_local_root() &&
+      observed_render_frames_.insert(new_host->GetGlobalId()).second) {
     new_host->GetRenderWidgetHost()->AddInputEventObserver(this);
   }
 }
 
-void GestureListenerManager::OnInputEvent(const blink::WebInputEvent& event) {
+void GestureListenerManager::OnInputEvent(const RenderWidgetHost& widget,
+                                          const blink::WebInputEvent& event) {
   const blink::mojom::EventType event_type = event.GetType();
+
+  if (IsUserInteractionInputType(event_type)) {
+    web_contents_->GetNativeView()->RequestFocus();
+  }
+
   if (WebInputEvent::IsTouchEventType(event_type)) {
     if (event_type == blink::mojom::EventType::kTouchStart) {
       active_pointers_++;
@@ -227,6 +248,7 @@ void GestureListenerManager::GestureEventAck(
 }
 
 void GestureListenerManager::OnInputEventAck(
+    const RenderWidgetHost& widget,
     blink::mojom::InputEventResultSource source,
     blink::mojom::InputEventResultState state,
     const blink::WebInputEvent& event) {
@@ -247,18 +269,14 @@ void GestureListenerManager::DidStopFlinging() {
 }
 
 bool GestureListenerManager::FilterInputEvent(const WebInputEvent& event) {
-  if (event.GetType() != WebInputEvent::Type::kGestureTap &&
-      event.GetType() != WebInputEvent::Type::kGestureLongTap &&
-      event.GetType() != WebInputEvent::Type::kGestureLongPress &&
-      event.GetType() != WebInputEvent::Type::kMouseDown)
+  if (!IsUserInteractionInputType(event.GetType())) {
     return false;
+  }
 
   JNIEnv* env = AttachCurrentThread();
   ScopedJavaLocalRef<jobject> j_obj = java_ref_.get(env);
   if (j_obj.is_null())
     return false;
-
-  web_contents_->GetNativeView()->RequestFocus();
 
   if (event.GetType() == WebInputEvent::Type::kMouseDown)
     return false;
@@ -348,6 +366,20 @@ void GestureListenerManager::ResetPopupsAndInput(bool render_process_gone) {
     return;
   Java_GestureListenerManagerImpl_resetPopupsAndInput(env, obj,
                                                       render_process_gone);
+}
+
+void GestureListenerManager::UnobserveRenderFrames() {
+  for (GlobalRenderFrameHostId& id : observed_render_frames_) {
+    RenderFrameHost* rfh = RenderFrameHost::FromID(id);
+    if (!rfh) {
+      continue;
+    }
+    RenderWidgetHost* rwh = rfh->GetRenderWidgetHost();
+    if (rwh) {
+      rwh->RemoveInputEventObserver(this);
+    }
+  }
+  observed_render_frames_.clear();
 }
 
 jlong JNI_GestureListenerManagerImpl_Init(

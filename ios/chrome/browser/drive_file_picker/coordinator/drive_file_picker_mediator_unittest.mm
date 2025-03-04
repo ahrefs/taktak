@@ -25,6 +25,7 @@
 #import "ios/chrome/browser/signin/model/chrome_account_manager_service.h"
 #import "ios/chrome/browser/signin/model/chrome_account_manager_service_factory.h"
 #import "ios/chrome/browser/signin/model/fake_system_identity.h"
+#import "ios/chrome/browser/signin/model/identity_manager_factory.h"
 #import "ios/chrome/browser/web/model/choose_file/choose_file_tab_helper.h"
 #import "ios/chrome/browser/web/model/choose_file/fake_choose_file_controller.h"
 #import "ios/web/public/test/fakes/fake_web_state.h"
@@ -198,7 +199,7 @@ constexpr char kFakeIconURL[] = "http://www.example.com/image";
 - (void)setSortingMenuEnabled:(BOOL)enabled {
 }
 
-- (void)setSelectedItemIdentifier:(NSString*)selectedIdentifier {
+- (void)setSelectedItemIdentifiers:(NSSet<NSString*>*)selectedIdentifiers {
 }
 
 - (void)reconfigureItemsWithIdentifiers:(NSArray<NSString*>*)identifiers {
@@ -214,7 +215,12 @@ constexpr char kFakeIconURL[] = "http://www.example.com/image";
                   forItems:(NSSet<NSString*>*)itemIdentifiers {
 }
 
-- (void)showDownloadFailureAlertWithRetryBlock:(ProceduralBlock)retryBlock {
+- (void)showDownloadFailureAlertForFileName:(NSString*)fileName
+                                 retryBlock:(ProceduralBlock)retryBlock
+                                cancelBlock:(ProceduralBlock)cancelBlock {
+}
+
+- (void)setAllowsMultipleSelection:(BOOL)allowsMultipleSelection {
 }
 
 @end
@@ -233,6 +239,7 @@ class DriveFilePickerMediatorTest : public PlatformTest {
     scoped_feature_list_.InitAndEnableFeature(kIOSChooseFromDrive);
     profile_ = TestProfileIOS::Builder().Build();
     drive_service_ = drive::DriveServiceFactory::GetForProfile(profile_.get());
+    _identityManager = IdentityManagerFactory::GetForProfile(profile_.get());
     _accountManagerService =
         ChromeAccountManagerServiceFactory::GetForProfile(profile_.get());
     image_fetcher_ =
@@ -278,6 +285,7 @@ class DriveFilePickerMediatorTest : public PlatformTest {
               sortingCriteria:DriveItemsSortingType::kName
              sortingDirection:DriveItemsSortingOrder::kAscending
                  driveService:drive_service_
+              identityManager:_identityManager
         accountManagerService:_accountManagerService
                  imageFetcher:std::move(image_fetcher_)
                 metricsHelper:metrics_helper_];
@@ -318,6 +326,7 @@ class DriveFilePickerMediatorTest : public PlatformTest {
   raw_ptr<ChooseFileTabHelper> choose_file_tab_helper_;
   raw_ptr<drive::DriveService> drive_service_;
   std::unique_ptr<TestProfileIOS> profile_;
+  raw_ptr<signin::IdentityManager> _identityManager;
   raw_ptr<ChromeAccountManagerService> _accountManagerService;
   network::TestURLLoaderFactory test_url_loader_factory_;
   scoped_refptr<network::SharedURLLoaderFactory> shared_factory_;
@@ -345,27 +354,27 @@ TEST_F(DriveFilePickerMediatorTest, SelectCollectionItemBrowsesCollection) {
   // The "My Drive" item opens the "My Drive" collection.
   DriveFilePickerItem* myDriveFilePickerItem =
       [DriveFilePickerItem myDriveItem];
-  [mediator_ selectDriveItem:myDriveFilePickerItem.identifier];
+  [mediator_ selectOrDeselectDriveItem:myDriveFilePickerItem.identifier];
   EXPECT_EQ(DriveFilePickerCollectionType::kFolder,
             fake_delegate_.collectionType);
   EXPECT_NSEQ(@"root", fake_delegate_.folderIdentifier);
   // The "Starred" item opens the "Starred" collection.
   DriveFilePickerItem* starredItemIdentifier =
       [DriveFilePickerItem starredItem];
-  [mediator_ selectDriveItem:starredItemIdentifier.identifier];
+  [mediator_ selectOrDeselectDriveItem:starredItemIdentifier.identifier];
   EXPECT_EQ(DriveFilePickerCollectionType::kStarred,
             fake_delegate_.collectionType);
   EXPECT_NSEQ(nil, fake_delegate_.folderIdentifier);
   // The "Recent" item opens the "Recent" collection.
   DriveFilePickerItem* recentItemIdentifier = [DriveFilePickerItem recentItem];
-  [mediator_ selectDriveItem:recentItemIdentifier.identifier];
+  [mediator_ selectOrDeselectDriveItem:recentItemIdentifier.identifier];
   EXPECT_EQ(DriveFilePickerCollectionType::kRecent,
             fake_delegate_.collectionType);
   EXPECT_NSEQ(nil, fake_delegate_.folderIdentifier);
   // The "Shared with me" item opens the "Shared with me" collection.
   DriveFilePickerItem* sharedWithMeItemIdentifier =
       [DriveFilePickerItem sharedWithMeItem];
-  [mediator_ selectDriveItem:sharedWithMeItemIdentifier.identifier];
+  [mediator_ selectOrDeselectDriveItem:sharedWithMeItemIdentifier.identifier];
   EXPECT_EQ(DriveFilePickerCollectionType::kSharedWithMe,
             fake_delegate_.collectionType);
   EXPECT_NSEQ(nil, fake_delegate_.folderIdentifier);
@@ -393,7 +402,7 @@ TEST_F(DriveFilePickerMediatorTest, SelectCollectionItemBrowsesCollection) {
   EXPECT_NSEQ(folder_to_browse.identifier,
               fake_consumer_.primaryItems[0].identifier);
   // Select the folder.
-  [mediator_ selectDriveItem:folder_to_browse.identifier];
+  [mediator_ selectOrDeselectDriveItem:folder_to_browse.identifier];
   EXPECT_EQ(DriveFilePickerCollectionType::kFolder,
             fake_delegate_.collectionType);
   EXPECT_NSEQ(folder_to_browse.identifier, fake_delegate_.folderIdentifier);
@@ -456,7 +465,8 @@ TEST_F(DriveFilePickerMediatorTest, SubmitFileSelection) {
       task_environment_.QuitClosure());
   EXPECT_EQ(DriveFileDownloadStatus::kNotStarted,
             fake_consumer_.downloadStatus);
-  [mediator_ selectDriveItem:fake_consumer_.primaryItems[0].identifier];
+  [mediator_
+      selectOrDeselectDriveItem:fake_consumer_.primaryItems[0].identifier];
   EXPECT_EQ(DriveFileDownloadStatus::kInProgress,
             fake_consumer_.downloadStatus);
   task_environment_.RunUntilQuit();

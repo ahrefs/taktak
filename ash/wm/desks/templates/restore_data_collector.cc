@@ -5,13 +5,11 @@
 #include "ash/wm/desks/templates/restore_data_collector.h"
 
 #include "ash/multi_user/multi_user_window_manager_impl.h"
-#include "ash/public/cpp/desk_profiles_delegate.h"
 #include "ash/public/cpp/multi_user_window_manager.h"
 #include "ash/public/cpp/saved_desk_delegate.h"
 #include "ash/public/cpp/window_properties.h"
 #include "ash/shell.h"
 #include "ash/wm/desks/desk.h"
-#include "ash/wm/desks/desks_controller.h"
 #include "ash/wm/desks/templates/saved_desk_dialog_controller.h"
 #include "ash/wm/desks/templates/saved_desk_util.h"
 #include "ash/wm/mru_window_tracker.h"
@@ -40,7 +38,8 @@ void RestoreDataCollector::CaptureActiveDeskAsSavedDesk(
     DeskTemplateType template_type,
     const std::string& template_name,
     aura::Window* root_window_to_show,
-    AccountId current_account_id) {
+    AccountId current_account_id,
+    const base::flat_set<std::string>& coral_app_id_allowlist) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   const auto current_serial = serial_++;
@@ -51,13 +50,6 @@ void RestoreDataCollector::CaptureActiveDeskAsSavedDesk(
   call.root_window_to_show = root_window_to_show;
   call.template_type = template_type;
   call.template_name = template_name;
-  // Lacros profile IDs cannot be transferred between devices and is therefore
-  // only enabled for save & recall (which is not synced between devices).
-  if (template_type == DeskTemplateType::kSaveAndRecall &&
-      chromeos::features::IsDeskProfilesEnabled()) {
-    call.lacros_profile_id =
-        DesksController::Get()->active_desk()->lacros_profile_id();
-  }
   auto* window_manager = MultiUserWindowManagerImpl::Get();
   auto* const shell = Shell::Get();
   auto mru_windows =
@@ -70,19 +62,13 @@ void RestoreDataCollector::CaptureActiveDeskAsSavedDesk(
       continue;
     }
 
-    if (template_type == DeskTemplateType::kFloatingWorkspace) {
-      // Filter the windows by profile ID associated with each window. Only save
-      // the windows that are attached to the primary profile ID. For lacros,
-      // the window profile id is non-zero. We can skip this check if it's on
-      // ash.
-      auto* desk_profile_delegate = Shell::Get()->GetDeskProfilesDelegate();
-      CHECK(desk_profile_delegate);
-      const uint64_t primary_profile_id =
-          desk_profile_delegate->GetPrimaryProfileId();
-      if (window->GetProperty(ash::kLacrosProfileId) != 0 &&
-          window->GetProperty(ash::kLacrosProfileId) != primary_profile_id) {
-        continue;
-      }
+    const std::string app_id = saved_desk_util::GetAppId(window);
+
+    // Coral desk templates only contain a subset of the apps on the active
+    // desk.
+    if (template_type == DeskTemplateType::kCoral &&
+        !coral_app_id_allowlist.contains(app_id)) {
+      continue;
     }
 
     // If `window_manager` is not nullptr, then we have a multi profile
@@ -105,7 +91,6 @@ void RestoreDataCollector::CaptureActiveDeskAsSavedDesk(
     }
 
     // Skip windows that do not associate with a full restore app id.
-    const std::string app_id = saved_desk_util::GetAppId(window);
     if (!Shell::Get()
              ->overview_controller()
              ->disable_app_id_check_for_saved_desks() &&
@@ -145,8 +130,8 @@ void RestoreDataCollector::CaptureActiveDeskAsSavedDesk(
   call.callback = std::move(callback);
 
   // If all requests in the loop above returned data synchronously, then we
-  // have no pending requests and send the data right away.  Otherwise it will
-  // be sent after the last pending request is handled.
+  // have no pending requests and send the data right away. Otherwise it will be
+  // sent after the last pending request is handled.
   if (call.pending_request_count == 0) {
     SendDeskTemplate(current_serial);
   }
@@ -194,9 +179,6 @@ void RestoreDataCollector::SendDeskTemplate(uint32_t serial) {
       base::Uuid::GenerateRandomV4(), DeskTemplateSource::kUser,
       call.template_name, base::Time::Now(), call.template_type);
   desk_template->set_desk_restore_data(std::move(call.data));
-  if (call.lacros_profile_id) {
-    desk_template->set_lacros_profile_id(call.lacros_profile_id);
-  }
 
   if (!call.unsupported_apps.empty() &&
       Shell::Get()->overview_controller()->InOverviewSession()) {

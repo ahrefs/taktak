@@ -30,6 +30,7 @@
 #include "crypto/scoped_test_system_nss_key_slot.h"
 #include "extensions/test/result_catcher.h"
 #include "google_apis/gaia/gaia_constants.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "google_apis/gaia/gaia_switches.h"
 #include "google_apis/gaia/gaia_urls.h"
 #include "net/dns/mock_host_resolver.h"
@@ -62,7 +63,7 @@ PlatformKeysTestBase::PlatformKeysTestBase(
       ash::test::UserAuthConfig::Create(ash::test::kDefaultAuthSetup));
 }
 
-PlatformKeysTestBase::~PlatformKeysTestBase() {}
+PlatformKeysTestBase::~PlatformKeysTestBase() = default;
 
 void PlatformKeysTestBase::SetUp() {
   base::FilePath test_data_dir;

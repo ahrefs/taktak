@@ -15,7 +15,7 @@
 #include "chrome/browser/ui/autofill/payments/save_card_bubble_controller.h"
 #include "chrome/browser/ui/autofill/payments/save_card_ui.h"
 #include "chrome/browser/ui/autofill/payments/save_payment_icon_controller.h"
-#include "components/autofill/core/browser/data_model/credit_card.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card.h"
 #include "components/autofill/core/browser/payments/legal_message_line.h"
 #include "components/autofill/core/browser/payments/payments_autofill_client.h"
 #include "content/public/browser/web_contents_observer.h"
@@ -28,6 +28,8 @@ class SyncService;
 namespace autofill {
 
 enum class BubbleType;
+
+class PaymentsDataManager;
 
 // Implementation of per-tab class to control the local/server save credit card
 // bubble, the local/server save CVC bubble, and Omnibox icon.
@@ -110,6 +112,15 @@ class SaveCardBubbleControllerImpl
           payments::PaymentsAutofillClient::OnConfirmationClosedCallback>
           on_confirmation_closed_callback);
 
+  // Gets a callback to `ShowConfirmationBubbleView` with a weak ptr to the
+  // controller, passing `card_saved` as true and
+  // `on_confirmation_closed_callback` as std::nullopt.
+  base::OnceClosure GetShowConfirmationForCardSuccessfullySavedCallback();
+
+  // Gets a callback to `EndSaveCardPromptFlow` with a weak ptr to the
+  // controller.
+  base::OnceClosure GetEndSaveCardPromptFlowCallback();
+
   // SaveCardBubbleController:
   std::u16string GetWindowTitle() const override;
   std::u16string GetExplanatoryMessage() const override;
@@ -178,11 +189,13 @@ class SaveCardBubbleControllerImpl
   // Returns whether the web contents related to the controller is active.
   bool IsWebContentsActive();
 
-  // Should outlive this object.
-  raw_ptr<PersonalDataManager> personal_data_manager_;
+  // Hides the bubble if it currently being shown, and sets the bubble to
+  // inactive, effectively ending the save card flow.
+  void EndSaveCardPromptFlow();
 
-  // Should outlive this object.
-  raw_ptr<syncer::SyncService> sync_service_;
+  // Tied to the profile and outlive this object.
+  const raw_ref<PaymentsDataManager> payments_data_manager_;
+  const raw_ptr<syncer::SyncService> sync_service_;
 
   // Is true only if the [Card saved] label animation should be shown.
   bool should_show_card_saved_label_animation_ = false;

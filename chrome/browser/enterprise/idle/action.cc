@@ -4,6 +4,7 @@
 
 #include "chrome/browser/enterprise/idle/action.h"
 
+#include <algorithm>
 #include <cstring>
 #include <utility>
 
@@ -12,7 +13,6 @@
 #include "base/containers/flat_map.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
-#include "base/ranges/algorithm.h"
 #include "base/scoped_observation.h"
 #include "base/task/single_thread_task_runner.h"
 #include "chrome/browser/browsing_data/chrome_browsing_data_remover_constants.h"
@@ -45,7 +45,7 @@ namespace {
 bool ProfileHasBrowsers(const Profile* profile) {
   DCHECK(profile);
   profile = profile->GetOriginalProfile();
-  return base::ranges::any_of(
+  return std::ranges::any_of(
       *BrowserList::GetInstance(), [profile](Browser* browser) {
         return browser->profile()->GetOriginalProfile() == profile;
       });
@@ -79,9 +79,7 @@ class ShowDialogAction : public Action {
   }
 
   bool ShouldNotifyUserOfPendingDestructiveAction(Profile* profile) override {
-    NOTREACHED_IN_MIGRATION();  // Should only be called in
-                                // ActionFactory::Build().
-    return false;
+    NOTREACHED();  // Should only be called in ActionFactory::Build().
   }
 
  private:
@@ -415,7 +413,7 @@ ActionFactory::ActionQueue ActionFactory::Build(
 
       default:
         // TODO(crbug.com/40222234): Perform validation in the `PolicyHandler`.
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 
@@ -426,7 +424,7 @@ ActionFactory::ActionQueue ActionFactory::Build(
   }
 
 #if !BUILDFLAG(IS_ANDROID)
-  bool needs_dialog = base::ranges::any_of(actions, [profile](const auto& a) {
+  bool needs_dialog = std::ranges::any_of(actions, [profile](const auto& a) {
     return a->ShouldNotifyUserOfPendingDestructiveAction(profile);
   });
   if (needs_dialog) {

@@ -28,6 +28,7 @@
 #include "ash/shelf/shelf_layout_manager.h"
 #include "ash/shell.h"
 #include "ash/shell_delegate.h"
+#include "ash/strings/grit/ash_strings.h"
 #include "ash/style/close_button.h"
 #include "ash/system/toast/toast_manager_impl.h"
 #include "ash/test/ash_test_base.h"
@@ -178,8 +179,7 @@ void DragGroupItemToPoint(OverviewItemBase* item,
 
   gfx::Point location =
       gfx::ToRoundedPoint(item->target_bounds().CenterPoint());
-  // TODO(michelefan): Use the center point of the `overview_item` after
-  // implementing or defining the event handling for the middle seam area.
+
   location.Offset(/*delta_x=*/5, /*delta_y=*/5);
   event_generator->set_current_screen_location(location);
   if (by_touch_gestures) {
@@ -672,12 +672,10 @@ TEST_F(FasterSplitScreenTest, ResizeAndAutoSnap) {
   std::unique_ptr<aura::Window> w3(CreateAppWindow());
   EXPECT_EQ(WindowStateType::kSecondarySnapped,
             WindowState::Get(w3.get())->GetStateType());
-  const int divider_delta = IsSnapGroupEnabledInClamshellMode()
-                                ? kSplitviewDividerShortSideLength / 2
-                                : 0;
   expected_autosnap_bounds.Subtract(
       gfx::Rect(expected_window_bounds.top_right(),
-                gfx::Size(divider_delta, GetWorkAreaBounds().height())));
+                gfx::Size(kSplitviewDividerShortSideLength / 2,
+                          GetWorkAreaBounds().height())));
   EXPECT_EQ(expected_autosnap_bounds, w3->GetBoundsInScreen());
 }
 
@@ -1341,7 +1339,6 @@ TEST_F(FasterSplitScreenTest, KeyboardAndWorkAreaBoundsChanges) {
       Shell::Get()->docked_magnifier_controller();
   docked_magnifier_controller->SetEnabled(/*enabled=*/true);
   EXPECT_FALSE(IsInOverviewSession());
-  // TODO(sophiewen): Consider testing no faster splitview widget.
 }
 
 // Test to verify that there will be no crash when dragging the snapped window
@@ -1492,20 +1489,11 @@ TEST_F(FasterSplitScreenTest,
   EXPECT_EQ(window1_state->GetStateType(), WindowStateType::kPrimarySnapped);
   EXPECT_LT(window1_state->snap_ratio().value(), chromeos::kTwoThirdSnapRatio);
 
-  const int divider_delta = IsSnapGroupEnabledInClamshellMode()
-                                ? kSplitviewDividerShortSideLength
-                                : 0;
-  // Both windows will fit within the work are with no overlap
-  if (auto* snap_group_controller = SnapGroupController::Get()) {
-    EXPECT_TRUE(snap_group_controller->AreWindowsInSnapGroup(window1.get(),
-                                                             window2.get()));
-    UnionBoundsEqualToWorkAreaBounds(window1.get(), window2.get(),
-                                     GetTopmostSnapGroupDivider());
-  } else {
-    EXPECT_EQ(window1->GetBoundsInScreen().width() +
-                  window2->GetBoundsInScreen().width() + divider_delta,
-              GetWorkAreaBounds().width());
-  }
+  // Both windows will fit within the work area with no overlap
+  EXPECT_TRUE(SnapGroupController::Get()->AreWindowsInSnapGroup(window1.get(),
+                                                                window2.get()));
+  UnionBoundsEqualToWorkAreaBounds(window1.get(), window2.get(),
+                                   GetTopmostSnapGroupDivider());
 }
 
 // Tests that double tap to swap windows doesn't crash after transition to
@@ -1687,7 +1675,7 @@ TEST_F(FasterSplitScreenTest, AccessibilityFocusAnnotator) {
   ASSERT_TRUE(focus_widget);
   OverviewGrid* grid = GetOverviewSession()->grid_list()[0].get();
   ASSERT_FALSE(grid->desks_widget());
-  ASSERT_FALSE(grid->GetSaveDeskForLaterButton());
+  ASSERT_FALSE(OverviewGridTestApi(grid).GetSaveDeskForLaterButton());
   auto* split_view_setup_widget = grid->split_view_setup_widget();
   ASSERT_TRUE(split_view_setup_widget);
 
@@ -2102,12 +2090,9 @@ class SnapGroupTest : public SnapGroupTestBase {
   template <typename... TaskEnvironmentTraits>
   explicit SnapGroupTest(TaskEnvironmentTraits&&... traits)
       : SnapGroupTestBase(std::forward<TaskEnvironmentTraits>(traits)...) {
-    scoped_feature_list_
-        .InitWithFeatures(/*enabled_features=*/
-                          {features::kSameAppWindowCycle,
-                           chromeos::features::
-                               kOverviewSessionInitOptimizations},
-                          /*disabled_features=*/{});
+    scoped_feature_list_.InitWithFeatures(/*enabled_features=*/
+                                          {features::kSameAppWindowCycle},
+                                          /*disabled_features=*/{});
   }
   SnapGroupTest(const SnapGroupTest&) = delete;
   SnapGroupTest& operator=(const SnapGroupTest&) = delete;
@@ -2136,7 +2121,6 @@ class SnapGroupTest : public SnapGroupTestBase {
     }
   }
 
-  // TODO(michelefan): Consider put this test util in a base class or test file.
   std::unique_ptr<aura::Window> CreateTestWindowWithAppID(
       std::string app_id_key) {
     std::unique_ptr<aura::Window> window = CreateAppWindow();
@@ -6832,7 +6816,8 @@ TEST_F(SnapGroupDesksTest, SaveDeskForSnapGroupWithAnotherSavedDeskOld) {
   ASSERT_TRUE(overview_grid);
   ASSERT_EQ(1u, overview_grid->item_list().size());
 
-  auto* save_for_later_button = overview_grid->GetSaveDeskForLaterButton();
+  auto* save_for_later_button =
+      OverviewGridTestApi(overview_grid).GetSaveDeskForLaterButton();
   ASSERT_TRUE(save_for_later_button);
   base::RunLoop().RunUntilIdle();
   LeftClickOn(save_for_later_button);
@@ -10868,7 +10853,92 @@ TEST_F(SnapGroupMetricsTest, GroupContainerCycleViewAccessibleProperties) {
   ui::AXNodeData data;
 
   cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
-  EXPECT_EQ(data.role, ax::mojom::Role::kGroup);
+  EXPECT_EQ(ax::mojom::Role::kGroup, data.role);
+  EXPECT_EQ(
+      l10n_util::GetStringUTF16(IDS_ASH_SNAP_GROUP_WINDOW_CYCLE_DESCRIPTION),
+      data.GetString16Attribute(ax::mojom::StringAttribute::kDescription));
+  // Default accessible state when none of the mini views are focused.
+  EXPECT_TRUE(
+      data.GetString16Attribute(ax::mojom::StringAttribute::kName).empty());
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Put focus on first mini view to gets its accessible properties.
+  cycle_view->SetSelectedWindowForFocus(w1.get());
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(u"Window -1",
+            data.GetString16Attribute(ax::mojom::StringAttribute::kName));
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Set new titles for both mini view's windows.
+  cycle_view->mini_views()[0]->source_window()->SetTitle(u"Title 1");
+  cycle_view->mini_views()[1]->source_window()->SetTitle(u"Title 2");
+
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(u"Title 1",
+            data.GetString16Attribute(ax::mojom::StringAttribute::kName));
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Put focus on both mini views, but notice that since first mini view is
+  // still focused accessible properties of the first mini view are prioritized.
+  cycle_view->SetSelectedWindowForFocus(w2.get());
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(u"Title 1",
+            data.GetString16Attribute(ax::mojom::StringAttribute::kName));
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Clear focus on all the mini views.
+  cycle_view->ClearFocusSelection();
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_TRUE(
+      data.GetString16Attribute(ax::mojom::StringAttribute::kName).empty());
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Now put focus on only second mini view so that only its accessible
+  // properties are propagated.
+  cycle_view->SetSelectedWindowForFocus(w2.get());
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(u"Title 2",
+            data.GetString16Attribute(ax::mojom::StringAttribute::kName));
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Delete the focused mini view so once again the accessible properties should
+  // be reset.
+  EXPECT_EQ(cycle_view->TryRemovingChildItem(w2.get()), 1);
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_TRUE(
+      data.GetString16Attribute(ax::mojom::StringAttribute::kName).empty());
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Once again put focus on the first mini view.
+  cycle_view->SetSelectedWindowForFocus(w1.get());
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(u"Title 1",
+            data.GetString16Attribute(ax::mojom::StringAttribute::kName));
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Test when source window title of the focus mini view is empty.
+  cycle_view->mini_views()[0]->source_window()->SetTitle(std::u16string());
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(l10n_util::GetStringUTF8(IDS_WM_WINDOW_CYCLER_UNTITLED_WINDOW),
+            data.GetStringAttribute(ax::mojom::StringAttribute::kName));
+  EXPECT_FALSE(data.HasState(ax::mojom::State::kIgnored));
+
+  // Test that view is hidden to a11y when source window of the focus mini view
+  // is destroyed.
+  cycle_view->mini_views()[0]->OnWindowDestroying(w1.get());
+  data = ui::AXNodeData();
+  cycle_view->GetViewAccessibility().GetAccessibleNodeData(&data);
+  EXPECT_EQ(l10n_util::GetStringUTF8(IDS_WM_WINDOW_CYCLER_UNTITLED_WINDOW),
+            data.GetStringAttribute(ax::mojom::StringAttribute::kName));
+  EXPECT_TRUE(data.HasState(ax::mojom::State::kIgnored));
 }
 
 }  // namespace ash

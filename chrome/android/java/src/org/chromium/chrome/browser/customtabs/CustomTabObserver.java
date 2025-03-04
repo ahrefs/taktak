@@ -13,11 +13,10 @@ import android.text.format.DateUtils;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
-import androidx.browser.customtabs.CustomTabsSessionToken;
 
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.chrome.browser.base.ColdStartTracker;
-import org.chromium.chrome.browser.browserservices.intents.BrowserServicesIntentDataProvider;
+import org.chromium.chrome.browser.browserservices.intents.SessionHolder;
 import org.chromium.chrome.browser.customtabs.ClientManager.CalledWarmup;
 import org.chromium.chrome.browser.customtabs.features.TabInteractionRecorder;
 import org.chromium.chrome.browser.intents.BrowserIntentUtils;
@@ -39,7 +38,7 @@ import java.lang.annotation.RetentionPolicy;
 /** A {@link TabObserver} that also handles custom tabs specific logging and messaging. */
 public class CustomTabObserver extends EmptyTabObserver {
     private final CustomTabsConnection mCustomTabsConnection;
-    private final CustomTabsSessionToken mSession;
+    private final SessionHolder<?> mSession;
     private final boolean mOpenedByChrome;
     private final NavigationInfoCaptureTrigger mNavigationInfoCaptureTrigger =
             new NavigationInfoCaptureTrigger(this::captureNavigationInfo);
@@ -94,10 +93,10 @@ public class CustomTabObserver extends EmptyTabObserver {
         }
     }
 
-    public CustomTabObserver(BrowserServicesIntentDataProvider intentDataProvider) {
-        mOpenedByChrome = intentDataProvider.isOpenedByChrome();
+    public CustomTabObserver(boolean openedByChrome, SessionHolder<?> token) {
+        mOpenedByChrome = openedByChrome;
         mCustomTabsConnection = mOpenedByChrome ? null : CustomTabsConnection.getInstance();
-        mSession = intentDataProvider.getSession();
+        mSession = token;
         resetPageLoadTracking();
     }
 
@@ -126,6 +125,9 @@ public class CustomTabObserver extends EmptyTabObserver {
 
     public void trackNextPageLoadForHiddenTab(
             boolean usedSpeculation, boolean hasCommitted, Intent sourceIntent) {
+        // If page load is already being tracked, it must have been an early nav - nothing to do
+        // here.
+        if (mIntentReceivedRealtimeMillis != 0) return;
         mUsedHiddenTabSpeculation = usedSpeculation;
         mLaunchedForSpeculationRealtimeMillis =
                 BrowserIntentUtils.getStartupRealtimeMillis(sourceIntent);
@@ -133,7 +135,7 @@ public class CustomTabObserver extends EmptyTabObserver {
                 BrowserIntentUtils.getStartupUptimeMillis(sourceIntent);
         trackNextLCP();
         if (usedSpeculation && hasCommitted) {
-            recordFirstCommitNavigation(mLaunchedForSpeculationRealtimeMillis);
+            recordFirstCommitNavigation();
         }
     }
 
@@ -275,31 +277,31 @@ public class CustomTabObserver extends EmptyTabObserver {
 
         mFirstCommitRealtimeMillis = SystemClock.elapsedRealtime();
 
-        recordFirstCommitNavigation(mFirstCommitRealtimeMillis);
+        recordFirstCommitNavigation();
     }
 
-    private void recordFirstCommitNavigation(long firstCommitRealtimeMillis) {
+    private void recordFirstCommitNavigation() {
         if (mCustomTabsConnection == null) return;
         String histogram = null;
         long duration = 0;
         // Note that this will exclude Webapp launches in all cases due to either
         // mUsedHiddenTabSpeculation being null, or mIntentReceivedTimestamp being 0.
         if (mUsedHiddenTabSpeculation != null && mUsedHiddenTabSpeculation) {
-            duration = firstCommitRealtimeMillis - mLaunchedForSpeculationRealtimeMillis;
+            duration = mFirstCommitRealtimeMillis - mLaunchedForSpeculationRealtimeMillis;
             histogram = "CustomTabs.Startup.TimeToFirstCommitNavigation2.Speculated";
         } else if (mIntentReceivedRealtimeMillis > 0) {
             // When the process is already warm the earliest measurable point in startup is when the
             // intent is received so we measure from there. In the cold start case we measure from
             // when the process was started as the best comparison against the warm case.
             if (wasWarmedUp()) {
-                duration = firstCommitRealtimeMillis - mIntentReceivedRealtimeMillis;
+                duration = mFirstCommitRealtimeMillis - mIntentReceivedRealtimeMillis;
                 histogram = "CustomTabs.Startup.TimeToFirstCommitNavigation2.WarmedUp";
             } else if (ColdStartTracker.wasColdOnFirstActivityCreationOrNow()
                     && SimpleStartupForegroundSessionDetector.runningCleanForegroundSession()) {
-                duration = firstCommitRealtimeMillis - Process.getStartElapsedRealtime();
+                duration = mFirstCommitRealtimeMillis - Process.getStartElapsedRealtime();
                 histogram = "CustomTabs.Startup.TimeToFirstCommitNavigation2.Cold";
             } else {
-                duration = firstCommitRealtimeMillis - mIntentReceivedRealtimeMillis;
+                duration = mFirstCommitRealtimeMillis - mIntentReceivedRealtimeMillis;
                 histogram = "CustomTabs.Startup.TimeToFirstCommitNavigation2.Warm";
             }
         }

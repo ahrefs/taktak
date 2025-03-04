@@ -23,6 +23,7 @@
 #include "third_party/blink/renderer/core/layout/out_of_flow_layout_part.h"
 #include "third_party/blink/renderer/core/layout/physical_box_fragment.h"
 #include "third_party/blink/renderer/core/layout/simplified_oof_layout_algorithm.h"
+#include "third_party/blink/renderer/core/layout/space_utils.h"
 #include "third_party/blink/renderer/core/layout/table/table_layout_utils.h"
 #include "third_party/blink/renderer/core/style/computed_style.h"
 
@@ -234,6 +235,8 @@ ColumnLayoutAlgorithm::ColumnLayoutAlgorithm(
           UnpositionedListMarker(marker_node));
     }
   }
+
+  container_builder_.SetInitialTextBoxTrim();
 }
 
 const LayoutResult* ColumnLayoutAlgorithm::Layout() {
@@ -259,11 +262,6 @@ const LayoutResult* ColumnLayoutAlgorithm::Layout() {
   // legacy fragmentainer group machinery needs the count.
   if (!IsBreakInside(GetBreakToken())) {
     node_.StoreColumnSizeAndCount(column_inline_size_, used_column_count_);
-
-    StyleEngine& style_engine = Node().GetDocument().GetStyleEngine();
-    style_engine.SetInScrollMarkersAttachment(true);
-    To<Element>(Node().EnclosingDOMNode())->ClearColumnPseudoElements();
-    style_engine.SetInScrollMarkersAttachment(false);
   }
 
   // If we know the block-size of the fragmentainers in an outer fragmentation
@@ -509,6 +507,12 @@ BreakStatus ColumnLayoutAlgorithm::LayoutChildren() {
         // spanner. We'll now walk that spanner and any sibling spanners, before
         // resuming at |next_column_token|.
         BlockNode spanner_node = GetSpannerFromPath(path);
+
+        if (Node().FirstChild() != spanner_node) {
+          // Preceded by column content. Done with any block-start trimming.
+          container_builder_.ClearShouldTextBoxTrimNodeStart();
+        }
+
         walker.MoveToSpanner(spanner_node, next_column_token);
         continue;
       }
@@ -539,6 +543,8 @@ BreakStatus ColumnLayoutAlgorithm::LayoutChildren() {
 
     BreakStatus break_status =
         LayoutSpanner(spanner_node, child_break_token, &margin_strut);
+
+    container_builder_.ClearShouldTextBoxTrimNodeStart();
 
     walker.Next();
 
@@ -753,7 +759,8 @@ const LayoutResult* ColumnLayoutAlgorithm::LayoutRow(
       ConstraintSpace child_space = CreateConstraintSpaceForFragmentainer(
           GetConstraintSpace(), kFragmentColumn, column_size,
           ColumnPercentageResolutionSize(), balance_columns,
-          min_break_appeal.value_or(kBreakAppealLastResort));
+          min_break_appeal.value_or(kBreakAppealLastResort),
+          &container_builder_);
 
       FragmentGeometry fragment_geometry = CalculateInitialFragmentGeometry(
           child_space, Node(), GetBreakToken());
@@ -909,7 +916,7 @@ const LayoutResult* ColumnLayoutAlgorithm::LayoutRow(
       for (wtf_size_t i = 0; i < new_columns.size(); i++) {
         auto& new_column = new_columns[i];
         columns.push_back(
-            LogicalFragmentLink{&new_column.Fragment(), new_column.offset});
+            LogicalFragmentLink(new_column.Fragment(), new_column.offset));
 
         // Because the current set of columns haven't been added to the builder
         // yet, any OOF descendants won't have been propagated up yet. Instead,
@@ -1056,30 +1063,37 @@ const LayoutResult* ColumnLayoutAlgorithm::LayoutRow(
   }
 
   Element* element = To<Element>(Node().EnclosingDOMNode());
-  bool create_column_pseudo =
-      element->CachedStyleForPseudoElement(kPseudoIdColumn);
+  StyleEngine::AttachScrollMarkersScope scope(
+      Node().GetDocument().GetStyleEngine());
 
+  wtf_size_t num_columns = 0u;
   // Commit all column fragments to the fragment builder.
   for (auto result_with_offset : new_columns) {
     const PhysicalBoxFragment& column = result_with_offset.Fragment();
     container_builder_.AddChild(column, result_with_offset.offset);
     PropagateBaselineFromChild(column, result_with_offset.offset.block_offset);
 
-    if (create_column_pseudo) {
-      // Create a ::column pseudo element, and, if needed, also a
-      // ::column::scroll-marker pseudo element child of ::column.
-      LogicalRect column_logical_rect(result_with_offset.offset, column_size);
-      const WritingModeConverter converter(
-          GetConstraintSpace().GetWritingDirection(),
-          LogicalSize(ChildAvailableSize().inline_size, column_block_size_));
-      ColumnPseudoElement* column_pseudo = element->CreateColumnPseudoElement(
-          converter.ToPhysical(column_logical_rect));
-      if (column_pseudo->GetComputedStyle()->GetScrollSnapAlign() !=
-          cc::ScrollSnapAlign()) {
-        container_builder_.AddSnapAreaForColumn(column_pseudo);
-      }
+    // Create a ::column pseudo element, and, if needed, also a
+    // ::column::scroll-marker pseudo element child of ::column.
+    LogicalRect column_logical_rect(result_with_offset.offset, column_size);
+    const WritingModeConverter converter(
+        GetConstraintSpace().GetWritingDirection(),
+        LogicalSize(ChildAvailableSize().inline_size, column_block_size_));
+    ColumnPseudoElement* column_pseudo =
+        element->GetOrCreateColumnPseudoElementIfNeeded(
+            num_columns, converter.ToPhysical(column_logical_rect));
+    num_columns += column_pseudo != nullptr;
+    if (column_pseudo &&
+        column_pseudo->GetComputedStyle()->GetScrollSnapAlign() !=
+            cc::ScrollSnapAlign()) {
+      container_builder_.AddSnapAreaForColumn(column_pseudo);
     }
   }
+
+  // If there were superfluous ::column pseudo-elements from the previous pass,
+  // remove the superfluous ones. This happens when the number of columns
+  // decreases.
+  element->ClearColumnPseudoElements(num_columns);
 
   if (min_break_appeal)
     container_builder_.ClampBreakAppeal(*min_break_appeal);
@@ -1484,7 +1498,7 @@ LayoutUnit ColumnLayoutAlgorithm::ConstrainColumnBlockSize(
 
   const Length& block_length = style.LogicalHeight();
   const Length& auto_length = space.IsBlockAutoBehaviorStretch()
-                                  ? Length::Stretch()
+                                  ? Length::FillAvailable()
                                   : Length::FitContent();
 
   extent = ResolveMainBlockLength(space, style, BorderPadding(), block_length,
@@ -1530,6 +1544,10 @@ ConstraintSpace ColumnLayoutAlgorithm::CreateConstraintSpaceForBalancing(
   space_builder.SetIsInColumnBfc();
   space_builder.SetIsInsideBalancedColumns();
 
+  if (container_builder_.ShouldTextBoxTrim()) {
+    SetTextBoxTrimOnChildSpaceBuilder(container_builder_, &space_builder);
+  }
+
   return space_builder.ToConstraintSpace();
 }
 
@@ -1550,6 +1568,11 @@ ConstraintSpace ColumnLayoutAlgorithm::CreateConstraintSpaceForSpanner(
 
   space_builder.SetBaselineAlgorithmType(
       GetConstraintSpace().GetBaselineAlgorithmType());
+
+  if (container_builder_.ShouldTextBoxTrim()) {
+    SetTextBoxTrimOnChildSpaceBuilder(container_builder_,
+                                      !!spanner.NextSibling(), &space_builder);
+  }
 
   if (GetConstraintSpace().HasBlockFragmentation()) {
     SetupSpaceBuilderForFragmentation(container_builder_, spanner, block_offset,

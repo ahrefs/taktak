@@ -69,6 +69,7 @@
 #include "third_party/blink/renderer/platform/loader/fetch/resource_fetcher.h"
 #include "third_party/blink/renderer/platform/loader/fetch/resource_loader_options.h"
 #include "third_party/blink/renderer/platform/loader/fetch/resource_request.h"
+#include "third_party/blink/renderer/platform/loader/fetch/resource_request_utils.h"
 #include "third_party/blink/renderer/platform/loader/fetch/resource_timing_utils.h"
 #include "third_party/blink/renderer/platform/loader/fetch/unique_identifier.h"
 #include "third_party/blink/renderer/platform/loader/testing/mock_resource.h"
@@ -98,7 +99,7 @@ class DummyFrameOwner final : public GarbageCollected<DummyFrameOwner>,
   }
   void AddResourceTiming(mojom::blink::ResourceTimingInfoPtr) override {}
   void DispatchLoad() override {}
-  void IntrinsicSizingInfoChanged() override {}
+  void NaturalSizingInfoChanged() override {}
   void SetNeedsOcclusionTracking(bool) override {}
   AtomicString BrowsingContextContainerName() const override {
     return AtomicString();
@@ -148,7 +149,7 @@ class FixedPolicySubresourceFilter : public WebDocumentSubresourceFilter {
       : policy_(policy), filtered_load_counter_(filtered_load_counter) {}
 
   LoadPolicy GetLoadPolicy(const WebURL& resource_url,
-                           mojom::blink::RequestContextType) override {
+                           network::mojom::RequestDestination) override {
     return policy_;
   }
 
@@ -166,6 +167,20 @@ class FixedPolicySubresourceFilter : public WebDocumentSubresourceFilter {
  private:
   const LoadPolicy policy_;
   int* filtered_load_counter_;
+};
+
+class TestResourceRequestContext : public ResourceRequestContext {
+  STACK_ALLOCATED();
+
+ public:
+  ~TestResourceRequestContext() override = default;
+
+  // ResourceRequestContext overrides:
+  ResourceLoadPriority ComputeLoadPriority(
+      const FetchParameters& params) override {
+    return ResourceLoadPriority::kMedium;
+  }
+  void RecordTrace() override {}
 };
 
 class FrameFetchContextTest : public testing::Test {
@@ -314,8 +329,9 @@ class FrameFetchContextModifyRequestTest : public FrameFetchContextTest {
       : example_origin(SecurityOrigin::Create(KURL("https://example.test/"))) {}
 
  protected:
-  void ModifyRequestForCSP(ResourceRequest& resource_request,
-                           mojom::RequestContextFrameType frame_type) {
+  void ModifyRequestForMixedContentUpgrade(
+      ResourceRequest& resource_request,
+      mojom::RequestContextFrameType frame_type) {
     document->GetFrame()->Loader().ModifyRequestForCSP(
         resource_request,
         &document->Fetcher()->GetProperties().GetFetchClientSettingsObject(),
@@ -337,7 +353,7 @@ class FrameFetchContextModifyRequestTest : public FrameFetchContextTest {
     ResourceRequest resource_request(input_url);
     resource_request.SetRequestContext(request_context);
 
-    ModifyRequestForCSP(resource_request, frame_type);
+    ModifyRequestForMixedContentUpgrade(resource_request, frame_type);
 
     EXPECT_EQ(expected_url.GetString(), resource_request.Url().GetString());
     EXPECT_EQ(expected_url.Protocol(), resource_request.Url().Protocol());
@@ -357,16 +373,16 @@ class FrameFetchContextModifyRequestTest : public FrameFetchContextTest {
     resource_request.SetRequestContext(
         mojom::blink::RequestContextType::SCRIPT);
 
-    ModifyRequestForCSP(resource_request, frame_type);
+    ModifyRequestForMixedContentUpgrade(resource_request, frame_type);
 
     EXPECT_EQ(
         should_prefer ? String("1") : String(),
         resource_request.HttpHeaderField(http_names::kUpgradeInsecureRequests));
 
-    // Calling modifyRequestForCSP more than once shouldn't affect the
-    // header.
+    // Calling modifyRequestForMixedContentUpgrade more than once shouldn't
+    // affect the header.
     if (should_prefer) {
-      GetFetchContext()->ModifyRequestForCSP(resource_request);
+      GetFetchContext()->ModifyRequestForMixedContentUpgrade(resource_request);
       EXPECT_EQ("1", resource_request.HttpHeaderField(
                          http_names::kUpgradeInsecureRequests));
     }
@@ -389,8 +405,8 @@ class FrameFetchContextModifyRequestTest : public FrameFetchContextTest {
     document->domWindow()->GetSecurityContext().SetInsecureRequestPolicy(
         policy);
 
-    ModifyRequestForCSP(resource_request,
-                        mojom::RequestContextFrameType::kNone);
+    ModifyRequestForMixedContentUpgrade(resource_request,
+                                        mojom::RequestContextFrameType::kNone);
 
     EXPECT_EQ(expected_value, resource_request.IsAutomaticUpgrade());
   }
@@ -583,8 +599,7 @@ class FrameFetchContextHintsTest : public FrameFetchContextTest,
                                    public testing::WithParamInterface<bool> {
  public:
   FrameFetchContextHintsTest() {
-    std::vector<base::test::FeatureRef> enabled_features = {
-    };
+    std::vector<base::test::FeatureRef> enabled_features = {};
     std::vector<base::test::FeatureRef> disabled_features = {};
     if (GetParam()) {
       enabled_features.push_back(
@@ -1601,6 +1616,31 @@ TEST_F(FrameFetchContextTest, TopFrameOriginDetached) {
   EXPECT_EQ(origin, GetTopFrameOrigin());
 }
 
+TEST_F(FrameFetchContextTest, SetTopFrameOriginBeforeCacheAccess) {
+  const KURL document_url("https://www2.example.com/foo/bar");
+  RecreateFetchContext(document_url);
+  const SecurityOrigin* origin = document->domWindow()->GetSecurityOrigin();
+
+  const KURL url("https://www.example.com/hoge/fuga");
+  ResourceRequest request(url);
+  request.SetRequestorOrigin(origin);
+
+  TestResourceRequestContext request_context;
+  FetchParameters fetch_parameters =
+      FetchParameters::CreateForTest(std::move(request));
+
+  std::optional<ResourceRequestBlockedReason> block_reason =
+      PrepareResourceRequestForCacheAccess(
+          ResourceType::kImage,
+          GetFetchContext()
+              ->GetResourceFetcherProperties()
+              .GetFetchClientSettingsObject(),
+          /*bundle_url_for_uuid_resources=*/KURL(), request_context,
+          *GetFetchContext(), fetch_parameters);
+  EXPECT_EQ(std::nullopt, block_reason);
+  EXPECT_EQ(origin, fetch_parameters.GetResourceRequest().TopFrameOrigin());
+}
+
 // Tests that CanRequestCanRequestBasedOnSubresourceFilterOnly will block ads
 // or not correctly, depending on the FilterPolicy.
 TEST_F(FrameFetchContextSubresourceFilterTest,
@@ -1678,8 +1718,9 @@ class FrameFetchContextDisableReduceAcceptLanguageTest
 
     document->GetFrame()->SetReducedAcceptLanguage(AtomicString("en-GB"));
 
-    if (is_detached)
+    if (is_detached) {
       dummy_page_holder = nullptr;
+    }
 
     GetFetchContext()->UpgradeResourceRequestForLoader(
         ResourceType::kRaw, std::nullopt /* resource_width */, request,

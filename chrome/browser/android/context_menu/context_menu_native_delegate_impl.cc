@@ -70,8 +70,7 @@ chrome::mojom::ImageFormat ToChromeMojomImageFormat(int image_format) {
       return chrome::mojom::ImageFormat::ORIGINAL;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return chrome::mojom::ImageFormat::JPEG;
+  NOTREACHED();
 }
 
 void OnRetrieveImageForShare(
@@ -85,11 +84,9 @@ void OnRetrieveImageForShare(
     const std::vector<lens::mojom::LatencyLogPtr>) {
   JNIEnv* env = base::android::AttachCurrentThread();
   auto j_data = base::android::ToJavaByteArray(env, thumbnail_data);
-  auto j_extension =
-      base::android::ConvertUTF8ToJavaString(env, image_extension);
   base::android::RunObjectCallbackAndroid(
       jcallback, Java_ContextMenuNativeDelegateImpl_createImageCallbackResult(
-                     env, j_data, j_extension));
+                     env, j_data, image_extension));
 }
 
 void OnRetrieveImageForContextMenu(

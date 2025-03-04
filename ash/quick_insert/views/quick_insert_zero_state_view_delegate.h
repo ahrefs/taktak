@@ -18,11 +18,11 @@ class View;
 
 namespace ash {
 
-enum class PickerActionType;
-enum class PickerCapsLockPosition;
+enum class QuickInsertActionType;
+enum class QuickInsertCapsLockPosition;
 
-// Delegate for `PickerZeroStateView`.
-class ASH_EXPORT PickerZeroStateViewDelegate {
+// Delegate for `QuickInsertZeroStateView`.
+class ASH_EXPORT QuickInsertZeroStateViewDelegate {
  public:
   using SuggestedEditorResultsCallback =
       base::OnceCallback<void(std::vector<QuickInsertSearchResult>)>;
@@ -30,7 +30,7 @@ class ASH_EXPORT PickerZeroStateViewDelegate {
   using SuggestedResultsCallback =
       base::RepeatingCallback<void(std::vector<QuickInsertSearchResult>)>;
 
-  virtual void SelectZeroStateCategory(PickerCategory category) = 0;
+  virtual void SelectZeroStateCategory(QuickInsertCategory category) = 0;
 
   virtual void SelectZeroStateResult(const QuickInsertSearchResult& result) = 0;
 
@@ -40,13 +40,13 @@ class ASH_EXPORT PickerZeroStateViewDelegate {
   // Requests for `view` to become the pseudo focused view.
   virtual void RequestPseudoFocus(views::View* view) = 0;
 
-  virtual PickerActionType GetActionForResult(
+  virtual QuickInsertActionType GetActionForResult(
       const QuickInsertSearchResult& result) = 0;
 
   // Informs that the height of the zero state view may change.
   virtual void OnZeroStateViewHeightChanged() = 0;
 
-  virtual PickerCapsLockPosition GetCapsLockPosition() = 0;
+  virtual QuickInsertCapsLockPosition GetCapsLockPosition() = 0;
 
   virtual void SetCapsLockDisplayed(bool displayed) = 0;
 };

@@ -7,6 +7,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "ash/ash_element_identifiers.h"
@@ -148,14 +149,14 @@ QuickInsertListItemView::QuickInsertListItemView(
 
   // Trailing badge should always be preferred size.
   trailing_badge_ = item_contents->AddChildView(
-      views::Builder<PickerBadgeView>()
+      views::Builder<QuickInsertBadgeView>()
           .SetProperty(views::kMarginsKey, kBadgeLeftPadding)
           .SetVisible(false)
           .Build());
   SetBadgeVisible(false);
 
   SetProperty(views::kElementIdentifierKey,
-              kPickerSearchResultsListItemElementId);
+              kQuickInsertSearchResultsListItemElementId);
 }
 
 QuickInsertListItemView::~QuickInsertListItemView() {
@@ -239,27 +240,27 @@ void QuickInsertListItemView::SetSecondaryText(
 }
 
 void QuickInsertListItemView::SetShortcutHintView(
-    std::unique_ptr<PickerShortcutHintView> shortcut_hint_view) {
+    std::unique_ptr<QuickInsertShortcutHintView> shortcut_hint_view) {
   shortcut_hint_view_ = nullptr;
   shortcut_hint_container_->RemoveAllChildViews();
   shortcut_hint_view_ =
       shortcut_hint_container_->AddChildView(std::move(shortcut_hint_view));
 }
 
-void QuickInsertListItemView::SetBadgeAction(PickerActionType action) {
+void QuickInsertListItemView::SetBadgeAction(QuickInsertActionType action) {
   switch (action) {
-    case PickerActionType::kDo:
+    case QuickInsertActionType::kDo:
       trailing_badge_->SetText(u"");
       break;
-    case PickerActionType::kInsert:
+    case QuickInsertActionType::kInsert:
       trailing_badge_->SetText(
           l10n_util::GetStringUTF16(IDS_PICKER_INSERT_RESULT_BADGE_LABEL));
       break;
-    case PickerActionType::kOpen:
+    case QuickInsertActionType::kOpen:
       trailing_badge_->SetText(
           l10n_util::GetStringUTF16(IDS_PICKER_OPEN_RESULT_BADGE_LABEL));
       break;
-    case PickerActionType::kCreate:
+    case QuickInsertActionType::kCreate:
       trailing_badge_->SetText(
           l10n_util::GetStringUTF16(IDS_PICKER_CREATE_RESULT_BADGE_LABEL));
       break;
@@ -287,7 +288,7 @@ void QuickInsertListItemView::SetBadgeVisible(bool visible) {
 }
 
 void QuickInsertListItemView::SetPreview(
-    PickerPreviewBubbleController* preview_bubble_controller,
+    QuickInsertPreviewBubbleController* preview_bubble_controller,
     FileInfoResolver get_file_info,
     const base::FilePath& file_path,
     AsyncBitmapResolver async_bitmap_resolver,
@@ -296,8 +297,8 @@ void QuickInsertListItemView::SetPreview(
     preview_bubble_controller_->CloseBubble();
   }
 
-  async_preview_image_ = std::make_unique<ash::HoldingSpaceImage>(
-      PickerPreviewBubbleView::kPreviewImageSize, file_path,
+  async_preview_image_ = std::make_unique<HoldingSpaceImage>(
+      QuickInsertPreviewBubbleView::kPreviewImageSize, file_path,
       async_bitmap_resolver);
   file_path_ = file_path;
   preview_bubble_controller_ = preview_bubble_controller;
@@ -315,7 +316,7 @@ void QuickInsertListItemView::SetPreview(
     // base::Unretained is safe here since `async_icon_subscription_` is a
     // member. During destruction, `async_icon_subscription_` will be destroyed
     // before the other members, so the callback is guaranteed to be safe.
-    async_preview_icon_ = std::make_unique<ash::HoldingSpaceImage>(
+    async_preview_icon_ = std::make_unique<HoldingSpaceImage>(
         kLeadingIconSizeDip, file_path, std::move(async_bitmap_resolver));
     async_icon_subscription_ = async_preview_icon_->AddImageSkiaChangedCallback(
         base::BindRepeating(&QuickInsertListItemView::UpdateIconWithPreview,
@@ -334,7 +335,7 @@ void QuickInsertListItemView::OnMouseExited(const ui::MouseEvent& event) {
   HidePreview();
 }
 
-std::u16string QuickInsertListItemView::GetPrimaryTextForTesting() const {
+std::u16string_view QuickInsertListItemView::GetPrimaryTextForTesting() const {
   return primary_label_ == nullptr ? u"" : primary_label_->GetText();
 }
 
@@ -351,10 +352,7 @@ ui::ImageModel QuickInsertListItemView::GetPrimaryImageForTesting() const {
 
 std::u16string_view QuickInsertListItemView::GetSecondaryTextForTesting()
     const {
-  if (secondary_label_ == nullptr) {
-    return base::EmptyString16();
-  }
-  return secondary_label_->GetText();
+  return secondary_label_ == nullptr ? u"" : secondary_label_->GetText();
 }
 
 void QuickInsertListItemView::UpdateIconWithPreview() {
@@ -366,14 +364,15 @@ void QuickInsertListItemView::UpdateIconWithPreview() {
 
 std::u16string QuickInsertListItemView::GetAccessibilityLabel() const {
   // TODO: b/316936418 - Get accessible name for image contents.
-  const std::u16string& primary_accessibililty_label =
-      primary_label_ == nullptr ? u"image contents" : primary_label_->GetText();
-  std::u16string label =
-      secondary_label_ == nullptr
-          ? primary_accessibililty_label
-          : l10n_util::GetStringFUTF16(IDS_PICKER_LIST_ITEM_ACCESSIBLE_NAME,
-                                       primary_accessibililty_label,
-                                       secondary_label_->GetText());
+  std::u16string primary_accessibililty_label(primary_label_ == nullptr
+                                                  ? u"image contents"
+                                                  : primary_label_->GetText());
+  std::u16string label = secondary_label_ == nullptr
+                             ? primary_accessibililty_label
+                             : l10n_util::GetStringFUTF16(
+                                   IDS_PICKER_LIST_ITEM_ACCESSIBLE_NAME,
+                                   primary_accessibililty_label,
+                                   std::u16string(secondary_label_->GetText()));
   if (shortcut_hint_view_ != nullptr) {
     label = l10n_util::GetStringFUTF16(
         IDS_PICKER_LIST_ITEM_WITH_SHORTCUT_ACCESSIBLE_NAME, label,
@@ -381,15 +380,15 @@ std::u16string QuickInsertListItemView::GetAccessibilityLabel() const {
   }
 
   switch (badge_action_) {
-    case PickerActionType::kDo:
+    case QuickInsertActionType::kDo:
       return label;
-    case PickerActionType::kInsert:
+    case QuickInsertActionType::kInsert:
       return l10n_util::GetStringFUTF16(
           IDS_PICKER_LIST_ITEM_INSERT_ACTION_ACCESSIBLE_NAME, label);
-    case PickerActionType::kOpen:
+    case QuickInsertActionType::kOpen:
       return l10n_util::GetStringFUTF16(
           IDS_PICKER_LIST_ITEM_OPEN_ACTION_ACCESSIBLE_NAME, label);
-    case PickerActionType::kCreate:
+    case QuickInsertActionType::kCreate:
       // TODO: b/345303965 - Add internal strings for Create.
       return label;
   }
@@ -403,7 +402,7 @@ void QuickInsertListItemView::OnFileInfoResolved(
     std::optional<base::File::Info> info) {
   file_info_ = std::move(info);
 
-  std::u16string description = PickerGetFilePreviewDescription(file_info_);
+  std::u16string description = QuickInsertGetFilePreviewDescription(file_info_);
 
   if (preview_bubble_controller_ != nullptr) {
     // Update the bubble main text if it's open.
@@ -418,7 +417,7 @@ void QuickInsertListItemView::ShowPreview() {
     return;
   }
 
-  std::u16string description = PickerGetFilePreviewDescription(file_info_);
+  std::u16string description = QuickInsertGetFilePreviewDescription(file_info_);
 
   // Update the bubble main text before it becomes visible.
   preview_bubble_controller_->ShowBubbleAfterDelay(async_preview_image_.get(),

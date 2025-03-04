@@ -310,9 +310,6 @@ TEST(VideoLayerImplTest, SoftwareVideoFrameGeneratesYUVQuad) {
   LayerTreeImplTestBase impl;
   DebugSetImplThreadAndMainThreadBlocked(impl.task_runner_provider());
 
-  gpu::MailboxHolder mailbox_holder;
-  mailbox_holder.mailbox.name[0] = 1;
-
   scoped_refptr<media::VideoFrame> video_frame = media::VideoFrame::CreateFrame(
       media::PIXEL_FORMAT_I420, gfx::Size(20, 10), gfx::Rect(20, 10),
       gfx::Size(20, 10), base::TimeDelta());
@@ -346,9 +343,6 @@ TEST(VideoLayerImplTest, HibitSoftwareVideoFrameGeneratesYUVQuad) {
 
   LayerTreeImplTestBase impl;
   DebugSetImplThreadAndMainThreadBlocked(impl.task_runner_provider());
-
-  gpu::MailboxHolder mailbox_holder;
-  mailbox_holder.mailbox.name[0] = 1;
 
   scoped_refptr<media::VideoFrame> video_frame = media::VideoFrame::CreateFrame(
       media::PIXEL_FORMAT_YUV420P10, gfx::Size(20, 10), gfx::Rect(20, 10),
@@ -394,8 +388,6 @@ TEST(VideoLayerImplTest, NativeYUVFrameGeneratesYUVQuad) {
                                          gfx::Size(10, 10), base::TimeDelta());
   ASSERT_TRUE(video_frame);
   video_frame->metadata().allow_overlay = true;
-  video_frame->set_shared_image_format_type(
-      media::SharedImageFormatType::kSharedImageFormat);
   FakeVideoFrameProvider provider;
   provider.set_frame(video_frame);
 

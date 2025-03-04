@@ -4,6 +4,7 @@
 
 #include "chrome/browser/printing/print_browsertest.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -21,7 +22,6 @@
 #include "base/memory/raw_ptr_exclusion.h"
 #include "base/notreached.h"
 #include "base/path_service.h"
-#include "base/ranges/algorithm.h"
 #include "base/run_loop.h"
 #include "base/strings/stringprintf.h"
 #include "base/task/sequenced_task_runner.h"
@@ -256,10 +256,7 @@ class TestPrintRenderFrame
   }
 
   // mojom::PrintRenderFrameInterceptorForTesting
-  mojom::PrintRenderFrame* GetForwardingInterface() override {
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
-  }
+  mojom::PrintRenderFrame* GetForwardingInterface() override { NOTREACHED(); }
   void PrintFrameContent(mojom::PrintFrameContentParamsPtr params,
                          PrintFrameContentCallback callback) override {
     // Sends the printed result back.
@@ -520,8 +517,7 @@ void PrintBrowserTest::AddPrinter(const std::string& printer_name) {
       printer_name,
       /*display_name=*/"test printer",
       /*printer_description=*/"A printer for testing.",
-      /*printer_status=*/0,
-      /*is_default=*/true, test::kPrintInfoOptions);
+      test::kPrintInfoOptions);
 
   auto default_caps = std::make_unique<PrinterSemanticCapsAndDefaults>();
   default_caps->copies_max = kTestPrinterCapabilitiesMaxCopies;
@@ -532,6 +528,7 @@ void PrintBrowserTest::AddPrinter(const std::string& printer_name) {
   test_print_backend_->AddValidPrinter(
       printer_name, std::move(default_caps),
       std::make_unique<PrinterBasicInfo>(printer_info));
+  test_print_backend_->SetDefaultPrinterName(printer_name);
 }
 
 void PrintBrowserTest::SetPrinterNameForSubsequentContexts(
@@ -785,7 +782,7 @@ class BackForwardCachePrintBrowserTest : public PrintBrowserTest {
   void ExpectBlocklistedFeature(
       blink::scheduler::WebSchedulerTrackedFeature feature,
       base::Location location) {
-    base::HistogramBase::Sample sample = base::HistogramBase::Sample(feature);
+    base::HistogramBase::Sample32 sample = base::HistogramBase::Sample32(feature);
     AddSampleToBuckets(&expected_blocklisted_features_, sample);
 
     EXPECT_THAT(
@@ -805,8 +802,8 @@ class BackForwardCachePrintBrowserTest : public PrintBrowserTest {
 
  private:
   void AddSampleToBuckets(std::vector<base::Bucket>* buckets,
-                          base::HistogramBase::Sample sample) {
-    auto it = base::ranges::find(*buckets, sample, &base::Bucket::min);
+                          base::HistogramBase::Sample32 sample) {
+    auto it = std::ranges::find(*buckets, sample, &base::Bucket::min);
     if (it == buckets->end()) {
       buckets->push_back(base::Bucket(sample, 1));
     } else {
@@ -2214,6 +2211,12 @@ class PrintCompositorDocumentDataTypeBrowserTest
          {{features::kEnableOopPrintDriversJobPrint.name, "true"}}});
     if (GetParam() == DocumentDataType::kXps) {
       enabled_features.push_back({features::kUseXpsForPrinting, {}});
+
+      // Use of XPS printing requires using LPAC for the sandbox, otherwise
+      // the permissions for token-based sandboxing have to be significantly
+      // relaxed.
+      enabled_features.push_back(
+          {sandbox::policy::features::kPrintCompositorLPAC, {}});
     } else {
       disabled_features.push_back(features::kUseXpsForPrinting);
     }

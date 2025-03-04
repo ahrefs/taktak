@@ -4,17 +4,19 @@
 
 import 'chrome://os-settings/lazy_load.js';
 
-import {PrivacyHubBrowserProxyImpl, SettingsPrivacyHubGeolocationSubpage} from 'chrome://os-settings/lazy_load.js';
-import {appPermissionHandlerMojom, ControlledButtonElement, ControlledRadioButtonElement, CrDialogElement, CrLinkRowElement, CrTooltipIconElement, GeolocationAccessLevel, OpenWindowProxyImpl, Router, routes, ScheduleType, setAppPermissionProviderForTesting, SettingsPrivacyHubSystemServiceRow} from 'chrome://os-settings/os_settings.js';
-import {CrButtonElement} from 'chrome://resources/ash/common/cr_elements/cr_button/cr_button.js';
+import type {SettingsPrivacyHubGeolocationSubpage} from 'chrome://os-settings/lazy_load.js';
+import {PrivacyHubBrowserProxyImpl} from 'chrome://os-settings/lazy_load.js';
+import type {appPermissionHandlerMojom, ControlledButtonElement, ControlledRadioButtonElement, CrDialogElement, CrLinkRowElement, SettingsPrivacyHubSystemServiceRow} from 'chrome://os-settings/os_settings.js';
+import {GeolocationAccessLevel, OpenWindowProxyImpl, Router, routes, ScheduleType, setAppPermissionProviderForTesting} from 'chrome://os-settings/os_settings.js';
+import type {CrButtonElement} from 'chrome://resources/ash/common/cr_elements/cr_button/cr_button.js';
 import {PermissionType, TriState} from 'chrome://resources/cr_components/app_management/app_management.mojom-webui.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
-import {DomRepeat} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
+import type {DomRepeat} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 import {assertEquals, assertLT, assertNotReached, assertNull, assertTrue} from 'chrome://webui-test/chai_assert.js';
 import {flushTasks} from 'chrome://webui-test/polymer_test_util.js';
 import {TestOpenWindowProxy} from 'chrome://webui-test/test_open_window_proxy.js';
 
-import {FakeMetricsPrivate} from '../fake_metrics_private.js';
+import type {FakeMetricsPrivate} from '../fake_metrics_private.js';
 
 import {FakeAppPermissionHandler} from './fake_app_permission_handler.js';
 import {createApp, createFakeMetricsPrivate, getSystemServiceName, getSystemServicePermissionText, getSystemServicesFromSubpage} from './privacy_hub_app_permission_test_util.js';
@@ -101,13 +103,12 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
 
   function getGeolocationLabel(): string {
     return privacyHubGeolocationSubpage.shadowRoot!
-        .querySelector<HTMLDivElement>('#geolocationStatus')!.innerText;
+        .querySelector<HTMLElement>('#geolocationStatus')!.innerText;
   }
 
   function getGeolocationSubLabel(): string {
     return privacyHubGeolocationSubpage.shadowRoot!
-        .querySelector<HTMLDivElement>(
-            '#geolocationStatusDescription')!.innerText;
+        .querySelector<HTMLElement>('#geolocationStatusDescription')!.innerText;
   }
 
   async function setGeolocationAccessLevelPref(
@@ -227,7 +228,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
             'privacyHubSystemServicesSectionTitle'),
         privacyHubGeolocationSubpage.shadowRoot!
             .querySelector<HTMLElement>(
-                '#systemServicesSectionTitle')!.innerText!.trim());
+                '#systemServicesSectionTitle')!.innerText.trim());
 
     const systemServices =
         getSystemServicesFromSubpage(privacyHubGeolocationSubpage);
@@ -256,7 +257,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
             .filter(value => typeof value === 'number') as ScheduleType[];
     // Test Night Light
     for (const scheduleType of allScheduleTypes) {
-      await setNightLightScheduleType(scheduleType as ScheduleType);
+      await setNightLightScheduleType(scheduleType);
 
       checkService(
           systemServices[1]!,
@@ -275,7 +276,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
 
     // Test Dark Theme
     for (const scheduleType of allScheduleTypes) {
-      await setDarkThemeScheduleType(scheduleType as ScheduleType);
+      await setDarkThemeScheduleType(scheduleType);
 
       checkService(
           systemServices[2]!,
@@ -431,8 +432,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
     assertEquals(
         privacyHubGeolocationSubpage.i18n('privacyHubAppsSectionTitle'),
         privacyHubGeolocationSubpage.shadowRoot!
-            .querySelector<HTMLElement>(
-                '#appsSectionTitle')!.innerText!.trim());
+            .querySelector<HTMLElement>('#appsSectionTitle')!.innerText.trim());
     assertTrue(!!getAppList());
     assertNull(getNoAppHasAccessTextSection());
   });
@@ -446,7 +446,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
     assertTrue(!!getNoAppHasAccessTextSection());
     assertEquals(
         privacyHubGeolocationSubpage.i18n('noAppCanUseGeolocationText'),
-        getNoAppHasAccessTextSection()!.innerText!.trim());
+        getNoAppHasAccessTextSection()!.innerText.trim());
 
     // Setting location permission to "Only allowed for system" should have
     // similar effect.
@@ -456,7 +456,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
     assertTrue(!!getNoAppHasAccessTextSection());
     assertEquals(
         privacyHubGeolocationSubpage.i18n('noAppCanUseGeolocationText'),
-        getNoAppHasAccessTextSection()!.innerText!.trim());
+        getNoAppHasAccessTextSection()!.innerText.trim());
   });
 
   function initializeObserver(): Promise<void> {
@@ -601,7 +601,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
         privacyHubGeolocationSubpage.i18n('websitesSectionTitle'),
         privacyHubGeolocationSubpage.shadowRoot!
             .querySelector<HTMLElement>(
-                '#websitesSectionTitle')!.innerText!.trim()),
+                '#websitesSectionTitle')!.innerText.trim()),
         'problem 1';
 
     assertEquals(
@@ -613,7 +613,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
     setGeolocationAccessLevelPref(GeolocationAccessLevel.DISALLOWED);
     assertEquals(
         privacyHubGeolocationSubpage.i18n('noWebsiteCanUseLocationText'),
-        getNoWebsiteHasAccessTextRow()!.innerText!.trim(), 'problem 3');
+        getNoWebsiteHasAccessTextRow()!.innerText.trim(), 'problem 3');
 
     // Setting location to "only allowed for system services" should have same
     // effect as disabling.
@@ -621,7 +621,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
         GeolocationAccessLevel.ONLY_ALLOWED_FOR_SYSTEM);
     assertEquals(
         privacyHubGeolocationSubpage.i18n('noWebsiteCanUseLocationText'),
-        getNoWebsiteHasAccessTextRow()!.innerText!.trim(), 'problem 4');
+        getNoWebsiteHasAccessTextRow()!.innerText.trim(), 'problem 4');
   });
 
   test(
@@ -811,7 +811,7 @@ suite('<settings-privacy-hub-geolocation-subpage>', () => {
     assertTrue(changeButton.disabled);
 
     // Managed icon with tooltip should be present.
-    assertTrue(!!privacyHubGeolocationSubpage.shadowRoot!
-                     .querySelector<CrTooltipIconElement>('cr-tooltip-icon'));
+    assertTrue(!!privacyHubGeolocationSubpage.shadowRoot!.querySelector(
+        'cr-tooltip-icon'));
   });
 });

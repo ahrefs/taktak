@@ -4,6 +4,7 @@
 
 #import "ios/chrome/browser/lens_overlay/ui/lens_overlay_entrypoint_view.h"
 
+#import "ios/chrome/browser/lens_overlay/coordinator/lens_overlay_availability.h"
 #import "ios/chrome/browser/shared/ui/symbols/symbols.h"
 #import "ios/chrome/browser/shared/ui/util/uikit_ui_util.h"
 #import "ios/chrome/common/ui/colors/semantic_color_names.h"
@@ -15,6 +16,7 @@
 namespace {
 
 const CGFloat kLensCameraSymbolPointSize = 18.0;
+const CGFloat kMinimumWidth = 44;
 
 }  // namespace
 
@@ -25,6 +27,7 @@ const CGFloat kLensCameraSymbolPointSize = 18.0;
 
   if (self) {
     self.pointerInteractionEnabled = YES;
+    self.minimumDiameter = kMinimumWidth;
     self.pointerStyleProvider = CreateDefaultEffectCirclePointerStyleProvider();
     self.tintColor = [UIColor colorNamed:kToolbarButtonColor];
     self.accessibilityLabel = l10n_util::GetNSString(
@@ -42,14 +45,15 @@ const CGFloat kLensCameraSymbolPointSize = 18.0;
           forState:UIControlStateNormal];
     self.imageView.contentMode = UIViewContentModeScaleAspectFit;
 
-    [NSLayoutConstraint
-        activateConstraints:@[ [self.widthAnchor
-                                constraintEqualToAnchor:self.heightAnchor] ]];
+    [NSLayoutConstraint activateConstraints:@[
+      [self.widthAnchor constraintGreaterThanOrEqualToConstant:kMinimumWidth]
+    ]];
 
     if (@available(iOS 17, *)) {
       __weak __typeof(self) weakSelf = self;
-      NSArray<UITrait>* traits = TraitCollectionSetForTraits(
-          @[ UITraitHorizontalSizeClass.self, UITraitVerticalSizeClass.self ]);
+      NSArray<UITrait>* traits = TraitCollectionSetForTraits(@[
+        UITraitHorizontalSizeClass.class, UITraitVerticalSizeClass.class
+      ]);
 
       [self registerForTraitChanges:traits
                         withHandler:^(id<UITraitEnvironment> traitEnvironment,
@@ -72,6 +76,10 @@ const CGFloat kLensCameraSymbolPointSize = 18.0;
 #pragma mark - private
 
 - (void)setEnabledOnTraitChange:(UITraitCollection*)previousTraitCollection {
+  if (IsLensOverlayLandscapeOrientationEnabled()) {
+    return;
+  }
+
   if (self.traitCollection.verticalSizeClass !=
           previousTraitCollection.verticalSizeClass ||
       self.traitCollection.horizontalSizeClass !=

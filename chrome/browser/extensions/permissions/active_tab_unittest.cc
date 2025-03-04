@@ -138,8 +138,7 @@ class ActiveTabTest : public ChromeRenderViewHostTestHarness {
       case PERMITTED_NONE:
         return !script && !capture;
     }
-    NOTREACHED_IN_MIGRATION();
-    return false;
+    NOTREACHED();
   }
 
   bool IsBlocked(const scoped_refptr<const Extension>& extension_refptr,
@@ -474,7 +473,7 @@ TEST_F(ActiveTabTest, ClearAllActiveExtensionsAndNotify) {
 // An active tab test that includes an ExtensionService.
 class ActiveTabWithServiceTest : public ExtensionServiceTestBase {
  public:
-  ActiveTabWithServiceTest() {}
+  ActiveTabWithServiceTest() = default;
 
   ActiveTabWithServiceTest(const ActiveTabWithServiceTest&) = delete;
   ActiveTabWithServiceTest& operator=(const ActiveTabWithServiceTest&) = delete;

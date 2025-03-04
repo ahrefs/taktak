@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/themes/theme_service.h"
 #include "chrome/browser/themes/theme_service_factory.h"
 #include "chrome/browser/ui/views/frame/browser_frame_view_linux.h"
@@ -58,11 +57,11 @@ std::unique_ptr<OpaqueBrowserFrameView> CreateOpaqueBrowserFrameView(
           nav_button_provider.get(),
           base::BindRepeating(
               [](DesktopBrowserFrameAuraLinux* native_frame,
-                 ui::LinuxUiTheme* linux_ui_theme, bool tiled) {
+                 ui::LinuxUiTheme* linux_ui_theme, bool tiled, bool maximized) {
                 const bool solid_frame =
                     !native_frame->ShouldDrawRestoredFrameShadow();
                 return linux_ui_theme->GetWindowFrameProvider(solid_frame,
-                                                              tiled);
+                                                              tiled, maximized);
               },
               native_frame, linux_ui_theme));
       return std::make_unique<BrowserFrameViewLinuxNative>(

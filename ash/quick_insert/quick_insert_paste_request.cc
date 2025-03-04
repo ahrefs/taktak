@@ -13,7 +13,7 @@
 
 namespace ash {
 
-PickerPasteRequest::PickerPasteRequest(
+QuickInsertPasteRequest::QuickInsertPasteRequest(
     ClipboardHistoryController* clipboard_history_controller,
     aura::client::FocusClient* focus_client,
     base::UnguessableToken clipboard_item_id)
@@ -22,15 +22,15 @@ PickerPasteRequest::PickerPasteRequest(
   observation_.Observe(focus_client);
 }
 
-PickerPasteRequest::~PickerPasteRequest() = default;
+QuickInsertPasteRequest::~QuickInsertPasteRequest() = default;
 
-void PickerPasteRequest::OnWindowFocused(aura::Window* gained_focus,
-                                         aura::Window* lost_focus) {
+void QuickInsertPasteRequest::OnWindowFocused(aura::Window* gained_focus,
+                                              aura::Window* lost_focus) {
   if (gained_focus == nullptr) {
     return;
   }
 
-  // TODO: b/329309518: Use a dedicated show source for Picker.
+  // TODO: b/329309518: Use a dedicated show source for Quick Insert.
   clipboard_history_controller_->PasteClipboardItemById(
       clipboard_item_id_.ToString(), ui::EF_NONE,
       crosapi::mojom::ClipboardHistoryControllerShowSource::kVirtualKeyboard);

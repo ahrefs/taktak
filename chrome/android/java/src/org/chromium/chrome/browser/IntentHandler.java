@@ -4,6 +4,8 @@
 
 package org.chromium.chrome.browser;
 
+import static androidx.browser.customtabs.CustomTabsIntent.EXTRA_ENABLE_EPHEMERAL_BROWSING;
+
 import static org.chromium.components.webapk.lib.common.WebApkConstants.WEBAPK_PACKAGE_PREFIX;
 
 import android.app.Activity;
@@ -24,9 +26,9 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.browser.customtabs.CustomTabsSessionToken;
 
 import org.jni_zero.JNINamespace;
+import org.jni_zero.JniType;
 import org.jni_zero.NativeMethods;
 
 import org.chromium.base.ContextUtils;
@@ -35,6 +37,8 @@ import org.chromium.base.IntentUtils;
 import org.chromium.base.Log;
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.chrome.browser.app.tabmodel.AsyncTabParamsManagerSingleton;
+import org.chromium.chrome.browser.browserservices.SessionDataHolder;
+import org.chromium.chrome.browser.browserservices.intents.SessionHolder;
 import org.chromium.chrome.browser.browserservices.intents.WebappConstants;
 import org.chromium.chrome.browser.customtabs.CustomTabsConnection;
 import org.chromium.chrome.browser.document.ChromeLauncherActivity;
@@ -45,10 +49,11 @@ import org.chromium.chrome.browser.gsa.GSAUtils;
 import org.chromium.chrome.browser.omnibox.suggestions.AutocompleteCoordinator;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.profiles.ProfileManager;
-import org.chromium.chrome.browser.renderer_host.ChromeNavigationUIData;
+import org.chromium.chrome.browser.renderer_host.ChromeNavigationUiData;
 import org.chromium.chrome.browser.search_engines.TemplateUrlServiceFactory;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab.TabLaunchType;
+import org.chromium.chrome.browser.tabmodel.TabGroupMetadata;
 import org.chromium.chrome.browser.webapps.WebappActivity;
 import org.chromium.components.bookmarks.BookmarkId;
 import org.chromium.components.bookmarks.BookmarkType;
@@ -246,12 +251,26 @@ public class IntentHandler {
     /** The id of a dragged tab that attempts to launch the intent. */
     public static final String EXTRA_DRAGGED_TAB_ID = "org.chromium.chrome.browser.dragdrop.tab_id";
 
+    /** The id of the window where the tab or tab group drag starts. */
+    public static final String EXTRA_DRAGDROP_TAB_WINDOW_ID =
+            "com.android.chrome.dragdrop_tab_window_id";
+
     /** A boolean to indicate whether the intent should launch the history page in Chrome. */
     public static final String EXTRA_OPEN_HISTORY = "org.chromium.chrome.browser.open_history";
 
     /** A boolean to indicate whether the intent should launch only app specific history */
     public static final String EXTRA_APP_SPECIFIC_HISTORY =
             "org.chromium.chrome.browser.app_specific_history";
+
+    /**
+     * {@link TabGroupMetadata} object used for transferring tab group data between windows during
+     * tab group drag drop.
+     */
+    public static final String EXTRA_TAB_GROUP_METADATA =
+            "org.chromium.chrome.browser.tab_group_metadata";
+
+    public static final String EXTRA_SKIP_PRECONNECT =
+            "org.chromium.chrome.browser.skip_preconnect";
 
     /** The package name for the Google Search App. */
     public static final String PACKAGE_GSA = GSAUtils.GSA_PACKAGE_NAME;
@@ -269,6 +288,8 @@ public class IntentHandler {
     private static final String PACKAGE_WHATSAPP = "com.whatsapp";
     private static final String PACKAGE_YAHOO_MAIL = "com.yahoo.mobile.client.android.mail";
     private static final String PACKAGE_VIBER = "com.viber.voip";
+    private static final String PACKAGE_PIXEL_LAUNCHER = "com.google.android.apps.nexuslauncher";
+    private static final String THIRD_PARTY_LAUNCHER_SUFFIX = "launcher";
     private static final String FACEBOOK_REFERRER_URL = "android-app://m.facebook.com";
     private static final String FACEBOOK_INTERNAL_BROWSER_REFERRER = "http://m.facebook.com";
     private static final String TWITTER_LINK_PREFIX = "http://t.co/";
@@ -304,6 +325,8 @@ public class IntentHandler {
         ExternalAppId.VIBER,
         ExternalAppId.YOUTUBE,
         ExternalAppId.CAMERA,
+        ExternalAppId.PIXEL_LAUNCHER,
+        ExternalAppId.THIRD_PARTY_LAUNCHER,
         ExternalAppId.NUM_ENTRIES
     })
     @Retention(RetentionPolicy.SOURCE)
@@ -325,25 +348,27 @@ public class IntentHandler {
         int VIBER = 14;
         int YOUTUBE = 15;
         int CAMERA = 16;
+        int PIXEL_LAUNCHER = 17;
+        int THIRD_PARTY_LAUNCHER = 18;
         // Update ClientAppId in enums.xml when adding new items.
-        int NUM_ENTRIES = 17;
+        int NUM_ENTRIES = 19;
     }
 
     /**
      * Represents apps that launch Incognito CCT. DO NOT reorder items in this interface, because
-     * it's mirrored to UMA (as {@link IncognitoCCTCallerId}). Values should be enumerated from 0.
+     * it's mirrored to UMA (as {@link IncognitoCctCallerId}). Values should be enumerated from 0.
      * When removing items, comment them out and keep existing numeric values stable.
      */
     @IntDef({
-        IncognitoCCTCallerId.OTHER_APPS,
-        IncognitoCCTCallerId.GOOGLE_APPS,
-        IncognitoCCTCallerId.OTHER_CHROME_FEATURES,
-        IncognitoCCTCallerId.READER_MODE,
-        IncognitoCCTCallerId.READ_LATER,
-        IncognitoCCTCallerId.EPHEMERAL_TAB,
+        IncognitoCctCallerId.OTHER_APPS,
+        IncognitoCctCallerId.GOOGLE_APPS,
+        IncognitoCctCallerId.OTHER_CHROME_FEATURES,
+        IncognitoCctCallerId.READER_MODE,
+        IncognitoCctCallerId.READ_LATER,
+        IncognitoCctCallerId.EPHEMERAL_TAB,
     })
     @Retention(RetentionPolicy.SOURCE)
-    public @interface IncognitoCCTCallerId {
+    public @interface IncognitoCctCallerId {
         int OTHER_APPS = 0;
         int GOOGLE_APPS = 1;
         // This should not be used, it's a fallback for Chrome features that didn't identify
@@ -358,17 +383,13 @@ public class IntentHandler {
         // An ephemeral custom tab without incognito branding.
         int EPHEMERAL_TAB = 5;
 
-        // Update {@link IncognitoCCTCallerId} in enums.xml when adding new items.
+        // Update {@link IncognitoCctCallerId} in enums.xml when adding new items.
         int NUM_ENTRIES = 6;
     }
 
     /** Intent extra to open an incognito tab. */
     public static final String EXTRA_OPEN_NEW_INCOGNITO_TAB =
             "com.google.android.apps.chrome.EXTRA_OPEN_NEW_INCOGNITO_TAB";
-
-    /** Intent extra to enable ephemeral browsing within the Custom Tab. */
-    public static final String EXTRA_ENABLE_EPHEMERAL_BROWSING =
-            "androidx.browser.customtabs.extra.ENABLE_EPHEMERAL_BROWSING";
 
     /** Scheme used by web pages to start up Chrome without an explicit Intent. */
     public static final String GOOGLECHROME_SCHEME = "googlechrome";
@@ -492,9 +513,15 @@ public class IntentHandler {
 
         if (externalId == ExternalAppId.OTHER && activity != null) {
             String activityReferrer = getActivityReferrer(intent, activity);
-            if (activityReferrer != null
-                    && activityReferrer.toLowerCase(Locale.getDefault()).endsWith("camera")) {
-                return ExternalAppId.CAMERA;
+            if (activityReferrer != null) {
+                String referrer = activityReferrer.toLowerCase(Locale.getDefault());
+                if (referrer.endsWith("camera")) {
+                    return ExternalAppId.CAMERA;
+                } else if (referrer.endsWith(PACKAGE_PIXEL_LAUNCHER)) {
+                    return ExternalAppId.PIXEL_LAUNCHER;
+                } else if (referrer.endsWith(THIRD_PARTY_LAUNCHER_SUFFIX)) {
+                    return ExternalAppId.THIRD_PARTY_LAUNCHER;
+                }
             }
         }
 
@@ -558,17 +585,16 @@ public class IntentHandler {
     /**
      * Extracts referrer URL string. The extra is used if we received it from a first party app or
      * if the referrer_extra is specified as android-app://package style URL.
+     *
      * @param intent The intent from which to extract the URL.
      * @return The URL string or null if none should be used.
      */
     private static String getReferrerUrl(Intent intent) {
         Uri referrerExtra = getReferrer(intent);
-        CustomTabsSessionToken customTabsSession =
-                CustomTabsSessionToken.getSessionTokenFromIntent(intent);
-        if (referrerExtra == null && customTabsSession != null) {
+        SessionHolder<?> session = SessionHolder.getSessionHolderFromIntent(intent);
+        if (referrerExtra == null && session != null) {
             Referrer referrer =
-                    CustomTabsConnection.getInstance()
-                            .getDefaultReferrerForSession(customTabsSession);
+                    CustomTabsConnection.getInstance().getDefaultReferrerForSession(session);
             if (referrer != null) {
                 referrerExtra = Uri.parse(referrer.getUrl());
             }
@@ -578,9 +604,8 @@ public class IntentHandler {
         if (isValidReferrerHeader(referrerExtra)) {
             return referrerExtra.toString();
         } else if (IntentHandler.notSecureIsIntentChromeOrFirstParty(intent)
-                || ChromeApplicationImpl.getComponent()
-                        .resolveSessionDataHolder()
-                        .canActiveHandlerUseReferrer(customTabsSession, referrerExtra)) {
+                || SessionDataHolder.getInstance()
+                        .canActiveHandlerUseReferrer(session, referrerExtra)) {
             return referrerExtra.toString();
         }
         return null;
@@ -1364,8 +1389,29 @@ public class IntentHandler {
     }
 
     /**
+     * Sets the The {@link TabGroupMetadata} for tab group drag drop to transfer tan group data
+     * between windows.
+     *
+     * @param intent The Intent to be set.
+     */
+    public static void setTabGroupMetadata(Intent intent, TabGroupMetadata tabGroupMetadata) {
+        intent.putExtra(EXTRA_TAB_GROUP_METADATA, tabGroupMetadata.toBundle());
+    }
+
+    /**
+     * @param intent An Intent to be checked.
+     * @return The {@link TabGroupMetadata} for tab group drag drop to transfer tab group data
+     *     between windows.
+     */
+    public static @Nullable TabGroupMetadata getTabGroupMetadata(Intent intent) {
+        Bundle bundle = IntentUtils.safeGetBundleExtra(intent, EXTRA_TAB_GROUP_METADATA);
+        return TabGroupMetadata.maybeCreateFromBundle(bundle);
+    }
+
+    /**
      * Creates an Intent that will launch a ChromeTabbedActivity on the new tab page. The Intent
      * will be trusted and therefore able to launch Incognito tabs.
+     *
      * @param context A {@link Context} to access class and package information.
      * @param incognito Whether the tab should be opened in Incognito.
      * @return The {@link Intent} to launch.
@@ -1427,7 +1473,7 @@ public class IntentHandler {
      * initially.
      *
      * @return the provided intent, if the intent is not from Android Recents. Otherwise, rewrites
-     *         the intent to be a consistent MAIN intent from recents.
+     *     the intent to be a consistent MAIN intent from recents.
      */
     public static Intent rewriteFromHistoryIntent(Intent intent) {
         // When a self-finished Activity is created from recents, Android launches it with its
@@ -1517,7 +1563,7 @@ public class IntentHandler {
                             intent, IntentHandler.EXTRA_PAGE_TRANSITION_BOOKMARK_ID);
             if (!TextUtils.isEmpty(bookmarkIdString)) {
                 BookmarkId bookmarkId = BookmarkId.getBookmarkIdFromString(bookmarkIdString);
-                ChromeNavigationUIData navData = new ChromeNavigationUIData();
+                ChromeNavigationUiData navData = new ChromeNavigationUiData();
                 navData.setBookmarkId(
                         bookmarkId.getType() == BookmarkType.NORMAL ? bookmarkId.getId() : -1);
                 loadUrlParams.setNavigationUIDataSupplier(navData::createUnownedNativeCopy);
@@ -1549,6 +1595,7 @@ public class IntentHandler {
 
     @NativeMethods
     interface Natives {
-        boolean isCorsSafelistedHeader(String name, String value);
+        boolean isCorsSafelistedHeader(
+                @JniType("std::string") String name, @JniType("std::string") String value);
     }
 }

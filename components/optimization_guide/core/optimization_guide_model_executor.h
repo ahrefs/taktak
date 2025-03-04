@@ -11,16 +11,29 @@
 #include "base/time/time.h"
 #include "base/types/expected.h"
 #include "components/optimization_guide/core/model_execution/feature_keys.h"
+#include "components/optimization_guide/core/model_execution/multimodal_message.h"
 #include "components/optimization_guide/core/model_execution/optimization_guide_model_execution_error.h"
 #include "components/optimization_guide/core/model_quality/model_quality_log_entry.h"
 #include "components/optimization_guide/proto/model_execution.pb.h"
+#include "services/on_device_model/public/mojom/on_device_model.mojom.h"
 
 namespace optimization_guide {
 
 // The result type of model execution.
-using OptimizationGuideModelExecutionResult =
-    base::expected<const proto::Any /*response_metadata*/,
-                   OptimizationGuideModelExecutionError>;
+struct OptimizationGuideModelExecutionResult {
+  OptimizationGuideModelExecutionResult();
+  explicit OptimizationGuideModelExecutionResult(
+      base::expected<const proto::Any /*response_metadata*/,
+                     OptimizationGuideModelExecutionError> response,
+      std::unique_ptr<proto::ModelExecutionInfo> execution_info);
+  OptimizationGuideModelExecutionResult(
+      OptimizationGuideModelExecutionResult&& other);
+  ~OptimizationGuideModelExecutionResult();
+  base::expected<const proto::Any /*response_metadata*/,
+                 OptimizationGuideModelExecutionError>
+      response;
+  std::unique_ptr<proto::ModelExecutionInfo> execution_info;
+};
 
 // A response type used for OptimizationGuideModelExecutor::Session.
 struct StreamingResponse {
@@ -32,6 +45,11 @@ struct StreamingResponse {
 
   // True if streaming has finished.
   bool is_complete = false;
+
+  // The number of tokens in this response's input.
+  size_t input_token_count = 0;
+  // The number of tokens in this response.
+  size_t output_token_count = 0;
 };
 
 struct OptimizationGuideModelStreamingExecutionResult {
@@ -40,7 +58,9 @@ struct OptimizationGuideModelStreamingExecutionResult {
       base::expected<const StreamingResponse,
                      OptimizationGuideModelExecutionError> response,
       bool provided_by_on_device,
-      std::unique_ptr<ModelQualityLogEntry> log_entry = nullptr);
+      // TODO(372535824): remove this parameter.
+      std::unique_ptr<ModelQualityLogEntry> log_entry = nullptr,
+      std::unique_ptr<proto::ModelExecutionInfo> execution_info = nullptr);
 
   ~OptimizationGuideModelStreamingExecutionResult();
   OptimizationGuideModelStreamingExecutionResult(
@@ -52,12 +72,16 @@ struct OptimizationGuideModelStreamingExecutionResult {
   bool provided_by_on_device = false;
   // The log entry will be null until `StreamingResponse.is_complete` is true.
   std::unique_ptr<ModelQualityLogEntry> log_entry;
+  // The execution info will be null until `StreamingResponse.is_complete` is
+  // true.
+  std::unique_ptr<proto::ModelExecutionInfo> execution_info;
 };
 
 // The callback for receiving the model execution result and model quality log
 // entry.
 using OptimizationGuideModelExecutionResultCallback =
     base::OnceCallback<void(OptimizationGuideModelExecutionResult,
+                            // TODO(372535824): remove this parameter.
                             std::unique_ptr<ModelQualityLogEntry>)>;
 
 // A callback for receiving a score from the model, or nullopt if the model
@@ -97,13 +121,6 @@ struct SessionConfigParams {
   // How the execution of this feature should be configured.
   ExecutionMode execution_mode = ExecutionMode::kDefault;
 
-  // The amount of time to wait before the initial response is received from the
-  // on device model. If unset, a default value will be used.
-  //
-  // If `execution_mode` allows, model execution will fall back to the server
-  // instead of failing entirely when this timeout is reached.
-  std::optional<base::TimeDelta> on_device_execution_timeout;
-
   enum class LoggingMode {
     // Enable logging if it's enabled for ModelBasedCapability.
     kDefault,
@@ -117,14 +134,17 @@ struct SessionConfigParams {
 //
 // These values are persisted to logs. Entries should not be renumbered and
 // numeric values should never be reused.
+// LINT.IfChange(OnDeviceModelEligibilityReason)
 enum class OnDeviceModelEligibilityReason {
   kUnknown = 0,
   // Success.
   kSuccess = 1,
   // The feature flag gating on-device model execution was disabled.
   kFeatureNotEnabled = 2,
+  // DEPRECATED: split into kModelNotEligible, kInsufficientDiskSpace and
+  // kNoOnDeviceFeatureUsed.
   // There was no on-device model available.
-  kModelNotAvailable = 3,
+  kDeprecatedModelNotAvailable = 3,
   // The on-device model was available but there was not an execution config
   // available for the feature.
   kConfigNotAvailableForFeature = 4,
@@ -132,8 +152,9 @@ enum class OnDeviceModelEligibilityReason {
   kGpuBlocked = 5,
   // The on-device model process crashed too many times for this version.
   kTooManyRecentCrashes = 6,
+  // DEPRECATED
   // The on-device model took too long too many times for this version.
-  kTooManyRecentTimeouts = 7,
+  // kTooManyRecentTimeouts = 7,
   // The on-device safety model was required but not available.
   kSafetyModelNotAvailable = 8,
   // The on-device safety model was available but there was not a safety config
@@ -152,13 +173,22 @@ enum class OnDeviceModelEligibilityReason {
   // There was no on-device model available, but it may be downloaded and
   // installed later.
   kModelToBeInstalled = 15,
-
-  // This must be kept in sync with
-  // OptimizationGuideOnDeviceModelEligibilityReason in optimization/enums.xml.
+  // The device is not eligible for running the on-device model.
+  kModelNotEligible = 16,
+  // The device does not have enough space to download and install the
+  // on-device model.
+  kInsufficientDiskSpace = 17,
+  // There was no on-device feature usage so the model has not been
+  // downloaded yet.
+  kNoOnDeviceFeatureUsed = 18,
 
   // Insert new values before this line.
-  kMaxValue = kModelToBeInstalled,
+  kMaxValue = kNoOnDeviceFeatureUsed,
 };
+// LINT.ThenChange(//tools/metrics/histograms/metadata/optimization/enums.xml:OptimizationGuideOnDeviceModelEligibilityReason)
+
+std::ostream& operator<<(std::ostream& out,
+                         const OnDeviceModelEligibilityReason& val);
 
 // Observer that is notified when the on-device model availability changes for
 // the on-device eligible features.
@@ -190,6 +220,12 @@ struct TokenLimits {
   uint32_t max_output_tokens = 0;
 };
 
+// The configuration that specifies the default sampling params.
+struct SamplingParamsConfig {
+  uint32_t default_top_k;
+  float default_temperature;
+};
+
 // Interface for model execution.
 class OptimizationGuideModelExecutor {
  public:
@@ -200,7 +236,19 @@ class OptimizationGuideModelExecutor {
    public:
     virtual ~Session() = default;
 
+    // TODO(crbug.com/385173789): Remove hacky multimodal prototype workarounds.
+    virtual on_device_model::mojom::Session& GetSession() = 0;
+
     virtual const TokenLimits& GetTokenLimits() const = 0;
+
+    // Sets the input context for this session, replacing any previous context.
+    // This will generate prompt text from the feature config's
+    // "input_context_substitutions". Data provided here (including images) will
+    // be merged with data provided to an ExecuteModel() call and be available
+    // for use in later prompt templates based on the request. Calling this will
+    // cancel any ongoing executions and invoke their 'callback' methods with
+    // the 'kCancelled' error.
+    virtual void SetInput(MultimodalMessage request) = 0;
 
     // Adds context to this session. This will be saved for future Execute()
     // calls. Calling multiple times will replace previous calls to
@@ -232,11 +280,18 @@ class OptimizationGuideModelExecutor {
         const std::string& text,
         OptimizationGuideModelSizeInTokenCallback callback) = 0;
 
+    // Gets the size in tokens used by request_metadata in tokens as it would be
+    // formatted by a call to `ExecuteModel()`. The result will be passed back
+    // through the callback.
+    virtual void GetExecutionInputSizeInTokens(
+        MultimodalMessageReadView request_metadata,
+        OptimizationGuideModelSizeInTokenCallback callback) = 0;
+
     // Gets the size in tokens used by request_metadata as it would be formatted
     // by a call to `AddContext()`. The result will be passed back through the
     // callback.
     virtual void GetContextSizeInTokens(
-        const google::protobuf::MessageLite& request_metadata,
+        MultimodalMessageReadView request_metadata,
         OptimizationGuideModelSizeInTokenCallback callback) = 0;
 
     // Return the sampling params for the current session.
@@ -245,14 +300,13 @@ class OptimizationGuideModelExecutor {
     // Returns the feature_metadata from the
     // OnDeviceModelExecutionFeatureConfig.
     virtual const proto::Any& GetOnDeviceFeatureMetadata() const = 0;
-  };
 
-  // Whether an on-device session can be created for `feature`. An optional
-  // `on_device_model_eligibility_reason` parameter can be provided for more
-  // detailed reasons for why an on-device session could not be created.
-  virtual bool CanCreateOnDeviceSession(
-      ModelBasedCapabilityKey feature,
-      OnDeviceModelEligibilityReason* on_device_model_eligibility_reason) = 0;
+    // Clones the session and associated context. Note that if the parent
+    // session is deleted and cancels context processing after clone, the
+    // context will also be cancelled for the clone.
+    // TODO: crbug.com/396211270 - Make clone independent of parent.
+    virtual std::unique_ptr<Session> Clone() = 0;
+  };
 
   // Starts a session which allows streaming input and output from the model.
   // May return nullptr if model execution is not supported. This session should

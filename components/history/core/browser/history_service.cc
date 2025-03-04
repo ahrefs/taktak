@@ -673,20 +673,41 @@ void HistoryService::AddPage(HistoryAddPageArgs add_page_args) {
 
 void HistoryService::AddPartitionedVisitedLinks(
     const HistoryAddPageArgs& args) {
-  // We require each element of the triple-partition key <link url, top-level
-  // site, frame origin> to have a value.
-  if (!visit_delegate_ || !args.top_level_url.has_value()) {
+  // Ensure that we can communicate to our in-memory hashtable.
+  if (!visit_delegate_) {
     return;
   }
-  // We require each element of the triple-partition key to be valid GURLs.
-  if (!args.top_level_url->is_valid() || !args.referrer.is_valid()) {
-    return;
-  }
+
   // When links are partitioned and the navigation comes from an ephemeral
   // context we want to avoid adding it to the hashtable.
   if (args.is_ephemeral) {
     return;
   }
+
+  // We require each element of the triple-partition key <link url, top-level
+  // site, frame origin> to have a valid value.
+  GURL top_level_or_opener;
+  if (args.top_level_url.has_value() && args.top_level_url->is_valid()) {
+    top_level_or_opener = args.top_level_url.value();
+  } else {
+    // Context clicks may replace their empty or invalid top-level site with a
+    // valid opener value. Check if the navigation transition type matches
+    // context click.
+    if (ui::PageTransitionCoreTypeIs(args.transition,
+                                     ui::PAGE_TRANSITION_LINK)) {
+      if (args.opener.has_value() && args.opener->url.is_valid()) {
+        top_level_or_opener = args.opener->url;
+      }
+    }
+  }
+
+  // If we were unable to obtain valid URLs for either of our top-level or
+  // frame origin parameters, we cannot successfully construct our
+  // triple-partition key and should not add this navigation to the hashtable.
+  if (!top_level_or_opener.is_valid() || !args.referrer.is_valid()) {
+    return;
+  }
+
   // Add the VisitedLink representing each navigation to the partitioned
   // hashtable.
   if (!args.redirects.empty()) {
@@ -696,14 +717,12 @@ void HistoryService::AddPartitionedVisitedLinks(
     DCHECK_EQ(args.url, args.redirects.back());
     for (const GURL& redirect : args.redirects) {
       // All redirects originate from the same top-level site and frame origin.
-      VisitedLink link = {redirect,
-                          net::SchemefulSite(args.top_level_url.value()),
+      VisitedLink link = {redirect, net::SchemefulSite(top_level_or_opener),
                           url::Origin::Create(args.referrer)};
       visit_delegate_->AddVisitedLink(link);
     }
   } else {
-    VisitedLink link = {args.url,
-                        net::SchemefulSite(args.top_level_url.value()),
+    VisitedLink link = {args.url, net::SchemefulSite(top_level_or_opener),
                         url::Origin::Create(args.referrer)};
     visit_delegate_->AddVisitedLink(link);
   }
@@ -1174,20 +1193,6 @@ base::CancelableTaskTracker::TaskId HistoryService::QueryURL(
       std::move(callback));
 }
 
-base::CancelableTaskTracker::TaskId HistoryService::QueryURLs(
-    const std::vector<GURL>& urls,
-    bool want_visits,
-    QueryURLsCallback callback,
-    base::CancelableTaskTracker* tracker) {
-  DCHECK(backend_task_runner_) << "History service being called after cleanup";
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return tracker->PostTaskAndReplyWithResult(
-      backend_task_runner_.get(), FROM_HERE,
-      base::BindOnce(&HistoryBackend::QueryURLs, history_backend_, urls,
-                     want_visits),
-      std::move(callback));
-}
-
 // Statistics ------------------------------------------------------------------
 
 base::CancelableTaskTracker::TaskId HistoryService::GetHistoryCount(
@@ -1290,21 +1295,6 @@ base::CancelableTaskTracker::TaskId HistoryService::GetLastVisitToOrigin(
       backend_task_runner_.get(), FROM_HERE,
       base::BindOnce(&HistoryBackend::GetLastVisitToOrigin, history_backend_,
                      origin, begin_time, end_time),
-      std::move(callback));
-}
-
-base::CancelableTaskTracker::TaskId HistoryService::GetLastVisitToURL(
-    const GURL& url,
-    base::Time end_time,
-    GetLastVisitCallback callback,
-    base::CancelableTaskTracker* tracker) {
-  DCHECK(backend_task_runner_) << "History service being called after cleanup";
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-
-  return tracker->PostTaskAndReplyWithResult(
-      backend_task_runner_.get(), FROM_HERE,
-      base::BindOnce(&HistoryBackend::GetLastVisitToURL, history_backend_, url,
-                     end_time),
       std::move(callback));
 }
 

@@ -21,7 +21,6 @@
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/chrome_version.h"
 #include "chrome/common/webui_url_constants.h"
-#include "components/user_education/common/user_education_features.h"
 #include "components/user_education/webui/whats_new_registry.h"
 #include "components/variations/service/variations_service.h"
 #include "components/variations/service/variations_service_utils.h"
@@ -49,6 +48,9 @@ void WhatsNewHandler::RecordTimeToLoadContent(base::Time time) {
 }
 
 void WhatsNewHandler::RecordVersionPageLoaded(bool is_auto_open) {
+  // Store that this version was used to show a version page.
+  whats_new_registry_->SetVersionUsed();
+
   base::RecordAction(base::UserMetricsAction("UserEducation.WhatsNew.Shown"));
   base::RecordAction(
       base::UserMetricsAction("UserEducation.WhatsNew.VersionShown"));
@@ -60,13 +62,8 @@ void WhatsNewHandler::RecordVersionPageLoaded(bool is_auto_open) {
 
 void WhatsNewHandler::RecordEditionPageLoaded(const std::string& page_uid,
                                               bool is_auto_open) {
-  if (user_education::features::IsWhatsNewV2()) {
-    // Store that this edition has been used for this milestone.
-    whats_new_registry_->SetEditionUsed(page_uid);
-
-    // Look for a survey override associated with this edition.
-    survey_override_ = whats_new_registry_->GetEditionSurvey(page_uid);
-  }
+  // Store that this edition has been used for this milestone.
+  whats_new_registry_->SetEditionUsed(page_uid);
 
   base::RecordAction(base::UserMetricsAction("UserEducation.WhatsNew.Shown"));
 
@@ -186,12 +183,8 @@ void WhatsNewHandler::GetServerUrl(bool is_staging,
                                    GetServerUrlCallback callback) {
   GURL result = GURL("");
   if (!whats_new::IsRemoteContentDisabled()) {
-    if (user_education::features::IsWhatsNewV2()) {
-      result =
-          whats_new::GetV2ServerURLForRender(*whats_new_registry_, is_staging);
-    } else {
-      result = whats_new::GetServerURL(true, is_staging);
-    }
+    result =
+        whats_new::GetV2ServerURLForRender(*whats_new_registry_, is_staging);
   }
   std::move(callback).Run(result);
 
@@ -206,14 +199,25 @@ void WhatsNewHandler::TryShowHatsSurveyWithTimeout() {
     return;
   }
 
-  auto trigger_id = survey_override_.has_value() ? survey_override_.value()
-                                                 : kHatsSurveyTriggerWhatsNew;
-
-  hats_service->LaunchDelayedSurveyForWebContents(
-      trigger_id, web_contents_,
-      features::kHappinessTrackingSurveysForDesktopWhatsNewTime.Get()
-          .InMilliseconds(),
-      /*product_specific_bits_data=*/{},
-      /*product_specific_string_data=*/{},
-      /*navigation_behaviour=*/HatsService::REQUIRE_SAME_ORIGIN);
+  // Look for a survey override associated with any editions that we
+  // requested from the server.
+  const auto survey_override = whats_new_registry_->GetActiveEditionSurvey();
+  if (survey_override.has_value()) {
+    hats_service->LaunchDelayedSurveyForWebContents(
+        kHatsSurveyTriggerWhatsNew, web_contents_,
+        features::kHappinessTrackingSurveysForDesktopWhatsNewTime.Get()
+            .InMilliseconds(),
+        /*product_specific_bits_data=*/{},
+        /*product_specific_string_data=*/{},
+        /*navigation_behaviour=*/HatsService::REQUIRE_SAME_ORIGIN,
+        base::DoNothing(), base::DoNothing(), survey_override.value());
+  } else {
+    hats_service->LaunchDelayedSurveyForWebContents(
+        kHatsSurveyTriggerWhatsNew, web_contents_,
+        features::kHappinessTrackingSurveysForDesktopWhatsNewTime.Get()
+            .InMilliseconds(),
+        /*product_specific_bits_data=*/{},
+        /*product_specific_string_data=*/{},
+        /*navigation_behaviour=*/HatsService::REQUIRE_SAME_ORIGIN);
+  }
 }

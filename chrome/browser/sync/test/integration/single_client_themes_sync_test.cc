@@ -67,7 +67,9 @@ MATCHER_P(HasUserColor, color, "") {
 
 std::unique_ptr<syncer::LoopbackServerEntity> CreateDefaultThemeEntity() {
   sync_pb::EntitySpecifics specifics;
-  specifics.mutable_theme();
+  // Clients always write `browser_color_scheme` field.
+  specifics.mutable_theme()->set_browser_color_scheme(
+      sync_pb::ThemeSpecifics_BrowserColorScheme_SYSTEM);
   return syncer::PersistentUniqueClientEntity::CreateFromSpecificsForTesting(
       ThemeSyncableService::kSyncEntityClientTag,
       ThemeSyncableService::kSyncEntityClientTag, specifics,
@@ -76,6 +78,9 @@ std::unique_ptr<syncer::LoopbackServerEntity> CreateDefaultThemeEntity() {
 
 std::unique_ptr<syncer::LoopbackServerEntity> CreateSystemThemeEntity() {
   sync_pb::EntitySpecifics specifics;
+  // Clients always write `browser_color_scheme` field.
+  specifics.mutable_theme()->set_browser_color_scheme(
+      sync_pb::ThemeSpecifics_BrowserColorScheme_SYSTEM);
   specifics.mutable_theme()->set_use_system_theme_by_default(true);
   return syncer::PersistentUniqueClientEntity::CreateFromSpecificsForTesting(
       ThemeSyncableService::kSyncEntityTitle,
@@ -309,6 +314,12 @@ IN_PROC_BROWSER_TEST_F(
   // Set the flag to not read incoming prefs.
   preferences_helper::GetPrefs(/*index=*/0)
       ->SetBoolean(prefs::kShouldReadIncomingSyncingThemePrefs, false);
+
+  // Wait for data to be committed to disk.
+  base::RunLoop loop;
+  preferences_helper::GetPrefs(/*index=*/0)
+      ->CommitPendingWrite(loop.QuitClosure());
+  loop.Run();
 }
 
 // Verifies that the syncing theme prefs are not read if the migration is set.
@@ -621,6 +632,47 @@ IN_PROC_BROWSER_TEST_F(SingleClientThemesSyncTestWithAccountThemesSeparation,
   ASSERT_TRUE(SetupClients());
   ASSERT_TRUE(GetClient(0)->AwaitSyncSetupCompletion());
   ASSERT_TRUE(GetSyncService(0)->GetActiveDataTypes().Has(syncer::THEMES));
+
+  // Disable sync.
+  ASSERT_TRUE(
+      GetClient(0)->DisableSyncForType(syncer::UserSelectableType::kThemes));
+
+  // Original local theme should get re-applied.
+  EXPECT_TRUE(CustomThemeChecker(GetProfile(0)).Wait());
+  EXPECT_FALSE(UsingGrayscaleTheme(GetProfile(0)));
+}
+
+IN_PROC_BROWSER_TEST_F(SingleClientThemesSyncTestWithAccountThemesSeparation,
+                       ShouldNotApplyLocalUpdateOnLocalThemeWhenSignedIn) {
+  ASSERT_TRUE(SetupSync());
+
+  // Change to a custom theme.
+  UseCustomTheme(GetProfile(0), 0);
+  // Custom theme is uploaded to account.
+  EXPECT_TRUE(
+      ServerThemeMatchChecker(HasCustomThemeWithId(GetCustomTheme(0))).Wait());
+
+  // Disable syncing of themes.
+  ASSERT_TRUE(
+      GetClient(0)->DisableSyncForType(syncer::UserSelectableType::kThemes));
+
+  // Original local theme is restored.
+  EXPECT_TRUE(DefaultThemeChecker(GetProfile(0)).Wait());
+}
+
+IN_PROC_BROWSER_TEST_F(SingleClientThemesSyncTestWithAccountThemesSeparation,
+                       ShouldNotApplyRemoteUpdateOnLocalTheme) {
+  ASSERT_TRUE(SetupClients());
+
+  // Set up a custom theme first, so we can then switch back to default.
+  UseCustomTheme(GetProfile(0), 0);
+  ASSERT_TRUE(CustomThemeChecker(GetProfile(0)).Wait());
+
+  ASSERT_TRUE(SetupSync());
+
+  // Remote update.
+  GetFakeServer()->InjectEntity(CreateDefaultThemeEntity());
+  EXPECT_TRUE(DefaultThemeChecker(GetProfile(0)).Wait());
 
   // Disable sync.
   ASSERT_TRUE(

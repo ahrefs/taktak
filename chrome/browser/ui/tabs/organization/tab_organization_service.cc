@@ -23,7 +23,7 @@
 #include "chrome/browser/ui/webui/tab_search/tab_search_prefs.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "base/system/sys_info.h"
 #include "chrome/browser/ash/ownership/owner_settings_service_ash.h"
 #include "chrome/browser/ash/ownership/owner_settings_service_ash_factory.h"
@@ -82,7 +82,7 @@ TabOrganizationSession* TabOrganizationService::GetSessionForBrowser(
 TabOrganizationSession* TabOrganizationService::CreateSessionForBrowser(
     const Browser* browser,
     const TabOrganizationEntryPoint entrypoint,
-    const tabs::TabModel* base_session_tab) {
+    const tabs::TabInterface* base_session_tab) {
   CHECK(!base::Contains(browser_session_map_, browser));
   CHECK(browser->tab_strip_model()->SupportsTabGroups());
   std::pair<BrowserSessionMap::iterator, bool> pair =
@@ -101,7 +101,7 @@ TabOrganizationSession* TabOrganizationService::CreateSessionForBrowser(
 TabOrganizationSession* TabOrganizationService::ResetSessionForBrowser(
     const Browser* browser,
     const TabOrganizationEntryPoint entrypoint,
-    const tabs::TabModel* base_session_tab) {
+    const tabs::TabInterface* base_session_tab) {
   browser->tab_strip_model()->RemoveObserver(this);
   if (base::Contains(browser_session_map_, browser)) {
     RemoveBrowserFromSessionMap(browser);
@@ -113,7 +113,7 @@ TabOrganizationSession* TabOrganizationService::ResetSessionForBrowser(
 void TabOrganizationService::RestartSessionAndShowUI(
     const Browser* browser,
     const TabOrganizationEntryPoint entrypoint,
-    const tabs::TabModel* base_session_tab) {
+    const tabs::TabInterface* base_session_tab) {
   ResetSessionForBrowser(browser, entrypoint, base_session_tab);
   StartRequestIfNotFRE(browser, entrypoint);
   OnUserInvokedFeature(browser);
@@ -226,12 +226,36 @@ void TabOrganizationService::OnTabGroupChanged(const TabGroupChange& change) {
     // When a tab group is added or removed on the tabstrip, or its contents
     // changes, destroy the session for that browser.
     case TabGroupChange::kCreated:
-    case TabGroupChange::kContentsChanged:
     case TabGroupChange::kClosed: {
       RemoveBrowserFromSessionMap(browser);
       return;
     }
   }
+}
+
+void TabOrganizationService::TabGroupedStateChanged(
+    TabStripModel* tab_strip_model,
+    std::optional<tab_groups::TabGroupId> old_group,
+    std::optional<tab_groups::TabGroupId> new_group,
+    tabs::TabInterface* tab,
+    int index) {
+  CHECK(old_group != new_group);
+  const Browser* browser = GetBrowserForTabStripModel(tab_strip_model);
+
+  if (!browser) {
+    return;
+  }
+
+  TabOrganizationSession* session = GetSessionForBrowser(browser);
+  CHECK(session);
+
+  // Ignore changes when the session has already been accepted, to avoid acting
+  // on changes made by the session itself.
+  if (session->request()->state() == TabOrganizationRequest::State::COMPLETED) {
+    return;
+  }
+
+  RemoveBrowserFromSessionMap(browser);
 }
 
 void TabOrganizationService::AcceptTabOrganization(

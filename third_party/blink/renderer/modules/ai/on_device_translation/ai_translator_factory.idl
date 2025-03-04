@@ -1,19 +1,35 @@
 [
     RuntimeEnabled=TranslationAPI,
-    Exposed=(Window,Worker)
+    Exposed=(Window,Worker),
+    SecureContext
 ]
 interface AITranslatorFactory {
+  [
+    Measure,
+    CallWith=ScriptState,
+    RaisesException
+  ]
+  Promise<AIAvailability> availability(AITranslatorCreateCoreOptions options);
+  [
+    Measure,
+    CallWith=ScriptState,
+    RaisesException
+  ]
+  Promise<AITranslator> create(AITranslatorCreateOptions options);
   [
     CallWith=ScriptState,
     RaisesException
   ]
-  Promise<AITranslator> create(optional AITranslatorCreateOptions options = {});
-// TODO(crbug.com/322229993): Add capabilities().
+  // TODO(crbug.com/392185835): Remove capabilities method.
+  Promise<AITranslatorCapabilities> capabilities();
 };
 
-dictionary AITranslatorCreateOptions {
-  AbortSignal signal;
-  // TODO(crbug.com/322229993): Add AICreateMonitorCallback.
+dictionary AITranslatorCreateCoreOptions {
   required DOMString sourceLanguage;
   required DOMString targetLanguage;
+};
+
+dictionary AITranslatorCreateOptions : AITranslatorCreateCoreOptions {
+  AbortSignal signal;
+  AICreateMonitorCallback monitor;
 };

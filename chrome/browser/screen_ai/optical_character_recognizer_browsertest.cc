@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "chrome/browser/screen_ai/public/optical_character_recognizer.h"
 
 #include "base/files/file_util.h"
@@ -9,6 +14,7 @@
 #include "base/path_service.h"
 #include "base/scoped_observation.h"
 #include "base/strings/stringprintf.h"
+#include "base/test/bind.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/test_future.h"
 #include "chrome/browser/profiles/profile.h"
@@ -21,12 +27,21 @@
 #include "content/public/test/browser_test.h"
 #include "services/screen_ai/buildflags/buildflags.h"
 #include "services/screen_ai/public/cpp/utilities.h"
+#include "services/screen_ai/public/mojom/screen_ai_service.mojom.h"
+#include "testing/gmock/include/gmock/gmock-matchers.h"
+#include "testing/gmock/include/gmock/gmock.h"
+#include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "ui/accessibility/accessibility_features.h"
 #include "ui/accessibility/ax_features.mojom-features.h"
 #include "ui/gfx/codec/png_codec.h"
 
 namespace {
+
+using ::testing::ElementsAre;
+using ::testing::Field;
+using ::testing::IsEmpty;
+using ::testing::Pointee;
 
 // Load image from test data directory.
 SkBitmap LoadImageFromTestFile(
@@ -42,13 +57,11 @@ SkBitmap LoadImageFromTestFile(
           .Append(relative_path_from_chrome_data);
   EXPECT_TRUE(base::PathExists(image_path));
 
-  std::string image_data;
-  EXPECT_TRUE(base::ReadFileToString(image_path, &image_data));
+  std::optional<std::vector<uint8_t>> image_data =
+      base::ReadFileToBytes(image_path);
 
-  SkBitmap image;
-  EXPECT_TRUE(
-      gfx::PNGCodec::Decode(reinterpret_cast<const uint8_t*>(image_data.data()),
-                            image_data.size(), &image));
+  SkBitmap image = gfx::PNGCodec::Decode(image_data.value());
+  EXPECT_FALSE(image.isNull());
   return image;
 }
 
@@ -258,6 +271,20 @@ IN_PROC_BROWSER_TEST_P(OpticalCharacterRecognizerTest,
   ASSERT_TRUE(ocr);
 }
 
+IN_PROC_BROWSER_TEST_P(OpticalCharacterRecognizerTest,
+                       CreateWithStatusCallbackWithReturnedPtrDestructed) {
+  base::test::TestFuture<bool> future;
+
+  // Create an `OpticalCharacterRecognizer` scoped_refptr and then immediately
+  // discard the result.
+  OpticalCharacterRecognizer::CreateWithStatusCallback(
+      browser()->profile(), mojom::OcrClientType::kTest, future.GetCallback());
+
+  // The status callback should still be run without crashing even though the
+  // created scoped_refptr was destroyed.
+  EXPECT_TRUE(future.Wait());
+}
+
 IN_PROC_BROWSER_TEST_P(OpticalCharacterRecognizerTest, PerformOCR_Empty) {
   // Init OCR.
   base::test::TestFuture<bool> init_future;
@@ -348,6 +375,102 @@ IN_PROC_BROWSER_TEST_P(OpticalCharacterRecognizerTest, PerformOCR_Simple) {
   histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.Latency.Medium", 0);
   histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.Latency.Large", 0);
   histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.Latency.XLarge", 0);
+
+  // PDF Specific metrics should not be recorded as the client type is test.
+  histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.LinesCount.PDF", 0);
+  histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.Time.PDF", 0);
+  histograms.ExpectTotalCount(
+      "Accessibility.ScreenAI.OCR.ImageSize.PDF.WithText", 0);
+  histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.ImageSize.PDF.NoText",
+                              0);
+  histograms.ExpectTotalCount(
+      "Accessibility.ScreenAI.OCR.MostDetectedLanguage.PDF", 0);
+}
+
+IN_PROC_BROWSER_TEST_P(OpticalCharacterRecognizerTest, PerformOCR_PdfMetrics) {
+  base::HistogramTester histograms;
+
+  // Init OCR.
+  base::test::TestFuture<bool> init_future;
+  scoped_refptr<OpticalCharacterRecognizer> ocr =
+      OpticalCharacterRecognizer::CreateWithStatusCallback(
+          browser()->profile(), mojom::OcrClientType::kPdfViewer,
+          init_future.GetCallback());
+  ASSERT_TRUE(init_future.Wait());
+  ASSERT_EQ(init_future.Get<bool>(), IsOcrAvailable());
+
+  // Perform OCR.
+  SkBitmap bitmap = LoadImageFromTestFile(
+      base::FilePath(FILE_PATH_LITERAL("ocr/just_one_letter.png")));
+  base::test::TestFuture<mojom::VisualAnnotationPtr> perform_future;
+  ocr->PerformOCR(bitmap, perform_future.GetCallback());
+  ASSERT_TRUE(perform_future.Wait());
+
+// Fake library always returns empty.
+#if BUILDFLAG(USE_FAKE_SCREEN_AI)
+  bool expected_call_success = false;
+#else
+  bool expected_call_success = true;
+#endif
+
+  metrics::SubprocessMetricsProvider::MergeHistogramDeltasForTesting();
+
+  unsigned expected_calls = IsOcrAvailable() ? 1 : 0;
+  unsigned expected_lines_count =
+      (expected_call_success && IsOcrAvailable()) ? 1 : 0;
+
+  histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.LinesCount.PDF",
+                              expected_calls);
+  histograms.ExpectBucketCount("Accessibility.ScreenAI.OCR.LinesCount.PDF",
+                               expected_lines_count, expected_calls);
+
+  // Since the text in the image is just one letter, language is not detected.
+  histograms.ExpectTotalCount(
+      "Accessibility.ScreenAI.OCR.MostDetectedLanguage.PDF",0);
+
+  // Expect measured latency and image size, but we don't know how long it
+  // taskes to process and how large the image is.
+  // So we just check the total count of the expected bucket.
+  histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.Time.PDF",
+                              expected_calls);
+  histograms.ExpectTotalCount(
+      "Accessibility.ScreenAI.OCR.ImageSize.PDF.WithText",
+      expected_lines_count);
+
+  // If OCR is not available, the metric is not recorded at all. But when it is
+  // available, the expectation is the opposite of the above metrics.
+  unsigned expected_no_text_calls =
+      IsOcrAvailable() ? (1 - expected_lines_count) : 0;
+  histograms.ExpectTotalCount("Accessibility.ScreenAI.OCR.ImageSize.PDF.NoText",
+                              expected_no_text_calls);
+}
+
+IN_PROC_BROWSER_TEST_P(OpticalCharacterRecognizerTest,
+                       PerformOCR_ImmediatelyAfterServiceInit) {
+  if (!IsOcrAvailable()) {
+    GTEST_SKIP() << "This test is only available when service is available";
+  }
+
+  base::test::TestFuture<mojom::VisualAnnotationPtr> perform_ocr_future;
+  scoped_refptr<OpticalCharacterRecognizer> ocr =
+      OpticalCharacterRecognizer::CreateWithStatusCallback(
+          browser()->profile(), mojom::OcrClientType::kTest,
+          base::BindLambdaForTesting([&](bool is_successful) {
+            EXPECT_TRUE(is_successful);
+            // The status callback is run asynchronously after `ocr` is created
+            // and assigned, so `ocr` is safe to use here.
+            ASSERT_TRUE(ocr);
+            ocr->PerformOCR(LoadImageFromTestFile(base::FilePath(
+                                FILE_PATH_LITERAL("ocr/just_one_letter.png"))),
+                            perform_ocr_future.GetCallback());
+          }));
+
+#if BUILDFLAG(USE_FAKE_SCREEN_AI)
+  EXPECT_THAT(perform_ocr_future.Get()->lines, IsEmpty());
+#else
+  EXPECT_THAT(perform_ocr_future.Get()->lines,
+              ElementsAre(Pointee(Field(&mojom::LineBox::text_line, "A"))));
+#endif
 }
 
 IN_PROC_BROWSER_TEST_P(OpticalCharacterRecognizerTest,

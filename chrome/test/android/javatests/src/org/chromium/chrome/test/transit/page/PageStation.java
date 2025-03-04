@@ -7,11 +7,17 @@ package org.chromium.chrome.test.transit.page;
 import static androidx.test.espresso.action.ViewActions.longClick;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 
+import static org.chromium.base.test.transit.Condition.whether;
 import static org.chromium.base.test.transit.ViewSpec.viewSpec;
+
+import android.app.Activity;
+import android.os.SystemClock;
+import android.view.View;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.supplier.Supplier;
-import org.chromium.base.test.transit.ActivityElement;
 import org.chromium.base.test.transit.CallbackCondition;
 import org.chromium.base.test.transit.Condition;
 import org.chromium.base.test.transit.ConditionStatus;
@@ -21,16 +27,26 @@ import org.chromium.base.test.transit.Elements;
 import org.chromium.base.test.transit.Facility;
 import org.chromium.base.test.transit.Station;
 import org.chromium.base.test.transit.Transition;
+import org.chromium.base.test.transit.Transition.Trigger;
 import org.chromium.base.test.transit.ViewElement;
 import org.chromium.base.test.transit.ViewSpec;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.ChromeTabbedActivity;
+import org.chromium.chrome.browser.layouts.LayoutType;
 import org.chromium.chrome.browser.tab.Tab;
+import org.chromium.chrome.browser.tab.TabLaunchType;
+import org.chromium.chrome.browser.tab.TabSelectionType;
 import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.browser.tabmodel.TabModelObserver;
+import org.chromium.chrome.browser.tabmodel.TabModelUtils;
 import org.chromium.chrome.test.transit.hub.IncognitoTabSwitcherStation;
 import org.chromium.chrome.test.transit.hub.RegularTabSwitcherStation;
+import org.chromium.chrome.test.transit.layouts.LayoutTypeVisibleCondition;
+import org.chromium.chrome.test.transit.ntp.IncognitoNewTabPageStation;
+import org.chromium.chrome.test.transit.ntp.RegularNewTabPageStation;
+import org.chromium.chrome.test.util.MenuUtils;
 import org.chromium.content_public.browser.LoadUrlParams;
+import org.chromium.content_public.browser.test.util.TouchCommon;
 import org.chromium.ui.base.PageTransition;
 
 import java.util.ArrayList;
@@ -43,7 +59,7 @@ import java.util.function.Function;
  * <p>Contains extra configurable Conditions such as waiting for a tab to be created, selected, have
  * the expected title, etc.
  */
-public class PageStation extends Station {
+public class PageStation extends Station<ChromeTabbedActivity> {
     /**
      * Builder for all PageStation subclasses.
      *
@@ -126,7 +142,7 @@ public class PageStation extends Station {
                 mNumTabsBeingSelected = 0;
             }
             if (mTabAlreadySelected == null && mNumTabsBeingSelected == 0) {
-                mTabAlreadySelected = previousStation.getLoadedTab();
+                mTabAlreadySelected = previousStation.mPageLoadedSupplier.get();
             }
             // Cannot copy over facilities because we have no way to clone them. It's also not
             // obvious that we should...
@@ -146,30 +162,39 @@ public class PageStation extends Station {
     protected final String mExpectedUrlSubstring;
     protected final String mExpectedTitle;
 
+    public static final ViewSpec TOOLBAR = viewSpec(withId(R.id.control_container));
     public static final ViewSpec HOME_BUTTON = viewSpec(withId(R.id.home_button));
     public static final ViewSpec URL_BAR = viewSpec(withId(R.id.url_bar));
     public static final ViewSpec TAB_SWITCHER_BUTTON = viewSpec(withId(R.id.tab_switcher_button));
     public static final ViewSpec MENU_BUTTON = viewSpec(withId(R.id.menu_button));
-
-    protected ActivityElement<ChromeTabbedActivity> mActivityElement;
     protected Supplier<Tab> mActivityTabSupplier;
     protected Supplier<Tab> mSelectedTabSupplier;
     protected Supplier<Tab> mPageLoadedSupplier;
+    private ViewElement mToolbar;
+
+    /** Prefer the PageStation's subclass |newBuilder()|. */
+    public static Builder<PageStation> newGenericBuilder() {
+        return new Builder<>(PageStation::new);
+    }
 
     /** Use the PageStation's subclass |newBuilder()|. */
     protected <T extends PageStation> PageStation(Builder<T> builder) {
         // incognito is optional and defaults to false
+        super(ChromeTabbedActivity.class);
         mIncognito = builder.mIncognito == null ? false : builder.mIncognito;
 
         // isEntryPoint is optional and defaults to false
         mIsEntryPoint = builder.mIsEntryPoint;
 
         // isOpeningTab is required
-        assert builder.mNumTabsBeingOpened != null;
+        assert builder.mNumTabsBeingOpened != null
+                : "PageStation.Builder needs withIsOpeningTabs() or initFrom()";
         mNumTabsBeingOpened = builder.mNumTabsBeingOpened;
 
         // mNumTabsBeingSelected is required
-        assert builder.mNumTabsBeingSelected != null;
+        assert builder.mNumTabsBeingSelected != null
+                : "PageStation.Builder needs withIsSelectingTabs(), withTabAlreadySelected() or"
+                        + " initFrom()";
         mNumTabsBeingSelected = builder.mNumTabsBeingSelected;
 
         // Pages must have an already selected tab, or be selecting a tab.
@@ -194,12 +219,16 @@ public class PageStation extends Station {
 
     @Override
     public void declareElements(Elements.Builder elements) {
-        mActivityElement = elements.declareActivity(ChromeTabbedActivity.class);
+        super.declareElements(elements);
+
+        elements.declareEnterCondition(
+                new LayoutTypeVisibleCondition(mActivityElement, LayoutType.BROWSING));
 
         // TODO(crbug.com/41497463): These should be scoped, but for now they need to be unscoped
         // since they unintentionally still exist in the non-Hub tab switcher. They are mostly
         // occluded by the tab switcher toolbar, but at least the tab_switcher_button is still
         // visible.
+        mToolbar = elements.declareView(TOOLBAR, ViewElement.unscopedOption());
         elements.declareView(HOME_BUTTON, ViewElement.unscopedOption());
         elements.declareView(TAB_SWITCHER_BUTTON, ViewElement.unscopedOption());
         elements.declareView(MENU_BUTTON, ViewElement.unscopedOption());
@@ -245,6 +274,9 @@ public class PageStation extends Station {
             elements.declareEnterCondition(
                     new PageUrlContainsCondition(mExpectedUrlSubstring, mPageLoadedSupplier));
         }
+
+        elements.declareEnterCondition(
+                new LayoutTypeVisibleCondition(mActivityElement, LayoutType.BROWSING));
     }
 
     public boolean isIncognito() {
@@ -312,6 +344,55 @@ public class PageStation extends Station {
         return enterFacilitySync(new PageAppMenuFacility<PageStation>(), MENU_BUTTON::click);
     }
 
+    /** Shortcut to open a new tab programmatically as if selecting "New Tab" from the app menu. */
+    public RegularNewTabPageStation openNewTabFast() {
+        return travelToSync(
+                RegularNewTabPageStation.newBuilder()
+                        .withIsOpeningTabs(1)
+                        .withIsSelectingTabs(1)
+                        .build(),
+                () ->
+                        MenuUtils.invokeCustomMenuActionSync(
+                                InstrumentationRegistry.getInstrumentation(),
+                                getActivity(),
+                                R.id.new_tab_menu_id));
+    }
+
+    /**
+     * Shortcut to open a new incognito tab programmatically as if selecting "New Incognito Tab"
+     * from the app menu.
+     */
+    public IncognitoNewTabPageStation openNewIncognitoTabFast() {
+        return travelToSync(
+                IncognitoNewTabPageStation.newBuilder()
+                        .withIsOpeningTabs(1)
+                        .withIsSelectingTabs(1)
+                        .build(),
+                () ->
+                        MenuUtils.invokeCustomMenuActionSync(
+                                InstrumentationRegistry.getInstrumentation(),
+                                getActivity(),
+                                R.id.new_incognito_tab_menu_id));
+    }
+
+    /** Shortcut to select a different tab programmatically. */
+    public <T extends PageStation> T selectTabFast(
+            Tab tabToSelect, Supplier<Builder<T>> pageStationFactory) {
+        return travelToSync(
+                pageStationFactory
+                        .get()
+                        .withIncognito(tabToSelect.isIncognitoBranded())
+                        .withIsOpeningTabs(0)
+                        .withIsSelectingTabs(1)
+                        .build(),
+                Transition.runTriggerOnUiThreadOption(),
+                () ->
+                        TabModelUtils.selectTabById(
+                                getActivity().getTabModelSelector(),
+                                tabToSelect.getId(),
+                                TabSelectionType.FROM_USER));
+    }
+
     /** Opens the tab switcher by pressing the toolbar tab switcher button. */
     public RegularTabSwitcherStation openRegularTabSwitcher() {
         assert !mIncognito;
@@ -336,33 +417,139 @@ public class PageStation extends Station {
         }
 
         T destination = builder.build();
-        Runnable r =
+        Trigger trigger =
                 () -> {
                     @PageTransition
                     int transitionType = PageTransition.TYPED | PageTransition.FROM_ADDRESS_BAR;
-                    getActivity().getActivityTab().loadUrl(new LoadUrlParams(url, transitionType));
+                    getLoadedTab().loadUrl(new LoadUrlParams(url, transitionType));
                 };
-        // TODO(b/341978208): Wait for a page loaded callback.
         Transition.TransitionOptions options =
-                Transition.newOptions().withTimeout(10000).withPossiblyAlreadyFulfilled().build();
-        return travelToSync(destination, options, () -> ThreadUtils.runOnUiThread(r));
+                Transition.newOptions()
+                        .withCondition(new PageLoadCallbackCondition(getLoadedTab()))
+                        .withTimeout(10000)
+                        .withPossiblyAlreadyFulfilled()
+                        .withRunTriggerOnUiThread()
+                        .build();
+        return travelToSync(destination, options, trigger);
+    }
+
+    /** Loads a |url| leading to a web page in the same tab and waits to transition. */
+    public WebPageStation loadWebPageProgrammatically(String url) {
+        return loadPageProgrammatically(url, WebPageStation.newBuilder());
     }
 
     public WebPageStation loadAboutBlank() {
-        return loadPageProgrammatically("about:blank", WebPageStation.newBuilder());
+        return loadWebPageProgrammatically("about:blank");
+    }
+
+    /** Loads a |url| in another tab as if a link was clicked and waits to transition. */
+    public <T extends PageStation> T openFakeLink(String url, Builder<T> builder) {
+        return travelToSync(
+                builder.withIsOpeningTabs(1)
+                        .withIsSelectingTabs(1)
+                        .withIncognito(mIncognito)
+                        .withExpectedUrlSubstring(url)
+                        .build(),
+                Transition.runTriggerOnUiThreadOption(),
+                () ->
+                        getActivity()
+                                .getTabCreator(mIncognito)
+                                .launchUrl(url, TabLaunchType.FROM_LINK));
     }
 
     /**
-     * Returns the {@link ChromeTabbedActivity} matched to the ActivityCondition.
-     *
-     * <p>The element is only guaranteed to exist as long as the station is ACTIVE or in transition
-     * triggers when it is already TRANSITIONING_FROM.
+     * Loads a |url| in another tab leading to a webpage as if a link was clicked and waits to
+     * transition.
      */
-    public ChromeTabbedActivity getActivity() {
-        assertSuppliersCanBeUsed();
-        return mActivityElement.get();
+    public WebPageStation openFakeLinkToWebPage(String url) {
+        return openFakeLink(url, WebPageStation.newBuilder());
     }
 
+    /** Move to next tab by swiping the toolbar left. */
+    public <T extends PageStation> T swipeToolbarToNextTab(
+            PageStation.Builder<T> destinationBuilder) {
+        return swipeToolbar(destinationBuilder, /* directionRight= */ false);
+    }
+
+    /** Move to previous tab by swiping the toolbar right. */
+    public <T extends PageStation> T swipeToolbarToPreviousTab(
+            PageStation.Builder<T> destinationBuilder) {
+        return swipeToolbar(destinationBuilder, /* directionRight= */ true);
+    }
+
+    public <T extends PageStation> T swipeToolbar(
+            PageStation.Builder<T> destinationBuilder, boolean directionRight) {
+        ToolbarSwipeCoordinates coords =
+                new ToolbarSwipeCoordinates(mToolbar.get(), directionRight);
+
+        T destination = destinationBuilder.initFrom(this).withIsSelectingTabs(1).build();
+        return travelToSync(
+                destination,
+                () ->
+                        TouchCommon.performDrag(
+                                mToolbar.get(),
+                                coords.mFromX,
+                                coords.mToX,
+                                coords.mY,
+                                coords.mY,
+                                ToolbarSwipeCoordinates.STEP_COUNT,
+                                500));
+    }
+
+    /** Start moving to next tab by swiping the toolbar left, but do not finish the swipe. */
+    public SwipingToTabFacility swipeToolbarToNextTabPartial() {
+        return swipeToolbarPartial(/* directionRight= */ false);
+    }
+
+    /** Start moving to previous tab by swiping the toolbar right, but do not finish the swipe. */
+    public SwipingToTabFacility swipeToolbarToPreviousTabPartial() {
+        return swipeToolbarPartial(/* directionRight= */ true);
+    }
+
+    private SwipingToTabFacility swipeToolbarPartial(boolean directionRight) {
+        ToolbarSwipeCoordinates coords =
+                new ToolbarSwipeCoordinates(mToolbar.get(), directionRight);
+        long downTime = SystemClock.uptimeMillis();
+        Activity activity = getActivity();
+
+        Trigger firstPartTrigger =
+                () -> {
+                    TouchCommon.dragStart(activity, coords.mFromX, coords.mY, downTime);
+                    TouchCommon.dragTo(
+                            activity,
+                            coords.mFromX,
+                            coords.mToX,
+                            coords.mY,
+                            coords.mY,
+                            ToolbarSwipeCoordinates.STEP_COUNT,
+                            downTime);
+                };
+        Trigger secondPartTrigger =
+                () -> {
+                    TouchCommon.dragEnd(activity, coords.mToX, coords.mY, downTime);
+                };
+        return enterFacilitySync(new SwipingToTabFacility(secondPartTrigger), firstPartTrigger);
+    }
+
+    private static class ToolbarSwipeCoordinates {
+        static final int STEP_COUNT = 25;
+        final int mFromX;
+        final int mToX;
+        final int mY;
+
+        private ToolbarSwipeCoordinates(View toolbar, boolean directionRight) {
+            int[] toolbarPos = new int[2];
+            toolbar.getLocationOnScreen(toolbarPos);
+            final int width = toolbar.getWidth();
+            final int height = toolbar.getHeight();
+
+            this.mFromX = toolbarPos[0] + width / 2;
+            this.mToX = toolbarPos[0] + (directionRight ? width : 0);
+            this.mY = toolbarPos[1] + height / 2;
+        }
+    }
+
+    /** Get the Tab corresponding to this active PageStation. */
     public Tab getLoadedTab() {
         assertSuppliersCanBeUsed();
         return mPageLoadedSupplier.get();

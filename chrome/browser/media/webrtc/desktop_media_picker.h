@@ -12,6 +12,7 @@
 #include "base/feature_list.h"
 #include "base/functional/callback_forward.h"
 #include "base/memory/raw_ptr.h"
+#include "build/android_buildflags.h"
 #include "build/buildflag.h"
 #include "content/public/browser/desktop_media_id.h"
 #include "content/public/browser/media_stream_request.h"
@@ -26,7 +27,7 @@ namespace content {
 class WebContents;
 }
 
-#if BUILDFLAG(IS_ANDROID)
+#if BUILDFLAG(IS_DESKTOP_ANDROID)
 BASE_DECLARE_FEATURE(kAndroidMediaPicker);
 #endif
 
@@ -47,6 +48,7 @@ class DesktopMediaPicker {
       kGetDisplayMedia,
       kScreenshotDataCollector,
       kArcScreenCapture,
+      kGlic
     };
 
     explicit Params(RequestSource request_source);
@@ -108,7 +110,7 @@ class DesktopMediaPicker {
 
   // Creates a picker dialog/confirmation box depending on the value of
   // |request|. If no request is available the default picker, namely
-  // DesktopMediaPickerViews is used.
+  // DesktopMediaPickerImpl is used.
   static std::unique_ptr<DesktopMediaPicker> Create(
       const content::MediaStreamRequest* request);
 

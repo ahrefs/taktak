@@ -22,7 +22,6 @@
 #include "base/task/single_thread_task_runner.h"
 #include "base/time/tick_clock.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "ui/events/event.h"
 #include "ui/events/event_source.h"
 #include "ui/events/event_utils.h"
@@ -229,7 +228,7 @@ void EventGenerator::SendMouseExit() {
   Dispatch(&mouseev);
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 void EventGenerator::MoveMouseToWithNative(const gfx::Point& point_in_host,
                                            const gfx::Point& point_for_native) {
   // Ozone uses the location in native event as a system location.
@@ -319,6 +318,11 @@ void EventGenerator::SetTouchRadius(float x, float y) {
 void EventGenerator::SetTouchTilt(float x, float y) {
   touch_pointer_details_.tilt_x = x;
   touch_pointer_details_.tilt_y = y;
+}
+
+void EventGenerator::SetProperties(
+    std::optional<Event::Properties> properties) {
+  properties_ = std::move(properties);
 }
 
 void EventGenerator::PressTouch(
@@ -598,7 +602,7 @@ void EventGenerator::GestureMultiFingerScroll(int count,
                                               int move_x,
                                               int move_y) {
   const int kMaxTouchPoints = 10;
-  int delays[kMaxTouchPoints] = {0};
+  int delays[kMaxTouchPoints] = {};
   GestureMultiFingerScrollWithDelays(
       count, start, delays, event_separation_time_ms, steps, move_x, move_y);
 }
@@ -719,6 +723,10 @@ void EventGenerator::Dispatch(ui::Event* event) {
     ui::TouchEvent* touch_event = static_cast<ui::TouchEvent*>(event);
     touch_pointer_details_.id = touch_event->pointer_details().id;
     touch_event->SetPointerDetailsForTest(touch_pointer_details_);
+  }
+
+  if (properties_.has_value()) {
+    event->SetProperties(properties_.value());
   }
 
   if (!event->handled()) {

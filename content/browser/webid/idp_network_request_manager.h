@@ -87,6 +87,7 @@ class CONTENT_EXPORT IdpNetworkRequestManager {
     // is possible to distinguish which it is since HTTP response codes are
     // positive and net errors are negative.
     int response_code;
+    bool cors_error = false;
   };
 
   enum class LogoutResponse {
@@ -117,6 +118,7 @@ class CONTENT_EXPORT IdpNetworkRequestManager {
     GURL client_metadata;
     GURL metrics;
     GURL disconnect;
+    GURL issuance;
   };
 
   struct CONTENT_EXPORT WellKnown {
@@ -223,7 +225,8 @@ class CONTENT_EXPORT IdpNetworkRequestManager {
   using DownloadCallback =
       base::OnceCallback<void(std::unique_ptr<std::string> response_body,
                               int response_code,
-                              const std::string& mime_type)>;
+                              const std::string& mime_type,
+                              bool cors_error)>;
   using FetchWellKnownCallback =
       base::OnceCallback<void(FetchStatus, const WellKnown&)>;
   using FetchConfigCallback = base::OnceCallback<
@@ -289,6 +292,7 @@ class CONTENT_EXPORT IdpNetworkRequestManager {
       const GURL& token_url,
       const std::string& account,
       const std::string& url_encoded_post_data,
+      bool idp_blindness,
       TokenRequestCallback callback,
       ContinueOnCallback continue_on,
       RecordErrorMetricsCallback record_error_metrics_callback);
@@ -304,6 +308,7 @@ class CONTENT_EXPORT IdpNetworkRequestManager {
   // Sends error code to metrics endpoint when token generation fails.
   virtual void SendFailedTokenRequestMetrics(
       const GURL& metrics_endpoint_url,
+      bool did_show_ui,
       MetricsEndpointErrorCode error_code);
 
   // Send logout request to a single target.
@@ -344,7 +349,8 @@ class CONTENT_EXPORT IdpNetworkRequestManager {
   void OnDownloadedImage(ImageCallback callback,
                          std::unique_ptr<std::string> response_body,
                          int response_code,
-                         const std::string& mime_type);
+                         const std::string& mime_type,
+                         bool cors_error);
 
   void OnDecodedImage(ImageCallback callback, const SkBitmap& decoded_bitmap);
 

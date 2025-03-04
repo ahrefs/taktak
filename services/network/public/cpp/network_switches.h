@@ -13,6 +13,8 @@ namespace switches {
 
 COMPONENT_EXPORT(NETWORK_CPP) extern const char kForceEffectiveConnectionType[];
 COMPONENT_EXPORT(NETWORK_CPP)
+extern const char kForcePermissionPolicyUnloadDefaultEnabled[];
+COMPONENT_EXPORT(NETWORK_CPP)
 extern const char kHostResolverRules[];
 COMPONENT_EXPORT(NETWORK_CPP)
 extern const char kIgnoreCertificateErrorsSPKIList[];
@@ -30,6 +32,7 @@ COMPONENT_EXPORT(NETWORK_CPP) extern const char kUseRelatedWebsiteSet[];
 COMPONENT_EXPORT(NETWORK_CPP) extern const char kIpAddressSpaceOverrides[];
 COMPONENT_EXPORT(NETWORK_CPP)
 extern const char kDisableSharedDictionaryStorageCleanupForTesting[];
+COMPONENT_EXPORT(NETWORK_CPP) extern const char kIgnoreBadMessageForTesting[];
 
 }  // namespace switches
 

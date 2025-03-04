@@ -20,6 +20,7 @@
 #include "base/functional/callback_helpers.h"
 #include "base/location.h"
 #include "base/memory/raw_ptr.h"
+#include "base/pickle.h"
 #include "base/task/single_thread_task_runner.h"
 #include "net/base/features.h"
 #include "net/base/net_errors.h"
@@ -340,7 +341,7 @@ Error MockDiskEntry::ReadyForSparseIO(CompletionOnceCallback callback) {
 }
 
 void MockDiskEntry::SetLastUsedTimeForTest(base::Time time) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 // If |value| is true, don't deliver any completion callbacks until called
@@ -529,7 +530,7 @@ disk_cache::EntryResult MockDiskCache::CreateEntry(
   if (it != entries_.end()) {
     if (!it->second->is_doomed()) {
       if (double_create_check_) {
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
       } else {
         return EntryResult::MakeError(ERR_CACHE_CREATE_FAILURE);
       }
@@ -765,16 +766,14 @@ bool MockHttpCache::WriteResponseInfo(disk_cache::Entry* disk_entry,
                                       const HttpResponseInfo* response_info,
                                       bool skip_transient_headers,
                                       bool response_truncated) {
-  base::Pickle pickle;
-  response_info->Persist(&pickle, skip_transient_headers, response_truncated);
+  auto data = base::MakeRefCounted<PickledIOBuffer>(
+      response_info->MakePickle(skip_transient_headers, response_truncated));
 
   TestCompletionCallback cb;
-  int len = static_cast<int>(pickle.size());
-  auto data = base::MakeRefCounted<WrappedIOBuffer>(pickle);
-
-  int rv = disk_entry->WriteData(0, 0, data.get(), len, cb.callback(), true);
+  int rv = disk_entry->WriteData(0, 0, data.get(), data->size(), cb.callback(),
+                                 true);
   rv = cb.GetResult(rv);
-  return (rv == len);
+  return rv == data->size();
 }
 
 bool MockHttpCache::OpenBackendEntry(const std::string& key,

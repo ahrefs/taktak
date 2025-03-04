@@ -303,8 +303,6 @@ class HistoryBackend : public base::RefCountedThreadSafe<HistoryBackend>,
   // Querying ------------------------------------------------------------------
 
   QueryURLResult QueryURL(const GURL& url, bool want_visits);
-  std::vector<QueryURLResult> QueryURLs(const std::vector<GURL>& urls,
-                                        bool want_visits);
   QueryResults QueryHistory(const std::u16string& text_query,
                             const QueryOptions& options);
 
@@ -400,12 +398,6 @@ class HistoryBackend : public base::RefCountedThreadSafe<HistoryBackend>,
   HistoryLastVisitResult GetLastVisitToOrigin(const url::Origin& origin,
                                               base::Time begin_time,
                                               base::Time end_time);
-
-  // Gets the last time `url` was visited before `end_time`. If the given URL
-  // has not been visited in the past, the result will have a null base::Time,
-  // but still report success.
-  HistoryLastVisitResult GetLastVisitToURL(const GURL& url,
-                                           base::Time end_time);
 
   // Gets counts for total visits and days visited for pages matching `host`'s
   // scheme, port, and host. Counts only user-visible visits.
@@ -663,6 +655,9 @@ class HistoryBackend : public base::RefCountedThreadSafe<HistoryBackend>,
 
   QueryURLResult GetMostRecentVisitsForGurl(GURL url, int max_visits);
 
+  // Gets whether the URL is known to sync.
+  bool GetIsUrlKnownToSync(URLID id, bool* is_known_to_sync);
+
   // Searches for a visit with the given `originator_visit_id` coming from
   // another device (identified by `originator_cache_guid`). If found, returns
   // true and writes the visit into `visit_row`; otherwise returns false.
@@ -862,14 +857,17 @@ class HistoryBackend : public base::RefCountedThreadSafe<HistoryBackend>,
   // If the caller wants to add this visit to the VisitedLinkDatabase, it needs
   // to provide values for the `top_level_url`, `frame_url`, `is_ephemeral`
   // parameters. `top_level_url` is a GURL representing the top-level frame that
-  // this navigation originated from. `frame_url` is GURL representing the
+  // this navigation originated from. Context clicks may replace an invalid
+  // `top_level_url` with a valid `opener_url`, which contains only the GURL
+  // from `opener_visit` for quick access. `frame_url` is GURL representing the
   // immediate frame that this navigation originated from. For example, if a
   // link to `c.com` is clicked in an iframe `b.com` that is embedded in
   // `a.com`, the `top_level_url` is `a.com` and the `frame_url` is `b.com` (and
   // the `url` is `c.com`). `is_ephemeral` represents whether our navigation
   // came from a credentialless iframe (which is an ephemeral context). When
-  // true, we want to avoid adding the visit into the VisitedLinkDatabase. This
-  // does not schedule database commits, it is intended to be used as a
+  // true, we want to avoid adding the visit into the VisitedLinkDatabase.
+  //
+  // This does not schedule database commits, it is intended to be used as a
   // subroutine for AddPage only. It also assumes the database is valid.
   // Note that |app_is| is used for mobile only; |nullopt| on other platforms.
   std::pair<URLID, VisitID> AddPageVisit(
@@ -883,18 +881,19 @@ class HistoryBackend : public base::RefCountedThreadSafe<HistoryBackend>,
       bool should_increment_typed_count,
       VisitID opener_visit,
       bool consider_for_ntp_most_visited,
+      bool is_ephemeral = false,
       std::optional<int64_t> local_navigation_id = std::nullopt,
       std::optional<std::u16string> title = std::nullopt,
       std::optional<GURL> top_level_url = std::nullopt,
       std::optional<GURL> frame_url = std::nullopt,
+      std::optional<GURL> opener_url = std::nullopt,
       std::optional<std::string> app_id = std::nullopt,
       std::optional<base::TimeDelta> visit_duration = std::nullopt,
       std::optional<std::string> originator_cache_guid = std::nullopt,
       std::optional<VisitID> originator_visit_id = std::nullopt,
       std::optional<VisitID> originator_referring_visit = std::nullopt,
       std::optional<VisitID> originator_opener_visit = std::nullopt,
-      bool is_known_to_sync = false,
-      bool is_ephemeral = false);
+      bool is_known_to_sync = false);
 
   // Returns a redirect-or-referral chain in `redirects` for the VisitID
   // `cur_visit`. `cur_visit` is assumed to be valid. Assumes that

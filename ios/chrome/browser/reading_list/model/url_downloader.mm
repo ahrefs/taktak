@@ -96,8 +96,7 @@ std::pair<URLDownloader::SuccessState, int64_t> SavePDFFile(
                                                              path);
 
     if (base::Move(temporary_path, absolute_path)) {
-      int64_t pdf_file_size;
-      base::GetFileSize(absolute_path, &pdf_file_size);
+      int64_t pdf_file_size = base::GetFileSize(absolute_path).value_or(0);
       return {URLDownloader::DOWNLOAD_SUCCESS, pdf_file_size};
     } else {
       return {URLDownloader::ERROR, 0};
@@ -435,6 +434,7 @@ void URLDownloader::FetchPDFFile() {
   auto resource_request = std::make_unique<network::ResourceRequest>();
   resource_request->url = pdf_url;
   resource_request->load_flags = net::LOAD_SKIP_CACHE_VALIDATION;
+  resource_request->site_for_cookies = net::SiteForCookies::FromUrl(pdf_url);
 
   url_loader_ = network::SimpleURLLoader::Create(std::move(resource_request),
                                                  NO_TRAFFIC_ANNOTATION_YET);

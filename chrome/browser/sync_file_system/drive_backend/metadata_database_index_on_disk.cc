@@ -2,13 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "chrome/browser/sync_file_system/drive_backend/metadata_database_index_on_disk.h"
 
+#include <array>
 #include <unordered_set>
 
 #include "base/containers/contains.h"
@@ -203,8 +199,7 @@ void RemoveUnreachableItemsFromDB(LevelDBWrapper* db,
       pending.pop_back();
 
       if (!visited_trackers.insert(tracker_id).second) {
-        NOTREACHED_IN_MIGRATION();
-        continue;
+        NOTREACHED();
       }
 
       AppendContents(
@@ -277,7 +272,7 @@ MetadataDatabaseIndexOnDisk::Create(LevelDBWrapper* db) {
   return index;
 }
 
-MetadataDatabaseIndexOnDisk::~MetadataDatabaseIndexOnDisk() {}
+MetadataDatabaseIndexOnDisk::~MetadataDatabaseIndexOnDisk() = default;
 
 void MetadataDatabaseIndexOnDisk::RemoveUnreachableItems() {
   RemoveUnreachableItemsFromDB(
@@ -382,8 +377,7 @@ void MetadataDatabaseIndexOnDisk::RemoveFileMetadata(
 void MetadataDatabaseIndexOnDisk::RemoveFileTracker(int64_t tracker_id) {
   FileTracker tracker;
   if (!GetFileTracker(tracker_id, &tracker)) {
-    NOTREACHED_IN_MIGRATION();
-    return;
+    NOTREACHED();
   }
 
   DVLOG(1) << "Removing tracker: "
@@ -686,13 +680,17 @@ int64_t MetadataDatabaseIndexOnDisk::BuildTrackerIndexes() {
 }
 
 int64_t MetadataDatabaseIndexOnDisk::DeleteTrackerIndexes() {
-  const char* kIndexPrefixes[] = {
-    kAppRootIDByAppIDKeyPrefix, kActiveTrackerIDByFileIDKeyPrefix,
-    kTrackerIDByFileIDKeyPrefix, kMultiTrackerByFileIDKeyPrefix,
-    kActiveTrackerIDByParentAndTitleKeyPrefix,
-    kTrackerIDByParentAndTitleKeyPrefix, kMultiBackingParentAndTitleKeyPrefix,
-    kDirtyIDKeyPrefix, kDemotedDirtyIDKeyPrefix
-  };
+  auto kIndexPrefixes = std::to_array<const char*>({
+      kAppRootIDByAppIDKeyPrefix,
+      kActiveTrackerIDByFileIDKeyPrefix,
+      kTrackerIDByFileIDKeyPrefix,
+      kMultiTrackerByFileIDKeyPrefix,
+      kActiveTrackerIDByParentAndTitleKeyPrefix,
+      kTrackerIDByParentAndTitleKeyPrefix,
+      kMultiBackingParentAndTitleKeyPrefix,
+      kDirtyIDKeyPrefix,
+      kDemotedDirtyIDKeyPrefix,
+  });
 
   int64_t num_deletes_before = db_->num_deletes();
   for (size_t i = 0; i < std::size(kIndexPrefixes); ++i)
@@ -868,8 +866,7 @@ void MetadataDatabaseIndexOnDisk::AddToPathIndexes(
       if (!base::StringToInt64(id_str, &tracker_id))
         continue;
       if (tracker_id == new_tracker.tracker_id()) {
-        NOTREACHED_IN_MIGRATION();
-        continue;
+        NOTREACHED();
       }
 
       const std::string multi_key =

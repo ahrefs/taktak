@@ -83,6 +83,8 @@ class CORE_EXPORT LayoutHTMLCanvas final : public LayoutReplaced {
     return &children_;
   }
 
+  void DidInvalidatePaintForPlacedElement(Element* placedElement);
+
  private:
   LayoutObjectChildList* VirtualChildren() final {
     NOT_DESTROYED();
@@ -100,12 +102,14 @@ class CORE_EXPORT LayoutHTMLCanvas final : public LayoutReplaced {
 
   void PaintReplaced(const PaintInfo&,
                      const PhysicalOffset& paint_offset) const override;
-  void IntrinsicSizeChanged() override {
+  void NaturalSizeChanged() override {
     NOT_DESTROYED();
     CanvasSizeChanged();
   }
+  PhysicalNaturalSizingInfo GetNaturalDimensions() const override;
 
   LayoutObjectChildList children_;
+  PhysicalSize natural_size_;
 };
 
 template <>

@@ -23,14 +23,15 @@
 #include "chrome/test/interaction/interaction_test_util_browser.h"
 #include "chrome/test/interaction/interactive_browser_test.h"
 #include "chrome/test/interaction/tracked_element_webcontents.h"
-#include "components/user_education/common/feature_promo_controller.h"
-#include "components/user_education/common/help_bubble_params.h"
-#include "components/user_education/common/tutorial.h"
-#include "components/user_education/common/tutorial_description.h"
-#include "components/user_education/common/tutorial_registry.h"
-#include "components/user_education/common/tutorial_service.h"
+#include "components/user_education/common/feature_promo/feature_promo_controller.h"
+#include "components/user_education/common/help_bubble/help_bubble_params.h"
+#include "components/user_education/common/tutorial/tutorial.h"
+#include "components/user_education/common/tutorial/tutorial_description.h"
+#include "components/user_education/common/tutorial/tutorial_registry.h"
+#include "components/user_education/common/tutorial/tutorial_service.h"
 #include "components/user_education/views/help_bubble_factory_views.h"
 #include "components/user_education/views/help_bubble_view.h"
+#include "components/user_education/views/help_bubble_views.h"
 #include "components/user_education/webui/tracked_element_webui.h"
 #include "content/public/test/browser_test.h"
 #include "ui/base/interaction/element_identifier.h"
@@ -187,7 +188,7 @@ class WebUITutorialInteractiveUitest : public InteractiveBrowserTest {
                     kTestTutorialId, browser()->window()->GetElementContext());
               }),
               WaitForStateChange(page_id, help_bubble_shown));
-    AddDescription(steps, "StartTutorial( %s )");
+    AddDescriptionPrefix(steps, "StartTutorial()");
     return steps;
   }
 
@@ -203,7 +204,7 @@ class WebUITutorialInteractiveUitest : public InteractiveBrowserTest {
                          service->CancelTutorialIfRunning(kTestTutorialId);
                        }),
                        WaitForStateChange(page_id, help_bubble_hidden));
-    AddDescription(steps, "CancelTutorial( %s )");
+    AddDescriptionPrefix(steps, "CancelTutorial()");
     return steps;
   }
 

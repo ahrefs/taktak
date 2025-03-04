@@ -7,15 +7,16 @@
 #import "base/i18n/rtl.h"
 #import "components/strings/grit/components_strings.h"
 #import "ios/chrome/browser/location_bar/ui_bundled/location_bar_constants.h"
+#import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_feature.h"
 #import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_header_constants.h"
 #import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/browser/shared/ui/elements/new_feature_badge_view.h"
 #import "ios/chrome/browser/shared/ui/symbols/symbols.h"
 #import "ios/chrome/browser/shared/ui/util/uikit_ui_util.h"
 #import "ios/chrome/browser/start_surface/ui_bundled/start_surface_features.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/public/toolbar_constants.h"
+#import "ios/chrome/browser/toolbar/ui_bundled/public/toolbar_utils.h"
 #import "ios/chrome/browser/ui/content_suggestions/ntp_home_constant.h"
-#import "ios/chrome/browser/ui/toolbar/public/toolbar_constants.h"
-#import "ios/chrome/browser/ui/toolbar/public/toolbar_utils.h"
 #import "ios/chrome/common/ui/colors/semantic_color_names.h"
 #import "ios/chrome/common/ui/util/pointer_interaction_util.h"
 #import "ios/chrome/common/ui/util/ui_util.h"
@@ -42,11 +43,9 @@ const CGFloat kDoodleTopMarginOther = 65;
 // Size of the doodle top margin which is multiplied by the scaled font factor,
 // and added to `kDoodleTopMarginOther` on non Regular x Regular form factors.
 const CGFloat kDoodleScaledTopMarginOther = 10;
-const CGFloat kLargeFakeboxExtraDoodleTopMargin = 10;
 
 // Top margin for the search field
 const CGFloat kSearchFieldTopMargin = 22;
-const CGFloat kLargeFakeboxSearchFieldTopMargin = 40;
 
 // Bottom margin for the search field.
 const CGFloat kNTPShrunkLogoSearchFieldBottomPadding = 20;
@@ -134,7 +133,7 @@ void SetUpButtonWithNewFeatureBadge(UIButton* button) {
                        constant:-kNewBadgeOffsetFromButtonCenter],
   ]];
 }
-}
+}  // namespace
 
 namespace content_suggestions {
 
@@ -153,7 +152,7 @@ CGFloat DoodleHeight(BOOL logo_is_showing,
     if (doodle_is_showing ||
         (ui::GetDeviceFormFactor() == ui::DEVICE_FORM_FACTOR_TABLET)) {
       return kGoogleSearchDoodleShrunkHeight;
-    } else if (IsIOSLargeFakeboxEnabled()) {
+    } else if (ShouldEnlargeLogoAndFakebox()) {
       return kLargeFakeboxGoogleSearchLogoHeight;
     } else {
       return kGoogleSearchLogoHeight;
@@ -163,20 +162,26 @@ CGFloat DoodleHeight(BOOL logo_is_showing,
   return kGoogleSearchDoodleHeight;
 }
 
-CGFloat DoodleTopMargin(CGFloat top_inset,
+CGFloat DoodleTopMargin(BOOL logo_is_showing,
+                        BOOL doodle_is_showing,
                         UITraitCollection* trait_collection) {
-  if (IsRegularXRegularSizeClass(trait_collection))
+  if (IsRegularXRegularSizeClass(trait_collection)) {
     return kDoodleTopMarginRegularXRegular;
+  }
+  CGFloat top_inset = 0;
+  if (logo_is_showing && !doodle_is_showing && ShouldEnlargeLogoAndFakebox()) {
+    // Shrink the top inset so that the enlarged logo has the same bottom
+    // positioning as the regular logo.
+    top_inset = kGoogleSearchLogoHeight - kLargeFakeboxGoogleSearchLogoHeight;
+  }
   CGFloat top_margin =
       top_inset +
       AlignValueToPixel(kDoodleScaledTopMarginOther *
                         ui_util::SystemSuggestedFontSizeMultiplier());
   // If Magic Stack is not enabled, this value is zero (e.g. no-op).
   top_margin -= ReducedNTPTopMarginSpaceForMagicStack();
-  if (IsIOSLargeFakeboxEnabled()) {
-    top_margin += kLargeFakeboxExtraDoodleTopMargin;
-  }
   top_margin += kDoodleTopMarginOther;
+  top_margin += TopPaddingToNTP();
   return top_margin;
 }
 
@@ -185,13 +190,13 @@ CGFloat HeaderSeparatorHeight() {
 }
 
 CGFloat SearchFieldTopMargin() {
-  return IsIOSLargeFakeboxEnabled() ? kLargeFakeboxSearchFieldTopMargin
-                                    : kSearchFieldTopMargin;
+  return kSearchFieldTopMargin;
 }
 
 CGFloat SearchFieldWidth(CGFloat width, UITraitCollection* trait_collection) {
-  if (!IsCompactWidth(trait_collection) && !IsCompactHeight(trait_collection))
+  if (!IsCompactWidth(trait_collection) && !IsCompactHeight(trait_collection)) {
     return kSearchFieldLarge;
+  }
 
   // Special case for narrow sizes.
   return std::max(
@@ -200,7 +205,7 @@ CGFloat SearchFieldWidth(CGFloat width, UITraitCollection* trait_collection) {
 }
 
 CGFloat FakeOmniboxHeight() {
-  if (IsIOSLargeFakeboxEnabled()) {
+  if (ShouldEnlargeLogoAndFakebox()) {
     CGFloat multiplier = ui_util::SystemSuggestedFontSizeMultiplier();
     return AlignValueToPixel((kFakeboxHeight - kFakeboxHeightNonDynamic) *
                                  multiplier +
@@ -211,7 +216,7 @@ CGFloat FakeOmniboxHeight() {
 }
 
 CGFloat PinnedFakeOmniboxHeight() {
-  if (IsIOSLargeFakeboxEnabled()) {
+  if (ShouldEnlargeLogoAndFakebox()) {
     CGFloat multiplier = ui_util::SystemSuggestedFontSizeMultiplier();
     return AlignValueToPixel(
         (kPinnedFakeboxHeight - kPinnedFakeboxHeightNonDynamic) * multiplier +
@@ -222,7 +227,7 @@ CGFloat PinnedFakeOmniboxHeight() {
 }
 
 CGFloat FakeToolbarHeight() {
-  if (IsIOSLargeFakeboxEnabled()) {
+  if (ShouldEnlargeLogoAndFakebox()) {
     return PinnedFakeOmniboxHeight() + FakeToolbarVerticalMargin();
   }
   return ToolbarExpandedHeight(
@@ -233,7 +238,7 @@ CGFloat HeightForLogoHeader(BOOL logo_is_showing,
                             BOOL doodle_is_showing,
                             UITraitCollection* trait_collection) {
   CGFloat header_height =
-      DoodleTopMargin(0, trait_collection) +
+      DoodleTopMargin(logo_is_showing, doodle_is_showing, trait_collection) +
       DoodleHeight(logo_is_showing, doodle_is_showing, trait_collection) +
       SearchFieldTopMargin() + FakeOmniboxHeight() +
       ntp_header::kScrolledToTopOmniboxBottomMargin +

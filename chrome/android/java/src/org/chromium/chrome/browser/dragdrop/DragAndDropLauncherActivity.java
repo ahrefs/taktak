@@ -16,6 +16,7 @@ import androidx.annotation.VisibleForTesting;
 import org.chromium.base.IntentUtils;
 import org.chromium.base.ResettersForTesting;
 import org.chromium.base.TimeUtils;
+import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.chrome.browser.ChromeTabbedActivity;
 import org.chromium.chrome.browser.IntentHandler;
@@ -101,16 +102,18 @@ public class DragAndDropLauncherActivity extends Activity {
      *
      * @param context The context used to retrieve the package name.
      * @param tab The dragged tab.
-     * @param windowId The window ID of the Chrome window in which the tab will be moved,
+     * @param sourceWindowId The window ID of the Chrome window where the tab drag starts.
+     * @param destWindowId The window ID of the Chrome window in which the tab will be moved,
      *     |MultiWindowUtils.INVALID_INSTANCE_ID| if the tab should be moved to a new window.
      * @return The intent that will be used to move a dragged tab to a new Chrome instance.
      */
-    public static Intent getTabIntent(Context context, Tab tab, int windowId) {
+    public static Intent getTabIntent(
+            Context context, Tab tab, int sourceWindowId, int destWindowId) {
         if (!MultiWindowUtils.isMultiInstanceApi31Enabled()) return null;
         Intent intent =
                 MultiWindowUtils.createNewWindowIntent(
                         context.getApplicationContext(),
-                        windowId,
+                        destWindowId,
                         /* preferNew= */ true,
                         /* openAdjacently= */ false,
                         /* addTrustedIntentExtras= */ false);
@@ -118,6 +121,7 @@ public class DragAndDropLauncherActivity extends Activity {
         intent.setAction(DragAndDropLauncherActivity.ACTION_DRAG_DROP_VIEW);
         intent.putExtra(IntentHandler.EXTRA_URL_DRAG_SOURCE, UrlIntentSource.TAB_IN_STRIP);
         intent.putExtra(IntentHandler.EXTRA_DRAGGED_TAB_ID, tab.getId());
+        intent.putExtra(IntentHandler.EXTRA_DRAGDROP_TAB_WINDOW_ID, sourceWindowId);
         intent.addCategory(Intent.CATEGORY_BROWSABLE);
         intent.setData(Uri.parse(tab.getUrl().getSpec()));
         DragAndDropLauncherActivity.setIntentCreationTimestampMs(SystemClock.elapsedRealtime());
@@ -168,18 +172,6 @@ public class DragAndDropLauncherActivity extends Activity {
         ResettersForTesting.register(() -> sDropTimeoutForTesting = null);
     }
 
-    @VisibleForTesting
-    static @DragDropType int getDragDropTypeFromIntent(Intent intent) {
-        switch (intent.getIntExtra(IntentHandler.EXTRA_URL_DRAG_SOURCE, UrlIntentSource.UNKNOWN)) {
-            case UrlIntentSource.LINK:
-                return DragDropType.LINK_TO_NEW_INSTANCE;
-            case UrlIntentSource.TAB_IN_STRIP:
-                return DragDropType.TAB_STRIP_TO_NEW_INSTANCE;
-            default:
-                return DragDropType.UNKNOWN_TO_NEW_INSTANCE;
-        }
-    }
-
     private static void recordLaunchMetrics(Intent intent) {
         @UrlIntentSource
         int intentSource =
@@ -187,9 +179,12 @@ public class DragAndDropLauncherActivity extends Activity {
                         intent, IntentHandler.EXTRA_URL_DRAG_SOURCE, UrlIntentSource.UNKNOWN);
         if (intentSource == UrlIntentSource.LINK) {
             RecordUserAction.record(LAUNCHED_FROM_LINK_USER_ACTION);
+            RecordHistogram.recordEnumeratedHistogram(
+                    DragDropMetricUtils.HISTOGRAM_DRAG_DROP_TAB_TYPE,
+                    DragDropType.LINK_TO_NEW_INSTANCE,
+                    DragDropType.NUM_ENTRIES);
         } else if (intentSource == UrlIntentSource.TAB_IN_STRIP) {
             RecordUserAction.record(LAUNCHED_FROM_TAB_USER_ACTION);
         }
-        DragDropMetricUtils.recordTabDragDropType(getDragDropTypeFromIntent(intent));
     }
 }

@@ -17,6 +17,7 @@
 #include "base/json/json_writer.h"
 #include "base/json/string_escape.h"
 #include "base/strings/stringprintf.h"
+#include "base/strings/to_string.h"
 #include "base/test/test_switches.h"
 #include "base/values.h"
 #include "chrome/browser/ash/app_restore/full_restore_app_launch_handler.h"
@@ -596,7 +597,7 @@ InteractiveAshTest::WaitForElementWithManagedPropertyBoolean(
              el.managedProperties_.%s.activeValue === %s;
     }
   )",
-                         property.c_str(), expected_value ? "true" : "false");
+                         property.c_str(), base::ToString(expected_value));
   return WaitForStateChange(element_id, managed_boolean_change);
 }
 
@@ -791,6 +792,21 @@ InteractiveAshTest::WaitForElementDisplayNone(
 }
 
 ui::test::internal::InteractiveTestPrivate::MultiStep
+InteractiveAshTest::WaitForElementDisplayNotNone(
+    const ui::ElementIdentifier& element_id,
+    WebContentsInteractionTestUtil::DeepQuery element) {
+  DEFINE_LOCAL_CUSTOM_ELEMENT_EVENT_TYPE(kElementDoesNotHaveDisplayNone);
+
+  WebContentsInteractionTestUtil::StateChange state_change;
+  state_change.event = kElementDoesNotHaveDisplayNone;
+  state_change.where = element;
+  state_change.type = StateChange::Type::kExistsAndConditionTrue;
+  state_change.test_function =
+      "(el) => { return el.style.display !== 'none'; }";
+  return WaitForStateChange(element_id, state_change);
+}
+
+ui::test::internal::InteractiveTestPrivate::MultiStep
 InteractiveAshTest::WaitForToggleState(
     const ui::ElementIdentifier& element_id,
     const WebContentsInteractionTestUtil::DeepQuery& query,
@@ -917,7 +933,7 @@ InteractiveAshTest::SendTextAsKeyEvents(const ui::ElementIdentifier& element_id,
 
     if (!key_code.has_value()) {
       // Unsupported input.
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
 
     AddStep(steps, SendAccelerator(

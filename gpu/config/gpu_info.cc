@@ -71,8 +71,7 @@ const char* ImageDecodeAcceleratorTypeToString(
     case gpu::ImageDecodeAcceleratorType::kUnknown:
       return "Unknown";
   }
-  NOTREACHED_IN_MIGRATION() << "Invalid ImageDecodeAcceleratorType.";
-  return "";
+  NOTREACHED() << "Invalid ImageDecodeAcceleratorType.";
 }
 
 const char* ImageDecodeAcceleratorSubsamplingToString(
@@ -295,6 +294,7 @@ void GPUInfo::EnumerateFields(Enumerator* enumerator) const {
     std::string machine_model_name;
     std::string machine_model_version;
     std::string display_type;
+    SkiaBackendType skia_backend_type;
     std::string gl_version;
     std::string gl_vendor;
     std::string gl_renderer;
@@ -363,6 +363,8 @@ void GPUInfo::EnumerateFields(Enumerator* enumerator) const {
   enumerator->AddString("vertexShaderVersion", vertex_shader_version);
   enumerator->AddString("maxMsaaSamples", max_msaa_samples);
   enumerator->AddString("displayType", display_type);
+  enumerator->AddString("skiaBackendType",
+                        SkiaBackendTypeToString(skia_backend_type));
   enumerator->AddString("glVersion", gl_version);
   enumerator->AddString("glVendor", gl_vendor);
   enumerator->AddString("glRenderer", gl_renderer);

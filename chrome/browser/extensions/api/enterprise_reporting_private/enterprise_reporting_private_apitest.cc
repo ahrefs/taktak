@@ -29,6 +29,7 @@
 #include "extensions/common/extension_features.h"
 #include "extensions/test/result_catcher.h"
 #include "extensions/test/test_extension_dir.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "services/network/test/test_url_loader_factory.h"
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
@@ -119,21 +120,6 @@ constexpr char kManifestTemplate[] = R"(
 class EnterpriseReportingPrivateApiTest : public extensions::ExtensionApiTest {
  public:
   EnterpriseReportingPrivateApiTest() {
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
-    scoped_features_.InitWithFeatures(
-        /*enabled_features=*/
-        {
-            extensions_features::
-                kApiEnterpriseReportingPrivateReportDataMaskingEvent,
-            enterprise_signals::features::kNewEvSignalsEnabled,
-        },
-        /*disabled_features=*/{});
-#else
-    scoped_features_.InitAndEnableFeature(
-        extensions_features::
-            kApiEnterpriseReportingPrivateReportDataMaskingEvent);
-#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
-
 #if !BUILDFLAG(IS_CHROMEOS)
     browser_dm_token_storage_.SetClientId("client_id");
     browser_dm_token_storage_.SetEnrollmentToken("enrollment_token");
@@ -198,21 +184,11 @@ class EnterpriseReportingPrivateApiTest : public extensions::ExtensionApiTest {
   }
 
  protected:
-  void SetUpInProcessBrowserTestFixture() override {
-    extensions::ExtensionApiTest::SetUpInProcessBrowserTestFixture();
-
-    create_services_subscription_ =
-        BrowserContextDependencyManager::GetInstance()
-            ->RegisterCreateServicesCallbackForTesting(
-                base::BindRepeating(&EnterpriseReportingPrivateApiTest::
-                                        OnWillCreateBrowserContextServices,
-                                    base::Unretained(this)));
-  }
-
-  void OnWillCreateBrowserContextServices(content::BrowserContext* context) {
+  void SetUpBrowserContextKeyedServices(
+      content::BrowserContext* context) override {
+    extensions::ExtensionApiTest::SetUpBrowserContextKeyedServices(context);
     IdentityTestEnvironmentProfileAdaptor::
         SetIdentityTestEnvironmentFactoriesOnBrowserContext(context);
-
     ChromeSigninClientFactory::GetInstance()->SetTestingFactory(
         context, base::BindRepeating(&BuildChromeSigninClientWithURLLoader,
                                      &test_url_loader_factory_));
@@ -256,10 +232,6 @@ class EnterpriseReportingPrivateApiTest : public extensions::ExtensionApiTest {
       identity_test_env_profile_adaptor_;
 
   network::TestURLLoaderFactory test_url_loader_factory_;
-
-  base::CallbackListSubscription create_services_subscription_;
-
-  base::test::ScopedFeatureList scoped_features_;
 
 #if !BUILDFLAG(IS_CHROMEOS)
   policy::FakeBrowserDMTokenStorage browser_dm_token_storage_;
@@ -537,7 +509,7 @@ IN_PROC_BROWSER_TEST_F(EnterpriseReportingPrivateApiTest, GetAvInfo_Success) {
   )";
 
   AccountInfo account_info = SignIn("some-email@example.com");
-  RunTest(base::StringPrintf(kTest, account_info.gaia.c_str()));
+  RunTest(base::StringPrintf(kTest, account_info.gaia.ToString().c_str()));
 }
 
 IN_PROC_BROWSER_TEST_F(EnterpriseReportingPrivateApiTest, GetHotfixes_Success) {
@@ -555,7 +527,7 @@ IN_PROC_BROWSER_TEST_F(EnterpriseReportingPrivateApiTest, GetHotfixes_Success) {
   )";
 
   AccountInfo account_info = SignIn("some-email@example.com");
-  RunTest(base::StringPrintf(kTest, account_info.gaia.c_str()));
+  RunTest(base::StringPrintf(kTest, account_info.gaia.ToString().c_str()));
 }
 
 IN_PROC_BROWSER_TEST_F(EnterpriseReportingPrivateApiTest,
@@ -666,8 +638,8 @@ IN_PROC_BROWSER_TEST_F(EnterpriseReportingPrivateApiTest,
   )";
 
   AccountInfo account_info = SignIn("some-email@example.com");
-  RunTest(base::StringPrintf(kTest, account_info.gaia.c_str(), kOptions.c_str(),
-                             kAssertions));
+  RunTest(base::StringPrintf(kTest, account_info.gaia.ToString().c_str(),
+                             kOptions.c_str(), kAssertions));
 }
 
 #endif  // BUILDFLAG(IS_WIN)
@@ -872,7 +844,7 @@ IN_PROC_BROWSER_TEST_F(EnterpriseReportingPrivateApiTest,
   base::ReplaceSubstringsAfterOffset(&escaped_file_path, 0U, "\\", "\\\\");
 
   AccountInfo account_info = SignIn("some-email@example.com");
-  RunTest(base::StringPrintf(kTest, account_info.gaia.c_str(),
+  RunTest(base::StringPrintf(kTest, account_info.gaia.ToString().c_str(),
                              escaped_file_path.c_str(), extra_items.c_str(),
                              kAssertions));
 }
@@ -949,7 +921,7 @@ IN_PROC_BROWSER_TEST_F(EnterpriseReportingPrivateApiTest,
   )";
 
   AccountInfo account_info = SignIn("some-email@example.com");
-  RunTest(base::StringPrintf(kTest, account_info.gaia.c_str(),
+  RunTest(base::StringPrintf(kTest, account_info.gaia.ToString().c_str(),
                              extra_items.c_str(), kAssertions));
 }
 #endif  // BUILDFLAG(IS_MAC)

@@ -9,11 +9,13 @@
 #include <memory>
 
 #include "base/observer_list.h"
-#include "ios/chrome/browser/shared/model/profile/profile_attributes_storage_ios.h"
+#include "ios/chrome/browser/shared/model/profile/mutable_profile_attributes_storage_ios.h"
 #include "ios/chrome/browser/shared/model/profile/profile_ios.h"
 #include "ios/chrome/browser/shared/model/profile/profile_manager_ios.h"
 #include "ios/chrome/browser/shared/model/profile/profile_manager_observer_ios.h"
 #include "ios/chrome/browser/shared/model/profile/test/test_profile_ios.h"
+
+class AccountProfileMapper;
 
 // ProfileManagerIOS implementation for tests.
 //
@@ -31,9 +33,12 @@ class TestProfileManagerIOS : public ProfileManagerIOS {
   // ProfileManagerIOS:
   void AddObserver(ProfileManagerObserverIOS* observer) override;
   void RemoveObserver(ProfileManagerObserverIOS* observer) override;
-  void LoadProfiles() override;
   ProfileIOS* GetProfileWithName(std::string_view name) override;
-  std::vector<ProfileIOS*> GetLoadedProfiles() override;
+  std::vector<ProfileIOS*> GetLoadedProfiles() const override;
+  bool HasProfileWithName(std::string_view name) const override;
+  bool CanCreateProfileWithName(std::string_view name) const override;
+  std::string ReserveNewProfileName() override;
+  bool CanDeleteProfileWithName(std::string_view name) const override;
   bool LoadProfileAsync(std::string_view name,
                         ProfileLoadedCallback initialized_callback,
                         ProfileLoadedCallback created_callback) override;
@@ -42,6 +47,10 @@ class TestProfileManagerIOS : public ProfileManagerIOS {
                           ProfileLoadedCallback created_callback) override;
   ProfileIOS* LoadProfile(std::string_view name) override;
   ProfileIOS* CreateProfile(std::string_view name) override;
+  void UnloadProfile(std::string_view name) override;
+  void UnloadAllProfiles() override;
+  void MarkProfileForDeletion(std::string_view name) override;
+  bool IsProfileMarkedForDeletion(std::string_view name) const override;
   ProfileAttributesStorageIOS* GetProfileAttributesStorage() override;
 
   // Builds and adds a TestProfileIOS using `builder`. Asserts that no Profile
@@ -49,15 +58,20 @@ class TestProfileManagerIOS : public ProfileManagerIOS {
   TestProfileIOS* AddProfileWithBuilder(TestProfileIOS::Builder builder);
 
  private:
+  // Storage for the TestProfileIOS.
+  using ProfileMap =
+      std::map<std::string, std::unique_ptr<TestProfileIOS>, std::less<>>;
+
   // The ProfileAttributesStorageIOS owned by this instance.
-  ProfileAttributesStorageIOS profile_attributes_storage_;
+  MutableProfileAttributesStorageIOS profile_attributes_storage_;
+
+  std::unique_ptr<AccountProfileMapper> account_profile_mapper_;
 
   // The path in which the Profiles' data are stored.
   const base::FilePath profile_data_dir_;
 
   // Mapping of name to TestProfileIOS instances.
-  std::map<std::string, std::unique_ptr<TestProfileIOS>, std::less<>>
-      profiles_map_;
+  ProfileMap profiles_map_;
 
   // The list of registered observers.
   base::ObserverList<ProfileManagerObserverIOS, true> observers_;

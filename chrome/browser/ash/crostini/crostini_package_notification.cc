@@ -41,10 +41,12 @@ const std::string& CrostiniPackageNotification::GetErrorMessageForTesting()
   return error_message_;
 }
 
-CrostiniPackageNotification::NotificationSettings::NotificationSettings() {}
+CrostiniPackageNotification::NotificationSettings::NotificationSettings() =
+    default;
 CrostiniPackageNotification::NotificationSettings::NotificationSettings(
     const NotificationSettings& rhs) = default;
-CrostiniPackageNotification::NotificationSettings::~NotificationSettings() {}
+CrostiniPackageNotification::NotificationSettings::~NotificationSettings() =
+    default;
 
 CrostiniPackageNotification::CrostiniPackageNotification(
     Profile* profile,
@@ -163,7 +165,7 @@ CrostiniPackageNotification::GetNotificationSettingsForTypeAndAppName(
       break;
 
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   return result;
@@ -255,7 +257,7 @@ void CrostiniPackageNotification::UpdateProgress(
       break;
 
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   notification_->set_title(title);

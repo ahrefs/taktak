@@ -30,22 +30,6 @@ namespace page_load_metrics {
 namespace {
 const int kInitialTimerDelayMillis = 50;
 
-mojom::UserInteractionType UserInteractionTypeForMojom(
-    blink::UserInteractionType interaction_type) {
-  switch (interaction_type) {
-    case blink::UserInteractionType::kKeyboard:
-      return mojom::UserInteractionType::kKeyboard;
-    case blink::UserInteractionType::kTapOrClick:
-      return mojom::UserInteractionType::kTapOrClick;
-    case blink::UserInteractionType::kDrag:
-      return mojom::UserInteractionType::kDrag;
-  }
-  // mojom::UserInteractionType should have the same interaction types as
-  // blink::UserInteractionType does.
-  NOTREACHED_IN_MIGRATION();
-  return mojom::UserInteractionType::kMinValue;
-}
-
 bool IsFirstFCP(const mojom::PageLoadTimingPtr& last_timing,
                 const mojom::PageLoadTimingPtr& new_timing) {
   return (!last_timing->paint_timing ||
@@ -266,9 +250,11 @@ void PageTimingMetricsSender::UpdateResourceMetadata(
   it->second->SetIsMainFrameResource(is_main_frame_resource);
 }
 
-void PageTimingMetricsSender::SetUpSmoothnessReporting(
-    base::ReadOnlySharedMemoryRegion shared_memory) {
-  sender_->SetUpSmoothnessReporting(std::move(shared_memory));
+void PageTimingMetricsSender::SetUpUkmReporting(
+    base::ReadOnlySharedMemoryRegion shared_memory_smoothness,
+    base::ReadOnlySharedMemoryRegion shared_memory_dropped_frames) {
+  sender_->SetUpUkmReporting(std::move(shared_memory_smoothness),
+                             std::move(shared_memory_dropped_frames));
 }
 
 void PageTimingMetricsSender::Update(
@@ -407,7 +393,6 @@ void PageTimingMetricsSender::DidObserveUserInteraction(
     base::TimeTicks max_event_queued_main_thread,
     base::TimeTicks max_event_commit_finish,
     base::TimeTicks max_event_end,
-    blink::UserInteractionType interaction_type,
     uint64_t interaction_offset) {
   input_timing_delta_->num_interactions++;
   metadata_recorder_.AddInteractionDurationMetadata(max_event_start,
@@ -418,8 +403,7 @@ void PageTimingMetricsSender::DidObserveUserInteraction(
   base::TimeDelta max_event_duration = max_event_end - max_event_start;
   input_timing_delta_->max_event_durations->get_user_interaction_latencies()
       .emplace_back(mojom::UserInteractionLatency::New(
-          max_event_duration, UserInteractionTypeForMojom(interaction_type),
-          interaction_offset, max_event_start));
+          max_event_duration, interaction_offset, max_event_start));
   EnsureSendTimer();
 }
 }  // namespace page_load_metrics

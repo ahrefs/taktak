@@ -9,7 +9,9 @@ import org.jni_zero.JNINamespace;
 import org.jni_zero.NativeMethods;
 
 import org.chromium.base.Callback;
+import org.chromium.base.ResettersForTesting;
 import org.chromium.base.UserDataHost;
+import org.chromium.components.data_sharing.mojom.LogSource;
 import org.chromium.url.GURL;
 
 /**
@@ -22,6 +24,14 @@ public class DataSharingServiceImpl implements DataSharingService {
 
     private final UserDataHost mUserDataHost = new UserDataHost();
     private final ObserverBridge mObserverBridge = new ObserverBridge();
+    private final Logger mLogger = new LoggerImpl();
+
+    private class LoggerImpl implements Logger {
+        @Override
+        public void log(@LogSource.EnumType int source, String message) {
+            DataSharingServiceImplJni.get().log(mNativePtr, source, message);
+        }
+    }
 
     @CalledByNative
     private static DataSharingServiceImpl create(long nativePtr) {
@@ -48,11 +58,6 @@ public class DataSharingServiceImpl implements DataSharingService {
     }
 
     @Override
-    public void readAllGroups(Callback<GroupsDataSetOrFailureOutcome> callback) {
-        DataSharingServiceImplJni.get().readAllGroups(mNativePtr, callback);
-    }
-
-    @Override
     public void readGroup(String groupId, Callback<GroupDataOrFailureOutcome> callback) {
         DataSharingServiceImplJni.get().readGroup(mNativePtr, groupId, callback);
     }
@@ -60,11 +65,6 @@ public class DataSharingServiceImpl implements DataSharingService {
     @Override
     public void createGroup(String groupName, Callback<GroupDataOrFailureOutcome> callback) {
         DataSharingServiceImplJni.get().createGroup(mNativePtr, groupName, callback);
-    }
-
-    @Override
-    public void deleteGroup(String groupId, Callback<Integer> callback) {
-        DataSharingServiceImplJni.get().deleteGroup(mNativePtr, groupId, callback);
     }
 
     @Override
@@ -98,15 +98,17 @@ public class DataSharingServiceImpl implements DataSharingService {
     }
 
     @Override
-    public GURL getDataSharingURL(GroupData groupData) {
+    public GURL getDataSharingUrl(GroupData groupData) {
         return DataSharingServiceImplJni.get()
-                .getDataSharingURL(
-                        mNativePtr, groupData.groupToken.groupId, groupData.groupToken.accessToken);
+                .getDataSharingUrl(
+                        mNativePtr,
+                        groupData.groupToken.collaborationId,
+                        groupData.groupToken.accessToken);
     }
 
     @Override
-    public DataSharingService.ParseURLResult parseDataSharingURL(GURL url) {
-        return DataSharingServiceImplJni.get().parseDataSharingURL(mNativePtr, url);
+    public DataSharingService.ParseUrlResult parseDataSharingUrl(GURL url) {
+        return DataSharingServiceImplJni.get().parseDataSharingUrl(mNativePtr, url);
     }
 
     @Override
@@ -118,19 +120,38 @@ public class DataSharingServiceImpl implements DataSharingService {
     @Override
     public void getSharedEntitiesPreview(
             GroupToken groupToken, Callback<SharedDataPreviewOrFailureOutcome> callback) {
+        if (sSharedEntitiesPreviewForTesting != null) {
+            callback.onResult(sSharedEntitiesPreviewForTesting);
+            return;
+        }
         DataSharingServiceImplJni.get()
                 .getSharedEntitiesPreview(
-                        mNativePtr, groupToken.groupId, groupToken.accessToken, callback);
+                        mNativePtr, groupToken.collaborationId, groupToken.accessToken, callback);
     }
 
     @Override
-    public DataSharingUIDelegate getUIDelegate() {
-        return DataSharingServiceImplJni.get().getUIDelegate(mNativePtr);
+    public DataSharingUIDelegate getUiDelegate() {
+        return DataSharingServiceImplJni.get().getUiDelegate(mNativePtr);
     }
 
     @Override
-    public ServiceStatus getServiceStatus() {
-        return DataSharingServiceImplJni.get().getServiceStatus(mNativePtr);
+    public Logger getLogger() {
+        return mLogger;
+    }
+
+    private static SharedDataPreviewOrFailureOutcome sSharedEntitiesPreviewForTesting;
+
+    /** Sets a test preview data to return for all preview requests. */
+    public static void setSharedEntitiesPreviewForTesting(
+            SharedDataPreviewOrFailureOutcome preview) {
+        sSharedEntitiesPreviewForTesting = preview;
+        ResettersForTesting.register(() -> sSharedEntitiesPreviewForTesting = null);
+    }
+
+    /** Static utility to get the data sharing URL for testing. */
+    public static GURL getDataSharingUrlForTesting(GroupToken groupToken) {
+        return DataSharingServiceImplJni.get()
+                .getDataSharingUrlForTesting(groupToken.groupId, groupToken.accessToken);
     }
 
     @CalledByNative
@@ -141,10 +162,6 @@ public class DataSharingServiceImpl implements DataSharingService {
 
     @NativeMethods
     interface Natives {
-        void readAllGroups(
-                long nativeDataSharingServiceAndroid,
-                Callback<GroupsDataSetOrFailureOutcome> callback);
-
         void readGroup(
                 long nativeDataSharingServiceAndroid,
                 String groupId,
@@ -154,9 +171,6 @@ public class DataSharingServiceImpl implements DataSharingService {
                 long nativeDataSharingServiceAndroid,
                 String groupName,
                 Callback<GroupDataOrFailureOutcome> callback);
-
-        void deleteGroup(
-                long nativeDataSharingServiceAndroid, String groupId, Callback<Integer> callback);
 
         void inviteMember(
                 long nativeDataSharingServiceAndroid,
@@ -180,10 +194,10 @@ public class DataSharingServiceImpl implements DataSharingService {
 
         DataSharingNetworkLoader getNetworkLoader(long nativeDataSharingServiceAndroid);
 
-        GURL getDataSharingURL(
+        GURL getDataSharingUrl(
                 long nativeDataSharingServiceAndroid, String groupId, String accessToken);
 
-        DataSharingService.ParseURLResult parseDataSharingURL(
+        DataSharingService.ParseUrlResult parseDataSharingUrl(
                 long nativeDataSharingServiceAndroid, GURL url);
 
         void ensureGroupVisibility(
@@ -197,8 +211,10 @@ public class DataSharingServiceImpl implements DataSharingService {
                 String accessToken,
                 Callback<SharedDataPreviewOrFailureOutcome> callback);
 
-        DataSharingUIDelegate getUIDelegate(long nativeDataSharingServiceAndroid);
+        DataSharingUIDelegate getUiDelegate(long nativeDataSharingServiceAndroid);
 
-        ServiceStatus getServiceStatus(long nativeDataSharingServiceAndroid);
+        void log(long nativeDataSharingServiceAndroid, int source, String message);
+
+        GURL getDataSharingUrlForTesting(String groupId, String accessToken);
     }
 }

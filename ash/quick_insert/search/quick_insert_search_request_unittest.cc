@@ -4,6 +4,7 @@
 
 #include "ash/quick_insert/search/quick_insert_search_request.h"
 
+#include <array>
 #include <optional>
 #include <string>
 #include <utility>
@@ -30,6 +31,9 @@
 #include "base/test/test_future.h"
 #include "base/time/clock.h"
 #include "base/time/time.h"
+#include "services/network/public/cpp/weak_wrapper_shared_url_loader_factory.h"
+#include "services/network/test/test_url_loader_factory.h"
+#include "services/network/test/test_utils.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/base/models/image_model.h"
@@ -40,6 +44,7 @@ namespace ash {
 namespace {
 
 using ::testing::_;
+using ::testing::AllOf;
 using ::testing::AnyNumber;
 using ::testing::AtLeast;
 using ::testing::ElementsAre;
@@ -57,50 +62,44 @@ using ::testing::VariantWith;
 
 constexpr base::TimeDelta kMetricMetricTime = base::Milliseconds(300);
 
-constexpr base::span<const PickerCategory> kAllCategories = {(PickerCategory[]){
-    PickerCategory::kEditorWrite,
-    PickerCategory::kEditorRewrite,
-    PickerCategory::kLinks,
-    PickerCategory::kEmojisGifs,
-    PickerCategory::kEmojis,
-    PickerCategory::kClipboard,
-    PickerCategory::kDriveFiles,
-    PickerCategory::kLocalFiles,
-    PickerCategory::kDatesTimes,
-    PickerCategory::kUnitsMaths,
-}};
-
-constexpr PickerSearchRequest::Options kDefaultOptions{
-    .available_categories = kAllCategories,
-    .caps_lock_state_to_search = false,
-};
+constexpr auto kAllCategories = std::to_array({
+    QuickInsertCategory::kEditorWrite,
+    QuickInsertCategory::kEditorRewrite,
+    QuickInsertCategory::kLinks,
+    QuickInsertCategory::kEmojisGifs,
+    QuickInsertCategory::kEmojis,
+    QuickInsertCategory::kClipboard,
+    QuickInsertCategory::kDriveFiles,
+    QuickInsertCategory::kLocalFiles,
+    QuickInsertCategory::kDatesTimes,
+    QuickInsertCategory::kUnitsMaths,
+});
 
 using MockSearchResultsCallback =
-    ::testing::MockFunction<PickerSearchRequest::SearchResultsCallback>;
+    ::testing::MockFunction<QuickInsertSearchRequest::SearchResultsCallback>;
 
 class QuickInsertSearchRequestTest : public testing::Test {
  protected:
-  base::test::SingleThreadTaskEnvironment& task_environment() {
-    return task_environment_;
-  }
+  base::test::TaskEnvironment& task_environment() { return task_environment_; }
 
-  MockSearchPickerClient& client() { return client_; }
+  MockSearchQuickInsertClient& client() { return client_; }
 
  private:
-  base::test::SingleThreadTaskEnvironment task_environment_{
+  base::test::TaskEnvironment task_environment_{
       base::test::TaskEnvironment::TimeSource::MOCK_TIME};
-  NiceMock<MockSearchPickerClient> client_;
+  network::TestURLLoaderFactory test_factory_;
+  NiceMock<MockSearchQuickInsertClient> client_;
 };
 
 TEST_F(QuickInsertSearchRequestTest, SendsQueryToCrosSearchImmediately) {
   NiceMock<MockSearchResultsCallback> search_results_callback;
   EXPECT_CALL(client(), StartCrosSearch(Eq(u"cat"), _, _)).Times(1);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 }
 
 TEST_F(QuickInsertSearchRequestTest,
@@ -108,11 +107,11 @@ TEST_F(QuickInsertSearchRequestTest,
   NiceMock<MockSearchResultsCallback> search_results_callback;
   EXPECT_CALL(client(), StartCrosSearch(_, _, _)).Times(0);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), {});
+      base::DoNothing(), &client());
 }
 
 TEST_F(QuickInsertSearchRequestTest,
@@ -120,11 +119,11 @@ TEST_F(QuickInsertSearchRequestTest,
   NiceMock<MockSearchResultsCallback> search_results_callback;
   EXPECT_CALL(client(), StartCrosSearch(_, _, _)).Times(0);
 
-  PickerSearchRequest request(
-      u"cat", {PickerCategory::kLinks},
+  QuickInsertSearchRequest request(
+      u"cat", {QuickInsertCategory::kLinks},
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), {});
+      base::DoNothing(), &client());
 }
 
 TEST_F(QuickInsertSearchRequestTest, ShowsResultsFromOmniboxSearch) {
@@ -134,7 +133,7 @@ TEST_F(QuickInsertSearchRequestTest, ShowsResultsFromOmniboxSearch) {
   // for more details.
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback,
-              Call(PickerSearchSource::kOmnibox,
+              Call(QuickInsertSearchSource::kOmnibox,
                    ElementsAre(VariantWith<QuickInsertBrowsingHistoryResult>(
                        Field("url", &QuickInsertBrowsingHistoryResult::url,
                              Property("spec", &GURL::spec,
@@ -142,15 +141,15 @@ TEST_F(QuickInsertSearchRequestTest, ShowsResultsFromOmniboxSearch) {
                    /*has_more_results=*/false))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kOmnibox,
-      {ash::QuickInsertBrowsingHistoryResult(
+      AppListSearchResultType::kOmnibox,
+      {QuickInsertBrowsingHistoryResult(
           GURL("https://www.google.com/search?q=cat"), u"cat - Google Search",
           ui::ImageModel())});
 }
@@ -161,7 +160,7 @@ TEST_F(QuickInsertSearchRequestTest, TruncatesOmniboxResults) {
   EXPECT_CALL(
       search_results_callback,
       Call(
-          PickerSearchSource::kOmnibox,
+          QuickInsertSearchSource::kOmnibox,
           ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                           "text", &QuickInsertTextResult::primary_text, u"1")),
                       VariantWith<QuickInsertTextResult>(Field(
@@ -171,16 +170,16 @@ TEST_F(QuickInsertSearchRequestTest, TruncatesOmniboxResults) {
           /*has_more_results=*/true))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kOmnibox,
-      {ash::QuickInsertTextResult(u"1"), ash::QuickInsertTextResult(u"2"),
-       ash::QuickInsertTextResult(u"3"), ash::QuickInsertTextResult(u"4")});
+      AppListSearchResultType::kOmnibox,
+      {QuickInsertTextResult(u"1"), QuickInsertTextResult(u"2"),
+       QuickInsertTextResult(u"3"), QuickInsertTextResult(u"4")});
 }
 
 TEST_F(QuickInsertSearchRequestTest, DoesNotTruncateOmniboxOnlyResults) {
@@ -189,7 +188,7 @@ TEST_F(QuickInsertSearchRequestTest, DoesNotTruncateOmniboxOnlyResults) {
   EXPECT_CALL(
       search_results_callback,
       Call(
-          PickerSearchSource::kOmnibox,
+          QuickInsertSearchSource::kOmnibox,
           ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                           "text", &QuickInsertTextResult::primary_text, u"1")),
                       VariantWith<QuickInsertTextResult>(Field(
@@ -201,26 +200,26 @@ TEST_F(QuickInsertSearchRequestTest, DoesNotTruncateOmniboxOnlyResults) {
           /*has_more_results=*/false))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
-      u"cat", PickerCategory::kLinks,
+  QuickInsertSearchRequest request(
+      u"cat", QuickInsertCategory::kLinks,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kOmnibox,
-      {ash::QuickInsertTextResult(u"1"), ash::QuickInsertTextResult(u"2"),
-       ash::QuickInsertTextResult(u"3"), ash::QuickInsertTextResult(u"4")});
+      AppListSearchResultType::kOmnibox,
+      {QuickInsertTextResult(u"1"), QuickInsertTextResult(u"2"),
+       QuickInsertTextResult(u"3"), QuickInsertTextResult(u"4")});
 }
 
 TEST_F(QuickInsertSearchRequestTest, DeduplicatesGoogleCorpGoLinks) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback,
-              Call(Ne(PickerSearchSource::kOmnibox), _, _))
+              Call(Ne(QuickInsertSearchSource::kOmnibox), _, _))
       .Times(AnyNumber());
   EXPECT_CALL(
       search_results_callback,
-      Call(PickerSearchSource::kOmnibox,
+      Call(QuickInsertSearchSource::kOmnibox,
            ElementsAre(VariantWith<QuickInsertBrowsingHistoryResult>(
                            Field("url", &QuickInsertBrowsingHistoryResult::url,
                                  GURL("https://example.com"))),
@@ -239,11 +238,11 @@ TEST_F(QuickInsertSearchRequestTest, DeduplicatesGoogleCorpGoLinks) {
            /*has_more_results=*/false))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
-      u"cat", PickerCategory::kLinks,
+  QuickInsertSearchRequest request(
+      u"cat", QuickInsertCategory::kLinks,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 
   client().cros_search_callback().Run(
       AppListSearchResultType::kOmnibox,
@@ -284,35 +283,36 @@ TEST_F(QuickInsertSearchRequestTest,
     search_started = false;
   });
   ON_CALL(client(), StartCrosSearch)
-      .WillByDefault([&search_started, this](
-                         const std::u16string& query,
-                         std::optional<PickerCategory> category,
-                         PickerClient::CrosSearchResultsCallback callback) {
-        client().StopCrosQuery();
-        search_started = true;
-        client().cros_search_callback() = std::move(callback);
-      });
+      .WillByDefault(
+          [&search_started, this](
+              const std::u16string& query,
+              std::optional<QuickInsertCategory> category,
+              QuickInsertClient::CrosSearchResultsCallback callback) {
+            client().StopCrosQuery();
+            search_started = true;
+            client().cros_search_callback() = std::move(callback);
+          });
   // Function only used for the below `EXPECT_CALL` to ensure that we don't call
   // the search callback with an empty callback after the initial state.
   testing::MockFunction<void()> after_start_search;
   testing::Expectation after_start_search_call =
       EXPECT_CALL(after_start_search, Call).Times(1);
   EXPECT_CALL(first_search_results_callback, Call).Times(AnyNumber());
-  EXPECT_CALL(
-      first_search_results_callback,
-      Call(PickerSearchSource::kOmnibox, IsEmpty(), /*has_more_results=*/_))
+  EXPECT_CALL(first_search_results_callback,
+              Call(QuickInsertSearchSource::kOmnibox, IsEmpty(),
+                   /*has_more_results=*/_))
       .Times(0)
       .After(after_start_search_call);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&first_search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
   after_start_search.Call();
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kOmnibox,
-      {ash::QuickInsertBrowsingHistoryResult(
+      AppListSearchResultType::kOmnibox,
+      {QuickInsertBrowsingHistoryResult(
           GURL("https://www.google.com/search?q=cat"), u"cat - Google Search",
           ui::ImageModel())});
 }
@@ -321,15 +321,15 @@ TEST_F(QuickInsertSearchRequestTest, RecordsOmniboxMetrics) {
   base::HistogramTester histogram;
   NiceMock<MockSearchResultsCallback> search_results_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
   task_environment().FastForwardBy(kMetricMetricTime);
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kOmnibox,
-      {ash::QuickInsertBrowsingHistoryResult(
+      AppListSearchResultType::kOmnibox,
+      {QuickInsertBrowsingHistoryResult(
           GURL("https://www.google.com/search?q=cat"), u"cat - Google Search",
           ui::ImageModel())});
 
@@ -353,21 +353,22 @@ TEST_F(QuickInsertSearchRequestTest,
       });
   EXPECT_CALL(client(), StartCrosSearch)
       .Times(1)
-      .WillRepeatedly([&search_started, this](
-                          const std::u16string& query,
-                          std::optional<PickerCategory> category,
-                          PickerClient::CrosSearchResultsCallback callback) {
-        client().StopCrosQuery();
-        search_started = true;
-        client().cros_search_callback() = std::move(callback);
-      });
+      .WillRepeatedly(
+          [&search_started, this](
+              const std::u16string& query,
+              std::optional<QuickInsertCategory> category,
+              QuickInsertClient::CrosSearchResultsCallback callback) {
+            client().StopCrosQuery();
+            search_started = true;
+            client().cros_search_callback() = std::move(callback);
+          });
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"cat", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
   }
 
   histogram.ExpectTotalCount("Ash.Picker.Search.OmniboxProvider.QueryTime", 0);
@@ -389,24 +390,25 @@ TEST_F(QuickInsertSearchRequestTest,
       });
   EXPECT_CALL(client(), StartCrosSearch)
       .Times(1)
-      .WillRepeatedly([&search_started, this](
-                          const std::u16string& query,
-                          std::optional<PickerCategory> category,
-                          PickerClient::CrosSearchResultsCallback callback) {
-        client().StopCrosQuery();
-        search_started = true;
-        client().cros_search_callback() = std::move(callback);
-      });
+      .WillRepeatedly(
+          [&search_started, this](
+              const std::u16string& query,
+              std::optional<QuickInsertCategory> category,
+              QuickInsertClient::CrosSearchResultsCallback callback) {
+            client().StopCrosQuery();
+            search_started = true;
+            client().cros_search_callback() = std::move(callback);
+          });
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"cat", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
     client().cros_search_callback().Run(
-        ash::AppListSearchResultType::kFileSearch,
-        {ash::QuickInsertTextResult(u"monorail_cat.jpg")});
+        AppListSearchResultType::kFileSearch,
+        {QuickInsertTextResult(u"monorail_cat.jpg")});
   }
 
   histogram.ExpectTotalCount("Ash.Picker.Search.OmniboxProvider.QueryTime", 0);
@@ -432,24 +434,25 @@ TEST_F(
     search_started = false;
   });
   ON_CALL(client(), StartCrosSearch)
-      .WillByDefault([&search_started, this](
-                         const std::u16string& query,
-                         std::optional<PickerCategory> category,
-                         PickerClient::CrosSearchResultsCallback callback) {
-        client().StopCrosQuery();
-        search_started = true;
-        client().cros_search_callback() = std::move(callback);
-      });
+      .WillByDefault(
+          [&search_started, this](
+              const std::u16string& query,
+              std::optional<QuickInsertCategory> category,
+              QuickInsertClient::CrosSearchResultsCallback callback) {
+            client().StopCrosQuery();
+            search_started = true;
+            client().cros_search_callback() = std::move(callback);
+          });
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"cat", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&first_search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
     client().cros_search_callback().Run(
-        ash::AppListSearchResultType::kOmnibox,
-        {ash::QuickInsertBrowsingHistoryResult(
+        AppListSearchResultType::kOmnibox,
+        {QuickInsertBrowsingHistoryResult(
             GURL("https://www.google.com/search?q=cat"), u"cat - Google Search",
             ui::ImageModel())});
   }
@@ -461,21 +464,21 @@ TEST_F(QuickInsertSearchRequestTest, ShowsResultsFromFileSearch) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback,
-              Call(PickerSearchSource::kLocalFile,
+              Call(QuickInsertSearchSource::kLocalFile,
                    ElementsAre(VariantWith<QuickInsertTextResult>(
                        Field("text", &QuickInsertTextResult::primary_text,
                              u"monorail_cat.jpg"))),
                    /*has_more_results=*/false))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kFileSearch,
-      {ash::QuickInsertTextResult(u"monorail_cat.jpg")});
+      AppListSearchResultType::kFileSearch,
+      {QuickInsertTextResult(u"monorail_cat.jpg")});
 }
 
 TEST_F(QuickInsertSearchRequestTest, TruncatesResultsFromFileSearch) {
@@ -483,7 +486,7 @@ TEST_F(QuickInsertSearchRequestTest, TruncatesResultsFromFileSearch) {
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(
       search_results_callback,
-      Call(PickerSearchSource::kLocalFile,
+      Call(QuickInsertSearchSource::kLocalFile,
            ElementsAre(
                VariantWith<QuickInsertTextResult>(Field(
                    "text", &QuickInsertTextResult::primary_text, u"1.jpg")),
@@ -495,16 +498,15 @@ TEST_F(QuickInsertSearchRequestTest, TruncatesResultsFromFileSearch) {
            /*has_more_results=*/true))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
-  client().cros_search_callback().Run(ash::AppListSearchResultType::kFileSearch,
-                                      {ash::QuickInsertTextResult(u"1.jpg"),
-                                       ash::QuickInsertTextResult(u"2.jpg"),
-                                       ash::QuickInsertTextResult(u"3.jpg"),
-                                       ash::QuickInsertTextResult(u"4.jpg")});
+      base::DoNothing(), &client(), kAllCategories);
+  client().cros_search_callback().Run(
+      AppListSearchResultType::kFileSearch,
+      {QuickInsertTextResult(u"1.jpg"), QuickInsertTextResult(u"2.jpg"),
+       QuickInsertTextResult(u"3.jpg"), QuickInsertTextResult(u"4.jpg")});
 }
 
 TEST_F(QuickInsertSearchRequestTest, DoesNotTruncateResultsFromFileOnlySearch) {
@@ -512,7 +514,7 @@ TEST_F(QuickInsertSearchRequestTest, DoesNotTruncateResultsFromFileOnlySearch) {
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(
       search_results_callback,
-      Call(PickerSearchSource::kLocalFile,
+      Call(QuickInsertSearchSource::kLocalFile,
            ElementsAre(
                VariantWith<QuickInsertTextResult>(Field(
                    "text", &QuickInsertTextResult::primary_text, u"1.jpg")),
@@ -526,31 +528,30 @@ TEST_F(QuickInsertSearchRequestTest, DoesNotTruncateResultsFromFileOnlySearch) {
            /*has_more_results=*/false))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
-      u"cat", PickerCategory::kLocalFiles,
+  QuickInsertSearchRequest request(
+      u"cat", QuickInsertCategory::kLocalFiles,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
-  client().cros_search_callback().Run(ash::AppListSearchResultType::kFileSearch,
-                                      {ash::QuickInsertTextResult(u"1.jpg"),
-                                       ash::QuickInsertTextResult(u"2.jpg"),
-                                       ash::QuickInsertTextResult(u"3.jpg"),
-                                       ash::QuickInsertTextResult(u"4.jpg")});
+      base::DoNothing(), &client(), kAllCategories);
+  client().cros_search_callback().Run(
+      AppListSearchResultType::kFileSearch,
+      {QuickInsertTextResult(u"1.jpg"), QuickInsertTextResult(u"2.jpg"),
+       QuickInsertTextResult(u"3.jpg"), QuickInsertTextResult(u"4.jpg")});
 }
 
 TEST_F(QuickInsertSearchRequestTest, RecordsFileMetrics) {
   base::HistogramTester histogram;
   NiceMock<MockSearchResultsCallback> search_results_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
   task_environment().FastForwardBy(kMetricMetricTime);
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kFileSearch,
-      {ash::QuickInsertTextResult(u"monorail_cat.jpg")});
+      AppListSearchResultType::kFileSearch,
+      {QuickInsertTextResult(u"monorail_cat.jpg")});
 
   histogram.ExpectUniqueTimeSample("Ash.Picker.Search.FileProvider.QueryTime",
                                    kMetricMetricTime, 1);
@@ -571,21 +572,22 @@ TEST_F(QuickInsertSearchRequestTest, DoesNotRecordFileMetricsIfNoFileResponse) {
       });
   EXPECT_CALL(client(), StartCrosSearch)
       .Times(1)
-      .WillRepeatedly([&search_started, this](
-                          const std::u16string& query,
-                          std::optional<PickerCategory> category,
-                          PickerClient::CrosSearchResultsCallback callback) {
-        client().StopCrosQuery();
-        search_started = true;
-        client().cros_search_callback() = std::move(callback);
-      });
+      .WillRepeatedly(
+          [&search_started, this](
+              const std::u16string& query,
+              std::optional<QuickInsertCategory> category,
+              QuickInsertClient::CrosSearchResultsCallback callback) {
+            client().StopCrosQuery();
+            search_started = true;
+            client().cros_search_callback() = std::move(callback);
+          });
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"cat", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
   }
 
   histogram.ExpectTotalCount("Ash.Picker.Search.FileProvider.QueryTime", 0);
@@ -607,24 +609,25 @@ TEST_F(QuickInsertSearchRequestTest,
       });
   EXPECT_CALL(client(), StartCrosSearch)
       .Times(1)
-      .WillRepeatedly([&search_started, this](
-                          const std::u16string& query,
-                          std::optional<PickerCategory> category,
-                          PickerClient::CrosSearchResultsCallback callback) {
-        client().StopCrosQuery();
-        search_started = true;
-        client().cros_search_callback() = std::move(callback);
-      });
+      .WillRepeatedly(
+          [&search_started, this](
+              const std::u16string& query,
+              std::optional<QuickInsertCategory> category,
+              QuickInsertClient::CrosSearchResultsCallback callback) {
+            client().StopCrosQuery();
+            search_started = true;
+            client().cros_search_callback() = std::move(callback);
+          });
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"cat", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
     client().cros_search_callback().Run(
-        ash::AppListSearchResultType::kOmnibox,
-        {ash::QuickInsertBrowsingHistoryResult(
+        AppListSearchResultType::kOmnibox,
+        {QuickInsertBrowsingHistoryResult(
             GURL("https://www.google.com/search?q=cat"), u"cat - Google Search",
             ui::ImageModel())});
   }
@@ -636,21 +639,21 @@ TEST_F(QuickInsertSearchRequestTest, ShowsResultsFromDriveSearch) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback,
-              Call(PickerSearchSource::kDrive,
+              Call(QuickInsertSearchSource::kDrive,
                    ElementsAre(VariantWith<QuickInsertTextResult>(
                        Field("text", &QuickInsertTextResult::primary_text,
                              u"catrbug_135117.jpg"))),
                    /*has_more_results=*/false))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kDriveSearch,
-      {ash::QuickInsertTextResult(u"catrbug_135117.jpg")});
+      AppListSearchResultType::kDriveSearch,
+      {QuickInsertTextResult(u"catrbug_135117.jpg")});
 }
 
 TEST_F(QuickInsertSearchRequestTest, TruncatesResultsFromDriveSearch) {
@@ -658,7 +661,7 @@ TEST_F(QuickInsertSearchRequestTest, TruncatesResultsFromDriveSearch) {
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(
       search_results_callback,
-      Call(PickerSearchSource::kDrive,
+      Call(QuickInsertSearchSource::kDrive,
            ElementsAre(
                VariantWith<QuickInsertTextResult>(Field(
                    "text", &QuickInsertTextResult::primary_text, u"1.jpg")),
@@ -670,17 +673,15 @@ TEST_F(QuickInsertSearchRequestTest, TruncatesResultsFromDriveSearch) {
            /*has_more_results=*/true))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kDriveSearch,
-      {ash::QuickInsertTextResult(u"1.jpg"),
-       ash::QuickInsertTextResult(u"2.jpg"),
-       ash::QuickInsertTextResult(u"3.jpg"),
-       ash::QuickInsertTextResult(u"4.jpg")});
+      AppListSearchResultType::kDriveSearch,
+      {QuickInsertTextResult(u"1.jpg"), QuickInsertTextResult(u"2.jpg"),
+       QuickInsertTextResult(u"3.jpg"), QuickInsertTextResult(u"4.jpg")});
 }
 
 TEST_F(QuickInsertSearchRequestTest,
@@ -689,7 +690,7 @@ TEST_F(QuickInsertSearchRequestTest,
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(
       search_results_callback,
-      Call(PickerSearchSource::kDrive,
+      Call(QuickInsertSearchSource::kDrive,
            ElementsAre(
                VariantWith<QuickInsertTextResult>(Field(
                    "text", &QuickInsertTextResult::primary_text, u"1.jpg")),
@@ -703,32 +704,30 @@ TEST_F(QuickInsertSearchRequestTest,
            /*has_more_results=*/false))
       .Times(AtLeast(1));
 
-  PickerSearchRequest request(
-      u"cat", /*category=*/PickerCategory::kDriveFiles,
+  QuickInsertSearchRequest request(
+      u"cat", /*category=*/QuickInsertCategory::kDriveFiles,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kDriveSearch,
-      {ash::QuickInsertTextResult(u"1.jpg"),
-       ash::QuickInsertTextResult(u"2.jpg"),
-       ash::QuickInsertTextResult(u"3.jpg"),
-       ash::QuickInsertTextResult(u"4.jpg")});
+      AppListSearchResultType::kDriveSearch,
+      {QuickInsertTextResult(u"1.jpg"), QuickInsertTextResult(u"2.jpg"),
+       QuickInsertTextResult(u"3.jpg"), QuickInsertTextResult(u"4.jpg")});
 }
 
 TEST_F(QuickInsertSearchRequestTest, RecordsDriveMetrics) {
   base::HistogramTester histogram;
   NiceMock<MockSearchResultsCallback> search_results_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
   task_environment().FastForwardBy(kMetricMetricTime);
   client().cros_search_callback().Run(
-      ash::AppListSearchResultType::kDriveSearch,
-      {ash::QuickInsertTextResult(u"catrbug_135117.jpg")});
+      AppListSearchResultType::kDriveSearch,
+      {QuickInsertTextResult(u"catrbug_135117.jpg")});
 
   histogram.ExpectUniqueTimeSample("Ash.Picker.Search.DriveProvider.QueryTime",
                                    kMetricMetricTime, 1);
@@ -750,21 +749,22 @@ TEST_F(QuickInsertSearchRequestTest,
       });
   EXPECT_CALL(client(), StartCrosSearch)
       .Times(1)
-      .WillRepeatedly([&search_started, this](
-                          const std::u16string& query,
-                          std::optional<PickerCategory> category,
-                          PickerClient::CrosSearchResultsCallback callback) {
-        client().StopCrosQuery();
-        search_started = true;
-        client().cros_search_callback() = std::move(callback);
-      });
+      .WillRepeatedly(
+          [&search_started, this](
+              const std::u16string& query,
+              std::optional<QuickInsertCategory> category,
+              QuickInsertClient::CrosSearchResultsCallback callback) {
+            client().StopCrosQuery();
+            search_started = true;
+            client().cros_search_callback() = std::move(callback);
+          });
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"cat", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
   }
 
   histogram.ExpectTotalCount("Ash.Picker.Search.DriveProvider.QueryTime", 0);
@@ -786,24 +786,25 @@ TEST_F(QuickInsertSearchRequestTest,
       });
   EXPECT_CALL(client(), StartCrosSearch)
       .Times(1)
-      .WillRepeatedly([&search_started, this](
-                          const std::u16string& query,
-                          std::optional<PickerCategory> category,
-                          PickerClient::CrosSearchResultsCallback callback) {
-        client().StopCrosQuery();
-        search_started = true;
-        client().cros_search_callback() = std::move(callback);
-      });
+      .WillRepeatedly(
+          [&search_started, this](
+              const std::u16string& query,
+              std::optional<QuickInsertCategory> category,
+              QuickInsertClient::CrosSearchResultsCallback callback) {
+            client().StopCrosQuery();
+            search_started = true;
+            client().cros_search_callback() = std::move(callback);
+          });
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"cat", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
     client().cros_search_callback().Run(
-        ash::AppListSearchResultType::kOmnibox,
-        {ash::QuickInsertBrowsingHistoryResult(
+        AppListSearchResultType::kOmnibox,
+        {QuickInsertBrowsingHistoryResult(
             GURL("https://www.google.com/search?q=cat"), u"cat - Google Search",
             ui::ImageModel())});
   }
@@ -815,7 +816,7 @@ TEST_F(QuickInsertSearchRequestTest, PublishesDateResultsOnlyOnce) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback,
-              Call(PickerSearchSource::kDate, _, /*has_more_results=*/_))
+              Call(QuickInsertSearchSource::kDate, _, /*has_more_results=*/_))
       .Times(1);
   // Fast forward the clock to a Sunday (day_of_week = 0).
   base::Time::Exploded exploded;
@@ -824,11 +825,11 @@ TEST_F(QuickInsertSearchRequestTest, PublishesDateResultsOnlyOnce) {
   task_environment().GetMockClock()->Now().LocalExplode(&exploded);
   ASSERT_EQ(0, exploded.day_of_week);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"next Friday", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 }
 
 TEST_F(QuickInsertSearchRequestTest, RecordsDateMetricsOnlyOnce) {
@@ -842,11 +843,11 @@ TEST_F(QuickInsertSearchRequestTest, RecordsDateMetricsOnlyOnce) {
   ASSERT_EQ(0, exploded.day_of_week);
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"next Friday", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
   }
 
   histogram.ExpectTotalCount("Ash.Picker.Search.DateProvider.QueryTime", 1);
@@ -857,7 +858,7 @@ TEST_F(QuickInsertSearchRequestTest,
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback,
-              Call(PickerSearchSource::kDate, _, /*has_more_results=*/_))
+              Call(QuickInsertSearchSource::kDate, _, /*has_more_results=*/_))
       .Times(1);
   // Fast forward the clock to a Sunday (day_of_week = 0).
   base::Time::Exploded exploded;
@@ -866,25 +867,25 @@ TEST_F(QuickInsertSearchRequestTest,
   task_environment().GetMockClock()->Now().LocalExplode(&exploded);
   ASSERT_EQ(0, exploded.day_of_week);
 
-  PickerSearchRequest request(
-      u"next Friday", PickerCategory::kDatesTimes,
+  QuickInsertSearchRequest request(
+      u"next Friday", QuickInsertCategory::kDatesTimes,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 }
 
 TEST_F(QuickInsertSearchRequestTest, PublishesMathResultsOnlyOnce) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback,
-              Call(PickerSearchSource::kMath, _, /*has_more_results=*/_))
+              Call(QuickInsertSearchSource::kMath, _, /*has_more_results=*/_))
       .Times(1);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"1 + 1", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 }
 
 TEST_F(QuickInsertSearchRequestTest, RecordsMathMetricsOnlyOnce) {
@@ -892,15 +893,15 @@ TEST_F(QuickInsertSearchRequestTest, RecordsMathMetricsOnlyOnce) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback,
-              Call(PickerSearchSource::kMath, _, /*has_more_results=*/_))
+              Call(QuickInsertSearchSource::kMath, _, /*has_more_results=*/_))
       .Times(1);
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"1 + 1", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
-        base::DoNothing(), &client(), kDefaultOptions);
+        base::DoNothing(), &client(), kAllCategories);
   }
 
   histogram.ExpectTotalCount("Ash.Picker.Search.MathProvider.QueryTime", 1);
@@ -911,41 +912,43 @@ TEST_F(QuickInsertSearchRequestTest,
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback,
-              Call(PickerSearchSource::kMath, _, /*has_more_results=*/_))
+              Call(QuickInsertSearchSource::kMath, _, /*has_more_results=*/_))
       .Times(1);
 
-  PickerSearchRequest request(
-      u"1 + 1", PickerCategory::kUnitsMaths,
+  QuickInsertSearchRequest request(
+      u"1 + 1", QuickInsertCategory::kUnitsMaths,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 }
 
 TEST_F(QuickInsertSearchRequestTest, OnlyStartCrosSearchForCertainCategories) {
   EXPECT_CALL(client(),
-              StartCrosSearch(Eq(u"ant"), Eq(PickerCategory::kLinks), _))
+              StartCrosSearch(Eq(u"ant"), Eq(QuickInsertCategory::kLinks), _))
       .Times(1);
-  EXPECT_CALL(client(),
-              StartCrosSearch(Eq(u"bat"), Eq(PickerCategory::kDriveFiles), _))
+  EXPECT_CALL(
+      client(),
+      StartCrosSearch(Eq(u"bat"), Eq(QuickInsertCategory::kDriveFiles), _))
       .Times(1);
-  EXPECT_CALL(client(),
-              StartCrosSearch(Eq(u"cat"), Eq(PickerCategory::kLocalFiles), _))
+  EXPECT_CALL(
+      client(),
+      StartCrosSearch(Eq(u"cat"), Eq(QuickInsertCategory::kLocalFiles), _))
       .Times(1);
 
   {
-    PickerSearchRequest request(u"ant", PickerCategory::kLinks,
-                                base::DoNothing(), base::DoNothing(), &client(),
-                                kDefaultOptions);
+    QuickInsertSearchRequest request(u"ant", QuickInsertCategory::kLinks,
+                                     base::DoNothing(), base::DoNothing(),
+                                     &client(), kAllCategories);
   }
   {
-    PickerSearchRequest request(u"bat", PickerCategory::kDriveFiles,
-                                base::DoNothing(), base::DoNothing(), &client(),
-                                kDefaultOptions);
+    QuickInsertSearchRequest request(u"bat", QuickInsertCategory::kDriveFiles,
+                                     base::DoNothing(), base::DoNothing(),
+                                     &client(), kAllCategories);
   }
   {
-    PickerSearchRequest request(u"cat", PickerCategory::kLocalFiles,
-                                base::DoNothing(), base::DoNothing(), &client(),
-                                kDefaultOptions);
+    QuickInsertSearchRequest request(u"cat", QuickInsertCategory::kLocalFiles,
+                                     base::DoNothing(), base::DoNothing(),
+                                     &client(), kAllCategories);
   }
 }
 
@@ -965,18 +968,18 @@ TEST_F(QuickInsertSearchRequestTest, ShowsResultsFromClipboardSearch) {
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(
       search_results_callback,
-      Call(PickerSearchSource::kClipboard,
+      Call(QuickInsertSearchSource::kClipboard,
            ElementsAre(VariantWith<QuickInsertClipboardResult>(
                FieldsAre(_, QuickInsertClipboardResult::DisplayFormat::kText,
                          /*file_count=*/0, u"cat", std::nullopt, true))),
            /*has_more_results=*/false))
       .Times(1);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 }
 
 TEST_F(QuickInsertSearchRequestTest, RecordsClipboardMetrics) {
@@ -991,11 +994,11 @@ TEST_F(QuickInsertSearchRequestTest, RecordsClipboardMetrics) {
   base::HistogramTester histogram;
   NiceMock<MockSearchResultsCallback> search_results_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), kDefaultOptions);
+      base::DoNothing(), &client(), kAllCategories);
 
   histogram.ExpectUniqueTimeSample(
       "Ash.Picker.Search.ClipboardProvider.QueryTime", kMetricMetricTime, 1);
@@ -1004,7 +1007,7 @@ TEST_F(QuickInsertSearchRequestTest, RecordsClipboardMetrics) {
 class QuickInsertSearchRequestEditorTest
     : public QuickInsertSearchRequestTest,
       public testing::WithParamInterface<
-          std::pair<PickerCategory, PickerSearchSource>> {};
+          std::pair<QuickInsertCategory, QuickInsertSearchSource>> {};
 
 TEST_P(QuickInsertSearchRequestEditorTest, ShowsResultsFromEditorSearch) {
   const auto& [category, source] = GetParam();
@@ -1015,11 +1018,11 @@ TEST_P(QuickInsertSearchRequestEditorTest, ShowsResultsFromEditorSearch) {
                    /*has_more_results=*/false))
       .Times(1);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"quick brown fox jumped over lazy dog", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), {.available_categories = {{category}}});
+      base::DoNothing(), &client(), base::span_from_ref(category));
 }
 
 TEST_P(QuickInsertSearchRequestEditorTest,
@@ -1029,11 +1032,11 @@ TEST_P(QuickInsertSearchRequestEditorTest,
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback, Call(source, _, _)).Times(0);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"quick brown fox jumped over lazy dog", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), {});
+      base::DoNothing(), &client());
 }
 
 TEST_P(QuickInsertSearchRequestEditorTest, RecordsEditorMetrics) {
@@ -1041,11 +1044,11 @@ TEST_P(QuickInsertSearchRequestEditorTest, RecordsEditorMetrics) {
   base::HistogramTester histogram;
   NiceMock<MockSearchResultsCallback> search_results_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"quick brown fox jumped over lazy dog", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), {.available_categories = {{category}}});
+      base::DoNothing(), &client(), base::span_from_ref(category));
 
   histogram.ExpectTotalCount("Ash.Picker.Search.EditorProvider.QueryTime", 1);
 }
@@ -1053,15 +1056,15 @@ TEST_P(QuickInsertSearchRequestEditorTest, RecordsEditorMetrics) {
 INSTANTIATE_TEST_SUITE_P(
     ,
     QuickInsertSearchRequestEditorTest,
-    testing::Values(std::make_pair(PickerCategory::kEditorWrite,
-                                   PickerSearchSource::kEditorWrite),
-                    std::make_pair(PickerCategory::kEditorRewrite,
-                                   PickerSearchSource::kEditorRewrite)));
+    testing::Values(std::make_pair(QuickInsertCategory::kEditorWrite,
+                                   QuickInsertSearchSource::kEditorWrite),
+                    std::make_pair(QuickInsertCategory::kEditorRewrite,
+                                   QuickInsertSearchSource::kEditorRewrite)));
 
 class QuickInsertSearchRequestLobsterTest
     : public QuickInsertSearchRequestTest,
       public testing::WithParamInterface<
-          std::pair<PickerCategory, PickerSearchSource>> {};
+          std::pair<QuickInsertCategory, QuickInsertSearchSource>> {};
 
 TEST_P(QuickInsertSearchRequestLobsterTest, ShowsResultsFromLobsterSearch) {
   const auto& [category, source] = GetParam();
@@ -1073,11 +1076,11 @@ TEST_P(QuickInsertSearchRequestLobsterTest, ShowsResultsFromLobsterSearch) {
            /*has_more_results=*/false))
       .Times(1);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"quick brown fox jumped over lazy dog", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), {.available_categories = {{category}}});
+      base::DoNothing(), &client(), base::span_from_ref(category));
 }
 
 TEST_P(QuickInsertSearchRequestLobsterTest,
@@ -1087,11 +1090,11 @@ TEST_P(QuickInsertSearchRequestLobsterTest,
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback, Call(source, _, _)).Times(0);
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"quick brown fox jumped over lazy dog", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), {});
+      base::DoNothing(), &client());
 }
 
 TEST_P(QuickInsertSearchRequestLobsterTest, RecordsLobsterMetrics) {
@@ -1099,11 +1102,11 @@ TEST_P(QuickInsertSearchRequestLobsterTest, RecordsLobsterMetrics) {
   base::HistogramTester histogram;
   NiceMock<MockSearchResultsCallback> search_results_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"quick brown fox jumped over lazy dog", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      base::DoNothing(), &client(), {.available_categories = {{category}}});
+      base::DoNothing(), &client(), base::span_from_ref(category));
 
   histogram.ExpectTotalCount("Ash.Picker.Search.LobsterProvider.QueryTime", 1);
 }
@@ -1111,21 +1114,87 @@ TEST_P(QuickInsertSearchRequestLobsterTest, RecordsLobsterMetrics) {
 INSTANTIATE_TEST_SUITE_P(
     ,
     QuickInsertSearchRequestLobsterTest,
-    testing::Values(std::make_pair(PickerCategory::kLobster,
-                                   PickerSearchSource::kLobster),
-                    std::make_pair(PickerCategory::kLobster,
-                                   PickerSearchSource::kLobster)));
+    testing::Values(
+        std::make_pair(QuickInsertCategory::kLobsterWithNoSelectedText,
+                       QuickInsertSearchSource::kLobsterWithNoSelectedText),
+        std::make_pair(QuickInsertCategory::kLobsterWithSelectedText,
+                       QuickInsertSearchSource::kLobsterWithSelectedText)));
+
+TEST_F(QuickInsertSearchRequestTest,
+       PublishesGifResultsWhenGifCategorySelected) {
+  network::TestURLLoaderFactory test_url_loader_factory;
+  ON_CALL(client(), GetSharedURLLoaderFactory)
+      .WillByDefault([&test_url_loader_factory]() {
+        return test_url_loader_factory.GetSafeWeakWrapper();
+      });
+  base::test::TestFuture<void> future;
+  MockSearchResultsCallback search_results_callback;
+  EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
+  EXPECT_CALL(
+      search_results_callback,
+      Call(QuickInsertSearchSource::kGifs,
+           ElementsAre(VariantWith<QuickInsertGifResult>(AllOf(
+               Field("preview_url", &QuickInsertGifResult::preview_url,
+                     GURL("https://tenor.com/preview.gif")),
+               Field("preview_image_url",
+                     &QuickInsertGifResult::preview_image_url,
+                     GURL("https://tenor.com/preview.png")),
+               Field("preview_dimensions",
+                     &QuickInsertGifResult::preview_dimensions,
+                     gfx::Size(100, 50)),
+               Field("full_url", &QuickInsertGifResult::full_url,
+                     GURL("https://tenor.com/full.gif")),
+               Field("full_dimensions", &QuickInsertGifResult::full_dimensions,
+                     gfx::Size(200, 100)),
+               Field("content_description",
+                     &QuickInsertGifResult::content_description, u"a cat")))),
+           /*has_more_results=*/false))
+      .WillOnce([&future]() { future.SetValue(); });
+
+  QuickInsertSearchRequest request(
+      u"cat", QuickInsertCategory::kGifs,
+      base::BindRepeating(&MockSearchResultsCallback::Call,
+                          base::Unretained(&search_results_callback)),
+      base::DoNothing(), &client(), kAllCategories);
+  test_url_loader_factory.SimulateResponseForPendingRequest(
+      GURL(), network::URLLoaderCompletionStatus(net::OK),
+      network::CreateURLResponseHead(net::HTTP_OK), R"json({
+          "results": [
+            {
+              "id": "0",
+              "content_description": "a cat",
+              "media_formats": {
+                "gif": {
+                  "dims": [200, 100],
+                  "url": "https://tenor.com/full.gif"
+                },
+                "tinygif": {
+                  "dims": [100, 50],
+                  "url": "https://tenor.com/preview.gif"
+                },
+                "tinygifpreview": {
+                  "url": "https://tenor.com/preview.png"
+                }
+              }
+            }
+          ]
+        })json",
+      static_cast<network::TestURLLoaderFactory::ResponseMatchFlags>(
+          network::TestURLLoaderFactory::kUrlMatchPrefix |
+          network::TestURLLoaderFactory::kWaitForRequest));
+  ASSERT_TRUE(future.Wait());
+}
 
 TEST_F(QuickInsertSearchRequestTest, DoneClosureCalledImmediatelyWhenNoSearch) {
   // This actually calls category search.
   NiceMock<MockSearchResultsCallback> search_results_callback;
   base::test::TestFuture<bool> done_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      done_callback.GetCallback(), &client(), {});
+      done_callback.GetCallback(), &client());
 
   bool interrupted = done_callback.Get();
   EXPECT_FALSE(interrupted);
@@ -1135,18 +1204,20 @@ TEST_F(QuickInsertSearchRequestTest,
        DoneClosureCalledImmediatelyWhenSynchronous) {
   // This actually calls category search.
   MockSearchResultsCallback search_results_callback;
-  EXPECT_CALL(search_results_callback, Call(PickerSearchSource::kAction, _, _))
+  EXPECT_CALL(search_results_callback,
+              Call(QuickInsertSearchSource::kAction, _, _))
       .Times(AnyNumber());
-  EXPECT_CALL(search_results_callback, Call(PickerSearchSource::kMath, _, _))
+  EXPECT_CALL(search_results_callback,
+              Call(QuickInsertSearchSource::kMath, _, _))
       .Times(1);
   base::test::TestFuture<bool> done_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"1+1", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
       done_callback.GetCallback(), &client(),
-      {.available_categories = {{PickerCategory::kUnitsMaths}}});
+      base::span_from_ref(QuickInsertCategory::kUnitsMaths));
 
   bool interrupted = done_callback.Get();
   EXPECT_FALSE(interrupted);
@@ -1157,11 +1228,11 @@ TEST_F(QuickInsertSearchRequestTest, DoneClosureNotCalledWhenAsynchronous) {
   base::test::TestFuture<bool> done_callback;
 
   // We expect there to be at least one asynchronous source.
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
-      done_callback.GetCallback(), &client(), kDefaultOptions);
+      done_callback.GetCallback(), &client(), kAllCategories);
 
   EXPECT_FALSE(done_callback.IsReady());
 }
@@ -1178,12 +1249,12 @@ TEST_F(QuickInsertSearchRequestTest, DoneClosureCalledAfterClipboard) {
   NiceMock<MockSearchResultsCallback> search_results_callback;
   base::test::TestFuture<bool> done_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
       done_callback.GetCallback(), &client(),
-      {.available_categories = {{PickerCategory::kClipboard}}});
+      base::span_from_ref(QuickInsertCategory::kClipboard));
   EXPECT_FALSE(done_callback.IsReady());
   ClipboardHistoryController::GetHistoryValuesCallback get_history_values =
       get_history_values_future.Take();
@@ -1202,12 +1273,12 @@ TEST_F(QuickInsertSearchRequestTest,
   NiceMock<MockSearchResultsCallback> search_results_callback;
   base::test::TestFuture<bool> done_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
       done_callback.GetCallback(), &client(),
-      {.available_categories = {{PickerCategory::kLinks}}});
+      base::span_from_ref(QuickInsertCategory::kLinks));
   EXPECT_FALSE(done_callback.IsReady());
   client().cros_search_callback().Run(AppListSearchResultType::kOmnibox, {});
 
@@ -1220,14 +1291,13 @@ TEST_F(QuickInsertSearchRequestTest,
   NiceMock<MockSearchResultsCallback> search_results_callback;
   base::test::TestFuture<bool> done_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
       done_callback.GetCallback(), &client(),
-      {.available_categories = {{PickerCategory::kLinks,
-                                 PickerCategory::kDriveFiles,
-                                 PickerCategory::kLocalFiles}}});
+      {QuickInsertCategory::kLinks, QuickInsertCategory::kDriveFiles,
+       QuickInsertCategory::kLocalFiles});
   EXPECT_FALSE(done_callback.IsReady());
   client().cros_search_callback().Run(AppListSearchResultType::kOmnibox, {});
   EXPECT_FALSE(done_callback.IsReady());
@@ -1253,13 +1323,12 @@ TEST_F(QuickInsertSearchRequestTest,
   NiceMock<MockSearchResultsCallback> search_results_callback;
   base::test::TestFuture<bool> done_callback;
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
       done_callback.GetCallback(), &client(),
-      {.available_categories = {
-           {PickerCategory::kClipboard, PickerCategory::kLinks}}});
+      {QuickInsertCategory::kClipboard, QuickInsertCategory::kLinks});
   EXPECT_FALSE(done_callback.IsReady());
   ClipboardHistoryController::GetHistoryValuesCallback get_history_values =
       get_history_values_future.Take();
@@ -1285,12 +1354,12 @@ TEST_F(QuickInsertSearchRequestTest,
     EXPECT_CALL(done_callback, Run(/*interrupted=*/false)).Times(1);
   }
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"1+1", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
       done_callback.Get(), &client(),
-      {.available_categories = {{PickerCategory::kUnitsMaths}}});
+      base::span_from_ref(QuickInsertCategory::kUnitsMaths));
 }
 
 TEST_F(QuickInsertSearchRequestTest,
@@ -1303,12 +1372,12 @@ TEST_F(QuickInsertSearchRequestTest,
     EXPECT_CALL(done_callback, Run(/*interrupted*/ false)).Times(1);
   }
 
-  PickerSearchRequest request(
+  QuickInsertSearchRequest request(
       u"cat", std::nullopt,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)),
       done_callback.Get(), &client(),
-      {.available_categories = {{PickerCategory::kLinks}}});
+      base::span_from_ref(QuickInsertCategory::kLinks));
   client().cros_search_callback().Run(AppListSearchResultType::kOmnibox, {});
 }
 
@@ -1317,12 +1386,12 @@ TEST_F(QuickInsertSearchRequestTest, DoneClosureCalledWhenDestructed) {
   base::test::TestFuture<bool> done_callback;
 
   {
-    PickerSearchRequest request(
+    QuickInsertSearchRequest request(
         u"cat", std::nullopt,
         base::BindRepeating(&MockSearchResultsCallback::Call,
                             base::Unretained(&search_results_callback)),
         done_callback.GetCallback(), &client(),
-        {.available_categories = {{PickerCategory::kLinks}}});
+        base::span_from_ref(QuickInsertCategory::kLinks));
     EXPECT_FALSE(done_callback.IsReady());
   }
 

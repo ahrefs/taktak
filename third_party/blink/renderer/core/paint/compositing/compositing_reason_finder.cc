@@ -56,11 +56,12 @@ bool ShouldPreferCompositingForLayoutView(const LayoutView& layout_view) {
 CompositingReasons BackfaceInvisibility3DAncestorReason(
     const PaintLayer& layer) {
   if (RuntimeEnabledFeatures::BackfaceVisibilityInteropEnabled()) {
-    if (auto* compositing_container = layer.CompositingContainer()) {
-      if (compositing_container->GetLayoutObject()
+    if (auto* painting_container = layer.PaintingContainer()) {
+      if (painting_container->GetLayoutObject()
               .StyleRef()
-              .BackfaceVisibility() == EBackfaceVisibility::kHidden)
+              .BackfaceVisibility() == EBackfaceVisibility::kHidden) {
         return CompositingReason::kBackfaceInvisibility3DAncestor;
+      }
     }
   }
   return CompositingReason::kNone;
@@ -106,7 +107,13 @@ CompositingReasons CompositingReasonsFor3DTransform(
   const ComputedStyle& style = layout_object.StyleRef();
   CompositingReasons reasons =
       CompositingReasonFinder::PotentialCompositingReasonsFor3DTransform(style);
-  if (reasons != CompositingReason::kNone && layout_object.IsBox()) {
+
+  bool has_scale =
+      RuntimeEnabledFeatures::RenderSurfaceForScaleTransformEnabled() &&
+      style.Scale();
+
+  if ((reasons != CompositingReason::kNone || has_scale) &&
+      layout_object.IsBox()) {
     // In theory this should operate on fragment sizes, but using the box size
     // is probably good enough for a use counter.
     auto& box = To<LayoutBox>(layout_object);
@@ -127,6 +134,14 @@ CompositingReasons CompositingReasonsFor3DTransform(
         UseCounter::Count(layout_object.GetDocument(),
                           WebFeature::kTransform3dScene);
       }
+    }
+
+    if (has_scale) {
+      // TODO(chrishtr): make this "2d scale with composited descendants"
+      // somehow. Currently it triggers for all elements with
+      // the scale CSS property (*not* transform--just scale, which is
+      // a shorthand for scale transforms).
+      reasons |= CompositingReason::k2DScaleTransformWithCompositedDescendants;
     }
   }
   return reasons;
@@ -232,6 +247,10 @@ CompositingReasons CompositingReasonsForViewportScrollEffect(
   if (layout_object.StyleRef().IsFixedToBottom()) {
     reasons |= CompositingReason::kFixedPosition |
                CompositingReason::kAffectedByOuterViewportBoundsDelta;
+
+    if (layout_object.StyleRef().IsBottomRelativeToSafeAreaInset()) {
+      reasons |= CompositingReason::kAffectedBySafeAreaBottom;
+    }
   }
 
   return reasons;

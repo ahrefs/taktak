@@ -6,7 +6,7 @@ import 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import 'chrome://resources/cr_elements/cr_dialog/cr_dialog.js';
 import 'chrome://resources/cr_elements/cr_input/cr_input.js';
 import './pack_dialog_alert.js';
-import './strings.m.js';
+import '/strings.m.js';
 
 import type {CrDialogElement} from 'chrome://resources/cr_elements/cr_dialog/cr_dialog.js';
 import type {CrInputElement} from 'chrome://resources/cr_elements/cr_input/cr_input.js';
@@ -88,7 +88,8 @@ export class ExtensionsPackDialogElement extends CrLitElement {
   delegate: PackDialogDelegate = new DummyPackDialogDelegate();
   protected packDirectory_: string = '';
   protected keyFile_: string = '';
-  protected lastResponse_: chrome.developerPrivate.PackDirectoryResponse|null;
+  protected lastResponse_: chrome.developerPrivate.PackDirectoryResponse|null =
+      null;
 
   protected onKeyFileChanged_(e: CustomEvent<{value: string}>) {
     this.keyFile_ = e.detail.value;
@@ -147,8 +148,8 @@ export class ExtensionsPackDialogElement extends CrLitElement {
     }
 
     // This is only possible for a warning dialog.
-    if (this.shadowRoot!.querySelector(
-                            'extensions-pack-dialog-alert')!.returnValue ===
+    if (this.shadowRoot.querySelector(
+                           'extensions-pack-dialog-alert')!.returnValue ===
         'success') {
       this.delegate
           .packExtension(

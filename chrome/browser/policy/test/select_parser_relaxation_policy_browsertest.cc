@@ -70,6 +70,14 @@ IN_PROC_BROWSER_TEST_P(SelectParserRelaxationEnabledPolicyBrowserTest,
                       "window.selectParserRelaxationEnabled")
           .ExtractBool();
   EXPECT_EQ(actual_enabled, expected_enabled);
+
+  // The dependency in RuntimeEnabledFeatures should disable CustomizableSelect
+  // when SelectParserRelaxation is disabled.
+  const bool customizable_select_enabled =
+      content::EvalJs(chrome_test_utils::GetActiveWebContents(this),
+                      "window.customizableSelectEnabled")
+          .ExtractBool();
+  EXPECT_EQ(customizable_select_enabled, expected_enabled);
 }
 
 INSTANTIATE_TEST_SUITE_P(

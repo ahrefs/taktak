@@ -155,8 +155,7 @@ void SetGaiaInputMethods(const AccountId& account_id) {
 int ErrorToMessageId(SigninError error) {
   switch (error) {
     case SigninError::kCaptivePortalError:
-      NOTREACHED_IN_MIGRATION();
-      return 0;
+      NOTREACHED();
     case SigninError::kGoogleAccountNotAllowed:
       return IDS_LOGIN_ERROR_GOOGLE_ACCOUNT_NOT_ALLOWED;
     case SigninError::kOwnerRequired:
@@ -225,10 +224,12 @@ CreateSecondDeviceAuthBroker() {
 
 }  // namespace
 
-LoginDisplayHostCommon::LoginDisplayHostCommon()
+LoginDisplayHostCommon::LoginDisplayHostCommon(
+    bool update_geolocation_usage_allowed)
     : keep_alive_(KeepAliveOrigin::LOGIN_DISPLAY_HOST_WEBUI,
                   KeepAliveRestartOption::DISABLED),
-      login_ui_pref_controller_(std::make_unique<LoginUIPrefController>()),
+      login_ui_pref_controller_(std::make_unique<LoginUIPrefController>(
+          update_geolocation_usage_allowed)),
       wizard_context_(std::make_unique<WizardContext>()),
       oobe_metrics_helper_(std::make_unique<OobeMetricsHelper>()) {
   if (features::IsOobeCrosEventsEnabled()) {
@@ -283,7 +284,7 @@ void LoginDisplayHostCommon::StartUserAdding(
 
 void LoginDisplayHostCommon::StartSignInScreen() {
   const user_manager::UserList& users =
-      user_manager::UserManager::Get()->GetUsers();
+      user_manager::UserManager::Get()->GetPersistedUsers();
 
   // Fix for users who updated device and thus never passed register screen.
   // If we already have users, we assume that it is not a second part of
@@ -495,6 +496,10 @@ bool LoginDisplayHostCommon::HandleAccelerator(LoginAcceleratorAction action) {
   }
 
   return false;
+}
+
+void LoginDisplayHostCommon::SkipPostLoginScreensForDemoMode() {
+  wizard_context_->skip_post_login_screens_for_tests = true;
 }
 
 void LoginDisplayHostCommon::SetScreenAfterManagedTos(OobeScreenId screen_id) {

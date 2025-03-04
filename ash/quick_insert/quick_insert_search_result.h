@@ -48,6 +48,8 @@ struct ASH_EXPORT QuickInsertTextResult {
                                  Source source);
   QuickInsertTextResult(const QuickInsertTextResult&);
   QuickInsertTextResult& operator=(const QuickInsertTextResult&);
+  QuickInsertTextResult(QuickInsertTextResult&&);
+  QuickInsertTextResult& operator=(QuickInsertTextResult&&);
   ~QuickInsertTextResult();
 
   bool operator==(const QuickInsertTextResult&) const;
@@ -64,6 +66,8 @@ struct ASH_EXPORT QuickInsertSearchRequestResult {
   QuickInsertSearchRequestResult(const QuickInsertSearchRequestResult&);
   QuickInsertSearchRequestResult& operator=(
       const QuickInsertSearchRequestResult&);
+  QuickInsertSearchRequestResult(QuickInsertSearchRequestResult&&);
+  QuickInsertSearchRequestResult& operator=(QuickInsertSearchRequestResult&&);
   ~QuickInsertSearchRequestResult();
 
   bool operator==(const QuickInsertSearchRequestResult&) const;
@@ -88,6 +92,8 @@ struct ASH_EXPORT QuickInsertEmojiResult {
                                   std::u16string name);
   QuickInsertEmojiResult(const QuickInsertEmojiResult&);
   QuickInsertEmojiResult& operator=(const QuickInsertEmojiResult&);
+  QuickInsertEmojiResult(QuickInsertEmojiResult&&);
+  QuickInsertEmojiResult& operator=(QuickInsertEmojiResult&&);
   ~QuickInsertEmojiResult();
 
   bool operator==(const QuickInsertEmojiResult&) const;
@@ -99,9 +105,12 @@ struct ASH_EXPORT QuickInsertGifResult {
                        const gfx::Size& preview_dimensions,
                        const GURL& full_url,
                        const gfx::Size& full_dimensions,
-                       std::u16string content_description);
+                       std::u16string content_description,
+                       size_t rank = 0);
   QuickInsertGifResult(const QuickInsertGifResult&);
   QuickInsertGifResult& operator=(const QuickInsertGifResult&);
+  QuickInsertGifResult(QuickInsertGifResult&&);
+  QuickInsertGifResult& operator=(QuickInsertGifResult&&);
   ~QuickInsertGifResult();
 
   // A url to an animated preview gif media source.
@@ -122,6 +131,9 @@ struct ASH_EXPORT QuickInsertGifResult {
   // A textual description of the content, primarily used for accessibility
   // features.
   std::u16string content_description;
+
+  // The index of this result within the results, starting from 0.
+  size_t rank;
 
   bool operator==(const QuickInsertGifResult&) const;
 };
@@ -152,6 +164,8 @@ struct ASH_EXPORT QuickInsertClipboardResult {
       bool is_recent);
   QuickInsertClipboardResult(const QuickInsertClipboardResult&);
   QuickInsertClipboardResult& operator=(const QuickInsertClipboardResult&);
+  QuickInsertClipboardResult(QuickInsertClipboardResult&&);
+  QuickInsertClipboardResult& operator=(QuickInsertClipboardResult&&);
   ~QuickInsertClipboardResult();
 
   bool operator==(const QuickInsertClipboardResult&) const;
@@ -170,6 +184,9 @@ struct ASH_EXPORT QuickInsertBrowsingHistoryResult {
   QuickInsertBrowsingHistoryResult(const QuickInsertBrowsingHistoryResult&);
   QuickInsertBrowsingHistoryResult& operator=(
       const QuickInsertBrowsingHistoryResult&);
+  QuickInsertBrowsingHistoryResult(QuickInsertBrowsingHistoryResult&&);
+  QuickInsertBrowsingHistoryResult& operator=(
+      QuickInsertBrowsingHistoryResult&&);
   ~QuickInsertBrowsingHistoryResult();
 
   bool operator==(const QuickInsertBrowsingHistoryResult&) const;
@@ -185,6 +202,8 @@ struct ASH_EXPORT QuickInsertLocalFileResult {
                                       bool best_match = false);
   QuickInsertLocalFileResult(const QuickInsertLocalFileResult&);
   QuickInsertLocalFileResult& operator=(const QuickInsertLocalFileResult&);
+  QuickInsertLocalFileResult(QuickInsertLocalFileResult&&);
+  QuickInsertLocalFileResult& operator=(QuickInsertLocalFileResult&&);
   ~QuickInsertLocalFileResult();
 
   bool operator==(const QuickInsertLocalFileResult&) const;
@@ -204,17 +223,21 @@ struct ASH_EXPORT QuickInsertDriveFileResult {
                                       bool best_match = false);
   QuickInsertDriveFileResult(const QuickInsertDriveFileResult&);
   QuickInsertDriveFileResult& operator=(const QuickInsertDriveFileResult&);
+  QuickInsertDriveFileResult(QuickInsertDriveFileResult&&);
+  QuickInsertDriveFileResult& operator=(QuickInsertDriveFileResult&&);
   ~QuickInsertDriveFileResult();
 
   bool operator==(const QuickInsertDriveFileResult&) const;
 };
 
 struct ASH_EXPORT QuickInsertCategoryResult {
-  PickerCategory category;
+  QuickInsertCategory category;
 
-  explicit QuickInsertCategoryResult(PickerCategory category);
+  explicit QuickInsertCategoryResult(QuickInsertCategory category);
   QuickInsertCategoryResult(const QuickInsertCategoryResult&);
   QuickInsertCategoryResult& operator=(const QuickInsertCategoryResult&);
+  QuickInsertCategoryResult(QuickInsertCategoryResult&&);
+  QuickInsertCategoryResult& operator=(QuickInsertCategoryResult&&);
   ~QuickInsertCategoryResult();
 
   bool operator==(const QuickInsertCategoryResult&) const;
@@ -235,17 +258,24 @@ struct ASH_EXPORT QuickInsertEditorResult {
       std::optional<std::string> preset_query_id);
   QuickInsertEditorResult(const QuickInsertEditorResult&);
   QuickInsertEditorResult& operator=(const QuickInsertEditorResult&);
+  QuickInsertEditorResult(QuickInsertEditorResult&&);
+  QuickInsertEditorResult& operator=(QuickInsertEditorResult&&);
   ~QuickInsertEditorResult();
 
   bool operator==(const QuickInsertEditorResult&) const;
 };
 
 struct ASH_EXPORT QuickInsertLobsterResult {
+  enum class Mode { kNoSelection, kWithSelection };
+
+  Mode mode;
   std::u16string display_name;
 
-  QuickInsertLobsterResult(std::u16string display_name);
+  QuickInsertLobsterResult(Mode mode, std::u16string display_name);
   QuickInsertLobsterResult(const QuickInsertLobsterResult&);
   QuickInsertLobsterResult& operator=(const QuickInsertLobsterResult&);
+  QuickInsertLobsterResult(QuickInsertLobsterResult&&);
+  QuickInsertLobsterResult& operator=(QuickInsertLobsterResult&&);
   ~QuickInsertLobsterResult();
 
   bool operator==(const QuickInsertLobsterResult&) const;
@@ -264,6 +294,8 @@ struct ASH_EXPORT QuickInsertNewWindowResult {
   explicit QuickInsertNewWindowResult(Type type);
   QuickInsertNewWindowResult(const QuickInsertNewWindowResult&);
   QuickInsertNewWindowResult& operator=(const QuickInsertNewWindowResult&);
+  QuickInsertNewWindowResult(QuickInsertNewWindowResult&&);
+  QuickInsertNewWindowResult& operator=(QuickInsertNewWindowResult&&);
   ~QuickInsertNewWindowResult();
 
   bool operator==(const QuickInsertNewWindowResult&) const;
@@ -273,7 +305,7 @@ struct ASH_EXPORT QuickInsertCapsLockResult {
   enum class Shortcut {
     kAltLauncher,
     kAltSearch,
-    kFnRightAlt,
+    kFnQuickInsert,
   };
 
   bool enabled;
@@ -282,6 +314,8 @@ struct ASH_EXPORT QuickInsertCapsLockResult {
   explicit QuickInsertCapsLockResult(bool enabled, Shortcut shortcut);
   QuickInsertCapsLockResult(const QuickInsertCapsLockResult&);
   QuickInsertCapsLockResult& operator=(const QuickInsertCapsLockResult&);
+  QuickInsertCapsLockResult(QuickInsertCapsLockResult&&);
+  QuickInsertCapsLockResult& operator=(QuickInsertCapsLockResult&&);
   ~QuickInsertCapsLockResult();
 
   bool operator==(const QuickInsertCapsLockResult&) const;
@@ -300,6 +334,8 @@ struct ASH_EXPORT QuickInsertCaseTransformResult {
   QuickInsertCaseTransformResult(const QuickInsertCaseTransformResult&);
   QuickInsertCaseTransformResult& operator=(
       const QuickInsertCaseTransformResult&);
+  QuickInsertCaseTransformResult(QuickInsertCaseTransformResult&&);
+  QuickInsertCaseTransformResult& operator=(QuickInsertCaseTransformResult&&);
   ~QuickInsertCaseTransformResult();
 
   bool operator==(const QuickInsertCaseTransformResult&) const;

@@ -39,8 +39,8 @@
 #include "components/keep_alive_registry/scoped_keep_alive.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "components/keyed_service/core/keyed_service.h"
+#include "components/regional_capabilities/regional_capabilities_switches.h"
 #include "components/search_engines/default_search_manager.h"
-#include "components/search_engines/prepopulated_engines.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_utils.h"
 #include "components/search_engines/search_engines_pref_names.h"
 #include "components/search_engines/search_engines_switches.h"
@@ -57,6 +57,7 @@
 #include "content/public/test/test_navigation_observer.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
+#include "third_party/search_engines_data/resources/definitions/prepopulated_engines.h"
 #include "ui/base/window_open_disposition.h"
 
 using testing::_;
@@ -141,7 +142,7 @@ class SearchEngineChoiceDialogBrowserTest : public InProcessBrowserTest {
   SearchEngineChoiceDialogBrowserTest& operator=(
       const SearchEngineChoiceDialogBrowserTest&) = delete;
 
-  ~SearchEngineChoiceDialogBrowserTest() override {}
+  ~SearchEngineChoiceDialogBrowserTest() override = default;
 
   void SetUpCommandLine(base::CommandLine* command_line) override {
     InProcessBrowserTest::SetUpCommandLine(command_line);
@@ -605,7 +606,7 @@ IN_PROC_BROWSER_TEST_F(SearchEngineChoiceDialogBrowserTest,
   chrome::AddTabAt(app_browser, GURL(), -1, true);
   EXPECT_TRUE(app_browser->is_type_app());
 
-  GURL url = GURL("http://www.google.com/");
+  GURL url = GURL("https://www.google.com/");
   content::TestNavigationObserver observer(url);
   observer.StartWatchingNewWebContents();
 
@@ -791,26 +792,9 @@ IN_PROC_BROWSER_TEST_F(SearchEngineChoiceDialogBrowserTest,
   EXPECT_EQ(BrowserList::GetInstance()->size(), 1u);
 }
 
-// TODO(crbug.com/373890422): Flaky on win-asan.
-#if BUILDFLAG(IS_WIN) && defined(ADDRESS_SANITIZER)
-#define MAYBE_SearchEngineChoiceIsShownOnEachGuestSession \
-  DISABLED_SearchEngineChoiceIsShownOnEachGuestSession
-#else
-#define MAYBE_SearchEngineChoiceIsShownOnEachGuestSession \
-  SearchEngineChoiceIsShownOnEachGuestSession
-#endif
 IN_PROC_BROWSER_TEST_F(SearchEngineChoiceDialogBrowserTest,
-                       MAYBE_SearchEngineChoiceIsShownOnEachGuestSession) {
-#if !BUILDFLAG(IS_MAC)
-  // This initial browser is sometimes missing on mac. We don't really need that
-  // browser, so if the guest browser works, then the test might still succeed.
-  EXPECT_EQ(BrowserList::GetInstance()->size(), 1u);
-#endif
-
+                       SearchEngineChoiceIsShownOnEachGuestSession) {
   Browser* guest_session = CreateGuestBrowserAndLoadNTP();
-#if !BUILDFLAG(IS_MAC)
-  EXPECT_EQ(BrowserList::GetInstance()->size(), 2u);
-#endif
   auto* second_service = static_cast<MockSearchEngineChoiceDialogService*>(
       SearchEngineChoiceDialogServiceFactory::GetForProfile(
           guest_session->profile()));
@@ -856,16 +840,7 @@ IN_PROC_BROWSER_TEST_F(SearchEngineChoiceDialogBrowserTest,
 
 IN_PROC_BROWSER_TEST_F(SearchEngineChoiceDialogBrowserTest,
                        SearchEngineIsSavedBetweenGuestSessionsIfNeeded) {
-#if !BUILDFLAG(IS_MAC)
-  // This initial browser is sometimes missing on mac. We don't really need that
-  // browser, so if the guest browser works, then the test might still succeed.
-  EXPECT_EQ(BrowserList::GetInstance()->size(), 1u);
-#endif
-
   Browser* guest_session = CreateGuestBrowserAndLoadNTP();
-#if !BUILDFLAG(IS_MAC)
-  EXPECT_EQ(BrowserList::GetInstance()->size(), 2u);
-#endif
   auto* second_service = static_cast<MockSearchEngineChoiceDialogService*>(
       SearchEngineChoiceDialogServiceFactory::GetForProfile(
           guest_session->profile()));

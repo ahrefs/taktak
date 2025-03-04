@@ -4,38 +4,45 @@
 
 package org.chromium.chrome.browser.firstrun;
 
+import static androidx.annotation.VisibleForTesting.PRIVATE;
+
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.CallSuper;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.annotation.VisibleForTesting;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
 import org.chromium.base.ActivityState;
 import org.chromium.base.ApplicationStatus;
 import org.chromium.base.ApplicationStatus.ActivityStateListener;
+import org.chromium.base.BuildInfo;
 import org.chromium.base.Promise;
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.back_press.SecondaryActivityBackPressUma.SecondaryActivity;
 import org.chromium.chrome.browser.customtabs.CustomTabActivity;
 import org.chromium.chrome.browser.feature_engagement.TrackerFactory;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
-import org.chromium.chrome.browser.fonts.FontPreloader;
 import org.chromium.chrome.browser.metrics.UmaUtils;
+import org.chromium.chrome.browser.multiwindow.MultiWindowUtils;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.search_engines.TemplateUrlServiceFactory;
 import org.chromium.chrome.browser.signin.SigninCheckerProvider;
 import org.chromium.chrome.browser.signin.SigninFirstRunFragment;
+import org.chromium.chrome.browser.ui.edge_to_edge.EdgeToEdgeUtils;
 import org.chromium.chrome.browser.ui.signin.DialogWhenLargeContentLayout;
 import org.chromium.chrome.browser.ui.signin.SigninUtils;
+import org.chromium.chrome.browser.ui.signin.fullscreen_signin.FullscreenSigninMediator;
 import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncHelper;
 import org.chromium.chrome.browser.ui.system.StatusBarColorController;
 import org.chromium.components.browser_ui.modaldialog.AppModalPresenter;
@@ -43,6 +50,7 @@ import org.chromium.components.feature_engagement.EventConstants;
 import org.chromium.components.metrics.LowEntropySource;
 import org.chromium.components.signin.metrics.SigninAccessPoint;
 import org.chromium.ui.base.ActivityWindowAndroid;
+import org.chromium.ui.base.DeviceFormFactor;
 import org.chromium.ui.base.LocalizationUtils;
 import org.chromium.ui.interpolators.Interpolators;
 import org.chromium.ui.modaldialog.ModalDialogManager;
@@ -172,6 +180,19 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
 
     private static boolean sIsAnimationDisabled;
 
+    /** Prevents Tapjacking on T-. See crbug.com/1430867 */
+    private static final boolean sPreventTouches =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU;
+
+    /**
+     * The last MotionEvent object blocked due to the activity being in paused state. We're
+     * interested in MotionEvent#ACTION_DOWN which is likely the very first event received when
+     * multi-window mode is entered. We inject this one after the activity is resumed (or it regains
+     * the focus) in order to recover the corresponding user gesture which otherwise would have gone
+     * missing.
+     */
+    private MotionEvent mBlockedEvent;
+
     private boolean mPostNativeAndPolicyPagesCreated;
 
     /** Use {@link Promise#isFulfilled()} to verify whether the native has been initialized. */
@@ -200,6 +221,8 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
 
     private FirstRunPageTransformer mPageTransformer;
     private ViewPager2 mPager;
+
+    private ValueAnimator mAnimator;
 
     /** The pager adapter, which provides the pages to the view pager widget. */
     private FirstRunPagerAdapter mPagerAdapter;
@@ -253,24 +276,15 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
 
         // An optional history sync opt-in page, the visibility of this page will be decided on the
         // fly according to the situation.
-        if (ChromeFeatureList.isEnabled(
-                ChromeFeatureList.REPLACE_SYNC_PROMOS_WITH_SIGN_IN_PROMOS)) {
-            BooleanSupplier showHistorySync =
-                    () -> mFreProperties.getBoolean(SHOW_HISTORY_SYNC_PAGE);
-            if (!showHistorySync.getAsBoolean()) {
-                HistorySyncHelper historySyncHelper =
-                        HistorySyncHelper.getForProfile(
-                                getProfileProviderSupplier().get().getOriginalProfile());
-                historySyncHelper.recordHistorySyncNotShown(SigninAccessPoint.START_PAGE);
-            }
-            mPages.add(new FirstRunPage<>(HistorySyncFirstRunFragment.class, showHistorySync));
-            mFreProgressStates.add(MobileFreProgress.HISTORY_SYNC_OPT_IN_SHOWN);
-        } else {
-            BooleanSupplier showSyncConsent =
-                    () -> mFreProperties.getBoolean(SHOW_SYNC_CONSENT_PAGE);
-            mPages.add(new FirstRunPage<>(SyncConsentFirstRunFragment.class, showSyncConsent));
-            mFreProgressStates.add(MobileFreProgress.SYNC_CONSENT_SHOWN);
+        BooleanSupplier showHistorySync = () -> mFreProperties.getBoolean(SHOW_HISTORY_SYNC_PAGE);
+        if (!showHistorySync.getAsBoolean()) {
+            HistorySyncHelper historySyncHelper =
+                    HistorySyncHelper.getForProfile(
+                            getProfileProviderSupplier().get().getOriginalProfile());
+            historySyncHelper.recordHistorySyncNotShown(SigninAccessPoint.START_PAGE);
         }
+        mPages.add(new FirstRunPage<>(HistorySyncFirstRunFragment.class, showHistorySync));
+        mFreProgressStates.add(MobileFreProgress.HISTORY_SYNC_OPT_IN_SHOWN);
 
         if (mPagerAdapter != null) {
             mPagerAdapter.notifyDataSetChanged();
@@ -291,12 +305,19 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
         //
         // To solve this, we apply Theme.Chromium.TabbedMode on Tablet and Automotive here, to use
         // the same window background as other tabbed mode activities using the same theme.
-        if (SigninUtils.isTabletOrAuto(this)) {
+        boolean isTabletOrAuto =
+                BuildInfo.getInstance().isAutomotive
+                        || DeviceFormFactor.isNonMultiDisplayContextOnTablet(this);
+        if (isTabletOrAuto) {
             setTheme(R.style.Theme_Chromium_TabbedMode);
-        } else if (DialogWhenLargeContentLayout.shouldShowAsDialog(this)) {
+        } else if (!EdgeToEdgeUtils.isEdgeToEdgeEverywhereEnabled()
+                && DialogWhenLargeContentLayout.shouldShowAsDialog(this)) {
             // For consistency with tablets, the status bar should be black on phones with large
             // screen, where the FRE is shown as dialog.
-            StatusBarColorController.setStatusBarColor(getWindow(), Color.BLACK);
+            StatusBarColorController.setStatusBarColor(
+                    getEdgeToEdgeManager().getEdgeToEdgeSystemBarColorHelper(),
+                    getWindow(),
+                    Color.BLACK);
         }
         super.onPreCreate();
     }
@@ -367,7 +388,7 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
                         RecordHistogram.recordTimesHistogram(
                                 "MobileFre.FromLaunch.FirstFragmentInflatedV2",
                                 inflationCompletion - mIntentCreationElapsedRealtimeMs);
-                        getFirstRunAppRestrictionInfo()
+                        getAppRestrictionSupplier()
                                 .getCompletionElapsedRealtimeMs(
                                         restrictionsCompletion -> {
                                             if (restrictionsCompletion > inflationCompletion) {
@@ -395,20 +416,6 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
     }
 
     @Override
-    protected void performPostInflationStartup() {
-        super.performPostInflationStartup();
-
-        FontPreloader.getInstance().onPostInflationStartupFre();
-    }
-
-    @Override
-    protected void onFirstDrawComplete() {
-        super.onFirstDrawComplete();
-
-        FontPreloader.getInstance().onFirstDrawFre();
-    }
-
-    @Override
     public void finishNativeInitialization() {
         super.finishNativeInitialization();
 
@@ -429,10 +436,7 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
 
     private void onNativeDependenciesFullyInitialized() {
         mNativeInitializationPromise.fulfill(null);
-        if (ChromeFeatureList.isEnabled(
-                ChromeFeatureList.REPLACE_SYNC_PROMOS_WITH_SIGN_IN_PROMOS)) {
-            mPager.setOffscreenPageLimit(ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);
-        }
+        mPager.setOffscreenPageLimit(ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);
 
         onInternalStateChanged();
     }
@@ -474,8 +478,12 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
     /**
      * @param {boolean} smoothScroll Whether to animate transition. This should be true for user
      *     triggered transition, and false for quick skips by software.
+     * @return Whether advancing to the next page succeeded.
      */
     private boolean advanceToNextPageInternal(boolean smoothScroll) {
+        // Debounce page changes while animation is in flight.
+        if (mAnimator != null) return false;
+
         mFirstRunFlowSequencer.updateFirstRunProperties(mFreProperties);
 
         int position = mPager.getCurrentItem() + 1;
@@ -559,9 +567,42 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
         if (position < 0) {
             abortFirstRunExperience();
         } else {
+            // Might be debounced if animation is in flight, but consider this SUCCESS anyway.
             setCurrentItemForPager(position, true);
         }
         return BackPressResult.SUCCESS;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (sPreventTouches && shouldPreventTouch(ev)) {
+            // Discard the events which may be trickling down from an overlay activity above.
+            return true;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    boolean shouldPreventTouch(MotionEvent ev) {
+        if (ApplicationStatus.getStateForActivity(this) == ActivityState.RESUMED) return false;
+        mBlockedEvent = ev;
+        return true;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // No need to do the following from Q and onward where multi-resume state is supported
+        // in split screen mode.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return;
+
+        if (hasFocus
+                && mBlockedEvent != null
+                && MultiWindowUtils.getInstance().isInMultiWindowMode(this)) {
+            mBlockedEvent.setAction(MotionEvent.ACTION_DOWN);
+            super.dispatchTouchEvent(mBlockedEvent); // Inject the blocked event
+            mBlockedEvent = null;
+        }
     }
 
     @Override
@@ -614,7 +655,7 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
     }
 
     private void launchPendingIntentAndFinish() {
-        if (!sendFirstRunCompletePendingIntent()) {
+        if (!sendFirstRunCompleteIntent()) {
             finish();
         } else {
             ApplicationStatus.registerStateListenerForAllActivities(
@@ -682,7 +723,11 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
         return LocalizationUtils.isLayoutRtl();
     }
 
+    /** Returns whether the set attempt will lead to transition to an existing Fragment. */
     private boolean setCurrentItemForPager(int position, boolean smoothScroll) {
+        // Debounce page changes while animation is in flight.
+        if (mAnimator != null) return false;
+
         if (sObserver != null) sObserver.onJumpToPage(this, position);
 
         if (position >= mPagerAdapter.getItemCount()) {
@@ -705,15 +750,15 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
 
         if (!sIsAnimationDisabled && smoothScroll) {
             // Use fake drags to control transition time and interpolation in ViewPager2.
-            int width = getWindow().getDecorView().getWidth();
+
             // Direction of content shift: Forward -> negative; backward -> positive (assuming LTR).
             int direction = (position > oldPosition) ? -1 : 1;
             mPageTransformer.setDirection(direction);
             // Direction of drag, which is flipped if RTL.
             float dragSign = direction * (isRtl() ? -1f : 1f);
             // Use linear interpolation to enable custom interpolators usage of various properties.
-            ValueAnimator animator = ValueAnimator.ofInt(0, width);
-            animator.setInterpolator(Interpolators.LINEAR_INTERPOLATOR);
+            mAnimator = ValueAnimator.ofFloat(0f, 1f);
+            mAnimator.setInterpolator(Interpolators.LINEAR_INTERPOLATOR);
 
             class UpdateListener implements ValueAnimator.AnimatorUpdateListener {
                 /** Previous animated value to calculate fake drag delta for transitions. */
@@ -721,16 +766,20 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
 
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    int animatedValue = ((Integer) animation.getAnimatedValue()).intValue();
+                    float frac = ((Float) animation.getAnimatedValue()).floatValue();
+                    // Get the up-to-date width, which is subject to user change, e.g., by
+                    // orientation changes or window resize.
+                    int width = mPager.getWidth();
+                    int animatedValue = Math.round(frac * width);
                     float deltaPx = dragSign * (animatedValue - mPrevAnimatedValue);
                     mPager.fakeDragBy(deltaPx);
                     mPrevAnimatedValue = animatedValue;
                 }
             }
 
-            animator.addUpdateListener(new UpdateListener());
+            mAnimator.addUpdateListener(new UpdateListener());
 
-            animator.addListener(
+            mAnimator.addListener(
                     new ValueAnimator.AnimatorListener() {
                         @Override
                         public void onAnimationStart(Animator animation) {
@@ -740,12 +789,13 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             mPager.endFakeDrag();
+                            mAnimator = null;
                             // No need to call `mPager.setCurrentItem(position, false)`.
                         }
 
                         @Override
                         public void onAnimationCancel(Animator animation) {
-                            /* Ignored */
+                            mAnimator = null;
                         }
 
                         @Override
@@ -754,8 +804,8 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
                         }
                     });
 
-            animator.setDuration(TRANSITION_DELAY_MS);
-            animator.start();
+            mAnimator.setDuration(TRANSITION_DELAY_MS);
+            mAnimator.start();
 
         } else {
             mPager.setCurrentItem(position, false);
@@ -786,10 +836,15 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
     }
 
     @Override
-    public void recordNativePolicyAndChildStatusLoadedHistogram() {
+    public void recordLoadCompletedHistograms(
+            @FullscreenSigninMediator.LoadPoint int slowestLoadPoint) {
         RecordHistogram.recordTimesHistogram(
                 "MobileFre.FromLaunch.NativePolicyAndChildStatusLoaded",
                 SystemClock.elapsedRealtime() - mIntentCreationElapsedRealtimeMs);
+        RecordHistogram.recordEnumeratedHistogram(
+                "MobileFre.SlowestLoadPoint",
+                slowestLoadPoint,
+                FullscreenSigninMediator.LoadPoint.MAX);
     }
 
     @Override
@@ -826,6 +881,10 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
     @Override
     protected ActivityWindowAndroid createWindowAndroid() {
         return new ActivityWindowAndroid(
-                this, /* listenToActivityState= */ true, getIntentRequestTracker());
+                this,
+                /* listenToActivityState= */ true,
+                getIntentRequestTracker(),
+                getInsetObserver(),
+                /* trackOcclusion= */ true);
     }
 }

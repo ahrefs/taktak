@@ -57,8 +57,7 @@ std::string ToString(PrinterClass pclass) {
     case PrinterClass::kSaved:
       return "Saved";
   }
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 
 bool IsValidPrinterUri(const Uri& uri, std::string* error_message) {
@@ -119,6 +118,13 @@ bool Printer::PpdReference::IsFilled() const {
          !effective_make_and_model.empty();
 }
 
+Printer::ManagedPrintOptions::ManagedPrintOptions() = default;
+Printer::ManagedPrintOptions::ManagedPrintOptions(
+    const Printer::ManagedPrintOptions& other) = default;
+Printer::ManagedPrintOptions& Printer::ManagedPrintOptions::operator=(
+    const Printer::ManagedPrintOptions& other) = default;
+Printer::ManagedPrintOptions::~ManagedPrintOptions() = default;
+
 Printer::Printer()
     : id_(base::Uuid::GenerateRandomV4().AsLowercaseString()),
       source_(SRC_USER_PREFS) {}
@@ -164,6 +170,7 @@ bool Printer::RequiresDriverlessUsb() const {
           "epson et-5180 series",    // b/319373509
           "epson et-8550 series",    // b/301387697
           "epson wf-110 series",     // b/287159028
+          "hp deskjet 2600 series",  // b/399480007
           "hp deskjet 4100 series",  // b/279387801
       });
   return kDriverlessUsbMakeModels.contains(base::ToLowerASCII(make_and_model_));

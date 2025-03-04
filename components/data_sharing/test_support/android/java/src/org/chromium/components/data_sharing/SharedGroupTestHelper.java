@@ -5,21 +5,25 @@
 package org.chromium.components.data_sharing;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.mockito.ArgumentCaptor;
 
 import org.chromium.base.Callback;
+import org.chromium.components.collaboration.CollaborationService;
 import org.chromium.components.data_sharing.DataSharingService.GroupDataOrFailureOutcome;
 import org.chromium.components.data_sharing.member_role.MemberRole;
+import org.chromium.components.signin.base.GaiaId;
 
 /**
  * Test helpers for creating data_sharing objects and mocking calls to {@link DataSharingService}.
  */
 public class SharedGroupTestHelper {
-    public static final String GAIA_ID1 = "gaiaId1";
-    public static final String GAIA_ID2 = "gaiaId2";
+    public static final String COLLABORATION_ID1 = "collabId1";
+    public static final String COLLABORATION_ID2 = "collabId2";
+    public static final String ACCESS_TOKEN1 = "accessToken1";
+    public static final GaiaId GAIA_ID1 = new GaiaId("gaiaId1");
+    public static final GaiaId GAIA_ID2 = new GaiaId("gaiaId2");
     public static final String DISPLAY_NAME1 = "Jane Doe";
     public static final String DISPLAY_NAME2 = "John Doe";
     public static final String EMAIL1 = "one@gmail.com";
@@ -32,22 +36,24 @@ public class SharedGroupTestHelper {
             newGroupMember(GAIA_ID2, DISPLAY_NAME2, EMAIL2, MemberRole.MEMBER, GIVEN_NAME2);
 
     private final DataSharingService mDataSharingService;
+    private final CollaborationService mCollaborationService;
     private final ArgumentCaptor<Callback<GroupDataOrFailureOutcome>> mReadGroupCallbackCaptor;
 
     /**
      * @param mockDataSharingService A mock {@link DataSharingService}.
-     * @param readGroupCallbackCaptor Will capture the read group callback.
+     * @param mockCollaborationService A mock {@link CollaborationService}.
      */
     public SharedGroupTestHelper(
             DataSharingService mockDataSharingService,
-            ArgumentCaptor<Callback<GroupDataOrFailureOutcome>> readGroupCallbackCaptor) {
+            CollaborationService mockCollaborationService) {
         mDataSharingService = mockDataSharingService;
-        mReadGroupCallbackCaptor = readGroupCallbackCaptor;
+        mCollaborationService = mockCollaborationService;
+        mReadGroupCallbackCaptor = ArgumentCaptor.forClass(Callback.class);
     }
 
     /** Creates a new group member. */
     private static GroupMember newGroupMember(
-            String gaiaId,
+            GaiaId gaiaId,
             String displayName,
             String email,
             @MemberRole int memberRole,
@@ -59,16 +65,16 @@ public class SharedGroupTestHelper {
     /** Creates new group data. */
     public static GroupData newGroupData(String collaborationId, GroupMember... members) {
         return new GroupData(
-                collaborationId, /* displayName= */ null, members, /* groupToken= */ null);
+                collaborationId, /* displayName= */ null, members, /* accessToken= */ null);
     }
 
     /** Responds to a readGroup call on the {@link DataSharingService}. */
     public void respondToReadGroup(String collaborationId, GroupMember... members) {
-        verify(mDataSharingService, atLeastOnce())
-                .readGroup(eq(collaborationId), mReadGroupCallbackCaptor.capture());
-        GroupData groupData = newGroupData(collaborationId, members);
-        GroupDataOrFailureOutcome outcome =
-                new GroupDataOrFailureOutcome(groupData, PeopleGroupActionFailure.UNKNOWN);
-        mReadGroupCallbackCaptor.getValue().onResult(outcome);
+        when(mCollaborationService.getGroupData(eq(collaborationId)))
+                .thenReturn(newGroupData(collaborationId, members));
+    }
+
+    public void respondToReadGroupWithFailure(String collaborationId) {
+        when(mCollaborationService.getGroupData(eq(collaborationId))).thenReturn(null);
     }
 }

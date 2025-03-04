@@ -21,42 +21,65 @@
 #include "ash/webui/common/trusted_types_util.h"
 #include "ash/webui/graduation/graduation_ui_handler.h"
 #include "ash/webui/graduation/mojom/graduation_ui.mojom.h"
+#include "ash/webui/graduation/webview_auth_handler.h"
 #include "ash/webui/grit/ash_graduation_resources.h"
 #include "ash/webui/grit/ash_graduation_resources_map.h"
+#include "base/check_deref.h"
 #include "base/containers/span.h"
 #include "base/strings/stringprintf.h"
+#include "base/version_info/version_info.h"
+#include "chromeos/ash/components/browser_context_helper/browser_context_helper.h"
 #include "chromeos/strings/grit/chromeos_strings.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui.h"
 #include "content/public/browser/web_ui_data_source.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
-#include "ui/resources/grit/webui_resources.h"
+#include "ui/webui/resources/grit/webui_resources.h"
 #include "url/gurl.h"
 #include "url/origin.h"
 
 namespace ash::graduation {
 
 namespace {
-const std::string GetTransferUrl() {
-  const std::string language_code =
-      ash::graduation::GraduationManager::Get()->GetLanguageCode();
 
-  const GURL transfer_url_base(kTransferURLBase);
+// A string that indicates the webview is coming from CrOS. This user
+// agent allows the Takeout Transfer embedded site to be loaded by the
+// Graduation app. Ex. `ChromeWebView/133`.
+constexpr char kUserAgentStringPrefix[] = "ChromeWebView/%s";
+
+const std::string GetTransferUrl() {
+  const std::string language_code = GraduationManager::Get()->GetLanguageCode();
+
+  std::string url_base;
+  // TODO(crbug.com/376690096): Clean up feature flag when the new
+  // endpoint is launched.
+  if (features::IsGraduationUseEmbeddedTransferEndpointEnabled()) {
+    url_base = kEmbeddedTransferURLBase;
+  } else {
+    url_base = kTransferURLBase;
+  }
+  const GURL transfer_url_base(url_base);
+
   GURL::Replacements replacements;
   const std::string query_string =
       base::StringPrintf("hl=%s", language_code.c_str());
   replacements.SetQueryStr(query_string);
   const GURL transfer_url = transfer_url_base.ReplaceComponents(replacements);
+
   CHECK(transfer_url.is_valid())
       << "Invalid URL for Takeout Transfer tool: \"" << transfer_url << "\"";
   return transfer_url.spec();
 }
 
+std::string GetUserAgentString() {
+  return base::StringPrintf(kUserAgentStringPrefix,
+                            version_info::GetMajorVersionNumber());
+}
+
 void AddResources(content::WebUIDataSource* source) {
   source->SetDefaultResource(IDR_ASH_GRADUATION_INDEX_HTML);
-  source->AddResourcePaths(
-      base::make_span(kAshGraduationResources, kAshGraduationResourcesSize));
+  source->AddResourcePaths(kAshGraduationResources);
   static constexpr webui::LocalizedString kLocalizedStrings[] = {
       {"appTitle", IDS_GRADUATION_APP_TITLE},
       {"backButtonLabel", IDS_GRADUATION_APP_BACK_BUTTON_LABEL},
@@ -74,7 +97,12 @@ void AddResources(content::WebUIDataSource* source) {
 
   source->AddLocalizedStrings(kLocalizedStrings);
 
-  source->AddString("webviewUrl", GetTransferUrl());
+  source->AddBoolean(
+      "isEmbeddedEndpointEnabled",
+      features::IsGraduationUseEmbeddedTransferEndpointEnabled());
+
+  source->AddString("startTransferUrl", GetTransferUrl());
+  source->AddString("userAgentString", GetUserAgentString());
 
   // Set up test resources used in browser tests.
   source->AddResourcePath("test_loader.html", IDR_WEBUI_TEST_LOADER_HTML);
@@ -86,7 +114,7 @@ void AddResources(content::WebUIDataSource* source) {
 
 bool GraduationUIConfig::IsWebUIEnabled(
     content::BrowserContext* browser_context) {
-  return features::IsGraduationEnabled() &&
+  return features::IsGraduationEnabled() && Shell::HasInstance() &&
          IsEligibleForGraduation(Shell::Get()
                                      ->session_controller()
                                      ->GetLastActiveUserPrefService());
@@ -116,7 +144,16 @@ GraduationUI::~GraduationUI() = default;
 
 void GraduationUI::BindInterface(
     mojo::PendingReceiver<graduation_ui::mojom::GraduationUiHandler> receiver) {
-  ui_handler_ = std::make_unique<GraduationUiHandler>(std::move(receiver));
+  content::BrowserContext* context =
+      web_ui()->GetWebContents()->GetBrowserContext();
+  CHECK(context);
+  const std::string host_name =
+      web_ui()->GetWebContents()->GetVisibleURL().host();
+  ui_handler_ = std::make_unique<GraduationUiHandler>(
+      std::move(receiver),
+      std::make_unique<WebviewAuthHandler>(context, host_name),
+      CHECK_DEREF(
+          ash::BrowserContextHelper::Get()->GetUserByBrowserContext(context)));
 }
 
 void GraduationUI::BindInterface(

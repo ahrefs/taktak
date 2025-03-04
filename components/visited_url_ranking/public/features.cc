@@ -19,7 +19,11 @@ constexpr base::FeatureParam<bool>
     kVisitedURLRankingHistoryFetcherDiscardZeroDurationVisits{
         &kVisitedURLRankingService,
         /*name=*/"history_fetcher_discard_zero_duration_visits",
+#if BUILDFLAG(IS_ANDROID)
+        /*default_value=*/false};
+#else
         /*default_value=*/true};
+#endif  // BUILDFLAG(IS_ANDROID)
 
 constexpr base::FeatureParam<std::string> kVisitedURLRankingResultTypesParam{
     &kVisitedURLRankingService,
@@ -105,5 +109,37 @@ constexpr base::FeatureParam<int>
         &kVisitedURLRankingDecorations,
         /*name=*/"decorations_recently_visited_minutes_threshold",
         /*default_value=*/1};
+
+BASE_FEATURE(kVisitedURLRankingScoreThreshold,
+             "VisitedURLRankingScoreThreshold",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+constexpr base::FeatureParam<double>
+    kVisitedURLRankingScoreThresholdActiveLocalTab{
+        &kVisitedURLRankingScoreThreshold,
+        /*name=*/"active_local_tab_score_threshold",
+        /*default_value=*/0};
+
+constexpr base::FeatureParam<double>
+    kVisitedURLRankingScoreThresholdActiveRemoteTab{
+        &kVisitedURLRankingScoreThreshold,
+        /*name=*/"active_remote_tab_score_threshold",
+        /*default_value=*/0};
+
+constexpr base::FeatureParam<double> kVisitedURLRankingScoreThresholdLocalVisit{
+    &kVisitedURLRankingScoreThreshold,
+    /*name=*/"local_visit_score_threshold",
+    /*default_value=*/0};
+
+constexpr base::FeatureParam<double>
+    kVisitedURLRankingScoreThresholdRemoteVisit{
+        &kVisitedURLRankingScoreThreshold,
+        /*name=*/"remote_visit_score_threshold",
+        /*default_value=*/0};
+
+constexpr base::FeatureParam<double> kVisitedURLRankingScoreThresholdCCTVisit{
+    &kVisitedURLRankingScoreThreshold,
+    /*name=*/"cct_visit_score_threshold",
+    /*default_value=*/0};
 
 }  // namespace visited_url_ranking::features

@@ -32,6 +32,7 @@
 #include "base/strings/strcat.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/stringprintf.h"
+#include "base/strings/to_string.h"
 #include "base/test/bind.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/scoped_feature_list.h"
@@ -42,7 +43,6 @@
 #include "components/cbor/values.h"
 #include "components/cbor/writer.h"
 #include "components/ukm/test_ukm_recorder.h"
-#include "content/browser/aggregation_service/aggregation_service_features.h"
 #include "content/browser/fenced_frame/fenced_frame_reporter.h"
 #include "content/browser/interest_group/ad_auction_page_data.h"
 #include "content/browser/interest_group/additional_bids_test_util.h"
@@ -53,14 +53,19 @@
 #include "content/browser/interest_group/debuggable_auction_worklet.h"
 #include "content/browser/interest_group/debuggable_auction_worklet_tracker.h"
 #include "content/browser/interest_group/interest_group_auction.h"
+#include "content/browser/interest_group/interest_group_features.h"
 #include "content/browser/interest_group/interest_group_k_anonymity_manager.h"
 #include "content/browser/interest_group/interest_group_manager_impl.h"
 #include "content/browser/interest_group/interest_group_storage.h"
 #include "content/browser/interest_group/mock_auction_process_manager.h"
 #include "content/browser/interest_group/test_interest_group_manager_impl.h"
 #include "content/browser/interest_group/test_interest_group_private_aggregation_manager.h"
+#include "content/browser/interest_group/test_same_process_auction_process_manager.h"
+#include "content/browser/interest_group/trusted_signals_cache_impl.h"
+#include "content/browser/interest_group/trusted_signals_fetcher.h"
 #include "content/browser/renderer_host/render_frame_host_impl.h"
 #include "content/public/browser/auction_result.h"
+#include "content/public/browser/frame_tree_node_id.h"
 #include "content/public/browser/page.h"
 #include "content/public/browser/site_instance.h"
 #include "content/public/browser/web_contents.h"
@@ -68,7 +73,9 @@
 #include "content/public/test/test_utils.h"
 #include "content/services/auction_worklet/auction_v8_helper.h"
 #include "content/services/auction_worklet/auction_worklet_service_impl.h"
+#include "content/services/auction_worklet/public/cpp/cbor_test_util.h"
 #include "content/services/auction_worklet/public/cpp/real_time_reporting.h"
+#include "content/services/auction_worklet/public/cpp/test_bid_builder.h"
 #include "content/services/auction_worklet/public/mojom/auction_shared_storage_host.mojom.h"
 #include "content/services/auction_worklet/public/mojom/auction_worklet_service.mojom.h"
 #include "content/services/auction_worklet/public/mojom/bidder_worklet.mojom.h"
@@ -109,19 +116,6 @@ using auction_worklet::TestDevToolsAgentClient;
 using testing::HasSubstr;
 
 namespace content {
-class ProcessHandleTestPeer {
- public:
-  explicit ProcessHandleTestPeer(
-      const AuctionProcessManager::ProcessHandle* handle)
-      : handle_(handle) {}
-
-  void CallOnLaunchedWithPidForCurrentProcess() {
-    handle_->OnBaseProcessLaunchedForTesting(base::Process::Current());
-  }
-
- private:
-  raw_ptr<const AuctionProcessManager::ProcessHandle> handle_;
-};
 
 namespace {
 
@@ -183,12 +177,205 @@ const char kSellerDebugLossReportBaseUrl[] =
 const char kSellerDebugWinReportBaseUrl[] =
     "https://seller-debug-win-reporting.com/";
 
+constexpr std::string_view kCoordinatorOrigin("https://coordinator.test");
+
 // Trusted bidding signals typically used for bidder1 and bidder2.
 const char kBidder1SignalsJson[] =
     R"({"keys": {"k1":"a", "k2": "b", "extra": "c"}})";
 const char kBidder2SignalsJson[] =
     R"({"keys": {"l1":"a", "l2": "b", "extra": "c"}})";
 
+// Equivalent signals in KVv2 response format, as JSON (Need to be converted to
+// CBOR to actually use).
+const char kBidder1SignalsKVv2Json[] =
+    R"([{
+      "id": 0,
+      "keyGroupOutputs": [{
+        "tags": [
+          "keys"
+        ],
+        "keyValues": {
+          "k1": {
+            "value": "\"a\""
+          },
+          "k2": {
+            "value": "\"b\""
+          },
+          "extra": {
+            "value": "\"c\""
+          }
+        }
+      }]
+    }])";
+const char kBidder2SignalsKVv2Json[] =
+    R"([{
+      "id": 0,
+      "keyGroupOutputs": [{
+        "tags": [
+          "keys"
+        ],
+        "keyValues": {
+          "l1": {
+            "value": "\"a\""
+          },
+          "l2": {
+            "value": "\"b\""
+          },
+          "extra": {
+            "value": "\"c\""
+          }
+        }
+      }]
+    }])";
+
+// Trusted scoring signals typically used when bidder1 and bidder2 signals are
+// requested together. The body is keys indicate to only accept the first
+// bidder's bid.
+const char kBidder1Bidder2ScoringSignalsBody[] =
+    R"({"renderUrls":{"https://ad1.com/":"accept", "https://ad2.com/":"reject"}})";
+
+// Just like above, but separate signals for bidder1 and bidder2.
+const char kBidder1ScoringSignalsBody[] =
+    R"({"renderUrls":{"https://ad1.com/":"accept"}})";
+const char kBidder2ScoringSignalsBody[] =
+    R"({"renderUrls":{"https://ad2.com/":"reject"}})";
+
+// Scoring signals in KVv2 response format for bidder1, as JSON.
+const char kBidder1ScoringSignalsKVv2Json[] =
+    R"([{
+      "id": 0,
+      "keyGroupOutputs": [{
+        "tags": [
+          "renderURLs"
+        ],
+        "keyValues": {
+          "https://ad1.com/": {
+            "value": "\"accept\""
+          }
+        }
+      }]
+    }])";
+
+// Scoring signals in KVv2 response format for bidder2, as JSON.
+const char kBidder2ScoringSignalsKVv2Json[] =
+    R"([{
+      "id": 0,
+      "keyGroupOutputs": [{
+        "tags": [
+          "renderURLs"
+        ],
+        "keyValues": {
+          "https://ad2.com/": {
+            "value": "\"reject\""
+          }
+        }
+      }]
+    }])";
+
+// Seller signals in KVv2 response format, as JSON, with two identical
+// partitions. Unfortunately, order of batched seller signals partitions is not
+// guaranteed, so simplest just to use a response that's valid for either order
+// of partitions.
+const char kBidder1Bidder2ScoringSignalsOneParititionKVv2Json[] =
+    R"([
+      {
+        "id": 0,
+        "keyGroupOutputs": [{
+          "tags": [
+            "renderURLs"
+          ],
+          "keyValues": {
+            "https://ad1.com/": {
+              "value": "\"accept\""
+            },
+            "https://ad2.com/": {
+              "value": "\"reject\""
+            }
+          }
+        }]
+      },
+      {
+        "id": 1,
+        "keyGroupOutputs": [{
+          "tags": [
+            "renderURLs"
+          ],
+          "keyValues": {
+            "https://ad1.com/": {
+              "value": "\"accept\""
+            },
+            "https://ad2.com/": {
+              "value": "\"reject\""
+            }
+          }
+        }]
+      }
+    ])";
+
+// Returns a CompressionGroupResult created from the provided JSON.
+TrustedSignalsFetcher::CompressionGroupResult MakeCompressionGroupResult(
+    std::string_view response_json) {
+  TrustedSignalsFetcher::CompressionGroupResult result;
+  result.compression_scheme =
+      auction_worklet::mojom::TrustedSignalsCompressionScheme::kNone;
+  result.compression_group_data =
+      auction_worklet::test::ToCborVector(response_json);
+  return result;
+}
+
+// Creates a CompressionGroupResultMap for a single compression group with the
+// specified JSON.
+TrustedSignalsFetcher::CompressionGroupResultMap
+MakeCompressionGroupMapForOneGroup(std::string_view response_json) {
+  TrustedSignalsFetcher::CompressionGroupResultMap result_map;
+  result_map.emplace(0, MakeCompressionGroupResult(response_json));
+  return result_map;
+}
+
+// Creates a CompressionGroupResultMap for the two provided compression groups.
+TrustedSignalsFetcher::CompressionGroupResultMap
+MakeCompressionGroupMapForTwoGroups(std::string_view group1_json,
+                                    std::string_view group2_json) {
+  TrustedSignalsFetcher::CompressionGroupResultMap result_map;
+  result_map.emplace(0, MakeCompressionGroupResult(group1_json));
+  result_map.emplace(1, MakeCompressionGroupResult(group2_json));
+  return result_map;
+}
+
+TrustedSignalsFetcher::CompressionGroupResultMap
+MakeBidder1CompressionGroupMap() {
+  return MakeCompressionGroupMapForOneGroup(kBidder1SignalsKVv2Json);
+}
+
+TrustedSignalsFetcher::CompressionGroupResultMap
+MakeBidder2CompressionGroupMap() {
+  return MakeCompressionGroupMapForOneGroup(kBidder2SignalsKVv2Json);
+}
+
+// Returns a scoring signals compression group map with two identical
+// partitions. Could have variants with bidder 1 first and bidder 2 first, but
+// only one test uses this, so seems not worth it.
+TrustedSignalsFetcher::CompressionGroupResultMap
+MakeBidder1Bidder2ScoringSignalsTwoPartitionsCompressionGroupMap() {
+  return MakeCompressionGroupMapForOneGroup(
+      kBidder1Bidder2ScoringSignalsOneParititionKVv2Json);
+}
+
+// Returns a scoring signals compression group map with two compression groups.
+// Bidder 1's compression group is first.
+TrustedSignalsFetcher::CompressionGroupResultMap
+MakeBidder1Bidder2ScoringSignalsTwoCompressionGroupsMap() {
+  return MakeCompressionGroupMapForTwoGroups(kBidder1ScoringSignalsKVv2Json,
+                                             kBidder2ScoringSignalsKVv2Json);
+}
+
+// Returns a scoring signals compression group map with two compression groups.
+// Bidder 2's compression group is first.
+TrustedSignalsFetcher::CompressionGroupResultMap
+MakeBidder2Bidder1ScoringSignalsTwoCompressionGroupsMap() {
+  return MakeCompressionGroupMapForTwoGroups(kBidder2ScoringSignalsKVv2Json,
+                                             kBidder1ScoringSignalsKVv2Json);
+}
 const char kPostAuctionSignalsPlaceholder[] =
     "?winningBid=${winningBid}&"
     "winningBidCurrency=${winningBidCurrency}&madeWinningBid=${madeWinningBid}&"
@@ -548,9 +735,9 @@ std::string MakeBidScript(const url::Origin& seller,
   return base::StringPrintf(
       kBidScript, seller.Serialize().c_str(), bid.c_str(), render_url.c_str(),
       num_ad_components, interest_group_owner.Serialize().c_str(),
-      interest_group_name.c_str(), has_signals ? "true" : "false",
-      report_post_auction_signals ? "true" : "false",
-      report_reject_reason ? "true" : "false", kPostAuctionSignalsPlaceholder,
+      interest_group_name.c_str(), base::ToString(has_signals),
+      base::ToString(report_post_auction_signals),
+      base::ToString(report_reject_reason), kPostAuctionSignalsPlaceholder,
       debug_loss_report_url.c_str(), debug_win_report_url.c_str(),
       signal_key.c_str(), signal_val.c_str());
 }
@@ -920,11 +1107,11 @@ std::string MakeDecisionScript(
   return base::StringPrintf(
       kCheckingAuctionScript, decision_logic_url.spec().c_str(),
       send_report_url ? send_report_url->spec().c_str() : "",
-      report_post_auction_signals ? "true" : "false",
+      base::ToString(report_post_auction_signals),
       kPostAuctionSignalsPlaceholder, debug_loss_report_url.c_str(),
       debug_win_report_url.c_str(),
-      bid_from_component_auction_wins ? "true" : "false",
-      report_top_level_post_auction_signals ? "true" : "false",
+      base::ToString(bid_from_component_auction_wins),
+      base::ToString(report_top_level_post_auction_signals),
       kTopLevelPostAuctionSignalsPlaceholder);
 }
 
@@ -1234,7 +1421,7 @@ const GURL ReportWinUrl(
       "&madeHighestScoringOtherBid=%s&bidCurrency=%s&bid=%.0f",
       url.c_str(), highest_scoring_other_bid,
       blink::PrintableAdCurrency(highest_scoring_other_bid_currency).c_str(),
-      made_highest_scoring_other_bid ? "true" : "false",
+      base::ToString(made_highest_scoring_other_bid),
       blink::PrintableAdCurrency(bid_currency).c_str(), bid));
 }
 
@@ -1256,11 +1443,11 @@ const GURL DebugReportUrl(
       "highestScoringOtherBidCurrency=%s&madeHighestScoringOtherBid=%s",
       url.c_str(), signals.winning_bid,
       blink::PrintableAdCurrency(signals.winning_bid_currency).c_str(),
-      signals.made_winning_bid ? "true" : "false",
+      base::ToString(signals.made_winning_bid),
       signals.highest_scoring_other_bid,
       blink::PrintableAdCurrency(signals.highest_scoring_other_bid_currency)
           .c_str(),
-      signals.made_highest_scoring_other_bid ? "true" : "false");
+      base::ToString(signals.made_highest_scoring_other_bid));
   if (reject_reason.has_value()) {
     report_url_string.append(
         base::StringPrintf("&rejectReason=%s", reject_reason.value().c_str()));
@@ -1299,15 +1486,15 @@ const GURL ComponentSellerDebugReportUrl(
       "&bid=%.0f",
       url.c_str(), signals.winning_bid,
       blink::PrintableAdCurrency(signals.winning_bid_currency).c_str(),
-      signals.made_winning_bid ? "true" : "false",
+      base::ToString(signals.made_winning_bid),
       signals.highest_scoring_other_bid,
       blink::PrintableAdCurrency(signals.highest_scoring_other_bid_currency)
           .c_str(),
-      signals.made_highest_scoring_other_bid ? "true" : "false",
+      base::ToString(signals.made_highest_scoring_other_bid),
       top_level_signals.winning_bid,
       blink::PrintableAdCurrency(top_level_signals.winning_bid_currency)
           .c_str(),
-      top_level_signals.made_winning_bid ? "true" : "false", bid));
+      base::ToString(top_level_signals.made_winning_bid), bid));
 }
 
 // Builds a PrivateAggregationRequest with histogram contribution using given
@@ -1442,85 +1629,6 @@ CreateBiddingAndAuctionEncryptionContext() {
   return std::move(request).ReleaseContext();
 }
 
-class SameProcessAuctionProcessManager : public AuctionProcessManager {
- public:
-  SameProcessAuctionProcessManager() = default;
-  SameProcessAuctionProcessManager(const SameProcessAuctionProcessManager&) =
-      delete;
-  SameProcessAuctionProcessManager& operator=(
-      const SameProcessAuctionProcessManager&) = delete;
-  ~SameProcessAuctionProcessManager() override = default;
-
-  // Resume all worklets paused waiting for debugger on startup.
-  void ResumeAllPaused() {
-    for (const auto& svc : auction_worklet_services_) {
-      for (const auto& v8_helper : svc->AuctionV8HelpersForTesting()) {
-        v8_helper->v8_runner()->PostTask(
-            FROM_HERE,
-            base::BindOnce(
-                [](scoped_refptr<auction_worklet::AuctionV8Helper> v8_helper) {
-                  v8_helper->ResumeAllForTesting();
-                },
-                v8_helper));
-      }
-    }
-  }
-
-  int NumBidderWorklets() const {
-    int total = 0;
-    for (const auto& svc : auction_worklet_services_) {
-      total += svc->NumBidderWorkletsForTesting();
-    }
-    return total;
-  }
-
-  int NumSellerWorklets() const {
-    int total = 0;
-    for (const auto& svc : auction_worklet_services_) {
-      total += svc->NumSellerWorkletsForTesting();
-    }
-    return total;
-  }
-
- private:
-  scoped_refptr<WorkletProcess> LaunchProcess(
-      WorkletType worklet_type,
-      const url::Origin& origin,
-      scoped_refptr<SiteInstance> site_instance,
-      const std::string& display_name,
-      bool is_idle) override {
-    // Create one AuctionWorkletServiceImpl per Mojo pipe, just like in
-    // production code. Don't bother to delete the service on pipe close,
-    // though; just keep it in a vector instead.
-    mojo::PendingRemote<auction_worklet::mojom::AuctionWorkletService> service;
-    auction_worklet_services_.push_back(
-        auction_worklet::AuctionWorkletServiceImpl::CreateForService(
-            service.InitWithNewPipeAndPassReceiver()));
-    return base::MakeRefCounted<WorkletProcess>(
-        this, /*site_instance=*/nullptr, /*render_process_host=*/nullptr,
-        std::move(service), worklet_type, origin,
-        /*uses_shared_process=*/false, /*is_idle=*/is_idle,
-        /*is_bound_to_origin=*/true);
-  }
-
-  void OnNewProcessAssigned(const ProcessHandle* handle) override {
-    ProcessHandleTestPeer(handle).CallOnLaunchedWithPidForCurrentProcess();
-  }
-
-  scoped_refptr<SiteInstance> MaybeComputeSiteInstance(
-      SiteInstance* frame_site_instance,
-      const url::Origin& worklet_origin) override {
-    return nullptr;
-  }
-
-  bool TryUseSharedProcess(ProcessHandle* process_handle) override {
-    return false;
-  }
-
-  std::vector<std::unique_ptr<auction_worklet::AuctionWorkletServiceImpl>>
-      auction_worklet_services_;
-};
-
 MATCHER_P2(HasMetricWithValue, key, matcher, "") {
   if (!arg.contains(key)) {
     *result_listener << "which does not contain " << key;
@@ -1598,6 +1706,267 @@ class EventReportingAttestationBrowserClient : public TestContentBrowserClient {
   }
 };
 
+// TrustedSignalsCacheImpl implementation that allows setting request
+// expectations and mocking out results, without having to deal with encryption
+// or request formatting. Note that consumers must specify compression group and
+// partition IDs. These IDs depend on how the real TrustedSignalsCacheImpl
+// assigns them.
+class MockTrustedSignalsCacheImpl : public TrustedSignalsCacheImpl {
+ public:
+  // Mirrors the content of TrustedSignalsFetcher::BiddingPartition, but owns
+  // its data.
+  struct BiddingPartitionInfo {
+    int partition_id;
+    std::set<std::string> interest_group_names;
+    std::set<std::string> keys;
+    base::Value::Dict additional_params;
+
+    bool operator<(const BiddingPartitionInfo& other) const {
+      return std::tie(partition_id, interest_group_names, keys,
+                      additional_params) <
+             std::tie(other.partition_id, other.interest_group_names,
+                      other.keys, other.additional_params);
+    }
+  };
+
+  // Contains all parameters for a single bidding signals request to the cache.
+  struct BidderRequestInfo {
+    url::Origin main_frame_origin;
+    url::Origin script_origin;
+    GURL trusted_bidding_signals_url;
+
+    std::map<int, std::vector<BiddingPartitionInfo>> compression_groups;
+
+    bool operator<(const BidderRequestInfo& other) const {
+      return std::tie(main_frame_origin, script_origin,
+                      trusted_bidding_signals_url, compression_groups) <
+             std::tie(other.main_frame_origin, other.script_origin,
+                      other.trusted_bidding_signals_url,
+                      other.compression_groups);
+    }
+  };
+
+  // Mirrors the content of TrustedSignalsFetcher::ScoringPartition, but owns
+  // its data.
+  struct ScoringPartitionInfo {
+    int partition_id;
+    GURL render_url;
+    std::set<GURL> component_render_urls;
+    base::Value::Dict additional_params;
+
+    bool operator<(const ScoringPartitionInfo& other) const {
+      return std::tie(partition_id, render_url, component_render_urls,
+                      additional_params) <
+             std::tie(other.partition_id, other.render_url,
+                      other.component_render_urls, other.additional_params);
+    }
+  };
+
+  // Contains all parameters for a single scoring signals request to the cache.
+  struct SellerRequestInfo {
+    url::Origin main_frame_origin;
+    url::Origin script_origin;
+    GURL trusted_scoring_signals_url;
+
+    std::map<int, std::vector<ScoringPartitionInfo>> compression_groups;
+
+    bool operator<(const SellerRequestInfo& other) const {
+      return std::tie(main_frame_origin, script_origin,
+                      trusted_scoring_signals_url, compression_groups) <
+             std::tie(other.main_frame_origin, other.script_origin,
+                      other.trusted_scoring_signals_url,
+                      other.compression_groups);
+    }
+  };
+
+  MockTrustedSignalsCacheImpl()
+      : TrustedSignalsCacheImpl(
+            /*url_loader_factory=*/nullptr,
+            base::BindRepeating(
+                &MockTrustedSignalsCacheImpl::GetCoordinatorKeyCallback,
+                base::Unretained(this))) {}
+
+  ~MockTrustedSignalsCacheImpl() override {
+    // All expected bidder requests should have been observed. Seller requests,
+    // on the other hand, may be ordered or grouped differently, so tests
+    // typically add multiple possible sets of requests, so they may not all be
+    // consumed.
+    EXPECT_TRUE(bidder_responses_.empty());
+  }
+
+  // Adds an expected request and the result to return when it's observed. A
+  // request with exactly matching parameters is expected to be made exactly
+  // once before `this` is destroyed. Multiple identical requests are not
+  // supported.
+  void AddBidderSignalsResult(
+      BidderRequestInfo bidder_request_info,
+      TrustedSignalsFetcher::SignalsFetchResult signals_fetch_result) {
+    EXPECT_TRUE(bidder_responses_
+                    .try_emplace(std::move(bidder_request_info),
+                                 std::move(signals_fetch_result))
+                    .second);
+  }
+
+  // Same as AddBidderSignalsResult(), but for scoring signals.
+  void AddSellerSignalsResult(
+      SellerRequestInfo seller_request_info,
+      TrustedSignalsFetcher::SignalsFetchResult signals_fetch_result) {
+    EXPECT_TRUE(seller_responses_
+                    .try_emplace(std::move(seller_request_info),
+                                 std::move(signals_fetch_result))
+                    .second);
+  }
+
+  // When called, callback passed to GetCoordinatorKeyCallback() will be stored
+  // until InvokeCoordinatorKeyCallback() is called, instead of being
+  // immediately invoked. Only one pending coordinator key callback is expected
+  // to be pending at a time. There's no API to wait for the callback, since the
+  // one test that uses this has to use RunUntilIdle().
+  void set_defer_coordinator_key_callback() {
+    defer_coordinator_key_callback_ = true;
+  }
+
+  // Runs the pending coordinator key callback (which must be non-null).
+  void InvokeCoordinatorKeyCallback() {
+    CHECK(coordinator_key_callback_);
+    std::move(coordinator_key_callback_)
+        .Run(BiddingAndAuctionServerKey{"key whose value does not matter",
+                                        /*id=*/"42"});
+  }
+
+ private:
+  // Expects only to see requests for `kCoordinatorOrigin`.
+  void GetCoordinatorKeyCallback(
+      const url::Origin& scope_origin,
+      const std::optional<url::Origin>& coordinator,
+      base::OnceCallback<void(
+          base::expected<BiddingAndAuctionServerKey, std::string>)> callback) {
+    // Make sure the right coordinator is plumbed through.
+    if (coordinator != url::Origin::Create(GURL(kCoordinatorOrigin))) {
+      ADD_FAILURE() << "unexpected coordintor: "
+                    << (coordinator ? coordinator->Serialize() : "(null)");
+      std::move(callback).Run(base::unexpected("Wrong coordinator origin"));
+      return;
+    }
+
+    CHECK(!coordinator_key_callback_);
+    coordinator_key_callback_ = std::move(callback);
+    if (defer_coordinator_key_callback_) {
+      return;
+    }
+    InvokeCoordinatorKeyCallback();
+  }
+
+  // Mock fetcher that returns results added to the parent
+  // MockTrustedSignalsCacheImpl.
+  class MockTrustedSignalsFetcher : public TrustedSignalsFetcher {
+   public:
+    explicit MockTrustedSignalsFetcher(MockTrustedSignalsCacheImpl* parent)
+        : parent_(parent) {}
+    ~MockTrustedSignalsFetcher() override = default;
+
+    void FetchBiddingSignals(
+        network::mojom::URLLoaderFactory* url_loader_factory,
+        FrameTreeNodeId /*frame_tree_node_id*/,
+        const url::Origin& main_frame_origin,
+        network::mojom::IPAddressSpace /*ip_address_space*/,
+        base::UnguessableToken /*network_partition_nonce*/,
+        const url::Origin& script_origin,
+        const GURL& trusted_bidding_signals_url,
+        const BiddingAndAuctionServerKey& bidding_and_auction_key,
+        const std::map<int, std::vector<BiddingPartition>>& compression_groups,
+        Callback callback) override {
+      BidderRequestInfo request_info;
+      request_info.main_frame_origin = main_frame_origin;
+      request_info.script_origin = script_origin;
+      request_info.trusted_bidding_signals_url = trusted_bidding_signals_url;
+      for (const auto& compression_group : compression_groups) {
+        std::vector<BiddingPartitionInfo> partitions;
+        for (const auto& partition : compression_group.second) {
+          partitions.emplace_back(BiddingPartitionInfo{
+              partition.partition_id, *partition.interest_group_names,
+              *partition.keys, partition.additional_params->Clone()});
+        }
+        request_info.compression_groups.emplace(compression_group.first,
+                                                std::move(partitions));
+      }
+
+      auto it = parent_->bidder_responses_.find(request_info);
+      ASSERT_TRUE(it != parent_->bidder_responses_.end());
+      base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
+          FROM_HERE,
+          base::BindOnce(&MockTrustedSignalsFetcher::InvokeCallback,
+                         weak_ptr_factory_.GetWeakPtr(), std::move(callback),
+                         std::move(it->second)));
+      parent_->bidder_responses_.erase(it);
+    }
+
+    void FetchScoringSignals(
+        network::mojom::URLLoaderFactory* url_loader_factory,
+        FrameTreeNodeId /*frame_tree_node_id*/,
+        const url::Origin& main_frame_origin,
+        network::mojom::IPAddressSpace /*ip_address_space*/,
+        base::UnguessableToken /*network_partition_nonce*/,
+        const url::Origin& script_origin,
+        const GURL& trusted_scoring_signals_url,
+        const BiddingAndAuctionServerKey& bidding_and_auction_key,
+        const std::map<int, std::vector<ScoringPartition>>& compression_groups,
+        Callback callback) override {
+      SellerRequestInfo request_info;
+      request_info.main_frame_origin = main_frame_origin;
+      request_info.script_origin = script_origin;
+      request_info.trusted_scoring_signals_url = trusted_scoring_signals_url;
+      for (const auto& compression_group : compression_groups) {
+        std::vector<ScoringPartitionInfo> partitions;
+        for (const auto& partition : compression_group.second) {
+          partitions.emplace_back(ScoringPartitionInfo{
+              partition.partition_id, *partition.render_url,
+              *partition.component_render_urls,
+              partition.additional_params->Clone()});
+        }
+        request_info.compression_groups.emplace(compression_group.first,
+                                                std::move(partitions));
+      }
+
+      auto it = parent_->seller_responses_.find(request_info);
+      ASSERT_TRUE(it != parent_->seller_responses_.end());
+      base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
+          FROM_HERE,
+          base::BindOnce(&MockTrustedSignalsFetcher::InvokeCallback,
+                         weak_ptr_factory_.GetWeakPtr(), std::move(callback),
+                         std::move(it->second)));
+      parent_->seller_responses_.erase(it);
+    }
+
+   private:
+    // Runs `callback`, passing it `result`. Needed to execute callbacks
+    // asynchronously, but bound to lifetime of `this`.
+    void InvokeCallback(Callback callback,
+                        TrustedSignalsFetcher::SignalsFetchResult result) {
+      std::move(callback).Run(std::move(result));
+    }
+
+    const raw_ptr<MockTrustedSignalsCacheImpl> parent_;
+
+    base::WeakPtrFactory<MockTrustedSignalsFetcher> weak_ptr_factory_{this};
+  };
+
+  // TrustedSignalsCacheImpl implementation:
+  std::unique_ptr<TrustedSignalsFetcher> CreateFetcher() override {
+    return std::make_unique<MockTrustedSignalsFetcher>(this);
+  }
+
+  bool defer_coordinator_key_callback_ = false;
+  base::OnceCallback<void(
+      base::expected<BiddingAndAuctionServerKey, std::string>)>
+      coordinator_key_callback_;
+
+  std::map<BidderRequestInfo, TrustedSignalsFetcher::SignalsFetchResult>
+      bidder_responses_;
+  std::map<SellerRequestInfo, TrustedSignalsFetcher::SignalsFetchResult>
+      seller_responses_;
+};
+
 class AuctionRunnerTest : public RenderViewHostTestHarness,
                           public AuctionWorkletManager::Delegate,
                           public DebuggableAuctionWorkletTracker::Observer {
@@ -1645,7 +2014,14 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
         &AuctionRunnerTest::OnBadMessage, base::Unretained(this)));
     DebuggableAuctionWorkletTracker::GetInstance()->AddObserver(this);
 
-    std::vector<base::test::FeatureRefAndParams> enabled_features;
+    std::vector<base::test::FeatureRefAndParams> enabled_features{
+        // Enable KVv2 support, with the cache, for all tests. KVv2 signals
+        // without the cache are tested at other layers, as
+        // they don't have any significant impact on the InterestGroupAuction /
+        // AuctionRunner layer.
+        {blink::features::kFledgeTrustedSignalsKVv2Support, {}},
+        {features::kFledgeUseKVv2SignalsCache, {}},
+    };
     std::vector<base::test::FeatureRef> disabled_features;
 
     if (should_enable_private_aggregation) {
@@ -1656,18 +2032,12 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
                                                                 : "false"}}});
       enabled_features.push_back(
           {blink::features::
-               kPrivateAggregationAuctionReportBuyerDebugModeConfig,
-           {}});
-      enabled_features.push_back(
-          {blink::features::
                kPrivateAggregationApiProtectedAudienceAdditionalExtensions,
            {}});
     } else {
       disabled_features.push_back(blink::features::kPrivateAggregationApi);
     }
 
-    enabled_features.push_back(
-        {blink::features::kAdAuctionReportingWithMacroApi, {}});
     enabled_features.push_back({blink::features::kFledgeRealTimeReporting, {}});
     enabled_features.push_back(
         {blink::features::kFledgeAuctionDealSupport, {}});
@@ -1939,6 +2309,8 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
         CreateAuctionConfig(seller_decision_logic_url, interest_group_buyers_);
 
     auction_config.trusted_scoring_signals_url = trusted_scoring_signals_url_;
+    auction_config.non_shared_params.trusted_scoring_signals_coordinator =
+        trusted_scoring_signals_coordinator_;
     auction_config.non_shared_params.seller_real_time_reporting_type =
         seller_real_time_reporting_type_;
     auction_config.non_shared_params.per_buyer_real_time_reporting_types =
@@ -1975,9 +2347,12 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
         frame_origin_, GetClientSecurityState(),
         dummy_report_shared_url_loader_factory_);
 
+    std::unique_ptr<TrustedSignalsCacheImpl> trusted_signals_cache;
     if (!auction_process_manager_) {
+      trusted_signals_cache = GetTrustedSignalsCache();
       auto same_process_auction_process_manager =
-          std::make_unique<SameProcessAuctionProcessManager>();
+          std::make_unique<TestSameProcessAuctionProcessManager>(
+              trusted_signals_cache.get());
       same_process_auction_process_manager_ =
           same_process_auction_process_manager.get();
       auction_process_manager_ =
@@ -1992,18 +2367,23 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
     interest_group_manager_->set_auction_process_manager_for_testing(
         std::move(auction_process_manager_));
 
+    // This has to be done after `set_auction_process_manager_for_testing`, as
+    // the process manager it created on construction may have a raw pointer to
+    // the original TrustedSignalsCache.
+    interest_group_manager_->set_trusted_signals_cache_for_testing(
+        std::move(trusted_signals_cache));
+
     histogram_tester_ = std::make_unique<base::HistogramTester>();
     ukm_recorder_ = std::make_unique<ukm::TestAutoSetUkmRecorder>();
 
     base::Time now = base::Time::Now();
     bool sample_debug_reports =
         base::FeatureList::IsEnabled(
-            blink::features::kBiddingAndScoringDebugReportingAPI) &&
-        base::FeatureList::IsEnabled(
             blink::features::kFledgeSampleDebugReports);
     if (sample_debug_reports) {
       if (seller_decision_logic_url == kSellerUrlDebugReportLockout) {
-        interest_group_manager_->RecordDebugReportLockout(now);
+        interest_group_manager_->RecordDebugReportLockout(
+            now, blink::features::kFledgeDebugReportLockout.Get());
       } else if (seller_decision_logic_url == kSellerUrlDebugReportCooldown) {
         interest_group_manager_->RecordDebugReportCooldown(
             url::Origin::Create(seller_decision_logic_url), now,
@@ -2080,7 +2460,8 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
                             base::Unretained(this)),
         private_aggregation_manager_.GetLogPrivateAggregationRequestsCallback(),
         std::move(auction_config), top_frame_origin_, frame_origin_,
-        GetClientSecurityState(), dummy_report_shared_url_loader_factory_,
+        /*user_agent_override=*/std::nullopt, GetClientSecurityState(),
+        dummy_report_shared_url_loader_factory_,
         IsInterestGroupApiAllowedCallback(), std::move(attestation_callback),
         abortable_ad_auction_.BindNewPipeAndPassReceiver(),
         base::BindOnce(&AuctionRunnerTest::OnAuctionComplete,
@@ -2244,7 +2625,9 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
       std::optional<GURL> trusted_bidding_signals_url,
       std::vector<std::string> trusted_bidding_signals_keys,
       std::optional<GURL> ad_url,
-      std::optional<std::vector<GURL>> ad_component_urls = std::nullopt) {
+      std::optional<std::vector<GURL>> ad_component_urls = std::nullopt,
+      std::optional<url::Origin> trusted_bidding_signals_coordinator =
+          std::nullopt) {
     std::optional<std::vector<blink::InterestGroup::Ad>> ads;
     // Give only kBidder1 an InterestGroupAd ad with non-empty metadata, to
     // better test the `ad_metadata` output.
@@ -2274,6 +2657,8 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
             .SetTrustedBiddingSignalsKeys({trusted_bidding_signals_keys})
             .SetAds(ads)
             .SetAdComponents(ad_components)
+            .SetTrustedBiddingSignalsCoordinator(
+                trusted_bidding_signals_coordinator)
             .Build());
   }
 
@@ -2304,20 +2689,27 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
     std::vector<StorageInterestGroup> bidders;
     std::optional<GURL> bidder1_signals_url;
     std::optional<GURL> bidder2_signals_url;
+    std::optional<url::Origin> bidder_signals_coordinator;
     if (request_trusted_bidding_signals) {
       bidder1_signals_url = kBidder1TrustedSignalsUrl;
       bidder2_signals_url = kBidder2TrustedSignalsUrl;
+      // If using KVv2 signals, need to set the coordinator as well.
+      if (UsingKVv2Signals()) {
+        bidder_signals_coordinator = coordinator_origin_;
+      }
     }
     bidders.emplace_back(MakeInterestGroup(
         kBidder1, kBidder1Name, kBidder1Url, std::move(bidder1_signals_url),
         {"k1", "k2"}, GURL("https://ad1.com"),
         std::vector<GURL>{GURL("https://ad1.com-component1.com"),
-                          GURL("https://ad1.com-component2.com")}));
+                          GURL("https://ad1.com-component2.com")},
+        bidder_signals_coordinator));
     bidders.emplace_back(MakeInterestGroup(
         kBidder2, kBidder2Name, kBidder2Url, std::move(bidder2_signals_url),
         {"l1", "l2"}, GURL("https://ad2.com"),
         std::vector<GURL>{GURL("https://ad2.com-component1.com"),
-                          GURL("https://ad2.com-component2.com")}));
+                          GURL("https://ad2.com-component2.com")},
+        bidder_signals_coordinator));
 
     StartAuction(kSellerUrl, std::move(bidders));
   }
@@ -2511,6 +2903,7 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
     return std::nullopt;
   }
   void GetBiddingAndAuctionServerKey(
+      const url::Origin& scope_origin,
       const std::optional<url::Origin>& coordinator,
       base::OnceCallback<void(base::expected<BiddingAndAuctionServerKey,
                                              std::string>)> callback) override {
@@ -3223,7 +3616,7 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
     } else if (bidder1_seller == kComponentSeller2) {
       component2_buyers.push_back(kBidder1);
     } else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
 
     if (bidder2_seller == kComponentSeller1) {
@@ -3231,7 +3624,7 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
     } else if (bidder2_seller == kComponentSeller2) {
       component2_buyers.push_back(kBidder2);
     } else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
 
     component_auctions_.emplace_back(CreateAuctionConfig(
@@ -3293,6 +3686,16 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
             bid_from_component_auction_wins, report_post_auction_signals));
   }
 
+  // Returns true of the test fixture is using KVv2 trusted signals.
+  virtual bool UsingKVv2Signals() const { return false; }
+
+  // Returns a TrustedSignalsCacheImpl to be used when setting up the next
+  // auction.
+  virtual std::unique_ptr<TrustedSignalsCacheImpl> GetTrustedSignalsCache() {
+    // Use one by default. This should fail the test if it's unexpected used.
+    return std::make_unique<MockTrustedSignalsCacheImpl>();
+  }
+
   data_decoder::test::InProcessDataDecoder data_decoder_;
   EventReportingAttestationBrowserClient browser_client_;
   ScopedContentBrowserClientSetting browser_client_setting_{&browser_client_};
@@ -3351,6 +3754,7 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
       auction_report_buyer_debug_mode_config_;
 
   std::optional<GURL> trusted_scoring_signals_url_;
+  std::optional<url::Origin> trusted_scoring_signals_coordinator_;
 
   std::optional<RealTimeReportingType> seller_real_time_reporting_type_;
   std::optional<base::flat_map<url::Origin, RealTimeReportingType>>
@@ -3390,6 +3794,10 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
       "Short Debug Report Cooldown"};
   const std::string kBidderNameDebugReportRestrictedCooldown{
       "Restricted Debug Report Cooldown"};
+
+  // Trusted signals KVv2 coordinator.
+  const url::Origin coordinator_origin_ =
+      url::Origin::Create(GURL(kCoordinatorOrigin));
 
   const base::TimeDelta kAllBuyersCumulativeTimeout = base::Milliseconds(23456);
 
@@ -3443,9 +3851,9 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
 
   // This is used (and consumed) when starting an auction, if non-null. Allows
   // either using a MockAuctionProcessManager instead of a
-  // SameProcessAuctionProcessManager, or using a
-  // SameProcessAuctionProcessManager that has already vended processes. If
-  // nullptr, a new SameProcessAuctionProcessManager() is created when an
+  // TestSameProcessAuctionProcessManager, or using a
+  // TestSameProcessAuctionProcessManager that has already vended processes. If
+  // nullptr, a new TestSameProcessAuctionProcessManager() is created when an
   // auction is started.
   std::unique_ptr<AuctionProcessManager> auction_process_manager_;
 
@@ -3454,10 +3862,10 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
   // InterestGroupManager.
   raw_ptr<MockAuctionProcessManager> mock_auction_process_manager_ = nullptr;
 
-  // If StartAuction() created a SameProcessAuctionProcessManager for
+  // If StartAuction() created a TestSameProcessAuctionProcessManager for
   // `auction_process_manager_`, this alises it.
   // Reset by other things that set `auction_process_manager_`.
-  raw_ptr<SameProcessAuctionProcessManager>
+  raw_ptr<TestSameProcessAuctionProcessManager>
       same_process_auction_process_manager_ = nullptr;
 
   // The TestInterestGroupManager is recreated and repopulated for each auction.
@@ -3481,6 +3889,193 @@ class AuctionRunnerTest : public RenderViewHostTestHarness,
   // Which worklet to pause, if any.
   GURL pause_worklet_url_;
 };
+
+// Fixture for tests that focus on trusted signals fetches. A parameter value of
+// false indicates the test case is using KVv1, while a value of true indicates
+// the test is testing KVv2 with the TrustedSignalsCache. The KVv2 path without
+// the TrustedSignalsCache has no additional logic at the AuctionRunner layer
+// not present in the KVv1 path, so is not covered by tests in this file.
+class AuctionRunnerTrustedSignalsTest
+    : public AuctionRunnerTest,
+      public testing::WithParamInterface<bool> {
+ public:
+  AuctionRunnerTrustedSignalsTest() {
+    if (UsingKVv2Signals()) {
+      trusted_scoring_signals_coordinator_ = coordinator_origin_;
+    }
+  }
+
+  ~AuctionRunnerTrustedSignalsTest() override = default;
+
+  bool UsingKVv2Signals() const override { return GetParam(); }
+
+  std::unique_ptr<TrustedSignalsCacheImpl> GetTrustedSignalsCache() override {
+    if (trusted_signals_cache_impl_) {
+      // There shouldn't be a `trusted_signals_cache_impl_` if not using KVv2
+      // signals. We create a MockTrustedSignalsCache in that case, anyways, but
+      // it should only be pre-propulated if it needs to response to KVv2
+      // requests, which should not happen when not using KVv2 signals.
+      CHECK(UsingKVv2Signals());
+      return std::move(trusted_signals_cache_impl_);
+    }
+
+    return std::make_unique<MockTrustedSignalsCacheImpl>();
+  }
+
+  // Populates `trusted_signals_cache_impl_`, if needed, and adds the specified
+  // fetch result to it.
+  void AddBiddingSignalsCacheResult(
+      MockTrustedSignalsCacheImpl::BidderRequestInfo bidder_request_info,
+      TrustedSignalsFetcher::SignalsFetchResult signals_fetch_result) {
+    // Only makes sense to call this when using KVv2 signals.
+    CHECK(UsingKVv2Signals());
+    if (!trusted_signals_cache_impl_) {
+      trusted_signals_cache_impl_ =
+          std::make_unique<MockTrustedSignalsCacheImpl>();
+    }
+    trusted_signals_cache_impl_->AddBidderSignalsResult(
+        std::move(bidder_request_info), std::move(signals_fetch_result));
+  }
+
+  // Returns the default request info for bidder1 KVv2 requests.
+  MockTrustedSignalsCacheImpl::BidderRequestInfo
+  DefaultBidder1SignalsRequestInfo() {
+    std::vector<MockTrustedSignalsCacheImpl::BiddingPartitionInfo> partitions;
+    partitions.emplace_back(MockTrustedSignalsCacheImpl::BiddingPartitionInfo{
+        /*partition_id=*/0,
+        {kBidder1Name},
+        /*keys=*/{"k1", "k2"},
+        /*additional_params=*/base::Value::Dict()});
+    std::map<int,
+             std::vector<MockTrustedSignalsCacheImpl::BiddingPartitionInfo>>
+        compression_groups;
+    compression_groups.try_emplace(0, std::move(partitions));
+    return MockTrustedSignalsCacheImpl::BidderRequestInfo{
+        top_frame_origin_, kBidder1, kBidder1TrustedSignalsUrl,
+        std::move(compression_groups)};
+  }
+
+  // Returns the default request info for bidder2 KVv2 requests.
+  MockTrustedSignalsCacheImpl::BidderRequestInfo
+  DefaultBidder2SignalsRequestInfo() {
+    std::vector<MockTrustedSignalsCacheImpl::BiddingPartitionInfo> partitions;
+    partitions.emplace_back(MockTrustedSignalsCacheImpl::BiddingPartitionInfo{
+        /*partition_id=*/0,
+        {kBidder2Name},
+        /*keys=*/{"l1", "l2"},
+        /*additional_params=*/base::Value::Dict()});
+    std::map<int,
+             std::vector<MockTrustedSignalsCacheImpl::BiddingPartitionInfo>>
+        compression_groups;
+    compression_groups.try_emplace(0, std::move(partitions));
+    return MockTrustedSignalsCacheImpl::BidderRequestInfo{
+        top_frame_origin_, kBidder2, kBidder2TrustedSignalsUrl,
+        std::move(compression_groups)};
+  }
+
+  // Adds the default bidder1 signals request/response pair to the
+  // TrustedSignalsCache map.
+  void AddDefaultBidder1SignalsResult() {
+    AddBiddingSignalsCacheResult(DefaultBidder1SignalsRequestInfo(),
+                                 MakeBidder1CompressionGroupMap());
+  }
+
+  // Adds the default bidder2 signals request/response pair to the
+  // TrustedSignalsCache map.
+  void AddDefaultBidder2SignalsResult() {
+    AddBiddingSignalsCacheResult(DefaultBidder2SignalsRequestInfo(),
+                                 MakeBidder2CompressionGroupMap());
+  }
+
+  // Populates `trusted_signals_cache_impl_`, if needed, and adds the specified
+  // fetch result to it.
+  void AddScoringSignalsCacheResult(
+      MockTrustedSignalsCacheImpl::SellerRequestInfo seller_request_info,
+      TrustedSignalsFetcher::SignalsFetchResult signals_fetch_result) {
+    // Only makes sense to call this when using KVv2 signals.
+    CHECK(UsingKVv2Signals());
+    if (!trusted_signals_cache_impl_) {
+      trusted_signals_cache_impl_ =
+          std::make_unique<MockTrustedSignalsCacheImpl>();
+    }
+    trusted_signals_cache_impl_->AddSellerSignalsResult(
+        std::move(seller_request_info), std::move(signals_fetch_result));
+  }
+
+  // Returns the default request info for bidder1 KVv2 scoring signals requests,
+  // assuming they're sent in their own isolated requests.
+  MockTrustedSignalsCacheImpl::SellerRequestInfo
+  IsolatedBidder1SellerRequestInfo() {
+    std::vector<MockTrustedSignalsCacheImpl::ScoringPartitionInfo> partitions;
+    partitions.emplace_back(MockTrustedSignalsCacheImpl::ScoringPartitionInfo{
+        /*partition_id=*/0,
+        /*render_url=*/GURL("https://ad1.com/"),
+        /*component_render_urls=*/{GURL("https://ad1.com-component1.com")},
+        /*additional_params=*/base::Value::Dict()});
+    std::map<int,
+             std::vector<MockTrustedSignalsCacheImpl::ScoringPartitionInfo>>
+        compression_groups;
+    compression_groups.emplace(0, std::move(partitions));
+    return MockTrustedSignalsCacheImpl::SellerRequestInfo{
+        top_frame_origin_, url::Origin::Create(kSellerUrl),
+        *trusted_scoring_signals_url_, std::move(compression_groups)};
+  }
+
+  // Returns the default request info for bidder2 KVv2 scoring signals requests,
+  // assuming they're sent in their own isolated requests.
+  MockTrustedSignalsCacheImpl::SellerRequestInfo
+  IsolatedBidder2SellerRequestInfo() {
+    std::vector<MockTrustedSignalsCacheImpl::ScoringPartitionInfo> partitions;
+    partitions.emplace_back(MockTrustedSignalsCacheImpl::ScoringPartitionInfo{
+        /*partition_id=*/0,
+        /*render_url=*/GURL("https://ad2.com/"),
+        /*component_render_urls=*/{GURL("https://ad2.com-component1.com")},
+        /*additional_params=*/base::Value::Dict()});
+    std::map<int,
+             std::vector<MockTrustedSignalsCacheImpl::ScoringPartitionInfo>>
+        compression_groups;
+    compression_groups.emplace(0, std::move(partitions));
+    return MockTrustedSignalsCacheImpl::SellerRequestInfo{
+        top_frame_origin_, url::Origin::Create(kSellerUrl),
+        *trusted_scoring_signals_url_, std::move(compression_groups)};
+  }
+
+  // Returns the default request info for merged bidder1 and bidder2 KVv2
+  // scoring signals requests, when they se in different compression groups.
+  // Assumes signals for bidder 1 is requested in the first compression group.
+  MockTrustedSignalsCacheImpl::SellerRequestInfo
+  Bidder1Bidder2TwoCompressionGroupsSellerRequestInfo() {
+    auto request_info = IsolatedBidder1SellerRequestInfo();
+
+    std::vector<MockTrustedSignalsCacheImpl::ScoringPartitionInfo> partitions2;
+    partitions2.emplace_back(MockTrustedSignalsCacheImpl::ScoringPartitionInfo{
+        /*partition_id=*/0,
+        /*render_url=*/GURL("https://ad2.com/"),
+        /*component_render_urls=*/{GURL("https://ad2.com-component1.com")},
+        /*additional_params=*/base::Value::Dict()});
+    std::map<int,
+             std::vector<MockTrustedSignalsCacheImpl::ScoringPartitionInfo>>
+        compression_groups;
+    request_info.compression_groups.try_emplace(1, std::move(partitions2));
+    return request_info;
+  }
+
+  // Same as above, but with flipped compression group order.
+  MockTrustedSignalsCacheImpl::SellerRequestInfo
+  Bidder2Bidder1TwoCompressionGroupsSellerRequestInfo() {
+    auto request_info = Bidder1Bidder2TwoCompressionGroupsSellerRequestInfo();
+    std::swap(request_info.compression_groups[0],
+              request_info.compression_groups[1]);
+    return request_info;
+  }
+
+ protected:
+  // This is used (and consumed) when starting an auction. Allows setting
+  // expectations for and settings results for trusted signals KVv2 requests.
+  std::unique_ptr<MockTrustedSignalsCacheImpl> trusted_signals_cache_impl_;
+};
+
+INSTANTIATE_TEST_SUITE_P(All, AuctionRunnerTrustedSignalsTest, testing::Bool());
 
 // Runs an auction with an empty buyers field.
 TEST_F(AuctionRunnerTest, NullBuyers) {
@@ -3725,7 +4320,7 @@ TEST_F(AuctionRunnerTest, OneInterestGroup) {
 }
 
 // An auction specifying buyer and seller experiment IDs.
-TEST_F(AuctionRunnerTest, ExperimentId) {
+TEST_P(AuctionRunnerTrustedSignalsTest, ExperimentId) {
   trusted_scoring_signals_url_ =
       GURL("https://adstuff.publisher1.com/seller_signals");
   seller_experiment_group_id_ = 498u;
@@ -3738,26 +4333,43 @@ TEST_F(AuctionRunnerTest, ExperimentId) {
                     /*has_signals=*/true, "k1", "a"));
   auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
                                          MakeAuctionScript());
-  auction_worklet::AddBidderJsonResponse(
-      &url_loader_factory_,
-      GURL(kBidder1TrustedSignalsUrl.spec() +
-           "?hostname=publisher1.com&keys=k1,k2"
-           "&interestGroupNames=Ad+Platform"
-           "&experimentGroupId=940"),
-      kBidder1SignalsJson);
-  auction_worklet::AddJsonResponse(
-      &url_loader_factory_,
-      GURL(trusted_scoring_signals_url_->spec() +
-           "?hostname=publisher1.com&renderUrls=https%3A%2F%2Fad1.com%2F" +
-           "&experimentGroupId=498"),
-      R"({"renderUrls":{"https://ad1.com/":"accept",
-          "https://ad2.com/":"reject"}}
-       )");
-
   std::vector<StorageInterestGroup> bidders;
   bidders.emplace_back(MakeInterestGroup(
       kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
       {"k1", "k2"}, GURL("https://ad1.com")));
+
+  if (UsingKVv2Signals()) {
+    bidders[0].interest_group.trusted_bidding_signals_coordinator =
+        coordinator_origin_;
+    auto bidder_request_info = DefaultBidder1SignalsRequestInfo();
+    bidder_request_info.compression_groups[0][0].additional_params.Set(
+        "experimentGroupId", "940");
+    AddBiddingSignalsCacheResult(std::move(bidder_request_info),
+                                 MakeBidder1CompressionGroupMap());
+
+    auto seller_request_info = IsolatedBidder1SellerRequestInfo();
+    seller_request_info.compression_groups[0][0].component_render_urls = {};
+    seller_request_info.compression_groups[0][0].additional_params.Set(
+        "experimentGroupId", "498");
+    AddScoringSignalsCacheResult(
+        std::move(seller_request_info),
+        MakeCompressionGroupMapForOneGroup(kBidder1ScoringSignalsKVv2Json));
+  } else {
+    auction_worklet::AddBidderJsonResponse(
+        &url_loader_factory_,
+        GURL(kBidder1TrustedSignalsUrl.spec() +
+             "?hostname=publisher1.com&keys=k1,k2"
+             "&interestGroupNames=Ad+Platform"
+             "&experimentGroupId=940"),
+        kBidder1SignalsJson);
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com&renderUrls=https%3A%2F%2Fad1.com%2F" +
+             "&experimentGroupId=498"),
+        R"({"renderUrls":{"https://ad1.com/":"accept",
+                          "https://ad2.com/":"reject"}})");
+  }
 
   RunAuctionAndWait(kSellerUrl, std::move(bidders));
 
@@ -3767,7 +4379,7 @@ TEST_F(AuctionRunnerTest, ExperimentId) {
 
 // An auction specifying a per-buyer experiment ID as well as fallback all-buyer
 // experiment id.
-TEST_F(AuctionRunnerTest, ExperimentIdPerBuyer) {
+TEST_P(AuctionRunnerTrustedSignalsTest, ExperimentIdPerBuyer) {
   all_buyer_experiment_group_id_ = 940u;
   per_buyer_experiment_group_id_[kBidder2] = 93u;
 
@@ -3783,21 +4395,6 @@ TEST_F(AuctionRunnerTest, ExperimentIdPerBuyer) {
                     /*has_signals=*/true, "l2", "b"));
   auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
                                          MakeAuctionScript());
-  auction_worklet::AddBidderJsonResponse(
-      &url_loader_factory_,
-      GURL(kBidder1TrustedSignalsUrl.spec() +
-           "?hostname=publisher1.com&keys=k1,k2"
-           "&interestGroupNames=Ad+Platform"
-           "&experimentGroupId=940"),
-      kBidder1SignalsJson);
-  auction_worklet::AddBidderJsonResponse(
-      &url_loader_factory_,
-      GURL(kBidder2TrustedSignalsUrl.spec() +
-           "?hostname=publisher1.com&keys=l1,l2"
-           "&interestGroupNames=Another+Ad+Thing"
-           "&experimentGroupId=93"),
-      kBidder2SignalsJson);
-
   std::vector<StorageInterestGroup> bidders;
   bidders.emplace_back(MakeInterestGroup(
       kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
@@ -3806,6 +4403,40 @@ TEST_F(AuctionRunnerTest, ExperimentIdPerBuyer) {
       kBidder2, kBidder2Name, kBidder2Url, kBidder2TrustedSignalsUrl,
       {"l1", "l2"}, GURL("https://ad2.com")));
 
+  if (UsingKVv2Signals()) {
+    bidders[0].interest_group.trusted_bidding_signals_coordinator =
+        coordinator_origin_;
+    bidders[1].interest_group.trusted_bidding_signals_coordinator =
+        coordinator_origin_;
+
+    auto bidder1_request_info = DefaultBidder1SignalsRequestInfo();
+    bidder1_request_info.compression_groups[0][0].additional_params.Set(
+        "experimentGroupId", "940");
+    AddBiddingSignalsCacheResult(std::move(bidder1_request_info),
+                                 MakeBidder1CompressionGroupMap());
+
+    auto bidder2_request_info = DefaultBidder2SignalsRequestInfo();
+    bidder2_request_info.compression_groups[0][0].additional_params.Set(
+        "experimentGroupId", "93");
+    AddBiddingSignalsCacheResult(std::move(bidder2_request_info),
+                                 MakeBidder2CompressionGroupMap());
+  } else {
+    auction_worklet::AddBidderJsonResponse(
+        &url_loader_factory_,
+        GURL(kBidder1TrustedSignalsUrl.spec() +
+             "?hostname=publisher1.com&keys=k1,k2"
+             "&interestGroupNames=Ad+Platform"
+             "&experimentGroupId=940"),
+        kBidder1SignalsJson);
+    auction_worklet::AddBidderJsonResponse(
+        &url_loader_factory_,
+        GURL(kBidder2TrustedSignalsUrl.spec() +
+             "?hostname=publisher1.com&keys=l1,l2"
+             "&interestGroupNames=Another+Ad+Thing"
+             "&experimentGroupId=93"),
+        kBidder2SignalsJson);
+  }
+
   RunAuctionAndWait(kSellerUrl, std::move(bidders));
 
   EXPECT_THAT(result_.errors, testing::ElementsAre());
@@ -3813,7 +4444,7 @@ TEST_F(AuctionRunnerTest, ExperimentIdPerBuyer) {
 }
 
 // An auction with two successful bids.
-TEST_F(AuctionRunnerTest, Basic) {
+TEST_P(AuctionRunnerTrustedSignalsTest, Basic) {
   auction_worklet::AddJavascriptResponse(
       &url_loader_factory_, kBidder1Url,
       MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/2,
@@ -3829,18 +4460,24 @@ TEST_F(AuctionRunnerTest, Basic) {
   auction_worklet::AddJavascriptResponse(
       &url_loader_factory_, kSellerUrl,
       MakeAuctionScript(/*report_post_auction_signals=*/true));
-  auction_worklet::AddBidderJsonResponse(
-      &url_loader_factory_,
-      GURL(kBidder1TrustedSignalsUrl.spec() +
-           "?hostname=publisher1.com&keys=k1,k2"
-           "&interestGroupNames=Ad+Platform"),
-      kBidder1SignalsJson);
-  auction_worklet::AddBidderJsonResponse(
-      &url_loader_factory_,
-      GURL(kBidder2TrustedSignalsUrl.spec() +
-           "?hostname=publisher1.com&keys=l1,l2"
-           "&interestGroupNames=Another+Ad+Thing"),
-      kBidder2SignalsJson);
+
+  if (UsingKVv2Signals()) {
+    AddDefaultBidder1SignalsResult();
+    AddDefaultBidder2SignalsResult();
+  } else {
+    auction_worklet::AddBidderJsonResponse(
+        &url_loader_factory_,
+        GURL(kBidder1TrustedSignalsUrl.spec() +
+             "?hostname=publisher1.com&keys=k1,k2"
+             "&interestGroupNames=Ad+Platform"),
+        kBidder1SignalsJson);
+    auction_worklet::AddBidderJsonResponse(
+        &url_loader_factory_,
+        GURL(kBidder2TrustedSignalsUrl.spec() +
+             "?hostname=publisher1.com&keys=l1,l2"
+             "&interestGroupNames=Another+Ad+Thing"),
+        kBidder2SignalsJson);
+  }
 
   RunStandardAuction();
   EXPECT_FALSE(result_.aborted_by_script);
@@ -3959,18 +4596,18 @@ TEST_F(AuctionRunnerTest, Basic) {
   EXPECT_THAT(
       title_log_,
       testing::UnorderedElementsAre(
-          "FLEDGE seller worklet for https://adstuff.publisher1.com/auction.js",
+          "FLEDGE seller worklet for "
+          "https://adstuff.publisher1.com/auction.js",
           "FLEDGE bidder worklet for https://adplatform.com/offers.js",
           "FLEDGE bidder worklet for https://anotheradthing.com/bids.js",
           "FLEDGE bidder worklet for https://anotheradthing.com/bids.js"));
+  observer_log_.clear();
+  title_log_.clear();
 }
 
 TEST_F(AuctionRunnerTest, BasicCurrencyCheck) {
   // This feature only relevant for the debug_loss_report_urls portion of the
   // test.
-  base::test::ScopedFeatureList debug_features;
-  debug_features.InitAndEnableFeature(
-      blink::features::kBiddingAndScoringDebugReportingAPI);
 
   // Test with bidder 2 making a bid with CAD when the fixture expects USD.
   auction_worklet::AddJavascriptResponse(
@@ -4341,10 +4978,10 @@ TEST_F(AuctionRunnerTest, BidderThreadPoolExpanded) {
 
   auction_worklet_service->LoadBidderWorklet(
       std::move(worklet_receiver1), std::move(shared_storage_hosts1),
-      /*should_pause_on_start=*/false, std::move(url_loader_factory1),
+      /*pause_for_debugger_on_start=*/false, std::move(url_loader_factory1),
       auction_network_events_handler.CreateRemote(),
       /*script_source_url=*/GURL("https://ad1.com"),
-      /*bidding_wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
+      /*wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
       /*trusted_bidding_signals_slot_size_param=*/{},
       /*top_window_origin=*/url::Origin::Create(GURL("https://ad1.com")),
       auction_worklet::mojom::AuctionWorkletPermissionsPolicyState::New(
@@ -4370,10 +5007,10 @@ TEST_F(AuctionRunnerTest, BidderThreadPoolExpanded) {
 
   auction_worklet_service->LoadBidderWorklet(
       std::move(worklet_receiver2), std::move(shared_storage_hosts2),
-      /*should_pause_on_start=*/false, std::move(url_loader_factory2),
+      /*pause_for_debugger_on_start=*/false, std::move(url_loader_factory2),
       auction_network_events_handler.CreateRemote(),
       /*script_source_url=*/GURL("https://ad1.com"),
-      /*bidding_wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
+      /*wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
       /*trusted_bidding_signals_slot_size_param=*/{},
       /*top_window_origin=*/url::Origin::Create(GURL("https://ad1.com")),
       auction_worklet::mojom::AuctionWorkletPermissionsPolicyState::New(
@@ -4425,10 +5062,10 @@ TEST_F(AuctionRunnerTest, BidderThreadPoolPartiallyResetAndSubsequentlyReused) {
 
   auction_worklet_service1->LoadBidderWorklet(
       std::move(worklet_receiver1), std::move(shared_storage_hosts1),
-      /*should_pause_on_start=*/false, std::move(url_loader_factory1),
+      /*pause_for_debugger_on_start=*/false, std::move(url_loader_factory1),
       auction_network_events_handler.CreateRemote(),
       /*script_source_url=*/GURL("https://ad1.com"),
-      /*bidding_wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
+      /*wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
       /*trusted_bidding_signals_slot_size_param=*/{},
       /*top_window_origin=*/url::Origin::Create(GURL("https://ad1.com")),
       auction_worklet::mojom::AuctionWorkletPermissionsPolicyState::New(
@@ -4464,10 +5101,10 @@ TEST_F(AuctionRunnerTest, BidderThreadPoolPartiallyResetAndSubsequentlyReused) {
 
   auction_worklet_service2->LoadBidderWorklet(
       std::move(worklet_receiver2), std::move(shared_storage_hosts2),
-      /*should_pause_on_start=*/false, std::move(url_loader_factory2),
+      /*pause_for_debugger_on_start=*/false, std::move(url_loader_factory2),
       auction_network_events_handler.CreateRemote(),
       /*script_source_url=*/GURL("https://ad1.com"),
-      /*bidding_wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
+      /*wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
       /*trusted_bidding_signals_slot_size_param=*/{},
       /*top_window_origin=*/url::Origin::Create(GURL("https://ad1.com")),
       auction_worklet::mojom::AuctionWorkletPermissionsPolicyState::New(
@@ -4507,10 +5144,10 @@ TEST_F(AuctionRunnerTest, BidderThreadPoolPartiallyResetAndSubsequentlyReused) {
 
   auction_worklet_service3->LoadBidderWorklet(
       std::move(worklet_receiver3), std::move(shared_storage_hosts3),
-      /*should_pause_on_start=*/false, std::move(url_loader_factory3),
+      /*pause_for_debugger_on_start=*/false, std::move(url_loader_factory3),
       auction_network_events_handler.CreateRemote(),
       /*script_source_url=*/GURL("https://ad1.com"),
-      /*bidding_wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
+      /*wasm_helper_url=*/{}, /*trusted_bidding_signals_url=*/{},
       /*trusted_bidding_signals_slot_size_param=*/{},
       /*top_window_origin=*/url::Origin::Create(GURL("https://ad1.com")),
       auction_worklet::mojom::AuctionWorkletPermissionsPolicyState::New(
@@ -5238,9 +5875,6 @@ TEST_F(AuctionRunnerTest, ComponentAuctionCurrencyPassThrough) {
 TEST_F(AuctionRunnerTest, ComponentAuctionCurrencyPassThroughCheck) {
   // This feature only relevant for the debug_loss_report_urls portion of the
   // test.
-  base::test::ScopedFeatureList debug_features;
-  debug_features.InitAndEnableFeature(
-      blink::features::kBiddingAndScoringDebugReportingAPI);
 
   const char kBidScript[] = R"(
     const inBid = %d;
@@ -6959,8 +7593,11 @@ TEST_F(AuctionRunnerTest, NoTrustedBiddingSignals) {
                    .SetNumInterestGroupsWithOnlyNonKAnonBid(2));
 }
 
-// An auction where trusted bidding signals are requested, but the fetch 404s.
-TEST_F(AuctionRunnerTest, TrustedBiddingSignals404) {
+// An auction where trusted bidding signals are requested, but the fetches fail.
+TEST_P(AuctionRunnerTrustedSignalsTest, TrustedBiddingSignals404) {
+  const std::string kKVv2Bidder1Error("Bidder 1 failed!");
+  const std::string kKVv2Bidder2Error("Bidder 2 failed!");
+
   auction_worklet::AddJavascriptResponse(
       &url_loader_factory_, kBidder1Url,
       MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/2,
@@ -6971,16 +7608,23 @@ TEST_F(AuctionRunnerTest, TrustedBiddingSignals404) {
       MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/2,
                     kBidder2, kBidder2Name,
                     /*has_signals=*/false, "l2", "b"));
-  url_loader_factory_.AddResponse(kBidder1TrustedSignalsUrl.spec() +
-                                      "?hostname=publisher1.com&keys=k1,k2"
-                                      "&interestGroupNames=Ad+Platform",
-                                  "", net::HTTP_NOT_FOUND);
-  url_loader_factory_.AddResponse(kBidder2TrustedSignalsUrl.spec() +
-                                      "?hostname=publisher1.com&keys=l1,l2"
-                                      "&interestGroupNames=Another+Ad+Thing",
-                                  "", net::HTTP_NOT_FOUND);
   auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
                                          MakeAuctionScript());
+  if (UsingKVv2Signals()) {
+    AddBiddingSignalsCacheResult(DefaultBidder1SignalsRequestInfo(),
+                                 base::unexpected(kKVv2Bidder1Error));
+    AddBiddingSignalsCacheResult(DefaultBidder2SignalsRequestInfo(),
+                                 base::unexpected(kKVv2Bidder2Error));
+  } else {
+    url_loader_factory_.AddResponse(kBidder1TrustedSignalsUrl.spec() +
+                                        "?hostname=publisher1.com&keys=k1,k2"
+                                        "&interestGroupNames=Ad+Platform",
+                                    "", net::HTTP_NOT_FOUND);
+    url_loader_factory_.AddResponse(kBidder2TrustedSignalsUrl.spec() +
+                                        "?hostname=publisher1.com&keys=l1,l2"
+                                        "&interestGroupNames=Another+Ad+Thing",
+                                    "", net::HTTP_NOT_FOUND);
+  }
 
   RunStandardAuction();
   EXPECT_EQ(kBidder2Key, result_.winning_group_id);
@@ -7031,17 +7675,23 @@ TEST_F(AuctionRunnerTest, TrustedBiddingSignals404) {
               testing::UnorderedElementsAre(kBidder1Key, kBidder2Key));
   EXPECT_EQ(R"({"renderURL":"https://ad2.com/"})",
             result_.winning_group_ad_metadata);
-  EXPECT_THAT(result_.errors, testing::UnorderedElementsAre(
-                                  "Failed to load "
-                                  "https://adplatform.com/"
-                                  "signals1?hostname=publisher1.com&keys=k1,k2&"
-                                  "interestGroupNames=Ad+Platform "
-                                  "HTTP status = 404 Not Found.",
-                                  "Failed to load "
-                                  "https://anotheradthing.com/"
-                                  "signals2?hostname=publisher1.com&keys=l1,l2"
-                                  "&interestGroupNames=Another+Ad+Thing "
-                                  "HTTP status = 404 Not Found."));
+  if (UsingKVv2Signals()) {
+    EXPECT_THAT(result_.errors, testing::UnorderedElementsAre(
+                                    kKVv2Bidder1Error, kKVv2Bidder2Error));
+  } else {
+    EXPECT_THAT(result_.errors,
+                testing::UnorderedElementsAre(
+                    "Failed to load "
+                    "https://adplatform.com/"
+                    "signals1?hostname=publisher1.com&keys=k1,k2&"
+                    "interestGroupNames=Ad+Platform "
+                    "HTTP status = 404 Not Found.",
+                    "Failed to load "
+                    "https://anotheradthing.com/"
+                    "signals2?hostname=publisher1.com&keys=l1,l2"
+                    "&interestGroupNames=Another+Ad+Thing "
+                    "HTTP status = 404 Not Found."));
+  }
   CheckMetrics(MetricsExpectations(AuctionResult::kSuccess)
                    .SetNumInterestGroups(2)
                    .SetNumOwnersAndDistinctOwners(2)
@@ -7375,7 +8025,7 @@ function scoreAd(adMetadata, bid, auctionConfig, trustedScoringSignals,
                    .SetNumInterestGroupsWithOnlyNonKAnonBid(2));
 }
 
-TEST_F(AuctionRunnerTest, TrustedScoringSignals) {
+TEST_P(AuctionRunnerTrustedSignalsTest, TrustedScoringSignals) {
   trusted_scoring_signals_url_ =
       GURL("https://adstuff.publisher1.com/seller_signals");
 
@@ -7383,25 +8033,13 @@ TEST_F(AuctionRunnerTest, TrustedScoringSignals) {
       &url_loader_factory_, kBidder1Url,
       MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/2,
                     kBidder1, kBidder1Name,
-                    /*has_signals=*/true, "k1", "a"));
+                    /*has_signals=*/false));
   auction_worklet::AddJavascriptResponse(
       &url_loader_factory_, kBidder2Url,
       MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/2,
                     kBidder2, kBidder2Name,
-                    /*has_signals=*/true, "l2", "b") +
+                    /*has_signals=*/false) +
           kReportWinExpectNullAuctionSignals);
-  auction_worklet::AddBidderJsonResponse(
-      &url_loader_factory_,
-      GURL(kBidder1TrustedSignalsUrl.spec() +
-           "?hostname=publisher1.com&keys=k1,k2"
-           "&interestGroupNames=Ad+Platform"),
-      kBidder1SignalsJson);
-  auction_worklet::AddBidderJsonResponse(
-      &url_loader_factory_,
-      GURL(kBidder2TrustedSignalsUrl.spec() +
-           "?hostname=publisher1.com&keys=l1,l2"
-           "&interestGroupNames=Another+Ad+Thing"),
-      kBidder2SignalsJson);
 
   // scoreAd() that only accepts bids where the scoring signals of the
   // `renderURL` is "accept".
@@ -7433,45 +8071,79 @@ function reportResult(auctionConfig, browserSignals) {
 }
                                          )"));
 
-  // Response body that only accept first bidder's bid.
-  const char kTrustedScoringSignalsBody[] =
-      R"({"renderUrls":{"https://ad1.com/":"accept", "https://ad2.com/":"reject"}})";
+  if (UsingKVv2Signals()) {
+    // `kSellerSignalsKVv2Json` doesn't have a data version header, and scripts
+    // by default expect there to be no version, so need to use a different
+    // signals response that include a version header.
+    const char kSellerSignalsKVv2JsonWithDataVersion[] =
+        R"([{
+          "id": 0,
+          "dataVersion": 2,
+          "keyGroupOutputs": [{
+            "tags": [
+              "renderURLs"
+            ],
+            "keyValues": {
+              "https://ad1.com/": {
+                "value": "\"accept\""
+              },
+              "https://ad2.com/": {
+                "value": "\"reject\""
+              }
+            }
+          }]
+        }])";
 
-  // There may be one merged trusted scoring signals request, or two separate
-  // requests.
+    // Requests should always be merged, since no time passes in this test, so
+    // the end-of-bidding seller fetch flush should be what triggers the signals
+    // fetch, rather than the timer that can send individual requests.
+    AddScoringSignalsCacheResult(
+        Bidder1Bidder2TwoCompressionGroupsSellerRequestInfo(),
+        MakeCompressionGroupMapForTwoGroups(
+            kSellerSignalsKVv2JsonWithDataVersion,
+            kSellerSignalsKVv2JsonWithDataVersion));
+    AddScoringSignalsCacheResult(
+        Bidder2Bidder1TwoCompressionGroupsSellerRequestInfo(),
+        MakeCompressionGroupMapForTwoGroups(
+            kSellerSignalsKVv2JsonWithDataVersion,
+            kSellerSignalsKVv2JsonWithDataVersion));
+  } else {
+    // There may be one merged trusted scoring signals request, or two separate
+    // requests.
 
-  // Response in the case of a single merged trusted scoring signals request.
-  auction_worklet::AddVersionedJsonResponse(
-      &url_loader_factory_,
-      GURL(trusted_scoring_signals_url_->spec() +
-           "?hostname=publisher1.com"
-           "&renderUrls=https%3A%2F%2Fad1.com%2F,https%3A%2F%2Fad2.com%2F"
-           "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F,"
-           "https%3A%2F%2Fad2.com-component1.com%2F"),
-      kTrustedScoringSignalsBody,
-      /*data_version=*/2);
+    // Response in the case of a single merged trusted scoring signals request.
+    auction_worklet::AddVersionedJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad1.com%2F,https%3A%2F%2Fad2.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F,"
+             "https%3A%2F%2Fad2.com-component1.com%2F"),
+        kBidder1Bidder2ScoringSignalsBody,
+        /*data_version=*/2);
 
-  // Responses in the case of two separate trusted scoring signals requests.
-  // Extra entries in the response dictionary will be ignored, so can use the
-  // same body as in the merged request case.
-  auction_worklet::AddVersionedJsonResponse(
-      &url_loader_factory_,
-      GURL(trusted_scoring_signals_url_->spec() +
-           "?hostname=publisher1.com"
-           "&renderUrls=https%3A%2F%2Fad1.com%2F"
-           "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F"),
-      kTrustedScoringSignalsBody,
-      /*data_version=*/2);
-  auction_worklet::AddVersionedJsonResponse(
-      &url_loader_factory_,
-      GURL(trusted_scoring_signals_url_->spec() +
-           "?hostname=publisher1.com"
-           "&renderUrls=https%3A%2F%2Fad2.com%2F"
-           "&adComponentRenderUrls=https%3A%2F%2Fad2.com-component1.com%2F"),
-      kTrustedScoringSignalsBody,
-      /*data_version=*/2);
+    // Responses in the case of two separate trusted scoring signals requests.
+    // Extra entries in the response dictionary will be ignored, so can use the
+    // same body as in the merged request case.
+    auction_worklet::AddVersionedJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad1.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F"),
+        kBidder1ScoringSignalsBody,
+        /*data_version=*/2);
+    auction_worklet::AddVersionedJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad2.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad2.com-component1.com%2F"),
+        kBidder2ScoringSignalsBody,
+        /*data_version=*/2);
+  }
 
-  RunStandardAuction();
+  RunStandardAuction(/*request_trusted_bidding_signals=*/false);
   EXPECT_THAT(result_.errors, testing::ElementsAre());
   EXPECT_EQ(kBidder1Key, result_.winning_group_id);
   EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
@@ -7524,6 +8196,455 @@ function reportResult(auctionConfig, browserSignals) {
                    .SetNumSellers(1)
                    .SetNumBidderWorklets(2)
                    .SetNumInterestGroupsWithOnlyNonKAnonBid(2));
+}
+
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       CrossOriginTrustedScoringSignalsBlocked) {
+  trusted_scoring_signals_url_ =
+      GURL("https://cross-origin.test/seller_signals");
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/2,
+                    kBidder1, kBidder1Name,
+                    /*has_signals=*/false));
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder2Url,
+      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/2,
+                    kBidder2, kBidder2Name,
+                    /*has_signals=*/false));
+
+  // scoreAd() that expects no signals.
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         std::string(R"(
+function scoreAd(adMetadata, bid, auctionConfig, trustedScoringSignals,
+                 browserSignals, directFromSellerSignals,
+                 crossOriginTrustedSignals) {
+  if (trustedScoringSignals === null && crossOriginTrustedSignals === null) {
+    return bid;
+  }
+  throw "incorrect trustedScoringSignals";
+}
+
+function reportResult(auctionConfig, browserSignals) {
+  return browserSignals;
+}
+                                                     )"));
+
+  RunStandardAuction(/*request_trusted_bidding_signals=*/false);
+  EXPECT_THAT(
+      result_.errors,
+      testing::UnorderedElementsAre(
+          "https://adstuff.publisher1.com/auction.js disregarding trusted "
+          "scoring signals since origin 'https://cross-origin.test' is "
+          "different from script's origin but not authorized by script's "
+          "Ad-Auction-Allow-Trusted-Scoring-Signals-From.",
+          "https://adstuff.publisher1.com/auction.js disregarding trusted "
+          "scoring signals since origin 'https://cross-origin.test' is "
+          "different from script's origin but not authorized by script's "
+          "Ad-Auction-Allow-Trusted-Scoring-Signals-From."));
+  EXPECT_EQ(kBidder2Key, result_.winning_group_id);
+  EXPECT_THAT(result_.interest_groups_that_bid,
+              testing::UnorderedElementsAre(kBidder1Key, kBidder2Key));
+}
+
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       CrossOriginTrustedScoringSignalsAllowed) {
+  trusted_scoring_signals_url_ =
+      GURL("https://cross-origin.test/seller_signals");
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/2,
+                    kBidder1, kBidder1Name,
+                    /*has_signals=*/false));
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder2Url,
+      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/2,
+                    kBidder2, kBidder2Name,
+                    /*has_signals=*/false));
+
+  if (UsingKVv2Signals()) {
+    // Requests should always be merged, since no time passes in this test, so
+    // the end-of-bidding seller fetch flush should be what triggers the signals
+    // fetch, rather than the timer that can send individual requests.
+    AddScoringSignalsCacheResult(
+        Bidder1Bidder2TwoCompressionGroupsSellerRequestInfo(),
+        MakeBidder1Bidder2ScoringSignalsTwoCompressionGroupsMap());
+    AddScoringSignalsCacheResult(
+        Bidder2Bidder1TwoCompressionGroupsSellerRequestInfo(),
+        MakeBidder2Bidder1ScoringSignalsTwoCompressionGroupsMap());
+  } else {
+    // Response in the case of a single merged trusted scoring signals request.
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad1.com%2F,https%3A%2F%2Fad2.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F,"
+             "https%3A%2F%2Fad2.com-component1.com%2F"),
+        kBidder1Bidder2ScoringSignalsBody);
+
+    // Responses in the case of two separate trusted scoring signals requests.
+    // Extra entries in the response dictionary will be ignored, so can use the
+    // same body as in the merged request case.
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad1.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F"),
+        kBidder1ScoringSignalsBody);
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad2.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad2.com-component1.com%2F"),
+        kBidder2ScoringSignalsBody);
+  }
+
+  StartStandardAuction(/*request_trusted_bidding_signals=*/false);
+
+  // Run until the seller worklet is needed. In the KVv2 path, this will ensure
+  // that the seller signals KVv2 requests are batched together, which both
+  // means fewer mock responses need to be configured, and it's possible to test
+  // the requests are group as expected.
+  task_environment()->RunUntilIdle();
+
+  // scoreAd() that only accepts bids where the scoring signals of the
+  // `renderURL` is "accept".
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kSellerUrl, std::string(R"(
+function scoreAd(adMetadata, bid, auctionConfig, trustedScoringSignals,
+                 browserSignals, directFromSellerSignals,
+                 crossOriginTrustedSignals) {
+  let signal = crossOriginTrustedSignals["https://cross-origin.test"].
+      renderURL[browserSignals.renderURL];
+  // 2 * bid is expected by the BidderWorklet ReportWin() script.
+  if (signal == "accept")
+    return 2 * bid;
+  if (signal == "reject")
+    return 0;
+  throw "incorrect trustedScoringSignals";
+}
+
+function reportResult(auctionConfig, browserSignals) {
+  return browserSignals;
+}
+                                                    )"),
+      /*extra_headers=*/
+      std::string("Ad-Auction-Allow-Trusted-Scoring-Signals-From:"
+                  " \"https://cross-origin.test/\""));
+
+  auction_run_loop_->Run();
+
+  EXPECT_THAT(result_.errors, testing::UnorderedElementsAre());
+  EXPECT_EQ(kBidder1Key, result_.winning_group_id);
+  EXPECT_THAT(result_.interest_groups_that_bid,
+              testing::UnorderedElementsAre(kBidder1Key, kBidder2Key));
+  CheckMetrics(
+      MetricsExpectations(AuctionResult::kSuccess)
+          .SetNumInterestGroups(2)
+          .SetNumOwnersAndDistinctOwners(2)
+          .SetNumOwnersWithoutInterestGroups(0)
+          .SetNumSellers(1)
+          .SetNumBidderWorklets(2)
+          .SetNumInterestGroupsWithOnlyNonKAnonBid(2)
+          // When using KVv2 signals, the bids are queued in the
+          // InterestGroupAuction layer waiting for the seller worklet to load,
+          // to learn if signals can be requested.
+          // When using KVv1 signals, that's handled compeltely within the
+          // SellerWorklet layer, so the metric records no delays.
+          .SetNumBidsQueuedWaitingForSellerWorklet(UsingKVv2Signals() ? 2 : 0));
+}
+
+// Test the case of trusted scoring signals for two interest groups with the
+// same owner and the same joining origin. In the KVv2 case, they should be in
+// the same compression group, but use different partitions.
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       TrustedScoringSignalsSameJoiningOrigin) {
+  trusted_scoring_signals_url_ =
+      GURL("https://adstuff.publisher1.com/seller_signals");
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/1,
+                    kBidder1, "1", /*has_signals=*/false));
+
+  // The bidding logic URL of the second interest group does not need to match
+  // that of the first one. It bids more than the first interest group, but the
+  // seller should reject it due to the seller signals.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1UrlAlt,
+      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/1,
+                    kBidder1, "2", /*has_signals=*/false));
+
+  if (UsingKVv2Signals()) {
+    // Requests should always be merged, since no time passes in this test, so
+    // the end-of-bidding seller fetch flush should be what triggers the signals
+    // fetch, rather than the timer that can send individual requests.
+
+    auto bidder1_first_request_info = IsolatedBidder1SellerRequestInfo();
+    bidder1_first_request_info.compression_groups[0].emplace_back(
+        MockTrustedSignalsCacheImpl::ScoringPartitionInfo{
+            /*partition_id=*/1,
+            /*render_url=*/GURL("https://ad2.com/"),
+            /*component_render_urls=*/{GURL("https://ad2.com-component1.com")},
+            /*additional_params=*/base::Value::Dict()});
+    auto bidder2_first_request_info = IsolatedBidder2SellerRequestInfo();
+    AddScoringSignalsCacheResult(
+        std::move(bidder1_first_request_info),
+        MakeBidder1Bidder2ScoringSignalsTwoPartitionsCompressionGroupMap());
+
+    bidder2_first_request_info.compression_groups[0].emplace_back(
+        MockTrustedSignalsCacheImpl::ScoringPartitionInfo{
+            /*partition_id=*/1,
+            /*render_url=*/GURL("https://ad1.com/"),
+            /*component_render_urls=*/{GURL("https://ad1.com-component1.com")},
+            /*additional_params=*/base::Value::Dict()});
+    AddScoringSignalsCacheResult(
+        std::move(bidder2_first_request_info),
+        MakeBidder1Bidder2ScoringSignalsTwoPartitionsCompressionGroupMap());
+  } else {
+    // Response in the case of a single merged trusted scoring signals request.
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad1.com%2F,https%3A%2F%2Fad2.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F,"
+             "https%3A%2F%2Fad2.com-component1.com%2F"),
+        kBidder1Bidder2ScoringSignalsBody);
+
+    // Responses in the case of two separate trusted scoring signals requests.
+    // Extra entries in the response dictionary will be ignored, so can use the
+    // same body as in the merged request case.
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad1.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F"),
+        kBidder1ScoringSignalsBody);
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad2.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad2.com-component1.com%2F"),
+        kBidder2ScoringSignalsBody);
+  }
+
+  std::vector<StorageInterestGroup> bidders;
+
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, "1", kBidder1Url, /*trusted_bidding_signals_url=*/std::nullopt,
+      /*trusted_bidding_signals_keys=*/{}, GURL("https://ad1.com"),
+      {{GURL("https://ad1.com-component1.com")}}));
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, "2", kBidder1UrlAlt,
+      /*trusted_bidding_signals_url=*/std::nullopt,
+      /*trusted_bidding_signals_keys=*/{}, GURL("https://ad2.com"),
+      {{GURL("https://ad2.com-component1.com")}}));
+
+  // scoreAd() that only accepts bids where the scoring signals of the
+  // `renderURL` is "accept".
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         std::string(R"(
+function scoreAd(adMetadata, bid, auctionConfig, trustedScoringSignals,
+                 browserSignals, directFromSellerSignals) {
+  let signal = trustedScoringSignals.renderURL[browserSignals.renderURL];
+  // 2 * bid is expected by the BidderWorklet ReportWin() script.
+  if (signal == "accept")
+    return 2 * bid;
+  if (signal == "reject")
+    return 0;
+  throw "incorrect trustedScoringSignals";
+}
+
+function reportResult(auctionConfig, browserSignals) {
+  return browserSignals;
+}
+                                        )"));
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+
+  EXPECT_THAT(result_.errors, testing::UnorderedElementsAre());
+  EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
+  EXPECT_EQ(result_.interest_groups_that_bid.size(), 2u);
+}
+
+// Test the case of trusted scoring signals for two interest groups with the
+// same owner but different joining origin. In the KVv2 case, they should be in
+// different compression groups in the same request.
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       TrustedScoringSignalsDifferentJoiningOrigin) {
+  trusted_scoring_signals_url_ =
+      GURL("https://adstuff.publisher1.com/seller_signals");
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/1,
+                    kBidder1, "1", /*has_signals=*/false));
+
+  // The bidding logic URL of the second interest group does not need to match
+  // that of the first one. It bids more than the first interest group, but the
+  // seller should reject it due to the seller signals.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1UrlAlt,
+      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/1,
+                    kBidder1, "2", /*has_signals=*/false));
+
+  if (UsingKVv2Signals()) {
+    // Requests should always be merged, since no time passes in this test, so
+    // the end-of-bidding seller fetch flush should be what triggers the signals
+    // fetch, rather than the timer that can send individual requests.
+    AddScoringSignalsCacheResult(
+        Bidder1Bidder2TwoCompressionGroupsSellerRequestInfo(),
+        MakeBidder1Bidder2ScoringSignalsTwoCompressionGroupsMap());
+    AddScoringSignalsCacheResult(
+        Bidder2Bidder1TwoCompressionGroupsSellerRequestInfo(),
+        MakeBidder2Bidder1ScoringSignalsTwoCompressionGroupsMap());
+  } else {
+    // Response in the case of a single merged trusted scoring signals request.
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad1.com%2F,https%3A%2F%2Fad2.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F,"
+             "https%3A%2F%2Fad2.com-component1.com%2F"),
+        kBidder1Bidder2ScoringSignalsBody);
+
+    // Responses in the case of two separate trusted scoring signals requests.
+    // Extra entries in the response dictionary will be ignored, so can use the
+    // same body as in the merged request case.
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad1.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad1.com-component1.com%2F"),
+        kBidder1ScoringSignalsBody);
+    auction_worklet::AddJsonResponse(
+        &url_loader_factory_,
+        GURL(trusted_scoring_signals_url_->spec() +
+             "?hostname=publisher1.com"
+             "&renderUrls=https%3A%2F%2Fad2.com%2F"
+             "&adComponentRenderUrls=https%3A%2F%2Fad2.com-component1.com%2F"),
+        kBidder2ScoringSignalsBody);
+  }
+
+  std::vector<StorageInterestGroup> bidders;
+
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, "1", kBidder1Url, /*trusted_bidding_signals_url=*/std::nullopt,
+      /*trusted_bidding_signals_keys=*/{}, GURL("https://ad1.com"),
+      {{GURL("https://ad1.com-component1.com")}}));
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, "2", kBidder1UrlAlt,
+      /*trusted_bidding_signals_url=*/std::nullopt,
+      /*trusted_bidding_signals_keys=*/{}, GURL("https://ad2.com"),
+      {{GURL("https://ad2.com-component1.com")}}));
+  bidders[1].joining_origin =
+      url::Origin::Create(GURL("https://other-origin.test"));
+
+  // scoreAd() that only accepts bids where the scoring signals of the
+  // `renderURL` is "accept".
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         std::string(R"(
+function scoreAd(adMetadata, bid, auctionConfig, trustedScoringSignals,
+                 browserSignals, directFromSellerSignals) {
+  let signal = trustedScoringSignals.renderURL[browserSignals.renderURL];
+  // 2 * bid is expected by the BidderWorklet ReportWin() script.
+  if (signal == "accept")
+    return 2 * bid;
+  if (signal == "reject")
+    return 0;
+  throw "incorrect trustedScoringSignals";
+}
+
+function reportResult(auctionConfig, browserSignals) {
+  return browserSignals;
+}
+                                        )"));
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+
+  EXPECT_THAT(result_.errors, testing::UnorderedElementsAre());
+  EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
+  EXPECT_EQ(result_.interest_groups_that_bid.size(), 2u);
+}
+
+// Check that when the bidder scripts finish bidding at different times, the
+// trusted scoring signals for each bid are fetched separately if the bid
+// generation times are further apart than
+// TrustedSignalsCacheImpl::kAutoStartDelay.
+TEST_P(AuctionRunnerTrustedSignalsTest, TrustedScoringSignalsSeparateRequests) {
+  // This test serves to test interactions with the
+  // TrustedScoringSignalsCacheImpl, so it's not very interesting when not using
+  // KVv2 signals.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  // TrustedScoringSignalsSeparateRequests
+  trusted_scoring_signals_url_ =
+      GURL("https://adstuff.publisher1.com/seller_signals");
+  // Responses for two different trusted scoring signals requests.
+  AddScoringSignalsCacheResult(
+      IsolatedBidder1SellerRequestInfo(),
+      MakeCompressionGroupMapForOneGroup(kBidder1ScoringSignalsKVv2Json));
+  AddScoringSignalsCacheResult(
+      IsolatedBidder2SellerRequestInfo(),
+      MakeCompressionGroupMapForOneGroup(kBidder2ScoringSignalsKVv2Json));
+
+  // scoreAd() that only accepts bids where the scoring signals of the
+  // `renderURL` is "accept".
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         std::string(R"(
+function scoreAd(adMetadata, bid, auctionConfig, trustedScoringSignals,
+                 browserSignals, directFromSellerSignals) {
+  let signal = trustedScoringSignals.renderURL[browserSignals.renderURL];
+  // 2 * bid is expected by the BidderWorklet ReportWin() script.
+  if (signal == "accept")
+    return 2 * bid;
+  if (signal == "reject")
+    return 0;
+  throw "incorrect trustedScoringSignals";
+}
+
+function reportResult(auctionConfig, browserSignals) {
+  return browserSignals;
+}
+                                        )"));
+
+  StartStandardAuction(/*request_trusted_bidding_signals=*/false);
+
+  // Bidder 1 replies with script.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/2,
+                    kBidder1, kBidder1Name, /*has_signals=*/false));
+  // Run long enough for the scoring signals request for bidder 1's bid to
+  // automatically be sent.
+  task_environment()->FastForwardBy(TrustedSignalsCacheImpl::kAutoStartDelay);
+
+  // Bidder 2 replies with script. The scoring signals request should be sent
+  // immediately, since that's the last bid.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder2Url,
+      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/2,
+                    kBidder2, kBidder2Name, /*has_signals=*/false));
+  // Wait for auction to complete.
+  auction_run_loop_->Run();
+
+  EXPECT_THAT(result_.errors, testing::UnorderedElementsAre());
+  EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
+  EXPECT_EQ(result_.interest_groups_that_bid.size(), 2u);
 }
 
 // Test that shows we reliably wait for promises to resolve even if nothing
@@ -7613,7 +8734,7 @@ TEST_F(AuctionRunnerTest, PromiseAuctionSignalsDeliveredBeforeWorklet) {
   // Create AuctionProcessManager in advance of starting the auction so can
   // create worklets before the auction starts.
   auction_process_manager_ =
-      std::make_unique<SameProcessAuctionProcessManager>();
+      std::make_unique<TestSameProcessAuctionProcessManager>();
 
   std::vector<std::unique_ptr<AuctionProcessManager::ProcessHandle>>
       busy_processes;
@@ -8724,10 +9845,6 @@ TEST_F(AuctionRunnerTest, PromiseSignalsBadAuctionIdAdditionalBids) {
 // An auction where the winning additional bid claims to be from an IG the user
 // is already in.
 TEST_F(AuctionRunnerTest, AdditionalBidAliasesInterestGroup) {
-  base::test::ScopedFeatureList debug_reporting_api_on;
-  debug_reporting_api_on.InitAndEnableFeature(
-      blink::features::kBiddingAndScoringDebugReportingAPI);
-
   const char kAdditionalBidUrl[] =
       "https://adplatform.com/offers-contextual.js";
 
@@ -8799,14 +9916,18 @@ TEST_F(AuctionRunnerTest, AdditionalBidAliasesInterestGroup) {
       kBidder1.Serialize().c_str(), kSeller.Serialize().c_str(),
       auction_nonce_->AsLowercaseString().c_str(), kSeller.Serialize().c_str());
 
-  std::map<std::string, std::vector<std::string>> additional_bids_for_nonce;
+  std::map<std::string, std::vector<SignedAdditionalBidWithMetadata>>
+      additional_bids_for_nonce;
   additional_bids_for_nonce[auction_nonce_->AsLowercaseString()].push_back(
-      GenerateSignedAdditionalBidHeaderPayloadPortion(
-          SignedAdditionalBidFault::kNone, bid_json,
-          {kPrivateKey1, kPrivateKey2},
-          {kBase64PublicKey1, kBase64PublicKey2}));
+      SignedAdditionalBidWithMetadata(
+          /*signed_additional_bid=*/
+          GenerateSignedAdditionalBidHeaderPayloadPortion(
+              SignedAdditionalBidFault::kNone, bid_json,
+              {kPrivateKey1, kPrivateKey2},
+              {kBase64PublicKey1, kBase64PublicKey2}),
+          /*seller_nonce=*/std::nullopt));
   ad_auction_page_data_->AddAuctionAdditionalBidsWitnessForOrigin(
-      kSeller, additional_bids_for_nonce);
+      kSeller, std::move(additional_bids_for_nonce));
 
   abortable_ad_auction_->ResolvedAdditionalBids(
       blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0));
@@ -8980,10 +10101,6 @@ TEST_F(AuctionRunnerTest, AdditionalBidAliasesInterestGroup) {
 // An auction where the winning additional bid claims to be from an IG the user
 // is not in.
 TEST_F(AuctionRunnerTest, AdditionalBidDistinctFromInterestGroup) {
-  base::test::ScopedFeatureList debug_reporting_api_on;
-  debug_reporting_api_on.InitAndEnableFeature(
-      blink::features::kBiddingAndScoringDebugReportingAPI);
-
   const char kAdditionalBidUrl[] =
       "https://adplatform.com/offers-contextual.js";
   const char kAdditionalBidName[] = "40";  // avoids per-buyerSignals check.
@@ -9056,14 +10173,18 @@ TEST_F(AuctionRunnerTest, AdditionalBidDistinctFromInterestGroup) {
       kBidder1.Serialize().c_str(), kSeller.Serialize().c_str(),
       auction_nonce_->AsLowercaseString().c_str(), kSeller.Serialize().c_str());
 
-  std::map<std::string, std::vector<std::string>> additional_bids_for_nonce;
+  std::map<std::string, std::vector<SignedAdditionalBidWithMetadata>>
+      additional_bids_for_nonce;
   additional_bids_for_nonce[auction_nonce_->AsLowercaseString()].push_back(
-      GenerateSignedAdditionalBidHeaderPayloadPortion(
-          SignedAdditionalBidFault::kNone, bid_json,
-          {kPrivateKey1, kPrivateKey2},
-          {kBase64PublicKey1, kBase64PublicKey2}));
+      SignedAdditionalBidWithMetadata(
+          /*signed_additional_bid=*/
+          GenerateSignedAdditionalBidHeaderPayloadPortion(
+              SignedAdditionalBidFault::kNone, bid_json,
+              {kPrivateKey1, kPrivateKey2},
+              {kBase64PublicKey1, kBase64PublicKey2}),
+          /*seller_nonce=*/std::nullopt));
   ad_auction_page_data_->AddAuctionAdditionalBidsWitnessForOrigin(
-      kSeller, additional_bids_for_nonce);
+      kSeller, std::move(additional_bids_for_nonce));
 
   abortable_ad_auction_->ResolvedAdditionalBids(
       blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0));
@@ -9960,13 +11081,11 @@ TEST_F(AuctionRunnerTest, PromiseServerResponseResolveTwice) {
 
   abortable_ad_auction_->ResolvedAuctionAdResponsePromise(
       blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0),
-      mojo_base::BigBuffer(
-          base::as_bytes(base::make_span(encrypted_response))));
+      mojo_base::BigBuffer(base::as_byte_span(encrypted_response)));
 
   abortable_ad_auction_->ResolvedAuctionAdResponsePromise(
       blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0),
-      mojo_base::BigBuffer(
-          base::as_bytes(base::make_span(encrypted_response))));
+      mojo_base::BigBuffer(base::as_byte_span(encrypted_response)));
 
   task_environment()->RunUntilIdle();
   EXPECT_EQ("ResolvedAuctionAdResponsePromise updating non-promise",
@@ -10216,7 +11335,7 @@ TEST_F(AuctionRunnerTest, ProcessManagerBlocksWorkletCreation) {
       // Create AuctionProcessManager in advance of starting the auction so can
       // create worklets before the auction starts.
       auction_process_manager_ =
-          std::make_unique<SameProcessAuctionProcessManager>();
+          std::make_unique<TestSameProcessAuctionProcessManager>();
 
       AuctionProcessManager* auction_process_manager =
           auction_process_manager_.get();
@@ -10408,7 +11527,7 @@ TEST_F(AuctionRunnerTest, ComponentAuctionProcessManagerBlocksWorkletCreation) {
       // Create AuctionProcessManager in advance of starting the auction so can
       // create worklets before the auction starts.
       auction_process_manager_ =
-          std::make_unique<SameProcessAuctionProcessManager>();
+          std::make_unique<TestSameProcessAuctionProcessManager>();
 
       AuctionProcessManager* auction_process_manager =
           auction_process_manager_.get();
@@ -10619,7 +11738,7 @@ TEST_F(AuctionRunnerTest, SellerLoadErrorWhileWaitingForBidders) {
   // Create AuctionProcessManager in advance of starting the auction so can
   // create worklets before the auction starts.
   auction_process_manager_ =
-      std::make_unique<SameProcessAuctionProcessManager>();
+      std::make_unique<TestSameProcessAuctionProcessManager>();
 
   // Make kMaxBidderProcesses bidder worklet requests for different origins.
   std::list<std::unique_ptr<AuctionProcessManager::ProcessHandle>>
@@ -10703,7 +11822,7 @@ TEST_F(AuctionRunnerTest,
           /*bid_from_component_auction_wins=*/true));
 
   auction_process_manager_ =
-      std::make_unique<SameProcessAuctionProcessManager>();
+      std::make_unique<TestSameProcessAuctionProcessManager>();
 
   // Take up all but 1 of the seller worklet process slots.
   std::list<std::unique_ptr<AuctionProcessManager::ProcessHandle>> sellers;
@@ -11206,44 +12325,6 @@ TEST_F(AuctionRunnerTest, BidderCrashBeforeBidding) {
                      .SetNumInterestGroupsWithNoBids(1)
                      .SetNumInterestGroupsWithOnlyNonKAnonBid(1));
   }
-}
-
-// Should not have any debugging win/loss report URLs after auction when feature
-// kBiddingAndScoringDebugReportingAPI is not enabled.
-TEST_F(AuctionRunnerTest, ForDebuggingOnlyReportingWithDebugFeatureDisabled) {
-  base::test::ScopedFeatureList scoped_feature_list;
-  scoped_feature_list.InitAndDisableFeature(
-      blink::features::kBiddingAndScoringDebugReportingAPI);
-
-  auction_worklet::AddJavascriptResponse(
-      &url_loader_factory_, kBidder1Url,
-      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/2,
-                    kBidder1, kBidder1Name,
-                    /*has_signals=*/false, "k1", "a",
-                    /*report_post_auction_signals=*/false,
-                    kBidder1DebugLossReportUrl, kBidder1DebugWinReportUrl));
-  auction_worklet::AddJavascriptResponse(
-      &url_loader_factory_, kBidder2Url,
-      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/2,
-                    kBidder2, kBidder2Name,
-                    /*has_signals=*/false, "l2", "b",
-                    /*report_post_auction_signals=*/false,
-                    kBidder2DebugLossReportUrl, kBidder2DebugWinReportUrl));
-  auction_worklet::AddJavascriptResponse(
-      &url_loader_factory_, kSellerUrl,
-      MakeAuctionScript(/*report_post_auction_signals=*/false, kSellerUrl,
-                        kSellerDebugLossReportBaseUrl,
-                        kSellerDebugWinReportBaseUrl));
-
-  RunStandardAuction(/*request_trusted_bidding_signals=*/false);
-  EXPECT_THAT(result_.errors, testing::UnorderedElementsAre());
-
-  // Bidder 2 won the auction.
-  EXPECT_EQ(kBidder2Key, result_.winning_group_id);
-  EXPECT_EQ(GURL("https://ad2.com/"), result_.ad_descriptor->url);
-
-  EXPECT_EQ(0u, result_.debug_loss_report_urls.size());
-  EXPECT_EQ(0u, result_.debug_win_report_urls.size());
 }
 
 // If the seller crashes before all bids are scored, the auction fails. Seller
@@ -13173,7 +14254,7 @@ TEST_F(AuctionRunnerTest, PerBuyerTwoThirdsCumulativeTimeouts) {
   StartAuction(kSellerUrl, std::move(bidders));
 
   mock_auction_process_manager_->WaitForWorklets(
-      /*num_bidder_worklets=*/1, /*num_sellers=*/1);
+      /*num_bidders=*/1, /*num_sellers=*/1);
 
   auto seller_worklet = mock_auction_process_manager_->TakeSellerWorklet();
   ASSERT_TRUE(seller_worklet);
@@ -15155,7 +16236,7 @@ TEST_F(AuctionRunnerTest,
 // Test the phase metrics for the WorkletCreation phase.
 TEST_F(AuctionRunnerTest, VerifyWorkletCreationPhaseMetrics) {
   auto same_process_auction_process_manager =
-      std::make_unique<SameProcessAuctionProcessManager>();
+      std::make_unique<TestSameProcessAuctionProcessManager>();
   same_process_auction_process_manager_ =
       same_process_auction_process_manager.get();
   auction_process_manager_ = std::move(same_process_auction_process_manager);
@@ -15648,14 +16729,18 @@ TEST_F(AuctionRunnerTest, PrivateAggregationReservedOnceAdditionalBid) {
         auction_nonce_->AsLowercaseString().c_str(),
         kSeller.Serialize().c_str());
 
-    std::map<std::string, std::vector<std::string>> additional_bids_for_nonce;
+    std::map<std::string, std::vector<SignedAdditionalBidWithMetadata>>
+        additional_bids_for_nonce;
     additional_bids_for_nonce[auction_nonce_->AsLowercaseString()].push_back(
-        GenerateSignedAdditionalBidHeaderPayloadPortion(
-            SignedAdditionalBidFault::kNone, bid_json,
-            {kPrivateKey1, kPrivateKey2},
-            {kBase64PublicKey1, kBase64PublicKey2}));
+        SignedAdditionalBidWithMetadata(
+            /*signed_additional_bid=*/
+            GenerateSignedAdditionalBidHeaderPayloadPortion(
+                SignedAdditionalBidFault::kNone, bid_json,
+                {kPrivateKey1, kPrivateKey2},
+                {kBase64PublicKey1, kBase64PublicKey2}),
+            /*seller_nonce=*/std::nullopt));
     ad_auction_page_data_->AddAuctionAdditionalBidsWitnessForOrigin(
-        kSeller, additional_bids_for_nonce);
+        kSeller, std::move(additional_bids_for_nonce));
 
     abortable_ad_auction_->ResolvedAdditionalBids(
         blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0));
@@ -16559,12 +17644,6 @@ TEST_F(AuctionRunnerTest,
 }
 
 TEST_F(AuctionRunnerTest, PrivateAggregationRequestForEventFilteringId) {
-  base::test::ScopedFeatureList scoped_feature_list;
-  scoped_feature_list.InitWithFeatures(
-      /*enabled_features=*/{blink::features::kPrivateAggregationApiFilteringIds,
-                            kPrivacySandboxAggregationServiceFilteringIds},
-      /*disabled_features=*/{});
-
   // Only one bidder participating the auction, to keep things simple.
   interest_group_buyers_ = {{kBidder1}};
 
@@ -16693,9 +17772,7 @@ TEST_F(AuctionRunnerTest,
        PrivateAggregationRequestForEventFilteringIdNonKAnon) {
   base::test::ScopedFeatureList scoped_feature_list;
   scoped_feature_list.InitWithFeatures(
-      /*enabled_features=*/{blink::features::kPrivateAggregationApiFilteringIds,
-                            kPrivacySandboxAggregationServiceFilteringIds,
-                            blink::features::kFledgeConsiderKAnonymity,
+      /*enabled_features=*/{blink::features::kFledgeConsiderKAnonymity,
                             blink::features::kFledgeEnforceKAnonymity},
       /*disabled_features=*/{});
 
@@ -18697,52 +19774,6 @@ TEST_F(AuctionRunnerTest,
                       /*debug_key=*/blink::mojom::DebugKey::New(123)))))));
 }
 
-TEST_F(AuctionRunnerTest,
-       PrivateAggregationBuyersReportDebugModeIgnoredWhenFeatureDisabled) {
-  base::test::ScopedFeatureList test_scoped_feature;
-  test_scoped_feature.InitAndDisableFeature(
-      blink::features::kPrivateAggregationAuctionReportBuyerDebugModeConfig);
-
-  constexpr base::TimeDelta kBiddingDuration = base::Milliseconds(2);
-  constexpr absl::uint128 kBaseBucket = 100l;
-  constexpr absl::uint128 kOffset = 20l;
-  constexpr double kScale = 2.4;
-
-  auction_report_buyer_keys_ = {{kBaseBucket}};
-  auction_report_buyers_ = {{{blink::AuctionConfig::NonSharedParams::
-                                  BuyerReportType::kTotalGenerateBidLatency,
-                              {/*bucket=*/kOffset,
-                               /*scale=*/kScale}}}};
-  auction_report_buyer_debug_mode_config_ = {/*is_enabled=*/true,
-                                             /*debug_key=*/1234};
-
-  std::vector<StorageInterestGroup> bidders;
-  bidders.emplace_back(MakeInterestGroup(
-      blink::TestInterestGroupBuilder(kBidder1, kBidder1Name)
-          .SetBiddingUrl(kBidder1Url)
-          .SetTrustedBiddingSignalsUrl(kBidder1TrustedSignalsUrl)
-          .SetTrustedBiddingSignalsKeys({{"k1", "k2"}})
-          .SetAds({{blink::InterestGroup::Ad(GURL("https://ad1.com"),
-                                             std::nullopt)}})
-          .SetSellerCapabilities(
-              {{{url::Origin::Create(kSellerUrl),
-                 {blink::SellerCapabilities::kLatencyStats}}}})
-          .Build()));
-
-  RunExtendedPABuyersAuction(bidders,
-                             /*trusted_fetch_latency=*/{base::TimeDelta()},
-                             /*bidding_latency=*/{kBiddingDuration});
-
-  EXPECT_THAT(private_aggregation_manager_.TakePrivateAggregationRequests(),
-              testing::UnorderedElementsAre(testing::Pair(
-                  url::Origin::Create(kSellerUrl),
-                  ElementsAreRequests(BuildPrivateAggregationRequest(
-                      /*bucket=*/kBaseBucket + kOffset,
-                      /*value=*/kBiddingDuration.InMilliseconds() * kScale,
-                      /*debug_mode_details=*/
-                      blink::mojom::DebugModeDetails::New())))));
-}
-
 TEST_F(AuctionRunnerTest, PrivateAggregationBuyerReservedOnceFeatureDisabled) {
   base::test::ScopedFeatureList scoped_feature_list;
   scoped_feature_list.InitAndDisableFeature(
@@ -19587,44 +20618,9 @@ TEST_F(AuctionRunnerTest, RealTimeReportingMixedContributionsFeatureDisabled) {
 }
 
 class RoundingTest : public AuctionRunnerTest,
-                     public ::testing::WithParamInterface<size_t> {
- public:
-  RoundingTest(size_t bid_bits, size_t score_bits, size_t cost_bits)
-      : bid_bits_(bid_bits), score_bits_(score_bits), cost_bits_(cost_bits) {
-    scoped_feature_list_.InitWithFeaturesAndParameters(
-        {{kFledgeRounding,
-          {{kFledgeBidReportingBits.name, base::NumberToString(bid_bits_)},
-           {kFledgeScoreReportingBits.name, base::NumberToString(score_bits_)},
-           {kFledgeAdCostReportingBits.name,
-            base::NumberToString(cost_bits_)}}}},
-        {});
-  }
+                     public ::testing::WithParamInterface<size_t> {};
 
-  size_t bid_bits() { return bid_bits_; }
-  size_t score_bits() { return score_bits_; }
-  size_t cost_bits() { return cost_bits_; }
-
- private:
-  base::test::ScopedFeatureList scoped_feature_list_;
-  size_t bid_bits_, score_bits_, cost_bits_;
-};
-
-class BidRoundingTest : public RoundingTest {
- public:
-  BidRoundingTest() : RoundingTest(GetParam(), 8, 8) {}
-};
-
-class ScoreRoundingTest : public RoundingTest {
- public:
-  ScoreRoundingTest() : RoundingTest(8, GetParam(), 8) {}
-};
-
-class CostRoundingTest : public RoundingTest {
- public:
-  CostRoundingTest() : RoundingTest(8, 8, GetParam()) {}
-};
-
-TEST_P(CostRoundingTest, AdCostPassed) {
+TEST_F(RoundingTest, AdCostPassed) {
   const char kBidScript[] = R"(
     const bid = %d;
     function generateBid(
@@ -19669,7 +20665,7 @@ TEST_P(CostRoundingTest, AdCostPassed) {
                   GURL("https://buyer-reporting.example.com/?adCost=2")));
 }
 
-TEST_P(CostRoundingTest, AdCostRounded) {
+TEST_F(RoundingTest, AdCostRounded) {
   const char kBidScript[] = R"(
     const bid = %f;
     function generateBid(
@@ -19709,34 +20705,14 @@ TEST_P(CostRoundingTest, AdCostRounded) {
   EXPECT_EQ(kBidder1Key, result_.winning_group_id);
   EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
 
-  switch (GetParam()) {
-    case 8:
-      EXPECT_THAT(
-          result_.report_urls,
-          testing::ElementsAre(testing::AnyOf(
-              GURL("https://buyer-reporting.example.com/?adCost=1.9921875"),
-              GURL("https://buyer-reporting.example.com/?adCost=1.984375"))));
-      break;
-    case 16:
-      EXPECT_THAT(result_.report_urls,
-                  testing::ElementsAre(
-                      testing::AnyOf(GURL("https://buyer-reporting.example.com/"
-                                          "?adCost=1.990020751953125"),
-                                     GURL("https://buyer-reporting.example.com/"
-                                          "?adCost=1.989990234375"))));
-      break;
-    case 53:
-      EXPECT_THAT(result_.report_urls,
-                  testing::ElementsAre(GURL(
-                      "https://buyer-reporting.example.com/?adCost=1.99")));
-      break;
-    default:
-      // Not a supported test case.
-      ASSERT_TRUE(false);
-  }
+  EXPECT_THAT(
+      result_.report_urls,
+      testing::ElementsAre(testing::AnyOf(
+          GURL("https://buyer-reporting.example.com/?adCost=1.9921875"),
+          GURL("https://buyer-reporting.example.com/?adCost=1.984375"))));
 }
 
-TEST_P(CostRoundingTest, AdCostExponentTruncated) {
+TEST_F(RoundingTest, AdCostExponentTruncated) {
   const char kBidScript[] = R"(
     const bid = %d;
     function generateBid(
@@ -19779,11 +20755,6 @@ TEST_P(CostRoundingTest, AdCostExponentTruncated) {
               testing::ElementsAre(GURL(
                   "https://buyer-reporting.example.com/?adCost=Infinity")));
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    /* no label */,
-    CostRoundingTest,
-    testing::Values(8, 16, 53));
 
 TEST_F(AuctionRunnerTest, ModelingSignalsPassed) {
   // Due to noising, modelingSignals is only correctly passed 99% of the time.
@@ -20104,33 +21075,90 @@ TEST_F(AuctionRunnerTest, RecencyPassedGenerateBid) {
   EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
 }
 
-class AuctionRunnerPassRecencyToGenerateBidDisabledTest
-    : public AuctionRunnerTest {
+class AuctionRunnerPrivateModelTrainingEnabledTest : public AuctionRunnerTest {
  public:
-  AuctionRunnerPassRecencyToGenerateBidDisabledTest() {
-    feature_list_.InitAndDisableFeature(
-        blink::features::kFledgePassRecencyToGenerateBid);
+  AuctionRunnerPrivateModelTrainingEnabledTest() {
+    feature_list_.InitAndEnableFeature(
+        blink::features::kFledgePrivateModelTraining);
   }
 
- private:
+ protected:
   base::test::ScopedFeatureList feature_list_;
 };
 
-TEST_F(AuctionRunnerPassRecencyToGenerateBidDisabledTest, NotPassed) {
+// This test verifies that reportAggregateWin() receives the correct arguments
+// by comparing them to those received by reportWin(). It also checks that
+// the aggregateWinSignals and modelingSignalsConfig are correctly passed
+// to reportAggregateWin().
+TEST_F(AuctionRunnerPrivateModelTrainingEnabledTest,
+       ReportAggregateWinGetsAllArgs) {
   const char kBidScript[] = R"(
     function generateBid(
         interestGroup, auctionSignals, perBuyerSignals, trustedBiddingSignals,
         browserSignals) {
-      // PassRecencyToGenerateBid is disabled, so recency shouldn't be set.
-      if (typeof browserSignals.recency !== "undefined") {
-        throw "Wrong recency " + browserSignals.recency;
-      }
-      return {bid: 1,
-              render: interestGroup.ads[0].renderURL};
+      return {'ad': 'example', 'bid': 1,
+            'render': interestGroup.ads[0].renderURL,
+            'aggregateWinSignals': {"test_array":[1,2,3]}
+      };
+    }
+    function reportWin(auctionSignals, perBuyerSignals, sellerSignals,
+                       browserSignals, directFromSellerSignals) {
+      // Store the arguments in global variables
+      globalThis.reportWin_auctionSignals = auctionSignals;
+      globalThis.reportWin_perBuyerSignals = perBuyerSignals;
+      globalThis.reportWin_sellerSignals = sellerSignals;
+      globalThis.reportWin_browserSignals = browserSignals;
+      globalThis.reportWin_directFromSellerSignals = directFromSellerSignals;
+      queueReportAggregateWin({
+        modelingSignalsConfig: {
+          destination: "https://destination.test/",
+          aggregationCoordinatorOrigin: "https://origin.test/",
+          payloadLength: 256,
+        }
+      });
     }
 
-    function reportWin(
-        auctionSignals, perBuyerSignals, sellerSignals, browserSignals) {
+    function reportAggregateWin(aggregateWinSignals, modelingSignalsConfig,
+                                auctionSignals,perBuyerSignals, sellerSignals,
+                                browserSignals, directFromSellerSignals ) {
+      if (aggregateWinSignals.test_array[0] !== 1 ||
+        aggregateWinSignals.test_array[1] !== 2 ||
+        aggregateWinSignals.test_array[2] !== 3) {
+          throw new Error("aggregateWinSignals not what was expected!");
+      }
+
+      if (modelingSignalsConfig.destination !== "https://destination.test/" ||
+        modelingSignalsConfig.aggregationCoordinatorOrigin !== "https://origin.test/" ||
+        modelingSignalsConfig.payloadLength !== 256) {
+          throw new Error("modelingSignalsConfig not what was expected!");
+      }
+
+      if (auctionSignals !== globalThis.reportWin_auctionSignals) {
+        throw new Error("auctionSignals not what was expected!");
+      }
+
+      let aggregateWin_perBuyerSignals = perBuyerSignals["https://adstuff.publisher1.comSignals/"];
+      let expected_perBuyerSignals = globalThis.reportWin_perBuyerSignals["https://adstuff.publisher1.comSignals/"];
+
+      if (aggregateWin_perBuyerSignals !== expected_perBuyerSignals) {
+        throw new Error("perBuyerSignals not what was expected!");
+      }
+
+      if (sellerSignals !== globalThis.reportWin_sellerSignals) {
+        throw new Error("sellerSignals not what was expected!");
+      }
+
+      // We do not pass the deprecated `renderUrl` into `reportAggregateWin()`.
+      // It's removed since it was in browserSignals at the time of `reportWin()`.
+      delete globalThis.reportWin_browserSignals.renderUrl;
+      if (JSON.stringify(browserSignals) !== JSON.stringify(globalThis.reportWin_browserSignals)) {
+        throw new Error("browserSignals not what was expected!");
+      }
+
+      if (directFromSellerSignals.perBuyerSignals !== globalThis.reportWin_directFromSellerSignals.perBuyerSignals ||
+        directFromSellerSignals.auctionSignals !== globalThis.reportWin_directFromSellerSignals.auctionSignals) {
+        throw new Error("directFromSellerSignals not what was expected!");
+      }
     }
   )";
 
@@ -20148,13 +21176,91 @@ TEST_F(AuctionRunnerPassRecencyToGenerateBidDisabledTest, NotPassed) {
   auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
                                          kSellerScript);
 
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url,
+      /*trusted_bidding_signals_url=*/std::nullopt,
+      /*trusted_bidding_signals_keys=*/{}, GURL("https://ad1.com")));
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+  EXPECT_THAT(result_.errors, testing::UnorderedElementsAre());
+}
+
+TEST_F(AuctionRunnerPrivateModelTrainingEnabledTest,
+       ReportAggregateWinErrorDoesNotStopNormalReporting) {
+  const char kBidScript[] = R"(
+    function generateBid(
+        interestGroup, auctionSignals, perBuyerSignals, trustedBiddingSignals,
+        browserSignals) {
+      return {bid: 1,
+              render: interestGroup.ads[0].renderURL};
+    }
+
+    function reportWin(
+        auctionSignals, perBuyerSignals, sellerSignals, browserSignals) {
+      queueReportAggregateWin({
+        modelingSignalsConfig: {
+          destination: "https://destination.test/",
+          aggregationCoordinatorOrigin: "https://origin.test/",
+          payloadLength: 256,
+        }
+      });
+      sendReportTo("https://buyer-reporting.example.com/?bid=" +
+                   browserSignals.bid);
+    }
+
+    function reportAggregateWin(aggregateWinSignals, modelingSignalsConfig,
+                                auctionSignals,perBuyerSignals, sellerSignals,
+                                browserSignals, directFromSellerSignals ) {
+      throw new Error("reportAggregateWin Error!");
+    }
+  )";
+
+  const std::string kSellerScript = R"(
+    function scoreAd(adMetadata, bid, auctionConfig, browserSignals) {
+      return bid;
+    }
+
+    function reportResult(auctionConfig, browserSignals) {
+          sendReportTo("https://seller-reporting.example.com/?bid=" +
+                   browserSignals.bid);
+
+    }
+  )";
+
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kBidder1Url,
+                                         kBidScript);
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         kSellerScript);
+
+  // Only one bidder, to keep things simple.
+  interest_group_buyers_ = {{kBidder1}};
   RunStandardAuction(/*request_trusted_bidding_signals=*/false);
   EXPECT_FALSE(result_.aborted_by_script);
   EXPECT_EQ(kBidder1Key, result_.winning_group_id);
   EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
+
+  EXPECT_THAT(
+      result_.report_urls,
+      testing::AnyOf(testing::ElementsAre(
+                         GURL("https://seller-reporting.example.com/?bid=1"),
+                         GURL("https://buyer-reporting.example.com/?bid=1")),
+                     testing::ElementsAre(
+                         GURL("https://seller-reporting.example.com/?bid=1"),
+                         GURL("https://buyer-reporting.example.com/?bid=1"))));
+
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url,
+      /*trusted_bidding_signals_url=*/std::nullopt,
+      /*trusted_bidding_signals_keys=*/{}, GURL("https://ad1.com")));
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+  EXPECT_THAT(result_.errors,
+              testing::UnorderedElementsAre(
+                  "https://adplatform.com/offers.js:25 "
+                  "Uncaught Error: reportAggregateWin Error!."));
 }
 
-TEST_P(BidRoundingTest, BidRounded) {
+TEST_F(RoundingTest, BidRounded) {
   const char kBidScript[] = R"(
     function generateBid(
         interestGroup, auctionSignals, perBuyerSignals, trustedBiddingSignals,
@@ -20194,44 +21300,18 @@ TEST_P(BidRoundingTest, BidRounded) {
   EXPECT_EQ(kBidder1Key, result_.winning_group_id);
   EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
 
-  switch (GetParam()) {
-    case 8:
-      EXPECT_THAT(
-          result_.report_urls,
-          testing::AnyOf(
-              testing::ElementsAre(
-                  GURL("https://seller-reporting.example.com/?bid=1.9921875"),
-                  GURL("https://buyer-reporting.example.com/?bid=1.9921875")),
-              testing::ElementsAre(
-                  GURL("https://seller-reporting.example.com/?bid=1.984375"),
-                  GURL("https://buyer-reporting.example.com/?bid=1.984375"))));
-      break;
-    case 16:
-      EXPECT_THAT(
-          result_.report_urls,
-          testing::AnyOf(
-              testing::ElementsAre(GURL("https://seller-reporting.example.com/"
-                                        "?bid=1.990020751953125"),
-                                   GURL("https://buyer-reporting.example.com/"
-                                        "?bid=1.990020751953125")),
-              testing::ElementsAre(GURL("https://seller-reporting.example.com/"
-                                        "?bid=1.989990234375"),
-                                   GURL("https://buyer-reporting.example.com/"
-                                        "?bid=1.989990234375"))));
-      break;
-    case 53:
-      EXPECT_THAT(result_.report_urls,
-                  testing::ElementsAre(
-                      GURL("https://seller-reporting.example.com/?bid=1.99"),
-                      GURL("https://buyer-reporting.example.com/?bid=1.99")));
-      break;
-    default:
-      // Not a supported test case.
-      ASSERT_TRUE(false);
-  }
+  EXPECT_THAT(
+      result_.report_urls,
+      testing::AnyOf(
+          testing::ElementsAre(
+              GURL("https://seller-reporting.example.com/?bid=1.9921875"),
+              GURL("https://buyer-reporting.example.com/?bid=1.9921875")),
+          testing::ElementsAre(
+              GURL("https://seller-reporting.example.com/?bid=1.984375"),
+              GURL("https://buyer-reporting.example.com/?bid=1.984375"))));
 }
 
-TEST_P(BidRoundingTest, HighestScoringOtherBidRounded) {
+TEST_F(RoundingTest, HighestScoringOtherBidRounded) {
   const char kBidScript[] = R"(
     function generateBid(
         interestGroup, auctionSignals, perBuyerSignals, trustedBiddingSignals,
@@ -20272,53 +21352,19 @@ TEST_P(BidRoundingTest, HighestScoringOtherBidRounded) {
   EXPECT_EQ(kBidder2Key, result_.winning_group_id);
   EXPECT_EQ(GURL("https://ad2.com/"), result_.ad_descriptor->url);
 
-  switch (GetParam()) {
-    case 8:
-      EXPECT_THAT(
-          result_.report_urls,
-          testing::ElementsAre(
-              testing::AnyOf(GURL("https://seller-reporting.example.com/"
-                                  "?highestScoringOtherBid=1.9921875"),
-                             GURL("https://seller-reporting.example.com/"
-                                  "?highestScoringOtherBid=1.984375")),
-              testing::AnyOf(GURL("https://buyer-reporting.example.com/"
-                                  "?highestScoringOtherBid=1.9921875"),
-                             GURL("https://buyer-reporting.example.com/"
-                                  "?highestScoringOtherBid=1.984375"))));
-      break;
-    case 16:
-      EXPECT_THAT(
-          result_.report_urls,
-          testing::ElementsAre(
-              testing::AnyOf(GURL("https://seller-reporting.example.com/"
-                                  "?highestScoringOtherBid=1.990020751953125"),
-                             GURL("https://seller-reporting.example.com/"
-                                  "?highestScoringOtherBid=1.989990234375")),
-              testing::AnyOf(GURL("https://buyer-reporting.example.com/"
-                                  "?highestScoringOtherBid=1.990020751953125"),
-                             GURL("https://buyer-reporting.example.com/"
-                                  "?highestScoringOtherBid=1.989990234375"))));
-      break;
-    case 53:
-      EXPECT_THAT(
-          result_.report_urls,
-          testing::ElementsAre(GURL("https://seller-reporting.example.com/"
-                                    "?highestScoringOtherBid=1.99"),
-                               GURL("https://buyer-reporting.example.com/"
-                                    "?highestScoringOtherBid=1.99")));
-      break;
-    default:
-      // Not a supported test case.
-      ASSERT_TRUE(false);
-  }
+  EXPECT_THAT(result_.report_urls,
+              testing::ElementsAre(
+                  testing::AnyOf(GURL("https://seller-reporting.example.com/"
+                                      "?highestScoringOtherBid=1.9921875"),
+                                 GURL("https://seller-reporting.example.com/"
+                                      "?highestScoringOtherBid=1.984375")),
+                  testing::AnyOf(GURL("https://buyer-reporting.example.com/"
+                                      "?highestScoringOtherBid=1.9921875"),
+                                 GURL("https://buyer-reporting.example.com/"
+                                      "?highestScoringOtherBid=1.984375"))));
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    /* no label */,
-    BidRoundingTest,
-    ::testing::Values(8, 16, 53));
-
-TEST_P(ScoreRoundingTest, ScoreRounded) {
+TEST_F(RoundingTest, ScoreRounded) {
   const char kBidScript[] = R"(
     function generateBid(
         interestGroup, auctionSignals, perBuyerSignals, trustedBiddingSignals,
@@ -20355,37 +21401,12 @@ TEST_P(ScoreRoundingTest, ScoreRounded) {
   EXPECT_EQ(kBidder1Key, result_.winning_group_id);
   EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
 
-  switch (GetParam()) {
-    case 8:
-      EXPECT_THAT(
-          result_.report_urls,
-          testing::ElementsAre(testing::AnyOf(
-              GURL("https://seller-reporting.example.com/?score=1.9921875"),
-              GURL("https://seller-reporting.example.com/?score=1.984375"))));
-      break;
-    case 16:
-      EXPECT_THAT(result_.report_urls,
-                  testing::ElementsAre(testing::AnyOf(
-                      GURL("https://seller-reporting.example.com/"
-                           "?score=1.990020751953125"),
-                      GURL("https://seller-reporting.example.com/"
-                           "?score=1.989990234375"))));
-      break;
-    case 53:
-      EXPECT_THAT(result_.report_urls,
-                  testing::ElementsAre(GURL(
-                      "https://seller-reporting.example.com/?score=1.99")));
-      break;
-    default:
-      // Not a supported test case.
-      ASSERT_TRUE(false);
-  }
+  EXPECT_THAT(
+      result_.report_urls,
+      testing::ElementsAre(testing::AnyOf(
+          GURL("https://seller-reporting.example.com/?score=1.9921875"),
+          GURL("https://seller-reporting.example.com/?score=1.984375"))));
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    /* no label */,
-    ScoreRoundingTest,
-    ::testing::Values(8, 16, 53));
 
 // Enable and test forDebuggingOnly.reportAdAuctionLoss() and
 // forDebuggingOnly.reportAdAuctionWin() APIs.
@@ -20400,8 +21421,6 @@ class AuctionRunnerBiddingAndScoringDebugReportingAPIEnabledTest
       public ::testing::WithParamInterface<bool> {
  public:
   AuctionRunnerBiddingAndScoringDebugReportingAPIEnabledTest() {
-    feature_list_.InitAndEnableFeature(
-        blink::features::kBiddingAndScoringDebugReportingAPI);
     if (SellerCurrencyOn()) {
       seller_currency_ = blink::AdCurrency::From("EUR");
     }
@@ -20810,7 +21829,7 @@ TEST_P(AuctionRunnerBiddingAndScoringDebugReportingAPIEnabledTest,
                   /*highest_scoring_other_bid=*/ModeBid(3), ModeCurrency(),
                   /*made_highest_scoring_other_bid=*/false)));
     } else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
   }
 }
@@ -21063,7 +22082,7 @@ TEST_P(AuctionRunnerBiddingAndScoringDebugReportingAPIEnabledTest,
                   /*highest_scoring_other_bid=*/ModeBid(2), ModeCurrency(),
                   /*made_highest_scoring_other_bid=*/true)));
     } else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
   }
 }
@@ -21306,7 +22325,7 @@ TEST_P(AuctionRunnerBiddingAndScoringDebugReportingAPIEnabledTest,
                   /*highest_scoring_other_bid=*/ModeBid(2), ModeCurrency(),
                   /*made_highest_scoring_other_bid=*/false)));
     } else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
   }
 }
@@ -22588,7 +23607,7 @@ TEST_F(AuctionRunnerTest, VerifyReportingIdsInScoreAd) {
   }
 }
 
-// Enable kBiddingAndScoringDebugReportingAPI, and kFledgeSampleDebugReports.
+// Enable kFledgeSampleDebugReports.
 // kFledgeEnableFilteringDebugReportStartingFrom is set to non-zero to enable
 // filtering debug reports, but set to a very short time delta (100 ms since
 // windows epoch) to guarantee lockout and cooldowns are after it and are not
@@ -22600,8 +23619,7 @@ class AuctionRunnerSampleDebugReportsEnabledTest : public AuctionRunnerTest {
     // fledge_debug_report_sampling_restricted_cooldown_random_max to small
     // numbers so that related tests can repeat less times and finish sooner.
     feature_list_.InitWithFeaturesAndParameters(
-        {{blink::features::kBiddingAndScoringDebugReportingAPI, {}},
-         {blink::features::kFledgeSampleDebugReports,
+        {{blink::features::kFledgeSampleDebugReports,
           {{"fledge_debug_report_sampling_random_max", "1"},
            {"fledge_debug_report_sampling_restricted_cooldown_random_max", "1"},
            {"fledge_enable_filtering_debug_report_starting_from", "100ms"}}}},
@@ -22697,8 +23715,7 @@ TEST_F(AuctionRunnerSampleDebugReportsEnabledTest,
   // Give it 100% chance to allow a debug report if not under cooldown or
   // lockout.
   feature_list.InitWithFeaturesAndParameters(
-      {{blink::features::kBiddingAndScoringDebugReportingAPI, {}},
-       {blink::features::kFledgeSampleDebugReports,
+      {{blink::features::kFledgeSampleDebugReports,
         {{"fledge_debug_report_sampling_random_max", "0"},
          {"fledge_debug_report_sampling_restricted_cooldown_random_max", "1"},
          {"fledge_enable_filtering_debug_report_starting_from", "100ms"}}}},
@@ -22800,9 +23817,8 @@ TEST_F(AuctionRunnerSampleDebugReportsEnabledTest,
                   testing::UnorderedElementsAre(
                       "https://bidder-debug-win-reporting.com/"));
       // We don't know the exact time, so just checking that there's a
-      // last_report_sent_time in DB after auction.
-      EXPECT_TRUE(new_debug_report_lockout_and_cooldowns.last_report_sent_time
-                      .has_value());
+      // lockout in DB after auction.
+      EXPECT_TRUE(new_debug_report_lockout_and_cooldowns.lockout.has_value());
       histogram_tester_->ExpectUniqueSample(
           "Ads.InterestGroup.Auction."
           "ForDebuggingOnlyReportAllowedAfterSampling",
@@ -22838,8 +23854,7 @@ TEST_F(AuctionRunnerSampleDebugReportsEnabledTest,
   // Give it 100% chance to allow a debug report if not under cooldown or
   // lockout.
   feature_list.InitWithFeaturesAndParameters(
-      {{blink::features::kBiddingAndScoringDebugReportingAPI, {}},
-       {blink::features::kFledgeSampleDebugReports,
+      {{blink::features::kFledgeSampleDebugReports,
         {{"fledge_debug_report_sampling_random_max", "0"},
          {"fledge_debug_report_sampling_restricted_cooldown_random_max", "1"},
          {"fledge_enable_filtering_debug_report_starting_from", "100ms"}}}},
@@ -22893,8 +23908,7 @@ TEST_F(AuctionRunnerSampleDebugReportsEnabledTest,
   // Give it 100% chance to allow a debug report if not under cooldown or
   // lockout. Set all cooldown and lockout lengths to zero.
   feature_list.InitWithFeaturesAndParameters(
-      {{blink::features::kBiddingAndScoringDebugReportingAPI, {}},
-       {blink::features::kFledgeSampleDebugReports,
+      {{blink::features::kFledgeSampleDebugReports,
         {{"fledge_debug_report_sampling_random_max", "0"},
          {"fledge_debug_report_sampling_restricted_cooldown_random_max", "1"},
          {"fledge_debug_report_lockout", "0ms"},
@@ -22950,8 +23964,7 @@ TEST_F(AuctionRunnerSampleDebugReportsEnabledTest,
   // Give it 100% chance to allow a debug report if not under cooldown or
   // lockout.
   feature_list.InitWithFeaturesAndParameters(
-      {{blink::features::kBiddingAndScoringDebugReportingAPI, {}},
-       {blink::features::kFledgeSampleDebugReports,
+      {{blink::features::kFledgeSampleDebugReports,
         {{"fledge_debug_report_sampling_random_max", "0"},
          {"fledge_debug_report_sampling_restricted_cooldown_random_max", "1"},
          {"fledge_enable_filtering_debug_report_starting_from",
@@ -23003,8 +24016,7 @@ class AuctionRunnerFilterDebugReportsDisabledTest : public AuctionRunnerTest {
  public:
   AuctionRunnerFilterDebugReportsDisabledTest() {
     feature_list_.InitWithFeaturesAndParameters(
-        {{blink::features::kBiddingAndScoringDebugReportingAPI, {}},
-         {blink::features::kFledgeSampleDebugReports,
+        {{blink::features::kFledgeSampleDebugReports,
           {{"fledge_debug_report_sampling_random_max", "1"},
            {"fledge_debug_report_sampling_restricted_cooldown_random_max", "1"},
            {"fledge_enable_filtering_debug_report_starting_from", "0ms"}}}},
@@ -23045,8 +24057,7 @@ TEST_F(AuctionRunnerFilterDebugReportsDisabledTest,
   // Give it 100% chance to allow a debug report if not under cooldown or
   // lockout, so that it will be locked out after the first debug report.
   feature_list.InitWithFeaturesAndParameters(
-      {{blink::features::kBiddingAndScoringDebugReportingAPI, {}},
-       {blink::features::kFledgeSampleDebugReports,
+      {{blink::features::kFledgeSampleDebugReports,
         {{"fledge_debug_report_sampling_random_max", "0"},
          {"fledge_debug_report_sampling_restricted_cooldown_random_max", "1"},
          {"fledge_enable_filtering_debug_report_starting_from", "0ms"}}}},
@@ -23094,8 +24105,7 @@ TEST_F(AuctionRunnerFilterDebugReportsDisabledTest,
             run_loop.Quit();
           }));
   run_loop.Run();
-  EXPECT_TRUE(
-      new_debug_report_lockout_and_cooldowns.last_report_sent_time.has_value());
+  EXPECT_TRUE(new_debug_report_lockout_and_cooldowns.lockout.has_value());
 }
 
 // Disable private aggregation API.
@@ -24416,29 +25426,29 @@ TEST_P(AuctionRunnerKAnonTest, MojoValidation) {
   const GURL kKAnonUrl("https://ad1.com");
   const GURL kNonKAnonUrl("https://ad2.com");
 
-  auto both_bid = auction_worklet::mojom::BidderWorkletBid::New(
-      auction_worklet::mojom::BidRole::kBothKAnonModes, "ad", 5.0,
-      /*bid_currency=*/std::nullopt,
-      /*ad_cost=*/std::nullopt, blink::AdDescriptor(kKAnonUrl),
-      /*selected_buyer_and_seller_reporting_id=*/std::nullopt,
-      /*ad_component_urls=*/std::nullopt,
-      /*modeling_signals=*/std::nullopt, base::TimeDelta());
+  auto both_bid =
+      auction_worklet::TestBidBuilder()
+          .SetBidRole(auction_worklet::mojom::BidRole::kBothKAnonModes)
+          .SetAd("ad")
+          .SetAdDescriptor(blink::AdDescriptor(kKAnonUrl))
+          .SetBid(5.0)
+          .Build();
 
-  auto enforced_bid = auction_worklet::mojom::BidderWorkletBid::New(
-      auction_worklet::mojom::BidRole::kEnforcedKAnon, "ad", 5.0,
-      /*bid_currency=*/std::nullopt,
-      /*ad_cost=*/std::nullopt, blink::AdDescriptor(kKAnonUrl),
-      /*selected_buyer_and_seller_reporting_id=*/std::nullopt,
-      /*ad_component_urls=*/std::nullopt,
-      /*modeling_signals=*/std::nullopt, base::TimeDelta());
+  auto enforced_bid =
+      auction_worklet::TestBidBuilder()
+          .SetBidRole(auction_worklet::mojom::BidRole::kEnforcedKAnon)
+          .SetAd("ad")
+          .SetAdDescriptor(blink::AdDescriptor(kKAnonUrl))
+          .SetBid(5.0)
+          .Build();
 
-  auto non_kanon_bid = auction_worklet::mojom::BidderWorkletBid::New(
-      auction_worklet::mojom::BidRole::kUnenforcedKAnon, "ad", 5.0,
-      /*bid_currency=*/std::nullopt,
-      /*ad_cost=*/std::nullopt, blink::AdDescriptor(kNonKAnonUrl),
-      /*selected_buyer_and_seller_reporting_id=*/std::nullopt,
-      /*ad_component_urls=*/std::nullopt,
-      /*modeling_signals=*/std::nullopt, base::TimeDelta());
+  auto non_kanon_bid =
+      auction_worklet::TestBidBuilder()
+          .SetBidRole(auction_worklet::mojom::BidRole::kUnenforcedKAnon)
+          .SetAd("ad")
+          .SetAdDescriptor(blink::AdDescriptor(kNonKAnonUrl))
+          .SetBid(5.0)
+          .Build();
 
   const struct TestCase {
     std::set<KAnonMode> run_in_modes;
@@ -24676,7 +25686,7 @@ TEST_P(AuctionRunnerKAnonTest, ReportingId) {
                             "commonid1/true/selectedid1/true"));
             break;
           default:
-            NOTREACHED_IN_MIGRATION();
+            NOTREACHED();
         }
       }
     }
@@ -24698,6 +25708,8 @@ TEST_P(AuctionRunnerKAnonTest, SelectedReportingIdMustBeKAnonForReporting) {
       std::string(R"(
         function generateBid(interestGroup, auctionSignals, perBuyerSignals,
                          trustedBiddingSignals, browserSignals) {
+          // This is in place for the re-run during a k-anon enforced
+          // generate bid.
           if (interestGroup.ads[0].selectableBuyerAndSellerReportingIds.length
               === 0) {
             return;
@@ -24763,6 +25775,161 @@ TEST_P(AuctionRunnerKAnonTest, SelectedReportingIdMustBeKAnonForReporting) {
   }
 }
 
+// This test verifies all the reporting ids are where we expect them to be in
+// different scenerios involving k-anon.
+//
+// For all cases we expect the following ids to be present when selectable
+// reporting ids are present, and once is selected within generateBid:
+//
+//  - generateBid:
+//    - selectableBuyerAndSellerReportingIds
+//    - buyerReportingId
+//    - buyerAndSellerReportingId
+//  - scoreAd:
+//    - selectedBuyerAndSellerReportingId
+//    - buyerAndSellerReportingId
+//
+// When all of the following conditions are true:
+//   - selectableBuyerAndSellerReportingIds are present
+//   - one is selected within generateBid
+//   - k-anon is enforced
+//   - authorize_reporting_kanon is false
+// neither reportWin nor reportResult will be called.
+
+// When selectableBuyerAndSellerReportingIds are not present, or one is not
+// selected within generateBid, both reportWin and reportResult will be called.
+// The remaining reporting ids will be passed to reportWin and reportResult only
+// if k-anon is not enforced or authorize_reporting_kanon is true.
+TEST_P(AuctionRunnerKAnonTest,
+       SelectedReportingIdNotKAnonVerifyPassedReportingIds) {
+  constexpr char kBiddingLogicScript[] = R"(
+  function generateBid(
+      interestGroup, unusedAuctionSignals, unusedPerBuyerSignals,
+      unusedTrustedBiddingSignals, unusedBrowserSignals) {
+      const ad = interestGroup.ads[0];
+    // This is in place for the re-run during a k-anon enforced generate bid.
+    if (ad.selectableBuyerAndSellerReportingIds.length
+                === 0) {
+      if (ad.buyerReportingId !== "brid" ||
+          ad.buyerAndSellerReportingId !== "bsid" ) {
+            throw "generateBid does not contain valid reporting ids";
+      }
+      return;
+    }
+    // Verify all of these are present in generate bid,
+    // if selectableBuyerAndSellerReportingIds is present.
+    if (ad.selectableBuyerAndSellerReportingIds.length !== 2 ||
+        ad.selectableBuyerAndSellerReportingIds[0] !== "selectable_id1" ||
+        ad.selectableBuyerAndSellerReportingIds[1] !== "selectable_id2" ||
+        ad.buyerReportingId !== "brid" ||
+        ad.buyerAndSellerReportingId !== "bsid" ) {
+      throw "generateBid does not contain valid reporting ids";
+    }
+    selectedReportingId = ad.selectableBuyerAndSellerReportingIds[0];
+    return {'ad': ad, 'bid': 1, 'render': ad.renderURL,
+            'selectedBuyerAndSellerReportingId': selectedReportingId};
+  }
+
+  function reportWin(unusedAuctionSignals, unusedPerBuyerSignals,
+                      unusedSellerSignals, browserSignals) {
+    // This function will not be called if k-anon is enforced and
+    // authorize_reporting_kanon is false, as there will be no auction
+    // winner in that case. We don't need to check that here because other
+    // tests already verify that reportWin is only called when the auction
+    // has a winner.
+    if(browserSignals.selectedBuyerAndSellerReportingId !== undefined){
+      throw "reportWin saw " + browserSignals.selectedBuyerAndSellerReportingId +
+        " " + browserSignals.buyerAndSellerReportingId+ " " +
+        browserSignals.buyerReportingId;
+    }
+  }
+  )";
+
+  constexpr char kDecisionLogicScript[] = R"(
+  function scoreAd(
+      adMetadata, bid, auctionConfig, unusedTrustedScoringSignals,
+      browserSignals) {
+    if (browserSignals.selectedBuyerAndSellerReportingId !== "selectable_id1" ||
+        browserSignals.buyerAndSellerReportingId !== "bsid") {
+      throw "scoreAd does not contain valid reporting ids";
+    }
+    return bid;
+  }
+
+  function reportResult(auctionConfig, browserSignals) {
+    // This function will not be called if k-anon is enforced and
+    // authorize_reporting_kanon is false, as there will be no auction
+    // winner in that case. We don't need to check that here because other
+    // tests already verify that reportResult is only called when the auction
+    // has a winner.
+    if(browserSignals.selectedBuyerAndSellerReportingId !== undefined){
+      throw "reportResult saw " + browserSignals.selectedBuyerAndSellerReportingId +
+        " " + browserSignals.buyerAndSellerReportingId;
+    }
+  }
+  )";
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      // bidding script tries to bid with ad that is not k-anonymous.
+      kBiddingLogicScript);
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         kDecisionLogicScript);
+
+  for (bool authorize_reporting_kanon : {false, true}) {
+    SCOPED_TRACE(authorize_reporting_kanon);
+    std::vector<StorageInterestGroup> bidders;
+    bidders.emplace_back(MakeInterestGroup(
+        kBidder1, kBidder1Name, kBidder1Url,
+        /*trusted_bidding_signals_url=*/std::nullopt,
+        /*trusted_bidding_signals_keys=*/{}, GURL("https://ad1.com")));
+    bidders[0].interest_group.ads.value()[0].buyer_reporting_id = "brid";
+    bidders[0].interest_group.ads.value()[0].buyer_and_seller_reporting_id =
+        "bsid";
+    bidders[0]
+        .interest_group.ads.value()[0]
+        .selectable_buyer_and_seller_reporting_ids = {"selectable_id1",
+                                                      "selectable_id2"};
+    AuthorizeKAnonAd(bidders[0].interest_group.ads.value()[0],
+                     "https://ad1.com/", bidders[0]);
+    if (authorize_reporting_kanon) {
+      AuthorizeKAnonReporting(bidders[0].interest_group.ads.value()[0],
+                              "https://ad1.com/", bidders[0],
+                              std::string("selectable_id1"));
+    }
+
+    StartAuction(kSellerUrl, bidders);
+    auction_run_loop_->Run();
+    // Have to spin all message loops to flush any k-anon set join events.
+    task_environment()->RunUntilIdle();
+    EXPECT_THAT(interest_group_manager_->TakeJoinedKAnonSets(),
+                testing::UnorderedElementsAre(
+                    blink::HashedKAnonKeyForAdBid(
+                        bidders[0].interest_group,
+                        bidders[0].interest_group.ads.value()[0].render_url()),
+                    blink::HashedKAnonKeyForAdNameReporting(
+                        bidders[0].interest_group,
+                        bidders[0].interest_group.ads.value()[0],
+                        std::string("selectable_id1"))));
+
+    if (kanon_mode() == KAnonMode::kEnforce && !authorize_reporting_kanon) {
+      // When k-anon is enforced and the reporting ID is not authorized, the
+      // bid is rejected because the reporting ID cannot be made k-anonymous.
+      EXPECT_FALSE(result_.ad_descriptor.has_value());
+      EXPECT_THAT(result_.errors, testing::ElementsAre());
+    } else {
+      ASSERT_TRUE(result_.ad_descriptor.has_value());
+      EXPECT_EQ(GURL("https://ad1.com"), result_.ad_descriptor->url);
+      EXPECT_THAT(result_.errors,
+                  testing::UnorderedElementsAre(
+                      "https://adstuff.publisher1.com/auction.js:19 "
+                      "Uncaught reportResult saw selectable_id1 bsid.",
+                      "https://adplatform.com/offers.js:37 Uncaught "
+                      "reportWin saw selectable_id1 bsid brid."));
+    }
+  }
+}
+
 TEST_P(AuctionRunnerKAnonTest, AdditionalBidBuyerReporting) {
   const char kAdditionalBidUrl[] =
       "https://adplatform.com/offers-contextual.js";
@@ -24823,14 +25990,18 @@ TEST_P(AuctionRunnerKAnonTest, AdditionalBidBuyerReporting) {
       kBidJsonTemplate, kAdditionalBidUrl, kBidder1.Serialize().c_str(),
       auction_nonce_->AsLowercaseString().c_str(), kSeller.Serialize().c_str());
 
-  std::map<std::string, std::vector<std::string>> additional_bids_for_nonce;
+  std::map<std::string, std::vector<SignedAdditionalBidWithMetadata>>
+      additional_bids_for_nonce;
   additional_bids_for_nonce[auction_nonce_->AsLowercaseString()].push_back(
-      GenerateSignedAdditionalBidHeaderPayloadPortion(
-          SignedAdditionalBidFault::kNone, bid_json,
-          {kPrivateKey1, kPrivateKey2},
-          {kBase64PublicKey1, kBase64PublicKey2}));
+      SignedAdditionalBidWithMetadata(
+          /*signed_additional_bid=*/
+          GenerateSignedAdditionalBidHeaderPayloadPortion(
+              SignedAdditionalBidFault::kNone, bid_json,
+              {kPrivateKey1, kPrivateKey2},
+              {kBase64PublicKey1, kBase64PublicKey2}),
+          /*seller_nonce=*/std::nullopt));
   ad_auction_page_data_->AddAuctionAdditionalBidsWitnessForOrigin(
-      kSeller, additional_bids_for_nonce);
+      kSeller, std::move(additional_bids_for_nonce));
 
   abortable_ad_auction_->ResolvedAdditionalBids(
       blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0));
@@ -25020,8 +26191,10 @@ TEST_F(AuctionRunnerTest, ServerResponseLogsErrors) {
        false,
        kSellerUrl,
        true,
-       {"runAdAuction(): No corresponding request with ID: " +
-        bad_request_id.AsLowercaseString()},
+       {base::StringPrintf("runAdAuction(): No corresponding request for "
+                           "seller '%s' with ID '%s'",
+                           kSeller.Serialize(),
+                           bad_request_id.AsLowercaseString())},
        AuctionResult::kInvalidServerResponse},
       {"wrong seller",
        chaff_response,
@@ -25029,7 +26202,9 @@ TEST_F(AuctionRunnerTest, ServerResponseLogsErrors) {
        true,
        kBidder1Url,  // Not the seller
        true,
-       {"runAdAuction(): Seller in response doesn't match request"},
+       {base::StringPrintf(
+           "runAdAuction(): No corresponding request for seller '%s' with ID ",
+           url::Origin::Create(kBidder1Url).Serialize())},
        AuctionResult::kInvalidServerResponse},
       {"not encrypted",
        chaff_response,
@@ -25101,18 +26276,171 @@ TEST_F(AuctionRunnerTest, ServerResponseLogsErrors) {
 
     abortable_ad_auction_->ResolvedAuctionAdResponsePromise(
         blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0),
-        mojo_base::BigBuffer(
-            base::as_bytes(base::make_span(encrypted_response))));
+        mojo_base::BigBuffer(base::as_byte_span(encrypted_response)));
 
     task_environment()->RunUntilIdle();
+    if (test_case.test_name != "wrong seller") {
+      EXPECT_THAT(result_.errors, testing::ElementsAreArray(test_case.errors));
+    } else {
+      EXPECT_EQ(result_.errors.size(), 1u);
+      EXPECT_EQ(test_case.errors.size(), 1u);
+      EXPECT_EQ(result_.errors[0], test_case.errors[0] + "'" +
+                                       request_id.AsLowercaseString() + "'");
+    }
+
+    hist.ExpectUniqueSample("Ads.InterestGroup.ServerAuction.Result",
+                            test_case.result, 1);
+  }
+}
+
+TEST_F(AuctionRunnerTest, MatchedSelectedReportingIdInServerResponse) {
+  const struct {
+    std::string test_name;
+    std::string winner_name;
+    std::optional<std::string> response_selected_buyer_and_seller_reporting_id;
+    std::vector<std::string> errors;
+    AuctionResult result;
+  } kTestCases[] = {
+      {
+          "Response no selected id, winner no selected id",
+          "NoSelectedBuyerAndSellerReportingId",
+          std::nullopt,
+          {},
+          AuctionResult::kSuccess,
+      },
+      {
+          "Response no selected id, winner has selected id",
+          "SelectedBuyerAndSellerReportingId",
+          std::nullopt,
+          {},
+          AuctionResult::kSuccess,
+      },
+      {
+          "Response has selected id, winner no selected id",
+          "NoSelectedBuyerAndSellerReportingId",
+          "SelectedBuyerAndSellerReportingId",
+          {"runAdAuction(): Couldn't reconstruct winning bid"},
+          AuctionResult::kInvalidServerResponse,
+      },
+      {
+          "Response has selected id, winner has selected id",
+          "SelectedBuyerAndSellerReportingId",
+          "SelectedBuyerAndSellerReportingId",
+          {},
+          AuctionResult::kSuccess,
+      },
+      {
+          "Response misspelled selcted id, winner has selected id",
+          "SelectedBuyerAndSellerReportingId",
+          "selectedbuyerandsellerreportingid",
+          {"runAdAuction(): Couldn't reconstruct winning bid"},
+          AuctionResult::kInvalidServerResponse,
+      },
+  };
+
+  for (const auto& test_case : kTestCases) {
+    SCOPED_TRACE(test_case.test_name);
+    base::HistogramTester hist;
+
+    cbor::Value::MapValue response_map;
+    response_map[cbor::Value("adRenderURL")] = cbor::Value("https://ad1.com");
+    response_map[cbor::Value("interestGroupName")] =
+        cbor::Value(test_case.winner_name);
+    response_map[cbor::Value("interestGroupOwner")] =
+        cbor::Value(kBidder1.Serialize());
+
+    if (test_case.response_selected_buyer_and_seller_reporting_id.has_value()) {
+      response_map[cbor::Value("selectedBuyerAndSellerReportingId")] =
+          cbor::Value(
+              *test_case.response_selected_buyer_and_seller_reporting_id);
+    }
+
+    cbor::Value::MapValue bidding_groups_map;
+    cbor::Value::ArrayValue bidding_groups_array;
+    bidding_groups_array.emplace_back(0);
+    bidding_groups_array.emplace_back(1);
+    bidding_groups_map[cbor::Value(kBidder1.Serialize())] =
+        cbor::Value(std::move(bidding_groups_array));
+
+    response_map[cbor::Value("biddingGroups")] =
+        cbor::Value(std::move(bidding_groups_map));
+
+    std::optional<std::vector<uint8_t>> response_vector =
+        cbor::Writer::Write(cbor::Value(std::move(response_map)));
+    ASSERT_TRUE(response_vector);
+    std::string unframed_response;
+    ASSERT_TRUE(
+        compression::GzipCompress(response_vector.value(), &unframed_response));
+
+    uint32_t request_size = unframed_response.size();
+    std::string response = {0x02, static_cast<char>(request_size >> 24),
+                            static_cast<char>(request_size >> 16),
+                            static_cast<char>(request_size >> 8),
+                            static_cast<char>(request_size >> 0)};
+
+    response += unframed_response;
+
+    const base::Uuid request_id = base::Uuid::GenerateRandomV4();
+    server_response_request_id_ = request_id;
+
+    quiche::ObliviousHttpRequest::Context client_context =
+        CreateBiddingAndAuctionEncryptionContext();
+    std::string encrypted_response =
+        quiche::ObliviousHttpResponse::CreateServerObliviousResponse(
+            response, client_context,
+            kBiddingAndAuctionEncryptionResponseMediaType)
+            ->EncapsulateAndSerialize();
+
+    ad_auction_page_data_ = PageUserData<AdAuctionPageData>::GetOrCreateForPage(
+        web_contents()->GetPrimaryPage());
+
+    std::string witnessed_hash = crypto::SHA256HashString(encrypted_response);
+    ad_auction_page_data_->AddAuctionResultWitnessForOrigin(kSeller,
+                                                            witnessed_hash);
+
+    AdAuctionRequestContext context(kSeller,
+                                    {{kBidder1,
+                                      {"NoSelectedBuyerAndSellerReportingId",
+                                       "SelectedBuyerAndSellerReportingId"}}},
+                                    std::move(client_context),
+                                    base::TimeTicks::Now(),
+                                    /*group_pagg_coordinators=*/{});
+    ad_auction_page_data_->RegisterAdAuctionRequestContext(request_id,
+                                                           std::move(context));
+
+    std::vector<StorageInterestGroup> bidders;
+    StorageInterestGroup no_id_group = MakeInterestGroup(
+        kBidder1, "NoSelectedBuyerAndSellerReportingId", kBidder1Url,
+        /*trusted_bidding_signals_url=*/std::nullopt,
+        /*trusted_bidding_signals_keys=*/{}, GURL("https://ad1.com"),
+        /*ad_component_urls=*/std::nullopt);
+    bidders.emplace_back(std::move(no_id_group));
+
+    StorageInterestGroup selected_buyer_and_seller_reporting_id_group =
+        MakeInterestGroup(
+            kBidder1, "SelectedBuyerAndSellerReportingId", kBidder1Url,
+            /*trusted_bidding_signals_url=*/std::nullopt,
+            /*trusted_bidding_signals_keys=*/{}, GURL("https://ad1.com"),
+            /*ad_component_urls=*/std::nullopt);
+    selected_buyer_and_seller_reporting_id_group.interest_group.ads.value()[0]
+        .selectable_buyer_and_seller_reporting_ids = {
+        "SelectedBuyerAndSellerReportingId"};
+    bidders.emplace_back(
+        std::move(selected_buyer_and_seller_reporting_id_group));
+
+    StartAuction(kSellerUrl, std::move(bidders));
+
+    abortable_ad_auction_->ResolvedAuctionAdResponsePromise(
+        blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0),
+        mojo_base::BigBuffer(base::as_byte_span(encrypted_response)));
+
+    auction_run_loop_->Run();
     EXPECT_THAT(result_.errors, testing::ElementsAreArray(test_case.errors));
     hist.ExpectUniqueSample("Ads.InterestGroup.ServerAuction.Result",
                             test_case.result, 1);
   }
 }
 
-// TODO(crbug.com/334053709): Add selected_buyer_and_seller_reporting_id when
-// it's added to the B&A response.
 TEST_F(AuctionRunnerTest, MatchedReportingIdsInServerResponse) {
   const struct {
     std::string test_name;
@@ -25325,8 +26653,7 @@ TEST_F(AuctionRunnerTest, MatchedReportingIdsInServerResponse) {
 
     abortable_ad_auction_->ResolvedAuctionAdResponsePromise(
         blink::mojom::AuctionAdConfigAuctionId::NewMainAuction(0),
-        mojo_base::BigBuffer(
-            base::as_bytes(base::make_span(encrypted_response))));
+        mojo_base::BigBuffer(base::as_byte_span(encrypted_response)));
 
     auction_run_loop_->Run();
     EXPECT_THAT(result_.errors, testing::ElementsAreArray(test_case.errors));
@@ -25403,6 +26730,129 @@ TEST_F(AuctionRunnerTest, TrustedBiddingSignalsAdSlotParamGroupingNoSizes) {
                   "&interestGroupNames=name1,name2,name3,name4,name5,name6")));
 
   // No need to finish the auction.
+}
+
+// Test that TrustedBiddingSignalsSlotSizeMode is respected in the case of KVv2
+// signals. Run an auction with 3 interest groups with different modes, and make
+// sure each one gets the correct signals. This test completely depends on the
+// checks in MockTrustedSignalsCache that exactly the expected signals requests
+// were made to the cache.
+TEST_P(AuctionRunnerTrustedSignalsTest, TrustedSignalsKVv2SlotSize) {
+  // The KVv1 slot tests can't be reused for KVv2, since bidding signals
+  // requests are not guaranteed to be merged, due to notification/PostTask
+  // patterns, so need separate KVv2 slot size tests for now.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  // Bidder 2 is reused for two interest groups, so have bidder 1 win.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeConstBidScript(2, "https://ad1.com/"));
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder2Url,
+      MakeConstBidScript(1, "https://ad2.com/"));
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         kMinimumDecisionScript);
+
+  requested_size_ = blink::AdSize(10, blink::AdSize::LengthUnit::kPixels, 20,
+                                  blink::AdSize::LengthUnit::kPixels);
+  all_slots_requested_sizes_ = {
+      blink::AdSize(10, blink::AdSize::LengthUnit::kPixels, 20,
+                    blink::AdSize::LengthUnit::kPixels),
+      blink::AdSize(30, blink::AdSize::LengthUnit::kPixels, 40,
+                    blink::AdSize::LengthUnit::kPixels)};
+
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
+      {"k1", "k2"}, GURL("https://ad1.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.back().interest_group.trusted_bidding_signals_slot_size_mode =
+      blink::InterestGroup::TrustedBiddingSignalsSlotSizeMode::kNone;
+
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder2, kBidder2Name, kBidder2Url, kBidder2TrustedSignalsUrl,
+      {"l1", "l2"}, GURL("https://ad2.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.back().interest_group.trusted_bidding_signals_slot_size_mode =
+      blink::InterestGroup::TrustedBiddingSignalsSlotSizeMode::kSlotSize;
+
+  // Largely reuse bidder 2's parameters for simplicity, but use a different URL
+  // for the third request, so no requests will be merged.
+  const GURL kBidder3TrustedSignalsUrl("https://some-other-url.test");
+  const std::string kBidder3Name("Bidder 3 name");
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder2, kBidder3Name, kBidder2Url, kBidder3TrustedSignalsUrl,
+      {"l1", "l2"}, GURL("https://ad2.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.back().interest_group.trusted_bidding_signals_slot_size_mode = blink::
+      InterestGroup::TrustedBiddingSignalsSlotSizeMode::kAllSlotsRequestedSizes;
+
+  AddDefaultBidder1SignalsResult();
+
+  auto bidder2_request_info = DefaultBidder2SignalsRequestInfo();
+  bidder2_request_info.compression_groups[0][0].additional_params.Set(
+      "slotSize", "10px,20px");
+  AddBiddingSignalsCacheResult(std::move(bidder2_request_info),
+                               MakeBidder2CompressionGroupMap());
+
+  auto bidder3_request_info = DefaultBidder2SignalsRequestInfo();
+  bidder3_request_info.trusted_bidding_signals_url = kBidder3TrustedSignalsUrl;
+  bidder3_request_info.compression_groups[0][0].interest_group_names = {
+      kBidder3Name};
+  bidder3_request_info.compression_groups[0][0].additional_params.Set(
+      "allSlotsRequestedSizes", "10px,20px,30px,40px");
+  // The actual response doesn't matter - this test depends on the logic in
+  // MockTrustedSignalsCache to verify all the expected requests were sent, with
+  // the correct parameters.
+  AddBiddingSignalsCacheResult(std::move(bidder3_request_info),
+                               MakeBidder2CompressionGroupMap());
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+  EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
+}
+
+// Test the KVv2 bidding signals case where interest groups require slot sites,
+// but the AuctionConfig doesn't provide any.
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       TrustedSignalsKVv2SlotSizeRequestedButNotProvided) {
+  // The KVv1 slot tests can't be reused for KVv2, since bidding signals
+  // requests are not guaranteed to be merged, due to notification/PostTask
+  // patterns, so need separate KVv2 slot size tests for now.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeConstBidScript(2, "https://ad1.com/"));
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder2Url,
+      MakeConstBidScript(1, "https://ad2.com/"));
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         kMinimumDecisionScript);
+
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
+      {"k1", "k2"}, GURL("https://ad1.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.back().interest_group.trusted_bidding_signals_slot_size_mode =
+      blink::InterestGroup::TrustedBiddingSignalsSlotSizeMode::kSlotSize;
+
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder2, kBidder2Name, kBidder2Url, kBidder2TrustedSignalsUrl,
+      {"l1", "l2"}, GURL("https://ad2.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.back().interest_group.trusted_bidding_signals_slot_size_mode = blink::
+      InterestGroup::TrustedBiddingSignalsSlotSizeMode::kAllSlotsRequestedSizes;
+
+  AddDefaultBidder1SignalsResult();
+  AddDefaultBidder2SignalsResult();
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+  EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
 }
 
 TEST_F(AuctionRunnerTest, TrustedBiddingSignalsJointBatchedRequests) {
@@ -25571,6 +27021,594 @@ TEST_F(AuctionRunnerTest, TrustedScoringSignalsSplitBatchedRequests) {
                "2F")));
 
   // No need to finish the auction.
+}
+
+// Test KVv2 bidding signals fetching in the case of two same-origin interest
+// groups that share a joining origin and have an execution mode of
+// group-by-origin. The signals requests should be in the same partition.
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       TrustedSignalsKVv2SameSignalsUrlGroupByOrigin) {
+  // Don't bother to test the KVv1 case, as joining origin doesn't matter for
+  // those requests.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  // For second bidder, use name equal to the bid, to bypass seller script
+  // checks that expect one pre-set name for a each bidder origin.
+  const std::string kOtherBidderName = "2";
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/0,
+                    kBidder1, kBidder1Name,
+                    /*has_signals=*/true, "k1", "a"));
+
+  // Second bidder script.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1UrlAlt,
+      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/0,
+                    kBidder1, kOtherBidderName, /*has_signals=*/true, "l2",
+                    "b"));
+
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         MakeAuctionScript());
+
+  auto bidder_request_info = DefaultBidder1SignalsRequestInfo();
+  auto& partition = bidder_request_info.compression_groups[0][0];
+  partition.interest_group_names.insert(kOtherBidderName);
+  partition.keys.insert("l1");
+  partition.keys.insert("l2");
+  auto compression_group_map = MakeCompressionGroupMapForOneGroup(
+      R"([{
+        "id": 0,
+        "keyGroupOutputs": [{
+          "tags": [
+            "keys"
+          ],
+          "keyValues": {
+            "k1": {
+              "value": "\"a\""
+            },
+            "l2": {
+              "value": "\"b\""
+            }
+          }
+        }]
+      }])");
+  AddBiddingSignalsCacheResult(std::move(bidder_request_info),
+                               std::move(compression_group_map));
+
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
+      {"k1", "k2"}, GURL("https://ad1.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kOtherBidderName, kBidder1UrlAlt, kBidder1TrustedSignalsUrl,
+      {"l1", "l2"}, GURL("https://ad2.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders[0].interest_group.execution_mode =
+      blink::InterestGroup::ExecutionMode::kGroupedByOriginMode;
+  bidders[1].interest_group.execution_mode =
+      blink::InterestGroup::ExecutionMode::kGroupedByOriginMode;
+  // Give first bidder a higher priority to make sure they're passed to the
+  // TrustedSignalsCache in a consistent order.
+  bidders[0].interest_group.priority = 2;
+  bidders[1].interest_group.priority = 1;
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+
+  EXPECT_THAT(result_.errors, testing::ElementsAre());
+  EXPECT_EQ(GURL("https://ad2.com/"), result_.ad_descriptor->url);
+}
+
+// Test KVv2 bidding signals fetching in the case of two same-origin interest
+// groups that share a joining origin but don't have an execution mode of
+// group-by-origin. The signals requests should be in different partitions in
+// the same compression group.
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       TrustedSignalsKVv2SameSignalsUrlSameJoiningOrigin) {
+  // Don't bother to test the KVv1 case, as joining origin doesn't matter for
+  // those requests.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  // For second bidder, use name equal to the bid, to bypass seller script
+  // checks that expect one pre-set name for a each bidder origin.
+  const std::string kOtherBidderName = "2";
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/0,
+                    kBidder1, kBidder1Name,
+                    /*has_signals=*/true, "k1", "a"));
+
+  // Second bidder script.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1UrlAlt,
+      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/0,
+                    kBidder1, kOtherBidderName, /*has_signals=*/true, "l2",
+                    "b"));
+
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         MakeAuctionScript());
+
+  auto bidder_request_info = DefaultBidder1SignalsRequestInfo();
+
+  MockTrustedSignalsCacheImpl::BiddingPartitionInfo partition2{
+      /*partition_id=*/1,
+      {kOtherBidderName},
+      /*keys=*/{"l1", "l2"},
+      /*additional_params=*/base::Value::Dict()};
+  bidder_request_info.compression_groups[0].emplace_back(std::move(partition2));
+  auto compression_group_map = MakeCompressionGroupMapForOneGroup(
+      R"([
+        {
+          "id": 0,
+          "keyGroupOutputs": [{
+            "tags": [
+              "keys"
+            ],
+            "keyValues": {
+              "k1": {
+                "value": "\"a\""
+              }
+            }
+          }]
+        },
+        {
+          "id": 1,
+          "keyGroupOutputs": [{
+            "tags": [
+              "keys"
+            ],
+            "keyValues": {
+              "l2": {
+                "value": "\"b\""
+              }
+            }
+          }]
+        }
+      ])");
+  AddBiddingSignalsCacheResult(std::move(bidder_request_info),
+                               std::move(compression_group_map));
+
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
+      {"k1", "k2"}, GURL("https://ad1.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kOtherBidderName, kBidder1UrlAlt, kBidder1TrustedSignalsUrl,
+      {"l1", "l2"}, GURL("https://ad2.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  // Give first bidder a higher priority to make sure they're passed to the
+  // TrustedSignalsCache in a consistent order.
+  bidders[0].interest_group.priority = 2;
+  bidders[1].interest_group.priority = 1;
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+
+  EXPECT_THAT(result_.errors, testing::ElementsAre());
+  EXPECT_EQ(GURL("https://ad2.com/"), result_.ad_descriptor->url);
+}
+
+// Test KVv2 bidding signals fetching in the case of two same-origin interest
+// groups don't share a joining origin. The signals requests should be in
+// different partitions.
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       TrustedSignalsKVv2SameSignalsUrlDifferentJoiningOrigin) {
+  // Don't bother to test the KVv1 case, as joining origin doesn't matter for
+  // those requests.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  // For second bidder, use name equal to the bid, to bypass seller script
+  // checks that expect one pre-set name for a each bidder origin.
+  const std::string kOtherBidderName = "2";
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/0,
+                    kBidder1, kBidder1Name,
+                    /*has_signals=*/true, "k1", "a"));
+
+  // Second bidder script.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1UrlAlt,
+      MakeBidScript(kSeller, "2", "https://ad2.com/", /*num_ad_components=*/0,
+                    kBidder1, kOtherBidderName, /*has_signals=*/true, "l2",
+                    "b"));
+
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         MakeAuctionScript());
+
+  auto compression_group_map = MakeCompressionGroupMapForOneGroup(
+      R"([
+        {
+          "id": 0,
+          "keyGroupOutputs": [{
+            "tags": [
+              "keys"
+            ],
+            "keyValues": {
+              "k1": {
+                "value": "\"a\""
+              }
+            }
+          }]
+        }])");
+  compression_group_map[1] = MakeCompressionGroupResult(
+      R"([{
+        "id": 0,
+        "keyGroupOutputs" : [{
+          "tags": [
+            "keys"
+          ],
+          "keyValues" : {
+            "l2": {
+              "value": "\"b\""
+            }
+          }
+        }]
+      }])");
+  auto bidder_request_info = DefaultBidder1SignalsRequestInfo();
+  std::vector<MockTrustedSignalsCacheImpl::BiddingPartitionInfo> partitions2;
+  partitions2.emplace_back(MockTrustedSignalsCacheImpl::BiddingPartitionInfo{
+      /*partition_id=*/0,
+      {kOtherBidderName},
+      /*keys=*/{"l1", "l2"},
+      /*additional_params=*/base::Value::Dict()});
+  bidder_request_info.compression_groups.emplace(1, std::move(partitions2));
+  AddBiddingSignalsCacheResult(std::move(bidder_request_info),
+                               std::move(compression_group_map));
+
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
+      {"k1", "k2"}, GURL("https://ad1.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kOtherBidderName, kBidder1UrlAlt, kBidder1TrustedSignalsUrl,
+      {"l1", "l2"}, GURL("https://ad2.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders[1].joining_origin =
+      url::Origin::Create(GURL("https://other-joining-origin.test"));
+  // Give first bidder a higher priority to make sure they're passed to the
+  // TrustedSignalsCache in a consistent order.
+  bidders[0].interest_group.priority = 2;
+  bidders[1].interest_group.priority = 1;
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+
+  EXPECT_THAT(result_.errors, testing::ElementsAre());
+  EXPECT_EQ(GURL("https://ad2.com/"), result_.ad_descriptor->url);
+}
+
+// Test KVv2 bidding signals fetching in the case of two interest groups with
+// different owners that share a joining origin and share a trusted signals URLs
+// and coordinator. The two signals requests should not be combined. This test
+// also serves to make sure the interest group owner's origin is correctly
+// passed to the cache, instead of the origin of the signals URL.
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       TrustedSignalsKVv2SameSignalsUrlDifferentOwner) {
+  // Don't bother to test the KVv1 case, as different origins guarantee
+  // different worklet processes, so requests can't be merged.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/0,
+                    kBidder1, kBidder1Name, /*has_signals=*/true, "k1", "a"));
+
+  // Second bidder script. Use a simpler script, since the default one only
+  // supports same-origin trusted signals.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder2Url,
+      MakeConstBidScript(2, "https://ad2.com/") + kReportWinNoUrl);
+
+  // Also use basic decision script, as the full one isn't compatible with the
+  // above basic bidding script.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kSellerUrl,
+      std::string(kMinimumDecisionScript) + kBasicReportResult);
+
+  // Used defaults for bidder 1's signals request.
+  AddDefaultBidder1SignalsResult();
+
+  // Use all defaults other than the trusted signals URL for bidder 2.
+  auto bidder2_request_info = DefaultBidder2SignalsRequestInfo();
+  bidder2_request_info.trusted_bidding_signals_url = kBidder1TrustedSignalsUrl;
+  AddBiddingSignalsCacheResult(std::move(bidder2_request_info),
+                               MakeBidder2CompressionGroupMap());
+
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
+      {"k1", "k2"}, GURL("https://ad1.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder2, kBidder2Name, kBidder2Url, kBidder1TrustedSignalsUrl,
+      {"l1", "l2"}, GURL("https://ad2.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  // Joining origin defaults to owner, so need to overwrite bidder 2's joining
+  // origin for them to match.
+  bidders[1].joining_origin = bidders[0].joining_origin;
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+
+  EXPECT_THAT(result_.errors, testing::ElementsAre());
+  EXPECT_EQ(GURL("https://ad2.com/"), result_.ad_descriptor->url);
+}
+
+// In the case of a component auction with a cross origin trusted signals
+// request, when KVv2 trusted signals are required, make sure the top-level
+// worklet load starts once a process is assigned to the component auction,
+// rather than waiting for the component auction to finish loading its script.
+TEST_P(
+    AuctionRunnerTrustedSignalsTest,
+    CrossOriginTrustedSignalsComponentAuctionTopLevelSellerOnProcessAssigned) {
+  // This test is only really interesting in the KVv2 case.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  // Manually set up trusted signals cache, and retain raw pointer. This test
+  // can't use the AddScoringSignalsCacheResult() helper used by most tests,
+  // since it only adds a result after starting the auction.
+  trusted_signals_cache_impl_ = std::make_unique<MockTrustedSignalsCacheImpl>();
+  raw_ptr<MockTrustedSignalsCacheImpl> trusted_signals_cache_impl =
+      trusted_signals_cache_impl_.get();
+
+  const GURL kComponentScoringSignalsUrl("https://cross-origin.test/");
+
+  interest_group_buyers_.reset();
+  component_auctions_.emplace_back(
+      CreateAuctionConfig(kComponentSeller1Url, /*buyers=*/{{kBidder1}}));
+  component_auctions_.front()
+      .non_shared_params.trusted_scoring_signals_coordinator =
+      coordinator_origin_;
+  component_auctions_.front().trusted_scoring_signals_url =
+      kComponentScoringSignalsUrl;
+
+  // Bidder response doesn't matter.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kComponentSeller1, /*bid=*/"1", "https://ad1.com/",
+                    /*num_ad_components=*/2, kBidder1, kBidder1Name));
+
+  StartStandardAuction(/*request_trusted_bidding_signals=*/false);
+
+  // Both the component auction seller script URL and top-level seller script
+  // URL should be requested. There should be no scoring signals cache request,
+  // however, until there's a response for the component seller URL granting
+  // permissions to access it. Note that KVv2 scoring signals requests are
+  // mocked out at the TrustedSignalsCache layer, which fails if it sees an
+  // unexpected request, so there's no need to check anything here.
+  url_loader_factory_.WaitForRequest(kComponentSeller1Url);
+  url_loader_factory_.WaitForRequest(kSellerUrl);
+
+  // Make sure there's no pending request to the TrustedSignalsCache.
+  task_environment()->RunUntilIdle();
+
+  // Inject mock request/response pair into the TrustedSignalsCache. It's just
+  // like the default bidder1 request, except for the origin and signals URL in
+  // the request.
+  std::vector<MockTrustedSignalsCacheImpl::ScoringPartitionInfo> partitions;
+  partitions.emplace_back(MockTrustedSignalsCacheImpl::ScoringPartitionInfo{
+      /*partition_id=*/0,
+      /*render_url=*/GURL("https://ad1.com/"),
+      /*component_render_urls=*/{GURL("https://ad1.com-component1.com")},
+      /*additional_params=*/base::Value::Dict()});
+  std::map<int, std::vector<MockTrustedSignalsCacheImpl::ScoringPartitionInfo>>
+      compression_groups;
+  compression_groups.emplace(0, std::move(partitions));
+  trusted_signals_cache_impl->AddSellerSignalsResult(
+      MockTrustedSignalsCacheImpl::SellerRequestInfo(
+          top_frame_origin_, kComponentSeller1, kComponentScoringSignalsUrl,
+          std::move(compression_groups)),
+      MakeCompressionGroupMapForOneGroup(kBidder1ScoringSignalsKVv2Json));
+
+  // Component scoreAd() script that only accepts bids where the scoring signals
+  // of the `renderURL` is "accept".
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kComponentSeller1Url, std::string(R"(
+function scoreAd(adMetadata, bid, auctionConfig, trustedScoringSignals,
+                 browserSignals, directFromSellerSignals,
+                 crossOriginTrustedSignals) {
+  let signal = crossOriginTrustedSignals["https://cross-origin.test"].
+      renderURL[browserSignals.renderURL];
+  // 2 * bid is expected by the BidderWorklet ReportWin() script.
+  if (signal == "accept")
+    return {desirability: 2 * bid, allowComponentAuction: true};
+  throw "incorrect trustedScoringSignals";
+}
+
+function reportResult(auctionConfig, browserSignals) {
+  return browserSignals;
+}
+                                                    )"),
+      /*extra_headers=*/
+      std::string("Ad-Auction-Allow-Trusted-Scoring-Signals-From:"
+                  " \"https://cross-origin.test/\""));
+
+  // Minimal top-level scoring script.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kSellerUrl,
+      std::string(kMinimumDecisionScript) + kBasicReportResult);
+
+  // Wait for auction to complete.
+  auction_run_loop_->Run();
+
+  EXPECT_THAT(result_.errors, testing::UnorderedElementsAre());
+  EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
+}
+
+// Test that KVv2 trusted bidding signals requests are batched together even
+// when there are more than AuctionWorkletManager::kBatchSize interest groups.
+TEST_P(AuctionRunnerTrustedSignalsTest, TrustedBiddingSignalsKVv2Batching) {
+  // Don't bother to test the KVv1 case, as batching is tested separately for
+  // that.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  // Basic bidding script that checks that `trustedBiddingSignals` is received,
+  // and uses the interest group name as the bid. Names are increasing integers,
+  // so the last interest group should win the auction.
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kBidder1Url,
+                                         R"(
+function generateBid(interestGroup, auctionSignals, perBuyerSignals,
+                     trustedBiddingSignals, browserSignals) {
+  if (trustedBiddingSignals["k1"] != "a") {
+    throw "bad trustedBiddingSignals: " + JSON.stringify(trustedBiddingSignals);
+  }
+  return {bid: interestGroup.name, render: interestGroup.ads[0].renderURL};
+}
+
+function reportWin() {}
+                                         )");
+
+  // Minimal top-level scoring script.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kSellerUrl,
+      std::string(kMinimumDecisionScript) + kBasicReportResult);
+
+  // Add a bunch of bidders. Use group-by-origin mode so all their requests are
+  // merged into a single partition. Since interest group names are sorted
+  // alphabetically within a partition, a shared partition means the structure
+  // of the request does not depend on the order signals for each interest group
+  // are requested from the cache.
+  //
+  // Use the same key for all interest groups, for simplicity. Other tests cover
+  // joining of requests with different keys.
+  std::vector<StorageInterestGroup> bidders;
+  std::vector<MockTrustedSignalsCacheImpl::BiddingPartitionInfo> partitions;
+  partitions.emplace_back(MockTrustedSignalsCacheImpl::BiddingPartitionInfo{
+      /*partition_id=*/0,
+      {},
+      /*keys=*/{"k1"},
+      /*additional_params=*/base::Value::Dict()});
+  for (size_t i = 0; i < 3 * AuctionWorkletManager::kBatchSize; ++i) {
+    std::string interest_group_name = base::NumberToString(i);
+    partitions[0].interest_group_names.emplace(interest_group_name);
+    bidders.emplace_back(MakeInterestGroup(
+        kBidder1, interest_group_name, kBidder1Url, kBidder1TrustedSignalsUrl,
+        {"k1"}, GURL("https://ad1.com"), /*ad_component_urls=*/std::nullopt,
+        coordinator_origin_));
+    bidders.back().interest_group.execution_mode =
+        blink::InterestGroup::ExecutionMode::kGroupedByOriginMode;
+  }
+
+  std::map<int, std::vector<MockTrustedSignalsCacheImpl::BiddingPartitionInfo>>
+      compression_groups;
+  compression_groups.try_emplace(0, std::move(partitions));
+  AddBiddingSignalsCacheResult(
+      MockTrustedSignalsCacheImpl::BidderRequestInfo{
+          top_frame_origin_, kBidder1, kBidder1TrustedSignalsUrl,
+          std::move(compression_groups)},
+      MakeBidder1CompressionGroupMap());
+
+  RunAuctionAndWait(kSellerUrl, std::move(bidders));
+
+  EXPECT_THAT(result_.errors, testing::ElementsAre());
+  EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
+  EXPECT_EQ((InterestGroupKey{kBidder1,
+                              base::NumberToString(
+                                  3 * AuctionWorkletManager::kBatchSize - 1)}),
+            result_.winning_group_id);
+}
+
+// Test that when a BiddingWorklet fails to load, the failed loads are correctly
+// taken into account when determining when to send batched KVv2 requests that
+// were merged between the failing BidderWorklet and other BidderWorklets that
+// were same-origin to it.
+TEST_P(AuctionRunnerTrustedSignalsTest,
+       TrustedBiddingSignalsKVv2BatchingWorkletLoadError) {
+  // Don't bother to test the KVv1 case, as batching is tested separately for
+  // that.
+  if (!UsingKVv2Signals()) {
+    return;
+  }
+
+  // Basic bidding script that successfully loads.
+  auction_worklet::AddJavascriptResponse(
+      &url_loader_factory_, kBidder1Url,
+      MakeBidScript(kSeller, "1", "https://ad1.com/", /*num_ad_components=*/0,
+                    kBidder1, kBidder1Name,
+                    /*has_signals=*/true, "k1", "a"));
+  AddDefaultBidder1SignalsResult();
+
+  // `kBidder1UrlAlt` fails to load.
+  url_loader_factory_.AddResponse(kBidder1UrlAlt.spec(), "",
+                                  net::HTTP_NOT_FOUND);
+
+  // Scoring script.
+  auction_worklet::AddJavascriptResponse(&url_loader_factory_, kSellerUrl,
+                                         MakeAuctionScript());
+
+  // Add bidder that should successfully load and bid.
+  std::vector<StorageInterestGroup> bidders;
+  bidders.emplace_back(MakeInterestGroup(
+      kBidder1, kBidder1Name, kBidder1Url, kBidder1TrustedSignalsUrl,
+      {"k1", "k2"}, GURL("https://ad1.com"), /*ad_component_urls=*/std::nullopt,
+      coordinator_origin_));
+  // Give this bidder a higher priority, so it calls into the cache first, and
+  // thus any other requests will be merged with it, and there will be a single
+  // coordinator request. If the other requests were started first, and then
+  // failed before this IG started its request to the cache, there might be
+  // multiple coordinator key requests, which the test fixture isn't designed
+  // to handle.
+  bidders.back().interest_group.priority = 2;
+
+  // Add a bunch of bidders that use `kBidder1UrlAlt` and the same trusted
+  // signals URL as the successfully loaded bidder. Use a different joining
+  // origin so that different compression groups will be used, since on
+  // cancellation, different compression groups can be stripped from the
+  // original request.
+  url::Origin other_joining_origin =
+      url::Origin::Create(GURL("https://other.test/"));
+  // 15 may seem too large, but the test does make through to the 5th batch, so
+  // it needs to be at least 6. Add some batches on top of that to protect
+  // against behavior changes and races.
+  for (size_t i = 0; i < 15 * AuctionWorkletManager::kBatchSize; ++i) {
+    bidders.emplace_back(MakeInterestGroup(
+        kBidder1, /*interest_group_name=*/base::NumberToString(i),
+        kBidder1UrlAlt, kBidder1TrustedSignalsUrl, {"l1"},
+        GURL("https://ad2.com"), /*ad_component_urls=*/std::nullopt,
+        coordinator_origin_));
+    bidders.back().joining_origin = other_joining_origin;
+    bidders.back().interest_group.priority = 1;
+  }
+
+  // Defer the coordinator key callback, so that all bidders have been informed
+  // of the failure before the TrustedSignalsFetcher has been started. This is
+  // needed to make sure that all the bidders associated with the failed URL
+  // load have been fully cleaned up and cancelled their signals requests before
+  // the fetch starts, so the contents of the fetch are predictable, and don't
+  // depend on the details of the error notification order.
+  trusted_signals_cache_impl_->set_defer_coordinator_key_callback();
+
+  // Back up pointer, since ownership is passed to the
+  // InterestGroupAuctionManager when starting an auction.
+  auto* trusted_signals_cache_impl = trusted_signals_cache_impl_.get();
+
+  StartAuction(kSellerUrl, std::move(bidders));
+  task_environment()->RunUntilIdle();
+  trusted_signals_cache_impl->InvokeCoordinatorKeyCallback();
+  auction_run_loop_->Run();
+
+  // Erase expected load errors, before checking for any other unexpected
+  // errors.
+  std::erase_if(result_.errors, [](const auto& error) {
+    return error ==
+           "Failed to load https://adplatform.com/offers_alt.js HTTP status = "
+           "404 Not Found.";
+  });
+  EXPECT_THAT(result_.errors, testing::ElementsAre());
+  EXPECT_EQ(GURL("https://ad1.com/"), result_.ad_descriptor->url);
 }
 
 }  // namespace

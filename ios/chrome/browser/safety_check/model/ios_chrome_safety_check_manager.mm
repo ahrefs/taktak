@@ -287,6 +287,16 @@ void IOSChromeSafetyCheckManager::ManagerWillShutdown(
   password_check_manager_ = nullptr;
 }
 
+void IOSChromeSafetyCheckManager::OnServiceStarted(
+    OmahaService* omaha_service) {
+  CHECK(IsOmahaServiceRefactorEnabled());
+
+  if (omaha_check_queued_) {
+    omaha_check_queued_ = false;
+    StartOmahaCheck();
+  }
+}
+
 void IOSChromeSafetyCheckManager::UpgradeRecommendedDetailsChanged(
     UpgradeRecommendedDetails details) {
   CHECK(IsOmahaServiceRefactorEnabled());
@@ -444,7 +454,8 @@ void IOSChromeSafetyCheckManager::SetPasswordCheckState(
        state == PasswordSafetyCheckState::kSafe);
 
   if (should_log_freshness) {
-    RecordModuleFreshnessSignal(ContentSuggestionsModuleType::kSafetyCheck);
+    RecordModuleFreshnessSignal(ContentSuggestionsModuleType::kSafetyCheck,
+                                pref_service_);
     base::UmaHistogramEnumeration(
         "IOS.SafetyCheck.FreshnessTrigger",
         IOSSafetyCheckFreshnessTrigger::kPasswordCheckStateChanged);
@@ -504,7 +515,8 @@ void IOSChromeSafetyCheckManager::SetUpdateChromeCheckState(
        state == UpdateChromeSafetyCheckState::kUpToDate);
 
   if (should_log_freshness) {
-    RecordModuleFreshnessSignal(ContentSuggestionsModuleType::kSafetyCheck);
+    RecordModuleFreshnessSignal(ContentSuggestionsModuleType::kSafetyCheck,
+                                pref_service_);
     base::UmaHistogramEnumeration(
         "IOS.SafetyCheck.FreshnessTrigger",
         IOSSafetyCheckFreshnessTrigger::kUpdateChromeCheckStateChanged);
@@ -551,6 +563,17 @@ void IOSChromeSafetyCheckManager::UpdateSafeBrowsingCheckState() {
 
 // TODO(crbug.com/40922030): Add UMA logs related to the Update Chrome check.
 void IOSChromeSafetyCheckManager::StartOmahaCheck() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  if (IsOmahaServiceRefactorEnabled() && !OmahaService::HasStarted()) {
+    omaha_check_queued_ = true;
+    return;
+  }
+
+  StartOmahaCheckInternal();
+}
+
+void IOSChromeSafetyCheckManager::StartOmahaCheckInternal() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   SetUpdateChromeCheckState(UpdateChromeSafetyCheckState::kRunning);
@@ -674,7 +697,12 @@ void IOSChromeSafetyCheckManager::RemoveObserver(
 
 void IOSChromeSafetyCheckManager::StartOmahaCheckForTesting() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  StartOmahaCheck();
+  StartOmahaCheckInternal();
+}
+
+bool IOSChromeSafetyCheckManager::IsOmahaCheckQueuedForTesting() const {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return omaha_check_queued_;
 }
 
 RunningSafetyCheckState

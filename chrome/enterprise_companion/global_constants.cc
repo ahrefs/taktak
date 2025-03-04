@@ -52,8 +52,6 @@ class GlobalConstantsImpl : public GlobalConstants {
 #endif
   }
 
-  ~GlobalConstantsImpl() override = default;
-
   GURL CrashUploadURL() const override { return crash_upload_url_; }
 
   GURL DeviceManagementEncryptedReportingURL() const override {
@@ -147,6 +145,7 @@ class GlobalConstantsImpl : public GlobalConstants {
                      GURL& value) {
     const std::string* str = overrides.FindString(key);
     if (str) {
+      VLOG(2) << __func__ << ": " << key << " = " << *str;
       value = GURL(*str);
     }
   }
@@ -156,6 +155,7 @@ class GlobalConstantsImpl : public GlobalConstants {
                      base::TimeDelta& value) {
     std::optional<int> override_val = overrides.FindInt(key);
     if (override_val) {
+      VLOG(2) << __func__ << ": " << key << " = " << *override_val;
       value = base::Seconds(*override_val);
     }
   }
@@ -166,6 +166,7 @@ class GlobalConstantsImpl : public GlobalConstants {
                      std::wstring& value) {
     const std::string* str = overrides.FindString(key);
     if (str) {
+      VLOG(2) << __func__ << ": " << key << " = " << *str;
       value = base::ASCIIToWide(*str);
     }
   }

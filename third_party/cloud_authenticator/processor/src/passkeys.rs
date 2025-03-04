@@ -25,10 +25,11 @@ use super::{
     KEY_PURPOSE_SECURITY_DOMAIN_SECRET, PUB_KEY, VAULT_HANDLE_WITHOUT_TYPE_KEY,
     WRAPPED_PIN_DATA_KEY, WRAPPED_SECRET_KEY,
 };
-use crate::pin;
+use crate::{pin, MetricsUpdate};
 use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
+use base64::Engine;
 use cbor::{MapKey, MapKeyRef, MapLookupKey, Value};
 use chromesync::pb::webauthn_credential_specifics::EncryptedData;
 use chromesync::pb::WebauthnCredentialSpecifics;
@@ -88,6 +89,7 @@ fn key(k: &str) -> MapKey {
 }
 
 pub(crate) fn do_assert(
+    metrics: &mut MetricsUpdate,
     auth: &Authentication,
     state: &mut DirtyFlag<ParsedState>,
     request: BTreeMap<MapKey, Value>,
@@ -160,10 +162,12 @@ pub(crate) fn do_assert(
         response.insert(key(PRF), prf_result);
     }
 
+    metrics.passkeys_assert += 1;
     Ok(Value::Map(response))
 }
 
 pub(crate) fn do_create(
+    metrics: &mut MetricsUpdate,
     auth: &Authentication,
     state: &mut DirtyFlag<ParsedState>,
     request: BTreeMap<MapKey, Value>,
@@ -225,6 +229,7 @@ pub(crate) fn do_create(
     if let Some(prf_result) = handle_prf(webauthn_request, &hmac_secret, None)? {
         result.insert(MapKey::String(String::from(PRF)), prf_result);
     }
+    metrics.passkeys_create += 1;
     Ok(Value::Map(result))
 }
 
@@ -422,6 +427,7 @@ fn validate_pin(
 }
 
 pub(crate) fn do_wrap_pin(
+    metrics: &mut MetricsUpdate,
     auth: &Authentication,
     state: &mut DirtyFlag<ParsedState>,
     request: BTreeMap<MapKey, Value>,
@@ -473,6 +479,7 @@ pub(crate) fn do_wrap_pin(
             .try_into()
             .map_err(|_| RequestError::Debug("incorrect length vault handle"))?,
     };
+    metrics.passkeys_wrap_pin += 1;
     Ok(Value::from(pin_data.encrypt(&security_domain_secret)))
 }
 
@@ -516,7 +523,7 @@ impl TryFrom<&Value> for PRFValues {
             let Value::String(value) = value else {
                 return debug("invalid PRF value");
             };
-            let value = base64::decode_config(value, base64::URL_SAFE_NO_PAD)
+            let value = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(value)
                 .map_err(|_| RequestError::Debug("invalid PRF base64url"))?;
             Ok(hash_prf_value(&value))
         }
@@ -573,7 +580,7 @@ fn prf_values_by_id(
     let Some(Value::Map(by_credential)) = prf.get(EVAL_BY_CREDENTIAL_KEY) else {
         return Ok(None);
     };
-    let base64url_credential_id = base64::encode_config(credential_id, base64::URL_SAFE_NO_PAD);
+    let base64url_credential_id = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(credential_id);
     let Some(values) = by_credential.get(&MapKey::String(base64url_credential_id)) else {
         return Ok(None);
     };
@@ -614,9 +621,7 @@ pub mod tests {
 
         assert!(EcdsaKeyPair::from_pkcs8(&pkcs8).is_ok());
 
-        assert!(
-            decrypt(&[0u8; 8], SAMPLE_SECURITY_DOMAIN_SECRET.try_into().unwrap(), &[]).is_err()
-        );
+        assert!(decrypt(&[0u8; 8], SAMPLE_SECURITY_DOMAIN_SECRET.try_into().unwrap(), &[]).is_err());
     }
 
     #[test]

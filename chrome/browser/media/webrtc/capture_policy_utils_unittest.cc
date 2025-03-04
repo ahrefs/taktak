@@ -18,10 +18,9 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "url/gurl.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/ash/crosapi/crosapi_manager.h"
 #include "chrome/browser/ash/crosapi/idle_service_ash.h"
-#include "chrome/browser/ash/crosapi/test_crosapi_dependency_registry.h"
 #include "chrome/browser/ash/login/users/fake_chrome_user_manager.h"
 #include "chrome/test/base/testing_browser_process.h"
 #include "chrome/test/base/testing_profile_manager.h"
@@ -29,16 +28,16 @@
 #include "components/account_id/account_id.h"
 #include "components/user_manager/scoped_user_manager.h"
 #include "components/user_manager/user_type.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 namespace {
 constexpr char kTestSite1[] = "https://foo.test.org";
 constexpr char kTestSite1Pattern[] = "foo.test.org";
 constexpr char kTestSite1NonMatchingPattern[] = "foo.org";
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 constexpr char kAccountId[] = "test_1@example.com";
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 }  // namespace
 
 class CapturePolicyUtilsTest : public testing::Test {
@@ -279,7 +278,7 @@ TEST_F(CapturePolicyUtilsTest, FilterMediaListRestrictedSameOrigin) {
   EXPECT_EQ(expected_media_types, actual_media_types);
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 
 class MultiCaptureTest
     : public testing::Test,
@@ -304,7 +303,7 @@ class MultiCaptureTest
     if (!ash::LoginState::IsInitialized()) {
       ash::LoginState::Initialize();
     }
-    cros_api_manager_ = crosapi::CreateCrosapiManagerWithTestRegistry();
+    cros_api_manager_ = std::make_unique<crosapi::CrosapiManager>();
 
     HostContentSettingsMap* content_settings =
         HostContentSettingsMapFactory::GetForProfile(profile());
@@ -330,19 +329,11 @@ class MultiCaptureTest
  protected:
   bool ExpectedIsMultiCaptureAllowed() {
     std::vector<std::string> allowed_urls = AllowedOrigins();
-    return
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-        IsMainProfile() &&
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-        base::Contains(allowed_urls, CurrentOrigin());
+    return base::Contains(allowed_urls, CurrentOrigin());
   }
 
   bool ExpectedIsMultiCaptureAllowedForAnyUrl() {
-    return
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-        IsMainProfile() &&
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-        !AllowedOrigins().empty();
+    return !AllowedOrigins().empty();
   }
 
  private:
@@ -384,4 +375,4 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn({std::string("https://www.google.com"),
                              std::string("https://www.notallowed.com")})));
 
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)

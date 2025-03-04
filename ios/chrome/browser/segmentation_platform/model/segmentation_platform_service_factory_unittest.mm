@@ -20,6 +20,7 @@
 #import "components/segmentation_platform/embedder/home_modules/home_modules_card_registry.h"
 #import "components/segmentation_platform/internal/constants.h"
 #import "components/segmentation_platform/internal/database/client_result_prefs.h"
+#import "components/segmentation_platform/internal/segmentation_platform_service_impl.h"
 #import "components/segmentation_platform/public/constants.h"
 #import "components/segmentation_platform/public/features.h"
 #import "components/segmentation_platform/public/prediction_options.h"
@@ -257,6 +258,14 @@ TEST_F(SegmentationPlatformServiceFactoryTest, Test) {
   // fixed.
 }
 
+TEST_F(SegmentationPlatformServiceFactoryTest, TestMetricsEnabled) {
+  WaitForServiceInit();
+  SegmentationPlatformServiceImpl* service =
+      reinterpret_cast<SegmentationPlatformServiceImpl*>(
+          profile_data_->service.get());
+  EXPECT_TRUE(service->IsMetricsEnabledForTesting());
+}
+
 TEST_F(SegmentationPlatformServiceFactoryTest, TestSearchUserModel) {
   InitServiceAndCacheResults(kSearchUserKey);
 
@@ -280,6 +289,7 @@ TEST_F(SegmentationPlatformServiceFactoryTest, TestIosModuleRankerModel) {
   int safety_check_freshness_impression_count = -1;
   int tab_resumption_freshness_impression_count = -1;
   int parcel_tracking_freshness_impression_count = -1;
+  int shop_card_freshness_impression_count = -1;
 
   input_context->metadata_args.emplace(
       segmentation_platform::kMostVisitedTilesFreshness,
@@ -301,12 +311,16 @@ TEST_F(SegmentationPlatformServiceFactoryTest, TestIosModuleRankerModel) {
       segmentation_platform::kParcelTrackingFreshness,
       segmentation_platform::processing::ProcessedValue::FromFloat(
           parcel_tracking_freshness_impression_count));
+  input_context->metadata_args.emplace(
+      segmentation_platform::kShopCardFreshness,
+      segmentation_platform::processing::ProcessedValue::FromFloat(
+          shop_card_freshness_impression_count));
 
   ExpectGetClassificationResult(
       segmentation_platform::kIosModuleRankerKey, prediction_options,
       input_context, PredictionStatus::kSucceeded,
       std::vector<std::string>{"MostVisitedTiles", "Shortcuts", "SafetyCheck",
-                               "TabResumption", "ParcelTracking"});
+                               "TabResumption", "ParcelTracking", "ShopCard"});
 }
 
 // Tests that the HomeModulesCardRegistry registers the correct cards and the

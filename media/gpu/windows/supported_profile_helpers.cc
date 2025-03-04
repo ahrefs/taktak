@@ -270,8 +270,9 @@ SupportedResolutionRangeMap GetSupportedD3DVideoDecoderResolutions(
   // Legacy AMD drivers with UVD3 or earlier and some Intel GPU's crash while
   // creating surfaces larger than 1920 x 1088.
   const std::vector<gfx::Size> kModernResolutions = {
-      gfx::Size(4096, 2160), gfx::Size(4096, 2304), gfx::Size(7680, 4320),
-      gfx::Size(8192, 4320), gfx::Size(8192, 8192)};
+      gfx::Size(4096, 2160),  gfx::Size(4096, 2304), gfx::Size(4096, 4096),
+      gfx::Size(7680, 4320),  gfx::Size(8192, 4352), gfx::Size(8192, 8192),
+      gfx::Size(16384, 16384)};
 
   // Enumerate supported video profiles and look for the known profile for each
   // codec. We first look through the the decoder profiles so we don't run N
@@ -335,21 +336,6 @@ SupportedResolutionRangeMap GetSupportedD3DVideoDecoderResolutions(
                                   kModernResolutions, DXGI_FORMAT_P010);
         continue;
       }
-    }
-
-    if (!workarounds.disable_accelerated_vp8_decode &&
-        profile_id == D3D11_DECODER_PROFILE_VP8_VLD &&
-        base::FeatureList::IsEnabled(kMediaFoundationVP8Decoding)) {
-      // VP8 decoding is cheap on modern devices compared to other codecs, so
-      // much so that hardware decoding performance is actually worse at low
-      // resolutions than software decoding. See https://crbug.com/1136495.
-      constexpr gfx::Size kMinVp8Resolution = gfx::Size(640, 480);
-
-      supported_resolutions[VP8PROFILE_ANY] = GetResolutionsForGUID(
-          video_device_wrapper, profile_id,
-          {gfx::Size(4096, 2160), gfx::Size(4096, 2304), gfx::Size(4096, 4096)},
-          DXGI_FORMAT_NV12, kMinVp8Resolution);
-      continue;
     }
 
 #if BUILDFLAG(ENABLE_HEVC_PARSER_AND_HW_DECODER)

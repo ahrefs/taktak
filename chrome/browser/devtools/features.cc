@@ -34,27 +34,12 @@ const base::FeatureParam<DevToolsFreestylerExecutionMode>::Option
          "SIDE_EFFECT_FREE_SCRIPTS_ONLY"},
         {DevToolsFreestylerExecutionMode::kNoScripts, "NO_SCRIPTS"}};
 
-// Whether the DevTools styling assistant dogfood is enabled.
-BASE_FEATURE(kDevToolsFreestylerDogfood,
-             "DevToolsFreestylerDogfood",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-const base::FeatureParam<std::string> kDevToolsFreestylerDogfoodModelId{
-    &kDevToolsFreestylerDogfood, "aida_model_id", /*default_value=*/""};
-const base::FeatureParam<double> kDevToolsFreestylerDogfoodTemperature{
-    &kDevToolsFreestylerDogfood, "aida_temperature", /*default_value=*/-1};
-const base::FeatureParam<DevToolsFreestylerUserTier>
-    kDevToolsFreestylerDogfoodUserTier{
-        &kDevToolsFreestylerDogfood, "user_tier",
-        /*default_value=*/DevToolsFreestylerUserTier::kBeta,
-        &devtools_freestyler_user_tier_options};
-
 // Whether the DevTools styling assistant is enabled.
 BASE_FEATURE(kDevToolsFreestyler,
              "DevToolsFreestyler",
              base::FEATURE_ENABLED_BY_DEFAULT);
 const base::FeatureParam<std::string> kDevToolsFreestylerModelId{
-    &kDevToolsFreestyler, "aida_model_id",
-    /*default_value=*/"codey_gemit_mpp_streaming"};
+    &kDevToolsFreestyler, "aida_model_id", /*default_value=*/""};
 const base::FeatureParam<double> kDevToolsFreestylerTemperature{
     &kDevToolsFreestyler, "aida_temperature", /*default_value=*/-1};
 const base::FeatureParam<DevToolsFreestylerUserTier>
@@ -67,58 +52,65 @@ const base::FeatureParam<DevToolsFreestylerExecutionMode>
         &kDevToolsFreestyler, "execution_mode",
         /*default_value=*/DevToolsFreestylerExecutionMode::kAllScripts,
         &devtools_freestyler_execution_mode_options};
+const base::FeatureParam<bool> kDevToolsFreestylerPatching{
+    &kDevToolsFreestyler, "patching", /*default_value=*/false};
+const base::FeatureParam<bool> kDevToolsFreestylerMultimodal{
+    &kDevToolsFreestyler, "multimodal", /*default_value=*/false};
+const base::FeatureParam<bool> kDevToolsFreestylerFunctionCalling{
+    &kDevToolsFreestyler, "function_calling", /*default_value=*/false};
 
-// Whether the DevTools resource explainer assistant is enabled.
-BASE_FEATURE(kDevToolsExplainThisResourceDogfood,
-             "DevToolsExplainThisResourceDogfood",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-const base::FeatureParam<std::string>
-    kDevToolsExplainThisResourceDogfoodModelId{
-        &kDevToolsExplainThisResourceDogfood, "aida_model_id",
-        /*default_value=*/""};
-const base::FeatureParam<double> kDevToolsExplainThisResourceDogfoodTemperature{
-    &kDevToolsExplainThisResourceDogfood, "aida_temperature",
+// Whether the DevTools AI Assistance Network Agent is enabled.
+BASE_FEATURE(kDevToolsAiAssistanceNetworkAgent,
+             "DevToolsAiAssistanceNetworkAgent",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+const base::FeatureParam<std::string> kDevToolsAiAssistanceNetworkAgentModelId{
+    &kDevToolsAiAssistanceNetworkAgent, "aida_model_id",
+    /*default_value=*/""};
+const base::FeatureParam<double> kDevToolsAiAssistanceNetworkAgentTemperature{
+    &kDevToolsAiAssistanceNetworkAgent, "aida_temperature",
     /*default_value=*/-1};
 const base::FeatureParam<DevToolsFreestylerUserTier>
-    kDevToolsExplainThisResourceDogfoodUserTier{
-        &kDevToolsExplainThisResourceDogfood, "user_tier",
-        /*default_value=*/DevToolsFreestylerUserTier::kBeta,
+    kDevToolsAiAssistanceNetworkAgentUserTier{
+        &kDevToolsAiAssistanceNetworkAgent, "user_tier",
+        /*default_value=*/DevToolsFreestylerUserTier::kPublic,
         &devtools_freestyler_user_tier_options};
 
 // Whether the DevTools AI Assistance Performance Agent is enabled.
-BASE_FEATURE(kDevToolsAiAssistancePerformanceAgentDogfood,
-             "DevToolsAiAssistancePerformanceAgentDogfood",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+BASE_FEATURE(kDevToolsAiAssistancePerformanceAgent,
+             "DevToolsAiAssistancePerformanceAgent",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 const base::FeatureParam<std::string>
-    kDevToolsAiAssistancePerformanceAgentDogfoodModelId{
-        &kDevToolsAiAssistancePerformanceAgentDogfood, "aida_model_id",
+    kDevToolsAiAssistancePerformanceAgentModelId{
+        &kDevToolsAiAssistancePerformanceAgent, "aida_model_id",
         /*default_value=*/""};
 const base::FeatureParam<double>
-    kDevToolsAiAssistancePerformanceAgentDogfoodTemperature{
-        &kDevToolsAiAssistancePerformanceAgentDogfood, "aida_temperature",
+    kDevToolsAiAssistancePerformanceAgentTemperature{
+        &kDevToolsAiAssistancePerformanceAgent, "aida_temperature",
         /*default_value=*/-1};
 const base::FeatureParam<DevToolsFreestylerUserTier>
-    kDevToolsAiAssistancePerformanceAgentDogfoodUserTier{
-        &kDevToolsAiAssistancePerformanceAgentDogfood, "user_tier",
-        /*default_value=*/DevToolsFreestylerUserTier::kBeta,
+    kDevToolsAiAssistancePerformanceAgentUserTier{
+        &kDevToolsAiAssistancePerformanceAgent, "user_tier",
+        /*default_value=*/DevToolsFreestylerUserTier::kPublic,
         &devtools_freestyler_user_tier_options};
+const base::FeatureParam<bool>
+    kDevToolsAiAssistancePerformanceAgentInsightsEnabled{
+        &kDevToolsAiAssistancePerformanceAgent, "insights_enabled",
+        /*default_value=*/false};
 
 // Whether the DevTools AI Assistance File Agent is enabled.
-BASE_FEATURE(kDevToolsAiAssistanceFileAgentDogfood,
-             "DevToolsAiAssistanceFileAgentDogfood",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-const base::FeatureParam<std::string>
-    kDevToolsAiAssistanceFileAgentDogfoodModelId{
-        &kDevToolsAiAssistanceFileAgentDogfood, "aida_model_id",
-        /*default_value=*/""};
-const base::FeatureParam<double>
-    kDevToolsAiAssistanceFileAgentDogfoodTemperature{
-        &kDevToolsAiAssistanceFileAgentDogfood, "aida_temperature",
-        /*default_value=*/-1};
+BASE_FEATURE(kDevToolsAiAssistanceFileAgent,
+             "DevToolsAiAssistanceFileAgent",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+const base::FeatureParam<std::string> kDevToolsAiAssistanceFileAgentModelId{
+    &kDevToolsAiAssistanceFileAgent, "aida_model_id",
+    /*default_value=*/""};
+const base::FeatureParam<double> kDevToolsAiAssistanceFileAgentTemperature{
+    &kDevToolsAiAssistanceFileAgent, "aida_temperature",
+    /*default_value=*/-1};
 const base::FeatureParam<DevToolsFreestylerUserTier>
-    kDevToolsAiAssistanceFileAgentDogfoodUserTier{
-        &kDevToolsAiAssistanceFileAgentDogfood, "user_tier",
-        /*default_value=*/DevToolsFreestylerUserTier::kBeta,
+    kDevToolsAiAssistanceFileAgentUserTier{
+        &kDevToolsAiAssistanceFileAgent, "user_tier",
+        /*default_value=*/DevToolsFreestylerUserTier::kPublic,
         &devtools_freestyler_user_tier_options};
 
 // Whether an infobar is shown when the process is shared.
@@ -134,5 +126,32 @@ BASE_FEATURE(kDevToolsVeLogging,
 // Run VE logging in a test mode
 const base::FeatureParam<bool> kDevToolsVeLoggingTesting{
     &kDevToolsVeLogging, "testing", /*default_value=*/false};
+
+// Whether showing animation styles in the styles tab is enabled.
+BASE_FEATURE(kDevToolsAnimationStylesInStylesTab,
+             "DevToolsAnimationStylesInStylesTab",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+// Whether DevTools will attempt to automatically connect Workspace folders.
+// See http://go/chrome-devtools:automatic-workspace-folders-design for details.
+BASE_FEATURE(kDevToolsAutomaticFileSystems,
+             "DevToolsAutomaticFileSystems",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Whether the new DevTools "Workspaces" features are enabled.
+BASE_FEATURE(kDevToolsImprovedWorkspaces,
+             "DevToolsImprovedWorkspaces",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Whether DevTools will attempt to load project settings from a well-known
+// URI. See https://goo.gle/devtools-json-design for additional details.
+BASE_FEATURE(kDevToolsWellKnown,
+             "DevToolsWellKnown",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Whether DevTools will offer the new CSS value tracing UI.
+BASE_FEATURE(kDevToolsCssValueTracing,
+             "DevToolsCssValueTracing",
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 }  // namespace features

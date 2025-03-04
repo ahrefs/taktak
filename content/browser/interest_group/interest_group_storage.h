@@ -15,6 +15,7 @@
 #include "base/thread_annotations.h"
 #include "base/time/time.h"
 #include "base/timer/timer.h"
+#include "content/browser/interest_group/for_debugging_only_report_util.h"
 #include "content/browser/interest_group/interest_group_update.h"
 #include "content/browser/interest_group/storage_interest_group.h"
 #include "content/common/content_export.h"
@@ -31,17 +32,19 @@ struct InterestGroup;
 }
 
 namespace content {
-struct BiddingAndAuctionServerKey;
-
 // InterestGroupStorage controls access to the Interest Group Database. All
 // public functions perform operations on the database and may block. This
 // implementation is not thread-safe so all functions should be called from
 // within the same sequence.
 class CONTENT_EXPORT InterestGroupStorage {
  public:
-  static constexpr base::TimeDelta kHistoryLength = base::Days(30);
   static constexpr base::TimeDelta kMaintenanceInterval = base::Hours(1);
-  static constexpr base::TimeDelta kIdlePeriod = base::Seconds(30);
+  // Gets the default time the database waits idle before maintenance is
+  // triggered.
+  //
+  // NOTE: This is the default value, which can be overridden by
+  // CreateWithIdlePeriodForTesting().
+  static constexpr base::TimeDelta kDefaultIdlePeriod = base::Seconds(30);
   // How long to store a k-anon key's last join time.
   static constexpr base::TimeDelta kAdditionalKAnonStoragePeriod =
       base::Days(1);
@@ -83,7 +86,7 @@ class CONTENT_EXPORT InterestGroupStorage {
       const url::Origin& main_frame_origin);
 
   // Gets lockout for sending forDebuggingOnly reports.
-  std::optional<base::Time> GetDebugReportLockout();
+  std::optional<DebugReportLockout> GetDebugReportLockout();
 
   // Gets lockout and cooldowns for sending forDebuggingOnly reports.
   std::optional<DebugReportLockoutAndCooldowns>
@@ -118,12 +121,15 @@ class CONTENT_EXPORT InterestGroupStorage {
                               const std::string& ad_json);
   // Adds an entry to forDebuggingOnly report lockout table if the table is
   // empty. Otherwise replaces the existing entry.
-  void RecordDebugReportLockout(base::Time last_report_sent_time);
+  void RecordDebugReportLockout(base::Time starting_time,
+                                base::TimeDelta duration);
   // Adds an entry to forDebuggingOnly report cooldown table for `origin` if it
   // does not exist, otherwise replaces the existing entry.
   void RecordDebugReportCooldown(const url::Origin& origin,
                                  base::Time cooldown_start,
                                  DebugReportCooldownType cooldown_type);
+  // Clear out all entries for debug report cooldown information.
+  void DeleteAllDebugReportCooldowns();
 
   // Records a K-anonymity update for an interest group. If
   // `replace_existing_values` is true, this update will store the new
@@ -168,6 +174,11 @@ class CONTENT_EXPORT InterestGroupStorage {
 
   std::vector<std::pair<url::Origin, url::Origin>>
   GetAllInterestGroupOwnerJoinerPairs();
+
+  // Set forDebuggingOnly lockout to the time until all interest groups that
+  // previously joined expires.
+  void SetDebugReportLockoutUntilIGExpires();
+
   void RemoveInterestGroupsMatchingOwnerAndJoiner(url::Origin owner,
                                                   url::Origin joining_origin);
 
@@ -195,15 +206,13 @@ class CONTENT_EXPORT InterestGroupStorage {
 
   // Update B&A keys for a coordinator. This function will overwrite any
   // existing keys for the coordinator.
-  void SetBiddingAndAuctionServerKeys(
-      const url::Origin& coordinator,
-      const std::vector<BiddingAndAuctionServerKey>& keys,
-      base::Time expiration);
+  void SetBiddingAndAuctionServerKeys(const url::Origin& coordinator,
+                                      std::string serialized_keys,
+                                      base::Time expiration);
   // Load stored B&A server keys for a coordinator along with the keys'
   // expiration.
-
-  std::pair<base::Time, std::vector<BiddingAndAuctionServerKey>>
-  GetBiddingAndAuctionServerKeys(const url::Origin& coordinator);
+  std::pair<base::Time, std::string> GetBiddingAndAuctionServerKeys(
+      const url::Origin& coordinator);
 
   // Returns various resource limits, as configured by feature params.
   static size_t MaxOwnerRegularInterestGroups();
@@ -214,7 +223,31 @@ class CONTENT_EXPORT InterestGroupStorage {
 
   static int GetCurrentVersionNumberForTesting();
 
+  // Creates an instance where the idle period is set to `idle_period` instead
+  // of kDefaultIdlePeriod.
+  static std::unique_ptr<InterestGroupStorage> CreateWithIdlePeriodForTesting(
+      const base::FilePath& path,
+      base::TimeDelta idle_period);
+
+  // Resets the internal idle timer without performing any database operation.
+  //
+  // Technically, this test hook isn't necessary, since tests could just call
+  // GetAllInterestGroupOwners() and throw away the result, but this method is
+  // *much* more performant (due to not doing any I/O), especially when calling
+  // in a loop.
+  //
+  // NOTE: This just calls EnsureDBInitialized() internally.
+  void ResetIdleTimerForTesting();
+
  private:
+  // Private constructor that allows changing the idle period, used by
+  // CreateWithIdlePeriodForTesting().
+  //
+  // `idle_period` may be optionally specified to override in tests the default
+  // time the database waits idle before maintenance is triggered
+  // (kDefaultIdlePeriod).
+  InterestGroupStorage(const base::FilePath& path, base::TimeDelta idle_period);
+
   bool EnsureDBInitialized();
   bool InitializeDB();
   bool InitializeSchema();

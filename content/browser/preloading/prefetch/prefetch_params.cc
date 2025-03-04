@@ -111,7 +111,7 @@ bool PrefetchStartsSpareRenderer() {
              true);
 }
 
-base::TimeDelta PrefetchContainerLifetimeInPrefetchService() {
+base::TimeDelta PrefetchContainerDefaultTtlInPrefetchService() {
   // A value of 0 or less, indicates that |PrefetchService| should keep the
   // prefetch forever.
   return base::Seconds(base::GetFieldTrialParamByFeatureAsInt(
@@ -252,8 +252,16 @@ bool PrefetchBrowserInitiatedTriggersEnabled() {
 
 bool UseNewWaitLoop() {
   return base::FeatureList::IsEnabled(features::kPrefetchNewWaitLoop) ||
+         (base::FeatureList::IsEnabled(features::kPrefetchReusable) &&
+          features::kPrefetchReusableUseNewWaitLoop.Get()) ||
          base::FeatureList::IsEnabled(
              features::kPrerender2FallbackPrefetchSpecRules);
+}
+
+size_t GetPrefetchDataPipeTeeBodySizeLimit() {
+  return std::max(
+      static_cast<size_t>(features::kPrefetchReusableBodySizeLimit.Get()),
+      features::kPrerender2FallbackBodySizeLimit.Get());
 }
 
 }  // namespace content

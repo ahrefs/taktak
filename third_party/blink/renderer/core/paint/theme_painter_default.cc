@@ -48,6 +48,7 @@
 #include "ui/base/ui_base_features.h"
 #include "ui/color/color_provider.h"
 #include "ui/gfx/color_utils.h"
+#include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/native_theme/native_theme.h"
 
 namespace blink {
@@ -242,21 +243,6 @@ gfx::Rect ProgressValueRectFor(const LayoutProgress& layout_progress,
              : IndeterminateProgressValueRectFor(layout_progress, rect);
 }
 
-gfx::Rect ConvertToPaintingRect(const LayoutObject& input_layout_object,
-                                const LayoutObject& part_layout_object,
-                                PhysicalRect part_rect,
-                                const gfx::Rect& local_offset) {
-  // Compute an offset between the partLayoutObject and the inputLayoutObject.
-  PhysicalOffset offset_from_input_layout_object =
-      -part_layout_object.OffsetFromAncestor(&input_layout_object);
-  // Move the rect into partLayoutObject's coords.
-  part_rect.Move(offset_from_input_layout_object);
-  // Account for the local drawing offset.
-  part_rect.Move(PhysicalOffset(local_offset.origin()));
-
-  return ToPixelSnappedRect(part_rect);
-}
-
 std::optional<SkColor> GetAccentColor(const ComputedStyle& style,
                                       const Document& document) {
   std::optional<Color> css_accent_color = style.AccentColorResolved();
@@ -393,11 +379,11 @@ bool ThemePainterDefault::PaintTextField(const Element& element,
   if (style.HasBorderRadius() || style.HasBackgroundImage())
     return true;
 
-  ControlPart part = style.EffectiveAppearance();
+  AppearanceValue appearance = style.EffectiveAppearance();
 
   WebThemeEngine::TextFieldExtraParams text_field;
-  text_field.is_text_area = part == kTextAreaPart;
-  text_field.is_listbox = part == kListboxPart;
+  text_field.is_text_area = appearance == AppearanceValue::kTextArea;
+  text_field.is_listbox = appearance == AppearanceValue::kListbox;
   text_field.has_border = true;
   text_field.zoom = style.EffectiveZoom();
 
@@ -558,7 +544,7 @@ bool ThemePainterDefault::PaintSliderTrack(const Element& element,
   bool is_slider_vertical =
       RuntimeEnabledFeatures::
           NonStandardAppearanceValueSliderVerticalEnabled() &&
-      style.EffectiveAppearance() == kSliderVerticalPart;
+      style.EffectiveAppearance() == AppearanceValue::kSliderVertical;
   const WritingMode writing_mode = style.GetWritingMode();
   bool is_writing_mode_vertical = !IsHorizontalWritingMode(writing_mode);
   slider.vertical = is_writing_mode_vertical || is_slider_vertical;
@@ -628,10 +614,11 @@ bool ThemePainterDefault::PaintSliderThumb(const Element& element,
                                            const PaintInfo& paint_info,
                                            const gfx::Rect& rect) {
   WebThemeEngine::SliderExtraParams slider;
-  slider.vertical = !style.IsHorizontalWritingMode() ||
-                    (RuntimeEnabledFeatures::
-                         NonStandardAppearanceValueSliderVerticalEnabled() &&
-                     style.EffectiveAppearance() == kSliderThumbVerticalPart);
+  slider.vertical =
+      !style.IsHorizontalWritingMode() ||
+      (RuntimeEnabledFeatures::
+           NonStandardAppearanceValueSliderVerticalEnabled() &&
+       style.EffectiveAppearance() == AppearanceValue::kSliderThumbVertical);
   slider.in_drag = element.IsActive();
   slider.zoom = style.EffectiveZoom();
 
@@ -765,40 +752,37 @@ bool ThemePainterDefault::PaintSearchFieldCancelButton(
     const LayoutObject& cancel_button_object,
     const PaintInfo& paint_info,
     const gfx::Rect& r) {
-  // Get the layoutObject of <input> element.
-  Node* input = cancel_button_object.GetNode()->OwnerShadowHost();
-  const LayoutObject& base_layout_object = input && input->GetLayoutObject()
-                                               ? *input->GetLayoutObject()
-                                               : cancel_button_object;
-  if (!base_layout_object.IsBox())
+  const auto* layout_box = DynamicTo<LayoutBox>(cancel_button_object);
+  if (!layout_box) {
     return false;
-  const auto& input_layout_box = To<LayoutBox>(base_layout_object);
-  PhysicalRect input_content_box = input_layout_box.PhysicalContentBoxRect();
+  }
+  // The content box of the button in the painting space and account for the
+  // local drawing offset.
+  const gfx::Rect content_box =
+      gfx::ToRoundedRect(gfx::RectF(layout_box->PhysicalContentBoxRect())) +
+      r.OffsetFromOrigin();
 
   // Make sure the scaled button stays square and will fit in its parent's box.
-  LayoutUnit cancel_button_size =
-      std::min(input_content_box.size.width,
-               std::min(input_content_box.size.height, LayoutUnit(r.height())));
-  // Calculate cancel button's coordinates relative to the input element.
+  int cancel_button_size =
+      std::min(content_box.width(), std::min(content_box.height(), r.height()));
+  // Calculate cancel button's coordinates relative to its layout box.
   // Center the button inline.  Round up though, so if it has to be one
   // pixel off-center, it will be one pixel closer to the bottom of the field.
   // This tends to look better with the text.
   const bool is_horizontal = cancel_button_object.IsHorizontalWritingMode();
-  const LayoutUnit cancel_button_rect_left =
-      is_horizontal
-          ? cancel_button_object.OffsetFromAncestor(&input_layout_box).left
-          : input_content_box.X() +
-                (input_content_box.Width() - cancel_button_size + 1) / 2;
-  const LayoutUnit cancel_button_rect_top =
-      is_horizontal
-          ? input_content_box.Y() +
-                (input_content_box.Height() - cancel_button_size + 1) / 2
-          : cancel_button_object.OffsetFromAncestor(&input_layout_box).top;
-  PhysicalRect cancel_button_rect(cancel_button_rect_left,
-                                  cancel_button_rect_top, cancel_button_size,
-                                  cancel_button_size);
-  gfx::Rect painting_rect = ConvertToPaintingRect(
-      input_layout_box, cancel_button_object, cancel_button_rect, r);
+  int cancel_button_rect_left = content_box.x();
+  if (!is_horizontal) {
+    cancel_button_rect_left += (content_box.width() - cancel_button_size) / 2;
+  }
+  int cancel_button_rect_top = content_box.y();
+  if (is_horizontal) {
+    cancel_button_rect_top +=
+        (content_box.height() - cancel_button_size + 1) / 2;
+  }
+  // Convert to Painting rect
+  gfx::Rect painting_rect(cancel_button_rect_left, cancel_button_rect_top,
+                          cancel_button_size, cancel_button_size);
+
   DEFINE_STATIC_REF(Image, cancel_image,
                     (Image::LoadPlatformResource(IDR_SEARCH_CANCEL)));
   DEFINE_STATIC_REF(Image, cancel_pressed_image,

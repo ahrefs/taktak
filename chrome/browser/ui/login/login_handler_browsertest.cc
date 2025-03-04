@@ -4,6 +4,7 @@
 
 #include "chrome/browser/ui/login/login_handler.h"
 
+#include <algorithm>
 #include <list>
 #include <map>
 #include <tuple>
@@ -13,7 +14,6 @@
 #include "base/location.h"
 #include "base/metrics/field_trial.h"
 #include "base/path_service.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/bind.h"
@@ -141,8 +141,8 @@ class LoginHandlerFake : public LoginHandler {
   ~LoginHandlerFake() override;
 
   void NotifyAuthNeeded() override;
-  void NotifyAuthSupplied(const std::u16string& username,
-                          const std::u16string& password) override;
+  void NotifyAuthSupplied(std::u16string_view username,
+                          std::u16string_view password) override;
   void NotifyAuthCancelled() override;
   bool BuildViewImpl(const std::u16string& authority,
                      const std::u16string& explanation,
@@ -164,7 +164,8 @@ class LoginTabHelperFake : public LoginTabHelper {
   std::unique_ptr<LoginHandler> CreateLoginHandler(
       const net::AuthChallengeInfo& auth_info,
       content::WebContents* web_contents,
-      LoginAuthRequiredCallback auth_required_callback) override {
+      content::LoginDelegate::LoginAuthRequiredCallback auth_required_callback)
+      override {
     return std::make_unique<LoginHandlerFake>(auth_info, web_contents,
                                               std::move(auth_required_callback),
                                               browser_client_);
@@ -239,8 +240,8 @@ void LoginHandlerFake::NotifyAuthNeeded() {
   prompt_shown_ = true;
   LoginHandler::NotifyAuthNeeded();
 }
-void LoginHandlerFake::NotifyAuthSupplied(const std::u16string& username,
-                                          const std::u16string& password) {
+void LoginHandlerFake::NotifyAuthSupplied(std::u16string_view username,
+                                          std::u16string_view password) {
   browser_client_->auth_supplied_count++;
   prompt_responded_ = true;
   LoginHandler::NotifyAuthSupplied(username, password);
@@ -355,10 +356,9 @@ class LoginPromptBrowserTest
     std::string username_;
     std::string password_;
 
-    AuthInfo() {}
+    AuthInfo() = default;
 
-    AuthInfo(const std::string& username,
-             const std::string& password)
+    AuthInfo(const std::string& username, const std::string& password)
         : username_(username), password_(password) {}
   };
 
@@ -448,7 +448,7 @@ INSTANTIATE_TEST_SUITE_P(
 const char kPrefetchAuthPage[] = "/login/prefetch.html";
 
 const char kMultiRealmTestPage[] = "/login/multi_realm.html";
-const int  kMultiRealmTestRealmCount = 2;
+const int kMultiRealmTestRealmCount = 2;
 const int kMultiRealmTestAuthRequestsCount = 4;
 
 const char kAuthBasicPage[] = "/auth-basic";
@@ -500,8 +500,9 @@ IN_PROC_BROWSER_TEST_P(LoginPromptBrowserTest, TestBasicAuth) {
   for (bool crash_network_service : {false, true}) {
     if (crash_network_service) {
       // Can't crash the network service if it isn't running out of process.
-      if (!content::IsOutOfProcessNetworkService())
+      if (!content::IsOutOfProcessNetworkService()) {
         return;
+      }
 
       SimulateNetworkServiceCrash();
       // Flush the network interface to make sure it notices the crash.
@@ -902,7 +903,7 @@ void MultiRealmLoginPromptBrowserTest::RunTest(const F& for_each_realm_func) {
   for (int i = 0; i < kMultiRealmTestRealmCount; ++i) {
     auto handlers = LoginHandler::GetAllLoginHandlersForTest();
     auto it =
-        base::ranges::find_if(handlers, [&seen_realms](LoginHandler* handler) {
+        std::ranges::find_if(handlers, [&seen_realms](LoginHandler* handler) {
           return seen_realms.count(handler->auth_info().realm) == 0;
         });
     ASSERT_TRUE(it != handlers.end());
@@ -2265,12 +2266,12 @@ class LoginPromptExtensionBrowserTest
     scoped_feature_list_.InitWithFeatureStates(
         {{network::features::kSplitAuthCacheByNetworkIsolationKey,
           (GetParam() == SplitAuthCacheByNetworkIsolationKey::kTrue)}});
-    }
+  }
 
-    void SetUpOnMainThread() override {
-      SetUpLoginFakes();
-      extensions::ExtensionBrowserTest::SetUpOnMainThread();
-    }
+  void SetUpOnMainThread() override {
+    SetUpLoginFakes();
+    extensions::ExtensionBrowserTest::SetUpOnMainThread();
+  }
 
   ~LoginPromptExtensionBrowserTest() override = default;
 
@@ -2297,8 +2298,9 @@ IN_PROC_BROWSER_TEST_P(LoginPromptExtensionBrowserTest,
   embedded_test_server()->RegisterRequestHandler(base::BindLambdaForTesting(
       [&](const net::test_server::HttpRequest& request)
           -> std::unique_ptr<net::test_server::HttpResponse> {
-        if (request.relative_url != kSlowResponse)
+        if (request.relative_url != kSlowResponse) {
           return nullptr;
+        }
         auto response = std::make_unique<SlowAuthResponse>(
             base::BindLambdaForTesting([&](base::OnceClosure start_response,
                                            base::OnceClosure finish_response) {
@@ -2450,8 +2452,9 @@ const char kWorkerHttpBasicAuthPath[] =
 // Serves a Basic Auth challenge.
 std::unique_ptr<net::test_server::HttpResponse> HandleHttpAuthRequest(
     const net::test_server::HttpRequest& request) {
-  if (request.relative_url != kWorkerHttpBasicAuthPath)
+  if (request.relative_url != kWorkerHttpBasicAuthPath) {
     return nullptr;
+  }
 
   auto http_response = std::make_unique<net::test_server::BasicHttpResponse>();
   http_response->set_code(net::HTTP_UNAUTHORIZED);

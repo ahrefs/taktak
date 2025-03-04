@@ -258,7 +258,7 @@ constexpr CGFloat kOverflowMenuButtonTopSpacing = 14;
     AppendHorizontalConstraintsForViews(
         staticConstraints, @[ self.addressLabel ], self.layoutGuide);
   } else {
-    self.overflowMenuButton = CreateOverflowMenuButton();
+    self.overflowMenuButton = CreateOverflowMenuButton(_cellIndex);
     [self.contentView addSubview:self.overflowMenuButton];
     [staticConstraints
         addObject:[self.overflowMenuButton.topAnchor
@@ -744,7 +744,7 @@ constexpr CGFloat kOverflowMenuButtonTopSpacing = 14;
                displayDescription:nil
                              icon:nil
                              type:autofill::SuggestionType::kAddressEntry
-                backendIdentifier:autofill::Suggestion::AutofillProfilePayload(
+                          payload:autofill::Suggestion::AutofillProfilePayload(
                                       autofill::Suggestion::Guid(
                                           base::SysNSStringToUTF8(
                                               [self.address GUID])))

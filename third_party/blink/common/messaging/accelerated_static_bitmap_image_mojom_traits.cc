@@ -60,13 +60,10 @@ bool StructTraits<blink::mojom::AcceleratedStaticBitmapImage::DataView,
     Read(blink::mojom::AcceleratedStaticBitmapImage::DataView data,
          blink::AcceleratedImageInfo* out) {
   if (!data.ReadSharedImage(&out->shared_image) ||
+      !data.ReadSyncToken(&out->sync_token) ||
       !data.ReadImageInfo(&out->image_info)) {
     return false;
   }
-
-  out->is_origin_top_left = data.is_origin_top_left();
-  out->supports_display_compositing = data.supports_display_compositing();
-  out->is_overlay_candidate = data.is_overlay_candidate();
 
   auto callback = data.TakeReleaseCallback<
       mojo::PendingRemote<blink::mojom::ImageReleaseCallback>>();

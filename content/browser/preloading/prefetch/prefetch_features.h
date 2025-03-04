@@ -19,12 +19,17 @@ CONTENT_EXPORT BASE_DECLARE_FEATURE(kPrefetchUseContentRefactor);
 
 // If enabled, PrefetchContainer can be used for more than one navigation.
 // https://crbug.com/1449360
+//
+// TODO(crbug.com/397882995): Remove this.
 CONTENT_EXPORT BASE_DECLARE_FEATURE(kPrefetchReusable);
 
 // The size limit of body size in bytes that can be reused in
 // `kPrefetchReusable`.
 CONTENT_EXPORT extern const base::FeatureParam<int>
     kPrefetchReusableBodySizeLimit;
+
+CONTENT_EXPORT BASE_DECLARE_FEATURE_PARAM(bool,
+                                          kPrefetchReusableUseNewWaitLoop);
 
 // If enabled, navigational prefetch is scoped to the referring document's
 // network isolation key instead of the old behavior of the referring document
@@ -51,9 +56,6 @@ CONTENT_EXPORT extern const base::FeatureParam<
     PrefetchClientHintsCrossSiteBehavior>
     kPrefetchClientHintsCrossSiteBehavior;
 
-// If enabled, prefetch requests may include X-Client-Data request header.
-CONTENT_EXPORT BASE_DECLARE_FEATURE(kPrefetchXClientDataHeader);
-
 // If enabled, then prefetch serving will apply mitigations if it may have been
 // contaminated by cross-partition state.
 CONTENT_EXPORT BASE_DECLARE_FEATURE(kPrefetchStateContaminationMitigation);
@@ -76,7 +78,14 @@ CONTENT_EXPORT BASE_DECLARE_FEATURE(kPrefetchNewLimits);
 
 // If enabled, use the new wait loop, which is driven by
 // `PrefetchMatchResolver2` instead of `PrefetchService`.
+//
+// TODO(crbug.com/353490734): Remove this.
 CONTENT_EXPORT BASE_DECLARE_FEATURE(kPrefetchNewWaitLoop);
+
+// Fix for prefetching a URL controlled by a ServiceWorker without fetch
+// handler. Currently this stops prefetching for such cases
+// (https://crbug.com/379076354).
+CONTENT_EXPORT BASE_DECLARE_FEATURE(kPrefetchServiceWorkerNoFetchHandlerFix);
 
 }  // namespace features
 

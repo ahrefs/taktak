@@ -116,6 +116,11 @@ bool ShellExtensionsBrowserClient::AreExtensionsDisabledForContext(
 }
 
 #if BUILDFLAG(IS_CHROMEOS)
+bool ShellExtensionsBrowserClient::IsActiveContext(
+    content::BrowserContext* browser_context) const {
+  return true;
+}
+
 std::string ShellExtensionsBrowserClient::GetUserIdHashFromContext(
     content::BrowserContext* context) {
   if (!ash::LoginState::IsInitialized())
@@ -156,7 +161,7 @@ void ShellExtensionsBrowserClient::LoadResourceFromResourceBundle(
     int resource_id,
     scoped_refptr<net::HttpResponseHeaders> headers,
     mojo::PendingRemote<network::mojom::URLLoaderClient> client) {
-  NOTREACHED_IN_MIGRATION() << "Load resources from bundles not supported.";
+  NOTREACHED() << "Load resources from bundles not supported.";
 }
 
 bool ShellExtensionsBrowserClient::AllowCrossRendererResourceLoad(
@@ -315,19 +320,9 @@ KioskDelegate* ShellExtensionsBrowserClient::GetKioskDelegate() {
   return kiosk_delegate_.get();
 }
 
-bool ShellExtensionsBrowserClient::IsLockScreenContext(
-    content::BrowserContext* context) {
-  return false;
-}
-
 std::string ShellExtensionsBrowserClient::GetApplicationLocale() {
   // TODO(michaelpg): Use system locale.
   return "en-US";
-}
-
-std::string ShellExtensionsBrowserClient::GetUserAgent() const {
-  return content::BuildUserAgentFromProduct(
-      std::string(version_info::GetProductNameAndVersionForUserAgent()));
 }
 
 void ShellExtensionsBrowserClient::InitWithBrowserContext(

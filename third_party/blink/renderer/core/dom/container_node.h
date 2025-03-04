@@ -131,15 +131,23 @@ class CORE_EXPORT ContainerNode : public Node {
                                       ExceptionState&);
   StaticElementList* QuerySelectorAll(const AtomicString& selectors);
 
+  void InsertBefore(const VectorOf<Node>& new_children,
+                    Node* ref_child,
+                    ExceptionState&);
   Node* InsertBefore(Node* new_child, Node* ref_child, ExceptionState&);
   Node* InsertBefore(Node* new_child, Node* ref_child);
+  void ReplaceChild(const VectorOf<Node>& new_children,
+                    Node* old_child,
+                    ExceptionState&);
   Node* ReplaceChild(Node* new_child, Node* old_child, ExceptionState&);
   Node* ReplaceChild(Node* new_child, Node* old_child);
   Node* RemoveChild(Node* child, ExceptionState&);
   Node* RemoveChild(Node* child);
+  void AppendChildren(const VectorOf<Node>& new_children, ExceptionState&);
   Node* AppendChild(Node* new_child, ExceptionState&);
   Node* AppendChild(Node* new_child);
-  bool EnsurePreInsertionValidity(const Node& new_child,
+  bool EnsurePreInsertionValidity(const Node* new_child,
+                                  const VectorOf<Node>* new_children,
                                   const Node* next,
                                   const Node* old_child,
                                   ExceptionState&) const;
@@ -180,7 +188,11 @@ class CORE_EXPORT ContainerNode : public Node {
   // Called when the parser has finished building a DocumentFragment. This is
   // not called if the parser fails parsing (if parsing fails, the
   // DocumentFragment is orphaned and will eventually be gc'd).
-  void ParserFinishedBuildingDocumentFragment();
+  //
+  // ShouldNotifyInsertedNodes controls whether to skip notifications that are
+  // redone if the contents of the DocumentFragment are moved to a new parent.
+  enum class ShouldNotifyInsertedNodes { kNotify, kSkip };
+  void ParserFinishedBuildingDocumentFragment(ShouldNotifyInsertedNodes);
   void ParserRemoveChild(Node&);
   void ParserInsertBefore(Node* new_child, Node& ref_child);
   void ParserTakeAllChildrenFrom(ContainerNode&);
@@ -327,7 +339,8 @@ class CORE_EXPORT ContainerNode : public Node {
                                    Node* node_before_change,
                                    Node* node_after_change);
   void RecalcDescendantStyles(const StyleRecalcChange,
-                              const StyleRecalcContext&);
+                              const StyleRecalcContext&,
+                              Element& host_or_element);
   void RebuildChildrenLayoutTrees(WhitespaceAttacher&);
   void RebuildLayoutTreeForChild(Node* child, WhitespaceAttacher&);
 
@@ -465,6 +478,11 @@ class CORE_EXPORT ContainerNode : public Node {
     return EnsureCachedCollection<HTMLCollection>(kPopoverInvokers);
   }
 
+  HTMLCollection* CommandInvokers() {
+    DCHECK(IsTreeScope());
+    return EnsureCachedCollection<HTMLCollection>(kCommandInvokers);
+  }
+
   void ReplaceChildren(const VectorOf<Node>& nodes,
                        ExceptionState& exception_state);
 
@@ -493,12 +511,8 @@ class CORE_EXPORT ContainerNode : public Node {
                                            Element* attribute_owner_element,
                                            const ChildrenChange*);
 
-  void SetFirstChild(Node* child) {
-    first_child_ = child;
-  }
-  void SetLastChild(Node* child) {
-    last_child_ = child;
-  }
+  void SetFirstChild(Node* child) { first_child_ = child; }
+  void SetLastChild(Node* child) { last_child_ = child; }
 
   // Utility functions for NodeListsNodeData API.
   template <typename Collection>
@@ -511,6 +525,8 @@ class CORE_EXPORT ContainerNode : public Node {
                                      const AtomicString& local_name);
   template <typename Collection>
   Collection* CachedCollection(CollectionType);
+  template <typename Collection>
+  const Collection* CachedCollection(CollectionType) const;
 
  private:
   bool IsContainerNode() const =
@@ -522,7 +538,8 @@ class CORE_EXPORT ContainerNode : public Node {
   // it was inserted.
   void NotifyNodeAtEndOfBuildingFragmentTree(Node& node,
                                              const ChildrenChange& change,
-                                             bool may_contain_shadow_roots);
+                                             bool may_contain_shadow_roots,
+                                             ShouldNotifyInsertedNodes);
 
   NodeListsNodeData& EnsureNodeLists();
   void RemoveBetween(Node* previous_child, Node* next_child, Node& old_child);
@@ -575,7 +592,6 @@ class CORE_EXPORT ContainerNode : public Node {
   inline bool CheckParserAcceptChild(const Node& new_child) const;
   inline bool IsHostIncludingInclusiveAncestorOfThis(const Node&,
                                                      ExceptionState&) const;
-  inline bool IsChildTypeAllowed(const Node& child) const;
 
   void CheckSoftNavigationHeuristicsTracking(const Document& document,
                                              Node& inserted_node);

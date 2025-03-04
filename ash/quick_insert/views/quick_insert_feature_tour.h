@@ -31,19 +31,19 @@ class ActivationClient;
 
 namespace ash {
 
-class ASH_EXPORT PickerFeatureTour : public wm::ActivationChangeObserver {
+class ASH_EXPORT QuickInsertFeatureTour : public wm::ActivationChangeObserver {
  public:
   enum class EditorStatus {
     kEligible,
     kNotEligible,
   };
 
-  PickerFeatureTour();
-  PickerFeatureTour(const PickerFeatureTour&) = delete;
-  PickerFeatureTour& operator=(const PickerFeatureTour&) = delete;
-  ~PickerFeatureTour() override;
+  QuickInsertFeatureTour();
+  QuickInsertFeatureTour(const QuickInsertFeatureTour&) = delete;
+  QuickInsertFeatureTour& operator=(const QuickInsertFeatureTour&) = delete;
+  ~QuickInsertFeatureTour() override;
 
-  // Registers Picker feature tour prefs to the provided `registry`.
+  // Registers Quick Insert feature tour prefs to the provided `registry`.
   static void RegisterProfilePrefs(PrefRegistrySimple* registry);
 
   // Disables the feature tour for tests.
@@ -86,7 +86,7 @@ class ASH_EXPORT PickerFeatureTour : public wm::ActivationChangeObserver {
   base::ScopedObservation<wm::ActivationClient, wm::ActivationChangeObserver>
       obs_{this};
 
-  base::WeakPtrFactory<PickerFeatureTour> weak_ptr_factory_{this};
+  base::WeakPtrFactory<QuickInsertFeatureTour> weak_ptr_factory_{this};
 };
 
 }  // namespace ash

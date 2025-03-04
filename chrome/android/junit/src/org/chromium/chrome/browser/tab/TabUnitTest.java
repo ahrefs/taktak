@@ -32,7 +32,6 @@ import androidx.annotation.Nullable;
 import androidx.test.filters.SmallTest;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -40,10 +39,10 @@ import org.mockito.MockitoAnnotations;
 import org.robolectric.annotation.Config;
 
 import org.chromium.base.Token;
+import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.Features.DisableFeatures;
 import org.chromium.base.test.util.Features.EnableFeatures;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.chrome.browser.app.ChromeActivity;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.ui.native_page.NativePage;
@@ -64,8 +63,6 @@ import java.lang.ref.WeakReference;
 public class TabUnitTest {
     private static final int TAB1_ID = 456;
     private static final int TAB2_ID = 789;
-
-    @Rule public JniMocker mocker = new JniMocker();
 
     @Mock private AutofillProvider mAutofillProvider;
     @Mock private Profile mProfile;
@@ -94,10 +91,11 @@ public class TabUnitTest {
 
         doReturn(mWeakReferenceActivity).when(mWindowAndroid).getActivity();
         doReturn(mWeakReferenceContext).when(mWindowAndroid).getContext();
+        doReturn(new ObservableSupplierImpl<>(false)).when(mWindowAndroid).getOcclusionSupplier();
         doReturn(mActivity).when(mWeakReferenceActivity).get();
         doReturn(mContext).when(mWeakReferenceContext).get();
         doReturn(mContext).when(mContext).getApplicationContext();
-        mocker.mock(UserPrefsJni.TEST_HOOKS, mUserPrefsNatives);
+        UserPrefsJni.setInstanceForTesting(mUserPrefsNatives);
         when(mUserPrefsNatives.get(mProfile)).thenReturn(mPrefs);
 
         mTab =
@@ -240,7 +238,7 @@ public class TabUnitTest {
     @Test
     @SmallTest
     public void testFreezeDetachedNativePage() {
-        mocker.mock(TabImplJni.TEST_HOOKS, mNativeMock);
+        TabImplJni.setInstanceForTesting(mNativeMock);
 
         doReturn(mTabWebContentsDelegateAndroid)
                 .when(mDelegateFactory)

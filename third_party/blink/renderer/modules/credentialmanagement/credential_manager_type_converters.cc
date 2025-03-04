@@ -8,9 +8,13 @@
 #include <utility>
 
 #include "base/numerics/safe_conversions.h"
+#include "base/time/time.h"
 #include "build/build_config.h"
+#include "mojo/public/cpp/bindings/type_converter.h"
+#include "third_party/blink/public/common/webid/login_status_options.h"
 #include "third_party/blink/public/mojom/webauthn/authenticator.mojom-blink.h"
 #include "third_party/blink/public/mojom/webid/digital_identity_request.mojom-blink.h"
+#include "third_party/blink/public/mojom/webid/federated_auth_request.mojom-blink-forward.h"
 #include "third_party/blink/public/mojom/webid/federated_auth_request.mojom-blink.h"
 #include "third_party/blink/renderer/bindings/core/v8/v8_typedefs.h"
 #include "third_party/blink/renderer/bindings/core/v8/v8_union_arraybuffer_arraybufferview.h"
@@ -19,7 +23,9 @@
 #include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_client_outputs.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_large_blob_inputs.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_large_blob_outputs.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_payment_browser_bound_signature.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_payment_inputs.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_payment_outputs.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_prf_inputs.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_prf_outputs.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_authentication_extensions_prf_values.h"
@@ -31,9 +37,13 @@
 #include "third_party/blink/renderer/bindings/modules/v8/v8_identity_credential_disconnect_options.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_identity_credential_request_options_context.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_identity_credential_request_options_mode.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_identity_provider_account.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_identity_provider_config.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_identity_provider_field.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_identity_provider_request_options.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_identity_provider_request_options_format.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_identity_user_info.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_login_status_options.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_public_key_credential_creation_options.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_public_key_credential_descriptor.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_public_key_credential_parameters.h"
@@ -41,12 +51,15 @@
 #include "third_party/blink/renderer/bindings/modules/v8/v8_public_key_credential_rp_entity.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_public_key_credential_user_entity.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_remote_desktop_client_override.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_union_identityproviderfield_usvstring.h"
 #include "third_party/blink/renderer/core/typed_arrays/dom_array_piece.h"
 #include "third_party/blink/renderer/modules/credentialmanagement/credential.h"
 #include "third_party/blink/renderer/modules/credentialmanagement/federated_credential.h"
 #include "third_party/blink/renderer/modules/credentialmanagement/password_credential.h"
 #include "third_party/blink/renderer/modules/credentialmanagement/public_key_credential.h"
 #include "third_party/blink/renderer/platform/bindings/enumeration_base.h"
+#include "third_party/blink/renderer/platform/bindings/v8_binding.h"
+#include "third_party/blink/renderer/platform/heap/collection_support/heap_vector.h"
 #include "third_party/blink/renderer/platform/heap/member.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 #include "third_party/blink/renderer/platform/wtf/text/base64.h"
@@ -79,6 +92,10 @@ using blink::mojom::blink::IdentityProviderRequestOptionsPtr;
 using blink::mojom::blink::IdentityUserInfo;
 using blink::mojom::blink::IdentityUserInfoPtr;
 using blink::mojom::blink::LargeBlobSupport;
+using blink::mojom::blink::LoginStatusAccount;
+using blink::mojom::blink::LoginStatusAccountPtr;
+using blink::mojom::blink::LoginStatusOptions;
+using blink::mojom::blink::LoginStatusOptionsPtr;
 using blink::mojom::blink::PRFValues;
 using blink::mojom::blink::PRFValuesPtr;
 using blink::mojom::blink::PublicKeyCredentialCreationOptionsPtr;
@@ -133,7 +150,7 @@ bool SortPRFValuesByCredentialId(const PRFValuesPtr& a, const PRFValuesPtr& b) {
 Vector<uint8_t> Base64UnpaddedURLDecodeOrCheck(const String& encoded) {
   Vector<char> decoded;
   CHECK(WTF::Base64UnpaddedURLDecode(encoded, decoded));
-  return Vector<uint8_t>(base::as_bytes(base::make_span(decoded)));
+  return Vector<uint8_t>(base::as_byte_span(decoded));
 }
 
 }  // namespace
@@ -186,8 +203,7 @@ TypeConverter<blink::Credential*, CredentialInfoPtr>::Convert(
     case CredentialType::EMPTY:
       return nullptr;
   }
-  NOTREACHED_IN_MIGRATION();
-  return nullptr;
+  NOTREACHED();
 }
 
 #if BUILDFLAG(IS_ANDROID)
@@ -244,6 +260,11 @@ TypeConverter<blink::AuthenticationExtensionsClientOutputs*,
         ConvertTo<blink::AuthenticationExtensionsSupplementalPubKeysOutputs*>(
             extensions->supplemental_pub_keys));
   }
+  if (extensions->payment) {
+    extension_outputs->setPayment(
+        ConvertTo<blink::AuthenticationExtensionsPaymentOutputs*>(
+            extensions->payment));
+  }
   if (extensions->echo_prf) {
     auto* prf_outputs = blink::AuthenticationExtensionsPRFOutputs::Create();
     if (extensions->prf_results) {
@@ -280,6 +301,25 @@ TypeConverter<blink::AuthenticationExtensionsSupplementalPubKeysOutputs*,
       blink::AuthenticationExtensionsSupplementalPubKeysOutputs::Create();
   spk_outputs->setSignatures(std::move(signatures));
   return spk_outputs;
+}
+
+// static
+blink::AuthenticationExtensionsPaymentOutputs*
+TypeConverter<blink::AuthenticationExtensionsPaymentOutputs*,
+              blink::mojom::blink::AuthenticationExtensionsPaymentResponsePtr>::
+    Convert(
+        const blink::mojom::blink::AuthenticationExtensionsPaymentResponsePtr&
+            payment_response) {
+  auto* payment_outputs =
+      blink::AuthenticationExtensionsPaymentOutputs::Create();
+  if (!payment_response->browser_bound_signature.empty()) {
+    auto* browser_bound_signature =
+        blink::AuthenticationExtensionsPaymentBrowserBoundSignature::Create();
+    browser_bound_signature->setSignatureOutput(blink::DOMArrayBuffer::Create(
+        std::move(payment_response->browser_bound_signature)));
+    payment_outputs->setBrowserBoundSignature(browser_bound_signature);
+  }
+  return payment_outputs;
 }
 
 // static
@@ -351,8 +391,7 @@ String TypeConverter<String, AuthenticatorTransport>::Convert(
   if (transport == AuthenticatorTransport::INTERNAL) {
     return "internal";
   }
-  NOTREACHED_IN_MIGRATION();
-  return "usb";
+  NOTREACHED();
 }
 
 // static
@@ -571,6 +610,30 @@ TypeConverter<PublicKeyCredentialParametersPtr,
 }
 
 // static
+Vector<PublicKeyCredentialParametersPtr> TypeConverter<
+    WTF::Vector<PublicKeyCredentialParametersPtr>,
+    blink::HeapVector<blink::Member<blink::PublicKeyCredentialParameters>>>::
+    Convert(const blink::HeapVector<
+            blink::Member<blink::PublicKeyCredentialParameters>>&
+                input_pub_key_cred_params) {
+  // Steps 9 and 10 of https://w3c.github.io/webauthn/#sctn-createCredential
+  Vector<PublicKeyCredentialParametersPtr> parameters;
+  if (input_pub_key_cred_params.size() == 0) {
+    parameters.push_back(CreatePublicKeyCredentialParameter(kCoseEs256));
+    parameters.push_back(CreatePublicKeyCredentialParameter(kCoseRs256));
+  } else {
+    for (auto& parameter : input_pub_key_cred_params) {
+      PublicKeyCredentialParametersPtr normalized_parameter =
+          PublicKeyCredentialParameters::From(*parameter);
+      if (normalized_parameter) {
+        parameters.push_back(std::move(normalized_parameter));
+      }
+    }
+  }
+  return parameters;
+}
+
+// static
 PublicKeyCredentialCreationOptionsPtr
 TypeConverter<PublicKeyCredentialCreationOptionsPtr,
               blink::PublicKeyCredentialCreationOptions>::
@@ -585,24 +648,12 @@ TypeConverter<PublicKeyCredentialCreationOptionsPtr,
   }
   mojo_options->challenge = ConvertTo<Vector<uint8_t>>(options.challenge());
 
-  // Steps 7 and 8 of https://w3c.github.io/webauthn/#sctn-createCredential
-  Vector<PublicKeyCredentialParametersPtr> parameters;
-  if (options.pubKeyCredParams().size() == 0) {
-    parameters.push_back(CreatePublicKeyCredentialParameter(kCoseEs256));
-    parameters.push_back(CreatePublicKeyCredentialParameter(kCoseRs256));
-  } else {
-    for (auto& parameter : options.pubKeyCredParams()) {
-      PublicKeyCredentialParametersPtr normalized_parameter =
-          PublicKeyCredentialParameters::From(*parameter);
-      if (normalized_parameter) {
-        parameters.push_back(std::move(normalized_parameter));
-      }
-    }
-    if (parameters.empty()) {
-      return nullptr;
-    }
+  mojo_options->public_key_parameters =
+      ConvertTo<WTF::Vector<PublicKeyCredentialParametersPtr>>(
+          options.pubKeyCredParams());
+  if (mojo_options->public_key_parameters.empty()) {
+    return nullptr;
   }
-  mojo_options->public_key_parameters = std::move(parameters);
 
   if (options.hasTimeout()) {
     mojo_options->timeout = base::Milliseconds(options.timeout());
@@ -698,6 +749,12 @@ TypeConverter<PublicKeyCredentialCreationOptionsPtr,
         mojo_options->supplemental_pub_keys = std::move(*supplemental_pub_keys);
       }
     }
+    if (extensions->hasPayment() &&
+        extensions->payment()->hasBrowserBoundPubKeyCredParams()) {
+      mojo_options->payment_browser_bound_key_parameters =
+          ConvertTo<WTF::Vector<PublicKeyCredentialParametersPtr>>(
+              extensions->payment()->browserBoundPubKeyCredParams());
+    }
     if (extensions->hasPrf()) {
       mojo_options->prf_enable = true;
       if (extensions->prf()->hasEval()) {
@@ -761,7 +818,17 @@ TypeConverter<PublicKeyCredentialRequestOptionsPtr,
     Convert(const blink::PublicKeyCredentialRequestOptions& options) {
   auto mojo_options =
       blink::mojom::blink::PublicKeyCredentialRequestOptions::New();
-  mojo_options->challenge = ConvertTo<Vector<uint8_t>>(options.challenge());
+
+  // This is a required field if challengeUrl is not enabled, but that has to
+  // be verified by the method handler.
+  if (options.hasChallenge()) {
+    mojo_options->challenge = ConvertTo<Vector<uint8_t>>(options.challenge());
+  }
+
+  if (blink::RuntimeEnabledFeatures::WebAuthenticationChallengeUrlEnabled() &&
+      options.hasChallengeUrl()) {
+    mojo_options->challenge_url = blink::KURL(options.challengeUrl());
+  }
 
   if (options.hasTimeout()) {
     mojo_options->timeout = base::Milliseconds(options.timeout());
@@ -859,6 +926,12 @@ TypeConverter<AuthenticationExtensionsClientInputsPtr,
       mojo_inputs->supplemental_pub_keys = std::move(*supplemental_pub_keys);
     }
   }
+  if (inputs.hasPayment() &&
+      inputs.payment()->hasBrowserBoundPubKeyCredParams()) {
+    mojo_inputs->payment_browser_bound_key_parameters =
+        ConvertTo<WTF::Vector<PublicKeyCredentialParametersPtr>>(
+            inputs.payment()->browserBoundPubKeyCredParams());
+  }
   if (inputs.hasPrf()) {
     mojo_inputs->prf = true;
     mojo_inputs->prf_inputs = ConvertTo<Vector<PRFValuesPtr>>(*inputs.prf());
@@ -898,7 +971,7 @@ TypeConverter<IdentityProviderRequestOptionsPtr,
   CHECK(options.hasConfigURL());
   if (blink::RuntimeEnabledFeatures::FedCmIdPRegistrationEnabled() &&
       options.configURL() == "any") {
-    mojo_options->config->use_registered_config_urls = true;
+    mojo_options->config->from_idp_registration_api = true;
     // We only set the `type` if `configURL` is 'any'.
     if (options.hasType()) {
       mojo_options->config->type = options.type();
@@ -910,22 +983,36 @@ TypeConverter<IdentityProviderRequestOptionsPtr,
 
   mojo_options->nonce = options.getNonceOr("");
   mojo_options->login_hint = options.getLoginHintOr("");
-  mojo_options->domain_hint =
-      blink::RuntimeEnabledFeatures::FedCmDomainHintEnabled()
-          ? options.getDomainHintOr("")
-          : "";
+  mojo_options->domain_hint = options.getDomainHintOr("");
+  if (options.hasFormat()) {
+    // Only one format type is supported at the time and the bindings code
+    // verifies that the correct one was specified.
+    mojo_options->format = blink::mojom::blink::Format::kSdJwt;
+  }
 
   // We do not need to check whether authz is enabled because the bindings
   // code will check that for us due to the RuntimeEnabled= flag in the IDL.
   if (options.hasFields()) {
-    mojo_options->fields = options.fields();
+    Vector<String> fields;
+    for (const auto& field : options.fields()) {
+      if (field->IsIdentityProviderField()) {
+        fields.push_back(field->GetAsIdentityProviderField()->name());
+      } else {
+        CHECK(field->IsUSVString());
+        fields.push_back(field->GetAsUSVString());
+      }
+    }
+    mojo_options->fields = std::move(fields);
   }
   if (options.hasParams()) {
-    HashMap<String, String> params;
-    for (const auto& pair : options.params()) {
-      params.Set(pair.first, pair.second);
+    v8::Isolate* isolate = options.params().GetIsolate();
+    v8::MaybeLocal<v8::String> json = v8::JSON::Stringify(
+        isolate->GetCurrentContext(), options.params().V8Value());
+    if (json.IsEmpty()) {
+      return nullptr;
     }
-    mojo_options->params = std::move(params);
+    mojo_options->params_json =
+        blink::ToCoreString(isolate, json.ToLocalChecked());
   }
 
   return mojo_options;
@@ -1122,6 +1209,43 @@ TypeConverter<blink::mojom::blink::PublicKeyCredentialReportOptionsPtr,
       Base64UnpaddedURLDecodeOrCheck(options.userId());
   mojo_options->current_user_details->name = options.name();
   mojo_options->current_user_details->display_name = options.displayName();
+  return mojo_options;
+}
+
+LoginStatusAccountPtr
+TypeConverter<LoginStatusAccountPtr, blink::IdentityProviderAccount>::Convert(
+    const blink::IdentityProviderAccount& account_profile) {
+  auto mojo_profile = blink::mojom::blink::LoginStatusAccount::New();
+
+  mojo_profile->id = account_profile.id();
+  mojo_profile->email = account_profile.email();
+  mojo_profile->name = account_profile.name();
+
+  if (account_profile.hasGivenName()) {
+    mojo_profile->given_name = account_profile.givenName();
+  }
+  if (account_profile.hasPicture()) {
+    mojo_profile->picture = blink::KURL(account_profile.picture());
+  }
+
+  return mojo_profile;
+}
+
+LoginStatusOptionsPtr
+TypeConverter<LoginStatusOptionsPtr, blink::LoginStatusOptions>::Convert(
+    const blink::LoginStatusOptions& options) {
+  auto mojo_options = blink::mojom::blink::LoginStatusOptions::New();
+  if (options.hasAccounts()) {
+    for (const auto& blink_account : options.accounts()) {
+      mojo_options->accounts.push_back(
+          mojo::ConvertTo<LoginStatusAccountPtr>(*blink_account.Get()));
+    }
+  }
+
+  if (options.hasExpiration()) {
+    mojo_options->expiration = base::Milliseconds(options.expiration());
+  }
+
   return mojo_options;
 }
 

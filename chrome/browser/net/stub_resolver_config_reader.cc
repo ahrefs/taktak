@@ -28,9 +28,9 @@
 #include "chrome/browser/policy/chrome_browser_policy_connector.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/pref_names.h"
-#include "components/flags_ui/pref_service_flags_storage.h"
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
+#include "components/webui/flags/pref_service_flags_storage.h"
 #include "content/public/browser/network_service_instance.h"
 #include "net/base/features.h"
 #include "net/dns/public/dns_over_https_config.h"
@@ -299,10 +299,9 @@ SecureDnsConfig StubResolverConfigReader::GetAndUpdateConfiguration(
             SecureDnsModeDetailsForHistogram::kOffByDetectedManagedEnvironment;
         break;
       case SecureDnsConfig::ManagementMode::kDisabledParentalControls:
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
 
     // No need to check for parental controls if DoH is already disabled.

@@ -19,8 +19,8 @@
 #include "chrome/browser/android/resource_mapper.h"
 #include "chrome/browser/ui/android/autofill/autofill_accessibility_utils.h"
 #include "chrome/browser/ui/autofill/autofill_keyboard_accessory_controller.h"
+#include "components/autofill/core/browser/suggestions/suggestion.h"
 #include "components/autofill/core/browser/ui/autofill_resource_utils.h"
-#include "components/autofill/core/browser/ui/suggestion.h"
 #include "third_party/abseil-cpp/absl/types/variant.h"
 #include "ui/android/view_android.h"
 #include "ui/android/window_android.h"
@@ -56,11 +56,13 @@ bool AutofillKeyboardAccessoryViewImpl::Initialize() {
     return false;
   }
   ui::ViewAndroid* view_android = controller_->container_view();
-  if (!view_android)
+  if (!view_android) {
     return false;
+  }
   ui::WindowAndroid* window_android = view_android->GetWindowAndroid();
-  if (!window_android)
+  if (!window_android) {
     return false;  // The window might not be attached (yet or anymore).
+  }
   Java_AutofillKeyboardAccessoryViewBridge_init(
       base::android::AttachCurrentThread(), java_object_,
       reinterpret_cast<intptr_t>(this), window_android->GetJavaObject());
@@ -118,12 +120,14 @@ void AutofillKeyboardAccessoryViewImpl::Show() {
             env, label, sublabel, android_icon_id,
             base::to_underlying(suggestion.type),
             controller_->GetRemovalConfirmationText(i, nullptr, nullptr),
-            suggestion.feature_for_iph ? suggestion.feature_for_iph->name : "",
+            suggestion.iph_metadata.feature
+                ? suggestion.iph_metadata.feature->name
+                : "",
             suggestion.iph_description_text,
             custom_icon_url
                 ? url::GURLAndroid::FromNativeGURL(env, **custom_icon_url)
                 : url::GURLAndroid::EmptyGURL(env),
-            suggestion.apply_deactivated_style));
+            suggestion.HasDeactivatedStyle()));
   }
   Java_AutofillKeyboardAccessoryViewBridge_show(env, java_object_,
                                                 std::move(java_suggestions));

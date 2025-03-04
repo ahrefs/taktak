@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.buildActivity;
 
 import android.app.Activity;
+import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.view.View;
 
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
 import org.chromium.base.supplier.ObservableSupplierImpl;
@@ -60,7 +62,8 @@ public class AppModalPresenterUnitTest {
         mAppModalPresenter = new AppModalPresenter(activity);
         mAppModalPresenter.setInsetObserver(mInsetObserver);
         mEdgeToEdgeStateSupplier = new ObservableSupplierImpl<>();
-        mAppModalPresenter.setEdgeToEdgeStateSupplier(mEdgeToEdgeStateSupplier);
+        mAppModalPresenter.setEdgeToEdgeStateSupplier(
+                mEdgeToEdgeStateSupplier, /* isEdgeToEdgeEverywhereEnabled= */ false);
         mModel = new PropertyModel.Builder(ModalDialogProperties.ALL_KEYS).build();
     }
 
@@ -177,6 +180,25 @@ public class AppModalPresenterUnitTest {
     }
 
     @Test
+    public void testRemoveDialogView() {
+        setupWindow(
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT,
+                /* leftInset= */ 25,
+                /* topInset= */ 40,
+                /* rightInset= */ 20,
+                /* bottomInset= */ 32,
+                /* isEdgeToEdgeActive= */ true);
+
+        addDialogView();
+        mAppModalPresenter.removeDialogView(mModel);
+
+        // This will try to run #onEnterAnimationStarted on the dialog view, which is now null. Just
+        // need to make sure it doesn't crash.
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+    }
+
+    @Test
     public void onWindowResizedWithDialogShowing_EdgeToEdgeActive() {
         // Setup initial window.
         setupWindow(
@@ -193,6 +215,11 @@ public class AppModalPresenterUnitTest {
 
         // Verify dialog margins.
         verifyDialogMargins(25, 40);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
 
         // Simulate window resizing / inset change while the dialog is showing.
         setupWindow(
@@ -208,6 +235,11 @@ public class AppModalPresenterUnitTest {
                 .getWindowInsetsListenerForTesting()
                 .onApplyWindowInsets(mock(View.class), mock(WindowInsetsCompat.class));
         verifyDialogMargins(/* expectedHorizontalMargin= */ 16, /* expectedVerticalMargin= */ 32);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
     }
 
     @Test
@@ -227,6 +259,11 @@ public class AppModalPresenterUnitTest {
 
         // Verify dialog margins.
         verifyDialogMargins(16, 16);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
 
         // Simulate window resizing / inset change while the dialog is showing.
         setupWindow(
@@ -242,6 +279,11 @@ public class AppModalPresenterUnitTest {
                 .getWindowInsetsListenerForTesting()
                 .onApplyWindowInsets(mock(View.class), mock(WindowInsetsCompat.class));
         verifyDialogMargins(/* expectedHorizontalMargin= */ 16, /* expectedVerticalMargin= */ 16);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
     }
 
     @Test
@@ -261,6 +303,11 @@ public class AppModalPresenterUnitTest {
 
         // Verify dialog margins.
         verifyDialogMargins(/* expectedHorizontalMargin= */ 25, /* expectedVerticalMargin= */ 40);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
 
         // Simulate window resizing where edge-to-edge state change is received before inset change
         // while the dialog is showing.
@@ -278,6 +325,11 @@ public class AppModalPresenterUnitTest {
                 .onApplyWindowInsets(mock(View.class), mock(WindowInsetsCompat.class));
 
         verifyDialogMargins(/* expectedHorizontalMargin= */ 16, /* expectedVerticalMargin= */ 16);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
     }
 
     @Test
@@ -297,6 +349,11 @@ public class AppModalPresenterUnitTest {
 
         // Verify dialog margins.
         verifyDialogMargins(/* expectedHorizontalMargin= */ 16, /* expectedVerticalMargin= */ 16);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
 
         // Simulate window resizing where edge-to-edge state change is received after inset change
         // while the dialog is showing.
@@ -315,6 +372,96 @@ public class AppModalPresenterUnitTest {
         mEdgeToEdgeStateSupplier.set(true);
 
         verifyDialogMargins(/* expectedHorizontalMargin= */ 25, /* expectedVerticalMargin= */ 40);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
+    }
+
+    @Test
+    public void normalDialog_EdgeToEdgeEverywhereIsEnabled_PaddingNotApplied() {
+        mAppModalPresenter.setEdgeToEdgeStateSupplier(
+                mEdgeToEdgeStateSupplier, /* isEdgeToEdgeEverywhereEnabled= */ true);
+
+        // Setup initial window.
+        setupWindow(
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT,
+                /* leftInset= */ 0,
+                /* topInset= */ 0,
+                /* rightInset= */ 0,
+                /* bottomInset= */ 0,
+                /* isEdgeToEdgeActive= */ true);
+
+        // Add dialog view.
+        mModel =
+                new PropertyModel.Builder(ModalDialogProperties.ALL_KEYS)
+                        .with(ModalDialogProperties.DIALOG_STYLES, DialogStyles.NORMAL)
+                        .build();
+        addDialogView();
+
+        // Verify dialog margins.
+        verifyDialogMargins(/* expectedHorizontalMargin= */ 16, /* expectedVerticalMargin= */ 16);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
+    }
+
+    @Test
+    public void fullscreenDialog_EdgeToEdgeEverywhereIsEnabled_PaddingApplied() {
+        mAppModalPresenter.setEdgeToEdgeStateSupplier(
+                mEdgeToEdgeStateSupplier, /* isEdgeToEdgeEverywhereEnabled= */ true);
+
+        // Setup initial window.
+        setupWindow(
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT,
+                /* leftInset= */ 0,
+                /* topInset= */ 36,
+                /* rightInset= */ 0,
+                /* bottomInset= */ 32,
+                /* isEdgeToEdgeActive= */ true);
+
+        // Add dialog view.
+        mModel =
+                new PropertyModel.Builder(ModalDialogProperties.ALL_KEYS)
+                        .with(ModalDialogProperties.DIALOG_STYLES, DialogStyles.FULLSCREEN_DIALOG)
+                        .build();
+        addDialogView();
+
+        // Verify dialog margins.
+        verifyDialogMargins(/* expectedHorizontalMargin= */ 0, /* expectedVerticalMargin= */ 0);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 36,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 32);
+
+        // Simulate window resizing where edge-to-edge state change is received after inset change
+        // while the dialog is showing.
+        setupWindow(
+                /* windowWidth= */ 1600,
+                /* windowHeight= */ 1600,
+                /* leftInset= */ 25,
+                /* topInset= */ 40,
+                /* rightInset= */ 20,
+                /* bottomInset= */ 32,
+                /* isEdgeToEdgeActive= */ true);
+        // This method will be invoked when the dialog window is resized.
+        mAppModalPresenter
+                .getWindowInsetsListenerForTesting()
+                .onApplyWindowInsets(mock(View.class), mock(WindowInsetsCompat.class));
+        mEdgeToEdgeStateSupplier.set(true);
+
+        verifyDialogMargins(/* expectedHorizontalMargin= */ 0, /* expectedVerticalMargin= */ 0);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 25,
+                /* expectedPaddingTop= */ 40,
+                /* expectedPaddingRight= */ 20,
+                /* expectedPaddingBottom= */ 32);
     }
 
     @Test
@@ -338,6 +485,11 @@ public class AppModalPresenterUnitTest {
 
         // Verify that dialog margins are not set.
         verifyDialogMargins(ModalDialogView.NOT_SPECIFIED, ModalDialogView.NOT_SPECIFIED);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
     }
 
     @Test
@@ -362,6 +514,11 @@ public class AppModalPresenterUnitTest {
 
         // Verify that dialog margins are not set.
         verifyDialogMargins(ModalDialogView.NOT_SPECIFIED, ModalDialogView.NOT_SPECIFIED);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
     }
 
     @Test
@@ -386,6 +543,11 @@ public class AppModalPresenterUnitTest {
 
         // Verify dialog margins.
         verifyDialogMargins(25, 40);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
     }
 
     @Test
@@ -402,6 +564,11 @@ public class AppModalPresenterUnitTest {
         // Verify dialog margins are set to the fixed value of 16dp, when window insets are not
         // available.
         verifyDialogMargins(16, 16);
+        verifyDialogPadding(
+                /* expectedPaddingLeft= */ 0,
+                /* expectedPaddingTop= */ 0,
+                /* expectedPaddingRight= */ 0,
+                /* expectedPaddingBottom= */ 0);
     }
 
     private void setupWindow(
@@ -430,7 +597,7 @@ public class AppModalPresenterUnitTest {
     }
 
     private void addDialogView() {
-        mAppModalPresenter.addDialogView(mModel, null);
+        mAppModalPresenter.addDialogView(mModel, null, null);
         // This method will be invoked when the dialog is added.
         mAppModalPresenter
                 .getWindowInsetsListenerForTesting()
@@ -447,5 +614,27 @@ public class AppModalPresenterUnitTest {
                 "Dialog vertical margin is incorrect.",
                 expectedVerticalMargin,
                 dialogView.getVerticalMarginForTesting());
+    }
+
+    private void verifyDialogPadding(
+            int expectedPaddingLeft,
+            int expectedPaddingTop,
+            int expectedPaddingRight,
+            int expectedPaddingBottom) {
+        var dialogView = mAppModalPresenter.getDialogViewForTesting();
+        assertEquals(
+                "Dialog left padding is incorrect.",
+                expectedPaddingLeft,
+                dialogView.getPaddingLeft());
+        assertEquals(
+                "Dialog top padding is incorrect.", expectedPaddingTop, dialogView.getPaddingTop());
+        assertEquals(
+                "Dialog right padding is incorrect.",
+                expectedPaddingRight,
+                dialogView.getPaddingRight());
+        assertEquals(
+                "Dialog bottom padding is incorrect.",
+                expectedPaddingBottom,
+                dialogView.getPaddingBottom());
     }
 }

@@ -16,12 +16,12 @@
   "account-reauthentication-recent-time-window",
   "allow-all-sites-to-initiate-mirroring",
   "allow-cross-device-feature-suite",
-  "allow-devtools-in-system-ui",
   "allow-previews",
   "always-enable-hdcp",
   "arc-native-bridge-toggle",
   "ash-debug-shortcuts",
   "ash-enable-unified-desktop",
+  "block-root-window-accessible-name-change-event",
   "borealis-enable-unsupported-hardware",
   "cellular-bypass-esim-installation-connectivity-check",
   "cellular-use-second-euicc",
@@ -35,6 +35,7 @@
   "disable-bruschetta-install-checks",
   "disable-buffer-bw-compression",
   "disable-explicit-dma-fences",
+  "disable-facilitated-payments-merchant-allowlist",
   "disable-javascript-harmony-shipping",
   "disallow-doc-written-script-loads",
   "enable-autofill-credit-card-upload",
@@ -112,7 +113,6 @@
   "optimization-guide-enable-dogfood-logging",
   "overlay-scrollbars",
   "overlay-strategies",
-  "prefer-dcheck",
   "prerender2",
   "printing-ppd-channel",
   "protected-audience-debug-token",
@@ -160,5 +160,6 @@
   "webrtc-hw-encoding",
   "webtransport-developer-mode",
   "webxr-runtime",
-  "webxr-shared-buffers"
+  "webxr-shared-buffers",
+  "windows-system-tracing"
 ]

@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <string_view>
+
 #include "ash/capture_mode/capture_mode_test_util.h"
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_pref_names.h"
@@ -73,7 +75,7 @@ bool IsNudgeShown(const std::string& id) {
   return Shell::Get()->anchored_nudge_manager()->IsNudgeShown(id);
 }
 
-const std::u16string& GetNudgeText(const std::string& id) {
+std::u16string_view GetNudgeText(const std::string& id) {
   return Shell::Get()->anchored_nudge_manager()->GetNudgeBodyTextForTest(id);
 }
 
@@ -271,13 +273,8 @@ class VideoConferenceIntegrationTest
     // Flags use to automatically select the right desktop source and get
     // around security restrictions.
     // TODO(crbug.com/40274188): Use a less error-prone flag.
-#if BUILDFLAG(IS_CHROMEOS_ASH)
     command_line->AppendSwitchASCII(::switches::kAutoSelectDesktopCaptureSource,
                                     "Display");
-#else
-    command_line->AppendSwitchASCII(::switches::kAutoSelectDesktopCaptureSource,
-                                    "Entire screen");
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
     // If in guest mode.
     if (is_guest_mode_) {
@@ -952,9 +949,7 @@ IN_PROC_BROWSER_TEST_P(VideoConferenceIntegrationTest,
   EXPECT_TRUE(found_noise_cancellation_buttion);
 }
 
-// TODO(crbug.com/40071631): re-enable once the bug is fixed.
-IN_PROC_BROWSER_TEST_P(VideoConferenceIntegrationTest,
-                       DISABLED_StopAllScreenShare) {
+IN_PROC_BROWSER_TEST_P(VideoConferenceIntegrationTest, StopAllScreenShare) {
   // Open a tab.
   content::WebContents* web_contents_1 =
       NavigateTo("/video_conference_demo.html");

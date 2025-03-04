@@ -14,7 +14,6 @@
 #include "base/functional/bind.h"
 #include "base/memory/weak_ptr.h"
 #include "base/metrics/histogram_functions.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
@@ -29,6 +28,7 @@
 #include "chrome/browser/ui/browser_commands.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
+#include "chrome/browser/ui/profiles/profile_view_utils.h"
 #include "chrome/browser/ui/tabs/public/tab_interface.h"
 #include "chrome/browser/ui/tabs/tab_group.h"
 #include "chrome/browser/ui/tabs/tab_group_model.h"
@@ -56,10 +56,10 @@
 #include "ui/actions/actions.h"
 #include "ui/base/clipboard/scoped_clipboard_writer.h"
 #include "ui/base/l10n/time_format.h"
-#include "ui/base/models/simple_menu_model.h"
 #include "ui/base/mojom/window_open_disposition.mojom.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/base/window_open_disposition_utils.h"
+#include "ui/menus/simple_menu_model.h"
 #include "ui/webui/resources/cr_components/history_clusters/history_clusters.mojom.h"
 #include "url/gurl.h"
 
@@ -88,7 +88,7 @@ class HistoryClustersSidePanelContextMenu
   HistoryClustersSidePanelContextMenu(
       absl::variant<BrowserWindowInterface*, tabs::TabInterface*> interface,
       GURL url)
-      : ui::SimpleMenuModel(this), interface_(interface), url_(url) {
+      : ui::SimpleMenuModel(this), interface_(interface), url_(std::move(url)) {
     AddItemWithStringId(IDC_CONTENT_CONTEXT_OPENLINKNEWTAB,
                         IDS_HISTORY_CLUSTERS_OPEN_IN_NEW_TAB);
     AddItemWithStringId(IDC_CONTENT_CONTEXT_OPENLINKNEWWINDOW,
@@ -109,6 +109,14 @@ class HistoryClustersSidePanelContextMenu
     AddItemWithStringId(IDC_PASTE, IDS_HISTORY_CLUSTERS_PASTE);
   }
   ~HistoryClustersSidePanelContextMenu() override = default;
+
+  bool IsCommandIdEnabled(int command_id) const override {
+    if (command_id == IDC_CONTENT_CONTEXT_OPENLINKOFFTHERECORD) {
+      return IsOpenLinkOTREnabled(
+          GetBrowserWindowInterface(interface_)->GetProfile(), url_);
+    }
+    return true;
+  }
 
   void ExecuteCommand(int command_id, int event_flags) override {
     switch (command_id) {
@@ -163,8 +171,7 @@ class HistoryClustersSidePanelContextMenu
                          ->root_action_item());
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
     }
   }
 
@@ -248,6 +255,10 @@ HistoryClustersHandler::~HistoryClustersHandler() = default;
 void HistoryClustersHandler::SetSidePanelUIEmbedder(
     base::WeakPtr<TopChromeWebUIController::Embedder> side_panel_embedder) {
   history_clusters_side_panel_embedder_ = side_panel_embedder;
+}
+
+void HistoryClustersHandler::SetContextInterface(ContextInterface interface) {
+  interface_ = interface;
 }
 
 void HistoryClustersHandler::SetQuery(const std::string& query) {
@@ -341,7 +352,7 @@ void HistoryClustersHandler::HideVisits(std::vector<mojom::URLVisitPtr> visits,
   }
 
   std::vector<history::VisitID> visit_ids;
-  base::ranges::transform(
+  std::ranges::transform(
       visits, std::back_inserter(visit_ids),
       [](const auto& url_visit_ptr) { return url_visit_ptr->visit_id; });
 
@@ -379,14 +390,13 @@ void HistoryClustersHandler::RemoveVisits(
     {
       history::BrowsingHistoryService::HistoryEntry entry;
       entry.url = visit->raw_visit_data->url;
-      entry.all_timestamps.insert(
-          visit->raw_visit_data->visit_time.ToInternalValue());
+      entry.all_timestamps.insert(visit->raw_visit_data->visit_time);
       items_to_remove.push_back(std::move(entry));
     }
     for (const auto& duplicate : visit->duplicates) {
       history::BrowsingHistoryService::HistoryEntry entry;
       entry.url = duplicate->url;
-      entry.all_timestamps.insert(duplicate->visit_time.ToInternalValue());
+      entry.all_timestamps.insert(duplicate->visit_time);
       items_to_remove.push_back(std::move(entry));
     }
   }
@@ -421,8 +431,7 @@ void HistoryClustersHandler::RemoveVisitByUrlAndTime(
   history::BrowsingHistoryService::HistoryEntry entry;
   entry.url = url;
   base::Time visit_time = base::Time::FromMillisecondsSinceUnixEpoch(timestamp);
-  entry.all_timestamps.insert(
-      visit_time.ToDeltaSinceWindowsEpoch().InMicroseconds());
+  entry.all_timestamps.insert(visit_time);
   browsing_history_service_->RemoveVisits({entry});
 }
 
@@ -509,6 +518,14 @@ void HistoryClustersHandler::HistoryDeleted() {
 Profile* HistoryClustersHandler::GetProfile() {
   DCHECK(profile_);
   return profile_;
+}
+
+std::unique_ptr<ui::SimpleMenuModel>
+HistoryClustersHandler::CreateHistoryClustersSidePanelContextMenuForTesting(
+    ContextInterface interface,
+    GURL url) {
+  return std::make_unique<HistoryClustersSidePanelContextMenu>(interface,
+                                                               std::move(url));
 }
 
 void HistoryClustersHandler::SendClustersToPage(

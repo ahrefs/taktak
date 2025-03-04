@@ -11,6 +11,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "base/functional/callback.h"
 #include "base/observer_list.h"
@@ -25,10 +26,14 @@
 @protocol SystemIdentityInteractionManager;
 class SystemIdentityManagerObserver;
 
-// SystemIdentityManager abstracts the signin flow on iOS.
+// SystemIdentityManager is Chrome's interface to the iOS shared authentication
+// library: It provides access to accounts on the device and information about
+// them, independent of whether or not the user is signed in to Chrome, and
+// whether the accounts were added through Chrome or through some other Google
+// app. It also allows adding accounts to the device via
+// `SystemIdentityInteractionManager`, and displaying some account-related UIs.
 class SystemIdentityManager {
  public:
-  // Alias SystemIdentityCapabilityResult.
   using CapabilityResult = SystemIdentityCapabilityResult;
 
   // Value returned by IdentityIteratorCallback.
@@ -37,7 +42,7 @@ class SystemIdentityManager {
     kInterruptIteration,
   };
 
-  // Value representing a refresh access token.
+  // Value representing an OAuth access token.
   struct AccessTokenInfo {
     // The access token itself.
     std::string token;
@@ -87,6 +92,9 @@ class SystemIdentityManager {
 
   // Callback invoked when the `GetHostedDomain()` operation completes.
   using HostedDomainCallback = base::OnceCallback<void(NSString*, NSError*)>;
+
+  // Callback invoked when the `FetchTokenAuthURL()` operation completes.
+  using AuthenticatedURLCallback = base::OnceCallback<void(NSURL*, NSError*)>;
 
   // Callback invoked when `IsSubjectToParentalControls()` operations complete.
   using FetchCapabilityCallback = base::OnceCallback<void(CapabilityResult)>;
@@ -226,7 +234,7 @@ class SystemIdentityManager {
 
   // Asynchronously returns the capabilities for `identity`.
   virtual void FetchCapabilities(id<SystemIdentity> identity,
-                                 const std::set<std::string>& names,
+                                 const std::vector<std::string>& names,
                                  FetchCapabilitiesCallback callback) = 0;
 
   // Asynchronously handles a potential MDM (Mobile Device Management) event.
@@ -243,12 +251,23 @@ class SystemIdentityManager {
   // (Mobile Device Management) or not.
   virtual bool IsMDMError(id<SystemIdentity> identity, NSError* error) = 0;
 
+  // Asynchronously fetches the token auth URL that can be used to
+  // authorize a webview for the given identity.
+  // The callback is invoked on the calling sequence when the operation
+  // completes.
+  virtual void FetchTokenAuthURL(id<SystemIdentity> identity,
+                                 NSURL* target_url,
+                                 AuthenticatedURLCallback callback) = 0;
+
  protected:
   // Invokes `OnIdentityListChanged(...)` for all observers.
   void FireIdentityListChanged();
 
   // Invokes `OnIdentityUpdated(...)` for all observers.
   void FireIdentityUpdated(id<SystemIdentity> identity);
+
+  // Invokes OnIdentityRefreshTokenUpdated(...)` for all observers.
+  void FireIdentityRefreshTokenUpdated(id<SystemIdentity> identity);
 
   // Invokes OnIdentityAccessTokenRefreshFailed(...)` for all observers.
   void FireIdentityAccessTokenRefreshFailed(id<SystemIdentity> identity,

@@ -56,6 +56,7 @@
 #include "url/gurl.h"
 
 #if BUILDFLAG(IS_ANDROID)
+#include "base/android/content_uri_utils.h"
 #include "base/android/path_utils.h"
 #include "base/strings/escape.h"
 #include "base/test/android/content_uri_test_utils.h"
@@ -113,7 +114,7 @@ class FileSystemAccessFileHandleImplTest : public testing::Test {
         FileSystemAccessManagerImpl::BindingContext(
             test_src_storage_key_, test_src_url_,
             web_contents_->GetPrimaryMainFrame()->GetGlobalId()),
-        url,
+        url, path.BaseName().AsUTF8Unsafe(),
         FileSystemAccessManagerImpl::SharedHandleState(std::move(read_grant),
                                                        std::move(write_grant)));
     return handle;
@@ -141,7 +142,6 @@ class FileSystemAccessFileHandleImplTest : public testing::Test {
         bucket_future;
     quota_manager_proxy_->CreateBucketForTesting(
         test_src_storage_key_, "custom_bucket",
-        blink::mojom::StorageType::kTemporary,
         base::SequencedTaskRunner::GetCurrentDefault(),
         bucket_future.GetCallback());
     return bucket_future.Take().transform(
@@ -187,9 +187,14 @@ class FileSystemAccessFileHandleImplTest : public testing::Test {
                               : base::FilePath::FromUTF8Unsafe("test");
 #if BUILDFLAG(IS_ANDROID)
     if (use_content_uri) {
-      base::FilePath content_uri =
-          *base::test::android::GetContentUriFromCacheDirFilePath(
-              test_file_path);
+      base::FilePath parent =
+          *base::test::android::GetInMemoryContentTreeUriFromCacheDirDirectory(
+              dir_.GetPath());
+      base::FilePath content_uri = base::ContentUriGetChildDocumentOrQuery(
+          parent, test_file_path.BaseName().value(), "text/plain",
+          /*is_directory=*/false,
+          /*create=*/true);
+      ASSERT_TRUE(base::ContentUriIsCreateChildDocumentQuery(content_uri));
       test_file_path = content_uri;
     }
 #endif
@@ -218,7 +223,7 @@ class FileSystemAccessFileHandleImplTest : public testing::Test {
         FileSystemAccessManagerImpl::BindingContext(
             test_src_storage_key_, test_src_url_,
             web_contents_->GetPrimaryMainFrame()->GetGlobalId()),
-        test_file_url_,
+        test_file_url_, "test",
         FileSystemAccessManagerImpl::SharedHandleState(allow_grant_,
                                                        allow_grant_));
   }

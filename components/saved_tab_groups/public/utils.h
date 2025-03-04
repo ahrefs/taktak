@@ -13,6 +13,8 @@
 
 namespace tab_groups {
 
+extern const char kChromeSavedTabGroupUnsupportedURL[];
+
 // Whether the local IDs are persisted, which is true for Android / iOS, but
 // false in desktop.
 bool AreLocalIdsPersisted();
@@ -29,6 +31,11 @@ bool IsURLValidForSavedTabGroups(const GURL& gurl);
 // Returns a default URL and default title. Should be invoked when
 // IsURLValidForSavedTabGroups() returns false.
 std::pair<GURL, std::u16string> GetDefaultUrlAndTitle();
+
+// Returns a title for display for a given URL. If the site had provided
+// a title for the URL, it may be controlled by attacker and thus cannot
+// be always trusted,.
+std::u16string GetTitleFromUrlForDisplay(const GURL& url);
 
 }  // namespace tab_groups
 

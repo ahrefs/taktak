@@ -27,8 +27,6 @@ class PLATFORM_EXPORT UnacceleratedStaticBitmapImage final
       ImageOrientation orientation = ImageOrientationEnum::kDefault);
 
   bool CurrentFrameKnownToBeOpaque() override;
-  scoped_refptr<StaticBitmapImage> ConvertToColorSpace(sk_sp<SkColorSpace>,
-                                                       SkColorType) override;
 
   void Draw(cc::PaintCanvas*,
             const cc::PaintFlags&,
@@ -43,7 +41,22 @@ class PLATFORM_EXPORT UnacceleratedStaticBitmapImage final
   bool CopyToResourceProvider(CanvasResourceProvider* resource_provider,
                               const gfx::Rect& copy_rect) override;
 
-  SkImageInfo GetSkImageInfo() const override;
+  SkImageInfo GetSkImageInfo() const;
+  gfx::Size GetSize() const override {
+    return gfx::Size(GetSkImageInfo().width(), GetSkImageInfo().height());
+  }
+  SkAlphaType GetAlphaType() const override {
+    return GetSkImageInfo().alphaType();
+  }
+  SkColorType GetSkColorType() const override {
+    return GetSkImageInfo().colorType();
+  }
+  sk_sp<SkColorSpace> GetSkColorSpace() const override {
+    return GetSkImageInfo().refColorSpace();
+  }
+  viz::SharedImageFormat GetSharedImageFormat() const override {
+    return viz::SkColorTypeToSinglePlaneSharedImageFormat(GetSkColorType());
+  }
 
  private:
   UnacceleratedStaticBitmapImage(sk_sp<SkImage>, ImageOrientation);

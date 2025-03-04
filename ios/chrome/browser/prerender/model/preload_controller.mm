@@ -17,13 +17,13 @@
 #import "components/signin/ios/browser/account_consistency_service.h"
 #import "ios/chrome/browser/app_launcher/model/app_launcher_tab_helper.h"
 #import "ios/chrome/browser/crash_report/model/crash_report_helper.h"
-#import "ios/chrome/browser/download/model/mime_type_util.h"
 #import "ios/chrome/browser/history/model/history_tab_helper.h"
 #import "ios/chrome/browser/itunes_urls/model/itunes_urls_handler_tab_helper.h"
 #import "ios/chrome/browser/prerender/model/preload_controller_delegate.h"
 #import "ios/chrome/browser/prerender/model/prerender_pref.h"
 #import "ios/chrome/browser/shared/model/prefs/pref_names.h"
 #import "ios/chrome/browser/shared/model/profile/profile_ios.h"
+#import "ios/chrome/browser/shared/model/utils/mime_type_util.h"
 #import "ios/chrome/browser/signin/model/account_consistency_service_factory.h"
 #import "ios/chrome/browser/supervised_user/model/supervised_user_capabilities.h"
 #import "ios/chrome/browser/tabs/model/tab_helper_util.h"
@@ -369,9 +369,11 @@ class PreloadManageAccountsDelegate : public ManageAccountsDelegate {
 
   // Ignore this request if there is already a scheduled request for the same
   // URL; or, if there is no scheduled request, but the currently prerendered
-  // page matches this URL.
+  // page matches this URL,
+  // or if the current webstate is null.
   if (url == self.scheduledURL ||
-      (self.scheduledURL.is_empty() && url == self.prerenderedURL)) {
+      (self.scheduledURL.is_empty() && url == self.prerenderedURL) ||
+      !currentWebState) {
     return;
   }
 

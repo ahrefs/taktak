@@ -22,14 +22,21 @@
 #include "base/functional/callback.h"
 #include "base/memory/raw_ptr.h"
 #include "base/notimplemented.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/strings/stringprintf.h"
 #include "base/time/time.h"
 #include "base/types/expected.h"
+#include "base/unguessable_token.h"
 #include "bidding_and_auction_server_key_fetcher.h"
 #include "components/cbor/values.h"
 #include "components/cbor/writer.h"
+#include "content/browser/renderer_host/private_network_access_util.h"
 #include "content/common/content_export.h"
+#include "content/public/browser/frame_tree_node_id.h"
+#include "content/services/auction_worklet/public/cpp/auction_downloader.h"
 #include "content/services/auction_worklet/public/mojom/trusted_signals_cache.mojom.h"
+#include "net/base/isolation_info.h"
+#include "net/cookies/site_for_cookies.h"
 #include "net/http/http_request_headers.h"
 #include "net/third_party/quiche/src/quiche/oblivious_http/buffers/oblivious_http_request.h"
 #include "net/third_party/quiche/src/quiche/oblivious_http/buffers/oblivious_http_response.h"
@@ -38,7 +45,10 @@
 #include "services/data_decoder/public/cpp/data_decoder.h"
 #include "services/network/public/cpp/resource_request.h"
 #include "services/network/public/cpp/simple_url_loader.h"
+#include "services/network/public/mojom/client_security_state.mojom.h"
 #include "services/network/public/mojom/fetch_api.mojom.h"
+#include "services/network/public/mojom/ip_address_space.mojom.h"
+#include "services/network/public/mojom/url_loader_completion_status.mojom-forward.h"
 #include "services/network/public/mojom/url_response_head.mojom.h"
 #include "third_party/boringssl/src/include/openssl/hpke.h"
 #include "url/gurl.h"
@@ -47,46 +57,6 @@
 namespace content {
 
 namespace {
-
-constexpr net::NetworkTrafficAnnotationTag kTrafficAnnotation =
-    net::DefineNetworkTrafficAnnotation("trusted_signals_fetcher", R"(
-        semantics {
-          sender: "TrustedSignalsFetcher"
-          description:
-            "Requests FLEDGE encrypted trusted signals for running an ad "
-            "auction."
-          trigger:
-            "Requested when a website runs a Protected Audiences auction. "
-            "The Protected Audience API allows sites to select content (such "
-            "as personalized ads) to display based on cross-site data in a "
-            "privacy preserving way."
-          data:
-            "HTTPS URL and POST body associated with an interest group or "
-            "seller. POST data has an additional layer of encryption, and "
-            "all data other than the URL is end-to-end encrypted and only "
-            "accessible in a Trusted Execution Environment."
-          destination: WEBSITE
-          user_data: {
-            type: SENSITIVE_URL
-          }
-          internal {
-            contacts {
-              email: "privacy-sandbox-dev@chromium.org"
-            }
-          }
-          last_reviewed: "2024-06-08"
-        }
-        policy {
-          cookies_allowed: NO
-          setting:
-            "Users can disable this via Settings > Privacy and Security > Ads "
-            "privacy > Site-suggested ads."
-          chrome_policy {
-            PrivacySandboxSiteEnabledAdsEnabled {
-              PrivacySandboxSiteEnabledAdsEnabled: false
-            }
-          }
-        })");
 
 // Supported compression formats.
 constexpr std::array<std::string_view, 2> kAcceptCompression = {"none", "gzip"};
@@ -196,7 +166,7 @@ cbor::Value::MapValue BuildMapForPartition(
 
   cbor::Value::ArrayValue arguments;
   arguments.emplace_back(MakeArgument(
-      "renderUrls", cbor::Value(scoring_partition.render_url->spec())));
+      "renderURLs", cbor::Value(scoring_partition.render_url->spec())));
 
   if (!scoring_partition.component_render_urls->empty()) {
     cbor::Value::ArrayValue component_urls;
@@ -205,7 +175,7 @@ cbor::Value::MapValue BuildMapForPartition(
       component_urls.emplace_back(cbor::Value(component_render_urls.spec()));
     }
     arguments.emplace_back(
-        MakeArgument("adComponentRenderUrls", std::move(component_urls)));
+        MakeArgument("adComponentRenderURLs", std::move(component_urls)));
   }
 
   partition_cbor_map.try_emplace(cbor::Value("arguments"),
@@ -226,8 +196,7 @@ std::string CreateRequestBodyFromCbor(cbor::Value cbor_value) {
   size_t request_body_size = size_with_padding - kOhttpHeaderSize;
   request_body.resize(request_body_size, 0x00);
 
-  base::SpanWriter writer(
-      base::as_writable_bytes(base::make_span(request_body)));
+  base::SpanWriter writer(base::as_writable_byte_span(request_body));
 
   // Add framing header. First byte includes version and compression format.
   // Always set first byte to 0x00 because request body is uncompressed.
@@ -236,7 +205,7 @@ std::string CreateRequestBodyFromCbor(cbor::Value cbor_value) {
       base::checked_cast<uint32_t>(maybe_cbor_bytes->size()));
 
   // Add CBOR string.
-  writer.Write(base::as_bytes(base::make_span(*maybe_cbor_bytes)));
+  writer.Write(base::as_byte_span(*maybe_cbor_bytes));
 
   DCHECK_EQ(writer.num_written(), size_before_padding - kOhttpHeaderSize);
 
@@ -336,45 +305,67 @@ TrustedSignalsFetcher::~TrustedSignalsFetcher() = default;
 
 void TrustedSignalsFetcher::FetchBiddingSignals(
     network::mojom::URLLoaderFactory* url_loader_factory,
-    std::string_view hostname,
+    FrameTreeNodeId frame_tree_node_id,
+    const url::Origin& main_frame_origin,
+    network::mojom::IPAddressSpace ip_address_space,
+    base::UnguessableToken network_partition_nonce,
+    const url::Origin& script_origin,
     const GURL& trusted_bidding_signals_url,
     const BiddingAndAuctionServerKey& bidding_and_auction_key,
     const std::map<int, std::vector<BiddingPartition>>& compression_groups,
     Callback callback) {
   EncryptRequestBodyAndStart(
-      url_loader_factory, trusted_bidding_signals_url, bidding_and_auction_key,
-      BuildSignalsRequestBody(hostname, compression_groups),
+      url_loader_factory, frame_tree_node_id, main_frame_origin,
+      ip_address_space, network_partition_nonce, script_origin,
+      trusted_bidding_signals_url, bidding_and_auction_key,
+      BuildSignalsRequestBody(main_frame_origin.host(), compression_groups),
       std::move(callback));
 }
 
 void TrustedSignalsFetcher::FetchScoringSignals(
     network::mojom::URLLoaderFactory* url_loader_factory,
-    std::string_view hostname,
+    FrameTreeNodeId frame_tree_node_id,
+    const url::Origin& main_frame_origin,
+    network::mojom::IPAddressSpace ip_address_space,
+    base::UnguessableToken network_partition_nonce,
+    const url::Origin& script_origin,
     const GURL& trusted_scoring_signals_url,
     const BiddingAndAuctionServerKey& bidding_and_auction_key,
     const std::map<int, std::vector<ScoringPartition>>& compression_groups,
     Callback callback) {
   EncryptRequestBodyAndStart(
-      url_loader_factory, trusted_scoring_signals_url, bidding_and_auction_key,
-      BuildSignalsRequestBody(hostname, compression_groups),
+      url_loader_factory, frame_tree_node_id, main_frame_origin,
+      ip_address_space, network_partition_nonce, script_origin,
+      trusted_scoring_signals_url, bidding_and_auction_key,
+      BuildSignalsRequestBody(main_frame_origin.host(), compression_groups),
       std::move(callback));
 }
 
 void TrustedSignalsFetcher::EncryptRequestBodyAndStart(
     network::mojom::URLLoaderFactory* url_loader_factory,
+    FrameTreeNodeId frame_tree_node_id,
+    const url::Origin& main_frame_origin,
+    network::mojom::IPAddressSpace ip_address_space,
+    base::UnguessableToken network_partition_nonce,
+    const url::Origin& script_origin,
     const GURL& trusted_signals_url,
     const BiddingAndAuctionServerKey& bidding_and_auction_key,
     std::string plaintext_request_body,
     Callback callback) {
-  DCHECK(!simple_url_loader_);
+  DCHECK(!auction_downloader_);
   DCHECK(!callback_);
   trusted_signals_url_ = trusted_signals_url;
   callback_ = std::move(callback);
 
+  uint32_t key_id = 0;
+  bool success = base::HexStringToUInt(
+      std::string_view(bidding_and_auction_key.id).substr(0, 2), &key_id);
+  DCHECK(success);
+
   // Add encryption for request body.
   auto maybe_key_config = quiche::ObliviousHttpHeaderKeyConfig::Create(
-      bidding_and_auction_key.id, EVP_HPKE_DHKEM_X25519_HKDF_SHA256,
-      EVP_HPKE_HKDF_SHA256, EVP_HPKE_AES_256_GCM);
+      key_id, EVP_HPKE_DHKEM_X25519_HKDF_SHA256, EVP_HPKE_HKDF_SHA256,
+      EVP_HPKE_AES_256_GCM);
   CHECK(maybe_key_config.ok());
 
   auto maybe_ciphertext_request_body =
@@ -383,53 +374,62 @@ void TrustedSignalsFetcher::EncryptRequestBodyAndStart(
           *maybe_key_config, kRequestMediaType);
   CHECK(maybe_ciphertext_request_body.ok());
 
-  auto resource_request = std::make_unique<network::ResourceRequest>();
-  resource_request->method = net::HttpRequestHeaders::kPostMethod;
-  resource_request->url = trusted_signals_url;
-  resource_request->credentials_mode = network::mojom::CredentialsMode::kOmit;
-  resource_request->mode = network::mojom::RequestMode::kNoCors;
-  resource_request->redirect_mode = network::mojom::RedirectMode::kError;
-  resource_request->headers.SetHeader("Accept", kResponseMediaType);
+  network::ResourceRequest::TrustedParams trusted_params;
 
-  // TODO(crbug.com/333445540): Set reasonable initiator, isolation info, client
-  // security state, and credentials mode, and select reasonable maximum body
-  // size. Also hook up to devtools.
+  // IsolationInfos usually use main frame origin and frame origin, to separate
+  // the disk cache, and prevent frames from spying on each other's cache
+  // entries. These requests aren't cached (due to being POSTs), and use their
+  // own nonce, so no frames can pull the responses from the cache, even the
+  // main frame.
+  //
+  // The frame origin is also used to populate a cross-origin bit in the
+  // NetworkIsolationKey, to separate out other network resources for connection
+  // spying. The nonce similarly makes that sort of spying not useful
+  // - the only leak is the run time of entire auction, which leaks minimal
+  // information about whether there's a pre-existing connection. There's no way
+  // for frames to probe in depth connection info more directly, since they
+  // can't make network requests directly using the `network_partition_nonce`.
+  trusted_params.isolation_info = net::IsolationInfo::Create(
+      net::IsolationInfo::RequestType::kOther,
+      /*top_frame_origin=*/main_frame_origin,
+      /*frame_origin=*/main_frame_origin, net::SiteForCookies(),
+      network_partition_nonce);
 
-  simple_url_loader_ = network::SimpleURLLoader::Create(
-      std::move(resource_request), kTrafficAnnotation);
-  simple_url_loader_->AttachStringForUpload(
+  auto client_security_state = network::mojom::ClientSecurityState::New();
+  client_security_state->ip_address_space = ip_address_space;
+  client_security_state->is_web_secure_context = true;
+  // This call is needed to respect the various features that affect the policy.
+  client_security_state->private_network_request_policy =
+      DerivePrivateNetworkRequestPolicy(
+          ip_address_space, /*is_web_secure_context=*/true,
+          PrivateNetworkRequestContext::kSubresource);
+  trusted_params.client_security_state = std::move(client_security_state);
+
+  auction_downloader_ = std::make_unique<auction_worklet::AuctionDownloader>(
+      url_loader_factory, trusted_signals_url,
+      auction_worklet::AuctionDownloader::DownloadMode::kActualDownload,
+      auction_worklet::AuctionDownloader::MimeType::kAdAuctionTrustedSignals,
       maybe_ciphertext_request_body->EncapsulateAndSerialize(),
-      kRequestMediaType);
-  // ObliviousHttpRequest::Context is a move-only type, with no default
-  // constructor, but ReleaseContext() return by value, so have to somewhat
-  // awkwardly wrap it in a unique_ptr to store it in an already-created
-  // TrustedSignalsFetcher.
+      std::string(kRequestMediaType),
+      /*request_initiator=*/script_origin, std::move(trusted_params),
+      base::BindOnce(&TrustedSignalsFetcher::OnRequestComplete,
+                     base::Unretained(this)),
+      /*network_events_delegate=*/nullptr);
   ohttp_context_ = std::make_unique<quiche::ObliviousHttpRequest::Context>(
       std::move(maybe_ciphertext_request_body).value().ReleaseContext());
-  simple_url_loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
-      url_loader_factory,
-      base::BindOnce(&TrustedSignalsFetcher::OnRequestComplete,
-                     base::Unretained(this)));
 }
 
 void TrustedSignalsFetcher::OnRequestComplete(
-    std::unique_ptr<std::string> response_body) {
+    std::unique_ptr<std::string> response_body,
+    scoped_refptr<net::HttpResponseHeaders> headers,
+    std::optional<std::string> error) {
+  // `auction_downloader_` is no longer needed.
+  auction_downloader_.reset();
+
   if (!response_body) {
-    std::move(callback_).Run(base::unexpected(base::StringPrintf(
-        "Failed to load %s error = %s.", trusted_signals_url_.spec().c_str(),
-        net::ErrorToString(simple_url_loader_->NetError()).c_str())));
+    std::move(callback_).Run(base::unexpected(std::move(error).value()));
     return;
   }
-
-  if (simple_url_loader_->ResponseInfo()->mime_type != kResponseMediaType) {
-    std::move(callback_).Run(base::unexpected(
-        base::StringPrintf("Rejecting load of %s due to unexpected MIME type.",
-                           trusted_signals_url_.spec().c_str())));
-    return;
-  }
-
-  // `simple_url_loader_` is no longer needed.
-  simple_url_loader_.reset();
 
   // The oblivious HTTP code returns an error on empty response bodies, so only
   // try and decrypt if the body is not empty, to give an error about size
@@ -485,7 +485,7 @@ void TrustedSignalsFetcher::OnRequestComplete(
     return;
   }
 
-  base::span<const uint8_t> cbor = remaining_span.subspan(0, cbor_length);
+  base::span<const uint8_t> cbor = remaining_span.first(cbor_length);
   data_decoder::DataDecoder::ParseCborIsolated(
       cbor, base::BindOnce(&TrustedSignalsFetcher::OnCborParsed,
                            weak_ptr_factory_.GetWeakPtr()));

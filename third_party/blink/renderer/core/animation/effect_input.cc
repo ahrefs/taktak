@@ -48,9 +48,10 @@
 #include "third_party/blink/renderer/core/animation/keyframe_effect_model.h"
 #include "third_party/blink/renderer/core/animation/string_keyframe.h"
 #include "third_party/blink/renderer/core/css/css_identifier_value.h"
-#include "third_party/blink/renderer/core/css/css_primitive_value_mappings.h"
+#include "third_party/blink/renderer/core/css/css_identifier_value_mappings.h"
 #include "third_party/blink/renderer/core/css/css_style_sheet.h"
 #include "third_party/blink/renderer/core/css/css_value_id_mappings_generated.h"
+#include "third_party/blink/renderer/core/css/media_values.h"
 #include "third_party/blink/renderer/core/css/parser/css_parser.h"
 #include "third_party/blink/renderer/core/css/properties/computed_style_utils.h"
 #include "third_party/blink/renderer/core/css/properties/css_parsing_utils.h"
@@ -58,7 +59,6 @@
 #include "third_party/blink/renderer/core/css/style_sheet_contents.h"
 #include "third_party/blink/renderer/core/dom/document.h"
 #include "third_party/blink/renderer/core/dom/element.h"
-#include "third_party/blink/renderer/core/dom/node_computed_style.h"
 #include "third_party/blink/renderer/core/execution_context/security_context.h"
 #include "third_party/blink/renderer/core/frame/frame_console.h"
 #include "third_party/blink/renderer/core/frame/local_dom_window.h"
@@ -102,8 +102,7 @@ Vector<std::optional<EffectModel::CompositeOperation>> ParseCompositeProperty(
       return result;
     }
   }
-  NOTREACHED_IN_MIGRATION();
-  return {};
+  NOTREACHED();
 }
 
 struct ParsedOffset {
@@ -143,6 +142,8 @@ std::optional<ParsedOffset> ParseOffsetFromCssText(
     ExceptionState& exception_state) {
   const CSSParserContext* context =
       document.ElementSheet().Contents()->ParserContext();
+  MediaValues* media_values =
+      MediaValues::CreateDynamicIfFrameExists(document.GetFrame());
   CSSParserTokenStream stream(css_text);
   stream.ConsumeWhitespace();
 
@@ -152,8 +153,8 @@ std::optional<ParsedOffset> ParseOffsetFromCssText(
     const CSSPrimitiveValue* primitive = css_parsing_utils::ConsumeNumber(
         stream, *context, CSSPrimitiveValue::ValueRange::kAll);
     if (primitive && stream.AtEnd()) {
-      return ParsedOffset(
-          {TimelineOffset::NamedRange::kNone, primitive->GetValue<double>()});
+      return ParsedOffset({TimelineOffset::NamedRange::kNone,
+                           primitive->ComputeNumber(*media_values)});
     }
     stream.Restore(savepoint);
   }
@@ -165,7 +166,7 @@ std::optional<ParsedOffset> ParseOffsetFromCssText(
         stream, *context, CSSPrimitiveValue::ValueRange::kAll);
     if (primitive && stream.AtEnd()) {
       return ParsedOffset({TimelineOffset::NamedRange::kNone,
-                           primitive->GetValue<double>() / 100});
+                           primitive->ComputeNumber(*media_values)});
     }
     stream.Restore(savepoint);
   }
@@ -182,8 +183,8 @@ std::optional<ParsedOffset> ParseOffsetFromCssText(
   TimelineOffset::NamedRange range =
       To<CSSIdentifierValue>(range_name_percent->Item(0))
           .ConvertTo<TimelineOffset::NamedRange>();
-  double relative_offset =
-      To<CSSPrimitiveValue>(range_name_percent->Item(1)).GetFloatValue() / 100;
+  double relative_offset = To<CSSPrimitiveValue>(range_name_percent->Item(1))
+                               .ComputeNumber(*media_values);
 
   return ParsedOffset({range, relative_offset});
 }
@@ -213,8 +214,7 @@ std::optional<ParsedOffset> ParseOffset(Document& document,
 
   // If calling using a PropertyIndexKeyframe, we must already have handled
   // sequences.
-  NOTREACHED_IN_MIGRATION();
-  return std::nullopt;
+  NOTREACHED();
 }
 
 void SetKeyframeOffset(Keyframe& keyframe, ParsedOffset& offset) {
@@ -668,8 +668,7 @@ StringKeyframeVector ConvertObjectForm(Element* element,
 
   // 5.3 Sort processed keyframes by the computed keyframe offset of each
   // keyframe in increasing order.
-  Vector<double> keys;
-  WTF::CopyKeysToVector(keyframes, keys);
+  Vector<double> keys(keyframes.Keys());
   std::sort(keys.begin(), keys.end());
 
   // Steps 5.5 - 5.12 deal with assigning the user-specified offset, easing, and

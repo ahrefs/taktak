@@ -23,20 +23,22 @@
 #include "base/android/callback_android.h"
 #include "base/android/jni_array.h"
 #include "base/android/jni_string.h"
+#include "base/check.h"
 #include "base/containers/adapters.h"
 #include "base/containers/stack.h"
-#include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/i18n/string_compare.h"
 #include "base/logging.h"
 #include "base/memory/raw_ptr.h"
+#include "base/not_fatal_until.h"
 #include "base/notreached.h"
+#include "base/numerics/safe_conversions.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/uuid.h"
-#include "chrome/browser/android/bookmarks/partner_bookmarks_reader.h"
 #include "chrome/browser/bookmarks/bookmark_model_factory.h"
 #include "chrome/browser/bookmarks/managed_bookmark_service_factory.h"
 #include "chrome/browser/commerce/shopping_service_factory.h"
+#include "chrome/browser/partnerbookmarks/partner_bookmarks_reader.h"
 #include "chrome/browser/profiles/incognito_helpers.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/reading_list/android/reading_list_manager.h"
@@ -44,6 +46,7 @@
 #include "chrome/browser/reading_list/reading_list_model_factory.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "chrome/browser/undo/bookmark_undo_service_factory.h"
+#include "components/bookmarks/browser/bookmark_node.h"
 #include "components/bookmarks/browser/bookmark_utils.h"
 #include "components/bookmarks/browser/titled_url_match.h"
 #include "components/bookmarks/common/android/bookmark_type.h"
@@ -57,7 +60,6 @@
 #include "components/reading_list/core/dual_reading_list_model.h"
 #include "components/signin/public/base/consent_level.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
-#include "components/sync/base/features.h"
 #include "components/undo/bookmark_undo_service.h"
 #include "components/undo/undo_manager.h"
 #include "content/public/browser/browser_thread.h"
@@ -65,7 +67,7 @@
 #include "url/gurl.h"
 
 // Must come after all headers that specialize FromJniType() / ToJniType().
-#include "chrome/android/chrome_jni_headers/BookmarkBridge_jni.h"
+#include "chrome/browser/bookmarks/android/jni_headers/BookmarkBridge_jni.h"
 
 using base::android::AttachCurrentThread;
 using base::android::JavaParamRef;
@@ -220,7 +222,8 @@ BookmarkBridge::BookmarkBridge(
     ExtensiveBookmarkChangesBeginning();
 
   java_bookmark_model_ = Java_BookmarkBridge_createBookmarkModel(
-      base::android::AttachCurrentThread(), reinterpret_cast<intptr_t>(this));
+      base::android::AttachCurrentThread(), reinterpret_cast<intptr_t>(this),
+      profile_->GetJavaObject());
 }
 
 BookmarkBridge::~BookmarkBridge() {
@@ -236,11 +239,6 @@ void BookmarkBridge::Destroy(JNIEnv* env) {
 }
 
 jboolean BookmarkBridge::AreAccountBookmarkFoldersActive(JNIEnv* env) {
-  if (!base::FeatureList::IsEnabled(
-          syncer::kSyncEnableBookmarksInTransportMode)) {
-    return false;
-  }
-
   return bookmark_model_->account_mobile_node() != nullptr;
 }
 
@@ -832,7 +830,7 @@ ScopedJavaLocalRef<jbyteArray> BookmarkBridge::GetPowerBookmarkMeta(
   if (!meta)
     return ScopedJavaLocalRef<jbyteArray>(nullptr);
 
-  int size = meta->ByteSize();
+  size_t size = meta->ByteSizeLong();
   std::string proto_bytes;
   meta->SerializeToString(&proto_bytes);
   std::vector<uint8_t> data(size);
@@ -1029,9 +1027,7 @@ void BookmarkBridge::DeleteBookmarkImpl(const BookmarkNode* node, int type) {
   // why this is called with an uneditable node.
   // See https://crbug.com/981172.
   if (!IsEditable(node)) {
-    LOG(ERROR) << "Deleting non editable bookmark, type:" << type;
-    NOTREACHED_IN_MIGRATION();
-    return;
+    NOTREACHED() << "Deleting non editable bookmark, type:" << type;
   }
 
   if (partner_bookmarks_shim_->IsPartnerBookmark(node)) {
@@ -1141,9 +1137,7 @@ void BookmarkBridge::MoveNodeBetweenReadingListAndBookmarks(
           GetReadingListManagerFromParentNode(new_parent_node);
       new_node = manager->Add(node->url(), base::UTF16ToUTF8(node->GetTitle()));
     } else {
-      new_node = nullptr;
-      NOTREACHED_IN_MIGRATION()
-          << "Type swapping is only supported for reading list.";
+      NOTREACHED() << "Type swapping is only supported for reading list.";
     }
 
     // The add operations aren't guaranteed to succeed, so bail early if
@@ -1674,7 +1668,7 @@ void BookmarkBridge::ReorderChildren(
   const long bookmark_id = JavaBookmarkIdGetId(env, j_bookmark_id_obj);
   const int bookmark_type = JavaBookmarkIdGetType(env, j_bookmark_id_obj);
 
-  const BookmarkNode* bookmark_node = GetNodeByID(bookmark_id, bookmark_type);
+  const BookmarkNode* parent_node = GetNodeByID(bookmark_id, bookmark_type);
 
   // populate a vector
   std::vector<const BookmarkNode*> ordered_nodes;
@@ -1683,10 +1677,15 @@ void BookmarkBridge::ReorderChildren(
 
   // iterate through array, adding the BookmarkNode*s of the objects
   for (int i = 0; i < arraySize; ++i) {
+    const BookmarkNode* child_node = GetNodeByID(elements[i], bookmark_type);
+    CHECK(child_node->parent() == parent_node, base::NotFatalUntil::M135);
+    CHECK(
+        base::checked_cast<jsize>(parent_node->children().size()) == arraySize,
+        base::NotFatalUntil::M135);
     ordered_nodes.push_back(GetNodeByID(elements[i], 0));
   }
 
-  bookmark_model_->ReorderChildren(bookmark_node, ordered_nodes);
+  bookmark_model_->ReorderChildren(parent_node, ordered_nodes);
 }
 
 // Should destroy the bookmark bridge, if OTR profile is destroyed not to delete
@@ -1741,11 +1740,6 @@ void BookmarkBridge::ReadingListModelCompletedBatchUpdates(
 
 void BookmarkBridge::OnPrimaryAccountChanged(
     const signin::PrimaryAccountChangeEvent& event_details) {
-  if (!base::FeatureList::IsEnabled(
-          syncer::kSyncEnableBookmarksInTransportMode)) {
-    return;
-  }
-
   JNIEnv* env = base::android::AttachCurrentThread();
   Java_BookmarkBridge_clearLastUsedParent(env);
 }

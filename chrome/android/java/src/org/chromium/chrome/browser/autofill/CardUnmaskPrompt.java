@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -284,6 +285,19 @@ public class CardUnmaskPrompt
                     mDidFocusOnYear = true;
                     validate();
                 });
+
+        // Focus the correct initial view once the window is focused.
+        mMainView
+                .getViewTreeObserver()
+                .addOnWindowFocusChangeListener(
+                        new ViewTreeObserver.OnWindowFocusChangeListener() {
+                            @Override
+                            public void onWindowFocusChanged(boolean hasFocus) {
+                                if (hasFocus) {
+                                    setInitialFocus();
+                                }
+                            }
+                        });
     }
 
     /** Avoids disk reads for timezone when getting the default instance of Calendar. */
@@ -320,7 +334,6 @@ public class CardUnmaskPrompt
         // the dialog.
         mDialogModel.set(ModalDialogProperties.POSITIVE_BUTTON_DISABLED, true);
         mCardUnmaskInput.addTextChangedListener(this);
-        mCardUnmaskInput.post(() -> setInitialFocus());
     }
 
     public void update(String title, String instructions, boolean shouldRequestExpirationDate) {
@@ -347,7 +360,7 @@ public class CardUnmaskPrompt
         setOverlayVisibility(View.VISIBLE);
         mVerificationProgressBar.setVisibility(View.VISIBLE);
         mVerificationView.setText(R.string.autofill_card_unmask_verification_in_progress);
-        mVerificationView.announceForAccessibility(mVerificationView.getText());
+        ViewCompat.setAccessibilityPaneTitle(mVerificationView, mVerificationView.getText());
         clearInputError();
     }
 
@@ -374,7 +387,8 @@ public class CardUnmaskPrompt
                 mVerificationProgressBar.setVisibility(View.GONE);
                 mMainView.findViewById(R.id.verification_success).setVisibility(View.VISIBLE);
                 mVerificationView.setText(R.string.autofill_card_unmask_verification_success);
-                mVerificationView.announceForAccessibility(mVerificationView.getText());
+                ViewCompat.setAccessibilityPaneTitle(
+                        mVerificationView, mVerificationView.getText());
                 new Handler().postDelayed(dismissRunnable, mSuccessMessageDurationMilliseconds);
             } else {
                 new Handler().post(dismissRunnable);
@@ -573,7 +587,7 @@ public class CardUnmaskPrompt
     private void setNoRetryError(String message) {
         mNoRetryErrorMessage.setText(message);
         mNoRetryErrorMessage.setVisibility(View.VISIBLE);
-        mNoRetryErrorMessage.announceForAccessibility(message);
+        ViewCompat.setAccessibilityPaneTitle(mNoRetryErrorMessage, message);
     }
 
     private void logCheckBoxInitialStateStats(boolean isChecked) {

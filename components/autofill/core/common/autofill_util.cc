@@ -9,8 +9,10 @@
 #include <vector>
 
 #include "base/command_line.h"
+#include "base/containers/to_vector.h"
 #include "base/feature_list.h"
 #include "base/i18n/rtl.h"
+#include "base/i18n/string_search.h"
 #include "base/no_destructor.h"
 #include "base/strings/strcat.h"
 #include "base/strings/string_split.h"
@@ -57,6 +59,34 @@ void SetCheckStatus(FormFieldData* form_field_data,
           FormFieldData::CheckStatus::kNotCheckable);
     }
   }
+}
+
+std::optional<size_t> FindShortestSubstringMatchInSelect(
+    const std::u16string& value,
+    bool ignore_whitespace,
+    base::span<const SelectOption> field_options) {
+  std::optional<size_t> best_match;
+
+  std::u16string value_stripped =
+      ignore_whitespace ? RemoveWhitespace(value) : value;
+  base::i18n::FixedPatternStringSearchIgnoringCaseAndAccents searcher(
+      value_stripped);
+  for (size_t i = 0; i < field_options.size(); ++i) {
+    const SelectOption& option = field_options[i];
+    std::u16string option_value =
+        ignore_whitespace ? RemoveWhitespace(option.value) : option.value;
+    std::u16string option_text =
+        ignore_whitespace ? RemoveWhitespace(option.text) : option.text;
+    if (searcher.Search(option_value, nullptr, nullptr) ||
+        searcher.Search(option_text, nullptr, nullptr)) {
+      if (!best_match.has_value() ||
+          field_options[best_match.value()].value.size() >
+              option.value.size()) {
+        best_match = i;
+      }
+    }
+  }
+  return best_match;
 }
 
 std::vector<std::string> LowercaseAndTokenizeAttributeString(
@@ -133,8 +163,14 @@ SubmissionIndicatorEvent ToSubmissionIndicatorEvent(SubmissionSource source) {
       return SubmissionIndicatorEvent::DOM_MUTATION_AFTER_AUTOFILL;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return SubmissionIndicatorEvent::NONE;
+  NOTREACHED();
+}
+
+GURL StripAuth(const GURL& gurl) {
+  GURL::Replacements rep;
+  rep.ClearUsername();
+  rep.ClearPassword();
+  return gurl.ReplaceComponents(rep);
 }
 
 GURL StripAuthAndParams(const GURL& gurl) {
@@ -148,21 +184,7 @@ GURL StripAuthAndParams(const GURL& gurl) {
 
 bool IsAutofillManuallyTriggered(
     AutofillSuggestionTriggerSource trigger_source) {
-  return IsAddressAutofillManuallyTriggered(trigger_source) ||
-         IsPaymentsAutofillManuallyTriggered(trigger_source) ||
-         IsPasswordsAutofillManuallyTriggered(trigger_source);
-}
-
-bool IsAddressAutofillManuallyTriggered(
-    AutofillSuggestionTriggerSource trigger_source) {
-  return trigger_source ==
-         AutofillSuggestionTriggerSource::kManualFallbackAddress;
-}
-
-bool IsPaymentsAutofillManuallyTriggered(
-    AutofillSuggestionTriggerSource trigger_source) {
-  return trigger_source ==
-         AutofillSuggestionTriggerSource::kManualFallbackPayments;
+  return IsPasswordsAutofillManuallyTriggered(trigger_source);
 }
 
 bool IsPasswordsAutofillManuallyTriggered(
@@ -183,6 +205,20 @@ bool IsAddressFieldSwappingEnabled() {
 #else
   return true;
 #endif
+}
+
+bool IsPaymentsFieldSwappingEnabled() {
+#if BUILDFLAG(IS_IOS)
+  return false;
+#else
+  return base::FeatureList::IsEnabled(features::kAutofillPaymentsFieldSwapping);
+#endif
+}
+
+std::u16string GetButtonTitlesString(const ButtonTitleList& titles_list) {
+  std::vector<std::u16string> titles = base::ToVector(
+      titles_list, [](const auto& list_item) { return list_item.first; });
+  return base::JoinString(titles, u",");
 }
 
 }  // namespace autofill

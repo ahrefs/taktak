@@ -204,9 +204,7 @@ void getExpectedColorAndMask(GLenum src_internal_format,
       break;
     }
     default:
-      NOTREACHED_IN_MIGRATION()
-          << gl::GLEnums::GetStringEnum(src_internal_format);
-      break;
+      NOTREACHED() << gl::GLEnums::GetStringEnum(src_internal_format);
   }
 
   switch (dest_internal_format) {
@@ -281,9 +279,7 @@ void getExpectedColorAndMask(GLenum src_internal_format,
       setColor(1, 1, 1, 0, expected_mask);
       break;
     default:
-      NOTREACHED_IN_MIGRATION()
-          << gl::GLEnums::GetStringEnum(dest_internal_format);
-      break;
+      NOTREACHED() << gl::GLEnums::GetStringEnum(dest_internal_format);
   }
 }
 
@@ -372,8 +368,7 @@ void getTextureDataAndExpectedRGBAs(FormatType src_format_type,
     }
     return;
   }
-  NOTREACHED_IN_MIGRATION() << gl::GLEnums::GetStringEnum(src_format_type.type);
-  return;
+  NOTREACHED() << gl::GLEnums::GetStringEnum(src_format_type.type);
 }
 
 }  // namespace
@@ -440,8 +435,7 @@ class GLCopyTextureCHROMIUMTest
       case GL_BGRA8_EXT:
         return GL_BGRA_EXT;
       default:
-        NOTREACHED_IN_MIGRATION();
-        return GL_NONE;
+        NOTREACHED();
     }
   }
 
@@ -1651,7 +1645,10 @@ TEST_P(GLCopyTextureCHROMIUMTest, UninitializedSource) {
   }
   EXPECT_TRUE(GL_NO_ERROR == glGetError());
 
-  uint8_t pixels[kHeight][kWidth][4] = {{{1}}};
+  uint8_t pixels[kHeight][kWidth][4] = {};
+  pixels[0][0][0] = 1;  // Set a pixel to a non-zero value, to ensure the zeroes
+                        // are indeed written by `glReadPixels`.
+
   glReadPixels(0, 0, kWidth, kHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
   for (int x = 0; x < kWidth; ++x) {
     for (int y = 0; y < kHeight; ++y) {

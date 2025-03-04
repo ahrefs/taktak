@@ -5,6 +5,7 @@
 #include "chrome/browser/ui/views/performance_controls/tab_list_row_view.h"
 
 #include <memory>
+#include <string_view>
 #include <utility>
 
 #include "base/functional/bind.h"
@@ -27,6 +28,7 @@
 #include "ui/base/models/image_model.h"
 #include "ui/color/color_id.h"
 #include "ui/gfx/geometry/insets.h"
+#include "ui/strings/grit/ui_strings.h"
 #include "ui/views/accessibility/view_accessibility.h"
 #include "ui/views/animation/ink_drop.h"
 #include "ui/views/animation/ink_drop_host.h"
@@ -58,7 +60,8 @@ constexpr int kFaviconBorderThickness = 4;
 // Spacing between the favicon and tab title.
 constexpr int kFaviconTabTitleSpacing = 8;
 
-std::unique_ptr<views::Label> CreateLabel(std::u16string text, int text_style) {
+std::unique_ptr<views::Label> CreateLabel(std::u16string_view text,
+                                          int text_style) {
   auto label = std::make_unique<views::Label>(text);
 
   label->SetMultiLine(false);
@@ -78,7 +81,7 @@ std::unique_ptr<views::Label> CreateLabel(std::u16string text, int text_style) {
 class TextContainer : public views::View {
   METADATA_HEADER(TextContainer, views::View)
  public:
-  TextContainer(std::u16string title,
+  TextContainer(std::u16string_view title,
                 GURL domain,
                 TabListModel* model,
                 base::RepeatingClosure on_reverse_focus_tab_traversal)
@@ -95,17 +98,7 @@ class TextContainer : public views::View {
     SetFocusBehavior(views::PlatformStyle::kDefaultFocusBehavior);
 
     GetViewAccessibility().SetRole(ax::mojom::Role::kListBoxOption);
-  }
-
-  void GetAccessibleNodeData(ui::AXNodeData* node_data) override {
-    if (tab_list_model_->count() > 1) {
-      node_data->SetNameChecked(title_->GetText());
-    } else {
-      node_data->SetNameChecked(base::StrCat(
-          {title_->GetText(), u" ",
-           l10n_util::GetStringUTF16(
-               IDS_PERFORMANCE_INTERVENTION_SINGLE_SUGGESTED_ROW_ACCNAME)}));
-    }
+    UpdateAccessibleName();
   }
 
   void AboutToRequestFocusFromTabTraversal(bool reverse) override {
@@ -115,6 +108,18 @@ class TextContainer : public views::View {
   }
 
   views::Label* title() { return title_; }
+
+  void UpdateAccessibleName() {
+    std::u16string title_str(title_->GetText());
+    if (tab_list_model_->count() > 1) {
+      GetViewAccessibility().SetName(title_str);
+    } else {
+      GetViewAccessibility().SetName(l10n_util::GetStringFUTF16(
+          IDS_CONCAT_TWO_STRINGS_WITH_COMMA, title_str,
+          l10n_util::GetStringUTF16(
+              IDS_PERFORMANCE_INTERVENTION_SINGLE_SUGGESTED_ROW_ACCNAME)));
+    }
+  }
 
  private:
   raw_ptr<TabListModel> tab_list_model_;
@@ -206,7 +211,7 @@ TabListRowView::TabListRowView(
   views::InstallCircleHighlightPathGenerator(close_button.get());
   close_button->GetViewAccessibility().SetName(l10n_util::GetStringFUTF16(
       IDS_PERFORMANCE_INTERVENTION_CLOSE_BUTTON_ACCNAME,
-      text_container_->title()->GetText()));
+      std::u16string(text_container_->title()->GetText())));
   close_button_ = row_container->AddChildView(std::move(close_button));
 
   inkdrop_container_->SetProperty(views::kViewIgnoredByLayoutKey, true);
@@ -221,7 +226,7 @@ TabListRowView::~TabListRowView() {
   views::InkDrop::Remove(this);
 }
 
-std::u16string TabListRowView::GetTitleTextForTesting() {
+std::u16string_view TabListRowView::GetTitleTextForTesting() {
   return text_container_->title()->GetText();
 }
 
@@ -274,6 +279,7 @@ void TabListRowView::OnTabCountChanged(int count) {
   if (count <= 1) {
     RefreshInkDropAndCloseButton();
   }
+  text_container_->UpdateAccessibleName();
 }
 
 void TabListRowView::RefreshInkDropAndCloseButton() {

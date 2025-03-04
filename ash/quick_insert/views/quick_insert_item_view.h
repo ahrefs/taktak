@@ -14,10 +14,10 @@
 
 namespace ash {
 
-enum class PickerActionType;
-class PickerSubmenuController;
+enum class QuickInsertActionType;
+class QuickInsertSubmenuController;
 
-// View for a Picker item which can be selected.
+// View for a Quick Insert item which can be selected.
 class ASH_EXPORT QuickInsertItemView : public views::Button {
   METADATA_HEADER(QuickInsertItemView, views::Button)
 
@@ -29,8 +29,8 @@ class ASH_EXPORT QuickInsertItemView : public views::Button {
     // Pseudo focused state. The item is painted as if it was focused to
     // indicate that it responds to certain user actions, e.g. it can be
     // selected if the user presses the enter key. Note that the item might not
-    // have actual view focus (which generally stays on the Picker search field
-    // to allow the user to easily type and modify their search query).
+    // have actual view focus (which generally stays on the Quick Insert search
+    // field to allow the user to easily type and modify their search query).
     kPseudoFocused,
   };
 
@@ -66,8 +66,8 @@ class ASH_EXPORT QuickInsertItemView : public views::Button {
 
   void SetCornerRadius(int corner_radius);
 
-  PickerSubmenuController* GetSubmenuController();
-  void SetSubmenuController(PickerSubmenuController* submenu_controller);
+  QuickInsertSubmenuController* GetSubmenuController();
+  void SetSubmenuController(QuickInsertSubmenuController* submenu_controller);
 
   ItemState GetItemState() const;
   virtual void SetItemState(ItemState item_state);
@@ -87,11 +87,11 @@ class ASH_EXPORT QuickInsertItemView : public views::Button {
   // Corner radius of the item background and highlight.
   int corner_radius_ = 0;
 
-  raw_ptr<PickerSubmenuController> submenu_controller_ = nullptr;
+  raw_ptr<QuickInsertSubmenuController> submenu_controller_ = nullptr;
 };
 
 BEGIN_VIEW_BUILDER(ASH_EXPORT, QuickInsertItemView, views::Button)
-VIEW_BUILDER_PROPERTY(PickerSubmenuController*, SubmenuController)
+VIEW_BUILDER_PROPERTY(QuickInsertSubmenuController*, SubmenuController)
 END_VIEW_BUILDER
 
 }  // namespace ash

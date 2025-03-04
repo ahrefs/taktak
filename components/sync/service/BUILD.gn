@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//build/config/chromeos/ui_mode.gni")
 import("//build/config/features.gni")
 
 static_library("service") {
@@ -14,6 +13,7 @@ static_library("service") {
     "data_type_controller.cc",
     "data_type_controller.h",
     "data_type_encryption_handler.h",
+    "data_type_local_data_batch_uploader.cc",
     "data_type_local_data_batch_uploader.h",
     "data_type_manager.cc",
     "data_type_manager.h",
@@ -36,6 +36,8 @@ static_library("service") {
     "history_sync_session_durations_metrics_recorder.h",
     "local_data_description.cc",
     "local_data_description.h",
+    "local_data_migration_item_queue.cc",
+    "local_data_migration_item_queue.h",
     "model_load_manager.cc",
     "model_load_manager.h",
     "non_ui_syncable_service_based_data_type_controller.cc",
@@ -101,7 +103,6 @@ static_library("service") {
   deps = [
     "//base",
     "//base:i18n",
-    "//build:chromeos_buildflags",
     "//components/keyed_service/core",
     "//components/metrics",
     "//components/os_crypt/sync",
@@ -109,6 +110,7 @@ static_library("service") {
     "//components/policy/core/browser",
     "//components/prefs",
     "//components/saved_tab_groups/public:prefs",
+    "//components/signin/public/base",
     "//components/signin/public/identity_manager",
     "//components/strings:components_strings_grit",
     "//components/sync/invalidations",

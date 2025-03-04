@@ -123,8 +123,8 @@ void CpuProbeManager::EnsureStarted() {
 void CpuProbeManager::Stop() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
-  timer_.AbandonAndStop();
-  randomization_timer_.AbandonAndStop();
+  timer_.Stop();
+  randomization_timer_.Stop();
   state_randomization_requested_ = false;
   // Drop the replies to any RequestSample calls that were posted before the
   // timer stopped.
@@ -177,7 +177,7 @@ mojom::PressureState CpuProbeManager::CalculateState(const CpuSample& sample) {
   // with thresholds defining the state.
   const auto& kStateThresholds = state_thresholds();
 
-  auto it = base::ranges::lower_bound(kStateThresholds, sample.cpu_utilization);
+  auto it = std::ranges::lower_bound(kStateThresholds, sample.cpu_utilization);
   if (it == kStateThresholds.end()) {
     NOTREACHED() << "unexpected value: " << sample.cpu_utilization;
   }

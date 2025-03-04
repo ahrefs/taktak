@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <memory>
@@ -16,6 +17,7 @@
 
 #include "base/command_line.h"
 #include "base/containers/contains.h"
+#include "base/debug/dump_without_crashing.h"
 #include "base/debug/stack_trace.h"
 #include "base/feature_list.h"
 #include "base/files/file_enumerator.h"
@@ -30,7 +32,6 @@
 #include "base/metrics/histogram_macros.h"
 #include "base/not_fatal_until.h"
 #include "base/observer_list.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
@@ -50,7 +51,6 @@
 #include "chrome/browser/lifetime/application_lifetime.h"
 #include "chrome/browser/navigation_predictor/navigation_predictor_keyed_service_factory.h"
 #include "chrome/browser/navigation_predictor/preloading_model_keyed_service_factory.h"
-#include "chrome/browser/permissions/adaptive_quiet_notification_permission_ui_enabler.h"
 #include "chrome/browser/prefs/incognito_mode_prefs.h"
 #include "chrome/browser/profiles/delete_profile_helper.h"
 #include "chrome/browser/profiles/keep_alive/profile_keep_alive_types.h"
@@ -64,8 +64,8 @@
 #include "chrome/browser/profiles/profile_selections.h"
 #include "chrome/browser/profiles/profiles_state.h"
 #include "chrome/browser/signin/account_reconcilor_factory.h"
+#include "chrome/browser/signin/accounts_policy_manager_factory.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
-#include "chrome/browser/signin/primary_account_policy_manager_factory.h"
 #include "chrome/browser/signin/signin_util.h"
 #include "chrome/browser/supervised_user/child_accounts/child_account_service_factory.h"
 #include "chrome/browser/supervised_user/child_accounts/list_family_members_service_factory.h"
@@ -79,6 +79,7 @@
 #include "chrome/common/logging_chrome.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/common/url_constants.h"
+#include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/account_id/account_id.h"
 #include "components/bookmarks/common/bookmark_pref_names.h"
@@ -142,8 +143,6 @@
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "ash/components/arc/arc_prefs.h"
-#include "ash/components/arc/session/arc_management_transition.h"
 #include "ash/constants/ash_switches.h"
 #include "base/debug/dump_without_crashing.h"
 #include "base/system/sys_info.h"
@@ -156,6 +155,8 @@
 #include "chrome/browser/chromeos/extensions/desk_api/desk_api_extension_manager_factory.h"
 #include "chromeos/ash/components/browser_context_helper/browser_context_helper.h"
 #include "chromeos/ash/components/browser_context_helper/browser_context_types.h"
+#include "chromeos/ash/experiences/arc/arc_prefs.h"
+#include "chromeos/ash/experiences/arc/session/arc_management_transition.h"
 #include "components/user_manager/user.h"
 #include "components/user_manager/user_manager.h"
 #include "components/user_manager/user_type.h"
@@ -418,6 +419,16 @@ std::string GetKeepAliveOriginName(ProfileKeepAliveOrigin origin) {
   return oss.str();
 }
 
+// Determines if profile should be OTR.
+bool ShouldGoOffTheRecord(Profile* profile) {
+#if BUILDFLAG(IS_CHROMEOS)
+  if (!ash::ProfileHelper::IsUserProfile(profile)) {
+    return true;
+  }
+#endif
+  return profile->IsGuestSession() || profile->IsSystemProfile();
+}
+
 }  // namespace
 
 ProfileManager::ProfileManager(const base::FilePath& user_data_dir)
@@ -674,12 +685,12 @@ Profile* ProfileManager::GetActiveUserProfile() {
 // static
 Profile* ProfileManager::CreateInitialProfile() {
   ProfileManager* const profile_manager = g_browser_process->profile_manager();
-  Profile* profile =
-      profile_manager->GetProfile(profile_manager->user_data_dir().Append(
-          profile_manager->GetInitialProfileDir()));
+  Profile* profile = profile_manager->GetProfile(
+      profile_manager->user_data_dir().Append(GetInitialProfileDir()));
 
-  if (profile_manager->ShouldGoOffTheRecord(profile))
+  if (ShouldGoOffTheRecord(profile)) {
     return profile->GetPrimaryOTRProfile(/*create_if_needed=*/true);
+  }
   return profile;
 }
 #endif  // BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_ANDROID)
@@ -802,6 +813,7 @@ bool ProfileManager::IsValidProfile(const void* profile) {
   return false;
 }
 
+// static
 base::FilePath ProfileManager::GetInitialProfileDir() {
 #if BUILDFLAG(IS_CHROMEOS)
   if (IsLoggedIn()) {
@@ -901,8 +913,7 @@ Profile* ProfileManager::GetProfileFromProfileKey(ProfileKey* profile_key) {
       return otr;
   }
 
-  NOTREACHED_IN_MIGRATION() << "An invalid profile key is passed.";
-  return nullptr;
+  NOTREACHED() << "An invalid profile key is passed.";
 }
 
 std::map<ProfileKeepAliveOrigin, int> ProfileManager::GetKeepAlivesByPath(
@@ -1159,10 +1170,10 @@ void ProfileManager::InitProfileUserPrefs(Profile* profile) {
     } else {
       avatar_index = profiles::GetPlaceholderAvatarIndex();
 #if !BUILDFLAG(IS_CHROMEOS) && !BUILDFLAG(IS_ANDROID)
-      profile_name =
-          base::UTF16ToUTF8(storage.ChooseNameForNewProfile(avatar_index));
+      profile_name = base::UTF16ToUTF8(storage.ChooseNameForNewProfile());
 #else
-      profile_name = l10n_util::GetStringUTF8(IDS_DEFAULT_PROFILE_NAME);
+      profile_name =
+          l10n_util::GetStringUTF8(IDS_PROFILE_MENU_PLACEHOLDER_PROFILE_NAME);
 #endif
     }
   }
@@ -1274,6 +1285,7 @@ void ProfileManager::AddKeepAlive(const Profile* profile,
   if (origin == ProfileKeepAliveOrigin::kBrowserWindow ||
       origin == ProfileKeepAliveOrigin::kProfileCreationFlow ||
       origin == ProfileKeepAliveOrigin::kProfileStatistics ||
+      origin == ProfileKeepAliveOrigin::kWaitingForGlicView ||
       (origin == ProfileKeepAliveOrigin::kProfilePickerView &&
        base::FeatureList::IsEnabled(features::kDestroySystemProfiles))) {
     ClearFirstBrowserWindowKeepAlive(profile);
@@ -1370,9 +1382,9 @@ void ProfileManager::UnloadProfileIfNoKeepAlive(const ProfileInfo* info) {
     return;
 
   if (!info->GetCreatedProfile()) {
-    NOTREACHED_IN_MIGRATION() << "Attempted to unload profile "
-                              << info->GetRawProfile()->GetDebugName()
-                              << " before it was loaded. This is not valid.";
+    NOTREACHED() << "Attempted to unload profile "
+                 << info->GetRawProfile()->GetDebugName()
+                 << " before it was loaded. This is not valid.";
   }
 
   VLOG(1) << "Unloading profile " << info->GetCreatedProfile()->GetDebugName();
@@ -1399,9 +1411,9 @@ void ProfileManager::DoFinalInit(ProfileInfo* profile_info,
   for (auto& observer : observers_)
     observer.OnProfileAdded(profile);
 
-  if (PrimaryAccountPolicyManager* primary_account_policy_manager =
-          PrimaryAccountPolicyManagerFactory::GetForProfile(profile)) {
-    primary_account_policy_manager->Initialize();
+  if (AccountsPolicyManager* accounts_policy_manager =
+          AccountsPolicyManagerFactory::GetForProfile(profile)) {
+    accounts_policy_manager->Initialize();
   }
 
 #if !BUILDFLAG(IS_ANDROID)
@@ -1440,7 +1452,6 @@ void ProfileManager::DoFinalInitForServices(Profile* profile,
   if ((!base::CommandLine::ForCurrentProcess()->HasSwitch(
            switches::kDisableLoginScreenApps) &&
        ash::ProfileHelper::IsSigninProfile(profile)) ||
-      ash::ProfileHelper::IsLockScreenAppProfile(profile) ||
       ash::IsShimlessRmaAppBrowserContext(profile)) {
     extensions_enabled = true;
   }
@@ -1528,15 +1539,11 @@ void ProfileManager::DoFinalInitForServices(Profile* profile,
 #if BUILDFLAG(IS_CHROMEOS)
   ash::AccountManagerPolicyControllerFactory::GetForBrowserContext(profile);
 #endif
-
-  // TODO(crbug.com/40110472): Remove once getting this created with the browser
-  // context does not change dependency initialization order to cause crashes.
-  AdaptiveQuietNotificationPermissionUiEnabler::GetForProfile(profile);
 }
 
 void ProfileManager::DoFinalInitLogging(Profile* profile) {
   TRACE_EVENT0("browser", "ProfileManager::DoFinalInitLogging");
-  base::UmaHistogramCounts100("Profile.NumberOfProfilesAtProfileCreation",
+  base::UmaHistogramCounts100("Profile.NumberOfProfilesAtProfileInit",
                               GetNumberOfProfiles());
 
   // Skip the rest of this function in tests as the extension service might be
@@ -1974,15 +1981,6 @@ void ProfileManager::SetNonPersonalProfilePrefs(Profile* profile) {
   prefs->ClearPref(DefaultSearchManager::kDefaultSearchProviderDataPrefName);
 }
 
-bool ProfileManager::ShouldGoOffTheRecord(Profile* profile) {
-#if BUILDFLAG(IS_CHROMEOS)
-  if (!ash::ProfileHelper::IsUserProfile(profile)) {
-    return true;
-  }
-#endif
-  return profile->IsGuestSession() || profile->IsSystemProfile();
-}
-
 void ProfileManager::SaveActiveProfiles() {
   PrefService* local_state = g_browser_process->local_state();
   DCHECK(local_state);
@@ -2097,7 +2095,7 @@ void ProfileManager::OnBrowserClosed(Browser* browser) {
   DCHECK(profile);
   if (!profile->IsOffTheRecord() && !browser->is_type_app() &&
       --browser_counts_[profile] == 0) {
-    active_profiles_.erase(base::ranges::find(active_profiles_, profile));
+    active_profiles_.erase(std::ranges::find(active_profiles_, profile));
     if (!closing_all_browsers_)
       SaveActiveProfiles();
   }

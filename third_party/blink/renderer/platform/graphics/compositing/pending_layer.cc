@@ -388,13 +388,13 @@ std::optional<PropertyTreeState> PendingLayer::CanUpcastWith(
   }
   std::optional<PropertyTreeState> result =
       GetPropertyTreeState().CanUpcastWith(guest_state, is_composited_scroll);
-  if (!result || !RuntimeEnabledFeatures::HitTestOpaquenessEnabled()) {
+  if (!result) {
     return result;
   }
 
-  // In HitTestOpaqueness, additionally check scroll translations to ensure
-  // they will be covered by the MainThreadScrollHitTestRegion of the merged
-  // layer if either of the scroll translations is not composited.
+  // Additionally check scroll translations to ensure they will be covered by
+  // the MainThreadScrollHitTestRegion of the merged layer if either of the
+  // scroll translations is not composited.
   const auto& home_scroll_translation =
       property_tree_state_.Transform().NearestScrollTranslationNode();
   const auto& guest_scroll_translation =
@@ -593,7 +593,7 @@ void PendingLayer::UpdateScrollHitTestLayer(PendingLayer* old_pending_layer) {
     cc_layer_->SetElementId(scroll_node.GetCompositorElementId());
   }
 
-  UpdateCcLayerHitTestOpaqueness();
+  cc_layer_->SetHitTestOpaqueness(GetHitTestOpaqueness());
 
   cc_layer_->SetOffsetToTransformParent(
       gfx::Vector2dF(scroll_node.ContainerRect().OffsetFromOrigin()));
@@ -660,7 +660,7 @@ void PendingLayer::UpdateSolidColorLayer(PendingLayer* old_pending_layer) {
   }
   cc_layer_->SetOffsetToTransformParent(LayerOffset());
   cc_layer_->SetBounds(LayerBounds());
-  UpdateCcLayerHitTestOpaqueness();
+  cc_layer_->SetHitTestOpaqueness(GetHitTestOpaqueness());
   cc_layer_->SetBackgroundColor(GetSolidColor());
   cc_layer_->SetIsDrawable(draws_content_);
 }
@@ -717,21 +717,14 @@ void PendingLayer::UpdateCompositedLayer(PendingLayer* old_pending_layer,
       break;
   }
 
-  UpdateLayerProperties(layer_selection, /*selection_only=*/false);
-
   cc::Layer& layer = CcLayer();
   layer.SetLayerTreeHost(layer_tree_host);
+
+  UpdateLayerProperties(layer_selection, /*selection_only=*/false);
+
   if (!layer.subtree_property_changed() &&
       PropertyTreeStateChanged(old_pending_layer)) {
     layer.SetSubtreePropertyChanged();
-  }
-}
-
-void PendingLayer::UpdateCcLayerHitTestOpaqueness() const {
-  if (RuntimeEnabledFeatures::HitTestOpaquenessEnabled()) {
-    CcLayer().SetHitTestOpaqueness(GetHitTestOpaqueness());
-  } else {
-    CcLayer().SetHitTestable(true);
   }
 }
 
@@ -779,6 +772,14 @@ void PendingLayer::UpdateCompositedLayerForRepaint(
   }
 
   UpdateLayerProperties(layer_selection, chunks_unchanged);
+}
+
+void PendingLayer::UpdateForRasterInducingScroll() {
+  if (content_layer_client_ &&
+      content_layer_client_->HasRasterInducingScroll()) {
+    content_layer_client_->GetRasterInvalidator().UpdateForRasterInducingScroll(
+        Chunks());
+  }
 }
 
 void PendingLayer::UpdateLayerProperties(cc::LayerSelection& layer_selection,

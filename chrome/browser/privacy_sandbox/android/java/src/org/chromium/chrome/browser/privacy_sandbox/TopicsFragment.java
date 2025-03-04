@@ -5,17 +5,18 @@
 package org.chromium.chrome.browser.privacy_sandbox;
 
 import android.os.Bundle;
-import android.text.style.ClickableSpan;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 
 import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.base.supplier.ObservableSupplier;
 import org.chromium.base.supplier.ObservableSupplierImpl;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.preferences.Pref;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.settings.ChromeManagedPreferenceDelegate;
@@ -24,8 +25,10 @@ import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
 import org.chromium.components.browser_ui.settings.ClickableSpansTextMessagePreference;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
 import org.chromium.components.browser_ui.settings.TextMessagePreference;
+import org.chromium.components.embedder_support.util.UrlConstants;
 import org.chromium.components.prefs.PrefService;
 import org.chromium.components.user_prefs.UserPrefs;
+import org.chromium.ui.text.ChromeClickableSpan;
 import org.chromium.ui.text.SpanApplier;
 
 import java.util.List;
@@ -43,6 +46,7 @@ public class TopicsFragment extends PrivacySandboxSettingsBaseFragment
     private static final String ACTIVE_TOPICS_PREFERENCE = "active_topics";
     private static final String BLOCKED_TOPICS_PREFERENCE = "blocked_topics";
     private static final String MANAGE_TOPICS_PREFERENCE = "manage_topics";
+    private static final String TOPICS_DISCLAIMER = "topics_page_disclaimer";
 
     private ChromeSwitchPreference mTopicsTogglePreference;
     private TextMessagePreference mTopicsExplanationPreference;
@@ -97,42 +101,27 @@ public class TopicsFragment extends PrivacySandboxSettingsBaseFragment
                         new SpanApplier.SpanInfo(
                                 "<link1>",
                                 "</link1>",
-                                new ClickableSpan() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        onManagingAdPrivacyClicked();
-                                    }
-                                })));
+                                new ChromeClickableSpan(
+                                        getContext(), this::onManagingAdPrivacyClicked))));
         mTopicsPageFooterPreference.setSummary(
                 SpanApplier.applySpans(
                         getResources().getString(R.string.settings_topics_page_footer_new),
                         new SpanApplier.SpanInfo(
                                 "<link1>",
                                 "</link1>",
-                                new ClickableSpan() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        onFledgeSettingsLinkClicked();
-                                    }
-                                }),
+                                new ChromeClickableSpan(
+                                        getContext(), this::onFledgeSettingsLinkClicked)),
                         new SpanApplier.SpanInfo(
                                 "<link2>",
                                 "</link2>",
-                                new ClickableSpan() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        onCookieSettingsLink();
-                                    }
-                                }),
+                                new ChromeClickableSpan(getContext(), this::onCookieSettingsLink)),
                         new SpanApplier.SpanInfo(
                                 "<link3>",
                                 "</link3>",
-                                new ClickableSpan() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        onManagingAdPrivacyClicked();
-                                    }
-                                })));
+                                new ChromeClickableSpan(
+                                        getContext(), this::onManagingAdPrivacyClicked))));
+        maybeApplyAdTopicsContentParity();
+        maybeApplyAdsApiUxEnhancements();
     }
 
     @Override
@@ -140,16 +129,76 @@ public class TopicsFragment extends PrivacySandboxSettingsBaseFragment
         return mPageTitle;
     }
 
-    private void onManagingAdPrivacyClicked() {
-        openUrlInCct(PrivacySandboxSettingsFragment.HELP_CENTER_URL);
+    private void maybeApplyAdTopicsContentParity() {
+        if (!ChromeFeatureList.isEnabled(
+                ChromeFeatureList.PRIVACY_SANDBOX_AD_TOPICS_CONTENT_PARITY)) {
+            return;
+        }
+        mTopicsTogglePreference.setSummary(
+                getResources().getString(R.string.settings_ad_topics_page_toggle_sub_label));
+        mActiveTopicsPreference.setSummary(
+                getResources()
+                        .getString(R.string.settings_ad_topics_page_active_topics_description));
     }
 
-    private void onFledgeSettingsLinkClicked() {
+    private void maybeApplyAdsApiUxEnhancements() {
+        if (!ChromeFeatureList.isEnabled(
+                ChromeFeatureList.PRIVACY_SANDBOX_ADS_API_UX_ENHANCEMENTS)) {
+            return;
+        }
+        mTopicsPageFooterPreference.setSummary(
+                SpanApplier.applySpans(
+                        getResources().getString(R.string.settings_ad_topics_page_footer_v2),
+                        new SpanApplier.SpanInfo(
+                                "<link1>",
+                                "</link1>",
+                                new ChromeClickableSpan(
+                                        getContext(), this::onFledgeSettingsLinkClicked)),
+                        new SpanApplier.SpanInfo(
+                                "<link2>",
+                                "</link2>",
+                                new ChromeClickableSpan(
+                                        getContext(), this::onCookieSettingsLink))));
+        @StringRes int disclaimerStringResId = R.string.settings_ad_topics_page_disclaimer_clank;
+        // Use the updated disclaimer text if the Ad Topics Content Parity feature is enabled.
+        if (ChromeFeatureList.isEnabled(
+                ChromeFeatureList.PRIVACY_SANDBOX_AD_TOPICS_CONTENT_PARITY)) {
+            disclaimerStringResId = R.string.settings_ad_topics_page_disclaimer_v2_clank;
+        }
+        ClickableSpansTextMessagePreference disclaimerPreference =
+                findPreference(TOPICS_DISCLAIMER);
+        disclaimerPreference.setVisible(true);
+        disclaimerPreference.setSummary(
+                SpanApplier.applySpans(
+                        getResources().getString(disclaimerStringResId),
+                        new SpanApplier.SpanInfo(
+                                "<link>",
+                                "</link>",
+                                new ChromeClickableSpan(
+                                        getContext(), this::onPrivacyPolicyLinkClicked))));
+    }
+
+    private void onManagingAdPrivacyClicked(View unused) {
+        getCustomTabLauncher()
+                .openUrlInCct(getContext(), PrivacySandboxSettingsFragment.HELP_CENTER_URL);
+    }
+
+    private void onFledgeSettingsLinkClicked(View unused) {
         startSettings(FledgeFragment.class);
     }
 
-    private void onCookieSettingsLink() {
+    private void onCookieSettingsLink(View unused) {
         launchCookieSettings();
+    }
+
+    private void onPrivacyPolicyLinkClicked(View unused) {
+        RecordUserAction.record("Settings.PrivacySandbox.AdTopics.PrivacyPolicyLinkClicked");
+        getCustomTabLauncher()
+                .openUrlInCct(
+                        getContext(),
+                        getPrivacySandboxBridge().shouldUsePrivacyPolicyChinaDomain()
+                                ? UrlConstants.GOOGLE_PRIVACY_POLICY_CHINA
+                                : UrlConstants.GOOGLE_PRIVACY_POLICY);
     }
 
     @Override

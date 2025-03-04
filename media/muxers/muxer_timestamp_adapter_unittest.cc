@@ -85,7 +85,8 @@ class MuxerTimestampAdapterTestBase {
       return *this;
     }
     Frame& WithAlphaData(std::string_view v) {
-      data->WritableSideData().alpha_data.assign(v.begin(), v.end());
+      data->WritableSideData().alpha_data =
+          base::HeapArray<uint8_t>::CopiedFrom(base::as_byte_span(v));
       return *this;
     }
     Frame& AsKeyframe() {
@@ -148,14 +149,14 @@ class MuxerTimestampAdapterTest : public MuxerTimestampAdapterTestBase,
                                   public ::testing::Test {};
 
 MATCHER_P(MatchBufferData, data, "decoderbuffer data matcher") {
-  return arg.data->AsSpan() == base::as_byte_span(data);
+  return (*arg.data) == base::as_byte_span(data);
 }
 
 MATCHER_P2(MatchBufferDataAndAlphaData,
            data,
            alpha_data,
            "decoderbuffer data matcher") {
-  return arg.data->AsSpan() == base::as_byte_span(data) &&
+  return (*arg.data) == base::as_byte_span(data) &&
          arg.data->WritableSideData().alpha_data ==
              base::as_byte_span(alpha_data);
 }

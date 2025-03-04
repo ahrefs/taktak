@@ -2,18 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {PluginController} from 'chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/pdf_viewer_wrapper.js';
+import {PluginController, UserAction} from 'chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/pdf_viewer_wrapper.js';
 import {isMac} from 'chrome://resources/js/platform.js';
 import {keyDownOn} from 'chrome://webui-test/keyboard_mock_interactions.js';
 import {eventToPromise, microtasksFinished} from 'chrome://webui-test/test_util.js';
 
-import {assertCheckboxMenuButton, createMockPdfPluginForTest, enterFullscreenWithUserGesture, finishInkStroke, getRequiredElement, openToolbarMenu} from './test_util.js';
+import {assertCheckboxMenuButton, enterFullscreenWithUserGesture, finishInkStroke, getRequiredElement, openToolbarMenu, setupMockMetricsPrivate, setupTestMockPluginForInk} from './test_util.js';
 
 const viewer = document.body.querySelector('pdf-viewer')!;
 const viewerToolbar = viewer.$.toolbar;
 const controller = PluginController.getInstance();
-const mockPlugin = createMockPdfPluginForTest();
-controller.setPluginForTesting(mockPlugin);
+const mockPlugin = setupTestMockPluginForInk();
+const mockMetricsPrivate = setupMockMetricsPrivate();
 
 function getUndoRedoModifier() {
   return isMac ? 'meta' : 'ctrl';
@@ -35,6 +35,55 @@ chrome.test.runTests([
     chrome.test.assertFalse(viewerToolbar.annotationMode);
     chrome.test.succeed();
   },
+  // <if expr="enable_ink">
+  // Test that the original Ink annotation bar is not used.
+  async function testInkAnnotationBarNotVisible() {
+    chrome.test.assertFalse(viewerToolbar.annotationMode);
+
+    viewerToolbar.toggleAnnotation();
+    await microtasksFinished();
+
+    chrome.test.assertTrue(viewerToolbar.annotationMode);
+    chrome.test.assertTrue(
+        !viewerToolbar.shadowRoot!.querySelector('viewer-annotations-bar'));
+
+    viewerToolbar.toggleAnnotation();
+    await microtasksFinished();
+
+    chrome.test.assertFalse(viewerToolbar.annotationMode);
+    chrome.test.assertTrue(
+        !viewerToolbar.shadowRoot!.querySelector('viewer-annotations-bar'));
+    chrome.test.succeed();
+  },
+  // Ink1 disables some toolbar buttons when in annotation mode, but Ink2 does
+  // not have the same limitations. Test that these buttons are still enabled in
+  // Ink2 annotation mode.
+  async function testInk1DisabledButtonsAreEnabled() {
+    chrome.test.assertFalse(viewerToolbar.annotationMode);
+
+    viewerToolbar.toggleAnnotation();
+    await microtasksFinished();
+
+    const rotationButton =
+        getRequiredElement<HTMLButtonElement>(viewerToolbar, '#rotate');
+    const twoPageViewButton = getRequiredElement<HTMLButtonElement>(
+        viewerToolbar, '#two-page-view-button');
+
+    chrome.test.assertTrue(viewerToolbar.annotationMode);
+    chrome.test.assertFalse(viewerToolbar.$.sidenavToggle.disabled);
+    chrome.test.assertFalse(rotationButton.disabled);
+    chrome.test.assertFalse(twoPageViewButton.disabled);
+
+    viewerToolbar.toggleAnnotation();
+    await microtasksFinished();
+
+    chrome.test.assertFalse(viewerToolbar.annotationMode);
+    chrome.test.assertFalse(viewerToolbar.$.sidenavToggle.disabled);
+    chrome.test.assertFalse(rotationButton.disabled);
+    chrome.test.assertFalse(twoPageViewButton.disabled);
+    chrome.test.succeed();
+  },
+  // </if>
   // Test that toggling annotation mode does not affect displaying annotations.
   async function testTogglingAnnotationModeDoesNotAffectDisplayAnnotations() {
     // The menu needs to be open to check for visible menu elements.
@@ -134,6 +183,7 @@ chrome.test.runTests([
   // Test the behavior of the undo and redo buttons.
   async function testUndoRedo() {
     mockPlugin.clearMessages();
+    mockMetricsPrivate.reset();
 
     const undoButton =
         getRequiredElement<HTMLButtonElement>(viewerToolbar, '#undo');
@@ -161,6 +211,8 @@ chrome.test.runTests([
         mockPlugin.findMessage('annotationUndo') !== undefined);
     chrome.test.assertTrue(undoButton.disabled);
     chrome.test.assertFalse(redoButton.disabled);
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 1);
+    mockMetricsPrivate.assertCount(UserAction.REDO_INK2, 0);
 
     // Redo the stroke. The undo button should be enabled.
     mockPlugin.clearMessages();
@@ -171,6 +223,8 @@ chrome.test.runTests([
         mockPlugin.findMessage('annotationRedo') !== undefined);
     chrome.test.assertFalse(undoButton.disabled);
     chrome.test.assertTrue(redoButton.disabled);
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 1);
+    mockMetricsPrivate.assertCount(UserAction.REDO_INK2, 1);
 
     // After redo, draw a stroke and undo it after. The undo button and redo
     // button should both be enabled.
@@ -183,6 +237,8 @@ chrome.test.runTests([
         mockPlugin.findMessage('annotationUndo') !== undefined);
     chrome.test.assertFalse(undoButton.disabled);
     chrome.test.assertFalse(redoButton.disabled);
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 2);
+    mockMetricsPrivate.assertCount(UserAction.REDO_INK2, 1);
 
     // Draw another stroke, overriding the stroke that could've been redone. The
     // undo button should be enabled.
@@ -260,6 +316,7 @@ chrome.test.runTests([
   // Test the behavior of the undo redo keyboard shortcuts.
   async function testUndoRedoKeyboardShortcuts() {
     mockPlugin.clearMessages();
+    mockMetricsPrivate.reset();
 
     chrome.test.assertFalse(viewerToolbar.annotationMode);
 
@@ -275,6 +332,8 @@ chrome.test.runTests([
 
     chrome.test.assertTrue(
         mockPlugin.findMessage('annotationUndo') !== undefined);
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 1);
+    mockMetricsPrivate.assertCount(UserAction.REDO_INK2, 0);
 
     mockPlugin.clearMessages();
 
@@ -283,6 +342,8 @@ chrome.test.runTests([
 
     chrome.test.assertTrue(
         mockPlugin.findMessage('annotationRedo') !== undefined);
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 1);
+    mockMetricsPrivate.assertCount(UserAction.REDO_INK2, 1);
 
     viewerToolbar.resetStrokesForTesting();
     chrome.test.succeed();
@@ -291,6 +352,7 @@ chrome.test.runTests([
   // form field is focused.
   async function testUndoRedoShortcutsDisabledOnFormFieldFocus() {
     mockPlugin.clearMessages();
+    mockMetricsPrivate.reset();
 
     chrome.test.assertTrue(viewerToolbar.annotationMode);
 
@@ -301,6 +363,8 @@ chrome.test.runTests([
     await microtasksFinished();
 
     getRequiredElement<HTMLButtonElement>(viewerToolbar, '#undo').click();
+
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 1);
 
     // Exit annotation mode, since form fields can only be focused outside of
     // annotation mode.
@@ -323,6 +387,8 @@ chrome.test.runTests([
         mockPlugin.findMessage('annotationUndo') === undefined);
     chrome.test.assertTrue(
         mockPlugin.findMessage('annotationRedo') === undefined);
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 1);
+    mockMetricsPrivate.assertCount(UserAction.REDO_INK2, 0);
 
     // Simulate focusing on a non-text form field. Both shortcuts should be
     // enabled.
@@ -337,6 +403,8 @@ chrome.test.runTests([
         mockPlugin.findMessage('annotationUndo') !== undefined);
     chrome.test.assertTrue(
         mockPlugin.findMessage('annotationRedo') !== undefined);
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 2);
+    mockMetricsPrivate.assertCount(UserAction.REDO_INK2, 1);
 
     mockPlugin.clearMessages();
 
@@ -352,6 +420,8 @@ chrome.test.runTests([
         mockPlugin.findMessage('annotationUndo') !== undefined);
     chrome.test.assertTrue(
         mockPlugin.findMessage('annotationRedo') !== undefined);
+    mockMetricsPrivate.assertCount(UserAction.UNDO_INK2, 3);
+    mockMetricsPrivate.assertCount(UserAction.REDO_INK2, 2);
 
     viewerToolbar.resetStrokesForTesting();
     chrome.test.succeed();

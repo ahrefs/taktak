@@ -148,17 +148,20 @@ enum class Error;
 struct CrxUpdateItem;
 
 enum class ComponentState {
-  kNew,
-  kChecking,
-  kCanUpdate,
+  kNew,          // The component has not yet been checked for updates.
+  kChecking,     // The component is being checked for updates now.
+  kCanUpdate,    // An update is available and will soon be processed.
+  kDownloading,  // An update is being downloaded.
+  kUpdating,     // An update is being installed.
+  kUpdated,      // An update was successfully applied.
+  kUpToDate,     // The component was already up to date.
+  kUpdateError,  // The service encountered an error.
+  kRun,          // The component is running a server-specified action.
+
+  // TODO(crbug.com/353249967): These states are unsent by the engine and can
+  // be removed, along with translations and mappings associated with them.
   kDownloadingDiff,
-  kDownloading,
   kUpdatingDiff,
-  kUpdating,
-  kUpdated,
-  kUpToDate,
-  kUpdateError,
-  kRun,
   kLastStatus
 };
 
@@ -301,6 +304,9 @@ struct CrxComponent {
   // flavor, branding, or provenance of the software.
   std::string brand;
 
+  // Optional. `lang` is the display language for the app.
+  std::string lang;
+
   // If populated, the `install_data_index` is sent to the update server as part
   // of the `data` element. The server will provide corresponding installer data
   // in the update response. This data is then provided to the installer when
@@ -423,15 +429,15 @@ class UpdateClient : public base::RefCountedThreadSafe<UpdateClient> {
   // the observers are being notified.
   virtual void RemoveObserver(Observer* observer) = 0;
 
-  // Installs the specified CRX. Calls back on |callback| after the
+  // Installs the specified CRX. Calls `callback` on the same sequence after the
   // update has been handled. Provides state change notifications through
-  // invocations of the optional |crx_state_change_callback| callback.
-  // The |error| parameter of the |callback| contains an error code in the case
+  // invocations of the optional `crx_state_change_callback` callback.
+  // The `error` parameter of the `callback` contains an error code in the case
   // of a run-time error, or 0 if the install has been handled successfully.
   // Overlapping calls of this function are executed concurrently, as long as
   // the id parameter is different, meaning that installs of different
   // components are parallelized.
-  // The |Install| function is intended to be used for foreground installs of
+  // The `Install` function is intended to be used for foreground installs of
   // one CRX. These cases are usually associated with on-demand install
   // scenarios, which are triggered by user actions. Installs are never
   // queued up.

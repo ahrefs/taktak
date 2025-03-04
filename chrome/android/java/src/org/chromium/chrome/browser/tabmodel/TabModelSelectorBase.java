@@ -44,13 +44,8 @@ public abstract class TabModelSelectorBase
     private final List<TabModelInternal> mTabModelInternals = new ArrayList<>();
     private IncognitoTabModel mIncognitoTabModel;
 
-    /**
-     * This is a placeholder implementation intended to stub out TabGroupModelFilterProvider before
-     * native is ready.
-     */
-    private TabGroupModelFilterProvider mTabGroupModelFilterProvider =
+    private final TabGroupModelFilterProvider mTabGroupModelFilterProvider =
             new TabGroupModelFilterProvider();
-
     private final ObservableSupplierImpl<TabModel> mTabModelSupplier =
             new ObservableSupplierImpl<>();
     private final TransitiveObservableSupplier<TabModel, Tab> mCurrentTabSupplier;
@@ -60,14 +55,14 @@ public abstract class TabModelSelectorBase
     private final ObserverList<IncognitoTabModelObserver> mIncognitoObservers =
             new ObserverList<>();
 
-    @NonNull private final Callback<TabModel> mIncognitoReauthDialogDelegateCallback;
-    @Nullable protected IncognitoReauthDialogDelegate mIncognitoReauthDialogDelegate;
+    private final TabCreatorManager mTabCreatorManager;
+
+    private final @NonNull Callback<TabModel> mIncognitoReauthDialogDelegateCallback;
+    protected @Nullable IncognitoReauthDialogDelegate mIncognitoReauthDialogDelegate;
 
     private boolean mTabStateInitialized;
     private boolean mStartIncognito;
     private boolean mReparentingInProgress;
-
-    private final TabCreatorManager mTabCreatorManager;
 
     protected TabModelSelectorBase(TabCreatorManager tabCreatorManager, boolean startIncognito) {
         mTabCreatorManager = tabCreatorManager;
@@ -89,7 +84,9 @@ public abstract class TabModelSelectorBase
     }
 
     protected final void initialize(
-            TabModelInternal normalModel, IncognitoTabModelInternal incognitoModel) {
+            TabModelInternal normalModel,
+            IncognitoTabModelInternal incognitoModel,
+            TabUngrouperFactory tabUngrouperFactory) {
         // Only normal and incognito supported for now.
         assert mTabModelInternals.isEmpty();
 
@@ -99,7 +96,8 @@ public abstract class TabModelSelectorBase
         mIncognitoTabModel = incognitoModel;
         int activeModelIndex = getModelIndex(mStartIncognito);
         assert activeModelIndex != MODEL_NOT_FOUND;
-        mTabGroupModelFilterProvider.init(TabGroupModelFilterImpl::new, this, getModels());
+        mTabGroupModelFilterProvider.init(
+                TabGroupModelFilterImpl::new, tabUngrouperFactory, this, mTabModelInternals);
 
         TabModelObserver tabModelObserver =
                 new TabModelObserver() {
@@ -170,10 +168,6 @@ public abstract class TabModelSelectorBase
         previousModel.setActive(false);
         newModel.setActive(true);
         mTabModelSupplier.set(newModel);
-
-        for (TabModelSelectorObserver listener : mObservers) {
-            listener.onTabModelSelected(newModel, previousModel);
-        }
     }
 
     @Override
@@ -278,7 +272,14 @@ public abstract class TabModelSelectorBase
     }
 
     @Override
-    public boolean closeTab(Tab tab) {
+    public boolean tryCloseTab(@NonNull TabClosureParams tabClosureParams, boolean allowDialog) {
+        if (tabClosureParams.tabs == null
+                || tabClosureParams.tabs.size() != 1
+                || tabClosureParams.tabCloseType != TabCloseType.SINGLE) {
+            assert false : "Invalid tab closure params received for tryCloseTab.";
+            return false;
+        }
+        Tab tab = tabClosureParams.tabs.get(0);
         boolean isClosing = tab.isClosing() && !tab.isDestroyed();
         for (int i = 0; i < getModels().size(); i++) {
             TabModel model = mTabModelInternals.get(i);
@@ -291,7 +292,8 @@ public abstract class TabModelSelectorBase
                     return true;
                 }
             } else if (model.indexOf(tab) > TabList.INVALID_TAB_INDEX) {
-                return model.closeTabs(TabClosureParams.closeTab(tab).allowUndo(false).build());
+                model.getTabRemover().closeTabs(tabClosureParams, allowDialog);
+                return true;
             }
         }
 
@@ -335,19 +337,6 @@ public abstract class TabModelSelectorBase
             if (tab != null) return tab;
         }
         return null;
-    }
-
-    @Override
-    public void closeAllTabs() {
-        closeAllTabs(false);
-    }
-
-    @Override
-    public void closeAllTabs(boolean uponExit) {
-        TabClosureParams params = TabClosureParams.closeAllTabs().uponExit(uponExit).build();
-        for (int i = 0; i < getModels().size(); i++) {
-            mTabModelInternals.get(i).closeTabs(params);
-        }
     }
 
     @Override
@@ -419,6 +408,7 @@ public abstract class TabModelSelectorBase
 
     /**
      * Notifies all the listeners that a tab has been hidden to switch to another.
+     *
      * @param tab The tab that has been hidden.
      */
     protected void notifyTabHidden(Tab tab) {

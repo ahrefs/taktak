@@ -16,6 +16,7 @@
 #include "base/values.h"
 #include "crypto/sha2.h"
 #include "crypto/signature_verifier.h"
+#include "net/base/url_util.h"
 #include "net/device_bound_sessions/jwk_utils.h"
 #include "third_party/boringssl/src/include/openssl/bn.h"
 #include "third_party/boringssl/src/include/openssl/ecdsa.h"
@@ -162,11 +163,15 @@ std::optional<std::string> AppendSignatureToHeaderAndPayload(
     if (!signature_holder.has_value()) {
       return std::nullopt;
     }
-    signature = base::make_span(*signature_holder);
+    signature = base::span(*signature_holder);
   }
 
   return base::StrCat(
       {header_and_payload, ".", Base64UrlEncode(as_string_view(signature))});
+}
+
+bool IsSecure(const GURL& url) {
+  return url.SchemeIsCryptographic() || IsLocalhost(url);
 }
 
 }  // namespace net::device_bound_sessions

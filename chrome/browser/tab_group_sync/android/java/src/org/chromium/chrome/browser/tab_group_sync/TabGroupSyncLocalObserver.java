@@ -13,14 +13,15 @@ import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab.TabSelectionType;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilterObserver;
-import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.browser.tabmodel.TabModelObserver;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
+import org.chromium.chrome.browser.tabmodel.TabModelUtils;
 import org.chromium.components.tab_group_sync.LocalTabGroupId;
 import org.chromium.components.tab_group_sync.SavedTabGroup;
 import org.chromium.components.tab_group_sync.SavedTabGroupTab;
 import org.chromium.components.tab_group_sync.TabGroupSyncService;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -109,25 +110,63 @@ public final class TabGroupSyncLocalObserver {
             }
 
             @Override
+            public void willCloseTab(Tab tab, boolean didCloseAlone) {
+                if (!mIsObserving || tab.getTabGroupId() == null || !didCloseAlone) return;
+                LogUtils.log(TAG, "willCloseTab");
+
+                mRemoteTabGroupMutationHelper.handleWillCloseTabs(Collections.singletonList(tab));
+            }
+
+            @Override
+            public void willCloseMultipleTabs(boolean allowUndo, List<Tab> tabs) {
+                if (!mIsObserving || tabs.isEmpty()) return;
+                LogUtils.log(TAG, "willCloseMultipleTabs, tabs# " + tabs.size());
+
+                mRemoteTabGroupMutationHelper.handleWillCloseTabs(tabs);
+            }
+
+            @Override
+            public void willCloseAllTabs(boolean incognito) {
+                if (!mIsObserving) return;
+                LogUtils.log(TAG, "willCloseAllTabs");
+
+                mRemoteTabGroupMutationHelper.handleWillCloseTabs(
+                        TabModelUtils.convertTabListToListOfTabs(
+                                mTabGroupModelFilter.getTabModel()));
+            }
+
+            @Override
             public void onFinishingMultipleTabClosure(List<Tab> tabs, boolean canRestore) {
                 if (!mIsObserving || tabs.isEmpty()) return;
                 LogUtils.log(TAG, "onFinishingMultipleTabClosure, tabs# " + tabs.size());
 
-                mRemoteTabGroupMutationHelper.handleMultipleTabClosure(tabs);
+                mRemoteTabGroupMutationHelper.handleDidCloseTabs(tabs);
             }
 
-            // This method is for metrics only!
+            @Override
+            public void tabClosureUndone(Tab tab) {
+                if (!mIsObserving || tab.getTabGroupId() == null) return;
+                LogUtils.log(TAG, "tabClosureUndone");
+
+                mRemoteTabGroupMutationHelper.handleTabClosureUndone(tab);
+            }
+
             @Override
             public void didSelectTab(Tab tab, @TabSelectionType int type, int lastId) {
-                if (!mTabGroupModelFilter.isTabInTabGroup(tab)) return;
+                LocalTabGroupId localTabGroupId =
+                        mTabGroupModelFilter.isTabInTabGroup(tab)
+                                ? TabGroupSyncUtils.getLocalTabGroupId(tab)
+                                : null;
 
-                if (tab.getTabGroupId() == null) return;
+                // We notify TabGroupSyncService of the currently selected tab regardless of
+                // whether it's part of a tab group or not. The accurate tracking of currently
+                // selected tab is required for the MessagingBackendService.
+                mTabGroupSyncService.onTabSelected(localTabGroupId, tab.getId(), tab.getTitle());
 
-                LocalTabGroupId localId = TabGroupSyncUtils.getLocalTabGroupId(tab);
-                SavedTabGroup savedGroup = mTabGroupSyncService.getGroup(localId);
+                // The rest of the method is required for metrics only.
+                if (localTabGroupId == null) return;
+                SavedTabGroup savedGroup = mTabGroupSyncService.getGroup(localTabGroupId);
                 if (savedGroup == null) return;
-
-                mTabGroupSyncService.onTabSelected(localId, tab.getId());
 
                 if (mTabGroupSyncService.isRemoteDevice(savedGroup.creatorCacheGuid)) {
                     RecordUserAction.record("TabGroups.Sync.SelectedTabInRemotelyCreatedGroup");
@@ -172,14 +211,13 @@ public final class TabGroupSyncLocalObserver {
             }
 
             @Override
-            public void didMergeTabToGroup(Tab movedTab, int selectedTabIdInGroup) {
+            public void didMergeTabToGroup(Tab movedTab) {
                 if (!mIsObserving) return;
-                LogUtils.log(
-                        TAG, "didMergeTabToGroup, selectedTabIdInGroup = " + selectedTabIdInGroup);
+                int rootId = movedTab.getRootId();
+                LogUtils.log(TAG, "didMergeTabToGroup, rootId = " + rootId);
 
                 LocalTabGroupId tabGroupRootId =
-                        TabGroupSyncUtils.getLocalTabGroupId(
-                                mTabGroupModelFilter, movedTab.getRootId());
+                        TabGroupSyncUtils.getLocalTabGroupId(mTabGroupModelFilter, rootId);
                 if (groupExistsInSync(tabGroupRootId)) {
                     int positionInGroup = mTabGroupModelFilter.getIndexOfTabInGroup(movedTab);
                     mRemoteTabGroupMutationHelper.addTab(tabGroupRootId, movedTab, positionInGroup);
@@ -243,16 +281,16 @@ public final class TabGroupSyncLocalObserver {
             }
 
             @Override
-            public void committedTabGroupClosure(Token tabGroupId, boolean wasHiding) {
+            public void willCloseTabGroup(Token tabGroupId, boolean isHiding) {
                 StringBuilder builder =
-                        new StringBuilder("committedTabGroupClosure, tabGroupId = ")
+                        new StringBuilder("willCloseTabGroup, tabGroupId = ")
                                 .append(tabGroupId)
                                 .append(" wasHiding = ")
-                                .append(wasHiding);
+                                .append(isHiding);
                 LogUtils.log(TAG, builder.toString());
 
-                mRemoteTabGroupMutationHelper.handleCommittedTabGroupClosure(
-                        new LocalTabGroupId(tabGroupId), wasHiding);
+                mRemoteTabGroupMutationHelper.handleWillCloseTabGroup(
+                        new LocalTabGroupId(tabGroupId), isHiding);
             }
 
             @Override
@@ -283,14 +321,14 @@ public final class TabGroupSyncLocalObserver {
         return mTabGroupSyncService.getGroup(rootId) != null;
     }
 
-    private TabModel getTabModel() {
-        return mTabGroupModelFilter.getTabModel();
-    }
-
     private SavedTabGroupTab getSavedTab(SavedTabGroup savedGroup, int tabId) {
         for (SavedTabGroupTab savedTab : savedGroup.savedTabs) {
             if (savedTab.localId != null && savedTab.localId == tabId) return savedTab;
         }
         return null;
+    }
+
+    boolean hasAnyPendingTabGroupClosuresForTesting() {
+        return mRemoteTabGroupMutationHelper.hasAnyPendingTabGroupClosuresForTesting();
     }
 }

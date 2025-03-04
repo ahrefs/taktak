@@ -8,7 +8,7 @@ import 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import 'chrome://resources/cr_elements/cr_dialog/cr_dialog.js';
 import 'chrome://resources/cr_elements/cr_radio_group/cr_radio_group.js';
 import 'chrome://resources/cr_elements/cr_radio_button/cr_radio_button.js';
-import './strings.m.js';
+import '/strings.m.js';
 
 import type {CrButtonElement} from 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import {I18nMixinLit} from 'chrome://resources/cr_elements/i18n_mixin_lit.js';
@@ -95,7 +95,7 @@ export class AppElement extends AppElementBase {
         // Fetch the favicon from the Favicon Service for custom search
         // engines.
         searchEngine.iconPath =
-            getFaviconForPageURL(searchEngine.url!, false, '', 24);
+            getFaviconForPageURL(searchEngine.url, false, '', 24);
       } else {
         searchEngine.iconPath = 'image-set(url(' + searchEngine.iconPath +
             ') 1x, url(' + searchEngine.iconPath + '@2x) 2x)';

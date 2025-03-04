@@ -36,6 +36,7 @@
 #include "cc/trees/paint_holding_reason.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/remote.h"
+#include "services/network/public/cpp/permissions_policy/permissions_policy_declaration.h"
 #include "third_party/blink/public/common/input/web_menu_source_type.h"
 #include "third_party/blink/public/common/scheduler/task_attribution_id.h"
 #include "third_party/blink/public/common/user_agent/user_agent_metadata.h"
@@ -272,7 +273,7 @@ class EmptyWebWorkerFetchContext : public WebWorkerFetchContext {
     return nullptr;
   }
   void FinalizeRequest(WebURLRequest&) override {}
-  WebVector<std::unique_ptr<URLLoaderThrottle>> CreateThrottles(
+  std::vector<std::unique_ptr<URLLoaderThrottle>> CreateThrottles(
       const network::ResourceRequest&) override {
     return {};
   }
@@ -325,7 +326,7 @@ class CORE_EXPORT EmptyLocalFrameClient : public LocalFrameClient {
       HistoryItem* item,
       WebHistoryCommitType commit_type,
       bool should_reset_browser_interface_broker,
-      const blink::ParsedPermissionsPolicy& permissions_policy_header,
+      const network::ParsedPermissionsPolicy& permissions_policy_header,
       const blink::DocumentPolicyFeatureState& document_policy_header)
       override {}
   void DispatchDidFailLoad(const ResourceError&,
@@ -401,8 +402,7 @@ class CORE_EXPORT EmptyLocalFrameClient : public LocalFrameClient {
       HTMLMediaElement&,
       const WebMediaPlayerSource&,
       WebMediaPlayerClient*) override;
-  WebRemotePlaybackClient* CreateWebRemotePlaybackClient(
-      HTMLMediaElement&) override;
+  RemotePlaybackClient* CreateRemotePlaybackClient(HTMLMediaElement&) override;
 
   void DidCommitDocumentReplacementNavigation(DocumentLoader*) override {}
   void DispatchDidClearWindowObjectInMainWorld(
@@ -442,10 +442,7 @@ class CORE_EXPORT EmptyLocalFrameClient : public LocalFrameClient {
     // should define their own subclass of LocalFrameClient or
     // EmptyLocalFrameClient and override the CreateURLLoaderForTesting method.
     // See also https://crbug.com/891872.
-    // We use CHECK(false) instead of NOTREACHED() here to catch errors on
-    // clusterfuzz and production.
-    CHECK(false);
-    return nullptr;
+    NOTREACHED();
   }
 
   std::unique_ptr<URLLoader> CreateURLLoaderForTesting() override {

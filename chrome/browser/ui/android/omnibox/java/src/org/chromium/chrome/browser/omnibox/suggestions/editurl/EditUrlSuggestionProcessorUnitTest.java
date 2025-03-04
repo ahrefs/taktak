@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
@@ -35,7 +36,6 @@ import org.robolectric.annotation.Implements;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.supplier.Supplier;
 import org.chromium.base.test.BaseRobolectricTestRunner;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.base.test.util.UserActionTester;
 import org.chromium.chrome.browser.omnibox.R;
 import org.chromium.chrome.browser.omnibox.styles.OmniboxImageSupplier;
@@ -92,7 +92,6 @@ public final class EditUrlSuggestionProcessorUnitTest {
         }
     }
 
-    public @Rule JniMocker mJniMocker = new JniMocker();
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     private @Mock ShareDelegate mShareDelegate;
@@ -115,7 +114,7 @@ public final class EditUrlSuggestionProcessorUnitTest {
 
     @Before
     public void setUp() {
-        mJniMocker.mock(UkmRecorderJni.TEST_HOOKS, mUkmRecorderJniMock);
+        UkmRecorderJni.setInstanceForTesting(mUkmRecorderJniMock);
 
         mOldClipboardManager =
                 ((ClipboardImpl) Clipboard.getInstance())
@@ -296,8 +295,14 @@ public final class EditUrlSuggestionProcessorUnitTest {
 
         verify(mShareDelegate).share(mTab, /* shareDirectly= */ false, ShareOrigin.EDIT_URL);
         verify(mUkmRecorderJniMock)
-                .recordEventWithBooleanMetric(
-                        any(), eq("Omnibox.EditUrlSuggestion.Share"), eq("HasOccurred"));
+                .recordEventWithMultipleMetrics(
+                        any(),
+                        eq("Omnibox.EditUrlSuggestion.Share"),
+                        argThat(
+                                metricsList ->
+                                        metricsList.length == 1
+                                                && metricsList[0].mName.equals("HasOccurred")
+                                                && metricsList[0].mValue == 1));
     }
 
     @Test

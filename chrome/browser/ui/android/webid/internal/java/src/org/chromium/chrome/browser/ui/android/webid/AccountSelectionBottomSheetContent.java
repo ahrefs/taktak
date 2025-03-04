@@ -4,16 +4,20 @@
 
 package org.chromium.chrome.browser.ui.android.webid;
 
+import android.content.Context;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.Px;
+import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.base.supplier.Supplier;
 import org.chromium.blink.mojom.RpMode;
+import org.chromium.chrome.R;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetContent;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
 
@@ -74,15 +78,21 @@ public class AccountSelectionBottomSheetContent implements BottomSheetContent {
         // accounts and part of the next one are visible.
         RecyclerView sheetItemListView = sheetContainer.findViewById(R.id.sheet_item_list);
         int numAccounts = sheetItemListView.getAdapter().getItemCount();
-        if (numAccounts > MAX_VISIBLE_ACCOUNTS_WIDGET_MODE) {
+
+        // When the number of rows is just over the limit and the last one is the user a different
+        // account button, we increase the max to avoid cutting off the use a different account
+        // button since its size is a bit different so it looks odd.
+        float maxRowSize = MAX_VISIBLE_ACCOUNTS_WIDGET_MODE;
+        if (sheetItemListView.findViewById(R.id.add_account) != null
+                && numAccounts == (int) (maxRowSize + 1)) {
+            ++maxRowSize;
+        }
+        if (numAccounts > maxRowSize) {
             sheetItemListView.measure(
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            int measuredHeight = sheetItemListView.getMeasuredHeight();
-            int containerHeight =
-                    Math.round(
-                            ((float) measuredHeight / numAccounts)
-                                    * MAX_VISIBLE_ACCOUNTS_WIDGET_MODE);
+            int accountHeight = sheetItemListView.getChildAt(0).getMeasuredHeight();
+            int containerHeight = Math.round(accountHeight * maxRowSize);
             sheetContainer.getLayoutParams().height = containerHeight;
         } else {
             // Need to set the height here in case it was changed by a previous {@link
@@ -97,9 +107,10 @@ public class AccountSelectionBottomSheetContent implements BottomSheetContent {
      * @return the full state height in pixels. Never 0. Can theoretically exceed the screen height.
      */
     private @Px int getMaximumActiveModeSheetHeightPx() {
+        int width = mBottomSheetController.getMaxSheetWidth();
         View accountSelectionSheet = mContentView.findViewById(R.id.account_selection_sheet);
         accountSelectionSheet.measure(
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         return accountSelectionSheet.getMeasuredHeight();
     }
@@ -179,7 +190,10 @@ public class AccountSelectionBottomSheetContent implements BottomSheetContent {
 
     @Override
     public float getFullHeightRatio() {
-        if (mRpMode == RpMode.PASSIVE) return HeightMode.WRAP_CONTENT;
+        if (mRpMode == RpMode.PASSIVE) {
+            computeAndUpdateAccountListHeight();
+            return HeightMode.WRAP_CONTENT;
+        }
         // WRAP_CONTENT would be the right fit but this disables the HALF state.
         return Math.min(
                         getMaximumActiveModeSheetHeightPx(),
@@ -189,9 +203,9 @@ public class AccountSelectionBottomSheetContent implements BottomSheetContent {
 
     @Override
     public float getHalfHeightRatio() {
+        // Passive mode does not use half height.
         if (mRpMode == RpMode.PASSIVE) {
-            computeAndUpdateAccountListHeight();
-            return HeightMode.WRAP_CONTENT;
+            return HeightMode.DISABLED;
         }
         return Math.min(
                         getDesiredActiveModeSheetHeightPx(),
@@ -224,22 +238,22 @@ public class AccountSelectionBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public int getSheetContentDescriptionStringId() {
-        return R.string.account_selection_content_description;
+    public @NonNull String getSheetContentDescription(Context context) {
+        return context.getString(R.string.account_selection_content_description);
     }
 
     @Override
-    public int getSheetHalfHeightAccessibilityStringId() {
+    public @StringRes int getSheetHalfHeightAccessibilityStringId() {
         return R.string.account_selection_sheet_half_height;
     }
 
     @Override
-    public int getSheetFullHeightAccessibilityStringId() {
+    public @StringRes int getSheetFullHeightAccessibilityStringId() {
         return R.string.account_selection_sheet_full_height;
     }
 
     @Override
-    public int getSheetClosedAccessibilityStringId() {
+    public @StringRes int getSheetClosedAccessibilityStringId() {
         return R.string.account_selection_sheet_closed;
     }
 }

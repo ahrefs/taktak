@@ -12,6 +12,7 @@
 #include "ash/webui/recorder_app_ui/recorder_app_ui_delegate.h"
 #include "ash/webui/recorder_app_ui/url_constants.h"
 #include "ash/webui/system_apps/public/system_web_app_ui_config.h"
+#include "base/containers/flat_set.h"
 #include "base/memory/weak_ptr.h"
 #include "base/sequence_checker.h"
 #include "chromeos/services/machine_learning/public/mojom/machine_learning_service.mojom.h"
@@ -91,6 +92,8 @@ class RecorderAppUI
 
   mojo::Remote<MachineLearningService>& GetMlService();
 
+  bool CanUseGenerativeAi();
+
   void UpdateSodaState(const speech::LanguageCode& language_code,
                        ModelState state);
 
@@ -99,6 +102,10 @@ class RecorderAppUI
       on_device_model::mojom::PlatformModelState state);
 
   void UpdateModelState(const base::Uuid& model_id, ModelState state);
+
+  void LoadModelResultCallback(const base::Uuid& model_id,
+                               LoadModelCallback callback,
+                               on_device_model::mojom::LoadModelResult result);
 
   void GetMicrophoneInfoWithDeviceId(
       GetMicrophoneInfoCallback callback,
@@ -109,6 +116,9 @@ class RecorderAppUI
   ModelState GetSodaState(const speech::LanguageCode& language_code);
 
   // recorder_app::mojom::PageHandler:
+  void GetModelInfo(on_device_model::mojom::FormatFeature feature,
+                    GetModelInfoCallback callback) override;
+
   void LoadModel(
       const base::Uuid& model_id,
       mojo::PendingReceiver<on_device_model::mojom::OnDeviceModel> model,
@@ -142,6 +152,8 @@ class RecorderAppUI
       const std::string& language,
       ::mojo::PendingRemote<recorder_app::mojom::ModelStateMonitor> monitor,
       AddSodaMonitorCallback callback) override;
+
+  void GetAvailableLangPacks(GetAvailableLangPacksCallback callback) override;
 
   void OpenAiFeedbackDialog(const std::string& description_template) override;
 
@@ -190,6 +202,12 @@ class RecorderAppUI
       soda_monitors_;
 
   base::flat_map<speech::LanguageCode, ModelState> soda_states_;
+
+  base::flat_set<speech::LanguageCode> transcription_supported_languages_;
+
+  base::flat_set<speech::LanguageCode> gen_ai_supported_languages_;
+
+  base::flat_set<speech::LanguageCode> speaker_label_supported_languages_;
 
   std::map<base::Uuid, mojo::RemoteSet<recorder_app::mojom::ModelStateMonitor>>
       model_monitors_;

@@ -32,6 +32,7 @@ import {
 } from '../core/on_device_model/types.js';
 import {ReactiveLitElement} from '../core/reactive/lit.js';
 import {signal} from '../core/reactive/signal.js';
+import {LanguageCode} from '../core/soda/language_info.js';
 import {Transcription} from '../core/soda/soda.js';
 import {settings, SummaryEnableState} from '../core/state/settings.js';
 import {HELP_URL} from '../core/url_constants.js';
@@ -185,8 +186,6 @@ export class SummarizationView extends ReactiveLitElement {
 
   private readonly downloadRequested = signal(false);
 
-  private readonly downloadPerfCollected = signal(false);
-
   get summaryContainerForTest(): HTMLDivElement {
     return assertExists(this.summaryContainer.value);
   }
@@ -205,12 +204,6 @@ export class SummarizationView extends ReactiveLitElement {
     if (settings.value.summaryEnabled === SummaryEnableState.ENABLED &&
         summaryState.value.kind === 'installing') {
       this.downloadRequested.value = true;
-    } else if (this.downloadRequested.value &&
-               !this.downloadPerfCollected.value &&
-               summaryState.value.kind === 'installed') {
-      // TODO: b/367263595 - Collect perf in PlatformHandler instead.
-      this.platformHandler.perfLogger.finish('summaryModelDownload');
-      this.downloadPerfCollected.value = true;
     }
   }
 
@@ -220,12 +213,16 @@ export class SummarizationView extends ReactiveLitElement {
 
     this.platformHandler.perfLogger.start({
       kind: 'summary',
-      wordCount: this.transcription?.wordCount ?? 0,
+      wordCount: this.transcription?.getWordCount() ?? 0,
     });
 
     const text = this.transcription?.toPlainText() ?? '';
+    const language = this.transcription?.language ?? LanguageCode.EN_US;
     this.summary.value =
-      await this.platformHandler.summaryModelLoader.loadAndExecute(text);
+      await this.platformHandler.summaryModelLoader.loadAndExecute(
+        text,
+        language,
+      );
     this.sendSummarizeEvent();
     this.platformHandler.perfLogger.finish('summary');
   }
@@ -238,11 +235,11 @@ export class SummarizationView extends ReactiveLitElement {
 
     this.platformHandler.eventsSender.sendSummarizeEvent({
       responseError: response.kind === 'error' ? response.error : null,
-      wordCount: this.transcription.wordCount,
+      wordCount: this.transcription.getWordCount(),
     });
   }
 
-  private renderSummaryFooter() {
+  private renderSummaryFooter(result: string) {
     return html`
       <div id="footer">
         ${i18n.genAiDisclaimerText}
@@ -254,8 +251,11 @@ export class SummarizationView extends ReactiveLitElement {
           ${i18n.genAiLearnMoreLink}
         </a>
       </div>
-      <genai-feedback-buttons .resultType=${GenaiResultType.SUMMARY}>
-      </genai-feedback-buttons>
+      <genai-feedback-buttons
+        .resultType=${GenaiResultType.SUMMARY}
+        .result=${result}
+        .transcription=${this.transcription?.toPlainText() ?? ''}
+      ></genai-feedback-buttons>
     `;
   }
 
@@ -295,7 +295,7 @@ export class SummarizationView extends ReactiveLitElement {
           <ul id="summary" ${ref(this.summaryContainer)}>
             ${this.renderSummaryResult(summary.result)}
           </ul>
-          ${this.renderSummaryFooter()}`;
+          ${this.renderSummaryFooter(summary.result)}`;
       default:
         assertExhaustive(summary);
     }
@@ -322,11 +322,16 @@ export class SummarizationView extends ReactiveLitElement {
     >
       ${i18n.summaryDownloadFinishedStatusMessage}
     </spoken-message>`;
+    const tooltipLabel = this.summaryOpened.value ?
+      i18n.summaryCollapseTooltip :
+      i18n.summaryExpandTooltip;
     return html`
       <cros-accordion variant="compact">
         <cros-accordion-item
           @cros-accordion-item-expanded=${this.onSummaryExpanded}
           @cros-accordion-item-collapsed=${this.onSummaryCollapsed}
+          show-button-tooltip
+          button-tooltip-label=${tooltipLabel}
         >
           <cra-icon name="summarize_auto" slot="leading"></cra-icon>
           <div slot="title">

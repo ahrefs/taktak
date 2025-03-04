@@ -2176,8 +2176,8 @@ TEST_P(PointerTest, SetCursorBitmapFromBuffer) {
   constexpr gfx::Size buffer_size(10, 10);
   const auto buffer_format = gfx::BufferFormat::RGBA_8888;
   // Setting some default usage in order to get a mappable shared image.
-  const auto si_usage =
-      gpu::SHARED_IMAGE_USAGE_CPU_WRITE | gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
+  const auto si_usage = gpu::SHARED_IMAGE_USAGE_CPU_WRITE_ONLY |
+                        gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
 
   // Create a mappable shared image.
   auto shared_image = test_sii->CreateSharedImage(
@@ -2219,6 +2219,35 @@ TEST_P(PointerTest, SetCursorBitmapFromBuffer) {
 
   EXPECT_CALL(delegate, OnPointerDestroying(pointer.get()));
   pointer.reset();
+}
+
+TEST_P(PointerConstraintTest, ConstraintPointerLockPointer) {
+  auto* cursor_client = WMHelper::GetInstance()->GetCursorClient();
+  auto original_cursor = cursor_client->GetCursor();
+  EXPECT_TRUE(pointer_->ConstrainPointer(&constraint_delegate_));
+
+  EXPECT_TRUE(cursor_client->IsCursorLocked());
+  EXPECT_TRUE(cursor_client->IsCursorVisible());
+  EXPECT_EQ(original_cursor.type(), cursor_client->GetCursor().type());
+
+  EXPECT_CALL(delegate_, OnPointerEnter(surface_.get(), gfx::PointF(), 0));
+  EXPECT_CALL(delegate_, OnPointerFrame()).Times(testing::AtLeast(1));
+  generator_->MoveMouseTo(surface_->window()->GetBoundsInScreen().origin());
+
+  pointer_->SetCursorType(ui::mojom::CursorType::kNull);
+
+  EXPECT_EQ(ui::mojom::CursorType::kNull, cursor_client->GetCursor().type());
+
+  GetEventGenerator()->PressKey(ui::VKEY_A, 0, 0);
+  EXPECT_TRUE(cursor_client->IsCursorLocked());
+  EXPECT_TRUE(cursor_client->IsCursorVisible());
+
+  pointer_->OnPointerConstraintDelegateDestroying(&constraint_delegate_);
+  EXPECT_CALL(delegate_, OnPointerDestroying(pointer_.get()));
+
+  EXPECT_FALSE(cursor_client->IsCursorLocked());
+
+  pointer_.reset();
 }
 
 }  // namespace

@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
+#pragma allow_unsafe_buffers
+#endif
+
 #include "chromecast/starboard/media/media/starboard_audio_decoder.h"
 
 #include <cstdint>
@@ -251,6 +256,32 @@ TEST_F(StarboardAudioDecoderTest, WritesEndOfStreamToStarboard) {
 
   EXPECT_EQ(decoder.PushBuffer(CastDecoderBufferImpl::CreateEOSBuffer().get()),
             MediaPipelineBackend::BufferStatus::kBufferSuccess);
+}
+
+TEST_F(StarboardAudioDecoderTest,
+       EndOfStreamAfterStopDoesNotPushToNullSbPlayer) {
+  // Regression test for crbug.com/375652489.
+  EXPECT_CALL(*starboard_, WriteEndOfStream(nullptr, kStarboardMediaTypeAudio))
+      .Times(0);
+  EXPECT_CALL(*starboard_,
+              WriteEndOfStream(&fake_player_, kStarboardMediaTypeAudio))
+      .Times(1);
+
+  StarboardAudioDecoder decoder(starboard_.get());
+  MockDelegate delegate;
+
+  const AudioConfig config = GetBasicConfig();
+
+  decoder.Initialize(&fake_player_);
+  decoder.SetConfig(config);
+  decoder.SetDelegate(&delegate);
+  decoder.Stop();
+
+  EXPECT_EQ(decoder.PushBuffer(CastDecoderBufferImpl::CreateEOSBuffer().get()),
+            MediaPipelineBackend::BufferStatus::kBufferPending);
+
+  // This should trigger the WriteEndOfStream call.
+  decoder.Initialize(&fake_player_);
 }
 
 TEST_F(StarboardAudioDecoderTest, ForwardsSetVolumeCallToStarboard) {

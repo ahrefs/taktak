@@ -9,13 +9,15 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
-import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
+import android.view.accessibility.AccessibilityEvent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,6 +26,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.chromium.base.Callback;
+import org.chromium.base.TimeUtils;
 import org.chromium.base.TraceEvent;
 import org.chromium.base.metrics.TimingMetric;
 import org.chromium.base.task.PostTask;
@@ -38,6 +41,7 @@ import org.chromium.chrome.browser.util.KeyNavigationUtil;
 import org.chromium.components.browser_ui.widget.RoundedCornerOutlineProvider;
 import org.chromium.components.omnibox.OmniboxFeatures;
 import org.chromium.ui.KeyboardVisibilityDelegate;
+import org.chromium.ui.MotionEventUtils;
 import org.chromium.ui.base.DeviceFormFactor;
 import org.chromium.ui.base.ViewUtils;
 
@@ -45,15 +49,31 @@ import java.util.Optional;
 
 /** A widget for showing a list of omnibox suggestions. */
 public class OmniboxSuggestionsDropdown extends RecyclerView {
+    /** Used to tag and cancel the Accessibility focus events. */
+    private static final Object TOKEN_ACCESSIBILITY_FOCUS = new Object();
+
     /**
      * Used to defer the accessibility announcement for list content. This makes core difference
      * when the list is first shown up, when the interaction with the Omnibox and presence of
      * virtual keyboard may actually cause throttling of the Accessibility events.
+     *
+     * <p>Note that this delay aims to strike a compromise between multiple directly competing
+     * components for a11y time:
+     *
+     * <ul>
+     *   <li>UrlBar: "facebook.com",
+     *   <li>Soft Keyboard: "f. foxtrot. showing us english q w e r t y", and
+     *   <li>Omnibox Suggestions: "15 suggested items in list below".
+     * </ul>
+     *
+     * The Suggestions list can be announced after a slight pause, as it's best that it's announced
+     * last.
      */
-    private static final long LIST_COMPOSITION_ACCESSIBILITY_ANNOUNCEMENT_DELAY_MS = 300;
+    private static final long LIST_COMPOSITION_ACCESSIBILITY_ANNOUNCEMENT_DELAY_MS = 1500;
 
     private final SuggestionLayoutScrollListener mLayoutScrollListener;
     private final RecyclerViewSelectionController mSelectionController;
+    private final Handler mHandler;
 
     private @Nullable OmniboxSuggestionsDropdownAdapter mAdapter;
     private Optional<OmniboxSuggestionsDropdownEmbedder> mEmbedder = Optional.empty();
@@ -235,6 +255,9 @@ public class OmniboxSuggestionsDropdown extends RecyclerView {
      */
     public OmniboxSuggestionsDropdown(@NonNull Context context, AttributeSet attrs) {
         super(context, attrs, android.R.attr.dropDownListViewStyle);
+
+        mHandler = new Handler(Looper.getMainLooper());
+
         setFocusable(true);
         setFocusableInTouchMode(true);
         setId(R.id.omnibox_suggestions_dropdown);
@@ -390,7 +413,7 @@ public class OmniboxSuggestionsDropdown extends RecyclerView {
      */
     public void refreshPopupBackground(@BrandedColorScheme int brandedColorScheme) {
         int color =
-                OmniboxResourceProvider.getSuggestionsDropdownBackgroundColorForColorScheme(
+                OmniboxResourceProvider.getSuggestionsDropdownBackgroundColor(
                         getContext(), brandedColorScheme);
 
         if (!isHardwareAccelerated()) {
@@ -513,15 +536,16 @@ public class OmniboxSuggestionsDropdown extends RecyclerView {
 
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
-        // Consume mouse events to ensure clicks do not bleed through to sibling views that
-        // are obscured by the list.  crbug.com/968414
+        // For some reason, RecyclerView.onGenericMotionEvent() always returns false even after
+        // handling events. Consume mouse/trackpad events to ensure clicks and scroll do not
+        // bleed through to sibling views that are obscured by the list.  crbug.com/968414
         int action = event.getActionMasked();
-        boolean shouldIgnoreGenericMotionEvent =
-                (event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0
-                        && event.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE
+        boolean shouldConsumeGenericMotionEvent =
+                (MotionEventUtils.isMouseEvent(event) || MotionEventUtils.isTrackpadEvent(event))
                         && (action == MotionEvent.ACTION_BUTTON_PRESS
-                                || action == MotionEvent.ACTION_BUTTON_RELEASE);
-        return shouldIgnoreGenericMotionEvent || super.onGenericMotionEvent(event);
+                                || action == MotionEvent.ACTION_BUTTON_RELEASE
+                                || action == MotionEvent.ACTION_SCROLL);
+        return super.onGenericMotionEvent(event) || shouldConsumeGenericMotionEvent;
     }
 
     @Override
@@ -557,6 +581,7 @@ public class OmniboxSuggestionsDropdown extends RecyclerView {
         if (urlHasFocus) {
             installAlignmentObserver();
         } else {
+            cancelWindowContentChangedAnnouncement();
             removeAlignmentObserver();
         }
     }
@@ -639,17 +664,26 @@ public class OmniboxSuggestionsDropdown extends RecyclerView {
         roundedCornerOutlineProvider.setRoundingEdges(true, true, true, roundBottomCorners);
     }
 
-    public void emitWindowContentChanged() {
-        PostTask.postDelayedTask(
-                TaskTraits.UI_DEFAULT,
+    public void emitWindowContentChangedAnnouncement() {
+        cancelWindowContentChangedAnnouncement();
+        // Note: can't use postDelayed until minSdk is 28.
+        mHandler.postAtTime(
                 () -> {
-                    announceForAccessibility(
+                    setAccessibilityLiveRegion(ACCESSIBILITY_LIVE_REGION_POLITE);
+                    setContentDescription(
                             getContext()
                                     .getString(
                                             R.string.accessibility_omnibox_suggested_items,
                                             mAdapter.getItemCount()));
+                    sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED);
+                    setAccessibilityLiveRegion(ACCESSIBILITY_LIVE_REGION_NONE);
                 },
-                LIST_COMPOSITION_ACCESSIBILITY_ANNOUNCEMENT_DELAY_MS);
+                TOKEN_ACCESSIBILITY_FOCUS,
+                TimeUtils.uptimeMillis() + LIST_COMPOSITION_ACCESSIBILITY_ANNOUNCEMENT_DELAY_MS);
+    }
+
+    private void cancelWindowContentChangedAnnouncement() {
+        mHandler.removeCallbacksAndMessages(TOKEN_ACCESSIBILITY_FOCUS);
     }
 
     @VisibleForTesting

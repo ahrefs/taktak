@@ -4,6 +4,7 @@
 
 package org.chromium.components.browser_ui.site_settings;
 
+import static org.chromium.build.NullUtil.assumeNonNull;
 import static org.chromium.components.browser_ui.site_settings.WebsitePreferenceBridge.SITE_WILDCARD;
 
 import android.content.Context;
@@ -19,6 +20,8 @@ import android.widget.TextView;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.accessibility.PageZoomUtils;
 import org.chromium.components.browser_ui.settings.ChromeImageViewPreference;
 import org.chromium.components.browser_ui.settings.FaviconViewUtils;
@@ -32,16 +35,17 @@ import org.chromium.url.GURL;
  * of the preference. See {@link ChromeImageViewPreference} for more details on how this icon
  * can be used.
  */
+@NullMarked
 class WebsitePreference extends ChromeImageViewPreference {
     protected final SiteSettingsDelegate mSiteSettingsDelegate;
     protected final Website mSite;
     protected final SiteSettingsCategory mCategory;
-    private Runnable mRefreshZoomsListFunction;
+    private @Nullable Runnable mRefreshZoomsListFunction;
 
     // Whether the favicon has been fetched already.
     private boolean mFaviconFetched;
 
-    private OnStorageAccessWebsiteDetailsRequested mStorageAccessSettingsPageListener;
+    private @Nullable OnStorageAccessWebsiteDetailsRequested mStorageAccessSettingsPageListener;
 
     /** Used to notify storage access website details subpage requests. */
     public interface OnStorageAccessWebsiteDetailsRequested {
@@ -111,7 +115,7 @@ class WebsitePreference extends ChromeImageViewPreference {
             return false;
         }
 
-        int numberSites = mSite.getEmbeddedContentSettings(type).size();
+        int numberSites = assumeNonNull(mSite.getEmbeddedContentSettings(type)).size();
         return numberSites != 1 || !mSite.isEmbargoed(type);
     }
 
@@ -125,7 +129,7 @@ class WebsitePreference extends ChromeImageViewPreference {
 
     protected String buildExpirationSummary(ContentSettingException exception) {
         assert exception != null && exception.hasExpiration();
-        var expirationInDays = exception.getExpirationInDays();
+        var expirationInDays = assumeNonNull(exception.getExpirationInDays());
         return expirationInDays == 0
                 ? getContext().getString(R.string.site_settings_expires_today_label)
                 : getContext()
@@ -136,11 +140,11 @@ class WebsitePreference extends ChromeImageViewPreference {
                                 expirationInDays);
     }
 
-    protected String buildSummary() {
-        if (mSiteSettingsDelegate.isPrivacySandboxFirstPartySetsUIFeatureEnabled()
+    protected @Nullable String buildSummary() {
+        if (mSiteSettingsDelegate.isPrivacySandboxFirstPartySetsUiFeatureEnabled()
                 && mSiteSettingsDelegate.isRelatedWebsiteSetsDataAccessEnabled()
-                && mSite.getRWSCookieInfo() != null) {
-            var rwsInfo = mSite.getRWSCookieInfo();
+                && mSite.getRwsCookieInfo() != null) {
+            var rwsInfo = mSite.getRwsCookieInfo();
             return getContext()
                     .getResources()
                     .getQuantityString(
@@ -152,7 +156,10 @@ class WebsitePreference extends ChromeImageViewPreference {
 
         if (hasSubPage()) {
             int numberSites =
-                    mSite.getEmbeddedContentSettings(mCategory.getContentSettingsType()).size();
+                    assumeNonNull(
+                                    mSite.getEmbeddedContentSettings(
+                                            mCategory.getContentSettingsType()))
+                            .size();
             return getContext()
                     .getResources()
                     .getQuantityString(
@@ -202,7 +209,6 @@ class WebsitePreference extends ChromeImageViewPreference {
             setImageView(
                     R.drawable.ic_delete_white_24dp,
                     getContext()
-                            .getResources()
                             .getString(
                                     R.string.site_settings_delete_zoom_level_content_description,
                                     buildTitle()),
@@ -210,7 +216,7 @@ class WebsitePreference extends ChromeImageViewPreference {
                             view -> {
                                 SiteSettingsUtil.resetZoomLevel(
                                         mSite, mSiteSettingsDelegate.getBrowserContextHandle());
-                                mRefreshZoomsListFunction.run();
+                                assumeNonNull(mRefreshZoomsListFunction).run();
                             });
             setImageViewEnabled(true);
             setImagePadding(25, 0, 0, 0);
@@ -221,13 +227,12 @@ class WebsitePreference extends ChromeImageViewPreference {
             setImageView(
                     R.drawable.ic_expand_more_horizontal_black_24dp,
                     getContext()
-                            .getResources()
                             .getString(
                                     R.string.webstorage_delete_data_content_description,
                                     buildTitle()),
                     (OnClickListener)
                             view -> {
-                                mStorageAccessSettingsPageListener
+                                assumeNonNull(mStorageAccessSettingsPageListener)
                                         .onStorageAccessWebsiteDetailsRequested(this);
                             });
             setImageViewEnabled(true);
@@ -259,6 +264,7 @@ class WebsitePreference extends ChromeImageViewPreference {
     public void onBindViewHolder(PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
         TextView usageText = (TextView) holder.findViewById(R.id.usage_text);
+        assumeNonNull(usageText);
         usageText.setVisibility(View.GONE);
         if (mCategory.getType() == SiteSettingsCategory.Type.USE_STORAGE) {
             long totalUsage = mSite.getTotalUsage();
@@ -269,6 +275,7 @@ class WebsitePreference extends ChromeImageViewPreference {
         }
         if (mCategory.getType() == SiteSettingsCategory.Type.ZOOM) {
             TextView summaryText = (TextView) holder.findViewById(android.R.id.summary);
+            assumeNonNull(summaryText);
             long readableZoomLevel =
                     Math.round(
                             100
@@ -282,6 +289,7 @@ class WebsitePreference extends ChromeImageViewPreference {
 
         // Manually apply ListItemStartIcon style to draw the outer circle in the right size.
         ImageView icon = (ImageView) holder.findViewById(android.R.id.icon);
+        assumeNonNull(icon);
         FaviconViewUtils.formatIconForFavicon(getContext().getResources(), icon);
 
         if (!mFaviconFetched && faviconUrl().isValid()) {

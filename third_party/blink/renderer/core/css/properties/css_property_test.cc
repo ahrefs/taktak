@@ -2,11 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "third_party/blink/renderer/core/css/properties/css_property.h"
+
 #include <cstring>
+
 #include "base/memory/values_equivalent.h"
 #include "testing/gtest/include/gtest/gtest.h"
-#include "third_party/blink/public/mojom/origin_trial_feature/origin_trial_feature.mojom-shared.h"
+#include "third_party/blink/public/mojom/origin_trials/origin_trial_feature.mojom-shared.h"
 #include "third_party/blink/renderer/core/css/anchor_evaluator.h"
 #include "third_party/blink/renderer/core/css/css_property_names.h"
 #include "third_party/blink/renderer/core/css/css_test_helpers.h"
@@ -468,16 +475,6 @@ TEST_F(CSSPropertyTest, AnchorModeHeight) {
             ComputedValue("max-width", "anchor-size(width, 0px)", context));
   EXPECT_EQ("1px",
             ComputedValue("max-height", "anchor-size(width, 0px)", context));
-}
-
-TEST_F(CSSPropertyTest, InsetAreaDisabled) {
-  ScopedCSSInsetAreaPropertyForTest inset_area_enabled(false);
-  auto* declarations = ParseShorthand("position-area", "center top");
-  ASSERT_TRUE(declarations);
-  ASSERT_EQ(declarations->PropertyCount(), 1u);
-  declarations = ParseShorthand("inset-area", "center top");
-  ASSERT_TRUE(declarations);
-  ASSERT_EQ(declarations->PropertyCount(), 0u);
 }
 
 TEST_F(CSSPropertyTest, AnchorSizeInsetsMarginsDisabled) {

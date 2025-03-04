@@ -121,7 +121,7 @@ static void JNI_FeedServiceBridge_SetContentOrderForWebFeed(
     case static_cast<jint>(ContentOrder::kUnspecified):
       break;
   }
-  NOTREACHED_IN_MIGRATION() << "Invalid content order: " << content_order;
+  NOTREACHED() << "Invalid content order: " << content_order;
 }
 
 static jboolean JNI_FeedServiceBridge_IsSignedIn(JNIEnv* env) {
@@ -130,8 +130,7 @@ static jboolean JNI_FeedServiceBridge_IsSignedIn(JNIEnv* env) {
 
 std::string FeedServiceBridge::GetLanguageTag() {
   JNIEnv* env = base::android::AttachCurrentThread();
-  return base::android::ConvertJavaStringToUTF8(
-      env, Java_FeedServiceBridge_getLanguageTag(env));
+  return Java_FeedServiceBridge_getLanguageTag(env);
 }
 
 DisplayMetrics FeedServiceBridge::GetDisplayMetrics() {
@@ -159,8 +158,7 @@ bool FeedServiceBridge::IsEnabled() {
 
 void FeedServiceBridge::PrefetchImage(const GURL& url) {
   JNIEnv* env = base::android::AttachCurrentThread();
-  Java_FeedServiceBridge_prefetchImage(
-      env, base::android::ConvertUTF8ToJavaString(env, url.spec()));
+  Java_FeedServiceBridge_prefetchImage(env, url.spec());
 }
 
 uint64_t FeedServiceBridge::GetReliabilityLoggingId() {

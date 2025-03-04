@@ -8,6 +8,7 @@ import android.content.Context;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.ColorRes;
+import androidx.annotation.DimenRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.Px;
 import androidx.core.content.res.ResourcesCompat;
@@ -24,6 +25,28 @@ public class TabUiThemeUtil {
     private static final float MAX_TAB_STRIP_TAB_WIDTH_DP = 265.f;
 
     /**
+     * Returns the tab strip background color based on the windowing mode and activity focus state.
+     * To get the default strip background color that is not affected by the activity focus state,
+     * use {@link #getTabStripBackgroundColor(Context, boolean)}.
+     *
+     * @param context {@link Context} used to retrieve color.
+     * @param isIncognito Whether the color is used for incognito mode.
+     * @param isInDesktopWindow Whether the app is in a desktop window.
+     * @param isActivityFocused Whether the activity containing the tab strip is focused.
+     * @return The {@link ColorInt} for the tab strip background.
+     */
+    public static @ColorInt int getTabStripBackgroundColor(
+            Context context,
+            boolean isIncognito,
+            boolean isInDesktopWindow,
+            boolean isActivityFocused) {
+        return isInDesktopWindow
+                ? getTabStripBackgroundColorForActivityState(
+                        context, isIncognito, isActivityFocused)
+                : getTabStripBackgroundColor(context, isIncognito);
+    }
+
+    /**
      * Returns the default color for the tab strip background, that does not take the activity focus
      * state into account.
      *
@@ -36,17 +59,7 @@ public class TabUiThemeUtil {
                 context, isIncognito, /* isActivityFocused= */ true);
     }
 
-    /**
-     * Returns the color for the tab strip background based on the activity state. To get the
-     * default strip background color that is not affected by the activity focus state, use {@link
-     * #getTabStripBackgroundColor(Context, boolean)}.
-     *
-     * @param context {@link Context} used to retrieve color.
-     * @param isIncognito Whether the color is used for incognito mode.
-     * @param isActivityFocused Whether the activity containing the tab strip is focused.
-     * @return The {@link ColorInt} for the tab strip background.
-     */
-    public static @ColorInt int getTabStripBackgroundColorForActivityState(
+    private static @ColorInt int getTabStripBackgroundColorForActivityState(
             Context context, boolean isIncognito, boolean isActivityFocused) {
         // Default spec for incognito, dark and light themes, used when not in desktop windowing
         // mode or when the activity is focused in desktop windowing mode.
@@ -83,7 +96,6 @@ public class TabUiThemeUtil {
      * @param context {@link Context} used to retrieve color.
      * @param isIncognito Whether the color is used for incognito mode.
      * @param foreground Whether the tab is in the foreground.
-     * @param isReordering Whether the tab is being reordered.
      * @param isPlaceholder Whether the tab is a placeholder "ghost" tab.
      * @param isHovered Whether the tab is hovered on.
      * @return The color for the tab container.
@@ -93,7 +105,6 @@ public class TabUiThemeUtil {
             Context context,
             boolean isIncognito,
             boolean foreground,
-            boolean isReordering,
             boolean isPlaceholder,
             boolean isHovered) {
         if (foreground) {
@@ -105,6 +116,27 @@ public class TabUiThemeUtil {
         } else {
             return getSurfaceColorElev0(context, isIncognito);
         }
+    }
+
+    /**
+     * Returns the color used for the shared group notification bubble.
+     *
+     * @param context {@link Context} used to retrieve color.
+     * @return The color for the notification bubble.
+     */
+    public static @ColorInt int getGroupTitleBubbleColor(Context context) {
+        return getSurfaceColorElev0(context, /* isIncognito= */ false);
+    }
+
+    public static @ColorInt int getReorderBackgroundColor(Context context, boolean isIncognito) {
+        if (isIncognito) return context.getColor(R.color.default_bg_color_dark_elev_4_baseline);
+
+        @DimenRes
+        int elevationRes =
+                ColorUtils.inNightMode(context)
+                        ? R.dimen.default_elevation_4
+                        : R.dimen.default_elevation_1;
+        return ChromeColors.getSurfaceColor(context, elevationRes);
     }
 
     /** Returns the color for the hovered tab container. */

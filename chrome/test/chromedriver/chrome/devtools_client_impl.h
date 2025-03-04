@@ -46,7 +46,9 @@ class DevToolsClientImpl : public DevToolsClient {
 
   // Postcondition: IsNull()
   // Postcondition: !IsConnected()
-  DevToolsClientImpl(const std::string& id, const std::string& session_id);
+  DevToolsClientImpl(const std::string& id,
+                     const std::string& session_id,
+                     bool is_tab = false);
 
   typedef base::RepeatingCallback<bool(const std::string&,
                                        int,
@@ -96,9 +98,11 @@ class DevToolsClientImpl : public DevToolsClient {
   // Precondition: IsMainPage()
   // Precondition: IsConnected()
   // Precondition: BiDi tunnel for CDP traffic is not set.
-  Status StartBidiServer(std::string bidi_mapper_script) override;
   Status StartBidiServer(std::string bidi_mapper_script,
-                         const Timeout& timeout);
+                         bool enable_unsafe_extension_debugging) override;
+  Status StartBidiServer(std::string bidi_mapper_script,
+                         const Timeout& timeout,
+                         bool enable_unsafe_extension_debugging);
   // If the object IsNull then it cannot be connected to the remote end.
   // Such an object needs to be attached to some !IsNull() parent first.
   // Postcondition: IsNull() == (socket == nullptr && parent == nullptr)
@@ -143,6 +147,7 @@ class DevToolsClientImpl : public DevToolsClient {
   WebViewImpl* GetOwner() const override;
   DevToolsClient* GetParentClient() const override;
   bool IsMainPage() const override;
+  bool IsTabTarget() const override;
   void SetMainPage(bool value);
   int NextMessageId() const override;
   // Return NextMessageId and immediately increment it
@@ -208,6 +213,7 @@ class DevToolsClientImpl : public DevToolsClient {
   Status EnsureListenersNotifiedOfEvent();
   Status EnsureListenersNotifiedOfCommandResponse();
   Status SetUpDevTools();
+  Status SetupTabTarget();
   Status HandleDialogOpening(const base::Value::Dict& params);
   Status HandleDialogClosed(const base::Value::Dict& params);
 
@@ -242,6 +248,7 @@ class DevToolsClientImpl : public DevToolsClient {
   std::list<std::string> unhandled_dialog_queue_;
   std::list<std::string> dialog_type_queue_;
   std::string prompt_text_;
+  bool is_tab_ = false;
   bool autoaccept_beforeunload_ = false;
   // Event tunneling is temporarily disabled in production.
   // It is enabled only by the unit tests

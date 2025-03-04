@@ -5,6 +5,7 @@
 #ifndef CONTENT_RENDERER_FONT_DATA_FONT_DATA_MANAGER_H_
 #define CONTENT_RENDERER_FONT_DATA_FONT_DATA_MANAGER_H_
 
+#include <list>
 #include <map>
 #include <memory>
 #include <string>
@@ -24,6 +25,10 @@
 #include "third_party/skia/include/core/SkFontStyle.h"
 #include "third_party/skia/include/core/SkStream.h"
 #include "third_party/skia/include/core/SkTypeface.h"
+
+namespace base {
+class MemoryMappedFile;
+}
 
 namespace font_data_service {
 
@@ -77,6 +82,13 @@ class CONTENT_EXPORT FontDataManager : public SkFontMgr {
  private:
   font_data_service::mojom::FontDataService& GetRemoteFontDataService() const;
 
+  sk_sp<SkTypeface> CreateTypefaceFromMatchResult(
+      mojom::MatchFamilyNameResultPtr match_result) const;
+
+  // This must be const to allow being called from onCountFamilies and
+  // onGetFamilyNames, but it does mutate family_names_.
+  void GetAllFamilyNames() const;
+
   // Key of the typeface_cache_.
   struct MatchFamilyRequest {
     std::string name;
@@ -111,6 +123,15 @@ class CONTENT_EXPORT FontDataManager : public SkFontMgr {
   // Cache of the shared memory region by GUID to known font mappings.
   mutable std::map<base::UnguessableToken, base::ReadOnlySharedMemoryMapping>
       mapped_regions_;
+
+  // Cache of the memory mapped files to ensure the mapping lives.
+  mutable std::list<std::unique_ptr<base::MemoryMappedFile>> mapped_files_;
+
+  // A cache of all the font family names that could be returned by
+  // onGetFamilyName. When populated, this has the same amount of elements as
+  // returned by onCountFamilies. This is populated on the first call to either
+  // onCountFamilies or onGetFamilyName.
+  mutable std::vector<std::string> family_names_;
 
 #if BUILDFLAG(ENABLE_FREETYPE)
   sk_sp<SkFontMgr> custom_fnt_mgr_;

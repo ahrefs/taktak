@@ -315,8 +315,7 @@ class MojoCdmTest : public ::testing::Test {
 
       case CONNECTION_ERROR_BEFORE:
         // Connection should be broken before this is called.
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
 
       case CONNECTION_ERROR_DURING:
         ForceConnectionError();
@@ -351,8 +350,7 @@ class MojoCdmTest : public ::testing::Test {
 
       case CONNECTION_ERROR_BEFORE:
         // Connection should be broken before this is called.
-        NOTREACHED_IN_MIGRATION();
-        break;
+        NOTREACHED();
 
       case CONNECTION_ERROR_DURING:
         ForceConnectionError();
@@ -371,7 +369,7 @@ class MojoCdmTest : public ::testing::Test {
   base::TestMessageLoop message_loop_;
 
   // |remote_cdm_| represents the CDM at the end of the mojo message pipe.
-  scoped_refptr<MockCdm> remote_cdm_{new MockCdm()};
+  scoped_refptr<MockCdm> remote_cdm_{base::MakeRefCounted<MockCdm>()};
   MockCdmFactory cdm_factory_{remote_cdm_};
   MockCdmContext cdm_context_;
 

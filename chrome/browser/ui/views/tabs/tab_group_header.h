@@ -5,6 +5,8 @@
 #ifndef CHROME_BROWSER_UI_VIEWS_TABS_TAB_GROUP_HEADER_H_
 #define CHROME_BROWSER_UI_VIEWS_TABS_TAB_GROUP_HEADER_H_
 
+#include <string_view>
+
 #include "base/memory/raw_ptr.h"
 #include "base/memory/raw_ref.h"
 #include "base/time/time.h"
@@ -55,11 +57,11 @@ class TabGroupHeader : public TabSlotView,
   void OnGestureEvent(ui::GestureEvent* event) override;
   void OnFocus() override;
   void OnThemeChanged() override;
-  void GetAccessibleNodeData(ui::AXNodeData* node_data) override;
   TabSlotView::ViewType GetTabSlotViewType() const override;
   TabSizeInfo GetTabSizeInfo() const override;
-  std::u16string GetTooltipText(const gfx::Point& p) const override;
   gfx::Rect GetAnchorBoundsInScreen() const override;
+
+  void OnGroupContentsChanged();
 
   // views::ContextMenuController:
   void ShowContextMenuForViewImpl(
@@ -82,24 +84,41 @@ class TabGroupHeader : public TabSlotView,
   // Removes {editor_bubble_tracker_} from observing the widget.
   void RemoveObserverFromWidget(views::Widget* widget);
 
+  // Enables or disables attention indicator on a tab group.
+  void SetTabGroupNeedsAttention(bool needs_attention);
+
+  // Returns whether the attention indicator should be shown.
+  bool GetShowingAttentionIndicator();
+
+  // Returns the title text for testing.
+  std::u16string_view GetTitleTextForTesting() const;
+
  private:
   friend class TabGroupEditorBubbleViewDialogBrowserTest;
+  FRIEND_TEST_ALL_PREFIXES(TabStripSaveBrowsertest, AttentionIndicatorIsShown);
 
   // Calculate the width for this View.
   int GetDesiredWidth() const;
   // Determines if the sync icon should be shown in the header.
-  bool ShouldShowSyncIcon() const;
+  bool ShouldShowHeaderIcon() const;
 
-  void UpdateIsCollapsed();
+  // Updates the local is_collapsed_ state.
+  void SetCollapsedState();
 
   void UpdateTitleView();
   void UpdateSyncIconView();
+  void UpdateAttentionIndicatorView();
+  void UpdateIsCollapsed();
 
   // Creates a squircle (cross between a square and a circle).
   void CreateHeaderWithoutTitle();
   // Creates a round rect, similar to the shape of a tab when hovered but not
   // selected.
   void CreateHeaderWithTitle();
+
+  void UpdateTooltipText();
+
+  void UpdateAccessibleName();
 
   const raw_ref<TabSlotController> tab_slot_controller_;
 
@@ -116,6 +135,10 @@ class TabGroupHeader : public TabSlotView,
   // the tabstrip.
   const raw_ptr<views::ImageView> sync_icon_;
 
+  // The circle indicator rendered after the title when a tab group has
+  // needs_attention_ set to true.
+  const raw_ptr<views::ImageView> attention_indicator_;
+
   const raw_ref<const TabGroupStyle> group_style_;
   const raw_ptr<const TabStyle> tab_style_;
 
@@ -125,13 +148,18 @@ class TabGroupHeader : public TabSlotView,
   // The current color of the group.
   SkColor color_;
 
-  // Determines if we should show the sync icon in front of the title.
-  bool should_show_sync_icon_;
+  // Determines if we should show the header icon in front of the title.
+  bool should_show_header_icon_;
 
   // Local saved collapsed state. When this differs from
   // `TabSlotController::IsGroupCollapsed()`, then the collapsed state has
   // changed in the model and we need to react to that.
   bool is_collapsed_;
+
+  // Determines if the tab group should show the attention indicator.
+  bool needs_attention_ = false;
+
+  base::CallbackListSubscription title_text_changed_subscription_;
 
   // Tracks whether our editor bubble is open. At most one can be open
   // at once.

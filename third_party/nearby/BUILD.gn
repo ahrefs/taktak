@@ -20,7 +20,7 @@ config("nearby_include_config") {
     "//third_party",
 
     # For bloom filter.
-    "//third_party/smhasher",
+    "//third_party/smhasher/src",
   ]
 }
 
@@ -158,7 +158,6 @@ source_set("connections_implementation") {
     "src/connections/implementation/injected_bluetooth_device_store.h",
     "src/connections/implementation/internal_payload.h",
     "src/connections/implementation/internal_payload_factory.h",
-    "src/connections/implementation/message_lite.h",
     "src/connections/implementation/offline_frames.h",
     "src/connections/implementation/offline_frames_validator.h",
     "src/connections/implementation/offline_service_controller.h",
@@ -790,12 +789,14 @@ source_set("platform_base_util") {
     ":nearby_defines",
   ]
   sources = [
-    "src/internal/platform/base_input_stream.cc",
     "src/internal/platform/byte_utils.cc",
+    "src/internal/platform/stream_reader.cc",
+    "src/internal/platform/stream_writer.cc",
   ]
   public = [
-    "src/internal/platform/base_input_stream.h",
     "src/internal/platform/byte_utils.h",
+    "src/internal/platform/stream_reader.h",
+    "src/internal/platform/stream_writer.h",
   ]
   public_deps = [
     ":platform_base",
@@ -942,6 +943,7 @@ source_set("platform_public_types") {
     "src/internal/platform/timer_impl.h",
   ]
   public_deps = [
+    ":connections_implementation_flags",
     ":flags",
     ":platform_api_platform",
     ":platform_api_types",
@@ -1355,13 +1357,24 @@ proto_library("certificate_rpc_proto") {
   link_deps = [ ":rpc_resources_proto" ]
 }
 
+config("sharing_log_proto_inputs_config") {
+  inputs = [ "//third_party/protobuf/src/google/protobuf/duration.proto" ]
+}
+
+group("sharing_log_proto_inputs") {
+  public_configs = [ ":sharing_log_proto_inputs_config" ]
+}
+
 # src/sharing/proto/analytics
 proto_library("sharing_log_proto") {
   proto_in_dir = "src"
   sources =
       [ "${proto_in_dir}/sharing/proto/analytics/nearby_sharing_log.proto" ]
   proto_out_dir = "third_party/nearby"
-  proto_deps = [ ":sharing_enums_proto" ]
+  proto_deps = [
+    ":sharing_enums_proto",
+    ":sharing_log_proto_inputs",
+  ]
   link_deps = [ ":sharing_enums_proto" ]
 
   # For built-in protos, specifically duration.proto.

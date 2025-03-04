@@ -6,6 +6,12 @@
 
 #import "base/apple/foundation_util.h"
 #import "base/strings/sys_string_conversions.h"
+#import "ios/chrome/browser/authentication/ui_bundled/authentication_flow/authentication_flow.h"
+#import "ios/chrome/browser/authentication/ui_bundled/identity_chooser/identity_chooser_coordinator.h"
+#import "ios/chrome/browser/authentication/ui_bundled/identity_chooser/identity_chooser_coordinator_delegate.h"
+#import "ios/chrome/browser/authentication/ui_bundled/signin/interruptible_chrome_coordinator.h"
+#import "ios/chrome/browser/authentication/ui_bundled/signin/signin_constants.h"
+#import "ios/chrome/browser/authentication/ui_bundled/signin/signin_coordinator.h"
 #import "ios/chrome/browser/first_run/model/first_run_metrics.h"
 #import "ios/chrome/browser/first_run/ui_bundled/first_run_constants.h"
 #import "ios/chrome/browser/first_run/ui_bundled/first_run_screen_delegate.h"
@@ -26,10 +32,6 @@
 #import "ios/chrome/browser/signin/model/chrome_account_manager_service_factory.h"
 #import "ios/chrome/browser/signin/model/identity_manager_factory.h"
 #import "ios/chrome/browser/sync/model/sync_service_factory.h"
-#import "ios/chrome/browser/ui/authentication/authentication_flow.h"
-#import "ios/chrome/browser/ui/authentication/identity_chooser/identity_chooser_coordinator.h"
-#import "ios/chrome/browser/ui/authentication/identity_chooser/identity_chooser_coordinator_delegate.h"
-#import "ios/chrome/browser/ui/authentication/signin/signin_coordinator.h"
 
 @interface SigninScreenCoordinator () <IdentityChooserCoordinatorDelegate,
                                        SigninScreenViewControllerDelegate,
@@ -76,7 +78,6 @@
   self = [super initWithBaseViewController:navigationController
                                    browser:browser];
   if (self) {
-    DCHECK(!browser->GetProfile()->IsOffTheRecord());
     _baseNavigationController = navigationController;
     _delegate = delegate;
     _UMAReportingUserChoice = kDefaultMetricsReportingCheckboxValue;
@@ -96,7 +97,8 @@
   self.viewController.TOSHandler = TOSHandler;
   self.viewController.delegate = self;
 
-  ProfileIOS* profile = self.browser->GetProfile();
+  ProfileIOS* profile = self.browser->GetProfile()->GetOriginalProfile();
+
   self.authenticationService =
       AuthenticationServiceFactory::GetForProfile(profile);
   if (self.authenticationService->GetPrimaryIdentity(
@@ -108,7 +110,7 @@
   self.accountManagerService =
       ChromeAccountManagerServiceFactory::GetForProfile(profile);
   signin::IdentityManager* identityManager =
-      IdentityManagerFactory::GetForProfile(self.browser->GetProfile());
+      IdentityManagerFactory::GetForProfile(profile);
   PrefService* localPrefService = GetApplicationContext()->GetLocalState();
   PrefService* prefService = profile->GetPrefs();
   syncer::SyncService* syncService = SyncServiceFactory::GetForProfile(profile);
@@ -131,8 +133,7 @@
 }
 
 - (void)stop {
-  [self.identityChooserCoordinator stop];
-  self.identityChooserCoordinator = nil;
+  [self stopIdentityChooserCoordinator];
   self.delegate = nil;
   self.viewController = nil;
   [self.mediator disconnect];
@@ -147,14 +148,33 @@
 - (void)interruptWithAction:(SigninCoordinatorInterrupt)action
                  completion:(ProceduralBlock)completion {
   if (self.addAccountSigninCoordinator) {
-    [self.addAccountSigninCoordinator interruptWithAction:action
-                                               completion:completion];
+    if (IsInterruptibleCoordinatorStoppedSynchronouslyEnabled()) {
+      [self.addAccountSigninCoordinator interruptWithAction:action
+                                                 completion:nil];
+
+      if (completion) {
+        completion();
+      }
+    } else {
+      [self.addAccountSigninCoordinator interruptWithAction:action
+                                                 completion:completion];
+    }
   } else if (completion) {
     completion();
   }
 }
 
 #pragma mark - Private
+
+- (void)stopIdentityChooserCoordinator {
+  [self.identityChooserCoordinator stop];
+  self.identityChooserCoordinator = nil;
+}
+
+- (void)stopAddAccountCoordinator {
+  [self.addAccountSigninCoordinator stop];
+  self.addAccountSigninCoordinator = nil;
+}
 
 - (void)stopUMACoordinator {
   [self.UMACoordinator stop];
@@ -172,23 +192,21 @@
   __weak __typeof(self) weakSelf = self;
   self.addAccountSigninCoordinator.signinCompletion =
       ^(SigninCoordinatorResult signinResult,
-        SigninCompletionInfo* signinCompletionInfo) {
+        id<SystemIdentity> signinCompletionIdentity) {
         [weakSelf addAccountSigninCompleteWithResult:signinResult
-                                      completionInfo:signinCompletionInfo];
+                                  completionIdentity:signinCompletionIdentity];
       };
   [self.addAccountSigninCoordinator start];
 }
 
 // Callback handling the completion of the AddAccount action.
 - (void)addAccountSigninCompleteWithResult:(SigninCoordinatorResult)signinResult
-                            completionInfo:
-                                (SigninCompletionInfo*)signinCompletionInfo {
-  [self.addAccountSigninCoordinator stop];
-  self.addAccountSigninCoordinator = nil;
+                        completionIdentity:
+                            (id<SystemIdentity>)signinCompletionIdentity {
+  [self stopAddAccountCoordinator];
   if (signinResult == SigninCoordinatorResultSuccess &&
-      self.accountManagerService->IsValidIdentity(
-          signinCompletionInfo.identity)) {
-    self.mediator.selectedIdentity = signinCompletionInfo.identity;
+      self.accountManagerService->IsValidIdentity(signinCompletionIdentity)) {
+    self.mediator.selectedIdentity = signinCompletionIdentity;
     self.mediator.addedAccount = YES;
   }
 }
@@ -196,12 +214,14 @@
 // Starts the sign in process.
 - (void)startSignIn {
   DCHECK(self.mediator.selectedIdentity);
-  AuthenticationFlow* authenticationFlow = [[AuthenticationFlow alloc]
-               initWithBrowser:self.browser
-                      identity:self.mediator.selectedIdentity
-                   accessPoint:_accessPoint
-             postSignInActions:PostSignInActionSet({PostSignInAction::kNone})
-      presentingViewController:self.viewController];
+  AuthenticationFlow* authenticationFlow =
+      [[AuthenticationFlow alloc] initWithBrowser:self.browser
+                                         identity:self.mediator.selectedIdentity
+                                      accessPoint:_accessPoint
+                                postSignInActions:PostSignInActionSet()
+                         presentingViewController:self.viewController
+                                       anchorView:nil
+                                       anchorRect:CGRectNull];
   authenticationFlow.precedingHistorySync = YES;
   __weak __typeof(self) weakSelf = self;
   ProceduralBlock completion = ^() {
@@ -233,8 +253,7 @@
 - (void)identityChooserCoordinatorDidClose:
     (IdentityChooserCoordinator*)coordinator {
   CHECK_EQ(self.identityChooserCoordinator, coordinator);
-  [self.identityChooserCoordinator stop];
-  self.identityChooserCoordinator = nil;
+  [self stopIdentityChooserCoordinator];
 }
 
 - (void)identityChooserCoordinatorDidTapOnAddAccount:
@@ -285,8 +304,8 @@
     self.mediator.UMALinkWasTapped = YES;
     [self showUMADialog];
   } else {
-    NOTREACHED_IN_MIGRATION() << std::string("Unknown URL ")
-                              << base::SysNSStringToUTF8(URL.absoluteString);
+    NOTREACHED() << std::string("Unknown URL ")
+                 << base::SysNSStringToUTF8(URL.absoluteString);
   }
 }
 

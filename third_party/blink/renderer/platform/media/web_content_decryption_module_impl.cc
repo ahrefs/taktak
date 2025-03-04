@@ -12,7 +12,6 @@
 #include <utility>
 
 #include "base/check.h"
-#include "base/functional/bind.h"
 #include "base/notreached.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/strings/string_util.h"
@@ -32,6 +31,7 @@
 #include "url/origin.h"
 
 namespace blink {
+
 namespace {
 
 const char kCreateSessionSessionTypeUMAName[] = "CreateSession.SessionType";
@@ -56,12 +56,7 @@ void WebContentDecryptionModuleImpl::Create(
   // TODO(ddorwin): Guard against this in supported types check and remove this.
   // Chromium only supports ASCII key systems.
   if (!base::IsStringASCII(key_system)) {
-    NOTREACHED_IN_MIGRATION();
-    ReportCreateCdmStatusUMA(key_system_uma_prefix, false,
-                             media::CreateCdmStatus::kUnsupportedKeySystem);
-    std::move(web_cdm_created_cb)
-        .Run(nullptr, media::CreateCdmStatus::kUnsupportedKeySystem);
-    return;
+    NOTREACHED();
   }
 
   // TODO(ddorwin): This should be a DCHECK.

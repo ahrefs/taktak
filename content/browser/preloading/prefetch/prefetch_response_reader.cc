@@ -4,11 +4,14 @@
 
 #include "content/browser/preloading/prefetch/prefetch_response_reader.h"
 
+#include <algorithm>
+
 #include "base/metrics/histogram_functions.h"
-#include "base/ranges/algorithm.h"
+#include "base/notreached.h"
 #include "base/strings/string_util.h"
 #include "base/task/sequenced_task_runner.h"
 #include "content/browser/preloading/prefetch/prefetch_features.h"
+#include "content/browser/preloading/prefetch/prefetch_params.h"
 #include "content/browser/preloading/prefetch/prefetch_streaming_url_loader.h"
 #include "net/http/http_cookie_indices.h"
 #include "services/network/public/mojom/early_hints.mojom.h"
@@ -162,6 +165,10 @@ PrefetchRequestHandler PrefetchResponseReader::CreateRequestHandler() {
       if (!body) {
         // This might be because `CreateRequestHandler()` is called for the
         // second time.
+        base::UmaHistogramBoolean(
+            "Preloading.Prefetch."
+            "PrefetchResponseReaderCreateRequestHandlerInvalidBody",
+            true);
         return {};
       }
       break;
@@ -252,8 +259,7 @@ void PrefetchResponseReader::BindAndStart(
     case LoadState::kFailedRedirect:
       // `CreateRequestHandler()` shouldn't be called for these non-servable
       // states.
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   RunEventQueue(client_id);
@@ -342,17 +348,13 @@ void PrefetchResponseReader::OnComplete(
       load_state_ = LoadState::kFailed;
       break;
     case LoadState::kRedirectHandled:
-      CHECK(false);
-      break;
+      NOTREACHED();
     case LoadState::kCompleted:
-      CHECK(false);
-      break;
+      NOTREACHED();
     case LoadState::kFailed:
-      CHECK(false);
-      break;
+      NOTREACHED();
     case LoadState::kFailedRedirect:
-      CHECK(false);
-      break;
+      NOTREACHED();
   }
 
   CHECK(!response_complete_time_);
@@ -452,7 +454,7 @@ void PrefetchResponseReader::OnReceiveResponse(
   head_ = std::move(head);
   if (is_reusable_) {
     body_tee_ = base::MakeRefCounted<PrefetchDataPipeTee>(
-        std::move(body), features::kPrefetchReusableBodySizeLimit.Get());
+        std::move(body), GetPrefetchDataPipeTeeBodySizeLimit());
   } else {
     body_ = std::move(body);
   }
@@ -517,7 +519,7 @@ void PrefetchResponseReader::FollowRedirect(
   // a redirect, then it will be interrupted before |FollowRedirect| is called,
   // and instead interceptors are given a chance to intercept the navigation to
   // the redirect.
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 void PrefetchResponseReader::SetPriority(net::RequestPriority priority,
@@ -525,20 +527,6 @@ void PrefetchResponseReader::SetPriority(net::RequestPriority priority,
   // Forward calls from the serving URL loader to the prefetch URL loader.
   if (streaming_url_loader_) {
     streaming_url_loader_->SetPriority(priority, intra_priority_value);
-  }
-}
-
-void PrefetchResponseReader::PauseReadingBodyFromNet() {
-  // Forward calls from the serving URL loader to the prefetch URL loader.
-  if (streaming_url_loader_) {
-    streaming_url_loader_->PauseReadingBodyFromNet();
-  }
-}
-
-void PrefetchResponseReader::ResumeReadingBodyFromNet() {
-  // Forward calls from the serving URL loader to the prefetch URL loader.
-  if (streaming_url_loader_) {
-    streaming_url_loader_->ResumeReadingBodyFromNet();
   }
 }
 
@@ -609,9 +597,9 @@ void PrefetchResponseReader::StoreInfoFromResponseHead(
   if (vary_on_cookie && head.parsed_headers->cookie_indices.has_value()) {
     auto& indices = cookie_indices_.emplace();
     indices.cookie_names = *head.parsed_headers->cookie_indices;
-    base::ranges::sort(indices.cookie_names);
-    indices.cookie_names.erase(base::ranges::unique(indices.cookie_names),
-                               indices.cookie_names.end());
+    std::ranges::sort(indices.cookie_names);
+    auto repeated = std::ranges::unique(indices.cookie_names);
+    indices.cookie_names.erase(repeated.begin(), repeated.end());
     indices.cookie_names.shrink_to_fit();
     indices.expected_hash =
         net::HashCookieIndices(indices.cookie_names, head.request_cookies);

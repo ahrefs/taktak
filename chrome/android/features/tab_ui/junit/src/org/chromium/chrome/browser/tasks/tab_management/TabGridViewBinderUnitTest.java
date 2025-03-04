@@ -30,6 +30,7 @@ import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Size;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewStub;
@@ -60,7 +61,6 @@ import org.chromium.chrome.browser.tab_ui.TabListFaviconProvider.TabFaviconFetch
 import org.chromium.chrome.browser.tab_ui.TabThumbnailView;
 import org.chromium.chrome.browser.tasks.tab_management.TabListMediator.ShoppingPersistedTabDataFetcher;
 import org.chromium.chrome.browser.tasks.tab_management.TabProperties.TabActionState;
-import org.chromium.chrome.tab_ui.R;
 import org.chromium.ui.modelutil.PropertyModel;
 
 /** Junit Tests for {@link TabGridViewBinder}. */
@@ -78,6 +78,7 @@ public final class TabGridViewBinderUnitTest {
     @Mock private ImageView mFaviconView;
     @Mock private ViewStub mTabCardLabelStub;
     @Mock private TabCardLabelView mTabCardLabelView;
+    @Mock private ImageView mActionButton;
     @Mock private TypedArray mTypedArray;
     @Mock private TabFavicon mTabFavicon;
     @Mock private PriceCardView mPriceCardView;
@@ -96,7 +97,9 @@ public final class TabGridViewBinderUnitTest {
 
     @Before
     public void setUp() {
-        mContext = RuntimeEnvironment.application;
+        mContext =
+                new ContextThemeWrapper(
+                        RuntimeEnvironment.application, R.style.Theme_BrowserUI_DayNight);
 
         mModel =
                 new PropertyModel.Builder(TabProperties.ALL_KEYS_TAB_GRID)
@@ -112,6 +115,7 @@ public final class TabGridViewBinderUnitTest {
         when(mViewGroup.fastFindViewById(R.id.tab_favicon)).thenReturn(mFaviconView);
         when(mViewGroup.fastFindViewById(R.id.price_info_box_outer)).thenReturn(mPriceCardView);
         when(mViewGroup.fastFindViewById(R.id.tab_card_label_stub)).thenReturn(mTabCardLabelStub);
+        when(mViewGroup.fastFindViewById(R.id.action_button)).thenReturn(mActionButton);
         doAnswer(
                         (ignored) -> {
                             when(mViewGroup.fastFindViewById(R.id.tab_card_label_stub))
@@ -451,6 +455,14 @@ public final class TabGridViewBinderUnitTest {
 
         verify(mTabGroupColorViewContainer).removeAllViews();
         verify(mTabGroupColorViewContainer).setVisibility(View.GONE);
+    }
+
+    @Test
+    public void bindClosableTab_actionButtonTint() {
+        mModel.set(TabProperties.IS_SELECTED, true);
+        TabGridViewBinder.bindTab(mModel, mViewGroup, TabProperties.TAB_ACTION_BUTTON_DATA);
+
+        verify(mViewGroup).setTabActionButtonTint(any());
     }
 
     private void assertImageMatrix(

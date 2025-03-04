@@ -87,7 +87,7 @@ suite('AutofillSectionUiTest', function() {
         'PersonalDataChangedListener should be set in the section element');
 
     // Imitate disabling sync.
-    changeListener(autofillManager.data.addresses, [], [], {
+    changeListener(autofillManager.data.addresses, [], [], [], {
       ...STUB_USER_ACCOUNT_INFO,
     });
 
@@ -110,7 +110,7 @@ suite('AutofillSectionUiTest', function() {
     await flushTasks();
 
     // Imitate disabling sync.
-    changeListener(autofillManager.data.addresses, [], [], undefined);
+    changeListener(autofillManager.data.addresses, [], [], [], undefined);
 
     {
       const dialog = await initiateRemoving(section, 0);
@@ -130,7 +130,7 @@ suite('AutofillSectionUiTest', function() {
 
     await flushTasks();
 
-    changeListener(autofillManager.data.addresses, [], [], {
+    changeListener(autofillManager.data.addresses, [], [], [], {
       ...STUB_USER_ACCOUNT_INFO,
       isSyncEnabledForAutofillProfiles: true,
     });
@@ -266,7 +266,7 @@ suite('AutofillSectionAddressTests', function() {
     let actualSummary = '';
 
     // Eliminate white space between nodes!
-    const addressPieces = row!.querySelector('#addressSummary')!.children;
+    const addressPieces = row.querySelector('#addressSummary')!.children;
     for (const addressPiece of addressPieces) {
       actualSummary += addressPiece.textContent!.trim();
     }
@@ -275,10 +275,6 @@ suite('AutofillSectionAddressTests', function() {
   });
 
   test('verifyAddressLocalIndication', async () => {
-    loadTimeData.overrideValues({
-      syncEnableContactInfoDataTypeInTransportMode: false,
-    });
-
     const autofillManager = new TestAutofillManager();
     autofillManager.data.addresses = [createAddressEntry()];
     autofillManager.data.accountInfo = {
@@ -302,23 +298,14 @@ suite('AutofillSectionAddressTests', function() {
     const changeListener =
         autofillManager.lastCallback.setPersonalDataManagerListener!;
 
-    changeListener(autofillManager.data.addresses, [], [], STUB_USER_ACCOUNT_INFO);
-    assertFalse(
-        isVisible(addressList.children[0]!.querySelector('[icon*=cloud-off]')),
-        'Sync is disabled but the feature is off, the icon should be hidden.');
-
-    changeListener(autofillManager.data.addresses, [], [], undefined);
+    changeListener(autofillManager.data.addresses, [], [], [], undefined);
     assertFalse(
         isVisible(section.$.addressList.children[0]!.querySelector(
             '[icon*=cloud-off]')),
         'The local indicator should not be shown to logged-out users');
 
-
-    loadTimeData.overrideValues({
-      syncEnableContactInfoDataTypeInTransportMode: true,
-    });
     changeListener(
-        autofillManager.data.addresses, [], [], STUB_USER_ACCOUNT_INFO);
+        autofillManager.data.addresses, [], [], [], STUB_USER_ACCOUNT_INFO);
     assertTrue(
         isVisible(addressList.children[0]!.querySelector('[icon*=cloud-off]')),
         'Sync is disabled but the feature is on, the icon should be visible.');
@@ -333,9 +320,9 @@ suite('AutofillSectionAddressTests', function() {
     const addressList = section.$.addressList;
     const row = addressList.children[0];
     assertTrue(!!row);
-    const menuButton = row!.querySelector<HTMLElement>('.address-menu');
+    const menuButton = row.querySelector<HTMLElement>('.address-menu');
     assertTrue(!!menuButton);
-    menuButton!.click();
+    menuButton.click();
     flush();
 
     assertTrue(!!section.shadowRoot!.querySelector('#menuEditAddress'));
@@ -746,7 +733,7 @@ suite('AutofillSectionAddressTests', function() {
         'PersonalDataChangedListener should be set in the section element');
 
     // Imitate native code `PersonalDataChangedListener` triggering.
-    changeListener([], [], [], {
+    changeListener([], [], [], [], {
       ...STUB_USER_ACCOUNT_INFO,
       isAutofillSyncToggleAvailable: true,
       isAutofillSyncToggleEnabled: false,
@@ -763,7 +750,7 @@ suite('AutofillSectionAddressTests', function() {
             'accountInfo.isAutofillSyncToggleEnabled == false');
 
     // Imitate native code `PersonalDataChangedListener` triggering.
-    changeListener([], [], [], {
+    changeListener([], [], [], [], {
       ...STUB_USER_ACCOUNT_INFO,
       isAutofillSyncToggleAvailable: true,
       isAutofillSyncToggleEnabled: true,
@@ -828,7 +815,7 @@ suite('AutofillSectionAddressTests', function() {
     // that it was unchecked after the second click, but the listener was
     // given `true`, the following assert checks it an covers the case when
     // the toggle was not updated in the native code for some reason.
-    changeListener([], [], [], {
+    changeListener([], [], [], [], {
       ...STUB_USER_ACCOUNT_INFO,
       isAutofillSyncToggleAvailable: true,
       isAutofillSyncToggleEnabled: true,
@@ -882,7 +869,7 @@ suite('AutofillSectionAddressLocaleTests', function() {
       assertTrue(!!countrySelect);
       assertEquals(
           'United States',
-          countrySelect!.selectedOptions[0]!.textContent!.trim());
+          countrySelect.selectedOptions[0]!.textContent!.trim());
       index++;
       // Name
       row = rows[index]!;
@@ -969,7 +956,7 @@ suite('AutofillSectionAddressLocaleTests', function() {
       assertTrue(!!countrySelect);
       assertEquals(
           'United Kingdom',
-          countrySelect!.selectedOptions[0]!.textContent!.trim());
+          countrySelect.selectedOptions[0]!.textContent!.trim());
       index++;
       // Name
       row = rows[index]!;
@@ -1067,7 +1054,7 @@ suite('AutofillSectionAddressLocaleTests', function() {
       const countrySelect = row.querySelector('select');
       assertTrue(!!countrySelect);
       assertEquals(
-          'Israel', countrySelect!.selectedOptions[0]!.textContent!.trim());
+          'Israel', countrySelect.selectedOptions[0]!.textContent!.trim());
       index++;
       // Name
       row = rows[index]!;
@@ -1195,9 +1182,11 @@ suite('AutofillSectionAddressLocaleTests', function() {
 
 suite('PlusAddressesTest', function() {
   const fakeUrl = 'https://foo.bar';
+  let metrics: MetricsTracker;
   let openWindowProxy: TestOpenWindowProxy;
 
   setup(function() {
+    metrics = fakeMetricsPrivate();
     openWindowProxy = new TestOpenWindowProxy();
     OpenWindowProxyImpl.setInstance(openWindowProxy);
     loadTimeData.overrideValues({
@@ -1247,7 +1236,8 @@ suite('PlusAddressesTest', function() {
         plusAddressButton.click();
         const url = await openWindowProxy.whenCalled('openUrl');
         assertEquals(url, fakeUrl);
-
+        assertEquals(
+            1, metrics.count('Settings.ManageOptionOnSettingsSelected'));
         autofillSection.remove();
       });
 });

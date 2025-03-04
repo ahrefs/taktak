@@ -76,6 +76,7 @@ constexpr auto kKnownSettings = base::MakeFixedFlatSet<std::string_view>({
     kAllowRedeemChromeOsRegistrationOffers,
     kAttestationForContentProtectionEnabled,
     kCastReceiverName,
+    kDeviceFlexArcPreloadEnabled,
     kDeviceActivityHeartbeatCollectionRateMs,
     kDeviceActivityHeartbeatEnabled,
     kDeviceAllowedBluetoothServices,
@@ -1075,6 +1076,15 @@ void DecodeGenericPolicies(const em::ChromeDeviceSettingsProto& policy,
     }
   }
 
+  if (policy.has_deviceflexarcpreloadenabled()) {
+    const em::BooleanPolicyProto& container(
+        policy.deviceflexarcpreloadenabled());
+    if (container.has_value()) {
+      new_values_cache->SetValue(kDeviceFlexArcPreloadEnabled,
+                                 base::Value(container.value()));
+    }
+  }
+
   if (policy.has_network_hostname()) {
     const em::NetworkHostnameProto& container(policy.network_hostname());
     if (container.has_device_hostname_template() &&
@@ -1418,8 +1428,7 @@ void DeviceSettingsProvider::DoSet(const std::string& path,
   }
 
   if (!IsDeviceSetting(path)) {
-    NOTREACHED_IN_MIGRATION() << "Try to set unhandled cros setting " << path;
-    return;
+    NOTREACHED() << "Try to set unhandled cros setting " << path;
   }
 
   if (device_settings_service_->HasPrivateOwnerKey()) {
@@ -1626,7 +1635,7 @@ const base::Value* DeviceSettingsProvider::Get(std::string_view path) const {
     if (values_cache_.GetValue(path, &value))
       return value;
   } else {
-    NOTREACHED_IN_MIGRATION() << "Trying to get non cros setting.";
+    NOTREACHED() << "Trying to get non cros setting.";
   }
 
   return nullptr;

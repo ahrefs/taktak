@@ -30,6 +30,7 @@
 namespace {
 using autofill::AccessoryAction;
 using autofill::AccessorySheetData;
+using autofill::AccessorySuggestionType;
 using autofill::AccessoryTabType;
 using autofill::TestAutofillClientInjector;
 using autofill::TestContentAutofillClient;
@@ -50,8 +51,10 @@ AccessorySheetData filled_passwords_sheet() {
   return AccessorySheetData::Builder(AccessoryTabType::PASSWORDS, u"Pwds",
                                      /*plus_address_title=*/std::u16string())
       .AddUserInfo("example.com", autofill::UserInfo::IsExactMatch(true))
-      .AppendField(u"Ben", u"Ben", false, true)
-      .AppendField(u"S3cur3", u"Ben's PW", true, false)
+      .AppendField(AccessorySuggestionType::kCredentialUsername, u"Ben", u"Ben",
+                   false, true)
+      .AppendField(AccessorySuggestionType::kCredentialPassword, u"S3cur3",
+                   u"Ben's PW", true, false)
       .Build();
 }
 
@@ -163,6 +166,17 @@ TEST_F(ManualFillingControllerTest, ShowsAccessoryForAutofillOnSearchField) {
                                          /*has_suggestions=*/false);
 }
 
+TEST_F(ManualFillingControllerTest, PasswordAccessoryControllerReturnsNoData) {
+  EXPECT_CALL(mock_pwd_controller_, GetSheetData)
+      .Times(AtLeast(1))
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*view(), OnItemsAvailable).Times(0);
+  EXPECT_CALL(*view(), Hide());
+
+  NotifyPasswordSourceObserver(IsFillingSourceAvailable(true));
+  FocusFieldAndClearExpectations(FocusedFieldType::kFillableUsernameField);
+}
+
 TEST_F(ManualFillingControllerTest,
        ShowsAccessoryForPasswordsTriggeredByObserver) {
   // TODO(crbug.com/40165275): Because the data isn't cached, test that only one
@@ -179,6 +193,17 @@ TEST_F(ManualFillingControllerTest,
 
   EXPECT_CALL(*view(), Hide());
   NotifyPasswordSourceObserver(IsFillingSourceAvailable(false));
+}
+
+TEST_F(ManualFillingControllerTest, AddressAccessoryControllerReturnsNoData) {
+  EXPECT_CALL(mock_address_controller_, GetSheetData)
+      .Times(AtLeast(1))
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*view(), OnItemsAvailable).Times(0);
+  EXPECT_CALL(*view(), Hide());
+
+  NotifyAddressSourceObserver(IsFillingSourceAvailable(true));
+  FocusFieldAndClearExpectations(FocusedFieldType::kFillableNonSearchField);
 }
 
 TEST_F(ManualFillingControllerTest,
@@ -199,6 +224,18 @@ TEST_F(ManualFillingControllerTest,
 
   EXPECT_CALL(*view(), Hide());
   NotifyAddressSourceObserver(IsFillingSourceAvailable(false));
+}
+
+TEST_F(ManualFillingControllerTest,
+       CreditCardAccessoryControllerReturnsNoData) {
+  EXPECT_CALL(mock_payment_method_controller_, GetSheetData)
+      .Times(AtLeast(1))
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*view(), OnItemsAvailable).Times(0);
+  EXPECT_CALL(*view(), Hide());
+
+  NotifyCreditCardSourceObserver(IsFillingSourceAvailable(true));
+  FocusFieldAndClearExpectations(FocusedFieldType::kFillableNonSearchField);
 }
 
 TEST_F(ManualFillingControllerTest,

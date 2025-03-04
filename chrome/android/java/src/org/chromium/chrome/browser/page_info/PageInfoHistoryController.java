@@ -62,7 +62,7 @@ public class PageInfoHistoryController
         mMainController = mainController;
         mRowView = rowView;
         mDelegate = delegate;
-        mTitle = mRowView.getContext().getResources().getString(R.string.page_info_history_title);
+        mTitle = mRowView.getContext().getString(R.string.page_info_history_title);
         mHost = mainController.getURL().getHost();
         mTabSupplier = tabSupplier;
 
@@ -100,7 +100,8 @@ public class PageInfoHistoryController
                         new BrowsingHistoryBridge(profile),
                         null,
                         /* launchedForApp= */ false,
-                        /* showAppFilter= */ false);
+                        /* showAppFilter= */ false,
+                        /* openHistoryItemCallback= */ null);
         mContentManager.startLoadingItems();
         return mContentManager.getRecyclerView();
     }

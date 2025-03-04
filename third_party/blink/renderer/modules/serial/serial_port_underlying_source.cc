@@ -93,8 +93,7 @@ void SerialPortUnderlyingSource::SignalErrorOnClose(SerialReceiveError error) {
   v8::Local<v8::Value> exception;
   switch (error) {
     case SerialReceiveError::NONE:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
     case SerialReceiveError::DISCONNECTED:
       [[fallthrough]];
     case SerialReceiveError::DEVICE_LOST:
@@ -220,6 +219,12 @@ void SerialPortUnderlyingSource::PipeClosed() {
 void SerialPortUnderlyingSource::Close() {
   watcher_.Cancel();
   data_pipe_.reset();
+}
+
+void SerialPortUnderlyingSource::Dispose() {
+  // Ensure that `watcher_` is disarmed so that `OnHandleReady()` is not called
+  // after this object becomes garbage.
+  Close();
 }
 
 }  // namespace blink

@@ -14,12 +14,6 @@
 
 namespace ui {
 
-bool IsPlatformWindowStateFullscreen(PlatformWindowState state) {
-  return state == PlatformWindowState::kFullScreen ||
-         state == PlatformWindowState::kPinnedFullscreen ||
-         state == PlatformWindowState::kTrustedPinnedFullscreen;
-}
-
 bool PlatformWindowDelegate::State::WillProduceFrameOnUpdateFrom(
     const State& old) const {
   // None of the following changes will produce a new frame:
@@ -44,9 +38,6 @@ std::string PlatformWindowDelegate::State::ToString() const {
   std::stringstream result;
   result << "State {";
   result << "window_state = " << static_cast<int>(window_state);
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  result << ", fullscreen_type = " << static_cast<int>(fullscreen_type);
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
   result << ", bounds_dip = " << bounds_dip.ToString();
   result << ", size_px = " << size_px.ToString();
   result << ", window_scale = " << window_scale;
@@ -71,12 +62,6 @@ void PlatformWindowDelegate::OnWindowTiledStateChanged(
     WindowTiledEdges new_tiled_edges) {}
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-void PlatformWindowDelegate::OnFullscreenTypeChanged(
-    PlatformFullscreenType old_type,
-    PlatformFullscreenType new_type) {}
-#endif
-
 std::optional<gfx::Size> PlatformWindowDelegate::GetMinimumSizeForWindow()
     const {
   return std::nullopt;
@@ -99,15 +84,12 @@ SkPath PlatformWindowDelegate::GetWindowMaskForWindowShapeInPixels() {
   return SkPath();
 }
 
-void PlatformWindowDelegate::OnSurfaceFrameLockingChanged(bool lock) {}
-
 void PlatformWindowDelegate::OnOcclusionStateChanged(
     PlatformWindowOcclusionState occlusion_state) {}
 
 int64_t PlatformWindowDelegate::OnStateUpdate(const State& old,
                                               const State& latest) {
-  NOTREACHED_IN_MIGRATION();
-  return -1;
+  NOTREACHED();
 }
 
 std::optional<OwnedWindowAnchor>
@@ -115,18 +97,11 @@ PlatformWindowDelegate::GetOwnedWindowAnchorAndRectInDIP() {
   return std::nullopt;
 }
 
-void PlatformWindowDelegate::SetFrameRateThrottleEnabled(bool enabled) {}
-
-void PlatformWindowDelegate::OnTooltipShownOnServer(const std::u16string& text,
-                                                    const gfx::Rect& bounds) {}
-
 bool PlatformWindowDelegate::OnRotateFocus(
     PlatformWindowDelegate::RotateDirection direction,
     bool reset) {
   return false;
 }
-
-void PlatformWindowDelegate::OnTooltipHiddenOnServer() {}
 
 gfx::Rect PlatformWindowDelegate::ConvertRectToPixels(
     const gfx::Rect& rect_in_dip) const {
@@ -147,7 +122,5 @@ gfx::Insets PlatformWindowDelegate::ConvertInsetsToPixels(
     const gfx::Insets& insets_dip) const {
   return insets_dip;
 }
-
-void PlatformWindowDelegate::DisableNativeWindowOcclusion() {}
 
 }  // namespace ui

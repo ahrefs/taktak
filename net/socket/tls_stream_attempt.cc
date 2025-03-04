@@ -6,8 +6,10 @@
 
 #include <memory>
 #include <optional>
+#include <string_view>
 
 #include "base/memory/scoped_refptr.h"
+#include "base/values.h"
 #include "net/base/completion_once_callback.h"
 #include "net/base/host_port_pair.h"
 #include "net/base/net_errors.h"
@@ -16,6 +18,22 @@
 #include "net/ssl/ssl_cert_request_info.h"
 
 namespace net {
+
+// static
+std::string_view TlsStreamAttempt::StateToString(State state) {
+  switch (state) {
+    case State::kNone:
+      return "None";
+    case State::kTcpAttempt:
+      return "TcpAttempt";
+    case State::kTcpAttemptComplete:
+      return "TcpAttemptComplete";
+    case State::kTlsAttempt:
+      return "TlsAttempt";
+    case State::kTlsAttemptComplete:
+      return "TlsAttemptComplete";
+  }
+}
 
 TlsStreamAttempt::TlsStreamAttempt(const StreamAttemptParams* params,
                                    IPEndPoint ip_endpoint,
@@ -42,6 +60,18 @@ LoadState TlsStreamAttempt::GetLoadState() const {
     case State::kTlsAttemptComplete:
       return LOAD_STATE_SSL_HANDSHAKE;
   }
+}
+
+base::Value::Dict TlsStreamAttempt::GetInfoAsValue() const {
+  base::Value::Dict dict;
+  dict.Set("next_state", StateToString(next_state_));
+  dict.Set("tcp_handshake_completed", tcp_handshake_completed_);
+  dict.Set("tls_handshake_started", tls_handshake_started_);
+  dict.Set("has_ssl_config", ssl_config_.has_value());
+  if (nested_attempt_) {
+    dict.Set("nested_attempt", nested_attempt_->GetInfoAsValue());
+  }
+  return dict;
 }
 
 scoped_refptr<SSLCertRequestInfo> TlsStreamAttempt::GetCertRequestInfo() {
@@ -194,6 +224,7 @@ int TlsStreamAttempt::DoTlsAttemptComplete(int rv) {
   const bool ech_enabled = params().ssl_client_context->config().ech_enabled;
 
   if (!ech_retry_configs_ && rv == ERR_ECH_NOT_NEGOTIATED && ech_enabled) {
+    CHECK(ssl_socket_);
     // We used ECH, and the server could not decrypt the ClientHello. However,
     // it was able to handshake with the public name and send authenticated
     // retry configs. If this is not the first time around, retry the connection
@@ -219,7 +250,7 @@ int TlsStreamAttempt::DoTlsAttemptComplete(int rv) {
 
   const bool is_ech_capable =
       ssl_config_ && !ssl_config_->ech_config_list.empty();
-  SSLClientSocket::RecordSSLConnectResult(*ssl_socket_, rv, is_ech_capable,
+  SSLClientSocket::RecordSSLConnectResult(ssl_socket_.get(), rv, is_ech_capable,
                                           ech_enabled, ech_retry_configs_,
                                           connect_timing());
 

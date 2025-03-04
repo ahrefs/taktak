@@ -4,6 +4,7 @@
 
 #include "chrome/browser/ui/views/autofill/popup/popup_row_factory_utils.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
@@ -20,7 +21,6 @@
 #include "base/location.h"
 #include "base/memory/weak_ptr.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "base/task/sequenced_task_runner.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/ui/autofill/autofill_popup_controller.h"
@@ -29,18 +29,17 @@
 #include "chrome/browser/ui/views/autofill/popup/popup_base_view.h"
 #include "chrome/browser/ui/views/autofill/popup/popup_cell_utils.h"
 #include "chrome/browser/ui/views/autofill/popup/popup_row_content_view.h"
-#include "chrome/browser/ui/views/autofill/popup/popup_row_prediction_improvements_feedback_view.h"
 #include "chrome/browser/ui/views/autofill/popup/popup_row_view.h"
 #include "chrome/browser/ui/views/autofill/popup/popup_row_with_button_view.h"
 #include "chrome/browser/ui/views/autofill/popup/popup_view_utils.h"
 #include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
 #include "chrome/browser/user_education/user_education_service.h"
-#include "components/autofill/core/browser/filling_product.h"
+#include "components/autofill/core/browser/filling/filling_product.h"
 #include "components/autofill/core/browser/metrics/autofill_metrics.h"
-#include "components/autofill/core/browser/ui/suggestion.h"
+#include "components/autofill/core/browser/suggestions/suggestion.h"
+#include "components/autofill/core/browser/suggestions/suggestion_type.h"
 #include "components/autofill/core/browser/ui/suggestion_button_action.h"
-#include "components/autofill/core/browser/ui/suggestion_type.h"
 #include "components/autofill/core/common/autofill_features.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "components/compose/core/browser/compose_features.h"
@@ -48,7 +47,7 @@
 #include "components/password_manager/core/common/password_manager_constants.h"
 #include "components/plus_addresses/grit/plus_addresses_strings.h"
 #include "components/strings/grit/components_strings.h"
-#include "components/user_education/common/new_badge_controller.h"
+#include "components/user_education/common/new_badge/new_badge_controller.h"
 #include "components/user_education/views/new_badge_label.h"
 #include "components/vector_icons/vector_icons.h"
 #include "content/public/browser/web_contents.h"
@@ -86,21 +85,12 @@ constexpr int kRefreshIconSize = 16;
 constexpr int kRefreshInkDropRadius = 12;
 
 // Popup items that use a leading icon instead of a trailing one.
-constexpr auto kPopupItemTypesUsingLeadingIcons =
-    base::MakeFixedFlatSet<SuggestionType>(
-        {SuggestionType::kAllSavedPasswordsEntry,
-         SuggestionType::kDeleteAddressProfile,
-         SuggestionType::kEditAddressProfile,
-         SuggestionType::kFillEverythingFromAddressProfile,
-         SuggestionType::kManageAddress, SuggestionType::kManageCreditCard,
-         SuggestionType::kManageIban, SuggestionType::kManagePlusAddress,
-         SuggestionType::kPasswordAccountStorageEmpty,
-         SuggestionType::kPasswordAccountStorageOptIn,
-         SuggestionType::kPasswordAccountStorageOptInAndGenerate,
-         SuggestionType::kPasswordAccountStorageReSignin,
-         SuggestionType::kShowAccountCards, SuggestionType::kUndoOrClear,
-         SuggestionType::kViewPasswordDetails,
-         SuggestionType::kRetrievePredictionImprovements});
+constexpr auto kPopupItemTypesUsingLeadingIcons = DenseSet<SuggestionType>(
+    {SuggestionType::kAllSavedPasswordsEntry, SuggestionType::kManageAddress,
+     SuggestionType::kManageAutofillAi, SuggestionType::kManageCreditCard,
+     SuggestionType::kManageIban, SuggestionType::kManagePlusAddress,
+     SuggestionType::kShowAccountCards, SuggestionType::kUndoOrClear,
+     SuggestionType::kViewPasswordDetails});
 
 // Max width for the username and masked password.
 constexpr int kAutofillPopupUsernameMaxWidth = 272;
@@ -108,10 +98,6 @@ constexpr int kAutofillPopupPasswordMaxWidth = 108;
 
 // Max width for the Autofill suggestion text.
 constexpr int kAutofillSuggestionMaxWidth = 192;
-
-// Max width for address profile suggestion text when granular filling is
-// enabled.
-constexpr int kAutofillPopupAddressProfileGranularFillingEnabledMaxWidth = 320;
 
 constexpr auto kMainTextStyle = views::style::TextStyle::STYLE_BODY_3_MEDIUM;
 constexpr auto kMainTextStyleLight = views::style::TextStyle::STYLE_BODY_3;
@@ -133,7 +119,7 @@ base::RepeatingClosure CreateExecuteSoonWrapper(base::RepeatingClosure task) {
 }
 
 bool IsDeactivatedPasswordOrPasskey(const Suggestion& suggestion) {
-  return suggestion.apply_deactivated_style &&
+  return suggestion.HasDeactivatedStyle() &&
          GetFillingProductFromSuggestionType(suggestion.type) ==
              FillingProduct::kPassword;
 }
@@ -149,12 +135,9 @@ void FormatLabel(views::Label& label,
       label.SetMaximumWidthSingleLine(maximum_width_single_line);
       break;
     case FillingProduct::kCreditCard:
-    case FillingProduct::kStandaloneCvc:
       if (text.should_truncate.value()) {
-        // should_truncate should only be set to true iff the experiments are
-        // enabled.
-        DCHECK(base::FeatureList::IsEnabled(
-            autofill::features::kAutofillEnableVirtualCardMetadata));
+        // `should_truncate` should only be set to true iff
+        // `kAutofillEnableCardProductName` is enabled.
         DCHECK(base::FeatureList::IsEnabled(
             autofill::features::kAutofillEnableCardProductName));
         label.SetMaximumWidthSingleLine(maximum_width_single_line);
@@ -164,53 +147,10 @@ void FormatLabel(views::Label& label,
     case FillingProduct::kIban:
     case FillingProduct::kMerchantPromoCode:
     case FillingProduct::kPassword:
-    case FillingProduct::kPredictionImprovements:
+    case FillingProduct::kAutofillAi:
     case FillingProduct::kNone:
       break;
   }
-}
-
-int GetMaxPopupAddressProfileWidth(bool should_use_new_popup_max_size) {
-  return should_use_new_popup_max_size
-             ? kAutofillPopupAddressProfileGranularFillingEnabledMaxWidth
-             : kAutofillSuggestionMaxWidth;
-}
-
-// Returns true when `features::kAutofillGranularFillingAvailable` is true or
-// the user is using manual fallbacks for unclassified address or payments
-// fields. Note that `is_suggestion_acceptable` is not enough because
-// suggestions like `SuggestionType::kDevtoolsTestAddresses` are also not
-// acceptable. This method will always return the same values for all
-// suggestions in a popup because:
-// 1. If the user triggers address manual fallback on an unclassified field, all
-// available suggestions will be of such type (address filling product, not
-// acceptable and not a `SuggestionType::kDevtoolsTestAddresses` suggestion).
-// 2. Same goes for credit card manual fallback suggestions. They will not be
-// mixed with other ones.
-// 3. If `features::kAutofillGranularFillingAvailable` is true, then this method
-// also returns true regardless of the `FillingProduct` and whether a suggestion
-// is acceptable.
-//
-// Note `SuggestionType::kDevtoolsTestAddresses` is not
-// acceptable, and is the parent of `SuggestionType::kDevtoolsTestAddressEntry`
-// (which can be accepted). We specifically remove it because its filling
-// product is also `FillingProduct::kAddress`.
-// TODO(crbug.com/40274514): Remove once clean up happens.
-bool ShouldApplyNewPopupMaxWidth(SuggestionType suggestion_type,
-                                 bool is_suggestion_acceptable) {
-  FillingProduct filling_product =
-      GetFillingProductFromSuggestionType(suggestion_type);
-  const bool is_address_unclassified_field_manual_fallback =
-      !is_suggestion_acceptable &&
-      filling_product == FillingProduct::kAddress &&
-      suggestion_type != SuggestionType::kDevtoolsTestAddresses;
-  const bool is_credit_card_unclassified_field_manual_fallback =
-      !is_suggestion_acceptable &&
-      filling_product == FillingProduct::kCreditCard;
-  return is_address_unclassified_field_manual_fallback ||
-         is_credit_card_unclassified_field_manual_fallback ||
-         base::FeatureList::IsEnabled(
-             features::kAutofillGranularFillingAvailable);
 }
 
 // Creates a label for the suggestion's main text.
@@ -219,7 +159,7 @@ std::unique_ptr<views::Label> CreateMainTextLabel(
     std::optional<user_education::DisplayNewBadge> show_new_badge,
     views::style::TextStyle primary_text_style = kMainTextStyle) {
   views::style::TextStyle main_text_label_style;
-  if (suggestion.apply_deactivated_style) {
+  if (suggestion.HasDeactivatedStyle()) {
     main_text_label_style = kDisabledTextStyle;
   } else {
     main_text_label_style = suggestion.main_text.is_primary
@@ -235,7 +175,7 @@ std::unique_ptr<views::Label> CreateMainTextLabel(
   }
 
   if (!suggestion.main_text.is_primary) {
-    label->SetEnabledColorId(ui::kColorLabelForegroundSecondary);
+    label->SetEnabledColor(ui::kColorLabelForegroundSecondary);
   }
   return label;
 }
@@ -248,9 +188,8 @@ std::unique_ptr<views::Label> CreateMinorTextLabel(
   }
   auto label = std::make_unique<views::Label>(
       suggestion.minor_text.value, views::style::CONTEXT_DIALOG_BODY_TEXT,
-      suggestion.apply_deactivated_style ? kDisabledTextStyle
-                                         : kMinorTextStyle);
-  label->SetEnabledColorId(ui::kColorLabelForegroundSecondary);
+      suggestion.HasDeactivatedStyle() ? kDisabledTextStyle : kMinorTextStyle);
+  label->SetEnabledColor(ui::kColorLabelForegroundSecondary);
   return label;
 }
 
@@ -288,22 +227,14 @@ std::vector<std::unique_ptr<views::View>> CreateSubtextViews(
               IsDeactivatedPasswordOrPasskey(suggestion) ? kDisabledTextStyle
                                                          : kMinorTextStyle));
       if (suggestion.type == SuggestionType::kPlusAddressError) {
-        label->SetEnabledColorId(ui::kColorSysError);
+        label->SetEnabledColor(ui::kColorSysError);
       } else if (!IsDeactivatedPasswordOrPasskey(suggestion)) {
-        label->SetEnabledColorId(ui::kColorLabelForegroundSecondary);
+        label->SetEnabledColor(ui::kColorLabelForegroundSecondary);
       }
       // To make sure the popup width will not exceed its maximum value,
       // divide the maximum label width by the number of labels.
-      // TODO(crbug.com/40274514): Keep new behaviour where the max
-      // popup size cannot be exceeded once clean up happens.
-      const bool should_apply_new_popup_max_width = ShouldApplyNewPopupMaxWidth(
-          suggestion.type, suggestion.IsAcceptable());
-      int shrink_formatted_label_by =
-          should_apply_new_popup_max_width ? label_row.size() : 1;
-      FormatLabel(
-          *label, label_text, main_filling_product,
-          GetMaxPopupAddressProfileWidth(should_apply_new_popup_max_width) /
-              shrink_formatted_label_by);
+      FormatLabel(*label, label_text, main_filling_product,
+                  kAutofillSuggestionMaxWidth / label_row.size());
     }
     result.push_back(std::move(label_row_container_view));
   }
@@ -340,8 +271,8 @@ std::unique_ptr<PopupRowContentView> CreateFooterPopupRowContentView(
       suggestion, /*show_new_badge=*/std::nullopt, kMainTextStyleLight);
   // TODO(crbug.com/345709988): Move this to CreateMainTextLabel. See
   // https://crrev.com/c/5605735/comment/970405c2_cbb55e85
-  if (!suggestion.apply_deactivated_style) {
-    main_text_label->SetEnabledColorId(ui::kColorLabelForegroundSecondary);
+  if (!suggestion.HasDeactivatedStyle()) {
+    main_text_label->SetEnabledColor(ui::kColorLabelForegroundSecondary);
   }
   main_text_label->SetEnabled(!suggestion.is_loading);
   view->AddChildView(std::move(main_text_label));
@@ -505,8 +436,7 @@ std::unique_ptr<PopupRowContentView> CreatePopupRowContentView(
   }
 
   FormatLabel(*main_text_label, suggestion.main_text, main_filling_product,
-              GetMaxPopupAddressProfileWidth(ShouldApplyNewPopupMaxWidth(
-                  suggestion.type, suggestion.IsAcceptable())));
+              kAutofillSuggestionMaxWidth);
   popup_cell_utils::AddSuggestionContentToView(
       suggestion, std::move(main_text_label), CreateMinorTextLabel(suggestion),
       /*description_label=*/nullptr,
@@ -523,19 +453,16 @@ std::unique_ptr<PopupRowWithButtonView> CreateAutocompleteRowWithDeleteButton(
     int line_number) {
   auto view = std::make_unique<PopupRowContentView>();
 
-  const Suggestion& kSuggestion = controller->GetSuggestionAt(line_number);
+  const Suggestion& suggestion = controller->GetSuggestionAt(line_number);
   std::unique_ptr<views::Label> main_text_label =
-      CreateMainTextLabel(kSuggestion, /*show_new_badge=*/std::nullopt);
-  FormatLabel(*main_text_label, kSuggestion.main_text,
-              FillingProduct::kAutocomplete,
-              GetMaxPopupAddressProfileWidth(ShouldApplyNewPopupMaxWidth(
-                  kSuggestion.type, kSuggestion.IsAcceptable())));
+      CreateMainTextLabel(suggestion, /*show_new_badge=*/std::nullopt);
+  FormatLabel(*main_text_label, suggestion.main_text,
+              FillingProduct::kAutocomplete, kAutofillSuggestionMaxWidth);
   popup_cell_utils::AddSuggestionContentToView(
-      kSuggestion, std::move(main_text_label),
-      CreateMinorTextLabel(kSuggestion),
+      suggestion, std::move(main_text_label), CreateMinorTextLabel(suggestion),
       /*description_label=*/nullptr,
-      CreateSubtextViews(*view, kSuggestion, FillingProduct::kAutocomplete),
-      popup_cell_utils::GetIconImageView(kSuggestion), *view);
+      CreateSubtextViews(*view, suggestion, FillingProduct::kAutocomplete),
+      popup_cell_utils::GetIconImageView(suggestion), *view);
 
   // The closure that actually attempts to delete an entry and record metrics
   // for it.
@@ -584,22 +511,19 @@ std::unique_ptr<PopupRowView> CreateNewPlusAddressInlineSuggestion(
     std::optional<user_education::DisplayNewBadge> show_new_badge) {
   auto view = std::make_unique<PopupRowContentView>();
 
-  const Suggestion& kSuggestion = controller->GetSuggestionAt(line_number);
+  const Suggestion& suggestion = controller->GetSuggestionAt(line_number);
   std::unique_ptr<views::Label> main_text_label =
-      CreateMainTextLabel(kSuggestion, show_new_badge);
-  FormatLabel(*main_text_label, kSuggestion.main_text,
-              FillingProduct::kPlusAddresses,
-              GetMaxPopupAddressProfileWidth(ShouldApplyNewPopupMaxWidth(
-                  kSuggestion.type, kSuggestion.IsAcceptable())));
+      CreateMainTextLabel(suggestion, show_new_badge);
+  FormatLabel(*main_text_label, suggestion.main_text,
+              FillingProduct::kPlusAddresses, kAutofillSuggestionMaxWidth);
   popup_cell_utils::AddSuggestionContentToView(
-      kSuggestion, std::move(main_text_label),
-      CreateMinorTextLabel(kSuggestion),
+      suggestion, std::move(main_text_label), CreateMinorTextLabel(suggestion),
       /*description_label=*/nullptr,
-      CreateSubtextViews(*view, kSuggestion, FillingProduct::kPlusAddresses),
-      popup_cell_utils::GetIconImageView(kSuggestion), *view);
+      CreateSubtextViews(*view, suggestion, FillingProduct::kPlusAddresses),
+      popup_cell_utils::GetIconImageView(suggestion), *view);
 
   // If no refresh is offered, we can just use a "normal" `PopupRowView`.
-  if (!kSuggestion.GetPayload<Suggestion::PlusAddressPayload>().offer_refresh) {
+  if (!suggestion.GetPayload<Suggestion::PlusAddressPayload>().offer_refresh) {
     return std::make_unique<PopupRowView>(a11y_selection_delegate,
                                           selection_delegate, controller,
                                           line_number, std::move(view));
@@ -629,18 +553,6 @@ std::unique_ptr<PopupRowView> CreateNewPlusAddressInlineSuggestion(
       PopupRowWithButtonView::ButtonSelectBehavior::kSelectSuggestion);
 }
 
-// Creates the row for the `SuggestionType::kPredictionImprovementsFeedback`
-// suggestion.
-std::unique_ptr<PopupRowPredictionImprovementsFeedbackView>
-CreatePredictionImprovementsFeedbackRow(
-    base::WeakPtr<AutofillPopupController> controller,
-    PopupRowView::AccessibilitySelectionDelegate& a11y_selection_delegate,
-    PopupRowView::SelectionDelegate& selection_delegate,
-    int line_number) {
-  return std::make_unique<PopupRowPredictionImprovementsFeedbackView>(
-      a11y_selection_delegate, selection_delegate, controller, line_number);
-}
-
 }  // namespace
 
 std::unique_ptr<PopupRowView> CreatePopupRowView(
@@ -658,11 +570,6 @@ std::unique_ptr<PopupRowView> CreatePopupRowView(
 
   if (type == SuggestionType::kAutocompleteEntry) {
     return CreateAutocompleteRowWithDeleteButton(
-        controller, a11y_selection_delegate, selection_delegate, line_number);
-  }
-
-  if (type == SuggestionType::kPredictionImprovementsFeedback) {
-    return CreatePredictionImprovementsFeedbackRow(
         controller, a11y_selection_delegate, selection_delegate, line_number);
   }
 

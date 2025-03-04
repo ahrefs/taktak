@@ -4,7 +4,8 @@
 
 import {stringToMojoString16} from 'chrome://resources/js/mojo_type_util.js';
 
-import {DeviceRequest, DeviceRequestId, DeviceRequestKind, FirmwareUpdate, InstallationProgress, UpdatePriority, UpdateState} from './firmware_update.mojom-webui.js';
+import type {DeviceRequest, FirmwareUpdate, InstallationProgress} from './firmware_update.mojom-webui.js';
+import {DeviceRequestId, DeviceRequestKind, UpdatePriority, UpdateState} from './firmware_update.mojom-webui.js';
 
 export const fakeFirmwareUpdates: FirmwareUpdate[][] = [[
   {
@@ -117,6 +118,17 @@ export const fakeFirmwareUpdate: FirmwareUpdate = {
   deviceVersion: '2.1.12',
   deviceDescription: stringToMojoString16(
       'Update firmware for Logitech keyboard to improve performance'),
+  priority: UpdatePriority.kLow,
+  filepath: {'path': '1.cab'},
+  checksum: '3fab34cfa1ef97238fb24c5e40a979bc544bb2b0967b863e43e7d58e0d9a923f',
+};
+
+export const fakeFirmwareUpdateWithReboot: FirmwareUpdate = {
+  deviceId: '1',
+  deviceName: stringToMojoString16('System firmware'),
+  needsReboot: true,
+  deviceVersion: '2.1.12',
+  deviceDescription: stringToMojoString16('Update system firmware'),
   priority: UpdatePriority.kLow,
   filepath: {'path': '1.cab'},
   checksum: '3fab34cfa1ef97238fb24c5e40a979bc544bb2b0967b863e43e7d58e0d9a923f',

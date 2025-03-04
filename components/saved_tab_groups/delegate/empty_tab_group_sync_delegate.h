@@ -31,12 +31,16 @@ class EmptyTabGroupSyncDelegate : public TabGroupSyncDelegate {
   CreateScopedLocalObserverPauser() override;
   void CreateLocalTabGroup(const SavedTabGroup& tab_group) override;
   void CloseLocalTabGroup(const LocalTabGroupID& local_id) override;
+  void ConnectLocalTabGroup(const SavedTabGroup& group) override;
   void DisconnectLocalTabGroup(const LocalTabGroupID& local_id) override;
   void UpdateLocalTabGroup(const SavedTabGroup& group) override;
   std::vector<LocalTabGroupID> GetLocalTabGroupIds() override;
   std::vector<LocalTabID> GetLocalTabIdsForTabGroup(
       const LocalTabGroupID& local_tab_group_id) override;
-  void CreateRemoteTabGroup(const LocalTabGroupID& local_tab_group_id) override;
+  std::set<LocalTabID> GetSelectedTabs() override;
+  std::u16string GetTabTitle(const LocalTabID& local_tab_id) override;
+  std::unique_ptr<SavedTabGroup> CreateSavedTabGroupFromLocalGroup(
+      const LocalTabGroupID& local_tab_group_id) override;
 };
 
 }  // namespace tab_groups

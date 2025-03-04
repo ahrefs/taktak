@@ -29,6 +29,7 @@ NSString* const kAlternateDiscoverFeedServerURL =
     @"AlternateDiscoverFeedServerURL";
 NSString* const kEnableStartupCrash = @"EnableStartupCrash";
 NSString* const kFirstRunForceEnabled = @"FirstRunForceEnabled";
+NSString* const kFirstRunForceDisabled = @"FirstRunForceDisabled";
 NSString* const kUpgradePromoForceEnabled = @"UpgradePromoForceEnabled";
 NSString* const kOriginServerHost = @"AlternateOriginServerHost";
 NSString* const kWhatsNewPromoStatus = @"WhatsNewPromoStatus";
@@ -64,15 +65,21 @@ NSString* const kTabResumptionDecorationOverride =
 NSString* const kTipsMagicStackLensShopWithImage =
     @"TipsMagicStackLensShopWithImage";
 NSString* const kTipsMagicStackStateOverride = @"TipsMagicStackStateOverride";
+NSString* const kInactiveTabsDemoMode = @"InactiveTabsDemoMode";
+NSString* const kInactiveTabsTestMode = @"InactiveTabsTestMode";
+NSString* const kAsyncStartupOverrideResponse = @"AsyncStartupOverrideResponse";
 }  // namespace
 
 namespace experimental_flags {
 
-NSString* const kDisplaySwitchProfile = @"DisplaySwitchProfile";
-
 bool AlwaysDisplayFirstRun() {
   return
       [[NSUserDefaults standardUserDefaults] boolForKey:kFirstRunForceEnabled];
+}
+
+bool NeverDisplayFirstRun() {
+  return
+      [[NSUserDefaults standardUserDefaults] boolForKey:kFirstRunForceDisabled];
 }
 
 bool AlwaysDisplayUpgradePromo() {
@@ -287,13 +294,6 @@ bool ShouldIgnoreHistorySyncDeclineLimits() {
       boolForKey:kShouldIgnoreHistorySyncDeclineLimits];
 }
 
-bool DisplaySwitchProfile() {
-  int switchProfileCount = [[NSUserDefaults standardUserDefaults]
-      integerForKey:kDisplaySwitchProfile];
-
-  return switchProfileCount > 0;
-}
-
 std::optional<int> GetForcedInactivityThresholdForSafetyCheckNotifications() {
   int threshold = [[NSUserDefaults standardUserDefaults]
       integerForKey:kSafetyCheckNotificationsInactivityThreshold];
@@ -321,6 +321,16 @@ bool ShouldDisplayLensShopTipWithImage() {
       boolForKey:kTipsMagicStackLensShopWithImage];
 }
 
+bool ShouldUseInactiveTabsDemoThreshold() {
+  return
+      [[NSUserDefaults standardUserDefaults] boolForKey:kInactiveTabsDemoMode];
+}
+
+bool ShouldUseInactiveTabsTestThreshold() {
+  return
+      [[NSUserDefaults standardUserDefaults] boolForKey:kInactiveTabsTestMode];
+}
+
 NSString* GetTabResumptionDecorationOverride() {
   NSString* override_value = [[NSUserDefaults standardUserDefaults]
       stringForKey:kTabResumptionDecorationOverride];
@@ -328,6 +338,32 @@ NSString* GetTabResumptionDecorationOverride() {
     return override_value;
   }
   return nil;
+}
+
+bool ShouldOpenInIncognitoOverride() {
+  NSString* value = [[NSUserDefaults standardUserDefaults]
+      stringForKey:kAsyncStartupOverrideResponse];
+  return ([value isEqualToString:@"FirstPartyIncognitoNoDelay"] ||
+          [value isEqualToString:@"FirstPartyIncognito500Delay"] ||
+          [value isEqualToString:@"AlwaysShowTheUI"]);
+}
+
+bool ShouldDelayAsyncStartup() {
+  NSString* value = [[NSUserDefaults standardUserDefaults]
+      stringForKey:kAsyncStartupOverrideResponse];
+  return ([value isEqualToString:@"FirstPartyIncognito500Delay"] ||
+          [value isEqualToString:@"500ms"]);
+}
+
+bool AlwaysShowTheFirstPartyIncognitoUI() {
+  NSString* value = [[NSUserDefaults standardUserDefaults]
+      stringForKey:kAsyncStartupOverrideResponse];
+  return [value isEqualToString:@"AlwaysShowTheUI"];
+}
+
+bool EnableAIPrototypingMenu() {
+  return [[NSUserDefaults standardUserDefaults]
+      boolForKey:@"EnableAIPrototypingMenu"];
 }
 
 }  // namespace experimental_flags

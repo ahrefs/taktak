@@ -31,6 +31,7 @@
 #include "extensions/browser/extension_registry.h"
 #include "extensions/browser/extension_system.h"
 #include "extensions/browser/extension_util.h"
+#include "extensions/browser/install_prefs_helper.h"
 #include "extensions/common/extension.h"
 #include "extensions/common/extension_set.h"
 #include "extensions/common/features/feature_developer_mode_only.h"
@@ -82,8 +83,7 @@ metrics::SystemProfileProto::ExtensionsState ExtensionStateAsProto(
     case OFF_STORE:
       return metrics::SystemProfileProto::HAS_OFFSTORE;
   }
-  NOTREACHED_IN_MIGRATION();
-  return metrics::SystemProfileProto::NO_EXTENSIONS;
+  NOTREACHED();
 }
 
 // Determines if the |extension| is an extension (can use extension APIs) and is
@@ -158,8 +158,7 @@ ExtensionInstallProto::Type GetType(Manifest::Type type) {
       // TODO(mgawad): introduce new CHROMEOS_SYSTEM_EXTENSION type.
       return ExtensionInstallProto::EXTENSION;
     case Manifest::NUM_LOAD_TYPES:
-      NOTREACHED_IN_MIGRATION();
-      // Fall through.
+      NOTREACHED();
   }
   return ExtensionInstallProto::UNKNOWN_TYPE;
 }
@@ -195,12 +194,15 @@ ExtensionInstallProto::InstallLocation GetInstallLocation(
 
 ExtensionInstallProto::ActionType GetActionType(const Manifest& manifest) {
   // Arbitrary order; each of these is mutually exclusive.
-  if (manifest.FindKey(extensions::manifest_keys::kBrowserAction))
+  if (manifest.FindKey(extensions::manifest_keys::kBrowserAction)) {
     return ExtensionInstallProto::BROWSER_ACTION;
-  if (manifest.FindKey(extensions::manifest_keys::kPageAction))
+  }
+  if (manifest.FindKey(extensions::manifest_keys::kPageAction)) {
     return ExtensionInstallProto::PAGE_ACTION;
-  if (manifest.FindKey(extensions::manifest_keys::kSystemIndicator))
-    return ExtensionInstallProto::SYSTEM_INDICATOR;
+  }
+  if (manifest.FindKey(extensions::manifest_keys::kAction)) {
+    return ExtensionInstallProto::ACTION;
+  }
   return ExtensionInstallProto::NO_ACTION;
 }
 
@@ -221,7 +223,7 @@ ExtensionInstallProto::BackgroundScriptType GetBackgroundScriptType(
   return ExtensionInstallProto::NO_BACKGROUND_SCRIPT;
 }
 
-static_assert(extensions::disable_reason::DISABLE_REASON_LAST == (1LL << 25),
+static_assert(extensions::disable_reason::DISABLE_REASON_LAST == (1LL << 26),
               "Adding a new disable reason? Be sure to include the new reason "
               "below, update the test to exercise it, and then adjust this "
               "value for DISABLE_REASON_LAST");
@@ -262,7 +264,7 @@ std::vector<ExtensionInstallProto::DisableReason> GetDisableReasons(
        ExtensionInstallProto::REINSTALL},
       {extensions::disable_reason::DISABLE_NOT_ALLOWLISTED,
        ExtensionInstallProto::NOT_ALLOWLISTED},
-      {extensions::disable_reason::DISABLE_NOT_ASH_KEEPLISTED,
+      {extensions::disable_reason::DEPRECATED_DISABLE_NOT_ASH_KEEPLISTED,
        ExtensionInstallProto::NOT_ASH_KEEPLISTED},
       {extensions::disable_reason::
            DISABLE_PUBLISHED_IN_STORE_REQUIRED_BY_POLICY,
@@ -271,29 +273,22 @@ std::vector<ExtensionInstallProto::DisableReason> GetDisableReasons(
        ExtensionInstallProto::UNSUPPORTED_MANIFEST_VERSION},
       {extensions::disable_reason::DISABLE_UNSUPPORTED_DEVELOPER_EXTENSION,
        ExtensionInstallProto::UNSUPPORTED_DEVELOPER_EXTENSION},
+      {extensions::disable_reason::DISABLE_UNKNOWN,
+       ExtensionInstallProto::UNKNOWN},
   };
 
-  int disable_reasons = prefs->GetDisableReasons(id);
-  DCHECK_EQ(
-      0, disable_reasons &
-             extensions::disable_reason::DEPRECATED_DISABLE_UNKNOWN_FROM_SYNC)
-      << "Encountered bad disable reason: " << disable_reasons;
+  extensions::DisableReasonSet disable_reasons = prefs->GetDisableReasons(id);
+  DCHECK(!disable_reasons.contains(
+      extensions::disable_reason::DEPRECATED_DISABLE_UNKNOWN_FROM_SYNC))
+      << "Encountered bad disable reason: DEPRECATED_DISABLE_UNKNOWN_FROM_SYNC";
   std::vector<ExtensionInstallProto::DisableReason> reasons;
   for (const auto& entry : disable_reason_map) {
-    int mask = static_cast<int>(entry.disable_reason);
-    if ((disable_reasons & mask) != 0) {
+    extensions::disable_reason::DisableReason disable_reason =
+        entry.disable_reason;
+    if (disable_reasons.contains(disable_reason)) {
       reasons.push_back(entry.proto_disable_reason);
-      disable_reasons &= ~mask;
+      disable_reasons.erase(disable_reason);
     }
-  }
-  if (disable_reasons !=
-      extensions::disable_reason::DisableReason::DISABLE_NONE) {
-    // Record any unexpected disable reasons - these are likely deprecated
-    // reason(s) that have not been migrated over in a few clients. Use this
-    // histogram to determine how many clients are affected to decide what
-    // action to take (if any).
-    base::UmaHistogramSparse("Extensions.DeprecatedDisableReasonsObserved",
-                             disable_reasons);
   }
 
   return reasons;
@@ -316,8 +311,7 @@ ExtensionInstallProto::BlacklistState GetBlacklistState(
     case extensions::BitMapBlocklistState::BLOCKLISTED_POTENTIALLY_UNWANTED:
       return ExtensionInstallProto::BLACKLISTED_POTENTIALLY_UNWANTED;
   }
-  NOTREACHED_IN_MIGRATION();
-  return ExtensionInstallProto::BLACKLISTED_UNKNOWN;
+  NOTREACHED();
 }
 
 // Creates the install proto for a given |extension|. |now| is the current
@@ -351,7 +345,7 @@ metrics::ExtensionInstallProto ConstructInstallProto(
   }
   install.set_blacklist_state(GetBlacklistState(extension.id(), prefs));
   install.set_installed_in_this_sample_period(
-      prefs->GetLastUpdateTime(extension.id()) >= last_sample_time);
+      GetLastUpdateTime(prefs, extension.id()) >= last_sample_time);
   install.set_in_extensions_developer_mode(in_extensions_developer_mode);
 
   return install;
@@ -396,8 +390,7 @@ int ExtensionsMetricsProvider::HashExtension(const std::string& extension_id,
   DCHECK_LE(client_key, kExtensionListClientKeys);
   std::string message =
       base::StringPrintf("%u:%s", client_key, extension_id.c_str());
-  uint64_t output =
-      base::legacy::CityHash64(base::as_bytes(base::make_span(message)));
+  uint64_t output = base::legacy::CityHash64(base::as_byte_span(message));
   return output % kExtensionListBuckets;
 }
 

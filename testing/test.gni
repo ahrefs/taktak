@@ -10,6 +10,7 @@ import("//build/config/chromeos/args.gni")
 import("//build/config/chromeos/ui_mode.gni")
 import("//build/config/devtools.gni")
 import("//build/config/gclient_args.gni")
+import("//build/config/rts.gni")
 import("//build/rust/rust_static_library.gni")
 import("//build_overrides/build.gni")
 
@@ -149,7 +150,7 @@ template("mixed_test") {
   }
 
   _building_fuzztest_fuzzer =
-      defined(invoker.fuzztests) && use_fuzzing_engine && is_linux
+      defined(invoker.fuzztests) && use_fuzzing_engine && (is_linux || is_mac)
 
   # Fuzz tests are small fuzzers that do not require particularly-powerful
   # machines to run, so we do not build them when `high_end_fuzzer_targets`
@@ -165,10 +166,12 @@ template("mixed_test") {
     }
   } else {
     target(invoker.target_type, target_name) {
-      forward_variables_from(
-          invoker,
-          "*",
-          TESTONLY_AND_VISIBILITY + _rs_vars + [ "fuzztests" ])
+      forward_variables_from(invoker,
+                             "*",
+                             TESTONLY_AND_VISIBILITY + _rs_vars + [
+                                   "fuzztests",
+                                   "fuzztest_stack_limit_kb",
+                                 ])
       forward_variables_from(invoker, TESTONLY_AND_VISIBILITY)
       sources = _cc_sources
       if (!defined(deps)) {
@@ -188,7 +191,7 @@ template("mixed_test") {
           # The following target contains a static initializer which
           # will ensure that the code in base/test:test_support
           # ends up calling through to fuzztest::InitFuzzTest.
-          "//base/test:confirm_fuzztest_init",
+          "//testing/libfuzzer:confirm_fuzztest_init",
         ]
       }
     }
@@ -218,6 +221,15 @@ template("mixed_test") {
     # `target_name`.
     _fuzzer_binary_name = _output_name + _fuzzer_binary_extension
     _fuzztest_target_name = target_name
+
+    # Additional command-line arguments passed to fuzzer executables, common to
+    # all fuzz tests in this executable.
+    _common_fuzzer_args = [ "--corpus_database=" ]
+
+    if (use_centipede && defined(invoker.fuzztest_stack_limit_kb)) {
+      _common_fuzzer_args +=
+          [ "--stack_limit_kb=${invoker.fuzztest_stack_limit_kb}" ]
+    }
 
     # Confirming that the "fuzztests =" directive is correct can only
     # be done on builds where we can confidently run the fuzzing binary.
@@ -270,48 +282,15 @@ template("mixed_test") {
       generated_file(_fuzztest_generate_fuzzer + "_constants") {
         outputs = [ "$target_gen_dir/$target_name/constants.cpp" ]
 
-        # If we're building for libfuzzer, we have to pass -undefok=max_len
-        # etc. for every conceivable libfuzzer argument, so that gtest doesn't
-        # get discombobulated by them. List is from https://llvm.org/docs/LibFuzzer.html
-        if (use_libfuzzer) {
-          known_libfuzzer_args = [
-            "help",
-            "seed",
-            "runs",
-            "max_len",
-            "len_control",
-            "timeout",
-            "rss_limit_mb",
-            "malloc_limit_mb",
-            "timeout_exitcode",
-            "error_exitcode",
-            "max_total_time",
-            "merge",
-            "merge_control_file",
-            "minimize_crash",
-            "reload",
-            "jobs",
-            "workers",
-            "dict",
-            "use_counters",
-            "reduce_inputs",
-            "use_value_profile",
-            "only_ascii",
-            "artifact_prefix",
-            "exact_artifact_path",
-            "print_pcs",
-            "print_final_stats",
-            "detect_leaks",
-            "close_fd_mask",
-            "fork",
-          ]
-          fuzzer_args =
-              "-undefok=" + string_join(",", known_libfuzzer_args) + " "
-        } else {
-          fuzzer_args = ""
-        }
-        fuzzer_args += "--fuzz=$fuzztest_unit --corpus_database=\"\""
-        contents = [ "const char* kFuzzerArgs = \"${fuzzer_args}\"; const char* kFuzzerBinary = \"${_fuzzer_binary_name}\";" ]
+        _fuzzer_args = _common_fuzzer_args + [ "--fuzz=${fuzztest_unit}" ]
+
+        fuzzer_args_joined = string_join(" ", _fuzzer_args)
+
+        NEWLINE = "$0x0A"
+
+        contents =
+            "const char* kFuzzerArgs = \"${fuzzer_args_joined}\";" + NEWLINE +
+            "const char* kFuzzerBinary = \"${_fuzzer_binary_name}\";" + NEWLINE
       }
 
       _fuzzer_target_name = target_name
@@ -361,7 +340,20 @@ template("mixed_test") {
 #      fuzzing infrastructure can find and run such tests.
 #      This should be a list of the test names, for example
 #      fuzztests = [ "MyTestClass.MyTestName" ]
+#   fuzztest_stack_limit_kb: soft limit on the size of the stack in KB, enforced
+#     for fuzz tests in fuzzing mode only.
 template("test") {
+  # Ensures a test filter file exists and if not, creates a dummy file.
+  # The Regression Test Selection (rts) flag is passed in mb.py and used
+  # to filter out test cases. Flag ensures that a file exists.
+  if (use_rts) {
+    action("${target_name}__rts_filters") {
+      script = "//build/add_rts_filters.py"
+      rts_file = "${root_build_dir}/gen/rts/${invoker.target_name}.filter"
+      args = [ rebase_path(rts_file, root_build_dir) ]
+      outputs = [ rts_file ]
+    }
+  }
   testonly = true
   if (!is_ios) {
     assert(!defined(invoker.is_xctest) || !invoker.is_xctest,
@@ -400,6 +392,7 @@ template("test") {
 
     _test_runner_target = "${_output_name}__test_runner_script"
     _wrapper_script_vars = [
+      "additional_apks",
       "android_test_runner_script",
       "extra_args",
       "ignore_all_data_deps",
@@ -460,6 +453,10 @@ template("test") {
 
         # Don't output to the root or else conflict with the group() below.
         output_name = rebase_path(_exec_output, root_out_dir)
+
+        if (use_rts) {
+          data_deps += [ ":${invoker.target_name}__rts_filters" ]
+        }
       }
 
       create_native_executable_dist(_dist_target) {
@@ -468,6 +465,12 @@ template("test") {
         deps = [ ":$_exec_target" ]
         if (defined(invoker.extra_dist_files)) {
           extra_files = invoker.extra_dist_files
+        }
+        if (use_rts) {
+          if (!defined(data_deps)) {
+            data_deps = []
+          }
+          data_deps += [ ":${invoker.target_name}__rts_filters" ]
         }
       }
     } else {
@@ -483,6 +486,7 @@ template("test") {
         "keystore_name",
         "keystore_password",
         "keystore_path",
+        "library_always_compress",
         "loadable_module_deps",
         "loadable_modules",
         "min_sdk_version",
@@ -598,6 +602,10 @@ template("test") {
         if (defined(_unwind_table_asset_name)) {
           deps += [ ":${_unwind_table_asset_name}" ]
         }
+
+        if (use_rts) {
+          data_deps = [ ":${invoker.target_name}__rts_filters" ]
+        }
       }
     }
 
@@ -618,6 +626,9 @@ template("test") {
       test_name = _output_name
       test_suite = _output_name
       test_type = "gtest"
+      if (use_rts) {
+        data_deps += [ ":${invoker.target_name}__rts_filters" ]
+      }
     }
 
     # Create a wrapper script rather than using a group() in order to ensure
@@ -651,6 +662,9 @@ template("test") {
 
       if (tests_have_location_tags) {
         data = [ "//testing/location_tags.json" ]
+      }
+      if (use_rts) {
+        data_deps += [ ":${invoker.target_name}__rts_filters" ]
       }
     }
   } else if (is_fuchsia) {
@@ -689,6 +703,8 @@ template("test") {
       _test_runner_shard,
     ]
 
+    _subpackages = []
+
     # Select the Fuchsia test realm in which to run the test.
     if (defined(invoker.run_as_chromium_system_test) &&
         invoker.run_as_chromium_system_test) {
@@ -697,6 +713,10 @@ template("test") {
         "//build/config/fuchsia/test/system_test_minimum.shard.test-cml",
       ]
     } else {
+      _subpackages += [
+        "//third_party/fuchsia-sdk/sdk/packages/fake-build-info:fake-build-info",
+        "//third_party/fuchsia-sdk/sdk/packages/intl_property_manager:intl_property_manager",
+      ]
       _manifest_fragments += [
         "//build/config/fuchsia/test/chromium_test_facet.shard.test-cml",
         "//build/config/fuchsia/test/minimum.shard.test-cml",
@@ -786,6 +806,8 @@ template("test") {
       if (devtools_root_location != "") {
         excluded_paths += [ "${devtools_root_location}/*" ]
       }
+
+      subpackages = _subpackages
     }
 
     # |target_name| refers to the package-runner rule, so that building
@@ -928,6 +950,9 @@ template("test") {
       # Include the generate_wrapper as part of data_deps
       data_deps += [ ":${_wrapper_output_name}" ]
       write_runtime_deps = _runtime_deps_file
+      if (use_rts) {
+        data_deps += [ ":${invoker.target_name}__rts_filters" ]
+      }
       if (!defined(deps)) {
         deps = []
       }
@@ -955,6 +980,9 @@ template("test") {
         if (tests_have_location_tags) {
           data = [ "//testing/location_tags.json" ]
         }
+        if (use_rts) {
+          data_deps = [ ":${invoker.target_name}__rts_filters" ]
+        }
       }
     }
 
@@ -981,6 +1009,9 @@ template("test") {
       }
 
       data_deps += [ "//testing:test_scripts_shared" ]
+      if (use_rts) {
+        data_deps += [ ":${invoker.target_name}__rts_filters" ]
+      }
     }
   } else if (!is_nacl) {
     if (is_mac || is_win) {
@@ -1031,6 +1062,9 @@ template("test") {
       if (fail_on_san_warnings) {
         executable_args += [ "--fail-san=1" ]
       }
+      if (use_rts) {
+        data_deps += [ ":${invoker.target_name}__rts_filters" ]
+      }
     }
 
     mixed_test(target_name) {
@@ -1056,6 +1090,9 @@ template("test") {
       }
 
       data_deps += [ "//testing:test_scripts_shared" ]
+      if (use_rts) {
+        data_deps += [ ":${invoker.target_name}__rts_filters" ]
+      }
     }
   } else {
     # This is a catch-all clause for NaCl toolchains and other random
@@ -1076,6 +1113,9 @@ template("test") {
       }
 
       data_deps += [ "//testing:test_scripts_shared" ]
+      if (use_rts) {
+        data_deps += [ ":${invoker.target_name}__rts_filters" ]
+      }
     }
   }
 }
@@ -1110,6 +1150,15 @@ template("script_test") {
   assert(!(_enable_logdog_wrapper && _enable_cros_wrapper),
          "The logdog and cros_test wrappers are mutually exclusive")
 
+  if (use_rts) {
+    action("${target_name}__rts_filters") {
+      script = "//build/add_rts_filters.py"
+      rts_file = "${root_build_dir}/gen/rts/${invoker.target_name}.filter"
+      args = [ rebase_path(rts_file, root_build_dir) ]
+      outputs = [ rts_file ]
+    }
+  }
+
   _shared_data = [ invoker.script ]
   if (defined(invoker.data)) {
     _shared_data += invoker.data
@@ -1121,6 +1170,9 @@ template("script_test") {
   _shared_data_deps = [ "//testing:test_scripts_shared" ]
   if (defined(invoker.data_deps)) {
     _shared_data_deps += invoker.data_deps
+  }
+  if (use_rts) {
+    _shared_data_deps += [ ":${invoker.target_name}__rts_filters" ]
   }
 
   _wrapped_script =

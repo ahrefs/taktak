@@ -509,10 +509,8 @@ void CertProvisioningSchedulerImpl::OnProfileFinished(
 
   auto worker_iter = workers_.find(profile.profile_id);
   if (worker_iter == workers_.end()) {
-    NOTREACHED_IN_MIGRATION();
-    LOG(WARNING) << "Finished worker is not found"
+    NOTREACHED() << "Finished worker is not found"
                  << base::StringPrintf(" [cppId: %s]", process_id.c_str());
-    return;
   }
   bool recreate = false;
   switch (state) {
@@ -736,6 +734,7 @@ void CertProvisioningSchedulerImpl::UpdateFailedCertProfiles(
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
   FailedWorkerInfo info;
+  info.process_id = worker.GetProcessId();
   info.state_before_failure = worker.GetPreviousState();
   info.cert_profile_name = worker.GetCertProfile().name;
   info.public_key = worker.GetPublicKey();

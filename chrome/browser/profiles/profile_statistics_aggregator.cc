@@ -40,7 +40,7 @@ ProfileStatisticsAggregator::ProfileStatisticsAggregator(
       platform_credential_store_(std::move(platform_credential_store)),
       done_callback_(std::move(done_callback)) {}
 
-ProfileStatisticsAggregator::~ProfileStatisticsAggregator() {}
+ProfileStatisticsAggregator::~ProfileStatisticsAggregator() = default;
 
 void ProfileStatisticsAggregator::AddCallbackAndStartAggregator(
     profiles::ProfileStatisticsCallback stats_callback) {
@@ -113,7 +113,7 @@ void ProfileStatisticsAggregator::OnCounterResult(
   } else if (pref_name == browsing_data::prefs::kDeleteFormData) {
     StatisticsCallback(profiles::kProfileStatisticsAutofill, count);
   } else {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 }
 

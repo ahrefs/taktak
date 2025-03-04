@@ -1,6 +1,4 @@
-<if expr="chromeos_ash">
 <style include="cros-color-overrides"></style>
-</if>
 <cr-view-manager id="viewManager">
   <nearby-confirmation-page id="[[Page.CONFIRMATION]]" slot="view"
       confirmation-manager="[[confirmationManager_]]"
@@ -17,9 +15,6 @@
   <nearby-onboarding-one-page id="[[Page.ONEPAGE_ONBOARDING]]"
       settings="{{settings}}" slot="view">
   </nearby-onboarding-one-page>
-  <nearby-onboarding-page id="[[Page.ONBOARDING]]" settings="{{settings}}"
-      slot="view">
-  </nearby-onboarding-page>
   <nearby-visibility-page id="[[Page.VISIBILITY]]" settings="{{settings}}"
       slot="view">
   </nearby-visibility-page>

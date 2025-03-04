@@ -104,7 +104,7 @@ std::vector<SkBitmap> SharedImageTestBase::AllocateRedBitmaps(
   std::vector<SkBitmap> bitmaps(num_planes);
 
   for (int plane = 0; plane < num_planes; ++plane) {
-    SkColorType color_type = ToClosestSkColorType(true, format, plane);
+    SkColorType color_type = ToClosestSkColorType(format, plane);
     gfx::Size plane_size = format.GetPlaneSize(plane, size);
     bitmaps[plane] = MakeRedBitmap(color_type, plane_size, added_stride);
   }
@@ -124,8 +124,7 @@ std::vector<SkPixmap> SharedImageTestBase::GetSkPixmaps(
 SharedImageTestBase::SharedImageTestBase() {
   gpu_preferences_.use_passthrough_cmd_decoder =
       gles2::UsePassthroughCommandDecoder(
-          base::CommandLine::ForCurrentProcess()) &&
-      gles2::PassthroughCommandDecoderSupported();
+          base::CommandLine::ForCurrentProcess());
 }
 
 SharedImageTestBase::~SharedImageTestBase() {
@@ -268,8 +267,7 @@ void SharedImageTestBase::VerifyPixelsWithReadbackGanesh(
 
   int num_planes = format.NumberOfPlanes();
   for (int plane = 0; plane < num_planes; ++plane) {
-    SkColorType plane_color_type =
-        viz::ToClosestSkColorType(true, format, plane);
+    SkColorType plane_color_type = viz::ToClosestSkColorType(format, plane);
     gfx::Size plane_size = format.GetPlaneSize(plane, size);
     SkImageInfo dst_info = SkImageInfo::Make(
         plane_size.width(), plane_size.height(), plane_color_type,
@@ -315,8 +313,7 @@ void SharedImageTestBase::VerifyPixelsWithReadbackGraphite(
 
   int num_planes = format.NumberOfPlanes();
   for (int plane = 0; plane < num_planes; ++plane) {
-    SkColorType plane_color_type =
-        viz::ToClosestSkColorType(true, format, plane);
+    SkColorType plane_color_type = viz::ToClosestSkColorType(format, plane);
     gfx::Size plane_size = format.GetPlaneSize(plane, size);
     SkImageInfo dst_info = SkImageInfo::Make(
         plane_size.width(), plane_size.height(), plane_color_type,

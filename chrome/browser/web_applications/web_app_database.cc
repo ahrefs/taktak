@@ -23,6 +23,7 @@
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/trace_event/trace_event.h"
+#include "build/build_config.h"
 #include "chrome/browser/web_applications/generated_icon_fix_util.h"
 #include "chrome/browser/web_applications/isolated_web_apps/isolated_web_app_integrity_block_data.h"
 #include "chrome/browser/web_applications/isolated_web_apps/isolated_web_app_storage_location.h"
@@ -34,6 +35,7 @@
 #include "chrome/browser/web_applications/os_integration/web_app_file_handler_manager.h"
 #include "chrome/browser/web_applications/proto/web_app.pb.h"
 #include "chrome/browser/web_applications/proto/web_app_install_state.pb.h"
+#include "chrome/browser/web_applications/proto/web_app_related_applications.pb.h"
 #include "chrome/browser/web_applications/proto/web_app_url_pattern.pb.h"
 #include "chrome/browser/web_applications/user_display_mode.h"
 #include "chrome/browser/web_applications/web_app.h"
@@ -42,6 +44,7 @@
 #include "chrome/browser/web_applications/web_app_database_factory.h"
 #include "chrome/browser/web_applications/web_app_helpers.h"
 #include "chrome/browser/web_applications/web_app_install_info.h"
+#include "chrome/browser/web_applications/web_app_management_type.h"
 #include "chrome/browser/web_applications/web_app_proto_utils.h"
 #include "chrome/browser/web_applications/web_app_registry_update.h"
 #include "chrome/browser/web_applications/web_app_utils.h"
@@ -57,9 +60,10 @@
 #include "components/sync/model/model_error.h"
 #include "components/webapps/browser/installable/installable_metrics.h"
 #include "components/webapps/common/web_app_id.h"
+#include "services/network/public/cpp/permissions_policy/origin_with_possible_wildcards.h"
+#include "services/network/public/cpp/permissions_policy/permissions_policy_declaration.h"
 #include "third_party/abseil-cpp/absl/types/variant.h"
 #include "third_party/blink/public/common/manifest/manifest.h"
-#include "third_party/blink/public/common/permissions_policy/origin_with_possible_wildcards.h"
 #include "third_party/blink/public/common/permissions_policy/policy_helper_public.h"
 #include "third_party/blink/public/common/safe_url_pattern.h"
 #include "third_party/blink/public/mojom/manifest/capture_links.mojom.h"
@@ -68,7 +72,7 @@
 #include "url/gurl.h"
 #include "url/origin.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "ash/webui/system_apps/public/system_web_app_type.h"
 #endif
 
@@ -128,8 +132,7 @@ WebAppProto::CaptureLinks CaptureLinksToProto(
     blink::mojom::CaptureLinks capture_links) {
   switch (capture_links) {
     case blink::mojom::CaptureLinks::kUndefined:
-      NOTREACHED_IN_MIGRATION();
-      [[fallthrough]];
+      NOTREACHED();
     case blink::mojom::CaptureLinks::kNone:
       return WebAppProto_CaptureLinks_NONE;
     case blink::mojom::CaptureLinks::kNewClient:
@@ -139,41 +142,47 @@ WebAppProto::CaptureLinks CaptureLinksToProto(
   }
 }
 
-LaunchHandler::ClientMode ProtoLaunchHandlerToLaunchHandlerClientMode(
+LaunchHandler ProtoLaunchHandlerToLaunchHandlerClientMode(
     LaunchHandlerProto::DeprecatedRouteTo route_to,
     LaunchHandlerProto::DeprecatedNavigateExistingClient
         navigate_existing_client,
-    LaunchHandlerProto::ClientMode client_mode) {
+    LaunchHandlerProto::ClientMode client_mode,
+    std::optional<bool> client_mode_valid_and_specified) {
+  // When migrating from a database that doesn't have the
+  // client_mode_valid_and_specified field saved yet, set it to `true` when the
+  // client mode is non-auto. If the site did set the client_mode to 'auto',
+  // then this is corrected on the next manifest update.
   switch (client_mode) {
     case LaunchHandlerProto_ClientMode_AUTO:
-      return LaunchHandler::ClientMode::kAuto;
+      return LaunchHandler{LaunchHandler::ClientMode::kAuto};
     case LaunchHandlerProto_ClientMode_NAVIGATE_NEW:
-      return LaunchHandler::ClientMode::kNavigateNew;
+      return LaunchHandler{LaunchHandler::ClientMode::kNavigateNew};
     case LaunchHandlerProto_ClientMode_NAVIGATE_EXISTING:
-      return LaunchHandler::ClientMode::kNavigateExisting;
+      return LaunchHandler{LaunchHandler::ClientMode::kNavigateExisting};
     case LaunchHandlerProto_ClientMode_FOCUS_EXISTING:
-      return LaunchHandler::ClientMode::kFocusExisting;
+      return LaunchHandler{LaunchHandler::ClientMode::kFocusExisting};
     case LaunchHandlerProto_ClientMode_UNSPECIFIED_CLIENT_MODE: {
       // route_to was removed in favor of client_mode, fall back to it if client
       // mode is unset.
       switch (route_to) {
         case LaunchHandlerProto_DeprecatedRouteTo_UNSPECIFIED_ROUTE:
         case LaunchHandlerProto_DeprecatedRouteTo_AUTO_ROUTE:
-          return LaunchHandler::ClientMode::kAuto;
+          return LaunchHandler{std::nullopt};
         case LaunchHandlerProto_DeprecatedRouteTo_NEW_CLIENT:
-          return LaunchHandler::ClientMode::kNavigateNew;
+          return LaunchHandler{LaunchHandler::ClientMode::kNavigateNew};
         case LaunchHandlerProto_DeprecatedRouteTo_EXISTING_CLIENT:
-          // route_to: existing-client and navigate_existing_client were removed
-          // in favor of existing-client-navigate and existing-client-retain.
+          // route_to: existing-client and navigate_existing_client were
+          // removed in favor of existing-client-navigate and
+          // existing-client-retain.
           if (navigate_existing_client ==
               LaunchHandlerProto_DeprecatedNavigateExistingClient_NEVER) {
-            return LaunchHandler::ClientMode::kFocusExisting;
+            return LaunchHandler{LaunchHandler::ClientMode::kFocusExisting};
           }
-          return LaunchHandler::ClientMode::kNavigateExisting;
+          return LaunchHandler{LaunchHandler::ClientMode::kNavigateExisting};
         case LaunchHandlerProto_DeprecatedRouteTo_EXISTING_CLIENT_NAVIGATE:
-          return LaunchHandler::ClientMode::kNavigateExisting;
+          return LaunchHandler{LaunchHandler::ClientMode::kNavigateExisting};
         case LaunchHandlerProto_DeprecatedRouteTo_EXISTING_CLIENT_RETAIN:
-          return LaunchHandler::ClientMode::kFocusExisting;
+          return LaunchHandler{LaunchHandler::ClientMode::kFocusExisting};
       }
     }
   }
@@ -242,8 +251,7 @@ WebAppFileHandlerProto::LaunchType LaunchTypeToProto(
 WebAppManagement::Type ProtoToWebAppManagement(WebAppManagementProto type) {
   switch (type) {
     case WebAppManagementProto::WEBAPPMANAGEMENT_UNSPECIFIED:
-      NOTREACHED_IN_MIGRATION();
-      [[fallthrough]];
+      NOTREACHED();
     case WebAppManagementProto::SYSTEM:
       return WebAppManagement::Type::kSystem;
     case WebAppManagementProto::KIOSK:
@@ -574,7 +582,7 @@ std::unique_ptr<WebAppProto> WebAppDatabase::CreateWebAppProto(
         chromeos_data.handles_file_open_intents);
   }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   if (web_app.client_data().system_web_app_data.has_value()) {
     auto& swa_data = web_app.client_data().system_web_app_data.value();
 
@@ -734,16 +742,11 @@ std::unique_ptr<WebAppProto> WebAppDatabase::CreateWebAppProto(
     local_data->add_disallowed_launch_protocols(disallowed_launch_protocols);
   }
 
-  for (const auto& url_handler : web_app.url_handlers()) {
-    WebAppUrlHandlerProto* url_handler_proto = local_data->add_url_handlers();
-    url_handler_proto->set_origin(url_handler.origin.Serialize());
-    url_handler_proto->set_has_origin_wildcard(url_handler.has_origin_wildcard);
-  }
-
   for (const auto& scope_extension : web_app.scope_extensions()) {
     WebAppScopeExtensionProto* scope_extension_proto =
         local_data->add_scope_extensions();
     scope_extension_proto->set_origin(scope_extension.origin.Serialize());
+    scope_extension_proto->set_scope(scope_extension.scope.spec());
     scope_extension_proto->set_has_origin_wildcard(
         scope_extension.has_origin_wildcard);
   }
@@ -752,6 +755,8 @@ std::unique_ptr<WebAppProto> WebAppDatabase::CreateWebAppProto(
     WebAppScopeExtensionProto* scope_extension_proto =
         local_data->add_scope_extensions_validated();
     scope_extension_proto->set_origin(valid_extension.origin.Serialize());
+    CHECK(valid_extension.scope.is_valid());
+    scope_extension_proto->set_scope(valid_extension.scope.spec());
     scope_extension_proto->set_has_origin_wildcard(
         valid_extension.has_origin_wildcard);
   }
@@ -782,7 +787,10 @@ std::unique_ptr<WebAppProto> WebAppDatabase::CreateWebAppProto(
 
   if (web_app.launch_handler()) {
     local_data->mutable_launch_handler()->set_client_mode(
-        LaunchHandlerClientModeToProto(web_app.launch_handler()->client_mode));
+        LaunchHandlerClientModeToProto(
+            web_app.launch_handler()->parsed_client_mode()));
+    local_data->mutable_launch_handler()->set_client_mode_valid_and_specified(
+        web_app.launch_handler()->client_mode_valid_and_specified());
   }
 
   if (web_app.parent_app_id_) {
@@ -937,6 +945,24 @@ std::unique_ptr<WebAppProto> WebAppDatabase::CreateWebAppProto(
 
   local_data->set_is_diy_app(web_app.is_diy_app());
 
+  local_data->set_was_shortcut_app(web_app.was_shortcut_app());
+
+  for (const auto& related_application : web_app.related_applications()) {
+    proto::RelatedApplications* related_application_proto =
+        local_data->add_related_applications();
+    if (related_application.platform) {
+      related_application_proto->set_platform(
+          base::UTF16ToUTF8(related_application.platform.value()));
+    }
+    CHECK(related_application.url.is_empty() ||
+          related_application.url.is_valid());
+    related_application_proto->set_url(related_application.url.spec());
+    if (related_application.id) {
+      related_application_proto->set_id(
+          base::UTF16ToUTF8(related_application.id.value()));
+    }
+  }
+
   return local_data;
 }
 
@@ -1082,7 +1108,7 @@ std::unique_ptr<WebApp> WebAppDatabase::CreateWebApp(
     web_app->SetWebAppChromeOsData(std::move(chromeos_data));
   }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   if (local_data.client_data().has_system_web_app_data()) {
     ash::SystemWebAppData& swa_data =
         web_app->client_data()->system_web_app_data.emplace();
@@ -1449,27 +1475,6 @@ std::unique_ptr<WebApp> WebAppDatabase::CreateWebApp(
   }
   web_app->SetDisallowedLaunchProtocols(std::move(disallowed_launch_protocols));
 
-  std::vector<apps::UrlHandlerInfo> url_handlers;
-  for (const auto& url_handler_proto : local_data.url_handlers()) {
-    if (!url_handler_proto.has_origin() ||
-        !url_handler_proto.has_has_origin_wildcard()) {
-      DLOG(ERROR) << "WebApp Url Handler proto parse error";
-      return nullptr;
-    }
-    apps::UrlHandlerInfo url_handler;
-
-    url::Origin origin = url::Origin::Create(GURL(url_handler_proto.origin()));
-    if (origin.opaque()) {
-      DLOG(ERROR) << "WebApp UrlHandler proto url parse error: "
-                  << origin.GetDebugString();
-      return nullptr;
-    }
-    url_handler.origin = std::move(origin);
-    url_handler.has_origin_wildcard = url_handler_proto.has_origin_wildcard();
-    url_handlers.push_back(std::move(url_handler));
-  }
-  web_app->SetUrlHandlers(std::move(url_handlers));
-
   base::flat_set<ScopeExtensionInfo> scope_extensions;
   for (const auto& scope_extension_proto : local_data.scope_extensions()) {
     if (!scope_extension_proto.has_origin() ||
@@ -1477,18 +1482,25 @@ std::unique_ptr<WebApp> WebAppDatabase::CreateWebApp(
       DLOG(ERROR) << "WebApp Scope Extension Info proto parse error";
       return nullptr;
     }
-    ScopeExtensionInfo scope_extension;
-
     url::Origin origin =
         url::Origin::Create(GURL(scope_extension_proto.origin()));
     if (origin.opaque()) {
-      DLOG(ERROR) << "WebApp ScopeExtension proto url parse error: "
-                  << origin.GetDebugString();
+      DLOG(ERROR) << "WebAppScopeExtensionProto's `origin` is opaque: "
+                  << scope_extension_proto.origin();
       return nullptr;
     }
-    scope_extension.origin = std::move(origin);
-    scope_extension.has_origin_wildcard =
-        scope_extension_proto.has_origin_wildcard();
+    if (origin == url::Origin()) {
+      DLOG(ERROR) << "WebAppScopeExtensionProto's `origin` is empty";
+      return nullptr;
+    }
+    if (!GURL(scope_extension_proto.scope()).is_valid()) {
+      DLOG(ERROR) << "WebAppScopeExtensionProto's `scope` url is invalid: "
+                  << scope_extension_proto.scope();
+      return nullptr;
+    }
+
+    auto scope_extension =
+        ScopeExtensionInfo::CreateForProto(scope_extension_proto);
 
     scope_extensions.insert(std::move(scope_extension));
   }
@@ -1497,18 +1509,29 @@ std::unique_ptr<WebApp> WebAppDatabase::CreateWebApp(
   base::flat_set<ScopeExtensionInfo> valid_scope_extensions;
   for (const auto& scope_extension_proto :
        local_data.scope_extensions_validated()) {
-    ScopeExtensionInfo scope_extension;
-
     url::Origin origin =
         url::Origin::Create(GURL(scope_extension_proto.origin()));
     if (origin.opaque()) {
-      DLOG(ERROR) << "WebApp ScopeExtension proto url parse error: "
-                  << origin.GetDebugString();
+      DLOG(ERROR) << "WebAppScopeExtensionProto's `origin` is opaque: "
+                  << scope_extension_proto.origin();
       return nullptr;
     }
-    scope_extension.origin = std::move(origin);
-    scope_extension.has_origin_wildcard =
-        scope_extension_proto.has_origin_wildcard();
+    if (origin == url::Origin()) {
+      DLOG(ERROR) << "WebAppScopeExtensionProto's `origin` is empty";
+      return nullptr;
+    }
+    if (!GURL(scope_extension_proto.scope()).is_valid()) {
+      DLOG(ERROR) << "WebAppScopeExtensionProto's `scope` url is invalid: "
+                  << scope_extension_proto.scope();
+      return nullptr;
+    }
+
+    auto scope_extension =
+        ScopeExtensionInfo::CreateForProto(scope_extension_proto);
+
+    if (!scope_extension.origin.IsSameOriginWith(scope_extension.scope)) {
+      return nullptr;
+    }
 
     valid_scope_extensions.insert(std::move(scope_extension));
   }
@@ -1556,11 +1579,15 @@ std::unique_ptr<WebApp> WebAppDatabase::CreateWebApp(
   if (local_data.has_launch_handler()) {
     const LaunchHandlerProto& launch_handler_proto =
         local_data.launch_handler();
-    web_app->SetLaunchHandler(
-        LaunchHandler{ProtoLaunchHandlerToLaunchHandlerClientMode(
-            launch_handler_proto.route_to(),
-            launch_handler_proto.navigate_existing_client(),
-            launch_handler_proto.client_mode())});
+    LaunchHandler launch_handler = ProtoLaunchHandlerToLaunchHandlerClientMode(
+        launch_handler_proto.route_to(),
+        launch_handler_proto.navigate_existing_client(),
+        launch_handler_proto.client_mode(),
+        launch_handler_proto.has_client_mode_valid_and_specified()
+            ? std::optional(
+                  launch_handler_proto.client_mode_valid_and_specified())
+            : std::nullopt);
+    web_app->SetLaunchHandler(launch_handler);
   }
 
   if (local_data.has_parent_app_id()) {
@@ -1568,22 +1595,22 @@ std::unique_ptr<WebApp> WebAppDatabase::CreateWebApp(
   }
 
   if (local_data.permissions_policy_size()) {
-    blink::ParsedPermissionsPolicy policy;
+    network::ParsedPermissionsPolicy policy;
     const auto& name_to_feature_map =
         blink::GetPermissionsPolicyNameToFeatureMap();
     for (const auto& decl_proto : local_data.permissions_policy()) {
-      blink::ParsedPermissionsPolicyDeclaration decl;
+      network::ParsedPermissionsPolicyDeclaration decl;
       const auto feature_enum = name_to_feature_map.find(decl_proto.feature());
       if (feature_enum == name_to_feature_map.end())
         continue;
       decl.feature = feature_enum->second;
 
       for (const std::string& origin : decl_proto.allowed_origins()) {
-        std::optional<blink::OriginWithPossibleWildcards>
+        std::optional<network::OriginWithPossibleWildcards>
             maybe_origin_with_possible_wildcards =
-                blink::OriginWithPossibleWildcards::Parse(
+                network::OriginWithPossibleWildcards::Parse(
                     origin,
-                    blink::OriginWithPossibleWildcards::NodeType::kHeader);
+                    network::OriginWithPossibleWildcards::NodeType::kHeader);
         if (maybe_origin_with_possible_wildcards.has_value()) {
           decl.allowed_origins.emplace_back(
               *maybe_origin_with_possible_wildcards);
@@ -1794,6 +1821,25 @@ std::unique_ptr<WebApp> WebAppDatabase::CreateWebApp(
   }
 
   web_app->SetIsDiyApp(local_data.is_diy_app());
+
+  web_app->SetWasShortcutApp(local_data.was_shortcut_app());
+
+  std::vector<blink::Manifest::RelatedApplication> related_applications;
+  for (const auto& related_application_proto :
+       local_data.related_applications()) {
+    blink::Manifest::RelatedApplication related_application;
+    if (related_application_proto.has_platform()) {
+      related_application.platform = std::make_optional(
+          base::UTF8ToUTF16(related_application_proto.platform()));
+    }
+    related_application.url = GURL(related_application_proto.url());
+    if (related_application_proto.has_id()) {
+      related_application.id =
+          std::make_optional(base::UTF8ToUTF16(related_application_proto.id()));
+    }
+    related_applications.push_back(std::move(related_application));
+  }
+  web_app->SetRelatedApplications(std::move(related_applications));
 
   return web_app;
 }
@@ -2043,8 +2089,7 @@ WebAppProto::DisplayMode ToWebAppProtoDisplayMode(DisplayMode display_mode) {
     case DisplayMode::kMinimalUi:
       return WebAppProto::MINIMAL_UI;
     case DisplayMode::kUndefined:
-      NOTREACHED_IN_MIGRATION();
-      [[fallthrough]];
+      NOTREACHED();
     case DisplayMode::kStandalone:
       return WebAppProto::STANDALONE;
     case DisplayMode::kFullscreen:

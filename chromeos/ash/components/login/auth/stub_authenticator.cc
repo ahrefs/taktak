@@ -33,8 +33,9 @@ StubAuthenticator::StubAuthenticator(AuthStatusConsumer* consumer,
 void StubAuthenticator::CompleteLogin(
     bool ephemeral,
     std::unique_ptr<UserContext> user_context) {
-  if (expected_user_context_ != *user_context)
-    NOTREACHED_IN_MIGRATION();
+  if (expected_user_context_ != *user_context) {
+    NOTREACHED();
+  }
   OnAuthSuccess();
 }
 
@@ -170,8 +171,9 @@ UserContext StubAuthenticator::ExpectedUserContextWithTransformedKey() const {
   UserContext user_context(expected_user_context_);
   user_context.SetUserIDHash(
       expected_user_context_.GetAccountId().GetUserEmail() + kUserIdHashSuffix);
-  user_context.GetKey()->Transform(Key::KEY_TYPE_SALTED_SHA256_TOP_HALF,
-                                   "some-salt");
+  user_context.GetKey()->Transform(Key::KEY_TYPE_SALTED_PBKDF2_AES256_1234,
+                                   "pin-salt");
+  user_context.GetKey()->SetLabel("pin");
   cryptohome::AuthFactorsSet factors;
   factors.Put(cryptohome::AuthFactorType::kPassword);
   factors.Put(cryptohome::AuthFactorType::kPin);

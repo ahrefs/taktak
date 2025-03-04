@@ -10,7 +10,7 @@
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
 #include "base/functional/callback_helpers.h"
-#include "base/metrics/histogram_functions_internal_overloads.h"
+#include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/notreached.h"
 #include "base/rand_util.h"
@@ -28,6 +28,7 @@
 #include "net/base/net_errors.h"
 #include "net/base/network_change_notifier.h"
 #include "net/base/network_delegate.h"
+#include "net/base/network_isolation_partition.h"
 #include "net/base/upload_data_stream.h"
 #include "net/cert/x509_certificate.h"
 #include "net/cookies/cookie_setting_override.h"
@@ -146,10 +147,10 @@ NetLogWithSource CreateNetLogWithSource(
 
 // TODO(https://crbug.com/366284840): remove this, once the "retry" header is
 // handled in URLLoader.
-net::cookie_util::SecFetchStorageAccessValueOutcome
+net::cookie_util::StorageAccessStatusOutcome
 ConvertSecFetchStorageAccessHeaderValueToOutcome(
     net::cookie_util::StorageAccessStatus storage_access_status) {
-  using enum net::cookie_util::SecFetchStorageAccessValueOutcome;
+  using enum net::cookie_util::StorageAccessStatusOutcome;
   switch (storage_access_status) {
     case net::cookie_util::StorageAccessStatus::kInactive:
       return kValueInactive;
@@ -196,7 +197,7 @@ void URLRequest::Delegate::OnSSLCertificateError(URLRequest* request,
 
 void URLRequest::Delegate::OnResponseStarted(URLRequest* request,
                                              int net_error) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -389,14 +390,12 @@ UploadProgress URLRequest::GetUploadProgress() const {
   return UploadProgress();
 }
 
-void URLRequest::GetResponseHeaderByName(std::string_view name,
-                                         std::string* value) const {
-  DCHECK(value);
-  if (response_info_.headers.get()) {
-    response_info_.headers->GetNormalizedHeader(name, value);
-  } else {
-    value->clear();
+std::string URLRequest::GetResponseHeaderByName(std::string_view name) const {
+  if (!response_info_.headers.get()) {
+    return std::string();
   }
+  return response_info_.headers->GetNormalizedHeader(name).value_or(
+      std::string());
 }
 
 IPEndPoint URLRequest::GetResponseRemoteEndpoint() const {
@@ -575,6 +574,12 @@ void URLRequest::set_allow_credentials(bool allow_credentials) {
 
 void URLRequest::Start() {
   DCHECK(delegate_);
+
+  // We do not support credentials with a non-general
+  // NetworkIsolationPartition.
+  CHECK(isolation_info_.GetNetworkIsolationPartition() ==
+            NetworkIsolationPartition::kGeneral ||
+        !allow_credentials());
 
   if (status_ != OK)
     return;
@@ -763,8 +768,7 @@ int URLRequest::CancelWithError(int error) {
 void URLRequest::CancelWithSSLError(int error, const SSLInfo& ssl_info) {
   // This should only be called on a started request.
   if (!is_pending_ || !job_.get() || job_->has_response_started()) {
-    NOTREACHED_IN_MIGRATION();
-    return;
+    NOTREACHED();
   }
   DoCancel(error, ssl_info);
 }
@@ -881,6 +885,7 @@ void URLRequest::ReceivedRedirect(RedirectInfo redirect_info) {
   // code must return immediately.
   base::WeakPtr<URLRequest> weak_this(weak_factory_.GetWeakPtr());
   bool defer_redirect = false;
+  per_hop_load_flags_ = LOAD_NORMAL;
   delegate_->OnReceivedRedirect(this, redirect_info, &defer_redirect);
 
   // Ensure that the request wasn't detached, destroyed, or canceled in
@@ -1060,9 +1065,6 @@ void URLRequest::Redirect(
                          url::Origin::Create(redirect_info.new_url)),
                      redirect_info.new_url);
 
-  cookie_setting_overrides().Remove(
-      CookieSettingOverride::kStorageAccessGrantEligibleViaHeader);
-
   if ((load_flags() & LOAD_CAN_USE_SHARED_DICTIONARY) &&
       (load_flags() &
        LOAD_DISABLE_SHARED_DICTIONARY_AFTER_CROSS_ORIGIN_REDIRECT) &&
@@ -1087,9 +1089,23 @@ void URLRequest::RetryWithStorageAccess() {
     network_delegate()->NotifyBeforeRetry(this);
   }
 
+  // TODO(https://crbug.com/366284840): this state mutation should reuse the
+  // Sec- header helpers at a higher layer, not within //net.
   cookie_setting_overrides().Put(
       CookieSettingOverride::kStorageAccessGrantEligibleViaHeader);
+  set_per_hop_load_flags(LOAD_BYPASS_CACHE);
   set_storage_access_status(CalculateStorageAccessStatus());
+  // This code is only reachable if the status was previously "inactive", which
+  // implies that the URL is "potentially trustworthy" and that adding the
+  // `kStorageAccessGrantEligibleViaHeader` override is sufficient to make the
+  // status "active".
+  CHECK(storage_access_status());
+  CHECK_EQ(static_cast<int>(storage_access_status().value()),
+           static_cast<int>(cookie_util::StorageAccessStatus::kActive));
+  extra_request_headers_.SetHeader("Sec-Fetch-Storage-Access", "active");
+  base::UmaHistogramEnumeration(
+      "API.StorageAccessHeader.SecFetchStorageAccessOutcome",
+      cookie_util::SecFetchStorageAccessOutcome::kValueActive);
 
   if (!final_upload_progress_.position() && upload_data_stream_) {
     final_upload_progress_ = upload_data_stream_->GetUploadProgress();
@@ -1130,10 +1146,7 @@ void URLRequest::SetPriority(RequestPriority priority) {
   DCHECK_LE(priority, MAXIMUM_PRIORITY);
 
   if ((load_flags() & LOAD_IGNORE_LIMITS) && (priority != MAXIMUM_PRIORITY)) {
-    NOTREACHED_IN_MIGRATION();
-    // Maintain the invariant that requests with IGNORE_LIMITS set
-    // have MAXIMUM_PRIORITY for release mode.
-    return;
+    NOTREACHED();
   }
 
   if (priority_ == priority)
@@ -1360,32 +1373,32 @@ void URLRequest::SetIsSharedDictionaryReadAllowedCallback(
   is_shared_dictionary_read_allowed_callback_ = std::move(callback);
 }
 
+void URLRequest::SetDeviceBoundSessionAccessCallback(
+    base::RepeatingCallback<void(const device_bound_sessions::SessionAccess&)>
+        callback) {
+  device_bound_session_access_callback_ = std::move(callback);
+}
+
 void URLRequest::set_socket_tag(const SocketTag& socket_tag) {
   DCHECK(!is_pending_);
   DCHECK(url().SchemeIsHTTPOrHTTPS());
   socket_tag_ = socket_tag;
 }
 std::optional<net::cookie_util::StorageAccessStatus>
-URLRequest::CalculateStorageAccessStatus() const {
+URLRequest::CalculateStorageAccessStatus(
+    base::optional_ref<const RedirectInfo> redirect_info) const {
   std::optional<net::cookie_util::StorageAccessStatus> storage_access_status =
-      network_delegate()->GetStorageAccessStatus(*this);
+      network_delegate()->GetStorageAccessStatus(*this, redirect_info);
 
-  auto get_storage_access_value_outcome_if_omitted = [&]()
-      -> std::optional<net::cookie_util::SecFetchStorageAccessValueOutcome> {
+  auto get_storage_access_value_outcome_if_omitted =
+      [&]() -> std::optional<net::cookie_util::StorageAccessStatusOutcome> {
     if (!network_delegate()->IsStorageAccessHeaderEnabled(
             base::OptionalToPtr(isolation_info().top_frame_origin()), url())) {
-      return net::cookie_util::SecFetchStorageAccessValueOutcome::
+      return net::cookie_util::StorageAccessStatusOutcome::
           kOmittedFeatureDisabled;
     }
-    // Avoid attaching the header in cases where credentials are not included in
-    // the request.
-    if (!allow_credentials_) {
-      return net::cookie_util::SecFetchStorageAccessValueOutcome::
-          kOmittedRequestOmitsCredentials;
-    }
     if (!storage_access_status) {
-      return net::cookie_util::SecFetchStorageAccessValueOutcome::
-          kOmittedSameSite;
+      return net::cookie_util::StorageAccessStatusOutcome::kOmittedSameSite;
     }
     return std::nullopt;
   };
@@ -1401,7 +1414,7 @@ URLRequest::CalculateStorageAccessStatus() const {
   }
 
   base::UmaHistogramEnumeration(
-      "API.StorageAccessHeader.SecFetchStorageAccessValueOutcome",
+      "API.StorageAccessHeader.StorageAccessStatusOutcome",
       storage_access_value_outcome.value());
 
   return storage_access_status;

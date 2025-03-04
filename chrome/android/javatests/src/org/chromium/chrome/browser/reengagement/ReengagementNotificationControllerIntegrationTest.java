@@ -33,12 +33,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import org.chromium.base.FeatureList;
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.test.util.CallbackHelper;
 import org.chromium.base.test.util.CommandLineFlags;
 import org.chromium.base.test.util.CriteriaHelper;
 import org.chromium.base.test.util.DisabledTest;
+import org.chromium.base.test.util.Features.DisableFeatures;
+import org.chromium.base.test.util.Features.EnableFeatures;
 import org.chromium.base.test.util.UrlUtils;
 import org.chromium.chrome.browser.DefaultBrowserInfo2;
 import org.chromium.chrome.browser.app.reengagement.ReengagementActivity;
@@ -60,12 +61,13 @@ import org.chromium.components.feature_engagement.FeatureConstants;
 import org.chromium.components.feature_engagement.Tracker;
 import org.chromium.content_public.common.ContentUrlConstants;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /** Integration tests for {@link ReengagementNotificationController}. */
 @RunWith(ChromeJUnit4ClassRunner.class)
 @CommandLineFlags.Add({ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE})
+@EnableFeatures(ChromeFeatureList.REENGAGEMENT_NOTIFICATION)
+// TODO(crbug.com/40142646): Remove these overrides when FeatureList#isInitialized() works
+// as expected with test values
+@DisableFeatures(ChromeFeatureList.VOICE_SEARCH_AUDIO_CAPTURE_POLICY)
 public class ReengagementNotificationControllerIntegrationTest {
     @Rule
     public ChromeTabbedActivityTestRule mTabbedActivityTestRule =
@@ -81,7 +83,6 @@ public class ReengagementNotificationControllerIntegrationTest {
     @Before
     public void setUp() throws Exception {
         reset(mTracker);
-        setReengagementNotificationEnabled(true);
         TrackerFactory.setTrackerForTests(mTracker);
         closeReengagementNotifications();
     }
@@ -100,13 +101,13 @@ public class ReengagementNotificationControllerIntegrationTest {
                 createDefaultInfo(/* passesPrecondition= */ true));
         doReturn(true)
                 .when(mTracker)
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         mCustomTabActivityTestRule.startCustomTabActivityWithIntent(
                 CustomTabsIntentTestUtils.createMinimalCustomTabIntent(
                         ApplicationProvider.getApplicationContext(),
                         ContentUrlConstants.ABOUT_BLANK_DISPLAY_URL));
         verify(mTracker, times(1))
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, times(1))
                 .dismissed(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
 
@@ -123,13 +124,13 @@ public class ReengagementNotificationControllerIntegrationTest {
                 createDefaultInfo(/* passesPrecondition= */ true));
         doReturn(true)
                 .when(mTracker)
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
         mCustomTabActivityTestRule.startCustomTabActivityWithIntent(
                 CustomTabsIntentTestUtils.createMinimalCustomTabIntent(
                         ApplicationProvider.getApplicationContext(),
                         ContentUrlConstants.ABOUT_BLANK_DISPLAY_URL));
         verify(mTracker, times(1))
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
         verify(mTracker, times(1))
                 .dismissed(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
 
@@ -141,7 +142,7 @@ public class ReengagementNotificationControllerIntegrationTest {
     @Test
     @MediumTest
     @DisabledTest(message = "https://crbug.com/1464323")
-    public void testReengagementNotificationNotSentDueToIPH() {
+    public void testReengagementNotificationNotSentDueToIph() {
         DefaultBrowserInfo2.setDefaultInfoForTests(
                 createDefaultInfo(/* passesPrecondition= */ true));
         mCustomTabActivityTestRule.startCustomTabActivityWithIntent(
@@ -150,11 +151,11 @@ public class ReengagementNotificationControllerIntegrationTest {
                         ContentUrlConstants.ABOUT_BLANK_DISPLAY_URL));
         verifyHasNoNotifications();
         verify(mTracker, times(1))
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, times(1))
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
         verify(mTracker, times(1))
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_3_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_3_FEATURE);
         verify(mTracker, never())
                 .dismissed(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, never())
@@ -174,11 +175,11 @@ public class ReengagementNotificationControllerIntegrationTest {
                         ContentUrlConstants.ABOUT_BLANK_DISPLAY_URL));
         verifyHasNoNotifications();
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_3_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_3_FEATURE);
         verify(mTracker, never())
                 .dismissed(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, never())
@@ -197,11 +198,11 @@ public class ReengagementNotificationControllerIntegrationTest {
                         ContentUrlConstants.ABOUT_BLANK_DISPLAY_URL));
         verifyHasNoNotifications();
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_3_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_3_FEATURE);
         verify(mTracker, never())
                 .dismissed(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, never())
@@ -229,9 +230,9 @@ public class ReengagementNotificationControllerIntegrationTest {
 
     @Test
     @SmallTest
+    @DisableFeatures(ChromeFeatureList.REENGAGEMENT_NOTIFICATION)
     @DisabledTest(message = "crbug.com/1112519 - Disabled while safety guard is in place.")
     public void testEngagementTrackedWhenDisabled() {
-        setReengagementNotificationEnabled(false);
         mTabbedActivityTestRule.startMainActivityFromLauncher();
         verify(mTracker, times(1)).notifyEvent(EventConstants.STARTED_FROM_MAIN_INTENT);
     }
@@ -246,8 +247,8 @@ public class ReengagementNotificationControllerIntegrationTest {
 
     @Test
     @MediumTest
+    @DisableFeatures(ChromeFeatureList.REENGAGEMENT_NOTIFICATION)
     public void testEngagementNotificationNotSentDueToDisabled() {
-        setReengagementNotificationEnabled(false);
         DefaultBrowserInfo2.setDefaultInfoForTests(
                 createDefaultInfo(/* passesPrecondition= */ true));
         mCustomTabActivityTestRule.startCustomTabActivityWithIntent(
@@ -256,11 +257,11 @@ public class ReengagementNotificationControllerIntegrationTest {
                         ContentUrlConstants.ABOUT_BLANK_DISPLAY_URL));
         verifyHasNoNotifications();
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_2_FEATURE);
         verify(mTracker, never())
-                .shouldTriggerHelpUI(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_3_FEATURE);
+                .shouldTriggerHelpUi(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_3_FEATURE);
         verify(mTracker, never())
                 .dismissed(FeatureConstants.CHROME_REENGAGEMENT_NOTIFICATION_1_FEATURE);
         verify(mTracker, never())
@@ -378,14 +379,5 @@ public class ReengagementNotificationControllerIntegrationTest {
                 /* hasDefault= */ true,
                 browserCount,
                 /* systemCount= */ 0);
-    }
-
-    private static void setReengagementNotificationEnabled(boolean enabled) {
-        Map<String, Boolean> features = new HashMap<>();
-        features.put(ChromeFeatureList.REENGAGEMENT_NOTIFICATION, enabled);
-        // TODO(crbug.com/40142646): Remove these overrides when FeatureList#isInitialized() works
-        // as expected with test values.
-        features.put(ChromeFeatureList.VOICE_SEARCH_AUDIO_CAPTURE_POLICY, false);
-        FeatureList.setTestFeatures(features);
     }
 }

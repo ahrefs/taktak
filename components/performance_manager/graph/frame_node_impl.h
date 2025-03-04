@@ -20,6 +20,7 @@
 #include "components/performance_manager/public/mojom/coordination_unit.mojom.h"
 #include "components/performance_manager/public/mojom/web_memory.mojom.h"
 #include "components/performance_manager/public/render_frame_host_proxy.h"
+#include "components/performance_manager/resource_attribution/cpu_measurement_data.h"
 #include "content/public/browser/browsing_instance_id.h"
 #include "content/public/browser/site_instance.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
@@ -40,9 +41,11 @@ class FrameNodeImpl
     : public PublicNodeImpl<FrameNodeImpl, FrameNode>,
       public TypedNodeBase<FrameNodeImpl, FrameNode, FrameNodeObserver>,
       public mojom::DocumentCoordinationUnit,
-      public SupportsNodeInlineData<execution_context::FrameExecutionContext,
-                                    // Keep this last to avoid merge conflicts.
-                                    NodeAttachedDataStorage> {
+      public SupportsNodeInlineData<
+          execution_context::FrameExecutionContext,
+          resource_attribution::SharedCPUTimeResultData,
+          // Keep this last to avoid merge conflicts.
+          NodeAttachedDataStorage> {
  public:
   static const char kDefaultPriorityReason[];
 
@@ -51,13 +54,13 @@ class FrameNodeImpl
   // Construct a frame node associated with a `process_node`, a `page_node` and
   // optionally with a `parent_frame_node`. For the main frame of `page_node`
   // the `parent_frame_node` parameter should be nullptr. For <fencedframe>s,
-  // `outer_document_for_fenced_frame` should be set to its outer document,
-  // nullptr otherwise. `render_frame_id` is the routing id of the frame (from
-  // RenderFrameHost::GetRoutingID).
+  // and MPArch aware <webview>s,  `outer_document_for_inner_frame_root` should
+  // be set to its outer document, nullptr otherwise. `render_frame_id` is the
+  // routing id of the frame (from RenderFrameHost::GetRoutingID).
   FrameNodeImpl(ProcessNodeImpl* process_node,
                 PageNodeImpl* page_node,
                 FrameNodeImpl* parent_frame_node,
-                FrameNodeImpl* outer_document_for_fenced_frame,
+                FrameNodeImpl* outer_document_for_inner_frame_root,
                 int render_frame_id,
                 const blink::LocalFrameToken& frame_token,
                 content::BrowsingInstanceId browsing_instance_id,
@@ -86,6 +89,7 @@ class FrameNodeImpl
   void OnWebMemoryMeasurementRequested(
       mojom::WebMemoryMeasurement::Mode mode,
       OnWebMemoryMeasurementRequestedCallback callback) override;
+  void OnFreezingOriginTrialOptOut() override;
 
   // Partial FrameNode implementation:
   const blink::LocalFrameToken& GetFrameToken() const override;
@@ -102,13 +106,14 @@ class FrameNodeImpl
   bool GetNetworkAlmostIdle() const override;
   bool IsAdFrame() const override;
   bool IsHoldingWebLock() const override;
-  bool IsHoldingIndexedDBLock() const override;
+  bool IsHoldingBlockingIndexedDBLock() const override;
   bool UsesWebRTC() const override;
   bool HadUserActivation() const override;
   bool HadFormInteraction() const override;
   bool HadUserEdits() const override;
   bool IsAudible() const override;
   bool IsCapturingMediaStream() const override;
+  bool HasFreezingOriginTrialOptOut() const override;
   std::optional<ViewportIntersection> GetViewportIntersection() const override;
   Visibility GetVisibility() const override;
   bool IsImportant() const override;
@@ -119,7 +124,6 @@ class FrameNodeImpl
   // Getters for const properties.
   FrameNodeImpl* parent_frame_node() const;
   FrameNodeImpl* parent_or_outer_document_or_embedder() const;
-  FrameNodeImpl* outer_document_for_fenced_frame() const;
   PageNodeImpl* page_node() const;
   ProcessNodeImpl* process_node() const;
   int render_frame_id() const;
@@ -138,7 +142,8 @@ class FrameNodeImpl
                                  GraphImpl* graph);
   void SetHadUserActivation();
   void SetIsHoldingWebLock(bool is_holding_weblock);
-  void SetIsHoldingIndexedDBLock(bool is_holding_indexeddb_lock);
+  void SetIsHoldingBlockingIndexedDBLock(
+      bool is_holding_blocking_indexeddb_lock);
   void SetIsAudible(bool is_audible);
   void SetIsCapturingMediaStream(bool is_capturing_media_stream);
   void SetViewportIntersection(const blink::mojom::ViewportIntersectionState&
@@ -156,6 +161,10 @@ class FrameNodeImpl
                              bool same_document,
                              bool is_served_from_back_forward_cache);
 
+  // Traverses the frame tree and notifies all frames that their embedding
+  // primary page is about to be discarded.
+  void OnPrimaryPageAboutToBeDiscarded();
+
   // Invoked by |worker_node| when it starts/stops being a child of this frame.
   void AddChildWorker(WorkerNodeImpl* worker_node);
   void RemoveChildWorker(WorkerNodeImpl* worker_node);
@@ -163,7 +172,6 @@ class FrameNodeImpl
   // Invoked to set the frame priority, and the reason behind it.
   void SetPriorityAndReason(const PriorityAndReason& priority_and_reason);
 
-  base::WeakPtr<FrameNodeImpl> GetWeakPtrOnUIThread();
   base::WeakPtr<FrameNodeImpl> GetWeakPtr();
 
   void SeverPageRelationshipsAndMaybeReparentForTesting() {
@@ -208,6 +216,7 @@ class FrameNodeImpl
 
   // Properties associated with a Document, which are reset when a
   // different-document navigation is committed in the frame.
+  // LINT.IfChange(document_prop)
   struct DocumentProperties {
     DocumentProperties();
     ~DocumentProperties();
@@ -250,16 +259,25 @@ class FrameNodeImpl
         bool,
         &FrameNodeObserver::OnFrameUsesWebRTCChanged>
         uses_web_rtc{false};
+
+    // Whether the document is opted-out from freezing via origin trial.
+    ObservedProperty::NotifiesOnlyOnChanges<
+        bool,
+        &FrameNodeObserver::OnFrameHasFreezingOriginTrialOptOutChanged>
+        has_freezing_origin_trial_opt_out{false};
   };
+  // LINT.ThenChange(//components/performance_manager/graph/frame_node_impl.cc:document_prop_reset)
 
   // Invoked by subframes on joining/leaving the graph.
   void AddChildFrame(FrameNodeImpl* frame_node);
   void RemoveChildFrame(FrameNodeImpl* frame_node);
 
   // NodeBase:
-  void OnJoiningGraph() override;
+  void OnInitializingProperties() override;
+  void OnInitializingEdges() override;
   void OnBeforeLeavingGraph() override;
-  void RemoveNodeAttachedData() override;
+  void OnUninitializingEdges() override;
+  void CleanUpNodeState() override;
 
   // Helper function to sever all opened/embedded page relationships. This is
   // called before destroying the frame node in "OnBeforeLeavingGraph". Note
@@ -297,7 +315,7 @@ class FrameNodeImpl
 
   const raw_ptr<FrameNodeImpl, DanglingUntriaged> parent_frame_node_;
   const raw_ptr<FrameNodeImpl, DanglingUntriaged>
-      outer_document_for_fenced_frame_;
+      outer_document_for_inner_frame_root_;
   const raw_ptr<PageNodeImpl, DanglingUntriaged> page_node_;
   const raw_ptr<ProcessNodeImpl, DanglingUntriaged> process_node_;
   // The routing id of the frame.
@@ -360,8 +378,8 @@ class FrameNodeImpl
       is_holding_weblock_{false};
   ObservedProperty::NotifiesOnlyOnChanges<
       bool,
-      &FrameNodeObserver::OnFrameIsHoldingIndexedDBLockChanged>
-      is_holding_indexeddb_lock_{false};
+      &FrameNodeObserver::OnFrameIsHoldingBlockingIndexedDBLockChanged>
+      is_holding_blocking_indexeddb_lock_{false};
 
   bool is_current_{false};
 
@@ -425,7 +443,6 @@ class FrameNodeImpl
   // true, frame visibility updates are ignored.
   bool has_viewport_intersection_updates_ = false;
 
-  base::WeakPtr<FrameNodeImpl> weak_this_;
   base::WeakPtrFactory<FrameNodeImpl> weak_factory_
       GUARDED_BY_CONTEXT(sequence_checker_){this};
 };

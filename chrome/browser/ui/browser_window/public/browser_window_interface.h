@@ -5,8 +5,9 @@
 #ifndef CHROME_BROWSER_UI_BROWSER_WINDOW_PUBLIC_BROWSER_WINDOW_INTERFACE_H_
 #define CHROME_BROWSER_UI_BROWSER_WINDOW_PUBLIC_BROWSER_WINDOW_INTERFACE_H_
 
+#include <vector>
+
 #include "base/callback_list.h"
-#include "build/chromeos_buildflags.h"
 #include "content/public/browser/page_navigator.h"
 #include "ui/base/window_open_disposition.h"
 
@@ -34,6 +35,7 @@ namespace web_modal {
 class WebContentsModalDialogHost;
 }  // namespace web_modal
 
+class Browser;
 class BrowserActions;
 class BrowserUserEducationInterface;
 class BrowserWindowFeatures;
@@ -42,6 +44,7 @@ class GURL;
 class Profile;
 class SessionID;
 class TabStripModel;
+class ImmersiveModeController;
 
 class BrowserWindowInterface : public content::PageNavigator {
  public:
@@ -77,6 +80,13 @@ class BrowserWindowInterface : public content::PageNavigator {
   // See Browser::IsAttemptingToCloseBrowser() for more details.
   virtual bool IsAttemptingToCloseBrowser() const = 0;
 
+  // Register callbacks invoked when browser has successfully processed its
+  // close request and has been scheduled for deletion.
+  using BrowserDidCloseCallback =
+      base::RepeatingCallback<void(BrowserWindowInterface*)>;
+  virtual base::CallbackListSubscription RegisterBrowserDidClose(
+      BrowserDidCloseCallback callback) = 0;
+
   // Returns the top container view.
   virtual views::View* TopContainer() = 0;
 
@@ -109,8 +119,12 @@ class BrowserWindowInterface : public content::PageNavigator {
   GetWebContentsModalDialogHostForWindow() = 0;
 
   // Whether the window is active.
-  // This definition needs to be more precise, as "active" has different
-  // semantics and nuance on each platform.
+  // The definition of "active" aligns with the window being painted as active
+  // instead of the top level widget having focus.
+  // Note this is different from "active" for BrowserList which is based on if
+  // the top level widget has focus and doesn't account for child widgets.
+  // Note that this does not work correctly for mac PWA windows, as those are
+  // hosted in a separate application with a stub in the browser process.
   virtual bool IsActive() = 0;
 
   // Register for these two callbacks to detect changes to IsActive().
@@ -125,6 +139,10 @@ class BrowserWindowInterface : public content::PageNavigator {
 
   // This class is responsible for controlling fullscreen and pointer lock.
   virtual ExclusiveAccessManager* GetExclusiveAccessManager() = 0;
+
+  // This class is responsible for controlling the top chrome reveal state while
+  // in immersive fullscreen.
+  virtual ImmersiveModeController* GetImmersiveModeController() = 0;
 
   // This class manages actions that a user can take that are scoped to a
   // browser window (e.g. most of the 3-dot menu actions).
@@ -155,7 +173,7 @@ class BrowserWindowInterface : public content::PageNavigator {
     // AppBrowserController) but looks like a popup (e.g. it never has a tab
     // strip).
     TYPE_APP_POPUP,
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     // Browser for ARC++ Chrome custom tabs.
     // It's an enhanced version of TYPE_POPUP, and is used to show the Chrome
     // Custom Tab toolbar for ARC++ apps. It has UI customizations like using
@@ -178,6 +196,26 @@ class BrowserWindowInterface : public content::PageNavigator {
   virtual BrowserUserEducationInterface* GetUserEducationInterface() = 0;
 
   virtual web_app::AppBrowserController* GetAppBrowserController() = 0;
+
+  // This is used by features that need to operate on most or all tabs in the
+  // browser window. Do not use this method to find a specific tab.
+  virtual std::vector<tabs::TabInterface*> GetAllTabInterfaces() = 0;
+
+  // Downcasts to a Browser*. The only valid use for this method is when
+  // migrating a large chunk of code to BrowserWindowInterface, to allow
+  // incremental migration.
+  virtual Browser* GetBrowserForMigrationOnly() = 0;
+
+  // Changes the blocked state of |web_contents|. WebContentses are considered
+  // blocked while displaying a web contents modal dialog. During that time
+  // renderer host will ignore any UI interaction within WebContents outside of
+  // the currently displaying dialog.
+  // Note that this is a duplicate of the same method in
+  // WebContentsModalDialogManagerDelegate. This is because there are two ways
+  // to open tab-modal dialogs, either via TabDialogManager or via
+  // //components/web_modal. See crbug.com/377820808.
+  virtual void SetWebContentsBlocked(content::WebContents* web_contents,
+                                     bool blocked) = 0;
 };
 
 #endif  // CHROME_BROWSER_UI_BROWSER_WINDOW_PUBLIC_BROWSER_WINDOW_INTERFACE_H_

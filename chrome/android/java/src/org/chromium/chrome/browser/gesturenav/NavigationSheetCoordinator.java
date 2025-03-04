@@ -13,6 +13,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.DimenRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 
 import org.chromium.base.supplier.Supplier;
 import org.chromium.chrome.R;
@@ -302,7 +304,9 @@ class NavigationSheetCoordinator implements BottomSheetContent, NavigationSheet 
     }
 
     @Override
-    public void destroy() {}
+    public void destroy() {
+        mMediator.destroy();
+    }
 
     @Override
     public @ContentPriority int getPriority() {
@@ -345,22 +349,22 @@ class NavigationSheetCoordinator implements BottomSheetContent, NavigationSheet 
     }
 
     @Override
-    public int getSheetContentDescriptionStringId() {
-        return R.string.overscroll_navigation_sheet_description;
+    public @NonNull String getSheetContentDescription(Context context) {
+        return context.getString(R.string.overscroll_navigation_sheet_description);
     }
 
     @Override
-    public int getSheetHalfHeightAccessibilityStringId() {
+    public @StringRes int getSheetHalfHeightAccessibilityStringId() {
         return R.string.overscroll_navigation_sheet_opened_half;
     }
 
     @Override
-    public int getSheetFullHeightAccessibilityStringId() {
+    public @StringRes int getSheetFullHeightAccessibilityStringId() {
         return R.string.overscroll_navigation_sheet_opened_full;
     }
 
     @Override
-    public int getSheetClosedAccessibilityStringId() {
+    public @StringRes int getSheetClosedAccessibilityStringId() {
         return R.string.overscroll_navigation_sheet_closed;
     }
 }

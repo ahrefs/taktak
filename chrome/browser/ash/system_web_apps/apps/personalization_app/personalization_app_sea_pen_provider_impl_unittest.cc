@@ -22,6 +22,7 @@
 #include "ash/webui/common/mojom/sea_pen.mojom-forward.h"
 #include "ash/webui/common/mojom/sea_pen.mojom.h"
 #include "base/containers/flat_map.h"
+#include "base/containers/span.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/i18n/rtl.h"
@@ -58,6 +59,7 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/test/browser_task_environment.h"
 #include "content/public/test/test_web_ui.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "mojo/public/cpp/test_support/test_utils.h"
 #include "testing/gmock/include/gmock/gmock.h"
@@ -71,11 +73,11 @@ namespace ash::personalization_app {
 namespace {
 
 constexpr char kFakeTestEmail[] = "fakeemail@personalization";
-constexpr char kTestGaiaId[] = "1234567890";
+constexpr GaiaId::Literal kTestGaiaId("1234567890");
 constexpr char kFakeTestEmail2[] = "anotherfakeemail@personalization";
-constexpr char kTestGaiaId2[] = "9876543210";
+constexpr GaiaId::Literal kTestGaiaId2("9876543210");
 constexpr char kGooglerEmail[] = "user@google.com";
-constexpr char kGooglerGaiaId[] = "123459876";
+constexpr GaiaId::Literal kGooglerGaiaId("123459876");
 constexpr char kDemoModeEmail[] = "demo-public-account@example.com";
 
 constexpr uint32_t kSeaPenId1 = 111;
@@ -91,9 +93,9 @@ SkBitmap CreateBitmap() {
 // Create fake Jpg image bytes.
 std::string CreateJpgBytes() {
   SkBitmap bitmap = CreateBitmap();
-  std::vector<unsigned char> data;
-  gfx::JPEGCodec::Encode(bitmap, /*quality=*/100, &data);
-  return std::string(data.begin(), data.end());
+  std::optional<std::vector<uint8_t>> data =
+      gfx::JPEGCodec::Encode(bitmap, /*quality=*/100);
+  return std::string(base::as_string_view(data.value()));
 }
 
 // Repeat `string_view` until the output is size `target_size` or as close as
@@ -435,7 +437,7 @@ TEST_F(PersonalizationAppSeaPenProviderImplTest, QueryLengthExceeded) {
       base::BindLambdaForTesting(
           [](std::optional<std::vector<
                  ash::personalization_app::mojom::SeaPenThumbnailPtr>>,
-             manta::MantaStatusCode) { NOTREACHED_IN_MIGRATION(); }));
+             manta::MantaStatusCode) { NOTREACHED(); }));
 
   EXPECT_EQ("GetSeaPenThumbnails exceeded maximum text length",
             bad_message_observer.WaitForBadMessage())
@@ -933,6 +935,27 @@ TEST_F(PersonalizationAppSeaPenProviderImplTest,
   EXPECT_FALSE(should_show_dialog_future.Take());
 }
 
+TEST_F(PersonalizationAppSeaPenProviderImplTest,
+       ShouldShowSeaPenFreeformIntroductionDialog) {
+  SetUpProfileForTesting(kFakeTestEmail, GetTestAccountId());
+  test_wallpaper_controller()->ClearCounts();
+  base::test::ScopedFeatureList features;
+  features.InitWithFeatures({features::kSeaPen}, {});
+
+  base::test::TestFuture<bool> should_show_dialog_future;
+  sea_pen_provider_remote()->ShouldShowSeaPenFreeformIntroductionDialog(
+      should_show_dialog_future.GetCallback());
+  // Expects to return true before the dialog is closed.
+  EXPECT_TRUE(should_show_dialog_future.Take());
+
+  sea_pen_provider_remote()->HandleSeaPenFreeformIntroductionDialogClosed();
+
+  sea_pen_provider_remote()->ShouldShowSeaPenFreeformIntroductionDialog(
+      should_show_dialog_future.GetCallback());
+  // Expects to return false after the dialog is closed.
+  EXPECT_FALSE(should_show_dialog_future.Take());
+}
+
 TEST_F(PersonalizationAppSeaPenProviderImplTest, IsEligibleForSeaPen_Guest) {
   SetUpProfileForTesting("guest", user_manager::GuestAccountId(),
                          user_manager::UserType::kGuest);
@@ -943,13 +966,6 @@ TEST_F(PersonalizationAppSeaPenProviderImplTest, IsEligibleForSeaPen_Child) {
   SetUpProfileForTesting("child", GetTestAccountId(),
                          user_manager::UserType::kChild);
   ASSERT_FALSE(sea_pen_provider()->IsEligibleForSeaPen());
-}
-
-TEST_F(PersonalizationAppSeaPenProviderImplTest, IsEligibleForSeaPen_Googler) {
-  // Managed Googlers can still access SeaPen.
-  SetUpProfileForTesting(kGooglerEmail, GetGooglerAccountId());
-  profile()->GetProfilePolicyConnector()->OverrideIsManagedForTesting(true);
-  ASSERT_TRUE(sea_pen_provider()->IsEligibleForSeaPen());
 }
 
 TEST_F(PersonalizationAppSeaPenProviderImplTest, IsEligibleForSeaPen_Managed) {

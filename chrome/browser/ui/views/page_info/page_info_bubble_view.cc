@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "chrome/browser/page_info/page_info_features.h"
 #include "chrome/browser/platform_util.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_window.h"
@@ -16,6 +17,8 @@
 #include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/controls/page_switcher_view.h"
 #include "chrome/browser/ui/views/page_info/page_info_main_view.h"
+#include "chrome/browser/ui/views/page_info/page_info_merchant_trust_content_view.h"
+#include "chrome/browser/ui/views/page_info/page_info_merchant_trust_coordinator.h"
 #include "chrome/browser/ui/views/page_info/page_info_security_content_view.h"
 #include "chrome/browser/ui/views/page_info/page_info_view_factory.h"
 #include "components/dom_distiller/core/url_constants.h"
@@ -133,7 +136,7 @@ PageInfoBubbleView::PageInfoBubbleView(
     const GURL& url,
     base::OnceClosure initialized_callback,
     PageInfoClosingCallback closing_callback,
-    bool allow_about_this_site)
+    bool allow_extended_site_info)
     : PageInfoBubbleViewBase(anchor_view,
                              anchor_rect,
                              parent_window,
@@ -144,14 +147,11 @@ PageInfoBubbleView::PageInfoBubbleView(
   DCHECK(web_contents());
   ChromeLayoutProvider* layout_provider = ChromeLayoutProvider::Get();
 
-  // In Harmony, the last view is a HoverButton, which overrides the bottom
-  // dialog inset in favor of its own. Note the multi-button value is used here
-  // assuming that the "Cookies" & "Site settings" buttons will always be shown.
-  const int bottom_margin =
-      layout_provider->GetDistanceMetric(DISTANCE_CONTENT_LIST_VERTICAL_MULTI);
+  // Only set the top margin. The bottom margin is set for each subpage
+  // separately, depending the content.
   const int top_margin =
       layout_provider->GetInsetsMetric(views::INSETS_DIALOG).top();
-  set_margins(gfx::Insets::TLBR(top_margin, 0, bottom_margin, 0));
+  set_margins(gfx::Insets().set_top(top_margin));
   ui_delegate_ =
       std::make_unique<ChromePageInfoUiDelegate>(web_contents(), url);
   presenter_ = std::make_unique<PageInfo>(
@@ -163,7 +163,7 @@ PageInfoBubbleView::PageInfoBubbleView(
   }
   view_factory_ = std::make_unique<PageInfoViewFactory>(
       presenter_.get(), ui_delegate_.get(), this, history_controller_.get(),
-      allow_about_this_site);
+      allow_extended_site_info);
 
   SetShowTitle(false);
   SetShowCloseButton(false);
@@ -178,6 +178,11 @@ PageInfoBubbleView::PageInfoBubbleView(
   main_page_view->SetID(PageInfoViewFactory::VIEW_ID_PAGE_INFO_CURRENT_VIEW);
   page_container_ = AddChildView(
       std::make_unique<PageSwitcherView>(std::move(main_page_view)));
+
+  if (page_info::IsMerchantTrustFeatureEnabled()) {
+    merchant_trust_coordinator_ =
+        std::make_unique<PageInfoMerchantTrustCoordinator>(web_contents());
+  }
 
   views::BubbleDialogDelegateView::CreateBubble(this);
 }
@@ -196,7 +201,9 @@ views::BubbleDialogDelegateView* PageInfoBubbleView::CreatePageInfoBubble(
     const GURL& url,
     base::OnceClosure initialized_callback,
     PageInfoClosingCallback closing_callback,
-    bool allow_about_this_site) {
+    bool allow_extended_site_info,
+    std::optional<ContentSettingsType> type,
+    bool open_merchant_trust_page) {
   DCHECK(web_contents);
   gfx::NativeView parent_view = platform_util::GetViewForWindow(parent_window);
 
@@ -207,10 +214,20 @@ views::BubbleDialogDelegateView* PageInfoBubbleView::CreatePageInfoBubble(
                                           web_contents, url);
   }
 
-  return new PageInfoBubbleView(
+  PageInfoBubbleView* bubble = new PageInfoBubbleView(
       anchor_view, anchor_rect, parent_view, web_contents, url,
       std::move(initialized_callback), std::move(closing_callback),
-      allow_about_this_site);
+      allow_extended_site_info);
+  if (type) {
+    CHECK(!open_merchant_trust_page);
+    bubble->OpenPermissionPage(*type);
+  }
+  if (open_merchant_trust_page) {
+    CHECK(!type);
+    bubble->OpenMerchantTrustPage(
+        page_info::MerchantBubbleOpenReferrer::kLocationBarChip);
+  }
+  return bubble;
 }
 
 void PageInfoBubbleView::OpenMainPage(base::OnceClosure initialized_callback) {
@@ -262,6 +279,23 @@ void PageInfoBubbleView::OpenCookiesPage() {
   cookies_page_view->SetID(PageInfoViewFactory::VIEW_ID_PAGE_INFO_CURRENT_VIEW);
   page_container_->SwitchToPage(std::move(cookies_page_view));
   AnnouncePageOpened(l10n_util::GetStringUTF16(IDS_PAGE_INFO_COOKIES));
+}
+
+void PageInfoBubbleView::OpenMerchantTrustPage(
+    page_info::MerchantBubbleOpenReferrer referrer) {
+  CHECK(merchant_trust_coordinator_);
+  auto title = l10n_util::GetStringUTF16(IDS_PAGE_INFO_MERCHANT_TRUST_HEADER);
+  auto page_content = merchant_trust_coordinator_->CreatePageContent();
+  // TODO(crbug.com/390370438): Remove this call after the presenter is
+  // refactored since merchant trust page doesn't implement any of the
+  // PageInfoUI methods.
+  presenter_->InitializeUiState(page_content.get(), base::DoNothing());
+  auto page_view =
+      view_factory_->CreatePageView(title, std::move(page_content));
+  page_view->SetID(PageInfoViewFactory::VIEW_ID_PAGE_INFO_CURRENT_VIEW);
+  page_container_->SwitchToPage(std::move(page_view));
+  AnnouncePageOpened(title);
+  merchant_trust_coordinator_->OnBubbleOpened(referrer);
 }
 
 void PageInfoBubbleView::CloseBubble() {
@@ -332,7 +366,8 @@ void ShowPageInfoDialogImpl(Browser* browser,
                             const GURL& virtual_url,
                             bubble_anchor_util::Anchor anchor,
                             base::OnceClosure initialized_callback,
-                            PageInfoClosingCallback closing_callback) {
+                            PageInfoClosingCallback closing_callback,
+                            std::optional<ContentSettingsType> type) {
   AnchorConfiguration configuration =
       GetPageInfoAnchorConfiguration(browser, anchor);
   gfx::Rect anchor_rect =
@@ -343,7 +378,7 @@ void ShowPageInfoDialogImpl(Browser* browser,
       PageInfoBubbleView::CreatePageInfoBubble(
           configuration.anchor_view, anchor_rect, parent_window, web_contents,
           virtual_url, std::move(initialized_callback),
-          std::move(closing_callback), /*allow_about_this_site=*/true);
+          std::move(closing_callback), /*allow_extended_site_info=*/true, type);
   bubble->SetHighlightedButton(configuration.highlighted_button);
   bubble->SetArrow(configuration.bubble_arrow);
   bubble->GetWidget()->Show();

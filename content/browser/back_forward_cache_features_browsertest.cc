@@ -6,10 +6,13 @@
 #include "base/threading/platform_thread.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "content/browser/back_forward_cache_browsertest.h"
+#include "content/browser/bluetooth/bluetooth_adapter_factory_wrapper.h"
+#include "content/browser/bluetooth/test/mock_bluetooth_delegate.h"
+#include "content/browser/browser_interface_binders.h"
 #include "content/browser/generic_sensor/frame_sensor_provider_proxy.h"
 #include "content/browser/generic_sensor/web_contents_sensor_provider_proxy.h"
+#include "content/browser/hid/hid_test_utils.h"
 #include "content/browser/presentation/presentation_test_utils.h"
 #include "content/browser/renderer_host/back_forward_cache_disable.h"
 #include "content/browser/renderer_host/media/media_devices_dispatcher_host.h"
@@ -17,24 +20,26 @@
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/browser/worker_host/dedicated_worker_hosts_for_document.h"
 #include "content/public/browser/disallow_activation_reason.h"
+#include "content/public/browser/hid_delegate.h"
 #include "content/public/browser/media_session.h"
 #include "content/public/browser/payment_app_provider.h"
 #include "content/public/test/back_forward_cache_util.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/browser_test_utils.h"
 #include "content/public/test/content_browser_test.h"
+#include "content/public/test/content_browser_test_content_browser_client.h"
 #include "content/public/test/content_browser_test_utils.h"
 #include "content/public/test/media_start_stop_observer.h"
 #include "content/public/test/test_navigation_observer.h"
 #include "content/public/test/test_utils.h"
 #include "content/public/test/web_transport_simple_test_server.h"
 #include "content/shell/browser/shell.h"
-#include "device/bluetooth/bluetooth_adapter_factory.h"
 #include "device/bluetooth/test/mock_bluetooth_adapter.h"
 #include "net/test/embedded_test_server/controllable_http_response.h"
 #include "net/test/embedded_test_server/embedded_test_server.h"
 #include "net/test/spawned_test_server/spawned_test_server.h"
 #include "net/test/test_data_directory.h"
+#include "services/device/public/cpp/test/fake_hid_manager.h"
 #include "services/device/public/cpp/test/fake_sensor_and_provider.h"
 #include "services/device/public/cpp/test/scoped_geolocation_overrider.h"
 #include "services/device/public/mojom/vibration_manager.mojom.h"
@@ -42,6 +47,7 @@
 #include "third_party/blink/public/common/features.h"
 #include "third_party/blink/public/common/scheduler/web_scheduler_tracked_feature.h"
 #include "third_party/blink/public/mojom/app_banner/app_banner.mojom.h"
+#include "third_party/blink/public/mojom/webauthn/authenticator.mojom.h"
 #include "ui/base/idle/idle_time_provider.h"
 #include "ui/base/test/idle_test_utils.h"
 
@@ -52,13 +58,14 @@
 // When adding tests for new features please also add WPTs. See
 // third_party/blink/web_tests/external/wpt/html/browsers/browsing-the-web/back-forward-cache/README.md
 
-using testing::_;
-using testing::Each;
-using testing::ElementsAre;
-using testing::Not;
-using testing::UnorderedElementsAreArray;
-
 namespace content {
+
+using ::testing::_;
+using ::testing::Each;
+using ::testing::ElementsAre;
+using ::testing::Not;
+using ::testing::Return;
+using ::testing::UnorderedElementsAreArray;
 
 using NotRestoredReason = BackForwardCacheMetrics::NotRestoredReason;
 
@@ -1369,14 +1376,49 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, CacheIfWebGL) {
 // content/browser/browser_interface_binders.cc for Android, this test is not
 // applicable for this OS.
 #if !BUILDFLAG(IS_ANDROID)
-IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, DoesNotCacheIfWebHID) {
+class HidBrowserTestContentBrowserClient
+    : public ContentBrowserTestContentBrowserClient {
+ public:
+  MockHidDelegate& delegate() { return delegate_; }
+
+  // ContentBrowserClient:
+  HidDelegate* GetHidDelegate() override { return &delegate_; }
+
+ private:
+  testing::NiceMock<MockHidDelegate> delegate_;
+};
+
+class BackForwardCacheWebHidTest : public BackForwardCacheBrowserTest {
+ public:
+  void SetUpOnMainThread() override {
+    BackForwardCacheBrowserTest::SetUpOnMainThread();
+    test_client_ = std::make_unique<HidBrowserTestContentBrowserClient>();
+    ON_CALL(delegate(), GetHidManager).WillByDefault(Return(&hid_manager_));
+  }
+
+  void TearDownOnMainThread() override {
+    BackForwardCacheBrowserTest::TearDownOnMainThread();
+    test_client_.reset();
+  }
+
+  MockHidDelegate& delegate() { return test_client_->delegate(); }
+  device::FakeHidManager* hid_manager() { return &hid_manager_; }
+
+ private:
+  std::unique_ptr<HidBrowserTestContentBrowserClient> test_client_;
+  device::FakeHidManager hid_manager_;
+};
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheWebHidTest,
+                       DoesNotCacheIfGetDevicesWasCalled) {
   ASSERT_TRUE(embedded_test_server()->Start());
 
-  // 1) Navigate to an empty page.
-  GURL url(embedded_test_server()->GetURL("/title1.html"));
-  EXPECT_TRUE(NavigateToURL(shell(), url));
+  // Navigate to an empty page.
+  ASSERT_TRUE(
+      NavigateToURL(shell(), embedded_test_server()->GetURL("/title1.html")));
+  RenderFrameHostWrapper rfh_wrapper(current_frame_host());
 
-  // Request for HID devices.
+  // Call getDevices to get a list of devices the page is allowed to access.
   EXPECT_EQ("success", EvalJs(current_frame_host(), R"(
     new Promise(resolve => {
       navigator.hid.getDevices()
@@ -1384,20 +1426,83 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, DoesNotCacheIfWebHID) {
         .catch(() => { resolve("error"); });
     });
   )"));
+  EXPECT_TRUE(current_frame_host()->GetBackForwardCacheDisablingFeatures().Has(
+      blink::scheduler::WebSchedulerTrackedFeature::kWebHID));
 
-  RenderFrameDeletedObserver deleted(current_frame_host());
+  // Navigate away.
+  ASSERT_TRUE(NavigateToURL(
+      shell(), embedded_test_server()->GetURL("b.com", "/title1.html")));
 
-  // 2) Navigate away.
-  shell()->LoadURL(embedded_test_server()->GetURL("b.com", "/title1.html"));
+  // The page called a WebHID method so it should be deleted.
+  EXPECT_TRUE(rfh_wrapper.WaitUntilRenderFrameDeleted());
 
-  // The page uses WebHID so it should be deleted.
-  deleted.WaitUntilDeleted();
-
-  // 3) Go back.
+  // Go back.
   ASSERT_TRUE(HistoryGoBack(web_contents()));
   ExpectNotRestored({NotRestoredReason::kBlocklistedFeatures},
                     {blink::scheduler::WebSchedulerTrackedFeature::kWebHID}, {},
                     {}, {}, FROM_HERE);
+}
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheWebHidTest,
+                       DoesNotCacheIfRequestDeviceWasCalled) {
+  ASSERT_TRUE(embedded_test_server()->Start());
+
+  // Navigate to an empty page.
+  ASSERT_TRUE(
+      NavigateToURL(shell(), embedded_test_server()->GetURL("/title1.html")));
+  RenderFrameHostWrapper rfh_wrapper(current_frame_host());
+
+  // Call requestDevice to open a permission request dialog. Simulate closing
+  // the dialog without selecting a device.
+  EXPECT_CALL(delegate(), CanRequestDevicePermission).WillOnce(Return(true));
+  EXPECT_CALL(delegate(), RunChooserInternal).WillOnce([]() {
+    return std::vector<device::mojom::HidDeviceInfoPtr>();
+  });
+  EXPECT_TRUE(ExecJs(current_frame_host(),
+                     "navigator.hid.requestDevice({filters: []})"));
+  EXPECT_TRUE(current_frame_host()->GetBackForwardCacheDisablingFeatures().Has(
+      blink::scheduler::WebSchedulerTrackedFeature::kWebHID));
+
+  // Navigate away.
+  ASSERT_TRUE(NavigateToURL(
+      shell(), embedded_test_server()->GetURL("b.com", "/title1.html")));
+
+  // The page called a WebHID method so it should be deleted.
+  EXPECT_TRUE(rfh_wrapper.WaitUntilRenderFrameDeleted());
+
+  // Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectNotRestored({NotRestoredReason::kBlocklistedFeatures},
+                    {blink::scheduler::WebSchedulerTrackedFeature::kWebHID}, {},
+                    {}, {}, FROM_HERE);
+}
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheWebHidTest,
+                       DoesCacheIfHidAttributeWasAccessed) {
+  ASSERT_TRUE(embedded_test_server()->Start());
+
+  // Navigate to an empty page.
+  ASSERT_TRUE(
+      NavigateToURL(shell(), embedded_test_server()->GetURL("/title1.html")));
+  RenderFrameHostWrapper rfh_a(current_frame_host());
+
+  // Access navigator.hid without invoking any WebHID API methods.
+  EXPECT_TRUE(ExecJs(current_frame_host(), "navigator.hid"));
+  EXPECT_FALSE(current_frame_host()->GetBackForwardCacheDisablingFeatures().Has(
+      blink::scheduler::WebSchedulerTrackedFeature::kWebHID));
+
+  // Navigate away.
+  ASSERT_TRUE(NavigateToURL(
+      shell(), embedded_test_server()->GetURL("b.com", "/title1.html")));
+  EXPECT_TRUE(WaitForLoadStop(shell()->web_contents()));
+  ASSERT_TRUE(!rfh_a.IsDestroyed());
+  EXPECT_TRUE(
+      static_cast<RenderFrameHostImpl*>(rfh_a.get())->IsInBackForwardCache());
+
+  // Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  EXPECT_EQ(current_frame_host(), rfh_a.get());
+  ExpectRestored(FROM_HERE);
 }
 #endif  // !BUILDFLAG(IS_ANDROID)
 
@@ -1512,11 +1617,11 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, DoesNotCacheIdleManager) {
   ui::test::ScopedIdleProviderForTest scoped_idle_provider(
       std::make_unique<FakeIdleTimeProvider>());
 
-  EXPECT_TRUE(ExecJs(rfh_a, R"(
+  EXPECT_EQ(42, EvalJs(rfh_a, R"(
     new Promise(async resolve => {
       let idleDetector = new IdleDetector();
-      idleDetector.start();
-      resolve();
+      await idleDetector.start();
+      resolve(42);
     });
   )"));
 
@@ -1610,12 +1715,12 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
   RenderFrameDeletedObserver rfh_a_deleted(rfh_a);
 
   // Execute functionality that calls PaymentManager.
-  EXPECT_TRUE(ExecJs(rfh_a, R"(
+  EXPECT_EQ(42, EvalJs(rfh_a, R"(
     new Promise(async resolve => {
       const registration = await navigator.serviceWorker.getRegistration(
           '/payments/payment_app.js');
       await registration.paymentManager.enableDelegations(['shippingAddress']);
-      resolve();
+      resolve(42);
     });
   )"));
 
@@ -1637,7 +1742,7 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
   // requests (kOutstandingNetworkRequestOthers). This causes flakiness if we
   // check against all blocklisted features. As a result, we only check for the
   // blocklist we care about.
-  base::HistogramBase::Sample sample = base::HistogramBase::Sample(
+  base::HistogramBase::Sample32 sample = base::HistogramBase::Sample32(
       blink::scheduler::WebSchedulerTrackedFeature::kPaymentManager);
   std::vector<base::Bucket> blocklist_values = histogram_tester().GetAllSamples(
       "BackForwardCache.HistoryNavigationOutcome."
@@ -1767,35 +1872,77 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
   ExpectRestored(FROM_HERE);
 }
 
+class BackForwardCacheNonStickyDoubleFixBrowserTest
+    : public BackForwardCacheBrowserTest,
+      public testing::WithParamInterface<bool> {
+ protected:
+  void SetUpCommandLine(base::CommandLine* command_line) override {
+    if (IsBackForwardCacheNonStickyDoubleFixEnabled()) {
+      EnableFeatureAndSetParams(kBackForwardCacheNonStickyDoubleFix, "", "");
+    } else {
+      DisableFeature(kBackForwardCacheNonStickyDoubleFix);
+    }
+    BackForwardCacheBrowserTest::SetUpCommandLine(command_line);
+  }
+
+  bool IsBackForwardCacheNonStickyDoubleFixEnabled() { return GetParam(); }
+};
+
+INSTANTIATE_TEST_SUITE_P(All,
+                         BackForwardCacheNonStickyDoubleFixBrowserTest,
+                         testing::Bool());
+
 // If pages released keyboard lock during pagehide, they can enter
-// BackForwardCache.
-IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
+// BackForwardCache. This also covers the case of entering BFCache for a
+// second time. KeyboardLock is a good feature to use as it will always
+// block BFCache. See https://crbug.com/360183659
+IN_PROC_BROWSER_TEST_P(BackForwardCacheNonStickyDoubleFixBrowserTest,
                        CacheIfKeyboardLockReleasedInPagehide) {
   ASSERT_TRUE(embedded_test_server()->Start());
 
-  // 1) Navigate to a page and start using the Keyboard lock.
+  // Navigate to a page and start using the Keyboard lock.
   GURL url(embedded_test_server()->GetURL("/title1.html"));
   EXPECT_TRUE(NavigateToURL(shell(), url));
   RenderFrameHostImplWrapper rfh_a(current_frame_host());
 
   AcquireKeyboardLock(rfh_a.get());
   // Register a pagehide handler to release keyboard lock.
-  EXPECT_TRUE(ExecJs(rfh_a.get(), R"(
+  ASSERT_TRUE(ExecJs(rfh_a.get(), R"(
     window.onpagehide = function(e) {
       new Promise(resolve => {
-      navigator.keyboard.unlock();
-      resolve();
+        navigator.keyboard.unlock();
+        resolve();
       });
     };
   )"));
 
-  // 2) Navigate away.
-  EXPECT_TRUE(NavigateToURL(
+  // Navigate away.
+  ASSERT_TRUE(NavigateToURL(
       shell(), embedded_test_server()->GetURL("b.com", "/title1.html")));
 
-  // 3) Go back and page should be restored from BackForwardCache.
+  // Go back and page should be restored from BackForwardCache.
   ASSERT_TRUE(HistoryGoBack(web_contents()));
   ExpectRestored(FROM_HERE);
+
+  // Acquire the lock again.
+  AcquireKeyboardLock(rfh_a.get());
+
+  // Navigate away again.
+  ASSERT_TRUE(NavigateToURL(
+      shell(), embedded_test_server()->GetURL("b.com", "/title1.html")));
+
+  // Go back again.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  if (IsBackForwardCacheNonStickyDoubleFixEnabled()) {
+    // The page should be restored from BackForwardCache.
+    ExpectRestored(FROM_HERE);
+  } else {
+    // The page should not be restored from BackForwardCache.
+    ExpectNotRestored(
+        {NotRestoredReason::kBlocklistedFeatures},
+        {blink::scheduler::WebSchedulerTrackedFeature::kKeyboardLock}, {}, {},
+        {}, FROM_HERE);
+  }
 }
 
 IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
@@ -2081,17 +2228,6 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
                     {kBlockingReasonEnum}, {}, {}, {}, FROM_HERE);
 }
 
-// Test for sending JavaScript details where blocking features are used.
-class BackForwardCacheBrowserTestWithJavaScriptDetails
-    : public BackForwardCacheBrowserTest {
- protected:
-  void SetUpCommandLine(base::CommandLine* command_line) override {
-    EnableFeatureAndSetParams(
-        blink::features::kRegisterJSSourceLocationBlockingBFCache, "", "");
-    BackForwardCacheBrowserTest::SetUpCommandLine(command_line);
-  }
-};
-
 // Use a blocklisted feature in multiple locations from an external JavaScript
 // file and make sure all the JavaScript location details are captured.
 // TODO(crbug.com/40241677): WebSocket server is flaky Android.
@@ -2101,7 +2237,7 @@ class BackForwardCacheBrowserTestWithJavaScriptDetails
 #else
 #define MAYBE_MultipleBlocksFromJavaScriptFile MultipleBlocksFromJavaScriptFile
 #endif
-IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
                        MAYBE_MultipleBlocksFromJavaScriptFile) {
   net::SpawnedTestServer ws_server(net::SpawnedTestServer::TYPE_WS,
                                    net::GetWebSocketTestDataDirectory());
@@ -2170,7 +2306,7 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
 #define MAYBE_BlockAndUnblockFromJavaScriptFile \
   BlockAndUnblockFromJavaScriptFile
 #endif
-IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
                        MAYBE_BlockAndUnblockFromJavaScriptFile) {
   net::SpawnedTestServer ws_server(net::SpawnedTestServer::TYPE_WS,
                                    net::GetWebSocketTestDataDirectory());
@@ -2236,7 +2372,7 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
 #else
 #define MAYBE_MultipleBlocksFromHTMLFile MultipleBlocksFromHTMLFile
 #endif
-IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
                        MAYBE_MultipleBlocksFromHTMLFile) {
   net::SpawnedTestServer ws_server(net::SpawnedTestServer::TYPE_WS,
                                    net::GetWebSocketTestDataDirectory());
@@ -2299,7 +2435,7 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
 #else
 #define MAYBE_BlockAndUnblockFromHTMLFile BlockAndUnblockFromHTMLFile
 #endif
-IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
                        MAYBE_BlockAndUnblockFromHTMLFile) {
   net::SpawnedTestServer ws_server(net::SpawnedTestServer::TYPE_WS,
                                    net::GetWebSocketTestDataDirectory());
@@ -2362,7 +2498,7 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
 #else
 #define MAYBE_StickyFeaturesWithDetails StickyFeaturesWithDetails
 #endif
-IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
                        MAYBE_StickyFeaturesWithDetails) {
   net::SpawnedTestServer ws_server(net::SpawnedTestServer::TYPE_WS,
                                    net::GetWebSocketTestDataDirectory());
@@ -2382,11 +2518,11 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithJavaScriptDetails,
   const char script[] = R"(
       new Promise(resolve => {
         const socket = new WebSocket($1);
-        socket.addEventListener('open', () => resolve());
+        socket.addEventListener('open', () => resolve(42));
       });)";
-  ASSERT_TRUE(
-      ExecJs(rfh_a.get(),
-             JsReplace(script, ws_server.GetURL("echo-with-no-extension"))));
+  ASSERT_EQ(42, EvalJs(rfh_a.get(),
+                       JsReplace(script,
+                                 ws_server.GetURL("echo-with-no-extension"))));
 
   // 3) Navigate away to `url_b`.
   ASSERT_TRUE(NavigateToURL(shell(), url_b));
@@ -3162,11 +3298,11 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
       }
       new Promise(resolve => {
         socket = new WebSocket($1);
-        socket.addEventListener('open', () => resolve());
+        socket.addEventListener('open', () => resolve(42));
       });)";
-  ASSERT_TRUE(
-      ExecJs(rfh_a.get(),
-             JsReplace(script, ws_server.GetURL("echo-with-no-extension"))));
+  ASSERT_EQ(42, EvalJs(rfh_a.get(),
+                       JsReplace(script,
+                                 ws_server.GetURL("echo-with-no-extension"))));
 
   // 2) Navigate to B.
   ASSERT_TRUE(NavigateToURL(shell(), url_b));
@@ -3285,10 +3421,11 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, MAYBE_WebSocketNotCached) {
   const char script[] = R"(
       new Promise(resolve => {
         const socket = new WebSocket($1);
-        socket.addEventListener('open', () => resolve());
+        socket.addEventListener('open', () => resolve(42));
       });)";
-  ASSERT_TRUE(ExecJs(
-      rfh_a, JsReplace(script, ws_server.GetURL("echo-with-no-extension"))));
+  ASSERT_EQ(
+      42, EvalJs(rfh_a, JsReplace(script,
+                                  ws_server.GetURL("echo-with-no-extension"))));
 
   // 2) Navigate to B.
   ASSERT_TRUE(NavigateToURL(shell(), url_b));
@@ -3327,8 +3464,9 @@ void RegisterServiceWorker(RenderFrameHostImpl* rfh) {
 // Returns a unique script for each request, to test service worker update.
 std::unique_ptr<net::test_server::HttpResponse> RequestHandlerForUpdateWorker(
     const net::test_server::HttpRequest& request) {
-  if (request.relative_url != "/back_forward_cache/service-worker.js")
+  if (request.relative_url != "/back_forward_cache/service-worker.js") {
     return nullptr;
+  }
   static int counter = 0;
   auto http_response = std::make_unique<net::test_server::BasicHttpResponse>();
   http_response->set_code(net::HTTP_OK);
@@ -3867,50 +4005,88 @@ IN_PROC_BROWSER_TEST_F(GeolocationBackForwardCacheBrowserTest,
       << "watchPosition API should have reported no errors";
 }
 
-class BluetoothForwardCacheBrowserTest : public BackForwardCacheBrowserTest {
- protected:
-  BluetoothForwardCacheBrowserTest() = default;
+class BluetoothBrowserTestContentBrowserClient
+    : public ContentBrowserTestContentBrowserClient {
+ public:
+  // ContentBrowserClient:
+  BluetoothDelegate* GetBluetoothDelegate() override { return &delegate_; }
 
-  ~BluetoothForwardCacheBrowserTest() override = default;
+  MockBluetoothDelegate& delegate() { return delegate_; }
+
+ private:
+  testing::NiceMock<MockBluetoothDelegate> delegate_;
+};
+
+class BackForwardCacheWebBluetoothTest : public BackForwardCacheBrowserTest {
+ protected:
+  BackForwardCacheWebBluetoothTest() = default;
+
+  ~BackForwardCacheWebBluetoothTest() override = default;
+
+  void SetUpOnMainThread() override {
+    BackForwardCacheBrowserTest::SetUpOnMainThread();
+    test_client_ = std::make_unique<BluetoothBrowserTestContentBrowserClient>();
+    ON_CALL(delegate(), MayUseBluetooth).WillByDefault(Return(true));
+  }
 
   void SetUp() override {
-    // Fake the BluetoothAdapter to say it's present.
-    // Used in WebBluetooth test.
+    // The test requires a mock Bluetooth adapter to perform WebBluetooth API
+    // calls. To avoid conflicts with the default Bluetooth adapter, e.g.
+    // Windows adapter, which is configured during Bluetooth initialization, the
+    // mock adapter is configured in SetUp().
     adapter_ =
         base::MakeRefCounted<testing::NiceMock<device::MockBluetoothAdapter>>();
-    device::BluetoothAdapterFactory::SetAdapterForTesting(adapter_);
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-    // In CHROMEOS build, even when |adapter_| object is released at TearDown()
-    // it causes the test to fail on exit with an error indicating |adapter_| is
-    // leaked.
-    testing::Mock::AllowLeak(adapter_.get());
-#endif
+    BluetoothAdapterFactoryWrapper::Get().SetBluetoothAdapterOverride(adapter_);
+    ON_CALL(*adapter_, IsPresent).WillByDefault(Return(true));
+
+    // Configure the mock adapter to return a scanning error to avoid leaking
+    // the adapter after teardown due to an ongoing scanning session.
+    ON_CALL(*adapter_, StartScanWithFilter_)
+        .WillByDefault(
+            [](const device::BluetoothDiscoveryFilter* filter,
+               base::OnceCallback<void(
+                   bool, device::UMABluetoothDiscoverySessionOutcome)>&
+                   callback) {
+              std::move(callback).Run(
+                  /*is_error=*/true,
+                  device::UMABluetoothDiscoverySessionOutcome::UNKNOWN);
+            });
 
     BackForwardCacheBrowserTest::SetUp();
   }
 
   void TearDown() override {
     testing::Mock::VerifyAndClearExpectations(adapter_.get());
+    BluetoothAdapterFactoryWrapper::Get().SetBluetoothAdapterOverride(nullptr);
     adapter_.reset();
     BackForwardCacheBrowserTest::TearDown();
   }
 
+  MockBluetoothDelegate& delegate() { return test_client_->delegate(); }
+
   scoped_refptr<device::MockBluetoothAdapter> adapter_;
+  std::unique_ptr<BluetoothBrowserTestContentBrowserClient> test_client_;
 };
 
-IN_PROC_BROWSER_TEST_F(BluetoothForwardCacheBrowserTest, WebBluetooth) {
-  // The test requires a mock Bluetooth adapter to perform a
-  // WebBluetooth API call. To avoid conflicts with the default Bluetooth
-  // adapter, e.g. Windows adapter, which is configured during Bluetooth
-  // initialization, the mock adapter is configured in SetUp().
-
+IN_PROC_BROWSER_TEST_F(BackForwardCacheWebBluetoothTest,
+                       DoesNotCacheIfRequestDeviceWasCalled) {
   // WebBluetooth requires HTTPS.
   ASSERT_TRUE(CreateHttpsServer()->Start());
-  GURL url(https_server()->GetURL("a.test", "/back_forward_cache/empty.html"));
 
-  ASSERT_TRUE(NavigateToURL(web_contents(), url));
-  BackForwardCacheDisabledTester tester;
+  // Navigate to an empty page.
+  ASSERT_TRUE(NavigateToURL(
+      web_contents(),
+      https_server()->GetURL("a.test", "/back_forward_cache/empty.html")));
+  RenderFrameHostWrapper rfh_wrapper(current_frame_host());
 
+  // Call requestDevice to open a permission request dialog. Cancel the dialog
+  // once it is opened.
+  EXPECT_CALL(delegate(), RunBluetoothChooser)
+      .WillOnce([](RenderFrameHost* frame,
+                   const BluetoothChooser::EventHandler& event_handler) {
+        event_handler.Run(BluetoothChooserEvent::CANCELLED, std::string());
+        return std::make_unique<BluetoothChooser>();
+      });
   EXPECT_EQ("device not found", EvalJs(current_frame_host(), R"(
     new Promise(resolve => {
       navigator.bluetooth.requestDevice({
@@ -3922,17 +4098,112 @@ IN_PROC_BROWSER_TEST_F(BluetoothForwardCacheBrowserTest, WebBluetooth) {
       .catch(() => resolve("device not found"))
     });
   )"));
-  auto reason = BackForwardCacheDisable::DisabledReason(
-      BackForwardCacheDisable::DisabledReasonId::kWebBluetooth);
-  EXPECT_TRUE(tester.IsDisabledForFrameWithReason(
-      current_frame_host()->GetProcess()->GetID(),
-      current_frame_host()->GetRoutingID(), reason));
 
+  // Navigate away.
   ASSERT_TRUE(NavigateToURL(web_contents(),
                             https_server()->GetURL("b.test", "/title1.html")));
+
+  // The page called requestDevice so it should be deleted.
+  EXPECT_TRUE(rfh_wrapper.WaitUntilRenderFrameDeleted());
+
+  // Go back.
   ASSERT_TRUE(HistoryGoBack(web_contents()));
-  ExpectNotRestored({NotRestoredReason::kDisableForRenderFrameHostCalled}, {},
-                    {}, {reason}, {}, FROM_HERE);
+  ExpectNotRestored(
+      {NotRestoredReason::kBlocklistedFeatures},
+      {blink::scheduler::WebSchedulerTrackedFeature::kWebBluetooth}, {}, {}, {},
+      FROM_HERE);
+}
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheWebBluetoothTest,
+                       DoesNotCacheIfGetDevicesWasCalled) {
+  // WebBluetooth requires HTTPS.
+  ASSERT_TRUE(CreateHttpsServer()->Start());
+
+  // Navigate to an empty page.
+  ASSERT_TRUE(NavigateToURL(
+      web_contents(),
+      https_server()->GetURL("a.test", "/back_forward_cache/empty.html")));
+  RenderFrameHostWrapper rfh_a(current_frame_host());
+
+  // Call getDevices to get a list of devices the page is allowed to access.
+  EXPECT_TRUE(ExecJs(current_frame_host(), "navigator.bluetooth.getDevices()"));
+
+  // Navigate away.
+  ASSERT_TRUE(NavigateToURL(web_contents(),
+                            https_server()->GetURL("b.test", "/title1.html")));
+
+  // The page called getDevices so it should be deleted.
+  EXPECT_TRUE(rfh_a.WaitUntilRenderFrameDeleted());
+
+  // Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectNotRestored(
+      {NotRestoredReason::kBlocklistedFeatures},
+      {blink::scheduler::WebSchedulerTrackedFeature::kWebBluetooth}, {}, {}, {},
+      FROM_HERE);
+}
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheWebBluetoothTest,
+                       DoesNotCacheIfScanningWasStarted) {
+  // WebBluetooth requires HTTPS.
+  ASSERT_TRUE(CreateHttpsServer()->Start());
+
+  // Navigate to an empty page.
+  ASSERT_TRUE(NavigateToURL(
+      web_contents(),
+      https_server()->GetURL("a.test", "/back_forward_cache/empty.html")));
+  RenderFrameHostWrapper rfh_a(current_frame_host());
+
+  // Call requestLEScan to start scanning for nearby devices.
+  EXPECT_EQ("scan error", EvalJs(current_frame_host(),
+                                 R"(
+    new Promise(resolve => {
+      navigator.bluetooth.requestLEScan({acceptAllAdvertisements: true})
+      .then(() => resolve("scan started"))
+      .catch(() => resolve("scan error"))
+    });
+  )"));
+
+  // Navigate away.
+  ASSERT_TRUE(NavigateToURL(web_contents(),
+                            https_server()->GetURL("b.test", "/title1.html")));
+
+  // The page started scanning so it should be deleted.
+  EXPECT_TRUE(rfh_a.WaitUntilRenderFrameDeleted());
+
+  // Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectNotRestored(
+      {NotRestoredReason::kBlocklistedFeatures},
+      {blink::scheduler::WebSchedulerTrackedFeature::kWebBluetooth}, {}, {}, {},
+      FROM_HERE);
+}
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheWebBluetoothTest,
+                       DoesCacheIfGetAvailabilityWasCalled) {
+  // WebBluetooth requires HTTPS.
+  ASSERT_TRUE(CreateHttpsServer()->Start());
+
+  // Navigate to an empty page.
+  GURL url(https_server()->GetURL("a.test", "/back_forward_cache/empty.html"));
+  ASSERT_TRUE(NavigateToURL(web_contents(), url));
+  RenderFrameHostWrapper rfh_a(current_frame_host());
+
+  // Call getAvailability to check for a Bluetooth adapter.
+  EXPECT_TRUE(
+      ExecJs(current_frame_host(), "navigator.bluetooth.getAvailability()"));
+
+  // Navigate away.
+  ASSERT_TRUE(NavigateToURL(web_contents(),
+                            https_server()->GetURL("b.test", "/title1.html")));
+  ASSERT_FALSE(rfh_a.IsDestroyed());
+  EXPECT_TRUE(
+      static_cast<RenderFrameHostImpl*>(rfh_a.get())->IsInBackForwardCache());
+
+  // Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  EXPECT_EQ(current_frame_host(), rfh_a.get());
+  ExpectRestored(FROM_HERE);
 }
 
 enum class SerialContext {
@@ -4050,7 +4321,7 @@ IN_PROC_BROWSER_TEST_P(BackForwardCacheBrowserWebUsbTest, Serials) {
           ? BackForwardCacheDisable::DisabledReasonId::kSerial
           : BackForwardCacheDisable::DisabledReasonId::kWebUSB;
   EXPECT_TRUE(tester.IsDisabledForFrameWithReason(
-      main_rfh->GetProcess()->GetID(), main_rfh->GetRoutingID(),
+      main_rfh->GetProcess()->GetDeprecatedID(), main_rfh->GetRoutingID(),
       BackForwardCacheDisable::DisabledReason(expected_reason)));
 }
 
@@ -4111,12 +4382,13 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, AudioSuspendAndResume) {
     EXPECT_EQ(u"canplaythrough", title_watcher.WaitAndGetTitle());
   }
 
-  EXPECT_TRUE(ExecJs(rfh_a, R"(
+  EXPECT_EQ(42, EvalJs(rfh_a, R"(
     new Promise(async resolve => {
       audio.play();
-      while (audio.currentTime === 0)
+      while (audio.currentTime === 0) {
         await new Promise(r => setTimeout(r, 1));
-      resolve();
+      }
+      resolve(42);
     });
   )"));
 
@@ -4200,12 +4472,12 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, VideoSuspendAndResume) {
     EXPECT_EQ(u"canplaythrough", title_watcher.WaitAndGetTitle());
   }
 
-  EXPECT_TRUE(ExecJs(rfh_a, R"(
+  EXPECT_EQ(42, EvalJs(rfh_a, R"(
     new Promise(async resolve => {
       video.play();
       while (video.currentTime == 0)
         await new Promise(r => setTimeout(r, 1));
-      resolve();
+      resolve(42);
     });
   )"));
 
@@ -4918,6 +5190,214 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, WebLocksNotCached) {
                     {}, {}, {}, FROM_HERE);
 }
 
+enum TestAuthenticatorBehavior {
+  kErrorOut,
+  kStallRequest,
+};
+
+// An implementation of blink::mojom::Authenticator that stalls all requests.
+class TestAuthenticator : public blink::mojom::Authenticator {
+ public:
+  explicit TestAuthenticator(TestAuthenticatorBehavior behavior)
+      : behavior_(behavior) {
+    OverrideAuthenticatorBinderForTesting(base::BindRepeating(
+        &TestAuthenticator::BindAuthenticator, base::Unretained(this)));
+  }
+
+  ~TestAuthenticator() override {
+    OverrideVibrationManagerBinderForTesting(base::NullCallback());
+  }
+
+  void BindAuthenticator(
+      mojo::PendingReceiver<blink::mojom::Authenticator> receiver) {
+    receiver_.Bind(std::move(receiver));
+  }
+
+ private:
+  // blink::mojom::Authenticator:
+  void MakeCredential(
+      blink::mojom::PublicKeyCredentialCreationOptionsPtr options,
+      MakeCredentialCallback callback) override {
+    if (behavior_ == kStallRequest) {
+      pending_make_credential_callback_ = std::move(callback);
+    } else {
+      std::move(callback).Run(blink::mojom::AuthenticatorStatus::ABORT_ERROR,
+                              nullptr, nullptr);
+    }
+  }
+  void GetCredential(blink::mojom::PublicKeyCredentialRequestOptionsPtr options,
+                     GetCredentialCallback callback) override {
+    if (behavior_ == kStallRequest) {
+      pending_get_credential_callback_ = std::move(callback);
+    } else {
+      auto get_assertion_response = blink::mojom::GetAssertionResponse::New(
+          blink::mojom::AuthenticatorStatus::ABORT_ERROR, nullptr, nullptr);
+      auto get_credential_response =
+          blink::mojom::GetCredentialResponse::NewGetAssertionResponse(
+              std::move(get_assertion_response));
+      std::move(callback).Run(std::move(get_credential_response));
+    }
+  }
+  void GetClientCapabilities(GetClientCapabilitiesCallback callback) override {}
+  void Report(blink::mojom::PublicKeyCredentialReportOptionsPtr options,
+              ReportCallback callback) override {}
+  void IsUserVerifyingPlatformAuthenticatorAvailable(
+      IsUserVerifyingPlatformAuthenticatorAvailableCallback callback) override {
+  }
+  void IsConditionalMediationAvailable(
+      IsConditionalMediationAvailableCallback callback) override {}
+  void Cancel() override {}
+
+  MakeCredentialCallback pending_make_credential_callback_;
+  GetCredentialCallback pending_get_credential_callback_;
+  TestAuthenticatorBehavior behavior_;
+  mojo::Receiver<blink::mojom::Authenticator> receiver_{this};
+};
+
+// Tests that an ongoing WebAuthn get assertion request disables BFcache.
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
+                       WebAuthnGetAssertion_NoCachingDuringRequest) {
+  TestAuthenticator test_authenticator(kStallRequest);
+  ASSERT_TRUE(CreateHttpsServer()->Start());
+  GURL url_a(https_server()->GetURL("a.com", "/title1.html"));
+  GURL url_b(https_server()->GetURL("b.com", "/title1.html"));
+
+  // 1) Navigate to A.
+  ASSERT_TRUE(NavigateToURL(shell(), url_a));
+  RenderFrameHostImplWrapper rfh_a(current_frame_host());
+
+  // Leave a WebAuthn get assertion request pending.
+  EXPECT_TRUE(ExecJs(rfh_a.get(), R"(
+    navigator.credentials.get({ publicKey: {
+      challenge: new TextEncoder().encode("speedrun a game"),
+      userVerification: "discouraged",
+      allowCredentials: [{type: "public-key", id: Uint8Array.from([1, 2, 3])}],
+    }});
+  )",
+                     EXECUTE_SCRIPT_NO_RESOLVE_PROMISES));
+
+  // 2) Navigate to B.
+  ASSERT_TRUE(NavigateToURL(shell(), url_b));
+
+  // - Page A should not be in the cache.
+  ASSERT_TRUE(rfh_a.WaitUntilRenderFrameDeleted());
+
+  // 3) Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectNotRestored(
+      {NotRestoredReason::kBlocklistedFeatures},
+      {blink::scheduler::WebSchedulerTrackedFeature::kWebAuthentication}, {},
+      {}, {}, FROM_HERE);
+}
+
+// Tests that after a WebAuthn get assertion request completes, BFcache is not
+// disabled.
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
+                       WebAuthnGetAssertion_CacheAfterRequest) {
+  TestAuthenticator test_authenticator(kErrorOut);
+  ASSERT_TRUE(CreateHttpsServer()->Start());
+  GURL url_a(https_server()->GetURL("a.com", "/title1.html"));
+  GURL url_b(https_server()->GetURL("b.com", "/title1.html"));
+
+  // 1) Navigate to A.
+  ASSERT_TRUE(NavigateToURL(shell(), url_a));
+  RenderFrameHostImplWrapper rfh_a(current_frame_host());
+
+  // Complete a WebAuthn get assertion request.
+  EXPECT_TRUE(ExecJs(rfh_a.get(), R"(
+    navigator.credentials.get({ publicKey: {
+      challenge: new TextEncoder().encode("speedrun a game"),
+      userVerification: "discouraged",
+      allowCredentials: [{type: "public-key", id: Uint8Array.from([1, 2, 3])}],
+    }}).catch(() => {});
+  )"));
+
+  // 2) Navigate to B.
+  ASSERT_TRUE(NavigateToURL(shell(), url_b));
+
+  // 3) Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectRestored(FROM_HERE);
+}
+
+// Tests that an ongoing WebAuthn make credential request disables BFcache.
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
+                       WebAuthnMakeCredential_NoCachingDuringRequest) {
+  TestAuthenticator test_authenticator(kStallRequest);
+  ASSERT_TRUE(CreateHttpsServer()->Start());
+  GURL url_a(https_server()->GetURL("a.com", "/title1.html"));
+  GURL url_b(https_server()->GetURL("b.com", "/title1.html"));
+
+  // 1) Navigate to A.
+  ASSERT_TRUE(NavigateToURL(shell(), url_a));
+  RenderFrameHostImplWrapper rfh_a(current_frame_host());
+
+  // Leave a WebAuthn make credential request pending.
+  EXPECT_TRUE(ExecJs(rfh_a.get(), R"(
+    navigator.credentials.create({ publicKey: {
+      challenge: new TextEncoder().encode("speedrun a game"),
+      userVerification: "discouraged",
+      rp: { name: "Acme"},
+      user: {
+        id: new TextEncoder().encode("1234"),
+        name: "fox",
+        displayName: "Fox McCloud"
+      },
+      pubKeyCredParams: [{ type: "public-key", alg: -7}],
+    }});
+  )",
+                     EXECUTE_SCRIPT_NO_RESOLVE_PROMISES));
+
+  // 2) Navigate to B.
+  ASSERT_TRUE(NavigateToURL(shell(), url_b));
+
+  // - Page A should not be in the cache.
+  ASSERT_TRUE(rfh_a.WaitUntilRenderFrameDeleted());
+
+  // 3) Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectNotRestored(
+      {NotRestoredReason::kBlocklistedFeatures},
+      {blink::scheduler::WebSchedulerTrackedFeature::kWebAuthentication}, {},
+      {}, {}, FROM_HERE);
+}
+
+// Tests that after a WebAuthn make credential request completes, BFcache is not
+// disabled.
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
+                       WebAuthnMakeCredential_CacheAfterRequest) {
+  TestAuthenticator test_authenticator(kErrorOut);
+  ASSERT_TRUE(CreateHttpsServer()->Start());
+  GURL url_a(https_server()->GetURL("a.com", "/title1.html"));
+  GURL url_b(https_server()->GetURL("b.com", "/title1.html"));
+
+  // 1) Navigate to A.
+  ASSERT_TRUE(NavigateToURL(shell(), url_a));
+  RenderFrameHostImplWrapper rfh_a(current_frame_host());
+
+  // Leave a WebAuthn make credential request pending.
+  EXPECT_TRUE(ExecJs(rfh_a.get(), R"(
+    navigator.credentials.create({ publicKey: {
+      challenge: new TextEncoder().encode("speedrun a game"),
+      userVerification: "discouraged",
+      rp: { name: "Acme"},
+      user: {
+        id: new TextEncoder().encode("1234"),
+        name: "fox",
+        displayName: "Fox McCloud"
+      },
+      pubKeyCredParams: [{ type: "public-key", alg: -7}],
+    }}).catch(() => {});
+  )"));
+
+  // 2) Navigate to B.
+  ASSERT_TRUE(NavigateToURL(shell(), url_b));
+
+  // 3) Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectRestored(FROM_HERE);
+}
+
 // TODO(crbug.com/40937711): Reenable. This is flaky because we block on
 // the permission request, not on API usage.
 IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest, DISABLED_WebMidiNotCached) {
@@ -5027,11 +5507,11 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
   RenderFrameDeletedObserver delete_observer_rfh_a(rfh_a);
 
   // 2) Start SpeechRecognition.
-  EXPECT_TRUE(ExecJs(rfh_a, R"(
+  EXPECT_EQ(42, EvalJs(rfh_a, R"(
     new Promise(async resolve => {
-    var r = new webkitSpeechRecognition();
-    r.start();
-    resolve();
+      var r = new webkitSpeechRecognition();
+      r.start();
+      resolve(42);
     });
   )"));
 
@@ -5061,10 +5541,10 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
   RenderFrameDeletedObserver delete_observer_rfh_a(rfh_a);
 
   // 2) Initialise SpeechRecognition but don't start it yet.
-  EXPECT_TRUE(ExecJs(rfh_a, R"(
+  EXPECT_EQ(42, EvalJs(rfh_a, R"(
     new Promise(async resolve => {
-    var r = new webkitSpeechRecognition();
-    resolve();
+      var r = new webkitSpeechRecognition();
+      resolve(42);
     });
   )"));
 
@@ -5100,11 +5580,11 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
   EXPECT_TRUE(NavigateToURL(shell(), url_a));
   RenderFrameHostImplWrapper rfh_a(current_frame_host());
 
-  EXPECT_TRUE(ExecJs(rfh_a.get(), R"(
+  EXPECT_EQ(42, EvalJs(rfh_a.get(), R"(
     new Promise(async resolve => {
-    var u = new SpeechSynthesisUtterance(" ");
-    speechSynthesis.speak(u);
-    resolve();
+      var u = new SpeechSynthesisUtterance(" ");
+      speechSynthesis.speak(u);
+      resolve(42);
     });
   )"));
 
@@ -5152,7 +5632,7 @@ IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTest,
   auto reason = BackForwardCacheDisable::DisabledReason(
       BackForwardCacheDisable::DisabledReasonId::kFileChooser);
   EXPECT_TRUE(tester.IsDisabledForFrameWithReason(
-      rfh_a->GetProcess()->GetID(), rfh_a->GetRoutingID(), reason));
+      rfh_a->GetProcess()->GetDeprecatedID(), rfh_a->GetRoutingID(), reason));
 
   // 5) Navigate to B having the file chooser open.
   EXPECT_TRUE(NavigateToURL(shell(), url_b));
@@ -5420,5 +5900,95 @@ IN_PROC_BROWSER_TEST_F(
   ExpectNotRestored({NotRestoredReason::kDisableForRenderFrameHostCalled}, {},
                     {}, {reason}, {}, FROM_HERE);
 }
+
+#if BUILDFLAG(ENABLE_VR)
+
+class BackForwardCacheBrowserTestWithWebXr
+    : public BackForwardCacheBrowserTest {
+ protected:
+  void SetUpCommandLine(base::CommandLine* command_line) override {
+    EnableFeatureAndSetParams(features::kWebXr, "", "");
+    BackForwardCacheBrowserTest::SetUpCommandLine(command_line);
+  }
+};
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithWebXr,
+                       DoesCacheIfXrAttributeWasAccessed) {
+  CreateHttpsServer();
+  ASSERT_TRUE(https_server()->Start());
+
+  // 1) Navigate to an empty page.
+  EXPECT_TRUE(
+      NavigateToURL(shell(), https_server()->GetURL("a.com", "/title1.html")));
+  RenderFrameHostImplWrapper rfh_a(current_frame_host());
+
+  // Access navigator.xr without calling any methods.
+  EXPECT_TRUE(ExecJs(rfh_a.get(), "navigator.xr"));
+
+  // 2) Navigate away.
+  EXPECT_TRUE(
+      NavigateToURL(shell(), https_server()->GetURL("b.com", "/title1.html")));
+  EXPECT_TRUE(rfh_a->IsInBackForwardCache());
+
+  // 3) Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  EXPECT_EQ(rfh_a.get(), current_frame_host());
+  ExpectRestored(FROM_HERE);
+}
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithWebXr,
+                       DoesNotCacheIfXrIsSessionSupportedWasCalled) {
+  CreateHttpsServer();
+  ASSERT_TRUE(https_server()->Start());
+
+  // 1) Navigate to an empty page.
+  EXPECT_TRUE(
+      NavigateToURL(shell(), https_server()->GetURL("a.com", "/title1.html")));
+  RenderFrameHostImplWrapper rfh_a(current_frame_host());
+
+  // Call isSessionSupported.
+  EXPECT_TRUE(ExecJs(rfh_a.get(), "navigator.xr.isSessionSupported('inline')"));
+
+  // 2) Navigate away.
+  EXPECT_TRUE(
+      NavigateToURL(shell(), https_server()->GetURL("b.com", "/title1.html")));
+
+  // The page called a WebXR method so it should be deleted.
+  EXPECT_TRUE(rfh_a.WaitUntilRenderFrameDeleted());
+
+  // 3) Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectNotRestored({NotRestoredReason::kBlocklistedFeatures},
+                    {blink::scheduler::WebSchedulerTrackedFeature::kWebXR}, {},
+                    {}, {}, FROM_HERE);
+}
+
+IN_PROC_BROWSER_TEST_F(BackForwardCacheBrowserTestWithWebXr,
+                       DoesNotCacheIfXrRequestSessionWasCalled) {
+  CreateHttpsServer();
+  ASSERT_TRUE(https_server()->Start());
+
+  // 1) Navigate to an empty page.
+  EXPECT_TRUE(
+      NavigateToURL(shell(), https_server()->GetURL("a.com", "/title1.html")));
+  RenderFrameHostImplWrapper rfh_a(current_frame_host());
+
+  // Call requestSession.
+  EXPECT_TRUE(ExecJs(rfh_a.get(), "navigator.xr.requestSession('inline')"));
+
+  // 2) Navigate away.
+  EXPECT_TRUE(
+      NavigateToURL(shell(), https_server()->GetURL("b.com", "/title1.html")));
+
+  // The page called a WebXR method so it should be deleted.
+  EXPECT_TRUE(rfh_a.WaitUntilRenderFrameDeleted());
+
+  // 3) Go back.
+  ASSERT_TRUE(HistoryGoBack(web_contents()));
+  ExpectNotRestored({NotRestoredReason::kBlocklistedFeatures},
+                    {blink::scheduler::WebSchedulerTrackedFeature::kWebXR}, {},
+                    {}, {}, FROM_HERE);
+}
+#endif
 
 }  // namespace content

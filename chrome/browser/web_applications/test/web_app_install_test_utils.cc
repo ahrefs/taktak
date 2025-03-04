@@ -6,11 +6,14 @@
 
 #include "base/command_line.h"
 #include "base/containers/enum_set.h"
+#include "base/functional/bind.h"
 #include "base/run_loop.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/bind.h"
 #include "base/test/test_future.h"
 #include "build/build_config.h"
+#include "chrome/browser/apps/app_service/app_registry_cache_waiter.h"
+#include "chrome/browser/apps/app_service/app_service_proxy_factory.h"
 #include "chrome/browser/web_applications/mojom/user_display_mode.mojom.h"
 #include "chrome/browser/web_applications/os_integration/os_integration_manager.h"
 #include "chrome/browser/web_applications/os_integration/os_integration_test_override.h"
@@ -24,14 +27,18 @@
 #include "chrome/browser/web_applications/web_app_install_info.h"
 #include "chrome/browser/web_applications/web_app_install_params.h"
 #include "chrome/browser/web_applications/web_app_install_utils.h"
+#include "chrome/browser/web_applications/web_app_management_type.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
 #include "chrome/browser/web_applications/web_app_registrar.h"
 #include "chrome/common/buildflags.h"
 #include "chrome/common/chrome_switches.h"
+#include "components/services/app_service/public/cpp/app_types.h"
+#include "components/services/app_service/public/cpp/types_util.h"
 #include "components/webapps/browser/install_result_code.h"
 #include "components/webapps/browser/installable/installable_metrics.h"
 #include "components/webapps/browser/uninstall_result_code.h"
 #include "testing/gtest/include/gtest/gtest.h"
+#include "third_party/blink/public/mojom/manifest/display_mode.mojom-shared.h"
 #include "url/gurl.h"
 
 namespace web_app {
@@ -90,14 +97,15 @@ webapps::AppId InstallWebApp(Profile* profile,
                              std::unique_ptr<WebAppInstallInfo> web_app_info,
                              bool overwrite_existing_manifest_fields,
                              webapps::WebappInstallSource install_source) {
-  // Use InstallShortcut for Create Shortcut install source.
-  CHECK_NE(install_source, webapps::WebappInstallSource::MENU_CREATE_SHORTCUT);
-
   // The sync system requires that sync entity name is never empty.
   if (web_app_info->title.empty())
     web_app_info->title = u"WebAppInstallInfo App Name";
 
-  webapps::AppId app_id;
+  // Ensure web apps can never be installed with an empty scope.
+  if (web_app_info->scope.is_empty()) {
+    web_app_info->scope = web_app_info->start_url().GetWithoutFilename();
+  }
+
   base::test::TestFuture<const webapps::AppId&, webapps::InstallResultCode>
       future;
   auto* provider = WebAppProvider::GetForTest(profile);
@@ -140,7 +148,13 @@ webapps::AppId InstallWebApp(Profile* profile,
   // Allow updates to be published to App Service listeners.
   base::RunLoop().RunUntilIdle();
 
-  return future.Get<webapps::AppId>();
+  webapps::AppId app_id = future.Get<webapps::AppId>();
+  if (apps::AppServiceProxyFactory::IsAppServiceAvailableForProfile(profile)) {
+    apps::AppReadinessWaiter(profile, app_id,
+                             base::BindRepeating(apps_util::IsInstalled))
+        .Await();
+  }
+  return app_id;
 }
 
 webapps::AppId InstallWebAppWithoutOsIntegration(
@@ -171,62 +185,6 @@ webapps::AppId InstallWebAppWithoutOsIntegration(
   // Allow updates to be published to App Service listeners.
   base::RunLoop().RunUntilIdle();
 
-  return future.Get<webapps::AppId>();
-}
-
-webapps::AppId InstallShortcut(Profile* profile,
-                               const std::string& shortcut_name,
-                               const GURL& start_url,
-                               bool create_default_icon,
-                               bool is_policy_install) {
-  auto web_app_info =
-      WebAppInstallInfo::CreateWithStartUrlForTesting(start_url);
-  // Explicitly clear the scope, because this is a shortcut.
-  web_app_info->scope = GURL();
-  web_app_info->title = base::UTF8ToUTF16(shortcut_name);
-  web_app_info->user_display_mode = mojom::UserDisplayMode::kBrowser;
-  if (create_default_icon) {
-    const GeneratedIconsInfo icon_info(
-        IconPurpose::ANY, {web_app::icon_size::k32}, {SK_ColorBLACK});
-    web_app::AddIconsToWebAppInstallInfo(web_app_info.get(), start_url,
-                                         {icon_info});
-  }
-  // The sync system requires that sync entity name is never empty.
-  if (web_app_info->title.empty()) {
-    web_app_info->title = u"WebAppInstallInfo Shortcut Name";
-  }
-
-  base::test::TestFuture<const webapps::AppId&, webapps::InstallResultCode>
-      future;
-  auto* provider = WebAppProvider::GetForTest(profile);
-  DCHECK(provider);
-  WaitUntilReady(provider);
-
-  WebAppInstallParams params;
-#if !BUILDFLAG(IS_CHROMEOS)
-  params.install_state = proto::InstallState::INSTALLED_WITHOUT_OS_INTEGRATION;
-  params.add_to_applications_menu = false;
-  params.add_to_desktop = false;
-  params.add_to_quick_launch_bar = false;
-#endif
-
-  // In unit tests, we do not have Browser or WebContents instances. Hence we
-  // use `InstallFromInfoCommand` instead of `FetchManifestAndInstallCommand` or
-  // `WebAppInstallCommand` to install the web app.
-  provider->scheduler().InstallFromInfoWithParams(
-      std::move(web_app_info), /*overwrite_existing_manifest_fields =*/true,
-      is_policy_install ? webapps::WebappInstallSource::EXTERNAL_POLICY
-                        : webapps::WebappInstallSource::MENU_CREATE_SHORTCUT,
-      future.GetCallback(), params);
-
-  EXPECT_EQ(webapps::InstallResultCode::kSuccessNewInstall,
-            future.Get<webapps::InstallResultCode>());
-
-  // Allow updates to be published to App Service listeners.
-  base::RunLoop().RunUntilIdle();
-
-  CHECK(
-      provider->registrar_unsafe().IsShortcutApp(future.Get<webapps::AppId>()));
   return future.Get<webapps::AppId>();
 }
 

@@ -30,11 +30,8 @@ import org.mockito.junit.MockitoRule;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
-import org.chromium.base.FeatureList;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.CommandLineFlags;
-import org.chromium.base.test.util.Features.DisableFeatures;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
 import org.chromium.chrome.browser.ui.fast_checkout.data.FastCheckoutAutofillProfile;
 import org.chromium.chrome.browser.ui.fast_checkout.data.FastCheckoutCreditCard;
@@ -46,7 +43,6 @@ import org.chromium.ui.modelutil.PropertyModel;
 /** Simple unit tests for the home screen view. */
 @RunWith(BaseRobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
-@DisableFeatures(ChromeFeatureList.AUTOFILL_ENABLE_NEW_CARD_ART_AND_NETWORK_IMAGES)
 @CommandLineFlags.Add({
     ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE,
     ChromeSwitches.DISABLE_NATIVE_INITIALIZATION
@@ -85,11 +81,6 @@ public class FastCheckoutHomeScreenViewTest {
 
     @Before
     public void setUp() {
-        FeatureList.TestValues featureTestValues = new FeatureList.TestValues();
-        featureTestValues.addFeatureFlagOverride(
-                ChromeFeatureList.AUTOFILL_ENABLE_NEW_CARD_ART_AND_NETWORK_IMAGES, false);
-        FeatureList.setTestValues(featureTestValues);
-
         mActivityScenarioRule
                 .getScenario()
                 .onActivity(
@@ -143,7 +134,6 @@ public class FastCheckoutHomeScreenViewTest {
                 equalTo(
                         mHomeScreenView
                                 .getContext()
-                                .getResources()
                                 .getString(
                                         R.string
                                                 .fast_checkout_home_sheet_expand_icon_autofill_profile_description)));
@@ -152,7 +142,6 @@ public class FastCheckoutHomeScreenViewTest {
                 equalTo(
                         mHomeScreenView
                                 .getContext()
-                                .getResources()
                                 .getString(
                                         R.string
                                                 .fast_checkout_home_sheet_expand_icon_credit_card_description)));

@@ -5,6 +5,8 @@
 #ifndef THIRD_PARTY_BLINK_RENDERER_PLATFORM_WIDGET_WIDGET_BASE_H_
 #define THIRD_PARTY_BLINK_RENDERER_PLATFORM_WIDGET_WIDGET_BASE_H_
 
+#include <optional>
+
 #include "base/memory/raw_ptr.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/time/time.h"
@@ -113,8 +115,10 @@ class PLATFORM_EXPORT WidgetBase
   // be called before using the widget.
   void InitializeNonCompositing();
 
-  // Shutdown the compositor.
-  void Shutdown();
+  // Shutdown the compositor. When `delay_release` is true, this detaches
+  // `layer_tree_view_` but delays its actual deletion, so that calling this
+  // function won't block on doing the release in the compositor thread.
+  void Shutdown(bool delay_release);
 
   void DidFirstVisuallyNonEmptyPaint(base::TimeTicks&);
 
@@ -139,6 +143,8 @@ class PLATFORM_EXPORT WidgetBase
   void GetWidgetInputHandler(
       mojo::PendingReceiver<mojom::blink::WidgetInputHandler> request,
       mojo::PendingRemote<mojom::blink::WidgetInputHandlerHost> host) override;
+  void GetWidgetInputHandlerForInputOnViz(
+      mojo::PendingReceiver<mojom::blink::WidgetInputHandler> request) override;
   void ShowContextMenu(ui::mojom::blink::MenuSourceType source_type,
                        const gfx::Point& location) override;
   void BindInputTargetClient(
@@ -160,11 +166,9 @@ class PLATFORM_EXPORT WidgetBase
       mojom::blink::RecordContentToVisibleTimeRequestPtr visible_time_request)
       override;
   void CancelSuccessfulPresentationTimeRequest() override;
-  void SetupRenderInputRouterConnections(
+  void SetupBrowserRenderInputRouterConnections(
       mojo::PendingReceiver<mojom::blink::RenderInputRouterClient>
-          browser_request,
-      mojo::PendingReceiver<mojom::blink::RenderInputRouterClient> viz_request)
-      override;
+          browser_request) override;
 
   // LayerTreeViewDelegate overrides:
   // Applies viewport related properties during a commit from the compositor
@@ -172,7 +176,7 @@ class PLATFORM_EXPORT WidgetBase
   void ApplyViewportChanges(const cc::ApplyViewportChangesArgs& args) override;
   void UpdateCompositorScrollState(
       const cc::CompositorCommitData& commit_data) override;
-  void BeginMainFrame(base::TimeTicks frame_time) override;
+  void BeginMainFrame(const viz::BeginFrameArgs& args) override;
   void OnDeferMainFrameUpdatesChanged(bool) override;
   void OnDeferCommitsChanged(
       bool defer_status,
@@ -324,13 +328,13 @@ class PLATFORM_EXPORT WidgetBase
                       const gfx::Rect& window_screen_rect);
 
   // Returns the visible viewport size.
-  const gfx::Size& VisibleViewportSizeInDIPs() const {
-    return visible_viewport_size_in_dips_;
+  const gfx::Size& VisibleViewportSize() const {
+    return visible_viewport_size_device_px_;
   }
 
   // Set the visible viewport size.
-  void SetVisibleViewportSizeInDIPs(const gfx::Size& size) {
-    visible_viewport_size_in_dips_ = size;
+  void SetVisibleViewportSize(const gfx::Size& size_device_px) {
+    visible_viewport_size_device_px_ = size_device_px;
   }
 
   // Some touch start which can trigger pointerdown will not be sent to the main
@@ -397,6 +401,11 @@ class PLATFORM_EXPORT WidgetBase
 
   bool WillBeDestroyed() const { return will_be_destroyed_; }
 
+  void OnDevToolsSessionConnectionChanged(bool attached);
+
+  // Helper to get the non-emulated device scale factor.
+  float GetOriginalDeviceScaleFactor() const;
+
  private:
   static void AssertAreCompatible(const WidgetBase& a, const WidgetBase& b);
 
@@ -423,9 +432,6 @@ class PLATFORM_EXPORT WidgetBase
   // Called after the delay given in `RequestAnimationAfterDelay()`.
   void RequestAnimationAfterDelayTimerFired(TimerBase*);
 
-  // Helper to get the non-emulated device scale factor.
-  float GetOriginalDeviceScaleFactor() const;
-
   // Finishes the call to RequestNewLayerTreeFrameSink() once the
   // |gpu_channel_host| is available.
   // TODO(crbug.com/1278147): Clean up these parameters using either a struct or
@@ -447,9 +453,14 @@ class PLATFORM_EXPORT WidgetBase
       LayerTreeFrameSinkCallback callback,
       scoped_refptr<gpu::GpuChannelHost> gpu_channel_host);
 
-  // Detaches the LayerTreeView from this widget and attaches it to
-  // `new_widget`, if provided.
-  void DisconnectLayerTreeView(WidgetBase* new_widget);
+  // This will do exactly one of these, depending on the params:
+  // - Detaches the LayerTreeView and attaches it to `new_widget`, if set
+  // - Detaches the LayerTreeView without releasing its resources (instead
+  //   this will be done asynchronously after a delay), if `delay_release` is
+  //   true
+  // - Disconnects and releases the LayerTreeView's resources synchronously,
+  //   if `delay_release` is false
+  void DisconnectLayerTreeView(WidgetBase* new_widget, bool delay_release);
 
   // Indicates that we are never visible, so never produce graphical output.
   const bool never_composited_;
@@ -522,9 +533,6 @@ class PLATFORM_EXPORT WidgetBase
   // Stores the current type of composition text rendering of |webwidget_|.
   bool can_compose_inline_ = true;
 
-  // Stores whether the IME should always be hidden for |webwidget_|.
-  bool always_hide_ime_ = false;
-
   // Used to inform didChangeSelection() when it is called in the context
   // of handling a FrameInputHandler::SelectRange IPC.
   bool handling_select_range_ = false;
@@ -561,10 +569,8 @@ class PLATFORM_EXPORT WidgetBase
   // non-zero.
   std::optional<gfx::Rect> pending_window_rect_;
 
-  // The size of the visible viewport (in DIPs).
-  // TODO(dtapuska): Figure out if we can change this to Blink Space.
-  // See https://crbug.com/1131389
-  gfx::Size visible_viewport_size_in_dips_;
+  // The size of the visible viewport (in device pixels).
+  gfx::Size visible_viewport_size_device_px_;
 
   // The AnimationTimeline for smooth scrolls in this widget.
   scoped_refptr<cc::AnimationTimeline> scroll_animation_timeline_;
@@ -592,6 +598,13 @@ class PLATFORM_EXPORT WidgetBase
   // Tracks when the compositing setup for this widget has been torn down or
   // disconnected in preparation to destroy this widget.
   bool will_be_destroyed_ = false;
+
+  // To store Viz side `WidgetInputHandler` receiver in case it arrives before
+  // Browser side. We do not want to start processing messages on this interface
+  // until a WidgetInputHandlerHost is bound which only happens after Browser
+  // side `WidgetInputHandler` call is received.
+  std::optional<mojo::PendingReceiver<mojom::blink::WidgetInputHandler>>
+      pending_widget_input_handler_ = std::nullopt;
 
   base::WeakPtrFactory<WidgetBase> weak_ptr_factory_{this};
 };

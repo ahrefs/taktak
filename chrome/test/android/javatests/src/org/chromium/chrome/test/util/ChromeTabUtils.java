@@ -31,6 +31,7 @@ import org.chromium.chrome.browser.tab.TabHidingType;
 import org.chromium.chrome.browser.tab.TabLaunchType;
 import org.chromium.chrome.browser.tab.TabSelectionType;
 import org.chromium.chrome.browser.tab.TabWebContentsObserver;
+import org.chromium.chrome.browser.tabmodel.TabClosureParams;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
 import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.browser.tabmodel.TabModelObserver;
@@ -266,9 +267,9 @@ public class ChromeTabUtils {
 
     private static String tabDebugInfo(final Tab tab, @Nullable final String url) {
         WebContents webContents = tab.getWebContents();
-        boolean shouldShowLoadingUI = false;
+        boolean shouldShowLoadingUi = false;
         if (webContents != null) {
-            shouldShowLoadingUI =
+            shouldShowLoadingUi =
                     ThreadUtils.runOnUiThreadBlocking(() -> webContents.shouldShowLoadingUI());
         }
         return String.format(
@@ -281,17 +282,17 @@ public class ChromeTabUtils {
                 Math.round(100 * tab.getProgress()),
                 tab.isLoading(),
                 webContents != null,
-                shouldShowLoadingUI);
+                shouldShowLoadingUi);
     }
 
     /**
      * Waits for the given tab to start loading its current page.
      *
      * @param tab The tab to wait for the page loading to be started.
-     * @param expectedUrl The expected url of the started page load.  Pass in null if starting
-     *                    any load is sufficient.
-     * @param loadTrigger The trigger action that will result in a page load started event
-     *                    to be fired (not run on the UI thread by default).
+     * @param expectedUrl The expected url of the started page load. Pass in null if starting any
+     *     load is sufficient.
+     * @param loadTrigger The trigger action that will result in a page load started event to be
+     *     fired (not run on the UI thread by default).
      */
     public static void waitForTabPageLoadStart(
             final Tab tab, @Nullable final String expectedUrl, Runnable loadTrigger) {
@@ -615,8 +616,15 @@ public class ChromeTabUtils {
                                 new Runnable() {
                                     @Override
                                     public void run() {
-                                        TabModelUtils.closeCurrentTab(
-                                                activity.getCurrentTabModel());
+                                        TabModel model = activity.getCurrentTabModel();
+                                        Tab tab = TabModelUtils.getCurrentTab(model);
+                                        if (tab == null) return;
+                                        model.getTabRemover()
+                                                .closeTabs(
+                                                        TabClosureParams.closeTab(tab)
+                                                                .allowUndo(false)
+                                                                .build(),
+                                                        /* allowDialog= */ false);
                                     }
                                 });
                     }
@@ -691,7 +699,15 @@ public class ChromeTabUtils {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    tabModelSelectorSupplier.get().closeAllTabs();
+                    TabClosureParams params =
+                            TabClosureParams.closeAllTabs().uponExit(false).build();
+                    TabModelSelector selector = tabModelSelectorSupplier.get();
+                    selector.getModel(false)
+                            .getTabRemover()
+                            .closeTabs(params, /* allowDialog= */ false);
+                    selector.getModel(true)
+                            .getTabRemover()
+                            .closeTabs(params, /* allowDialog= */ false);
                 });
 
         try {
@@ -781,15 +797,6 @@ public class ChromeTabUtils {
     }
 
     /**
-     * @param tab The tab to retrieve Root ID for.
-     * @return the Root ID for a supplied tab object.
-     */
-    public static int getRootId(Tab tab) {
-        Assert.assertTrue(ThreadUtils.runningOnUiThread());
-        return tab.getRootId();
-    }
-
-    /**
      * Groups together two tabs.
      * @param tab1 First tab to group.
      * @param tab2 Second tab to group.
@@ -805,7 +812,7 @@ public class ChromeTabUtils {
                         .getTabGroupModelFilter(tab1.isIncognito());
 
         filter.mergeTabsToGroup(tab1.getId(), tab2.getId());
-        Assert.assertEquals(getRootId(tab1), getRootId(tab2));
+        Assert.assertEquals(tab1.getRootId(), tab2.getRootId());
     }
 
     /**

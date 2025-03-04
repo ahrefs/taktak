@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -18,7 +19,6 @@
 #include "base/memory/raw_ptr.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
-#include "base/ranges/ranges.h"
 #include "base/strings/utf_offset_string_conversions.h"
 #include "build/build_config.h"
 #include "components/omnibox/browser/actions/omnibox_action_concepts.h"
@@ -47,7 +47,6 @@
 
 class AutocompleteProvider;
 class OmniboxAction;
-class SuggestionAnswer;
 class TemplateURL;
 class TemplateURLService;
 
@@ -212,6 +211,15 @@ struct AutocompleteMatch {
     DOCUMENT_TYPE_SIZE
   };
 
+  // Enterprise search aggregator subtype, for suggestions from the
+  // EnterpriseSearchAggregatorProvider provider.
+  enum class EnterpriseSearchAggregatorType {
+    NONE = 0,
+    QUERY,
+    PEOPLE,
+    CONTENT,
+  };
+
   // These values are persisted to logs. Entries should not be renumbered and
   // numeric values should never be reused.
   enum class RichAutocompletionType {
@@ -297,8 +305,9 @@ struct AutocompleteMatch {
 #endif
 
 #if (!BUILDFLAG(IS_ANDROID) || BUILDFLAG(ENABLE_VR)) && !BUILDFLAG(IS_IOS)
-  // Converts SuggestionAnswer::AnswerType to an answer vector icon.
-  static const gfx::VectorIcon& AnswerTypeToAnswerIcon(int type);
+  // Converts omnibox::AnswerType to an answer vector icon.
+  static const gfx::VectorIcon& AnswerTypeToAnswerIcon(
+      omnibox::AnswerType type);
 
   // Gets the vector icon identifier for the icon to be shown for this match. If
   // `is_bookmark` is true, returns a bookmark icon rather than what the type
@@ -432,15 +441,11 @@ struct AutocompleteMatch {
   // - If the match's keyword is known, it can be provided in `keyword`.
   //   Otherwise, it can be left empty and the template URL (if any) is
   //   determined from the destination's hostname.
-  // - If `normalize_search_terms` is true, the search terms in the final URL
-  //   will be converted to lowercase with extra whitespace characters
-  //   collapsed.
   static GURL GURLToStrippedGURL(const GURL& url,
                                  const AutocompleteInput& input,
                                  const TemplateURLService* template_url_service,
                                  const std::u16string& keyword,
-                                 const bool keep_search_intent_params,
-                                 const bool normalize_search_terms);
+                                 const bool keep_search_intent_params);
 
   // Sets the |match_in_scheme| and |match_in_subdomain| flags based on the
   // provided |url| and list of substring |match_positions|. |match_positions|
@@ -696,7 +701,7 @@ struct AutocompleteMatch {
   template <typename UnaryPredicate>
   bool MatchOrDuplicateMeets(UnaryPredicate predicate) const {
     return predicate(*this) ||
-           base::ranges::any_of(duplicate_matches, std::move(predicate));
+           std::ranges::any_of(duplicate_matches, std::move(predicate));
   }
 
   // Finds first action where `predicate` returns true. This is a special use
@@ -704,7 +709,7 @@ struct AutocompleteMatch {
   // need to be selected. If no such action is found, returns nullptr.
   template <typename UnaryPredicate>
   OmniboxAction* GetActionWhere(UnaryPredicate predicate) const {
-    auto it = base::ranges::find_if(actions, std::move(predicate));
+    auto it = std::ranges::find_if(actions, std::move(predicate));
     return it != actions.end() ? it->get() : nullptr;
   }
 
@@ -796,10 +801,16 @@ struct AutocompleteMatch {
   // for how headers should be represented.
   std::string extra_headers;
 
-  // Optional image information. Used for entity suggestions. The dominant color
-  // can be used to paint the image placeholder while fetching the image.
+  // Optional image information. Used for some types of suggestions, such as
+  // entity suggestions, that want to display an associated image, which will be
+  // rendered larger than a regular suggestion icon. The dominant color can be
+  // used to paint the image placeholder while fetching the image.
   std::string image_dominant_color;
   GURL image_url;
+
+  // Optional icon URL. Providers may set this to override the default icon for
+  // the match.
+  GURL icon_url;
 
   // Optional entity id for entity suggestions. Empty string means no entity ID.
   // This is not meant for display, but internal use only. The actual UI display
@@ -810,8 +821,12 @@ struct AutocompleteMatch {
   // URI.
   std::string website_uri;
 
-  // Optional override to use for types that specify an icon sub-type.
+  // Used for document suggestions to show the mime-corresponding icons.
   DocumentType document_type = DocumentType::NONE;
+
+  // Used for enterprise search aggregator suggestions for grouping.
+  EnterpriseSearchAggregatorType enterprise_search_aggregator_type =
+      EnterpriseSearchAggregatorType::NONE;
 
   // Holds the common part of tail suggestion. Used to indent the contents.
   // Can't simply store the character length of the string, as different
@@ -850,9 +865,6 @@ struct AutocompleteMatch {
   // If true, UI-level code should swap the contents and description fields
   // before displaying.
   bool swap_contents_and_description = false;
-
-  // A rich-format version of the display for the dropdown.
-  std::optional<SuggestionAnswer> answer;
 
   std::optional<omnibox::RichAnswerTemplate> answer_template;
 
@@ -921,7 +933,14 @@ struct AutocompleteMatch {
   // it!
   std::u16string keyword;
 
-  // Set in matches originating from keyword results.
+  // Set in matches originating in keyword mode. `from_keyword` can be true even
+  // if `keyword` is empty and vice versa. `from_keyword` basically means the
+  // user input is in keyword mode. `!keyword.empty()` basically means the match
+  // was generated using a template URL.
+  //
+  // CAUTION: Not consistently set by all providers. That's fine-ish since this
+  // field isn't used much. But code relying on this feature to be correctly set
+  // should take care.
   bool from_keyword = false;
 
   // The visible actions relevant to this match.
@@ -990,6 +1009,12 @@ struct AutocompleteMatch {
   // their contents/description text.
   std::u16string iph_link_text;
   GURL iph_link_url;
+
+  // The text to show above the match contents & description for
+  // `HISTORY_EMBEDDINGS_ANSWER` matches.
+  std::u16string history_embeddings_answer_header_text;
+  // Whether the answer is still loading and should therefore show a throbber.
+  bool history_embeddings_answer_header_loading = false;
 
   // The user feedback on the match.
   FeedbackType feedback_type = FeedbackType::kNone;

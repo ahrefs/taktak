@@ -30,6 +30,7 @@
 #include "chrome/updater/updater_branding.h"
 #include "chrome/updater/updater_version.h"
 #include "chrome/updater/util/util.h"
+#include "components/policy/core/common/policy_types.h"
 #include "components/update_client/network.h"
 #include "url/gurl.h"
 
@@ -72,8 +73,6 @@ class DefaultConfigurator : public DMClient::Configurator {
       : server_url_(server_url),
         policy_service_proxy_configuration_(
             std::move(policy_service_proxy_configuration)) {}
-
-  ~DefaultConfigurator() override = default;
 
   GURL GetDMServerUrl() const override { return server_url_; }
 
@@ -387,6 +386,7 @@ void DMClient::RegisterDevice(
 }
 
 void DMClient::FetchPolicy(
+    policy::PolicyFetchReason reason,
     std::unique_ptr<Configurator> config,
     scoped_refptr<device_management_storage::DMStorage> storage,
     PolicyFetchCallback callback) {
@@ -403,8 +403,8 @@ void DMClient::FetchPolicy(
   auto dm_fetch = base::MakeRefCounted<DMFetch>(std::move(config), storage);
   std::unique_ptr<device_management_storage::CachedPolicyInfo> cached_info =
       dm_fetch->storage()->GetCachedPolicyInfo();
-  const std::string request_data =
-      GetPolicyFetchRequestData(kGoogleUpdateMachineLevelApps, *cached_info);
+  const std::string request_data = GetPolicyFetchRequestData(
+      reason, kGoogleUpdateMachineLevelApps, *cached_info);
   dm_fetch->PostRequest(
       kPolicyFetchRequestType, DMFetch::TokenType::kDMToken, request_data,
       base::BindOnce(&OnDMPolicyFetchRequestComplete, dm_fetch,

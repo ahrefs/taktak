@@ -7,7 +7,6 @@
 #include <memory>
 
 #include "android_webview/browser/aw_content_browser_client.h"
-#include "android_webview/browser/aw_media_url_interceptor.h"
 #include "android_webview/browser/gfx/aw_draw_fn_impl.h"
 #include "android_webview/browser/gfx/browser_view_renderer.h"
 #include "android_webview/browser/gfx/gpu_service_webview.h"
@@ -51,7 +50,6 @@
 #include "components/version_info/android/channel_getter.h"
 #include "components/viz/common/features.h"
 #include "content/public/app/initialize_mojo_core.h"
-#include "content/public/browser/android/media_url_interceptor_register.h"
 #include "content/public/browser/browser_main_runner.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/network_service_util.h"
@@ -151,7 +149,6 @@ std::optional<int> AwMainDelegate::BasicStartupComplete() {
   if (cl->GetSwitchValueASCII(switches::kProcessType).empty()) {
     // Browser process (no type specified).
 
-    content::RegisterMediaUrlInterceptor(new AwMediaUrlInterceptor());
     BrowserViewRenderer::CalculateTileMemoryPolicy();
 
     if (AwDrawFnImpl::IsUsingVulkan())
@@ -324,16 +321,6 @@ std::optional<int> AwMainDelegate::PostEarlyInitialization(
     InitIcuAndResourceBundleBrowserSide();
     aw_feature_list_creator_->CreateFeatureListAndFieldTrials();
     content::InitializeMojoCore();
-
-    // WebView apps can override WebView#computeScroll to achieve custom
-    // scroll/fling. As a result, fling animations may not be ticked,
-    // potentially
-    // confusing the tap suppression controller. Simply disable it for WebView
-    if (!base::FeatureList::IsEnabled(
-            ::features::kWebViewSuppressTapDuringFling)) {
-      ui::GestureConfiguration::GetInstance()
-          ->set_fling_touchscreen_tap_suppression_enabled(false);
-    }
   }
 
   InitializeMemorySystem(is_browser_process);
@@ -380,7 +367,8 @@ content::ContentGpuClient* AwMainDelegate::CreateContentGpuClient() {
       base::BindRepeating(&GetSyncPointManager),
       base::BindRepeating(&GetSharedImageManager),
       base::BindRepeating(&GetScheduler),
-      base::BindRepeating(&GetVizCompositorThreadRunner));
+      base::BindRepeating(&GetVizCompositorThreadRunner),
+      &aw_gr_context_options_provider_);
   return content_gpu_client_.get();
 }
 

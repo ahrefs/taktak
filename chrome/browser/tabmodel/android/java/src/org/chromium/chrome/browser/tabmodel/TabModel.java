@@ -26,14 +26,9 @@ public interface TabModel extends TabList {
     @Nullable
     Tab getTabById(int tabId);
 
-    /**
-     * Closes tabs based on the provided parameters. Refer to {@link TabClosureParams} for different
-     * ways to close tabs.
-     *
-     * @param tabClosureParams The parameters to follow when closing tabs.
-     * @return Whether the tab closure succeeded (only possibly false for single tab closure).
-     */
-    boolean closeTabs(TabClosureParams tabClosureParams);
+    /** Returns the tab remover for this tab model. */
+    @NonNull
+    TabRemover getTabRemover();
 
     /**
      * Returns which tab would be selected if the specified tab {@code id} were closed.
@@ -72,12 +67,6 @@ public interface TabModel extends TabList {
      * @param tabId The id of the {@link Tab} to undo.
      */
     void cancelTabClosure(int tabId);
-
-    /**
-     * Notifies observers that all tabs closure action has been completed and tabs have been
-     * restored.
-     */
-    void notifyAllTabsClosureUndone();
 
     /**
      * Restores the most recent closure, bringing the tab(s) back into their original tab model or
@@ -144,14 +133,8 @@ public interface TabModel extends TabList {
     void addTab(Tab tab, int index, @TabLaunchType int type, @TabCreationState int creationState);
 
     /**
-     * Removes the given tab from the model without destroying it. The tab should be inserted into
-     * another model to avoid leaking as after this the link to the old Activity will be broken.
-     * @param tab The tab to remove.
-     */
-    void removeTab(Tab tab);
-
-    /**
      * Subscribes a {@link TabModelObserver} to be notified about changes to this model.
+     *
      * @param observer The observer to be subscribed.
      */
     void addObserver(TabModelObserver observer);
@@ -162,17 +145,4 @@ public interface TabModel extends TabList {
      * @param observer The observer to be unsubscribed.
      */
     void removeObserver(TabModelObserver observer);
-
-    /**
-     * Returns the count of non-custom tabs that have a {@link
-     * Tab#getLastNavigationCommittedTimestampMillis()} within the time range [beginTimeMs,
-     * endTimeMs).
-     */
-    int getTabCountNavigatedInTimeWindow(long beginTimeMs, long endTimeMs);
-
-    /**
-     * Closes non-custom tabs that have a {@link Tab#getLastNavigationCommittedTimestampMillis()}
-     * within the time range [beginTimeMs, endTimeMs).
-     */
-    void closeTabsNavigatedInTimeWindow(long beginTimeMs, long endTimeMs);
 }

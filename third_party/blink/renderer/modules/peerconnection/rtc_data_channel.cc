@@ -691,6 +691,12 @@ void RTCDataChannel::OnStateChange(
       if (!error.ok()) {
         LOG(ERROR) << "DataChannel error: \"" << error.message() << "\""
                    << ", code: " << error.sctp_cause_code().value_or(-1);
+
+        if (error.error_detail() == webrtc::RTCErrorDetailType::NONE) {
+          error.set_error_detail(
+              webrtc::RTCErrorDetailType::DATA_CHANNEL_FAILURE);
+        }
+
         IncrementErrorCounter(error);
         DispatchEvent(*MakeGarbageCollected<RTCErrorEvent>(
             event_type_names::kError, error));
@@ -723,7 +729,7 @@ void RTCDataChannel::OnMessage(webrtc::DataBuffer buffer) {
     switch (binary_type_) {
       case V8BinaryType::Enum::kBlob: {
         auto blob_data = std::make_unique<BlobData>();
-        blob_data->AppendBytes(base::make_span(buffer.data));
+        blob_data->AppendBytes(base::span(buffer.data));
         uint64_t blob_size = blob_data->length();
         auto* blob = MakeGarbageCollected<Blob>(
             BlobDataHandle::Create(std::move(blob_data), blob_size));
@@ -868,6 +874,7 @@ void RTCDataChannel::BlobReader::DidFinishLoading(FileReaderData data) {
   message_->buffer_ = webrtc::DataBuffer(buffer, true);
   message_->type_ = RTCDataChannel::PendingMessage::Type::kBufferReady;
   data_channel_->ProcessSendQueue();
+  Dispose();
 }
 
 void RTCDataChannel::BlobReader::DidFail(FileErrorCode error) {
@@ -878,6 +885,7 @@ void RTCDataChannel::BlobReader::DidFail(FileErrorCode error) {
       "Couldn't read Blob content, skipping message."));
   message_->type_ = RTCDataChannel::PendingMessage::Type::kBlobFailure;
   data_channel_->ProcessSendQueue();
+  Dispose();
 }
 
 RTCDataChannel::BlobReader::BlobReader(ExecutionContext* context,
@@ -888,7 +896,8 @@ RTCDataChannel::BlobReader::BlobReader(ExecutionContext* context,
           this,
           GetExecutionContext()->GetTaskRunner(TaskType::kFileReading))),
       data_channel_(data_channel),
-      message_(message) {}
+      message_(message),
+      keep_alive_(this) {}
 
 RTCDataChannel::BlobReader::~BlobReader() = default;
 
@@ -913,6 +922,12 @@ bool RTCDataChannel::BlobReader::HasFinishedLoading() const {
 void RTCDataChannel::BlobReader::ContextDestroyed() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   loader_->Cancel();
+  Dispose();
+}
+
+void RTCDataChannel::BlobReader::Dispose() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  keep_alive_.Clear();
 }
 
 }  // namespace blink

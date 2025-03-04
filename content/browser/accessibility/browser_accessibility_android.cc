@@ -148,23 +148,7 @@ BrowserAccessibilityAndroid::GetLocalizedStringForImageAnnotationStatus(
         status);
   }
 
-  int message_id = 0;
-  switch (static_cast<ax::mojom::WritingDirection>(
-      GetIntAttribute(ax::mojom::IntAttribute::kTextDirection))) {
-    case ax::mojom::WritingDirection::kRtl:
-      message_id = IDS_AX_IMAGE_ELIGIBLE_FOR_ANNOTATION_ANDROID_RTL;
-      break;
-    case ax::mojom::WritingDirection::kTtb:
-    case ax::mojom::WritingDirection::kBtt:
-    case ax::mojom::WritingDirection::kNone:
-    case ax::mojom::WritingDirection::kLtr:
-      message_id = IDS_AX_IMAGE_ELIGIBLE_FOR_ANNOTATION_ANDROID_LTR;
-      break;
-  }
-
-  DCHECK(message_id);
-
-  return GetLocalizedString(message_id);
+  return GetLocalizedString(IDS_AX_IMAGE_ELIGIBLE_FOR_ANNOTATION_ANDROID);
 }
 
 void BrowserAccessibilityAndroid::AppendTextToString(
@@ -284,8 +268,7 @@ bool BrowserAccessibilityAndroid::IsEnabled() const {
       return false;
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return true;
+  NOTREACHED();
 }
 
 bool BrowserAccessibilityAndroid::IsExpanded() const {
@@ -382,6 +365,12 @@ bool BrowserAccessibilityAndroid::IsVisibleToUser() const {
   return !IsInvisibleOrIgnored();
 }
 
+bool BrowserAccessibilityAndroid::ShouldUsePaneTitle() const {
+  // Dialogs should use paneTitles, as well as comboboxes but only when the
+  // combobox is expanded.
+  return ui::IsDialog(GetRole()) || (ui::IsComboBox(GetRole()) && IsExpanded());
+}
+
 bool BrowserAccessibilityAndroid::IsInterestingOnAndroid() const {
   // The root is not interesting if it doesn't have a title, even
   // though it's focusable.
@@ -401,6 +390,16 @@ bool BrowserAccessibilityAndroid::IsInterestingOnAndroid() const {
   // when swiping by heading, landmark, etc. So we will also mark the
   // children of a link as not interesting to prevent double utterances.
   const BrowserAccessibility* parent = PlatformGetParent();
+
+  // Should not read options in a multiselect combobox as it is invisible.
+  // TODO(crbug.com/395134019): We should be able to select options in
+  // aria list box.
+  if (parent && parent->GetRole() == ax::mojom::Role::kListBox &&
+      parent->HasState(ax::mojom::State::kMultiselectable) &&
+      GetRole() == ax::mojom::Role::kListBoxOption) {
+    return false;
+  }
+
   while (parent) {
     if (ui::IsControl(parent->GetRole()) && !IsFocusable()) {
       return false;
@@ -729,7 +728,7 @@ std::u16string BrowserAccessibilityAndroid::GetSubstringTextContentUTF16(
   // First, always return the |value| attribute if this is an
   // input field.
   std::u16string value = GetValueForControl();
-  if (ShouldExposeValueAsName()) {
+  if (ShouldExposeValueAsName(value)) {
     return value;
   }
 
@@ -875,7 +874,7 @@ std::u16string BrowserAccessibilityAndroid::GetHint() const {
 
   // If we're returning the value as the main text, the name needs to be
   // part of the hint.
-  if (ShouldExposeValueAsName()) {
+  if (ShouldExposeValueAsName(GetValueForControl())) {
     std::u16string name = GetNameAsString16();
     if (!name.empty()) {
       strings.push_back(name);
@@ -897,6 +896,16 @@ std::u16string BrowserAccessibilityAndroid::GetHint() const {
   }
 
   return base::JoinString(strings, u" ");
+}
+
+std::u16string BrowserAccessibilityAndroid::GetPaneTitle() const {
+  if (ui::IsDialog(GetRole())) {
+    return GetDialogModalMessageText();
+  } else if (ui::IsComboBox(GetRole()) && IsExpanded()) {
+    return GetComboboxExpandedText();
+  } else {
+    NOTREACHED();
+  }
 }
 
 std::u16string BrowserAccessibilityAndroid::GetDialogModalMessageText() const {
@@ -946,12 +955,6 @@ std::u16string BrowserAccessibilityAndroid::GetStateDescription() const {
   // For nodes with non-trivial aria-current values, communicate state.
   if (HasAriaCurrent()) {
     state_descs.push_back(GetAriaCurrentStateDescription());
-  }
-
-  // For nodes of any type that are required, add this to the end of the state.
-  if (IsRequired()) {
-    state_descs.push_back(
-        GetLocalizedString(IDS_AX_ARIA_REQUIRED_STATE_DESCRIPTION));
   }
 
   // Concatenate all state descriptions and return.
@@ -1510,7 +1513,7 @@ bool BrowserAccessibilityAndroid::Scroll(int direction,
       x = std::clamp(x_initial + page_x, x_min, x_max);
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   manager()->SetScrollOffset(*this, gfx::Point(x, y));
@@ -1784,7 +1787,7 @@ void BrowserAccessibilityAndroid::GetGranularityBoundaries(
       GetWordBoundaries(starts, ends, offset);
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 }
 
@@ -1795,7 +1798,7 @@ void BrowserAccessibilityAndroid::GetLineBoundaries(
   // If this node has no children, treat it as all one line.
   if (GetSubstringTextContentUTF16(1).size() > 0 && !InternalChildCount()) {
     line_starts->push_back(offset);
-    line_ends->push_back(offset + GetTextContentUTF16().size());
+    line_ends->push_back(offset + GetTextContentLengthUTF16());
   }
 
   // If this is a static text node, get the line boundaries from the
@@ -1817,7 +1820,7 @@ void BrowserAccessibilityAndroid::GetLineBoundaries(
         line_ends->push_back(offset);
         line_starts->push_back(offset);
       }
-      offset += child->GetTextContentUTF16().size();
+      offset += child->GetTextContentLengthUTF16();
       last_y = y;
     }
     line_ends->push_back(offset);
@@ -1829,7 +1832,7 @@ void BrowserAccessibilityAndroid::GetLineBoundaries(
     BrowserAccessibilityAndroid* child =
         static_cast<BrowserAccessibilityAndroid*>(it.get());
     child->GetLineBoundaries(line_starts, line_ends, offset);
-    offset += child->GetTextContentUTF16().size();
+    offset += child->GetTextContentLengthUTF16();
   }
 }
 
@@ -1864,7 +1867,7 @@ void BrowserAccessibilityAndroid::GetWordBoundaries(
       BrowserAccessibilityAndroid* child =
           static_cast<BrowserAccessibilityAndroid*>(it.get());
       child->GetWordBoundaries(word_starts, word_ends, offset);
-      offset += child->GetTextContentUTF16().size();
+      offset += child->GetTextContentLengthUTF16();
     }
   } else {
     // This node has its own accessible text that doesn't match its
@@ -1932,7 +1935,7 @@ void BrowserAccessibilityAndroid::GetSuggestions(
           suggestion_ends->push_back(suggestion_end);
         }
       }
-      start_offset += node->GetTextContentUTF16().length();
+      start_offset += node->GetTextContentLengthUTF16();
     }
 
     // Implementation of NextInTreeOrder, but walking the internal tree.
@@ -2061,7 +2064,8 @@ bool BrowserAccessibilityAndroid::HasListMarkerChild() const {
   return false;
 }
 
-bool BrowserAccessibilityAndroid::ShouldExposeValueAsName() const {
+bool BrowserAccessibilityAndroid::ShouldExposeValueAsName(
+    const std::u16string& value) const {
   switch (GetRole()) {
     case ax::mojom::Role::kDate:
     case ax::mojom::Role::kDateTime:
@@ -2075,6 +2079,8 @@ bool BrowserAccessibilityAndroid::ShouldExposeValueAsName() const {
 
   if (GetData().IsRangeValueSupported()) {
     return false;
+  } else if (!value.empty()) {
+    return true;
   }
 
   if (IsTextField()) {
@@ -2126,12 +2132,11 @@ int BrowserAccessibilityAndroid::CountChildrenWithRole(
 
 std::u16string BrowserAccessibilityAndroid::GetContentInvalidErrorMessage()
     const {
-  int message_id = -1;
-
   if (!IsContentInvalid()) {
     return std::u16string();
   }
 
+  int message_id = -1;
   switch (GetData().GetInvalidState()) {
     case ax::mojom::InvalidState::kNone:
     case ax::mojom::InvalidState::kFalse:
@@ -2168,11 +2173,28 @@ std::u16string BrowserAccessibilityAndroid::GetContentInvalidErrorMessage()
       break;
   }
 
+  std::vector<std::u16string> error_messages;
   if (message_id != -1) {
-    return GetLocalizedString(message_id);
+    error_messages.push_back(GetLocalizedString(message_id));
   }
 
-  return std::u16string();
+  for (int error_message_id :
+       GetIntListAttribute(ax::mojom::IntListAttribute::kErrormessageIds)) {
+    BrowserAccessibility* node = manager()->GetFromID(error_message_id);
+    if (!node || !node->HasStringAttribute(ax::mojom::StringAttribute::kName)) {
+      continue;
+    }
+
+    const auto& name =
+        node->GetString16Attribute(ax::mojom::StringAttribute::kName);
+    if (name.empty()) {
+      continue;
+    }
+
+    error_messages.push_back(name);
+  }
+
+  return base::JoinString(error_messages, u" ");
 }
 
 std::u16string

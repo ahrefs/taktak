@@ -113,6 +113,8 @@ void EditorSystemActuator::CloseUI() {
 }
 
 void EditorSystemActuator::SubmitFeedback(const std::string& description) {
+  // TODO: b/384383652 - Use `ShellDelegate::SendSpecializedFeatureFeedback`
+  // after this is moved out of //chrome.
   SendEditorFeedback(profile_, description);
   system_->Announce(
       l10n_util::GetStringUTF16(IDS_EDITOR_ANNOUNCEMENT_TEXT_FOR_FEEDBACK));
@@ -155,7 +157,7 @@ void EditorSystemActuator::OnFocus(int context_id) {
   }
 }
 
-void EditorSystemActuator::QueueTextInsertion(const std::string pending_text) {
+void EditorSystemActuator::QueueTextInsertion(std::string pending_text) {
   // The text cannot be immediately inserted as the target input is not focused
   // at this point, the WebUI is focused. After closing the WebUI focus will
   // return to the original text input.

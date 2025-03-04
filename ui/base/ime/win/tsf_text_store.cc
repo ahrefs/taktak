@@ -18,6 +18,7 @@
 #include <algorithm>
 
 #include "base/logging.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/trace_event/trace_event.h"
 #include "base/win/scoped_variant.h"
 #include "components/stylus_handwriting/win/features.h"
@@ -171,14 +172,17 @@ HRESULT TSFTextStore::GetACPFromPoint(TsViewCookie view_cookie,
   if (stylus_handwriting::win::IsStylusHandwritingWinEnabled()) {
     IndexFromPointFlags index_flags{};
     if (flags & GXFPF_NEAREST) {
-      index_flags |= IndexFromPointFlags::kIndexFromPointNearest;
+      index_flags |= IndexFromPointFlags::kNearestToUncontainedPoint;
     }
     if (flags & GXFPF_ROUND_NEAREST) {
-      index_flags |= IndexFromPointFlags::kIndexFromPointRoundNearest;
+      index_flags |= IndexFromPointFlags::kNearestToContainedPoint;
     }
+    const gfx::Point screen_point_in_dips =
+        gfx::ToFlooredPoint(display::win::ScreenWin::ScreenToDIPPoint(
+            gfx::PointF(gfx::Point(*point))));
     const std::optional<size_t> index =
         text_input_client_->GetProximateCharacterIndexFromPoint(
-            gfx::Point(*point), index_flags);
+            screen_point_in_dips, index_flags);
     if (!index.has_value()) {
       return TS_E_INVALIDPOINT;
     }
@@ -372,8 +376,9 @@ HRESULT TSFTextStore::GetTextExt(TsViewCookie view_cookie,
     return TS_E_INVALIDPOS;
   }
 
-  TRACE_EVENT1("ime", "TSFTextStore::GetTextExt", "start, end",
-               std::to_string(acp_start) + ", " + std::to_string(acp_end));
+  TRACE_EVENT1(
+      "ime", "TSFTextStore::GetTextExt", "start, end",
+      base::NumberToString(acp_start) + ", " + base::NumberToString(acp_end));
 
   // According to a behavior of notepad.exe and wordpad.exe, top left corner of
   // rect indicates a first character's one, and bottom right corner of rect
@@ -1354,8 +1359,8 @@ void TSFTextStore::CalculateTextandSelectionDiffAndNotifyIfNeeded() {
     if (notify_text_change && text_changed) {
       TRACE_EVENT2(
           "ime", "TSFTextStore::CalculateTextandSelectionDiffAndNotifyIfNeeded",
-          "text_change_start", std::to_string(text_change.acpStart),
-          "text_change_end", std::to_string(text_change.acpNewEnd));
+          "text_change_start", base::NumberToString(text_change.acpStart),
+          "text_change_end", base::NumberToString(text_change.acpNewEnd));
       text_store_acp_sink_->OnTextChange(0, &text_change);
     }
 

@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "remoting/host/setup/start_host_as_root.h"
 
 #include <errno.h>
@@ -91,6 +96,21 @@ int StartHostAsRoot(int argc, char** argv) {
       user_name = std::string(parts->first);
     } else {
       fprintf(stderr, "The --cloud-user flag requires an email address.\n");
+      return 1;
+    }
+    // The 'user-name' flag can be used to override the username portion of the
+    // value provided via the 'cloud-user' flag for Cloud hosts. Note that this
+    // is not allowed for Corp hosts.
+    if (command_line.HasSwitch("user-name")) {
+      std::string user_name_switch_value =
+          command_line.GetSwitchValueASCII("user-name");
+      if (user_name == user_name_switch_value) {
+        fprintf(stderr,
+                "The --user-name flag is not required when the value matches "
+                "the username portion of the email provided via the cloud-user "
+                "flag.\n");
+      }
+      user_name = user_name_switch_value;
     }
   } else if (command_line.HasSwitch("user-name")) {
     user_name = command_line.GetSwitchValueASCII("user-name");
@@ -103,6 +123,8 @@ int StartHostAsRoot(int argc, char** argv) {
             "\n  --cloud-user=<email>\n");
     return 1;
   }
+  fprintf(stdout, "Configuring the host service to run as local account: %s\n",
+          user_name.c_str());
 
   errno = 0;
   const passwd* user_struct = getpwnam(user_name.c_str());

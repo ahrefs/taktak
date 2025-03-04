@@ -65,6 +65,10 @@ IN_PROC_BROWSER_TEST_F(NewTabPageTest, Transparency) {
   RunTest("new_tab_page/transparency_test.js", "mocha.run()");
 }
 
+IN_PROC_BROWSER_TEST_F(NewTabPageTest, Footer) {
+  RunTest("new_tab_page/footer_test.js", "mocha.run()");
+}
+
 using NewTabPageModulesTest = NewTabPageBrowserTest;
 
 IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, ModuleWrapper) {
@@ -77,10 +81,6 @@ IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, ModulesV2) {
 
 IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, ModuleHeaderV2) {
   RunTest("new_tab_page/modules/v2/module_header_test.js", "mocha.run()");
-}
-
-IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, Modules) {
-  RunTest("new_tab_page/modules/modules_test.js", "mocha.run()");
 }
 
 IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, ModuleDescriptor) {
@@ -136,10 +136,6 @@ IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, OutlookCalendarModule) {
           "mocha.run()");
 }
 
-IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, DriveModule) {
-  RunTest("new_tab_page/modules/drive/module_test.js", "mocha.run()");
-}
-
 IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, DriveModuleV2) {
   RunTest("new_tab_page/modules/v2/file_suggestion/drive_module_test.js",
           "mocha.run()");
@@ -150,9 +146,16 @@ IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, FileSuggestion) {
           "mocha.run()");
 }
 
-IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, SharepointModule) {
-  RunTest("new_tab_page/modules/v2/file_suggestion/sharepoint_module_test.js",
-          "mocha.run()");
+IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, MicrosoftFilesModule) {
+  RunTest(
+      "new_tab_page/modules/v2/file_suggestion/microsoft_files_module_test.js",
+      "mocha.run()");
+}
+
+IN_PROC_BROWSER_TEST_F(NewTabPageModulesTest, MicrosoftAuthModule) {
+  RunTest(
+      "new_tab_page/modules/v2/authentication/microsoft_auth_module_test.js",
+      "mocha.run()");
 }
 
 using NewTabPageAppTest = NewTabPageBrowserTest;
@@ -187,11 +190,6 @@ IN_PROC_BROWSER_TEST_F(NewTabPageAppTest, Clicks) {
           "runMochaSuite('NewTabPageAppTest Clicks')");
 }
 
-IN_PROC_BROWSER_TEST_F(NewTabPageAppTest, Modules) {
-  RunTest("new_tab_page/app_test.js",
-          "runMochaSuite('NewTabPageAppTest Modules')");
-}
-
 IN_PROC_BROWSER_TEST_F(NewTabPageAppTest, V2Modules) {
   RunTest("new_tab_page/app_test.js",
           "runMochaSuite('NewTabPageAppTest V2Modules')");
@@ -215,6 +213,11 @@ IN_PROC_BROWSER_TEST_F(NewTabPageAppTest, LensUploadDialog) {
 IN_PROC_BROWSER_TEST_F(NewTabPageAppTest, WallpaperSearch) {
   RunTest("new_tab_page/app_test.js",
           "runMochaSuite('NewTabPageAppTest WallpaperSearch')");
+}
+
+IN_PROC_BROWSER_TEST_F(NewTabPageAppTest, MicrosoftAuth) {
+  RunTest("new_tab_page/app_test.js",
+          "runMochaSuite('NewTabPageAppTest MicrosoftAuth')");
 }
 
 class NewTabPageModulesMostRelevantTabResumptionModuleTest

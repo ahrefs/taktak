@@ -102,8 +102,7 @@ void BrowserPolicyConnectorIOS::Init(
 }
 
 bool BrowserPolicyConnectorIOS::IsDeviceEnterpriseManaged() const {
-  NOTREACHED_IN_MIGRATION() << "This method is only defined for Chrome OS";
-  return false;
+  NOTREACHED() << "This method is only defined for Chrome OS";
 }
 
 bool BrowserPolicyConnectorIOS::HasMachineLevelPolicies() {
@@ -165,4 +164,8 @@ BrowserPolicyConnectorIOS::CreatePlatformProvider() {
 
   return std::make_unique<AsyncPolicyProvider>(GetSchemaRegistry(),
                                                std::move(loader));
+}
+
+void BrowserPolicyConnectorIOS::OnResourceBundleCreated() {
+  BrowserPolicyConnectorBase::OnResourceBundleCreated();
 }

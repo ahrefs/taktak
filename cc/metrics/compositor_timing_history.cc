@@ -156,12 +156,12 @@ const int kUMAVSyncBuckets[] = {
     32000000,
 };
 
-#define UMA_HISTOGRAM_CUSTOM_TIMES_VSYNC_ALIGNED(name, sample)             \
-  do {                                                                     \
-    UMA_HISTOGRAM_CUSTOM_ENUMERATION(                                      \
-        name "2", sample.InMicroseconds(),                                 \
-        std::vector<int>(kUMAVSyncBuckets,                                 \
-                         kUMAVSyncBuckets + std::size(kUMAVSyncBuckets))); \
+#define UMA_HISTOGRAM_CUSTOM_TIMES_VSYNC_ALIGNED(name, sample) \
+  do {                                                         \
+    UMA_HISTOGRAM_CUSTOM_ENUMERATION(                          \
+        name "2", sample.InMicroseconds(),                     \
+        std::vector<int>(std::begin(kUMAVSyncBuckets),         \
+                         std::end(kUMAVSyncBuckets)));         \
   } while (false)
 
 }  // namespace
@@ -181,6 +181,7 @@ CompositorTimingHistory::CompositorTimingHistory(
       commit_to_ready_to_activate_duration_history_(kDurationHistorySize),
       activate_duration_history_(kDurationHistorySize),
       draw_duration_history_(kDurationHistorySize),
+      pending_tree_is_impl_side_(false),
       uma_category_(uma_category),
       rendering_stats_instrumentation_(rendering_stats_instrumentation) {}
 

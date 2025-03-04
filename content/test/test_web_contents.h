@@ -64,6 +64,14 @@ class TestWebContents : public WebContentsImpl, public WebContentsTester {
                     uint32_t max_bitmap_size,
                     bool bypass_cache,
                     ImageDownloadCallback callback) override;
+  int DownloadImageInFrame(
+      const GlobalRenderFrameHostId& initiator_frame_routing_id,
+      const GURL& url,
+      bool is_favicon,
+      const gfx::Size& preferred_size,
+      uint32_t max_bitmap_size,
+      bool bypass_cache,
+      ImageDownloadCallback callback) override;
   const GURL& GetLastCommittedURL() override;
   const std::u16string& GetTitle() override;
 
@@ -193,6 +201,9 @@ class TestWebContents : public WebContentsImpl, public WebContentsTester {
   void SetMediaCaptureRawDeviceIdsOpened(blink::mojom::MediaStreamType type,
                                          std::vector<std::string> ids) override;
 
+  void OnIgnoredUIEvent() override;
+  bool GetIgnoredUIEventCalled() const;
+
  protected:
   // The deprecated WebContentsTester still needs to subclass this.
   explicit TestWebContents(BrowserContext* browser_context);
@@ -256,6 +267,7 @@ class TestWebContents : public WebContentsImpl, public WebContentsTester {
   bool overscroll_enabled_ = true;
   base::flat_map<blink::mojom::MediaStreamType, std::vector<std::string>>
       media_capture_raw_device_ids_opened_;
+  bool ignored_ui_event_called_ = false;
 };
 
 }  // namespace content

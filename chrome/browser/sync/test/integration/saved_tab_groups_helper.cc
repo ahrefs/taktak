@@ -82,6 +82,13 @@ void SavedTabOrGroupExistsChecker::OnTabGroupUpdated(const SavedTabGroup& group,
   CheckExitCondition();
 }
 
+void SavedTabOrGroupExistsChecker::OnTabGroupMigrated(
+    const SavedTabGroup& shared_group,
+    const base::Uuid& old_sync_id,
+    TriggerSource source) {
+  CheckExitCondition();
+}
+
 // ==========================================
 // --- SavedTabOrGroupDoesNotExistChecker ---
 // ==========================================
@@ -357,6 +364,16 @@ bool ServerSavedTabGroupMatchChecker::IsExitConditionSatisfied(
   std::vector<sync_pb::SavedTabGroupSpecifics> entities =
       SyncEntitiesToSavedTabGroupSpecifics(
           fake_server()->GetSyncEntitiesByDataType(syncer::SAVED_TAB_GROUP));
+
+  for (const sync_pb::SavedTabGroupSpecifics& specifics : entities) {
+    *os << "Entity GUID: " << specifics.guid() << ", ";
+    if (specifics.has_group()) {
+      *os << "group title: " << specifics.group().title() << ". ";
+    } else if (specifics.has_tab()) {
+      *os << "tab title: " << specifics.tab().title()
+          << ", URL: " << specifics.tab().url() << ". ";
+    }
+  }
 
   testing::StringMatchResultListener result_listener;
   const bool matches =

@@ -13,6 +13,7 @@
 #include "chrome/browser/apps/app_service/launch_result_type.h"
 #include "chrome/browser/ash/boca/on_task/locked_session_window_tracker_factory.h"
 #include "chrome/browser/ash/boca/on_task/on_task_locked_session_window_tracker.h"
+#include "chrome/browser/platform_util.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/ash/system_web_apps/system_web_app_ui_utils.h"
 #include "chrome/browser/ui/browser.h"
@@ -20,10 +21,16 @@
 #include "chrome/browser/ui/browser_list.h"
 #include "chrome/browser/ui/browser_navigator.h"
 #include "chrome/browser/ui/browser_window.h"
-#include "chromeos/ash/components/boca/activity/active_tab_tracker.h"
+#include "chrome/browser/ui/exclusive_access/exclusive_access_manager.h"
+#include "chrome/browser/ui/exclusive_access/fullscreen_controller.h"
+#include "chromeos/ash/components/boca/on_task/activity/active_tab_tracker.h"
 #include "chromeos/ash/components/boca/on_task/on_task_blocklist.h"
+#include "chromeos/ui/base/window_properties.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "content/public/browser/browser_thread.h"
+#include "ui/aura/window.h"
+#include "ui/views/widget/widget.h"
+#include "ui/views/widget/widget_delegate.h"
 #include "url/gurl.h"
 
 namespace ash::boca {
@@ -43,6 +50,14 @@ Browser* GetBrowserWindowWithID(SessionID window_id) {
 
   // No window found with specified ID.
   return nullptr;
+}
+
+void MakeWindowResizable(const BrowserWindow* window) {
+  views::Widget* const widget =
+      views::Widget::GetWidgetForNativeWindow(window->GetNativeWindow());
+  if (widget) {
+    widget->widget_delegate()->SetCanResize(true);
+  }
 }
 }  // namespace
 
@@ -69,7 +84,8 @@ void OnTaskSystemWebAppManagerImpl::LaunchSystemWebAppAsync(
             if (instance) {
               const SessionID active_window_id =
                   instance->GetActiveSystemWebAppWindowID();
-              instance->PrepareSystemWebAppWindowForOnTask(active_window_id);
+              instance->PrepareSystemWebAppWindowForOnTask(
+                  active_window_id, /*close_bundle_content=*/true);
             }
             std::move(callback).Run(launch_result.state ==
                                     apps::LaunchResult::State::kSuccess);
@@ -86,6 +102,8 @@ void OnTaskSystemWebAppManagerImpl::CloseSystemWebAppWindow(
     window_tracker->InitializeBrowserInfoForTracking(nullptr);
   }
   if (browser) {
+    // Skips the tab unload process so that browser closes immediately.
+    browser->set_force_skip_warning_user_on_close(true);
     browser->window()->Close();
   }
 }
@@ -97,7 +115,9 @@ SessionID OnTaskSystemWebAppManagerImpl::GetActiveSystemWebAppWindowID() {
   // OnTask (for instance, those manually spawned by consumers).
   Browser* const browser =
       FindSystemWebAppBrowser(profile_, SystemWebAppType::BOCA);
-  if (!browser) {
+  // Verify that there is no browser instance and that there is no scheduled
+  // task to delete the browser instance following window close.
+  if (!browser || browser->IsBrowserClosing()) {
     return SessionID::InvalidValue();
   }
   return browser->session_id();
@@ -111,12 +131,25 @@ void OnTaskSystemWebAppManagerImpl::SetPinStateForSystemWebAppWindow(
   if (!browser) {
     return;
   }
-  aura::Window* const native_window = browser->window()->GetNativeWindow();
-  bool currently_pinned = IsWindowPinned(native_window);
+
+  // Verify window pin state before we exit fullscreen mode. This helps us
+  // ensure we properly restore the window for subsequent updates.
+  bool currently_pinned = platform_util::IsBrowserLockedFullscreen(browser);
+
+  // Exit fullscreen mode if necessary. This is especially needed for certain
+  // cases where the web app window is in fullscreen mode but not pinned, like
+  // on session restore.
+  auto* const fullscreen_controller =
+      browser->exclusive_access_manager()->fullscreen_controller();
+  if (fullscreen_controller->IsFullscreenForBrowser() && !pinned) {
+    fullscreen_controller->ToggleBrowserFullscreenMode(
+        /*user_initiated=*/false);
+  }
   if (pinned == currently_pinned) {
     // Nothing to do.
     return;
   }
+  aura::Window* const native_window = browser->window()->GetNativeWindow();
   if (pinned) {
     PinWindow(native_window, /*trusted=*/true);
     browser->command_controller()->LockedFullscreenStateChanged();
@@ -130,7 +163,7 @@ void OnTaskSystemWebAppManagerImpl::SetPinStateForSystemWebAppWindow(
 // TODO(b/367417612): Add unit test for this function.
 void OnTaskSystemWebAppManagerImpl::SetWindowTrackerForSystemWebAppWindow(
     SessionID window_id,
-    ActiveTabTracker* active_tab_tracker) {
+    const std::vector<boca::BocaWindowObserver*> observers) {
   Browser* const browser = GetBrowserWindowWithID(window_id);
   if (!browser) {
     return;
@@ -140,13 +173,15 @@ void OnTaskSystemWebAppManagerImpl::SetWindowTrackerForSystemWebAppWindow(
     return;
   }
   window_tracker->InitializeBrowserInfoForTracking(browser);
-  window_tracker->SetActiveTabTracker(active_tab_tracker);
+  for (auto* observer : observers) {
+    window_tracker->AddObserver(observer);
+  }
 }
 
 SessionID OnTaskSystemWebAppManagerImpl::CreateBackgroundTabWithUrl(
     SessionID window_id,
     GURL url,
-    OnTaskBlocklist::RestrictionLevel restriction_level) {
+    ::boca::LockedNavigationOptions::NavigationType restriction_level) {
   Browser* const browser = GetBrowserWindowWithID(window_id);
   if (!browser) {
     return SessionID::InvalidValue();
@@ -170,7 +205,7 @@ SessionID OnTaskSystemWebAppManagerImpl::CreateBackgroundTabWithUrl(
 
 void OnTaskSystemWebAppManagerImpl::RemoveTabsWithTabIds(
     SessionID window_id,
-    const base::flat_set<SessionID>& tab_ids_to_remove) {
+    const std::set<SessionID>& tab_ids_to_remove) {
   Browser* const browser = GetBrowserWindowWithID(window_id);
   if (!browser) {
     return;
@@ -195,7 +230,8 @@ void OnTaskSystemWebAppManagerImpl::RemoveTabsWithTabIds(
 }
 
 void OnTaskSystemWebAppManagerImpl::PrepareSystemWebAppWindowForOnTask(
-    SessionID window_id) {
+    SessionID window_id,
+    bool close_bundle_content) {
   Browser* const browser = GetBrowserWindowWithID(window_id);
   if (!browser) {
     return;
@@ -205,17 +241,72 @@ void OnTaskSystemWebAppManagerImpl::PrepareSystemWebAppWindowForOnTask(
   // downstream components (especially UI controls) are setup for locked mode
   // transitions.
   browser->SetLockedForOnTask(true);
+  MakeWindowResizable(browser->window());
 
-  // Remove all tabs with pre-existing content. This is to de-dupe content and
-  // ensure that the tabs are set up for locked mode.
-  base::flat_set<SessionID> tab_ids_to_remove;
-  for (int idx = browser->tab_strip_model()->count() - 1; idx > 0; --idx) {
+  // Remove the floating button on the browser window for OnTask.
+  aura::Window* const native_window = browser->window()->GetNativeWindow();
+  native_window->SetProperty(chromeos::kSupportsFloatedStateKey, false);
+
+  // Remove all tabs with pre-existing content if specified. This is to normally
+  // de-dupe content and ensure that the tabs are set up for locked mode.
+  if (close_bundle_content) {
+    std::set<SessionID> tab_ids_to_remove;
+    for (int idx = browser->tab_strip_model()->count() - 1; idx > 0; --idx) {
+      content::WebContents* const tab =
+          browser->tab_strip_model()->GetWebContentsAt(idx);
+      const SessionID tab_id = sessions::SessionTabHelper::IdForTab(tab);
+      tab_ids_to_remove.insert(tab_id);
+    }
+    RemoveTabsWithTabIds(window_id, tab_ids_to_remove);
+  }
+}
+
+SessionID OnTaskSystemWebAppManagerImpl::GetActiveTabID() {
+  const Browser* const browser =
+      GetBrowserWindowWithID(GetActiveSystemWebAppWindowID());
+  if (!browser) {
+    return SessionID::InvalidValue();
+  }
+  const SessionID tab_id = sessions::SessionTabHelper::IdForTab(
+      browser->tab_strip_model()->GetActiveWebContents());
+  return tab_id;
+}
+
+void OnTaskSystemWebAppManagerImpl::SwitchToTab(SessionID tab_id) {
+  Browser* const browser =
+      GetBrowserWindowWithID(GetActiveSystemWebAppWindowID());
+  if (!browser || !tab_id.is_valid()) {
+    return;
+  }
+  for (int idx = browser->tab_strip_model()->count() - 1; idx >= 0; --idx) {
     content::WebContents* const tab =
         browser->tab_strip_model()->GetWebContentsAt(idx);
-    const SessionID tab_id = sessions::SessionTabHelper::IdForTab(tab);
-    tab_ids_to_remove.insert(tab_id);
+    const SessionID id = sessions::SessionTabHelper::IdForTab(tab);
+    if (tab_id == id) {
+      browser->tab_strip_model()->ActivateTabAt(idx);
+      return;
+    }
   }
-  RemoveTabsWithTabIds(window_id, tab_ids_to_remove);
+}
+
+void OnTaskSystemWebAppManagerImpl::SetAllChromeTabsMuted(bool muted) {
+  Browser* const boca_browser =
+      GetBrowserWindowWithID(GetActiveSystemWebAppWindowID());
+  if (!boca_browser) {
+    return;
+  }
+  for (Browser* const browser : *BrowserList::GetInstance()) {
+    if (!browser || browser == boca_browser) {
+      continue;
+    }
+    for (int idx = 0; idx < browser->tab_strip_model()->count(); ++idx) {
+      content::WebContents* const tab =
+          browser->tab_strip_model()->GetWebContentsAt(idx);
+      if (tab) {
+        tab->SetAudioMuted(muted);
+      }
+    }
+  }
 }
 
 void OnTaskSystemWebAppManagerImpl::SetWindowTrackerForTesting(

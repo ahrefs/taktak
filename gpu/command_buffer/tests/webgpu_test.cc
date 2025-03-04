@@ -140,7 +140,7 @@ void WebGPUTest::Initialize(const Options& options) {
 
   wgpu::RequestAdapterOptions ra_options = {};
   ra_options.forceFallbackAdapter = options.force_fallback_adapter;
-  ra_options.compatibilityMode = options.compatibility_mode;
+  ra_options.featureLevel = options.feature_level;
 
   bool done = false;
   instance_.RequestAdapter(
@@ -226,12 +226,16 @@ void WebGPUTest::PollUntilIdle() {
   context_->GetTaskRunner()->RunPendingTasks();
 }
 
-wgpu::Device WebGPUTest::GetNewDevice() {
+wgpu::Device WebGPUTest::GetNewDevice(
+    std::vector<wgpu::FeatureName> requiredFeatures) {
   wgpu::Device device;
   bool done = false;
 
   DCHECK(adapter_);
   wgpu::DeviceDescriptor device_desc = {};
+  device_desc.requiredFeatureCount = requiredFeatures.size();
+  device_desc.requiredFeatures = requiredFeatures.data();
+
   device_desc.SetDeviceLostCallback(
       wgpu::CallbackMode::AllowSpontaneous,
       [](const wgpu::Device&, wgpu::DeviceLostReason reason,
@@ -455,7 +459,7 @@ TEST_F(WebGPUTest, ImplicitFallbackAdapterIsDisallowed) {
 
 TEST_F(WebGPUTest, CompatibilityMode) {
   auto options = WebGPUTest::Options();
-  options.compatibility_mode = true;
+  options.feature_level = wgpu::FeatureLevel::Compatibility;
   options.enable_unsafe_webgpu = true;
   // Initialize attempts to create an adapter.
   Initialize(options);
@@ -471,7 +475,7 @@ TEST_F(WebGPUTest, CompatibilityMode) {
 
 TEST_F(WebGPUTest, NonCompatibilityMode) {
   auto options = WebGPUTest::Options();
-  options.compatibility_mode = false;
+  options.feature_level = wgpu::FeatureLevel::Core;
   options.enable_unsafe_webgpu = true;
   // Initialize attempts to create an adapter.
   Initialize(options);

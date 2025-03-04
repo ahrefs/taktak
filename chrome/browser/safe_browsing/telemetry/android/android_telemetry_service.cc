@@ -186,7 +186,8 @@ void AndroidTelemetryService::FillReferrerChain(download::DownloadItem* item) {
           : nullptr;
 
   if (web_contents) {
-    GURL intent_url = GetReferringAppInfo(web_contents).target_url;
+    GURL intent_url =
+        GetReferringAppInfo(web_contents, /*get_webapk_info=*/false).target_url;
     referrer_chain_result_[item].triggered_by_intent =
         intent_url == item->GetOriginalUrl();
   }
@@ -262,7 +263,7 @@ void AndroidTelemetryService::GetReport(
   mutable_download_item_info->mutable_digests()->set_sha256(item->GetHash());
   mutable_download_item_info->set_length(item->GetReceivedBytes());
   mutable_download_item_info->set_file_basename(
-      item->GetTargetFilePath().BaseName().value());
+      item->GetFileNameToReportUser().value());
 
   if (base::FeatureList::IsEnabled(kGooglePlayProtectInApkTelemetry)) {
     SafeBrowsingApiHandlerBridge::GetInstance().StartIsVerifyAppsEnabled(
@@ -306,8 +307,7 @@ void AndroidTelemetryService::MaybeSendApkDownloadReport(
     RecordApkDownloadTelemetryOutcome(
         ApkDownloadTelemetryOutcome::NOT_SENT_FAILED_TO_SERIALIZE);
   } else {
-    NOTREACHED_IN_MIGRATION()
-        << "Unhandled PingManager::ReportThreatDetailsResult type";
+    NOTREACHED() << "Unhandled PingManager::ReportThreatDetailsResult type";
   }
 }
 

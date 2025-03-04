@@ -29,6 +29,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #ifndef THIRD_PARTY_BLINK_RENDERER_PLATFORM_BINDINGS_V8_BINDING_H_
 #define THIRD_PARTY_BLINK_RENDERER_PLATFORM_BINDINGS_V8_BINDING_H_
 
@@ -54,20 +59,9 @@
 
 namespace blink {
 
-class ExceptionState;
-
 // This file contains bindings helper functions that do not have dependencies
 // to core/ or bindings/core. For core-specific helper functions, see
-// bindings/core/v8/V8BindingForCore.h.
-
-template <typename T>
-struct V8TypeOf {
-  STATIC_ONLY(V8TypeOf);
-  // |Type| provides C++ -> V8 type conversion for DOM wrappers.
-  // The Blink binding code generator will generate specialized version of
-  // V8TypeOf for each wrapper class.
-  typedef void Type;
-};
+// bindings/core/v8/v8_binding_for_core.h.
 
 // Convert v8::String to a WTF::String. If the V8 string is not already
 // an external string then it is transformed into an external string at this
@@ -167,14 +161,6 @@ inline v8::Local<v8::String> V8String(v8::Isolate* isolate,
              isolate, reinterpret_cast<const uint8_t*>(string),
              v8::NewStringType::kNormal, static_cast<int>(strlen(string)))
       .ToLocalChecked();
-}
-
-inline v8::Local<v8::Value> V8StringOrNull(v8::Isolate* isolate,
-                                           const AtomicString& string) {
-  if (string.IsNull())
-    return v8::Null(isolate);
-  return V8PerIsolateData::From(isolate)->GetStringCache()->V8ExternalString(
-      isolate, string.Impl());
 }
 
 inline v8::Local<v8::String> V8String(v8::Isolate* isolate,
@@ -309,8 +295,7 @@ struct V8PropertyDescriptorBag {
 PLATFORM_EXPORT void V8ObjectToPropertyDescriptor(
     v8::Isolate* isolate,
     v8::Local<v8::Value> descriptor_object,
-    V8PropertyDescriptorBag& descriptor_bag,
-    ExceptionState& exception_state);
+    V8PropertyDescriptorBag& descriptor_bag);
 
 }  // namespace bindings
 

@@ -51,10 +51,10 @@ bool IsNGTextOrInline(const LayoutObject* object) {
 
 template <>
 const SVGEnumerationMap& GetEnumerationMap<SVGLengthAdjustType>() {
-  static const SVGEnumerationMap::Entry enum_items[] = {
-      {kSVGLengthAdjustSpacing, "spacing"},
-      {kSVGLengthAdjustSpacingAndGlyphs, "spacingAndGlyphs"},
-  };
+  static constexpr auto enum_items = std::to_array<const char* const>({
+      "spacing",
+      "spacingAndGlyphs",
+  });
   static const SVGEnumerationMap entries(enum_items);
   return entries;
 }
@@ -271,7 +271,7 @@ bool SVGTextContentElement::IsPresentationAttribute(
 void SVGTextContentElement::CollectStyleForPresentationAttribute(
     const QualifiedName& name,
     const AtomicString& value,
-    MutableCSSPropertyValueSet* style) {
+    HeapVector<CSSPropertyValue, 8>& style) {
   if (name.Matches(xml_names::kSpaceAttr)) {
     DEFINE_STATIC_LOCAL(const AtomicString, preserve_string, ("preserve"));
 

@@ -3,11 +3,9 @@
 // found in the LICENSE file.
 
 #include "build/branding_buildflags.h"
-#include "build/chromeos_buildflags.h"
+#include "build/build_config.h"
 
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING) && !BUILDFLAG(IS_CHROMEOS_ASH)
-
-#include "chrome/browser/ui/webui/settings/metrics_reporting_handler.h"
+#if BUILDFLAG(GOOGLE_CHROME_BRANDING) && !BUILDFLAG(IS_CHROMEOS)
 
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
@@ -15,14 +13,15 @@
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/metrics/chrome_metrics_service_accessor.h"
 #include "chrome/browser/metrics/metrics_reporting_state.h"
+#include "chrome/browser/ui/webui/settings/metrics_reporting_handler.h"
 #include "components/metrics/metrics_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/web_ui.h"
 
 namespace settings {
 
-MetricsReportingHandler::MetricsReportingHandler() {}
-MetricsReportingHandler::~MetricsReportingHandler() {}
+MetricsReportingHandler::MetricsReportingHandler() = default;
+MetricsReportingHandler::~MetricsReportingHandler() = default;
 
 void MetricsReportingHandler::RegisterMessages() {
   web_ui()->RegisterMessageCallback(
@@ -68,13 +67,10 @@ base::Value::Dict MetricsReportingHandler::CreateMetricsReportingDict() {
 void MetricsReportingHandler::HandleSetMetricsReportingEnabled(
     const base::Value::List& args) {
   if (IsMetricsReportingPolicyManaged()) {
-    NOTREACHED_IN_MIGRATION();
     // NOTE: ChangeMetricsReportingState() already checks whether metrics
     // reporting is managed by policy. Also, the UI really shouldn't be able to
-    // send this message when managed. However, in this specific case, there's a
-    // sane, graceful fallback so we might as well do that.
-    SendMetricsReportingChange();
-    return;
+    // send this message when managed.
+    NOTREACHED();
   }
 
   bool enabled = args[0].GetBool();
@@ -93,4 +89,4 @@ void MetricsReportingHandler::SendMetricsReportingChange() {
 
 }  // namespace settings
 
-#endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING) && !BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING) && !BUILDFLAG(IS_CHROMEOS)

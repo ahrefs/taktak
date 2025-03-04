@@ -26,6 +26,16 @@ luci.gitiles_poller(
     schedule = "0 4 * * *",
 )
 
+# Use a separate poller to trigger the webview coverage builders.
+luci.gitiles_poller(
+    name = "code-coverage-webview-gitiles-trigger",
+    bucket = "ci",
+    repo = "https://chromium.googlesource.com/chromium/src",
+    refs = [settings.ref],
+    # Trigger coverage jobs once a day at 10 am UTC(2 am PST)
+    schedule = "0 10 * * *",
+)
+
 ci.defaults.set(
     executable = ci.DEFAULT_EXECUTABLE,
     builder_group = "chromium.coverage",
@@ -57,6 +67,18 @@ def coverage_builder(**kwargs):
     return ci.builder(
         schedule = "triggered",
         triggered_by = ["code-coverage-gitiles-trigger"],
+        # This should allow one to be pending should code coverage
+        # builds take longer.
+        triggering_policy = scheduler.greedy_batching(
+            max_concurrent_invocations = 2,
+        ),
+        **kwargs
+    )
+
+def coverage_webview_builder(**kwargs):
+    return ci.builder(
+        schedule = "triggered",
+        triggered_by = ["code-coverage-webview-gitiles-trigger"],
         # This should allow one to be pending should code coverage
         # builds take longer.
         triggering_policy = scheduler.greedy_batching(
@@ -129,12 +151,9 @@ coverage_builder(
     use_java_coverage = True,
 )
 
-ci.builder(
+coverage_webview_builder(
     name = "android-webview-code-coverage",
     description_html = "Builder for WebView java coverage",
-    # Trigger coverage jobs once a day at 10 am UTC(2 am PST)
-    schedule = "0 10 * * *",
-    triggered_by = [],
     builder_spec = builder_config.builder_spec(
         gclient_config = builder_config.gclient_config(
             config = "chromium",
@@ -274,14 +293,6 @@ coverage_builder(
                     shards = 2,
                 ),
             ),
-            # TODO: crbug.com/40258588 - This flag should have no effect on this
-            # script test, but it needs to be present to satisfy the
-            # targets-config-verifier, so remove it after landing
-            "check_network_annotations": targets.mixin(
-                args = [
-                    "--avd-config=../../tools/android/avd/proto/generic_android26.textpb",
-                ],
-            ),
             # Keep this same as android-oreo-x86-rel
             "chrome_public_test_apk": targets.mixin(
                 args = [
@@ -333,7 +344,7 @@ coverage_builder(
             # Keep this same as android-oreo-x86-rel
             "gl_tests_validating": targets.mixin(
                 args = [
-                    "--test-launcher-filter-file=../../testing/buildbot/filters/android.emulator_o_p.gl_tests.filter",
+                    "--test-launcher-filter-file=../../testing/buildbot/filters/android.emulator_o_p_10.gl_tests.filter",
                 ],
             ),
             # Keep this same as android-oreo-x86-rel
@@ -540,12 +551,9 @@ coverage_builder(
     use_clang_coverage = True,
 )
 
-ci.builder(
+coverage_webview_builder(
     name = "android-webview-code-coverage-native",
     description_html = "Builder for WebView clang coverage",
-    # Trigger coverage jobs once a day at 10 am UTC(2 am PST)
-    schedule = "0 10 * * *",
-    triggered_by = [],
     builder_spec = builder_config.builder_spec(
         gclient_config = builder_config.gclient_config(
             config = "chromium",
@@ -902,7 +910,7 @@ coverage_builder(
         consoles.console_view_entry(
             branch_selector = branches.selector.MAIN,
             console_view = "sheriff.fuchsia",
-            category = "gardener|fuchsia ci|x64",
+            category = "fuchsia ci|x64",
             short_name = "cov",
         ),
     ],
@@ -1198,6 +1206,57 @@ coverage_builder(
     notifies = ["chrome-fuzzing-core"],
     properties = {
         "collect_fuzz_coverage": True,
+        "fuzz_engine": "libfuzzer",
+    },
+)
+
+# Experimental builder. Does not export_coverage_to_zoss.
+coverage_builder(
+    name = "linux-x64-fuzzilli-coverage",
+    description_html = "This builder collects code coverage for V8 Fuzzilli tests.",
+    executable = "recipe:chromium/fuzz",
+    builder_spec = builder_config.builder_spec(
+        gclient_config = builder_config.gclient_config(
+            config = "chromium",
+            apply_configs = ["use_clang_coverage"],
+        ),
+        chromium_config = builder_config.chromium_config(
+            config = "chromium_clang",
+            apply_configs = [
+                "clobber",
+                "mb",
+            ],
+            build_config = builder_config.build_config.RELEASE,
+            target_bits = 64,
+            target_platform = builder_config.target_platform.LINUX,
+        ),
+    ),
+    gn_args = gn_args.config(
+        configs = [
+            "dcheck_always_on",
+            "v8_backtrace",
+            "v8_debug",
+            "v8_heap",
+            "v8_static",
+            "use_clang_coverage",
+            "remoteexec",
+            "linux",
+            "x64",
+        ],
+    ),
+    builderless = True,
+    os = os.LINUX_DEFAULT,
+    console_view_entry = [
+        consoles.console_view_entry(
+            category = "linux-fuzz",
+            short_name = "fuzzlli-x64",
+        ),
+    ],
+    contact_team_email = "v8-security@google.com",
+    notifies = ["chrome-fuzzing-core"],
+    properties = {
+        "collect_fuzz_coverage": True,
+        "fuzz_engine": "fuzzilli",
     },
 )
 
@@ -1512,41 +1571,15 @@ coverage_builder(
                 ),
             ),
             # These tests must run with a GPU.
-            # TODO(crbug.com/40888390): This must be kept in sync with the
-            # appropriate mixin; currently, win10_nvidia_gtx_1660_stable,
-            # which is used by Dawn Win10 x64 Release (NVIDIA).
-            # TODO: crbug.com/40258588 - Mixins can be specified in
-            # per_test_modifications, but the mixin applies the extra dimension
-            # display_attached, so it can't be switched until after the tests
-            # are migrated to starlark
-            "webgpu_blink_web_tests": targets.mixin(
-                swarming = targets.swarming(
-                    dimensions = {
-                        "gpu": "10de:2184-27.21.14.5638",
-                        "os": "Windows-10-18363",
-                        "pool": "chromium.tests.gpu",
-                    },
-                ),
-            ),
+            "webgpu_blink_web_tests": [
+                "win10_nvidia_gtx_1660_stable",
+            ],
             "webgpu_blink_web_tests_with_backend_validation": targets.remove(
                 reason = "Remove from bots where capacity is constrained.",
             ),
-            # TODO(crbug.com/40888390): This must be kept in sync with the
-            # appropriate mixin; currently, win10_nvidia_gtx_1660_stable,
-            # which is used by Dawn Win10 x64 Release (NVIDIA).
-            # TODO: crbug.com/40258588 - Mixins can be specified in
-            # per_test_modifications, but the mixin applies the extra dimension
-            # display_attached, so it can't be switched until after the tests
-            # are migrated to starlark
-            "webgpu_cts_tests": targets.mixin(
-                swarming = targets.swarming(
-                    dimensions = {
-                        "gpu": "10de:2184-27.21.14.5638",
-                        "os": "Windows-10-18363",
-                        "pool": "chromium.tests.gpu",
-                    },
-                ),
-            ),
+            "webgpu_cts_tests": [
+                "win10_nvidia_gtx_1660_stable",
+            ],
             "webgpu_cts_with_validation_tests": targets.remove(
                 reason = "Don't need validation layers on code coverage bots",
             ),

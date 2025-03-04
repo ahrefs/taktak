@@ -5,6 +5,7 @@
 #ifndef CHROME_BROWSER_PREDICTORS_LCP_CRITICAL_PATH_PREDICTOR_LCP_CRITICAL_PATH_PREDICTOR_HOST_H_
 #define CHROME_BROWSER_PREDICTORS_LCP_CRITICAL_PATH_PREDICTOR_LCP_CRITICAL_PATH_PREDICTOR_HOST_H_
 
+#include "chrome/browser/page_load_metrics/observers/lcp_critical_path_predictor_page_load_metrics_observer.h"
 #include "content/public/browser/document_service.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "services/network/public/mojom/fetch_api.mojom.h"
@@ -39,10 +40,13 @@ class LCPCriticalPathPredictorHost
 
   ~LCPCriticalPathPredictorHost() override;
 
+  LcpCriticalPathPredictorPageLoadMetricsObserver*
+  GetLcpCriticalPathPredictorPageLoadMetricsObserver() const;
+
   // Implements blink::mojom::LCPCriticalPathPredictorHost.
-  void SetLcpElementLocator(
-      const std::string& lcp_element_locator,
-      std::optional<uint32_t> predicted_lcp_index) override;
+  void OnLcpUpdated(const std::optional<std::string>& lcp_element_locator,
+                    bool is_image_element,
+                    std::optional<uint32_t> predicted_lcp_index) override;
   void SetLcpInfluencerScriptUrls(
       const std::vector<GURL>& lcp_influencer_scripts) override;
   void SetPreconnectOrigins(const std::vector<GURL>& origins) override;

@@ -139,32 +139,42 @@ inline bool ascii_isxdigit(unsigned char c) {
 //
 // Determines whether the given character can be represented as a decimal
 // digit character (i.e. {0-9}).
-inline bool ascii_isdigit(unsigned char c) { return c >= '0' && c <= '9'; }
+inline constexpr bool ascii_isdigit(unsigned char c) {
+  return c >= '0' && c <= '9';
+}
 
 // ascii_isprint()
 //
 // Determines whether the given character is printable, including spaces.
-inline bool ascii_isprint(unsigned char c) { return c >= 32 && c < 127; }
+inline constexpr bool ascii_isprint(unsigned char c) {
+  return c >= 32 && c < 127;
+}
 
 // ascii_isgraph()
 //
 // Determines whether the given character has a graphical representation.
-inline bool ascii_isgraph(unsigned char c) { return c > 32 && c < 127; }
+inline constexpr bool ascii_isgraph(unsigned char c) {
+  return c > 32 && c < 127;
+}
 
 // ascii_isupper()
 //
 // Determines whether the given character is uppercase.
-inline bool ascii_isupper(unsigned char c) { return c >= 'A' && c <= 'Z'; }
+inline constexpr bool ascii_isupper(unsigned char c) {
+  return c >= 'A' && c <= 'Z';
+}
 
 // ascii_islower()
 //
 // Determines whether the given character is lowercase.
-inline bool ascii_islower(unsigned char c) { return c >= 'a' && c <= 'z'; }
+inline constexpr bool ascii_islower(unsigned char c) {
+  return c >= 'a' && c <= 'z';
+}
 
 // ascii_isascii()
 //
 // Determines whether the given character is ASCII.
-inline bool ascii_isascii(unsigned char c) { return c < 128; }
+inline constexpr bool ascii_isascii(unsigned char c) { return c < 128; }
 
 // ascii_tolower()
 //
@@ -227,7 +237,7 @@ ABSL_MUST_USE_RESULT inline std::string AsciiStrToUpper(std::string&& s) {
 // Returns absl::string_view with whitespace stripped from the beginning of the
 // given string_view.
 ABSL_MUST_USE_RESULT inline absl::string_view StripLeadingAsciiWhitespace(
-    absl::string_view str) {
+    absl::string_view str ABSL_ATTRIBUTE_LIFETIME_BOUND) {
   auto it = std::find_if_not(str.begin(), str.end(), absl::ascii_isspace);
   return str.substr(static_cast<size_t>(it - str.begin()));
 }
@@ -241,7 +251,7 @@ inline void StripLeadingAsciiWhitespace(absl::Nonnull<std::string*> str) {
 // Returns absl::string_view with whitespace stripped from the end of the given
 // string_view.
 ABSL_MUST_USE_RESULT inline absl::string_view StripTrailingAsciiWhitespace(
-    absl::string_view str) {
+    absl::string_view str ABSL_ATTRIBUTE_LIFETIME_BOUND) {
   auto it = std::find_if_not(str.rbegin(), str.rend(), absl::ascii_isspace);
   return str.substr(0, static_cast<size_t>(str.rend() - it));
 }
@@ -255,7 +265,7 @@ inline void StripTrailingAsciiWhitespace(absl::Nonnull<std::string*> str) {
 // Returns absl::string_view with whitespace stripped from both ends of the
 // given string_view.
 ABSL_MUST_USE_RESULT inline absl::string_view StripAsciiWhitespace(
-    absl::string_view str) {
+    absl::string_view str ABSL_ATTRIBUTE_LIFETIME_BOUND) {
   return StripTrailingAsciiWhitespace(StripLeadingAsciiWhitespace(str));
 }
 

@@ -156,13 +156,11 @@ class COMPONENT_EXPORT(CHROMEOS_ASH_COMPONENTS_DISKS) DiskMountManager {
   // Delegate class for ARC-side operations.
   class ArcDelegate {
    public:
-    typedef base::OnceCallback<void(bool success)> PreparationCallback;
+    typedef base::OnceCallback<void(bool success)> Callback;
 
-    // Instruct ARC to prpeare for removable media unmount mounted on
-    // `mount_path` by dropping any references to the volume.
-    virtual void PrepareForRemovableMediaUnmount(
-        const base::FilePath& mount_path,
-        PreparationCallback callback) {}
+    // Drop ARC caches for the given removable drive.
+    virtual void DropArcCaches(const base::FilePath& mount_path,
+                               Callback callback) = 0;
   };
 
   virtual ~DiskMountManager() = default;
@@ -178,7 +176,7 @@ class COMPONENT_EXPORT(CHROMEOS_ASH_COMPONENTS_DISKS) DiskMountManager {
 
   // Returns Disk object corresponding to |source_path| or NULL on failure.
   virtual const Disk* FindDiskBySourcePath(
-      const std::string& source_path) const = 0;
+      std::string_view source_path) const = 0;
 
   // Gets the list of mount points.
   virtual const MountPoints& mount_points() const = 0;
@@ -214,9 +212,10 @@ class COMPONENT_EXPORT(CHROMEOS_ASH_COMPONENTS_DISKS) DiskMountManager {
   virtual void UnmountPath(const std::string& mount_path,
                            UnmountPathCallback callback) = 0;
 
-  // Remounts mounted removable devices to change the read-only mount option.
-  // Devices that can be mounted only in its read-only mode will be ignored.
-  virtual void RemountAllRemovableDrives(MountAccessMode mode) = 0;
+  // Remounts mounted removable device to change the read-only mount option.
+  // Device that can be mounted only in its read-only mode will be ignored.
+  virtual void RemountRemovableDrive(const Disk& disk,
+                                     MountAccessMode access_mode) = 0;
 
   // Formats device mounted at |mount_path| with the given filesystem and label.
   // Also unmounts the device before formatting.

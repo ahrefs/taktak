@@ -57,7 +57,7 @@ LogicalOffset ToLogicalOffset(const gfx::PointF& point,
 }  // anonymous namespace
 
 // With 100 unique strings, a 2^12 slot table has a false positive rate of ~2%.
-using ClassnameFilter = CountingBloomFilter<12>;
+using ClassnameFilter = WTF::BloomFilter<12>;
 using Corner = ScrollAnchor::Corner;
 
 SerializedAnchor::SerializedAnchor(const ScrollAnchorData& data,
@@ -125,8 +125,7 @@ static PhysicalOffset CornerPointOfRect(const PhysicalRect& rect,
     case Corner::kTopRight:
       return rect.MaxXMinYCorner();
   }
-  NOTREACHED_IN_MIGRATION();
-  return PhysicalOffset();
+  NOTREACHED();
 }
 
 // Bounds of the LayoutObject relative to the scroller's visible content rect.
@@ -151,7 +150,7 @@ static PhysicalRect RelativeBounds(const LayoutObject* layout_object,
     local_bounds.Unite(text->PhysicalLinesBoundingBox());
   } else {
     // Only LayoutBox and LayoutText are supported.
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 
   gfx::RectF relative_bounds =
@@ -403,8 +402,17 @@ bool ScrollAnchor::FindAnchorInPriorityCandidates() {
     if (candidate) {
       result = ExaminePriorityCandidate(candidate);
       if (IsViable(result.status)) {
+        // Start with the candidate object.
         anchor_object_ = candidate;
         corner_ = result.corner;
+
+        // Run the selection algorithm with the priority candidate as the root.
+        // This would override the anchor_object_ if there is a better
+        // alternative.
+        if (RuntimeEnabledFeatures::
+                ScrollAnchorPriorityCandidateSubtreeEnabled()) {
+          FindAnchorRecursive(candidate);
+        }
         return true;
       }
     }
@@ -415,8 +423,16 @@ bool ScrollAnchor::FindAnchorInPriorityCandidates() {
       PriorityCandidateFromNode(document.GetFindInPageActiveMatchNode());
   result = ExaminePriorityCandidate(candidate);
   if (IsViable(result.status)) {
+    // Start with the candidate object.
     anchor_object_ = candidate;
     corner_ = result.corner;
+
+    // Run the selection algorithm with the priority candidate as the root.
+    // This would override the anchor_object_ if there is a better
+    // alternative.
+    if (RuntimeEnabledFeatures::ScrollAnchorPriorityCandidateSubtreeEnabled()) {
+      FindAnchorRecursive(candidate);
+    }
     return true;
   }
   return false;

@@ -56,6 +56,10 @@ struct SearchResultItem {
   // When present, this contains information about how to mark this
   // SearchResultItem as the query answer. Most items will not have it.
   AnswerData? answer_data;
+
+  // Set to true for results that have at least 1 visit known to sync. This is
+  // used to determine if the UI can request images for the URL.
+  bool is_url_known_to_sync;
 };
 
 // Represents a search query for the history embeddings database.
@@ -107,7 +111,8 @@ interface PageHandler {
   // non-empty embeddings results, and if the user clicked one of the results.
   RecordSearchResultsMetrics(bool nonEmptyResults, bool userClickedResult,
                              bool answerShown, bool answerCitationClicked,
-                             bool otherHistoryResultClicked);
+                             bool otherHistoryResultClicked,
+                             uint32 queryWordCount);
 
   // Store the user feedback supplied by the user.
   SetUserFeedback(UserFeedback feedback);

@@ -11,15 +11,16 @@
 #include "base/functional/callback.h"
 #include "chrome/browser/chrome_browser_main_extra_parts.h"
 #include "chrome/common/buildflags.h"
+#include "chromeos/ash/components/login/readahead/login_readahead_performer.h"
 #include "chromeos/components/mahi/public/cpp/mahi_media_app_content_manager.h"
 
 namespace ash {
 class ArcWindowWatcher;
 class ActiveSessionFingerprintClient;
 class InSessionAuthTokenProviderImpl;
-class DemoLoginController;
 class MagicBoostStateAsh;
 class NetworkPortalNotificationController;
+class NetworkPortalSigninController;
 class OobeDialogUtil;
 class PeripheralsAppDelegateImpl;
 class VideoConferenceTrayController;
@@ -72,9 +73,9 @@ class ManagementDisclosureClientImpl;
 class MediaClientImpl;
 class MobileDataNotifications;
 class NetworkConnectDelegate;
-class PickerClientImpl;
 class ProjectorAppClientImpl;
 class ProjectorClientImpl;
+class QuickInsertClientImpl;
 class AnnotatorClientImpl;
 class ScreenOrientationDelegateChromeos;
 class SessionControllerClientImpl;
@@ -82,6 +83,7 @@ class SystemTrayClientImpl;
 class TabClusterUIClient;
 class TabletModePageBehavior;
 class VpnListForwarder;
+class WallpaperAsh;
 class WallpaperControllerClientImpl;
 
 namespace internal {
@@ -124,6 +126,7 @@ class ChromeBrowserMainExtraPartsAsh : public ChromeBrowserMainExtraParts {
   class UserProfileLoadedObserver;
 
   std::unique_ptr<UserProfileLoadedObserver> user_profile_loaded_observer_;
+  std::unique_ptr<WallpaperAsh> wallpaper_ash_;
 
   // Initialized in PreProfileInit in all configs before Shell init:
   std::unique_ptr<NetworkConnectDelegate> network_connect_delegate_;
@@ -159,8 +162,6 @@ class ChromeBrowserMainExtraPartsAsh : public ChromeBrowserMainExtraParts {
   std::unique_ptr<ProjectorAppClientImpl> projector_app_client_;
   std::unique_ptr<AnnotatorClientImpl> annotator_client_;
   std::unique_ptr<game_mode::GameModeController> game_mode_controller_;
-  std::unique_ptr<ash::NetworkPortalNotificationController>
-      network_portal_notification_controller_;
   std::unique_ptr<ash::VideoConferenceTrayController>
       video_conference_tray_controller_;
   std::unique_ptr<enterprise_connectors::AshAttestationCleanupManager>
@@ -171,6 +172,7 @@ class ChromeBrowserMainExtraPartsAsh : public ChromeBrowserMainExtraParts {
       mahi_media_app_events_proxy_;
   std::unique_ptr<chromeos::MahiMediaAppContentManager>
       mahi_media_app_content_manager_;
+  std::optional<ash::LoginReadaheadPerformer> login_readahead_performer_;
 
   std::unique_ptr<internal::ChromeShelfControllerInitializer>
       chrome_shelf_controller_initializer_;
@@ -187,12 +189,15 @@ class ChromeBrowserMainExtraPartsAsh : public ChromeBrowserMainExtraParts {
   std::unique_ptr<MediaClientImpl> media_client_;
   std::unique_ptr<AppAccessNotifier> app_access_notifier_;
   std::unique_ptr<policy::DisplaySettingsHandler> display_settings_handler_;
+  std::unique_ptr<ash::NetworkPortalSigninController>
+      network_portal_signin_controller_;
+  std::unique_ptr<ash::NetworkPortalNotificationController>
+      network_portal_notification_controller_;
   std::unique_ptr<AshWebViewFactoryImpl> ash_web_view_factory_;
-  std::unique_ptr<PickerClientImpl> picker_client_;
+  std::unique_ptr<QuickInsertClientImpl> quick_insert_client_;
   std::unique_ptr<ash::OobeDialogUtil> oobe_dialog_util_;
   std::unique_ptr<chromeos::ReadWriteCardsManager> read_write_cards_manager_;
   std::unique_ptr<ash::graduation::GraduationManager> graduation_manager_;
-  std::unique_ptr<ash::DemoLoginController> demo_login_controller_;
 
   // Initialized in PostBrowserStart in all configs:
   std::unique_ptr<MobileDataNotifications> mobile_data_notifications_;

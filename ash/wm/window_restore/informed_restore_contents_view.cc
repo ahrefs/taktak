@@ -23,6 +23,7 @@
 #include "ash/wm/window_restore/informed_restore_items_container_view.h"
 #include "ash/wm/window_restore/informed_restore_screenshot_icon_row_view.h"
 #include "ash/wm/window_restore/window_restore_metrics.h"
+#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/ui/base/display_util.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/mojom/menu_source_type.mojom.h"
@@ -151,8 +152,10 @@ std::unique_ptr<views::Widget> InformedRestoreContentsView::Create(
   if (features::IsBackgroundBlurEnabled()) {
     layer->SetRoundedCornerRadius(gfx::RoundedCornersF(kContentsRounding));
     layer->SetIsFastRoundedCorner(true);
-    layer->SetBackgroundBlur(ColorProvider::kBackgroundBlurSigma);
-    layer->SetBackdropFilterQuality(ColorProvider::kBackgroundBlurQuality);
+    if (chromeos::features::IsSystemBlurEnabled()) {
+      layer->SetBackgroundBlur(ColorProvider::kBackgroundBlurSigma);
+      layer->SetBackdropFilterQuality(ColorProvider::kBackgroundBlurQuality);
+    }
   }
 
   return widget;
@@ -264,7 +267,7 @@ void InformedRestoreContentsView::OnSettingsButtonPressed() {
   context_label->SetBorder(views::CreateEmptyBorder(kContextMenuLabelInsets));
   TypographyProvider::Get()->StyleLabel(TypographyToken::kCrosAnnotation1,
                                         *context_label);
-  context_label->SetEnabledColorId(cros_tokens::kCrosSysOnSurfaceVariant);
+  context_label->SetEnabledColor(cros_tokens::kCrosSysOnSurfaceVariant);
   container->AddChildView(std::move(context_label));
 
   // Set the label container's a11y name to be the same as the label text so
@@ -361,7 +364,7 @@ void InformedRestoreContentsView::CreateChildViews() {
               // Title.
               views::Builder<views::Label>()
                   .SetAccessibleRole(ax::mojom::Role::kHeading)
-                  .SetEnabledColorId(cros_tokens::kCrosSysOnSurface)
+                  .SetEnabledColor(cros_tokens::kCrosSysOnSurface)
                   .SetHorizontalAlignment(gfx::ALIGN_LEFT)
                   .SetMultiLine(true)
                   .SetText(l10n_util::GetStringUTF16(title_message_id))
@@ -371,7 +374,7 @@ void InformedRestoreContentsView::CreateChildViews() {
                   })),
               // Description.
               views::Builder<views::Label>()
-                  .SetEnabledColorId(cros_tokens::kCrosSysOnSurface)
+                  .SetEnabledColor(cros_tokens::kCrosSysOnSurface)
                   .SetHorizontalAlignment(gfx::ALIGN_LEFT)
                   .SetMultiLine(true)
                   .SetText(l10n_util::GetStringUTF16(description_message_id))
@@ -418,7 +421,7 @@ void InformedRestoreContentsView::CreateChildViews() {
                 views::Builder<views::ImageView>()
                     .CopyAddressTo(&image_view_)
                     .SetPaintToLayer()
-                    .SetImage(image)
+                    .SetImage(ui::ImageModel::FromImageSkia(image))
                     .SetImageSize(screenshot_size))
             .Build());
 

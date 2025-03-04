@@ -40,6 +40,7 @@
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/simple_test_tick_clock.h"
+#include "base/time/time.h"
 #include "build/build_config.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/apps/app_service/app_service_proxy.h"
@@ -99,7 +100,7 @@ namespace {
 
 const char* kChromeVoxPerformCommandMetric =
     "Accessibility.ChromeVox.PerformCommand";
-const double kExpectedPhoneticSpeechAndHintDelayMS = 1000;
+const base::TimeDelta kExpectedPhoneticSpeechAndHintDelay = base::Seconds(1);
 
 }  // namespace
 
@@ -587,8 +588,8 @@ class SpokenFeedbackTest
     : public LoggedInSpokenFeedbackTest,
       public ::testing::WithParamInterface<SpokenFeedbackTestVariant> {
  protected:
-  SpokenFeedbackTest() {}
-  virtual ~SpokenFeedbackTest() {}
+  SpokenFeedbackTest() = default;
+  virtual ~SpokenFeedbackTest() = default;
 
   void SetUpCommandLine(base::CommandLine* command_line) override {
     if (GetParam() == kTestAsGuestUser) {
@@ -921,15 +922,14 @@ IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest,
   std::string app_id = "TestApp";
 
   // Set the app status as paused;
-  apps::AppPtr app =
-      std::make_unique<apps::App>(apps::AppType::kBuiltIn, app_id);
+  apps::AppPtr app = std::make_unique<apps::App>(apps::AppType::kWeb, app_id);
   app->readiness = apps::Readiness::kReady;
   app->paused = true;
 
   std::vector<apps::AppPtr> apps;
   apps.push_back(std::move(app));
   apps::AppServiceProxyFactory::GetForProfile(GetProfile())
-      ->OnApps(std::move(apps), apps::AppType::kBuiltIn,
+      ->OnApps(std::move(apps), apps::AppType::kWeb,
                false /* should_notify_initialized */);
 
   // Create and add a test app to the shelf model.
@@ -1009,13 +1009,12 @@ IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest,
   std::string app_id = "TestApp";
 
   // Set the app status as paused;
-  apps::AppPtr app =
-      std::make_unique<apps::App>(apps::AppType::kBuiltIn, app_id);
+  apps::AppPtr app = std::make_unique<apps::App>(apps::AppType::kWeb, app_id);
   app->readiness = apps::Readiness::kDisabledByPolicy;
   std::vector<apps::AppPtr> apps;
   apps.push_back(std::move(app));
   apps::AppServiceProxyFactory::GetForProfile(GetProfile())
-      ->OnApps(std::move(apps), apps::AppType::kBuiltIn,
+      ->OnApps(std::move(apps), apps::AppType::kWeb,
                false /* should_notify_initialized */);
 
   // Create and add a test app to the shelf model.
@@ -1308,14 +1307,7 @@ IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest,
   sm_.Replay();
 }
 
-// TODO(crbug.com/40845611): Flaky on Linux ChromiumOS MSan.
-#if defined(MEMORY_SANITIZER)
-#define MAYBE_ChromeVoxFindInPage DISABLED_ChromeVoxFindInPage
-#else
-#define MAYBE_ChromeVoxFindInPage ChromeVoxFindInPage
-#endif
-
-IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest, MAYBE_ChromeVoxFindInPage) {
+IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest, ChromeVoxFindInPage) {
   EnableChromeVox();
   StablizeChromeVoxState();
 
@@ -1387,13 +1379,7 @@ IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest, ChromeVoxStickyMode) {
 // sending js commands above. This variant may be subject to flakes as it
 // depends on more of the UI events stack and sticky mode invocation has a
 // timing element to it.
-// Consistently failing on ChromiumOS MSan and ASan. http://crbug.com/1182542
-#if defined(MEMORY_SANITIZER) || defined(ADDRESS_SANITIZER)
-#define MAYBE_ChromeVoxStickyModeRawKeys DISABLED_ChromeVoxStickyModeRawKeys
-#else
-#define MAYBE_ChromeVoxStickyModeRawKeys ChromeVoxStickyModeRawKeys
-#endif
-IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest, MAYBE_ChromeVoxStickyModeRawKeys) {
+IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest, ChromeVoxStickyModeRawKeys) {
   EnableChromeVox();
   StablizeChromeVoxState();
 
@@ -1868,49 +1854,49 @@ IN_PROC_BROWSER_TEST_P(SpokenFeedbackTest,
   sm_.ExpectSpeech("L");
   sm_.ExpectSpeech("lima");
   sm_.Call([this]() {
-    EXPECT_TRUE(sm_.GetDelayForLastUtteranceMS() >=
-                kExpectedPhoneticSpeechAndHintDelayMS);
+    EXPECT_GE(sm_.GetDelayForLastUtterance(),
+              kExpectedPhoneticSpeechAndHintDelay);
   });
   sm_.ExpectSpeech("Press Search plus Space to activate");
   sm_.Call([this]() {
-    EXPECT_TRUE(sm_.GetDelayForLastUtteranceMS() >=
-                kExpectedPhoneticSpeechAndHintDelayMS);
+    EXPECT_GE(sm_.GetDelayForLastUtterance(),
+              kExpectedPhoneticSpeechAndHintDelay);
   });
   sm_.Call([this]() { SendKeyPressWithSearchAndShift(ui::VKEY_RIGHT); });
   sm_.ExpectSpeech("I");
   sm_.ExpectSpeech("india");
   sm_.Call([this]() {
-    EXPECT_TRUE(sm_.GetDelayForLastUtteranceMS() >=
-                kExpectedPhoneticSpeechAndHintDelayMS);
+    EXPECT_GE(sm_.GetDelayForLastUtterance(),
+              kExpectedPhoneticSpeechAndHintDelay);
   });
   sm_.ExpectSpeech("Press Search plus Space to activate");
   sm_.Call([this]() {
-    EXPECT_TRUE(sm_.GetDelayForLastUtteranceMS() >=
-                kExpectedPhoneticSpeechAndHintDelayMS);
+    EXPECT_GE(sm_.GetDelayForLastUtterance(),
+              kExpectedPhoneticSpeechAndHintDelay);
   });
   sm_.Call([this]() { SendKeyPressWithSearchAndShift(ui::VKEY_RIGHT); });
   sm_.ExpectSpeech("C");
   sm_.ExpectSpeech("charlie");
   sm_.Call([this]() {
-    EXPECT_TRUE(sm_.GetDelayForLastUtteranceMS() >=
-                kExpectedPhoneticSpeechAndHintDelayMS);
+    EXPECT_GE(sm_.GetDelayForLastUtterance(),
+              kExpectedPhoneticSpeechAndHintDelay);
   });
   sm_.ExpectSpeech("Press Search plus Space to activate");
   sm_.Call([this]() {
-    EXPECT_TRUE(sm_.GetDelayForLastUtteranceMS() >=
-                kExpectedPhoneticSpeechAndHintDelayMS);
+    EXPECT_GE(sm_.GetDelayForLastUtterance(),
+              kExpectedPhoneticSpeechAndHintDelay);
   });
   sm_.Call([this]() { SendKeyPressWithSearchAndShift(ui::VKEY_RIGHT); });
   sm_.ExpectSpeech("K");
   sm_.ExpectSpeech("kilo");
   sm_.Call([this]() {
-    EXPECT_TRUE(sm_.GetDelayForLastUtteranceMS() >=
-                kExpectedPhoneticSpeechAndHintDelayMS);
+    EXPECT_GE(sm_.GetDelayForLastUtterance(),
+              kExpectedPhoneticSpeechAndHintDelay);
   });
   sm_.ExpectSpeech("Press Search plus Space to activate");
   sm_.Call([this]() {
-    EXPECT_TRUE(sm_.GetDelayForLastUtteranceMS() >=
-                kExpectedPhoneticSpeechAndHintDelayMS);
+    EXPECT_GE(sm_.GetDelayForLastUtterance(),
+              kExpectedPhoneticSpeechAndHintDelay);
   });
   sm_.Replay();
 }

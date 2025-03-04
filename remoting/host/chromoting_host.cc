@@ -6,7 +6,9 @@
 
 #include <stddef.h>
 
+#include <algorithm>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "base/command_line.h"
@@ -14,7 +16,6 @@
 #include "base/functional/callback.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/raw_ptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/task/single_thread_task_runner.h"
 #include "build/build_config.h"
 #include "components/named_mojo_ipc_server/connection_info.h"
@@ -85,6 +86,7 @@ ChromotingHost::ChromotingHost(
     scoped_refptr<base::SingleThreadTaskRunner> audio_task_runner,
     scoped_refptr<base::SingleThreadTaskRunner> video_encode_task_runner,
     const DesktopEnvironmentOptions& options,
+    const SessionPoliciesValidator& per_session_policies_validator,
     const LocalSessionPoliciesProvider* local_session_policies_provider)
     : desktop_environment_factory_(desktop_environment_factory),
       session_manager_(std::move(session_manager)),
@@ -94,7 +96,8 @@ ChromotingHost::ChromotingHost(
       status_monitor_(new HostStatusMonitor()),
       login_backoff_(&kDefaultBackoffPolicy),
       desktop_environment_options_(options),
-      local_session_policies_provider_(local_session_policies_provider) {
+      local_session_policies_provider_(local_session_policies_provider),
+      per_session_policies_validator_(per_session_policies_validator) {
   webrtc::ThreadWrapper::EnsureForCurrentMessageLoop();
 }
 
@@ -226,8 +229,8 @@ void ChromotingHost::OnSessionAuthenticationFailed(ClientSession* client) {
 void ChromotingHost::OnSessionClosed(ClientSession* client) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
-  auto it = base::ranges::find(clients_, client,
-                               &std::unique_ptr<ClientSession>::get);
+  auto it =
+      std::ranges::find(clients_, client, &std::unique_ptr<ClientSession>::get);
   CHECK(it != clients_.end());
 
   bool was_authenticated = client->is_authenticated();
@@ -249,6 +252,17 @@ void ChromotingHost::OnSessionRouteChange(
   for (auto& observer : status_monitor_->observers()) {
     observer.OnClientRouteChange(session->client_jid(), channel_name, route);
   }
+}
+
+std::optional<ErrorCode> ChromotingHost::OnSessionPoliciesReceived(
+    const SessionPolicies& policies) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  if (!per_session_policies_validator_) {
+    return std::nullopt;
+  }
+
+  return per_session_policies_validator_.Run(policies);
 }
 
 void ChromotingHost::BindSessionServices(

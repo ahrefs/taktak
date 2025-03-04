@@ -47,6 +47,7 @@ class GetUpdatesProcessor {
 
   // Applies any downloaded and processed updates.
   void ApplyUpdates(const DataTypeSet& gu_types,
+                    const DataTypeSet& data_types_with_failure,
                     StatusController* status_controller);
 
   // Returns true if last DownloadUpdates() outcome indicated that there are
@@ -60,7 +61,7 @@ class GetUpdatesProcessor {
                          sync_pb::ClientToServerMessage* message);
 
   // Sends the specified message to the server and stores the response in a
-  // member of the |cycle|'s StatusController.
+  // member of the `cycle`'s StatusController.
   SyncerError ExecuteDownloadUpdates(DataTypeSet* request_types,
                                      SyncCycle* cycle,
                                      sync_pb::ClientToServerMessage* msg);

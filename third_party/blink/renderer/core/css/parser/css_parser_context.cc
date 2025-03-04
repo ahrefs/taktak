@@ -222,6 +222,12 @@ void CSSParserContext::Count(WebFeature feature) const {
   }
 }
 
+void CSSParserContext::Count(WebDXFeature feature) const {
+  if (IsUseCounterRecordingEnabled()) {
+    document_->CountWebDXFeature(feature);
+  }
+}
+
 void CSSParserContext::CountDeprecation(WebFeature feature) const {
   if (IsUseCounterRecordingEnabled() && document_) {
     Deprecation::CountDeprecation(document_->GetExecutionContext(), feature);
@@ -244,7 +250,7 @@ const Document* CSSParserContext::GetDocument() const {
 
 // Fuzzers may execution CSS parsing code without a Document being available,
 // thus this method can return null.
-const ExecutionContext* CSSParserContext::GetExecutionContext() const {
+ExecutionContext* CSSParserContext::GetExecutionContext() const {
   return (document_.Get()) ? document_.Get()->GetExecutionContext() : nullptr;
 }
 

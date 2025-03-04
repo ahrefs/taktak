@@ -13,7 +13,6 @@
 #include "base/auto_reset.h"
 #include "base/functional/callback.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/web_applications/web_app_callback_app_identity.h"
 #include "chrome/browser/web_applications/web_app_install_info.h"
 #include "chrome/browser/web_applications/web_app_uninstall_dialog_user_options.h"
@@ -43,12 +42,12 @@ class Widget;
 namespace webapps {
 class MlInstallOperationTracker;
 enum class WebappUninstallSource;
-struct Screenshot;
 }  // namespace webapps
 
 namespace web_app {
 
 class IsolatedWebAppInstallerCoordinator;
+class WebAppScreenshotFetcher;
 struct WebAppInstallInfo;
 
 // Callback used to indicate whether a user has accepted the installation of a
@@ -166,6 +165,8 @@ void ShowDiyAppInstallDialog(
     AppInstallationAcceptanceCallback callback,
     PwaInProductHelpState iph_state = PwaInProductHelpState::kNotShown);
 
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kDetailedInstallDialogImageContainer);
+
 // Shows the Web App detailed install dialog.
 // The dialog shows app's detailed information including screenshots. Users then
 // confirm or cancel install in this dialog.
@@ -174,7 +175,7 @@ void ShowWebAppDetailedInstallDialog(
     std::unique_ptr<WebAppInstallInfo> web_app_info,
     std::unique_ptr<webapps::MlInstallOperationTracker> install_tracker,
     AppInstallationAcceptanceCallback callback,
-    std::vector<webapps::Screenshot> screenshots,
+    base::WeakPtr<WebAppScreenshotFetcher> screenshot_fetcher,
     PwaInProductHelpState iph_state = PwaInProductHelpState::kNotShown);
 
 // Sets whether |ShowSimpleInstallDialogForWebApps| should accept immediately

@@ -4,6 +4,7 @@
 
 #include "extensions/browser/extension_function_dispatcher.h"
 
+#include <algorithm>
 #include <optional>
 #include <utility>
 
@@ -19,7 +20,6 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/process/process.h"
-#include "base/ranges/algorithm.h"
 #include "base/scoped_observation.h"
 #include "base/trace_event/typed_macros.h"
 #include "base/tracing/protos/chrome_track_event.pbzero.h"
@@ -111,9 +111,7 @@ const char* ToString(bad_message::BadMessageReason bad_message_code) {
     case bad_message::BadMessageReason::EFD_INVALID_EXTENSION_ID_FOR_PROCESS:
       return "LocalFrameHost::Request: renderer never hosted such extension";
     default:
-      NOTREACHED_IN_MIGRATION();
-      return "LocalFrameHost::Request encountered unrecognized validation "
-             "error.";
+      NOTREACHED();
   }
 }
 
@@ -283,12 +281,13 @@ void ExtensionFunctionDispatcher::DispatchWithCallbackInternal(
     return;
   }
 
-  const int render_process_id = render_process_host.GetID();
+  const int render_process_id = render_process_host.GetDeprecatedID();
 
   const GURL* render_frame_host_url = nullptr;
   if (render_frame_host) {
     render_frame_host_url = &render_frame_host->GetLastCommittedURL();
-    DCHECK_EQ(render_process_id, render_frame_host->GetProcess()->GetID());
+    DCHECK_EQ(render_process_id,
+              render_frame_host->GetProcess()->GetDeprecatedID());
   }
 
   ExtensionRegistry* registry = ExtensionRegistry::Get(browser_context_);
@@ -515,7 +514,7 @@ void ExtensionFunctionDispatcher::AddResponseTarget(ExtensionFunction* func) {
 
 void ExtensionFunctionDispatcher::ProcessResponseAck(
     const base::Uuid& request_uuid) {
-  auto iter = base::ranges::find_if(
+  auto iter = std::ranges::find_if(
       response_targets_, [request_uuid](ExtensionFunction* function) {
         return function->request_uuid() == request_uuid;
       });

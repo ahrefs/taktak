@@ -40,6 +40,7 @@ import org.chromium.chrome.browser.omnibox.styles.OmniboxResourceProvider;
 import org.chromium.chrome.browser.omnibox.suggestions.SuggestionHost;
 import org.chromium.chrome.browser.omnibox.suggestions.base.BaseSuggestionViewProperties;
 import org.chromium.chrome.browser.omnibox.test.R;
+import org.chromium.components.metrics.OmniboxEventProtos.OmniboxEventProto.PageClassification;
 import org.chromium.components.omnibox.AutocompleteInput;
 import org.chromium.components.omnibox.AutocompleteMatch;
 import org.chromium.components.omnibox.AutocompleteMatchBuilder;
@@ -88,7 +89,6 @@ public class BasicSuggestionProcessorUnitTest {
         map.put(OmniboxSuggestionType.HISTORY_URL, "HISTORY_URL");
         map.put(OmniboxSuggestionType.HISTORY_TITLE, "HISTORY_TITLE");
         map.put(OmniboxSuggestionType.HISTORY_BODY, "HISTORY_BODY");
-        map.put(OmniboxSuggestionType.HISTORY_KEYWORD, "HISTORY_KEYWORD");
         map.put(OmniboxSuggestionType.NAVSUGGEST, "NAVSUGGEST");
         map.put(OmniboxSuggestionType.SEARCH_WHAT_YOU_TYPED, "SEARCH_WHAT_YOU_TYPED");
         map.put(OmniboxSuggestionType.SEARCH_HISTORY, "SEARCH_HISTORY");
@@ -112,11 +112,11 @@ public class BasicSuggestionProcessorUnitTest {
     private @Mock UrlBarEditingTextStateProvider mUrlBarText;
     private @Mock Bitmap mBitmap;
     private @Mock OmniboxImageSupplier mImageSupplier;
-    private @Mock AutocompleteInput mInput;
 
     private BasicSuggestionProcessor mProcessor;
     private AutocompleteMatch mSuggestion;
     private PropertyModel mModel;
+    private AutocompleteInput mInput;
 
     private static class BookmarkPredicate implements BasicSuggestionProcessor.BookmarkState {
         boolean mState;
@@ -139,12 +139,14 @@ public class BasicSuggestionProcessorUnitTest {
                         mUrlBarText,
                         Optional.of(mImageSupplier),
                         mIsBookmarked);
+        mInput = new AutocompleteInput();
         OmniboxResourceProvider.disableCachesForTesting();
     }
 
     @After
     public void tearDown() {
         OmniboxResourceProvider.reenableCachesForTesting();
+        mInput.reset();
     }
 
     /**
@@ -203,7 +205,6 @@ public class BasicSuggestionProcessorUnitTest {
             {OmniboxSuggestionType.HISTORY_URL, ICON_MAGNIFIER},
             {OmniboxSuggestionType.HISTORY_TITLE, ICON_MAGNIFIER},
             {OmniboxSuggestionType.HISTORY_BODY, ICON_MAGNIFIER},
-            {OmniboxSuggestionType.HISTORY_KEYWORD, ICON_MAGNIFIER},
             {OmniboxSuggestionType.NAVSUGGEST, ICON_MAGNIFIER},
             {OmniboxSuggestionType.SEARCH_WHAT_YOU_TYPED, ICON_MAGNIFIER},
             {OmniboxSuggestionType.SEARCH_HISTORY, ICON_HISTORY},
@@ -234,7 +235,6 @@ public class BasicSuggestionProcessorUnitTest {
             {OmniboxSuggestionType.HISTORY_URL, ICON_GLOBE},
             {OmniboxSuggestionType.HISTORY_TITLE, ICON_GLOBE},
             {OmniboxSuggestionType.HISTORY_BODY, ICON_GLOBE},
-            {OmniboxSuggestionType.HISTORY_KEYWORD, ICON_GLOBE},
             {OmniboxSuggestionType.NAVSUGGEST, ICON_GLOBE},
             {OmniboxSuggestionType.SEARCH_WHAT_YOU_TYPED, ICON_GLOBE},
             {OmniboxSuggestionType.SEARCH_HISTORY, ICON_GLOBE},
@@ -265,7 +265,6 @@ public class BasicSuggestionProcessorUnitTest {
             {OmniboxSuggestionType.HISTORY_URL, ICON_BOOKMARK},
             {OmniboxSuggestionType.HISTORY_TITLE, ICON_BOOKMARK},
             {OmniboxSuggestionType.HISTORY_BODY, ICON_BOOKMARK},
-            {OmniboxSuggestionType.HISTORY_KEYWORD, ICON_BOOKMARK},
             {OmniboxSuggestionType.NAVSUGGEST, ICON_BOOKMARK},
             {OmniboxSuggestionType.SEARCH_WHAT_YOU_TYPED, ICON_BOOKMARK},
             {OmniboxSuggestionType.SEARCH_HISTORY, ICON_BOOKMARK},
@@ -344,7 +343,7 @@ public class BasicSuggestionProcessorUnitTest {
 
         final List<BaseSuggestionViewProperties.Action> actions =
                 mModel.get(BaseSuggestionViewProperties.ACTION_BUTTONS);
-        Assert.assertEquals(actions.size(), 1);
+        Assert.assertEquals(1, actions.size());
         final OmniboxDrawableState iconState = actions.get(0).icon;
         Assert.assertEquals(
                 R.drawable.btn_suggestion_refine,
@@ -364,14 +363,18 @@ public class BasicSuggestionProcessorUnitTest {
     @SmallTest
     public void switchTabIconShownForSwitchToTabSuggestions() {
         final String tabMatch = "tab match";
+        mInput.setPageClassification(
+                PageClassification.INSTANT_NTP_WITH_OMNIBOX_AS_STARTING_FOCUS_VALUE);
+
         createSwitchToTabSuggestion(OmniboxSuggestionType.URL_WHAT_YOU_TYPED, tabMatch);
         PropertyModel model = mProcessor.createModel();
+
         mProcessor.populateModel(mInput, mSuggestion, model, 0);
         Assert.assertNotNull(mModel.get(BaseSuggestionViewProperties.ACTION_BUTTONS));
 
         final List<BaseSuggestionViewProperties.Action> actions =
                 mModel.get(BaseSuggestionViewProperties.ACTION_BUTTONS);
-        Assert.assertEquals(actions.size(), 1);
+        Assert.assertEquals(1, actions.size());
         final OmniboxDrawableState iconState = actions.get(0).icon;
         Assert.assertEquals(
                 R.drawable.switch_to_tab, shadowOf(iconState.drawable).getCreatedFromResId());
@@ -436,10 +439,10 @@ public class BasicSuggestionProcessorUnitTest {
     public void searchSuggestions_searchQueriesCanWrapAroundWithFeatureEnabled() {
         mProcessor.onNativeInitialized();
         createSearchSuggestion(OmniboxSuggestionType.SEARCH_WHAT_YOU_TYPED, "");
-        Assert.assertEquals(mModel.get(SuggestionViewProperties.ALLOW_WRAP_AROUND), true);
+        Assert.assertEquals(true, mModel.get(SuggestionViewProperties.ALLOW_WRAP_AROUND));
 
         createUrlSuggestion(OmniboxSuggestionType.URL_WHAT_YOU_TYPED, "");
-        Assert.assertEquals(mModel.get(SuggestionViewProperties.ALLOW_WRAP_AROUND), false);
+        Assert.assertEquals(false, mModel.get(SuggestionViewProperties.ALLOW_WRAP_AROUND));
     }
 
     @Test

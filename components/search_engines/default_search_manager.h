@@ -11,10 +11,10 @@
 #include "base/memory/raw_ptr.h"
 #include "base/scoped_observation.h"
 #include "base/values.h"
-#include "build/chromeos_buildflags.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "components/search_engines/reconciling_template_url_data_holder.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_service.h"
+#include "components/search_engines/template_url_prepopulate_data_resolver.h"
 
 namespace search_engines {
 class SearchEngineChoiceService;
@@ -39,6 +39,10 @@ class DefaultSearchManager
   static constexpr char kDefaultSearchProviderDataPrefName[] =
       "default_search_provider_data.template_url_data";
 
+  // A mirrored copy of the Default Search Engine data.
+  static constexpr char kMirroredDefaultSearchProviderDataPrefName[] =
+      "default_search_provider_data.mirrored_template_url_data";
+
   static const char kID[];
   static const char kShortName[];
   static const char kKeyword[];
@@ -59,8 +63,6 @@ class DefaultSearchManager
   static const char kSearchURLPostParams[];
   static const char kSuggestionsURLPostParams[];
   static const char kImageURLPostParams[];
-  static const char kSideSearchParam[];
-  static const char kSideImageSearchParam[];
   static const char kImageSearchBrandingLabel[];
   static const char kSearchIntentParams[];
   static const char kImageTranslateSourceLanguageParamKey[];
@@ -75,19 +77,22 @@ class DefaultSearchManager
 
   static const char kUsageCount[];
   static const char kAlternateURLs[];
-  static const char kCreatedByPolicy[];
+  static const char kPolicyOrigin[];
   static const char kDisabledByPolicy[];
   static const char kCreatedFromPlayAPI[];
   static const char kFeaturedByPolicy[];
+  static const char kRequireShortcut[];
   static const char kPreconnectToSearchUrl[];
   static const char kPrefetchLikelyNavigations[];
   static const char kIsActive[];
   static const char kStarterPackId[];
   static const char kEnforcedByPolicy[];
 
+  static const char kDefaultSearchEngineMirroredMetric[];
+
   enum Source {
     // Default search engine chosen either from prepopulated engines set for
-    // current country or overriden from kSearchProviderOverrides preference.
+    // current country or overridden from kSearchProviderOverrides preference.
     FROM_FALLBACK = 0,
     // User selected engine.
     FROM_USER,
@@ -107,12 +112,8 @@ class DefaultSearchManager
   DefaultSearchManager(
       PrefService* pref_service,
       search_engines::SearchEngineChoiceService* search_engine_choice_service,
-      const ObserverCallback& change_observer
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-      ,
-      bool for_lacros_main_profile
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-  );
+      TemplateURLPrepopulateData::Resolver& prepopulate_data_resolver,
+      const ObserverCallback& change_observer);
 
   DefaultSearchManager(const DefaultSearchManager&) = delete;
   DefaultSearchManager& operator=(const DefaultSearchManager&) = delete;
@@ -197,6 +198,8 @@ class DefaultSearchManager
                           search_engines::SearchEngineChoiceService::Observer>
       search_engine_choice_service_observation_{this};
 
+  raw_ref<TemplateURLPrepopulateData::Resolver> prepopulate_data_resolver_;
+
   // Default search engine provided by pre-populated data or by the
   // |kSearchProviderOverrides| pref. This will be used when no other default
   // search engine has been selected.
@@ -220,11 +223,6 @@ class DefaultSearchManager
 
   // True if the default search is currently recommended by policy.
   bool default_search_recommended_by_policy_ = false;
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  // True if this instance is used for the Lacros primary profile.
-  bool for_lacros_main_profile_ = false;
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 };
 
 #endif  // COMPONENTS_SEARCH_ENGINES_DEFAULT_SEARCH_MANAGER_H_

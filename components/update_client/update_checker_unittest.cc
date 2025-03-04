@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "components/update_client/update_checker.h"
 
 #include <initializer_list>
@@ -78,6 +73,7 @@ class UpdateCheckerTest : public testing::TestWithParam<bool> {
   std::unique_ptr<Component> MakeComponent(const std::string& brand) const;
   std::unique_ptr<Component> MakeComponent(
       const std::string& brand,
+      const std::string& lang,
       const std::string& install_data_index,
       bool allow_updates_on_metered_connection) const;
   std::optional<base::Value::Dict> ParseRequest(int request_number);
@@ -186,19 +182,21 @@ std::unique_ptr<Component> UpdateCheckerTest::MakeComponent() const {
 
 std::unique_ptr<Component> UpdateCheckerTest::MakeComponent(
     const std::string& brand) const {
-  return MakeComponent(brand, {}, true);
+  return MakeComponent(brand, {}, {}, true);
 }
 
 std::unique_ptr<Component> UpdateCheckerTest::MakeComponent(
     const std::string& brand,
+    const std::string& lang,
     const std::string& install_data_index,
     bool allow_updates_on_metered_connection) const {
   CrxComponent crx_component;
   crx_component.app_id = "jebgalgnebhfojomionfpkfelancnnkf";
   crx_component.brand = brand;
+  crx_component.lang = lang;
   crx_component.install_data_index = install_data_index;
   crx_component.name = "test_jebg";
-  crx_component.pk_hash.assign(jebg_hash, jebg_hash + std::size(jebg_hash));
+  crx_component.pk_hash.assign(std::begin(jebg_hash), std::end(jebg_hash));
   crx_component.installer = nullptr;
   crx_component.version = base::Version("0.9");
   crx_component.fingerprint = "fp1";
@@ -258,7 +256,7 @@ TEST_P(UpdateCheckerTest, UpdateCheckSuccess) {
   update_checker_ = UpdateChecker::Create(config_);
 
   update_context_->components[kUpdateItemId] =
-      MakeComponent("TEST", "foobar_install_data_index", true);
+      MakeComponent("TEST", "foolang", "foobar_install_data_index", true);
 
   auto& component = update_context_->components[kUpdateItemId];
   component->crx_component_->installer_attributes["ap"] = "some_ap";
@@ -330,7 +328,7 @@ TEST_P(UpdateCheckerTest, UpdateCheckSuccess) {
   ASSERT_TRUE(app->FindString("brand"));
   EXPECT_EQ("TEST", *app->FindString("brand"));
   ASSERT_TRUE(app->FindString("lang"));
-  EXPECT_EQ("fake_lang", *app->FindString("lang"));
+  EXPECT_EQ("foolang", *app->FindString("lang"));
   EXPECT_EQ("name1", *app->FindString("cohortname"));
   EXPECT_EQ("hint2", *app->FindString("cohorthint"));
   EXPECT_EQ("id3", *app->FindString("cohort"));
@@ -391,7 +389,6 @@ TEST_P(UpdateCheckerTest, UpdateCheckSuccess) {
   const auto& result = results_->list.front();
   EXPECT_STREQ("jebgalgnebhfojomionfpkfelancnnkf", result.extension_id.c_str());
   EXPECT_EQ("1.0", result.manifest.version);
-  EXPECT_EQ("11.0.1.0", result.manifest.browser_min_version);
   EXPECT_EQ(1u, result.manifest.packages.size());
   EXPECT_STREQ("jebgalgnebhfojomionfpkfelancnnkf.crx",
                result.manifest.packages.front().name.c_str());
@@ -441,6 +438,7 @@ TEST_P(UpdateCheckerTest, UpdateCheckInvalidAp) {
   EXPECT_EQ(kUpdateItemId, CHECK_DEREF(app.FindString("appid")));
   EXPECT_EQ("0.9", CHECK_DEREF(app.FindString("version")));
   EXPECT_EQ("TEST", CHECK_DEREF(app.FindString("brand")));
+  EXPECT_EQ("fake_lang", CHECK_DEREF(app.FindString("lang")));
   EXPECT_FALSE(app.contains("data"));
   if (is_foreground_) {
     EXPECT_EQ("ondemand", CHECK_DEREF(app.FindString("installsource")));
@@ -1077,7 +1075,7 @@ TEST_P(UpdateCheckerTest, UpdateDisabledByMeteredConnection) {
   update_checker_ = UpdateChecker::Create(config_);
 
   update_context_->components[kUpdateItemId] =
-      MakeComponent("TEST", "foobar_install_data_index", false);
+      MakeComponent("TEST", {}, "foobar_install_data_index", false);
 
   auto& component = update_context_->components[kUpdateItemId];
   auto crx_component = component->crx_component();

@@ -82,19 +82,6 @@
     case AppInitStage::kEnterprise:
       stage = InitStageDuringBackgroundRefreshActions::kInitStageEnterprise;
       break;
-    case AppInitStage::kBrowserObjectsForUI:
-      stage = InitStageDuringBackgroundRefreshActions::
-          kInitStageBrowserObjectsForUI;
-      break;
-    case AppInitStage::kNormalUI:
-      stage = InitStageDuringBackgroundRefreshActions::kInitStageNormalUI;
-      break;
-    case AppInitStage::kFirstRun:
-      stage = InitStageDuringBackgroundRefreshActions::kInitStageFirstRun;
-      break;
-    case AppInitStage::kChoiceScreen:
-      stage = InitStageDuringBackgroundRefreshActions::kInitStageChoiceScreen;
-      break;
     case AppInitStage::kFinal:
       stage = InitStageDuringBackgroundRefreshActions::kInitStageFinal;
       break;

@@ -53,7 +53,7 @@ class OmniboxResultView : public views::View {
 
   // Static method to share logic about how to set backgrounds of popup cells.
   static std::unique_ptr<views::Background> GetPopupCellBackground(
-      views::View* view,
+      const views::View* view,
       OmniboxPartState part_state);
 
   // Updates the match used to paint the contents of this result view. We copy
@@ -74,6 +74,7 @@ class OmniboxResultView : public views::View {
 
   // Returns the focused button or nullptr if none exists for this suggestion.
   views::Button* GetActiveAuxiliaryButtonForAccessibility();
+  const views::Button* GetActiveAuxiliaryButtonForAccessibility() const;
 
   OmniboxPartState GetThemeState() const;
 
@@ -86,10 +87,9 @@ class OmniboxResultView : public views::View {
   void ButtonPressed(OmniboxPopupSelection::LineState state,
                      const ui::Event& event);
 
-  // Helper to emit accessibility events (may only emit if conditions are met).
-  void EmitTextChangedAccessiblityEvent();
-
   void UpdateAccessibilityProperties();
+
+  void UpdateAccessibleName();
 
   // views::View:
   bool OnMousePressed(const ui::MouseEvent& event) override;
@@ -97,7 +97,6 @@ class OmniboxResultView : public views::View {
   void OnMouseReleased(const ui::MouseEvent& event) override;
   void OnMouseEntered(const ui::MouseEvent& event) override;
   void OnMouseExited(const ui::MouseEvent& event) override;
-  void GetAccessibleNodeData(ui::AXNodeData* node_data) override;
   void OnThemeChanged() override;
 
  private:
@@ -134,9 +133,6 @@ class OmniboxResultView : public views::View {
 
   // The data this class is built to display (the "Omnibox Result").
   AutocompleteMatch match_;
-
-  // Accessible name (enables to emit certain events).
-  std::u16string accessible_name_;
 
   // Weak pointers for easy reference.
 

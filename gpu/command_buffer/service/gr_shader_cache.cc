@@ -11,15 +11,17 @@
 
 #include <inttypes.h>
 
-#include "base/auto_reset.h"
 #include "base/base64.h"
+#include "base/feature_list.h"
 #include "base/functional/callback_helpers.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/strings/stringprintf.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/trace_event/memory_dump_manager.h"
 #include "base/trace_event/trace_event.h"
+#include "build/build_config.h"
 #include "gpu/config/gpu_finch_features.h"
+#include "skia/ext/skia_utils_base.h"
 #include "third_party/skia/include/gpu/ganesh/GrDirectContext.h"
 
 namespace gpu {
@@ -174,10 +176,26 @@ void GrShaderCache::PurgeMemory(
     case base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_NONE:
       return;
     case base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_MODERATE:
-      cache_size_limit_ = cache_size_limit_ / 4;
+      if (base::FeatureList::IsEnabled(
+              ::features::kAggressiveShaderCacheLimits)) {
+        // Ignore moderate memory pressure.
+      } else {
+        cache_size_limit_ = cache_size_limit_ / 4;
+      }
       break;
     case base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_CRITICAL:
-      cache_size_limit_ = 0;
+      if (base::FeatureList::IsEnabled(
+              ::features::kAggressiveShaderCacheLimits)) {
+#if BUILDFLAG(IS_ANDROID)
+        // On Android, critical memory pressure notifications are very common,
+        // and not necessarily tied to actual critical memory pressure. Ignore.
+        break;
+#else
+        cache_size_limit_ /= 4;
+#endif
+      } else {
+        cache_size_limit_ = 0;
+      }
       break;
   }
 
@@ -281,7 +299,7 @@ GrShaderCache::ScopedCacheUse::~ScopedCacheUse() {
 }
 
 GrShaderCache::CacheKey::CacheKey(sk_sp<SkData> data) : data(std::move(data)) {
-  hash = base::FastHash(base::span(this->data->bytes(), this->data->size()));
+  hash = base::FastHash(skia::as_byte_span(*this->data));
 }
 GrShaderCache::CacheKey::CacheKey(const CacheKey& other) = default;
 GrShaderCache::CacheKey::CacheKey(CacheKey&& other) = default;

@@ -9,6 +9,7 @@ import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,13 +33,16 @@ import org.chromium.chrome.R;
 import org.chromium.chrome.browser.browser_controls.BrowserControlsSizer;
 import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider;
 import org.chromium.chrome.browser.browserservices.intents.BrowserServicesIntentDataProvider;
+import org.chromium.chrome.browser.browserservices.intents.BrowserServicesIntentDataProvider.CustomTabProfileType;
 import org.chromium.chrome.browser.browserservices.intents.CustomButtonParams;
 import org.chromium.chrome.browser.compositor.bottombar.OverlayPanelManager.OverlayPanelManagerObserver;
 import org.chromium.chrome.browser.compositor.layouts.LayoutManagerImpl;
-import org.chromium.chrome.browser.dependency_injection.ActivityScope;
 import org.chromium.chrome.browser.night_mode.RemoteViewsWithNightModeInflater;
 import org.chromium.chrome.browser.night_mode.SystemNightModeMonitor;
+import org.chromium.chrome.browser.omnibox.styles.OmniboxResourceProvider;
 import org.chromium.chrome.browser.tab.Tab;
+import org.chromium.chrome.browser.theme.ThemeUtils;
+import org.chromium.chrome.browser.ui.theme.BrandedColorScheme;
 import org.chromium.components.browser_ui.widget.gesture.SwipeGestureListener;
 import org.chromium.components.browser_ui.widget.gesture.SwipeGestureListener.ScrollDirection;
 import org.chromium.ui.base.ViewportInsets;
@@ -47,10 +51,7 @@ import org.chromium.ui.interpolators.Interpolators;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 /** Delegate that manages bottom bar area inside of {@link CustomTabActivity}. */
-@ActivityScope
 public class CustomTabBottomBarDelegate
         implements BrowserControlsStateProvider.Observer, SwipeGestureListener.SwipeHandler {
     private static final String TAG = "CustomTab";
@@ -79,7 +80,6 @@ public class CustomTabBottomBarDelegate
     private final BrowserServicesIntentDataProvider mDataProvider;
     private final Supplier<Tab> mTabProvider;
     private final CustomTabNightModeStateController mNightModeStateController;
-    private final SystemNightModeMonitor mSystemNightModeMonitor;
 
     private CustomTabBottomBarView mBottomBarView;
     @Nullable private View mBottomBarContentView;
@@ -109,23 +109,21 @@ public class CustomTabBottomBarDelegate
                 }
             };
 
-    @Inject
     public CustomTabBottomBarDelegate(
-            BaseCustomTabActivity activity,
+            Activity activity,
             WindowAndroid windowAndroid,
             BrowserServicesIntentDataProvider dataProvider,
             BrowserControlsSizer browserControlsSizer,
             CustomTabNightModeStateController nightModeStateController,
-            SystemNightModeMonitor systemNightModeMonitor,
+            Supplier<Tab> tabProvider,
             CustomTabCompositorContentInitializer compositorContentInitializer) {
         mActivity = activity;
         mWindowAndroid = windowAndroid;
         mDataProvider = dataProvider;
         mBrowserControlsSizer = browserControlsSizer;
         mNightModeStateController = nightModeStateController;
-        mSystemNightModeMonitor = systemNightModeMonitor;
-        mTabProvider = activity.getCustomTabActivityTabProvider();
-        browserControlsSizer.addObserver(this);
+        mTabProvider = tabProvider;
+        mBrowserControlsSizer.addObserver(this);
         mKeepContentView = false;
         compositorContentInitializer.addCallback(this::addOverlayPanelManagerObserver);
 
@@ -192,7 +190,8 @@ public class CustomTabBottomBarDelegate
                         v -> sendPendingIntentWithUrl(pendingIntent, null, mActivity, mTabProvider);
             }
             layout.addView(
-                    params.buildBottomBarButton(mActivity, getBottomBarView(), clickListener));
+                    params.buildBottomBarButton(
+                            mActivity, getBottomBarView(), clickListener, getButtonIconTint()));
         }
         getBottomBarView().addView(layout);
     }
@@ -208,7 +207,19 @@ public class CustomTabBottomBarDelegate
         }
         ImageButton button = (ImageButton) getBottomBarView().findViewById(params.getId());
         button.setContentDescription(params.getDescription());
-        button.setImageDrawable(params.getIcon(mActivity));
+        button.setImageDrawable(params.getIcon(mActivity, getButtonIconTint()));
+    }
+
+    private ColorStateList getButtonIconTint() {
+        // We use OmniboxResourceProvider so that our color scheme matches the CCT top toolbar's
+        // color scheme - see CustomTabToolbar.
+        @BrandedColorScheme
+        int brandedColorScheme =
+                OmniboxResourceProvider.getBrandedColorScheme(
+                        mActivity,
+                        mDataProvider.getCustomTabMode() == CustomTabProfileType.INCOGNITO,
+                        mDataProvider.getColorProvider().getBottomBarColor());
+        return ThemeUtils.getThemedToolbarIconTint(mActivity, brandedColorScheme);
     }
 
     /**
@@ -410,7 +421,7 @@ public class CustomTabBottomBarDelegate
                         remoteViews,
                         getBottomBarView(),
                         mNightModeStateController.isInNightMode(),
-                        mSystemNightModeMonitor.isSystemNightModeOn());
+                        SystemNightModeMonitor.getInstance().isSystemNightModeOn());
 
         if (inflatedView == null) return false;
 
@@ -454,10 +465,13 @@ public class CustomTabBottomBarDelegate
             Supplier<Tab> tabProvider) {
         Intent addedIntent = extraIntent == null ? new Intent() : new Intent(extraIntent);
         Tab tab = tabProvider.get();
-        if (tab != null) addedIntent.setData(Uri.parse(tab.getUrl().getSpec()));
+        if (tab != null) {
+            addedIntent.setData(Uri.parse(tab.getUrl().getSpec()));
+            addedIntent.putExtra(Intent.EXTRA_SUBJECT, tab.getTitle());
+        }
         try {
             ActivityOptions options = ActivityOptions.makeBasic();
-            ApiCompatibilityUtils.setActivityOptionsBackgroundActivityStartMode(options);
+            ApiCompatibilityUtils.setActivityOptionsBackgroundActivityStartAllowAlways(options);
             pendingIntent.send(activity, 0, addedIntent, null, null, null, options.toBundle());
         } catch (CanceledException e) {
             Log.e(TAG, "CanceledException when sending pending intent.");
@@ -482,9 +496,11 @@ public class CustomTabBottomBarDelegate
     public void onControlsOffsetChanged(
             int topOffset,
             int topControlsMinHeightOffset,
+            boolean topControlsMinHeightChanged,
             int bottomOffset,
             int bottomControlsMinHeightOffset,
-            boolean needsAnimate,
+            boolean bottomControlsMinHeightChanged,
+            boolean requestNewFrame,
             boolean isVisibilityForced) {
         if (mBottomBarView != null) {
             int minHeight = mBrowserControlsSizer.getBottomControlsMinHeight();

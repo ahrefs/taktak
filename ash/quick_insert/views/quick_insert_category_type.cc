@@ -5,27 +5,34 @@
 #include "ash/quick_insert/views/quick_insert_category_type.h"
 
 #include "ash/quick_insert/quick_insert_category.h"
+#include "base/notreached.h"
 
 namespace ash {
 
-ASH_EXPORT PickerCategoryType GetPickerCategoryType(PickerCategory category) {
+ASH_EXPORT QuickInsertCategoryType
+GetQuickInsertCategoryType(QuickInsertCategory category) {
   switch (category) {
-    case PickerCategory::kEditorWrite:
-      return PickerCategoryType::kEditorWrite;
-    case PickerCategory::kEditorRewrite:
-      return PickerCategoryType::kEditorRewrite;
-    case PickerCategory::kLobster:
-      return PickerCategoryType::kEditorWrite;
-    case PickerCategory::kLinks:
-    case PickerCategory::kEmojisGifs:
-    case PickerCategory::kEmojis:
-    case PickerCategory::kClipboard:
-    case PickerCategory::kDriveFiles:
-    case PickerCategory::kLocalFiles:
-      return PickerCategoryType::kGeneral;
-    case PickerCategory::kDatesTimes:
-    case PickerCategory::kUnitsMaths:
-      return PickerCategoryType::kMore;
+    case QuickInsertCategory::kEditorWrite:
+      return QuickInsertCategoryType::kEditorWrite;
+    case QuickInsertCategory::kEditorRewrite:
+      return QuickInsertCategoryType::kEditorRewrite;
+    case QuickInsertCategory::kLobsterWithNoSelectedText:
+      return QuickInsertCategoryType::kEditorWrite;
+    case QuickInsertCategory::kLobsterWithSelectedText:
+      return QuickInsertCategoryType::kEditorRewrite;
+    case QuickInsertCategory::kLinks:
+    case QuickInsertCategory::kEmojisGifs:
+    case QuickInsertCategory::kEmojis:
+    case QuickInsertCategory::kClipboard:
+    case QuickInsertCategory::kDriveFiles:
+    case QuickInsertCategory::kLocalFiles:
+      return QuickInsertCategoryType::kGeneral;
+    case QuickInsertCategory::kDatesTimes:
+    case QuickInsertCategory::kUnitsMaths:
+      return QuickInsertCategoryType::kMore;
+    case QuickInsertCategory::kGifs:
+      // The GIFs category button doesn't appear in the zero state.
+      NOTREACHED();
   }
 }
 

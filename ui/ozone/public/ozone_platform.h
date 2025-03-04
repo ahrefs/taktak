@@ -171,18 +171,18 @@ class COMPONENT_EXPORT(OZONE) OzonePlatform {
     // via overlays. If overlays are not supported the promotion and validation
     // logic can be skipped.
     bool supports_overlays = false;
+
     // Indicates whether the platform supports server-side window decorations.
     bool supports_server_side_window_decorations = true;
+
+    // Indicates whether the platform supports window controls menus.
+    bool supports_server_window_menus = false;
 
     // For platforms that have optional support for server-side decorations,
     // this parameter allows setting the desired state in tests.  The platform
     // must have the appropriate logic in its GetPlatformRuntimeProperties()
     // method.
     static SupportsForTest override_supports_ssd_for_test;
-
-    // Wayland only: determines whether solid color overlays can be delegated
-    // without a backing image via a wayland protocol.
-    bool supports_non_backed_solid_color_buffers = false;
 
     // Wayland only: determines whether single pixel buffer protocol is
     // supported.
@@ -195,35 +195,16 @@ class COMPONENT_EXPORT(OZONE) OzonePlatform {
     // be stacked below an AcceleratedWidget to make a widget opaque.
     bool needs_background_image = false;
 
-    // Wayland only: determines whether clip rects can be delegated via the
-    // wayland protocol when no quad is out of window.
-    bool supports_clip_rect = false;
-
-    // Wayland only: determine whether toplevel surfaces can be activated and
-    // deactivated.
-    bool supports_activation = false;
-
-    // Wayland only: determines whether non axis-aligned 2d transforms can be
-    // delegated via the wayland protocol.
-    bool supports_affine_transform = false;
-
-    // Wayland only: determines whether clip rects can be delegated via the
-    // wayland protocol when some quads are out of window.
-    // TODO(crbug.com/40277728): The flag is currently disabled by default since
-    // there is a bug. Set this flag to enabled in GPU process when the
-    // remaining issues are resolved.
-    bool supports_out_of_window_clip_rect = false;
-
-    // Wayland only: whether wayland server has the fix that applies
-    // transformations in the correct order.
-    bool has_transformation_fix = false;
-
     // Wayland only: whether bubble widgets can use platform objects.
     bool supports_subwindows_as_accelerated_widgets = false;
 
     // Indicates whether the platform supports system-controlled per-window
     // scaling.
     bool supports_per_window_scaling = false;
+
+    // Whether status icon windows (with a wm_role_name of
+    // ui::kStatusIconWmRoleName) are supported.
+    bool supports_system_tray_windowing = false;
 
     // Allows overriding whether per window scaling is enabled in tests.
     static SupportsForTest override_supports_per_window_scaling_for_test;
@@ -250,6 +231,8 @@ class COMPONENT_EXPORT(OZONE) OzonePlatform {
   // task_runner suitable for handling user input after the message loop
   // started. It's required to call this so that we can exit cleanly if the
   // server can exit before we do.
+  // Note: This is currently not strongly enforced and so it may not be called
+  // in all content embedders or tests.
   virtual void PostCreateMainMessageLoop(
       base::OnceCallback<void()> shutdown_cb,
       scoped_refptr<base::SingleThreadTaskRunner> user_input_task_runner);

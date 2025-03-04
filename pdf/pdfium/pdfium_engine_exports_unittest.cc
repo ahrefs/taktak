@@ -12,6 +12,7 @@
 #include "base/test/mock_callback.h"
 #include "build/chromeos_buildflags.h"
 #include "pdf/pdf.h"
+#include "pdf/pdfium/pdfium_api_wrappers.h"
 #include "pdf/pdfium/pdfium_engine.h"
 #include "services/screen_ai/buildflags/buildflags.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -51,8 +52,7 @@ class ScopedLibraryInitializer {
 
 // Returns all characters in the page.
 std::string GetText(base::span<const uint8_t> pdf, int page_index) {
-  ScopedFPDFDocument document(
-      FPDF_LoadMemDocument64(pdf.data(), pdf.size(), nullptr));
+  ScopedFPDFDocument document = LoadPdfData(pdf);
   CHECK(document);
   ScopedFPDFPage page(FPDF_LoadPage(document.get(), page_index));
   CHECK(page);
@@ -71,8 +71,7 @@ std::string GetText(base::span<const uint8_t> pdf, int page_index) {
 
 std::vector<gfx::RectF> GetTextPositions(base::span<const uint8_t> pdf,
                                          int page_index) {
-  ScopedFPDFDocument document(
-      FPDF_LoadMemDocument64(pdf.data(), pdf.size(), nullptr));
+  ScopedFPDFDocument document = LoadPdfData(pdf);
   CHECK(document);
   ScopedFPDFPage page(FPDF_LoadPage(document.get(), page_index));
   CHECK(page);
@@ -184,8 +183,7 @@ TEST_F(PDFiumEngineExportsTest, ConvertPdfPagesToNupPdf) {
       pdf_buffers, 2, gfx::Size(612, 792), gfx::Rect(22, 20, 570, 750));
   ASSERT_GT(output_pdf_buffer.size(), 0U);
 
-  base::span<const uint8_t> output_pdf_span =
-      base::make_span(output_pdf_buffer);
+  base::span<const uint8_t> output_pdf_span = base::span(output_pdf_buffer);
   int page_count;
   ASSERT_TRUE(GetPDFDocInfo(output_pdf_span, &page_count, nullptr));
   ASSERT_EQ(1, page_count);
@@ -211,8 +209,7 @@ TEST_F(PDFiumEngineExportsTest, ConvertPdfDocumentToNupPdf) {
       pdf_data.value(), 4, gfx::Size(612, 792), gfx::Rect(22, 20, 570, 750));
   ASSERT_GT(output_pdf_buffer.size(), 0U);
 
-  base::span<const uint8_t> output_pdf_span =
-      base::make_span(output_pdf_buffer);
+  base::span<const uint8_t> output_pdf_span = base::span(output_pdf_buffer);
   int page_count;
   ASSERT_TRUE(GetPDFDocInfo(output_pdf_span, &page_count, nullptr));
   ASSERT_EQ(2, page_count);

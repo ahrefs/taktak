@@ -46,9 +46,9 @@ suite('cr-dialog', function() {
     const inner = document.body.querySelector<CrDialogElement>('#inner');
     assertTrue(!!inner);
 
-    outer!.showModal();
-    inner!.showModal();
-    return [outer!, inner!];
+    outer.showModal();
+    inner.showModal();
+    return [outer, inner];
   }
 
   setup(function() {
@@ -206,11 +206,11 @@ suite('cr-dialog', function() {
     const otherButton =
         document.body.querySelector<HTMLElement>('#other-button');
     assertTrue(!!otherButton);
-    simulateEnterOnButton(otherButton!);
+    simulateEnterOnButton(otherButton);
     assertEquals(0, clickedCounter);
 
     // Enter keys on the close icon in the top-right corner should be ignored.
-    const close = dialog.shadowRoot!.querySelector<HTMLElement>('#close');
+    const close = dialog.shadowRoot.querySelector<HTMLElement>('#close');
     assertTrue(!!close);
     pressEnter(close);
     assertEquals(0, clickedCounter);
@@ -377,7 +377,7 @@ suite('cr-dialog', function() {
       element.showDialog = true;
       await whenOpen;
 
-      const child = element.shadowRoot!.querySelector(
+      const child = element.shadowRoot.querySelector(
           useTextarea ? 'cr-textarea' : 'cr-input')!;
       assertEquals(
           useTextarea ? (child as CrTextareaElement).$.input :
@@ -400,18 +400,18 @@ suite('cr-dialog', function() {
 
     const dialog = document.body.querySelector('cr-dialog')!;
     assertFalse(dialog.open);
-    const bodyContainer = dialog.shadowRoot!.querySelector('.body-container');
+    const bodyContainer = dialog.shadowRoot.querySelector('.body-container');
     assertTrue(!!bodyContainer);
     const topShadow =
-        dialog.shadowRoot!.querySelector('#cr-container-shadow-top');
+        dialog.shadowRoot.querySelector('#cr-container-shadow-top');
     assertTrue(!!topShadow);
     const bottomShadow =
-        dialog.shadowRoot!.querySelector('#cr-container-shadow-bottom');
+        dialog.shadowRoot.querySelector('#cr-container-shadow-bottom');
     assertTrue(!!bottomShadow);
 
     await microtasksFinished();
-    assertFalse(topShadow!.classList.contains('has-shadow'));
-    assertFalse(bottomShadow!.classList.contains('has-shadow'));
+    assertFalse(topShadow.classList.contains('has-shadow'));
+    assertFalse(bottomShadow.classList.contains('has-shadow'));
   });
 
   test('dialog body scrollable border when appropriate', function(done) {
@@ -425,12 +425,12 @@ suite('cr-dialog', function() {
 
     const dialog = document.body.querySelector('cr-dialog')!;
     const bodyContainer =
-        dialog.shadowRoot!.querySelector<HTMLElement>('.body-container');
+        dialog.shadowRoot.querySelector<HTMLElement>('.body-container');
     assertTrue(!!bodyContainer);
-    const topShadow = dialog.shadowRoot!.querySelector<HTMLElement>(
+    const topShadow = dialog.shadowRoot.querySelector<HTMLElement>(
         '#cr-container-shadow-top');
     assertTrue(!!topShadow);
-    const bottomShadow = dialog.shadowRoot!.querySelector<HTMLElement>(
+    const bottomShadow = dialog.shadowRoot.querySelector<HTMLElement>(
         '#cr-container-shadow-bottom');
     assertTrue(!!bottomShadow);
 
@@ -455,28 +455,28 @@ suite('cr-dialog', function() {
       observerCount++;
       switch (observerCount) {
         case 1:  // Triggered when scrolled to bottom.
-          assertTrue(hasTransparentBorder(bottomShadow!));
-          assertFalse(hasTransparentBorder(topShadow!));
-          bodyContainer!.scrollTop = 0;
+          assertTrue(hasTransparentBorder(bottomShadow));
+          assertFalse(hasTransparentBorder(topShadow));
+          bodyContainer.scrollTop = 0;
           break;
         case 2:  // Triggered when scrolled back to top.
           assertFalse(hasTransparentBorder(bottomShadow));
           assertTrue(hasTransparentBorder(topShadow));
-          bodyContainer!.scrollTop = 2;
+          bodyContainer.scrollTop = 2;
           break;
         case 3:  // Triggered when finally scrolling to middle.
-          assertFalse(hasTransparentBorder(bottomShadow!));
-          assertFalse(hasTransparentBorder(topShadow!));
+          assertFalse(hasTransparentBorder(bottomShadow));
+          assertFalse(hasTransparentBorder(topShadow));
           observer.disconnect();
           done();
           break;
       }
     });
-    observer.observe(bodyContainer!, {attributes: true});
+    observer.observe(bodyContainer, {attributes: true});
 
     // Height is normally set via CSS, but mixin doesn't work with innerHTML.
-    bodyContainer!.style.height = '60px';  // Element has "min-height: 60px".
-    bodyContainer!.scrollTop = 100;
+    bodyContainer.style.height = '60px';  // Element has "min-height: 60px".
+    bodyContainer.scrollTop = 100;
   });
 
   test(
@@ -513,7 +513,7 @@ suite('cr-dialog', function() {
     assertTrue(dialog.noCancel);
     dialog.showModal();
 
-    assertNull(dialog.shadowRoot!.querySelector('#close'));
+    assertNull(dialog.shadowRoot.querySelector('#close'));
 
     // Hitting escape fires a 'cancel' event. Cancelling that event prevents the
     // dialog from closing.
@@ -539,7 +539,7 @@ suite('cr-dialog', function() {
     dialog.showModal();
     assertTrue(dialog.open);
 
-    const close = dialog.shadowRoot!.querySelector<HTMLElement>('#close');
+    const close = dialog.shadowRoot.querySelector<HTMLElement>('#close');
     assertTrue(!!close);
     assertTrue(isVisible(close));
     close.click();
@@ -555,7 +555,7 @@ suite('cr-dialog', function() {
     const dialog = document.body.querySelector('cr-dialog')!;
     dialog.showModal();
 
-    assertNull(dialog.shadowRoot!.querySelector('#close'));
+    assertNull(dialog.shadowRoot.querySelector('#close'));
   });
 
   test(
@@ -625,7 +625,7 @@ suite('cr-dialog', function() {
     dialog.showModal();
 
     assertEquals('foo', dialog.closeText);
-    const close = dialog.shadowRoot!.querySelector<HTMLElement>('#close');
+    const close = dialog.shadowRoot.querySelector<HTMLElement>('#close');
     assertTrue(!!close);
     assertEquals('foo', close.ariaLabel);
     assertEquals('foo', close.getAttribute('aria-label'));

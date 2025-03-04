@@ -25,6 +25,8 @@
 #include "ui/base/interaction/interactive_test.h"
 #include "ui/base/interaction/state_observer.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "ui/chromeos/strings/grit/ui_chromeos_strings.h"
+#include "ui/views/accessibility/view_accessibility.h"
 #include "ui/views/controls/button/toggle_button.h"
 #include "ui/views/interaction/element_tracker_views.h"
 #include "ui/views/interaction/polling_view_observer.h"
@@ -45,9 +47,16 @@ class WifiInteractiveUiTest : public InteractiveAshTest {
   using NetworkNameObserver =
       views::test::PollingViewObserver<bool, views::View>;
 
+  using ToggleAccessibilityCheckedStateObserver =
+      views::test::PollingViewObserver<ax::mojom::CheckedState,
+                                       views::ToggleButton>;
+
   // InteractiveAshTest:
   void SetUpOnMainThread() override {
     InteractiveAshTest::SetUpOnMainThread();
+    ash::ShillServiceClient::TestInterface* service_test =
+        ash::ShillServiceClient::Get()->GetTestInterface();
+    service_test->ClearServices();
 
     // Set up context for element tracking for InteractiveBrowserTest.
     SetupContextWidget();
@@ -101,9 +110,8 @@ class WifiInteractiveUiTest : public InteractiveAshTest {
                 "state")));
 
     if (enabled) {
-      AddStep(steps,
-              std::move(WaitForShow(kTrayDetailedViewProgressBarElementId)
-                            .SetMustRemainVisible(false)));
+      AddStep(steps, WaitForShow(kTrayDetailedViewProgressBarElementId)
+                         .SetMustRemainVisible(false));
     } else {
       AddStep(steps, WaitForHide(kTrayDetailedViewProgressBarElementId));
     }
@@ -133,15 +141,34 @@ class WifiInteractiveUiTest : public InteractiveAshTest {
         base::Milliseconds(50)));
   }
 
+  auto PollToggleAccessibilityCheckedState(
+      const ui::test::StateIdentifier<ToggleAccessibilityCheckedStateObserver>&
+          polling_identifier) {
+    return Steps(PollView(
+        polling_identifier, kNetworkDetailedViewWifiToggleElementId,
+        [&](const views::ToggleButton* toggle_button)
+            -> ax::mojom::CheckedState {
+          ui::AXNodeData data;
+          toggle_button->GetViewAccessibility().GetAccessibleNodeData(&data);
+          return data.GetCheckedState();
+        },
+        base::Milliseconds(500)));
+  }
+
  private:
   const ShillServiceInfo wifi_service_info_{/*id=*/0, shill::kTypeWifi};
 };
 
-IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest, EnableDisableFromOsSettings) {
+IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest,
+                       ToggleAndCheckOsSettingsWiFiPageElements) {
   DEFINE_LOCAL_STATE_IDENTIFIER_VALUE(ShillDevicePowerStateObserver,
                                       kWifiPoweredState);
 
   ConfigureWifi(/*connected=*/true);
+
+  // Set this delay so the WiFi scanning progress bar shows.
+  ShillManagerClient::Get()->GetTestInterface()->SetInteractiveDelay(
+      base::Seconds(2));
 
   // Ensure the OS Settings app is installed.
   InstallSystemApps();
@@ -165,7 +192,13 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest, EnableDisableFromOsSettings) {
       WaitForElementTextContains(
           kOSSettingsId, settings::InternetSettingsSubpageTitle(),
           /*text=*/l10n_util::GetStringUTF8(IDS_NETWORK_TYPE_WIFI)),
-      WaitForElementExists(kOSSettingsId, settings::wifi::WifiNetworksList()),
+      WaitForElementExists(
+          kOSSettingsId, settings::wifi::WiFiSubpageSearchForNetworksSpinner()),
+      WaitForElementTextContains(
+          kOSSettingsId, settings::wifi::WiFiSubpageSearchForNetworks(),
+          /*text=*/l10n_util::GetStringUTF8(IDS_NETWORK_SCANNING_MESSAGE)),
+      WaitForElementDisplayNotNone(kOSSettingsId,
+                                   settings::wifi::WiFiSubpageNetworkListDiv()),
       WaitForToggleState(kOSSettingsId,
                          settings::wifi::WifiSubpageEnableToggle(),
                          /*is_checked=*/true),
@@ -177,7 +210,7 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest, EnableDisableFromOsSettings) {
                          settings::wifi::WifiSubpageEnableToggle(), false),
       WaitForState(kWifiPoweredState, false),
       WaitForElementDisplayNone(kOSSettingsId,
-                                settings::wifi::WifiNetworksList()),
+                                settings::wifi::WiFiSubpageNetworkListDiv()),
 
       Log("Enable WiFi from WiFi subpage"),
 
@@ -185,7 +218,13 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest, EnableDisableFromOsSettings) {
       WaitForToggleState(kOSSettingsId,
                          settings::wifi::WifiSubpageEnableToggle(), true),
       WaitForState(kWifiPoweredState, true),
-      WaitForElementExists(kOSSettingsId, settings::wifi::WifiNetworksList()),
+      WaitForElementExists(
+          kOSSettingsId, settings::wifi::WiFiSubpageSearchForNetworksSpinner()),
+      WaitForElementTextContains(
+          kOSSettingsId, settings::wifi::WiFiSubpageSearchForNetworks(),
+          /*text=*/l10n_util::GetStringUTF8(IDS_NETWORK_SCANNING_MESSAGE)),
+      WaitForElementDisplayNotNone(kOSSettingsId,
+                                   settings::wifi::WiFiSubpageNetworkListDiv()),
 
       Log("Test complete"));
 }
@@ -196,6 +235,8 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest,
                                       kWifiPoweredState);
   DEFINE_LOCAL_STATE_IDENTIFIER_VALUE(ToggleObserver, kToggleButtonState);
   DEFINE_LOCAL_STATE_IDENTIFIER_VALUE(NetworkNameObserver, kNetworkInListState);
+  DEFINE_LOCAL_STATE_IDENTIFIER_VALUE(ToggleAccessibilityCheckedStateObserver,
+                                      kToggleAccessibilityCheckedState);
 
   ConfigureWifi(/*connected=*/true);
 
@@ -212,6 +253,7 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest,
                        kNetworkDetailedViewWifiToggleElementId,
                        &views::ToggleButton::GetIsOn),
       PollNetworkInList(WifiServiceName(), kNetworkInListState),
+      PollToggleAccessibilityCheckedState(kToggleAccessibilityCheckedState),
 
       Log("Opening the Quick Settings bubble and navigating to the network "
           "page"),
@@ -223,6 +265,8 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest,
 
       WaitForShow(kNetworkDetailedViewWifiToggleElementId),
       VerifyWifiState(/*enabled=*/true, kWifiPoweredState, kToggleButtonState),
+      WaitForState(kToggleAccessibilityCheckedState,
+                   ax::mojom::CheckedState::kTrue),
 
       Log("Verify the WiFi service in the network list"),
 
@@ -236,6 +280,8 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest,
       Log("Wait for WiFi to have the expected disabled state"),
 
       VerifyWifiState(/*enabled=*/false, kWifiPoweredState, kToggleButtonState),
+      WaitForState(kToggleAccessibilityCheckedState,
+                   ax::mojom::CheckedState::kFalse),
 
       Log("Re-enable WiFi"),
 
@@ -245,6 +291,8 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest,
       Log("Wait for WiFi to have the expected enabled state"),
 
       VerifyWifiState(/*enabled=*/true, kWifiPoweredState, kToggleButtonState),
+      WaitForState(kToggleAccessibilityCheckedState,
+                   ax::mojom::CheckedState::kTrue),
 
       Log("Verify the WiFi service in the network list"),
 
@@ -310,6 +358,94 @@ IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest, ConnectFromSettingsSubpage) {
           kOSSettingsId, settings::wifi::WifiNetworksList(), kWifiNetworkItem,
           kWifiItemTitle, WifiServiceName(), kWifiItemSublabel,
           /*text=*/l10n_util::GetStringUTF8(IDS_ONC_CONNECTED).c_str()),
+      Log("Test complete"));
+}
+
+IN_PROC_BROWSER_TEST_F(WifiInteractiveUiTest, ToggleWifiFromInternetPage) {
+  DEFINE_LOCAL_STATE_IDENTIFIER_VALUE(ShillDevicePowerStateObserver,
+                                      kWifiPoweredState);
+  // Ensure the OS Settings app is installed.
+  InstallSystemApps();
+
+  ui::ElementContext context =
+      LaunchSystemWebApp(SystemWebAppType::SETTINGS, kOSSettingsId);
+
+  // Run the following steps with the OS Settings context set as the default.
+  RunTestSequenceInContext(
+      context,
+      ObserveState(kWifiPoweredState,
+                   std::make_unique<ShillDevicePowerStateObserver>(
+                       ShillManagerClient::Get(), NetworkTypePattern::WiFi())),
+      WaitForState(kWifiPoweredState, true),
+      WaitForToggleState(kOSSettingsId, settings::wifi::WifiSummaryItemToggle(),
+                         /*is_checked=*/true),
+
+      Log("Navigate to the Internet subpage"),
+
+      NavigateSettingsToInternetPage(kOSSettingsId),
+
+      Log("Turn off WiFi toggle button from network summary"),
+
+      ClickElement(kOSSettingsId, settings::wifi::WifiSummaryItemToggle()),
+      WaitForToggleState(kOSSettingsId, settings::wifi::WifiSummaryItemToggle(),
+                         false),
+      WaitForState(kWifiPoweredState, false),
+
+      Log("WiFi subpage arrow should disappear"),
+
+      WaitForElementDisplayNone(kOSSettingsId,
+                                settings::wifi::WifiSummaryItemSubpageArrow()),
+
+      Log("Add WiFi div in expand section should disappear"),
+
+      ClickElement(kOSSettingsId, settings::AddConnectionsExpandButton()),
+      WaitForElementDoesNotExist(kOSSettingsId, settings::AddWiFiRow()),
+
+      Log("Verify WiFi network state is off"),
+
+      WaitForElementTextContains(
+          kOSSettingsId, settings::wifi::WifiSummaryItemNetworkState(),
+          /*text=*/l10n_util::GetStringUTF8(IDS_SETTINGS_DEVICE_OFF)),
+
+      Log("Turn on WiFi toggle button from network summary"),
+
+      ClickElement(kOSSettingsId, settings::wifi::WifiSummaryItemToggle()),
+      WaitForToggleState(kOSSettingsId, settings::wifi::WifiSummaryItemToggle(),
+                         true),
+      WaitForState(kWifiPoweredState, true),
+
+      Log("Verify subpage arrow exists"),
+
+      WaitForElementExists(kOSSettingsId,
+                           settings::wifi::WifiSummaryItemSubpageArrow()),
+
+      Log("Verify expand section contains Add Wi-Fi row"),
+
+      WaitForElementExists(kOSSettingsId,
+                           settings::AddConnectionsExpandButton()),
+
+      Log("Add WiFi div in expand section should exist"),
+
+      WaitForElementExists(kOSSettingsId, settings::AddWiFiRow()),
+      WaitForElementExists(kOSSettingsId, settings::AddWifiIcon()),
+
+      Log("WiFi network state should change from Off to \"No network\" when no "
+          "visible network"),
+
+      WaitForElementTextContains(
+          kOSSettingsId, settings::wifi::WifiSummaryItemNetworkState(),
+          /*text=*/l10n_util::GetStringUTF8(IDS_NETWORK_LIST_NO_NETWORK)),
+
+      // Add a Wifi configuration but don't connect it.
+      Do([&]() { ConfigureWifi(false); }),
+
+      Log("WiFi network state should change from \"No network\" to \"Not "
+          "connected\" when there are available networks"),
+
+      WaitForElementTextContains(
+          kOSSettingsId, settings::wifi::WifiSummaryItemNetworkState(),
+          /*text=*/l10n_util::GetStringUTF8(IDS_NETWORK_LIST_NOT_CONNECTED)),
+
       Log("Test complete"));
 }
 

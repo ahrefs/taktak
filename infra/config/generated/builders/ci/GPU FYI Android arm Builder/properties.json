@@ -216,6 +216,14 @@
       ],
       "mirroring_builder_group_and_names": [
         {
+          "builder": "gpu-fyi-try-android-a13-32",
+          "group": "tryserver.chromium.android"
+        },
+        {
+          "builder": "gpu-fyi-try-android-a23-32",
+          "group": "tryserver.chromium.android"
+        },
+        {
           "builder": "gpu-fyi-try-android-nvidia-shield-tv",
           "group": "tryserver.chromium.android"
         },
@@ -227,7 +235,8 @@
           "builder": "gpu-fyi-try-android-r-pixel-4-32",
           "group": "tryserver.chromium.android"
         }
-      ]
+      ],
+      "targets_spec_directory": "src/infra/config/generated/builders/ci/GPU FYI Android arm Builder/targets"
     }
   },
   "$build/reclient": {

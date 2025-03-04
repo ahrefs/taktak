@@ -27,10 +27,8 @@
 #include "base/files/scoped_temp_dir.h"
 #include "base/memory/ref_counted_memory.h"
 #include "base/numerics/byte_conversions.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/skia/include/core/SkBitmap.h"
@@ -74,11 +72,11 @@ constexpr char kLottieData[] = "LOTTIEtest";
 // The contents after the prefix has been removed.
 constexpr uint8_t kLottieExpected[] = {'t', 'e', 's', 't'};
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 // Mock of |lottie::ParseLottieAsStillImage|. Checks that |kLottieData| is
 // properly stripped of the "LOTTIE" prefix.
 gfx::ImageSkia ParseLottieAsStillImageForTesting(std::vector<uint8_t> data) {
-  CHECK(base::ranges::equal(data, kLottieExpected));
+  CHECK(std::ranges::equal(data, kLottieExpected));
 
   constexpr int kDimension = 16;
   return gfx::ImageSkia(
@@ -619,7 +617,7 @@ TEST_F(ResourceBundleImageTest, GetImageNamed) {
 
   gfx::ImageSkia* image_skia = resource_bundle->GetImageSkiaNamed(3);
 
-#if BUILDFLAG(IS_CHROMEOS_ASH) || BUILDFLAG(IS_WIN)
+#if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_WIN)
   // ChromeOS/Windows load highest scale factor first.
   EXPECT_EQ(ui::k200Percent, GetSupportedResourceScaleFactor(
                                  image_skia->image_reps()[0].scale()));
@@ -722,9 +720,9 @@ TEST_F(ResourceBundleImageTest, Lottie) {
 
   std::optional<std::vector<uint8_t>> data = resource_bundle->GetLottieData(3);
   ASSERT_TRUE(data.has_value());
-  EXPECT_TRUE(base::ranges::equal(*data, kLottieExpected));
+  EXPECT_TRUE(std::ranges::equal(*data, kLottieExpected));
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   ui::ResourceBundle::SetLottieParsingFunctions(
       &ParseLottieAsStillImageForTesting,
       /*parse_lottie_as_themed_still_image=*/nullptr);

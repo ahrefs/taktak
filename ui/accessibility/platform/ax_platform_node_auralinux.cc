@@ -2,15 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/version.h"
 #ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
 #endif
+
+#include "ui/accessibility/platform/ax_platform_node_auralinux.h"
 
 #include <stdint.h>
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <optional>
 #include <set>
@@ -24,12 +26,12 @@
 #include "base/metrics/histogram_macros.h"
 #include "base/no_destructor.h"
 #include "base/not_fatal_until.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/sys_string_conversions.h"
 #include "base/strings/utf_string_conversion_utils.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/version.h"
 #include "build/build_config.h"
 #include "ui/accessibility/accessibility_features.h"
 #include "ui/accessibility/ax_action_data.h"
@@ -41,7 +43,6 @@
 #include "ui/accessibility/platform/atk_util_auralinux.h"
 #include "ui/accessibility/platform/ax_platform.h"
 #include "ui/accessibility/platform/ax_platform_atk_hyperlink.h"
-#include "ui/accessibility/platform/ax_platform_node_auralinux.h"
 #include "ui/accessibility/platform/ax_platform_node_delegate.h"
 #include "ui/accessibility/platform/ax_platform_text_boundary.h"
 #include "ui/accessibility/platform/child_iterator.h"
@@ -571,11 +572,31 @@ gboolean DoAction(AtkAction* atk_action, gint index) {
 
   const std::vector<ax::mojom::Action> actions =
       obj->GetDelegate()->GetSupportedActions();
-  g_return_val_if_fail(index < static_cast<gint>(actions.size()), FALSE);
+  const std::vector<int32_t>& aria_actions =
+      obj->GetIntListAttribute(ax::mojom::IntListAttribute::kActionsIds);
 
+  // Actions can be from Blink for the given markup, or from the aria-actions
+  // attribute defined by the author.
+  g_return_val_if_fail(
+      index < static_cast<gint>(actions.size() + aria_actions.size()), FALSE);
   AXActionData data;
-  data.action = actions[index];
-  return obj->GetDelegate()->AccessibilityPerformAction(data);
+
+  // Handle Blink action.
+  if (index < static_cast<gint>(actions.size())) {
+    data.action = actions[index];
+    return obj->GetDelegate()->AccessibilityPerformAction(data);
+  }
+
+  // index refers to a position in the combined Blink actions and aria-actions
+  // vector. To find the corresponding index in the aria_actions vector,
+  // subtract the number of Blink actions.
+  int32_t aria_action_id = aria_actions[index - actions.size()];
+  if (AXPlatformNodeAuraLinux* aria_action_obj =
+          obj->GetFromNodeID(aria_action_id)) {
+    data.action = ax::mojom::Action::kDoDefault;
+    return aria_action_obj->GetDelegate()->AccessibilityPerformAction(data);
+  }
+  return FALSE;
 }
 
 gint GetNActions(AtkAction* atk_action) {
@@ -587,13 +608,49 @@ gint GetNActions(AtkAction* atk_action) {
   if (!obj)
     return 0;
 
-  return static_cast<gint>(obj->GetDelegate()->GetSupportedActions().size());
+  return static_cast<gint>(
+      obj->GetDelegate()->GetSupportedActions().size() +
+      obj->GetIntListAttribute(ax::mojom::IntListAttribute::kActionsIds)
+          .size());
 }
 
 const gchar* GetDescription(AtkAction*, gint) {
   // Not implemented. Right now Orca does not provide this and
   // Chromium is not providing a string for the action description.
   return nullptr;
+}
+
+const gchar* GetLocalizedName(AtkAction* atk_action, gint index) {
+  g_return_val_if_fail(ATK_IS_ACTION(atk_action), nullptr);
+
+  AtkObject* atk_object = ATK_OBJECT(atk_action);
+  AXPlatformNodeAuraLinux* obj =
+      AXPlatformNodeAuraLinux::FromAtkObject(atk_object);
+  if (!obj) {
+    return nullptr;
+  }
+
+  const std::vector<ax::mojom::Action> actions =
+      obj->GetDelegate()->GetSupportedActions();
+  const std::vector<int32_t>& aria_actions =
+      obj->GetIntListAttribute(ax::mojom::IntListAttribute::kActionsIds);
+
+  g_return_val_if_fail(
+      index < static_cast<gint>(actions.size() + aria_actions.size()), FALSE);
+
+  // Localized name is only specified for aria-actions, not for Blink actions.
+  if (index < static_cast<gint>(actions.size())) {
+    return nullptr;
+  }
+
+  // index refers to a position in the combined Blink actions and aria-actions
+  // vector. To find the corresponding index in the aria_actions vector,
+  // subtract the number of Blink actions.
+  int32_t aria_action_id = aria_actions[index - actions.size()];
+  AXPlatformNodeAuraLinux* aria_action_obj = obj->GetFromNodeID(aria_action_id);
+
+  aria_action_obj->accessible_name_ = aria_action_obj->GetName();
+  return aria_action_obj->accessible_name_.c_str();
 }
 
 const gchar* GetName(AtkAction* atk_action, gint index) {
@@ -607,13 +664,34 @@ const gchar* GetName(AtkAction* atk_action, gint index) {
 
   const std::vector<ax::mojom::Action> actions =
       obj->GetDelegate()->GetSupportedActions();
-  g_return_val_if_fail(index < static_cast<gint>(actions.size()), nullptr);
+  const std::vector<int32_t>& aria_actions =
+      obj->GetIntListAttribute(ax::mojom::IntListAttribute::kActionsIds);
+
+  g_return_val_if_fail(
+      index < static_cast<gint>(actions.size() + aria_actions.size()), FALSE);
 
   if (index == 0 && obj->GetDelegate()->HasDefaultActionVerb()) {
     // If there is a default action, it will always be at index 0.
     return obj->GetDefaultActionName();
   }
-  return ToString(actions[index]);
+
+  // Handle Blink action.
+  if (index < static_cast<gint>(actions.size())) {
+    return ToString(actions[index]);
+  }
+
+  // index refers to a position in the combined Blink actions and aria-actions
+  // vector. To find the corresponding index in the aria_actions vector,
+  // subtract the number of Blink actions.
+  int32_t aria_action_id = aria_actions[index - actions.size()];
+  AXPlatformNodeAuraLinux* aria_action_obj = obj->GetFromNodeID(aria_action_id);
+  std::string html_id =
+      aria_action_obj->GetStringAttribute(ax::mojom::StringAttribute::kHtmlId);
+  if (html_id.empty()) {
+    ATK_AURALINUX_RETURN_STRING(AXPlatformNodeBase::kAriaActionsPrefix);
+  }
+  ATK_AURALINUX_RETURN_STRING(AXPlatformNodeBase::kAriaActionsPrefix + "_" +
+                              html_id);
 }
 
 const gchar* GetKeybinding(AtkAction* atk_action, gint index) {
@@ -642,6 +720,7 @@ void Init(AtkActionIface* iface) {
   iface->do_action = DoAction;
   iface->get_n_actions = GetNActions;
   iface->get_description = GetDescription;
+  iface->get_localized_name = GetLocalizedName;
   iface->get_name = GetName;
   iface->get_keybinding = GetKeybinding;
 }
@@ -2263,7 +2342,7 @@ ImplementedAtkInterfaces AXPlatformNodeAuraLinux::GetGTypeInterfaceMask(
   // interfaces, which are provided by all the AtkObjects that we produce.
   ImplementedAtkInterfaces interface_mask;
 
-  if (!IsImageOrVideo(data.role)) {
+  if (!IsImageOrVideo(data.role) && !ui::IsText(data.role)) {
     interface_mask.Add(ImplementedAtkInterfaces::Value::kText);
     if (!data.IsAtomicTextField())
       interface_mask.Add(ImplementedAtkInterfaces::Value::kHypertext);
@@ -2472,16 +2551,22 @@ void AXPlatformNodeAuraLinux::DestroyAtkObjects() {
       SetWeakGPtrToAtkObject(&g_current_focused, nullptr);
     atk_object::Detach(AX_PLATFORM_NODE_AURALINUX(atk_object_.get()));
 
+    // Under some circumstances, menu open and close requests can arrive
+    // in unexpected orders; let's ensure this object is no longer in
+    // the stack of open menus.
+    std::erase(GetActiveMenus(), atk_object_);
+
     g_object_unref(atk_object_);
     atk_object_ = nullptr;
   }
 }
 
 // static
-AXPlatformNode* AXPlatformNode::Create(AXPlatformNodeDelegate* delegate) {
+AXPlatformNode::Pointer AXPlatformNode::Create(
+    AXPlatformNodeDelegate* delegate) {
   AXPlatformNodeAuraLinux* node = new AXPlatformNodeAuraLinux();
   node->Init(delegate);
-  return node;
+  return Pointer(node);
 }
 
 // static
@@ -3276,6 +3361,16 @@ gfx::NativeViewAccessible AXPlatformNodeAuraLinux::GetOrCreateAtkObject() {
   return atk_object_;
 }
 
+AXPlatformNodeAuraLinux* AXPlatformNodeAuraLinux::GetFromNodeID(
+    int32_t node_id) {
+  if (AXPlatformNode* node = GetDelegate()->GetFromNodeID(node_id)) {
+    if (AtkObject* atk_obj = node->GetNativeViewAccessible()) {
+      return AXPlatformNodeAuraLinux::FromAtkObject(atk_obj);
+    }
+  }
+  return nullptr;
+}
+
 void AXPlatformNodeAuraLinux::OnCheckedStateChanged() {
   AtkObject* obj = GetOrCreateAtkObject();
   if (!obj)
@@ -3379,10 +3474,12 @@ void AXPlatformNodeAuraLinux::OnMenuPopupEnd() {
   // kMenuPopupHide may be called multiple times for the same menu, so only
   // remove it if our parent frame matches the most recently opened menu.
   std::vector<AtkObject*>& active_menus = GetActiveMenus();
-  DCHECK(!active_menus.empty())
-      << "Asymmetrical menupopupend events -- too many";
 
-  active_menus.pop_back();
+  // We don't trust menu show/hide events to arrive in
+  // any sensible order if multiple menus are involved, so ensure we delete
+  // this particular menu from the stack even if it's not topmost.
+  std::erase(active_menus, atk_object);
+
   AtkObject* new_active_item = ComputeActiveTopLevelFrame();
   if (new_active_item != parent_frame) {
     // Newly activated menu has the different AtkWindow as the previous one.
@@ -4028,14 +4125,14 @@ void AXPlatformNodeAuraLinux::NotifyAccessibilityEvent(
 
 std::optional<std::pair<int, int>>
 AXPlatformNodeAuraLinux::GetEmbeddedObjectIndicesForId(int id) {
-  auto iterator = base::ranges::find(hypertext_.hyperlinks, id);
+  auto iterator = std::ranges::find(hypertext_.hyperlinks, id);
   if (iterator == hypertext_.hyperlinks.end())
     return std::nullopt;
   int hyperlink_index = std::distance(hypertext_.hyperlinks.begin(), iterator);
 
   auto offset =
-      base::ranges::find(hypertext_.hyperlink_offset_to_index, hyperlink_index,
-                         &AXLegacyHypertext::OffsetToIndex::value_type::second);
+      std::ranges::find(hypertext_.hyperlink_offset_to_index, hyperlink_index,
+                        &AXLegacyHypertext::OffsetToIndex::value_type::second);
   if (offset == hypertext_.hyperlink_offset_to_index.end())
     return std::nullopt;
 
@@ -4385,8 +4482,7 @@ bool AXPlatformNodeAuraLinux::
       return child->GrabFocusOrSetSequentialFocusNavigationStartingPoint();
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return false;
+  NOTREACHED();
 }
 
 const gchar* AXPlatformNodeAuraLinux::GetDefaultActionName() {
@@ -4444,7 +4540,12 @@ const gchar* AXPlatformNodeAuraLinux::GetDocumentAttributeValue(
 
 AtkAttributeSet* AXPlatformNodeAuraLinux::GetDocumentAttributes() const {
   AtkAttributeSet* attribute_set = nullptr;
-  const gchar* doc_attributes[] = {"DocType", "MimeType", "Title", "URI"};
+  auto doc_attributes = std::to_array<const gchar*>({
+      "DocType",
+      "MimeType",
+      "Title",
+      "URI",
+  });
   const gchar* value = nullptr;
 
   for (unsigned i = 0; i < G_N_ELEMENTS(doc_attributes); i++) {
@@ -4521,7 +4622,15 @@ int AXPlatformNodeAuraLinux::GetCaretOffset() {
     return -1;
   }
 
-  std::pair<int, int> selection = GetSelectionOffsetsForAtk();
+  std::pair<int, int> selection;
+  if (GetDelegate()->IsWebContent()) {
+    AXSelection unignored_selection = GetDelegate()->GetUnignoredSelection();
+    GetSelectionOffsetsFromTree(&unignored_selection, &selection.first,
+                                &selection.second, /*caret_only*/ true);
+  } else {
+    GetSelectionOffsets(&selection.first, &selection.second);
+  }
+
   return UTF16ToUnicodeOffsetInText(selection.second);
 }
 
@@ -4805,8 +4914,7 @@ int AXPlatformNodeAuraLinux::FindStartOfStyle(
 
   switch (direction) {
     case ax::mojom::MoveDirection::kNone:
-      NOTREACHED_IN_MIGRATION();
-      return start_offset;
+      NOTREACHED();
     case ax::mojom::MoveDirection::kBackward: {
       auto iterator = offset_to_text_attributes_.upper_bound(start_offset);
       --iterator;
@@ -4821,8 +4929,7 @@ int AXPlatformNodeAuraLinux::FindStartOfStyle(
     }
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return start_offset;
+  NOTREACHED();
 }
 
 const TextAttributeList& AXPlatformNodeAuraLinux::GetTextAttributes(
@@ -4868,7 +4975,9 @@ void AXPlatformNodeAuraLinux::ActivateFindInPageResult(int start_offset,
   if (!atk_object)
     return;
 
-  DCHECK(ATK_IS_TEXT(atk_object));
+  if (!ATK_IS_TEXT(atk_object)) {
+    return;
+  }
 
   if (!EmitsAtkTextEvents()) {
     ActivateFindInPageInParent(start_offset, end_offset);

@@ -2,11 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "chrome/browser/ui/tabs/tab_collection_storage.h"
+
 #include <memory>
 
 #include "base/notimplemented.h"
 #include "chrome/browser/ui/tabs/tab_collection.h"
-#include "chrome/browser/ui/tabs/tab_collection_storage.h"
 #include "chrome/browser/ui/tabs/tab_model.h"
 
 namespace tabs {
@@ -16,9 +17,9 @@ TabCollectionStorage::TabCollectionStorage(TabCollection& owner)
 
 TabCollectionStorage::~TabCollectionStorage() = default;
 
-bool TabCollectionStorage::ContainsTab(TabModel* tab_model) const {
-  CHECK(tab_model);
-  return GetIndexOfTab(tab_model).has_value();
+bool TabCollectionStorage::ContainsTab(const TabInterface* tab) const {
+  CHECK(tab);
+  return GetIndexOfTab(tab).has_value();
 }
 
 TabModel* TabCollectionStorage::GetTabAtIndex(size_t index) const {
@@ -127,12 +128,12 @@ void TabCollectionStorage::CloseCollection(TabCollection* collection) {
 }
 
 std::optional<size_t> TabCollectionStorage::GetIndexOfTab(
-    const TabModel* const tab_model) const {
-  CHECK(tab_model);
+    const TabInterface* const tab) const {
+  CHECK(tab);
   const auto it = std::find_if(
-      children_.begin(), children_.end(), [tab_model](const auto& child) {
+      children_.begin(), children_.end(), [tab](const auto& child) {
         return std::holds_alternative<std::unique_ptr<TabModel>>(child) &&
-               std::get<std::unique_ptr<TabModel>>(child).get() == tab_model;
+               std::get<std::unique_ptr<TabModel>>(child).get() == tab;
       });
   return it == children_.end() ? std::nullopt
                                : std::optional<size_t>(it - children_.begin());

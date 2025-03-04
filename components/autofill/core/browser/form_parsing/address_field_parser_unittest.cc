@@ -20,13 +20,11 @@ class AddressFieldParserTest : public FormFieldParserTestBase,
                                public ::testing::Test {
  public:
   AddressFieldParserTest() {
-    default_features.InitWithFeatures({features::kAutofillUseAUAddressModel,
-                                       features::kAutofillUseCAAddressModel,
-                                       features::kAutofillUseDEAddressModel,
-                                       features::kAutofillUseFRAddressModel,
+    default_features.InitWithFeatures({features::kAutofillUseFRAddressModel,
                                        features::kAutofillUsePLAddressModel,
                                        features::kAutofillUseINAddressModel,
-                                       features::kAutofillUseITAddressModel},
+                                       features::kAutofillUseITAddressModel,
+                                       features::kAutofillUseNLAddressModel},
                                       {});
   }
   AddressFieldParserTest(const AddressFieldParserTest&) = delete;
@@ -248,7 +246,6 @@ TEST_F(AddressFieldParserTest, ParseOverflow) {
       {"complemento", "Complemento", "BR", "pt"},
       {"adresszusatz", "Adresszusatz", "DE", "de"},
   };
-  base::test::ScopedFeatureList enabled{features::kAutofillUseDEAddressModel};
 
   for (const TestCase& test : testcases) {
     SCOPED_TRACE(testing::Message() << "field_name=" << test.field_name
@@ -390,6 +387,45 @@ TEST_F(AddressFieldParserTest, ParseAddressComponentsSequenceAsStreetAddress) {
                    ADDRESS_HOME_STREET_ADDRESS);
   ClassifyAndVerify(ParseResult::kParsed, GeoIpCountryCode("TR"),
                     LanguageCode("tr"));
+}
+
+// Tests that house number, apartment number and street name sequence is
+// correctly classified for NL. Misleading labels added to make sure that the
+// sequence is parsed correctly.
+TEST_F(AddressFieldParserTest, ParseHouseNumberAptNumAndStreetName_NL) {
+  AddTextFormFieldData("house number", "Street[0] Huisnummer",
+                       ADDRESS_HOME_HOUSE_NUMBER);
+  AddTextFormFieldData("apartment", "Street[1] Toevoeging",
+                       ADDRESS_HOME_APT_NUM);
+  AddTextFormFieldData("street name", "Street[2] Straatnaam",
+                       ADDRESS_HOME_STREET_NAME);
+  ClassifyAndVerify(ParseResult::kParsed, GeoIpCountryCode("NL"),
+                    LanguageCode("nl"));
+}
+
+// Tests that house number and street name sequence is
+// correctly classified for NL. Misleading labels added to make sure that the
+// sequence is parsed correctly.
+TEST_F(AddressFieldParserTest, ParseHouseNumberAndStreetName_NL) {
+  AddTextFormFieldData("house number", "Street[0] Huisnummer",
+                       ADDRESS_HOME_HOUSE_NUMBER);
+  AddTextFormFieldData("street name", "Street[1]", ADDRESS_HOME_STREET_NAME);
+  AddTextFormFieldData("zip code", "Zipcode", ADDRESS_HOME_ZIP);
+  ClassifyAndVerify(ParseResult::kParsed, GeoIpCountryCode("NL"),
+                    LanguageCode("nl"));
+}
+
+// Tests that house number and apartment number sequence is
+// correctly classified for NL. Misleading labels added to make sure that the
+// sequence is parsed correctly.
+TEST_F(AddressFieldParserTest, ParseHouseNumberAndAptNum_NL) {
+  AddTextFormFieldData("house number", "Street[0] Huisnummer",
+                       ADDRESS_HOME_HOUSE_NUMBER);
+  AddTextFormFieldData("apartment", "Street[1] Toevoeging",
+                       ADDRESS_HOME_APT_NUM);
+  AddTextFormFieldData("zip code", "Zipcode", ADDRESS_HOME_ZIP);
+  ClassifyAndVerify(ParseResult::kParsed, GeoIpCountryCode("NL"),
+                    LanguageCode("nl"));
 }
 
 }  // namespace autofill

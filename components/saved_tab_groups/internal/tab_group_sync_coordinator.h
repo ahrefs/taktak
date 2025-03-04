@@ -6,6 +6,7 @@
 #define COMPONENTS_SAVED_TAB_GROUPS_INTERNAL_TAB_GROUP_SYNC_COORDINATOR_H_
 
 #include <memory>
+#include <set>
 
 #include "base/uuid.h"
 #include "components/saved_tab_groups/public/saved_tab_group.h"
@@ -30,11 +31,12 @@ class TabGroupSyncCoordinator : public TabGroupSyncService::Observer {
 
   // Pass-through logic from TabGroupSyncService::ConnectLocalTabGroup.
   virtual void ConnectLocalTabGroup(const base::Uuid& sync_id,
-                                    const LocalTabGroupID& local_id,
-                                    OpeningSource opening_source) = 0;
+                                    const LocalTabGroupID& local_id) = 0;
   virtual void DisconnectLocalTabGroup(const LocalTabGroupID& local_id) = 0;
   virtual std::unique_ptr<ScopedLocalObservationPauser>
   CreateScopedLocalObserverPauser() = 0;
+  virtual std::set<LocalTabID> GetSelectedTabs() = 0;
+  virtual std::u16string GetTabTitle(const LocalTabID& local_tab_id) = 0;
 
   // TabGroupSyncService::Observer overrides.
   void OnInitialized() override = 0;
@@ -46,6 +48,8 @@ class TabGroupSyncCoordinator : public TabGroupSyncService::Observer {
                          TriggerSource source) override = 0;
   void OnTabGroupRemoved(const base::Uuid& sync_id,
                          TriggerSource source) override = 0;
+  // Do not handle OnTabGroupMigrated() because the transition is handled by
+  // TabGroupSyncService.
 };
 
 }  // namespace tab_groups

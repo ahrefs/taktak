@@ -133,7 +133,7 @@ class WebDatabaseHostImplTest : public ::testing::Test {
   void RunUntilIdle() { task_environment_.RunUntilIdle(); }
 
   WebDatabaseHostImpl* host() { return host_.get(); }
-  int process_id() const { return render_process_host_->GetID(); }
+  int process_id() const { return render_process_host_->GetDeprecatedID(); }
   BrowserContext* browser_context() { return &browser_context_; }
   base::SequencedTaskRunner* task_runner() { return task_runner_.get(); }
 
@@ -145,6 +145,10 @@ class WebDatabaseHostImplTest : public ::testing::Test {
             OriginAgentClusterIsolationState::CreateForDefaultIsolation(
                 &browser_context_)),
         process_id(), url);
+    // All tests in this file assume that they have committed an origin
+    // corresponding to `url`.
+    ChildProcessSecurityPolicyImpl::GetInstance()->AddCommittedOrigin(
+        process_id(), url::Origin::Create(url));
   }
 
   storage::MockQuotaManager* quota_manager() { return quota_manager_.get(); }
@@ -200,7 +204,7 @@ TEST_F(WebDatabaseHostImplTest, OpenFileCreatesBucket) {
       storage::BucketInfo result,
       quota_manager_proxy_sync.GetBucket(
           blink::StorageKey::CreateFromStringForTesting(example_url),
-          storage::kDefaultBucketName, blink::mojom::StorageType::kTemporary));
+          storage::kDefaultBucketName));
   EXPECT_EQ(result.name, storage::kDefaultBucketName);
   EXPECT_EQ(result.storage_key,
             blink::StorageKey::CreateFromStringForTesting(example_url));

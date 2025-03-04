@@ -298,7 +298,6 @@ void SetBuildInfoAnnotations(std::map<std::string, std::string>* annotations) {
   (*annotations)["board"] = info->board();
   (*annotations)["installer_package_name"] = info->installer_package_name();
   (*annotations)["abi_name"] = info->abi_name();
-  (*annotations)["custom_themes"] = info->custom_themes();
   (*annotations)["resources_version"] = info->resources_version();
   (*annotations)["gms_core_version"] = info->gms_version_code();
 
@@ -435,13 +434,10 @@ void BuildHandlerArgs(CrashReporterClient* crash_reporter_client,
   // TODO(jperaza): Set URL for Android when Crashpad takes over report upload.
   *url = std::string();
 
-  std::string product_name;
-  std::string product_version;
-  std::string channel;
-  crash_reporter_client->GetProductNameAndVersion(&product_name,
-                                                  &product_version, &channel);
-  (*process_annotations)["prod"] = product_name;
-  (*process_annotations)["ver"] = product_version;
+  ProductInfo product_info;
+  crash_reporter_client->GetProductInfo(&product_info);
+  (*process_annotations)["prod"] = product_info.product_name;
+  (*process_annotations)["ver"] = product_info.version;
 
   SetBuildInfoAnnotations(process_annotations);
 
@@ -451,8 +447,8 @@ void BuildHandlerArgs(CrashReporterClient* crash_reporter_client,
 #else
   const bool allow_empty_channel = false;
 #endif
-  if (allow_empty_channel || !channel.empty()) {
-    (*process_annotations)["channel"] = channel;
+  if (allow_empty_channel || !product_info.channel.empty()) {
+    (*process_annotations)["channel"] = product_info.channel;
   }
 
   (*process_annotations)["plat"] = std::string("Android");

@@ -8,8 +8,11 @@
 #include <utility>
 
 #include "base/functional/bind.h"
+#include "base/metrics/histogram_macros.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/threading/thread_restrictions.h"
+#include "base/time/time.h"
+#include "base/timer/elapsed_timer.h"
 #include "base/trace_event/trace_event.h"
 #include "ui/gfx/linux/gbm_wrapper.h"
 #include "ui/ozone/platform/drm/gpu/drm_device.h"
@@ -69,26 +72,6 @@ DrmThreadProxy::~DrmThreadProxy() = default;
 void DrmThreadProxy::StartDrmThread(base::OnceClosure receiver_drainer) {
   drm_thread_.Start(std::move(receiver_drainer),
                     std::make_unique<GbmDeviceGenerator>());
-}
-
-bool DrmThreadProxy::IsPrimaryDeviceAtomic() {
-  static std::optional<bool> cached_is_atomic;
-
-  if (!cached_is_atomic.has_value()) {
-    base::ScopedAllowBaseSyncPrimitivesOutsideBlockingScope allow_wait;
-    // Passing `kNullAcceleratedWidget` results in querying the primary device.
-    bool is_atomic = false;
-    base::OnceClosure task = base::BindOnce(
-        &DrmThread::IsDeviceAtomic, base::Unretained(&drm_thread_),
-        gfx::kNullAcceleratedWidget, &is_atomic);
-    PostSyncTask(
-        drm_thread_.task_runner(),
-        base::BindOnce(&DrmThread::RunTaskAfterDeviceReady,
-                       base::Unretained(&drm_thread_), std::move(task)));
-    cached_is_atomic = is_atomic;
-  }
-
-  return cached_is_atomic.value();
 }
 
 std::unique_ptr<DrmWindowProxy> DrmThreadProxy::CreateDrmWindowProxy(
@@ -189,9 +172,21 @@ std::vector<OverlayStatus> DrmThreadProxy::CheckOverlayCapabilitiesSync(
   base::OnceClosure task = base::BindOnce(
       &DrmThread::CheckOverlayCapabilitiesSync, base::Unretained(&drm_thread_),
       widget, candidates, &result);
+
+  base::ElapsedTimer timer;
   PostSyncTask(drm_thread_.task_runner(),
                base::BindOnce(&DrmThread::RunTaskAfterDeviceReady,
                               base::Unretained(&drm_thread_), std::move(task)));
+  base::TimeDelta time = timer.Elapsed();
+
+  static constexpr base::TimeDelta kMinTime = base::Microseconds(1);
+  static constexpr base::TimeDelta kMaxTime = base::Milliseconds(10);
+  static constexpr int kTimeBuckets = 50;
+  UMA_HISTOGRAM_CUSTOM_MICROSECONDS_TIMES(
+      "Compositing.Display.DrmThreaedProxy."
+      "CheckOverlayCapabilitiesSyncOnDrmThreadUs",
+      time, kMinTime, kMaxTime, kTimeBuckets);
+
   return result;
 }
 

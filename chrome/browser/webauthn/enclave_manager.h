@@ -13,6 +13,7 @@
 
 #include "base/files/file_path.h"
 #include "base/functional/callback_forward.h"
+#include "base/gtest_prod_util.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
@@ -35,6 +36,12 @@
 #include "chrome/common/chrome_version.h"
 #include "crypto/scoped_lacontext.h"
 #endif  // BUILDFLAG(IS_MAC)
+
+class GaiaId;
+
+namespace base {
+class ElapsedTimer;
+}
 
 namespace crypto {
 class RefCountedUserVerifyingSigningKey;
@@ -181,6 +188,8 @@ class EnclaveManager : public EnclaveManagerInterface {
   // to call after `StoreKeys` has been called and thus `has_pending_keys`
   // returns true.
   void AddDeviceAndPINToAccount(std::string pin, Callback callback);
+  // Set a PIN on an account that doesn't currently have one.
+  void SetPIN(std::string pin, std::string rapt, Callback callback);
   // Change the GPM PIN on the account. If a RAPT (Reauthentication Proof Token)
   // is given then it will be used, otherwise the UV key will be used, causing
   // system UI to appear to verify the user.
@@ -275,7 +284,7 @@ class EnclaveManager : public EnclaveManagerInterface {
 
   // This function is called by the MagicArch integration when the user
   // successfully completes recovery.
-  void StoreKeys(const std::string& gaia_id,
+  void StoreKeys(const GaiaId& gaia_id,
                  std::vector<std::vector<uint8_t>> keys,
                  int last_key_version);
 
@@ -319,6 +328,7 @@ class EnclaveManager : public EnclaveManagerInterface {
   class IdentityObserver;
   struct PendingAction;
   friend class StateMachine;
+  FRIEND_TEST_ALL_PREFIXES(EnclaveUVTest, UnregisterOnMissingUserVerifyingKey);
 
   // Starts a `StateMachine` to process the current request.
   void Act();
@@ -400,6 +410,7 @@ class EnclaveManager : public EnclaveManagerInterface {
   std::unique_ptr<StateMachine> state_machine_;
   std::vector<base::OnceClosure> load_callbacks_;
   std::deque<std::unique_ptr<PendingAction>> pending_actions_;
+  base::OneShotTimer load_timer_;
   base::RepeatingTimer renewal_timer_;
   unsigned renewal_checks_ = 0;
   unsigned renewal_attempts_ = 0;
@@ -416,6 +427,10 @@ class EnclaveManager : public EnclaveManagerInterface {
       identity_key_;
 
   unsigned store_keys_count_ = 0;
+
+  // Timer for recording a metric measuring the delay to load the Enclave
+  // state.
+  std::unique_ptr<base::ElapsedTimer> load_duration_timer_;
 
   base::ObserverList<Observer> observer_list_;
 

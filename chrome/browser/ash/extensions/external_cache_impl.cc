@@ -79,8 +79,9 @@ class ExternalCacheImpl::AnyInstallFailureObserver
 
   // extensions::InstallObserver:
   void OnFinishCrxInstall(content::BrowserContext* context,
-                          const extensions::CrxInstaller& installer,
+                          const base::FilePath& source_file,
                           const std::string& extension_id,
+                          const extensions::Extension* extension,
                           bool success) override;
 
   bool IsAnyObservedProfileUsingTracker(
@@ -157,11 +158,12 @@ void ExternalCacheImpl::AnyInstallFailureObserver::
 
 void ExternalCacheImpl::AnyInstallFailureObserver::OnFinishCrxInstall(
     content::BrowserContext* context,
-    const extensions::CrxInstaller& installer,
+    const base::FilePath& source_file,
     const std::string& extension_id,
+    const extensions::Extension* extension,
     bool success) {
   if (!success) {
-    owner_->OnCrxInstallFailure(context, installer);
+    owner_->OnCrxInstallFailure(context, source_file);
   }
 }
 
@@ -231,9 +233,8 @@ void ExternalCacheImpl::UpdateExtensionsList(base::Value::Dict prefs) {
 void ExternalCacheImpl::OnDamagedFileDetected(const base::FilePath& path) {
   for (const auto [key, value] : cached_extensions_) {
     if (!value.is_dict()) {
-      NOTREACHED_IN_MIGRATION()
-          << "ExternalCacheImpl found bad entry with type " << value.type();
-      continue;
+      NOTREACHED() << "ExternalCacheImpl found bad entry with type "
+                   << value.type();
     }
 
     const std::string* external_crx = value.GetDict().FindString(
@@ -308,10 +309,9 @@ void ExternalCacheImpl::SetBackoffPolicy(
   }
 }
 
-void ExternalCacheImpl::OnCrxInstallFailure(
-    content::BrowserContext* context,
-    const extensions::CrxInstaller& installer) {
-  OnDamagedFileDetected(installer.source_file());
+void ExternalCacheImpl::OnCrxInstallFailure(content::BrowserContext* context,
+                                            const base::FilePath& source_file) {
+  OnDamagedFileDetected(source_file);
 }
 
 void ExternalCacheImpl::OnExtensionDownloadFailed(

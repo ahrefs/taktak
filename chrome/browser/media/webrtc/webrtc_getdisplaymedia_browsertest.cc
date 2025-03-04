@@ -13,11 +13,12 @@
 #include "base/memory/raw_ptr.h"
 #include "base/path_service.h"
 #include "base/strings/strcat.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
+#include "base/strings/to_string.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "build/config/chromebox_for_meetings/buildflags.h"  // PLATFORM_CFM
 #include "chrome/browser/apps/platform_apps/app_browsertest_util.h"
 #include "chrome/browser/media/webrtc/webrtc_browsertest_base.h"
@@ -55,7 +56,7 @@
 #include "chrome/browser/media/webrtc/system_media_capture_permissions_mac.h"
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/chromeos/policy/dlp/dlp_content_restriction_set.h"
 #include "chrome/browser/chromeos/policy/dlp/test/dlp_content_manager_test_helper.h"
 #endif
@@ -128,8 +129,7 @@ struct TestConfigForFakeUI {
   const char* display_surface;
 };
 
-struct TestConfigForHiDpi {
-  bool enable_hidpi;
+struct TestConfigForMediaResolution {
   int constraint_width;
   int constraint_height;
 };
@@ -260,9 +260,8 @@ class WebRtcScreenCaptureBrowserTest : public WebRtcTestBase {
 
   std::string GetConstraints(bool video, bool audio) const {
     return base::StringPrintf("{video: %s, audio: %s, preferCurrentTab: %s}",
-                              video ? "true" : "false",
-                              audio ? "true" : "false",
-                              PreferCurrentTab() ? "true" : "false");
+                              base::ToString(video), base::ToString(audio),
+                              base::ToString(PreferCurrentTab()));
   }
 };
 
@@ -292,13 +291,13 @@ class WebRtcScreenCaptureBrowserTestWithPicker
                                      ? switches::kThisTabCaptureAutoAccept
                                      : switches::kThisTabCaptureAutoReject);
     } else {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
       command_line->AppendSwitchASCII(switches::kAutoSelectDesktopCaptureSource,
                                       "Display");
 #else
       command_line->AppendSwitchASCII(switches::kAutoSelectDesktopCaptureSource,
                                       "Entire screen");
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
     }
   }
 
@@ -340,7 +339,7 @@ IN_PROC_BROWSER_TEST_P(WebRtcScreenCaptureBrowserTestWithPicker,
                      /*is_tab_capture=*/PreferCurrentTab());
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 IN_PROC_BROWSER_TEST_P(WebRtcScreenCaptureBrowserTestWithPicker,
                        ScreenCaptureVideoWithDlp) {
   if (!test_config_.should_prefer_current_tab &&
@@ -384,19 +383,17 @@ IN_PROC_BROWSER_TEST_P(WebRtcScreenCaptureBrowserTestWithPicker,
   EXPECT_EQ(content::EvalJs(tab->GetPrimaryMainFrame(), "waitVideoUnmuted();"),
             "unmuted");
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 // TODO(crbug.com/40744542): Real desktop capture is flaky on below platforms.
 // TODO(crbug.com/41493366): enable this flaky test.
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 #define MAYBE_ScreenCaptureVideoAndAudio DISABLED_ScreenCaptureVideoAndAudio
 // On linux debug bots, it's flaky as well.
-#elif ((BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)) && \
-       !defined(NDEBUG))
+#elif BUILDFLAG(IS_LINUX) && !defined(NDEBUG)
 #define MAYBE_ScreenCaptureVideoAndAudio DISABLED_ScreenCaptureVideoAndAudio
 // On linux asan bots, it's flaky as well - msan and other rel bot are fine.
-#elif ((BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)) && \
-       defined(ADDRESS_SANITIZER))
+#elif BUILDFLAG(IS_LINUX) && defined(ADDRESS_SANITIZER)
 #define MAYBE_ScreenCaptureVideoAndAudio DISABLED_ScreenCaptureVideoAndAudio
 #else
 #define MAYBE_ScreenCaptureVideoAndAudio ScreenCaptureVideoAndAudio
@@ -498,13 +495,16 @@ IN_PROC_BROWSER_TEST_P(WebRtcScreenCaptureBrowserTestWithFakeUI,
       "should_prefer_current_tab: "
       "%s}",
       kMaxWidth, kMaxFrameRate,
-      test_config_.should_prefer_current_tab ? "true" : "false");
+      base::ToString(test_config_.should_prefer_current_tab));
   RunGetDisplayMedia(tab, constraints,
                      /*is_fake_ui=*/true, /*expect_success=*/true,
                      /*is_tab_capture=*/PreferCurrentTab());
-
-  EXPECT_EQ(content::EvalJs(tab->GetPrimaryMainFrame(), "getWidthSetting();"),
-            base::StringPrintf("%d", kMaxWidth));
+  auto result =
+      content::EvalJs(tab->GetPrimaryMainFrame(), "getWidthSetting();")
+          .ExtractString();
+  int value;
+  EXPECT_TRUE(base::StringToInt(result, &value));
+  EXPECT_LE(value, kMaxWidth);
 
   EXPECT_EQ(
       content::EvalJs(tab->GetPrimaryMainFrame(), "getFrameRateSetting();"),
@@ -571,7 +571,7 @@ IN_PROC_BROWSER_TEST_P(WebRtcScreenCapturePermissionPolicyBrowserTest,
   // using just one tab. It is orthogonal to the test's purpose.
   const std::string constraints = base::StringPrintf(
       "{video: true, selfBrowserSurface: 'include', preferCurrentTab: %s}",
-      PreferCurrentTab() ? "true" : "false");
+      base::ToString(PreferCurrentTab()));
 
   EXPECT_EQ(
       content::EvalJs(
@@ -923,29 +923,21 @@ IN_PROC_BROWSER_TEST_P(GetDisplayMediaVideoTrackBrowserTest, RunCombinedTest) {
     !(defined(MEMORY_SANITIZER) || defined(ADDRESS_SANITIZER))
 class GetDisplayMediaHiDpiBrowserTest
     : public WebRtcTestBase,
-      public testing::WithParamInterface<TestConfigForHiDpi> {
+      public testing::WithParamInterface<TestConfigForMediaResolution> {
  public:
   GetDisplayMediaHiDpiBrowserTest() : test_config_(GetParam()) {}
 
   // The browser window size must be consistent with the
-  // INSTANTIATE_TEST_SUITE_P TestConfigForHiDpi configurations below. See the
-  // comments there for more details.
+  // INSTANTIATE_TEST_SUITE_P TestConfigForMediaResolution configurations below.
+  // See the comments there for more details.
   static constexpr int kBrowserWindowWidth = 800;
   static constexpr int kBrowserWindowHeight = 600;
 
-  bool enable_hidpi() const { return test_config_.enable_hidpi; }
   int constraint_width() const { return test_config_.constraint_width; }
   int constraint_height() const { return test_config_.constraint_height; }
 
   void SetUpInProcessBrowserTestFixture() override {
-    if (enable_hidpi()) {
-      feature_list_.InitAndEnableFeature(media::kWebContentsCaptureHiDpi);
-    } else {
-      feature_list_.InitAndDisableFeature(media::kWebContentsCaptureHiDpi);
-    }
-
     WebRtcTestBase::SetUpInProcessBrowserTestFixture();
-
     DetectErrorsInJavaScript();
   }
 
@@ -953,14 +945,6 @@ class GetDisplayMediaHiDpiBrowserTest
     WebRtcTestBase::SetUpOnMainThread();
 
     ASSERT_TRUE(embedded_test_server()->Start());
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-    // The picker itself shows previews which are unsupported in Lacros tests.
-    base::Value::List matchlist;
-    matchlist.Append("*");
-    browser()->profile()->GetPrefs()->SetList(
-        prefs::kTabCaptureAllowedByOrigins, std::move(matchlist));
-#endif
 
     // Fire up the page.
     tab_ = OpenTestPageInNewTab(kMainHtmlPage);
@@ -1012,8 +996,7 @@ class GetDisplayMediaHiDpiBrowserTest
         .ExtractString();
   }
 
-  base::test::ScopedFeatureList feature_list_;
-  const TestConfigForHiDpi test_config_;
+  const TestConfigForMediaResolution test_config_;
   raw_ptr<content::WebContents, AcrossTasksDanglingUntriaged> tab_ = nullptr;
 };
 
@@ -1048,10 +1031,8 @@ IN_PROC_BROWSER_TEST_P(GetDisplayMediaHiDpiBrowserTest, Capture) {
   WaitForVideoToPlay(Tab());
 
   // If the video size is higher resolution than the browser window
-  // size, expect that HiDPI mode should be active. This requires
-  // the feature to be enabled.
-  bool expect_hidpi = enable_hidpi() &&
-                      constraint_width() > kBrowserWindowWidth &&
+  // size, expect that HiDPI mode should be active.
+  bool expect_hidpi = constraint_width() > kBrowserWindowWidth &&
                       constraint_height() > kBrowserWindowHeight;
 
   double device_pixel_ratio = GetDevicePixelRatio();
@@ -1071,15 +1052,10 @@ INSTANTIATE_TEST_SUITE_P(
     // (cf. kBrowserWindowWidth and kBrowserWindowHeight in
     // GetDisplayMediaHiDpiBrowserTest above), and the large sizes must be
     // significantly larger than the browser window size.
-    Values(TestConfigForHiDpi{/*enable_hidpi=*/false,
-                              /*constraint_width=*/3840,
-                              /*constraint_height=*/2160},
-           TestConfigForHiDpi{/*enable_hidpi=*/true,
-                              /*constraint_width=*/640,
-                              /*constraint_height=*/480},
-           TestConfigForHiDpi{/*enable_hidpi=*/true,
-                              /*constraint_width=*/3840,
-                              /*constraint_height=*/2160}));
+    Values(TestConfigForMediaResolution{/*constraint_width=*/640,
+                                        /*constraint_height=*/480},
+           TestConfigForMediaResolution{/*constraint_width=*/3840,
+                                        /*constraint_height=*/2160}));
 #endif
 
 class GetDisplayMediaChangeSourceBrowserTest
@@ -1095,7 +1071,7 @@ class GetDisplayMediaChangeSourceBrowserTest
   void SetUp() override {
     // TODO(crbug.com/40245399): Fix GetDisplayMediaChangeSourceBrowserTest with
     // audio requested on ChromeOS
-#if (BUILDFLAG(IS_CHROMEOS_ASH) || BUILDFLAG(IS_CHROMEOS_LACROS))
+#if BUILDFLAG(IS_CHROMEOS)
     if (dynamic_surface_switching_requested_ && feature_enabled_ &&
         user_shared_audio_) {
       GTEST_SKIP();

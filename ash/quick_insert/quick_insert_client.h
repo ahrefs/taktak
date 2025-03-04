@@ -19,13 +19,21 @@
 #include "base/files/file.h"
 #include "base/functional/callback_forward.h"
 #include "base/memory/scoped_refptr.h"
+#include "ui/base/ime/text_input_client.h"
 #include "url/gurl.h"
 
 class SkBitmap;
-class PrefService;
+
+namespace favicon {
+class FaviconService;
+}
 
 namespace gfx {
 class Size;
+}
+
+namespace history {
+class HistoryService;
 }
 
 namespace network {
@@ -34,11 +42,11 @@ class SharedURLLoaderFactory;
 
 namespace ash {
 
-// Lets PickerController in Ash to communicate with the browser.
-class ASH_EXPORT PickerClient {
+// Lets QuickInsertController in Ash to communicate with the browser.
+class ASH_EXPORT QuickInsertClient {
  public:
   using CrosSearchResultsCallback = base::RepeatingCallback<void(
-      ash::AppListSearchResultType result_type,
+      AppListSearchResultType result_type,
       std::vector<QuickInsertSearchResult> results)>;
   using ShowEditorCallback =
       base::OnceCallback<void(std::optional<std::string> preset_query_id,
@@ -49,21 +57,19 @@ class ASH_EXPORT PickerClient {
       base::OnceCallback<void(std::vector<QuickInsertSearchResult>)>;
   using RecentFilesCallback =
       base::OnceCallback<void(std::vector<QuickInsertSearchResult>)>;
-  using SuggestedLinksCallback =
-      base::RepeatingCallback<void(std::vector<QuickInsertSearchResult>)>;
   using FetchFileThumbnailCallback =
       base::OnceCallback<void(const SkBitmap* bitmap, base::File::Error error)>;
 
-  // Gets the SharedURLLoaderFactory to use for Picker network requests, e.g. to
-  // fetch assets. This is the loader factory for the active profile, not the
-  // global browser process one.
+  // Gets the SharedURLLoaderFactory to use for Quick Insert network requests,
+  // e.g. to fetch assets. This is the loader factory for the active profile,
+  // not the global browser process one.
   virtual scoped_refptr<network::SharedURLLoaderFactory>
   GetSharedURLLoaderFactory() = 0;
 
   // Starts a search using the CrOS Search API
   // (`app_list::SearchEngine::StartSearch`).
   virtual void StartCrosSearch(const std::u16string& query,
-                               std::optional<PickerCategory> category,
+                               std::optional<QuickInsertCategory> category,
                                CrosSearchResultsCallback callback) = 0;
   // Stops a search using the CrOS Search API
   // (`app_list::SearchEngine::StopQuery`).
@@ -76,7 +82,8 @@ class ASH_EXPORT PickerClient {
   // Editor. If Editor is not available, this returns a null callback.
   virtual ShowEditorCallback CacheEditorContext() = 0;
 
-  virtual ShowLobsterCallback GetShowLobsterCallback() = 0;
+  virtual ShowLobsterCallback CacheLobsterContext(
+      ui::TextInputClient* text_input_client) = 0;
 
   virtual void GetSuggestedEditorResults(
       SuggestedEditorResultsCallback callback) = 0;
@@ -88,24 +95,23 @@ class ASH_EXPORT PickerClient {
   virtual void GetRecentDriveFileResults(size_t max_files,
                                          RecentFilesCallback callback) = 0;
 
-  virtual void GetSuggestedLinkResults(size_t max_results,
-                                       SuggestedLinksCallback callback) = 0;
-
   virtual void FetchFileThumbnail(const base::FilePath& path,
                                   const gfx::Size& size,
                                   FetchFileThumbnailCallback callback) = 0;
 
-  virtual PrefService* GetPrefs() = 0;
   // SAFETY: The returned `do_paste` MUST be called synchronously. Calling it
   // after a delay, such as in a different task, may result in use-after-frees.
-  virtual std::optional<PickerWebPasteTarget> GetWebPasteTarget() = 0;
+  virtual std::optional<QuickInsertWebPasteTarget> GetWebPasteTarget() = 0;
 
   // Make an announcement via an offscreen live region.
   virtual void Announce(std::u16string_view message) = 0;
 
+  virtual history::HistoryService* GetHistoryService() = 0;
+  virtual favicon::FaviconService* GetFaviconService() = 0;
+
  protected:
-  PickerClient();
-  virtual ~PickerClient();
+  QuickInsertClient();
+  virtual ~QuickInsertClient();
 };
 
 }  // namespace ash

@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "net/cert/x509_certificate.h"
 
 #include <limits.h>
@@ -311,8 +316,7 @@ void X509Certificate::Persist(base::Pickle* pickle) const {
   DCHECK(cert_buffer_);
   // This would be an absolutely insane number of intermediates.
   if (intermediate_ca_certs_.size() > static_cast<size_t>(INT_MAX) - 1) {
-    NOTREACHED_IN_MIGRATION();
-    return;
+    NOTREACHED();
   }
   pickle->WriteInt(static_cast<int>(intermediate_ca_certs_.size() + 1));
   pickle->WriteString(x509_util::CryptoBufferAsStringPiece(cert_buffer_.get()));
@@ -448,12 +452,9 @@ bool X509Certificate::VerifyHostname(
   //                         access, i.e. the thing displayed in the URL bar.
   // Presented identifier(s) == name(s) the server knows itself as, in its cert.
 
-  // CanonicalizeHost requires surrounding brackets to parse an IPv6 address.
-  const std::string host_or_ip = hostname.find(':') != std::string::npos
-                                     ? base::StrCat({"[", hostname, "]"})
-                                     : std::string(hostname);
   url::CanonHostInfo host_info;
-  std::string reference_name = CanonicalizeHost(host_or_ip, &host_info);
+  std::string reference_name =
+      CanonicalizeHostSupportsBareIPV6(hostname, &host_info);
 
   // If the host cannot be canonicalized, fail fast.
   if (reference_name.empty())
@@ -653,9 +654,7 @@ X509Certificate::CreateCertBuffersFromBytes(base::span<const uint8_t> data,
       break;
     }
     default: {
-      NOTREACHED_IN_MIGRATION()
-          << "Certificate format " << format << " unimplemented";
-      break;
+      NOTREACHED() << "Certificate format " << format << " unimplemented";
     }
   }
 

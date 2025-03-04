@@ -101,11 +101,11 @@ MutableCSSPropertyValueSet::SetResult StringKeyframe::SetCSSPropertyValue(
     // Logical shorthands to not directly map to physical shorthands. Determine
     // if the shorthand is for a logical property by checking the first
     // longhand.
-    if (property_value_set->PropertyCount()) {
-      CSSPropertyValueSet::PropertyReference reference =
-          property_value_set->PropertyAt(0);
-      if (IsLogicalProperty(reference.Id()))
+    if (!property_value_set->IsEmpty()) {
+      const CSSPropertyValue& reference = property_value_set->PropertyAt(0);
+      if (IsLogicalProperty(reference.PropertyID())) {
         is_logical = true;
+      }
     }
   } else {
     is_logical = IsLogicalProperty(property_id);
@@ -175,9 +175,8 @@ PropertyHandleSet StringKeyframe::Properties() const {
   EnsureCssPropertyMap();
   PropertyHandleSet properties;
 
-  for (unsigned i = 0; i < css_property_map_->PropertyCount(); ++i) {
-    CSSPropertyValueSet::PropertyReference property_reference =
-        css_property_map_->PropertyAt(i);
+  for (const CSSPropertyValue& property_reference :
+       css_property_map_->Properties()) {
     const CSSPropertyName& name = property_reference.Name();
     DCHECK(!name.IsCustomProperty() ||
            !CSSProperty::Get(name.Id()).IsShorthand())
@@ -186,10 +185,10 @@ PropertyHandleSet StringKeyframe::Properties() const {
     properties.insert(PropertyHandle(name));
   }
 
-  for (unsigned i = 0; i < presentation_attribute_map_->PropertyCount(); ++i) {
-    properties.insert(PropertyHandle(
-        CSSProperty::Get(presentation_attribute_map_->PropertyAt(i).Id()),
-        true));
+  for (const CSSPropertyValue& property :
+       presentation_attribute_map_->Properties()) {
+    properties.insert(
+        PropertyHandle(CSSProperty::Get(property.PropertyID()), true));
   }
 
   for (auto* const key : svg_attribute_map_.Keys())
@@ -315,14 +314,15 @@ StringKeyframe::CreatePropertySpecificKeyframe(
       composite_.value_or(effect_composite);
   if (property.IsCSSProperty()) {
     return MakeGarbageCollected<CSSPropertySpecificKeyframe>(
-        offset, &Easing(), &CssPropertyValue(property), composite);
+        offset, &Easing(), &CssPropertyValue(property), tree_scope_.Get(),
+        composite);
   }
 
   if (property.IsPresentationAttribute()) {
     return MakeGarbageCollected<CSSPropertySpecificKeyframe>(
         offset, &Easing(),
         &PresentationAttributeValue(property.PresentationAttribute()),
-        composite);
+        tree_scope_.Get(), composite);
   }
 
   DCHECK(property.IsSVGAttribute());
@@ -354,12 +354,14 @@ StringKeyframe::CSSPropertySpecificKeyframe::NeutralKeyframe(
     double offset,
     scoped_refptr<TimingFunction> easing) const {
   return MakeGarbageCollected<CSSPropertySpecificKeyframe>(
-      offset, std::move(easing), nullptr, EffectModel::kCompositeAdd);
+      offset, std::move(easing), /*value=*/nullptr, /*tree_scope=*/nullptr,
+      EffectModel::kCompositeAdd);
 }
 
 void StringKeyframe::CSSPropertySpecificKeyframe::Trace(
     Visitor* visitor) const {
   visitor->Trace(value_);
+  visitor->Trace(tree_scope_);
   visitor->Trace(compositor_keyframe_value_cache_);
   Keyframe::PropertySpecificKeyframe::Trace(visitor);
 }
@@ -368,7 +370,7 @@ Keyframe::PropertySpecificKeyframe*
 StringKeyframe::CSSPropertySpecificKeyframe::CloneWithOffset(
     double offset) const {
   auto* clone = MakeGarbageCollected<CSSPropertySpecificKeyframe>(
-      offset, easing_, value_.Get(), composite_);
+      offset, easing_, value_.Get(), tree_scope_.Get(), composite_);
   clone->compositor_keyframe_value_cache_ = compositor_keyframe_value_cache_;
   return clone;
 }
@@ -434,11 +436,10 @@ void PropertyResolver::AppendTo(MutableCSSPropertyValueSet* property_value_set,
     if (is_logical_) {
       // Walk set of properties converting each property name to its
       // corresponding physical property.
-      for (unsigned i = 0; i < css_property_value_set_->PropertyCount(); i++) {
-        CSSPropertyValueSet::PropertyReference reference =
-            css_property_value_set_->PropertyAt(i);
-        SetProperty(property_value_set, reference.Id(), reference.Value(),
-                    writing_direction);
+      for (const CSSPropertyValue& reference :
+           css_property_value_set_->Properties()) {
+        SetProperty(property_value_set, reference.PropertyID(),
+                    reference.Value(), writing_direction);
       }
     } else {
       property_value_set->MergeAndOverrideOnConflict(css_property_value_set_);

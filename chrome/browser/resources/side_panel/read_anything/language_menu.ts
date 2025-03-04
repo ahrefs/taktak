@@ -4,7 +4,7 @@
 
 import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import '//resources/cr_elements/cr_icon/cr_icon.js';
-import '//resources/cr_elements/icons_lit.html.js';
+import '//resources/cr_elements/icons.html.js';
 import '//resources/cr_elements/cr_dialog/cr_dialog.js';
 import '//resources/cr_elements/cr_input/cr_input.js';
 import '//resources/cr_elements/cr_toggle/cr_toggle.js';
@@ -12,6 +12,7 @@ import './language_toast.js';
 import './icons.html.js';
 
 import type {CrDialogElement} from '//resources/cr_elements/cr_dialog/cr_dialog.js';
+import type {CrInputElement} from '//resources/cr_elements/cr_input/cr_input.js';
 import {I18nMixinLit} from '//resources/cr_elements/i18n_mixin_lit.js';
 import {WebUiListenerMixinLit} from '//resources/cr_elements/web_ui_listener_mixin_lit.js';
 import {assert} from '//resources/js/assert.js';
@@ -29,6 +30,7 @@ import {VoiceNotificationManager} from './voice_notification_manager.js';
 export interface LanguageMenuElement {
   $: {
     languageMenu: CrDialogElement,
+    searchField: CrInputElement,
   };
 }
 
@@ -100,7 +102,10 @@ export class LanguageMenuElement extends LanguageMenuElementBase implements
     }
   }
 
-  notify(language: string, type: NotificationType) {
+  notify(type: NotificationType, language?: string) {
+    if (!language) {
+      return;
+    }
     this.currentNotifications_ = {
       ...this.currentNotifications_,
       [language]: type,
@@ -132,6 +137,7 @@ export class LanguageMenuElement extends LanguageMenuElementBase implements
 
   protected onClearSearchClick_() {
     this.languageSearchValue_ = '';
+    this.$.searchField.focus();
   }
 
   protected onToggleChange_(e: Event) {
@@ -155,11 +161,7 @@ export class LanguageMenuElement extends LanguageMenuElementBase implements
   }
 
   private getSupportedNaturalVoiceDownloadLocales(): Set<string> {
-    if (chrome.readingMode.isLanguagePackDownloadingEnabled &&
-        chrome.readingMode.isChromeOsAsh) {
-      return AVAILABLE_GOOGLE_TTS_LOCALES;
-    }
-    return new Set([]);
+    return AVAILABLE_GOOGLE_TTS_LOCALES;
   }
 
   private computeAvailableLanguages_(): LanguageDropdownItem[] {
@@ -220,6 +222,8 @@ export class LanguageMenuElement extends LanguageMenuElementBase implements
       case NotificationType.NO_SPACE:
         return {isError: true, text: 'allocationError'};
       case NotificationType.DOWNLOADED:
+      case NotificationType.GOOGLE_VOICES_UNAVAILABLE:
+        // TODO (crbug.com/396436665) Show inline error message
       case NotificationType.NONE:
         return {isError: false};
       default:

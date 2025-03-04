@@ -12,7 +12,8 @@ dictionary AIWriterWriteOptions {
 
 [
   Exposed=(Window,Worker),
-  RuntimeEnabled=AIWriterAPI
+  RuntimeEnabled=AIWriterAPI,
+  SecureContext
 ]
 interface AIWriter {
   [
@@ -21,7 +22,7 @@ interface AIWriter {
     RaisesException
   ]
   Promise<DOMString> write(
-    DOMString input,
+    DOMString writingTask,
     optional AIWriterWriteOptions options = {});
 
   [
@@ -30,7 +31,7 @@ interface AIWriter {
     RaisesException
   ]
   ReadableStream writeStreaming(
-    DOMString input,
+    DOMString writingTask,
     optional AIWriterWriteOptions options = {});
 
   [
@@ -40,5 +41,18 @@ interface AIWriter {
   ]
   void destroy();
 
+  [Measure]
   readonly attribute DOMString sharedContext;
+  [Measure]
+  readonly attribute AIWriterTone tone;
+  [Measure]
+  readonly attribute AIWriterFormat format;
+  [Measure]
+  readonly attribute AIWriterLength length;
+  [Measure]
+  readonly attribute FrozenArray<DOMString>? expectedInputLanguages;
+  [Measure]
+  readonly attribute FrozenArray<DOMString>? expectedContextLanguages;
+  [Measure]
+  readonly attribute DOMString? outputLanguage;
 };

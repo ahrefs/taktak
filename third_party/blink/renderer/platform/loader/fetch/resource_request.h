@@ -35,7 +35,7 @@
 #include "base/time/time.h"
 #include "base/unguessable_token.h"
 #include "net/cookies/site_for_cookies.h"
-#include "net/filter/source_stream.h"
+#include "net/filter/source_stream_type.h"
 #include "net/storage_access_api/status.h"
 #include "services/metrics/public/cpp/ukm_source_id.h"
 #include "services/network/public/mojom/attribution.mojom-blink.h"
@@ -43,10 +43,10 @@
 #include "services/network/public/mojom/cors.mojom-blink-forward.h"
 #include "services/network/public/mojom/fetch_api.mojom-blink.h"
 #include "services/network/public/mojom/ip_address_space.mojom-blink-forward.h"
+#include "services/network/public/mojom/permissions_policy/permissions_policy_feature.mojom-blink-forward.h"
 #include "services/network/public/mojom/trust_tokens.mojom-blink.h"
 #include "services/network/public/mojom/web_bundle_handle.mojom-blink.h"
 #include "third_party/blink/public/mojom/fetch/fetch_api_request.mojom-blink-forward.h"
-#include "third_party/blink/public/mojom/permissions_policy/permissions_policy_feature.mojom-blink-forward.h"
 #include "third_party/blink/public/platform/resource_request_blocked_reason.h"
 #include "third_party/blink/public/platform/web_url_request_extra_data.h"
 #include "third_party/blink/renderer/platform/loader/fetch/render_blocking_behavior.h"
@@ -58,10 +58,14 @@
 #include "third_party/blink/renderer/platform/weborigin/security_origin.h"
 #include "third_party/blink/renderer/platform/wtf/ref_counted.h"
 
+namespace network {
+class PermissionsPolicy;
+}  // namespace network
+
 namespace blink {
 
+class FeatureContext;
 class EncodedFormData;
-class PermissionsPolicy;
 
 // ResourceRequestHead represents request without request body.
 // See ResourceRequest below to see what request is.
@@ -280,7 +284,12 @@ class PLATFORM_EXPORT ResourceRequestHead {
 
   // True if the request can work after the fetch group is terminated.
   bool GetKeepalive() const { return keepalive_; }
-  void SetKeepalive(bool keepalive) { keepalive_ = keepalive; }
+  void SetKeepalive(bool keepalive) {
+    keepalive_ = keepalive;
+    keepalive_token_ =
+        keepalive_ ? std::make_optional(base::UnguessableToken::Create())
+                   : std::nullopt;
+  }
 
   // True if the request should be considered for computing and attaching the
   // topics headers.
@@ -395,8 +404,12 @@ class PLATFORM_EXPORT ResourceRequestHead {
   }
 
   const String& GetFetchIntegrity() const { return fetch_integrity_; }
-  void SetFetchIntegrity(const String& integrity) {
-    fetch_integrity_ = integrity;
+  void SetFetchIntegrity(const String& integrity, const FeatureContext*);
+
+  // The list of expected signatures is set as a side-effect of
+  // `SetFetchIntegrity()`.
+  const WTF::Vector<String>& GetExpectedSignatures() const {
+    return expected_signatures_;
   }
 
   bool CacheControlContainsNoCache() const;
@@ -448,14 +461,13 @@ class PLATFORM_EXPORT ResourceRequestHead {
   }
 
   const scoped_refptr<
-      base::RefCountedData<base::flat_set<net::SourceStream::SourceType>>>&
+      base::RefCountedData<base::flat_set<net::SourceStreamType>>>&
   GetDevToolsAcceptedStreamTypes() const {
     return devtools_accepted_stream_types_;
   }
   void SetDevToolsAcceptedStreamTypes(
       const scoped_refptr<
-          base::RefCountedData<base::flat_set<net::SourceStream::SourceType>>>&
-          types) {
+          base::RefCountedData<base::flat_set<net::SourceStreamType>>>& types) {
     devtools_accepted_stream_types_ = types;
   }
 
@@ -644,6 +656,10 @@ class PLATFORM_EXPORT ResourceRequestHead {
     return known_transparent_placeholder_image_index_;
   }
 
+  const std::optional<base::UnguessableToken>& GetKeepaliveToken() const {
+    return keepalive_token_;
+  }
+
   // Indicates that both FetchContext::PrepareResourceRequestForCacheAccess()
   // and FetchContext::UpgradeResourceRequestForLoader() must be called. See
   // FetchContext::UpgradeResourceRequestForLoader() for details.
@@ -726,6 +742,8 @@ class PLATFORM_EXPORT ResourceRequestHead {
   network::mojom::RedirectMode redirect_mode_;
   // Exposed as Request.integrity in Service Workers
   String fetch_integrity_;
+  // Signature expectations extracted from `fetch_integrity_`
+  WTF::Vector<String> expected_signatures_;
   String referrer_string_;
   network::mojom::ReferrerPolicy referrer_policy_;
   network::mojom::CorsPreflightPolicy cors_preflight_policy_;
@@ -777,8 +795,7 @@ class PLATFORM_EXPORT ResourceRequestHead {
   // Instead of using std::optional, we use scoped_refptr to reduce
   // blink memory footprint because the attribute is only used by DevTools
   // and we should keep the footprint minimal when DevTools is closed.
-  scoped_refptr<
-      base::RefCountedData<base::flat_set<net::SourceStream::SourceType>>>
+  scoped_refptr<base::RefCountedData<base::flat_set<net::SourceStreamType>>>
       devtools_accepted_stream_types_;
 
   net::StorageAccessApiStatus storage_access_api_status_ =
@@ -801,6 +818,11 @@ class PLATFORM_EXPORT ResourceRequestHead {
 
   std::optional<base::UnguessableToken>
       service_worker_race_network_request_token_;
+
+  // The unique identifier set when this request's `keepalive_` is true.
+  // TODO(crbug.com/382527001): Consider merge this field with `keepalive_`.
+  std::optional<base::UnguessableToken> keepalive_token_;
+
 #if DCHECK_IS_ON()
   bool is_set_url_allowed_ = true;
 #endif
@@ -885,8 +907,8 @@ class PLATFORM_EXPORT ResourceRequest final : public ResourceRequestHead {
   // `PermissionsPolicy::IsFeatureEnabledForSubresourceRequestAssumingOptIn()`
   // private for safety.
   bool IsFeatureEnabledForSubresourceRequestAssumingOptIn(
-      const PermissionsPolicy* policy,
-      mojom::blink::PermissionsPolicyFeature feature,
+      const network::PermissionsPolicy* policy,
+      network::mojom::PermissionsPolicyFeature feature,
       const url::Origin& origin);
 
  private:

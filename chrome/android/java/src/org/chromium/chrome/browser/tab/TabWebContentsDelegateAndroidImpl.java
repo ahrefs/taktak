@@ -5,23 +5,26 @@
 package org.chromium.chrome.browser.tab;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.view.KeyEvent;
 
 import org.jni_zero.CalledByNative;
-import org.jni_zero.JniType;
 import org.jni_zero.NativeMethods;
 
+import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.BuildInfo;
 import org.chromium.base.Callback;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.ObserverList.RewindableIterator;
+import org.chromium.chrome.R;
 import org.chromium.chrome.browser.ZoomController;
 import org.chromium.chrome.browser.app.bluetooth.BluetoothNotificationService;
 import org.chromium.chrome.browser.app.usb.UsbNotificationService;
-import org.chromium.chrome.browser.back_press.BackPressManager;
 import org.chromium.chrome.browser.bluetooth.BluetoothNotificationManager;
 import org.chromium.chrome.browser.gesturenav.NativePageBitmapCapturer;
 import org.chromium.chrome.browser.media.MediaCaptureNotificationServiceImpl;
@@ -29,6 +32,7 @@ import org.chromium.chrome.browser.policy.PolicyAuditor;
 import org.chromium.chrome.browser.policy.PolicyAuditorJni;
 import org.chromium.chrome.browser.usb.UsbNotificationManager;
 import org.chromium.components.browser_ui.styles.ChromeColors;
+import org.chromium.components.browser_ui.styles.SemanticColorUtils;
 import org.chromium.components.find_in_page.FindMatchRectsDetails;
 import org.chromium.components.find_in_page.FindNotificationDetails;
 import org.chromium.content_public.browser.InvalidateTypes;
@@ -122,6 +126,12 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
                 sourceWebContents, webContents, disposition, initialPosition, userGesture);
     }
 
+    @CalledByNative
+    @Override
+    protected void setContentsBounds(WebContents source, Rect bounds) {
+        mDelegate.setContentsBounds(source, bounds);
+    }
+
     // WebContentsDelegateAndroid
 
     @Override
@@ -146,14 +156,14 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
     }
 
     @Override
-    public void loadingStateChanged(boolean shouldShowLoadingUI) {
+    public void loadingStateChanged(boolean shouldShowLoadingUi) {
         boolean isLoading = mTab.getWebContents() != null && mTab.getWebContents().isLoading();
         if (isLoading) {
-            mTab.onLoadStarted(shouldShowLoadingUI);
+            mTab.onLoadStarted(shouldShowLoadingUi);
         } else {
             mTab.onLoadStopped();
         }
-        mDelegate.loadingStateChanged(shouldShowLoadingUI);
+        mDelegate.loadingStateChanged(shouldShowLoadingUi);
     }
 
     @Override
@@ -196,10 +206,9 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
 
     @Override
     public void navigationStateChanged(int flags) {
-        if (BackPressManager.isEnabled()) {
-            RewindableIterator<TabObserver> observers = mTab.getTabObservers();
-            while (observers.hasNext()) observers.next().onNavigationStateChanged();
-        }
+        RewindableIterator<TabObserver> observers = mTab.getTabObservers();
+        while (observers.hasNext()) observers.next().onNavigationStateChanged();
+
         if ((flags & InvalidateTypes.TAB) != 0) {
             MediaCaptureNotificationServiceImpl.updateMediaNotificationForTab(
                     ContextUtils.getApplicationContext(),
@@ -226,7 +235,7 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
             mTab.updateTitle();
         }
         if ((flags & InvalidateTypes.URL) != 0) {
-            RewindableIterator<TabObserver> observers = mTab.getTabObservers();
+            observers = mTab.getTabObservers();
             while (observers.hasNext()) observers.next().onUrlUpdated(mTab);
         }
         mDelegate.navigationStateChanged(flags);
@@ -236,9 +245,13 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
     public void visibleSSLStateChanged() {
         PolicyAuditor auditor = PolicyAuditor.maybeCreate();
         if (auditor != null) {
-            auditor.notifyCertificateFailure(
-                    PolicyAuditorJni.get().getCertificateFailure(mTab.getWebContents()),
-                    ContextUtils.getApplicationContext());
+            WebContents webContents = mTab.getWebContents();
+            // Speculative fix for crbug.com/384566650
+            if (webContents != null && !webContents.isDestroyed()) {
+                auditor.notifyCertificateFailure(
+                        PolicyAuditorJni.get().getCertificateFailure(mTab.getWebContents()),
+                        ContextUtils.getApplicationContext());
+            }
         }
         RewindableIterator<TabObserver> observers = mTab.getTabObservers();
         while (observers.hasNext()) observers.next().onSSLStateUpdated(mTab);
@@ -393,6 +406,12 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
         return mDelegate.isModalContextMenu();
     }
 
+    @CalledByNative
+    @Override
+    protected boolean isDynamicSafeAreaInsetsEnabled() {
+        return mDelegate.isDynamicSafeAreaInsetsEnabled();
+    }
+
     @Override
     public int getTopControlsHeight() {
         return mDelegate.getTopControlsHeight();
@@ -435,7 +454,30 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
 
     @Override
     public Bitmap maybeCopyContentAreaAsBitmapSync() {
-        return NativePageBitmapCapturer.maybeCaptureNativeViewSync(mTab);
+        return NativePageBitmapCapturer.maybeCaptureNativeViewSync(mTab, getTopControlsHeight());
+    }
+
+    @Override
+    public Bitmap getBackForwardTransitionFallbackUXInternalPageIcon() {
+        Drawable drawable =
+                ApiCompatibilityUtils.getDrawable(
+                        mTab.getContext().getResources(), R.drawable.chromelogo16);
+
+        drawable.setColorFilter(
+                SemanticColorUtils.getDefaultIconColor(mTab.getContext()), PorterDuff.Mode.SRC_IN);
+
+        int idealNativeFaviconSize =
+                mTab.getContext()
+                        .getResources()
+                        .getDimensionPixelSize(R.dimen.navigation_transitions_favicon_size);
+
+        Bitmap bitmap =
+                Bitmap.createBitmap(
+                        idealNativeFaviconSize, idealNativeFaviconSize, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 
     @Override
@@ -463,11 +505,6 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
         }
     }
 
-    void showFramebustBlockInfobarForTesting(String url) {
-        TabWebContentsDelegateAndroidImplJni.get()
-                .showFramebustBlockInfoBar(mTab.getWebContents(), url);
-    }
-
     @Override
     public void didChangeCloseSignalInterceptStatus() {
         mTab.didChangeCloseSignalInterceptStatus();
@@ -481,8 +518,5 @@ final class TabWebContentsDelegateAndroidImpl extends TabWebContentsDelegateAndr
     @NativeMethods
     interface Natives {
         void onRendererUnresponsive(WebContents webContents);
-
-        void showFramebustBlockInfoBar(
-                WebContents webContents, @JniType("std::u16string") String url);
     }
 }

@@ -59,12 +59,32 @@
 //     // This body will not be inlined into callers.
 //   }
 // ```
-#if __has_cpp_attribute(gnu::noinline)
+#if __has_cpp_attribute(clang::noinline)
+#define NOINLINE [[clang::noinline]]
+#elif __has_cpp_attribute(gnu::noinline)
 #define NOINLINE [[gnu::noinline]]
 #elif __has_cpp_attribute(msvc::noinline)
 #define NOINLINE [[msvc::noinline]]
 #else
 #define NOINLINE
+#endif
+
+// Annotates a call site indicating that the callee should not be inlined.
+//
+// See also:
+//   https://clang.llvm.org/docs/AttributeReference.html#noinline
+//
+// Usage:
+// ```
+//   void Func() {
+//      // This specific call to `DoSomething` should not be inlined.
+//      NOINLINE_CALL DoSomething();
+//   }
+// ```
+#if __has_cpp_attribute(clang::noinline)
+#define NOINLINE_CALL [[clang::noinline]]
+#else
+#define NOINLINE_CALL
 #endif
 
 // Annotates a function indicating it should not be optimized.
@@ -102,7 +122,9 @@
 // Since `ALWAYS_INLINE` is performance-oriented but can hamper debugging,
 // ignore it in debug mode.
 #if defined(NDEBUG)
-#if __has_cpp_attribute(gnu::always_inline)
+#if __has_cpp_attribute(clang::always_inline)
+#define ALWAYS_INLINE [[clang::always_inline]] inline
+#elif __has_cpp_attribute(gnu::always_inline)
 #define ALWAYS_INLINE [[gnu::always_inline]] inline
 #elif defined(COMPILER_MSVC)
 #define ALWAYS_INLINE __forceinline
@@ -110,6 +132,30 @@
 #endif
 #if !defined(ALWAYS_INLINE)
 #define ALWAYS_INLINE inline
+#endif
+
+// Annotates a call site indicating the calee should always be inlined.
+//
+// See also:
+//   https://clang.llvm.org/docs/AttributeReference.html#always-inline-force-inline
+//
+// Usage:
+// ```
+//   void Func() {
+//     // This specific call will be inlined if possible.
+//     ALWAYS_INLINE_CALL DoSomething();
+//   }
+// ```
+//
+// Since `ALWAYS_INLINE_CALL` is performance-oriented but can hamper debugging,
+// ignore it in debug mode.
+#if defined(NDEBUG)
+#if __has_cpp_attribute(clang::always_inline)
+#define ALWAYS_INLINE_CALL [[clang::always_inline]]
+#endif
+#endif
+#if !defined(ALWAYS_INLINE_CALL)
+#define ALWAYS_INLINE_CALL
 #endif
 
 // Annotates a function indicating it should never be tail called. Useful to
@@ -903,31 +949,44 @@ inline constexpr bool AnalyzerAssumeTrue(bool arg) {
 #define PURE_FUNCTION
 #endif
 
-// Annotates a function indicating it can lead to out-of-bounds accesses (OOB)
-// if called with incorrect inputs. Commonly this includes functions which take
-// pointers, sizes, iterators, sentinels, etc. and cannot fully check their
-// preconditions (e.g. that the provided pointer actually points to an
-// allocation of at least the provided size). Useful to diagnose potential
-// misuse via `-Wunsafe-buffer-usage`, as well as to mark functions potentially
-// in need of safer alternatives.
+// Annotates a function or class data member indicating it can lead to
+// out-of-bounds accesses (OOB) if given incorrect inputs.
 //
-// All functions annotated with this macro should come with a `# Safety` comment
-// that explains what the caller must guarantee to prevent OOB. Ideally, such
-// functions should also be paired with a safer version, e.g. one that replaces
-// pointer parameters with `span`s; otherwise, document safer replacement coding
-// patterns callers can migrate to.
+// For functions, this commonly includes functions which take pointers, sizes,
+// iterators, sentinels, etc. and cannot fully check their preconditions (e.g.
+// that the provided pointer actually points to an allocation of at least the
+// provided size). Useful to diagnose potential misuse via
+// `-Wunsafe-buffer-usage`, as well as to mark functions potentially in need of
+// safer alternatives.
+//
+// For fields, this would be used to annotate both pointer and size fields that
+// have not yet been converted to a span.
+//
+// All functions or fields annotated with this macro should come with a `#
+// Safety` comment that explains what the caller must guarantee to prevent OOB.
+// Ideally, unsafe functions should also be paired with a safer version, e.g.
+// one that replaces pointer parameters with `span`s; otherwise, document safer
+// replacement coding patterns callers can migrate to.
 //
 // Annotating a function `UNSAFE_BUFFER_USAGE` means all call sites (that do not
 // disable the warning) must wrap calls in `UNSAFE_BUFFERS()`; see documentation
-// there.
+// there. Annotating a field `UNSAFE_BUFFER_USAGE` means that `UNSAFE_BUFFERS()`
+// must wrap expressions that mutate of the field.
 //
 // See also:
+//   https://chromium.googlesource.com/chromium/src/+/main/docs/unsafe_buffers.md
+//   https://clang.llvm.org/docs/SafeBuffers.html
 //   https://clang.llvm.org/docs/DiagnosticsReference.html#wunsafe-buffer-usage
 //
 // Usage:
 // ```
 //   // Calls to this function must be wrapped in `UNSAFE_BUFFERS()`.
 //   UNSAFE_BUFFER_USAGE void Func(T* input, T* end);
+//
+//   struct S {
+//     // Changing this pointer requires `UNSAFE_BUFFERS()`.
+//     UNSAFE_BUFFER_USAGE int* p;
+//   };
 // ```
 #if __has_cpp_attribute(clang::unsafe_buffer_usage)
 #define UNSAFE_BUFFER_USAGE [[clang::unsafe_buffer_usage]]
@@ -959,6 +1018,11 @@ inline constexpr bool AnalyzerAssumeTrue(bool arg) {
 // - Invariants guaranteed by function calls in the surrounding code
 // - Caller requirements, if the containing function is itself annotated with
 //   `UNSAFE_BUFFER_USAGE`; this is less safe and should be a last resort
+//
+// See also:
+//   https://chromium.googlesource.com/chromium/src/+/main/docs/unsafe_buffers.md
+//   https://clang.llvm.org/docs/SafeBuffers.html
+//   https://clang.llvm.org/docs/DiagnosticsReference.html#wunsafe-buffer-usage
 //
 // Usage:
 // ```

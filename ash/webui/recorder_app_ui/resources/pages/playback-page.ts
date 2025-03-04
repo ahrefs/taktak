@@ -38,6 +38,7 @@ import {
 import {CraIconButton} from '../components/cra/cra-icon-button.js';
 import {CraMenu} from '../components/cra/cra-menu.js';
 import {DeleteRecordingDialog} from '../components/delete-recording-dialog.js';
+import {withTooltip} from '../components/directives/with-tooltip.js';
 import {ExportDialog} from '../components/export-dialog.js';
 import {RecordingInfoDialog} from '../components/recording-info-dialog.js';
 import {RecordingTitle} from '../components/recording-title.js';
@@ -47,7 +48,10 @@ import {
   ReactiveAudio,
 } from '../core/audio_player_controller.js';
 import {i18n} from '../core/i18n.js';
-import {useRecordingDataManager} from '../core/lit/context.js';
+import {
+  usePlatformHandler,
+  useRecordingDataManager,
+} from '../core/lit/context.js';
 import {
   ComputedState,
   ReactiveLitElement,
@@ -135,6 +139,10 @@ export class PlaybackPage extends ReactiveLitElement {
       display: flex;
       flex-flow: row;
       padding: 8px;
+
+      @container style(--small-viewport: 1) {
+        padding: 2px;
+      }
 
       & > recording-title {
         margin: 0 auto 0 -4px;
@@ -308,7 +316,7 @@ export class PlaybackPage extends ReactiveLitElement {
       align-items: center;
       display: flex;
       flex-flow: row;
-      gap: 24px;
+      gap: 28px;
     }
 
     #speed-controls {
@@ -365,6 +373,8 @@ export class PlaybackPage extends ReactiveLitElement {
   private readonly exportDialog = createRef<ExportDialog>();
 
   private readonly recordingInfoDialog = createRef<RecordingInfoDialog>();
+
+  private readonly platformHandler = usePlatformHandler();
 
   private readonly recordingDataManager = useRecordingDataManager();
 
@@ -546,6 +556,7 @@ export class PlaybackPage extends ReactiveLitElement {
       @click=${this.onPlayPauseClick}
       ${ref(this.playPauseButton)}
       aria-label=${ariaLabel}
+      ${withTooltip()}
     >
       <cra-icon
         slot="icon"
@@ -651,6 +662,7 @@ export class PlaybackPage extends ReactiveLitElement {
               @click=${this.toggleTranscription}
               ${ref(this.transcriptionButtonRef)}
               aria-label=${transcriptionLabel}
+              ${withTooltip()}
             >
               <cra-icon slot="icon" name="notes"></cra-icon>
               <cra-icon slot="selectedIcon" name="notes"></cra-icon>
@@ -664,6 +676,7 @@ export class PlaybackPage extends ReactiveLitElement {
           @click=${() => navigateTo('main')}
           ${ref(this.backButton)}
           aria-label=${i18n.backToMainButtonAriaLabel}
+          ${withTooltip(i18n.backToMainButtonTooltip)}
         >
           <cra-icon slot="icon" name="arrow_back"></cra-icon>
         </cra-icon-button>
@@ -678,6 +691,7 @@ export class PlaybackPage extends ReactiveLitElement {
           id="show-menu"
           @click=${this.toggleMenu}
           aria-label=${i18n.playbackMenuButtonTooltip}
+          ${withTooltip(i18n.playbackMenuButtonTooltip)}
         >
           <cra-icon slot="icon" name="more_vertical"></cra-icon>
         </cra-icon-button>
@@ -753,6 +767,9 @@ export class PlaybackPage extends ReactiveLitElement {
       const label = this.getSpeedLabel(speed);
       const onClick = () => {
         this.audioPlayer.playbackSpeed.value = speed;
+        this.platformHandler.eventsSender.sendChangePlaybackSpeedEvent(
+          {playbackSpeed: speed},
+        );
       };
 
       return html`<cra-menu-item
@@ -793,21 +810,34 @@ export class PlaybackPage extends ReactiveLitElement {
         @click=${togglePlaybackSpeedMenu}
         aria-haspopup="true"
         aria-label=${this.getPlaybackSpeedControlLabel()}
+        ${withTooltip(i18n.playbackSpeedButtonTooltip)}
       >
         <cra-icon slot="icon" .name=${iconName}></cra-icon>
       </cra-icon-button>
     `;
   }
 
+  // Updates volume states in audioPlayer and sends event
+  private updateVolume(muted: boolean, volume: number) {
+    this.audioPlayer.muted.value = muted;
+    this.audioPlayer.volume.value = volume / 100;
+    // Directly records the change because we don't do optimistic updates on
+    // those values in the audioPlayer.
+    this.platformHandler.eventsSender.sendChangePlaybackVolumeEvent(
+      {muted, volume},
+    );
+  }
+
   private onVolumeInput(ev: Event) {
     const slider = assertInstanceof(ev.target, CrosSlider);
-    this.audioPlayer.muted.value = false;
-    this.audioPlayer.volume.value = slider.value / 100;
+    this.updateVolume(/* muted= */ false, slider.value);
     this.requestUpdate();
   }
 
   private toggleMuted() {
-    this.audioPlayer.muted.update((s) => !s);
+    const muted = !this.audioPlayer.muted.value;
+    const volume = Math.round(this.audioPlayer.volume.value * 100);
+    this.updateVolume(muted, volume);
     this.requestUpdate();
   }
 
@@ -835,7 +865,7 @@ export class PlaybackPage extends ReactiveLitElement {
         min="0"
         max="100"
         @input=${this.onVolumeInput}
-        aria-label=${i18n.playbackVolumeAriaLabel}
+        aria-label=${i18n.playbackVolumeSliderAriaLabel}
       ></cros-slider>
     `;
   }
@@ -854,14 +884,18 @@ export class PlaybackPage extends ReactiveLitElement {
   }
 
   private renderVolumeControl(): RenderResult {
+    const volumeButtonLabel = this.audioPlayer.muted.value ?
+      i18n.playbackUnmuteButtonTooltip :
+      i18n.playbackMuteButtonTooltip;
     return html`
       <div id="inline-slider">
         <cra-icon-button
           buttonstyle="toggle"
           @click=${this.toggleMuted}
-          aria-label=${i18n.playbackMuteButtonTooltip}
+          aria-label=${volumeButtonLabel}
           class="with-floating-style"
           .selected=${this.audioPlayer.muted.value}
+          ${withTooltip()}
         >
           ${this.renderVolumeIcon()}
           <cra-icon slot="selectedIcon" name="volume_mute"></cra-icon>
@@ -872,7 +906,8 @@ export class PlaybackPage extends ReactiveLitElement {
         <cra-icon-button
           buttonstyle="floating"
           @click=${this.showFloatingVolume}
-          aria-label=${i18n.playbackVolumeAriaLabel}
+          aria-label=${i18n.playbackFloatingVolumeShowButtonAriaLabel}
+          ${withTooltip()}
         >
           ${this.renderVolumeIcon()}
         </cra-icon-button>
@@ -881,13 +916,20 @@ export class PlaybackPage extends ReactiveLitElement {
           ${ref(this.floatingVolume)}
           @focusout=${this.hideFloatingVolume}
         >
-          <cra-icon-button buttonstyle="floating" @click=${this.toggleMuted}>
+          <cra-icon-button
+            buttonstyle="floating"
+            @click=${this.toggleMuted}
+            aria-label=${volumeButtonLabel}
+            ${withTooltip()}
+          >
             ${this.renderVolumeIcon()}
           </cra-icon-button>
           ${this.renderVolumeSlider()}
           <cra-icon-button
             buttonstyle="floating"
             @click=${this.hideFloatingVolume}
+            aria-label=${i18n.playbackFloatingVolumeCloseButtonAriaLabel}
+            ${withTooltip()}
           >
             <cra-icon slot="icon" name="close"></cra-icon>
           </cra-icon-button>
@@ -929,6 +971,7 @@ export class PlaybackPage extends ReactiveLitElement {
             <secondary-button
               @click=${this.onRewind10Secs}
               aria-label=${i18n.playbackBackwardButtonTooltip}
+              ${withTooltip()}
             >
               <cra-icon slot="icon" name="replay_10"></cra-icon>
             </secondary-button>
@@ -936,6 +979,7 @@ export class PlaybackPage extends ReactiveLitElement {
             <secondary-button
               @click=${this.onForward10Secs}
               aria-label=${i18n.playbackForwardButtonTooltip}
+              ${withTooltip()}
             >
               <cra-icon slot="icon" name="forward_10"></cra-icon>
             </secondary-button>

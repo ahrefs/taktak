@@ -44,8 +44,8 @@
         [weakSelf updateUIOnTraitChange:previousCollection];
       };
       NSArray<UITrait>* traits = @[
-        UITraitVerticalSizeClass.self, UITraitHorizontalSizeClass.self,
-        UITraitPreferredContentSizeCategory.self
+        UITraitVerticalSizeClass.class, UITraitHorizontalSizeClass.class,
+        UITraitPreferredContentSizeCategory.class
       ];
       [self registerForTraitChanges:traits withHandler:handler];
     }
@@ -54,13 +54,11 @@
 }
 
 - (instancetype)initWithCoder:(NSCoder*)decoder {
-  NOTREACHED_IN_MIGRATION();
-  return nil;
+  NOTREACHED();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
-  NOTREACHED_IN_MIGRATION();
-  return nil;
+  NOTREACHED();
 }
 
 - (void)dealloc {
@@ -122,11 +120,13 @@
 }
 
 - (void)updateWebViewContentViewForContainerWindow:(UIWindow*)containerWindow {
-  if (!base::FeatureList::IsEnabled(web::features::kKeepsRenderProcessAlive))
+  if (!base::FeatureList::IsEnabled(web::features::kKeepsRenderProcessAlive)) {
     return;
+  }
 
-  if (!self.webViewContentView)
+  if (!self.webViewContentView) {
     return;
+  }
 
   // If there's a containerWindow or `webViewContentView` is inactive, put it
   // back where it belongs.

@@ -30,6 +30,7 @@
 #include "base/memory/raw_ptr.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/notreached.h"
+#include "base/system/sys_info.h"
 #include "base/trace_event/trace_event.h"
 #include "components/viz/common/display/renderer_settings.h"
 #include "components/viz/common/features.h"
@@ -60,9 +61,6 @@
 namespace android_webview {
 namespace {
 
-BASE_FEATURE(kWebViewUseOutputSurfaceClipRect,
-             "WebViewUseOutputSurfaceClipRect",
-             base::FEATURE_ENABLED_BY_DEFAULT);
 BASE_FEATURE(kDrawAndSwapInjectLatency,
              "DrawAndSwapInjectLatency",
              base::FEATURE_DISABLED_BY_DEFAULT);
@@ -349,21 +347,12 @@ void HardwareRenderer::OnViz::DrawAndSwapOnViz(
                       gfx::Transform());
   render_pass->has_transparent_background = false;
 
-  const bool use_output_surface_clip_rect =
-      base::FeatureList::IsEnabled(kWebViewUseOutputSurfaceClipRect);
-
   viz::SharedQuadState* quad_state =
       render_pass->CreateAndAppendSharedQuadState();
   quad_state->quad_to_target_transform = transform;
   quad_state->quad_layer_rect = gfx::Rect(frame_size);
   quad_state->visible_quad_layer_rect = gfx::Rect(frame_size);
   quad_state->opacity = 1.f;
-
-  // We don't need to clip render pass if we apply clip on the viz::Display
-  // level.
-  if (!use_output_surface_clip_rect) {
-    quad_state->clip_rect = clip;
-  }
 
   viz::SurfaceDrawQuad* surface_quad =
       render_pass->CreateAndAppendDrawQuad<viz::SurfaceDrawQuad>();
@@ -472,10 +461,7 @@ void HardwareRenderer::OnViz::DrawAndSwapOnViz(
   }
 
   display_->Resize(viewport);
-
-  if (use_output_surface_clip_rect) {
-    display_->SetOutputSurfaceClipRect(clip);
-  }
+  display_->SetOutputSurfaceClipRect(clip);
 
   auto now = base::TimeTicks::Now();
   display_->DrawAndSwap({now, now});
@@ -491,16 +477,20 @@ void HardwareRenderer::OnViz::PostDrawOnViz(
   *timing_details = without_gpu_->TakeChildFrameTimingDetailsMap();
 
   auto renderer_thread_ids = without_gpu_->GetChildFrameRendererThreadIds();
-  *rendering_thread_ids = std::vector<pid_t>(renderer_thread_ids.begin(),
-                                             renderer_thread_ids.end());
+  *rendering_thread_ids = std::vector<pid_t>();
+  rendering_thread_ids->reserve(renderer_thread_ids.size());
+  std::transform(renderer_thread_ids.begin(), renderer_thread_ids.end(),
+                 std::back_inserter(*rendering_thread_ids),
+                 [](const base::PlatformThreadId& tid) { return tid.raw(); });
 
   auto gpu_thread_ids =
       VizCompositorThreadRunnerWebView::GetInstance()->GetThreadIds();
-  std::copy(gpu_thread_ids.begin(), gpu_thread_ids.end(),
-            std::back_inserter(*rendering_thread_ids));
+  std::transform(gpu_thread_ids.begin(), gpu_thread_ids.end(),
+                 std::back_inserter(*rendering_thread_ids),
+                 [](const base::PlatformThreadId& tid) { return tid.raw(); });
 
   if (browser_io_thread_id_ != base::kInvalidThreadId) {
-    rendering_thread_ids->push_back(browser_io_thread_id_);
+    rendering_thread_ids->push_back(browser_io_thread_id_.raw());
   }
 
   *preferred_frame_interval = preferred_frame_interval_;
@@ -624,10 +614,18 @@ HardwareRenderer::HardwareRenderer(RenderThreadManager* state,
                                    AwVulkanContextProvider* context_provider)
     : render_thread_manager_(state),
       last_egl_context_(eglGetCurrentContext()),
-      output_surface_provider_(context_provider),
-      report_rendering_threads_(
-          base::FeatureList::IsEnabled(::features::kWebViewEnableADPF)) {
+      output_surface_provider_(context_provider) {
   DCHECK_CALLED_ON_VALID_THREAD(render_thread_checker_);
+
+  if (base::FeatureList::IsEnabled(::features::kWebViewEnableADPF)) {
+    std::string soc_allowlist =
+        ::features::kWebViewADPFSocManufacturerAllowlist.Get();
+    std::string soc_blocklist =
+        ::features::kWebViewADPFSocManufacturerBlocklist.Get();
+    std::string soc = base::SysInfo::SocManufacturer();
+    report_rendering_threads_ =
+        ::features::ShouldUseAdpfForSoc(soc_allowlist, soc_blocklist, soc);
+  }
 
   VizCompositorThreadRunnerWebView::GetInstance()->ScheduleOnVizAndBlock(
       base::BindOnce(&HardwareRenderer::InitializeOnViz, base::Unretained(this),

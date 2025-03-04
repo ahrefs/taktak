@@ -28,31 +28,31 @@ class View;
 
 namespace ash {
 
-class PickerAssetFetcher;
-class PickerClipboardHistoryProvider;
-class PickerPreviewBubbleController;
-class PickerSectionListView;
+class QuickInsertAssetFetcher;
+class QuickInsertClipboardHistoryProvider;
+class QuickInsertPreviewBubbleController;
+class QuickInsertSectionListView;
 class QuickInsertSectionView;
-class PickerZeroStateViewDelegate;
+class QuickInsertZeroStateViewDelegate;
 
-class ASH_EXPORT PickerZeroStateView : public PickerPageView {
-  METADATA_HEADER(PickerZeroStateView, PickerPageView)
+class ASH_EXPORT QuickInsertZeroStateView : public QuickInsertPageView {
+  METADATA_HEADER(QuickInsertZeroStateView, QuickInsertPageView)
 
  public:
   // `delegate`, `asset_fetcher`, `submenu_controller`, `preview_controller`
   // must remain valid for the lifetime of this class.
-  explicit PickerZeroStateView(
-      PickerZeroStateViewDelegate* delegate,
-      base::span<const PickerCategory> available_categories,
-      int picker_view_width,
-      PickerAssetFetcher* asset_fetcher,
-      PickerSubmenuController* submenu_controller,
-      PickerPreviewBubbleController* preview_controller);
-  PickerZeroStateView(const PickerZeroStateView&) = delete;
-  PickerZeroStateView& operator=(const PickerZeroStateView&) = delete;
-  ~PickerZeroStateView() override;
+  explicit QuickInsertZeroStateView(
+      QuickInsertZeroStateViewDelegate* delegate,
+      base::span<const QuickInsertCategory> available_categories,
+      int quick_insert_view_width,
+      QuickInsertAssetFetcher* asset_fetcher,
+      QuickInsertSubmenuController* submenu_controller,
+      QuickInsertPreviewBubbleController* preview_controller);
+  QuickInsertZeroStateView(const QuickInsertZeroStateView&) = delete;
+  QuickInsertZeroStateView& operator=(const QuickInsertZeroStateView&) = delete;
+  ~QuickInsertZeroStateView() override;
 
-  // PickerPageView:
+  // QuickInsertPageView:
   views::View* GetTopItem() override;
   views::View* GetBottomItem() override;
   views::View* GetItemAbove(views::View* item) override;
@@ -61,7 +61,7 @@ class ASH_EXPORT PickerZeroStateView : public PickerPageView {
   views::View* GetItemRightOf(views::View* item) override;
   bool ContainsItem(views::View* item) override;
 
-  std::map<PickerCategoryType, raw_ptr<QuickInsertSectionView>>
+  std::map<QuickInsertCategoryType, raw_ptr<QuickInsertSectionView>>
   category_section_views_for_testing() const {
     return category_section_views_;
   }
@@ -71,27 +71,27 @@ class ASH_EXPORT PickerZeroStateView : public PickerPageView {
   }
 
  private:
-  void OnCategorySelected(PickerCategory category);
+  void OnCategorySelected(QuickInsertCategory category);
   void OnResultSelected(const QuickInsertSearchResult& result);
   void RecordCapsLockIgnored(bool ignored);
 
   // Gets or creates the category type section for `category_type`.
   QuickInsertSectionView* GetOrCreateSectionView(
-      PickerCategoryType category_type);
+      QuickInsertCategoryType category_type);
 
   // Gets or creates the category type section to contain `category`.
-  QuickInsertSectionView* GetOrCreateSectionView(PickerCategory category);
+  QuickInsertSectionView* GetOrCreateSectionView(QuickInsertCategory category);
 
   void OnFetchSuggestedResults(std::vector<QuickInsertSearchResult> result);
   void AddResultToSection(const QuickInsertSearchResult& result,
                           QuickInsertSectionView* section);
 
-  raw_ptr<PickerZeroStateViewDelegate> delegate_;
-  raw_ptr<PickerSubmenuController> submenu_controller_;
-  raw_ptr<PickerPreviewBubbleController> preview_controller_;
+  raw_ptr<QuickInsertZeroStateViewDelegate> delegate_;
+  raw_ptr<QuickInsertSubmenuController> submenu_controller_;
+  raw_ptr<QuickInsertPreviewBubbleController> preview_controller_;
 
   // The section list view, contains the section views.
-  raw_ptr<PickerSectionListView> section_list_view_ = nullptr;
+  raw_ptr<QuickInsertSectionListView> section_list_view_ = nullptr;
 
   // The primary section is a titleless section that is shown first.
   // It contains items such as zero-state suggestions.
@@ -99,15 +99,15 @@ class ASH_EXPORT PickerZeroStateView : public PickerPageView {
 
   // Below the primary section, there is a set of sections for each category
   // type.
-  std::map<PickerCategoryType, raw_ptr<QuickInsertSectionView>>
+  std::map<QuickInsertCategoryType, raw_ptr<QuickInsertSectionView>>
       category_section_views_;
 
-  std::unique_ptr<PickerClipboardHistoryProvider> clipboard_provider_;
+  std::unique_ptr<QuickInsertClipboardHistoryProvider> clipboard_provider_;
 
   // Timer used to put caps lock toggle to the end of the primary section.
   base::OneShotTimer add_caps_lock_delay_timer_;
 
-  base::WeakPtrFactory<PickerZeroStateView> weak_ptr_factory_{this};
+  base::WeakPtrFactory<QuickInsertZeroStateView> weak_ptr_factory_{this};
 };
 
 }  // namespace ash

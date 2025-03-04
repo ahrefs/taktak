@@ -5,7 +5,6 @@
 #include "chrome/browser/ui/views/permissions/embedded_permission_prompt_show_system_prompt_view.h"
 
 #include "base/memory/weak_ptr.h"
-
 #include "chrome/browser/ui/url_identity.h"
 #include "components/permissions/features.h"
 #include "components/strings/grit/components_strings.h"
@@ -52,8 +51,7 @@ std::u16string EmbeddedPermissionPromptShowSystemPromptView::GetWindowTitle()
 void EmbeddedPermissionPromptShowSystemPromptView::RunButtonCallback(
     int button_id) {
   // This view has no buttons.
-  NOTREACHED_IN_MIGRATION();
-  return;
+  NOTREACHED();
 }
 
 std::vector<

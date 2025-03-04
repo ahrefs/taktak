@@ -2,15 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "third_party/blink/renderer/core/layout/inline/line_breaker.h"
 
+#include <algorithm>
+
 #include "base/containers/adapters.h"
-#include "base/ranges/algorithm.h"
 #include "third_party/blink/renderer/core/frame/web_feature.h"
 #include "third_party/blink/renderer/core/layout/block_break_token.h"
 #include "third_party/blink/renderer/core/layout/constraint_space.h"
@@ -59,8 +55,7 @@ inline LineBreakStrictness StrictnessFromLineBreak(LineBreak line_break) {
     case LineBreak::kLoose:
       return LineBreakStrictness::kLoose;
   }
-  NOTREACHED_IN_MIGRATION();
-  return LineBreakStrictness::kDefault;
+  NOTREACHED();
 }
 
 // Returns smallest negative left and right bearing in `box_fragment`.
@@ -278,16 +273,13 @@ inline void RemoveLastItem(LineInfo* line_info) {
 // padding, border, or margin.
 // The inline-end size from all of these ancestors contribute to the "used
 // size" of the float, and may cause the float to be pushed down.
-LayoutUnit ComputeFloatAncestorInlineEndSize(
-    const ConstraintSpace& space,
-    const HeapVector<InlineItem>& items,
-    wtf_size_t item_index) {
+LayoutUnit ComputeFloatAncestorInlineEndSize(const ConstraintSpace& space,
+                                             const InlineItems& items,
+                                             wtf_size_t item_index) {
   LayoutUnit inline_end_size;
-  for (const InlineItem *cur = items.data() + item_index,
-                        *end = items.data() + items.size();
-       cur != end; ++cur) {
-    const InlineItem& item = *cur;
-
+  for (const Member<InlineItem>& item_ptr :
+       base::span(items).subspan(item_index)) {
+    const InlineItem& item = *item_ptr;
     if (item.Type() == InlineItem::kCloseTag) {
       inline_end_size += ComputeInlineEndSize(space, item.Style());
       continue;
@@ -387,7 +379,7 @@ class FastMinTextContext {
     DCHECK(!locations.Contains(0u));
     DCHECK(!locations.Contains(word.length()));
 #endif  // EXPENSIVE_DCHECKS_ARE_ON()
-    // Append 0 to process all parts the same way.
+        // Append 0 to process all parts the same way.
     locations.push_back(0);
     const LayoutUnit hyphen_inline_size = HyphenInlineSize(item_result);
     LayoutUnit max_part_width;
@@ -422,9 +414,19 @@ inline bool LineBreaker::ShouldAutoWrap(const ComputedStyle& style) const {
 void LineBreaker::UpdateAvailableWidth() {
   LayoutUnit available_width;
   if (override_available_width_) [[unlikely]] {
-    available_width = override_available_width_;
+    // If we have an overridden width (e.g. because of text-wrap), the
+    // line-clamp ellipsis should only cut into it when the overridden available
+    // width plus the ellipsis width overflow the available inline size.
+    if (line_clamp_ellipsis_width_) {
+      available_width = std::min(
+          line_opportunity_.AvailableInlineSize() - line_clamp_ellipsis_width_,
+          override_available_width_);
+    } else {
+      available_width = override_available_width_;
+    }
   } else {
-    available_width = line_opportunity_.AvailableInlineSize();
+    available_width =
+        line_opportunity_.AvailableInlineSize() - line_clamp_ellipsis_width_;
   }
   // Make sure it's at least the initial size, which is usually 0 but not so
   // when `box-decoration-break: clone`.
@@ -551,7 +553,7 @@ inline InlineItemResult* LineBreaker::AddItem(const InlineItem& item,
                                               unsigned end_offset,
                                               LineInfo* line_info) {
   if (item.Type() != InlineItem::kOpenRubyColumn) {
-    DCHECK_EQ(&item, &items_data_->items[current_.item_index]);
+    DCHECK_EQ(&item, items_data_->items[current_.item_index]);
     DCHECK_GE(current_.text_offset, item.StartOffset());
     DCHECK_GE(end_offset, current_.text_offset);
     DCHECK_LE(end_offset, item.EndOffset());
@@ -561,7 +563,7 @@ inline InlineItemResult* LineBreaker::AddItem(const InlineItem& item,
   }
   InlineItemResults* item_results = line_info->MutableResults();
   return &item_results->emplace_back(
-      &item, current_.item_index,
+      item, current_.item_index,
       TextOffsetRange(current_.text_offset, end_offset),
       break_anywhere_if_overflow_, ShouldCreateLineBox(*item_results),
       HasUnpositionedFloats(*item_results));
@@ -846,7 +848,7 @@ void LineBreaker::NextLine(LineInfo* line_info) {
   if (break_token_ && break_token_->IsInParallelBlockFlow()) {
     const auto* block_break_token = break_token_->GetBlockBreakToken();
     DCHECK(block_break_token);
-    const InlineItem& item = Items()[break_token_->StartItemIndex()];
+    const InlineItem& item = *Items()[break_token_->StartItemIndex()];
     DCHECK_EQ(item.GetLayoutObject(),
               block_break_token->InputNode().GetLayoutBox());
     if (block_break_token->InputNode().IsFloating()) {
@@ -867,8 +869,10 @@ void LineBreaker::NextLine(LineInfo* line_info) {
   if (HasHyphen()) [[unlikely]] {
     FinalizeHyphen(line_info->MutableResults());
   }
-  RemoveTrailingCollapsibleSpace(line_info);
-  SplitTrailingBidiPreservedSpace(line_info);
+  if (!disable_trailing_whitespace_collapsing_) {
+    RemoveTrailingCollapsibleSpace(line_info);
+    SplitTrailingBidiPreservedSpace(line_info);
+  }
 
   const InlineItemResults& item_results = line_info->Results();
 #if DCHECK_IS_ON()
@@ -897,9 +901,12 @@ void LineBreaker::NextLine(LineInfo* line_info) {
   }
 
   line_info->SetEndItemIndex(current_.item_index);
-  DCHECK_NE(trailing_whitespace_, WhitespaceState::kUnknown);
-  if (trailing_whitespace_ == WhitespaceState::kPreserved)
-    line_info->SetHasTrailingSpaces();
+  if (!disable_trailing_whitespace_collapsing_) {
+    DCHECK_NE(trailing_whitespace_, WhitespaceState::kUnknown);
+    if (trailing_whitespace_ == WhitespaceState::kPreserved) {
+      line_info->SetHasTrailingSpaces();
+    }
+  }
 
   if (override_available_width_) [[unlikely]] {
     // Clear the overridden available width so that `line_info` has the original
@@ -929,7 +936,7 @@ void LineBreaker::NextLine(LineInfo* line_info) {
 
 void LineBreaker::BreakLine(LineInfo* line_info) {
   DCHECK(!line_info->IsLastLine());
-  const HeapVector<InlineItem>& items = Items();
+  const InlineItems& items = Items();
   // If `kMinContent`, the line will overflow. Avoid calling `HandleOverflow()`
   // for the performance.
   if (mode_ == LineBreakerMode::kMinContent) [[unlikely]] {
@@ -972,7 +979,7 @@ void LineBreaker::BreakLine(LineInfo* line_info) {
 
     // Handle trailable items first. These items may not be break before.
     // They (or part of them) may also overhang the available width.
-    const InlineItem& item = items[current_.item_index];
+    const InlineItem& item = *items[current_.item_index];
     if (item.Type() == InlineItem::kText) {
       if (item.Length())
         HandleText(item, *item.TextShapeResult(), line_info);
@@ -1036,10 +1043,10 @@ void LineBreaker::BreakLine(LineInfo* line_info) {
     if (item.Type() == InlineItem::kOpenRubyColumn) {
       // Skip to call HandleRuby() for a placeholder-only ruby column.
       const wtf_size_t i = current_.item_index;
-      if (items[i + 1].Type() == InlineItem::kRubyLinePlaceholder &&
-          (items[i + 2].Type() == InlineItem::kCloseRubyColumn ||
-           (items[i + 2].Type() == InlineItem::kRubyLinePlaceholder &&
-            items[i + 3].Type() == InlineItem::kCloseRubyColumn))) {
+      if (items[i + 1]->Type() == InlineItem::kRubyLinePlaceholder &&
+          (items[i + 2]->Type() == InlineItem::kCloseRubyColumn ||
+           (items[i + 2]->Type() == InlineItem::kRubyLinePlaceholder &&
+            items[i + 3]->Type() == InlineItem::kCloseRubyColumn))) {
         AddItem(item, line_info);
         MoveToNextOf(item);
         continue;
@@ -1054,21 +1061,14 @@ void LineBreaker::BreakLine(LineInfo* line_info) {
     if (item.Type() == InlineItem::kOutOfFlowPositioned) {
       HandleOutOfFlowPositioned(item, line_info);
     } else if (item.Length()) {
-      NOTREACHED_IN_MIGRATION();
-      // For other items with text (e.g., bidi controls), use their text to
-      // determine the break opportunity.
-      InlineItemResult* item_result = AddItem(item, line_info);
-      item_result->can_break_after =
-          break_iterator_.IsBreakable(item_result->EndOffset());
-      MoveToNextOf(item);
+      NOTREACHED();
     } else if (item.Type() == InlineItem::kListMarker) {
       InlineItemResult* item_result = AddItem(item, line_info);
       force_non_empty_if_last_line_ = true;
       DCHECK(!item_result->can_break_after);
       MoveToNextOf(item);
     } else {
-      NOTREACHED_IN_MIGRATION();
-      MoveToNextOf(item);
+      NOTREACHED();
     }
   }
 }
@@ -1077,8 +1077,9 @@ void LineBreaker::ComputeLineLocation(LineInfo* line_info) const {
   // Negative margins can make the position negative, but the inline size is
   // always positive or 0.
   LayoutUnit available_width = AvailableWidth();
-  line_info->SetWidth(available_width,
-                      position_ + cloned_box_decorations_end_size_);
+  line_info->SetWidth(available_width + line_clamp_ellipsis_width_,
+                      position_ + cloned_box_decorations_end_size_ +
+                          line_clamp_ellipsis_width_);
   line_info->SetBfcOffset(
       {line_opportunity_.line_left_offset, line_opportunity_.bfc_block_offset});
   if (mode_ == LineBreakerMode::kContent) {
@@ -1211,8 +1212,9 @@ const InlineItem* LineBreaker::TryGetAtomicInlineItemAfter(
 
   // This kObjectReplacementCharacter can be any objects, such as a floating or
   // an OOF object. Check if it's really an atomic inline.
-  for (const auto& next_item :
-       base::span(Items()).subspan(items_data_->ToItemIndex(item) + 1)) {
+  for (const Member<InlineItem>& item_ptr :
+       base::span(Items()).subspan(item.Index() + 1)) {
+    const InlineItem& next_item = *item_ptr;
     DCHECK_EQ(next_item.StartOffset(), item.EndOffset());
     if (next_item.Type() == InlineItem::kAtomicInline) {
       return &next_item;
@@ -1225,21 +1227,21 @@ const InlineItem* LineBreaker::TryGetAtomicInlineItemAfter(
 }
 
 unsigned LineBreaker::IgnorableBidiControlLength(const InlineItem& item) const {
-  const InlineItem* items = Items().data();
-  for (wtf_size_t i =
-           base::checked_cast<wtf_size_t>(std::distance(items, &item)) + 1;
-       i < end_item_index_; ++i) {
-    if (items[i].Length() == 0u) {
+  size_t start_item_index = item.Index() + 1;
+  for (const auto& item_i_ptr : base::span(Items()).subspan(
+           start_item_index, end_item_index_ - start_item_index)) {
+    const InlineItem& item_i = *item_i_ptr;
+    if (item_i.Length() == 0u) {
       continue;
     }
-    if (items[i].Type() != InlineItem::kOpenRubyColumn &&
-        items[i].Type() != InlineItem::kCloseRubyColumn) {
-      return items[i].StartOffset() - item.EndOffset();
+    if (item_i.Type() != InlineItem::kOpenRubyColumn &&
+        item_i.Type() != InlineItem::kCloseRubyColumn) {
+      return item_i.StartOffset() - item.EndOffset();
     }
   }
   return (end_item_index_ >= Items().size()
               ? Text().length()
-              : items[end_item_index_].StartOffset()) -
+              : Items()[end_item_index_]->StartOffset()) -
          item.EndOffset();
 }
 
@@ -1553,7 +1555,7 @@ LineBreaker::BreakResult LineBreaker::BreakText(
         : ShapingLineBreaker(result,
                              &line_breaker->break_iterator_,
                              line_breaker->hyphenation_,
-                             &item->Style()->GetFont()),
+                             item->Style()->GetFont()),
           line_breaker_(line_breaker),
           item_(item) {}
 
@@ -1718,7 +1720,9 @@ bool LineBreaker::BreakTextAt(InlineItemResult* item_result,
 // |item_result->text_offset.end|. Returns false if there were no previous break
 // opportunities.
 bool LineBreaker::BreakTextAtPreviousBreakOpportunity(
-    InlineItemResult* item_result) {
+    InlineItemResults& results,
+    wtf_size_t item_result_index) {
+  InlineItemResult* item_result = &results[item_result_index];
   DCHECK(item_result->item);
   DCHECK(item_result->may_break_inside);
   const InlineItem& item = *item_result->item;
@@ -1741,7 +1745,8 @@ bool LineBreaker::BreakTextAtPreviousBreakOpportunity(
   item_result->can_break_after = true;
 
   if (trailing_collapsible_space_.has_value() &&
-      trailing_collapsible_space_->item_result == item_result) {
+      trailing_collapsible_space_->item_results == &results &&
+      trailing_collapsible_space_->item_result_index == item_result_index) {
     trailing_collapsible_space_.reset();
   }
 
@@ -1803,9 +1808,9 @@ bool LineBreaker::HandleTextForFastMinContent(InlineItemResult* item_result,
 #if EXPENSIVE_DCHECKS_ARE_ON()
     // Whether the start offset is at middle of a word or not can also be
     // determined by `line_info->Results()`. Check if they match.
-    auto results = base::make_span(line_info->Results());
+    auto results = base::span(line_info->Results());
     DCHECK_EQ(item_result, &results.back());
-    results = results.subspan(0, results.size() - 1);
+    results = results.first(results.size() - 1);
     bool is_at_mid_word = false;
     for (const InlineItemResult& result : base::Reversed(results)) {
       DCHECK(!result.can_break_after);
@@ -1964,13 +1969,12 @@ const ShapeResult* LineBreaker::ShapeText(const InlineItem& item,
   if (!items_data_->segments) {
     RunSegmenter::RunSegmenterRange segment_range =
         InlineItemSegment::UnpackSegmentData(start, end, item.SegmentData());
-    shape_result = shaper_.Shape(&item.Style()->GetFont(), item.Direction(),
+    shape_result = shaper_.Shape(item.Style()->GetFont(), item.Direction(),
                                  start, end, segment_range, options);
   } else {
     shape_result = items_data_->segments->ShapeText(
-        &shaper_, &item.Style()->GetFont(), item.Direction(), start, end,
-        base::checked_cast<unsigned>(&item - items_data_->items.data()),
-        options);
+        &shaper_, item.Style()->GetFont(), item.Direction(), start, end,
+        item.Index(), options);
   }
   if (spacing_.HasSpacing()) [[unlikely]] {
     shape_result->ApplySpacing(spacing_);
@@ -2235,11 +2239,10 @@ void LineBreaker::AppendCandidates(const InlineItemResult& item_result,
 
 bool LineBreaker::CanBreakInside(const LineInfo& line_info) {
   const InlineItemResults& item_results = line_info.Results();
-  for (const InlineItemResult& item_result :
-       base::make_span(item_results.begin(), item_results.size() - 1)) {
-    if (item_result.can_break_after) {
-      return true;
-    }
+  if (std::ranges::any_of(
+          base::span(item_results).first(item_results.size() - 1),
+          std::identity(), &InlineItemResult::can_break_after)) {
+    return true;
   }
   for (const InlineItemResult& item_result : item_results) {
     DCHECK(item_result.item);
@@ -2425,7 +2428,7 @@ void LineBreaker::HandleTrailingSpaces(const InlineItem& item,
   }
   DCHECK_EQ(current_.text_offset, item.EndOffset());
   const InlineItemResults& item_results = line_info->Results();
-  if (item_results.empty() || item_results.back().item != &item) {
+  if (item_results.empty() || item_results.back().item.Get() != &item) {
     // If at the end of `item` but the item hasn't been added to `line_info`,
     // add an empty text item. See `HandleEmptyText`.
     AddEmptyItem(item, line_info);
@@ -2475,7 +2478,7 @@ void LineBreaker::RemoveTrailingCollapsibleSpace(LineInfo* line_info) {
   }
 
   // We have a trailing collapsible space. Remove it.
-  InlineItemResult* item_result = trailing_collapsible_space_->item_result;
+  InlineItemResult* item_result = &trailing_collapsible_space_->ItemResult();
   bool position_was_saturated = position_ == LayoutUnit::Max();
   position_ -= item_result->inline_size;
   if (const ShapeResultView* collapsed_shape_result =
@@ -2491,11 +2494,26 @@ void LineBreaker::RemoveTrailingCollapsibleSpace(LineInfo* line_info) {
     item_result->shape_result = nullptr;
     item_result->inline_size = LayoutUnit();
   }
-  trailing_collapsible_space_.reset();
-  trailing_whitespace_ = WhitespaceState::kCollapsed;
-  if (position_was_saturated) {
+  for (auto [results, index] :
+       trailing_collapsible_space_->ancestor_ruby_columns) {
+    InlineItemResult& ruby_column = (*results)[index];
+    CHECK(ruby_column.IsRubyColumn());
+    LineInfo& base_line = ruby_column.ruby_column->base_line;
+    LayoutUnit new_width = base_line.ComputeWidth();
+    base_line.SetWidth(base_line.AvailableWidth(), new_width);
+    // Update LineInfo::end_offset_for_justify_.
+    base_line.UpdateTextAlign();
+    for (auto& line : ruby_column.ruby_column->annotation_line_list) {
+      new_width = std::max(new_width, line.Width());
+    }
+    ruby_column.inline_size = new_width;
+  }
+  if (position_was_saturated ||
+      !trailing_collapsible_space_->ancestor_ruby_columns.empty()) {
     position_ = line_info->ComputeWidth();
   }
+  trailing_collapsible_space_.reset();
+  trailing_whitespace_ = WhitespaceState::kCollapsed;
 }
 
 // Compute the width of trailing spaces without removing it.
@@ -2506,16 +2524,34 @@ LayoutUnit LineBreaker::TrailingCollapsibleSpaceWidth(LineInfo* line_info) {
 
   // Normally, the width of new_reuslt is smaller, but technically it can be
   // larger. In such case, it means the trailing spaces has negative width.
-  InlineItemResult* item_result = trailing_collapsible_space_->item_result;
+  InlineItemResult& item_result = trailing_collapsible_space_->ItemResult();
+  LayoutUnit width_diff = item_result.inline_size;
   if (const ShapeResultView* collapsed_shape_result =
           trailing_collapsible_space_->collapsed_shape_result) {
-    return item_result->inline_size - collapsed_shape_result->SnappedWidth();
+    width_diff -= collapsed_shape_result->SnappedWidth();
   }
-  return item_result->inline_size;
+  if (trailing_collapsible_space_->ancestor_ruby_columns.empty()) {
+    return width_diff;
+  }
+  for (auto [results, index] :
+       trailing_collapsible_space_->ancestor_ruby_columns) {
+    InlineItemResult& ruby_column = (*results)[index];
+    CHECK(ruby_column.IsRubyColumn());
+    LayoutUnit new_width =
+        ruby_column.ruby_column->base_line.Width() - width_diff;
+    for (auto& line : ruby_column.ruby_column->annotation_line_list) {
+      new_width = std::max(new_width, line.Width());
+    }
+    width_diff = ruby_column.inline_size - new_width;
+    if (width_diff == LayoutUnit()) {
+      break;
+    }
+  }
+  return width_diff;
 }
 
-// Find trailing collapsible space if exists. The result is cached to
-// |trailing_collapsible_space_|.
+// Find trailing collapsible space in `line_info` and its descendants if exists.
+// The result is cached to |trailing_collapsible_space_|.
 void LineBreaker::ComputeTrailingCollapsibleSpace(LineInfo* line_info) {
   if (trailing_whitespace_ == WhitespaceState::kLeading ||
       trailing_whitespace_ == WhitespaceState::kNone ||
@@ -2528,43 +2564,78 @@ void LineBreaker::ComputeTrailingCollapsibleSpace(LineInfo* line_info) {
          trailing_whitespace_ == WhitespaceState::kCollapsible);
 
   trailing_whitespace_ = WhitespaceState::kNone;
+  if (!ComputeTrailingCollapsibleSpaceHelper(*line_info)) {
+    trailing_collapsible_space_.reset();
+  }
+}
+
+// Returns true if trailing_whitespace_ is determined.
+bool LineBreaker::ComputeTrailingCollapsibleSpaceHelper(LineInfo& line_info) {
   const String& text = Text();
-  for (auto& item_result : base::Reversed(*line_info->MutableResults())) {
+  for (auto& item_result : base::Reversed(*line_info.MutableResults())) {
     DCHECK(item_result.item);
     const InlineItem& item = *item_result.item;
-    if (item.EndCollapseType() == InlineItem::kOpaqueToCollapsing) {
+    if (RuntimeEnabledFeatures::NoCollapseSpaceBeforeRubyEnabled() &&
+        item_result.IsRubyColumn()) {
+      if (ComputeTrailingCollapsibleSpaceHelper(
+              item_result.ruby_column->base_line)) {
+        if (trailing_collapsible_space_ &&
+            trailing_collapsible_space_->item_result_index != WTF::kNotFound) {
+          trailing_collapsible_space_->ancestor_ruby_columns.push_back(
+              std::make_pair(line_info.MutableResults(),
+                             std::distance(line_info.MutableResults()->data(),
+                                           &item_result)));
+        }
+        return true;
+      }
+      continue;
+    } else if (item.EndCollapseType() == InlineItem::kOpaqueToCollapsing) {
       continue;
     }
     if (item.Type() == InlineItem::kText) {
+      if (RuntimeEnabledFeatures::NoCollapseSpaceBeforeRubyEnabled() &&
+          item_result.Length() == 0) {
+        continue;
+      }
       DCHECK_GT(item_result.EndOffset(), 0u);
       DCHECK(item.Style());
       if (Character::IsOtherSpaceSeparator(text[item_result.EndOffset() - 1])) {
         trailing_whitespace_ = WhitespaceState::kPreserved;
-        break;
+        trailing_collapsible_space_.reset();
+        return true;
       }
-      if (!IsBreakableSpace(text[item_result.EndOffset() - 1]))
-        break;
+      if (!IsBreakableSpace(text[item_result.EndOffset() - 1])) {
+        trailing_collapsible_space_.reset();
+        return true;
+      }
       if (item.Style()->ShouldPreserveWhiteSpaces()) {
         trailing_whitespace_ = WhitespaceState::kPreserved;
-        break;
+        trailing_collapsible_space_.reset();
+        return true;
       }
       // |shape_result| is nullptr if this is an overflow because BreakText()
       // uses kNoResultIfOverflow option.
-      if (!item_result.shape_result)
-        break;
+      if (!item_result.shape_result) {
+        trailing_collapsible_space_.reset();
+        return true;
+      }
 
+      InlineItemResults* results = line_info.MutableResults();
+      wtf_size_t index = std::distance(results->data(), &item_result);
       if (!trailing_collapsible_space_.has_value() ||
-          trailing_collapsible_space_->item_result != &item_result) {
+          trailing_collapsible_space_->item_results != results ||
+          trailing_collapsible_space_->item_result_index != index) {
         trailing_collapsible_space_.emplace();
-        trailing_collapsible_space_->item_result = &item_result;
+        trailing_collapsible_space_->item_results = results;
+        trailing_collapsible_space_->item_result_index = index;
         if (item_result.EndOffset() - 1 > item_result.StartOffset()) {
           trailing_collapsible_space_->collapsed_shape_result =
-              TruncateLineEndResult(*line_info, item_result,
+              TruncateLineEndResult(line_info, item_result,
                                     item_result.EndOffset() - 1);
         }
       }
       trailing_whitespace_ = WhitespaceState::kCollapsible;
-      return;
+      return true;
     }
     if (item.Type() == InlineItem::kControl) {
       if (item.TextType() == TextItemType::kForcedLineBreak) {
@@ -2573,12 +2644,12 @@ void LineBreaker::ComputeTrailingCollapsibleSpace(LineInfo* line_info) {
       }
       trailing_whitespace_ = WhitespaceState::kPreserved;
       trailing_collapsible_space_.reset();
-      return;
+      return true;
     }
-    break;
+    trailing_collapsible_space_.reset();
+    return true;
   }
-
-  trailing_collapsible_space_.reset();
+  return false;
 }
 
 // Per UAX#9 L1, any spaces logically at the end of a line must be reset to the
@@ -2634,6 +2705,11 @@ void LineBreaker::SplitTrailingBidiPreservedSpace(LineInfo* line_info) {
       return;
     }
 
+    if (!item_result.Length()) {
+      item_result.has_only_bidi_trailing_spaces = true;
+      continue;
+    }
+
     DCHECK_GT(item_result.EndOffset(), 0u);
 
     wtf_size_t i = item_result.EndOffset();
@@ -2664,7 +2740,7 @@ void LineBreaker::SplitTrailingBidiPreservedSpace(LineInfo* line_info) {
         item_result.inline_size = item_result.shape_result->SnappedWidth();
         DCHECK_LE(item_result.inline_size, prev_inline_size);
 
-        InlineItemResult spaces_result(&item, item_result.item_index,
+        InlineItemResult spaces_result(item, item_result.item_index,
                                        TextOffsetRange(i, end),
                                        item_result.break_anywhere_if_overflow,
                                        item_result.should_create_line_box,
@@ -2745,9 +2821,9 @@ void LineBreaker::HandleForcedLineBreak(const InlineItem* item,
     // This is not a defined behavior, but legacy/WebKit do this for preserved
     // newlines and <br>s. Gecko does this only for preserved newlines (but
     // not for <br>s).
-    const HeapVector<InlineItem>& items = Items();
+    const InlineItems& items = Items();
     while (!IsAtEnd()) {
-      const InlineItem& next_item = items[current_.item_index];
+      const InlineItem& next_item = *items[current_.item_index];
       if (next_item.Type() == InlineItem::kCloseTag) {
         HandleCloseTag(next_item, line_info);
         continue;
@@ -2785,14 +2861,14 @@ void LineBreaker::HandleControlItem(const InlineItem& item,
     case kTabulationCharacter: {
       DCHECK(item.Style());
       const ComputedStyle& style = *item.Style();
-      if (!style.GetFont().PrimaryFont()) {
+      if (!style.GetFont()->PrimaryFont()) {
         // TODO(crbug.com/561873): PrimaryFont should not be nullptr.
         HandleEmptyText(item, line_info);
         return;
       }
       const ShapeResult* shape_result =
           ShapeResult::CreateForTabulationCharacters(
-              &style.GetFont(), item.Direction(), style.GetTabSize(), position_,
+              style.GetFont(), item.Direction(), style.GetTabSize(), position_,
               item.StartOffset(), item.Length());
       HandleText(item, *shape_result, line_info);
       return;
@@ -2816,9 +2892,7 @@ void LineBreaker::HandleControlItem(const InlineItem& item,
       HandleEmptyText(item, line_info);
       return;
     default:
-      NOTREACHED_IN_MIGRATION();
-      HandleEmptyText(item, line_info);
-      return;
+      NOTREACHED();
   }
   MoveToNextOf(item);
 }
@@ -2877,7 +2951,7 @@ void LineBreaker::HandleAtomicInline(const InlineItem& item,
   if (state_ == LineBreakState::kContinue && remaining_width < 0 &&
       (!parent_breaker_ || auto_wrap_)) {
     const unsigned item_index = current_.item_index;
-    DCHECK_EQ(item_index, static_cast<unsigned>(&item - Items().data()));
+    DCHECK_EQ(item_index, item.Index());
     HandleOverflow(line_info);
     if (!line_info->HasOverflow() || item_index != current_.item_index) {
       return;
@@ -2990,8 +3064,7 @@ void LineBreaker::ComputeMinMaxContentSizeForBlockChild(
   DCHECK(mode_ == LineBreakerMode::kMaxContent ||
          mode_ == LineBreakerMode::kMinContent);
   if (mode_ == LineBreakerMode::kMaxContent && max_size_cache_) {
-    const unsigned item_index =
-        base::checked_cast<unsigned>(&item - Items().data());
+    const unsigned item_index = item.Index();
     item_result->inline_size = (*max_size_cache_)[item_index];
     return;
   }
@@ -3022,8 +3095,7 @@ void LineBreaker::ComputeMinMaxContentSizeForBlockChild(
       if (size_cache->empty()) {
         size_cache->resize(Items().size());
       }
-      const unsigned item_index =
-          base::checked_cast<unsigned>(&item - Items().data());
+      const unsigned item_index = item.Index();
       (*size_cache)[item_index] = result.sizes.max_size + inline_margins;
     }
     return;
@@ -3136,29 +3208,31 @@ bool LineBreaker::HandleRuby(LineInfo* line_info, LayoutUnit retry_size) {
     RubyItemIndexes ruby_indexes =
         ParseRubyInInlineItems(Items(), current_.item_index);
     base_end_index = ruby_indexes.base_end;
-    if (Items()[base_end_index].Type() == InlineItem::kCloseRubyColumn) {
+    if (Items()[base_end_index]->Type() == InlineItem::kCloseRubyColumn) {
       // No ruby-text. We don't need a kOpenRubyColumn result.
       return false;
     }
     UseCounter::Count(GetDocument(), WebFeature::kRenderRuby);
-    DCHECK_EQ(Items()[base_end_index].Type(), InlineItem::kOpenTag);
-    DCHECK(Items()[base_end_index].GetLayoutObject()->IsInlineRubyText());
+    DCHECK_EQ(Items()[base_end_index]->Type(), InlineItem::kOpenTag);
+    DCHECK(Items()[base_end_index]->GetLayoutObject()->IsInlineRubyText());
     base_start = {current_.item_index + 1,
-                  Items()[current_.item_index].EndOffset()};
+                  Items()[current_.item_index]->EndOffset()};
 
     wtf_size_t start = ruby_indexes.annotation_start;
-    annotation_data.push_back(AnnotationBreakTokenData{
-        {start, Items()[start].StartOffset()}, start, ruby_indexes.column_end});
+    annotation_data.push_back(
+        AnnotationBreakTokenData{{start, Items()[start]->StartOffset()},
+                                 start,
+                                 ruby_indexes.column_end});
   } else {
     open_column_item_index = ruby_token->open_column_item_index;
     base_end_index = ruby_token->ruby_base_end_item_index;
     annotation_data = ruby_token->annotation_data;
   }
-  const InlineItem& item = Items()[open_column_item_index];
+  const InlineItem& item = *Items()[open_column_item_index];
 
   LineInfo base_line_info = CreateSubLineInfo(
       base_start, base_end_index, LineBreakerMode::kMaxContent, kIndefiniteSize,
-      trailing_whitespace_);
+      trailing_whitespace_, /* disable_trailing_whitespace_collapsing */ true);
   base_line_info.OverrideLineStyle(*current_style_);
   base_line_info.SetIsRubyBase();
   base_line_info.UpdateTextAlign();
@@ -3171,7 +3245,7 @@ bool LineBreaker::HandleRuby(LineInfo* line_info, LayoutUnit retry_size) {
         data.start, data.end_item_index, LineBreakerMode::kMaxContent,
         kIndefiniteSize, WhitespaceState::kLeading));
     annotation_line_list.back().OverrideLineStyle(
-        Items()[data.start_item_index].GetLayoutObject()->StyleRef());
+        Items()[data.start_item_index]->GetLayoutObject()->StyleRef());
   }
 
   LayoutUnit ruby_size = MaxLineWidth(base_line_info, annotation_line_list);
@@ -3189,9 +3263,10 @@ bool LineBreaker::HandleRuby(LineInfo* line_info, LayoutUnit retry_size) {
     if (mode_ == LineBreakerMode::kContent) {
       // Recreate lines because lines created with LineBreakerMode::kMaxContent
       // are not usable in InlineLayoutAlgorithm.
-      base_line_info = CreateSubLineInfo(base_start, base_end_index,
-                                         LineBreakerMode::kContent,
-                                         kIndefiniteSize, trailing_whitespace_);
+      base_line_info = CreateSubLineInfo(
+          base_start, base_end_index, LineBreakerMode::kContent,
+          kIndefiniteSize, trailing_whitespace_,
+          /* disable_trailing_whitespace_collapsing */ true);
       for (wtf_size_t i = 0; i < annotation_data.size(); ++i) {
         annotation_line_list[i] = CreateSubLineInfo(
             annotation_data[i].start, annotation_data[i].end_item_index,
@@ -3344,7 +3419,8 @@ LineInfo LineBreaker::CreateSubLineInfo(
     wtf_size_t end_item_index,
     LineBreakerMode mode,
     LayoutUnit limit,
-    WhitespaceState initial_whitespace_state) {
+    WhitespaceState initial_whitespace_state,
+    bool disable_trailing_whitespace_collapsing) {
   bool disallow_auto_wrap = false;
   if (limit == kIndefiniteSize) {
     limit = LayoutUnit::Max();
@@ -3361,6 +3437,10 @@ LineInfo LineBreaker::CreateSubLineInfo(
   sub_line_breaker.disallow_auto_wrap_ = disallow_auto_wrap;
   sub_line_breaker.SetInputRange(start, end_item_index,
                                  initial_whitespace_state, this);
+  if (RuntimeEnabledFeatures::NoCollapseSpaceBeforeRubyEnabled()) {
+    sub_line_breaker.disable_trailing_whitespace_collapsing_ =
+        disable_trailing_whitespace_collapsing;
+  }
   // OverrideAvailableWidth() prevents HandleFloat() from updating
   // available_width_.
   sub_line_breaker.OverrideAvailableWidth(limit);
@@ -3397,7 +3477,7 @@ InlineItemResult* LineBreaker::AddRubyColumnResult(
   data->annotation_line_list = annotation_line_list;
   for (wtf_size_t i = 0; i < annotation_line_list.size(); ++i) {
     LayoutObject& annotation_object =
-        *Items()[annotation_data_list[i].start_item_index].GetLayoutObject();
+        *Items()[annotation_data_list[i].start_item_index]->GetLayoutObject();
     data->annotation_line_list[i].OverrideLineStyle(*annotation_object.Style());
     data->annotation_line_list[i].SetIsRubyText();
     data->annotation_line_list[i].UpdateTextAlign();
@@ -3437,7 +3517,10 @@ InlineItemResult* LineBreaker::AddRubyColumnResult(
       position_ -= overhang.start;
     }
   }
-  trailing_whitespace_ = WhitespaceState::kNone;
+  trailing_whitespace_ =
+      RuntimeEnabledFeatures::NoCollapseSpaceBeforeRubyEnabled()
+          ? WhitespaceState::kUnknown
+          : WhitespaceState::kNone;
   return column_result;
 }
 
@@ -3460,7 +3543,7 @@ bool LineBreaker::CanBreakAfterRubyColumn(
       base_line.EndTextOffset() - base_line.StartOffset();
   text_content.Append(
       StringView(Text(), base_line.StartOffset(), base_text_length));
-  const InlineItem& next_item = Items()[column_end_item_index];
+  const InlineItem& next_item = *Items()[column_end_item_index];
   DCHECK_EQ(next_item.Type(), InlineItem::kCloseRubyColumn);
   unsigned ignorable_bidi_length = 1 + IgnorableBidiControlLength(next_item);
   text_content.Append(
@@ -3652,7 +3735,7 @@ void LineBreaker::RewindFloats(unsigned new_end,
                                LineInfo& line_info,
                                InlineItemResults& item_results) {
   for (const InlineItemResult& item_result :
-       base::make_span(item_results).subspan(new_end)) {
+       base::span(item_results).subspan(new_end)) {
     if (item_result.positioned_float) {
       const unsigned item_index = item_result.item_index;
       line_info.RemoveParallelFlowBreakToken(item_index);
@@ -3909,7 +3992,7 @@ void LineBreaker::HandleOverflow(LineInfo* line_info) {
         // If |inline_size| is zero (e.g., `font-size: 0`), |BreakText| cannot
         // make it shorter. Take the previous break opportunity.
         if (min_available_width <= 0) [[unlikely]] {
-          if (BreakTextAtPreviousBreakOpportunity(item_result)) {
+          if (BreakTextAtPreviousBreakOpportunity(*item_results, i)) {
             RewindOverflow(i + 1, line_info);
             return;
           }
@@ -4053,10 +4136,10 @@ void LineBreaker::HandleOverflow(LineInfo* line_info) {
   }
 
   // No break opportunities. Break at the earliest break opportunity.
-  DCHECK(base::ranges::all_of(*item_results,
-                              [](const InlineItemResult& item_result) {
-                                return !item_result.can_break_after;
-                              }));
+  DCHECK(std::ranges::all_of(*item_results,
+                             [](const InlineItemResult& item_result) {
+                               return !item_result.can_break_after;
+                             }));
   state_ = LineBreakState::kOverflow;
 }
 
@@ -4193,9 +4276,7 @@ void LineBreaker::Rewind(unsigned new_end, LineInfo* line_info) {
     // we're in the infinite loop.
     if (current_.item_index == last_rewind_->from_item_index &&
         new_end == last_rewind_->to_index) {
-      NOTREACHED_IN_MIGRATION();
-      state_ = LineBreakState::kDone;
-      return;
+      NOTREACHED();
     }
     last_rewind_.emplace(RewindIndex{current_.item_index, new_end});
   }
@@ -4269,11 +4350,11 @@ void LineBreaker::Rewind(unsigned new_end, LineInfo* line_info) {
     //   [7] kCloseTag 13-13 <i>
     // Note: We can have multiple empty |LayoutText| by ::first-letter, nested
     // <q>, Text.splitText(), etc.
-    const HeapVector<InlineItem>& items = Items();
+    const InlineItems& items = Items();
     while (!IsAtEnd() &&
-           items[current_.item_index].Type() == InlineItem::kText &&
-           !items[current_.item_index].Length()) {
-      HandleEmptyText(items[current_.item_index], line_info);
+           items[current_.item_index]->Type() == InlineItem::kText &&
+           !items[current_.item_index]->Length()) {
+      HandleEmptyText(*items[current_.item_index], line_info);
     }
   } else {
     // Rewinding all items.
@@ -4311,7 +4392,7 @@ const ComputedStyle& LineBreaker::ComputeCurrentStyle(
   const InlineItemResults& item_results = line_info->Results();
 
   // Use the current item if it can compute the current style.
-  const InlineItem* item = item_results[item_result_index].item;
+  const InlineItem* item = item_results[item_result_index].item.Get();
   DCHECK(item);
   if (item->Type() == InlineItem::kText ||
       item->Type() == InlineItem::kCloseTag) {
@@ -4321,7 +4402,7 @@ const ComputedStyle& LineBreaker::ComputeCurrentStyle(
 
   // Otherwise look back an item that can compute the current style.
   while (item_result_index) {
-    item = item_results[--item_result_index].item;
+    item = item_results[--item_result_index].item.Get();
     if (item->Type() == InlineItem::kText ||
         item->Type() == InlineItem::kOpenTag) {
       DCHECK(item->Style());
@@ -4351,7 +4432,7 @@ void LineBreaker::SetCurrentStyle(const ComputedStyle& style) {
       DCHECK_EQ(break_iterator_.Locale(), style.GetFontDescription().Locale());
     }
     ShapeResultSpacing<String> spacing(spacing_.Text(), is_svg_text_);
-    spacing.SetSpacing(style.GetFont().GetFontDescription());
+    spacing.SetSpacing(style.GetFont()->GetFontDescription());
     DCHECK_EQ(spacing.LetterSpacing(), spacing_.LetterSpacing());
     DCHECK_EQ(spacing.WordSpacing(), spacing_.WordSpacing());
 #endif  //  EXPENSIVE_DCHECKS_ARE_ON()
@@ -4446,7 +4527,7 @@ void LineBreaker::SetCurrentStyleForce(const ComputedStyle& style) {
 
 bool LineBreaker::IsPreviousItemOfType(InlineItem::InlineItemType type) {
   return current_.item_index > 0
-             ? Items().at(current_.item_index - 1).Type() == type
+             ? Items().at(current_.item_index - 1)->Type() == type
              : false;
 }
 
@@ -4454,9 +4535,9 @@ void LineBreaker::MoveToNextOf(const InlineItem& item) {
   current_.text_offset = item.EndOffset();
   current_.item_index++;
 #if DCHECK_IS_ON()
-  const HeapVector<InlineItem>& items = Items();
+  const InlineItems& items = Items();
   if (current_.item_index < items.size()) {
-    items[current_.item_index].AssertOffset(current_.text_offset);
+    items[current_.item_index]->AssertOffset(current_.text_offset);
   } else {
     DCHECK_EQ(current_.text_offset, Text().length());
   }
@@ -4489,7 +4570,7 @@ const InlineBreakToken* LineBreaker::CreateBreakToken(
 #endif
 
   DCHECK(current_style_);
-  const HeapVector<InlineItem>& items = Items();
+  const InlineItems& items = Items();
   DCHECK_LE(current_.item_index, items.size());
   // If we have reached the end, create no break token.
   if (IsAtEnd()) {

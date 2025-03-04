@@ -42,18 +42,20 @@ UnusedSitePermissionsServiceFactory::UnusedSitePermissionsServiceFactory()
 UnusedSitePermissionsServiceFactory::~UnusedSitePermissionsServiceFactory() =
     default;
 
-KeyedService* UnusedSitePermissionsServiceFactory::BuildServiceInstanceFor(
+std::unique_ptr<KeyedService>
+UnusedSitePermissionsServiceFactory::BuildServiceInstanceForBrowserContext(
     content::BrowserContext* context) const {
-  auto* service = new UnusedSitePermissionsService(
+  return std::make_unique<UnusedSitePermissionsService>(
       context, Profile::FromBrowserContext(context)->GetPrefs());
-  return service;
 }
 
-#if BUILDFLAG(IS_ANDROID)
 bool UnusedSitePermissionsServiceFactory::ServiceIsCreatedWithBrowserContext()
     const {
+#if BUILDFLAG(IS_ANDROID)
   return base::FeatureList::IsEnabled(features::kSafetyHub) ||
          base::FeatureList::IsEnabled(
              safe_browsing::kSafetyHubAbusiveNotificationRevocation);
-}
+#else   // BUILDFLAG(IS_ANDROID)
+  return base::FeatureList::IsEnabled(features::kSafetyHubServicesOnStartUp);
 #endif  // BUILDFLAG(IS_ANDROID)
+}

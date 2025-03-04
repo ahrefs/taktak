@@ -4,22 +4,20 @@
 
 #include "chrome/browser/safe_browsing/download_protection/check_client_download_request_base.h"
 
+#include <algorithm>
+
 #include "base/cancelable_callback.h"
 #include "base/containers/span.h"
 #include "base/functional/bind.h"
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/rand_util.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/strcat.h"
 #include "base/task/bind_post_task.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/extensions/api/safe_browsing_private/safe_browsing_private_event_router.h"
-#include "chrome/browser/extensions/api/safe_browsing_private/safe_browsing_private_event_router_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
 #include "chrome/browser/safe_browsing/download_protection/download_protection_util.h"
-#include "chrome/browser/safe_browsing/download_protection/ppapi_download_request.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "components/prefs/pref_service.h"
 #include "components/safe_browsing/content/browser/web_ui/safe_browsing_ui.h"
@@ -34,6 +32,7 @@
 #include "net/base/load_flags.h"
 #include "net/http/http_request_headers.h"
 #include "net/http/http_status_code.h"
+#include "services/network/public/cpp/resource_request.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/network/public/cpp/simple_url_loader.h"
 #include "services/network/public/mojom/url_response_head.mojom.h"
@@ -221,7 +220,7 @@ void CheckClientDownloadRequestBase::OnUrlAllowlistCheckDone(
 
       default:
         // We only expect the reasons explicitly handled above.
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
   RecordFileExtensionType(kDownloadExtensionUmaName, target_file_path_);
@@ -287,8 +286,8 @@ void CheckClientDownloadRequestBase::GetAdditionalPromptResult(
     LogDeepScanningPrompt(deep_scanning_prompt);
   }
 
-  bool immediate_deep_scan_prompt = ShouldImmediatelyDeepScan(
-      response.request_deep_scan(), /*log_metrics=*/true);
+  bool immediate_deep_scan_prompt =
+      ShouldImmediatelyDeepScan(response.request_deep_scan());
   if (immediate_deep_scan_prompt) {
     *result = DownloadCheckResult::IMMEDIATE_DEEP_SCAN;
     *reason = DownloadCheckResultReason::REASON_IMMEDIATE_DEEP_SCAN;
@@ -300,8 +299,7 @@ void CheckClientDownloadRequestBase::GetAdditionalPromptResult(
 
   // Only record the UMA metric if we're in a population that potentially
   // could prompt for deep scanning.
-  if (ShouldImmediatelyDeepScan(/*server_requests_prompt=*/true,
-                                /*log_metrics=*/false)) {
+  if (ShouldImmediatelyDeepScan(/*server_requests_prompt=*/true)) {
     base::UmaHistogramBoolean(
         "SBClientDownload.ServerRequestsImmediateDeepScan2",
         immediate_deep_scan_prompt);
@@ -335,7 +333,7 @@ void CheckClientDownloadRequestBase::OnRequestBuilt(
            ClientDownloadRequest::SEVEN_ZIP_COMPRESSED_EXECUTABLE) &&
       client_download_request_->archive_summary().parser_status() ==
           ClientDownloadRequest::ArchiveSummary::VALID &&
-      base::ranges::all_of(
+      std::ranges::all_of(
           client_download_request_->archived_binary(),
           [](const ClientDownloadRequest::ArchivedBinary& archived_binary) {
             return !archived_binary.is_executable() &&
@@ -406,38 +404,25 @@ void CheckClientDownloadRequestBase::SendRequest() {
     return;
   }
 
+  CHECK(service_);
+
   NotifySendRequest(client_download_request_.get());
 
   DVLOG(2) << "Sending a request for URL: " << source_url_;
   DVLOG(2) << "Detected " << client_download_request_->archived_binary().size()
            << " archived "
            << "binaries (may be capped)";
-  net::NetworkTrafficAnnotationTag traffic_annotation =
-      net::DefineNetworkTrafficAnnotation("client_download_request", R"(
+  net::PartialNetworkTrafficAnnotationTag partial_traffic_annotation =
+      net::DefinePartialNetworkTrafficAnnotation(
+          "client_download_request", "client_download_request_for_platform", R"(
           semantics {
             sender: "Download Protection Service"
-            description:
-              "Chromium checks whether a given download is likely to be "
-              "dangerous by sending this client download request to Google's "
-              "Safe Browsing servers. Safe Browsing server will respond to "
-              "this request by sending back a verdict, indicating if this "
-              "download is safe or the danger type of this download (e.g. "
-              "dangerous content, uncommon content, potentially harmful, etc)."
-            trigger:
-              "This request is triggered when a download is about to complete, "
-              "the download is not allowlisted, and its file extension is "
-              "supported by download protection service (e.g. executables, "
-              "archives). Please refer to https://cs.chromium.org/chromium/src/"
-              "chrome/browser/resources/safe_browsing/"
-              "download_file_types.asciipb for the complete list of supported "
-              "files."
-            data:
-              "URL of the file to be downloaded, its referrer chain, digest "
-              "and other features extracted from the downloaded file. Refer to "
-              "ClientDownloadRequest message in https://cs.chromium.org/"
-              "chromium/src/components/safe_browsing/csd.proto for all "
-              "submitted features."
             destination: GOOGLE_OWNED_SERVICE
+            internal {
+              contacts {
+                email: "chrome-counter-abuse-downloads@google.com"
+              }
+            }
           }
           policy {
             cookies_allowed: YES
@@ -462,9 +447,11 @@ void CheckClientDownloadRequestBase::SendRequest() {
             deprecated_policies: "SafeBrowsingEnabled"
           })");
   auto resource_request = std::make_unique<network::ResourceRequest>();
-  resource_request->url = PPAPIDownloadRequest::GetDownloadRequestUrl();
+  resource_request->url = service_->GetDownloadRequestUrl();
   resource_request->method = "POST";
   resource_request->load_flags = net::LOAD_DISABLE_CACHE;
+  resource_request->site_for_cookies =
+      net::SiteForCookies::FromUrl(resource_request->url);
 
   if (!access_token_.empty()) {
     LogAuthenticatedCookieResets(
@@ -481,8 +468,10 @@ void CheckClientDownloadRequestBase::SendRequest() {
     return;
   }
 
-  loader_ = network::SimpleURLLoader::Create(std::move(resource_request),
-                                             traffic_annotation);
+  loader_ = network::SimpleURLLoader::Create(
+      std::move(resource_request),
+      service_->delegate()->CompleteClientDownloadRequestTrafficAnnotation(
+          partial_traffic_annotation));
   loader_->AttachStringForUpload(client_download_request_data_,
                                  "application/octet-stream");
   loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
@@ -513,6 +502,11 @@ void CheckClientDownloadRequestBase::OnURLLoaderComplete(
     response_code = loader_->ResponseInfo()->headers->response_code();
   DVLOG(2) << "Received a response for URL: " << source_url_
            << ": success=" << success << " response_code=" << response_code;
+  RecordHttpResponseOrErrorCode("SBClientDownload.DownloadRequestNetworkResult",
+                                loader_->NetError(), response_code);
+  // TODO: crbug.com/383994656 - Remove these metrics once
+  // SBClientDownload.DownloadRequestNetworkResult available on Stable. Alert
+  // monitoring should also be modified.
   if (success) {
     base::UmaHistogramSparse("SBClientDownload.DownloadRequestResponseCode",
                              response_code);
@@ -585,17 +579,24 @@ void CheckClientDownloadRequestBase::OnURLLoaderComplete(
     GetAdditionalPromptResult(response, &result, &reason, &token);
 
     if (!token.empty()) {
-      const TailoredVerdictOverrideData& local_override =
-          WebUIInfoSingleton::GetInstance()->tailored_verdict_override();
       SetDownloadProtectionData(
           token, response.verdict(),
-          local_override.override_value.value_or(response.tailored_verdict()));
+#if !BUILDFLAG(IS_ANDROID)
+          WebUIInfoSingleton::GetInstance()
+              ->tailored_verdict_override()
+              .override_value.value_or(response.tailored_verdict())
+#else
+          response.tailored_verdict()
+#endif
+      );
     }
 
+#if !BUILDFLAG(IS_ANDROID)
     bool upload_requested = response.upload();
     MaybeBeginFeedbackForDownload(result, upload_requested,
                                   client_download_request_data_,
                                   *response_body.get());
+#endif
   }
 
   // We don't need the loader anymore.
@@ -605,31 +606,30 @@ void CheckClientDownloadRequestBase::OnURLLoaderComplete(
       FileTypePolicies::GetInstance()
           ->PolicyForFile(target_file_path_, GURL{}, nullptr)
           .inspection_type();
-  std::string metrics_suffix = "";
+  std::string histogram_name = "SBClientDownload.DownloadRequestDuration";
   base::TimeDelta duration = base::TimeTicks::Now() - start_time_;
+  base::UmaHistogramTimes("SBClientDownload.DownloadRequestDuration", duration);
+
+  std::string metrics_suffix = "";
   switch (inspection_type) {
     case DownloadFileType::NONE:
-      metrics_suffix = ".None";
+      base::StrAppend(&histogram_name, {".None"});
       break;
     case DownloadFileType::ZIP:
-      metrics_suffix = ".Zip";
+      base::StrAppend(&histogram_name, {".Zip"});
       break;
     case DownloadFileType::RAR:
-      metrics_suffix = ".Rar";
+      base::StrAppend(&histogram_name, {".Rar"});
       break;
     case DownloadFileType::DMG:
-      metrics_suffix = ".Dmg";
+      base::StrAppend(&histogram_name, {".Dmg"});
       break;
     case DownloadFileType::SEVEN_ZIP:
-      metrics_suffix = ".SevenZip";
+      base::StrAppend(&histogram_name, {".SevenZip"});
       break;
   }
-  base::UmaHistogramTimes("SBClientDownload.DownloadRequestDuration", duration);
-  base::UmaHistogramTimes(
-      "SBClientDownload.DownloadRequestDuration" + metrics_suffix, duration);
-  base::UmaHistogramMediumTimes(
-      "SBClientDownload.DownloadRequestDurationMedium" + metrics_suffix,
-      duration);
+
+  base::UmaHistogramTimes(histogram_name, duration);
   base::UmaHistogramTimes("SBClientDownload.DownloadRequestNetworkDuration",
                           base::TimeTicks::Now() - request_start_time_);
 

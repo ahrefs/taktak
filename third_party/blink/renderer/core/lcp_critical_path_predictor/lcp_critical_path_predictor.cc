@@ -160,7 +160,7 @@ void LCPCriticalPathPredictor::OnLargestContentfulPaintUpdated(
   if (base::FeatureList::IsEnabled(features::kLCPCriticalPathPredictor) ||
       base::FeatureList::IsEnabled(features::kLCPPLazyLoadImagePreload) ||
       IsTimingPredictorEnabled()) {
-    std::string lcp_element_locator_string =
+    const std::string lcp_element_locator_string =
         element_locator::OfElement(lcp_element).SerializeAsString();
 
     has_lcp_occurred_ = true;
@@ -180,27 +180,28 @@ void LCPCriticalPathPredictor::OnLargestContentfulPaintUpdated(
 
     features::LcppRecordedLcpElementTypes recordable_lcp_element_type =
         features::kLCPCriticalPathPredictorRecordedLcpElementTypes.Get();
-    bool should_record_element_locator =
+    const bool is_image_element = IsA<HTMLImageElement>(lcp_element);
+    const bool is_recordable_type =
         (recordable_lcp_element_type ==
          features::LcppRecordedLcpElementTypes::kAll) ||
         (recordable_lcp_element_type ==
              features::LcppRecordedLcpElementTypes::kImageOnly &&
-         IsA<HTMLImageElement>(lcp_element));
+         is_image_element);
 
-    if (should_record_element_locator) {
-      base::UmaHistogramCounts10000(
-          "Blink.LCPP.LCPElementLocatorSize",
-          base::checked_cast<int>(lcp_element_locator_string.size()));
-
-      if (lcp_element_locator_string.size() <=
-          features::kLCPCriticalPathPredictorMaxElementLocatorLength.Get()) {
-        GetHost().SetLcpElementLocator(
-            lcp_element_locator_string,
-            predicted_lcp_index == kNotFound
-                ? std::nullopt
-                : std::optional<wtf_size_t>(predicted_lcp_index));
-      }
-    }
+    base::UmaHistogramCounts10000(
+        "Blink.LCPP.LCPElementLocatorSize",
+        base::checked_cast<int>(lcp_element_locator_string.size()));
+    const bool is_recordable =
+        is_recordable_type &&
+        (lcp_element_locator_string.size() <=
+         features::kLCPCriticalPathPredictorMaxElementLocatorLength.Get());
+    GetHost().OnLcpUpdated(
+        is_recordable ? std::optional<std::string>(lcp_element_locator_string)
+                      : std::nullopt,
+        is_image_element,
+        predicted_lcp_index == kNotFound
+            ? std::nullopt
+            : std::optional<wtf_size_t>(predicted_lcp_index));
   }
 
   if (base::FeatureList::IsEnabled(features::kLCPPAutoPreconnectLcpOrigin)) {
@@ -320,9 +321,8 @@ void LCPCriticalPathPredictor::OnStartPreload(
   if (!url.ProtocolIsInHTTPFamily()) {
     return;
   }
-  static size_t max_url_length = base::checked_cast<size_t>(
-      features::kHttpDiskCachePrewarmingMaxUrlLength.Get());
-  if (url.GetString().length() > max_url_length) {
+  if (url.GetString().length() >
+      features::kHttpDiskCachePrewarmingMaxUrlLength.Get()) {
     return;
   }
   Document* document = frame_->GetDocument();

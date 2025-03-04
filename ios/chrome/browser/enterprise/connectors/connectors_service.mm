@@ -16,13 +16,28 @@ ConnectorsService::ConnectorsService(
     policy::UserCloudPolicyManager* user_cloud_policy_manager)
     : off_the_record_(off_the_record),
       prefs_(pref_service),
-      user_cloud_policy_manager_(user_cloud_policy_manager) {
+      user_cloud_policy_manager_(user_cloud_policy_manager),
+      connectors_manager_(
+          std::make_unique<ConnectorsManager>(pref_service,
+                                              GetServiceProviderConfig())) {
   DCHECK(prefs_);
 }
+
+ConnectorsService::~ConnectorsService() = default;
 
 bool ConnectorsService::IsConnectorEnabled(AnalysisConnector connector) const {
   // None of the analysis connector policies are supported on iOS.
   return false;
+}
+
+std::optional<std::string> ConnectorsService::GetBrowserDmToken() const {
+  auto browser_dm_token =
+      policy::BrowserDMTokenStorage::Get()->RetrieveDMToken();
+  if (!browser_dm_token.is_valid()) {
+    return std::nullopt;
+  }
+
+  return browser_dm_token.value();
 }
 
 std::optional<ConnectorsServiceBase::DmToken> ConnectorsService::GetDmToken(
@@ -39,13 +54,11 @@ std::optional<ConnectorsServiceBase::DmToken> ConnectorsService::GetDmToken(
   }
 
   DCHECK_EQ(scope, policy::PolicyScope::POLICY_SCOPE_MACHINE);
-  auto browser_dm_token =
-      policy::BrowserDMTokenStorage::Get()->RetrieveDMToken();
-  if (!browser_dm_token.is_valid()) {
+  auto browser_dm_token = GetBrowserDmToken();
+  if (!browser_dm_token) {
     return std::nullopt;
   }
-
-  return DmToken(browser_dm_token.value(),
+  return DmToken(std::move(*browser_dm_token),
                  policy::PolicyScope::POLICY_SCOPE_MACHINE);
 }
 
@@ -62,14 +75,12 @@ const PrefService* ConnectorsService::GetPrefs() const {
 }
 
 ConnectorsManagerBase* ConnectorsService::GetConnectorsManagerBase() {
-  // TODO(crbug.com/370466578): Implement this method.
-  return nullptr;
+  return connectors_manager_.get();
 }
 
 const ConnectorsManagerBase* ConnectorsService::GetConnectorsManagerBase()
     const {
-  // TODO(crbug.com/370466578): Implement this method.
-  return nullptr;
+  return connectors_manager_.get();
 }
 
 policy::CloudPolicyManager*

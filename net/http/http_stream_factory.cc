@@ -102,6 +102,7 @@ HttpStreamFactory::StreamRequestInfo::StreamRequestInfo(
     const HttpRequestInfo& http_request_info)
     : method(http_request_info.method),
       network_anonymization_key(http_request_info.network_anonymization_key),
+      traffic_annotation(http_request_info.traffic_annotation),
       is_http1_allowed(!http_request_info.upload_data_stream ||
                        http_request_info.upload_data_stream->AllowHTTP1()),
       load_flags(http_request_info.load_flags),
@@ -135,9 +136,9 @@ void HttpStreamFactory::ProcessAlternativeServices(
   if (!headers->HasHeader(kAlternativeServiceHeader))
     return;
 
-  std::string alternative_service_str;
-  headers->GetNormalizedHeader(kAlternativeServiceHeader,
-                               &alternative_service_str);
+  std::string alternative_service_str =
+      headers->GetNormalizedHeader(kAlternativeServiceHeader)
+          .value_or(std::string());
   spdy::SpdyAltSvcWireFormat::AlternativeServiceVector
       alternative_service_vector;
   if (!spdy::SpdyAltSvcWireFormat::ParseHeaderFieldValue(
@@ -280,7 +281,7 @@ void HttpStreamFactory::OnJobControllerComplete(JobController* controller) {
   if (it != job_controller_set_.end()) {
     job_controller_set_.erase(it);
   } else {
-    NOTREACHED_IN_MIGRATION();
+    NOTREACHED();
   }
 }
 

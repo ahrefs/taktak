@@ -30,8 +30,13 @@
 #include "components/signin/public/identity_manager/identity_manager.h"
 #include "components/signin/public/identity_manager/identity_utils.h"
 #include "content/public/browser/storage_partition.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "ui/gfx/image/image.h"
+
+#if BUILDFLAG(ENABLE_GLIC)
+#include "chrome/browser/glic/glic_enabling.h"
+#endif
 
 namespace {
 
@@ -43,7 +48,7 @@ void UpdateAccountsPrefs(
     return;
   }
 
-  base::flat_set<std::string> account_ids_in_chrome =
+  base::flat_set<GaiaId> account_ids_in_chrome =
       signin::GetAllGaiaIdsForKeyedPreferences(&identity_manager,
                                                accounts_in_cookie_jar_info);
 
@@ -55,11 +60,7 @@ void UpdateAccountsPrefs(
 
   SigninPrefs signin_prefs(pref_service);
   size_t removed_count = signin_prefs.RemoveAllAccountPrefsExcept(
-      // Convert `std::string` to `SigninPrefs::GaiaId`.
-      base::ToVector(account_ids_in_chrome,
-                     [](const std::string& gaia_id) -> SigninPrefs::GaiaId {
-                       return gaia_id;
-                     }));
+      base::ToVector(account_ids_in_chrome));
 
   if (removed_count > 0) {
     // There is a maximum of 10 Gaia accounts on the web. If we add the Chrome
@@ -82,11 +83,13 @@ void UpdateAccountsPrefs(
 }  // namespace
 
 GAIAInfoUpdateService::GAIAInfoUpdateService(
+    Profile* profile,
     signin::IdentityManager* identity_manager,
     ProfileAttributesStorage* profile_attributes_storage,
     PrefService& pref_service,
     const base::FilePath& profile_path)
-    : identity_manager_(identity_manager),
+    : profile_(profile),
+      identity_manager_(identity_manager),
       profile_attributes_storage_(profile_attributes_storage),
       pref_service_(pref_service),
       profile_path_(profile_path) {
@@ -103,6 +106,10 @@ GAIAInfoUpdateService::GAIAInfoUpdateService(
   }
 
   gaia_id_of_profile_attribute_entry_ = entry->GetGAIAId();
+
+#if BUILDFLAG(ENABLE_GLIC)
+  entry->SetIsGlicEligible(glic::GlicEnabling::IsEnabledForProfile(profile_));
+#endif
 }
 
 GAIAInfoUpdateService::~GAIAInfoUpdateService() = default;
@@ -146,11 +153,18 @@ void GAIAInfoUpdateService::UpdatePrimaryAccount(const AccountInfo& info) {
     entry->SetGAIAPicture(info.last_downloaded_image_url_with_size,
                           info.account_image);
   }
+
+#if BUILDFLAG(ENABLE_GLIC)
+  // TODO(crbug.com/388211126): Make the setter name match with the
+  // `GlicEnabling` function.
+  entry->SetIsGlicEligible(glic::GlicEnabling::IsEnabledForProfile(profile_));
+#endif
 }
 
 void GAIAInfoUpdateService::UpdateAnyAccount(const AccountInfo& info) {
-  if (!info.IsValid())
+  if (!info.IsValid()) {
     return;
+  }
 
   ProfileAttributesEntry* entry =
       profile_attributes_storage_->GetProfileAttributesWithPath(profile_path_);
@@ -169,11 +183,12 @@ void GAIAInfoUpdateService::ClearProfileEntry() {
   if (!entry) {
     return;
   }
-  gaia_id_of_profile_attribute_entry_ = "";
+  gaia_id_of_profile_attribute_entry_ = GaiaId();
   entry->SetGAIAName(std::u16string());
   entry->SetGAIAGivenName(std::u16string());
   entry->SetGAIAPicture(std::string(), gfx::Image());
   entry->SetHostedDomain(std::string());
+  entry->SetIsGlicEligible(false);
 }
 
 void GAIAInfoUpdateService::Shutdown() {

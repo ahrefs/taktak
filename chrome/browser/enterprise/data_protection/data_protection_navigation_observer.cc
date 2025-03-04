@@ -16,14 +16,18 @@
 #include "chrome/browser/safe_browsing/chrome_enterprise_url_lookup_service.h"
 #include "chrome/browser/safe_browsing/chrome_enterprise_url_lookup_service_factory.h"
 #include "components/enterprise/data_controls/core/browser/features.h"
+#include "components/safe_browsing/buildflags.h"
 #include "components/safe_browsing/core/browser/realtime/policy_engine.h"
-#include "components/safe_browsing/core/browser/realtime/url_lookup_service_base.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/url_constants.h"
 #include "extensions/common/constants.h"
+
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
+#include "components/safe_browsing/core/browser/realtime/url_lookup_service_base.h"
+#endif
 
 namespace enterprise_data_protection {
 
@@ -68,11 +72,13 @@ void RunPendingNavigationCallback(
   auto* user_data = GetUserData(web_contents);
   DCHECK(user_data);
 
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
   if (ShouldReportSafeUrlFilteringEvents(user_data)) {
     MaybeTriggerUrlFilteringInterstitialEvent(
         web_contents, web_contents->GetLastCommittedURL(),
         /*threat_type=*/"", *user_data->rt_lookup_response());
   }
+#endif
 
   std::move(callback).Run(user_data->settings());
 }
@@ -147,13 +153,14 @@ void DoLookup(safe_browsing::RealTimeUrlLookupServiceBase* lookup_service,
   DCHECK(web_contents);
   DCHECK(!callback.is_null());
   DCHECK(IsEnterpriseLookupEnabled(web_contents->GetBrowserContext()));
-
+  // The referring_app_info parameter to StartLookup is Android-specific.
   lookup_service->StartLookup(
       url,
       base::BindOnce(&OnRealTimeLookupComplete, std::move(callback),
                      identifier),
       base::SequencedTaskRunner::GetCurrentDefault(),
-      sessions::SessionTabHelper::IdForTab(web_contents));
+      sessions::SessionTabHelper::IdForTab(web_contents),
+      /*referring_app_info=*/std::nullopt);
 }
 
 bool IsScreenshotProtectionEnabled() {
@@ -197,6 +204,7 @@ void DataProtectionNavigationObserver::CreateForNavigationIfNeeded(
     return;
   }
 
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
   // The Data protection settings need to be cleared if:
   // 1. This is a skipped URL. This is needed to handle for example navigating
   // from a watermarked page to the NTP.
@@ -217,10 +225,13 @@ void DataProtectionNavigationObserver::CreateForNavigationIfNeeded(
           safe_browsing::ChromeEnterpriseRealTimeUrlLookupServiceFactory::
               GetForProfile(profile),
           navigation_handle->GetWebContents(), std::move(callback));
+#else
+  std::move(callback).Run(UrlSettings::None());
+#endif
 }
 
 // static
-void DataProtectionNavigationObserver::GetDataProtectionSettings(
+void DataProtectionNavigationObserver::ApplyDataProtectionSettings(
     Profile* profile,
     content::WebContents* web_contents,
     Callback callback) {
@@ -255,8 +266,12 @@ void DataProtectionNavigationObserver::GetDataProtectionSettings(
   auto* lookup_service =
       g_lookup_service
           ? g_lookup_service
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
           : safe_browsing::ChromeEnterpriseRealTimeUrlLookupServiceFactory::
                 GetForProfile(profile);
+#else
+          : nullptr;
+#endif
   if (lookup_service && IsEnterpriseLookupEnabled(profile)) {
     auto lookup_callback = base::BindOnce(
         [](const std::string& identifier,

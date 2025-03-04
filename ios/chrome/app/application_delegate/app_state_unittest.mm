@@ -13,7 +13,6 @@
 #import "base/test/task_environment.h"
 #import "ios/chrome/app/app_startup_parameters.h"
 #import "ios/chrome/app/application_delegate/app_init_stage_test_utils.h"
-#import "ios/chrome/app/application_delegate/app_state+Testing.h"
 #import "ios/chrome/app/application_delegate/app_state_observer.h"
 #import "ios/chrome/app/application_delegate/fake_startup_information.h"
 #import "ios/chrome/app/application_delegate/memory_warning_helper.h"
@@ -26,6 +25,7 @@
 #import "ios/chrome/browser/crash_report/model/crash_helper.h"
 #import "ios/chrome/browser/device_sharing/model/device_sharing_manager.h"
 #import "ios/chrome/browser/safe_mode/ui_bundled/safe_mode_coordinator.h"
+#import "ios/chrome/browser/settings/ui_bundled/settings_navigation_controller.h"
 #import "ios/chrome/browser/shared/coordinator/scene/connection_information.h"
 #import "ios/chrome/browser/shared/coordinator/scene/test/fake_scene_state.h"
 #import "ios/chrome/browser/shared/coordinator/scene/test/stub_browser_provider.h"
@@ -44,7 +44,6 @@
 #import "ios/chrome/browser/signin/model/authentication_service_factory.h"
 #import "ios/chrome/browser/signin/model/fake_authentication_service_delegate.h"
 #import "ios/chrome/browser/ui/device_orientation/scoped_force_portrait_orientation.h"
-#import "ios/chrome/browser/ui/settings/settings_navigation_controller.h"
 #import "ios/chrome/browser/web_state_list/model/web_usage_enabler/web_usage_enabler_browser_agent.h"
 #import "ios/chrome/common/crash_report/crash_helper.h"
 #import "ios/chrome/test/block_cleanup_test.h"
@@ -115,18 +114,6 @@
       [appState queueTransitionToNextInitStage];
       break;
     case AppInitStage::kEnterprise:
-      break;
-    case AppInitStage::kBrowserObjectsForUI:
-      [appState queueTransitionToNextInitStage];
-      break;
-    case AppInitStage::kNormalUI:
-      [appState queueTransitionToNextInitStage];
-      break;
-    case AppInitStage::kFirstRun:
-      [appState queueTransitionToNextInitStage];
-      break;
-    case AppInitStage::kChoiceScreen:
-      [appState queueTransitionToNextInitStage];
       break;
     case AppInitStage::kFinal:
       break;
@@ -215,11 +202,9 @@ class AppStateTest : public BlockCleanupTest {
     TestProfileIOS::Builder builder;
     builder.AddTestingFactory(
         AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
     profile_ = profile_manager_.AddProfileWithBuilder(std::move(builder));
-
-    AuthenticationServiceFactory::CreateAndInitializeForProfile(
-        profile_.get(), std::make_unique<FakeAuthenticationServiceDelegate>());
   }
 
   void TearDown() override {
@@ -358,192 +343,10 @@ class AppStateTest : public BlockCleanupTest {
   DecisionBlock safe_mode_swizzle_block_;
   std::unique_ptr<ScopedBlockSwizzler> safe_mode_swizzler_;
   std::unique_ptr<ScopedBlockSwizzler> connected_scenes_swizzler_;
-  std::unique_ptr<ScopedBlockSwizzler> handle_startup_swizzler_;
   raw_ptr<ProfileIOS> profile_;
 };
 
 #pragma mark - Tests.
-
-using AppStateNoFixtureTest = PlatformTest;
-
-// Test that -willResignActive set cold start to NO and launch record.
-TEST_F(AppStateNoFixtureTest, WillResignActive) {
-  // Setup.
-  base::test::TaskEnvironment task_environment;
-  FakeStartupInformation* startupInformation =
-      [[FakeStartupInformation alloc] init];
-  [startupInformation setIsColdStart:YES];
-
-  IOSChromeScopedTestingLocalState scoped_testing_local_state;
-  TestProfileManagerIOS profile_manager;
-  profile_manager.AddProfileWithBuilder(TestProfileIOS::Builder());
-
-  AppState* appState =
-      [[AppState alloc] initWithStartupInformation:startupInformation];
-
-  [appState addAgent:[[SafeModeAppAgent alloc] init]];
-  AppStateObserverToMockMainController* observer =
-      [AppStateObserverToMockMainController alloc];
-  [appState addObserver:observer];
-
-  // Start init stages.
-  [appState startInitialization];
-  [appState queueTransitionToNextInitStage];
-  [appState queueTransitionToNextInitStage];
-
-  ASSERT_TRUE([startupInformation isColdStart]);
-
-  // Action.
-  [appState willResignActive];
-
-  // Test.
-  EXPECT_FALSE([startupInformation isColdStart]);
-}
-
-// Test that -applicationWillTerminate clears everything.
-TEST_F(AppStateTest, WillTerminate) {
-  // Setup.
-  ios::provider::test::ResetAppDistributionNotificationsState();
-  ASSERT_FALSE(ios::provider::test::AreAppDistributionNotificationsCanceled());
-
-  [[GetStartupInformationMock() stub] setIsFirstRun:YES];
-  [[[GetStartupInformationMock() stub] andReturnValue:@YES] isFirstRun];
-
-  [[GetStartupInformationMock() expect] stopChromeMain];
-
-  AppState* appState = GetAppStateWithMock();
-
-  id appStateMock = OCMPartialMock(GetAppStateWithMock());
-  [[appStateMock expect] completeUIInitialization];
-
-  // Start init stages.
-  [appState startInitialization];
-  [appState queueTransitionToNextInitStage];
-
-  // Initialize the WebUsageEnablerBrowserAgent for all scenes.
-  for (SceneState* connectedScene in appState.connectedScenes) {
-    Browser* test_browser =
-        connectedScene.browserProviderInterface.currentBrowserProvider.browser;
-    WebUsageEnablerBrowserAgent::CreateForBrowser(test_browser);
-  }
-
-  id application = [OCMockObject mockForClass:[UIApplication class]];
-
-  // Action.
-  [appState applicationWillTerminate:application];
-
-  // Test.
-  EXPECT_OCMOCK_VERIFY(GetStartupInformationMock());
-  EXPECT_OCMOCK_VERIFY(application);
-
-  for (SceneState* connectedScene in appState.connectedScenes) {
-    Browser* browser =
-        connectedScene.browserProviderInterface.currentBrowserProvider.browser;
-    EXPECT_FALSE(
-        WebUsageEnablerBrowserAgent::FromBrowser(browser)->IsWebUsageEnabled());
-  }
-
-  EXPECT_TRUE(ios::provider::test::AreAppDistributionNotificationsCanceled());
-}
-
-// Tests that -applicationWillEnterForeground resets components as needed.
-TEST_F(AppStateTest, ApplicationWillEnterForeground) {
-  SwizzleSafeModeShouldStart(NO);
-  [[GetStartupInformationMock() stub] setIsFirstRun:YES];
-  [[[GetStartupInformationMock() stub] andReturnValue:@YES] isFirstRun];
-
-  // Setup.
-  id application = [OCMockObject mockForClass:[UIApplication class]];
-  id metricsMediator = [OCMockObject mockForClass:[MetricsMediator class]];
-  id memoryHelper = [OCMockObject mockForClass:[MemoryWarningHelper class]];
-  std::unique_ptr<Browser> browser =
-      std::make_unique<TestBrowser>(GetProfile());
-
-  [[metricsMediator expect] updateMetricsStateBasedOnPrefsUserTriggered:NO];
-  [[metricsMediator expect]
-      notifyCredentialProviderWasUsed:static_cast<feature_engagement::Tracker*>(
-                                          [OCMArg anyPointer])];
-  [[memoryHelper expect] resetForegroundMemoryWarningCount];
-  [[[memoryHelper stub] andReturnValue:@0] foregroundMemoryWarningCount];
-
-  id appStateMock = OCMPartialMock(GetAppStateWithMock());
-  [[appStateMock expect] completeUIInitialization];
-
-  // Simulate finishing the initialization before going to background.
-  [GetAppStateWithMock() startInitialization];
-  [GetAppStateWithMock() queueTransitionToNextInitStage];
-
-  // Simulate background before going to foreground.
-  [[GetStartupInformationMock() expect] expireFirstUserActionRecorder];
-  [GetAppStateWithMock() applicationDidEnterBackground:application
-                                          memoryHelper:memoryHelper];
-
-  void (^swizzleBlock)() = ^{
-  };
-
-  ScopedBlockSwizzler swizzler(
-      [MetricsMediator class],
-      @selector(logLaunchMetricsWithStartupInformation:connectedScenes:),
-      swizzleBlock);
-
-  // Actions.
-  [GetAppStateWithMock() applicationWillEnterForeground:application
-                                        metricsMediator:metricsMediator
-                                           memoryHelper:memoryHelper];
-
-  // Tests.
-  EXPECT_OCMOCK_VERIFY(metricsMediator);
-  EXPECT_OCMOCK_VERIFY(memoryHelper);
-  EXPECT_OCMOCK_VERIFY(GetStartupInformationMock());
-}
-
-// Tests that -applicationWillEnterForeground starts the browser if the
-// application is in background.
-TEST_F(AppStateTest, ApplicationWillEnterForegroundFromBackground) {
-  // Setup.
-  id application = [OCMockObject mockForClass:[UIApplication class]];
-  id metricsMediator = [OCMockObject mockForClass:[MetricsMediator class]];
-  id memoryHelper = [OCMockObject mockForClass:[MemoryWarningHelper class]];
-
-  [[[GetWindowMock() stub] andReturn:nil] rootViewController];
-  SwizzleSafeModeShouldStart(NO);
-
-  [[[GetStartupInformationMock() stub] andReturnValue:@YES] isColdStart];
-  [[GetStartupInformationMock() stub] setIsFirstRun:YES];
-  [[[GetStartupInformationMock() stub] andReturnValue:@YES] isFirstRun];
-
-  // Simulate finishing the initialization before going to background.
-  [GetAppStateWithMock() startInitialization];
-  [GetAppStateWithMock() queueTransitionToNextInitStage];
-
-  // Actions.
-  [GetAppStateWithMock() applicationWillEnterForeground:application
-                                        metricsMediator:metricsMediator
-                                           memoryHelper:memoryHelper];
-}
-
-// Tests that -applicationDidEnterBackground do nothing if the application has
-// never been in a Foreground stage.
-TEST_F(AppStateTest, ApplicationDidEnterBackgroundStageBackground) {
-  SwizzleSafeModeShouldStart(NO);
-  [[GetStartupInformationMock() stub] setIsFirstRun:YES];
-  [[[GetStartupInformationMock() stub] andReturnValue:@YES] isFirstRun];
-
-  // Setup.
-  ScopedKeyWindow scopedKeyWindow;
-  id application = [OCMockObject mockForClass:[UIApplication class]];
-  id memoryHelper = [OCMockObject mockForClass:[MemoryWarningHelper class]];
-
-  ASSERT_EQ(NSUInteger(0), [scopedKeyWindow.Get() subviews].count);
-
-  // Action.
-  [GetAppStateWithRealWindow(scopedKeyWindow.Get())
-      applicationDidEnterBackground:application
-                       memoryHelper:memoryHelper];
-
-  // Tests.
-  EXPECT_EQ(NSUInteger(0), [scopedKeyWindow.Get() subviews].count);
-}
 
 // Tests that -queueTransitionToNextInitStage transitions to the next stage.
 TEST_F(AppStateTest, queueTransitionToNextInitStage) {

@@ -92,11 +92,11 @@ class GPU_EXPORT CommandBufferProxyImpl : public gpu::CommandBuffer,
   ~CommandBufferProxyImpl() override;
 
   // Connect to a command buffer in the GPU process.
-  ContextResult Initialize(gpu::SurfaceHandle surface_handle,
-                           CommandBufferProxyImpl* share_group,
+  ContextResult Initialize(CommandBufferProxyImpl* share_group,
                            gpu::SchedulingPriority stream_priority,
                            const gpu::ContextCreationAttribs& attribs,
-                           const GURL& active_url);
+                           const GURL& active_url = GURL(),
+                           const std::string_view label = "");
 
   void OnDisconnect();
 
@@ -234,7 +234,11 @@ class GPU_EXPORT CommandBufferProxyImpl : public gpu::CommandBuffer,
   void DisconnectChannel();
 
   // The shared memory area used to update state.
-  gpu::CommandBufferSharedState* shared_state() const;
+  gpu::CommandBufferSharedState* shared_state() {
+    return const_cast<gpu::CommandBufferSharedState*>(
+        std::as_const(*this).shared_state());
+  }
+  const gpu::CommandBufferSharedState* shared_state() const;
 
   base::HistogramBase* GetUMAHistogramEnsureWorkVisibleDuration();
 
@@ -253,7 +257,7 @@ class GPU_EXPORT CommandBufferProxyImpl : public gpu::CommandBuffer,
   // threads, or we guarantee it is used by a single thread by using a thread
   // checker if no lock_ is set.
   raw_ptr<base::Lock> lock_ = nullptr;
-  base::SequenceChecker lockless_sequence_checker_;
+  SEQUENCE_CHECKER(lockless_sequence_checker_);
 
   // Client that wants to listen for important events on the GpuControl.
   raw_ptr<gpu::GpuControlClient> gpu_control_client_ = nullptr;

@@ -4,31 +4,38 @@
 
 #import "ios/chrome/browser/autofill/ui_bundled/bottom_sheet/autofill_edit_profile_bottom_sheet_coordinator.h"
 
+#import <Foundation/Foundation.h>
+
+#import "base/debug/dump_without_crashing.h"
 #import "base/strings/sys_string_conversions.h"
-#import "components/autofill/core/browser/autofill_save_update_address_profile_delegate_ios.h"
-#import "components/autofill/core/browser/data_model/autofill_profile.h"
+#import "components/autofill/core/browser/data_model/addresses/autofill_profile.h"
+#import "components/autofill/core/browser/form_import/addresses/autofill_save_update_address_profile_delegate_ios.h"
 #import "components/infobars/core/infobar.h"
 #import "ios/chrome/browser/autofill/model/bottom_sheet/autofill_bottom_sheet_tab_helper.h"
 #import "ios/chrome/browser/autofill/model/personal_data_manager_factory.h"
-#import "ios/chrome/browser/autofill/ui_bundled/autofill_constants.h"
-#import "ios/chrome/browser/autofill/ui_bundled/autofill_country_selection_table_view_controller.h"
-#import "ios/chrome/browser/autofill/ui_bundled/autofill_profile_edit_mediator.h"
-#import "ios/chrome/browser/autofill/ui_bundled/autofill_profile_edit_mediator_delegate.h"
-#import "ios/chrome/browser/autofill/ui_bundled/autofill_profile_edit_table_view_controller.h"
+#import "ios/chrome/browser/autofill/ui_bundled/address_editor/autofill_constants.h"
+#import "ios/chrome/browser/autofill/ui_bundled/address_editor/autofill_country_selection_table_view_controller.h"
+#import "ios/chrome/browser/autofill/ui_bundled/address_editor/autofill_profile_edit_mediator.h"
+#import "ios/chrome/browser/autofill/ui_bundled/address_editor/autofill_profile_edit_mediator_delegate.h"
+#import "ios/chrome/browser/autofill/ui_bundled/address_editor/autofill_profile_edit_table_view_controller.h"
+#import "ios/chrome/browser/autofill/ui_bundled/address_editor/cells/country_item.h"
 #import "ios/chrome/browser/autofill/ui_bundled/bottom_sheet/autofill_edit_profile_bottom_sheet_table_view_controller.h"
-#import "ios/chrome/browser/autofill/ui_bundled/cells/country_item.h"
 #import "ios/chrome/browser/infobars/model/infobar_ios.h"
 #import "ios/chrome/browser/infobars/model/infobar_manager_impl.h"
 #import "ios/chrome/browser/infobars/model/infobar_type.h"
+#import "ios/chrome/browser/shared/coordinator/alert/action_sheet_coordinator.h"
 #import "ios/chrome/browser/shared/model/browser/browser.h"
 #import "ios/chrome/browser/shared/model/profile/profile_ios.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list.h"
 #import "ios/chrome/browser/shared/ui/table_view/table_view_navigation_controller.h"
+#import "ios/chrome/grit/ios_strings.h"
+#import "ui/base/l10n/l10n_util_mac.h"
 
 @interface AutofillEditProfileBottomSheetCoordinator () <
     AutofillCountrySelectionTableViewControllerDelegate,
     AutofillEditProfileBottomSheetTableViewControllerDelegate,
-    AutofillProfileEditMediatorDelegate>
+    AutofillProfileEditMediatorDelegate,
+    UIAdaptivePresentationControllerDelegate>
 @end
 
 @implementation AutofillEditProfileBottomSheetCoordinator {
@@ -48,11 +55,16 @@
 
   raw_ptr<autofill::PersonalDataManager> _personalDataManager;
   raw_ptr<web::WebState> _webState;
+
+  // The action sheet coordinator, if one is currently being shown.
+  ActionSheetCoordinator* _actionSheetCoordinator;
 }
 
-- (instancetype)initWithBaseViewController:
-                    (UINavigationController*)viewController
-                                   browser:(Browser*)browser {
+- (instancetype)
+    initWithBaseViewController:(UINavigationController*)viewController
+                       browser:(Browser*)browser
+                       handler:
+                           (id<AutofillEditProfileBottomSheetHandler>)handler {
   self = [super initWithBaseViewController:viewController browser:browser];
   if (self) {
     ProfileIOS* profile = browser->GetProfile();
@@ -120,16 +132,11 @@
       [[TableViewNavigationController alloc] initWithTable:_viewController];
   BOOL isIPad =
       UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad;
-  if (isIPad) {
-    _navigationController.modalPresentationStyle = UIModalPresentationFormSheet;
-    _navigationController.modalInPresentation = YES;
-  } else {
-    _navigationController.modalPresentationStyle =
-        UIModalPresentationFullScreen;
-  }
-
+  _navigationController.modalPresentationStyle =
+      isIPad ? UIModalPresentationFormSheet : UIModalPresentationPageSheet;
   _navigationController.modalTransitionStyle =
       UIModalTransitionStyleCoverVertical;
+  _navigationController.presentationController.delegate = self;
 
   [self.baseViewController presentViewController:_navigationController
                                         animated:YES
@@ -141,8 +148,71 @@
   [_navigationController.presentingViewController
       dismissViewControllerAnimated:YES
                          completion:nil];
+  _navigationController.presentationController.delegate = nil;
   _viewController = nil;
   _autofillProfileEditMediator = nil;
+}
+
+#pragma mark - UIAdaptivePresentationControllerDelegate
+
+- (BOOL)presentationControllerShouldDismiss:
+    (UIPresentationController*)presentationController {
+  return [_autofillProfileEditMediator canDismissImmediately];
+}
+
+- (void)presentationControllerDidDismiss:
+    (UIPresentationController*)presentationController {
+  [self didCancelBottomSheetView];
+}
+
+- (void)presentationControllerDidAttemptToDismiss:
+    (UIPresentationController*)presentationController {
+  if (![_autofillProfileEditMediator
+          shouldShowConfirmationDialogOnDismissBySwiping]) {
+    return;
+  }
+
+  _actionSheetCoordinator = [[ActionSheetCoordinator alloc]
+      initWithBaseViewController:_navigationController.topViewController
+                         browser:self.browser
+                           title:nil
+                         message:nil
+                   barButtonItem:_navigationController.topViewController
+                                     .navigationItem.leftBarButtonItem];
+
+  __weak __typeof(self) weakSelf = self;
+  [_actionSheetCoordinator
+      addItemWithTitle:l10n_util::GetNSString(
+                           IDS_IOS_VIEW_CONTROLLER_DISMISS_SAVE_CHANGES)
+                action:^{
+                  [weakSelf dismissActionSheetCoordinator];
+                  AutofillEditProfileBottomSheetCoordinator* strongSelf =
+                      weakSelf;
+                  if (strongSelf) {
+                    [strongSelf->_autofillProfileEditMediator
+                            saveChangesForDismiss];
+                  }
+                }
+                 style:UIAlertActionStyleDefault];
+
+  [_actionSheetCoordinator
+      addItemWithTitle:l10n_util::GetNSString(
+                           IDS_IOS_VIEW_CONTROLLER_DISMISS_DISCARD_CHANGES)
+                action:^{
+                  [weakSelf dismissActionSheetCoordinator];
+                  [weakSelf didCancelBottomSheetView];
+                }
+                 style:UIAlertActionStyleDestructive];
+
+  [_actionSheetCoordinator
+      addItemWithTitle:l10n_util::GetNSString(
+                           IDS_IOS_VIEW_CONTROLLER_DISMISS_CANCEL_CHANGES)
+                action:^{
+                  [weakSelf dismissActionSheetCoordinator];
+                }
+                 style:UIAlertActionStyleCancel];
+
+  [_actionSheetCoordinator start];
 }
 
 #pragma mark - AutofillProfileEditMediatorDelegate
@@ -158,10 +228,12 @@
   AutofillCountrySelectionTableViewController*
       autofillCountrySelectionTableViewController =
           [[AutofillCountrySelectionTableViewController alloc]
-              initWithDelegate:self
-               selectedCountry:country
-                  allCountries:allCountries
-                  settingsView:NO];
+                         initWithDelegate:self
+                          selectedCountry:country
+                             allCountries:allCountries
+                             settingsView:NO
+              previousViewControllerTitle:_navigationController
+                                              .topViewController.title];
 
   [_navigationController
       pushViewController:autofillCountrySelectionTableViewController
@@ -185,6 +257,10 @@
 - (void)didSelectCountry:(CountryItem*)selectedCountry {
   [_navigationController popViewControllerAnimated:YES];
   [_autofillProfileEditMediator didSelectCountry:selectedCountry];
+}
+
+- (void)dismissCountryViewController {
+  [_navigationController popViewControllerAnimated:YES];
 }
 
 #pragma mark - AutofillEditProfileBottomSheetTableViewControllerDelegate
@@ -237,7 +313,7 @@
 
   InfoBarManagerImpl* manager = InfoBarManagerImpl::FromWebState(_webState);
   CHECK(manager);
-  const auto it = base::ranges::find(
+  const auto it = std::ranges::find(
       manager->infobars(), InfobarType::kInfobarTypeSaveAutofillAddressProfile,
       [](const infobars::InfoBar* infobar) {
         return static_cast<const InfoBarIOS*>(infobar)->infobar_type();
@@ -253,6 +329,11 @@
           FromInfobarDelegate(infobar->delegate());
 
   return delegate;
+}
+
+- (void)dismissActionSheetCoordinator {
+  [_actionSheetCoordinator stop];
+  _actionSheetCoordinator = nil;
 }
 
 @end

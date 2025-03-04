@@ -11,6 +11,7 @@
 
 #include "base/scoped_observation.h"
 #import "components/remote_cocoa/app_shim/bridged_content_view.h"
+#import "components/remote_cocoa/app_shim/browser_native_widget_window_mac.h"
 #import "components/remote_cocoa/app_shim/native_widget_mac_nswindow.h"
 #import "components/remote_cocoa/app_shim/native_widget_mac_overlay_nswindow.h"
 #include "components/remote_cocoa/app_shim/remote_cocoa_app_shim_export.h"
@@ -49,7 +50,7 @@ class REMOTE_COCOA_APP_SHIM_EXPORT ImmersiveModeControllerCocoa
     : public display::DisplayObserver {
  public:
   explicit ImmersiveModeControllerCocoa(
-      NativeWidgetMacNSWindow* browser_window,
+      BrowserNativeWidgetWindow* browser_window,
       NativeWidgetMacOverlayNSWindow* overlay_window);
   ~ImmersiveModeControllerCocoa() override;
 
@@ -190,21 +191,13 @@ class REMOTE_COCOA_APP_SHIM_EXPORT ImmersiveModeControllerCocoa
   // complete.
   bool fullscreen_transition_complete_ = false;
 
-  NativeWidgetMacNSWindow* __weak browser_window_;
+  BrowserNativeWidgetWindow* __weak browser_window_;
   NativeWidgetMacOverlayNSWindow* __weak overlay_window_;
   BridgedContentView* __weak overlay_content_view_;
 
   // A controller for top chrome.
   ImmersiveModeTitlebarViewController* __strong
       immersive_mode_titlebar_view_controller_;
-
-  // A controller that keeps a small portion (0.5px) of the fullscreen AppKit
-  // NSWindow on screen.
-  // This controller is used as a workaround for an AppKit bug that displays a
-  // black bar when changing a NSTitlebarAccessoryViewController's
-  // fullScreenMinHeight from zero to non-zero.
-  // TODO(crbug.com/40240734): Remove when fixed by Apple.
-  NSTitlebarAccessoryViewController* __strong thin_titlebar_view_controller_;
 
   ImmersiveModeMapper* __strong immersive_mode_mapper_;
 

@@ -7,6 +7,29 @@
 
 #include "crypto/crypto_export.h"
 
+namespace ash {
+class CryptohomeTokenEncryptor;
+class Key;
+}
+
+namespace syncer {
+class Nigori;
+}
+
+namespace crypto {
+class SubtlePassKey;
+}  // namespace crypto
+
+namespace chromeos::onc {
+crypto::SubtlePassKey MakeCryptoPassKey();
+}
+
+namespace os_crypt_async {
+class FreedesktopSecretKeyProvider;
+}
+
+class OSCryptImpl;
+
 namespace crypto {
 
 // A crypto::SubtlePassKey allows you to call subtle, difficult-to-get-right, or
@@ -27,6 +50,26 @@ class CRYPTO_EXPORT SubtlePassKey final {
   // Deprecated: remove this once the DeriveKey*() methods are deleted from
   // SymmetricKey.
   friend class SymmetricKey;
+
+  // This class uses custom PBKDF2 parameters, and has to keep doing so for
+  // compatibility with persisted data on disk.
+  friend class ash::CryptohomeTokenEncryptor;
+
+  // This class uses custom PBKDF2 parameters - the Nigori spec requires this.
+  friend class syncer::Nigori;
+
+  // ONC EncryptedConfiguration objects can contain and require us to use
+  // arbitrary (possibly attacker-supplied) PBKDF2 parameters.
+  friend SubtlePassKey chromeos::onc::MakeCryptoPassKey();
+
+  // These classes use custom PBKDF2 parameters and have to keep doing so for
+  // compatibility with existing persisted data.
+  friend class ::OSCryptImpl;
+  friend class os_crypt_async::FreedesktopSecretKeyProvider;
+
+  // This class uses custom PBKDF2 parameters which cannot be changed for
+  // compatibility with persisted data.
+  friend class ash::Key;
 };
 
 }  // namespace crypto

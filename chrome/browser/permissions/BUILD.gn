@@ -4,18 +4,15 @@
 
 import("//build/config/ui.gni")
 import("//components/optimization_guide/features.gni")
+import("//components/safe_browsing/buildflags.gni")
 import("//device/vr/buildflags/buildflags.gni")
 import("//services/device/public/cpp/geolocation/buildflags.gni")
 import("//third_party/protobuf/proto_library.gni")
 
 source_set("permissions") {
   sources = [
-    "adaptive_quiet_notification_permission_ui_enabler.cc",
-    "adaptive_quiet_notification_permission_ui_enabler.h",
     "chrome_permissions_client.cc",
     "chrome_permissions_client.h",
-    "contextual_notification_permission_ui_selector.cc",
-    "contextual_notification_permission_ui_selector.h",
     "crowd_deny_preload_data.cc",
     "crowd_deny_preload_data.h",
     "crowd_deny_safe_browsing_request.cc",
@@ -35,16 +32,18 @@ source_set("permissions") {
     "origin_keyed_permission_action_service_factory.h",
     "permission_actions_history_factory.cc",
     "permission_actions_history_factory.h",
-    "permission_auditing_service_factory.cc",
-    "permission_auditing_service_factory.h",
     "permission_decision_auto_blocker_factory.cc",
     "permission_decision_auto_blocker_factory.h",
     "permission_manager_factory.cc",
     "permission_manager_factory.h",
     "permission_revocation_request.cc",
     "permission_revocation_request.h",
+    "permissions_ai_handler.cc",
+    "permissions_ai_handler.h",
     "prediction_based_permission_ui_selector.cc",
     "prediction_based_permission_ui_selector.h",
+    "prediction_model_handler_provider.cc",
+    "prediction_model_handler_provider.h",
     "prediction_service_factory.cc",
     "prediction_service_factory.h",
     "prediction_service_request.cc",
@@ -68,6 +67,7 @@ source_set("permissions") {
   deps = [
     ":permissions_proto",
     "//chrome/browser:browser_process",
+    "//chrome/browser/content_extraction:content_extraction",
     "//chrome/browser/content_settings:content_settings_factory",
     "//chrome/browser/favicon",
     "//chrome/browser/optimization_guide",
@@ -85,11 +85,12 @@ source_set("permissions") {
     "//components/background_sync",
     "//components/content_settings/core/browser",
     "//components/content_settings/core/browser:cookie_settings",
-    "//components/embedder_support:browser_util",
+    "//components/embedder_support:permissions",
     "//components/google/core/common",
     "//components/infobars/content",
     "//components/keyed_service/content",
     "//components/optimization_guide/core",
+    "//components/optimization_guide/proto:optimization_guide_proto",
     "//components/permissions",
     "//components/permissions/prediction_service",
     "//components/pref_registry",
@@ -142,6 +143,7 @@ source_set("permissions") {
 
   if (is_chromeos_ash) {
     deps += [
+      "//chrome/browser/ash/app_mode/isolated_web_app",
       "//chrome/browser/ash/app_mode/web_app",
       "//chrome/browser/ash/privacy_hub",
       "//chrome/browser/ash/shimless_rma",
@@ -167,6 +169,13 @@ source_set("permissions") {
   if (!is_android) {
     deps += [ "//chrome/browser/ui/permission_bubble" ]
   }
+
+  if (safe_browsing_mode != 0) {
+    sources += [
+      "contextual_notification_permission_ui_selector.cc",
+      "contextual_notification_permission_ui_selector.h",
+    ]
+  }
 }
 
 proto_library("permissions_proto") {
@@ -177,7 +186,6 @@ source_set("unit_tests") {
   testonly = true
 
   sources = [
-    "adaptive_quiet_notification_permission_ui_enabler_unittest.cc",
     "chrome_permission_manager_unittest.cc",
     "chrome_permission_request_manager_unittest.cc",
     "contextual_notification_permission_ui_selector_unittest.cc",
@@ -187,6 +195,7 @@ source_set("unit_tests") {
     "permission_context_base_permissions_policy_unittest.cc",
     "permission_revocation_request_unittests.cc",
     "permission_subscription_unittest.cc",
+    "permissions_ai_handler_unittest.cc",
     "prediction_based_permission_ui_selector_unittest.cc",
     "pref_based_quiet_permission_ui_selector_unittest.cc",
     "system/mock_platform_handle.cc",
@@ -197,9 +206,12 @@ source_set("unit_tests") {
     ":permissions",
     ":permissions_proto",
     "//chrome/browser/content_settings:content_settings_factory",
+    "//chrome/browser/optimization_guide:test_support",
     "//chrome/browser/permissions/system",
     "//chrome/browser/search_engines",
     "//chrome/test:test_support",
+    "//components/optimization_guide/core:test_support",
+    "//components/permissions/prediction_service:prediction_service",
     "//components/site_engagement/content",
     "//components/ukm/content",
     "//components/unified_consent",

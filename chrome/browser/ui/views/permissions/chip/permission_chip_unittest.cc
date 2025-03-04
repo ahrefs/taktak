@@ -2,9 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <algorithm>
+
 #include "base/containers/to_vector.h"
 #include "base/memory/raw_ptr.h"
-#include "base/ranges/algorithm.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/frame/test_with_browser_view.h"
 #include "chrome/browser/ui/views/permissions/chip/chip_controller.h"
@@ -81,7 +82,7 @@ class TestDelegate : public permissions::PermissionPrompt::Delegate {
   void Deny() override { requests_.clear(); }
   void Dismiss() override { requests_.clear(); }
   void Ignore() override { requests_.clear(); }
-  void FinalizeCurrentRequests() override { NOTREACHED_IN_MIGRATION(); }
+  void FinalizeCurrentRequests() override { NOTREACHED(); }
   void OpenHelpCenterLink(const ui::Event& event) override {}
   void PreIgnoreQuietPrompt() override { requests_.clear(); }
   void SetManageClicked() override { requests_.clear(); }
@@ -89,6 +90,9 @@ class TestDelegate : public permissions::PermissionPrompt::Delegate {
   void SetHatsShownCallback(base::OnceCallback<void()> callback) override {}
 
   bool RecreateView() override { return false; }
+  const permissions::PermissionPrompt* GetCurrentPrompt() const override {
+    return nullptr;
+  }
 
   bool WasCurrentRequestAlreadyDisplayed() override {
     return was_current_request_already_displayed_;

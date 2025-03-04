@@ -40,7 +40,8 @@ ResponseHolder::GetStreamingCallback() {
 void ResponseHolder::Clear() {
   final_status_future_.Clear();
   log_entry_received_.reset();
-  streamed_responses_.clear();
+  model_execution_info_received_.reset();
+  partial_responses_.clear();
   response_error_ = std::nullopt;
   provided_by_on_device_ = std::nullopt;
   response_received_ = std::nullopt;
@@ -49,15 +50,17 @@ void ResponseHolder::Clear() {
 void ResponseHolder::OnResponse(
     OptimizationGuideModelExecutionResult result,
     std::unique_ptr<ModelQualityLogEntry> log_entry) {
-  if (result.has_value()) {
+  if (result.response.has_value()) {
     OnStreamingResponse(OptimizationGuideModelStreamingExecutionResult(
-        base::ok(
-            StreamingResponse{.response = result.value(), .is_complete = true}),
-        /*provided_by_on_device=*/false, std::move(log_entry)));
+        base::ok(StreamingResponse{.response = result.response.value(),
+                                   .is_complete = true}),
+        /*provided_by_on_device=*/false, std::move(log_entry),
+        std::move(result.execution_info)));
   } else {
     OnStreamingResponse(OptimizationGuideModelStreamingExecutionResult(
-        base::unexpected(result.error()),
-        /*provided_by_on_device=*/false, std::move(log_entry)));
+        base::unexpected(result.response.error()),
+        /*provided_by_on_device=*/false, std::move(log_entry),
+        std::move(result.execution_info)));
   }
 }
 
@@ -66,15 +69,26 @@ void ResponseHolder::OnStreamingResponse(
   if (result.response.has_value() && !result.response->is_complete) {
     EXPECT_FALSE(result.log_entry);
     EXPECT_TRUE(result.provided_by_on_device);
-    streamed_responses_.push_back(GetOutput(*result.response));
+    partial_responses_.push_back(GetOutput(*result.response));
     return;
   }
   provided_by_on_device_ = result.provided_by_on_device;
   log_entry_received_ = std::move(result.log_entry);
+  model_execution_info_received_ = std::move(result.execution_info);
   if (log_entry_received_) {
     auto& id = log_entry_received_->log_ai_data_request()
                    ->model_execution_info()
                    .execution_id();
+    if (result.provided_by_on_device) {
+      EXPECT_TRUE(base::StartsWith(id, "on-device"));
+    } else if (result.response.has_value()) {
+      EXPECT_FALSE(id.empty());
+    } else {
+      // May be empty in some server error cases.
+    }
+  }
+  if (model_execution_info_received_) {
+    auto& id = model_execution_info_received_->execution_id();
     if (result.provided_by_on_device) {
       EXPECT_TRUE(base::StartsWith(id, "on-device"));
     } else if (result.response.has_value()) {

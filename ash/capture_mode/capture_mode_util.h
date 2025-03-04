@@ -9,6 +9,7 @@
 #include <string>
 
 #include "ash/ash_export.h"
+#include "ash/capture_mode/capture_mode_constants.h"
 #include "ash/capture_mode/capture_mode_types.h"
 #include "base/time/time.h"
 #include "ui/gfx/animation/tween.h"
@@ -16,6 +17,8 @@
 #include "ui/gfx/geometry/size.h"
 #include "ui/views/controls/button/button.h"
 #include "ui/views/highlight_border.h"
+
+class PrefService;
 
 namespace aura {
 class Window;
@@ -49,6 +52,8 @@ namespace ash {
 class StopRecordingButtonTray;
 
 namespace capture_mode_util {
+
+ASH_EXPORT PrefService* GetActiveUserPrefService();
 
 // Returns true if the capture mode feature is enabled and capture mode is
 // active. This method allows callers to avoid including the full header for
@@ -243,7 +248,14 @@ gfx::Rect GetEffectivePartialRegionBounds(
 ASH_EXPORT void AddActionButton(views::Button::PressedCallback callback,
                                 std::u16string text,
                                 const gfx::VectorIcon* icon,
-                                const ActionButtonRank rank);
+                                const ActionButtonRank rank,
+                                ActionButtonViewID id);
+
+ASH_EXPORT void AnimateToOpacity(
+    views::Widget* widget,
+    const float opacity,
+    const base::TimeDelta duration =
+        capture_mode::kCaptureUIOpacityChangeDuration);
 
 }  // namespace capture_mode_util
 

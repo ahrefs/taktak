@@ -11,6 +11,7 @@
 #include "components/saved_tab_groups/internal/saved_tab_group_sync_bridge.h"
 #include "components/saved_tab_groups/public/saved_tab_group.h"
 #include "components/saved_tab_groups/public/saved_tab_group_tab.h"
+#include "components/saved_tab_groups/public/utils.h"
 #include "components/saved_tab_groups/test_support/saved_tab_group_test_utils.h"
 #include "components/sync/protocol/saved_tab_group_specifics.pb.h"
 #include "components/tab_groups/tab_group_color.h"
@@ -60,8 +61,6 @@ class SavedTabGroupConversionTest : public testing::Test {
               sp2.local_tab_group_data().local_group_id());
     EXPECT_EQ(sp1.local_tab_group_data().created_before_syncing_tab_groups(),
               sp2.local_tab_group_data().created_before_syncing_tab_groups());
-    EXPECT_EQ(sp1.local_tab_group_data().close_and_delete_on_next_restore(),
-              sp2.local_tab_group_data().close_and_delete_on_next_restore());
     EXPECT_EQ(sp1.local_tab_group_data()
                   .last_user_interaction_time_windows_epoch_micros(),
               sp2.local_tab_group_data()
@@ -115,7 +114,11 @@ TEST_F(SavedTabGroupConversionTest, GroupToDataRetainsData) {
       "last_updater_cache_guid_1",  // last_updater_cache_guid
       /*created_before_syncing_tab_groups=*/true,
       creation_time_windows_epoch_micros, update_time_windows_epoch_micros);
+  const base::Uuid kOriginatingSavedTabGroupGuid =
+      base::Uuid::GenerateRandomV4();
   group.SetLastUserInteractionTime(time_);
+  group.SetOriginatingTabGroupGuid(kOriginatingSavedTabGroupGuid);
+  group.SetIsHidden(true);
 
   proto::SavedTabGroupData proto =
       SavedTabGroupSyncBridge::SavedTabGroupToDataForTest(group);
@@ -201,6 +204,7 @@ TEST_F(SavedTabGroupConversionTest, VerifyLocalFieldsOnProtoToGroupConversion) {
   pb_local_group_data->set_created_before_syncing_tab_groups(true);
   pb_local_group_data->set_last_user_interaction_time_windows_epoch_micros(
       time_in_micros);
+  pb_local_group_data->set_is_group_hidden(true);
 
 #if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
   std::string serialized_local_id = base::Token::CreateRandom().ToString();
@@ -222,8 +226,6 @@ TEST_F(SavedTabGroupConversionTest, VerifyLocalFieldsOnProtoToGroupConversion) {
 // Verifies that merging 2 group objects (1 Sync, 1 SavedTabGroup) merges the
 // most recently updated object correctly.
 TEST_F(SavedTabGroupConversionTest, MergedGroupHoldsCorrectData) {
-  // Create a group.
-  const base::Time old_time = base::Time::Now();
   const std::u16string& title = u"Test title";
   const tab_groups::TabGroupColorId& color = tab_groups::TabGroupColorId::kBlue;
   std::optional<base::Uuid> saved_guid = base::Uuid::GenerateRandomV4();
@@ -241,29 +243,17 @@ TEST_F(SavedTabGroupConversionTest, MergedGroupHoldsCorrectData) {
   group2.SetColor(tab_groups::TabGroupColorId::kGreen);
   group2.SetTitle(u"New Title");
 
-  // Expect that group2 is a valid group to merge with and that group1 hold the
-  // same data after the merge.
-  EXPECT_TRUE(group1.RemoteGroupHasMoreRecentUpdates(
-      group2.update_time_windows_epoch_micros()));
+  // Merge existing group group1 with incoming group group2 and verify that
+  // group1 holds the same data as group2 after the merge.
   group1.MergeRemoteGroupMetadata(
       group2.title(), group2.color(), group2.position(),
       group2.creator_cache_guid(), group2.last_updater_cache_guid(),
       group2.update_time_windows_epoch_micros());
   CompareGroups(group1, group2);
-
-  // Expect that group2 is not a valid group to merge. No merging should be
-  // done.
-  group1.SetColor(tab_groups::TabGroupColorId::kOrange);
-  group1.SetTitle(u"Another title");
-  group2.SetUpdateTimeWindowsEpochMicros(old_time);
-  EXPECT_TRUE(group1.RemoteGroupHasMoreRecentUpdates(
-      group2.update_time_windows_epoch_micros()));
 }
 
 // Verifies that merging 2 tab objects (1 Sync, 1 SavedTabGroupTab)
 TEST_F(SavedTabGroupConversionTest, MergedTabHoldsCorrectData) {
-  // Create a tab.
-  const base::Time old_time = base::Time::Now();
   base::Uuid saved_guid = base::Uuid::GenerateRandomV4();
   SavedTabGroupTab tab1(GURL("Test url"), u"Test Title", saved_guid,
                         /*position=*/0);
@@ -271,22 +261,39 @@ TEST_F(SavedTabGroupConversionTest, MergedTabHoldsCorrectData) {
   // Create a new group with the same data and update it. Calling set functions
   // should internally update update_time_windows_epoch_micros.
   SavedTabGroupTab tab2(tab1);
-  tab2.SetURL(GURL("new url"));
+  tab2.SetURL(GURL("http://xyz.com"));
   tab2.SetTitle(u"New Title");
   tab2.SetCreatorCacheGuid("creator_cache_guid");
   tab2.SetLastUpdaterCacheGuid("last_updater_cache_guid");
 
-  // Expect that tab2 is a valid group to merge with and that the tab1 holds the
-  // same data after the merge.
-  EXPECT_TRUE(tab1.ShouldMergeTab(tab2));
+  // Merge existing tab tab1 with incoming tab tab2 and verify that tab1 holds
+  // the same data as tab2 after the merge.
   tab1.MergeRemoteTab(tab2);
   CompareTabs(tab1, tab2);
+}
 
-  // Expect that tab2 is not a valid group to merge. No merging should be done.
-  tab1.SetTitle(u"A title");
-  tab1.SetURL(GURL("Another url"));
-  tab2.SetUpdateTimeWindowsEpochMicros(old_time);
-  EXPECT_TRUE(tab1.ShouldMergeTab(tab2));
+// Verifies that merging 2 tab objects (1 Sync, 1 SavedTabGroupTab)
+TEST_F(SavedTabGroupConversionTest, MergedTabWithUnsupportedURL) {
+  GURL tab1_url = GURL("http://xyz.com");
+  std::u16string title = u"Test Title";
+  SavedTabGroupTab tab1(tab1_url, title, base::Uuid::GenerateRandomV4(),
+                        /*position=*/0);
+
+  // Create a new tab with the same data and update it. Calling set functions
+  // should internally update update_time_windows_epoch_micros.
+  SavedTabGroupTab remote_tab(tab1);
+  remote_tab.SetURL(GURL(kChromeSavedTabGroupUnsupportedURL));
+  remote_tab.SetTitle(u"New Title");
+  remote_tab.SetCreatorCacheGuid("creator_cache_guid");
+  remote_tab.SetLastUpdaterCacheGuid("last_updater_cache_guid");
+
+  // Merge existing tab with incoming remote tab. The existing tab
+  // should keep its title and URL and accept all other fields.
+  tab1.MergeRemoteTab(remote_tab);
+  EXPECT_EQ(tab1.url(), tab1_url);
+  EXPECT_EQ(tab1.title(), title);
+  EXPECT_EQ(tab1.creator_cache_guid(), "creator_cache_guid");
+  EXPECT_EQ(tab1.last_updater_cache_guid(), "last_updater_cache_guid");
 }
 
 }  // namespace tab_groups

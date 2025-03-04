@@ -12,7 +12,6 @@
 #include "base/location.h"
 #include "base/memory/raw_ptr.h"
 #include "base/metrics/histogram_functions.h"
-#include "base/metrics/histogram_macros.h"
 #include "base/notreached.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
@@ -49,8 +48,7 @@ std::string WriteBlobToFileResultToString(
     case storage::mojom::WriteBlobToFileResult::kSuccess:
       return "Success";
   }
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 
 // Disabled in some tests.
@@ -86,9 +84,8 @@ UmaIDBException ExceptionCodeToUmaEnum(blink::mojom::IDBException code) {
     case blink::mojom::IDBException::kTimeoutError:
       return UmaIDBExceptionTimeoutError;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
-  return UmaIDBExceptionUnknownError;
 }
 
 }  // namespace
@@ -297,28 +294,51 @@ void Transaction::DontAllowInactiveClientToBlockOthers(
 bool Transaction::IsTransactionBlockingOtherClients(
     bool consider_priority) const {
   CHECK_EQ(state_, STARTED);
-  std::set<PartitionedLockHolder*> blocked_requests =
-      bucket_context_->lock_manager().GetBlockedRequests(lock_ids());
-  return std::any_of(
-      blocked_requests.begin(), blocked_requests.end(),
-      [&](PartitionedLockHolder* blocked_lock_holder) {
-        auto* lock_request_data = static_cast<LockRequestData*>(
-            blocked_lock_holder->GetUserData(LockRequestData::kKey));
-        if (!lock_request_data) {
-          return true;
-        }
-        // If `this`
-        //   * comes from a background client (priority > 0), and
-        //   * is equal or higher priority than the blocked transaction's client
-        //     (aka equally or less severely throttled)
-        // then don't worry about blocking it.
-        const int this_priority = connection_->scheduling_priority();
-        if (consider_priority && (this_priority > 0) &&
-            (this_priority <= lock_request_data->scheduling_priority)) {
-          return false;
-        }
-        return lock_request_data->client_token != connection_->client_token();
-      });
+
+  if (database_->OnlyHasOneClient()) {
+    return false;
+  }
+
+  base::TimeTicks start = base::TimeTicks::Now();
+  std::optional<int> scheduling_priority;
+  if (consider_priority) {
+    scheduling_priority = connection_->scheduling_priority();
+  }
+  const bool is_blocking_others =
+      bucket_context_->lock_manager().IsBlockingAnyRequest(
+          lock_ids(),
+          base::BindRepeating(
+              [](std::optional<int> this_priority,
+                 const base::UnguessableToken& this_token,
+                 PartitionedLockHolder* blocked_lock_holder) {
+                auto* lock_request_data = static_cast<LockRequestData*>(
+                    blocked_lock_holder->GetUserData(LockRequestData::kKey));
+                if (!lock_request_data) {
+                  return true;
+                }
+                // If `this`
+                //   * comes from a background client (priority > 0), and
+                //   * is equal or higher priority than the blocked
+                //   transaction's client
+                //     (aka equally or less severely throttled)
+                // then don't worry about blocking it.
+                if (this_priority && (*this_priority > 0) &&
+                    (*this_priority <=
+                     lock_request_data->scheduling_priority)) {
+                  return false;
+                }
+                return lock_request_data->client_token != this_token;
+              },
+              scheduling_priority, connection_->client_token()));
+  base::TimeDelta duration = base::TimeTicks::Now() - start;
+  if (duration > base::Milliseconds(2)) {
+    base::UmaHistogramTimes("IndexedDB.CalculateBlockingStatusLongTimes",
+                            duration);
+    base::UmaHistogramCounts100000(
+        "IndexedDB.CalculateBlockingStatusRequestQueueSize",
+        bucket_context_->lock_manager().RequestsWaitingForMetrics());
+  }
+  return is_blocking_others;
 }
 
 void Transaction::Start() {
@@ -329,6 +349,8 @@ void Transaction::Start() {
     return;
   }
   DCHECK_EQ(CREATED, state_);
+  std::optional scheduling_priority_at_last_state_change =
+      scheduling_priority_at_last_state_change_;
   SetState(STARTED);
   DCHECK(!locks_receiver_.locks.empty());
   diagnostics_.start_time = base::Time::Now();
@@ -345,15 +367,30 @@ void Transaction::Start() {
     case blink::mojom::IDBTransactionMode::ReadOnly:
       base::UmaHistogramMediumTimes(
           "WebCore.IndexedDB.Transaction.ReadOnly.TimeQueued", time_queued);
+      if (scheduling_priority_at_last_state_change == 0) {
+        base::UmaHistogramMediumTimes(
+            "WebCore.IndexedDB.Transaction.ReadOnly.TimeQueued.Foreground",
+            time_queued);
+      }
       break;
     case blink::mojom::IDBTransactionMode::ReadWrite:
       base::UmaHistogramMediumTimes(
           "WebCore.IndexedDB.Transaction.ReadWrite.TimeQueued", time_queued);
+      if (scheduling_priority_at_last_state_change == 0) {
+        base::UmaHistogramMediumTimes(
+            "WebCore.IndexedDB.Transaction.ReadWrite.TimeQueued.Foreground",
+            time_queued);
+      }
       break;
     case blink::mojom::IDBTransactionMode::VersionChange:
       base::UmaHistogramMediumTimes(
           "WebCore.IndexedDB.Transaction.VersionChange.TimeQueued",
           time_queued);
+      if (scheduling_priority_at_last_state_change == 0) {
+        base::UmaHistogramMediumTimes(
+            "WebCore.IndexedDB.Transaction.VersionChange.TimeQueued.Foreground",
+            time_queued);
+      }
       break;
   }
 
@@ -555,7 +592,7 @@ Status Transaction::BlobWriteComplete(
       return CommitPhaseTwo();
     }
   }
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 Status Transaction::DoPendingCommit() {
@@ -626,6 +663,8 @@ Status Transaction::CommitPhaseTwo() {
 
   DCHECK_EQ(state_, COMMITTING);
 
+  std::optional scheduling_priority_at_last_state_change =
+      scheduling_priority_at_last_state_change_;
   SetState(FINISHED);
 
   Status s;
@@ -633,41 +672,45 @@ Status Transaction::CommitPhaseTwo() {
   if (!used_) {
     committed = true;
   } else {
-    const base::TimeDelta active_time =
-        base::Time::Now() - diagnostics_.start_time;
-
     s = backing_store_transaction_->CommitPhaseTwo();
 
     // This measurement includes the time it takes to commit to the backing
-    // store (i.e. LevelDB), not just the blobs. It should replace the
-    // `active_time` measurement.
-    const base::TimeDelta active_time2 =
+    // store (i.e. LevelDB), not just the blobs.
+    const base::TimeDelta active_time =
         base::Time::Now() - diagnostics_.start_time;
 
     switch (mode_) {
       case blink::mojom::IDBTransactionMode::ReadOnly:
-        DEPRECATED_UMA_HISTOGRAM_MEDIUM_TIMES(
-            "WebCore.IndexedDB.Transaction.ReadOnly.TimeActive", active_time);
         base::UmaHistogramMediumTimes(
-            "WebCore.IndexedDB.Transaction.ReadOnly.TimeActive2", active_time2);
+            "WebCore.IndexedDB.Transaction.ReadOnly.TimeActive2", active_time);
+        if (scheduling_priority_at_last_state_change == 0) {
+          base::UmaHistogramMediumTimes(
+              "WebCore.IndexedDB.Transaction.ReadOnly.TimeActive2.Foreground",
+              active_time);
+        }
         break;
       case blink::mojom::IDBTransactionMode::ReadWrite:
-        DEPRECATED_UMA_HISTOGRAM_MEDIUM_TIMES(
-            "WebCore.IndexedDB.Transaction.ReadWrite.TimeActive", active_time);
         base::UmaHistogramMediumTimes(
-            "WebCore.IndexedDB.Transaction.ReadWrite.TimeActive2",
-            active_time2);
+            "WebCore.IndexedDB.Transaction.ReadWrite.TimeActive2", active_time);
+        if (scheduling_priority_at_last_state_change == 0) {
+          base::UmaHistogramMediumTimes(
+              "WebCore.IndexedDB.Transaction.ReadWrite.TimeActive2.Foreground",
+              active_time);
+        }
         break;
       case blink::mojom::IDBTransactionMode::VersionChange:
-        DEPRECATED_UMA_HISTOGRAM_MEDIUM_TIMES(
-            "WebCore.IndexedDB.Transaction.VersionChange.TimeActive",
-            active_time);
         base::UmaHistogramMediumTimes(
             "WebCore.IndexedDB.Transaction.VersionChange.TimeActive2",
-            active_time2);
+            active_time);
+        if (scheduling_priority_at_last_state_change == 0) {
+          base::UmaHistogramMediumTimes(
+              "WebCore.IndexedDB.Transaction.VersionChange.TimeActive2."
+              "Foreground",
+              active_time);
+        }
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
 
     committed = s.ok();
@@ -873,6 +916,12 @@ void Transaction::ResetTimeoutTimer() {
 
 void Transaction::SetState(State state) {
   state_ = state;
+  if (connection_) {
+    scheduling_priority_at_last_state_change_ =
+        connection_->scheduling_priority();
+  } else {
+    scheduling_priority_at_last_state_change_ = std::nullopt;
+  }
   NotifyOfIdbInternalsRelevantChange();
 }
 

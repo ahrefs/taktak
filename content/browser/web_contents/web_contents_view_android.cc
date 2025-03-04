@@ -129,7 +129,7 @@ WebContentsViewAndroid::WebContentsViewAndroid(
     std::unique_ptr<WebContentsViewDelegate> delegate)
     : web_contents_(web_contents),
       delegate_(std::move(delegate)),
-      view_(ui::ViewAndroid::LayoutType::NORMAL),
+      view_(ui::ViewAndroid::LayoutType::kNormal),
       synchronous_compositor_client_(nullptr) {
   view_.SetLayer(cc::slim::Layer::Create());
   view_.set_event_handler(this);
@@ -248,7 +248,7 @@ DropData* WebContentsViewAndroid::GetDropData() const {
 }
 
 gfx::Rect WebContentsViewAndroid::GetViewBounds() const {
-  return gfx::Rect(view_.GetSize());
+  return gfx::Rect(view_.GetSizeDIPs());
 }
 
 void WebContentsViewAndroid::CreateView(gfx::NativeView context) {}
@@ -339,6 +339,10 @@ WebContentsViewAndroid::GetBackForwardTransitionAnimationManager() {
   return back_forward_animation_manager_.get();
 }
 
+void WebContentsViewAndroid::DestroyBackForwardTransitionAnimationManager() {
+  back_forward_animation_manager_.reset();
+}
+
 void WebContentsViewAndroid::ShowContextMenu(RenderFrameHost& render_frame_host,
                                              const ContextMenuParams& params) {
   if (is_active_drag_ && drag_exceeded_movement_threshold_)
@@ -375,7 +379,6 @@ void WebContentsViewAndroid::ShowPopupMenu(
     RenderFrameHost* render_frame_host,
     mojo::PendingRemote<blink::mojom::PopupMenuClient> popup_client,
     const gfx::Rect& bounds,
-    int item_height,
     double item_font_size,
     int selected_item,
     std::vector<blink::mojom::MenuItemPtr> menu_items,
@@ -471,15 +474,6 @@ bool WebContentsViewAndroid::OnDragEvent(const ui::DragEventAndroid& event) {
   switch (event.action()) {
     case JNI_DragEvent::ACTION_DRAG_ENTERED: {
       drag_metadata_.clear();
-      if (!base::FeatureList::IsEnabled(features::kDragDropFiles)) {
-        for (const std::u16string& mime_type : event.mime_types()) {
-          drag_metadata_.push_back(DropData::Metadata::CreateForMimeType(
-              DropData::Kind::STRING, mime_type));
-        }
-        OnDragEntered(event.location(), event.screen_location());
-        break;
-      }
-
       for (const std::u16string& mime_type : event.mime_types()) {
         if (mime_type == base::ASCIIToUTF16(ui::kMimeTypeText) ||
             mime_type == base::ASCIIToUTF16(ui::kMimeTypeHTML) ||
@@ -508,24 +502,6 @@ bool WebContentsViewAndroid::OnDragEvent(const ui::DragEventAndroid& event) {
       drop_data->did_originate_from_renderer = false;
       drop_data->document_is_handling_drag = document_is_handling_drag_;
       JNIEnv* env = AttachCurrentThread();
-      if (!base::FeatureList::IsEnabled(features::kDragDropFiles)) {
-        std::u16string drop_content =
-            ConvertJavaStringToUTF16(env, event.GetJavaContent());
-        for (const std::u16string& mime_type : event.mime_types()) {
-          if (base::EqualsASCII(mime_type, ui::kMimeTypeURIList)) {
-            drop_data->url = GURL(drop_content);
-          } else if (base::EqualsASCII(mime_type, ui::kMimeTypeText)) {
-            drop_data->text = drop_content;
-          } else {
-            drop_data->html = drop_content;
-          }
-        }
-
-        OnPerformDrop(std::move(drop_data), event.location(),
-                      event.screen_location());
-        break;
-      }
-
       std::vector<std::vector<std::string>> filenames;
       base::android::Java2dStringArrayTo2dStringVector(
           env, event.GetJavaFilenames(), &filenames);

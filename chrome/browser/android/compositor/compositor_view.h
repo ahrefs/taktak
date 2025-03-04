@@ -64,7 +64,7 @@ class CompositorView : public content::CompositorClient,
                       const base::android::JavaParamRef<jobject>& object);
   void SurfaceDestroyed(JNIEnv* env,
                         const base::android::JavaParamRef<jobject>& object);
-  void SurfaceChanged(
+  std::optional<int> SurfaceChanged(
       JNIEnv* env,
       const base::android::JavaParamRef<jobject>& object,
       jint format,
@@ -97,6 +97,10 @@ class CompositorView : public content::CompositorClient,
                            const base::android::JavaParamRef<jobject>& object,
                            bool enabled);
   void SetOverlayImmersiveArMode(
+      JNIEnv* env,
+      const base::android::JavaParamRef<jobject>& object,
+      bool enabled);
+  void SetOverlayXrFullScreenMode(
       JNIEnv* env,
       const base::android::JavaParamRef<jobject>& object,
       bool enabled);
@@ -155,6 +159,7 @@ class CompositorView : public content::CompositorClient,
   int content_height_;
   bool overlay_video_mode_;
   bool overlay_immersive_ar_mode_;
+  bool overlay_xr_full_screen_mode_;
 
   base::WeakPtrFactory<CompositorView> weak_factory_{this};
 };

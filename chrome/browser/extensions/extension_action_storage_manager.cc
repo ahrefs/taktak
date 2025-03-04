@@ -186,8 +186,8 @@ base::Value::Dict DefaultsToValue(ExtensionAction* action) {
 ExtensionActionStorageManager::ExtensionActionStorageManager(
     content::BrowserContext* context)
     : browser_context_(context) {
-  extension_action_observation_.Observe(
-      ExtensionActionAPI::Get(browser_context_));
+  extension_action_dispatcher_observation_.Observe(
+      ExtensionActionDispatcher::Get(browser_context_));
   extension_registry_observation_.Observe(
       ExtensionRegistry::Get(browser_context_));
 
@@ -196,8 +196,7 @@ ExtensionActionStorageManager::ExtensionActionStorageManager(
     store->RegisterKey(kBrowserActionStorageKey);
 }
 
-ExtensionActionStorageManager::~ExtensionActionStorageManager() {
-}
+ExtensionActionStorageManager::~ExtensionActionStorageManager() = default;
 
 void ExtensionActionStorageManager::OnExtensionLoaded(
     content::BrowserContext* browser_context,
@@ -232,8 +231,8 @@ void ExtensionActionStorageManager::OnExtensionActionUpdated(
   }
 }
 
-void ExtensionActionStorageManager::OnExtensionActionAPIShuttingDown() {
-  extension_action_observation_.Reset();
+void ExtensionActionStorageManager::OnShuttingDown() {
+  extension_action_dispatcher_observation_.Reset();
 }
 
 void ExtensionActionStorageManager::WriteToStorage(

@@ -41,7 +41,7 @@
 #include "third_party/blink/renderer/modules/canvas/canvas2d/identifiability_study_helper.h"
 #include "third_party/blink/renderer/modules/modules_export.h"
 #include "third_party/blink/renderer/platform/bindings/script_wrappable.h"
-#include "third_party/blink/renderer/platform/graphics/path.h"
+#include "third_party/blink/renderer/platform/geometry/path.h"
 #include "third_party/blink/renderer/platform/heap/forward.h"  // IWYU pragma: keep (blink::Visitor)
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
 #include "third_party/blink/renderer/platform/heap/member.h"
@@ -68,8 +68,7 @@ class MODULES_EXPORT Path2D final : public ScriptWrappable, public CanvasPath {
       case V8UnionPath2DOrString::ContentType::kString:
         return MakeGarbageCollected<Path2D>(script_state, path->GetAsString());
     }
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
+    NOTREACHED();
   }
   static Path2D* Create(ScriptState* script_state) {
     return MakeGarbageCollected<Path2D>(script_state);

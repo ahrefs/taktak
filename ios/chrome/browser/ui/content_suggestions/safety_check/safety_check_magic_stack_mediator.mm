@@ -20,6 +20,7 @@
 #import "ios/chrome/browser/safety_check/model/ios_chrome_safety_check_manager.h"
 #import "ios/chrome/browser/safety_check/model/ios_chrome_safety_check_manager_constants.h"
 #import "ios/chrome/browser/safety_check/model/ios_chrome_safety_check_manager_observer_bridge.h"
+#import "ios/chrome/browser/settings/ui_bundled/notifications/notifications_settings_observer.h"
 #import "ios/chrome/browser/shared/model/prefs/pref_names.h"
 #import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/browser/shared/public/features/system_flags.h"
@@ -33,7 +34,6 @@
 #import "ios/chrome/browser/ui/content_suggestions/safety_check/safety_check_prefs.h"
 #import "ios/chrome/browser/ui/content_suggestions/safety_check/safety_check_state.h"
 #import "ios/chrome/browser/ui/content_suggestions/safety_check/utils.h"
-#import "ios/chrome/browser/ui/settings/notifications/notifications_settings_observer.h"
 
 namespace {
 
@@ -114,8 +114,7 @@ int ImpressionsCount(const base::Value::List& impressions,
       _notificationsObserver.delegate = self;
     }
 
-    if (!safety_check_prefs::IsSafetyCheckInMagicStackDisabled(
-            IsHomeCustomizationEnabled() ? _userState : _localState)) {
+    if (!safety_check_prefs::IsSafetyCheckInMagicStackDisabled(_userState)) {
       if (!_prefObserverBridge) {
         _prefObserverBridge = std::make_unique<PrefObserverBridge>(self);
       }
@@ -131,12 +130,14 @@ int ImpressionsCount(const base::Value::List& impressions,
       _prefObserverBridge->ObserveChangesForPreference(
           prefs::kIosSafetyCheckManagerSafeBrowsingCheckResult,
           &_prefChangeRegistrar);
+
+      _userPrefChangeRegistrar.Init(userState);
+
       _prefObserverBridge->ObserveChangesForPreference(
           safety_check_prefs::kSafetyCheckInMagicStackDisabledPref,
-          &_prefChangeRegistrar);
+          &_userPrefChangeRegistrar);
 
       if (IsHomeCustomizationEnabled()) {
-        _userPrefChangeRegistrar.Init(userState);
         _prefObserverBridge->ObserveChangesForPreference(
             prefs::kHomeCustomizationMagicStackSafetyCheckEnabled,
             &_userPrefChangeRegistrar);
@@ -199,8 +200,7 @@ int ImpressionsCount(const base::Value::List& impressions,
 }
 
 - (void)disableModule {
-  safety_check_prefs::DisableSafetyCheckInMagicStack(
-      IsHomeCustomizationEnabled() ? _userState : _localState);
+  safety_check_prefs::DisableSafetyCheckInMagicStack(_userState);
 }
 
 - (void)reset {
@@ -262,8 +262,7 @@ int ImpressionsCount(const base::Value::List& impressions,
            withPrefService:_localState];
   }
 
-  if (safety_check_prefs::IsSafetyCheckInMagicStackDisabled(
-          IsHomeCustomizationEnabled() ? _userState : _localState)) {
+  if (safety_check_prefs::IsSafetyCheckInMagicStackDisabled(_userState)) {
     // Safety Check can be disabled by long-pressing the module, so
     // SafetyCheckManager can still be running and returning results even after
     // disabling.
@@ -291,8 +290,7 @@ int ImpressionsCount(const base::Value::List& impressions,
 - (void)profileState:(ProfileState*)profileState
     willTransitionToInitStage:(ProfileInitStage)nextInitStage
                 fromInitStage:(ProfileInitStage)fromInitStage {
-  if (!safety_check_prefs::IsSafetyCheckInMagicStackDisabled(
-          IsHomeCustomizationEnabled() ? _userState : _localState) &&
+  if (!safety_check_prefs::IsSafetyCheckInMagicStackDisabled(_userState) &&
       nextInitStage == ProfileInitStage::kFinal &&
       profileState.firstSceneHasInitializedUI &&
       _safetyCheckState.runningState == RunningSafetyCheckState::kRunning) {
@@ -369,7 +367,7 @@ int ImpressionsCount(const base::Value::List& impressions,
     [self runningStateChanged:_safetyCheckState.runningState];
   } else if (preferenceName ==
              safety_check_prefs::kSafetyCheckInMagicStackDisabledPref) {
-    if (safety_check_prefs::IsSafetyCheckInMagicStackDisabled(_localState)) {
+    if (safety_check_prefs::IsSafetyCheckInMagicStackDisabled(_userState)) {
       [self.delegate removeSafetyCheckModule];
     }
   } else if (preferenceName ==
@@ -507,7 +505,7 @@ int ImpressionsCount(const base::Value::List& impressions,
 
   BOOL isOptedIn = push_notification_settings::
       GetMobileNotificationPermissionStatusForClient(
-          PushNotificationClientId::kSafetyCheck, "");
+          PushNotificationClientId::kSafetyCheck, GaiaId());
 
   if (isOptedIn) {
     return NO;

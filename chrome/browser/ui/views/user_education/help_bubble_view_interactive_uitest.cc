@@ -19,10 +19,10 @@
 #include "chrome/browser/user_education/user_education_service_factory.h"
 #include "chrome/test/base/interactive_test_utils.h"
 #include "chrome/test/interaction/interactive_browser_test.h"
-#include "components/user_education/common/help_bubble.h"
-#include "components/user_education/common/help_bubble_factory.h"
-#include "components/user_education/common/help_bubble_factory_registry.h"
-#include "components/user_education/common/help_bubble_params.h"
+#include "components/user_education/common/help_bubble/help_bubble.h"
+#include "components/user_education/common/help_bubble/help_bubble_factory.h"
+#include "components/user_education/common/help_bubble/help_bubble_factory_registry.h"
+#include "components/user_education/common/help_bubble/help_bubble_params.h"
 #include "components/user_education/views/help_bubble_delegate.h"
 #include "components/user_education/views/help_bubble_factory_views.h"
 #include "components/user_education/views/help_bubble_view.h"
@@ -159,8 +159,8 @@ class HelpBubbleViewInteractiveUiTest : public InteractiveBrowserTest {
                       help_bubbles_.emplace_back(factories().CreateHelpBubble(
                           anchor, std::move(params)));
                     }),
-        std::move(WaitForShow(HelpBubbleView::kHelpBubbleElementIdForTesting)
-                      .SetTransitionOnlyOnEvent(true)));
+        WaitForShow(HelpBubbleView::kHelpBubbleElementIdForTesting)
+            .SetTransitionOnlyOnEvent(true));
   }
 
   // Closes the current help bubble and waits for it to hide.
@@ -168,8 +168,8 @@ class HelpBubbleViewInteractiveUiTest : public InteractiveBrowserTest {
     return Steps(
         WithView(HelpBubbleView::kHelpBubbleElementIdForTesting,
                  [](HelpBubbleView* bubble) { bubble->GetWidget()->Close(); }),
-        std::move(WaitForHide(HelpBubbleView::kHelpBubbleElementIdForTesting)
-                      .SetTransitionOnlyOnEvent(true)));
+        WaitForHide(HelpBubbleView::kHelpBubbleElementIdForTesting)
+            .SetTransitionOnlyOnEvent(true));
   }
 
   user_education::HelpBubbleFactoryRegistry& factories() { return factories_; }
@@ -323,7 +323,7 @@ constexpr char kLinuxWaylandErrorMessage[] =
 // Determines whether the current system is Linux + Wayland and the current test
 // should be skipped for reasons described in the error message above.
 bool SkipIfLinuxWayland() {
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)
+#if BUILDFLAG(IS_LINUX)
   return views::test::InteractionTestUtilSimulatorViews::IsWayland();
 #else
   return false;
@@ -366,11 +366,6 @@ IN_PROC_BROWSER_TEST_F(HelpBubbleViewInteractiveUiTest, MAYBE_AnnotateMenu) {
   RunTestSequence(
       // Show the application menu and attach a bubble to a menu item.
       PressButton(kToolbarAppMenuButtonElementId),
-
-      // There may be some shuffling and setting up on some platforms (looking
-      // at you, Lacros) so make sure the menu is fully loaded before trying to
-      // show the help bubble.
-      WaitForShow(AppMenuModel::kDownloadsMenuItem),
 
       // Show the help bubble attached to the menu.
       ShowHelpBubble(AppMenuModel::kDownloadsMenuItem, std::move(params)),
@@ -418,11 +413,6 @@ IN_PROC_BROWSER_TEST_F(HelpBubbleViewInteractiveUiTest, TwoMenuHelpBubbles) {
       // Show the application menu and attach a bubble to two different menu
       // items.
       PressButton(kToolbarAppMenuButtonElementId),
-
-      // There may be some shuffling and setting up on some platforms (looking
-      // at you, Lacros) so make sure the menu is fully loaded before trying to
-      // show the help bubble.
-      WaitForShow(AppMenuModel::kDownloadsMenuItem),
 
       ShowHelpBubble(AppMenuModel::kDownloadsMenuItem, std::move(params1)),
       ShowHelpBubble(AppMenuModel::kMoreToolsMenuItem, std::move(params2)),

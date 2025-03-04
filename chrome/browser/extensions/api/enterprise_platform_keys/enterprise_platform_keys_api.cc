@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -42,10 +43,26 @@ crosapi::mojom::KeystoreService* GetKeystoreService(
 
 std::optional<crosapi::mojom::KeystoreType> KeystoreTypeFromString(
     const std::string& input) {
-  if (input == "user")
+  if (input == "user") {
     return crosapi::mojom::KeystoreType::kUser;
-  if (input == "system")
+  }
+  if (input == "system") {
     return crosapi::mojom::KeystoreType::kDevice;
+  }
+  return std::nullopt;
+}
+
+std::optional<chromeos::platform_keys::KeyType> KeyTypeFromString(
+    const std::string& input) {
+  if (input == "RSASSA-PKCS1-v1_5") {
+    return chromeos::platform_keys::KeyType::kRsassaPkcs1V15;
+  }
+  if (input == "RSA-OAEP") {
+    return chromeos::platform_keys::KeyType::kRsaOaep;
+  }
+  if (input == "ECDSA") {
+    return chromeos::platform_keys::KeyType::kEcdsa;
+  }
   return std::nullopt;
 }
 
@@ -57,8 +74,9 @@ std::string ValidateInput(const std::string& token_id,
                           crosapi::mojom::KeystoreType* keystore) {
   std::optional<crosapi::mojom::KeystoreType> keystore_type =
       KeystoreTypeFromString(token_id);
-  if (!keystore_type)
+  if (!keystore_type) {
     return platform_keys::kErrorInvalidToken;
+  }
 
   *keystore = keystore_type.value();
   return "";
@@ -78,36 +96,44 @@ EnterprisePlatformKeysInternalGenerateKeyFunction::Run() {
   EXTENSION_FUNCTION_VALIDATE(params);
   std::optional<chromeos::platform_keys::TokenId> platform_keys_token_id =
       platform_keys::ApiIdToPlatformKeysTokenId(params->token_id);
-  if (!platform_keys_token_id)
+  if (!platform_keys_token_id) {
     return RespondNow(Error(platform_keys::kErrorInvalidToken));
+  }
 
   chromeos::ExtensionPlatformKeysService* service =
       chromeos::ExtensionPlatformKeysServiceFactory::GetForBrowserContext(
           browser_context());
   DCHECK(service);
 
-  if (params->algorithm.name == "RSASSA-PKCS1-v1_5") {
-    // TODO(pneubeck): Add support for unsigned integers to IDL.
-    EXTENSION_FUNCTION_VALIDATE(params->algorithm.modulus_length &&
-                                *(params->algorithm.modulus_length) >= 0);
-    service->GenerateRSAKey(
-        platform_keys_token_id.value(), *(params->algorithm.modulus_length),
-        params->software_backed, extension_id(),
-        base::BindOnce(
-            &EnterprisePlatformKeysInternalGenerateKeyFunction::OnGeneratedKey,
-            this));
-  } else if (params->algorithm.name == "ECDSA") {
-    EXTENSION_FUNCTION_VALIDATE(params->algorithm.named_curve);
-    service->GenerateECKey(
-        platform_keys_token_id.value(), *(params->algorithm.named_curve),
-        extension_id(),
-        base::BindOnce(
-            &EnterprisePlatformKeysInternalGenerateKeyFunction::OnGeneratedKey,
-            this));
-  } else {
-    NOTREACHED_IN_MIGRATION();
-    EXTENSION_FUNCTION_VALIDATE(false);
+  std::optional<chromeos::platform_keys::KeyType> key_type =
+      KeyTypeFromString(params->algorithm.name);
+  CHECK(key_type.has_value());
+
+  switch (key_type.value()) {
+    case chromeos::platform_keys::KeyType::kRsassaPkcs1V15:
+    case chromeos::platform_keys::KeyType::kRsaOaep:
+      // TODO(pneubeck): Add support for unsigned integers to IDL.
+      EXTENSION_FUNCTION_VALIDATE(params->algorithm.modulus_length &&
+                                  *(params->algorithm.modulus_length) >= 0);
+      service->GenerateRSAKey(
+          platform_keys_token_id.value(), key_type.value(),
+          *(params->algorithm.modulus_length), params->software_backed,
+          extension_id(),
+          base::BindOnce(&EnterprisePlatformKeysInternalGenerateKeyFunction::
+                             OnGeneratedKey,
+                         this));
+      break;
+    case chromeos::platform_keys::KeyType::kEcdsa:
+      EXTENSION_FUNCTION_VALIDATE(params->algorithm.named_curve);
+      service->GenerateECKey(
+          platform_keys_token_id.value(), key_type.value(),
+          *(params->algorithm.named_curve), extension_id(),
+          base::BindOnce(&EnterprisePlatformKeysInternalGenerateKeyFunction::
+                             OnGeneratedKey,
+                         this));
+      break;
   }
+
   return RespondLater();
 }
 
@@ -283,8 +309,7 @@ EnterprisePlatformKeysChallengeMachineKeyFunction::Run() {
       ->ChallengeAttestationOnlyKeystore(
           crosapi::mojom::KeystoreType::kDevice, params->challenge,
           /*migrate=*/params->register_key ? *params->register_key : false,
-          crosapi::mojom::KeystoreSigningAlgorithmName::kRsassaPkcs115,
-          std::move(c));
+          crosapi::mojom::KeystoreAlgorithmName::kRsassaPkcs115, std::move(c));
   return RespondLater();
 }
 
@@ -326,8 +351,7 @@ EnterprisePlatformKeysChallengeUserKeyFunction::Run() {
       ->ChallengeAttestationOnlyKeystore(
           crosapi::mojom::KeystoreType::kUser, params->challenge,
           /*migrate=*/params->register_key,
-          crosapi::mojom::KeystoreSigningAlgorithmName::kRsassaPkcs115,
-          std::move(c));
+          crosapi::mojom::KeystoreAlgorithmName::kRsassaPkcs115, std::move(c));
   return RespondLater();
 }
 
@@ -373,27 +397,26 @@ EnterprisePlatformKeysChallengeKeyFunction::Run() {
       keystore_type = crosapi::mojom::KeystoreType::kDevice;
       break;
     case api::enterprise_platform_keys::Scope::kNone:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   // Default to RSA when not registering a key.
-  crosapi::mojom::KeystoreSigningAlgorithmName algorithm =
-      crosapi::mojom::KeystoreSigningAlgorithmName::kRsassaPkcs115;
+  crosapi::mojom::KeystoreAlgorithmName algorithm =
+      crosapi::mojom::KeystoreAlgorithmName::kRsassaPkcs115;
   if (params->options.register_key.has_value()) {
     EXTENSION_FUNCTION_VALIDATE(
         params->options.register_key->algorithm !=
         api::enterprise_platform_keys::Algorithm::kNone);
     switch (params->options.register_key->algorithm) {
       case api::enterprise_platform_keys::Algorithm::kRsa:
-        algorithm =
-            crosapi::mojom::KeystoreSigningAlgorithmName::kRsassaPkcs115;
+        algorithm = crosapi::mojom::KeystoreAlgorithmName::kRsassaPkcs115;
         break;
       case api::enterprise_platform_keys::Algorithm::kEcdsa: {
-        algorithm = crosapi::mojom::KeystoreSigningAlgorithmName::kEcdsa;
+        algorithm = crosapi::mojom::KeystoreAlgorithmName::kEcdsa;
         break;
       }
       case api::enterprise_platform_keys::Algorithm::kNone:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 

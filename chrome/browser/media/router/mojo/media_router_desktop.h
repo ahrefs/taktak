@@ -46,7 +46,7 @@ class DesktopMediaPickerController;
 namespace content {
 class BrowserContext;
 struct DesktopMediaID;
-}
+}  // namespace content
 
 namespace media {
 class FlingingController;
@@ -152,9 +152,6 @@ class MediaRouterDesktop : public MediaRouterBase, public mojom::MediaRouter {
   void GetLogger(mojo::PendingReceiver<mojom::Logger> receiver) final;
   void GetDebugger(mojo::PendingReceiver<mojom::Debugger> receiver) final;
   void GetLogsAsString(GetLogsAsStringCallback callback) final;
-
-  // ::KeyedService implementation.
-  void Shutdown() override;
 
   // Result callback when Mojo TerminateRoute is invoked.
   // `route_id`: ID of MediaRoute passed to the TerminateRoute request.
@@ -291,6 +288,7 @@ class MediaRouterDesktop : public MediaRouterBase, public mojom::MediaRouter {
     disable_media_route_providers_for_test_ = true;
   }
 
+  friend class CastBrowserControllerTest;
   friend class MediaRouterDesktopTest;
   friend class MediaRouterFactory;
   friend class MediaRouterMojoTest;
@@ -318,6 +316,7 @@ class MediaRouterDesktop : public MediaRouterBase, public mojom::MediaRouter {
                            SendRouteRequestsToMultipleProviders);
   FRIEND_TEST_ALL_PREFIXES(MediaRouterDesktopTest,
                            GetMirroringMediaControllerHost);
+  FRIEND_TEST_ALL_PREFIXES(CastBrowserControllerTest, PausedIcon);
 
   // Represents a query to the MediaRouteProviders for media sinks and caches
   // media sinks returned by MRPs. Holds observers for the query.
@@ -425,30 +424,9 @@ class MediaRouterDesktop : public MediaRouterBase, public mojom::MediaRouter {
     std::vector<raw_ptr<MediaRoutesObserver>> new_observers_;
   };
 
-  // A MediaRoutesObserver that maintains state about the current set of media
-  // routes.
-  class InternalMediaRoutesObserver final : public MediaRoutesObserver {
-   public:
-    explicit InternalMediaRoutesObserver(media_router::MediaRouter* router);
-
-    InternalMediaRoutesObserver(const InternalMediaRoutesObserver&) = delete;
-    InternalMediaRoutesObserver& operator=(const InternalMediaRoutesObserver&) =
-        delete;
-
-    ~InternalMediaRoutesObserver() final;
-
-    // MediaRoutesObserver
-    void OnRoutesUpdated(const std::vector<MediaRoute>& routes) final;
-
-    const std::vector<MediaRoute>& current_routes() const;
-
-   private:
-    std::vector<MediaRoute> current_routes_;
-  };
-
   IssueManager issue_manager_;
 
-  std::unique_ptr<InternalMediaRoutesObserver> internal_routes_observer_;
+  std::vector<MediaRoute> current_routes_;
 
   base::flat_map<MediaSource::Id, std::unique_ptr<MediaSinksQuery>>
       sinks_queries_;

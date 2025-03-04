@@ -98,9 +98,8 @@ public class MostVisitedTilesProcessor extends BaseCarouselSuggestionProcessor {
                         .with(BaseCarouselSuggestionViewProperties.TILES, new ArrayList<>())
                         .with(
                                 BaseCarouselSuggestionViewProperties.CONTENT_DESCRIPTION,
-                                mContext.getResources()
-                                        .getString(
-                                                R.string.accessibility_omnibox_most_visited_list))
+                                mContext.getString(
+                                        R.string.accessibility_omnibox_most_visited_list))
                         .with(
                                 BaseCarouselSuggestionViewProperties.TOP_PADDING,
                                 OmniboxResourceProvider.getMostVisitedCarouselTopPadding(mContext))
@@ -188,7 +187,7 @@ public class MostVisitedTilesProcessor extends BaseCarouselSuggestionProcessor {
         }
 
         var model =
-                new PropertyModel.Builder(TileViewProperties.ALL_KEYS)
+                new PropertyModel.Builder(MostVisitedTileViewProperties.ALL_KEYS)
                         .with(TileViewProperties.TITLE, title)
                         .with(TileViewProperties.TITLE_LINES, 1)
                         .with(
@@ -199,7 +198,7 @@ public class MostVisitedTilesProcessor extends BaseCarouselSuggestionProcessor {
                         .with(
                                 TileViewProperties.ICON_TINT,
                                 ChromeColors.getSecondaryIconTint(
-                                        mContext, /* isIncognito= */ false))
+                                        mContext, /* forceLightIconTint= */ false))
                         .with(TileViewProperties.CONTENT_DESCRIPTION, contentDescription)
                         .with(TileViewProperties.ICON, decoration)
                         .with(

@@ -11,6 +11,8 @@
 #include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
+#include "base/metrics/histogram.h"
+#include "base/metrics/histogram_functions.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/pref_value_map.h"
@@ -18,11 +20,6 @@
 #include "components/search_engines/template_url_data.h"
 #include "components/search_engines/template_url_data_util.h"
 #include "components/search_engines/template_url_prepopulate_data.h"
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-#include "chromeos/crosapi/mojom/prefs.mojom.h"
-#include "chromeos/lacros/lacros_service.h"
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 
 namespace {
 bool g_fallback_search_engines_disabled = false;
@@ -52,9 +49,6 @@ const char DefaultSearchManager::kSuggestionsURLPostParams[] =
     "suggestions_url_post_params";
 const char DefaultSearchManager::kImageURLPostParams[] =
     "image_url_post_params";
-const char DefaultSearchManager::kSideSearchParam[] = "side_search_param";
-const char DefaultSearchManager::kSideImageSearchParam[] =
-    "side_image_search_param";
 const char DefaultSearchManager::kImageSearchBrandingLabel[] =
     "image_search_branding_label";
 const char DefaultSearchManager::kSearchIntentParams[] = "search_intent_params";
@@ -72,11 +66,12 @@ const char DefaultSearchManager::kLastVisited[] = "last_visited";
 
 const char DefaultSearchManager::kUsageCount[] = "usage_count";
 const char DefaultSearchManager::kAlternateURLs[] = "alternate_urls";
-const char DefaultSearchManager::kCreatedByPolicy[] = "created_by_policy";
+const char DefaultSearchManager::kPolicyOrigin[] = "policy_origin";
 const char DefaultSearchManager::kDisabledByPolicy[] = "disabled_by_policy";
 const char DefaultSearchManager::kCreatedFromPlayAPI[] =
     "created_from_play_api";
 const char DefaultSearchManager::kFeaturedByPolicy[] = "featured_by_policy";
+const char DefaultSearchManager::kRequireShortcut[] = "require_shortcut";
 const char DefaultSearchManager::kPreconnectToSearchUrl[] =
     "preconnect_to_search_url";
 const char DefaultSearchManager::kPrefetchLikelyNavigations[] =
@@ -85,23 +80,20 @@ const char DefaultSearchManager::kIsActive[] = "is_active";
 const char DefaultSearchManager::kStarterPackId[] = "starter_pack_id";
 const char DefaultSearchManager::kEnforcedByPolicy[] = "enforced_by_policy";
 
+const char DefaultSearchManager::kDefaultSearchEngineMirroredMetric[] =
+    "Search.DefaultSearchEngineMirrored";
+
 DefaultSearchManager::DefaultSearchManager(
     PrefService* pref_service,
     search_engines::SearchEngineChoiceService* search_engine_choice_service,
-    const ObserverCallback& change_observer
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-    ,
-    bool for_lacros_main_profile
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-    )
+    TemplateURLPrepopulateData::Resolver& prepopulate_data_resolver,
+    const ObserverCallback& change_observer)
     : pref_service_(pref_service),
       search_engine_choice_service_(search_engine_choice_service),
       change_observer_(change_observer),
       search_engine_choice_service_observation_(this),
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-      for_lacros_main_profile_(for_lacros_main_profile),
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-      prefs_default_search_(pref_service, search_engine_choice_service) {
+      prepopulate_data_resolver_(prepopulate_data_resolver),
+      prefs_default_search_(prepopulate_data_resolver) {
   if (pref_service_) {
     pref_change_registrar_.Init(pref_service_);
     pref_change_registrar_.Add(
@@ -124,6 +116,18 @@ DefaultSearchManager::DefaultSearchManager(
     LoadSavedGuestSearch();
   }
   LoadDefaultSearchEngineFromPrefs();
+  const base::Value::Dict& url_dict =
+      pref_service_->GetDict(kDefaultSearchProviderDataPrefName);
+  const base::Value::Dict& mirrored_dict =
+      pref_service_->GetDict(kMirroredDefaultSearchProviderDataPrefName);
+  if (mirrored_dict.empty() && !url_dict.empty()) {
+    pref_service_->SetDict(kMirroredDefaultSearchProviderDataPrefName,
+                           url_dict.Clone());
+  } else {
+    base::UmaHistogramBoolean(
+        DefaultSearchManager::kDefaultSearchEngineMirroredMetric,
+        mirrored_dict == url_dict);
+  }
 }
 
 DefaultSearchManager::~DefaultSearchManager() = default;
@@ -132,6 +136,7 @@ DefaultSearchManager::~DefaultSearchManager() = default;
 void DefaultSearchManager::RegisterProfilePrefs(
     user_prefs::PrefRegistrySyncable* registry) {
   registry->RegisterDictionaryPref(kDefaultSearchProviderDataPrefName);
+  registry->RegisterDictionaryPref(kMirroredDefaultSearchProviderDataPrefName);
 }
 
 // static
@@ -251,31 +256,16 @@ void DefaultSearchManager::OnDefaultSearchPrefChanged() {
   bool source_was_fallback = GetDefaultSearchEngineSource() == FROM_FALLBACK;
 
   LoadDefaultSearchEngineFromPrefs();
+  // Mirror the dse pref to the mirrored pref.
+  const base::Value::Dict& url_dict =
+      pref_service_->GetDict(kDefaultSearchProviderDataPrefName);
+  pref_service_->SetDict(kMirroredDefaultSearchProviderDataPrefName,
+                         url_dict.Clone());
 
   // The effective DSE may have changed unless we were using the fallback source
   // both before and after the above load.
   if (!source_was_fallback || (GetDefaultSearchEngineSource() != FROM_FALLBACK))
     NotifyObserver();
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  if (for_lacros_main_profile_) {
-    auto* lacros_service = chromeos::LacrosService::Get();
-    if (!lacros_service ||
-        !lacros_service->IsAvailable<crosapi::mojom::Prefs>()) {
-      LOG(WARNING) << "crosapi: Prefs API not available";
-      return;
-    }
-
-    const base::Value::Dict& dict =
-        pref_service_->GetDict(kDefaultSearchProviderDataPrefName);
-    if (dict.empty()) {
-      return;
-    }
-    lacros_service->GetRemote<crosapi::mojom::Prefs>()->SetPref(
-        crosapi::mojom::PrefPath::kDefaultSearchProviderDataPrefName,
-        base::Value(dict.Clone()), base::DoNothing());
-  }
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 }
 
 void DefaultSearchManager::OnOverridesPrefChanged() {
@@ -314,8 +304,9 @@ void DefaultSearchManager::LoadDefaultSearchEngineFromPrefs() {
 
   const base::Value::Dict& url_dict =
       pref_service_->GetDict(kDefaultSearchProviderDataPrefName);
-  if (url_dict.empty())
+  if (url_dict.empty()) {
     return;
+  }
 
   if (default_search_mandatory_by_policy_ ||
       default_search_recommended_by_policy_) {
@@ -327,7 +318,7 @@ void DefaultSearchManager::LoadDefaultSearchEngineFromPrefs() {
   if (!turl_data)
     return;
 
-  // Check if default search preference is overriden by extension.
+  // Check if default search preference is overridden by extension.
   if (pref->IsExtensionControlled()) {
     extension_default_search_ = std::move(turl_data);
   } else {
@@ -340,8 +331,7 @@ void DefaultSearchManager::LoadSavedGuestSearch() {
       search_engine_choice_service_->GetSavedSearchEngineBetweenGuestSessions();
   if (prepopulate_id.has_value()) {
     saved_guest_search_ =
-        TemplateURLPrepopulateData::GetPrepopulatedEngineFromFullList(
-            &*pref_service_, &*search_engine_choice_service_, *prepopulate_id);
+        prepopulate_data_resolver_->GetEngineFromFullList(*prepopulate_id);
   } else {
     saved_guest_search_.reset();
   }
@@ -349,8 +339,7 @@ void DefaultSearchManager::LoadSavedGuestSearch() {
 
 void DefaultSearchManager::LoadPrepopulatedFallbackSearch() {
   std::unique_ptr<TemplateURLData> data =
-      TemplateURLPrepopulateData::GetPrepopulatedFallbackSearch(
-          pref_service_, search_engine_choice_service_);
+      prepopulate_data_resolver_->GetFallbackSearch();
   fallback_default_search_ = std::move(data);
 }
 

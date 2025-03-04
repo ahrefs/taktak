@@ -58,10 +58,21 @@ tests.forEach(
       const builder = new MLGraphBuilder(context);
       if (test.output) {
         const inputOperand = builder.input(test.name, test.descriptor);
-        assert_equals(inputOperand.dataType(), test.output.dataType);
-        assert_array_equals(inputOperand.shape(), test.output.shape);
+        assert_equals(inputOperand.dataType, test.output.dataType);
+        assert_array_equals(inputOperand.shape, test.output.shape);
       } else {
         assert_throws_js(
             TypeError, () => builder.input(test.name, test.descriptor));
       }
     }, test.testName));
+
+promise_test(async t => {
+  const builder = new MLGraphBuilder(context);
+
+  const inputDescriptor = {
+      dataType: 'float32',
+      shape: [(context.opSupportLimits().maxTensorByteLength + 1) / 4]};
+
+  assert_throws_js(
+    TypeError, () => builder.input('input', inputDescriptor));
+}, '[input] throw if the output tensor byte length exceeds limit');

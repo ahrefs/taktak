@@ -236,9 +236,15 @@ def main():
 
     build_cmd = [
         sys.executable,
-        os.path.join(THIS_DIR, 'build.py'), '--bootstrap', '--disable-asserts',
-        '--run-tests', '--pgo'
+        os.path.join(THIS_DIR, 'build.py'),
+        '--bootstrap',
+        '--disable-asserts',
+        '--run-tests',
     ]
+    # PGO drastically increases packaging time and x86-64 macs are almost
+    # obsolete while being slow, so don't PGO-optimize x86-64 mac toolchains.
+    if sys.platform != 'darwin' or platform.machine() == 'arm64':
+      build_cmd.append('--pgo')
     if sys.platform != 'darwin':
       build_cmd.append('--thinlto')
     if sys.platform.startswith('linux'):
@@ -308,6 +314,7 @@ def main():
     runtime_package_name = 'clang-mac-runtime-library'
     runtime_packages = set([
         # AddressSanitizer runtime.
+        'lib/clang/$V/lib/darwin/libclang_rt.asan_ios_dynamic.dylib',
         'lib/clang/$V/lib/darwin/libclang_rt.asan_iossim_dynamic.dylib',
         'lib/clang/$V/lib/darwin/libclang_rt.asan_osx_dynamic.dylib',
 
@@ -315,6 +322,8 @@ def main():
         'lib/clang/$V/lib/darwin/libclang_rt.ios.a',
         'lib/clang/$V/lib/darwin/libclang_rt.iossim.a',
         'lib/clang/$V/lib/darwin/libclang_rt.osx.a',
+        'lib/clang/$V/lib/darwin/libclang_rt.tvos.a',
+        'lib/clang/$V/lib/darwin/libclang_rt.tvossim.a',
         'lib/clang/$V/lib/darwin/libclang_rt.watchos.a',
         'lib/clang/$V/lib/darwin/libclang_rt.watchossim.a',
         'lib/clang/$V/lib/darwin/libclang_rt.xros.a',

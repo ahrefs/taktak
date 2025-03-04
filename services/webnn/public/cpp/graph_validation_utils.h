@@ -18,9 +18,6 @@
 
 namespace webnn {
 
-std::string COMPONENT_EXPORT(WEBNN_PUBLIC_CPP)
-    DataTypeConstraintToString(const SupportedDataTypes& constraint_set);
-
 // Represents the `MLConv2dFilterOperandLayout` that specifies the layout format
 // of the filter tensor. O is output channels, I is input channels / groups, H
 // is height and W is the width of filter.
@@ -373,9 +370,12 @@ struct COMPONENT_EXPORT(WEBNN_PUBLIC_CPP) SliceAttributes {
   // The sequence of unsigned integer values indicating the starting index to
   // slice of each input dimension.
   std::vector<uint32_t> starts;
-  // The sequence of unsigned integer values indicating the number of elements
-  // to slice of each input dimension.
+  // The sequence of unsigned integer values indicating the window size to slice
+  // of each input dimension.
   std::vector<uint32_t> sizes;
+  // The sequence of unsigned integer values indicating the strides to slice of
+  // each input dimension.
+  std::vector<uint32_t> strides;
   // The operator label defined by the user.
   std::string label = "";
 };
@@ -512,6 +512,15 @@ base::expected<OperandDescriptor, std::string> COMPONENT_EXPORT(
                             base::span<const uint32_t>>& scales_or_sizes,
         base::span<const uint32_t> axes,
         std::string_view label);
+
+// Validate and infer output information of reverse operator defined in
+// WebIDL here https://www.w3.org/TR/webnn/#api-mlgraphbuilder-reverse
+base::expected<OperandDescriptor, std::string> COMPONENT_EXPORT(
+    WEBNN_PUBLIC_CPP)
+    ValidateReverseAndInferOutput(const ContextProperties& context_properties,
+                                  const OperandDescriptor& input,
+                                  base::span<const uint32_t> axes,
+                                  std::string_view label);
 
 // Validate and infer output information of gather operator defined in
 // WebIDL here https://www.w3.org/TR/webnn/#api-mlgraphbuilder-gather
@@ -758,9 +767,6 @@ base::expected<uint32_t, std::string> COMPONENT_EXPORT(WEBNN_PUBLIC_CPP)
                                        const uint32_t stride,
                                        const uint32_t dilation,
                                        const uint32_t output_padding);
-
-bool COMPONENT_EXPORT(WEBNN_PUBLIC_CPP)
-    IsFloatingPointType(OperandDataType data_type);
 
 // A depthwise conv2d operation is a variant of grouped convolution where the
 // options.groups == input_channels == output_channels according to WebNN conv2d

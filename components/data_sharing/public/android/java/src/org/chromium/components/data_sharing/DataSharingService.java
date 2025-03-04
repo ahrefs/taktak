@@ -4,8 +4,6 @@
 
 package org.chromium.components.data_sharing;
 
-import androidx.annotation.NonNull;
-
 import org.chromium.base.Callback;
 import org.chromium.base.UserDataHost;
 import org.chromium.url.GURL;
@@ -67,17 +65,17 @@ public interface DataSharingService {
         public final SharedDataPreview sharedDataPreview;
 
         /** Result of the action, UNKNOWN if the action was successful. */
-        public final @PeopleGroupActionFailure int actionFailure;
+        public final @DataPreviewActionFailure int actionFailure;
 
         public SharedDataPreviewOrFailureOutcome(
-                SharedDataPreview sharedDataPreview, @PeopleGroupActionFailure int actionFailure) {
+                SharedDataPreview sharedDataPreview, @DataPreviewActionFailure int actionFailure) {
             this.sharedDataPreview = sharedDataPreview;
             this.actionFailure = actionFailure;
         }
     }
 
     /** Result that contains a groupToken and an status of the action that was requested. */
-    public static class ParseURLResult {
+    public static class ParseUrlResult {
         /**
          * The group data requested.
          *
@@ -86,9 +84,9 @@ public interface DataSharingService {
         public final GroupToken groupToken;
 
         /** Result of the action */
-        public final @ParseURLStatus int status;
+        public final @ParseUrlStatus int status;
 
-        public ParseURLResult(GroupToken groupToken, int status) {
+        public ParseUrlResult(GroupToken groupToken, int status) {
             this.groupToken = groupToken;
             this.status = status;
         }
@@ -123,15 +121,6 @@ public interface DataSharingService {
     void removeObserver(Observer observer);
 
     /**
-     * Refresh and read all the group data the user is part of.
-     *
-     * <p>Refresh data if necessary. The result is ordered by group ID.
-     *
-     * @param callback On success passes to the `callback` a set of all groups known to the client.
-     */
-    void readAllGroups(Callback<GroupsDataSetOrFailureOutcome> callback);
-
-    /**
      * Refresh and read the requested group data.
      *
      * <p>Refresh data if necessary.
@@ -148,14 +137,6 @@ public interface DataSharingService {
      * @param callback Return a created group data on success.
      */
     void createGroup(String groupName, Callback<GroupDataOrFailureOutcome> callback);
-
-    /**
-     * Attempt to delete a group.
-     *
-     * @param groupId The group ID to delete.
-     * @param callback The deletion result as PeopleGroupActionOutcome.
-     */
-    void deleteGroup(String groupId, Callback</* PeopleGroupActionOutcome= */ Integer> callback);
 
     /**
      * Attempt to invite a new user to the group.
@@ -216,15 +197,15 @@ public interface DataSharingService {
      * @param groupData The group information needed to create the URL.
      * @return Associated data sharing GURL if successful, else returns null.
      */
-    GURL getDataSharingURL(GroupData groupData);
+    GURL getDataSharingUrl(GroupData groupData);
 
     /**
      * Parse and validate a data sharing URL.
      *
      * @param url The url to be parsed.
-     * @return The parsing result as ParseURLResult.
+     * @return The parsing result as ParseUrlResult.
      */
-    ParseURLResult parseDataSharingURL(GURL url);
+    ParseUrlResult parseDataSharingUrl(GURL url);
 
     /**
      * Ensure that an existing group is visible for new user to join.
@@ -244,9 +225,10 @@ public interface DataSharingService {
             GroupToken groupToken, Callback<SharedDataPreviewOrFailureOutcome> callback);
 
     /** Returns The current instance of {@link DataSharingUIDelegate}. */
-    DataSharingUIDelegate getUIDelegate();
+    DataSharingUIDelegate getUiDelegate();
 
-    /** Returns the current {@link ServiceStatus} of the service. */
-    @NonNull
-    ServiceStatus getServiceStatus();
+    /**
+     * @return {@link Logger} used for recording data sharing logs.
+     */
+    Logger getLogger();
 }

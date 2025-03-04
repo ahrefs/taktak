@@ -60,6 +60,10 @@ const char kCrdSessionTypeFieldName[] = "crdSessionType";
 // The admin's email address.
 const char kAdminEmailFieldName[] = "adminEmail";
 
+// True if CRD should show a confirmation dialog to the user to allow them
+// to confirm/reject the admin session.
+const char kShowConfirmationDialogFieldName[] = "showConfirmationDialog";
+
 // Result payload fields:
 
 // Integer value containing DeviceCommandStartCrdSessionJob::ResultCode
@@ -187,8 +191,9 @@ DeviceCommandStartCrdSessionJob::GetType() const {
 
 bool DeviceCommandStartCrdSessionJob::ParseCommandPayload(
     const std::string& command_payload) {
-  std::optional<base::Value> root(base::JSONReader::Read(command_payload));
-  if (!root || !root->is_dict()) {
+  std::optional<base::Value::Dict> root =
+      base::JSONReader::ReadDict(command_payload);
+  if (!root) {
     LOG(WARNING) << "Rejecting remote command with invalid payload: "
                  << std::quoted(command_payload);
     return false;
@@ -196,30 +201,22 @@ bool DeviceCommandStartCrdSessionJob::ParseCommandPayload(
   CRD_VLOG(1) << "Received remote command with payload "
               << std::quoted(command_payload);
 
-  const base::Value::Dict& root_dict = root->GetDict();
-
   idleness_cutoff_ =
-      base::Seconds(root_dict.FindInt(kIdlenessCutoffFieldName).value_or(0));
+      base::Seconds(root->FindInt(kIdlenessCutoffFieldName).value_or(0));
 
   acked_user_presence_ =
-      root_dict.FindBool(kAckedUserPresenceFieldName).value_or(false);
+      root->FindBool(kAckedUserPresenceFieldName).value_or(false);
 
   CrdSessionType crd_session_type =
-      ToCrdSessionTypeOrDefault(root_dict.FindInt(kCrdSessionTypeFieldName),
+      ToCrdSessionTypeOrDefault(root->FindInt(kCrdSessionTypeFieldName),
                                 CrdSessionType::REMOTE_SUPPORT_SESSION);
 
-  admin_email_ = FindString(root_dict, kAdminEmailFieldName);
+  admin_email_ = FindString(*root, kAdminEmailFieldName);
+
+  show_confirmation_dialog_ = root->FindBool(kShowConfirmationDialogFieldName);
 
   curtain_local_user_session_ =
       (crd_session_type == CrdSessionType::REMOTE_ACCESS_SESSION);
-
-  if (curtain_local_user_session_ &&
-      !base::FeatureList::IsEnabled(
-          remoting::features::kEnableCrdAdminRemoteAccess)) {
-    LOG(WARNING) << "Rejecting CRD session type as CRD remote access feature "
-                    "is not enabled";
-    return false;
-  }
 
   return true;
 }
@@ -379,11 +376,16 @@ bool DeviceCommandStartCrdSessionJob::IsDeviceIdle() const {
 }
 
 bool DeviceCommandStartCrdSessionJob::ShouldShowConfirmationDialog() const {
+  if (show_confirmation_dialog_.has_value()) {
+    return show_confirmation_dialog_.value();
+  }
   switch (GetCurrentUserSessionType()) {
     case UserSessionType::AUTO_LAUNCHED_KIOSK_SESSION:
     case UserSessionType::MANUALLY_LAUNCHED_KIOSK_SESSION:
-    case UserSessionType::NO_SESSION:
       return false;
+
+    case UserSessionType::NO_SESSION:
+      return GetCrdSessionType() == CrdSessionType::REMOTE_SUPPORT_SESSION;
 
     case UserSessionType::AFFILIATED_USER_SESSION:
     case UserSessionType::MANAGED_GUEST_SESSION:
@@ -392,8 +394,7 @@ bool DeviceCommandStartCrdSessionJob::ShouldShowConfirmationDialog() const {
       return true;
 
     case UserSessionType::USER_SESSION_TYPE_UNKNOWN:
-      NOTREACHED_IN_MIGRATION();
-      return true;
+      NOTREACHED();
   }
 }
 
@@ -419,13 +420,14 @@ bool DeviceCommandStartCrdSessionJob::ShouldTerminateUponInput() const {
       return !acked_user_presence_;
 
     case UserSessionType::NO_SESSION:
+      return GetCrdSessionType() != CrdSessionType::REMOTE_SUPPORT_SESSION;
+
     case UserSessionType::UNAFFILIATED_USER_SESSION:
     case UserSessionType::GUEST_SESSION:
       return true;
 
     case UserSessionType::USER_SESSION_TYPE_UNKNOWN:
-      NOTREACHED_IN_MIGRATION();
-      return true;
+      NOTREACHED();
   }
 }
 

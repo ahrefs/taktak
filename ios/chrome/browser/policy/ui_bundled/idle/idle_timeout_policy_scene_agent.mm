@@ -11,8 +11,7 @@
 #import "components/enterprise/idle/metrics.h"
 #import "components/policy/core/common/policy_pref_names.h"
 #import "components/prefs/pref_service.h"
-#import "ios/chrome/app/application_delegate/app_state.h"
-#import "ios/chrome/app/application_delegate/app_state_observer.h"
+#import "ios/chrome/app/profile/profile_init_stage.h"
 #import "ios/chrome/app/profile/profile_state.h"
 #import "ios/chrome/browser/enterprise/model/idle/idle_service_observer_bridge.h"
 #import "ios/chrome/browser/policy/ui_bundled/idle/constants.h"
@@ -20,6 +19,7 @@
 #import "ios/chrome/browser/policy/ui_bundled/idle/idle_timeout_confirmation_coordinator_delegate.h"
 #import "ios/chrome/browser/policy/ui_bundled/idle/idle_timeout_launch_screen_view_controller.h"
 #import "ios/chrome/browser/policy/ui_bundled/idle/idle_timeout_policy_utils.h"
+#import "ios/chrome/browser/scoped_ui_blocker/ui_bundled/scoped_ui_blocker.h"
 #import "ios/chrome/browser/shared/coordinator/scene/scene_ui_provider.h"
 #import "ios/chrome/browser/shared/model/browser/browser.h"
 #import "ios/chrome/browser/shared/model/browser/browser_provider.h"
@@ -30,13 +30,11 @@
 #import "ios/chrome/browser/shared/public/commands/snackbar_commands.h"
 #import "ios/chrome/browser/shared/ui/util/snackbar_util.h"
 #import "ios/chrome/browser/shared/ui/util/uikit_ui_util.h"
-#import "ios/chrome/browser/ui/scoped_ui_blocker/scoped_ui_blocker.h"
 #import "ios/chrome/grit/ios_strings.h"
 #import "ios/web/public/web_state.h"
 #import "ui/base/l10n/l10n_util.h"
 
 @interface IdleTimeoutPolicySceneAgent () <
-    AppStateObserver,
     IdleServiceObserving,
     IdleTimeoutConfirmationCoordinatorDelegate>
 @end
@@ -95,13 +93,6 @@
     _idleService = idleService;
   }
   return self;
-}
-
-#pragma mark - ObservingSceneAgent
-
-- (void)setSceneState:(SceneState*)sceneState {
-  [super setSceneState:sceneState];
-  [self.sceneState.profileState.appState addObserver:self];
 }
 
 #pragma mark - SceneStateObserver
@@ -197,7 +188,6 @@
 
 - (void)tearDownObservers {
   _idleServiceObserverBridge.reset();
-  [self.sceneState.profileState.appState removeObserver:self];
 }
 
 - (PrefService*)prefService {
@@ -276,7 +266,7 @@
 // Returns whether the scene and app states allow for the idle timeout
 // confirmation dialog to be shown if it is needed.
 - (BOOL)isUIAvailableToShowDialog {
-  if (self.sceneState.profileState.appState.initStage < AppInitStage::kFinal) {
+  if (self.sceneState.profileState.initStage < ProfileInitStage::kFinal) {
     // Return NO when the app isn't yet fully initialized.
     return NO;
   }
@@ -304,6 +294,11 @@
 // 1. the UI is available
 // 2. it was never shown or if a scene displaying the dialog
 // was closed and anoher foregrouded window remained open.
+// TODO(crbug.com/364574533): `showIdleTimeoutConfirmation` will be called from
+// `sceneStateDidHideModalOverlay` in the case of multiple profiles when the
+// window that shows the _uiBlocker is closed. Call
+// `stopPresentingAndRunActionsAfterwards` without showing the dialog for <1
+// second as it looks buggy when this happens.
 - (void)maybeShowIdleTimeoutConfirmationDialog {
   // Initially set the pending snackbar flag to false in case it was set on
   // startup but actions failed to complete.
@@ -321,7 +316,8 @@
   // Set the pending snackbar flag for the agent that will show the dialog then
   // show then dismiss any modals and display the dialog.
   _pendingDisplayingSnackbar = YES;
-  _UIBlocker = std::make_unique<ScopedUIBlocker>(self.sceneState);
+  _UIBlocker = std::make_unique<ScopedUIBlocker>(self.sceneState,
+                                                 UIBlockerExtent::kApplication);
   __weak __typeof(self) weakSelf = self;
   [_applicationHandler dismissModalDialogsWithCompletion:^{
     [weakSelf showIdleTimeoutConfirmation];
@@ -407,7 +403,7 @@
   }
 
   _launchScreenWindow = nil;
-  [self.sceneState.window makeKeyAndVisible];
+  [self.sceneState setRootViewControllerKeyAndVisible];
 }
 
 - (BOOL)isLaunchScreenDisplayed {

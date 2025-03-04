@@ -9,13 +9,14 @@
 
 #include <stddef.h>
 
+#include <array>
+
 #include "base/check.h"
 #include "base/run_loop.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/values.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "chrome/common/chrome_paths.h"
@@ -115,7 +116,7 @@ class TestFinishObserver : public content::WebContentsObserver {
 
 class BrowserKeyEventsTest : public InProcessBrowserTest {
  public:
-  BrowserKeyEventsTest() {}
+  BrowserKeyEventsTest() = default;
 
   void SetUpCommandLine(base::CommandLine* command_line) override {
     // Some builders are flaky due to slower loading interacting with
@@ -268,64 +269,115 @@ class BrowserKeyEventsTest : public InProcessBrowserTest {
 
 // TODO(crbug.com/40849047): Re-enable this test
 IN_PROC_BROWSER_TEST_F(BrowserKeyEventsTest, DISABLED_NormalKeyEvents) {
-  static const KeyEventTestData kTestNoInput[] = {
-    // a
-    { ui::VKEY_A, false, false, false, false,
-      false, false, false, false, 3,
-      { "D 65 0 false false false false",
-        "P 97 97 false false false false",
-        "U 65 0 false false false false" } },
-    // shift-a
-    { ui::VKEY_A, false, true, false, false,
-      false, false, false, false, 5,
-      { "D 16 0 false true false false",
-        "D 65 0 false true false false",
-        "P 65 65 false true false false",
-        "U 65 0 false true false false",
-        "U 16 0 false true false false" } },
-    // a, suppress keydown
-    { ui::VKEY_A, false, false, false, false,
-      true, false, false, false, 2,
-      { "D 65 0 false false false false",
-        "U 65 0 false false false false" } },
-  };
+  static const auto kTestNoInput = std::to_array<KeyEventTestData>({
+      // a
+      {ui::VKEY_A,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       3,
+       {"D 65 0 false false false false", "P 97 97 false false false false",
+        "U 65 0 false false false false"}},
+      // shift-a
+      {ui::VKEY_A,
+       false,
+       true,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       5,
+       {"D 16 0 false true false false", "D 65 0 false true false false",
+        "P 65 65 false true false false", "U 65 0 false true false false",
+        "U 16 0 false true false false"}},
+      // a, suppress keydown
+      {ui::VKEY_A,
+       false,
+       false,
+       false,
+       false,
+       true,
+       false,
+       false,
+       false,
+       2,
+       {"D 65 0 false false false false", "U 65 0 false false false false"}},
+  });
 
-  static const KeyEventTestData kTestWithInput[] = {
-    // a
-    { ui::VKEY_A, false, false, false, false,
-      false, false, false, false, 4,
-      { "D 65 0 false false false false",
-        "P 97 97 false false false false",
-        "T a",
-        "U 65 0 false false false false" } },
-    // shift-a
-    { ui::VKEY_A, false, true, false, false,
-      false, false, false, false, 6,
-      { "D 16 0 false true false false",
-        "D 65 0 false true false false",
-        "P 65 65 false true false false",
-        "T A",
-        "U 65 0 false true false false",
-        "U 16 0 false true false false" } },
-    // a, suppress keydown
-    { ui::VKEY_A, false, false, false, false,
-      true, false, false, false, 2,
-      { "D 65 0 false false false false",
-        "U 65 0 false false false false" } },
-    // a, suppress keypress
-    { ui::VKEY_A, false, false, false, false,
-      false, true, false, false, 3,
-      { "D 65 0 false false false false",
-        "P 97 97 false false false false",
-        "U 65 0 false false false false" } },
-    // a, suppress textInput
-    { ui::VKEY_A, false, false, false, false,
-      false, false, false, true, 4,
-      { "D 65 0 false false false false",
-        "P 97 97 false false false false",
-        "T a",
-        "U 65 0 false false false false" } },
-  };
+  static const auto kTestWithInput = std::to_array<KeyEventTestData>({
+      // a
+      {ui::VKEY_A,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       4,
+       {"D 65 0 false false false false", "P 97 97 false false false false",
+        "T a", "U 65 0 false false false false"}},
+      // shift-a
+      {ui::VKEY_A,
+       false,
+       true,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       6,
+       {"D 16 0 false true false false", "D 65 0 false true false false",
+        "P 65 65 false true false false", "T A",
+        "U 65 0 false true false false", "U 16 0 false true false false"}},
+      // a, suppress keydown
+      {ui::VKEY_A,
+       false,
+       false,
+       false,
+       false,
+       true,
+       false,
+       false,
+       false,
+       2,
+       {"D 65 0 false false false false", "U 65 0 false false false false"}},
+      // a, suppress keypress
+      {ui::VKEY_A,
+       false,
+       false,
+       false,
+       false,
+       false,
+       true,
+       false,
+       false,
+       3,
+       {"D 65 0 false false false false", "P 97 97 false false false false",
+        "U 65 0 false false false false"}},
+      // a, suppress textInput
+      {ui::VKEY_A,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       true,
+       4,
+       {"D 65 0 false false false false", "P 97 97 false false false false",
+        "T a", "U 65 0 false false false false"}},
+  });
 
   ASSERT_TRUE(embedded_test_server()->Start());
 
@@ -488,8 +540,7 @@ IN_PROC_BROWSER_TEST_F(BrowserKeyEventsTest, CommandKeyEvents) {
 #endif
 
 // https://crbug.com/81451 for mac
-// https://crbug.com/1249688 for Lacros
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_CHROMEOS_LACROS)
+#if BUILDFLAG(IS_MAC)
 #define MAYBE_AccessKeys DISABLED_AccessKeys
 #else
 #define MAYBE_AccessKeys AccessKeys

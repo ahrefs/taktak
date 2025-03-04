@@ -19,9 +19,12 @@ import org.jni_zero.CalledByNative;
 import org.jni_zero.JNINamespace;
 import org.jni_zero.NativeMethods;
 
+import org.chromium.base.BuildInfo;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
+import org.chromium.base.metrics.ScopedSysTraceEvent;
 import org.chromium.net.NetworkChangeNotifier;
+import org.chromium.net.RegistrationPolicyAlwaysRegister;
 import org.chromium.net.httpflags.BaseFeature;
 import org.chromium.net.httpflags.Flags;
 import org.chromium.net.httpflags.HttpFlagsLoader;
@@ -45,6 +48,8 @@ public class CronetLibraryLoader {
     private static boolean sInitialized;
 
     private static final String LIBRARY_NAME = "cronet." + ImplVersion.getCronetVersion();
+    private static final String TESTING_LIBRARY_NAME = LIBRARY_NAME + "_for_testing";
+    private static boolean sSwitchToTestLibrary;
     @VisibleForTesting public static final String TAG = CronetLibraryLoader.class.getSimpleName();
     // Thread used for initialization work and processing callbacks for
     // long-lived global singletons. This thread lives forever as things like
@@ -55,6 +60,15 @@ public class CronetLibraryLoader {
     private static final ConditionVariable sWaitForLibLoad = new ConditionVariable();
 
     private static final ConditionVariable sHttpFlagsLoaded = new ConditionVariable();
+
+    @VisibleForTesting
+    public static final String UPDATE_NETWORK_STATE_ONCE_ON_STARTUP_FLAG_NAME =
+            "Cronet_UpdateNetworkStateOnlyOnceOnStartup";
+
+    @VisibleForTesting
+    public static final String INITIALIZE_BUILD_INFO_ON_STARTUP =
+            "Cronet_InitializeBuildInfoOnStartup";
+
     private static ResolvedFlags sHttpFlags;
 
     /**
@@ -84,46 +98,101 @@ public class CronetLibraryLoader {
         return ensureInitialized(applicationContext, builder, /* libAlreadyLoaded= */ false);
     }
 
+    /**
+     * This method will be called by the Zygote pre-fork to preload the native code. Which means
+     * that this will be dead code in Chromium but it will be used in AOSP.
+     */
+    public static void preload() {
+        loadLibrary();
+    }
+
+    @VisibleForTesting
+    public static void loadLibrary() {
+        if (sSwitchToTestLibrary) {
+            System.loadLibrary(TESTING_LIBRARY_NAME);
+        } else {
+            System.loadLibrary(LIBRARY_NAME);
+        }
+    }
+
+    @VisibleForTesting
+    public static void switchToTestLibrary() {
+        sSwitchToTestLibrary = true;
+    }
+
     public static boolean ensureInitialized(
             Context applicationContext,
             final CronetEngineBuilderImpl builder,
             boolean libAlreadyLoaded) {
-        synchronized (sLoadLock) {
-            if (sInitialized) return false;
-            ContextUtils.initApplicationContext(applicationContext);
-            // The init thread may already be running if a previous initialization attempt failed.
-            // In this case there is no need to spin it up again.
-            //
-            // Note: if we never succeed in loading the library, the init thread will end up
-            // blocking on `sWaitForLibLoad` forever. Obviously this is suboptimal, but given this
-            // is not supposed to fail, it's arguably benign.
-            if (!sInitThread.isAlive()) {
-                sInitThread.start();
-                postToInitThread(
-                        () -> {
-                            initializeOnInitThread();
-                        });
-            }
-            if (!libAlreadyLoaded) {
-                if (builder.libraryLoader() != null) {
-                    builder.libraryLoader().loadLibrary(LIBRARY_NAME);
-                } else {
-                    System.loadLibrary(LIBRARY_NAME);
+        try (var traceEvent = ScopedSysTraceEvent.scoped("CronetLibraryLoader#ensureInitialized")) {
+            synchronized (sLoadLock) {
+                if (sInitialized) return false;
+                ContextUtils.initApplicationContext(applicationContext);
+                // The init thread may already be running if a previous initialization attempt
+                // failed. In this case there is no need to spin it up again.
+                //
+                // Note: if we never succeed in loading the library, the init thread will end up
+                // blocking on `sWaitForLibLoad` forever. Obviously this is suboptimal, but given
+                // this is not supposed to fail, it's arguably benign.
+                if (!sInitThread.isAlive()) {
+                    try (var startInitThreadTraceEvent =
+                            ScopedSysTraceEvent.scoped(
+                                    "CronetLibraryLoader#ensureInitialized starting init thread")) {
+                        sInitThread.start();
+                        postToInitThread(
+                                () -> {
+                                    initializeOnInitThread();
+                                });
+                    }
                 }
+                if (!libAlreadyLoaded) {
+                    try (var loadLibTraceEvent =
+                            ScopedSysTraceEvent.scoped(
+                                    "CronetLibraryLoader#ensureInitialized loading native"
+                                            + " library")) {
+                        if (builder.libraryLoader() != null) {
+                            builder.libraryLoader().loadLibrary(LIBRARY_NAME);
+                        } else {
+                            loadLibrary();
+                        }
+                    }
+                }
+                try (var nativeInitTraceEvent =
+                        ScopedSysTraceEvent.scoped(
+                                "CronetLibraryLoader#ensureInitialized calling nativeInit")) {
+                    CronetLibraryLoaderJni.get().nativeInit();
+                }
+                var initializeBuildInfoOnStartup =
+                        getHttpFlags().flags().get(INITIALIZE_BUILD_INFO_ON_STARTUP);
+
+                // The flag is considered active if it is absent unlike the usual case
+                // where the flag is considered active only if it's "true". This is needed
+                // to ensure we don't change the behaviour.
+                if (initializeBuildInfoOnStartup == null
+                        || initializeBuildInfoOnStartup.getBoolValue()) {
+                    // This is added here to maintain the previous behaviour of Cronet where
+                    // it would initialize BuildInfo when it calls `getCronetVersion` in the
+                    // proceeding line. We want to A/B on the impact of removing this.
+                    BuildInfo.getInstance();
+                }
+                String implVersion = ImplVersion.getCronetVersion();
+                if (!implVersion.equals(CronetLibraryLoaderJni.get().getCronetVersion())) {
+                    throw new RuntimeException(
+                            String.format(
+                                    "Expected Cronet version number %s, "
+                                            + "actual version number %s.",
+                                    implVersion, CronetLibraryLoaderJni.get().getCronetVersion()));
+                }
+                Log.i(
+                        TAG,
+                        "Cronet version: %s, arch: %s",
+                        implVersion,
+                        System.getProperty("os.arch"));
+                setNativeLoggingLevel();
+                sWaitForLibLoad.open();
+                sInitialized = true;
+                return true;
             }
-            CronetLibraryLoaderJni.get().nativeInit();
-            String implVersion = ImplVersion.getCronetVersion();
-            if (!implVersion.equals(CronetLibraryLoaderJni.get().getCronetVersion())) {
-                throw new RuntimeException(
-                        String.format(
-                                "Expected Cronet version number %s, " + "actual version number %s.",
-                                implVersion, CronetLibraryLoaderJni.get().getCronetVersion()));
-            }
-            Log.i(TAG, "Cronet version: %s, arch: %s", implVersion, System.getProperty("os.arch"));
-            setNativeLoggingLevel();
-            sWaitForLibLoad.open();
-            sInitialized = true;
-            return true;
         }
     }
 
@@ -157,52 +226,98 @@ public class CronetLibraryLoader {
      * NetworkChangeNotifier is initialzied and the init thread native MessageLoop is initialized.
      */
     static void initializeOnInitThread() {
-        assert onInitThread();
-        assert sInitializedInfo == null;
-        sInitializedInfo = new CronetInitializedInfo();
+        try (var traceEvent =
+                ScopedSysTraceEvent.scoped("CronetLibraryLoader#initializeOnInitThread")) {
+            assert onInitThread();
+            assert sInitializedInfo == null;
+            sInitializedInfo = new CronetInitializedInfo();
 
-        var httpFlagsLoadingStartUptimeMillis = SystemClock.uptimeMillis();
-        var applicationContext = ContextUtils.getApplicationContext();
-        // Load HTTP flags. This is a potentially expensive call, so we do this in parallel with
-        // library loading in the hope of minimizing impact on Cronet initialization latency.
-        assert sHttpFlags == null;
-        Flags flags;
-        if (!CronetManifest.shouldReadHttpFlags(applicationContext)) {
-            Log.d(TAG, "Not loading HTTP flags because they are disabled in the manifest");
-            flags = null;
-        } else {
-            flags = HttpFlagsLoader.load(applicationContext);
-            sInitializedInfo.httpFlagsSuccessful = flags != null;
+            try (var httpFlagsTraceEvent =
+                    ScopedSysTraceEvent.scoped(
+                            "CronetLibraryLoader#initializeOnInitThread loading HTTP flags")) {
+                var httpFlagsLoadingStartUptimeMillis = SystemClock.uptimeMillis();
+                var applicationContext = ContextUtils.getApplicationContext();
+                // Load HTTP flags. This is a potentially expensive call, so we do this in parallel
+                // with library loading in the hope of minimizing impact on Cronet initialization
+                // latency.
+                assert sHttpFlags == null;
+                Flags flags;
+                if (!CronetManifest.shouldReadHttpFlags(applicationContext)) {
+                    Log.d(TAG, "Not loading HTTP flags because they are disabled in the manifest");
+                    flags = null;
+                } else {
+                    flags = HttpFlagsLoader.load(applicationContext);
+                    sInitializedInfo.httpFlagsSuccessful = flags != null;
+                }
+                sHttpFlags =
+                        ResolvedFlags.resolve(
+                                flags != null ? flags : Flags.newBuilder().build(),
+                                applicationContext.getPackageName(),
+                                ImplVersion.getCronetVersion());
+                // Stop the timer immediately *before* we unblock the thread that may be waiting on
+                // us. This matters more than you may think, because in the (likely) case the
+                // waiting thread is higher priority than us, we may get preempted as soon as we
+                // unblock, adding misleading delays to the timer. See https://crbug.com/346546533.
+                sInitializedInfo.httpFlagsLatencyMillis =
+                        (int) (SystemClock.uptimeMillis() - httpFlagsLoadingStartUptimeMillis);
+            }
+            sHttpFlagsLoaded.open();
+            ResolvedFlags.Value logMe = sHttpFlags.flags().get(LOG_FLAG_NAME);
+            if (logMe != null) {
+                Log.i(TAG, "HTTP flags log line: %s", logMe.getStringValue());
+            }
+            populateCronetInitializedHttpFlagNamesValues();
+
+            NetworkChangeNotifier.init();
+            // Registers to always receive network notifications. Note
+            // that this call is fine for Cronet because Cronet
+            // embedders do not have API access to create network change
+            // observers. Existing observers in the net stack do not
+            // perform expensive work.
+            //
+            // During the setup of connectivity state autodetection, the network state is updated
+            // multiple times:
+            // 1. Within Java NetworkChangeNotifierAutoDetect's constructor
+            // 2. Within Java NetworkChangeNotifier#setAutoDetectConnectivityStateInternal, after
+            // creating a NetworkChangeNotifierAutoDetect (effectively, just after 1)
+            // 3. Within C++ NetworkChangeNotifierDelegateAndroid's constructor
+            //
+            // 2 should never be needed, as 1 always runs before and takes care of updating the
+            // network state. Having said that, it will be kept to keep track of the performance
+            // improvement from this change. Once the experiment terminates, we will delete it, this
+            // should always be safe for Chrome, Cronet and Webview.
+            //
+            // As per 3, Cronet always initializes NetworkChangeNotifier first from Java (going
+            // through 1 and 2), then from C++ (going through 3).
+            // Since we would like to query the network state only once, this experiment
+            // disables 2 and 3.
+            var updateNetworkStateOnceFlagValue =
+                    getHttpFlags().flags().get(UPDATE_NETWORK_STATE_ONCE_ON_STARTUP_FLAG_NAME);
+            var updateNetworkStateOnce =
+                    updateNetworkStateOnceFlagValue != null
+                            && updateNetworkStateOnceFlagValue.getBoolValue();
+            NetworkChangeNotifier.setAutoDetectConnectivityState(
+                    new RegistrationPolicyAlwaysRegister(),
+                    /* forceUpdateNetworkState= */ !updateNetworkStateOnce);
+
+            try (var libLoadTraceEvent =
+                    ScopedSysTraceEvent.scoped(
+                            "CronetLibraryLoader#initializeOnInitThread waiting on library load")) {
+                // Wait for loadLibrary() to complete so JNI is registered.
+                sWaitForLibLoad.block();
+            }
+
+            try (var nativeInitTraceEvent =
+                    ScopedSysTraceEvent.scoped(
+                            "CronetLibraryLoader#ensureInitialized calling"
+                                    + " cronetInitOnInitThread")) {
+                // registerToReceiveNotificationsAlways() is called before the native
+                // NetworkChangeNotifierAndroid is created, so as to avoid receiving
+                // the undesired initial network change observer notification, which
+                // will cause active requests to fail with ERR_NETWORK_CHANGED.
+                CronetLibraryLoaderJni.get().cronetInitOnInitThread(!updateNetworkStateOnce);
+            }
         }
-        sHttpFlags =
-                ResolvedFlags.resolve(
-                        flags != null ? flags : Flags.newBuilder().build(),
-                        applicationContext.getPackageName(),
-                        ImplVersion.getCronetVersion());
-        sHttpFlagsLoaded.open();
-        ResolvedFlags.Value logMe = sHttpFlags.flags().get(LOG_FLAG_NAME);
-        if (logMe != null) {
-            Log.i(TAG, "HTTP flags log line: %s", logMe.getStringValue());
-        }
-        populateCronetInitializedHttpFlagNamesValues();
-        sInitializedInfo.httpFlagsLatencyMillis =
-                (int) (SystemClock.uptimeMillis() - httpFlagsLoadingStartUptimeMillis);
-
-        NetworkChangeNotifier.init();
-        // Registers to always receive network notifications. Note
-        // that this call is fine for Cronet because Cronet
-        // embedders do not have API access to create network change
-        // observers. Existing observers in the net stack do not
-        // perform expensive work.
-        NetworkChangeNotifier.registerToReceiveNotificationsAlways();
-        // Wait for loadLibrary() to complete so JNI is registered.
-        sWaitForLibLoad.block();
-
-        // registerToReceiveNotificationsAlways() is called before the native
-        // NetworkChangeNotifierAndroid is created, so as to avoid receiving
-        // the undesired initial network change observer notification, which
-        // will cause active requests to fail with ERR_NETWORK_CHANGED.
-        CronetLibraryLoaderJni.get().cronetInitOnInitThread();
     }
 
     private static void populateCronetInitializedHttpFlagNamesValues() {
@@ -274,7 +389,25 @@ public class CronetLibraryLoader {
      * <p>This function will deadlock if {@link #ensureInitialized} is not called.
      */
     public static ResolvedFlags getHttpFlags() {
-        sHttpFlagsLoaded.block();
+        // To avoid trace spam (and because tracing is not free) we want to trace only if we are
+        // about to block on the condition variable. Unfortunately, there is no way to read the
+        // current value of a ConditionVariable (counter-intuitively, block() with a zero timeout
+        // blocks indefinitely instead of returning immediately). So instead we use the nullness of
+        // `sHttpFlags` as an hint as to whether we are about to block or not. This is obviously
+        // racy, but the Java memory model guarantees defined behavior even in this case, so we're
+        // fine as long as we don't rely on the result for correctness.
+        if (sHttpFlags == null) {
+            try (var traceEvent =
+                    ScopedSysTraceEvent.scoped(
+                            "CronetLibraryLoader#getHttpFlags waiting for HTTP flags load")) {
+                sHttpFlagsLoaded.block();
+            }
+        } else {
+            // Make sure HTTP flags have truly finished loading (memory barrier). Due to how the
+            // Java memory model works, the above null check is not sufficient as it does not
+            // prevent reordering.
+            sHttpFlagsLoaded.block();
+        }
         return sHttpFlags;
     }
 
@@ -339,7 +472,7 @@ public class CronetLibraryLoader {
         // Native methods are implemented in cronet_library_loader.cc.
         void nativeInit();
 
-        void cronetInitOnInitThread();
+        void cronetInitOnInitThread(boolean updateNetworkStateFromNative);
 
         String getCronetVersion();
 

@@ -15,14 +15,12 @@
 #include "base/containers/flat_set.h"
 #include "base/containers/flat_tree.h"
 #include "base/containers/span.h"
-#include "base/feature_list.h"
 #include "base/functional/callback_helpers.h"
-#include "base/ranges/algorithm.h"
+#include "base/logging.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/trace_event/trace_event.h"
 #include "components/sync/base/data_type.h"
 #include "components/sync/base/deletion_origin.h"
-#include "components/sync/base/features.h"
 #include "components/sync/model/client_tag_based_data_type_processor.h"
 #include "components/sync/model/data_type_controller_delegate.h"
 #include "components/sync/model/data_type_store.h"
@@ -37,32 +35,13 @@
 namespace webauthn {
 namespace {
 
-// The byte length of the WebauthnCredentialSpecifics `sync_id` field.
-constexpr size_t kSyncIdLength = 16u;
-
-// The byte length of the WebauthnCredentialSpecifics `credential_id` field.
-constexpr size_t kCredentialIdLength = 16u;
-
-// The maximum byte length of the WebauthnCredentialSpecifics `user_id` field.
-constexpr size_t kUserIdMaxLength = 64u;
-
 std::unique_ptr<syncer::EntityData> CreateEntityData(
     const sync_pb::WebauthnCredentialSpecifics& specifics) {
   auto entity_data = std::make_unique<syncer::EntityData>();
   // Name must be UTF-8 decodable.
-  entity_data->name =
-      base::HexEncode(base::as_bytes(base::make_span(specifics.sync_id())));
+  entity_data->name = base::HexEncode(base::as_byte_span(specifics.sync_id()));
   *entity_data->specifics.mutable_webauthn_credential() = specifics;
   return entity_data;
-}
-
-bool WebauthnCredentialSpecificsValid(
-    const sync_pb::WebauthnCredentialSpecifics& specifics) {
-  return specifics.sync_id().size() == kSyncIdLength &&
-         specifics.credential_id().size() == kCredentialIdLength &&
-         !specifics.rp_id().empty() &&
-         specifics.user_id().length() <= kUserIdMaxLength &&
-         (specifics.has_private_key() || specifics.has_encrypted());
 }
 
 std::optional<std::string> FindHeadOfShadowChain(
@@ -105,7 +84,6 @@ PasskeySyncBridge::PasskeySyncBridge(
           std::make_unique<syncer::ClientTagBasedDataTypeProcessor>(
               syncer::WEBAUTHN_CREDENTIAL,
               /*dump_stack=*/base::DoNothing())) {
-  DCHECK(base::FeatureList::IsEnabled(syncer::kSyncWebauthnCredentials));
   std::move(store_factory)
       .Run(syncer::WEBAUTHN_CREDENTIAL,
            base::BindOnce(&PasskeySyncBridge::OnCreateStore,
@@ -134,7 +112,7 @@ PasskeySyncBridge::CreateMetadataChangeList() {
 std::optional<syncer::ModelError> PasskeySyncBridge::MergeFullSyncData(
     std::unique_ptr<syncer::MetadataChangeList> metadata_changes,
     syncer::EntityChangeList entity_changes) {
-  CHECK(base::ranges::all_of(entity_changes, [](const auto& change) {
+  CHECK(std::ranges::all_of(entity_changes, [](const auto& change) {
     return change->type() == syncer::EntityChange::ACTION_ADD;
   }));
 
@@ -228,7 +206,7 @@ std::unique_ptr<syncer::DataBatch> PasskeySyncBridge::GetAllDataForDebugging() {
 
 bool PasskeySyncBridge::IsEntityDataValid(
     const syncer::EntityData& entity_data) const {
-  return WebauthnCredentialSpecificsValid(
+  return passkey_model_utils::IsPasskeyValid(
       entity_data.specifics.webauthn_credential());
 }
 
@@ -271,16 +249,16 @@ bool PasskeySyncBridge::IsEmpty() const {
 
 base::flat_set<std::string> PasskeySyncBridge::GetAllSyncIds() const {
   std::vector<std::string> sync_ids;
-  base::ranges::transform(data_, std::back_inserter(sync_ids),
-                          [](const auto& pair) { return pair.first; });
+  std::ranges::transform(data_, std::back_inserter(sync_ids),
+                         [](const auto& pair) { return pair.first; });
   return base::flat_set<std::string>(base::sorted_unique, std::move(sync_ids));
 }
 
 std::vector<sync_pb::WebauthnCredentialSpecifics>
 PasskeySyncBridge::GetAllPasskeys() const {
   std::vector<sync_pb::WebauthnCredentialSpecifics> passkeys;
-  base::ranges::transform(data_, std::back_inserter(passkeys),
-                          [](const auto& pair) { return pair.second; });
+  std::ranges::transform(data_, std::back_inserter(passkeys),
+                         [](const auto& pair) { return pair.second; });
   return passkeys;
 }
 
@@ -323,7 +301,7 @@ bool PasskeySyncBridge::DeletePasskey(const std::string& credential_id,
                                       const base::Location& location) {
   // Find the credential with the given |credential_id|.
   const auto passkey_it =
-      base::ranges::find_if(data_, [&credential_id](const auto& passkey) {
+      std::ranges::find_if(data_, [&credential_id](const auto& passkey) {
         return passkey.second.credential_id() == credential_id;
       });
   if (passkey_it == data_.end()) {
@@ -451,7 +429,8 @@ sync_pb::WebauthnCredentialSpecifics PasskeySyncBridge::CreatePasskey(
 
   auto [specifics, public_key_spki_der] =
       webauthn::passkey_model_utils::GeneratePasskeyAndEncryptSecrets(
-          rp_id, user_entity, trusted_vault_key, trusted_vault_key_version);
+          rp_id, user_entity, trusted_vault_key, trusted_vault_key_version,
+          /*extension_input_data=*/{}, /*extension_output_data=*/nullptr);
 
   AddShadowedCredentialIdsToNewPasskey(specifics);
 
@@ -470,7 +449,7 @@ void PasskeySyncBridge::CreatePasskey(
   // passkey.
   CHECK(IsReady());
 
-  CHECK(WebauthnCredentialSpecificsValid(passkey));
+  CHECK(passkey_model_utils::IsPasskeyValid(passkey));
 
   std::string sync_id = passkey.sync_id();
   CHECK(!base::Contains(data_, sync_id));
@@ -488,7 +467,7 @@ std::string PasskeySyncBridge::AddNewPasskeyForTesting(
 
 void PasskeySyncBridge::AddPasskeyInternal(
     sync_pb::WebauthnCredentialSpecifics specifics) {
-  CHECK(WebauthnCredentialSpecificsValid(specifics));
+  CHECK(passkey_model_utils::IsPasskeyValid(specifics));
   CHECK(IsReady());
   CHECK(store_);
 
@@ -592,7 +571,7 @@ bool PasskeySyncBridge::UpdateSinglePasskey(
         mutate_callback) {
   // Find the credential with the given |credential_id|.
   const auto passkey_it =
-      base::ranges::find_if(data_, [&credential_id](const auto& passkey) {
+      std::ranges::find_if(data_, [&credential_id](const auto& passkey) {
         return passkey.second.credential_id() == credential_id;
       });
   if (passkey_it == data_.end()) {

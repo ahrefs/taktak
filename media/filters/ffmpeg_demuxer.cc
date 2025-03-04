@@ -226,7 +226,8 @@ std::unique_ptr<FFmpegDemuxerStream> FFmpegDemuxerStream::Create(
     // IsValidConfig internally and return a null scoped_ptr if not valid.
     if (!AVStreamToAudioDecoderConfig(stream, audio_config.get()) ||
         !audio_config->IsValidConfig() ||
-        !IsSupportedAudioType(AudioType::FromDecoderConfig(*audio_config))) {
+        !IsDecoderSupportedAudioType(
+            AudioType::FromDecoderConfig(*audio_config))) {
       MEDIA_LOG(DEBUG, media_log) << "Warning, FFmpegDemuxer failed to create "
                                      "a valid/supported audio decoder "
                                      "configuration from muxed stream, config:"
@@ -243,7 +244,8 @@ std::unique_ptr<FFmpegDemuxerStream> FFmpegDemuxerStream::Create(
     // IsValidConfig internally and return a null scoped_ptr if not valid.
     if (!AVStreamToVideoDecoderConfig(stream, video_config.get()) ||
         !video_config->IsValidConfig() ||
-        !IsSupportedVideoType(VideoType::FromDecoderConfig(*video_config))) {
+        !IsDecoderSupportedVideoType(
+            VideoType::FromDecoderConfig(*video_config))) {
       MEDIA_LOG(DEBUG, media_log) << "Warning, FFmpegDemuxer failed to create "
                                      "a valid/supported video decoder "
                                      "configuration from muxed stream, config:"
@@ -309,8 +311,7 @@ FFmpegDemuxerStream::FFmpegDemuxerStream(
       is_encrypted = video_config_->is_encrypted();
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   // Calculate the duration.
@@ -339,6 +340,14 @@ FFmpegDemuxerStream::~FFmpegDemuxerStream() {
   DCHECK(!demuxer_);
   DCHECK(!read_cb_);
   DCHECK(buffer_queue_.IsEmpty());
+}
+
+base::span<const uint8_t> GetSideData(const AVPacket* packet) {
+  size_t side_data_size = 0;
+  uint8_t* side_data = av_packet_get_side_data(
+      packet, AV_PKT_DATA_MATROSKA_BLOCKADDITIONAL, &side_data_size);
+
+  return base::span<const uint8_t>(side_data, side_data_size);
 }
 
 void FFmpegDemuxerStream::EnqueuePacket(ScopedAVPacket packet) {
@@ -401,27 +410,26 @@ void FFmpegDemuxerStream::EnqueuePacket(ScopedAVPacket packet) {
   // Convert the packet if there is a bitstream filter.
   if (bitstream_converter_ &&
       !bitstream_converter_->ConvertPacket(packet.get())) {
-    DVLOG(1) << "Format conversion failed.";
+    demuxer_->NotifyDemuxerError(DEMUXER_ERROR_BITSTREAM_CONVERSION_FAILED);
+    return;
   }
 #endif
 
   scoped_refptr<DecoderBuffer> buffer;
 
-    size_t side_data_size = 0;
-    uint8_t* side_data = av_packet_get_side_data(
-        packet.get(), AV_PKT_DATA_MATROSKA_BLOCKADDITIONAL, &side_data_size);
+  base::span<const uint8_t> side_data = GetSideData(packet.get());
 
-    std::unique_ptr<DecryptConfig> decrypt_config;
-    int data_offset = 0;
-    if ((type() == DemuxerStream::AUDIO && audio_config_->is_encrypted()) ||
-        (type() == DemuxerStream::VIDEO && video_config_->is_encrypted())) {
-      if (!WebMCreateDecryptConfig(
-              packet->data, packet->size,
-              reinterpret_cast<const uint8_t*>(encryption_key_id_.data()),
-              encryption_key_id_.size(), &decrypt_config, &data_offset)) {
-        MEDIA_LOG(ERROR, media_log_) << "Creation of DecryptConfig failed.";
-      }
+  std::unique_ptr<DecryptConfig> decrypt_config;
+  int data_offset = 0;
+  if ((type() == DemuxerStream::AUDIO && audio_config_->is_encrypted()) ||
+      (type() == DemuxerStream::VIDEO && video_config_->is_encrypted())) {
+    if (!WebMCreateDecryptConfig(
+            packet->data, packet->size,
+            reinterpret_cast<const uint8_t*>(encryption_key_id_.data()),
+            encryption_key_id_.size(), &decrypt_config, &data_offset)) {
+      MEDIA_LOG(ERROR, media_log_) << "Creation of DecryptConfig failed.";
     }
+  }
 
     // FFmpeg may return garbage packets for MP3 stream containers, so we need
     // to drop these to avoid decoder errors. The ffmpeg team maintains that
@@ -460,11 +468,11 @@ void FFmpegDemuxerStream::EnqueuePacket(ScopedAVPacket packet) {
     // If a packet is returned by FFmpeg's av_parser_parse2() the packet will
     // reference inner memory of FFmpeg.  As such we should transfer the packet
     // into memory we control.
-    buffer =
-        DecoderBuffer::CopyFrom(AVPacketData(*packet).subspan(data_offset));
-    if (side_data_size > 0) {
-      buffer->WritableSideData().alpha_data.assign(side_data,
-                                                   side_data + side_data_size);
+    buffer = DecoderBuffer::CopyFrom(
+        AVPacketData(*packet).subspan(base::checked_cast<size_t>(data_offset)));
+    if (side_data.size() > 0) {
+      buffer->WritableSideData().alpha_data =
+          base::HeapArray<uint8_t>::CopiedFrom(side_data);
     }
 
     size_t skip_samples_size = 0;
@@ -1759,6 +1767,8 @@ void FFmpegDemuxer::FindAndEnableProperTracks(
     TrackChangeCB change_completed_cb) {
   DCHECK(task_runner_->RunsTasksInCurrentSequence());
 
+  bool any_track_changed = false;
+
   std::set<FFmpegDemuxerStream*> enabled_streams;
   for (const auto& id : track_ids) {
     auto it = track_id_to_demux_stream_map_.find(id);
@@ -1774,6 +1784,9 @@ void FFmpegDemuxer::FindAndEnableProperTracks(
       continue;
     }
     enabled_streams.insert(stream);
+    if (!stream->IsEnabled()) {
+      any_track_changed = true;
+    }
     stream->SetEnabled(true, curr_time);
   }
 
@@ -1783,13 +1796,35 @@ void FFmpegDemuxer::FindAndEnableProperTracks(
     if (stream && stream->type() == track_type &&
         enabled_streams.find(stream.get()) == enabled_streams.end()) {
       DVLOG(1) << __func__ << ": disabling stream " << stream.get();
+      if (stream->IsEnabled()) {
+        any_track_changed = true;
+      }
       stream->SetEnabled(false, curr_time);
     }
   }
 
   std::vector<DemuxerStream*> streams(enabled_streams.begin(),
                                       enabled_streams.end());
-  std::move(change_completed_cb).Run(streams);
+  base::OnceCallback<void(int)> seek_cb = base::BindOnce(
+      &FFmpegDemuxer::OnTrackChangeSeekComplete, weak_factory_.GetWeakPtr(),
+      base::BindOnce(std::move(change_completed_cb), std::move(streams)));
+
+  if (any_track_changed) {
+    SeekInternal(curr_time, std::move(seek_cb));
+  } else {
+    std::move(seek_cb).Run(0);
+  }
+}
+
+void FFmpegDemuxer::OnTrackChangeSeekComplete(base::OnceClosure cb,
+                                              int seek_status) {
+  for (const auto& stream : streams_) {
+    if (stream && stream->IsEnabled()) {
+      stream->FlushBuffers(true);
+    }
+  }
+  // TODO(crbug.com/40898124): Report seek failures for track changes too.
+  std::move(cb).Run();
 }
 
 void FFmpegDemuxer::OnEnabledAudioTracksChanged(
@@ -1800,45 +1835,12 @@ void FFmpegDemuxer::OnEnabledAudioTracksChanged(
                             std::move(change_completed_cb));
 }
 
-void FFmpegDemuxer::OnVideoSeekedForTrackChange(
-    DemuxerStream* video_stream,
-    base::OnceClosure seek_completed_cb,
-    int result) {
-  static_cast<FFmpegDemuxerStream*>(video_stream)->FlushBuffers(true);
-  // TODO(crbug.com/40898124): Report seek failures for track changes too.
-  std::move(seek_completed_cb).Run();
-}
-
-void FFmpegDemuxer::SeekOnVideoTrackChange(
-    base::TimeDelta seek_to_time,
-    TrackChangeCB seek_completed_cb,
-    const std::vector<DemuxerStream*>& streams) {
-  if (streams.size() != 1u) {
-    // If FFmpegDemuxer::FindAndEnableProperTracks() was not able to find the
-    // selected streams in the ID->DemuxerStream map, then its possible for
-    // this vector to be empty. If that's the case, we don't want to bother
-    // with seeking, and just call the callback immediately.
-    std::move(seek_completed_cb).Run(streams);
-    return;
-  }
-  SeekInternal(
-      seek_to_time,
-      base::BindOnce(&FFmpegDemuxer::OnVideoSeekedForTrackChange,
-                     weak_factory_.GetWeakPtr(), streams[0],
-                     base::BindOnce(std::move(seek_completed_cb), streams)));
-}
-
 void FFmpegDemuxer::OnSelectedVideoTrackChanged(
     const std::vector<MediaTrack::Id>& track_ids,
     base::TimeDelta curr_time,
     TrackChangeCB change_completed_cb) {
-  // Find tracks -> Seek track -> run callback.
-  FindAndEnableProperTracks(
-      track_ids, curr_time, DemuxerStream::VIDEO,
-      track_ids.empty() ? std::move(change_completed_cb)
-                        : base::BindOnce(&FFmpegDemuxer::SeekOnVideoTrackChange,
-                                         weak_factory_.GetWeakPtr(), curr_time,
-                                         std::move(change_completed_cb)));
+  FindAndEnableProperTracks(track_ids, curr_time, DemuxerStream::VIDEO,
+                            std::move(change_completed_cb));
 }
 
 void FFmpegDemuxer::ReadFrameIfNeeded() {

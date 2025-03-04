@@ -9,8 +9,10 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
+#include "base/functional/callback_forward.h"
 #include "build/build_config.h"
 #include "chrome/browser/password_manager/web_app_profile_switcher.h"
 #include "chrome/browser/profiles/avatar_menu.h"
@@ -59,6 +61,7 @@ class ProfileMenuView : public ProfileMenuViewBase {
   std::u16string GetAccessibleWindowTitle() const override;
 
   // Button/link actions.
+  void OnProfileManagementButtonClicked();
   void OnManageGoogleAccountButtonClicked();
   void OnPasswordsButtonClicked();
   void OnCreditCardsButtonClicked();
@@ -84,16 +87,17 @@ class ProfileMenuView : public ProfileMenuViewBase {
   static bool close_on_deactivate_for_testing_;
 
   // Helper methods for building the menu.
+  void SetMenuTitleForAccessibility();
   void BuildGuestIdentity();
   void BuildAutofillSettingsButton();
-  void MaybeBuildCustomizeProfileButton();
+  void BuildCustomizeProfileButton();
   void MaybeBuildChromeAccountSettingsButton();
   void MaybeBuildManageGoogleAccountButton();
   void MaybeBuildCloseBrowsersButton();
   void MaybeBuildSignoutButton();
   void BuildFeatureButtons();
-  std::u16string GetIdentitySectionSubtitle(
-      const CoreAccountInfo& account_info) const;
+  IdentitySectionParams GetIdentitySectionParams(
+      const ProfileAttributesEntry& entry);
   void BuildIdentityWithCallToAction();
 
   // TODO(crbug.com/370473765): Delete these functions after
@@ -102,7 +106,18 @@ class ProfileMenuView : public ProfileMenuViewBase {
   void BuildAutofillButtons();
   void BuildSyncInfo();
 
-  void BuildAvailableProfiles();
+  // Gets the profiles to be displayed in the "Other profiles" section. Does not
+  // include the current profile.
+  // When `switches::IsImprovedSigninUIOnDesktopEnabled()` returns true, the
+  // guest profile is never shown in this section. It is shown in the profile
+  // management section instead.
+  void GetProfilesForOtherProfilesSection(
+      std::vector<ProfileAttributesEntry*>& available_profiles,
+      bool& show_guest_in_other_profiles_section) const;
+  void BuildOtherProfilesSection(
+      const std::vector<ProfileAttributesEntry*>& available_profiles,
+      bool show_guest_in_other_profiles_section);
+
   void BuildProfileManagementFeatureButtons();
 
   std::u16string menu_title_;

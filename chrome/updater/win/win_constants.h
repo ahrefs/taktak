@@ -47,6 +47,7 @@ extern const wchar_t kGlobalPrefix[];
 extern const wchar_t kRegValuePV[];
 extern const wchar_t kRegValueBrandCode[];
 extern const wchar_t kRegValueAP[];
+extern const wchar_t kRegValueLang[];
 extern const wchar_t kRegValueDateOfLastActivity[];
 extern const wchar_t kRegValueDateOfLastRollcall[];
 extern const wchar_t kRegValueDayOfInstall[];
@@ -157,7 +158,7 @@ extern const wchar_t kLegacyRunValuePrefix[];
 extern const wchar_t kLegacyTaskNamePrefixSystem[];
 extern const wchar_t kLegacyTaskNamePrefixUser[];
 
-// `InstallerApiResult` values defined by the Installer API.
+// `InstallerResult` values defined by the Installer API.
 enum class InstallerApiResult {
   // The installer succeeded, unconditionally.
   // - if a launch command was provided via the installer API, the command will

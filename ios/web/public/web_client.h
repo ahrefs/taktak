@@ -28,6 +28,7 @@ class GURL;
 @protocol UITraitEnvironment;
 @class NSString;
 @class NSData;
+@protocol UIMenuBuilder;
 @class UIView;
 
 namespace net {
@@ -57,6 +58,10 @@ class WebClient {
   // Allows the embedder to set a custom WebMainParts implementation for the
   // browser startup code.
   virtual std::unique_ptr<WebMainParts> CreateWebMainParts();
+
+  // Allows the embedder to initialize the field trial and features list
+  // early.
+  virtual void InitializeFieldTrialAndFeatureList() {}
 
   // Gives the embedder a chance to perform tasks before a web view is created.
   virtual void PreWebViewCreation() const {}
@@ -187,6 +192,8 @@ class WebClient {
 
   virtual bool IsInsecureFormWarningEnabled(
       web::BrowserState* browser_state) const;
+
+  virtual void BuildEditMenu(web::WebState* web_state, id<UIMenuBuilder>) const;
 };
 
 }  // namespace web

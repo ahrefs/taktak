@@ -42,7 +42,6 @@
 #include "third_party/blink/public/common/frame/user_activation_state.h"
 #include "third_party/blink/public/common/frame/user_activation_update_source.h"
 #include "third_party/blink/public/common/permissions_policy/document_policy_features.h"
-#include "third_party/blink/public/common/permissions_policy/permissions_policy_features.h"
 #include "third_party/blink/public/common/tokens/tokens.h"
 #include "third_party/blink/public/mojom/frame/frame_owner_properties.mojom-blink-forward.h"
 #include "third_party/blink/public/mojom/frame/frame_policy.mojom-blink-forward.h"
@@ -418,7 +417,8 @@ class CORE_EXPORT Frame : public GarbageCollected<Frame> {
             mojo::PendingAssociatedRemote<mojom::blink::RemoteFrameHost>
                 remote_frame_host,
             mojo::PendingAssociatedReceiver<mojom::blink::RemoteFrame>
-                remote_frame_receiver);
+                remote_frame_receiver,
+            const std::optional<base::UnguessableToken>& devtools_frame_token);
 
   // Removes the given child from this frame.
   void RemoveChild(Frame* child);
@@ -453,6 +453,9 @@ class CORE_EXPORT Frame : public GarbageCollected<Frame> {
 
   // Returns all the resources under the frame tree of this node.
   HeapVector<Member<Resource>> AllResourcesUnderFrame();
+
+  // Iterates through the frame owner's ancestor nodes and adjusts the offset.
+  void AdjustOffsetByAncestorFrames(gfx::Point* origin_point);
 
  protected:
   // |inheriting_agent_factory| should basically be set to the parent frame or
@@ -520,11 +523,13 @@ class CORE_EXPORT Frame : public GarbageCollected<Frame> {
 
   void CancelFormSubmissionWithVersion(uint64_t version);
 
-  bool SwapImpl(WebFrame*,
-                mojo::PendingAssociatedRemote<mojom::blink::RemoteFrameHost>
-                    remote_frame_host,
-                mojo::PendingAssociatedReceiver<mojom::blink::RemoteFrame>
-                    remote_frame_receiver);
+  bool SwapImpl(
+      WebFrame*,
+      mojo::PendingAssociatedRemote<mojom::blink::RemoteFrameHost>
+          remote_frame_host,
+      mojo::PendingAssociatedReceiver<mojom::blink::RemoteFrame>
+          remote_frame_receiver,
+      const std::optional<base::UnguessableToken>& devtools_frame_token);
 
   // Notifies a specific frame that it now has user activation. Used to prevent
   // duplicated logic in `NotifyUserActivationInFrameTree()`, which notifies

@@ -4,16 +4,22 @@
 
 package org.chromium.chrome.browser.ui.android.webid;
 
+import static org.junit.Assert.assertEquals;
+
+import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.view.View;
 
 import androidx.annotation.Px;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.ParameterizedRobolectricTestRunner.Parameter;
 
@@ -22,6 +28,7 @@ import org.chromium.blink.mojom.RpContext;
 import org.chromium.blink.mojom.RpMode;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.AccountProperties;
+import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.ButtonData;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.ItemProperties;
 import org.chromium.chrome.browser.ui.android.webid.data.Account;
 import org.chromium.chrome.browser.ui.android.webid.data.ClientIdMetadata;
@@ -29,9 +36,11 @@ import org.chromium.chrome.browser.ui.android.webid.data.IdentityCredentialToken
 import org.chromium.chrome.browser.ui.android.webid.data.IdentityProviderData;
 import org.chromium.chrome.browser.ui.android.webid.data.IdentityProviderMetadata;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
-import org.chromium.components.image_fetcher.ImageFetcher;
 import org.chromium.content.webid.IdentityRequestDialogDisclosureField;
 import org.chromium.ui.base.TestActivity;
+import org.chromium.ui.modaldialog.DialogDismissalCause;
+import org.chromium.ui.modaldialog.ModalDialogManager;
+import org.chromium.ui.modaldialog.ModalDialogProperties;
 import org.chromium.ui.modelutil.MVCListAdapter;
 import org.chromium.ui.modelutil.MVCListAdapter.ModelList;
 import org.chromium.ui.modelutil.PropertyKey;
@@ -63,6 +72,46 @@ public class AccountSelectionJUnitTestBase {
         }
     }
 
+    static class MockModalDialogManager extends ModalDialogManager {
+        private PropertyModel mDialogModel;
+        private @ModalDialogManager.ModalDialogType int mDialogType;
+
+        public MockModalDialogManager() {
+            super(Mockito.mock(ModalDialogManager.Presenter.class), 0);
+        }
+
+        @Override
+        public void showDialog(
+                PropertyModel model,
+                @ModalDialogManager.ModalDialogType int dialogType,
+                boolean showNext) {
+            mDialogModel = model;
+            mDialogType = dialogType;
+        }
+
+        public PropertyModel getDialogModel() {
+            return mDialogModel;
+        }
+
+        public @ModalDialogManager.ModalDialogType int getDialogType() {
+            return mDialogType;
+        }
+
+        public void simulateButtonClick(@ModalDialogProperties.ButtonType int buttonType) {
+            mDialogModel.get(ModalDialogProperties.CONTROLLER).onClick(mDialogModel, buttonType);
+        }
+
+        @Override
+        public void dismissDialog(PropertyModel model, @DialogDismissalCause int dismissalCause) {
+            assertEquals(model, mDialogModel);
+            mDialogModel
+                    .get(ModalDialogProperties.CONTROLLER)
+                    .onDismiss(mDialogModel, dismissalCause);
+            mDialogModel = null;
+            mDialogType = -1;
+        }
+    }
+
     protected static final String TEST_ERROR_CODE = "invalid_request";
     protected static final int[] RP_CONTEXTS =
             new int[] {RpContext.SIGN_IN, RpContext.SIGN_UP, RpContext.USE, RpContext.CONTINUE};
@@ -73,12 +122,14 @@ public class AccountSelectionJUnitTestBase {
                 IdentityRequestDialogDisclosureField.EMAIL,
                 IdentityRequestDialogDisclosureField.PICTURE
             };
+    protected static final float ALPHA_COMPARISON_DELTA = 0.00001f;
 
-    @Mock Callback<Account> mAccountCallback;
+    @Mock Callback<ButtonData> mAccountCallback;
     @Mock AccountSelectionComponent.Delegate mMockDelegate;
-    @Mock ImageFetcher mMockImageFetcher;
     @Mock BottomSheetController mMockBottomSheetController;
     @Mock Tab mTab;
+    Context mContext;
+    MockModalDialogManager mMockModalDialogManager;
 
     // Constants but this test base is used by parameterized tests. These can only be initialized
     // after parameterized test runner setup.
@@ -89,16 +140,19 @@ public class AccountSelectionJUnitTestBase {
     GURL mTestUrlPrivacyPolicy;
     GURL mTestIdpBrandIconUrl;
     GURL mTestRpBrandIconUrl;
-    GURL mTestProfilePicUrl;
     GURL mTestConfigUrl;
     GURL mTestLoginUrl;
     GURL mTestErrorUrl;
     GURL mTestEmptyErrorUrl;
     Account mAnaAccount;
+    Account mAnaAccountWithUseDifferentAccount;
     Account mBobAccount;
     Account mCarlAccount;
     Account mNewUserAccount;
     Account mNoOneAccount;
+    Account mFilteredOutAccount;
+    Account mFilteredOutAccountWithUseDifferentAccount;
+    Account mNicolasAccount;
 
     IdentityCredentialTokenError mTokenError;
     IdentityCredentialTokenError mTokenErrorEmptyUrl;
@@ -108,7 +162,11 @@ public class AccountSelectionJUnitTestBase {
     ModelList mSheetAccountItems;
     View mContentView;
     IdentityProviderMetadata mIdpMetadata;
+    IdentityProviderMetadata mIdpMetadataWithoutIcon;
     IdentityProviderData mIdpData;
+    IdentityProviderData mIdpDataWithoutIcons;
+    IdentityProviderMetadata mIdpMetadataWithUseDifferentAccount;
+    IdentityProviderData mIdpDataWithUseDifferentAccount;
     List<Account> mNewAccountsSingleReturningAccount;
     List<Account> mNewAccountsSingleNewAccount;
     List<Account> mNewAccountsMultipleAccounts;
@@ -118,6 +176,7 @@ public class AccountSelectionJUnitTestBase {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+        mContext = ApplicationProvider.getApplicationContext();
 
         // Note that these are not actual ETLD+1 values, but this is irrelevant for the purposes of
         // this test.
@@ -128,62 +187,10 @@ public class AccountSelectionJUnitTestBase {
         mTestUrlPrivacyPolicy = JUnitTestGURLs.RED_2;
         mTestIdpBrandIconUrl = JUnitTestGURLs.RED_3;
         mTestRpBrandIconUrl = JUnitTestGURLs.RED_3;
-        mTestProfilePicUrl = new GURL("https://profile-picture.com");
         mTestConfigUrl = new GURL("https://idp.com/fedcm.json");
         mTestLoginUrl = new GURL("https://idp.com/login");
         mTestErrorUrl = new GURL("https://idp.com/error");
         mTestEmptyErrorUrl = new GURL("");
-
-        mAnaAccount =
-                new Account(
-                        "Ana",
-                        "ana@email.example",
-                        "Ana Doe",
-                        "Ana",
-                        mTestProfilePicUrl,
-                        /* pictureBitmap= */ null,
-                        /* isSignIn= */ true,
-                        /* isBrowserTrustedSignIn= */ true);
-        mBobAccount =
-                new Account(
-                        "Bob",
-                        "",
-                        "Bob",
-                        "",
-                        mTestProfilePicUrl,
-                        /* pictureBitmap= */ null,
-                        /* isSignIn= */ true,
-                        /* isBrowserTrustedSignIn= */ true);
-        mCarlAccount =
-                new Account(
-                        "Carl",
-                        "carl@three.test",
-                        "Carl Test",
-                        ":)",
-                        mTestProfilePicUrl,
-                        /* pictureBitmap= */ null,
-                        /* isSignIn= */ true,
-                        /* isBrowserTrustedSignIn= */ true);
-        mNewUserAccount =
-                new Account(
-                        "602214076",
-                        "goto@email.example",
-                        "Sam E. Goto",
-                        "Sam",
-                        mTestProfilePicUrl,
-                        /* pictureBitmap= */ null,
-                        /* isSignIn= */ false,
-                        /* isBrowserTrustedSignIn= */ false);
-        mNoOneAccount =
-                new Account(
-                        "",
-                        "",
-                        "No Subject",
-                        "",
-                        mTestProfilePicUrl,
-                        /* pictureBitmap= */ null,
-                        /* isSignIn= */ true,
-                        /* isBrowserTrustedSignIn= */ true);
 
         mTokenError = new IdentityCredentialTokenError(TEST_ERROR_CODE, mTestErrorUrl);
         mTokenErrorEmptyUrl = new IdentityCredentialTokenError(TEST_ERROR_CODE, mTestEmptyErrorUrl);
@@ -192,10 +199,19 @@ public class AccountSelectionJUnitTestBase {
                 new IdentityProviderMetadata(
                         Color.BLUE,
                         Color.GREEN,
-                        "https://icon-url.example",
+                        Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_4444),
                         mTestConfigUrl,
                         mTestLoginUrl,
-                        /* supportsAddAccount= */ false);
+                        /* showUseDifferentAccountButton= */ false);
+
+        mIdpMetadataWithoutIcon =
+                new IdentityProviderMetadata(
+                        Color.BLUE,
+                        Color.GREEN,
+                        null,
+                        mTestConfigUrl,
+                        mTestLoginUrl,
+                        /* showUseDifferentAccountButton= */ false);
 
         mIdpData =
                 new IdentityProviderData(
@@ -204,10 +220,145 @@ public class AccountSelectionJUnitTestBase {
                         new ClientIdMetadata(
                                 mTestUrlTermsOfService,
                                 mTestUrlPrivacyPolicy,
-                                mTestRpBrandIconUrl.getSpec()),
+                                Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)),
                         RpContext.SIGN_IN,
                         DEFAULT_DISCLOSURE_FIELDS,
-                        /* has_login_status_mismatch= */ false);
+                        /* hasLoginStatusMismatch= */ false);
+
+        mIdpDataWithoutIcons =
+                new IdentityProviderData(
+                        mTestEtldPlusOne2,
+                        mIdpMetadataWithoutIcon,
+                        new ClientIdMetadata(mTestUrlTermsOfService, mTestUrlPrivacyPolicy, null),
+                        RpContext.SIGN_IN,
+                        DEFAULT_DISCLOSURE_FIELDS,
+                        /* hasLoginStatusMismatch= */ false);
+
+        mIdpMetadataWithUseDifferentAccount =
+                new IdentityProviderMetadata(
+                        Color.BLUE,
+                        Color.GREEN,
+                        null,
+                        mTestConfigUrl,
+                        mTestLoginUrl,
+                        /* showUseDifferentAccountButton= */ true);
+        mIdpDataWithUseDifferentAccount =
+                new IdentityProviderData(
+                        mTestEtldPlusOne2,
+                        mIdpMetadataWithUseDifferentAccount,
+                        new ClientIdMetadata(mTestUrlTermsOfService, mTestUrlPrivacyPolicy, null),
+                        RpContext.SIGN_IN,
+                        DEFAULT_DISCLOSURE_FIELDS,
+                        /* hasLoginStatusMismatch= */ false);
+
+        mAnaAccount =
+                new Account(
+                        "Ana",
+                        "ana@email.example",
+                        "Ana Doe",
+                        "Ana",
+                        /* secondaryDescription= */ null,
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ true,
+                        /* isBrowserTrustedSignIn= */ true,
+                        /* isFilteredOut= */ false,
+                        mIdpData);
+        mAnaAccountWithUseDifferentAccount =
+                new Account(
+                        "Ana",
+                        "ana@email.example",
+                        "Ana Doe",
+                        "Ana",
+                        /* secondaryDescription= */ null,
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ true,
+                        /* isBrowserTrustedSignIn= */ true,
+                        /* isFilteredOut= */ false,
+                        mIdpDataWithUseDifferentAccount);
+        mBobAccount =
+                new Account(
+                        "Bob",
+                        "",
+                        "Bob",
+                        "",
+                        /* secondaryDescription= */ null,
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ true,
+                        /* isBrowserTrustedSignIn= */ true,
+                        /* isFilteredOut= */ false,
+                        mIdpData);
+        mCarlAccount =
+                new Account(
+                        "Carl",
+                        "carl@three.test",
+                        "Carl Test",
+                        ":)",
+                        /* secondaryDescription= */ null,
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ true,
+                        /* isBrowserTrustedSignIn= */ true,
+                        /* isFilteredOut= */ false,
+                        mIdpData);
+        mNewUserAccount =
+                new Account(
+                        "602214076",
+                        "goto@email.example",
+                        "Sam E. Goto",
+                        "Sam",
+                        /* secondaryDescription= */ null,
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ false,
+                        /* isBrowserTrustedSignIn= */ false,
+                        /* isFilteredOut= */ false,
+                        mIdpData);
+        mNoOneAccount =
+                new Account(
+                        "",
+                        "",
+                        "No Subject",
+                        "",
+                        /* secondaryDescription= */ null,
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ true,
+                        /* isBrowserTrustedSignIn= */ true,
+                        /* isFilteredOut= */ false,
+                        mIdpData);
+        mFilteredOutAccount =
+                new Account(
+                        "ID123",
+                        "nicolas@example.com",
+                        "Nicolas Pena",
+                        "Nicolas",
+                        /* secondaryDescription= */ null,
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ true,
+                        /* isBrowserTrustedSignIn= */ true,
+                        /* isFilteredOut= */ true,
+                        mIdpData);
+        mFilteredOutAccountWithUseDifferentAccount =
+                new Account(
+                        "ID123",
+                        "nicolas@example.com",
+                        "Nicolas Pena",
+                        "Nicolas",
+                        /* secondaryDescription= */ null,
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ true,
+                        /* isBrowserTrustedSignIn= */ true,
+                        /* isFilteredOut= */ true,
+                        mIdpDataWithUseDifferentAccount);
+        mNicolasAccount =
+                new Account(
+                        "NicoId",
+                        "nicolas@email.com",
+                        "Nico P",
+                        "Nicolas",
+                        "email.com",
+                        /* pictureBitmap= */ null,
+                        /* isSignIn= */ true,
+                        /* isBrowserTrustedSignIn= */ true,
+                        /* isFilteredOut= */ false,
+                        mIdpData);
 
         mNewAccountsSingleReturningAccount = Arrays.asList(mAnaAccount);
         mNewAccountsSingleNewAccount = Arrays.asList(mNewUserAccount);
@@ -236,6 +387,7 @@ public class AccountSelectionJUnitTestBase {
                         /* bottomSheetController= */ null,
                         /* scrollOffsetSupplier= */ null,
                         mRpMode);
+        mMockModalDialogManager = new MockModalDialogManager();
         mMediator =
                 new AccountSelectionMediator(
                         mTab,
@@ -244,9 +396,10 @@ public class AccountSelectionJUnitTestBase {
                         mSheetAccountItems,
                         mMockBottomSheetController,
                         mBottomSheetContent,
-                        mMockImageFetcher,
                         DESIRED_AVATAR_SIZE,
-                        mRpMode);
+                        mRpMode,
+                        mContext,
+                        mMockModalDialogManager);
     }
 
     MVCListAdapter.ListItem buildAccountItem(Account account) {

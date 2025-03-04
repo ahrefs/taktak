@@ -41,7 +41,7 @@ class IntegrationTestCommands
                              base::TimeDelta server_keep_alive_time,
                              base::TimeDelta ceca_connection_timeout) const = 0;
   virtual void ExitTestMode() const = 0;
-  virtual void SetGroupPolicies(const base::Value::Dict& values) const = 0;
+  virtual void SetDictPolicies(const base::Value::Dict& values) const = 0;
   virtual void SetPlatformPolicies(const base::Value::Dict& values) const = 0;
   virtual void SetMachineManaged(bool is_managed_device) const = 0;
   virtual void Clean() const = 0;
@@ -57,7 +57,10 @@ class IntegrationTestCommands
       bool always_launch_cmd,
       bool verify_app_logo_loaded,
       bool expect_success,
-      bool wait_for_the_installer) const = 0;
+      bool wait_for_the_installer,
+      int expected_exit_code,
+      const base::Value::List& additional_switches,
+      const base::FilePath& updater_path) const = 0;
   virtual void SetActive(const std::string& app_id) const = 0;
   virtual void ExpectActive(const std::string& app_id) const = 0;
   virtual void ExpectNotActive(const std::string& app_id) const = 0;
@@ -78,7 +81,8 @@ class IntegrationTestCommands
       const std::string& app_id,
       UpdateService::Priority priority,
       const base::Version& from_version,
-      const base::Version& to_version) const = 0;
+      const base::Version& to_version,
+      const base::Version& updater_version) const = 0;
   virtual void ExpectUpdateSequence(ScopedServer* test_server,
                                     const std::string& app_id,
                                     const std::string& install_data_index,
@@ -86,7 +90,9 @@ class IntegrationTestCommands
                                     const base::Version& from_version,
                                     const base::Version& to_version,
                                     bool do_fault_injection,
-                                    bool skip_download) const = 0;
+                                    bool skip_download,
+                                    const base::Version& updater_version,
+                                    const std::string& event_regex) const = 0;
   virtual void ExpectUpdateSequenceBadHash(
       ScopedServer* test_server,
       const std::string& app_id,
@@ -101,7 +107,11 @@ class IntegrationTestCommands
                                      const base::Version& from_version,
                                      const base::Version& to_version,
                                      bool do_fault_injection,
-                                     bool skip_download) const = 0;
+                                     bool skip_download,
+                                     const base::Version& updater_version,
+                                     const std::string& event_regex) const = 0;
+  virtual void ExpectEnterpriseCompanionAppOTAInstallSequence(
+      ScopedServer* test_server) const = 0;
   virtual void ExpectVersionActive(const std::string& version) const = 0;
   virtual void ExpectVersionNotActive(const std::string& version) const = 0;
   virtual void Uninstall() const = 0;
@@ -111,7 +121,7 @@ class IntegrationTestCommands
   virtual void CopyLog(const std::string& infix) const = 0;
   virtual void SetupFakeUpdaterHigherVersion() const = 0;
   virtual void SetupFakeUpdaterLowerVersion() const = 0;
-  virtual void SetupRealUpdaterLowerVersion() const = 0;
+  virtual void SetupRealUpdater(const base::FilePath& updater_path) const = 0;
   virtual void SetExistenceCheckerPath(const std::string& app_id,
                                        const base::FilePath& path) const = 0;
   virtual void SetServerStarts(int value) const = 0;
@@ -125,7 +135,7 @@ class IntegrationTestCommands
                          const std::string& tag) const = 0;
   virtual void ExpectAppVersion(const std::string& app_id,
                                 const base::Version& version) const = 0;
-  virtual void RunWake(int exit_code) const = 0;
+  virtual void RunWake(int exit_code, const base::Version& version) const = 0;
   virtual void RunWakeAll() const = 0;
   virtual void RunWakeActive(int exit_code) const = 0;
   virtual void RunCrashMe() const = 0;
@@ -133,6 +143,8 @@ class IntegrationTestCommands
 
   virtual void RegisterApp(const RegistrationRequest& registration) const = 0;
   virtual void CheckForUpdate(const std::string& app_id) const = 0;
+  virtual void ExpectCheckForUpdateOppositeScopeFails(
+      const std::string& app_id) const = 0;
   virtual void Update(const std::string& app_id,
                       const std::string& install_data_index) const = 0;
   virtual void UpdateAll() const = 0;
@@ -159,6 +171,8 @@ class IntegrationTestCommands
       const base::Value::List& parameters,
       int expected_exit_code) const = 0;
   virtual void ExpectLegacyPolicyStatusSucceeds() const = 0;
+  virtual void LegacyInstallApp(const std::string& app_id,
+                                const base::Version& version) const = 0;
   virtual void RunUninstallCmdLine() const = 0;
   virtual void RunHandoff(const std::string& app_id) const = 0;
 #endif  // BUILDFLAG(IS_WIN)
@@ -197,7 +211,8 @@ class IntegrationTestCommands
   virtual void RunOfflineInstall(bool is_legacy_install,
                                  bool is_silent_install) = 0;
   virtual void RunOfflineInstallOsNotSupported(bool is_legacy_install,
-                                               bool is_silent_install) = 0;
+                                               bool is_silent_install,
+                                               const std::string& language) = 0;
   virtual void DMPushEnrollmentToken(const std::string& enrollment_token) = 0;
   virtual void DMDeregisterDevice() = 0;
   virtual void DMCleanup() = 0;

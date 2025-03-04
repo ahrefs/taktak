@@ -121,7 +121,7 @@ public class MerchantTrustBottomSheetMediator {
                         if (navigation.hasCommitted()) {
                             mToolbarModel.set(
                                     BottomSheetToolbarProperties.URL,
-                                    mWebContents.get().getVisibleUrl());
+                                    getWebContents().getVisibleUrl());
                         }
                     }
                 };
@@ -157,7 +157,7 @@ public class MerchantTrustBottomSheetMediator {
                     }
 
                     @Override
-                    public void loadingStateChanged(boolean shouldShowLoadingUI) {
+                    public void loadingStateChanged(boolean shouldShowLoadingUi) {
                         boolean isLoading = mWebContents != null && mWebContents.isLoading();
                         if (isLoading) {
                             if (mToolbarModel == null) return;
@@ -228,7 +228,7 @@ public class MerchantTrustBottomSheetMediator {
 
     void destroyWebContents() {
         if (mWebContentsObserver != null) {
-            mWebContentsObserver.destroy();
+            mWebContentsObserver.observe(null);
             mWebContentsObserver = null;
         }
         if (mWebContents != null) {
@@ -254,9 +254,8 @@ public class MerchantTrustBottomSheetMediator {
                 return R.drawable.omnibox_info;
             case ConnectionSecurityLevel.DANGEROUS:
                 return R.drawable.omnibox_not_secure_warning;
-            case ConnectionSecurityLevel.SECURE_WITH_POLICY_INSTALLED_CERT:
             case ConnectionSecurityLevel.SECURE:
-                return R.drawable.omnibox_https_valid;
+                return R.drawable.omnibox_https_valid_lock;
             default:
                 assert false;
         }

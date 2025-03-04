@@ -11,6 +11,7 @@
 
 #include <stddef.h>
 
+#include <array>
 #include <memory>
 #include <string>
 
@@ -24,6 +25,7 @@
 #include "base/strings/strcat.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
+#include "base/strings/to_string.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
@@ -42,6 +44,7 @@
 #include "chrome/test/base/testing_profile.h"
 #include "components/google/core/common/google_switches.h"
 #include "components/history/core/browser/history_service.h"
+#include "components/lens/lens_features.h"
 #include "components/lens/proto/server/lens_overlay_response.pb.h"
 #include "components/omnibox/browser/autocomplete_controller.h"
 #include "components/omnibox/browser/autocomplete_input.h"
@@ -50,10 +53,11 @@
 #include "components/omnibox/browser/autocomplete_provider_listener.h"
 #include "components/omnibox/browser/base_search_provider.h"
 #include "components/omnibox/browser/history_url_provider.h"
-#include "components/omnibox/browser/omnibox_feature_configs.h"
 #include "components/omnibox/browser/omnibox_field_trial.h"
 #include "components/omnibox/browser/remote_suggestions_service.h"
 #include "components/omnibox/browser/suggestion_answer.h"
+#include "components/omnibox/browser/zero_suggest_provider.h"
+#include "components/omnibox/common/omnibox_feature_configs.h"
 #include "components/omnibox/common/omnibox_features.h"
 #include "components/prefs/pref_service.h"
 #include "components/search_engines/search_engine_type.h"
@@ -116,14 +120,12 @@ class TestAutocompleteProviderClient : public ChromeAutocompleteProviderClient {
                 loader_factory)) {}
   ~TestAutocompleteProviderClient() override = default;
 
-  bool IsPersonalizedUrlDataCollectionActive() const override {
-    return is_personalized_url_data_collection_active_;
+  bool IsUrlDataCollectionActive() const override {
+    return is_url_data_collection_active_;
   }
 
-  void set_is_personalized_url_data_collection_active(
-      bool is_personalized_url_data_collection_active) {
-    is_personalized_url_data_collection_active_ =
-        is_personalized_url_data_collection_active;
+  void set_is_url_data_collection_active(bool is_url_data_collection_active) {
+    is_url_data_collection_active_ = is_url_data_collection_active;
   }
 
   scoped_refptr<network::SharedURLLoaderFactory> GetURLLoaderFactory()
@@ -132,7 +134,7 @@ class TestAutocompleteProviderClient : public ChromeAutocompleteProviderClient {
   }
 
  private:
-  bool is_personalized_url_data_collection_active_ = true;
+  bool is_url_data_collection_active_ = true;
   scoped_refptr<network::SharedURLLoaderFactory> shared_factory_;
 };
 
@@ -140,8 +142,8 @@ std::unique_ptr<KeyedService> BuildRemoteSuggestionsServiceWithURLLoader(
     network::TestURLLoaderFactory* test_url_loader_factory,
     content::BrowserContext* context) {
   return std::make_unique<RemoteSuggestionsService>(
-      DocumentSuggestionsServiceFactory::GetForProfile(
-          Profile::FromBrowserContext(context), /*create_if_necessary=*/true),
+      /*document_suggestions_service=*/nullptr,
+      /*enterprise_search_aggregator_suggestions_service=*/nullptr,
       test_url_loader_factory->GetSafeWeakWrapper());
 }
 
@@ -254,6 +256,14 @@ class BaseSearchProviderTest : public testing::Test,
         base::BindRepeating(&AutocompleteClassifierFactory::BuildInstanceFor));
 
     profile_ = profile_builder.Build();
+
+    TestingProfile::Builder otr_profile_builder;
+    otr_profile_builder.AddTestingFactory(
+        RemoteSuggestionsServiceFactory::GetInstance(),
+        base::BindRepeating(&BuildRemoteSuggestionsServiceWithURLLoader,
+                            &test_url_loader_factory_));
+    otr_profile_builder.BuildOffTheRecord(profile_.get(),
+                                          Profile::OTRProfileID::PrimaryID());
   }
 
   BaseSearchProviderTest(const BaseSearchProviderTest&) = delete;
@@ -679,7 +689,7 @@ TEST_F(SearchProviderTest, QueryDefaultProvider) {
 TEST_F(SearchProviderTest, QueryDefaultProvider_LensSearchbox) {
   std::u16string term = term1_.substr(0, term1_.length() - 1);
   AutocompleteInput input(term,
-                          metrics::OmniboxEventProto::CONTEXTUAL_SEARCHBOX,
+                          metrics::OmniboxEventProto::LENS_SIDE_PANEL_SEARCHBOX,
                           ChromeAutocompleteSchemeClassifier(profile_.get()));
   QueryForInput(input);
 
@@ -1079,16 +1089,9 @@ TEST_F(SearchProviderTest, InlineMixedCaseMatches) {
   ASSERT_NO_FATAL_FAILURE(QueryForInputAndSetWYTMatch(u"f", &wyt_match));
   ASSERT_EQ(2u, provider_->matches().size());
   AutocompleteMatch term_match;
-  if (base::FeatureList::IsEnabled(omnibox::kNormalizeSearchSuggestions)) {
-    EXPECT_TRUE(FindMatchWithDestination(
-        GURL(base::ToLowerASCII(term_url.spec())), &term_match));
-    EXPECT_EQ(u"foo", term_match.fill_into_edit);
-    EXPECT_EQ(u"oo", term_match.inline_autocompletion);
-  } else {
-    EXPECT_TRUE(FindMatchWithDestination(term_url, &term_match));
-    EXPECT_EQ(u"FOO", term_match.fill_into_edit);
-    EXPECT_EQ(u"OO", term_match.inline_autocompletion);
-  }
+  EXPECT_TRUE(FindMatchWithDestination(term_url, &term_match));
+  EXPECT_EQ(u"FOO", term_match.fill_into_edit);
+  EXPECT_EQ(u"OO", term_match.inline_autocompletion);
   EXPECT_GT(term_match.relevance, wyt_match.relevance);
   EXPECT_TRUE(term_match.allowed_to_be_default_match);
   // Make sure the case doesn't affect the highlighting.
@@ -1578,11 +1581,12 @@ TEST_F(SearchProviderTest, KeywordFetcherSuggestRelevance) {
     bool allowed_to_be_default_match;
   };
   const KeywordFetcherMatch kEmptyMatch = { kNotApplicable, false, false };
-  struct {
+  struct Cases {
     const std::string json;
     const KeywordFetcherMatch matches[6];
     const std::string inline_autocompletion;
-  } cases[] = {
+  };
+  auto cases = std::to_array<Cases>({
       // clang-format off
     // Ensure that suggest relevance scores reorder matches.
     { "[\"a\",[\"b\", \"c\"],[],[],{\"google:suggestrelevance\":[1, 2]}]",
@@ -1939,7 +1943,7 @@ TEST_F(SearchProviderTest, KeywordFetcherSuggestRelevance) {
         kEmptyMatch, kEmptyMatch },
       "3" },
       // clang-format on
-  };
+  });
 
   for (size_t i = 0; i < std::size(cases); ++i) {
     // Send the query twice in order to have a synchronous pass after the first
@@ -2229,11 +2233,12 @@ TEST_F(SearchProviderTest, DontCacheCalculatorSuggestions) {
   // processing (receiving first asynchronous response, handling new keystroke
   // synchronously) we have the expected matches.  The new keystroke should
   // immediately invalidate old calculator suggestions.
-  struct {
+  struct Cases {
     std::string json;
     ExpectedMatch async_matches[4];
     ExpectedMatch sync_matches[4];
-  } cases[] = {
+  };
+  auto cases = std::to_array<Cases>({
       {"[\"1+2\",[\"= 3\", \"1+2+3+4+5\"],[],[],"
        "{\"google:verbatimrelevance\":1300,"
        "\"google:suggesttype\":[\"CALCULATOR\", \"QUERY\"],"
@@ -2253,7 +2258,7 @@ TEST_F(SearchProviderTest, DontCacheCalculatorSuggestions) {
         {"1+2+3+4+5", false},
         kEmptyExpectedMatch,
         kEmptyExpectedMatch}},
-  };
+  });
 
   // Note: SearchSuggestionParser::ParseSuggestResults swaps the content and
   // answer fields on Desktop. See https://crbug.com/1325124#c1.
@@ -2304,56 +2309,59 @@ TEST_F(SearchProviderTest, LocalAndRemoteRelevances) {
   AddSearchToHistory(default_t_url_, term + u"2", 2);
   profile_->BlockUntilHistoryProcessesPendingRequests();
 
-  struct {
+  struct Cases {
     const std::u16string input;
     const std::string json;
     const std::string matches[6];
-  } cases[] = {
-    // The history results outscore the default verbatim score.  term2 has more
-    // visits so it outscores term1.  The suggestions are still returned since
-    // they're server-scored.
-    { term,
-      "[\"term\",[\"a1\", \"a2\", \"a3\"],[],[],"
-       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\"],"
-        "\"google:suggestrelevance\":[1, 2, 3]}]",
-      { "term2", "term1", "term", "a3", "a2", "a1" } },
-    // Because we already have three suggestions by the time we see the history
-    // results, they don't get returned.
-    { term,
-      "[\"term\",[\"a1\", \"a2\", \"a3\"],[],[],"
-       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\"],"
-        "\"google:verbatimrelevance\":1450,"
-        "\"google:suggestrelevance\":[1440, 1430, 1420]}]",
-      { "term", "a1", "a2", "a3", kNotApplicable, kNotApplicable } },
-    // If we only have two suggestions, we have room for a history result.
-    { term,
-      "[\"term\",[\"a1\", \"a2\"],[],[],"
-       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\"],"
-        "\"google:verbatimrelevance\":1450,"
-        "\"google:suggestrelevance\":[1430, 1410]}]",
-      { "term", "a1", "a2", "term2", kNotApplicable, kNotApplicable } },
-    // If we have more than three suggestions, they should all be returned as
-    // long as we have enough total space for them.
-    { term,
-      "[\"term\",[\"a1\", \"a2\", \"a3\", \"a4\"],[],[],"
-       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\", \"QUERY\"],"
-        "\"google:verbatimrelevance\":1450,"
-        "\"google:suggestrelevance\":[1440, 1430, 1420, 1410]}]",
-      { "term", "a1", "a2", "a3", "a4", kNotApplicable } },
-    { term,
-      "[\"term\",[\"a1\", \"a2\", \"a3\", \"a4\", \"a5\", \"a6\"],[],[],"
-       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\", \"QUERY\","
-                                "\"QUERY\", \"QUERY\"],"
-        "\"google:verbatimrelevance\":1450,"
-        "\"google:suggestrelevance\":[1440, 1430, 1420, 1410, 1400, 1390]}]",
-      { "term", "a1", "a2", "a3", "a4", "a5" } },
-    { term,
-      "[\"term\",[\"a1\", \"a2\", \"a3\", \"a4\"],[],[],"
-       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\", \"QUERY\"],"
-        "\"google:verbatimrelevance\":1450,"
-        "\"google:suggestrelevance\":[1430, 1410, 1390, 1370]}]",
-      { "term", "a1", "a2", "term2", "a3", "a4" } }
   };
+  auto cases = std::to_array<Cases>({
+      // The history results outscore the default verbatim score.  term2 has
+      // more
+      // visits so it outscores term1.  The suggestions are still returned since
+      // they're server-scored.
+      {term,
+       "[\"term\",[\"a1\", \"a2\", \"a3\"],[],[],"
+       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\"],"
+       "\"google:suggestrelevance\":[1, 2, 3]}]",
+       {"term2", "term1", "term", "a3", "a2", "a1"}},
+      // Because we already have three suggestions by the time we see the
+      // history
+      // results, they don't get returned.
+      {term,
+       "[\"term\",[\"a1\", \"a2\", \"a3\"],[],[],"
+       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\"],"
+       "\"google:verbatimrelevance\":1450,"
+       "\"google:suggestrelevance\":[1440, 1430, 1420]}]",
+       {"term", "a1", "a2", "a3", kNotApplicable, kNotApplicable}},
+      // If we only have two suggestions, we have room for a history result.
+      {term,
+       "[\"term\",[\"a1\", \"a2\"],[],[],"
+       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\"],"
+       "\"google:verbatimrelevance\":1450,"
+       "\"google:suggestrelevance\":[1430, 1410]}]",
+       {"term", "a1", "a2", "term2", kNotApplicable, kNotApplicable}},
+      // If we have more than three suggestions, they should all be returned as
+      // long as we have enough total space for them.
+      {term,
+       "[\"term\",[\"a1\", \"a2\", \"a3\", \"a4\"],[],[],"
+       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\", \"QUERY\"],"
+       "\"google:verbatimrelevance\":1450,"
+       "\"google:suggestrelevance\":[1440, 1430, 1420, 1410]}]",
+       {"term", "a1", "a2", "a3", "a4", kNotApplicable}},
+      {term,
+       "[\"term\",[\"a1\", \"a2\", \"a3\", \"a4\", \"a5\", \"a6\"],[],[],"
+       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\", \"QUERY\","
+       "\"QUERY\", \"QUERY\"],"
+       "\"google:verbatimrelevance\":1450,"
+       "\"google:suggestrelevance\":[1440, 1430, 1420, 1410, 1400, 1390]}]",
+       {"term", "a1", "a2", "a3", "a4", "a5"}},
+      {term,
+       "[\"term\",[\"a1\", \"a2\", \"a3\", \"a4\"],[],[],"
+       "{\"google:suggesttype\":[\"QUERY\", \"QUERY\", \"QUERY\", \"QUERY\"],"
+       "\"google:verbatimrelevance\":1450,"
+       "\"google:suggestrelevance\":[1430, 1410, 1390, 1370]}]",
+       {"term", "a1", "a2", "term2", "a3", "a4"}},
+  });
 
   for (size_t i = 0; i < std::size(cases); ++i) {
     QueryForInputAndWaitForFetcherResponses(
@@ -2515,7 +2523,7 @@ TEST_F(SearchProviderTest, FieldTrialTriggeredParsing) {
         "[\"foo\",[\"foo bar\"],[\"\"],[],"
         "{\"google:suggesttype\":[\"QUERY\"],"
         "\"google:fieldtrialtriggered\":" +
-            std::string(trigger ? "true" : "false") + "}]",
+            base::ToString(trigger) + "}]",
         std::string());
 
     // Check for the match and field trial triggered bits.
@@ -3310,45 +3318,52 @@ TEST_F(SearchProviderTest, XSSIGuardedJSONParsing_ValidResponses) {
       kNotApplicable, AutocompleteMatchType::NUM_TYPES
   };
 
-  struct {
+  struct Cases {
     const std::string input_text;
     const std::string default_provider_response_json;
     const Match matches[4];
-  } cases[] = {
-    // No XSSI guard.
-    { "a",
-      "[\"a\",[\"b\", \"c\"],[],[],"
-      "{\"google:suggesttype\":[\"QUERY\",\"QUERY\"],"
-      "\"google:suggestrelevance\":[1, 2]}]",
-      { { "a", AutocompleteMatchType::SEARCH_WHAT_YOU_TYPED },
-        { "c", AutocompleteMatchType::SEARCH_SUGGEST },
-        { "b", AutocompleteMatchType::SEARCH_SUGGEST },
-        kEmptyMatch,
-      },
-    },
-    // Standard XSSI guard - )]}'\n.
-    { "a",
-      ")]}'\n[\"a\",[\"b\", \"c\"],[],[],"
-      "{\"google:suggesttype\":[\"QUERY\",\"QUERY\"],"
-      "\"google:suggestrelevance\":[1, 2]}]",
-      { { "a", AutocompleteMatchType::SEARCH_WHAT_YOU_TYPED },
-        { "c", AutocompleteMatchType::SEARCH_SUGGEST },
-        { "b", AutocompleteMatchType::SEARCH_SUGGEST },
-        kEmptyMatch,
-      },
-    },
-    // Modified XSSI guard - contains "[".
-    { "a",
-      ")]}'\n[)\"[\"a\",[\"b\", \"c\"],[],[],"
-      "{\"google:suggesttype\":[\"QUERY\",\"QUERY\"],"
-      "\"google:suggestrelevance\":[1, 2]}]",
-      { { "a", AutocompleteMatchType::SEARCH_WHAT_YOU_TYPED },
-        { "c", AutocompleteMatchType::SEARCH_SUGGEST },
-        { "b", AutocompleteMatchType::SEARCH_SUGGEST },
-        kEmptyMatch,
-      },
-    },
   };
+  auto cases = std::to_array<Cases>({
+      // No XSSI guard.
+      {
+          "a",
+          "[\"a\",[\"b\", \"c\"],[],[],"
+          "{\"google:suggesttype\":[\"QUERY\",\"QUERY\"],"
+          "\"google:suggestrelevance\":[1, 2]}]",
+          {
+              {"a", AutocompleteMatchType::SEARCH_WHAT_YOU_TYPED},
+              {"c", AutocompleteMatchType::SEARCH_SUGGEST},
+              {"b", AutocompleteMatchType::SEARCH_SUGGEST},
+              kEmptyMatch,
+          },
+      },
+      // Standard XSSI guard - )]}'\n.
+      {
+          "a",
+          ")]}'\n[\"a\",[\"b\", \"c\"],[],[],"
+          "{\"google:suggesttype\":[\"QUERY\",\"QUERY\"],"
+          "\"google:suggestrelevance\":[1, 2]}]",
+          {
+              {"a", AutocompleteMatchType::SEARCH_WHAT_YOU_TYPED},
+              {"c", AutocompleteMatchType::SEARCH_SUGGEST},
+              {"b", AutocompleteMatchType::SEARCH_SUGGEST},
+              kEmptyMatch,
+          },
+      },
+      // Modified XSSI guard - contains "[".
+      {
+          "a",
+          ")]}'\n[)\"[\"a\",[\"b\", \"c\"],[],[],"
+          "{\"google:suggesttype\":[\"QUERY\",\"QUERY\"],"
+          "\"google:suggestrelevance\":[1, 2]}]",
+          {
+              {"a", AutocompleteMatchType::SEARCH_WHAT_YOU_TYPED},
+              {"c", AutocompleteMatchType::SEARCH_SUGGEST},
+              {"b", AutocompleteMatchType::SEARCH_SUGGEST},
+              kEmptyMatch,
+          },
+      },
+  });
 
   for (size_t i = 0; i < std::size(cases); ++i) {
     ClearAllResults();
@@ -3391,12 +3406,12 @@ TEST_F(SearchProviderTest, ParseDeletionUrl) {
   const Match kEmptyMatch = {kNotApplicable, std::string(),
                              AutocompleteMatchType::NUM_TYPES};
 
-  const char* url[] = {
+  auto url = std::to_array<const char*>({
       "http://defaultturl/complete/deleteitems"
       "?delq=ab&client=chrome&deltok=xsrf124",
       "http://defaultturl/complete/deleteitems"
       "?delq=www.amazon.com&client=chrome&deltok=xsrf123",
-  };
+  });
 
   struct {
     const std::string input_text;
@@ -3541,7 +3556,7 @@ TEST_F(SearchProviderTest, CanSendRequestWithURL) {
   TemplateURL google_template_url(google_template_url_data);
 
   // Enable personalized URL data collection.
-  client_->set_is_personalized_url_data_collection_active(true);
+  client_->set_is_url_data_collection_active(true);
 
   // Personalized URL data collection is active. Test that we can send the page
   // URL if all of the following hold:
@@ -3574,7 +3589,7 @@ TEST_F(SearchProviderTest, CanSendRequestWithURL) {
   EXPECT_TRUE(test_srp(&google_template_url, client_.get()));
 
   // Disable personalized URL data collection.
-  client_->set_is_personalized_url_data_collection_active(false);
+  client_->set_is_url_data_collection_active(false);
 
   // Does not require personalized URL data collection to be enabled.
   EXPECT_TRUE(test_lens(&google_template_url, client_.get()));
@@ -3584,7 +3599,7 @@ TEST_F(SearchProviderTest, CanSendRequestWithURL) {
   EXPECT_TRUE(test_srp(&google_template_url, client_.get()));
 
   // Re-enable personalized URL data collection.
-  client_->set_is_personalized_url_data_collection_active(true);
+  client_->set_is_url_data_collection_active(true);
 
   // Ensure the state is properly reset.
   EXPECT_TRUE(test_lens(&google_template_url, client_.get()));
@@ -3593,11 +3608,13 @@ TEST_F(SearchProviderTest, CanSendRequestWithURL) {
 
   // Incognito profile.
   ChromeAutocompleteProviderClient incognito_client(
-      profile_->GetPrimaryOTRProfile(/*create_if_needed=*/true));
+      profile_->GetPrimaryOTRProfile(/*create_if_needed=*/false));
 
+  // Can make Suggest requests in incognito mode.
+  EXPECT_TRUE(test_lens(&google_template_url, &incognito_client));
   // Don't make Suggest requests in incognito mode.
-  EXPECT_FALSE(test_lens(&google_template_url, &incognito_client));
   EXPECT_FALSE(test_other(&google_template_url, &incognito_client));
+  // Don't make Suggest requests in incognito mode.
   EXPECT_FALSE(test_srp(&google_template_url, &incognito_client));
 
   // Create a non-Google search provider.
@@ -3761,7 +3778,7 @@ TEST_F(SearchProviderTest, AnswersCache) {
   AutocompleteResult result;
   ACMatches matches;
   AutocompleteMatch match1;
-  match1.answer = SuggestionAnswer();
+  match1.answer_template = omnibox::RichAnswerTemplate();
   match1.answer_type = omnibox::ANSWER_TYPE_WEATHER;
   match1.fill_into_edit = u"weather los angeles";
 
@@ -3777,22 +3794,6 @@ TEST_F(SearchProviderTest, AnswersCache) {
   AnswersQueryData answer =
       provider_->answers_cache_.GetTopAnswerEntry(u"weather l");
   EXPECT_EQ(u"weather los angeles", answer.full_query_text);
-
-  AutocompleteMatch match2;
-  match2.answer_template = omnibox::RichAnswerTemplate();
-  match2.answer_type = omnibox::ANSWER_TYPE_WEATHER;
-  match2.fill_into_edit = u"weather san diego";
-
-  AutocompleteResult result2;
-  ACMatches matches2;
-  matches2.push_back(match2);
-  matches2.push_back(non_answer_match1);
-  result2.AppendMatches(matches2);
-  provider_->RegisterDisplayedAnswers(result2);
-  ASSERT_FALSE(provider_->answers_cache_.empty());
-  AnswersQueryData answer2 =
-      provider_->answers_cache_.GetTopAnswerEntry(u"weather s");
-  EXPECT_EQ(u"weather san diego", answer2.full_query_text);
 
   // Without scored results, no answers will be retrieved.
   answer = provider_->FindAnswersPrefetchData();
@@ -3816,17 +3817,12 @@ TEST_F(SearchProviderTest, AnswersCache) {
 }
 
 TEST_F(SearchProviderTest, RemoveExtraAnswers) {
-  SuggestionAnswer answer1;
-  SuggestionAnswer answer2;
-
   ACMatches matches;
   AutocompleteMatch match1, match2, match3, match4, match5;
-  match1.answer = answer1;
+  match1.answer_template = omnibox::RichAnswerTemplate();
   match1.answer_type = omnibox::ANSWER_TYPE_WEATHER;
-  match3.answer = answer2;
+  match3.answer_template = omnibox::RichAnswerTemplate();
   match3.answer_type = omnibox::ANSWER_TYPE_TRANSLATION;
-  match5.answer_template = omnibox::RichAnswerTemplate();
-  match5.answer_type = omnibox::ANSWER_TYPE_FINANCE;
 
   matches.push_back(match1);
   matches.push_back(match2);
@@ -3836,11 +3832,10 @@ TEST_F(SearchProviderTest, RemoveExtraAnswers) {
 
   SearchProvider::RemoveExtraAnswers(&matches);
   EXPECT_EQ(omnibox::ANSWER_TYPE_WEATHER, matches[0].answer_type);
-  EXPECT_TRUE(answer1.Equals(*matches[0].answer));
-  EXPECT_FALSE(matches[1].answer || matches[1].answer_template);
-  EXPECT_FALSE(matches[2].answer || matches[2].answer_template);
-  EXPECT_FALSE(matches[3].answer || matches[3].answer_template);
-  EXPECT_FALSE(matches[4].answer || matches[4].answer_template);
+  EXPECT_FALSE(matches[1].answer_template);
+  EXPECT_FALSE(matches[2].answer_template);
+  EXPECT_FALSE(matches[3].answer_template);
+  EXPECT_FALSE(matches[4].answer_template);
   EXPECT_EQ(omnibox::ANSWER_TYPE_UNSPECIFIED, matches[1].answer_type);
   EXPECT_EQ(omnibox::ANSWER_TYPE_UNSPECIFIED, matches[2].answer_type);
   EXPECT_EQ(omnibox::ANSWER_TYPE_UNSPECIFIED, matches[3].answer_type);
@@ -3854,6 +3849,7 @@ TEST_F(SearchProviderTest, DuplicateCardAnswer) {
   match1.type = AutocompleteMatchType::SEARCH_SUGGEST;
   match1.allowed_to_be_default_match = true;
   match1.answer_template = omnibox::RichAnswerTemplate();
+  match1.answer_type = omnibox::ANSWER_TYPE_WEATHER;
   match1.destination_url = GURL("http://www.google.com/google.com/search?");
 
   matches.push_back(match1);
@@ -3864,8 +3860,10 @@ TEST_F(SearchProviderTest, DuplicateCardAnswer) {
 
   EXPECT_EQ(4u, matches.size());
   EXPECT_TRUE(matches[0].answer_template);
+  EXPECT_EQ(matches[0].answer_type, omnibox::ANSWER_TYPE_WEATHER);
   EXPECT_FALSE(matches[0].allowed_to_be_default_match);
   EXPECT_FALSE(matches[3].answer_template);
+  EXPECT_EQ(matches[3].answer_type, omnibox::ANSWER_TYPE_UNSPECIFIED);
   EXPECT_TRUE(matches[3].allowed_to_be_default_match);
   EXPECT_EQ(matches[3].suggestion_group_id, omnibox::GROUP_SEARCH);
   EXPECT_EQ(matches[0].contents, matches[3].contents);
@@ -3984,22 +3982,41 @@ TEST_F(SearchProviderRequestTest, SendRequestWithURL) {
       "suggest?q=foo&url=https%3A%2F%2Fwww.example.com%2F&"));
 }
 
-TEST_F(SearchProviderRequestTest, SendRequestWithoutLensInteractionResponse) {
+TEST_F(SearchProviderRequestTest, LensContextualSearchboxSuggestRequest) {
+  base::test::ScopedFeatureList feature_list;
+  feature_list.InitWithFeaturesAndParameters(
+      {{lens::features::kLensOverlayContextualSearchbox,
+        {
+            {"show-contextual-searchbox-search-suggest", "true"},
+        }}},
+      /*disabled_features=*/{});
   // Start a query.
   AutocompleteInput input(u"foo",
                           metrics::OmniboxEventProto::CONTEXTUAL_SEARCHBOX,
                           ChromeAutocompleteSchemeClassifier(profile_.get()));
-  lens::proto::LensOverlaySuggestInputs lens_overlay_suggest_inputs;
-  lens_overlay_suggest_inputs.set_encoded_image_signals("xyz");
-  input.set_lens_overlay_suggest_inputs(lens_overlay_suggest_inputs);
   provider_->Start(input, false);
 
-  // Make sure the default provider's suggest endpoint was queried with the
-  // Lens interaction response.
+  // Make sure the default provider's suggest endpoint is queried when
+  // contextual searchbox search suggest is enabled.
   base::RunLoop().RunUntilIdle();
   EXPECT_FALSE(provider_->done());
   EXPECT_TRUE(test_url_loader_factory_.IsPending(
       "https://www.google.com/suggest?q=foo&client=chrome-contextual"));
+}
+
+TEST_F(SearchProviderRequestTest, LensContextualSearchboxNoSuggestRequest) {
+  // Start a query.
+  AutocompleteInput input(u"foo",
+                          metrics::OmniboxEventProto::CONTEXTUAL_SEARCHBOX,
+                          ChromeAutocompleteSchemeClassifier(profile_.get()));
+  provider_->Start(input, false);
+
+  // Make sure the default provider's suggest endpoint is not queried for
+  // contextual searchboxes.
+  base::RunLoop().RunUntilIdle();
+  EXPECT_FALSE(test_url_loader_factory_.IsPending(
+      "https://www.google.com/suggest?q=foo&client=chrome-contextual"));
+  EXPECT_TRUE(provider_->done());
 }
 
 TEST_F(SearchProviderRequestTest, SendRequestWithLensInteractionResponse) {
@@ -4038,6 +4055,110 @@ TEST_F(SearchProviderInvalidSuggestEndpointTest, DoesNotSendSuggestRequest) {
 
   // Make sure the default provider's suggest service was not queried.
   EXPECT_FALSE(test_url_loader_factory_.IsPending("http://defaulturl/query"));
+}
+
+// SearchProviderOTRTest ------------------------------------------------
+//
+// Test environment with an OTR profile.
+class SearchProviderOTRTest : public SearchProviderTest {
+ public:
+  SearchProviderOTRTest() = default;
+
+  void SetUp() override {
+    SearchProviderTest::SetUp();
+
+    // Set up a Google default search provider.
+    TemplateURLData google_template_url_data;
+    google_template_url_data.SetShortName(u"t");
+    google_template_url_data.SetURL(
+        "https://www.google.com/search?q={searchTerms}");
+    google_template_url_data.suggestions_url =
+        "https://www.google.com/suggest?q={searchTerms}";
+
+    TemplateURLService* turl_model =
+        TemplateURLServiceFactory::GetForProfile(otr_profile());
+    TemplateURL* template_url = turl_model->Add(
+        std::make_unique<TemplateURL>(google_template_url_data));
+    turl_model->SetUserSelectedDefaultSearchProvider(template_url);
+    ASSERT_NE(0, template_url->id());
+
+    otr_client_ = std::make_unique<TestAutocompleteProviderClient>(
+        otr_profile(), &test_url_loader_factory_);
+    provider_ = new TestSearchProvider(otr_client_.get(), this);
+    zero_suggest_provider_ = new ZeroSuggestProvider(otr_client_.get(), this);
+  }
+
+  void TearDown() override {
+    BaseSearchProviderTest::TearDown();
+
+    // Shutdown the provider before the profile.
+    zero_suggest_provider_ = nullptr;
+  }
+
+ protected:
+  Profile* otr_profile() {
+    return profile_->GetPrimaryOTRProfile(/*create_if_needed=*/false);
+  }
+
+  std::unique_ptr<TestAutocompleteProviderClient> otr_client_;
+  scoped_refptr<ZeroSuggestProvider> zero_suggest_provider_;
+};
+
+TEST_F(SearchProviderOTRTest, DoesNotSendSuggestRequest) {
+  // Start a query.
+  AutocompleteInput input(u"foo", metrics::OmniboxEventProto::OTHER,
+                          ChromeAutocompleteSchemeClassifier(otr_profile()));
+  provider_->Start(input, false);
+
+  // Make sure the provider was not run and the default search engine's suggest
+  // endpoint was not queried.
+  base::RunLoop().RunUntilIdle();
+  EXPECT_TRUE(provider_->done());
+  EXPECT_TRUE(test_url_loader_factory_.pending_requests()->empty());
+}
+
+TEST_F(SearchProviderOTRTest, DoesNotSendZeroSuggestRequest) {
+  // Start a zero-prefix query.
+  AutocompleteInput input(u"", metrics::OmniboxEventProto::NTP_REALBOX,
+                          ChromeAutocompleteSchemeClassifier(otr_profile()));
+  input.set_focus_type(metrics::OmniboxFocusType::INTERACTION_FOCUS);
+  zero_suggest_provider_->Start(input, false);
+
+  // Make sure the provider was not run and the default search engine's suggest
+  // endpoint was not queried.
+  base::RunLoop().RunUntilIdle();
+  EXPECT_TRUE(zero_suggest_provider_->done());
+  EXPECT_TRUE(test_url_loader_factory_.pending_requests()->empty());
+}
+
+TEST_F(SearchProviderOTRTest, SendSuggestRequestForLens) {
+  // Start a query.
+  AutocompleteInput input(u"foo",
+                          metrics::OmniboxEventProto::LENS_SIDE_PANEL_SEARCHBOX,
+                          ChromeAutocompleteSchemeClassifier(profile_.get()));
+  provider_->Start(input, false);
+
+  // Make sure the provdier was run and the default search engine's suggest
+  // endpoint was queried.
+  base::RunLoop().RunUntilIdle();
+  EXPECT_FALSE(provider_->done());
+  EXPECT_TRUE(test_url_loader_factory_.IsPending(
+      "https://www.google.com/suggest?q=foo&client=chrome-multimodal"));
+}
+
+TEST_F(SearchProviderOTRTest, SendZeroSuggestRequestForLens) {
+  // Start a zero-prefix query.
+  AutocompleteInput input(u"", metrics::OmniboxEventProto::CONTEXTUAL_SEARCHBOX,
+                          ChromeAutocompleteSchemeClassifier(profile_.get()));
+  input.set_focus_type(metrics::OmniboxFocusType::INTERACTION_FOCUS);
+  zero_suggest_provider_->Start(input, false);
+
+  // Make sure the provdier was run and the default search engine's suggest
+  // endpoint was queried.
+  base::RunLoop().RunUntilIdle();
+  EXPECT_FALSE(zero_suggest_provider_->done());
+  EXPECT_TRUE(test_url_loader_factory_.IsPending(
+      "https://www.google.com/suggest?q=&client=chrome-contextual"));
 }
 
 // SearchProviderCommandLineOverrideTest -------------------------------------

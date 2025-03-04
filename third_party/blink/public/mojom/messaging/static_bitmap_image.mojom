@@ -34,16 +34,13 @@ struct SharedImageUsageSet {
 // Holds all information, necessary to recreate the accelerated image.
 struct AcceleratedStaticBitmapImage {
   // ExportedSharedImage contains SharedImage reference:
-  // mailbox, sync token and texture target.
+  // mailbox, metadata, creation sync token and texture target.
   gpu.mojom.ExportedSharedImage shared_image;
+  // Sync token that must be waited on before reading the shared image
+  // associated with this AcceleratedStaticBitmapImage.
+  gpu.mojom.SyncToken sync_token;
   // Common image metadata.
   skia.mojom.ImageInfo image_info;
-  // Indicates the orientation of the image.
-  bool is_origin_top_left;
-  // Indicates if the display compositing may be used with this image.
-  bool supports_display_compositing;
-  // Indicates if the image is an overlay candidate.
-  bool is_overlay_candidate;
   // Resource lifetime management callback. Until this pending remote is
   // destroyed or the callback is called the sender shall keep the
   // resource alive.

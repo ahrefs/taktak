@@ -2,18 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <algorithm>
+
 #include "base/barrier_closure.h"
 #include "base/command_line.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_forward.h"
 #include "base/memory/raw_ptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/run_loop.h"
 #include "base/strings/strcat.h"
 #include "base/test/bind.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/extensions/api/desktop_capture/desktop_capture_api.h"
 #include "chrome/browser/media/webrtc/fake_desktop_media_picker_factory.h"
 #include "chrome/browser/media/webrtc/webrtc_browsertest_base.h"
@@ -59,8 +59,9 @@ content::DesktopMediaID GetDesktopMediaIDForTab(Browser* browser, int tab) {
   return content::DesktopMediaID(
       content::DesktopMediaID::TYPE_WEB_CONTENTS,
       content::DesktopMediaID::kNullId,
-      content::WebContentsMediaCaptureId(main_frame->GetProcess()->GetID(),
-                                         main_frame->GetRoutingID()));
+      content::WebContentsMediaCaptureId(
+          main_frame->GetProcess()->GetDeprecatedID(),
+          main_frame->GetRoutingID()));
 }
 
 infobars::ContentInfoBarManager* GetInfoBarManager(Browser* browser, int tab) {
@@ -152,7 +153,7 @@ class InfobarUIChangeObserver : public TabStripModelObserver {
 
  public:
   void EraseObserver(InfoBarChangeObserver* observer) {
-    auto iter = base::ranges::find(
+    auto iter = std::ranges::find(
         observers_, observer,
         [](const auto& observer_iter) { return observer_iter.second.get(); });
     observers_.erase(iter);
@@ -185,7 +186,7 @@ class InfobarUIChangeObserver : public TabStripModelObserver {
 
     void OnInfoBarReplaced(infobars::InfoBar* old_infobar,
                            infobars::InfoBar* new_infobar) override {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
 
     void OnManagerShuttingDown(infobars::InfoBarManager* manager) override {

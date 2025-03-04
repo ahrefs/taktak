@@ -4,8 +4,8 @@
 
 #import "ios/chrome/browser/docking_promo/ui/docking_promo_view_controller.h"
 
-#import "ios/chrome/browser/shared/ui/elements/instruction_view.h"
 #import "ios/chrome/common/ui/colors/semantic_color_names.h"
+#import "ios/chrome/common/ui/instruction_view/instruction_view.h"
 #import "ios/chrome/grit/ios_branded_strings.h"
 #import "ios/chrome/grit/ios_strings.h"
 #import "ui/base/l10n/l10n_util_mac.h"
@@ -27,18 +27,37 @@ NSString* const kEditHomeScreenKeypath = @"edit_home_screen";
 
 }  // namespace
 
-@implementation DockingPromoViewController
+@implementation DockingPromoViewController {
+  BOOL _remindMeLater;
+}
+
+- (instancetype)initWithRemindMeLater:(BOOL)remindMeLater {
+  self = [super initWithNibName:nil bundle:nil];
+  if (self) {
+    _remindMeLater = remindMeLater;
+  }
+  return self;
+}
 
 #pragma mark - UIViewController
 
 - (void)viewDidLoad {
   self.animationName = kAnimationName;
   self.animationNameDarkMode = kAnimationNameDarkMode;
+  self.animationBackgroundColor = [UIColor
+      colorWithDynamicProvider:^UIColor*(UITraitCollection* traitCollection) {
+        return (traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
+                   ? [UIColor colorNamed:kBackgroundColor]
+                   : [UIColor colorNamed:kGrey100Color];
+      }];
   self.titleString = l10n_util::GetNSString(IDS_IOS_DOCKING_PROMO_TITLE);
   self.primaryActionString =
       l10n_util::GetNSString(IDS_IOS_DOCKING_PROMO_PRIMARY_BUTTON_TITLE);
   self.secondaryActionString =
-      l10n_util::GetNSString(IDS_IOS_DOCKING_PROMO_SECONDARY_BUTTON_TITLE);
+      _remindMeLater
+          ? l10n_util::GetNSString(IDS_IOS_DOCKING_PROMO_SECONDARY_BUTTON_TITLE)
+          : l10n_util::GetNSString(
+                IDS_IOS_DOCKING_PROMO_NO_THANKS_BUTTON_TITLE);
 
   // Set the text localization.
   NSString* editHomeScreenTitle = l10n_util::GetNSString(

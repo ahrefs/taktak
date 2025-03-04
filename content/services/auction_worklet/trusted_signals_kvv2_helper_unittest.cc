@@ -32,6 +32,7 @@
 #include "content/common/features.h"
 #include "content/services/auction_worklet/public/cpp/cbor_test_util.h"
 #include "content/services/auction_worklet/public/mojom/auction_worklet_service.mojom.h"
+#include "content/services/auction_worklet/worklet_test_util.h"
 #include "net/third_party/quiche/src/quiche/oblivious_http/oblivious_http_gateway.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -160,7 +161,7 @@ std::string ExtractBiddingSignals(
   if (v8_helper->ExtractJson(context, value,
                              /*script_timeout=*/nullptr,
                              &result) != AuctionV8Helper::Result::kSuccess) {
-    result = "JSON extraction failed.";
+    return "JSON extraction failed.";
   }
   return result;
 }
@@ -193,6 +194,30 @@ void CheckBiddingResult(
   EXPECT_EQ(data_version, result->GetDataVersion());
 }
 
+// Returns the results of calling TrustedSignals::Result::GetScoringSignals()
+// with `render_url` and `ad_component_render_urls`. Returns value as a JSON
+// std::string, for easy testing.
+std::string ExtractScoringSignals(
+    AuctionV8Helper* v8_helper,
+    TrustedSignals::Result* signals,
+    const GURL& render_url,
+    const std::vector<std::string>& ad_component_render_urls) {
+  AuctionV8Helper::FullIsolateScope isolate_scope(v8_helper);
+  v8::Isolate* isolate = v8_helper->isolate();
+  v8::Local<v8::Context> context = v8::Context::New(isolate);
+  v8::Context::Scope context_scope(context);
+  v8::Local<v8::Value> value = signals->GetScoringSignals(
+      v8_helper, context, render_url,
+      CreateMojoCreativeInfoWithoutOwnerVector(ad_component_render_urls));
+  std::string result;
+
+  if (v8_helper->ExtractJson(context, value, /*script_timeout=*/nullptr,
+                             &result) != AuctionV8Helper::Result::kSuccess) {
+    return "JSON extraction failed.";
+  }
+  return result;
+}
+
 // Check trusted scoring signals' render urls and ad component signals in json
 // format with given render url and ad component render urls.
 void CheckScoringResult(
@@ -206,19 +231,8 @@ void CheckScoringResult(
   ASSERT_TRUE(result_map.contains(index));
   TrustedSignals::Result* result = result_map.at(index).get();
 
-  AuctionV8Helper::FullIsolateScope isolate_scope(v8_helper);
-  v8::Isolate* isolate = v8_helper->isolate();
-  v8::Local<v8::Context> context = v8::Context::New(isolate);
-  v8::Context::Scope context_scope(context);
-  v8::Local<v8::Value> value = result->GetScoringSignals(
-      v8_helper, context, render_url, ad_component_render_urls);
-  std::string signals_json;
-
-  if (v8_helper->ExtractJson(context, value, /*script_timeout=*/nullptr,
-                             &signals_json) !=
-      AuctionV8Helper::Result::kSuccess) {
-    signals_json = "JSON extraction failed.";
-  }
+  std::string signals_json = ExtractScoringSignals(
+      v8_helper, result, render_url, ad_component_render_urls);
 
   EXPECT_EQ(expected_signals, signals_json);
   EXPECT_EQ(data_version, result->GetDataVersion());
@@ -239,11 +253,10 @@ std::string BuildResponseBody(const std::string& hex_string,
   size_t response_body_size = desired_size - kOhttpHeaderSize;
   response_body.resize(response_body_size, 0x00);
 
-  base::SpanWriter writer(
-      base::as_writable_bytes(base::make_span(response_body)));
+  base::SpanWriter writer(base::as_writable_byte_span(response_body));
   writer.WriteU8BigEndian(compress_scheme);
   writer.WriteU32BigEndian(hex_bytes.size());
-  writer.Write(base::as_bytes(base::make_span(hex_bytes)));
+  writer.Write(base::as_byte_span(hex_bytes));
 
   return response_body;
 }
@@ -770,7 +783,7 @@ TEST_F(TrustedSignalsKVv2RequestHelperTest,
                       "https://foo.test/"
                     ],
                     "tags": [
-                      "renderUrls"
+                      "renderURLs"
                     ]
                   }
                 ]
@@ -835,7 +848,7 @@ TEST_F(TrustedSignalsKVv2RequestHelperTest,
   //             "https://foo.test/"
   //           ],
   //           "tags": [
-  //             "renderUrls"
+  //             "renderURLs"
   //           ]
   //         },
   //         {
@@ -843,7 +856,7 @@ TEST_F(TrustedSignalsKVv2RequestHelperTest,
   //             "https://foosub.test/"
   //           ],
   //           "tags": [
-  //             "adComponentRenderUrls"
+  //             "adComponentRenderURLs"
   //           ]
   //         }
   //       ],
@@ -860,7 +873,7 @@ TEST_F(TrustedSignalsKVv2RequestHelperTest,
   //             "https://bar.test/"
   //           ],
   //           "tags": [
-  //             "renderUrls"
+  //             "renderURLs"
   //           ]
   //         },
   //         {
@@ -868,7 +881,7 @@ TEST_F(TrustedSignalsKVv2RequestHelperTest,
   //             "https://barsub.test/"
   //           ],
   //           "tags": [
-  //             "adComponentRenderUrls"
+  //             "adComponentRenderURLs"
   //           ]
   //         }
   //       ],
@@ -885,7 +898,7 @@ TEST_F(TrustedSignalsKVv2RequestHelperTest,
   //             "https://foo.test/"
   //           ],
   //           "tags": [
-  //             "renderUrls"
+  //             "renderURLs"
   //           ]
   //         },
   //         {
@@ -893,7 +906,7 @@ TEST_F(TrustedSignalsKVv2RequestHelperTest,
   //             "https://foosub.test/"
   //           ],
   //           "tags": [
-  //             "adComponentRenderUrls"
+  //             "adComponentRenderURLs"
   //           ]
   //         }
   //       ],
@@ -910,18 +923,18 @@ TEST_F(TrustedSignalsKVv2RequestHelperTest,
       "A3686D65746164617461A168686F73746E616D656E7075626C69736865722E746573746A"
       "706172746974696F6E7383A462696400686D65746164617461A1716578706572696D656E"
       "7447726F7570496465313233343569617267756D656E747382A264646174618171687474"
-      "70733A2F2F666F6F2E746573742F6474616773816A72656E64657255726C73A264646174"
+      "70733A2F2F666F6F2E746573742F6474616773816A72656E64657255524C73A264646174"
       "61817468747470733A2F2F666F6F7375622E746573742F647461677381756164436F6D70"
-      "6F6E656E7452656E64657255726C7372636F6D7072657373696F6E47726F7570496400A4"
+      "6F6E656E7452656E64657255524C7372636F6D7072657373696F6E47726F7570496400A4"
       "62696401686D65746164617461A1716578706572696D656E7447726F7570496465313233"
       "343569617267756D656E747382A26464617461817168747470733A2F2F6261722E746573"
-      "742F6474616773816A72656E64657255726C73A26464617461817468747470733A2F2F62"
+      "742F6474616773816A72656E64657255524C73A26464617461817468747470733A2F2F62"
       "61727375622E746573742F647461677381756164436F6D706F6E656E7452656E64657255"
-      "726C7372636F6D7072657373696F6E47726F7570496400A462696400686D657461646174"
+      "524C7372636F6D7072657373696F6E47726F7570496400A462696400686D657461646174"
       "61A1716578706572696D656E7447726F7570496465313233343569617267756D656E7473"
       "82A26464617461817168747470733A2F2F666F6F2E746573742F6474616773816A72656E"
-      "64657255726C73A26464617461817468747470733A2F2F666F6F7375622E746573742F64"
-      "7461677381756164436F6D706F6E656E7452656E64657255726C7372636F6D7072657373"
+      "64657255524C73A26464617461817468747470733A2F2F666F6F7375622E746573742F64"
+      "7461677381756164436F6D706F6E656E7452656E64657255524C7372636F6D7072657373"
       "696F6E47726F757049640171616363657074436F6D7072657373696F6E82646E6F6E6564"
       "677A6970";
   // Prefix hex for `kExpectedBodyHex` which includes the compression format
@@ -1299,7 +1312,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://bar.test/": {
@@ -1312,7 +1325,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //       },
   //       {
   //         "tags": [
-  //           "adComponentRenderUrls"
+  //           "adComponentRenderURLs"
   //         ],
   //         "keyValues": {
   //           "https://barsub.test/": {
@@ -1330,7 +1343,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://baz.test/": {
@@ -1340,7 +1353,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //       },
   //       {
   //         "tags": [
-  //           "adComponentRenderUrls"
+  //           "adComponentRenderURLs"
   //         ],
   //         "keyValues": {
   //           "https://bazsub.test/": {
@@ -1353,15 +1366,15 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   // ]
   const std::string kCompressionGroup0Hex =
       "82A3626964006B6461746156657273696F6E18366F6B657947726F75704F757470757473"
-      "82A26474616773816A72656E64657255726C73696B657956616C756573A2716874747073"
+      "82A26474616773816A72656E64657255524C73696B657956616C756573A2716874747073"
       "3A2F2F6261722E746573742FA16576616C756561317168747470733A2F2F666F6F2E7465"
       "73742FA16576616C7565781D7B22666F6F223A205B3130305D2C2022626172223A202274"
-      "657374227DA2647461677381756164436F6D706F6E656E7452656E64657255726C73696B"
+      "657374227DA2647461677381756164436F6D706F6E656E7452656E64657255524C73696B"
       "657956616C756573A27468747470733A2F2F6261727375622E746573742FA16576616C75"
       "6561327468747470733A2F2F666F6F7375622E746573742FA16576616C7565635B335DA2"
       "626964016F6B657947726F75704F75747075747382A26474616773816A72656E64657255"
-      "726C73696B657956616C756573A17168747470733A2F2F62617A2E746573742FA1657661"
-      "6C7565646E756C6CA2647461677381756164436F6D706F6E656E7452656E64657255726C"
+      "524C73696B657956616C756573A17168747470733A2F2F62617A2E746573742FA1657661"
+      "6C7565646E756C6CA2647461677381756164436F6D706F6E656E7452656E64657255524C"
       "73696B657956616C756573A17468747470733A2F2F62617A7375622E746573742FA16576"
       "616C7565646E756C6C";
   std::vector<uint8_t> compression_group0_bytes;
@@ -1375,7 +1388,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://qux.test/": {
@@ -1385,7 +1398,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //       },
   //       {
   //         "tags": [
-  //           "adComponentRenderUrls"
+  //           "adComponentRenderURLs"
   //         ],
   //         "keyValues": {
   //           "https://quxsub.test/": {
@@ -1398,9 +1411,9 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   // ]
   const std::string kCompressionGroup1Hex =
       "81A3626964026B6461746156657273696F6E116F6B657947726F75704F75747075747382"
-      "A26474616773816A72656E64657255726C73696B657956616C756573A17168747470733A"
+      "A26474616773816A72656E64657255524C73696B657956616C756573A17168747470733A"
       "2F2F7175782E746573742FA16576616C7565655B2233225DA2647461677381756164436F"
-      "6D706F6E656E7452656E64657255726C73696B657956616C756573A17468747470733A2F"
+      "6D706F6E656E7452656E64657255524C73696B657956616C756573A17468747470733A2F"
       "2F7175787375622E746573742FA16576616C7565655B2234225D";
   std::vector<uint8_t> compression_group1_bytes;
   base::HexStringToBytes(kCompressionGroup1Hex, &compression_group1_bytes);
@@ -2010,7 +2023,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://bar.test/": {
@@ -2025,7 +2038,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://foo.test/": {
@@ -2038,9 +2051,9 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   // ]
   hex_string =
       "82A2626964006F6B657947726F75704F75747075747381A26474616773816A72656E6465"
-      "7255726C73696B657956616C756573A17168747470733A2F2F6261722E746573742FA165"
+      "7255524C73696B657956616C756573A17168747470733A2F2F6261722E746573742FA165"
       "76616C756563313030A2626964006F6B657947726F75704F75747075747381A264746167"
-      "73816A72656E64657255726C73696B657956616C756573A17168747470733A2F2F666F6F"
+      "73816A72656E64657255524C73696B657956616C756573A17168747470733A2F2F666F6F"
       "2E746573742FA16576616C756563313030";
   result_map[0].content.clear();
   base::HexStringToBytes(hex_string, &result_map[0].content);
@@ -2297,7 +2310,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://foo.test/": 100
@@ -2308,7 +2321,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   // ]
   hex_string =
       "81A2626964006F6B657947726F75704F75747075747381A26474616773816A72656E6465"
-      "7255726C73696B657956616C756573A17168747470733A2F2F666F6F2E746573742F186"
+      "7255524C73696B657956616C756573A17168747470733A2F2F666F6F2E746573742F186"
       "4";
   result_map[0].content.clear();
   base::HexStringToBytes(hex_string, &result_map[0].content);
@@ -2351,7 +2364,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://foo.test/": {
@@ -2364,7 +2377,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   // ]
   hex_string =
       "81A2626964006F6B657947726F75704F75747075747381A26474616773816A72656E6465"
-      "7255726C73696B657956616C756573A17168747470733A2F2F666F6F2E746573742FA163"
+      "7255524C73696B657956616C756573A17168747470733A2F2F666F6F2E746573742FA163"
       "76616C60";
   result_map[0].content.clear();
   base::HexStringToBytes(hex_string, &result_map[0].content);
@@ -2407,7 +2420,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://foo.test/": {
@@ -2420,7 +2433,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   // ]
   hex_string =
       "81A2626964006F6B657947726F75704F75747075747381A26474616773816A72656E6465"
-      "7255726C73696B657956616C756573A17168747470733A2F2F666F6F2E746573742FA165"
+      "7255524C73696B657956616C756573A17168747470733A2F2F666F6F2E746573742FA165"
       "76616C75651864";
   result_map[0].content.clear();
   base::HexStringToBytes(hex_string, &result_map[0].content);
@@ -2490,7 +2503,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "renderUrls"
+  //           "renderURLs"
   //         ],
   //         "keyValues": {
   //           "https://foo.test/": {
@@ -2503,7 +2516,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   // ]
   hex_string =
       "81A2626964006F6B657947726F75704F75747075747381A26474616773816A72656E6465"
-      "7255726C73696B657956616C756573A17168747470733A2F2F666F6F2E746573742FA165"
+      "7255524C73696B657956616C756573A17168747470733A2F2F666F6F2E746573742FA165"
       "76616C7565643130303A";
   result_map[0].content.clear();
   base::HexStringToBytes(hex_string, &result_map[0].content);
@@ -2519,7 +2532,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   //     "keyGroupOutputs": [
   //       {
   //         "tags": [
-  //           "adComponentRenderUrls"
+  //           "adComponentRenderURLs"
   //         ],
   //         "keyValues": {
   //           "https://foosub.test/": {
@@ -2532,7 +2545,7 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
   // ]
   hex_string =
       "81A2626964006F6B657947726F75704F75747075747381A2647461677381756164436F6D"
-      "706F6E656E7452656E64657255726C73696B657956616C756573A17468747470733A2F2F"
+      "706F6E656E7452656E64657255524C73696B657956616C756573A17468747470733A2F2F"
       "666F6F7375622E746573742FA16576616C7565643130303A";
   result_map[0].content.clear();
   base::HexStringToBytes(hex_string, &result_map[0].content);
@@ -2547,46 +2560,63 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
 // ParseEntireCompressionGroup tests
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsEmptyData) {
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kNone, base::span<uint8_t>());
-  EXPECT_THAT(result_or_error, IsError("Failed to parse content as CBOR."));
+TEST_F(TrustedSignalsKVv2ResponseParserTest, EmptyData) {
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            base::span<uint8_t>());
+    EXPECT_THAT(result_or_error, IsError("Failed to parse content as CBOR."));
+  }
 }
 
-TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsNonCborData) {
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kNone,
-          base::as_bytes(base::make_span("Not CBOR")));
-  EXPECT_THAT(result_or_error, IsError("Failed to parse content as CBOR."));
+TEST_F(TrustedSignalsKVv2ResponseParserTest, NonCborData) {
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            base::byte_span_with_nul_from_cstring("Not CBOR"));
+    EXPECT_THAT(result_or_error, IsError("Failed to parse content as CBOR."));
+  }
 }
 
-TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsNotCborArray) {
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kNone,
-          test::ToCborVector(R"({"this": "is a map."})"));
-  EXPECT_THAT(result_or_error, IsError("Content is not type of array."));
+TEST_F(TrustedSignalsKVv2ResponseParserTest, NotCborArray) {
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            test::ToCborVector(R"({"this": "is a map."})"));
+    EXPECT_THAT(result_or_error, IsError("Content is not type of array."));
+  }
 }
 
-TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsNoPartitions) {
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kNone,
-          test::ToCborVector("[]"));
-  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{}));
+TEST_F(TrustedSignalsKVv2ResponseParserTest, NoPartitions) {
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            test::ToCborVector("[]"));
+    ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{}));
+  }
 }
 
-TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsInvalidPartitions) {
+TEST_F(TrustedSignalsKVv2ResponseParserTest, InvalidPartitions) {
   const struct {
     const char* reponse_as_json;
     const char* expected_error;
@@ -2607,35 +2637,71 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsInvalidPartitions) {
                          { "id": 37, "keyGroupOutputs": [] }])",
                      R"(Duplicated partition id "37".)"}};
 
-  for (const auto& test_case : kTestCases) {
-    SCOPED_TRACE(test_case.reponse_as_json);
-    auto result_or_error =
-        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-            helper_.get(),
-            TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-            mojom::TrustedSignalsCompressionScheme::kNone,
-            test::ToCborVector(test_case.reponse_as_json));
-    EXPECT_THAT(result_or_error, IsError(test_case.expected_error));
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    for (const auto& test_case : kTestCases) {
+      SCOPED_TRACE(test_case.reponse_as_json);
+      auto result_or_error =
+          TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+              helper_.get(), signals_type,
+              mojom::TrustedSignalsCompressionScheme::kNone,
+              test::ToCborVector(test_case.reponse_as_json));
+      EXPECT_THAT(result_or_error, IsError(test_case.expected_error));
+    }
   }
 }
 
-// Empty partitions are allowed, as long as they have a "keyGroupOutputs" array.
-TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsEmptyPartition) {
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kNone,
-          test::ToCborVector(R"([{ "id": 0, "keyGroupOutputs": [] }])"));
-  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
-  EXPECT_FALSE((*result_or_error)[0]->GetDataVersion());
-  EXPECT_FALSE((*result_or_error)[0]->GetPerGroupData("group1"));
-  EXPECT_EQ(ExtractBiddingSignals(helper_.get(), (*result_or_error)[0].get(),
-                                  {"key1"}),
-            R"({"key1":null})");
+TEST_F(TrustedSignalsKVv2ResponseParserTest, CompressionSchemeNoneButGzipped) {
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            GzipCompressHelper(
+                test::ToCborVector(R"([{ "id": 0, "keyGroupOutputs": [] }])")));
+    EXPECT_THAT(result_or_error, IsError("Failed to parse content as CBOR."));
+  }
 }
 
-TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsInvalidDataVersion) {
+TEST_F(TrustedSignalsKVv2ResponseParserTest,
+       CompressionSchemeGzipButNotGzipped) {
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kGzip,
+            // Ideally this would be a valid CBOR compression group, but the
+            // gzip code unconditionally allocates memory based on the last 4
+            // bytes of the response, which can be quite large. End this string
+            // with 4 character 01's to avoid allocating too much memory.
+            base::byte_span_with_nul_from_cstring("Not gzip.\x1\x1\x1\x1"));
+    ASSERT_THAT(result_or_error,
+                IsError("Failed to decompress content string with Gzip."));
+  }
+}
+
+TEST_F(TrustedSignalsKVv2ResponseParserTest, CompressionSchemeGzip) {
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kGzip,
+            GzipCompressHelper(test::ToCborVector(
+                R"([{ "id": 37, "dataVersion": 5, "keyGroupOutputs": [] }])")));
+    ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{37}));
+    EXPECT_EQ((*result_or_error)[37]->GetDataVersion(), 5);
+  }
+}
+
+TEST_F(TrustedSignalsKVv2ResponseParserTest, InvalidDataVersion) {
   const struct {
     const char* data_version;
     const char* expected_error;
@@ -2650,95 +2716,107 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsInvalidDataVersion) {
       // only supports floats and ints. As a result, it's covered in another
       // test.
   };
-  for (const auto& test_case : kTestCases) {
-    SCOPED_TRACE(test_case.data_version);
-    auto result_or_error =
-        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-            helper_.get(),
-            TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-            mojom::TrustedSignalsCompressionScheme::kNone,
-            test::ToCborVector(base::StringPrintf(
-                R"([{"id": 0,
-                     "dataVersion": %s,
-                     "keyGroupOutputs": [] }])",
-                test_case.data_version)));
-    EXPECT_THAT(result_or_error, IsError(test_case.expected_error));
+
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    for (const auto& test_case : kTestCases) {
+      SCOPED_TRACE(test_case.data_version);
+      auto result_or_error =
+          TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+              helper_.get(), signals_type,
+              mojom::TrustedSignalsCompressionScheme::kNone,
+              test::ToCborVector(base::StringPrintf(
+                  R"([{"id": 0,
+                       "dataVersion": %s,
+                       "keyGroupOutputs": [] }])",
+                  test_case.data_version)));
+      EXPECT_THAT(result_or_error, IsError(test_case.expected_error));
+    }
   }
 }
 
-TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsDataVersion) {
+TEST_F(TrustedSignalsKVv2ResponseParserTest, DataVersion) {
   const uint32_t kTestCases[] = {0, 1};
-  for (uint32_t test_case : kTestCases) {
-    SCOPED_TRACE(test_case);
-    auto result_or_error =
-        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-            helper_.get(),
-            TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-            mojom::TrustedSignalsCompressionScheme::kNone,
-            test::ToCborVector(base::StringPrintf(
-                R"([{"id": 0,
+
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    for (uint32_t test_case : kTestCases) {
+      SCOPED_TRACE(test_case);
+      auto result_or_error =
+          TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+              helper_.get(), signals_type,
+              mojom::TrustedSignalsCompressionScheme::kNone,
+              test::ToCborVector(base::StringPrintf(
+                  R"([{"id": 0,
                      "dataVersion": %u,
                      "keyGroupOutputs": [] }])",
-                test_case)));
-    ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
-    EXPECT_EQ((*result_or_error)[0]->GetDataVersion(), test_case);
+                  test_case)));
+      ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+      EXPECT_EQ((*result_or_error)[0]->GetDataVersion(), test_case);
+    }
   }
 }
 
 // ToCborVector() uses base::Value, which only supports ints and doubles. The
 // maximum DataVersion value is the max uint32, so to test the max value, have
 // to construct the cbor::Value directly.
-TEST_F(TrustedSignalsKVv2ResponseParserTest,
-       BiddingSignalsDataVersionMaxValue) {
+TEST_F(TrustedSignalsKVv2ResponseParserTest, DataVersionMaxValue) {
   const int64_t kDataVersionMax = std::numeric_limits<uint32_t>::max();
 
-  // Max value should succeed.
-  cbor::Value::MapValue max_data_version_compression_group;
-  max_data_version_compression_group.emplace(cbor::Value("id"), cbor::Value(0));
-  max_data_version_compression_group.emplace(cbor::Value("dataVersion"),
-                                             cbor::Value(kDataVersionMax));
-  max_data_version_compression_group.emplace(
-      cbor::Value("keyGroupOutputs"), cbor::Value(cbor::Value::ArrayValue()));
-  cbor::Value::ArrayValue max_data_version_partitions;
-  max_data_version_partitions.emplace_back(
-      std::move(max_data_version_compression_group));
-  cbor::Value max_data_version(std::move(max_data_version_partitions));
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kNone,
-          *cbor::Writer::Write(max_data_version));
-  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
-  EXPECT_EQ((*result_or_error)[0]->GetDataVersion(), kDataVersionMax);
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    // Max value should succeed.
+    cbor::Value::MapValue max_data_version_compression_group;
+    max_data_version_compression_group.emplace(cbor::Value("id"),
+                                               cbor::Value(0));
+    max_data_version_compression_group.emplace(cbor::Value("dataVersion"),
+                                               cbor::Value(kDataVersionMax));
+    max_data_version_compression_group.emplace(
+        cbor::Value("keyGroupOutputs"), cbor::Value(cbor::Value::ArrayValue()));
+    cbor::Value::ArrayValue max_data_version_partitions;
+    max_data_version_partitions.emplace_back(
+        std::move(max_data_version_compression_group));
+    cbor::Value max_data_version(std::move(max_data_version_partitions));
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            *cbor::Writer::Write(max_data_version));
+    ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+    EXPECT_EQ((*result_or_error)[0]->GetDataVersion(), kDataVersionMax);
 
-  // Max value + 1 should fail.
-  cbor::Value::MapValue max_data_version_exceeded_compression_group;
-  max_data_version_exceeded_compression_group.emplace(cbor::Value("id"),
-                                                      cbor::Value(0));
-  max_data_version_exceeded_compression_group.emplace(
-      cbor::Value("dataVersion"), cbor::Value(kDataVersionMax + 1));
-  max_data_version_exceeded_compression_group.emplace(
-      cbor::Value("keyGroupOutputs"), cbor::Value(cbor::Value::ArrayValue()));
-  cbor::Value::ArrayValue max_data_version_exceeded_partitions;
-  max_data_version_exceeded_partitions.emplace_back(
-      std::move(max_data_version_exceeded_compression_group));
-  cbor::Value max_data_version_exceeded(
-      std::move(max_data_version_exceeded_partitions));
-  result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kNone,
-          *cbor::Writer::Write(std::move(max_data_version_exceeded)));
-  EXPECT_THAT(result_or_error,
-              IsError("DataVersion field is out of range for uint32."));
+    // Max value + 1 should fail.
+    cbor::Value::MapValue max_data_version_exceeded_compression_group;
+    max_data_version_exceeded_compression_group.emplace(cbor::Value("id"),
+                                                        cbor::Value(0));
+    max_data_version_exceeded_compression_group.emplace(
+        cbor::Value("dataVersion"), cbor::Value(kDataVersionMax + 1));
+    max_data_version_exceeded_compression_group.emplace(
+        cbor::Value("keyGroupOutputs"), cbor::Value(cbor::Value::ArrayValue()));
+    cbor::Value::ArrayValue max_data_version_exceeded_partitions;
+    max_data_version_exceeded_partitions.emplace_back(
+        std::move(max_data_version_exceeded_compression_group));
+    cbor::Value max_data_version_exceeded(
+        std::move(max_data_version_exceeded_partitions));
+    result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(), signals_type,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            *cbor::Writer::Write(std::move(max_data_version_exceeded)));
+    EXPECT_THAT(result_or_error,
+                IsError("DataVersion field is out of range for uint32."));
+  }
 }
 
 // This test covers cases where the structure of the "keyGroupOutputs" or the
 // maps the tags or KeyGroupOutputs values it contains are invalid.
-TEST_F(TrustedSignalsKVv2ResponseParserTest,
-       BiddingSignalsInvalidKeyGroupOutputs) {
+TEST_F(TrustedSignalsKVv2ResponseParserTest, InvalidKeyGroupOutputs) {
   const struct {
     const char* key_group_outputs;
     const char* expected_error;
@@ -2779,21 +2857,43 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest,
        R"(KeyValue value in keyGroupOutputs map is not type of map.)"},
   };
 
-  for (const auto& test_case : kTestCases) {
-    SCOPED_TRACE(test_case.key_group_outputs);
-    auto result_or_error =
-        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-            helper_.get(),
-            TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-            mojom::TrustedSignalsCompressionScheme::kNone,
-            test::ToCborVector(
-                base::StringPrintf(R"([{ "id": 0, "keyGroupOutputs": %s }])",
-                                   test_case.key_group_outputs)));
-    EXPECT_THAT(result_or_error, IsError(test_case.expected_error));
+  for (auto signals_type :
+       {TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+        TrustedSignalsKVv2ResponseParser::SignalsType::kScoring}) {
+    SCOPED_TRACE(static_cast<int>(signals_type));
+    for (const auto& test_case : kTestCases) {
+      SCOPED_TRACE(test_case.key_group_outputs);
+      auto result_or_error =
+          TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+              helper_.get(),
+              TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+              mojom::TrustedSignalsCompressionScheme::kNone,
+              test::ToCborVector(
+                  base::StringPrintf(R"([{ "id": 0, "keyGroupOutputs": %s }])",
+                                     test_case.key_group_outputs)));
+      EXPECT_THAT(result_or_error, IsError(test_case.expected_error));
+    }
   }
 }
 
-// Unknown tags are ignored.
+// Empty partitions are allowed, as long as they have a "keyGroupOutputs" array.
+TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsEmptyPartition) {
+  auto result_or_error =
+      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+          helper_.get(),
+          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
+          mojom::TrustedSignalsCompressionScheme::kNone,
+          test::ToCborVector(R"([{ "id": 0, "keyGroupOutputs": [] }])"));
+  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+  EXPECT_FALSE((*result_or_error)[0]->GetDataVersion());
+  EXPECT_FALSE((*result_or_error)[0]->GetPerGroupData("group1"));
+  EXPECT_EQ(ExtractBiddingSignals(helper_.get(), (*result_or_error)[0].get(),
+                                  {"key1"}),
+            R"({"key1":null})");
+}
+
+// Unknown tags are ignored. Tags exclusive to scoring signals are treated as
+// unknown tags if they appear in bidding signals.
 TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsUnknownTags) {
   auto result_or_error =
       TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
@@ -2805,7 +2905,9 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsUnknownTags) {
                 "id": 0,
                 "keyGroupOutputs": [
                   {"tags": ["foo"], "keyValues": {}},
-                  {"tags": ["bar"], "keyValues": {"foo":"bar"}}
+                  {"tags": ["bar"], "keyValues": {"foo":"bar"}},
+                  {"tags": ["renderURLs"], "keyValues": {"foo":"bar"}},
+                  {"tags": ["adComponentRenderURLs"], "keyValues": {"foo":2}}
                 ]
               }])"));
   ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
@@ -3280,47 +3382,6 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsFullyPopulated) {
             R"({"key1":"4"})");
 }
 
-TEST_F(TrustedSignalsKVv2ResponseParserTest,
-       BiddingSignalsCompressionSchemeNoneButGzipped) {
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kNone,
-          GzipCompressHelper(
-              test::ToCborVector(R"([{ "id": 0, "keyGroupOutputs": [] }])")));
-  EXPECT_THAT(result_or_error, IsError("Failed to parse content as CBOR."));
-}
-
-TEST_F(TrustedSignalsKVv2ResponseParserTest,
-       BiddingSignalsCompressionSchemeGzipButNotGzipped) {
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kGzip,
-          // Ideally this would be a valid CBOR compression group, but the gzip
-          // code unconditionally allocates memory based on the last 4 bytes of
-          // the response, which can be quite large. End this string with 4
-          // character 01's to avoid allocating too much memory.
-          base::as_bytes(base::make_span("Not gzip.\x1\x1\x1\x1")));
-  ASSERT_THAT(result_or_error,
-              IsError("Failed to decompress content string with Gzip."));
-}
-
-TEST_F(TrustedSignalsKVv2ResponseParserTest,
-       BiddingSignalsCompressionSchemeGzip) {
-  auto result_or_error =
-      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
-          helper_.get(),
-          TrustedSignalsKVv2ResponseParser::SignalsType::kBidding,
-          mojom::TrustedSignalsCompressionScheme::kGzip,
-          GzipCompressHelper(test::ToCborVector(
-              R"([{ "id": 37, "dataVersion": 5, "keyGroupOutputs": [] }])")));
-  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{37}));
-  EXPECT_EQ((*result_or_error)[37]->GetDataVersion(), 5);
-}
-
 TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsMultiplePartitions) {
   base::test::ScopedFeatureList feature_list;
   feature_list.InitAndEnableFeature(features::kInterestGroupUpdateIfOlderThan);
@@ -3416,6 +3477,378 @@ TEST_F(TrustedSignalsKVv2ResponseParserTest, BiddingSignalsMultiplePartitions) {
   EXPECT_EQ(ExtractBiddingSignals(helper_.get(), (*result_or_error)[14].get(),
                                   {"key1", "key2", "key3"}),
             R"({"key1":null,"key2":null,"key3":null})");
+}
+
+// Empty partitions are allowed, as long as they have a "keyGroupOutputs" array.
+TEST_F(TrustedSignalsKVv2ResponseParserTest, ScoringSignalsEmptyPartition) {
+  auto result_or_error =
+      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+          helper_.get(),
+          TrustedSignalsKVv2ResponseParser::SignalsType::kScoring,
+          mojom::TrustedSignalsCompressionScheme::kNone,
+          test::ToCborVector(R"([{ "id": 0, "keyGroupOutputs": [] }])"));
+  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+  EXPECT_FALSE((*result_or_error)[0]->GetDataVersion());
+  EXPECT_EQ(ExtractScoringSignals(helper_.get(), (*result_or_error)[0].get(),
+                                  GURL("https://render.test/"),
+                                  {"https://component.test/"}),
+            R"({"renderURL":{"https://render.test/":null},)"
+            R"("renderUrl":{"https://render.test/":null},)"
+            R"("adComponentRenderURLs":{"https://component.test/":null},)"
+            R"("adComponentRenderUrls":{"https://component.test/":null}})");
+}
+
+// Unknown tags are ignored. Tags exclusive to bidding signals are treated as
+// unknown tags if they appear in scoring signals.
+TEST_F(TrustedSignalsKVv2ResponseParserTest, ScoringSignalsUnknownTags) {
+  auto result_or_error =
+      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+          helper_.get(),
+          TrustedSignalsKVv2ResponseParser::SignalsType::kScoring,
+          mojom::TrustedSignalsCompressionScheme::kNone,
+          test::ToCborVector(
+              R"([{
+                "id": 0,
+                "keyGroupOutputs": [
+                  {"tags": ["foo"], "keyValues": {}},
+                  {"tags": ["bar"], "keyValues": {"foo":"bar"}},
+                  {"tags": ["interestGroupNames"], "keyValues": {"foo":"bar"}},
+                  {"tags": ["keys"],"keyValues": {"key": 2}}
+                ]
+              }])"));
+  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+  EXPECT_FALSE((*result_or_error)[0]->GetDataVersion());
+  EXPECT_EQ(ExtractScoringSignals(helper_.get(), (*result_or_error)[0].get(),
+                                  GURL("https://render.test/"),
+                                  {"https://component.test/"}),
+            R"({"renderURL":{"https://render.test/":null},)"
+            R"("renderUrl":{"https://render.test/":null},)"
+            R"("adComponentRenderURLs":{"https://component.test/":null},)"
+            R"("adComponentRenderUrls":{"https://component.test/":null}})");
+}
+
+// Test cases where a `renderURL` / `adComponentRenderURL` is invalid.
+TEST_F(TrustedSignalsKVv2ResponseParserTest, ScoringSignalsInvalidRenderUrl) {
+  const struct {
+    const char* key_values_json;
+    const char* expected_error;
+  } kTestCases[] = {
+      {R"()", R"(Failed to find key "value" in the map.)"},
+      {R"("not-value":1)", R"(Failed to find key "value" in the map.)"},
+      {R"("value":"Not JSON")",
+       R"(Failed to parse key-value string to JSON for key "key1".)"},
+  };
+
+  for (bool test_component_render_url : {false, true}) {
+    SCOPED_TRACE(test_component_render_url);
+    for (const auto& test_case : kTestCases) {
+      SCOPED_TRACE(test_case.key_values_json);
+      auto result_or_error =
+          TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+              helper_.get(),
+              TrustedSignalsKVv2ResponseParser::SignalsType::kScoring,
+              mojom::TrustedSignalsCompressionScheme::kNone,
+              test::ToCborVector(base::StringPrintf(
+                  R"([{
+                    "id": 0,
+                    "keyGroupOutputs": [{
+                      "tags": ["%s"],
+                      "keyValues": {
+                        "key1": { %s }
+                      }
+                    }]
+                  }])",
+                  test_component_render_url ? "adComponentRenderURLs"
+                                            : "renderURLs",
+                  test_case.key_values_json)));
+      EXPECT_THAT(result_or_error, IsError(test_case.expected_error));
+    }
+  }
+}
+
+// Tests basic `renderURL` and `adComponentRenderURLs` parsing. Queries both URL
+// types using a single string, after receiving a response with only a single
+// one of them populated in the KVv2 partition.
+TEST_F(TrustedSignalsKVv2ResponseParserTest, ScoringSignalsRenderUrl) {
+  // The `renderUrl` and `adComponentRenderUrl` requested in each test case.
+  const GURL kRenderUrl = GURL("https://foo.test/");
+
+  const struct {
+    // The value of `keyValues` in the input CBOR for either `renderUrls` or
+    // `adComponentRenderUrls`, depending on the value of
+    // `test_component_render_url`. The other one has no value in the CBOR.
+    const char* key_values_json;
+    // The expected value for either `renderUrl[kRenderUrl]` or
+    // `adComponentRenderUrls[kRenderUrl]` in the output of GetScoringSignals(),
+    // depending on the value of `test_component_render_url`. The value of the
+    // other one should be null.
+    const char* expected_value;
+  } kTestCases[] = {
+      {R"({"https://foo.test/":{"value":"null"}})", "null"},
+      {R"({"https://foo.test/":{"value":"1"}})", "1"},
+      {R"({"https://foo.test/":{"value":"-1.5"}})", "-1.5"},
+      {R"({"https://foo.test/":{"value":"[]"}})", "[]"},
+      {R"({"https://foo.test/":{"value":"[1,\"b\"]"}})", R"([1,"b"])"},
+      {R"({"https://foo.test/":{"value":"{}"}})", "{}"},
+      {R"({"https://foo.test/":{"value":"{\"a\":\"b\",\"c\":1}"}})",
+       R"({"a":"b","c":1})"},
+      {R"({"https://bar.test/":{"value":"1"}})", "null"},
+      {R"({"https://foo.test/":{"value":"1"},"https://bar.test/":{"value":"3"}})",
+       "1"},
+
+      // Unexpected values are ignored.
+      {R"({"https://foo.test/":{"value":"1","foo":"bar"}})", "1"},
+  };
+
+  for (bool test_component_render_url : {false, true}) {
+    SCOPED_TRACE(test_component_render_url);
+    for (const auto& test_case : kTestCases) {
+      SCOPED_TRACE(test_case.key_values_json);
+      auto result_or_error =
+          TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+              helper_.get(),
+              TrustedSignalsKVv2ResponseParser::SignalsType::kScoring,
+              mojom::TrustedSignalsCompressionScheme::kNone,
+              test::ToCborVector(base::StringPrintf(
+                  R"([{
+                    "id": 0,
+                    "keyGroupOutputs": [{
+                      "tags": ["%s"],
+                      "keyValues": %s
+                    }]
+                  }])",
+                  test_component_render_url ? "adComponentRenderURLs"
+                                            : "renderURLs",
+                  test_case.key_values_json)));
+      ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+
+      // Expected JSON object for the renderURL or adComponentRenderUrl
+      // corresponding to whether `test_component_render_url` is false or true.
+      std::string expected_match_object = base::StringPrintf(
+          R"({"%s":%s})", kRenderUrl.spec().c_str(), test_case.expected_value);
+      // The other JSON object, which should be null.
+      std::string expected_other_object =
+          base::StringPrintf(R"({"%s":null})", kRenderUrl.spec().c_str());
+
+      std::string expected_render_url_object;
+      std::string expected_component_render_url_object;
+      if (test_component_render_url) {
+        expected_render_url_object = expected_other_object;
+        expected_component_render_url_object = expected_match_object;
+      } else {
+        expected_render_url_object = expected_match_object;
+        expected_component_render_url_object = expected_other_object;
+      }
+
+      EXPECT_EQ(
+          ExtractScoringSignals(helper_.get(), (*result_or_error)[0].get(),
+                                kRenderUrl, {kRenderUrl.spec()}),
+          base::StringPrintf(R"({"renderURL":%s,)"
+                             R"("renderUrl":%s,)"
+                             R"("adComponentRenderURLs":%s,)"
+                             R"("adComponentRenderUrls":%s})",
+                             expected_render_url_object.c_str(),
+                             expected_render_url_object.c_str(),
+                             expected_component_render_url_object.c_str(),
+                             expected_component_render_url_object.c_str()));
+    }
+  }
+}
+
+// Test the case of an empty set of `ad_component_render_urls` being requested,
+// both with and without a a adComponentRenderUrls value.
+TEST_F(TrustedSignalsKVv2ResponseParserTest,
+       ScoringSignalsNoComponentRenderUrl) {
+  const std::string_view kTestCases[] = {
+      R"([{"id": 0, "keyGroupOutputs":[]}])",
+      R"([{
+        "id": 0,
+        "keyGroupOutputs": [{
+          "tags": ["adComponentRenderURLs"],
+          "keyValues": {"https://foo.test/":{"value":"{}"}}
+        }]
+      }])",
+  };
+
+  for (const auto test_case : kTestCases) {
+    SCOPED_TRACE(test_case);
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(),
+            TrustedSignalsKVv2ResponseParser::SignalsType::kScoring,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            test::ToCborVector(test_case));
+    ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+
+    EXPECT_EQ(ExtractScoringSignals(helper_.get(), (*result_or_error)[0].get(),
+                                    GURL("https://foo.test/"),
+                                    /*ad_component_render_urls=*/{}),
+              R"({"renderURL":{"https://foo.test/":null},)"
+              R"("renderUrl":{"https://foo.test/":null}})");
+  }
+}
+
+TEST_F(TrustedSignalsKVv2ResponseParserTest, ScoringSignalsComponentRenderUrl) {
+  // The value to pass to GetScoringSignals() as the `render_url` only.
+  const GURL kRenderUrl = GURL("https://foo.test/");
+
+  const struct {
+    // The value of `keyValues` for `adComponentRenderUrls` in the input CBOR.
+    const char* components_render_url_json;
+    // The values of `adComponentRenderUrls` to request when calling
+    // GetScoringSignals() on the TrustedSignals::Result object.
+    std::vector<std::string> component_urls_to_query;
+    // The expected value of `adComponentRenderUrls` in
+    const char* expected_value;
+  } kTestCases[] = {
+      // Same two componentRenderUrls in request and response.
+      {R"({"https://a.test/":{"value":"1"},"https://b.test/":{"value":"[2]"}})",
+       {"https://a.test/", "https://b.test/"},
+       R"({"https://a.test/":1,"https://b.test/":[2]})"},
+      // Two requested componentRenderUrls, but only one provided in the
+      // response.
+      {R"({"https://a.test/":{"value":"1"},"https://b.test/":{"value":"[2]"}})",
+       {"https://a.test/", "https://c.test/"},
+       R"({"https://a.test/":1,"https://c.test/":null})"},
+  };
+
+  for (const auto& test_case : kTestCases) {
+    SCOPED_TRACE(test_case.components_render_url_json);
+    auto result_or_error =
+        TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+            helper_.get(),
+            TrustedSignalsKVv2ResponseParser::SignalsType::kScoring,
+            mojom::TrustedSignalsCompressionScheme::kNone,
+            test::ToCborVector(base::StringPrintf(
+                R"([{
+                  "id": 0,
+                  "keyGroupOutputs": [{
+                    "tags": ["adComponentRenderURLs"],
+                    "keyValues": %s
+                  }]
+                }])",
+                test_case.components_render_url_json)));
+    ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+
+    EXPECT_EQ(
+        ExtractScoringSignals(helper_.get(), (*result_or_error)[0].get(),
+                              kRenderUrl, test_case.component_urls_to_query),
+        base::StringPrintf(R"({"renderURL":{"https://foo.test/":null},)"
+                           R"("renderUrl":{"https://foo.test/":null},)"
+                           R"("adComponentRenderURLs":%s,)"
+                           R"("adComponentRenderUrls":%s})",
+                           test_case.expected_value, test_case.expected_value));
+  }
+}
+
+// Test all fields together, for a single partition.
+TEST_F(TrustedSignalsKVv2ResponseParserTest, ScoringSignalsFullyPopulated) {
+  base::test::ScopedFeatureList feature_list;
+  feature_list.InitAndEnableFeature(features::kInterestGroupUpdateIfOlderThan);
+  auto result_or_error =
+      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+          helper_.get(),
+          TrustedSignalsKVv2ResponseParser::SignalsType::kScoring,
+          mojom::TrustedSignalsCompressionScheme::kNone,
+          test::ToCborVector(
+              R"([{
+                "id": 0,
+                "dataVersion": 1,
+                "keyGroupOutputs": [
+                  {
+                    "tags": ["renderURLs"],
+                    "keyValues": {"https://a.test/":{"value":"4"}}
+                  },
+                  {
+                    "tags": ["adComponentRenderURLs"],
+                    "keyValues": {
+                      "https://a.test/":{"value":"[5]"},
+                      "https://b.test/":{"value":"\"6\""}
+                    }
+                  }
+                ]
+              }])"));
+  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0}));
+  EXPECT_EQ((*result_or_error)[0]->GetDataVersion(), 1);
+
+  EXPECT_EQ(
+      ExtractScoringSignals(helper_.get(), (*result_or_error)[0].get(),
+                            GURL("https://a.test/"),
+                            {"https://a.test/", "https://b.test/"}),
+      R"({"renderURL":{"https://a.test/":4},)"
+      R"("renderUrl":{"https://a.test/":4},)"
+      R"("adComponentRenderURLs":{"https://a.test/":[5],"https://b.test/":"6"},)"
+      R"("adComponentRenderUrls":{"https://a.test/":[5],"https://b.test/":"6"}})");
+}
+
+TEST_F(TrustedSignalsKVv2ResponseParserTest, ScoringSignalsMultiplePartitions) {
+  base::test::ScopedFeatureList feature_list;
+  feature_list.InitAndEnableFeature(features::kInterestGroupUpdateIfOlderThan);
+  auto result_or_error =
+      TrustedSignalsKVv2ResponseParser::ParseEntireCompressionGroup(
+          helper_.get(),
+          TrustedSignalsKVv2ResponseParser::SignalsType::kScoring,
+          mojom::TrustedSignalsCompressionScheme::kNone,
+          test::ToCborVector(
+              R"([
+                {
+                  "id": 0,
+                  "dataVersion": 1,
+                  "keyGroupOutputs": [
+                    {
+                      "tags": ["renderURLs"],
+                      "keyValues": {"https://a.test/":{"value":"1"}}
+                    },
+                    {
+                      "tags": ["adComponentRenderURLs"],
+                      "keyValues": {"https://a.test/":{"value":"2"}}
+                    }
+                  ]
+                },
+                {
+                  "id": 7,
+                  "dataVersion": 8,
+                  "keyGroupOutputs": [
+                    {
+                      "tags": ["renderURLs"],
+                      "keyValues": {"https://a.test/":{"value":"3"}}
+                    },
+                    {
+                      "tags": ["adComponentRenderURLs"],
+                      "keyValues": {"https://a.test/":{"value":"4"}}
+                    }
+                  ]
+                },
+                {
+                  "id": 14,
+                  "keyGroupOutputs": []
+                }
+              ])"));
+  ASSERT_THAT(result_or_error, PartitionsAre(std::vector<int>{0, 7, 14}));
+
+  EXPECT_EQ((*result_or_error)[0]->GetDataVersion(), 1);
+  EXPECT_EQ(ExtractScoringSignals(helper_.get(), (*result_or_error)[0].get(),
+                                  GURL("https://a.test/"), {"https://a.test/"}),
+            R"({"renderURL":{"https://a.test/":1},)"
+            R"("renderUrl":{"https://a.test/":1},)"
+            R"("adComponentRenderURLs":{"https://a.test/":2},)"
+            R"("adComponentRenderUrls":{"https://a.test/":2}})");
+
+  EXPECT_EQ((*result_or_error)[7]->GetDataVersion(), 8);
+  EXPECT_EQ(ExtractScoringSignals(helper_.get(), (*result_or_error)[7].get(),
+                                  GURL("https://a.test/"), {"https://a.test/"}),
+            R"({"renderURL":{"https://a.test/":3},)"
+            R"("renderUrl":{"https://a.test/":3},)"
+            R"("adComponentRenderURLs":{"https://a.test/":4},)"
+            R"("adComponentRenderUrls":{"https://a.test/":4}})");
+
+  EXPECT_FALSE((*result_or_error)[14]->GetDataVersion());
+  EXPECT_EQ(ExtractScoringSignals(helper_.get(), (*result_or_error)[14].get(),
+                                  GURL("https://a.test/"), {"https://a.test/"}),
+            R"({"renderURL":{"https://a.test/":null},)"
+            R"("renderUrl":{"https://a.test/":null},)"
+            R"("adComponentRenderURLs":{"https://a.test/":null},)"
+            R"("adComponentRenderUrls":{"https://a.test/":null}})");
 }
 
 }  // namespace auction_worklet

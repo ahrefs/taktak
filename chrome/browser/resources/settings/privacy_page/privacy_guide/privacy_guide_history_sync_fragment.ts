@@ -7,8 +7,9 @@
  * 'privacy-guide-history-sync-fragment' is the fragment in a privacy guide
  * card that contains the history sync setting and its description.
  */
+
+import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 import '/shared/settings/prefs/prefs.js';
-import './privacy_guide_description_item.js';
 import './privacy_guide_fragment_shared.css.js';
 import './privacy_guide_fragment_shared.css.js';
 import '../../controls/settings_toggle_button.js';
@@ -129,7 +130,7 @@ export class PrivacyGuideHistorySyncFragmentElement extends
           PrivacyGuideSettingsStates.HISTORY_SYNC_OFF_TO_ON :
           PrivacyGuideSettingsStates.HISTORY_SYNC_OFF_TO_OFF;
     }
-    this.metricsBrowserProxy_.recordPrivacyGuideSettingsStatesHistogram(state!);
+    this.metricsBrowserProxy_.recordPrivacyGuideSettingsStatesHistogram(state);
 
     this.firstSyncPrefUpdate_ = true;
   }

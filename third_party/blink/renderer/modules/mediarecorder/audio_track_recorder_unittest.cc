@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "third_party/blink/renderer/modules/mediarecorder/audio_track_recorder.h"
 
 #include <stdint.h>
@@ -496,7 +501,7 @@ class AudioTrackRecorderTest : public testing::TestWithParam<ATRTestParams> {
         frames_per_buffer_ = kAacFramesPerBuffer;
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
   }
 
@@ -689,7 +694,7 @@ class AudioTrackRecorderTest : public testing::TestWithParam<ATRTestParams> {
 #endif  // HAS_AAC_DECODER
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
 
     DoOnEncodedAudio(params, std::move(encoded_data), timestamp);
@@ -708,11 +713,13 @@ class AudioTrackRecorderTest : public testing::TestWithParam<ATRTestParams> {
   void ValidatePcmData(scoped_refptr<media::DecoderBuffer> encoded_data) {
     // Manually confirm that we're getting the same data out as what we
     // generated from the sine wave.
+    const size_t kSampleSize = 4;
     for (size_t b = 0; b + 3 < encoded_data->size() &&
                        first_source_cache_pos_ < first_source_cache_.size();
          b += sizeof(first_source_cache_[0]), ++first_source_cache_pos_) {
       float sample;
-      memcpy(&sample, encoded_data->AsSpan().subspan(b).data(), 4);
+      memcpy(&sample, (*encoded_data).subspan(b, kSampleSize).data(),
+             kSampleSize);
       ASSERT_FLOAT_EQ(sample, first_source_cache_[first_source_cache_pos_])
           << "(Sample " << first_source_cache_pos_ << ")";
     }
@@ -745,7 +752,7 @@ class AudioTrackRecorderTest : public testing::TestWithParam<ATRTestParams> {
         channel_layout = media::ChannelLayout::CHANNEL_LAYOUT_5_1_BACK;
         break;
       default:
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
     }
     media::AudioDecoderConfig config(media::AudioCodec::kAAC,
                                      media::SampleFormat::kSampleFormatS16,

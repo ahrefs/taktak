@@ -15,6 +15,7 @@
 #include "third_party/blink/public/platform/browser_interface_broker_proxy.h"
 #include "third_party/blink/public/platform/task_type.h"
 #include "third_party/blink/renderer/core/dom/document.h"
+#include "third_party/blink/renderer/core/dom/shadow_including_tree_order_traversal.h"
 #include "third_party/blink/renderer/core/editing/editing_utilities.h"
 #include "third_party/blink/renderer/core/events/pointer_event.h"
 #include "third_party/blink/renderer/core/execution_context/execution_context.h"
@@ -194,9 +195,12 @@ void AnchorElementMetricsSender::DocumentDetached(Document& document) {
       main_frame->Loader().IsCommittingNavigation()) {
     return;
   }
-  for (Element* element : *(document.links())) {
-    HTMLAnchorElementBase* anchor = To<HTMLAnchorElementBase>(element);
-    RemoveAnchorElement(*anchor);
+  for (Node& node :
+       ShadowIncludingTreeOrderTraversal::DescendantsOf(document)) {
+    if (HTMLAnchorElementBase* anchor =
+            DynamicTo<HTMLAnchorElementBase>(node)) {
+      RemoveAnchorElement(*anchor);
+    }
   }
 }
 
@@ -206,6 +210,10 @@ void AnchorElementMetricsSender::Trace(Visitor* visitor) const {
   visitor->Trace(update_timer_);
   Supplement<Document>::Trace(visitor);
   AnchorElementViewportPositionTracker::Observer::Trace(visitor);
+}
+
+bool AnchorElementMetricsSender::AllAnchorsSampledIn() const {
+  return random_anchor_sampling_period_ == 1;
 }
 
 bool AnchorElementMetricsSender::AssociateInterface() {
@@ -540,14 +548,14 @@ void AnchorElementMetricsSender::UpdateMetrics(TimerBase* /*timer*/) {
     wtf_size_t remove_idx = 0;
     for (const auto& [insert_end, remove_end] : metrics_partitions_) {
       // For each partition, removals are processed before insertions.
-      const auto removals = base::make_span(metrics_removed_anchors_)
+      const auto removals = base::span(metrics_removed_anchors_)
                                 .subspan(remove_idx, (remove_end - remove_idx));
       for (AnchorId removed_id : removals) {
         auto result = present.Set(removed_id, false);
         newly_removed.insert(removed_id, result.is_new_entry);
       }
-      const auto insertions = base::make_span(metrics_).subspan(
-          insert_idx, (insert_end - insert_idx));
+      const auto insertions =
+          base::span(metrics_).subspan(insert_idx, (insert_end - insert_idx));
       for (const auto& insertion : insertions) {
         present.Set(insertion->anchor_id, true);
       }

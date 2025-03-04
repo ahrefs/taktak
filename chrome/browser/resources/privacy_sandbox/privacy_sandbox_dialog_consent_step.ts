@@ -4,13 +4,14 @@
 
 import 'chrome://resources/cr_elements/cr_shared_style.css.js';
 import 'chrome://resources/cr_elements/cr_button/cr_button.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
+import 'chrome://resources/cr_elements/icons.html.js';
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
-import './strings.m.js';
+import '/strings.m.js';
 import './shared_style.css.js';
 import './privacy_sandbox_dialog_learn_more.js';
+import './privacy_sandbox_privacy_policy_dialog.js';
 
-import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
+import {I18nMixin} from 'chrome://resources/cr_elements/i18n_mixin.js';
 import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 
 import {PrivacySandboxDialogBrowserProxy, PrivacySandboxPromptAction} from './privacy_sandbox_dialog_browser_proxy.js';
@@ -18,7 +19,7 @@ import {getTemplate} from './privacy_sandbox_dialog_consent_step.html.js';
 import {PrivacySandboxDialogMixin} from './privacy_sandbox_dialog_mixin.js';
 
 const PrivacySandboxDialogConsentStepElementBase =
-    PrivacySandboxDialogMixin(PolymerElement);
+    PrivacySandboxDialogMixin(I18nMixin(PolymerElement));
 
 export class PrivacySandboxDialogConsentStepElement extends
     PrivacySandboxDialogConsentStepElementBase {
@@ -38,16 +39,6 @@ export class PrivacySandboxDialogConsentStepElement extends
       },
 
       /**
-       * If true, the notice is in dark mode.
-       */
-      isDarkMode_: {
-        type: Boolean,
-        value: () => {
-          return loadTimeData.getBoolean('isDarkMode');
-        },
-      },
-
-      /**
        * If true, the privacy policy text is hyperlinked.
        */
       isPrivacyPolicyLinkEnabled_: {
@@ -63,31 +54,41 @@ export class PrivacySandboxDialogConsentStepElement extends
         type: Boolean,
         value: false,
       },
+
+      /**
+       * If true, the Ad Topics Content parity should be shown.
+       */
+      shouldShowAdTopicsContentParity_: {
+        type: Boolean,
+        value: false,
+      },
+
+      consentContentV2FirstDescription_: {
+        type: String,
+        computed:
+            'computeConsentContentV2FirstDescription_(shouldShowAdTopicsContentParity_)',
+      },
+
+      learnMoreBulletDescriptionNoLink_: {
+        type: String,
+        computed:
+            'computeLearnMoreBulletDescriptionNoLink_(shouldShowAdTopicsContentParity_)',
+      },
     };
   }
 
-  private privacyPolicyPageClickStartTime_: number;
-  private privacyPolicyPageLoadEndTime_: number;
   private isPrivacyPolicyLinkEnabled_: boolean;
   private hideConsentNoticePage_: boolean;
-  private isDarkMode_: boolean;
+  private shouldShowAdTopicsContentParity_: boolean;
 
   override ready() {
     super.ready();
 
-    window.addEventListener('message', event => {
-      if (event.data.id === 'privacy-policy-loaded') {
-        this.privacyPolicyPageLoadEndTime_ = event.data.value;
-        // Tracks when the privacy policy page is loaded after the link is
-        // clicked.
-        if (this.privacyPolicyPageClickStartTime_) {
-          this.recordPrivacyPolicyLoadTime_(
-              this.privacyPolicyPageLoadEndTime_ -
-              this.privacyPolicyPageClickStartTime_);
-        }
-        return;
-      }
-    });
+    PrivacySandboxDialogBrowserProxy.getInstance()
+        .shouldShowAdTopicsContentParity()
+        .then(shouldShow => {
+          this.shouldShowAdTopicsContentParity_ = shouldShow;
+        });
   }
 
   private onConsentAccepted_() {
@@ -111,8 +112,7 @@ export class PrivacySandboxDialogConsentStepElement extends
     // When the expand is triggered, if the iframe hasn't been loaded yet,
     // load it the first time the learn more expand section is clicked.
     if (newValue && !oldValue) {
-      if (!this.shadowRoot!.querySelector<HTMLIFrameElement>(
-              '#privacyPolicy')) {
+      if (!this.shadowRoot!.querySelector('#privacyPolicyDialog')) {
         PrivacySandboxDialogBrowserProxy.getInstance()
             .shouldShowPrivacySandboxPrivacyPolicy()
             .then(isPrivacyPolicyLinkEnabled => {
@@ -122,44 +122,36 @@ export class PrivacySandboxDialogConsentStepElement extends
     }
   }
 
-  private recordPrivacyPolicyLoadTime_(privacyPolicyLoadDuration: number) {
-    PrivacySandboxDialogBrowserProxy.getInstance().recordPrivacyPolicyLoadTime(
-        privacyPolicyLoadDuration);
-  }
-
-  private onBackToConsentNotice_() {
-    // Move the privacy policy iframe to the back.
-    const iframeContent =
-        this.shadowRoot!.querySelector<HTMLElement>('#privacyPolicy');
-    iframeContent!.classList.add('hidden');
-    iframeContent!.classList.remove('visible');
+  private onBackButtonClicked_() {
     this.hideConsentNoticePage_ = false;
+    const privacyPolicyLinkId = this.shouldShowV2() ?
+        (this.shouldShowAdTopicsContentParity_ ? '#privacyPolicyLinkV3' :
+                                                 '#privacyPolicyLinkV2') :
+        '#privacyPolicyLink';
+    // Send focus back to privacy policy link for a11y screen reader.
+    this.shadowRoot!.querySelector<HTMLElement>(privacyPolicyLinkId)!.focus();
   }
 
   private onPrivacyPolicyLinkClicked_() {
-    // Move the privacy policy iframe to the front.
-    // By manually setting the visibility, the privacy policy page
-    // is able to preload while staying hidden.
-    const iframeContent =
-        this.shadowRoot!.querySelector<HTMLElement>('#privacyPolicy');
-    iframeContent!.classList.add('visible');
-    iframeContent!.classList.remove('hidden');
-
     this.hideConsentNoticePage_ = true;
-    this.privacyPolicyPageClickStartTime_ = performance.now();
-    this.promptActionOccurred(
-        PrivacySandboxPromptAction.PRIVACY_POLICY_LINK_CLICKED);
-    // Tracks when the privacy policy page is loaded before the link is clicked.
-    if (this.privacyPolicyPageLoadEndTime_) {
-      this.recordPrivacyPolicyLoadTime_(
-          this.privacyPolicyPageLoadEndTime_ -
-          this.privacyPolicyPageClickStartTime_);
-    }
   }
 
-  private getBackButtonBorderStyle_(): string {
-    return this.isDarkMode_ ? 'border-bottom: 1px solid #505254;' :
-                              'border-bottom: 1px solid #E1E3E1;';
+  private getButtonsClass_() {
+    return this.equalizedButtons() ? 'tonal-button' : '';
+  }
+
+  private computeConsentContentV2FirstDescription_(): string {
+    return this.i18n(
+        this.shouldShowAdTopicsContentParity_ ?
+            'm1ConsentDescription1ContentParity' :
+            'm1ConsentDescription2V2');
+  }
+
+  private computeLearnMoreBulletDescriptionNoLink_(): string {
+    return this.i18n(
+        this.shouldShowAdTopicsContentParity_ ?
+            'm1ConsentLearnMoreBullet2DescriptionNoLinkContentParity' :
+            'm1ConsentLearnmoreBullet2DescriptionNoLink');
   }
 }
 

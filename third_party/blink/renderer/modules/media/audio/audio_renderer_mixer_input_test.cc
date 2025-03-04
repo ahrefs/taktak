@@ -64,6 +64,7 @@ class AudioRendererMixerInputTest : public testing::Test,
   }
 
   AudioRendererMixer* GetMixer(
+      const LocalFrameToken&,
       const FrameToken&,
       const media::AudioParameters& params,
       media::AudioLatency::Type,
@@ -72,7 +73,7 @@ class AudioRendererMixerInputTest : public testing::Test,
     EXPECT_TRUE(params.IsValid());
     size_t idx = (sink_info.device_id() == kDefaultDeviceId) ? 0 : 1;
     if (!mixers_[idx]) {
-      EXPECT_CALL(*reinterpret_cast<media::MockAudioRendererSink*>(sink.get()),
+      EXPECT_CALL(*static_cast<media::MockAudioRendererSink*>(sink.get()),
                   Start());
 
       mixers_[idx] = std::make_unique<AudioRendererMixer>(audio_parameters_,
@@ -88,6 +89,7 @@ class AudioRendererMixerInputTest : public testing::Test,
 
   scoped_refptr<media::AudioRendererSink> GetSink(
       const LocalFrameToken&,
+      const FrameToken&,
       std::string_view device_id) override {
     media::OutputDeviceStatus status = media::OUTPUT_DEVICE_STATUS_OK;
     if (device_id == kNonexistentDeviceId) {
@@ -113,7 +115,7 @@ class AudioRendererMixerInputTest : public testing::Test,
 
   AudioRendererMixer* GetInputMixer() { return mixer_input_->mixer_; }
   media::MockAudioRendererSink* GetMockSink() const {
-    return reinterpret_cast<media::MockAudioRendererSink*>(
+    return static_cast<media::MockAudioRendererSink*>(
         mixer_input_->sink_.get());
   }
 

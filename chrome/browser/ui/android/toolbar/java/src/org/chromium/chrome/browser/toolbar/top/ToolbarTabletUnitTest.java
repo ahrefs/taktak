@@ -45,7 +45,6 @@ import org.robolectric.annotation.LooperMode;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowToast;
 
-import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.Features.DisableFeatures;
 import org.chromium.base.test.util.Features.EnableFeatures;
@@ -60,6 +59,8 @@ import org.chromium.chrome.browser.toolbar.ButtonData.ButtonSpec;
 import org.chromium.chrome.browser.toolbar.ButtonDataImpl;
 import org.chromium.chrome.browser.toolbar.R;
 import org.chromium.chrome.browser.toolbar.ToolbarDataProvider;
+import org.chromium.chrome.browser.toolbar.ToolbarProgressBar;
+import org.chromium.chrome.browser.toolbar.ToolbarProgressBarAnimatingView;
 import org.chromium.chrome.browser.toolbar.ToolbarTabController;
 import org.chromium.chrome.browser.toolbar.adaptive.AdaptiveToolbarButtonVariant;
 import org.chromium.chrome.browser.toolbar.menu_button.MenuButtonCoordinator;
@@ -77,7 +78,6 @@ import java.util.List;
 @LooperMode(LooperMode.Mode.PAUSED)
 @RunWith(BaseRobolectricTestRunner.class)
 public final class ToolbarTabletUnitTest {
-    private static final int TAB_COUNT = 1;
     @Mock private LocationBarCoordinator mLocationBar;
     @Mock private LocationBarCoordinatorTablet mLocationBarTablet;
     @Mock private ToggleTabStackButtonCoordinator mTabSwitcherButtonCoordinator;
@@ -95,13 +95,10 @@ public final class ToolbarTabletUnitTest {
     private ImageButton mReloadingButton;
     private ImageButton mBackButton;
     private ImageButton mForwardButton;
-    private ImageButton mMenuButton;
     private ToggleTabStackButton mTabSwitcherButton;
     private ImageButton mBookmarkButton;
     private ImageButton mSaveOfflineButton;
-    private View mLocationBarButton;
-    private ObservableSupplierImpl<Integer> mTabCountSupplier =
-            new ObservableSupplierImpl<>(TAB_COUNT);
+    private ToolbarProgressBar mProgressBar;
 
     @Before
     public void setUp() {
@@ -126,12 +123,12 @@ public final class ToolbarTabletUnitTest {
         mBackButton = mToolbarTablet.findViewById(R.id.back_button);
         mForwardButton = mToolbarTablet.findViewById(R.id.forward_button);
         mReloadingButton = mToolbarTablet.findViewById(R.id.refresh_button);
-        mMenuButton = mToolbarTablet.findViewById(R.id.menu_button);
         mTabSwitcherButton = mToolbarTablet.findViewById(R.id.tab_switcher_button);
         when(mTabSwitcherButtonCoordinator.getContainerView()).thenReturn(mTabSwitcherButton);
-        mLocationBarButton = mToolbarTablet.findViewById(R.id.location_bar_status_icon);
         mBookmarkButton = mToolbarTablet.findViewById(R.id.bookmark_button);
         mSaveOfflineButton = mToolbarTablet.findViewById(R.id.save_offline_button);
+        mProgressBar = new ToolbarProgressBar(mActivity, null);
+        mProgressBar.setAnimatingView(new ToolbarProgressBarAnimatingView(mActivity, null));
     }
 
     @After
@@ -172,7 +169,8 @@ public final class ToolbarTabletUnitTest {
                 () -> false,
                 null,
                 null,
-                null);
+                null,
+                mProgressBar);
         mToolbarTablet.onNativeLibraryReady();
 
         mToolbarTablet.onClick(mReloadingButton);
@@ -192,7 +190,8 @@ public final class ToolbarTabletUnitTest {
                 () -> false,
                 null,
                 null,
-                null);
+                null,
+                mProgressBar);
         mToolbarTablet.onNativeLibraryReady();
 
         MotionEvent shiftClick =
@@ -217,7 +216,8 @@ public final class ToolbarTabletUnitTest {
                 () -> false,
                 null,
                 null,
-                null);
+                null,
+                mProgressBar);
         when(mToolbarDataProvider.getNewTabPageDelegate()).thenReturn(mNewTabPageDelegate);
         when(mToolbarDataProvider.isIncognitoBranded()).thenReturn(true);
         mToolbarTablet.onTabOrModelChanged();
@@ -247,29 +247,6 @@ public final class ToolbarTabletUnitTest {
     }
 
     @Test
-    @EnableFeatures({ChromeFeatureList.TABLET_TOOLBAR_REORDERING})
-    public void testButtonPosition_TSR() {
-        mToolbarTablet.onFinishInflate();
-        assertEquals(
-                "Back button position is not as expected for Tab Strip Redesign",
-                mBackButton,
-                mToolbarTabletLayout.getChildAt(0));
-        assertEquals(
-                "Forward button position is not as expected for Tab Strip Redesign",
-                mForwardButton,
-                mToolbarTabletLayout.getChildAt(1));
-        assertEquals(
-                "Reloading button position is not as expected for Tab Strip Redesign",
-                mReloadingButton,
-                mToolbarTabletLayout.getChildAt(2));
-        assertEquals(
-                "Home button position is not as expected for Tab Strip Redesign",
-                mHomeButton,
-                mToolbarTabletLayout.getChildAt(3));
-    }
-
-    @Test
-    @DisableFeatures(ChromeFeatureList.TABLET_TOOLBAR_REORDERING)
     public void testButtonPosition_ShutoffToolbarReordering() {
         mToolbarTablet.onFinishInflate();
 
@@ -328,7 +305,8 @@ public final class ToolbarTabletUnitTest {
                 () -> false,
                 null,
                 null,
-                null);
+                null,
+                mProgressBar);
         when(mToolbarDataProvider.getNewTabPageDelegate()).thenReturn(mNewTabPageDelegate);
         when(mToolbarDataProvider.isIncognitoBranded()).thenReturn(true);
         mToolbarTablet.onTabOrModelChanged();
@@ -492,48 +470,6 @@ public final class ToolbarTabletUnitTest {
         CaptureReadinessResult result = mToolbarTablet.isReadyForTextureCapture();
         Assert.assertFalse(result.isReady);
         Assert.assertEquals(TopToolbarBlockCaptureReason.URL_BAR_HAS_FOCUS, result.blockReason);
-    }
-
-    @Test
-    @DisableFeatures(ChromeFeatureList.DATA_SHARING)
-    public void testHoverTooltipText() {
-        mTabSwitcherButton.setTabCountSupplier(mTabCountSupplier, () -> true);
-        mTabSwitcherButton.onDrawableStateChanged();
-
-        // verify tooltip texts for tablet toolbar button are set.
-        Assert.assertEquals(
-                "Tooltip text for Home button is not as expected",
-                mActivity.getResources().getString(R.string.accessibility_toolbar_btn_home),
-                mHomeButton.getTooltipText());
-        Assert.assertEquals(
-                "Tooltip text for Reload button is not as expected",
-                mActivity.getResources().getString(R.string.accessibility_btn_refresh),
-                mReloadingButton.getTooltipText());
-        Assert.assertEquals(
-                "Tooltip text for Forward button is not as expected",
-                mActivity.getResources().getString(R.string.accessibility_menu_forward),
-                mForwardButton.getTooltipText());
-        Assert.assertEquals(
-                "Tooltip text for Back button is not as expected",
-                mActivity.getResources().getString(R.string.accessibility_toolbar_btn_back),
-                mBackButton.getTooltipText());
-        Assert.assertEquals(
-                "Tooltip text for Tab Switcher button is not as expected",
-                mActivity
-                        .getResources()
-                        .getQuantityString(
-                                R.plurals.accessibility_toolbar_btn_tabswitcher_toggle_default,
-                                TAB_COUNT,
-                                TAB_COUNT),
-                mTabSwitcherButton.getTooltipText());
-        Assert.assertEquals(
-                "Tooltip text for Bookmark button is not as expected",
-                mActivity.getResources().getString(R.string.accessibility_menu_bookmark),
-                mBookmarkButton.getTooltipText());
-        Assert.assertEquals(
-                "Tooltip text for Save Offline button is not as expected",
-                mActivity.getResources().getString(R.string.download_page),
-                mSaveOfflineButton.getTooltipText());
     }
 
     @Test

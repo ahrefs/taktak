@@ -159,23 +159,23 @@ void BrowserAccessibilityManagerWin::FireAriaNotificationEvent(
     switch (interrupt_property) {
       case ax::mojom::AriaNotificationInterrupt::kNone:
         switch (priority_property) {
-          case ax::mojom::AriaNotificationPriority::kNone:
+          case ax::mojom::AriaNotificationPriority::kNormal:
             return NotificationProcessing_All;
-          case ax::mojom::AriaNotificationPriority::kImportant:
+          case ax::mojom::AriaNotificationPriority::kHigh:
             return NotificationProcessing_ImportantAll;
         }
       case ax::mojom::AriaNotificationInterrupt::kAll:
         switch (priority_property) {
-          case ax::mojom::AriaNotificationPriority::kNone:
+          case ax::mojom::AriaNotificationPriority::kNormal:
             return NotificationProcessing_MostRecent;
-          case ax::mojom::AriaNotificationPriority::kImportant:
+          case ax::mojom::AriaNotificationPriority::kHigh:
             return NotificationProcessing_ImportantMostRecent;
         }
       case ax::mojom::AriaNotificationInterrupt::kPending:
         switch (priority_property) {
-          case ax::mojom::AriaNotificationPriority::kNone:
+          case ax::mojom::AriaNotificationPriority::kNormal:
             return NotificationProcessing_CurrentThenMostRecent;
-          case ax::mojom::AriaNotificationPriority::kImportant:
+          case ax::mojom::AriaNotificationPriority::kHigh:
             // This is resolved the same as `AriaNotificationInterrupt::kAll`,
             // but UIA doesn't have a specific enum value for these options yet.
             return NotificationProcessing_ImportantMostRecent;
@@ -604,6 +604,15 @@ void BrowserAccessibilityManagerWin::FireWinAccessibilityEvent(
   HWND hwnd = GetParentHWND();
   if (!hwnd)
     return;
+
+  // Ensure that IA2_EVENT_TEXT events are fired on IAccessibleText
+  // objects. Text leaf nodes do not support IAccessibleText/HyperText,
+  // but their parents do.
+  if (node->IsText() && (win_event_type == IA2_EVENT_TEXT_CARET_MOVED ||
+                         win_event_type == IA2_EVENT_TEXT_ATTRIBUTE_CHANGED)) {
+    node = node->PlatformGetParent();
+    DCHECK(node);  // A text node will always have a non-null parent.
+  }
 
   // Pass the negation of this node's unique id in the |child_id|
   // argument to NotifyWinEvent; the AT client will then call get_accChild

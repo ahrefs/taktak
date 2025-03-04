@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <utility>
 
 #include "base/functional/bind.h"
@@ -188,13 +190,13 @@ IconLabelBubbleView::IconLabelBubbleView(const gfx::FontList& font_list,
   separator_view_->SetFlipCanvasOnPaintForRTLUI(true);
 
   auto alert_view = std::make_unique<views::AXVirtualView>();
-  alert_view->GetCustomData().role = ax::mojom::Role::kAlert;
-  alert_view->GetCustomData().AddState(ax::mojom::State::kInvisible);
+  alert_view->SetRole(ax::mojom::Role::kAlert);
+  alert_view->SetIsInvisible(true);
   alert_virtual_view_ = alert_view.get();
   GetViewAccessibility().AddVirtualChildView(std::move(alert_view));
 }
 
-IconLabelBubbleView::~IconLabelBubbleView() {}
+IconLabelBubbleView::~IconLabelBubbleView() = default;
 
 void IconLabelBubbleView::InkDropAnimationStarted() {
   separator_view_->UpdateOpacity();
@@ -267,18 +269,18 @@ void IconLabelBubbleView::SetBackgroundVisibility(
   UpdateBackground();
 }
 
-void IconLabelBubbleView::SetLabel(const std::u16string& label_text) {
+void IconLabelBubbleView::SetLabel(std::u16string_view label_text) {
   SetLabel(label_text, label_text);
 }
 
-void IconLabelBubbleView::SetLabel(const std::u16string& label_text,
-                                   const std::u16string& accessible_name) {
+void IconLabelBubbleView::SetLabel(std::u16string_view label_text,
+                                   std::u16string_view accessible_name) {
   // TODO(crbug.com/40890218): Under what conditions, if any, will the text be
   // empty? Read the description of the bug and update accordingly.
   GetViewAccessibility().SetName(
-      accessible_name, accessible_name.empty()
-                           ? ax::mojom::NameFrom::kAttributeExplicitlyEmpty
-                           : ax::mojom::NameFrom::kAttribute);
+      std::u16string(accessible_name),
+      accessible_name.empty() ? ax::mojom::NameFrom::kAttributeExplicitlyEmpty
+                              : ax::mojom::NameFrom::kAttribute);
   label()->SetText(label_text);
   separator_view_->SetVisible(ShouldShowSeparator());
   separator_view_->UpdateOpacity();
@@ -356,8 +358,8 @@ void IconLabelBubbleView::UpdateBackground() {
   // solid background.
   const bool painted_on_solid_background = PaintedOnSolidBackground();
   SetBackground(painted_on_solid_background
-                    ? views::CreateRoundedRectBackground(
-                          GetBackgroundColor(), GetPreferredSize().height())
+                    ? views::CreateRoundedRectBackground(GetBackgroundColor(),
+                                                         GetCornerRadii())
                     : nullptr);
   // TODO(pbos): Consider renaming kOmniboxIcon/kOmniboxActionIcon color IDs to
   // share the same prefix. Here OmniboxIcon assumes to have a background and
@@ -504,7 +506,7 @@ void IconLabelBubbleView::AnimationEnded(const gfx::Animation* animation) {
     // Subclasses override `ShouldShowLabelAfterAnimation` for custom behavior.
     // Default behavior is when we do not show separator, the label should
     // collapse.
-    ResetSlideAnimation(/*show_label=*/ShouldShowLabelAfterAnimation());
+    ResetSlideAnimation(/*show=*/ShouldShowLabelAfterAnimation());
     PreferredSizeChanged();
   }
 
@@ -538,6 +540,19 @@ void IconLabelBubbleView::AnimationCanceled(const gfx::Animation* animation) {
 void IconLabelBubbleView::SetImageModel(const ui::ImageModel& image_model) {
   DCHECK(!image_model.IsEmpty());
   LabelButton::SetImageModel(STATE_NORMAL, image_model);
+}
+
+gfx::RoundedCornersF IconLabelBubbleView::GetCornerRadii() const {
+  if (radii_.has_value()) {
+    return radii_.value();
+  }
+  return gfx::RoundedCornersF(GetPreferredSize().height() / 2);
+}
+
+void IconLabelBubbleView::SetCornerRadii(const gfx::RoundedCornersF& radii) {
+  radii_ = radii;
+  UpdateBackground();
+  UpdateBorder();
 }
 
 gfx::Size IconLabelBubbleView::GetSizeForLabelWidth(int label_width) const {
@@ -640,15 +655,14 @@ void IconLabelBubbleView::AnimateIn(std::optional<int> string_id) {
       // which serves to announce it. This is done unconditionally here if there
       // is text because the animation is intended to draw attention to the
       // instance anyway.
-      alert_virtual_view_->GetCustomData().RemoveState(
-          ax::mojom::State::kInvisible);
+      alert_virtual_view_->SetIsInvisible(false);
 
       // A valid role must be set prior to setting the name.
       // TODO(crbug.com/40863593): Consider using AnnounceText instead of a
       // virtual view.
-      alert_virtual_view_->GetCustomData().role = ax::mojom::Role::kAlert;
-      alert_virtual_view_->GetCustomData().SetNameChecked(label);
-      alert_virtual_view_->NotifyAccessibilityEvent(ax::mojom::Event::kAlert);
+      alert_virtual_view_->SetRole(ax::mojom::Role::kAlert);
+      alert_virtual_view_->SetName(label);
+      alert_virtual_view_->NotifyEvent(ax::mojom::Event::kAlert, true);
     }
     label()->SetVisible(true);
     ShowAnimation();
@@ -658,8 +672,8 @@ void IconLabelBubbleView::AnimateIn(std::optional<int> string_id) {
 void IconLabelBubbleView::AnimateOut() {
   if (label()->GetVisible()) {
     label()->SetVisible(false);
-    alert_virtual_view_->GetCustomData().AddState(ax::mojom::State::kInvisible);
-    alert_virtual_view_->NotifyAccessibilityEvent(ax::mojom::Event::kHide);
+    alert_virtual_view_->SetIsInvisible(true);
+    alert_virtual_view_->NotifyEvent(ax::mojom::Event::kHide, true);
     HideAnimation();
   }
 }
@@ -718,7 +732,7 @@ void IconLabelBubbleView::HideAnimation() {
   UpdateBackground();
 }
 
-// TODO(josephjoopark): Refactor using addCircle().
+// TODO(crbug.com/378108580): Refactor using addCircle().
 SkPath IconLabelBubbleView::GetHighlightPath() const {
   gfx::Rect highlight_bounds = GetLocalBounds();
   if (ShouldShowSeparator()) {
@@ -727,11 +741,15 @@ SkPath IconLabelBubbleView::GetHighlightPath() const {
   }
   highlight_bounds = GetMirroredRect(highlight_bounds);
 
-  const float corner_radius = highlight_bounds.height() / 2.f;
   const SkRect rect = RectToSkRect(highlight_bounds);
+  gfx::RoundedCornersF radii = GetCornerRadii();
+  const SkScalar sk_radii[8] = {
+      SkIntToScalar(radii.upper_left()),  SkIntToScalar(radii.upper_left()),
+      SkIntToScalar(radii.upper_right()), SkIntToScalar(radii.upper_right()),
+      SkIntToScalar(radii.lower_right()), SkIntToScalar(radii.lower_right()),
+      SkIntToScalar(radii.lower_left()),  SkIntToScalar(radii.lower_left())};
 
-  return SkPath().addRoundRect(rect, corner_radius, corner_radius);
-  // return SkPath().addCircle(12, radius, radius); // size / 2
+  return SkPath().addRoundRect(rect, sk_radii);
 }
 
 bool IconLabelBubbleView::PaintedOnSolidBackground() const {

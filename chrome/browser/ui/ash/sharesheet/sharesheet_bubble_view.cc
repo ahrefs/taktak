@@ -531,8 +531,7 @@ bool SharesheetBubbleView::OnKeyPressed(const ui::KeyEvent& event) {
       delta = base::i18n::IsRTL() ? -1 : 1;
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 
   const size_t default_views = default_view_->children().size();
@@ -560,7 +559,7 @@ SharesheetBubbleView::CreateNonClientFrameView(views::Widget* widget) {
   // TODO(crbug.com/40136695) Replace this with layer->SetRoundedCornerRadius.
   auto bubble_border =
       std::make_unique<views::BubbleBorder>(arrow(), GetShadow());
-  bubble_border->SetColor(color());
+  bubble_border->SetColor(background_color());
   bubble_border->SetCornerRadius(kCornerRadius);
   auto frame =
       views::BubbleDialogDelegateView::CreateNonClientFrameView(widget);
@@ -647,8 +646,9 @@ void SharesheetBubbleView::ExpandButtonPressed() {
   // Scrollview has separators that overlaps with |header_body_separator_| and
   // |body_footer_separator_| to create a double line when both are visible, so
   // when scrollview is expanded we hide our separators.
-  if (header_body_separator_)
+  if (header_body_separator_) {
     header_body_separator_->SetVisible(!show_expanded_view_);
+  }
   body_footer_separator_->SetVisible(!show_expanded_view_);
 
   expanded_view_->SetVisible(show_expanded_view_);

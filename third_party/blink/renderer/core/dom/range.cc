@@ -219,6 +219,11 @@ void Range::setStart(Node* ref_node,
     return;
 
   start_.Set(*ref_node, offset, child_node);
+  // Since we're setting start here, it's now ok to update selection start.
+  update_selection_behavior_ =
+      update_selection_behavior_ == UpdateSelectionBehavior::kEndOnly
+          ? UpdateSelectionBehavior::kAll
+          : UpdateSelectionBehavior::kStartOnly;
 
   CollapseIfNeeded(did_move_document, /*collapse_to_start=*/true);
 }
@@ -245,6 +250,11 @@ void Range::setEnd(Node* ref_node,
     return;
 
   end_.Set(*ref_node, offset, child_node);
+  // Since we're setting end here, it's now ok to update selection end.
+  update_selection_behavior_ =
+      update_selection_behavior_ == UpdateSelectionBehavior::kStartOnly
+          ? UpdateSelectionBehavior::kAll
+          : UpdateSelectionBehavior::kEndOnly;
 
   CollapseIfNeeded(did_move_document, /*collapse_to_start=*/false);
 }
@@ -271,16 +281,18 @@ void Range::collapse(bool to_start) {
 }
 
 void Range::CollapseIfNeeded(bool did_move_document, bool collapse_to_start) {
-  RangeBoundaryPoint original_start(start_);
-  RangeBoundaryPoint original_end(end_);
-
   bool different_tree_scopes =
       HasDifferentRootContainer(&start_.Container(), &end_.Container());
   // If document moved, we are in different tree scopes, or start boundary point
   // is after end boundary point, we should collapse the range.
-  if (did_move_document || different_tree_scopes ||
-      compareBoundaryPoints(start_, end_, ASSERT_NO_EXCEPTION) > 0) {
+  if (different_tree_scopes) {
     collapse(collapse_to_start);
+  } else if (did_move_document ||
+             compareBoundaryPoints(start_, end_, ASSERT_NO_EXCEPTION) > 0) {
+    // Further, if collapse is not due to being in different tree scopes, the
+    // range should update both selection's start and end positions.
+    collapse(collapse_to_start);
+    update_selection_behavior_ = UpdateSelectionBehavior::kAll;
   }
 }
 
@@ -405,8 +417,7 @@ int16_t Range::compareBoundaryPoints(unsigned how,
       return compareBoundaryPoints(start_, source_range->end_, exception_state);
   }
 
-  NOTREACHED_IN_MIGRATION();
-  return 0;
+  NOTREACHED();
 }
 
 int16_t Range::compareBoundaryPoints(Node* container_a,
@@ -893,9 +904,11 @@ void Range::insertNode(Node* new_node, ExceptionState& exception_state) {
                                          : To<ContainerNode>(start_node);
 
   // 6. Ensure pre-insertion validity of node into parent before referenceNode.
-  if (!parent.EnsurePreInsertionValidity(*new_node, reference_node, nullptr,
-                                         exception_state))
+  if (!parent.EnsurePreInsertionValidity(new_node, /*new_children*/ nullptr,
+                                         reference_node, nullptr,
+                                         exception_state)) {
     return;
+  }
 
   EventQueueScope scope;
   // 7. If range's start node is a Text node, set referenceNode to the result of
@@ -1078,8 +1091,7 @@ Node* Range::CheckNodeWOffset(Node* n,
       return child_before;
     }
   }
-  NOTREACHED_IN_MIGRATION();
-  return nullptr;
+  NOTREACHED();
 }
 
 void Range::CheckNodeBA(Node* n, ExceptionState& exception_state) const {
@@ -1774,9 +1786,24 @@ void Range::UpdateSelectionIfAddedToSelection() {
   DCHECK(endContainer()->isConnected());
   DCHECK(endContainer()->GetDocument() == OwnerDocument());
   EventDispatchForbiddenScope no_events;
+
+  // Given this range's update_selection_behavior_, update selection to either
+  // the range's new position or keep using current selection's position.
+  const Position& start_position =
+      RuntimeEnabledFeatures::SelectionAcrossShadowDOMEnabled() &&
+              update_selection_behavior_ == UpdateSelectionBehavior::kEndOnly
+          ? selection.GetSelectionInDOMTree().ComputeStartPosition()
+          : StartPosition();
+  const Position& end_position =
+      RuntimeEnabledFeatures::SelectionAcrossShadowDOMEnabled() &&
+              update_selection_behavior_ == UpdateSelectionBehavior::kStartOnly
+          ? selection.GetSelectionInDOMTree().ComputeEndPosition()
+          : EndPosition();
+  update_selection_behavior_ = UpdateSelectionBehavior::kAll;
+
   selection.SetSelection(SelectionInDOMTree::Builder()
-                             .Collapse(StartPosition())
-                             .Extend(EndPosition())
+                             .Collapse(start_position)
+                             .Extend(end_position)
                              .Build(),
                          SetSelectionOptions::Builder()
                              .SetShouldCloseTyping(true)

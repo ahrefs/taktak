@@ -153,14 +153,35 @@ def convert_swarming(swarming: dict[str, typing.Any]) -> Value:
 
   for key, value in swarming.items():
     match key:
-      case 'dimensions' | 'idempotent' | 'shards':
+      case 'dimensions' | 'idempotent' | 'service_account' | 'shards':
         value_builder[key] = convert_direct(value)
+
+      case 'expiration':
+        value_builder['expiration_sec'] = convert_direct(value)
 
       case 'hard_timeout':
         value_builder['hard_timeout_sec'] = convert_direct(value)
 
+      case 'io_timeout':
+        value_builder['io_timeout_sec'] = convert_direct(value)
+
       case _:
         raise Exception(f'unhandled key in swarming: "{key}"')
+
+  return value_builder
+
+
+def convert_skylab(skylab: dict[str, typing.Any]) -> Value:
+  """Convert a skylab dict to a targets.skylab call."""
+  value_builder = CallValueBuilder('targets.skylab')
+
+  for key, value in skylab.items():
+    match key:
+      case 'cros_cbx' | 'shards' | 'timeout_sec':
+        value_builder[key] = convert_direct(value)
+
+      case _:
+        raise Exception(f'unhandled key in skylab: "{key}"')
 
   return value_builder
 

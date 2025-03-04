@@ -69,9 +69,7 @@ std::string FormatFileSystemTypeToString(FormatFileSystemType filesystem) {
     case FormatFileSystemType::kNtfs:
       return "ntfs";
   }
-  NOTREACHED_IN_MIGRATION()
-      << "Unknown filesystem type " << static_cast<int>(filesystem);
-  return "";
+  NOTREACHED() << "Unknown filesystem type " << static_cast<int>(filesystem);
 }
 
 // The DiskMountManager implementation.
@@ -147,21 +145,16 @@ class DiskMountManagerImpl : public DiskMountManager,
     VLOG(1) << "Unmounting '" << mount_path << "'...";
 
     const base::FilePath mount_file_path(mount_path);
-
-    // TODO(crbug.com/317944073) Enable this code path once crbug.com/373514367
-    // is fixed.
-#if 0
     if (arc_delegate_ &&
         cros_disks_client_->GetRemovableDiskMountPoint().IsParent(
             mount_file_path)) {
       VLOG(1) << "Dropping ARC caches for " << Redact(mount_path);
-      arc_delegate_->PrepareForRemovableMediaUnmount(
+      arc_delegate_->DropArcCaches(
           mount_file_path, BindOnce(&DiskMountManagerImpl::UnmountPathContinue,
                                     weak_ptr_factory_.GetWeakPtr(), mount_path,
                                     std::move(callback)));
       return;
     }
-#endif
 
     UnmountPathContinue(mount_path, std::move(callback), true /* success */);
   }
@@ -176,21 +169,6 @@ class DiskMountManagerImpl : public DiskMountManager,
                                 BindOnce(&DiskMountManagerImpl::OnUnmountPath,
                                          weak_ptr_factory_.GetWeakPtr(),
                                          std::move(callback), mount_path));
-  }
-
-  void RemountAllRemovableDrives(MountAccessMode mode) override {
-    // TODO(yamaguchi): Retry for tentative remount failures. crbug.com/661455
-    for (const auto& disk : disks_) {
-      DCHECK(disk);
-      if (disk->is_read_only_hardware()) {
-        // Read-only devices can be mounted in RO mode only. No need to remount.
-        continue;
-      }
-      if (!disk->is_mounted()) {
-        continue;
-      }
-      RemountRemovableDrive(*disk, mode);
-    }
   }
 
   // DiskMountManager override.
@@ -363,7 +341,7 @@ class DiskMountManagerImpl : public DiskMountManager,
 
   // DiskMountManager override.
   const Disk* FindDiskBySourcePath(
-      const std::string& source_path) const override {
+      std::string_view source_path) const override {
     const Disks::const_iterator it = disks_.find(source_path);
     return it == disks_.end() ? nullptr : it->get();
   }
@@ -430,7 +408,17 @@ class DiskMountManagerImpl : public DiskMountManager,
     OnMountCompleted({source_path, {}, type, MountError::kInternalError});
   }
 
-  void RemountRemovableDrive(const Disk& disk, MountAccessMode access_mode) {
+  void RemountRemovableDrive(const Disk& disk,
+                             MountAccessMode access_mode) override {
+    // TODO(yamaguchi): Retry for tentative remount failures. crbug.com/661455
+    if (disk.is_read_only_hardware()) {
+      // Read-only devices can be mounted in RO mode only. No need to remount.
+      return;
+    }
+    if (!disk.is_mounted()) {
+      return;
+    }
+
     const std::string& mount_path = disk.mount_path();
     MountPoints::const_iterator mount_point = mount_points_.find(mount_path);
     if (mount_point == mount_points_.end()) {
@@ -639,21 +627,24 @@ class DiskMountManagerImpl : public DiskMountManager,
       }
     }
 
-    if (const MountPoints::const_iterator mount_point =
-            mount_points_.find(mount_path);
-        mount_point != mount_points_.end()) {
-      NotifyMountStatusUpdate(UNMOUNTING, error, *mount_point);
-
+    if (const MountPoints::const_iterator it = mount_points_.find(mount_path);
+        it != mount_points_.end()) {
       if (error == MountError::kSuccess) {
+        const MountPoints::node_type n = mount_points_.extract(it);
+        DCHECK(n);
+        const MountPoint& mount_point = n.value();
+
         if (const Disks::const_iterator disk =
-                disks_.find(mount_point->source_path);
+                disks_.find(mount_point.source_path);
             disk != disks_.end()) {
           DCHECK(*disk);
           (*disk)->clear_mount_path();
           (*disk)->set_mounted(false);
         }
 
-        mount_points_.erase(mount_point);
+        NotifyMountStatusUpdate(UNMOUNTING, error, mount_point);
+      } else {
+        NotifyMountStatusUpdate(UNMOUNTING, error, *it);
       }
     }
 

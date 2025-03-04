@@ -55,6 +55,7 @@
 #include "chrome/browser/ui/ash/system_web_apps/system_web_app_ui_utils.h"
 #include "chrome/common/extensions/extension_constants.h"
 #include "chrome/grit/generated_resources.h"
+#include "chromeos/ash/components/demo_mode/utils/demo_session_utils.h"
 #include "chromeos/ash/components/growth/campaigns_manager.h"
 #include "chromeos/ash/components/growth/campaigns_model.h"
 #include "chromeos/ash/components/growth/growth_metrics.h"
@@ -285,9 +286,6 @@ void TriggerLaunchDemoModeApp() {
 
 }  // namespace
 
-// static
-constexpr char DemoSession::kSupportedCountries[][3];
-
 constexpr char DemoSession::kCountryNotSelectedId[];
 
 // static
@@ -301,8 +299,7 @@ std::string DemoSession::DemoConfigToString(
     case DemoSession::DemoModeConfig::kOfflineDeprecated:
       return "offlineDeprecated";
   }
-  NOTREACHED_IN_MIGRATION() << "Unknown demo mode configuration";
-  return std::string();
+  NOTREACHED() << "Unknown demo mode configuration";
 }
 
 // static
@@ -503,16 +500,6 @@ base::Value::List DemoSession::GetCountryList() {
   return country_list;
 }
 
-// static
-void DemoSession::RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
-  registry->RegisterStringPref(prefs::kDemoModeDefaultLocale, std::string());
-  registry->RegisterStringPref(prefs::kDemoModeCountry, kSupportedCountries[0]);
-  registry->RegisterStringPref(prefs::kDemoModeRetailerId, std::string());
-  registry->RegisterStringPref(prefs::kDemoModeStoreId, std::string());
-  registry->RegisterStringPref(prefs::kDemoModeAppVersion, std::string());
-  registry->RegisterStringPref(prefs::kDemoModeResourcesVersion, std::string());
-}
-
 void DemoSession::EnsureResourcesLoaded(base::OnceClosure load_callback) {
   if (!components_)
     components_ = std::make_unique<DemoComponents>(GetDemoConfig());
@@ -567,7 +554,7 @@ std::vector<CountryCodeAndFullNamePair>
 DemoSession::GetSortedCountryCodeAndNamePairList() {
   const std::string current_locale = g_browser_process->GetApplicationLocale();
   std::vector<CountryCodeAndFullNamePair> result;
-  for (const std::string country : kSupportedCountries) {
+  for (const std::string country : demo_mode::kSupportedCountries) {
     result.push_back({country, l10n_util::GetDisplayNameForCountry(
                                    country, current_locale)});
   }
@@ -682,6 +669,11 @@ void DemoSession::OnSessionStateChanged() {
       if (!components_) {
         components_ = std::make_unique<DemoComponents>(GetDemoConfig());
       }
+
+      // Create the window closer.
+      window_closer_ = std::make_unique<DemoModeWindowCloser>(
+          base::BindRepeating(&TriggerLaunchDemoModeApp));
+
       if (features::IsGrowthCampaignsInDemoModeEnabled()) {
         auto* campaigns_manager = growth::CampaignsManager::Get();
         CHECK(campaigns_manager);
@@ -708,20 +700,6 @@ void DemoSession::OnSessionStateChanged() {
 
       // Register the device with in the A/A experiment
       RegisterDemoModeAAExperiment();
-
-      // Create the window closer.
-      // TODO(b/302583338) Remove this when the issue with GMSCore gets fixed.
-      if (ash::features::IsDemoModeGMSCoreWindowCloserEnabled()) {
-        window_closer_ = std::make_unique<DemoModeWindowCloser>();
-      }
-
-      // TODO(b/292454543): Remove this after issue is resolved.
-      if (InstallAttributes::IsInitialized()) {
-        LOG(WARNING) << "Demo Mode DeviceMode: "
-                     << InstallAttributes::Get()->GetMode();
-        LOG(WARNING) << "Demo Mode domain: "
-                     << InstallAttributes::Get()->GetDomain();
-      }
 
       // When the session successfully starts, we record the action
       // DemoMode.DemoSessionStarts.
@@ -759,6 +737,11 @@ void DemoSession::OnDemoAppComponentLoaded() {
   }
 
   TriggerLaunchDemoModeApp();
+
+  if (demo_mode::IsDemoAccountSignInEnabled()) {
+    CHECK(window_closer_);
+    idle_handler_ = std::make_unique<DemoModeIdleHandler>(window_closer_.get());
+  }
 }
 
 base::FilePath GetSplashScreenImagePath(base::FilePath localized_image_path,

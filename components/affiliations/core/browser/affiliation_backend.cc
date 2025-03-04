@@ -5,6 +5,7 @@
 #include "components/affiliations/core/browser/affiliation_backend.h"
 
 #include <stdint.h>
+
 #include <algorithm>
 #include <utility>
 #include <vector>
@@ -417,15 +418,8 @@ bool AffiliationBackend::OnCanSendNetworkRequest() {
   }
   // TODO(crbug.com/40858918): There is no need to request psl extension every
   // time, find a better way of caching it.
-#if BUILDFLAG(IS_ANDROID)
-  // psl_extension_list isn't needed on Android because the OS API will apply
-  // it..
-  fetcher_->StartRequest(requested_facet_uris,
-                         {.branding_info = true, .psl_extension_list = false});
-#else
   fetcher_->StartRequest(requested_facet_uris,
                          {.branding_info = true, .psl_extension_list = true});
-#endif
   ReportStatistics(requested_facet_uris.size());
   return true;
 }

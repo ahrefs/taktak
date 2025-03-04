@@ -4,14 +4,17 @@
 
 package org.chromium.chrome.test.transit.hub;
 
+import android.util.Pair;
+
 import org.chromium.base.test.transit.Condition;
 import org.chromium.base.test.transit.ScrollableFacility;
 import org.chromium.base.test.transit.Transition;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.tabmodel.TabModel;
 import org.chromium.chrome.test.R;
 import org.chromium.chrome.test.transit.AppMenuFacility;
+import org.chromium.chrome.test.transit.SoftKeyboardFacility;
 import org.chromium.chrome.test.transit.tabmodel.TabCountChangedCondition;
+import org.chromium.chrome.test.transit.tabmodel.TabGroupUtil;
 
 import java.util.List;
 
@@ -25,8 +28,9 @@ public class TabListEditorAppMenu extends AppMenuFacility<TabSwitcherStation> {
 
     private final TabSwitcherListEditorFacility mListEditor;
     private Item<Void> mCloseMenuItem;
-    private Item<TabSwitcherGroupCardFacility> mGroupMenuItem;
-    private Item<NewTabGroupDialogFacility> mGroupWithParityMenuItem;
+    private Item<NewTabGroupDialogFacility> mGroupWithDialogMenuItem;
+    private Item<Pair<TabSwitcherGroupCardFacility, UndoSnackbarFacility>>
+            mGroupWithoutDialogMenuItem;
 
     public TabListEditorAppMenu(TabSwitcherListEditorFacility listEditor) {
         mListEditor = listEditor;
@@ -45,18 +49,18 @@ public class TabListEditorAppMenu extends AppMenuFacility<TabSwitcherStation> {
                         itemDataMatcher(R.id.tab_list_editor_close_menu_item),
                         this::doCloseTabs);
 
-        if (ChromeFeatureList.sTabGroupParityAndroid.isEnabled()) {
-            mGroupWithParityMenuItem =
-                    items.declareItemToFacility(
+        if (mListEditor.isAnyGroupSelected()) {
+            mGroupWithoutDialogMenuItem =
+                    items.declareItem(
                             itemViewMatcher("Group " + tabOrTabs),
                             itemDataMatcher(R.id.tab_list_editor_group_menu_item),
-                            this::doGroupTabsWithParityEnabled);
+                            this::doGroupTabsWithoutDialog);
         } else {
-            mGroupMenuItem =
-                    items.declareItemToFacility(
+            mGroupWithDialogMenuItem =
+                    items.declareItem(
                             itemViewMatcher("Group " + tabOrTabs),
                             itemDataMatcher(R.id.tab_list_editor_group_menu_item),
-                            this::doGroupTabsWithParityDisabled);
+                            this::doGroupTabs);
         }
 
         items.declareStubItem(
@@ -71,33 +75,53 @@ public class TabListEditorAppMenu extends AppMenuFacility<TabSwitcherStation> {
     /**
      * Select "Group tabs" to create a new group with the selected tabs.
      *
-     * @return the next state of the TabSwitcher as a Station and the newly created tab group card
-     *     as a Facility.
+     * @return the "New tab group" dialog as a Facility.
      */
-    public TabSwitcherGroupCardFacility groupTabs() {
-        assert !ChromeFeatureList.sTabGroupParityAndroid.isEnabled();
-        return mGroupMenuItem.scrollToAndSelect();
+    public NewTabGroupDialogFacility groupTabs() {
+        return mGroupWithDialogMenuItem.scrollToAndSelect();
     }
 
     /** Factory for the result of {@link #groupTabs()}. */
-    private TabSwitcherGroupCardFacility doGroupTabsWithParityDisabled() {
-        return new TabSwitcherGroupCardFacility(mListEditor.getTabIdsSelected());
+    private NewTabGroupDialogFacility doGroupTabs(
+            ItemOnScreenFacility<NewTabGroupDialogFacility> itemOnScreen) {
+        SoftKeyboardFacility softKeyboard = new SoftKeyboardFacility();
+        NewTabGroupDialogFacility dialog =
+                new NewTabGroupDialogFacility(mListEditor.getAllTabIdsSelected(), softKeyboard);
+        mHostStation.swapFacilitiesSync(
+                List.of(this, mListEditor, itemOnScreen),
+                List.of(dialog, softKeyboard),
+                itemOnScreen.clickTrigger());
+        return dialog;
     }
 
     /**
-     * Select "Group tabs" to create a new group with the selected tabs when TAB_GROUP_PARITY is
-     * enabled.
+     * Select "Group tabs" to create a new group with the selected tabs, expecting no dialog.
      *
-     * @return the "New tab group" dialog as a Facility.
+     * <p>The tab creation dialog does not appear when at least one group is selected (one of the
+     * groups will be extended instead of a new group being created).
+     *
+     * @return the new group card and the undo snackbar expected to be shown.
      */
-    public NewTabGroupDialogFacility groupTabsWithParityEnabled() {
-        assert ChromeFeatureList.sTabGroupParityAndroid.isEnabled();
-        return mGroupWithParityMenuItem.scrollToAndSelect();
+    public Pair<TabSwitcherGroupCardFacility, UndoSnackbarFacility> groupTabsWithoutDialog() {
+        assert mListEditor.isAnyGroupSelected();
+        return mGroupWithoutDialogMenuItem.scrollToAndSelect();
     }
 
-    /** Factory for the result of {@link #groupTabsWithParityEnabled()}. */
-    private NewTabGroupDialogFacility doGroupTabsWithParityEnabled() {
-        return new NewTabGroupDialogFacility(mListEditor.getTabIdsSelected());
+    /** Factory for the result of {@link #groupTabsWithoutDialog()}. */
+    private Pair<TabSwitcherGroupCardFacility, UndoSnackbarFacility> doGroupTabsWithoutDialog(
+            ItemOnScreenFacility<Pair<TabSwitcherGroupCardFacility, UndoSnackbarFacility>>
+                    itemOnScreen) {
+        List<Integer> tabIdsSelected = mListEditor.getAllTabIdsSelected();
+        String title = TabGroupUtil.getNumberOfTabsString(tabIdsSelected.size());
+        String snackbarMessage =
+                TabGroupUtil.getUndoGroupTabsSnackbarMessageString(tabIdsSelected.size());
+        var card = new TabSwitcherGroupCardFacility(/* cardIndex= */ null, tabIdsSelected, title);
+        var undoSnackbar = new UndoSnackbarFacility(snackbarMessage);
+        mHostStation.swapFacilitiesSync(
+                List.of(this, mListEditor, itemOnScreen),
+                List.of(card, undoSnackbar),
+                itemOnScreen.clickTrigger());
+        return Pair.create(card, undoSnackbar);
     }
 
     /**

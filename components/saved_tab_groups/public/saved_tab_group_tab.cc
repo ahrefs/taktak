@@ -7,6 +7,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "components/saved_tab_groups/public/features.h"
 #include "components/saved_tab_groups/public/saved_tab_group.h"
+#include "components/saved_tab_groups/public/utils.h"
 
 namespace tab_groups {
 
@@ -21,7 +22,8 @@ SavedTabGroupTab::SavedTabGroupTab(
     std::optional<std::string> last_updater_cache_guid,
     std::optional<base::Time> creation_time_windows_epoch_micros,
     std::optional<base::Time> update_time_windows_epoch_micros,
-    std::optional<gfx::Image> favicon)
+    std::optional<gfx::Image> favicon,
+    bool is_pending_ntp)
     : saved_tab_guid_(saved_tab_guid.has_value()
                           ? saved_tab_guid.value()
                           : base::Uuid::GenerateRandomV4()),
@@ -40,7 +42,8 @@ SavedTabGroupTab::SavedTabGroupTab(
           update_time_windows_epoch_micros.has_value()
               ? update_time_windows_epoch_micros.value()
               : base::Time::Now()),
-      favicon_(favicon) {}
+      favicon_(favicon),
+      is_pending_ntp_(is_pending_ntp) {}
 
 SavedTabGroupTab::SavedTabGroupTab(const SavedTabGroupTab& other) = default;
 SavedTabGroupTab& SavedTabGroupTab::operator=(const SavedTabGroupTab& other) =
@@ -50,27 +53,34 @@ SavedTabGroupTab& SavedTabGroupTab::operator=(SavedTabGroupTab&& other) =
     default;
 SavedTabGroupTab::~SavedTabGroupTab() = default;
 
-bool SavedTabGroupTab::ShouldMergeTab(
-    const SavedTabGroupTab& remote_tab) const {
-  if (AlwaysAcceptServerDataInModel()) {
-    return true;
+SavedTabGroupTab& SavedTabGroupTab::SetUpdatedByAttribution(GaiaId updated_by) {
+  if (shared_attribution_.created_by.empty()) {
+    shared_attribution_.created_by = updated_by;
   }
+  shared_attribution_.updated_by = std::move(updated_by);
+  return *this;
+}
 
-  return remote_tab.update_time_windows_epoch_micros() >=
-         update_time_windows_epoch_micros();
+SavedTabGroupTab& SavedTabGroupTab::SetCreatedByAttribution(GaiaId created_by) {
+  CHECK(shared_attribution_.created_by.empty());
+  shared_attribution_.created_by = std::move(created_by);
+  return *this;
 }
 
 void SavedTabGroupTab::MergeRemoteTab(const SavedTabGroupTab& remote_tab) {
-  if (!ShouldMergeTab(remote_tab)) {
-    return;
+  // If a remote tab's URL is not supported, don't change the URL and title
+  // for the existing tab as it will allow user to continue navigating the
+  // current page. Only keep other information such as position, cache guid
+  // and attribution up-to-date from the remote tab.
+  if (IsURLValidForSavedTabGroups(remote_tab.url())) {
+    SetURL(remote_tab.url());
+    SetTitle(remote_tab.title());
   }
-
-  SetURL(remote_tab.url());
-  SetTitle(remote_tab.title());
   // TODO(crbug.com/370714643): check that remote tab always contains position.
   SetPosition(remote_tab.position().value_or(0));
   SetCreatorCacheGuid(remote_tab.creator_cache_guid());
   SetLastUpdaterCacheGuid(remote_tab.last_updater_cache_guid());
+  SetUpdatedByAttribution(remote_tab.shared_attribution().updated_by);
   SetUpdateTimeWindowsEpochMicros(
       remote_tab.update_time_windows_epoch_micros());
 }
@@ -94,18 +104,11 @@ SavedTabGroupTabBuilder::SavedTabGroupTabBuilder() = default;
 
 SavedTabGroupTabBuilder::~SavedTabGroupTabBuilder() = default;
 
-SavedTabGroupTabBuilder& SavedTabGroupTabBuilder::SetURL(const GURL& url) {
-  url_ = url;
-  has_url_ = true;
-  return *this;
-}
+SavedTabGroupTabBuilder::SavedTabGroupTabBuilder(
+    const SavedTabGroupTabBuilder&) = default;
 
-SavedTabGroupTabBuilder& SavedTabGroupTabBuilder::SetTitle(
-    const std::u16string& title) {
-  title_ = title;
-  has_title_ = true;
-  return *this;
-}
+SavedTabGroupTabBuilder& SavedTabGroupTabBuilder::operator=(
+    const SavedTabGroupTabBuilder&) = default;
 
 SavedTabGroupTabBuilder& SavedTabGroupTabBuilder::SetPosition(size_t position) {
   position_ = position;
@@ -125,12 +128,6 @@ SavedTabGroupTab SavedTabGroupTabBuilder::Build(
   SavedTabGroupTab updated_tab(tab);
 
   // Apply the updates from the builder.
-  if (has_url_) {
-    updated_tab.SetURL(url_);
-  }
-  if (has_title_) {
-    updated_tab.SetTitle(title_);
-  }
   if (has_position_) {
     updated_tab.SetPosition(position_);
   }

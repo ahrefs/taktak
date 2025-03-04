@@ -142,7 +142,7 @@ class CORE_EXPORT MessageEvent final : public Event {
                         const String& origin,
                         const String& last_event_id,
                         EventTarget* source,
-                        MessagePortArray& ports);
+                        MessagePortArray ports);
   void initMessageEvent(const AtomicString& type,
                         bool bubbles,
                         bool cancelable,
@@ -205,11 +205,6 @@ class CORE_EXPORT MessageEvent final : public Event {
   void Trace(Visitor*) const override;
 
   void LockToAgentCluster();
-
-  [[nodiscard]] v8::Local<v8::Object> AssociateWithWrapper(
-      v8::Isolate*,
-      const WrapperTypeInfo*,
-      v8::Local<v8::Object> wrapper) override;
 
  private:
   enum DataType {

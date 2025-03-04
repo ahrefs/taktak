@@ -12,7 +12,7 @@
 #include "chrome/browser/ui/views/extensions/extensions_request_access_button.h"
 #include "chrome/browser/ui/views/extensions/extensions_toolbar_button.h"
 #include "chrome/browser/ui/views/extensions/extensions_toolbar_container.h"
-#include "components/user_education/common/feature_promo_controller.h"
+#include "components/user_education/common/feature_promo/feature_promo_controller.h"
 #include "extensions/common/extension_features.h"
 
 ExtensionsToolbarContainerViewController::
@@ -83,6 +83,11 @@ void ExtensionsToolbarContainerViewController::MaybeShowIPH() {
 
 void ExtensionsToolbarContainerViewController::UpdateRequestAccessButton() {
   CHECK(extensions_container_);
+
+  if (!base::FeatureList::IsEnabled(
+          extensions_features::kExtensionsMenuAccessControl)) {
+    return;
+  }
 
   auto* web_contents = extensions_container_->GetCurrentWebContents();
   extensions::PermissionsManager::UserSiteSetting site_setting =
@@ -197,13 +202,13 @@ void ExtensionsToolbarContainerViewController::
 }
 
 void ExtensionsToolbarContainerViewController::
-    OnSiteAccessRequestDismissedByUser(
+    OnHostAccessRequestDismissedByUser(
         const extensions::ExtensionId& extension_id,
         const url::Origin& origin) {
   UpdateRequestAccessButton();
 }
 
-void ExtensionsToolbarContainerViewController::OnSiteAccessRequestAdded(
+void ExtensionsToolbarContainerViewController::OnHostAccessRequestAdded(
     const extensions::ExtensionId& extension_id,
     int tab_id) {
   int current_tab_id = extensions::ExtensionTabUtil::GetTabId(
@@ -215,13 +220,13 @@ void ExtensionsToolbarContainerViewController::OnSiteAccessRequestAdded(
   UpdateRequestAccessButton();
 }
 
-void ExtensionsToolbarContainerViewController::OnSiteAccessRequestUpdated(
+void ExtensionsToolbarContainerViewController::OnHostAccessRequestUpdated(
     const extensions::ExtensionId& extension_id,
     int tab_id) {
   UpdateRequestAccessButton();
 }
 
-void ExtensionsToolbarContainerViewController::OnSiteAccessRequestRemoved(
+void ExtensionsToolbarContainerViewController::OnHostAccessRequestRemoved(
     const extensions::ExtensionId& extension_id,
     int tab_id) {
   int current_tab_id = extensions::ExtensionTabUtil::GetTabId(
@@ -233,7 +238,7 @@ void ExtensionsToolbarContainerViewController::OnSiteAccessRequestRemoved(
   UpdateRequestAccessButton();
 }
 
-void ExtensionsToolbarContainerViewController::OnSiteAccessRequestsCleared(
+void ExtensionsToolbarContainerViewController::OnHostAccessRequestsCleared(
     int tab_id) {
   int current_tab_id = extensions::ExtensionTabUtil::GetTabId(
       extensions_container_->GetCurrentWebContents());

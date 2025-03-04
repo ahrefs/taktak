@@ -11,7 +11,6 @@
 #include <type_traits>
 #include <vector>
 
-#include "base/atomicops.h"
 #include "base/auto_reset.h"
 #include "base/base_export.h"
 #include "base/bits.h"
@@ -150,7 +149,6 @@ class BASE_EXPORT HangWatcher : public DelegateSimpleThread::Delegate {
   // Initializes HangWatcher. Must be called once on the main thread during
   // startup while single-threaded.
   static void InitializeOnMainThread(ProcessType process_type,
-                                     bool is_zygote_child,
                                      bool emit_crashes);
 
   // Returns the values that were set through InitializeOnMainThread() to their
@@ -665,7 +663,7 @@ class BASE_EXPORT HangWatchState {
 
   // A unique ID of the thread under watch. Used for logging in crash reports
   // only.
-  PlatformThreadId thread_id_;
+  PlatformThreadId thread_id_ = kInvalidThreadId;
 
   // Number of active HangWatchScopeEnables on this thread.
   int nesting_level_ = 0;

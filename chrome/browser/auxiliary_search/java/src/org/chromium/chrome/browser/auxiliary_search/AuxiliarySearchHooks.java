@@ -4,23 +4,32 @@
 
 package org.chromium.chrome.browser.auxiliary_search;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.chromium.chrome.browser.profiles.Profile;
-import org.chromium.chrome.browser.tabmodel.TabModelSelector;
+import org.chromium.chrome.browser.auxiliary_search.AuxiliarySearchDonor.SetDocumentClassVisibilityForPackageCallback;
 
 /** Provides access to internal AuxiliarySearch implementation parts, if they are available. */
 public interface AuxiliarySearchHooks {
     /** Whether the internal components of the Auxiliary Search are available. */
     boolean isEnabled();
 
-    /** Create a AuxiliarySearchController. */
+    /**
+     * Sets the schema visibility for the requestBuilder.
+     *
+     * @param callback The callback to set the document visibilities.
+     */
+    default void setSchemaTypeVisibilityForPackage(
+            @NonNull SetDocumentClassVisibilityForPackageCallback callback) {}
+
+    /** Returns whether the sharing Tabs with the system is enabled by default on the device. */
+    default boolean isSettingDefaultEnabledByOs() {
+        return false;
+    }
+
+    /** Returns the package name of the supported app which reads the donated Tabs. */
     @Nullable
-    AuxiliarySearchController createAuxiliarySearchController(
-            @NonNull Context context,
-            @NonNull Profile profile,
-            @NonNull TabModelSelector tabModelSelector);
+    default String getSupportedPackageName() {
+        return null;
+    }
 }

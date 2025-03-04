@@ -5,10 +5,12 @@
 import("//build/config/chromebox_for_meetings/buildflags.gni")
 import("//build/config/chromeos/ui_mode.gni")
 
-assert(is_chromeos_ash)
+assert(is_chromeos)
 
 static_library("dbus") {
   sources = [
+    "arc_crosh_service_provider.cc",
+    "arc_crosh_service_provider.h",
     "arc_tracing_service_provider.cc",
     "arc_tracing_service_provider.h",
     "ash_dbus_helper.cc",
@@ -67,17 +69,14 @@ static_library("dbus") {
   ]
 
   deps = [
-    "//ash/components/arc:arc_features",
     "//ash/constants",
     "//ash/webui/shimless_rma",
-    "//build:chromeos_buildflags",
     "//build/config/chromebox_for_meetings:buildflags",
     "//chrome/browser:browser_process",
     "//chrome/browser/ash/app_mode",
     "//chrome/browser/ash/arc/fileapi",
     "//chrome/browser/ash/arc/session",
     "//chrome/browser/ash/arc/tracing",
-    "//chrome/browser/ash/arc/video",
     "//chrome/browser/ash/crostini",
     "//chrome/browser/ash/login/lock",
     "//chrome/browser/ash/net",
@@ -152,6 +151,9 @@ static_library("dbus") {
     "//chromeos/ash/components/install_attributes",
     "//chromeos/ash/components/language_packs",
     "//chromeos/ash/components/settings",
+    "//chromeos/ash/experiences/arc:arc_features",
+    "//chromeos/ash/experiences/arc/session",
+    "//chromeos/ash/experiences/arc/video",
     "//chromeos/ash/services/rollback_network_config/public/mojom",
     "//chromeos/components/mojo_bootstrap",
     "//chromeos/dbus/constants",
@@ -194,6 +196,7 @@ static_library("dbus") {
 
 action("dbus_service_files") {
   sources = [
+    "org.chromium.ArcCroshServiceProvider.conf",
     "org.chromium.ArcTracing.conf",
     "org.chromium.ChromeFeaturesService.conf",
     "org.chromium.ComponentUpdaterService.conf",
@@ -232,6 +235,7 @@ source_set("unit_tests") {
   testonly = true
 
   sources = [
+    "arc_crosh_service_provider_unittest.cc",
     "arc_tracing_service_provider_unittest.cc",
     "chrome_features_service_provider_unittest.cc",
     "dlp_files_policy_service_provider_unittest.cc",
@@ -241,11 +245,12 @@ source_set("unit_tests") {
 
   deps = [
     ":dbus",
-    "//ash/components/arc:arc_test_support",
     "//ash/constants",
     "//base",
     "//base/test:test_support",
     "//chrome/browser",
+    "//chrome/browser/ash/arc/session",
+    "//chrome/browser/ash/arc/test:arc_test_support",
     "//chrome/browser/ash/arc/tracing",
     "//chrome/browser/ash/arc/tracing/test:test_support",
     "//chrome/browser/ash/net",
@@ -256,8 +261,10 @@ source_set("unit_tests") {
     "//chrome/test:test_support",
     "//chromeos/ash/components/dbus/services:test_support",
     "//chromeos/ash/components/dbus/system_proxy",
+    "//chromeos/ash/components/dbus/upstart",
     "//chromeos/ash/components/install_attributes:test_support",
     "//chromeos/ash/components/network:test_support",
+    "//chromeos/ash/experiences/arc:arc_test_support",
     "//chromeos/dbus/dlp:dlp_proto",
     "//chromeos/dbus/missive",
     "//components/exo",

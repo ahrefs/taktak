@@ -6,10 +6,10 @@ import 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import 'chrome://resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import 'chrome://resources/cr_elements/cr_toggle/cr_toggle.js';
 import 'chrome://resources/cr_elements/cr_tooltip/cr_tooltip.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
+import 'chrome://resources/cr_elements/icons.html.js';
 import 'chrome://resources/js/action_link.js';
 import './icons.html.js';
-import './strings.m.js';
+import '/strings.m.js';
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
 
 import type {ChromeEvent} from '/tools/typescript/definitions/chrome_event.js';
@@ -30,8 +30,9 @@ export interface ItemDelegate {
   deleteItem(id: string): void;
   deleteItems(ids: string[]): Promise<void>;
   uninstallItem(id: string): Promise<void>;
-  setItemEnabled(id: string, isEnabled: boolean): void;
+  setItemEnabled(id: string, isEnabled: boolean): Promise<void>;
   setItemAllowedIncognito(id: string, isAllowedIncognito: boolean): void;
+  setItemAllowedUserScripts(id: string, isAllowedUserScripts: boolean): void;
   setItemAllowedOnFileUrls(id: string, isAllowedOnFileUrls: boolean): void;
   setItemHostAccess(id: string, hostAccess: chrome.developerPrivate.HostAccess):
       void;
@@ -51,6 +52,7 @@ export interface ItemDelegate {
       reason: chrome.developerPrivate.SafetyCheckWarningReason): void;
   setShowAccessRequestsInToolbar(id: string, showRequests: boolean): void;
   setItemPinnedToToolbar(id: string, pinnedToToolbar: boolean): void;
+  uploadItemToAccount(id: string): Promise<void>;
 
   // TODO(tjudkins): This function is not specific to items, so should be pulled
   // out to a more generic place when we need to access it from elsewhere.
@@ -73,8 +75,11 @@ export class DummyItemDelegate {
   uninstallItem(_id: string) {
     return Promise.resolve();
   }
-  setItemEnabled(_id: string, _isEnabled: boolean) {}
+  setItemEnabled(_id: string, _isEnabled: boolean) {
+    return Promise.resolve();
+  }
   setItemAllowedIncognito(_id: string, _isAllowedIncognito: boolean) {}
+  setItemAllowedUserScripts(_id: string, _isAllowedUserScripts: boolean) {}
   setItemAllowedOnFileUrls(_id: string, _isAllowedOnFileUrls: boolean) {}
   setItemHostAccess(
       _id: string, _hostAccess: chrome.developerPrivate.HostAccess) {}
@@ -100,6 +105,9 @@ export class DummyItemDelegate {
       _id: string, _reason: chrome.developerPrivate.SafetyCheckWarningReason) {}
   setShowAccessRequestsInToolbar(_id: string, _showRequests: boolean) {}
   setItemPinnedToToolbar(_id: string, _pinnedToToolbar: boolean) {}
+  uploadItemToAccount(_id: string) {
+    return Promise.resolve();
+  }
   recordUserAction(_metricName: string) {}
   getItemStateChangedTarget() {
     return new FakeChromeEvent();
@@ -146,9 +154,6 @@ export class ExtensionsItemElement extends ExtensionsItemElementBase {
 
       mv2ExperimentStage: {type: Number},
 
-      // Whether or not the expanded view of the item is shown.
-      showingDetails_: {type: Boolean},
-
       // First inspectable view after sorting.
       firstInspectView_: {type: Object},
     };
@@ -159,8 +164,7 @@ export class ExtensionsItemElement extends ExtensionsItemElementBase {
   mv2ExperimentStage: Mv2ExperimentStage = Mv2ExperimentStage.NONE;
   safetyCheckShowing: boolean = false;
   data: chrome.developerPrivate.ExtensionInfo = createDummyExtensionInfo();
-  private showingDetails_: boolean = false;
-  private firstInspectView_: chrome.developerPrivate.ExtensionView;
+  private firstInspectView_?: chrome.developerPrivate.ExtensionView;
 
   override willUpdate(changedProperties: PropertyValues<this>) {
     super.willUpdate(changedProperties);
@@ -182,7 +186,7 @@ export class ExtensionsItemElement extends ExtensionsItemElementBase {
 
   /** @return The "Errors" button, if it exists. */
   getErrorsButton(): HTMLElement|null {
-    return this.shadowRoot!.querySelector('#errors-button');
+    return this.shadowRoot.querySelector('#errors-button');
   }
 
   protected getEnableToggleAriaLabel_(): string {
@@ -243,12 +247,14 @@ export class ExtensionsItemElement extends ExtensionsItemElementBase {
     navigation.navigateTo({page: Page.DETAILS, extensionId: this.data.id});
   }
 
-  private computeFirstInspectView_(): chrome.developerPrivate.ExtensionView {
-    return sortViews(this.data.views)[0];
+  private computeFirstInspectView_(): (chrome.developerPrivate.ExtensionView|
+                                       undefined) {
+    return this.data.views.length === 0 ? undefined :
+                                          sortViews(this.data.views)[0]!;
   }
 
   protected onInspectClick_() {
-    assert(this.delegate);
+    assert(this.delegate && this.firstInspectView_);
     this.delegate.inspectItemView(this.data.id, this.firstInspectView_);
   }
 
@@ -258,6 +264,11 @@ export class ExtensionsItemElement extends ExtensionsItemElementBase {
 
   protected onReloadClick_() {
     this.reloadItem().catch((loadError) => this.fire('load-error', loadError));
+  }
+
+  protected onUploadClick_() {
+    assert(this.delegate);
+    this.delegate.uploadItemToAccount(this.data.id);
   }
 
   protected onRepairClick_() {
@@ -337,7 +348,7 @@ export class ExtensionsItemElement extends ExtensionsItemElementBase {
     // sometimes it can. Even when it is, the UI behaves properly, but we
     // need to handle the case gracefully.
     return this.data.views.length > 0 ?
-        computeInspectableViewLabel(this.firstInspectView_) :
+        computeInspectableViewLabel(this.firstInspectView_!) :
         '';
   }
 
@@ -350,8 +361,12 @@ export class ExtensionsItemElement extends ExtensionsItemElementBase {
     return this.data.views.length <= 1;
   }
 
-  protected computeDevReloadButtonHidden_(): boolean {
-    return !this.canReloadItem();
+  protected showAccountUploadButton_(): boolean {
+    return this.data.canUploadAsAccountExtension;
+  }
+
+  protected showDevReloadButton_(): boolean {
+    return this.canReloadItem();
   }
 
   protected computeExtraInspectLabel_(): string {
@@ -366,6 +381,7 @@ export class ExtensionsItemElement extends ExtensionsItemElementBase {
   private hasSevereWarnings_(): boolean {
     return this.data.disableReasons.corruptInstall ||
         this.data.disableReasons.suspiciousInstall ||
+        this.data.disableReasons.unsupportedDeveloperExtension ||
         this.data.runtimeWarnings.length > 0 || !!this.data.blocklistText;
   }
 

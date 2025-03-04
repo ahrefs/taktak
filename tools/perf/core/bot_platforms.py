@@ -284,18 +284,6 @@ OFFICIAL_BENCHMARK_CONFIGS = OFFICIAL_BENCHMARK_CONFIGS.Remove([
 OFFICIAL_BENCHMARK_NAMES = frozenset(
     b.name for b in OFFICIAL_BENCHMARK_CONFIGS.Frozenset())
 
-# TODO(crbug.com/40110184): Stop using these 'OFFICIAL_EXCEPT' suites and
-# instead define each benchmarking config separately as is already done for
-# many of the suites below.
-_OFFICIAL_EXCEPT_DISPLAY_LOCKING = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove(
-    ['blink_perf.display_locking'])
-_OFFICIAL_EXCEPT_JETSTREAM2 = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove(
-    ['jetstream2'])
-_OFFICIAL_EXCEPT_DISPLAY_LOCKING_JETSTREAM2 = PerfSuite(
-    OFFICIAL_BENCHMARK_CONFIGS).Remove(
-        ['blink_perf.display_locking', 'jetstream2'])
-
-
 def _sync_performance_tests(estimated_runtime=110,
                             path=None,
                             additional_flags=None):
@@ -375,6 +363,13 @@ def _views_perftests(estimated_runtime=7):
                           estimated_runtime=estimated_runtime)
 
 
+def _crossbench_speedometer2_1(estimated_runtime=60, arguments=None):
+  return CrossbenchConfig('speedometer2.1.crossbench',
+                          'speedometer_2.1',
+                          estimated_runtime=estimated_runtime,
+                          arguments=arguments)
+
+
 def _crossbench_speedometer3_0(estimated_runtime=60, arguments=None):
   return CrossbenchConfig('speedometer3.crossbench',
                           'speedometer_3.0',
@@ -394,6 +389,20 @@ def _crossbench_jetstream2_1(estimated_runtime=180):
                           estimated_runtime=estimated_runtime)
 
 
+def _crossbench_loadline_phone(estimated_runtime=7000, arguments=None):
+  return CrossbenchConfig('loadline_phone.crossbench',
+                          'loadline-phone',
+                          estimated_runtime=estimated_runtime,
+                          arguments=arguments)
+
+
+def _crossbench_loadline_tablet(estimated_runtime=3600, arguments=None):
+  return CrossbenchConfig('loadline_tablet.crossbench',
+                          'loadline-tablet',
+                          estimated_runtime=estimated_runtime,
+                          arguments=arguments)
+
+
 _CROSSBENCH_JETSTREAM_SPEEDOMETER = frozenset([
     _crossbench_jetstream2_1(),
     _crossbench_speedometer3_0(),
@@ -405,14 +414,27 @@ _CROSSBENCH_MOTIONMARK_SPEEDOMETER = frozenset([
 ])
 
 _CROSSBENCH_BENCHMARKS_ALL = frozenset([
+    _crossbench_speedometer2_1(arguments=['--fileserver']),
     _crossbench_speedometer3_0(),
     _crossbench_motionmark1_3(),
     _crossbench_jetstream2_1(),
 ])
 
 # TODO(b/338630584): Remove it when other benchmarks can be run on Android.
-_CROSSBENCH_SPEEDOMETER = frozenset([
+_CROSSBENCH_ANDROID = frozenset([
     _crossbench_speedometer3_0(arguments=['--fileserver']),
+    _crossbench_loadline_phone(arguments=[
+        '--cool-down-threshold=moderate',
+        '--no-splash',
+    ]),
+])
+
+_CROSSBENCH_TANGOR = frozenset([
+    _crossbench_loadline_tablet(arguments=[
+        '--repeat=20',
+        '--cool-down-threshold=moderate',
+        '--no-splash',
+    ]),
 ])
 
 _CHROME_HEALTH_BENCHMARK_CONFIGS_DESKTOP = PerfSuite(
@@ -425,47 +447,24 @@ FUCHSIA_EXEC_ARGS = {
     'nelson': None,
     'nuc': None
 }
-FUCHSIA_EXEC_CONFIGS = {
-    'astro': None,
-    'sherlock': None,
-    'atlas': None,
-    'nelson': None,
-    'nuc': None
-}
 _IMAGE_PATHS = {
     'astro': ('astro-release', 'smart_display_eng_arrested'),
     'sherlock': ('sherlock-release', 'smart_display_max_eng_arrested'),
     'nelson': ('nelson-release', 'smart_display_m3_eng_paused'),
 }
 
-# Some image paths are just a product-bundle, which is not a relative path.
-_PB_IMAGE_PATHS = {
-    'atlas': 'workstation_eng.chromebook-x64',
-    'nuc': 'workstation_eng.x64',
-}
-
-_FUCHSIA_IMAGE_DIR = '../../third_party/fuchsia-sdk/images-internal/%s/%s'
-_COMMON_FUCHSIA_ARGS = ['-d', '--os-check=check']
+# TODO(zijiehe): Fuchsia should check the os version, i.e. --os-check=check, but
+# perf test run multiple suites in sequential and the os checks are performed
+# multiple times. Currently there isn't a simple way to check only once at the
+# beginning of the test.
+# See the revision:
+# https://crsrc.org/c/tools/perf/core/bot_platforms.py
+#   ;drc=93a804bc8c5871e1fb70a762e461d787749cb2d7;l=470
+_COMMON_FUCHSIA_ARGS = ['-d', '--os-check=ignore']
 for board, path_parts in _IMAGE_PATHS.items():
-  image_dir = _FUCHSIA_IMAGE_DIR % path_parts
-  FUCHSIA_EXEC_ARGS[board] = _COMMON_FUCHSIA_ARGS + [
-      '--system-image-dir=%s' % image_dir
-  ]
+  FUCHSIA_EXEC_ARGS[board] = _COMMON_FUCHSIA_ARGS
 
-for board, pb_name in _PB_IMAGE_PATHS.items():
-  FUCHSIA_EXEC_ARGS[board] = _COMMON_FUCHSIA_ARGS + [
-      f'--system-image-dir={pb_name}'
-  ]
-  FUCHSIA_EXEC_CONFIGS[board] = frozenset([
-      _base_perftests(900,
-                      path='bin/run_base_perftests',
-                      additional_flags=FUCHSIA_EXEC_ARGS[board]),
-      _sync_performance_tests(900,
-                              path='bin/run_sync_performance_tests',
-                              additional_flags=FUCHSIA_EXEC_ARGS[board]),
-  ])
 _LINUX_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove([
-    'blink_perf.display_locking',
     'v8.runtime_stats.top_25',
 ]).Add([
     'blink_perf.svg',
@@ -487,37 +486,25 @@ _LINUX_EXECUTABLE_CONFIGS = frozenset([
     _tint_benchmark(),
     _tracing_perftests(5),
 ])
-_MAC_HIGH_END_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove([
-    'blink_perf.display_locking',
-    'v8.runtime_stats.top_25',
-])
-_MAC_HIGH_END_EXECUTABLE_CONFIGS = frozenset([
-    _base_perftests(300),
-    # _dawn_perf_tests(330),    # b/332611618
-    _tint_benchmark(),
-    _views_perftests(),
-])
-_MAC_LOW_END_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove([
-    'jetstream2',
-    'v8.runtime_stats.top_25',
-])
-_MAC_LOW_END_EXECUTABLE_CONFIGS = frozenset([
-    _load_library_perf_tests(),
-])
+_LINUX_R350_BENCHMARK_CONFIGS = PerfSuite(
+    _LINUX_BENCHMARK_CONFIGS_WITH_MINORMS_PREDICTABLE).Remove([
+        'rendering.desktop',
+        'rendering.desktop.notracing',
+        'system_health.common_desktop',
+    ])
 _MAC_INTEL_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove([
-    'blink_perf.display_locking',
     'v8.runtime_stats.top_25',
+    'rendering.desktop',
 ])
 _MAC_INTEL_EXECUTABLE_CONFIGS = frozenset([
     _base_perftests(300),
-    # _dawn_perf_tests(330),    # b/332611618
+    _dawn_perf_tests(330),
     _tint_benchmark(),
     _views_perftests(),
     _load_library_perf_tests(),
 ])
 _MAC_M1_MINI_2020_BENCHMARK_CONFIGS = PerfSuite(
     OFFICIAL_BENCHMARK_CONFIGS).Remove([
-        'blink_perf.display_locking',
         'v8.runtime_stats.top_25',
     ]).Add([
         'jetstream2-minorms',
@@ -528,9 +515,11 @@ _MAC_M1_MINI_2020_BENCHMARK_CONFIGS = PerfSuite(
         'rendering.desktop.notracing',
     ], 2).Repeat([
         'speedometer3',
-    ], 6)
+    ], 6).Repeat([
+        'jetstream2',
+    ], 11)
 _MAC_M1_MINI_2020_PGO_BENCHMARK_CONFIGS = PerfSuite([
-    _GetBenchmarkConfig('jetstream2'),
+    _GetBenchmarkConfig('jetstream2', pageset_repeat=11),
     _GetBenchmarkConfig('speedometer2'),
     _GetBenchmarkConfig('speedometer3', pageset_repeat=22),
     _GetBenchmarkConfig('rendering.desktop.notracing'),
@@ -553,7 +542,6 @@ _MAC_M1_MINI_2020_EXECUTABLE_CONFIGS = frozenset([
     _views_perftests(),
 ])
 _MAC_M2_PRO_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove([
-    'blink_perf.display_locking',
     'v8.runtime_stats.top_25',
 ]).Add([
     'jetstream2-minorms',
@@ -562,7 +550,6 @@ _MAC_M2_PRO_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove([
 ])
 
 _WIN_10_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove([
-    'blink_perf.display_locking',
     'v8.runtime_stats.top_25',
 ])
 _WIN_10_EXECUTABLE_CONFIGS = frozenset([
@@ -571,10 +558,7 @@ _WIN_10_EXECUTABLE_CONFIGS = frozenset([
     _dawn_perf_tests(600),
     _views_perftests(),
 ])
-_WIN_10_LOW_END_BENCHMARK_CONFIGS = PerfSuite(
-    OFFICIAL_BENCHMARK_CONFIGS).Remove([
-        'blink_perf.display_locking',
-    ])
+_WIN_10_LOW_END_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS)
 _WIN_10_LOW_END_HP_CANDIDATE_BENCHMARK_CONFIGS = PerfSuite([
     _GetBenchmarkConfig('v8.browsing_desktop'),
     _GetBenchmarkConfig('rendering.desktop', abridged=True),
@@ -586,7 +570,6 @@ _WIN_10_AMD_LAPTOP_BENCHMARK_CONFIGS = PerfSuite([
     _GetBenchmarkConfig('speedometer3'),
 ])
 _WIN_11_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Remove([
-    'blink_perf.display_locking',
     'rendering.desktop',
     'rendering.desktop.notracing',
     'system_health.common_desktop',
@@ -599,6 +582,23 @@ _WIN_11_EXECUTABLE_CONFIGS = frozenset([
     _tint_benchmark(),
     _views_perftests(),
 ])
+_WIN_ARM64_BENCHMARK_CONFIGS = PerfSuite([
+    _GetBenchmarkConfig('blink_perf.dom'),
+    _GetBenchmarkConfig('jetstream2'),
+    _GetBenchmarkConfig('media.desktop'),
+    _GetBenchmarkConfig('rendering.desktop', abridged=True),
+    _GetBenchmarkConfig('rendering.desktop.notracing'),
+    _GetBenchmarkConfig('speedometer2'),
+    _GetBenchmarkConfig('speedometer3'),
+    _GetBenchmarkConfig('system_health.common_desktop'),
+    _GetBenchmarkConfig('v8.browsing_desktop'),
+])
+_WIN_ARM64_EXECUTABLE_CONFIGS = frozenset([
+    _base_perftests(200),
+    _components_perftests(125),
+    _views_perftests(),
+])
+_WIN_11_LOW_END_BENCHMARK_CONFIGS = _WIN_ARM64_BENCHMARK_CONFIGS
 _ANDROID_GO_BENCHMARK_CONFIGS = PerfSuite([
     _GetBenchmarkConfig('system_health.memory_mobile'),
     _GetBenchmarkConfig('system_health.common_mobile'),
@@ -610,21 +610,19 @@ _ANDROID_GO_BENCHMARK_CONFIGS = PerfSuite([
     _GetBenchmarkConfig('speedometer3'),
 ])
 _ANDROID_GO_WEBVIEW_BENCHMARK_CONFIGS = _ANDROID_GO_BENCHMARK_CONFIGS
-_ANDROID_PIXEL4_BENCHMARK_CONFIGS = PerfSuite(_OFFICIAL_EXCEPT_DISPLAY_LOCKING)
+_ANDROID_PIXEL4_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS)
 _ANDROID_PIXEL4_EXECUTABLE_CONFIGS = frozenset([
     _components_perftests(60),
 ])
 _ANDROID_PIXEL4_WEBVIEW_BENCHMARK_CONFIGS = PerfSuite(
     OFFICIAL_BENCHMARK_CONFIGS).Remove([
-        'blink_perf.display_locking',
         'jetstream2',
         'v8.browsing_mobile-future',
     ])
-_ANDROID_PIXEL6_BENCHMARK_CONFIGS = PerfSuite(
-    _OFFICIAL_EXCEPT_DISPLAY_LOCKING).Add(
-        [_GetBenchmarkConfig('system_health.scroll_jank_mobile')]).Repeat([
-            'speedometer3',
-        ], 4)
+_ANDROID_PIXEL6_BENCHMARK_CONFIGS = PerfSuite(OFFICIAL_BENCHMARK_CONFIGS).Add(
+    [_GetBenchmarkConfig('system_health.scroll_jank_mobile')]).Repeat([
+        'speedometer3',
+    ], 4)
 _ANDROID_PIXEL6_PGO_BENCHMARK_CONFIGS = PerfSuite([
     _GetBenchmarkConfig('system_health.common_mobile'),
     _GetBenchmarkConfig('jetstream2'),
@@ -635,14 +633,13 @@ _ANDROID_PIXEL6_PGO_BENCHMARK_CONFIGS = PerfSuite([
     _GetBenchmarkConfig('speedometer3-predictable'),
 ])
 _ANDROID_PIXEL6_PRO_BENCHMARK_CONFIGS = PerfSuite(
-    _OFFICIAL_EXCEPT_DISPLAY_LOCKING).Add([
+    OFFICIAL_BENCHMARK_CONFIGS).Add([
         _GetBenchmarkConfig('jetstream2-minorms'),
         _GetBenchmarkConfig('speedometer2-minorms'),
         _GetBenchmarkConfig('speedometer3-minorms'),
     ])
 _ANDROID_PIXEL6_EXECUTABLE_CONFIGS = frozenset([
     _components_perftests(60),
-    _tint_benchmark(),
 ])
 _ANDROID_PIXEL6_PGO_EXECUTABLE_CONFIGS = frozenset([
     _components_perftests(60),
@@ -652,7 +649,7 @@ _ANDROID_PIXEL6_PRO_EXECUTABLE_CONFIGS = frozenset([
 ])
 # Pixel fold
 _ANDROID_PIXEL_FOLD_BENCHMARK_CONFIGS = PerfSuite(
-    _OFFICIAL_EXCEPT_DISPLAY_LOCKING).Add([
+    OFFICIAL_BENCHMARK_CONFIGS).Add([
         _GetBenchmarkConfig('jetstream2-minorms'),
         _GetBenchmarkConfig('speedometer2-minorms'),
         _GetBenchmarkConfig('speedometer3-minorms'),
@@ -662,7 +659,7 @@ _ANDROID_PIXEL_FOLD_EXECUTABLE_CONFIGS = frozenset([
 ])
 # Pixel Tangor
 _ANDROID_PIXEL_TANGOR_BENCHMARK_CONFIGS = PerfSuite(
-    _OFFICIAL_EXCEPT_DISPLAY_LOCKING).Add([
+    OFFICIAL_BENCHMARK_CONFIGS).Add([
         _GetBenchmarkConfig('jetstream2-minorms'),
         _GetBenchmarkConfig('speedometer2-minorms'),
         _GetBenchmarkConfig('speedometer3-minorms')
@@ -671,13 +668,12 @@ _ANDROID_PIXEL_TANGOR_EXECUTABLE_CONFIGS = frozenset(
     [_components_perftests(60)])
 _CHROMEOS_KEVIN_FYI_BENCHMARK_CONFIGS = PerfSuite(
     [_GetBenchmarkConfig('rendering.desktop')])
-_FUCHSIA_PERF_NELSON_BENCHMARK_CONFIGS = PerfSuite([
+_FUCHSIA_PERF_SMARTDISPLAY_BENCHMARK_CONFIGS = PerfSuite([
     _GetBenchmarkConfig('speedometer2'),
     _GetBenchmarkConfig('speedometer3'),
     _GetBenchmarkConfig('media.mobile'),
+    _GetBenchmarkConfig('v8.browsing_mobile'),
 ])
-_FUCHSIA_PERF_SHERLOCK_BENCHMARK_CONFIGS = \
-    _FUCHSIA_PERF_NELSON_BENCHMARK_CONFIGS
 _LINUX_PERF_FYI_BENCHMARK_CONFIGS = PerfSuite([
     _GetBenchmarkConfig('speedometer2'),
     _GetBenchmarkConfig('speedometer2-minorms'),
@@ -695,7 +691,7 @@ _LINUX_PERF_CALIBRATION_BENCHMARK_CONFIGS = PerfSuite([
 LINUX = PerfPlatform('linux-perf',
                      'Ubuntu-18.04, 8 core, NVIDIA Quadro P400',
                      _LINUX_BENCHMARK_CONFIGS_WITH_MINORMS_PREDICTABLE,
-                     26,
+                     22,
                      'linux',
                      executables=_LINUX_EXECUTABLE_CONFIGS,
                      crossbench=_CROSSBENCH_BENCHMARKS_ALL)
@@ -712,45 +708,13 @@ LINUX_REL = PerfPlatform(
     'linux', executables=_LINUX_EXECUTABLE_CONFIGS)
 LINUX_R350 = PerfPlatform('linux-r350-perf',
                           'Ubuntu-22.04, 16 core',
-                          _LINUX_BENCHMARK_CONFIGS_WITH_MINORMS_PREDICTABLE,
+                          _LINUX_R350_BENCHMARK_CONFIGS,
                           30,
                           'linux',
                           executables=_LINUX_EXECUTABLE_CONFIGS,
                           crossbench=_CROSSBENCH_BENCHMARKS_ALL)
 
 # Mac
-MAC_HIGH_END_LAPTOP = PerfPlatform(
-    'mac-laptop_high_end-perf',
-    'MacBook Pro, Core i7 2.8 GHz, 16GB RAM, 256GB SSD, Radeon 55',
-    _MAC_HIGH_END_BENCHMARK_CONFIGS,
-    23,
-    'mac',
-    executables=_MAC_HIGH_END_EXECUTABLE_CONFIGS,
-    crossbench=_CROSSBENCH_BENCHMARKS_ALL)
-MAC_HIGH_END_LAPTOP_PGO = PerfPlatform(
-    'mac-laptop_high_end-perf-pgo',
-    'MacBook Pro, Core i7 2.8 GHz, 16GB RAM, 256GB SSD, Radeon 55',
-    _MAC_HIGH_END_BENCHMARK_CONFIGS,
-    26,
-    'mac',
-    executables=_MAC_HIGH_END_EXECUTABLE_CONFIGS,
-    pinpoint_only=True)
-MAC_LOW_END_LAPTOP = PerfPlatform(
-    'mac-laptop_low_end-perf',
-    'MacBook Air, Core i5 1.8 GHz, 8GB RAM, 128GB SSD, HD Graphics',
-    _MAC_LOW_END_BENCHMARK_CONFIGS,
-    23,
-    'mac',
-    executables=_MAC_LOW_END_EXECUTABLE_CONFIGS,
-    crossbench=_CROSSBENCH_MOTIONMARK_SPEEDOMETER)
-MAC_LOW_END_LAPTOP_PGO = PerfPlatform(
-    'mac-laptop_low_end-perf-pgo',
-    'MacBook Air, Core i5 1.8 GHz, 8GB RAM, 128GB SSD, HD Graphics',
-    _MAC_LOW_END_BENCHMARK_CONFIGS,
-    26,
-    'mac',
-    executables=_MAC_LOW_END_EXECUTABLE_CONFIGS,
-    pinpoint_only=True)
 MAC_INTEL = PerfPlatform('mac-intel-perf',
                          'Mac Mini 8,1, Core i7 3.2 GHz',
                          _MAC_INTEL_BENCHMARK_CONFIGS,
@@ -837,6 +801,13 @@ WIN_10_AMD_LAPTOP_PGO = PerfPlatform('win-10_amd_laptop-perf-pgo',
                                      3,
                                      'win',
                                      pinpoint_only=True)
+WIN_11_LOW_END = PerfPlatform('win-11_laptop_low_end-perf',
+                              'Low end windows 11 laptops.'
+                              'SSD, 4GB RAM.',
+                              _WIN_11_LOW_END_BENCHMARK_CONFIGS,
+                              2,
+                              'win',
+                              crossbench=_CROSSBENCH_BENCHMARKS_ALL)
 WIN_11 = PerfPlatform('win-11-perf',
                       'Windows Dell PowerEdge R350',
                       _WIN_11_BENCHMARK_CONFIGS,
@@ -851,6 +822,24 @@ WIN_11_PGO = PerfPlatform('win-11-perf-pgo',
                           'win',
                           executables=_WIN_11_EXECUTABLE_CONFIGS,
                           pinpoint_only=True)
+WIN_ARM64_SNAPDRAGON_PLUS = PerfPlatform(
+    'win-arm64-snapdragon-plus-perf',
+    'Windows Dell Snapdragon Plus',
+    _WIN_ARM64_BENCHMARK_CONFIGS,
+    1,
+    'win',
+    executables=_WIN_ARM64_EXECUTABLE_CONFIGS,
+    crossbench=_CROSSBENCH_BENCHMARKS_ALL,
+    is_fyi=True)
+WIN_ARM64_SNAPDRAGON_ELITE = PerfPlatform(
+    'win-arm64-snapdragon-elite-perf',
+    'Windows Dell Snapdragon Elite',
+    _WIN_ARM64_BENCHMARK_CONFIGS,
+    1,
+    'win',
+    executables=_WIN_ARM64_EXECUTABLE_CONFIGS,
+    crossbench=_CROSSBENCH_BENCHMARKS_ALL,
+    is_fyi=True)
 
 # Android
 ANDROID_PIXEL4 = PerfPlatform('android-pixel4-perf',
@@ -873,16 +862,13 @@ ANDROID_PIXEL4_WEBVIEW = PerfPlatform(
 ANDROID_PIXEL4_WEBVIEW_PGO = PerfPlatform(
     'android-pixel4_webview-perf-pgo', 'Android R',
     _ANDROID_PIXEL4_WEBVIEW_BENCHMARK_CONFIGS, 20, 'android')
-# TODO(crbug.com/307958700): Switch shard number back to a higher number around
-#                            28 once more devices are procured. Temporarily use
-#                            15 to avoid high contention in the pixel6 pool.
 ANDROID_PIXEL6 = PerfPlatform('android-pixel6-perf',
                               'Android U',
                               _ANDROID_PIXEL6_BENCHMARK_CONFIGS,
                               14,
                               'android',
                               executables=_ANDROID_PIXEL6_EXECUTABLE_CONFIGS,
-                              crossbench=_CROSSBENCH_SPEEDOMETER)
+                              crossbench=_CROSSBENCH_ANDROID)
 ANDROID_PIXEL6_PGO = PerfPlatform(
     'android-pixel6-perf-pgo',
     'Android U',
@@ -890,7 +876,7 @@ ANDROID_PIXEL6_PGO = PerfPlatform(
     8,
     'android',
     executables=_ANDROID_PIXEL6_PGO_EXECUTABLE_CONFIGS,
-    crossbench=_CROSSBENCH_SPEEDOMETER)
+    crossbench=_CROSSBENCH_ANDROID)
 ANDROID_PIXEL6_PRO = PerfPlatform(
     'android-pixel6-pro-perf',
     'Android T',
@@ -906,14 +892,21 @@ ANDROID_PIXEL6_PRO_PGO = PerfPlatform(
     'android',
     executables=_ANDROID_PIXEL6_PRO_EXECUTABLE_CONFIGS,
     pinpoint_only=True)
-ANDROID_PIXEL_FOLD = PerfPlatform('android-pixel-fold-perf', 'Android U',
+ANDROID_PIXEL_FOLD = PerfPlatform(
+    'android-pixel-fold-perf',
+    'Android U',
     _ANDROID_PIXEL_FOLD_BENCHMARK_CONFIGS,
-    2,  # testing on the first two connected devices
+    18,  # testing on the first 18 connected devices
     'android',
     executables=_ANDROID_PIXEL_FOLD_EXECUTABLE_CONFIGS)
-ANDROID_PIXEL_TANGOR = PerfPlatform('android-pixel-tangor-perf', 'Android U',
-    _ANDROID_PIXEL_TANGOR_BENCHMARK_CONFIGS, 8, 'android',
-    executables=_ANDROID_PIXEL_TANGOR_EXECUTABLE_CONFIGS)
+ANDROID_PIXEL_TANGOR = PerfPlatform(
+    'android-pixel-tangor-perf',
+    'Android U',
+    _ANDROID_PIXEL_TANGOR_BENCHMARK_CONFIGS,
+    8,
+    'android',
+    executables=_ANDROID_PIXEL_TANGOR_EXECUTABLE_CONFIGS,
+    crossbench=_CROSSBENCH_TANGOR)
 ANDROID_GO_WEMBLEY = PerfPlatform('android-go-wembley-perf', 'Android U',
                                   _ANDROID_GO_BENCHMARK_CONFIGS, 15, 'android')
 ANDROID_GO_WEMBLEY_WEBVIEW = PerfPlatform(
@@ -947,16 +940,17 @@ ANDROID_NEW_PIXEL_PRO_PGO = PerfPlatform('android-new-pixel-pro-perf-pgo',
 # Cros
 FUCHSIA_PERF_NELSON = PerfPlatform('fuchsia-perf-nsn',
                                    '',
-                                   _FUCHSIA_PERF_NELSON_BENCHMARK_CONFIGS,
-                                   3,
+                                   _FUCHSIA_PERF_SMARTDISPLAY_BENCHMARK_CONFIGS,
+                                   1,
                                    'fuchsia',
                                    is_fyi=True)
-FUCHSIA_PERF_SHERLOCK = PerfPlatform('fuchsia-perf-shk',
-                                     '',
-                                     _FUCHSIA_PERF_SHERLOCK_BENCHMARK_CONFIGS,
-                                     3,
-                                     'fuchsia',
-                                     is_fyi=True)
+FUCHSIA_PERF_SHERLOCK = PerfPlatform(
+    'fuchsia-perf-shk',
+    '',
+    _FUCHSIA_PERF_SMARTDISPLAY_BENCHMARK_CONFIGS,
+    1,
+    'fuchsia',
+    is_fyi=True)
 
 # FYI bots
 WIN_10_LOW_END_HP_CANDIDATE = PerfPlatform(

@@ -109,6 +109,26 @@ enum class SessionType {
 enum class ActionButtonType {
   kOther,
   kScanner,
+  kCopyText,
+  kSunfish,
+};
+
+// Defines the capture type to be performed and how the captured image will be
+// used.
+enum class PerformCaptureType {
+  // Captured from normal capture mode to take a screenshot.
+  kCapture,
+  // Captured when the "search" button is pressed from normal capture mode. The
+  // captured image will be sent to a search service.
+  kSearch,
+  // Captured when the "smart actions" button is pressed from normal capture
+  // mode. The captured image will be sent to the Scanner service.
+  kScanner,
+  // Captured when a region is selected from normal capture mode. The captured
+  // image will be processed by on-device OCR to detect text.
+  kTextDetection,
+  // Captured when a region is selected from Sunfish mode. The captured image
+  // will be sent to a search service and the Scanner service.
   kSunfish,
 };
 
@@ -136,6 +156,16 @@ struct ActionButtonRank {
   // a higher rank compared to an `ActionButtonType::kDefault` button with
   // weight 0, and thus be placed to its right.
   int weight;
+};
+
+// View IDs for the `ActionButtonView`s. Note these are not 1:1 to
+// `ActionButtonType`s.
+enum ActionButtonViewID {
+  kSmartActionsButton = 1,
+  kCopyTextButton = 2,
+  kSearchButton = 3,
+  kScannerButton = 4,  // Placeholder view ID for unknown Scanner buttons.
+                       // Replace with explicit buttons as they are known.
 };
 
 }  // namespace ash

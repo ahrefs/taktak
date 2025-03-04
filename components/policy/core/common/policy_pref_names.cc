@@ -89,11 +89,6 @@ const char kBackForwardCacheEnabled[] = "policy.back_forward_cache_enabled";
 const char kReadAloudEnabled[] = "policy.read_aloud_enabled";
 #endif  // BUILDFLAG(IS_ANDROID)
 
-// Boolean policy preference to disable the User-Agent Client Hints
-// updated GREASE algorithm feature.
-const char kUserAgentClientHintsGREASEUpdateEnabled[] =
-    "policy.user_agent_client_hints_grease_update_enabled";
-
 #if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
 // Last time that a check for cloud policy management was done. This time is
 // recorded on Android and iOS so that retries aren't attempted on every
@@ -138,6 +133,10 @@ const char kStandardizedBrowserZoomEnabled[] =
 // If this is set to True, the page will be accessible.
 const char kPolicyTestPageEnabled[] = "policy_test_page_enabled";
 
+// Boolean indicating if the user has permanently dismissed the promotion
+// banner on the chrome://policy page. If it's true, it means the user
+// has clicked the "dismiss" button and has the banner turned off, if the
+// value is false, the user has taken no action to turn off the banner.
 const char kHasDismissedPolicyPagePromotionBanner[] =
     "has_dismissed_policy_page_promotion_banner";
 
@@ -170,6 +169,15 @@ const char kSelectParserRelaxationEnabled[] =
 // If false, the deprecation rollout will be ignored.
 const char kForcePermissionPolicyUnloadDefaultEnabled[] =
     "policy.force_permission_policy_unload_default_enabled";
+
+// Prevents certain types of downloads based on integer value, which corresponds
+// to policy::DownloadRestriction.
+// 0 - No special restrictions (default)
+// 1 - Block dangerous downloads
+// 2 - Block potentially dangerous downloads
+// 3 - Block all downloads
+// 4 - Block malicious downloads
+const char kDownloadRestrictions[] = "download_restrictions";
 
 #if BUILDFLAG(IS_CHROMEOS)
 // Allows user browser navigation access to the listed host patterns. Only

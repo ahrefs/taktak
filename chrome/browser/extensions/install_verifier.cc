@@ -15,7 +15,6 @@
 #include "base/metrics/field_trial.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/one_shot_event.h"
-#include "base/ranges/algorithm.h"
 #include "base/stl_util.h"
 #include "base/trace_event/trace_event.h"
 #include "base/values.h"
@@ -31,6 +30,7 @@
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/common/content_switches.h"
+#include "extensions/browser/disable_reason.h"
 #include "extensions/browser/extension_prefs.h"
 #include "extensions/browser/extension_registry.h"
 #include "extensions/browser/extension_system.h"
@@ -230,7 +230,7 @@ void InstallVerifier::RemoveMany(const ExtensionIdSet& ids) {
   if (!signature_.get() || !ShouldFetchSignature())
     return;
 
-  if (base::ranges::any_of(ids, [this](const std::string& id) {
+  if (std::ranges::any_of(ids, [this](const std::string& id) {
         return base::Contains(signature_->ids, id) ||
                base::Contains(signature_->invalid_ids, id);
       })) {
@@ -255,9 +255,9 @@ std::string InstallVerifier::GetDebugPolicyProviderName() const {
   return std::string("InstallVerifier");
 }
 
-bool InstallVerifier::MustRemainDisabled(const Extension* extension,
-                                         disable_reason::DisableReason* reason,
-                                         std::u16string* error) const {
+bool InstallVerifier::MustRemainDisabled(
+    const Extension* extension,
+    disable_reason::DisableReason* reason) const {
   CHECK(extension);
   if (!CanUseExtensionApis(*extension))
     return false;
@@ -306,12 +306,9 @@ bool InstallVerifier::MustRemainDisabled(const Extension* extension,
                   << "might want to use a ScopedInstallVerifierBypassForTest "
                   << "instance to prevent this.";
 
-    if (reason)
+    if (reason) {
       *reason = disable_reason::DISABLE_NOT_VERIFIED;
-    if (error)
-      *error = l10n_util::GetStringFUTF16(
-          IDS_EXTENSIONS_ADDED_WITHOUT_KNOWLEDGE,
-          l10n_util::GetStringUTF16(IDS_EXTENSION_WEB_STORE_TITLE));
+    }
   }
   return !verified;
 }
@@ -336,7 +333,7 @@ ExtensionIdSet InstallVerifier::GetExtensionsToVerify() const {
 void InstallVerifier::MaybeBootstrapSelf() {
   ExtensionIdSet extension_ids = GetExtensionsToVerify();
   if ((signature_.get() == nullptr && ShouldFetchSignature()) ||
-      base::ranges::any_of(extension_ids, [this](const std::string& id) {
+      std::ranges::any_of(extension_ids, [this](const std::string& id) {
         return !IsKnownId(id);
       })) {
     AddMany(extension_ids, ADD_ALL_BOOTSTRAP);
@@ -357,9 +354,9 @@ void InstallVerifier::OnVerificationComplete(bool success, OperationType type) {
             ExtensionRegistry::Get(context_)->disabled_extensions();
         for (ExtensionSet::const_iterator iter = disabled_extensions.begin();
              iter != disabled_extensions.end(); ++iter) {
-          int disable_reasons = prefs_->GetDisableReasons((*iter)->id());
-          if (disable_reasons & disable_reason::DISABLE_NOT_VERIFIED &&
-              !MustRemainDisabled(iter->get(), nullptr, nullptr)) {
+          if (prefs_->HasDisableReason((*iter)->id(),
+                                       disable_reason::DISABLE_NOT_VERIFIED) &&
+              !MustRemainDisabled(iter->get(), nullptr)) {
             prefs_->RemoveDisableReason((*iter)->id(),
                                         disable_reason::DISABLE_NOT_VERIFIED);
           }

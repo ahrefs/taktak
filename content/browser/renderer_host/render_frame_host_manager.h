@@ -15,6 +15,7 @@
 #include <unordered_set>
 
 #include "base/containers/unique_ptr_adapters.h"
+#include "base/functional/function_ref.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/types/expected.h"
@@ -32,6 +33,7 @@
 #include "content/common/frame.mojom-forward.h"
 #include "content/public/browser/global_request_id.h"
 #include "content/public/browser/navigation_discard_reason.h"
+#include "content/public/browser/process_allocation_context.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/common/referrer.h"
 #include "third_party/blink/public/common/tokens/tokens.h"
@@ -62,10 +64,10 @@ class RenderWidgetHostViewChildFrame;
 class TestWebContents;
 
 using PageBroadcastMethodCallback =
-    base::RepeatingCallback<void(RenderViewHostImpl*)>;
+    base::FunctionRef<void(RenderViewHostImpl*)>;
 
 using RemoteFramesBroadcastMethodCallback =
-    base::RepeatingCallback<void(RenderFrameProxyHost*)>;
+    base::FunctionRef<void(RenderFrameProxyHost*)>;
 
 // Reasons that `GetFrameHostForNavigation()` might fail.
 enum class GetFrameHostForNavigationFailed {
@@ -80,11 +82,6 @@ enum class GetFrameHostForNavigationFailed {
   // RenderFrameHost (because the pre-existing unsuitable speculative
   // RenderFrameHost cannot be discarded).
   kBlockedByPendingCommit,
-  // Intentionally defer the creation of the RenderFrameHost to prioritize
-  // initiating the network request instead.
-  // Please refer to the comments of features:kDeferSpeculativeRFHCreation
-  // in contents/common/features.cc for more details.
-  kIntentionalDefer,
 };
 
 // These values are persisted to logs. Entries should not be renumbered and
@@ -98,6 +95,41 @@ enum class DeferSpeculativeRFHAction {
   kMaxValue = kDeferredWithoutRenderProcessWarmUp,
 };
 // LINT.ThenChange(//tools/metrics/histograms/metadata/navigation/enums.xml:DeferSpeculativeRFHAction)
+
+// These values are persisted to logs. Entries should not be renumbered and
+// numeric values should never be reused.
+//
+// Describes cases where calling `GetFrameHostForNavigation()` results in a
+// wasted speculative RenderFrameHost for the navigation (values starting with
+// kWasted) or not (values starting with kNotWasted).
+enum class WastedSpeculativeRFHCase {
+  // No associated RFH yet for the navigation before this, so there's no
+  // wasted speculative RFH. We can get here when it's the first call to
+  // `GetFrameHostForNavigation()` for that navigation, or if the navigation
+  // couldn't create a new RFH before due to navigation queueing, or if the
+  // speculative RFH associated with it became the current RFH due to another
+  // navigation.
+  kNotWasted_WasUnassociated = 0,
+  // The navigation decided to reuse the current RFH on the previous call, and
+  // continues to keep using the current RFH now.
+  kNotWasted_WasUsingCurrentRFH_NowKeepCurrentRFH = 1,
+  // The navigation decided to reuse the current RFH on the previous call, but
+  // decides to use a speculative RFH now. There's no wasted speculative RFH,
+  // but if we were able to predict that we needed a speculative RFH, maybe we
+  // could've prepared it earlier.
+  kNotWasted_WasUsingCurrentRFH_NowUseSpeculativeRFH = 2,
+  // The navigation decided to create a speculative RFH before, and will keep
+  // using the created speculative RFH.
+  kNotWasted_NowKeepSameSpeculativeRFH = 3,
+  // The navigation decided to create a speculative RFH before, but now decides
+  // to reuse the current / active RFH.
+  kWasted_NowUseCurrentRFH = 4,
+  // The navigation decided to create a speculative RFH before, but will create
+  // a new speculative RFH as the previous speculative RFH is no longer
+  // compatible.
+  kWasted_NowUseNewSpeculativeRFH = 5,
+  kMaxValue = kWasted_NowUseNewSpeculativeRFH,
+};
 
 // Manages RenderFrameHosts for a FrameTreeNode. It maintains a
 // current_frame_host() which is the content currently visible to the user. When
@@ -453,6 +485,7 @@ class CONTENT_EXPORT RenderFrameHostManager {
   GetFrameHostForNavigation(
       NavigationRequest* request,
       BrowsingContextGroupSwap* browsing_context_group_swap,
+      const ProcessAllocationContext& process_allocation_context,
       std::string* reason = nullptr);
 
   // Discards `speculative_render_frame_host_` if it exists, even if there are
@@ -531,8 +564,13 @@ class CONTENT_EXPORT RenderFrameHostManager {
   // Tells the |render_frame_host|'s renderer that its RenderFrame is being
   // swapped for a frame in another process, and that it should create a
   // `blink::RemoteFrame` to replace it using the |proxy| RenderFrameProxyHost.
-  void SwapOuterDelegateFrame(RenderFrameHostImpl* render_frame_host,
-                              RenderFrameProxyHost* proxy);
+  // The `blink::RemoteFrame` will use |devtools_frame_token| as its
+  // devtools_frame_token (which will match the value used by the embedded
+  // frame tree's main frame).
+  void SwapOuterDelegateFrame(
+      RenderFrameHostImpl* render_frame_host,
+      RenderFrameProxyHost* proxy,
+      const base::UnguessableToken& devtools_frame_token);
 
   // Sets the child RenderWidgetHostView for this frame, which must be part of
   // an inner FrameTree.
@@ -587,8 +625,9 @@ class CONTENT_EXPORT RenderFrameHostManager {
   // by |navigation_request|.
   // Note: the SiteInstance returned by this function may not have an
   // initialized RenderProcessHost. It will only be initialized when
-  // GetProcess() is called on the SiteInstance. In particular, calling this
-  // function will never lead to a process being created for the navigation.
+  // GetOrCreateProcess() is called on the SiteInstance. In particular, calling
+  // this function will never lead to a process being created for the
+  // navigation.
   //
   // |is_same_site| is a struct to cache the output of `IsNavigationSameSite()`
   // if/when it gets called. See `IsSameSiteGetter` for more details.
@@ -677,6 +716,10 @@ class CONTENT_EXPORT RenderFrameHostManager {
   enum class SiteInstanceRelation {
     // A SiteInstance in a different browsing instance from the current.
     UNRELATED,
+    // A SiteInstance in the same SiteInstanceGroup, and thus process.
+    // Note: Using this value requires passing in a valid `source_site_instance`
+    // to ConvertToSiteInstance.
+    RELATED_IN_GROUP,
     // A SiteInstance in a different BrowsingInstance, but in the same
     // CoopRelatedGroup. Only used for COOP: restrict-properties
     // navigations.
@@ -862,11 +905,15 @@ class CONTENT_EXPORT RenderFrameHostManager {
       std::string* reason = nullptr);
 
   // Converts a SiteInstanceDescriptor to the actual SiteInstance it describes.
-  // If a |candidate_instance| is provided (is not nullptr) and it matches the
+  // If a `candidate_instance` is provided (is not nullptr) and it matches the
   // description, it is returned as is.
+  // `source_site_instance` is needed for navigations that use
+  // SiteInstanceGroup, where the new SiteInstance belongs to the group of the
+  // source SiteInstance.
   scoped_refptr<SiteInstanceImpl> ConvertToSiteInstance(
       const SiteInstanceDescriptor& descriptor,
-      SiteInstanceImpl* candidate_instance);
+      SiteInstanceImpl* candidate_instance,
+      SiteInstanceImpl* source_site_instance = nullptr);
 
   // Returns true if `candidate` is currently same site with `dest_url_info`.
   // This method is a special case for handling hosted apps in this object. Most
@@ -962,16 +1009,19 @@ class CONTENT_EXPORT RenderFrameHostManager {
       const blink::DocumentToken& document_token,
       base::UnguessableToken devtools_frame_token,
       bool renderer_initiated_creation,
-      scoped_refptr<BrowsingContextState> browsing_context_state);
+      scoped_refptr<BrowsingContextState> browsing_context_state,
+      const ProcessAllocationContext& process_allocation_context);
 
   // Create and initialize a speculative RenderFrameHost for an ongoing
   // navigation. It might be destroyed and re-created later if the navigation is
   // redirected to a different SiteInstance. |recovering_without_early_commit|
   // is true if we are reviving a crashed render frame by creating a proxy and
   // committing later rather than doing an immediate commit.
-  bool CreateSpeculativeRenderFrameHost(SiteInstanceImpl* old_instance,
-                                        SiteInstanceImpl* new_instance,
-                                        bool recovering_without_early_commit);
+  bool CreateSpeculativeRenderFrameHost(
+      SiteInstanceImpl* old_instance,
+      SiteInstanceImpl* new_instance,
+      bool recovering_without_early_commit,
+      const ProcessAllocationContext& process_allocation_context);
 
   // Initialization for RenderFrameHost uses the same sequence as InitRenderView
   // above.

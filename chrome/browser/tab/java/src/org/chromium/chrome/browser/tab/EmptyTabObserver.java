@@ -9,8 +9,8 @@ import android.graphics.Bitmap;
 import androidx.annotation.Nullable;
 
 import org.chromium.base.Token;
-import org.chromium.cc.input.BrowserControlsOffsetTagsInfo;
 import org.chromium.cc.input.BrowserControlsState;
+import org.chromium.chrome.browser.browser_controls.BrowserControlsOffsetTagsInfo;
 import org.chromium.chrome.browser.tab.Tab.LoadUrlResult;
 import org.chromium.components.find_in_page.FindMatchRectsDetails;
 import org.chromium.components.find_in_page.FindNotificationDetails;
@@ -187,5 +187,11 @@ public class EmptyTabObserver implements TabObserver {
     public void onGestureEnd() {}
 
     @Override
+    public void didBackForwardTransitionAnimationChange(Tab tab) {}
+
+    @Override
     public void onTabContentSensitivityChanged(Tab tab, boolean contentIsSensitive) {}
+
+    @Override
+    public void onTabUnarchived(Tab tab) {}
 }

@@ -30,8 +30,7 @@
 #import "ios/web/public/session/proto/storage.pb.h"
 #import "ios/web/public/web_state_delegate.h"
 #import "ios/web/public/web_state_observer.h"
-#import "ios/web/text_fragments/text_fragments_manager_impl.h"
-#import "ios/web/web_view/content_type_util.h"
+#import "ios/web/util/content_type_util.h"
 #import "net/cert/x509_util.h"
 #import "net/cert/x509_util_apple.h"
 #import "services/network/public/mojom/referrer_policy.mojom-shared.h"
@@ -73,8 +72,7 @@ FaviconURL::IconType IconTypeFromContentIconType(
     case blink::mojom::FaviconIconType::kInvalid:
       return FaviconURL::IconType::kInvalid;
   }
-  NOTREACHED_IN_MIGRATION();
-  return FaviconURL::IconType::kInvalid;
+  NOTREACHED();
 }
 
 // Creates a CRWSessionStorage instance from protobuf message.
@@ -124,7 +122,12 @@ ContentWebState::ContentWebState(const CreateParams& params,
           params.browser_state);
   navigation_manager_ = std::make_unique<ContentNavigationManager>(
       this, params.browser_state, web_contents_->GetController());
-  web_frames_manager_ = std::make_unique<ContentWebFramesManager>(this);
+  managers_[ContentWorld::kAllContentWorlds] =
+      std::make_unique<ContentWebFramesManager>(this);
+  managers_[ContentWorld::kPageContentWorld] =
+      std::make_unique<ContentWebFramesManager>(this);
+  managers_[ContentWorld::kIsolatedWorld] =
+      std::make_unique<ContentWebFramesManager>(this);
 
   UIScrollView* web_contents_view = base::apple::ObjCCastStrict<UIScrollView>(
       web_contents_->GetNativeView().Get());
@@ -141,7 +144,6 @@ ContentWebState::ContentWebState(const CreateParams& params,
 
   // These should be moved when the are removed from CRWWebController.
   web::JavaScriptFindInPageManagerImpl::CreateForWebState(this);
-  web::TextFragmentsManagerImpl::CreateForWebState(this);
 
   session_storage_ = session_storage;
   if (session_storage) {
@@ -326,7 +328,7 @@ NavigationManager* ContentWebState::GetNavigationManager() {
 }
 
 WebFramesManager* ContentWebState::GetPageWorldWebFramesManager() {
-  return web_frames_manager_.get();
+  return managers_[ContentWorld::kPageContentWorld].get();
 }
 
 const SessionCertificatePolicyCache*
@@ -452,7 +454,7 @@ std::optional<GURL> ContentWebState::GetLastCommittedURLIfTrusted() const {
 }
 
 WebFramesManager* ContentWebState::GetWebFramesManager(ContentWorld world) {
-  return web_frames_manager_.get();
+  return managers_[world].get();
 }
 
 CRWWebViewProxyType ContentWebState::GetWebViewProxy() const {

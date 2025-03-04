@@ -18,7 +18,6 @@
 #include "third_party/blink/renderer/core/dom/document.h"
 #include "third_party/blink/renderer/core/dom/dom_exception.h"
 #include "third_party/blink/renderer/core/dom/element.h"
-#include "third_party/blink/renderer/core/dom/node_computed_style.h"
 #include "third_party/blink/renderer/core/editing/frame_selection.h"
 #include "third_party/blink/renderer/core/editing/selection_template.h"
 #include "third_party/blink/renderer/core/execution_context/agent.h"
@@ -1339,6 +1338,8 @@ const char* DisplayLockContext::RenderAffectingStateName(int state) const {
       return "DescendantIsViewTransitionElement";
     case RenderAffectingState::kDescendantIsAnchorTarget:
       return "kDescendantIsAnchorTarget";
+    case RenderAffectingState::kHasScrollerWithScrollMarkerGroup:
+      return "kHasScrollerWithScrollMarkerGroup";
     case RenderAffectingState::kNumRenderAffectingStates:
       break;
   }

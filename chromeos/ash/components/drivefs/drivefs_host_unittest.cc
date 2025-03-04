@@ -63,10 +63,7 @@ class MockDriveFs : public mojom::DriveFsInterceptorForTesting,
  public:
   MockDriveFs() = default;
 
-  DriveFs* GetForwardingInterface() override {
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
-  }
+  DriveFs* GetForwardingInterface() override { NOTREACHED(); }
 
   void FetchChangeLog(
       std::vector<mojom::FetchChangeLogOptionsPtr> options) override {
@@ -229,7 +226,8 @@ class DriveFsHostTest : public ::testing::Test, public mojom::DriveFsBootstrap {
   void SetUp() override {
     testing::Test::SetUp();
     profile_path_ = base::FilePath(FILE_PATH_LITERAL("/path/to/profile"));
-    account_id_ = AccountId::FromUserEmailGaiaId("test@example.com", "ID");
+    account_id_ =
+        AccountId::FromUserEmailGaiaId("test@example.com", GaiaId("ID"));
 
     disk_manager_ = std::make_unique<ash::disks::MockDiskMountManager>();
     identity_test_env_.MakePrimaryAccountAvailable(
@@ -608,11 +606,9 @@ TEST_F(DriveFsHostTest, DisplayConfirmDialogImpl_IgnoreIfNoHandler) {
 
 TEST_F(DriveFsHostTest, DisplayConfirmDialogImpl_IgnoreUnknownReasonTypes) {
   ASSERT_NO_FATAL_FAILURE(DoMount());
-  host_->set_dialog_handler(
-      base::BindRepeating([](const mojom::DialogReason&,
-                             base::OnceCallback<void(mojom::DialogResult)>) {
-        NOTREACHED_IN_MIGRATION();
-      }));
+  host_->set_dialog_handler(base::BindRepeating(
+      [](const mojom::DialogReason&,
+         base::OnceCallback<void(mojom::DialogResult)>) { NOTREACHED(); }));
   bool called = false;
   delegate_->DisplayConfirmDialog(
       mojom::DialogReason::New(

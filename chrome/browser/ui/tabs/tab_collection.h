@@ -14,6 +14,7 @@
 
 namespace tabs {
 
+class TabInterface;
 class TabModel;
 
 // This is an interface that representing the hierarchical storage of tabs.
@@ -23,24 +24,30 @@ class TabModel;
 // collection that does not store any collection.
 class TabCollection {
  public:
-  TabCollection() = default;
+  // Type describes the various kinds of tab collections:
+  // - TABSTRIP:  The main container for tabs in a browser window.
+  // - PINNED:    A container for pinned tabs.
+  // - UNPINNED:  A container for unpinned tabs.
+  // - GROUP:     A container to grouped tabs.
+  enum class Type { TABSTRIP, PINNED, UNPINNED, GROUP };
+
   virtual ~TabCollection() = default;
   TabCollection(const TabCollection&) = delete;
   TabCollection& operator=(const TabCollection&) = delete;
 
   // Returns true if the tab model is a direct child of the collection.
-  virtual bool ContainsTab(TabModel* tab_model) const = 0;
+  virtual bool ContainsTab(const TabInterface* tab) const = 0;
 
   // Returns true if the tab collection tree contains the tab.
-  virtual bool ContainsTabRecursive(TabModel* tab_model) const = 0;
+  virtual bool ContainsTabRecursive(const TabInterface* tab) const = 0;
 
   // Returns true is the tab collection contains the collection. This is a
   // non-recursive check.
   virtual bool ContainsCollection(TabCollection* collection) const = 0;
 
-  // Recursively get the index of the tab_model among all the leaf tab_models.
+  // Recursively get the index of the tab among all the leaf tabs.
   virtual std::optional<size_t> GetIndexOfTabRecursive(
-      const TabModel* tab_model) const = 0;
+      const TabInterface* tab) const = 0;
 
   // Non-recursively get the index of a collection.
   virtual std::optional<size_t> GetIndexOfCollection(
@@ -49,6 +56,8 @@ class TabCollection {
   // Total number of children that directly have this collection as their
   // parent.
   virtual size_t ChildCount() const = 0;
+
+  Type type() { return type_; }
 
   // Total number of tabs the collection contains.
   size_t TabCountRecursive() const { return recursive_tab_count_; }
@@ -78,6 +87,8 @@ class TabCollection {
   void OnReparented(TabCollection* new_parent) { parent_ = new_parent; }
 
  protected:
+  explicit TabCollection(Type type);
+
   // Returns the pass key to be used by derived classes as operations such as
   // setting the parent of a tab can only be performed by a `TabCollection`.
   base::PassKey<TabCollection> GetPassKey() const {
@@ -89,6 +100,7 @@ class TabCollection {
 
  private:
   raw_ptr<TabCollection> parent_ = nullptr;
+  Type type_;
 };
 
 }  // namespace tabs

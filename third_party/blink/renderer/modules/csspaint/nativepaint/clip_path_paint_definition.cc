@@ -7,11 +7,13 @@
 #include "cc/paint/paint_recorder.h"
 #include "third_party/blink/renderer/core/animation/basic_shape_interpolation_functions.h"
 #include "third_party/blink/renderer/core/animation/css/compositor_keyframe_double.h"
+#include "third_party/blink/renderer/core/animation/css_shape_interpolation_type.h"
 #include "third_party/blink/renderer/core/animation/element_animations.h"
 #include "third_party/blink/renderer/core/animation/path_interpolation_functions.h"
 #include "third_party/blink/renderer/core/css/basic_shape_functions.h"
 #include "third_party/blink/renderer/core/css/clip_path_paint_image_generator.h"
 #include "third_party/blink/renderer/core/css/css_identifier_value.h"
+#include "third_party/blink/renderer/core/css/css_identifier_value_mappings.h"
 #include "third_party/blink/renderer/core/css/css_inherited_value.h"
 #include "third_party/blink/renderer/core/css/css_initial_value.h"
 #include "third_party/blink/renderer/core/css/css_revert_layer_value.h"
@@ -27,6 +29,7 @@
 #include "third_party/blink/renderer/core/layout/layout_object.h"
 #include "third_party/blink/renderer/core/style/computed_style_constants.h"
 #include "third_party/blink/renderer/core/style/shape_clip_path_operation.h"
+#include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 #include "ui/gfx/geometry/size_f.h"
 
 namespace blink {
@@ -187,7 +190,13 @@ scoped_refptr<BasicShape> CreateBasicShape(
     return PathInterpolationFunctions::AppliedValue(
         interpolable_value, &untyped_non_interpolable_value);
   }
-  CSSToLengthConversionData conversion_data;
+
+  CSSToLengthConversionData conversion_data(/*element=*/nullptr);
+  if (type == BasicShape::kStyleShapeType) {
+    return CSSShapeInterpolationType::CreateShape(
+        interpolable_value, &untyped_non_interpolable_value, conversion_data);
+  }
+
   return basic_shape_interpolation_functions::CreateBasicShape(
       interpolable_value, untyped_non_interpolable_value, conversion_data);
 }
@@ -195,7 +204,10 @@ scoped_refptr<BasicShape> CreateBasicShape(
 bool CanExtractShapeOrPath(const CSSValue* computed_value) {
   // TODO(pdr): Support <geometry-box> (alone, or with a shape).
   if (const auto* list = DynamicTo<CSSValueList>(computed_value)) {
-    return list->First().IsBasicShapeValue() || list->First().IsPathValue();
+    return list->First().IsBasicShapeValue() || list->First().IsPathValue() ||
+           (list->First().IsShapeValue() &&
+            RuntimeEnabledFeatures::
+                CSSShapeFunctionCompositeAnimationEnabled());
   }
   return false;
 }
@@ -273,6 +285,17 @@ bool ValidateClipPathValue(const Element* element,
 
     // Don't try to composite animations where we can't extract a shape or path
     if (computed_value && CanExtractShapeOrPath(computed_value)) {
+      const auto* list = DynamicTo<CSSValueList>(computed_value);
+
+      // TODO(crbug.com/379052285): We do not currently support anything other
+      // than kBorderBox. Any other value will result in bad interpolation. This
+      // should be resolved in future.
+      if (list->length() == 2 &&
+          (DynamicTo<CSSIdentifierValue>(list->Item(1))
+               ->ConvertTo<GeometryBox>() != GeometryBox::kBorderBox)) {
+        return false;
+      }
+
       return true;
     }
 
@@ -323,8 +346,32 @@ struct DowncastTraits<ClipPathPaintWorkletInput> {
 // static
 Animation* ClipPathPaintDefinition::GetAnimationIfCompositable(
     const Element* element) {
-  return GetAnimationForProperty(element, GetCSSPropertyClipPath(),
-                                 ValidateClipPathValue);
+  if (!element->GetElementAnimations()) {
+    return nullptr;
+  }
+
+  Animation* compositable_animation =
+      element->GetElementAnimations()->PaintWorkletClipPathAnimation();
+
+  if (!compositable_animation) {
+    return nullptr;
+  }
+
+  DCHECK(compositable_animation->Affects(*element, GetCSSPropertyClipPath()));
+
+  if (element->GetElementAnimations()->CompositedClipPathStatus() ==
+      ElementAnimations::CompositedPaintStatus::kComposited) {
+    DCHECK(AnimationIsValidForPaintWorklets(compositable_animation, element,
+                                            GetCSSPropertyClipPath(),
+                                            ValidateClipPathValue));
+    return compositable_animation;
+  }
+
+  return AnimationIsValidForPaintWorklets(compositable_animation, element,
+                                          GetCSSPropertyClipPath(),
+                                          ValidateClipPathValue)
+             ? compositable_animation
+             : nullptr;
 }
 
 // static

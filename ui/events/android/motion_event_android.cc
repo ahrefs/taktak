@@ -56,10 +56,8 @@ MotionEventAndroid::Action FromAndroidAction(int android_action) {
     ACTION_CASE(BUTTON_PRESS);
     ACTION_CASE(BUTTON_RELEASE);
     default:
-      NOTREACHED_IN_MIGRATION()
-          << "Invalid Android MotionEvent action: " << android_action;
+      NOTREACHED() << "Invalid Android MotionEvent action: " << android_action;
   }
-  return MotionEventAndroid::Action::CANCEL;
 }
 
 int ToAndroidAction(MotionEventAndroid::Action action) {
@@ -76,9 +74,8 @@ int ToAndroidAction(MotionEventAndroid::Action action) {
     ACTION_REVERSE_CASE(BUTTON_PRESS);
     ACTION_REVERSE_CASE(BUTTON_RELEASE);
     default:
-      NOTREACHED_IN_MIGRATION() << "Invalid MotionEvent action: " << action;
+      NOTREACHED() << "Invalid MotionEvent action: " << action;
   }
-  return JNI_MotionEvent::ACTION_CANCEL;
 }
 
 int ToAndroidToolType(MotionEventAndroid::ToolType tool_type) {
@@ -89,10 +86,8 @@ int ToAndroidToolType(MotionEventAndroid::ToolType tool_type) {
     TOOL_TYPE_REVERSE_CASE(MOUSE);
     TOOL_TYPE_REVERSE_CASE(ERASER);
     default:
-      NOTREACHED_IN_MIGRATION()
-          << "Invalid MotionEvent tool type: " << tool_type;
+      NOTREACHED() << "Invalid MotionEvent tool type: " << tool_type;
   }
-  return JNI_MotionEvent::TOOL_TYPE_UNKNOWN;
 }
 
 #undef ACTION_CASE
@@ -190,6 +185,7 @@ MotionEventAndroid::MotionEventAndroid(float pix_to_dip,
                                        float tick_multiplier,
                                        base::TimeTicks oldest_event_time,
                                        base::TimeTicks latest_event_time,
+                                       base::TimeTicks down_time_ms,
                                        int android_action,
                                        int pointer_count,
                                        int history_size,
@@ -212,6 +208,7 @@ MotionEventAndroid::MotionEventAndroid(float pix_to_dip,
       for_touch_handle_(for_touch_handle),
       cached_oldest_event_time_(FromAndroidTime(oldest_event_time)),
       cached_latest_event_time_(FromAndroidTime(latest_event_time)),
+      cached_down_time_ms_(FromAndroidTime(down_time_ms)),
       cached_action_(FromAndroidAction(android_action)),
       cached_pointer_count_(pointer_count),
       cached_history_size_(ToValidHistorySize(history_size, cached_action_)),
@@ -302,6 +299,10 @@ float MotionEventAndroid::GetTickMultiplier() const {
   return ToDips(tick_multiplier_);
 }
 
+float MotionEventAndroid::GetRawXPix(size_t pointer_index) const {
+  return GetRawX(pointer_index) / pix_to_dip();
+}
+
 ScopedJavaLocalRef<jobject> MotionEventAndroid::GetJavaObject() const {
   DUMP_WILL_BE_NOTREACHED();
   return nullptr;
@@ -331,6 +332,11 @@ float MotionEventAndroid::GetRawY(size_t pointer_index) const {
 float MotionEventAndroid::GetTwist(size_t pointer_index) const {
   DCHECK_LT(pointer_index, cached_pointer_count_);
   return 0.f;
+}
+
+base::TimeTicks MotionEventAndroid::GetDownTime() const {
+  DCHECK(!cached_down_time_ms_.is_null());
+  return cached_down_time_ms_;
 }
 
 float MotionEventAndroid::GetTangentialPressure(size_t pointer_index) const {
@@ -380,10 +386,9 @@ MotionEventAndroid::ToolType MotionEventAndroid::FromAndroidToolType(
     TOOL_TYPE_CASE(MOUSE);
     TOOL_TYPE_CASE(ERASER);
     default:
-      NOTREACHED_IN_MIGRATION()
-          << "Invalid Android MotionEvent tool type: " << android_tool_type;
+      NOTREACHED() << "Invalid Android MotionEvent tool type: "
+                   << android_tool_type;
   }
-  return MotionEventAndroid::ToolType::UNKNOWN;
 }
 
 #undef TOOL_TYPE_CASE

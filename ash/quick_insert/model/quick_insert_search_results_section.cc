@@ -12,38 +12,38 @@
 
 namespace ash {
 
-PickerSearchResultsSection::PickerSearchResultsSection(
-    PickerSectionType type,
+QuickInsertSearchResultsSection::QuickInsertSearchResultsSection(
+    QuickInsertSectionType type,
     std::vector<QuickInsertSearchResult> results,
     bool has_more_results)
     : type_(type),
       results_(std::move(results)),
       has_more_results_(has_more_results) {}
 
-PickerSearchResultsSection::PickerSearchResultsSection(
-    const PickerSearchResultsSection& other) = default;
+QuickInsertSearchResultsSection::QuickInsertSearchResultsSection(
+    const QuickInsertSearchResultsSection& other) = default;
 
-PickerSearchResultsSection& PickerSearchResultsSection::operator=(
-    const PickerSearchResultsSection& other) = default;
+QuickInsertSearchResultsSection& QuickInsertSearchResultsSection::operator=(
+    const QuickInsertSearchResultsSection& other) = default;
 
-PickerSearchResultsSection::PickerSearchResultsSection(
-    PickerSearchResultsSection&& other) = default;
+QuickInsertSearchResultsSection::QuickInsertSearchResultsSection(
+    QuickInsertSearchResultsSection&& other) = default;
 
-PickerSearchResultsSection& PickerSearchResultsSection::operator=(
-    PickerSearchResultsSection&& other) = default;
+QuickInsertSearchResultsSection& QuickInsertSearchResultsSection::operator=(
+    QuickInsertSearchResultsSection&& other) = default;
 
-PickerSearchResultsSection::~PickerSearchResultsSection() = default;
+QuickInsertSearchResultsSection::~QuickInsertSearchResultsSection() = default;
 
-PickerSectionType PickerSearchResultsSection::type() const {
+QuickInsertSectionType QuickInsertSearchResultsSection::type() const {
   return type_;
 }
 
-base::span<const QuickInsertSearchResult> PickerSearchResultsSection::results()
-    const {
+base::span<const QuickInsertSearchResult>
+QuickInsertSearchResultsSection::results() const {
   return results_;
 }
 
-bool PickerSearchResultsSection::has_more_results() const {
+bool QuickInsertSearchResultsSection::has_more_results() const {
   return has_more_results_;
 }
 

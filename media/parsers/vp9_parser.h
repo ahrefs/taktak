@@ -236,7 +236,7 @@ struct MEDIA_EXPORT Vp9FrameHeader {
   bool intra_only = false;
   uint8_t reset_frame_context = 0;
   uint8_t refresh_frame_flags = 0;
-  uint8_t ref_frame_idx[kVp9NumRefsPerFrame] = {0};
+  uint8_t ref_frame_idx[kVp9NumRefsPerFrame] = {};
   bool ref_frame_sign_bias[Vp9RefType::VP9_FRAME_MAX] = {false};
   bool allow_high_precision_mv = false;
   Vp9InterpolationFilter interpolation_filter{Vp9InterpolationFilter::EIGHTTAP};
@@ -256,7 +256,8 @@ struct MEDIA_EXPORT Vp9FrameHeader {
   // Frame data. It is a responsibility of the client of the Vp9Parser to
   // maintain validity of this data while it is being used outside of that
   // class.
-  base::span<const uint8_t> data;
+  // TODO(367764863) Rewrite to base::raw_span.
+  RAW_PTR_EXCLUSION base::span<const uint8_t> data;
 
   // Size of compressed header in bytes.
   size_t header_size_in_bytes = 0;

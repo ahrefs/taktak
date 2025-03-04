@@ -6,7 +6,7 @@
 
 #include <cinttypes>
 
-#include "chrome/common/read_anything/read_anything_constants.h"
+#include "base/strings/stringprintf.h"
 #include "services/strings/grit/services_strings.h"
 #include "ui/accessibility/ax_enum_util.h"
 #include "ui/accessibility/ax_role_properties.h"
@@ -139,7 +139,7 @@ std::string GetHtmlTagForPDF(ui::AXNode* ax_node, const std::string& html_tag) {
           l10n_util::GetStringUTF8(IDS_PDF_OCR_RESULT_END)) {
         return "br";
       }
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     default:
       return html_tag.empty() ? "span" : html_tag;
   }
@@ -148,8 +148,11 @@ std::string GetHtmlTagForPDF(ui::AXNode* ax_node, const std::string& html_tag) {
 std::string GetHeadingHtmlTagForPDF(ui::AXNode* ax_node,
                                     const std::string& html_tag) {
   // Sometimes whole paragraphs can be formatted as a heading. If the text is
-  // longer than 2 lines, assume it was meant to be a paragragh,
-  if (ax_node->GetTextContentUTF8().length() > (2 * kMaxLineWidth)) {
+  // longer than 2 lines, assume it was meant to be a paragragh.
+  // LINT.IfChange(MaxLineWidth)
+  static constexpr int kMaxLineWidth = 60;
+  // LINT.ThenChange(//chrome/browser/resources/side_panel/read_anything/app.css:MaxLineWidth)
+  if (ax_node->GetTextContentLengthUTF8() > (2 * kMaxLineWidth)) {
     return "p";
   }
 
@@ -220,7 +223,7 @@ std::u16string GetTextContent(ui::AXNode* ax_node, bool is_docs) {
     // With 'Annotated Canvas', text is stored within the aria-labels of SVG
     // elements. To retrieve this text, we need to access the 'name' attribute
     // of these elements.
-    if ((ax_node->GetTextContentUTF16()).empty()) {
+    if (!ax_node->GetTextContentLengthUTF16()) {
       std::u16string nodeText = GetNameAttributeText(ax_node);
       if (!nodeText.empty()) {
         // Add a space between the text of two annotated canvas elements.

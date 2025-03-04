@@ -13,7 +13,7 @@
 #import "ios/chrome/common/ui/util/constraints_ui_util.h"
 #import "url/gurl.h"
 
-@interface SadTabViewController ()<SadTabViewDelegate>
+@interface SadTabViewController () <SadTabViewDelegate>
 
 @property(nonatomic) SadTabView* sadTabView;
 
@@ -55,8 +55,8 @@
   // OverscrollActionsController.
   SadTabViewMode mode =
       self.repeatedFailure ? SadTabViewMode::FEEDBACK : SadTabViewMode::RELOAD;
-  self.sadTabView =
-      [[SadTabView alloc] initWithMode:mode offTheRecord:self.offTheRecord];
+  self.sadTabView = [[SadTabView alloc] initWithMode:mode
+                                        offTheRecord:self.offTheRecord];
   self.sadTabView.delegate = self;
   [self.scrollView addSubview:self.sadTabView];
 
@@ -73,7 +73,7 @@
 
   if (@available(iOS 17, *)) {
     NSArray<UITrait>* traits = TraitCollectionSetForTraits(
-        @[ UITraitHorizontalSizeClass.self, UITraitVerticalSizeClass.self ]);
+        @[ UITraitHorizontalSizeClass.class, UITraitVerticalSizeClass.class ]);
     [self registerForTraitChanges:traits
                        withAction:@selector(updateOverscrollActionsState)];
   }

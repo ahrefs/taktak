@@ -47,8 +47,7 @@ class CORE_EXPORT CSSInterpolationType : public InterpolationType {
     // TODO(alancutter): Implement this for all subclasses and make this an
     // abstract declaration so the return type can be changed to
     // const CSSValue&.
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
+    NOTREACHED();
   }
 
   // The interpolation stack has an optimization where we perform compositing
@@ -101,6 +100,7 @@ class CORE_EXPORT CSSInterpolationType : public InterpolationType {
 
   InterpolationValue MaybeConvertCustomPropertyDeclaration(
       const CSSValue&,
+      const TreeScope* keyframe_tree_scope,
       const InterpolationEnvironment&,
       ConversionCheckers&) const;
 

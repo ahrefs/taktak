@@ -21,6 +21,7 @@ import org.chromium.base.test.util.CriteriaHelper;
 import org.chromium.chrome.browser.ChromeTabbedActivity;
 import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider;
 import org.chromium.chrome.browser.crypto.CipherFactory;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab.TabState;
 import org.chromium.chrome.browser.tab.TabUtils;
@@ -31,7 +32,6 @@ import org.chromium.chrome.browser.tabmodel.TabPersistentStore.ActiveTabState;
 import org.chromium.chrome.browser.tabmodel.TabbedModeTabPersistencePolicy;
 import org.chromium.chrome.browser.tabpersistence.TabStateDirectory;
 import org.chromium.chrome.browser.tabpersistence.TabStateFileManager;
-import org.chromium.chrome.browser.tasks.ReturnToChromeUtil;
 import org.chromium.chrome.test.ChromeActivityTestRule;
 import org.chromium.chrome.test.ChromeTabbedActivityTestRule;
 
@@ -42,10 +42,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /** Utility methods and classes for testing home Surface. */
 public class HomeSurfaceTestUtils {
-    public static final String IMMEDIATE_RETURN_TEST_PARAMS =
-            "force-fieldtrial-params=Study.Group:"
-                    + ReturnToChromeUtil.HOME_SURFACE_RETURN_TIME_SECONDS_PARAM
-                    + "/0";
+    public static final String START_SURFACE_RETURN_TIME_IMMEDIATE =
+            ChromeFeatureList.START_SURFACE_RETURN_TIME
+                    + ":start_surface_return_time_on_tablet_seconds/0";
 
     private static final long MAX_TIMEOUT_MS = 30000L;
 
@@ -195,7 +194,7 @@ public class HomeSurfaceTestUtils {
      *
      * @param cta The ChromeTabbedActivity under test.
      */
-    public static Tab getCurrentTabFromUIThread(ChromeTabbedActivity cta) {
+    public static Tab getCurrentTabFromUiThread(ChromeTabbedActivity cta) {
         AtomicReference<Tab> tab = new AtomicReference<>();
         ThreadUtils.runOnUiThreadBlocking(
                 () -> tab.set(TabModelUtils.getCurrentTab(cta.getCurrentTabModel())));
@@ -214,13 +213,13 @@ public class HomeSurfaceTestUtils {
                         TabStateDirectory.getOrCreateTabbedModeStateDirectory(),
                         tabId,
                         /* encrypted= */ false,
-                        /* isFlatBuffer= */ false);
+                        /* isFlatbuffer= */ false);
         writeFile(file, M26_GOOGLE_COM.encodedTabState);
 
         CipherFactory unusedCipherFactory = new CipherFactory();
         TabState tabState =
                 TabStateFileManager.restoreTabStateInternal(
-                        file, /* encrypted= */ false, unusedCipherFactory);
+                        file, /* isEncrypted= */ false, unusedCipherFactory);
         tabState.rootId = rootId;
         TabStateFileManager.saveStateInternal(
                 file, tabState, /* encrypted= */ false, unusedCipherFactory);

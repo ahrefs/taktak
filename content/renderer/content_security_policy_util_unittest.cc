@@ -6,6 +6,7 @@
 
 #include "services/network/public/cpp/web_sandbox_flags.h"
 #include "services/network/public/mojom/content_security_policy.mojom.h"
+#include "services/network/public/mojom/integrity_algorithm.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace content {
@@ -24,7 +25,7 @@ TEST(ContentSecurityPolicyUtilTest, BackAndForthConversion) {
       ContentSecurityPolicyHeader::New(
           "my-csp", network::mojom::ContentSecurityPolicyType::kEnforce,
           network::mojom::ContentSecurityPolicySource::kHTTP),
-      false, std::vector<std::string>(),
+      false, std::vector<std::string>(), network::mojom::CSPRequireSRIFor::None,
       network::mojom::CSPRequireTrustedTypesFor::None, nullptr,
       std::vector<std::string>());
 
@@ -104,7 +105,7 @@ TEST(ContentSecurityPolicyUtilTest, BackAndForthConversionForCSPSourceList) {
       network::mojom::ContentSecurityPolicyHeader::New(
           "my-csp", network::mojom::ContentSecurityPolicyType::kEnforce,
           network::mojom::ContentSecurityPolicySource::kHTTP),
-      false, std::vector<std::string>(),
+      false, std::vector<std::string>(), network::mojom::CSPRequireSRIFor::None,
       network::mojom::CSPRequireTrustedTypesFor::None, nullptr,
       std::vector<std::string>());
 
@@ -129,10 +130,10 @@ TEST(ContentSecurityPolicyUtilTest, BackAndForthConversionForCSPSourceList) {
       },
       [](CSPSourceList& source_list) {
         source_list.hashes.emplace_back(network::mojom::CSPHashSource::New(
-            network::mojom::CSPHashAlgorithm::SHA256,
+            network::mojom::IntegrityAlgorithm::kSha256,
             std::vector<uint8_t>({'a', 'd'})));
         source_list.hashes.emplace_back(network::mojom::CSPHashSource::New(
-            network::mojom::CSPHashAlgorithm::SHA384,
+            network::mojom::IntegrityAlgorithm::kSha384,
             std::vector<uint8_t>({'c', 'd', 'e'})));
       },
       [](CSPSourceList& source_list) { source_list.allow_self = true; },

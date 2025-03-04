@@ -25,19 +25,27 @@ class AutofillFormFeaturesJavaScriptFeature : public web::JavaScriptFeature {
   // Enables/disables the AutofillAcrossIframes feature in `frame`.
   void SetAutofillAcrossIframes(web::WebFrame* frame, bool enabled);
 
+  // Enables/disables the throttling of child frame extraction for
+  // AutofillAcrossIframes in `frame`.
+  void SetAutofillAcrossIframesThrottling(web::WebFrame* frame, bool enabled);
+
   // Enables/disables the renderer side behaviours in `frame` needed for
   // Autofill features to work in an isolated content world.
   void SetAutofillIsolatedContentWorld(web::WebFrame* frame, bool enabled);
 
+  // Enables/disables the renderer side behaviors in `frame` needed for
+  // enabling the fix for not showing the payment sheet as a spam after
+  // dismissing a modal dialog triggered from the KA (e.g. filling a
+  // suggestion).
+  void SetAutofillFixPaymentSheetSpam(web::WebFrame* frame, bool enabled);
+
+  // Enables/disables correctly setting the is_user_edited bit in the parsed
+  // form fields instead of using true by default.
+  void SetAutofillCorrectUserEditedBitInParsedField(web::WebFrame* frame,
+                                                    bool enabled);
+
  private:
   friend class base::NoDestructor<AutofillFormFeaturesJavaScriptFeature>;
-  // Friend test feature container so it can create instances of this class.
-  // This JS feature is injected in different content worlds depending on a
-  // feature flag. Tests need to create new instances of the JS feature when the
-  // feature flag changes.
-  // TODO(crbug.com/359538514): Remove friend once isolated world for Autofill
-  // is launched.
-  friend class TestAutofillJavaScriptFeatureContainer;
 
   AutofillFormFeaturesJavaScriptFeature();
   ~AutofillFormFeaturesJavaScriptFeature() override;

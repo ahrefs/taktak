@@ -5,6 +5,7 @@
 #include "chrome/browser/ui/tabs/organization/tab_data.h"
 
 #include "base/functional/bind.h"
+#include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
 #include "chrome/browser/ui/tabs/organization/tab_sensitivity_cache.h"
 #include "chrome/browser/ui/tabs/public/tab_interface.h"
 #include "chrome/browser/ui/tabs/tab_model.h"
@@ -13,15 +14,12 @@
 #include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 
-TabData::TabData(tabs::TabModel* tab)
-    : WebContentsObserver(tab->contents()),
+TabData::TabData(tabs::TabInterface* tab)
+    : WebContentsObserver(tab->GetContents()),
       tab_(tab->GetHandle()),
-      original_url_(tab->contents()->GetLastCommittedURL()) {
-  CHECK(tab->owning_model());
-  CHECK(tab);
-  CHECK(tab->contents());
-
-  original_tab_strip_model_ = tab->owning_model();
+      original_url_(tab->GetContents()->GetLastCommittedURL()) {
+  original_tab_strip_model_ =
+      tab->GetBrowserWindowInterface()->GetTabStripModel();
   original_tab_strip_model_->AddObserver(this);
 
   tab_subscriptions_.push_back(tab->RegisterWillDetach(
@@ -29,7 +27,7 @@ TabData::TabData(tabs::TabModel* tab)
   tab_subscriptions_.push_back(
       tab->RegisterWillDiscardContents(base::BindRepeating(
           &TabData::OnTabWillDiscardContents, base::Unretained(this))));
-  Observe(tab->contents());
+  Observe(tab->GetContents());
 }
 
 TabData::~TabData() {
@@ -53,12 +51,12 @@ void TabData::RemoveObserver(TabData::Observer* observer) {
 bool TabData::IsValidForOrganizing(
     std::optional<tab_groups::TabGroupId> allowed_group_id) const {
   // if the model or the tab have been destroyed, then it's not valid.
-  if (!original_tab_strip_model_ || !tab_.Get() || !tab_.Get()->contents()) {
+  if (!original_tab_strip_model_ || !tab_.Get() || !tab_.Get()->GetContents()) {
     return false;
   }
 
   // If the web_contents is no longer the same URL, then it's not valid.
-  if (original_url_ != tab_.Get()->contents()->GetLastCommittedURL()) {
+  if (original_url_ != tab_.Get()->GetContents()->GetLastCommittedURL()) {
     return false;
   }
 
@@ -72,21 +70,22 @@ bool TabData::IsValidForOrganizing(
   // below, but IsValidForOrganizing might be called from another
   // TabStripModelObserver first - most notably from a TabData's in another
   // TabOrganization - so we cannot assume our web_contents_ is already nullptr.
-  if (tab_.Get()->owning_model() != original_tab_strip_model_) {
+  if (tab_.Get()->GetBrowserWindowInterface()->GetTabStripModel() !=
+      original_tab_strip_model_) {
     return false;
   }
 
   // Tab is not valid if it is grouped and does not belong to
   // |allowed_group_id|.
   const std::optional<tab_groups::TabGroupId> tab_group_id =
-      tab_.Get()->group();
+      tab_.Get()->GetGroup();
   if (tab_group_id.has_value() &&
       (!allowed_group_id.has_value() ||
        tab_group_id.value() != allowed_group_id.value())) {
     return false;
   }
 
-  if (tab_.Get()->pinned()) {
+  if (tab_.Get()->IsPinned()) {
     return false;
   }
 

@@ -31,11 +31,12 @@ import com.google.android.material.color.MaterialColors;
 import org.chromium.base.Callback;
 import org.chromium.blink.mojom.RpContext;
 import org.chromium.blink.mojom.RpMode;
+import org.chromium.chrome.R;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.AccountProperties;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.AddAccountButtonProperties;
+import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.ButtonData;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.ContinueButtonProperties;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.DataSharingConsentProperties;
-import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.ErrorButtonProperties;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.ErrorProperties;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.HeaderProperties;
 import org.chromium.chrome.browser.ui.android.webid.AccountSelectionProperties.IdpSignInProperties;
@@ -50,7 +51,7 @@ import org.chromium.ui.modelutil.PropertyKey;
 import org.chromium.ui.modelutil.PropertyModel;
 import org.chromium.ui.modelutil.PropertyModel.WritableObjectPropertyKey;
 import org.chromium.ui.modelutil.PropertyModelChangeProcessor.ViewBinder;
-import org.chromium.ui.text.NoUnderlineClickableSpan;
+import org.chromium.ui.text.ChromeClickableSpan;
 import org.chromium.ui.text.SpanApplier;
 import org.chromium.ui.util.ColorUtils;
 import org.chromium.ui.widget.ButtonCompat;
@@ -76,12 +77,15 @@ class AccountSelectionViewBinder {
     static final String TEMPORARILY_UNAVAILABLE = "temporarily_unavailable";
     static final String SERVER_ERROR = "server_error";
 
+    static final float DISABLED_OPACITY = 0.38f;
+
     /**
      * Returns bitmap with the maskable bitmap's safe zone as defined in
      * https://www.w3.org/TR/appmanifest/ cropped in a circle.
+     *
      * @param resources the Resources used to set initial target density.
      * @param bitmap the maskable bitmap. It should adhere to the maskable icon spec as defined in
-     * https://www.w3.org/TR/appmanifest/
+     *     https://www.w3.org/TR/appmanifest/
      * @param outBitmapSize the target bitmap size in pixels.
      * @return the cropped bitmap.
      */
@@ -161,24 +165,40 @@ class AccountSelectionViewBinder {
             ImageView avatarView = view.findViewById(R.id.start_icon);
             avatarView.setImageDrawable(croppedAvatar);
         } else if (key == AccountProperties.ON_CLICK_LISTENER) {
-            Callback<Account> clickCallback = model.get(AccountProperties.ON_CLICK_LISTENER);
+            Callback<ButtonData> clickCallback = model.get(AccountProperties.ON_CLICK_LISTENER);
             if (clickCallback == null) {
                 view.setOnClickListener(null);
             } else {
                 view.setOnClickListener(
                         clickedView -> {
-                            clickCallback.onResult(account);
+                            clickCallback.onResult(
+                                    new ButtonData(account, /* idpMetadata= */ null));
                         });
             }
         } else if (key == AccountProperties.ACCOUNT) {
-            TextView name = view.findViewById(R.id.title);
+            if (account.isFilteredOut()) {
+                view.setAlpha(DISABLED_OPACITY);
+            }
+            TextView title = view.findViewById(R.id.title);
             // Name is not shown in the account chip of the request permission dialog. The name is
             // shown in the Continue button instead.
-            if (name != null) {
-                name.setText(account.getName());
+            if (title != null) {
+                title.setText(account.isFilteredOut() ? account.getEmail() : account.getName());
             }
-            TextView email = view.findViewById(R.id.description);
-            email.setText(account.getEmail());
+            TextView description = view.findViewById(R.id.description);
+            description.setText(
+                    account.isFilteredOut()
+                            ? view.getContext().getString(R.string.filtered_account_message)
+                            : account.getEmail());
+            if (account.getSecondaryDescription() != null) {
+                TextView secondaryDescription = view.findViewById(R.id.secondary_description);
+                // The secondary description is not shown in the account chip of active mode's
+                // request permission dialog. In this case, the view is not present.
+                if (secondaryDescription != null) {
+                    secondaryDescription.setText(account.getSecondaryDescription());
+                    secondaryDescription.setVisibility(View.VISIBLE);
+                }
+            }
         } else {
             assert false : "Unhandled update to property:" + key;
         }
@@ -201,12 +221,17 @@ class AccountSelectionViewBinder {
             // If iconView is available, the add account button is an account row at the end of the
             // accounts list.
             ImageView iconView = view.findViewById(R.id.start_icon);
+            IdentityProviderMetadata idpMetadata = properties.mIdpMetadata;
             if (iconView != null) {
                 TintedDrawable plusIcon =
                         TintedDrawable.constructTintedDrawable(
                                 context,
-                                R.drawable.plus,
-                                R.color.default_icon_color_accent1_tint_list);
+                                properties.mRpMode == RpMode.ACTIVE
+                                        ? R.drawable.plus
+                                        : R.drawable.open_in_new_tab,
+                                properties.mRpMode == RpMode.ACTIVE
+                                        ? R.color.default_icon_color_accent1_tint_list
+                                        : R.color.default_icon_color_tint_list);
                 iconView.setImageDrawable(plusIcon);
 
                 TextView subject = view.findViewById(R.id.title);
@@ -214,7 +239,8 @@ class AccountSelectionViewBinder {
 
                 view.setOnClickListener(
                         clickedView -> {
-                            properties.mOnClickListener.onResult(null);
+                            properties.mOnClickListener.onResult(
+                                    new ButtonData(/* account= */ null, idpMetadata));
                         });
                 return;
             }
@@ -224,11 +250,11 @@ class AccountSelectionViewBinder {
             ButtonCompat button = view.findViewById(R.id.account_selection_add_account_btn);
             button.setOnClickListener(
                     clickedView -> {
-                        properties.mOnClickListener.onResult(null);
+                        properties.mOnClickListener.onResult(
+                                new ButtonData(/* account= */ null, idpMetadata));
                     });
             button.setText(context.getString(R.string.account_selection_add_account));
 
-            IdentityProviderMetadata idpMetadata = properties.mIdpMetadata;
             if (!ColorUtils.inNightMode(context)) {
                 Integer backgroundColor = idpMetadata.getBrandBackgroundColor();
                 if (backgroundColor != null) {
@@ -253,11 +279,12 @@ class AccountSelectionViewBinder {
                     clickCallback.accept(context);
                 };
         return new SpanApplier.SpanInfo(
-                startTag, endTag, new NoUnderlineClickableSpan(context, onClickCallback));
+                startTag, endTag, new ChromeClickableSpan(context, onClickCallback));
     }
 
     /**
      * Called whenever a user data sharing consent is bound to this view.
+     *
      * @param model The model containing the data for the view.
      * @param view The view to be bound.
      * @param key The key of the property to be bound.
@@ -282,6 +309,15 @@ class AccountSelectionViewBinder {
                     case IdentityRequestDialogDisclosureField.PICTURE:
                         fieldStrings.add(
                                 context.getString(R.string.account_selection_data_sharing_picture));
+                        break;
+                    case IdentityRequestDialogDisclosureField.PHONE_NUMBER:
+                        fieldStrings.add(
+                                context.getString(R.string.account_selection_data_sharing_phone));
+                        break;
+                    case IdentityRequestDialogDisclosureField.USERNAME:
+                        fieldStrings.add(
+                                context.getString(
+                                        R.string.account_selection_data_sharing_username));
                         break;
                 }
             }
@@ -354,7 +390,7 @@ class AccountSelectionViewBinder {
         textView.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
-    private static class ErrorText {
+    static class ErrorText {
         final String mSummary;
         final SpannableString mDescription;
 
@@ -369,24 +405,25 @@ class AccountSelectionViewBinder {
                     new SpanApplier.SpanInfo(
                             "<link_more_details>",
                             "</link_more_details>",
-                            new NoUnderlineClickableSpan(
-                                    context, (View clickedView) -> runnable.run()));
+                            new ChromeClickableSpan(context, (View clickedView) -> runnable.run()));
             mDescription = SpanApplier.applySpans(description, moreDetailsSpan);
         }
     }
 
     /**
      * Returns text to be displayed on the error dialog.
-     * @param view The view to be bound.
+     *
+     * @param context The context of the view to be bound.
      * @param properties The properties which determine what error text to display.
+     * @param clickableText Whether the text should contain a link for more details.
      * @return The ErrorText containing the summary and description to display.
      */
-    private static ErrorText getErrorText(View view, ErrorProperties.Properties properties) {
+    static ErrorText getErrorText(
+            Context context, ErrorProperties.Properties properties, boolean clickableText) {
         String code = properties.mError.getCode();
         GURL url = properties.mError.getUrl();
         String idpForDisplay = properties.mIdpForDisplay;
         String rpForDisplay = properties.mRpForDisplay;
-        Context context = view.getContext();
 
         String summary;
         String description;
@@ -429,7 +466,7 @@ class AccountSelectionViewBinder {
                     context.getString(R.string.signin_generic_error_dialog_summary, idpForDisplay);
             description = context.getString(R.string.signin_generic_error_dialog_description);
 
-            if (url.isEmpty()) {
+            if (url.isEmpty() || !clickableText) {
                 return new ErrorText(summary, description);
             }
 
@@ -455,21 +492,36 @@ class AccountSelectionViewBinder {
         description +=
                 context.getString(
                         TEMPORARILY_UNAVAILABLE.equals(code)
-                                ? R.string.signin_error_dialog_more_details_retry_prompt
-                                : R.string.signin_error_dialog_more_details_prompt,
+                                ? (clickableText
+                                        ? R.string.signin_error_dialog_more_details_retry_prompt
+                                        : R.string
+                                                .signin_error_dialog_more_details_button_retry_prompt)
+                                : (clickableText
+                                        ? R.string.signin_error_dialog_more_details_prompt
+                                        : R.string.signin_error_dialog_more_details_button_prompt),
                         idpForDisplay);
-        return new ErrorText(summary, description, context, properties.mMoreDetailsClickRunnable);
+
+        if (clickableText) {
+            return new ErrorText(
+                    summary, description, context, properties.mMoreDetailsClickRunnable);
+        }
+        return new ErrorText(summary, description);
     }
 
     /**
      * Called whenever error text is bound to this view.
+     *
      * @param model The model containing the data for the view.
      * @param view The view to be bound.
      * @param key The key of the property to be bound.
      */
     static void bindErrorTextView(PropertyModel model, View view, PropertyKey key) {
         if (key == ErrorProperties.PROPERTIES) {
-            ErrorText errorText = getErrorText(view, model.get(ErrorProperties.PROPERTIES));
+            ErrorText errorText =
+                    getErrorText(
+                            view.getContext(),
+                            model.get(ErrorProperties.PROPERTIES),
+                            /* clickableText= */ true);
 
             TextView summaryTextView = view.findViewById(R.id.error_summary);
             summaryTextView.setText(errorText.mSummary);
@@ -522,25 +574,26 @@ class AccountSelectionViewBinder {
             Account account = properties.mAccount;
             button.setOnClickListener(
                     clickedView -> {
-                        properties.mOnClickListener.onResult(account);
+                        properties.mOnClickListener.onResult(
+                                new ButtonData(account, properties.mIdpMetadata));
                     });
 
             String btnText;
             HeaderProperties.HeaderType headerType = properties.mHeaderType;
             if (headerType == HeaderProperties.HeaderType.SIGN_IN_TO_IDP_STATIC) {
-                btnText = context.getString(R.string.idp_signin_status_mismatch_dialog_continue);
+                btnText = context.getString(R.string.signin_continue);
             } else if (headerType == HeaderProperties.HeaderType.SIGN_IN_ERROR) {
                 btnText = context.getString(R.string.signin_error_dialog_got_it_button);
             } else {
-                // Prefers to use given name if it is provided otherwise falls back to using the
-                // name.
                 String givenName = account.getGivenName();
-                String displayedName =
-                        givenName != null && !givenName.isEmpty() ? givenName : account.getName();
-                btnText =
-                        String.format(
-                                context.getString(R.string.account_selection_continue),
-                                displayedName);
+                if (givenName.isEmpty()) {
+                    btnText = context.getString(R.string.signin_continue);
+                } else {
+                    btnText =
+                            String.format(
+                                    context.getString(R.string.account_selection_continue),
+                                    givenName);
+                }
                 button.setContentDescription(btnText + ", " + account.getEmail());
             }
 
@@ -549,42 +602,6 @@ class AccountSelectionViewBinder {
             if (properties.mSetFocusViewCallback != null) {
                 properties.mSetFocusViewCallback.onResult(button);
             }
-        } else {
-            assert false : "Unhandled update to property:" + key;
-        }
-    }
-
-    /**
-     * Called whenever a button on the error dialog is bound to this view.
-     * @param model The model containing the data for the view.
-     * @param view The view to be bound.
-     * @param key The key of the property to be bound.
-     * @param button The button to be bound.
-     * @param buttonText The text that should be set to the button to be bound.
-     */
-    @SuppressWarnings("checkstyle:SetTextColorAndSetTextSizeCheck")
-    private static void bindErrorButtonView(
-            PropertyModel model, View view, PropertyKey key, ButtonCompat button, int textId) {
-        Context context = view.getContext();
-        if (key == ErrorButtonProperties.IDP_METADATA) {
-            String buttonText = context.getString(textId);
-            button.setText(buttonText);
-            if (!ColorUtils.inNightMode(context)) {
-                IdentityProviderMetadata idpMetadata =
-                        model.get(ErrorButtonProperties.IDP_METADATA);
-
-                // TODO(crbug.com/40282202): Decide on how to set colours for error buttons.
-                Integer textColor = idpMetadata.getBrandBackgroundColor();
-                button.setTextColor(
-                        textColor != null
-                                ? textColor
-                                : MaterialColors.getColor(context, R.attr.colorOnPrimary, TAG));
-            }
-        } else if (key == ErrorButtonProperties.ON_CLICK_LISTENER) {
-            button.setOnClickListener(
-                    clickedView -> {
-                        model.get(ErrorButtonProperties.ON_CLICK_LISTENER).run();
-                    });
         } else {
             assert false : "Unhandled update to property:" + key;
         }
@@ -678,7 +695,8 @@ class AccountSelectionViewBinder {
                 || key == HeaderProperties.RP_CONTEXT
                 || key == HeaderProperties.RP_MODE
                 || key == HeaderProperties.IS_MULTIPLE_ACCOUNT_CHOOSER
-                || key == HeaderProperties.SET_FOCUS_VIEW_CALLBACK) {
+                || key == HeaderProperties.SET_FOCUS_VIEW_CALLBACK
+                || key == HeaderProperties.IS_MULTIPLE_IDPS) {
             TextView headerTitleText = view.findViewById(R.id.header_title);
             TextView headerSubtitleText = view.findViewById(R.id.header_subtitle);
             HeaderProperties.HeaderType headerType = model.get(HeaderProperties.TYPE);
@@ -688,7 +706,8 @@ class AccountSelectionViewBinder {
                             resources,
                             model.get(HeaderProperties.RP_FOR_DISPLAY),
                             model.get(HeaderProperties.RP_MODE),
-                            model.get(HeaderProperties.IS_MULTIPLE_ACCOUNT_CHOOSER));
+                            model.get(HeaderProperties.IS_MULTIPLE_ACCOUNT_CHOOSER),
+                            model.get(HeaderProperties.IS_MULTIPLE_IDPS));
             if (!subtitle.isEmpty()) {
                 headerTitleText.setPadding(
                         /* left= */ 0, /* top= */ 12, /* right= */ 0, /* bottom= */ 0);
@@ -709,7 +728,8 @@ class AccountSelectionViewBinder {
                             model.get(HeaderProperties.RP_FOR_DISPLAY),
                             model.get(HeaderProperties.IDP_FOR_DISPLAY),
                             model.get(HeaderProperties.RP_CONTEXT),
-                            model.get(HeaderProperties.RP_MODE));
+                            model.get(HeaderProperties.RP_MODE),
+                            model.get(HeaderProperties.IS_MULTIPLE_IDPS));
             if (headerTitleText.getText() != title
                     && model.get(HeaderProperties.SET_FOCUS_VIEW_CALLBACK) != null) {
                 model.get(HeaderProperties.SET_FOCUS_VIEW_CALLBACK).onResult(headerView);
@@ -749,13 +769,22 @@ class AccountSelectionViewBinder {
                 view.findViewById(R.id.header_divider)
                         .setVisibility(!progressBarVisible ? View.VISIBLE : View.GONE);
             }
+            if (key == HeaderProperties.IS_MULTIPLE_IDPS) {
+                // Do not reserve space for IDP icon if there are multiple IDPs.
+                ImageView headerIconView = (ImageView) view.findViewById(R.id.header_idp_icon);
+                if (model.get(HeaderProperties.IS_MULTIPLE_IDPS)) {
+                    headerIconView.setVisibility(View.GONE);
+                }
+            }
         } else if (key == HeaderProperties.IDP_BRAND_ICON) {
+            // There should not be an IDP icon when multi IDPs are used.
+            if (model.get(HeaderProperties.IS_MULTIPLE_IDPS)) return;
             Bitmap brandIcon = model.get(HeaderProperties.IDP_BRAND_ICON);
             if (brandIcon != null) {
                 int iconSize =
                         resources.getDimensionPixelSize(
                                 model.get(HeaderProperties.RP_MODE) == RpMode.ACTIVE
-                                        ? R.dimen.account_selection_button_mode_sheet_icon_size
+                                        ? R.dimen.account_selection_active_mode_sheet_icon_size
                                         : R.dimen.account_selection_sheet_icon_size);
                 Drawable croppedBrandIcon =
                         createBitmapWithMaskableIconSafeZone(resources, brandIcon, iconSize);
@@ -773,7 +802,7 @@ class AccountSelectionViewBinder {
             if (brandIcon != null) {
                 int iconSize =
                         resources.getDimensionPixelSize(
-                                R.dimen.account_selection_button_mode_sheet_icon_size);
+                                R.dimen.account_selection_active_mode_sheet_icon_size);
                 Drawable croppedBrandIcon =
                         createBitmapWithMaskableIconSafeZone(resources, brandIcon, iconSize);
                 headerIconView.setImageDrawable(croppedBrandIcon);
@@ -782,7 +811,7 @@ class AccountSelectionViewBinder {
                     brandIcon != null
                             && model.get(HeaderProperties.IDP_BRAND_ICON) != null
                             && model.get(HeaderProperties.TYPE)
-                                    == HeaderProperties.HeaderType.REQUEST_PERMISSION;
+                                    == HeaderProperties.HeaderType.REQUEST_PERMISSION_MODAL;
             headerIconView.setVisibility(isRpIconVisible ? View.VISIBLE : View.GONE);
             arrowRangeIcon.setVisibility(isRpIconVisible ? View.VISIBLE : View.GONE);
         } else if (key == HeaderProperties.CLOSE_ON_CLICK_LISTENER) {
@@ -817,9 +846,11 @@ class AccountSelectionViewBinder {
             String rpUrl,
             String idpUrl,
             @RpContext.EnumType int rpContext,
-            @RpMode.EnumType int rpMode) {
+            @RpMode.EnumType int rpMode,
+            Boolean isMultipleIdps) {
         @StringRes int titleStringId;
-        if (rpMode == RpMode.ACTIVE) {
+        // In single IDP active mode, show the title with RP and IDP.
+        if (rpMode == RpMode.ACTIVE && !isMultipleIdps) {
             switch (rpContext) {
                 case RpContext.SIGN_UP:
                     titleStringId =
@@ -839,11 +870,33 @@ class AccountSelectionViewBinder {
             return String.format(resources.getString(titleStringId), idpUrl);
         }
 
-        if (type == HeaderProperties.HeaderType.VERIFY) {
+        // In passive mode, we change the title when signing in the user.
+        if (rpMode == RpMode.PASSIVE && type == HeaderProperties.HeaderType.VERIFY) {
             return resources.getString(getVerifyHeaderStringId());
         }
-        if (type == HeaderProperties.HeaderType.VERIFY_AUTO_REAUTHN) {
+        if (rpMode == RpMode.PASSIVE && type == HeaderProperties.HeaderType.VERIFY_AUTO_REAUTHN) {
             return resources.getString(getVerifyHeaderAutoReauthnStringId());
+        }
+
+        // If there are multiple IDPs, show the title with just the RP.
+        if (isMultipleIdps) {
+            switch (rpContext) {
+                case RpContext.SIGN_UP:
+                    titleStringId =
+                            R.string.account_selection_multi_idp_sheet_title_explicit_signup;
+                    break;
+                case RpContext.USE:
+                    titleStringId = R.string.account_selection_multi_idp_sheet_title_explicit_use;
+                    break;
+                case RpContext.CONTINUE:
+                    titleStringId =
+                            R.string.account_selection_multi_idp_sheet_title_explicit_continue;
+                    break;
+                default:
+                    titleStringId =
+                            R.string.account_selection_multi_idp_sheet_title_explicit_signin;
+            }
+            return String.format(resources.getString(titleStringId), rpUrl);
         }
 
         switch (rpContext) {
@@ -866,8 +919,9 @@ class AccountSelectionViewBinder {
             Resources resources,
             String rpUrl,
             @RpMode.EnumType int rpMode,
-            Boolean isMultipleAccountChooser) {
-        if (rpMode == RpMode.PASSIVE) return "";
+            Boolean isMultipleAccountChooser,
+            Boolean isMultipleIdps) {
+        if (rpMode == RpMode.PASSIVE || isMultipleIdps) return "";
 
         if (isMultipleAccountChooser) {
             return String.format(

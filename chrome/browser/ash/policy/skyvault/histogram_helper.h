@@ -5,6 +5,7 @@
 #ifndef CHROME_BROWSER_ASH_POLICY_SKYVAULT_HISTOGRAM_HELPER_H_
 #define CHROME_BROWSER_ASH_POLICY_SKYVAULT_HISTOGRAM_HELPER_H_
 
+#include "base/time/time.h"
 #include "chrome/browser/ash/policy/skyvault/policy_utils.h"
 
 namespace policy::local_user_files {
@@ -24,12 +25,21 @@ void SkyVaultMigrationEnabledHistogram(CloudProvider provider, bool value);
 void SkyVaultMigrationMisconfiguredHistogram(CloudProvider provider,
                                              bool value);
 void SkyVaultMigrationResetHistogram(bool value);
+void SkyVaultMigrationRetryHistogram(int count);
 void SkyVaultMigrationStoppedHistogram(CloudProvider provider, bool value);
 void SkyVaultMigrationWrongStateHistogram(CloudProvider provider,
                                           StateErrorContext context,
                                           State state);
-void SkyVaultMigrationFailedHistogram(CloudProvider provider, bool value);
+void SkyVaultMigrationDoneHistograms(CloudProvider provider,
+                                     bool success,
+                                     base::TimeDelta duration);
 void SkyVaultMigrationWriteAccessErrorHistogram(bool value);
+void SkyVaultMigrationUploadErrorHistogram(CloudProvider provider,
+                                           MigrationUploadError error);
+void SkyVaultMigrationWaitForConnectionHistogram(CloudProvider provider,
+                                                 bool waiting_for_connection);
+void SkyVaultMigrationReconnectionDurationHistogram(CloudProvider provider,
+                                                    base::TimeDelta duration);
 
 // Helper functions to log UMA stats on migration dialog interactions.
 void SkyVaultMigrationDialogActionHistogram(CloudProvider provider,

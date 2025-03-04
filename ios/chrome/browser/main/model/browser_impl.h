@@ -12,9 +12,9 @@
 #import "base/observer_list.h"
 #import "ios/chrome/browser/main/model/browser_web_state_list_delegate.h"
 #import "ios/chrome/browser/shared/model/browser/browser.h"
-#import "ios/chrome/browser/shared/model/profile/profile_ios_forward.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list.h"
 
+class ProfileIOS;
 @class SceneState;
 
 // BrowserImpl is the concrete implementation of the Browser interface.
@@ -55,9 +55,6 @@ class BrowserImpl final : public Browser, public BrowserWebStateListDelegate {
  private:
   // The type of this browser.
   const Type type_;
-
-  // The ProfileIOS this Browser is attached to. Must not be null.
-  raw_ptr<ProfileIOS> const profile_;
 
   // The owned WebStateList.
   WebStateList web_state_list_;

@@ -6,17 +6,23 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
+#include "base/metrics/histogram_functions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
+#include "base/time/time.h"
 #include "base/trace_event/trace_event.h"
+#include "base/types/optional_ref.h"
 #include "base/unguessable_token.h"
 #include "base/values.h"
+#include "content/services/auction_worklet/public/cpp/auction_worklet_features.h"
+#include "net/base/load_flags.h"
 #include "net/base/net_errors.h"
 #include "net/base/request_priority.h"
 #include "net/http/http_request_headers.h"
@@ -45,7 +51,13 @@ constexpr net::NetworkTrafficAnnotationTag kTrafficAnnotation =
             "ad auction."
           trigger:
             "Requested when running a Protected Audiences auction."
-          data: "URL associated with an interest group or seller."
+            "The Protected Audience API allows sites to select content (such "
+            "as personalized ads) to display based on cross-site data in a "
+            "privacy preserving way."
+          data:
+            "URL associated with an interest group or seller, and details on "
+            "what data specifically is being requested, also provided by the "
+            "interest group."
           destination: WEBSITE
           user_data: {
             type: SENSITIVE_URL
@@ -55,7 +67,7 @@ constexpr net::NetworkTrafficAnnotationTag kTrafficAnnotation =
               email: "privacy-sandbox-dev@chromium.org"
             }
           }
-          last_reviewed: "2023-06-12"
+          last_reviewed: "2024-06-08"
         }
         policy {
           cookies_allowed: NO
@@ -116,16 +128,17 @@ bool MimeTypeIsConsistent(
       // ResponseInfo's `mime_type` is always lowercase.
       return blink::IsJSONMimeType(response_info.mime_type);
     case AuctionDownloader::MimeType::kWebAssembly: {
-      std::string raw_content_type;
       // Here we use the headers directly, not the parsed mimetype, since we
       // much check there are no parameters whatsoever. Ref.
       // https://webassembly.github.io/spec/web-api/#streaming-modules
-      if (!response_info.headers->GetNormalizedHeader(
-              net::HttpRequestHeaders::kContentType, &raw_content_type)) {
+      std::optional<std::string> raw_content_type =
+          response_info.headers->GetNormalizedHeader(
+              net::HttpRequestHeaders::kContentType);
+      if (!raw_content_type) {
         return false;
       }
 
-      return base::ToLowerASCII(raw_content_type) == kWebAssemblyMime;
+      return base::ToLowerASCII(*raw_content_type) == kWebAssemblyMime;
     }
   }
 }
@@ -179,6 +192,41 @@ void WriteTraceTiming(const net::LoadTimingInfo& timing,
   dict.Add("pushEnd", timing.push_end.since_origin().InSecondsF());
 }
 
+std::unique_ptr<network::ResourceRequest> MakeResourceRequest(
+    const GURL& source_url,
+    AuctionDownloader::MimeType mime_type,
+    bool post,
+    bool allow_stale_response,
+    base::optional_ref<const url::Origin> request_initiator,
+    std::optional<network::ResourceRequest::TrustedParams> trusted_params,
+    std::string_view request_id) {
+  DCHECK(!(allow_stale_response && post));
+  auto resource_request = std::make_unique<network::ResourceRequest>();
+  resource_request->url = source_url;
+  resource_request->redirect_mode = network::mojom::RedirectMode::kError;
+  resource_request->credentials_mode = network::mojom::CredentialsMode::kOmit;
+  resource_request->enable_load_timing =
+      *TRACE_EVENT_API_GET_CATEGORY_GROUP_ENABLED("devtools.timeline");
+  resource_request->headers.SetHeader(net::HttpRequestHeaders::kAccept,
+                                      MimeTypeToString(mime_type));
+  resource_request->trusted_params = std::move(trusted_params);
+  if (post) {
+    resource_request->method = net::HttpRequestHeaders::kPostMethod;
+  }
+  if (request_initiator) {
+    resource_request->request_initiator = *request_initiator;
+    resource_request->mode = network::mojom::RequestMode::kCors;
+  }
+  if (allow_stale_response) {
+    DCHECK(!request_initiator);
+    DCHECK(!resource_request->trusted_params);
+    resource_request->load_flags |= net::LOAD_SUPPORT_ASYNC_REVALIDATION;
+  }
+  resource_request->devtools_request_id = request_id;
+
+  return resource_request;
+}
+
 }  // namespace
 
 AuctionDownloader::AuctionDownloader(
@@ -188,29 +236,88 @@ AuctionDownloader::AuctionDownloader(
     MimeType mime_type,
     std::optional<std::string> post_body,
     std::optional<std::string> content_type,
+    std::optional<size_t> num_igs_for_trusted_bidding_signals_kvv1,
     ResponseStartedCallback response_started_callback,
     AuctionDownloaderCallback auction_downloader_callback,
     std::unique_ptr<NetworkEventsDelegate> network_events_delegate)
-    : source_url_(source_url),
+    : AuctionDownloader(url_loader_factory,
+                        source_url,
+                        download_mode,
+                        mime_type,
+                        std::move(post_body),
+                        std::move(content_type),
+                        num_igs_for_trusted_bidding_signals_kvv1,
+                        /*request_initiator=*/std::nullopt,
+                        /*trusted_params=*/std::nullopt,
+                        std::move(response_started_callback),
+                        std::move(auction_downloader_callback),
+                        std::move(network_events_delegate)) {}
+
+AuctionDownloader::AuctionDownloader(
+    network::mojom::URLLoaderFactory* url_loader_factory,
+    const GURL& source_url,
+    DownloadMode download_mode,
+    MimeType mime_type,
+    std::optional<std::string> post_body,
+    std::optional<std::string> content_type,
+    const url::Origin& request_initiator,
+    network::ResourceRequest::TrustedParams trusted_params,
+    AuctionDownloaderCallback auction_downloader_callback,
+    std::unique_ptr<NetworkEventsDelegate> network_events_delegate)
+    : AuctionDownloader(
+          url_loader_factory,
+          source_url,
+          download_mode,
+          mime_type,
+          std::move(post_body),
+          std::move(content_type),
+          /*num_igs_for_trusted_bidding_signals_kvv1=*/std::nullopt,
+          request_initiator,
+          std::move(trusted_params),
+          ResponseStartedCallback(),
+          std::move(auction_downloader_callback),
+          std::move(network_events_delegate)) {}
+
+AuctionDownloader::NetworkEventsDelegate::~NetworkEventsDelegate() = default;
+AuctionDownloader::~AuctionDownloader() = default;
+
+AuctionDownloader::AuctionDownloader(
+    network::mojom::URLLoaderFactory* url_loader_factory,
+    const GURL& source_url,
+    DownloadMode download_mode,
+    MimeType mime_type,
+    std::optional<std::string> post_body,
+    std::optional<std::string> content_type,
+    std::optional<size_t> num_igs_for_trusted_bidding_signals_kvv1,
+    base::optional_ref<const url::Origin> request_initiator,
+    std::optional<network::ResourceRequest::TrustedParams> trusted_params,
+    ResponseStartedCallback response_started_callback,
+    AuctionDownloaderCallback auction_downloader_callback,
+    std::unique_ptr<NetworkEventsDelegate> network_events_delegate)
+    : url_loader_factory_(*url_loader_factory),
+      source_url_(source_url),
       mime_type_(mime_type),
+      num_igs_for_trusted_bidding_signals_kvv1_(
+          num_igs_for_trusted_bidding_signals_kvv1),
       request_id_(base::UnguessableToken::Create().ToString()),
       response_started_callback_(std::move(response_started_callback)),
       auction_downloader_callback_(std::move(auction_downloader_callback)),
       network_events_delegate_(std::move(network_events_delegate)) {
   DCHECK(auction_downloader_callback_);
-  auto resource_request = std::make_unique<network::ResourceRequest>();
-  resource_request->url = source_url;
-  resource_request->redirect_mode = network::mojom::RedirectMode::kError;
-  resource_request->credentials_mode = network::mojom::CredentialsMode::kOmit;
-  resource_request->enable_load_timing =
-      *TRACE_EVENT_API_GET_CATEGORY_GROUP_ENABLED("devtools.timeline");
-  resource_request->devtools_request_id = request_id_;
-  resource_request->headers.SetHeader(net::HttpRequestHeaders::kAccept,
-                                      MimeTypeToString(mime_type_));
 
-  if (post_body.has_value()) {
-    resource_request->method = net::HttpRequestHeaders::kPostMethod;
-  }
+  // Stale-while-revalidate is not supported for POST in the http cache,
+  // so do not try to support it here -- so we do not need to hold onto
+  // the post body. The `request_initiator` constructor is, in production,
+  // currently only used with POSTs, so no need to support
+  // stale-while-revalidate when it is populated, either.
+  bool allow_stale_response =
+      base::FeatureList::IsEnabled(
+          features::kFledgeAuctionDownloaderStaleWhileRevalidate) &&
+      !post_body.has_value() && !request_initiator;
+
+  auto resource_request = MakeResourceRequest(
+      source_url_, mime_type_, post_body.has_value(), allow_stale_response,
+      request_initiator, std::move(trusted_params), request_id_);
 
   if (network_events_delegate_ != nullptr) {
     network_events_delegate_->OnNetworkSendRequest(*resource_request);
@@ -245,10 +352,11 @@ AuctionDownloader::AuctionDownloader(
   simple_url_loader_->SetOnRedirectCallback(base::BindRepeating(
       &AuctionDownloader::OnRedirect, base::Unretained(this)));
 
-  simple_url_loader_->SetOnResponseStartedCallback(base::BindRepeating(
-      &AuctionDownloader::OnResponseStarted, base::Unretained(this)));
+  simple_url_loader_->SetOnResponseStartedCallback(
+      base::BindRepeating(&AuctionDownloader::OnResponseStarted,
+                          base::Unretained(this), base::Time::Now()));
 
-  simple_url_loader_->SetTimeoutDuration(base::Seconds(30));
+  simple_url_loader_->SetTimeoutDuration(kRequestTimeout);
 
   // TODO(mmenke): Consider limiting the size of response bodies.
   if (download_mode == DownloadMode::kActualDownload) {
@@ -262,9 +370,6 @@ AuctionDownloader::AuctionDownloader(
                        base::Unretained(this)));
   }
 }
-
-AuctionDownloader::NetworkEventsDelegate::~NetworkEventsDelegate() = default;
-AuctionDownloader::~AuctionDownloader() = default;
 
 void AuctionDownloader::OnHeadersOnlyReceived(
     scoped_refptr<net::HttpResponseHeaders> headers) {
@@ -298,6 +403,39 @@ void AuctionDownloader::OnBodyReceived(std::unique_ptr<std::string> body) {
                     TruncateUrlIfNeededForError(source_url_).c_str(),
                     net::ErrorToString(simple_url_loader->NetError()).c_str()));
     return;
+  }
+
+  if (num_igs_for_trusted_bidding_signals_kvv1_ && response_started_time_) {
+    base::TimeDelta elapsed_time =
+        base::TimeTicks::Now() - response_started_time_.value();
+    base::UmaHistogramTimes(
+        "Ads.InterestGroup.Auction.BiddingSignalsResponseDownloadTime",
+        elapsed_time);
+    base::UmaHistogramTimes(
+        "Ads.InterestGroup.Auction.BiddingSignalsResponseDownloadTimePerIG",
+        elapsed_time / num_igs_for_trusted_bidding_signals_kvv1_.value());
+    base::UmaHistogramTimes(
+        "Ads.InterestGroup.Auction."
+        "BiddingSignalsResponseDownloadTimeAfterOneDownloadTimePerIG",
+        elapsed_time -
+            elapsed_time / num_igs_for_trusted_bidding_signals_kvv1_.value());
+  }
+
+  if (simple_url_loader->ResponseInfo()->async_revalidation_requested) {
+    auto resource_request =
+        MakeResourceRequest(source_url_, mime_type_, /*post=*/false,
+                            /*allow_stale_response=*/false,
+                            /*request_initiator=*/std::nullopt,
+                            /*trusted_params=*/std::nullopt, request_id_);
+    auto revalidation_url_loader = network::SimpleURLLoader::Create(
+        std::move(resource_request), kTrafficAnnotation);
+    // Pass the URL loader to the callback to prevent it from being destroyed
+    // until revalidation is done. If the loader is destroyed, the call to
+    // revalidate will not complete.
+    revalidation_url_loader->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
+        &url_loader_factory_.get(),
+        base::BindOnce(&AuctionDownloader::OnRevalidatedBodyReceived,
+                       std::move(revalidation_url_loader)));
   }
 
   // Everything below is a network success even if it's a semantic failure.
@@ -352,7 +490,52 @@ void AuctionDownloader::OnRedirect(
                                  source_url_.spec().c_str()));
 }
 
+// static
+std::optional<std::string> AuctionDownloader::CheckResponseAllowed(
+    const GURL& url,
+    const network::mojom::URLResponseHead& response_head,
+    network::URLLoaderCompletionStatus& status_out) {
+  if (response_head.headers &&
+      response_head.headers->response_code() / 100 != 2) {
+    status_out =
+        network::URLLoaderCompletionStatus(net::ERR_HTTP_RESPONSE_CODE_FAILURE);
+    return base::StringPrintf("Failed to load %s HTTP status = %d %s.",
+                              url.spec().c_str(),
+                              response_head.headers->response_code(),
+                              response_head.headers->GetStatusText().c_str());
+  }
+
+  bool allow_fledge_header_found = false;
+  if (response_head.headers) {
+    for (const std::string_view header :
+         {"Ad-Auction-Allowed", "X-Allow-FLEDGE"}) {
+      std::optional<std::string> allow_fledge =
+          response_head.headers->GetNormalizedHeader(header);
+      if (allow_fledge &&
+          base::EqualsCaseInsensitiveASCII(*allow_fledge, "true")) {
+        allow_fledge_header_found = true;
+        break;
+      }
+    }
+  }
+  if (!allow_fledge_header_found) {
+    status_out = network::URLLoaderCompletionStatus(net::ERR_ABORTED);
+    return base::StringPrintf(
+        "Rejecting load of %s due to lack of Ad-Auction-Allowed: true "
+        "(or the deprecated X-Allow-FLEDGE: true).",
+        url.spec().c_str());
+  }
+  return std::nullopt;
+}
+
+// static
+std::string_view AuctionDownloader::MimeTypeToStringForTesting(
+    AuctionDownloader::MimeType mime_type) {
+  return MimeTypeToString(mime_type);
+}
+
 void AuctionDownloader::OnResponseStarted(
+    base::Time request_time,
     const GURL& final_url,
     const network::mojom::URLResponseHead& response_head) {
   if (network_events_delegate_ != nullptr) {
@@ -416,34 +599,24 @@ void AuctionDownloader::OnResponseStarted(
         }
       });
 
-  if (response_head.headers &&
-      response_head.headers->response_code() / 100 != 2) {
-    int status = response_head.headers->response_code();
-    FailRequest(
-        network::URLLoaderCompletionStatus(net::ERR_HTTP_RESPONSE_CODE_FAILURE),
-        base::StringPrintf("Failed to load %s HTTP status = %d %s.",
-                           source_url_.spec().c_str(), status,
-                           response_head.headers->GetStatusText().c_str()));
+  network::URLLoaderCompletionStatus status;
+  std::optional<std::string> error =
+      CheckResponseAllowed(source_url_, response_head, status);
+  if (error) {
+    FailRequest(status, *error);
     return;
   }
 
-  std::string allow_fledge;
-  std::string auction_allowed;
-  if (!response_head.headers ||
-      ((!response_head.headers->GetNormalizedHeader("X-Allow-FLEDGE",
-                                                    &allow_fledge) ||
-        !base::EqualsCaseInsensitiveASCII(allow_fledge, "true")) &&
-       (!response_head.headers->GetNormalizedHeader("Ad-Auction-Allowed",
-                                                    &auction_allowed) ||
-        !base::EqualsCaseInsensitiveASCII(auction_allowed, "true")))) {
-    FailRequest(
-        network::URLLoaderCompletionStatus(net::ERR_ABORTED),
-        base::StringPrintf(
-            "Rejecting load of %s due to lack of Ad-Auction-Allowed: true "
-            "(or the deprecated X-Allow-FLEDGE: true).",
-            source_url_.spec().c_str()));
-    return;
+  // Record the cached response's age if there was an entry in the cache.
+  if (num_igs_for_trusted_bidding_signals_kvv1_ &&
+      response_head.was_fetched_via_cache &&
+      response_head.original_response_time < request_time) {
+    base::UmaHistogramTimes(
+        "Ads.InterestGroup.Auction.HttpCachedTrustedBiddingSignalsAge2",
+        request_time - response_head.original_response_time);
   }
+
+  response_started_time_ = base::TimeTicks::Now();
 
   if (response_started_callback_) {
     std::move(response_started_callback_).Run(response_head);
@@ -467,6 +640,10 @@ void AuctionDownloader::TraceResult(bool failure,
                                     base::TimeTicks completion_time,
                                     int64_t encoded_data_length,
                                     int64_t decoded_body_length) {
+  if (!completion_time.is_null()) {
+    base::UmaHistogramTimes("Ads.InterestGroup.Auction.DownloadThreadDelay",
+                            base::TimeTicks::Now() - completion_time);
+  }
   TRACE_EVENT_INSTANT1(
       "devtools.timeline", "ResourceFinish", TRACE_EVENT_SCOPE_THREAD, "data",
       [&](perfetto::TracedValue dest) {

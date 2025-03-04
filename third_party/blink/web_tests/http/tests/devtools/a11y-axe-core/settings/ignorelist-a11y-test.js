@@ -13,7 +13,7 @@ import * as UI from 'devtools/ui/legacy/legacy.js';
   const ignoreListWidget = await UI.ViewManager.ViewManager.instance().view('blackbox').widget();
 
   async function testAddPattern() {
-    const addPatternButton = ignoreListWidget.defaultFocusedElement;
+    const addPatternButton = ignoreListWidget.contentElement.querySelector('.add-button');
     // Make add pattern editor visible
     addPatternButton.click();
 
@@ -25,7 +25,12 @@ import * as UI from 'devtools/ui/legacy/legacy.js';
 
   async function testPatternList() {
     ignoreListWidget.list.appendItem({pattern: 'test*'}, true);
-    TestRunner.addResult(`Added a pattern in the list: ${ignoreListWidget.list.items.map(x => x.pattern).join(',')}`);
+    const ignoreList = ignoreListWidget.list.items.map(x => x.pattern);
+    if (ignoreList.length > 0) {
+      // We don't need this test to assert the default pattern.
+      ignoreList[0] = '(Default)';
+    }
+    TestRunner.addResult(`Added a pattern in the list: ${ignoreList.join(',')}`);
     await AxeCoreTestRunner.runValidation(ignoreListWidget.contentElement);
   }
 

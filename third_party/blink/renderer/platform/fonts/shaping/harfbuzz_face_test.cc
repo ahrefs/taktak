@@ -25,11 +25,11 @@ String WPTFontPath(const String& font_name) {
 }
 
 hb_codepoint_t GetGlyphForVariationSequenceFromFont(
-    Font font,
+    Font* font,
     UChar32 character,
     UChar32 variation_selector) {
   const FontPlatformData& font_without_char_platform_data =
-      font.PrimaryFont()->PlatformData();
+      font->PrimaryFont()->PlatformData();
   HarfBuzzFace* face_without_char =
       font_without_char_platform_data.GetHarfBuzzFace();
   EXPECT_TRUE(face_without_char);
@@ -39,7 +39,7 @@ hb_codepoint_t GetGlyphForVariationSequenceFromFont(
 
 hb_codepoint_t GetGlyphForEmojiVSFromFontWithVS15(UChar32 character,
                                                   UChar32 variation_selector) {
-  Font font =
+  Font* font =
       test::CreateTestFont(AtomicString("Noto Emoji"),
                            WPTFontPath("NotoEmoji-Regular_subset.ttf"), 11);
   return GetGlyphForVariationSequenceFromFont(font, character,
@@ -48,7 +48,7 @@ hb_codepoint_t GetGlyphForEmojiVSFromFontWithVS15(UChar32 character,
 
 hb_codepoint_t GetGlyphForEmojiVSFromFontWithVS16(UChar32 character,
                                                   UChar32 variation_selector) {
-  Font font = test::CreateTestFont(
+  Font* font = test::CreateTestFont(
       AtomicString("Noto Color Emoji"),
       WPTFontPath("NotoColorEmoji-Regular_subset.ttf"), 11);
   return GetGlyphForVariationSequenceFromFont(font, character,
@@ -58,7 +58,7 @@ hb_codepoint_t GetGlyphForEmojiVSFromFontWithVS16(UChar32 character,
 hb_codepoint_t GetGlyphForEmojiVSFromFontWithBaseCharOnly(
     UChar32 character,
     UChar32 variation_selector) {
-  Font font = test::CreateTestFont(
+  Font* font = test::CreateTestFont(
       AtomicString("Noto Emoji Without VS"),
       WPTFontPath("NotoEmoji-Regular_without-cmap14-subset.ttf"), 11);
   return GetGlyphForVariationSequenceFromFont(font, character,
@@ -69,10 +69,10 @@ hb_codepoint_t GetGlyphForStandardizedVSFromFontWithBaseCharOnly() {
   UChar32 character = kMongolianLetterA;
   UChar32 variation_selector = kMongolianFreeVariationSelectorTwo;
 
-  Font font = test::CreateTestFont(AtomicString("Noto Sans Mongolian"),
-                                   blink::test::BlinkWebTestsFontsTestDataPath(
-                                       "noto/NotoSansMongolian-regular.woff2"),
-                                   11);
+  Font* font = test::CreateTestFont(AtomicString("Noto Sans Mongolian"),
+                                    blink::test::BlinkWebTestsFontsTestDataPath(
+                                        "noto/NotoSansMongolian-regular.woff2"),
+                                    11);
   return GetGlyphForVariationSequenceFromFont(font, character,
                                               variation_selector);
 }
@@ -81,7 +81,7 @@ hb_codepoint_t GetGlyphForCJKVSFromFontWithVS() {
   UChar32 character = kFullwidthExclamationMark;
   UChar32 variation_selector = kVariationSelector2Character;
 
-  Font font = test::CreateTestFont(
+  Font* font = test::CreateTestFont(
       AtomicString("Noto Sans CJK JP"),
       blink::test::BlinkWebTestsFontsTestDataPath(
           "noto/cjk/NotoSansCJKjp-Regular-subset-chws.otf"),
@@ -152,7 +152,7 @@ TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestFontWithoutBaseChar) {
   UChar32 character = kFullwidthExclamationMark;
   UChar32 variation_selector = kVariationSelector2Character;
 
-  Font font = test::CreateAhemFont(11);
+  Font* font = test::CreateAhemFont(11);
   EXPECT_FALSE(GetGlyphForVariationSequenceFromFont(font, character,
                                                     variation_selector));
 }
@@ -175,9 +175,12 @@ TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestVariantEmojiEmoji) {
   EXPECT_TRUE(glyph_from_font_with_vs16);
   EXPECT_NE(glyph_from_font_with_vs16, kUnmatchedVSGlyphId);
 
-  hb_codepoint_t glyph_from_font_without_vs =
-      GetGlyphForEmojiVSFromFontWithBaseCharOnly(character, variation_selector);
-  EXPECT_EQ(glyph_from_font_without_vs, kUnmatchedVSGlyphId);
+  if (!RuntimeEnabledFeatures::SystemFallbackEmojiVSSupportEnabled()) {
+    hb_codepoint_t glyph_from_font_without_vs =
+        GetGlyphForEmojiVSFromFontWithBaseCharOnly(character,
+                                                   variation_selector);
+    EXPECT_EQ(glyph_from_font_without_vs, kUnmatchedVSGlyphId);
+  }
 }
 
 TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestVariantEmojiText) {
@@ -198,9 +201,12 @@ TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestVariantEmojiText) {
       GetGlyphForEmojiVSFromFontWithVS16(character, variation_selector);
   EXPECT_EQ(glyph_from_font_with_vs16, kUnmatchedVSGlyphId);
 
-  hb_codepoint_t glyph_from_font_without_vs =
-      GetGlyphForEmojiVSFromFontWithBaseCharOnly(character, variation_selector);
-  EXPECT_EQ(glyph_from_font_without_vs, kUnmatchedVSGlyphId);
+  if (!RuntimeEnabledFeatures::SystemFallbackEmojiVSSupportEnabled()) {
+    hb_codepoint_t glyph_from_font_without_vs =
+        GetGlyphForEmojiVSFromFontWithBaseCharOnly(character,
+                                                   variation_selector);
+    EXPECT_EQ(glyph_from_font_without_vs, kUnmatchedVSGlyphId);
+  }
 }
 
 TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestVariantEmojiUnicode) {
@@ -221,9 +227,12 @@ TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestVariantEmojiUnicode) {
   EXPECT_TRUE(glyph_from_font_with_vs16);
   EXPECT_NE(glyph_from_font_with_vs16, kUnmatchedVSGlyphId);
 
-  hb_codepoint_t glyph_from_font_without_vs =
-      GetGlyphForEmojiVSFromFontWithBaseCharOnly(character, variation_selector);
-  EXPECT_EQ(glyph_from_font_without_vs, kUnmatchedVSGlyphId);
+  if (!RuntimeEnabledFeatures::SystemFallbackEmojiVSSupportEnabled()) {
+    hb_codepoint_t glyph_from_font_without_vs =
+        GetGlyphForEmojiVSFromFontWithBaseCharOnly(character,
+                                                   variation_selector);
+    EXPECT_EQ(glyph_from_font_without_vs, kUnmatchedVSGlyphId);
+  }
 }
 
 TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestVSOverrideVariantEmoji) {
@@ -244,9 +253,12 @@ TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestVSOverrideVariantEmoji) {
       GetGlyphForEmojiVSFromFontWithVS16(character, variation_selector);
   EXPECT_EQ(glyph_from_font_with_vs16, kUnmatchedVSGlyphId);
 
-  hb_codepoint_t glyph_from_font_without_vs =
-      GetGlyphForEmojiVSFromFontWithBaseCharOnly(character, variation_selector);
-  EXPECT_EQ(glyph_from_font_without_vs, kUnmatchedVSGlyphId);
+  if (!RuntimeEnabledFeatures::SystemFallbackEmojiVSSupportEnabled()) {
+    hb_codepoint_t glyph_from_font_without_vs =
+        GetGlyphForEmojiVSFromFontWithBaseCharOnly(character,
+                                                   variation_selector);
+    EXPECT_EQ(glyph_from_font_without_vs, kUnmatchedVSGlyphId);
+  }
 }
 
 // Test emoji variation selectors support in system fallback. We are only
@@ -259,7 +271,6 @@ TEST(HarfBuzzFaceTest, HarfBuzzGetNominalGlyph_TestSystemFallbackEmojiVS) {
       true);
 
   HarfBuzzFace::SetVariationSelectorMode(kUseSpecifiedVariationSelector);
-  HarfBuzzFace::SetIsSystemFallbackStage(true);
 
   UChar32 character = kShakingFaceEmoji;
 

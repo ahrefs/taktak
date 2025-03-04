@@ -77,7 +77,7 @@ void PageLiveStateDecoratorHelperTest::EndToEndStreamPropertyTest(
     media::mojom::DisplayMediaInformationPtr display_media_info,
     bool (PageLiveStateDecorator::Data::*pm_getter)() const) {
   // By default all properties are set to false.
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       pm_getter, false);
 
@@ -87,12 +87,13 @@ void PageLiveStateDecoratorHelperTest::EndToEndStreamPropertyTest(
   device.display_media_info = std::move(display_media_info);
 
   blink::mojom::StreamDevices devices;
-  if (blink::IsAudioInputMediaType(device.type))
+  if (blink::IsAudioInputMediaType(device.type)) {
     devices.audio_device = device;
-  else if (blink::IsVideoInputMediaType(device.type))
+  } else if (blink::IsVideoInputMediaType(device.type)) {
     devices.video_device = device;
-  else
-    NOTREACHED_IN_MIGRATION();
+  } else {
+    NOTREACHED();
+  }
 
   std::unique_ptr<content::MediaStreamUI> ui =
       indicator()->RegisterMediaStream(web_contents(), devices);
@@ -100,13 +101,13 @@ void PageLiveStateDecoratorHelperTest::EndToEndStreamPropertyTest(
                 content::MediaStreamUI::SourceCallback(),
                 /*label=*/std::string(), /*screen_capture_ids=*/{},
                 content::MediaStreamUI::StateChangeCallback());
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       pm_getter, true);
 
   // Switch back to the default state.
   ui.reset();
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       pm_getter, false);
 }
@@ -153,48 +154,53 @@ TEST_F(PageLiveStateDecoratorHelperTest, OnIsCapturingDisplayChanged) {
 }
 
 TEST_F(PageLiveStateDecoratorHelperTest, IsConnectedToBluetoothDevice) {
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsConnectedToBluetoothDevice, false);
   content::WebContentsTester::For(web_contents())
       ->TestIncrementBluetoothConnectedDeviceCount();
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsConnectedToBluetoothDevice, true);
   content::WebContentsTester::For(web_contents())
       ->TestDecrementBluetoothConnectedDeviceCount();
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsConnectedToBluetoothDevice, false);
 }
 
 TEST_F(PageLiveStateDecoratorHelperTest, IsConnectedToUsbDevice) {
-  EXPECT_FALSE(web_contents()->IsConnectedToUsbDevice());
-  testing::TestPageNodePropertyOnPMSequence(
+  EXPECT_FALSE(web_contents()->IsCapabilityActive(
+      content::WebContentsCapabilityType::kUSB));
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsConnectedToUSBDevice, false);
   content::WebContentsTester::For(web_contents())
       ->TestIncrementUsbActiveFrameCount();
-  EXPECT_TRUE(web_contents()->IsConnectedToUsbDevice());
-  testing::TestPageNodePropertyOnPMSequence(
+  EXPECT_TRUE(web_contents()->IsCapabilityActive(
+      content::WebContentsCapabilityType::kUSB));
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsConnectedToUSBDevice, true);
   content::WebContentsTester::For(web_contents())
       ->TestIncrementUsbActiveFrameCount();
-  EXPECT_TRUE(web_contents()->IsConnectedToUsbDevice());
-  testing::TestPageNodePropertyOnPMSequence(
+  EXPECT_TRUE(web_contents()->IsCapabilityActive(
+      content::WebContentsCapabilityType::kUSB));
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsConnectedToUSBDevice, true);
   content::WebContentsTester::For(web_contents())
       ->TestDecrementUsbActiveFrameCount();
-  EXPECT_TRUE(web_contents()->IsConnectedToUsbDevice());
-  testing::TestPageNodePropertyOnPMSequence(
+  EXPECT_TRUE(web_contents()->IsCapabilityActive(
+      content::WebContentsCapabilityType::kUSB));
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsConnectedToUSBDevice, true);
   content::WebContentsTester::For(web_contents())
       ->TestDecrementUsbActiveFrameCount();
-  EXPECT_FALSE(web_contents()->IsConnectedToUsbDevice());
-  testing::TestPageNodePropertyOnPMSequence(
+  EXPECT_FALSE(web_contents()->IsCapabilityActive(
+      content::WebContentsCapabilityType::kUSB));
+  testing::TestPageNodeProperty(
       web_contents(), &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsConnectedToUSBDevice, false);
 }
@@ -244,7 +250,7 @@ TEST_F(PageLiveStateDecoratorHelperTabsTest, IsActiveTab) {
   AddTab(browser(), GURL("http://foo/1"));
   content::WebContents* contents =
       browser()->tab_strip_model()->GetWebContentsAt(0);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsActiveTab, true);
 
@@ -255,25 +261,25 @@ TEST_F(PageLiveStateDecoratorHelperTabsTest, IsActiveTab) {
   content::WebContents* other_contents =
       browser()->tab_strip_model()->GetWebContentsAt(0);
   EXPECT_NE(contents, other_contents);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsActiveTab, false);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       other_contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsActiveTab, true);
 
   // Reactivate the initial tab, the previously active tab is now inactive.
   browser()->tab_strip_model()->ActivateTabAt(1);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsActiveTab, true);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       other_contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsActiveTab, false);
 
   // Deleting a tab automatically makes another one active.
   browser()->tab_strip_model()->DetachAndDeleteWebContentsAt(1);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       other_contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsActiveTab, true);
 }
@@ -283,17 +289,17 @@ TEST_F(PageLiveStateDecoratorHelperTabsTest, IsPinnedTab) {
   AddTab(browser(), GURL("http://foo/1"));
   content::WebContents* contents =
       browser()->tab_strip_model()->GetWebContentsAt(0);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsPinnedTab, false);
 
   browser()->tab_strip_model()->SetTabPinned(0, true);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsPinnedTab, true);
 
   browser()->tab_strip_model()->SetTabPinned(0, false);
-  testing::TestPageNodePropertyOnPMSequence(
+  testing::TestPageNodeProperty(
       contents, &PageLiveStateDecorator::Data::GetOrCreateForPageNode,
       &PageLiveStateDecorator::Data::IsPinnedTab, false);
 }

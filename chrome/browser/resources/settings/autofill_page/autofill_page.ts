@@ -9,7 +9,7 @@
  */
 import 'chrome://resources/cr_elements/cr_link_row/cr_link_row.js';
 import 'chrome://resources/cr_elements/cr_shared_vars.css.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
+import 'chrome://resources/cr_elements/icons.html.js';
 import '/shared/settings/prefs/prefs.js';
 import '../settings_page/settings_animated_pages.js';
 import '../settings_page/settings_subpage.js';
@@ -25,7 +25,6 @@ import '../icons.html.js';
 import {I18nMixin} from '//resources/cr_elements/i18n_mixin.js';
 import {PrefsMixin} from '/shared/settings/prefs/prefs_mixin.js';
 import type {CrLinkRowElement} from 'chrome://resources/cr_elements/cr_link_row/cr_link_row.js';
-import {OpenWindowProxyImpl} from 'chrome://resources/js/open_window_proxy.js';
 import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 
 import {BaseMixin} from '../base_mixin.js';
@@ -34,8 +33,8 @@ import {routes} from '../route.js';
 import {Router} from '../router.js';
 
 import {getTemplate} from './autofill_page.html.js';
+import {EntityDataManagerProxyImpl} from './entity_data_manager_proxy.js';
 import {PasswordManagerImpl, PasswordManagerPage} from './password_manager_proxy.js';
-import {UserAnnotationsManagerProxyImpl} from './user_annotations_manager_proxy.js';
 
 const SettingsAutofillPageElementBase =
     PrefsMixin(I18nMixin(BaseMixin(PolymerElement)));
@@ -87,53 +86,51 @@ export class SettingsAutofillPageElement extends
         },
       },
 
-      userEligbleForAutofillPredictionImprovements_: {
+      userEligibleForAutofillAi_: {
+        type: Boolean,
+        value() {
+          return loadTimeData.getBoolean('userEligibleForAutofillAi');
+        },
+      },
+
+      userHasAutofillAiEntries_: {
         type: Boolean,
         value: false,
       },
 
-
-      userHasAutofillPredictionImprovementsEntries_: {
+      autofillAiAvailable_: {
         type: Boolean,
-        value: false,
-      },
-
-      autofillPredictionImprovementsAvailable_: {
-        type: Boolean,
-        computed: 'computeAutofillPredictionImprovementsAvailable_(' +
-            'userEligbleForAutofillPredictionImprovements_, ' +
-            'userHasAutofillPredictionImprovementsEntries_)',
+        computed: 'computeAutofillAiAvailable_(userEligibleForAutofillAi_, ' +
+            'userHasAutofillAiEntries_)',
       },
     };
   }
 
   private passkeyFilter_: string;
-  private userEligbleForAutofillPredictionImprovements_: boolean;
-  private userHasAutofillPredictionImprovementsEntries_: boolean;
-  private autofillPredictionImprovementsAvailable_: boolean;
+  private userEligibleForAutofillAi_: boolean;
+  private userHasAutofillAiEntries_: boolean;
+  private autofillAiAvailable_: boolean;
   private focusConfig_: Map<string, string>;
 
   override connectedCallback() {
     super.connectedCallback();
-    // TODO(crbug.com/368565649): Consider updating on sign-in state changes.
-    UserAnnotationsManagerProxyImpl.getInstance().isUserEligible().then(
-        eliglble => {
-          this.userEligbleForAutofillPredictionImprovements_ = eliglble;
-        });
-    UserAnnotationsManagerProxyImpl.getInstance().hasEntries().then(value => {
-      this.userHasAutofillPredictionImprovementsEntries_ = value;
-    });
+    if (loadTimeData.getBoolean('autofillAiFeatureEnabled')) {
+      EntityDataManagerProxyImpl.getInstance().loadEntityInstances().then(
+          entities => {
+            this.userHasAutofillAiEntries_ = entities.length > 0;
+          });
+    }
   }
 
   /**
-   * Computes `autofillPredictionImprovementsAvailable_`.
+   * Computes `autofillAiAvailable_`.
    */
-  private computeAutofillPredictionImprovementsAvailable_(): boolean {
-    return loadTimeData.getBoolean('autofillPredictionImprovementsEnabled') &&
-        (this.userEligbleForAutofillPredictionImprovements_ ||
-         this.userHasAutofillPredictionImprovementsEntries_);
+  private computeAutofillAiAvailable_(): boolean {
+    // Users who are not eligible but have data saved are able to access the
+    // Autofill Ai settings page, so that they can update or delete their data.
+    return loadTimeData.getBoolean('autofillAiFeatureEnabled') &&
+        (this.userEligibleForAutofillAi_ || this.userHasAutofillAiEntries_);
   }
-
 
   /**
    * Shows the manage addresses sub page.
@@ -158,16 +155,11 @@ export class SettingsAutofillPageElement extends
         PasswordManagerPage.PASSWORDS);
   }
 
-  private onPlusAddressClick_() {
-    OpenWindowProxyImpl.getInstance().openUrl(
-        loadTimeData.getString('plusAddressManagementUrl'));
-  }
-
   /**
-   * Shows the prediction improvements settings sub page.
+   * Shows the Autofill AI settings sub page.
    */
-  private onAutofillPredictionImprovementsClick_() {
-    Router.getInstance().navigateTo(routes.AUTOFILL_PREDICTION_IMPROVEMENTS);
+  private onAutofillAiClick_() {
+    Router.getInstance().navigateTo(routes.AUTOFILL_AI);
   }
 
   /**

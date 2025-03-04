@@ -84,7 +84,7 @@ class OmniboxResultViewTest : public ChromeViewsTestBase {
     views::View* root_view = widget_->GetRootView();
     root_view->SetBoundsRect(gfx::Rect(0, 0, 500, 500));
     result_view_->SetBoundsRect(gfx::Rect(0, 0, 100, 100));
-    root_view->AddChildView(result_view_.get());
+    root_view->AddChildViewRaw(result_view_.get());
 
     // Start by not hovering over the result view.
     FakeMouseEvent(ui::EventType::kMouseMoved, 0, 200, 200);
@@ -273,8 +273,7 @@ TEST_F(OmniboxResultViewTest, AccessibleProperties) {
   AutocompleteMatch match(nullptr, 500, false,
                           AutocompleteMatchType::HISTORY_TITLE);
   match.contents = match_url;
-  match.contents_class.push_back(
-      ACMatchClassification(0, ACMatchClassification::URL));
+  match.contents_class.emplace_back(0, ACMatchClassification::URL);
   match.destination_url = GURL(match_url);
   match.description = u"Google";
   match.allowed_to_be_default_match = true;
@@ -283,10 +282,6 @@ TEST_F(OmniboxResultViewTest, AccessibleProperties) {
   result_view()->GetViewAccessibility().GetAccessibleNodeData(
       &result_node_data);
   EXPECT_EQ(result_node_data.role, ax::mojom::Role::kListBoxOption);
-  // TODO(tommycli) Find a way to test this.
-  // EXPECT_EQ(
-  //   result_node_data.GetString16Attribute(ax::mojom::StringAttribute::kName),
-  //   u"Google https://google.com location from history");
   EXPECT_EQ(
       result_node_data.GetIntAttribute(ax::mojom::IntAttribute::kPosInSet),
       int{kTestResultViewIndex} + 1);

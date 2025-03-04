@@ -241,7 +241,7 @@ class COMPONENT_EXPORT(CHROMEOS_NETWORK) NetworkState : public ManagedState {
   bool IsNonShillCellularNetwork() const;
 
   // Returns the state of automatic captive portal detection for the network.
-  PortalState GetPortalState() const { return portal_state_; }
+  PortalState portal_state() const { return portal_state_; }
 
   // Returns true if the security type is non-empty and not 'none'.
   bool IsSecure() const;
@@ -313,7 +313,6 @@ class COMPONENT_EXPORT(CHROMEOS_NETWORK) NetworkState : public ManagedState {
   constexpr static const int kSignalStrengthChangeThreshold = 5;
 
  private:
-  friend class MobileActivatorTest;
   friend class NetworkStateHandler;
   friend class NetworkStateTest;
 

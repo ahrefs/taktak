@@ -33,6 +33,7 @@ class PinSetupScreen : public BaseScreen {
     kTimedOut,
     kUserChosePassword,
     kDoneAsMainFactor,
+    kDoneRecoveryReset,
   };
 
   // Detailed reason describing why the screen is being skipped.
@@ -45,7 +46,6 @@ class PinSetupScreen : public BaseScreen {
     kUsupportedHardware,
     kNotSupportedAsPrimaryFactor,
     kNotSupportedAsPrimaryFactorForManagedUsers,
-    kPinAlreadySet,
   };
 
   // This enum is tied directly to a UMA enum defined in

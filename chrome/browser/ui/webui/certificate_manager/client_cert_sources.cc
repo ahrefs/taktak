@@ -38,7 +38,10 @@
 #include "ui/webui/resources/cr_components/certificate_manager/certificate_manager_v2.mojom.h"
 
 #if BUILDFLAG(USE_NSS_CERTS)
+#include "chrome/browser/net/nss_service.h"
+#include "chrome/browser/net/nss_service_factory.h"
 #include "chrome/browser/ui/crypto_module_delegate_nss.h"
+#include "net/cert/nss_cert_database.h"
 #include "net/cert/x509_util_nss.h"
 #include "net/ssl/client_cert_store_nss.h"
 #endif  // BUILDFLAG(USE_NSS_CERTS)
@@ -59,25 +62,19 @@
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/certificate_provider/certificate_provider.h"
-#include "chrome/browser/certificate_provider/certificate_provider_service.h"
-#include "chrome/browser/certificate_provider/certificate_provider_service_factory.h"
-#endif
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "ash/components/kcer/kcer.h"
-#include "ash/components/kcer/kcer_histograms.h"
 #include "ash/constants/ash_features.h"
 #include "chrome/browser/ash/kcer/kcer_factory_ash.h"
 #include "chrome/browser/ash/net/client_cert_store_ash.h"
 #include "chrome/browser/ash/net/client_cert_store_kcer.h"
 #include "chrome/browser/ash/profiles/profile_helper.h"
-#include "chrome/browser/net/nss_service.h"
-#include "chrome/browser/net/nss_service_factory.h"
+#include "chrome/browser/certificate_provider/certificate_provider.h"
+#include "chrome/browser/certificate_provider/certificate_provider_service.h"
+#include "chrome/browser/certificate_provider/certificate_provider_service_factory.h"
+#include "chromeos/ash/components/kcer/kcer.h"
+#include "chromeos/ash/components/kcer/kcer_histograms.h"
 #include "chromeos/constants/chromeos_features.h"
 #include "components/user_manager/user.h"
 #include "components/user_manager/user_manager.h"
-#include "net/cert/nss_cert_database.h"
 #endif
 
 namespace {
@@ -130,7 +127,7 @@ class ClientCertStoreLoader {
       active_requests_;
 };
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 class ClientCertStoreFactoryAsh : public ClientCertStoreFactory {
  public:
   explicit ClientCertStoreFactoryAsh(Profile* profile) : profile_(profile) {}
@@ -177,13 +174,10 @@ class ClientCertStoreFactoryMac : public ClientCertStoreFactory {
 };
 #endif
 
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
+#if !BUILDFLAG(IS_CHROMEOS) && !BUILDFLAG(IS_LINUX)
 std::unique_ptr<ClientCertStoreLoader> CreatePlatformClientCertLoader(
     Profile* profile) {
-#if BUILDFLAG(USE_NSS_CERTS)
-  return std::make_unique<ClientCertStoreLoader>(
-      std::make_unique<ClientCertStoreFactoryNSS>());
-#elif BUILDFLAG(IS_WIN)
+#if BUILDFLAG(IS_WIN)
   return std::make_unique<ClientCertStoreLoader>(
       std::make_unique<ClientCertStoreFactoryWin>());
 #elif BUILDFLAG(IS_MAC)
@@ -353,12 +347,16 @@ class ClientCertSource : public CertificateManagerPageHandler::CertSource {
   std::optional<net::CertificateList> certs_;
 };
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-// ChromeOS currently can use either Kcer or NSS for listing client certs. This
-// interface provides an abstraction to hide that from CrosClientCertSource.
-// Once NSS client cert support is removed, this could just be merged into
-// CrosClientCertSource.
-class CrosCertLoader : public CertificateManagerPageHandler::CertSource {
+#if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX)
+// ChromeOS currently can use either Kcer or NSS for listing client certs, and
+// Linux uses NSS only. This interface provides an abstraction to hide that
+// from WritableClientCertSource. Currently this class only handles reading
+// from the database and writing is still handled directly inside
+// WritableClientCertSource (even when Kcer is enabled, the ChromeOS code still
+// writes to both NSS and Kcer). Once NSS client cert support is removed on
+// ChromeOS, consider if things should be refactored as then NSS will only be
+// used on Linux and Kcer will only be used on ChromeOS.
+class WritableCertLoader : public CertificateManagerPageHandler::CertSource {
  public:
   virtual void RefreshCachedCertificateList(base::OnceClosure callback) = 0;
 
@@ -370,7 +368,7 @@ class CrosCertLoader : public CertificateManagerPageHandler::CertSource {
       return;
     }
     RefreshCachedCertificateList(
-        base::BindOnce(&CrosCertLoader::ReplyToGetCertificatesCallback,
+        base::BindOnce(&WritableCertLoader::ReplyToGetCertificatesCallback,
                        weak_ptr_factory_.GetWeakPtr(), std::move(callback)));
   }
 
@@ -430,14 +428,25 @@ class CrosCertLoader : public CertificateManagerPageHandler::CertSource {
   std::optional<std::vector<CertInfo>> certs_;
 
  private:
-  base::WeakPtrFactory<CrosCertLoader> weak_ptr_factory_{this};
+  base::WeakPtrFactory<WritableCertLoader> weak_ptr_factory_{this};
 };
 
-class CrosKcerLoader : public CrosCertLoader {
+#if BUILDFLAG(IS_CHROMEOS)
+class KcerLoader : public WritableCertLoader {
  public:
-  explicit CrosKcerLoader(Profile* profile)
-      : profile_(profile), kcer_(kcer::KcerFactoryAsh::GetKcer(profile)) {}
-  ~CrosKcerLoader() override = default;
+  explicit KcerLoader(
+      Profile* profile,
+      mojo::Remote<certificate_manager_v2::mojom::CertificateManagerPage>*
+          remote_client)
+      : profile_(profile),
+        remote_client_(remote_client),
+        kcer_(kcer::KcerFactoryAsh::GetKcer(profile)) {
+    if (kcer_) {
+      observer_callback_ = kcer_->AddObserver(base::BindRepeating(
+          &KcerLoader::OnCertDbChanged, weak_ptr_factory_.GetWeakPtr()));
+    }
+  }
+  ~KcerLoader() override = default;
 
   void RefreshCachedCertificateList(base::OnceClosure callback) override {
     if (!kcer_) {
@@ -445,12 +454,23 @@ class CrosKcerLoader : public CrosCertLoader {
       return;
     }
 
-    kcer_->GetAvailableTokens(base::BindOnce(&CrosKcerLoader::GotKcerTokens,
+    kcer_->GetAvailableTokens(base::BindOnce(&KcerLoader::GotKcerTokens,
                                              weak_ptr_factory_.GetWeakPtr(),
                                              std::move(callback)));
   }
 
+  void OnCertDbChanged() {
+    RefreshCachedCertificateList(base::BindOnce(
+        &KcerLoader::TriggerReload, weak_ptr_factory_.GetWeakPtr()));
+  }
+
  private:
+  void TriggerReload() {
+    (*remote_client_)
+        ->TriggerReload({certificate_manager_v2::mojom::CertificateSource::
+                             kPlatformClientCert});
+  }
+
   void GotKcerTokens(base::OnceClosure callback,
                      base::flat_set<kcer::Token> tokens) {
     if (!kcer_) {
@@ -460,7 +480,7 @@ class CrosKcerLoader : public CrosCertLoader {
 
     kcer_->ListCerts(
         std::move(tokens),
-        base::BindOnce(&CrosKcerLoader::GotKcerCerts,
+        base::BindOnce(&KcerLoader::GotKcerCerts,
                        weak_ptr_factory_.GetWeakPtr(), std::move(callback)));
   }
 
@@ -497,17 +517,27 @@ class CrosKcerLoader : public CrosCertLoader {
   }
 
   raw_ptr<Profile> profile_;
+  raw_ptr<mojo::Remote<certificate_manager_v2::mojom::CertificateManagerPage>>
+      remote_client_;
   base::WeakPtr<kcer::Kcer> kcer_;
-  base::WeakPtrFactory<CrosKcerLoader> weak_ptr_factory_{this};
+  base::CallbackListSubscription observer_callback_;
+  base::WeakPtrFactory<KcerLoader> weak_ptr_factory_{this};
 };
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
-class CrosNSSLoader : public CrosCertLoader {
+class NSSLoader : public WritableCertLoader {
  public:
-  explicit CrosNSSLoader(Profile* profile)
+  explicit NSSLoader(Profile* profile)
       : profile_(profile),
         loader_(std::make_unique<ClientCertStoreLoader>(
-            std::make_unique<ClientCertStoreFactoryAsh>(profile))) {}
-  ~CrosNSSLoader() override = default;
+#if BUILDFLAG(IS_CHROMEOS)
+            std::make_unique<ClientCertStoreFactoryAsh>(profile)
+#else
+            std::make_unique<ClientCertStoreFactoryNSS>()
+#endif
+                )) {
+  }
+  ~NSSLoader() override = default;
 
   void RefreshCachedCertificateList(base::OnceClosure callback) override {
     if (!loader_) {
@@ -515,7 +545,7 @@ class CrosNSSLoader : public CrosCertLoader {
       return;
     }
 
-    loader_->GetCerts(base::BindOnce(&CrosNSSLoader::SaveCertsAndRespond,
+    loader_->GetCerts(base::BindOnce(&NSSLoader::SaveCertsAndRespond,
                                      weak_ptr_factory_.GetWeakPtr(),
                                      std::move(callback)));
   }
@@ -544,27 +574,32 @@ class CrosNSSLoader : public CrosCertLoader {
  private:
   raw_ptr<Profile> profile_;
   std::unique_ptr<ClientCertStoreLoader> loader_;
-  base::WeakPtrFactory<CrosNSSLoader> weak_ptr_factory_{this};
+  base::WeakPtrFactory<NSSLoader> weak_ptr_factory_{this};
 };
 
 // Subclass of ClientCertSource that also allows importing client certificates
-// to the ChromeOS client cert store.
-class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
-                             public ui::SelectFileDialog::Listener {
+// to the ChromeOS or Linux client cert store.
+class WritableClientCertSource
+    : public CertificateManagerPageHandler::CertSource,
+      public ui::SelectFileDialog::Listener {
  public:
-  explicit CrosClientCertSource(
+  explicit WritableClientCertSource(
       mojo::Remote<certificate_manager_v2::mojom::CertificateManagerPage>*
           remote_client,
       Profile* profile)
       : remote_client_(remote_client), profile_(profile) {
+#if BUILDFLAG(IS_CHROMEOS)
     if (ash::features::ShouldUseKcerClientCertStore()) {
-      cros_cert_loader_ = std::make_unique<CrosKcerLoader>(profile);
+      cert_loader_ = std::make_unique<KcerLoader>(profile, remote_client);
     } else {
-      cros_cert_loader_ = std::make_unique<CrosNSSLoader>(profile);
+      cert_loader_ = std::make_unique<NSSLoader>(profile);
     }
+#else
+    cert_loader_ = std::make_unique<NSSLoader>(profile);
+#endif
   }
 
-  ~CrosClientCertSource() override {
+  ~WritableClientCertSource() override {
     if (select_file_dialog_) {
       select_file_dialog_->ListenerDestroyed();
     }
@@ -573,14 +608,13 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
   void GetCertificateInfos(
       CertificateManagerPageHandler::GetCertificatesCallback callback)
       override {
-    cros_cert_loader_->GetCertificateInfos(std::move(callback));
+    cert_loader_->GetCertificateInfos(std::move(callback));
   }
 
   void ViewCertificate(
       const std::string& sha256_hex_hash,
       base::WeakPtr<content::WebContents> web_contents) override {
-    cros_cert_loader_->ViewCertificate(sha256_hex_hash,
-                                       std::move(web_contents));
+    cert_loader_->ViewCertificate(sha256_hex_hash, std::move(web_contents));
   }
 
   void ImportCertificate(
@@ -600,34 +634,19 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
   }
 
   void DeleteCertificate(
+      const std::string& display_name,
       const std::string& sha256hash_hex,
       CertificateManagerPageHandler::DeleteCertificateCallback callback)
       override {
-    scoped_refptr<net::X509Certificate> cert =
-        cros_cert_loader_->FindCertificate(sha256hash_hex);
-    if (!cert) {
-      // This error is not expected to be displayed under normal circumstances,
-      // so it's not localized.
-      std::move(callback).Run(
-          certificate_manager_v2::mojom::ActionResult::NewError(
-              "cert not found"));
-      return;
-    }
-
-    std::u16string cert_title =
-        base::UTF8ToUTF16(x509_certificate_model::X509CertificateModel(
-                              bssl::UpRef(cert->cert_buffer()), "")
-                              .GetTitle());
-
     (*remote_client_)
         ->AskForConfirmation(
             l10n_util::GetStringFUTF8(
                 IDS_SETTINGS_CERTIFICATE_MANAGER_V2_DELETE_CERT_TITLE,
-                cert_title),
+                base::UTF8ToUTF16(display_name)),
             l10n_util::GetStringUTF8(
                 IDS_SETTINGS_CERTIFICATE_MANAGER_V2_DELETE_CLIENT_CERT_DESCRIPTION),
             base::BindOnce(
-                &CrosClientCertSource::GotDeleteCertificateConfirmation,
+                &WritableClientCertSource::GotDeleteCertificateConfirmation,
                 weak_ptr_factory_.GetWeakPtr(), sha256hash_hex,
                 std::move(callback)));
   }
@@ -670,7 +689,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
         base::FilePath(), &file_type_info,
         1,  // 1-based index for |file_type_info.extensions| to specify default.
         FILE_PATH_LITERAL("p12"), web_contents->GetTopLevelNativeWindow(),
-        /*params=*/nullptr);
+        /*caller=*/nullptr);
   }
 
   // ui::SelectFileDialog::Listener
@@ -688,7 +707,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
         {base::MayBlock(), base::TaskPriority::USER_BLOCKING,
          base::TaskShutdownBehavior::CONTINUE_ON_SHUTDOWN},
         base::BindOnce(&base::ReadFileToBytes, file.path()),
-        base::BindOnce(&CrosClientCertSource::FileRead,
+        base::BindOnce(&WritableClientCertSource::FileRead,
                        weak_ptr_factory_.GetWeakPtr()));
   }
 
@@ -710,7 +729,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
 
     (*remote_client_)
         ->AskForImportPassword(base::BindOnce(
-            &CrosClientCertSource::GotImportPassword,
+            &WritableClientCertSource::GotImportPassword,
             weak_ptr_factory_.GetWeakPtr(), std::move(*file_bytes)));
   }
 
@@ -725,13 +744,14 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
     content::GetIOThreadTaskRunner({})->PostTask(
         FROM_HERE,
         base::BindOnce(
-            &CrosClientCertSource::GetCertDBOnIOThread,
+            &WritableClientCertSource::GetCertDBOnIOThread,
             NssServiceFactory::GetForContext(profile_)
                 ->CreateNSSCertDatabaseGetterForIOThread(),
             base::BindOnce(
-                &CrosClientCertSource::GotNSSCertDatabaseForImportOnIOThread,
+                &WritableClientCertSource::
+                    GotNSSCertDatabaseForImportOnIOThread,
                 import_hardware_backed_, std::move(file_bytes), *password,
-                base::BindOnce(&CrosClientCertSource::FinishedNSSImport,
+                base::BindOnce(&WritableClientCertSource::FinishedNSSImport,
                                weak_ptr_factory_.GetWeakPtr()))));
   }
 
@@ -786,6 +806,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
                          int nss_import_result) {
     DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
+#if BUILDFLAG(IS_CHROMEOS)
     if (nss_import_result == net::OK) {
       kcer::RecordPkcs12MigrationUmaEvent(
           kcer::Pkcs12MigrationUmaEvent::kPkcs12ImportNssSuccess);
@@ -809,7 +830,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
               std::move(password),
               /*hardware_backed=*/import_hardware_backed_,
               /*mark_as_migrated=*/true,
-              base::BindOnce(&CrosClientCertSource::FinishedKcerImport,
+              base::BindOnce(&WritableClientCertSource::FinishedKcerImport,
                              weak_ptr_factory_.GetWeakPtr(),
                              nss_import_result));
         }
@@ -818,10 +839,12 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
       kcer::RecordPkcs12MigrationUmaEvent(
           kcer::Pkcs12MigrationUmaEvent::kPkcs12ImportNssFailed);
     }
+#endif
 
     ReplyToImportCallback(nss_import_result);
   }
 
+#if BUILDFLAG(IS_CHROMEOS)
   void FinishedKcerImport(
       int nss_import_result,
       base::expected<void, kcer::Error> kcer_import_result) {
@@ -840,6 +863,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
     // NSS succeeds and even if Kcer fails, the cert should be usable.
     ReplyToImportCallback(nss_import_result);
   }
+#endif
 
   void ReplyToImportCallback(int nss_import_result) {
     DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
@@ -847,7 +871,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
     if (nss_import_result == net::OK) {
       // Refresh the certificate list to include the newly imported cert, and
       // call the import complete callback once the list has been updated.
-      cros_cert_loader_->RefreshCachedCertificateList(base::BindOnce(
+      cert_loader_->RefreshCachedCertificateList(base::BindOnce(
           std::move(import_callback_),
           certificate_manager_v2::mojom::ActionResult::NewSuccess(
               certificate_manager_v2::mojom::SuccessResult::kSuccess)));
@@ -889,7 +913,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
     }
 
     scoped_refptr<net::X509Certificate> cert =
-        cros_cert_loader_->FindCertificate(sha256hash_hex);
+        cert_loader_->FindCertificate(sha256hash_hex);
     if (!cert) {
       // This error is not expected to be displayed under normal circumstances,
       // so it's not localized.
@@ -902,13 +926,14 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
     content::GetIOThreadTaskRunner({})->PostTask(
         FROM_HERE,
         base::BindOnce(
-            &CrosClientCertSource::GetCertDBOnIOThread,
+            &WritableClientCertSource::GetCertDBOnIOThread,
             NssServiceFactory::GetForContext(profile_)
                 ->CreateNSSCertDatabaseGetterForIOThread(),
             base::BindOnce(
-                &CrosClientCertSource::GotNSSCertDatabaseForDeleteOnIOThread,
+                &WritableClientCertSource::
+                    GotNSSCertDatabaseForDeleteOnIOThread,
                 cert, ClientCertManagementAccessControls(profile_),
-                base::BindOnce(&CrosClientCertSource::FinishedDelete,
+                base::BindOnce(&WritableClientCertSource::FinishedDelete,
                                weak_ptr_factory_.GetWeakPtr(),
                                std::move(callback)))));
   }
@@ -935,10 +960,15 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
             ? ClientCertManagementAccessControls::kHardwareBacked
             : ClientCertManagementAccessControls::kSoftwareBacked;
     const auto device_wide =
+#if BUILDFLAG(IS_CHROMEOS)
         cert_db->IsCertificateOnSlot(nss_cert.get(),
                                      cert_db->GetSystemSlot().get())
             ? ClientCertManagementAccessControls::kDeviceWide
-            : ClientCertManagementAccessControls::kUser;
+            : ClientCertManagementAccessControls::kUser
+#else
+        ClientCertManagementAccessControls::kUser
+#endif
+        ;
     if (!client_cert_policy.IsChangeAllowed(hardware_backed, device_wide)) {
       content::GetUIThreadTaskRunner({})->PostTask(
           FROM_HERE,
@@ -960,7 +990,7 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
     if (delete_result) {
       // Refresh the certificate list to remove the deleted cert, and
       // call the deletion complete callback once the list has been updated.
-      cros_cert_loader_->RefreshCachedCertificateList(base::BindOnce(
+      cert_loader_->RefreshCachedCertificateList(base::BindOnce(
           std::move(callback),
           certificate_manager_v2::mojom::ActionResult::NewSuccess(
               certificate_manager_v2::mojom::SuccessResult::kSuccess)));
@@ -974,16 +1004,16 @@ class CrosClientCertSource : public CertificateManagerPageHandler::CertSource,
     }
   }
 
-  std::unique_ptr<CrosCertLoader> cros_cert_loader_;
+  std::unique_ptr<WritableCertLoader> cert_loader_;
   scoped_refptr<ui::SelectFileDialog> select_file_dialog_;
   bool import_hardware_backed_;
   CertificateManagerPageHandler::ImportCertificateCallback import_callback_;
   raw_ptr<mojo::Remote<certificate_manager_v2::mojom::CertificateManagerPage>>
       remote_client_;
   raw_ptr<Profile> profile_;
-  base::WeakPtrFactory<CrosClientCertSource> weak_ptr_factory_{this};
+  base::WeakPtrFactory<WritableClientCertSource> weak_ptr_factory_{this};
 };
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if BUILDFLAG(IS_CHROMEOS)
 class ExtensionsClientCertSource
@@ -1048,8 +1078,8 @@ CreatePlatformClientCertSource(
     mojo::Remote<certificate_manager_v2::mojom::CertificateManagerPage>*
         remote_client,
     Profile* profile) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  return std::make_unique<CrosClientCertSource>(remote_client, profile);
+#if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX)
+  return std::make_unique<WritableClientCertSource>(remote_client, profile);
 #else
   return std::make_unique<ClientCertSource>(
       CreatePlatformClientCertLoader(profile));
@@ -1074,7 +1104,6 @@ CreateExtensionsClientCertSource(Profile* profile) {
       certificate_provider_service->CreateCertificateProvider());
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
 ClientCertManagementAccessControls::ClientCertManagementAccessControls(
     Profile* profile)
     : is_guest_(
@@ -1106,6 +1135,21 @@ bool ClientCertManagementAccessControls::IsChangeAllowed(
 
   return client_cert_policy_ == ClientCertificateManagementPermission::kAll;
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#elif BUILDFLAG(IS_LINUX)
+ClientCertManagementAccessControls::ClientCertManagementAccessControls(
+    Profile* profile) {}
 
-#endif
+// The ClientCertificateManagementAllowed enterprise policy is ChromeOS only.
+// There's no technical reason it couldn't be supported on Linux too, but
+// unless someone asks for it, keeping the status quo is fine.
+bool ClientCertManagementAccessControls::IsManagementAllowed(
+    KeyStorage key_storage) const {
+  return true;
+}
+
+bool ClientCertManagementAccessControls::IsChangeAllowed(
+    KeyStorage key_storage,
+    CertLocation cert_location) const {
+  return true;
+}
+#endif  // BUILDFLAG(IS_LINUX)

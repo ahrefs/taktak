@@ -153,8 +153,6 @@ class PLATFORM_EXPORT PendingLayer {
     return content_layer_client_.Get();
   }
 
-  void UpdateCcLayerHitTestOpaqueness() const;
-
   // For this PendingLayer, creates a composited layer or uses the existing
   // one in |old_pending_layer|, and updates the layer according to the current
   // contents and properties of this PendingLayer.
@@ -164,9 +162,14 @@ class PLATFORM_EXPORT PendingLayer {
                              cc::LayerTreeHost*);
 
   // A lighter version of UpdateCompositedLayer(). Called when the existing
-  // composited layer has only repainted since the last update.
+  // composited layer has only repainted since the last update
   void UpdateCompositedLayerForRepaint(const PaintArtifact& repainted_artifact,
                                        cc::LayerSelection&);
+
+  // Another lighter version of UpdateCompositedLayers(). Called after
+  // raster-inducing scrolls that don't need repaint or PaintArtifactCompositor
+  // update.
+  void UpdateForRasterInducingScroll();
 
   SkColor4f ComputeBackgroundColor() const;
 

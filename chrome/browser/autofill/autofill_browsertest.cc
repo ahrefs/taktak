@@ -18,6 +18,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/test/gmock_callback_support.h"
 #include "base/test/scoped_command_line.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/time/time.h"
@@ -35,17 +36,17 @@
 #include "chrome/test/base/ui_test_utils.h"
 #include "components/autofill/content/browser/content_autofill_driver.h"
 #include "components/autofill/content/browser/test_autofill_manager_injector.h"
-#include "components/autofill/core/browser/address_data_manager.h"
-#include "components/autofill/core/browser/address_data_manager_test_api.h"
-#include "components/autofill/core/browser/autofill_test_utils.h"
-#include "components/autofill/core/browser/browser_autofill_manager.h"
-#include "components/autofill/core/browser/data_model/autofill_profile.h"
-#include "components/autofill/core/browser/data_model/credit_card.h"
-#include "components/autofill/core/browser/personal_data_manager.h"
-#include "components/autofill/core/browser/personal_data_manager_observer.h"
-#include "components/autofill/core/browser/personal_data_manager_test_utils.h"
-#include "components/autofill/core/browser/test_autofill_manager_waiter.h"
-#include "components/autofill/core/browser/validation.h"
+#include "components/autofill/core/browser/data_manager/addresses/address_data_manager.h"
+#include "components/autofill/core/browser/data_manager/addresses/address_data_manager_test_api.h"
+#include "components/autofill/core/browser/data_manager/personal_data_manager.h"
+#include "components/autofill/core/browser/data_manager/personal_data_manager_observer.h"
+#include "components/autofill/core/browser/data_manager/personal_data_manager_test_utils.h"
+#include "components/autofill/core/browser/data_model/addresses/autofill_profile.h"
+#include "components/autofill/core/browser/data_model/payments/credit_card.h"
+#include "components/autofill/core/browser/data_quality/validation.h"
+#include "components/autofill/core/browser/foundations/browser_autofill_manager.h"
+#include "components/autofill/core/browser/foundations/test_autofill_manager_waiter.h"
+#include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #include "components/autofill/core/common/autofill_features.h"
 #include "components/autofill/core/common/mojom/autofill_types.mojom-shared.h"
 #include "components/keyed_service/core/service_access_type.h"
@@ -76,16 +77,13 @@ namespace {
 
 using ::base::ASCIIToUTF16;
 using ::base::UTF16ToASCII;
+using ::base::test::RunClosure;
 using ::testing::_;
 using ::testing::AssertionResult;
 using ::testing::MockFunction;
 using ::testing::Sequence;
 using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
-
-ACTION_P(InvokeClosure, closure) {
-  closure.Run();
-}
 
 // Default JavaScript code used to submit the forms.
 const char kDocumentClickHandlerSubmitJS[] =
@@ -98,7 +96,7 @@ class AutofillTest : public InProcessBrowserTest {
   class TestAutofillManager : public BrowserAutofillManager {
    public:
     explicit TestAutofillManager(ContentAutofillDriver* driver)
-        : BrowserAutofillManager(driver, "en-US") {}
+        : BrowserAutofillManager(driver) {}
 
     [[nodiscard]] AssertionResult WaitForFormsSeen(int min_num_awaited_calls) {
       return forms_seen_waiter_.Wait(min_num_awaited_calls);
@@ -110,7 +108,7 @@ class AutofillTest : public InProcessBrowserTest {
         {AutofillManagerEvent::kFormsSeen}};
   };
 
-  AutofillTest() {}
+  AutofillTest() = default;
 
   void SetUpOnMainThread() override {
     InProcessBrowserTest::SetUpOnMainThread();
@@ -167,7 +165,7 @@ class AutofillTest : public InProcessBrowserTest {
   }
 
   // Helper where the actual submit JS code can be specified, as well as whether
-  // the test should |simulate_click| on the document.
+  // the test should `simulate_click` on the document.
   void FillFormAndSubmitWithHandler(const std::string& filename,
                                     const FormMap& data,
                                     const std::string& submit_js,
@@ -429,16 +427,11 @@ IN_PROC_BROWSER_TEST_F(AutofillTest, ProfileSavedWithValidCountryPhone) {
   // Two valid phone numbers are imported, two invalid ones are removed.
   EXPECT_THAT(
       actual_phone_numbers,
-      UnorderedElementsAre(base::FeatureList::IsEnabled(
-                               features::kAutofillInferCountryCallingCode)
-                               ? u"14088714567"
-                               : u"4088714567",
-                           u"+4940808179000", u"", u""));
+      UnorderedElementsAre(u"14088714567", u"+4940808179000", u"", u""));
 }
 
-// Prepend country codes when formatting phone numbers if:
-// - It was provided in the first place.
-// - `AutofillInferCountryCallingCode` is enabled.
+// Prepend country codes when formatting phone numbers if it was provided or if
+// it could be inferred form the provided country.
 IN_PROC_BROWSER_TEST_F(AutofillTest, AppendCountryCodeForAggregatedPhones) {
   FormMap data = {{"NAME_FIRST", "Bob"},
                   {"NAME_LAST", "Smith"},
@@ -461,13 +454,10 @@ IN_PROC_BROWSER_TEST_F(AutofillTest, AppendCountryCodeForAggregatedPhones) {
         profile->GetRawInfo(PHONE_HOME_WHOLE_NUMBER));
   }
 
-  // With `AutofillInferCountryCallingCode` enabled, the country code of the
-  // second phone number is derived from the profile (Germany).
-  std::vector<std::u16string> expected_phone_numbers = {
-      u"+49 8450 777777",
-      base::FeatureList::IsEnabled(features::kAutofillInferCountryCallingCode)
-          ? u"+49 8450 777777"
-          : u"08450 777777"};
+  // Expect that the country code of the second phone number is derived from the
+  // profile (Germany).
+  std::vector<std::u16string> expected_phone_numbers = {u"+49 8450 777777",
+                                                        u"+49 8450 777777"};
 
   EXPECT_THAT(actual_phone_numbers,
               UnorderedElementsAreArray(expected_phone_numbers));
@@ -811,7 +801,7 @@ class AutofillTestPrerendering : public InProcessBrowserTest {
   class MockAutofillManager : public BrowserAutofillManager {
    public:
     explicit MockAutofillManager(ContentAutofillDriver* driver)
-        : BrowserAutofillManager(driver, "en-US") {
+        : BrowserAutofillManager(driver) {
       // We need to set these expectations immediately to catch any premature
       // calls while prerendering.
       if (driver->render_frame_host()->GetLifecycleState() ==
@@ -894,7 +884,7 @@ IN_PROC_BROWSER_TEST_F(AutofillTestPrerendering, DeferWhilePrerendering) {
   EXPECT_CALL(on_forms_seen.check_point, Call).InSequence(on_forms_seen.seq);
   EXPECT_CALL(*mock, OnFormsSeen)
       .InSequence(on_forms_seen.seq)
-      .WillOnce(InvokeClosure(on_forms_seen.run_loop.QuitClosure()));
+      .WillOnce(RunClosure(on_forms_seen.run_loop.QuitClosure()));
 
   struct {
     Sequence seq;
@@ -908,8 +898,7 @@ IN_PROC_BROWSER_TEST_F(AutofillTestPrerendering, DeferWhilePrerendering) {
       .InSequence(on_focus_on_form_field_impl.seq);
   EXPECT_CALL(*mock, OnFocusOnFormFieldImpl)
       .InSequence(on_focus_on_form_field_impl.seq)
-      .WillOnce(
-          InvokeClosure(on_focus_on_form_field_impl.run_loop.QuitClosure()));
+      .WillOnce(RunClosure(on_focus_on_form_field_impl.run_loop.QuitClosure()));
 
   // During prerendering, no events should be fired by AutofillAgent.
   ASSERT_TRUE(content::ExecJs(rfh,

@@ -235,8 +235,9 @@ class PageLoadTracker : public PageLoadMetricsUpdateDispatcher::Client,
       const gfx::Rect& main_frame_viewport_rect) override;
   void OnMainFrameImageAdRectsChanged(
       const base::flat_map<int, gfx::Rect>& main_frame_image_ad_rects) override;
-  void SetUpSharedMemoryForSmoothness(
-      base::ReadOnlySharedMemoryRegion shared_memory) override;
+  void SetUpSharedMemoryForUkms(
+      base::ReadOnlySharedMemoryRegion smoothness_memory,
+      base::ReadOnlySharedMemoryRegion dropped_frames_memory) override;
 
   // PageLoadMetricsObserverDelegate implementation:
   content::WebContents* GetWebContents() const override;
@@ -286,6 +287,7 @@ class PageLoadTracker : public PageLoadMetricsUpdateDispatcher::Client,
   bool IsFirstNavigationInWebContents() const override;
   bool IsOriginVisit() const override;
   bool IsTerminalVisit() const override;
+  bool ShouldObserveScheme(std::string_view scheme) const override;
   int64_t GetNavigationId() const override;
 
   // The following methods are called on navigation related events.

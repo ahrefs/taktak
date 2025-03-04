@@ -79,26 +79,19 @@ bool AccountChecker::IsSignedIn() {
          identity_manager_->HasPrimaryAccount(signin::ConsentLevel::kSync);
 }
 
-bool AccountChecker::IsSyncingBookmarks() {
-  if (base::FeatureList::IsEnabled(
-          syncer::kReplaceSyncPromosWithSignInPromos)) {
-    return sync_service_ && syncer::GetUploadToGoogleState(
-                                sync_service_, syncer::DataType::BOOKMARKS) ==
-                                syncer::UploadState::ACTIVE;
-  }
-  // The feature is not enabled, fallback to old behavior.
-  // TODO(crbug.com/40067058): Delete IsSyncFeatureActive() usage once
-  // kReplaceSyncPromosWithSignInPromos is launched on all platforms. See
-  // ConsentLevel::kSync documentation for details.
-  return sync_service_ && sync_service_->IsSyncFeatureActive() &&
-         syncer::GetUploadToGoogleState(sync_service_,
-                                        syncer::DataType::BOOKMARKS) !=
-             syncer::UploadState::NOT_ACTIVE;
-}
-
 bool AccountChecker::IsSyncTypeEnabled(syncer::UserSelectableType type) {
   return sync_service_ && sync_service_->GetUserSettings() &&
          sync_service_->GetUserSettings()->GetSelectedTypes().Has(type);
+}
+
+bool AccountChecker::IsSyncAvailable() {
+  return sync_service_ &&
+         sync_service_->GetTransportState() !=
+             syncer::SyncService::TransportState::DISABLED &&
+         sync_service_->GetTransportState() !=
+             syncer::SyncService::TransportState::PAUSED &&
+         sync_service_->GetTransportState() !=
+             syncer::SyncService::TransportState::PENDING_DESIRED_CONFIGURATION;
 }
 
 bool AccountChecker::IsAnonymizedUrlDataCollectionEnabled() {

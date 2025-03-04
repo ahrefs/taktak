@@ -4,6 +4,7 @@
 
 #include "chrome/browser/devtools/devtools_window.h"
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <string_view>
@@ -19,7 +20,6 @@
 #include "base/metrics/histogram_macros.h"
 #include "base/metrics/user_metrics.h"
 #include "base/not_fatal_until.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/escape.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/time/time.h"
@@ -97,10 +97,7 @@
 #include "ui/events/keycodes/keyboard_code_conversion.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 
-// This should be after all other #includes.
-#if defined(_WINDOWS_)  // Detect whether windows.h was included.
 #include "base/win/windows_h_disallowed.h"
-#endif  // defined(_WINDOWS_)
 
 using blink::WebInputEvent;
 using content::BrowserThread;
@@ -147,11 +144,12 @@ bool FindInspectedBrowserAndTabIndex(
 }
 
 void SetPreferencesFromJson(Profile* profile, const std::string& json) {
-  std::optional<base::Value> parsed = base::JSONReader::Read(json);
-  if (!parsed || !parsed->is_dict())
+  std::optional<base::Value::Dict> parsed = base::JSONReader::ReadDict(json);
+  if (!parsed) {
     return;
+  }
   ScopedDictPrefUpdate update(profile->GetPrefs(), prefs::kDevToolsPreferences);
-  for (auto dict_value : parsed->GetDict()) {
+  for (auto dict_value : *parsed) {
     if (!dict_value.second.is_string())
       continue;
     update->Set(dict_value.first, std::move(dict_value.second));
@@ -195,8 +193,7 @@ DevToolsToolboxDelegate::DevToolsToolboxDelegate(WebContents* toolbox_contents,
       inspected_web_contents_(web_contents ? web_contents->GetWeakPtr()
                                            : nullptr) {}
 
-DevToolsToolboxDelegate::~DevToolsToolboxDelegate() {
-}
+DevToolsToolboxDelegate::~DevToolsToolboxDelegate() = default;
 
 content::WebContents* DevToolsToolboxDelegate::OpenURLFromTab(
     content::WebContents* source,
@@ -491,7 +488,7 @@ DevToolsWindow::~DevToolsWindow() {
   owned_toolbox_web_contents_.reset();
 
   DevToolsWindows* instances = g_devtools_window_instances.Pointer();
-  auto it = base::ranges::find(*instances, this);
+  auto it = std::ranges::find(*instances, this);
   CHECK(it != instances->end(), base::NotFatalUntil::M130);
   instances->erase(it);
 
@@ -805,20 +802,11 @@ Profile* DevToolsWindow::GetProfileForDevToolsWindow(
     content::WebContents* web_contents) {
   Profile* profile =
       Profile::FromBrowserContext(web_contents->GetBrowserContext());
-  if (profile->IsPrimaryOTRProfile()) {
+  if (profile->IsPrimaryOTRProfile() || profile->IsDevToolsOTRProfile()) {
     return profile;
   }
   return profile->GetOriginalProfile();
 }
-
-namespace {
-
-scoped_refptr<DevToolsAgentHost> GetOrCreateDevToolsHostForWebContents(
-    WebContents* wc) {
-  return DevToolsAgentHost::GetOrCreateForTab(wc);
-}
-
-}  // namespace
 
 // static
 void DevToolsWindow::ToggleDevToolsWindow(
@@ -829,7 +817,7 @@ void DevToolsWindow::ToggleDevToolsWindow(
     const std::string& settings,
     DevToolsOpenedByAction toggled_by) {
   scoped_refptr<DevToolsAgentHost> agent(
-      GetOrCreateDevToolsHostForWebContents(inspected_web_contents));
+      DevToolsAgentHost::GetOrCreateForTab(inspected_web_contents));
   DevToolsWindow* window = FindDevToolsWindow(agent.get());
   bool do_open = force_open;
   if (!window) {
@@ -902,7 +890,7 @@ void DevToolsWindow::InspectElement(
   WebContents* web_contents =
       WebContents::FromRenderFrameHost(inspected_frame_host);
   scoped_refptr<DevToolsAgentHost> agent(
-      GetOrCreateDevToolsHostForWebContents(web_contents));
+      DevToolsAgentHost::GetOrCreateForTab(web_contents));
   agent->InspectElement(inspected_frame_host, x, y);
   bool should_measure_time = !FindDevToolsWindow(agent.get());
   base::TimeTicks start_time = base::TimeTicks::Now();
@@ -1629,11 +1617,9 @@ void DevToolsWindow::SetIsDocked(bool dock_requested) {
     // TODO(crbug.com/40773744): WebContents should be removed with a reason
     // other than kInsertedIntoOtherTabStrip, it's not getting reinserted into
     // another tab strip.
-    std::unique_ptr<tabs::TabModel> tab_model =
-        tab_strip_model->DetachTabAtForInsertion(
-            tab_strip_model->GetIndexOfWebContents(main_web_contents_));
     std::unique_ptr<WebContents> web_contents =
-        tabs::TabModel::DestroyAndTakeWebContents(std::move(tab_model));
+        tab_strip_model->DetachWebContentsAtForInsertion(
+            tab_strip_model->GetIndexOfWebContents(main_web_contents_));
     owned_main_web_contents_ =
         std::make_unique<OwnedMainWebContents>(std::move(web_contents));
   } else if (!dock_requested && was_docked) {
@@ -1678,7 +1664,7 @@ void DevToolsWindow::OpenInNewTab(const GURL& url) {
     content::RenderViewHost* render_view_host =
         inspected_web_contents->GetPrimaryMainFrame()->GetRenderViewHost();
     if (render_view_host)
-      child_id = render_view_host->GetProcess()->GetID();
+      child_id = render_view_host->GetProcess()->GetDeprecatedID();
   }
   // Use about:blank instead of an empty GURL. The browser treats an empty GURL
   // as navigating to the home page, which may be privileged (chrome://newtab/).
@@ -1899,8 +1885,7 @@ void DevToolsWindow::DoAction(const DevToolsToggleAction& action) {
       break;
     }
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
 }
 
@@ -1977,8 +1962,9 @@ void DevToolsWindow::MaybeShowSharedProcessInfobar() {
   }
 
   // Only show the infobar only if the RenderProcessHost id changes.
-  int rph_id =
-      inspected_web_contents->GetPrimaryMainFrame()->GetProcess()->GetID();
+  int rph_id = inspected_web_contents->GetPrimaryMainFrame()
+                   ->GetProcess()
+                   ->GetDeprecatedID();
   if (checked_sharing_process_id_ == rph_id) {
     return;
   }
@@ -1993,7 +1979,10 @@ void DevToolsWindow::MaybeShowSharedProcessInfobar() {
 
   content::SiteInstance* site_instance =
       inspected_web_contents->GetPrimaryMainFrame()->GetSiteInstance();
-  if (site_instance->GetSiteURL().SchemeIs(extensions::kExtensionScheme)) {
+  const GURL& site_url = site_instance->GetSiteURL();
+  if (site_url.SchemeIs(extensions::kExtensionScheme) ||
+      site_url.SchemeIs(content::kChromeDevToolsScheme) ||
+      site_url.SchemeIs(content::kChromeUIScheme)) {
     return;
   }
 

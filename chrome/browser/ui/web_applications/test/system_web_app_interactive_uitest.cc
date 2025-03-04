@@ -22,7 +22,6 @@
 #include "base/test/bind.h"
 #include "base/test/gtest_util.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/apps/app_service/app_service_proxy.h"
 #include "chrome/browser/apps/app_service/app_service_proxy_factory.h"
@@ -786,10 +785,16 @@ IN_PROC_BROWSER_TEST_P(SystemWebAppLaunchOmniboxNavigateBrowsertest,
   EXPECT_EQ(web_contents->GetLastCommittedURL(), GetStartUrl());
   EXPECT_EQ(1, browser()->tab_strip_model()->count());
 
-  // Verifies the tab has an associated tab helper for System App's
-  // webapps::AppId.
-  EXPECT_EQ(*web_app::WebAppTabHelper::GetAppId(web_contents),
-            *ash::GetAppIdForSystemWebApp(browser()->profile(), GetAppType()));
+  // Incognito WebContents don't have app IDs.
+  // TODO(crbug.com/40723875): Decide what should happen with SWA URLs and
+  // incognito windows.
+  if (!browser()->profile()->IsOffTheRecord()) {
+    // Verifies the tab has an associated tab helper for System App's
+    // webapps::AppId.
+    EXPECT_EQ(
+        *web_app::WebAppTabHelper::GetAppId(web_contents),
+        *ash::GetAppIdForSystemWebApp(browser()->profile(), GetAppType()));
+  }
 }
 
 // A one shot observer which waits for an activation of any window.
@@ -913,15 +918,14 @@ class SystemWebAppNewWindowMenuItemTest
     auto app_id = GetManager().GetAppIdForSystemApp(GetAppType()).value();
     apps::AppServiceProxyFactory::GetForProfile(profile)
         ->AppRegistryCache()
-        .ForOneApp(
-            app_id, [profile, &item](const apps::AppUpdate& update) {
-              item = std::make_unique<AppServiceAppItem>(
-                  profile, /*model_updater=*/nullptr, /*sync_item=*/nullptr,
-                  update);
+        .ForOneApp(app_id, [profile, &item](const apps::AppUpdate& update) {
+          item = std::make_unique<AppServiceAppItem>(
+              profile, /*model_updater=*/nullptr, /*sync_item=*/nullptr,
+              update);
 
-              // Because model updater is null, set position manually.
-              item->SetChromePosition(item->CalculateDefaultPositionForTest());
-            });
+          // Because model updater is null, set position manually.
+          item->SetChromePosition(item->CalculateDefaultPositionForTest());
+        });
     return item;
   }
 

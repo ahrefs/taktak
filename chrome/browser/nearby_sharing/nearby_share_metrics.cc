@@ -37,6 +37,8 @@ enum class BackgroundScanningDevicesDetectedEvent {
 // be updated. This enum should be kept in sync with the
 // NearbyShareTransferFinalStatus enum in
 // //tools/metrics/histograms/metadata/nearby/enums.xml.
+//
+// LINT.IfChange(NearbyShareTransferFinalStatus)
 enum class TransferFinalStatus {
   kComplete = 0,
   kUnknown = 1,
@@ -62,12 +64,15 @@ enum class TransferFinalStatus {
   kUnexpectedDisconnection = 21,
   kMaxValue = kUnexpectedDisconnection
 };
+// LINT.ThenChange(//tools/metrics/histograms/metadata/nearby/enums.xml:NearbyShareTransferFinalStatus)
 
 // These values are persisted to logs. Entries should not be renumbered and
 // numeric values should never be reused. If entries are added, kMaxValue should
 // be updated. This enum should be kept in sync with the
 // NearbyShareStartAdvertisingFailureReason enum in
 // //tools/metrics/histograms/metadata/nearby/enums.xml.
+//
+// LINT.IfChange(NearbyShareStartAdvertisingFailureReason)
 enum class StartAdvertisingFailureReason {
   kUnknown = 0,
   kError = 1,
@@ -79,23 +84,29 @@ enum class StartAdvertisingFailureReason {
   kWifiLanError = 7,
   kMaxValue = kWifiLanError
 };
+// LINT.ThenChange(//tools/metrics/histograms/metadata/nearby/enums.xml:NearbyShareStartAdvertisingFailureReason)
 
 // These values are persisted to logs. Entries should not be renumbered and
 // numeric values should never be reused. If entries are added, kMaxValue should
 // be updated. This enum should be kept in sync with the NearbyShareFinalStatus
 // enum in //tools/metrics/histograms/metadata/nearby/enums.xml.
+//
+// LINT.IfChange(NearbyShareFinalStatus)
 enum class FinalStatus {
   kSuccess = 0,
   kFailure = 1,
   kCanceled = 2,
   kMaxValue = kCanceled
 };
+// LINT.ThenChange(//tools/metrics/histograms/metadata/nearby/enums.xml:NearbyShareFinalStatus)
 
 // These values are persisted to logs. Entries should not be renumbered and
 // numeric values should never be reused. If entries are added, kMaxValue should
 // be updated. This enum should be kept in sync with the
 // NearbyShareAttachmentType enum in
 // //tools/metrics/histograms/metadata/nearby/enums.xml.
+//
+// LINT.IfChange(NearbyShareAttachmentType)
 enum class AttachmentType {
   kUnknownFileType = 0,
   kUnknownTextType = 1,
@@ -110,12 +121,15 @@ enum class AttachmentType {
   kWifiCredentials = 10,
   kMaxValue = kWifiCredentials
 };
+// LINT.ThenChange(//tools/metrics/histograms/metadata/nearby/enums.xml:NearbyShareAttachmentType)
 
 // These values are persisted to logs. Entries should not be renumbered and
 // numeric values should never be reused. If entries are added, kMaxValue should
 // be updated. This enum should be kept in sync with the
 // NearbyShareUpgradedMedium enum in
 // //tools/metrics/histograms/metadata/nearby/enums.xml.
+//
+// LINT.IfChange(NearbyShareUpgradedMedium)
 enum class UpgradedMedium {
   kUnknown = 0,
   kMdns = 1,
@@ -133,6 +147,7 @@ enum class UpgradedMedium {
   kWebRtcNonCellular = 13,
   kMaxValue = kWebRtcNonCellular
 };
+// LINT.ThenChange(//tools/metrics/histograms/metadata/nearby/enums.xml:NearbyShareUpgradedMedium)
 
 AttachmentType FileMetadataTypeToAttachmentType(
     ::sharing::mojom::FileMetadata::Type type) {
@@ -218,8 +233,7 @@ TransferFinalStatus TransferMetadataStatusToTransferFinalStatus(
     case TransferMetadata::Status::kInProgress:
     case TransferMetadata::Status::kMediaDownloading:
     case TransferMetadata::Status::kExternalProviderLaunched:
-      NOTREACHED_IN_MIGRATION();
-      return TransferFinalStatus::kUnknown;
+      NOTREACHED();
   }
 }
 
@@ -242,8 +256,7 @@ NearbyConnectionsStatusToStartAdvertisingFailureReason(
     case nearby::connections::mojom::Status::kWifiLanError:
       return StartAdvertisingFailureReason::kWifiLanError;
     case nearby::connections::mojom::Status::kSuccess:
-      NOTREACHED_IN_MIGRATION();
-      [[fallthrough]];
+      NOTREACHED();
     case nearby::connections::mojom::Status::kAlreadyDiscovering:
     case nearby::connections::mojom::Status::kEndpointIOError:
     case nearby::connections::mojom::Status::kEndpointUnknown:
@@ -270,8 +283,7 @@ FinalStatus PayloadStatusToFinalStatus(
     case nearby::connections::mojom::PayloadStatus::kCanceled:
       return FinalStatus::kCanceled;
     case nearby::connections::mojom::PayloadStatus::kInProgress:
-      NOTREACHED_IN_MIGRATION();
-      return FinalStatus::kFailure;
+      NOTREACHED();
   }
 }
 
@@ -309,8 +321,7 @@ std::string GetPayloadStatusSubcategoryName(
     case nearby::connections::mojom::PayloadStatus::kCanceled:
       return ".Cancelled";
     case nearby::connections::mojom::PayloadStatus::kInProgress:
-      NOTREACHED_IN_MIGRATION();
-      return ".Failed";
+      NOTREACHED();
   }
 }
 

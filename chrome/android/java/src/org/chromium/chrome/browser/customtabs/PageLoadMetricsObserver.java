@@ -6,8 +6,7 @@ package org.chromium.chrome.browser.customtabs;
 
 import android.os.Bundle;
 
-import androidx.browser.customtabs.CustomTabsSessionToken;
-
+import org.chromium.chrome.browser.browserservices.intents.SessionHolder;
 import org.chromium.chrome.browser.page_load_metrics.PageLoadMetrics;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.content_public.browser.WebContents;
@@ -17,14 +16,11 @@ import org.chromium.content_public.browser.WebContents;
  * contentful paint.
  */
 public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
-    private final CustomTabsConnection mConnection;
-    private final CustomTabsSessionToken mSession;
+    private final SessionHolder<?> mSession;
     private final Tab mTab;
     private Long mNavigationId;
 
-    public PageLoadMetricsObserver(
-            CustomTabsConnection connection, CustomTabsSessionToken session, Tab tab) {
-        mConnection = connection;
+    public PageLoadMetricsObserver(SessionHolder<?> session, Tab tab) {
         mSession = session;
         mTab = tab;
     }
@@ -32,13 +28,9 @@ public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
     @Override
     public void onNewNavigation(
             WebContents webContents, long navigationId, boolean isFirstNavigationInWebContents) {
-        if (webContents != mTab.getWebContents()) return;
-        if (isFirstNavigationInWebContents) {
+        if (isFirstNavigationInWebContents && webContents == mTab.getWebContents()) {
             assert mNavigationId == null;
             mNavigationId = navigationId;
-        } else if (mNavigationId == null) {
-            // Missed the first navigation and a new one started, so skip metrics reporting.
-            mNavigationId = -1L;
         }
     }
 
@@ -55,7 +47,7 @@ public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
         args.putLong(PageLoadMetrics.EFFECTIVE_CONNECTION_TYPE, effectiveConnectionType);
         args.putLong(PageLoadMetrics.HTTP_RTT, httpRttMs);
         args.putLong(PageLoadMetrics.TRANSPORT_RTT, transportRttMs);
-        mConnection.notifyPageLoadMetrics(mSession, args);
+        CustomTabsConnection.getInstance().notifyPageLoadMetrics(mSession, args);
     }
 
     @Override
@@ -66,11 +58,12 @@ public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
             long firstContentfulPaintMs) {
         if (!shouldNotifyPageLoadMetrics(webContents, navigationId)) return;
 
-        mConnection.notifySinglePageLoadMetric(
-                mSession,
-                PageLoadMetrics.FIRST_CONTENTFUL_PAINT,
-                navigationStartMicros,
-                firstContentfulPaintMs);
+        CustomTabsConnection.getInstance()
+                .notifySinglePageLoadMetric(
+                        mSession,
+                        PageLoadMetrics.FIRST_CONTENTFUL_PAINT,
+                        navigationStartMicros,
+                        firstContentfulPaintMs);
     }
 
     @Override
@@ -83,12 +76,13 @@ public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
         if (!shouldNotifyPageLoadMetrics(webContents, navigationId)) return;
 
         Bundle args =
-                mConnection.createBundleWithNavigationStartAndPageLoadMetric(
-                        PageLoadMetrics.LARGEST_CONTENTFUL_PAINT,
-                        navigationStartMicros,
-                        largestContentfulPaintMs);
+                CustomTabsConnection.getInstance()
+                        .createBundleWithNavigationStartAndPageLoadMetric(
+                                PageLoadMetrics.LARGEST_CONTENTFUL_PAINT,
+                                navigationStartMicros,
+                                largestContentfulPaintMs);
         args.putLong(PageLoadMetrics.LARGEST_CONTENTFUL_PAINT_SIZE, largestContentfulPaintSize);
-        mConnection.notifyPageLoadMetrics(mSession, args);
+        CustomTabsConnection.getInstance().notifyPageLoadMetrics(mSession, args);
     }
 
     @Override
@@ -99,11 +93,12 @@ public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
             long loadEventStartMs) {
         if (!shouldNotifyPageLoadMetrics(webContents, navigationId)) return;
 
-        mConnection.notifySinglePageLoadMetric(
-                mSession,
-                PageLoadMetrics.LOAD_EVENT_START,
-                navigationStartMicros,
-                loadEventStartMs);
+        CustomTabsConnection.getInstance()
+                .notifySinglePageLoadMetric(
+                        mSession,
+                        PageLoadMetrics.LOAD_EVENT_START,
+                        navigationStartMicros,
+                        loadEventStartMs);
     }
 
     @Override
@@ -127,7 +122,7 @@ public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
         args.putLong(PageLoadMetrics.REQUEST_START, requestStartMs);
         args.putLong(PageLoadMetrics.SEND_START, sendStartMs);
         args.putLong(PageLoadMetrics.SEND_END, sendEndMs);
-        mConnection.notifyPageLoadMetrics(mSession, args);
+        CustomTabsConnection.getInstance().notifyPageLoadMetrics(mSession, args);
     }
 
     @Override
@@ -137,7 +132,7 @@ public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
 
         Bundle args = new Bundle();
         args.putLong(PageLoadMetrics.FIRST_INPUT_DELAY, firstInputDelayMs);
-        mConnection.notifyPageLoadMetrics(mSession, args);
+        CustomTabsConnection.getInstance().notifyPageLoadMetrics(mSession, args);
     }
 
     @Override
@@ -153,14 +148,10 @@ public class PageLoadMetricsObserver implements PageLoadMetrics.Observer {
         args.putFloat(
                 PageLoadMetrics.LAYOUT_SHIFT_SCORE_BEFORE_INPUT_OR_SCROLL,
                 layoutShiftScoreBeforeInputOrScroll);
-        mConnection.notifyPageLoadMetrics(mSession, args);
+        CustomTabsConnection.getInstance().notifyPageLoadMetrics(mSession, args);
     }
 
     private boolean shouldNotifyPageLoadMetrics(WebContents webContents, long navigationId) {
-        // In pre-warm cases this observer is added late and will have missed the start of the
-        // navigation, so if |mNavigationId| is still uninitialized we can be pretty confident this
-        // is still just the first navigation.
-        if (mNavigationId == null) onNewNavigation(webContents, navigationId, true);
         return webContents == mTab.getWebContents()
                 && null != mNavigationId
                 && navigationId == mNavigationId;

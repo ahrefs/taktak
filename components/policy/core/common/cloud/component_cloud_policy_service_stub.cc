@@ -8,7 +8,7 @@
 
 namespace policy {
 
-ComponentCloudPolicyService::Delegate::~Delegate() {}
+ComponentCloudPolicyService::Delegate::~Delegate() = default;
 
 ComponentCloudPolicyService::ComponentCloudPolicyService(
     const std::string& policy_type,
@@ -43,10 +43,5 @@ void ComponentCloudPolicyService::OnStoreLoaded(CloudPolicyStore* store) {}
 void ComponentCloudPolicyService::OnStoreError(CloudPolicyStore* store) {}
 
 void ComponentCloudPolicyService::OnPolicyFetched(CloudPolicyClient* client) {}
-
-void ComponentCloudPolicyService::OnRegistrationStateChanged(
-    CloudPolicyClient* client) {}
-
-void ComponentCloudPolicyService::OnClientError(CloudPolicyClient* client) {}
 
 }  // namespace policy

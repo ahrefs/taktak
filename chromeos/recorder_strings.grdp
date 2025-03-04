@@ -14,6 +14,9 @@
   <message desc="Tooltip of the button to close the dialog." meaning="Close the dialog." name="IDS_RECORDER_CLOSE_DIALOG_BUTTON_TOOLTIP">
     Close
   </message>
+  <message desc="Button to acknowledge the instruction described in the unescapable error dialog." name="IDS_RECORDER_ERROR_DIALOG_CONSENT_BUTTON">
+    OK
+  </message>
   <message desc="Label of the menu item to choose webm as audio format in the export dialog." name="IDS_RECORDER_EXPORT_DIALOG_AUDIO_FORMAT_WEBM_OPTION">
     WEBM
   </message>
@@ -47,20 +50,26 @@
   <message desc="Error message for general error in generative AI features." name="IDS_RECORDER_GEN_AI_ERROR_GENERAL_LABEL">
     Something went wrong
   </message>
+  <message desc="Error message for unsupported transcript language input for summary." name="IDS_RECORDER_GEN_AI_ERROR_SUMMARY_LANGUAGE_UNSUPPORTED_LABEL">
+    Can’t create summary for this transcript language
+  </message>
   <message desc="Error message for too-long transcript input for summary." name="IDS_RECORDER_GEN_AI_ERROR_SUMMARY_TRANSCRIPT_TOO_LONG_LABEL">
-    Can’t summarize a transcript longer than <ph name="MAX_WORD_LENGTH">$1<ex>1461</ex></ph> words
+    Can’t summarize. Try a shorter transcript.
   </message>
   <message desc="Error message for too-short transcript input for summary." name="IDS_RECORDER_GEN_AI_ERROR_SUMMARY_TRANSCRIPT_TOO_SHORT_LABEL">
-    Can’t summarize a transcript fewer than <ph name="MIN_WORD_LENGTH">$1<ex>150</ex></ph> words
+    Can’t summarize. Try a longer transcript.
   </message>
   <message desc="Error message for trust and safety related error for summary generative AI feature." name="IDS_RECORDER_GEN_AI_ERROR_SUMMARY_TRUST_AND_SAFETY_LABEL">
     Can’t create summary for this content
   </message>
+  <message desc="Error message for unsupported transcript language input for title suggestion." name="IDS_RECORDER_GEN_AI_ERROR_TITLE_SUGGESTION_LANGUAGE_UNSUPPORTED_LABEL">
+    Can't create recording names for this transcript language
+  </message>
   <message desc="Error message for too-long transcript input for title suggestion." name="IDS_RECORDER_GEN_AI_ERROR_TITLE_SUGGESTION_TRANSCRIPT_TOO_LONG_LABEL">
-    Can’t create names for a transcript longer than <ph name="MAX_WORD_LENGTH">$1<ex>1461</ex></ph> words
+    Can’t create names. Try a shorter transcript.
   </message>
   <message desc="Error message for too-short transcript input for title suggestion." name="IDS_RECORDER_GEN_AI_ERROR_TITLE_SUGGESTION_TRANSCRIPT_TOO_SHORT_LABEL">
-    Can’t create names for a transcript fewer than <ph name="MIN_WORD_LENGTH">$1<ex>150</ex></ph> words
+    Can’t create names. Try a longer transcript.
   </message>
   <message desc="Error message for trust and safety related error for title suggestion generative AI feature." name="IDS_RECORDER_GEN_AI_ERROR_TITLE_SUGGESTION_TRUST_AND_SAFETY_LABEL">
     Can’t create recording names for this content
@@ -68,11 +77,89 @@
   <message desc="Badge for experimental state of generative AI features." name="IDS_RECORDER_GEN_AI_EXPERIMENT_BADGE">
     Experiment
   </message>
+  <message desc="Field for model input in the GenAI feedback template." name="IDS_RECORDER_GEN_AI_FEEDBACK_MODEL_INPUT_FIELD">
+    Transcript:
+  </message>
+  <message desc="Prompt for user feedback in the GenAI feedback template." name="IDS_RECORDER_GEN_AI_FEEDBACK_PROMPT">
+    Share your feedback or describe your issue
+  </message>
+  <message desc="Field for generated summary in the GenAI feedback template." name="IDS_RECORDER_GEN_AI_FEEDBACK_SUMMARY_OUTPUT_FIELD">
+    Generated summary:
+  </message>
+  <message desc="Field for generated titles in the GenAI feedback template." name="IDS_RECORDER_GEN_AI_FEEDBACK_TITLE_SUGGESTION_OUTPUT_FIELD">
+    Generated names:
+  </message>
   <message desc="Link to more information about generative AI disclaimer." name="IDS_RECORDER_GEN_AI_LEARN_MORE_LINK">
     Learn more
   </message>
   <message desc="Tooltip of the link to more information about generative AI disclaimer." name="IDS_RECORDER_GEN_AI_LEARN_MORE_LINK_TOOLTIP">
     Learn more about Generative AI
+  </message>
+  <message desc="Hint text for users to choose language from the dropdown." name="IDS_RECORDER_LANGUAGE_DROPDOWN_HINT_OPTION">
+    Select language
+  </message>
+  <message desc="Header of the available languages in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_AVAILABLE_LANGUAGES_HEADER">
+    Available languages
+  </message>
+  <message desc="Aria-label of the back button in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_BACK_BUTTON_ARIA_LABEL">
+    Back
+  </message>
+  <message desc="Tooltip of the back button in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_BACK_BUTTON_TOOLTIP">
+    Back
+  </message>
+  <message desc="Header of the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_HEADER">
+    Transcription language
+  </message>
+  <message desc="Accessibility label of the landmark for the list of available languages in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGES_LIST_LANDMARK_ARIA_LABEL">
+    List of available languages
+  </message>
+  <message desc="Accessibility label of downloading language row in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOADING_ARIA_LABEL">
+    <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph> transcription model <ph name="PROGRESS_PERCENTAGE">$2<ex>42</ex></ph>% downloaded
+  </message>
+  <message desc="Button when language model is donwloading in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOADING_BUTTON">
+    Downloading…
+  </message>
+  <message desc="Description of language when language model is downloading in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOADING_PROGRESS_DESCRIPTION">
+    <ph name="PROGRESS_PERCENTAGE">$1<ex>42</ex></ph>% downloaded
+  </message>
+  <message desc="Button to download language model in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOAD_BUTTON">
+    Download
+  </message>
+  <message desc="Accessibility label of download button in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOAD_BUTTON_ARIA_LABEL">
+    Download and select <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph> transcription model
+  </message>
+  <message desc="Accessibility label of error language row in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOAD_ERROR_ARIA_LABEL">
+    Can't download <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph> transcription model. Try again or restart your Chromebook
+  </message>
+  <message desc="Status message for screen reader to announce the language download failure in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOAD_ERROR_STATUS_MESSAGE">
+    Can't download <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph> transcription model. Try again or restart your Chromebook
+  </message>
+  <message desc="Status message for screen reader to announce the language download completion in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOAD_FINISHED_STATUS_MESSAGE">
+    <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph> transcription model download completed
+  </message>
+  <message desc="Status message for screen reader to announce the language download start in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_DOWNLOAD_STARTED_STATUS_MESSAGE">
+    <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph> transcription model download in progress
+  </message>
+  <message desc="Description of language error state in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_ERROR_DESCRIPTION">
+    Can’t download. Try again or restart your Chromebook.
+  </message>
+  <message desc="Accessibility label of not downloaded language row in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_NOT_DOWNLOADED_ARIA_LABEL">
+    Download and select <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph> transcription model
+  </message>
+  <message desc="Accessibility label of not selected language row in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_NOT_SELECTED_ARIA_LABEL">
+    Select <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph>
+  </message>
+  <message desc="Accessibility label of selected language row in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_LANGUAGE_SELECTED_ARIA_LABEL">
+    <ph name="LANGUAGE_NAME">$1<ex>English</ex></ph> selected
+  </message>
+  <message desc="Header of the selected language in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_SELECTED_LANGUAGE_HEADER">
+    Selected language
+  </message>
+  <message desc="Label of the selected language when there's no selected language in the language picker." name="IDS_RECORDER_LANGUAGE_PICKER_SELECTED_LANGUAGE_NONE_LABEL">
+    None
+  </message>
+  <message desc="Nudge to choose microphone when the microphone menu hasn't been opened in main page." name="IDS_RECORDER_MAIN_CHOOSE_MIC_NUDGE">
+    Choose your mic
   </message>
   <message desc="Accessibility label of the landmark for the list of recordings in the main page." name="IDS_RECORDER_MAIN_RECORDINGS_LIST_LANDMARK_ARIA_LABEL">
     List of audio recordings
@@ -89,17 +176,38 @@
   <message desc="Nudge to start recording when there's no existing recording in main page." name="IDS_RECORDER_MAIN_START_RECORD_NUDGE">
     Press to record
   </message>
+  <message desc="Description of the mic-connection-error dialog before starting recording." name="IDS_RECORDER_MIC_CONNECTION_ERROR_DIALOG_DESCRIPTION">
+    Make sure a mic is connected to start recording audio
+  </message>
+  <message desc="Header of the mic-connection-error dialog before starting recording." name="IDS_RECORDER_MIC_CONNECTION_ERROR_DIALOG_HEADER">
+    Connect a mic
+  </message>
   <message desc="Tooltip of the combobox to choose microphone to use in recording session." meaning="Microphone device to use in recordding session." name="IDS_RECORDER_MIC_SELECTION_MENU_BUTTON_TOOLTIP">
     Mic options
   </message>
   <message desc="Label of the option to include system audio in the recording." name="IDS_RECORDER_MIC_SELECTION_MENU_CHROMEBOOK_AUDIO_OPTION">
     Chromebook audio
   </message>
+  <message desc="Description of mic connection error in the mic selection menu." name="IDS_RECORDER_MIC_SELECTION_MENU_MIC_CONNECTION_ERROR_DESCRIPTION">
+    Connect a mic to start recording audio
+  </message>
+  <message desc="Button to defer transcription language selection and go next step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_LANGUAGE_SELECTION_CANCEL_BUTTON">
+    Cancel
+  </message>
+  <message desc="Description of the transcription language selection step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_LANGUAGE_SELECTION_DESCRIPTION">
+    You can change this later in Recorder settings
+  </message>
+  <message desc="Button to download transcription model and go next step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_LANGUAGE_SELECTION_DOWNLOAD_BUTTON">
+    Download
+  </message>
+  <message desc="Header of the transcription language selection step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_LANGUAGE_SELECTION_HEADER">
+    Select transcription language and download model
+  </message>
   <message desc="Button to enable speaker label and go next step in the speaker label enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_SPEAKER_LABEL_ALLOW_BUTTON">
     Allow
   </message>
   <message desc="Button to defer enabling speaker label and go next step in the speaker label enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_SPEAKER_LABEL_DEFER_BUTTON">
-    Skip
+    Not now
   </message>
   <message desc="The first item in the list of the explanation of the speaker label enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_SPEAKER_LABEL_DESCRIPTION_LIST_ITEM_1">
     Compute models of the voices detected in the recording
@@ -129,17 +237,26 @@
     Cancel
   </message>
   <message desc="Button to defer enabling transcription and go next step in the transcription enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_DEFER_BUTTON">
-    Skip
+    Not now
   </message>
-  <message desc="Description of the transcription enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_DESCRIPTION">
+  <message desc="Description of the transcription enable and download step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_DESCRIPTION">
     Recorder can create transcriptions for recordings with speech.
 Download the transcription model (up to 100MB) to get these transcriptions.
   </message>
-  <message desc="Header of the transcription enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_HEADER">
+  <message desc="Button to enable transcription and download transcription model, and go next step in the transcription enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_DOWNLOAD_BUTTON">
+    Turn on and download
+  </message>
+  <message desc="Header of the transcription enable and download step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_HEADER">
     Turn on transcription and download transcription model?
   </message>
   <message desc="Button to enable transcription and go next step in the transcription enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_TURN_ON_BUTTON">
-    Turn on and download
+    Turn on
+  </message>
+  <message desc="Description of the transcription enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_TURN_ON_DESCRIPTION">
+    Recorder can create transcriptions for recordings with speech. In the next step, you need to select the transcription language and download the model (up to 100MB).
+  </message>
+  <message desc="Header of the transcription enable step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_TRANSCRIPTION_TURN_ON_HEADER">
+    Turn on transcription?
   </message>
   <message desc="Description of the welcome step in the onboarding dialog." name="IDS_RECORDER_ONBOARDING_DIALOG_WELCOME_DESCRIPTION">
     Automatically create transcriptions, get recording summaries using Google AI, and search audio. Create recordings even when you’re not connected to the internet.
@@ -155,6 +272,12 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   </message>
   <message desc="Accessibility label of the landmark for the playback controls section in the playback page." name="IDS_RECORDER_PLAYBACK_CONTROLS_LANDMARK_ARIA_LABEL">
     Playback controls
+  </message>
+  <message desc="Accessibility label of the floating volume close button in playback page." name="IDS_RECORDER_PLAYBACK_FLOATING_VOLUME_CLOSE_BUTTON_ARIA_LABEL">
+    Close
+  </message>
+  <message desc="Accessibility label of the floating volume show button in playback page." name="IDS_RECORDER_PLAYBACK_FLOATING_VOLUME_SHOW_BUTTON_ARIA_LABEL">
+    Volume
   </message>
   <message desc="Tooltip of the button to forward the recording playback 10 seconds." name="IDS_RECORDER_PLAYBACK_FORWARD_BUTTON_TOOLTIP">
     Forward 10 seconds
@@ -174,8 +297,8 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   <message desc="Label of the menu item to show recording details in playback page." name="IDS_RECORDER_PLAYBACK_MENU_SHOW_DETAIL_OPTION">
     More details
   </message>
-  <message desc="Tooltip of the button to toggle mute on and off for the playback." meaning="Toggle mute for recording playback." name="IDS_RECORDER_PLAYBACK_MUTE_BUTTON_TOOLTIP">
-    Toggle mute
+  <message desc="Tooltip of the button to mute the playback." name="IDS_RECORDER_PLAYBACK_MUTE_BUTTON_TOOLTIP">
+    Turn off volume
   </message>
   <message desc="Tooltip of the button to pause the recording playback." meaning="Pause the audio recording playback." name="IDS_RECORDER_PLAYBACK_PAUSE_BUTTON_TOOLTIP">
     Pause
@@ -198,8 +321,11 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   <message desc="Accessibility label of the landmark for recording transcript in playback page." meaning="Transcript of the audio recording." name="IDS_RECORDER_PLAYBACK_TRANSCRIPT_LANDMARK_ARIA_LABEL">
     Transcript
   </message>
-  <message desc="Accessibility label of the volume slider for the playback." meaning="Set the playback volume." name="IDS_RECORDER_PLAYBACK_VOLUME_ARIA_LABEL">
-    Volume
+  <message desc="Tooltip of the button to unmute the playback." name="IDS_RECORDER_PLAYBACK_UNMUTE_BUTTON_TOOLTIP">
+    Turn on volume
+  </message>
+  <message desc="Accessibility label of the volume slider in playback page." name="IDS_RECORDER_PLAYBACK_VOLUME_SLIDER_ARIA_LABEL">
+    Adjust volume
   </message>
   <message desc="Accessibility label of the button to open more recording options." name="IDS_RECORDER_RECORDING_ITEM_OPTIONS_BUTTON_ARIA_LABEL">
     More options for <ph name="RECORDING_NAME">$1<ex>Audio recording</ex></ph>
@@ -288,6 +414,12 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   <message desc="Button to save and exit in the exit recording dialog." name="IDS_RECORDER_RECORD_EXIT_DIALOG_SAVE_AND_EXIT_BUTTON">
     Save and exit
   </message>
+  <message desc="Description of general audio error dialog during recording." name="IDS_RECORDER_RECORD_GENERAL_AUDIO_ERROR_DIALOG_DESCRIPTION">
+    Make sure your mic is connected or try restarting your Chromebook
+  </message>
+  <message desc="Header of general audio error dialog during recording." name="IDS_RECORDER_RECORD_GENERAL_AUDIO_ERROR_DIALOG_HEADER">
+    Something went wrong
+  </message>
   <message desc="Tooltip of the button to hide the live transcription of the recording." name="IDS_RECORDER_RECORD_HIDE_TRANSCRIPT_BUTTON_TOOLTIP">
     Hide transcript
   </message>
@@ -311,6 +443,9 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   </message>
   <message desc="Label of the menu item to delete the ongoing recording." name="IDS_RECORDER_RECORD_MENU_DELETE_OPTION">
     Delete
+  </message>
+  <message desc="Label of the menu item to toggle whether speaker label is enabled while recording." name="IDS_RECORDER_RECORD_MENU_TOGGLE_SPEAKER_LABEL_OPTION">
+    Speaker identification
   </message>
   <message desc="Label of the menu item to toggle whether transcription is enabled while recording." name="IDS_RECORDER_RECORD_MENU_TOGGLE_TRANSCRIPTION_OPTION">
     Create transcript
@@ -343,10 +478,25 @@ Download the transcription model (up to 100MB) to get these transcriptions.
     Turn on transcription?
   </message>
   <message desc="Description when transcription is off in the transcription view while recording. The [3dot] will be replaced by an icon of the 3 dots menu." name="IDS_RECORDER_RECORD_TRANSCRIPTION_OFF_DESCRIPTION">
-    You can turn this on in Settings or the <ph name="THREE_DOTS_MENU_ICON">[3dot]</ph> menu
+    Transcription is off. Turn on in Settings or in the <ph name="THREE_DOTS_MENU_ICON">[3dot]</ph> menu.
   </message>
   <message desc="Header when transcription is off in the transcription view while recording." name="IDS_RECORDER_RECORD_TRANSCRIPTION_OFF_HEADER">
-    Transcript is off
+    No transcript will be created
+  </message>
+  <message desc="Description when the selected transcription language failed to install in the transcription view while recording." name="IDS_RECORDER_RECORD_TRANSCRIPTION_UNUSABLE_ERROR_DESCRIPTION">
+    Can’t download transcription model. Try again or restart your Chromebook.
+  </message>
+  <message desc="Header when transcription is unusable in the transcription view while recording." name="IDS_RECORDER_RECORD_TRANSCRIPTION_UNUSABLE_HEADER">
+    Can't create transcript
+  </message>
+  <message desc="Description when the selected transcription language is not installed in the transcription view while recording." name="IDS_RECORDER_RECORD_TRANSCRIPTION_UNUSABLE_NOT_INSTALLED_DESCRIPTION">
+    Download transcription model in Settings
+  </message>
+  <message desc="Description when transcription language is not selected in the transcription view while recording. The [3dot] will be replaced by an icon of the 3 dots menu." name="IDS_RECORDER_RECORD_TRANSCRIPTION_UNUSABLE_SELECT_LANGUAGE_DESCRIPTION">
+    Select transcription language and download in Settings or in the <ph name="THREE_DOTS_MENU_ICON">[3dot]</ph> menu
+  </message>
+  <message desc="Description when the selected transcription language is downloading in the transcription view while recording." name="IDS_RECORDER_RECORD_TRANSCRIPTION_WAITING_DOWNLOAD_TEXT">
+    Downloading transcription model…
   </message>
   <message desc="Tooltip of the button to unmute the microphone while recording." name="IDS_RECORDER_RECORD_UNMUTE_BUTTON_TOOLTIP">
     Turn on mic
@@ -362,6 +512,9 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   </message>
   <message desc="Label of the keep screen on toggle in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_KEEP_SCREEN_ON_LABEL">
     Keep screen on when recording
+  </message>
+  <message desc="Accessibility label of the chevron-right button to open transcription language subpage in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_LANGUAGE_SUBPAGE_BUTTON_ARIA_LABEL">
+    Transcription language picker
   </message>
   <message desc="Description of the speaker label toggle in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_SPEAKER_LABEL_DESCRIPTION">
     Currently only available in English (US)
@@ -381,11 +534,17 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   <message desc="Button to download summary model in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_SUMMARY_DOWNLOAD_BUTTON">
     Download
   </message>
+  <message desc="Accessibility label of the button to download summary and name creation model in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_SUMMARY_DOWNLOAD_BUTTON_ARIA_LABEL">
+    Download summary and name creation model
+  </message>
   <message desc="Label of the summary setting in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_SUMMARY_LABEL">
     Recording summary and name creation
   </message>
   <message desc="Link to more information about summary and name creation model." name="IDS_RECORDER_SETTINGS_OPTIONS_SUMMARY_LEARN_MORE_LINK">
     Learn more
+  </message>
+  <message desc="Accessibility label of the link to more information about summary and name creation model." name="IDS_RECORDER_SETTINGS_OPTIONS_SUMMARY_LEARN_MORE_LINK_ARIA_LABEL">
+    Learn more about summary and name creation
   </message>
   <message desc="Button when transcription model is downloading in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_TRANSCRIPTION_DOWNLOADING_BUTTON">
     Downloading…
@@ -396,14 +555,29 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   <message desc="Button to download transcription model in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_TRANSCRIPTION_DOWNLOAD_BUTTON">
     Download
   </message>
+  <message desc="Accessibility label of the transcription model download button in the settings." name="IDS_RECORDER_SETTINGS_OPTIONS_TRANSCRIPTION_DOWNLOAD_BUTTON_ARIA_LABEL">
+    Download transcription model
+  </message>
+  <message desc="Description of transcription error state in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_TRANSCRIPTION_ERROR_DESCRIPTION">
+    Can’t download. Try again or restart your Chromebook.
+  </message>
   <message desc="Label of the transcription toggle in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_TRANSCRIPTION_LABEL">
     Audio transcription
+  </message>
+  <message desc="Description of transcription language subpage in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_TRANSCRIPTION_LANGUAGE_DESCRIPTION">
+    Select transcription language
+  </message>
+  <message desc="Label of the transcription language option in settings." name="IDS_RECORDER_SETTINGS_OPTIONS_TRANSCRIPTION_LANGUAGE_LABEL">
+    Transcription language
   </message>
   <message desc="Header of the general section in settings." name="IDS_RECORDER_SETTINGS_SECTION_GENERAL_HEADER">
     General
   </message>
   <message desc="Header of the transcription and summary section in settings." name="IDS_RECORDER_SETTINGS_SECTION_TRANSCRIPTION_SUMMARY_HEADER">
     Transcription and summary
+  </message>
+  <message desc="Tooltip of the arrow button to collapse the summary view." name="IDS_RECORDER_SUMMARY_COLLAPSE_TOOLTIP">
+    Hide summary
   </message>
   <message desc="Label when summary is disabled." name="IDS_RECORDER_SUMMARY_DISABLED_LABEL">
     Summary is off
@@ -428,6 +602,9 @@ Download the transcription model (up to 100MB) to get these transcriptions.
   </message>
   <message desc="Status message for screen reader to update that the model is downloading." name="IDS_RECORDER_SUMMARY_DOWNLOAD_STARTED_STATUS_MESSAGE">
     Model download in progress
+  </message>
+  <message desc="Tooltip of the arrow button to expand the summary view." name="IDS_RECORDER_SUMMARY_EXPAND_TOOLTIP">
+    Show summary
   </message>
   <message desc="Status message for screen reader to update that the summary generation failed." name="IDS_RECORDER_SUMMARY_FAILED_STATUS_MESSAGE">
     Failed to generate summary

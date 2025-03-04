@@ -5,11 +5,12 @@
 #import "ios/chrome/browser/ui/content_suggestions/send_tab_to_self/send_tab_promo_mediator.h"
 
 #import "base/memory/raw_ptr.h"
+#import "base/metrics/histogram_functions.h"
 #import "components/prefs/pref_service.h"
 #import "components/send_tab_to_self/pref_names.h"
 #import "ios/chrome/browser/favicon/model/favicon_loader.h"
 #import "ios/chrome/browser/ui/content_suggestions/content_suggestions_constants.h"
-#import "ios/chrome/browser/ui/content_suggestions/notifications_module_delegate.h"
+#import "ios/chrome/browser/ui/content_suggestions/magic_stack/magic_stack_module_container_delegate.h"
 #import "ios/chrome/browser/ui/content_suggestions/send_tab_to_self/send_tab_promo_item.h"
 #import "ios/chrome/common/ui/favicon/favicon_attributes.h"
 #import "ios/chrome/common/ui/favicon/favicon_constants.h"
@@ -27,7 +28,6 @@
   if (self) {
     _faviconLoader = faviconLoader;
     _prefService = prefService;
-    _sendTabPromoItem = [[SendTabPromoItem alloc] init];
   }
   return self;
 }
@@ -49,11 +49,17 @@
   }
 }
 
-#pragma mark - SendTabPromoDelegate
+- (void)dismissModule {
+  [_delegate removeSendTabPromoModule];
+}
 
-- (void)allowSendTabNotifications {
-  [self.notificationsDelegate
-      enableNotifications:ContentSuggestionsModuleType::kSendTabPromo];
+#pragma mark - StandaloneModuleDelegate
+
+- (void)buttonTappedForModuleType:(ContentSuggestionsModuleType)moduleType {
+  CHECK(moduleType == ContentSuggestionsModuleType::kSendTabPromo);
+  base::UmaHistogramBoolean(
+      "IOS.Notifications.SendTab.MagicStack.AllowNotificationsPressed", true);
+  [self.notificationsDelegate enableNotifications:moduleType viaContextMenu:NO];
 }
 
 #pragma mark - Private
@@ -68,6 +74,7 @@
 
 // Fetches the favicon for the page at `tabURL`.
 - (void)fetchFaviconForUrl:(GURL)tabURL {
+  _sendTabPromoItem = nullptr;
   __weak SendTabPromoMediator* weakSelf = self;
 
   _faviconLoader->FaviconForPageUrl(
@@ -79,9 +86,19 @@
 
 // Called when the favicon has been received.
 - (void)onFaviconReceived:(FaviconAttributes*)attributes {
+  if (_sendTabPromoItem) {
+    // Favicon callback has already been executed, update the image and return.
+    if (!attributes.usesDefaultImage) {
+      _sendTabPromoItem.faviconImage = attributes.faviconImage;
+    }
+    return;
+  }
+
+  _sendTabPromoItem = [[SendTabPromoItem alloc] init];
   if (!attributes.usesDefaultImage) {
     _sendTabPromoItem.faviconImage = attributes.faviconImage;
   }
+  _sendTabPromoItem.standaloneDelegate = self;
   [_delegate sentTabReceived];
 }
 

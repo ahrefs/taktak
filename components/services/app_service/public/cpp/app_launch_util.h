@@ -21,12 +21,11 @@ namespace apps {
 // - Update ApplicationLaunchSource in
 //   //components/services/app_service/public/protos/app_types.proto.
 //
-// This is used for metrics and should not be reordered or removed and email
-// chromeos-data-team@google.com to request a corresponding change to backend
-// enums.
-//
-// These values are persisted to logs. Entries should not be renumbered and
-// numeric values should never be reused.
+// This is used for metrics, persisted to logs, and we should not
+//   - change the assigned value, nor
+//   - reuse the value which was used (even in past historically)
+// Email chromeos-data-team@google.com to request a corresponding change to
+// backend enums.
 enum class LaunchSource {
   kUnknown = 0,
   kFromAppListGrid = 1,              // Grid of apps, not the search box.
@@ -75,10 +74,11 @@ enum class LaunchSource {
   kFromFocusMode = 40,            // Focus Mode panel.
   kFromSparky = 41,               // From Sparky feature.
   kFromNavigationCapturing = 42,  // Web App Navigation Capturing.
+  kFromWebInstallApi = 43,        // Web Install API.
 
   // Add any new values above this one, and update kMaxValue to the highest
   // enumerator value.
-  kMaxValue = kFromNavigationCapturing,
+  kMaxValue = kFromWebInstallApi,
 };
 
 // Don't remove items or change the order of this enum.  It's used in

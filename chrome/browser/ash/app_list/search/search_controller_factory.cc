@@ -34,7 +34,6 @@
 #include "chrome/browser/ash/app_list/search/search_features.h"
 #include "chrome/browser/ash/app_list/search/system_info/system_info_card_provider.h"
 #include "chrome/browser/ash/arc/arc_util.h"
-#include "chrome/browser/ash/crosapi/crosapi_manager.h"
 #include "chrome/browser/ash/drive/drive_integration_service.h"
 #include "chrome/browser/ash/system_web_apps/apps/personalization_app/personalization_app_utils.h"
 #include "chrome/browser/profiles/profile.h"
@@ -98,9 +97,7 @@ std::unique_ptr<SearchController> CreateSearchController(
         kMaxAppShortcutResults, profile, list_controller));
   }
 
-  if (ash::features::IsLauncherContinueSectionWithRecentsEnabled() ||
-      base::GetFieldTrialParamByFeatureAsBool(
-          ash::features::kProductivityLauncher, "enable_continue", false)) {
+  if (ash::features::IsLauncherContinueSectionWithRecentsEnabled()) {
     controller->AddProvider(std::make_unique<ZeroStateFileProvider>(profile));
 
     controller->AddProvider(std::make_unique<ZeroStateDriveProvider>(

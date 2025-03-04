@@ -5,13 +5,16 @@
 #import "ios/chrome/browser/metrics/model/ios_push_notifications_metrics_provider.h"
 
 #import "base/metrics/histogram_functions.h"
+#import "base/strings/sys_string_conversions.h"
 #import "base/test/metrics/histogram_tester.h"
 #import "base/types/cxx23_to_underlying.h"
 #import "components/signin/public/base/signin_metrics.h"
 #import "ios/chrome/browser/metrics/model/constants.h"
 #import "ios/chrome/browser/push_notification/model/push_notification_util.h"
+#import "ios/chrome/browser/shared/model/application_context/application_context.h"
 #import "ios/chrome/browser/shared/model/profile/test/test_profile_ios.h"
 #import "ios/chrome/browser/shared/model/profile/test/test_profile_manager_ios.h"
+#import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/browser/signin/model/authentication_service.h"
 #import "ios/chrome/browser/signin/model/authentication_service_factory.h"
 #import "ios/chrome/browser/signin/model/fake_authentication_service_delegate.h"
@@ -62,38 +65,53 @@ class IOSPushNotificationsMetricsProviderTest : public PlatformTest {
     PlatformTest::TearDown();
   }
 
-  // Creates a TestProfileIOS and pretends it is signed-in with
-  // `identity` if not nil.
-  void AddProfile(const std::string& name, FakeSystemIdentity* identity) {
-    TestProfileIOS::Builder builder;
-    builder.SetName(name);
-    builder.AddTestingFactory(
-        AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
-
-    ProfileIOS* profile =
-        profile_manager_.AddProfileWithBuilder(std::move(builder));
-
-    AuthenticationServiceFactory::CreateAndInitializeForBrowserState(
-        profile, std::make_unique<FakeAuthenticationServiceDelegate>());
-
-    if (identity) {
-      FakeSystemIdentityManager::FromSystemIdentityManager(
-          GetApplicationContext()->GetSystemIdentityManager())
-          ->AddIdentity(identity);
-
-      AuthenticationServiceFactory::GetForProfile(profile)->SignIn(
-          identity, signin_metrics::AccessPoint::ACCESS_POINT_SETTINGS);
-    }
+  // Creates a personal TestProfileIOS with the given `name`. This must be the
+  // first profile that's created (because secondary profiles are work profiles,
+  // which must be associated with a managed account).
+  void AddPersonalProfile(const std::string& name) {
+    CHECK(profile_manager_.GetLoadedProfiles().empty());
+    AddProfileImpl(name);
   }
 
-  void AddProfile(const std::string& name) {
-    AddProfile(name, /*identity=*/nil);
+  // Creates a work TestProfileIOS and pretends it is signed-in with `identity`
+  // which must be a managed identity.
+  void AddWorkProfileForManagedIdentity(FakeSystemIdentity* identity) {
+    FakeSystemIdentityManager::FromSystemIdentityManager(
+        GetApplicationContext()->GetSystemIdentityManager())
+        ->AddIdentity(identity);
+    std::string profile_name;
+    if (AreSeparateProfilesForManagedAccountsEnabled()) {
+      std::optional<std::string> assigned_profile_name =
+          GetApplicationContext()
+              ->GetAccountProfileMapper()
+              ->FindProfileNameForGaiaID(GaiaId(identity.gaiaID));
+      CHECK(assigned_profile_name.has_value());
+      profile_name = *assigned_profile_name;
+    } else {
+      profile_name = profile_manager_.ReserveNewProfileName();
+    }
+    CHECK(!profile_name.empty());
+
+    ProfileIOS* profile = AddProfileImpl(profile_name);
+
+    AuthenticationServiceFactory::GetForProfile(profile)->SignIn(
+        identity, signin_metrics::AccessPoint::kSettings);
   }
 
   base::HistogramTester& histogram_tester() { return histogram_tester_; }
 
  private:
+  ProfileIOS* AddProfileImpl(const std::string& name) {
+    TestProfileIOS::Builder builder;
+    builder.SetName(name);
+    builder.AddTestingFactory(
+        AuthenticationServiceFactory::GetInstance(),
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
+
+    return profile_manager_.AddProfileWithBuilder(std::move(builder));
+  }
+
   web::WebTaskEnvironment task_environment_;
   IOSChromeScopedTestingLocalState scoped_testing_local_state_;
   TestProfileManagerIOS profile_manager_;
@@ -149,7 +167,7 @@ TEST_F(IOSPushNotificationsMetricsProviderTest,
   IOSPushNotificationsMetricsProvider provider;
 
   // Add one BrowserState and record the metrics.
-  AddProfile("Default");
+  AddPersonalProfile("Default");
   provider.ProvideCurrentSessionData(/*uma_proto*/ nullptr);
 
   // The status of the notification authorization must always be logged
@@ -191,9 +209,8 @@ TEST_F(IOSPushNotificationsMetricsProviderTest,
   IOSPushNotificationsMetricsProvider provider;
 
   // Add a few BrowserStates and record the metrics.
-  AddProfile("Profile1");
-  AddProfile("Profile2");
-  AddProfile("Profile3", [FakeSystemIdentity fakeIdentity1]);
+  AddPersonalProfile("Profile1");
+  AddWorkProfileForManagedIdentity([FakeSystemIdentity fakeManagedIdentity]);
   provider.ProvideCurrentSessionData(/*uma_proto*/ nullptr);
 
   // The status of the notification authorization must always be logged
@@ -216,11 +233,11 @@ TEST_F(IOSPushNotificationsMetricsProviderTest,
 
   EXPECT_THAT(histogram_tester().GetAllSamples(
                   kTipsNotifClientStatusByProviderHistogram),
-              ::testing::ElementsAre(base::Bucket(0, 3)));
+              ::testing::ElementsAre(base::Bucket(0, 2)));
 
   EXPECT_THAT(histogram_tester().GetAllSamples(
                   kSafetyCheckNotifClientStatusByProviderHistogram),
-              ::testing::ElementsAre(base::Bucket(0, 3)));
+              ::testing::ElementsAre(base::Bucket(0, 2)));
 
   EXPECT_THAT(histogram_tester().GetAllSamples(
                   kSendTabNotifClientStatusByProviderHistogram),

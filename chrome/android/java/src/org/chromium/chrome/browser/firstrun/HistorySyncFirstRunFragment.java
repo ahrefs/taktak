@@ -18,10 +18,13 @@ import org.chromium.base.Log;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.signin.services.IdentityServicesProvider;
+import org.chromium.chrome.browser.signin.services.SigninMetricsUtils;
+import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncConfig;
 import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncCoordinator;
 import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncView;
 import org.chromium.components.signin.identitymanager.ConsentLevel;
 import org.chromium.components.signin.metrics.SigninAccessPoint;
+import org.chromium.components.signin.metrics.SyncButtonClicked;
 
 public class HistorySyncFirstRunFragment extends Fragment
         implements FirstRunFragment, HistorySyncCoordinator.HistorySyncDelegate {
@@ -52,6 +55,8 @@ public class HistorySyncFirstRunFragment extends Fragment
 
     private void createViewAndAttachToFragment() {
         maybeCreateCoordinator();
+        if (mHistorySyncCoordinator == null) return;
+
         HistorySyncView view = mHistorySyncCoordinator.maybeRecreateView();
         if (view != null) {
             // View is non-null when HistorySyncView has created a new view. This new view will
@@ -80,6 +85,7 @@ public class HistorySyncFirstRunFragment extends Fragment
                         getActivity(),
                         this,
                         profile,
+                        new HistorySyncConfig(),
                         SigninAccessPoint.START_PAGE,
                         false,
                         false,
@@ -98,7 +104,7 @@ public class HistorySyncFirstRunFragment extends Fragment
 
     /** Implements {@link HistorySyncDelegate} */
     @Override
-    public void dismissHistorySync() {
+    public void dismissHistorySync(boolean isHistorySyncAccepted) {
         getPageDelegate().advanceToNextPage();
         if (mHistorySyncCoordinator != null) {
             mHistorySyncCoordinator.destroy();
@@ -108,8 +114,26 @@ public class HistorySyncFirstRunFragment extends Fragment
 
     /** Implements {@link HistorySyncDelegate} */
     @Override
-    public void maybeRecordFreProgress(@MobileFreProgress int state) {
-        getPageDelegate().recordFreProgressHistogram(state);
+    public void recordHistorySyncOptIn(
+            @SigninAccessPoint int accessPoint, @SyncButtonClicked int syncButtonClicked) {
+        switch (syncButtonClicked) {
+            case SyncButtonClicked.HISTORY_SYNC_OPT_IN_EQUAL_WEIGHTED:
+            case SyncButtonClicked.HISTORY_SYNC_OPT_IN_NOT_EQUAL_WEIGHTED:
+                getPageDelegate()
+                        .recordFreProgressHistogram(MobileFreProgress.HISTORY_SYNC_ACCEPTED);
+                SigninMetricsUtils.logHistorySyncAcceptButtonClicked(
+                        SigninAccessPoint.START_PAGE, syncButtonClicked);
+                break;
+            case SyncButtonClicked.HISTORY_SYNC_CANCEL_EQUAL_WEIGHTED:
+            case SyncButtonClicked.HISTORY_SYNC_CANCEL_NOT_EQUAL_WEIGHTED:
+                getPageDelegate()
+                        .recordFreProgressHistogram(MobileFreProgress.HISTORY_SYNC_DISMISSED);
+                SigninMetricsUtils.logHistorySyncDeclineButtonClicked(
+                        SigninAccessPoint.START_PAGE, syncButtonClicked);
+                break;
+            default:
+                throw new IllegalStateException("Unrecognized sync button type");
+        }
     }
 
     @Override
@@ -117,6 +141,7 @@ public class HistorySyncFirstRunFragment extends Fragment
         super.onDetach();
         if (mHistorySyncCoordinator != null) {
             mHistorySyncCoordinator.destroy();
+            mHistorySyncCoordinator = null;
         }
     }
 }

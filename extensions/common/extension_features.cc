@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "extensions/common/extension_features.h"
+
 #include "base/feature_list.h"
 
 namespace extensions_features {
@@ -23,20 +24,24 @@ BASE_FEATURE(kApiEnterpriseKioskInput,
              "ApiEnterpriseKioskInput",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
-BASE_FEATURE(kApiPermissionsSiteAccessRequests,
-             "ApiPermissionsSiteAccessRequests",
+BASE_FEATURE(kApiRuntimeActionData,
+             "ApiRuntimeActionData",
              base::FEATURE_DISABLED_BY_DEFAULT);
+
+BASE_FEATURE(kApiPermissionsHostAccessRequests,
+             "ApiPermissionsHostAccessRequests",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+BASE_FEATURE(kApiUserScriptsExecute,
+             "ApiUserScriptsExecute",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kApiUserScriptsMultipleWorlds,
              "ApiUserScriptsMultipleWorlds",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kApiOdfsConfigPrivate,
              "ApiOdfsConfigPrivate",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
-BASE_FEATURE(kApiEnterpriseReportingPrivateReportDataMaskingEvent,
-             "ApiEnterpriseReportingPrivateReportDataMaskingEvent",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -45,17 +50,9 @@ BASE_FEATURE(kApiEnterpriseReportingPrivateReportDataMaskingEvent,
 
 // For historical reasons, this includes some APIs. Please don't add more.
 
-BASE_FEATURE(kAllowSharedArrayBuffersUnconditionally,
-             "AllowSharedArrayBuffersUnconditionally",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 BASE_FEATURE(kAllowWithholdingExtensionPermissionsOnInstall,
              "AllowWithholdingExtensionPermissionsOnInstall",
              base::FEATURE_DISABLED_BY_DEFAULT);
-
-BASE_FEATURE(kAvoidEarlyExtensionScriptContextCreation,
-             "AvoidEarlyExtensionScriptContextCreation",
-             base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kCheckingNoExtensionIdInExtensionIpcs,
              "EMF_NO_EXTENSION_ID_FOR_EXTENSION_SOURCE",
@@ -67,10 +64,6 @@ BASE_FEATURE(kEnableWebHidInWebView,
 
 BASE_FEATURE(kExtensionDisableUnsupportedDeveloper,
              "ExtensionDisableUnsupportedDeveloper",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
-BASE_FEATURE(kExtensionDynamicURLRedirection,
-             "ExtensionDynamicURLRedirection",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kExtensionIconVariants,
@@ -91,7 +84,7 @@ BASE_FEATURE(kExtensionManifestV2ExceptionList,
 
 BASE_FEATURE(kExtensionManifestV2Disabled,
              "ExtensionManifestV2Disabled",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 const base::FeatureParam<std::string> kExtensionManifestV2ExceptionListParam(
     &kExtensionManifestV2ExceptionList,
@@ -104,6 +97,10 @@ BASE_FEATURE(kAllowLegacyMV2Extensions,
 
 BASE_FEATURE(kExtensionSourceUrlEnforcement,
              "ExtensionSourceUrlEnforcement",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+BASE_FEATURE(kExtensionWARForRedirect,
+             "ExtensionWARForRedirect",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kExtensionWebFileHandlers,
@@ -134,10 +131,6 @@ BASE_FEATURE(kLaunchWindowsNativeHostsDirectly,
              "LaunchWindowsNativeHostsDirectly",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-BASE_FEATURE(kNewExtensionFaviconHandling,
-             "ExtensionsNewFaviconHandling",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 // To investigate signal beacon loss in crrev.com/c/2262402.
 BASE_FEATURE(kReportKeepaliveUkm,
              "ReportKeepaliveUkm",
@@ -167,6 +160,10 @@ BASE_FEATURE(kDeclarativeNetRequestSafeRuleLimits,
              "DeclarativeNetRequestSafeDynamicRules",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
+BASE_FEATURE(kExperimentalOmniboxLabs,
+             "ExperimentalOmniboxLabs",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
 BASE_FEATURE(kDeclarativeNetRequestResponseHeaderMatching,
              "DeclarativeNetRequestResponseHeaderMatching",
              base::FEATURE_ENABLED_BY_DEFAULT);
@@ -177,7 +174,7 @@ BASE_FEATURE(kIncludeJSCallStackInExtensionApiRequest,
 
 BASE_FEATURE(kUseItemSnippetsAPI,
              "UseItemSnippetsAPI",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 BASE_FEATURE(kUseNewServiceWorkerTaskQueue,
              "UseNewServiceWorkerTaskQueue",
@@ -189,6 +186,18 @@ BASE_FEATURE(kDeclarativeNetRequestHeaderSubstitution,
 
 BASE_FEATURE(kSilentDebuggerExtensionAPI,
              "SilentDebuggerExtensionAPI",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+BASE_FEATURE(kRemoveCoreSiteInstance,
+             "RemoveCoreSiteInstance",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+BASE_FEATURE(kUserScriptUserExtensionToggle,
+             "UserScriptUserExtensionToggle",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+BASE_FEATURE(kDebuggerAPIRestrictedToDevMode,
+             "DebuggerAPIRestrictedToDevMode",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 }  // namespace extensions_features

@@ -279,9 +279,12 @@ class COMPONENT_EXPORT(STORAGE_BROWSER) QuotaManagerImpl
                                   blink::mojom::StorageType type,
                                   UsageAndQuotaCallback callback);
 
-  // Called by Web Apps (navigator.storage.estimate())
+  // Called by Web Apps (navigator.storage.estimate()).
+  // Returns usage and real quota for sites with unlimited storage permission or
+  // static quota otherwise. Returning static quota in the limited storage case
+  // avoids leaking information about the user's browsing mode.
   // This method is declared as virtual to allow test code to override it.
-  virtual void GetUsageAndQuotaWithBreakdown(
+  virtual void GetUsageAndReportedQuotaWithBreakdown(
       const blink::StorageKey& storage_key,
       blink::mojom::StorageType type,
       UsageAndQuotaWithBreakdownCallback callback);
@@ -419,7 +422,12 @@ class COMPONENT_EXPORT(STORAGE_BROWSER) QuotaManagerImpl
                                        UsageWithBreakdownCallback callback);
   void GetBucketUsageWithBreakdown(const BucketLocator& bucket,
                                    UsageWithBreakdownCallback callback);
-  void GetBucketUsageAndQuota(BucketId id, UsageAndQuotaCallback callback);
+  // Returns bucket usage and real quota for sites with unlimited storage
+  // permission and buckets with non-default quota, or static quota otherwise.
+  // Returning static quota in the non-default, limited storage case avoids
+  // leaking information about the user's browsing mode.
+  void GetBucketUsageAndReportedQuota(BucketId id,
+                                      UsageAndQuotaCallback callback);
   void GetBucketSpaceRemaining(
       const BucketLocator& bucket,
       base::OnceCallback<void(QuotaErrorOr<int64_t>)> callback);
@@ -469,6 +477,12 @@ class COMPONENT_EXPORT(STORAGE_BROWSER) QuotaManagerImpl
   static constexpr base::TimeDelta kMinutesAfterStartupToBeginEviction =
       base::Minutes(5);
 
+  // After 15 minutes from startup, go through the buckets to delete the
+  // MediaLicense database from all of the bucket directories.
+  static constexpr base::TimeDelta
+      kMinutesAfterStartupToBeginMediaLicenseDatabaseDeletion =
+          base::Minutes(15);
+
   static constexpr int kThresholdOfErrorsToBeDenylisted = 3;
 
   static constexpr char kDatabaseName[] = "QuotaManager";
@@ -515,6 +529,8 @@ class COMPONENT_EXPORT(STORAGE_BROWSER) QuotaManagerImpl
   }
 
   bool is_db_disabled_for_testing() { return db_disabled_; }
+
+  void DeleteMediaLicenseDatabaseForTesting() { DeleteMediaLicenseDatabase(); }
 
   void AddObserver(
       mojo::PendingRemote<storage::mojom::QuotaManagerObserver> observer);
@@ -575,6 +591,16 @@ class COMPONENT_EXPORT(STORAGE_BROWSER) QuotaManagerImpl
   // Initialize() must be called after all quota clients are added to the
   // manager by RegisterClient().
   void EnsureDatabaseOpened();
+
+  // Removes Media License Databases only if it hasn't already happened.
+  void MaybeRemoveMediaLicenseDatabases();
+
+  // Methods to help with the removal of the Media License Databases, including
+  // retrieving the flag from the metadata and disabling the database if there
+  // is an error with the retrieval.
+  void RemoveMediaLicenseDatabases();
+  void DidGetMediaLicenseDatabaseRemovalFlag(
+      bool is_media_license_database_removed);
 
   // Bootstraps only if it hasn't already happened.
   void MaybeBootstrapDatabase();
@@ -668,6 +694,11 @@ class COMPONENT_EXPORT(STORAGE_BROWSER) QuotaManagerImpl
   // user-facing dialog in Chrome.
   void NotifyWriteFailed(const blink::StorageKey& storage_key);
 
+  // Methods for MediaLicenseDB logic.
+  void DeleteMediaLicenseDatabase();
+  void DidGetBucketsForMediaLicenseDeletion(
+      const std::set<BucketLocator>& buckets);
+
   // Methods for eviction logic.
   void StartEviction();
   void DeleteBucketFromDatabase(
@@ -706,6 +737,10 @@ class COMPONENT_EXPORT(STORAGE_BROWSER) QuotaManagerImpl
   void DidGetBucketsForEvictionFromDatabase(
       GetBucketsCallback callback,
       QuotaErrorOr<std::set<BucketLocator>> result);
+  void GetUsageAndQuotaWithBreakdown(
+      const blink::StorageKey& storage_key,
+      blink::mojom::StorageType type,
+      UsageAndQuotaWithBreakdownCallback callback);
   void GetQuotaSettings(QuotaSettingsCallback callback);
   void DidGetSettings(std::optional<QuotaSettings> settings);
   void GetStorageCapacity(StorageCapacityCallback callback);
@@ -733,6 +768,7 @@ class COMPONENT_EXPORT(STORAGE_BROWSER) QuotaManagerImpl
       QuotaErrorOr<BucketInfo> result);
   void DidGetBucketForDeletion(StatusCallback callback,
                                QuotaErrorOr<BucketInfo> result);
+  void GetBucketUsageAndQuota(BucketId id, UsageAndQuotaCallback callback);
   void DidGetBucketForUsageAndQuota(UsageAndQuotaCallback callback,
                                     QuotaErrorOr<BucketInfo> result);
   void DidGetStorageKeys(GetStorageKeysCallback callback,

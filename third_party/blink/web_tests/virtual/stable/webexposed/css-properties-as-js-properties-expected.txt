@@ -241,6 +241,7 @@ insetBlockStart
 insetInline
 insetInlineEnd
 insetInlineStart
+interactivity
 interpolateSize
 isolation
 item
@@ -316,7 +317,9 @@ outlineStyle
 outlineWidth
 overflow
 overflowAnchor
+overflowBlock
 overflowClipMargin
+overflowInline
 overflowWrap
 overflowX
 overflowY
@@ -374,6 +377,7 @@ rx
 ry
 scale
 scrollBehavior
+scrollInitialTarget
 scrollMargin
 scrollMarginBlock
 scrollMarginBlockEnd
@@ -385,6 +389,7 @@ scrollMarginInlineStart
 scrollMarginLeft
 scrollMarginRight
 scrollMarginTop
+scrollMarkerGroup
 scrollPadding
 scrollPaddingBlock
 scrollPaddingBlockEnd
@@ -434,6 +439,9 @@ tableLayout
 textAlign
 textAlignLast
 textAnchor
+textBox
+textBoxEdge
+textBoxTrim
 textCombineUpright
 textDecoration
 textDecorationColor

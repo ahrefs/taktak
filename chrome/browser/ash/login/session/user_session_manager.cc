@@ -13,7 +13,6 @@
 #include <utility>
 #include <vector>
 
-#include "ash/components/arc/arc_prefs.h"
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_pref_names.h"
 #include "ash/constants/ash_switches.h"
@@ -21,6 +20,7 @@
 #include "ash/shell.h"
 #include "ash/wm/window_util.h"
 #include "base/base_paths.h"
+#include "base/check_deref.h"
 #include "base/check_op.h"
 #include "base/command_line.h"
 #include "base/containers/contains.h"
@@ -145,8 +145,8 @@
 #include "chromeos/ash/components/network/portal_detector/network_portal_detector.h"
 #include "chromeos/ash/components/settings/cros_settings.h"
 #include "chromeos/ash/components/settings/cros_settings_names.h"
-#include "chromeos/ash/components/standalone_browser/migrator_util.h"
 #include "chromeos/ash/components/tpm/prepare_tpm.h"
+#include "chromeos/ash/experiences/arc/arc_prefs.h"
 #include "chromeos/dbus/tpm_manager/tpm_manager.pb.h"
 #include "chromeos/dbus/tpm_manager/tpm_manager_client.h"
 #include "chromeos/ui/base/app_types.h"
@@ -156,8 +156,6 @@
 #include "components/account_manager_core/account.h"
 #include "components/account_manager_core/chromeos/account_manager.h"
 #include "components/component_updater/component_updater_service.h"
-#include "components/flags_ui/flags_ui_metrics.h"
-#include "components/flags_ui/pref_service_flags_storage.h"
 #include "components/language/core/browser/pref_names.h"
 #include "components/password_manager/core/browser/password_manager_metrics_util.h"
 #include "components/password_manager/core/browser/password_store/password_store_interface.h"
@@ -186,10 +184,13 @@
 #include "components/user_manager/user_names.h"
 #include "components/user_manager/user_type.h"
 #include "components/version_info/version_info.h"
+#include "components/webui/flags/flags_ui_metrics.h"
+#include "components/webui/flags/pref_service_flags_storage.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/network_service_instance.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/common/content_switches.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "rlz/buildflags/buildflags.h"
 #include "third_party/cros_system_api/switches/chrome_switches.h"
 #include "ui/aura/window.h"
@@ -444,7 +445,7 @@ void OnPrepareTpmDeviceFinished() {
 }
 
 void SaveSyncTrustedVaultKeysToProfile(
-    const std::string& gaia_id,
+    const GaiaId& gaia_id,
     const SyncTrustedVaultKeys& trusted_vault_keys,
     Profile* profile) {
   trusted_vault::TrustedVaultService* trusted_vault_service =
@@ -584,11 +585,11 @@ std::string Sha1Digest(const std::string& data) {
 
 }  // namespace
 
-UserSessionManagerDelegate::~UserSessionManagerDelegate() {}
+UserSessionManagerDelegate::~UserSessionManagerDelegate() = default;
 
 void UserSessionStateObserver::PendingUserSessionsRestoreFinished() {}
 
-UserSessionStateObserver::~UserSessionStateObserver() {}
+UserSessionStateObserver::~UserSessionStateObserver() = default;
 
 // static
 UserSessionManager* UserSessionManager::GetInstance() {
@@ -608,7 +609,6 @@ UserSessionManager::UserSessionManager()
       authenticator_(nullptr),
       has_auth_cookies_(false),
       user_sessions_restored_(false),
-      user_sessions_restore_in_progress_(false),
       should_obtain_handles_(true),
       should_launch_browser_(true),
       waiting_for_child_account_status_(false),
@@ -651,10 +651,12 @@ class UserSessionManager::DeviceAccountGaiaTokenObserver
 
   // account_manager::AccountManager::Observer overrides:
   void OnTokenUpserted(const account_manager::Account& account) override {
-    if (account.key.account_type() != account_manager::AccountType::kGaia)
+    if (account.key.account_type() != account_manager::AccountType::kGaia) {
       return;
-    if (account.key.id() != account_id_.GetGaiaId())
+    }
+    if (GaiaId(account.key.id()) != account_id_.GetGaiaId()) {
       return;
+    }
 
     callback_.Run(account_id_);
   }
@@ -740,7 +742,7 @@ scoped_refptr<Authenticator> UserSessionManager::CreateAuthenticator(
       auto* user_manager = user_manager::UserManager::Get();
       bool new_user_can_become_owner =
           !ash::InstallAttributes::Get()->IsEnterpriseManaged() &&
-          user_manager->GetUsers().empty();
+          user_manager->GetPersistedUsers().empty();
       authenticator_ = new AuthSessionAuthenticator(
           consumer, std::make_unique<ChromeSafeModeDelegate>(),
           base::BindRepeating(&RecordKnownUser), new_user_can_become_owner,
@@ -771,7 +773,7 @@ void UserSessionManager::StartSession(
 
   VLOG(1) << "Starting user session.";
   PreStartSession(start_session_type);
-  CreateUserSession(user_context, has_auth_cookies);
+  CreateUserSession(user_context, has_auth_cookies, has_active_session);
 
   if (!has_active_session)
     StartCrosSession();
@@ -830,7 +832,6 @@ void UserSessionManager::RestoreAuthenticationSession(Profile* user_profile) {
 }
 
 void UserSessionManager::RestoreActiveSessions() {
-  user_sessions_restore_in_progress_ = true;
   SessionManagerClient::Get()->RetrieveActiveSessions(
       base::BindOnce(&UserSessionManager::OnRestoreActiveSessions,
                      GetUserSessionManagerAsWeakPtr()));
@@ -839,11 +840,6 @@ void UserSessionManager::RestoreActiveSessions() {
 bool UserSessionManager::UserSessionsRestored() const {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   return user_sessions_restored_;
-}
-
-bool UserSessionManager::UserSessionsRestoreInProgress() const {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  return user_sessions_restore_in_progress_;
 }
 
 void UserSessionManager::SetFirstLoginPrefs(
@@ -1178,14 +1174,53 @@ void UserSessionManager::StopChildStatusObserving(Profile* profile) {
 }
 
 void UserSessionManager::CreateUserSession(const UserContext& user_context,
-                                           bool has_auth_cookies) {
+                                           bool has_auth_cookies,
+                                           bool has_active_session) {
   user_context_ = user_context;
   has_auth_cookies_ = has_auth_cookies;
   ProcessAppModeSwitches();
   StoreUserContextDataBeforeProfileIsCreated();
-  session_manager::SessionManager::Get()->CreateSession(
-      user_context_.GetAccountId(), user_context_.GetUserIDHash(),
-      user_context.GetUserType() == user_manager::UserType::kChild);
+
+  // Ensure there's user to be logged in.
+  // TODO(hidehiko): probably we should have better place to guarantee User
+  // registered much before this stage. Investigate further.
+  const AccountId& account_id = user_context_.GetAccountId();
+  auto& user_manager = CHECK_DEREF(user_manager::UserManager::Get());
+  auto& session_manager = CHECK_DEREF(session_manager::SessionManager::Get());
+
+  // Find persisted user.
+  user_manager::User* persisted_user = nullptr;
+  for (auto& user : user_manager.GetPersistedUsers()) {
+    if (user->GetAccountId() == account_id) {
+      persisted_user = user.get();
+      break;
+    }
+  }
+
+  bool created = false;
+  if (session_manager.sessions().empty()) {
+    // Primary session login.
+    user_manager::UserType user_type = user_manager.CalculateUserType(
+        account_id, persisted_user,
+        /*browser_restart=*/false,
+        user_context_.GetUserType() == user_manager::UserType::kChild);
+    // TODO(crbug.com/278643115): Make sure user_type and
+    // user_context_.GetUserType() are the same value, and then remove
+    // CalculateUserType call.
+
+    // Note: we call EnsureUser even if there's persisted_user,
+    // which may update user type between kRegular and kChild.
+    created = user_manager.EnsureUser(
+        account_id, user_type, user_manager.IsEphemeralAccountId(account_id));
+  } else {
+    CHECK(persisted_user);
+    // TODO(crbug.com/278643115): Make sure persisted_user's type and
+    // user_context_.GetUserType() are the same value.
+  }
+
+  session_manager.CreateSession(user_context_.GetAccountId(),
+                                user_context_.GetUserIDHash(), created,
+                                has_active_session);
 }
 
 void UserSessionManager::PreStartSession(StartSessionType start_session_type) {
@@ -1287,6 +1322,12 @@ void UserSessionManager::UpdateArcFileSystemCompatibilityAndPrepareProfile() {
   arc::UpdateArcFileSystemCompatibilityPrefIfNeeded(
       user_context_.GetAccountId(),
       ProfileHelper::GetProfilePathByUserIdHash(user_context_.GetUserIDHash()),
+      base::BindOnce(&UserSessionManager::CheckArcVmDlcImageExist,
+                     GetUserSessionManagerAsWeakPtr()));
+}
+
+void UserSessionManager::CheckArcVmDlcImageExist() {
+  arc::CheckArcVmDlcImageExist(
       base::BindOnce(&UserSessionManager::InitializeAccountManager,
                      GetUserSessionManagerAsWeakPtr()));
 }
@@ -1393,7 +1434,7 @@ void UserSessionManager::InitProfilePreferences(
     // `IdentityManager`.
     signin::IdentityManager* identity_manager =
         IdentityManagerFactory::GetForProfile(profile);
-    std::string gaia_id = user_context.GetGaiaID();
+    GaiaId gaia_id = user_context.GetGaiaID();
     // TODO(http://crbug.com/1454286): Remove.
     bool used_extended_account_info = false;
     if (gaia_id.empty()) {
@@ -1406,8 +1447,10 @@ void UserSessionManager::InitProfilePreferences(
       used_extended_account_info = true;
 
       // Use a fake gaia id for tests that do not have it.
-      if (IsRunningTest() && gaia_id.empty())
-        gaia_id = "fake_gaia_id_" + user_context.GetAccountId().GetUserEmail();
+      if (IsRunningTest() && gaia_id.empty()) {
+        gaia_id = GaiaId("fake_gaia_id_" +
+                         user_context.GetAccountId().GetUserEmail());
+      }
 
       // Update http://crbug.com/1454286 if the following line CHECKs.
       CHECK(!gaia_id.empty());
@@ -1428,8 +1471,8 @@ void UserSessionManager::InitProfilePreferences(
 
     DCHECK(account_manager->IsInitialized());
 
-    const ::account_manager::AccountKey account_key{
-        gaia_id, account_manager::AccountType::kGaia};
+    const ::account_manager::AccountKey account_key =
+        ::account_manager::AccountKey::FromGaiaId(gaia_id);
 
     // 1. Make sure that the account is present in
     // `account_manager::AccountManager`.
@@ -1483,9 +1526,10 @@ void UserSessionManager::InitProfilePreferences(
       base::debug::Alias(&set_account_result_copy);
       base::debug::Alias(&used_extended_account_info_copy);
 
-      DEBUG_ALIAS_FOR_CSTR(local_gaia_id_str, gaia_id.c_str(), 32);
-      DEBUG_ALIAS_FOR_CSTR(identity_manager_gaia_id_str,
-                           identity_manager_account_info.gaia.c_str(), 32);
+      DEBUG_ALIAS_FOR_CSTR(local_gaia_id_str, gaia_id.ToString().c_str(), 32);
+      DEBUG_ALIAS_FOR_CSTR(
+          identity_manager_gaia_id_str,
+          identity_manager_account_info.gaia.ToString().c_str(), 32);
 
       DEBUG_ALIAS_FOR_CSTR(
           account_id_str, user_context.GetAccountId().Serialize().c_str(), 128);
@@ -1520,7 +1564,7 @@ void UserSessionManager::InitProfilePreferences(
         token_observers_.emplace(profile,
                                  std::move(device_account_token_observer));
       } else {
-        NOTREACHED_IN_MIGRATION()
+        NOTREACHED()
             << "Found an existing Gaia token observer for this Profile. "
                "Profile is being erroneously initialized twice?";
       }
@@ -1542,8 +1586,7 @@ void UserSessionManager::InitProfilePreferences(
         account_id, is_child ? signin::Tribool::kTrue : signin::Tribool::kFalse,
         is_under_advanced_protection);
 
-    if (is_child &&
-        base::FeatureList::IsEnabled(::features::kDMServerOAuthForChildUser)) {
+    if (is_child) {
       child_policy_observer_ = std::make_unique<ChildPolicyObserver>(profile);
     }
   } else {
@@ -1654,8 +1697,7 @@ void UserSessionManager::UserProfileInitialized(Profile* profile,
     // sign in using GAIA (webview) and webview didn't yet initialize.
     if (signin_partition) {
       ProfileAuthData::Transfer(
-          signin_partition, profile->GetDefaultStoragePartition(),
-          transfer_auth_cookies_on_first_login,
+          signin_partition, profile, transfer_auth_cookies_on_first_login,
           transfer_saml_auth_cookies_on_subsequent_login,
           base::BindOnce(
               &UserSessionManager::CompleteProfileCreateAfterAuthTransfer,
@@ -1713,7 +1755,7 @@ void UserSessionManager::FinalizePrepareProfile(Profile* profile) {
         password_sync_token_verifier->CheckForPasswordNotInSync();
       } else {
         // SAML user is not expected to go through other authentication flows.
-        NOTREACHED_IN_MIGRATION();
+        NOTREACHED();
       }
     }
 
@@ -1782,16 +1824,13 @@ void UserSessionManager::FinalizePrepareProfile(Profile* profile) {
     VLOG(1) << "Clearing all secrets";
     user_context_.ClearSecrets();
     if (user->GetType() == user_manager::UserType::kChild) {
-      if (base::FeatureList::IsEnabled(
-              ::features::kDMServerOAuthForChildUser)) {
-        VLOG(1) << "Waiting for child policy refresh before showing session UI";
-        DCHECK(child_policy_observer_);
-        child_policy_observer_->NotifyWhenPolicyReady(
-            base::BindOnce(&UserSessionManager::OnChildPolicyReady,
-                           GetUserSessionManagerAsWeakPtr()),
-            kWaitForChildPolicyTimeout);
-        return;
-      }
+      VLOG(1) << "Waiting for child policy refresh before showing session UI";
+      DCHECK(child_policy_observer_);
+      child_policy_observer_->NotifyWhenPolicyReady(
+          base::BindOnce(&UserSessionManager::OnChildPolicyReady,
+                         GetUserSessionManagerAsWeakPtr()),
+          kWaitForChildPolicyTimeout);
+      return;
     }
   }
 
@@ -2226,7 +2265,6 @@ void UserSessionManager::RestorePendingUserSessions() {
 void UserSessionManager::NotifyPendingUserSessionsRestoreFinished() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   user_sessions_restored_ = true;
-  user_sessions_restore_in_progress_ = false;
   for (auto& observer : session_state_observer_list_)
     observer.PendingUserSessionsRestoreFinished();
 }

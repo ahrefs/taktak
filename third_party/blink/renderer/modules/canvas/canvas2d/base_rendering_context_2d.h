@@ -113,8 +113,8 @@ class OffscreenCanvas;
 class Path;
 class Path2D;
 class ScriptState;
-class SimpleFontData;
 class TextCluster;
+class TextClusterOptions;
 class TextMetrics;
 class V8GPUTextureFormat;
 class V8UnionCanvasFilterOrString;
@@ -126,6 +126,11 @@ template <typename T>
 class NotShared;
 class V8CanvasFontStretch;
 class V8CanvasTextRendering;
+class V8CanvasTextAlign;
+class V8CanvasTextBaseline;
+class V8CanvasDirection;
+class V8CanvasFontKerning;
+class V8CanvasFontVariantCaps;
 
 class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
  public:
@@ -203,7 +208,8 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
                   ExceptionState& exception_state) {
     beginLayerImpl(script_state, options, &exception_state);
   }
-  // Pop state stack if top state was pushed by beginLayer, restore state and draw the bitmap.
+  // Pop state stack if top state was pushed by beginLayer, restore state and
+  // draw the bitmap.
   void endLayer(ExceptionState& exception_state);
   int LayerCount() const { return layer_count_; }
   virtual void reset();  // Called by the javascript interface
@@ -258,11 +264,12 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
   void fillRect(double x, double y, double width, double height);
   void strokeRect(double x, double y, double width, double height);
 
-  // https://github.com/Igalia/explainers/blob/main/canvas-formatted-text/html-in-canvas.md
+  // https://github.com/WICG/canvas-place-element
   void placeElement(Element* element,
                     double x,
                     double y,
                     ExceptionState& exception_state);
+  void OnPlaceElementStateChanged(Element& element);
   void drawImage(const V8CanvasImageSource* image_source,
                  double x,
                  double y,
@@ -436,10 +443,7 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
 
   virtual bool HasAlpha() const = 0;
 
-  virtual bool IsDesynchronized() const {
-    NOTREACHED_IN_MIGRATION();
-    return false;
-  }
+  virtual bool IsDesynchronized() const { NOTREACHED(); }
 
   virtual bool isContextLost() const = 0;
 
@@ -447,14 +451,17 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
 
   void RestoreMatrixClipStack(cc::PaintCanvas*) const;
 
-  String direction() const;
-  void setDirection(const String&);
+  String lang() const;
+  void setLang(const String&);
 
-  String textAlign() const;
-  void setTextAlign(const String&);
+  V8CanvasDirection direction() const;
+  void setDirection(const V8CanvasDirection);
 
-  String textBaseline() const;
-  void setTextBaseline(const String&);
+  V8CanvasTextAlign textAlign() const;
+  void setTextAlign(const V8CanvasTextAlign);
+
+  V8CanvasTextBaseline textBaseline() const;
+  void setTextBaseline(const V8CanvasTextBaseline);
 
   String letterSpacing() const;
   void setLetterSpacing(const String&);
@@ -465,20 +472,14 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
   V8CanvasTextRendering textRendering() const;
   void setTextRendering(const V8CanvasTextRendering&);
 
-  String textRenderingAsString() const;
-  void setTextRenderingAsString(const String&);
-
-  String fontKerning() const;
-  void setFontKerning(const String&);
+  V8CanvasFontKerning fontKerning() const;
+  void setFontKerning(const V8CanvasFontKerning);
 
   V8CanvasFontStretch fontStretch() const;
   void setFontStretch(const V8CanvasFontStretch&);
 
-  String fontStretchAsString() const;
-  void setFontStretchAsString(const String&);
-
-  String fontVariantCaps() const;
-  void setFontVariantCaps(const String&);
+  V8CanvasFontVariantCaps fontVariantCaps() const;
+  void setFontVariantCaps(const V8CanvasFontVariantCaps&);
 
   String font() const;
   void setFont(const String& new_font);
@@ -493,6 +494,15 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
   // The x and y parameters are added to the values from the TextCluster to
   // position the cluster.
   void fillTextCluster(const TextCluster* text_cluster, double x, double y);
+  void fillTextCluster(const TextCluster* text_cluster,
+                       double x,
+                       double y,
+                       const TextClusterOptions* cluster_options);
+  void strokeTextCluster(const TextCluster* text_cluster, double x, double y);
+  void strokeTextCluster(const TextCluster* text_cluster,
+                         double x,
+                         double y,
+                         const TextClusterOptions* cluster_options);
 
   void Trace(Visitor*) const override;
 
@@ -595,12 +605,13 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
   virtual HTMLCanvasElement* HostAsHTMLCanvasElement() const;
   virtual OffscreenCanvas* HostAsOffscreenCanvas() const;
   virtual FontSelector* GetFontSelector() const;
-  const Font& AccessFont(HTMLCanvasElement* canvas);
+  const Font* AccessFont(HTMLCanvasElement* canvas);
 
   void WillUseCurrentFont() const;
   virtual bool WillSetFont() const;
   virtual bool ResolveFont(const String& new_font) = 0;
   virtual bool CurrentFontResolvedAndUpToDate() const;
+  const LayoutLocale* LocaleFromLang();
 
   ALWAYS_INLINE CanvasRenderingContext2DState& GetState() const {
     return *state_stack_.back();
@@ -634,12 +645,10 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
                            size_t row_bytes,
                            int x,
                            int y) {
-    NOTREACHED_IN_MIGRATION();
-    return false;
+    NOTREACHED();
   }
   virtual scoped_refptr<StaticBitmapImage> GetImage(FlushReason) {
-    NOTREACHED_IN_MIGRATION();
-    return nullptr;
+    NOTREACHED();
   }
 
   void CheckOverdraw(const cc::PaintFlags*,
@@ -654,38 +663,13 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
 
   virtual void FinalizeFrame(FlushReason) {}
 
-  float GetFontBaseline(const SimpleFontData&) const;
   virtual void DispatchContextLostEvent(TimerBase*);
   virtual void DispatchContextRestoredEvent(TimerBase*);
   virtual void TryRestoreContextEvent(TimerBase*) {}
 
   static const char kDefaultFont[];
-  static const char kInheritDirectionString[];
-  static const char kRtlDirectionString[];
-  static const char kLtrDirectionString[];
-  static const char kAutoKerningString[];
-  static const char kNormalKerningString[];
-  static const char kNoneKerningString[];
-  static const char kNormalVariantString[];
-  static const char kUltraCondensedString[];
-  static const char kExtraCondensedString[];
-  static const char kCondensedString[];
-  static const char kSemiCondensedString[];
-  static const char kNormalStretchString[];
-  static const char kSemiExpandedString[];
-  static const char kExpandedString[];
-  static const char kExtraExpandedString[];
-  static const char kUltraExpandedString[];
-  static const char kSmallCapsVariantString[];
-  static const char kAllSmallCapsVariantString[];
-  static const char kPetiteVariantString[];
-  static const char kAllPetiteVariantString[];
-  static const char kUnicaseVariantString[];
-  static const char kTitlingCapsVariantString[];
-  static const char kAutoRendering[];
-  static const char kOptimizeSpeedRendering[];
-  static const char kOptimizeLegibilityRendering[];
-  static const char kGeometricPrecisionRendering[];
+  static const char kInheritString[];
+
   virtual void DisableAcceleration() {}
 
   // Override to prematurely disable acceleration because of a readback.
@@ -731,8 +715,12 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
                         double x,
                         double y,
                         CanvasRenderingContext2DState::PaintType paint_type,
+                        V8CanvasTextAlign align,
+                        V8CanvasTextBaseline baseline,
+                        unsigned run_start,
+                        unsigned run_end,
                         double* max_width = nullptr,
-                        const TextCluster* text_cluster = nullptr);
+                        const Font* cluster_font = nullptr);
 
   // Returns the color from a string. This may return a cached value as well
   // as updating the cache (if possible).
@@ -858,10 +846,7 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
   void PutByteArray(const SkPixmap& source,
                     const gfx::Rect& source_rect,
                     const gfx::Vector2d& dest_offset);
-  virtual bool IsCanvas2DBufferValid() const {
-    NOTREACHED_IN_MIGRATION();
-    return false;
-  }
+  virtual bool IsCanvas2DBufferValid() const { NOTREACHED(); }
 
   virtual std::optional<cc::PaintRecord> FlushCanvas(FlushReason) = 0;
 

@@ -115,10 +115,15 @@ interface UntrustedPageHandler {
   GetDependencyParserModel() => (mojo_base.mojom.File? model_file);
 
   // Called by the renderer to see if a voice is installed, or being installed.
-  GetVoicePackInfo(string language) => (VoicePackInfo voice_pack_info);
+  // The response for this call comes via UntrustedPage::OnGetVoicePackInfo.
+  GetVoicePackInfo(string language);
 
-  // Called by the renderer to install a natural-voice pack.
-  InstallVoicePack(string language) => (VoicePackInfo voice_pack_info);
+  // Called by the renderer to install a natural-voice pack. The response for
+  // this call comes via UntrustedPage::OnGetVoicePackInfo.
+  InstallVoicePack(string language);
+
+  // Called by the renderer to uninstall a natural voice.
+  UninstallVoice(string language);
 
   // Informs the browser controller that a user tried to copy text from the
   // WebUI. If the main page allows copy commands, then the current selection
@@ -158,8 +163,7 @@ interface UntrustedPageHandler {
   OnColorChange(read_anything.mojom.Colors color);
 
   // Informs the browser controller that the user updated the speech rate via
-  // the webui toolbar. rate is a multiplicative scale where 1 is the baseline,
-  // and 2 is twice as fast, 0.5 is half as fast. See
+  // the webui toolbar. The value is a multiplier against the baseline rate; see
   // https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesisUtterance/rate
   OnSpeechRateChange(double rate);
 
@@ -255,8 +259,12 @@ interface UntrustedPage {
   SetLanguageCode(string code);
 
   // Notifies that the device has been locked. Only called by ChromeOS.
-  [EnableIf=is_chromeos_ash]
+  [EnableIf=is_chromeos]
   OnDeviceLocked();
+
+  // Notifies that the TTS engine for Google natural voices has been installed.
+  [EnableIfNot=is_chromeos]
+  OnTtsEngineInstalled();
 
   // Sets the default language code to be available in the WebUI in the event
   // the language set by SetLanguageCode is invalid.

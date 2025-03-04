@@ -40,8 +40,7 @@ SubframeTask::SubframeTask(content::RenderFrameHost* render_frame_host,
   // different processes than that of their main frame.
 }
 
-SubframeTask::~SubframeTask() {
-}
+SubframeTask::~SubframeTask() = default;
 
 void SubframeTask::UpdateTitle() {
   set_title(GetTitle());
@@ -52,8 +51,8 @@ void SubframeTask::UpdateFavicon() {
   // frame, but this Task represents other frames, so we don't care.
 }
 
-Task* SubframeTask::GetParentTask() const {
-  return main_task_.get();
+base::WeakPtr<Task> SubframeTask::GetParentTask() const {
+  return main_task_;
 }
 
 void SubframeTask::Activate() {

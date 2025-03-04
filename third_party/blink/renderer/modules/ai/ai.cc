@@ -6,10 +6,11 @@
 
 #include "base/functional/bind.h"
 #include "base/functional/callback_forward.h"
-#include "third_party/blink/renderer/bindings/modules/v8/v8_ai_assistant_create_options.h"
+#include "third_party/blink/public/platform/browser_interface_broker_proxy.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ai_capability_availability.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_ai_language_model_create_options.h"
 #include "third_party/blink/renderer/core/execution_context/execution_context.h"
-#include "third_party/blink/renderer/modules/ai/ai_assistant_factory.h"
+#include "third_party/blink/renderer/modules/ai/ai_language_model_factory.h"
 #include "third_party/blink/renderer/modules/ai/ai_rewriter_factory.h"
 #include "third_party/blink/renderer/modules/ai/ai_summarizer_factory.h"
 #include "third_party/blink/renderer/modules/ai/ai_writer_factory.h"
@@ -26,11 +27,12 @@ void AI::Trace(Visitor* visitor) const {
   ScriptWrappable::Trace(visitor);
   ExecutionContextClient::Trace(visitor);
   visitor->Trace(ai_remote_);
-  visitor->Trace(ai_assistant_factory_);
+  visitor->Trace(ai_language_model_factory_);
   visitor->Trace(ai_summarizer_factory_);
   visitor->Trace(ai_writer_factory_);
   visitor->Trace(ai_rewriter_factory_);
   visitor->Trace(ai_language_detector_factory_);
+  visitor->Trace(ai_translator_factory_);
 }
 
 HeapMojoRemote<mojom::blink::AIManager>& AI::GetAIRemote() {
@@ -47,11 +49,12 @@ scoped_refptr<base::SequencedTaskRunner> AI::GetTaskRunner() {
   return task_runner_;
 }
 
-AIAssistantFactory* AI::languageModel() {
-  if (!ai_assistant_factory_) {
-    ai_assistant_factory_ = MakeGarbageCollected<AIAssistantFactory>(this);
+AILanguageModelFactory* AI::languageModel() {
+  if (!ai_language_model_factory_) {
+    ai_language_model_factory_ =
+        MakeGarbageCollected<AILanguageModelFactory>(this);
   }
-  return ai_assistant_factory_.Get();
+  return ai_language_model_factory_.Get();
 }
 
 AISummarizerFactory* AI::summarizer() {
@@ -79,9 +82,18 @@ AIRewriterFactory* AI::rewriter() {
 AILanguageDetectorFactory* AI::languageDetector() {
   if (!ai_language_detector_factory_) {
     ai_language_detector_factory_ =
-        MakeGarbageCollected<AILanguageDetectorFactory>();
+        MakeGarbageCollected<AILanguageDetectorFactory>(GetExecutionContext(),
+                                                        task_runner_);
   }
   return ai_language_detector_factory_.Get();
+}
+
+AITranslatorFactory* AI::translator() {
+  if (!ai_translator_factory_) {
+    ai_translator_factory_ =
+        MakeGarbageCollected<AITranslatorFactory>(GetExecutionContext());
+  }
+  return ai_translator_factory_.Get();
 }
 
 }  // namespace blink

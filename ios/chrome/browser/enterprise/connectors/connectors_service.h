@@ -8,6 +8,7 @@
 #import "base/gtest_prod_util.h"
 #import "components/enterprise/connectors/core/connectors_service_base.h"
 #import "components/keyed_service/core/keyed_service.h"
+#import "ios/chrome/browser/enterprise/connectors/connectors_manager.h"
 
 namespace policy {
 class UserCloudPolicyManager;
@@ -24,9 +25,14 @@ class ConnectorsService : public ConnectorsServiceBase, public KeyedService {
   ConnectorsService(bool off_the_record,
                     PrefService* pref_service,
                     policy::UserCloudPolicyManager* user_cloud_policy_manager);
+  ~ConnectorsService() override;
 
   // ConnectorsServiceBase:
   bool IsConnectorEnabled(AnalysisConnector connector) const override;
+
+  // Returns the DM tokens corresponding to browser management, if one is
+  // present.
+  std::optional<std::string> GetBrowserDmToken() const;
 
  protected:
   // ConnectorsServiceBase:
@@ -47,6 +53,7 @@ class ConnectorsService : public ConnectorsServiceBase, public KeyedService {
   bool off_the_record_;
   raw_ptr<PrefService> prefs_;
   raw_ptr<policy::UserCloudPolicyManager> user_cloud_policy_manager_;
+  std::unique_ptr<ConnectorsManager> connectors_manager_;
 };
 
 }  // namespace enterprise_connectors

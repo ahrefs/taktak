@@ -23,8 +23,8 @@ class ComputedStyle;
 class ContainerQuery;
 class Element;
 class MatchResult;
+class ScrollStateQuerySnapshot;
 class SnappedQueryScrollSnapshot;
-class StuckQueryScrollSnapshot;
 class StyleRecalcContext;
 
 class CORE_EXPORT ContainerQueryEvaluator final
@@ -37,17 +37,18 @@ class CORE_EXPORT ContainerQueryEvaluator final
   static Element* FindContainer(Element* starting_element,
                                 const ContainerSelector&,
                                 const TreeScope* selector_tree_scope);
-  static bool EvalAndAdd(Element* style_container_candidate,
+  // The starting element is an element in the (exclusive) ancestor chain
+  // of `element where we should begin our search for a suitable container.
+  static Element* DetermineStartingElement(Element& element,
+                                           PseudoId,
+                                           const ContainerSelector&,
+                                           Element* nearest_size_container);
+
+  static bool EvalAndAdd(Element* starting_element,
                          const StyleRecalcContext&,
                          const ContainerQuery&,
                          ContainerSelectorCache&,
                          MatchResult&);
-
-  // Get the parent container candidate for container queries. Either the flat
-  // tree parent or the shadow-including parent based on a runtime flag due to a
-  // spec change.
-  // To be removed when the CSSFlatTreeContainer flag is removed.
-  static Element* ParentContainerCandidateElement(Element& element);
 
   // Width/Height are used by container relative units (qi, qb, etc).
   //
@@ -61,9 +62,11 @@ class CORE_EXPORT ContainerQueryEvaluator final
   bool DependsOnStyle() const { return depends_on_style_; }
   bool DependsOnStuck() const { return depends_on_stuck_; }
   bool DependsOnSnapped() const { return depends_on_snapped_; }
+  bool DependsOnScrollable() const { return depends_on_scrollable_; }
   bool DependsOnSize() const { return depends_on_size_; }
   bool MayDependOnWritingDirection() const {
-    return DependsOnSize() || DependsOnStuck() || DependsOnSnapped();
+    return DependsOnSize() || DependsOnStuck() || DependsOnSnapped() ||
+           DependsOnScrollable();
   }
 
   enum class Change : uint8_t {
@@ -80,6 +83,23 @@ class CORE_EXPORT ContainerQueryEvaluator final
     kDescendantContainers,
   };
 
+  // Evaluate and add a dependent query to this evaluator. During calls to
+  // SizeContainerChanged/StyleChanged, all dependent queries are checked to see
+  // if the new size/axis or computed style information causes a change in the
+  // evaluation result.
+  bool EvalAndAdd(const ContainerQuery& query,
+                  Change change,
+                  MatchResult& match_result);
+
+  // The affected ComputedStyle is marked with various flags to aid
+  // invalidation, e.g. DependsOnSizeContainerQueries. We usually want to set
+  // these flags even when there is currently no container to carry out the
+  // actual evaluation of the query, since a container may appear later.
+  //
+  // The flags are transported on MatchResult, but ultimately end up on
+  // ComputedStyle.
+  static void SetDependencyFlags(const ContainerQuery& query, MatchResult&);
+
   // Update the size/axis information of the evaluator.
   //
   // Dependent queries are cleared when kUnnamed/kNamed is returned (and left
@@ -89,7 +109,7 @@ class CORE_EXPORT ContainerQueryEvaluator final
   // To be called during style recalc to make any necessary invalidation of
   // container queries based on computed style changes on the container.
   // style_changed is true if there is a diff between old_style and new_style.
-  StyleRecalcChange ApplyStateAndStyleChanges(
+  StyleRecalcChange ApplyScrollStateAndStyleChanges(
       const StyleRecalcChange& child_change,
       const ComputedStyle& old_style,
       const ComputedStyle& new_style,
@@ -142,6 +162,10 @@ class CORE_EXPORT ContainerQueryEvaluator final
   // Update the CSSContainerValues with the new stuck state.
   void UpdateContainerSnapped(ContainerSnappedFlags snapped);
 
+  // Update the CSSContainerValues with the new overflowing state.
+  void UpdateContainerScrollable(ContainerScrollableFlags scrollable_horizontal,
+                                 ContainerScrollableFlags scrollable_vertical);
+
   // Re-evaluate the cached results and clear any results which are affected by
   // the ContainerStuckPhysical changes.
   Change StickyContainerChanged(ContainerStuckPhysical stuck_horizontal,
@@ -151,11 +175,18 @@ class CORE_EXPORT ContainerQueryEvaluator final
   // the snapped target changes.
   Change SnapContainerChanged(ContainerSnappedFlags snapped);
 
+  // Re-evaluate the cached results and clear any results which are affected by
+  // the snapped target changes.
+  Change ScrollableContainerChanged(
+      ContainerScrollableFlags scrollable_horizontal,
+      ContainerScrollableFlags scrollable_vertical);
+
   enum ContainerType {
     kSizeContainer,
     kStyleContainer,
     kStickyContainer,
-    kSnapContainer
+    kSnapContainer,
+    kScrollableContainer,
   };
   void ClearResults(Change change, ContainerType container_type);
 
@@ -166,8 +197,18 @@ class CORE_EXPORT ContainerQueryEvaluator final
   // Re-evaluate cached query results after a style change and return which
   // elements need to be invalidated if necessary.
   Change ComputeStyleChange() const;
+
+  // Re-evaluate cached query results after a stuck state change and return
+  // which elements need to be invalidated if necessary.
   Change ComputeStickyChange() const;
+
+  // Re-evaluate cached query results after a snapped state change and return
+  // which elements need to be invalidated if necessary.
   Change ComputeSnapChange() const;
+
+  // Re-evaluate cached query results after a overflowing state change and
+  // return which elements need to be invalidated if necessary.
+  Change ComputeOverflowChange() const;
 
   struct Result {
     // Main evaluation result.
@@ -181,14 +222,6 @@ class CORE_EXPORT ContainerQueryEvaluator final
 
   Result Eval(const ContainerQuery&) const;
 
-  // Evaluate and add a dependent query to this evaluator. During calls to
-  // SizeContainerChanged/StyleChanged, all dependent queries are checked to see
-  // if the new size/axis or computed style information causes a change in the
-  // evaluation result.
-  bool EvalAndAdd(const ContainerQuery& query,
-                  Change change,
-                  MatchResult& match_result);
-
   Member<MediaQueryEvaluator> media_query_evaluator_;
   PhysicalSize size_;
   PhysicalAxes contained_axes_;
@@ -198,8 +231,12 @@ class CORE_EXPORT ContainerQueryEvaluator final
       static_cast<ContainerSnappedFlags>(ContainerSnapped::kNone);
   ContainerSnappedFlags pending_snapped_ =
       static_cast<ContainerSnappedFlags>(ContainerSnapped::kNone);
+  ContainerScrollableFlags scrollable_horizontal_ =
+      static_cast<ContainerScrollableFlags>(ContainerScrollable::kNone);
+  ContainerScrollableFlags scrollable_vertical_ =
+      static_cast<ContainerScrollableFlags>(ContainerScrollable::kNone);
   HeapHashMap<Member<const ContainerQuery>, Result> results_;
-  Member<StuckQueryScrollSnapshot> stuck_snapshot_;
+  Member<ScrollStateQuerySnapshot> scroll_state_snapshot_;
   // The MediaQueryExpValue::UnitFlags of all queries evaluated against this
   // ContainerQueryEvaluator.
   unsigned unit_flags_ = 0;
@@ -207,6 +244,7 @@ class CORE_EXPORT ContainerQueryEvaluator final
   bool depends_on_style_ = false;
   bool depends_on_stuck_ = false;
   bool depends_on_snapped_ = false;
+  bool depends_on_scrollable_ = false;
   bool depends_on_size_ = false;
 };
 

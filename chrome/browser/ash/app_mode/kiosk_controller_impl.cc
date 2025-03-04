@@ -4,6 +4,7 @@
 
 #include "chrome/browser/ash/app_mode/kiosk_controller_impl.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
@@ -11,7 +12,6 @@
 #include <utility>
 #include <vector>
 
-#include "ash/constants/ash_features.h"
 #include "ash/constants/ash_switches.h"
 #include "ash/public/cpp/login_accelerators.h"
 #include "base/check.h"
@@ -22,9 +22,7 @@
 #include "base/functional/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/notimplemented.h"
 #include "base/notreached.h"
-#include "base/ranges/algorithm.h"
 #include "base/sequence_checker.h"
 #include "base/task/sequenced_task_runner.h"
 #include "chrome/browser/ash/app_mode/app_launch_utils.h"
@@ -122,9 +120,7 @@ std::vector<KioskApp> KioskControllerImpl::GetApps() const {
   std::vector<KioskApp> apps;
   AppendWebApps(apps);
   AppendChromeApps(apps);
-  if (ash::features::IsIsolatedWebAppKioskEnabled()) {
-    AppendIsolatedWebApps(apps);
-  }
+  AppendIsolatedWebApps(apps);
   return apps;
 }
 
@@ -148,10 +144,18 @@ std::optional<KioskApp> KioskControllerImpl::GetAutoLaunchApp() const {
   if (const auto& web_account_id = web_app_manager_.GetAutoLaunchAccountId();
       web_account_id.is_valid()) {
     return WebAppById(web_app_manager_, web_account_id);
-  } else if (std::string chrome_app_id = chrome_app_manager_.GetAutoLaunchApp();
-             !chrome_app_id.empty()) {
+  }
+
+  if (const auto& chrome_app_id = chrome_app_manager_.GetAutoLaunchApp();
+      !chrome_app_id.empty()) {
     return ChromeAppById(chrome_app_manager_, chrome_app_id);
   }
+
+  if (const auto& iwa_account_id = iwa_manager_.GetAutoLaunchAccountId();
+      iwa_account_id.has_value()) {
+    return IsolatedWebAppById(iwa_manager_, *iwa_account_id);
+  }
+
   return std::nullopt;
 }
 
@@ -174,8 +178,7 @@ void KioskControllerImpl::InitializeKioskSystemSession(
       chrome_app_manager_.OnKioskSessionStarted(kiosk_app_id);
       break;
     case KioskAppType::kIsolatedWebApp:
-      // TODO(crbug.com/361017701): add iwa_manager_.OnKioskSessionStarted.
-      NOTIMPLEMENTED();
+      iwa_manager_.OnKioskSessionStarted(kiosk_app_id);
       break;
   }
 }
@@ -209,6 +212,14 @@ void KioskControllerImpl::StartSession(const KioskAppId& app_id,
 void KioskControllerImpl::StartSessionAfterCrash(const KioskAppId& app,
                                                  Profile* profile) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          ash::switches::kPreventKioskAutolaunchForTesting)) {
+    LOG(WARNING) << "Skipping to launch " << app << " for "
+                 << profile->GetPath() << " due to --"
+                 << ash::switches::kPreventKioskAutolaunchForTesting
+                 << " flag.";
+    return;
+  }
   crash_recovery_launcher_ =
       std::make_unique<CrashRecoveryLauncher>(CHECK_DEREF(profile), app);
   crash_recovery_launcher_->Start(
@@ -290,9 +301,9 @@ void KioskControllerImpl::OnUserLoggedIn(const user_manager::User& user) {
   // device-local account list here to extract the kiosk_app_id.
   const std::vector<policy::DeviceLocalAccount> device_local_accounts =
       policy::GetDeviceLocalAccounts(CrosSettings::Get());
-  const auto account = base::ranges::find(device_local_accounts,
-                                          kiosk_app_account_id.GetUserEmail(),
-                                          &policy::DeviceLocalAccount::user_id);
+  const auto account = std::ranges::find(device_local_accounts,
+                                         kiosk_app_account_id.GetUserEmail(),
+                                         &policy::DeviceLocalAccount::user_id);
   std::string kiosk_app_id;
   if (account != device_local_accounts.end()) {
     kiosk_app_id = account->kiosk_app_id;
@@ -304,6 +315,13 @@ void KioskControllerImpl::OnUserLoggedIn(const user_manager::User& user) {
 
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
   command_line->AppendSwitch(::switches::kForceAppMode);
+
+  // Disables installation of preinstalled apps in kiosk sessions as
+  // `UserManager::Observer::OnUserLoggedIn` is called before `Profile` creation
+  // and `WebAppProvider::Start`.
+  // TODO(crbug.com/385072112): Replace cmd line switch with proper filtering.
+  command_line->AppendSwitch(::switches::kDisableDefaultApps);
+
   // This happens in Web kiosks.
   if (!kiosk_app_id.empty()) {
     command_line->AppendSwitchASCII(::switches::kAppId, kiosk_app_id);

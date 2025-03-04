@@ -2,13 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/containers/map_util.h"
-#include "base/notreached.h"
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
+#include "ui/base/interaction/interaction_sequence.h"
 
+#include <array>
 #include <list>
 #include <memory>
 #include <optional>
@@ -18,6 +14,7 @@
 #include <vector>
 
 #include "base/callback_list.h"
+#include "base/containers/map_util.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_forward.h"
 #include "base/logging.h"
@@ -25,15 +22,15 @@
 #include "base/memory/weak_auto_reset.h"
 #include "base/memory/weak_ptr.h"
 #include "base/not_fatal_until.h"
+#include "base/notreached.h"
 #include "base/observer_list_internal.h"
 #include "base/run_loop.h"
 #include "base/scoped_observation.h"
-#include "base/strings/stringprintf.h"
+#include "base/strings/strcat.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/task/single_thread_task_runner.h"
 #include "ui/base/interaction/element_identifier.h"
 #include "ui/base/interaction/element_tracker.h"
-#include "ui/base/interaction/interaction_sequence.h"
 
 namespace ui {
 
@@ -326,7 +323,7 @@ InteractionSequence::StepBuilder::SetElementName(std::string_view name) {
 }
 
 InteractionSequence::StepBuilder& InteractionSequence::StepBuilder::SetContext(
-    StepContext context) {
+    StepContext context) & {
   DCHECK(context != StepContext(ElementContext()));
   step_->context = context;
   if (const ContextMode* mode = std::get_if<ContextMode>(&context)) {
@@ -337,25 +334,48 @@ InteractionSequence::StepBuilder& InteractionSequence::StepBuilder::SetContext(
   return *this;
 }
 
+InteractionSequence::StepBuilder&& InteractionSequence::StepBuilder::SetContext(
+    StepContext context) && {
+  return std::move(this->SetContext(context));
+}
+
 InteractionSequence::StepBuilder&
 InteractionSequence::StepBuilder::SetMustBeVisibleAtStart(
-    bool must_be_visible) {
+    bool must_be_visible) & {
   step_->must_be_visible = must_be_visible;
   return *this;
 }
 
+InteractionSequence::StepBuilder&&
+InteractionSequence::StepBuilder::SetMustBeVisibleAtStart(
+    bool must_be_visible) && {
+  return std::move(this->SetMustBeVisibleAtStart(must_be_visible));
+}
+
 InteractionSequence::StepBuilder&
 InteractionSequence::StepBuilder::SetMustRemainVisible(
-    bool must_remain_visible) {
+    bool must_remain_visible) & {
   step_->must_remain_visible = must_remain_visible;
   return *this;
 }
 
+InteractionSequence::StepBuilder&&
+InteractionSequence::StepBuilder::SetMustRemainVisible(
+    bool must_remain_visible) && {
+  return std::move(this->SetMustRemainVisible(must_remain_visible));
+}
+
 InteractionSequence::StepBuilder&
 InteractionSequence::StepBuilder::SetTransitionOnlyOnEvent(
-    bool transition_only_on_event) {
+    bool transition_only_on_event) & {
   step_->transition_only_on_event = transition_only_on_event;
   return *this;
+}
+
+InteractionSequence::StepBuilder&&
+InteractionSequence::StepBuilder::SetTransitionOnlyOnEvent(
+    bool transition_only_on_event) && {
+  return std::move(this->SetTransitionOnlyOnEvent(transition_only_on_event));
 }
 
 InteractionSequence::StepBuilder& InteractionSequence::StepBuilder::SetType(
@@ -424,9 +444,15 @@ InteractionSequence::StepBuilder::SetStartCallback(
 
 InteractionSequence::StepBuilder&
 InteractionSequence::StepBuilder::SetStepStartMode(
-    StepStartMode step_start_mode) {
+    StepStartMode step_start_mode) & {
   step_->step_start_mode = step_start_mode;
   return *this;
+}
+
+InteractionSequence::StepBuilder&&
+InteractionSequence::StepBuilder::SetStepStartMode(
+    StepStartMode step_start_mode) && {
+  return std::move(this->SetStepStartMode(step_start_mode));
 }
 
 InteractionSequence::StepBuilder&
@@ -443,17 +469,29 @@ InteractionSequence::StepBuilder::SetEndCallback(
 }
 
 InteractionSequence::StepBuilder&
-InteractionSequence::StepBuilder::SetDescription(std::string_view description) {
+InteractionSequence::StepBuilder::SetDescription(
+    std::string_view description) & {
   step_->description = std::string(description);
   return *this;
 }
 
+InteractionSequence::StepBuilder&&
+InteractionSequence::StepBuilder::SetDescription(
+    std::string_view description) && {
+  return std::move(this->SetDescription(description));
+}
+
 InteractionSequence::StepBuilder&
-InteractionSequence::StepBuilder::FormatDescription(
-    std::string_view format_string) {
-  step_->description = base::StringPrintfNonConstexpr(
-      format_string.data(), step_->description.c_str());
+InteractionSequence::StepBuilder::AddDescriptionPrefix(
+    std::string_view prefix) & {
+  step_->description = base::StrCat({prefix, ": ", step_->description});
   return *this;
+}
+
+InteractionSequence::StepBuilder&&
+InteractionSequence::StepBuilder::AddDescriptionPrefix(
+    std::string_view prefix) && {
+  return std::move(this->AddDescriptionPrefix(prefix));
 }
 
 std::unique_ptr<InteractionSequence::Step>
@@ -597,6 +635,10 @@ InteractionSequence::AbortedData InteractionSequence::BuildAbortedData(
                                    : std::nullopt);
         }
       }
+      if (const auto* ctx =
+              std::get_if<ui::ElementContext>(&next_step()->context)) {
+        aborted_data.context = *ctx;
+      }
     }
   } else if (current_step_) {
     aborted_data.step_type = current_step_->type;
@@ -612,6 +654,16 @@ InteractionSequence::AbortedData InteractionSequence::BuildAbortedData(
       waiting_for.element_id = next_step()->id;
       waiting_for.step_description = next_step()->description;
       aborted_data.subsequence_failures.emplace_back(std::move(waiting_for));
+      if (const auto* ctx =
+              std::get_if<ui::ElementContext>(&next_step()->context)) {
+        aborted_data.context = *ctx;
+      }
+    }
+    if (!aborted_data.context && current_step_) {
+      if (const auto* ctx =
+              std::get_if<ui::ElementContext>(&current_step_->context)) {
+        aborted_data.context = *ctx;
+      }
     }
   }
   return aborted_data;
@@ -1470,50 +1522,42 @@ ElementContext InteractionSequence::context() const {
 }
 
 void PrintTo(InteractionSequence::StepType step_type, std::ostream* os) {
-  static const char* const kStepTypeNames[] = {
-      "kShown", "kActivated", "kHidden", "kCustomEvent", "kSubsequence"};
-  constexpr int kCount = sizeof(kStepTypeNames) / sizeof(kStepTypeNames[0]);
+  static constexpr auto kStepTypeNames = std::to_array<const char*>(
+      {"kShown", "kActivated", "kHidden", "kCustomEvent", "kSubsequence"});
+  constexpr size_t kCount = kStepTypeNames.size();
   static_assert(kCount ==
-                static_cast<int>(InteractionSequence::StepType::kMaxValue) + 1);
-  const int value = static_cast<int>(step_type);
-  *os << ((value < 0 || value >= kCount) ? "[invalid StepType]"
-                                         : kStepTypeNames[value]);
+                static_cast<size_t>(InteractionSequence::StepType::kMaxValue) +
+                    1);
+  const size_t value = base::checked_cast<size_t>(step_type);
+  *os << (value >= kCount ? "[invalid StepType]" : kStepTypeNames[value]);
 }
 
 void PrintTo(InteractionSequence::AbortedReason reason, std::ostream* os) {
-  static const char* const kAbortedReasonNames[] = {
-      "kSequenceDestroyed",
-      "kElementHiddenBeforeSequenceStart",
-      "kElementNotVisibleAtStartOfStep",
-      "kElementHiddenDuringStep",
-      "kElementHiddenBetweenTriggerAndStepStart",
-      "kNoSubsequenceRun",
-      "kSubsequenceFailed",
-      "kFailedForTesting",
-      "kSequenceTimedOut",
-      "kSubsequentStepTriggeredTooEarly",
-      "kSubsequentStepTriggerInvalidated"};
-  constexpr int kCount =
-      sizeof(kAbortedReasonNames) / sizeof(kAbortedReasonNames[0]);
+  static constexpr auto kAbortedReasonNames = std::to_array(
+      {"kSequenceDestroyed", "kElementHiddenBeforeSequenceStart",
+       "kElementNotVisibleAtStartOfStep", "kElementHiddenDuringStep",
+       "kElementHiddenBetweenTriggerAndStepStart", "kNoSubsequenceRun",
+       "kSubsequenceFailed", "kFailedForTesting", "kSequenceTimedOut",
+       "kSubsequentStepTriggeredTooEarly",
+       "kSubsequentStepTriggerInvalidated"});
+  constexpr size_t kCount = kAbortedReasonNames.size();
   static_assert(
       kCount ==
-      static_cast<int>(InteractionSequence::AbortedReason::kMaxValue) + 1);
-  const int value = static_cast<int>(reason);
-  *os << ((value < 0 || value >= kCount) ? "[invalid StepType]"
-                                         : kAbortedReasonNames[value]);
+      static_cast<size_t>(InteractionSequence::AbortedReason::kMaxValue) + 1);
+  const size_t value = base::checked_cast<size_t>(reason);
+  *os << (value >= kCount ? "[invalid StepType]" : kAbortedReasonNames[value]);
 }
 
 void PrintTo(InteractionSequence::SubsequenceMode mode, std::ostream* os) {
-  static const char* const kSubsequenceModeNames[] = {
-      "kAtMostOne", "kExactlyOne", "kAtLeastOne", "kAll"};
-  constexpr int kCount =
-      sizeof(kSubsequenceModeNames) / sizeof(kSubsequenceModeNames[0]);
+  static constexpr auto kSubsequenceModeNames = std::to_array<const char*>(
+      {"kAtMostOne", "kExactlyOne", "kAtLeastOne", "kAll"});
+  constexpr size_t kCount = kSubsequenceModeNames.size();
   static_assert(
       kCount ==
       static_cast<int>(InteractionSequence::SubsequenceMode::kMaxValue) + 1);
-  const int value = static_cast<int>(mode);
-  *os << ((value < 0 || value >= kCount) ? "[invalid SubsequenceMode]"
-                                         : kSubsequenceModeNames[value]);
+  const size_t value = base::checked_cast<size_t>(mode);
+  *os << (value >= kCount ? "[invalid SubsequenceMode]"
+                          : kSubsequenceModeNames[value]);
 }
 
 void PrintTo(InteractionSequence::StepStartMode mode, std::ostream* os) {

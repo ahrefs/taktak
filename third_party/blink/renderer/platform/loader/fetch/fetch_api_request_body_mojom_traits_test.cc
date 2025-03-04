@@ -38,7 +38,7 @@ TEST_F(FetchApiRequestBodyMojomTraitsTest, RoundTripEmpty) {
 
 TEST_F(FetchApiRequestBodyMojomTraitsTest, RoundTripBytes) {
   ResourceRequestBody src(EncodedFormData::Create());
-  src.FormBody()->AppendData("hello", 5);
+  src.FormBody()->AppendData(base::span_from_cstring("hello"));
   src.FormBody()->SetIdentifier(29);
   src.FormBody()->SetContainsPasswordData(true);
 
@@ -52,7 +52,7 @@ TEST_F(FetchApiRequestBodyMojomTraitsTest, RoundTripBytes) {
   ASSERT_EQ(1u, dest.FormBody()->Elements().size());
   const FormDataElement& e = dest.FormBody()->Elements()[0];
   EXPECT_EQ(e.type_, FormDataElement::kData);
-  EXPECT_EQ("hello", String(e.data_.data(), e.data_.size()));
+  EXPECT_EQ("hello", String(e.data_));
 }
 
 TEST_F(FetchApiRequestBodyMojomTraitsTest, RoundTripFile) {

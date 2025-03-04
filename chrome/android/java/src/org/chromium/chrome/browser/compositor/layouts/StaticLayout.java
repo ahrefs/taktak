@@ -13,8 +13,8 @@ import android.os.Handler;
 import androidx.annotation.VisibleForTesting;
 
 import org.chromium.base.supplier.Supplier;
-import org.chromium.cc.input.BrowserControlsOffsetTagsInfo;
 import org.chromium.cc.input.BrowserControlsState;
+import org.chromium.chrome.browser.browser_controls.BrowserControlsOffsetTagsInfo;
 import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider;
 import org.chromium.chrome.browser.compositor.layouts.components.LayoutTab;
 import org.chromium.chrome.browser.compositor.scene_layer.StaticTabSceneLayer;
@@ -34,7 +34,6 @@ import org.chromium.chrome.browser.tabmodel.TabModelSelectorTabModelObserver;
 import org.chromium.chrome.browser.tabmodel.TabModelSelectorTabObserver;
 import org.chromium.chrome.browser.theme.ThemeUtils;
 import org.chromium.chrome.browser.theme.TopUiThemeColorProvider;
-import org.chromium.chrome.browser.toolbar.ToolbarFeatures;
 import org.chromium.components.browser_ui.widget.animation.CancelAwareAnimatorListener;
 import org.chromium.components.embedder_support.util.UrlConstants;
 import org.chromium.content_public.browser.WebContents;
@@ -124,15 +123,17 @@ public class StaticLayout extends Layout {
 
     /**
      * Creates an instance of the {@link StaticLayout}.
-     * @param context             The current Android's context.
-     * @param updateHost          The {@link LayoutUpdateHost} view for this layout.
-     * @param renderHost          The {@link LayoutRenderHost} view for this layout.
-     * @param viewHost            The {@link LayoutManagerHost} view for this layout
+     *
+     * @param context The current Android's context.
+     * @param updateHost The {@link LayoutUpdateHost} view for this layout.
+     * @param renderHost The {@link LayoutRenderHost} view for this layout.
+     * @param viewHost The {@link LayoutManagerHost} view for this layout.
      * @param requestSupplier Frame request supplier for Compositor MCP.
      * @param tabModelSelector {@link TabModelSelector} instance.
      * @param tabContentManager {@link TabContentsManager} instance.
      * @param browserControlsStateProvider A {@link BrowserControlsStateProvider}.
      * @param topUiThemeColorProvider {@link ThemeColorProvider} for top UI.
+     * @param needsOffsetTag Whether or not this layout needs an OffsetTag.
      */
     public StaticLayout(
             Context context,
@@ -143,7 +144,8 @@ public class StaticLayout extends Layout {
             TabModelSelector tabModelSelector,
             TabContentManager tabContentManager,
             BrowserControlsStateProvider browserControlsStateProvider,
-            Supplier<TopUiThemeColorProvider> topUiThemeColorProvider) {
+            Supplier<TopUiThemeColorProvider> topUiThemeColorProvider,
+            boolean needsOffsetTag) {
         this(
                 context,
                 updateHost,
@@ -154,7 +156,8 @@ public class StaticLayout extends Layout {
                 tabContentManager,
                 browserControlsStateProvider,
                 topUiThemeColorProvider,
-                null);
+                null,
+                needsOffsetTag);
     }
 
     /** Protected constructor for testing, allows specifying a custom SceneLayer. */
@@ -169,16 +172,18 @@ public class StaticLayout extends Layout {
             TabContentManager tabContentManager,
             BrowserControlsStateProvider browserControlsStateProvider,
             Supplier<TopUiThemeColorProvider> topUiThemeColorProvider,
-            StaticTabSceneLayer testSceneLayer) {
+            StaticTabSceneLayer testSceneLayer,
+            boolean needsOffsetTag) {
         super(context, updateHost, renderHost);
 
         mContext = context;
-        boolean isTablet = DeviceFormFactor.isNonMultiDisplayContextOnTablet(mContext);
+
         // Only handle tab lifecycle on tablets.
-        mHandlesTabLifecycles = isTablet;
-        // On tablets, StaticTabSceneLayer is a subtree of TabStripSceneLayer,
-        // and the tag would have been set on the TabStripSceneLayer already.
-        mNeedsOffsetTag = !isTablet;
+        mHandlesTabLifecycles = DeviceFormFactor.isNonMultiDisplayContextOnTablet(mContext);
+
+        // StaticTabSceneLayer is a subtree of TabStripSceneLayer, and the tag would have been set
+        // on the TabStripSceneLayer already if tablet UI is present.
+        mNeedsOffsetTag = needsOffsetTag;
 
         mViewHost = viewHost;
         mRequestSupplier = requestSupplier;
@@ -219,28 +224,18 @@ public class StaticLayout extends Layout {
                             BrowserControlsOffsetTagsInfo oldOffsetTagsInfo,
                             BrowserControlsOffsetTagsInfo offsetTagsInfo,
                             @BrowserControlsState int constraints) {
-                        if (ToolbarFeatures.isBrowserControlsInVizEnabled(
-                                DeviceFormFactor.isNonMultiDisplayContextOnTablet(mContext))) {
-                            // On tablets, StaticTabSceneLayer is a subtree of TabStripSceneLayer,
-                            // and the tag would have been set on the TabStripSceneLayer already.
+                        if (ChromeFeatureList.sBrowserControlsInViz.isEnabled()) {
                             if (mNeedsOffsetTag) {
                                 mModel.set(
                                         LayoutTab.CONTENT_OFFSET_TAG,
-                                        offsetTagsInfo.getTopControlsOffsetTag());
+                                        offsetTagsInfo.getContentOffsetTag());
                             }
 
-                            // With BCIV enabled, scrolling will not update the content offset of
-                            // the browser's compositor frame. If we transition to a HIDDEN state
-                            // while the controls are already scrolled offscreen, then there is no
-                            // need to move the top controls, which means the renderer will not
-                            // notify the browser to move them. We set the content offset here so
-                            // the browser will submit a compositor frame with the correct offset.
-                            int contentOffset = mBrowserControlsStateProvider.getContentOffset();
-                            if (constraints == BrowserControlsState.HIDDEN
-                                    && contentOffset
-                                            == mBrowserControlsStateProvider
-                                                    .getTopControlsMinHeight()) {
-                                mModel.set(LayoutTab.CONTENT_OFFSET, contentOffset);
+                            if (mBrowserControlsStateProvider
+                                    .shouldUpdateOffsetsWhenConstraintsChange()) {
+                                mModel.set(
+                                        LayoutTab.CONTENT_OFFSET,
+                                        mBrowserControlsStateProvider.getContentOffset());
                             }
                         }
                     }
@@ -249,17 +244,23 @@ public class StaticLayout extends Layout {
                     public void onControlsOffsetChanged(
                             int topOffset,
                             int topControlsMinHeightOffset,
+                            boolean topControlsMinHeightChanged,
                             int bottomOffset,
                             int bottomControlsMinHeightOffset,
-                            boolean needsAnimate,
+                            boolean bottomControlsMinHeightChanged,
+                            boolean requestNewFrame,
                             boolean isVisibilityForced) {
-                        if (!ToolbarFeatures.isBrowserControlsInVizEnabled(
-                                        DeviceFormFactor.isNonMultiDisplayContextOnTablet(mContext))
-                                || needsAnimate
+                        if (!ChromeFeatureList.sBrowserControlsInViz.isEnabled()
+                                || requestNewFrame
                                 || isVisibilityForced) {
-                            mModel.set(
-                                    LayoutTab.CONTENT_OFFSET,
-                                    mBrowserControlsStateProvider.getContentOffset());
+                            int contentOffset = mBrowserControlsStateProvider.getContentOffset();
+                            mModel.set(LayoutTab.CONTENT_OFFSET, contentOffset);
+                        } else {
+                            // We need to set the height, as it would have changed if this is the
+                            // first frame of an animation. Any existing offsets from scrolling and
+                            // animations will be applied by OffsetTags.
+                            int height = mBrowserControlsStateProvider.getTopControlsHeight();
+                            mModel.set(LayoutTab.CONTENT_OFFSET, height);
                         }
                     }
                 };
@@ -341,10 +342,8 @@ public class StaticLayout extends Layout {
                     }
 
                     @Override
-                    public void didBackForwardTransitionAnimationChange() {
-                        updateStaticTab(
-                                tabModelSelector.getCurrentTab(),
-                                /* skipUpdateVisibleIds= */ false);
+                    public void didBackForwardTransitionAnimationChange(Tab tab) {
+                        updateStaticTab(tab, /* skipUpdateVisibleIds= */ false);
                     }
                 };
     }

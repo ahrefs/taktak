@@ -77,6 +77,7 @@ public class AdaptiveToolbarButtonController
     private final AndroidPermissionDelegate mAndroidPermissionDelegate;
     private final CallbackController mCallbackController;
     private final Callback<AdaptiveToolbarStatePredictor.UiState> mUiStateCallback;
+    private final AdaptiveToolbarBehavior mToolbarBehavior;
 
     @Nullable private AdaptiveToolbarStatePredictor mAdaptiveToolbarStatePredictor;
     @Nullable private View.OnLongClickListener mMenuHandler;
@@ -103,6 +104,7 @@ public class AdaptiveToolbarButtonController
             ActivityLifecycleDispatcher lifecycleDispatcher,
             ObservableSupplier<Profile> profileSupplier,
             AdaptiveButtonActionMenuCoordinator menuCoordinator,
+            AdaptiveToolbarBehavior toolbarBehavior,
             AndroidPermissionDelegate androidPermissionDelegate) {
         mContext = context;
         mMenuClickListener =
@@ -118,6 +120,7 @@ public class AdaptiveToolbarButtonController
         mLifecycleDispatcher = lifecycleDispatcher;
         mLifecycleDispatcher.register(this);
         mMenuCoordinator = menuCoordinator;
+        mToolbarBehavior = toolbarBehavior;
         mScreenWidthDp = context.getResources().getConfiguration().screenWidthDp;
         mAndroidPermissionDelegate = androidPermissionDelegate;
         mCallbackController = new CallbackController();
@@ -214,7 +217,7 @@ public class AdaptiveToolbarButtonController
             RecordHistogram.recordEnumeratedHistogram(
                     "Android.AdaptiveToolbarButton.SessionVariant",
                     receivedButtonData.getButtonSpec().getButtonVariant(),
-                    AdaptiveToolbarButtonVariant.MAX_VALUE + 1);
+                    AdaptiveToolbarButtonVariant.MAX_VALUE);
         }
 
         mButtonData.setCanShow(receivedButtonData.canShow() && isScreenWideEnoughForButton());
@@ -236,7 +239,7 @@ public class AdaptiveToolbarButtonController
                             receivedButtonSpec.isDynamicAction() ? null : mMenuHandler,
                             receivedButtonSpec.getContentDescription(),
                             receivedButtonSpec.getSupportsTinting(),
-                            receivedButtonSpec.getIPHCommandBuilder(),
+                            receivedButtonSpec.getIphCommandBuilder(),
                             receivedButtonSpec.getButtonVariant(),
                             receivedButtonSpec.getActionChipLabelResId(),
                             receivedButtonSpec.getHoverTooltipTextId(),
@@ -252,7 +255,7 @@ public class AdaptiveToolbarButtonController
             RecordHistogram.recordEnumeratedHistogram(
                     "Android.AdaptiveToolbarButton.Clicked",
                     buttonVariant,
-                    AdaptiveToolbarButtonVariant.MAX_VALUE + 1);
+                    AdaptiveToolbarButtonVariant.MAX_VALUE);
             receivedListener.onClick(view);
         };
     }
@@ -273,7 +276,8 @@ public class AdaptiveToolbarButtonController
         assert mAdaptiveToolbarStatePredictor == null;
         profile = profile.getOriginalProfile();
         mAdaptiveToolbarStatePredictor =
-                new AdaptiveToolbarStatePredictor(mContext, profile, mAndroidPermissionDelegate);
+                new AdaptiveToolbarStatePredictor(
+                        mContext, profile, mAndroidPermissionDelegate, mToolbarBehavior);
         ContextUtils.getAppSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 
         if (!AdaptiveToolbarFeatures.isCustomizationEnabled()) return;
@@ -323,7 +327,7 @@ public class AdaptiveToolbarButtonController
         RecordHistogram.recordEnumeratedHistogram(
                 "Android.AdaptiveToolbarButton.Variant.OnPageLoad",
                 actionToShow,
-                AdaptiveToolbarButtonVariant.MAX_VALUE + 1);
+                AdaptiveToolbarButtonVariant.MAX_VALUE);
         if (mOriginalButtonSpec != null && mOriginalButtonSpec.getButtonVariant() == actionToShow) {
             return;
         }
@@ -357,7 +361,7 @@ public class AdaptiveToolbarButtonController
                                 RecordHistogram.recordEnumeratedHistogram(
                                         "Android.AdaptiveToolbarButton.Variant.OnStartNavigation",
                                         currentVariant,
-                                        AdaptiveToolbarButtonVariant.MAX_VALUE + 1);
+                                        AdaptiveToolbarButtonVariant.MAX_VALUE);
                             }
                         },
                         null);

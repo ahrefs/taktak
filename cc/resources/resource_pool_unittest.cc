@@ -4,8 +4,10 @@
 
 #include "cc/resources/resource_pool.h"
 
+#include <GLES2/gl2extchromium.h>
 #include <stddef.h>
 
+#include <array>
 #include <limits>
 #include <vector>
 
@@ -52,21 +54,12 @@ class ResourcePoolTest : public testing::Test {
     MOCK_METHOD0(FlushPendingWork, void());
   };
 
-  class StubGpuBacking : public ResourcePool::GpuBacking {
-   public:
-    void OnMemoryDump(
-        base::trace_event::ProcessMemoryDump* pmd,
-        const base::trace_event::MemoryAllocatorDumpGuid& buffer_dump_guid,
-        uint64_t tracing_process_id,
-        int importance) const override {}
-  };
-
   void SetBackingOnResource(const ResourcePool::InUsePoolResource& resource) {
-    auto backing = std::make_unique<StubGpuBacking>();
-    backing->shared_image = gpu::ClientSharedImage::CreateForTesting();
+    auto backing = std::make_unique<ResourcePool::Backing>();
+    backing->set_shared_image(gpu::ClientSharedImage::CreateForTesting());
     backing->mailbox_sync_token.Set(
         gpu::GPU_IO, gpu::CommandBufferId::FromUnsafeValue(1), 1);
-    resource.set_gpu_backing(std::move(backing));
+    resource.set_backing(std::move(backing));
   }
 
   void CheckAndReturnResource(ResourcePool::InUsePoolResource resource) {
@@ -386,7 +379,7 @@ TEST_F(ResourcePoolTest, UpdateContentIdAndInvalidatedRect) {
   gfx::Size size(100, 100);
   viz::SharedImageFormat format = viz::SinglePlaneFormat::kRGBA_8888;
   gfx::ColorSpace color_space;
-  uint64_t content_ids[] = {42, 43, 44};
+  auto content_ids = std::to_array<uint64_t>({42, 43, 44});
   gfx::Rect invalidated_rect(20, 20, 10, 10);
   gfx::Rect second_invalidated_rect(25, 25, 10, 10);
   gfx::Rect expected_total_invalidated_rect(20, 20, 15, 15);
@@ -432,7 +425,7 @@ TEST_F(ResourcePoolTest, LargeInvalidatedRect) {
   gfx::Size size(100, 100);
   viz::SharedImageFormat format = viz::SinglePlaneFormat::kRGBA_8888;
   gfx::ColorSpace color_space;
-  uint64_t content_ids[] = {42, 43, 44};
+  auto content_ids = std::to_array<uint64_t>({42, 43, 44});
   // This rect is too large to take the area of it.
   gfx::Rect large_invalidated_rect(0, 0, std::numeric_limits<int>::max() / 2,
                                    std::numeric_limits<int>::max() / 2);
@@ -693,24 +686,26 @@ TEST_F(ResourcePoolTest, MetadataSentToDisplayCompositor) {
   resource_pool_->SetResourceUsageLimits(bytes_limit, count_limit);
 
   // These values are all non-default values so we can tell they are propagated.
-  gfx::Size size(100, 101);
-  viz::SharedImageFormat format = viz::SinglePlaneFormat::kRGBA_4444;
+  gpu::SharedImageMetadata metadata;
+  metadata.size = gfx::Size(100, 101);
+  metadata.format = viz::SinglePlaneFormat::kRGBA_4444;
   EXPECT_NE(gfx::BufferFormat::RGBA_8888,
-            viz::SinglePlaneSharedImageFormatToBufferFormat(format));
-  gfx::ColorSpace color_space = gfx::ColorSpace::CreateSRGB();
+            viz::SinglePlaneSharedImageFormatToBufferFormat(metadata.format));
+  metadata.color_space = gfx::ColorSpace::CreateSRGB();
   gpu::SyncToken sync_token(gpu::CommandBufferNamespace::GPU_IO,
                             gpu::CommandBufferId::FromUnsafeValue(0x123), 7);
+  metadata.usage = gpu::SharedImageUsage::SHARED_IMAGE_USAGE_SCANOUT;
 
-  ResourcePool::InUsePoolResource resource =
-      resource_pool_->AcquireResource(size, format, color_space);
+  ResourcePool::InUsePoolResource resource = resource_pool_->AcquireResource(
+      metadata.size, metadata.format, metadata.color_space);
   SetBackingOnResource(resource);
 
+  resource.backing()->set_shared_image(gpu::ClientSharedImage::CreateForTesting(
+      metadata, GL_TEXTURE_RECTANGLE_ARB));
+
   // More non-default values.
-  resource.gpu_backing()->shared_image =
-      gpu::ClientSharedImage::CreateForTesting();
-  resource.gpu_backing()->mailbox_sync_token = sync_token;
-  resource.gpu_backing()->wait_on_fence_required = true;
-  resource.gpu_backing()->overlay_candidate = true;
+  resource.backing()->mailbox_sync_token = sync_token;
+  resource.backing()->wait_on_fence_required = true;
 
   EXPECT_TRUE(resource_pool_->PrepareForExport(
       resource, viz::TransferableResource::ResourceSource::kTest));
@@ -727,11 +722,12 @@ TEST_F(ResourcePoolTest, MetadataSentToDisplayCompositor) {
   ASSERT_EQ(transfer.size(), 1u);
   EXPECT_EQ(transfer[0].id, resource.resource_id_for_export());
   EXPECT_EQ(transfer[0].mailbox(),
-            resource.gpu_backing()->shared_image->mailbox());
+            resource.backing()->shared_image()->mailbox());
   EXPECT_EQ(transfer[0].sync_token(), sync_token);
   EXPECT_EQ(transfer[0].texture_target(),
-            resource.gpu_backing()->shared_image->GetTextureTarget());
-  EXPECT_EQ(transfer[0].format, format);
+            resource.backing()->shared_image()->GetTextureTarget());
+  EXPECT_EQ(transfer[0].size, metadata.size);
+  EXPECT_EQ(transfer[0].format, metadata.format);
   EXPECT_EQ(
       transfer[0].synchronization_type,
       viz::TransferableResource::SynchronizationType::kGpuCommandsCompleted);
@@ -757,10 +753,9 @@ TEST_F(ResourcePoolTest, InvalidResource) {
       resource_pool_->AcquireResource(size, format, color_space);
 
   // Keep a zero mailbox
-  auto backing = std::make_unique<StubGpuBacking>();
+  auto backing = std::make_unique<ResourcePool::Backing>();
   backing->wait_on_fence_required = true;
-  backing->overlay_candidate = true;
-  resource.set_gpu_backing(std::move(backing));
+  resource.set_backing(std::move(backing));
 
   EXPECT_FALSE(resource_pool_->PrepareForExport(
       resource, viz::TransferableResource::ResourceSource::kTest));
@@ -769,7 +764,7 @@ TEST_F(ResourcePoolTest, InvalidResource) {
 
   // Acquire another resource. The resource should not be reused.
   resource = resource_pool_->AcquireResource(size, format, color_space);
-  EXPECT_FALSE(resource.gpu_backing());
+  EXPECT_FALSE(resource.backing());
   resource_pool_->ReleaseResource(std::move(resource));
 }
 

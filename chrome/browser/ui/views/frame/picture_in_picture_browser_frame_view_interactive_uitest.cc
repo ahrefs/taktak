@@ -6,6 +6,7 @@
 
 #include "base/memory/raw_ptr.h"
 #include "base/strings/strcat.h"
+#include "base/strings/to_string.h"
 #include "base/test/scoped_feature_list.h"
 #include "chrome/browser/media/webrtc/webrtc_browsertest_base.h"
 #include "chrome/browser/picture_in_picture/auto_picture_in_picture_tab_helper.h"
@@ -105,6 +106,16 @@ class AnimationWaiter {
   std::vector<gfx::Animation*> animations_;
 };
 
+class ModalWidgetDelegate : public views::WidgetDelegate {
+ public:
+  explicit ModalWidgetDelegate(ui::mojom::ModalType modal_type)
+      : modal_type_(modal_type) {}
+
+  ui::mojom::ModalType GetModalType() const override { return modal_type_; }
+
+  ui::mojom::ModalType modal_type_;
+};
+
 class PictureInPictureBrowserFrameViewTest : public WebRtcTestBase,
                                              public AnimationTimingTest {
  public:
@@ -129,10 +140,21 @@ class PictureInPictureBrowserFrameViewTest : public WebRtcTestBase,
     InProcessBrowserTest::SetUp();
   }
 
+  // Should we specify a size when opening pip with
+  // `kPictureInPictureDocumentPipPage`?  Ignored for other pages.
+  enum class SizingMode {
+    // Specify size when opening pip.
+    kSized,
+
+    // Do not specify size when opening pip.
+    kUnsized
+  };
+
   void SetUpDocumentPIP(
       std::optional<bool> disallow_return_to_opener = std::nullopt,
       const base::FilePath::CharType* pip_page_relative_path =
-          kPictureInPictureDocumentPipPage) {
+          kPictureInPictureDocumentPipPage,
+      SizingMode sizing_mode = SizingMode::kSized) {
     // Navigate to test url.
     GURL test_page_url = ui_test_utils::GetTestUrl(
         base::FilePath(base::FilePath::kCurrentDirectory),
@@ -146,10 +168,12 @@ class PictureInPictureBrowserFrameViewTest : public WebRtcTestBase,
     // Enter document pip.
     auto* pip_window_controller_ = content::PictureInPictureWindowController::
         GetOrCreateDocumentPictureInPictureController(active_web_contents);
-    std::string disallow_return_to_opener_js_string =
+    const std::string disallow_return_to_opener_js_string =
         (disallow_return_to_opener.has_value()
-             ? (*disallow_return_to_opener ? "true" : "false")
+             ? base::ToString(*disallow_return_to_opener)
              : "undefined");
+    const std::string size_string =
+        (sizing_mode == SizingMode::kSized ? "300" : "undefined");
 
     if (pip_page_relative_path == kCameraPage) {
       GetUserMediaAndAccept(active_web_contents);
@@ -167,11 +191,13 @@ class PictureInPictureBrowserFrameViewTest : public WebRtcTestBase,
               base::NullCallback(), content::ISOLATED_WORLD_ID_GLOBAL);
       enter_pip_observer.Wait();
     } else {
-      ASSERT_EQ(true,
-                EvalJs(active_web_contents,
-                       base::StrCat(
-                           {"createDocumentPipWindow({disallowReturnToOpener: ",
-                            disallow_return_to_opener_js_string, "})"})));
+      ASSERT_EQ(
+          true,
+          EvalJs(active_web_contents,
+                 base::StrCat({"createDocumentPipWindow({width: ", size_string,
+                               ", height: ", size_string,
+                               ", disallowReturnToOpener: ",
+                               disallow_return_to_opener_js_string, "})"})));
     }
 
     // A pip window should have opened.
@@ -226,21 +252,39 @@ class PictureInPictureBrowserFrameViewTest : public WebRtcTestBase,
 #endif
   }
 
-#if RESIZE_DOCUMENT_PICTURE_IN_PICTURE_TO_DIALOG
-  std::unique_ptr<views::Widget> OpenChildDialog(const gfx::Size& size) {
+  // Open a dialog and wait for the pip window to resize in response.
+  std::unique_ptr<views::Widget> OpenChildDialog(
+      const gfx::Size& size,
+      ui::mojom::ModalType modal_type,
+      std::optional<gfx::Size> initial_size = std::nullopt) {
+    CHECK(!delegate_);
+    delegate_ = std::make_unique<ModalWidgetDelegate>(modal_type);
+    auto dialog = OpenChildDialogWithDelegate(size, delegate_.get(),
+                                              std::move(initial_size));
+    pip_frame_view()->RunPendingChildResizeForTesting();
+    return dialog;
+  }
+
+  // Open a child dialog and do _not_ wait for the pip window to resize in
+  // response to it.  Note that everything runs on the UI thread, so the posted
+  // work won't run until we tell it to.
+  std::unique_ptr<views::Widget> OpenChildDialogWithDelegate(
+      const gfx::Size& size,
+      views::WidgetDelegate* delegate,
+      std::optional<gfx::Size> initial_size = std::nullopt) {
     views::Widget::InitParams init_params(
         views::Widget::InitParams::WIDGET_OWNS_NATIVE_WIDGET,
         views::Widget::InitParams::TYPE_WINDOW);
     init_params.child = true;
-    init_params.parent = pip_frame_view_->GetWidget()->GetNativeWindow();
+    init_params.parent = pip_frame_view_->GetWidget()->GetNativeView();
+    init_params.delegate = delegate;
 
     auto child_dialog = std::make_unique<views::Widget>(std::move(init_params));
     child_dialog->GetContentsView()->SetPreferredSize(size);
-    child_dialog->SetSize(size);
+    child_dialog->SetSize(initial_size ? *initial_size : size);
     child_dialog->Show();
     return child_dialog;
   }
-#endif  // RESIZE_DOCUMENT_PICTURE_IN_PICTURE_TO_DIALOG
 
   PictureInPictureBrowserFrameView* pip_frame_view() { return pip_frame_view_; }
 
@@ -249,10 +293,10 @@ class PictureInPictureBrowserFrameViewTest : public WebRtcTestBase,
   raw_ptr<PictureInPictureBrowserFrameView, AcrossTasksDanglingUntriaged>
       pip_frame_view_ = nullptr;
   std::unique_ptr<ui::test::EventGenerator> event_generator_;
+  std::unique_ptr<ModalWidgetDelegate> delegate_;
 };
 
 #if BUILDFLAG(IS_WIN)
-// Document PIP is not supported in LACROS.
 // TODO(jazzhsu): Fix test on MAC and Wayland. Test currently not working on
 // those platforms because if we send mouse move event outside of the pip window
 // in ui_test_utils::SendMouseMoveSync, the pip window will not receive the
@@ -297,18 +341,23 @@ IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
   ASSERT_TRUE(IsButtonVisible(pip_frame_view()->GetCloseButtonForTesting()));
 }
 
-#if RESIZE_DOCUMENT_PICTURE_IN_PICTURE_TO_DIALOG
 IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
-                       ResizesToFitChildDialogs) {
+                       ResizesToFitModalChildDialogs) {
   ASSERT_NO_FATAL_FAILURE(SetUpDocumentPIP());
 
   gfx::Rect initial_pip_bounds =
       pip_frame_view()->GetWidget()->GetWindowBoundsInScreen();
 
-  // Open a child dialog that is larger than the pip window.
+  // Open a child dialog that is smaller than the pip window, but has a
+  // preferred size that is larger.  Since some dialogs try to match the pip
+  // window's size, the pip window tries to resize to their minimum size.  For
+  // our particular child view, the default implementation uses the preferred
+  // size as the minimum size.
   const gfx::Size child_dialog_size(initial_pip_bounds.width() + 20,
                                     initial_pip_bounds.height() + 10);
-  auto child_dialog = OpenChildDialog(child_dialog_size);
+  auto child_dialog =
+      OpenChildDialog(child_dialog_size, ui::mojom::ModalType::kWindow,
+                      gfx::ScaleToFlooredSize(child_dialog_size, 0.5f));
 
   // The pip window should increase its size to contain the child dialog.
   gfx::Rect new_pip_bounds =
@@ -319,10 +368,107 @@ IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
 
   // Close the dialog.
   child_dialog->CloseNow();
+  pip_frame_view()->RunPendingChildResizeForTesting();
 
   // The pip window should return to its original bounds.
   EXPECT_EQ(initial_pip_bounds,
             pip_frame_view()->GetWidget()->GetWindowBoundsInScreen());
+}
+
+IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
+                       MultipleChildDialogsRespectPendingBounds) {
+  // If a resize is pending due to a child dialog when a second child dialog
+  // opens, make sure that the result considers both.
+  ASSERT_NO_FATAL_FAILURE(SetUpDocumentPIP());
+
+  gfx::Rect initial_pip_bounds =
+      pip_frame_view()->GetWidget()->GetWindowBoundsInScreen();
+
+  // Open one child dialog that's wider and one that's taller.
+  const gfx::Size child_dialog_size_1(initial_pip_bounds.width() + 100,
+                                      initial_pip_bounds.height());
+  const gfx::Size child_dialog_size_2(initial_pip_bounds.width(),
+                                      initial_pip_bounds.height() + 100);
+  auto delegate_1 =
+      std::make_unique<ModalWidgetDelegate>(ui::mojom::ModalType::kWindow);
+  auto child_dialog_1 =
+      OpenChildDialogWithDelegate(child_dialog_size_1, delegate_1.get());
+  ASSERT_TRUE(pip_frame_view()->IsChildResizePendingForTesting());
+
+  auto delegate_2 =
+      std::make_unique<ModalWidgetDelegate>(ui::mojom::ModalType::kWindow);
+  auto child_dialog_2 =
+      OpenChildDialogWithDelegate(child_dialog_size_2, delegate_2.get());
+
+  // The pip window should increase its size to contain the child dialog.
+  pip_frame_view()->RunPendingChildResizeForTesting();
+  gfx::Rect new_pip_bounds =
+      pip_frame_view()->GetWidget()->GetWindowBoundsInScreen();
+  EXPECT_GE(new_pip_bounds.width(), child_dialog_size_1.width());
+  EXPECT_GE(new_pip_bounds.height(), child_dialog_size_2.height());
+}
+
+IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
+                       ResizesToFitNonModalChildDialogs) {
+  ASSERT_NO_FATAL_FAILURE(SetUpDocumentPIP());
+
+  gfx::Rect initial_pip_bounds =
+      pip_frame_view()->GetWidget()->GetWindowBoundsInScreen();
+
+  // Open a child dialog that is larger than the pip window.
+  const gfx::Size child_dialog_size(initial_pip_bounds.width() + 20,
+                                    initial_pip_bounds.height() + 10);
+  auto child_dialog =
+      OpenChildDialog(child_dialog_size, ui::mojom::ModalType::kNone);
+
+  // The pip window should increase its size to contain the child dialog.
+  gfx::Rect new_pip_bounds =
+      pip_frame_view()->GetWidget()->GetWindowBoundsInScreen();
+  EXPECT_NE(initial_pip_bounds, new_pip_bounds);
+  EXPECT_GE(new_pip_bounds.width(), child_dialog_size.width());
+  EXPECT_GE(new_pip_bounds.height(), child_dialog_size.height());
+
+  // Close the dialog.
+  child_dialog->CloseNow();
+  pip_frame_view()->RunPendingChildResizeForTesting();
+
+  // The pip window should still have its original bounds.
+  EXPECT_EQ(initial_pip_bounds,
+            pip_frame_view()->GetWidget()->GetWindowBoundsInScreen());
+}
+
+// When a child dialog opens, causing a resize of the pip window, verify that
+// the pip window restores its original size even if no size was specified.
+// See crbug.com/377194135 for more information, but TL;DR: verify that we're
+// capturing the size properly even if we don't get a widget resize message.  We
+// sometimes don't on ChromeOS when the size is unspecified.  Other platforms
+// seem to get a resize either way.
+IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
+                       UnsizedWindowResizesProperly) {
+  ASSERT_NO_FATAL_FAILURE(SetUpDocumentPIP({}, kPictureInPictureDocumentPipPage,
+                                           SizingMode::kUnsized));
+
+  // Ignore the origin, since the window might be pushed around on the screen
+  // when the child dialog causes it to become bigger.  We still want a rect
+  // rather than size, since size doesn't support "approximately equal".
+  const auto initial_pip_bounds = gfx::Rect(
+      gfx::Point(),
+      pip_frame_view()->GetWidget()->GetWindowBoundsInScreen().size());
+  const gfx::Size child_dialog_size(initial_pip_bounds.width() + 20,
+                                    initial_pip_bounds.height() + 10);
+  auto child_dialog =
+      OpenChildDialog(child_dialog_size, ui::mojom::ModalType::kWindow);
+  child_dialog->CloseNow();
+  pip_frame_view()->RunPendingChildResizeForTesting();
+
+  // The pip window should return to its original bounds.  Allow some
+  // verification because wayland can be off by one and windows can be off by
+  // four.  We're mostly concerned that it's not minimum sized at the origin, so
+  // anything close is fine.
+  const auto final_pip_bounds = gfx::Rect(
+      gfx::Point(),
+      pip_frame_view()->GetWidget()->GetWindowBoundsInScreen().size());
+  EXPECT_TRUE(initial_pip_bounds.ApproximatelyEqual(final_pip_bounds, 5));
 }
 
 IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
@@ -335,7 +481,8 @@ IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
   // Open a child dialog that is larger than the pip window.
   const gfx::Size child_dialog_size(initial_pip_bounds.width() + 20,
                                     initial_pip_bounds.height() + 10);
-  auto child_dialog = OpenChildDialog(child_dialog_size);
+  auto child_dialog =
+      OpenChildDialog(child_dialog_size, ui::mojom::ModalType::kWindow);
 
   // The pip window should increase its size to contain the child dialog.
   gfx::Rect new_pip_bounds =
@@ -352,6 +499,7 @@ IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
 
   // Close the dialog.
   child_dialog->CloseNow();
+  pip_frame_view()->RunPendingChildResizeForTesting();
 
   // Since the user moved the window but did not resize, it should return to
   // its original size but keep the new position.
@@ -372,7 +520,8 @@ IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
   // Open a child dialog that is larger than the pip window.
   const gfx::Size child_dialog_size(initial_pip_bounds.width() + 20,
                                     initial_pip_bounds.height() + 10);
-  auto child_dialog = OpenChildDialog(child_dialog_size);
+  auto child_dialog =
+      OpenChildDialog(child_dialog_size, ui::mojom::ModalType::kWindow);
 
   // The pip window should increase its size to contain the child dialog.
   gfx::Rect new_pip_bounds =
@@ -391,14 +540,15 @@ IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
 
   // Close the dialog.
   child_dialog->CloseNow();
+  pip_frame_view()->RunPendingChildResizeForTesting();
 
   // Since the user both moved and resized the window, it should not change back
-  // when the child dialog closes.
-  EXPECT_EQ(moved_bounds,
-            pip_frame_view()->GetWidget()->GetWindowBoundsInScreen());
+  // when the child dialog closes.  We allow a pixel either way because this
+  // sometimes rounds from DIP to pixels (wayland).
+  const auto actual_final_bounds =
+      pip_frame_view()->GetWidget()->GetWindowBoundsInScreen();
+  EXPECT_TRUE(actual_final_bounds.ApproximatelyEqual(moved_bounds, 1));
 }
-
-#endif  // RESIZE_DOCUMENT_PICTURE_IN_PICTURE_TO_DIALOG
 
 IN_PROC_BROWSER_TEST_F(PictureInPictureBrowserFrameViewTest,
                        TitleActivatesWithOverlayView) {
@@ -495,7 +645,8 @@ class FakeLinuxUiGetter : public ui::LinuxUiGetter {
     }
 
     ui::WindowFrameProvider* GetWindowFrameProvider(bool solid_frame,
-                                                    bool tiled) override {
+                                                    bool tiled,
+                                                    bool maximized) override {
       // The test relies on this returning null.
       return nullptr;
     }

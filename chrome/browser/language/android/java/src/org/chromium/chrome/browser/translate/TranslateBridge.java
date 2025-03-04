@@ -5,6 +5,7 @@
 package org.chromium.chrome.browser.translate;
 
 import org.jni_zero.CalledByNative;
+import org.jni_zero.JniType;
 import org.jni_zero.NativeMethods;
 
 import org.chromium.base.LocaleUtils;
@@ -43,16 +44,17 @@ public class TranslateBridge {
     }
 
     /** Returns true iff we're in a state where the manual translate IPH could be shown. */
-    public static boolean shouldShowManualTranslateIPH(Tab tab) {
-        return TranslateBridgeJni.get().shouldShowManualTranslateIPH(tab.getWebContents());
+    public static boolean shouldShowManualTranslateIph(Tab tab) {
+        return TranslateBridgeJni.get().shouldShowManualTranslateIph(tab.getWebContents());
     }
 
     /**
-     * Sets the language that the contents of the tab needs to be translated to.
-     * No-op in case target language is invalid or not supported.
+     * Sets the language that the contents of the tab needs to be translated to. No-op in case
+     * target language is invalid or not supported.
+     *
      * @param targetLanguage language code in ISO 639 format.
      * @param shouldAutoTranslate If true, the page should be automatically translated immediately
-     *                            to targetLanguage.
+     *     to targetLanguage.
      */
     public static void setPredefinedTargetLanguage(
             Tab tab, String targetLanguage, boolean shouldAutoTranslate) {
@@ -94,9 +96,9 @@ public class TranslateBridge {
     @CalledByNative
     private static void addNewLanguageItemToList(
             List<LanguageItem> list,
-            String code,
-            String displayName,
-            String nativeDisplayName,
+            @JniType("std::string") String code,
+            @JniType("std::string") String displayName,
+            @JniType("std::string") String nativeDisplayName,
             boolean supportTranslate) {
         list.add(new LanguageItem(code, displayName, nativeDisplayName, supportTranslate));
     }
@@ -292,18 +294,22 @@ public class TranslateBridge {
 
         boolean canManuallyTranslate(WebContents webContents, boolean menuLogging);
 
-        boolean shouldShowManualTranslateIPH(WebContents webContents);
+        boolean shouldShowManualTranslateIph(WebContents webContents);
 
         boolean isPageTranslated(WebContents webContents);
 
         void setPredefinedTargetLanguage(
-                WebContents webContents, String targetLanguage, boolean shouldAutoTranslate);
+                WebContents webContents,
+                @JniType("std::string") String targetLanguage,
+                boolean shouldAutoTranslate);
 
+        @JniType("std::string")
         String getTargetLanguage(Profile profile);
 
-        void setDefaultTargetLanguage(Profile profile, String targetLanguage);
+        void setDefaultTargetLanguage(
+                Profile profile, @JniType("std::string") String targetLanguage);
 
-        void resetAcceptLanguages(Profile profile, String defaultLocale);
+        void resetAcceptLanguages(Profile profile, @JniType("std::string") String defaultLocale);
 
         void getChromeAcceptLanguages(Profile profile, List<LanguageItem> list);
 
@@ -314,17 +320,20 @@ public class TranslateBridge {
         String[] getNeverTranslateLanguages(Profile profile);
 
         void setLanguageAlwaysTranslateState(
-                Profile profile, String language, boolean alwaysTranslate);
+                Profile profile, @JniType("std::string") String language, boolean alwaysTranslate);
 
-        void updateUserAcceptLanguages(Profile profile, String language, boolean add);
+        void updateUserAcceptLanguages(
+                Profile profile, @JniType("std::string") String language, boolean add);
 
-        void moveAcceptLanguage(Profile profile, String language, int offset);
+        void moveAcceptLanguage(
+                Profile profile, @JniType("std::string") String language, int offset);
 
         void setLanguageOrder(Profile profile, String[] codes);
 
-        boolean isBlockedLanguage(Profile profile, String language);
+        boolean isBlockedLanguage(Profile profile, @JniType("std::string") String language);
 
-        void setLanguageBlockedState(Profile profile, String language, boolean blocked);
+        void setLanguageBlockedState(
+                Profile profile, @JniType("std::string") String language, boolean blocked);
 
         boolean getAppLanguagePromptShown(Profile profile);
 
@@ -332,6 +341,7 @@ public class TranslateBridge {
 
         void setIgnoreMissingKeyForTesting(boolean ignore);
 
+        @JniType("std::string")
         String getCurrentLanguage(WebContents webContents);
     }
 }

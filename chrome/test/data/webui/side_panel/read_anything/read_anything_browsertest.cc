@@ -22,7 +22,6 @@ class ReadAnythingMochaBrowserTest : public WebUIMochaBrowserTest {
     set_test_loader_scheme(content::kChromeUIUntrustedScheme);
     scoped_feature_list_.InitWithFeatures(
         {features::kReadAnythingReadAloud,
-         features::kReadAloudLanguagePackDownloading,
          features::kReadAnythingImagesViaAlgorithm},
         {});
   }
@@ -77,6 +76,11 @@ IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, VoiceSelectionMenu) {
 
 IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, VoiceLanguageUtil) {
   RunSidePanelTest("side_panel/read_anything/voice_language_util_test.js",
+                   "mocha.run()");
+}
+
+IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, KeyboardUtil) {
+  RunSidePanelTest("side_panel/read_anything/keyboard_util_test.js",
                    "mocha.run()");
 }
 
@@ -149,6 +153,11 @@ IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, LinksToggle) {
                    "mocha.run()");
 }
 
+IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, ImagesToggle) {
+  RunSidePanelTest("side_panel/read_anything/images_toggle_button_test.js",
+                   "mocha.run()");
+}
+
 IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, PlayPause) {
   RunSidePanelTest("side_panel/read_anything/play_pause_test.js",
                    "mocha.run()");
@@ -191,12 +200,7 @@ IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, Prefs) {
   RunSidePanelTest("side_panel/read_anything/prefs_test.js", "mocha.run()");
 }
 
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-#define MAYBE_UpdateVoicePack DISABLED_UpdateVoicePack
-#else
-#define MAYBE_UpdateVoicePack UpdateVoicePack
-#endif
-IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, MAYBE_UpdateVoicePack) {
+IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, UpdateVoicePack) {
   RunSidePanelTest("side_panel/read_anything/update_voice_pack_test.js",
                    "mocha.run()");
 }
@@ -211,21 +215,17 @@ IN_PROC_BROWSER_TEST_F(ReadAnythingMochaTest, ToolbarOverflow) {
 class ReadAnythingReadAloudMochaTest : public ReadAnythingMochaBrowserTest {
  protected:
   ReadAnythingReadAloudMochaTest() {
-    scoped_feature_list_.InitAndEnableFeature(features::kReadAnythingReadAloud);
+    scoped_feature_list_.InitWithFeatures(
+        {features::kReadAnythingReadAloud},
+        {features::kReadAnythingReadAloudPhraseHighlighting});
   }
 
  private:
   base::test::ScopedFeatureList scoped_feature_list_;
 };
 
-// TODO(crbug.com/368057422): This test is flaky on Mac. Fix and re-enable.
-#if BUILDFLAG(IS_MAC)
-#define MAYBE_LinksToggledIntegration DISABLED_LinksToggledIntegration
-#else
-#define MAYBE_LinksToggledIntegration LinksToggledIntegration
-#endif
 IN_PROC_BROWSER_TEST_F(ReadAnythingReadAloudMochaTest,
-                       MAYBE_LinksToggledIntegration) {
+                       LinksToggledIntegration) {
   RunSidePanelTest("side_panel/read_anything/links_toggled_integration_test.js",
                    "mocha.run()");
 }
@@ -286,8 +286,7 @@ class ReadAnythingReadAloudWordHighlightingMochaTest
  protected:
   ReadAnythingReadAloudWordHighlightingMochaTest() {
     scoped_feature_list_.InitWithFeatures(
-        {features::kReadAnythingReadAloud,
-         features::kReadAnythingReadAloudAutomaticWordHighlighting},
+        {features::kReadAnythingReadAloud},
         {features::kReadAnythingReadAloudPhraseHighlighting});
   }
 
@@ -301,31 +300,7 @@ IN_PROC_BROWSER_TEST_F(ReadAnythingReadAloudWordHighlightingMochaTest,
                    "mocha.run()");
 }
 
-// TODO(b/301131238): Remove this test once the word highlighting flag is
-// removed.
-// Integration tests that need the actual Read Aloud flag enabled and the word
-// highlighting flag because they use the full C++ pipeline
-class ReadAnythingReadAloudWordHighlightingDisabledMochaTest
-    : public ReadAnythingMochaBrowserTest {
- protected:
-  ReadAnythingReadAloudWordHighlightingDisabledMochaTest() {
-    scoped_feature_list_.InitWithFeatures(
-        {features::kReadAnythingReadAloud},
-        {features::kReadAnythingReadAloudAutomaticWordHighlighting});
-  }
-
- private:
-  base::test::ScopedFeatureList scoped_feature_list_;
-};
-
-IN_PROC_BROWSER_TEST_F(ReadAnythingReadAloudWordHighlightingDisabledMochaTest,
-                       WordHighlighting) {
-  RunSidePanelTest(
-      "side_panel/read_anything/word_highlighting_disabled_test.js",
-      "mocha.run()");
-}
-
-IN_PROC_BROWSER_TEST_F(ReadAnythingReadAloudWordHighlightingDisabledMochaTest,
+IN_PROC_BROWSER_TEST_F(ReadAnythingReadAloudWordHighlightingMochaTest,
                        HighlightToggle) {
   RunSidePanelTest("side_panel/read_anything/highlight_toggle_test.js",
                    "mocha.run()");
@@ -337,7 +312,6 @@ class ReadAnythingReadAloudPhraseHighlightingMochaTest
   ReadAnythingReadAloudPhraseHighlightingMochaTest() {
     scoped_feature_list_.InitWithFeatures(
         {features::kReadAnythingReadAloud,
-         features::kReadAnythingReadAloudAutomaticWordHighlighting,
          features::kReadAnythingReadAloudPhraseHighlighting},
         {});
   }

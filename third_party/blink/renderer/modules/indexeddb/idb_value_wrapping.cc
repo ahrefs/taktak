@@ -14,8 +14,10 @@
 #include <utility>
 
 #include "base/containers/span.h"
+#include "base/feature_list.h"
 #include "base/metrics/field_trial_params.h"
 #include "base/numerics/safe_conversions.h"
+#include "third_party/blink/public/common/features.h"
 #include "third_party/blink/public/mojom/indexeddb/indexeddb.mojom-blink.h"
 #include "third_party/blink/renderer/bindings/core/v8/script_value.h"
 #include "third_party/blink/renderer/bindings/core/v8/serialization/serialization_tag.h"
@@ -165,11 +167,22 @@ void IDBValueWrapper::DoneCloning() {
 }
 
 bool IDBValueWrapper::ShouldCompress(size_t uncompressed_length) const {
-  return uncompressed_length >= compression_threshold_override_.value_or(
-                                    mojom::blink::kIDBWrapThreshold);
+  static int field_trial_threshold =
+      features::kIndexedDBCompressValuesWithSnappyCompressionThreshold.Get();
+  return base::FeatureList::IsEnabled(
+             features::kIndexedDBCompressValuesWithSnappy) &&
+         uncompressed_length >=
+             compression_threshold_override_.value_or(static_cast<size_t>(
+                 field_trial_threshold < 0 ? mojom::blink::kIDBWrapThreshold
+                                           : field_trial_threshold));
 }
 
 void IDBValueWrapper::MaybeCompress() {
+  if (!base::FeatureList::IsEnabled(
+          features::kIndexedDBCompressValuesWithSnappy)) {
+    return;
+  }
+
   DCHECK(wire_data_buffer_.empty());
   const size_t wire_data_size = wire_data_.size();
 
@@ -201,9 +214,7 @@ void IDBValueWrapper::MaybeCompress() {
     wire_data_buffer_.resize(static_cast<wtf_size_t>(wire_data_size));
   }
 
-  wire_data_ = base::make_span(
-      reinterpret_cast<const uint8_t*>(wire_data_buffer_.data()),
-      wire_data_buffer_.size());
+  wire_data_ = base::as_byte_span(wire_data_buffer_);
 }
 
 void IDBValueWrapper::MaybeStoreInBlob() {
@@ -238,9 +249,7 @@ void IDBValueWrapper::MaybeStoreInBlob() {
                                wire_data_buffer_);
   IDBValueWrapper::WriteVarInt(blob_info_.size() - 1, wire_data_buffer_);
 
-  wire_data_ = base::make_span(
-      reinterpret_cast<const uint8_t*>(wire_data_buffer_.data()),
-      wire_data_buffer_.size());
+  wire_data_ = base::as_byte_span(wire_data_buffer_);
   DCHECK(!wire_data_buffer_.empty());
 }
 
@@ -394,7 +403,7 @@ bool IDBValueUnwrapper::ReadBytes(Vector<uint8_t>& value) {
     return false;
   Vector<uint8_t> result;
   result.ReserveInitialCapacity(length);
-  result.Append(current_, length);
+  result.AppendSpan(base::span(current_, end_).first(length));
   value = std::move(result);
   current_ += length;
   return true;

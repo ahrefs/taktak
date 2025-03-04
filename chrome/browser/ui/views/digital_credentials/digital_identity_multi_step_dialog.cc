@@ -12,7 +12,9 @@
 #include "third_party/blink/public/mojom/webid/federated_auth_request.mojom-shared.h"
 #include "ui/base/mojom/dialog_button.mojom.h"
 #include "ui/base/mojom/ui_base_types.mojom-shared.h"
+#include "ui/color/color_variant.h"
 #include "ui/views/bubble/bubble_border.h"
+#include "ui/views/bubble/bubble_dialog_delegate_view.h"
 #include "ui/views/bubble/bubble_dialog_utils.h"
 #include "ui/views/controls/scroll_view.h"
 #include "ui/views/layout/box_layout_view.h"
@@ -203,6 +205,15 @@ void DigitalIdentityMultiStepDialog::TryShow(
                   new_dialog_delegate.release(), web_contents_.get())
                   ->GetWeakPtr();
   }
+}
+
+ui::ColorVariant DigitalIdentityMultiStepDialog::GetBackgroundColor() {
+  DigitalIdentityMultiStepDialog::Delegate* widget_delegate =
+      GetWidgetDelegate();
+  if (!widget_delegate) {
+    return gfx::kPlaceholderColor;
+  }
+  return widget_delegate->background_color();
 }
 
 DigitalIdentityMultiStepDialog::Delegate*

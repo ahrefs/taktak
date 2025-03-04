@@ -80,6 +80,9 @@ def main():
   parser.add_argument('--pointer-width', help='rust target pointer width')
   parser.add_argument('--features', help='features', nargs='+')
   parser.add_argument('--env', help='environment variable', nargs='+')
+  parser.add_argument('--rustflags',
+                      help=('path to a file of newline-separated command line '
+                            'flags for rustc'))
   parser.add_argument('--rust-prefix', required=True, help='rust path prefix')
   parser.add_argument('--generated-files', nargs='+', help='any generated file')
   parser.add_argument('--out-dir', required=True, help='target out dir')
@@ -146,10 +149,21 @@ def main():
       for f in args.features:
         feature_name = f.upper().replace("-", "_")
         env["CARGO_FEATURE_%s" % feature_name] = "1"
+    if args.rustflags:
+      with open(args.rustflags) as flags:
+        for flag in flags:
+          if "-Copt-level" in flag:
+            (_, opt) = flag.split("=")
+            env["OPT_LEVEL"] = opt.rstrip()
+        flags.seek(0)
+        env["CARGO_ENCODED_RUSTFLAGS"] = '\x1f'.join(flags.readlines())
     if args.env:
       for e in args.env:
         (k, v) = e.split("=")
         env[k] = v
+    if "OPT_LEVEL" not in env:
+      env["OPT_LEVEL"] = "0"
+
     # Pass through a couple which are useful for diagnostics
     if os.environ.get("RUST_BACKTRACE"):
       env["RUST_BACKTRACE"] = os.environ.get("RUST_BACKTRACE")

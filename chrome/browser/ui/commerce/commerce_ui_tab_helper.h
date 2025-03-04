@@ -23,6 +23,7 @@
 enum class PriceInsightsIconLabelType;
 
 class GURL;
+class SidePanelEntryScope;
 class SidePanelRegistry;
 class SidePanelUI;
 namespace bookmarks {
@@ -58,8 +59,7 @@ class CommerceUiTabHelper : public content::WebContentsObserver {
                       SidePanelRegistry* side_panel_registry);
   ~CommerceUiTabHelper() override;
   CommerceUiTabHelper(const CommerceUiTabHelper& other) = delete;
-  CommerceUiTabHelper& operator=(const CommerceUiTabHelper& other) =
-      delete;
+  CommerceUiTabHelper& operator=(const CommerceUiTabHelper& other) = delete;
 
   static void RegisterProfilePrefs(PrefRegistrySimple* registry);
 
@@ -158,7 +158,8 @@ class CommerceUiTabHelper : public content::WebContentsObserver {
  protected:
   const std::optional<bool>& GetPendingTrackingStateForTesting();
 
-  virtual std::unique_ptr<views::View> CreateShoppingInsightsWebView();
+  virtual std::unique_ptr<views::View> CreateShoppingInsightsWebView(
+      SidePanelEntryScope& scope);
 
   virtual GURL GetComparisonTableURL();
 

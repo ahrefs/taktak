@@ -14,9 +14,9 @@
 #include "base/check.h"
 #include "base/dcheck_is_on.h"
 #include "base/memory/raw_ptr_exclusion.h"
-#include "base/strings/to_string.h"
 #include "base/types/is_arc_pointer.h"
 #include "base/types/supports_ostream_operator.h"
+#include "base/types/supports_to_string.h"
 
 // This header defines the (DP)CHECK_EQ etc. macros.
 //
@@ -180,18 +180,21 @@ BASE_EXPORT char* CreateCheckOpLogMessageString(const char* expr_str,
 #if !CHECK_WILL_STREAM()
 
 // Discard log strings to reduce code bloat.
-#define CHECK_OP(name, op, val1, val2, ...)                                \
-  BASE_IF(BASE_IS_EMPTY(__VA_ARGS__), CHECK((val1)op(val2)),               \
-          CHECK_OP_FUNCTION_IMPL(::logging::CheckError::CheckOp, name, op, \
-                                 val1, val2, __VA_ARGS__))
+#define CHECK_OP_INTERNAL_IMPL(name, op, val1, val2) CHECK((val1)op(val2))
 
 #else
 
-#define CHECK_OP(name, op, val1, val2, ...)                              \
-  CHECK_OP_FUNCTION_IMPL(::logging::CheckError::CheckOp, name, op, val1, \
-                         val2 __VA_OPT__(, ) __VA_ARGS__)
+#define CHECK_OP_INTERNAL_IMPL(name, op, val1, val2)                       \
+  CHECK_OP_FUNCTION_IMPL(::logging::CheckNoreturnError::CheckOp, name, op, \
+                         val1, val2)
 
 #endif
+
+#define CHECK_OP(name, op, val1, val2, ...)                                \
+  BASE_IF(BASE_IS_EMPTY(__VA_ARGS__),                                      \
+          CHECK_OP_INTERNAL_IMPL(name, op, val1, val2),                    \
+          CHECK_OP_FUNCTION_IMPL(::logging::CheckError::CheckOp, name, op, \
+                                 val1, val2, __VA_ARGS__))
 
 // The second overload avoids address-taking of static members for
 // fundamental types.

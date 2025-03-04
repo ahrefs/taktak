@@ -151,6 +151,8 @@ std::string ResponseCodeToString(int response_code) {
       return "IllegalAccountForPackagedEDULicense";
     case DeviceManagementService::kInvalidPackagedDeviceForKiosk:
       return "InvalidPackagedDeviceForKiosk";
+    case DeviceManagementService::kOrgUnitEnrollmentLimitExceeded:
+      return "OrgUnitEnrollmentLimitExceeded";
   }
 
   return base::NumberToString(response_code);
@@ -185,6 +187,7 @@ const int DeviceManagementService::kInvalidDomainlessCustomer;
 const int DeviceManagementService::kTosHasNotBeenAccepted;
 const int DeviceManagementService::kIllegalAccountForPackagedEDULicense;
 const int DeviceManagementService::kInvalidPackagedDeviceForKiosk;
+const int DeviceManagementService::kOrgUnitEnrollmentLimitExceeded;
 
 // static
 std::string DeviceManagementService::JobConfiguration::GetJobTypeAsString(
@@ -284,8 +287,10 @@ std::string DeviceManagementService::JobConfiguration::GetJobTypeAsString(
         TYPE_ACTIVE_DIRECTORY_ENROLL_PLAY_USER:
     case DeviceManagementService::JobConfiguration::
         TYPE_ACTIVE_DIRECTORY_PLAY_ACTIVITY:
-      NOTREACHED_IN_MIGRATION() << "Invalid job type: " << type;
-      return "";
+      NOTREACHED() << "Invalid job type: " << type;
+    case DeviceManagementService::JobConfiguration::
+        TYPE_DETERMINE_PROMOTION_ELIGIBILITY:
+      return "DeterminePromotionEligibility";
   }
 }
 
@@ -329,6 +334,10 @@ void JobConfigurationBase::AddParameter(const std::string& name,
 
 const DMAuth& JobConfigurationBase::GetAuth() const {
   return auth_data_;
+}
+
+std::string JobConfigurationBase::GetContentType() {
+  return kPostContentType;
 }
 
 scoped_refptr<network::SharedURLLoaderFactory>
@@ -426,14 +435,21 @@ JobConfigurationBase::GetResourceRequest(bool bypass_proxy, int last_error) {
       // OAuth token is transferred as a HTTP query parameter.
       break;
     case DMAuthTokenType::kOidc:
-      // Send OIDC Auth token and ID token in auth header, send profile ID in
-      // URL parameter
-      rr->headers.SetHeader(
-          dm_protocol::kAuthHeader,
-          base::StrCat({dm_protocol::kOidcAuthHeaderPrefix,
-                        dm_protocol::kOidcAuthTokenHeaderPrefix, *oauth_token_,
-                        ",", dm_protocol::kOidcIdTokenHeaderPrefix,
-                        auth_data_.oidc_id_token()}));
+      if (oauth_token_ && !oauth_token_.value().empty()) {
+        rr->headers.SetHeader(
+            dm_protocol::kAuthHeader,
+            base::StrCat({dm_protocol::kOidcAuthHeaderPrefix,
+                          dm_protocol::kOidcAuthTokenHeaderPrefix,
+                          *oauth_token_, ",",
+                          dm_protocol::kOidcIdTokenHeaderPrefix,
+                          auth_data_.oidc_id_token()}));
+      } else {
+        rr->headers.SetHeader(
+            dm_protocol::kAuthHeader,
+            base::StrCat({dm_protocol::kOidcAuthHeaderPrefix,
+                          dm_protocol::kOidcEncryptedUserInfoPrefix,
+                          auth_data_.oidc_id_token()}));
+      }
       break;
   }
 
@@ -518,7 +534,8 @@ void DeviceManagementService::JobImpl::CreateUrlLoader() {
   auto rr = config_->GetResourceRequest(bypass_proxy_, last_error_);
   auto annotation = config_->GetTrafficAnnotationTag();
   url_loader_ = network::SimpleURLLoader::Create(std::move(rr), annotation);
-  url_loader_->AttachStringForUpload(config_->GetPayload(), kPostContentType);
+  url_loader_->AttachStringForUpload(config_->GetPayload(),
+                                     config_->GetContentType());
   url_loader_->SetAllowHttpErrorResults(true);
   if (config_->GetTimeoutDuration()) {
     url_loader_->SetTimeoutDuration(config_->GetTimeoutDuration().value());
@@ -679,8 +696,7 @@ int DeviceManagementService::JobImpl::GetRetryDelay(RetryMethod method) {
     case RETRY_IMMEDIATELY:
       return 0;
     default:
-      NOTREACHED_IN_MIGRATION();
-      return 0;
+      NOTREACHED();
   }
 }
 

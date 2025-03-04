@@ -8,6 +8,7 @@
 #include "base/memory/weak_ptr.h"
 #include "chrome/browser/ai/ai_context_bound_object.h"
 #include "components/optimization_guide/core/optimization_guide_model_executor.h"
+#include "components/optimization_guide/proto/features/summarize.pb.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote_set.h"
@@ -17,14 +18,12 @@
 class AISummarizer : public AIContextBoundObject,
                      public blink::mojom::AISummarizer {
  public:
-  AISummarizer(std::unique_ptr<
+  AISummarizer(AIContextBoundObjectSet& context_bound_object_set,
+               std::unique_ptr<
                    optimization_guide::OptimizationGuideModelExecutor::Session>
                    summarize_session,
                blink::mojom::AISummarizerCreateOptionsPtr options,
                mojo::PendingReceiver<blink::mojom::AISummarizer> receiver);
-
-  // `AIUserData` implementation
-  void SetDeletionCallback(base::OnceClosure deletion_callback) override;
 
   // `blink::mojom::AISummarizer` implementation.
   void Summarize(const std::string& input,
@@ -34,9 +33,16 @@ class AISummarizer : public AIContextBoundObject,
 
   ~AISummarizer() override;
 
+  static std::unique_ptr<optimization_guide::proto::SummarizeOptions>
+  ToProtoOptions(const blink::mojom::AISummarizerCreateOptionsPtr& options);
+
  private:
+  friend class AITestUtils;
+
+  static std::string CombineContexts(const std::string& shared_context,
+                                     const std::string& context);
+
   void ModelExecutionCallback(
-      const std::string& input,
       mojo::RemoteSetElementId responder_id,
       optimization_guide::OptimizationGuideModelStreamingExecutionResult
           result);

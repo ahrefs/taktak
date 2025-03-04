@@ -27,7 +27,6 @@
 #include "base/types/expected.h"
 #include "base/values.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/enterprise/browser_management/management_service_factory.h"
 #include "chrome/browser/policy/chrome_browser_policy_connector.h"
@@ -810,12 +809,12 @@ void EncryptedReportingClient::OnReportUploadCompleted(
       }
       state->scoped_reservation.Reduce(records_memory);
     }
+  } else {
+    // If failed upload is returned but is not parseable or does not match the
+    // successfully uploaded part, just log an error.
+    LOG_IF(ERROR, failed_uploaded_record.error().code() != error::NOT_FOUND)
+        << failed_uploaded_record.error();
   }
-
-  // If failed upload is returned but is not parseable or does not match the
-  // successfully uploaded part, just log an error.
-  LOG_IF(ERROR, failed_uploaded_record.error().code() != error::NOT_FOUND)
-      << failed_uploaded_record.error();
 
   // Forward results to the pending callback.
   std::move(callback).Run(std::move(response_parser));

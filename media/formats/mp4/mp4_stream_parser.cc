@@ -11,6 +11,7 @@
 
 #include <stddef.h>
 
+#include <array>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -59,10 +60,8 @@ EncryptionScheme GetEncryptionScheme(const ProtectionSchemeInfo& sinf) {
     case FOURCC_CBCS:
       return EncryptionScheme::kCbcs;
     default:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
   }
-  return EncryptionScheme::kUnencrypted;
 }
 
 class ExternalMemoryAdapter : public DecoderBuffer::ExternalMemory {
@@ -405,10 +404,10 @@ VideoTransformation MP4StreamParser::CalculateRotation(
   // 3x3 matrix: [ a b c ]
   //             [ d e f ]
   //             [ x y z ]
-  int32_t rotation_matrix[kDisplayMatrixDimension] = {0};
+  std::array<int32_t, kDisplayMatrixDimension> rotation_matrix = {};
 
   // Shift values for fixed point multiplications.
-  const int32_t shifts[kDisplayMatrixHeight] = {16, 16, 30};
+  const std::array<int32_t, kDisplayMatrixHeight> shifts = {16, 16, 30};
 
   // Matrix multiplication for
   // track.display_matrix * movie.display_matrix

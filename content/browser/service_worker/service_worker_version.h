@@ -673,12 +673,6 @@ class CONTENT_EXPORT ServiceWorkerVersion
     return receiver_;
   }
 
-  void set_reporting_observer_receiver(
-      mojo::PendingReceiver<blink::mojom::ReportingObserver>
-          reporting_observer_receiver) {
-    reporting_observer_receiver_ = std::move(reporting_observer_receiver);
-  }
-
   void set_policy_container_host(
       scoped_refptr<PolicyContainerHost> policy_container_host) {
     policy_container_host_ = std::move(policy_container_host);
@@ -724,10 +718,6 @@ class CONTENT_EXPORT ServiceWorkerVersion
     return associated_interface_provider_.get();
   }
 
-  // Check if the static router API is enabled. It checks if the feature flag is
-  // enabled or having a valid trial token.
-  bool IsStaticRouterEnabled();
-
   // Check if the static router should be evaluated.
   bool NeedRouterEvaluate() const;
 
@@ -737,6 +727,15 @@ class CONTENT_EXPORT ServiceWorkerVersion
   // Describes whether the client has a controller and if it has a fetch event
   // handler.
   blink::mojom::ControllerServiceWorkerMode GetControllerMode() const;
+
+  void SetResponseHeadForSyntheticResponse(
+      const network::mojom::URLResponseHead& response_head) {
+    synthetic_response_head_ = response_head.Clone();
+  }
+
+  network::mojom::URLResponseHeadPtr GetResponseHeadForSyntheticResponse() {
+    return synthetic_response_head_.Clone();
+  }
 
   // Timeout for a request to be handled.
   static constexpr base::TimeDelta kRequestTimeout = base::Minutes(5);
@@ -1281,9 +1280,6 @@ class CONTENT_EXPORT ServiceWorkerVersion
   // that is going to be registered from now on.
   blink::mojom::WorkerMainScriptLoadParamsPtr main_script_load_params_;
 
-  mojo::PendingReceiver<blink::mojom::ReportingObserver>
-      reporting_observer_receiver_;
-
   // Lives while the ServiceWorkerVersion is alive.
   // See comments at the definition of storage::mojom::ServiceWorkerVersionRef
   // for more details.
@@ -1311,6 +1307,11 @@ class CONTENT_EXPORT ServiceWorkerVersion
   std::unique_ptr<blink::AssociatedInterfaceRegistry> associated_registry_;
   std::unique_ptr<blink::AssociatedInterfaceProvider>
       associated_interface_provider_;
+
+  // (crbug.com/352578800): Keep the response header which is provided by the
+  // browser initiated network response for SyntheticResponse. In subsequent
+  // navigations, this will be used as the locally returned response header.
+  network::mojom::URLResponseHeadPtr synthetic_response_head_;
 
   base::WeakPtrFactory<ServiceWorkerVersion> weak_factory_{this};
 };

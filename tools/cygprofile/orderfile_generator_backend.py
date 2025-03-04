@@ -277,6 +277,15 @@ class ClankCompiler:
     self._step_recorder.RunCommand(
         ['gn', 'gen',
          str(self._out_dir), '--args=' + ' '.join(gn_args)])
+    # At times there is a cyclic dependency, so if the initial ninja command
+    # fails, we can retry after cleaning the output directory.
+    process = self._step_recorder.RunCommand(self._ninja_command +
+                                             [str(self._out_dir), target],
+                                             raise_on_error=False)
+    if process.returncode == 0:
+      return
+    # The first ninja command failed, try cleaning and re-running.
+    self._step_recorder.RunCommand(['gn', 'clean', str(self._out_dir)])
     self._step_recorder.RunCommand(self._ninja_command +
                                    [str(self._out_dir), target])
 
@@ -560,11 +569,14 @@ class OrderfileGenerator:
       assert options.buildbot, ('--use-common-out-dir-for-instrumented is only '
                                 'meant to be used with --buildbot, otherwise '
                                 'it will overwrite the local out/Release dir.')
+      assert options.common_out_dir, (
+          '--common-out-dir needs to be specified when '
+          '--use-common-out-dir-for-instrumented is passed.')
       # This is used on the bot to save the directory for the stack tool. We
       # only save the instrumented out dir since it is needed to deobfuscate the
       # stack trace. The uninstrumented build is used to compare performance on
       # Speedometer with/without orderfile, which is less likely to fail.
-      self._instrumented_out_dir = _OUT_PATH / 'Release'
+      self._instrumented_out_dir = pathlib.Path(options.common_out_dir)
     else:
       self._instrumented_out_dir = (
           _OUT_PATH / f'orderfile_{self._options.arch}_instrumented_out')
@@ -1005,8 +1017,8 @@ class OrderfileGenerator:
       if _OUT_PATH.exists():
         logging.info('Clobbering %s...', _OUT_PATH)
         shutil.rmtree(_OUT_PATH, ignore_errors=True)
-        # The bot assumes that `out/Release` is always available.
-        out_release_path = _OUT_PATH / 'Release'
+        # The bot assumes that the common dir is always available.
+        out_release_path = pathlib.Path(self._options.common_out_dir)
         logging.info('mkdir %s', out_release_path)
         out_release_path.mkdir(parents=True)
 
@@ -1158,12 +1170,15 @@ def CreateArgumentParser():
                             'generated will be valid and nontrivial, but '
                             'may not be based on a representative profile '
                             'or other such considerations. Use with caution.'))
-  parser.add_argument('--commit-hashes', action='store_true',
+  parser.add_argument('--commit-hashes',
+                      action='store_true',
                       help=('Commit any orderfile hash files in the current '
                             'checkout; performs no other action'))
+  parser.add_argument('--common-out-dir',
+                      help='The bot will pass in its own unique path.')
   parser.add_argument('--use-common-out-dir-for-instrumented',
                       action='store_true',
-                      help='Use out/Release for the instrumented out dir so '
+                      help='Use the common dir for the instrumented out dir so '
                       'that the stack tool works on the bot.')
   parser.add_argument('--clobber',
                       action='store_true',

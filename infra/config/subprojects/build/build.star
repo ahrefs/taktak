@@ -106,7 +106,7 @@ consoles.console_view(
 
 def cq_build_perf_builder(description_html, **kwargs):
     # Use CQ RBE instance and high remote_jobs/cores to simulate CQ builds.
-    if not kwargs.get("siso_configs"):
+    if not "siso_configs" in kwargs:
         kwargs["siso_configs"] = ["builder", "remote-link"]
     return ci.builder(
         description_html = description_html + "<br>Build stats is show in http://shortn/_gaAdI3x6o6.",
@@ -114,6 +114,17 @@ def cq_build_perf_builder(description_html, **kwargs):
         siso_remote_jobs = siso.remote_jobs.HIGH_JOBS_FOR_CQ,
         siso_project = siso.project.DEFAULT_UNTRUSTED,
         use_clang_coverage = True,
+        **kwargs
+    )
+
+def ci_build_perf_builder(description_html, **kwargs):
+    # Use CI RBE instance to simulate CI builds.
+    if not "siso_configs" in kwargs:
+        kwargs["siso_configs"] = ["builder", "remote-link"]
+    return ci.builder(
+        description_html = description_html + "<br>Build stats is show in http://shortn/_gaAdI3x6o6.",
+        siso_remote_jobs = siso.remote_jobs.DEFAULT,
+        siso_project = siso.project.DEFAULT_TRUSTED,
         **kwargs
     )
 
@@ -310,6 +321,41 @@ cq_build_perf_builder(
     ),
 )
 
+ci_build_perf_builder(
+    name = "win-build-perf-ci-siso",
+    description_html = "This builder measures Windows CI build performance with Siso.<br/>" +
+                       "The build configs and the bot specs should be in sync with " + linkify_builder("ci", " Win x64 Builder", "chromium"),
+    executable = "recipe:chrome_build/build_perf_siso",
+    builder_spec = builder_config.builder_spec(
+        gclient_config = builder_config.gclient_config(
+            config = "chromium",
+            apply_configs = [
+                "siso_latest",
+            ],
+        ),
+        chromium_config = builder_config.chromium_config(
+            config = "chromium",
+            apply_configs = [
+                "mb",
+            ],
+            target_platform = builder_config.target_platform.WIN,
+        ),
+    ),
+    gn_args = {
+        "builtin": gn_args.config(configs = ["ci/Win x64 Builder", "no_reclient"]),
+        "reproxy": "ci/Win x64 Builder",
+    },
+    os = os.WINDOWS_DEFAULT,
+    console_view_entry = consoles.console_view_entry(
+        category = "windows",
+        short_name = "sisoci",
+    ),
+    siso_configs = ["builder"],
+    # TODO(333491525): enable no-fallback once OOM fallback mitigated.
+    siso_experiments = [],
+    siso_limits = "fastlocal=0",
+)
+
 cq_build_perf_builder(
     name = "linux-chromeos-build-perf-ninja",
     description_html = "This builder measures CrOS CQ build performance with Ninja.<br/>" +
@@ -401,6 +447,7 @@ cq_build_perf_builder(
         category = "mac",
         short_name = "ninja",
     ),
+    siso_configs = ["builder"],
     siso_enabled = False,
 )
 
@@ -436,6 +483,7 @@ cq_build_perf_builder(
         category = "mac",
         short_name = "siso",
     ),
+    siso_configs = ["builder"],
 )
 
 cq_build_perf_builder(
@@ -468,6 +516,7 @@ cq_build_perf_builder(
         category = "ios",
         short_name = "ninja",
     ),
+    siso_configs = ["builder"],
     siso_enabled = False,
     xcode = xcode.xcode_default,
 )
@@ -505,16 +554,18 @@ cq_build_perf_builder(
         category = "ios",
         short_name = "siso",
     ),
+    siso_configs = ["builder"],
     xcode = xcode.xcode_default,
 )
 
 def developer_build_perf_builder(description_html, **kwargs):
     # Use CQ siso.project and high siso_remote_jobs/cores to simulate CQ builds.
+    if not "siso_configs" in kwargs:
+        kwargs["siso_configs"] = ["remote-link"]
     return ci.builder(
         description_html = description_html + "<br>Build stats is show in http://shortn/_gaAdI3x6o6.",
         executable = "recipe:chrome_build/build_perf_developer",
         siso_project = siso.project.DEFAULT_UNTRUSTED,
-        siso_configs = ["remote-link"],
         shadow_siso_project = None,
         **kwargs
     )
@@ -657,6 +708,7 @@ This builder measures build performance for Mac developer builds, by simulating 
         short_name = "dev",
     ),
     reclient_jobs = 640,
+    siso_configs = [],
 )
 
 developer_build_perf_builder(
@@ -694,6 +746,7 @@ This builder measures build performance for iOS developer builds, by simulating 
         short_name = "dev",
     ),
     reclient_jobs = 640,
+    siso_configs = [],
     xcode = xcode.xcode_default,
 )
 
@@ -715,6 +768,10 @@ ci.builder(
         ),
     ),
     gn_args = gn_args.config(
+        args = {
+            # For analyze_includes.py
+            "show_includes": True,
+        },
         configs = [
             "no_remoteexec",
             "linux",

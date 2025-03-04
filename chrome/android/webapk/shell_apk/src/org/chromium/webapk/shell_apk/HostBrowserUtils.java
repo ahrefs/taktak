@@ -4,11 +4,16 @@
 
 package org.chromium.webapk.shell_apk;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.chromium.components.webapk.lib.common.WebApkMetaDataKeys;
 
@@ -21,6 +26,12 @@ public class HostBrowserUtils {
     public static String ARC_INTENT_HELPER_BROWSER = "org.chromium.arc.intent_helper";
 
     public static String ARC_WEBAPK_BROWSER = "org.chromium.arc.webapk";
+
+    // Action for launching {@link WebappLauncherActivity}.
+    // TODO(hanxi): crbug.com/737556. Replaces this string with the new WebAPK launch action after
+    // it is propagated to all the Chrome's channels.
+    public static final String ACTION_START_WEBAPK =
+            "com.google.android.apps.chrome.webapps.WebappManager.ACTION_START_WEBAPP";
 
     /** The package names of the browsers that support WebAPK notification delegation. */
     private static Set<String> sBrowsersSupportingNotificationDelegation =
@@ -54,24 +65,58 @@ public class HostBrowserUtils {
     }
 
     /**
-     * Returns the package name of the host browser to launch the WebAPK, or null if we did not find
-     * one.
+     * Contains a host browser's package name, and, if applicable, also its component name. The
+     * component name is expected to be null if the WebAPK is bound, and valid if the WebAPK is
+     * unbound or effectively unbound.
      */
-    public static String computeHostBrowserPackageName(Context context) {
+    public static class PackageNameAndComponentName {
+        @NonNull private String mPackageName;
+        @Nullable private ComponentName mComponentName;
+
+        public PackageNameAndComponentName(@NonNull String packageName) {
+            mPackageName = packageName;
+            mComponentName = null;
+        }
+
+        public PackageNameAndComponentName(@NonNull ComponentName componentName) {
+            mPackageName = componentName.getPackageName();
+            mComponentName = componentName;
+        }
+
+        /** Returns the package name of the host browser. */
+        public @NonNull String getPackageName() {
+            return mPackageName;
+        }
+
+        /**
+         * Returns the component name of the host browser if the WebAPK is unbound, or null if it is
+         * bound.
+         */
+        public @Nullable ComponentName getComponentName() {
+            return mComponentName;
+        }
+    }
+
+    /**
+     * Returns the package name and (if the WebAPK is unbound) component name of the host browser to
+     * launch the WebAPK, or null if we did not find a host browser.
+     */
+    public static @Nullable PackageNameAndComponentName
+            computeHostBrowserPackageNameAndComponentName(Context context) {
         // Gets the package name of the host browser if it is specified in AndroidManifest.xml.
         String hostBrowserFromManifest = getHostBrowserFromManifest(context);
         if (!TextUtils.isEmpty(hostBrowserFromManifest)) {
-            return hostBrowserFromManifest;
+            return new PackageNameAndComponentName(hostBrowserFromManifest);
         }
 
         PackageManager packageManager = context.getPackageManager();
 
         // Gets the package name of the default browser on the Android device.
-        // TODO(hanxi): Investigate the best way to know which browser supports WebAPKs.
-        String defaultBrowser = getDefaultBrowserPackageName(packageManager);
-        if (!TextUtils.isEmpty(defaultBrowser)
-                && WebApkUtils.isInstalled(packageManager, defaultBrowser)) {
-            return defaultBrowser;
+        ComponentName defaultBrowser = getDefaultBrowserComponentName(packageManager);
+        if (defaultBrowser != null
+                && !TextUtils.isEmpty(defaultBrowser.getPackageName())
+                && WebApkUtils.isInstalled(packageManager, defaultBrowser.getPackageName())) {
+            return new PackageNameAndComponentName(defaultBrowser);
         }
 
         return null;
@@ -94,19 +139,39 @@ public class HostBrowserUtils {
         return TextUtils.equals(hostBrowser, getHostBrowserFromManifest(context));
     }
 
-    /** Returns the package name of the default browser on the Android device. */
-    private static String getDefaultBrowserPackageName(PackageManager packageManager) {
+    /** Returns the component name of the default browser on the Android device. */
+    private static @Nullable ComponentName getDefaultBrowserComponentName(
+            PackageManager packageManager) {
         Intent browserIntent = WebApkUtils.getQueryInstalledBrowsersIntent();
         ResolveInfo resolveInfo =
                 packageManager.resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY);
-        return WebApkUtils.getPackageNameFromResolveInfo(resolveInfo);
+        return WebApkUtils.getComponentNameFromResolveInfo(resolveInfo);
     }
 
-    /** Deletes the internal storage for the given context. */
-    private static void deleteInternalStorage(Context context) {
-        DexLoader.deletePath(context.getCacheDir());
-        DexLoader.deletePath(context.getFilesDir());
-        DexLoader.deletePath(
-                context.getDir(HostBrowserClassLoader.DEX_DIR_NAME, Context.MODE_PRIVATE));
+    static @NonNull Intent getBrowserLaunchIntentWithoutFlagsAndExtras(
+            boolean hostBrowserIsFromManifest,
+            @NonNull String hostBrowserPackageName,
+            @Nullable ComponentName hostBrowserComponentName,
+            @NonNull Uri startUrl) {
+        Intent intent;
+        if (hostBrowserIsFromManifest) {
+            intent = new Intent();
+            intent.setAction(ACTION_START_WEBAPK);
+        } else {
+            intent = new Intent(Intent.ACTION_VIEW, startUrl);
+        }
+
+        if (hostBrowserComponentName != null) {
+            // If the component is Android's intent resolver (which is expected if there's no
+            // default browser set), then setting this selector will ensure that the WebAPK itself
+            // doesn't register as a potential intent receiver (which could cause an infinite loop
+            // of the WebAPK intenting to itself).
+            intent.setSelector(WebApkUtils.getQueryInstalledBrowsersIntent());
+            intent.setComponent(hostBrowserComponentName);
+        } else {
+            intent.setPackage(hostBrowserPackageName);
+        }
+
+        return intent;
     }
 }

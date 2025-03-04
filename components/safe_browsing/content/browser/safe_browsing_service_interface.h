@@ -7,10 +7,11 @@
 
 #include "base/memory/ref_counted.h"
 #include "build/build_config.h"
+#include "components/safe_browsing/core/browser/db/database_manager.h"
 #include "content/public/browser/browser_thread.h"
 
 #if BUILDFLAG(IS_ANDROID)
-#include "components/safe_browsing/android/referring_app_info.h"
+#include "components/safe_browsing/core/browser/referring_app_info.h"
 #endif
 
 namespace content {
@@ -55,8 +56,11 @@ class SafeBrowsingServiceInterface
   virtual ReferrerChainProvider* GetReferrerChainProviderFromBrowserContext(
       content::BrowserContext* browser_context) = 0;
 
+  virtual const scoped_refptr<SafeBrowsingDatabaseManager>& database_manager()
+      const = 0;
+
 #if BUILDFLAG(IS_ANDROID)
-  virtual ReferringAppInfo GetReferringAppInfo(
+  virtual internal::ReferringAppInfo GetReferringAppInfo(
       content::WebContents* web_contents) = 0;
 #endif
 

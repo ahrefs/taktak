@@ -8,9 +8,9 @@
  * Autofill keyboard accessory.
  */
 
-// Requires functions from fill.ts, form.ts, and autofill_form_features.ts.
+// Requires functions from fill.ts, form.ts, autofill_form_features.ts and
+// child_frame_registration_lib.ts.
 
-import {processChildFrameMessage} from '//components/autofill/ios/form_util/resources/child_frame_registration_lib.js';
 import {gCrWeb} from '//ios/web/public/js_messaging/resources/gcrweb.js';
 import {sendWebKitMessage} from '//ios/web/public/js_messaging/resources/utils.js';
 
@@ -168,7 +168,8 @@ function submitHandler(evt: Event): void {
 
   gCrWeb.form.formSubmitted(
       evt.target as HTMLFormElement,
-      /* messageHandler= */ NATIVE_MESSAGE_HANDLER);
+      /* messageHandler= */ NATIVE_MESSAGE_HANDLER,
+      /* programmaticSubmission= */ false);
 }
 
 /**
@@ -221,7 +222,7 @@ function sendFormMutationMessagesAfterDelay(
  */
 function processInboundMessage(event: MessageEvent<any>): void {
   if (gCrWeb.autofill_form_features.isAutofillAcrossIframesEnabled()) {
-    processChildFrameMessage(event);
+    gCrWeb.remoteFrameRegistration.processChildFrameMessage(event);
   }
 }
 
@@ -266,7 +267,8 @@ function attachListeners(): void {
         try {
           gCrWeb.form.formSubmitted(
               this,
-              /* messageHandler= */ NATIVE_MESSAGE_HANDLER);
+              /* messageHandler= */ NATIVE_MESSAGE_HANDLER,
+              /* programmaticSubmission= */ true);
         } catch (e) {
         }
       }
@@ -443,16 +445,4 @@ function trackFormMutations(delay: number): void {
   formMutationObserver.observe(document, {childList: true, subtree: true});
 }
 
-
-/**
- * Enables or disables the tracking of input event sources.
- */
-function toggleTrackingUserEditedFields(track: boolean): void {
-  if (track) {
-    gCrWeb.form.wasEditedByUser = gCrWeb.form.wasEditedByUser || new WeakMap();
-  } else {
-    gCrWeb.form.wasEditedByUser = null;
-  }
-}
-
-gCrWeb.formHandlers = {trackFormMutations, toggleTrackingUserEditedFields};
+gCrWeb.formHandlers = {trackFormMutations};

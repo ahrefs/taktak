@@ -76,6 +76,11 @@
 
 namespace cc {
 namespace {
+
+SkV4 SkColorToSkV4(SkColor4f color) {
+  return SkV4{color.fR, color.fG, color.fB, color.fA};
+}
+
 scoped_refptr<DisplayItemList> MakeNoopDisplayItemList() {
   auto display_item_list = base::MakeRefCounted<DisplayItemList>();
   display_item_list->StartPaint();
@@ -87,9 +92,12 @@ scoped_refptr<DisplayItemList> MakeNoopDisplayItemList() {
 }
 
 // Creates a bitmap of |size| filled with pixels of |color|.
-SkBitmap MakeSolidColorBitmap(gfx::Size size, SkColor4f color) {
+SkBitmap MakeSolidColorBitmap(gfx::Size size,
+                              SkColor4f color,
+                              SkAlphaType alpha_type = kPremul_SkAlphaType) {
   SkBitmap bitmap;
-  bitmap.allocPixels(SkImageInfo::MakeN32Premul(size.width(), size.height()));
+  bitmap.allocPixels(SkImageInfo::Make(size.width(), size.height(),
+                                       kN32_SkColorType, alpha_type));
   bitmap.eraseColor(color);
   return bitmap;
 }
@@ -506,6 +514,68 @@ TEST_F(OopPixelTest, DrawImage) {
   ExpectEquals(actual, FILE_PATH_LITERAL("oop_draw_image.png"));
 }
 
+TEST_F(OopPixelTest, DrawImageAlpha) {
+  constexpr gfx::Rect rect(100, 100);
+
+  auto bitmap_black = MakeSolidColorBitmap(rect.size(), SkColors::kBlack);
+
+  // Initialize the premul and unpremul SkPixmaps with the same color (note
+  // that SkColor4f is always unpremultiplied).
+  const SkColor4f kTestColor = {128.f / 255.f, 0.f, 0.f, 128.f / 255.f};
+  auto bitmap_premul =
+      MakeSolidColorBitmap(gfx::Size(50, 50), kTestColor, kPremul_SkAlphaType);
+  auto bitmap_unpremul = MakeSolidColorBitmap(gfx::Size(50, 50), kTestColor,
+                                              kUnpremul_SkAlphaType);
+
+  // Despite being initialized by the same SkColor, the premultiplied and
+  // unpremultiplied bitmaps will end up with different bits in them (reflecting
+  // the premultiplied vs unpremultiplied representations of the color).
+  EXPECT_NE(bitmap_premul.getAddr32(0, 0), bitmap_unpremul.getAddr32(0, 0));
+
+  const PaintImage::Id kIdBlack = 32;
+  const PaintImage::Id kIdPremul = 33;
+  const PaintImage::Id kIdUnpremul = 34;
+
+  auto paint_image_black =
+      PaintImageBuilder::WithDefault()
+          .set_image(SkImages::RasterFromBitmap(bitmap_black), 0)
+          .set_id(kIdBlack)
+          .TakePaintImage();
+  auto paint_image_premul =
+      PaintImageBuilder::WithDefault()
+          .set_image(SkImages::RasterFromBitmap(bitmap_premul), 1)
+          .set_id(kIdPremul)
+          .TakePaintImage();
+  auto paint_image_unpremul =
+      PaintImageBuilder::WithDefault()
+          .set_image(SkImages::RasterFromBitmap(bitmap_unpremul), 2)
+          .set_id(kIdUnpremul)
+          .TakePaintImage();
+
+  auto display_item_list = base::MakeRefCounted<DisplayItemList>();
+  display_item_list->StartPaint();
+  SkSamplingOptions sampling(
+      PaintFlags::FilterQualityToSkSamplingOptions(kDefaultFilterQuality));
+
+  // Draw a black background.
+  display_item_list->push<DrawImageOp>(paint_image_black, 0.f, 0.f, sampling,
+                                       nullptr);
+  // Draw a premul image on the left.
+  display_item_list->push<DrawImageOp>(paint_image_premul, 0.f, 25.f, sampling,
+                                       nullptr);
+  // Draw an unpremul image on the right.
+  display_item_list->push<DrawImageOp>(paint_image_unpremul, 50.f, 25.f,
+                                       sampling, nullptr);
+
+  display_item_list->EndPaintOfUnpaired(rect);
+  display_item_list->Finalize();
+
+  auto actual = Raster(display_item_list, rect.size());
+
+  // The premul and unpremul images should be identical.
+  ExpectEquals(actual, FILE_PATH_LITERAL("oop_alpha_premul_unpremul.png"));
+}
+
 TEST_F(OopPixelTest, DrawImageScaled) {
   constexpr gfx::Rect rect(100, 100);
 
@@ -724,8 +794,11 @@ TEST_F(OopPixelTest, DrawGainmapImage) {
 
   auto display_item_list = base::MakeRefCounted<DisplayItemList>();
   display_item_list->StartPaint();
-  SkSamplingOptions sampling(
-      PaintFlags::FilterQualityToSkSamplingOptions(kDefaultFilterQuality));
+
+  // Use cubic sampling, to ensure that it does not cause corruption or crashes.
+  // https://crbug.com/374783345
+  SkSamplingOptions sampling =
+      SkSamplingOptions(SkCubicResampler::CatmullRom());
   display_item_list->push<DrawImageOp>(paint_image, 0.f, 0.f, sampling,
                                        nullptr);
   display_item_list->EndPaintOfUnpaired(kRect);
@@ -766,6 +839,93 @@ TEST_F(OopPixelTest, DrawGainmapImage) {
     EXPECT_NEAR(out_color.fR, std::pow(0.5f / kDestScale, kGamma), kEps);
     EXPECT_NEAR(out_color.fG, std::pow(1.0f / kDestScale, kGamma), kEps);
     EXPECT_NEAR(out_color.fB, std::pow(2.0f / kDestScale, kGamma), kEps);
+  }
+}
+
+TEST_F(OopPixelTest, DrawGainmapImageCubic) {
+  constexpr uint32_t kSrcSize = 2;
+  constexpr uint32_t kDstSize = 4;
+
+  // The gainmap is fully applied at headroom 2, and has a maximum scale of 4.
+  const float kRatioMax = 4.f;
+  SkGainmapInfo gainmap_info = {
+      {1.f, 1.f, 1.f, 1.f},
+      {kRatioMax, kRatioMax, kRatioMax, 1.f},
+      {1.f, 1.f, 1.f, 1.f},
+      {0.f, 0.f, 0.f, 1.f},
+      {0.f, 0.f, 0.f, 1.f},
+      1.f,
+      kRatioMax,
+      SkGainmapInfo::BaseImageType::kSDR,
+      SkGainmapInfo::Type::kDefault,
+      nullptr,
+  };
+
+  auto info = SkImageInfo::MakeN32Premul(kSrcSize, kSrcSize,
+                                         SkColorSpace::MakeSRGBLinear());
+  sk_sp<FakePaintImageGenerator> generators[2];
+  uint8_t pixel_values[2][2] = {
+      {100, 20},
+      {static_cast<uint8_t>(
+           std::round(255.f * std::log(2.f) / std::log(kRatioMax))),
+       static_cast<uint8_t>(
+           std::round(255.f * std::log(3.f) / std::log(kRatioMax)))}};
+  for (int i = 0; i < 2; ++i) {
+    generators[i] = sk_make_sp<FakePaintImageGenerator>(info);
+    SkPixmap pm = generators[i]->GetPixmap();
+    for (size_t x = 0; x < kSrcSize; ++x) {
+      for (size_t y = 0; y < kSrcSize; ++y) {
+        uint32_t* pixel = pm.writable_addr32(x, y);
+        uint8_t v = pixel_values[i][x];
+        *pixel = SkColorSetARGB(255, v, v, v);
+      }
+    }
+  }
+
+  // Draw with cubic filtering. This will get demoted to linear filtering.
+  static int counter = 0;
+  const PaintImage::Id kSomeId = 32 + counter++;
+  auto paint_image =
+      PaintImageBuilder::WithDefault()
+          .set_id(kSomeId)
+          .set_paint_image_generator(generators[0])
+          .set_gainmap_paint_image_generator(generators[1], gainmap_info)
+          .TakePaintImage();
+  auto display_item_list = base::MakeRefCounted<DisplayItemList>();
+  {
+    display_item_list->StartPaint();
+    display_item_list->push<DrawImageRectOp>(
+        paint_image, SkRect::MakeWH(kSrcSize, kSrcSize),
+        SkRect::MakeWH(kDstSize, kDstSize),
+        SkSamplingOptions(SkCubicResampler::CatmullRom()), nullptr,
+        SkCanvas::kStrict_SrcRectConstraint);
+    display_item_list->EndPaintOfUnpaired(gfx::Rect(0, 0, kDstSize, kDstSize));
+    display_item_list->Finalize();
+  }
+  RasterOptions options(gfx::Size(kDstSize, kDstSize));
+  {
+    auto dest_color_space = SkColorSpace::MakeSRGBLinear();
+    options.target_color_params.color_space =
+        gfx::ColorSpace(*dest_color_space);
+    options.target_color_params.hdr_max_luminance_relative = kRatioMax;
+  }
+  auto result = Raster(display_item_list, options);
+
+  // Check pixel values against manually computed expected values.
+  for (int i = 0; i < 4; ++i) {
+    // Compute the linearly interpolated base and gainmap pixel values.
+    float base_value =
+        ((3.f - i) * pixel_values[0][0] + i * pixel_values[0][1]) /
+        (255.f * 3.f);
+    float gain_value =
+        ((3.f - i) * pixel_values[1][0] + i * pixel_values[1][1]) /
+        (255.f * 3.f);
+
+    // Compute the expected value using the interpolated values.
+    float expected = base_value * std::exp(gain_value * std::log(kRatioMax));
+    float actual = result.getColor4f(i, 0).fR;
+    float kEpsilon = 16.f / 255.f;
+    EXPECT_NEAR(expected, actual, kEpsilon);
   }
 }
 
@@ -2552,9 +2712,7 @@ TEST_F(OopPixelTest, CopySharedImage) {
     ri->WaitSyncTokenCHROMIUM(sii->GenUnverifiedSyncToken().GetConstData());
 
     ri->CopySharedImage(source_client_si->mailbox(), dest_client_si->mailbox(),
-                        GL_TEXTURE_2D, 0, 0, 0, 0, size.width(), size.height(),
-                        /*unpack_flip_y=*/GL_FALSE,
-                        /*unpack_premultiply_alpha=*/GL_FALSE);
+                        0, 0, 0, 0, size.width(), size.height());
   }
 
   // Read the data back as DisplayP3, from the Display P3 SharedImage.
@@ -2637,9 +2795,9 @@ TEST_P(OopYUVToRGBPixelTest, CopyI420SharedImage) {
   // Upload initial Y+U+V planes and convert to RGB.
   UploadPixelsYUV(ri, yuv_client_si->mailbox(), yuv_pixmap);
 
-  ri->CopySharedImage(yuv_client_si->mailbox(), dest_client_si->mailbox(),
-                      GL_TEXTURE_2D, 0, 0, 0, 0, options.resource_size.width(),
-                      options.resource_size.height(), GL_FALSE, GL_FALSE);
+  ri->CopySharedImage(yuv_client_si->mailbox(), dest_client_si->mailbox(), 0, 0,
+                      0, 0, options.resource_size.width(),
+                      options.resource_size.height());
 
   SkBitmap actual_bitmap =
       ReadbackMailbox(ri, dest_client_si->mailbox(), options.resource_size,
@@ -2718,9 +2876,9 @@ TEST_F(OopPixelTest, CopyNV12SharedImage) {
   // Upload initial Y+UV planes and convert to RGB.
   UploadPixelsYUV(ri, y_uv_client_si->mailbox(), yuv_pixmap);
 
-  ri->CopySharedImage(y_uv_client_si->mailbox(), dest_client_si->mailbox(),
-                      GL_TEXTURE_2D, 0, 0, 0, 0, options.resource_size.width(),
-                      options.resource_size.height(), GL_FALSE, GL_FALSE);
+  ri->CopySharedImage(y_uv_client_si->mailbox(), dest_client_si->mailbox(), 0,
+                      0, 0, 0, options.resource_size.width(),
+                      options.resource_size.height());
 
   SkBitmap actual_bitmap =
       ReadbackMailbox(ri, dest_client_si->mailbox(), options.resource_size);
@@ -2769,16 +2927,19 @@ class OopPathPixelTest : public OopPixelTest,
     display_item_list->EndPaintOfUnpaired(options.full_raster_rect);
     display_item_list->Finalize();
 
-    auto comparator =
-#if BUILDFLAG(IS_IOS)
-        // TODO(crbug.com/40280014): We have larger errors on the platform, but
-        // the images here still seem visually indistinguishable.
-        FuzzyPixelComparator().SetErrorPixelsPercentageLimit(0.5f);
-#else
-        // Allow 8 pixels in 100x100 image to be different due to non-AA pixel
-        // rounding.
+    // Allow 8 pixels in 100x100 image to be different due to non-AA pixel
+    // rounding.
+    FuzzyPixelComparator comparator =
         FuzzyPixelComparator().SetErrorPixelsPercentageLimit(0.08f);
-#endif
+
+    // TODO(crbug.com/40280014): We have larger errors when running these
+    // tests with Graphite, but the images here still seem visually
+    // indistinguishable.
+    auto* cmd = base::CommandLine::ForCurrentProcess();
+    if (features::IsSkiaGraphiteEnabled(cmd)) {
+      comparator.SetErrorPixelsPercentageLimit(0.5f);
+    }
+
     auto actual = Raster(display_item_list, options);
     ExpectEquals(actual, FILE_PATH_LITERAL("oop_path.png"), comparator);
   }
@@ -2825,6 +2986,71 @@ TEST_F(OopPixelTest, RecordShaderExceedsMaxTextureSize) {
 
 INSTANTIATE_TEST_SUITE_P(P, OopClearPixelTest, ::testing::Bool());
 INSTANTIATE_TEST_SUITE_P(P, OopPathPixelTest, ::testing::Bool());
+
+TEST_F(OopPixelTest, SkSLCommandShader) {
+  // Draws a red square.
+  const std::string_view kDrawRedRect(R"(
+    uniform float u_border_alpha;
+    uniform float2 u_top_left;
+    uniform float2 u_btm_right;
+    uniform vec4 u_border_color;
+    uniform vec4 u_center_color;
+    uniform int u_nudge;
+
+    vec4 main(float2 coord) {
+      float2 adjusted = u_top_left;
+      adjusted.x = u_top_left.x + float(u_nudge);
+      if (all(greaterThanEqual(coord, adjusted)) &&
+          all(lessThan(coord, u_btm_right))) {
+        return u_center_color;
+      } else {
+        return vec4(u_border_color.xyz, u_border_alpha);
+      }
+    }
+  )");
+  auto shader = PaintShader::MakeSkSLCommand(
+      kDrawRedRect,
+      /*float_uniforms=*/{{.name = SkString("u_border_alpha"), .value = 0.5f}},
+      /*float2_uniforms=*/
+      {{.name = SkString("u_top_left"), .value = SkV2{23.f, 25.f}},
+       {.name = SkString("u_btm_right"), .value = SkV2{75.f, 75.f}}},
+      /*float4_uniforms=*/
+      {{.name = SkString("u_border_color"),
+        .value = SkColorToSkV4(SkColors::kRed)},
+       {.name = SkString("u_center_color"),
+        .value = SkColorToSkV4(SkColors::kGreen)}},
+      /*int_uniforms=*/
+      {{.name = SkString("u_nudge"), .value = 2}});
+  ASSERT_TRUE(shader);
+
+  const gfx::Size rect(100, 100);
+  RasterOptions options(rect);
+  options.preclear = true;
+  options.preclear_color = SkColors::kWhite;
+  PaintFlags flags;
+  flags.setShader(std::move(shader));
+  auto display_item_list = base::MakeRefCounted<DisplayItemList>();
+  display_item_list->StartPaint();
+  display_item_list->push<DrawRectOp>(gfx::RectToSkRect(gfx::Rect(rect)),
+                                      flags);
+  display_item_list->EndPaintOfUnpaired(options.full_raster_rect);
+  display_item_list->Finalize();
+
+  auto actual = Raster(display_item_list, options);
+
+  SkBitmap expected = MakeSolidColorBitmap(rect, SkColors::kWhite);
+  SkCanvas canvas(expected, SkSurfaceProps{});
+  SkPaint red;
+  red.setColor(SkColors::kRed);
+  red.setAlphaf(0.5f);
+  canvas.drawRect(SkRect::MakeXYWH(0, 0, 100, 100), red);
+  SkPaint green;
+  green.setColor(SkColors::kGreen);
+  canvas.drawRect(SkRect::MakeXYWH(25, 25, 50, 50), green);
+
+  EXPECT_TRUE(MatchesBitmap(actual, expected,
+                            ManhattanDistancePixelComparator(/*tolerance=*/5)));
+}
 
 }  // namespace
 }  // namespace cc

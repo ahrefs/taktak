@@ -33,10 +33,14 @@ import org.chromium.base.ActivityState;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.Batch;
 import org.chromium.chrome.browser.app.bookmarks.BookmarkFolderPickerActivity;
+import org.chromium.chrome.browser.profiles.Profile;
+import org.chromium.chrome.browser.profiles.ProfileResolver;
+import org.chromium.chrome.browser.profiles.ProfileResolverJni;
 import org.chromium.chrome.browser.ui.messages.snackbar.Snackbar;
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
 import org.chromium.components.bookmarks.BookmarkId;
 import org.chromium.components.signin.base.CoreAccountInfo;
+import org.chromium.components.signin.base.GaiaId;
 import org.chromium.components.signin.identitymanager.IdentityManager;
 import org.chromium.ui.base.TestActivity;
 import org.chromium.url.GURL;
@@ -55,6 +59,8 @@ public class BookmarkMoveSnackbarManagerTest {
     @Rule public MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     @Mock private SnackbarManager mSnackbarManager;
+    @Mock private Profile mProfile;
+    @Mock private ProfileResolver.Natives mProfileResolverNatives;
     @Mock private IdentityManager mIdentityManager;
     @Mock private BookmarkFolderPickerActivity mFolderPickerActivity;
 
@@ -69,10 +75,12 @@ public class BookmarkMoveSnackbarManagerTest {
     private BookmarkId mAccountMobileFolderId;
     private BookmarkModelObserver mBookmarkModelObserver;
     private CoreAccountInfo mAccountInfo =
-            CoreAccountInfo.createFromEmailAndGaiaId("test@gmail.com", "testGaiaId");
+            CoreAccountInfo.createFromEmailAndGaiaId("test@gmail.com", new GaiaId("testGaiaId"));
 
     @Before
     public void setUp() {
+        ProfileResolverJni.setInstanceForTesting(mProfileResolverNatives);
+
         mBookmarkModel = setupFakeBookmarkModel();
         mBookmarkModel.setAreAccountBookmarkFoldersActive(true);
         doReturn(mAccountInfo).when(mIdentityManager).getPrimaryAccountInfo(anyInt());
@@ -86,7 +94,7 @@ public class BookmarkMoveSnackbarManagerTest {
 
         mBookmarkMoveSnackbarManager =
                 new BookmarkMoveSnackbarManager(
-                        mActivity, mBookmarkModel, mSnackbarManager, mIdentityManager);
+                        mActivity, mProfile, mBookmarkModel, mSnackbarManager, mIdentityManager);
         mBookmarkModelObserver = mBookmarkMoveSnackbarManager.getBookmarkModelObserverForTesting();
     }
 

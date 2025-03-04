@@ -196,8 +196,7 @@ GlanceablesTimeManagementBubbleView::GlanceablesTimeManagementBubbleView(
   TypographyProvider::Get()->StyleLabel(TypographyToken::kCrosTitle1,
                                         *combobox_replacement_label_);
   combobox_replacement_label_->SetAutoColorReadabilityEnabled(false);
-  combobox_replacement_label_->SetEnabledColorId(
-      cros_tokens::kCrosSysOnSurface);
+  combobox_replacement_label_->SetEnabledColor(cros_tokens::kCrosSysOnSurface);
   combobox_replacement_label_->SetVisible(false);
 
   expand_button_ = header_container->AddChildView(
@@ -438,7 +437,7 @@ void GlanceablesTimeManagementBubbleView::SetUpResizeThroughputTracker(
   }
 
   resize_throughput_tracker_.emplace(
-      GetWidget()->GetCompositor()->RequestNewThroughputTracker());
+      GetWidget()->GetCompositor()->RequestNewCompositorMetricsTracker());
   resize_throughput_tracker_->Start(
       ash::metrics_util::ForSmoothnessV3(base::BindRepeating(
           [](const std::string& histogram_name, int smoothness) {

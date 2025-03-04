@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -14,7 +15,6 @@
 #include "base/functional/callback_helpers.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_refptr.h"
-#include "base/ranges/algorithm.h"
 #include "base/run_loop.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/stringprintf.h"
@@ -61,7 +61,6 @@
 #include "third_party/blink/public/platform/media/web_media_player_delegate.h"
 #include "third_party/blink/public/platform/web_fullscreen_video_status.h"
 #include "third_party/blink/public/platform/web_media_player.h"
-#include "third_party/blink/public/platform/web_media_player_client.h"
 #include "third_party/blink/public/platform/web_media_player_encrypted_media_client.h"
 #include "third_party/blink/public/platform/web_media_player_source.h"
 #include "third_party/blink/public/platform/web_security_origin.h"
@@ -74,11 +73,13 @@
 #include "third_party/blink/public/web/web_widget.h"
 #include "third_party/blink/renderer/core/frame/frame_test_helpers.h"
 #include "third_party/blink/renderer/platform/media/buffered_data_source_host_impl.h"
+#include "third_party/blink/renderer/platform/media/media_player_client.h"
 #include "third_party/blink/renderer/platform/media/power_status_helper.h"
 #include "third_party/blink/renderer/platform/media/resource_multi_buffer_data_provider.h"
 #include "third_party/blink/renderer/platform/media/testing/mock_resource_fetch_context.h"
 #include "third_party/blink/renderer/platform/media/testing/mock_web_associated_url_loader.h"
 #include "third_party/blink/renderer/platform/media/video_decode_stats_reporter.h"
+#include "third_party/blink/renderer/platform/media/video_frame_compositor.h"
 #include "third_party/blink/renderer/platform/media/web_audio_source_provider_client.h"
 #include "third_party/blink/renderer/platform/media/web_content_decryption_module_impl.h"
 #include "third_party/blink/renderer/platform/testing/task_environment.h"
@@ -151,7 +152,7 @@ class MockMediaObserver : public media::MediaObserver {
   base::WeakPtrFactory<MediaObserver> weak_ptr_factory_{this};
 };
 
-class MockWebMediaPlayerClient : public WebMediaPlayerClient {
+class MockWebMediaPlayerClient : public MediaPlayerClient {
  public:
   MockWebMediaPlayerClient() = default;
 
@@ -168,7 +169,7 @@ class MockWebMediaPlayerClient : public WebMediaPlayerClient {
   MOCK_METHOD1(AddMediaTrack, void(const media::MediaTrack& track));
   MOCK_METHOD1(RemoveMediaTrack, void(const media::MediaTrack&));
   MOCK_METHOD1(MediaSourceOpened, void(std::unique_ptr<WebMediaSource>));
-  MOCK_METHOD2(RemotePlaybackCompatibilityChanged, void(const WebURL&, bool));
+  MOCK_METHOD2(RemotePlaybackCompatibilityChanged, void(const KURL&, bool));
   MOCK_METHOD0(WasAlwaysMuted, bool());
   MOCK_METHOD0(HasSelectedVideoTrack, bool());
   MOCK_METHOD0(GetSelectedVideoTrackId, WebMediaPlayer::TrackId());
@@ -182,7 +183,7 @@ class MockWebMediaPlayerClient : public WebMediaPlayerClient {
   MOCK_METHOD0(OnPictureInPictureStateChange, void());
   MOCK_CONST_METHOD0(CouldPlayIfEnoughData, bool());
   MOCK_METHOD0(ResumePlayback, void());
-  MOCK_METHOD1(PausePlayback, void(WebMediaPlayerClient::PauseReason));
+  MOCK_METHOD1(PausePlayback, void(MediaPlayerClient::PauseReason));
   MOCK_METHOD0(DidPlayerStartPlaying, void());
   MOCK_METHOD1(DidPlayerPaused, void(bool));
   MOCK_METHOD1(DidPlayerMutedStatusChange, void(bool));
@@ -434,6 +435,7 @@ class WebMediaPlayerImplTest
         media::MediaMetricsProvider::GetLearningSessionCallback(),
         WTF::BindRepeating(&WebMediaPlayerImplTest::IsShuttingDown,
                            WTF::Unretained(this)),
+        media::PictureInPictureEventsInfo::AutoPipReasonCallback(),
         provider.BindNewPipeAndPassReceiver());
 
     // Initialize provider since none of the tests below actually go through the
@@ -443,7 +445,7 @@ class WebMediaPlayerImplTest
                          media::mojom::MediaStreamType::kNone);
 
     audio_sink_ =
-        base::WrapRefCounted(new NiceMock<media::MockAudioRendererSink>());
+        base::MakeRefCounted<NiceMock<media::MockAudioRendererSink>>();
 
     url_index_ = std::make_unique<UrlIndex>(&mock_resource_fetch_context_,
                                             media_thread_.task_runner());
@@ -827,7 +829,7 @@ class WebMediaPlayerImplTest
     client->DidReceiveResponse(response);
 
     // Copy over the file data.
-    client->DidReceiveData(base::as_chars(data->AsSpan()));
+    client->DidReceiveData(base::as_chars(base::span(*data)));
 
     // If we're pretending to be a streaming resource, don't complete the load;
     // otherwise the DataSource will not be marked as streaming.
@@ -1007,9 +1009,10 @@ TEST_F(WebMediaPlayerImplTest, LoadAndDestroy) {
   // usage to ensure we're getting audio buffer and demuxer usage too.
   const int64_t data_source_size = GetDataSourceMemoryUsage();
   EXPECT_GT(data_source_size, 0);
-  EXPECT_GT(
-      task_environment_.isolate()->AdjustAmountOfExternalAllocatedMemory(0),
-      data_source_size);
+  EXPECT_GT(V8ExternalMemoryAccounterBase::
+                GetTotalAmountOfExternalAllocatedMemoryForTesting(
+                    task_environment_.isolate()),
+            data_source_size);
 }
 
 // Verify LoadAndWaitForCurrentData() functions without issue.
@@ -1112,9 +1115,10 @@ TEST_F(WebMediaPlayerImplTest, LoadPreloadMetadataSuspend) {
   // usage to ensure there's no other memory usage.
   const int64_t data_source_size = GetDataSourceMemoryUsage();
   EXPECT_GT(data_source_size, 0);
-  EXPECT_EQ(
-      task_environment_.isolate()->AdjustAmountOfExternalAllocatedMemory(0),
-      data_source_size);
+  EXPECT_EQ(V8ExternalMemoryAccounterBase::
+                GetTotalAmountOfExternalAllocatedMemoryForTesting(
+                    task_environment_.isolate()),
+            data_source_size);
 }
 
 // Verify that Play() before kReadyStateHaveEnough doesn't increase buffer size.
@@ -1191,9 +1195,10 @@ TEST_F(WebMediaPlayerImplTest, LazyLoadPreloadMetadataSuspend) {
   // usage to ensure there's no other memory usage.
   const int64_t data_source_size = GetDataSourceMemoryUsage();
   EXPECT_GT(data_source_size, 0);
-  EXPECT_EQ(
-      task_environment_.isolate()->AdjustAmountOfExternalAllocatedMemory(0),
-      data_source_size);
+  EXPECT_EQ(V8ExternalMemoryAccounterBase::
+                GetTotalAmountOfExternalAllocatedMemoryForTesting(
+                    task_environment_.isolate()),
+            data_source_size);
 
   EXPECT_CALL(*surface_layer_bridge_ptr_, ClearObserver());
 }
@@ -1235,9 +1240,10 @@ TEST_F(WebMediaPlayerImplTest, LoadPreloadMetadataSuspendNoVideoMemoryUsage) {
   // usage to ensure there's no other memory usage.
   const int64_t data_source_size = GetDataSourceMemoryUsage();
   EXPECT_GT(data_source_size, 0);
-  EXPECT_EQ(
-      task_environment_.isolate()->AdjustAmountOfExternalAllocatedMemory(0),
-      data_source_size);
+  EXPECT_EQ(V8ExternalMemoryAccounterBase::
+                GetTotalAmountOfExternalAllocatedMemoryForTesting(
+                    task_environment_.isolate()),
+            data_source_size);
 
   EXPECT_CALL(*surface_layer_bridge_ptr_, ClearObserver());
 }
@@ -2384,10 +2390,9 @@ TEST_F(WebMediaPlayerImplTest, BackgroundIdlePauseTimerDependsOnAudio) {
   ScheduleIdlePauseTimer();
   EXPECT_TRUE(IsIdlePauseTimerRunning());
 
-  EXPECT_CALL(
-      client_,
-      PausePlayback(
-          WebMediaPlayerClient::PauseReason::kSuspendedPlayerIdleTimeout));
+  EXPECT_CALL(client_,
+              PausePlayback(
+                  MediaPlayerClient::PauseReason::kSuspendedPlayerIdleTimeout));
   FireIdlePauseTimer();
   base::RunLoop().RunUntilIdle();
 }
@@ -2647,14 +2652,14 @@ TEST_F(WebMediaPlayerImplTest, MemDumpReporting) {
         auto* player_dump = it->second.get();
         const auto& entries = player_dump->entries();
 
-        ASSERT_TRUE(base::ranges::any_of(entries, [](const auto& e) {
+        ASSERT_TRUE(std::ranges::any_of(entries, [](const auto& e) {
           auto* name = base::trace_event::MemoryAllocatorDump::kNameObjectCount;
           return e.name == name && e.value_uint64 == 1;
         }));
 
         if (args.level_of_detail ==
             base::trace_event::MemoryDumpLevelOfDetail::kDetailed) {
-          ASSERT_TRUE(base::ranges::any_of(entries, [](const auto& e) {
+          ASSERT_TRUE(std::ranges::any_of(entries, [](const auto& e) {
             return e.name == "player_state" && !e.value_string.empty();
           }));
         }

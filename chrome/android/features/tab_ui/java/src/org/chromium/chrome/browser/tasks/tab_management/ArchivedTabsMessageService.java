@@ -11,7 +11,7 @@ import static org.chromium.chrome.browser.tasks.tab_management.ArchivedTabsCardV
 import static org.chromium.chrome.browser.tasks.tab_management.ArchivedTabsCardViewProperties.NUMBER_OF_ARCHIVED_TABS;
 import static org.chromium.chrome.browser.tasks.tab_management.ArchivedTabsCardViewProperties.WIDTH;
 
-import android.content.Context;
+import android.app.Activity;
 import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,8 +42,9 @@ import org.chromium.chrome.browser.tasks.tab_management.TabListCoordinator.TabLi
 import org.chromium.chrome.browser.tasks.tab_management.TabListCoordinator.TabListMode;
 import org.chromium.chrome.browser.tasks.tab_management.TabListModel.CardProperties.ModelType;
 import org.chromium.chrome.browser.tasks.tab_management.TabSwitcherMessageManager.MessageUpdateObserver;
+import org.chromium.chrome.browser.ui.edge_to_edge.EdgeToEdgeController;
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
-import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateProvider;
+import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateManager;
 import org.chromium.components.browser_ui.widget.highlight.ViewHighlighter;
 import org.chromium.components.browser_ui.widget.highlight.ViewHighlighter.HighlightParams;
 import org.chromium.components.browser_ui.widget.highlight.ViewHighlighter.HighlightShape;
@@ -82,9 +83,9 @@ public class ArchivedTabsMessageService extends MessageService
                     mArchivedTabModel.getTabCountSupplier().addObserver(mTabCountObserver);
 
                     mCustomCardView =
-                            LayoutInflater.from(mContext)
+                            LayoutInflater.from(mActivity)
                                     .inflate(R.layout.archived_tabs_message_card_view, null);
-                    if (mShowTwoStepIPH) {
+                    if (mShowTwoStepIph) {
                         mCustomCardView.addOnAttachStateChangeListener(
                                 new OnAttachStateChangeListener() {
                                     @Override
@@ -128,7 +129,7 @@ public class ArchivedTabsMessageService extends MessageService
     private final TabListItemSizeChangedObserver mTabListItemSizeChangedObserver =
             this::maybeResizeCard;
 
-    private final @NonNull Context mContext;
+    private final @NonNull Activity mActivity;
     private final @NonNull ArchivedTabModelOrchestrator mArchivedTabModelOrchestrator;
     private final @NonNull BrowserControlsStateProvider mBrowserControlsStateProvider;
     private final @NonNull TabContentManager mTabContentManager;
@@ -141,7 +142,8 @@ public class ArchivedTabsMessageService extends MessageService
     private final @NonNull Tracker mTracker;
     private final @NonNull Runnable mAppendMessageRunnable;
     private final @NonNull ObservableSupplier<TabListCoordinator> mTabListCoordinatorSupplier;
-    private final @Nullable DesktopWindowStateProvider mDesktopWindowStateProvider;
+    private final @Nullable DesktopWindowStateManager mDesktopWindowStateManager;
+    private final @NonNull ObservableSupplier<EdgeToEdgeController> mEdgeToEdgeSupplier;
 
     private TabArchiveSettings mTabArchiveSettings;
     private ArchivedTabsDialogCoordinator mArchivedTabsDialogCoordinator;
@@ -151,10 +153,10 @@ public class ArchivedTabsMessageService extends MessageService
     private PropertyModel mCustomCardModel;
     private boolean mMessageSentToQueue;
     private OnTabSelectingListener mOnTabSelectingListener;
-    private boolean mShowTwoStepIPH;
+    private boolean mShowTwoStepIph;
 
     ArchivedTabsMessageService(
-            @NonNull Context context,
+            @NonNull Activity activity,
             @NonNull ArchivedTabModelOrchestrator archivedTabModelOrchestrator,
             @NonNull BrowserControlsStateProvider browserControlStateProvider,
             @NonNull TabContentManager tabContentManager,
@@ -167,9 +169,10 @@ public class ArchivedTabsMessageService extends MessageService
             @NonNull Tracker tracker,
             @NonNull Runnable appendMessageRunnable,
             @NonNull ObservableSupplier<TabListCoordinator> tabListCoordinatorSupplier,
-            @Nullable DesktopWindowStateProvider desktopWindowStateProvider) {
+            @Nullable DesktopWindowStateManager desktopWindowStateManager,
+            @NonNull ObservableSupplier<EdgeToEdgeController> edgeToEdgeSupplier) {
         super(MessageType.ARCHIVED_TABS_MESSAGE);
-        mContext = context;
+        mActivity = activity;
         mArchivedTabModelOrchestrator = archivedTabModelOrchestrator;
         mBrowserControlsStateProvider = browserControlStateProvider;
         mTabContentManager = tabContentManager;
@@ -182,7 +185,7 @@ public class ArchivedTabsMessageService extends MessageService
         mTracker = tracker;
         mAppendMessageRunnable = appendMessageRunnable;
         mTabListCoordinatorSupplier = tabListCoordinatorSupplier;
-        mDesktopWindowStateProvider = desktopWindowStateProvider;
+        mDesktopWindowStateManager = desktopWindowStateManager;
         mTabListCoordinatorSupplier.addObserver(
                 (tabListCoordinator) -> {
                     if (tabListCoordinator == null) return;
@@ -199,7 +202,7 @@ public class ArchivedTabsMessageService extends MessageService
         // happen regardless of user behavior. The TabArchiveSettings tracks whether the main IPH
         // was followed. When that's true, the archived tabs message should be highlighted as part
         // of the 2-step IPH.
-        mShowTwoStepIPH = TabArchiveSettings.getIphShownThisSession();
+        mShowTwoStepIph = TabArchiveSettings.getIphShownThisSession();
 
         if (mArchivedTabModelOrchestrator.isTabModelInitialized()) {
             mArchivedTabModelOrchestratorObserver.onTabModelCreated(
@@ -209,9 +212,13 @@ public class ArchivedTabsMessageService extends MessageService
         } else {
             mArchivedTabModelOrchestrator.addObserver(mArchivedTabModelOrchestratorObserver);
         }
+
+        mEdgeToEdgeSupplier = edgeToEdgeSupplier;
     }
 
+    @Override
     public void destroy() {
+        super.destroy();
         if (mTabArchiveSettings != null) {
             mTabArchiveSettings.removeObserver(mTabArchiveSettingsObserver);
         }
@@ -224,6 +231,10 @@ public class ArchivedTabsMessageService extends MessageService
             mTabListCoordinatorSupplier
                     .get()
                     .removeTabListItemSizeChangedObserver(mTabListItemSizeChangedObserver);
+        }
+
+        if (mArchivedTabModel != null) {
+            mArchivedTabModel.getTabCountSupplier().removeObserver(mTabCountObserver);
         }
     }
 
@@ -259,8 +270,8 @@ public class ArchivedTabsMessageService extends MessageService
     @Override
     public void onAppendedMessage() {
         // When the two-step IPH is active, highlight the end icon.
-        if (mShowTwoStepIPH) {
-            mShowTwoStepIPH = false;
+        if (mShowTwoStepIph) {
+            mShowTwoStepIph = false;
             // Reset this manually, in case the IPH wasn't dismissed for some reason.
             TabArchiveSettings.setIphShownThisSession(false);
             // Scrolling the recycler view only works when posted.
@@ -321,7 +332,7 @@ public class ArchivedTabsMessageService extends MessageService
     private void createArchivedTabsDialogCoordinator() {
         mArchivedTabsDialogCoordinator =
                 new ArchivedTabsDialogCoordinator(
-                        mContext,
+                        mActivity,
                         mArchivedTabModelOrchestrator,
                         mBrowserControlsStateProvider,
                         mTabContentManager,
@@ -333,7 +344,8 @@ public class ArchivedTabsMessageService extends MessageService
                         mBackPressManager,
                         mTabArchiveSettings,
                         mModalDialogManager,
-                        mDesktopWindowStateProvider);
+                        mDesktopWindowStateManager,
+                        mEdgeToEdgeSupplier);
     }
 
     private void updateModelProperties() {

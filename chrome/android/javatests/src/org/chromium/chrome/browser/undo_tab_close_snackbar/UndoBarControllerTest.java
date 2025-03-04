@@ -48,6 +48,9 @@ import java.util.concurrent.ExecutionException;
 @RunWith(ChromeJUnit4ClassRunner.class)
 @Batch(Batch.PER_CLASS)
 @CommandLineFlags.Add({ChromeSwitches.DISABLE_FIRST_RUN_EXPERIENCE})
+// DRAW_KEY_NATIVE_EDGE_TO_EDGE is a cached flag that is reset between batch runs, which results
+// in breakage when trying to reset the test environment back to the original state between tests.
+@DisableFeatures(ChromeFeatureList.DRAW_KEY_NATIVE_EDGE_TO_EDGE)
 public class UndoBarControllerTest {
     @ClassRule
     public static ChromeTabbedActivityTestRule sActivityTestRule =
@@ -184,7 +187,7 @@ public class UndoBarControllerTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.closeTabs(
+                    closeTabs(
                             TabClosureParams.closeTabs(
                                             List.of(mTabModel.getTabAt(0), mTabModel.getTabAt(1)))
                                     .build());
@@ -224,7 +227,7 @@ public class UndoBarControllerTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.closeTabs(
+                    closeTabs(
                             TabClosureParams.closeTabs(
                                             List.of(mTabModel.getTabAt(0), mTabModel.getTabAt(1)))
                                     .hideTabGroups(true)
@@ -268,7 +271,7 @@ public class UndoBarControllerTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.closeTabs(
+                    closeTabs(
                             TabClosureParams.closeTabs(
                                             List.of(mTabModel.getTabAt(0), mTabModel.getTabAt(1)))
                                     .build());
@@ -296,8 +299,7 @@ public class UndoBarControllerTest {
                 InstrumentationRegistry.getInstrumentation(), sActivityTestRule.getActivity());
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.createSingleTabGroup(
-                            mTabModel.getTabAt(0), /* notify= */ false);
+                    mTabGroupModelFilter.createSingleTabGroup(mTabModel.getTabAt(0));
                 });
 
         assertNull(getCurrentSnackbar());
@@ -306,7 +308,7 @@ public class UndoBarControllerTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.closeTabs(
+                    closeTabs(
                             TabClosureParams.closeTabs(
                                             List.of(
                                                     mTabModel.getTabAt(0),
@@ -337,10 +339,8 @@ public class UndoBarControllerTest {
                 InstrumentationRegistry.getInstrumentation(), sActivityTestRule.getActivity());
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.createSingleTabGroup(
-                            mTabModel.getTabAt(0), /* notify= */ false);
-                    mTabGroupModelFilter.createSingleTabGroup(
-                            mTabModel.getTabAt(1), /* notify= */ false);
+                    mTabGroupModelFilter.createSingleTabGroup(mTabModel.getTabAt(0));
+                    mTabGroupModelFilter.createSingleTabGroup(mTabModel.getTabAt(1));
                 });
 
         assertNull(getCurrentSnackbar());
@@ -349,7 +349,7 @@ public class UndoBarControllerTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.closeTabs(
+                    closeTabs(
                             TabClosureParams.closeTabs(
                                             List.of(
                                                     mTabModel.getTabAt(0),
@@ -396,7 +396,7 @@ public class UndoBarControllerTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.closeTabs(
+                    closeTabs(
                             TabClosureParams.closeTabs(
                                             List.of(mTabModel.getTabAt(0), mTabModel.getTabAt(1)))
                                     .build());
@@ -422,10 +422,8 @@ public class UndoBarControllerTest {
                 InstrumentationRegistry.getInstrumentation(), sActivityTestRule.getActivity());
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.createSingleTabGroup(
-                            mTabModel.getTabAt(0), /* notify= */ false);
-                    mTabGroupModelFilter.createSingleTabGroup(
-                            mTabModel.getTabAt(1), /* notify= */ false);
+                    mTabGroupModelFilter.createSingleTabGroup(mTabModel.getTabAt(0));
+                    mTabGroupModelFilter.createSingleTabGroup(mTabModel.getTabAt(1));
                 });
 
         assertNull(getCurrentSnackbar());
@@ -434,7 +432,7 @@ public class UndoBarControllerTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.closeTabs(
+                    closeTabs(
                             TabClosureParams.closeTabs(
                                             List.of(mTabModel.getTabAt(0), mTabModel.getTabAt(1)))
                                     .build());
@@ -460,10 +458,8 @@ public class UndoBarControllerTest {
                 InstrumentationRegistry.getInstrumentation(), sActivityTestRule.getActivity());
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.createSingleTabGroup(
-                            mTabModel.getTabAt(0), /* notify= */ false);
-                    mTabGroupModelFilter.createSingleTabGroup(
-                            mTabModel.getTabAt(1), /* notify= */ false);
+                    mTabGroupModelFilter.createSingleTabGroup(mTabModel.getTabAt(0));
+                    mTabGroupModelFilter.createSingleTabGroup(mTabModel.getTabAt(1));
                 });
 
         assertNull(getCurrentSnackbar());
@@ -472,7 +468,7 @@ public class UndoBarControllerTest {
 
         ThreadUtils.runOnUiThreadBlocking(
                 () -> {
-                    mTabGroupModelFilter.closeTabs(
+                    closeTabs(
                             TabClosureParams.closeTabs(
                                             List.of(mTabModel.getTabAt(0), mTabModel.getTabAt(1)))
                                     .hideTabGroups(true)
@@ -560,5 +556,9 @@ public class UndoBarControllerTest {
                         return mSnackbarManager.getCurrentSnackbarForTesting();
                     }
                 });
+    }
+
+    private void closeTabs(TabClosureParams params) {
+        mTabModel.getTabRemover().closeTabs(params, /* allowDialog= */ false);
     }
 }

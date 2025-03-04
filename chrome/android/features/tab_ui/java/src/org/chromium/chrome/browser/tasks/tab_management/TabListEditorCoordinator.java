@@ -4,6 +4,7 @@
 
 package org.chromium.chrome.browser.tasks.tab_management;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.view.LayoutInflater;
@@ -39,7 +40,7 @@ import org.chromium.chrome.browser.ui.edge_to_edge.EdgeToEdgeUtils;
 import org.chromium.chrome.browser.ui.messages.snackbar.SnackbarManager;
 import org.chromium.chrome.tab_ui.R;
 import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
-import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateProvider;
+import org.chromium.components.browser_ui.desktop_windowing.DesktopWindowStateManager;
 import org.chromium.components.browser_ui.edge_to_edge.EdgeToEdgePadAdjuster;
 import org.chromium.components.browser_ui.widget.gesture.BackPressHandler;
 import org.chromium.components.browser_ui.widget.selectable_list.SelectionDelegate;
@@ -111,6 +112,11 @@ class TabListEditorCoordinator {
          */
         boolean isVisible();
 
+        /**
+         * @return Whether the TabListEditor needs to be cleaned up.
+         */
+        boolean needsCleanUp();
+
         /** Sets the toolbar title when no items are selected. */
         void setToolbarTitle(String title);
 
@@ -173,6 +179,7 @@ class TabListEditorCoordinator {
                 @Override
                 public void hide() {
                     mTabListEditorMediator.hide();
+                    mNeedsCleanUp = true;
                 }
 
                 @Override
@@ -185,6 +192,11 @@ class TabListEditorCoordinator {
                 @Override
                 public boolean isVisible() {
                     return mTabListEditorMediator.isVisible();
+                }
+
+                @Override
+                public boolean needsCleanUp() {
+                    return mNeedsCleanUp;
                 }
 
                 @Override
@@ -224,7 +236,7 @@ class TabListEditorCoordinator {
                 }
             };
 
-    private final Context mContext;
+    private final Activity mActivity;
     private final ViewGroup mRootView;
     private final ViewGroup mParentView;
     private final BrowserControlsStateProvider mBrowserControlsStateProvider;
@@ -247,10 +259,11 @@ class TabListEditorCoordinator {
     private TabListCoordinator mTabListCoordinator;
     private PropertyModelChangeProcessor mTabListEditorLayoutChangeProcessor;
     private @TabActionState int mTabActionState;
+    private boolean mNeedsCleanUp;
     private @Nullable EdgeToEdgePadAdjuster mEdgeToEdgePadAdjuster;
 
     /**
-     * @param context The Android context to use.
+     * @param activity The Android activity to use.
      * @param rootView The top ViewGroup which has parentView attached to it, or the same if no
      *     custom parentView is present.
      * @param parentView The ViewGroup which the TabListEditor will attach itself to it may be
@@ -266,11 +279,11 @@ class TabListEditorCoordinator {
      * @param bottomSheetController Used to display bottom sheets.
      * @param initialTabActionState The initial TabActionState to use.
      * @param modalDialogManager Used for managing the modal dialogs.
-     * @param desktopWindowStateProvider Provider to get desktop window and app header state.
+     * @param desktopWindowStateManager Manager to get desktop window and app header state.
      * @param edgeToEdgeSupplier Supplier to the {@link EdgeToEdgeController} instance.
      */
     public TabListEditorCoordinator(
-            Context context,
+            Activity activity,
             ViewGroup rootView,
             ViewGroup parentView,
             BrowserControlsStateProvider browserControlsStateProvider,
@@ -284,10 +297,10 @@ class TabListEditorCoordinator {
             @TabActionState int initialTabActionState,
             @Nullable GridCardOnClickListenerProvider gridCardOnClickListenerProvider,
             @NonNull ModalDialogManager modalDialogManager,
-            @Nullable DesktopWindowStateProvider desktopWindowStateProvider,
+            @Nullable DesktopWindowStateManager desktopWindowStateManager,
             @Nullable ObservableSupplier<EdgeToEdgeController> edgeToEdgeSupplier) {
         try (TraceEvent e = TraceEvent.scoped("TabListEditorCoordinator.constructor")) {
-            mContext = context;
+            mActivity = activity;
             mRootView = rootView;
             mParentView = parentView;
             mBrowserControlsStateProvider = browserControlsStateProvider;
@@ -305,7 +318,7 @@ class TabListEditorCoordinator {
 
             // The change processor isn't created until TabListCoordinator is created (lazily).
             mTabListEditorLayout =
-                    LayoutInflater.from(context)
+                    LayoutInflater.from(activity)
                             .inflate(R.layout.tab_list_editor_layout, parentView, false)
                             .findViewById(R.id.selectable_list);
             mModel = new PropertyModel.Builder(TabListEditorProperties.ALL_KEYS).build();
@@ -314,7 +327,7 @@ class TabListEditorCoordinator {
             // parentViews in a stack to avoid contention and using new snackbar managers.
             mTabListEditorMediator =
                     new TabListEditorMediator(
-                            mContext,
+                            activity,
                             mCurrentTabGroupModelFilterSupplier,
                             mModel,
                             mSelectionDelegate,
@@ -323,9 +336,10 @@ class TabListEditorCoordinator {
                             bottomSheetController,
                             mTabListEditorLayout,
                             mTabActionState,
-                            desktopWindowStateProvider);
+                            desktopWindowStateManager);
             mTabListEditorMediator.setNavigationProvider(
-                    new TabListEditorNavigationProvider(mContext, mTabListEditorController));
+                    new TabListEditorNavigationProvider(activity, mTabListEditorController));
+            mNeedsCleanUp = false;
         }
     }
 
@@ -374,6 +388,7 @@ class TabListEditorCoordinator {
             mEdgeToEdgePadAdjuster.destroy();
             mEdgeToEdgePadAdjuster = null;
         }
+        mNeedsCleanUp = false;
     }
 
     /**
@@ -475,13 +490,14 @@ class TabListEditorCoordinator {
         mTabListCoordinator =
                 new TabListCoordinator(
                         mTabListMode,
-                        mContext,
+                        mActivity,
                         mBrowserControlsStateProvider,
                         mModalDialogManager,
                         mCurrentTabGroupModelFilterSupplier,
                         thumbnailProvider,
                         mDisplayGroups,
                         /* actionConfirmationManager= */ null,
+                        /* dataSharingTabManager= */ null,
                         mGridCardOnClickListenerProvider,
                         /* dialogHandler= */ null,
                         mTabActionState,
@@ -553,7 +569,7 @@ class TabListEditorCoordinator {
         if (displayGroups) {
             mMultiThumbnailCardProvider =
                     new MultiThumbnailCardProvider(
-                            mContext,
+                            mActivity,
                             mBrowserControlsStateProvider,
                             tabContentManager,
                             mCurrentTabGroupModelFilterSupplier);

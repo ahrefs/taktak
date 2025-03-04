@@ -48,6 +48,7 @@
 #include "storage/browser/quota/quota_manager_impl.h"
 #include "storage/browser/quota/quota_manager_proxy.h"
 #include "storage/browser/quota/quota_override_handle.h"
+#include "storage/browser/quota/storage_directory_util.h"
 #include "storage/browser/test/mock_quota_client.h"
 #include "storage/browser/test/mock_special_storage_policy.h"
 #include "testing/gmock/include/gmock/gmock.h"
@@ -134,8 +135,8 @@ StorageKey ToStorageKey(const std::string& url) {
 const storage::mojom::BucketTableEntry* FindBucketTableEntry(
     const std::vector<storage::mojom::BucketTableEntryPtr>& bucket_entries,
     BucketId& id) {
-  auto it = base::ranges::find(bucket_entries, id.value(),
-                               &storage::mojom::BucketTableEntry::bucket_id);
+  auto it = std::ranges::find(bucket_entries, id.value(),
+                              &storage::mojom::BucketTableEntry::bucket_id);
   if (it == bucket_entries.end()) {
     return nullptr;
   }
@@ -309,8 +310,8 @@ class QuotaManagerImplTest : public testing::Test {
 
   UsageAndQuotaResult GetUsageAndQuotaForBucket(const BucketInfo& bucket_info) {
     base::test::TestFuture<QuotaStatusCode, int64_t, int64_t> future;
-    quota_manager_impl_->GetBucketUsageAndQuota(bucket_info.id,
-                                                future.GetCallback());
+    quota_manager_impl_->GetBucketUsageAndReportedQuota(bucket_info.id,
+                                                        future.GetCallback());
     return {future.Get<0>(), future.Get<1>(), future.Get<2>()};
   }
 
@@ -320,8 +321,8 @@ class QuotaManagerImplTest : public testing::Test {
     base::test::TestFuture<QuotaStatusCode, int64_t, int64_t,
                            blink::mojom::UsageBreakdownPtr>
         future;
-    quota_manager_impl_->GetUsageAndQuotaWithBreakdown(storage_key, type,
-                                                       future.GetCallback());
+    quota_manager_impl_->GetUsageAndReportedQuotaWithBreakdown(
+        storage_key, type, future.GetCallback());
     auto result = future.Take();
     return {std::get<0>(result), std::get<1>(result), std::get<2>(result),
             std::move(std::get<3>(result))};
@@ -3665,4 +3666,141 @@ TEST_F(QuotaManagerImplTest, QuotaManagerObserver_NotifiedOnExpired) {
 
   QuotaDatabase::SetClockForTesting(nullptr);
 }
+
+TEST_F(QuotaManagerImplTest, StaticReportedQuota_NonBucket) {
+  scoped_feature_list_.InitAndEnableFeature(
+      storage::features::kStaticStorageQuota);
+
+  static const ClientBucketData kData[] = {
+      {"http://foo.com/", kDefaultBucketName, kTemp, 80},
+      {"http://unlimited/", kDefaultBucketName, kTemp, 10},
+  };
+  mock_special_storage_policy()->AddUnlimited(GURL("http://unlimited/"));
+  MockQuotaClient* fs_client =
+      CreateAndRegisterClient(QuotaClientType::kFileSystem, {kTemp, kSync});
+  RegisterClientBucketData(fs_client, kData);
+
+  const int64_t kPoolSize = GetAvailableDiskSpaceForTest();
+  const int64_t kPerStorageKeyQuota = kPoolSize / 5;
+  SetQuotaSettings(kPoolSize, kPerStorageKeyQuota,
+                   kMustRemainAvailableForSystem);
+
+  // Static quota is returned for sites without unlimited storage permissions.
+  auto result =
+      GetUsageAndQuotaWithBreakdown(ToStorageKey("http://foo.com/"), kTemp);
+  EXPECT_EQ(result.status, QuotaStatusCode::kOk);
+  EXPECT_EQ(result.usage, 80);
+  EXPECT_NE(result.quota, kPerStorageKeyQuota);
+
+  int64_t initial_reported_quota = result.quota;
+  int64_t additional_usage = initial_reported_quota + 100;
+  ASSERT_OK_AND_ASSIGN(
+      auto foo_temp_bucket,
+      GetBucket(ToStorageKey("http://foo.com/"), kDefaultBucketName, kTemp));
+  fs_client->ModifyBucketAndNotify(foo_temp_bucket.ToBucketLocator(),
+                                   additional_usage);
+  result =
+      GetUsageAndQuotaWithBreakdown(ToStorageKey("http://foo.com/"), kTemp);
+  // Quota increases with usage.
+  EXPECT_GT(result.quota, initial_reported_quota);
+  EXPECT_GT(result.quota, result.usage);
+  EXPECT_EQ(result.usage, 80 + additional_usage);
+
+  // Actual quota is returned for sites with unlimited storage permissions.
+  result =
+      GetUsageAndQuotaWithBreakdown(ToStorageKey("http://unlimited/"), kTemp);
+  EXPECT_EQ(result.status, QuotaStatusCode::kOk);
+  EXPECT_EQ(result.usage, 10);
+  EXPECT_EQ(result.quota, GetStorageCapacity().available_space + result.usage);
+}
+
+TEST_F(QuotaManagerImplTest, StaticReportedQuota_Bucket) {
+  scoped_feature_list_.InitAndEnableFeature(
+      storage::features::kStaticStorageQuota);
+
+  static const ClientBucketData kData[] = {
+      {"http://foo.com/", "logs", kTemp, 10},
+      {"http://foo.com/", "inbox", kTemp, 60},
+      {"http://highrequestedquota.com/", "bucket", kTemp, 0},
+      {"http://unlimited/", "other", kTemp, 0},
+  };
+  mock_special_storage_policy()->AddUnlimited(GURL("http://unlimited/"));
+  auto storage_capacity = GetStorageCapacity();
+
+  MockQuotaClient* fs_client =
+      CreateAndRegisterClient(QuotaClientType::kFileSystem, {kTemp, kSync});
+
+  // Initialize the logs bucket with a non-default quota.
+  BucketInitParams low_quota_params(ToStorageKey("http://foo.com/"), "logs");
+  low_quota_params.quota = 117;
+  ASSERT_TRUE(UpdateOrCreateBucket(low_quota_params).has_value());
+
+  // Initialize a bucket with quota > the max quota.
+  BucketInitParams high_quota_params(
+      ToStorageKey("http://highrequestedquota.com/"), "bucket");
+  high_quota_params.quota = kDefaultPerStorageKeyQuota + 100;
+  ASSERT_TRUE(UpdateOrCreateBucket(high_quota_params).has_value());
+
+  RegisterClientBucketData(fs_client, kData);
+
+  // Actual bucket quota is returned for bucket with non-default quota.
+  {
+    ASSERT_OK_AND_ASSIGN(
+        BucketInfo bucket,
+        UpdateOrCreateBucket({ToStorageKey("http://foo.com/"), "logs"}));
+    auto result = GetUsageAndQuotaForBucket(bucket);
+    EXPECT_EQ(result.status, QuotaStatusCode::kOk);
+    EXPECT_EQ(result.usage, 10);
+    EXPECT_EQ(result.quota, low_quota_params.quota);
+  }
+
+  // Static quota is returned for bucket with default quota and limited storage.
+  {
+    ASSERT_OK_AND_ASSIGN(
+        BucketInfo bucket,
+        UpdateOrCreateBucket({ToStorageKey("http://foo.com/"), "inbox"}));
+    auto result = GetUsageAndQuotaForBucket(bucket);
+    EXPECT_EQ(result.status, QuotaStatusCode::kOk);
+    EXPECT_EQ(result.usage, 60);
+    EXPECT_NE(result.quota, kDefaultPerStorageKeyQuota);
+
+    int64_t initial_reported_quota = result.quota;
+    int64_t additional_usage = initial_reported_quota + 100;
+    fs_client->ModifyBucketAndNotify(bucket.ToBucketLocator(),
+                                     additional_usage);
+    result = GetUsageAndQuotaForBucket(bucket);
+    EXPECT_EQ(result.status, QuotaStatusCode::kOk);
+
+    // Quota increases with usage.
+    EXPECT_GT(result.quota, initial_reported_quota);
+    EXPECT_GT(result.quota, result.usage);
+    EXPECT_EQ(result.usage, 60 + additional_usage);
+  }
+
+  // Requested quota is returned for bucket with requested quota > the max.
+  {
+    ASSERT_OK_AND_ASSIGN(
+        BucketInfo bucket,
+        UpdateOrCreateBucket(
+            {ToStorageKey("http://highrequestedquota.com/"), "bucket"}));
+    auto result = GetUsageAndQuotaForBucket(bucket);
+    EXPECT_EQ(result.status, QuotaStatusCode::kOk);
+    EXPECT_EQ(result.usage, 0);
+    EXPECT_NE(result.quota, kDefaultPerStorageKeyQuota);
+    EXPECT_EQ(result.quota, high_quota_params.quota);
+  }
+
+  // Actual quota is returned for bucket with default quota and unlimited
+  // storage.
+  {
+    ASSERT_OK_AND_ASSIGN(
+        BucketInfo bucket,
+        UpdateOrCreateBucket({ToStorageKey("http://unlimited/"), "logs"}));
+    auto result = GetUsageAndQuotaForBucket(bucket);
+    EXPECT_EQ(result.status, QuotaStatusCode::kOk);
+    EXPECT_EQ(result.usage, 0);
+    EXPECT_EQ(result.quota, storage_capacity.available_space);
+  }
+}
+
 }  // namespace storage

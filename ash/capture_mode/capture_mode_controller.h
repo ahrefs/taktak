@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ash/ash_export.h"
@@ -17,6 +18,7 @@
 #include "ash/capture_mode/video_recording_watcher.h"
 #include "ash/public/cpp/capture_mode/capture_mode_delegate.h"
 #include "ash/public/cpp/session/session_observer.h"
+#include "ash/scanner/scanner_session.h"
 #include "base/files/file_path.h"
 #include "base/functional/callback_forward.h"
 #include "base/functional/callback_helpers.h"
@@ -24,6 +26,7 @@
 #include "base/memory/ref_counted_memory.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
+#include "base/time/time.h"
 #include "base/timer/timer.h"
 #include "base/unguessable_token.h"
 #include "chromeos/ash/services/recording/public/mojom/recording_service.mojom.h"
@@ -50,7 +53,7 @@ class CaptureModeBehavior;
 class CaptureModeCameraController;
 class CaptureModeObserver;
 class BaseCaptureModeSession;
-class ScannerActionViewModel;
+class SearchResultsPanel;
 
 // Defines a callback type that will be invoked when an attempt to delete the
 // given `path` is completed with the given status `delete_successful`.
@@ -130,6 +133,26 @@ class ASH_EXPORT CaptureModeController
   CaptureModeEducationController* education_controller() {
     return education_controller_.get();
   }
+  views::Widget* search_results_panel_widget() {
+    return search_results_panel_widget_.get();
+  }
+
+  // Returns the search results panel, or nullptr if none exists.
+  SearchResultsPanel* GetSearchResultsPanel() const;
+
+  // Shows the results panel with the captured region as `image` and the search
+  // results `url`.
+  void ShowSearchResultsPanel(const gfx::ImageSkia& image, GURL url);
+
+  // Closes the search results panel, or does nothing if it doesn't exist.
+  void CloseSearchResultsPanel();
+
+  // Called explicitly by `CaptureModeSession` on a mouse drag, to hide the
+  // panel.
+  void OnLocatedEventDragged();
+
+  // Updates the search results panel bounds if the widget exists.
+  void MaybeUpdateSearchResultsPanelBounds();
 
   // Returns true if a capture mode session is currently active. If you only
   // need to call this method, but don't need the rest of the controller, use
@@ -149,11 +172,24 @@ class ASH_EXPORT CaptureModeController
   // `ScreenCaptureLocation` policy and can't be changed.
   bool IsCustomFolderManagedByPolicy() const;
 
+  // Returns true if Search is allowed.
+  bool IsSearchAllowedByPolicy() const;
+
   // Returns true if there's an active video recording that is recording audio.
   bool IsAudioRecordingInProgress() const;
 
   // Returns true if the camera preview is visible, false otherwise.
   bool IsShowingCameraPreview() const;
+
+  // Returns true if the panel should handle the event.
+  bool IsEventOnSearchResultsPanel(const ui::LocatedEvent& event,
+                                   const gfx::Point& screen_location);
+
+  // Returns true if the panel is visible.
+  bool IsSearchResultsPanelVisible() const;
+
+  // Returns true if the network is currently in an offline or unknown state.
+  bool IsNetworkConnectionOffline() const;
 
   // Returns true if this supports the new behavior provided by
   // `new_entry_type`.
@@ -193,7 +229,8 @@ class ASH_EXPORT CaptureModeController
   // starting a countdown by using a null session. Currently unused.
   void StartRecordingInstantlyForGameDashboard(aura::Window* game_window);
 
-  // Starts a new sunfish session. Currently only invoked via a debug command.
+  // Starts a new sunfish session. Currently invoked when clicking the Sunfish
+  // button in the launcher, or a debug command.
   void StartSunfishSession();
 
   // Stops an existing capture session.
@@ -209,12 +246,12 @@ class ASH_EXPORT CaptureModeController
 
   // Returns true if we can show a user nudge animation and a toast message to
   // alert users any available new features.
-  bool CanShowUserNudge() const;
+  bool CanShowSunfishRegionNudge() const;
 
   // Disables showing the user nudge from now on. Calling the above
-  // CanShowUserNudge() will return false for the current active user going
-  // forward.
-  void DisableUserNudgeForever();
+  // CanShowSunfishRegionNudge() will return false for the current active user
+  // going forward.
+  void DisableSunfishRegionNudgeForever();
 
   // Sets whether the currently logged in user selected to use the default
   // "Downloads" folder as the current save location, even while they already
@@ -252,11 +289,14 @@ class ASH_EXPORT CaptureModeController
 
   // Called only while a capture session is in progress to perform the actual
   // capture depending on the current selected `source_` and `type_`, and ends
-  // the capture session.
-  void PerformCapture();
+  // the capture session. `capture_type` indicates what type of capture to do.
+  void PerformCapture(
+      PerformCaptureType capture_type = PerformCaptureType::kCapture);
 
   // Called by a capture session behavior to perform an image capture search.
-  void PerformImageSearch();
+  // `capture_type` indicates the type of search to perform on the captured
+  // image.
+  void PerformImageSearch(PerformCaptureType capture_type);
 
   void EndVideoRecording(EndRecordingReason reason);
 
@@ -333,6 +373,20 @@ class ASH_EXPORT CaptureModeController
   // Returns true is annotating should be supported for the current capture mode
   // behavior.
   bool IsAnnotatingSupported() const;
+
+  // Calls the delegate to send a multimodal search with `image` and `text`.
+  void SendMultimodalSearch(const gfx::ImageSkia& image,
+                            const std::string& text);
+
+  // Called by `CaptureModeDelegate` when the search result is fetched.
+  // Opens `url` and `image` if the captured region on the screen has not
+  // changed since the request was made.
+  void OnSearchUrlFetched(const gfx::Rect& captured_region,
+                          const gfx::ImageSkia& image,
+                          GURL url);
+
+  // Called by `SearchResultsView` when a search result is opened.
+  void OnSearchResultClicked();
 
   // recording::mojom::RecordingServiceClient:
   void OnRecordingEnded(recording::mojom::RecordingStatus status,
@@ -478,14 +532,57 @@ class ASH_EXPORT CaptureModeController
 
   // Called back when an image has been captured to trigger a search request.
   // `jpeg_bytes` is the buffer containing the captured image in a JPEG format.
+  // `capture_type` indicates the type of search to perform on the captured
+  // image.
   void OnImageCapturedForSearch(
+      PerformCaptureType capture_type,
       bool was_cursor_originally_blocked,
+      base::WeakPtr<BaseCaptureModeSession> image_search_token,
       scoped_refptr<base::RefCountedMemory> jpeg_bytes);
+
+  // Called back when on-device text detection is complete to show copy text and
+  // smart actions buttons if needed. `image_search_token` is a weak pointer
+  // which is invalidated every time the selected region or session changes. If
+  // the selected region or session has changed since the request was made, then
+  // the detected text result is discarded and no buttons are shown.
+  // `ocr_attempt_start_time` is used to record the metric for the the latency
+  // of the on device text detection. Currently only used for regular capture
+  // mode sessions when a region is selected.
+  void OnTextDetectionComplete(
+      base::WeakPtr<BaseCaptureModeSession> image_search_token,
+      base::TimeTicks ocr_attempt_start_time,
+      std::optional<std::string> detected_text);
+
+  // Called back when Lens-based text detection is complete to show the copy
+  // text button if needed. `image_search_token` is a weak pointer which is
+  // invalidated every time the selected region or session changes. If the
+  // selected region or session has changed since the request was made, then the
+  // detected text result is discarded and no button is shown. Currently only
+  // used in Sunfish capture mode sessions when a region is selected.
+  void OnLensTextDetectionComplete(
+      base::WeakPtr<BaseCaptureModeSession> image_search_token,
+      std::optional<std::string> detected_text);
+
+  // Helper function that adds a Copy Text action button. Called when both
+  // Lens-based and on-device text detection are completed with non-empty
+  // `detected_text`.
+  void AddCopyTextButton(std::string_view detected_text);
+
+  // Called back when the copy text button is clicked. This will copy `text` to
+  // clipboard, show a notification, and close the capture session.
+  void OnCopyTextButtonClicked(const std::u16string& text);
+
+  // Shows scanner discliamer if necessary, which has an option to accept or
+  // decline consent for scanner.
+  // If only scanner is enabled, then stops the session if declined since there
+  // is nothing you can do in the session.
+  void MaybeShowScannerDisclaimerOnSunfishStartup(bool startup_success);
 
   // Called back when the Scanner feature has processed a captured image to
   // suggest available Scanner actions.
   void OnScannerActionsFetched(
-      std::vector<ScannerActionViewModel> scanner_actions);
+      base::WeakPtr<BaseCaptureModeSession> image_search_token,
+      ScannerSession::FetchActionsResponse actions_response);
 
   // Called back when an attempt to save the image file has been completed, with
   // `file_saved_path` indicating whether the attempt succeeded or failed. If
@@ -542,10 +639,10 @@ class ASH_EXPORT CaptureModeController
   base::FilePath BuildVideoPath() const;
   base::FilePath BuildImagePathForDisplay(int display_index) const;
   // Used by the above three functions by providing the corresponding file name
-  // |format_string| to a capture type (image or video). The returned file path
+  // |base_name| to a capture type (image or video). The returned file path
   // excludes the file extension. The above functions are responsible for adding
   // it.
-  base::FilePath BuildPathNoExtension(const char* const format_string,
+  base::FilePath BuildPathNoExtension(std::string_view base_name,
                                       base::Time timestamp) const;
 
   // Returns a fallback path concatenating the default `Downloads` folder and
@@ -584,8 +681,10 @@ class ASH_EXPORT CaptureModeController
   // Called by the DLP manager when it's checked for any on-screen content
   // restriction at the time when the capture operation is attempted. `proceed`
   // will be set to true if the capture operation should continue, false if it
-  // should be aborted.
-  void OnDlpRestrictionCheckedAtPerformingCapture(bool proceed);
+  // should be aborted. `capture_type` indicates what type of capture to do.
+  void OnDlpRestrictionCheckedAtPerformingCapture(
+      PerformCaptureType capture_type,
+      bool proceed);
 
   // Called after the video recording was written to the final file location.
   // `should_delete_file` indicates if the file was deleted due to an error.
@@ -658,6 +757,15 @@ class ASH_EXPORT CaptureModeController
   // otherwise.
   CaptureModeBehavior* GetBehavior(BehaviorType behavior_type);
 
+  // Deletes the `path` on `blocking_task_runner_` if local or calls delegate to
+  // remove it if remote.
+  void DeleteFileAsync(const base::FilePath& path);
+
+  // Refreshes the search results panel stacking order if it exists.
+  // `current_root` is the current capture mode session root if it is active,
+  // else nullptr.
+  void RefreshSearchResultsPanel(aura::Window* current_root);
+
   // The ID of this object as a client of the video conference manager.
   const base::UnguessableToken vc_client_id_ = base::UnguessableToken::Create();
 
@@ -674,6 +782,9 @@ class ASH_EXPORT CaptureModeController
   CaptureModeType type_ = CaptureModeType::kImage;
   CaptureModeSource source_ = CaptureModeSource::kRegion;
   RecordingType recording_type_ = RecordingType::kWebM;
+
+  // Contains `SearchResultsPanel` as its contents view.
+  views::UniqueWidgetPtr search_results_panel_widget_;
 
   // A blocking task runner for file IO operations.
   scoped_refptr<base::SequencedTaskRunner> blocking_task_runner_;
@@ -724,9 +835,6 @@ class ASH_EXPORT CaptureModeController
   bool is_camera_muted_ = false;
   bool is_microphone_muted_ = false;
 
-  // Watches events that lead to ending video recording.
-  std::unique_ptr<VideoRecordingWatcher> video_recording_watcher_;
-
   // Tracks the windows that currently have content protection enabled, so that
   // we prevent them from being video recorded. Each window is mapped to its
   // currently-set protection_mask. Windows in this map are only the ones that
@@ -745,7 +853,8 @@ class ASH_EXPORT CaptureModeController
 
   base::OnceClosure on_video_recording_started_callback_for_test_;
 
-  base::OnceClosure on_image_captured_for_search_callback_for_test_;
+  base::OnceCallback<void(PerformCaptureType capture_type)>
+      on_image_captured_for_search_callback_for_test_;
 
   // Timers used to schedule recording of the number of screenshots taken.
   base::RepeatingTimer num_screenshots_taken_in_last_day_scheduler_;
@@ -788,6 +897,11 @@ class ASH_EXPORT CaptureModeController
   // settings.
   base::flat_map<BehaviorType, std::unique_ptr<CaptureModeBehavior>>
       behaviors_map_;
+
+  // Watches events that lead to ending video recording.
+  // Must be destroyed before `behaviors_map_` to avoid dangling raw pointers
+  // to `CaptureModeBehavior`s.
+  std::unique_ptr<VideoRecordingWatcher> video_recording_watcher_;
 
   base::ObserverList<CaptureModeObserver> observers_;
 

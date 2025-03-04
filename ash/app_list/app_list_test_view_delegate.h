@@ -22,8 +22,8 @@
 #include "ash/public/cpp/app_list/app_list_types.h"
 #include "base/functional/callback_forward.h"
 #include "chromeos/ash/services/assistant/public/cpp/assistant_enums.h"
-#include "ui/base/models/simple_menu_model.h"
 #include "ui/base/mojom/menu_source_type.mojom-forward.h"
+#include "ui/menus/simple_menu_model.h"
 
 namespace ash {
 namespace test {
@@ -130,6 +130,7 @@ class AppListTestViewDelegate : public AppListViewDelegate,
   AppListTestModel* GetTestModel() { return model_.get(); }
 
   SearchModel* ReleaseTestSearchModel() { return search_model_.release(); }
+  SearchModel* GetTestSearchModel() { return search_model_.get(); }
 
  private:
   void RecordAppLaunched(ash::AppListLaunchedFrom launched_from);

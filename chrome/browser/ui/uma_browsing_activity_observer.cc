@@ -30,7 +30,6 @@
 #include "content/public/browser/web_contents_user_data.h"
 #include "ui/gfx/range/range.h"
 
-namespace chrome {
 namespace {
 
 UMABrowsingActivityObserver* g_uma_browsing_activity_observer_instance =
@@ -79,8 +78,9 @@ void UMABrowsingActivityObserver::OnAppTerminating() const {
 void UMABrowsingActivityObserver::LogTimeBeforeUpdate() const {
   const base::Time upgrade_detected_time =
       UpgradeDetector::GetInstance()->upgrade_detected_time();
-  if (upgrade_detected_time.is_null())
+  if (upgrade_detected_time.is_null()) {
     return;
+  }
   const base::TimeDelta time_since_upgrade =
       base::Time::Now() - upgrade_detected_time;
   constexpr int kMaxDays = 30;
@@ -195,5 +195,3 @@ void UMABrowsingActivityObserver::TabHelper::NavigationEntryCommitted(
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(UMABrowsingActivityObserver::TabHelper);
-
-}  // namespace chrome

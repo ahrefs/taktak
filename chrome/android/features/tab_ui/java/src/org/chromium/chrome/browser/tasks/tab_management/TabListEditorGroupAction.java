@@ -11,7 +11,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
 
 import org.chromium.base.Token;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab_group_sync.TabGroupSyncServiceFactory;
 import org.chromium.chrome.browser.tabmodel.TabGroupModelFilter;
@@ -103,13 +102,8 @@ public class TabListEditorGroupAction extends TabListEditorAction {
             Tab tab = tabs.get(0);
             if (tabGroupModelFilter.isTabInTabGroup(tab)) return true;
 
-            tabGroupModelFilter.createSingleTabGroup(tab, /* notify= */ true);
-            if (ChromeFeatureList.sTabGroupParityAndroid.isEnabled()
-                    && !TabGroupCreationDialogManager.shouldSkipGroupCreationDialog(
-                            /* shouldShow= */ TabGroupCreationDialogManager
-                                    .shouldShowGroupCreationDialogViaSettingsSwitch())) {
-                mTabGroupCreationDialogManager.showDialog(tab.getRootId(), tabGroupModelFilter);
-            }
+            tabGroupModelFilter.createSingleTabGroup(tab);
+            mTabGroupCreationDialogManager.showDialog(tab.getRootId(), tabGroupModelFilter);
             return true;
         }
 
@@ -139,11 +133,7 @@ public class TabListEditorGroupAction extends TabListEditorAction {
                 tabGroupModelFilter.willMergingCreateNewGroup(tabsToMerge);
         tabGroupModelFilter.mergeListOfTabsToGroup(sortedTabs, destinationTab, /* notify= */ true);
 
-        if (ChromeFeatureList.sTabGroupParityAndroid.isEnabled()
-                && willMergingCreateNewGroup
-                && !TabGroupCreationDialogManager.shouldSkipGroupCreationDialog(
-                        /* shouldShow= */ TabGroupCreationDialogManager
-                                .shouldShowGroupCreationDialogViaSettingsSwitch())) {
+        if (willMergingCreateNewGroup) {
             mTabGroupCreationDialogManager.showDialog(
                     destinationTab.getRootId(), tabGroupModelFilter);
         }

@@ -4,6 +4,8 @@
 
 #include "components/compose/core/browser/config.h"
 
+#include "base/containers/fixed_flat_set.h"
+#include "base/containers/flat_set.h"
 #include "base/feature_list.h"
 #include "base/metrics/field_trial_params.h"
 #include "base/no_destructor.h"
@@ -33,6 +35,22 @@ unsigned int GetFieldTrialParamByFeatureAsUnsignedInt(
   }
   return static_cast<unsigned int>(value_as_int);
 }
+
+std::vector<std::string> GetFieldTrialParamAsSplitString(
+    const base::Feature& feature,
+    const std::string& param_name) {
+  std::string string_list =
+      base::GetFieldTrialParamValueByFeature(feature, param_name);
+  return base::SplitString(string_list, ", \t\n'\"", base::TRIM_WHITESPACE,
+                           base::SPLIT_WANT_NONEMPTY);
+}
+
+constexpr auto DEFAULT_COMPOSE_ENABLED_COUNTRIES =
+    base::MakeFixedFlatSet<std::string>({"bd", "ca", "gh", "in", "ke", "my",
+                                         "ng", "ph", "pk", "sg", "tz", "ug",
+                                         "us", "zm", "zw"});
+constexpr auto DEFAULT_PROACTIVE_NUDGE_ENABLED_COUNTRIES =
+    base::MakeFixedFlatSet<std::string>({"us"});
 
 }  // namespace
 
@@ -153,13 +171,15 @@ Config::Config() {
           "proactive_nudge_field_per_navigation",
           proactive_nudge_field_per_navigation);
 
-  saved_state_timeout_milliseconds = base::GetFieldTrialParamByFeatureAsInt(
-      features::kEnableComposeSavedStateNotification,
-      "saved_state_timeout_milliseconds", saved_state_timeout_milliseconds);
+  saved_state_timeout =
+      base::Milliseconds(base::GetFieldTrialParamByFeatureAsInt(
+          features::kEnableComposeSavedStateNotification,
+          "saved_state_timeout_milliseconds",
+          saved_state_timeout.InMilliseconds()));
 
-  focus_lost_delay_milliseconds = base::GetFieldTrialParamByFeatureAsInt(
+  focus_lost_delay = base::Milliseconds(base::GetFieldTrialParamByFeatureAsInt(
       features::kEnableComposeSavedStateNotification,
-      "focus_lost_delay_milliseconds", focus_lost_delay_milliseconds);
+      "focus_lost_delay_milliseconds", focus_lost_delay.InMilliseconds()));
 
   stay_in_window_bounds = base::GetFieldTrialParamByFeatureAsBool(
       features::kComposeUiParams, "stay_in_window_bounds",
@@ -170,25 +190,38 @@ Config::Config() {
           features::kComposeUiParams, "positioning_strategy",
           base::to_underlying(positioning_strategy)));
 
-  request_latency_timeout_seconds = base::GetFieldTrialParamByFeatureAsInt(
-      features::kComposeRequestLatencyTimeout,
-      "request_latency_timeout_seconds", request_latency_timeout_seconds);
+  request_latency_timeout =
+      base::Seconds(base::GetFieldTrialParamByFeatureAsInt(
+          features::kComposeRequestLatencyTimeout,
+          "request_latency_timeout_seconds",
+          request_latency_timeout.InSeconds()));
 
-  // The "enabled_countries" field trial param must contain a list of lowercase
+  // The "countries" field trial params must contain a list of lowercase
   // country codes, following the format described in the documentation for the
   // variations::VariationsService::GetStoredPermanentCountry method. Commas,
   // spaces, tabs, new lines, single and double quotes are all treated as
   // separators and then discarded. A resulting empty list will be ignored in
   // favor of the default launched countries list.
-  // To enable for any and all countries, set it to have a single "*" element.
-  std::string enabled_countries_str = base::GetFieldTrialParamValueByFeature(
-      features::kEnableCompose, "enabled_countries");
+  // To enable all countries, set it to have a single "*" element.
   std::vector<std::string> enabled_countries_from_finch =
-      base::SplitString(enabled_countries_str, ", \t\n'\"",
-                        base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
-  if (!enabled_countries_from_finch.empty()) {
-    enabled_countries = enabled_countries_from_finch;
-  }
+      GetFieldTrialParamAsSplitString(features::kEnableCompose,
+                                      "enabled_countries");
+  enabled_countries =
+      (enabled_countries_from_finch.empty())
+          ? base::flat_set<std::string>(
+                DEFAULT_COMPOSE_ENABLED_COUNTRIES.begin(),
+                DEFAULT_COMPOSE_ENABLED_COUNTRIES.end())
+          : base::flat_set<std::string>(enabled_countries_from_finch);
+
+  std::vector<std::string> proactive_nudge_countries_from_finch =
+      GetFieldTrialParamAsSplitString(features::kEnableComposeProactiveNudge,
+                                      "proactive_nudge_countries");
+  proactive_nudge_countries =
+      (proactive_nudge_countries_from_finch.empty())
+          ? base::flat_set<std::string>(
+                DEFAULT_PROACTIVE_NUDGE_ENABLED_COUNTRIES.begin(),
+                DEFAULT_PROACTIVE_NUDGE_ENABLED_COUNTRIES.end())
+          : base::flat_set<std::string>(proactive_nudge_countries_from_finch);
 
   session_max_allowed_lifetime =
       base::Minutes(base::GetFieldTrialParamByFeatureAsInt(

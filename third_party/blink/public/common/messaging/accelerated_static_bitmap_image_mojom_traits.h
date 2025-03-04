@@ -27,26 +27,17 @@ template <>
 struct BLINK_COMMON_EXPORT
     StructTraits<blink::mojom::AcceleratedStaticBitmapImage::DataView,
                  blink::AcceleratedImageInfo> {
-  static const gpu::ExportedSharedImage& shared_image(
-      const blink::AcceleratedImageInfo& input) {
+  static gpu::ExportedSharedImage& shared_image(
+      blink::AcceleratedImageInfo& input) {
     return input.shared_image;
+  }
+
+  static gpu::SyncToken sync_token(const blink::AcceleratedImageInfo& input) {
+    return input.sync_token;
   }
 
   static SkImageInfo image_info(const blink::AcceleratedImageInfo& input) {
     return input.image_info;
-  }
-
-  static bool is_origin_top_left(const blink::AcceleratedImageInfo& input) {
-    return input.is_origin_top_left;
-  }
-
-  static bool supports_display_compositing(
-      const blink::AcceleratedImageInfo& input) {
-    return input.supports_display_compositing;
-  }
-
-  static bool is_overlay_candidate(const blink::AcceleratedImageInfo& input) {
-    return input.is_overlay_candidate;
   }
 
   static mojo::PendingRemote<blink::mojom::ImageReleaseCallback>

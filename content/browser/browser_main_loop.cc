@@ -13,10 +13,10 @@
 #include <utility>
 #include <vector>
 
-#include "base/allocator/partition_alloc_features.h"
 #include "base/base_switches.h"
 #include "base/callback_list.h"
 #include "base/command_line.h"
+#include "base/debug/leak_annotations.h"
 #include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/location.h"
@@ -53,7 +53,6 @@
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
 #include "build/chromecast_buildflags.h"
-#include "build/chromeos_buildflags.h"
 #include "cc/base/histograms.h"
 #include "components/discardable_memory/service/discardable_shared_memory_manager.h"
 #include "components/memory_pressure/multi_source_memory_pressure_monitor.h"
@@ -90,6 +89,7 @@
 #include "content/browser/scheduler/responsiveness/watcher.h"
 #include "content/browser/screenlock_monitor/screenlock_monitor.h"
 #include "content/browser/screenlock_monitor/screenlock_monitor_device_source.h"
+#include "content/browser/service_host/utility_process_host.h"
 #include "content/browser/sms/sms_provider.h"
 #include "content/browser/speech/speech_recognition_manager_impl.h"
 #include "content/browser/speech/tts_controller_impl.h"
@@ -98,7 +98,6 @@
 #include "content/browser/tracing/background_tracing_manager_impl.h"
 #include "content/browser/tracing/startup_tracing_controller.h"
 #include "content/browser/tracing/tracing_controller_impl.h"
-#include "content/browser/utility_process_host.h"
 #include "content/browser/webrtc/webrtc_internals.h"
 #include "content/browser/webui/content_web_ui_configs.h"
 #include "content/browser/webui/url_data_manager.h"
@@ -131,7 +130,6 @@
 #include "media/audio/audio_manager.h"
 #include "media/audio/audio_system.h"
 #include "media/audio/audio_thread_impl.h"
-#include "media/base/user_input_monitor.h"
 #include "media/media_buildflags.h"
 #include "media/midi/midi_service.h"
 #include "media/mojo/buildflags.h"
@@ -200,11 +198,10 @@
 #include <commctrl.h>
 #include <shellapi.h>
 
-#include "base/threading/platform_thread_win.h"
 #include "net/base/winsock_init.h"
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 #include "device/bluetooth/bluetooth_adapter_factory.h"
 #include "services/data_decoder/public/cpp/data_decoder.h"
 #endif
@@ -283,8 +280,7 @@ static void GLibLogHandler(const gchar* log_domain,
              (G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG)) {
     LOG(INFO) << log_domain << ": " << message;
   } else {
-    NOTREACHED_IN_MIGRATION();
-    LOG(DFATAL) << log_domain << ": " << message;
+    NOTREACHED() << log_domain << ": " << message;
   }
 }
 
@@ -385,7 +381,7 @@ std::unique_ptr<base::MemoryPressureMonitor> CreateMemoryPressureMonitor(
   return monitor;
 }
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
 mojo::PendingRemote<data_decoder::mojom::BleScanParser> GetBleScanParser() {
   static base::NoDestructor<data_decoder::DataDecoder> decoder;
   mojo::PendingRemote<data_decoder::mojom::BleScanParser> ble_scan_parser;
@@ -393,7 +389,7 @@ mojo::PendingRemote<data_decoder::mojom::BleScanParser> GetBleScanParser() {
       ble_scan_parser.InitWithNewPipeAndPassReceiver());
   return ble_scan_parser;
 }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
 
 class OopDataDecoder : public data_decoder::ServiceProvider {
  public:
@@ -569,12 +565,6 @@ int BrowserMainLoop::EarlyInitialization() {
     if (pre_early_init_error_code != RESULT_CODE_NORMAL_EXIT)
       return pre_early_init_error_code;
   }
-
-#if BUILDFLAG(IS_WIN)
-  // This assumes FeatureList is initialized, and must happen before
-  // SetCurrentThreadType() below.
-  base::InitializePlatformThreadFeatures();
-#endif
 
   // SetCurrentThreadType relies on CurrentUIThread on some platforms. The
   // MessagePumpForUI needs to be bound to the main thread by this point.
@@ -758,7 +748,7 @@ void BrowserMainLoop::PostCreateMainMessageLoop() {
 
   base::trace_event::MemoryDumpManager::GetInstance()->RegisterDumpProvider(
       sql::SqlMemoryDumpProvider::GetInstance(), "Sql", nullptr);
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   device::BluetoothAdapterFactory::SetBleScanParserCallback(
       base::BindRepeating(&GetBleScanParser));
 #else
@@ -978,9 +968,6 @@ int BrowserMainLoop::CreateThreads() {
 int BrowserMainLoop::PostCreateThreads() {
   TRACE_EVENT0("startup", "BrowserMainLoop::PostCreateThreads");
 
-  BackgroundTracingManagerImpl::GetInstance()
-      .AddMetadataGeneratorFunction();
-
   if (parts_)
     parts_->PostCreateThreads();
 
@@ -1081,7 +1068,7 @@ BrowserMainLoop::InterceptMainMessageLoopRun() {
 void BrowserMainLoop::RunMainMessageLoop() {
 #if BUILDFLAG(IS_ANDROID)
   // Android's main message loop is the Java message loop.
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #else  // BUILDFLAG(IS_ANDROID)
   if (InterceptMainMessageLoopRun() != ProceedWithMainMessageLoopRun(true))
     return;
@@ -1154,9 +1141,6 @@ void BrowserMainLoop::ShutdownThreadsAndCleanUp() {
 
   if (RenderProcessHost::run_renderer_in_process())
     RenderProcessHostImpl::ShutDownInProcessRenderer();
-
-  base::features::MakeFreeNoOp(
-      base::features::WhenFreeBecomesNoOp::kInShutDownThreads);
 
   if (parts_) {
     TRACE_EVENT0("shutdown",
@@ -1271,9 +1255,6 @@ void BrowserMainLoop::ShutdownThreadsAndCleanUp() {
       // Intentionally leak AudioManager if shutdown failed.
       // We might run into various CHECK(s) in AudioManager destructor.
       std::ignore = audio_manager_.release();
-      // |user_input_monitor_| may be in use by stray streams in case
-      // AudioManager shutdown failed.
-      std::ignore = user_input_monitor_.release();
     }
 
     // Leaking AudioSystem: we cannot correctly destroy it since Audio service
@@ -1336,22 +1317,22 @@ void BrowserMainLoop::PostCreateThreadsImpl() {
   InitGpuDiskCacheFactorySingleton();
 
   bool always_uses_gpu = true;
-  bool established_gpu_channel = false;
+  bool establish_gpu_channel = false;
 #if BUILDFLAG(IS_ANDROID)
   // TODO(crbug.com/40396955): This should be set to |true|.
-  established_gpu_channel = false;
+  establish_gpu_channel = false;
   always_uses_gpu = ShouldStartGpuProcessOnBrowserStartup();
-  BrowserGpuChannelHostFactory::Initialize(established_gpu_channel);
+  BrowserGpuChannelHostFactory::Initialize(establish_gpu_channel);
 #else
-  established_gpu_channel = true;
+  establish_gpu_channel = true;
   if (parsed_command_line_->HasSwitch(switches::kDisableGpu) ||
       parsed_command_line_->HasSwitch(switches::kDisableGpuCompositing) ||
       parsed_command_line_->HasSwitch(switches::kDisableGpuEarlyInit)) {
-    established_gpu_channel = always_uses_gpu = false;
+    establish_gpu_channel = always_uses_gpu = false;
   }
 
   host_frame_sink_manager_ = std::make_unique<viz::HostFrameSinkManager>();
-  BrowserGpuChannelHostFactory::Initialize(established_gpu_channel);
+  BrowserGpuChannelHostFactory::Initialize(establish_gpu_channel);
   compositing_mode_reporter_impl_ =
       std::make_unique<viz::CompositingModeReporterImpl>();
 
@@ -1426,14 +1407,6 @@ void BrowserMainLoop::PostCreateThreadsImpl() {
 
   {
     TRACE_EVENT0("startup",
-                 "BrowserMainLoop::PostCreateThreads::InitUserInputMonitor");
-    user_input_monitor_ = media::UserInputMonitor::Create(
-        io_thread_->task_runner(),
-        base::SingleThreadTaskRunner::GetCurrentDefault());
-  }
-
-  {
-    TRACE_EVENT0("startup",
                  "BrowserMainLoop::PostCreateThreads::SaveFileManager");
     save_file_manager_ = new SaveFileManager();
   }
@@ -1449,7 +1422,12 @@ void BrowserMainLoop::PostCreateThreadsImpl() {
 #endif
   ui::Clipboard::SetAllowedThreads(allowed_clipboard_threads);
 
-  if (!established_gpu_channel && always_uses_gpu) {
+  // Post a task to launch the GPU process if appropriate. Note that if we
+  // earlier established the GPU channel, that took care of launching the GPU
+  // process and so it is not necessary to do so here.
+  bool should_post_task_to_launch_gpu_process =
+      always_uses_gpu && !establish_gpu_channel;
+  if (should_post_task_to_launch_gpu_process) {
     TRACE_EVENT_INSTANT0("gpu", "Post task to launch GPU process",
                          TRACE_EVENT_SCOPE_THREAD);
     GpuProcessHost::Get(GPU_PROCESS_KIND_SANDBOXED, true /* force_create */);
@@ -1525,12 +1503,16 @@ bool BrowserMainLoop::InitializeToolkit() {
 }
 
 void BrowserMainLoop::InitializeMojo() {
+// iOS browser process does sync calls using mojo (mainly for in process
+// unzipper, so do not enable these checks right now).
+#if !BUILDFLAG(IS_IOS)
   if (!parsed_command_line_->HasSwitch(switches::kSingleProcess)) {
     // Disallow mojo sync calls in the browser process. Note that we allow sync
     // calls in single-process mode since renderer IPCs are made from a browser
     // thread.
     mojo::SyncCallRestrictions::DisallowSyncCall();
   }
+#endif
 
   // Start startup tracing through TracingController's interface. TraceLog has
   // been enabled in content_main_runner where threads are not available. Now We

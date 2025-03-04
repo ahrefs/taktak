@@ -37,6 +37,13 @@ namespace blink {
 
 class Document;
 class ExceptionState;
+class PointerEvent;
+
+enum class ClosedByState {
+  kAny,
+  kCloseRequest,
+  kNone,
+};
 
 class CORE_EXPORT HTMLDialogElement final : public HTMLElement {
   DEFINE_WRAPPERTYPEINFO();
@@ -46,18 +53,33 @@ class CORE_EXPORT HTMLDialogElement final : public HTMLElement {
 
   void Trace(Visitor*) const override;
 
+  // open_attribute_being_removed should only be true when `close()` is being
+  // run from the attribute change steps for the `open` attribute.
   void close(const String& return_value = String(),
-             bool ignore_open_attribute = false);
+             bool open_attribute_being_removed = false);
+  void requestClose(ExceptionState& exception_state) {
+    requestClose(String(), exception_state);
+  }
+  void requestClose(const String& return_value, ExceptionState&);
   void show(ExceptionState&);
   void showModal(ExceptionState&);
+  InsertionNotificationRequest InsertedInto(ContainerNode&) override;
   void RemovedFrom(ContainerNode&) override;
 
   bool IsModal() const { return is_modal_; }
+  bool IsOpen() const { return FastHasAttribute(html_names::kOpenAttr); }
 
   String returnValue() const { return return_value_; }
   void setReturnValue(const String& return_value) {
     return_value_ = return_value;
   }
+
+  ClosedByState ClosedBy() const;
+  String closedBy() const;
+  void setClosedBy(const String& return_value);
+
+  static void HandleDialogLightDismiss(const PointerEvent& pointer_event,
+                                       const Node& target_node);
 
   void CloseWatcherFiredCancel(Event*);
   void CloseWatcherFiredClose();
@@ -69,8 +91,9 @@ class CORE_EXPORT HTMLDialogElement final : public HTMLElement {
   FocusableState SupportsFocus(UpdateBehavior) const override {
     return FocusableState::kFocusable;
   }
-  bool IsKeyboardFocusable(UpdateBehavior update_behavior =
-                               UpdateBehavior::kStyleAndLayout) const override;
+  bool IsKeyboardFocusableSlow(
+      UpdateBehavior update_behavior =
+          UpdateBehavior::kStyleAndLayout) const override;
 
   // https://html.spec.whatwg.org/C/#the-dialog-element
   // Chooses the focused element when show() or showModal() is invoked.
@@ -87,13 +110,17 @@ class CORE_EXPORT HTMLDialogElement final : public HTMLElement {
   bool HandleCommandInternal(HTMLElement& invoker,
                              CommandEventType command) override;
 
- private:
+  void AttributeChanged(const AttributeModificationParams&) override;
   void ParseAttribute(const AttributeModificationParams&) override;
+
+ private:
+  void SetCloseWatcherEnabledState();
+  void CreateCloseWatcher();
 
   void SetIsModal(bool is_modal);
   void ScheduleCloseEvent();
 
-  bool DispatchToggleEvents(bool opening);
+  bool DispatchToggleEvents(bool opening, bool asModal = false);
   void DispatchPendingToggleEvent();
 
   bool is_modal_;
@@ -101,6 +128,7 @@ class CORE_EXPORT HTMLDialogElement final : public HTMLElement {
   // false after the call to close() finishes.
   bool is_closing_ = false;
   String return_value_;
+  String request_close_return_value_;
   WeakMember<Element> previously_focused_element_;
 
   Member<CloseWatcher> close_watcher_;

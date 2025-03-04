@@ -9,7 +9,6 @@
 #include "base/command_line.h"
 #include "base/strings/strcat.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_list.h"
 #include "chrome/browser/ui/browser_window.h"
@@ -50,8 +49,8 @@ class PixelTestUi : public TestBrowserUi {
   ~PixelTestUi() override = default;
 
   // TestBrowserUi:
-  void ShowUi(const std::string& name) override { NOTREACHED_IN_MIGRATION(); }
-  void WaitForUserDismissal() override { NOTREACHED_IN_MIGRATION(); }
+  void ShowUi(const std::string& name) override { NOTREACHED(); }
+  void WaitForUserDismissal() override { NOTREACHED(); }
 
   bool VerifyUi() override {
     return VerifyUiWithResult() != ui::test::ActionResult::kFailed;

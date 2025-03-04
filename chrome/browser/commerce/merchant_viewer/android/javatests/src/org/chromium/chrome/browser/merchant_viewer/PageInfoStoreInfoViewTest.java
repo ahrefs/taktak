@@ -35,9 +35,9 @@ import org.mockito.stubbing.Answer;
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.test.util.Batch;
 import org.chromium.base.test.util.CommandLineFlags;
+import org.chromium.base.test.util.DisabledTest;
 import org.chromium.base.test.util.Feature;
 import org.chromium.base.test.util.Features.EnableFeatures;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.base.test.util.Restriction;
 import org.chromium.chrome.browser.app.ChromeActivity;
 import org.chromium.chrome.browser.commerce.ShoppingServiceFactory;
@@ -75,8 +75,6 @@ public class PageInfoStoreInfoViewTest {
     @Rule
     public final BlankCTATabInitialStateRule mInitialStateRule =
             new BlankCTATabInitialStateRule(sActivityTestRule, false);
-
-    @Rule public JniMocker mMocker = new JniMocker();
 
     @Rule
     public ChromeRenderTestRule mRenderTestRule =
@@ -137,6 +135,7 @@ public class PageInfoStoreInfoViewTest {
     @Test
     @MediumTest
     @Feature({"RenderTest"})
+    @DisabledTest(message = "crbug.com/394345850")
     public void testStoreInfoRowVisibleWithData_Highlight() throws IOException {
         mockShoppingServiceResponse(mFakeMerchantTrustSignals);
         openPageInfoFromStoreIcon(true, false); // fromStoreIcon, dialogCheck

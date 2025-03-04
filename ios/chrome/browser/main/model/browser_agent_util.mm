@@ -8,6 +8,7 @@
 #import "components/breadcrumbs/core/breadcrumbs_status.h"
 #import "ios/chrome/browser/app_launcher/model/app_launcher_browser_agent.h"
 #import "ios/chrome/browser/crash_report/model/breadcrumbs/breadcrumb_manager_browser_agent.h"
+#import "ios/chrome/browser/credential_provider/model/credential_provider_buildflags.h"
 #import "ios/chrome/browser/device_sharing/model/device_sharing_browser_agent.h"
 #import "ios/chrome/browser/favicon/model/favicon_browser_agent.h"
 #import "ios/chrome/browser/follow/model/follow_browser_agent.h"
@@ -17,7 +18,7 @@
 #import "ios/chrome/browser/lens/model/lens_browser_agent.h"
 #import "ios/chrome/browser/metrics/model/tab_usage_recorder_browser_agent.h"
 #import "ios/chrome/browser/metrics/model/web_state_list_metrics_browser_agent.h"
-#import "ios/chrome/browser/omnibox/model/omnibox_position_browser_agent.h"
+#import "ios/chrome/browser/omnibox/model/omnibox_position/omnibox_position_browser_agent.h"
 #import "ios/chrome/browser/policy/model/policy_watcher_browser_agent.h"
 #import "ios/chrome/browser/reading_list/model/reading_list_browser_agent.h"
 #import "ios/chrome/browser/send_tab_to_self/model/send_tab_to_self_browser_agent.h"
@@ -31,7 +32,6 @@
 #import "ios/chrome/browser/tab_insertion/model/tab_insertion_browser_agent.h"
 #import "ios/chrome/browser/tabs/model/closing_web_state_observer_browser_agent.h"
 #import "ios/chrome/browser/tabs/model/synced_window_delegate_browser_agent.h"
-#import "ios/chrome/browser/tabs/model/tab_parenting_browser_agent.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_browser_agent.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_notifier_browser_agent.h"
 #import "ios/chrome/browser/view_source/model/view_source_browser_agent.h"
@@ -42,6 +42,10 @@
 #import "ios/chrome/browser/web_state_list/model/session_metrics.h"
 #import "ios/chrome/browser/web_state_list/model/web_usage_enabler/web_usage_enabler_browser_agent.h"
 #import "ios/public/provider/chrome/browser/app_utils/app_utils_api.h"
+
+#if BUILDFLAG(IOS_CREDENTIAL_PROVIDER_ENABLED)
+#import "ios/chrome/browser/credential_provider/model/credential_provider_browser_agent.h"
+#endif
 
 void AttachBrowserAgents(Browser* browser) {
   if (breadcrumbs::IsEnabled(GetApplicationContext()->GetLocalState())) {
@@ -64,7 +68,6 @@ void AttachBrowserAgents(Browser* browser) {
   // LensBrowserAgent must be created before WebNavigationBrowserAgent.
   LensBrowserAgent::CreateForBrowser(browser);
   WebNavigationBrowserAgent::CreateForBrowser(browser);
-  TabParentingBrowserAgent::CreateForBrowser(browser);
 
   if (!browser_is_off_record) {
     ClosingWebStateObserverBrowserAgent::CreateForBrowser(browser);
@@ -128,6 +131,10 @@ void AttachBrowserAgents(Browser* browser) {
   if (!browser_is_inactive) {
     TabBasedIPHBrowserAgent::CreateForBrowser(browser);
   }
+
+#if BUILDFLAG(IOS_CREDENTIAL_PROVIDER_ENABLED)
+  CredentialProviderBrowserAgent::CreateForBrowser(browser);
+#endif
 
   // This needs to be called last in case any downstream browser agents need to
   // access upstream agents created earlier in this function.

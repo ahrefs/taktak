@@ -32,16 +32,18 @@ using ::testing::Truly;
 
 constexpr gfx::Rect kDefaultAnchorBounds(200, 100, 0, 10);
 
-class FakePickerViewDelegate : public PickerViewDelegate {
+class FakeQuickInsertViewDelegate : public QuickInsertViewDelegate {
  public:
-  // PickerViewDelegate:
-  std::vector<PickerCategory> GetAvailableCategories() override { return {}; }
+  // QuickInsertViewDelegate:
+  std::vector<QuickInsertCategory> GetAvailableCategories() override {
+    return {};
+  }
   void GetZeroStateSuggestedResults(
       SuggestedResultsCallback callback) override {}
-  void GetResultsForCategory(PickerCategory category,
+  void GetResultsForCategory(QuickInsertCategory category,
                              SearchResultsCallback callback) override {}
   void StartSearch(std::u16string_view query,
-                   std::optional<PickerCategory> category,
+                   std::optional<QuickInsertCategory> category,
                    SearchResultsCallback callback) override {}
   void StopSearch() override {}
   void StartEmojiSearch(std::u16string_view query,
@@ -54,52 +56,55 @@ class FakePickerViewDelegate : public PickerViewDelegate {
   void ShowEditor(std::optional<std::string> preset_query_id,
                   std::optional<std::string> freeform_text) override {}
   void ShowLobster(std::optional<std::string> freeform_text) override {}
-  PickerAssetFetcher* GetAssetFetcher() override { return nullptr; }
-  PickerSessionMetrics& GetSessionMetrics() override {
+  QuickInsertAssetFetcher* GetAssetFetcher() override { return nullptr; }
+  QuickInsertSessionMetrics& GetSessionMetrics() override {
     return session_metrics_;
   }
-  PickerActionType GetActionForResult(
+  QuickInsertActionType GetActionForResult(
       const QuickInsertSearchResult& result) override {
-    return PickerActionType::kInsert;
+    return QuickInsertActionType::kInsert;
   }
   std::vector<QuickInsertEmojiResult> GetSuggestedEmoji() override {
     return {};
   }
   bool IsGifsEnabled() override { return true; }
-  PickerModeType GetMode() override { return PickerModeType::kNoSelection; }
-  PickerCapsLockPosition GetCapsLockPosition() override {
-    return PickerCapsLockPosition::kTop;
+  QuickInsertModeType GetMode() override {
+    return QuickInsertModeType::kNoSelection;
+  }
+  QuickInsertCapsLockPosition GetCapsLockPosition() override {
+    return QuickInsertCapsLockPosition::kTop;
   }
 
  private:
-  PickerSessionMetrics session_metrics_;
+  QuickInsertSessionMetrics session_metrics_;
 };
 
 using QuickInsertWidgetTest = AshTestBase;
 
 TEST_F(QuickInsertWidgetTest, CreateWidgetHasCorrectHierarchy) {
-  FakePickerViewDelegate delegate;
+  FakeQuickInsertViewDelegate delegate;
   auto widget = QuickInsertWidget::Create(&delegate, kDefaultAnchorBounds);
 
   // Widget should contain a NonClientView, which has a NonClientFrameView for
-  // borders and shadows, and a ClientView with a sole child of the PickerView.
+  // borders and shadows, and a ClientView with a sole child of the
+  // QuickInsertView.
   ASSERT_TRUE(widget);
   ASSERT_TRUE(widget->non_client_view());
   ASSERT_TRUE(widget->non_client_view()->frame_view());
   ASSERT_TRUE(widget->non_client_view()->client_view());
   EXPECT_THAT(widget->non_client_view()->client_view()->children(),
-              ElementsAre(Truly(views::IsViewClass<PickerView>)));
+              ElementsAre(Truly(views::IsViewClass<QuickInsertView>)));
 }
 
 TEST_F(QuickInsertWidgetTest, CreateWidgetHasCorrectBorder) {
-  FakePickerViewDelegate delegate;
+  FakeQuickInsertViewDelegate delegate;
   auto widget = QuickInsertWidget::Create(&delegate, kDefaultAnchorBounds);
 
   EXPECT_TRUE(widget->non_client_view()->frame_view()->GetBorder());
 }
 
 TEST_F(QuickInsertWidgetTest, ClickingOutsideClosesQuickInsertWidget) {
-  FakePickerViewDelegate delegate;
+  FakeQuickInsertViewDelegate delegate;
   auto widget = QuickInsertWidget::Create(&delegate, kDefaultAnchorBounds);
   widget->Show();
 
@@ -112,25 +117,25 @@ TEST_F(QuickInsertWidgetTest, ClickingOutsideClosesQuickInsertWidget) {
 }
 
 TEST_F(QuickInsertWidgetTest, LosingFocusClosesQuickInsertWidget) {
-  // Create something other than the picker to focus.
+  // Create something other than Quick Insert to focus.
   auto window = CreateTestWindow();
   window->Show();
 
-  // Create the fake picker and make sure it has focus.
-  FakePickerViewDelegate delegate;
+  // Create the fake Quick Insert and make sure it has focus.
+  FakeQuickInsertViewDelegate delegate;
   auto quick_insert_widget =
       QuickInsertWidget::Create(&delegate, kDefaultAnchorBounds);
   quick_insert_widget->Show();
   EXPECT_THAT(quick_insert_widget->GetFocusManager()->GetFocusedView(),
               testing::NotNull());
 
-  // Focus the other Widget and expect the picker to have closed.
+  // Focus the other Widget and expect Quick Insert to have closed.
   window->Focus();
   EXPECT_TRUE(window->HasFocus());
 
   EXPECT_TRUE(quick_insert_widget->IsClosed());
   EXPECT_EQ(delegate.GetSessionMetrics().GetOutcomeForTesting(),
-            PickerSessionMetrics::SessionOutcome::kAbandoned);
+            QuickInsertSessionMetrics::SessionOutcome::kAbandoned);
 }
 
 TEST_F(QuickInsertWidgetTest, PreviewBubbleDoesNotStealFocusQuickInsertWidget) {
@@ -138,14 +143,14 @@ TEST_F(QuickInsertWidgetTest, PreviewBubbleDoesNotStealFocusQuickInsertWidget) {
   anchor_widget->SetContentsView(std::make_unique<views::View>());
 
   // Create the QuickInsertWidget and make sure it has focus.
-  FakePickerViewDelegate delegate;
+  FakeQuickInsertViewDelegate delegate;
   auto quick_insert_widget =
       QuickInsertWidget::Create(&delegate, kDefaultAnchorBounds);
   quick_insert_widget->Show();
 
   // Show bubble widget and expect the QuickInsertWidget to not close.
   views::View* bubble_view =
-      new PickerPreviewBubbleView(anchor_widget->GetContentsView());
+      new QuickInsertPreviewBubbleView(anchor_widget->GetContentsView());
   bubble_view->GetWidget()->Show();
 
   EXPECT_FALSE(quick_insert_widget->IsClosed());
@@ -154,7 +159,7 @@ TEST_F(QuickInsertWidgetTest, PreviewBubbleDoesNotStealFocusQuickInsertWidget) {
 }
 
 TEST_F(QuickInsertWidgetTest, CreatesCenteredWidget) {
-  FakePickerViewDelegate delegate;
+  FakeQuickInsertViewDelegate delegate;
   auto widget =
       QuickInsertWidget::CreateCentered(&delegate, gfx::Rect(10, 10, 10, 10));
   widget->Show();

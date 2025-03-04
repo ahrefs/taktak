@@ -62,6 +62,10 @@ class MockRendererAgent : public RendererAgent {
     return last_injected_filter_.get();
   }
 
+  subresource_filter::mojom::ActivationState activation_state() {
+    return activation_state_;
+  }
+
   using RendererAgent::OnActivationComputed;
 
  private:

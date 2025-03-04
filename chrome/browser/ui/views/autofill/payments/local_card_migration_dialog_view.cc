@@ -78,7 +78,7 @@ class AutofillMigrationHeaderView : public views::ImageView {
   // views::Label:
   void OnThemeChanged() override {
     ImageView::OnThemeChanged();
-    SetImage(ui::ResourceBundle::GetSharedInstance().GetImageSkiaNamed(
+    SetImage(ui::ImageModel::FromResourceId(
         GetNativeTheme()->ShouldUseDarkColors()
             ? IDR_AUTOFILL_MIGRATION_DIALOG_HEADER_DARK
             : IDR_AUTOFILL_MIGRATION_DIALOG_HEADER));
@@ -124,7 +124,7 @@ std::unique_ptr<views::BoxLayoutView> CreateTipTextContainer(
           .SetText(tip_message)
           .SetTextContext(CONTEXT_DIALOG_BODY_TEXT_SMALL)
           .SetTextStyle(views::style::STYLE_SECONDARY)
-          .SetEnabledColorId(kColorPaymentsFeedbackTipForeground)
+          .SetEnabledColor(kColorPaymentsFeedbackTipForeground)
           .SetMultiLine(true)
           .SetHorizontalAlignment(gfx::ALIGN_LEFT)
           .SizeToFit(provider->GetDistanceMetric(
@@ -333,7 +333,7 @@ class LocalCardMigrationOfferView : public views::View {
         AddChildView(std::make_unique<views::ScrollView>());
     legal_message_container->SetHorizontalScrollBarMode(
         views::ScrollView::ScrollBarMode::kDisabled);
-    legal_message_container->SetContents(std::make_unique<LegalMessageView>(
+    legal_message_container->SetContents(CreateLegalMessageView(
         controller->GetLegalMessageLines(), /*user_email=*/std::u16string(),
         /*user_avatar=*/ui::ImageModel(),
         base::BindRepeating(

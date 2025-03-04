@@ -14,6 +14,7 @@
 #include "base/functional/callback_helpers.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/scoped_refptr.h"
+#include "base/notreached.h"
 #include "base/run_loop.h"
 #include "base/task/sequenced_task_runner.h"
 #include "base/task/single_thread_task_runner.h"
@@ -21,6 +22,8 @@
 #include "base/time/time.h"
 #include "build/build_config.h"
 #include "cc/layers/layer.h"
+#include "gpu/command_buffer/client/client_shared_image.h"
+#include "gpu/command_buffer/client/test_shared_image_interface.h"
 #include "media/base/media_content_type.h"
 #include "media/base/media_util.h"
 #include "media/base/test_helpers.h"
@@ -32,12 +35,12 @@
 #include "third_party/blink/public/platform/scheduler/test/renderer_scheduler_test_support.h"
 #include "third_party/blink/public/platform/web_fullscreen_video_status.h"
 #include "third_party/blink/public/platform/web_media_player.h"
-#include "third_party/blink/public/platform/web_media_player_client.h"
 #include "third_party/blink/public/platform/web_media_player_source.h"
 #include "third_party/blink/public/web/web_local_frame.h"
 #include "third_party/blink/renderer/modules/mediastream/media_stream_audio_renderer.h"
 #include "third_party/blink/renderer/modules/mediastream/media_stream_renderer_factory.h"
 #include "third_party/blink/renderer/modules/mediastream/web_media_player_ms_compositor.h"
+#include "third_party/blink/renderer/platform/media/media_player_client.h"
 #include "third_party/blink/renderer/platform/scheduler/public/post_cross_thread_task.h"
 #include "third_party/blink/renderer/platform/testing/task_environment.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_copier_base.h"
@@ -266,7 +269,7 @@ class MockMediaStreamAudioRenderer : public MediaStreamAudioRenderer {
   void Stop() override {}
   void Play() override {}
   void Pause() override {}
-  void SetVolume(float volume) override {}
+  MOCK_METHOD(void, SetVolume, (float volume));
 
   void SwitchOutputDevice(const std::string& device_id,
                           media::OutputDeviceStatusCB callback) override {}
@@ -324,8 +327,7 @@ void MockMediaStreamVideoRenderer::QueueFrames(
           gfx::Size(standard_size_.width() * 2, standard_size_.height() * 2);
     }
     if (token < static_cast<int>(FrameType::MIN_TYPE)) {
-      CHECK(false) << "Unrecognized frame type: " << token;
-      return;
+      NOTREACHED() << "Unrecognized frame type: " << token;
     }
 
     if (token < 0) {
@@ -525,7 +527,7 @@ class WebMediaPlayerMSTest
           testing::tuple<bool /* enable_surface_layer_for_video */,
                          bool /* opaque_frame */,
                          bool /* odd_size_frame */>>,
-      public WebMediaPlayerClient,
+      public MediaPlayerClient,
       public cc::VideoFrameProvider::Client {
  public:
   WebMediaPlayerMSTest()
@@ -537,6 +539,7 @@ class WebMediaPlayerMSTest
         surface_layer_bridge_(
             std::make_unique<NiceMock<MockSurfaceLayerBridge>>()),
         submitter_(std::make_unique<NiceMock<MockWebVideoFrameSubmitter>>()),
+        test_sii_(base::MakeRefCounted<gpu::TestSharedImageInterface>()),
         layer_set_(false),
         rendering_(false),
         background_rendering_(false) {
@@ -566,7 +569,7 @@ class WebMediaPlayerMSTest
   void AddMediaTrack(const media::MediaTrack& track) override {}
 
   void MediaSourceOpened(std::unique_ptr<WebMediaSource>) override {}
-  void RemotePlaybackCompatibilityChanged(const WebURL& url,
+  void RemotePlaybackCompatibilityChanged(const KURL& url,
                                           bool is_compatible) override {}
   bool WasAlwaysMuted() override { return false; }
   bool HasSelectedVideoTrack() override { return false; }
@@ -670,6 +673,7 @@ class WebMediaPlayerMSTest
       surface_layer_bridge_ptr_ = nullptr;
   raw_ptr<NiceMock<MockWebVideoFrameSubmitter>, DanglingUntriaged>
       submitter_ptr_ = nullptr;
+  scoped_refptr<gpu::TestSharedImageInterface> test_sii_;
   bool enable_surface_layer_for_video_ = false;
   base::TimeTicks deadline_min_;
   base::TimeTicks deadline_max_;
@@ -1750,16 +1754,56 @@ TEST_P(WebMediaPlayerMSTest, OnContextLost) {
   compositor_->OnContextLost();
   EXPECT_EQ(non_gpu_frame, compositor_->GetCurrentFrame());
 
-  std::unique_ptr<gfx::GpuMemoryBuffer> gmb =
-      std::make_unique<media::FakeGpuMemoryBuffer>(
-          frame_size, gfx::BufferFormat::YUV_420_BIPLANAR);
-  auto gpu_frame = media::VideoFrame::WrapExternalGpuMemoryBuffer(
-      gfx::Rect(frame_size), frame_size, std::move(gmb), base::TimeDelta());
+  test_sii_->UseTestGMBInSharedImageCreationWithBufferUsage();
+  // Setting some default usage in order to get a mappable shared image.
+  const auto si_usage = gpu::SHARED_IMAGE_USAGE_CPU_WRITE_ONLY |
+                        gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
+  // Create a mappable shared image.
+  auto shared_image = test_sii_->CreateSharedImage(
+      {viz::MultiPlaneFormat::kNV12, frame_size, gfx::ColorSpace(),
+       gpu::SharedImageUsageSet(si_usage), "WebMediaPlayerMSTest"},
+      gpu::kNullSurfaceHandle, gfx::BufferUsage::GPU_READ);
+  auto gpu_frame = media::VideoFrame::WrapMappableSharedImage(
+      std::move(shared_image), test_sii_->GenVerifiedSyncToken(),
+      base::NullCallback(), gfx::Rect(frame_size), frame_size,
+      base::TimeDelta());
+
   compositor_->EnqueueFrame(gpu_frame, true);
   base::RunLoop().RunUntilIdle();
   // frame with gpu resource should be reset if context is lost
   compositor_->OnContextLost();
   EXPECT_NE(gpu_frame, compositor_->GetCurrentFrame());
+}
+
+TEST_P(WebMediaPlayerMSTest, VolumeMultiplierAdjustsOutputVolume) {
+  InitializeWebMediaPlayerMS();
+  is_audio_element_ = true;
+  auto audio_renderer = base::MakeRefCounted<MockMediaStreamAudioRenderer>();
+  render_factory_->set_audio_renderer(audio_renderer);
+
+  player_->Load(WebMediaPlayer::kLoadTypeURL, WebMediaPlayerSource(),
+                WebMediaPlayer::kCorsModeUnspecified,
+                /*is_cache_disabled=*/false);
+
+  message_loop_controller_.RunAndWaitForStatus(media::PIPELINE_OK);
+
+  // Setting the volume multiplier should adjust the volume sent to the audio
+  // renderer.
+  EXPECT_CALL(*audio_renderer, SetVolume(0.2));
+  player_->SetVolumeMultiplier(0.2);
+  testing::Mock::VerifyAndClearExpectations(audio_renderer.get());
+
+  // Setting the volume after the multiplier should still take the multiplier
+  // into account.
+  EXPECT_CALL(*audio_renderer, SetVolume(0.1));
+  player_->SetVolume(0.5);
+  testing::Mock::VerifyAndClearExpectations(audio_renderer.get());
+
+  // Resetting the multiplier should take the previously set volume into
+  // account.
+  EXPECT_CALL(*audio_renderer, SetVolume(0.5));
+  player_->SetVolumeMultiplier(1.0);
+  testing::Mock::VerifyAndClearExpectations(audio_renderer.get());
 }
 
 INSTANTIATE_TEST_SUITE_P(All,

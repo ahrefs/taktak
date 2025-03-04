@@ -137,7 +137,7 @@ void ChromeContentBrowserClientPluginsPart::
         blink::AssociatedInterfaceRegistry& associated_registry) {
   associated_registry.AddInterface<chrome::mojom::PluginInfoHost>(
       base::BindRepeating(&BindPluginInfoHost,
-                          render_frame_host.GetProcess()->GetID()));
+                          render_frame_host.GetProcess()->GetDeprecatedID()));
 }
 
 bool ChromeContentBrowserClientPluginsPart::
@@ -288,7 +288,7 @@ void ChromeContentBrowserClientPluginsPart::DidCreatePpapiPlugin(
       std::unique_ptr<ppapi::host::HostFactory>(
           new ChromeBrowserPepperHostFactory(browser_host)));
 #else
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 #endif  // BUILDFLAG(ENABLE_PPAPI)
 }
 

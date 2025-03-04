@@ -10,7 +10,7 @@
 
 import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import '//resources/cr_elements/cr_search_field/cr_search_field.js';
-import '//resources/cr_elements/icons_lit.html.js';
+import '//resources/cr_elements/icons.html.js';
 import '//resources/cr_elements/cr_shared_style.css.js';
 import '../settings_shared.css.js';
 import '../site_favicon.js';
@@ -293,7 +293,7 @@ export class SettingsSubpageElement extends SettingsSubpageElementBase {
   // Override FindShortcutMixin methods.
   override searchInputHasFocus() {
     const field = this.shadowRoot!.querySelector('cr-search-field')!;
-    return field.getSearchInput() === field.shadowRoot!.activeElement;
+    return field.getSearchInput() === field.shadowRoot.activeElement;
   }
 
   static get template() {

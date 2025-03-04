@@ -8,7 +8,6 @@
 #include "third_party/blink/renderer/core/execution_context/agent.h"
 #include "third_party/blink/renderer/core/execution_context/execution_context.h"
 #include "third_party/blink/renderer/core/streams/miscellaneous_operations.h"
-#include "third_party/blink/renderer/core/streams/promise_handler.h"
 #include "third_party/blink/renderer/core/streams/read_into_request.h"
 #include "third_party/blink/renderer/core/streams/read_request.h"
 #include "third_party/blink/renderer/core/streams/readable_byte_stream_controller.h"
@@ -30,9 +29,9 @@ class ByteStreamTeeEngine::PullAlgorithm final : public StreamAlgorithm {
     DCHECK(branch == 0 || branch == 1);
   }
 
-  v8::Local<v8::Promise> Run(ScriptState* script_state,
-                             int argc,
-                             v8::Local<v8::Value> argv[]) override {
+  ScriptPromise<IDLUndefined> Run(ScriptState* script_state,
+                                  int argc,
+                                  v8::Local<v8::Value> argv[]) override {
     // https://streams.spec.whatwg.org/#abstract-opdef-readablebytestreamtee
     // This implements both pull1Algorithm and pull2Algorithm as they are
     // identical except for the index they operate on. Standard comments are
@@ -44,7 +43,7 @@ class ByteStreamTeeEngine::PullAlgorithm final : public StreamAlgorithm {
       //     i. Set readAgainForBranch1 to true.
       engine_->read_again_for_branch_[branch_] = true;
       //     ii. Return a promise resolved with undefined.
-      return PromiseResolveWithUndefined(script_state);
+      return ToResolvedUndefinedPromise(script_state);
     }
     //   b. Set reading to true.
     engine_->reading_ = true;
@@ -63,7 +62,7 @@ class ByteStreamTeeEngine::PullAlgorithm final : public StreamAlgorithm {
                                   exception_state);
     }
     //   f. Return a promise resolved with undefined.
-    return PromiseResolveWithUndefined(script_state);
+    return ToResolvedUndefinedPromise(script_state);
   }
 
   void Trace(Visitor* visitor) const override {
@@ -83,9 +82,9 @@ class ByteStreamTeeEngine::CancelAlgorithm final : public StreamAlgorithm {
     DCHECK(branch == 0 || branch == 1);
   }
 
-  v8::Local<v8::Promise> Run(ScriptState* script_state,
-                             int argc,
-                             v8::Local<v8::Value> argv[]) override {
+  ScriptPromise<IDLUndefined> Run(ScriptState* script_state,
+                                  int argc,
+                                  v8::Local<v8::Value> argv[]) override {
     // https://streams.spec.whatwg.org/#abstract-opdef-readablebytestreamtee
     // This implements both cancel1Algorithm and cancel2Algorithm as they are
     // identical except for the index they operate on. Standard comments are
@@ -115,7 +114,7 @@ class ByteStreamTeeEngine::CancelAlgorithm final : public StreamAlgorithm {
       engine_->cancel_promise_->Resolve(cancel_result);
     }
     //   d. Return cancelPromise.
-    return engine_->cancel_promise_->V8Promise();
+    return engine_->cancel_promise_->Promise();
   }
 
   void Trace(Visitor* visitor) const override {
@@ -483,14 +482,13 @@ void ByteStreamTeeEngine::ForwardReaderError(
     ReadableStreamGenericReader* this_reader) {
   // 14. Let forwardReaderError be the following steps, taking a thisReader
   // argument:
-  class RejectFunction final : public PromiseHandler {
+  class RejectFunction final : public ThenCallable<IDLAny, RejectFunction> {
    public:
     explicit RejectFunction(ByteStreamTeeEngine* engine,
                             ReadableStreamGenericReader* reader)
         : engine_(engine), reader_(reader) {}
 
-    void CallWithLocal(ScriptState* script_state,
-                       v8::Local<v8::Value> r) override {
+    void React(ScriptState* script_state, ScriptValue r) {
       //   a. Upon rejection of thisReader.[[closedPromise]] with reason r,
       //     i. If thisReader is not reader, return.
       if (engine_->reader_ != reader_) {
@@ -499,11 +497,11 @@ void ByteStreamTeeEngine::ForwardReaderError(
       //     ii. Perform !
       //     ReadableByteStreamControllerError(branch1.[[controller]], r).
       ReadableByteStreamController::Error(script_state, engine_->controller_[0],
-                                          r);
+                                          r.V8Value());
       //     iii. Perform !
       //     ReadableByteStreamControllerError(branch2.[[controller]], r).
       ReadableByteStreamController::Error(script_state, engine_->controller_[1],
-                                          r);
+                                          r.V8Value());
       //     iv. If canceled1 is false or canceled2 is false, resolve
       //     cancelPromise with undefined.
       if (!engine_->canceled_[0] || !engine_->canceled_[1]) {
@@ -514,7 +512,7 @@ void ByteStreamTeeEngine::ForwardReaderError(
     void Trace(Visitor* visitor) const override {
       visitor->Trace(engine_);
       visitor->Trace(reader_);
-      PromiseHandler::Trace(visitor);
+      ThenCallable<IDLAny, RejectFunction>::Trace(visitor);
     }
 
    private:
@@ -522,11 +520,9 @@ void ByteStreamTeeEngine::ForwardReaderError(
     Member<ReadableStreamGenericReader> reader_;
   };
 
-  StreamThenPromise(script_state->GetContext(),
-                    this_reader->closed(script_state).V8Promise(), nullptr,
-                    MakeGarbageCollected<ScriptFunction>(
-                        script_state, MakeGarbageCollected<RejectFunction>(
-                                          this, this_reader)));
+  this_reader->closed(script_state)
+      .Catch(script_state,
+             MakeGarbageCollected<RejectFunction>(this, this_reader));
 }
 
 void ByteStreamTeeEngine::PullWithDefaultReader(
@@ -649,8 +645,7 @@ void ByteStreamTeeEngine::Start(ScriptState* script_state,
 
   // 13. Let cancelPromise be a new promise.
   cancel_promise_ =
-      MakeGarbageCollected<ScriptPromiseResolver<IDLPromise<IDLUndefined>>>(
-          script_state);
+      MakeGarbageCollected<ScriptPromiseResolver<IDLUndefined>>(script_state);
 
   // 17. Let pull1Algorithm be the following steps:
   // (See PullAlgorithm::Run()).

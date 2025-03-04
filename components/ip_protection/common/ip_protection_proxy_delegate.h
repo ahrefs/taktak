@@ -5,32 +5,41 @@
 #ifndef COMPONENTS_IP_PROTECTION_COMMON_IP_PROTECTION_PROXY_DELEGATE_H_
 #define COMPONENTS_IP_PROTECTION_COMMON_IP_PROTECTION_PROXY_DELEGATE_H_
 
+#include <cstddef>
 #include <deque>
+#include <string>
 
-#include "base/component_export.h"
-#include "base/memory/raw_ptr.h"
-#include "components/ip_protection/common/ip_protection_core.h"
-#include "components/ip_protection/common/ip_protection_telemetry.h"
-#include "components/ip_protection/common/masked_domain_list_manager.h"
+#include "base/gtest_prod_util.h"
+#include "base/memory/raw_ref.h"
+#include "base/memory/weak_ptr.h"
+#include "net/base/net_errors.h"
+#include "net/base/network_anonymization_key.h"
+#include "net/base/proxy_chain.h"
 #include "net/base/proxy_delegate.h"
 #include "net/proxy_resolution/proxy_retry_info.h"
 
+class GURL;
+
 namespace net {
+
 class HttpRequestHeaders;
 class ProxyResolutionService;
+class ProxyList;
+struct ProxyRetryInfo;
+
 }  // namespace net
 
 namespace ip_protection {
+
+class IpProtectionCore;
+enum class ProxyResolutionResult;
 
 // IpProtectionProxyDelegate is used to support IP protection, by injecting
 // proxies for requests where IP should be protected.
 class IpProtectionProxyDelegate : public net::ProxyDelegate {
  public:
-  // Both masked_domain_list_manager and ipp_core must be
-  // non-null. The masked_domain_list_manager (MaskedDomainList) feature
-  // must be enabled.
-  IpProtectionProxyDelegate(MaskedDomainListManager* masked_domain_list_manager,
-                            std::unique_ptr<IpProtectionCore> ipp_core);
+  // The `ip_protection_core` must be non-null.
+  explicit IpProtectionProxyDelegate(IpProtectionCore* ip_protection_core);
 
   IpProtectionProxyDelegate(const IpProtectionProxyDelegate&) = delete;
   IpProtectionProxyDelegate& operator=(const IpProtectionProxyDelegate&) =
@@ -74,9 +83,7 @@ class IpProtectionProxyDelegate : public net::ProxyDelegate {
       const net::ProxyList& existing_proxy_list,
       const net::ProxyList& custom_proxy_list);
 
-  const raw_ptr<MaskedDomainListManager> masked_domain_list_manager_;
-
-  const std::unique_ptr<IpProtectionCore> ipp_core_;
+  const raw_ref<IpProtectionCore> ip_protection_core_;
 
   base::WeakPtrFactory<IpProtectionProxyDelegate> weak_factory_{this};
 };

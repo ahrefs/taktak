@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/40285824): Remove this and spanify to fix the errors.
+#pragma allow_unsafe_buffers
+#endif
+
 #include "media/gpu/v4l2/test/h265_decoder.h"
 
 #include <linux/videodev2.h>
@@ -1443,8 +1448,7 @@ VideoDecoder::Result H265Decoder::DecodeNextFrame(const int frame_number,
   }
 
   if (frames_ready_to_be_outputted_.empty()) {
-    NOTREACHED_IN_MIGRATION()
-        << "Stream ended with |frames_ready_to_be_outputted_| empty";
+    NOTREACHED() << "Stream ended with |frames_ready_to_be_outputted_| empty";
   }
 
   scoped_refptr<H265Picture> picture = frames_ready_to_be_outputted_.front();

@@ -191,9 +191,7 @@ bool ShouldConfigureDefaultContainer(Profile* profile) {
       profile->GetPrefs()->GetFilePath(prefs::kCrostiniAnsiblePlaybookFilePath);
   bool default_container_configured = profile->GetPrefs()->GetBoolean(
       prefs::kCrostiniDefaultContainerConfigured);
-  return base::FeatureList::IsEnabled(
-             features::kCrostiniAnsibleInfrastructure) &&
-         !default_container_configured && !ansible_playbook_file_path.empty();
+  return !default_container_configured && !ansible_playbook_file_path.empty();
 }
 
 bool ShouldAllowContainerUpgrade(Profile* profile) {
@@ -239,7 +237,7 @@ void LaunchCrostiniAppImpl(
           [](Profile* profile, const std::string& app_id,
              guest_os::GuestOsRegistryService::Registration registration,
              const guest_os::GuestId& container_id, int64_t display_id,
-             const std::vector<guest_os::LaunchArg> args,
+             std::vector<guest_os::LaunchArg> args,
              crostini::CrostiniSuccessCallback callback,
              crostini::CrostiniResult result) {
             if (result != crostini::CrostiniResult::SUCCESS) {

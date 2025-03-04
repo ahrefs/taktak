@@ -45,7 +45,7 @@ TranslateService::TranslateService()
   resource_request_allowed_notifier_.Init(this, true /* leaky */);
 }
 
-TranslateService::~TranslateService() {}
+TranslateService::~TranslateService() = default;
 
 // static
 void TranslateService::Initialize() {
@@ -99,8 +99,7 @@ void TranslateService::OnResourceRequestsAllowed() {
   translate::TranslateLanguageList* language_list =
       translate::TranslateDownloadManager::GetInstance()->language_list();
   if (!language_list) {
-    NOTREACHED_IN_MIGRATION();
-    return;
+    NOTREACHED();
   }
 
   language_list->SetResourceRequestsAllowed(

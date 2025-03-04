@@ -7,11 +7,11 @@
 #import "base/functional/bind.h"
 #import "base/memory/ptr_util.h"
 #import "base/uuid.h"
-#import "components/autofill/core/browser/autofill_test_utils.h"
 #import "components/autofill/core/browser/payments/autofill_save_card_delegate.h"
 #import "components/autofill/core/browser/payments/autofill_save_card_ui_info.h"
 #import "components/autofill/core/browser/payments/payments_autofill_client.h"
 #import "components/autofill/core/browser/payments/test_legal_message_line.h"
+#import "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #import "components/signin/public/identity_manager/account_info.h"
 
 MockAutofillSaveCardInfoBarDelegateMobile::
@@ -56,7 +56,9 @@ std::unique_ptr<MockAutofillSaveCardInfoBarDelegateMobile>
 MockAutofillSaveCardInfoBarDelegateMobileFactory::
     CreateMockAutofillSaveCardInfoBarDelegateMobileFactory(
         bool upload,
-        autofill::CreditCard card) {
+        autofill::CreditCard card,
+        autofill::payments::PaymentsAutofillClient::SaveCreditCardOptions
+            options) {
   using Variant = absl::variant<
       autofill::payments::PaymentsAutofillClient::LocalSaveCardPromptCallback,
       autofill::payments::PaymentsAutofillClient::UploadSaveCardPromptCallback>;
@@ -65,7 +67,7 @@ MockAutofillSaveCardInfoBarDelegateMobileFactory::
   autofill::payments::PaymentsAutofillClient::LocalSaveCardPromptCallback
       local_cb = base::DoNothing();
   return std::make_unique<MockAutofillSaveCardInfoBarDelegateMobile>(
-      autofill::payments::PaymentsAutofillClient::SaveCreditCardOptions(), card,
+      options, card,
       upload ? Variant(std::move(upload_cb)) : Variant(std::move(local_cb)),
       autofill::LegalMessageLines(
           {autofill::TestLegalMessageLine("Test message")}),

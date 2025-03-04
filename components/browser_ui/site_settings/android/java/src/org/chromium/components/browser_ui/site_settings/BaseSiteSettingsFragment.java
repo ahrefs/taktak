@@ -4,20 +4,19 @@
 
 package org.chromium.components.browser_ui.site_settings;
 
-import android.content.Context;
-import android.content.Intent;
-
 import androidx.preference.PreferenceFragmentCompat;
 
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.settings.FragmentSettingsNavigation;
 import org.chromium.components.browser_ui.settings.SettingsNavigation;
 
 /** Preference fragment for showing the Site Settings UI. */
+@NullMarked
 public abstract class BaseSiteSettingsFragment extends PreferenceFragmentCompat
         implements FragmentSettingsNavigation {
-    private SiteSettingsDelegate mSiteSettingsDelegate;
-    private CustomTabIntentHelper mCustomTabIntentHelper;
-    private SettingsNavigation mSettingsNavigation;
+    private @Nullable SiteSettingsDelegate mSiteSettingsDelegate;
+    private @Nullable SettingsNavigation mSettingsNavigation;
 
     /**
      * Sets the SiteSettingsDelegate instance this Fragment should use.
@@ -40,32 +39,6 @@ public abstract class BaseSiteSettingsFragment extends PreferenceFragmentCompat
         return mSiteSettingsDelegate != null;
     }
 
-    /**
-     * Functional interface to start a Chrome Custom Tab for the given intent, e.g. by using {@link
-     * org.chromium.chrome.browser.LaunchIntentDispatcher#createCustomTabActivityIntent}.
-     * TODO(crbug.com/40751023): Update when LaunchIntentDispatcher is (partially-)modularized.
-     */
-    public interface CustomTabIntentHelper {
-        /**
-         * @see org.chromium.chrome.browser.LaunchIntentDispatcher#createCustomTabActivityIntent
-         */
-        Intent createCustomTabActivityIntent(Context context, Intent intent);
-    }
-
-    /**
-     * Sets the CustomTabIntentHelper instance this Fragment should use.
-     *
-     * <p>This should be called by the embedding Activity.
-     */
-    public void setCustomTabIntentHelper(CustomTabIntentHelper customTabIntentHelper) {
-        mCustomTabIntentHelper = customTabIntentHelper;
-    }
-
-    /** @return the CustomTabIntentHelper instance to use. */
-    public CustomTabIntentHelper getCustomTabIntentHelper() {
-        return mCustomTabIntentHelper;
-    }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -80,7 +53,7 @@ public abstract class BaseSiteSettingsFragment extends PreferenceFragmentCompat
     }
 
     /** Returns the associated {@link SettingsNavigation}. */
-    public SettingsNavigation getSettingsNavigation() {
+    public @Nullable SettingsNavigation getSettingsNavigation() {
         return mSettingsNavigation;
     }
 }

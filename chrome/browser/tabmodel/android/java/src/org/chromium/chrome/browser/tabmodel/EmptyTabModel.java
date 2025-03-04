@@ -68,6 +68,11 @@ public class EmptyTabModel implements IncognitoTabModelInternal {
     }
 
     @Override
+    public @NonNull TabRemover getTabRemover() {
+        return new EmptyTabRemover();
+    }
+
+    @Override
     public boolean closeTabs(TabClosureParams tabClosureParams) {
         return false;
     }
@@ -143,9 +148,6 @@ public class EmptyTabModel implements IncognitoTabModelInternal {
     public void cancelTabClosure(int tabId) {}
 
     @Override
-    public void notifyAllTabsClosureUndone() {}
-
-    @Override
     public boolean supportsPendingClosures() {
         return false;
     }
@@ -173,14 +175,6 @@ public class EmptyTabModel implements IncognitoTabModelInternal {
 
     @Override
     public void removeObserver(TabModelObserver observer) {}
-
-    @Override
-    public int getTabCountNavigatedInTimeWindow(long beginTimeMs, long endTimeMs) {
-        return 0;
-    }
-
-    @Override
-    public void closeTabsNavigatedInTimeWindow(long beginTimeMs, long endTimeMs) {}
 
     @Override
     public void removeTab(Tab tab) {}

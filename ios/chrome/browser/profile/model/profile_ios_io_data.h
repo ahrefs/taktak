@@ -19,7 +19,6 @@
 #import "components/prefs/pref_member.h"
 #import "ios/chrome/browser/net/model/net_types.h"
 #import "ios/chrome/browser/profile/model/ios_chrome_io_thread.h"
-#import "ios/chrome/browser/shared/model/profile/profile_ios_forward.h"
 #import "net/cookies/cookie_monster.h"
 #import "net/http/http_cache.h"
 #import "net/http/http_network_session.h"
@@ -32,10 +31,7 @@ enum class ProfileIOSType;
 class HostContentSettingsMap;
 class IOSChromeHttpUserAgentSettings;
 class IOSChromeURLRequestContextGetter;
-
-namespace content_settings {
-class CookieSettings;
-}
+class ProfileIOS;
 
 namespace net {
 class HttpTransactionFactory;
@@ -70,7 +66,6 @@ class ProfileIOSIOData {
   // These are useful when the Chrome layer is called from the content layer
   // with a content::ResourceContext, and they want access to Chrome data for
   // that profile.
-  content_settings::CookieSettings* GetCookieSettings() const;
   HostContentSettingsMap* GetHostContentSettingsMap() const;
 
   ProfileIOSType profile_type() const { return profile_type_; }
@@ -95,7 +90,6 @@ class ProfileIOSIOData {
 
     base::FilePath path;
     raw_ptr<IOSChromeIOThread> io_thread;
-    scoped_refptr<content_settings::CookieSettings> cookie_settings;
     scoped_refptr<HostContentSettingsMap> host_content_settings_map;
 
     // We need to initialize the ProxyConfigService from the UI thread
@@ -116,7 +110,7 @@ class ProfileIOSIOData {
 
   void InitializeOnUIThread(ProfileIOS* profile);
 
-  // Called when the ChromeBrowserState is destroyed. `context_getters` must
+  // Called when the ProfileIOS is destroyed. `context_getters` must
   // include all URLRequestContextGetters that refer to the
   // ProfileIOSIOData's URLRequestContexts. Triggers destruction of the
   // ProfileIOSIOData and shuts down `context_getters` safely on the IO
@@ -157,13 +151,12 @@ class ProfileIOSIOData {
   // Tracks whether or not we've been lazily initialized.
   mutable bool initialized_;
 
-  // Data from the UI thread from the ChromeBrowserState, used to initialize
+  // Data from the UI thread from the ProfileIOS, used to initialize
   // ProfileIOSIOData. Deleted after lazy initialization.
   mutable std::unique_ptr<ProfileParams> profile_params_;
 
   // Member variables which are pointed to by the various context objects.
   mutable BooleanPrefMember enable_referrers_;
-  mutable BooleanPrefMember enable_do_not_track_;
 
   BooleanPrefMember enable_metrics_;
   std::unique_ptr<AcceptLanguagePrefWatcher> accept_language_pref_watcher_;
@@ -171,8 +164,6 @@ class ProfileIOSIOData {
   // These are only valid in between LazyInitialize() and their accessor being
   // called.
   mutable std::unique_ptr<net::URLRequestContext> main_request_context_;
-
-  mutable scoped_refptr<content_settings::CookieSettings> cookie_settings_;
 
   mutable scoped_refptr<HostContentSettingsMap> host_content_settings_map_;
 

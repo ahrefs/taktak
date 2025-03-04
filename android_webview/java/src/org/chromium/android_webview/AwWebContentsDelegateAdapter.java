@@ -227,6 +227,7 @@ class AwWebContentsDelegateAdapter extends AwWebContentsDelegate {
             final int processId,
             final int renderId,
             final int blinkFileChooserParamsMode,
+            boolean openWritable,
             String acceptTypes,
             String title,
             String defaultFilename,
@@ -235,7 +236,12 @@ class AwWebContentsDelegateAdapter extends AwWebContentsDelegate {
                 FileModeConversionHelper.convertFileChooserMode(blinkFileChooserParamsMode);
         AwContentsClient.FileChooserParamsImpl params =
                 new AwContentsClient.FileChooserParamsImpl(
-                        webChromeClientMode, acceptTypes, title, defaultFilename, capture);
+                        webChromeClientMode,
+                        openWritable,
+                        acceptTypes,
+                        title,
+                        defaultFilename,
+                        capture);
 
         mContentsClient.showFileChooser(
                 new Callback<String[]>() {
@@ -405,6 +411,19 @@ class AwWebContentsDelegateAdapter extends AwWebContentsDelegate {
             Uri uri = Uri.parse(filePath);
             return ContentUriUtils.getDisplayName(
                     uri, mContext, MediaStore.MediaColumns.DISPLAY_NAME);
+        }
+    }
+
+    /** Handle zoom in/zoom out for ctrl + mouse wheel. */
+    @Override
+    public void contentsZoomChange(boolean zoomIn) {
+        boolean supportsZoom = mAwContents.getSettings().supportZoom();
+        if (supportsZoom) {
+            if (zoomIn) {
+                mAwContents.zoomIn();
+            } else {
+                mAwContents.zoomOut();
+            }
         }
     }
 }

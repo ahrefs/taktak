@@ -99,7 +99,7 @@ TEST_F(HighlightOverlayTest, ComputeLayers) {
                 HighlightLayer{HighlightLayerType::kSpelling},
                 HighlightLayer{HighlightLayerType::kTargetText},
                 HighlightLayer{HighlightLayerType::kSearchText},
-                HighlightLayer{HighlightLayerType::kSearchTextCurrent},
+                HighlightLayer{HighlightLayerType::kSearchTextActiveMatch},
             }))
       << "should return kGrammar + kSpelling + kTargetText + kSearchText no "
          "more than once each";
@@ -249,7 +249,7 @@ TEST_F(HighlightOverlayTest, ComputeEdges) {
                         3,
                         HighlightEdgeType::kStart},
           HighlightEdge{{2, 3},
-                        HighlightLayerType::kSearchTextCurrent,
+                        HighlightLayerType::kSearchTextActiveMatch,
                         5,
                         HighlightEdgeType::kStart},
           HighlightEdge{
@@ -263,7 +263,7 @@ TEST_F(HighlightOverlayTest, ComputeEdges) {
                         3,
                         HighlightEdgeType::kEnd},
           HighlightEdge{{2, 3},
-                        HighlightLayerType::kSearchTextCurrent,
+                        HighlightLayerType::kSearchTextActiveMatch,
                         5,
                         HighlightEdgeType::kEnd},
           HighlightEdge{{1, 3},
@@ -305,7 +305,7 @@ TEST_F(HighlightOverlayTest, ComputeEdges) {
                         3,
                         HighlightEdgeType::kStart},
           HighlightEdge{{2, 3},
-                        HighlightLayerType::kSearchTextCurrent,
+                        HighlightLayerType::kSearchTextActiveMatch,
                         5,
                         HighlightEdgeType::kStart},
           HighlightEdge{
@@ -319,7 +319,7 @@ TEST_F(HighlightOverlayTest, ComputeEdges) {
                         3,
                         HighlightEdgeType::kEnd},
           HighlightEdge{{2, 3},
-                        HighlightLayerType::kSearchTextCurrent,
+                        HighlightLayerType::kSearchTextActiveMatch,
                         5,
                         HighlightEdgeType::kEnd},
           HighlightEdge{{1, 3},
@@ -406,7 +406,6 @@ TEST_F(HighlightOverlayTest, ComputeParts) {
   HighlightStyleUtils::HighlightColorPropertySet bar_current_colors{
       HighlightStyleUtils::HighlightColorProperty::kCurrentColor,
       HighlightStyleUtils::HighlightColorProperty::kFillColor,
-      HighlightStyleUtils::HighlightColorProperty::kStrokeColor,
       HighlightStyleUtils::HighlightColorProperty::kEmphasisColor,
       HighlightStyleUtils::HighlightColorProperty::kSelectionDecorationColor,
       HighlightStyleUtils::HighlightColorProperty::kTextDecorationColor,
@@ -429,7 +428,6 @@ TEST_F(HighlightOverlayTest, ComputeParts) {
   HighlightStyleUtils::HighlightColorPropertySet target_current_colors{
       HighlightStyleUtils::HighlightColorProperty::kCurrentColor,
       HighlightStyleUtils::HighlightColorProperty::kFillColor,
-      HighlightStyleUtils::HighlightColorProperty::kStrokeColor,
       HighlightStyleUtils::HighlightColorProperty::kEmphasisColor,
       HighlightStyleUtils::HighlightColorProperty::kSelectionDecorationColor,
       HighlightStyleUtils::HighlightColorProperty::kTextDecorationColor,

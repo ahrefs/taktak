@@ -51,12 +51,12 @@ export class SettingsMultideviceSmartlockItemElement extends
        * Authentication token provided by lock-screen-password-prompt-dialog.
        */
       authToken: {
-        type: Object,
+        type: String,
       },
     };
   }
 
-  authToken: chrome.quickUnlockPrivate.TokenInfo|undefined;
+  authToken: string|undefined;
   private browserProxy_: MultiDeviceBrowserProxy;
 
   constructor() {
@@ -109,8 +109,8 @@ export class SettingsMultideviceSmartlockItemElement extends
     const feature = event.detail.feature;
     const enabled = event.detail.enabled;
 
-    this.browserProxy_.setFeatureEnabledState(
-        feature, enabled, this.authToken!.token);
+    this.browserProxy_.setFeatureEnabledState(feature, enabled, this.authToken);
+
     recordSettingChange(Setting.kSmartLockOnOff);
   }
 }

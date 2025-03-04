@@ -102,6 +102,10 @@ class CONTENT_EXPORT AttributionResolverDelegate {
   // Must be positive.
   virtual base::TimeDelta GetDeleteExpiredRateLimitsFrequency() const = 0;
 
+  // Returns the maximum frequency at which to delete expired OS registrations.
+  // Must be positive.
+  virtual base::TimeDelta GetDeleteExpiredOsRegistrationsFrequency() const = 0;
+
   // Returns a new report ID.
   virtual base::Uuid NewReportID() const = 0;
 
@@ -118,14 +122,6 @@ class CONTENT_EXPORT AttributionResolverDelegate {
   // if they are within the same reporting window, and we do not want to allow
   // ordering on their conversion metadata bits.
   virtual void ShuffleReports(std::vector<AttributionReport>& reports) = 0;
-
-  // Returns the rate used to determine whether to randomize the response to a
-  // source with the given trigger specs, as implemented by
-  // `GetRandomizedResponse()`. Must be in the range [0, 1] and remain constant
-  // for the lifetime of the delegate for calls with identical inputs.
-  virtual std::optional<double> GetRandomizedResponseRate(
-      const attribution_reporting::TriggerSpecs&,
-      attribution_reporting::EventLevelEpsilon) const = 0;
 
   using GetRandomizedResponseResult =
       base::expected<attribution_reporting::RandomizedResponseData,

@@ -92,6 +92,7 @@ class TabModel {
     // - "+" button in the bottom tab strip
     // - "+" button in the tab grid dialog
     // - "New tab in group" option in the tab strip group context menu
+    // - "Reopen" action in shared tab group messages.
     FROM_TAB_GROUP_UI,
     // Open from the long press context menu item 'Open in new tab in group'.
     // Will not be brought to the foreground.
@@ -125,6 +126,8 @@ class TabModel {
     FROM_RECENT_TABS_FOREGROUND,
     // Open a new tab to prevent collaborations from having 0 tabs.
     FROM_COLLABORATION_BACKGROUND_IN_GROUP,
+    // Opened from the bookmark bar. Will not be brought to the foreground.
+    FROM_BOOKMARK_BAR_BACKGROUND,
     // Must be last.
     SIZE
   };
@@ -186,6 +189,7 @@ class TabModel {
   virtual base::android::ScopedJavaLocalRef<jobject> GetJavaObject() const = 0;
 
   virtual void SetActiveIndex(int index) = 0;
+  virtual void ForceCloseAllTabs() = 0;
   virtual void CloseTabAt(int index) = 0;
 
   // Used for restoring tabs from synced foreign sessions.

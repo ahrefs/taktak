@@ -124,7 +124,7 @@ class COMPONENT_EXPORT(INPUT) RenderWidgetHostViewInput
   // properly transformed; however, coordinates received from an out-of-process
   // iframe renderer process require transformation.
   virtual gfx::PointF TransformPointToRootCoordSpaceF(
-      const gfx::PointF& point) = 0;
+      const gfx::PointF& point) const;
 
   // Converts a point in the root view's coordinate space to the coordinate
   // space of whichever view is used to call this method.
@@ -246,17 +246,17 @@ class COMPONENT_EXPORT(INPUT) RenderWidgetHostViewInput
 
   virtual const viz::DisplayHitTestQueryMap& GetDisplayHitTestQuery() const = 0;
 
- protected:
-  RenderWidgetHostViewInput();
-  ~RenderWidgetHostViewInput() override;
-
-  virtual void UpdateFrameSinkIdRegistration() = 0;
-
   // Stops flinging if a GSU event with momentum phase is sent to the renderer
   // but not consumed.
   virtual void StopFlingingIfNecessary(
       const blink::WebGestureEvent& event,
       blink::mojom::InputEventResultState ack_result);
+
+ protected:
+  RenderWidgetHostViewInput();
+  ~RenderWidgetHostViewInput() override;
+
+  virtual void UpdateFrameSinkIdRegistration() = 0;
 
   // If |event| is a touchpad pinch or double tap event for which we've sent a
   // synthetic wheel event, forward the |event| to the renderer, subject to

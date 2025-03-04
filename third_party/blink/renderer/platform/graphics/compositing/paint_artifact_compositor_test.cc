@@ -2,18 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "third_party/blink/renderer/platform/graphics/compositing/paint_artifact_compositor.h"
 
+#include <array>
 #include <memory>
 
 #include "base/containers/adapters.h"
 #include "base/memory/ptr_util.h"
 #include "base/task/single_thread_task_runner.h"
+#include "base/test/scoped_feature_list.h"
 #include "base/test/test_simple_task_runner.h"
 #include "build/build_config.h"
 #include "cc/input/main_thread_scrolling_reason.h"
@@ -25,6 +22,7 @@
 #include "cc/trees/clip_node.h"
 #include "cc/trees/effect_node.h"
 #include "cc/trees/layer_tree_host.h"
+#include "cc/trees/layer_tree_impl.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "cc/trees/property_tree.h"
 #include "cc/trees/scroll_node.h"
@@ -270,6 +268,76 @@ TEST_P(PaintArtifactCompositorTest, OneChunkWithAnOffset) {
   EXPECT_EQ(Translation(50, -50), child->ScreenSpaceTransform());
   EXPECT_EQ(gfx::Size(100, 100), child->bounds());
   EXPECT_FALSE(GetTransformNode(child).transform_changed);
+}
+
+TEST_P(PaintArtifactCompositorTest, MergeDistanceLimit0) {
+  gfx::Rect bounds(100, 100);
+  TestPaintArtifact ta;
+  ta.Chunk().Bounds(bounds).Chunk().Bounds(bounds).Chunk().Bounds(bounds);
+  const auto& artifact = ta.Build();
+  Update(artifact);
+  ASSERT_EQ(1u, LayerCount());
+
+  // No merge with merge distance limit 0.
+  base::test::ScopedFeatureList feature;
+  feature.InitAndEnableFeatureWithParameters(features::kLimitLayerMergeDistance,
+                                             {{"limit", "0"}});
+  Update(artifact);
+  EXPECT_EQ(3u, LayerCount());
+}
+
+TEST_P(PaintArtifactCompositorTest, MergeDistanceLimit1) {
+  gfx::Rect bounds(100, 100);
+  // The foreign layer doesn't overlap with other chunks.
+  gfx::Point foreign_layer_origin(200, 200);
+  TestPaintArtifact ta;
+  ta.Chunk().Bounds(bounds).Chunk().Bounds(bounds).Chunk().Bounds(bounds);
+  ta.ForeignLayerChunk(cc::Layer::Create(), foreign_layer_origin);
+  ta.Chunk().Bounds(bounds).Chunk().Bounds(bounds).Chunk().Bounds(bounds);
+  const auto& artifact = ta.Build();
+  Update(artifact);
+  ASSERT_EQ(2u, LayerCount());
+
+  // Only merge mergeable adjacent layers.
+  base::test::ScopedFeatureList feature;
+  feature.InitAndEnableFeatureWithParameters(features::kLimitLayerMergeDistance,
+                                             {{"limit", "1"}});
+  Update(artifact);
+  EXPECT_EQ(3u, LayerCount());
+}
+
+TEST_P(PaintArtifactCompositorTest, MergeDistanceLimit2) {
+  gfx::Rect bounds(100, 100);
+  // The foreign layers don't overlap with the non-foreign-layer chunks.
+  gfx::Point foreign_layer_origin(200, 200);
+
+  // One foreign layer between other mergeable layers.
+  TestPaintArtifact ta1;
+  ta1.Chunk().Bounds(bounds).Chunk().Bounds(bounds).Chunk().Bounds(bounds);
+  ta1.ForeignLayerChunk(cc::Layer::Create(), foreign_layer_origin);
+  ta1.Chunk().Bounds(bounds).Chunk().Bounds(bounds).Chunk().Bounds(bounds);
+
+  // Three foreign layers between other mergeable layers.
+  TestPaintArtifact ta2;
+  ta2.Chunk().Bounds(bounds).Chunk().Bounds(bounds).Chunk().Bounds(bounds);
+  ta2.ForeignLayerChunk(cc::Layer::Create(), foreign_layer_origin);
+  ta2.ForeignLayerChunk(cc::Layer::Create(), foreign_layer_origin);
+  ta2.Chunk().Bounds(bounds).Chunk().Bounds(bounds).Chunk().Bounds(bounds);
+
+  const auto& artifact1 = ta1.Build();
+  const auto& artifact2 = ta2.Build();
+  Update(artifact1);
+  ASSERT_EQ(2u, LayerCount());
+  Update(artifact2);
+  ASSERT_EQ(3u, LayerCount());
+
+  base::test::ScopedFeatureList feature;
+  feature.InitAndEnableFeatureWithParameters(features::kLimitLayerMergeDistance,
+                                             {{"limit", "2"}});
+  Update(artifact1);
+  EXPECT_EQ(2u, LayerCount());
+  Update(artifact2);
+  EXPECT_EQ(4u, LayerCount());
 }
 
 TEST_P(PaintArtifactCompositorTest, OneTransform) {
@@ -938,7 +1006,7 @@ TEST_P(PaintArtifactCompositorTest, ForeignLayerPassesThrough) {
 
   TestPaintArtifact test_artifact;
   test_artifact.Chunk().RectDrawing(gfx::Rect(0, 0, 100, 100), Color::kWhite);
-  test_artifact.Chunk().ForeignLayer(layer, gfx::Point(50, 60));
+  test_artifact.ForeignLayerChunk(layer, gfx::Point(50, 60));
   test_artifact.Chunk().RectDrawing(gfx::Rect(0, 0, 100, 100), Color::kGray);
 
   auto& artifact = test_artifact.Build();
@@ -1039,8 +1107,8 @@ static void CheckCcScrollNode(const ScrollPaintPropertyNode& blink_scroll,
   EXPECT_EQ(blink_scroll.UserScrollableVertical(),
             cc_scroll.user_scrollable_vertical);
   EXPECT_EQ(blink_scroll.GetCompositorElementId(), cc_scroll.element_id);
-  EXPECT_EQ(blink_scroll.GetMainThreadScrollingReasons(),
-            cc_scroll.main_thread_scrolling_reasons);
+  EXPECT_EQ(blink_scroll.GetMainThreadRepaintReasons(),
+            cc_scroll.main_thread_repaint_reasons);
 }
 
 TEST_P(PaintArtifactCompositorTest, OneScrollNodeComposited) {
@@ -1068,7 +1136,7 @@ TEST_P(PaintArtifactCompositorTest, OneScrollNodeComposited) {
       *transform_tree.Node(scroll_node.transform_id);
   EXPECT_TRUE(transform_node.local.IsIdentity());
   EXPECT_EQ(gfx::PointF(-7, -9), transform_node.scroll_offset);
-  EXPECT_EQ(kNotScrollingOnMain, scroll_node.main_thread_scrolling_reasons);
+  EXPECT_EQ(kNotScrollingOnMain, scroll_node.main_thread_repaint_reasons);
 
   auto* layer = NonScrollHitTestLayerAt(0);
   auto transform_node_index = layer->transform_tree_index();
@@ -1230,9 +1298,7 @@ TEST_P(PaintArtifactCompositorTest, ScrollHitTestLayerOrder) {
   ASSERT_EQ(scroll.GetCompositorElementId(), scroll_node->element_id);
   EXPECT_EQ(scroll.GetCompositorElementId(),
             ScrollHitTestLayerAt(0)->element_id());
-  EXPECT_EQ(RuntimeEnabledFeatures::HitTestOpaquenessEnabled()
-                ? cc::HitTestOpaqueness::kOpaque
-                : cc::HitTestOpaqueness::kMixed,
+  EXPECT_EQ(cc::HitTestOpaqueness::kOpaque,
             ScrollHitTestLayerAt(0)->hit_test_opaqueness());
 
   // The second content layer should appear after the first.
@@ -1281,13 +1347,9 @@ TEST_P(PaintArtifactCompositorTest, NestedScrollableLayerOrder) {
   EXPECT_LT(LayerIndex(ScrollHitTestLayerAt(1)),
             LayerIndex(NonScrollHitTestLayerAt(0)));
 
-  auto expected_hit_test_opaqueness =
-      RuntimeEnabledFeatures::HitTestOpaquenessEnabled()
-          ? cc::HitTestOpaqueness::kOpaque
-          : cc::HitTestOpaqueness::kMixed;
-  EXPECT_EQ(expected_hit_test_opaqueness,
+  EXPECT_EQ(cc::HitTestOpaqueness::kOpaque,
             ScrollHitTestLayerAt(0)->hit_test_opaqueness());
-  EXPECT_EQ(expected_hit_test_opaqueness,
+  EXPECT_EQ(cc::HitTestOpaqueness::kOpaque,
             ScrollHitTestLayerAt(1)->hit_test_opaqueness());
 }
 
@@ -1625,11 +1687,7 @@ TEST_P(PaintArtifactCompositorTest, FixedPositionScrollState) {
   EXPECT_EQ(1, layer_a->transform_tree_index());
 
   auto* fixed_layer = LayerAt(1);
-  if (RuntimeEnabledFeatures::HitTestOpaquenessEnabled()) {
-    EXPECT_EQ(2, fixed_layer->scroll_tree_index());
-  } else {
-    EXPECT_EQ(1, fixed_layer->scroll_tree_index());
-  }
+  EXPECT_EQ(2, fixed_layer->scroll_tree_index());
   EXPECT_EQ(CcNodeId(*fixed_transform), fixed_layer->transform_tree_index());
   auto* fixed_transform_node = transform_tree.Node(3);
   EXPECT_EQ(1, fixed_transform_node->parent_id);
@@ -1699,11 +1757,7 @@ TEST_P(PaintArtifactCompositorTest, NonScrollingChildUnderFixedPosition) {
   EXPECT_EQ(2, layer_b->transform_tree_index());
 
   auto* fixed_layer = LayerAt(2);
-  if (RuntimeEnabledFeatures::HitTestOpaquenessEnabled()) {
-    EXPECT_EQ(2, fixed_layer->scroll_tree_index());
-  } else {
-    EXPECT_EQ(3, fixed_layer->scroll_tree_index());
-  }
+  EXPECT_EQ(2, fixed_layer->scroll_tree_index());
   EXPECT_EQ(CcNodeId(*fixed_transform), fixed_layer->transform_tree_index());
   auto* fixed_transform_node = transform_tree.Node(4);
   EXPECT_EQ(3, fixed_transform_node->parent_id);
@@ -4104,12 +4158,17 @@ TEST_P(PaintArtifactCompositorTest, LayerRasterInvalidationWithClip) {
   // layer_tree_host_->ActivateCommitState() and the second argument would come
   // from layer_tree_host_->active_commit_state(); we use pending_commit_state()
   // just to keep the test code simple.
-  layer->PushPropertiesTo(
-      layer->CreateLayerImpl(host_impl.sync_tree()).get(),
-      *const_cast<const cc::LayerTreeHost&>(GetLayerTreeHost())
-           .pending_commit_state(),
-      const_cast<const cc::LayerTreeHost&>(GetLayerTreeHost())
-          .thread_unsafe_commit_state());
+  auto layer_impl = layer->CreateLayerImpl(host_impl.sync_tree());
+  {
+    cc::LayerTreeImpl::DiscardableImageMapUpdater updater(
+        host_impl.sync_tree());
+    layer->PushPropertiesTo(
+        layer_impl.get(),
+        *const_cast<const cc::LayerTreeHost&>(GetLayerTreeHost())
+             .pending_commit_state(),
+        const_cast<const cc::LayerTreeHost&>(GetLayerTreeHost())
+            .thread_unsafe_commit_state());
+  }
   Update(artifact2);
   ASSERT_EQ(1u, LayerCount());
   ASSERT_EQ(layer, LayerAt(0));
@@ -4131,12 +4190,16 @@ TEST_P(PaintArtifactCompositorTest, LayerRasterInvalidationWithClip) {
                        Color::kBlack)
           .Build();
   // Simluate commit to the compositor thread.
-  layer->PushPropertiesTo(
-      layer->CreateLayerImpl(host_impl.sync_tree()).get(),
-      *const_cast<const cc::LayerTreeHost&>(GetLayerTreeHost())
-           .pending_commit_state(),
-      const_cast<const cc::LayerTreeHost&>(GetLayerTreeHost())
-          .thread_unsafe_commit_state());
+  {
+    cc::LayerTreeImpl::DiscardableImageMapUpdater updater(
+        host_impl.sync_tree());
+    layer->PushPropertiesTo(
+        layer_impl.get(),
+        *const_cast<const cc::LayerTreeHost&>(GetLayerTreeHost())
+             .pending_commit_state(),
+        const_cast<const cc::LayerTreeHost&>(GetLayerTreeHost())
+            .thread_unsafe_commit_state());
+  }
   Update(artifact3);
   ASSERT_EQ(1u, LayerCount());
   ASSERT_EQ(layer, LayerAt(0));
@@ -4322,7 +4385,7 @@ TEST_P(PaintArtifactCompositorTest, OpacityRenderSurfaces) {
   Update(artifact.Build());
   ASSERT_EQ(6u, LayerCount());
 
-  int effect_ids[6];
+  std::array<int, 6> effect_ids;
   for (size_t i = 0; i < LayerCount(); i++)
     effect_ids[i] = LayerAt(i)->effect_tree_index();
 
@@ -4409,7 +4472,7 @@ TEST_P(PaintArtifactCompositorTest, OpacityAnimationRenderSurfaces) {
   Update(artifact.Build());
   ASSERT_EQ(6u, LayerCount());
 
-  int effect_ids[6];
+  std::array<int, 6> effect_ids;
   for (size_t i = 0; i < LayerCount(); i++)
     effect_ids[i] = LayerAt(i)->effect_tree_index();
 
@@ -5032,7 +5095,7 @@ TEST_P(PaintArtifactCompositorTest, AddIndirectlyCompositedScrollNodes) {
   ASSERT_TRUE(scroll_node);
   EXPECT_TRUE(scroll_node->is_composited);
   EXPECT_EQ(cc::MainThreadScrollingReason::kNotScrollingOnMain,
-            scroll_node->main_thread_scrolling_reasons);
+            scroll_node->main_thread_repaint_reasons);
   EXPECT_TRUE(scroll_tree.CanRealizeScrollsOnActiveTree(*scroll_node));
   EXPECT_FALSE(scroll_tree.CanRealizeScrollsOnPendingTree(*scroll_node));
   EXPECT_FALSE(scroll_tree.ShouldRealizeScrollsOnMain(*scroll_node));
@@ -5056,12 +5119,12 @@ TEST_P(PaintArtifactCompositorTest, AddNonCompositedScrollNodes) {
   EXPECT_FALSE(scroll_tree.CanRealizeScrollsOnActiveTree(*scroll_node));
   if (RuntimeEnabledFeatures::RasterInducingScrollEnabled()) {
     EXPECT_EQ(cc::MainThreadScrollingReason::kNotScrollingOnMain,
-              scroll_node->main_thread_scrolling_reasons);
+              scroll_node->main_thread_repaint_reasons);
     EXPECT_TRUE(scroll_tree.CanRealizeScrollsOnPendingTree(*scroll_node));
     EXPECT_FALSE(scroll_tree.ShouldRealizeScrollsOnMain(*scroll_node));
   } else {
     EXPECT_EQ(cc::MainThreadScrollingReason::kNotOpaqueForTextAndLCDText,
-              scroll_node->main_thread_scrolling_reasons);
+              scroll_node->main_thread_repaint_reasons);
     EXPECT_FALSE(scroll_tree.CanRealizeScrollsOnPendingTree(*scroll_node));
     EXPECT_TRUE(scroll_tree.ShouldRealizeScrollsOnMain(*scroll_node));
   }
@@ -5085,12 +5148,12 @@ TEST_P(PaintArtifactCompositorTest, AddNonCompositedMainThreadScrollNodes) {
   if (RuntimeEnabledFeatures::RasterInducingScrollEnabled()) {
     EXPECT_EQ(
         cc::MainThreadScrollingReason::kHasBackgroundAttachmentFixedObjects,
-        scroll_node->main_thread_scrolling_reasons);
+        scroll_node->main_thread_repaint_reasons);
   } else {
     EXPECT_EQ(
         cc::MainThreadScrollingReason::kNotOpaqueForTextAndLCDText |
             cc::MainThreadScrollingReason::kHasBackgroundAttachmentFixedObjects,
-        scroll_node->main_thread_scrolling_reasons);
+        scroll_node->main_thread_repaint_reasons);
   }
   EXPECT_FALSE(scroll_tree.CanRealizeScrollsOnActiveTree(*scroll_node));
   EXPECT_FALSE(scroll_tree.CanRealizeScrollsOnPendingTree(*scroll_node));
@@ -5118,7 +5181,7 @@ TEST_P(PaintArtifactCompositorTest,
   // THe scroll node should realize on main thread despite is_composited.
   EXPECT_TRUE(scroll_node->is_composited);
   EXPECT_EQ(cc::MainThreadScrollingReason::kHasBackgroundAttachmentFixedObjects,
-            scroll_node->main_thread_scrolling_reasons);
+            scroll_node->main_thread_repaint_reasons);
   EXPECT_FALSE(scroll_tree.CanRealizeScrollsOnActiveTree(*scroll_node));
   EXPECT_FALSE(scroll_tree.CanRealizeScrollsOnPendingTree(*scroll_node));
   EXPECT_TRUE(scroll_tree.ShouldRealizeScrollsOnMain(*scroll_node));
@@ -5160,7 +5223,7 @@ TEST_P(PaintArtifactCompositorTest, RepaintIndirectScrollHitTest) {
   host.CompositeForTest(base::TimeTicks::Now(), true, base::OnceClosure());
   EXPECT_FALSE(host.CommitRequested());
 
-  GetPaintArtifactCompositor().UpdateRepaintedLayers(artifact);
+  EXPECT_TRUE(GetPaintArtifactCompositor().TryFastPathUpdate(artifact));
   EXPECT_FALSE(host.CommitRequested());
 }
 
@@ -5187,7 +5250,7 @@ TEST_P(PaintArtifactCompositorTest, ClearChangedStateWithIndirectTransform) {
   EXPECT_EQ(PaintPropertyChangeType::kUnchanged, c1->NodeChanged());
   EXPECT_EQ(PaintPropertyChangeType::kUnchanged, c2->NodeChanged());
 
-  GetPaintArtifactCompositor().UpdateRepaintedLayers(artifact);
+  EXPECT_TRUE(GetPaintArtifactCompositor().TryFastPathUpdate(artifact));
   // This test passes if no DCHECK occurs.
 }
 

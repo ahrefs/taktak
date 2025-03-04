@@ -15,7 +15,6 @@
 #include "base/memory/weak_ptr.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "ui/base/ime/text_input_client.h"
 #include "ui/views/views_export.h"
 
@@ -65,7 +64,7 @@ class VIEWS_EXPORT PrefixSelector : public ui::TextInputClient {
   std::optional<gfx::Rect> GetProximateCharacterBounds(
       const gfx::Range& range) const override;
   std::optional<size_t> GetProximateCharacterIndexFromPoint(
-      const gfx::Point& point,
+      const gfx::Point& screen_point_in_dips,
       ui::IndexFromPointFlags flags) const override;
 #endif  // BUILDFLAG(IS_WIN)
   bool GetCompositionCharacterBounds(size_t index,

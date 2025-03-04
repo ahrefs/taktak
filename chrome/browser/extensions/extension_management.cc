@@ -2,12 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "chrome/browser/extensions/extension_management.h"
 
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "base/command_line.h"
 #include "base/containers/contains.h"
 #include "base/feature_list.h"
 #include "base/functional/bind.h"
@@ -36,11 +42,13 @@
 #include "chrome/browser/themes/theme_service.h"
 #include "chrome/browser/themes/theme_service_factory.h"
 #include "chrome/common/chrome_features.h"
+#include "chrome/common/chrome_switches.h"
 #include "chrome/common/extensions/extension_constants.h"
 #include "chrome/common/pref_names.h"
 #include "components/crx_file/id_util.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_service.h"
+#include "content/public/common/content_switches.h"
 #include "extensions/browser/extension_prefs.h"
 #include "extensions/browser/pref_names.h"
 #include "extensions/common/extension.h"
@@ -379,10 +387,6 @@ bool ExtensionManagement::IsExemptFromMV2DeprecationByPolicy(
 
 bool ExtensionManagement::IsAllowedByUnpublishedAvailabilityPolicy(
     const Extension* extension) {
-  // Check the kill switch before applying policy check.
-  if (!base::FeatureList::IsEnabled(kCWSInfoService)) {
-    return true;
-  }
   // This policy only applies to extensions that update from CWS.
   if (!UpdatesFromWebstore(*extension)) {
     return true;
@@ -421,6 +425,11 @@ bool ExtensionManagement::IsAllowedByUnpackedDeveloperModePolicy(
     return true;
   }
   if (extension.location() != mojom::ManifestLocation::kUnpacked) {
+    return true;
+  }
+  // Allow extensions loaded from DevTools' "Extensions.loadUnpacked" command.
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kEnableUnsafeExtensionDebugging)) {
     return true;
   }
 
@@ -728,15 +737,11 @@ void ExtensionManagement::Refresh() {
   if (dict_pref) {
     // Parse new extension management preference.
 
-    bool defer_load_settings = base::FeatureList::IsEnabled(
-        features::kExtensionDeferredIndividualSettings);
     std::unordered_set<std::string> installed_extensions;
-    if (defer_load_settings) {
-      auto* extension_prefs = ExtensionPrefs::Get(profile_);
-      auto extensions_info = extension_prefs->GetInstalledExtensionsInfo();
-      for (const auto& extension_info : extensions_info) {
-        installed_extensions.insert(extension_info.extension_id);
-      }
+    auto* extension_prefs = ExtensionPrefs::Get(profile_);
+    auto extensions_info = extension_prefs->GetInstalledExtensionsInfo();
+    for (const auto& extension_info : extensions_info) {
+      installed_extensions.insert(extension_info.extension_id);
     }
 
     for (auto iter : *dict_pref) {
@@ -771,31 +776,30 @@ void ExtensionManagement::Refresh() {
             continue;
           }
 
-          if (defer_load_settings) {
-            auto should_defer = [&extension_id, &installed_extensions](
-                                    const base::Value::Dict& dict,
-                                    const SettingsIdMap* settings_by_id) {
-              // If in legacy force list, don't defer since already have an
-              // entry. This ensures that the entry in these settings matches
-              // the entry in the forcelist. Also don't defer if the extension
-              // is installed.
-              if (base::Contains(*settings_by_id, extension_id) ||
-                  base::Contains(installed_extensions, extension_id)) {
-                return false;
-              }
-              auto* install_mode =
-                  dict.FindString(schema_constants::kInstallationMode);
-              if (!install_mode)
-                return true;
-              // Don't defer if the extension needs to be installed.
-              return *install_mode != schema_constants::kForceInstalled &&
-                     *install_mode != schema_constants::kNormalInstalled;
-            };
-
-            if (should_defer(*subdict, &settings_by_id_)) {
-              deferred_ids_.insert(extension_id);
-              continue;
+          auto should_defer = [&extension_id, &installed_extensions](
+                                  const base::Value::Dict& dict,
+                                  const SettingsIdMap* settings_by_id) {
+            // If in legacy force list, don't defer since already have an
+            // entry. This ensures that the entry in these settings matches
+            // the entry in the forcelist. Also don't defer if the extension
+            // is installed.
+            if (base::Contains(*settings_by_id, extension_id) ||
+                base::Contains(installed_extensions, extension_id)) {
+              return false;
             }
+            auto* install_mode =
+                dict.FindString(schema_constants::kInstallationMode);
+            if (!install_mode) {
+              return true;
+            }
+            // Don't defer if the extension needs to be installed.
+            return *install_mode != schema_constants::kForceInstalled &&
+                   *install_mode != schema_constants::kNormalInstalled;
+          };
+
+          if (should_defer(*subdict, &settings_by_id_)) {
+            deferred_ids_.insert(extension_id);
+            continue;
           }
 
           internal::IndividualSettings* by_id = AccessById(extension_id);
@@ -1046,7 +1050,7 @@ ExtensionManagementFactory::ExtensionManagementFactory()
   DependsOn(InstallStageTrackerFactory::GetInstance());
 }
 
-ExtensionManagementFactory::~ExtensionManagementFactory() {}
+ExtensionManagementFactory::~ExtensionManagementFactory() = default;
 
 std::unique_ptr<KeyedService>
 ExtensionManagementFactory::BuildServiceInstanceForBrowserContext(
@@ -1055,11 +1059,6 @@ ExtensionManagementFactory::BuildServiceInstanceForBrowserContext(
                "ExtensionManagementFactory::BuildServiceInstanceFor");
   return std::make_unique<ExtensionManagement>(
       Profile::FromBrowserContext(context));
-}
-
-void ExtensionManagementFactory::RegisterProfilePrefs(
-    user_prefs::PrefRegistrySyncable* user_prefs) {
-  user_prefs->RegisterDictionaryPref(pref_names::kExtensionManagement);
 }
 
 }  // namespace extensions

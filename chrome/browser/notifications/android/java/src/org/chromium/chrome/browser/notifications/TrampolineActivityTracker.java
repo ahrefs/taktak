@@ -9,10 +9,17 @@ import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.IntDef;
+
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.TimeUtils;
+import org.chromium.base.metrics.RecordHistogram;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,31 +32,39 @@ import java.util.Map;
  * notification, it should inform this class about the corresponding job ID. The timeout will then
  * be set to the latest remaining job that is expected to finish.
  */
+@NullMarked
 public class TrampolineActivityTracker {
-    // Grace period to keep the activity alive.
-    private static final String TIMEOUT_PRIOR_NATIVE_INIT_PARAM =
-            "timeout_in_millis_prior_native_init";
-    private static final String TIMEOUT_POST_NATIVE_INIT_PARAM =
-            "timeout_in_millis_post_native_init";
-    private static final int TIMEOUT_PRIOR_NATIVE_INIT_IN_MILLISECONDS = 5 * 1000;
-    private static final int TIMEOUT_POST_NATIVE_INIT_IN_MILLISECONDS = 1 * 1000;
-    private static final int INVALID_JOB_HANDLE = -1;
 
     @SuppressLint("StaticFieldLeak")
-    private static TrampolineActivityTracker sInstance;
+    private static @Nullable TrampolineActivityTracker sInstance;
 
     private final Runnable mRunnable;
-    private final Map<Integer, Long> mEstimatedJobCompletionTimeMap = new HashMap<>();
+    private final Map<String, Long> mEstimatedJobCompletionTimeMap = new HashMap<>();
 
     private boolean mNativeInitialized;
-    private Activity mTrackedActivity;
+    private @Nullable Activity mTrackedActivity;
 
     // Number of activities waiting for notification intent handling.
-    private int mCurrentJobId;
     private Handler mHandler;
 
     // The elapsed real time in Milliseconds to finish the tracked activity.
     private long mActivityFinishTimeInMillis;
+
+    // The latest time when notification intent is started.
+    private long mNotificationIntentStartTime;
+    // Whether native is initialized when the most recent notification intent is started.
+    private boolean mIsNativeInitializedWhenIntentStarted;
+    // Number of notifications that is currently processed in parallel.
+    private int mNotificationInProcessing;
+
+    /** Defines the job duration */
+    @IntDef({JobDuration.IMMEDIATE, JobDuration.NORMAL, JobDuration.LONG})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface JobDuration {
+        int IMMEDIATE = 0; /* The job will immediately finish*/
+        int NORMAL = 1; /* The job will take normal amount of time */
+        int LONG = 2; /* The job may take a longer time */
+    }
 
     /**
      * Returns the singleton instance, lazily creating one if needed.
@@ -71,6 +86,26 @@ public class TrampolineActivityTracker {
     }
 
     /**
+     * Called when TrampolineActivity is created.
+     *
+     * @param hasVisibleActivity Whether Chrome has activities visible to user.
+     */
+    public void onNotificationIntentStarted() {
+        long lastStartTime = mNotificationIntentStartTime;
+        mNotificationIntentStartTime = TimeUtils.elapsedRealtimeMillis();
+        mIsNativeInitializedWhenIntentStarted = mNativeInitialized;
+
+        // Some notification might not report their job, Reset
+        // `mNotificationInProcessing` after some time.
+        if (mNotificationIntentStartTime - lastStartTime > getJobDuration(JobDuration.LONG)) {
+            mNotificationInProcessing = 0;
+        }
+        mNotificationInProcessing++;
+        RecordHistogram.recordCount100Histogram(
+                "Notifications.Android.IntentProcessedInParallel", mNotificationInProcessing);
+    }
+
+    /**
      * Called to track a trampoline activity. If a activity is already tracked, return false.
      * Otherwise, start tracking the new activity.
      *
@@ -78,7 +113,10 @@ public class TrampolineActivityTracker {
      */
     public boolean tryTrackActivity(Activity activity) {
         long delayToFinish =
-                mNativeInitialized ? getTimeoutPostNativeInitMs() : getTimeoutPriorNativeInitMs();
+                mNativeInitialized
+                        ? getJobDuration(JobDuration.NORMAL)
+                        : ChromeFeatureList.sNotificationTrampolineTimeoutPriorNativeInitMs
+                                .getValue();
         long estimatedFinishTime = TimeUtils.elapsedRealtimeMillis() + delayToFinish;
         // Extend the timeout if necessary.
         if (estimatedFinishTime > mActivityFinishTimeInMillis) {
@@ -106,31 +144,43 @@ public class TrampolineActivityTracker {
     /**
      * Called to inform that a job started processing notification intent.
      *
-     * @param estimatedTimeInMillis Estimated time to complete the job.
-     * @return An integer representing the job Id.
+     * @param jobId ID of the Job.
+     * @param jobDuration Estimated time to complete the job.
      */
-    public int startProcessingNewIntent(long estimatedTimeInMillis) {
-        if (mTrackedActivity == null) {
-            return INVALID_JOB_HANDLE;
+    public void startProcessingNewIntent(String jobId, @JobDuration int jobDuration) {
+        if (mTrackedActivity == null || jobId == null) {
+            return;
         }
 
-        long estimatedFinishTime = TimeUtils.elapsedRealtimeMillis() + estimatedTimeInMillis;
+        long estimatedFinishTime = TimeUtils.elapsedRealtimeMillis() + getJobDuration(jobDuration);
 
         // Extend the timeout if necessary.
         if (estimatedFinishTime > mActivityFinishTimeInMillis) {
             updateActivityFinishTime(estimatedFinishTime);
         }
-        mEstimatedJobCompletionTimeMap.put(mCurrentJobId, estimatedFinishTime);
-        return mCurrentJobId++;
+        mEstimatedJobCompletionTimeMap.put(jobId, estimatedFinishTime);
     }
 
     /**
      * Called when a notification intent finished processing.
      *
-     * @param jobId The ID of the job.
+     * @param jobId The ID of the Job.
      */
-    public void onIntentCompleted(int jobId) {
-        if (jobId == INVALID_JOB_HANDLE) return;
+    public void onIntentCompleted(String jobId) {
+        if (mNotificationIntentStartTime > 0) {
+            if (mNotificationInProcessing > 0) {
+                mNotificationInProcessing--;
+            }
+            String histogram =
+                    "Notifications.Android.IntentStartToFinishDuration."
+                            + (mIsNativeInitializedWhenIntentStarted
+                                    ? "NativeInitialized"
+                                    : "NativeUninitialized");
+            RecordHistogram.recordTimesHistogram(
+                    histogram, TimeUtils.elapsedRealtimeMillis() - mNotificationIntentStartTime);
+        }
+
+        if (jobId == null) return;
 
         mEstimatedJobCompletionTimeMap.remove(jobId);
 
@@ -147,13 +197,19 @@ public class TrampolineActivityTracker {
     public void onNativeInitialized() {
         mNativeInitialized = true;
 
+        if (mNotificationIntentStartTime > 0) {
+            assert !mIsNativeInitializedWhenIntentStarted;
+            RecordHistogram.recordTimesHistogram(
+                    "Android.Notification.Startup.NativeInitialized",
+                    TimeUtils.elapsedRealtimeMillis() - mNotificationIntentStartTime);
+        }
         if (mTrackedActivity == null) return;
 
         // There are no jobs yet, wait a small amount of time for jobs to be added. If there
         // are some jobs, just use the timeout from those jobs
         if (mEstimatedJobCompletionTimeMap.isEmpty()) {
             long estimatedFinishTime =
-                    TimeUtils.elapsedRealtimeMillis() + getTimeoutPostNativeInitMs();
+                    TimeUtils.elapsedRealtimeMillis() + getJobDuration(JobDuration.NORMAL);
             updateActivityFinishTime(estimatedFinishTime);
         }
     }
@@ -161,7 +217,6 @@ public class TrampolineActivityTracker {
     /** Update the activity finish time. */
     void updateActivityFinishTime(long activityFinishTime) {
         long delayToFinish = activityFinishTime - TimeUtils.elapsedRealtimeMillis();
-
         // If the finish time has already passed, finish the activity.
         if (delayToFinish < 0) {
             finishTrackedActivity();
@@ -174,18 +229,16 @@ public class TrampolineActivityTracker {
         mHandler.postDelayed(mRunnable, delayToFinish);
     }
 
-    private int getTimeoutPriorNativeInitMs() {
-        return ChromeFeatureList.getFieldTrialParamByFeatureAsInt(
-                ChromeFeatureList.NOTIFICATION_TRAMPOLINE,
-                TIMEOUT_PRIOR_NATIVE_INIT_PARAM,
-                TIMEOUT_PRIOR_NATIVE_INIT_IN_MILLISECONDS);
-    }
-
-    private int getTimeoutPostNativeInitMs() {
-        return ChromeFeatureList.getFieldTrialParamByFeatureAsInt(
-                ChromeFeatureList.NOTIFICATION_TRAMPOLINE,
-                TIMEOUT_POST_NATIVE_INIT_PARAM,
-                TIMEOUT_POST_NATIVE_INIT_IN_MILLISECONDS);
+    private int getJobDuration(@JobDuration int jobDuration) {
+        switch (jobDuration) {
+            case JobDuration.IMMEDIATE:
+                return ChromeFeatureList.sNotificationTrampolineImmediateJobDurationMs.getValue();
+            case JobDuration.NORMAL:
+                return ChromeFeatureList.sNotificationTrampolineNormalJobDurationMs.getValue();
+            case JobDuration.LONG:
+                return ChromeFeatureList.sNotificationTrampolineLongJobDurationMs.getValue();
+        }
+        return 0;
     }
 
     /** Sets the handler for testing purpose. */

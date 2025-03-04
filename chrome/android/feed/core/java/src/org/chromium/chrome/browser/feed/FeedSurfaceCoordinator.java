@@ -596,7 +596,7 @@ public class FeedSurfaceCoordinator
 
     public void maybeShowWebFeedAwarenessIph() {
         if (mWebFeedHasContent
-                && FeedFeatures.shouldUseWebFeedAwarenessIPH()
+                && FeedFeatures.shouldUseWebFeedAwarenessIph()
                 && !FeedFeatures.isFeedFollowUiUpdateEnabled()) {
             UserEducationHelper helper = new UserEducationHelper(mActivity, mProfile, mHandler);
             mSectionHeaderView.showWebFeedAwarenessIph(
@@ -794,13 +794,6 @@ public class FeedSurfaceCoordinator
     /** Sets the {@link StreamTabId} of the feed given a {@link NewTabPageLaunchOrigin}. */
     public void setTabIdFromLaunchOrigin(@NewTabPageLaunchOrigin int launchOrigin) {
         mMediator.setTabId(getTabIdFromLaunchOrigin(launchOrigin));
-    }
-
-    /*
-     * Returns true if the supervised user feed should be displayed.
-     */
-    public boolean shouldDisplaySupervisedFeed() {
-        return mProfile.isChild();
     }
 
     /**
@@ -1047,8 +1040,13 @@ public class FeedSurfaceCoordinator
         return mSectionHeaderModel;
     }
 
-    /** @return The {@link View} for this class. */
+    /**
+     * @return The {@link View} for this class.
+     */
+    // TODO(crbug.com/327387704): Remove after uno phase 2 follow-up launch.
+    @Deprecated
     View getSigninPromoView() {
+        assert !ChromeFeatureList.isEnabled(ChromeFeatureList.UNO_PHASE_2_FOLLOW_UP);
         if (mSigninPromoView == null) {
             LayoutInflater inflater = LayoutInflater.from(mRootView.getContext());
             mSigninPromoView =
@@ -1059,7 +1057,7 @@ public class FeedSurfaceCoordinator
     }
 
     /** Update header views in the Feed. */
-    void updateHeaderViews(boolean isSignInPromoVisible) {
+    void updateHeaderViews(@Nullable View signinPromoView) {
         if (!mMediator.hasStreams()) return;
 
         List<View> headers = new ArrayList<>();
@@ -1069,8 +1067,9 @@ public class FeedSurfaceCoordinator
 
         headers.add(mSectionHeaderView);
 
-        if (isSignInPromoVisible) {
-            headers.add(getSigninPromoView());
+        if (signinPromoView != null) {
+            mSigninPromoView = signinPromoView;
+            headers.add(signinPromoView);
         }
         setHeaders(headers);
     }
@@ -1081,10 +1080,6 @@ public class FeedSurfaceCoordinator
 
     public void setMediatorForTesting(FeedSurfaceMediator mediator) {
         mMediator = mediator;
-    }
-
-    public View getSignInPromoViewForTesting() {
-        return getSigninPromoView();
     }
 
     public View getSectionHeaderViewForTesting() {
@@ -1135,7 +1130,7 @@ public class FeedSurfaceCoordinator
                         () -> {
                             UserEducationHelper helper =
                                     new UserEducationHelper(mActivity, mProfile, mHandler);
-                            mSwipeRefreshLayout.showIPH(helper);
+                            mSwipeRefreshLayout.showIph(helper);
                         });
         mScrollableContainerDelegate.addScrollListener(mRefreshIphScrollListener);
     }
@@ -1175,7 +1170,7 @@ public class FeedSurfaceCoordinator
     }
 
     @Override
-    public boolean isFeedHeaderPositionInContainerSuitableForIPH(float headerMaxPosFraction) {
+    public boolean isFeedHeaderPositionInContainerSuitableForIph(float headerMaxPosFraction) {
         assert headerMaxPosFraction >= 0.0f && headerMaxPosFraction <= 1.0f
                 : "Max position fraction should be ranging between 0.0 and 1.0";
 
@@ -1235,6 +1230,11 @@ public class FeedSurfaceCoordinator
 
     public boolean isLoadingFeed() {
         return mMediator.isLoadingFeed();
+    }
+
+    @Override
+    public ObservableSupplier<Integer> getRestoringStateSupplier() {
+        return mMediator.getRestoringStateSupplier();
     }
 
     private int getLateralPaddingsPx() {

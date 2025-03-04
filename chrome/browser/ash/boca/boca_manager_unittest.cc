@@ -7,12 +7,20 @@
 #include <memory>
 
 #include "ash/constants/ash_features.h"
+#include "base/test/bind.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/task_environment.h"
 #include "chrome/test/base/testing_profile.h"
+#include "chromeos/ash/components/boca/babelorca/babel_orca_controller.h"
+#include "chromeos/ash/components/boca/babelorca/babel_orca_manager.h"
+#include "chromeos/ash/components/boca/babelorca/tachyon_request_data_provider.h"
+#include "chromeos/ash/components/boca/babelorca/token_manager.h"
+#include "chromeos/ash/components/boca/boca_metrics_manager.h"
 #include "chromeos/ash/components/boca/boca_session_manager.h"
 #include "chromeos/ash/components/boca/invalidations/invalidation_service_impl.h"
 #include "chromeos/ash/components/boca/session_api/session_client_impl.h"
+#include "chromeos/ash/components/boca/spotlight/spotlight_session_manager.h"
+#include "chromeos/ash/components/browser_context_helper/fake_browser_context_helper_delegate.h"
 #include "components/account_id/account_id.h"
 #include "components/gcm_driver/fake_gcm_driver.h"
 #include "components/gcm_driver/instance_id/instance_id_driver.h"
@@ -100,17 +108,31 @@ class BocaManagerTest : public testing::Test {
     session_client_impl_ =
         std::make_unique<StrictMock<MockSessionClientImpl>>(nullptr);
     boca_session_manager_ = std::make_unique<boca::BocaSessionManager>(
-        session_client_impl_.get(), AccountId::FromUserEmail(kTestEmail));
+        session_client_impl_.get(), AccountId::FromUserEmail(kTestEmail),
+        /*is_producer=*/false);
     invalidation_service_impl_ =
         std::make_unique<boca::InvalidationServiceImpl>(
-            /*=gcm_driver*/ &fake_gcm_driver_,
-            /*=instance_id_driver*/ &mock_instance_id_driver_,
+            /*gcm_driver=*/&fake_gcm_driver_,
+            /*instance_id_driver=*/&mock_instance_id_driver_,
             AccountId::FromUserEmail(kTestEmail), boca_session_manager_.get(),
-            session_client_impl_.get());
+            session_client_impl_.get(), "https://test");
   }
+
+  boca::BabelOrcaManager::ControllerFactory GetBabelOrcaControllerFactory() {
+    return base::BindLambdaForTesting(
+        [](babelorca::TokenManager*, babelorca::TachyonRequestDataProvider*)
+            -> std::unique_ptr<babelorca::BabelOrcaController> {
+          return nullptr;
+        });
+  }
+
   // BocaSessionManager require task_env for mojom binding.
   base::test::TaskEnvironment task_environment_;
-
+  std::unique_ptr<ash::FakeBrowserContextHelperDelegate>
+      fake_browser_context_helper_delegate_ =
+          std::make_unique<ash::FakeBrowserContextHelperDelegate>();
+  ash::BrowserContextHelper helper{
+      std::move(fake_browser_context_helper_delegate_)};
   std::unique_ptr<StrictMock<MockSessionClientImpl>> session_client_impl_;
   std::unique_ptr<boca::BocaSessionManager> boca_session_manager_;
   gcm::FakeGCMDriver fake_gcm_driver_;
@@ -129,37 +151,48 @@ class BocaManagerProducerTest : public BocaManagerTest {
     BocaManagerTest::SetUp();
     scoped_feature_list_.InitWithFeatures({ash::features::kBoca},
                                           /*disabled_features=*/{});
-
     boca_manager_ = std::make_unique<BocaManager>(
         std::make_unique<boca::OnTaskSessionManager>(
             /*system_web_app_manager=*/nullptr, /*extensions_manager=*/nullptr),
         std::move(session_client_impl_), std::move(boca_session_manager_),
         std::move(invalidation_service_impl_),
         std::make_unique<boca::BabelOrcaManager>(
-            /*translation_dispatcher=*/nullptr,
             identity_test_env_.identity_manager(),
-            url_loader_factory_.GetSafeWeakWrapper()));
+            url_loader_factory_.GetSafeWeakWrapper(),
+            GetBabelOrcaControllerFactory()),
+        std::make_unique<boca::BocaMetricsManager>(/*is_producer=*/true),
+        std::make_unique<boca::SpotlightSessionManager>(
+            /*spotlight_notification_handler=*/nullptr,
+            /*spotlight_crd_manager=*/nullptr, /*spotlight_service=*/nullptr));
   }
   std::unique_ptr<BocaManager> boca_manager_;
 };
 
 TEST_F(BocaManagerProducerTest, VerifyOnTaskObserverNotAddedForProducer) {
-  ASSERT_FALSE(
-      boca_manager_->GetBocaSessionManagerForTesting()->observers().HasObserver(
-          boca_manager_->GetOnTaskSessionManagerForTesting()));
+  ASSERT_FALSE(boca_manager_->GetBocaSessionManager()->observers().HasObserver(
+      boca_manager_->GetOnTaskSessionManager()));
 }
 
 TEST_F(BocaManagerProducerTest, VerifyBabelOrcaObserverHasAddedForProducer) {
-  ASSERT_TRUE(
-      boca_manager_->GetBocaSessionManagerForTesting()->observers().HasObserver(
-          boca_manager_->GetBabelOrcaManagerForTesting()));
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().HasObserver(
+      boca_manager_->GetBabelOrcaManagerForTesting()));
 }
 
 TEST_F(BocaManagerProducerTest, VerifyDependenciesTearDownProperly) {
   boca_manager_->Shutdown();
   ASSERT_EQ(nullptr, invalidation_service_impl_);
-  ASSERT_TRUE(
-      boca_manager_->GetBocaSessionManagerForTesting()->observers().empty());
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().empty());
+}
+
+TEST_F(BocaManagerProducerTest, VerifyBocaMetricsManagerWasAddedForProducer) {
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().HasObserver(
+      boca_manager_->GetBocaMetricsManagerForTesting()));
+}
+
+TEST_F(BocaManagerProducerTest,
+       VerifySpotlightSessionManagerWasAddedForProducer) {
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().HasObserver(
+      boca_manager_->GetSpotlightSessionManagerForTesting()));
 }
 
 class BocaManagerConsumerTest : public BocaManagerTest {
@@ -168,39 +201,52 @@ class BocaManagerConsumerTest : public BocaManagerTest {
   void SetUp() override {
     BocaManagerTest::SetUp();
     scoped_feature_list_.InitWithFeatures(
-        /* enabled_features */ {ash::features::kBoca,
-                                ash::features::kBocaConsumer},
-        /* disabled_features */ {});
+        /* enabled_features=*/{ash::features::kBoca,
+                               ash::features::kBocaConsumer},
+        /* disabled_features=*/{});
+
     boca_manager_ = std::make_unique<BocaManager>(
         std::make_unique<boca::OnTaskSessionManager>(
             /*system_web_app_manager=*/nullptr, /*extensions_manager=*/nullptr),
         std::move(session_client_impl_), std::move(boca_session_manager_),
         std::move(invalidation_service_impl_),
         std::make_unique<boca::BabelOrcaManager>(
-            /*translation_dispatcher=*/nullptr,
             identity_test_env_.identity_manager(),
-            url_loader_factory_.GetSafeWeakWrapper()));
+            url_loader_factory_.GetSafeWeakWrapper(),
+            GetBabelOrcaControllerFactory()),
+        std::make_unique<boca::BocaMetricsManager>(/*is_producer=*/false),
+        std::make_unique<boca::SpotlightSessionManager>(
+            /*spotlight_notification_handler=*/nullptr,
+            /*spotlight_crd_manager=*/nullptr, /*spotlight_service=*/nullptr));
   }
   std::unique_ptr<BocaManager> boca_manager_;
 };
 
 TEST_F(BocaManagerConsumerTest, VerifyOnTaskObserverHasAddedForConsumer) {
-  ASSERT_TRUE(
-      boca_manager_->GetBocaSessionManagerForTesting()->observers().HasObserver(
-          boca_manager_->GetOnTaskSessionManagerForTesting()));
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().HasObserver(
+      boca_manager_->GetOnTaskSessionManager()));
 }
 
 TEST_F(BocaManagerConsumerTest, VerifyBabelOrcaObserverHasAddedForConsumer) {
-  ASSERT_TRUE(
-      boca_manager_->GetBocaSessionManagerForTesting()->observers().HasObserver(
-          boca_manager_->GetBabelOrcaManagerForTesting()));
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().HasObserver(
+      boca_manager_->GetBabelOrcaManagerForTesting()));
+}
+
+TEST_F(BocaManagerConsumerTest, VerifyBocaMetricsManagerWasAddedForConsumer) {
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().HasObserver(
+      boca_manager_->GetBocaMetricsManagerForTesting()));
+}
+
+TEST_F(BocaManagerProducerTest,
+       VerifySpotlightSessionManagerWasAddedForConsumer) {
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().HasObserver(
+      boca_manager_->GetSpotlightSessionManagerForTesting()));
 }
 
 TEST_F(BocaManagerConsumerTest, VerifyDependenciesTearDownProperly) {
   boca_manager_->Shutdown();
   ASSERT_EQ(nullptr, invalidation_service_impl_);
-  ASSERT_TRUE(
-      boca_manager_->GetBocaSessionManagerForTesting()->observers().empty());
+  ASSERT_TRUE(boca_manager_->GetBocaSessionManager()->observers().empty());
 }
 
 }  // namespace

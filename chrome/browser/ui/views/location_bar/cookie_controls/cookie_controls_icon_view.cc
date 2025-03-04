@@ -24,7 +24,7 @@
 #include "components/omnibox/browser/vector_icons.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
 #include "components/privacy_sandbox/tracking_protection_settings.h"
-#include "components/user_education/common/feature_promo_controller.h"
+#include "components/user_education/common/feature_promo/feature_promo_controller.h"
 #include "content/public/browser/web_contents.h"
 #include "cookie_controls_bubble_coordinator.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -101,7 +101,8 @@ void CookieControlsIconView::UpdateImpl() {
                                               profile->GetOriginalProfile())
                                         : nullptr,
               HostContentSettingsMapFactory::GetForProfile(profile),
-              TrackingProtectionSettingsFactory::GetForProfile(profile));
+              TrackingProtectionSettingsFactory::GetForProfile(profile),
+              profile->IsIncognitoProfile());
       controller_observation_.Observe(controller_.get());
     }
     // Reset animation and tracker when URL changes.
@@ -112,6 +113,22 @@ void CookieControlsIconView::UpdateImpl() {
     }
     controller_->Update(web_contents);
   }
+}
+
+void CookieControlsIconView::UpdateTooltipText() {
+  if (!custom_tooltip_text_.empty()) {
+    SetTooltipText(custom_tooltip_text_);
+  } else {
+    PageActionIconView::UpdateTooltipText();
+  }
+}
+
+std::u16string CookieControlsIconView::GetAlternativeAccessibleName() const {
+  if (!custom_tooltip_text_.empty()) {
+    return custom_tooltip_text_;
+  }
+
+  return PageActionIconView::GetAlternativeAccessibleName();
 }
 
 void CookieControlsIconView::MaybeShowIPH() {
@@ -151,22 +168,14 @@ void CookieControlsIconView::OnIPHClosed() {
 bool CookieControlsIconView::IsManagedIPHActive() const {
   CHECK(browser_->window());
   return browser_->window()->IsFeaturePromoActive(
-      feature_engagement::kIPHCookieControlsFeature);
+             feature_engagement::kIPHCookieControlsFeature) ||
+         browser_->window()->IsFeaturePromoQueued(
+             feature_engagement::kIPHCookieControlsFeature);
 }
 
 void CookieControlsIconView::SetLabelForStatus() {
-  int icon_label = GetLabelForStatus();
-  // Only use "Tracking Protection" and verbose accessibility description if the
-  // label is hidden.
-  if (ShouldShowTrackingProtectionText()) {
-    // Set the accessible description to whatever the 3PC blocking state is.
-    GetViewAccessibility().SetDescription(
-        l10n_util::GetStringUTF16(icon_label));
-    icon_label = IDS_TRACKING_PROTECTION_PAGE_ACTION_LABEL;
-  } else {
-    GetViewAccessibility().SetDescription(u"");
-  }
-  SetLabel(l10n_util::GetStringUTF16(icon_label));
+  GetViewAccessibility().SetDescription(u"");
+  SetLabel(l10n_util::GetStringUTF16(GetLabelForStatus()));
 }
 
 int CookieControlsIconView::GetLabelForStatus() const {
@@ -230,10 +239,10 @@ void CookieControlsIconView::UpdateIcon() {
   if (protections_changed_ || label()->GetText().empty()) {
     SetLabelForStatus();
   }
-  SetTooltipText(
-      l10n_util::GetStringUTF16(ShouldShowTrackingProtectionText()
-                                    ? IDS_TRACKING_PROTECTION_PAGE_ACTION_LABEL
-                                    : GetLabelForStatus()));
+
+  custom_tooltip_text_ = l10n_util::GetStringUTF16(GetLabelForStatus());
+  SetTooltipText(custom_tooltip_text_);
+
   if (protections_on_ && should_highlight_) {
     if (blocking_status_ == CookieBlocking3pcdStatus::kNotIn3pcd) {
       MaybeShowIPH();
@@ -314,13 +323,6 @@ views::BubbleDialogDelegate* CookieControlsIconView::GetBubble() const {
 const gfx::VectorIcon& CookieControlsIconView::GetVectorIcon() const {
   return protections_on_ ? views::kEyeCrossedRefreshIcon
                          : views::kEyeRefreshIcon;
-}
-
-bool CookieControlsIconView::ShouldShowTrackingProtectionText() {
-  return base::FeatureList::IsEnabled(
-             privacy_sandbox::kTrackingProtection3pcdUx) &&
-         blocking_status_ != CookieBlocking3pcdStatus::kNotIn3pcd &&
-         !label()->GetVisible();
 }
 
 void CookieControlsIconView::UpdateTooltipForFocus() {}

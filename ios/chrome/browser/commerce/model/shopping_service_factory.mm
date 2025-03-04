@@ -10,7 +10,6 @@
 #import "components/commerce/core/shopping_service.h"
 #import "components/commerce/ios/browser/web_extractor_impl.h"
 #import "components/keyed_service/core/service_access_type.h"
-#import "components/keyed_service/ios/browser_state_dependency_manager.h"
 #import "components/prefs/pref_service.h"
 #import "components/variations/service/variations_service_utils.h"
 #import "ios/chrome/browser/bookmarks/model/bookmark_model_factory.h"
@@ -23,7 +22,6 @@
 #import "ios/chrome/browser/power_bookmarks/model/power_bookmark_service_factory.h"
 #import "ios/chrome/browser/sessions/model/ios_chrome_tab_restore_service_factory.h"
 #import "ios/chrome/browser/shared/model/application_context/application_context.h"
-#import "ios/chrome/browser/shared/model/browser_state/browser_state_otr_helper.h"
 #import "ios/chrome/browser/shared/model/profile/profile_ios.h"
 #import "ios/chrome/browser/signin/model/identity_manager_factory.h"
 #import "ios/chrome/browser/sync/model/sync_service_factory.h"
@@ -39,33 +37,20 @@ ShoppingServiceFactory* ShoppingServiceFactory::GetInstance() {
 
 // static
 ShoppingService* ShoppingServiceFactory::GetForProfile(ProfileIOS* profile) {
-  return static_cast<ShoppingService*>(
-      GetInstance()->GetServiceForBrowserState(profile, true));
+  return GetInstance()->GetServiceForProfileAs<ShoppingService>(
+      profile, /*create=*/true);
 }
 
 // static
 ShoppingService* ShoppingServiceFactory::GetForProfileIfExists(
     ProfileIOS* profile) {
-  return static_cast<ShoppingService*>(
-      GetInstance()->GetServiceForBrowserState(profile, false));
-}
-
-// static
-ShoppingService* ShoppingServiceFactory::GetForBrowserState(
-    ProfileIOS* profile) {
-  return GetForProfile(profile);
-}
-
-// static
-ShoppingService* ShoppingServiceFactory::GetForBrowserStateIfExists(
-    ProfileIOS* profile) {
-  return GetForProfileIfExists(profile);
+  return GetInstance()->GetServiceForProfileAs<ShoppingService>(
+      profile, /*create=*/false);
 }
 
 ShoppingServiceFactory::ShoppingServiceFactory()
-    : BrowserStateKeyedServiceFactory(
-          "ShoppingService",
-          BrowserStateDependencyManager::GetInstance()) {
+    : ProfileKeyedServiceFactoryIOS("ShoppingService",
+                                    TestingCreation::kNoServiceForTests) {
   DependsOn(IdentityManagerFactory::GetInstance());
   DependsOn(ios::BookmarkModelFactory::GetInstance());
   DependsOn(OptimizationGuideServiceFactory::GetInstance());
@@ -82,8 +67,8 @@ ShoppingServiceFactory::ShoppingServiceFactory()
 
 std::unique_ptr<KeyedService> ShoppingServiceFactory::BuildServiceInstanceFor(
     web::BrowserState* state) const {
-  ProfileIOS* chrome_state = ProfileIOS::FromBrowserState(state);
-  PrefService* pref_service = chrome_state ? chrome_state->GetPrefs() : nullptr;
+  ProfileIOS* profile = ProfileIOS::FromBrowserState(state);
+  PrefService* pref_service = profile->GetPrefs();
 
   if (IsIOSParcelTrackingEnabled()) {
     RecordParcelTrackingOptInStatus(pref_service);
@@ -92,28 +77,26 @@ std::unique_ptr<KeyedService> ShoppingServiceFactory::BuildServiceInstanceFor(
   return std::make_unique<ShoppingService>(
       GetCurrentCountryCode(GetApplicationContext()->GetVariationsService()),
       GetApplicationContext()->GetApplicationLocale(),
-      ios::BookmarkModelFactory::GetForProfile(chrome_state),
-      OptimizationGuideServiceFactory::GetForProfile(chrome_state),
-      pref_service, IdentityManagerFactory::GetForProfile(chrome_state),
-      SyncServiceFactory::GetForProfile(chrome_state),
-      chrome_state->GetSharedURLLoaderFactory(),
+      ios::BookmarkModelFactory::GetForProfile(profile),
+      OptimizationGuideServiceFactory::GetForProfile(profile), pref_service,
+      IdentityManagerFactory::GetForProfile(profile),
+      SyncServiceFactory::GetForProfile(profile),
+      profile->GetSharedURLLoaderFactory(),
       SessionProtoDBFactory<commerce_subscription_db::
                                 CommerceSubscriptionContentProto>::GetInstance()
-          ->GetForProfile(chrome_state),
-      PowerBookmarkServiceFactory::GetForProfile(chrome_state), nullptr,
-      nullptr, /**ProductSpecificationsService not currently used on iOS
-                  b/329431295 */
+          ->GetForProfile(profile),
+      PowerBookmarkServiceFactory::GetForProfile(profile), nullptr,
+      /**ProductSpecificationsService not currently used on iOS
+         crbug.com/329431295 */
+      nullptr,
+      nullptr, /** Cart and discount features are not available on iOS. */
       SessionProtoDBFactory<
           parcel_tracking_db::ParcelTrackingContent>::GetInstance()
-          ->GetForProfile(chrome_state),
+          ->GetForProfile(profile),
       ios::HistoryServiceFactory::GetForProfile(
-          chrome_state, ServiceAccessType::EXPLICIT_ACCESS),
+          profile, ServiceAccessType::EXPLICIT_ACCESS),
       std::make_unique<commerce::WebExtractorImpl>(),
-      IOSChromeTabRestoreServiceFactory::GetForProfile(chrome_state));
-}
-
-bool ShoppingServiceFactory::ServiceIsNULLWhileTesting() const {
-  return true;
+      IOSChromeTabRestoreServiceFactory::GetForProfile(profile));
 }
 
 }  // namespace commerce

@@ -110,8 +110,7 @@ HitTestRequest::HitTestRequestType GestureManager::GetHitTypeForGestureType(
       // FIXME: Shouldn't LongTap and TwoFingerTap clear the Active state?
       return hit_type | HitTestRequest::kActive | HitTestRequest::kReadOnly;
     default:
-      NOTREACHED_IN_MIGRATION();
-      return hit_type | HitTestRequest::kActive | HitTestRequest::kReadOnly;
+      NOTREACHED();
   }
 }
 
@@ -161,7 +160,7 @@ WebInputEventResult GestureManager::HandleGestureEventInFrame(
     case WebInputEvent::Type::kGestureTapUnconfirmed:
       break;
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 
   return WebInputEventResult::kNotHandled;
@@ -570,10 +569,7 @@ WebInputEventResult GestureManager::HandleGestureShowPress() {
   LocalFrameView* view = frame_->View();
   if (!view)
     return WebInputEventResult::kNotHandled;
-  const LocalFrameView::ScrollableAreaMap* areas = view->UserScrollableAreas();
-  if (!areas)
-    return WebInputEventResult::kNotHandled;
-  for (PaintLayerScrollableArea* scrollable_area : areas->Values()) {
+  for (auto& scrollable_area : view->ScrollableAreas().Values()) {
     if (scrollable_area->ScrollsOverflow())
       scrollable_area->CancelScrollAnimation();
   }

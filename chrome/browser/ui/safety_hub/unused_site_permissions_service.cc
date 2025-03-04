@@ -27,7 +27,7 @@
 #include "build/build_config.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
+#include "chrome/browser/engagement/site_engagement_service_factory.h"
 #include "chrome/browser/ui/safety_hub/safety_hub_prefs.h"
 #include "chrome/browser/ui/safety_hub/safety_hub_service.h"
 #include "chrome/browser/ui/safety_hub/safety_hub_util.h"
@@ -58,6 +58,10 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
 #include "url/origin.h"
+
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
+#include "chrome/browser/safe_browsing/safe_browsing_service.h"
+#endif
 
 constexpr base::TimeDelta kRevocationThresholdNoDelayForTesting = base::Days(0);
 constexpr base::TimeDelta kRevocationThresholdWithDelayForTesting =
@@ -299,7 +303,7 @@ bool UnusedSitePermissionsService::UnusedSitePermissionsResult::
     } else if (origin_val.is_string()) {
       origin_str = &origin_val.GetString();
     } else {
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
     }
     ContentSettingsPattern origin =
         ContentSettingsPattern::FromString(*origin_str);
@@ -307,7 +311,7 @@ bool UnusedSitePermissionsService::UnusedSitePermissionsResult::
   }
 
   std::set<ContentSettingsPattern> new_origins = GetRevokedOrigins();
-  return !base::ranges::includes(old_origins, new_origins);
+  return !std::ranges::includes(old_origins, new_origins);
 }
 
 std::u16string UnusedSitePermissionsService::UnusedSitePermissionsResult::
@@ -350,6 +354,7 @@ UnusedSitePermissionsService::UnusedSitePermissionsService(
   pref_change_registrar_ = std::make_unique<PrefChangeRegistrar>();
   pref_change_registrar_->Init(prefs);
 
+#if BUILDFLAG(IS_ANDROID)
   if (base::FeatureList::IsEnabled(features::kSafetyHub)) {
     pref_change_registrar_->Add(
         safety_hub_prefs::kUnusedSitePermissionsRevocationEnabled,
@@ -357,15 +362,35 @@ UnusedSitePermissionsService::UnusedSitePermissionsService(
                                 OnPermissionsAutorevocationControlChanged,
                             base::Unretained(this)));
   }
+#else   // BUILDFLAG(IS_ANDROID)
+  pref_change_registrar_->Add(
+      safety_hub_prefs::kUnusedSitePermissionsRevocationEnabled,
+      base::BindRepeating(&UnusedSitePermissionsService::
+                              OnPermissionsAutorevocationControlChanged,
+                          base::Unretained(this)));
+#endif  // BUILDFLAG(IS_ANDROID)
 
   if (base::FeatureList::IsEnabled(
           safe_browsing::kSafetyHubAbusiveNotificationRevocation)) {
     abusive_notification_manager_ =
         std::make_unique<AbusiveNotificationPermissionsManager>(
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
             g_browser_process->safe_browsing_service()
                 ? g_browser_process->safe_browsing_service()->database_manager()
                 : nullptr,
+#else
+            nullptr,
+#endif
             hcsm());
+
+    if (base::FeatureList::IsEnabled(
+            safe_browsing::kSafetyHubDisruptiveNotificationRevocation)) {
+      disruptive_notification_manager_ =
+          std::make_unique<DisruptiveNotificationPermissionsManager>(
+              hcsm(),
+              site_engagement::SiteEngagementServiceFactory::GetForProfile(
+                  browser_context_));
+    }
 
     pref_change_registrar_->Add(
         prefs::kSafeBrowsingEnabled,
@@ -499,10 +524,9 @@ void UnusedSitePermissionsService::RegrantPermissionsForOrigin(
           info.primary_pattern, info.secondary_pattern, type,
           base::Value(std::move(*revoked_value)));
     } else {
-      NOTREACHED_IN_MIGRATION()
-          << "Unable to find ContentSettingsType in neither "
-          << "ContentSettingsRegistry nor WebsiteSettingsRegistry: "
-          << ConvertContentSettingsTypeToKey(type);
+      NOTREACHED() << "Unable to find ContentSettingsType in neither "
+                   << "ContentSettingsRegistry nor WebsiteSettingsRegistry: "
+                   << ConvertContentSettingsTypeToKey(type);
     }
   }
   // Set this back to false, so that `OnContentSettingChanged` can cleanup
@@ -559,10 +583,9 @@ void UnusedSitePermissionsService::UndoRegrantPermissionsForOrigin(
           permissions_data.primary_pattern.ToRepresentativeUrl(), GURL(),
           permission, base::Value());
     } else {
-      NOTREACHED_IN_MIGRATION()
-          << "Unable to find ContentSettingsType in neither "
-          << "ContentSettingsRegistry nor WebsiteSettingsRegistry: "
-          << ConvertContentSettingsTypeToKey(permission);
+      NOTREACHED() << "Unable to find ContentSettingsType in neither "
+                   << "ContentSettingsRegistry nor WebsiteSettingsRegistry: "
+                   << ConvertContentSettingsTypeToKey(permission);
     }
   }
   // Set this back to false, so that `OnContentSettingChanged` can cleanup
@@ -701,6 +724,9 @@ UnusedSitePermissionsService::UpdateOnUIThread(
           result.get());
   recently_unused_permissions_ = interim_result->GetRecentlyUnusedPermissions();
   RevokeUnusedPermissions();
+  if (disruptive_notification_manager_) {
+    disruptive_notification_manager_->RevokeDisruptiveNotifications();
+  }
   // TODO(crbug.com/40250875): Clean up these checks.
   if (IsAbusiveNotificationAutoRevocationEnabled()) {
     abusive_notification_manager_->CheckNotificationPermissionOrigins();
@@ -868,7 +894,7 @@ void UnusedSitePermissionsService::RevokeUnusedPermissions() {
                                                entry.source.secondary_pattern,
                                                entry.type, base::Value());
         } else {
-          NOTREACHED_IN_MIGRATION()
+          NOTREACHED()
               << "Unable to find ContentSettingsType in neither "
               << "ContentSettingsRegistry nor WebsiteSettingsRegistry: "
               << ConvertContentSettingsTypeToKey(entry.type);
@@ -1016,12 +1042,12 @@ base::WeakPtr<SafetyHubService> UnusedSitePermissionsService::GetAsWeakRef() {
 }
 
 bool UnusedSitePermissionsService::IsUnusedSiteAutoRevocationEnabled() {
-  // If kSafetyHub is disabled, then the auto-revocation directly depends on
-  // kSafetyCheckUnusedSitePermissions.
+#if BUILDFLAG(IS_ANDROID)
   if (!base::FeatureList::IsEnabled(features::kSafetyHub)) {
-    return base::FeatureList::IsEnabled(
-        content_settings::features::kSafetyCheckUnusedSitePermissions);
+    return false;
   }
+#endif  // BUILDFLAG(IS_ANDROID)
+
   return pref_change_registrar_->prefs()->GetBoolean(
       safety_hub_prefs::kUnusedSitePermissionsRevocationEnabled);
 }

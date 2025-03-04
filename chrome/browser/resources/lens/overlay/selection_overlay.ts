@@ -3,12 +3,12 @@
 // found in the LICENSE file.
 
 import './object_layer.js';
+import './simplified_text_layer.js';
 import './text_layer.js';
 import './region_selection.js';
 import './post_selection_renderer.js';
-import './overlay_shimmer.js';
 import './overlay_shimmer_canvas.js';
-import './strings.m.js';
+import '/strings.m.js';
 import '//resources/cr_elements/cr_button/cr_button.js';
 import '//resources/cr_elements/cr_toast/cr_toast.js';
 
@@ -25,18 +25,17 @@ import {type CursorTooltipData, CursorTooltipType} from './cursor_tooltip.js';
 import type {CenterRotatedBox} from './geometry.mojom-webui.js';
 import {UserAction} from './lens.mojom-webui.js';
 import {INVOCATION_SOURCE} from './lens_overlay_app.js';
-import {recordLensOverlayInteraction} from './metrics_utils.js';
+import {ContextMenuOption, recordContextMenuOptionShown, recordLensOverlayInteraction} from './metrics_utils.js';
 import type {ObjectLayerElement} from './object_layer.js';
-import type {OverlayShimmerElement} from './overlay_shimmer.js';
 import type {OverlayShimmerCanvasElement} from './overlay_shimmer_canvas.js';
 import type {PostSelectionRendererElement} from './post_selection_renderer.js';
 import type {RegionSelectionElement} from './region_selection.js';
 import {ScreenshotBitmapBrowserProxyImpl} from './screenshot_bitmap_browser_proxy.js';
 import {renderScreenshot} from './screenshot_utils.js';
 import {getTemplate} from './selection_overlay.html.js';
-import {CursorType, DRAG_THRESHOLD, DragFeature, emptyGestureEvent, focusShimmerOnRegion, GestureState, ShimmerControlRequester, unfocusShimmer} from './selection_utils.js';
+import {CursorType, DRAG_THRESHOLD, DragFeature, emptyGestureEvent, focusShimmerOnRegion, GestureState, ShimmerControlRequester} from './selection_utils.js';
 import type {GestureEvent, OverlayShimmerFocusedRegion} from './selection_utils.js';
-import type {TextLayerElement} from './text_layer.js';
+import type {TextLayerBase} from './text_layer_base.js';
 import type {TranslateState} from './translate_button.js';
 import {toPercent} from './values_converter.js';
 
@@ -84,22 +83,22 @@ export interface SelectedRegionContextMenuData {
   selectionStartIndex: number;
   // The end selection index of the detected text, or -1 if none.
   selectionEndIndex: number;
+  // The text selection that the context menu commands will act on.
+  text?: string;
 }
 
 export interface SelectionOverlayElement {
   $: {
     backgroundImageCanvas: HTMLCanvasElement,
     cursor: HTMLElement,
-    initialFlashScrim: HTMLDivElement,
+    initialFlashScrim: HTMLElement,
     objectSelectionLayer: ObjectLayerElement,
     overlayShimmerCanvas: OverlayShimmerCanvasElement,
-    overlayShimmer: OverlayShimmerElement,
     postSelectionRenderer: PostSelectionRendererElement,
     regionSelectionLayer: RegionSelectionElement,
     selectedRegionContextMenu: HTMLElement,
     selectedTextContextMenu: HTMLElement,
     selectionOverlay: HTMLElement,
-    textSelectionLayer: TextLayerElement,
   };
 }
 
@@ -166,11 +165,6 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
         readOnly: true,
         value: !loadTimeData.getBoolean('enableShimmer'),
       },
-      useShimmerCanvas: {
-        type: Boolean,
-        readOnly: true,
-        value: loadTimeData.getBoolean('useShimmerCanvas'),
-      },
       enableCopyAsImage: {
         type: Boolean,
         reflectToAttribute: true,
@@ -193,6 +187,11 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
       },
       shimmerFadeOutComplete: {
         type: Boolean,
+        reflectToAttribute: true,
+      },
+      simplifiedSelectionEnabled: {
+        type: Boolean,
+        value: () => loadTimeData.getBoolean('simplifiedSelectionEnabled'),
         reflectToAttribute: true,
       },
       darkenExtraScrim: {
@@ -257,7 +256,6 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
   // gesture has started.
   private currentGesture: GestureEvent = emptyGestureEvent();
   private disableShimmer: boolean;
-  private useShimmerCanvas: boolean;
   private enableCopyAsImage: boolean =
       loadTimeData.getBoolean('enableCopyAsImage');
   private enableSaveAsImage: boolean =
@@ -272,6 +270,9 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
   // Whether the shimmer is currently focused on a segmentation mask.
   private shimmerOnSegmentation: boolean = false;
   private shimmerFadeOutComplete: boolean = true;
+  private simplifiedSelectionEnabled: boolean;
+  // The text selection layer rendered on the selection overlay if it exists.
+  private textSelectionLayer: TextLayerBase;
 
   private eventTracker_: EventTracker = new EventTracker();
   // Listener ids for events from the browser side.
@@ -308,9 +309,8 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
         this.isClosing = true;
         this.removeDragListeners();
       }),
-      this.browserProxy.callbackRouter.triggerCopyText.addListener(() => {
-        this.handleCopy();
-      }),
+      this.browserProxy.callbackRouter.onCopyCommand.addListener(
+          this.onCopyCommand.bind(this)),
     ];
     ScreenshotBitmapBrowserProxyImpl.getInstance().fetchScreenshot(
         this.screenshotDataReceived.bind(this));
@@ -342,20 +342,20 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
     this.eventTracker_.add(
         document, 'show-selected-text-context-menu',
         (e: CustomEvent<SelectedTextContextMenuData>) => {
-          this.showSelectedTextContextMenu = true;
           this.selectedTextContextMenuX = e.detail.left;
           this.selectedTextContextMenuY = e.detail.bottom;
           this.highlightedText = e.detail.text;
           this.contentLanguage = e.detail.contentLanguage;
           this.textSelectionStartIndex = e.detail.selectionStartIndex;
           this.textSelectionEndIndex = e.detail.selectionEndIndex;
+          this.setShowSelectedTextContextMenu(true);
         });
     this.eventTracker_.add(
         document, 'restore-selected-text-context-menu', () => {
           // show-selected-text-context-menu or
           // update-selected-text-context-menu must be triggered first so that
           // instance variables are set.
-          this.showSelectedTextContextMenu = true;
+          this.setShowSelectedTextContextMenu(true);
         });
     this.eventTracker_.add(
         document, 'update-selected-text-context-menu',
@@ -368,7 +368,7 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
           this.textSelectionEndIndex = e.detail.selectionEndIndex;
         });
     this.eventTracker_.add(document, 'hide-selected-text-context-menu', () => {
-      this.showSelectedTextContextMenu = false;
+      this.setShowSelectedTextContextMenu(false);
       this.textSelectionStartIndex = -1;
       this.textSelectionEndIndex = -1;
     });
@@ -385,10 +385,11 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
           this.showDetectedTextContextMenuOptions =
               this.detectedTextStartIndex !== -1 &&
               this.detectedTextEndIndex !== -1;
-          this.showSelectedRegionContextMenu =
+          this.highlightedText = e.detail.text ?? this.highlightedText;
+          this.setShowSelectedRegionContextMenu(
               (!this.suppressCopyAndSaveAsImage &&
                (this.enableCopyAsImage || this.enableSaveAsImage)) ||
-              this.showDetectedTextContextMenuOptions;
+              this.showDetectedTextContextMenuOptions);
         });
     this.eventTracker_.add(
         document, 'restore-selected-region-context-menu', () => {
@@ -396,15 +397,17 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
           // we are still waiting for the text layer to receive text. Check for
           // this condition by checking if the box has been set.
           if (this.selectedRegionContextMenuBox !== undefined) {
-            this.showSelectedRegionContextMenu =
+            this.setShowSelectedRegionContextMenu(
                 (!this.suppressCopyAndSaveAsImage &&
                  (this.enableCopyAsImage || this.enableSaveAsImage)) ||
-                this.showDetectedTextContextMenuOptions;
+                this.showDetectedTextContextMenuOptions);
           }
         });
     this.eventTracker_.add(
         document, 'hide-selected-region-context-menu', () => {
-          this.showSelectedRegionContextMenu = false;
+          this.setShowSelectedRegionContextMenu(false);
+          this.textSelectionStartIndex = -1;
+          this.textSelectionEndIndex = -1;
           this.detectedTextStartIndex = -1;
           this.detectedTextEndIndex = -1;
         });
@@ -430,6 +433,18 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
             this.shimmerOnSegmentation = true;
           }
         });
+    if (this.simplifiedSelectionEnabled) {
+      this.eventTracker_.add(
+          document, 'post-selection-updated', (e: CustomEvent) => {
+            this.selectedRegionContextMenuBox = e.detail.centerRotatedBox;
+            this.selectedRegionContextMenuX =
+                this.selectedRegionContextMenuBox.box.x -
+                this.selectedRegionContextMenuBox.box.width / 2;
+            this.selectedRegionContextMenuY =
+                this.selectedRegionContextMenuBox.box.y +
+                this.selectedRegionContextMenuBox.box.height / 2;
+          });
+    }
     this.eventTracker_.add(document, 'unfocus-region', () => {
       this.shimmerOnSegmentation = false;
     });
@@ -609,13 +624,6 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
 
   private handlePointerLeave() {
     this.isPointerInside = false;
-
-    // Unfocus the shimmer from the cursor. If the cursor is dragging, force
-    // shimmer to follow cursor.
-    if (!this.disableShimmer &&
-        this.currentGesture.state !== GestureState.DRAGGING) {
-      unfocusShimmer(this, ShimmerControlRequester.CURSOR);
-    }
   }
 
   private onImageRendered() {
@@ -631,7 +639,7 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
     }
 
     if (event.button === 2 /* right button */) {
-      if (this.$.textSelectionLayer.handleRightClick(event)) {
+      if (this.getTextSelectionLayer().handleRightClick(event)) {
         return;
       }
       this.$.postSelectionRenderer.handleRightClick(event);
@@ -733,19 +741,28 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
     this.set('currentGesture.state', GestureState.STARTING);
 
     // Send events to hide UI.
-    this.browserProxy.handler.closeSearchBubble();
     this.browserProxy.handler.closePreselectionBubble();
     this.suppressCopyAndSaveAsImage = false;
     this.dispatchEvent(
         new CustomEvent('selection-started', {bubbles: true, composed: true}));
 
-    if (this.$.textSelectionLayer.handleGestureStart(this.currentGesture)) {
+    // If simplified selection is enabled, the context menu should have text
+    // reset whenever a new selection is started.
+    if (this.simplifiedSelectionEnabled) {
+      this.detectedTextStartIndex = -1;
+      this.detectedTextEndIndex = -1;
+      this.showDetectedTextContextMenuOptions = false;
+    }
+
+    this.getTextSelectionLayer().onSelectionStart();
+
+    if (this.$.postSelectionRenderer.handleGestureStart(this.currentGesture)) {
+      this.draggingRespondent = DragFeature.POST_SELECTION;
+    } else if (this.getTextSelectionLayer().handleGestureStart(
+                   this.currentGesture)) {
       // Text is responding to this sequence of gestures.
       this.draggingRespondent = DragFeature.TEXT;
       this.$.postSelectionRenderer.clearSelection();
-    } else if (this.$.postSelectionRenderer.handleGestureStart(
-                   this.currentGesture)) {
-      this.draggingRespondent = DragFeature.POST_SELECTION;
     }
   }
 
@@ -758,7 +775,7 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
 
     if (this.draggingRespondent === DragFeature.TEXT) {
       this.setCursorToText();
-      this.$.textSelectionLayer.handleGestureDrag(this.currentGesture);
+      this.getTextSelectionLayer().handleGestureDrag(this.currentGesture);
     } else if (this.draggingRespondent === DragFeature.POST_SELECTION) {
       this.$.postSelectionRenderer.handleGestureDrag(this.currentGesture);
     } else if (!this.translateModeEnabled) {
@@ -774,6 +791,10 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
   }
 
   private handleGestureEnd() {
+    // Call onSelectionFinish before gesture is handled so the simplified text
+    // layer can reset the context menu.
+    this.getTextSelectionLayer().onSelectionFinish();
+
     // Allow proper feature to respond to the tap/drag event.
     switch (this.currentGesture.state) {
       case GestureState.DRAGGING:
@@ -782,7 +803,7 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
         if (this.draggingRespondent === DragFeature.MANUAL_REGION) {
           this.$.regionSelectionLayer.handleGestureEnd(this.currentGesture);
         } else if (this.draggingRespondent === DragFeature.TEXT) {
-          this.$.textSelectionLayer.handleGestureEnd();
+          this.getTextSelectionLayer().handleGestureEnd();
         } else if (this.draggingRespondent === DragFeature.POST_SELECTION) {
           this.$.postSelectionRenderer.handleGestureEnd();
         }
@@ -790,7 +811,7 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
       case GestureState.STARTING:
         // This gesture was a tap. Let the features respond to a tap.
         if (this.draggingRespondent === DragFeature.TEXT) {
-          this.$.textSelectionLayer.handleGestureEnd();
+          this.getTextSelectionLayer().handleGestureEnd();
           break;
         }
         if (this.translateModeEnabled) {
@@ -816,7 +837,7 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
   }
 
   private handleGestureCancel() {
-    this.$.textSelectionLayer.cancelGesture();
+    this.getTextSelectionLayer().cancelGesture();
     this.$.regionSelectionLayer.cancelGesture();
     this.$.postSelectionRenderer.cancelGesture();
   }
@@ -917,9 +938,7 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
     this.$.regionSelectionLayer.setCanvasSizeTo(newWidth, newHeight);
     this.$.postSelectionRenderer.setCanvasSizeTo(newWidth, newHeight);
     this.$.objectSelectionLayer.setCanvasSizeTo(newWidth, newHeight);
-    if (this.useShimmerCanvas) {
-      this.$.overlayShimmerCanvas.setCanvasSizeTo(newWidth, newHeight);
-    }
+    this.$.overlayShimmerCanvas.setCanvasSizeTo(newWidth, newHeight);
   }
 
   // Updates the currentGesture to correspond with the given PointerEvent.
@@ -966,45 +985,69 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
         toPercent(contextMenuY)} + 12px)`;
   }
 
-  private async handleCopy() {
-    if (this.textSelectionStartIndex < 0 || this.textSelectionEndIndex < 0) {
+  // This handles the copying of currently selected text on the overlay. This
+  // differs from handleCopyDetectedText() since text must be selected in order
+  // to copy.
+  private handleCopy() {
+    this.copyText(
+        this.textSelectionStartIndex, this.textSelectionEndIndex,
+        this.highlightedText);
+  }
+
+  // This handles the copying of detected text on the overlay within a selected
+  // region. This differs from handleCopy() since text does not need to be
+  // selected to support this copy.
+  private handleCopyDetectedText() {
+    this.copyText(
+        this.detectedTextStartIndex, this.detectedTextEndIndex,
+        this.highlightedText);
+  }
+
+  private copyText(textStartIndex: number, textEndIndex: number, text: string) {
+    if (textStartIndex < 0 || textEndIndex < 0) {
       return;
     }
-    this.browserProxy.handler.copyText(this.highlightedText);
+    this.browserProxy.handler.copyText(text);
     recordLensOverlayInteraction(INVOCATION_SOURCE, UserAction.kCopyText);
     this.dispatchEvent(new CustomEvent('text-copied', {
       bubbles: true,
       composed: true,
     }));
-    this.showSelectedTextContextMenu = false;
+    this.setShowSelectedTextContextMenu(false);
+    this.setShowSelectedRegionContextMenu(false);
   }
 
   private handleSelectText() {
-    this.$.textSelectionLayer.selectAndSendWords(
+    this.getTextSelectionLayer().selectAndSendWords(
         this.detectedTextStartIndex, this.detectedTextEndIndex);
     this.$.postSelectionRenderer.clearSelection();
-    unfocusShimmer(this, ShimmerControlRequester.CURSOR);
   }
 
   private handleTranslateDetectedText() {
-    this.$.textSelectionLayer.selectAndTranslateWords(
+    this.getTextSelectionLayer().selectAndTranslateWords(
         this.detectedTextStartIndex, this.detectedTextEndIndex);
+
+    // Do not clear the post selection renderer if simplified selection is
+    // enabled. Instead, just hide the region context menu manually.
+    if (this.simplifiedSelectionEnabled) {
+      this.setShowSelectedRegionContextMenu(false);
+      return;
+    }
     this.$.postSelectionRenderer.clearSelection();
-    unfocusShimmer(this, ShimmerControlRequester.CURSOR);
   }
 
   private handleTranslate() {
     BrowserProxyImpl.getInstance().handler.issueTranslateSelectionRequest(
-        this.highlightedText, this.contentLanguage,
+        this.highlightedText.replaceAll('\r\n', ' '), this.contentLanguage,
         this.textSelectionStartIndex, this.textSelectionEndIndex);
-    this.showSelectedTextContextMenu = false;
+    this.setShowSelectedTextContextMenu(false);
     recordLensOverlayInteraction(INVOCATION_SOURCE, UserAction.kTranslateText);
   }
 
   private handleCopyAsImage() {
     BrowserProxyImpl.getInstance().handler.copyImage(
         this.selectedRegionContextMenuBox);
-    this.showSelectedRegionContextMenu = false;
+    this.setShowSelectedRegionContextMenu(false);
     recordLensOverlayInteraction(INVOCATION_SOURCE, UserAction.kCopyAsImage);
     this.dispatchEvent(new CustomEvent('copied-as-image', {
       bubbles: true,
@@ -1015,7 +1058,7 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
   private handleSaveAsImage() {
     BrowserProxyImpl.getInstance().handler.saveAsImage(
         this.selectedRegionContextMenuBox);
-    this.showSelectedRegionContextMenu = false;
+    this.setShowSelectedRegionContextMenu(false);
     recordLensOverlayInteraction(INVOCATION_SOURCE, UserAction.kSaveAsImage);
   }
 
@@ -1030,7 +1073,6 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
           composed: true,
           detail: {tooltipType: CursorTooltipType.NONE},
         }));
-    unfocusShimmer(this, ShimmerControlRequester.CURSOR);
   }
 
   private handlePointerLeaveContextMenu() {
@@ -1049,6 +1091,56 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
         }));
   }
 
+  // Sets the text context menu to be visible or not, and logs the shown
+  // context menu options.
+  private setShowSelectedTextContextMenu(shouldShow: boolean) {
+    if (shouldShow && !this.showSelectedTextContextMenu) {
+      // If the context menu was not being shown earlier, but will be now, log
+      // the shown context menu options.
+      recordContextMenuOptionShown(
+          INVOCATION_SOURCE, ContextMenuOption.COPY_TEXT);
+      if (this.showTranslateContextMenuItem) {
+        recordContextMenuOptionShown(
+            INVOCATION_SOURCE, ContextMenuOption.TRANSLATE_TEXT);
+      }
+    }
+    this.showSelectedTextContextMenu = shouldShow;
+  }
+
+  // Sets the region context menu to be visible or not, and logs the shown
+  // context menu options.
+  private setShowSelectedRegionContextMenu(shouldShow: boolean) {
+    if (shouldShow && !this.showSelectedRegionContextMenu) {
+      // If the context menu was not being shown earlier, but will be now, log
+      // the shown context menu options.
+      if (this.showDetectedTextContextMenuOptions) {
+        // If simplified selection is enabled, select text in region context
+        // menu option is not shown. Instead, a copy text in region context menu
+        // option is shown.
+        recordContextMenuOptionShown(
+            INVOCATION_SOURCE,
+            this.simplifiedSelectionEnabled ?
+                ContextMenuOption.COPY_TEXT_IN_REGION :
+                ContextMenuOption.SELECT_TEXT_IN_REGION);
+        if (this.showTranslateContextMenuItem) {
+          recordContextMenuOptionShown(
+              INVOCATION_SOURCE, ContextMenuOption.TRANSLATE_TEXT_IN_REGION);
+        }
+      }
+      if (!this.suppressCopyAndSaveAsImage) {
+        if (this.enableCopyAsImage) {
+          recordContextMenuOptionShown(
+              INVOCATION_SOURCE, ContextMenuOption.COPY_AS_IMAGE);
+        }
+        if (this.enableSaveAsImage) {
+          recordContextMenuOptionShown(
+              INVOCATION_SOURCE, ContextMenuOption.SAVE_AS_IMAGE);
+        }
+      }
+    }
+    this.showSelectedRegionContextMenu = shouldShow;
+  }
+
   private onInitialFlashAnimationEnd() {
     if (this.hasInitialFlashAnimationEnded) {
       return;
@@ -1065,15 +1157,11 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
     // Don't start the shimmer animation until the initial flash animation is
     // finished.
     if (!this.disableShimmer) {
-      if (this.useShimmerCanvas) {
-        this.$.overlayShimmerCanvas.startAnimation();
-      } else {
-        this.$.overlayShimmer.startAnimation();
-      }
+      this.$.overlayShimmerCanvas.startAnimation();
     }
   }
 
-  private async screenshotDataReceived(screenshotBitmap: ImageBitmap) {
+  private screenshotDataReceived(screenshotBitmap: ImageBitmap) {
     renderScreenshot(this.$.backgroundImageCanvas, screenshotBitmap);
     // Start the canvas as the same dimensions as the viewport, since we are
     // assuming the screenshot takes up the viewport dimensions. Our resize
@@ -1083,6 +1171,52 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
 
     this.isScreenshotRendered = true;
     this.onImageRendered();
+  }
+
+  /**
+   * Attempts to fetch the text layer in the selection overlay and returns it.
+   */
+  private getTextSelectionLayer(): TextLayerBase {
+    if (this.textSelectionLayer) {
+      return this.textSelectionLayer;
+    }
+
+    // If simplified selection is enabled, then that means the layer being
+    // rendered must be the `lens-simplified-text-layer`. It is only not
+    // rendered when simplified selection is disabled.
+    if (this.simplifiedSelectionEnabled) {
+      this.textSelectionLayer =
+          this.shadowRoot!.querySelector('lens-simplified-text-layer')!;
+      return this.textSelectionLayer;
+    }
+
+    // Likewise, if simplified selection is disabled, `lens-text-layer` must be
+    // the text layer being rendered.
+    this.textSelectionLayer =
+        this.shadowRoot!.querySelector('lens-text-layer')!;
+    return this.textSelectionLayer;
+  }
+
+  private onCopyCommand() {
+    if (!this.simplifiedSelectionEnabled) {
+      this.handleCopy();
+      return;
+    }
+
+    this.handleCopyAsImage();
+  }
+
+  /**
+   * Returns the bounding rect of the selection overlay. This is preferred over
+   * using getBoundingClientRect() because it is a cached DOM property which
+   * doesn't need to be recalculated every time.
+   */
+  getBoundingRect() {
+    return this.selectionOverlayRect;
+  }
+
+  getTextSelectionLayerForTesting(): TextLayerBase {
+    return this.getTextSelectionLayer();
   }
 
   fetchNewScreenshotForTesting() {
@@ -1116,6 +1250,10 @@ export class SelectionOverlayElement extends SelectionOverlayElementBase {
 
   handleCopyForTesting() {
     this.handleCopy();
+  }
+
+  handleCopyDetectedTextForTesting() {
+    this.handleCopyDetectedText();
   }
 
   handleTranslateForTesting() {

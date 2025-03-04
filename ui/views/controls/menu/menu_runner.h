@@ -13,7 +13,7 @@
 
 #include "base/functional/callback.h"
 #include "base/memory/raw_ptr.h"
-#include "ui/base/mojom/menu_source_type.mojom.h"
+#include "ui/base/mojom/menu_source_type.mojom-forward.h"
 #include "ui/gfx/geometry/rounded_corners_f.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/views/controls/menu/menu_types.h"
@@ -115,6 +115,9 @@ class VIEWS_EXPORT MenuRunner {
 
     // Indicates that the menu should show mnemonics.
     SHOULD_SHOW_MNEMONICS = 1 << 10,
+
+    // Indicates that the menu was invoked from the keyboard.
+    INVOKED_FROM_KEYBOARD = 1 << 11,
   };
 
   // Creates a new MenuRunner, which may use a native menu if available.

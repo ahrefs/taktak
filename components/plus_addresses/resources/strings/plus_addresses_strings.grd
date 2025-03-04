@@ -436,6 +436,14 @@ if we want to translate this file.
         <message name="IDS_PLUS_ADDRESS_ERROR_TRY_AGAIN_PRIMARY_BUTTON_IOS" desc="The confirmation button displayed in the alert view that retries the previous failed action." translateable="false">
           Try again
         </message>
+
+        <!-- Snackbar strings -->
+        <message name="IDS_PLUS_ADDRESS_SNACKBAR_UNDO_EMAIL_SWAP_DESCRIPTION_TEXT_IOS" desc="The text displayed on the snackbar at the bottom of the screen. The snackbar is shown when the user's plus address was filled instead of a regular email." translateable="false">
+          Chrome filled your plus address for this site
+        </message>
+        <message name="IDS_PLUS_ADDRESS_SNACKBAR_UNDO_EMAIL_SWAP_ACTION_TEXT_IOS" desc="The text displayed on the snackbar at the bottom of the screen. The snackbar is shown when the user's plus address was filled instead of a regular email." translateable="false">
+          Undo
+        </message>
       </if>
 
       <!-- Desktop strings -->
@@ -512,6 +520,17 @@ if we want to translate this file.
           Can't create any more plus addresses for this site or app.
         </message>
 
+        <!-- Strings for the top toast that is shown after full form filling -->
+        <message name="IDS_PLUS_ADDRESS_FULL_FORM_FILL_TOAST_MESSAGE" desc="The text shown in the Chrome top toast that is displayed after a plus address was automatically swapped in during full form filling." translateable="false">
+          Chrome filled your plus address for this site
+        </message>
+        <message name="IDS_PLUS_ADDRESS_FULL_FORM_FILL_TOAST_UNDO" desc="The label of the menu option in the Chrome top toast to fill the profile's email address instead of the plus address." translateable="false">
+          Replace with <ph name="EMAIL">$1<ex>foo@gmail.com</ex></ph>
+        </message>
+        <message name="IDS_PLUS_ADDRESS_FULL_FORM_FILL_TOAST_MANAGE" desc="The label of the menu option in the Chrome top toast to go to the plus address management surface." translateable="false">
+          Manage plus addresses...
+        </message>
+
         <!-- Manual fallback strings -->
         <message name="IDS_PLUS_ADDRESS_FALLBACK_LABEL_CONTEXT_MENU" desc="Label for the context menu entry that serves as a fallback to trigger plus address suggestions on a field." translateable="false">
           Lorem Ipsum
@@ -529,6 +548,12 @@ if we want to translate this file.
       </message>
       <message name="IDS_PLUS_ADDRESS_SETTINGS_SUBLABEL" desc="The description of the link in settings to manage plus addresses" translateable="false">
         Manage plus addresses you've created
+      </message>
+      <message name="IDS_AUTOFILL_ADDRESSES_SETTINGS_WITH_PLUS_ADDRESS_SUBLABEL" desc="Description shown below the link to the Autofill settings page for managing addresses and more." translateable="false">
+        Phone numbers, email addresses, shipping addresses, and plus addresses
+      </message>
+      <message name="IDS_SETTINGS_ENCRYPT_WITH_SYNC_PASSPHRASE_INCLUDING_PLUS_ADDRESS_LABEL" desc="Label for the radio button which, when selected, causes synced settings to be encrypted with a user-provided password." translateable="false">
+        Encrypt synced data with your own <ph name="BEGIN_LINK">&lt;a href="$1" target=&quot;_blank&quot;&gt;<ex>&lt;a href="$1" target=&quot;_blank&quot;&gt;</ex></ph>sync passphrase<ph name="END_LINK">&lt;/a&gt;<ex>&lt;/a&gt;</ex></ph>. Payment methods and addresses from Google Pay and Plus Address won’t be encrypted. Browsing history from Chrome won’t sync.
       </message>
 
       <!-- Suggestion strings -->
@@ -573,7 +598,7 @@ if we want to translate this file.
       <message name="IDS_PLUS_ADDRESS_CREATE_SUGGESTION_IPH_SCREENREADER" is_accessibility_with_no_ui="true" desc="Screenreader text shown in the IPH bubble for educating the user on creating plus addresses." translateable="false">
         Placeholder Plus Address Create Suggestion IPH Screenreader String
       </message>
-      <message name="IDS_PLUS_ADDRESS_CREATE_SUGGESTION_IPH_ANDROID" desc="Text shown in the IPH bubble for educating the user on creating plus addresses on Android." translateable="false">
+      <message name="IDS_PLUS_ADDRESS_CREATE_SUGGESTION_IPH_ANDROID" desc="Text shown in the IPH bubble for educating the user on creating plus addresses on Android." formatter_data="android_java" translateable="false">
         Placeholder Plus Address Create Suggestion IPH String.
       </message>
       <message name="IDS_PLUS_ADDRESS_CREATE_SUGGESTION_IPH_IOS" desc="Text shown in the IPH bubble for educating the user on creating plus addresses in iOS." translateable="false">

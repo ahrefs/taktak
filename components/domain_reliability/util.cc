@@ -121,8 +121,7 @@ std::string GetDomainReliabilityProtocol(
     case net::HttpConnectionInfoCoarse::kOTHER:
       return "";
   }
-  NOTREACHED_IN_MIGRATION();
-  return "";
+  NOTREACHED();
 }
 
 DomainReliabilityUploader::UploadResult GetUploadResultFromResponseDetails(
@@ -199,8 +198,8 @@ class ActualTimer : public MockableTime::Timer {
 
 }  // namespace
 
-MockableTime::Timer::~Timer() {}
-MockableTime::Timer::Timer() {}
+MockableTime::Timer::~Timer() = default;
+MockableTime::Timer::Timer() = default;
 
 MockableTime::~MockableTime() = default;
 MockableTime::MockableTime() = default;

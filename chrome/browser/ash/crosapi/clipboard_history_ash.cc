@@ -8,11 +8,12 @@
 
 #include "ash/public/cpp/clipboard_history_controller.h"
 #include "ash/shell.h"
+#include "base/check.h"
 #include "base/scoped_observation.h"
 #include "base/unguessable_token.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/crosapi/mojom/clipboard_history.mojom.h"
 #include "chromeos/ui/clipboard_history/clipboard_history_util.h"
+#include "ui/base/mojom/menu_source_type.mojom-forward.h"
 
 namespace crosapi {
 
@@ -38,7 +39,6 @@ class ClipboardHistoryAsh::ClientUpdater
  public:
   explicit ClientUpdater(mojom::ClipboardHistoryClient* client)
       : client_(client) {
-    CHECK(chromeos::features::IsClipboardHistoryRefreshEnabled());
     observation_.Observe(ash::ClipboardHistoryController::Get());
   }
   ClientUpdater(const ClientUpdater&) = delete;
@@ -73,7 +73,7 @@ ClipboardHistoryAsh::~ClipboardHistoryAsh() = default;
 
 void ClipboardHistoryAsh::ShowClipboard(
     const gfx::Rect& anchor_point,
-    ui::MenuSourceType menu_source_type,
+    ui::mojom::MenuSourceType menu_source_type,
     crosapi::mojom::ClipboardHistoryControllerShowSource show_source) {
   if (auto* clipboard_history_controller =
           ash::ClipboardHistoryController::Get()) {
@@ -95,8 +95,6 @@ void ClipboardHistoryAsh::PasteClipboardItemById(
 
 void ClipboardHistoryAsh::RegisterClient(
     mojo::PendingRemote<mojom::ClipboardHistoryClient> client) {
-  CHECK(chromeos::features::IsClipboardHistoryRefreshEnabled());
-
   // In testing, `remote_client_` can be already bound when multiple Lacros
   // tests run in parallel. This does not happen on real devices.
   // TODO(http://b/294617428): Make `ClipboardHistoryAsh` support multiple
@@ -121,7 +119,6 @@ void ClipboardHistoryAsh::RegisterClient(
 }
 
 void ClipboardHistoryAsh::UpdateRemoteDescriptorsForTesting() {
-  CHECK(chromeos::features::IsClipboardHistoryRefreshEnabled());
   CHECK(remote_client_.is_bound());
   CHECK(client_updater_);
 

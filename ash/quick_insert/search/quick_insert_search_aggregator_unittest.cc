@@ -38,7 +38,7 @@ using ::testing::UnorderedElementsAre;
 using ::testing::VariantWith;
 
 using MockSearchResultsCallback =
-    ::testing::MockFunction<PickerViewDelegate::SearchResultsCallback>;
+    ::testing::MockFunction<QuickInsertViewDelegate::SearchResultsCallback>;
 
 constexpr base::TimeDelta kBurnInPeriod = base::Milliseconds(400);
 
@@ -49,8 +49,8 @@ MATCHER_P(LastElement, matcher, "") {
 }
 
 struct TestCase {
-  PickerSearchSource source;
-  PickerSectionType section_type;
+  QuickInsertSearchSource source;
+  QuickInsertSectionType section_type;
 };
 
 class QuickInsertSearchAggregatorTest
@@ -67,50 +67,54 @@ class QuickInsertSearchAggregatorTest
 
 const TestCase kNamedSectionTestCases[] = {
     TestCase{
-        .source = PickerSearchSource::kOmnibox,
-        .section_type = PickerSectionType::kLinks,
+        .source = QuickInsertSearchSource::kOmnibox,
+        .section_type = QuickInsertSectionType::kLinks,
     },
     TestCase{
-        .source = PickerSearchSource::kLocalFile,
-        .section_type = PickerSectionType::kLocalFiles,
+        .source = QuickInsertSearchSource::kLocalFile,
+        .section_type = QuickInsertSectionType::kLocalFiles,
     },
     TestCase{
-        .source = PickerSearchSource::kDrive,
-        .section_type = PickerSectionType::kDriveFiles,
+        .source = QuickInsertSearchSource::kDrive,
+        .section_type = QuickInsertSectionType::kDriveFiles,
     },
     TestCase{
-        .source = PickerSearchSource::kClipboard,
-        .section_type = PickerSectionType::kClipboard,
+        .source = QuickInsertSearchSource::kClipboard,
+        .section_type = QuickInsertSectionType::kClipboard,
     },
 };
 
 const TestCase kNoneSectionTestCases[] = {
     TestCase{
-        .source = PickerSearchSource::kAction,
-        .section_type = PickerSectionType::kNone,
+        .source = QuickInsertSearchSource::kAction,
+        .section_type = QuickInsertSectionType::kNone,
     },
     TestCase{
-        .source = PickerSearchSource::kDate,
-        .section_type = PickerSectionType::kNone,
+        .source = QuickInsertSearchSource::kDate,
+        .section_type = QuickInsertSectionType::kNone,
     },
     TestCase{
-        .source = PickerSearchSource::kMath,
-        .section_type = PickerSectionType::kNone,
+        .source = QuickInsertSearchSource::kMath,
+        .section_type = QuickInsertSectionType::kNone,
     },
 };
 
 const TestCase kContentEditorSectionTestCases[] = {
     TestCase{
-        .source = PickerSearchSource::kEditorWrite,
-        .section_type = PickerSectionType::kContentEditor,
+        .source = QuickInsertSearchSource::kEditorWrite,
+        .section_type = QuickInsertSectionType::kContentEditor,
     },
     TestCase{
-        .source = PickerSearchSource::kEditorRewrite,
-        .section_type = PickerSectionType::kContentEditor,
+        .source = QuickInsertSearchSource::kEditorRewrite,
+        .section_type = QuickInsertSectionType::kContentEditor,
     },
     TestCase{
-        .source = PickerSearchSource::kLobster,
-        .section_type = PickerSectionType::kContentEditor,
+        .source = QuickInsertSearchSource::kLobsterWithNoSelectedText,
+        .section_type = QuickInsertSectionType::kContentEditor,
+    },
+    TestCase{
+        .source = QuickInsertSearchSource::kLobsterWithSelectedText,
+        .section_type = QuickInsertSectionType::kContentEditor,
     },
 };
 
@@ -137,7 +141,7 @@ TEST_P(QuickInsertSearchAggregatorTest, DoesNotPublishResultsDuringBurnIn) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       /*burn_in_period=*/base::Milliseconds(100),
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -153,7 +157,7 @@ TEST_P(QuickInsertSearchAggregatorTest,
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       /*burn_in_period=*/base::Milliseconds(100),
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -171,11 +175,11 @@ TEST_P(QuickInsertSearchAggregatorTest,
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(
       search_results_callback,
-      Call(ElementsAre(Property("type", &PickerSearchResultsSection::type,
+      Call(ElementsAre(Property("type", &QuickInsertSearchResultsSection::type,
                                 GetParam().section_type))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       /*burn_in_period=*/base::Milliseconds(100),
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -193,15 +197,15 @@ TEST_P(QuickInsertSearchAggregatorTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
+          Property("type", &QuickInsertSearchResultsSection::type,
                    GetParam().section_type),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                        "primary_text", &QuickInsertTextResult::primary_text,
                        u"test"))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -217,15 +221,15 @@ TEST_P(QuickInsertSearchAggregatorTest, PublishesResultsPostBurnIn) {
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
+          Property("type", &QuickInsertSearchResultsSection::type,
                    GetParam().section_type),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                        "primary_text", &QuickInsertTextResult::primary_text,
                        u"test"))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -239,12 +243,13 @@ TEST_P(QuickInsertSearchAggregatorTest, PublishesResultsPostBurnIn) {
 TEST_P(QuickInsertSearchAggregatorTest, DoNotPublishEmptySectionsAfterBurnIn) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call(_)).Times(AnyNumber());
-  EXPECT_CALL(search_results_callback,
-              Call(Contains(Property("type", &PickerSearchResultsSection::type,
-                                     GetParam().section_type))))
+  EXPECT_CALL(
+      search_results_callback,
+      Call(Contains(Property("type", &QuickInsertSearchResultsSection::type,
+                             GetParam().section_type))))
       .Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -257,12 +262,13 @@ TEST_P(QuickInsertSearchAggregatorTest, DoNotPublishEmptySectionsAfterBurnIn) {
 TEST_P(QuickInsertSearchAggregatorTest, DoNotPublishEmptySectionsPostBurnIn) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call(_)).Times(AnyNumber());
-  EXPECT_CALL(search_results_callback,
-              Call(Contains(Property("type", &PickerSearchResultsSection::type,
-                                     GetParam().section_type))))
+  EXPECT_CALL(
+      search_results_callback,
+      Call(Contains(Property("type", &QuickInsertSearchResultsSection::type,
+                             GetParam().section_type))))
       .Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -276,7 +282,7 @@ TEST_P(QuickInsertSearchAggregatorTest, DoNotPublishEmptySearchAfterBurnIn) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -290,7 +296,7 @@ TEST_P(QuickInsertSearchAggregatorTest, DoNotPublishEmptySearchPostBurnIn) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -305,15 +311,15 @@ TEST_P(QuickInsertSearchAggregatorTest,
   MockSearchResultsCallback search_results_callback;
   {
     ::testing::InSequence seq;
-    EXPECT_CALL(
-        search_results_callback,
-        Call(ElementsAre(Property("type", &PickerSearchResultsSection::type,
-                                  GetParam().section_type))))
+    EXPECT_CALL(search_results_callback,
+                Call(ElementsAre(
+                    Property("type", &QuickInsertSearchResultsSection::type,
+                             GetParam().section_type))))
         .Times(1);
     EXPECT_CALL(search_results_callback, Call(IsEmpty())).Times(1);
   }
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       /*burn_in_period=*/base::Milliseconds(100),
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -330,15 +336,15 @@ TEST_P(QuickInsertSearchAggregatorTest,
   MockSearchResultsCallback search_results_callback;
   {
     ::testing::InSequence seq;
-    EXPECT_CALL(
-        search_results_callback,
-        Call(ElementsAre(Property("type", &PickerSearchResultsSection::type,
-                                  GetParam().section_type))))
+    EXPECT_CALL(search_results_callback,
+                Call(ElementsAre(
+                    Property("type", &QuickInsertSearchResultsSection::type,
+                             GetParam().section_type))))
         .Times(1);
     EXPECT_CALL(search_results_callback, Call(IsEmpty())).Times(1);
   }
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -357,15 +363,15 @@ TEST_P(QuickInsertSearchAggregatorNamedSectionTest,
   MockSearchResultsCallback search_results_callback;
   {
     ::testing::InSequence seq;
-    EXPECT_CALL(
-        search_results_callback,
-        Call(ElementsAre(Property("type", &PickerSearchResultsSection::type,
-                                  GetParam().section_type))))
+    EXPECT_CALL(search_results_callback,
+                Call(ElementsAre(
+                    Property("type", &QuickInsertSearchResultsSection::type,
+                             GetParam().section_type))))
         .Times(1);
     EXPECT_CALL(search_results_callback, Call(IsEmpty())).Times(1);
   }
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -383,7 +389,7 @@ TEST_P(QuickInsertSearchAggregatorTest,
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback, Call(IsEmpty())).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       /*burn_in_period=*/base::Milliseconds(100),
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -401,7 +407,7 @@ TEST_P(QuickInsertSearchAggregatorTest,
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback, Call(IsEmpty())).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -419,7 +425,7 @@ TEST_P(QuickInsertSearchAggregatorTest,
   EXPECT_CALL(search_results_callback, Call).Times(AnyNumber());
   EXPECT_CALL(search_results_callback, Call(IsEmpty())).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -447,7 +453,7 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call(_)).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
@@ -459,22 +465,22 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback, Call(_)).Times(0);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kOmnibox, {},
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kOmnibox, {},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kDate, {},
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kDate, {},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kAction, {},
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kAction, {},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kLocalFile, {},
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kLocalFile, {},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kDrive, {},
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kDrive, {},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kMath, {},
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kMath, {},
                                        /*has_more_results=*/false);
   task_environment().FastForwardBy(kBurnInPeriod);
 }
@@ -485,10 +491,10 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kNone),
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kNone),
                 Property(
-                    "results", &PickerSearchResultsSection::results,
+                    "results", &QuickInsertSearchResultsSection::results,
                     ElementsAre(
                         VariantWith<QuickInsertTextResult>(Field(
                             "primary_text",
@@ -500,37 +506,37 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                             "primary_text",
                             &QuickInsertTextResult::primary_text, u"math"))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kLinks),
-              Property("results", &PickerSearchResultsSection::results,
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kLinks),
+              Property("results", &QuickInsertSearchResultsSection::results,
                        ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                            "primary_text", &QuickInsertTextResult::primary_text,
                            u"omnibox"))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kDriveFiles),
-              Property("results", &PickerSearchResultsSection::results,
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kDriveFiles),
+              Property("results", &QuickInsertSearchResultsSection::results,
                        ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                            "primary_text", &QuickInsertTextResult::primary_text,
                            u"drive"))))),
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kLocalFiles),
-                Property("results", &PickerSearchResultsSection::results,
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kLocalFiles),
+                Property("results", &QuickInsertSearchResultsSection::results,
                          ElementsAre(VariantWith<QuickInsertLocalFileResult>(
                              Field("title", &QuickInsertLocalFileResult::title,
                                    u"local"))))),
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kClipboard),
-                Property("results", &PickerSearchResultsSection::results,
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kClipboard),
+                Property("results", &QuickInsertSearchResultsSection::results,
                          ElementsAre(VariantWith<QuickInsertClipboardResult>(
                              Field("display_text",
                                    &QuickInsertClipboardResult::display_text,
                                    u"clipboard"))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kContentEditor),
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kContentEditor),
               Property(
-                  "results", &PickerSearchResultsSection::results,
+                  "results", &QuickInsertSearchResultsSection::results,
                   ElementsAre(
                       VariantWith<QuickInsertTextResult>(Field(
                           "primary_text", &QuickInsertTextResult::primary_text,
@@ -540,51 +546,59 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                           u"rewrite")),
                       VariantWith<QuickInsertTextResult>(Field(
                           "primary_text", &QuickInsertTextResult::primary_text,
-                          u"lobster"))))))))
+                          u"lobster_with_no_selected_text")),
+                      VariantWith<QuickInsertTextResult>(Field(
+                          "primary_text", &QuickInsertTextResult::primary_text,
+                          u"lobster_with_selected_text"))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kOmnibox,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kOmnibox,
                                        {QuickInsertTextResult(u"omnibox")},
                                        /*has_more_results=*/false);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kClipboard,
+      QuickInsertSearchSource::kClipboard,
       {QuickInsertClipboardResult(
           base::UnguessableToken::Create(),
           QuickInsertClipboardResult::DisplayFormat::kText,
           /*file_count=*/0, u"clipboard", std::nullopt,
           /*is_recent=*/false)},
       /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kDate,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kDate,
                                        {QuickInsertTextResult(u"date")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kAction,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kAction,
                                        {QuickInsertTextResult(u"category")},
                                        /*has_more_results=*/false);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kLocalFile,
+      QuickInsertSearchSource::kLocalFile,
       {QuickInsertLocalFileResult(u"local", base::FilePath("fake_path"),
                                   /*best_match=*/false)},
       /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kDrive,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kDrive,
                                        {QuickInsertTextResult(u"drive")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kMath,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kMath,
                                        {QuickInsertTextResult(u"math")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kEditorWrite,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kEditorWrite,
                                        {QuickInsertTextResult(u"write")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kEditorRewrite,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kEditorRewrite,
                                        {QuickInsertTextResult(u"rewrite")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kLobster,
-                                       {QuickInsertTextResult(u"lobster")},
-                                       /*has_more_results=*/false);
+  aggregator.HandleSearchSourceResults(
+      QuickInsertSearchSource::kLobsterWithNoSelectedText,
+      {QuickInsertTextResult(u"lobster_with_no_selected_text")},
+      /*has_more_results=*/false);
+  aggregator.HandleSearchSourceResults(
+      QuickInsertSearchSource::kLobsterWithSelectedText,
+      {QuickInsertTextResult(u"lobster_with_selected_text")},
+      /*has_more_results=*/false);
   task_environment().FastForwardBy(kBurnInPeriod);
 }
 
@@ -594,45 +608,45 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kLocalFiles),
-                Property("results", &PickerSearchResultsSection::results,
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kLocalFiles),
+                Property("results", &QuickInsertSearchResultsSection::results,
                          ElementsAre(VariantWith<QuickInsertLocalFileResult>(
                              Field("title", &QuickInsertLocalFileResult::title,
                                    u"local"))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kLinks),
-              Property("results", &PickerSearchResultsSection::results,
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kLinks),
+              Property("results", &QuickInsertSearchResultsSection::results,
                        ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                            "primary_text", &QuickInsertTextResult::primary_text,
                            u"omnibox"))))),
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kClipboard),
-                Property("results", &PickerSearchResultsSection::results,
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kClipboard),
+                Property("results", &QuickInsertSearchResultsSection::results,
                          ElementsAre(VariantWith<QuickInsertClipboardResult>(
                              Field("display_text",
                                    &QuickInsertClipboardResult::display_text,
                                    u"clipboard"))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kContentEditor),
-              Property("results", &PickerSearchResultsSection::results,
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kContentEditor),
+              Property("results", &QuickInsertSearchResultsSection::results,
                        ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                            "primary_text", &QuickInsertTextResult::primary_text,
                            u"write"))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kOmnibox,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kOmnibox,
                                        {QuickInsertTextResult(u"omnibox")},
                                        /*has_more_results=*/false);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kClipboard,
+      QuickInsertSearchSource::kClipboard,
       {QuickInsertClipboardResult(
           base::UnguessableToken::Create(),
           QuickInsertClipboardResult::DisplayFormat::kText,
@@ -640,11 +654,11 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
           /*is_recent=*/false)},
       /*has_more_results=*/false);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kLocalFile,
+      QuickInsertSearchSource::kLocalFile,
       {QuickInsertLocalFileResult(u"local", base::FilePath("fake_path"),
                                   /*best_match=*/true)},
       /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kEditorWrite,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kEditorWrite,
                                        {QuickInsertTextResult(u"write")},
                                        /*has_more_results=*/false);
   task_environment().FastForwardBy(kBurnInPeriod);
@@ -656,45 +670,45 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kLocalFiles),
-                Property("results", &PickerSearchResultsSection::results,
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kLocalFiles),
+                Property("results", &QuickInsertSearchResultsSection::results,
                          ElementsAre(VariantWith<QuickInsertLocalFileResult>(
                              Field("title", &QuickInsertLocalFileResult::title,
                                    u"local"))))),
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kClipboard),
-                Property("results", &PickerSearchResultsSection::results,
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kClipboard),
+                Property("results", &QuickInsertSearchResultsSection::results,
                          ElementsAre(VariantWith<QuickInsertClipboardResult>(
                              Field("display_text",
                                    &QuickInsertClipboardResult::display_text,
                                    u"clipboard"))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kLinks),
-              Property("results", &PickerSearchResultsSection::results,
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kLinks),
+              Property("results", &QuickInsertSearchResultsSection::results,
                        ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                            "primary_text", &QuickInsertTextResult::primary_text,
                            u"omnibox"))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kContentEditor),
-              Property("results", &PickerSearchResultsSection::results,
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kContentEditor),
+              Property("results", &QuickInsertSearchResultsSection::results,
                        ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                            "primary_text", &QuickInsertTextResult::primary_text,
                            u"write"))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kOmnibox,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kOmnibox,
                                        {QuickInsertTextResult(u"omnibox")},
                                        /*has_more_results=*/false);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kClipboard,
+      QuickInsertSearchSource::kClipboard,
       {QuickInsertClipboardResult(
           base::UnguessableToken::Create(),
           QuickInsertClipboardResult::DisplayFormat::kText,
@@ -702,11 +716,11 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
           /*is_recent=*/true)},
       /*has_more_results=*/false);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kLocalFile,
+      QuickInsertSearchSource::kLocalFile,
       {QuickInsertLocalFileResult(u"local", base::FilePath("fake_path"),
                                   /*best_match=*/true)},
       /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kEditorWrite,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kEditorWrite,
                                        {QuickInsertTextResult(u"write")},
                                        /*has_more_results=*/false);
   task_environment().FastForwardBy(kBurnInPeriod);
@@ -721,9 +735,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kLinks),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kLinks),
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                        "primary_text", &QuickInsertTextResult::primary_text,
                        u"omnibox"))))))))
@@ -731,9 +745,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kDriveFiles),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kDriveFiles),
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                        "primary_text", &QuickInsertTextResult::primary_text,
                        u"drive"))))))))
@@ -741,9 +755,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kClipboard),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kClipboard),
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                        "primary_text", &QuickInsertTextResult::primary_text,
                        u"clipboard"))))))))
@@ -751,72 +765,77 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kLocalFiles),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kLocalFiles),
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertTextResult>(Field(
                        "primary_text", &QuickInsertTextResult::primary_text,
                        u"local"))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
   task_environment().FastForwardBy(kBurnInPeriod);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kOmnibox,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kOmnibox,
                                        {QuickInsertTextResult(u"omnibox")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kDrive,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kDrive,
                                        {QuickInsertTextResult(u"drive")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kDate,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kDate,
                                        {QuickInsertTextResult(u"date")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kAction,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kAction,
                                        {QuickInsertTextResult(u"category")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kClipboard,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kClipboard,
                                        {QuickInsertTextResult(u"clipboard")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kLocalFile,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kLocalFile,
                                        {QuickInsertTextResult(u"local")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kMath,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kMath,
                                        {QuickInsertTextResult(u"math")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kEditorWrite,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kEditorWrite,
                                        {QuickInsertTextResult(u"write")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kEditorRewrite,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kEditorRewrite,
                                        {QuickInsertTextResult(u"rewrite")},
                                        /*has_more_results=*/false);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kLobster,
-                                       {QuickInsertTextResult(u"lobster")},
-                                       /*has_more_results=*/false);
+  aggregator.HandleSearchSourceResults(
+      QuickInsertSearchSource::kLobsterWithNoSelectedText,
+      {QuickInsertTextResult(u"lobster")},
+      /*has_more_results=*/false);
+  aggregator.HandleSearchSourceResults(
+      QuickInsertSearchSource::kLobsterWithSelectedText,
+      {QuickInsertTextResult(u"lobster")},
+      /*has_more_results=*/false);
 }
 
 TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
        CombinesSearchResultsRetainingHasMoreResultsBeforeBurnIn) {
   MockSearchResultsCallback search_results_callback;
   EXPECT_CALL(search_results_callback,
-              Call(Each(Property("has_more_results",
-                                 &PickerSearchResultsSection::has_more_results,
-                                 true))));
+              Call(Each(Property(
+                  "has_more_results",
+                  &QuickInsertSearchResultsSection::has_more_results, true))));
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kOmnibox,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kOmnibox,
                                        {QuickInsertTextResult(u"omnibox")},
                                        /*has_more_results=*/true);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kLocalFile,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kLocalFile,
                                        {QuickInsertTextResult(u"local")},
                                        /*has_more_results=*/true);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kDrive,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kDrive,
                                        {QuickInsertTextResult(u"drive")},
                                        /*has_more_results=*/true);
   task_environment().FastForwardBy(kBurnInPeriod);
@@ -827,25 +846,25 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   MockSearchResultsCallback search_results_callback;
   testing::InSequence seq;
   EXPECT_CALL(search_results_callback, Call(_)).Times(0);
-  EXPECT_CALL(
-      search_results_callback,
-      Call(Each(Property("has_more_results",
-                         &PickerSearchResultsSection::has_more_results, true))))
+  EXPECT_CALL(search_results_callback,
+              Call(Each(Property(
+                  "has_more_results",
+                  &QuickInsertSearchResultsSection::has_more_results, true))))
       .Times(3);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
   task_environment().FastForwardBy(kBurnInPeriod);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kOmnibox,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kOmnibox,
                                        {QuickInsertTextResult(u"omnibox")},
                                        /*has_more_results=*/true);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kLocalFile,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kLocalFile,
                                        {QuickInsertTextResult(u"local")},
                                        /*has_more_results=*/true);
-  aggregator.HandleSearchSourceResults(PickerSearchSource::kDrive,
+  aggregator.HandleSearchSourceResults(QuickInsertSearchSource::kDrive,
                                        {QuickInsertTextResult(u"drive")},
                                        /*has_more_results=*/true);
 }
@@ -856,10 +875,10 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(UnorderedElementsAre(
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kDriveFiles),
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kDriveFiles),
                 Property(
-                    "results", &PickerSearchResultsSection::results,
+                    "results", &QuickInsertSearchResultsSection::results,
                     ElementsAre(VariantWith<QuickInsertDriveFileResult>(
                                     Field("id", &QuickInsertDriveFileResult::id,
                                           std::nullopt)),
@@ -873,9 +892,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                                     Field("id", &QuickInsertDriveFileResult::id,
                                           Optional(Eq("driveid3"))))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kLinks),
-              Property("results", &PickerSearchResultsSection::results,
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kLinks),
+              Property("results", &QuickInsertSearchResultsSection::results,
                        ElementsAre(
                            VariantWith<QuickInsertBrowsingHistoryResult>(Field(
                                "url", &QuickInsertBrowsingHistoryResult::url,
@@ -889,13 +908,13 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                                     "notmatched")))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kDrive,
+      QuickInsertSearchSource::kDrive,
       {
           QuickInsertDriveFileResult(/*id=*/std::nullopt, /*title=*/u"", GURL(),
                                      base::FilePath()),
@@ -908,7 +927,7 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
       },
       /*has_more_results=*/true);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kOmnibox,
+      QuickInsertSearchSource::kOmnibox,
       {
           QuickInsertBrowsingHistoryResult(GURL("https://example.com"), u"",
                                            ui::ImageModel()),
@@ -936,10 +955,10 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(UnorderedElementsAre(
-          AllOf(Property("type", &PickerSearchResultsSection::type,
-                         PickerSectionType::kDriveFiles),
+          AllOf(Property("type", &QuickInsertSearchResultsSection::type,
+                         QuickInsertSectionType::kDriveFiles),
                 Property(
-                    "results", &PickerSearchResultsSection::results,
+                    "results", &QuickInsertSearchResultsSection::results,
                     ElementsAre(VariantWith<QuickInsertDriveFileResult>(
                                     Field("id", &QuickInsertDriveFileResult::id,
                                           std::nullopt)),
@@ -953,9 +972,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                                     Field("id", &QuickInsertDriveFileResult::id,
                                           Optional(Eq("driveid3"))))))),
           AllOf(
-              Property("type", &PickerSearchResultsSection::type,
-                       PickerSectionType::kLinks),
-              Property("results", &PickerSearchResultsSection::results,
+              Property("type", &QuickInsertSearchResultsSection::type,
+                       QuickInsertSectionType::kLinks),
+              Property("results", &QuickInsertSearchResultsSection::results,
                        ElementsAre(
                            VariantWith<QuickInsertBrowsingHistoryResult>(Field(
                                "url", &QuickInsertBrowsingHistoryResult::url,
@@ -969,13 +988,13 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                                     "notmatched")))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kOmnibox,
+      QuickInsertSearchSource::kOmnibox,
       {
           QuickInsertBrowsingHistoryResult(GURL("https://example.com"), u"",
                                            ui::ImageModel()),
@@ -995,7 +1014,7 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
       },
       /*has_more_results=*/true);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kDrive,
+      QuickInsertSearchSource::kDrive,
       {
           QuickInsertDriveFileResult(/*id=*/std::nullopt, /*title=*/u"", GURL(),
                                      base::FilePath()),
@@ -1017,9 +1036,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kDriveFiles),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kDriveFiles),
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertDriveFileResult>(
                                    Field("id", &QuickInsertDriveFileResult::id,
                                          std::nullopt)),
@@ -1036,10 +1055,10 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kLinks),
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kLinks),
           Property(
-              "results", &PickerSearchResultsSection::results,
+              "results", &QuickInsertSearchResultsSection::results,
               ElementsAre(VariantWith<QuickInsertBrowsingHistoryResult>(Field(
                               "url", &QuickInsertBrowsingHistoryResult::url,
                               GURL("https://example.com"))),
@@ -1052,13 +1071,13 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                                    "notmatched")))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kDrive,
+      QuickInsertSearchSource::kDrive,
       {
           QuickInsertDriveFileResult(/*id=*/std::nullopt, /*title=*/u"", GURL(),
                                      base::FilePath()),
@@ -1072,7 +1091,7 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
       /*has_more_results=*/true);
   task_environment().FastForwardBy(kBurnInPeriod);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kOmnibox,
+      QuickInsertSearchSource::kOmnibox,
       {
           QuickInsertBrowsingHistoryResult(GURL("https://example.com"), u"",
                                            ui::ImageModel()),
@@ -1100,9 +1119,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kDriveFiles),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kDriveFiles),
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertDriveFileResult>(
                                    Field("id", &QuickInsertDriveFileResult::id,
                                          std::nullopt)),
@@ -1119,10 +1138,10 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kLinks),
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kLinks),
           Property(
-              "results", &PickerSearchResultsSection::results,
+              "results", &QuickInsertSearchResultsSection::results,
               ElementsAre(VariantWith<QuickInsertBrowsingHistoryResult>(Field(
                               "url", &QuickInsertBrowsingHistoryResult::url,
                               GURL("https://example.com"))),
@@ -1135,14 +1154,14 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                                    "notmatched")))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
   task_environment().FastForwardBy(kBurnInPeriod);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kDrive,
+      QuickInsertSearchSource::kDrive,
       {
           QuickInsertDriveFileResult(/*id=*/std::nullopt, /*title=*/u"", GURL(),
                                      base::FilePath()),
@@ -1155,7 +1174,7 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
       },
       /*has_more_results=*/true);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kOmnibox,
+      QuickInsertSearchSource::kOmnibox,
       {
           QuickInsertBrowsingHistoryResult(GURL("https://example.com"), u"",
                                            ui::ImageModel()),
@@ -1183,10 +1202,10 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kLinks),
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kLinks),
           Property(
-              "results", &PickerSearchResultsSection::results,
+              "results", &QuickInsertSearchResultsSection::results,
               ElementsAre(VariantWith<QuickInsertBrowsingHistoryResult>(Field(
                               "url", &QuickInsertBrowsingHistoryResult::url,
                               GURL("https://example.com"))),
@@ -1210,9 +1229,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kDriveFiles),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kDriveFiles),
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertDriveFileResult>(
                                    Field("id", &QuickInsertDriveFileResult::id,
                                          std::nullopt)),
@@ -1221,13 +1240,13 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                                          Optional(Eq("driveid3"))))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kOmnibox,
+      QuickInsertSearchSource::kOmnibox,
       {
           QuickInsertBrowsingHistoryResult(GURL("https://example.com"), u"",
                                            ui::ImageModel()),
@@ -1248,7 +1267,7 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
       /*has_more_results=*/true);
   task_environment().FastForwardBy(kBurnInPeriod);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kDrive,
+      QuickInsertSearchSource::kDrive,
       {
           QuickInsertDriveFileResult(/*id=*/std::nullopt, /*title=*/u"", GURL(),
                                      base::FilePath()),
@@ -1269,10 +1288,10 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kLinks),
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kLinks),
           Property(
-              "results", &PickerSearchResultsSection::results,
+              "results", &QuickInsertSearchResultsSection::results,
               ElementsAre(VariantWith<QuickInsertBrowsingHistoryResult>(Field(
                               "url", &QuickInsertBrowsingHistoryResult::url,
                               GURL("https://example.com"))),
@@ -1296,9 +1315,9 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
   EXPECT_CALL(
       search_results_callback,
       Call(ElementsAre(AllOf(
-          Property("type", &PickerSearchResultsSection::type,
-                   PickerSectionType::kDriveFiles),
-          Property("results", &PickerSearchResultsSection::results,
+          Property("type", &QuickInsertSearchResultsSection::type,
+                   QuickInsertSectionType::kDriveFiles),
+          Property("results", &QuickInsertSearchResultsSection::results,
                    ElementsAre(VariantWith<QuickInsertDriveFileResult>(
                                    Field("id", &QuickInsertDriveFileResult::id,
                                          std::nullopt)),
@@ -1307,14 +1326,14 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
                                          Optional(Eq("driveid3"))))))))))
       .Times(1);
 
-  PickerSearchAggregator aggregator(
+  QuickInsertSearchAggregator aggregator(
       kBurnInPeriod,
       base::BindRepeating(&MockSearchResultsCallback::Call,
                           base::Unretained(&search_results_callback)));
 
   task_environment().FastForwardBy(kBurnInPeriod);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kOmnibox,
+      QuickInsertSearchSource::kOmnibox,
       {
           QuickInsertBrowsingHistoryResult(GURL("https://example.com"), u"",
                                            ui::ImageModel()),
@@ -1334,7 +1353,7 @@ TEST_F(QuickInsertSearchAggregatorMultipleSourcesTest,
       },
       /*has_more_results=*/true);
   aggregator.HandleSearchSourceResults(
-      PickerSearchSource::kDrive,
+      QuickInsertSearchSource::kDrive,
       {
           QuickInsertDriveFileResult(/*id=*/std::nullopt, /*title=*/u"", GURL(),
                                      base::FilePath()),

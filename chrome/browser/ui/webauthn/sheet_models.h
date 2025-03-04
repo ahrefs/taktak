@@ -5,7 +5,9 @@
 #ifndef CHROME_BROWSER_UI_WEBAUTHN_SHEET_MODELS_H_
 #define CHROME_BROWSER_UI_WEBAUTHN_SHEET_MODELS_H_
 
+#include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -13,6 +15,7 @@
 #include "build/build_config.h"
 #include "chrome/browser/ui/webauthn/authenticator_request_sheet_model.h"
 #include "chrome/browser/webauthn/authenticator_request_dialog_model.h"
+#include "crypto/scoped_lacontext.h"
 #include "device/fido/pin.h"
 
 namespace gfx {
@@ -186,6 +189,19 @@ class AuthenticatorInternalUnrecognizedErrorSheetModel
   std::u16string GetStepTitle() const override;
   std::u16string GetStepDescription() const override;
   void OnAccept() override;
+};
+
+class AuthenticatorChallengeFetchErrorModel
+    : public AuthenticatorSheetModelBase {
+ public:
+  explicit AuthenticatorChallengeFetchErrorModel(
+      AuthenticatorRequestDialogModel* dialog_model);
+
+ private:
+  // AuthenticatorSheetModelBase:
+  std::u16string GetCancelButtonLabel() const override;
+  std::u16string GetStepTitle() const override;
+  std::u16string GetStepDescription() const override;
 };
 
 class AuthenticatorBlePowerOnManualSheetModel
@@ -446,24 +462,10 @@ class AuthenticatorSelectAccountSheetModel
     kPostUserVerification,
   };
 
-  // Whether the user needs to select an account from a list of many or they
-  // merely need to confirm a single possible choice.
-  enum SelectionType {
-    kSingleAccount,
-    kMultipleAccounts,
-  };
-
   AuthenticatorSelectAccountSheetModel(
       AuthenticatorRequestDialogModel* dialog_model,
-      UserVerificationMode mode,
-      SelectionType type);
+      UserVerificationMode mode);
   ~AuthenticatorSelectAccountSheetModel() override;
-
-  SelectionType selection_type() const;
-
-  // Returns the single available credential if `type()` is
-  // `kSingleAccount` and must not be called otherwise.
-  const device::DiscoverableCredentialMetadata& SingleCredential() const;
 
   // Set the index of the currently selected row. Only valid to call for
   // `kMultipleAccount`.
@@ -480,24 +482,24 @@ class AuthenticatorSelectAccountSheetModel
   std::u16string GetAcceptButtonLabel() const override;
 
   const UserVerificationMode user_verification_mode_;
-  const SelectionType selection_type_;
   size_t selected_ = 0;
 };
 
-class AuthenticatorQRSheetModel : public AuthenticatorSheetModelBase {
+class AuthenticatorHybridAndSecurityKeySheetModel
+    : public AuthenticatorSheetModelBase {
  public:
-  explicit AuthenticatorQRSheetModel(
+  explicit AuthenticatorHybridAndSecurityKeySheetModel(
       AuthenticatorRequestDialogModel* dialog_model);
-  ~AuthenticatorQRSheetModel() override;
+  ~AuthenticatorHybridAndSecurityKeySheetModel() override;
 
-  // Returns the labels that indicate to the user they can insert and activate
-  // a hardware security key. If empty then a security key cannot be used.
-  std::vector<std::u16string> GetSecurityKeyLabels() const;
+  // Returns the attestation warning for the security key.
+  std::optional<std::u16string> GetAttestationWarning() const;
 
  private:
   // AuthenticatorSheetModelBase:
   std::u16string GetStepTitle() const override;
   std::u16string GetStepDescription() const override;
+  std::u16string GetOtherMechanismButtonLabel() const override;
 };
 
 class AuthenticatorConnectingSheetModel : public AuthenticatorSheetModelBase {
@@ -641,6 +643,7 @@ class AuthenticatorMultiSourcePickerSheetModel
   std::vector<int> primary_passkey_indices_;
   std::vector<int> secondary_passkey_indices_;
   std::u16string primary_passkeys_label_;
+  bool has_passwords_ = false;
 };
 
 class AuthenticatorPriorityMechanismSheetModel
@@ -697,6 +700,7 @@ class AuthenticatorGpmPinSheetModelBase : public AuthenticatorSheetModelBase {
   bool IsForgotGPMPinButtonVisible() const override;
   bool IsGPMPinOptionsButtonVisible() const override;
   void OnAccept() override;
+  void OnCancel() override;
   void OnForgotGPMPin() const override;
   void OnGPMPinOptionChosen(bool is_arbitrary) const override;
 };
@@ -796,6 +800,9 @@ class AuthenticatorCreateGpmPasskeySheetModel
   bool IsAcceptButtonVisible() const override;
   std::u16string GetAcceptButtonLabel() const override;
   void OnAccept() override;
+  // "Save another way" button handler.
+  void OnBack() override;
+  void OnCancel() override;
 };
 
 // The sheet shown for warning a user about creating a Google Password Manager

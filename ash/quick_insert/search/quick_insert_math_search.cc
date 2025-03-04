@@ -22,21 +22,21 @@ constexpr std::u16string_view kMathExamples[] = {
 };
 }  // namespace
 
-std::optional<QuickInsertSearchResult> PickerMathSearch(
+std::optional<QuickInsertSearchResult> QuickInsertMathSearch(
     std::u16string_view query) {
   std::optional<std::string> result =
       fend_core::evaluate(base::UTF16ToUTF8(query));
   if (result.has_value()) {
-    return QuickInsertTextResult(
-        base::UTF8ToUTF16(*result), u"",
-        ui::ImageModel::FromVectorIcon(
-            kPickerUnitsMathsIcon, cros_tokens::kCrosSysOnSurface, kIconSize),
-        QuickInsertTextResult::Source::kMath);
+    return QuickInsertTextResult(base::UTF8ToUTF16(*result), u"",
+                                 ui::ImageModel::FromVectorIcon(
+                                     kQuickInsertUnitsMathsIcon,
+                                     cros_tokens::kCrosSysOnSurface, kIconSize),
+                                 QuickInsertTextResult::Source::kMath);
   }
   return std::nullopt;
 }
 
-std::vector<QuickInsertSearchResult> PickerMathExamples() {
+std::vector<QuickInsertSearchResult> QuickInsertMathExamples() {
   std::vector<QuickInsertSearchResult> results;
   for (const auto& query : kMathExamples) {
     std::optional<std::string> result =
@@ -45,8 +45,9 @@ std::vector<QuickInsertSearchResult> PickerMathExamples() {
 
     results.push_back(QuickInsertSearchRequestResult(
         query, base::UTF8ToUTF16(*result),
-        ui::ImageModel::FromVectorIcon(
-            kPickerUnitsMathsIcon, cros_tokens::kCrosSysOnSurface, kIconSize)));
+        ui::ImageModel::FromVectorIcon(kQuickInsertUnitsMathsIcon,
+                                       cros_tokens::kCrosSysOnSurface,
+                                       kIconSize)));
   }
   return results;
 }

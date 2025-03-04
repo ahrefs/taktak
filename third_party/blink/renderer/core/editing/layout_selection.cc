@@ -23,7 +23,6 @@
 
 #include "third_party/blink/renderer/core/css/style_change_reason.h"
 #include "third_party/blink/renderer/core/dom/document.h"
-#include "third_party/blink/renderer/core/dom/node_computed_style.h"
 #include "third_party/blink/renderer/core/editing/editing_utilities.h"
 #include "third_party/blink/renderer/core/editing/ephemeral_range.h"
 #include "third_party/blink/renderer/core/editing/frame_selection.h"
@@ -156,8 +155,7 @@ static EphemeralRangeInFlatTree CalcSelectionInFlatTree(
                              : EphemeralRangeInFlatTree(focus, anchor);
     }
   }
-  NOTREACHED_IN_MIGRATION();
-  return {};
+  NOTREACHED();
 }
 
 // OldSelectedNodes is current selected Nodes with
@@ -339,9 +337,11 @@ static void SetShouldInvalidateSelection(
 }
 
 static bool IsDisplayContentElement(const Node& node) {
-  if (!node.IsElementNode())
+  const Element* element = DynamicTo<Element>(node);
+  if (!element) {
     return false;
-  const ComputedStyle* const style = node.GetComputedStyle();
+  }
+  const ComputedStyle* style = element->GetComputedStyle();
   return style && style->Display() == EDisplay::kContents;
 }
 
@@ -419,8 +419,7 @@ static OldSelectedNodes ResetOldSelectedNodes(
           break;
         }
         default: {
-          NOTREACHED_IN_MIGRATION();
-          break;
+          NOTREACHED();
         }
       }
     }
@@ -612,8 +611,7 @@ static LayoutTextSelectionStatus ComputeSelectionStatusForNode(
       return {start_offset.value(), end_offset.value(),
               SelectionIncludeEnd::kNotInclude};
     default:
-      NOTREACHED_IN_MIGRATION();
-      return {0, 0, SelectionIncludeEnd::kNotInclude};
+      NOTREACHED();
   }
 }
 
@@ -1014,7 +1012,7 @@ void LayoutSelection::InvalidateStyleAndPaintForSelection() {
       // elements so that ::selection::inactive-window style is applied
       // (or removed).
       if (auto* this_element = DynamicTo<Element>(node)) {
-        const ComputedStyle* element_style = node.GetComputedStyle();
+        const ComputedStyle* element_style = this_element->GetComputedStyle();
         if (element_style &&
             element_style->HasPseudoElementStyle(kPseudoIdSelection)) {
           node.SetNeedsStyleRecalc(

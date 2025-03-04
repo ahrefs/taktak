@@ -51,6 +51,9 @@ enum class DriveItemType : NSUInteger {
 // Whether the icon is a thumbnail. NO by default.
 @property(nonatomic, assign) BOOL iconIsThumbnail;
 
+// Whether this item is a shortcut. YES by default.
+@property(nonatomic, assign) BOOL isShortcut;
+
 // Convenience factory methods to create root drive items.
 + (instancetype)myDriveItem;
 + (instancetype)sharedDrivesItem;

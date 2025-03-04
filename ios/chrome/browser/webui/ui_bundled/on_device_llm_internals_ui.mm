@@ -101,7 +101,7 @@ void OnDeviceLlmInternalsHandler::RegisterMessages() {
 
 void OnDeviceLlmInternalsHandler::HandleRequestModelInformation(
     const base::Value::List& args) {
-  // TODO(crbug.com/370768381): Load model name.
+  // TODO(crbug.com/387510419): Load model name.
   std::string model_name = "";
   if (model_name.empty()) {
     model_name = "(Model name unavailable)";
@@ -129,7 +129,7 @@ void OnDeviceLlmInternalsHandler::InitAndGenerateResponse(
   VLOG(1) << "Init LLM and generate response...";
   VLOG(1) << "query: " << input;
 
-  ChromeBrowserState* profile = ChromeBrowserState::FromWebUIIOS(web_ui());
+  ProfileIOS* profile = ProfileIOS::FromWebUIIOS(web_ui());
   OptimizationGuideService* service =
       OptimizationGuideServiceFactory::GetForProfile(profile);
 
@@ -139,6 +139,7 @@ void OnDeviceLlmInternalsHandler::InitAndGenerateResponse(
   VLOG(1) << "Executing server query";
   service->ExecuteModel(
       optimization_guide::ModelBasedCapabilityKey::kTest, request,
+      /*execution_timeout=*/std::nullopt,
       base::BindOnce(&OnDeviceLlmInternalsHandler::OnServerModelExecuteResponse,
                      weak_ptr_factory_.GetWeakPtr()));
 #endif  // Server inference
@@ -147,7 +148,9 @@ void OnDeviceLlmInternalsHandler::InitAndGenerateResponse(
   if (!on_device_session_) {
     VLOG(1) << "Starting on-device session";
     optimization_guide::SessionConfigParams config_params =
-        optimization_guide::SessionConfigParams{};
+        optimization_guide::SessionConfigParams{
+            .execution_mode = optimization_guide::SessionConfigParams::
+                ExecutionMode::kOnDeviceOnly};
     on_device_session_ = service->StartSession(
         optimization_guide::ModelBasedCapabilityKey::kPromptApi, config_params);
 
@@ -178,17 +181,18 @@ void OnDeviceLlmInternalsHandler::OnServerModelExecuteResponse(
     std::unique_ptr<optimization_guide::ModelQualityLogEntry> log_entry) {
   std::string response = "";
 
-  if (result.has_value()) {
+  if (result.response.has_value()) {
     auto parsed = optimization_guide::ParsedAnyMetadata<
-        optimization_guide::proto::StringValue>(result.value());
+        optimization_guide::proto::StringValue>(result.response.value());
     if (parsed->has_value()) {
       response = parsed->value();
     } else {
       response = "Failed to parse server response as a string";
     }
   } else {
-    response = base::StringPrintf("Server model execution error: %d",
-                                  static_cast<int>(result.error().error()));
+    response =
+        base::StringPrintf("Server model execution error: %d",
+                           static_cast<int>(result.response.error().error()));
   }
 
   VLOG(1) << "Server query response: " << response;

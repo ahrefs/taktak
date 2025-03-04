@@ -25,20 +25,22 @@ import './os_sync_encryption_options.js';
 import '../settings_shared.css.js';
 import '../settings_vars.css.js';
 
-import {CrInputElement} from '//resources/ash/common/cr_elements/cr_input/cr_input.js';
+import type {CrInputElement} from '//resources/ash/common/cr_elements/cr_input/cr_input.js';
 import {WebUiListenerMixin} from '//resources/ash/common/cr_elements/web_ui_listener_mixin.js';
 import {assert, assertNotReached} from '//resources/js/assert.js';
-import {IronCollapseElement} from '//resources/polymer/v3_0/iron-collapse/iron-collapse.js';
+import type {IronCollapseElement} from '//resources/polymer/v3_0/iron-collapse/iron-collapse.js';
 import {PolymerElement} from '//resources/polymer/v3_0/polymer/polymer_bundled.min.js';
-import {PageStatus, SignedInState, StatusAction, SyncBrowserProxy, SyncBrowserProxyImpl, SyncPrefs, SyncStatus} from '/shared/settings/people_page/sync_browser_proxy.js';
+import type {SyncBrowserProxy, SyncPrefs, SyncStatus} from '/shared/settings/people_page/sync_browser_proxy.js';
+import {PageStatus, SignedInState, StatusAction, SyncBrowserProxyImpl} from '/shared/settings/people_page/sync_browser_proxy.js';
 import {I18nMixin} from 'chrome://resources/ash/common/cr_elements/i18n_mixin.js';
 import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
 
 import {RouteOriginMixin} from '../common/route_origin_mixin.js';
-import {Route, Router, routes} from '../router.js';
+import type {Route} from '../router.js';
+import {Router, routes} from '../router.js';
 
-import {OsSettingsPersonalizationOptionsElement} from './os_personalization_options.js';
-import {OsSettingsSyncEncryptionOptionsElement} from './os_sync_encryption_options.js';
+import type {OsSettingsPersonalizationOptionsElement} from './os_personalization_options.js';
+import type {OsSettingsSyncEncryptionOptionsElement} from './os_sync_encryption_options.js';
 import {getTemplate} from './os_sync_subpage.html.js';
 
 export interface OsSettingsSyncSubpageElement {
@@ -159,17 +161,6 @@ export class OsSettingsSyncSubpageElement extends
         computed: 'computeExistingPassphraseLabel_(syncPrefs.encryptAllData,' +
             'syncPrefs.explicitPassphraseTime)',
       },
-
-      /**
-       * Whether to show the new UI for OS Sync Settings
-       * which include sublabel and Apps toggle
-       * shared between Ash and Lacros.
-       */
-      showSyncSettingsRevamp_: {
-        type: Boolean,
-        value: loadTimeData.getBoolean('showSyncSettingsRevamp'),
-        readOnly: true,
-      },
     };
   }
 
@@ -187,7 +178,6 @@ export class OsSettingsSyncSubpageElement extends
   private encryptionExpanded_: boolean;
   forceEncryptionExpanded: boolean;
   private existingPassphrase_: string;
-  private showSyncSettingsRevamp_: boolean;
   private signedIn_: boolean;
   private syncDisabledByAdmin_: boolean;
   private syncSectionDisabled_: boolean;
@@ -206,7 +196,7 @@ export class OsSettingsSyncSubpageElement extends
     super();
 
     /** RouteOriginMixin override */
-    this.route = routes.SYNC;
+    this.route = routes.OS_SYNC_SETUP;
 
     /**
      * The beforeunload callback is used to show the 'Leave site' dialog. This
@@ -262,7 +252,7 @@ export class OsSettingsSyncSubpageElement extends
     super.disconnectedCallback();
 
     const router = Router.getInstance();
-    if (routes.SYNC.contains(router.currentRoute)) {
+    if (this.route!.contains(router.currentRoute)) {
       this.onNavigateAwayFromPage_();
     }
 
@@ -279,7 +269,7 @@ export class OsSettingsSyncSubpageElement extends
   override ready(): void {
     super.ready();
 
-    this.addFocusConfig(routes.OS_SYNC, '#syncAdvancedRow');
+    this.addFocusConfig(routes.OS_SYNC_CONTROLS, '#syncAdvancedRow');
   }
 
   getEncryptionOptions(): OsSettingsSyncEncryptionOptionsElement|null {
@@ -328,7 +318,7 @@ export class OsSettingsSyncSubpageElement extends
       return;
     }
 
-    if (routes.SYNC.contains(newRoute)) {
+    if (this.route!.contains(newRoute)) {
       return;
     }
 
@@ -403,24 +393,6 @@ export class OsSettingsSyncSubpageElement extends
   private handleSyncPrefsChanged_(syncPrefs: SyncPrefs): void {
     this.syncPrefs = syncPrefs;
     this.pageStatus_ = PageStatus.CONFIGURE;
-  }
-
-  private onManageChromeBrowserSyncClick_(): void {
-    chrome.send('OpenBrowserSyncSettings');
-  }
-
-  private getManageSyncedDataSubtitle_(): string {
-    if (this.showSyncSettingsRevamp_) {
-      return this.i18n('manageSyncedDataSubtitle');
-    }
-    return '';
-  }
-
-  private getSyncAdvancedTitle_(): string {
-    if (this.showSyncSettingsRevamp_) {
-      return this.i18n('syncAdvancedDevicePageTitle');
-    }
-    return this.i18n('syncAdvancedPageTitle');
   }
 
   private onSyncDashboardLinkClick_(): void {
@@ -532,7 +504,7 @@ export class OsSettingsSyncSubpageElement extends
         this.pageStatus_ = pageStatus;
         return;
       case PageStatus.DONE:
-        if (router.currentRoute === routes.SYNC) {
+        if (router.currentRoute === this.route) {
           router.navigateTo(routes.OS_PEOPLE);
         }
         return;
@@ -567,7 +539,7 @@ export class OsSettingsSyncSubpageElement extends
 
   private onSyncAdvancedClick_(): void {
     const router = Router.getInstance();
-    router.navigateTo(routes.OS_SYNC);
+    router.navigateTo(routes.OS_SYNC_CONTROLS);
   }
 
   /**
@@ -578,7 +550,7 @@ export class OsSettingsSyncSubpageElement extends
     const passphraseInput = this.shadowRoot!.querySelector<CrInputElement>(
         '#existingPassphraseInput');
     const router = Router.getInstance();
-    if (passphraseInput && router.currentRoute === routes.SYNC) {
+    if (passphraseInput && router.currentRoute === this.route) {
       passphraseInput.focus();
     }
   }

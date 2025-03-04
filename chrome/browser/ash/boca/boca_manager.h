@@ -7,13 +7,20 @@
 
 #include "chrome/browser/ash/boca/boca_app_client_impl.h"
 #include "chromeos/ash/components/boca/babelorca/babel_orca_manager.h"
+#include "chromeos/ash/components/boca/boca_metrics_manager.h"
 #include "chromeos/ash/components/boca/boca_session_manager.h"
 #include "chromeos/ash/components/boca/invalidations/invalidation_service_impl.h"
 #include "chromeos/ash/components/boca/on_task/on_task_session_manager.h"
 #include "chromeos/ash/components/boca/session_api/session_client_impl.h"
+#include "chromeos/ash/components/boca/spotlight/spotlight_session_manager.h"
 #include "components/keyed_service/core/keyed_service.h"
+#include "components/prefs/pref_service.h"
 
 class Profile;
+
+namespace user_manager {
+class User;
+}  // namespace user_manager
 
 namespace ash {
 // Manages boca main business logic.
@@ -25,32 +32,47 @@ class BocaManager : public KeyedService {
       std::unique_ptr<boca::SessionClientImpl> session_client_impl,
       std::unique_ptr<boca::BocaSessionManager> boca_session_manager,
       std::unique_ptr<boca::InvalidationServiceImpl> invalidation_service_impl,
-      std::unique_ptr<boca::BabelOrcaManager> babel_orca_manager);
+      std::unique_ptr<boca::BabelOrcaManager> babel_orca_manager,
+      std::unique_ptr<boca::BocaMetricsManager> boca_metrics_manager,
+      std::unique_ptr<boca::SpotlightSessionManager> spotlight_session_manager);
 
-  explicit BocaManager(Profile* profile);
+  BocaManager(Profile* profile,
+              PrefService* global_prefs,
+              const std::string& application_locale);
   ~BocaManager() override;
 
   // KeyedService:
   void Shutdown() override;
 
-  boca::OnTaskSessionManager* GetOnTaskSessionManagerForTesting() {
-    return on_task_session_manager_.get();
-  }
-  boca::BocaSessionManager* GetBocaSessionManagerForTesting() {
+  boca::BocaSessionManager* GetBocaSessionManager() {
     return boca_session_manager_.get();
+  }
+
+  boca::OnTaskSessionManager* GetOnTaskSessionManager() {
+    return on_task_session_manager_.get();
   }
   boca::BabelOrcaManager* GetBabelOrcaManagerForTesting() {
     return babel_orca_manager_.get();
   }
 
-  void AddObservers();
+  boca::BocaMetricsManager* GetBocaMetricsManagerForTesting() {
+    return boca_metrics_manager_.get();
+  }
+
+  boca::SpotlightSessionManager* GetSpotlightSessionManagerForTesting() {
+    return spotlight_session_manager_.get();
+  }
 
  private:
+  void AddObservers(const user_manager::User* user);
+
   std::unique_ptr<boca::OnTaskSessionManager> on_task_session_manager_;
   std::unique_ptr<boca::SessionClientImpl> session_client_impl_;
   std::unique_ptr<boca::BocaSessionManager> boca_session_manager_;
   std::unique_ptr<boca::InvalidationServiceImpl> invalidation_service_impl_;
   std::unique_ptr<boca::BabelOrcaManager> babel_orca_manager_;
+  std::unique_ptr<boca::BocaMetricsManager> boca_metrics_manager_;
+  std::unique_ptr<boca::SpotlightSessionManager> spotlight_session_manager_;
 };
 }  // namespace ash
 

@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "ash/ash_export.h"
+#include "ash/quick_insert/model/quick_insert_link_suggester.h"
 #include "ash/quick_insert/quick_insert_clipboard_history_provider.h"
 #include "ash/quick_insert/quick_insert_search_result.h"
 #include "base/functional/callback_forward.h"
@@ -15,33 +16,35 @@
 
 namespace ash {
 
-enum class PickerCategory;
-class PickerClient;
+enum class QuickInsertCategory;
+class QuickInsertClient;
 class QuickInsertModel;
 
-class ASH_EXPORT PickerSuggestionsController {
+class ASH_EXPORT QuickInsertSuggestionsController {
  public:
   using SuggestionsCallback =
       base::RepeatingCallback<void(std::vector<QuickInsertSearchResult>)>;
 
-  PickerSuggestionsController();
-  PickerSuggestionsController(const PickerSuggestionsController&) = delete;
-  PickerSuggestionsController& operator=(const PickerSuggestionsController&) =
+  QuickInsertSuggestionsController();
+  QuickInsertSuggestionsController(const QuickInsertSuggestionsController&) =
       delete;
-  ~PickerSuggestionsController();
+  QuickInsertSuggestionsController& operator=(
+      const QuickInsertSuggestionsController&) = delete;
+  ~QuickInsertSuggestionsController();
 
   // `client` only needs to remain valid until the function ends.
-  void GetSuggestions(PickerClient& client,
+  void GetSuggestions(QuickInsertClient& client,
                       const QuickInsertModel& model,
                       SuggestionsCallback callback);
   // `client` only needs to remain valid until the function ends.
-  void GetSuggestionsForCategory(PickerClient& client,
-                                 PickerCategory category,
+  void GetSuggestionsForCategory(QuickInsertClient& client,
+                                 QuickInsertCategory category,
                                  SuggestionsCallback callback);
 
  private:
-  raw_ptr<PickerClient> client_;
-  PickerClipboardHistoryProvider clipboard_provider_;
+  raw_ptr<QuickInsertClient> client_;
+  QuickInsertLinkSuggester link_suggester_;
+  QuickInsertClipboardHistoryProvider clipboard_provider_;
 };
 
 }  // namespace ash

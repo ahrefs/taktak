@@ -48,11 +48,10 @@ class FeedMenuCoordinatorTest : public PlatformTest {
     TestProfileIOS::Builder test_cbs_builder;
     test_cbs_builder.AddTestingFactory(
         AuthenticationServiceFactory::GetInstance(),
-        AuthenticationServiceFactory::GetDefaultFactory());
+        AuthenticationServiceFactory::GetFactoryWithDelegate(
+            std::make_unique<FakeAuthenticationServiceDelegate>()));
     profile_ = std::move(test_cbs_builder).Build();
     browser_ = std::make_unique<TestBrowser>(profile_.get());
-    AuthenticationServiceFactory::CreateAndInitializeForProfile(
-        profile_.get(), std::make_unique<FakeAuthenticationServiceDelegate>());
 
     base_view_controller_ = [[UIViewController alloc] init];
     [scoped_key_window_.Get() setRootViewController:base_view_controller_];
@@ -86,8 +85,7 @@ class FeedMenuCoordinatorTest : public PlatformTest {
     system_identity_manager->AddIdentity(identity);
     AuthenticationService* auth_service =
         AuthenticationServiceFactory::GetForProfile(profile_.get());
-    auth_service->SignIn(identity,
-                         signin_metrics::AccessPoint::ACCESS_POINT_UNKNOWN);
+    auth_service->SignIn(identity, signin_metrics::AccessPoint::kUnknown);
   }
 
   // Expects that the action attributes match the given `items`.

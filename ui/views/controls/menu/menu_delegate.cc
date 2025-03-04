@@ -7,9 +7,10 @@
 #include "base/functional/callback_helpers.h"
 #include "base/notreached.h"
 #include "ui/base/dragdrop/mojom/drag_drop_types.mojom.h"
-#include "ui/base/mojom/menu_source_type.mojom.h"
+#include "ui/base/mojom/menu_source_type.mojom-forward.h"
 #include "ui/events/event.h"
 #include "ui/views/controls/menu/menu_config.h"
+#include "ui/views/controls/menu/menu_item_view.h"
 
 namespace views {
 
@@ -79,6 +80,13 @@ bool MenuDelegate::ShouldExecuteCommandWithoutClosingMenu(int id,
 
 bool MenuDelegate::IsTriggerableEvent(MenuItemView* source,
                                       const ui::Event& e) {
+  // By default, a sub-menu is not triggerable.
+  // Subclass can override this behavior.
+  if (source->GetType() == MenuItemView::Type::kSubMenu) {
+    return false;
+  }
+
+  // Trigger the action by click or click-like event.
   return e.type() == ui::EventType::kGestureTap ||
          e.type() == ui::EventType::kGestureTapDown ||
          (e.IsMouseEvent() &&

@@ -45,6 +45,7 @@ bool IsPropertyAllowedInRule(const CSSProperty& property,
   DCHECK(property.IsProperty());
   switch (rule_type) {
     case StyleRule::kStyle:
+    case StyleRule::kScope:
       return true;
     case StyleRule::kPage:
     case StyleRule::kPageMargin:
@@ -57,8 +58,7 @@ bool IsPropertyAllowedInRule(const CSSProperty& property,
     case StyleRule::kPositionTry:
       return property.IsValidForPositionTry();
     default:
-      NOTREACHED_IN_MIGRATION();
-      return false;
+      NOTREACHED();
   }
 }
 
@@ -218,7 +218,7 @@ bool CSSPropertyParser::ParseValueStart(CSSPropertyID unresolved_property,
           /*is_animation_tainted=*/false,
           /*must_contain_variable_reference=*/true,
           /*restricted_value=*/true, /*comma_ends_declaration=*/false,
-          important, context_->GetExecutionContext());
+          important, *context_);
   if (!variable_data) {
     return false;
   }
@@ -262,7 +262,6 @@ static inline bool QuasiLowercaseIntoBuffer(const UChar* src,
     }
     dst[i] = ToASCIILower(c);
   }
-  dst[length] = '\0';
   return true;
 }
 
@@ -293,7 +292,6 @@ static inline bool QuasiLowercaseIntoBuffer(const LChar* src,
     LChar c = src[i];
     dst[i] = c | ((c & 0x40) >> 1);
   }
-  dst[length] = '\0';
   return true;
 }
 
@@ -340,7 +338,7 @@ static CSSPropertyID UnresolvedCSSPropertyID(
     return CSSPropertyID::kInvalid;
   }
 
-  char buffer[kMaxCSSPropertyNameLength + 1];  // 1 for null character
+  char buffer[kMaxCSSPropertyNameLength];
   if (!QuasiLowercaseIntoBuffer(property_name, length, buffer)) {
     return CSSPropertyID::kInvalid;
   }
@@ -358,17 +356,20 @@ static CSSPropertyID UnresolvedCSSPropertyID(
     return CSSPropertyID::kInvalid;
   }
 
-  CSSPropertyID property_id = static_cast<CSSPropertyID>(hash_table_entry->id);
-  if (kKnownExposedProperties.Has(property_id)) {
+  int id_and_exposed_bit = hash_table_entry->id_and_exposed_bit;
+  if (id_and_exposed_bit & kNotKnownExposedPropertyBit) {
+    // The property is behind a runtime flag, so we need to go ahead
+    // and actually do the resolution to see if that flag is on or not.
+    // This should happen only occasionally.
+    CSSPropertyID property_id = static_cast<CSSPropertyID>(
+        id_and_exposed_bit & ~kNotKnownExposedPropertyBit);
+    return ExposedProperty(property_id, execution_context, mode);
+  } else {
+    CSSPropertyID property_id = static_cast<CSSPropertyID>(id_and_exposed_bit);
     DCHECK_EQ(property_id,
               ExposedProperty(property_id, execution_context, mode));
     return property_id;
   }
-
-  // The property is behind a runtime flag, so we need to go ahead
-  // and actually do the resolution to see if that flag is on or not.
-  // This should happen only occasionally.
-  return ExposedProperty(property_id, execution_context, mode);
 }
 
 CSSPropertyID UnresolvedCSSPropertyID(const ExecutionContext* execution_context,
@@ -383,7 +384,7 @@ CSSPropertyID UnresolvedCSSPropertyID(const ExecutionContext* execution_context,
 template <typename CharacterType>
 static CSSValueID CssValueKeywordID(const CharacterType* value_keyword,
                                     unsigned length) {
-  char buffer[maxCSSValueKeywordLength + 1];  // 1 for null character
+  char buffer[kMaxCSSValueKeywordLength];
   if (!QuasiLowercaseIntoBuffer(value_keyword, length, buffer)) {
     return CSSValueID::kInvalid;
   }
@@ -405,7 +406,7 @@ CSSValueID CssValueKeywordID(StringView string) {
   if (!length) {
     return CSSValueID::kInvalid;
   }
-  if (length > maxCSSValueKeywordLength) {
+  if (length > kMaxCSSValueKeywordLength) {
     return CSSValueID::kInvalid;
   }
 

@@ -27,9 +27,10 @@ TEST(QuickInsertModelTest, AvailableCategoriesWithNoFocusHasCorrectOrdering) {
                          &fake_ime_keyboard,
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
-  EXPECT_THAT(model.GetAvailableCategories(),
-              ElementsAre(PickerCategory::kLinks, PickerCategory::kDriveFiles,
-                          PickerCategory::kLocalFiles));
+  EXPECT_THAT(
+      model.GetAvailableCategories(),
+      ElementsAre(QuickInsertCategory::kLinks, QuickInsertCategory::kDriveFiles,
+                  QuickInsertCategory::kLocalFiles));
 }
 
 TEST(QuickInsertModelTest,
@@ -43,11 +44,13 @@ TEST(QuickInsertModelTest,
                          QuickInsertModel::LobsterStatus::kEnabled);
   EXPECT_THAT(
       model.GetAvailableCategories(),
-      ElementsAre(PickerCategory::kEditorWrite, PickerCategory::kLobster,
-                  PickerCategory::kLinks, PickerCategory::kEmojis,
-                  PickerCategory::kClipboard, PickerCategory::kDriveFiles,
-                  PickerCategory::kLocalFiles, PickerCategory::kDatesTimes,
-                  PickerCategory::kUnitsMaths));
+      ElementsAre(
+          QuickInsertCategory::kEditorWrite,
+          QuickInsertCategory::kLobsterWithNoSelectedText,
+          QuickInsertCategory::kLinks, QuickInsertCategory::kEmojis,
+          QuickInsertCategory::kClipboard, QuickInsertCategory::kDriveFiles,
+          QuickInsertCategory::kLocalFiles, QuickInsertCategory::kDatesTimes,
+          QuickInsertCategory::kUnitsMaths));
 }
 
 TEST(QuickInsertModelTest,
@@ -59,9 +62,9 @@ TEST(QuickInsertModelTest,
   QuickInsertModel model(/*prefs=*/nullptr, &client, &fake_ime_keyboard,
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
-  EXPECT_THAT(
-      model.GetAvailableCategories(),
-      ElementsAre(PickerCategory::kEditorRewrite, PickerCategory::kLobster));
+  EXPECT_THAT(model.GetAvailableCategories(),
+              ElementsAre(QuickInsertCategory::kEditorRewrite,
+                          QuickInsertCategory::kLobsterWithSelectedText));
 }
 
 TEST(QuickInsertModelTest, AvailableCategoriesContainsEditorWriteWhenEnabled) {
@@ -72,7 +75,7 @@ TEST(QuickInsertModelTest, AvailableCategoriesContainsEditorWriteWhenEnabled) {
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kDisabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Contains(PickerCategory::kEditorWrite));
+              Contains(QuickInsertCategory::kEditorWrite));
 }
 
 TEST(QuickInsertModelTest, AvailableCategoriesOmitsEditorWriteWhenDisabled) {
@@ -83,7 +86,7 @@ TEST(QuickInsertModelTest, AvailableCategoriesOmitsEditorWriteWhenDisabled) {
                          QuickInsertModel::EditorStatus::kDisabled,
                          QuickInsertModel::LobsterStatus::kDisabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Not(Contains(PickerCategory::kEditorWrite)));
+              Not(Contains(QuickInsertCategory::kEditorWrite)));
 }
 
 TEST(QuickInsertModelTest,
@@ -96,7 +99,7 @@ TEST(QuickInsertModelTest,
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kDisabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Contains(PickerCategory::kEditorRewrite));
+              Contains(QuickInsertCategory::kEditorRewrite));
 }
 
 TEST(QuickInsertModelTest, AvailableCategoriesOmitsEditorRewriteWhenDisabled) {
@@ -108,7 +111,7 @@ TEST(QuickInsertModelTest, AvailableCategoriesOmitsEditorRewriteWhenDisabled) {
                          QuickInsertModel::EditorStatus::kDisabled,
                          QuickInsertModel::LobsterStatus::kDisabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Not(Contains(PickerCategory::kEditorRewrite)));
+              Not(Contains(QuickInsertCategory::kEditorRewrite)));
 }
 
 TEST(QuickInsertModelTest, AvailableCategoriesContainsLobsterWhenEnabled) {
@@ -119,7 +122,7 @@ TEST(QuickInsertModelTest, AvailableCategoriesContainsLobsterWhenEnabled) {
                          QuickInsertModel::EditorStatus::kDisabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Contains(PickerCategory::kLobster));
+              Contains(QuickInsertCategory::kLobsterWithNoSelectedText));
 }
 
 TEST(QuickInsertModelTest, AvailableCategoriesOmitsLobsterWriteWhenDisabled) {
@@ -130,7 +133,9 @@ TEST(QuickInsertModelTest, AvailableCategoriesOmitsLobsterWriteWhenDisabled) {
                          QuickInsertModel::EditorStatus::kDisabled,
                          QuickInsertModel::LobsterStatus::kDisabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Not(Contains(PickerCategory::kLobster)));
+              Not(Contains(QuickInsertCategory::kLobsterWithNoSelectedText)));
+  EXPECT_THAT(model.GetAvailableCategories(),
+              Not(Contains(QuickInsertCategory::kLobsterWithSelectedText)));
 }
 
 TEST(QuickInsertModelTest,
@@ -145,9 +150,9 @@ TEST(QuickInsertModelTest,
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Contains(PickerCategory::kEmojisGifs));
+              Contains(QuickInsertCategory::kEmojisGifs));
   EXPECT_THAT(model.GetAvailableCategories(),
-              Not(Contains(PickerCategory::kEmojis)));
+              Not(Contains(QuickInsertCategory::kEmojis)));
 }
 
 TEST(QuickInsertModelTest,
@@ -162,9 +167,9 @@ TEST(QuickInsertModelTest,
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Contains(PickerCategory::kEmojis));
+              Contains(QuickInsertCategory::kEmojis));
   EXPECT_THAT(model.GetAvailableCategories(),
-              Not(Contains(PickerCategory::kEmojisGifs)));
+              Not(Contains(QuickInsertCategory::kEmojisGifs)));
 }
 
 TEST(QuickInsertModelTest,
@@ -176,9 +181,9 @@ TEST(QuickInsertModelTest,
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
   EXPECT_THAT(model.GetAvailableCategories(),
-              Not(Contains(PickerCategory::kEmojis)));
+              Not(Contains(QuickInsertCategory::kEmojis)));
   EXPECT_THAT(model.GetAvailableCategories(),
-              Not(Contains(PickerCategory::kEmojisGifs)));
+              Not(Contains(QuickInsertCategory::kEmojisGifs)));
 }
 
 TEST(QuickInsertModelTest, GetsEmptySelectedText) {
@@ -210,7 +215,7 @@ TEST(QuickInsertModelTest, GetModeForUnfocusedState) {
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
 
-  EXPECT_EQ(model.GetMode(), PickerModeType::kUnfocused);
+  EXPECT_EQ(model.GetMode(), QuickInsertModeType::kUnfocused);
 }
 
 TEST(QuickInsertModelTest, GetModeForInputTypeNone) {
@@ -220,7 +225,7 @@ TEST(QuickInsertModelTest, GetModeForInputTypeNone) {
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
 
-  EXPECT_EQ(model.GetMode(), PickerModeType::kUnfocused);
+  EXPECT_EQ(model.GetMode(), QuickInsertModeType::kUnfocused);
 }
 
 TEST(QuickInsertModelTest, GetModeForNoSelectionState) {
@@ -231,7 +236,7 @@ TEST(QuickInsertModelTest, GetModeForNoSelectionState) {
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
 
-  EXPECT_EQ(model.GetMode(), PickerModeType::kNoSelection);
+  EXPECT_EQ(model.GetMode(), QuickInsertModeType::kNoSelection);
 }
 
 TEST(QuickInsertModelTest, GetModeForSelectionState) {
@@ -243,7 +248,7 @@ TEST(QuickInsertModelTest, GetModeForSelectionState) {
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
 
-  EXPECT_EQ(model.GetMode(), PickerModeType::kHasSelection);
+  EXPECT_EQ(model.GetMode(), QuickInsertModeType::kHasSelection);
 }
 
 TEST(QuickInsertModelTest, GifsDisabledWhenPrefDoesNotExist) {
@@ -297,7 +302,7 @@ TEST(QuickInsertModelTest, GetModeForBlankStringsSelectionState) {
                          QuickInsertModel::EditorStatus::kEnabled,
                          QuickInsertModel::LobsterStatus::kEnabled);
 
-  EXPECT_EQ(model.GetMode(), PickerModeType::kNoSelection);
+  EXPECT_EQ(model.GetMode(), QuickInsertModeType::kNoSelection);
 }
 
 TEST(QuickInsertModelTest, UnfocusedShouldLearn) {

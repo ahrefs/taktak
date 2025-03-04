@@ -163,15 +163,6 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="2" label="(Obsolete) Notification's button clicked"/>
 </enum>
 
-<enum name="AshNightLightDisplayCrtcCtmSupportType">
-  <summary>
-    Defines the possible displays' color transform matrix support types
-  </summary>
-  <int value="0" label="No display support"/>
-  <int value="1" label="Mixed display support"/>
-  <int value="2" label="All displays support"/>
-</enum>
-
 <enum name="AshNightLightScheduleType">
   <summary>Defines the possible Night Light schedule types</summary>
   <int value="0" label="None"/>
@@ -321,6 +312,13 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="9" label="Last Active"/>
   <int value="10" label="Lost Media"/>
   <int value="11" label="Coral"/>
+</enum>
+
+<enum name="BocaPollingResult">
+  <int value="0" label="No Update"/>
+  <int value="1" label="Polling causes session to start"/>
+  <int value="2" label="Polling causes session to end"/>
+  <int value="3" label="Polling causes in-session update"/>
 </enum>
 
 <enum name="BooleanMuted">
@@ -520,6 +518,12 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
              screenshot"/>
 </enum>
 
+<enum name="ContentTransferAuthenticationResult">
+  <int value="0" label="Success"/>
+  <int value="1" label="Transient Failure"/>
+  <int value="2" label="Persistent Failure"/>
+</enum>
+
 <enum name="ContentTransferFlowState">
   <int value="0" label="Welcome screen"/>
   <int value="1" label="Takeout screen"/>
@@ -538,6 +542,18 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
       label="Disabled because the related app is disabled by policy"/>
   <int value="3"
       label="Disabled because the related URLs are blocked by policy"/>
+</enum>
+
+<enum name="CoralActionType">
+  <int value="0" label="Restore"/>
+  <int value="1" label="LaunchToNewDesk"/>
+  <int value="2" label="SaveAsDeskTemplate"/>
+</enum>
+
+<enum name="CoralSource">
+  <int value="0" label="Unknown"/>
+  <int value="1" label="PostLogin"/>
+  <int value="2" label="InSession"/>
 </enum>
 
 <enum name="CriticalNotificationOutcome">
@@ -1314,42 +1330,6 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="8" label="FailedToGetNssCerts"/>
 </enum>
 
-<enum name="LacrosLaunchMode">
-  <int value="0" label="Only Ash browser"/>
-  <int value="1" label="Ash and Lacros browser available"/>
-  <int value="2" label="Lacros browser is primary"/>
-  <int value="3" label="Only Lacros browser"/>
-</enum>
-
-<enum name="LacrosLaunchModeAndSource">
-  <int value="0" label="Default or user set, only Ash browser"/>
-  <int value="1" label="Default or user set, Ash and Lacros browser available"/>
-  <int value="2" label="Default or user set, Lacros browser is primary"/>
-  <int value="3" label="Default or user set, only Lacros browser"/>
-  <int value="4" label="User forced, only Ash browser"/>
-  <int value="5" label="User forced, Ash and Lacros browser available"/>
-  <int value="6" label="User forced, Lacros browser is primary"/>
-  <int value="7" label="User forced, only Lacros browser"/>
-  <int value="8" label="Policy forced, only Ash browser"/>
-  <int value="9" label="Policy forced, Ash and Lacros browser available"/>
-  <int value="10" label="Policy forced, Lacros browser is primary"/>
-  <int value="11" label="Policy forced, only Lacros browser"/>
-</enum>
-
-<enum name="LacrosMigrationStatus">
-  <int value="0" label="Lacros not enabled"/>
-  <int value="1" label="Uncompleted"/>
-  <int value="2" label="Skipped for new user">
-    Migration was skipped but marked as completed because new users don't
-    require migration.
-  </int>
-  <int value="3" label="Completed via copy"/>
-  <int value="4" label="Completed via move"/>
-  <int value="5" label="Reached its retry limit">
-    Migration failed or skipped more than the number of attempts allowed.
-  </int>
-</enum>
-
 <enum name="LobsterState">
   <int value="0" label="Shown Opportunity"/>
   <int value="1" label="Blocked"/>
@@ -1380,6 +1360,8 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="26" label="Commit As Insert"/>
   <int value="27" label="Commit As Insert Success"/>
   <int value="28" label="Commit As Insert Error"/>
+  <int value="29" label="Feedback Thumbs Up"/>
+  <int value="30" label="Feedback Thumbs Down"/>
 </enum>
 
 <enum name="LockScreenUserClickTarget">
@@ -1394,6 +1376,16 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="8" label="Lock screen note action button"/>
   <int value="9" label="Parent access button"/>
 </enum>
+
+<!-- LINT.IfChange(LoginReadaheadResult) -->
+
+<enum name="LoginReadaheadResult">
+  <int value="0" label="Failed"/>
+  <int value="1" label="Succeeded"/>
+  <int value="2" label="Canceled"/>
+</enum>
+
+<!-- LINT.ThenChange(//chromeos/ash/components/login/readahead/login_readahead_performer.cc:LoginReadaheadResult) -->
 
 <enum name="LoginScreenUserClickTarget">
   <int value="0" label="Shut down button"/>
@@ -1424,6 +1416,7 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="9" label="kRestrictedCountry"/>
   <int value="10" label="kNoIdentityManager"/>
   <int value="11" label="kPerUserQuotaExceeded"/>
+  <int value="12" label="kImageHasPerson"/>
 </enum>
 
 <enum name="ModifyGlanceablesTaskResult">
@@ -1591,6 +1584,7 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="36" label="Video Conference Tray Sidetone Not Supported"/>
   <int value="37" label="Video Conference Tray Sidetone Enabled"/>
   <int value="38" label="Content Transfer App Enabled"/>
+  <int value="39" label="Sunfish Launcher Nudge"/>
 </enum>
 
 <enum name="OnDeviceToServerSpeechRecognitionFallbackReason">
@@ -1613,6 +1607,12 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="6" label="Use as personal device button"/>
   <int value="7" label="OsInstall button"/>
   <int value="8" label="Unexpected click"/>
+</enum>
+
+<enum name="OverviewBasedScreenshotKeyboardType">
+  <int value="0" label="Non-ChromeOS Keyboard"/>
+  <int value="1" label="ChromeOS Keyboard WITH Screenshot key"/>
+  <int value="2" label="ChromeOS Keyboard WITHOUT Screenshot key"/>
 </enum>
 
 <enum name="OverviewDragAction">
@@ -1667,6 +1667,7 @@ ash/webui/personalization_app/mojom/personalization_app.mojom -->
   <int value="22" label="Exiting overview due to window deactivation"/>
   <int value="23" label="Window restored from previous session"/>
   <int value="24" label="After user login, close dialog for full restore"/>
+  <int value="25" label="Window restored from a coral group"/>
 </enum>
 
 <enum name="OverviewStartAction">
@@ -1987,6 +1988,102 @@ chromeos/ash/components/peripheral_notification/peripheral_notification_manager.
   <int value="6" label="Invalid JSON format"/>
 </enum>
 
+<!-- LINT.IfChange(ScannerFeatureUserState) -->
+
+<enum name="ScannerFeatureUserState">
+  <int value="0" label="Consent disclaimer accepted"/>
+  <int value="1" label="Consent disclaimer rejected"/>
+  <int value="2" label="Sunfish screen entered via shortcut"/>
+  <int value="3"
+      label="DEPRECATED: Sunfish screen: initial screen capture sent to
+             scanner server"/>
+  <int value="4" label="Screen capture mode: Scanner button shown"/>
+  <int value="5"
+      label="DEPRECATED: Screen capture mode: initial screen capture sent to
+             scanner server"/>
+  <int value="6" label="No actions detected"/>
+  <int value="7" label="New calendar event action detected"/>
+  <int value="8" label="New calendar event action finished successfully"/>
+  <int value="9" label="New calendar event action population failed"/>
+  <int value="10" label="New contact action detected"/>
+  <int value="11" label="New contact action finished successfully"/>
+  <int value="12" label="New contact action population failed"/>
+  <int value="13" label="New Google Sheet action detected"/>
+  <int value="14" label="New Google Sheet action finished successfully"/>
+  <int value="15" label="New Google Sheet action population failed"/>
+  <int value="16" label="New Google Doc action detected"/>
+  <int value="17" label="New Google Doc action finished successfully"/>
+  <int value="18" label="New Google Doc action population failed"/>
+  <int value="19" label="Copy to clipboard action detected"/>
+  <int value="20" label="Copy to clipboard action finished successfully"/>
+  <int value="21" label="Copy to clipboard action population failed"/>
+  <int value="22"
+      label="New calendar event populated action failed on execution"/>
+  <int value="23" label="New contact populated action failed on execution"/>
+  <int value="24"
+      label="New Google Sheet populated action failed on execution"/>
+  <int value="25" label="New Google Doc populated action failed on execution"/>
+  <int value="26"
+      label="Copy to clipboard populated action failed on execution"/>
+  <int value="27"
+      label="UI access checks resulted in &quot;do not show UI&quot;"/>
+  <int value="28"
+      label="UI access checks resulted in &quot;show UI, but user not
+             consented&quot;"/>
+  <int value="29"
+      label="UI access checks resulted in &quot;show UI and user
+             consented&quot;"/>
+  <int value="30"
+      label="&quot;Do not show UI&quot; resulted from no Shell instance"/>
+  <int value="31"
+      label="&quot;Do not show UI&quot; resulted from no ScannerController on
+             Shell"/>
+  <int value="32"
+      label="&quot;Do not show UI&quot; resulted from enterprise policy"/>
+  <int value="33"
+      label="&quot;Do not show UI&quot; resulted from no profile scoped
+             delegate"/>
+  <int value="34"
+      label="&quot;Do not show UI&quot; resulted from settings toggle"/>
+  <int value="35"
+      label="&quot;Do not show UI&quot; resulted from feature flag"/>
+  <int value="36"
+      label="&quot;Do not show UI&quot; resulted from feature management"/>
+  <int value="37" label="&quot;Do not show UI&quot; resulted from secret key"/>
+  <int value="38"
+      label="&quot;Do not show UI&quot; resulted from account capabilities"/>
+  <int value="39" label="&quot;Do not show UI&quot; resulted from country"/>
+  <int value="40" label="&quot;Do not show UI&quot; resulted from kiosk mode"/>
+  <int value="41" label="Launcher was shown without Sunfish-session button"/>
+  <int value="42" label="Launcher was shown with Sunfish-session button"/>
+  <int value="43"
+      label="Image captured in Sunfish-session, and actions were not fetched"/>
+  <int value="44"
+      label="Image captured in Sunfish-session, and actions started fetching"/>
+  <int value="45"
+      label="Image captured from smart actions button, and actions were not
+             fetched"/>
+  <int value="46"
+      label="Image captured from smart actions button, and actions started
+             fetching"/>
+  <int value="47"
+      label="Smart actions button was not shown because UI access checks for
+             both Sunfish and Scanner resulted in &quot;do not show UI&quot;"/>
+  <int value="48"
+      label="Smart actions button was not shown because text detection was
+             cancelled"/>
+  <int value="49"
+      label="Smart actions button was not shown because no text was detected"/>
+  <int value="50"
+      label="Smart actions button was not shown because UI access checks
+             resulted in &quot;do not show UI&quot; after text detection"/>
+  <int value="51"
+      label="Smart actions button was not shown because network connection
+             was offline after text detection"/>
+</enum>
+
+<!-- LINT.ThenChange(//ash/scanner/scanner_metrics.h:ScannerFeatureUserState) -->
+
 <enum name="ScreenRotationAcceleratorAction">
   <int value="0" label="CancelledDialog"/>
   <int value="1" label="AcceptedDialog"/>
@@ -2071,12 +2168,23 @@ chromeos/ash/components/peripheral_notification/peripheral_notification_manager.
   <int value="1000" label="VcBackgroundFreeform"/>
 </enum>
 
-<enum name="SeaPenWallpaperManagerMigrationStatus">
-  <int value="0" label="kNotStarted"/>
-  <int value="1" label="kCrashed"/>
-  <int value="2" label="kFailed"/>
-  <int value="3" label="kSuccess"/>
+<!-- LINT.IfChange(SearchResultsPanelEntryType) -->
+
+<enum name="SearchResultsPanelEntryType">
+  <int value="0" label="Sunfish session region selection"/>
+  <int value="1" label="Default session search action button"/>
 </enum>
+
+<!-- LINT.ThenChange(//ash/capture_mode/capture_mode_metrics.h:SearchResultsPanelEntryType) -->
+
+<!-- LINT.IfChange(SessionLockEvent) -->
+
+<enum name="SessionLockEvent">
+  <int value="0" label="Lock"/>
+  <int value="1" label="Unlock"/>
+</enum>
+
+<!-- LINT.ThenChange(//ash/session/session_controller_impl.cc:SessionLockEvent) -->
 
 <enum name="SetWallpaperResult">
   <int value="0" label="Success"/>
@@ -2211,6 +2319,7 @@ chromeos/ash/components/peripheral_notification/peripheral_notification_manager.
   <int value="18" label="Snap to replace"/>
   <int value="19" label="Visible on all desks"/>
   <int value="20" label="Select a window in Snap Group in partial Overview"/>
+  <int value="21" label="Move a window in Snap Group to new coral desk"/>
 </enum>
 
 <enum name="SpeechRecognitionEndState">
@@ -2315,6 +2424,17 @@ chromeos/ash/components/peripheral_notification/peripheral_notification_manager.
   <int value="48" label="Video Conference Speak On Mute Opt In Confirmation"/>
   <int value="50" label="Game Dashboard Disabled In Tablet Mode"/>
   <int value="51" label="Informed Restore Onboarding Turn On Ask Every Time"/>
+  <int value="53" label="Enter OnTask locked mode (deprecated)"/>
+  <int value="54" label="OnTask session end (deprecated)"/>
+  <int value="55" label="OnTask URL blocked"/>
+  <int value="56" label="Copy Image To Clipboard Action"/>
+  <int value="57" label="Capture Mode Text Copied"/>
+  <int value="58" label="Coral Saved Groups Limit Max"/>
+  <int value="59" label="Scanner Action Success"/>
+  <int value="60" label="Scanner Action Failure"/>
+  <int value="61" label="Apps Can Access Camera"/>
+  <int value="62" label="Apps Can't Access Camera"/>
+  <int value="63" label="Can't Turn On Camera Access Remotely"/>
 </enum>
 
 <enum name="TogglePickerAction">

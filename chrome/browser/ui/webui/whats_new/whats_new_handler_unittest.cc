@@ -17,9 +17,8 @@
 #include "chrome/common/chrome_version.h"
 #include "chrome/test/base/testing_browser_process.h"
 #include "chrome/test/base/testing_profile.h"
-#include "components/user_education/common/user_education_features.h"
+#include "components/user_education/webui/mock_whats_new_storage_service.h"
 #include "components/user_education/webui/whats_new_registry.h"
-#include "components/user_education/webui/whats_new_storage_service.h"
 #include "content/public/test/browser_task_environment.h"
 #include "content/public/test/test_web_contents_factory.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
@@ -50,31 +49,6 @@ class MockPage : public whats_new::mojom::Page {
   mojo::Receiver<whats_new::mojom::Page> receiver_{this};
 };
 
-class MockWhatsNewStorageService : public whats_new::WhatsNewStorageService {
- public:
-  MockWhatsNewStorageService() = default;
-  MOCK_METHOD(const base::Value::List&, ReadModuleData, (), (const override));
-  MOCK_METHOD(const base::Value::Dict&, ReadEditionData, (), (const, override));
-  MOCK_METHOD(int,
-              GetModuleQueuePosition,
-              (const std::string_view),
-              (const, override));
-  MOCK_METHOD(std::optional<int>,
-              GetUsedVersion,
-              (std::string_view edition_name),
-              (const override));
-  MOCK_METHOD(std::optional<std::string_view>,
-              FindEditionForCurrentVersion,
-              (),
-              (const, override));
-  MOCK_METHOD(bool, IsUsedEdition, (const std::string_view), (const, override));
-  MOCK_METHOD(void, SetModuleEnabled, (const std::string_view), (override));
-  MOCK_METHOD(void, ClearModule, (const std::string_view), (override));
-  MOCK_METHOD(void, SetEditionUsed, (const std::string_view), (override));
-  MOCK_METHOD(void, ClearEdition, (const std::string_view), (override));
-  MOCK_METHOD(void, Reset, (), (override));
-};
-
 }  // namespace
 
 class WhatsNewHandlerTest : public testing::Test {
@@ -82,8 +56,6 @@ class WhatsNewHandlerTest : public testing::Test {
   WhatsNewHandlerTest()
       : profile_(std::make_unique<TestingProfile>()),
         web_contents_(factory_.CreateWebContents(profile_.get())) {
-    feature_list_.InitWithFeatures(
-        {}, {user_education::features::kWhatsNewVersion2});
   }
   ~WhatsNewHandlerTest() override = default;
 
@@ -97,6 +69,7 @@ class WhatsNewHandlerTest : public testing::Test {
     // Setup mock storage service for tests that use the registry.
     auto mock_storage_service =
         std::make_unique<testing::NiceMock<MockWhatsNewStorageService>>();
+    mock_storage_service_ = mock_storage_service.get();
     EXPECT_CALL(*mock_storage_service, ReadModuleData)
         .WillRepeatedly(testing::ReturnRef(mock_module_data_));
 
@@ -111,6 +84,11 @@ class WhatsNewHandlerTest : public testing::Test {
     testing::Mock::VerifyAndClearExpectations(&mock_page_);
   }
 
+  void TearDown() override {
+    mock_storage_service_ = nullptr;
+    testing::Test::TearDown();
+  }
+
  protected:
   MockHatsService* mock_hats_service() { return mock_hats_service_; }
 
@@ -119,6 +97,7 @@ class WhatsNewHandlerTest : public testing::Test {
   base::UserActionTester user_action_tester_;
   base::test::ScopedFeatureList feature_list_;
   base::Value::List mock_module_data_;
+  raw_ptr<MockWhatsNewStorageService> mock_storage_service_;
 
   // NOTE: The initialization order of these members matters.
   std::unique_ptr<TestingProfile> profile_;
@@ -134,7 +113,7 @@ TEST_F(WhatsNewHandlerTest, GetServerUrl) {
   base::MockCallback<WhatsNewHandler::GetServerUrlCallback> callback;
 
   const GURL expected_url = GURL(base::StringPrintf(
-      "https://www.google.com/chrome/whats-new/?version=%d&internal=true",
+      "https://www.google.com/chrome/v2/whats-new/?version=%d&internal=true",
       CHROME_VERSION_MAJOR));
 
   EXPECT_CALL(callback, Run)
@@ -260,8 +239,7 @@ TEST_F(WhatsNewHandlerTest, SurveyIsTriggeredWithOverride) {
 
   base::test::ScopedFeatureList features;
   features.InitWithFeaturesAndParameters(
-      {{user_education::features::kWhatsNewVersion2, {{}}},
-       {kTestEdition, {{whats_new::kSurveyParam, survey_override_id}}},
+      {{kTestEdition, {{whats_new::kSurveyParam, survey_override_id}}},
        base::test::FeatureRefAndParams(
            features::kHappinessTrackingSurveysForDesktopWhatsNew,
            {{"whats-new-time", "20s"}})},
@@ -270,12 +248,39 @@ TEST_F(WhatsNewHandlerTest, SurveyIsTriggeredWithOverride) {
   base::MockCallback<WhatsNewHandler::GetServerUrlCallback> callback;
   EXPECT_CALL(callback, Run).Times(1);
   EXPECT_CALL(*mock_hats_service(),
-              LaunchDelayedSurveyForWebContents(survey_override_id, _, _, _, _,
-                                                _, _, _, _, _))
+              LaunchDelayedSurveyForWebContents(
+                  kHatsSurveyTriggerWhatsNew, _, _, _, _, _, _, _,
+                  std::optional<std::string>(survey_override_id), _))
       .Times(1);
 
-  // Recording the edition loaded will enable the survey override.
-  handler_->RecordEditionPageLoaded(kTestEdition.name, true);
+  handler_->GetServerUrl(false, callback.Get());
+  mock_page_.FlushForTesting();
+}
+
+TEST_F(WhatsNewHandlerTest, SurveyIsNotTriggeredForPreviouslyUsedEdition) {
+  const std::string survey_override_id = "my-survey-id";
+  whats_new_registry_->RegisterEdition(
+      whats_new::WhatsNewEdition(kTestEdition, ""));
+
+  // Mark the registered edition as previously used.
+  EXPECT_CALL(*mock_storage_service_, IsUsedEdition)
+      .WillRepeatedly(testing::Return(true));
+
+  base::test::ScopedFeatureList features;
+  features.InitWithFeaturesAndParameters(
+      {{kTestEdition, {{whats_new::kSurveyParam, survey_override_id}}},
+       base::test::FeatureRefAndParams(
+           features::kHappinessTrackingSurveysForDesktopWhatsNew,
+           {{"whats-new-time", "20s"}})},
+      {});
+
+  base::MockCallback<WhatsNewHandler::GetServerUrlCallback> callback;
+  EXPECT_CALL(callback, Run).Times(1);
+  EXPECT_CALL(*mock_hats_service(),
+              LaunchDelayedSurveyForWebContents(kHatsSurveyTriggerWhatsNew, _,
+                                                _, _, _, _, _, _, _, _))
+      .Times(1);
+
   handler_->GetServerUrl(false, callback.Get());
   mock_page_.FlushForTesting();
 }

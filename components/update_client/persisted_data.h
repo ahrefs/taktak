@@ -90,6 +90,13 @@ class PersistedData {
   // other data stores.
   virtual void SetInstallDate(const std::string& id, int install_date) = 0;
 
+  // Install IDs are unique identifiers for individual installations of the app
+  // identified by `app_id`. The install ID is sent in the install ping and in
+  // the first update check, but is cleared afterward by `SetDateLastData`.
+  virtual std::string GetInstallId(const std::string& app_id) const = 0;
+  virtual void SetInstallId(const std::string& app_id,
+                            const std::string& install_id) = 0;
+
   // These functions return cohort data for the specified |id|. "Cohort"
   // indicates the membership of the client in any release channels components
   // have set up in a machine-readable format, while "CohortName" does so in a
@@ -151,7 +158,7 @@ class PersistedData {
 // Creates a PersistedData instance. Passing null for either or both parameters
 // is safe and will disable functionality that relies on them.
 std::unique_ptr<PersistedData> CreatePersistedData(
-    PrefService* pref_service,
+    base::RepeatingCallback<PrefService*()> pref_service_provider,
     std::unique_ptr<ActivityDataService> activity_data_service);
 
 // Register prefs for a PersistedData returned by CreatePersistedData.

@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "extensions/browser/api/socket/socket_api.h"
 
 #include <memory>
@@ -100,7 +95,7 @@ SocketApiFunction::ScopedWriteQuota::ScopedWriteQuota(SocketApiFunction* owner,
 
 SocketApiFunction::ScopedWriteQuota::~ScopedWriteQuota() {
   WriteQuotaChecker::Get(owner_->browser_context())
-      ->ReturnBytes(owner_->extension_id(), bytes_used_);
+      ->ReturnBytes(owner_->GetOriginId(), bytes_used_);
 }
 
 SocketApiFunction::SocketApiFunction() = default;
@@ -140,10 +135,7 @@ void SocketApiFunction::OpenFirewallHole(const std::string& address,
   if (!net::HostStringIsLocalhost(address)) {
     net::IPEndPoint local_address;
     if (!socket->GetLocalAddress(&local_address)) {
-      NOTREACHED_IN_MIGRATION()
-          << "Cannot get address of recently bound socket.";
-      Respond(ErrorWithCode(-1, kFirewallFailure));
-      return;
+      NOTREACHED() << "Cannot get address of recently bound socket.";
     }
 
     AppFirewallHoleManager* manager =
@@ -216,7 +208,7 @@ bool SocketApiFunction::CheckRequest(
 
 bool SocketApiFunction::TakeWriteQuota(size_t bytes_to_write) {
   if (!WriteQuotaChecker::Get(browser_context())
-           ->TakeBytes(extension_id(), bytes_to_write)) {
+           ->TakeBytes(GetOriginId(), bytes_to_write)) {
     return false;
   }
 
@@ -318,8 +310,7 @@ ExtensionFunction::ResponseAction SocketCreateFunction::Work() {
       break;
     }
     case extensions::api::socket::SocketType::kNone:
-      NOTREACHED_IN_MIGRATION();
-      return RespondNow(NoArguments());
+      NOTREACHED();
   }
 
   DCHECK(socket);
@@ -374,9 +365,7 @@ ExtensionFunction::ResponseAction SocketConnectFunction::Work() {
       operation_type = SocketPermissionRequest::UDP_SEND_TO;
       break;
     default:
-      NOTREACHED_IN_MIGRATION() << "Unknown socket type.";
-      operation_type = SocketPermissionRequest::NONE;
-      break;
+      NOTREACHED() << "Unknown socket type.";
   }
 
   SocketPermission::CheckParam param(operation_type, hostname_, port_);
@@ -599,8 +588,7 @@ void SocketReadFunction::OnCompleted(int bytes_read,
   result.Set(kResultCodeKey, bytes_read);
   base::span<const uint8_t> data_span;
   if (bytes_read > 0) {
-    data_span = base::as_bytes(
-        base::make_span(io_buffer->data(), static_cast<size_t>(bytes_read)));
+    data_span = io_buffer->span().first(static_cast<size_t>(bytes_read));
   }
   result.Set(kDataKey, base::Value(data_span));
   Respond(WithArguments(std::move(result)));
@@ -625,7 +613,7 @@ ExtensionFunction::ResponseAction SocketWriteFunction::Work() {
 
   auto io_buffer =
       base::MakeRefCounted<net::IOBufferWithSize>(data_value.GetBlob().size());
-  base::ranges::copy(data_value.GetBlob(), io_buffer->data());
+  std::ranges::copy(data_value.GetBlob(), io_buffer->data());
 
   Socket* socket = GetSocket(socket_id);
   if (!socket) {
@@ -680,8 +668,7 @@ void SocketRecvFromFunction::OnCompleted(int bytes_read,
   result.Set(kResultCodeKey, bytes_read);
   base::span<const uint8_t> data_span;
   if (bytes_read > 0) {
-    data_span = base::as_bytes(
-        base::make_span(io_buffer->data(), static_cast<size_t>(bytes_read)));
+    data_span = io_buffer->span().first(static_cast<size_t>(bytes_read));
   }
   result.Set(kDataKey, base::Value(data_span));
   result.Set(kAddressKey, address);
@@ -715,7 +702,7 @@ ExtensionFunction::ResponseAction SocketSendToFunction::Work() {
   io_buffer_size_ = data_value.GetBlob().size();
   io_buffer_ =
       base::MakeRefCounted<net::IOBufferWithSize>(data_value.GetBlob().size());
-  base::ranges::copy(data_value.GetBlob(), io_buffer_->data());
+  std::ranges::copy(data_value.GetBlob(), io_buffer_->data());
 
   Socket* socket = GetSocket(socket_id_);
   if (!socket) {

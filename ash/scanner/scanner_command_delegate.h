@@ -8,11 +8,16 @@
 #include <memory>
 
 #include "ash/ash_export.h"
+#include "base/memory/weak_ptr.h"
 
 class GURL;
 
 namespace drive {
 class DriveServiceInterface;
+}
+
+namespace google_apis {
+class RequestSender;
 }
 
 namespace ui {
@@ -33,8 +38,12 @@ class ASH_EXPORT ScannerCommandDelegate {
   // Gets the `DriveServiceInterface` used to upload files.
   virtual drive::DriveServiceInterface* GetDriveService() = 0;
 
+  virtual google_apis::RequestSender* GetGoogleApisRequestSender() = 0;
+
   // Sets the clipboard to the given `ui::ClipboardData`.
   virtual void SetClipboard(std::unique_ptr<ui::ClipboardData> data) = 0;
+
+  virtual base::WeakPtr<ScannerCommandDelegate> GetWeakPtr() = 0;
 };
 
 }  // namespace ash

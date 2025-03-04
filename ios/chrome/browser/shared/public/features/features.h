@@ -11,6 +11,8 @@
 #import "base/metrics/field_trial_params.h"
 #import "ios/chrome/browser/ntp/ui_bundled/feed_top_section/notifications_promo_view_constants.h"
 
+enum class FeedActivityBucket;
+
 namespace base {
 class TimeDelta;
 }  // namespace base
@@ -19,12 +21,31 @@ class TimeDelta;
 // Set Up List, and video promos.
 BASE_DECLARE_FEATURE(kSegmentedDefaultBrowserPromo);
 
+// Name of the parameter that controls the experiment type for the Segmented
+// Default Browser promo, determining whether or not the Default Browser promo
+// is animated.
+extern const char kSegmentedDefaultBrowserExperimentType[];
+
+// Defines the different experiment arms for the Segmented Default Browser
+// promo, which determine if the Default Browser promo is animated.
+enum class SegmentedDefaultBrowserExperimentType {
+  // The experiment arm that shows the static Default Browser promo.
+  kStaticPromo = 0,
+  // The experiment arm that show the animated Default Browser promo.
+  kAnimatedPromo = 1,
+};
+
 // Whether personalized messaging for Default Browser First Run, Set Up List,
 // and video promos is enabled.
 bool IsSegmentedDefaultBrowserPromoEnabled();
 
-// Feature flag to enable the Keyboard Accessory Upgrade.
-BASE_DECLARE_FEATURE(kIOSKeyboardAccessoryUpgrade);
+// Returns the experiment type for the Segmented Default Browser promo, which
+// determines whether or not the promo is animated.
+SegmentedDefaultBrowserExperimentType
+SegmentedDefaultBrowserExperimentTypeEnabled();
+
+// Feature flag to enable the Keyboard Accessory Upgrade for iPads.
+BASE_DECLARE_FEATURE(kIOSKeyboardAccessoryUpgradeForIPad);
 
 // Feature flag to enable the Keyboard Accessory Upgrade with a shorter manual
 // fill menu.
@@ -60,9 +81,17 @@ extern const char kSafetyCheckNotificationsProvisionalEnabled[];
 // Returns true if provisional Safety Check notifications are enabled.
 bool ProvisionalSafetyCheckNotificationsEnabled();
 
+// A parameter defining the duration to suppress scheduling new Safety Check
+// notifications if one is already present in the notification center.
+extern const char kSafetyCheckNotificationsSuppressDelayIfPresent[];
+
 // A parameter defining the duration of user inactivity required before
 // displaying Safety Check push notifications.
 extern const char kSafetyCheckNotificationsUserInactiveThreshold[];
+
+// Returns the duration of time to suppress scheduling new Safety Check
+// notifications if one is already present in the notification center.
+const base::TimeDelta SuppressDelayForSafetyCheckNotificationsIfPresent();
 
 // Returns the time duration of user inactivity that must elapse before Safety
 // Check notifications are displayed.
@@ -163,29 +192,6 @@ BASE_DECLARE_FEATURE(kShareInWebContextMenuIOS);
 // Feature flag to enable the modern tabstrip.
 BASE_DECLARE_FEATURE(kModernTabStrip);
 
-// Feature parameters for `kModernTabStrip`feature. If no parameter is set,
-// `kModernTabStripNTBDynamicParam` will be used.
-extern const char kModernTabStripParameterName[];
-extern const char kModernTabStripNTBDynamicParam[];
-extern const char kModernTabStripNTBStaticParam[];
-
-// Feature parameters for V2 of Modern Tab Strip.
-extern const char kModernTabStripCloserNTB[];
-extern const char kModernTabStripDarkerBackground[];
-extern const char kModernTabStripNTBNoBackground[];
-extern const char kModernTabStripBlackBackground[];
-extern const char kModernTabStripBiggerNTB[];
-
-// Feature parameters for V3 of Modern Tab Strip.
-extern const char kModernTabStripDarkerBackgroundV3[];
-extern const char kModernTabStripCloseButtonsVisible[];
-extern const char kModernTabStripInactiveTabsHighContrast[];
-extern const char kModernTabStripHighContrastNTB[];
-extern const char kModernTabStripDetachedTabs[];
-
-// Feature flag that allows external apps to show default browser settings.
-BASE_DECLARE_FEATURE(kDefaultBrowserIntentsShowSettings);
-
 // Feature flag to log metrics for the edit menu.
 BASE_DECLARE_FEATURE(kIOSBrowserEditMenuMetrics);
 
@@ -263,28 +269,11 @@ const base::TimeDelta InactiveThresholdForNewUsersUntilDockingPromoShown();
 // Promo to old users.
 const base::TimeDelta InactiveThresholdForOldUsersUntilDockingPromoShown();
 
-// Feature flag to enable the non-modal DB promo cooldown refactor separating
-// the cooldown periods for full screen and non-modal promos, as well as
-// Finchable cooldown period for non-modal promos.
-BASE_DECLARE_FEATURE(kNonModalDefaultBrowserPromoCooldownRefactor);
-
-// The default param value for the non-modal promo cooldown period, in days,
-// overridable through Finch.
-extern const base::FeatureParam<int>
-    kNonModalDefaultBrowserPromoCooldownRefactorParam;
-
-// Feature flag to hide search web in the edit menu.
-BASE_DECLARE_FEATURE(kIOSEditMenuHideSearchWeb);
-
 // Feature flag to use direct upload for Lens searches.
 BASE_DECLARE_FEATURE(kIOSLensUseDirectUpload);
 
 // Feature flag to enable the Lens entrypoint in the home screen widget.
 BASE_DECLARE_FEATURE(kEnableLensInHomeScreenWidget);
-
-// Feature flag to enable the color Lens and voice icons in the home screen
-// widget.
-BASE_DECLARE_FEATURE(kEnableColorLensAndVoiceIconsInHomeScreenWidget);
 
 // Feature flag to enable the Lens entrypoint in the keyboard.
 BASE_DECLARE_FEATURE(kEnableLensInKeyboard);
@@ -299,8 +288,53 @@ BASE_DECLARE_FEATURE(kEnableLensInOmniboxCopiedImage);
 BASE_DECLARE_FEATURE(kEnableLensOverlay);
 extern const base::NotFatalUntil kLensOverlayNotFatalUntil;
 
+// Feature flag to enable the Lens View Finder Unified experience
+BASE_DECLARE_FEATURE(kEnableLensViewFinderUnifiedExperience);
+
+// Feature flag to enable the Lens Context Menu Unified experience
+BASE_DECLARE_FEATURE(kEnableLensContextMenuUnifiedExperience);
+
+// Feature flag to enable the Lens overlay location bar entrypoint. Enabled by
+// default.
+BASE_DECLARE_FEATURE(kLensOverlayEnableLocationBarEntrypoint);
+
+// Feature flag to enable the Lens overlay location bar entrypoint on SRP.
+// Enabled by default.
+BASE_DECLARE_FEATURE(kLensOverlayEnableLocationBarEntrypointOnSRP);
+
+// Feature flag to disable price insights for a lens overlay experiment. As the
+// price insights entrypoint trumps the lens overlay entrypoint. This flag
+// should only be used for experiment.
+BASE_DECLARE_FEATURE(kLensOverlayDisablePriceInsights);
+
+// Feature flag to enable lens overlay location bar entrypoint only when price
+// insights should trigger. This is used as counterfactual for
+// kLensOverlayDisablePriceInsights.
+BASE_DECLARE_FEATURE(kLensOverlayPriceInsightsCounterfactual);
+
+// Feature to force allow iPad support of lens overlay.
+BASE_DECLARE_FEATURE(kLensOverlayEnableIPadCompatibility);
+
+// Feature to allow landscape support of lens overlay.
+BASE_DECLARE_FEATURE(kLensOverlayEnableLandscapeCompatibility);
+
+// Feature to enable LVF escape hatch in the overflow menu in Lens overlay.
+BASE_DECLARE_FEATURE(kLensOverlayEnableLVFEscapeHatch);
+
+// Feature to open lens overlay navigation in the same tab.
+BASE_DECLARE_FEATURE(kLensOverlayEnableSameTabNavigation);
+
 // Feature to enable force showing the lens overlay onboarding screen.
 BASE_DECLARE_FEATURE(kLensOverlayForceShowOnboardingScreen);
+
+// Types of lens overlay onboarding.
+extern const char kLensOverlayOnboardingParam[];
+extern const char kLensOverlayOnboardingParamSpeedbumpMenu[];
+extern const char kLensOverlayOnboardingParamUpdatedStrings[];
+extern const char kLensOverlayOnboardingParamUpdatedStringsAndVisuals[];
+
+// Feature flag to change the onboariding experience of Lens Overlay.
+BASE_DECLARE_FEATURE(kLensOverlayAlternativeOnboarding);
 
 // Feature flag to enable UITraitCollection workaround for fixing incorrect
 // trait propagation.
@@ -308,10 +342,6 @@ BASE_DECLARE_FEATURE(kEnableTraitCollectionWorkAround);
 
 // Feature flag to enable duplicate NTP cleanup.
 BASE_DECLARE_FEATURE(kRemoveExcessNTPs);
-
-// Feature flag to enable shortened instruction to turn on Password AutoFill for
-// Chrome.
-BASE_DECLARE_FEATURE(kEnableShortenedPasswordAutoFillInstruction);
 
 // Feature flag / Kill Switch for TCRex.
 BASE_DECLARE_FEATURE(kTCRexKillSwitch);
@@ -447,14 +477,11 @@ int SafetyCheckNotificationsImpressionLimit();
 // Feature flag enabling Choose from Drive.
 BASE_DECLARE_FEATURE(kIOSChooseFromDrive);
 
-// Feature flag enabling Save to Drive.
-BASE_DECLARE_FEATURE(kIOSSaveToDrive);
-
-// Feature flag enabling Save to Photos.
-BASE_DECLARE_FEATURE(kIOSSaveToPhotos);
-
 // Feature flag enabling a fix for the Download manager mediator.
 BASE_DECLARE_FEATURE(kIOSDownloadNoUIUpdateInBackground);
+
+// Feature flag enabling account storage management.
+BASE_DECLARE_FEATURE(kIOSManageAccountStorage);
 
 // Feature flag to enable feed background refresh.
 // Use IsFeedBackgroundRefreshEnabled() instead of this constant directly.
@@ -463,6 +490,12 @@ BASE_DECLARE_FEATURE(kEnableFeedBackgroundRefresh);
 // Feature flag to enable the Following feed in the NTP.
 // Use IsWebChannelsEnabled() instead of this constant directly.
 BASE_DECLARE_FEATURE(kEnableWebChannels);
+
+// Feature flag to deprecate the "Discover / Follow" toggle from the header of
+// the feed. When this feature is enabled, there would not be a separate
+// following feed.
+BASE_DECLARE_FEATURE(kDeprecateFeedHeader);
+bool ShouldDeprecateFeedHeader();
 
 // Feature flag to disable the feed.
 BASE_DECLARE_FEATURE(kEnableFeedAblation);
@@ -492,9 +525,6 @@ BASE_DECLARE_FEATURE(kContentNotificationDeliveredNAU);
 // Parameter value for the max number of delivered NAUs to be sent per session.
 extern const char kDeliveredNAUMaxPerSession[];
 
-// Feature flag to enable the Large Fakebox design changes.
-BASE_DECLARE_FEATURE(kIOSLargeFakebox);
-
 // Feature flag to enable a more stable fullscreen.
 BASE_DECLARE_FEATURE(kFullscreenImprovement);
 
@@ -516,6 +546,10 @@ BASE_DECLARE_FEATURE(kTabGroupIndicator);
 // Whether the Tab Group Indicator feature is enabled.
 bool IsTabGroupIndicatorEnabled();
 
+// Whether the TabGroup send feedback button is enabled.
+// TODO(crbug.com/398183785): Remove once we got feedback.
+bool IsTabGroupSendFeedbackAvailable();
+
 // Feature flag to enable a new illustration in the sync opt-in promotion view.
 BASE_DECLARE_FEATURE(kNewSyncOptInIllustration);
 
@@ -525,11 +559,14 @@ bool IsNewSyncOptInIllustration();
 // Feature flag to disable Lens LVF features.
 BASE_DECLARE_FEATURE(kDisableLensCamera);
 
-// Feature flag to enable color icons in the Omnibox.
-BASE_DECLARE_FEATURE(kOmniboxColorIcons);
-
 // Feature flag that allows clearing data for managed users signing out.
 BASE_DECLARE_FEATURE(kClearDeviceDataOnSignOutForManagedUsers);
+
+// YES when the Downloads Auto Deletion feature is enabled.
+BASE_DECLARE_FEATURE(kDownloadAutoDeletionFeatureEnabled);
+
+// Whether the kDownloadAutoDeletion feature is enabled.
+bool IsDownloadAutoDeletionFeatureEnabled();
 
 // Feature flag that allows opening the downloaded PDF files in Chrome.
 BASE_DECLARE_FEATURE(kDownloadedPDFOpening);
@@ -565,21 +602,8 @@ bool IsWebChannelsEnabled();
 // Whether the Discover service is created early, alongside the app creation.
 bool IsDiscoverFeedServiceCreatedEarly();
 
-// Whether feed background refresh is enabled and the capability was enabled at
-// startup.
+// Whether feed background refresh is enabled.
 bool IsFeedBackgroundRefreshEnabled();
-
-// Whether feed background refresh capability is enabled. Returns the value in
-// NSUserDefaults set by
-// `SaveFeedBackgroundRefreshCapabilityEnabledForNextColdStart()`. This is used
-// because registering for background refreshes must happen early in app
-// initialization and FeatureList is not yet available. Enabling or disabling
-// background refresh features will always take effect after two cold starts
-// after the feature has been changed on the server (once for the Finch
-// configuration, and another for reading the stored value from NSUserDefaults).
-// This function always returns false if the `IOS_BACKGROUND_MODE_ENABLED`
-// buildflag is not defined.
-bool IsFeedBackgroundRefreshCapabilityEnabled();
 
 // Saves whether any background refresh experiment is enabled. This call
 // DCHECKs on the availability of `base::FeatureList`.
@@ -594,11 +618,6 @@ void SetFeedRefreshTimestamp(NSDate* timestamp, NSString* NSUserDefaultsKey);
 // defaults.
 bool IsFeedOverrideDefaultsEnabled();
 
-// Returns true if the user should receive a local notification when a feed
-// background refresh is completed. Background refresh completion notifications
-// are only enabled by Experimental Settings.
-bool IsFeedBackgroundRefreshCompletedNotificationEnabled();
-
 // Whether the Following feed should also be refreshed in the background.
 bool IsFollowingFeedBackgroundRefreshEnabled();
 
@@ -606,7 +625,7 @@ bool IsFollowingFeedBackgroundRefreshEnabled();
 bool IsServerDrivenBackgroundRefreshScheduleEnabled();
 
 // Whether a new refresh should be scheduled after completion of a previous
-// background refresh.
+// background refresh. Not currently used in code.
 bool IsRecurringBackgroundRefreshScheduleEnabled();
 
 // Returns the max age that the cache is still considered fresh. In other words,
@@ -656,10 +675,7 @@ bool IsContentPushNotificationsProvisionalRegistrationOnly();
 // change.
 bool IsContentPushNotificationsSetUpListRegistrationOnly();
 
-// Returns true when the IOSLargeFakebox feature is enabled.
-bool IsIOSLargeFakeboxEnabled();
-
-// Whether or not the kIOSKeyboardAccessoryUpgrade feature is enabled.
+// Whether or not the Keyboard Accessory Upgrade feature is enabled.
 bool IsKeyboardAccessoryUpgradeEnabled();
 
 // Whether or not the kIOSKeyboardAccessoryUpgradeShortManualFillMenu feature is
@@ -761,8 +777,10 @@ bool IsTabResumptionImagesThumbnailsEnabled();
 // X-Devices tabs only.
 const base::TimeDelta TabResumptionForXDevicesTimeThreshold();
 
-// Whether the Most Visited Sites should be put into the Magic Stack.
-bool ShouldPutMostVisitedSitesInMagicStack();
+// Whether the Most Visited Sites should be put into the Magic Stack based on
+// `feed_activity_bucket`.
+bool ShouldPutMostVisitedSitesInMagicStack(
+    FeedActivityBucket feed_activity_bucket);
 
 // How much the NTP top margin should be reduced by for the Magic Stack design.
 double ReducedNTPTopMarginSpaceForMagicStack();
@@ -809,9 +827,6 @@ extern const char kIOSTipsNotificationsDismissLimitParam[];
 // Helper for whether Tips Notifications are enabled.
 bool IsIOSTipsNotificationsEnabled();
 
-// Feature flag to disable fullscreen scrolling logic.
-BASE_DECLARE_FEATURE(kDisableFullscreenScrolling);
-
 // Convenience method for determining if Pinned Tabs is enabled.
 // The Pinned Tabs feature is fully enabled on iPhone and disabled on iPad.
 bool IsPinnedTabsEnabled();
@@ -821,12 +836,6 @@ BASE_DECLARE_FEATURE(kSegmentationPlatformIosModuleRankerCaching);
 
 // Whether the Segmentation Tips Manager is enabled for Chrome iOS.
 bool IsSegmentationTipsManagerEnabled();
-
-// Feature flag for default browser promo experimental string for iPad.
-BASE_DECLARE_FEATURE(kDefaultBrowserPromoIPadExperimentalString);
-
-// Returns `YES` if the title and subtitle should be tailored for iPad.
-BOOL UseIPadTailoredStringForDefaultBrowserPromo();
 
 // Flag to not keep a strong reference to the spotlight index, as a tentative
 // memory improvement measure.
@@ -870,11 +879,6 @@ BASE_DECLARE_FEATURE(kHomeMemoryImprovements);
 // Whether Home memory improvements are enabled.
 bool IsHomeMemoryImprovementsEnabled();
 
-// Feature to enable the removal of the image in the rich IPH bubble.
-BASE_DECLARE_FEATURE(kRichBubbleWithoutImage);
-
-bool IsRichBubbleWithoutImageEnabled();
-
 // Feature flag to enable account confirmation snackbar on startup.
 BASE_DECLARE_FEATURE(kIdentityConfirmationSnackbar);
 
@@ -898,10 +902,163 @@ BASE_DECLARE_FEATURE(kBlueDotOnToolsMenuButton);
 // Returns whether `kBlueDotOnToolsMenuButton` is enabled.
 bool IsBlueDotOnToolsMenuButtoneEnabled();
 
+// Feature flag to use IdentityManager APIs instead of
+// ChromeAccountManagerService APIs for getting the list of accounts, and for
+// listening to account changes.
+BASE_DECLARE_FEATURE(kUseAccountListFromIdentityManager);
+
+// Returns whether the feature to use IdentityManager APIs instead of
+// ChromeAccountManagerService APIs is enabled.
+bool IsUseAccountListFromIdentityManagerEnabled();
+
 // Feature flag to assign each managed account to its own separate profile.
+// DO NOT CHECK DIRECTLY, use AreSeparateProfilesForManagedAccountsEnabled()!
 BASE_DECLARE_FEATURE(kSeparateProfilesForManagedAccounts);
+
+// Returns whether the feature to put each managed account into its own separate
+// profile is enabled. This is the case if `kSeparateProfilesForManagedAccounts`
+// is enabled *and* the iOS version is >= 17 (required for multiprofile).
+bool AreSeparateProfilesForManagedAccountsEnabled();
 
 // Feature to control resyncing the omaha ping timer on foregrounding.
 BASE_DECLARE_FEATURE(kOmahaResyncTimerOnForeground);
+
+// Feature flag to use the async version of the chrome startup method.
+BASE_DECLARE_FEATURE(kChromeStartupParametersAsync);
+
+// Feature flag to enable the opening of links from Youtube Incognito in Chrome
+// incognito.
+BASE_DECLARE_FEATURE(kYoutubeIncognito);
+
+// Feature param to specify whether the youtube incognito handling is done
+// without the incognito interstitial.
+extern const char
+    kYoutubeIncognitoErrorHandlingWithoutIncognitoInterstitialParam[];
+
+// A parameter to choose what type of apps allowed for `kYoutubeIncognito`
+// experiment (default to allow listed)
+extern const char kYoutubeIncognitoTargetApps[];
+
+// A parameter value for `kYoutubeIncognitoTargetApps` to only enable the
+// feature for the allow listed apps.
+extern const char kYoutubeIncognitoTargetAppsAllowlisted[];
+
+// A parameter value for `kYoutubeIncognitoTargetApps` to only enable the
+// feature for the first party apps.
+extern const char kYoutubeIncognitoTargetAppsFirstParty[];
+
+// A parameter value for `kYoutubeIncognitoTargetApps` to only enable the
+// feature for all apps.
+extern const char kYoutubeIncognitoTargetAppsAll[];
+
+// Returns whether
+// `kYoutubeIncognitoErrorHandlingWithoutIncognitoInterstitialParam` is enabled.
+bool IsYoutubeIncognitoErrorHandlingWithoutIncognitoInterstitialEnabled();
+
+// Returns whether `kYoutubeIncognitoTargetApps` is
+// `kYoutubeIncognitoTargetAppsAllowlisted`.
+bool IsYoutubeIncognitoTargetAllowListedEnabled();
+
+// Returns whether `kYoutubeIncognitoTargetApps` is
+// `kYoutubeIncognitoTargetAppsFirstParty`.
+bool IsYoutubeIncognitoTargetFirstPartyEnabled();
+
+// Returns whether `kYoutubeIncognitoTargetApps` is
+// `kYoutubeIncognitoTargetAppsAll`.
+bool IsYoutubeIncognitoTargetAllEnabled();
+
+// Feature flag to enable Reactivation Notifications.
+BASE_DECLARE_FEATURE(kIOSReactivationNotifications);
+
+// Feature param to specify how much time should elapse before a Reactivation
+// notification should trigger.
+extern const char kIOSReactivationNotificationsTriggerTimeParam[];
+
+// Returns whether `kIOSReactivationNotifications` is enabled.
+bool IsIOSReactivationNotificationsEnabled();
+
+// Feature flag to show an alert to the user when only provisiona notifications
+// are allowed.
+BASE_DECLARE_FEATURE(kProvisionalNotificationAlert);
+
+// Returns whether `kIOSReactivationNotifications` is enabled.
+bool IsProvisionalNotificationAlertEnabled();
+
+// Feature and parameters for the feed positioning experiment, which will
+// determine two things: 1) whether the MVT should be combined with the magic
+// stack 2) whether homestack should be enabled.
+BASE_DECLARE_FEATURE(kNewFeedPositioning);
+extern const char kNewFeedPositioningCombinedMVTForHighEngaged[];
+extern const char kNewFeedPositioningCombinedMVTForMidEngaged[];
+extern const char kNewFeedPositioningCombinedMVTForLowEngaged[];
+
+// Feature flag to control whether the Default Browser banner promo is enabled.
+BASE_DECLARE_FEATURE(kDefaultBrowserBannerPromo);
+
+// Parameter for the number of impressions to show the promo for.
+extern const base::FeatureParam<int> kDefaultBrowserBannerPromoImpressionLimit;
+
+// Returns whether `kDefaultBrowserBannerPromo` is enabled.
+bool IsDefaultBrowserBannerPromoEnabled();
+
+// Feature to enable different text for the secondary action on FRE sign-in
+// promo.
+BASE_DECLARE_FEATURE(kFRESignInSecondaryActionLabelUpdate);
+extern const base::FeatureParam<std::string>
+    kFRESignInSecondaryActionLabelUpdateParam;
+extern const std::string_view
+    kFRESignInSecondaryActionLabelUpdateParamStaySignedOut;
+
+// Returns whether 'kFRESignInSecondaryActionLabelUpdate' is enabled
+bool FRESignInSecondaryActionLabelUpdate();
+
+// Enables passkey syncing follow-up features.
+BASE_DECLARE_FEATURE(kIOSPasskeysM2);
+
+// Helper function returning the status of `kIOSPasskeysM2` and the M1
+// prerequisite.
+bool IOSPasskeysM2Enabled();
+
+extern const char kFullscreenTransitionSlower[];
+extern const char kFullscreenTransitionDefaultSpeed[];
+extern const char kFullscreenTransitionFaster[];
+extern const char kFullscreenTransitionSpeedParam[];
+
+enum class FullscreenTransitionSpeed {
+  kSlower = 0,
+  kFaster = 1,
+};
+
+FullscreenTransitionSpeed FullscreenTransitionSpeedParam();
+
+bool IsFullscreenTransitionSet();
+
+bool IsFullscreenTransitionOffsetSet();
+
+extern const char kMediumFullscreenTransitionOffsetParam[];
+
+// Feature flag to changes the distance of unique scrolling before triggering
+// the fullscreen transition or the speed of the transition.
+BASE_DECLARE_FEATURE(kFullscreenTransition);
+
+// Feature flag for switching the toolbar UI to an observer-based architecture.
+BASE_DECLARE_FEATURE(kRefactorToolbarsSize);
+
+bool IsRefactorToolbarsSize();
+
+// Feature flag to enable the new share extension UI and entries.
+BASE_DECLARE_FEATURE(kNewShareExtension);
+
+// Feature that disables all IPH messages.
+BASE_DECLARE_FEATURE(kIPHAblation);
+
+// Returns true if IPH ablation is enabled.
+bool IsIPHAblationEnabled();
+
+// Feature flag for enabling the non-modal sign-in promo.
+BASE_DECLARE_FEATURE(kNonModalSignInPromo);
+
+// Returns whether the non-modal sign-in promo is enabled.
+bool IsNonModalSignInPromoEnabled();
 
 #endif  // IOS_CHROME_BROWSER_SHARED_PUBLIC_FEATURES_FEATURES_H_

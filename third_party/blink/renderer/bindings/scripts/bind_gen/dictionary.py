@@ -48,12 +48,6 @@ class _DictionaryMember(object):
     of IDL dictionary.
     """
 
-    # Map from Blink member type to presence expression.
-    _MEMBER_TYPE_TO_PRESENCE_EXPR = {
-        "ScriptPromiseUntyped": "!{}.IsEmpty()",
-        "ScriptValue": "!{}.IsEmpty()",
-    }
-
     def __init__(self, dict_member):
         assert isinstance(dict_member, web_idl.DictionaryMember)
 
@@ -141,16 +135,19 @@ class _DictionaryMember(object):
     def presence_expr(self):
         if self.is_always_present:
             return "true"
-        expr = self._MEMBER_TYPE_TO_PRESENCE_EXPR.get(self.type_info.member_t)
-        if expr:
-            return expr.format(self.value_var)
-        return self.presence_var
+        if self.does_use_presence_var:
+            return self.presence_var
+        return "!{}.IsEmpty()".format(self.value_var)
 
     @property
     def does_use_presence_var(self):
-        return not (
-            self.is_always_present
-            or self.type_info.member_t in self._MEMBER_TYPE_TO_PRESENCE_EXPR)
+        if self.is_always_present:
+            return False
+        if self._idl_type.is_promise:
+            return False
+        if "ScriptValue" == self.type_info.member_t:
+            return False
+        return True
 
     @property
     def is_always_present(self):
@@ -392,8 +389,6 @@ def make_accessor_functions(cg_context):
 
     def make_check_assigned_value(member):
         idl_type = member.idl_type.unwrap(typedef=True)
-        if idl_type.is_object:
-            return F("DCHECK({}.IsObject());", member.value_var)
         if (member.type_info.is_gc_type and not idl_type.is_nullable):
             return F("DCHECK({});", member.value_var)
         return None
@@ -690,9 +685,9 @@ def make_trace_function(cg_context):
     body = func_def.body
 
     for member in cg_context.dictionary_own_members:
-        body.append(
-            TextNode("TraceIfNeeded<{}>::Trace(visitor, {});".format(
-                member.type_info.member_t, member.value_var)))
+        if not member.type_info.is_traceable:
+            continue
+        body.append(TextNode("visitor->Trace({});".format(member.value_var)))
     body.append(TextNode("${base_class_name}::Trace(visitor);"))
 
     return func_def.make_decl(override=True), func_def

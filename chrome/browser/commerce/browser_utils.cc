@@ -4,9 +4,12 @@
 
 #include "chrome/browser/commerce/browser_utils.h"
 
+#include "chrome/browser/commerce/shopping_service_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/commerce/core/commerce_constants.h"
 #include "components/commerce/core/commerce_feature_list.h"
+#include "components/commerce/core/feature_utils.h"
+#include "components/commerce/core/shopping_service.h"
 #include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 
@@ -16,8 +19,8 @@ const std::vector<GURL> GetListOfProductSpecsEligibleUrls(
     const std::vector<content::WebContents*>& web_contents_list) {
   std::vector<GURL> urls;
   for (auto* wc : web_contents_list) {
-    const auto& url = wc->GetURL();
-    if (!url.SchemeIs(url::kHttpsScheme) && !url.SchemeIs(url::kHttpScheme)) {
+    const auto& url = wc->GetLastCommittedURL();
+    if (!IsUrlEligibleForProductSpecs(url)) {
       continue;
     }
     urls.push_back(url);
@@ -32,14 +35,24 @@ bool IsWebContentsListEligibleForProductSpecs(
          kProductSpecificationsMinTabsCount;
 }
 
+bool IsUrlEligibleForProductSpecs(const GURL& url) {
+  return url.SchemeIsHTTPOrHTTPS();
+}
+
 bool IsProductSpecsMultiSelectMenuEnabled(Profile* profile,
                                           content::WebContents* web_contents) {
-  if (!base::FeatureList::IsEnabled(commerce::kProductSpecifications) ||
-      !profile || !web_contents) {
+  if (!profile || !web_contents) {
     return false;
   }
 
-  if (profile->IsOffTheRecord() || profile->IsGuestSession()) {
+  if (!profile->IsRegularProfile()) {
+    return false;
+  }
+
+  auto* shopping_service =
+      commerce::ShoppingServiceFactory::GetForBrowserContext(profile);
+  if (!shopping_service || !commerce::CanFetchProductSpecificationsData(
+                               shopping_service->GetAccountChecker())) {
     return false;
   }
 

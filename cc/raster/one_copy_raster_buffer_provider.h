@@ -12,11 +12,14 @@
 
 #include "base/memory/raw_ptr.h"
 #include "base/task/sequenced_task_runner.h"
+#include "cc/raster/raster_buffer.h"
 #include "cc/raster/raster_buffer_provider.h"
 #include "cc/raster/staging_buffer_pool.h"
 #include "cc/trees/raster_capabilities.h"
 #include "components/viz/client/client_resource_provider.h"
 #include "gpu/command_buffer/common/sync_token.h"
+
+class GURL;
 
 namespace base {
 class WaitableEvent;
@@ -87,13 +90,10 @@ class CC_EXPORT OneCopyRasterBufferProvider : public RasterBufferProvider {
   void Flush() override;
 
  private:
-  class OneCopyGpuBacking;
-
   class RasterBufferImpl : public RasterBuffer {
    public:
     RasterBufferImpl(OneCopyRasterBufferProvider* client,
                      const ResourcePool::InUsePoolResource& in_use_resource,
-                     OneCopyGpuBacking* backing,
                      uint64_t previous_content_id);
     RasterBufferImpl(const RasterBufferImpl&) = delete;
     ~RasterBufferImpl() override;
@@ -113,16 +113,16 @@ class CC_EXPORT OneCopyRasterBufferProvider : public RasterBufferProvider {
    private:
     // These fields may only be used on the compositor thread.
     const raw_ptr<OneCopyRasterBufferProvider> client_;
-    raw_ptr<OneCopyGpuBacking> backing_;
+    raw_ptr<ResourcePool::Backing> backing_;
 
     // These fields are for use on the worker thread.
     const gfx::Size resource_size_;
     const viz::SharedImageFormat format_;
     const gfx::ColorSpace color_space_;
     const uint64_t previous_content_id_;
-    const gpu::SyncToken before_raster_sync_token_;
+    gpu::SyncToken before_raster_sync_token_;
     scoped_refptr<gpu::ClientSharedImage> shared_image_;
-    const bool mailbox_texture_is_overlay_candidate_;
+    bool mailbox_texture_is_overlay_candidate_;
     // A SyncToken to be returned from the worker thread, and waited on before
     // using the rastered resource.
     gpu::SyncToken after_raster_sync_token_;

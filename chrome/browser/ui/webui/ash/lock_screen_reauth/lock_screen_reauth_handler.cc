@@ -40,8 +40,10 @@
 #include "components/version_info/version_info.h"
 #include "content/public/browser/storage_partition.h"
 #include "google_apis/gaia/gaia_auth_util.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "google_apis/gaia/gaia_urls.h"
 #include "net/base/net_errors.h"
+#include "third_party/abseil-cpp/absl/cleanup/cleanup.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/display/display.h"
 #include "ui/display/screen.h"
@@ -131,10 +133,23 @@ void LockScreenReauthHandler::HandleAuthenticatorLoaded(
     std::move(waiting_caller_).Run();
   }
 
+  ActivateAutoReload();
+
   // Recreate the client cert usage observer, in order to track only the certs
   // used during the current sign-in attempt.
   extension_provided_client_cert_usage_observer_ =
       std::make_unique<LoginClientCertUsageObserver>();
+}
+
+void LockScreenReauthHandler::ActivateAutoReload() {
+  auth_flow_auto_reload_manager_.Activate(base::BindOnce(
+      &LockScreenReauthHandler::LoadAuthenticatorParam,
+      weak_factory_.GetWeakPtr(), /*force_reauth_gaia_page=*/false));
+}
+
+ash::AuthenticationFlowAutoReloadManager&
+LockScreenReauthHandler::GetAutoReloadManager() {
+  return auth_flow_auto_reload_manager_;
 }
 
 void LockScreenReauthHandler::LoadAuthenticatorParam(
@@ -253,7 +268,7 @@ void LockScreenReauthHandler::OnSetCookieForLoadGaiaWithPartition(
   DCHECK(!app_locale.empty());
   params.Set("hl", app_locale);
   params.Set("email", context.email);
-  params.Set("gaiaId", context.gaia_id);
+  params.Set("gaiaId", context.gaia_id.ToString());
   params.Set("extractSamlPasswordAttributes",
              login::ExtractSamlPasswordAttributesEnabled());
   params.Set("clientVersion", version_info::GetVersionNumber());
@@ -266,10 +281,10 @@ void LockScreenReauthHandler::OnSetCookieForLoadGaiaWithPartition(
         local_state->GetString(prefs::kUrlParameterToAutofillSAMLUsername));
   }
 
+  // TODO(crbug.com/377862442) Add autoreload url param.
+
   CallJavascript("loadAuthenticator", params);
-  if (features::IsNewLockScreenReauthLayoutEnabled()) {
-    UpdateOrientationAndWidth();
-  }
+  UpdateOrientationAndWidth();
 }
 
 void LockScreenReauthHandler::UpdateOrientationAndWidth() {
@@ -289,12 +304,15 @@ void LockScreenReauthHandler::CallJavascript(const std::string& function,
 
 void LockScreenReauthHandler::HandleCompleteAuthentication(
     const base::Value::List& params) {
+  absl::Cleanup run_callback_on_return = [this] {
+    auth_flow_auto_reload_manager_.Terminate();
+  };
+
   CHECK_EQ(params.size(), 7u);
-  std::string gaia_id, email, password;
   bool using_saml;
-  gaia_id = params[0].GetString();
-  email = params[1].GetString();
-  password = params[2].GetString();
+  GaiaId gaia_id(params[0].GetString());
+  std::string email = params[1].GetString();
+  std::string password = params[2].GetString();
   auto scraped_saml_passwords =
       ::login::ConvertToStringList(params[3].GetList());
   using_saml = params[4].GetBool();
@@ -317,8 +335,7 @@ void LockScreenReauthHandler::HandleCompleteAuthentication(
     auto challenge_response_key_or_error = login::ExtractClientCertificates(
         *extension_provided_client_cert_usage_observer_);
     if (!challenge_response_key_or_error.has_value()) {
-      NOTREACHED_IN_MIGRATION();
-      return;
+      NOTREACHED();
     }
     challenge_response_key = challenge_response_key_or_error.value();
   }
@@ -368,9 +385,7 @@ void LockScreenReauthHandler::FinishAuthentication(
 }
 
 void LockScreenReauthHandler::OnCookieWaitTimeout() {
-  NOTREACHED_IN_MIGRATION()
-      << "Cookie has timed out while attempting to login in.";
-  LockScreenStartReauthDialog::Dismiss();
+  NOTREACHED() << "Cookie has timed out while attempting to login in.";
 }
 
 void LockScreenReauthHandler::OnReauthDialogReadyForTesting() {
@@ -487,15 +502,11 @@ void LockScreenReauthHandler::HandleWebviewLoadAborted(int error_code) {
 
 void LockScreenReauthHandler::HandleGetDeviceId(
     const std::string& callback_id) {
-  if (!IsJavascriptAllowed()) {
-    return;
-  }
-
   user_manager::KnownUser known_user{g_browser_process->local_state()};
   ResolveJavascriptCallback(callback_id, GetDeviceId(known_user));
 }
 
-void LockScreenReauthHandler::ReloadGaia() {
+void LockScreenReauthHandler::ReloadGaiaAuthenticator() {
   CallJavascriptFunction(std::string(kMainElement) + "reloadAuthenticator");
 }
 
@@ -503,33 +514,37 @@ void LockScreenReauthHandler::RegisterMessages() {
   web_ui()->RegisterMessageCallback(
       "startOnlineAuth",
       base::BindRepeating(&LockScreenReauthHandler::HandleStartOnlineAuth,
-                          weak_factory_.GetWeakPtr()));
+                          base::Unretained(this)));
 
   web_ui()->RegisterMessageCallback(
       "authenticatorLoaded",
       base::BindRepeating(&LockScreenReauthHandler::HandleAuthenticatorLoaded,
-                          weak_factory_.GetWeakPtr()));
+                          base::Unretained(this)));
   web_ui()->RegisterMessageCallback(
       "completeAuthentication",
       base::BindRepeating(
           &LockScreenReauthHandler::HandleCompleteAuthentication,
-          weak_factory_.GetWeakPtr()));
+          base::Unretained(this)));
   web_ui()->RegisterMessageCallback(
       "updateUserPassword",
       base::BindRepeating(&LockScreenReauthHandler::HandleUpdateUserPassword,
-                          weak_factory_.GetWeakPtr()));
+                          base::Unretained(this)));
   web_ui()->RegisterMessageCallback(
       "onPasswordTyped",
       base::BindRepeating(&LockScreenReauthHandler::HandleOnPasswordTyped,
-                          weak_factory_.GetWeakPtr()));
+                          base::Unretained(this)));
   web_ui()->RegisterHandlerCallback(
       "webviewLoadAborted",
       base::BindRepeating(&LockScreenReauthHandler::HandleWebviewLoadAborted,
-                          weak_factory_.GetWeakPtr()));
+                          base::Unretained(this)));
   web_ui()->RegisterHandlerCallback(
       "getDeviceId",
       base::BindRepeating(&LockScreenReauthHandler::HandleGetDeviceId,
-                          weak_factory_.GetWeakPtr()));
+                          base::Unretained(this)));
+}
+
+void LockScreenReauthHandler::OnJavascriptDisallowed() {
+  weak_factory_.InvalidateWeakPtrs();
 }
 
 bool LockScreenReauthHandler::IsAuthenticatorLoaded(

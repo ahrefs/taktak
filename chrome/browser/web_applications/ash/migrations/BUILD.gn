@@ -2,16 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//build/config/chromeos/ui_mode.gni")
-
-assert(is_chromeos_ash)
+assert(is_chromeos)
 
 static_library("migrations") {
   sources = [
     "adobe_express_oem_to_default_migration.cc",
     "adobe_express_oem_to_default_migration.h",
-    "migrate_preinstalls_to_aps.cc",
-    "migrate_preinstalls_to_aps.h",
   ]
 
   deps = [
@@ -29,10 +25,7 @@ source_set("browser_tests") {
 
   defines = [ "HAS_OUT_OF_PROC_TEST_RUNNER" ]
 
-  sources = [
-    "adobe_express_oem_to_default_migration_browsertest.cc",
-    "migrate_preinstalls_to_aps_browsertest.cc",
-  ]
+  sources = [ "adobe_express_oem_to_default_migration_browsertest.cc" ]
 
   deps = [
     ":migrations",

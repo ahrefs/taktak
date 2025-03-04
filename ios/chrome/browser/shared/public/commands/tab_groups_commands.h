@@ -56,7 +56,13 @@ class WebStateID;
 - (void)showTabGridTabGroupSnackbarAfterClosingGroups:(int)numberOfClosedGroups;
 
 // Displays a half sheet of the recent activity in a shared tab group.
-- (void)showRecentActivity;
+- (void)showRecentActivityForGroup:(base::WeakPtr<const TabGroup>)tabGroup;
+
+// Displays a management page for managing a shared group.
+- (void)showManageForGroup:(base::WeakPtr<const TabGroup>)tabGroup;
+
+// Displays a share page for sharing a group.
+- (void)showShareForGroup:(base::WeakPtr<const TabGroup>)tabGroup;
 
 @end
 

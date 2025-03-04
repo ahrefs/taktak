@@ -38,6 +38,7 @@
 #include "chrome/grit/generated_resources.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "content/public/browser/storage_partition.h"
+#include "extensions/browser/extension_registrar.h"
 #include "extensions/browser/extension_registry.h"
 #include "extensions/browser/extension_system.h"
 #include "extensions/browser/uninstall_reason.h"
@@ -145,8 +146,7 @@ ExternalInstallMenuAlert::ExternalInstallMenuAlert(ExternalInstallError* error)
     : error_(error) {
 }
 
-ExternalInstallMenuAlert::~ExternalInstallMenuAlert() {
-}
+ExternalInstallMenuAlert::~ExternalInstallMenuAlert() = default;
 
 GlobalError::Severity ExternalInstallMenuAlert::GetSeverity() {
   return SEVERITY_LOW;
@@ -173,12 +173,11 @@ bool ExternalInstallMenuAlert::HasBubbleView() {
 }
 
 bool ExternalInstallMenuAlert::HasShownBubbleView() {
-  NOTREACHED_IN_MIGRATION();
-  return true;
+  NOTREACHED();
 }
 
 void ExternalInstallMenuAlert::ShowBubbleView(Browser* browser) {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 GlobalErrorBubbleViewBase* ExternalInstallMenuAlert::GetBubbleView() {
@@ -196,8 +195,7 @@ ExternalInstallBubbleAlert::ExternalInstallBubbleAlert(
   DCHECK(prompt_);
 }
 
-ExternalInstallBubbleAlert::~ExternalInstallBubbleAlert() {
-}
+ExternalInstallBubbleAlert::~ExternalInstallBubbleAlert() = default;
 
 GlobalError::Severity ExternalInstallBubbleAlert::GetSeverity() {
   return SEVERITY_LOW;
@@ -341,16 +339,14 @@ void ExternalInstallError::OnInstallPromptDone(
   switch (payload.result) {
     case ExtensionInstallPrompt::Result::ACCEPTED:
       if (extension) {
-        ExtensionSystem::Get(browser_context_)
-            ->extension_service()
-            ->GrantPermissionsAndEnableExtension(extension);
+        ExtensionRegistrar::Get(browser_context_)
+            ->GrantPermissionsAndEnableExtension(*extension);
       }
       break;
     case ExtensionInstallPrompt::Result::ACCEPTED_WITH_WITHHELD_PERMISSIONS:
       // TODO(crbug.com/40636075): Handle `ACCEPTED_WITH_WITHHELD_PERMISSIONS`
       // when it is supported for external installs.
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
     case ExtensionInstallPrompt::Result::USER_CANCELED:
       if (extension) {
         ExtensionSystem::Get(browser_context_)

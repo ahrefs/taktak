@@ -23,7 +23,6 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import org.chromium.base.FeatureMap;
-import org.chromium.base.cached_flags.ValuesOverridden;
 import org.chromium.base.cached_flags.ValuesReturned;
 import org.chromium.base.task.test.PausedExecutorTestRule;
 import org.chromium.base.test.BaseRobolectricTestRunner;
@@ -31,6 +30,7 @@ import org.chromium.base.test.util.BaseFlagTestRule;
 import org.chromium.components.cached_flags.CachedFlagsSafeMode.Behavior;
 
 import java.util.Arrays;
+import java.util.List;
 
 /** Unit Tests for {@link CachedFlagsSafeMode}, the Safe Mode mechanism for {@link CachedFlag}. */
 @RunWith(BaseRobolectricTestRunner.class)
@@ -64,26 +64,26 @@ public class CachedFeatureFlagsSafeModeUnitTest {
     @Mock private FeatureMap mFeatureMap;
     private CachedFlag mCrashyFeature;
     private CachedFlag mOkFeature;
-    private BooleanCachedFieldTrialParameter mBoolParam;
-    private IntCachedFieldTrialParameter mIntParam;
-    private DoubleCachedFieldTrialParameter mDoubleParam;
-    private StringCachedFieldTrialParameter mStringParam;
+    private BooleanCachedFeatureParam mBoolParam;
+    private IntCachedFeatureParam mIntParam;
+    private DoubleCachedFeatureParam mDoubleParam;
+    private StringCachedFeatureParam mStringParam;
 
     @Before
     public void setUp() {
         mCrashyFeature = new CachedFlag(mFeatureMap, CRASHY_FEATURE, CRASHY_FEATURE_DEFAULT);
         mOkFeature = new CachedFlag(mFeatureMap, OK_FEATURE, OK_FEATURE_DEFAULT);
         mBoolParam =
-                new BooleanCachedFieldTrialParameter(
+                new BooleanCachedFeatureParam(
                         mFeatureMap, OK_FEATURE, BOOL_PARAM_NAME, BOOL_PARAM_DEFAULT);
         mIntParam =
-                new IntCachedFieldTrialParameter(
+                new IntCachedFeatureParam(
                         mFeatureMap, OK_FEATURE, INT_PARAM_NAME, INT_PARAM_DEFAULT);
         mDoubleParam =
-                new DoubleCachedFieldTrialParameter(
+                new DoubleCachedFeatureParam(
                         mFeatureMap, OK_FEATURE, DOUBLE_PARAM_NAME, DOUBLE_PARAM_DEFAULT);
         mStringParam =
-                new StringCachedFieldTrialParameter(
+                new StringCachedFeatureParam(
                         mFeatureMap, OK_FEATURE, STRING_PARAM_NAME, STRING_PARAM_DEFAULT);
 
         CachedFlagsSafeMode.getInstance().enableForTesting();
@@ -462,9 +462,9 @@ public class CachedFeatureFlagsSafeModeUnitTest {
                 .thenReturn(DOUBLE_PARAM_NATIVE_1);
         when(mFeatureMap.getFieldTrialParamByFeature(OK_FEATURE, STRING_PARAM_NAME))
                 .thenReturn(STRING_PARAM_NATIVE_1);
-        CachedFlagUtils.cacheNativeFlags(Arrays.asList(mCrashyFeature, mOkFeature));
-        CachedFlagUtils.cacheFieldTrialParameters(
-                Arrays.asList(mBoolParam, mIntParam, mDoubleParam, mStringParam));
+        CachedFlagUtils.cacheNativeFlags(List.of(Arrays.asList(mCrashyFeature, mOkFeature)));
+        CachedFlagUtils.cacheFeatureParams(
+                List.of(Arrays.asList(mBoolParam, mIntParam, mDoubleParam, mStringParam)));
 
         clearMemory();
         // Cached values became true(crashy)/true/native1.
@@ -694,9 +694,9 @@ public class CachedFeatureFlagsSafeModeUnitTest {
         when(mFeatureMap.getFieldTrialParamByFeature(OK_FEATURE, STRING_PARAM_NAME))
                 .thenReturn(stringParamValue);
 
-        CachedFlagUtils.cacheNativeFlags(Arrays.asList(mCrashyFeature, mOkFeature));
-        CachedFlagUtils.cacheFieldTrialParameters(
-                Arrays.asList(mBoolParam, mIntParam, mDoubleParam, mStringParam));
+        CachedFlagUtils.cacheNativeFlags(List.of(Arrays.asList(mCrashyFeature, mOkFeature)));
+        CachedFlagUtils.cacheFeatureParams(
+                List.of(Arrays.asList(mBoolParam, mIntParam, mDoubleParam, mStringParam)));
 
         CachedFlagsSafeMode.getInstance().onEndCheckpoint();
         mExecutorRule.runAllBackgroundAndUi();
@@ -731,7 +731,6 @@ public class CachedFeatureFlagsSafeModeUnitTest {
 
     private static void clearMemory() {
         ValuesReturned.clearForTesting();
-        ValuesOverridden.removeOverrides();
         CachedFlagsSafeMode.getInstance().clearMemoryForTesting();
     }
 }

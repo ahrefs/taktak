@@ -8,6 +8,7 @@
 #include "base/containers/circular_deque.h"
 #include "base/containers/span.h"
 #include "base/functional/callback.h"
+#include "base/memory/raw_ptr_exclusion.h"
 #include "base/moving_window.h"
 #include "media/base/audio_bus.h"
 #include "media/base/media_export.h"
@@ -62,6 +63,14 @@ class MEDIA_EXPORT AudioLimiter {
                   const OutputChannels& output_channels,
                   OutputFilledCB on_output_filled_cb);
 
+  // Same as `LimitPeaks()`, but only pushes in the first `num_frames` frames
+  // from `input`. Each channel in `output_channels` must have the exact size
+  // to contain `num_frames`.
+  void LimitPeaksPartial(const AudioBus& input,
+                         int num_frames,
+                         const OutputChannels& output_channels,
+                         OutputFilledCB on_output_filled_cb);
+
   // Feeds in silence to forces the remaining input data to be written out.
   // Can only be called once, after which the limiter cannot be re-used.
   void Flush();
@@ -76,11 +85,13 @@ class MEDIA_EXPORT AudioLimiter {
 
     PendingOutput(PendingOutput&&);
 
-    OutputFilledCB on_filled_callback;
-    OutputChannels channels;
+    // TODO(367764863) Rewrite to base::raw_span.
+    RAW_PTR_EXCLUSION OutputFilledCB on_filled_callback;
+    // TODO(367764863) Rewrite to base::raw_span.
+    RAW_PTR_EXCLUSION OutputChannels channels;
   };
 
-  void FeedInput(const AudioBus& input);
+  void FeedInput(const AudioBus& input, int num_frames);
 
   // Updates `target_gain_` and `smoothed_gain_`.
   void UpdateGain(float current_maximum);

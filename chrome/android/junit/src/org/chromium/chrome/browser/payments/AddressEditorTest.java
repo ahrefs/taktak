@@ -51,13 +51,13 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
 import org.chromium.base.Callback;
 import org.chromium.base.test.BaseRobolectricTestRunner;
-import org.chromium.base.test.util.JniMocker;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.autofill.AutofillAddress;
 import org.chromium.chrome.browser.autofill.AutofillProfileBridge;
@@ -147,7 +147,7 @@ public class AddressEditorTest {
                     .setLanguageCode("en-US")
                     .build();
 
-    @Rule public JniMocker mJniMocker = new JniMocker();
+    @Rule public MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     @Mock private AutofillProfileBridge.Natives mAutofillProfileBridgeJni;
     @Mock private PhoneNumberUtil.Natives mPhoneNumberUtilJni;
@@ -173,12 +173,11 @@ public class AddressEditorTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
         Locale.setDefault(Locale.US);
 
         // PersonalDataManagerFactory.setInstanceForTesting(mPersonalDataManager);
         when(mPersonalDataManager.getDefaultCountryCodeForNewAddress()).thenReturn("US");
-        mJniMocker.mock(AutofillProfileBridgeJni.TEST_HOOKS, mAutofillProfileBridgeJni);
+        AutofillProfileBridgeJni.setInstanceForTesting(mAutofillProfileBridgeJni);
         doAnswer(
                         invocation -> {
                             List<Integer> requiredFields =
@@ -193,7 +192,7 @@ public class AddressEditorTest {
                         })
                 .when(mAutofillProfileBridgeJni)
                 .getRequiredFields(anyString(), anyList());
-        mJniMocker.mock(PhoneNumberUtilJni.TEST_HOOKS, mPhoneNumberUtilJni);
+        PhoneNumberUtilJni.setInstanceForTesting(mPhoneNumberUtilJni);
         when(mPhoneNumberUtilJni.isPossibleNumber(anyString(), anyString())).thenReturn(true);
 
         mActivity = Robolectric.setupActivity(TestActivity.class);
@@ -295,14 +294,14 @@ public class AddressEditorTest {
         // Fields obtained from backend must be placed after the country dropdown.
         validateTextField(
                 editorFields.get(1),
-                profile.getFullName(),
+                profile.getInfo(FieldType.NAME_FULL),
                 FieldType.NAME_FULL,
                 /* label= */ "full name label",
                 /* isRequired= */ true,
                 /* isFullLine= */ true);
         validateTextField(
                 editorFields.get(2),
-                profile.getRegion(),
+                profile.getInfo(FieldType.ADDRESS_HOME_STATE),
                 FieldType.ADDRESS_HOME_STATE,
                 /* label= */ "admin area label",
                 /* isRequired= */ true,
@@ -310,7 +309,7 @@ public class AddressEditorTest {
         // Locality field is forced to occupy full line.
         validateTextField(
                 editorFields.get(3),
-                profile.getLocality(),
+                profile.getInfo(FieldType.ADDRESS_HOME_CITY),
                 FieldType.ADDRESS_HOME_CITY,
                 /* label= */ "locality label",
                 /* isRequired= */ true,
@@ -322,7 +321,7 @@ public class AddressEditorTest {
         // profiles.
         validateTextField(
                 editorFields.get(4),
-                profile.getDependentLocality(),
+                profile.getInfo(FieldType.ADDRESS_HOME_DEPENDENT_LOCALITY),
                 FieldType.ADDRESS_HOME_DEPENDENT_LOCALITY,
                 /* label= */ "dependent locality label",
                 /* isRequired= */ true,
@@ -330,7 +329,7 @@ public class AddressEditorTest {
 
         validateTextField(
                 editorFields.get(5),
-                profile.getCompanyName(),
+                profile.getInfo(FieldType.COMPANY_NAME),
                 FieldType.COMPANY_NAME,
                 /* label= */ "organization label",
                 /* isRequired= */ false,
@@ -338,28 +337,28 @@ public class AddressEditorTest {
 
         validateTextField(
                 editorFields.get(6),
-                profile.getSortingCode(),
+                profile.getInfo(FieldType.ADDRESS_HOME_SORTING_CODE),
                 FieldType.ADDRESS_HOME_SORTING_CODE,
                 /* label= */ "sorting code label",
                 /* isRequired= */ false,
                 /* isFullLine= */ false);
         validateTextField(
                 editorFields.get(7),
-                profile.getPostalCode(),
+                profile.getInfo(FieldType.ADDRESS_HOME_ZIP),
                 FieldType.ADDRESS_HOME_ZIP,
                 /* label= */ "postal code label",
                 /* isRequired= */ true,
                 /* isFullLine= */ false);
         validateTextField(
                 editorFields.get(8),
-                profile.getStreetAddress(),
+                profile.getInfo(FieldType.ADDRESS_HOME_STREET_ADDRESS),
                 FieldType.ADDRESS_HOME_STREET_ADDRESS,
                 /* label= */ "street address label",
                 /* isRequired= */ true,
                 /* isFullLine= */ true);
         validateTextField(
                 editorFields.get(9),
-                profile.getPhoneNumber(),
+                profile.getInfo(FieldType.PHONE_HOME_WHOLE_NUMBER),
                 FieldType.PHONE_HOME_WHOLE_NUMBER,
                 mActivity.getString(R.string.autofill_profile_editor_phone_number),
                 /* isRequired= */ true,
@@ -435,7 +434,7 @@ public class AddressEditorTest {
         assertEquals(2, editorFields.size());
 
         FieldItem countryDropdownItem = editorFields.get(0);
-        assertEquals(countryDropdownItem.type, DROPDOWN);
+        assertEquals(DROPDOWN, countryDropdownItem.type);
         assertTrue(countryDropdownItem.isFullLine);
 
         PropertyModel countryDropdown = countryDropdownItem.model;
@@ -453,7 +452,7 @@ public class AddressEditorTest {
 
         validateTextField(
                 editorFields.get(1),
-                sProfile.getPhoneNumber(),
+                sProfile.getInfo(FieldType.PHONE_HOME_WHOLE_NUMBER),
                 FieldType.PHONE_HOME_WHOLE_NUMBER,
                 mActivity.getString(R.string.autofill_profile_editor_phone_number),
                 /* isRequired= */ true,
@@ -510,8 +509,8 @@ public class AddressEditorTest {
                 adminAreas,
                 containsInAnyOrder(adminAreaDropdown.get(DROPDOWN_KEY_VALUE_LIST).toArray()));
 
-        assertEquals(adminAreaDropdown.get(VALUE), sProfile.getRegion());
-        assertEquals(adminAreaDropdown.get(LABEL), "admin area label");
+        assertEquals(adminAreaDropdown.get(VALUE), sProfile.getInfo(FieldType.ADDRESS_HOME_STATE));
+        assertEquals("admin area label", adminAreaDropdown.get(LABEL));
     }
 
     @Test
@@ -695,9 +694,11 @@ public class AddressEditorTest {
         verify(mCancelCallback, times(0)).onResult(any());
         AutofillAddress address = mAddressCapture.getValue();
         assertNotNull(address);
-        assertEquals("New locality", address.getProfile().getLocality());
-        assertEquals("New dependent locality", address.getProfile().getDependentLocality());
-        assertEquals("New organization", address.getProfile().getCompanyName());
+        assertEquals("New locality", address.getProfile().getInfo(FieldType.ADDRESS_HOME_CITY));
+        assertEquals(
+                "New dependent locality",
+                address.getProfile().getInfo(FieldType.ADDRESS_HOME_DEPENDENT_LOCALITY));
+        assertEquals("New organization", address.getProfile().getInfo(FieldType.COMPANY_NAME));
     }
 
     @Test
@@ -739,11 +740,11 @@ public class AddressEditorTest {
         AutofillAddress address = mAddressCapture.getValue();
         assertNotNull(address);
         AutofillProfile profile = address.getProfile();
-        assertEquals(profile.getStreetAddress(), "111 First St");
-        assertEquals(profile.getDependentLocality(), "");
-        assertEquals(profile.getCompanyName(), "Google");
-        assertEquals(profile.getPostalCode(), "90291");
-        assertEquals(profile.getSortingCode(), "");
+        assertEquals("111 First St", profile.getInfo(FieldType.ADDRESS_HOME_STREET_ADDRESS));
+        assertEquals("", profile.getInfo(FieldType.ADDRESS_HOME_DEPENDENT_LOCALITY));
+        assertEquals("Google", profile.getInfo(FieldType.COMPANY_NAME));
+        assertEquals("90291", profile.getInfo(FieldType.ADDRESS_HOME_ZIP));
+        assertEquals("", profile.getInfo(FieldType.ADDRESS_HOME_SORTING_CODE));
     }
 
     @Test

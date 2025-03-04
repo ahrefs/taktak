@@ -33,6 +33,7 @@
 #include "components/user_manager/user_manager.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/test/browser_test.h"
+#include "google_apis/gaia/gaia_id.h"
 #include "google_apis/gaia/gaia_urls.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/network/public/cpp/weak_wrapper_shared_url_loader_factory.h"
@@ -44,14 +45,14 @@ class SigninHelperTest;
 
 namespace {
 
-const char kFakePrimaryGaiaId[] = "primary_account_gaia";
+const GaiaId::Literal kFakePrimaryGaiaId("primary_account_gaia");
 const char kFakePrimaryEmail[] = "primary@example.com";
-const char kFakeGaiaId[] = "fake_gaia_id";
+const GaiaId::Literal kFakeGaiaId("fake_gaia_id");
 const char kFakeEmail[] = "fake_email@gmail.com";
 const char kFakeAuthCode[] = "fake_auth_code";
 const char kFakeDeviceId[] = "fake_device_id";
 const char kFakeRefreshToken[] = "fake_refresh_token";
-const char kFakeEnterpriseGaiaId[] = "fake_enterprise_gaia_id";
+const GaiaId::Literal kFakeEnterpriseGaiaId("fake_enterprise_gaia_id");
 const char kFakeEnterpriseEmail[] = "fake_enterprise@example.com";
 const char kFakeEnterpriseDomain[] = "example.com";
 
@@ -83,7 +84,7 @@ constexpr char kSecondaryGoogleAccountUsageLatencyHistogramName[] =
     "Enterprise.SecondaryGoogleAccountUsage.PolicyFetch.ResponseLatency";
 
 void NotReached() {
-  NOTREACHED_IN_MIGRATION();
+  NOTREACHED();
 }
 
 class TestSigninHelper : public SigninHelper {
@@ -97,7 +98,7 @@ class TestSigninHelper : public SigninHelper {
           void(const std::string&, const std::string&)>& show_signin_error,
       scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
       std::unique_ptr<ArcHelper> arc_helper,
-      const std::string& gaia_id,
+      const GaiaId& gaia_id,
       const std::string& email,
       const std::string& auth_code,
       const std::string& signin_scoped_device_id)
@@ -145,8 +146,8 @@ class SigninHelperTest : public InProcessBrowserTest,
     account_manager_->AddObserver(this);
 
     // Setup the main account:
-    account_manager::AccountKey kPrimaryAccountKey{
-        kFakePrimaryGaiaId, account_manager::AccountType::kGaia};
+    account_manager::AccountKey kPrimaryAccountKey =
+        account_manager::AccountKey::FromGaiaId(kFakePrimaryGaiaId);
     account_manager()->UpsertAccount(kPrimaryAccountKey, kFakePrimaryEmail,
                                      "access_token");
     base::RunLoop().RunUntilIdle();
@@ -340,7 +341,7 @@ class SigninHelperTestSecondaryGoogleAccountUsage : public SigninHelperTest {
       const base::RepeatingClosure& exit_closure,
       const base::RepeatingClosure& close_dialog_closure,
       const base::RepeatingClosure& show_signin_error,
-      const std::string& gaia_id,
+      const GaiaId& gaia_id,
       const std::string& email) {
     std::unique_ptr<SigninHelper::ArcHelper> arc_helper =
         std::make_unique<SigninHelper::ArcHelper>(

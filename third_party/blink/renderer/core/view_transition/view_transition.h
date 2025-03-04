@@ -56,13 +56,13 @@ class CORE_EXPORT ViewTransition : public GarbageCollected<ViewTransition>,
   // Creates and starts a same-document ViewTransition initiated using the
   // script API.
   static ViewTransition* CreateFromScript(
-      Document*,
+      Element*,
       V8ViewTransitionCallback*,
       const std::optional<Vector<String>>& types,
       Delegate*);
 
   // Creates a skipped transition that still runs the specified callbacks.
-  static ViewTransition* CreateSkipped(Document*, V8ViewTransitionCallback*);
+  static ViewTransition* CreateSkipped(Element*, V8ViewTransitionCallback*);
 
   // Creates a ViewTransition to cache the state of a Document before a
   // navigation. The cached state is provided to the caller using the
@@ -85,12 +85,12 @@ class CORE_EXPORT ViewTransition : public GarbageCollected<ViewTransition>,
 
   // Script-based constructor.
   ViewTransition(PassKey,
-                 Document*,
+                 Element*,
                  V8ViewTransitionCallback*,
                  const std::optional<Vector<String>>& types,
                  Delegate*);
   // Skipped transition constructor.
-  ViewTransition(PassKey, Document*, V8ViewTransitionCallback*);
+  ViewTransition(PassKey, Element*, V8ViewTransitionCallback*);
   // Navigation-initiated for-snapshot constructor.
   ViewTransition(PassKey,
                  Document*,
@@ -245,6 +245,10 @@ class CORE_EXPORT ViewTransition : public GarbageCollected<ViewTransition>,
   };
   void SkipTransition(PromiseResponse response = PromiseResponse::kRejectAbort);
 
+  // This can be called inside of the lifecycle. It will skip the transition
+  // whenever view transition steps are run within the lifecycle.
+  void SkipTransitionSoon();
+
   // Dispatched when the promise returned from the author's update callback has
   // resolved and start phase of the animation can be initiated. Note: this is
   // called only if a callback is provided.
@@ -257,6 +261,8 @@ class CORE_EXPORT ViewTransition : public GarbageCollected<ViewTransition>,
   // Returns true if `pseudo_element` is generated for this transition.
   bool IsGeneratingPseudo(
       const ViewTransitionPseudoElementBase& pseudo_element) const;
+
+  Element* Scope() const { return scope_.Get(); }
 
  private:
   friend class ViewTransitionTest;
@@ -350,6 +356,7 @@ class CORE_EXPORT ViewTransition : public GarbageCollected<ViewTransition>,
   const CreationType creation_type_;
 
   Member<Document> document_;
+  Member<Element> scope_;
   Delegate* const delegate_ = nullptr;
 
   // Each transition is assigned a unique ID. For cross-document navigations
@@ -390,6 +397,7 @@ class CORE_EXPORT ViewTransition : public GarbageCollected<ViewTransition>,
   bool dom_callback_succeeded_ = false;
   bool first_animating_frame_ = true;
   bool context_destroyed_ = false;
+  bool pending_skip_view_transitions_ = false;
 };
 
 }  // namespace blink

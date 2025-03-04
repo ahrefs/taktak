@@ -38,8 +38,7 @@ getNetPrivateRegistryFilter(
   // There are only two network_utils::PrivateRegistryFilter enum entries, so
   // we should never reach this point. However, we must have a default return
   // value to avoid a compiler error.
-  NOTREACHED_IN_MIGRATION();
-  return net::registry_controlled_domains::INCLUDE_PRIVATE_REGISTRIES;
+  NOTREACHED();
 }
 
 }  // namespace
@@ -62,7 +61,7 @@ String GetDomainAndRegistry(const StringView& host,
   StringUTF8Adaptor host_utf8(host);
   std::string domain = net::registry_controlled_domains::GetDomainAndRegistry(
       host_utf8.AsStringView(), getNetPrivateRegistryFilter(filter));
-  return String(domain.data(), domain.length());
+  return String(domain);
 }
 
 std::tuple<int, ResourceResponse, scoped_refptr<SharedBuffer>> ParseDataURL(
@@ -83,7 +82,7 @@ std::tuple<int, ResourceResponse, scoped_refptr<SharedBuffer>> ParseDataURL(
   if (result != net::OK)
     return std::make_tuple(result, ResourceResponse(), nullptr);
 
-  auto buffer = SharedBuffer::Create(data_string.data(), data_string.size());
+  auto buffer = SharedBuffer::Create(data_string);
   // The below code is the same as in
   // `CreateResourceForTransparentPlaceholderImage()`.
   ResourceResponse response;

@@ -73,7 +73,15 @@ class TestPageLoadMetricsEmbedderInterface
 
   bool IsExtensionUrl(const GURL& url) override { return false; }
 
-  bool IsNonTabWebUI() override { return test_->is_non_tab_webui(); }
+  bool IsNonTabWebUI(const GURL& url) override {
+    return test_->is_non_tab_webui();
+  }
+
+  bool ShouldObserveScheme(std::string_view scheme) override { return false; }
+
+  bool IsIncognito(content::WebContents* web_contents) override {
+    return false;
+  }
 
   page_load_metrics::PageLoadMetricsMemoryTracker*
   GetMemoryTrackerForBrowserContext(
@@ -322,7 +330,8 @@ void PageLoadMetricsObserverTester::SimulateFrameReceivedUserActivation(
 
 void PageLoadMetricsObserverTester::SimulateInputEvent(
     const blink::WebInputEvent& event) {
-  metrics_web_contents_observer_->OnInputEvent(event);
+  metrics_web_contents_observer_->OnInputEvent(
+      *web_contents()->GetPrimaryMainFrame()->GetRenderWidgetHost(), event);
 }
 
 void PageLoadMetricsObserverTester::SimulateAppEnterBackground() {

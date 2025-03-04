@@ -357,7 +357,16 @@ class HttpStreamFactory::Job
   // proxy. This differs from `using_ssl_`, which only describes the origin.
   bool using_spdy() const;
 
+  // Calculates SchemeHostPort for HttpServerProperties::{Set,Get}SupportsSpdy()
+  // calls.
+  url::SchemeHostPort SchemeHostPortForSupportsSpdy() const;
+
   bool disable_cert_verification_network_fetches() const;
+
+  void RecordPreconnectHistograms(int result);
+
+  // Records histograms required at the end of the execution.
+  void RecordCompletionHistograms(int result);
 
   const StreamRequestInfo request_info_;
   RequestPriority priority_;
@@ -447,7 +456,7 @@ class HttpStreamFactory::Job
   std::unique_ptr<BidirectionalStreamImpl> bidirectional_stream_impl_;
 
   // Protocol negotiated with the server.
-  NextProto negotiated_protocol_ = kProtoUnknown;
+  NextProto negotiated_protocol_ = NextProto::kProtoUnknown;
 
   // 0 if we're not preconnecting. Otherwise, the number of streams to
   // preconnect.

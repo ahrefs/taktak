@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "base/files/file_util.h"
 
 #include <dirent.h>
@@ -451,7 +456,7 @@ std::optional<FilePath> MakeAbsoluteFilePathNoResolveSymbolicLinks(
   // a relative |input|.
   if (input.IsAbsolute()) {
     collapsed_path = FilePath(components_span[0]);
-    components_span = components_span.subspan(1);
+    components_span = components_span.subspan<1>();
   } else {
     if (!GetCurrentDirectory(&collapsed_path)) {
       return std::nullopt;
@@ -827,7 +832,7 @@ bool CreateTemporaryFileInDir(const FilePath& dir, FilePath* temp_file) {
   return fd.is_valid();
 }
 
-FilePath FormatTemporaryFileName(FilePath::StringPieceType identifier) {
+FilePath FormatTemporaryFileName(FilePath::StringViewType identifier) {
 #if BUILDFLAG(IS_APPLE)
   std::string_view prefix = base::apple::BaseBundleID();
 #elif BUILDFLAG(GOOGLE_CHROME_BRANDING)
@@ -876,7 +881,7 @@ static bool CreateTemporaryDirInDirImpl(const FilePath& base_dir,
 }
 
 bool CreateTemporaryDirInDir(const FilePath& base_dir,
-                             FilePath::StringPieceType prefix,
+                             FilePath::StringViewType prefix,
                              FilePath* new_dir) {
   FilePath::StringType mkdtemp_template(prefix);
   mkdtemp_template.append("XXXXXX");
@@ -897,22 +902,25 @@ bool CreateNewTempDirectory(const FilePath::StringType& prefix,
 bool CreateDirectoryAndGetError(const FilePath& full_path, File::Error* error) {
   ScopedBlockingCall scoped_blocking_call(
       FROM_HERE, BlockingType::MAY_BLOCK);  // For call to mkdir().
-  std::vector<FilePath> subpaths;
+  // Avoid checking subdirs if directory already exists.
+  if (DirectoryExists(full_path)) {
+    return true;
+  }
 
-  // Collect a list of all parent directories.
+  // Collect a list of all missing directories.
+  std::vector<FilePath> missing_subpaths({full_path});
   FilePath last_path = full_path;
-  subpaths.push_back(full_path);
   for (FilePath path = full_path.DirName(); path.value() != last_path.value();
        path = path.DirName()) {
-    subpaths.push_back(path);
+    if (DirectoryExists(path)) {
+      break;
+    }
+    missing_subpaths.push_back(path);
     last_path = path;
   }
 
-  // Iterate through the parents and create the missing ones.
-  for (const FilePath& subpath : base::Reversed(subpaths)) {
-    if (DirectoryExists(subpath)) {
-      continue;
-    }
+  // Iterate through the missing directories and create.
+  for (const FilePath& subpath : base::Reversed(missing_subpaths)) {
     if (mkdir(subpath.value().c_str(), 0700) == 0) {
       continue;
     }
@@ -1101,7 +1109,7 @@ bool WriteFileDescriptor(int fd, span<const uint8_t> data) {
 }
 
 bool WriteFileDescriptor(int fd, std::string_view data) {
-  return WriteFileDescriptor(fd, as_bytes(make_span(data)));
+  return WriteFileDescriptor(fd, as_byte_span(data));
 }
 
 bool AllocateFileRegion(File* file, int64_t offset, size_t size) {
@@ -1210,7 +1218,7 @@ bool AppendToFile(const FilePath& filename, span<const uint8_t> data) {
 }
 
 bool AppendToFile(const FilePath& filename, std::string_view data) {
-  return AppendToFile(filename, as_bytes(make_span(data)));
+  return AppendToFile(filename, as_byte_span(data));
 }
 
 bool GetCurrentDirectory(FilePath* dir) {

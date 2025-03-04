@@ -4,8 +4,13 @@
 
 package org.chromium.components.browser_ui.modaldialog;
 
+import static org.chromium.build.NullUtil.assumeNonNull;
+
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
@@ -19,17 +24,23 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.VisibleForTesting;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import org.chromium.base.Callback;
 import org.chromium.base.ResettersForTesting;
 import org.chromium.base.TimeUtils;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.styles.ChromeColors;
+import org.chromium.components.browser_ui.styles.SemanticColorUtils;
 import org.chromium.components.browser_ui.widget.BoundedLinearLayout;
 import org.chromium.components.browser_ui.widget.FadingEdgeScrollView;
 import org.chromium.ui.UiUtils;
 import org.chromium.ui.base.DeviceFormFactor;
 import org.chromium.ui.modaldialog.ModalDialogProperties;
+import org.chromium.ui.modaldialog.ModalDialogProperties.ButtonStyles;
 import org.chromium.ui.modaldialog.ModalDialogProperties.ButtonType;
 import org.chromium.ui.widget.ButtonCompat;
 
@@ -39,6 +50,7 @@ import java.util.List;
 import java.util.Set;
 
 /** Generic dialog view for app modal or tab modal alert dialogs. */
+@NullMarked
 public class ModalDialogView extends BoundedLinearLayout implements View.OnClickListener {
     private static final String TAG_PREFIX = "ModalDialogViewButton";
     static final int NOT_SPECIFIED = -1;
@@ -59,12 +71,12 @@ public class ModalDialogView extends BoundedLinearLayout implements View.OnClick
     private LinearLayout mButtonGroup;
     private Button mPositiveButton;
     private Button mNegativeButton;
-    private Callback<Integer> mOnButtonClickedCallback;
-    private Runnable mOnEscapeCallback;
+    private @Nullable Callback<Integer> mOnButtonClickedCallback;
+    private @Nullable Runnable mOnEscapeCallback;
     private boolean mTitleScrollable;
     private boolean mShouldWrapCustomViewScrollable;
     private boolean mFilterTouchForSecurity;
-    private Runnable mOnTouchFilteredCallback;
+    private @Nullable Runnable mOnTouchFilteredCallback;
     private final Set<View> mTouchFilterableViews = new HashSet<>();
     private ViewGroup mFooterContainer;
     private TextView mFooterMessageView;
@@ -73,6 +85,10 @@ public class ModalDialogView extends BoundedLinearLayout implements View.OnClick
     // displayed to prevent potentially unintentional user interactions. A value of zero turns off
     // this kind of tap-jacking protection.
     private long mButtonTapProtectionDurationMs;
+    private boolean mBlockTouchInput;
+    private @Nullable CircularProgressDrawable mSpinner;
+    private float mTextScaleX;
+    private @Nullable LayerDrawable mSpinnerButtonBackground;
 
     private int mHorizontalMargin = NOT_SPECIFIED;
     private int mVerticalMargin = NOT_SPECIFIED;
@@ -178,7 +194,7 @@ public class ModalDialogView extends BoundedLinearLayout implements View.OnClick
     @Override
     public void onClick(View v) {
         if (isWithinButtonTapProtectionPeriod()) return;
-        mOnButtonClickedCallback.onResult(getButtonTypeForTag(v.getTag()));
+        assumeNonNull(mOnButtonClickedCallback).onResult(getButtonTypeForTag(v.getTag()));
     }
 
     // Dialog buttons will not react to any tap event for a short period after this view is
@@ -224,7 +240,7 @@ public class ModalDialogView extends BoundedLinearLayout implements View.OnClick
     /**
      * @param callback The {@link Runnable} to invoke when the keyboard escape key is pressed.
      */
-    void setOnEscapeCallback(Runnable callback) {
+    void setOnEscapeCallback(@Nullable Runnable callback) {
         mOnEscapeCallback = callback;
     }
 
@@ -366,27 +382,47 @@ public class ModalDialogView extends BoundedLinearLayout implements View.OnClick
     }
 
     void setupButtonGroup(ModalDialogProperties.ModalDialogButtonSpec[] buttonSpecList) {
-        mButtonGroup.setVisibility(View.VISIBLE);
-        int numButtons = buttonSpecList.length;
+        // There are flows can dynamically change the button, so remove all the previous buttons
+        // before adding new ones.
+        if (mButtonGroup.getChildCount() > 0) {
+            mButtonGroup.removeAllViews();
+        }
+        int numButtons = buttonSpecList != null ? buttonSpecList.length : 0;
+        mButtonGroup.setVisibility(numButtons > 0 ? View.VISIBLE : View.GONE);
 
-        for (int i = 0; i < buttonSpecList.length; i++) {
+        for (int i = 0; i < numButtons; i++) {
             ModalDialogProperties.ModalDialogButtonSpec spec = buttonSpecList[i];
+            // We can get rid of the button by just leaving the text blank.
+            if (TextUtils.isEmpty(spec.getText())) {
+                continue;
+            }
+
             int style = 0;
             if (numButtons == 1) {
-                style = R.style.FilledButton_Tonal_SingleButton;
+                style = R.style.FilledButton_Tonal_ThemeOverlay_SingleButton;
             } else {
                 if (i == 0) {
-                    style = R.style.FilledButton_Tonal_TopButton;
+                    style = R.style.FilledButton_Tonal_ThemeOverlay_TopButton;
                 } else if (i == numButtons - 1) {
-                    style = R.style.FilledButton_Tonal_BottomButton;
+                    style = R.style.FilledButton_Tonal_ThemeOverlay_BottomButton;
                 } else {
-                    style = R.style.FilledButton_Tonal_MiddleButton;
+                    style = R.style.FilledButton_Tonal_ThemeOverlay_MiddleButton;
                 }
             }
 
             Button button = new ButtonCompat(mButtonGroup.getContext(), style);
             button.setText(spec.getText());
             button.setContentDescription(spec.getContentDescription());
+
+            int button_padding_in_px =
+                    getContext()
+                            .getResources()
+                            .getDimensionPixelSize(R.dimen.modal_dialog_button_group_padding);
+            button.setPadding(
+                    button_padding_in_px,
+                    button_padding_in_px,
+                    button_padding_in_px,
+                    button_padding_in_px);
 
             setupClickableView(button, spec.getButtonType());
             setFilterTouchForSecurityIfNecessary(button);
@@ -494,6 +530,15 @@ public class ModalDialogView extends BoundedLinearLayout implements View.OnClick
     }
 
     /**
+     * Set padding to the dialog view.
+     *
+     * @param padding The padding to be applied to the dialog view.
+     */
+    void setPadding(Rect padding) {
+        setPadding(padding.left, padding.top, padding.right, padding.bottom);
+    }
+
+    /**
      * Sets content description for the specified button.
      *
      * @param buttonType The {@link ButtonType} of the button.
@@ -515,6 +560,105 @@ public class ModalDialogView extends BoundedLinearLayout implements View.OnClick
     void setFooterMessage(CharSequence message) {
         mFooterMessageView.setText(message);
         updateContentVisibility();
+    }
+
+    /**
+     * @param isLoading Whether the button should play a loading spinner.
+     * @param buttonStyles The button styles applied to this implementation of the modal dialog.
+     * @param buttonType The button type that the spinner should be applied to.
+     */
+    void setLoadingButtonState(
+            boolean isLoading, @ButtonStyles int buttonStyles, @ButtonType int buttonType) {
+        Context context = getContext();
+        Button button = getButton(buttonType);
+
+        if (isLoading) {
+            // Set a fixed button width before hiding the button text and starting the spinner
+            // animation.
+            int buttonWidth = button.getWidth();
+            var layoutParams = button.getLayoutParams();
+            layoutParams.width = buttonWidth;
+            button.setLayoutParams(layoutParams);
+            mTextScaleX = button.getTextScaleX();
+            button.setTextScaleX(0);
+
+            @ColorInt int spinnerColor = getSpinnerColor(context, buttonType, buttonStyles);
+            // TODO(crbug.com/392152746): Implement a custom spinner button to replace the defaults
+            // that controls its own state to prevent conflicting stored properties.
+            assert mSpinner == null : "A button is already in the loading phase";
+            mSpinner = new CircularProgressDrawable(context);
+            mSpinner.setStyle(CircularProgressDrawable.DEFAULT);
+            mSpinner.setColorSchemeColors(spinnerColor);
+
+            Drawable buttonBackgroundDrawable = button.getBackground();
+            mSpinnerButtonBackground =
+                    new LayerDrawable(new Drawable[] {buttonBackgroundDrawable, mSpinner});
+            button.setBackground(mSpinnerButtonBackground);
+            mSpinner.start();
+        } else {
+            // Reset the button width to be variable based on the content and show the button text,
+            // and stop the spinner animation.
+            var layoutParams = button.getLayoutParams();
+            layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            button.setLayoutParams(layoutParams);
+
+            if (mTextScaleX != 0.0f) {
+                button.setTextScaleX(mTextScaleX);
+                mTextScaleX = 0.0f;
+            }
+
+            if (mSpinnerButtonBackground != null) {
+                Drawable buttonBackgroundDrawable = mSpinnerButtonBackground.getDrawable(0);
+                button.setBackground(buttonBackgroundDrawable);
+                mSpinnerButtonBackground = null;
+            }
+
+            assert mSpinner != null;
+            if (mSpinner != null) {
+                mSpinner.stop();
+                mSpinner = null;
+            }
+        }
+    }
+
+    /**
+     * @param shouldBlockInputs Whether all inputs on the modal dialog should be blocked.
+     */
+    void blockInputs(boolean shouldBlockInputs) {
+        mBlockTouchInput = shouldBlockInputs;
+    }
+
+    private @ColorInt int getSpinnerColor(
+            Context context, @ButtonType int buttonType, @ButtonStyles int buttonStyles) {
+        @ColorInt
+        int colorForOutlineBackground = SemanticColorUtils.getDefaultIconColorAccent1(context);
+        @ColorInt int colorForFilledBackground = SemanticColorUtils.getDefaultBgColor(context);
+
+        switch (buttonStyles) {
+            case ButtonStyles.PRIMARY_OUTLINE_NEGATIVE_OUTLINE:
+                return colorForOutlineBackground;
+            case ButtonStyles.PRIMARY_FILLED_NEGATIVE_OUTLINE:
+                return buttonType == ButtonType.POSITIVE
+                        ? colorForFilledBackground
+                        : colorForOutlineBackground;
+            case ButtonStyles.PRIMARY_OUTLINE_NEGATIVE_FILLED:
+                return buttonType == ButtonType.NEGATIVE
+                        ? colorForFilledBackground
+                        : colorForOutlineBackground;
+            case ButtonStyles.PRIMARY_FILLED_NO_NEGATIVE:
+                return colorForFilledBackground;
+            default:
+                assert false
+                        : "unknown button style encountered when determining spinner color scheme";
+                return Color.TRANSPARENT;
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent e) {
+        if (mBlockTouchInput) return true;
+
+        return super.dispatchTouchEvent(e);
     }
 
     private void updateContentVisibility() {

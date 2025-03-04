@@ -14,7 +14,6 @@
 #include "base/test/gmock_callback_support.h"
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/mock_callback.h"
-#include "base/test/scoped_feature_list.h"
 #include "base/test/test_future.h"
 #include "chrome/browser/media/router/chrome_media_router_factory.h"
 #include "chrome/browser/media/router/discovery/access_code/access_code_cast_feature.h"
@@ -38,7 +37,6 @@
 #include "components/media_router/common/providers/cast/channel/cast_socket.h"
 #include "components/media_router/common/providers/cast/channel/cast_socket_service.h"
 #include "components/media_router/common/providers/cast/channel/cast_test_util.h"
-#include "components/media_router/common/test/test_helper.h"
 #include "components/sync_preferences/testing_pref_service_syncable.h"
 #include "content/public/test/browser_task_environment.h"
 #include "content/public/test/test_utils.h"
@@ -72,6 +70,9 @@ class AccessCodeCastSinkServiceTest : public testing::Test {
  public:
   AccessCodeCastSinkServiceTest()
       : task_runner_(task_environment_.GetMainThreadTaskRunner()),
+        dial_media_sink_service_(
+            base::DoNothing(),
+            base::SequencedTaskRunner::GetCurrentDefault()),
         mock_cast_socket_service_(
             std::make_unique<cast_channel::MockCastSocketService>(
                 task_runner_)),
@@ -81,7 +82,7 @@ class AccessCodeCastSinkServiceTest : public testing::Test {
                 mock_sink_discovered_cb_.Get(),
                 mock_cast_socket_service_.get(),
                 discovery_network_monitor_.get(),
-                &dual_media_sink_service_)) {}
+                &dial_media_sink_service_)) {}
 
   AccessCodeCastSinkServiceTest(AccessCodeCastSinkServiceTest&) = delete;
   AccessCodeCastSinkServiceTest& operator=(AccessCodeCastSinkServiceTest&) =
@@ -93,8 +94,6 @@ class AccessCodeCastSinkServiceTest : public testing::Test {
     network::TestNetworkConnectionTracker::GetInstance()->SetConnectionType(
         network::mojom::ConnectionType::CONNECTION_WIFI);
 
-    feature_list_.InitWithFeatures({features::kAccessCodeCastRememberDevices},
-                                   {});
     GetTestingPrefs()->SetManagedPref(::prefs::kEnableMediaRouter,
                                       std::make_unique<base::Value>(true));
     GetTestingPrefs()->SetManagedPref(prefs::kAccessCodeCastEnabled,
@@ -245,8 +244,6 @@ class AccessCodeCastSinkServiceTest : public testing::Test {
   std::unique_ptr<media_router::MockMediaRouter> router_;
   std::unique_ptr<LoggerImpl> logger_;
 
-  base::test::ScopedFeatureList feature_list_;
-
   static std::vector<DiscoveryNetworkInfo> fake_network_info_;
 
   static const std::vector<DiscoveryNetworkInfo> fake_ethernet_info_;
@@ -264,7 +261,7 @@ class AccessCodeCastSinkServiceTest : public testing::Test {
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
   base::MockCallback<OnSinksDiscoveredCallback> mock_sink_discovered_cb_;
 
-  TestMediaSinkService dual_media_sink_service_;
+  DialMediaSinkServiceImpl dial_media_sink_service_;
   std::unique_ptr<cast_channel::MockCastSocketService>
       mock_cast_socket_service_;
   testing::NiceMock<cast_channel::MockCastMessageHandler> message_handler_;

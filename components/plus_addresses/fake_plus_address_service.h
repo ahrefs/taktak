@@ -28,8 +28,11 @@ class FakePlusAddressService : public PlusAddressService {
 
   // autofill::AutofillPlusAddressDelegate:
   bool IsPlusAddress(const std::string& potential_plus_address) const override;
+  bool MatchesPlusAddressFormat(const std::u16string& value) const override;
   bool IsPlusAddressFillingEnabled(const url::Origin& origin) const override;
   bool IsPlusAddressFullFormFillingEnabled() const override;
+  bool IsFieldEligibleForPlusAddress(
+      const autofill::AutofillField& field) const override;
   void GetAffiliatedPlusAddresses(
       const url::Origin& origin,
       base::OnceCallback<void(std::vector<std::string>)> callback) override;
@@ -38,10 +41,10 @@ class FakePlusAddressService : public PlusAddressService {
       const url::Origin& origin,
       bool is_off_the_record,
       const autofill::FormData& focused_form,
+      const autofill::FormFieldData& focused_field,
       const base::flat_map<autofill::FieldGlobalId, autofill::FieldTypeGroup>&
           form_field_type_groups,
       const autofill::PasswordFormClassification& focused_form_classification,
-      const autofill::FieldGlobalId& focused_field_id,
       autofill::AutofillSuggestionTriggerSource trigger_source) override;
   autofill::Suggestion GetManagePlusAddressSuggestion() const override;
   void RecordAutofillSuggestionEvent(SuggestionEvent suggestion_event) override;
@@ -52,6 +55,8 @@ class FakePlusAddressService : public PlusAddressService {
       SuggestionContext suggestion_context,
       autofill::PasswordFormClassification::Type form_type,
       autofill::SuggestionType suggestion_type) override;
+  void DidFillPlusAddress() override;
+  size_t GetPlusAddressesCount() override;
   void OnClickedRefreshInlineSuggestion(
       const url::Origin& last_committed_primary_main_frame_origin,
       base::span<const autofill::Suggestion> current_suggestions,
@@ -71,6 +76,7 @@ class FakePlusAddressService : public PlusAddressService {
       ShowAffiliationErrorDialogCallback show_affiliation_error_dialog,
       ShowErrorDialogCallback show_error_dialog,
       base::OnceClosure reshow_suggestions) override;
+  std::map<std::string, std::string> GetPlusAddressHatsData() const override;
 
   // PlusAddressService:
   void AddObserver(PlusAddressService::Observer* o) override;
@@ -158,6 +164,14 @@ class FakePlusAddressService : public PlusAddressService {
     should_return_timeout_error_ = should_return_timeout_error;
   }
 
+  bool was_plus_address_suggestion_filled() {
+    return did_fill_plus_address_suggestion_;
+  }
+
+  bool was_email_chosen_over_plus_address() {
+    return was_email_chosen_over_plus_address_;
+  }
+
  private:
   PlusAddressRequestCallback on_confirmed_;
   testing::NiceMock<affiliations::MockAffiliationService>
@@ -173,6 +187,8 @@ class FakePlusAddressService : public PlusAddressService {
   bool should_return_affiliated_plus_profile_on_confirm_ = false;
   bool should_return_quota_error_ = false;
   bool should_return_timeout_error_ = false;
+  bool did_fill_plus_address_suggestion_ = false;
+  bool was_email_chosen_over_plus_address_ = false;
 };
 
 }  // namespace plus_addresses

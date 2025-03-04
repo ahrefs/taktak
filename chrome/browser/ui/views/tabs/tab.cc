@@ -2,16 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "chrome/browser/ui/views/tabs/tab.h"
 
 #include <stddef.h>
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -44,14 +40,15 @@
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/tabs/alert_indicator_button.h"
 #include "chrome/browser/ui/views/tabs/browser_tab_strip_controller.h"
+#include "chrome/browser/ui/views/tabs/dragging/tab_drag_controller.h"
 #include "chrome/browser/ui/views/tabs/tab_close_button.h"
-#include "chrome/browser/ui/views/tabs/tab_drag_controller.h"
 #include "chrome/browser/ui/views/tabs/tab_hover_card_bubble_view.h"
 #include "chrome/browser/ui/views/tabs/tab_icon.h"
 #include "chrome/browser/ui/views/tabs/tab_slot_controller.h"
 #include "chrome/browser/ui/views/tabs/tab_slot_view.h"
 #include "chrome/browser/ui/views/tabs/tab_strip.h"
 #include "chrome/browser/ui/views/tabs/tab_strip_layout.h"
+#include "chrome/browser/ui/views/tabs/tab_strip_types.h"
 #include "chrome/browser/ui/views/tabs/tab_style_views.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/grit/generated_resources.h"
@@ -241,7 +238,7 @@ Tab::Tab(TabSlotController* controller)
   // onto opaque parts of a not-entirely-opaque layer.
   title_->SetSkipSubpixelRenderingOpacityCheck(true);
 
-  AddChildView(title_.get());
+  AddChildViewRaw(title_.get());
 
   SetEventTargeter(std::make_unique<views::ViewTargeter>(this));
 
@@ -258,7 +255,7 @@ Tab::Tab(TabSlotController* controller)
                           base::Unretained(controller_))));
   close_button_->SetHasInkDropActionOnClick(true);
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
   showing_close_button_ = !controller_->IsLockedForOnTask();
   close_button_->SetVisible(showing_close_button_);
 #endif
@@ -279,6 +276,15 @@ Tab::Tab(TabSlotController* controller)
 
   GetViewAccessibility().SetRole(ax::mojom::Role::kTab);
   UpdateAccessibleName();
+
+  // Tab hover cards replace tooltips for tabs.
+  SetTooltipText(std::u16string());
+
+  root_name_changed_subscription_ =
+      GetViewAccessibility().AddStringAttributeChangedCallback(
+          ax::mojom::StringAttribute::kName,
+          base::BindRepeating(&Tab::OnAXNameChanged,
+                              weak_ptr_factory_.GetWeakPtr()));
 }
 
 Tab::~Tab() {
@@ -512,6 +518,7 @@ bool IsSelectionModifierDown(const ui::MouseEvent& event) {
 }  // namespace
 
 bool Tab::OnMousePressed(const ui::MouseEvent& event) {
+  shift_pressed_on_mouse_down_ = event.IsShiftDown();
   controller_->UpdateHoverCard(nullptr,
                                TabSlotController::HoverCardUpdateType::kEvent);
   controller_->OnMouseEventInTab(this, event);
@@ -565,6 +572,7 @@ void Tab::OnMouseReleased(const ui::MouseEvent& event) {
   // so, bail immediately, since our members are already dead and we shouldn't
   // do anything else except drop the tab where it is.
   if (controller_->EndDrag(END_DRAG_COMPLETE)) {
+    shift_pressed_on_mouse_down_ = false;
     return;
   }
 
@@ -573,7 +581,7 @@ void Tab::OnMouseReleased(const ui::MouseEvent& event) {
   // releases happen off the element).
   if (event.IsOnlyMiddleMouseButton()) {
     if (HitTestPoint(event.location())) {
-      controller_->CloseTab(this, CLOSE_TAB_FROM_MOUSE);
+      controller_->CloseTab(this, CloseTabSource::kFromMouse);
     } else if (closing_) {
       // We're animating closed and a middle mouse button was pushed on us but
       // we don't contain the mouse anymore. We assume the user is clicking
@@ -583,16 +591,18 @@ void Tab::OnMouseReleased(const ui::MouseEvent& event) {
       ConvertPointToTarget(this, parent(), &location_in_parent);
       Tab* closest_tab = controller_->GetTabAt(location_in_parent);
       if (closest_tab) {
-        controller_->CloseTab(closest_tab, CLOSE_TAB_FROM_MOUSE);
+        controller_->CloseTab(closest_tab, CloseTabSource::kFromMouse);
       }
     }
-  } else if (event.IsOnlyLeftMouseButton() && !event.IsShiftDown() &&
+  } else if (event.IsOnlyLeftMouseButton() &&
+             !(event.IsShiftDown() || shift_pressed_on_mouse_down_) &&
              !IsSelectionModifierDown(event)) {
     // If the tab was already selected mouse pressed doesn't change the
     // selection. Reset it now to handle the case where multiple tabs were
     // selected.
     controller_->SelectTab(this, event);
   }
+  shift_pressed_on_mouse_down_ = false;
 }
 
 void Tab::OnMouseCaptureLost() {
@@ -703,11 +713,6 @@ void Tab::OnGestureEvent(ui::GestureEvent* event) {
   event->SetHandled();
 }
 
-std::u16string Tab::GetTooltipText(const gfx::Point& p) const {
-  // Tab hover cards replace tooltips for tabs.
-  return std::u16string();
-}
-
 // This function updates the accessible name for the tab whenever any of the
 // parameters that influence the accessible name change. It ultimately calls
 // BrowserView::GetAccessibleTabLabel to get the updated accessible name.
@@ -724,6 +729,13 @@ void Tab::UpdateAccessibleName() {
     // Under some conditions, |GetAccessibleTabName| returns an empty string.
     GetViewAccessibility().SetName(
         std::string(), ax::mojom::NameFrom::kAttributeExplicitlyEmpty);
+  }
+}
+
+void Tab::OnAXNameChanged(ax::mojom::StringAttribute attribute,
+                          const std::optional<std::string>& name) {
+  if (GetWidget()) {
+    GetWidget()->UpdateAccessibleNameForRootView();
   }
 }
 
@@ -834,6 +846,7 @@ ui::ColorId Tab::GetAlertIndicatorColor(TabAlertState state) const {
       break;
     case TabAlertState::TAB_CAPTURING:
     case TabAlertState::PIP_PLAYING:
+    case TabAlertState::GLIC_ACCESSING:
       group = 1;
       break;
     case TabAlertState::AUDIO_PLAYING:
@@ -848,19 +861,19 @@ ui::ColorId Tab::GetAlertIndicatorColor(TabAlertState state) const {
       break;
   }
 
-  const ui::ColorId color_ids[3][2][2] = {
-      {{kColorTabAlertMediaRecordingInactiveFrameInactive,
-        kColorTabAlertMediaRecordingInactiveFrameActive},
-       {kColorTabAlertMediaRecordingActiveFrameInactive,
-        kColorTabAlertMediaRecordingActiveFrameActive}},
-      {{kColorTabAlertPipPlayingInactiveFrameInactive,
-        kColorTabAlertPipPlayingInactiveFrameActive},
-       {kColorTabAlertPipPlayingActiveFrameInactive,
-        kColorTabAlertPipPlayingActiveFrameActive}},
-      {{kColorTabAlertAudioPlayingInactiveFrameInactive,
-        kColorTabAlertAudioPlayingInactiveFrameActive},
-       {kColorTabAlertAudioPlayingActiveFrameInactive,
-        kColorTabAlertAudioPlayingActiveFrameActive}}};
+  static constexpr std::array<std::array<std::array<ui::ColorId, 2>, 2>, 3>
+      color_ids{{{{{kColorTabAlertMediaRecordingInactiveFrameInactive,
+                    kColorTabAlertMediaRecordingInactiveFrameActive},
+                   {kColorTabAlertMediaRecordingActiveFrameInactive,
+                    kColorTabAlertMediaRecordingActiveFrameActive}}},
+                 {{{kColorTabAlertPipPlayingInactiveFrameInactive,
+                    kColorTabAlertPipPlayingInactiveFrameActive},
+                   {kColorTabAlertPipPlayingActiveFrameInactive,
+                    kColorTabAlertPipPlayingActiveFrameActive}}},
+                 {{{kColorTabAlertAudioPlayingInactiveFrameInactive,
+                    kColorTabAlertAudioPlayingInactiveFrameActive},
+                   {kColorTabAlertAudioPlayingActiveFrameInactive,
+                    kColorTabAlertAudioPlayingActiveFrameActive}}}}};
   return color_ids[group][tab_style_views()->GetApparentActiveState() ==
                           TabActive::kActive]
                   [GetWidget()->ShouldPaintAsActive()];
@@ -1106,14 +1119,14 @@ void Tab::UpdateIconVisibility() {
                                    : kMinimumContentsWidthForCloseButtons);
 
   if (IsActive()) {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
     // Hide tab close button for OnTask if locked. Only applicable for non-web
     // browser scenarios.
     showing_close_button_ = !controller_->IsLockedForOnTask();
 #else
     // Close button is shown on active tabs regardless of the size.
     showing_close_button_ = true;
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+#endif  // BUILDFLAG(IS_CHROMEOS)
     available_width -= close_button_width;
 
     showing_alert_indicator_ =
@@ -1139,7 +1152,7 @@ void Tab::UpdateIconVisibility() {
     }
 
     showing_close_button_ =
-#if BUILDFLAG(IS_CHROMEOS_ASH)
+#if BUILDFLAG(IS_CHROMEOS)
         !controller_->IsLockedForOnTask() &&
 #endif
         large_enough_for_close_button;
@@ -1220,8 +1233,8 @@ void Tab::CloseButtonPressed(const ui::Event& event) {
 
   const bool from_mouse = event.type() == ui::EventType::kMouseReleased &&
                           !(event.flags() & ui::EF_FROM_TOUCH);
-  controller_->CloseTab(
-      this, from_mouse ? CLOSE_TAB_FROM_MOUSE : CLOSE_TAB_FROM_TOUCH);
+  controller_->CloseTab(this, from_mouse ? CloseTabSource::kFromMouse
+                                         : CloseTabSource::kFromTouch);
 }
 
 BEGIN_METADATA(Tab)

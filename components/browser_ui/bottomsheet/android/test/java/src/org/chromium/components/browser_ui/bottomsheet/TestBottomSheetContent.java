@@ -10,7 +10,9 @@ import android.graphics.drawable.ColorDrawable;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.supplier.ObservableSupplierImpl;
@@ -223,22 +225,22 @@ public class TestBottomSheetContent implements BottomSheetContent {
     }
 
     @Override
-    public int getSheetContentDescriptionStringId() {
+    public @NonNull String getSheetContentDescription(Context context) {
+        return context.getString(android.R.string.copy);
+    }
+
+    @Override
+    public @StringRes int getSheetHalfHeightAccessibilityStringId() {
         return android.R.string.copy;
     }
 
     @Override
-    public int getSheetHalfHeightAccessibilityStringId() {
+    public @StringRes int getSheetFullHeightAccessibilityStringId() {
         return android.R.string.copy;
     }
 
     @Override
-    public int getSheetFullHeightAccessibilityStringId() {
-        return android.R.string.copy;
-    }
-
-    @Override
-    public int getSheetClosedAccessibilityStringId() {
+    public @StringRes int getSheetClosedAccessibilityStringId() {
         return android.R.string.copy;
     }
 

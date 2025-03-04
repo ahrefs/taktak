@@ -27,6 +27,7 @@
 #include "chrome/browser/extensions/extension_tab_util.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
+#include "chrome/browser/ui/tabs/public/tab_interface.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "chrome/common/channel_info.h"
 #include "chrome/common/url_constants.h"
@@ -156,13 +157,12 @@ TerminalSource::TerminalSource(Profile* profile,
   auto* webui_allowlist = WebUIAllowlist::GetOrCreate(profile);
   const url::Origin terminal_origin = url::Origin::Create(GURL(source));
   CHECK(!terminal_origin.opaque());
-  for (auto permission :
-       {ContentSettingsType::CLIPBOARD_READ_WRITE, ContentSettingsType::COOKIES,
-        ContentSettingsType::IMAGES, ContentSettingsType::JAVASCRIPT,
-        ContentSettingsType::NOTIFICATIONS, ContentSettingsType::POPUPS,
-        ContentSettingsType::SOUND}) {
-    webui_allowlist->RegisterAutoGrantedPermission(terminal_origin, permission);
-  }
+  webui_allowlist->RegisterAutoGrantedPermissions(
+      terminal_origin,
+      {ContentSettingsType::CLIPBOARD_READ_WRITE, ContentSettingsType::COOKIES,
+       ContentSettingsType::IMAGES, ContentSettingsType::JAVASCRIPT,
+       ContentSettingsType::NOTIFICATIONS, ContentSettingsType::POPUPS,
+       ContentSettingsType::SOUND});
   webui_allowlist->RegisterAutoGrantedThirdPartyCookies(
       terminal_origin, {ContentSettingsPattern::Wildcard()});
 }
@@ -194,10 +194,11 @@ void TerminalSource::StartDataRequest(
       int tab_index;
       extensions::ExtensionTabUtil::GetTabStripModel(contents, &tab_strip,
                                                      &tab_index);
-      tabs::TabModel* opener_tab = tab_strip->GetOpenerOfTabAt(tab_index);
+      tabs::TabInterface* opener_tab = tab_strip->GetOpenerOfTabAt(tab_index);
       if (opener_tab) {
-        CHECK(opener_tab->contents());
-        opener_background_color = opener_tab->contents()->GetBackgroundColor();
+        CHECK(opener_tab->GetContents());
+        opener_background_color =
+            opener_tab->GetContents()->GetBackgroundColor();
       }
     }
     replacements_["themeColor"] =

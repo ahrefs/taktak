@@ -5,6 +5,7 @@
 #include "chrome/browser/ai/ai_summarizer.h"
 
 #include "base/strings/stringprintf.h"
+#include "chrome/browser/ai/ai_context_bound_object.h"
 #include "chrome/browser/ai/ai_utils.h"
 #include "components/optimization_guide/core/optimization_guide_util.h"
 #include "components/optimization_guide/proto/features/summarize.pb.h"
@@ -13,7 +14,7 @@
 
 namespace {
 
-optimization_guide::proto::SummarizerOutputType ToProtoOutputType(
+optimization_guide::proto::SummarizerOutputType ToProtoType(
     blink::mojom::AISummarizerType type) {
   switch (type) {
     case blink::mojom::AISummarizerType::kTLDR:
@@ -27,7 +28,7 @@ optimization_guide::proto::SummarizerOutputType ToProtoOutputType(
   }
 }
 
-optimization_guide::proto::SummarizerOutputFormat ToProtoOutputFormat(
+optimization_guide::proto::SummarizerOutputFormat ToProtoFormat(
     blink::mojom::AISummarizerFormat format) {
   switch (format) {
     case blink::mojom::AISummarizerFormat::kPlainText:
@@ -37,7 +38,7 @@ optimization_guide::proto::SummarizerOutputFormat ToProtoOutputFormat(
   }
 }
 
-optimization_guide::proto::SummarizerOutputLength ToProtoOutputLength(
+optimization_guide::proto::SummarizerOutputLength ToProtoLength(
     blink::mojom::AISummarizerLength length) {
   switch (length) {
     case blink::mojom::AISummarizerLength::kShort:
@@ -52,28 +53,56 @@ optimization_guide::proto::SummarizerOutputLength ToProtoOutputLength(
 }  // namespace
 
 AISummarizer::AISummarizer(
+    AIContextBoundObjectSet& context_bound_object_set,
     std::unique_ptr<optimization_guide::OptimizationGuideModelExecutor::Session>
         summarize_session,
     blink::mojom::AISummarizerCreateOptionsPtr options,
     mojo::PendingReceiver<blink::mojom::AISummarizer> receiver)
-    : summarize_session_(std::move(summarize_session)),
+    : AIContextBoundObject(context_bound_object_set),
+      summarize_session_(std::move(summarize_session)),
       receiver_(this, std::move(receiver)),
-      options_(std::move(options)) {}
+      options_(std::move(options)) {
+  receiver_.set_disconnect_handler(base::BindOnce(
+      &AIContextBoundObject::RemoveFromSet, base::Unretained(this)));
+}
 
 AISummarizer::~AISummarizer() {
   for (auto& responder : responder_set_) {
-    responder->OnResponse(
-        blink::mojom::ModelStreamingResponseStatus::kErrorSessionDestroyed,
-        std::nullopt, std::nullopt);
+    responder->OnError(
+        blink::mojom::ModelStreamingResponseStatus::kErrorSessionDestroyed);
   }
 }
 
-void AISummarizer::SetDeletionCallback(base::OnceClosure deletion_callback) {
-  receiver_.set_disconnect_handler(std::move(deletion_callback));
+// static
+std::unique_ptr<optimization_guide::proto::SummarizeOptions>
+AISummarizer::ToProtoOptions(
+    const blink::mojom::AISummarizerCreateOptionsPtr& options) {
+  auto proto_options =
+      std::make_unique<optimization_guide::proto::SummarizeOptions>();
+  proto_options->set_output_type(ToProtoType(options->type));
+  proto_options->set_output_format(ToProtoFormat(options->format));
+  proto_options->set_output_length(ToProtoLength(options->length));
+  return proto_options;
+}
+
+// static
+std::string AISummarizer::CombineContexts(const std::string& shared_context,
+                                          const std::string& context) {
+  std::string final_context = shared_context;
+  if (!context.empty()) {
+    if (!final_context.empty()) {
+      final_context = final_context + " " + context;
+    } else {
+      final_context = context;
+    }
+  }
+  if (!final_context.empty()) {
+    final_context += "\n";
+  }
+  return final_context;
 }
 
 void AISummarizer::ModelExecutionCallback(
-    const std::string& input,
     mojo::RemoteSetElementId responder_id,
     optimization_guide::OptimizationGuideModelStreamingExecutionResult result) {
   blink::mojom::ModelStreamingResponder* responder =
@@ -83,21 +112,20 @@ void AISummarizer::ModelExecutionCallback(
   }
 
   if (!result.response.has_value()) {
-    responder->OnResponse(
-        AIUtils::ConvertModelExecutionError(result.response.error().error()),
-        std::nullopt, std::nullopt);
+    responder->OnError(
+        AIUtils::ConvertModelExecutionError(result.response.error().error()));
     return;
   }
 
   auto response = optimization_guide::ParsedAnyMetadata<
       optimization_guide::proto::StringValue>(result.response->response);
   if (response->has_value()) {
-    responder->OnResponse(blink::mojom::ModelStreamingResponseStatus::kOngoing,
-                          response->value(), std::nullopt);
+    responder->OnStreaming(
+        response->value(),
+        blink::mojom::ModelStreamingResponderAction::kReplace);
   }
   if (result.response->is_complete) {
-    responder->OnResponse(blink::mojom::ModelStreamingResponseStatus::kComplete,
-                          std::nullopt, std::nullopt);
+    responder->OnCompletion(/*context_info=*/nullptr);
   }
 }
 
@@ -109,9 +137,8 @@ void AISummarizer::Summarize(
   if (!summarize_session_) {
     mojo::Remote<blink::mojom::ModelStreamingResponder> responder(
         std::move(pending_responder));
-    responder->OnResponse(
-        blink::mojom::ModelStreamingResponseStatus::kErrorSessionDestroyed,
-        std::nullopt, std::nullopt);
+    responder->OnError(
+        blink::mojom::ModelStreamingResponseStatus::kErrorSessionDestroyed);
     return;
   }
 
@@ -119,25 +146,11 @@ void AISummarizer::Summarize(
       responder_set_.Add(std::move(pending_responder));
   optimization_guide::proto::SummarizeRequest request;
   request.set_article(input);
-  request.mutable_options()->set_output_type(ToProtoOutputType(options_->type));
-  request.mutable_options()->set_output_format(
-      ToProtoOutputFormat(options_->format));
-  request.mutable_options()->set_output_length(
-      ToProtoOutputLength(options_->length));
-  std::string final_context = options_->shared_context.value_or("");
-  if (!context.empty()) {
-    if (!final_context.empty()) {
-      final_context = final_context + " " + context;
-    } else {
-      final_context = context;
-    }
-  }
-  if (!final_context.empty()) {
-    final_context += "\n";
-  }
-  request.set_context(final_context);
+  request.set_allocated_options(ToProtoOptions(options_).release());
+  request.set_context(
+      CombineContexts(options_->shared_context.value_or(""), context));
   summarize_session_->ExecuteModel(
       request,
       base::BindRepeating(&AISummarizer::ModelExecutionCallback,
-                          weak_ptr_factory_.GetWeakPtr(), input, responder_id));
+                          weak_ptr_factory_.GetWeakPtr(), responder_id));
 }

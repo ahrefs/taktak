@@ -87,21 +87,6 @@ TEST(ProtoUtilTest, DefaultCapabilities) {
            feedwire::Capability::SPORTS_IN_GAME_UPDATE}));
 }
 
-TEST(ProtoUtilTest, HeartsEnabled) {
-  base::test::ScopedFeatureList scoped_feature_list;
-  scoped_feature_list.InitWithFeatures({kInterestFeedV2Hearts}, {});
-  feedwire::FeedRequest request =
-      CreateFeedQueryRefreshRequest(
-          StreamType(StreamKind::kForYou), feedwire::FeedQuery::MANUAL_REFRESH,
-          /*request_metadata=*/{},
-          /*consistency_token=*/std::string(), SingleWebFeedEntryPoint::kOther,
-          /*doc_view_counts=*/{})
-          .feed_request();
-
-  ASSERT_THAT(request.client_capability(),
-              Contains(feedwire::Capability::HEART));
-}
-
 // SYNC_STRING_REMOVAL is mobile-only.
 #if BUILDFLAG(IS_ANDROID)
 TEST(ProtoUtilTest, SyncRestringEnabled) {
@@ -277,22 +262,6 @@ TEST(ProtoUtilTest, CormorantEnabled) {
             feedwire::FeedEntryPointSource::CHROME_SINGLE_WEB_FEED_MENU);
 }
 
-TEST(ProtoUtilTest, InfoCardAcknowledgementTrackingDisabled) {
-  base::test::ScopedFeatureList scoped_feature_list;
-  scoped_feature_list.InitWithFeatures({}, {kInfoCardAcknowledgementTracking});
-  feedwire::FeedRequest request =
-      CreateFeedQueryRefreshRequest(
-          StreamType(StreamKind::kForYou), feedwire::FeedQuery::MANUAL_REFRESH,
-          /*request_metadata=*/{},
-          /*consistency_token=*/std::string(), SingleWebFeedEntryPoint::kOther,
-          /*doc_view_counts=*/{})
-          .feed_request();
-
-  ASSERT_THAT(
-      request.client_capability(),
-      Not(Contains(feedwire::Capability::INFO_CARD_ACKNOWLEDGEMENT_TRACKING)));
-}
-
 TEST(ProtoUtilTest, FeedSignedOutViewDemotionEnablesCapability) {
   base::test::ScopedFeatureList scoped_feature_list;
   scoped_feature_list.InitWithFeatures({kFeedSignedOutViewDemotion}, {});
@@ -306,6 +275,21 @@ TEST(ProtoUtilTest, FeedSignedOutViewDemotionEnablesCapability) {
 
   ASSERT_THAT(request.client_capability(),
               Contains(feedwire::Capability::ON_DEVICE_VIEW_HISTORY));
+}
+
+TEST(ProtoUtilTest, FeedStreamingEnablesCapability) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitWithFeatures({kFeedStreaming}, {});
+  feedwire::FeedRequest request =
+      CreateFeedQueryRefreshRequest(
+          StreamType(StreamKind::kForYou), feedwire::FeedQuery::MANUAL_REFRESH,
+          /*request_metadata=*/{},
+          /*consistency_token=*/std::string(), SingleWebFeedEntryPoint::kOther,
+          /*doc_view_counts=*/{})
+          .feed_request();
+
+  ASSERT_THAT(request.client_capability(),
+              Contains(feedwire::Capability::STREAMING_FULL));
 }
 
 TEST(ProtoUtilTest, TabGroupsEnabledForReplaced) {

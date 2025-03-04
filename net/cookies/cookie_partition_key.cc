@@ -4,6 +4,7 @@
 
 #include "net/cookies/cookie_partition_key.h"
 
+#include <compare>
 #include <ostream>
 #include <tuple>
 
@@ -12,6 +13,7 @@
 #include "base/types/optional_util.h"
 #include "net/base/cronet_buildflags.h"
 #include "net/base/features.h"
+#include "net/base/network_isolation_partition.h"
 #include "net/cookies/cookie_constants.h"
 #include "net/cookies/cookie_util.h"
 #include "net/cookies/site_for_cookies.h"
@@ -99,27 +101,20 @@ CookiePartitionKey& CookiePartitionKey::operator=(CookiePartitionKey&& other) =
 CookiePartitionKey::~CookiePartitionKey() = default;
 
 bool CookiePartitionKey::operator==(const CookiePartitionKey& other) const {
-  AncestorChainBit this_bit = MaybeAncestorChainBit();
-  AncestorChainBit other_bit = other.MaybeAncestorChainBit();
-
-  return std::tie(site_, nonce_, this_bit) ==
-         std::tie(other.site_, other.nonce_, other_bit);
+  return (*this <=> other) == 0;
 }
 
-bool CookiePartitionKey::operator!=(const CookiePartitionKey& other) const {
-  return !(*this == other);
-}
-
-bool CookiePartitionKey::operator<(const CookiePartitionKey& other) const {
+std::strong_ordering CookiePartitionKey::operator<=>(
+    const CookiePartitionKey& other) const {
   AncestorChainBit this_bit = MaybeAncestorChainBit();
   AncestorChainBit other_bit = other.MaybeAncestorChainBit();
-  return std::tie(site_, nonce_, this_bit) <
+  return std::tie(site_, nonce_, this_bit) <=>
          std::tie(other.site_, other.nonce_, other_bit);
 }
 
 // static
 base::expected<CookiePartitionKey::SerializedCookiePartitionKey, std::string>
-CookiePartitionKey::Serialize(const std::optional<CookiePartitionKey>& in) {
+CookiePartitionKey::Serialize(base::optional_ref<const CookiePartitionKey> in) {
   if (!in) {
     return base::ok(SerializedCookiePartitionKey(
         base::PassKey<CookiePartitionKey>(), kEmptyCookiePartitionKey, true));
@@ -139,6 +134,13 @@ std::optional<CookiePartitionKey> CookiePartitionKey::FromNetworkIsolationKey(
     const SiteForCookies& site_for_cookies,
     const SchemefulSite& request_site,
     bool main_frame_navigation) {
+  // Support for creating a CookiePartitionKey from IsolationInfos with
+  // special NetworkIsolationPartition is not implemented. The original use
+  // cases for special NetworkIsolationPartitions disallow cookies.
+  if (network_isolation_key.GetNetworkIsolationPartition() !=
+      NetworkIsolationPartition::kGeneral) {
+    return std::nullopt;
+  }
   if (cookie_util::PartitionedCookiesDisabledByCommandLine()) {
     return std::nullopt;
   }
@@ -180,11 +182,12 @@ std::optional<CookiePartitionKey> CookiePartitionKey::FromNetworkIsolationKey(
 std::optional<CookiePartitionKey> CookiePartitionKey::FromStorageKeyComponents(
     const SchemefulSite& site,
     AncestorChainBit ancestor_chain_bit,
-    const std::optional<base::UnguessableToken>& nonce) {
+    base::optional_ref<const base::UnguessableToken> nonce) {
   if (cookie_util::PartitionedCookiesDisabledByCommandLine()) {
     return std::nullopt;
   }
-  return CookiePartitionKey::FromWire(site, ancestor_chain_bit, nonce);
+  return CookiePartitionKey::FromWire(site, ancestor_chain_bit,
+                                      nonce.CopyAsOptional());
 }
 
 // static

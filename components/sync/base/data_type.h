@@ -168,7 +168,11 @@ enum DataType {
   // standard syncable prefs.
   PLUS_ADDRESS_SETTING,
 
-  LAST_USER_DATA_TYPE = PLUS_ADDRESS_SETTING,
+  // Loyalty cards stored in the Google Wallet.
+  // Read-only on the client.
+  AUTOFILL_LOYALTY_CARD,
+
+  LAST_USER_DATA_TYPE = AUTOFILL_LOYALTY_CARD,
 
   // ---- Control Types ----
   // An object representing a set of Nigori keys.
@@ -266,7 +270,8 @@ enum class DataTypeForHistograms {
   kProductComparison = 66,
   kCookies = 67,
   kPlusAddressSettings = 68,
-  kMaxValue = kPlusAddressSettings,
+  kAutofillLoyaltyCard = 69,
+  kMaxValue = kAutofillLoyaltyCard,
 };
 // LINT.ThenChange(/tools/metrics/histograms/metadata/sync/enums.xml:SyncDataTypes)
 
@@ -398,7 +403,7 @@ constexpr DataTypeSet SharedTypes() {
 // abort sign-out, depending on the platform.
 constexpr DataTypeSet TypesRequiringUnsyncedDataCheckOnSignout() {
   static_assert(
-      53 == GetNumDataTypes(),
+      54 == GetNumDataTypes(),
       "Add new types to `TypesRequiringUnsyncedDataCheckOnSignout()` if there "
       "should be a warning when the user signs out and the types have unsynced "
       "data. The warning offers the user to either save the data locally or "
@@ -440,11 +445,11 @@ DataTypeSet GetDataTypeSetFromSpecificsFieldNumberList(
 int GetSpecificsFieldNumberFromDataType(DataType data_type);
 
 // Returns a string with application lifetime that represents the name of
-// |data_type|.
+// `data_type`.
 const char* DataTypeToDebugString(DataType data_type);
 
 // Returns a string with application lifetime that is used as the histogram
-// suffix for |data_type|.
+// suffix for `data_type`.
 const char* DataTypeToHistogramSuffix(DataType data_type);
 
 // Some histograms take an integer parameter that represents a data type.
@@ -461,7 +466,7 @@ int DataTypeToStableIdentifier(DataType data_type);
 // persistence. It is guaranteed to be lowercase.
 const char* DataTypeToStableLowerCaseString(DataType data_type);
 
-// Returns the comma-separated string representation of |data_types|.
+// Returns the comma-separated string representation of `data_types`.
 std::string DataTypeSetToDebugString(DataTypeSet data_types);
 
 // Necessary for compatibility with EXPECT_EQ and the like.
@@ -475,10 +480,10 @@ std::ostream& operator<<(std::ostream& out, DataTypeSet data_type_set);
 // not return the root entity.
 std::string DataTypeToProtocolRootTag(DataType data_type);
 
-// Returns true if |data_type| is a real datatype
+// Returns true if `data_type` is a real datatype
 bool IsRealDataType(DataType data_type);
 
-// Returns true if |data_type| is an act-once type. Act once types drop
+// Returns true if `data_type` is an act-once type. Act once types drop
 // entities after applying them. Drops are deletes that are not synced to other
 // clients.
 bool IsActOnceDataType(DataType data_type);

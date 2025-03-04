@@ -21,6 +21,11 @@
  *
  */
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #ifndef THIRD_PARTY_BLINK_RENDERER_CORE_CSS_RESOLVER_MATCH_RESULT_H_
 #define THIRD_PARTY_BLINK_RENDERER_CORE_CSS_RESOLVER_MATCH_RESULT_H_
 
@@ -126,7 +131,7 @@ class CORE_EXPORT MatchResult {
   MatchResult& operator=(const MatchResult&) = delete;
 
   void AddMatchedProperties(const CSSPropertyValueSet* properties,
-                            const MatchedProperties::Data& types);
+                            MatchedProperties::Data types);
   bool HasMatchedProperties() const { return matched_properties_.size(); }
 
   void BeginAddingAuthorRulesForTreeScope(const TreeScope&);
@@ -152,11 +157,11 @@ class CORE_EXPORT MatchResult {
   bool DependsOnStyleContainerQueries() const {
     return depends_on_style_container_queries_;
   }
-  void SetDependsOnStateContainerQueries() {
-    depends_on_state_container_queries_ = true;
+  void SetDependsOnScrollStateContainerQueries() {
+    depends_on_scroll_state_container_queries_ = true;
   }
-  bool DependsOnStateContainerQueries() const {
-    return depends_on_state_container_queries_;
+  bool DependsOnScrollStateContainerQueries() const {
+    return depends_on_scroll_state_container_queries_;
   }
   void SetFirstLineDependsOnSizeContainerQueries() {
     first_line_depends_on_size_container_queries_ = true;
@@ -252,7 +257,7 @@ class CORE_EXPORT MatchResult {
   bool is_cacheable_{true};
   bool depends_on_size_container_queries_{false};
   bool depends_on_style_container_queries_{false};
-  bool depends_on_state_container_queries_{false};
+  bool depends_on_scroll_state_container_queries_{false};
   bool first_line_depends_on_size_container_queries_{false};
   bool depends_on_static_viewport_units_{false};
   bool depends_on_dynamic_viewport_units_{false};

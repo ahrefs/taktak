@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
+#pragma allow_unsafe_libc_calls
+#endif
+
 #include "third_party/blink/renderer/core/messaging/blink_transferable_message_mojom_traits.h"
 
 #include "mojo/public/cpp/base/big_buffer_mojom_traits.h"
@@ -9,6 +14,7 @@
 #include "third_party/blink/public/mojom/messaging/static_bitmap_image.mojom-blink.h"
 #include "third_party/blink/public/mojom/messaging/transferable_message.mojom-blink.h"
 #include "third_party/blink/renderer/core/imagebitmap/image_bitmap.h"
+#include "third_party/blink/renderer/platform/graphics/static_bitmap_image_transform.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 
 namespace mojo {
@@ -39,10 +45,13 @@ std::optional<SkBitmap> ToSkBitmapN32(
 blink::mojom::blink::SerializedStaticBitmapImagePtr
 ToSerializedAcceleratedImage(
     scoped_refptr<blink::StaticBitmapImage> static_bitmap_image) {
-  static_bitmap_image->EnsureSyncTokenVerified();
+  // TODO(crbug.com/374812177): Remove this clone once the lifetime issues
+  // around sending accelerated StaticBitmapImage are resolved.
+  auto cloned_image = blink::StaticBitmapImageTransform::Clone(
+      blink::FlushReason::kCreateImageBitmap, static_bitmap_image);
+  cloned_image->EnsureSyncTokenVerified();
 
-  auto image_info = static_bitmap_image->GetSkImageInfo();
-  auto shared_image = static_bitmap_image->GetSharedImage();
+  auto shared_image = cloned_image->GetSharedImage();
   if (!shared_image) {
     return nullptr;
   }
@@ -50,12 +59,14 @@ ToSerializedAcceleratedImage(
   auto result =
       blink::mojom::blink::SerializedStaticBitmapImage::NewAcceleratedImage(
           blink::AcceleratedImageInfo{
-              shared_image->Export(), image_info,
-              static_bitmap_image->IsOriginTopLeft(),
-              static_bitmap_image->SupportsDisplayCompositing(),
-              static_bitmap_image->IsOverlayCandidate(),
+              shared_image->Export(), cloned_image->GetSyncToken(),
+              SkImageInfo::Make(cloned_image->GetSize().width(),
+                                cloned_image->GetSize().height(),
+                                cloned_image->GetSkColorType(),
+                                cloned_image->GetAlphaType(),
+                                cloned_image->GetSkColorSpace()),
               WTF::BindOnce(&blink::StaticBitmapImage::UpdateSyncToken,
-                            static_bitmap_image)});
+                            std::move(cloned_image))});
   return result;
 }
 

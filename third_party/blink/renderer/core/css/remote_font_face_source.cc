@@ -19,7 +19,6 @@
 #include "third_party/blink/renderer/core/frame/local_frame_client.h"
 #include "third_party/blink/renderer/core/inspector/console_message.h"
 #include "third_party/blink/renderer/core/lcp_critical_path_predictor/lcp_critical_path_predictor.h"
-#include "third_party/blink/renderer/core/loader/subresource_integrity_helper.h"
 #include "third_party/blink/renderer/core/probe/core_probes.h"
 #include "third_party/blink/renderer/core/workers/worker_global_scope.h"
 #include "third_party/blink/renderer/platform/fonts/font_cache.h"
@@ -126,8 +125,7 @@ RemoteFontFaceSource::DisplayPeriod RemoteFontFaceSource::ComputePeriod()
       return kSwapPeriod;
     }
   }
-  NOTREACHED_IN_MIGRATION();
-  return kSwapPeriod;
+  NOTREACHED();
 }
 
 RemoteFontFaceSource::RemoteFontFaceSource(
@@ -183,25 +181,23 @@ void RemoteFontFaceSource::NotifyFinished(Resource* resource) {
   auto* font = To<FontResource>(resource);
   histograms_.RecordRemoteFont(font);
 
-  // Refer to the comments in classic_pending_script.cc for the reason why
+  // Refer to the comments in `Resource::ForceIntegrityChecks()`:
   // SRI checks should be done here in ResourceClient instead of
   // ResourceFetcher. SRI failure should behave as network error
   // (ErrorOccurred()). PreloadCache even caches network errors.
   // Font fetch itself doesn't support SRI but font preload does.
   // So, if the resource was preloaded we need to check
   // SRI failure and simulate network error if it happens.
-
-  if (resource->IsLinkPreload()) {
-    SubresourceIntegrityHelper::DoReport(*execution_context,
-                                         resource->IntegrityReportInfo());
+  bool force_integrity_checks = resource->ForceIntegrityChecks();
+  if (force_integrity_checks) {
+    resource->IntegrityReport().SendReports(execution_context);
   }
 
-  DCHECK(!custom_font_data_);
   // font->GetCustomFontData() returns nullptr if network error happened
   // (ErrorOccurred() is true). To simulate network error we don't update
   // custom_font_data_ to keep the nullptr value in case of SRI failures.
-  if (!resource->IsLinkPreload() || resource->IntegrityDisposition() !=
-                                        ResourceIntegrityDisposition::kFailed) {
+  DCHECK(!custom_font_data_);
+  if (resource->PassedIntegrityChecks() || !force_integrity_checks) {
     custom_font_data_ = font->GetCustomFontData();
   }
   url_ = resource->Url().GetString();
@@ -340,10 +336,7 @@ const SimpleFontData* RemoteFontFaceSource::CreateFontData(
           font_description.GetFontSelectionRequest(),
           font_selection_capabilities, font_description.FontOpticalSizing(),
           font_description.TextRendering(),
-          font_description.GetFontVariantAlternates()
-              ? font_description.GetFontVariantAlternates()
-                    ->GetResolvedFontFeatures()
-              : ResolvedFontFeatures(),
+          font_description.ResolveFontFeatures(),
           font_description.Orientation(), font_description.VariationSettings(),
           font_description.GetFontPalette()),
       MakeGarbageCollected<CustomFontData>());
@@ -370,6 +363,10 @@ void RemoteFontFaceSource::BeginLoadIfNeeded() {
   if (IsLoaded()) {
     return;
   }
+  // Skip loading if the document is for markup sanitization.
+  if (GetDocument() && GetDocument()->IsForMarkupSanitization()) {
+    return;
+  }
   ExecutionContext* const execution_context =
       font_selector_->GetExecutionContext();
   if (!execution_context) {
@@ -384,7 +381,7 @@ void RemoteFontFaceSource::BeginLoadIfNeeded() {
   CHECK(font);
   if (font->StillNeedsLoad()) {
     TRACE_EVENT("devtools.timeline", "BeginRemoteFontLoad", "id",
-                font->InspectorId(), "display",
+                font->InspectorId(), "url", font->Url(), "display",
                 face_->GetFontFace()->display());
     if (font->IsLowPriorityLoadingAllowedForRemoteFont()) {
       execution_context->AddConsoleMessage(MakeGarbageCollected<ConsoleMessage>(
@@ -527,8 +524,7 @@ RemoteFontFaceSource::FontLoadHistograms::DataSourceMetricsValue() {
     case kFromUnknown:
       return CacheHitMetrics::kMiss;
   }
-  NOTREACHED_IN_MIGRATION();
-  return CacheHitMetrics::kMiss;
+  NOTREACHED();
 }
 
 }  // namespace blink

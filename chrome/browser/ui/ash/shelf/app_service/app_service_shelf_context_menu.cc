@@ -12,7 +12,6 @@
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/apps/app_service/app_service_proxy.h"
 #include "chrome/browser/apps/app_service/app_service_proxy_factory.h"
-#include "chrome/browser/apps/app_service/extension_apps_utils.h"
 #include "chrome/browser/apps/app_service/menu_util.h"
 #include "chrome/browser/ash/app_list/arc/arc_app_list_prefs.h"
 #include "chrome/browser/ash/app_list/extension_app_utils.h"
@@ -22,7 +21,6 @@
 #include "chrome/browser/ash/bruschetta/bruschetta_service.h"
 #include "chrome/browser/ash/bruschetta/bruschetta_service_factory.h"
 #include "chrome/browser/ash/bruschetta/bruschetta_util.h"
-#include "chrome/browser/ash/crosapi/browser_manager.h"
 #include "chrome/browser/ash/crostini/crostini_manager.h"
 #include "chrome/browser/ash/crostini/crostini_util.h"
 #include "chrome/browser/ash/guest_os/guest_os_registry_service.h"
@@ -86,8 +84,7 @@ extensions::LaunchType ConvertLaunchTypeCommandToExtensionLaunchType(
     case ash::DEPRECATED_USE_LAUNCH_TYPE_FULLSCREEN:
       [[fallthrough]];
     default:
-      NOTREACHED_IN_MIGRATION();
-      return extensions::LAUNCH_TYPE_INVALID;
+      NOTREACHED();
   }
 }
 
@@ -95,8 +92,9 @@ std::string GetAppId(const ash::ShelfID& shelf_id) {
   // Remove the ARC shelf group prefix.
   const arc::ArcAppShelfId arc_shelf_id =
       arc::ArcAppShelfId::FromString(shelf_id.app_id);
-  if (arc_shelf_id.valid())
+  if (arc_shelf_id.valid()) {
     return arc_shelf_id.app_id();
+  }
 
   return shelf_id.app_id;
 }
@@ -149,7 +147,7 @@ std::u16string AppServiceShelfContextMenu::GetLabelForCommandId(
   if (command_id == ash::LAUNCH_NEW) {
     CHECK_GT(launch_new_string_id_, 0)
         << "Unexpected `launch_new_string_id_` value. App id = "
-        << item().id.app_id << "; app type = " << apps::EnumToString(app_type_)
+        << item().id.app_id << "; app type = " << app_type_
         << "; submenu items count = " << submenu_->GetItemCount();
     return l10n_util::GetStringUTF16(launch_new_string_id_);
   } else if (command_id == ash::SHUTDOWN_BRUSCHETTA_OS) {
@@ -173,8 +171,9 @@ void AppServiceShelfContextMenu::ExecuteCommand(int command_id,
                                                 int event_flags) {
   // Place new windows on the same display as the context menu.
   display::ScopedDisplayForNewWindows scoped_display(display_id());
-  if (ExecuteCommonCommand(command_id, event_flags))
+  if (ExecuteCommonCommand(command_id, event_flags)) {
     return;
+  }
 
   switch (command_id) {
     case ash::SHOW_APP_INFO:
@@ -186,9 +185,6 @@ void AppServiceShelfContextMenu::ExecuteCommand(int command_id,
       if (app_type_ == apps::AppType::kCrostini ||
           app_type_ == apps::AppType::kBruschetta) {
         ShelfContextMenu::ExecuteCommand(ash::LAUNCH_NEW, event_flags);
-      } else if (app_type_ == apps::AppType::kStandaloneBrowser) {
-        crosapi::BrowserManager::Get()->NewWindow(
-            /*incognito=*/false, /*should_trigger_session_restore=*/false);
       } else {
         ash::NewWindowDelegate::GetInstance()->NewWindow(
             /*incognito=*/false,
@@ -198,14 +194,9 @@ void AppServiceShelfContextMenu::ExecuteCommand(int command_id,
       break;
 
     case ash::APP_CONTEXT_MENU_NEW_INCOGNITO_WINDOW:
-      if (app_type_ == apps::AppType::kStandaloneBrowser) {
-        crosapi::BrowserManager::Get()->NewWindow(
-            /*incognito=*/true, /*should_trigger_session_restore=*/false);
-      } else {
-        ash::NewWindowDelegate::GetInstance()->NewWindow(
-            /*incognito=*/true,
-            /*should_trigger_session_restore=*/false);
-      }
+      ash::NewWindowDelegate::GetInstance()->NewWindow(
+          /*incognito=*/true,
+          /*should_trigger_session_restore=*/false);
       MaybeCloseFullRestoreServiceNotification(controller()->profile());
       break;
 
@@ -245,8 +236,7 @@ void AppServiceShelfContextMenu::ExecuteCommand(int command_id,
 
     case ash::DEPRECATED_USE_LAUNCH_TYPE_FULLSCREEN:
     case ash::DEPRECATED_USE_LAUNCH_TYPE_PINNED:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
 
     case ash::CROSTINI_USE_LOW_DENSITY:
     case ash::CROSTINI_USE_HIGH_DENSITY: {
@@ -255,8 +245,9 @@ void AppServiceShelfContextMenu::ExecuteCommand(int command_id,
               controller()->profile());
       const bool scaled = command_id == ash::CROSTINI_USE_LOW_DENSITY;
       registry_service->SetAppScaled(item().id.app_id, scaled);
-      if (controller()->IsOpen(item().id))
+      if (controller()->IsOpen(item().id)) {
         crostini::ShowAppRestartDialog(display_id());
+      }
       return;
     }
 
@@ -287,7 +278,6 @@ void AppServiceShelfContextMenu::ExecuteCommand(int command_id,
 
 bool AppServiceShelfContextMenu::IsCommandIdChecked(int command_id) const {
   switch (app_type_) {
-    case apps::AppType::kStandaloneBrowserChromeApp:
     case apps::AppType::kWeb:
     case apps::AppType::kSystemWeb: {
       if (command_id >= ash::USE_LAUNCH_TYPE_COMMAND_START &&
@@ -320,8 +310,6 @@ bool AppServiceShelfContextMenu::IsCommandIdChecked(int command_id) const {
       [[fallthrough]];
     case apps::AppType::kCrostini:
       [[fallthrough]];
-    case apps::AppType::kBuiltIn:
-      [[fallthrough]];
     case apps::AppType::kPluginVm:
       [[fallthrough]];
     case apps::AppType::kBorealis:
@@ -332,8 +320,9 @@ bool AppServiceShelfContextMenu::IsCommandIdChecked(int command_id) const {
 }
 
 bool AppServiceShelfContextMenu::IsCommandIdEnabled(int command_id) const {
-  if (command_id < ash::COMMAND_ID_COUNT)
+  if (command_id < ash::COMMAND_ID_COUNT) {
     return ShelfContextMenu::IsCommandIdEnabled(command_id);
+  }
   if (extensions::ContextMenuMatcher::IsExtensionsCustomCommandId(command_id) &&
       extension_menu_items_) {
     return extension_menu_items_->IsCommandIdEnabled(command_id);
@@ -368,8 +357,9 @@ void AppServiceShelfContextMenu::OnGetMenuModel(GetMenuModelCallback callback,
       (app_type_ == apps::AppType::kChromeApp &&
        item().id.app_id == extension_misc::kFilesManagerAppId);
 
-  if (build_extension_menu_before_pin)
+  if (build_extension_menu_before_pin) {
     BuildExtensionAppShortcutsMenu(menu_model.get());
+  }
 
   // "New Window" should go above "Pin".
   if (menu_items.items.size() > index &&
@@ -386,8 +376,7 @@ void AppServiceShelfContextMenu::OnGetMenuModel(GetMenuModelCallback callback,
   size_t shortcut_index = menu_items.items.size();
   for (size_t i = index; i < menu_items.items.size(); i++) {
     // For Chrome browser, add the close item before the app info item.
-    if ((item().id.app_id == app_constants::kChromeAppId ||
-         item().id.app_id == app_constants::kLacrosAppId) &&
+    if (item().id.app_id == app_constants::kChromeAppId &&
         menu_items.items[i]->command_id == ash::SHOW_APP_INFO) {
       BuildChromeAppMenu(menu_model.get());
     }
@@ -425,8 +414,9 @@ void AppServiceShelfContextMenu::OnGetMenuModel(GetMenuModelCallback callback,
     return;
   }
 
-  if (!build_extension_menu_before_pin)
+  if (!build_extension_menu_before_pin) {
     BuildExtensionAppShortcutsMenu(menu_model.get());
+  }
 
   // When Crostini generates shelf id with the prefix "crostini:", AppService
   // can't generate the menu items, because the app_id doesn't match, so add the
@@ -519,10 +509,9 @@ void AppServiceShelfContextMenu::BuildCrostiniAppMenu(
 
 void AppServiceShelfContextMenu::BuildChromeAppMenu(
     ui::SimpleMenuModel* menu_model) {
-  // Don't check list of active browsers for lacros app because the list of
-  // browsers only tracks in-process browsers (i.e. instances of ash-chrome).
+  // The list of browsers only tracks in-process browsers (i.e. instances of
+  // ash-chrome).
   const bool has_active_browsers =
-      item().id.app_id != app_constants::kLacrosAppId &&
       !BrowserShortcutShelfItemController::IsListOfActiveBrowserEmpty(
           controller()->shelf_model());
   if (has_active_browsers || item().type == ash::TYPE_DIALOG ||
@@ -540,17 +529,11 @@ void AppServiceShelfContextMenu::ShowAppInfo() {
     return;
   }
 
-  // TODO(crbug.com/40176571): If this comes from Lacros app, it shows the
-  // top "Apps" settings page. This is fallback, because Lacros app is not
-  // registered. This is short term workaround to keep the relative
-  // compatibility for Lacros Primary. We should figure out what should be shown
-  // by this.
   controller()->DoShowAppInfoFlow(item().id.app_id);
 }
 
 void AppServiceShelfContextMenu::SetLaunchType(int command_id) {
   switch (app_type_) {
-    case apps::AppType::kStandaloneBrowserChromeApp:
     case apps::AppType::kWeb:
     case apps::AppType::kSystemWeb: {
       // Web apps can only toggle between kWindow, kTabbed and kBrowser.
@@ -568,8 +551,6 @@ void AppServiceShelfContextMenu::SetLaunchType(int command_id) {
     case apps::AppType::kArc:
       [[fallthrough]];
     case apps::AppType::kCrostini:
-      [[fallthrough]];
-    case apps::AppType::kBuiltIn:
       [[fallthrough]];
     case apps::AppType::kPluginVm:
       [[fallthrough]];
@@ -600,8 +581,7 @@ void AppServiceShelfContextMenu::SetExtensionLaunchType(int command_id) {
     case ash::USE_LAUNCH_TYPE_TABBED_WINDOW:
     case ash::DEPRECATED_USE_LAUNCH_TYPE_FULLSCREEN:
     case ash::DEPRECATED_USE_LAUNCH_TYPE_PINNED:
-      NOTREACHED_IN_MIGRATION();
-      break;
+      NOTREACHED();
     default:
       return;
   }
@@ -613,8 +593,9 @@ extensions::LaunchType AppServiceShelfContextMenu::GetExtensionLaunchType()
       extensions::ExtensionRegistry::Get(controller()->profile())
           ->GetExtensionById(item().id.app_id,
                              extensions::ExtensionRegistry::EVERYTHING);
-  if (!extension)
+  if (!extension) {
     return extensions::LAUNCH_TYPE_DEFAULT;
+  }
 
   return extensions::GetLaunchType(
       extensions::ExtensionPrefs::Get(controller()->profile()), extension);

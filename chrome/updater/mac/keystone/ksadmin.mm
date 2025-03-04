@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 
+#include <algorithm>
 #include <map>
 #include <optional>
 #include <string>
@@ -20,7 +21,6 @@
 
 #include "base/apple/foundation_util.h"
 #include "base/at_exit.h"
-#include "base/check.h"
 #include "base/check_op.h"
 #include "base/command_line.h"
 #include "base/containers/fixed_flat_map.h"
@@ -35,7 +35,6 @@
 #include "base/notreached.h"
 #include "base/path_service.h"
 #include "base/process/launch.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
 #include "base/strings/sys_string_conversions.h"
 #include "base/task/single_thread_task_executor.h"
@@ -487,7 +486,11 @@ void KSAdminApp::PrintUsage(const std::string& error_message) {
       "  --version,-v VERS   Set the version. Use with -P.\n"
       "  --version-key,-e    Set the version path key. Use with -P and -a.\n"
       "  --version-path,-a   Set the version path. Use with -P and -e.\n"
-      "  --xcpath,-x PATH    Set a path to use as an existence checker.\n";
+      "  --xcpath,-x PATH    Set a path to use as an existence checker.\n"
+      "\n"
+      "If neither -S nor -U are provided, ksadmin will try to deduce the\n"
+      "correct store, but may return a ticket with a mismatching xcpath if\n"
+      "tickets are present in both stores.\n";
   printf("%s\n", usage_message.c_str());
   Shutdown(error_message.empty() ? 0 : 1);
 }
@@ -564,7 +567,7 @@ void KSAdminApp::DoUpdateApp(UpdaterScope scope) {
       app_id, GetInstallDataIndexFromAppArgs(app_id),
       HasSwitch(kCommandUserInitiated) ? UpdateService::Priority::kForeground
                                        : UpdateService::Priority::kBackground,
-      UpdateService::PolicySameVersionUpdate::kNotAllowed,
+      UpdateService::PolicySameVersionUpdate::kNotAllowed, /*language=*/{},
       base::BindRepeating([](const UpdateService::UpdateState& update_state) {
         if (update_state.state == UpdateService::UpdateState::State::kUpdated) {
           printf("Finished updating (errors=%d reboot=%s)\n", 0, "YES");
@@ -599,7 +602,7 @@ void KSAdminApp::DoListAppUpdate(UpdaterScope scope) {
       app_id,
       HasSwitch(kCommandUserInitiated) ? UpdateService::Priority::kForeground
                                        : UpdateService::Priority::kBackground,
-      UpdateService::PolicySameVersionUpdate::kNotAllowed,
+      UpdateService::PolicySameVersionUpdate::kNotAllowed, /*language=*/{},
       base::BindRepeating(
           [](scoped_refptr<UpdateCheckResult> update_check_result,
              const UpdateService::UpdateState& update_state) {
@@ -703,7 +706,7 @@ void KSAdminApp::DoPrintTag(UpdaterScope scope) {
         int exit_code = 0;
 
         std::vector<updater::UpdateService::AppState>::const_iterator it =
-            base::ranges::find_if(
+            std::ranges::find_if(
                 states,
                 [&app_id](const updater::UpdateService::AppState& state) {
                   return base::EqualsCaseInsensitiveASCII(state.app_id, app_id);

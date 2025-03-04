@@ -4,14 +4,19 @@
 
 package org.chromium.chrome.browser.tabmodel;
 
+import androidx.annotation.NonNull;
+
 /**
  * A factory that creates a concrete subclass of {@link TabGroupModelFilterInternal} for {@link
  * TabModel}s.
  */
 interface TabGroupModelFilterFactory {
     /**
-     * @param model The {@link TabModel} to serve as base for the new filter.
+     * @param model The {@link TabModelInternal} to serve as base for the new filter.
+     * @param tabUngrouper The {@link TabUngrouper} to use for the filter.
      * @return A new {@link TabGroupModelFilterBase} for {@code model}.
      */
-    /*package*/ TabGroupModelFilterInternal createTabGroupModelFilter(TabModel model);
+    /*package*/ @NonNull
+    TabGroupModelFilterInternal createTabGroupModelFilter(
+            @NonNull TabModelInternal model, @NonNull TabUngrouper tabUngrouper);
 }

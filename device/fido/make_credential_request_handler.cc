@@ -17,7 +17,6 @@
 #include "base/stl_util.h"
 #include "base/strings/string_number_conversions.h"
 #include "build/build_config.h"
-#include "build/chromeos_buildflags.h"
 #include "components/cbor/diagnostic_writer.h"
 #include "components/device_event_log/device_event_log.h"
 #include "device/fido/features.h"
@@ -388,12 +387,18 @@ MakeCredentialRequestHandler::MakeCredentialRequestHandler(
   }
 #endif
 
-  InitDiscoveries(
-      fido_discovery_factory, std::move(additional_discoveries),
+  auto available_transports =
       base::STLSetIntersection<base::flat_set<FidoTransportProtocol>>(
-          supported_transports, allowed_transports),
-      request.authenticator_attachment !=
-          AuthenticatorAttachment::kCrossPlatform);
+          supported_transports, allowed_transports);
+  bool consider_enclave = request.authenticator_attachment !=
+                          AuthenticatorAttachment::kCrossPlatform;
+  if (options_.is_passkey_upgrade_request) {
+    consider_enclave = true;
+    available_transports = {};
+  }
+
+  InitDiscoveries(fido_discovery_factory, std::move(additional_discoveries),
+                  std::move(available_transports), consider_enclave);
   std::string json_string;
   if (!options_.json ||
       !base::JSONWriter::WriteWithOptions(

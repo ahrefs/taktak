@@ -13,11 +13,13 @@
 
 namespace ash {
 
-std::optional<QuickInsertSearchResult> PickerLobsterSearch(
+std::optional<QuickInsertSearchResult> QuickInsertLobsterSearch(
+    QuickInsertLobsterResult::Mode mode,
     std::u16string_view query) {
   CHECK(!query.empty());
   // TODO: b/369508495 - implement matching logic.
-  return std::make_optional(QuickInsertLobsterResult(/*display_name=*/u""));
+  return std::make_optional(
+      QuickInsertLobsterResult(mode, /*display_name=*/u""));
 }
 
 }  // namespace ash

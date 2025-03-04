@@ -9,6 +9,7 @@
 
 #include "net/dns/host_resolver_manager_unittest.h"
 
+#include <algorithm>
 #include <iterator>
 #include <limits>
 #include <optional>
@@ -28,7 +29,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/rand_util.h"
-#include "base/ranges/algorithm.h"
 #include "base/run_loop.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
@@ -396,7 +396,7 @@ const DohProviderEntry& GetDohProviderEntryForTesting(
     std::string_view provider) {
   auto provider_list = DohProviderEntry::GetList();
   auto it =
-      base::ranges::find(provider_list, provider, &DohProviderEntry::provider);
+      std::ranges::find(provider_list, provider, &DohProviderEntry::provider);
   CHECK(it != provider_list.end());
   return **it;
 }
@@ -525,10 +525,17 @@ bool HostResolverManagerTest::GetLastIpv6ProbeResult() {
 
 void HostResolverManagerTest::PopulateCache(const HostCache::Key& key,
                                             IPEndPoint endpoint) {
-  resolver_->CacheResult(resolve_context_->host_cache(), key,
-                         HostCache::Entry(OK, {endpoint}, /*aliases=*/{},
-                                          HostCache::Entry::SOURCE_UNKNOWN),
-                         base::Seconds(1));
+  std::vector<IPEndPoint> endpoints = {endpoint};
+  PopulateCache(key, std::move(endpoints));
+}
+
+void HostResolverManagerTest::PopulateCache(const HostCache::Key& key,
+                                            std::vector<IPEndPoint> endpoints) {
+  resolver_->CacheResult(
+      resolve_context_->host_cache(), key,
+      HostCache::Entry(OK, std::move(endpoints), /*aliases=*/{},
+                       HostCache::Entry::SOURCE_UNKNOWN),
+      base::Seconds(1));
 }
 
 const std::pair<const HostCache::Key, HostCache::Entry>*
@@ -1610,9 +1617,11 @@ void HostResolverManagerTest::FlushCacheOnIPAddressChangeTest(bool is_async) {
 // Test that IP address changes flush the cache but initial DNS config reads
 // do not.
 TEST_F(HostResolverManagerTest, FlushCacheOnIPAddressChangeAsync) {
+  base::test::ScopedFeatureList feature_list(features::kUseHostResolverCache);
   FlushCacheOnIPAddressChangeTest(true);
 }
 TEST_F(HostResolverManagerTest, FlushCacheOnIPAddressChangeSync) {
+  base::test::ScopedFeatureList feature_list(features::kUseHostResolverCache);
   FlushCacheOnIPAddressChangeTest(false);
 }
 
@@ -4778,9 +4787,9 @@ TEST_F(HostResolverManagerDnsTest, LocalhostLookup) {
 TEST_F(HostResolverManagerDnsTest, LocalhostLookupWithHosts) {
   DnsHosts hosts;
   hosts[DnsHostsKey("localhost", ADDRESS_FAMILY_IPV4)] =
-      IPAddress({192, 168, 1, 1});
+      IPAddress(base::span<const uint8_t>({192, 168, 1, 1}));
   hosts[DnsHostsKey("foo.localhost", ADDRESS_FAMILY_IPV4)] =
-      IPAddress({192, 168, 1, 2});
+      IPAddress(base::span<const uint8_t>({192, 168, 1, 2}));
 
   DnsConfig config = CreateValidDnsConfig();
   config.hosts = hosts;
@@ -5242,7 +5251,7 @@ TEST_F(HostResolverManagerDnsTest, ServeFromHosts) {
               testing::Pointee(testing::ElementsAre(ExpectEndpointResult(
                   testing::ElementsAre(CreateExpected("127.0.0.1", 80))))));
   EXPECT_THAT(response_ipv4.request()->GetDnsAliasResults(),
-              testing::Pointee(testing::IsEmpty()));
+              testing::Pointee(ElementsAre("nx_ipv4")));
 
   ResolveHostResponseHelper response_ipv6(resolver_->CreateRequest(
       HostPortPair("nx_ipv6", 80), NetworkAnonymizationKey(),
@@ -5254,7 +5263,7 @@ TEST_F(HostResolverManagerDnsTest, ServeFromHosts) {
               testing::Pointee(testing::ElementsAre(ExpectEndpointResult(
                   testing::ElementsAre(CreateExpected("::1", 80))))));
   EXPECT_THAT(response_ipv6.request()->GetDnsAliasResults(),
-              testing::Pointee(testing::IsEmpty()));
+              testing::Pointee(ElementsAre("nx_ipv6")));
 
   ResolveHostResponseHelper response_both(resolver_->CreateRequest(
       HostPortPair("nx_both", 80), NetworkAnonymizationKey(),
@@ -5269,7 +5278,7 @@ TEST_F(HostResolverManagerDnsTest, ServeFromHosts) {
           ExpectEndpointResult(testing::UnorderedElementsAre(
               CreateExpected("::1", 80), CreateExpected("127.0.0.1", 80))))));
   EXPECT_THAT(response_both.request()->GetDnsAliasResults(),
-              testing::Pointee(testing::IsEmpty()));
+              testing::Pointee(ElementsAre("nx_both")));
 
   // Requests with specified DNS query type.
   HostResolver::ResolveHostParameters parameters;
@@ -5286,7 +5295,7 @@ TEST_F(HostResolverManagerDnsTest, ServeFromHosts) {
               testing::Pointee(testing::ElementsAre(ExpectEndpointResult(
                   testing::ElementsAre(CreateExpected("127.0.0.1", 80))))));
   EXPECT_THAT(response_specified_ipv4.request()->GetDnsAliasResults(),
-              testing::Pointee(testing::IsEmpty()));
+              testing::Pointee(ElementsAre("nx_ipv4")));
 
   parameters.dns_query_type = DnsQueryType::AAAA;
   ResolveHostResponseHelper response_specified_ipv6(resolver_->CreateRequest(
@@ -5300,7 +5309,7 @@ TEST_F(HostResolverManagerDnsTest, ServeFromHosts) {
               testing::Pointee(testing::ElementsAre(ExpectEndpointResult(
                   testing::ElementsAre(CreateExpected("::1", 80))))));
   EXPECT_THAT(response_specified_ipv6.request()->GetDnsAliasResults(),
-              testing::Pointee(testing::IsEmpty()));
+              testing::Pointee(ElementsAre("nx_ipv6")));
 }
 
 TEST_F(HostResolverManagerDnsTest,
@@ -8981,8 +8990,8 @@ TEST_F(HostResolverManagerDnsTest, TxtQuery) {
                   "foo1", "foo2", "foo3", "bar1", "bar2")));
   const std::vector<std::string>* results =
       response.request()->GetTextResults();
-  EXPECT_NE(results->end(), base::ranges::search(*results, foo_records));
-  EXPECT_NE(results->end(), base::ranges::search(*results, bar_records));
+  EXPECT_NE(results->end(), std::ranges::search(*results, foo_records).begin());
+  EXPECT_NE(results->end(), std::ranges::search(*results, bar_records).begin());
 
   // Expect result to be cached.
   EXPECT_EQ(resolve_context_->host_cache()->size(), 1u);
@@ -8995,8 +9004,8 @@ TEST_F(HostResolverManagerDnsTest, TxtQuery) {
               testing::Pointee(testing::UnorderedElementsAre(
                   "foo1", "foo2", "foo3", "bar1", "bar2")));
   results = cached_response.request()->GetTextResults();
-  EXPECT_NE(results->end(), base::ranges::search(*results, foo_records));
-  EXPECT_NE(results->end(), base::ranges::search(*results, bar_records));
+  EXPECT_NE(results->end(), std::ranges::search(*results, foo_records).begin());
+  EXPECT_NE(results->end(), std::ranges::search(*results, bar_records).begin());
 }
 
 TEST_F(HostResolverManagerDnsTest, TxtQueryRejectsIpLiteral) {
@@ -9449,8 +9458,8 @@ TEST_F(HostResolverManagerDnsTest, TxtDnsQuery) {
                   "foo1", "foo2", "foo3", "bar1", "bar2")));
   const std::vector<std::string>* results =
       response.request()->GetTextResults();
-  EXPECT_NE(results->end(), base::ranges::search(*results, foo_records));
-  EXPECT_NE(results->end(), base::ranges::search(*results, bar_records));
+  EXPECT_NE(results->end(), std::ranges::search(*results, foo_records).begin());
+  EXPECT_NE(results->end(), std::ranges::search(*results, bar_records).begin());
 
   // Expect result to be cached.
   EXPECT_EQ(resolve_context_->host_cache()->size(), 1u);
@@ -9463,8 +9472,8 @@ TEST_F(HostResolverManagerDnsTest, TxtDnsQuery) {
               testing::Pointee(testing::UnorderedElementsAre(
                   "foo1", "foo2", "foo3", "bar1", "bar2")));
   results = cached_response.request()->GetTextResults();
-  EXPECT_NE(results->end(), base::ranges::search(*results, foo_records));
-  EXPECT_NE(results->end(), base::ranges::search(*results, bar_records));
+  EXPECT_NE(results->end(), std::ranges::search(*results, foo_records).begin());
+  EXPECT_NE(results->end(), std::ranges::search(*results, bar_records).begin());
 }
 
 TEST_F(HostResolverManagerDnsTest, PtrQuery) {

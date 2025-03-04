@@ -16,7 +16,6 @@
 #include "components/performance_manager/performance_manager_impl.h"
 #include "components/performance_manager/performance_manager_registry_impl.h"
 #include "components/performance_manager/performance_manager_tab_helper.h"
-#include "components/performance_manager/public/performance_manager_owned.h"
 #include "components/performance_manager/resource_attribution/query_scheduler.h"
 #include "content/public/browser/browser_child_process_host.h"
 #include "content/public/browser/child_process_data.h"
@@ -26,6 +25,11 @@ namespace performance_manager {
 
 PerformanceManager::PerformanceManager() = default;
 PerformanceManager::~PerformanceManager() = default;
+
+// static
+Graph* PerformanceManager::GetGraph() {
+  return PerformanceManagerImpl::GetGraphImpl();
+}
 
 // static
 void PerformanceManager::CallOnGraph(const base::Location& from_here,
@@ -72,7 +76,7 @@ base::WeakPtr<PageNode> PerformanceManager::GetPrimaryPageNodeForWebContents(
       PerformanceManagerTabHelper::FromWebContents(wc);
   if (!helper)
     return nullptr;
-  return helper->primary_page_node()->GetWeakPtrOnUIThread();
+  return helper->primary_page_node()->GetWeakPtr();
 }
 
 // static
@@ -91,7 +95,7 @@ base::WeakPtr<FrameNode> PerformanceManager::GetFrameNodeForRenderFrameHost(
     DCHECK(!rfh->IsRenderFrameLive());
     return nullptr;
   }
-  return frame_node->GetWeakPtrOnUIThread();
+  return frame_node->GetWeakPtr();
 }
 
 // static
@@ -102,7 +106,7 @@ PerformanceManager::GetProcessNodeForBrowserProcess() {
     return nullptr;
   }
   ProcessNodeImpl* process_node = registry->GetBrowserProcessNode();
-  return process_node ? process_node->GetWeakPtrOnUIThread() : nullptr;
+  return process_node ? process_node->GetWeakPtr() : nullptr;
 }
 
 // static
@@ -117,7 +121,7 @@ PerformanceManager::GetProcessNodeForRenderProcessHost(
   // indirectly from RenderProcessHost::Init.)
   if (!user_data)
     return nullptr;
-  return user_data->process_node()->GetWeakPtrOnUIThread();
+  return user_data->process_node()->GetWeakPtr();
 }
 
 // static
@@ -150,7 +154,7 @@ PerformanceManager::GetProcessNodeForBrowserChildProcessHostId(
     return nullptr;
   }
   ProcessNodeImpl* process_node = registry->GetBrowserChildProcessNode(id);
-  return process_node ? process_node->GetWeakPtrOnUIThread() : nullptr;
+  return process_node ? process_node->GetWeakPtr() : nullptr;
 }
 
 // static
@@ -161,71 +165,17 @@ base::WeakPtr<WorkerNode> PerformanceManager::GetWorkerNodeForToken(
     return nullptr;
   }
   WorkerNodeImpl* worker_node = registry->FindWorkerNodeForToken(token);
-  return worker_node ? worker_node->GetWeakPtrOnUIThread() : nullptr;
+  return worker_node ? worker_node->GetWeakPtr() : nullptr;
 }
 
 // static
-void PerformanceManager::AddObserver(
-    PerformanceManagerMainThreadObserver* observer) {
+void PerformanceManager::AddObserver(PerformanceManagerObserver* observer) {
   PerformanceManagerRegistryImpl::GetInstance()->AddObserver(observer);
 }
 
 // static
-void PerformanceManager::RemoveObserver(
-    PerformanceManagerMainThreadObserver* observer) {
+void PerformanceManager::RemoveObserver(PerformanceManagerObserver* observer) {
   PerformanceManagerRegistryImpl::GetInstance()->RemoveObserver(observer);
-}
-
-// static
-void PerformanceManager::AddMechanism(
-    PerformanceManagerMainThreadMechanism* mechanism) {
-  PerformanceManagerRegistryImpl::GetInstance()->AddMechanism(mechanism);
-}
-
-// static
-void PerformanceManager::RemoveMechanism(
-    PerformanceManagerMainThreadMechanism* mechanism) {
-  PerformanceManagerRegistryImpl::GetInstance()->RemoveMechanism(mechanism);
-}
-
-// static
-bool PerformanceManager::HasMechanism(
-    PerformanceManagerMainThreadMechanism* mechanism) {
-  return PerformanceManagerRegistryImpl::GetInstance()->HasMechanism(mechanism);
-}
-
-// static
-void PerformanceManager::PassToPM(
-    std::unique_ptr<PerformanceManagerOwned> pm_owned) {
-  return PerformanceManagerRegistryImpl::GetInstance()->PassToPM(
-      std::move(pm_owned));
-}
-
-// static
-std::unique_ptr<PerformanceManagerOwned> PerformanceManager::TakeFromPM(
-    PerformanceManagerOwned* pm_owned) {
-  return PerformanceManagerRegistryImpl::GetInstance()->TakeFromPM(pm_owned);
-}
-
-// static
-void PerformanceManager::RegisterObject(
-    PerformanceManagerRegistered* pm_object) {
-  return PerformanceManagerRegistryImpl::GetInstance()->RegisterObject(
-      pm_object);
-}
-
-// static
-void PerformanceManager::UnregisterObject(
-    PerformanceManagerRegistered* pm_object) {
-  return PerformanceManagerRegistryImpl::GetInstance()->UnregisterObject(
-      pm_object);
-}
-
-// static
-PerformanceManagerRegistered* PerformanceManager::GetRegisteredObject(
-    uintptr_t type_id) {
-  return PerformanceManagerRegistryImpl::GetInstance()->GetRegisteredObject(
-      type_id);
 }
 
 // static
@@ -236,8 +186,8 @@ scoped_refptr<base::SequencedTaskRunner> PerformanceManager::GetTaskRunner() {
 // static
 void PerformanceManager::RecordMemoryMetrics() {
   using QueryScheduler = resource_attribution::internal::QueryScheduler;
-  QueryScheduler::CallWithScheduler(
-      base::BindOnce(&QueryScheduler::RecordMemoryMetrics));
+  QueryScheduler::CallWithScheduler(base::BindOnce(
+      [](QueryScheduler* scheduler) { scheduler->RecordMemoryMetrics(); }));
 }
 
 }  // namespace performance_manager

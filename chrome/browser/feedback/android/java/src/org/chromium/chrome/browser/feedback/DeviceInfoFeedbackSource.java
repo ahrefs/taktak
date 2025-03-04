@@ -5,16 +5,16 @@
 package org.chromium.chrome.browser.feedback;
 
 import android.os.Build;
-import android.util.Pair;
 
 import org.chromium.base.BuildInfo;
-import org.chromium.base.CollectionUtil;
 import org.chromium.base.ContextUtils;
+import org.chromium.build.annotations.NullMarked;
 import org.chromium.ui.base.DeviceFormFactor;
 
 import java.util.Map;
 
 /** Grabs feedback about the device information - name and type. */
+@NullMarked
 class DeviceInfoFeedbackSource implements FeedbackSource {
     private static final String DEVICE_NAME_KEY = "device_name";
     private static final String DEVICE_TYPE_KEY = "device_type";
@@ -39,7 +39,6 @@ class DeviceInfoFeedbackSource implements FeedbackSource {
             type = TYPE_PHONE;
         }
 
-        return CollectionUtil.newHashMap(
-                Pair.create(DEVICE_NAME_KEY, name), Pair.create(DEVICE_TYPE_KEY, type));
+        return Map.of(DEVICE_NAME_KEY, name, DEVICE_TYPE_KEY, type);
     }
 }

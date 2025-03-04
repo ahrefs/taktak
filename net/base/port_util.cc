@@ -25,6 +25,7 @@ namespace {
 // When adding a port to the list, consider also adding it to kAllowablePorts,
 // below. See <https://fetch.spec.whatwg.org/#port-blocking>.
 const int kRestrictedPorts[] = {
+    0,      // Not in Fetch Spec.
     1,      // tcpmux
     7,      // echo
     9,      // discard
@@ -166,10 +167,11 @@ ScopedPortException::ScopedPortException(int port) : port_(port) {
 
 ScopedPortException::~ScopedPortException() {
   auto it = g_explicitly_allowed_ports.Get().find(port_);
-  if (it != g_explicitly_allowed_ports.Get().end())
+  if (it != g_explicitly_allowed_ports.Get().end()) {
     g_explicitly_allowed_ports.Get().erase(it);
-  else
-    NOTREACHED_IN_MIGRATION();
+  } else {
+    NOTREACHED();
+  }
 }
 
 NET_EXPORT bool IsAllowablePort(int port) {
