@@ -44,6 +44,8 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/web_ui_browser_interface_broker_registry.h"
 #include "content/public/browser/web_ui_controller_interface_binder.h"
+#include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
+#include "chrome/browser/ui/webui/side_panel/chat/chat_ui.h"
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
     BUILDFLAG(IS_CHROMEOS)
@@ -505,7 +507,7 @@ void PopulateChromeWebUIFrameBinders(
       SignoutConfirmationUI,
 #endif
       NewTabPageUI, OmniboxPopupUI, BookmarksSidePanelUI, CustomizeChromeUI,
-      UserEducationInternalsUI, ReadingListUI, TabSearchUI, WebuiGalleryUI,
+      UserEducationInternalsUI, ReadingListUI, ChatUI, TabSearchUI, WebuiGalleryUI,
       HistoryClustersSidePanelUI, ShoppingInsightsSidePanelUI,
       media_router::AccessCodeCastUI, commerce::ProductSpecificationsUI>(map);
 
@@ -645,6 +647,9 @@ void PopulateChromeWebUIFrameBinders(
   RegisterWebUIControllerInterfaceBinder<
       side_panel::mojom::BookmarksPageHandlerFactory, BookmarksSidePanelUI>(
       map);
+
+  RegisterWebUIControllerInterfaceBinder<
+      chat::mojom::PageHandlerFactory, ChatUI>(map);
 
   RegisterWebUIControllerInterfaceBinder<
       shopping_service::mojom::ShoppingServiceHandlerFactory,

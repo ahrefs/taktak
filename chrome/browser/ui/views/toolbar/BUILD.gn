@@ -58,6 +58,8 @@ source_set("toolbar") {
     "toolbar_ink_drop_util.h",
     "toolbar_view.cc",
     "toolbar_view.h",
+    "ai_chat_toolbar_button.cc",
+    "ai_chat_toolbar_button.h"
   ]
   public_deps = [
     "//base",

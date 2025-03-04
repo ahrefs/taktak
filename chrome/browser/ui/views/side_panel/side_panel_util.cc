@@ -15,6 +15,9 @@
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/side_panel/bookmarks/bookmarks_side_panel_coordinator.h"
+#include "chrome/browser/ui/views/side_panel/chat/chat_side_panel_coordinator.h"
+#include "chrome/browser/ui/views/side_panel/companion/companion_utils.h"
+#include "chrome/browser/ui/views/side_panel/extensions/extension_side_panel_manager.h"
 #include "chrome/browser/ui/views/side_panel/extensions/extension_side_panel_manager.h"
 #include "chrome/browser/ui/views/side_panel/history_clusters/history_clusters_side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/reading_list/reading_list_side_panel_coordinator.h"
@@ -33,6 +36,10 @@ void SidePanelUtil::PopulateGlobalEntries(Browser* browser,
                                           SidePanelRegistry* window_registry) {
   // Add reading list.
   ReadingListSidePanelCoordinator::GetOrCreateForBrowser(browser)
+      ->CreateAndRegisterEntry(window_registry);
+
+  // Add ai chat
+  ChatSidePanelCoordinator::GetOrCreateForBrowser(browser)
       ->CreateAndRegisterEntry(window_registry);
 
   // Add bookmarks.
@@ -78,6 +85,10 @@ void SidePanelUtil::RecordSidePanelClosed(base::TimeTicks opened_timestamp) {
 
   base::UmaHistogramLongTimes("SidePanel.OpenDuration",
                               base::TimeTicks::Now() - opened_timestamp);
+
+  auto* ai_chat_coordinator =
+      ChatSidePanelCoordinator::GetOrCreateForBrowser(browser);
+  ai_chat_coordinator->UpdateClosingPanelId(id);
 }
 
 void SidePanelUtil::RecordSidePanelResizeMetrics(SidePanelEntry::Id id,
@@ -133,6 +144,10 @@ void SidePanelUtil::RecordEntryShowTriggeredMetrics(
     Browser* browser,
     SidePanelEntry::Id id,
     std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
+  auto* ai_chat_coordinator =
+      ChatSidePanelCoordinator::GetOrCreateForBrowser(browser);
+  ai_chat_coordinator->UpdateOpeningPanelId(id);
+
   if (trigger.has_value()) {
     base::UmaHistogramEnumeration(
         base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),

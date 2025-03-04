@@ -120,6 +120,14 @@
 #include "ui/views/widget/tooltip_manager.h"
 #include "ui/views/widget/widget.h"
 #include "ui/views/window/non_client_view.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_coordinator.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_entry_key.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_enums.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_entry_id.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_ui.h"
+#include "ui/views/background.h"
+#include "ui/views/view.h"
+#include "ui/gfx/color_palette.h"
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 #include "chrome/browser/recovery/recovery_install_global_error_factory.h"
@@ -351,6 +359,10 @@ void ToolbarView::Init() {
   std::unique_ptr<ReloadButton> reload =
       std::make_unique<ReloadButton>(browser_->command_controller());
 
+  std::unique_ptr<AIChatToolbarButton> ai_chat_button = std::make_unique<AIChatToolbarButton>(
+          base::BindRepeating(
+                  &ToolbarView::AIChatButtonPressed, base::Unretained(this)));
+
   PrefService* const prefs = browser_->profile()->GetPrefs();
   std::unique_ptr<HomeButton> home = std::make_unique<HomeButton>(
       base::BindRepeating(callback, browser_, IDC_HOME), prefs);
@@ -503,6 +515,8 @@ void ToolbarView::Init() {
       container_view_->AddChildView(std::make_unique<OverflowButton>());
   overflow_button_->SetVisible(false);
 
+  ai_chat_button_ = container_view_->AddChildView(std::move(ai_chat_button));
+
   auto app_menu_button = std::make_unique<BrowserAppMenuButton>(this);
   app_menu_button->SetFlipCanvasOnPaintForRTLUI(true);
   app_menu_button->GetViewAccessibility().SetName(
@@ -550,6 +564,14 @@ void ToolbarView::Init() {
   }
 
   initialized_ = true;
+}
+
+void ToolbarView::ResetHighlightForAIChatButton() {
+    ai_chat_button_->ResetHighlight();
+}
+
+void ToolbarView::AddHighlightForAIChatButton() {
+    ai_chat_button_->AddHighlight();
 }
 
 void ToolbarView::AnimationEnded(const gfx::Animation* animation) {
@@ -927,6 +949,18 @@ void ToolbarView::NewTabButtonPressed(const ui::Event& event) {
   UMA_HISTOGRAM_ENUMERATION("Tab.NewTab",
                             NewTabTypes::NEW_TAB_BUTTON_IN_TOOLBAR_FOR_TOUCH,
                             NewTabTypes::NEW_TAB_ENUM_COUNT);
+}
+
+void ToolbarView::AIChatButtonPressed(const ui::Event& event) {
+    is_ai_chat_button_active_ = !is_ai_chat_button_active_;
+    if (is_ai_chat_button_active_) {
+        ai_chat_button_->AddHighlight();
+    } else {
+        ai_chat_button_->ResetHighlight();
+    }
+    auto key =  SidePanelEntryKey(SidePanelEntryId::kAIChat);
+    auto *side_panel = browser_view_ -> browser()->GetFeatures().side_panel_ui();
+    side_panel->Toggle(key, SidePanelOpenTrigger::kToolbarButton);
 }
 
 bool ToolbarView::AcceleratorPressed(const ui::Accelerator& accelerator) {

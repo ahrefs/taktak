@@ -1086,11 +1086,8 @@ BrowserView::BrowserView(std::unique_ptr<Browser> browser)
   right_aligned_side_panel_separator_ =
       AddChildView(std::make_unique<ContentsSeparator>());
 
-  const bool is_right_aligned = GetProfile()->GetPrefs()->GetBoolean(
-      prefs::kSidePanelHorizontalAlignment);
   unified_side_panel_ = AddChildView(std::make_unique<SidePanel>(
-      this, is_right_aligned ? SidePanel::HorizontalAlignment::kRight
-                             : SidePanel::HorizontalAlignment::kLeft));
+      this, SidePanel::HorizontalAlignment::kRight));
   left_aligned_side_panel_separator_ =
       AddChildView(std::make_unique<ContentsSeparator>());
   side_panel_rounded_corner_ =

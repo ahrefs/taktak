@@ -608,6 +608,10 @@
     "META": {"sizes": {"includes": [15],}},
     "includes": [4900],
   },
+  "<(SHARED_INTERMEDIATE_DIR)/chrome/browser/resources/side_panel/chat/resources.grd": {
+       "META": {"sizes": {"includes": [20]}},
+       "includes": [4910],
+  },
   "<(SHARED_INTERMEDIATE_DIR)/chrome/browser/resources/side_panel/shared/resources.grd": {
     "META": {"sizes": {"includes": [15],}},
     "includes": [4920],

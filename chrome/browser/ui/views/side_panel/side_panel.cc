@@ -61,7 +61,7 @@ int GetBorderThickness() {
 
 // This is how many units of the toolbar are essentially expected to be
 // background.
-constexpr int kOverlapFromToolbar = 4;
+constexpr int kOverlapFromToolbar = -1;
 
 // We want the border to visually look like GetBorderThickness() units on all
 // sides. On the top side, background is drawn on top of the top-content
@@ -71,7 +71,7 @@ gfx::Insets GetBorderInsets() {
   int border_thickness = GetBorderThickness();
   return gfx::Insets::TLBR(
       border_thickness - views::Separator::kThickness - kOverlapFromToolbar,
-      border_thickness, border_thickness, border_thickness);
+      border_thickness, -border_thickness, border_thickness);
 }
 
 constexpr int kAnimationDurationMs = 450;
@@ -104,9 +104,7 @@ class SidePanelBorder : public views::Border {
         view.GetLocalBounds(), view.layer()->device_scale_factor());
 
     gfx::RectF scaled_contents_bounds_f = scaled_view_bounds_f;
-    const float corner_radius =
-        dsf * view.GetLayoutProvider()->GetCornerRadiusMetric(
-                  views::ShapeContextTokens::kSidePanelContentRadius);
+    const float corner_radius = 16;
     const gfx::InsetsF insets_in_pixels(
         gfx::ConvertInsetsToPixels(GetInsets(), dsf));
     scaled_contents_bounds_f.Inset(insets_in_pixels);
@@ -142,6 +140,7 @@ class SidePanelBorder : public views::Border {
       // border. This is done in DIPs because for some device scale factors, the
       // conversion to pixels can cause the clip to be off by a pixel, resulting
       // in a pixel gap between the side panel border and web contents.
+
       canvas->ClipPath(rounded_border_path, /*do_anti_alias=*/true);
 
       // Draw the top-container background.
@@ -149,14 +148,11 @@ class SidePanelBorder : public views::Border {
     }
 
     // Paint the inner border around SidePanel content. Since half the stroke
-    // gets painted in the clipped area, make this twice as thick, and scale
-    // the thickness by device scale factor since we're working in pixels.
-    const float stroke_thickness = views::Separator::kThickness * 2 * dsf;
-
+    // gets painted in the clipped area, make this twice as thick.
+    const float stroke_thickness = views::Separator::kThickness * 4;
     cc::PaintFlags flags;
     flags.setStrokeWidth(stroke_thickness);
-    flags.setColor(
-        view.GetColorProvider()->GetColor(kColorSidePanelContentAreaSeparator));
+    flags.setColor(view.GetColorProvider()->GetColor(kColorYepChatPanelBorder));
     flags.setStyle(cc::PaintFlags::kStroke_Style);
     flags.setAntiAlias(true);
 
@@ -171,8 +167,9 @@ class SidePanelBorder : public views::Border {
     // header to paint on top of the border area.
     int top_inset =
         views::Separator::kThickness + header_height_ - GetBorderThickness();
-    return GetBorderInsets() + gfx::Insets::TLBR(top_inset, 0, 0, 0);
+    return GetBorderInsets() + gfx::Insets::TLBR(top_inset, 0, 0, 2);
   }
+
   gfx::Size GetMinimumSize() const override {
     return gfx::Size(GetInsets().width(), GetInsets().height());
   }
@@ -432,10 +429,11 @@ void SidePanel::AddHeaderView(std::unique_ptr<views::View> view) {
     RemoveChildView(header_view_);
   }
   header_view_ = view.get();
+  header_view_->SetVisible(false);
   AddChildView(std::move(view));
   static_cast<BorderView*>(border_view_)->HeaderViewChanged(header_view_);
-  // Update the border so that the insets include space for the header to be
-  // placed on top of the border.
+  //  // Update the border so that the insets include space for the header to be
+  //  // placed on top of the border.
   int top_inset = header_view_->height() - GetBorderThickness();
   SetBorder(views::CreateEmptyBorder(GetBorderInsets() +
                                      gfx::Insets::TLBR(top_inset, 0, 0, 0)));

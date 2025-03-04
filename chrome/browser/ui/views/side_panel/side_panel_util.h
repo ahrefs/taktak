@@ -39,7 +39,9 @@ class SidePanelUtil {
   static void RecordSidePanelOpen(std::optional<SidePanelOpenTrigger> trigger);
   static void RecordSidePanelShowOrChangeEntryTrigger(
       std::optional<SidePanelOpenTrigger> trigger);
-  static void RecordSidePanelClosed(base::TimeTicks opened_timestamp);
+  static void RecordSidePanelClosed(Browser* browser,
+                                    SidePanelEntry::Id id,
+                                    base::TimeTicks opened_timestamp);
   static void RecordSidePanelResizeMetrics(SidePanelEntry::Id id,
                                            int side_panel_contents_width,
                                            int browser_window_width);
