@@ -6,10 +6,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "base/containers/contains.h"
 #include "base/metrics/histogram_macros.h"
-#include "base/ranges/algorithm.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
@@ -174,7 +174,7 @@ void PageContentExtractor::ExtractPageText(
     if (content_nodes_this_root.empty()) {
       content_nodes.emplace_back(content_root_node);
     } else {
-      base::ranges::move(content_nodes_this_root,
+      std::ranges::move(content_nodes_this_root,
                          std::back_inserter(content_nodes));
     }
   }
@@ -218,7 +218,7 @@ void PageContentExtractor::ExtractPageText(
         };
 
     render_frame->GetWebFrame()->RequestExecuteScript(
-        isolated_world_id, UNSAFE_TODO(base::make_span(&source, 1u)),
+        isolated_world_id, UNSAFE_TODO(base::span(&source, 1u)),
         blink::mojom::UserActivationOption::kDoNotActivate,
         blink::mojom::EvaluationTiming::kAsynchronous,
         blink::mojom::LoadEventBlockingOption::kDoNotBlock,

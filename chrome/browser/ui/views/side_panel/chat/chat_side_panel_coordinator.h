@@ -5,6 +5,7 @@
 #include "chrome/browser/ui/views/side_panel/side_panel_entry_id.h"
 
 class Browser;
+class SidePanelEntryScope;
 class SidePanelRegistry;
 
 namespace views {
@@ -23,7 +24,8 @@ class ChatSidePanelCoordinator
 
  private:
   friend class BrowserUserData<ChatSidePanelCoordinator>;
-  std::unique_ptr<views::View> CreateChatWebView();
+  std::unique_ptr<views::View> CreateChatWebView(
+          SidePanelEntryScope& scope);
 
   BROWSER_USER_DATA_KEY_DECL();
 };

@@ -1,4 +1,4 @@
-import './strings.m.js';
+import '/strings.m.js';
 import '//resources/cr_elements/cr_button/cr_button.js';
 import '//resources/cr_elements/cr_icon_button/cr_icon_button.js';
 import '//resources/cr_elements/cr_input/cr_input.js';
@@ -259,7 +259,11 @@ export class ChatAppElement extends CrLitElement {
         e.preventDefault();
         this.logConversations();
         // Todo: to fix the error that occurs when the side panel is closed while extraction content is in progress
-        this.chatApiProxy_.closeUI();
+        if (this.isQuerySubmitting_) {
+            setTimeout(() => this.chatApiProxy_.closeUI(), 1000);
+        } else {
+            this.chatApiProxy_.closeUI();
+        }
     }
 
     onLoad() {

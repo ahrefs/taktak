@@ -27,7 +27,9 @@ class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
   using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
   METADATA_HEADER(ChatSidePanelWebView, SidePanelWebUIViewT_ChatUI)
  public:
-  ChatSidePanelWebView(Browser* browser, base::RepeatingClosure close_cb);
+  ChatSidePanelWebView(Browser* browser,
+                       SidePanelEntryScope& scope,
+                       base::RepeatingClosure close_cb);
   ChatSidePanelWebView(const ChatSidePanelWebView&) = delete;
   ChatSidePanelWebView& operator=(const ChatSidePanelWebView&) = delete;
   ~ChatSidePanelWebView() override;

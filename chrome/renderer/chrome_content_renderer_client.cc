@@ -796,14 +796,14 @@ void ChromeContentRendererClient::RenderFrameCreated(
     new wallet::BoardingPassExtractor(render_frame, registry);
   }
 #endif
-}
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
-if (render_frame->IsMainFrame() && !IsIncognitoProcess()) {
-    new ai_chat::PageContentExtractor(render_frame, registry,
+    if (render_frame->IsMainFrame() && !IsIncognitoProcess()) {
+        new ai_chat::PageContentExtractor(render_frame, registry,
                                       ISOLATED_WORLD_ID_CHROME_INTERNAL);
-  }
+    }
 #endif
+}
 
 void ChromeContentRendererClient::WebViewCreated(
     blink::WebView* web_view,

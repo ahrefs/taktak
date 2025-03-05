@@ -29,8 +29,9 @@ void ChatSidePanelCoordinator::CreateAndRegisterEntry(
                           base::Unretained(this))));
 }
 
-std::unique_ptr<views::View> ChatSidePanelCoordinator::CreateChatWebView() {
-  return std::make_unique<ChatSidePanelWebView>(&GetBrowser(),
+std::unique_ptr<views::View> ChatSidePanelCoordinator::CreateChatWebView(
+        SidePanelEntryScope& scope) {
+  return std::make_unique<ChatSidePanelWebView>(&GetBrowser(), scope,
                                                 base::RepeatingClosure());
 }
 

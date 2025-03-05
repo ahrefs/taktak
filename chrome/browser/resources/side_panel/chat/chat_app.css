@@ -1,6 +1,5 @@
 /* #css_wrapper_metadata_start
 * #type=style-lit
-* #import=../chat_app.css.js
 * #scheme=relative
 * #css_wrapper_metadata_end */
 
@@ -499,7 +498,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
     width: 18px;
     height: 18px;
     border: none;

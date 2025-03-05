@@ -3,6 +3,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "base/check.h"
 #include "base/check_op.h"
@@ -13,8 +14,6 @@
 #include "base/json/json_writer.h"
 #include "base/memory/raw_ptr.h"
 #include "base/metrics/histogram_functions.h"
-#include "base/ranges/algorithm.h"
-#include "base/rust_buildflags.h"
 #include "base/strings/string_split.h"
 #include "base/task/thread_pool.h"
 #include "base/time/time.h"

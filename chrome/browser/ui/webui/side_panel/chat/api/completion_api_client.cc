@@ -155,9 +155,7 @@ void CompletionApiClient::OnQueryCompleted(
         const std::string *value =
                 result.value_body().GetDict().FindString("message");
         if (value) {
-            // Trimming necessary for Llama 2 which prepends responses with a " ".
-            auto error_message = base::TrimWhitespaceASCII(*value, base::TRIM_ALL);
-            DVLOG(0) << "Error message: " << error_message;
+            DVLOG(0) << "Error message: " << *value;
         }
     }
 

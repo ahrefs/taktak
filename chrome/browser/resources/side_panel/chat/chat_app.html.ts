@@ -1,5 +1,7 @@
 import 'chrome://resources/cr_elements/cr_icon/cr_icon.js';
-import 'chrome://resources/cr_elements/icons_lit.html.js';
+import 'chrome://resources/cr_elements/icons.html.js';
+import 'chrome://resources/cr_elements/cr_icon/cr_iconset.js';
+
 import {getTrustedHTML} from 'chrome://resources/js/parse_html_subset.js';
 import {ChatAppElement, ActionOnExtractedContent} from "./chat_app.js";
 import {html} from '//resources/lit/v3_0/lit.rollup.js';

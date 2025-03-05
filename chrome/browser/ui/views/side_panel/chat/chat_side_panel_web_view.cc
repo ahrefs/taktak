@@ -33,8 +33,10 @@ BEGIN_TEMPLATE_METADATA(SidePanelWebUIViewT_ChatUI, SidePanelWebUIViewT)
 END_METADATA
 
 ChatSidePanelWebView::ChatSidePanelWebView(Browser* browser,
+                                           SidePanelEntryScope& scope,
                                            base::RepeatingClosure close_cb)
     : SidePanelWebUIViewT(
+          scope,
           base::BindRepeating(&ChatSidePanelWebView::UpdateActiveWebContents,
                               base::Unretained(this)),
           close_cb,
