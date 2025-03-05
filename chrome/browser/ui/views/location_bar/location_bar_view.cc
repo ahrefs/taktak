@@ -490,7 +490,7 @@ bool LocationBarView::IsInitialized() const {
 
 int LocationBarView::GetBorderRadius() const {
   return ChromeLayoutProvider::Get()->GetCornerRadiusMetric(
-      views::Emphasis::kMaximum, size());
+      views::Emphasis::kHigh, size());
 }
 
 std::unique_ptr<views::Background> LocationBarView::CreateRoundRectBackground(

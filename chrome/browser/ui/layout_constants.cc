@@ -52,7 +52,8 @@ int GetLayoutConstant(LayoutConstant constant) {
     case LOCATION_BAR_CHILD_INTERIOR_PADDING:
       return 3;
     case LOCATION_BAR_CHILD_CORNER_RADIUS:
-      return 12;
+      // return 12;
+      return 0;
     case LOCATION_BAR_CHIP_ICON_SIZE:
       return 16;
     case LOCATION_BAR_CHIP_PADDING:
@@ -73,7 +74,8 @@ int GetLayoutConstant(LayoutConstant constant) {
     case LOCATION_BAR_TRAILING_DECORATION_INNER_PADDING:
       return touch_ui ? 3 : 8;
     case LOCATION_BAR_HEIGHT:
-      return touch_ui ? 36 : 34;
+      // return touch_ui ? 36 : 34;
+      return touch_ui ? 30 : 28; // toolbar_button height is changed too
     case LOCATION_BAR_ICON_SIZE:
       return touch_ui ? 20 : 16;
     case LOCATION_BAR_LEADING_ICON_SIZE:
@@ -116,11 +118,14 @@ int GetLayoutConstant(LayoutConstant constant) {
       }
       return 1;
     case TOOLBAR_BUTTON_HEIGHT:
-      return touch_ui ? 48 : 34;
+      // return touch_ui ? 48 : 34;
+      return touch_ui ? 48 : 28;
     case TOOLBAR_DIVIDER_CORNER_RADIUS:
-      return 1;
+      // return 1;
+      return 0;
     case TOOLBAR_DIVIDER_HEIGHT:
-      return touch_ui ? 20 : 16;
+      // return touch_ui ? 20 : 16;
+      return touch_ui ? 18 : 14;
     case TOOLBAR_DIVIDER_SPACING:
       return 9;
     case TOOLBAR_DIVIDER_WIDTH:
@@ -136,7 +141,8 @@ int GetLayoutConstant(LayoutConstant constant) {
     case DOWNLOAD_ICON_SIZE:
       return 20;
     case TOOLBAR_CORNER_RADIUS:
-      return 8;
+      // return 8;
+      return 0;
     default:
       break;
   }
