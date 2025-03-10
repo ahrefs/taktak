@@ -1,4 +1,4 @@
-// Copyright 2012 The Chromium Authors
+// Copyright 2012 The Taktak Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -60,7 +60,7 @@ char* ProductDirNameForBundle(NSBundle* chrome_bundle) {
 #elif BUILDFLAG(GOOGLE_CHROME_BRANDING)
       product_dir_name = "Google/Chrome";
 #else
-      product_dir_name = "Chromium";
+      product_dir_name = "Taktak";
 #endif
     }
 
@@ -74,7 +74,7 @@ char* ProductDirNameForBundle(NSBundle* chrome_bundle) {
 // ~/Library/Application Support that should hold the product application
 // data. This can be overridden by setting the CrProductDirName key in the
 // outer browser .app's Info.plist. The default is "Google/Chrome" for
-// officially-branded builds, and "Chromium" for unbranded builds. For the
+// officially-branded builds, and "Taktak" for unbranded builds. For the
 // official canary channel, the Info.plist will have CrProductDirName set
 // to "Google/Chrome Canary".
 std::string ProductDirName() {
@@ -173,13 +173,13 @@ base::FilePath GetFrameworkBundlePath() {
   DCHECK_EQ(path.BaseName().value(), "Contents");
 
   if (base::apple::IsBackgroundOnlyProcess()) {
-    // |path| is Chromium.app/Contents/Frameworks/Chromium Framework.framework/
-    // Versions/X/Helpers/Chromium Helper.app/Contents. Go up three times to
+    // |path| is Taktak.app/Contents/Frameworks/Taktak Framework.framework/
+    // Versions/X/Helpers/Taktak Helper.app/Contents. Go up three times to
     // the versioned framework directory.
     path = path.DirName().DirName().DirName();
   } else {
-    // |path| is Chromium.app/Contents, so go down to
-    // Chromium.app/Contents/Frameworks/Chromium Framework.framework/Versions/X.
+    // |path| is Taktak.app/Contents, so go down to
+    // Taktak.app/Contents/Frameworks/Taktak Framework.framework/Versions/X.
     path = path.Append("Frameworks")
                .Append(kFrameworkName)
                .Append("Versions")

@@ -385,7 +385,7 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_TRACKING_PROTECTION_IP_PROTECTION_TOGGLE_SUB_LABEL" desc="Sub-label for the IP protection toggle. Explains that the feature only works for signed-in users and that some traffic may be sent through privacy servers when the feature is on. Provides a link to a help center article.">
-              When you're signed in to Chromium, this setting helps keep your IP address private. If Chromium suspects a site may be tracking you, some of your traffic may be sent through privacy servers. Learn more about <ph name="LINK_BEGIN">&lt;a href="#" aria-label="$1" aria-description="$2" target="_blank"&gt;</ph>how IP protection works<ph name="LINK_END">&lt;/a&gt;</ph>
+              When you're signed in to Taktak, this setting helps keep your IP address private. If Taktak suspects a site may be tracking you, some of your traffic may be sent through privacy servers. Learn more about <ph name="LINK_BEGIN">&lt;a href="#" aria-label="$1" aria-description="$2" target="_blank"&gt;</ph>how IP protection works<ph name="LINK_END">&lt;/a&gt;</ph>
           </message>
         </else>
       </if>
@@ -566,13 +566,13 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_SITE_SUGGESTED_ADS_CURRENT_SITES_DESCRIPTION_V2" desc="This string signals to users that they have the ability to block any website they don’t want using their activity. “Auto-deletes” means “automatically deletes”." formatter_data="android_java">
-            You can block sites you don't want. Chromium also auto-deletes sites from the list that are older than 30 days.
+            You can block sites you don't want. Taktak also auto-deletes sites from the list that are older than 30 days.
           </message>
           <message name="IDS_SETTINGS_SITE_SUGGESTED_ADS_PAGE_LEARN_MORE_BULLET_3_V2" desc="This string appears in the “More about site-suggested ads” dialog. “Activity data” refers to information about a user's actions or behaviors on the internet.">
-            Chromium deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK1">&lt;a href="$1" aria-description="$2" target="_blank"&gt;</ph>managing your ad privacy in Chromium<ph name="LINK_END1">&lt;/a&gt;</ph>.
+            Taktak deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK1">&lt;a href="$1" aria-description="$2" target="_blank"&gt;</ph>managing your ad privacy in Taktak<ph name="LINK_END1">&lt;/a&gt;</ph>.
           </message>
           <message name="IDS_SETTINGS_SITE_SUGGESTED_ADS_PAGE_LEARN_MORE_BULLET_3_V2_CLANK" desc="This string appears in the “More about site-suggested ads” dialog. “Activity data” refers to information about a user's actions or behaviors on the internet." formatter_data="android_java">
-            Chromium deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK">&lt;link&gt;</ph>managing your ad privacy in Chromium<ph name="END_LINK">&lt;/link&gt;</ph>.
+            Taktak deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK">&lt;link&gt;</ph>managing your ad privacy in Taktak<ph name="END_LINK">&lt;/link&gt;</ph>.
           </message>
         </else>
       </if>
@@ -659,16 +659,16 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET1" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            Chromium notes topics of interest based on your recent browsing history. For example, things like Sports, Apparel, and more
+            Taktak notes topics of interest based on your recent browsing history. For example, things like Sports, Apparel, and more
           </message>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET2" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            Sites you visit can ask Chromium for topics that help limit what sites and their advertising partners can learn about you to show you personalized ads
+            Sites you visit can ask Taktak for topics that help limit what sites and their advertising partners can learn about you to show you personalized ads
           </message>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET3" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            Chromium auto-deletes ad topics that are older than 4 weeks
+            Taktak auto-deletes ad topics that are older than 4 weeks
           </message>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_THINGS_TO_CONSIDER_BULLET1" desc="A part of the things to consider section of the Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            You can see your ad topics in Chromium settings and block the ones you don't want shared with sites
+            You can see your ad topics in Taktak settings and block the ones you don't want shared with sites
           </message>
         </else>
       </if>
@@ -693,7 +693,7 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_AD_TOPICS_PAGE_ACTIVE_TOPICS_DESCRIPTION" desc="A description that appears beneath the 'Active topics' label." translateable="false" formatter_data="android_java">
-            Chromium auto-deletes ad topics that are older than 4 weeks
+            Taktak auto-deletes ad topics that are older than 4 weeks
           </message>
         </else>
       </if>
