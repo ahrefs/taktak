@@ -3624,6 +3624,13 @@ void BrowserView::Paste() {
   CutCopyPaste(IDC_PASTE);
 }
 
+
+void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_handle) {
+    DVLOG(0) << "[[ BrowserView::DidFinishNavigation() ]] :" << navigation_handle->GetURL().spec();
+
+    // Todo: to implement to call clickstream api to save user visited urls
+}
+
 // TODO(devint): http://b/issue?id=1117225 Cut, Copy, and Paste are always
 // enabled in the page menu regardless of whether the command will do
 // anything. When someone selects the menu item, we just act as if they hit

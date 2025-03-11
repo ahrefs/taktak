@@ -905,7 +905,10 @@ class BrowserView : public BrowserWindow,
   void Copy();
   void Paste();
 
- protected:
+  // WebContentsObserver implementation
+  void DidFinishNavigation(content::NavigationHandle* navigation_handle) override;
+
+protected:
   // Enumerates where the devtools are docked relative to the browser's main
   // web contents.
   enum class DevToolsDockedPlacement {
