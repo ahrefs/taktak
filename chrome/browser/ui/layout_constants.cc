@@ -75,7 +75,7 @@ int GetLayoutConstant(LayoutConstant constant) {
             return touch_ui ? 3 : 8;
         case LOCATION_BAR_HEIGHT:
             // return touch_ui ? 36 : 34;
-            return touch_ui ? 30 : 28; // toolbar_button height is changed too
+            return touch_ui ? 26 : 24; // toolbar_button height is changed too
         case LOCATION_BAR_ICON_SIZE:
             return touch_ui ? 20 : 16;
         case LOCATION_BAR_LEADING_ICON_SIZE:

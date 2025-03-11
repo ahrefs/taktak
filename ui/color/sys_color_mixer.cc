@@ -314,6 +314,9 @@ void AddSysColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
   mixer[kColorSysOmniboxContainer] = {dark_mode ? kColorRefNeutral15
                                                 : kColorSysSurface4};
 
+  // Taktak
+  mixer[kColorTransparent] = {SK_ColorTRANSPARENT};
+
   // Deprecated.
   // TODO(crbug.com/350783235): Remove remaining uses of these deprecated sys
   // tokens.
