@@ -128,6 +128,7 @@
 #include "ui/views/background.h"
 #include "ui/views/view.h"
 #include "ui/gfx/color_palette.h"
+#include "chrome/renderer/process_state.h"
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 #include "chrome/browser/recovery/recovery_install_global_error_factory.h"
@@ -515,7 +516,9 @@ void ToolbarView::Init() {
       container_view_->AddChildView(std::make_unique<OverflowButton>());
   overflow_button_->SetVisible(false);
 
-  ai_chat_button_ = container_view_->AddChildView(std::move(ai_chat_button));
+  if (!IsIncognitoProcess() && !browser_->profile()->IsIncognitoProfile()) {
+      ai_chat_button_ = container_view_->AddChildView(std::move(ai_chat_button));
+  }
 
   auto app_menu_button = std::make_unique<BrowserAppMenuButton>(this);
   app_menu_button->SetFlipCanvasOnPaintForRTLUI(true);
@@ -567,11 +570,15 @@ void ToolbarView::Init() {
 }
 
 void ToolbarView::ResetHighlightForAIChatButton() {
-    ai_chat_button_->ResetHighlight();
+    if(ai_chat_button_) {
+        ai_chat_button_->ResetHighlight();
+    }
 }
 
 void ToolbarView::AddHighlightForAIChatButton() {
-    ai_chat_button_->AddHighlight();
+    if(ai_chat_button_) {
+        ai_chat_button_->AddHighlight();
+    }
 }
 
 void ToolbarView::AnimationEnded(const gfx::Animation* animation) {
