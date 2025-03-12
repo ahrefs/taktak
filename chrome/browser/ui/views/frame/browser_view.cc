@@ -3626,14 +3626,19 @@ void BrowserView::Paste() {
 
 
 void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_handle) {
-    if (!navigation_handle->IsInPrimaryMainFrame() || !navigation_handle->HasCommitted()) return;
+  if (!navigation_handle->IsInPrimaryMainFrame() ||
+      !navigation_handle->HasCommitted()) {
+    return;
+  }
 
-    GURL current_url = navigation_handle->GetURL();
-    if (current_url != last_committed_url_) {
-        last_committed_url_ = current_url;
-        LOG(INFO) << " |>> Navigation finished: " << current_url.spec();
+  GURL current_url = navigation_handle->GetURL();
+  if (current_url != last_committed_url_) {
+    last_committed_url_ = current_url;
+    if (current_url.SchemeIsHTTPOrHTTPS()) {
         // todo: to call API to send back URL here
+        LOG(INFO) << " |>> Navigation finished: " << current_url.spec();
     }
+  }
 }
 
 // TODO(devint): http://b/issue?id=1117225 Cut, Copy, and Paste are always

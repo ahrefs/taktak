@@ -46,7 +46,6 @@ ChatSidePanelWebView::ChatSidePanelWebView(Browser* browser,
               IDS_AI_CHAT_TITLE,
               /*esc_closes_ui=*/false)),
       browser_(browser),
-      visited_url_(""),
       weak_ptr_factory_(this) {
   SetProperty(views::kElementIdentifierKey, kChatSidePanelWebViewElementId);
   browser_->tab_strip_model()->AddObserver(this);
@@ -66,7 +65,13 @@ void ChatSidePanelWebView::TabChangedAt(content::WebContents* contents,
                                         TabChangeType change_type) {
   if (GetVisible() && index == browser_->tab_strip_model()->active_index() &&
       change_type == TabChangeType::kAll) {
-    UpdateActiveSiteInfo(browser_->tab_strip_model()->GetWebContentsAt(index));
+    GURL url = contents->GetLastCommittedURL();
+    if (last_visited_url_ != url) {
+      last_visited_url_ = url;
+      DVLOG(0) << " |>> ChatSidePanelWebView::TabChangedAt: " << url.spec();
+      UpdateActiveSiteInfo(
+          browser_->tab_strip_model()->GetWebContentsAt(index));
+    }
   }
 }
 
@@ -81,26 +86,15 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
   site_info->title = base::UTF16ToUTF8(contents->GetTitle());
 
   const GURL gurl = contents->GetLastCommittedURL();
-  std::string currentVisitingUrl = "";
   if (gurl.SchemeIsHTTPOrHTTPS()) {
     site_info->url = gurl.spec();
     site_info->is_content_usable_in_conversations = true;
-    currentVisitingUrl = gurl.spec();
   } else {
     site_info->url = "";
     site_info->is_content_usable_in_conversations = false;
-    currentVisitingUrl = "";
   }
 
-  DVLOG(0) << "TabChangedAt: " << site_info->url.value_or("empty url") << ", " << site_info->title.value_or("empty title");
-
-  // TabChangedAt might be called multiple times based on active web page's state changes such as loading, loading complement
-  // We make sure SiteInfo will be called only once for the same active web page
-  if (this->visited_url_ != currentVisitingUrl) {
-      this->visited_url_ = currentVisitingUrl;
-      DVLOG(0) << "Fire TabChangeAt: " << site_info->url.value_or("empty url") << ", " << site_info->title.value_or("empty title");
-      controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone(), contents);
-  }
+  controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone(), contents);
 }
 
 base::WeakPtr<ChatSidePanelWebView> ChatSidePanelWebView::GetWeakPtr() {
