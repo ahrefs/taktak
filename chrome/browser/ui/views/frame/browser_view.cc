@@ -3626,9 +3626,14 @@ void BrowserView::Paste() {
 
 
 void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_handle) {
-    DVLOG(0) << "[[ BrowserView::DidFinishNavigation() ]] :" << navigation_handle->GetURL().spec();
+    if (!navigation_handle->IsInPrimaryMainFrame() || !navigation_handle->HasCommitted()) return;
 
-    // Todo: to implement to call clickstream api to save user visited urls
+    GURL current_url = navigation_handle->GetURL();
+    if (current_url != last_committed_url_) {
+        last_committed_url_ = current_url;
+        LOG(INFO) << " |>> Navigation finished: " << current_url.spec();
+        // todo: to call API to send back URL here
+    }
 }
 
 // TODO(devint): http://b/issue?id=1117225 Cut, Copy, and Paste are always

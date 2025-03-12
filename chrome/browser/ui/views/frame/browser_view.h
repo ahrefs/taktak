@@ -1420,6 +1420,8 @@ protected:
 
   ui::OmniboxPopupCloser omnibox_popup_closer_{this};
 
+  GURL last_committed_url_;
+
   mutable base::WeakPtrFactory<BrowserView> weak_ptr_factory_{this};
 };
 
