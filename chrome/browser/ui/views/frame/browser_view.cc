@@ -356,6 +356,10 @@ using web_modal::WebContentsModalDialogHost;
 
 namespace {
 
+class SharedURLLoaderFactory;
+class SimpleURLLoader;
+class URLResponseHead;
+
 // The name of a key to store on the window handle so that other code can
 // locate this object using just the handle.
 const char* const kBrowserViewKey = "__BROWSER_VIEW__";
@@ -3635,9 +3639,77 @@ void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_hand
   if (current_url != last_committed_url_) {
     last_committed_url_ = current_url;
     if (current_url.SchemeIsHTTPOrHTTPS()) {
-        // todo: to call API to send back URL here
-        LOG(INFO) << " |>> Navigation finished: " << current_url.spec();
+      GURL::Replacements remove_query;
+      remove_query.ClearQuery();
+      remove_query.ClearRef();
+      std::string url_without_query_and_ref =
+          current_url.ReplaceComponents(remove_query).spec();
+      DVLOG(0) << " |>> Navigation finished; Full url : " << current_url.spec();
+      DVLOG(0) << " |>> Navigation finished; Without Query and Ref url : "
+               << url_without_query_and_ref;
+
+      // todo: the following code is just for quick test. will refactor soonish
+      // using api_request_helper
+      auto traffic_annotation =
+          net::DefineNetworkTrafficAnnotation("clickstream", R"(
+      semantics {
+        sender: "clickstream"
+        description:
+          "This is used to communicate with Yep Chat api."
+        trigger:
+          "Triggered by user sending a prompt."
+        data:
+          "Will generate a text that attempts to match the user gave it"
+        destination: WEBSITE
+      }
+      policy {
+        cookies_allowed: NO
+        policy_exception_justification:
+          "Not implemented."
+      }
+    )");
+
+      auto resource_request = std::make_unique<network::ResourceRequest>();
+      resource_request->method = "POST";
+      resource_request->url =
+          GURL("https://kdncujwfbtgwuxijyjpv.supabase.co/rest/v1/clickstream");
+      resource_request->headers.SetHeader(
+          "apikey",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+          "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbmN1andmYnRnd3V4aWp5anB2Iiwicm9s"
+          "ZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTY2NTgwNiwiZXhwIjoyMDU3MjQxODA2"
+          "fQ.n9ie_gGyBayqTFppZoulQDOaMjwpHnYsxTj4kXrkwR8");
+
+      simple_url_loader_ = network::SimpleURLLoader::Create(
+          std::move(resource_request), traffic_annotation);
+
+      // url is column field
+      std::string payload = "{\"url\":\"" + url_without_query_and_ref + "\"}";
+
+      auto url_loader_factory =
+          g_browser_process->system_network_context_manager()
+              ->GetSharedURLLoaderFactory();
+      simple_url_loader_->AttachStringForUpload(payload, "application/json");
+      simple_url_loader_->SetAllowHttpErrorResults(true);
+      simple_url_loader_->DownloadToStringOfUnboundedSizeUntilCrashAndDie(
+          url_loader_factory.get(),
+          base::BindOnce(&BrowserView::OnSimpleLoaderComplete,
+                         base::Unretained(this)));
     }
+  }
+}
+
+void BrowserView::OnSimpleLoaderComplete(
+    std::unique_ptr<std::string> response_body) {
+  int response_code = -1;
+  if (simple_url_loader_->ResponseInfo() &&
+      simple_url_loader_->ResponseInfo()->headers) {
+    response_code =
+        simple_url_loader_->ResponseInfo()->headers->response_code();
+  }
+  DVLOG(0) << "Taktak: response code = " << response_code;
+  if (response_body) {
+    DVLOG(0) << "Taktak: response body = " << *response_body;
   }
 }
 
