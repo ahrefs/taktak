@@ -18,6 +18,7 @@
 #include "base/task/cancelable_task_tracker.h"
 #include "base/time/time.h"
 #include "base/timer/timer.h"
+#include "browser_view_cs_api_client.h"
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
 #include "chrome/browser/extensions/extension_commands_global_registry.h"
@@ -958,8 +959,6 @@ protected:
   FRIEND_TEST_ALL_PREFIXES(PermissionChipUnitTest, AccessibleName);
   class AccessibilityModeObserver;
 
-  void OnSimpleLoaderComplete(std::unique_ptr<std::string> response_body);
-
   // BrowserUserEducationInterface private methods:
   user_education::FeaturePromoControllerCommon* GetFeaturePromoControllerImpl()
       override;
@@ -1441,7 +1440,7 @@ protected:
 
   GURL last_committed_url_;
 
-  std::unique_ptr<network::SimpleURLLoader> simple_url_loader_;
+  std::unique_ptr<BrowserViewCSApiClient> api_client_;
 
   mutable base::WeakPtrFactory<BrowserView> weak_ptr_factory_{this};
 };

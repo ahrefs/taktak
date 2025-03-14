@@ -1,5 +1,5 @@
-#ifndef CHROMIUM_COMPLETION_API_CLIENT_H
-#define CHROMIUM_COMPLETION_API_CLIENT_H
+#ifndef CHROMIUM_COMPLETION_Web_CLIENT_H
+#define CHROMIUM_COMPLETION_Web_CLIENT_H
 
 #include <memory>
 #include <optional>
@@ -11,15 +11,15 @@
 #include "base/functional/callback_forward.h"
 #include "base/memory/weak_ptr.h"
 #include "base/types/expected.h"
-#include "components/web_request_helper/web_request_helper.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
+#include "components/web_request_helper/web_request_helper.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 
 namespace network {
     class SharedURLLoaderFactory;
 }  // namespace network
 
-using web_request_helper::APIRequestResult;
+using web_request_helper::WebRequestResult;
 
 struct CompletionMessage {
     std::string content;
@@ -53,12 +53,12 @@ private:
     void OnQueryDataReceived(GenerationDataCallback callback,
                              base::expected<base::Value, std::string> result);
     void OnQueryCompleted(GenerationCompletedCallback callback,
-                          APIRequestResult result);
+                          WebRequestResult result);
 
-    web_request_helper::APIRequestHelper api_request_helper_;
+    web_request_helper::WebRequestHelper web_request_helper_;
     std::vector<std::string> entire_completion_result;
 
     base::WeakPtrFactory<CompletionApiClient> weak_ptr_factory_{this};
 };
 
-#endif  // CHROMIUM_COMPLETION_API_CLIENT_H
+#endif  // CHROMIUM_COMPLETION_Web_CLIENT_H
