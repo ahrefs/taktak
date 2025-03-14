@@ -1,4 +1,4 @@
-#include "api_request_helper.h"
+#include "web_request_helper.h"
 
 #include <string_view>
 #include <utility>
@@ -26,7 +26,7 @@
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/network/public/mojom/url_response_head.mojom.h"
 
-namespace api_request_helper {
+namespace web_request_helper {
 
     namespace {
 
@@ -294,11 +294,11 @@ namespace api_request_helper {
     }
 
     APIRequestHelper::URLLoaderHandler::URLLoaderHandler(
-        APIRequestHelper* api_request_helper,
-        scoped_refptr<base::SequencedTaskRunner> task_runner)
-        : api_request_helper_(api_request_helper),
-          previous_invalid_piece_of_response_chunk_(""),
-          task_runner_(std::move(task_runner)) {}
+            APIRequestHelper* api_request_helper,
+            scoped_refptr<base::SequencedTaskRunner> task_runner)
+            : api_request_helper_(api_request_helper),
+              previous_invalid_piece_of_response_chunk_(""),
+              task_runner_(std::move(task_runner)) {}
 
     APIRequestHelper::URLLoaderHandler::~URLLoaderHandler() = default;
 

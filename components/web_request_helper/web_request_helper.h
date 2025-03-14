@@ -1,5 +1,5 @@
-#ifndef CHROMIUM_API_REQUEST_HELPER_H
-#define CHROMIUM_API_REQUEST_HELPER_H
+#ifndef CHROMIUM_WEB_REQUEST_HELPER_H
+#define CHROMIUM_WEB_REQUEST_HELPER_H
 
 #include <list>
 #include <memory>
@@ -28,7 +28,7 @@ namespace data_decoder {
     class DataDecoder;
 }
 
-namespace api_request_helper {
+namespace web_request_helper {
 
     class APIRequestResult {
     public:
@@ -272,6 +272,5 @@ namespace api_request_helper {
     void SanitizeAndParseJson(std::string json,
                               base::OnceCallback<void(ValueOrError)> callback);
 
-}  // namespace api_request_helper
-
-#endif  // CHROMIUM_API_REQUEST_HELPER_H
+}
+#endif //CHROMIUM_WEB_REQUEST_HELPER_H

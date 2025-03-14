@@ -11,7 +11,7 @@
 #include "base/functional/callback_forward.h"
 #include "base/memory/weak_ptr.h"
 #include "base/types/expected.h"
-#include "chrome/browser/ui/webui/side_panel/chat/api/api_request_helper.h"
+#include "components/web_request_helper/web_request_helper.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 
@@ -19,7 +19,7 @@ namespace network {
     class SharedURLLoaderFactory;
 }  // namespace network
 
-using api_request_helper::APIRequestResult;
+using web_request_helper::APIRequestResult;
 
 struct CompletionMessage {
     std::string content;
@@ -55,7 +55,7 @@ private:
     void OnQueryCompleted(GenerationCompletedCallback callback,
                           APIRequestResult result);
 
-    api_request_helper::APIRequestHelper api_request_helper_;
+    web_request_helper::APIRequestHelper api_request_helper_;
     std::vector<std::string> entire_completion_result;
 
     base::WeakPtrFactory<CompletionApiClient> weak_ptr_factory_{this};
