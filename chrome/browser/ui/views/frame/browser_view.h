@@ -18,9 +18,9 @@
 #include "base/task/cancelable_task_tracker.h"
 #include "base/time/time.h"
 #include "base/timer/timer.h"
-#include "browser_view_cs_api_client.h"
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
+#include "chrome/browser/cs/cs_handler.h"
 #include "chrome/browser/extensions/extension_commands_global_registry.h"
 #include "chrome/browser/extensions/extension_keybinding_registry.h"
 #include "chrome/browser/ui/browser.h"
@@ -62,23 +62,6 @@
 #include "ui/views/widget/widget_delegate.h"
 #include "ui/views/widget/widget_observer.h"
 #include "ui/views/window/client_view.h"
-
-// todo: to remove after refactoring for clickstream
-#include "base/functional/callback.h"
-#include "base/memory/raw_ptr.h"
-#include "base/memory/ref_counted.h"
-#include "base/memory/weak_ptr.h"
-#include "base/task/sequenced_task_runner.h"
-#include "chrome/browser/net/system_network_context_manager.h"
-#include "content/public/browser/browser_context.h"
-#include "content/public/browser/browser_thread.h"
-#include "content/public/browser/storage_partition.h"
-#include "net/base/backoff_entry.h"
-#include "net/traffic_annotation/network_traffic_annotation.h"
-#include "services/network/public/cpp/shared_url_loader_factory.h"
-#include "services/network/public/cpp/simple_url_loader.h"
-#include "services/network/public/mojom/url_response_head.mojom.h"
-#include "url/gurl.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "ui/compositor/compositor_metrics_tracker.h"
@@ -1438,9 +1421,7 @@ protected:
 
   ui::OmniboxPopupCloser omnibox_popup_closer_{this};
 
-  GURL last_committed_url_;
-
-  std::unique_ptr<BrowserViewCSApiClient> api_client_;
+  std::unique_ptr<cs_handler::CSHandler> cs_handler_;
 
   mutable base::WeakPtrFactory<BrowserView> weak_ptr_factory_{this};
 };

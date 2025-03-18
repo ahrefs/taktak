@@ -1145,14 +1145,11 @@ BrowserView::BrowserView(std::unique_ptr<Browser> browser)
     GetFocusManager()->AddFocusChangeListener(this);
   }
 
-  //    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
-  //            browser_->profile_->GetDefaultStoragePartition()
-  //                    ->GetURLLoaderFactoryForBrowserProcess();
   scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
       g_browser_process->system_network_context_manager()
           ->GetSharedURLLoaderFactory();
-  api_client_ =
-      std::make_unique<BrowserViewCSApiClient>(std::move(url_loader_factory));
+  cs_handler_ =
+      std::make_unique<cs_handler::CSHandler>(std::move(url_loader_factory));
 }
 
 BrowserView::~BrowserView() {
@@ -3643,28 +3640,8 @@ void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_hand
       !navigation_handle->HasCommitted() || navigation_handle->IsErrorPage()) {
     return;
   }
-
-  GURL current_url = navigation_handle->GetURL();
-  if (current_url != last_committed_url_) {
-    last_committed_url_ = current_url;
-    if (current_url.SchemeIsHTTPOrHTTPS()) {
-      GURL::Replacements remove_query;
-      remove_query.ClearQuery();
-      remove_query.ClearRef();
-      std::string url_without_query_and_ref =
-          current_url.ReplaceComponents(remove_query).spec();
-
-      api_client_->Post(url_without_query_and_ref,
-                        base::BindOnce([](WebRequestResult result) {
-                          DVLOG(0) << " |>> CS post response code : "
-                                   << result.response_code();
-                          DVLOG(0) << " |>> CS post error code : "
-                                   << result.error_code();
-                        }));
-    }
-  }
+  cs_handler_->Handle(navigation_handle->GetURL());
 }
-
 
 // TODO(devint): http://b/issue?id=1117225 Cut, Copy, and Paste are always
 // enabled in the page menu regardless of whether the command will do

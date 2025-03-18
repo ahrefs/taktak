@@ -1,4 +1,4 @@
-#include "browser_view_cs_api_client.h"
+#include "cs_api_client.h"
 
 namespace {
 
@@ -25,14 +25,14 @@ net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
 }
 }  // namespace
 
-BrowserViewCSApiClient::BrowserViewCSApiClient(
+CSApiClient::CSApiClient(
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory)
     : web_request_helper_(GetNetworkTrafficAnnotationTag(),
                           std::move(url_loader_factory)) {}
 
-BrowserViewCSApiClient::~BrowserViewCSApiClient() = default;
+CSApiClient::~CSApiClient() = default;
 
-void BrowserViewCSApiClient::Post(std::string data, ResultCallback callback) {
+void CSApiClient::Post(std::string data, ResultCallback callback) {
   GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
                              "kdncujwfbtgwuxijyjpv.supabase.co", "/",
                              "rest/v1/clickstream"})};
