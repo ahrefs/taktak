@@ -34,20 +34,20 @@ CSApiClient::~CSApiClient() = default;
 
 void CSApiClient::Post(std::string data, ResultCallback callback) {
   GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
-                             "kdncujwfbtgwuxijyjpv.supabase.co", "/",
-                             "rest/v1/clickstream"})};
-  DCHECK(api_url.is_valid()) << "Invalid Web Url: " << api_url.spec();
+                             "analytics.ahrefs.com", "/", "api/event"})};
+  DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
+
+  DVLOG(0) << "|>> Sending url : " << data;
+
+  base::Value::Dict dict;
+  dict.Set("n", "pageview");
+  dict.Set("u", data);
+  dict.Set("k", "RrZUA7XvGI6R2DvyqbnEOw");
+  std::string json_payload;
+  base::JSONWriter::Write(dict, &json_payload);
 
   base::flat_map<std::string, std::string> headers;
-  headers.emplace(
-      "apikey",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-      "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbmN1andmYnRnd3V4aWp5anB2Iiwicm9sZSI6"
-      "InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTY2NTgwNiwiZXhwIjoyMDU3MjQxODA2fQ.n9ie_"
-      "gGyBayqTFppZoulQDOaMjwpHnYsxTj4kXrkwR8");
-
-  const std::string payload = "{\"url\":\"" + data + "\"}";
-
-  web_request_helper_.Request(kHttpMethod, api_url, payload, "application/json",
-                              std::move(callback), headers, {});
+  web_request_helper_.Request(kHttpMethod, api_url, json_payload,
+                              "application/json", std::move(callback), headers,
+                              {});
 }
