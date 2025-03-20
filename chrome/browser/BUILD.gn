@@ -2415,6 +2415,7 @@ static_library("browser") {
     "//components/visitedlink/browser",
     "//components/visitedlink/common",
     "//components/web_cache/browser",
+    "//components/web_request_helper",
     "//components/web_resource",
     "//components/webapps/browser",
     "//components/webapps/common",

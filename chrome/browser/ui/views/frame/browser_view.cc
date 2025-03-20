@@ -3635,7 +3635,6 @@ void BrowserView::Paste() {
   CutCopyPaste(IDC_PASTE);
 }
 
-
 void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_handle) {
   if (IsIncognitoProcess() || browser_->profile()->IsIncognitoProfile()) {
     return;

@@ -38,12 +38,11 @@ void CSHandler::Handle(const GURL& url) {
   if (url != last_committed_url_) {
     last_committed_url_ = url;
     if (url.SchemeIsHTTPOrHTTPS()) {
-      std::string url_to_submit = url.spec();
-
-      GURL::Replacements remove_query;
-      remove_query.ClearQuery();
-      remove_query.ClearRef();
-      url_to_submit = url.ReplaceComponents(remove_query).spec();
+      std::string url_to_submit;
+      GURL::Replacements remove_query_and_ref;
+      remove_query_and_ref.ClearQuery();
+      remove_query_and_ref.ClearRef();
+      url_to_submit = url.ReplaceComponents(remove_query_and_ref).spec();
 
       const std::string query = url.query();
       const std::string query_with_qm = std::string("?") + query;
@@ -87,9 +86,8 @@ void CSHandler::Handle(const GURL& url) {
         }
         if (has_wd_or_word_param) {
           url_to_submit +=
-              "?wd=" + (params["wd"].length() > 0     ? params["wd"]
-                        : params["word"].length() > 0 ? params["word"]
-                                                      : "");
+              "?wd=" +
+              (params["wd"].length() > 0 ? params["wd"] : params["word"]);
         }
         if (has_query_param) {
           url_to_submit += "?query=" + params["query"];

@@ -1,4 +1,4 @@
-#include "machine_id/machine_id.h"
+#include "components/machine_id/machine_id.h"
 
 int main() {
   std::string machine_id;

@@ -1,8 +1,13 @@
 #include "cs_api_client.h"
 
+#include "base/uuid.h"
+#include "components/machine_id/machine_id.h"
+
 namespace {
 
 constexpr char kHttpMethod[] = "POST";
+constexpr char kContentType[] = "application/json";
+constexpr char kStagingApiKey[] = "RrZUA7XvGI6R2DvyqbnEOw";
 
 net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
   return net::DefineNetworkTrafficAnnotation("research", R"(
@@ -42,12 +47,20 @@ void CSApiClient::Post(std::string data, ResultCallback callback) {
   base::Value::Dict dict;
   dict.Set("n", "pageview");
   dict.Set("u", data);
-  dict.Set("k", "RrZUA7XvGI6R2DvyqbnEOw");
+  dict.Set("k", kStagingApiKey);
+  std::string machine_id;
+
+  // if machine ID is empty for some reasons, a UUID will be generated and sent.
+  if (!machine_id::GetMachineId(&machine_id)) {
+    base::Uuid uuid = base::Uuid::GenerateRandomV4();
+    machine_id = uuid.AsLowercaseString();
+  }
+  dict.Set("v", machine_id);
   std::string json_payload;
   base::JSONWriter::Write(dict, &json_payload);
 
-  base::flat_map<std::string, std::string> headers;
-  web_request_helper_.Request(kHttpMethod, api_url, json_payload,
-                              "application/json", std::move(callback), headers,
-                              {});
+  DVLOG(0) << "|>> Sending payload : " << json_payload;
+
+  web_request_helper_.Request(kHttpMethod, api_url, json_payload, kContentType,
+                              std::move(callback), {}, {});
 }
