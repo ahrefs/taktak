@@ -240,8 +240,11 @@ ToolbarView::ToolbarView(Browser* browser, BrowserView* browser_view)
   container_view_ = AddChildView(std::make_unique<ContainerView>());
   container_view_->SetProperty(views::kElementIdentifierKey,
                                kToolbarContainerElementId);
+  container_view_
+      ->
 
-  GetViewAccessibility().SetRole(ax::mojom::Role::kToolbar);
+      GetViewAccessibility()
+      .SetRole(ax::mojom::Role::kToolbar);
 
   if (display_mode_ == DisplayMode::NORMAL) {
     container_view_->SetBackground(
@@ -852,6 +855,10 @@ void ToolbarView::Layout(PassKey) {
 
   // The container view should be the exact same size/position as ToolbarView.
   container_view_->SetSize(size());
+
+  // Make sure the container_view height is 28 based on the UI guideline
+  container_view_->SetBorder(
+      views::CreateEmptyBorder(gfx::Insets::TLBR(3, 0, 3, 0)));
 
   // The background views should be behind the top-left and top-right corners
   // of the container_view_.
