@@ -151,7 +151,7 @@ source_set("side_panel") {
     "//chrome/browser/ui/views/toolbar",
     "//chrome/browser/ui/webui:webui_util",
     "//chrome/browser/ui/webui/top_chrome",
-    "//chrome/common/chat:mojo_bindings",
+    "//chrome/common/page_content_extractor:mojo_bindings",
     "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings",
     "//chrome/common",
     "//chrome/common:constants",

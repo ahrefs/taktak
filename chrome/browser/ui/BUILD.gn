@@ -1763,8 +1763,6 @@ static_library("ui") {
       "//chrome/browser/ui/webui/searchbox",
       "//chrome/browser/ui/webui/settings",
       "//chrome/browser/ui/webui/settings:impl",
-
-      #      "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings",
       "//chrome/browser/ui/webui/signin",
       "//chrome/browser/ui/webui/signin:login",
       "//chrome/browser/ui/webui/signin:login_impl",
@@ -3109,7 +3107,7 @@ static_library("ui") {
       "//chrome/browser/on_device_translation:language_pack_util",
       "//chrome/browser/shortcuts",
       "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings",
-      "//chrome/common/chat:mojo_bindings",
+      "//chrome/common/page_content_extractor:mojo_bindings",
       "//components/capture_mode",
       "//services/audio/public/mojom",
       "//services/video_capture/public/mojom",

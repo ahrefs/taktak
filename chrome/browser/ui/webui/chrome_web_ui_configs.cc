@@ -256,7 +256,6 @@ void RegisterChromeWebUIConfigs() {
   map.AddWebUIConfig(
       std::make_unique<
           privacy_sandbox_internals::PrivacySandboxInternalsUIConfig>());
-  map.AddWebUIConfig(std::make_unique<ChatUIConfig>());
 
 #if BUILDFLAG(ENABLE_NACL)
   map.AddWebUIConfig(std::make_unique<NaClUIConfig>());
@@ -352,6 +351,7 @@ void RegisterChromeWebUIConfigs() {
   map.AddWebUIConfig(std::make_unique<WebAppSettingsUIConfig>());
   map.AddWebUIConfig(std::make_unique<WhatsNewUIConfig>());
   map.AddWebUIConfig(std::make_unique<OnDeviceTranslationInternalsUIConfig>());
+  map.AddWebUIConfig(std::make_unique<ChatUIConfig>());
 #endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || \
