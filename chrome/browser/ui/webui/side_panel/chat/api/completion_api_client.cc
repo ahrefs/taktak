@@ -72,9 +72,9 @@ namespace {
 }  // namespace
 
 CompletionApiClient::CompletionApiClient(
-        scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory)
-        : api_request_helper_(GetNetworkTrafficAnnotationTag(),
-                              std::move(url_loader_factory)) {}
+    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory)
+    : web_request_helper_(GetNetworkTrafficAnnotationTag(),
+                          std::move(url_loader_factory)) {}
 
 CompletionApiClient::~CompletionApiClient() = default;
 
@@ -86,7 +86,7 @@ void CompletionApiClient::QueryPrompt(
         data_received_callback /* = base::NullCallback() */) {
     GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
                                "api.yep.com", "/", "v1/chat/completions"})};
-    DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
+    DCHECK(api_url.is_valid()) << "Invalid Web Url: " << api_url.spec();
 
     base::flat_map<std::string, std::string> headers;
     headers.emplace("Accept", "text/event-stream");
@@ -100,14 +100,14 @@ void CompletionApiClient::QueryPrompt(
 
     const std::string request_body = CreateJSONRequestBody(completion_messages, enable_thinking);
 
-    api_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
+    web_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
                                    "application/json", std::move(on_received),
                                    std::move(on_complete), headers, {});
 }
 
 void CompletionApiClient::ClearAllQueries() {
     DVLOG(0) << "Clearing all queries";
-    api_request_helper_.CancelAll();
+    web_request_helper_.CancelAll();
     entire_completion_result.clear();
 }
 
@@ -135,38 +135,36 @@ void CompletionApiClient::OnQueryDataReceived(
     }
 }
 
-void CompletionApiClient::OnQueryCompleted(
-        GenerationCompletedCallback callback,
-        APIRequestResult result) {
-    const bool success = result.Is2XXResponseCode();
+void CompletionApiClient::OnQueryCompleted(GenerationCompletedCallback callback,
+                                           WebRequestResult result) {
+  const bool success = result.Is2XXResponseCode();
 
-    if (success) {
-        entire_completion_result.clear();
-        std::move(callback).Run(base::ok(""));
-        return;
+  if (success) {
+    entire_completion_result.clear();
+    std::move(callback).Run(base::ok(""));
+    return;
+  }
+
+  // Handle error
+  chat::mojom::APIErrorType error;
+  DVLOG(0) << "Error response_code: " << result.response_code();
+  DVLOG(0) << "Error error_code: " << result.error_code();
+
+  if (result.value_body().is_dict()) {
+    const std::string* value =
+        result.value_body().GetDict().FindString("message");
+    if (value) {
+      DVLOG(0) << "Error message: " << *value;
     }
+  }
 
-    // Handle error
-    chat::mojom::APIErrorType error;
-    DVLOG(0) << "Error response_code: " << result.response_code();
-    DVLOG(0) << "Error error_code: " << result.error_code();
+  if (net::HTTP_TOO_MANY_REQUESTS == result.response_code()) {
+    error = chat::mojom::APIErrorType::RateLimitReached;
+  } else if (net::HTTP_REQUEST_ENTITY_TOO_LARGE == result.response_code()) {
+    error = chat::mojom::APIErrorType::ContextLimitReached;
+  } else {
+    error = chat::mojom::APIErrorType::ConnectionError;
+  }
 
-    if (result.value_body().is_dict()) {
-        const std::string *value =
-                result.value_body().GetDict().FindString("message");
-        if (value) {
-            DVLOG(0) << "Error message: " << *value;
-        }
-    }
-
-    if (net::HTTP_TOO_MANY_REQUESTS == result.response_code()) {
-        error = chat::mojom::APIErrorType::RateLimitReached;
-    } else if (net::HTTP_REQUEST_ENTITY_TOO_LARGE == result.response_code()) {
-        error = chat::mojom::APIErrorType::ContextLimitReached;
-    } else {
-        error = chat::mojom::APIErrorType::ConnectionError;
-    }
-
-    std::move(callback).Run(base::unexpected(std::move(error)));
+  std::move(callback).Run(base::unexpected(std::move(error)));
 }
-

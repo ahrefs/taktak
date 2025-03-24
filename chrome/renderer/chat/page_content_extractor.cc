@@ -153,7 +153,8 @@ void PageContentExtractor::ExtractPageContent(
 void PageContentExtractor::ExtractPageText(
     content::RenderFrame* render_frame,
     int32_t isolated_world_id,
-    base::OnceCallback<void(const std::optional<std::string>&, const std::optional<std::string>&)> callback) {
+    base::OnceCallback<void(const std::optional<std::string>&,
+                            const std::optional<std::string>&)> callback) {
   auto snapshotter = render_frame->CreateAXTreeSnapshotter(
       ui::AXMode::kWebContents | ui::AXMode::kHTML | ui::AXMode::kScreenReader);
   ui::AXTreeUpdate snapshot;
@@ -175,7 +176,7 @@ void PageContentExtractor::ExtractPageText(
       content_nodes.emplace_back(content_root_node);
     } else {
       std::ranges::move(content_nodes_this_root,
-                         std::back_inserter(content_nodes));
+                        std::back_inserter(content_nodes));
     }
   }
 
@@ -187,29 +188,25 @@ void PageContentExtractor::ExtractPageText(
   std::string contents_text =
       base::UTF16ToUTF8(base::JoinString(text_node_contents, u" "));
 
-    blink::WebLocalFrame* main_frame = render_frame->GetWebFrame();
-    // Retrieve the current URL
-    blink::WebURL web_url = main_frame->GetDocumentLoader()->GetUrl();
+  blink::WebLocalFrame* main_frame = render_frame->GetWebFrame();
 
-    // Convert to GURL for convenience
-    GURL url(web_url);
+  // Retrieve the current URL
+  blink::WebURL web_url = main_frame->GetDocumentLoader()->GetUrl();
 
-//    if (url.is_valid()) {
-//        LOG(INFO) << "Current URL: " << url.spec();
-//    } else {
-//        LOG(INFO) << "Invalid URL.";
-//    }
+  // Convert to GURL for convenience
+  GURL url(web_url);
 
   if (contents_text.empty()) {
-
     v8::HandleScope handle_scope(
         main_frame->GetAgentGroupScheduler()->Isolate());
     blink::WebScriptSource source = blink::WebScriptSource(
         blink::WebString::FromASCII("document.body.innerText"));
 
     auto on_script_executed =
-        [](base::OnceCallback<void(const std::optional<std::string>&, const std::optional<std::string>&)> callback,
-           std::string url, std::optional<base::Value> value, base::TimeTicks start_time) {
+        [](base::OnceCallback<void(const std::optional<std::string>&,
+                                   const std::optional<std::string>&)> callback,
+           std::string url, std::optional<base::Value> value,
+           base::TimeTicks start_time) {
           if (value && value->is_string()) {
             std::move(callback).Run(value->GetString(), url);
           } else {
@@ -228,7 +225,7 @@ void PageContentExtractor::ExtractPageText(
         blink::mojom::PromiseResultOption::kAwait);
   } else {
     // todo: to test this path
-      std::move(callback).Run(std::move(contents_text), std::move(url.spec()));
+    std::move(callback).Run(std::move(contents_text), std::move(url.spec()));
   }
 }
 

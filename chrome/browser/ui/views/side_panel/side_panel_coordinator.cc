@@ -75,6 +75,7 @@
 #include "ui/views/vector_icons.h"
 #include "ui/views/view.h"
 #include "ui/views/view_class_properties.h"
+#include "chrome/browser/ui/views/side_panel/chat/chat_side_panel_coordinator.h"
 
 namespace {
 
@@ -518,6 +519,9 @@ void SidePanelCoordinator::Show(
       entry,
       base::BindOnce(&SidePanelCoordinator::PopulateSidePanel,
                      base::Unretained(this), suppress_animations, input));
+
+  auto* ai_chat_coordinator = ChatSidePanelCoordinator::GetOrCreateForBrowser(browser_view_->browser());
+  ai_chat_coordinator->UpdateOpeningPanelId(entry->key().id());
 }
 
 base::CallbackListSubscription SidePanelCoordinator::RegisterSidePanelShown(
@@ -556,9 +560,12 @@ void SidePanelCoordinator::Close(bool suppress_animations) {
     }
     SidePanelEntry* entry = GetEntryForUniqueKey(*current_key_);
     if (entry) {
+      auto* ai_chat_coordinator = ChatSidePanelCoordinator::GetOrCreateForBrowser(browser_view_->browser());
+      ai_chat_coordinator->UpdateClosingPanelId(entry->key().id());
       entry->OnEntryWillHide(SidePanelEntryHideReason::kSidePanelClosed);
     }
   }
+
   browser_view_->unified_side_panel()->Close(
       /*animated=*/!suppress_animations);
 

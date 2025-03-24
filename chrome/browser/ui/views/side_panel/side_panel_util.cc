@@ -139,10 +139,6 @@ void SidePanelUtil::RecordEntryShowTriggeredMetrics(
     Browser* browser,
     SidePanelEntry::Id id,
     std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
-  auto* ai_chat_coordinator =
-      ChatSidePanelCoordinator::GetOrCreateForBrowser(browser);
-  ai_chat_coordinator->UpdateOpeningPanelId(id);
-
   if (trigger.has_value()) {
     base::UmaHistogramEnumeration(
         base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
