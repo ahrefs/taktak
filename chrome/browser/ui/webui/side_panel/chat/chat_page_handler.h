@@ -15,7 +15,7 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/webui/side_panel/chat/api/completion_api_client.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
-#include "chrome/common/chat/page_content_extractor.mojom.h"
+#include "chrome/common/page_content_extractor/page_content_extractor.mojom.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"

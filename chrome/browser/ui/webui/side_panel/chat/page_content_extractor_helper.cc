@@ -14,7 +14,7 @@
 #include "base/functional/bind.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string_util.h"
-#include "chrome/common/chat/page_content_extractor.mojom.h"
+#include "chrome/common/page_content_extractor/page_content_extractor.mojom.h"
 #include "content/public/browser/navigation_handle.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
