@@ -8,7 +8,7 @@
 
 #include "base/functional/callback_forward.h"
 #include "base/values.h"
-#include "chrome/common/chat/page_content_extractor.mojom.h"
+#include "chrome/common/page_content_extractor/page_content_extractor.mojom.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_frame_observer.h"
 #include "content/public/renderer/render_frame_observer_tracker.h"
