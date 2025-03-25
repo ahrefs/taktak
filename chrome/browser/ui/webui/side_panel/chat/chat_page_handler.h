@@ -1,10 +1,10 @@
 #ifndef CHROMIUM_CHAT_PAGE_HANDLER_H
 #define CHROMIUM_CHAT_PAGE_HANDLER_H
 
+#include <atomic>
 #include <memory>
 #include <optional>
 #include <string>
-#include <atomic>
 
 #include "base/containers/flat_set.h"
 #include "base/functional/callback_forward.h"

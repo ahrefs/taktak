@@ -120,25 +120,29 @@ namespace {
 }  // namespace
 
 ChatPageHandler::ChatPageHandler(
-        mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
-        mojo::PendingRemote<chat::mojom::Page> page,
-        ChatUI *chat_ui,
-        content::WebUI *web_ui,
-        content::WebContents *owner_web_contents,
-        content::WebContents *chat_context_web_contents)
-        : receiver_(this, std::move(receiver)),
-          page_(std::move(page)),
-          chat_ui_(chat_ui),
-          owner_web_contents_(owner_web_contents->GetWeakPtr()),
-          chat_context_web_contents_(chat_context_web_contents->GetWeakPtr()),
-          profile_(Profile::FromWebUI(web_ui)),
-          page_content_extractor_helper_(std::make_unique<PageContentExtractorHelper>(chat_context_web_contents)) {
-    isQueryCancellingInProgress_.store(false);
-    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
-            profile_->GetDefaultStoragePartition()
-                    ->GetURLLoaderFactoryForBrowserProcess();
-    api_client_ =
-            std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
+    mojo::PendingReceiver<chat::mojom::PageHandler> receiver,
+    mojo::PendingRemote<chat::mojom::Page> page,
+    ChatUI* chat_ui,
+    content::WebUI* web_ui,
+    content::WebContents* owner_web_contents,
+    content::WebContents* chat_context_web_contents)
+    : receiver_(this, std::move(receiver)),
+      page_(std::move(page)),
+      chat_ui_(chat_ui),
+      owner_web_contents_(owner_web_contents->GetWeakPtr()),
+      profile_(Profile::FromWebUI(web_ui)) {
+  isQueryCancellingInProgress_.store(false);
+  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
+      profile_->GetDefaultStoragePartition()
+          ->GetURLLoaderFactoryForBrowserProcess();
+  api_client_ =
+      std::make_unique<CompletionApiClient>(std::move(url_loader_factory));
+
+  if (chat_context_web_contents) {
+    chat_context_web_contents_ = chat_context_web_contents->GetWeakPtr();
+    page_content_extractor_helper_ =
+        std::make_unique<PageContentExtractorHelper>(chat_context_web_contents);
+  }
 }
 
 ChatPageHandler::~ChatPageHandler() = default;
@@ -177,7 +181,6 @@ void ChatPageHandler::SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::W
 }
 
 void ChatPageHandler::GetSiteInfo(GetSiteInfoCallback callback) {
-    DCHECK(chat_context_web_contents_);
     chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
     site_info->url = "";
     site_info->is_content_usable_in_conversations = false;

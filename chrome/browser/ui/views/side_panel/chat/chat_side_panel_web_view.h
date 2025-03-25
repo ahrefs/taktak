@@ -11,14 +11,14 @@
 #include "chrome/browser/ui/views/side_panel/side_panel_web_ui_view.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat_ui.h"
-#include "ui/base/metadata/metadata_header_macros.h"
-#include "ui/views/controls/webview/webview.h"
-#include "ui/views/view.h"
 #include "chrome/common/page_content_extractor/page_content_extractor.mojom.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
+#include "ui/base/metadata/metadata_header_macros.h"
+#include "ui/views/controls/webview/webview.h"
+#include "ui/views/view.h"
 
 class Browser;
 

@@ -1,17 +1,17 @@
 #include "page_content_extractor_helper.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
-#include <algorithm>
 
+#include "base/containers/contains.h"
+#include "base/containers/fixed_flat_set.h"
+#include "base/functional/bind.h"
 #include "base/functional/callback_forward.h"
 #include "base/memory/raw_ptr.h"
-#include "base/containers/fixed_flat_set.h"
-#include "base/containers/contains.h"
-#include "base/functional/bind.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string_util.h"
 #include "chrome/common/page_content_extractor/page_content_extractor.mojom.h"
@@ -23,7 +23,6 @@
 #include "mojo/public/cpp/bindings/associated_receiver.h"
 #include "mojo/public/cpp/bindings/pending_associated_receiver.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
-#include "content/public/browser/web_contents.h"
 
 namespace {
 
