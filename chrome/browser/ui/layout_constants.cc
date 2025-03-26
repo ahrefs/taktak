@@ -121,8 +121,7 @@ int GetLayoutConstant(LayoutConstant constant) {
             // return touch_ui ? 48 : 34;
             return touch_ui ? 48 : 28;
         case TOOLBAR_DIVIDER_CORNER_RADIUS:
-            // return 1;
-            return 0;
+            return 1;
         case TOOLBAR_DIVIDER_HEIGHT:
             // return touch_ui ? 20 : 16;
             return touch_ui ? 18 : 14;
