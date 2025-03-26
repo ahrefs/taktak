@@ -61,7 +61,8 @@ int GetLayoutConstant(LayoutConstant constant) {
         case LOCATION_BAR_ELEMENT_PADDING:
             return touch_ui ? 3 : 2;
         case LOCATION_BAR_PAGE_INFO_ICON_VERTICAL_PADDING:
-            return touch_ui ? 3 : 5;
+          // return touch_ui ? 3 : 5;
+          return touch_ui ? 3 : 2;
         case LOCATION_BAR_LEADING_DECORATION_EDGE_PADDING:
             // TODO(manukh): See comment in `LocationBarView::Layout()`. We have too
             //   many feature permutations that would affect this and other layout
@@ -121,7 +122,7 @@ int GetLayoutConstant(LayoutConstant constant) {
             // return touch_ui ? 48 : 34;
             return touch_ui ? 48 : 28;
         case TOOLBAR_DIVIDER_CORNER_RADIUS:
-            return 1;
+          return 1;
         case TOOLBAR_DIVIDER_HEIGHT:
             // return touch_ui ? 20 : 16;
             return touch_ui ? 18 : 14;
