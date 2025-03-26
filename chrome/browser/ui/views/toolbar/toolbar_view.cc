@@ -305,11 +305,7 @@ ToolbarView::ToolbarView(Browser* browser, BrowserView* browser_view)
   container_view_ = AddChildView(std::make_unique<ContainerView>());
   container_view_->SetProperty(views::kElementIdentifierKey,
                                kToolbarContainerElementId);
-  container_view_
-      ->
-
-      GetViewAccessibility()
-      .SetRole(ax::mojom::Role::kToolbar);
+  container_view_->GetViewAccessibility().SetRole(ax::mojom::Role::kToolbar);
 
   if (display_mode_ == DisplayMode::NORMAL) {
     container_view_->SetBackground(
