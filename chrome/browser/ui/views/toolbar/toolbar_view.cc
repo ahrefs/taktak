@@ -171,12 +171,13 @@ ToolbarView::DisplayMode GetDisplayMode(Browser* browser) {
 }
 
 auto& GetViewCommandMap() {
-  static constexpr auto kViewCommandMap = base::MakeFixedFlatMap<int, int>(
-      {{VIEW_ID_BACK_BUTTON, IDC_BACK},
-       {VIEW_ID_FORWARD_BUTTON, IDC_FORWARD},
-       {VIEW_ID_HOME_BUTTON, IDC_HOME},
-       {VIEW_ID_RELOAD_BUTTON, IDC_RELOAD},
-       {VIEW_ID_AVATAR_BUTTON, IDC_SHOW_AVATAR_MENU}});
+  static constexpr auto kViewCommandMap = base::MakeFixedFlatMap<int, int>({
+      {VIEW_ID_BACK_BUTTON, IDC_BACK},
+      {VIEW_ID_FORWARD_BUTTON, IDC_FORWARD},
+      {VIEW_ID_HOME_BUTTON, IDC_HOME},
+      {VIEW_ID_RELOAD_BUTTON, IDC_RELOAD},
+      //  {VIEW_ID_AVATAR_BUTTON, IDC_SHOW_AVATAR_MENU}
+  });
   return kViewCommandMap;
 }
 
@@ -547,24 +548,25 @@ void ToolbarView::Init() {
         container_view_->AddChildView(std::move(send_tab_to_self_button));
   }
 
-  avatar_ = container_view_->AddChildView(
-      std::make_unique<AvatarToolbarButton>(browser_view_));
-  bool show_avatar_toolbar_button = true;
-#if BUILDFLAG(IS_CHROMEOS)
-  // ChromeOS only badges Incognito, Guest, and captive portal signin icons in
-  // the browser window.
-  show_avatar_toolbar_button =
-      browser_->profile()->IsIncognitoProfile() ||
-      browser_->profile()->IsGuestSession() ||
-      (browser_->profile()->IsOffTheRecord() &&
-       browser_->profile()->GetOTRProfileID().IsCaptivePortal());
-#else
-  // DevTools profiles are OffTheRecord, so hide it there.
-  show_avatar_toolbar_button = browser_->profile()->IsIncognitoProfile() ||
-                               browser_->profile()->IsGuestSession() ||
-                               browser_->profile()->IsRegularProfile();
-#endif
-  avatar_->SetVisible(show_avatar_toolbar_button);
+  //  avatar_ = container_view_->AddChildView(
+  //      std::make_unique<AvatarToolbarButton>(browser_view_));
+  //  bool show_avatar_toolbar_button = true;
+  // #if BUILDFLAG(IS_CHROMEOS)
+  //  // ChromeOS only badges Incognito, Guest, and captive portal signin icons
+  //  in
+  //  // the browser window.
+  //  show_avatar_toolbar_button =
+  //      browser_->profile()->IsIncognitoProfile() ||
+  //      browser_->profile()->IsGuestSession() ||
+  //      (browser_->profile()->IsOffTheRecord() &&
+  //       browser_->profile()->GetOTRProfileID().IsCaptivePortal());
+  // #else
+  //  // DevTools profiles are OffTheRecord, so hide it there.
+  //  show_avatar_toolbar_button = browser_->profile()->IsIncognitoProfile() ||
+  //                               browser_->profile()->IsGuestSession() ||
+  //                               browser_->profile()->IsRegularProfile();
+  // #endif
+  //  avatar_->SetVisible(show_avatar_toolbar_button);
 
 #if BUILDFLAG(ENABLE_WEBUI_TAB_STRIP)
   auto new_tab_button = std::make_unique<ToolbarButton>(base::BindRepeating(
@@ -583,8 +585,9 @@ void ToolbarView::Init() {
       container_view_->AddChildView(std::make_unique<OverflowButton>());
   overflow_button_->SetVisible(false);
 
-  if (!IsIncognitoProcess() && !browser_->profile()->IsIncognitoProfile()) {
-      ai_chat_button_ = container_view_->AddChildView(std::move(ai_chat_button));
+  if (!IsIncognitoProcess() && !browser_->profile()->IsIncognitoProfile() &&
+      !browser_->profile()->IsGuestSession()) {
+    ai_chat_button_ = container_view_->AddChildView(std::move(ai_chat_button));
   }
 
   auto app_menu_button = std::make_unique<BrowserAppMenuButton>(this);
@@ -626,8 +629,8 @@ void ToolbarView::Init() {
 
   InitLayout();
 
-  for (auto* button : std::array<views::Button*, 5>{back_, forward_, reload_,
-                                                    home_, avatar_}) {
+  for (auto* button :
+       std::array<views::Button*, 5>{back_, forward_, reload_, home_}) {
     if (button) {
       button->set_tag(GetViewCommandMap().at(button->GetID()));
     }
@@ -833,8 +836,7 @@ ToolbarView::GetContentSettingBubbleModelDelegate() {
 
 void ToolbarView::EnabledStateChangedForCommand(int id, bool enabled) {
   DCHECK(display_mode_ == DisplayMode::NORMAL);
-  const std::array<views::Button*, 5> kButtons{back_, forward_, reload_, home_,
-                                               avatar_};
+  const std::array<views::Button*, 5> kButtons{back_, forward_, reload_, home_};
   auto* button = *std::ranges::find(kButtons, id, &views::Button::tag);
   DCHECK(button);
   button->SetEnabled(enabled);
@@ -1170,15 +1172,15 @@ void ToolbarView::LayoutCommon() {
 
     // The margins of the `avatar_` uses the same constants as the
     // `app_menu_button_`.
-    if (avatar_->IsLabelPresentAndVisible()) {
-      avatar_->SetProperty(
-          views::kMarginsKey,
-          gfx::Insets::VH(0, kBrowserAppMenuRefreshExpandedMargin));
-    } else {
-      avatar_->SetProperty(
-          views::kMarginsKey,
-          gfx::Insets::VH(0, kBrowserAppMenuRefreshCollapsedMargin));
-    }
+    //    if (avatar_->IsLabelPresentAndVisible()) {
+    //      avatar_->SetProperty(
+    //          views::kMarginsKey,
+    //          gfx::Insets::VH(0, kBrowserAppMenuRefreshExpandedMargin));
+    //    } else {
+    //      avatar_->SetProperty(
+    //          views::kMarginsKey,
+    //          gfx::Insets::VH(0, kBrowserAppMenuRefreshCollapsedMargin));
+    //    }
   }
 
   layout_manager_->SetInteriorMargin(interior_margin);
