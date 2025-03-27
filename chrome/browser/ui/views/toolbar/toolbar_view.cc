@@ -213,7 +213,7 @@ constexpr double kLargeToolbarMargin = 0.1;
 constexpr int kToolbarWidthThreshold1 = 700;
 constexpr int kToolbarWidthThreshold2 = 850;
 constexpr int kToolbarWidthThreshold3 = 960;
-constexpr double kMaxRightShrinkFactor = 0.25;
+constexpr double kMaxRightShrinkFactor = 0.56;
 
 double GetMarginForWidth(int toolbar_width) {
   if (toolbar_width < kToolbarWidthThreshold1) {
