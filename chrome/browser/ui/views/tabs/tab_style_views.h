@@ -48,6 +48,13 @@ class TabStyleViews {
                          TabStyle::RenderUnits render_units =
                              TabStyle::RenderUnits::kPixels) const = 0;
 
+  // tt: Get the rounded paths
+  virtual SkPath GetRoundedPath(TabStyle::PathType path_type,
+                                float scale,
+                                bool force_active = false,
+                                TabStyle::RenderUnits render_units =
+                                    TabStyle::RenderUnits::kPixels) const = 0;
+
   // Paints the tab.
   virtual void PaintTab(gfx::Canvas* canvas) const = 0;
 
