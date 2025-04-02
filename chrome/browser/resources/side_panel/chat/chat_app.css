@@ -421,7 +421,6 @@
 }
 
 .query-prompt-container .prompt-section {
-    width: fit-content;
     word-wrap: break-word;
     box-sizing: border-box;
     display: block;
