@@ -937,7 +937,8 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
     mixer[kColorYepChatThinkingHeadIcon] = {SkColorSetARGB(255, 217, 217, 217)};
 
     mixer[kColorYepChatToolbarIcon] = {dark_mode
-                                       ? SK_ColorYELLOW : SK_ColorGRAY};
+                                           ? SkColorSetARGB(255, 255, 242, 1)
+                                           : SkColorSetARGB(217, 0, 0, 0)};
     mixer[kColorYepChatLink] = {dark_mode
                                 ? SkColorSetARGB(255, 129, 160, 240)
                                 : SkColorSetARGB(255, 8, 40, 187)};
