@@ -66,7 +66,7 @@ int ChromeRefresh2023TabStyle::GetPinnedWidth() const {
   //  constexpr int kTabPinnedContentWidth = 24;
   //  return kTabPinnedContentWidth + GetContentsInsets().left() +
   //         GetContentsInsets().right();
-  return 44;
+  return 48;
 }
 
 int ChromeRefresh2023TabStyle::GetMinimumActiveWidth() const {
@@ -118,7 +118,7 @@ int ChromeRefresh2023TabStyle::GetTabOverlap() const {
   //                                      GetSeparatorSize().width() +
   //                                      GetSeparatorMargins().right();
   //  return 2 * GetBottomCornerRadius() - total_separator_width;
-  return 8;
+  return 14;
 }
 
 gfx::Size ChromeRefresh2023TabStyle::GetPreviewImageSize() const {
