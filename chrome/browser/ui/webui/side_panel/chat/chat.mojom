@@ -108,6 +108,7 @@ interface PageHandler {
 
   // Put the toggle state of the "Enable Thinking" button into in-memory cache
   SaveThinkingState(bool thinking_state);
+  GetThinkingState() => (bool thinking_state);
 
   // Cache the latest SiteInfo if any, or empty one
   SaveSiteInfo(SiteInfo site_info);

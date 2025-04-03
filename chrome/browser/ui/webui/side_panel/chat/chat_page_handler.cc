@@ -2,13 +2,13 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_map>
 
-#include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/synchronization/lock.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/browser.h"
@@ -16,7 +16,10 @@
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_ui.h"
+#include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
+#include "chrome/common/pref_names.h"
 #include "chrome/grit/generated_resources.h"
+#include "components/prefs/pref_service.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/browser/web_contents.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
@@ -24,31 +27,29 @@
 #include "ui/base/mojom/window_open_disposition.mojom.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/base/window_open_disposition_utils.h"
-#include "base/synchronization/lock.h"
 
 namespace {
 
-    constexpr size_t
-    kMaxUserPromptLength = 90'000;
-    constexpr char kUserRole[] = "user";
-    constexpr char kAssistantRole[] = "assistant";
+constexpr size_t kMaxUserPromptLength = 90'000;
+constexpr char kUserRole[] = "user";
+constexpr char kAssistantRole[] = "assistant";
 
-    std::string BuildPrompt(const std::string &query,
-                            const std::string &extracted_content,
-                            chat::mojom::ActionType action_type) {
-        if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE ||
-            action_type == chat::mojom::ActionType::EXPLAIN ||
-            action_type == chat::mojom::ActionType::FACT_CHECK ||
-            action_type == chat::mojom::ActionType::TRANSLATE ||
-            action_type == chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
-            return query + ": " + extracted_content;
-        } else {
-            std::string context_prompt =
-                    l10n_util::GetStringUTF8(IDS_CHAT_CONTEXT_PROMPT);
-            return base::ReplaceStringPlaceholders(context_prompt,
-                                                   {query, extracted_content}, nullptr);
-        }
-    }
+std::string BuildPrompt(const std::string& query,
+                        const std::string& extracted_content,
+                        chat::mojom::ActionType action_type) {
+  if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE ||
+      action_type == chat::mojom::ActionType::EXPLAIN ||
+      action_type == chat::mojom::ActionType::FACT_CHECK ||
+      action_type == chat::mojom::ActionType::TRANSLATE ||
+      action_type == chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
+    return query + ": " + extracted_content;
+  } else {
+    std::string context_prompt =
+        l10n_util::GetStringUTF8(IDS_CHAT_CONTEXT_PROMPT);
+    return base::ReplaceStringPlaceholders(context_prompt,
+                                           {query, extracted_content}, nullptr);
+  }
+}
 
     class ChatHistoryCache {
     public:
@@ -71,11 +72,6 @@ namespace {
         void SaveConversation(chat::mojom::SavableConversationModelPtr conversation) {
             base::AutoLock lock(lock_);
             this->chat_cache_[conversation->id] = std::move(conversation);
-        }
-
-        void SaveThinkingState(bool thinking_state) {
-            base::AutoLock lock(lock_);
-            this->enable_thinking_ = thinking_state;
         }
 
         void SaveSiteInfo(chat::mojom::SiteInfoPtr site_info) {
@@ -160,8 +156,13 @@ void ChatPageHandler::CloseUI() {
         return;
     }
 
+    // Note: An error may occur here if the side panel is closed while content
+    // extraction is in progress. Although it's not a perfect solution, the
+    // issue is mitigated on the Web UI side. In the Web UI, when a user closes
+    // the panel, there is a delay of a few milliseconds before it actually
+    // closes to allow content extraction to start, preventing null pointer
+    // errors.
     if (SidePanelUI *ui = browser->GetFeatures().side_panel_ui()) {
-        // Todo: to fix the error that occurs when the side panel is closed while extraction content is in progress
         this->CancelQuery();
         ui->Close();
     }
@@ -257,7 +258,14 @@ void ChatPageHandler::SaveSiteInfo(chat::mojom::SiteInfoPtr site_info) {
 }
 
 void ChatPageHandler::SaveThinkingState(bool thinking_state) {
-    ChatHistoryCache::GetInstance()->SaveThinkingState(thinking_state);
+    PrefService* prefs = profile_->GetPrefs();
+    prefs->SetBoolean(prefs::kChatThinkingEnabled,thinking_state);
+}
+
+void ChatPageHandler::GetThinkingState(GetThinkingStateCallback callback) {
+    PrefService* prefs = profile_->GetPrefs();
+    bool thinking_state = prefs->GetBoolean(prefs::kChatThinkingEnabled);
+    std::move(callback).Run(thinking_state);
 }
 
 void ChatPageHandler::ClearChatState() {

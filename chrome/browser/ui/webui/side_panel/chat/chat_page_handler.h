@@ -59,6 +59,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
 
   void SaveThinkingState(bool thinking_state) override;
 
+  void GetThinkingState(GetThinkingStateCallback callback) override;
+
   void ClearChatState() override;
 
   void SubmitAction(chat::mojom::ActionType action_type,
