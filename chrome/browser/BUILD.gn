@@ -2879,6 +2879,8 @@ static_library("browser") {
       "cs/android/cs_api_client_module_bridge.h",
       "cs/android/cs_api_client_service.cc",
       "cs/android/cs_api_client_service.h",
+      "cs/android/cs_api_client_service_factory.cc",
+      "cs/android/cs_api_client_service_factory.h",
       "data_sharing/android/data_sharing_service_factory_android.cc",
       "data_sharing/android/data_sharing_ui_delegate_android.cc",
       "data_sharing/android/data_sharing_ui_delegate_android.h",
