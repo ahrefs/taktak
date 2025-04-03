@@ -2877,6 +2877,8 @@ static_library("browser") {
       "content_extraction/android/inner_text_bridge.cc",
       "cs/android/cs_api_client_module_bridge.cc",
       "cs/android/cs_api_client_module_bridge.h",
+      "cs/android/cs_api_client_service.cc",
+      "cs/android/cs_api_client_service.h",
       "data_sharing/android/data_sharing_service_factory_android.cc",
       "data_sharing/android/data_sharing_ui_delegate_android.cc",
       "data_sharing/android/data_sharing_ui_delegate_android.h",

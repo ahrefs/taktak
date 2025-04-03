@@ -9,29 +9,29 @@ using jni_zero::JavaRef;
 
 namespace cs_api_client_module {
 CsApiClientModuleBridge::CsApiClientModuleBridge(
-    JNIEnv* env,
-    const JavaRef<jobject>& jobj,
-    Profile* profile
+  JNIEnv* env,
+  const JavaRef<jobject>& jobj,
+  Profile* profile
 ) : java_object_(env, jobj) {
-    // TODO
+  // TODO
 }
 
 void CsApiClientModuleBridge::Destroy(
-    JNIEnv* env,
-    const JavaParamRef<jobject>& obj
+  JNIEnv* env,
+  const JavaParamRef<jobject>& obj
 ) {
-    delete this;
+  delete this;
 }
 
 CsApiClientModuleBridge::~CsApiClientModuleBridge() = default;
 
 static jlong JNI_CsApiClientModuleBridge_Create(
-    JNIEnv* env,
-    const JavaParamRef<jobject>& obj,
-    Profile* profile
+  JNIEnv* env,
+  const JavaParamRef<jobject>& obj,
+  Profile* profile
 ) {
-    CsApiClientModuleBridge* native_bridge =
-        new CsApiClientModuleBridge(env, obj, profile);
-    return reinterpret_cast<intptr_t>(native_bridge);
+  CsApiClientModuleBridge* native_bridge =
+    new CsApiClientModuleBridge(env, obj, profile);
+  return reinterpret_cast<intptr_t>(native_bridge);
 }
 } // namespace cs_api_client_module
