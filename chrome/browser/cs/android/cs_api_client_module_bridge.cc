@@ -1,6 +1,8 @@
 #include "cs_api_client_module_bridge.h"
 
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/cs/android/cs_api_client_service.h"
+#include "chrome/browser/cs/android/cs_api_client_service_factory.h"
 
 #include "chrome/browser/cs/android/jni_headers/CsApiClientModuleBridge_jni.h"
 
@@ -13,7 +15,9 @@ CsApiClientModuleBridge::CsApiClientModuleBridge(
   const JavaRef<jobject>& jobj,
   Profile* profile
 ) : java_object_(env, jobj) {
-  // TODO
+  CHECK(!profile->IsOffTheRecord());
+  cs_api_client_service_ =
+        CSApiClientServiceFactory::GetInstance()->GetForBrowserContext(profile);
 }
 
 void CsApiClientModuleBridge::Destroy(

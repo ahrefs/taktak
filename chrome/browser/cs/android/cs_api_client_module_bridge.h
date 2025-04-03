@@ -6,6 +6,10 @@
 
 #include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
+#include "base/memory/raw_ptr.h"
+#include "base/memory/weak_ptr.h"
+#include "chrome/browser/cs/android/cs_api_client_service.h"
+#include "components/keyed_service/content/browser_context_keyed_service_factory.h"
 
 class Profile;
 
@@ -21,7 +25,10 @@ class CsApiClientModuleBridge {
   private:
     ~CsApiClientModuleBridge();
 
+    raw_ptr<CSApiClientService> cs_api_client_service_;
     jni_zero::ScopedJavaGlobalRef<jobject> java_object_;
+
+    const base::WeakPtrFactory<CsApiClientModuleBridge> weak_ptr_factory_{this};
 };
 } // namespace cs_api_client_module
 #endif // CHROME_BROWSER_CS_CS_API_CLIENT_MODULE_BRIDGE_H_
