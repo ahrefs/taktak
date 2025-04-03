@@ -35,9 +35,10 @@ CSApiClientServiceFactory::~CSApiClientServiceFactory() = default;
 std::unique_ptr<KeyedService>
 CSApiClientServiceFactory::BuildServiceInstanceForBrowserContext(
     content::BrowserContext* context) const {
+  Profile* profile = Profile::FromBrowserContext(context);
   auto url_loader_factory = context->GetDefaultStoragePartition()
                                 ->GetURLLoaderFactoryForBrowserProcess();
-  return std::make_unique<CSApiClientService>(url_loader_factory);
+  return std::make_unique<CSApiClientService>(profile, url_loader_factory);
 }
 
 } // namespace cs_api_client_module

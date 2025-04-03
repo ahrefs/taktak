@@ -8,6 +8,7 @@
 #include "base/functional/callback.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "chrome/browser/profiles/profile.h"
 #include "components/keyed_service/core/keyed_service.h"
 #include "components/web_request_helper/web_request_helper.h"
 
@@ -20,6 +21,7 @@ using web_request_helper::WebRequestResult;
 class CSApiClientService : public KeyedService {
   public:
     CSApiClientService(
+      Profile* profile,
       scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory);
     ~CSApiClientService() override;
     CSApiClientService(const CSApiClientService&) = delete;
@@ -30,6 +32,7 @@ class CSApiClientService : public KeyedService {
     void Post(std::string data, ResultCallback callback);
 
   private:
+    raw_ptr<Profile> profile_;
     web_request_helper::WebRequestHelper web_request_helper_;
     base::WeakPtrFactory<CSApiClientService> weak_ptr_factory_{this};
 };
