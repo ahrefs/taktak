@@ -4,7 +4,7 @@ import("//third_party/jni_zero/jni_zero.gni")
 android_library("java") {
     srcjar_deps = [ ":jni_headers" ]
     sources = [
-        "java/src/org/chromium/chrome/browser/cs/CsApiClientModuleBridge.java",
+        "java/src/org/chromium/chrome/browser/cs/CSApiClientModuleBridge.java",
     ]
     deps = [
         "//base:base_java",
@@ -19,5 +19,5 @@ android_library("java") {
 }
 
 generate_jni("jni_headers") {
-    sources = [ "java/src/org/chromium/chrome/browser/cs/CsApiClientModuleBridge.java" ]
+    sources = [ "java/src/org/chromium/chrome/browser/cs/CSApiClientModuleBridge.java" ]
 }
