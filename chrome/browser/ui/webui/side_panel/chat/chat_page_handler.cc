@@ -17,8 +17,8 @@
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_ui.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
-#include "chrome/common/pref_names.h"
 #include "chrome/grit/generated_resources.h"
+#include "components/browsing_data/core/pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/browser/web_contents.h"
@@ -65,7 +65,6 @@ std::string BuildPrompt(const std::string& query,
             for (const auto &entry: chat_cache_) {
                 chat_state->conversations.push_back(entry.second.Clone());
             }
-            chat_state->enable_thinking = this->enable_thinking_;
             return chat_state;
         }
 
@@ -109,7 +108,6 @@ std::string BuildPrompt(const std::string& query,
 
         base::Lock lock_;
         std::unordered_map<std::string, chat::mojom::SavableConversationModelPtr> chat_cache_;
-        bool enable_thinking_;
         chat::mojom::SiteInfoPtr site_info_;
     };
 
@@ -259,12 +257,14 @@ void ChatPageHandler::SaveSiteInfo(chat::mojom::SiteInfoPtr site_info) {
 
 void ChatPageHandler::SaveThinkingState(bool thinking_state) {
     PrefService* prefs = profile_->GetPrefs();
-    prefs->SetBoolean(prefs::kChatThinkingEnabled,thinking_state);
+    prefs->SetBoolean(browsing_data::prefs::kChatThinkingEnabled,
+                      thinking_state);
 }
 
 void ChatPageHandler::GetThinkingState(GetThinkingStateCallback callback) {
     PrefService* prefs = profile_->GetPrefs();
-    bool thinking_state = prefs->GetBoolean(prefs::kChatThinkingEnabled);
+    bool thinking_state =
+        prefs->GetBoolean(browsing_data::prefs::kChatThinkingEnabled);
     std::move(callback).Run(thinking_state);
 }
 

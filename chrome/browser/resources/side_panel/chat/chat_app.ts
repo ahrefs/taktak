@@ -92,7 +92,7 @@ export class ChatAppElement extends CrLitElement {
     protected shouldShowActionsMenu_: boolean = false;
 
     private isActivePageUrlNew_: boolean = false;
-    protected enableThinking_: boolean = false;
+    protected enableThinking_: boolean = true;
 
     // Individual properties are used to signal changes in the UI
     // instead of a single object. Using an object would result in
@@ -188,7 +188,6 @@ export class ChatAppElement extends CrLitElement {
 
     private async updateConversationHistory(chatState: ChatState) {
         this.conversations_ = chatState.conversations.sort((a, b) => Number(a.timestamp - b.timestamp));
-        this.enableThinking_ = chatState.enableThinking;
         await this.updateComplete;
     }
 
@@ -257,8 +256,15 @@ export class ChatAppElement extends CrLitElement {
 
     protected onCloseSidePanel_(e: Event) {
         e.preventDefault();
+
+        // todo: to remove later
         this.logConversations();
-        // Todo: to fix the error that occurs when the side panel is closed while extraction content is in progress
+
+        // Ensures that closing the side panel during an ongoing content extraction process
+        // does not disrupt the operation and avoids potential pointer errors.
+        // When the user attempts to close the panel mid-extraction, the closure is delayed
+        // by 1 second. This delay allows the content extraction process to be initialized fully,
+        // ensuring stability and preventing issues caused by prematurely nullified references.
         if (this.isQuerySubmitting_) {
             setTimeout(() => this.chatApiProxy_.closeUI(), 1000);
         } else {
@@ -420,7 +426,7 @@ export class ChatAppElement extends CrLitElement {
             currentConversation.shouldDisplaySiteInfo = (lastConversation.url === currentConversation.url &&
                 lastConversation.title === currentConversation.title && lastConversation.isUrlContext)
                 ? false
-                : this.shouldUseCurrentPageContentAsChatContext_ ;
+                : this.shouldUseCurrentPageContentAsChatContext_;
 
             console.log("shouldUseCurrentPageContentAsChatContext_: " + this.shouldUseCurrentPageContentAsChatContext_);
         } else {
@@ -567,6 +573,9 @@ export class ChatAppElement extends CrLitElement {
             this.chatApiProxy_.showUI();
             const {chatState} = await this.chatApiProxy_.getChatState();
             await this.updateConversationHistory(chatState);
+
+            const {thinkingState} = await this.chatApiProxy_.getThinkingState();
+            this.enableThinking_ = thinkingState;
 
             let cacheSiteInfo = await this.chatApiProxy_.getSiteInfoFromCache();
             await this.updateSiteInfo(cacheSiteInfo.siteInfo, false /* willSaveInCache */);

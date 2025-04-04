@@ -25,6 +25,8 @@ export interface ChatApiProxy {
 
     saveThinkingState(thinkingState : boolean) : void;
 
+    getThinkingState(): Promise<{ thinkingState: boolean }>;
+
     clearChatState(): void;
 
     submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean): void;
@@ -89,6 +91,10 @@ export class ChatApiProxyImpl implements ChatApiProxy {
 
     saveThinkingState(thinkingState: boolean) {
         this.handler.saveThinkingState(thinkingState);
+    }
+
+    getThinkingState(): Promise<{ thinkingState: boolean }> {
+        return this.handler.getThinkingState();
     }
 
     clearChatState() {

@@ -78,7 +78,6 @@ struct SavableConversationModel {
 
 struct ChatState {
     array<SavableConversationModel> conversations;
-    bool enable_thinking;
 };
 
 // Used by the WebUI page to bootstrap bidirectional communication.
