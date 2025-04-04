@@ -23,7 +23,9 @@ class CSApiClientModuleBridge {
 
     void Destroy(JNIEnv* env, const jni_zero::JavaParamRef<jobject>& obj);
 
-    void Handle(JNIEnv* env, const GURL& url);
+    void Handle(JNIEnv* env,
+                const jni_zero::JavaParamRef<jobject>& obj,
+                const jni_zero::JavaParamRef<jstring>& url);
 
   private:
     ~CSApiClientModuleBridge();

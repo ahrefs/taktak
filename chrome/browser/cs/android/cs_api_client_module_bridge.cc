@@ -54,18 +54,23 @@ void CSApiClientModuleBridge::Destroy(
 
 void CSApiClientModuleBridge::Handle(
   JNIEnv* env,
-  const GURL& url
+  const JavaParamRef<jobject>& obj,
+  const JavaParamRef<jstring>& url
 ) {
-  if (url != last_committed_url_) {
-    last_committed_url_ = url;
-    if (url.SchemeIsHTTPOrHTTPS()) {
+  const char *url_chars = env->GetStringUTFChars(url, nullptr);
+  std::string url_str(url_chars);
+  GURL gurl(url_str);
+
+  if (gurl != last_committed_url_) {
+    last_committed_url_ = gurl;
+    if (gurl.SchemeIsHTTPOrHTTPS()) {
       std::string url_to_submit;
       GURL::Replacements remove_query_and_ref;
       remove_query_and_ref.ClearQuery();
       remove_query_and_ref.ClearRef();
-      url_to_submit = url.ReplaceComponents(remove_query_and_ref).spec();
+      url_to_submit = gurl.ReplaceComponents(remove_query_and_ref).spec();
 
-      const std::string query = url.query();
+      const std::string query = gurl.query();
       const std::string query_with_qm = std::string("?") + query;
 
       constexpr std::size_t npos = std::string::npos;
