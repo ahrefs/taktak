@@ -10,6 +10,7 @@
 #include "base/memory/weak_ptr.h"
 #include "chrome/browser/cs/android/cs_api_client_service.h"
 #include "components/keyed_service/content/browser_context_keyed_service_factory.h"
+#include "url/gurl.h"
 
 class Profile;
 
@@ -22,9 +23,12 @@ class CSApiClientModuleBridge {
 
     void Destroy(JNIEnv* env, const jni_zero::JavaParamRef<jobject>& obj);
 
+    void Handle(JNIEnv* env, const GURL& url);
+
   private:
     ~CSApiClientModuleBridge();
 
+    GURL last_committed_url_;
     raw_ptr<CSApiClientService> cs_api_client_service_;
     jni_zero::ScopedJavaGlobalRef<jobject> java_object_;
 
