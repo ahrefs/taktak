@@ -49,6 +49,7 @@ export type ConversationRecord = {
 export interface ChatAppElement {
     $: {
         promptInput: ChatPromptInputElement,
+        conversationContainer: HTMLElement,
     };
 }
 
@@ -93,6 +94,11 @@ export class ChatAppElement extends CrLitElement {
 
     private isActivePageUrlNew_: boolean = false;
     protected enableThinking_: boolean = true;
+
+    private shouldAutoScroll_: boolean = true;
+    private scrollInterval_: number = 0;
+    private scrollThreshold_: number = 0;
+    private totalConversationLength_: number = 0;
 
     // Individual properties are used to signal changes in the UI
     // instead of a single object. Using an object would result in
@@ -217,18 +223,50 @@ export class ChatAppElement extends CrLitElement {
                         this.currentResponseResult_ = this.appendCaret(this.currentResponseResult_);
                     }
                 }
+
+                if (this.totalConversationLength_ < 3_000) {
+                   this.scrollThreshold_ = 2;
+                } else if (this.totalConversationLength_ < 5_000) {
+                    this.scrollThreshold_ = 4;
+                } else if(this.totalConversationLength_ < 10_000) {
+                    this.scrollThreshold_ = 8;
+                } else if(this.totalConversationLength_ < 20_000) {
+                    this.scrollThreshold_ = 16;
+                } else if(this.totalConversationLength_ < 30_000) {
+                    this.scrollThreshold_ = 24;
+                } else if(this.totalConversationLength_ < 40_000) {
+                    this.scrollThreshold_ = 32;
+                } else {
+                    this.scrollThreshold_ = 0;
+                }
+                // Due to performance issue in markdown container, need to set word count threshold
+                if (this.shouldAutoScroll_ && this.totalConversationLength_ < 40_000) {
+                    if (this.scrollInterval_ >= this.scrollThreshold_) {
+                        this.$.conversationContainer.scrollTo({
+                            top: this.$.conversationContainer.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                        this.scrollInterval_ = 0;
+                    } else {
+                        this.scrollInterval_++;
+                    }
+                }
             }
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.isQuerySubmitting_ = false;
+            this.shouldAutoScroll_ = true;
             this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
+            this.totalConversationLength_ = this.conversations_.reduce((acc, cur) => acc + cur.thinkingText.length + cur.responseText.length, 0);
+            // console.log("word count: " + this.conversations_.reduce((acc, cur) => acc + cur.thinkingText.length + cur.responseText.length, 0));
         } else if (response.responseType == ResponseType.ERROR) {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.currentErrorResult_ = loadTimeData.getString('genericError');
             this.isQuerySubmitting_ = false;
+            this.shouldAutoScroll_ = true;
             this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
         }
@@ -270,13 +308,6 @@ export class ChatAppElement extends CrLitElement {
         } else {
             this.chatApiProxy_.closeUI();
         }
-    }
-
-    onLoad() {
-        const updater = ColorChangeUpdater.forDocument();
-        updater.start();
-        updater.refreshColorsCss();
-        setTimeout(() => this.$.promptInput.focusInput(), 0);
     }
 
     protected onCancelQuery_() {
@@ -406,7 +437,14 @@ export class ChatAppElement extends CrLitElement {
             currentConversation.query = loadTimeData.getString('promptSocialMediaPost') + ' ' + actionParam;
         }
         this.conversations_.push(currentConversation);
-        setTimeout(() => this.chatApiProxy_.submitAction(actionType, actionParam, this.enableThinking_), 0);
+
+        this.shouldAutoScroll_ = true;
+        this.$.conversationContainer.scrollTo({
+            top: this.$.conversationContainer.scrollHeight,
+            behavior: 'smooth'
+        });
+        setTimeout(() => {
+            this.chatApiProxy_.submitAction(actionType, actionParam, this.enableThinking_)}, 0);
     }
 
     protected onSubmitQuery_() {
@@ -418,8 +456,6 @@ export class ChatAppElement extends CrLitElement {
         currentConversation.url = this.stripUrlProtocol_(this.siteInfo_.url ?? "");
         currentConversation.isUrlContext = this.shouldUseCurrentPageContentAsChatContext_;
 
-        console.log("shouldUseCurrentPageContentAsChatContext_: " + this.shouldUseCurrentPageContentAsChatContext_);
-
         const lastIndex = this.conversations_.length - 1;
         const lastConversation = this.conversations_[lastIndex];
         if (lastConversation) {
@@ -427,16 +463,18 @@ export class ChatAppElement extends CrLitElement {
                 lastConversation.title === currentConversation.title && lastConversation.isUrlContext)
                 ? false
                 : this.shouldUseCurrentPageContentAsChatContext_;
-
-            console.log("shouldUseCurrentPageContentAsChatContext_: " + this.shouldUseCurrentPageContentAsChatContext_);
         } else {
-            currentConversation.shouldDisplaySiteInfo = (this.isActivePageUrlNew_ && !this.shouldHideSiteInfoInUserQueryElement_ && this.shouldUseCurrentPageContentAsChatContext_)
+            currentConversation.shouldDisplaySiteInfo =
+                (this.isActivePageUrlNew_ &&
+                    !this.shouldHideSiteInfoInUserQueryElement_ &&
+                    this.shouldUseCurrentPageContentAsChatContext_)
                 ||
                 /* This is for the situation where the side panel is closed while there is an active streaming based on the content of the active page.
                    In that case, the active conversation will not be saved into cache due to the abrupt closure.
                  */
-                (!this.isActivePageUrlNew_ && this.siteInfo_.isContentUsableInConversations && this.conversations_.length == 0 && this.shouldUseCurrentPageContentAsChatContext_);
-            console.log("shouldUseCurrentPageContentAsChatContext_: " + this.shouldUseCurrentPageContentAsChatContext_);
+                (!this.isActivePageUrlNew_ && this.siteInfo_.isContentUsableInConversations &&
+                    this.conversations_.length == 0 &&
+                    this.shouldUseCurrentPageContentAsChatContext_);
         }
 
         this.conversations_.push(currentConversation);
@@ -460,11 +498,18 @@ export class ChatAppElement extends CrLitElement {
             }
         }
 
-        setTimeout(() =>
+        this.shouldAutoScroll_ = true;
+        this.$.conversationContainer.scrollTo({
+            top: this.$.conversationContainer.scrollHeight,
+            behavior: 'smooth'
+        });
+
+        setTimeout(() => {
             this.chatApiProxy_.submitQuery(
                 ActionType.QUERY,
                 this.submittedQuery_ ?? "",
-                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse(), this.enableThinking_), 0);
+                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse(), this.enableThinking_)
+        }, 0);
     }
 
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {
@@ -566,9 +611,40 @@ export class ChatAppElement extends CrLitElement {
         await this.updateComplete;
     }
 
+    onLoad() {
+        const updater = ColorChangeUpdater.forDocument();
+        updater.start();
+        updater.refreshColorsCss();
+    }
+
+    onConversationContainerScroll(container: HTMLElement) {
+        // if (container) {
+        //     const threshold = 60; // pixels from bottom
+        //     const position = container.scrollTop + container.clientHeight;
+        //     console.log("position: " + position);
+        //     const height = container.scrollHeight;
+        //     console.log("height: " + height);
+        //     console.log("height - position: " + (height - position));
+        //     this.shouldAutoScroll_ = (height - position) < threshold;
+        //     console.log("shouldAutoScroll_: " + this.shouldAutoScroll_);
+        // }
+        if (container) {
+            this.shouldAutoScroll_ = false;
+        }
+    }
+
     override connectedCallback() {
         super.connectedCallback();
+
         window.addEventListener('load', this.onLoad);
+
+        const conversationContainer = this.shadowRoot?.querySelector('#conversationContainer') as HTMLElement;
+        if (conversationContainer) {
+            // conversationContainer.addEventListener('scroll', this.onConversationContainerScroll.bind(this, conversationContainer));
+            conversationContainer.addEventListener('wheel', this.onConversationContainerScroll.bind(this, conversationContainer));
+            conversationContainer.addEventListener('touchmove', this.onConversationContainerScroll.bind(this, conversationContainer));
+        }
+
         setTimeout(async () => {
             this.chatApiProxy_.showUI();
             const {chatState} = await this.chatApiProxy_.getChatState();
@@ -596,6 +672,15 @@ export class ChatAppElement extends CrLitElement {
         super.disconnectedCallback();
 
         window.removeEventListener('load', this.onLoad);
+
+        const conversationContainer = this.shadowRoot.querySelector('#conversationContainer') as HTMLElement;
+        if (conversationContainer) {
+            console.log("xxx: release event listener");
+            conversationContainer.removeEventListener('scroll', this.onConversationContainerScroll.bind(this, conversationContainer));
+        } else {
+            console.log("xxx: cannot release listener");
+        }
+
         this.listenerIds_.forEach(
             id => this.chatApiProxy_.getCallbackRouter().removeListener(id));
     }

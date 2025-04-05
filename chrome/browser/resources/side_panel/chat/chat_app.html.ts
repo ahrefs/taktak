@@ -139,7 +139,7 @@ export function getHtml(this: ChatAppElement) {
                     <cr-icon aria-hidden="true" icon="cr:delete" class="header-icon"></cr-icon>
                 </button>
             </div>
-            <div id="conversation-container" class="chat-scroller chat-scroller-top-of-page">
+            <div id="conversationContainer" class="chat-scroller chat-scroller-top-of-page">
                 <div class="conversation-content">
                     <div class="gap-between-header-and-first-conversation"></div>
                     ${
