@@ -99,6 +99,7 @@ export class ChatAppElement extends CrLitElement {
     private scrollInterval_: number = 0;
     private scrollThreshold_: number = 0;
     private totalConversationLength_: number = 0;
+    private isPointerDown_: boolean = false;
 
     // Individual properties are used to signal changes in the UI
     // instead of a single object. Using an object would result in
@@ -111,6 +112,10 @@ export class ChatAppElement extends CrLitElement {
     protected currentConversationId_: string = "";
     protected showThinkingText_: boolean = true;
 
+    private handleWheelOrTouchMove_ = this.onWheelOrTouchMove.bind(this);
+    private handlePointerDown_ = this.onPointerDown.bind(this);
+    private handlePointerUp_ = this.onPointerUp.bind(this);
+    private handleConversationContainerScroll_ = this.onConversationContainerScroll.bind(this);
 
     constructor() {
         super();
@@ -224,23 +229,25 @@ export class ChatAppElement extends CrLitElement {
                     }
                 }
 
-                if (this.totalConversationLength_ < 3_000) {
-                   this.scrollThreshold_ = 2;
-                } else if (this.totalConversationLength_ < 5_000) {
-                    this.scrollThreshold_ = 4;
-                } else if(this.totalConversationLength_ < 10_000) {
-                    this.scrollThreshold_ = 8;
-                } else if(this.totalConversationLength_ < 20_000) {
-                    this.scrollThreshold_ = 16;
-                } else if(this.totalConversationLength_ < 30_000) {
-                    this.scrollThreshold_ = 24;
-                } else if(this.totalConversationLength_ < 40_000) {
-                    this.scrollThreshold_ = 32;
-                } else {
-                    this.scrollThreshold_ = 0;
-                }
-                // Due to performance issue in markdown container, need to set word count threshold
                 if (this.shouldAutoScroll_ && this.totalConversationLength_ < 40_000) {
+                    // To have an acceptable performance in the markdown container, we set thresholds for scrolling and word count.
+                    // The interface may experience slight sluggishness if the 'conversations' array exceeds 45,000 words.
+                    if (this.totalConversationLength_ < 3_000) {
+                        this.scrollThreshold_ = 2;
+                    } else if (this.totalConversationLength_ < 5_000) {
+                        this.scrollThreshold_ = 4;
+                    } else if (this.totalConversationLength_ < 10_000) {
+                        this.scrollThreshold_ = 8;
+                    } else if (this.totalConversationLength_ < 20_000) {
+                        this.scrollThreshold_ = 16;
+                    } else if (this.totalConversationLength_ < 30_000) {
+                        this.scrollThreshold_ = 24;
+                    } else if (this.totalConversationLength_ < 40_000) {
+                        this.scrollThreshold_ = 32;
+                    } else {
+                        this.scrollThreshold_ = 0;
+                    }
+
                     if (this.scrollInterval_ >= this.scrollThreshold_) {
                         this.$.conversationContainer.scrollTo({
                             top: this.$.conversationContainer.scrollHeight,
@@ -256,11 +263,17 @@ export class ChatAppElement extends CrLitElement {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.isQuerySubmitting_ = false;
-            this.shouldAutoScroll_ = true;
             this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
             this.totalConversationLength_ = this.conversations_.reduce((acc, cur) => acc + cur.thinkingText.length + cur.responseText.length, 0);
-            // console.log("word count: " + this.conversations_.reduce((acc, cur) => acc + cur.thinkingText.length + cur.responseText.length, 0));
+            if (this.shouldShowActionsMenu_ && this.shouldAutoScroll_) {
+                setTimeout(() =>
+                    this.$.conversationContainer.scrollTo({
+                        top: this.$.conversationContainer.scrollHeight + 1000, // just to make sure to scroll down to the bottom
+                        behavior: 'instant'
+                    }), 100);
+            }
+            this.shouldAutoScroll_ = true;
         } else if (response.responseType == ResponseType.ERROR) {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
@@ -444,7 +457,8 @@ export class ChatAppElement extends CrLitElement {
             behavior: 'smooth'
         });
         setTimeout(() => {
-            this.chatApiProxy_.submitAction(actionType, actionParam, this.enableThinking_)}, 0);
+            this.chatApiProxy_.submitAction(actionType, actionParam, this.enableThinking_)
+        }, 0);
     }
 
     protected onSubmitQuery_() {
@@ -584,12 +598,10 @@ export class ChatAppElement extends CrLitElement {
                 But the content of the abc.com will be used as the context of the chat.
              */
             if (lastConversation && lastConversation.isUrlContext && lastConversation.url == this.stripUrlProtocol_(siteInfo.url ?? "")) {
-                console.log("3 isUrlContext: " + lastConversation?.isUrlContext);
                 this.shouldShowActionsMenu_ = false;
                 this.shouldHideSiteInfoInUserQueryElement_ = true;
                 this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
             } else {
-                console.log("4 isUrlContext: " + lastConversation?.isUrlContext);
                 this.isActivePageUrlNew_ = true;
                 this.shouldHideSiteInfoInUserQueryElement_ = false;
                 this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
@@ -605,6 +617,14 @@ export class ChatAppElement extends CrLitElement {
             this.shouldDisplayChatAboutThisPageButton_ = false;
         } else {
             this.shouldUseCurrentPageContentAsChatContext_ = false;
+            this.shouldShowActionsMenu_ = false;
+        }
+
+        if (this.shouldShowActionsMenu_ && !this.isQuerySubmitting_ && this.shouldAutoScroll_) {
+            this.$.conversationContainer.scrollTo({
+                top: this.$.conversationContainer.scrollHeight,
+                behavior: 'instant'
+            });
         }
 
         // Lit requires this to update
@@ -617,18 +637,20 @@ export class ChatAppElement extends CrLitElement {
         updater.refreshColorsCss();
     }
 
-    onConversationContainerScroll(container: HTMLElement) {
-        // if (container) {
-        //     const threshold = 60; // pixels from bottom
-        //     const position = container.scrollTop + container.clientHeight;
-        //     console.log("position: " + position);
-        //     const height = container.scrollHeight;
-        //     console.log("height: " + height);
-        //     console.log("height - position: " + (height - position));
-        //     this.shouldAutoScroll_ = (height - position) < threshold;
-        //     console.log("shouldAutoScroll_: " + this.shouldAutoScroll_);
-        // }
-        if (container) {
+    onWheelOrTouchMove() {
+        this.shouldAutoScroll_ = false;
+    }
+
+    onPointerDown() {
+        this.isPointerDown_ = true
+    }
+
+    onPointerUp() {
+        this.isPointerDown_ = false;
+    }
+
+    onConversationContainerScroll() {
+        if (this.isPointerDown_) {
             this.shouldAutoScroll_ = false;
         }
     }
@@ -640,9 +662,11 @@ export class ChatAppElement extends CrLitElement {
 
         const conversationContainer = this.shadowRoot?.querySelector('#conversationContainer') as HTMLElement;
         if (conversationContainer) {
-            // conversationContainer.addEventListener('scroll', this.onConversationContainerScroll.bind(this, conversationContainer));
-            conversationContainer.addEventListener('wheel', this.onConversationContainerScroll.bind(this, conversationContainer));
-            conversationContainer.addEventListener('touchmove', this.onConversationContainerScroll.bind(this, conversationContainer));
+            conversationContainer.addEventListener('wheel', this.handleWheelOrTouchMove_);
+            conversationContainer.addEventListener('touchmove', this.handleWheelOrTouchMove_);
+            conversationContainer.addEventListener('pointerdown', this.handlePointerDown_);
+            conversationContainer.addEventListener('pointerup', this.handlePointerUp_);
+            conversationContainer.addEventListener('scroll', this.handleConversationContainerScroll_);
         }
 
         setTimeout(async () => {
@@ -675,10 +699,11 @@ export class ChatAppElement extends CrLitElement {
 
         const conversationContainer = this.shadowRoot.querySelector('#conversationContainer') as HTMLElement;
         if (conversationContainer) {
-            console.log("xxx: release event listener");
-            conversationContainer.removeEventListener('scroll', this.onConversationContainerScroll.bind(this, conversationContainer));
-        } else {
-            console.log("xxx: cannot release listener");
+            conversationContainer.removeEventListener('wheel', this.handleWheelOrTouchMove_);
+            conversationContainer.removeEventListener('touchmove', this.handleWheelOrTouchMove_);
+            conversationContainer.removeEventListener('pointerdown', this.handlePointerDown_);
+            conversationContainer.removeEventListener('pointerup', this.handlePointerUp_);
+            conversationContainer.removeEventListener('scroll', this.handleConversationContainerScroll_);
         }
 
         this.listenerIds_.forEach(
