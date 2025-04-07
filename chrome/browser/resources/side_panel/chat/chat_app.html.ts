@@ -135,7 +135,7 @@ export function getHtml(this: ChatAppElement) {
                     <div class="chat-title">${this.title_}</div>
                 </div>
                 <button id="target-restart-btn" class="header-btn"
-                        @click="${this.onRestartChat_}">
+                        @click="${this.onDeleteAll_}">
                     <cr-icon aria-hidden="true" icon="cr:delete" class="header-icon"></cr-icon>
                 </button>
             </div>

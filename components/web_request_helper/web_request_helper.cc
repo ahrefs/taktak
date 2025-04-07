@@ -239,7 +239,7 @@ WebRequestHelper::Ticket WebRequestHelper::CreateURLLoaderHandler(
     request->method = method;
   }
 
-  DVLOG(0) << method << " " << url.spec();
+  DVLOG(1) << method << " " << url.spec();
 
   if (!headers.empty()) {
     for (auto entry : headers) {
@@ -344,11 +344,11 @@ void WebRequestHelper::URLLoaderHandler::ParseJsonImpl(
 void WebRequestHelper::URLLoaderHandler::OnDataReceived(
     std::string_view string_piece,
     base::OnceClosure resume) {
-  DVLOG(0) << "[[" << __func__ << "]]" << " Chunk received";
+  DVLOG(1) << "[[" << __func__ << "]]" << " Chunk received";
   if (is_sse_) {
     ParseSSE(string_piece);
   } else {
-    DVLOG(0) << "Chunk content: \n" << string_piece;
+    DVLOG(1) << "Chunk content: \n" << string_piece;
     data_received_callback_.Run(base::Value(string_piece));
   }
   std::move(resume).Run();
@@ -356,7 +356,7 @@ void WebRequestHelper::URLLoaderHandler::OnDataReceived(
 
 void WebRequestHelper::URLLoaderHandler::OnComplete(bool success) {
   DCHECK(result_callback_);
-  VLOG(0) << "[[" << __func__ << "]]" << " Response completed\n";
+  DVLOG(1) << "[[" << __func__ << "]]" << " Response completed\n";
 
   request_is_finished_ = true;
 
@@ -372,7 +372,7 @@ void WebRequestHelper::URLLoaderHandler::OnRetry(
 void WebRequestHelper::URLLoaderHandler::OnResponse(
     ResponseConversionCallback conversion_callback,
     const std::unique_ptr<std::string> response_body) {
-  VLOG(0) << "[[" << __func__ << "]]" << " Response received\n";
+  DVLOG(1) << "[[" << __func__ << "]]" << " Response received\n";
   DCHECK(result_callback_);
 
   DCHECK_EQ(current_decoding_operation_count_, 0);
@@ -403,7 +403,7 @@ void WebRequestHelper::URLLoaderHandler::OnParseJsonResponse(
     WebRequestResult result,
     ValueOrError result_value) {
   if (!result_value.has_value()) {
-    VLOG(0) << "Response validation error:" << result_value.error();
+    DVLOG(1) << "Response validation error:" << result_value.error();
     if (result_value.error().starts_with("trailing comma")) {
       DEBUG_ALIAS_FOR_GURL(url_alias, result.final_url());
       DEBUG_ALIAS_FOR_CSTR(result_str, result_value.error().c_str(), 1024);
@@ -413,12 +413,12 @@ void WebRequestHelper::URLLoaderHandler::OnParseJsonResponse(
     return;
   }
   if (!result_value.value().is_dict() && !result_value.value().is_list()) {
-    VLOG(0) << "Response validation error: Invalid top-level type";
+    DVLOG(1) << "Response validation error: Invalid top-level type";
     std::move(result_callback_).Run(std::move(result));
     return;
   }
 
-  VLOG(2) << "Response validation successful";
+  DVLOG(1) << "Response validation successful";
   result.value_body_ = std::move(result_value.value());
   std::move(result_callback_).Run(std::move(result));
 }
@@ -427,11 +427,11 @@ void WebRequestHelper::URLLoaderHandler::MaybeSendResult() {
   DCHECK_LE(0, current_decoding_operation_count_);
   const bool decoding_is_complete = (current_decoding_operation_count_ == 0);
 
-  DVLOG(0) << "request_is_finished_: " << request_is_finished_ << std::endl
+  DVLOG(1) << "request_is_finished_: " << request_is_finished_ << std::endl
            << "decoding_is_complete:" << decoding_is_complete;
 
   if (!request_is_finished_ && decoding_is_complete) {
-    VLOG(0)
+    DVLOG(1)
         << "Did not run URLLoaderHandler completion handler, maybe still have "
         << current_decoding_operation_count_
         << " decoding operations in progress.";
@@ -452,7 +452,7 @@ void WebRequestHelper::URLLoaderHandler::ParseSSE(
   // multiple chunks are received in a single call.
   std::vector<std::string_view> stream_data = base::SplitStringPiece(
       string_piece, "\r\n", base::KEEP_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
-  DVLOG(0) << "StringPiece(string_view): " << string_piece;
+  DVLOG(1) << "StringPiece(string_view): " << string_piece;
 
   // Occasionally, one of the response chunks may be divided into
   // two parts—specifically, the last chunk of one response and the
@@ -471,15 +471,15 @@ void WebRequestHelper::URLLoaderHandler::ParseSSE(
     auto first = stream_data[0];
     if (!base::StartsWith(first, kDataPrefix)) {
       is_first_piece_invalid = true;
-      DVLOG(0) << "Chunk doesn't start with SSE prefix. Invalid JSON.";
-      DVLOG(0) << "Invalid first chunk: " << first;
+      DVLOG(1) << "Chunk doesn't start with SSE prefix. Invalid JSON.";
+      DVLOG(1) << "Invalid first chunk: " << first;
       if (!previous_invalid_piece_of_response_chunk_.empty()) {
         std::string combined_chunk =
             std::string(previous_invalid_piece_of_response_chunk_) +
             (std::string(first));
         stream_data_copy.push_back(combined_chunk);
         previous_invalid_piece_of_response_chunk_ = "";
-        DVLOG(0) << "Replaced invalid chunk with valid one: " << combined_chunk;
+        DVLOG(1) << "Replaced invalid chunk with valid one: " << combined_chunk;
       }
     }
     if (stream_data.size() > 1) {
@@ -487,9 +487,9 @@ void WebRequestHelper::URLLoaderHandler::ParseSSE(
       if (base::StartsWith(last, kDataPrefix) &&
           !base::EndsWith(last, kDataSuffix)) {
         is_last_piece_invalid = true;
-        DVLOG(0) << "Chunk starts with SSE prefix but doesn't end with "
+        DVLOG(1) << "Chunk starts with SSE prefix but doesn't end with "
                     "SSE suffix. Invalid JSON.";
-        DVLOG(0) << "Invalid last chunk: " << last;
+        DVLOG(1) << "Invalid last chunk: " << last;
         previous_invalid_piece_of_response_chunk_ = std::string(last);
       }
     }
@@ -514,7 +514,7 @@ void WebRequestHelper::URLLoaderHandler::ParseSSE(
   for (const auto& data : stream_data_copy) {
     auto start_index = strlen(kDataPrefix) - 1;
     if (start_index >= data.size()) {
-      DVLOG(0) << "Start index is out of bounds.";
+      DVLOG(1) << "Start index is out of bounds.";
       continue;
     }
     auto json = data.substr(start_index);
@@ -532,7 +532,7 @@ void WebRequestHelper::URLLoaderHandler::ParseSSE(
           handler->MaybeSendResult();
         };
 
-    DVLOG(0) << "Going to call ParseJsonImpl";
+    DVLOG(1) << "Going to call ParseJsonImpl";
     ParseJsonImpl(std::string(json),
                   base::BindOnce(std::move(on_json_parsed),
                                  weak_ptr_factory_.GetWeakPtr()));

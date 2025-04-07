@@ -106,7 +106,7 @@ void CompletionApiClient::QueryPrompt(
 }
 
 void CompletionApiClient::ClearAllQueries() {
-    DVLOG(0) << "Clearing all queries";
+    DVLOG(1) << "Clearing all queries";
     web_request_helper_.CancelAll();
     entire_completion_result.clear();
 }
@@ -147,14 +147,14 @@ void CompletionApiClient::OnQueryCompleted(GenerationCompletedCallback callback,
 
   // Handle error
   chat::mojom::APIErrorType error;
-  DVLOG(0) << "Error response_code: " << result.response_code();
-  DVLOG(0) << "Error error_code: " << result.error_code();
+  DVLOG(1) << "Error response_code: " << result.response_code();
+  DVLOG(1) << "Error error_code: " << result.error_code();
 
   if (result.value_body().is_dict()) {
     const std::string* value =
         result.value_body().GetDict().FindString("message");
     if (value) {
-      DVLOG(0) << "Error message: " << *value;
+      DVLOG(1) << "Error message: " << *value;
     }
   }
 

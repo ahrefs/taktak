@@ -99,6 +99,7 @@ export class ChatAppElement extends CrLitElement {
     private scrollInterval_: number = 0;
     private scrollThreshold_: number = 0;
     private totalConversationLength_: number = 0;
+    private conversationLengthThreshold_: number = 100_000;
     private isPointerDown_: boolean = false;
 
     // Individual properties are used to signal changes in the UI
@@ -229,24 +230,23 @@ export class ChatAppElement extends CrLitElement {
                     }
                 }
 
-                if (this.shouldAutoScroll_ && this.totalConversationLength_ < 40_000) {
+                if (this.shouldAutoScroll_ && this.totalConversationLength_ < this.conversationLengthThreshold_) {
                     // To have an acceptable performance in the markdown container, we set thresholds for scrolling and word count.
-                    // The interface may experience slight sluggishness if the 'conversations' array exceeds 45,000 words.
-                    if (this.totalConversationLength_ < 3_000) {
-                        this.scrollThreshold_ = 2;
-                    } else if (this.totalConversationLength_ < 5_000) {
-                        this.scrollThreshold_ = 4;
-                    } else if (this.totalConversationLength_ < 10_000) {
+                    if (this.totalConversationLength_ < 2_000) {
+                        this.scrollThreshold_ = 0;
+                    } else if (this.totalConversationLength_ < 4_000) {
                         this.scrollThreshold_ = 8;
-                    } else if (this.totalConversationLength_ < 20_000) {
+                    } else if (this.totalConversationLength_ < 8_000) {
                         this.scrollThreshold_ = 16;
                     } else if (this.totalConversationLength_ < 30_000) {
                         this.scrollThreshold_ = 24;
-                    } else if (this.totalConversationLength_ < 40_000) {
+                    } else if (this.totalConversationLength_ < 60_000) {
                         this.scrollThreshold_ = 32;
                     } else {
-                        this.scrollThreshold_ = 0;
+                        this.scrollThreshold_ = 64;
                     }
+
+                    this.totalConversationLength_ += responseResult.length;
 
                     if (this.scrollInterval_ >= this.scrollThreshold_) {
                         this.$.conversationContainer.scrollTo({
@@ -266,11 +266,11 @@ export class ChatAppElement extends CrLitElement {
             this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
             this.totalConversationLength_ = this.conversations_.reduce((acc, cur) => acc + cur.thinkingText.length + cur.responseText.length, 0);
-            if (this.shouldShowActionsMenu_ && this.shouldAutoScroll_) {
+            if (this.shouldAutoScroll_) {
                 setTimeout(() =>
                     this.$.conversationContainer.scrollTo({
-                        top: this.$.conversationContainer.scrollHeight + 1000, // just to make sure to scroll down to the bottom
-                        behavior: 'instant'
+                        top: this.$.conversationContainer.scrollHeight,
+                        behavior: 'smooth'
                     }), 100);
             }
             this.shouldAutoScroll_ = true;
@@ -337,11 +337,26 @@ export class ChatAppElement extends CrLitElement {
         }, 0);
     }
 
-    protected onRestartChat_(e: Event) {
+    protected onDeleteAll_(e: Event) {
         e.preventDefault();
         if (this.isQuerySubmitting_) {
             this.chatApiProxy_.cancelQuery();
         }
+        this.conversations_ = [];
+        this.isThinking_ = false;
+        this.currentResponseResult_ = "";
+        this.currentThinkingResult_ = "";
+        this.currentErrorResult_ = "";
+
+        // To make sure to clear active conversation text remained in memory
+        setTimeout(() => {
+            this.currentResponseResult_ = "";
+            this.currentThinkingResult_ = "";
+            this.currentErrorResult_ = "";
+        });
+
+        this.totalConversationLength_ = 0;
+
         this.hasExceededMaxTokenCount_ = false;
         this.exceedMaxTokenCountErrorMessages_ = "";
 
@@ -351,14 +366,9 @@ export class ChatAppElement extends CrLitElement {
         this.shouldShowActionsMenu_ = this.siteInfo_.isContentUsableInConversations;
         this.shouldHideSiteInfoInUserQueryElement_ = !this.siteInfo_.isContentUsableInConversations;
 
-        this.conversations_.length = 0;
         this.query_ = "";
         this.isQuerySubmitting_ = false;
         this.submittedQuery_ = "";
-        this.currentResponseResult_ = "";
-        this.currentThinkingResult_ = "";
-        this.isThinking_ = false;
-        this.currentErrorResult_ = "";
 
         this.$.promptInput.resetToAutoHeight();
         this.$.promptInput.focusInput();
@@ -618,13 +628,6 @@ export class ChatAppElement extends CrLitElement {
         } else {
             this.shouldUseCurrentPageContentAsChatContext_ = false;
             this.shouldShowActionsMenu_ = false;
-        }
-
-        if (this.shouldShowActionsMenu_ && !this.isQuerySubmitting_ && this.shouldAutoScroll_) {
-            this.$.conversationContainer.scrollTo({
-                top: this.$.conversationContainer.scrollHeight,
-                behavior: 'instant'
-            });
         }
 
         // Lit requires this to update
