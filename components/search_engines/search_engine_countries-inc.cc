@@ -39,6 +39,7 @@ struct EngineAndTier {
 // Default (for countries with no better engine set)
 constexpr EngineAndTier engines_default[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
 };
@@ -49,6 +50,7 @@ constexpr EngineAndTier engines_default[] = {
 // United Arab Emirates
 constexpr EngineAndTier engines_AE[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_ru},
@@ -58,6 +60,7 @@ constexpr EngineAndTier engines_AE[] = {
 // Albania
 constexpr EngineAndTier engines_AL[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_tr},
@@ -67,6 +70,7 @@ constexpr EngineAndTier engines_AL[] = {
 // Argentina
 constexpr EngineAndTier engines_AR[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_ar},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -76,6 +80,7 @@ constexpr EngineAndTier engines_AR[] = {
 // Austria
 constexpr EngineAndTier engines_AT[] = {
   {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &ecosia},
@@ -88,6 +93,7 @@ constexpr EngineAndTier engines_AT[] = {
 // Australia
 constexpr EngineAndTier engines_AU[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_au},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -97,6 +103,7 @@ constexpr EngineAndTier engines_AU[] = {
 // Bosnia and Herzegovina
 constexpr EngineAndTier engines_BA[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -106,6 +113,7 @@ constexpr EngineAndTier engines_BA[] = {
 // Belgium
 constexpr EngineAndTier engines_BE[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -118,6 +126,7 @@ constexpr EngineAndTier engines_BE[] = {
 // Bulgaria
 constexpr EngineAndTier engines_BG[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -130,6 +139,7 @@ constexpr EngineAndTier engines_BG[] = {
 // Bahrain
 constexpr EngineAndTier engines_BH[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -139,6 +149,7 @@ constexpr EngineAndTier engines_BH[] = {
 // Burundi
 constexpr EngineAndTier engines_BI[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_ru},
@@ -148,6 +159,7 @@ constexpr EngineAndTier engines_BI[] = {
 // Brunei
 constexpr EngineAndTier engines_BN[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -157,6 +169,7 @@ constexpr EngineAndTier engines_BN[] = {
 // Bolivia
 constexpr EngineAndTier engines_BO[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -166,6 +179,7 @@ constexpr EngineAndTier engines_BO[] = {
 // Brazil
 constexpr EngineAndTier engines_BR[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_br},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -175,6 +189,7 @@ constexpr EngineAndTier engines_BR[] = {
 // Belarus
 constexpr EngineAndTier engines_BY[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &yandex_by},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -184,6 +199,7 @@ constexpr EngineAndTier engines_BY[] = {
 // Belize
 constexpr EngineAndTier engines_BZ[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &duckduckgo},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -193,6 +209,7 @@ constexpr EngineAndTier engines_BZ[] = {
 // Canada
 constexpr EngineAndTier engines_CA[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_ca},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -202,6 +219,7 @@ constexpr EngineAndTier engines_CA[] = {
 // Switzerland
 constexpr EngineAndTier engines_CH[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &duckduckgo},
     {SearchEngineTier::kTopEngines, &yahoo_ch},
@@ -211,6 +229,7 @@ constexpr EngineAndTier engines_CH[] = {
 // Chile
 constexpr EngineAndTier engines_CL[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_cl},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -220,6 +239,7 @@ constexpr EngineAndTier engines_CL[] = {
 // China
 constexpr EngineAndTier engines_CN[] = {
     {SearchEngineTier::kTopEngines, &baidu},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &sogou},
     {SearchEngineTier::kTopEngines, &so_360},
@@ -229,6 +249,7 @@ constexpr EngineAndTier engines_CN[] = {
 // Colombia
 constexpr EngineAndTier engines_CO[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_co},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -238,6 +259,7 @@ constexpr EngineAndTier engines_CO[] = {
 // Costa Rica
 constexpr EngineAndTier engines_CR[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -247,6 +269,7 @@ constexpr EngineAndTier engines_CR[] = {
 // Republic of Cyprus
 constexpr EngineAndTier engines_CY[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
   {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -259,6 +282,7 @@ constexpr EngineAndTier engines_CY[] = {
 // Czech Republic
 constexpr EngineAndTier engines_CZ[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &seznam},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -271,6 +295,7 @@ constexpr EngineAndTier engines_CZ[] = {
 // Germany
 constexpr EngineAndTier engines_DE[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &ecosia},
   {SearchEngineTier::kTopEngines, &brave},
@@ -283,6 +308,7 @@ constexpr EngineAndTier engines_DE[] = {
 // Denmark
 constexpr EngineAndTier engines_DK[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -295,6 +321,7 @@ constexpr EngineAndTier engines_DK[] = {
 // Dominican Republic
 constexpr EngineAndTier engines_DO[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -304,6 +331,7 @@ constexpr EngineAndTier engines_DO[] = {
 // Algeria
 constexpr EngineAndTier engines_DZ[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_fr},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -313,6 +341,7 @@ constexpr EngineAndTier engines_DZ[] = {
 // Ecuador
 constexpr EngineAndTier engines_EC[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_es},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -322,6 +351,7 @@ constexpr EngineAndTier engines_EC[] = {
 // Estonia
 constexpr EngineAndTier engines_EE[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -334,6 +364,7 @@ constexpr EngineAndTier engines_EE[] = {
 // Egypt
 constexpr EngineAndTier engines_EG[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -343,6 +374,7 @@ constexpr EngineAndTier engines_EG[] = {
 // Spain
 constexpr EngineAndTier engines_ES[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
   {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -355,6 +387,7 @@ constexpr EngineAndTier engines_ES[] = {
 // Finland
 constexpr EngineAndTier engines_FI[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -367,6 +400,7 @@ constexpr EngineAndTier engines_FI[] = {
 // Faroe Islands
 constexpr EngineAndTier engines_FO[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_uk},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -376,6 +410,7 @@ constexpr EngineAndTier engines_FO[] = {
 // France
 constexpr EngineAndTier engines_FR[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &ecosia},
   {SearchEngineTier::kTopEngines, &bing},
@@ -388,6 +423,7 @@ constexpr EngineAndTier engines_FR[] = {
 // United Kingdom
 constexpr EngineAndTier engines_GB[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_uk},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -397,6 +433,7 @@ constexpr EngineAndTier engines_GB[] = {
 // Greece
 constexpr EngineAndTier engines_GR[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -409,6 +446,7 @@ constexpr EngineAndTier engines_GR[] = {
 // Guatemala
 constexpr EngineAndTier engines_GT[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -418,6 +456,7 @@ constexpr EngineAndTier engines_GT[] = {
 // Hong Kong
 constexpr EngineAndTier engines_HK[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_hk},
     {SearchEngineTier::kTopEngines, &baidu},
@@ -427,6 +466,7 @@ constexpr EngineAndTier engines_HK[] = {
 // Honduras
 constexpr EngineAndTier engines_HN[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -436,6 +476,7 @@ constexpr EngineAndTier engines_HN[] = {
 // Croatia
 constexpr EngineAndTier engines_HR[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -448,6 +489,7 @@ constexpr EngineAndTier engines_HR[] = {
 // Hungary
 constexpr EngineAndTier engines_HU[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
   {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -460,6 +502,7 @@ constexpr EngineAndTier engines_HU[] = {
 // Indonesia
 constexpr EngineAndTier engines_ID[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &yandex_com},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_id},
@@ -469,6 +512,7 @@ constexpr EngineAndTier engines_ID[] = {
 // Ireland
 constexpr EngineAndTier engines_IE[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
@@ -481,6 +525,7 @@ constexpr EngineAndTier engines_IE[] = {
 // Israel
 constexpr EngineAndTier engines_IL[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yandex_ru},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -490,6 +535,7 @@ constexpr EngineAndTier engines_IL[] = {
 // India
 constexpr EngineAndTier engines_IN[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_in},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -499,6 +545,7 @@ constexpr EngineAndTier engines_IN[] = {
 // Iraq
 constexpr EngineAndTier engines_IQ[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yandex_tr},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -508,6 +555,7 @@ constexpr EngineAndTier engines_IQ[] = {
 // Iran
 constexpr EngineAndTier engines_IR[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -517,6 +565,7 @@ constexpr EngineAndTier engines_IR[] = {
 // Iceland
 constexpr EngineAndTier engines_IS[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
@@ -529,6 +578,7 @@ constexpr EngineAndTier engines_IS[] = {
 // Italy
 constexpr EngineAndTier engines_IT[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
   {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -541,6 +591,7 @@ constexpr EngineAndTier engines_IT[] = {
 // Jamaica
 constexpr EngineAndTier engines_JM[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -550,6 +601,7 @@ constexpr EngineAndTier engines_JM[] = {
 // Jordan
 constexpr EngineAndTier engines_JO[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -559,6 +611,7 @@ constexpr EngineAndTier engines_JO[] = {
 // Japan
 constexpr EngineAndTier engines_JP[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &yahoo_jp},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -568,6 +621,7 @@ constexpr EngineAndTier engines_JP[] = {
 // Kenya
 constexpr EngineAndTier engines_KE[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -577,6 +631,7 @@ constexpr EngineAndTier engines_KE[] = {
 // South Korea
 constexpr EngineAndTier engines_KR[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &naver},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &daum},
@@ -586,6 +641,7 @@ constexpr EngineAndTier engines_KR[] = {
 // Kuwait
 constexpr EngineAndTier engines_KW[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yandex_tr},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -595,6 +651,7 @@ constexpr EngineAndTier engines_KW[] = {
 // Kazakhstan
 constexpr EngineAndTier engines_KZ[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &yandex_kz},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &mail_ru},
@@ -604,6 +661,7 @@ constexpr EngineAndTier engines_KZ[] = {
 // Lebanon
 constexpr EngineAndTier engines_LB[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -613,6 +671,7 @@ constexpr EngineAndTier engines_LB[] = {
 // Liechtenstein
 constexpr EngineAndTier engines_LI[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
@@ -625,6 +684,7 @@ constexpr EngineAndTier engines_LI[] = {
 // Lithuania
 constexpr EngineAndTier engines_LT[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -637,6 +697,7 @@ constexpr EngineAndTier engines_LT[] = {
 // Luxembourg
 constexpr EngineAndTier engines_LU[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -649,6 +710,7 @@ constexpr EngineAndTier engines_LU[] = {
 // Latvia
 constexpr EngineAndTier engines_LV[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -661,6 +723,7 @@ constexpr EngineAndTier engines_LV[] = {
 // Libya
 constexpr EngineAndTier engines_LY[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yandex_tr},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -670,6 +733,7 @@ constexpr EngineAndTier engines_LY[] = {
 // Morocco
 constexpr EngineAndTier engines_MA[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_fr},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -679,6 +743,7 @@ constexpr EngineAndTier engines_MA[] = {
 // Monaco
 constexpr EngineAndTier engines_MC[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_fr},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -688,6 +753,7 @@ constexpr EngineAndTier engines_MC[] = {
 // Moldova
 constexpr EngineAndTier engines_MD[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &yandex_ru},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -697,6 +763,7 @@ constexpr EngineAndTier engines_MD[] = {
 // Montenegro
 constexpr EngineAndTier engines_ME[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yandex_ru},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -706,6 +773,7 @@ constexpr EngineAndTier engines_ME[] = {
 // Macedonia
 constexpr EngineAndTier engines_MK[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -715,6 +783,7 @@ constexpr EngineAndTier engines_MK[] = {
 // Malta
 constexpr EngineAndTier engines_MT[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
   {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -727,6 +796,7 @@ constexpr EngineAndTier engines_MT[] = {
 // Mexico
 constexpr EngineAndTier engines_MX[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_mx},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -736,6 +806,7 @@ constexpr EngineAndTier engines_MX[] = {
 // Malaysia
 constexpr EngineAndTier engines_MY[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_my},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -745,6 +816,7 @@ constexpr EngineAndTier engines_MY[] = {
 // Nicaragua
 constexpr EngineAndTier engines_NI[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -754,6 +826,7 @@ constexpr EngineAndTier engines_NI[] = {
 // Netherlands
 constexpr EngineAndTier engines_NL[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
@@ -766,6 +839,7 @@ constexpr EngineAndTier engines_NL[] = {
 // Norway
 constexpr EngineAndTier engines_NO[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
@@ -778,6 +852,7 @@ constexpr EngineAndTier engines_NO[] = {
 // New Zealand
 constexpr EngineAndTier engines_NZ[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_nz},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -787,6 +862,7 @@ constexpr EngineAndTier engines_NZ[] = {
 // Oman
 constexpr EngineAndTier engines_OM[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -796,6 +872,7 @@ constexpr EngineAndTier engines_OM[] = {
 // Panama
 constexpr EngineAndTier engines_PA[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_es},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -805,6 +882,7 @@ constexpr EngineAndTier engines_PA[] = {
 // Peru
 constexpr EngineAndTier engines_PE[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_pe},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -814,6 +892,7 @@ constexpr EngineAndTier engines_PE[] = {
 // Philippines
 constexpr EngineAndTier engines_PH[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_ph},
     {SearchEngineTier::kTopEngines, &ecosia},
@@ -823,6 +902,7 @@ constexpr EngineAndTier engines_PH[] = {
 // Pakistan
 constexpr EngineAndTier engines_PK[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -832,6 +912,7 @@ constexpr EngineAndTier engines_PK[] = {
 // Poland
 constexpr EngineAndTier engines_PL[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -844,6 +925,7 @@ constexpr EngineAndTier engines_PL[] = {
 // Puerto Rico
 constexpr EngineAndTier engines_PR[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -853,6 +935,7 @@ constexpr EngineAndTier engines_PR[] = {
 // Portugal
 constexpr EngineAndTier engines_PT[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
   {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -865,6 +948,7 @@ constexpr EngineAndTier engines_PT[] = {
 // Paraguay
 constexpr EngineAndTier engines_PY[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_es},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -874,6 +958,7 @@ constexpr EngineAndTier engines_PY[] = {
 // Qatar
 constexpr EngineAndTier engines_QA[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -883,6 +968,7 @@ constexpr EngineAndTier engines_QA[] = {
 // Romania
 constexpr EngineAndTier engines_RO[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &yahoo_emea},
   {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -895,6 +981,7 @@ constexpr EngineAndTier engines_RO[] = {
 // Serbia
 constexpr EngineAndTier engines_RS[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &yandex_ru},
@@ -904,6 +991,7 @@ constexpr EngineAndTier engines_RS[] = {
 // Russia
 constexpr EngineAndTier engines_RU[] = {
     {SearchEngineTier::kTopEngines, &yandex_ru},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &google},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -913,6 +1001,7 @@ constexpr EngineAndTier engines_RU[] = {
 // Rwanda
 constexpr EngineAndTier engines_RW[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -922,6 +1011,7 @@ constexpr EngineAndTier engines_RW[] = {
 // Saudi Arabia
 constexpr EngineAndTier engines_SA[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yandex_com},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -931,6 +1021,7 @@ constexpr EngineAndTier engines_SA[] = {
 // Sweden
 constexpr EngineAndTier engines_SE[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &bing},
@@ -943,6 +1034,7 @@ constexpr EngineAndTier engines_SE[] = {
 // Singapore
 constexpr EngineAndTier engines_SG[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_sg},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -952,18 +1044,19 @@ constexpr EngineAndTier engines_SG[] = {
 // Slovenia
 constexpr EngineAndTier engines_SI[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
   {SearchEngineTier::kTopEngines, &ecosia},
   {SearchEngineTier::kRemainingEngines, &yahoo_emea},
-  {SearchEngineTier::kRemainingEngines, &yep},
   {SearchEngineTier::kRemainingEngines, &qwant},
 };
 
 // Slovakia
 constexpr EngineAndTier engines_SK[] = {
   {SearchEngineTier::kTopEngines, &google},
+  {SearchEngineTier::kTopEngines, &yep},
   {SearchEngineTier::kTopEngines, &brave},
   {SearchEngineTier::kTopEngines, &duckduckgo},
   {SearchEngineTier::kTopEngines, &bing},
@@ -976,6 +1069,7 @@ constexpr EngineAndTier engines_SK[] = {
 // El Salvador
 constexpr EngineAndTier engines_SV[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_es},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -985,6 +1079,7 @@ constexpr EngineAndTier engines_SV[] = {
 // Syria
 constexpr EngineAndTier engines_SY[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yandex_ru},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -994,6 +1089,7 @@ constexpr EngineAndTier engines_SY[] = {
 // Thailand
 constexpr EngineAndTier engines_TH[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_th},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -1003,6 +1099,7 @@ constexpr EngineAndTier engines_TH[] = {
 // Tunisia
 constexpr EngineAndTier engines_TN[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_fr},
     {SearchEngineTier::kTopEngines, &yandex_com},
@@ -1012,6 +1109,7 @@ constexpr EngineAndTier engines_TN[] = {
 // Turkey
 constexpr EngineAndTier engines_TR[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &yandex_tr},
     {SearchEngineTier::kTopEngines, &yahoo_tr},
     {SearchEngineTier::kTopEngines, &bing},
@@ -1021,6 +1119,7 @@ constexpr EngineAndTier engines_TR[] = {
 // Trinidad and Tobago
 constexpr EngineAndTier engines_TT[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -1030,6 +1129,7 @@ constexpr EngineAndTier engines_TT[] = {
 // Taiwan
 constexpr EngineAndTier engines_TW[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &yahoo_tw},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &coccoc},
@@ -1039,6 +1139,7 @@ constexpr EngineAndTier engines_TW[] = {
 // Tanzania
 constexpr EngineAndTier engines_TZ[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &duckduckgo},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
@@ -1048,6 +1149,7 @@ constexpr EngineAndTier engines_TZ[] = {
 // Ukraine
 constexpr EngineAndTier engines_UA[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &yandex_ru},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -1057,6 +1159,7 @@ constexpr EngineAndTier engines_UA[] = {
 // United States
 constexpr EngineAndTier engines_US[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -1066,6 +1169,7 @@ constexpr EngineAndTier engines_US[] = {
 // Uruguay
 constexpr EngineAndTier engines_UY[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_es},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -1075,6 +1179,7 @@ constexpr EngineAndTier engines_UY[] = {
 // Venezuela
 constexpr EngineAndTier engines_VE[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo_es},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -1084,6 +1189,7 @@ constexpr EngineAndTier engines_VE[] = {
 // Vietnam
 constexpr EngineAndTier engines_VN[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &coccoc},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &bing},
@@ -1093,6 +1199,7 @@ constexpr EngineAndTier engines_VN[] = {
 // Yemen
 constexpr EngineAndTier engines_YE[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -1102,6 +1209,7 @@ constexpr EngineAndTier engines_YE[] = {
 // South Africa
 constexpr EngineAndTier engines_ZA[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
@@ -1111,6 +1219,7 @@ constexpr EngineAndTier engines_ZA[] = {
 // Zimbabwe
 constexpr EngineAndTier engines_ZW[] = {
     {SearchEngineTier::kTopEngines, &google},
+    {SearchEngineTier::kTopEngines, &yep},
     {SearchEngineTier::kTopEngines, &bing},
     {SearchEngineTier::kTopEngines, &yahoo},
     {SearchEngineTier::kTopEngines, &duckduckgo},
