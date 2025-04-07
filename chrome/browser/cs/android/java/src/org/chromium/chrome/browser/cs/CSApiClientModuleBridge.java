@@ -25,7 +25,7 @@ public class CSApiClientModuleBridge {
         }
     }
 
-    void handle(String url) {
+    public void handle(String url) {
         if (mCSApiClientModuleBridge != 0) {
             CSApiClientModuleBridgeJni.get()
                 .handle(mCSApiClientModuleBridge, CSApiClientModuleBridge.this, url);

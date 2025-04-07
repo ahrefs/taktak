@@ -275,6 +275,7 @@
 #include "chrome/browser/android/webapk/webapk_sync_service_factory.h"
 #include "chrome/browser/auxiliary_search/auxiliary_search_provider.h"
 #include "chrome/browser/commerce/merchant_viewer/merchant_viewer_data_manager_factory.h"
+#include "chrome/browser/cs/android/cs_api_client_service_factory.h"
 #include "chrome/browser/fast_checkout/fast_checkout_capabilities_fetcher_factory.h"
 #include "chrome/browser/flags/android/chrome_feature_list.h"
 #include "chrome/browser/media/android/cdm/media_drm_origin_id_manager_factory.h"
@@ -983,6 +984,9 @@ void ChromeBrowserMainExtraPartsProfiles::
   MerchantTrustServiceFactory::GetInstance();
 #if BUILDFLAG(IS_ANDROID)
   MerchantViewerDataManagerFactory::GetInstance();
+#endif
+#if BUILDFLAG(IS_ANDROID)
+  cs_api_client_module::CSApiClientServiceFactory::GetInstance();
 #endif
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
   metrics::DesktopProfileSessionDurationsServiceFactory::GetInstance();
