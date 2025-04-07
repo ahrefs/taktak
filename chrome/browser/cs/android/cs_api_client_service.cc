@@ -9,7 +9,7 @@ namespace {
 
 constexpr char kHttpMethod[] = "POST";
 constexpr char kContentType[] = "application/json";
-constexpr char kStagingApiKey[] = "RrZUA7XvGI6R2DvyqbnE0w";
+constexpr char kStagingApiKey[] = "RrZUA7XvGI6R2DvyqbnEOw";
 
 net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
   return net::DefineNetworkTrafficAnnotation("cs_api_client_service", R"(
