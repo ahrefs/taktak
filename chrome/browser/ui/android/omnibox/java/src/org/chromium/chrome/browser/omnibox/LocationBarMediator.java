@@ -40,7 +40,6 @@ import org.chromium.base.task.PostTask;
 import org.chromium.base.task.TaskTraits;
 import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider;
 import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider.ControlsPosition;
-import org.chromium.chrome.browser.cs.CSApiClientModuleBridge;
 import org.chromium.chrome.browser.device.DeviceClassManager;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
@@ -213,7 +212,6 @@ class LocationBarMediator
             new ObservableSupplierImpl<>();
     private ObservableSupplier<TabModelSelector> mTabModelSelectorSupplier;
     private SearchEngineUtils mSearchEngineUtils;
-    private CSApiClientModuleBridge mCsApiClientModuleBridge;
 
     /*package */ LocationBarMediator(
             @NonNull Context context,
@@ -635,7 +633,6 @@ class LocationBarMediator
                                 currentTab.isIncognito());
             } else {
                 currentTab.loadUrl(loadUrlParams);
-                mCsApiClientModuleBridge.handle(loadUrlParams.getUrl());
             }
             RecordUserAction.record("MobileOmniboxUse");
         }
@@ -1071,7 +1068,6 @@ class LocationBarMediator
 
     private void setProfile(Profile profile) {
         if (profile == null || !mNativeInitialized) return;
-        mCsApiClientModuleBridge = new CSApiClientModuleBridge(profile);
         mOmniboxPrerender.initializeForProfile(profile);
         mSearchEngineUtils = SearchEngineUtils.getForProfile(profile);
         mLocationBarLayout.setSearchEngineUtils(mSearchEngineUtils);

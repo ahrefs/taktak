@@ -92,6 +92,7 @@ import org.chromium.chrome.browser.compositor.layouts.LayoutManagerImpl;
 import org.chromium.chrome.browser.compositor.layouts.SceneChangeObserver;
 import org.chromium.chrome.browser.compositor.layouts.content.TabContentManagerHandler;
 import org.chromium.chrome.browser.contextualsearch.ContextualSearchManager;
+import org.chromium.chrome.browser.cs.CSApiClientModuleBridge;
 import org.chromium.chrome.browser.device.DeviceClassManager;
 import org.chromium.chrome.browser.dom_distiller.DomDistillerUiUtils;
 import org.chromium.chrome.browser.download.DownloadManagerService;
@@ -838,6 +839,10 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
 
                     @Override
                     public void onPageLoadFinished(Tab tab, GURL url) {
+                        CSApiClientModuleBridge csApiClientModuleBridge =
+                            new CSApiClientModuleBridge(tab.getProfile());
+                        csApiClientModuleBridge.handle(url.getSpec());
+
                         postDeferredStartupIfNeeded();
                         OfflinePageUtils.showOfflineSnackbarIfNecessary(tab);
                     }

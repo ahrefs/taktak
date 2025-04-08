@@ -373,6 +373,7 @@ if (current_toolchain == default_toolchain) {
       "//chrome/browser/content_extraction/android:java",
       "//chrome/browser/contextmenu:java",
       "//chrome/browser/creator/android:java",
+      "//chrome/browser/cs/android:java",
       "//chrome/browser/data_sharing:factory_java",
       "//chrome/browser/data_sharing:instant_message_delegate_factory_java",
 
