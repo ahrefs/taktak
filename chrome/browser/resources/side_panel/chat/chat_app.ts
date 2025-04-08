@@ -200,6 +200,7 @@ export class ChatAppElement extends CrLitElement {
 
     private async updateConversationHistory(chatState: ChatState) {
         this.conversations_ = chatState.conversations.sort((a, b) => Number(a.timestamp - b.timestamp));
+        this.totalConversationLength_ = this.conversations_.reduce((acc, cur) => acc + cur.thinkingText.length + cur.responseText.length, 0);
         await this.updateComplete;
     }
 
@@ -525,7 +526,7 @@ export class ChatAppElement extends CrLitElement {
         this.shouldAutoScroll_ = true;
         this.$.conversationContainer.scrollTo({
             top: this.$.conversationContainer.scrollHeight,
-            behavior: 'smooth'
+            behavior: 'instant'
         });
 
         setTimeout(() => {
