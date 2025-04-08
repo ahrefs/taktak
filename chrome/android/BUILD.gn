@@ -381,7 +381,6 @@ if (current_toolchain == default_toolchain) {
       "//chrome/browser/autofill/android:third_party_provider_java",
       "//chrome/browser/collaboration:internal_java",
       "//chrome/browser/collaboration:utils_java",
-      "//chrome/browser/cs/android:java",
       "//chrome/browser/data_sharing:data_sharing_public_java",
       "//chrome/browser/data_sharing:internal_library_java",
       "//chrome/browser/data_sharing:invitation_dialog_java",
