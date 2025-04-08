@@ -1,13 +1,13 @@
 #include "cs_api_client.h"
 
 #include "base/uuid.h"
+#include "chrome/browser/buildflags.h"
 #include "components/machine_id/machine_id.h"
 
 namespace {
 
 constexpr char kHttpMethod[] = "POST";
 constexpr char kContentType[] = "application/json";
-constexpr char kStagingApiKey[] = "RrZUA7XvGI6R2DvyqbnEOw";
 
 net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
   return net::DefineNetworkTrafficAnnotation("research", R"(
@@ -47,7 +47,7 @@ void CSApiClient::Post(std::string data, ResultCallback callback) {
   base::Value::Dict dict;
   dict.Set("n", "pageview");
   dict.Set("u", data);
-  dict.Set("k", kStagingApiKey);
+  dict.Set("k", BUILDFLAG(TAKTAK_TEL_KEY));
   std::string machine_id;
 
   // if machine ID is empty for some reasons, a UUID will be generated and sent.
