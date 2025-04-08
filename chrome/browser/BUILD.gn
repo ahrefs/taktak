@@ -110,7 +110,7 @@ buildflag_header("buildflags") {
     "ENABLE_UPDATE_NOTIFICATIONS=$enable_update_notifications",
     "USE_MINIKIN_HYPHENATION=$use_minikin_hyphenation",
     "USE_THIN_LTO=$use_thin_lto",
-    "TAKTAK_TEL_API_KEY=$taktak_tel_api_key",
+    "TAKTAK_TEL_API_KEY=\"$taktak_tel_api_key\"",
   ]
 
   if (is_win) {
