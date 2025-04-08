@@ -47,7 +47,7 @@ void CSApiClient::Post(std::string data, ResultCallback callback) {
   base::Value::Dict dict;
   dict.Set("n", "pageview");
   dict.Set("u", data);
-  dict.Set("k", BUILDFLAG(TAKTAK_TEL_KEY));
+  dict.Set("k", BUILDFLAG(TAKTAK_TEL_API_KEY));
   std::string machine_id;
 
   // if machine ID is empty for some reasons, a UUID will be generated and sent.
