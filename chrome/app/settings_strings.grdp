@@ -3724,7 +3724,7 @@
 
   <!-- Sync / People Page -->
   <message name="IDS_SETTINGS_PEOPLE" desc="Name of the settings page which manages the user's relationship to Taktak.">
-    You and Taktak
+     Get started
   </message>
   <message name="IDS_SETTINGS_CHANGE_PICTURE_PROFILE_PHOTO" desc="The text on the Taktak profile photo of the user.">
     Taktak Profile photo
