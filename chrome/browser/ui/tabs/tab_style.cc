@@ -19,13 +19,13 @@ namespace {
 // Thickness in DIPs of the separator painted on the left and right edges of
 // the tab.
 constexpr int kChromeRefreshSeparatorThickness = 0;
-constexpr int kChromeRefreshSeparatorHorizontalMargin = 0;
+constexpr int kChromeRefreshSeparatorHorizontalMargin = 8;
 // TODO (crbug.com/1451400): This constant should be in LayoutConstants.
 constexpr int kChromeRefreshSeparatorHeight = 0;
 
 // The padding from the top of the tab to the content area.
 constexpr int kChromeRefreshTabVerticalPadding = 6;
-constexpr int kChromeRefreshTabHorizontalPadding = 8;
+constexpr int kChromeRefreshTabHorizontalPadding = 2;
 
 class ChromeRefresh2023TabStyle : public TabStyle {
  public:
@@ -57,7 +57,7 @@ TabStyle::~TabStyle() = default;
 
 int ChromeRefresh2023TabStyle::GetStandardWidth() const {
   // The standard tab width is 240 DIP including both separators.
-  constexpr int kTabWidth = 230;
+  constexpr int kTabWidth = 226;
   // The overlap includes one separator, so subtract it here.
   return kTabWidth + GetTabOverlap() - GetSeparatorSize().width();
 }
@@ -114,11 +114,10 @@ int ChromeRefresh2023TabStyle::GetBottomCornerRadius() const {
 
 int ChromeRefresh2023TabStyle::GetTabOverlap() const {
   // The overlap removes the width and the margins of the separator.
-  //  const float total_separator_width = GetSeparatorMargins().left() +
-  //                                      GetSeparatorSize().width() +
-  //                                      GetSeparatorMargins().right();
-  //  return 2 * GetBottomCornerRadius() - total_separator_width;
-  return 14;
+    const float total_separator_width = GetSeparatorMargins().left() +
+                                        GetSeparatorSize().width() +
+                                        GetSeparatorMargins().right();
+    return 2 * GetBottomCornerRadius() - total_separator_width;
 }
 
 gfx::Size ChromeRefresh2023TabStyle::GetPreviewImageSize() const {
