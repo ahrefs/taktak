@@ -236,7 +236,7 @@ export class ChatAppElement extends CrLitElement {
                     if (this.totalConversationLength_ < 2_000) {
                         this.scrollThreshold_ = 0;
                     } else if (this.totalConversationLength_ < 4_000) {
-                        this.scrollThreshold_ = 8;
+                        this.scrollThreshold_ = 10;
                     } else if (this.totalConversationLength_ < 8_000) {
                         this.scrollThreshold_ = 16;
                     } else if (this.totalConversationLength_ < 30_000) {
@@ -267,12 +267,11 @@ export class ChatAppElement extends CrLitElement {
             this.saveCurrentConversation();
             setTimeout(() => this.$.promptInput.focusInput(), 0);
             this.totalConversationLength_ = this.conversations_.reduce((acc, cur) => acc + cur.thinkingText.length + cur.responseText.length, 0);
-            if (this.shouldAutoScroll_) {
-                setTimeout(() =>
-                    this.$.conversationContainer.scrollTo({
-                        top: this.$.conversationContainer.scrollHeight,
-                        behavior: 'smooth'
-                    }), 100);
+            if (this.shouldAutoScroll_ && this.scrollInterval_ >= this.scrollThreshold_) {
+                this.$.conversationContainer.scrollTo({
+                    top: this.$.conversationContainer.scrollHeight,
+                    behavior: 'instant'
+                });
             }
             this.shouldAutoScroll_ = true;
         } else if (response.responseType == ResponseType.ERROR) {

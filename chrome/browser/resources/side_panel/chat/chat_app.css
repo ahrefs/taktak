@@ -132,6 +132,8 @@
     box-sizing: border-box;
     background: var(--color-yep-chat-panel-background);
     color: var(--color-yep-chat-primary-text);
+    margin-block-start: 0;
+    margin-block-end: 0;
 }
 
 /* container for thinking and response */
@@ -289,7 +291,6 @@
 }
 
 /* end thinking button and text */
-
 
 .vertical-space {
     padding-top: 2px;
@@ -537,7 +538,7 @@
     line-height: 22px;
 }
 
-.response-markdown-container p:last-child {
+.response-markdown-container > p:last-child {
     margin: 0px;
 }
 
@@ -550,6 +551,12 @@
 .response-markdown-container a:hover, .thinking-markdown-container a:hover {
     text-decoration: none;
     color: inherit;
+}
+
+.response-markdown-container h1, h2, h3, h4, h5, h6 {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    margin-bottom: 8px;
 }
 
 .response-markdown-container h1 {
@@ -673,12 +680,14 @@
     vertical-align: top;
 }
 
-.response-markdown-container ul, .thinking-markdown-container ul {
+.response-markdown-container ul {
     list-style-type: disc;
     padding-left: 20px;
     font-size: 15px;
     font-weight: 400;
     line-height: 22px;
+    margin-block-start: 0;
+    margin-block-end: 0;
 }
 
 .thinking-markdown-container ul {
@@ -695,6 +704,8 @@
     font-size: 15px;
     font-weight: 400;
     line-height: 22px;
+    margin-block-start: 0;
+    margin-block-end: 0;
 }
 
 .thinking-markdown-container ol {
@@ -703,6 +714,8 @@
     font-size: 13px;
     font-weight: 400;
     line-height: 18px;
+    margin-block-start: 0;
+    margin-block-end: 0;
 }
 
 .response-markdown-container ol ul, ul ol {
@@ -736,8 +749,7 @@
 }
 
 .response-markdown-container li {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     margin-left: 10px;
     font-size: 15px;
     font-weight: 400;
@@ -745,8 +757,7 @@
 }
 
 .thinking-markdown-container li {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     margin-left: 10px;
     font-size: 13px;
     font-weight: 400;
