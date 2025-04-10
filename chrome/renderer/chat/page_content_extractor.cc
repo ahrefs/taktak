@@ -203,14 +203,47 @@ void PageContentExtractor::ExtractPageText(
     v8::HandleScope handle_scope(
         main_frame->GetAgentGroupScheduler()->Isolate());
     std::string script =
-        "const bodyClone = document.body.cloneNode(true);\n"
-        "bodyClone.querySelectorAll('script').forEach(script => "
-        "script.remove());\n"
-        "bodyClone.innerHTML;";
+        "(function () {\n"
+        "    const unwantedTopLevelTags = new Set([\n"
+        "        'META', 'LINK', 'HEAD', 'SCRIPT', 'NOSCRIPT',\n"
+        "        'STYLE', 'IFRAME', 'IMG', 'FIGURE', 'HEADER', 'FOOTER'\n"
+        "    ]);\n"
+        "    \n"
+        "    const unwantedTags = new Set([\n"
+        "        'META', 'LINK', 'SCRIPT', 'NOSCRIPT', 'ASIDE', 'NAV',\n"
+        "        'STYLE', 'IFRAME', 'IMG', 'FIGURE', 'FOOTER'\n"
+        "    ]);\n"
+        "\n"
+        "    const isVisible = (element) => {\n"
+        "        const style = window.getComputedStyle(element);\n"
+        "        return style.display !== 'none' && style.visibility !== "
+        "'hidden' && style.opacity !== '0';\n"
+        "    };\n"
+        "\n"
+        "    return Array.from(document.body.children)\n"
+        "        .filter(e => !unwantedTopLevelTags.has(e.tagName) && "
+        "isVisible(e))\n"
+        "        .map(e => {\n"
+        "            const clone = e.cloneNode(true);\n"
+        "            clone.querySelectorAll('*').forEach(child => {\n"
+        "                if (unwantedTags.has(child.tagName) || "
+        "!child.textContent.trim()) {\n"
+        "                    child.remove();\n"
+        "                } else {\n"
+        "                    while (child.attributes.length > 0) {\n"
+        "                        "
+        "child.removeAttribute(child.attributes[0].name);\n"
+        "                    }\n"
+        "                }\n"
+        "            });\n"
+        "            return clone.outerHTML;\n"
+        "        })\n"
+        "        .join('');\n"
+        "})()";
 
     blink::WebScriptSource source =
         includesHTML
-            ? blink::WebScriptSource(blink::WebString::FromUTF8(script))
+            ? blink::WebScriptSource(blink::WebString::FromASCII(script))
             : blink::WebScriptSource(
                   blink::WebString::FromASCII("document.body.innerText"));
 

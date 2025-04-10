@@ -136,6 +136,19 @@
     margin-block-end: 0;
 }
 
+thinking-markdown-container {
+    display: block;
+    margin: 0;
+    padding: 0;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+    margin-block-start: 0;
+    margin-block-end: 0;
+    font-size: 13px !important;
+}
+
 /* container for thinking and response */
 .thinking-and-response-container {
     display: flex;
@@ -548,15 +561,31 @@
     cursor: default;
 }
 
+.thinking-markdown-container a {
+    text-decoration: none;
+    color: inherit;
+    cursor: default;
+}
+
 .response-markdown-container a:hover, .thinking-markdown-container a:hover {
     text-decoration: none;
     color: inherit;
 }
 
-.response-markdown-container h1, h2, h3, h4, h5, h6 {
+.response-markdown-container :is(h1, h2, h3, h4, h5, h6) {
     margin-block-start: 0;
     margin-block-end: 0;
     margin-bottom: 8px;
+}
+
+.thinking-markdown-container :is(h1, h2, h3, h4, h5, h6) {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    font-weight: normal;
+    text-decoration: none;
 }
 
 .response-markdown-container h1 {

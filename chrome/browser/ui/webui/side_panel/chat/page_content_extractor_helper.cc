@@ -83,8 +83,6 @@ class PageContentExtractorInternal {
             return;
         }
 
-      DVLOG(0) << __func__ << "extracted page content: " << content.value();
-      DVLOG(0) << __func__ << "url of the extracted page content: " << url.value();
       SendResultAndDeleteSelf(std::move(callback), content.value(), url.value());
     }
 

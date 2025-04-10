@@ -8908,10 +8908,11 @@ Keep your key file in a safe place. You will need it to create new versions of y
         Translate this page to
       </message>
       <message name="IDS_CHAT_PROMPT_REAL_TRANSLATE" desc="Prompt to translate the current page's content.">
-        Translate the content of the HTML tags to <ph name="LANGUAGE">$1</ph>.
-        Try to identify headings, lists and other text blocks from the HTML tags and apply a basic formatting to them.
-        Don't return HTML tags.
-        Here is the the HTML tags and their content: <ph name="HTML_TAGS">$2</ph>
+        Translate the content inside the provided HTML tags into <ph name="LANGUAGE">$1</ph>.
+        Identify headings, lists, and other text blocks based on the HTML structure and apply basic formatting, but ignore empty HTML tags.
+        Do not include any HTML tags in the final result. Do not include horizontal rules (---) in the final result.
+        In any reasoning or thinking text, do not use angle brackets for HTML tags. Instead, either remove the brackets or replace them with parentheses (e.g., (h1), (ul)).
+        Here is the HTML content to translate: <ph name="HTML_TAGS">$2</ph>
       </message>
       <message name="IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST" desc="Prompt to draft a social media post of the current page's content.">
         Draft a post about this page for
