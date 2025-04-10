@@ -39,6 +39,7 @@ class PageContentExtractor
  private:
   // chat::mojom::PageContentExtractor implementation:
   void ExtractPageContent(
+      bool includesHTML,
       chat::mojom::PageContentExtractor::ExtractPageContentCallback callback)
       override;
 
@@ -55,7 +56,9 @@ class PageContentExtractor
   void ExtractPageText(
       content::RenderFrame* render_frame,
       int32_t isolated_world_id,
-      base::OnceCallback<void(const std::optional<std::string>& text, const std::optional<std::string>& url)>);
+      base::OnceCallback<void(const std::optional<std::string>& text,
+                              const std::optional<std::string>& url)>,
+      bool includesHTML);
 
   void OnPageTextExtracted(
       chat::mojom::PageContentExtractor::ExtractPageContentCallback callback,

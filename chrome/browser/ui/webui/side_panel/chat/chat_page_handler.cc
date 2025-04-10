@@ -40,9 +40,14 @@ std::string BuildPrompt(const std::string& query,
   if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE ||
       action_type == chat::mojom::ActionType::EXPLAIN ||
       action_type == chat::mojom::ActionType::FACT_CHECK ||
-      action_type == chat::mojom::ActionType::TRANSLATE ||
       action_type == chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
     return query + ": " + extracted_content;
+  } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
+    std::string translate_prompt =
+        l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_REAL_TRANSLATE);
+    return base::ReplaceStringPlaceholders(translate_prompt,
+                                           {query, extracted_content}, nullptr);
+
   } else {
     std::string context_prompt =
         l10n_util::GetStringUTF8(IDS_CHAT_CONTEXT_PROMPT);
@@ -288,40 +293,51 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
         std::string fact_check_prompt =
                 l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_FACT_CHECK);
         std::string translate_to_prompt =
-                l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_TRANSLATE);
+            l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_REAL_TRANSLATE);
         std::string draft_social_media_post_prompt =
                 l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST);
 
         std::vector<struct CompletionMessage> completion_messages = {};
 
         if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE) {
-            page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-                    &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-                    action_type, summarize_prompt, completion_messages, enable_thinking));
+          page_content_extractor_helper_->ExtractPageContent(
+              base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                             base::Unretained(this), action_type,
+                             summarize_prompt, completion_messages,
+                             enable_thinking),
+              false);
 
         } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
-            page_content_extractor_helper_->ExtractPageContent(
-                    base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                                   base::Unretained(this), action_type,
-                                   explain_prompt, completion_messages, enable_thinking));
+          page_content_extractor_helper_->ExtractPageContent(
+              base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                             base::Unretained(this), action_type,
+                             explain_prompt, completion_messages,
+                             enable_thinking),
+              false);
 
         } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
-            page_content_extractor_helper_->ExtractPageContent(
-                    base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                                   base::Unretained(this), action_type,
-                                   fact_check_prompt, completion_messages, enable_thinking));
+          page_content_extractor_helper_->ExtractPageContent(
+              base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                             base::Unretained(this), action_type,
+                             fact_check_prompt, completion_messages,
+                             enable_thinking),
+              false);
         } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
-            page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-                    &ChatPageHandler::OnPageContentExtracted,
-                    base::Unretained(this), action_type,
-                    translate_to_prompt + " " + action_param, completion_messages, enable_thinking));
+          page_content_extractor_helper_->ExtractPageContent(
+              base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                             base::Unretained(this), action_type,
+                             translate_to_prompt + " " + action_param,
+                             completion_messages, enable_thinking),
+              true);
         } else if (action_type ==
                    chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
-            page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-                    &ChatPageHandler::OnPageContentExtracted,
-                    base::Unretained(this), action_type,
-                    draft_social_media_post_prompt + " " + action_param,
-                    completion_messages, enable_thinking));
+          page_content_extractor_helper_->ExtractPageContent(
+              base::BindOnce(
+                  &ChatPageHandler::OnPageContentExtracted,
+                  base::Unretained(this), action_type,
+                  draft_social_media_post_prompt + " " + action_param,
+                  completion_messages, enable_thinking),
+              false);
         }
     }
 }
@@ -394,9 +410,11 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                                     base::Unretained(this), action_type));
 
     } else if (!url.empty()/* Context is not in the cache; user visit new page so new content should be extracted */) {
-        page_content_extractor_helper_->ExtractPageContent(base::BindOnce(
-                &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
-                action_type, query, completion_messages, enable_thinking));
+      page_content_extractor_helper_->ExtractPageContent(
+          base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
+                         base::Unretained(this), action_type, query,
+                         completion_messages, enable_thinking),
+          action_type == chat::mojom::ActionType::TRANSLATE ? true : false);
     } else /* user removed the context via Chat UI or the current opening tab is
               empty */
     {

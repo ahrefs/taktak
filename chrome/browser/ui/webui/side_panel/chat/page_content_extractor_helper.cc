@@ -32,7 +32,8 @@ class PageContentExtractorInternal {
 
     void Start(
         mojo::Remote<chat::mojom::PageContentExtractor> content_extractor,
-        base::OnceCallback<void(std::string content, std::string url)> callback) {
+        base::OnceCallback<void(std::string content, std::string url)> callback,
+        bool includesHTML) {
       content_extractor_ = std::move(content_extractor);
       if (!content_extractor_) {
         DeleteSelf();
@@ -49,6 +50,7 @@ class PageContentExtractorInternal {
       content_extractor_.set_disconnect_handler(base::BindOnce(
           &PageContentExtractorInternal::DeleteSelf, base::Unretained(this)));
       content_extractor_->ExtractPageContent(
+          includesHTML,
           base::BindOnce(&PageContentExtractorInternal::OnPageContentExtracted,
                          base::Unretained(this), std::move(callback)));
     }
@@ -107,7 +109,8 @@ PageContentExtractorHelper::PageContentExtractorHelper(
 PageContentExtractorHelper::~PageContentExtractorHelper() = default;
 
 void PageContentExtractorHelper::ExtractPageContent(
-    base::OnceCallback<void(std::string content, std::string url)> callback) {
+    base::OnceCallback<void(std::string content, std::string url)> callback,
+    bool includesHTML) {
   auto* primary_rfh = web_contents_->GetPrimaryMainFrame();
   DCHECK(primary_rfh->IsRenderFrameLive());
 
@@ -116,5 +119,6 @@ void PageContentExtractorHelper::ExtractPageContent(
       extractor.BindNewPipeAndPassReceiver());
 
   auto* internal_extractor = new PageContentExtractorInternal();
-  internal_extractor->Start(std::move(extractor), std::move(callback));
+  internal_extractor->Start(std::move(extractor), std::move(callback),
+                            includesHTML);
 }

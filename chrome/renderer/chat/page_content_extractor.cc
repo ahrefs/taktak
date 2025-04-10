@@ -142,19 +142,22 @@ void PageContentExtractor::BindReceiver(
 }
 
 void PageContentExtractor::ExtractPageContent(
+    bool includesHTML,
     chat::mojom::PageContentExtractor::ExtractPageContentCallback callback) {
   DVLOG(0) << __func__ << "The current page will be extracted for Yep Chat.";
   ExtractPageText(
       render_frame(), isolated_world_id_,
       base::BindOnce(&PageContentExtractor::OnPageTextExtracted,
-                     weak_ptr_factory_.GetWeakPtr(), std::move(callback)));
+                     weak_ptr_factory_.GetWeakPtr(), std::move(callback)),
+      includesHTML);
 }
 
 void PageContentExtractor::ExtractPageText(
     content::RenderFrame* render_frame,
     int32_t isolated_world_id,
     base::OnceCallback<void(const std::optional<std::string>&,
-                            const std::optional<std::string>&)> callback) {
+                            const std::optional<std::string>&)> callback,
+    bool includesHTML) {
   auto snapshotter = render_frame->CreateAXTreeSnapshotter(
       ui::AXMode::kWebContents | ui::AXMode::kHTML | ui::AXMode::kScreenReader);
   ui::AXTreeUpdate snapshot;
@@ -199,8 +202,17 @@ void PageContentExtractor::ExtractPageText(
   if (contents_text.empty()) {
     v8::HandleScope handle_scope(
         main_frame->GetAgentGroupScheduler()->Isolate());
-    blink::WebScriptSource source = blink::WebScriptSource(
-        blink::WebString::FromASCII("document.body.innerText"));
+    std::string script =
+        "const bodyClone = document.body.cloneNode(true);\n"
+        "bodyClone.querySelectorAll('script').forEach(script => "
+        "script.remove());\n"
+        "bodyClone.innerHTML;";
+
+    blink::WebScriptSource source =
+        includesHTML
+            ? blink::WebScriptSource(blink::WebString::FromUTF8(script))
+            : blink::WebScriptSource(
+                  blink::WebString::FromASCII("document.body.innerText"));
 
     auto on_script_executed =
         [](base::OnceCallback<void(const std::optional<std::string>&,
@@ -224,7 +236,6 @@ void PageContentExtractor::ExtractPageText(
         blink::mojom::WantResultOption::kWantResult,
         blink::mojom::PromiseResultOption::kAwait);
   } else {
-    // todo: to test this path
     std::move(callback).Run(std::move(contents_text), std::move(url.spec()));
   }
 }

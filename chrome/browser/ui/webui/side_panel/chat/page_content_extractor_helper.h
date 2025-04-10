@@ -19,7 +19,8 @@ class PageContentExtractorHelper{
   PageContentExtractorHelper& operator=(const PageContentExtractorHelper&) =
       delete;
   void ExtractPageContent(
-      base::OnceCallback<void(std::string content, std::string url)> callback);
+      base::OnceCallback<void(std::string content, std::string url)> callback,
+      bool includesHTML);
 
  private:
   base::WeakPtr<content::WebContents> web_contents_;
