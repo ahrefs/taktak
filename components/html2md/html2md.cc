@@ -567,7 +567,7 @@ bool Converter::ParseCharInTagContent(char ch) {
 
 bool Converter::ReplacePreviousSpaceInLineByNewline() {
   if ((current_tag_ == kTagParagraph ||
-      is_in_table_) && (prev_tag_ != kTagCode && prev_tag_ != kTagPre))) {
+      is_in_table_) && (prev_tag_ != kTagCode && prev_tag_ != kTagPre)) {
     return false;
   }
 
