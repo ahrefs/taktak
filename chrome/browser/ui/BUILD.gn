@@ -3109,6 +3109,7 @@ static_library("ui") {
       "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings",
       "//chrome/common/page_content_extractor:mojo_bindings",
       "//components/capture_mode",
+      "//components/html2md",
       "//services/audio/public/mojom",
       "//services/video_capture/public/mojom",
     ]

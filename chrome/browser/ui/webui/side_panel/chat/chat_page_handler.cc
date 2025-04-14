@@ -19,6 +19,7 @@
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/browsing_data/core/pref_names.h"
+#include "components/html2md/html2md.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/browser/web_contents.h"
@@ -44,7 +45,7 @@ std::string BuildPrompt(const std::string& query,
     return query + ": " + extracted_content;
   } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
     std::string translate_prompt =
-        l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_REAL_TRANSLATE);
+        l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_TRANSLATE);
     return base::ReplaceStringPlaceholders(translate_prompt,
                                            {query, extracted_content}, nullptr);
 
@@ -292,8 +293,6 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
                 IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE);
         std::string fact_check_prompt =
                 l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_FACT_CHECK);
-        std::string translate_to_prompt =
-            l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_REAL_TRANSLATE);
         std::string draft_social_media_post_prompt =
                 l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST);
 
@@ -325,8 +324,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
         } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
           page_content_extractor_helper_->ExtractPageContent(
               base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                             base::Unretained(this), action_type,
-                             translate_to_prompt + " " + action_param,
+                             base::Unretained(this), action_type, action_param,
                              completion_messages, enable_thinking),
               true);
         } else if (action_type ==
@@ -357,6 +355,14 @@ void ChatPageHandler::OnPageContentExtracted(
     std::string max_content = content;
     if (content.length() > kMaxUserPromptLength) {
         max_content = content.substr(0, kMaxUserPromptLength);
+    }
+
+    if (action_type == chat::mojom::ActionType::TRANSLATE) {
+      html2md::Converter c(max_content);
+      auto md = c.convert();
+      max_content = md;
+      DVLOG(0) << __func__ << " markdown content -> " << max_content;
+      // max_content = html2md::Convert(max_content);
     }
 
     if (!url.empty()) {

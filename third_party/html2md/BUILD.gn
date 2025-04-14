@@ -1,0 +1,9 @@
+import("//ui/webui/resources/tools/generate_grd.gni")
+
+generate_grd("build_grdp") {
+    grd_prefix = "html2md"
+    out_grd = "$target_gen_dir/html2md_resources.grdp"
+    input_files_base_dir = rebase_path("./src", "//")
+    input_files = [ "html2md.h", "table.h", "html2md.cc", "table.cc" ]
+    resource_path_prefix = "html2md"
+}

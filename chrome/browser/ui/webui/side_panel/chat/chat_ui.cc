@@ -75,25 +75,24 @@ ChatUI::ChatUI(content::WebUI *web_ui)
     content::WebUIDataSource *source = content::WebUIDataSource::CreateAndAdd(
             profile, chrome::kChromeUIChatHost);
 
-    static constexpr webui::LocalizedString
-    kLocalizedStrings[] = {
-            {"title",                     IDS_AI_CHAT_TITLE},
-            {"askAnything",               IDS_CHAT_ASK_ANYTHING},
-            {"chatAboutThisPage",         IDS_CHAT_CHAT_ABOUT_THIS_PAGE},
-            {"promptSummarizeThisPage",   IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE},
-            {"promptExplainInSimpleLanguage",
-                                          IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE},
-            {"promptFactCheck",           IDS_CHAT_PROMPT_DRAFT_FACT_CHECK},
-            {"promptTranslate",           IDS_CHAT_PROMPT_TRANSLATE},
-            {"promptSocialMediaPost",     IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST},
-            {"translateLanguages",        IDS_CHAT_TRANSLATE_LANGS},
-            {"socialMedias",              IDS_CHAT_SOCIAL_MEDIAS},
-            {"promptExceedMaxTokenCount", IDS_CHAT_PROMPT_INPUT_EXCEED},
-            {"genericError",              IDS_CHAT_GENERIC_ERROR},
-            {"thinking",                  IDS_CHAT_THINKING},
-            {"doneThinking",              IDS_CHAT_DONE_THINKING},
-            {"enableThinking",            IDS_CHAT_ENABLE_THINKING},
-            {"thinkingEnabled",           IDS_CHAT_THINKING_ENABLED},
+    static constexpr webui::LocalizedString kLocalizedStrings[] = {
+        {"title", IDS_AI_CHAT_TITLE},
+        {"askAnything", IDS_CHAT_ASK_ANYTHING},
+        {"chatAboutThisPage", IDS_CHAT_CHAT_ABOUT_THIS_PAGE},
+        {"promptSummarizeThisPage", IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE},
+        {"promptExplainInSimpleLanguage",
+         IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE},
+        {"promptFactCheck", IDS_CHAT_PROMPT_DRAFT_FACT_CHECK},
+        {"promptTranslate", IDS_CHAT_DISPLAY_PROMPT_TRANSLATE},
+        {"promptSocialMediaPost", IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST},
+        {"translateLanguages", IDS_CHAT_TRANSLATE_LANGS},
+        {"socialMedias", IDS_CHAT_SOCIAL_MEDIAS},
+        {"promptExceedMaxTokenCount", IDS_CHAT_PROMPT_INPUT_EXCEED},
+        {"genericError", IDS_CHAT_GENERIC_ERROR},
+        {"thinking", IDS_CHAT_THINKING},
+        {"doneThinking", IDS_CHAT_DONE_THINKING},
+        {"enableThinking", IDS_CHAT_ENABLE_THINKING},
+        {"thinkingEnabled", IDS_CHAT_THINKING_ENABLED},
     };
 
     for (const auto &str: kLocalizedStrings)

@@ -50,8 +50,9 @@ namespace {
                                       bool enable_thinking) {
         base::Value::Dict dict;
         const std::string model = enable_thinking ? "DeepSeek-R1-Distill-Qwen-32B" : "Mixtral-8x7B-Instruct-v0.1";
+        // dict.Set("max_tokens", enable_thinking ? 8'000 : 2'000);
+        dict.Set("max_tokens", 8'000);
         dict.Set("stream", true);
-        dict.Set("max_tokens", 8000);
         dict.Set("top_p", 0.7);
         dict.Set("temperature", 0.6);
         dict.Set("model", model);
@@ -67,6 +68,7 @@ namespace {
 
         std::string json;
         base::JSONWriter::Write(dict, &json);
+        DVLOG(0) << "Request body: " << json;
         return json;
     }
 }  // namespace
