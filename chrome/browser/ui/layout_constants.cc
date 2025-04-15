@@ -86,7 +86,7 @@ int GetLayoutConstant(LayoutConstant constant) {
         case NEW_TAB_BUTTON_LEADING_MARGIN:
             return features::IsTabstripComboButtonEnabled() &&
                    !features::HasTabstripComboButtonWithBackground()
-                   ? 4
+                   ? 6
                    : 0;
         case STAR_RATING_ICON_SIZE:
             return 14;
