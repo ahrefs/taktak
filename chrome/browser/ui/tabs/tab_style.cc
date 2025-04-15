@@ -57,7 +57,7 @@ TabStyle::~TabStyle() = default;
 
 int ChromeRefresh2023TabStyle::GetStandardWidth() const {
   // The standard tab width is 240 DIP including both separators.
-  constexpr int kTabWidth = 226;
+  constexpr int kTabWidth = 216;
   // The overlap includes one separator, so subtract it here.
   return kTabWidth + GetTabOverlap() - GetSeparatorSize().width();
 }
@@ -117,7 +117,8 @@ int ChromeRefresh2023TabStyle::GetTabOverlap() const {
   const float total_separator_width = GetSeparatorMargins().left() +
                                       GetSeparatorSize().width() +
                                       GetSeparatorMargins().right();
-  return 2 * GetBottomCornerRadius() - total_separator_width;
+  // The gap between the tabs is 6px.
+  return 2 * GetBottomCornerRadius() - (total_separator_width + 2);
 }
 
 gfx::Size ChromeRefresh2023TabStyle::GetPreviewImageSize() const {

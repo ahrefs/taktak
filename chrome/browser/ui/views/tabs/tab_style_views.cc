@@ -478,8 +478,9 @@ SkPath TabStyleViewsImpl::GetRoundedPath(
   //      GetTopCornerRadiusForWidth(tab()->width()) * scale;
   //  float extension_corner_radius = tab_style()->GetBottomCornerRadius() *
   //  scale;
-  float content_corner_radius = 20;
-  float extension_corner_radius = 20;
+  // This changes also reflects on the gap between tabs.
+  float content_corner_radius = 12;
+  float extension_corner_radius = 12;
 
   // Selected, hover, and inactive tab fills are a detached squarcle tab.
   float top_content_corner_radius = content_corner_radius;
