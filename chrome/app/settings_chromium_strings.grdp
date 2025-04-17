@@ -432,7 +432,7 @@
     Taktak's safety tools
   </message>
   <message name="IDS_SETTINGS_SAFETY_HUB_USER_EDU_DATA_SUBHEADER" desc="The subheader of the first item in the 'User Education Module' in the Safety Hub page. This item explains how Chrome's tools help user to keep their data safe.">
-    With <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank"&gt;</ph>tools from Taktak<ph name="END_LINK">&lt;/a&gt;</ph>, you can browse safely and stay in control
+    With <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank"&gt;</ph>the tools<ph name="END_LINK">&lt;/a&gt;</ph>, you can browse safely and stay in control
   </message>
   <message name="IDS_SETTINGS_SAFETY_HUB_USER_EDU_INCOGNITO_HEADER" desc="The header of the second item in the 'User Education Module' in the Safety Hub page. This item explains Incognito mode.">
     Taktak Incognito
