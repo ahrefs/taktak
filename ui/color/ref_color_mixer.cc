@@ -44,7 +44,11 @@ void AddBaselinePalette(ColorProvider* provider) {
   mixer[kColorRefSecondary12] = {SkColorSetRGB(0x00, 0x22, 0x38)};
   mixer[kColorRefSecondary15] = {SkColorSetRGB(0x00, 0x28, 0x45)};
   mixer[kColorRefSecondary20] = {SkColorSetRGB(0x00, 0x33, 0x55)};
-  mixer[kColorRefSecondary25] = {SkColorSetRGB(0x00, 0x3f, 0x66)};
+
+  // mixer[kColorRefSecondary25] = {SkColorSetRGB(0x00, 0x3f, 0x66)};
+  // Taktak - selected tab background (Active or Inactive frame)
+  mixer[kColorRefSecondary25] = {SkColorSetRGB(0x2A, 0x29, 0x33)};
+
   mixer[kColorRefSecondary30] = {SkColorSetRGB(0x00, 0x4A, 0x77)};
   mixer[kColorRefSecondary35] = {SkColorSetRGB(0x00, 0x57, 0x89)};
   mixer[kColorRefSecondary40] = {SkColorSetRGB(0x00, 0x63, 0x9B)};
@@ -90,13 +94,24 @@ void AddBaselinePalette(ColorProvider* provider) {
   mixer[kColorRefNeutral6] = {SkColorSetRGB(0x13, 0x13, 0x14)};
   mixer[kColorRefNeutral8] = {SkColorSetRGB(0x16, 0x18, 0x18)};
   mixer[kColorRefNeutral10] = {SkColorSetRGB(0x1F, 0x1F, 0x1F)};
-  mixer[kColorRefNeutral12] = {SkColorSetRGB(0x1F, 0x20, 0x20)};
-  mixer[kColorRefNeutral15] = {SkColorSetRGB(0x28, 0x28, 0x28)};
+
+  // mixer[kColorRefNeutral12] = {SkColorSetRGB(0x1F, 0x20, 0x20)};
+  // Taktak - Toolstrip color in dark theme
+  mixer[kColorRefNeutral12] = {SkColorSetRGB(0x11, 0x11, 0x19)};
+
+  // mixer[kColorRefNeutral15] = {SkColorSetRGB(0x28, 0x28, 0x28)};
+  // Taktak - Omnibox background
+  mixer[kColorRefNeutral15] = {SkColorSetRGB(0x18, 0x18, 0x1C)};
+
   mixer[kColorRefNeutral17] = {SkColorSetRGB(0x2A, 0x2A, 0x2A)};
   mixer[kColorRefNeutral20] = {SkColorSetRGB(0x30, 0x30, 0x30)};
   mixer[kColorRefNeutral22] = {SkColorSetRGB(0x34, 0x35, 0x35)};
   mixer[kColorRefNeutral24] = {SkColorSetRGB(0x39, 0x39, 0x39)};
-  mixer[kColorRefNeutral25] = {SkColorSetRGB(0x3c, 0x3c, 0x3c)};
+
+  // mixer[kColorRefNeutral25] = {SkColorSetRGB(0x3c, 0x3c, 0x3c)};
+  // Taktak - Toolbar/Bookmark bar/ Content background
+  mixer[kColorRefNeutral25] = {SkColorSetRGB(0x2A, 0x29, 0x33)};
+
   mixer[kColorRefNeutral30] = {SkColorSetRGB(0x47, 0x47, 0x47)};
   mixer[kColorRefNeutral40] = {SkColorSetRGB(0x5E, 0x5E, 0x5E)};
   mixer[kColorRefNeutral50] = {SkColorSetRGB(0x75, 0x75, 0x75)};
