@@ -95,12 +95,11 @@
             </cr-button>
           </template>
         </div>
-        <div id="colorSchemeModeRow" class="cr-row"
-<if expr="is_linux">
-            hidden="[[!showColorSchemeMode_(prefs.extensions.theme.id.value,
-              systemTheme_)]]"
-</if>
-        >
+        <div id="colorSchemeModeRow" class="cr-row">
+<!--<if expr="is_linux">-->
+<!--            hidden="[[!showColorSchemeMode_(prefs.extensions.theme.id.value,-->
+<!--              systemTheme_)]]"-->
+<!--</if>-->
           <div id="colorSchemeModeLabel" class="flex cr-padded-text"
               aria-hidden="true">
             $i18n{colorSchemeMode}
