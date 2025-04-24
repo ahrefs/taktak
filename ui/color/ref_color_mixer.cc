@@ -34,7 +34,11 @@ void AddBaselinePalette(ColorProvider* provider) {
   mixer[kColorRefPrimary60] = {SkColorSetRGB(0x4C, 0x8D, 0xF6)};
   mixer[kColorRefPrimary70] = {SkColorSetRGB(0x7C, 0xAC, 0xF8)};
   mixer[kColorRefPrimary80] = {SkColorSetRGB(0xA8, 0xC7, 0xFA)};
-  mixer[kColorRefPrimary90] = {SkColorSetRGB(0xD3, 0xE3, 0xFD)};
+
+  // mixer[kColorRefPrimary90] = {SkColorSetRGB(0xD3, 0xE3, 0xFD)};
+  // Taktak - tabstrip background in light theme
+  mixer[kColorRefPrimary90] = {SkColorSetRGB(0xD7, 0xD9, 0xE9)};
+
   mixer[kColorRefPrimary95] = {SkColorSetRGB(0xEC, 0xF3, 0xFE)};
   mixer[kColorRefPrimary99] = {SkColorSetRGB(0xFA, 0xFB, 0xFF)};
   mixer[kColorRefPrimary100] = {SkColorSetRGB(0xFF, 0xFF, 0xFF)};
@@ -56,7 +60,11 @@ void AddBaselinePalette(ColorProvider* provider) {
   mixer[kColorRefSecondary60] = {SkColorSetRGB(0x39, 0x98, 0xD3)};
   mixer[kColorRefSecondary70] = {SkColorSetRGB(0x5A, 0xB3, 0xF0)};
   mixer[kColorRefSecondary80] = {SkColorSetRGB(0x7F, 0xCF, 0xFF)};
-  mixer[kColorRefSecondary90] = {SkColorSetRGB(0xC2, 0xE7, 0xFF)};
+
+  // mixer[kColorRefSecondary90] = {SkColorSetRGB(0xC2, 0xE7, 0xFF)};
+  // Taktak - tabstrip background in light theme
+  mixer[kColorRefSecondary90] = {SkColorSetRGB(0xD7, 0xD9, 0xE9)};
+
   mixer[kColorRefSecondary95] = {SkColorSetRGB(0xDF, 0xF3, 0xFF)};
   mixer[kColorRefSecondary99] = {SkColorSetRGB(0xF7, 0xFC, 0xFF)};
   mixer[kColorRefSecondary100] = {SkColorSetRGB(0xFF, 0xFF, 0xFF)};
@@ -96,11 +104,11 @@ void AddBaselinePalette(ColorProvider* provider) {
   mixer[kColorRefNeutral10] = {SkColorSetRGB(0x1F, 0x1F, 0x1F)};
 
   // mixer[kColorRefNeutral12] = {SkColorSetRGB(0x1F, 0x20, 0x20)};
-  // Taktak - Toolstrip color in dark theme
+  // Taktak - tabstrip background in dark theme
   mixer[kColorRefNeutral12] = {SkColorSetRGB(0x11, 0x11, 0x19)};
 
   // mixer[kColorRefNeutral15] = {SkColorSetRGB(0x28, 0x28, 0x28)};
-  // Taktak - Omnibox background
+  // Taktak - Omnibox background in dark theme
   mixer[kColorRefNeutral15] = {SkColorSetRGB(0x18, 0x18, 0x1C)};
 
   mixer[kColorRefNeutral17] = {SkColorSetRGB(0x2A, 0x2A, 0x2A)};
@@ -109,7 +117,7 @@ void AddBaselinePalette(ColorProvider* provider) {
   mixer[kColorRefNeutral24] = {SkColorSetRGB(0x39, 0x39, 0x39)};
 
   // mixer[kColorRefNeutral25] = {SkColorSetRGB(0x3c, 0x3c, 0x3c)};
-  // Taktak - Toolbar/Bookmark bar/ Content background
+  // Taktak - Toolbar, Bookmark bar in dark theme
   mixer[kColorRefNeutral25] = {SkColorSetRGB(0x2A, 0x29, 0x33)};
 
   mixer[kColorRefNeutral30] = {SkColorSetRGB(0x47, 0x47, 0x47)};
@@ -121,7 +129,11 @@ void AddBaselinePalette(ColorProvider* provider) {
   mixer[kColorRefNeutral87] = {SkColorSetRGB(0xDA, 0xDA, 0xDA)};
   mixer[kColorRefNeutral90] = {SkColorSetRGB(0xE3, 0xE3, 0xE3)};
   mixer[kColorRefNeutral92] = {SkColorSetRGB(0xE9, 0xE8, 0xE8)};
-  mixer[kColorRefNeutral94] = {SkColorSetRGB(0xEF, 0xED, 0xED)};
+
+  // mixer[kColorRefNeutral94] = {SkColorSetRGB(0xEF, 0xED, 0xED)};
+  // Taktak - Omnibox background in light theme
+  mixer[kColorRefNeutral94] = {SkColorSetRGB(0xEB, 0xE9, 0xF0)};
+
   mixer[kColorRefNeutral95] = {SkColorSetRGB(0xF2, 0xF2, 0xF2)};
   mixer[kColorRefNeutral96] = {SkColorSetRGB(0xF4, 0xF3, 0xF2)};
   mixer[kColorRefNeutral98] = {SkColorSetRGB(0xFA, 0xF9, 0xF8)};
