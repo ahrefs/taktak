@@ -118,7 +118,7 @@ int ChromeRefresh2023TabStyle::GetTabOverlap() const {
                                       GetSeparatorSize().width() +
                                       GetSeparatorMargins().right();
   // The gap between the tabs is 6px.
-  return 2 * GetBottomCornerRadius() - (total_separator_width + 2);
+  return 2 * GetBottomCornerRadius() - (total_separator_width);
 }
 
 gfx::Size ChromeRefresh2023TabStyle::GetPreviewImageSize() const {
