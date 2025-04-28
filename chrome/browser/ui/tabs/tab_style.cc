@@ -57,7 +57,7 @@ TabStyle::~TabStyle() = default;
 
 int ChromeRefresh2023TabStyle::GetStandardWidth() const {
   // The standard tab width is 240 DIP including both separators.
-  constexpr int kTabWidth = 226;
+  constexpr int kTabWidth = 224;
   // The overlap includes one separator, so subtract it here.
   return kTabWidth + GetTabOverlap() - GetSeparatorSize().width();
 }
