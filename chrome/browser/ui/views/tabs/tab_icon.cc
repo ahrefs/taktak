@@ -122,9 +122,9 @@ void TabIcon::SetData(const TabRendererData& data) {
 
   // To make sure the taktak icon is visible if new tab is open
   if (data.visible_url.spec().starts_with("chrome://")) {
-      SetIcon(data.favicon, false);
+    SetIcon(data.favicon, false);
   } else {
-      SetIcon(data.favicon, data.should_themify_favicon);
+    SetIcon(data.favicon, data.should_themify_favicon);
   }
   SetNetworkState(data.network_state);
   SetCrashed(data.IsCrashed());
