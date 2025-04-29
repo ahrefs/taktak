@@ -84,10 +84,10 @@ int GetLayoutConstant(LayoutConstant constant) {
         case LOCATION_BAR_TRAILING_ICON_SIZE:
             return 20;
         case NEW_TAB_BUTTON_LEADING_MARGIN:
-            return features::IsTabstripComboButtonEnabled() &&
-                   !features::HasTabstripComboButtonWithBackground()
-                   ? 6
-                   : 0;
+          return features::IsTabstripComboButtonEnabled() &&
+                         !features::HasTabstripComboButtonWithBackground()
+                     ? 4
+                     : 0;
         case STAR_RATING_ICON_SIZE:
             return 14;
         case TAB_AFTER_TITLE_PADDING:

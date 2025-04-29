@@ -474,13 +474,13 @@ SkPath TabStyleViewsImpl::GetRoundedPath(
 
   // Calculate the corner radii. Note that corner radius is based on original
   // tab width (in DIP), not our new, scaled-and-aligned bounds.
-  //  float content_corner_radius =
-  //      GetTopCornerRadiusForWidth(tab()->width()) * scale;
-  //  float extension_corner_radius = tab_style()->GetBottomCornerRadius() *
-  //  scale;
-  // This changes also reflects on the gap between tabs.
-  float content_corner_radius = 18;
-  float extension_corner_radius = 18;
+  float taktak_corner_radius_factor = 4.0;
+  float content_corner_radius = (GetTopCornerRadiusForWidth(tab()->width()) -
+                                 taktak_corner_radius_factor) *
+                                scale;
+  float extension_corner_radius =
+      (tab_style()->GetBottomCornerRadius() - taktak_corner_radius_factor) *
+      scale;
 
   // Selected, hover, and inactive tab fills are a detached squarcle tab.
   float top_content_corner_radius = content_corner_radius;
