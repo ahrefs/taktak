@@ -754,6 +754,12 @@ thinking-markdown-container {
     line-height: 22px;
 }
 
+.response-markdown-container li > *:first-child {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    margin-bottom: 8px;
+}
+
 .thinking-markdown-container ol ul, ul ol {
     padding-left: 20px;
     font-size: 13px;
