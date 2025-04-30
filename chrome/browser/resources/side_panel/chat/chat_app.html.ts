@@ -129,9 +129,15 @@ export function getHtml(this: ChatAppElement) {
         <div id="main-container">
             <div id="header-container">
                 <div class="header-title-container">
-                    <button id="target-close-btn" class="header-btn" @click="${this.onCloseSidePanel_}">
-                        <cr-icon aria-hidden="true" icon="cr:close" class="header-icon"></cr-icon>
-                    </button>
+                    ${
+                            // If chat is open via chrome://chat, the title of the tab is null; in this case we won't show the close button on the Chat UI header
+                            this.siteInfo_.title === null
+                                    ? html``
+                                    : html`
+                                        <button id="target-close-btn" class="header-btn" @click="${this.onCloseSidePanel_}">
+                                            <cr-icon aria-hidden="true" icon="cr:close" class="header-icon"></cr-icon>
+                                        </button>`
+                    }
                     <div class="chat-title">${this.title_}</div>
                 </div>
                 <button id="target-restart-btn" class="header-btn"
