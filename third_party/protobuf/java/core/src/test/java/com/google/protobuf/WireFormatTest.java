@@ -9,26 +9,29 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import protobuf_unittest.UnittestMset.RawMessageSet;
-import protobuf_unittest.UnittestMset.TestMessageSetExtension1;
-import protobuf_unittest.UnittestMset.TestMessageSetExtension2;
-import protobuf_unittest.UnittestProto;
-import protobuf_unittest.UnittestProto.TestAllExtensions;
-import protobuf_unittest.UnittestProto.TestAllTypes;
-import protobuf_unittest.UnittestProto.TestExtensionInsideTable;
-import protobuf_unittest.UnittestProto.TestFieldOrderings;
-import protobuf_unittest.UnittestProto.TestOneof2;
-import protobuf_unittest.UnittestProto.TestOneofBackwardsCompatible;
-import protobuf_unittest.UnittestProto.TestPackedExtensions;
-import protobuf_unittest.UnittestProto.TestPackedTypes;
-import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.List;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestMset.RawMessageSet;
+import proto2_unittest.UnittestMset.TestMessageSetExtension1;
+import proto2_unittest.UnittestMset.TestMessageSetExtension2;
+import proto2_unittest.UnittestProto;
+import proto2_unittest.UnittestProto.TestAllExtensions;
+import proto2_unittest.UnittestProto.TestAllTypes;
+import proto2_unittest.UnittestProto.TestExtensionInsideTable;
+import proto2_unittest.UnittestProto.TestFieldOrderings;
+import proto2_unittest.UnittestProto.TestOneof2;
+import proto2_unittest.UnittestProto.TestOneofBackwardsCompatible;
+import proto2_unittest.UnittestProto.TestPackedExtensions;
+import proto2_unittest.UnittestProto.TestPackedTypes;
+
+import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 /** Tests related to parsing and serialization. */
 @RunWith(JUnit4.class)

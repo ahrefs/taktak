@@ -210,6 +210,10 @@ void WorkerFetchContext::PrepareRequest(
   }
 
   probe::PrepareRequest(Probe(), nullptr, request, options, resource_type);
+
+  request.SetAllowsDeviceBoundSessions(
+      RuntimeEnabledFeatures::DeviceBoundSessionCredentialsEnabled(
+          GetExecutionContext()));
 }
 
 void WorkerFetchContext::AddAdditionalRequestHeaders(ResourceRequest& request) {
@@ -243,7 +247,9 @@ void WorkerFetchContext::ModifyRequestForMixedContentUpgrade(
 
 void WorkerFetchContext::PopulateResourceRequestBeforeCacheAccess(
     const ResourceLoaderOptions& options,
-    ResourceRequest& request) {
+    ResourceRequest& request,
+    FetchParameters::HasPreloadedResponseCandidate
+        has_preloaded_response_candidate) {
   if (!RuntimeEnabledFeatures::PreloadLinkRelDataUrlsEnabled()) {
     ModifyRequestForMixedContentUpgrade(request);
   }

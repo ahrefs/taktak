@@ -7,8 +7,8 @@ import("//third_party/jni_zero/jni_zero.gni")
 
 java_cpp_enum("autofill_generated_enums") {
   sources = [
-    "//chrome/browser/android/preferences/autofill/autofill_profile_bridge.h",
     "//chrome/browser/autofill/android/android_autofill_availability_status.h",
+    "//chrome/browser/autofill/android/autofill_profile_bridge.h",
   ]
 }
 
@@ -81,6 +81,7 @@ android_library("java") {
     "//chrome/browser/settings:java",
     "//chrome/browser/signin/services/android:java",
     "//chrome/browser/sync/android:java",
+    "//chrome/browser/ui/android/edge_to_edge:java",
     "//chrome/browser/ui/android/favicon:java",
     "//chrome/browser/util:java",
     "//components/autofill/android:autofill_features_java",
@@ -189,6 +190,7 @@ android_library("test_java") {
 
   deps = [
     ":java",
+    ":third_party_provider_java",
     "//base:base_java",
     "//base:base_java_test_support",
     "//chrome/android:chrome_java",

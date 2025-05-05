@@ -34,7 +34,6 @@
 #include "third_party/blink/renderer/core/html/canvas/text_cluster.h"
 #include "third_party/blink/renderer/platform/bindings/script_wrappable.h"
 #include "third_party/blink/renderer/platform/fonts/font.h"
-#include "third_party/blink/renderer/platform/graphics/graphics_types.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
 #include "third_party/blink/renderer/platform/text/text_direction.h"
 #include "third_party/blink/renderer/platform/text/text_run.h"
@@ -43,6 +42,7 @@ namespace blink {
 
 class DOMRectReadOnly;
 class ExceptionState;
+class PlainTextPainter;
 class TextClusterOptions;
 
 class CORE_EXPORT TextMetrics final : public ScriptWrappable {
@@ -50,11 +50,13 @@ class CORE_EXPORT TextMetrics final : public ScriptWrappable {
 
  public:
   TextMetrics();
+  // `text_painter` must be non-null if `CanvasTextNg` flag is enabled.
   TextMetrics(const Font* font,
               const TextDirection& direction,
               V8CanvasTextBaseline::Enum baseline,
               V8CanvasTextAlign::Enum align,
-              const String& text);
+              const String& text,
+              PlainTextPainter* text_painter);
 
   double width() const { return width_; }
   double actualBoundingBoxLeft() const { return actual_bounding_box_left_; }
@@ -114,10 +116,11 @@ class CORE_EXPORT TextMetrics final : public ScriptWrappable {
               const TextDirection& direction,
               V8CanvasTextBaseline::Enum baseline,
               V8CanvasTextAlign::Enum align,
-              const String&);
+              const String&,
+              PlainTextPainter* text_painter);
   // A helper for Update().  This function updates `runs_with_offset_`, and
   // returns a pair of the total width and the glyph bounding rectangle.
-  std::pair<float, gfx::RectF> MeasureRuns();
+  std::pair<float, gfx::RectF> MeasureRuns(PlainTextPainter* text_painter);
 
   void ShapeTextIfNeeded();
   unsigned CorrectForMixedBidi(HeapVector<RunWithOffset>::reverse_iterator&,
@@ -158,6 +161,8 @@ class CORE_EXPORT TextMetrics final : public ScriptWrappable {
   // Cache of ShapeResults that is lazily created the first time it's needed.
   HeapVector<RunWithOffset> runs_with_offset_;
   bool shaping_needed_ = false;
+  // This flag should be removed on removal of "CanvasTextNg" origin trial.
+  bool split_by_word_ = false;
 };
 
 }  // namespace blink

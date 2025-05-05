@@ -13,19 +13,22 @@ import static com.google.protobuf.TestUtil.TEST_REQUIRED_INITIALIZED;
 import static com.google.protobuf.TestUtil.TEST_REQUIRED_UNINITIALIZED;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import protobuf_unittest.UnittestOptimizeFor.TestOptimizedForSize;
-import protobuf_unittest.UnittestProto;
-import protobuf_unittest.UnittestProto.ForeignMessage;
-import protobuf_unittest.UnittestProto.TestAllExtensions;
-import protobuf_unittest.UnittestProto.TestAllTypes;
-import protobuf_unittest.UnittestProto.TestPackedTypes;
-import protobuf_unittest.UnittestProto.TestRequired;
-import protobuf_unittest.UnittestProto.TestRequiredForeign;
-import protobuf_unittest.UnittestProto.TestUnpackedTypes;
-import java.util.Map;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestOptimizeFor.TestOptimizedForSize;
+import proto2_unittest.UnittestProto;
+import proto2_unittest.UnittestProto.ForeignMessage;
+import proto2_unittest.UnittestProto.TestAllExtensions;
+import proto2_unittest.UnittestProto.TestAllTypes;
+import proto2_unittest.UnittestProto.TestPackedTypes;
+import proto2_unittest.UnittestProto.TestRequired;
+import proto2_unittest.UnittestProto.TestRequiredForeign;
+import proto2_unittest.UnittestProto.TestUnpackedTypes;
+
+import java.util.Map;
 
 /** Unit test for {@link AbstractMessage}. */
 @RunWith(JUnit4.class)

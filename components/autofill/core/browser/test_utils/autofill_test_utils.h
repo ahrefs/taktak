@@ -26,6 +26,7 @@
 #include "components/autofill/core/browser/form_structure.h"
 #include "components/autofill/core/browser/metrics/autofill_metrics_utils.h"
 #include "components/autofill/core/browser/payments/card_unmask_challenge_option.h"
+#include "components/autofill/core/browser/payments/constants.h"
 #include "components/autofill/core/browser/proto/api_v1.pb.h"
 #include "components/autofill/core/browser/proto/server.pb.h"
 #include "components/autofill/core/browser/suggestions/suggestion.h"
@@ -330,8 +331,8 @@ struct PassportEntityOptions {
   const char16_t* name = u"Pippi Långstrump";
   const char16_t* number = u"123";
   const char16_t* country = u"Sweden";
-  const char16_t* expiry_date = u"12/2019";
-  const char16_t* issue_date = u"01/2010";
+  const char16_t* expiry_date = u"2019-08-30";
+  const char16_t* issue_date = u"2010-09-01";
   std::string_view guid = "00000000-0000-4000-8000-000000000000";
   std::string_view nickname = "Passie";
   base::Time date_modified = kJune2017;
@@ -357,6 +358,20 @@ struct DriversLicenseOptions {
 
 EntityInstance GetDriversLicenseEntityInstance(
     DriversLicenseOptions options = {});
+
+struct VehicleOptions {
+  const char16_t* name = u"Knecht Ruprecht";
+  const char16_t* plate = u"123456";
+  const char16_t* number = u"12312345";
+  const char16_t* make = u"BMW";
+  const char16_t* model = u"Series 2";
+  const char16_t* year = u"2025";
+  const char16_t* state = u"California";
+  std::string_view guid = "00000000-0000-4000-8000-200000000000";
+  std::string_view nickname = "Vehicle";
+};
+
+EntityInstance GetVehicleEntityInstance(VehicleOptions options = {});
 
 // Adds `possible_types` at the end of `possible_field_types`.
 void InitializePossibleTypes(std::vector<FieldTypeSet>& possible_field_types,
@@ -464,7 +479,8 @@ sync_pb::PaymentInstrument CreatePaymentInstrumentWithLinkedBnplIssuer(
     uint64_t max_price_in_micros);
 
 // Returns a linked BNPL issuer with fake data.
-BnplIssuer GetTestLinkedBnplIssuer();
+BnplIssuer GetTestLinkedBnplIssuer(
+    std::string_view issuer_id = kBnplAffirmIssuerId);
 
 // Returns an unlinked BNPL issuer with fake data.
 BnplIssuer GetTestUnlinkedBnplIssuer();

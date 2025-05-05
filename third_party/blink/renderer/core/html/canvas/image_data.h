@@ -37,7 +37,7 @@
 #include "third_party/blink/renderer/core/typed_arrays/array_buffer_view_helpers.h"
 #include "third_party/blink/renderer/core/typed_arrays/dom_typed_array.h"
 #include "third_party/blink/renderer/platform/bindings/script_wrappable.h"
-#include "third_party/blink/renderer/platform/graphics/graphics_types.h"
+#include "third_party/blink/renderer/platform/graphics/predefined_color_space.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
 #include "third_party/blink/renderer/platform/wtf/text/wtf_string.h"
 #include "third_party/skia/include/core/SkPixmap.h"
@@ -47,7 +47,7 @@ namespace blink {
 
 class ExceptionState;
 class ImageBitmapOptions;
-class V8ImageDataStorageFormat;
+class V8ImageDataPixelFormat;
 class V8PredefinedColorSpace;
 
 class CORE_EXPORT ImageData final : public ScriptWrappable,
@@ -94,9 +94,9 @@ class CORE_EXPORT ImageData final : public ScriptWrappable,
                              ValidateAndCreateParams(), exception_state);
   }
 
-  // Constructor that takes DOMUint16Array, width, optional height, and optional
-  // ImageDataSettings.
-  static ImageData* Create(NotShared<DOMUint16Array> data,
+  // Constructor that takes DOMFloat16Array, width, optional height, and
+  // optional ImageDataSettings.
+  static ImageData* Create(NotShared<DOMFloat16Array> data,
                            unsigned width,
                            ExceptionState& exception_state) {
     ValidateAndCreateParams params;
@@ -104,7 +104,7 @@ class CORE_EXPORT ImageData final : public ScriptWrappable,
     return ValidateAndCreate(width, std::nullopt, data, nullptr, params,
                              exception_state);
   }
-  static ImageData* Create(NotShared<DOMUint16Array> data,
+  static ImageData* Create(NotShared<DOMFloat16Array> data,
                            unsigned width,
                            unsigned height,
                            const ImageDataSettings* settings,
@@ -182,7 +182,7 @@ class CORE_EXPORT ImageData final : public ScriptWrappable,
   int width() const { return size_.width(); }
   int height() const { return size_.height(); }
   V8PredefinedColorSpace colorSpace() const;
-  V8ImageDataStorageFormat storageFormat() const;
+  V8ImageDataPixelFormat pixelFormat() const;
 
   // TODO(https://crbug.com/1198606): Remove this.
   ImageDataSettings* getSettings() const;
@@ -217,7 +217,7 @@ class CORE_EXPORT ImageData final : public ScriptWrappable,
   Member<ImageDataSettings> settings_;
   Member<V8ImageDataArray> data_;
   NotShared<DOMUint8ClampedArray> data_u8_;
-  NotShared<DOMUint16Array> data_u16_;
+  NotShared<DOMFloat16Array> data_f16_;
   NotShared<DOMFloat32Array> data_f32_;
   PredefinedColorSpace color_space_ = PredefinedColorSpace::kSRGB;
   SkColorType color_type_ = kRGBA_8888_SkColorType;

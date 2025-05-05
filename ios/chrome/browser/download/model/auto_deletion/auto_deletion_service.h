@@ -7,10 +7,15 @@
 
 #import <Foundation/Foundation.h>
 
+#import "base/functional/callback_forward.h"
 #import "base/memory/weak_ptr.h"
 #import "ios/chrome/browser/download/model/auto_deletion/scheduler.h"
 
+namespace base {
+class Time;
+}  // namespace base
 class PrefRegistrySimple;
+class PrefService;
 namespace web {
 class DownloadTask;
 }  // namespace web
@@ -22,7 +27,7 @@ class Scheduler;
 // the auto-deletion system.
 class AutoDeletionService {
  public:
-  AutoDeletionService();
+  explicit AutoDeletionService(PrefService* local_state);
   ~AutoDeletionService();
 
   // Registers the auto deletion Chrome settings status.
@@ -31,10 +36,19 @@ class AutoDeletionService {
   // Schedules a file for auto-deletion.
   void ScheduleFileForDeletion(web::DownloadTask* task);
 
+  // Deletes the files that have been marked as ready for deletion.
+  void RemoveScheduledFilesReadyForDeletion(base::OnceClosure closure);
+
+  // Untracks all the files that were scheduled for auto-deletion.
+  void Clear();
+
  private:
   // Invoked after the download task data is read from data. It finishes
   // scheduling the file for deletion.
   void ScheduleFileForDeletionHelper(web::DownloadTask* task, NSData* data);
+
+  // Notifies the Scheduler to remove its expired ScheduledFiles.
+  void OnFilesDeletedFromDisk(base::Time instant, base::OnceClosure closure);
 
   // The Scheduler object which tracks and manages the downloaded files
   // scheduled for automatic deletion.

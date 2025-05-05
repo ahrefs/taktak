@@ -41,6 +41,7 @@
 #include "ui/views/controls/label.h"
 #include "ui/views/layout/box_layout.h"
 #include "ui/views/layout/flex_layout.h"
+#include "ui/views/layout/layout_provider.h"
 #include "ui/views/widget/widget.h"
 
 using signin_util::SignedInState;
@@ -52,7 +53,6 @@ using signin_util::SignedInState;
 namespace {
 
 constexpr int kTitleMaxWidth = 218;
-constexpr int kExtensionsExplicitSigninTitleMaxWidth = 318;
 
 int GetSubtitleID(bool is_signin_promo,
                   signin::SignInPromoType promo_type,
@@ -84,8 +84,23 @@ int GetSubtitleID(bool is_signin_promo,
             break;
         }
       } break;
-      case signin::SignInPromoType::kBookmark:
-        return IDS_BOOKMARK_DICE_PROMO_SYNC_MESSAGE;
+      case signin::SignInPromoType::kBookmark: {
+        if (!is_signin_promo) {
+          return IDS_BOOKMARK_DICE_PROMO_SYNC_MESSAGE;
+        }
+
+        switch (signed_in_state) {
+          case SignedInState::kSignedOut:
+          case SignedInState::kWebOnlySignedIn:
+            return IDS_BOOKMARK_INSTALLED_PROMO_EXPLICIT_SIGNIN_MESSAGE;
+          case SignedInState::kSignInPending:
+            return IDS_BOOKMARK_VERIFY_PROMO_SUBTITLE;
+          case SignedInState::kSignedIn:
+          case SignedInState::kSyncing:
+          case SignedInState::kSyncPaused:
+            break;
+        }
+      } break;
       case signin::SignInPromoType::kExtension: {
         return is_signin_promo
                    ? IDS_EXTENSION_INSTALLED_PROMO_EXPLICIT_SIGNIN_MESSAGE
@@ -98,16 +113,12 @@ int GetSubtitleID(bool is_signin_promo,
 }
 
 std::u16string GetButtonText(bool is_signin_promo,
-                             bool is_extension_signin_promo,
                              SignedInState signed_in_state,
                              const std::string& name) {
   if (is_signin_promo) {
     switch (signed_in_state) {
-      case SignedInState::kSignedOut: {
-        return l10n_util::GetStringUTF16(
-            is_extension_signin_promo ? IDS_EXTENSIONS_EXPLICIT_SIGNIN_BUTTON
-                                      : IDS_PROFILE_MENU_SIGNIN_PROMO_BUTTON);
-      }
+      case SignedInState::kSignedOut:
+        return l10n_util::GetStringUTF16(IDS_PROFILE_MENU_SIGNIN_PROMO_BUTTON);
       case SignedInState::kWebOnlySignedIn:
         return l10n_util::GetStringFUTF16(
             IDS_SIGNIN_DICE_WEB_INTERCEPT_BUBBLE_CHROME_SIGNIN_ACCEPT_TEXT,
@@ -180,15 +191,7 @@ BubbleSignInPromoView::BubbleSignInPromoView(
       signin::GetSignInPromoTypeFromAccessPoint(access_point);
   SignedInState signed_in_state =
       signin_util::GetSignedInState(identity_manager);
-  bool is_autofill_promo = signin::IsAutofillSigninPromo(access_point);
-  bool is_extension_signin_promo =
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-      promo_type == signin::SignInPromoType::kExtension &&
-      switches::IsExtensionsExplicitBrowserSigninEnabled();
-#else
-      false;
-#endif  // BUILDFLAG(ENABLE_EXTENSIONS)
-  bool is_signin_promo = is_autofill_promo || is_extension_signin_promo;
+  bool is_signin_promo = signin::IsSignInPromo(access_point);
 
   AccountInfo account;
   // Sync promos can be shown in incognito, they use an empty account list.
@@ -199,7 +202,7 @@ BubbleSignInPromoView::BubbleSignInPromoView(
 
   // Set the layout.
   const views::LayoutOrientation orientation =
-      account.IsEmpty() && !is_autofill_promo
+      account.IsEmpty() && !is_signin_promo
           ? views::LayoutOrientation::kHorizontal
           : views::LayoutOrientation::kVertical;
 
@@ -216,8 +219,7 @@ BubbleSignInPromoView::BubbleSignInPromoView(
   int title_resource_id =
       GetSubtitleID(is_signin_promo, promo_type, signed_in_state);
   std::u16string button_text =
-      GetButtonText(is_signin_promo, is_extension_signin_promo, signed_in_state,
-                    account.given_name);
+      GetButtonText(is_signin_promo, signed_in_state, account.given_name);
   std::u16string accessibility_text =
       GetAccessibilityText(is_signin_promo, signed_in_state, account);
   signin_metrics::PromoAction promo_action =
@@ -231,21 +233,19 @@ BubbleSignInPromoView::BubbleSignInPromoView(
   title->SetHorizontalAlignment(gfx::HorizontalAlignment::ALIGN_LEFT);
   title->SetMultiLine(true);
   if (orientation == views::LayoutOrientation::kHorizontal) {
-    int title_max_width =
-        promo_type == signin::SignInPromoType::kExtension && is_signin_promo
-            ? kExtensionsExplicitSigninTitleMaxWidth
-            : kTitleMaxWidth;
-    title->SetMaximumWidth(title_max_width);
+    title->SetMaximumWidth(kTitleMaxWidth);
   } else {
-    title->SetProperty(
-        views::kMarginsKey,
-        gfx::Insets::TLBR(
-            0, 0,
-            ChromeLayoutProvider::Get()
-                ->GetDialogInsetsForContentType(views::DialogContentType::kText,
-                                                views::DialogContentType::kText)
-                .bottom(),
-            0));
+    // Make the distance smaller if the next element will be an account card.
+    const int subtitle_margin_bottom =
+        account.IsEmpty() ? ChromeLayoutProvider::Get()
+                                ->GetDialogInsetsForContentType(
+                                    views::DialogContentType::kText,
+                                    views::DialogContentType::kText)
+                                .bottom()
+                          : ChromeLayoutProvider::Get()->GetDistanceMetric(
+                                DISTANCE_TEXTFIELD_ACCOUNT_CARD_VERTICAL);
+    title->SetProperty(views::kMarginsKey,
+                       gfx::Insets::TLBR(0, 0, subtitle_margin_bottom, 0));
   }
   AddChildView(std::move(title));
 
@@ -256,7 +256,7 @@ BubbleSignInPromoView::BubbleSignInPromoView(
 
   if (account.IsEmpty()) {
     signin_button_pointer = std::make_unique<BubbleSignInPromoSignInButtonView>(
-        std::move(callback), is_autofill_promo, button_style,
+        std::move(callback), access_point, button_style,
         std::move(button_text));
 
     views::View* button_parent = AddChildView(std::make_unique<views::View>());
@@ -285,7 +285,7 @@ BubbleSignInPromoView::BubbleSignInPromoView(
           profiles::GetPlaceholderAvatarIconResourceID());
     }
     signin_button_pointer = std::make_unique<BubbleSignInPromoSignInButtonView>(
-        account, account_icon, std::move(callback), is_autofill_promo,
+        account, account_icon, std::move(callback), access_point,
         std::move(button_text), std::move(accessibility_text));
 
     signin_button_view_ = AddChildView(std::move(signin_button_pointer));

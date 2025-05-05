@@ -987,11 +987,15 @@ class AutoReloadWebviewLoginTest : public WebviewLoginTest {
     // TODO(b/353919505): Introduce a function for testing to advance time and
     // reschedule the timer in one call.
     task_runner()->FastForwardBy(time_change);
-    LoginDisplayHost::default_host()
-        ->GetOobeUI()
-        ->GetHandler<GaiaScreenHandler>()
-        ->GetAutoReloadManagerForTesting()
-        .ResumeTimerForTesting();
+    base::WallClockTimer* auto_reload_timer =
+        LoginDisplayHost::default_host()
+            ->GetOobeUI()
+            ->GetHandler<GaiaScreenHandler>()
+            ->GetAutoReloadManagerForTesting()
+            .GetTimerForTesting();
+    if (auto_reload_timer && auto_reload_timer->IsRunning()) {
+      auto_reload_timer->OnResume();
+    }
   }
 
   void SetUpOnMainThread() override {
@@ -1038,7 +1042,7 @@ class AutoReloadWebviewLoginTest : public WebviewLoginTest {
         ->GetOobeUI()
         ->GetHandler<GaiaScreenHandler>()
         ->GetAutoReloadManagerForTesting()
-        .IsActiveForTesting();
+        .IsAutoReloadActive();
   }
 
   void ExpectAutoReloadDisabled() {
@@ -1231,16 +1235,7 @@ IN_PROC_BROWSER_TEST_F(ReauthWebviewLoginTest, EmailPrefill) {
             user_with_gaia_pw_.account_id.GetUserEmail());
 }
 
-class ReauthWebviewPasswordlessLoginTest : public ReauthWebviewLoginTest {
- public:
-  ReauthWebviewPasswordlessLoginTest() {
-    scoped_feature_list_.Reset();
-    scoped_feature_list_.InitAndEnableFeature(
-        features::kPasswordlessGaiaForConsumers);
-  }
-};
-
-IN_PROC_BROWSER_TEST_F(ReauthWebviewPasswordlessLoginTest, GaiaPasswordFactor) {
+IN_PROC_BROWSER_TEST_F(ReauthWebviewLoginTest, GaiaPasswordFactor) {
   TriggerOnlineSignin(user_with_gaia_pw_);
   // Passwordless login is disallowed when Gaia password factor is
   // configured.
@@ -1257,8 +1252,7 @@ IN_PROC_BROWSER_TEST_F(ReauthWebviewPasswordlessLoginTest, GaiaPasswordFactor) {
                                        0 /* password login */, 0);
 }
 
-IN_PROC_BROWSER_TEST_F(ReauthWebviewPasswordlessLoginTest,
-                       LocalPasswordFactor) {
+IN_PROC_BROWSER_TEST_F(ReauthWebviewLoginTest, LocalPasswordFactor) {
   TriggerOnlineSignin(user_with_local_pw_);
   // Passwordless login is allowed when only local password factor is
   // configured.

@@ -10,7 +10,7 @@
             "builder_id": {
               "bucket": "ci",
               "builder": "Dawn Mac arm64 DEPS Builder",
-              "project": "chromium"
+              "project": "chromium-m136"
             },
             "builder_spec": {
               "build_gs_bucket": "chromium-dawn-archive",
@@ -35,7 +35,7 @@
             "builder_id": {
               "bucket": "ci",
               "builder": "Dawn Mac arm64 DEPS Release (Apple M2)",
-              "project": "chromium"
+              "project": "chromium-m136"
             },
             "builder_spec": {
               "build_gs_bucket": "chromium-dawn-archive",
@@ -57,7 +57,7 @@
               "parent": {
                 "bucket": "ci",
                 "builder": "Dawn Mac arm64 DEPS Builder",
-                "project": "chromium"
+                "project": "chromium-m136"
               },
               "run_tests_serially": true
             }
@@ -68,41 +68,34 @@
         {
           "bucket": "ci",
           "builder": "Dawn Mac arm64 DEPS Builder",
-          "project": "chromium"
+          "project": "chromium-m136"
         }
       ],
       "builder_ids_in_scope_for_testing": [
         {
           "bucket": "ci",
           "builder": "Dawn Mac arm64 DEPS Release (Apple M2)",
-          "project": "chromium"
+          "project": "chromium-m136"
         }
       ],
       "mirroring_builder_group_and_names": [
         {
           "builder": "dawn-mac-arm64-deps-rel",
           "group": "tryserver.chromium.dawn"
-        },
-        {
-          "builder": "dawn-try-mac-arm64-deps-rel",
-          "group": "tryserver.chromium.dawn"
         }
       ],
       "targets_spec_directory": "src/infra/config/generated/builders/ci/Dawn Mac arm64 DEPS Builder/targets"
     }
   },
-  "$build/reclient": {
-    "instance": "rbe-chromium-trusted",
-    "metrics_project": "chromium-reclient-metrics",
-    "scandeps_server": true
-  },
   "$build/siso": {
     "configs": [
       "builder"
     ],
+    "enable_cloud_monitoring": true,
     "enable_cloud_profiler": true,
     "enable_cloud_trace": true,
     "experiments": [],
+    "metrics_project": "chromium-reclient-metrics",
     "project": "rbe-chromium-trusted",
     "remote_jobs": 250
   },
@@ -114,11 +107,12 @@
     ]
   },
   "builder_group": "chromium.dawn",
+  "dawn_ref": "refs/heads/chromium/7103",
   "gardener_rotations": [
-    "dawn"
+    "chrome_browser_release"
   ],
   "recipe": "chromium",
   "sheriff_rotations": [
-    "dawn"
+    "chrome_browser_release"
   ]
 }

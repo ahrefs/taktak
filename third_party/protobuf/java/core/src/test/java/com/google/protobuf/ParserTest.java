@@ -10,24 +10,26 @@ package com.google.protobuf;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import protobuf_unittest.UnittestOptimizeFor;
-import protobuf_unittest.UnittestOptimizeFor.TestOptimizedForSize;
-import protobuf_unittest.UnittestOptimizeFor.TestRequiredOptimizedForSize;
-import protobuf_unittest.UnittestProto;
-import protobuf_unittest.UnittestProto.ForeignMessage;
-import protobuf_unittest.UnittestProto.TestAllTypes;
-import protobuf_unittest.UnittestProto.TestEmptyMessage;
-import protobuf_unittest.UnittestProto.TestMergeException;
-import protobuf_unittest.UnittestProto.TestParsingMerge;
-import protobuf_unittest.UnittestProto.TestRequired;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestOptimizeFor;
+import proto2_unittest.UnittestOptimizeFor.TestOptimizedForSize;
+import proto2_unittest.UnittestOptimizeFor.TestRequiredOptimizedForSize;
+import proto2_unittest.UnittestProto;
+import proto2_unittest.UnittestProto.ForeignMessage;
+import proto2_unittest.UnittestProto.TestAllTypes;
+import proto2_unittest.UnittestProto.TestEmptyMessage;
+import proto2_unittest.UnittestProto.TestMergeException;
+import proto2_unittest.UnittestProto.TestParsingMerge;
+import proto2_unittest.UnittestProto.TestRequired;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Unit test for {@link Parser}. */
 @RunWith(JUnit4.class)

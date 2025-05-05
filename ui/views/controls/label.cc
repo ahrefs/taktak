@@ -931,9 +931,12 @@ void Label::PaintText(gfx::Canvas* canvas) {
     // This is our approximation of being painted on an opaque region. If any
     // parent has an opaque background we assume that that background covers the
     // text bounds. This is not necessarily true as the background could be
-    // inset from the parent bounds, and get_color() does not imply that all of
+    // inset from the parent bounds, and color() does not imply that all of
     // the background is painted with the same opaque color.
-    if (view->background() && IsOpaque(view->background()->get_color())) {
+    const auto* background = view->background();
+    auto* color_provider = view->GetColorProvider();
+    if (background && color_provider &&
+        IsOpaque(background->color().ConvertToSkColor(color_provider))) {
       break;
     }
 
@@ -1409,6 +1412,11 @@ gfx::Size Label::GetBoundedTextSize(const SizeBounds& available_size) const {
     const int width = w.is_bounded() ? w.value() : 0;
     // SetDisplayRect() has side-effect. The text height will change to respect
     // width.
+    // TODO(crbug.com/400028865): full_text_'s eliding behavior should align
+    // with the label. Currently, it always returns non-elided width,
+    // effectively preventing the label to shrink. It should be as small as the
+    // width of "...". This issue currently causes overflow in a horizontal
+    // layout that has multiple single-line labels.
     full_text_->SetDisplayRect(gfx::Rect(0, 0, width, 0));
     size = full_text_->GetStringSize();
 

@@ -48,6 +48,7 @@ import com.google.protobuf.Timestamp;
 import com.google.protobuf.UInt32Value;
 import com.google.protobuf.UInt64Value;
 import com.google.protobuf.Value;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -64,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
+
 import javax.annotation.Nullable;
 
 /**
@@ -83,16 +85,17 @@ public class JsonFormat {
    * Creates a {@link Printer} with default configurations.
    */
   public static Printer printer() {
-    return new Printer(
-        com.google.protobuf.TypeRegistry.getEmptyTypeRegistry(),
-        TypeRegistry.getEmptyTypeRegistry(),
-        ShouldPrintDefaults.ONLY_IF_PRESENT,
-        /* includingDefaultValueFields */ ImmutableSet.of(),
-        /* preservingProtoFieldNames */ false,
-        /* omittingInsignificantWhitespace */ false,
-        /* printingEnumsAsInts */ false,
-        /* sortingMapKeys */ false);
-  }
+        return new Printer(
+                com.google.protobuf.TypeRegistry.getEmptyTypeRegistry(),
+                TypeRegistry.getEmptyTypeRegistry(),
+                ShouldPrintDefaults.ONLY_IF_PRESENT,
+                /* includingDefaultValueFields */ ImmutableSet.of(),
+                /* preservingProtoFieldNames */ false,
+                /* omittingInsignificantWhitespace */ false,
+                /* printingEnumsAsInts */ false,
+                /* sortingMapKeys */ false,
+                /* unsafeDisableCodepointsForHtmlSymbols */ false);
+    }
 
   private enum ShouldPrintDefaults {
     ONLY_IF_PRESENT, // The "normal" behavior; the others add more compared to this baseline.
@@ -112,27 +115,30 @@ public class JsonFormat {
 
     private final boolean preservingProtoFieldNames;
     private final boolean omittingInsignificantWhitespace;
-    private final boolean printingEnumsAsInts;
-    private final boolean sortingMapKeys;
+        private final boolean printingEnumsAsInts;
+        private final boolean sortingMapKeys;
+        private final boolean unsafeDisableCodepointsForHtmlSymbols;
 
-    private Printer(
-        com.google.protobuf.TypeRegistry registry,
-        TypeRegistry oldRegistry,
-        ShouldPrintDefaults shouldOutputDefaults,
-        Set<FieldDescriptor> includingDefaultValueFields,
-        boolean preservingProtoFieldNames,
-        boolean omittingInsignificantWhitespace,
-        boolean printingEnumsAsInts,
-        boolean sortingMapKeys) {
-      this.registry = registry;
-      this.oldRegistry = oldRegistry;
+        private Printer(
+                com.google.protobuf.TypeRegistry registry,
+                TypeRegistry oldRegistry,
+                ShouldPrintDefaults shouldOutputDefaults,
+                Set<FieldDescriptor> includingDefaultValueFields,
+                boolean preservingProtoFieldNames,
+                boolean omittingInsignificantWhitespace,
+                boolean printingEnumsAsInts,
+                boolean sortingMapKeys,
+                boolean unsafeDisableCodepointsForHtmlSymbols) {
+            this.registry = registry;
+            this.oldRegistry = oldRegistry;
       this.shouldPrintDefaults = shouldOutputDefaults;
       this.includingDefaultValueFields = includingDefaultValueFields;
       this.preservingProtoFieldNames = preservingProtoFieldNames;
       this.omittingInsignificantWhitespace = omittingInsignificantWhitespace;
-      this.printingEnumsAsInts = printingEnumsAsInts;
-      this.sortingMapKeys = sortingMapKeys;
-    }
+            this.printingEnumsAsInts = printingEnumsAsInts;
+            this.sortingMapKeys = sortingMapKeys;
+            this.unsafeDisableCodepointsForHtmlSymbols = unsafeDisableCodepointsForHtmlSymbols;
+        }
 
     /**
      * Creates a new {@link Printer} using the given registry. The new Printer clones all other
@@ -145,16 +151,17 @@ public class JsonFormat {
           || this.registry != com.google.protobuf.TypeRegistry.getEmptyTypeRegistry()) {
         throw new IllegalArgumentException("Only one registry is allowed.");
       }
-      return new Printer(
-          com.google.protobuf.TypeRegistry.getEmptyTypeRegistry(),
-          oldRegistry,
-          shouldPrintDefaults,
-          includingDefaultValueFields,
-          preservingProtoFieldNames,
-          omittingInsignificantWhitespace,
-          printingEnumsAsInts,
-          sortingMapKeys);
-    }
+            return new Printer(
+                    com.google.protobuf.TypeRegistry.getEmptyTypeRegistry(),
+                    oldRegistry,
+                    shouldPrintDefaults,
+                    includingDefaultValueFields,
+                    preservingProtoFieldNames,
+                    omittingInsignificantWhitespace,
+                    printingEnumsAsInts,
+                    sortingMapKeys,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
     /**
      * Creates a new {@link Printer} using the given registry. The new Printer clones all other
@@ -167,16 +174,17 @@ public class JsonFormat {
           || this.registry != com.google.protobuf.TypeRegistry.getEmptyTypeRegistry()) {
         throw new IllegalArgumentException("Only one registry is allowed.");
       }
-      return new Printer(
-          registry,
-          oldRegistry,
-          shouldPrintDefaults,
-          includingDefaultValueFields,
-          preservingProtoFieldNames,
-          omittingInsignificantWhitespace,
-          printingEnumsAsInts,
-          sortingMapKeys);
-    }
+            return new Printer(
+                    registry,
+                    oldRegistry,
+                    shouldPrintDefaults,
+                    includingDefaultValueFields,
+                    preservingProtoFieldNames,
+                    omittingInsignificantWhitespace,
+                    printingEnumsAsInts,
+                    sortingMapKeys,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
     /**
      * Creates a new {@link Printer} that will always print fields unless they are a message type or
@@ -196,28 +204,28 @@ public class JsonFormat {
         throw new IllegalStateException(
             "JsonFormat includingDefaultValueFields has already been set.");
       }
-      return new Printer(
-          registry,
-          oldRegistry,
-          ShouldPrintDefaults.ALWAYS_PRINT_EXCEPT_MESSAGES_AND_ONEOFS,
-          ImmutableSet.of(),
-          preservingProtoFieldNames,
-          omittingInsignificantWhitespace,
-          printingEnumsAsInts,
-          sortingMapKeys);
-    }
+            return new Printer(
+                    registry,
+                    oldRegistry,
+                    ShouldPrintDefaults.ALWAYS_PRINT_EXCEPT_MESSAGES_AND_ONEOFS,
+                    ImmutableSet.of(),
+                    preservingProtoFieldNames,
+                    omittingInsignificantWhitespace,
+                    printingEnumsAsInts,
+                    sortingMapKeys,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
-    /**
-     * Creates a new {@link Printer} that will also print default-valued fields if their
-     * FieldDescriptors are found in the supplied set. Empty repeated fields and map fields will be
-     * printed as well, if they match. The new Printer clones all other configurations from the
-     * current {@link Printer}. Call includingDefaultValueFields() with no args to unconditionally
-     * output all fields.
-     *
-     * <p>Note that non-repeated message fields or fields in a oneof are not honored if provided
-     * here.
-     */
-    public Printer includingDefaultValueFields(Set<FieldDescriptor> fieldsToAlwaysOutput) {
+        /**
+         * Creates a new {@link Printer} that will also print default-valued fields if their
+         * FieldDescriptors are found in the supplied set. Empty repeated fields and map fields will
+         * be printed as well, if they match. The new Printer clones all other configurations from
+         * the current {@link Printer}.
+         *
+         * <p>Note that non-repeated message fields or fields in a oneof are not honored if provided
+         * here.
+         */
+        public Printer includingDefaultValueFields(Set<FieldDescriptor> fieldsToAlwaysOutput) {
       Preconditions.checkArgument(
           null != fieldsToAlwaysOutput && !fieldsToAlwaysOutput.isEmpty(),
           "Non-empty Set must be supplied for includingDefaultValueFields.");
@@ -225,16 +233,17 @@ public class JsonFormat {
         throw new IllegalStateException(
             "JsonFormat includingDefaultValueFields has already been set.");
       }
-      return new Printer(
-          registry,
-          oldRegistry,
-          ShouldPrintDefaults.ALWAYS_PRINT_SPECIFIED_FIELDS,
-          ImmutableSet.copyOf(fieldsToAlwaysOutput),
-          preservingProtoFieldNames,
-          omittingInsignificantWhitespace,
-          printingEnumsAsInts,
-          sortingMapKeys);
-    }
+            return new Printer(
+                    registry,
+                    oldRegistry,
+                    ShouldPrintDefaults.ALWAYS_PRINT_SPECIFIED_FIELDS,
+                    ImmutableSet.copyOf(fieldsToAlwaysOutput),
+                    preservingProtoFieldNames,
+                    omittingInsignificantWhitespace,
+                    printingEnumsAsInts,
+                    sortingMapKeys,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
     /**
      * Creates a new {@link Printer} that will print any field that does not support presence even
@@ -246,16 +255,17 @@ public class JsonFormat {
       if (shouldPrintDefaults != ShouldPrintDefaults.ONLY_IF_PRESENT) {
         throw new IllegalStateException("Only one of the JsonFormat defaults options can be set.");
       }
-      return new Printer(
-          registry,
-          oldRegistry,
-          ShouldPrintDefaults.ALWAYS_PRINT_WITHOUT_PRESENCE_FIELDS,
-          ImmutableSet.of(),
-          preservingProtoFieldNames,
-          omittingInsignificantWhitespace,
-          printingEnumsAsInts,
-          sortingMapKeys);
-    }
+            return new Printer(
+                    registry,
+                    oldRegistry,
+                    ShouldPrintDefaults.ALWAYS_PRINT_WITHOUT_PRESENCE_FIELDS,
+                    ImmutableSet.of(),
+                    preservingProtoFieldNames,
+                    omittingInsignificantWhitespace,
+                    printingEnumsAsInts,
+                    sortingMapKeys,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
     /**
      * Creates a new {@link Printer} that prints enum field values as integers instead of as string.
@@ -263,16 +273,17 @@ public class JsonFormat {
      */
     public Printer printingEnumsAsInts() {
       checkUnsetPrintingEnumsAsInts();
-      return new Printer(
-          registry,
-          oldRegistry,
-          shouldPrintDefaults,
-          includingDefaultValueFields,
-          preservingProtoFieldNames,
-          omittingInsignificantWhitespace,
-          true,
-          sortingMapKeys);
-    }
+            return new Printer(
+                    registry,
+                    oldRegistry,
+                    shouldPrintDefaults,
+                    includingDefaultValueFields,
+                    preservingProtoFieldNames,
+                    omittingInsignificantWhitespace,
+                    true,
+                    sortingMapKeys,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
     private void checkUnsetPrintingEnumsAsInts() {
       if (printingEnumsAsInts) {
@@ -287,17 +298,17 @@ public class JsonFormat {
      * current {@link Printer}.
      */
     public Printer preservingProtoFieldNames() {
-      return new Printer(
-          registry,
-          oldRegistry,
-          shouldPrintDefaults,
-          includingDefaultValueFields,
-          true,
-          omittingInsignificantWhitespace,
-          printingEnumsAsInts,
-          sortingMapKeys);
-    }
-
+            return new Printer(
+                    registry,
+                    oldRegistry,
+                    shouldPrintDefaults,
+                    includingDefaultValueFields,
+                    true,
+                    omittingInsignificantWhitespace,
+                    printingEnumsAsInts,
+                    sortingMapKeys,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
     /**
      * Create a new {@link Printer} that omits insignificant whitespace in the JSON output.
@@ -316,16 +327,17 @@ public class JsonFormat {
      * See <a href="https://tools.ietf.org/html/rfc7159">https://tools.ietf.org/html/rfc7159</a>.
      */
     public Printer omittingInsignificantWhitespace() {
-      return new Printer(
-          registry,
-          oldRegistry,
-          shouldPrintDefaults,
-          includingDefaultValueFields,
-          preservingProtoFieldNames,
-          true,
-          printingEnumsAsInts,
-          sortingMapKeys);
-    }
+            return new Printer(
+                    registry,
+                    oldRegistry,
+                    shouldPrintDefaults,
+                    includingDefaultValueFields,
+                    preservingProtoFieldNames,
+                    true,
+                    printingEnumsAsInts,
+                    sortingMapKeys,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
     /**
      * Create a new {@link Printer} that will sort the map keys in the JSON output.
@@ -339,16 +351,17 @@ public class JsonFormat {
      * <p>This new Printer clones all other configurations from the current {@link Printer}.
      */
     public Printer sortingMapKeys() {
-      return new Printer(
-          registry,
-          oldRegistry,
-          shouldPrintDefaults,
-          includingDefaultValueFields,
-          preservingProtoFieldNames,
-          omittingInsignificantWhitespace,
-          printingEnumsAsInts,
-          true);
-    }
+            return new Printer(
+                    registry,
+                    oldRegistry,
+                    shouldPrintDefaults,
+                    includingDefaultValueFields,
+                    preservingProtoFieldNames,
+                    omittingInsignificantWhitespace,
+                    printingEnumsAsInts,
+                    true,
+                    unsafeDisableCodepointsForHtmlSymbols);
+        }
 
     /**
      * Converts a protobuf message to the proto3 JSON format.
@@ -358,20 +371,21 @@ public class JsonFormat {
      * @throws IOException if writing to the output fails
      */
     public void appendTo(MessageOrBuilder message, Appendable output) throws IOException {
-      // TODO: Investigate the allocation overhead and optimize for
-      // mobile.
-      new PrinterImpl(
-              registry,
-              oldRegistry,
-              shouldPrintDefaults,
-              includingDefaultValueFields,
-              preservingProtoFieldNames,
-              output,
-              omittingInsignificantWhitespace,
-              printingEnumsAsInts,
-              sortingMapKeys)
-          .print(message);
-    }
+            // TODO: Investigate the allocation overhead and optimize for
+            // mobile.
+            new PrinterImpl(
+                            registry,
+                            oldRegistry,
+                            shouldPrintDefaults,
+                            includingDefaultValueFields,
+                            preservingProtoFieldNames,
+                            output,
+                            omittingInsignificantWhitespace,
+                            printingEnumsAsInts,
+                            sortingMapKeys,
+                            unsafeDisableCodepointsForHtmlSymbols)
+                    .print(message);
+        }
 
     /**
      * Converts a protobuf message to the proto3 JSON format. Throws exceptions if there
@@ -725,30 +739,36 @@ public class JsonFormat {
     private final CharSequence blankOrSpace;
     private final CharSequence blankOrNewLine;
 
-    private static class GsonHolder {
-      private static final Gson DEFAULT_GSON = new GsonBuilder().create();
-    }
+        private static class GsonHolder {
+            private static final Gson DEFAULT_GSON = new GsonBuilder().create();
+            private static final Gson GSON_WITHOUT_HTML_ESCAPING =
+                    new GsonBuilder().disableHtmlEscaping().create();
+        }
 
-    PrinterImpl(
-        com.google.protobuf.TypeRegistry registry,
-        TypeRegistry oldRegistry,
-        ShouldPrintDefaults shouldPrintDefaults,
-        Set<FieldDescriptor> includingDefaultValueFields,
-        boolean preservingProtoFieldNames,
-        Appendable jsonOutput,
-        boolean omittingInsignificantWhitespace,
-        boolean printingEnumsAsInts,
-        boolean sortingMapKeys) {
-      this.registry = registry;
-      this.oldRegistry = oldRegistry;
+        PrinterImpl(
+                com.google.protobuf.TypeRegistry registry,
+                TypeRegistry oldRegistry,
+                ShouldPrintDefaults shouldPrintDefaults,
+                Set<FieldDescriptor> includingDefaultValueFields,
+                boolean preservingProtoFieldNames,
+                Appendable jsonOutput,
+                boolean omittingInsignificantWhitespace,
+                boolean printingEnumsAsInts,
+                boolean sortingMapKeys,
+                boolean unsafeDisableCodepointsForHtmlSymbols) {
+            this.registry = registry;
+            this.oldRegistry = oldRegistry;
       this.shouldPrintDefaults = shouldPrintDefaults;
       this.includingDefaultValueFields = includingDefaultValueFields;
       this.preservingProtoFieldNames = preservingProtoFieldNames;
-      this.printingEnumsAsInts = printingEnumsAsInts;
-      this.sortingMapKeys = sortingMapKeys;
-      this.gson = GsonHolder.DEFAULT_GSON;
-      // json format related properties, determined by printerType
-      if (omittingInsignificantWhitespace) {
+            this.printingEnumsAsInts = printingEnumsAsInts;
+            this.sortingMapKeys = sortingMapKeys;
+            this.gson =
+                    unsafeDisableCodepointsForHtmlSymbols
+                            ? GsonHolder.GSON_WITHOUT_HTML_ESCAPING
+                            : GsonHolder.DEFAULT_GSON;
+            // json format related properties, determined by printerType
+            if (omittingInsignificantWhitespace) {
         this.generator = new CompactTextGenerator(jsonOutput);
         this.blankOrSpace = "";
         this.blankOrNewLine = "";
@@ -861,11 +881,11 @@ public class JsonFormat {
       return printers;
     }
 
-    /** Prints google.protobuf.Any */
-    private void printAny(MessageOrBuilder message) throws IOException {
-      if (Any.getDefaultInstance().equals(message)) {
-        generator.print("{}");
-        return;
+        /** Prints google.protobuf.Any */
+        private void printAny(MessageOrBuilder message) throws IOException {
+            if (message.getDefaultInstanceForType().equals(message)) {
+                generator.print("{}");
+                return;
       }
       Descriptor descriptor = message.getDescriptorForType();
       FieldDescriptor typeUrlField = descriptor.findFieldByName("type_url");

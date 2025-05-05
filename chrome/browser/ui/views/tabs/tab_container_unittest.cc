@@ -203,8 +203,11 @@ class TabContainerTest : public ChromeViewsTestBase {
               std::optional<tab_groups::TabGroupId> group = std::nullopt,
               TabActive active = TabActive::kInactive,
               TabPinned pinned = TabPinned::kUnpinned) {
-    Tab* tab = tab_container_->AddTab(
-        std::make_unique<Tab>(tab_slot_controller_.get()), model_index, pinned);
+    std::vector<TabContainer::TabInsertionParams> tabs_params;
+    tabs_params.emplace_back(std::make_unique<Tab>(tab_slot_controller_.get()),
+                             model_index, pinned);
+    Tab* tab = tab_container_->AddTabs(std::move(tabs_params))[0];
+
     tab_strip_controller_->AddTab(model_index, active, pinned);
 
     if (active == TabActive::kActive) {
@@ -342,8 +345,8 @@ class TabContainerTest : public ChromeViewsTestBase {
     }
   }
 
-  // Checks whether |tab| contains |point_in_tab_container_coords|, where the
-  // point is in |tab_container_| coordinates.
+  // Checks whether `tab` contains `point_in_tab_container_coords`, where the
+  // point is in `tab_container_` coordinates.
   bool IsPointInTab(Tab* tab, const gfx::Point& point_in_tab_container_coords) {
     gfx::Point point_in_tab_coords(point_in_tab_container_coords);
     views::View::ConvertPointToTarget(tab_container_.get(), tab,

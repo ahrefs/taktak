@@ -7,10 +7,13 @@
 
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
+#include <vector>
 
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "base/time/time.h"
 #include "base/types/expected.h"
 #include "base/values.h"
 #include "components/omnibox/browser/autocomplete_match.h"
@@ -32,6 +35,14 @@ class TemplateURLService;
 
 class EnterpriseSearchAggregatorProvider : public AutocompleteProvider {
  public:
+  // Relevance along with info for `AutocompleteMatch::additional_info`.
+  struct RelevanceData {
+    int relevance;
+    size_t strong_word_matches;
+    size_t weak_word_matches;
+    std::string rule;
+  };
+
   EnterpriseSearchAggregatorProvider(AutocompleteProviderClient* client,
                                      AutocompleteProviderListener* listener);
 
@@ -75,9 +86,14 @@ class EnterpriseSearchAggregatorProvider : public AutocompleteProvider {
   void ParseEnterpriseSearchAggregatorSearchResults(
       const base::Value::Dict& root_val);
 
-  // Helper method to parse query, people, and content suggestions.
+  // Helper method to parse query, people, and content suggestions and populate
+  // `matches_`.
+  // - `input_words` is used for scoring matches.
+  // - `suggestion_type` is used for selecting which JSON fields to look for,
+  // scoring matches, and creating the match.
+  // - `is_navigation` is used for creating the match.
   // Example:
-  //   Given a response with one query suggestion:
+  //   Given a `results` with one query suggestion:
   //    {
   //     "querySuggestions": [{
   //       "suggestion": "hello",
@@ -93,7 +109,8 @@ class EnterpriseSearchAggregatorProvider : public AutocompleteProvider {
   //  - `match.image_url` = `icon_url` from EnterpriseSearchAggregatorSettings
   //  policy,
   //  - `match.relevance` = 1001.
-  void ParseResultList(const base::Value::List* results,
+  void ParseResultList(std::set<std::u16string> input_words,
+                       const base::Value::List* results,
                        SuggestionType suggestion_type,
                        bool is_navigation);
 
@@ -113,15 +130,40 @@ class EnterpriseSearchAggregatorProvider : public AutocompleteProvider {
   std::string GetMatchContents(const base::Value::Dict& result,
                                SuggestionType suggestion_type) const;
 
+  // Helper method to get a localized metadata string depending on which of
+  // `update_time`, `owner`, and `file_type_description` exist.
+  std::u16string GetLocalizedContentMetadata(
+      const std::u16string& update_time,
+      const std::u16string& owner,
+      const std::u16string& file_type_description) const;
+
+  // Helper method to get user-readable (e.g. 'chromium is awesome
+  // document') fields that can be used to compare input similarity.
+  // Non-user-readable fields (e.g. 'doc_id=123/locations/global') should be
+  // excluded because the input matching that would be a coincidence and not
+  // a sign the user wanted this suggestion. Does not return fields already
+  // returned by `GetMatchDescription()` and `GetMatchContents()`.
+  std::vector<std::string> GetAdditionalScoringFields(
+      const base::Value::Dict& result,
+      SuggestionType suggestion_type) const;
+
   // Helper to create a match.
   AutocompleteMatch CreateMatch(SuggestionType suggestion_type,
                                 bool is_navigation,
-                                int relevance,
+                                RelevanceData relevance_data,
                                 const std::string& destination_url,
                                 const std::string& image_url,
                                 const std::string& icon_url,
                                 const std::u16string& description,
-                                const std::u16string& contents);
+                                const std::u16string& contents,
+                                const std::u16string& fill_into_edit);
+
+  // Helper function for setting the time when the request started.
+  void SetTimeRequestSent();
+
+  // Helper function for logging request times sliced by whether the request was
+  // interrupted or not.
+  void LogResponseTime(bool interrupted);
 
   // Owned by AutocompleteController.
   const raw_ptr<AutocompleteProviderClient> client_;

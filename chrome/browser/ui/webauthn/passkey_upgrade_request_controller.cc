@@ -9,6 +9,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 
 #include "base/check.h"
 #include "base/check_op.h"
@@ -37,13 +38,13 @@
 #include "components/password_manager/core/browser/password_store/password_store_interface.h"
 #include "components/password_manager/core/browser/password_store/password_store_util.h"
 #include "components/password_manager/core/browser/password_sync_util.h"
+#include "components/password_manager/core/common/password_manager_pref_names.h"
 #include "components/sync/service/sync_service.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
 #include "device/fido/fido_discovery_base.h"
 #include "device/fido/fido_discovery_factory.h"
-#include "third_party/abseil-cpp/absl/types/variant.h"
 
 using RenderFrameHost = content::RenderFrameHost;
 
@@ -52,6 +53,7 @@ enum class PasskeyUpgradeRequestController::RequestError {
   kPasswordStoreError,
   kNotEligible,
   kEnclaveError,
+  kOptOut,
 };
 
 enum class PasskeyUpgradeRequestController::EnclaveState {
@@ -93,6 +95,12 @@ void PasskeyUpgradeRequestController::TryUpgradePasswordToPasskey(
   delegate_ = delegate;
   rp_id_ = std::move(rp_id);
   username_ = base::UTF8ToUTF16(username);
+
+  if (!profile()->GetPrefs()->GetBoolean(
+          password_manager::prefs::kAutomaticPasskeyUpgrades)) {
+    SignalRequestFailure(RequestError::kOptOut);
+    return;
+  }
 
   switch (enclave_state_) {
     case EnclaveState::kUnknown:
@@ -144,7 +152,7 @@ void PasskeyUpgradeRequestController::ContinuePendingUpgradeRequest() {
 void PasskeyUpgradeRequestController::OnGetPasswordStoreResultsOrErrorFrom(
     password_manager::PasswordStoreInterface* store,
     password_manager::LoginsResultOrError results_or_error) {
-  if (absl::holds_alternative<password_manager::PasswordStoreBackendError>(
+  if (std::holds_alternative<password_manager::PasswordStoreBackendError>(
           results_or_error)) {
     FIDO_LOG(EVENT) << "Passkey upgrade failed due to password store error";
     SignalRequestFailure(RequestError::kPasswordStoreError);

@@ -394,12 +394,8 @@ base::RepeatingCallback<bool(const url::Origin&)> BuildOriginFilter(
 // If |filter| is null, creates an always-true predicate.
 base::RepeatingCallback<bool(const GURL&)> BuildUrlFilter(
     mojom::ClearDataFilterPtr filter) {
-  return filter ? base::BindRepeating(
-                      &DoesUrlMatchFilter, filter->type,
-                      std::set<url::Origin>(filter->origins.begin(),
-                                            filter->origins.end()),
-                      std::set<std::string>(filter->domains.begin(),
-                                            filter->domains.end()))
+  return filter ? BindDoesUrlMatchFilter(filter->type, filter->origins,
+                                         filter->domains)
                 : base::NullCallback();
 }
 
@@ -1185,6 +1181,14 @@ void NetworkContext::SetBlockTrustTokens(bool block) {
   block_trust_tokens_ = block;
 }
 
+void NetworkContext::SetTrackingProtectionContentSetting(
+    const ContentSettingsForOneType& settings) {
+  if (!ip_protection_core_) {
+    return;
+  }
+  ip_protection_core_->SetTrackingProtectionContentSetting(settings);
+}
+
 void NetworkContext::OnProxyLookupComplete(
     ProxyLookupRequest* proxy_lookup_request) {
   auto it = proxy_lookup_requests_.find(proxy_lookup_request);
@@ -1731,7 +1735,8 @@ void NetworkContext::SetCTPolicy(mojom::CTPolicyPtr ct_policy) {
 
 int NetworkContext::CheckCTRequirements(
     net::CertVerifyResult& cert_verify_result,
-    const net::HostPortPair& host_port_pair) {
+    const net::HostPortPair& host_port_pair,
+    CTVerificationMode ct_verification_mode) {
   net::X509Certificate* verified_cert = cert_verify_result.verified_cert.get();
 
   net::TransportSecurityState::CTRequirementsStatus ct_requirement_status =
@@ -1751,6 +1756,13 @@ int NetworkContext::CheckCTRequirements(
     case net::TransportSecurityState::CT_REQUIREMENTS_MET:
       return net::OK;
     case net::TransportSecurityState::CT_NOT_REQUIRED:
+      switch (ct_verification_mode) {
+        case CTVerificationMode::kTlsCertificate:
+          return net::OK;
+        case CTVerificationMode::kSignedExchange:
+          // Proceed.
+          break;
+      }
       // CT is not required if the certificate does not chain to a publicly
       // trusted root certificate.
       if (!cert_verify_result.is_issued_by_known_root) {
@@ -2022,7 +2034,8 @@ void NetworkContext::CreateHostResolver(
     private_internal_resolver =
         network_service_->host_resolver_factory()->CreateStandaloneResolver(
             url_request_context_->net_log(), std::move(options),
-            "" /* host_mapping_rules */, false /* enable_caching */);
+            /* host_mapping_rules */ "", /* enable_caching */ false,
+            /* enable_stale */ false);
     private_internal_resolver->SetRequestContext(url_request_context_);
     internal_resolver = private_internal_resolver.get();
   }
@@ -2035,11 +2048,12 @@ void NetworkContext::CreateHostResolver(
       url_request_context_->net_log()));
 }
 
-void NetworkContext::VerifyCert(
+void NetworkContext::VerifyCertInternal(
     const scoped_refptr<net::X509Certificate>& certificate,
     const net::HostPortPair& host_port,
     const std::string& ocsp_result,
     const std::string& sct_list,
+    CTVerificationMode ct_verification_mode,
     VerifyCertCallback callback) {
   uint64_t cert_verify_id = ++next_cert_verify_id_;
   CHECK_NE(0u, next_cert_verify_id_);  // The request ID should not wrap around.
@@ -2050,6 +2064,7 @@ void NetworkContext::VerifyCert(
   pending_cert_verify->host_port = host_port;
   pending_cert_verify->ocsp_result = ocsp_result;
   pending_cert_verify->sct_list = sct_list;
+  pending_cert_verify->ct_verification_mode = ct_verification_mode;
   net::CertVerifier* cert_verifier =
       g_cert_verifier_for_testing ? g_cert_verifier_for_testing
                                   : url_request_context_->cert_verifier();
@@ -2067,6 +2082,26 @@ void NetworkContext::VerifyCert(
   if (result != net::ERR_IO_PENDING) {
     OnVerifyCertComplete(cert_verify_id, result);
   }
+}
+
+void NetworkContext::VerifyCert(
+    const scoped_refptr<net::X509Certificate>& certificate,
+    const net::HostPortPair& host_port,
+    const std::string& ocsp_result,
+    const std::string& sct_list,
+    VerifyCertCallback callback) {
+  VerifyCertInternal(certificate, host_port, ocsp_result, sct_list,
+                     CTVerificationMode::kTlsCertificate, std::move(callback));
+}
+
+void NetworkContext::VerifyCertForSignedExchange(
+    const scoped_refptr<net::X509Certificate>& certificate,
+    const net::HostPortPair& host_port,
+    const std::string& ocsp_result,
+    const std::string& sct_list,
+    VerifyCertCallback callback) {
+  VerifyCertInternal(certificate, host_port, ocsp_result, sct_list,
+                     CTVerificationMode::kSignedExchange, std::move(callback));
 }
 
 void NetworkContext::NotifyExternalCacheHit(const GURL& url,
@@ -2621,7 +2656,9 @@ URLRequestContextOwner NetworkContext::MakeURLRequestContext(
     auto ip_protection_core_impl =
         std::make_unique<ip_protection::IpProtectionCoreImplMojo>(
             std::move(params_->ip_protection_control), core_host_remote,
-            mdl_manager, prt_registry, params_->enable_ip_protection);
+            mdl_manager, prt_registry, params_->enable_ip_protection,
+            params_->ip_protection_incognito,
+            params_->ip_protection_data_directory);
     builder.set_proxy_delegate(
         std::make_unique<ip_protection::IpProtectionProxyDelegate>(
             ip_protection_core_impl.get()));
@@ -2953,6 +2990,10 @@ URLRequestContextOwner NetworkContext::MakeURLRequestContext(
     }
   }
 
+#if BUILDFLAG(IS_ANDROID)
+  builder.enable_stale_dns_resolver(params_->stale_dns_enabled);
+#endif  // BUILDFLAG(IS_ANDROID)
+
   if (on_url_request_context_builder_configured) {
     std::move(on_url_request_context_builder_configured).Run(&builder);
   }
@@ -3148,8 +3189,9 @@ void NetworkContext::OnVerifyCertComplete(uint64_t cert_verify_id, int result) {
   bool pkp_bypassed = false;
   if (result == net::OK) {
 #if BUILDFLAG(IS_CT_SUPPORTED)
-    int ct_result = CheckCTRequirements(*pending_cert_verify->result,
-                                        pending_cert_verify->host_port);
+    int ct_result = CheckCTRequirements(
+        *pending_cert_verify->result, pending_cert_verify->host_port,
+        pending_cert_verify->ct_verification_mode);
 #endif  // BUILDFLAG(IS_CT_SUPPORTED)
     net::TransportSecurityState::PKPStatus pin_validity =
         url_request_context_->transport_security_state()->CheckPublicKeyPins(

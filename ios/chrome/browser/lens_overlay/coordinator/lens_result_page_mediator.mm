@@ -15,10 +15,12 @@
 #import "components/lens/lens_url_utils.h"
 #import "ios/chrome/browser/context_menu/ui_bundled/context_menu_configuration_provider.h"
 #import "ios/chrome/browser/lens_overlay/coordinator/lens_overlay_availability.h"
+#import "ios/chrome/browser/lens_overlay/coordinator/lens_overlay_tab_change_responder.h"
 #import "ios/chrome/browser/lens_overlay/coordinator/lens_result_page_mediator_delegate.h"
 #import "ios/chrome/browser/lens_overlay/model/lens_overlay_url_utils.h"
 #import "ios/chrome/browser/lens_overlay/ui/lens_overlay_error_handler.h"
 #import "ios/chrome/browser/lens_overlay/ui/lens_result_page_consumer.h"
+#import "ios/chrome/browser/shared/model/profile/profile_ios.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list.h"
 #import "ios/chrome/browser/shared/public/commands/application_commands.h"
 #import "ios/chrome/browser/shared/public/commands/open_new_tab_command.h"
@@ -530,7 +532,7 @@ inline constexpr char kDarkModeParameterDarkValue[] = "1";
   _webState->AddObserver(_webStateObserverBridge.get());
   _policyDeciderBridge =
       std::make_unique<web::WebStatePolicyDeciderBridge>(_webState.get(), self);
-  AttachTabHelpers(_webState.get(), TabHelperFilter::kBottomSheet);
+  AttachTabHelpers(_webState.get(), TabHelperFilter::kLensOverlay);
   id<CRWWebViewProxy> webViewProxy = _webState->GetWebViewProxy();
   webViewProxy.allowsBackForwardNavigationGestures = NO;
   // Allow the scrollView to cover the safe area.
@@ -545,8 +547,11 @@ inline constexpr char kDarkModeParameterDarkValue[] = "1";
 
 /// Activates the web state with the given `URL`.
 - (void)activateWebStateWithURL:(GURL)URL {
-  if (IsLensOverlaySameTabNavigationEnabled()) {
-    [self.delegate respondToTabWillChange];
+  if (_webState &&
+      IsLensOverlaySameTabNavigationEnabled(
+          ProfileIOS::FromBrowserState(_webState->GetBrowserState())
+              ->GetPrefs())) {
+    [_tabChangeResponder prepareForBackgroundTabChange];
   }
 
   if (WebStateList* webStateList = _webStateList.get()) {

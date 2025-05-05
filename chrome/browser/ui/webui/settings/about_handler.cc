@@ -428,10 +428,12 @@ void AboutHandler::OnJavascriptAllowed() {
 }
 
 void AboutHandler::OnJavascriptDisallowed() {
+  // Invalidate all existing WeakPtrs so that no stale callbacks occur.
+  weak_factory_.InvalidateWeakPtrs();
+
   apply_changes_from_upgrade_observer_ = false;
   version_updater_.reset();
   policy_registrar_.reset();
-  weak_factory_.InvalidateWeakPtrs();
 }
 
 void AboutHandler::OnUpgradeRecommended() {
@@ -824,6 +826,7 @@ void AboutHandler::HandleOpenProductLicenseOther(
 
 void AboutHandler::HandleIsExtendedUpdatesOptInEligible(
     const base::Value::List& args) {
+  AllowJavascript();
   CHECK_EQ(4U, args.size());
   ash::ExtendedUpdatesController::Params params{
       .eol_passed = args[1].GetBool(),

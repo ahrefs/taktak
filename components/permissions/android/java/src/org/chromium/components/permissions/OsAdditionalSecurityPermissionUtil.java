@@ -7,11 +7,13 @@ package org.chromium.components.permissions;
 import org.jni_zero.CalledByNative;
 
 import org.chromium.base.ServiceLoaderUtil;
+import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 
 /**
  * Utility class for querying whether the operating system has granted various security permissions.
  */
+@NullMarked
 public class OsAdditionalSecurityPermissionUtil {
     private static @Nullable OsAdditionalSecurityPermissionProvider sProviderInstance;
 
@@ -21,17 +23,22 @@ public class OsAdditionalSecurityPermissionUtil {
      */
     @CalledByNative
     public static boolean hasJavascriptOptimizerPermission() {
+        OsAdditionalSecurityPermissionProvider provider = getProviderInstance();
+        return provider == null || provider.hasJavascriptOptimizerPermission();
+    }
+
+    /** Requires native to be loaded. */
+    public static @Nullable OsAdditionalSecurityPermissionProvider getProviderInstance() {
         if (PermissionsAndroidFeatureMap.isEnabled(
                 PermissionsAndroidFeatureList.OS_ADDITIONAL_SECURITY_PERMISSION_KILL_SWITCH)) {
-            return true;
+            return null;
         }
 
         if (sProviderInstance == null) {
             sProviderInstance =
                     ServiceLoaderUtil.maybeCreate(OsAdditionalSecurityPermissionProvider.class);
         }
-
-        return sProviderInstance == null || sProviderInstance.hasJavascriptOptimizerPermission();
+        return sProviderInstance;
     }
 
     public static void resetForTesting() {

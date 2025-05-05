@@ -16,8 +16,11 @@
 #include "third_party/blink/public/platform/platform.h"
 #include "third_party/blink/renderer/bindings/core/v8/script_promise_resolver.h"
 #include "third_party/blink/renderer/bindings/core/v8/v8_image_encode_options.h"
+#include "third_party/blink/renderer/core/frame/web_feature.h"
 #include "third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.h"
 #include "third_party/blink/renderer/core/html/canvas/canvas_rendering_context.h"
+#include "third_party/blink/renderer/core/html/canvas/unique_font_selector.h"
+#include "third_party/blink/renderer/platform/fonts/plain_text_painter.h"
 #include "third_party/blink/renderer/platform/graphics/canvas_resource_dispatcher.h"
 #include "third_party/blink/renderer/platform/graphics/canvas_resource_provider.h"
 #include "third_party/blink/renderer/platform/graphics/gpu/shared_gpu_context.h"
@@ -25,6 +28,7 @@
 #include "third_party/blink/renderer/platform/graphics/static_bitmap_image.h"
 #include "third_party/blink/renderer/platform/graphics/unaccelerated_static_bitmap_image.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
+#include "third_party/blink/renderer/platform/instrumentation/use_counter.h"
 #include "third_party/skia/include/core/SkSurface.h"
 #include "ui/gfx/geometry/skia_conversions.h"
 
@@ -37,6 +41,11 @@ BASE_FEATURE(kUseSharedBitmapProviderForSoftwareCompositing,
 CanvasRenderingContextHost::CanvasRenderingContextHost(HostType host_type,
                                                        const gfx::Size& size)
     : CanvasResourceHost(size), host_type_(host_type) {}
+
+void CanvasRenderingContextHost::Trace(Visitor* visitor) const {
+  visitor->Trace(plain_text_painter_);
+  visitor->Trace(unique_font_selector_);
+}
 
 void CanvasRenderingContextHost::RecordCanvasSizeToUMA() {
   if (did_record_canvas_size_to_uma_)
@@ -187,16 +196,9 @@ void CanvasRenderingContextHost::CreateCanvasResourceProviderWebGL() {
           SharedGpuContext::ContextProviderWrapper(), this);
     }
     if (!provider) {
-      // If PassThrough failed, try a SharedImage with usage display enabled,
-      // and if WebGLImageChromium is enabled, add concurrent read write and
-      // usage scanout (overlay).
+      // If PassThrough failed, try a SharedImage with usage display enabled.
       gpu::SharedImageUsageSet shared_image_usage_flags =
           gpu::SHARED_IMAGE_USAGE_DISPLAY_READ;
-      if (using_webgl_image_chromium) {
-        shared_image_usage_flags |= gpu::SHARED_IMAGE_USAGE_SCANOUT;
-        shared_image_usage_flags |=
-            gpu::SHARED_IMAGE_USAGE_CONCURRENT_READ_WRITE;
-      }
       provider = CanvasResourceProvider::CreateSharedImageProvider(
           Size(), format, alpha_type, color_space, kShouldInitialize,
           SharedGpuContext::ContextProviderWrapper(), RasterMode::kGPU,
@@ -228,9 +230,10 @@ void CanvasRenderingContextHost::CreateCanvasResourceProviderWebGL() {
           : !!dispatcher;
 
   if (!provider && use_software_shared_image_provider) {
-    provider = CanvasResourceProvider::CreateSoftwareSharedImageProvider(
-        Size(), format, alpha_type, color_space, kShouldInitialize,
-        SharedGpuContext::SharedImageInterfaceProvider(), this);
+    provider =
+        CanvasResourceProvider::CreateSharedImageProviderForSoftwareCompositor(
+            Size(), format, alpha_type, color_space, kShouldInitialize,
+            SharedGpuContext::SharedImageInterfaceProvider(), this);
   }
   if (!provider) {
     provider = CanvasResourceProvider::CreateBitmapProvider(
@@ -303,6 +306,12 @@ void CanvasRenderingContextHost::CreateCanvasResourceProvider2D(
         shared_image_usage_flags, this);
   } else if (SharedGpuContext::MaySupportImageChromium() &&
              RuntimeEnabledFeatures::Canvas2dImageChromiumEnabled()) {
+    // In this case, we are using CPU raster and GPU compositing and native
+    // mappable buffers are supported. Try to use a
+    // CanvasResourceProviderSharedImage, which if successful will result in
+    // using a SharedImage that can be mapped onto the CPU for software raster
+    // writes and then read by the display compositor (and potentially used as
+    // an overlay).
     const gpu::SharedImageUsageSet shared_image_usage_flags =
         gpu::SHARED_IMAGE_USAGE_DISPLAY_READ | gpu::SHARED_IMAGE_USAGE_SCANOUT;
     provider = CanvasResourceProvider::CreateSharedImageProvider(
@@ -321,11 +330,18 @@ void CanvasRenderingContextHost::CreateCanvasResourceProvider2D(
           : !!dispatcher;
 
   if (!provider && use_software_shared_image_provider) {
-    provider = CanvasResourceProvider::CreateSoftwareSharedImageProvider(
-        Size(), format, alpha_type, color_space, kShouldInitialize,
-        SharedGpuContext::SharedImageInterfaceProvider(), this);
+    // In this case, we are using CPU raster and CPU compositing. Create a
+    // CanvasResourceProvider that uses a SharedImage backed by a shared-memory
+    // buffer that can be written by canvas raster and read by the compositor.
+    provider =
+        CanvasResourceProvider::CreateSharedImageProviderForSoftwareCompositor(
+            Size(), format, alpha_type, color_space, kShouldInitialize,
+            SharedGpuContext::SharedImageInterfaceProvider(), this);
   }
   if (!provider) {
+    // The final fallback is to raster into a bitmap that will then either be
+    // uploaded into GPU memory (for GPU compositing) or copied into the Viz
+    // process (for software compositing).
     provider = CanvasResourceProvider::CreateBitmapProvider(
         Size(), format, alpha_type, color_space, kShouldInitialize, this);
   }
@@ -367,6 +383,15 @@ gfx::ColorSpace CanvasRenderingContextHost::GetRenderingContextColorSpace()
     const {
   return RenderingContext() ? RenderingContext()->GetColorSpace()
                             : gfx::ColorSpace::CreateSRGB();
+}
+
+PlainTextPainter& CanvasRenderingContextHost::GetPlainTextPainter() {
+  if (!plain_text_painter_) {
+    plain_text_painter_ =
+        MakeGarbageCollected<PlainTextPainter>(PlainTextPainter::kCanvas);
+    UseCounter::Count(GetTopExecutionContext(), WebFeature::kCanvasTextNg);
+  }
+  return *plain_text_painter_;
 }
 
 bool CanvasRenderingContextHost::IsOffscreenCanvas() const {

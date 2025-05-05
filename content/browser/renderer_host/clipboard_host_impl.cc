@@ -38,7 +38,6 @@
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
 #include "mojo/public/cpp/system/platform_handle.h"
 #include "skia/ext/skia_utils_base.h"
-#include "third_party/abseil-cpp/absl/types/variant.h"
 #include "third_party/blink/public/mojom/clipboard/clipboard.mojom.h"
 #include "third_party/blink/public/mojom/drag/drag.mojom-forward.h"
 #include "third_party/skia/include/core/SkBitmap.h"
@@ -701,9 +700,7 @@ void ClipboardHostImpl::OnCopyHtmlAllowedResult(
   DCHECK_GT(pending_writes_, 0);
   --pending_writes_;
 
-  clipboard_writer_->SetDataSourceURL(
-      render_frame_host().GetMainFrame()->GetLastCommittedURL(),
-      render_frame_host().GetLastCommittedURL());
+  AddSourceDataToClipboardWriter();
 
   if (replacement_data) {
     clipboard_writer_->WriteText(std::move(*replacement_data));
@@ -722,9 +719,7 @@ void ClipboardHostImpl::OnCopyAllowedResult(
   DCHECK_GT(pending_writes_, 0);
   --pending_writes_;
 
-  clipboard_writer_->SetDataSourceURL(
-      render_frame_host().GetMainFrame()->GetLastCommittedURL(),
-      render_frame_host().GetLastCommittedURL());
+  AddSourceDataToClipboardWriter();
 
   // If `replacement_data` is empty, only one of these fields should be
   // non-empty depending on which "Write" method was called by the renderer.
@@ -798,6 +793,12 @@ ClipboardEndpoint ClipboardHostImpl::CreateClipboardEndpoint() {
 void ClipboardHostImpl::ResetClipboardWriter() {
   clipboard_writer_ = std::make_unique<ui::ScopedClipboardWriter>(
       ui::ClipboardBuffer::kCopyPaste, CreateDataEndpoint());
+}
+
+void ClipboardHostImpl::AddSourceDataToClipboardWriter() {
+  clipboard_writer_->SetDataSourceURL(
+      render_frame_host().GetMainFrame()->GetLastCommittedURL(),
+      render_frame_host().GetLastCommittedURL());
   clipboard_writer_->WritePickledData(
       render_frame_host().GetGlobalFrameToken().ToPickle(),
       SourceRFHTokenType());

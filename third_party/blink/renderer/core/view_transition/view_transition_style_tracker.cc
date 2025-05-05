@@ -53,7 +53,6 @@
 #include "third_party/blink/renderer/core/view_transition/view_transition_transition_element.h"
 #include "third_party/blink/renderer/core/view_transition/view_transition_utils.h"
 #include "third_party/blink/renderer/platform/data_resource_helper.h"
-#include "third_party/blink/renderer/platform/graphics/graphics_types.h"
 #include "third_party/blink/renderer/platform/graphics/paint/geometry_mapper.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 #include "third_party/blink/renderer/platform/widget/frame_widget.h"
@@ -183,10 +182,24 @@ const String& StaticUAStyles() {
   return kStaticUAStyles;
 }
 
+const String& StaticUAStylesScoped() {
+  DEFINE_STATIC_LOCAL(
+      String, kStaticUAStylesScoped,
+      (UncompressResourceAsASCIIString(IDR_UASTYLE_TRANSITION_SCOPED_CSS)));
+  return kStaticUAStylesScoped;
+}
+
 const String& AnimationUAStyles() {
   DEFINE_STATIC_LOCAL(
       String, kAnimationUAStyles,
       (UncompressResourceAsASCIIString(IDR_UASTYLE_TRANSITION_ANIMATIONS_CSS)));
+  return kAnimationUAStyles;
+}
+
+const String& AnimationUAStylesScoped() {
+  DEFINE_STATIC_LOCAL(String, kAnimationUAStyles,
+                      (UncompressResourceAsASCIIString(
+                          IDR_UASTYLE_TRANSITION_ANIMATIONS_SCOPED_CSS)));
   return kAnimationUAStyles;
 }
 
@@ -378,43 +391,6 @@ int ComputeMaxCaptureSize(Document& document,
   return std::min(max_bounds_based_on_viewport, max_texture_size_in_layout);
 }
 
-gfx::Transform ComputeViewportTransform(const LayoutObject& object) {
-  DCHECK(object.HasLayer());
-  DCHECK(!object.IsLayoutView());
-
-  auto& first_fragment = object.FirstFragment();
-  DCHECK(ToRoundedPoint(first_fragment.PaintOffset()).IsOrigin())
-      << first_fragment.PaintOffset();
-  auto paint_properties = first_fragment.LocalBorderBoxProperties();
-
-  auto& root_fragment = object.GetDocument().GetLayoutView()->FirstFragment();
-  const auto& root_properties = root_fragment.LocalBorderBoxProperties();
-
-  auto transform = GeometryMapper::SourceToDestinationProjection(
-      paint_properties.Transform(), root_properties.Transform());
-  if (auto* layout_inline = DynamicTo<LayoutInline>(object)) {
-    // The paint_properties we get from
-    // `first_fragment.LocalBorderBoxProperties()` correspond to the origin of
-    // the inline's container's border-box. So the transform from GeometryMapper
-    // maps a point from the viewport to the container's border-box origin. We
-    // need the extra translation to map from container's border box origin to
-    // inline's border box origin.
-    transform.Translate(
-        gfx::Vector2dF(layout_inline->PhysicalLinesBoundingBox().offset));
-  }
-
-  if (!transform.HasPerspective()) {
-    if (base::FeatureList::IsEnabled(
-            ::features::kViewTransitionFloorTransform)) {
-      transform.Floor2dTranslationComponents();
-    } else {
-      transform.Round2dTranslationComponents();
-    }
-  }
-
-  return transform;
-}
-
 gfx::Transform ConvertFromTopLeftToCenter(
     const gfx::Transform& transform_from_top_left,
     const PhysicalSize& box_size) {
@@ -513,6 +489,15 @@ ViewTransitionStyleTracker::ViewTransitionStyleTracker(
       device_pixel_ratio_(DevicePixelRatioFromDocument(document)) {}
 
 ViewTransitionStyleTracker::ViewTransitionStyleTracker(
+    Element& element,
+    const blink::ViewTransitionToken& transition_token)
+    : document_(element.GetDocument()),
+      element_(element),
+      transition_token_(transition_token),
+      device_pixel_ratio_(DevicePixelRatioFromDocument(element.GetDocument())) {
+}
+
+ViewTransitionStyleTracker::ViewTransitionStyleTracker(
     Document& document,
     ViewTransitionState transition_state)
     : document_(document),
@@ -543,23 +528,7 @@ ViewTransitionStyleTracker::ViewTransitionStyleTracker(
         PhysicalRect::EnclosingRect(
             transition_state_element
                 .border_box_rect_in_enclosing_layer_css_space),
-        transition_state_element.viewport_matrix,
-        transition_state_element.layered_box_properties
-            ? std::make_optional(ContainerProperties::BoxGeometry{
-                  .content_box = PhysicalRect::EnclosingRect(
-                      transition_state_element.layered_box_properties
-                          ->content_box),
-                  .padding_box = PhysicalRect::EnclosingRect(
-                      transition_state_element.layered_box_properties
-                          ->padding_box),
-                  .box_sizing =
-                      transition_state_element.layered_box_properties
-                                  ->box_sizing ==
-                              mojom::blink::ViewTransitionElementBoxSizing::
-                                  kContentBox
-                          ? EBoxSizing::kContentBox
-                          : EBoxSizing::kBorderBox})
-            : std::nullopt};
+        transition_state_element.viewport_matrix};
     element_data->old_snapshot_id = transition_state_element.snapshot_id;
 
     element_data->element_index = transition_state_element.paint_order;
@@ -609,6 +578,11 @@ ViewTransitionStyleTracker::ViewTransitionStyleTracker(
         transition_state.subframe_snapshot_id, /*is_live_content_layer=*/false);
   }
 
+  for (auto& p : transition_state.id_to_auto_name_map) {
+    id_to_auto_name_map_.Set(AtomicString::FromUTF8(p.first),
+                             AtomicString::FromUTF8(p.second));
+  }
+
   // The aim of this flag is to serialize/deserialize SPA state using MPA
   // machinery. The intent is to use SPA tests to test MPA implementation as
   // well. To that end, if the flag is enabled we should invalidate styles and
@@ -623,7 +597,8 @@ ViewTransitionStyleTracker::ViewTransitionStyleTracker(
 
 ViewTransitionStyleTracker::~ViewTransitionStyleTracker() {
   if (!RuntimeEnabledFeatures::SerializeViewTransitionStateInSPAEnabled()) {
-    CHECK_EQ(state_, State::kFinished);
+    CHECK(state_ == State::kIdle || state_ == State::kFinished)
+        << static_cast<int>(state_);
   }
 }
 
@@ -717,9 +692,26 @@ void ViewTransitionStyleTracker::AddTransitionElementsFromCSS() {
 
   Vector<AtomicString> containing_group_stack;
 
+  PaintLayer* paint_layer = nullptr;
+  if (RuntimeEnabledFeatures::ScopedViewTransitionsEnabled()) {
+    if (element_ && element_->parentElement()) {
+      // Element is not detached and not the root document element.
+      paint_layer = element_->GetLayoutObject()->EnclosingLayer();
+    } else if (!element_ || element_ == document_->documentElement()) {
+      paint_layer = document_->GetLayoutView()->PaintingLayer();
+    }
+    if (!paint_layer) {
+      return;
+    }
+  } else {
+    paint_layer = document_->GetLayoutView()->PaintingLayer();
+  }
+
+  // PaintLayer* paint_layer = document_->GetLayoutView()->PaintingLayer();
+
   AddTransitionElementsFromCSSRecursive(
-      document_->GetLayoutView()->PaintingLayer(), document_.Get(),
-      containing_group_stack, /*nearest_group_with_contain=*/g_null_atom);
+      paint_layer, document_.Get(), containing_group_stack,
+      /*nearest_group_with_contain=*/g_null_atom);
 }
 
 AtomicString ViewTransitionStyleTracker::GenerateAutoName(
@@ -728,10 +720,27 @@ AtomicString ViewTransitionStyleTracker::GenerateAutoName(
     bool allow_from_id) {
   // The flag should be checked much earlier than this, in the CSS parser.
   CHECK(RuntimeEnabledFeatures::CSSViewTransitionMatchElementEnabled());
+
+  // For "auto" we generate a random name that is consistent for the same id, so
+  // we store it in a map and look it up first.
   if (allow_from_id && element.HasID() && scope &&
       *scope == element.GetTreeScope()) {
-    return element.GetIdAttribute();
+    AtomicString id_attribute = element.GetIdAttribute();
+    auto it = id_to_auto_name_map_.find(id_attribute);
+    if (it != id_to_auto_name_map_.end()) {
+      return it->value;
+    }
+
+    StringBuilder builder;
+    builder.Append("-ua-auto-");
+    builder.Append(base::Token::CreateRandom().ToString().c_str());
+    AtomicString name = builder.ToAtomicString();
+    id_to_auto_name_map_.Set(id_attribute, name);
+
+    return name;
   }
+
+  // For match-element, use a stable per-element id.
   StringBuilder builder;
   builder.Append("-ua-auto-");
   if (token_.is_zero()) {
@@ -1045,9 +1054,8 @@ void ViewTransitionStyleTracker::SetCaptureRectsFromCompositor(
     // This rect no longer matters.
     element_data->cached_captured_rect_in_layout_space.reset();
 
-    if (auto* pseudo_element =
-            document_->documentElement()->GetStyledPseudoElement(
-                PseudoId::kPseudoIdViewTransitionOld, entry.key)) {
+    if (auto* pseudo_element = OriginatingElement()->GetStyledPseudoElement(
+            PseudoId::kPseudoIdViewTransitionOld, entry.key)) {
       static_cast<ViewTransitionContentElement*>(pseudo_element)
           ->SetIntrinsicSize(rect_from_compositor,
                              element_data->GetReferenceRect(
@@ -1310,9 +1318,22 @@ PseudoElement* ViewTransitionStyleTracker::CreatePseudoElement(
   DCHECK(IsTransitionPseudoElement(pseudo_id));
   DCHECK(pseudo_id == kPseudoIdViewTransition || view_transition_name);
 
-  bool is_generated_name =
-      view_transition_name &&
-      element_data_map_.find(view_transition_name)->value->is_generated_name;
+  bool is_generated_name = false;
+  if (view_transition_name) {
+    auto it = element_data_map_.find(view_transition_name);
+    if (RuntimeEnabledFeatures::ScopedViewTransitionsEnabled()) {
+      if (it == element_data_map_.end()) {
+        // TODO(crbug.com/405117185): This is only possible because view
+        // transition names are still tracked globally in StyleEngine.
+        // Once that's fixed, we should enforce that the name passed to this
+        // method exists in element_data_map_.
+        return nullptr;
+      }
+    } else {
+      DCHECK(it != element_data_map_.end());
+    }
+    is_generated_name = it->value->is_generated_name;
+  }
 
   switch (pseudo_id) {
     case kPseudoIdViewTransition:
@@ -1385,16 +1406,17 @@ PseudoElement* ViewTransitionStyleTracker::CreatePseudoElement(
 bool ViewTransitionStyleTracker::RunPostPrePaintSteps() {
   DCHECK_GE(document_->Lifecycle().GetState(),
             DocumentLifecycle::kPrePaintClean);
-  // Abort if the document element is not there.
-  if (!document_->documentElement()) {
+  // Abort if the originating element is not there.
+  Element* scope = OriginatingElement();
+  if (!scope) {
     return false;
   }
 
-  if (!document_->documentElement()->GetLayoutObject()) {
+  if (!scope->GetLayoutObject()) {
     // If we have any view transition elements, while having no
-    // documentElement->GetLayoutObject(), we should abort. Target elements are
+    // scope->GetLayoutObject(), we should abort. Target elements are
     // only set on the current phase of the animation, so it means that the
-    // documentElement's layout object disappeared in this phase.
+    // scope's layout object disappeared in this phase.
     for (auto& entry : element_data_map_) {
       auto& element_data = entry.value;
       if (element_data->target_element) {
@@ -1404,8 +1426,7 @@ bool ViewTransitionStyleTracker::RunPostPrePaintSteps() {
     return true;
   }
 
-  DCHECK(document_->documentElement() &&
-         document_->documentElement()->GetLayoutObject());
+  DCHECK(scope && scope->GetLayoutObject());
   // We don't support changing device pixel ratio, because it's uncommon and
   // textures may have already been captured at a different size.
   if (device_pixel_ratio_ != DevicePixelRatioFromDocument(*document_)) {
@@ -1442,7 +1463,7 @@ bool ViewTransitionStyleTracker::RunPostPrePaintSteps() {
     if (!element_data->target_element)
       continue;
 
-    DCHECK(document_->documentElement());
+    DCHECK(scope);
     auto* layout_object = element_data->target_element->GetLayoutObject();
     if (!layout_object) {
       return false;
@@ -1463,7 +1484,7 @@ bool ViewTransitionStyleTracker::RunPostPrePaintSteps() {
       layout_view_size_in_css_space.Scale(1 / device_pixel_ratio_);
       container_properties = ContainerProperties{
           PhysicalRect(PhysicalOffset(), layout_view_size_in_css_space),
-          gfx::Transform(), std::nullopt};
+          gfx::Transform()};
       visual_overflow_rect_in_layout_space.size = layout_view_size;
     } else {
       ComputeLiveElementGeometry(
@@ -1489,12 +1510,6 @@ bool ViewTransitionStyleTracker::RunPostPrePaintSteps() {
       capture_property(id);
     }
 
-    if (ViewTransitionUtils::UseLayeredCapture(layout_object->StyleRef())) {
-      for (CSSPropertyID id : kLayeredCaptureProperties) {
-        capture_property(id);
-      }
-    }
-
     auto css_properties = std::move(css_property_builder).Finish();
 
     if (element_data->container_properties == container_properties &&
@@ -1516,10 +1531,9 @@ bool ViewTransitionStyleTracker::RunPostPrePaintSteps() {
     PseudoId live_content_element = HasLiveNewContent()
                                         ? kPseudoIdViewTransitionNew
                                         : kPseudoIdViewTransitionOld;
-    DCHECK(document_->documentElement());
+    DCHECK(scope);
     if (auto* pseudo_element =
-            document_->documentElement()->GetStyledPseudoElement(
-                live_content_element, entry.key)) {
+            scope->GetStyledPseudoElement(live_content_element, entry.key)) {
       // A pseudo element of type |tansition*content| must be created using
       // ViewTransitionContentElement.
       bool use_cached_data = false;
@@ -1570,7 +1584,7 @@ void ViewTransitionStyleTracker::ComputeLiveElementGeometry(
   // scaling more generally might use some improvements.
   // https://crbug.com/1416951.
   auto snapshot_matrix_in_layout_space =
-      ComputeViewportTransform(layout_object);
+      ComputeTransformForParticipant(layout_object);
 
   // The FixedToSnapshot offset below takes points from the fixed
   // viewport into the snapshot viewport. However, the transform is
@@ -1599,13 +1613,7 @@ void ViewTransitionStyleTracker::ComputeLiveElementGeometry(
 
   offset_in_css_space.Scale(1.f / device_pixel_ratio_);
 
-  // For layered capture, the reference box might be the content box, based on
-  // box-sizing.
   PhysicalSize border_box_size_in_css_space;
-  const bool use_layered_capture =
-      ViewTransitionUtils::UseLayeredCapture(layout_object.StyleRef());
-
-  std::optional<ContainerProperties::BoxGeometry> box_geometry;
   if (layout_object.IsSVGChild() || IsA<LayoutBox>(layout_object)) {
     // ResizeObserverEntry is created to reuse the logic for parsing object
     // size for different types of LayoutObjects. However, this works only
@@ -1627,19 +1635,6 @@ void ViewTransitionStyleTracker::ComputeLiveElementGeometry(
     border_box_size_in_css_space.Scale(1.f / device_pixel_ratio_);
   }
 
-  if (use_layered_capture && layout_object.IsBoxModelObject()) {
-    PhysicalRect padding_box(PhysicalOffset(), border_box_size_in_css_space);
-    padding_box.Contract(
-        To<LayoutBoxModelObject>(layout_object).BorderOutsets());
-    PhysicalRect content_box = padding_box;
-    content_box.Contract(
-        To<LayoutBoxModelObject>(layout_object).PaddingOutsets());
-    box_geometry = ContainerProperties::BoxGeometry{
-        .content_box = content_box,
-        .padding_box = padding_box,
-        .box_sizing = layout_object.StyleRef().BoxSizing()};
-  }
-
   float effective_zoom = layout_object.StyleRef().EffectiveZoom();
 
   // If the object's effective zoom differs from device_pixel_ratio, adjust
@@ -1648,10 +1643,6 @@ void ViewTransitionStyleTracker::ComputeLiveElementGeometry(
       std::numeric_limits<float>::epsilon()) {
     float device_to_css_pixels_ratio = effective_zoom / device_pixel_ratio_;
     border_box_size_in_css_space.Scale(device_to_css_pixels_ratio);
-    if (box_geometry) {
-      box_geometry->content_box.Scale(device_to_css_pixels_ratio);
-      box_geometry->padding_box.Scale(device_to_css_pixels_ratio);
-    }
   }
 
   snapshot_matrix_in_css_space = ConvertFromTopLeftToCenter(
@@ -1669,10 +1660,72 @@ void ViewTransitionStyleTracker::ComputeLiveElementGeometry(
       snapshot_matrix_in_layout_space, *snapshot_root_layout_size_at_capture_);
   container_properties = {
       PhysicalRect(offset_in_css_space, border_box_size_in_css_space),
-      snapshot_matrix_in_css_space, box_geometry};
+      snapshot_matrix_in_css_space};
+}
+
+gfx::Transform ViewTransitionStyleTracker::ComputeTransformForParticipant(
+    const LayoutObject& object) const {
+  DCHECK(object.HasLayer());
+  DCHECK(!object.IsLayoutView());
+
+  auto& first_fragment = object.FirstFragment();
+  DCHECK(ToRoundedPoint(first_fragment.PaintOffset()).IsOrigin())
+      << first_fragment.PaintOffset();
+  auto paint_properties = first_fragment.LocalBorderBoxProperties();
+
+  LayoutBox* scope_box = object.GetDocument().GetLayoutView();
+  if (RuntimeEnabledFeatures::ScopedViewTransitionsEnabled()) {
+    auto* scope = OriginatingElement();
+    scope_box = scope->IsDocumentElement()
+                    ? scope->GetDocument().GetLayoutView()
+                    : DynamicTo<LayoutBox>(scope->GetLayoutObject());
+    CHECK(scope_box);
+  }
+  auto& scope_fragment = scope_box->FirstFragment();
+  const auto& scope_properties = scope_fragment.LocalBorderBoxProperties();
+
+  auto transform = GeometryMapper::SourceToDestinationProjection(
+      paint_properties.Transform(), scope_properties.Transform());
+  if (auto* layout_inline = DynamicTo<LayoutInline>(object)) {
+    // The paint_properties we get from
+    // `first_fragment.LocalBorderBoxProperties()` correspond to the origin of
+    // the inline's container's border-box. So the transform from GeometryMapper
+    // maps a point from the viewport to the container's border-box origin. We
+    // need the extra translation to map from container's border box origin to
+    // inline's border box origin.
+    transform.Translate(
+        gfx::Vector2dF(layout_inline->PhysicalLinesBoundingBox().offset));
+  }
+
+  if (RuntimeEnabledFeatures::ScopedViewTransitionsEnabled() &&
+      !scope_box->IsLayoutView()) {
+    // TODO(crbug.com/394052227): Should we force compositing on the scope?
+    // If we do, its paint offset will always be zero.
+    transform.Translate(-gfx::Vector2dF(scope_fragment.PaintOffset()));
+
+    // Adjust for the scope element's borders and scrollbars.
+    // TODO(crbug.com/394052227): Is this correct in RTL / all writing modes?
+    transform.Translate(-scope_box->ClientLeft(), -scope_box->ClientTop());
+  }
+
+  if (!transform.HasPerspective()) {
+    if (base::FeatureList::IsEnabled(
+            ::features::kViewTransitionFloorTransform)) {
+      transform.Floor2dTranslationComponents();
+    } else {
+      transform.Round2dTranslationComponents();
+    }
+  }
+
+  return transform;
 }
 
 bool ViewTransitionStyleTracker::HasActiveAnimations() const {
+  auto* originating_element = OriginatingElement();
+  if (!originating_element) {
+    return false;
+  }
+
   auto pseudo_has_animation = [](PseudoElement* pseudo_element) {
     auto* animations = pseudo_element->GetElementAnimations();
     if (!animations) {
@@ -1689,7 +1742,8 @@ bool ViewTransitionStyleTracker::HasActiveAnimations() const {
     }
     return false;
   };
-  return !!ViewTransitionUtils::FindPseudoIf(*document_, pseudo_has_animation);
+  return !!ViewTransitionUtils::FindPseudoIf(*originating_element,
+                                             pseudo_has_animation);
 }
 
 PaintPropertyChangeType ViewTransitionStyleTracker::UpdateCaptureClip(
@@ -1912,17 +1966,6 @@ ViewTransitionState ViewTransitionStyleTracker::GetViewTransitionState() const {
                        ->border_box_rect_in_enclosing_layer_css_space);
     element.viewport_matrix =
         element_data->container_properties->snapshot_matrix;
-    if (const auto& box_geometry =
-            element_data->container_properties->box_geometry) {
-      element
-          .layered_box_properties = ViewTransitionElement::LayeredBoxProperties{
-          .content_box = gfx::RectF(box_geometry->content_box),
-          .padding_box = gfx::RectF(box_geometry->padding_box),
-          .box_sizing =
-              box_geometry->box_sizing == EBoxSizing::kContentBox
-                  ? mojom::blink::ViewTransitionElementBoxSizing::kContentBox
-                  : mojom::blink::ViewTransitionElementBoxSizing::kBorderBox};
-    }
     element.overflow_rect_in_layout_space =
         gfx::RectF(element_data->visual_overflow_rect_in_layout_space);
 
@@ -1959,6 +2002,13 @@ ViewTransitionState ViewTransitionStyleTracker::GetViewTransitionState() const {
         subframe_snapshot_layer_->ViewTransitionResourceId();
   }
 
+  std::vector<std::pair<std::string, std::string>> id_to_auto_name_list;
+  for (auto& p : id_to_auto_name_map_) {
+    id_to_auto_name_list.emplace_back(p.key.Utf8(), p.value.Utf8());
+  }
+  transition_state.id_to_auto_name_map =
+      base::flat_map<std::string, std::string>(std::move(id_to_auto_name_list));
+
   state_extracted_ = true;
 
   // TODO(khushalsagar): Need to send offsets to retain positioning of
@@ -1990,19 +2040,22 @@ bool ViewTransitionStyleTracker::SnapshotRootDidChangeSize() const {
 
 void ViewTransitionStyleTracker::InvalidateStyle() {
   ua_style_sheet_ = nullptr;
-
-  if (auto* originating_element = document_->documentElement()) {
-    originating_element->SetNeedsStyleRecalc(
-        kLocalStyleChange, StyleChangeReasonForTracing::Create(
-                               style_change_reason::kViewTransition));
+  auto* originating_element = OriginatingElement();
+  if (!originating_element) {
+    return;
   }
+
+  originating_element->SetNeedsStyleRecalc(
+      kLocalStyleChange, StyleChangeReasonForTracing::Create(
+                             style_change_reason::kViewTransition));
 
   auto invalidate_style = [](PseudoElement* pseudo_element) {
     pseudo_element->SetNeedsStyleRecalc(
         kLocalStyleChange, StyleChangeReasonForTracing::Create(
                                style_change_reason::kViewTransition));
   };
-  ViewTransitionUtils::ForEachTransitionPseudo(*document_, invalidate_style);
+  ViewTransitionUtils::ForEachTransitionPseudo(*originating_element,
+                                               invalidate_style);
 
   // Invalidate layout view compositing properties.
   if (auto* layout_view = document_->GetLayoutView()) {
@@ -2054,9 +2107,14 @@ CSSStyleSheet& ViewTransitionStyleTracker::UAStyleSheet() {
   const bool add_animations = state_ == State::kStarted;
 
   ViewTransitionStyleBuilder builder;
-  builder.AddUAStyle(StaticUAStyles());
-  if (add_animations)
-    builder.AddUAStyle(AnimationUAStyles());
+  builder.AddUAStyle(RuntimeEnabledFeatures::ScopedViewTransitionsEnabled()
+                         ? StaticUAStylesScoped()
+                         : StaticUAStyles());
+  if (add_animations) {
+    builder.AddUAStyle(RuntimeEnabledFeatures::ScopedViewTransitionsEnabled()
+                           ? AnimationUAStylesScoped()
+                           : AnimationUAStyles());
+  }
 
   for (auto& entry : element_data_map_) {
     const auto& view_transition_name = entry.key.GetString();
@@ -2080,17 +2138,11 @@ CSSStyleSheet& ViewTransitionStyleTracker::UAStyleSheet() {
           containing_group_data->cached_container_properties.snapshot_matrix
               .InverseOrIdentity();
 
-      old_parent_inverse_transform.Translate(
-          -containing_group_data->cached_container_properties.BorderOffset());
-
       if (containing_group_data->container_properties) {
         const auto& new_container_properties =
             *containing_group_data->container_properties;
         new_parent_inverse_transform =
-
             new_container_properties.snapshot_matrix.InverseOrIdentity();
-        new_parent_inverse_transform.Translate(
-            -new_container_properties.BorderOffset());
       }
     }
 
@@ -2145,6 +2197,7 @@ bool ViewTransitionStyleTracker::HasLiveNewContent() const {
 
 void ViewTransitionStyleTracker::Trace(Visitor* visitor) const {
   visitor->Trace(document_);
+  visitor->Trace(element_);
   visitor->Trace(element_data_map_);
   visitor->Trace(pending_transition_element_names_);
   visitor->Trace(ua_style_sheet_);
@@ -2196,10 +2249,6 @@ gfx::RectF ViewTransitionStyleTracker::ElementData::GetReferenceRect(
   const auto& properties =
       use_cached_data ? cached_container_properties : *container_properties;
   PhysicalRect rect = properties.border_box_rect_in_enclosing_layer_css_space;
-  if (properties.box_geometry) {
-    rect = properties.box_geometry->content_box;
-    rect.Move(properties.border_box_rect_in_enclosing_layer_css_space.offset);
-  }
   rect.Scale(device_scale_factor);
   return gfx::RectF(rect);
 }
@@ -2245,9 +2294,7 @@ PhysicalRect ViewTransitionStyleTracker::ComputeVisualOverflowRect(
   // coordinate space.
   auto rect =
       box.EnclosingLayer()->LocalBoundingBoxIncludingSelfPaintingDescendants();
-  if (!ViewTransitionUtils::UseLayeredCapture(box.StyleRef())) {
-    rect = box.ApplyFiltersToRect(rect);
-  }
+  rect = box.ApplyFiltersToRect(rect);
 
   // Correct for fractional offset.
   rect.Move(box.FirstFragment().PaintOffset());
@@ -2324,6 +2371,10 @@ void ViewTransitionStyleTracker::SnapBrowserControlsToFullyShown() {
   } else {
     controls.SetShownRatio(1, 1);
   }
+}
+
+Element* ViewTransitionStyleTracker::OriginatingElement() const {
+  return element_ ? element_.Get() : document_->documentElement();
 }
 
 }  // namespace blink

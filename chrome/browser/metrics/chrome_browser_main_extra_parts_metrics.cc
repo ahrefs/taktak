@@ -49,7 +49,6 @@
 #include "chrome/browser/web_applications/sampling_metrics_provider.h"
 #include "chrome/common/chrome_switches.h"
 #include "components/metrics/android_metrics_helper.h"
-#include "components/performance_manager/public/features.h"
 #include "components/performance_manager/public/performance_manager.h"
 #include "components/policy/core/common/management/management_service.h"
 #include "components/prefs/pref_registry_simple.h"
@@ -107,6 +106,7 @@
 #include "base/win/windows_version.h"
 #include "chrome/browser/metrics/key_credential_manager_support_reporter_win.h"
 #include "chrome/browser/shell_integration_win.h"
+#include "chrome/browser/win/cloud_synced_folder_checker.h"
 #include "chrome/installer/util/taskbar_util.h"
 #endif  // BUILDFLAG(IS_WIN)
 
@@ -778,7 +778,7 @@ void RecordAppCompatMetrics() {
   base::UmaHistogramBoolean("Windows.AcLayersLoaded", !!mod);
 }
 
-void RecordWin11UpgradeEligibilityMetrics(
+void RecordWin11HardwareRequirementsMetrics(
     const base::win::HardwareEvaluationResult& result) {
   base::UmaHistogramBoolean("Windows.Win11UpgradeEligible",
                             result.IsEligible());
@@ -792,6 +792,22 @@ void RecordWin11UpgradeEligibilityMetrics(
                             result.firmware);
   base::UmaHistogramBoolean("Windows.Win11HardwareRequirements.TPMCheck",
                             result.tpm);
+}
+
+void MaybeRecordOneDriveSyncMetrics() {
+  if (!base::FeatureList::IsEnabled(
+          cloud_synced_folder_checker::features::kCloudSyncedFolderChecker)) {
+    return;
+  }
+
+  cloud_synced_folder_checker::CloudSyncStatus status =
+      cloud_synced_folder_checker::EvaluateOneDriveSyncStatus();
+
+  base::UmaHistogramBoolean("Windows.OneDriveSyncState.Synced", status.synced);
+  base::UmaHistogramBoolean("Windows.OneDriveSyncState.DesktopSynced",
+                            status.desktop_synced);
+  base::UmaHistogramBoolean("Windows.OneDriveSyncState.DocumentsSynced",
+                            status.documents_synced);
 }
 
 #endif  // BUILDFLAG(IS_WIN)
@@ -837,10 +853,12 @@ void RecordStartupMetrics() {
                             IsParallelDllLoadingEnabled());
   RecordAppCompatMetrics();
 
+  MaybeRecordOneDriveSyncMetrics();
+
   if (base::win::OSInfo::Kernel32Version() < base::win::Version::WIN11) {
     base::win::HardwareEvaluationResult result =
-        base::win::EvaluateWin11UpgradeEligibility();
-    RecordWin11UpgradeEligibilityMetrics(result);
+        base::win::EvaluateWin11HardwareRequirements();
+    RecordWin11HardwareRequirementsMetrics(result);
   }
   key_credential_manager_support::ReportKeyCredentialManagerSupport();
 #endif  // BUILDFLAG(IS_WIN)
@@ -955,7 +973,7 @@ void ChromeBrowserMainExtraPartsMetrics::PreBrowserStart() {
 
   // Log once here at browser start rather than at each renderer launch.
   ChromeMetricsServiceAccessor::RegisterSyntheticFieldTrial("ClangPGO",
-#if BUILDFLAG(CLANG_PGO)
+#if BUILDFLAG(CLANG_PGO_OPTIMIZED)
 #if BUILDFLAG(USE_THIN_LTO)
                                                             "EnabledWithThinLTO"
 #else
@@ -1155,12 +1173,9 @@ void ChromeBrowserMainExtraPartsMetrics::PostBrowserStart() {
         std::make_unique<PowerMetricsReporter>(process_monitor_.get());
   }
 
-  if (performance_manager::features::
-          ShouldUsePerformanceInterventionBackend()) {
-    performance_intervention_metrics_reporter_ =
-        std::make_unique<PerformanceInterventionMetricsReporter>(
-            g_browser_process->local_state());
-  }
+  performance_intervention_metrics_reporter_ =
+      std::make_unique<PerformanceInterventionMetricsReporter>(
+          g_browser_process->local_state());
 
   web_app_metrics_provider_ =
       std::make_unique<web_app::SamplingMetricsProvider>();

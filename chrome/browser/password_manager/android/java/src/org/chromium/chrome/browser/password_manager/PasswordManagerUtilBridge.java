@@ -79,6 +79,18 @@ public class PasswordManagerUtilBridge {
     }
 
     /**
+     * Checks whether Google Play Services is installed and whether Play Store is installed so that
+     * the user can be redirected to the store to update Google Play Services if needed.
+     *
+     * @return true if both Google Play Services and Google Play Store are installed.
+     */
+    @CalledByNative
+    public static boolean isGooglePlayServicesUpdatable() {
+        return PackageUtils.isPackageInstalled("com.google.android.gms")
+                && PasswordManagerUtilBridge.isPlayStoreAppPresent();
+    }
+
+    /**
      * Returns whether Chrome's internal backend is available and the minimum GMS Core requirements
      * for UPM are met.
      */

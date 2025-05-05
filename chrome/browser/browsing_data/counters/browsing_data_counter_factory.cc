@@ -7,6 +7,7 @@
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
 #include "build/build_config.h"
+#include "chrome/browser/autofill/autofill_entity_data_manager_factory.h"
 #include "chrome/browser/autofill/personal_data_manager_factory.h"
 #include "chrome/browser/browsing_data/counters/browsing_data_counter_utils.h"
 #include "chrome/browser/browsing_data/counters/cache_counter.h"
@@ -39,7 +40,6 @@
 #endif
 
 #if !BUILDFLAG(IS_ANDROID)
-#include "chrome/browser/user_annotations/user_annotations_service_factory.h"
 #include "content/public/browser/host_zoom_map.h"
 #else
 #include "chrome/browser/browsing_data/counters/tabs_counter.h"
@@ -109,11 +109,7 @@ BrowsingDataCounterFactory::GetForProfileAndPref(Profile* profile,
         autofill::PersonalDataManagerFactory::GetForBrowserContext(profile),
         WebDataServiceFactory::GetAutofillWebDataForProfile(
             profile, ServiceAccessType::EXPLICIT_ACCESS),
-#if !BUILDFLAG(IS_ANDROID)
-        UserAnnotationsServiceFactory::GetForProfile(profile),
-#else
-        /*user_annotations_service=*/nullptr,
-#endif
+        autofill::AutofillEntityDataManagerFactory::GetForProfile(profile),
         SyncServiceFactory::GetForProfile(profile));
   }
 

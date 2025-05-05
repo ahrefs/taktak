@@ -12,6 +12,7 @@
 #import "ios/chrome/browser/lens_overlay/model/lens_overlay_tab_helper.h"
 #import "ios/chrome/browser/shared/coordinator/layout_guide/layout_guide_util.h"
 #import "ios/chrome/browser/shared/model/browser/browser.h"
+#import "ios/chrome/browser/shared/model/profile/profile_ios.h"
 #import "ios/chrome/browser/shared/model/web_state_list/web_state_list.h"
 #import "ios/chrome/browser/shared/public/commands/command_dispatcher.h"
 #import "ios/chrome/browser/shared/public/commands/help_commands.h"
@@ -36,9 +37,8 @@
 
 - (void)start {
   _fullscreenController = FullscreenController::FromBrowser(self.browser);
-  ProfileIOS* profile = self.browser->GetProfile();
   feature_engagement::Tracker* engagementTracker =
-      feature_engagement::TrackerFactory::GetForProfile(profile);
+      feature_engagement::TrackerFactory::GetForProfile(self.profile);
   _sideSwipeMediator = [[SideSwipeMediator alloc]
       initWithWebStateList:self.browser->GetWebStateList()];
   _sideSwipeMediator.engagementTracker = engagementTracker;
@@ -54,7 +54,6 @@
   _sideSwipeUIController.toolbarInteractionHandler =
       self.toolbarInteractionHandler;
   _sideSwipeUIController.toolbarSnapshotProvider = self.toolbarSnapshotProvider;
-  _sideSwipeUIController.tabStripDelegate = self.tabStripDelegate;
   _sideSwipeUIController.mutator = _sideSwipeMediator;
   _sideSwipeUIController.navigationDelegate = _sideSwipeMediator;
   _sideSwipeUIController.tabsDelegate = _sideSwipeMediator;
@@ -102,11 +101,6 @@
   [_sideSwipeUIController
       setSideSwipeUIControllerDelegate:sideSwipeUIControllerDelegate];
   _sideSwipeUIControllerDelegate = sideSwipeUIControllerDelegate;
-}
-
-- (void)setTabStripDelegate:(id<TabStripHighlighting>)tabStripDelegate {
-  _tabStripDelegate = tabStripDelegate;
-  [_sideSwipeUIController setTabStripDelegate:tabStripDelegate];
 }
 
 - (void)setToolbarSnapshotProvider:
@@ -168,7 +162,7 @@
 
 // Checks if the user is navigating back to the Lens Overlay.
 - (BOOL)navigatingBackToLensOverlay {
-  if (!IsLensOverlaySameTabNavigationEnabled() ||
+  if (!IsLensOverlaySameTabNavigationEnabled(self.profile->GetPrefs()) ||
       IsCompactHeight(self.baseViewController)) {
     return NO;
   }

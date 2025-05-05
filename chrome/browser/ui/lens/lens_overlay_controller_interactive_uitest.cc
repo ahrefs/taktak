@@ -19,6 +19,7 @@
 #include "chrome/browser/ui/browser_element_identifiers.h"
 #include "chrome/browser/ui/lens/lens_overlay_controller.h"
 #include "chrome/browser/ui/lens/lens_overlay_gen204_controller.h"
+#include "chrome/browser/ui/lens/lens_search_controller.h"
 #include "chrome/browser/ui/lens/test_lens_overlay_query_controller.h"
 #include "chrome/browser/ui/tabs/public/tab_features.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
@@ -43,6 +44,7 @@
 #include "ui/base/clipboard/clipboard.h"
 #include "ui/base/clipboard/clipboard_format_type.h"
 #include "ui/events/keycodes/dom/dom_code.h"
+#include "ui/gfx/geometry/point.h"
 
 namespace {
 
@@ -91,8 +93,7 @@ class LensOverlayControllerFake : public LensOverlayController {
                             signin::IdentityManager* identity_manager,
                             PrefService* pref_service,
                             syncer::SyncService* sync_service,
-                            ThemeService* theme_service,
-                            Profile* profile)
+                            ThemeService* theme_service)
       : LensOverlayController(tab,
                               variations_client,
                               identity_manager,
@@ -143,22 +144,36 @@ class LensOverlayControllerFake : public LensOverlayController {
   }
 };
 
+class LensSearchControllerFake : public LensSearchController {
+ public:
+  explicit LensSearchControllerFake(tabs::TabInterface* tab)
+      : LensSearchController(tab) {}
+
+  std::unique_ptr<LensOverlayController> CreateLensOverlayController(
+      tabs::TabInterface* tab,
+      variations::VariationsClient* variations_client,
+      signin::IdentityManager* identity_manager,
+      PrefService* pref_service,
+      syncer::SyncService* sync_service,
+      ThemeService* theme_service) override {
+    // Set browser color scheme to light mode for consistency.
+    theme_service->SetBrowserColorScheme(
+        ThemeService::BrowserColorScheme::kLight);
+
+    return std::make_unique<LensOverlayControllerFake>(
+        tab, variations_client, identity_manager, pref_service, sync_service,
+        theme_service);
+  }
+};
+
 class TabFeaturesFake : public tabs::TabFeatures {
  public:
   TabFeaturesFake() = default;
 
  protected:
-  std::unique_ptr<LensOverlayController> CreateLensController(
-      tabs::TabInterface* tab,
-      Profile* profile) override {
-    auto* theme_service = ThemeServiceFactory::GetForProfile(profile);
-    // Set browser color scheme to light mode for consistency.
-    theme_service->SetBrowserColorScheme(
-        ThemeService::BrowserColorScheme::kLight);
-    return std::make_unique<LensOverlayControllerFake>(
-        tab, profile->GetVariationsClient(),
-        IdentityManagerFactory::GetForProfile(profile), profile->GetPrefs(),
-        SyncServiceFactory::GetForProfile(profile), theme_service, profile);
+  std::unique_ptr<LensSearchController> CreateLensController(
+      tabs::TabInterface* tab) override {
+    return std::make_unique<LensSearchControllerFake>(tab);
   }
 };
 
@@ -1047,14 +1062,14 @@ IN_PROC_BROWSER_TEST_F(LensPreselectionBubbleInteractiveUiTest,
                   WaitForHide(LensOverlayController::kOverlayId));
 }
 
-class LensOverlayControllerSimplifedSelectionCUJTest
+class LensOverlayControllerSimplifiedSelectionCUJTest
     : public LensOverlayControllerCUJTest {
  public:
-  LensOverlayControllerSimplifedSelectionCUJTest() = default;
-  ~LensOverlayControllerSimplifedSelectionCUJTest() override = default;
-  LensOverlayControllerSimplifedSelectionCUJTest(
-      const LensOverlayControllerSimplifedSelectionCUJTest&) = delete;
-  void operator=(const LensOverlayControllerSimplifedSelectionCUJTest&) =
+  LensOverlayControllerSimplifiedSelectionCUJTest() = default;
+  ~LensOverlayControllerSimplifiedSelectionCUJTest() override = default;
+  LensOverlayControllerSimplifiedSelectionCUJTest(
+      const LensOverlayControllerSimplifiedSelectionCUJTest&) = delete;
+  void operator=(const LensOverlayControllerSimplifiedSelectionCUJTest&) =
       delete;
 
   void SetUpFeatureList() override {
@@ -1075,23 +1090,29 @@ class LensOverlayControllerSimplifedSelectionCUJTest
 //  (2) User opens lens overlay.
 //  (3) User highlights some region.
 //  (4) User presses CTRL+C.
-//  (5) Region gets copied.
-// TODO(crbug.com/399520257): Fix test failure on ChromeOS, and ASAN.
-#if BUILDFLAG(IS_CHROMEOS) || defined(ADDRESS_SANITIZER)
-// Flaky on ASAN, and on ChromeOS.
-#define MAYBE_CopyKeyCommandCopiesImage DISABLED_CopyKeyCommandCopiesImage
+//  (5) Text in region gets copied.
+// TODO(crbug.com/399520257): Fix test failure on Linux, and ASAN.
+#if BUILDFLAG(IS_LINUX) || defined(ADDRESS_SANITIZER)
+// Flaky on ASAN, and on Linux.
+#define MAYBE_CopyKeyCommandCopiesText DISABLED_CopyKeyCommandCopiesText
 #else
-#define MAYBE_CopyKeyCommandCopiesImage CopyKeyCommandCopiesImage
+#define MAYBE_CopyKeyCommandCopiesText CopyKeyCommandCopiesText
 #endif
-IN_PROC_BROWSER_TEST_F(LensOverlayControllerSimplifedSelectionCUJTest,
-                       MAYBE_CopyKeyCommandCopiesImage) {
+IN_PROC_BROWSER_TEST_F(LensOverlayControllerSimplifiedSelectionCUJTest,
+                       MAYBE_CopyKeyCommandCopiesText) {
   WaitForTemplateURLServiceToLoad();
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlayId);
   DEFINE_LOCAL_ELEMENT_IDENTIFIER_VALUE(kOverlaySidePanelWebViewId);
   DEFINE_LOCAL_STATE_IDENTIFIER_VALUE(ui::test::PollingStateObserver<bool>,
-                                      kRegionCopiedState);
+                                      kTextCopiedState);
 
   const GURL url = embedded_test_server()->GetURL(kDocumentWithNamedElement);
+  auto top_left_point = base::BindLambdaForTesting([&](ui::TrackedElement* el) {
+    return gfx::Point(el->AsA<views::TrackedElementViews>()
+                          ->view()
+                          ->GetBoundsInScreen()
+                          .origin());
+  });
 
   // Path to region selection layer.
   const DeepQuery kPathToRegionSelection{
@@ -1117,11 +1138,12 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerSimplifedSelectionCUJTest,
       // Wait for the webview to finish loading to prevent re-entrancy. Then
       // click the center of the region selection layer to select a region.
       // Flush tasks after click to prevent flakiness.
-      InSameContext(WaitForShow(LensOverlayController::kOverlayId),
-                    WaitForScreenshotRendered(kOverlayId),
-                    EnsurePresent(kOverlayId, kPathToRegionSelection),
-                    MoveMouseTo(kOverlayId, kPathToRegionSelection),
-                    ClickMouse()),
+      InSameContext(
+          WaitForShow(LensOverlayController::kOverlayId),
+          WaitForScreenshotRendered(kOverlayId),
+          EnsurePresent(kOverlayId, kPathToRegionSelection),
+          MoveMouseTo(kOverlayId, kPathToRegionSelection),
+          DragMouseTo(LensOverlayController::kOverlayId, top_left_point)),
 
       // Clicking the overlay should have opened the side panel with the results
       // frame.
@@ -1139,17 +1161,16 @@ IN_PROC_BROWSER_TEST_F(LensOverlayControllerSimplifedSelectionCUJTest,
           WaitForShow(kOverlaySidePanelWebViewId),
           FocusWebContents(kOverlaySidePanelWebViewId),
           SendAccelerator(kOverlaySidePanelWebViewId, ctrl_c_accelerator),
-          PollState(kRegionCopiedState,
-                    [&]() {
-                      ui::Clipboard* clipboard =
-                          ui::Clipboard::GetForCurrentThread();
-                      std::string clipboard_data;
-                      clipboard->ReadData(ui::ClipboardFormatType::PngType(),
-                                          /*data_dst=*/nullptr,
-                                          &clipboard_data);
-                      return !clipboard_data.empty();
-                    }),
-          WaitForState(kRegionCopiedState, true)));
+          PollState(
+              kTextCopiedState,
+              [&]() {
+                ui::Clipboard* clipboard = ui::Clipboard::GetForCurrentThread();
+                std::u16string clipboard_text;
+                clipboard->ReadText(ui::ClipboardBuffer::kCopyPaste,
+                                    /* data_dst = */ nullptr, &clipboard_text);
+                return base::EqualsASCII(clipboard_text, "This is test text.");
+              }),
+          WaitForState(kTextCopiedState, true)));
 }
 
 }  // namespace

@@ -17,6 +17,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.CallSuper;
+import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.VisibleForTesting;
@@ -30,7 +31,6 @@ import org.chromium.base.BuildInfo;
 import org.chromium.base.Promise;
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.chrome.R;
-import org.chromium.chrome.browser.back_press.SecondaryActivityBackPressUma.SecondaryActivity;
 import org.chromium.chrome.browser.customtabs.CustomTabActivity;
 import org.chromium.chrome.browser.feature_engagement.TrackerFactory;
 import org.chromium.chrome.browser.metrics.UmaUtils;
@@ -45,6 +45,7 @@ import org.chromium.chrome.browser.ui.signin.SigninUtils;
 import org.chromium.chrome.browser.ui.signin.fullscreen_signin.FullscreenSigninMediator;
 import org.chromium.chrome.browser.ui.signin.history_sync.HistorySyncHelper;
 import org.chromium.chrome.browser.ui.system.StatusBarColorController;
+import org.chromium.components.browser_ui.edge_to_edge.EdgeToEdgeSystemBarColorHelper;
 import org.chromium.components.browser_ui.modaldialog.AppModalPresenter;
 import org.chromium.components.feature_engagement.EventConstants;
 import org.chromium.components.metrics.LowEntropySource;
@@ -315,11 +316,28 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
             // For consistency with tablets, the status bar should be black on phones with large
             // screen, where the FRE is shown as dialog.
             StatusBarColorController.setStatusBarColor(
-                    getEdgeToEdgeManager().getEdgeToEdgeSystemBarColorHelper(),
+                    (getEdgeToEdgeManager() != null)
+                            ? getEdgeToEdgeManager().getEdgeToEdgeSystemBarColorHelper()
+                            : null,
                     getWindow(),
                     Color.BLACK);
         }
         super.onPreCreate();
+    }
+
+    @Override
+    protected void initializeSystemBarColors(
+            EdgeToEdgeSystemBarColorHelper edgeToEdgeSystemBarColorHelper) {
+        if (DialogWhenLargeContentLayout.shouldShowAsDialog(this)) {
+            @ColorInt
+            int backgroundColor = DialogWhenLargeContentLayout.getDialogBackgroundColor(this);
+
+            StatusBarColorController.setStatusBarColor(
+                    edgeToEdgeSystemBarColorHelper, getWindow(), backgroundColor);
+            edgeToEdgeSystemBarColorHelper.setNavigationBarColor(backgroundColor);
+        } else {
+            super.initializeSystemBarColors(edgeToEdgeSystemBarColorHelper);
+        }
     }
 
     @Override
@@ -374,9 +392,8 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
                 new FirstRunFlowSequencer(
                         getProfileProviderSupplier(), getChildAccountStatusSupplier()) {
                     @Override
-                    public void onFlowIsKnown(Bundle freProperties) {
-                        assert freProperties != null;
-                        mFreProperties = freProperties;
+                    public void onFlowIsKnown(boolean isChild) {
+                        mFreProperties = new Bundle();
                         RecordHistogram.recordTimesHistogram(
                                 "MobileFre.FromLaunch.ChildStatusAvailable",
                                 SystemClock.elapsedRealtime() - mIntentCreationElapsedRealtimeMs);
@@ -603,11 +620,6 @@ public class FirstRunActivity extends FirstRunActivityBase implements FirstRunPa
             super.dispatchTouchEvent(mBlockedEvent); // Inject the blocked event
             mBlockedEvent = null;
         }
-    }
-
-    @Override
-    public int getSecondaryActivity() {
-        return SecondaryActivity.FIRST_RUN;
     }
 
     // FirstRunPageDelegate:

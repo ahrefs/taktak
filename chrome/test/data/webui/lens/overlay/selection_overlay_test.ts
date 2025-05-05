@@ -13,19 +13,19 @@ import {SemanticEvent, UserAction} from 'chrome-untrusted://lens-overlay/lens.mo
 import {ContextMenuOption} from 'chrome-untrusted://lens-overlay/metrics_utils.js';
 import type {OverlayObject} from 'chrome-untrusted://lens-overlay/overlay_object.mojom-webui.js';
 import {ScreenshotBitmapBrowserProxyImpl} from 'chrome-untrusted://lens-overlay/screenshot_bitmap_browser_proxy.js';
-import type {SelectionOverlayElement} from 'chrome-untrusted://lens-overlay/selection_overlay.js';
+import type {SelectedRegionContextMenuData, SelectionOverlayElement} from 'chrome-untrusted://lens-overlay/selection_overlay.js';
 import type {TextLayerBase} from 'chrome-untrusted://lens-overlay/text_layer_base.js';
 import {loadTimeData} from 'chrome-untrusted://resources/js/load_time_data.js';
 import {assertDeepEquals, assertEquals, assertFalse, assertNotEquals, assertStringContains, assertTrue} from 'chrome-untrusted://webui-test/chai_assert.js';
 import type {MetricsTracker} from 'chrome-untrusted://webui-test/metrics_test_support.js';
 import {fakeMetricsPrivate} from 'chrome-untrusted://webui-test/metrics_test_support.js';
 import {flushTasks, waitAfterNextRender} from 'chrome-untrusted://webui-test/polymer_test_util.js';
-import {isVisible} from 'chrome-untrusted://webui-test/test_util.js';
+import {eventToPromise, isVisible} from 'chrome-untrusted://webui-test/test_util.js';
 
 import {fakeScreenshotBitmap, waitForScreenshotRendered} from '../utils/image_utils.js';
 import {assertBoxesWithinThreshold, createObject} from '../utils/object_utils.js';
 import {getImageBoundingRect, normalizeBoxInElement, simulateClick, simulateDrag} from '../utils/selection_utils.js';
-import {createLine, createParagraph, createText, createTranslatedLine, createTranslatedParagraph, createWord, dispatchTranslateStateEvent, getTranslatedWordNodesForTesting, getWordNodesForTesting} from '../utils/text_utils.js';
+import {addEmptyTextToPage, addGenericWordsToPage, createLine, createParagraph, createText, createTranslatedLine, createTranslatedParagraph, createWord, dispatchTranslateStateEvent, getTranslatedWordNodesForTesting, getWordNodesForTesting} from '../utils/text_utils.js';
 
 import {TestLensOverlayBrowserProxy} from './test_overlay_browser_proxy.js';
 
@@ -77,7 +77,7 @@ suite('SelectionOverlay', function() {
   });
 
   function getTextSelectionLayer(): TextLayerBase {
-    return selectionOverlayElement.getTextSelectionLayerForTesting()!;
+    return selectionOverlayElement.getTextSelectionLayerForTesting();
   }
 
   function getWordNodes(): NodeListOf<Element> {
@@ -157,6 +157,27 @@ suite('SelectionOverlay', function() {
     // requestAnimationFrame callback queued by the ResizeObserver.
     await waitAfterNextRender(selectionOverlayElement);
     await waitAfterNextRender(selectionOverlayElement);
+  }
+
+  async function dispatchUpdateSelectedRegionContextMenuEvent() {
+    const centerRotatedBox: CenterRotatedBox = {
+      box: {x: 0.2, y: 0.2, width: 0.4, height: 0.4},
+      rotation: 0,
+      coordinateType: CenterRotatedBox_CoordinateType.kNormalized,
+    };
+    selectionOverlayElement.dispatchEvent(
+        new CustomEvent<SelectedRegionContextMenuData>(
+            'update-selected-region-context-menu', {
+              bubbles: true,
+              composed: true,
+              detail: {
+                box: centerRotatedBox,
+                selectionStartIndex: 0,
+                selectionEndIndex: 1,
+                text: 'text',
+              },
+            }));
+    await flushTasks();
   }
 
   suite('WithoutWordsOrObjects', function() {
@@ -557,6 +578,79 @@ suite('SelectionOverlay', function() {
               testBrowserProxy.handler.getCallCount('issueLensRegionRequest'));
         });
 
+    test('CopyTextWorksAfterSelectText', async () => {
+      callbackRouterRemote.setPostRegionSelection({
+        box: normalizedBox({x: 65, y: 25, width: 30, height: 30}),
+        rotation: 0.0,
+        coordinateType: 1,
+      });
+      await addWords();
+
+      assertEquals(
+          0, testBrowserProxy.handler.getCallCount('issueLensRegionRequest'));
+      assertEquals(
+          0,
+          testBrowserProxy.handler.getCallCount('issueTextSelectionRequest'));
+      assertTrue(
+          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
+      assertTrue(selectionOverlayElement
+                     .getShowDetectedTextContextMenuOptionsForTesting());
+
+      testBrowserProxy.handler.reset();
+      selectionOverlayElement.handleSelectTextForTesting();
+
+      const textQuery = await testBrowserProxy.handler.whenCalled(
+          'issueTextSelectionRequest');
+      assertDeepEquals('there test', textQuery);
+      assertEquals(
+          0, testBrowserProxy.handler.getCallCount('issueLensRegionRequest'));
+
+      selectionOverlayElement.handleCopyForTesting();
+      const copyQuery = await testBrowserProxy.handler.whenCalled('copyText');
+      // Copied text should include newlines.
+      assertDeepEquals('there\r\ntest', copyQuery);
+
+      // Verify context menu hides when an option is selected.
+      assertFalse(
+          selectionOverlayElement.getShowSelectedTextContextMenuForTesting());
+    });
+    test('TranslateTextWorksAfterSelectText', async () => {
+      callbackRouterRemote.setPostRegionSelection({
+        box: normalizedBox({x: 65, y: 25, width: 30, height: 30}),
+        rotation: 0.0,
+        coordinateType: 1,
+      });
+      await addWords();
+
+      assertEquals(
+          0, testBrowserProxy.handler.getCallCount('issueLensRegionRequest'));
+      assertEquals(
+          0,
+          testBrowserProxy.handler.getCallCount('issueTextSelectionRequest'));
+      assertTrue(
+          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
+      assertTrue(selectionOverlayElement
+                     .getShowDetectedTextContextMenuOptionsForTesting());
+
+      testBrowserProxy.handler.reset();
+      selectionOverlayElement.handleSelectTextForTesting();
+
+      const textQuery = await testBrowserProxy.handler.whenCalled(
+          'issueTextSelectionRequest');
+      assertDeepEquals('there test', textQuery);
+      assertEquals(
+          0, testBrowserProxy.handler.getCallCount('issueLensRegionRequest'));
+
+      selectionOverlayElement.handleTranslateForTesting();
+      const translateQuery = await testBrowserProxy.handler.whenCalled(
+          'issueTranslateSelectionRequest');
+      assertDeepEquals('there test', translateQuery);
+
+      // Verify context menu hides when an option is selected.
+      assertFalse(
+          selectionOverlayElement.getShowSelectedTextContextMenuForTesting());
+    });
+
     test('verify that select text in detected text options works', async () => {
       await simulateDrag(selectionOverlayElement, {x: 0, y: 0}, {x: 80, y: 40});
       selectionOverlayElement.handleSelectTextForTesting();
@@ -851,6 +945,49 @@ suite('SelectionOverlay', function() {
           postSelectionRenderer.$.postSelection.getBoundingClientRect();
       assertNotEquals(postSelectionBounds.x, newPostSelectionBounds.x);
       assertNotEquals(postSelectionBounds.y, newPostSelectionBounds.y);
+    });
+
+    test('OnCopyCommandCopiesWordsAfterSelection', async () => {
+      // Drag that starts on a word but finishes on empty space.
+      const wordEl = getWordNodes()[0]!;
+      await simulateDrag(
+          selectionOverlayElement, {
+            x: wordEl.getBoundingClientRect().left + 15,
+            y: wordEl.getBoundingClientRect().top + 5,
+          },
+          {x: 0, y: 0});
+
+      const textQuery = await testBrowserProxy.handler.whenCalled(
+          'issueTextSelectionRequest');
+      assertDeepEquals('hello', textQuery);
+      assertEquals(
+          0, testBrowserProxy.handler.getCallCount('issueLensRegionRequest'));
+      assertEquals(
+          1,
+          metrics.count(
+              'Lens.Overlay.Overlay.UserAction', UserAction.kTextSelection));
+      assertEquals(
+          1,
+          metrics.count(
+              'Lens.Overlay.Overlay.ByInvocationSource.AppMenu.UserAction',
+              UserAction.kTextSelection));
+
+      // Copy command should copy text.
+      callbackRouterRemote.onCopyCommand();
+
+      const copiedText = await testBrowserProxy.handler.whenCalled('copyText');
+      assertFalse(
+          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
+      assertEquals('hello', copiedText);
+      assertEquals(
+          1,
+          metrics.count(
+              'Lens.Overlay.Overlay.UserAction', UserAction.kCopyText));
+      assertEquals(
+          1,
+          metrics.count(
+              'Lens.Overlay.Overlay.ByInvocationSource.AppMenu.UserAction',
+              UserAction.kCopyText));
     });
   });
 
@@ -1504,6 +1641,9 @@ suite('SelectionOverlay', function() {
   suite('SimplifiedSelection', function() {
     setup(async function() {
       loadTimeData.overrideValues({
+        'textReceivedTimeout': 0,
+        'copyTextTimeout': 0,
+        'translateTextTimeout': 0,
         'simplifiedSelectionEnabled': true,
       });
 
@@ -1516,6 +1656,23 @@ suite('SelectionOverlay', function() {
       selectionOverlayElement.$.selectionOverlay.style.height = '100%';
       await waitAfterNextRender(selectionOverlayElement);
       return waitAfterNextRender(selectionOverlayElement);
+    });
+
+    test('UpdateRegionContextMenuEventDoesNotShow', async () => {
+      // Default state of selection overlay.
+      assertFalse(
+          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
+      assertEquals(
+          undefined,
+          selectionOverlayElement
+              .getShowDetectedTextContextMenuOptionsForTesting());
+
+      await dispatchUpdateSelectedRegionContextMenuEvent();
+
+      assertFalse(
+          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
+      assertTrue(selectionOverlayElement
+                     .getShowDetectedTextContextMenuOptionsForTesting());
     });
 
     test('SelectedRegionContextMenuAppearsWithNoText', async () => {
@@ -1601,10 +1758,10 @@ suite('SelectionOverlay', function() {
     });
 
     test('SelectedRegionContextMenuAppearsWithText', async () => {
-      await simulateDrag(
-          selectionOverlayElement, {x: 50, y: 25}, {x: 300, y: 200});
+      await addGenericWordsToPage(
+          callbackRouterRemote, selectionOverlayElement);
+      await simulateDrag(selectionOverlayElement, {x: 0, y: 0}, {x: 50, y: 20});
       await waitAfterNextRender(selectionOverlayElement);
-      await addWords();
 
       assertTrue(
           selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
@@ -1661,33 +1818,65 @@ suite('SelectionOverlay', function() {
       assertEquals(4, metrics.count('Lens.Overlay.ContextMenuOption.Shown'));
     });
 
-    test('SelectedRegionContextMenuCopyDetectedText', async () => {
-      await simulateDrag(
-          selectionOverlayElement, {x: 50, y: 25}, {x: 300, y: 200});
-      await waitAfterNextRender(selectionOverlayElement);
-      await addWords();
+    test(
+        'SelectedRegionContextMenuCopyDetectedTextFromFullImageResponse',
+        async () => {
+          await addGenericWordsToPage(
+              callbackRouterRemote, selectionOverlayElement);
+          await simulateDrag(
+              selectionOverlayElement, {x: 5, y: 15}, {x: 75, y: 25});
+          await waitAfterNextRender(selectionOverlayElement);
 
-      assertTrue(
-          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
-      assertTrue(selectionOverlayElement
-                     .getShowDetectedTextContextMenuOptionsForTesting());
+          assertTrue(selectionOverlayElement
+                         .getShowSelectedRegionContextMenuForTesting());
+          assertTrue(selectionOverlayElement
+                         .getShowDetectedTextContextMenuOptionsForTesting());
 
-      selectionOverlayElement.handleCopyDetectedTextForTesting();
-      const textQuery = await testBrowserProxy.handler.whenCalled('copyText');
-      // Copied text should include newlines.
-      assertDeepEquals('hello there\r\ntest', textQuery);
+          selectionOverlayElement.handleCopyDetectedTextForTesting();
+          const textQuery =
+              await testBrowserProxy.handler.whenCalled('copyText');
+          // Copied text should include newlines.
+          assertDeepEquals('hello there\r\ntest', textQuery);
 
-      // Verify context menu hides when an option is selected.
-      await waitAfterNextRender(selectionOverlayElement);
-      assertFalse(
-          selectionOverlayElement.getShowSelectedTextContextMenuForTesting());
-    });
+          // Verify context menu hides when an option is selected.
+          await waitAfterNextRender(selectionOverlayElement);
+          assertFalse(selectionOverlayElement
+                          .getShowSelectedTextContextMenuForTesting());
+        });
+
+    test(
+        'SelectedRegionContextMenuCopyDetectedTextFromRegionResponse',
+        async () => {
+          await addEmptyTextToPage(callbackRouterRemote);
+          await simulateDrag(
+              selectionOverlayElement, {x: 5, y: 15}, {x: 75, y: 25});
+          await addGenericWordsToPage(
+              callbackRouterRemote, selectionOverlayElement);
+          await waitAfterNextRender(selectionOverlayElement);
+
+          assertTrue(selectionOverlayElement
+                         .getShowSelectedRegionContextMenuForTesting());
+          assertTrue(selectionOverlayElement
+                         .getShowDetectedTextContextMenuOptionsForTesting());
+
+          selectionOverlayElement.handleCopyDetectedTextForTesting();
+          const textQuery =
+              await testBrowserProxy.handler.whenCalled('copyText');
+          // Copied text should include newlines.
+          assertDeepEquals('hello there\r\ntest', textQuery);
+
+          // Verify context menu hides when an option is selected.
+          await waitAfterNextRender(selectionOverlayElement);
+          assertFalse(selectionOverlayElement
+                          .getShowSelectedTextContextMenuForTesting());
+        });
 
     test('NewSelectionClearsDetectedTextOptions', async () => {
+      await addGenericWordsToPage(
+          callbackRouterRemote, selectionOverlayElement);
       await simulateDrag(
-          selectionOverlayElement, {x: 50, y: 25}, {x: 300, y: 200});
+          selectionOverlayElement, {x: 5, y: 15}, {x: 75, y: 25});
       await waitAfterNextRender(selectionOverlayElement);
-      await addWords();
 
       assertTrue(
           selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
@@ -1703,6 +1892,81 @@ suite('SelectionOverlay', function() {
           selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
       assertFalse(selectionOverlayElement
                       .getShowDetectedTextContextMenuOptionsForTesting());
+    });
+
+    test('OnCopyCommandCopiesImage', async () => {
+      await addEmptyTextToPage(callbackRouterRemote);
+      await simulateDrag(
+          selectionOverlayElement, {x: 5, y: 15}, {x: 75, y: 25});
+      await addGenericWordsToPage(
+          callbackRouterRemote, selectionOverlayElement);
+      await waitAfterNextRender(selectionOverlayElement);
+
+      loadTimeData.overrideValues({
+        shouldCopyAsImage: true,
+      });
+
+      callbackRouterRemote.onCopyCommand();
+      await flushTasks();
+
+      await testBrowserProxy.handler.whenCalled('copyImage');
+      assertFalse(
+          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
+
+      assertEquals(
+          1,
+          metrics.count(
+              'Lens.Overlay.Overlay.UserAction', UserAction.kCopyAsImage));
+      assertEquals(
+          1,
+          metrics.count(
+              'Lens.Overlay.Overlay.ByInvocationSource.AppMenu.UserAction',
+              UserAction.kCopyAsImage));
+    });
+
+    test('OnCopyCommandCopiesText', async () => {
+      await addEmptyTextToPage(callbackRouterRemote);
+      await simulateDrag(
+          selectionOverlayElement, {x: 5, y: 15}, {x: 75, y: 25});
+      await addGenericWordsToPage(
+          callbackRouterRemote, selectionOverlayElement);
+      await waitAfterNextRender(selectionOverlayElement);
+
+      loadTimeData.overrideValues({
+        shouldCopyAsImage: false,
+      });
+
+      callbackRouterRemote.onCopyCommand();
+      await flushTasks();
+
+      const copiedWords = await testBrowserProxy.handler.whenCalled('copyText');
+      assertFalse(
+          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
+      assertEquals('hello there\r\ntest', copiedWords);
+      assertEquals(
+          1,
+          metrics.count(
+              'Lens.Overlay.Overlay.UserAction', UserAction.kCopyText));
+      assertEquals(
+          1,
+          metrics.count(
+              'Lens.Overlay.Overlay.ByInvocationSource.AppMenu.UserAction',
+              UserAction.kCopyText));
+    });
+
+    test('TextDetectedInRegionEventFired', async () => {
+      await addGenericWordsToPage(
+          callbackRouterRemote, selectionOverlayElement);
+      const textDetectedInRegionEvent =
+          eventToPromise('text-found-in-region', document.body);
+      await simulateDrag(selectionOverlayElement, {x: 0, y: 0}, {x: 50, y: 20});
+      await textDetectedInRegionEvent;
+      await waitAfterNextRender(selectionOverlayElement);
+
+      assertTrue(
+          selectionOverlayElement.getShowSelectedRegionContextMenuForTesting());
+      assertTrue(selectionOverlayElement
+                     .getShowDetectedTextContextMenuOptionsForTesting());
     });
   });
 

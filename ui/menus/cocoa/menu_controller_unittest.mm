@@ -640,20 +640,6 @@ TEST_F(MenuControllerTest, OwningDelegate) {
   EXPECT_TRUE(did_delete);
 }
 
-// Tests to make sure that when |-initWithModel:| is called the menu is
-// constructed.
-TEST_F(MenuControllerTest, InitBuildsMenu) {
-  Delegate delegate;
-  SimpleMenuModel model(&delegate);
-  model.AddItem(1, u"one");
-  model.AddItem(2, u"two");
-  model.AddItem(3, u"three");
-
-  MenuControllerCocoa* menu = [[MenuControllerCocoa alloc] initWithModel:&model
-                                                                delegate:nil];
-  EXPECT_TRUE([menu isMenuBuiltForTesting]);
-}
-
 // Tests that Windows-style ampersand mnemonics are stripped by default, but
 // remain if the `MayHaveMnemonics` is false.
 TEST_F(MenuControllerTest, Ampersands) {

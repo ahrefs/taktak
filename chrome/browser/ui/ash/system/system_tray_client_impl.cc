@@ -24,6 +24,7 @@
 #include "base/i18n/time_formatting.h"
 #include "base/logging.h"
 #include "base/memory/raw_ptr.h"
+#include "base/memory/raw_ref.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/metrics/user_metrics.h"
@@ -284,8 +285,8 @@ class SystemTrayClientImpl::EnterpriseAccountObserver
 SystemTrayClientImpl::SystemTrayClientImpl(
     ash::system::SystemClock& system_clock,
     policy::BrowserPolicyConnectorAsh& browser_policy_connector_ash)
-    : system_clock_(&system_clock),
-      browser_policy_connector_ash_(&browser_policy_connector_ash),
+    : system_clock_(system_clock),
+      browser_policy_connector_ash_(browser_policy_connector_ash),
       system_tray_(ash::SystemTray::Get()),
       enterprise_account_observer_(
           std::make_unique<EnterpriseAccountObserver>(this)) {
@@ -868,8 +869,6 @@ void SystemTrayClientImpl::ShowRemapKeysSubpage(int device_id) {
 }
 
 void SystemTrayClientImpl::ShowYouTubeMusicPremiumPage() {
-  DCHECK(ash::features::IsFocusModeEnabled());
-  DCHECK(ash::features::IsFocusModeYTMEnabled());
   base::RecordAction(base::UserMetricsAction("ShowYouTubeMusicPremiumPage"));
 
   const GURL official_url(chrome::kYoutubeMusicPremiumURL);
@@ -902,8 +901,6 @@ void SystemTrayClientImpl::ShowYouTubeMusicPremiumPage() {
 }
 
 void SystemTrayClientImpl::ShowChromebookPerksYouTubePage() {
-  DCHECK(ash::features::IsFocusModeEnabled());
-  DCHECK(ash::features::IsFocusModeYTMEnabled());
   OpenInBrowser(GURL(chrome::kChromebookPerksYouTubePage));
 }
 
@@ -947,14 +944,6 @@ bool SystemTrayClientImpl::IsUserFeedbackEnabled() {
       ProfileManager::GetActiveUserProfile()->GetPrefs();
   DCHECK(signin_prefs);
   return signin_prefs->GetBoolean(prefs::kUserFeedbackAllowed);
-}
-
-SystemTrayClientImpl::SystemTrayClientImpl(SystemTrayClientImpl* mock_instance)
-    : system_clock_(nullptr),
-      browser_policy_connector_ash_(nullptr),
-      system_tray_(nullptr) {
-  DCHECK(!g_system_tray_client_instance);
-  g_system_tray_client_instance = mock_instance;
 }
 
 void SystemTrayClientImpl::HandleUpdateAvailable() {

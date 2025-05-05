@@ -32,8 +32,7 @@ DataSharingUIConfig::~DataSharingUIConfig() = default;
 
 bool DataSharingUIConfig::IsWebUIEnabled(
     content::BrowserContext* browser_context) {
-  return base::FeatureList::IsEnabled(
-      data_sharing::features::kDataSharingFeature);
+  return data_sharing::features::IsDataSharingFunctionalityEnabled();
 }
 
 bool DataSharingUIConfig::ShouldAutoResizeHost() {
@@ -140,6 +139,8 @@ DataSharingUI::DataSharingUI(content::WebUI* web_ui)
       {"deleteLastDialogHeader", IDS_DATA_SHARING_DELETE_LAST_DIALOG_HEADER},
       {"keepGroup", IDS_DATA_SHARING_KEEP_GROUP},
       {"deleteGroup", IDS_DATA_SHARING_DELETE_GROUP},
+      {"deleteFlowHeader", IDS_DATA_SHARING_OWNER_DELETE_DIALOG_TITLE},
+      {"delete", IDS_DATA_SHARING_OWNER_DELETE_DIALOG_CONFIRM},
 
       // dynamic messages:
       {"shareGroupShareAs", IDS_DATA_SHARING_SHARE_GROUP_SHARE_AS},
@@ -177,6 +178,8 @@ DataSharingUI::DataSharingUI(content::WebUI* web_ui)
        IDS_DATA_SHARING_OWNER_DELETE_LAST_TAB_BODY_2},
       {"memberDeleteLastTimeBody",
        IDS_DATA_SHARING_MEMBER_DELETE_LAST_TAB_BODY_SINGULAR},
+      {"deleteFlowDescriptionContent",
+       IDS_DATA_SHARING_OWNER_DELETE_DIALOG_BODY},
   };
   source->AddLocalizedStrings(kStrings);
   source->AddBoolean(
@@ -216,6 +219,24 @@ void DataSharingUI::BindInterface(
 void DataSharingUI::ApiInitComplete() {
   if (delegate_) {
     delegate_->ApiInitComplete();
+  }
+}
+
+void DataSharingUI::OnShareLinkRequested(
+    const std::string& group_id,
+    const std::string& access_token,
+    base::OnceCallback<void(const std::optional<GURL>&)> callback) {
+  if (delegate_) {
+    delegate_->OnShareLinkRequested(group_id, access_token,
+                                    std::move(callback));
+  }
+}
+
+void DataSharingUI::OnGroupAction(
+    data_sharing::mojom::GroupAction action,
+    data_sharing::mojom::GroupActionProgress progress) {
+  if (delegate_) {
+    delegate_->OnGroupAction(action, progress);
   }
 }
 

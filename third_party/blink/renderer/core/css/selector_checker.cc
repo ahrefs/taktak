@@ -27,11 +27,6 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/351564777): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "third_party/blink/renderer/core/css/selector_checker.h"
 
 #include "base/auto_reset.h"
@@ -51,6 +46,7 @@
 #include "third_party/blink/renderer/core/dom/nth_index_cache.h"
 #include "third_party/blink/renderer/core/dom/popover_data.h"
 #include "third_party/blink/renderer/core/dom/scroll_button_pseudo_element.h"
+#include "third_party/blink/renderer/core/dom/scroll_marker_group_data.h"
 #include "third_party/blink/renderer/core/dom/scroll_marker_pseudo_element.h"
 #include "third_party/blink/renderer/core/dom/shadow_root.h"
 #include "third_party/blink/renderer/core/dom/slot_assignment_engine.h"
@@ -67,6 +63,7 @@
 #include "third_party/blink/renderer/core/html/forms/html_input_element.h"
 #include "third_party/blink/renderer/core/html/forms/html_option_element.h"
 #include "third_party/blink/renderer/core/html/forms/html_select_element.h"
+#include "third_party/blink/renderer/core/html/html_anchor_element.h"
 #include "third_party/blink/renderer/core/html/html_details_element.h"
 #include "third_party/blink/renderer/core/html/html_dialog_element.h"
 #include "third_party/blink/renderer/core/html/html_document.h"
@@ -1457,7 +1454,8 @@ bool SelectorChecker::CheckPseudoHas(const SelectorCheckingContext& context,
   bool match_in_shadow_tree = context.selector->HasArgumentMatchInShadowTree();
 
   if (match_in_shadow_tree && !has_anchor_element->GetShadowRoot()) {
-    NOTREACHED();
+    // Able to reach here when :host is after :has(). (e.g. ':has(div):host')
+    return false;
   }
 
   DCHECK(context.selector->SelectorList());
@@ -1723,8 +1721,9 @@ bool SelectorChecker::CheckPseudoClass(const SelectorCheckingContext& context,
           return false;
         }
       }
-      return selector.MatchNth(NthIndexCache::NthChildIndex(
-          element, selector.SelectorList(), this, &context));
+      return selector.MatchNth(
+          NthIndexCache::NthChildIndex(element, selector.SelectorList(), this,
+                                       &context, NthIndexData::kLightTree));
     case CSSSelector::kPseudoNthOfType:
       if (mode_ == kResolvingStyle) {
         if (ContainerNode* parent = element.ParentElementOrDocumentFragment()) {
@@ -1749,7 +1748,8 @@ bool SelectorChecker::CheckPseudoClass(const SelectorCheckingContext& context,
         }
       }
       return selector.MatchNth(NthIndexCache::NthLastChildIndex(
-          element, selector.SelectorList(), this, &context));
+          element, selector.SelectorList(), this, &context,
+          NthIndexData::kLightTree));
     }
     case CSSSelector::kPseudoNthLastOfType: {
       ContainerNode* parent = element.ParentElementOrDocumentFragment();
@@ -2077,6 +2077,12 @@ bool SelectorChecker::CheckPseudoClass(const SelectorCheckingContext& context,
     case CSSSelector::kPseudoTargetCurrent: {
       if (element.IsScrollMarkerPseudoElement()) {
         return To<ScrollMarkerPseudoElement>(element).IsSelected();
+      }
+      if (auto* anchor_element = DynamicTo<HTMLAnchorElement>(element)) {
+        if (ScrollMarkerGroupData* data =
+                anchor_element->GetScrollMarkerGroupContainerData()) {
+          return data->Selected() == element;
+        }
       }
       break;
     }
@@ -2593,11 +2599,11 @@ bool SelectorChecker::CheckPseudoElement(const SelectorCheckingContext& context,
       // <pt-name-selector><pt-class-selector>, as in [name, class, class, ...]
       // so we check that all of its items excluding the first one are
       // contained in the pseudo element's classes (pseudo_ident_list_).
-      return std::ranges::all_of(
-          selector.IdentList().begin() + 1, selector.IdentList().end(),
-          [&](const AtomicString& class_from_selector) {
-            return base::Contains(pseudo_ident_list_, class_from_selector);
-          });
+      return std::ranges::all_of(base::span(selector.IdentList()).subspan(1ul),
+                                 [&](const AtomicString& class_from_selector) {
+                                   return base::Contains(pseudo_ident_list_,
+                                                         class_from_selector);
+                                 });
     }
     case CSSSelector::kPseudoScrollbarButton:
     case CSSSelector::kPseudoScrollbarCorner:

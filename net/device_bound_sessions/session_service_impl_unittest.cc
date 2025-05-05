@@ -5,8 +5,10 @@
 #include "net/device_bound_sessions/session_service_impl.h"
 
 #include "base/test/gmock_callback_support.h"
+#include "base/test/scoped_feature_list.h"
 #include "base/test/test_future.h"
-#include "crypto/scoped_mock_unexportable_key_provider.h"
+#include "crypto/scoped_fake_unexportable_key_provider.h"
+#include "net/base/features.h"
 #include "net/device_bound_sessions/mock_session_store.h"
 #include "net/device_bound_sessions/proto/storage.pb.h"
 #include "net/device_bound_sessions/session_store.h"
@@ -40,14 +42,14 @@ const GURL kTestUrl(kUrlString);
 constexpr char kRefreshUrlString[] = "https://example.com/refresh";
 const GURL kTestRefreshUrl(kRefreshUrlString);
 const std::string kSessionId = "SessionId";
-const std::string kOrigin = "example.com";
+const std::string kOrigin = "https://example.com";
 
 constexpr char kUrlString2[] = "https://example2.com";
 const GURL kTestUrl2(kUrlString2);
 constexpr char kRefreshUrlString2[] = "https://example2.com/refresh";
 const GURL kTestRefreshUrl2(kRefreshUrlString);
 const std::string kSessionId2 = "SessionId2";
-const std::string kOrigin2 = "example2.com";
+const std::string kOrigin2 = "https://example2.com";
 
 const std::string kChallenge = "challenge";
 
@@ -113,13 +115,17 @@ class SessionServiceImplTest : public ::testing::Test,
  public:
   SessionServiceImplTest()
       : WithTaskEnvironment(base::test::TaskEnvironment::TimeSource::MOCK_TIME),
-        context_(CreateTestURLRequestContextBuilder()->Build()),
-        service_(*UnexportableKeyServiceFactory::GetInstance()->GetShared(),
-                 context_.get(),
-                 /*store=*/nullptr) {}
+        context_(CreateTestURLRequestContextBuilder()->Build()) {}
+
+  void SetUp() override {
+    service_ = std::make_unique<SessionServiceImpl>(
+        *UnexportableKeyServiceFactory::GetInstance()->GetShared(),
+        context_.get(),
+        /*store=*/nullptr);
+  }
 
   URLRequestContext* context() { return context_.get(); }
-  SessionServiceImpl& service() { return service_; }
+  SessionServiceImpl& service() { return *service_; }
 
   // Take list of <session_id, site_url> to add sessions for testing.
   void AddSessionsForTesting(
@@ -132,7 +138,7 @@ class SessionServiceImplTest : public ::testing::Test,
           GURL(url_str),
           {crypto::SignatureVerifier::SignatureAlgorithm::ECDSA_SHA256},
           "challenge", /*authorization=*/std::nullopt);
-      service_.RegisterBoundSession(
+      service_->RegisterBoundSession(
           base::DoNothing(), std::move(fetch_param),
           IsolationInfo::CreateTransient(/*nonce=*/std::nullopt),
           NetLogWithSource(), /*original_request_initiator=*/std::nullopt);
@@ -140,9 +146,20 @@ class SessionServiceImplTest : public ::testing::Test,
   }
 
  private:
-  crypto::ScopedMockUnexportableKeyProvider scoped_mock_key_provider_;
+  crypto::ScopedFakeUnexportableKeyProvider scoped_fake_key_provider_;
   std::unique_ptr<URLRequestContext> context_;
-  SessionServiceImpl service_;
+  std::unique_ptr<SessionServiceImpl> service_;
+};
+
+class SessionServiceImplNoRefreshQuotaTest : public SessionServiceImplTest {
+ public:
+  SessionServiceImplNoRefreshQuotaTest() {
+    scoped_feature_list_.InitAndDisableFeature(
+        net::features::kDeviceBoundSessionsRefreshQuota);
+  }
+
+ private:
+  base::test::ScopedFeatureList scoped_feature_list_;
 };
 
 TEST_F(SessionServiceImplTest, RegisterSuccess) {
@@ -284,6 +301,7 @@ TEST_F(SessionServiceImplTest, AccessObserverCalledOnRegistration) {
   EXPECT_EQ(access.access_type, SessionAccess::AccessType::kCreation);
   EXPECT_EQ(access.session_key.site, SchemefulSite(kTestUrl));
   EXPECT_EQ(access.session_key.id.value(), kSessionId);
+  EXPECT_TRUE(access.cookies.empty());
 }
 
 TEST_F(SessionServiceImplTest, AccessObserverCalledOnDeferral) {
@@ -306,6 +324,7 @@ TEST_F(SessionServiceImplTest, AccessObserverCalledOnDeferral) {
   EXPECT_EQ(access.access_type, SessionAccess::AccessType::kUpdate);
   EXPECT_EQ(access.session_key.site, SchemefulSite(kTestUrl));
   EXPECT_EQ(access.session_key.id.value(), kSessionId);
+  EXPECT_TRUE(access.cookies.empty());
 }
 
 TEST_F(SessionServiceImplTest, AccessObserverCalledOnSetChallenge) {
@@ -327,6 +346,7 @@ TEST_F(SessionServiceImplTest, AccessObserverCalledOnSetChallenge) {
   EXPECT_EQ(access.access_type, SessionAccess::AccessType::kUpdate);
   EXPECT_EQ(access.session_key.site, SchemefulSite(kTestUrl));
   EXPECT_EQ(access.session_key.id.value(), kSessionId);
+  EXPECT_TRUE(access.cookies.empty());
 }
 
 TEST_F(SessionServiceImplTest, GetAllSessions) {
@@ -355,6 +375,7 @@ TEST_F(SessionServiceImplTest, DeleteSession) {
   EXPECT_EQ(access.access_type, SessionAccess::AccessType::kTermination);
   EXPECT_EQ(access.session_key.site, site);
   EXPECT_EQ(access.session_key.id, session_id);
+  EXPECT_EQ(access.cookies, std::vector<std::string>{"test_cookie"});
 }
 
 TEST_F(SessionServiceImplTest, DeleteAllSessionsByCreationTime) {
@@ -377,7 +398,7 @@ TEST_F(SessionServiceImplTest, DeleteAllSessionsByCreationTime) {
   base::RunLoop run_loop;
   service().DeleteAllSessions(base::Time::Now() - base::Days(5),
                               base::Time::Now() - base::Days(3),
-                              /*site_matcher=*/
+                              /*origin_and_site_matcher=*/
                               base::NullCallback(), run_loop.QuitClosure());
   run_loop.Run();
 
@@ -390,25 +411,57 @@ TEST_F(SessionServiceImplTest, DeleteAllSessionsBySite) {
   GURL url_a("https://a_example.com");
   GURL url_b("https://b_example.com");
 
-  AddSessionsForTesting({{kSessionId, url_a.spec(), "a_example.com"},
-                         {kSessionId, url_b.spec(), "b_example.com"}});
+  AddSessionsForTesting({{kSessionId, url_a.spec(), "https://a_example.com"},
+                         {kSessionId, url_b.spec(), "https://b_example.com"}});
 
   SchemefulSite site_a(url_a);
   SchemefulSite site_b(url_b);
 
-  // `site_matcher` only matches `site_a`
-  base::RepeatingCallback<bool(const net::SchemefulSite&)> site_matcher =
-      base::BindRepeating(std::equal_to<net::SchemefulSite>(), site_a);
+  // `origin_and_site_matcher` only matches `site_a`
+  base::RepeatingCallback<bool(const url::Origin&, const net::SchemefulSite&)>
+      origin_and_site_matcher = base::BindRepeating(
+          [](const net::SchemefulSite& site_a, const url::Origin& origin,
+             const net::SchemefulSite& site) { return site == site_a; },
+          site_a);
 
   base::RunLoop run_loop;
   service().DeleteAllSessions(
       /*created_after_time=*/std::nullopt,
-      /*created_before_time=*/std::nullopt, site_matcher,
+      /*created_before_time=*/std::nullopt, origin_and_site_matcher,
       run_loop.QuitClosure());
   run_loop.Run();
 
   EXPECT_FALSE(service().GetSession(site_a, Session::Id(kSessionId)));
   EXPECT_TRUE(service().GetSession(site_b, Session::Id(kSessionId)));
+}
+
+TEST_F(SessionServiceImplTest, DeleteAllSessionsByOrigin) {
+  GURL url_a("https://example.com:1234");
+  GURL url_b("https://example.com:5678");
+
+  AddSessionsForTesting(
+      {{kSessionId, url_a.spec(), "https://example.com:1234"},
+       {kSessionId2, url_b.spec(), "https://example.com:5678"}});
+
+  // Both sessions have the same site, but different origins.
+  SchemefulSite site(url_a);
+
+  // `origin_and_site_matcher` only matches the first origin.
+  base::RepeatingCallback<bool(const url::Origin&, const net::SchemefulSite&)>
+      origin_and_site_matcher = base::BindRepeating(
+          [](const url::Origin& origin_a, const url::Origin& origin,
+             const net::SchemefulSite& site) { return origin == origin_a; },
+          url::Origin::Create(url_a));
+
+  base::RunLoop run_loop;
+  service().DeleteAllSessions(
+      /*created_after_time=*/std::nullopt,
+      /*created_before_time=*/std::nullopt, origin_and_site_matcher,
+      run_loop.QuitClosure());
+  run_loop.Run();
+
+  EXPECT_FALSE(service().GetSession(site, Session::Id(kSessionId)));
+  EXPECT_TRUE(service().GetSession(site, Session::Id(kSessionId2)));
 }
 
 TEST_F(SessionServiceImplTest, TestDeferWithRequestRestart) {
@@ -503,7 +556,8 @@ TEST_F(SessionServiceImplTest, TestDeferWithRequestContinue_FatalError) {
       ElementsAre(SessionAccess{SessionAccess::AccessType::kUpdate,
                                 SessionKey(site_1, Session::Id(kSessionId))},
                   SessionAccess{SessionAccess::AccessType::kTermination,
-                                SessionKey(site_1, Session::Id(kSessionId))}));
+                                SessionKey(site_1, Session::Id(kSessionId)),
+                                std::vector<std::string>{"test_cookie"}}));
 
   // Check the restart callback is called for successful fetcher.
   EXPECT_EQ(future_2.Take(), TestDeferCompletion::CallbackType::kContinue);
@@ -644,7 +698,8 @@ TEST_F(SessionServiceImplTest, RefreshWithNewSessionId) {
       ElementsAre(SessionAccess{SessionAccess::AccessType::kUpdate,
                                 SessionKey(site, Session::Id(kSessionId))},
                   SessionAccess{SessionAccess::AccessType::kTermination,
-                                SessionKey(site, Session::Id(kSessionId))},
+                                SessionKey(site, Session::Id(kSessionId)),
+                                std::vector<std::string>{"test_cookie"}},
                   SessionAccess{SessionAccess::AccessType::kCreation,
                                 SessionKey(site, Session::Id(kSessionId2))}));
 
@@ -704,7 +759,8 @@ TEST_F(SessionServiceImplTest, RefreshWithInvalidParams) {
       ElementsAre(SessionAccess{SessionAccess::AccessType::kUpdate,
                                 SessionKey(site, Session::Id(kSessionId))},
                   SessionAccess{SessionAccess::AccessType::kTermination,
-                                SessionKey(site, Session::Id(kSessionId))}));
+                                SessionKey(site, Session::Id(kSessionId)),
+                                std::vector<std::string>{"test_cookie"}}));
   // Check the restart callback is called due to unsuccessful refresh.
   EXPECT_EQ(future.Take(), TestDeferCompletion::CallbackType::kContinue);
   ASSERT_FALSE(service().GetSession(site, Session::Id(kSessionId)));
@@ -835,6 +891,28 @@ TEST_F(SessionServiceImplTest, SessionRefreshQuota) {
   }
 }
 
+TEST_F(SessionServiceImplNoRefreshQuotaTest, SessionRefreshQuotaDisabled) {
+  AddSessionsForTesting({{kSessionId, kRefreshUrlString, kOrigin}});
+  auto scoped_test_fetcher = ScopedTestRegistrationFetcher::CreateWithSuccess(
+      kSessionId, kRefreshUrlString, kOrigin);
+
+  net::TestDelegate delegate;
+  std::unique_ptr<URLRequest> request =
+      context()->CreateRequest(kTestUrl, IDLE, &delegate, kDummyAnnotation);
+  request->set_site_for_cookies(SiteForCookies::FromUrl(kTestUrl));
+
+  // The third refresh is not throttled because the refresh quota is disabled.
+  for (size_t i = 0; i < 3; i++) {
+    base::test::TestFuture<TestDeferCompletion::CallbackType> future;
+    TestDeferCompletion defer_completion(
+        future.GetCallback<TestDeferCompletion::CallbackType>());
+    service().DeferRequestForRefresh(
+        request.get(), SessionService::DeferralParams(Session::Id(kSessionId)),
+        defer_completion.GetRestartCb(), defer_completion.GetContinueCb());
+    EXPECT_EQ(future.Take(), TestDeferCompletion::CallbackType::kRestart);
+  }
+}
+
 TEST_F(SessionServiceImplTest, SessionBackoff) {
   AddSessionsForTesting({{kSessionId, kRefreshUrlString, kOrigin}});
   auto scoped_test_fetcher = ScopedTestRegistrationFetcher::CreateWithFailure(
@@ -895,7 +973,7 @@ class SessionServiceImplWithStoreTest : public TestWithTaskEnvironment {
   URLRequestContext* context() { return context_.get(); }
 
  private:
-  crypto::ScopedMockUnexportableKeyProvider scoped_mock_key_provider_;
+  crypto::ScopedFakeUnexportableKeyProvider scoped_fake_key_provider_;
   std::unique_ptr<URLRequestContext> context_;
   std::unique_ptr<StrictMock<SessionStoreMock>> store_;
   SessionServiceImpl service_;
@@ -946,7 +1024,7 @@ TEST_F(SessionServiceImplWithStoreTest, GetAllSessionsWaitsForSessionsToLoad) {
       future.GetCallback<const std::vector<SessionKey>&>());
 
   SessionParams::Scope scope;
-  scope.origin = "example.com";
+  scope.origin = "https://example.com";
   auto session_or_error = Session::CreateIfValid(SessionParams(
       "session_id", kTestUrl, "https://example.com/refresh", std::move(scope),
       /*creds=*/{}, unexportable_keys::UnexportableKeyId()));

@@ -47,7 +47,6 @@ import org.chromium.components.tab_group_sync.TabGroupSyncService;
 import org.chromium.components.tab_group_sync.TriggerSource;
 import org.chromium.url.GURL;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Unit tests for the {@link TabGroupSyncRemoteObserver}. */
@@ -110,9 +109,9 @@ public class TabGroupSyncRemoteObserverUnitTest {
 
     private void addOneTab() {
         mTabModel.addTab(TAB_ID_1);
-        List<Tab> tabs = new ArrayList<>();
-        tabs.add(mTabModel.getTabAt(0));
-        when(mTabGroupModelFilter.getRelatedTabListForRootId(eq(ROOT_ID_1))).thenReturn(tabs);
+        Tab tab = mTabModel.getTabAt(0);
+        tab.setTabGroupId(TOKEN_1);
+        when(mTabGroupModelFilter.getTabsInGroup(eq(TOKEN_1))).thenReturn(List.of(tab));
     }
 
     @Test
@@ -147,6 +146,34 @@ public class TabGroupSyncRemoteObserverUnitTest {
         SavedTabGroup savedTabGroup = TabGroupSyncTestUtils.createSavedTabGroup();
         mRemoteObserver.onTabGroupAdded(savedTabGroup, TriggerSource.REMOTE);
         verify(mLocalMutationHelper, never()).createNewTabGroup(any(), anyInt());
+    }
+
+    @Test
+    public void testTabGroupAdded_SkipsSharedTabGroupIfAlreadyOpen() {
+        SavedTabGroup savedTabGroup = TabGroupSyncTestUtils.createSavedTabGroup();
+        savedTabGroup.localId = LOCAL_TAB_GROUP_ID_1;
+        savedTabGroup.collaborationId = "Collaboration1";
+        mRemoteObserver.onTabGroupAdded(savedTabGroup, TriggerSource.REMOTE);
+        verify(mLocalMutationHelper, never()).createNewTabGroup(any(), anyInt());
+    }
+
+    @Test
+    public void testTabGroupAdded_BypassesPrefForSharedTabGroup() {
+        when(mPrefService.getBoolean(eq(Pref.AUTO_OPEN_SYNCED_TAB_GROUPS))).thenReturn(false);
+
+        SavedTabGroup savedTabGroup = TabGroupSyncTestUtils.createSavedTabGroup();
+        savedTabGroup.collaborationId = "Collaboration1";
+        mRemoteObserver.onTabGroupAdded(savedTabGroup, TriggerSource.REMOTE);
+        verify(mLocalMutationHelper).createNewTabGroup(any(), anyInt());
+    }
+
+    @Test
+    public void testTabGroupAdded_CreatesSharedTabGroupIfNotAlreadyOpen() {
+        SavedTabGroup savedTabGroup = TabGroupSyncTestUtils.createSavedTabGroup();
+        savedTabGroup.collaborationId = "Collaboration1";
+        mRemoteObserver.onTabGroupAdded(savedTabGroup, TriggerSource.REMOTE);
+        verify(mLocalMutationHelper)
+                .createNewTabGroup(any(), eq(OpeningSource.AUTO_OPENED_FROM_SYNC));
     }
 
     @Test

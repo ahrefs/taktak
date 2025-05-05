@@ -75,7 +75,7 @@
 <translation id="1342835525016946179">článok</translation>
 <translation id="1346059596910821859">Tip</translation>
 <translation id="1354356357730355833">kopírovať</translation>
-<translation id="1360699455582016846">Kliknite na položku pod navigačným klávesom <ph name="ROUTING_KEY_NUMBER" /></translation>
+<translation id="1360699455582016846">Kliknite na položku pod smerovacím klávesom <ph name="ROUTING_KEY_NUMBER" /></translation>
 <translation id="1365650529628379165">Zdvihnite obočie</translation>
 <translation id="1376703628032300005">prejsť na ďalší znak</translation>
 <translation id="1377925789329510816">Toto je posledný nadpis. Stlačením kombinácie klávesov Hľadať+H prejdete na prvý nadpis. Stlačením kombinácie klávesov Hľadať+Shift+H prejdete na druhý nadpis na tejto stránke.</translation>
@@ -295,6 +295,7 @@
 <translation id="2867808975387772810">Bibliografia</translation>
 <translation id="2873259058405069099">Prejsť na začiatok tabuľky</translation>
 <translation id="287383510823843610">Tmavooranžová</translation>
+<translation id="2876760662374103627">Ovládanie tvárou je aktívne</translation>
 <translation id="2879867157561757640">Potiahnite troma prstami nadol</translation>
 <translation id="288178314850623291">Ak chcete prejsť na konkrétne typy prvkov, použite príkazy na preskočenie. Ak chcete prechádzať dopredu medzi nadpismi, stlačte kombináciu klávesov Hľadať + H. Ak chcete prejsť dozadu, stlačte kombináciu klávesov Hľadať + Shift + H.</translation>
 <translation id="2885764457467528513">{COUNT,plural, =1{minúta}few{minúty}many{minúty}other{minút}}</translation>

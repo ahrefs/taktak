@@ -27,8 +27,9 @@ import {CursorType} from './selection_utils.js';
 import type {GestureEvent} from './selection_utils.js';
 import type {BackgroundImageData, Line, Paragraph, Text, TranslatedLine, TranslatedParagraph, Word} from './text.mojom-webui.js';
 import {Alignment, WritingDirection} from './text.mojom-webui.js';
+import type {HighlightedLine} from './text_highlights.js';
 import {getTemplate} from './text_layer.html.js';
-import type {TextLayerBase} from './text_layer_base.js';
+import type {TextCopyCallback, TextLayerBase} from './text_layer_base.js';
 import {getTextSeparator, isWordRenderable, translateWords} from './text_rendering.js';
 import type {TranslateState} from './translate_button.js';
 import {toPercent} from './values_converter.js';
@@ -87,14 +88,6 @@ export interface TextLayerElement {
     translateContainer: DomRepeat,
     wordsContainer: DomRepeat,
   };
-}
-
-interface HighlightedLine {
-  height: number;
-  left: number;
-  top: number;
-  width: number;
-  rotation: number;
 }
 
 interface TranslatedLineData {
@@ -188,6 +181,7 @@ export class TextLayerElement extends PolymerElement implements TextLayerBase {
   // The index of the word in renderedWords at the end of the current selection.
   // -1 if no current selection.
   private selectionEndIndex: number;
+  private debugMode: boolean;
   // Whether the user is currently selecting text.
   private isSelectingText: boolean;
   // The bounds of the parent element. This is updated by the parent to avoid
@@ -1321,6 +1315,11 @@ export class TextLayerElement extends PolymerElement implements TextLayerBase {
       return 'ltr';
     }
     return isRtlLanguage(language) ? 'rtl' : 'ltr';
+  }
+
+  onCopyDetectedText(
+      _startIndex: number, _endIndex: number, _callbackFn: TextCopyCallback) {
+    // This layer does not support copying detected text. Only selected text.
   }
 
   getElementForTesting(): Element {

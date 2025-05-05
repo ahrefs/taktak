@@ -4,6 +4,7 @@
 
 package org.chromium.chrome.browser.supervised_user.website_approval;
 
+import org.chromium.build.annotations.NullMarked;
 import org.chromium.ui.modelutil.PropertyKey;
 import org.chromium.ui.modelutil.PropertyModel;
 
@@ -11,10 +12,11 @@ import org.chromium.ui.modelutil.PropertyModel;
  * Provides functions that map {@link WebsiteApprovalProperties} changes in a {@link PropertyModel}
  * to the suitable method in {@link WebsiteApprovalSheetContent}.
  */
+@NullMarked
 class WebsiteApprovalViewBinder {
     /**
-     * Called whenever a property in the given model changes. It updates the given view
-     * accordingly.
+     * Called whenever a property in the given model changes. It updates the given view accordingly.
+     *
      * @param model The observed {@link PropertyModel}. Its data need to be reflected in the view.
      * @param view The {@link WebsiteApprovalSheetContent} to update.
      * @param propertyKey The {@link PropertyKey} which changed.

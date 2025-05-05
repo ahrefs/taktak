@@ -8,26 +8,32 @@
 package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
 
 import com.google.protobuf.Descriptors.EnumDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.OneofDescriptor;
+
 import dynamicmessagetest.DynamicMessageTestProto.EmptyMessage;
 import dynamicmessagetest.DynamicMessageTestProto.MessageWithMapFields;
-import protobuf_unittest.UnittestMset.TestMessageSetExtension2;
-import protobuf_unittest.UnittestProto;
-import protobuf_unittest.UnittestProto.TestAllExtensions;
-import protobuf_unittest.UnittestProto.TestAllTypes;
-import protobuf_unittest.UnittestProto.TestAllTypes.NestedMessage;
-import protobuf_unittest.UnittestProto.TestEmptyMessage;
-import protobuf_unittest.UnittestProto.TestPackedTypes;
-import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
-import java.util.ArrayList;
+
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestMset.TestMessageSetExtension2;
+import proto2_unittest.UnittestProto;
+import proto2_unittest.UnittestProto.TestAllExtensions;
+import proto2_unittest.UnittestProto.TestAllTypes;
+import proto2_unittest.UnittestProto.TestAllTypes.NestedMessage;
+import proto2_unittest.UnittestProto.TestEmptyMessage;
+import proto2_unittest.UnittestProto.TestPackedTypes;
+
+import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
+
+import java.util.ArrayList;
 
 /**
  * Unit test for {@link DynamicMessage}. See also {@link MessageTest}, which tests some {@link

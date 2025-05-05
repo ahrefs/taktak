@@ -52,7 +52,9 @@ ChromeOSSystemExtensionInfoMap ConstructMap() {
       {/*extension_id=*/"gogonhoemckpdpadfnjnpgbjpbjnodgc",
        {
            /*manufacturers=*/{"HP", "ASUS", "Acer", "Lenovo"},
-           /*pwa_origin=*/"*://googlechromelabs.github.io/*",
+           /*pwa_origin=*/
+           "*://googlechromelabs.github.io/cros-sample-telemetry-extension/"
+           "test-page/*",
            /*iwa_id=*/std::nullopt,
        }},
       {/*extension_id=*/"alnedpmllcfpgldkagbfbjkloonjlfjb",
@@ -73,7 +75,7 @@ ChromeOSSystemExtensionInfoMap ConstructMap() {
            /*pwa_origin=*/"https://acerpartners.com/*",
            /*iwa_id=*/std::nullopt,
        }},
-      {/*extension_id=*/"abpkjagfgndmbkendplbabnefkjkgdcf",
+      {/*extension_id=*/"mconamggkmbalafmibfjlcmimnlbgmlb",
        {
            /*manufacturers=*/{"Lenovo"},
            /*pwa_origin=*/"https://chromebookdiags.lenovo.com/*",
@@ -86,7 +88,9 @@ ChromeOSSystemExtensionInfoMap ConstructMap() {
         kChromeOSSystemExtensionDevExtensionId,
         ChromeOSSystemExtensionInfo{
             /*manufacturers=*/{"Google", "HP", "ASUS", "Acer", "Lenovo"},
-            /*pwa_origin=*/"*://googlechromelabs.github.io/*",
+            /*pwa_origin=*/
+            "*://googlechromelabs.github.io/cros-sample-telemetry-extension/"
+            "test-page/*",
             /*iwa_id=*/
             web_package::SignedWebBundleId::Create(
                 "pt2jysa7yu326m2cbu5mce4rrajvguagronrsqwn5dhbaris6eaaaaic")

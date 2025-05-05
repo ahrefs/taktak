@@ -7,15 +7,18 @@ package org.chromium.chrome.browser.tab.state;
 import org.chromium.base.Callback;
 import org.chromium.base.task.PostTask;
 import org.chromium.base.task.TaskTraits;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- * Mock implementation of {@link PersistedTabDataStorage} for tests. Specifically
- * this implementation mocks a non-null Bytebuffer with limit 0 simulating what
- * we saw in crbug.com/1287632.
+ * Mock implementation of {@link PersistedTabDataStorage} for tests. Specifically this
+ * implementation mocks a non-null Bytebuffer with limit 0 simulating what we saw in
+ * crbug.com/1287632.
  */
+@NullMarked
 public class EmptyByteBufferPersistedTabDataStorage implements PersistedTabDataStorage {
     // Unused
     @Override
@@ -33,7 +36,7 @@ public class EmptyByteBufferPersistedTabDataStorage implements PersistedTabDataS
     }
 
     @Override
-    public void restore(int tabId, String tabDataId, Callback<ByteBuffer> callback) {
+    public void restore(int tabId, String tabDataId, Callback<@Nullable ByteBuffer> callback) {
         PostTask.runOrPostTask(
                 TaskTraits.UI_DEFAULT,
                 () -> {

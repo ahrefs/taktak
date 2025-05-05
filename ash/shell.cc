@@ -49,6 +49,7 @@
 #include "ash/booting/booting_animation_controller.h"
 #include "ash/calendar/calendar_controller.h"
 #include "ash/capture_mode/capture_mode_controller.h"
+#include "ash/capture_mode/sunfish_scanner_feature_watcher.h"
 #include "ash/child_accounts/parent_access_controller_impl.h"
 #include "ash/clipboard/clipboard_history_controller_delegate.h"
 #include "ash/clipboard/clipboard_history_controller_impl.h"
@@ -1034,6 +1035,9 @@ Shell::~Shell() {
 
   float_controller_.reset();
   pip_controller_.reset();
+  // `scanner_controller_` depends on `session_controller_` (destroyed
+  // implicitly) and `screen_pinning_controller_` (destroyed below).
+  scanner_controller_.reset();
   screen_pinning_controller_.reset();
 
   multidevice_notification_presenter_.reset();
@@ -1616,6 +1620,15 @@ void Shell::Init(
 
   multi_capture_service_ = std::make_unique<MultiCaptureService>();
 
+  // Depends on `session_controller_` (instantiated in the constructor).
+  // Must be instantiated before `capture_mode_controller_`,
+  // `scanner_controller_` and `app_list_controller_` (controllers which may use
+  // the watcher), and additionally before `Shelf` is initialised in the
+  // `WindowTreeHostManager::InitHosts` call.
+  sunfish_scanner_feature_watcher_ =
+      std::make_unique<SunfishScannerFeatureWatcher>(*session_controller_,
+                                                     *this);
+
   // |tablet_mode_controller_| |mru_window_tracker_|, and
   // |assistant_controller_| are put before |app_list_controller_| as they are
   // used in its constructor.
@@ -1666,12 +1679,10 @@ void Shell::Init(
       focus_controller_.get(), std::make_unique<WmShadowControllerDelegate>(),
       env);
 
-  if (features::IsFocusModeEnabled()) {
-    tasks_controller_ = std::make_unique<api::TasksController>(
-        shell_delegate_->CreateTasksDelegate());
-    focus_mode_controller_ = std::make_unique<FocusModeController>(
-        shell_delegate_->CreateFocusModeDelegate());
-  }
+  tasks_controller_ = std::make_unique<api::TasksController>(
+      shell_delegate_->CreateTasksDelegate());
+  focus_mode_controller_ = std::make_unique<FocusModeController>(
+      shell_delegate_->CreateFocusModeDelegate());
 
   logout_confirmation_controller_ =
       std::make_unique<LogoutConfirmationController>();
@@ -1829,9 +1840,11 @@ void Shell::Init(
   }
 
   if (features::IsScannerEnabled()) {
-    // Depends on `session_controller_` (instantiated in the constructor).
+    // Depends on `session_controller_` (instantiated in the constructor) and
+    // `screen_pinning_controller_` (initialised above).
     scanner_controller_ = std::make_unique<ScannerController>(
-        shell_delegate_->CreateScannerDelegate(), *session_controller_);
+        shell_delegate_->CreateScannerDelegate(), *session_controller_,
+        screen_pinning_controller_.get());
   }
 
   if (features::IsTilingWindowResizeEnabled()) {

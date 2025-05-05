@@ -36,15 +36,18 @@ Dikkate alınması gereken noktalar:
 <translation id="1634522710245925681">Fiyat analizlerini kolayca almak İçin varsayılan olarak Chrome'u kullanın</translation>
 <translation id="1646463005043273333">Chrome'u varsayılan tarayıcı olarak ayarlamak için Chrome ayarlarını açar.</translation>
 <translation id="1670609221633730681">Chrome ipucu: Adres çubuğunuzun konumunu seçin</translation>
+<translation id="1683863426423719967">Chrome'dan sekme hatırlatıcıları almak için iOS ayarlarınızdan bildirimleri açın.</translation>
 <translation id="1759842336958782510">Chrome</translation>
 <translation id="1784567647421309104">Şifrelerinizi Chrome'a Kaydedin</translation>
 <translation id="1790080846677398234">Girilen URL'leri Chrome'daki yer işaretlerinize ekler.</translation>
 <translation id="1799920918471566157">Chrome İpuçları</translation>
 <translation id="1830634592642484976">Bu adres şu anda Chrome'da kayıtlı. Adresi diğer Google ürünlerinde kullanmak için Google Hesabınıza (<ph name="USER_EMAIL" />) kaydedin.</translation>
 <translation id="1891812034154776216">Chrome'dan ayrıldığınızda açık olan gizli sekmeleri gizleyin</translation>
+<translation id="1894434821386148799">Chrome ayarlarını ve daha fazlasını burada bulabilirsiniz</translation>
 <translation id="1917964099031477364">Bu hesap ve kaydedilmemiş tüm veriler, Chrome'un yanı sıra bu cihazdaki diğer Google uygulamalarından kaldırılacak.</translation>
 <translation id="1919130412786645364">Chrome'da oturum açmaya izin ver</translation>
 <translation id="1965935827552890526">Açık olan diğer Chrome pencerenizde yaptığınız işlemi tamamlayın.</translation>
+<translation id="1973910962341002002">"<ph name="TEXT_OF_THE_SETTINGS_MENU_ITEM" />" ayarlarından "Chrome"u etkinleştirin</translation>
 <translation id="1984705450038014246">Chrome verilerimi senkronize et</translation>
 <translation id="1987779152850321833">Chrome'dan en iyi şekilde yararlanmak için aşağıdaki önerilen işlemleri tamamlayın.</translation>
 <translation id="2055826352861631739">iPad'de varsayılan olarak Chrome'u kullanın</translation>
@@ -93,13 +96,16 @@ Oturumunuzu kapatmadan önce birkaç dakika bekleyin. Oturumu şimdi kapatırsan
 <translation id="314782365035065913">Ana ekran yuvanızdan Chrome'a daha hızlı erişin</translation>
 <translation id="3167189358072330585">Hesabınız Google Chrome'da kullanılamıyor. Lütfen alan adı yöneticinizle iletişim kurun veya oturum açmak için normal bir Google Hesabı kullanın.</translation>
 <translation id="322254490661677575">Chrome verilerini kullanmak ve Google Hesabınıza kaydetmek için parolanızı girin.</translation>
-<translation id="3282568296779691940">Chrome'da oturum aç</translation>
+<translation id="3282568296779691940">Chrome'da Oturum Aç</translation>
 <translation id="3303503998967553377">iOS'te Chrome işlemler özelliğini kullanın</translation>
 <translation id="3348862487678490430">Okuma listesi öğesini Chrome'a ekle</translation>
+<translation id="3357827134511189025">Otomatik doldurma için Chrome'u kullanarak kayıtlı şifreleriniz ve geçiş anahtarlarınızla tüm uygulamalardan oturum açın</translation>
 <translation id="3360031466389132716">{THRESHOLD,plural, =1{Bu işlem, Chrome {THRESHOLD} dakika boyunca kullanılmadığında gerçekleşir}other{Bu işlem, Chrome {THRESHOLD} dakika boyunca kullanılmadığında gerçekleşir}}</translation>
 <translation id="3367797402528056312">Chrome kurulumunu tamamlayın</translation>
 <translation id="3371064404604898522">Chrome'u varsayılan tarayıcı olarak ayarla</translation>
 <translation id="3399930248910934354">Chrome Ayarlarını Aç</translation>
+<translation id="3440830787838130530">Google Şifre Yöneticisi'ndeki bir şifrenin kopyasını aile grubunuzla kolay ve güvenli bir şekilde paylaşın</translation>
+<translation id="3460369101684070455">Kayıtlı şifrelerinizi diğer uygulamalarınızda da kolayca görmek amacıyla Otomatik Doldurma için Chrome'u kullanın</translation>
 <translation id="3472587960215700950">Chrome, algılanan adreslerle ilgili yol tarifleri ve yerel bilgiler sağlamak için Google Haritalar'ı kullanır.</translation>
 <translation id="3503014945441706099">Bu Chrome profilinde Gelişmiş Güvenli Tarama'yı da edinin</translation>
 <translation id="3522659714780527202">Chrome kullandığınız her yerde sekmelerinizi görmek için senkronizasyonu açın</translation>
@@ -122,9 +128,9 @@ Oturumunuzu kapatmadan önce birkaç dakika bekleyin. Oturumu şimdi kapatırsan
 <translation id="4430797724889237570">Gmail, Haritalar, YouTube ve diğer uygulamalardaki bağlantıları Chrome'da açın</translation>
 <translation id="447252321002412580">Chrome'un özelliklerini ve performansını iyileştirmeye yardımcı ol</translation>
 <translation id="4523886039239821078">Bazı eklentiler Chrome'un kilitlenmesine neden oluyor. Lütfen şunların yüklemelerini kaldırın:</translation>
+<translation id="4574806550936185355">"Chrome'u kapattığınızda Gizli sekmeler kilitlensin" seçeneğini etkinleştirin</translation>
 <translation id="4633328489441962921">Chrome, güncellemeleri denetleyemiyor</translation>
 <translation id="4636900170638246267">Bu sitede ve Chrome'da oturum açın.</translation>
-<translation id="4646014602299206846">Chrome, ziyaret ettiğiniz sitelerdeki kargo takip numaralarını algılar ve kargoyla ilgili güncellemeleri yeni sekme sayfasında gösterir. Verileriniz, bu özelliği sunmak ve Alışveriş'i herkes için iyileştirmek üzere Google ile paylaşılır.</translation>
 <translation id="4647910807533196601">Chrome'daki en son sekmemi aç</translation>
 <translation id="4693084815234024320">Chrome'un Gizli modundasınız</translation>
 <translation id="4724297637870447613">Chrome'u her yerde kullanın</translation>
@@ -155,7 +161,6 @@ Oturumunuzu kapatmadan önce birkaç dakika bekleyin. Oturumu şimdi kapatırsan
 <translation id="5395376160638294582">Google Hesabınızdaki Chrome verilerini her zaman kullanabildiğinizden emin olun</translation>
 <translation id="5404252374083197467">Chrome varsayılan olarak ayarlansın mı?</translation>
 <translation id="5439191312780166229">Standart korumaya ek olarak sitelerden alınmış daha fazla veriyi analiz ederek Google'ın daha önce bilmedikleri de dahil olmak üzere tehlikeli siteler hakkında sizi uyarır. Chrome uyarılarını atlamayı seçebilirsiniz.</translation>
-<translation id="5442013002200339429">"<ph name="MODULE_NAME" />" öğesini gizlerseniz Chrome gelecekteki kargolarınızı otomatik olarak takip etmez ve tüm geçmiş kargo takibi verilerinizi siler.</translation>
 <translation id="5460571915754665838">4. Chrome'u seçin</translation>
 <translation id="5492504007368565877">Google Şifre Yöneticisi, şifrelerinizi kontrol edemiyor.</translation>
 <translation id="5525095647255982834">Bu sekmeyi başka bir cihaza göndermek için ilgili cihazda Chrome'da oturum açın.</translation>
@@ -174,6 +179,7 @@ Oturumunuzu kapatmadan önce birkaç dakika bekleyin. Oturumu şimdi kapatırsan
 <translation id="5716154293141027663">Diğer uygulamalarda bağlantılara dokunduğunuzda Chrome açılır</translation>
 <translation id="5752489513673657785">Google tarafından sizin için oluşturulmuş özel feed</translation>
 <translation id="5772407442571703917">Chrome'u buradan indirin.</translation>
+<translation id="5777468213129569553">Chrome'u aç</translation>
 <translation id="5779767936254214055">Chrome'dan çıktığınızda veya farklı bir uygulamaya geçtiğinizde gizli sekmelerinizi kilitleyin</translation>
 <translation id="5808435672482059465">Chrome Geçmişimi Göster</translation>
 <translation id="5833027901704861726">Chrome verilerinizden bazıları henüz <ph name="EMAIL" /> hesabına kaydedilmedi.
@@ -181,6 +187,7 @@ Hesap değiştirmeden önce birkaç dakika beklemeyi deneyin. Hesabı şimdi de�
 <translation id="5998675059699164418">Kuruluşunuz, Chrome'u kullanmak için oturum açmanızı zorunlu tutuyor.</translation>
 <translation id="6021312115739110405">Google tarafından sizin için oluşturulmuş özel feed. Haberler, spor ve hava durumuyla ilgili içerikler yer alır.</translation>
 <translation id="6022659036123304283">Chrome'u kendinize uyarlayın</translation>
+<translation id="6132075343662013154">Chrome, şifrenizi kaydetmeyi önerir</translation>
 <translation id="6132149203299792222">Şifrelerinizi, yer işaretleri ve daha fazlasını senkronize etmek için Google Hesabınızla oturum açın.</translation>
 <translation id="6145223986912084844">chrome</translation>
 <translation id="6177442314419606057">Chrome'da ara</translation>
@@ -208,7 +215,6 @@ Verileriniz parolanızla şifrelenir. Chrome verilerini kullanmak ve Google Hesa
 <translation id="6636941099779251629">Kuruluşunuz, Chrome'u kullanmak için oturum açmanızı zorunlu tutuyor. <ph name="BEGIN_LINK" />Daha fazla bilgi<ph name="END_LINK" /></translation>
 <translation id="6646696210740573446">IP adresinizi gizleyen bir gizlilik sunucusu aracılığıyla URL'nin kodu karartılmış bir kısmını Google'a gönderir. Chrome, bir sitenin şifrenizi çalmaya çalışması veya zararlı bir dosya indirmeniz halinde de Google'a sayfa içeriğinden parçalarla birlikte URL'ler gönderebilir.</translation>
 <translation id="6647304104688527905">Chrome'da yeni sekme açar.</translation>
-<translation id="6648150602980899529"><ph name="DOMAIN" /> tarafından yönetilen bir hesapla oturum açıyorsunuz ve yöneticiye tüm Chrome verileriniz üzerinde denetim olanağı veriyorsunuz. Verileriniz kalıcı olarak bu hesaba bağlanacaktır. Chrome'da oturumu kapattığınızda verileriniz bu cihazdan silinir ancak Google Hesabınızda kalmaya devam eder.</translation>
 <translation id="6684809838922667136">Chrome'u daha iyi hale getirin</translation>
 <translation id="6695698548122852044">{THRESHOLD,plural, =1{Bu işlem, Chrome {THRESHOLD} dakika boyunca kullanılmadığında gerçekleşir. Yalnızca oturumunuz açıkken bu cihaza kaydedilen veriler silinir. Geçmiş ve şifreler bu kapsamda yer alabilir.}other{Bu işlem, Chrome {THRESHOLD} dakika boyunca kullanılmadığında gerçekleşir Yalnızca oturumunuz açıkken bu cihaza kaydedilen veriler silinir. Geçmiş ve şifreler bu kapsamda yer alabilir.}}</translation>
 <translation id="6709398533399187136">Şifreniz bir veri ihlali nedeniyle açığa çıktı. Google Şifre Yöneticisi bu şifreyi hemen değiştirmenizi öneriyor.</translation>
@@ -228,6 +234,7 @@ Veri kullanarak Chrome deneyiminizi iyileştiren daha fazla ayar görmek için <
 <translation id="7061455974939528301">Chrome simgesini basılı tutup "Ana ekranı düzenle"yi tıklayın</translation>
 <translation id="7065813315247345131">Chrome'u yuvaya taşıyın</translation>
 <translation id="7124339256045485976">Chrome'u güncel tutun</translation>
+<translation id="7145599899567697473">Chrome'da şifreleri kaydedip otomatik olarak doldurun</translation>
 <translation id="7161390184744336561">Google Chrome güncel değil</translation>
 <translation id="7165736900384873061">Google Chrome QR tarayıcısını kullanmaya başlayın</translation>
 <translation id="7175129790242719365">Chrome İpucu: Chrome'da Oturum Açın</translation>
@@ -255,12 +262,14 @@ Veri kullanarak Chrome deneyiminizi iyileştiren daha fazla ayar görmek için <
 <translation id="7575971113404272499">Chrome İpucu: Varsayılan olarak Chrome'u kullanın</translation>
 <translation id="7581063337314642333">Chrome'daki Sekme Izgarasına Git</translation>
 <translation id="7599894504325210080">Chrome otomatik doldurma genişletilmiş görünümü</translation>
+<translation id="7617512710641355143">Chrome yönetiliyor</translation>
 <translation id="7642373780953416937">Chrome'un sizin için otomatik olarak tespit ettiği tüm gizlilik veya güvenlik sorunlarıyla ilgili uyarılar alabilirsiniz.</translation>
 <translation id="7660356333829433649">Chrome'u en iyi şekilde kullanmanıza yardımcı olacak daha fazla ipucu için daha sonra burayı tekrar kontrol edin.</translation>
 <translation id="7662994914830945754">Chrome kullandığınız her yerde sekmelerinizi görmek için oturum açın ve senkronizasyonu etkinleştirin</translation>
 <translation id="7693590760643069321">Artık mesajlardaki, dokümanlardaki ve diğer uygulamalardaki bağlantılara dokunduğunuzda Chrome'u kullanabilirsiniz.</translation>
 <translation id="7698568245838009292">Chrome, Kameraya Erişmek İstiyor</translation>
 <translation id="7707877166818730835">Chrome'daki en son sekmemi aç</translation>
+<translation id="7747746207470479571">Otomatik doldurma için Chrome'u kullanarak şifrelerinize ve geçiş anahtarlarınıza kolayca erişin</translation>
 <translation id="776305366874821582">iPhone'unuzun ana ekran yuvasından Chrome'a daha hızlı erişin.</translation>
 <translation id="7780154209050837198">Chrome'dan en iyi şekilde yararlanmak için Google Hesabı'nızla Chrome'da oturum açın.</translation>
 <translation id="7787205077729386167">iOS'te Chrome ayarlarını açtıktan sonra "Varsayılan Tarayıcı Uygulaması"na dokunup Chrome'u seçin.</translation>
@@ -281,6 +290,7 @@ Veri kullanarak Chrome deneyiminizi iyileştiren daha fazla ayar görmek için <
 <translation id="8136856065410661948">Bu bilgiler, Chrome ve Google Lens'ten alınan etkinlikleri Apple Takvim'de oluşturmak için kullanılır.</translation>
 <translation id="8154120522323162874">Chrome'dan en iyi şekilde yararlanmak için tarayıcınızın kurulumuna devam edin.</translation>
 <translation id="8160472928944011082">Chrome güncellenemiyor</translation>
+<translation id="8245080522851805544">Chrome'u kapattığınızda cihaz kimlik doğrulama özelliğiyle tarama işlemlerinizi gizli tutun</translation>
 <translation id="8248887045858762645">Chrome ipucu</translation>
 <translation id="8265730590513812063">Chrome menüsünü açın</translation>
 <translation id="8317674518145175158">Ödeme yöntemleri ve adresler şifrelenmez. Chrome'daki tarama geçmişi senkronize edilmez.
@@ -324,5 +334,6 @@ Verileriniz <ph name="TIME" /> tarihinde parolanızla şifrelendi. Chrome verile
 <translation id="9181628561061032322">Chrome'daki Son Sekmeleri Açar.</translation>
 <translation id="948597495737267756">Chrome geçmişi sayfanızı açar.</translation>
 <translation id="97300214378190234">Diğer uygulamalardaki bağlantılara her dokunduğunuzda Chrome'u kullanın.</translation>
+<translation id="997929539742564806">Chrome'daki şifrelerinizi ve geçiş anahtarlarınızı otomatik doldurarak uygulamalarda ve sitelerde hızlıca oturum açın</translation>
 <translation id="998677222109959694">Chrome ayarlarını yönet</translation>
 </translationbundle>

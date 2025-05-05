@@ -32,6 +32,10 @@ enum ChromeInsetsMetric {
 enum ChromeDistanceMetric {
   // Default minimum width of a button.
   DISTANCE_BUTTON_MINIMUM_WIDTH = views::VIEWS_DISTANCE_END,
+  // Size of the Collaboration Messaging fallback icon padding.
+  DISTANCE_COLLABORATION_MESSAGING_AVATAR_FALLBACK_ICON_PADDING,
+  // Size of the Collaboration Messaging fallback icon border.
+  DISTANCE_COLLABORATION_MESSAGING_AVATAR_FALLBACK_ICON_BORDER_SIZE,
   // Vertical spacing at the beginning and end of a content list (a vertical
   // stack of composite views that behaves like a menu) containing one item.
   DISTANCE_CONTENT_LIST_VERTICAL_SINGLE,
@@ -77,8 +81,6 @@ enum ChromeDistanceMetric {
   DISTANCE_UNRELATED_CONTROL_HORIZONTAL_LARGE,
   // Larger vertical spacing between unrelated controls.
   DISTANCE_UNRELATED_CONTROL_VERTICAL_LARGE,
-  // Width of larger modal dialogs that require extra width.
-  DISTANCE_LARGE_MODAL_DIALOG_PREFERRED_WIDTH,
   // Width and height of a vector icon in a bubble's header (i.e. the one
   // returned from GetWindowIcon).
   DISTANCE_BUBBLE_HEADER_VECTOR_ICON_SIZE,
@@ -183,6 +185,9 @@ enum ChromeDistanceMetric {
   DISTANCE_RECENT_ACTIVITY_ROW_VERTICAL_PADDING,
   // Distance between the avatar icon and the email in the account info row.
   DISTANCE_ACCOUNT_INFO_ROW_AVATAR_EMAIL,
+  // Vertical spacing between a textfield and an account card, usually
+  // consisting of an avatar icon, name and email address.
+  DISTANCE_TEXTFIELD_ACCOUNT_CARD_VERTICAL,
 };
 
 class ChromeLayoutProvider : public views::LayoutProvider {

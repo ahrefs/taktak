@@ -42,6 +42,10 @@ import {TitleItem} from './title_item.js';
 // height. Includes a half row that hints to the user the capability to scroll.
 const MINIMUM_AVAILABLE_HEIGHT_LIST_ITEM_COUNT: number = 5.5;
 
+// A maximum limit for search queries, to prevent  errors like
+// "SyntaxError: Invalid regular expression: ..."
+export const SEARCH_QUERY_MAX_LENGTH: number = 400;
+
 const TabSearchSearchFieldBase = CrSearchFieldMixinLit(CrLitElement);
 
 /**
@@ -78,6 +82,7 @@ export class TabSearchPageElement extends TabSearchSearchFieldBase {
       filteredItems_: {type: Array},
       listMaxHeight_: {type: Number},
       listItemSize_: {type: Number},
+      searchQueryMaxLength_: {type: Number},
 
       /**
        * Options for search. Controls how heavily weighted fields are relative
@@ -93,14 +98,15 @@ export class TabSearchPageElement extends TabSearchSearchFieldBase {
     };
   }
 
-  tabOrganizationEnabled: boolean =
+  accessor tabOrganizationEnabled: boolean =
       loadTimeData.getBoolean('tabOrganizationEnabled');
-  availableHeight?: number;
-  private searchText_: string = '';
-  protected listMaxHeight_?: number;
-  protected listItemSize_?: number;
-  protected filteredItems_: Array<TitleItem|TabData|TabGroupData> = [];
-  private searchOptions_: SearchOptions = {
+  accessor availableHeight: number|undefined;
+  private accessor searchText_: string = '';
+  protected accessor listMaxHeight_: number|undefined;
+  protected accessor listItemSize_: number|undefined;
+  protected accessor searchQueryMaxLength_: number = SEARCH_QUERY_MAX_LENGTH;
+  protected accessor filteredItems_: Array<TitleItem|TabData|TabGroupData> = [];
+  private accessor searchOptions_: SearchOptions = {
     includeScore: true,
     includeMatches: true,
     ignoreLocation: false,
@@ -125,11 +131,11 @@ export class TabSearchPageElement extends TabSearchSearchFieldBase {
           },
         ],
   };
-  private recentlyClosedDefaultItemDisplayCount_: number =
+  private accessor recentlyClosedDefaultItemDisplayCount_: number =
       loadTimeData.getValue('recentlyClosedDefaultItemDisplayCount');
-  protected searchResultText_: string = '';
+  protected accessor searchResultText_: string = '';
   protected activeSelectionId_?: string;
-  protected shortcut_: string = loadTimeData.getString('shortcutText');
+  protected accessor shortcut_: string = loadTimeData.getString('shortcutText');
   override autofocus: boolean = false;
 
   private apiProxy_: TabSearchApiProxy = TabSearchApiProxyImpl.getInstance();

@@ -7,6 +7,7 @@ package org.chromium.components.browser_ui.bottomsheet;
 import androidx.annotation.IntDef;
 
 import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.widget.gesture.BackPressHandler;
 import org.chromium.components.browser_ui.widget.scrim.ScrimManager;
 import org.chromium.ui.modelutil.PropertyModel;
@@ -126,10 +127,14 @@ public interface BottomSheetController {
      */
     boolean collapseSheet(boolean animate);
 
-    /** @return The content currently showing in the bottom sheet. */
-    BottomSheetContent getCurrentSheetContent();
+    /**
+     * @return The content currently showing in the bottom sheet.
+     */
+    @Nullable BottomSheetContent getCurrentSheetContent();
 
-    /** @return The current state of the bottom sheet. */
+    /**
+     * @return The current state of the bottom sheet.
+     */
     @SheetState
     int getSheetState();
 
@@ -203,4 +208,11 @@ public interface BottomSheetController {
      *     sheet state.
      */
     boolean isSmallScreen();
+
+    /**
+     * Whether the bottom sheet is anchored on top of the browser controls. When false, the bottom
+     * sheet will be anchored at the bottom of the window and potentially covering the bottom
+     * controls UI.
+     */
+    boolean isAnchoredToBottomControls();
 }

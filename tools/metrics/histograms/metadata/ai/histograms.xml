@@ -25,6 +25,7 @@ chromium-metrics-reviews@google.com.
 <!-- LINT.IfChange(SessionType) -->
 
 <variants name="SessionType">
+  <variant name="LanguageDetector" summary="AI language detector session"/>
   <variant name="LanguageModel" summary="AI language model session"/>
   <variant name="Rewriter" summary="AI rewriter session"/>
   <variant name="Summarizer" summary="AI summarizer session"/>
@@ -117,18 +118,6 @@ chromium-metrics-reviews@google.com.
     This is recorded each time when the prompt JavaScript API is invoked. This
     can be used to measure the number of calls of each API within a particular
     time period.
-  </summary>
-  <token key="SessionType" variants="SessionType"/>
-</histogram>
-
-<histogram name="AI.{SessionType}.Availability" enum="AICapabilityAvailability"
-    expires_after="2025-10-27">
-  <owner>leimy@chromium.org</owner>
-  <owner>fergal@chromium.org</owner>
-  <owner>src/chrome/browser/ai/OWNERS</owner>
-  <summary>
-    Records the availability of model execution as returned in methods like
-    `ai.*.capabilities()`.
   </summary>
   <token key="SessionType" variants="SessionType"/>
 </histogram>

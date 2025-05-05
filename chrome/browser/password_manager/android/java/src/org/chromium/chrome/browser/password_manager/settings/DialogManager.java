@@ -5,28 +5,29 @@
 package org.chromium.chrome.browser.password_manager.settings;
 
 import androidx.annotation.IntDef;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 
 import org.chromium.base.task.PostTask;
 import org.chromium.base.task.TaskTraits;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * This class manages a {@link DialogFragment}.
- * In particular, it ensures that the dialog stays visible for a minimum time period, so that
- * earlier calls to hide it are delayed appropriately. It also allows to override the delaying for
- * testing purposes.
+ * This class manages a {@link DialogFragment}. In particular, it ensures that the dialog stays
+ * visible for a minimum time period, so that earlier calls to hide it are delayed appropriately. It
+ * also allows to override the delaying for testing purposes.
  */
+@NullMarked
 public final class DialogManager {
     /**
      * Contains the reference to a {@link android.app.DialogFragment} between the call to {@link
      * show} and dismissing the dialog.
      */
-    @Nullable private DialogFragment mDialogFragment;
+    private @Nullable DialogFragment mDialogFragment;
 
     /**
      * The least amout of time for which {@link mDialogFragment} should stay visible to avoid
@@ -47,10 +48,10 @@ public final class DialogManager {
      * Used to gate hiding of a dialog on two actions: one automatic delayed signal and one manual
      * call to {@link hide}. This is not null between the calls to {@link show} and {@link hide}.
      */
-    @Nullable private SingleThreadBarrierClosure mBarrierClosure;
+    private @Nullable SingleThreadBarrierClosure mBarrierClosure;
 
-    /** Callback to run after the dialog was hidden. Can be null if no hiding was requested.*/
-    @Nullable private Runnable mCallback;
+    /** Callback to run after the dialog was hidden. Can be null if no hiding was requested. */
+    private @Nullable Runnable mCallback;
 
     private boolean mShowingRequested;
 
@@ -74,11 +75,12 @@ public final class DialogManager {
     }
 
     /** The callback called everytime {@link #hide} is executed. */
-    @Nullable private final ActionsConsumer mActionsConsumer;
+    private final @Nullable ActionsConsumer mActionsConsumer;
 
     /**
      * Constructs a DialogManager, optionally with a callback to report which action was taken on
      * hiding.
+     *
      * @param actionsConsumer The callback called everytime {@link #hide} is executed.
      */
     public DialogManager(@Nullable ActionsConsumer actionsConsumer) {
@@ -125,9 +127,10 @@ public final class DialogManager {
      * Hides the dialog as soon as possible, but not sooner than {@link MINIMUM_LIFE_SPAN_MILLIS}
      * milliseconds after it was shown. Attempts to hide the dialog when none is shown are
      * gracefully ignored but the callback is called in any case.
+     *
      * @param callback is asynchronously called as soon as the dialog is no longer visible.
      */
-    public void hide(Runnable callback) {
+    public void hide(@Nullable Runnable callback) {
         if (mActionsConsumer != null) {
             @HideActions final int action;
             if (mBarrierClosure == null) {

@@ -11,6 +11,7 @@
 #include "base/test/scoped_feature_list.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/media/router/media_router_feature.h"
+#include "chrome/browser/navigation_predictor/search_engine_preconnector.h"
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/profiles/profile_selections.h"
 #include "chrome/browser/ui/browser.h"
@@ -34,7 +35,6 @@
 #include "extensions/common/extension_features.h"
 #include "net/base/features.h"
 #include "pdf/buildflags.h"
-#include "printing/buildflags/buildflags.h"
 #include "services/network/public/cpp/features.h"
 #include "testing/gmock/include/gmock/gmock-matchers.h"
 #include "third_party/blink/public/common/features.h"
@@ -264,6 +264,9 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceBrowserTest,
     "PasswordRequirementsServiceFactory",
     "PolicyBlocklist",
     "PolicyClipboardRestriction",
+#if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
+    "ReportingEventRouter",
+#endif  // BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
     "SafeSearch",
     "WebDataService",
 
@@ -305,6 +308,9 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceBrowserTest,
     "OmniboxSuggestionsWatcher",
     "PolicyBlocklist",
     "PolicyClipboardRestriction",
+#if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
+    "ReportingEventRouter",
+#endif  // BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
     "SafeSearch",
 
     // in chrome: using `BrowserContextKeyedServiceShutdownNotifierFactory`:
@@ -379,6 +385,7 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceGuestBrowserTest,
     "ExtensionInstallEventRouter",
 #endif  // BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
     "ChromeEnterpriseRealTimeUrlLookupService",
+    "EnterpriseReportingPrivateEventRouter",
     "ExtensionNavigationRegistry",
     "ExtensionSystem",
     "ExtensionURLLoaderFactory::BrowserContextShutdownNotifierFactory",
@@ -505,6 +512,10 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceGuestBrowserTest,
 #endif  // BUILDFLAG(IS_CHROMEOS)
   };
   // clang-format on
+  if (SearchEnginePreconnector::ShouldBeEnabledAsKeyedService() &&
+      SearchEnginePreconnector::ShouldBeEnabledForOffTheRecord()) {
+    guest_otr_active_services.insert("SearchEnginePreconnector");
+  }
 
 #if BUILDFLAG(IS_CHROMEOS)
   EXPECT_TRUE(user_manager::UserManager::Get()->IsLoggedInAsGuest());
@@ -591,15 +602,25 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceGuestBrowserTest,
     "ContentSettingsService",
     "CookieSettings",
     "CookiesAPI",
+#if BUILDFLAG(ENABLE_EXTENSIONS_CORE)
+    "CorruptedExtensionReinstaller",
+#endif
     "CWSInfoService",
     "DataTypeStoreService",
+#if BUILDFLAG(ENABLE_EXTENSIONS_CORE)
+    "DelayedInstallManager",
+#endif
     "DeveloperPrivateAPI",
     "DeviceInfoSyncService",
     "DownloadCoreService",
     "EventRouter",
     "ExtensionActionDispatcher",
     "ExtensionActionManager",
+#if BUILDFLAG(ENABLE_EXTENSIONS_CORE)
+    "ExtensionAllowlist",
+#endif
     "ExtensionCommandsGlobalRegistry",
+    "ExtensionErrorController",
     "ExtensionGCMAppHandler",
     "ExtensionGarbageCollector",
     "ExtensionHostRegistry",
@@ -614,8 +635,13 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceGuestBrowserTest,
     "ExtensionSyncService",
     "ExtensionSystem",
     "ExtensionSystemShared",
+    "ExtensionUpdater",
     "ExtensionURLLoaderFactory::BrowserContextShutdownNotifierFactory",
     "ExtensionWebUIOverrideRegistrar",
+    "ExternalInstallManager",
+  #if BUILDFLAG(ENABLE_EXTENSIONS)
+    "ExternalProviderManager",
+  #endif
     "FaviconService",
     "FederatedIdentityPermissionContext",
     "FederatedIdentityAutoReauthnPermissionContext",
@@ -713,9 +739,6 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceGuestBrowserTest,
     "PredictorDatabase",
     "PrefWatcher",
     "PreferenceAPI",
-  #if BUILDFLAG(IS_CHROMEOS) && BUILDFLAG(USE_CUPS)
-    "PrintingMetricsService",
-  #endif // BUILDFLAG(IS_CHROMEOS) && BUILDFLAG(USE_CUPS)
     "PrinterProviderInternal",
     "PrivacySandboxService",
     "PrivacySandboxSettings",
@@ -767,7 +790,6 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceGuestBrowserTest,
     "SpellcheckService",
 #endif
 
-    "StorageAccessHeaderService",
     "StorageFrontend",
     "StorageNotificationService",
     "SupervisedUserService",
@@ -881,6 +903,10 @@ IN_PROC_BROWSER_TEST_F(ProfileKeyedServiceGuestBrowserTest,
 
   if (base::FeatureList::IsEnabled(commerce::kProductSpecifications)) {
     guest_active_services.insert("ProductSpecificationsService");
+  }
+
+  if (SearchEnginePreconnector::ShouldBeEnabledAsKeyedService()) {
+    guest_active_services.insert("SearchEnginePreconnector");
   }
 #if BUILDFLAG(IS_CHROMEOS)
   EXPECT_TRUE(user_manager::UserManager::Get()->IsLoggedInAsGuest());

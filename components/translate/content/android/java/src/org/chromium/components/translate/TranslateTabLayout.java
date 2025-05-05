@@ -4,6 +4,8 @@
 
 package org.chromium.components.translate;
 
+import static org.chromium.build.NullUtil.assumeNonNull;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
@@ -14,17 +16,18 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 
-import androidx.annotation.NonNull;
-
 import com.google.android.material.tabs.TabLayout;
 
 import org.chromium.base.StrictModeContext;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.ui.interpolators.Interpolators;
 
 /** TabLayout shown in the TranslateCompactInfoBar. */
+@NullMarked
 public class TranslateTabLayout extends TabLayout {
     /** The tab in which a spinning progress bar is showing. */
-    private Tab mTabShowingProgressBar;
+    private @Nullable Tab mTabShowingProgressBar;
 
     /** The amount of waiting time before starting the scrolling animation. */
     private static final long START_POSITION_WAIT_DURATION_MS = 1000;
@@ -33,9 +36,9 @@ public class TranslateTabLayout extends TabLayout {
     private static final long SCROLL_DURATION_MS = 300;
 
     /** We define the keyframes of the scrolling animation in this object. */
-    ObjectAnimator mScrollToEndAnimator;
+    @Nullable ObjectAnimator mScrollToEndAnimator;
 
-    /** Start padding of a Tab.  Used for width calculation only.  Will not be applied to views. */
+    /** Start padding of a Tab. Used for width calculation only. Will not be applied to views. */
     private int mTabPaddingStart;
 
     /** End padding of a Tab.  Used for width calculation only.  Will not be applied to views. */
@@ -103,8 +106,8 @@ public class TranslateTabLayout extends TabLayout {
         if (tabPos < 0 || tabPos >= getTabCount()) {
             return;
         }
-        Tab tab = getTabAt(tabPos);
-        ((TranslateTabContent) tab.getCustomView()).setText(tabTitle);
+        Tab tab = assumeNonNull(getTabAt(tabPos));
+        assumeNonNull((TranslateTabContent) tab.getCustomView()).setText(tabTitle);
         tab.setContentDescription(tabTitle);
     }
 
@@ -116,11 +119,12 @@ public class TranslateTabLayout extends TabLayout {
         if (tabPos < 0 || tabPos >= getTabCount() || mTabShowingProgressBar != null) {
             return;
         }
-        mTabShowingProgressBar = getTabAt(tabPos);
+        mTabShowingProgressBar = assumeNonNull(getTabAt(tabPos));
 
         // TODO(martiw) See if we need to setContentDescription as "Translating" here.
 
         if (tabIsSupported(mTabShowingProgressBar)) {
+            assumeNonNull(mTabShowingProgressBar.getCustomView());
             ((TranslateTabContent) mTabShowingProgressBar.getCustomView()).showProgressBar();
         }
     }
@@ -130,6 +134,7 @@ public class TranslateTabLayout extends TabLayout {
         if (mTabShowingProgressBar == null) return;
 
         if (tabIsSupported(mTabShowingProgressBar)) {
+            assumeNonNull(mTabShowingProgressBar.getCustomView());
             ((TranslateTabContent) mTabShowingProgressBar.getCustomView()).hideProgressBar();
         }
 
@@ -154,7 +159,7 @@ public class TranslateTabLayout extends TabLayout {
 
     // Overrided to make sure only supported Tabs can be added.
     @Override
-    public void addTab(@NonNull Tab tab, int position, boolean setSelected) {
+    public void addTab(Tab tab, int position, boolean setSelected) {
         if (!tabIsSupported(tab)) {
             throw new IllegalArgumentException();
         }
@@ -163,7 +168,7 @@ public class TranslateTabLayout extends TabLayout {
 
     // Overrided to make sure only supported Tabs can be added.
     @Override
-    public void addTab(@NonNull Tab tab, boolean setSelected) {
+    public void addTab(Tab tab, boolean setSelected) {
         if (!tabIsSupported(tab)) {
             throw new IllegalArgumentException();
         }
@@ -171,14 +176,17 @@ public class TranslateTabLayout extends TabLayout {
     }
 
     /**
-     * Calculate and return the width of a specified tab.  Tab doesn't provide a means of getting
-     * the width so we need to calculate the width by summing up the tab paddings and content width.
+     * Calculate and return the width of a specified tab. Tab doesn't provide a means of getting the
+     * width so we need to calculate the width by summing up the tab paddings and content width.
+     *
      * @param position Tab position.
      * @return Tab's width in pixels.
      */
     private int getTabWidth(int position) {
-        if (getTabAt(position) == null) return 0;
-        return getTabAt(position).getCustomView().getWidth() + mTabPaddingStart + mTabPaddingEnd;
+        Tab tab = getTabAt(position);
+        if (tab == null) return 0;
+        assumeNonNull(tab.getCustomView());
+        return tab.getCustomView().getWidth() + mTabPaddingStart + mTabPaddingEnd;
     }
 
     /**

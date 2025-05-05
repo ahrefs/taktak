@@ -197,10 +197,10 @@ void CSSDefaultStyleSheets::VerifyUniversalRuleCount() {
       expected_rule_count += 3u;
     }
     if (scroll_button_style_sheet_) {
-      expected_rule_count += 4u;
+      expected_rule_count += 5u;
     }
     if (scroll_marker_style_sheet_) {
-      expected_rule_count += 4u;
+      expected_rule_count += 6u;
     }
     DCHECK_EQ(default_pseudo_element_style_->UniversalRules().size(),
               expected_rule_count);
@@ -370,8 +370,7 @@ bool CSSDefaultStyleSheets::EnsureDefaultStyleSheetsForElement(
       builder.Append("video::cue { ");
       if (CSSParser::ParseColor(
               color,
-              MaybeRemoveCSSImportant(settings->GetTextTrackWindowColor()),
-              /*strict=*/true) &&
+              MaybeRemoveCSSImportant(settings->GetTextTrackWindowColor())) &&
           color.Alpha() > 0) {
         AddTextTrackCSSProperties(&builder, CSSPropertyID::kBackgroundColor,
                                   settings->GetTextTrackWindowColor());

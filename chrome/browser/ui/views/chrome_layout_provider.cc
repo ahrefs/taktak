@@ -145,8 +145,6 @@ int ChromeLayoutProvider::GetDistanceMetric(int metric) const {
       return 20;
     case DISTANCE_STANDALONE_BUBBLE_PREFERRED_WIDTH:
       return kMediumDialogWidth;
-    case DISTANCE_LARGE_MODAL_DIALOG_PREFERRED_WIDTH:
-      return kLargeDialogWidth;
     case DISTANCE_BETWEEN_PRIMARY_AND_SECONDARY_LABELS_HORIZONTAL:
       return 24;
     case DISTANCE_OMNIBOX_CELL_VERTICAL_PADDING:
@@ -229,6 +227,12 @@ int ChromeLayoutProvider::GetDistanceMetric(int metric) const {
       return 6;
     case DISTANCE_ACCOUNT_INFO_ROW_AVATAR_EMAIL:
       return 8;
+    case DISTANCE_COLLABORATION_MESSAGING_AVATAR_FALLBACK_ICON_PADDING:
+      return 2;
+    case DISTANCE_COLLABORATION_MESSAGING_AVATAR_FALLBACK_ICON_BORDER_SIZE:
+      return 1;
+    case DISTANCE_TEXTFIELD_ACCOUNT_CARD_VERTICAL:
+      return 4;
   }
   NOTREACHED();
 }

@@ -5,6 +5,7 @@ package org.chromium.support_lib_glue;
 
 import org.chromium.android_webview.AwNavigation;
 import org.chromium.android_webview.AwNavigationClient;
+import org.chromium.android_webview.AwPage;
 import org.chromium.android_webview.common.Lifetime;
 import org.chromium.support_lib_boundary.WebViewNavigationClientBoundaryInterface;
 import org.chromium.support_lib_boundary.util.BoundaryInterfaceReflectionUtil;
@@ -68,5 +69,49 @@ class SupportLibWebViewNavigationClientAdapter implements AwNavigationClient {
         mImpl.onNavigationCompleted(
                 BoundaryInterfaceReflectionUtil.createInvocationHandlerFor(
                         new SupportLibWebViewNavigationAdapter(navigation)));
+    }
+
+    @Override
+    public void onPageDeleted(AwPage page) {
+        if (!BoundaryInterfaceReflectionUtil.containsFeature(
+                mSupportedFeatures, Features.WEB_VIEW_NAVIGATION_CLIENT_BASIC_USAGE)) {
+            return;
+        }
+        mImpl.onPageDeleted(
+                BoundaryInterfaceReflectionUtil.createInvocationHandlerFor(
+                        new SupportLibWebViewPageAdapter(page)));
+    }
+
+    @Override
+    public void onPageLoadEventFired(AwPage page) {
+        if (!BoundaryInterfaceReflectionUtil.containsFeature(
+                mSupportedFeatures, Features.WEB_VIEW_NAVIGATION_CLIENT_BASIC_USAGE)) {
+            return;
+        }
+        mImpl.onPageLoadEventFired(
+                BoundaryInterfaceReflectionUtil.createInvocationHandlerFor(
+                        new SupportLibWebViewPageAdapter(page)));
+    }
+
+    @Override
+    public void onPageDOMContentLoadedEventFired(AwPage page) {
+        if (!BoundaryInterfaceReflectionUtil.containsFeature(
+                mSupportedFeatures, Features.WEB_VIEW_NAVIGATION_CLIENT_BASIC_USAGE)) {
+            return;
+        }
+        mImpl.onPageDOMContentLoadedEventFired(
+                BoundaryInterfaceReflectionUtil.createInvocationHandlerFor(
+                        new SupportLibWebViewPageAdapter(page)));
+    }
+
+    @Override
+    public void onFirstContentfulPaint(AwPage page) {
+        if (!BoundaryInterfaceReflectionUtil.containsFeature(
+                mSupportedFeatures, Features.WEB_VIEW_NAVIGATION_CLIENT_BASIC_USAGE)) {
+            return;
+        }
+        mImpl.onFirstContentfulPaint(
+                BoundaryInterfaceReflectionUtil.createInvocationHandlerFor(
+                        new SupportLibWebViewPageAdapter(page)));
     }
 }

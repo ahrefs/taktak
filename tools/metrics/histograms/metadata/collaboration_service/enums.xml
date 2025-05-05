@@ -26,6 +26,19 @@ chromium-metrics-reviews@google.com.
 
 <enums>
 
+<!-- LINT.IfChange(CollaborationServiceJoinEntryPoint) -->
+
+<enum name="CollaborationServiceJoinEntryPoint">
+  <int value="0" label="Unknown"/>
+  <int value="1" label="Link Click"/>
+  <int value="2" label="User Typed"/>
+  <int value="3" label="External Application"/>
+  <int value="4" label="Forward or Back Button"/>
+  <int value="5" label="Redirect"/>
+</enum>
+
+<!-- LINT.ThenChange(//components/collaboration/public/collaboration_flow_entry_point.h:CollaborationServiceJoinEntryPoint) -->
+
 <!-- LINT.IfChange(CollaborationServiceJoinEvent) -->
 
 <enum name="CollaborationServiceJoinEvent">
@@ -57,9 +70,33 @@ chromium-metrics-reviews@google.com.
   <int value="25" label="Data sharing service ready observed"/>
   <int value="26" label="Tab group sync service ready"/>
   <int value="27" label="All services ready for flow"/>
+  <int value="28" label="Timeout waiting for services to be ready"/>
+  <int value="29" label="Timeout waiting for sync and data sharing group"/>
+  <int value="30" label="Device policy disables signin"/>
+  <int value="31" label="Managed account signed in"/>
+  <int value="32" label="Account info is not ready upon signin"/>
+  <int value="33" label="Read new group result: user is already member"/>
 </enum>
 
 <!-- LINT.ThenChange(//components/collaboration/internal/metrics.h:CollaborationServiceJoinEvent) -->
+
+<!-- LINT.IfChange(CollaborationServiceShareOrManageEntryPoint) -->
+
+<enum name="CollaborationServiceShareOrManageEntryPoint">
+  <int value="0" label="Unknown"/>
+  <int value="1" label="AndroidTabGridDialogShare"/>
+  <int value="2" label="AndroidTabGridDialogManage"/>
+  <int value="3" label="RecentActivity"/>
+  <int value="4" label="AndroidTabGroupContextMenuShare"/>
+  <int value="5" label="AndroidTabGroupContextMenuManage"/>
+  <int value="6" label="Notification"/>
+  <int value="7" label="AndroidMessage"/>
+  <int value="8" label="TabGroupItemMenuShare"/>
+  <int value="9" label="AndroidShareSheetExtra"/>
+  <int value="10" label="DialogToolbarButton"/>
+</enum>
+
+<!-- LINT.ThenChange(//components/collaboration/public/collaboration_flow_entry_point.h:CollaborationServiceShareOrManageEntryPoint) -->
 
 <!-- LINT.IfChange(CollaborationServiceShareOrManageEvent) -->
 
@@ -87,6 +124,9 @@ chromium-metrics-reviews@google.com.
   <int value="20" label="Data sharing service ready observed"/>
   <int value="21" label="Tab group sync service ready"/>
   <int value="22" label="All services ready for flow"/>
+  <int value="23" label="Device policy disables signin"/>
+  <int value="24" label="Managed account signed in"/>
+  <int value="25" label="Account info is not ready upon signin"/>
 </enum>
 
 <!-- LINT.ThenChange(//components/collaboration/internal/metrics.h:CollaborationServiceShareOrManageEvent) -->

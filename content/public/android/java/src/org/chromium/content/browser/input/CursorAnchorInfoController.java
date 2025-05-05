@@ -206,12 +206,11 @@ final class CursorAnchorInfoController {
     }
 
     public void updateCursorAnchorInfoData(InputCursorAnchorInfo cursorAnchorInfo, View view) {
-        if (mInputCursorAnchorInfo != null && mInputCursorAnchorInfo.equals(cursorAnchorInfo)) {
-            return;
-        }
         mInputCursorAnchorInfo = cursorAnchorInfo;
         mLastCursorAnchorInfo = null;
-        updateCursorAnchorInfo(view);
+        if (cursorAnchorInfo.requested || mMonitorModeEnabled) {
+            updateCursorAnchorInfo(view);
+        }
     }
 
     /** Computes the CursorAnchorInfo instance and notify to InputMethodManager if needed. */

@@ -5,6 +5,7 @@
 #ifndef THIRD_PARTY_BLINK_RENDERER_MODULES_AI_AI_AVAILABILITY_H_
 #define THIRD_PARTY_BLINK_RENDERER_MODULES_AI_AI_AVAILABILITY_H_
 
+#include "components/language_detection/content/common/language_detection.mojom-blink-forward.h"
 #include "third_party/blink/public/mojom/ai/ai_manager.mojom-blink-forward.h"
 #include "third_party/blink/public/mojom/on_device_translation/translation_manager.mojom-blink-forward.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ai_availability.h"
@@ -36,6 +37,10 @@ AIAvailability HandleModelAvailabilityCheckResult(
 AIAvailability HandleTranslatorAvailabilityCheckResult(
     ExecutionContext* execution_context,
     mojom::blink::CanCreateTranslatorResult result);
+
+AIAvailability HandleLanguageDetectionModelCheckResult(
+    ExecutionContext* execution_context,
+    language_detection::mojom::blink::LanguageDetectionModelStatus result);
 
 }  // namespace blink
 

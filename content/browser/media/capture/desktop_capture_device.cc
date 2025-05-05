@@ -717,6 +717,12 @@ void DesktopCaptureDevice::Core::OnCaptureResult(
     gfx::ICCProfile icc_profile = gfx::ICCProfile::FromData(
         frame->icc_profile().data(), frame->icc_profile().size());
     frame_color_space = icc_profile.GetColorSpace();
+    if (output_is_i420_) {
+      // Conversion ARGB->I420 will switch the color space.
+      frame_color_space = frame_color_space.GetWithMatrixAndRange(
+          gfx::ColorSpace::MatrixID::SMPTE170M,
+          gfx::ColorSpace::RangeID::LIMITED);
+    }
   }
 
   base::TimeTicks now = NowTicks();

@@ -46,6 +46,8 @@
 #include "third_party/blink/renderer/core/css/css_font_face_source.h"
 #include "third_party/blink/renderer/core/css/css_font_palette_values_rule.h"
 #include "third_party/blink/renderer/core/css/css_font_selector.h"
+#include "third_party/blink/renderer/core/css/css_function_declarations_rule.h"
+#include "third_party/blink/renderer/core/css/css_function_descriptors.h"
 #include "third_party/blink/renderer/core/css/css_function_rule.h"
 #include "third_party/blink/renderer/core/css/css_gradient_value.h"
 #include "third_party/blink/renderer/core/css/css_import_rule.h"
@@ -125,10 +127,12 @@
 #include "third_party/blink/renderer/core/inspector/inspector_style_resolver.h"
 #include "third_party/blink/renderer/core/inspector/inspector_style_sheet.h"
 #include "third_party/blink/renderer/core/inspector/protocol/css.h"
+#include "third_party/blink/renderer/core/layout/constraint_space.h"
 #include "third_party/blink/renderer/core/layout/hit_test_result.h"
 #include "third_party/blink/renderer/core/layout/inline/inline_cursor.h"
 #include "third_party/blink/renderer/core/layout/layout_object.h"
 #include "third_party/blink/renderer/core/layout/layout_object_inlines.h"
+#include "third_party/blink/renderer/core/layout/layout_result.h"
 #include "third_party/blink/renderer/core/layout/layout_text.h"
 #include "third_party/blink/renderer/core/layout/layout_view.h"
 #include "third_party/blink/renderer/core/loader/document_loader.h"
@@ -146,10 +150,12 @@
 #include "third_party/blink/renderer/platform/fonts/font_custom_platform_data.h"
 #include "third_party/blink/renderer/platform/fonts/shaping/caching_word_shaper.h"
 #include "third_party/blink/renderer/platform/fonts/shaping/shape_result_view.h"
+#include "third_party/blink/renderer/platform/geometry/layout_unit.h"
 #include "third_party/blink/renderer/platform/heap/collection_support/clear_collection_scope.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 #include "third_party/blink/renderer/platform/text/text_run.h"
+#include "third_party/blink/renderer/platform/text/writing_direction_mode.h"
 #include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
 #include "third_party/blink/renderer/platform/wtf/casting.h"
 #include "third_party/blink/renderer/platform/wtf/text/atomic_string.h"
@@ -273,6 +279,49 @@ CSSSyntaxDefinition CreateCombinedSyntax() {
       CSSSyntaxDefinition::Consume(stream);
   DCHECK(syntax_definition.has_value());
   return *syntax_definition;
+}
+
+bool IsMarginPaddingProperty(CSSPropertyName property_name) {
+  return property_name.Id() == CSSPropertyID::kMarginBottom ||
+         property_name.Id() == CSSPropertyID::kMarginLeft ||
+         property_name.Id() == CSSPropertyID::kMarginRight ||
+         property_name.Id() == CSSPropertyID::kMarginTop ||
+         property_name.Id() == CSSPropertyID::kPaddingBottom ||
+         property_name.Id() == CSSPropertyID::kPaddingLeft ||
+         property_name.Id() == CSSPropertyID::kPaddingRight ||
+         property_name.Id() == CSSPropertyID::kPaddingTop;
+}
+
+bool IsInsetProperty(CSSPropertyName property_name) {
+  return property_name.Id() == CSSPropertyID::kBottom ||
+         property_name.Id() == CSSPropertyID::kLeft ||
+         property_name.Id() == CSSPropertyID::kRight ||
+         property_name.Id() == CSSPropertyID::kTop;
+}
+
+bool IsSizingProperty(CSSPropertyName property_name) {
+  return property_name.Id() == CSSPropertyID::kHeight ||
+         property_name.Id() == CSSPropertyID::kWidth ||
+         property_name.Id() == CSSPropertyID::kMinHeight ||
+         property_name.Id() == CSSPropertyID::kMinWidth ||
+         property_name.Id() == CSSPropertyID::kMaxHeight ||
+         property_name.Id() == CSSPropertyID::kMaxWidth;
+}
+
+LayoutUnit PickInlineOrBlockSize(LogicalSize value,
+                                 CSSPropertyID property_id,
+                                 WritingDirectionMode writing_direction_mode) {
+  const CSSProperty& property = CSSProperty::Get(property_id);
+  CSSPropertyID logical_property_id =
+      property.ToLogical(writing_direction_mode).PropertyID();
+  if (logical_property_id == CSSPropertyID::kInsetBlockEnd ||
+      logical_property_id == CSSPropertyID::kInsetBlockStart ||
+      logical_property_id == CSSPropertyID::kBlockSize ||
+      logical_property_id == CSSPropertyID::kMaxBlockSize ||
+      logical_property_id == CSSPropertyID::kMinBlockSize) {
+    return value.block_size;
+  }
+  return value.inline_size;
 }
 
 }  // namespace
@@ -943,13 +992,13 @@ void InspectorCSSAgent::SetActiveStyleSheets(
     Document* document,
     const HeapVector<Member<CSSStyleSheet>>& all_sheets_vector) {
   auto it = document_to_css_style_sheets_.find(document);
-  HeapHashSet<Member<CSSStyleSheet>>* document_css_style_sheets = nullptr;
+  GCedHeapHashSet<Member<CSSStyleSheet>>* document_css_style_sheets = nullptr;
 
   if (it != document_to_css_style_sheets_.end()) {
     document_css_style_sheets = it->value;
   } else {
     document_css_style_sheets =
-        MakeGarbageCollected<HeapHashSet<Member<CSSStyleSheet>>>();
+        MakeGarbageCollected<GCedHeapHashSet<Member<CSSStyleSheet>>>();
     document_to_css_style_sheets_.Set(document, document_css_style_sheets);
   }
 
@@ -1290,6 +1339,17 @@ protocol::Response InspectorCSSAgent::getAnimatedStylesForNode(
     return response;
   }
 
+  auto* owner_document = element->ownerDocument();
+  if (!owner_document) {
+    return protocol::Response::ServerError(
+        "Element does not have an owner document");
+  }
+
+  if (!owner_document->GetFrame()) {
+    return protocol::Response::ServerError(
+        "Owner document does not have a frame attached");
+  }
+
   Element* animating_element = element;
   PseudoId element_pseudo_id = kPseudoIdNone;
   AtomicString view_transition_name = g_null_atom;
@@ -1355,7 +1415,9 @@ protocol::Response InspectorCSSAgent::getMatchedStylesForNode(
         css_property_registrations,
     std::unique_ptr<protocol::CSS::CSSFontPaletteValuesRule>*
         css_font_palette_values_rule,
-    std::optional<int>* parent_layout_node_id) {
+    std::optional<int>* parent_layout_node_id,
+    std::unique_ptr<protocol::Array<protocol::CSS::CSSFunctionRule>>*
+        css_function_rules) {
   protocol::Response response = AssertEnabled();
   if (!response.IsSuccess())
     return response;
@@ -1532,6 +1594,23 @@ protocol::Response InspectorCSSAgent::getMatchedStylesForNode(
     }
   }
 
+  DocumentStyleSheets::iterator css_style_sheets_for_document_it =
+      document_to_css_style_sheets_.find(&document);
+  if (css_style_sheets_for_document_it != document_to_css_style_sheets_.end() &&
+      resolver.MatchedRules()) {
+    HeapHashMap<Member<const ScopedCSSName>, Member<CSSFunctionRule>>
+        function_hash_map;
+    CollectReferencedFunctionRules(document,
+                                   *css_style_sheets_for_document_it->value,
+                                   *resolver.MatchedRules(), function_hash_map);
+    if (!function_hash_map.empty()) {
+      *css_function_rules =
+          std::make_unique<protocol::Array<protocol::CSS::CSSFunctionRule>>();
+      for (const auto& [scoped_name, rule] : function_hash_map) {
+        (*css_function_rules)->emplace_back(BuildObjectForFunctionRule(rule));
+      }
+    }
+  }
   return protocol::Response::Success();
 }
 
@@ -1711,9 +1790,15 @@ InspectorCSSAgent::CustomPropertiesForNode(Element* element) {
   Document& document = element->GetDocument();
   DCHECK(!document.NeedsLayoutTreeUpdateForNode(*element));
 
-  const ComputedStyle* style = element->EnsureComputedStyle();
-  if (!style /*|| !style->HasVariableReference()*/)
+  auto style_sheets = document_to_css_style_sheets_.find(&document);
+  if (style_sheets == document_to_css_style_sheets_.end()) {
     return result;
+  }
+
+  const ComputedStyle* style = element->EnsureComputedStyle();
+  if (!style) {
+    return result;
+  }
 
   for (const AtomicString& var_name : style->GetVariableNames()) {
     const auto* registration =
@@ -1725,8 +1810,7 @@ InspectorCSSAgent::CustomPropertiesForNode(Element* element) {
     if (StyleRuleProperty* rule = registration->PropertyRule()) {
       // Find CSSOM wrapper.
       CSSPropertyRule* property_rule = nullptr;
-      for (CSSStyleSheet* style_sheet :
-           *document_to_css_style_sheets_.at(&document)) {
+      for (CSSStyleSheet* style_sheet : *style_sheets->value) {
         property_rule = FindPropertyRule(style_sheet, rule);
         if (property_rule)
           break;
@@ -1789,10 +1873,14 @@ InspectorCSSAgent::FontPalettesForNode(Element& element) {
     return {};
   }
 
+  auto style_sheets = document_to_css_style_sheets_.find(&document);
+  if (style_sheets == document_to_css_style_sheets_.end()) {
+    return {};
+  }
+
   // Find CSSOM wrapper.
   CSSFontPaletteValuesRule* values_rule = nullptr;
-  for (CSSStyleSheet* style_sheet :
-       *document_to_css_style_sheets_.at(&document)) {
+  for (CSSStyleSheet* style_sheet : *style_sheets->value) {
     values_rule = FindFontPaletteValuesRule(style_sheet, rule);
     if (values_rule)
       break;
@@ -2015,6 +2103,70 @@ protocol::Response InspectorCSSAgent::getComputedStyleForNode(
   return protocol::Response::Success();
 }
 
+// Resolve percentages in the context of the given element values for margin,
+// padding, inset, width and height properties, return an empty string if
+// there was an error during percentage resolution. Returns null string if the
+// value doesn't have percentages and for all other properties that don't
+// support percentage resolution.
+String InspectorCSSAgent::ResolvePercentagesValues(
+    Element* element,
+    CSSPropertyName property_name,
+    const CSSValue* value) {
+  CHECK(!element->GetDocument().View()->NeedsLayout());
+  if (!IsMarginPaddingProperty(property_name) &&
+      !IsInsetProperty(property_name) && !IsSizingProperty(property_name)) {
+    return g_null_atom;
+  }
+  auto* primitive_value = DynamicTo<CSSPrimitiveValue>(value);
+  if (!primitive_value) {
+    return g_null_atom;
+  }
+
+  ElementResolveContext element_resolve_context(*element);
+  CSSToLengthConversionData::Flags ignored_flags = 0;
+  CSSToLengthConversionData length_conversion_data(
+      element->ComputedStyleRef(), element_resolve_context.ParentStyle(),
+      element_resolve_context.RootElementStyle(),
+      CSSToLengthConversionData::ViewportSize(),
+      CSSToLengthConversionData::ContainerSizes(),
+      CSSToLengthConversionData::AnchorData(),
+      element->GetComputedStyle()->EffectiveZoom(), ignored_flags, element);
+  Length length_value =
+      primitive_value->ConvertToLength(length_conversion_data);
+  if (!length_value.HasPercent()) {
+    return g_null_atom;
+  }
+
+  if (auto* box = DynamicTo<LayoutBox>(element->GetLayoutObject())) {
+    if (!box->GetLayoutResults().size()) {
+      return g_empty_string;
+    }
+    // Using the first LayoutResult is okay, as all fragments have the same
+    // percentage resolution sizes.
+    const ConstraintSpace& constraint_space =
+        box->GetLayoutResult(0)->GetConstraintSpaceForCaching();
+    LogicalSize percentage_resolution_size =
+        IsMarginPaddingProperty(property_name)
+            ? constraint_space.MarginPaddingPercentageResolutionSize()
+            : constraint_space.PercentageResolutionSize();
+    LayoutUnit percentage_resolution_value = PickInlineOrBlockSize(
+        percentage_resolution_size, property_name.Id(),
+        element->GetComputedStyle()->GetWritingDirection());
+    if (percentage_resolution_value == kIndefiniteSize) {
+      return g_empty_string;
+    }
+    LayoutUnit resolved_percentage_value =
+        MinimumValueForLength(length_value, percentage_resolution_value);
+
+    StringBuilder builder;
+    builder.AppendNumber(static_cast<double>(resolved_percentage_value));
+    builder.Append("px");
+    return builder.ToString();
+  }
+
+  return g_empty_string;
+}
+
 protocol::Response InspectorCSSAgent::resolveValues(
     std::unique_ptr<protocol::Array<String>> values,
     int node_id,
@@ -2039,6 +2191,8 @@ protocol::Response InspectorCSSAgent::resolveValues(
   }
 
   Document& document = element->GetDocument();
+  document.UpdateStyleAndLayoutForNode(element,
+                                       DocumentUpdateReason::kInspector);
   CSSParserContext* parser_context =
       MakeGarbageCollected<CSSParserContext>(document);
   ExecutionContext* execution_context = element->GetExecutionContext();
@@ -2082,6 +2236,11 @@ protocol::Response InspectorCSSAgent::resolveValues(
   }
   DCHECK(property_name.has_value());
 
+  if (CSSProperty::Get(property_name->Id()).IsShorthand()) {
+    return protocol::Response::ServerError(
+        "Property name should not be a shorthand.");
+  }
+
   *results = std::make_unique<protocol::Array<String>>();
   for (auto value : *values) {
     const CSSValue* parsed_value = nullptr;
@@ -2109,6 +2268,12 @@ protocol::Response InspectorCSSAgent::resolveValues(
 
     if (!computed_value) {
       (*results)->emplace_back(String());
+      continue;
+    }
+
+    if (String resolved_value =
+            ResolvePercentagesValues(element, *property_name, computed_value)) {
+      (*results)->emplace_back(resolved_value);
       continue;
     }
 
@@ -3356,6 +3521,113 @@ void InspectorCSSAgent::CollectScopesFromRule(
     scopes_list->emplace_back(BuildScopeObject(scope_rule));
     rule_types->emplace_back(protocol::CSS::CSSRuleTypeEnum::ScopeRule);
   }
+}
+
+std::unique_ptr<protocol::CSS::CSSFunctionConditionNode>
+InspectorCSSAgent::BuildObjectForFunctionConditionNode(CSSConditionRule* rule) {
+  return protocol::CSS::CSSFunctionConditionNode::create()
+      .setConditionText(rule->ConditionTextInternal())
+      .setChildren(BuildArrayForFunctionNodeChildren(rule->cssRules()))
+      .build();
+}
+
+std::unique_ptr<protocol::Array<protocol::CSS::CSSFunctionNode>>
+InspectorCSSAgent::BuildArrayForFunctionNodeChildren(CSSRuleList* rule_list) {
+  std::unique_ptr<protocol::Array<protocol::CSS::CSSFunctionNode>> result =
+      std::make_unique<protocol::Array<protocol::CSS::CSSFunctionNode>>();
+
+  const unsigned length = rule_list->length();
+  for (unsigned i = 0; i < length; ++i) {
+    CSSRule* rule = rule_list->item(i);
+    std::unique_ptr<protocol::CSS::CSSFunctionNode> function_node =
+        protocol::CSS::CSSFunctionNode::create().build();
+    switch (rule->GetType()) {
+      case CSSRule::kFunctionDeclarationsRule: {
+        CSSFunctionDeclarationsRule* function_rule =
+            To<CSSFunctionDeclarationsRule>(rule);
+        InspectorStyleSheet* inspector_style_sheet =
+            BindStyleSheet(function_rule->parentStyleSheet());
+        function_node->setStyle(inspector_style_sheet->BuildObjectForStyle(
+            function_rule->style(), nullptr));
+        break;
+      }
+      case CSSRule::kContainerRule: {
+        CSSContainerRule* container_rule = To<CSSContainerRule>(rule);
+        std::unique_ptr<protocol::CSS::CSSFunctionConditionNode> condition =
+            BuildObjectForFunctionConditionNode(container_rule);
+        condition->setContainerQueries(
+            BuildContainerQueryObject(container_rule));
+        function_node->setCondition(std::move(condition));
+        break;
+      }
+      case CSSRule::kMediaRule: {
+        CSSMediaRule* media_rule = To<CSSMediaRule>(rule);
+        std::unique_ptr<protocol::CSS::CSSFunctionConditionNode> condition =
+            BuildObjectForFunctionConditionNode(media_rule);
+        String source_url =
+            media_rule->parentStyleSheet()->Contents()->BaseURL();
+        if (source_url.empty()) {
+          source_url = InspectorDOMAgent::DocumentURLString(
+              media_rule->parentStyleSheet()->OwnerDocument());
+        }
+        condition->setMedia(
+            BuildMediaObject(media_rule->media(), kMediaListSourceMediaRule,
+                             source_url, media_rule->parentStyleSheet()));
+        function_node->setCondition(std::move(condition));
+        break;
+      }
+      case CSSRule::kSupportsRule: {
+        CSSSupportsRule* supports_rule = To<CSSSupportsRule>(rule);
+        std::unique_ptr<protocol::CSS::CSSFunctionConditionNode> condition =
+            BuildObjectForFunctionConditionNode(supports_rule);
+        condition->setSupports(BuildSupportsObject(supports_rule));
+        function_node->setCondition(std::move(condition));
+        break;
+      }
+      default:
+        DCHECK(false) << "Unexpected rule type: " << rule->GetType();
+        break;
+    }
+    result->emplace_back(std::move(function_node));
+  }
+  return result;
+}
+
+std::unique_ptr<protocol::CSS::CSSFunctionRule>
+InspectorCSSAgent::BuildObjectForFunctionRule(CSSFunctionRule* function_rule) {
+  InspectorStyleSheet* inspector_style_sheet =
+      BindStyleSheet(function_rule->parentStyleSheet());
+  std::unique_ptr<protocol::CSS::Value> name =
+      protocol::CSS::Value::create().setText(function_rule->name()).build();
+
+  if (CSSRuleSourceData* source_data =
+          inspector_style_sheet->SourceDataForRule(function_rule)) {
+    name->setRange(inspector_style_sheet->BuildSourceRangeObject(
+        source_data->rule_header_range));
+  }
+
+  std::unique_ptr<protocol::Array<protocol::CSS::CSSFunctionParameter>>
+      parameters = std::make_unique<
+          protocol::Array<protocol::CSS::CSSFunctionParameter>>();
+  for (const auto& parameter : function_rule->getParameters()) {
+    parameters->emplace_back(protocol::CSS::CSSFunctionParameter::create()
+                                 .setName(parameter->name())
+                                 .setType(parameter->type())
+                                 .build());
+  }
+  std::unique_ptr<protocol::CSS::CSSFunctionRule> result =
+      protocol::CSS::CSSFunctionRule::create()
+          .setName(std::move(name))
+          .setOrigin(inspector_style_sheet->Origin())
+          .setParameters(std::move(parameters))
+          .setChildren(
+              BuildArrayForFunctionNodeChildren(function_rule->cssRules()))
+          .build();
+  if (inspector_style_sheet->CanBindOrigin() &&
+      !inspector_style_sheet->Id().empty()) {
+    result->setStyleSheetId(inspector_style_sheet->Id());
+  }
+  return result;
 }
 
 InspectorStyleSheetForInlineStyle* InspectorCSSAgent::AsInspectorStyleSheet(

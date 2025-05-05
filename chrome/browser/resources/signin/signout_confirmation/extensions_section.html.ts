@@ -8,21 +8,27 @@ import type {ExtensionsSectionElement} from './extensions_section.js';
 
 export function getHtml(this: ExtensionsSectionElement) {
   // clang-format off
-  return html`
+  return html`<!--_html_template_start_-->
 <div id="extensionsSection">
   <div id="header-row">
-    <cr-checkbox id="checkbox">
+    <cr-checkbox id="checkbox" aria-label-override="${this.title_}">
     </cr-checkbox>
-    <div id="title">
-      ${this.title_}
+    <div id="title-container">
+      <span id="title">${this.title_}</span>
+      <!-- Make the icon focusable since it has a tooltip. cr-icon is used here
+      to support custom tooltip widths. -->
       <cr-icon id="tooltip-icon"
           icon="cr:info-outline"
+          tabindex="0"
+          role="img"
           aria-label="${this.tooltip_}">
       </cr-icon>
     </div>
     <cr-expand-button id="expandButton" no-hover
         ?expanded="${this.expanded_}"
-        @expanded-changed="${this.onExpandChanged_}">
+        @expanded-changed="${this.onExpandChanged_}"
+        role="button"
+        aria-label="${this.title_}">
     </cr-expand-button>
   </div>
   <cr-tooltip id="tooltip" for="tooltip-icon" position="right" offset="0"
@@ -41,6 +47,7 @@ export function getHtml(this: ExtensionsSectionElement) {
       `)}
     </div>
   </cr-collapse>
-</div>`;
+</div>
+<!--_html_template_end_-->`;
   // clang-format on
 }

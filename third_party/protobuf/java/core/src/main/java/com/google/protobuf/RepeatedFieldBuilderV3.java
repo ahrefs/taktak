@@ -25,11 +25,12 @@ import java.util.RandomAccess;
  *     should update gencode to >= 4.26.x which replaces RepeatedFieldBuilderV3 with
  *     RepeatedFieldBuilder.
  */
+@Deprecated
 public class RepeatedFieldBuilderV3<
-        MType extends AbstractMessage,
-        BType extends AbstractMessage.Builder,
-        IType extends MessageOrBuilder>
-    implements AbstractMessage.BuilderParent {
+                MType extends AbstractMessage,
+                BType extends AbstractMessage.Builder,
+                IType extends MessageOrBuilder>
+        implements AbstractMessage.BuilderParent {
 
   private AbstractMessage.BuilderParent parent;
 

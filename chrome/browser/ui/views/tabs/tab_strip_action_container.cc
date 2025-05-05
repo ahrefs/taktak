@@ -13,6 +13,7 @@
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_element_identifiers.h"
+#include "chrome/browser/ui/browser_window.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/layout_constants.h"
 #include "chrome/browser/ui/tabs/organization/tab_declutter_controller.h"
@@ -38,13 +39,13 @@
 #include "ui/views/view_class_properties.h"
 
 #if BUILDFLAG(ENABLE_GLIC)
+#include "chrome/browser/glic/browser_ui/glic_vector_icon_manager.h"
+#include "chrome/browser/glic/fre/glic_fre_controller.h"
 #include "chrome/browser/glic/glic_enabling.h"
-#include "chrome/browser/glic/glic_enums.h"
-#include "chrome/browser/glic/glic_fre_controller.h"
 #include "chrome/browser/glic/glic_keyed_service.h"
 #include "chrome/browser/glic/glic_keyed_service_factory.h"
 #include "chrome/browser/glic/glic_profile_manager.h"
-#include "chrome/browser/glic/glic_vector_icon_manager.h"
+#include "chrome/browser/glic/host/glic.mojom.h"
 #include "chrome/browser/glic/resources/grit/glic_browser_resources.h"
 #endif  // BUILDFLAG(ENABLE_GLIC)
 namespace {
@@ -384,6 +385,9 @@ void TabStripActionContainer::OnTabDeclutterButtonClicked() {
   base::UmaHistogramEnumeration(kDeclutterTriggerOutcomeName,
                                 TriggerOutcome::kAccepted);
   LogDeclutterTriggerBucket(true);
+  browser_->window()->CreateTabSearchBubble(
+      tab_search::mojom::TabSearchSection::kOrganize,
+      tab_search::mojom::TabOrganizationFeature::kDeclutter);
 
   ExecuteHideTabStripNudge(tab_declutter_button_);
 }
@@ -419,8 +423,8 @@ void TabStripActionContainer::OnGlicButtonClicked() {
       ->ToggleUI(tab_strip_controller_->GetBrowserWindowInterface(),
                  /*prevent_close=*/false,
                  glic_button_->GetIsShowingNudge()
-                     ? glic::InvocationSource::kNudge
-                     : glic::InvocationSource::kTopChromeButton);
+                     ? glic::mojom::InvocationSource::kNudge
+                     : glic::mojom::InvocationSource::kTopChromeButton);
 
   if (glic_button_->GetIsShowingNudge()) {
     glic_nudge_controller_->OnNudgeActivity(

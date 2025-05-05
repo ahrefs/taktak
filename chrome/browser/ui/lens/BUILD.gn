@@ -17,6 +17,7 @@ source_set("lens") {
     "lens_overlay_image_helper.h",
     "lens_overlay_side_panel_navigation_throttle.h",
     "lens_overlay_untrusted_ui.h",
+    "lens_search_controller.h",
     "lens_side_panel_untrusted_ui.h",
   ]
   friend = [
@@ -93,6 +94,7 @@ source_set("impl") {
     "lens_overlay_url_builder.cc",
     "lens_permission_bubble_controller.cc",
     "lens_preselection_bubble.cc",
+    "lens_search_controller.cc",
     "lens_side_panel_untrusted_ui.cc",
   ]
 

@@ -28,7 +28,6 @@
 #include "skia/ext/skia_utils_base.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
-#include "third_party/abseil-cpp/absl/types/variant.h"
 #include "third_party/blink/public/mojom/tokens/tokens.mojom-forward.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "ui/base/clipboard/clipboard.h"
@@ -227,6 +226,21 @@ class ClipboardHostImplWriteTest : public RenderViewHostTestHarness {
   // lifetime.
   raw_ptr<ClipboardHostImpl> fake_clipboard_host_impl_;
 };
+
+TEST_F(ClipboardHostImplWriteTest, NoSourceWithoutDataWrite) {
+  clipboard_host_impl()->CommitWrite();
+
+  base::test::TestFuture<const std::u16string&> future;
+  clipboard_host_impl()->ReadText(ui::ClipboardBuffer::kCopyPaste,
+                                  future.GetCallback());
+  EXPECT_EQ(u"", future.Take());
+
+  ClipboardEndpoint source_endpoint =
+      GetSourceClipboardEndpoint(nullptr, ui::ClipboardBuffer::kCopyPaste);
+  EXPECT_FALSE(source_endpoint.data_transfer_endpoint());
+  EXPECT_FALSE(source_endpoint.web_contents());
+  EXPECT_FALSE(source_endpoint.browser_context());
+}
 
 TEST_F(ClipboardHostImplWriteTest, MainFrameURL) {
   GURL gurl1("https://example.com");

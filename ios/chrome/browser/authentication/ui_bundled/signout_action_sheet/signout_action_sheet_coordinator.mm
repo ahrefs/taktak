@@ -51,11 +51,13 @@ using signin_metrics::SignoutDataLossAlertReason;
   // View for the popovert alert.
   __weak UIView* _view;
   // Source of the sign-out action. For histogram if the sign-out occurs.
-  signin_metrics::ProfileSignout _signout_source_metric;
+  signin_metrics::ProfileSignout _signoutSourceMetric;
   // Show the snackbar above the snackbar.
   BOOL _forceSnackbarOverToolbar;
   // Signin and syncing state.
   SignedInUserState _signedInUserState;
+  // Completion callback.
+  signin_ui::SignoutCompletionCallback _signoutCompletion;
 }
 
 // Service for managing identity authentication.
@@ -70,19 +72,21 @@ using signin_metrics::SignoutDataLossAlertReason;
 
 @implementation SignoutActionSheetCoordinator
 
-- (instancetype)initWithBaseViewController:(UIViewController*)viewController
-                                   browser:(Browser*)browser
-                                      rect:(CGRect)rect
-                                      view:(UIView*)view
-                  forceSnackbarOverToolbar:(BOOL)forceSnackbarOverToolbar
-                                withSource:(signin_metrics::ProfileSignout)
-                                               signout_source_metric {
+- (instancetype)
+    initWithBaseViewController:(UIViewController*)viewController
+                       browser:(Browser*)browser
+                          rect:(CGRect)rect
+                          view:(UIView*)view
+      forceSnackbarOverToolbar:(BOOL)forceSnackbarOverToolbar
+                    withSource:(signin_metrics::ProfileSignout)source
+                    completion:(signin_ui::SignoutCompletionCallback)block {
   self = [super initWithBaseViewController:viewController browser:browser];
   if (self) {
     _rect = rect;
     _view = view;
-    _signout_source_metric = signout_source_metric;
+    _signoutSourceMetric = source;
     _forceSnackbarOverToolbar = forceSnackbarOverToolbar;
+    _signoutCompletion = block;
   }
   return self;
 }
@@ -90,24 +94,17 @@ using signin_metrics::SignoutDataLossAlertReason;
 #pragma mark - ChromeCoordinator
 
 - (void)start {
-  DCHECK(self.signoutCompletion);
+  DCHECK(_signoutCompletion);
   DCHECK(self.authenticationService->HasPrimaryIdentity(
       signin::ConsentLevel::kSignin));
-  PrefService* profilePrefService = self.browser->GetProfile()->GetPrefs();
+  PrefService* profilePrefService = self.profile->GetPrefs();
   _signedInUserState = GetSignedInUserState(
       self.authenticationService, self.identityManager, profilePrefService);
-  switch (_signedInUserState) {
-    case SignedInUserState::kNotSyncingAndReplaceSyncWithSignin:
-      [self checkForUnsyncedDataAndSignOut];
-      break;
-    case SignedInUserState::kManagedAccountClearsDataOnSignout:
-    case SignedInUserState::kManagedAccountAndMigratedFromSyncing:
-      if (base::FeatureList::IsEnabled(kSeparateProfilesForManagedAccounts)) {
-        [self checkForUnsyncedDataAndSignOut];
-      } else {
-        [self startActionSheetCoordinatorForSignout];
-      }
-      break;
+  if (ForceLeavingPrimaryAccountConfirmationDialog(
+          _signedInUserState, self.profile->GetProfileName())) {
+    [self startActionSheetCoordinatorForSignout];
+  } else {
+    [self checkForUnsyncedDataAndSignOut];
   }
 }
 
@@ -139,77 +136,11 @@ using signin_metrics::SignoutDataLossAlertReason;
 #pragma mark - Browser-based properties
 
 - (AuthenticationService*)authenticationService {
-  return AuthenticationServiceFactory::GetForProfile(
-      self.browser->GetProfile());
+  return AuthenticationServiceFactory::GetForProfile(self.profile);
 }
 
 - (signin::IdentityManager*)identityManager {
-  return IdentityManagerFactory::GetForProfile(self.browser->GetProfile());
-}
-
-// Returns the title associated to the given user sign-in state or nil if no
-// title is defined for the state.
-- (NSString*)actionSheetCoordinatorTitle {
-  DCHECK(self.browser);
-  NSString* title = nil;
-  switch (_signedInUserState) {
-    case SignedInUserState::kNotSyncingAndReplaceSyncWithSignin:
-      // This dialog is triggered only if there is unsync data.
-      title = l10n_util::GetNSString(
-          IDS_IOS_SIGNOUT_DIALOG_SIGN_OUT_AND_DELETE_TITLE);
-      break;
-    case SignedInUserState::kManagedAccountAndMigratedFromSyncing: {
-      std::u16string hostedDomain =
-          HostedDomainForPrimaryAccount(self.identityManager);
-      title = l10n_util::GetNSStringF(
-          IDS_IOS_SIGNOUT_DIALOG_TITLE_WITH_SYNCING_MANAGED_ACCOUNT,
-          hostedDomain);
-      break;
-    }
-    case SignedInUserState::kManagedAccountClearsDataOnSignout: {
-      title =
-          self.accountSwitch
-              ? l10n_util::GetNSString(
-                    IDS_IOS_SWITCH_CLEARS_DATA_DIALOG_TITLE_WITH_MANAGED_ACCOUNT)
-              : l10n_util::GetNSString(
-                    IDS_IOS_SIGNOUT_CLEARS_DATA_DIALOG_TITLE_WITH_MANAGED_ACCOUNT);
-      break;
-    }
-  }
-
-  return title;
-}
-
-// Returns the message associated to the given user sign-in state or nil if no
-// message is defined for the state.
-- (NSString*)actionSheetCoordinatorMessage {
-  switch (_signedInUserState) {
-    case SignedInUserState::kNotSyncingAndReplaceSyncWithSignin: {
-      // This dialog is triggered only if there is unsync data.
-      NSString* userEmail =
-          self.authenticationService
-              ->GetPrimaryIdentity(signin::ConsentLevel::kSignin)
-              .userEmail;
-      return self.accountSwitch
-                 ? l10n_util::GetNSStringF(
-                       IDS_IOS_DATA_NOT_UPLOADED_SWITCH_DIALOG_BODY,
-                       base::SysNSStringToUTF16(userEmail))
-                 : l10n_util::GetNSString(
-                       IDS_IOS_SIGNOUT_DIALOG_MESSAGE_WITH_NOT_SAVED_DATA);
-    }
-    case SignedInUserState::kManagedAccountClearsDataOnSignout:
-      // If `kIdentityDiscAccountMenu` is enabled, signing out may also cause
-      // tabs to be closed, see `MainControllerAuthenticationServiceDelegate::
-      //    ClearBrowsingDataForSignedinPeriod`.
-      return base::FeatureList::IsEnabled(kIdentityDiscAccountMenu)
-                 ? l10n_util::GetNSString(
-                       IDS_IOS_SIGNOUT_CLOSES_TABS_AND_CLEARS_DATA_DIALOG_MESSAGE_WITH_MANAGED_ACCOUNT)
-                 : l10n_util::GetNSString(
-                       IDS_IOS_SIGNOUT_CLEARS_DATA_DIALOG_MESSAGE_WITH_MANAGED_ACCOUNT);
-    case SignedInUserState::kManagedAccountAndMigratedFromSyncing: {
-      return nil;
-    }
-  }
+  return IdentityManagerFactory::GetForProfile(self.profile);
 }
 
 #pragma mark - Properties
@@ -241,7 +172,7 @@ using signin_metrics::SignoutDataLossAlertReason;
   [self preventUserInteraction];
 
   syncer::SyncService* syncService =
-      SyncServiceFactory::GetForProfile(self.browser->GetProfile());
+      SyncServiceFactory::GetForProfile(self.profile);
   __weak __typeof(self) weakSelf = self;
   auto callback = base::BindOnce(^(syncer::DataTypeSet set) {
     [weakSelf continueSignOutWithUnsyncedDataTypeSet:set];
@@ -255,11 +186,9 @@ using signin_metrics::SignoutDataLossAlertReason;
 - (void)continueSignOutWithUnsyncedDataTypeSet:(syncer::DataTypeSet)set {
   [self allowUserInteraction];
   if (!set.empty()) {
-    if (!self.accountSwitch) {
-      for (syncer::DataType type : set) {
-        base::UmaHistogramEnumeration("Sync.UnsyncedDataOnSignout2",
-                                      syncer::DataTypeHistogramValue(type));
-      }
+    for (syncer::DataType type : set) {
+      base::UmaHistogramEnumeration("Sync.UnsyncedDataOnSignout2",
+                                    syncer::DataTypeHistogramValue(type));
     }
     [self startActionSheetCoordinatorForSignout];
   } else {
@@ -276,120 +205,20 @@ using signin_metrics::SignoutDataLossAlertReason;
 
 // Starts the signout action sheet for the current user state.
 - (void)startActionSheetCoordinatorForSignout {
-  self.actionSheetCoordinator = [[ActionSheetCoordinator alloc]
-      initWithBaseViewController:self.baseViewController
-                         browser:self.browser
-                           title:self.actionSheetCoordinatorTitle
-                         message:self.actionSheetCoordinatorMessage
-                            rect:_rect
-                            view:_view];
-
-  __weak SignoutActionSheetCoordinator* weakSelf = self;
-  switch (_signedInUserState) {
-    case SignedInUserState::kNotSyncingAndReplaceSyncWithSignin: {
-      // This dialog is triggered only if there is unsynced data.
-      self.actionSheetCoordinator.alertStyle = UIAlertControllerStyleAlert;
-      NSString* const signOutButtonTitle =
-          self.accountSwitch
-              ? l10n_util::GetNSString(
-                    IDS_IOS_DATA_NOT_UPLOADED_SWITCH_DIALOG_BUTTON)
-              : l10n_util::GetNSString(
-                    IDS_IOS_SIGNOUT_DIALOG_SIGN_OUT_AND_DELETE_BUTTON);
-      [self.actionSheetCoordinator
-          addItemWithTitle:signOutButtonTitle
-                    action:^{
-                      base::RecordAction(base::UserMetricsAction(
-                          "Signin_Signout_Confirm_Regular_UNO"));
-                      signin_metrics::
-                          RecordSignoutConfirmationFromDataLossAlert(
-                              SignoutDataLossAlertReason::
-                                  kSignoutWithUnsyncedData,
-                              true);
-                      [weakSelf signoutConfirmationWithContinue:YES];
-                    }
-                     style:UIAlertActionStyleDestructive];
-      [self.actionSheetCoordinator
-          addItemWithTitle:l10n_util::GetNSString(IDS_CANCEL)
-                    action:^{
-                      base::RecordAction(base::UserMetricsAction(
-                          "Signin_Signout_Cancel_Regular_UNO"));
-                      signin_metrics::
-                          RecordSignoutConfirmationFromDataLossAlert(
-                              SignoutDataLossAlertReason::
-                                  kSignoutWithUnsyncedData,
-                              false);
-                      [weakSelf signoutConfirmationWithContinue:NO];
-                    }
-                     style:UIAlertActionStyleCancel];
-      break;
-    }
-    case SignedInUserState::kManagedAccountClearsDataOnSignout: {
-      self.actionSheetCoordinator.alertStyle = UIAlertControllerStyleAlert;
-      NSString* const signOutButtonTitle =
-          self.accountSwitch
-              ? l10n_util::GetNSString(
-                    IDS_IOS_DATA_NOT_UPLOADED_SWITCH_DIALOG_BUTTON)
-              : l10n_util::GetNSString(
-                    IDS_IOS_SIGNOUT_AND_DELETE_DIALOG_SIGN_OUT_BUTTON);
-      [self.actionSheetCoordinator
-          addItemWithTitle:signOutButtonTitle
-                    action:^{
-                      base::RecordAction(base::UserMetricsAction(
-                          "Signin_Signout_Confirm_Managed_ClearDataOnSignout"));
-                      signin_metrics::
-                          RecordSignoutConfirmationFromDataLossAlert(
-                              SignoutDataLossAlertReason::
-                                  kSignoutWithClearDataForManagedUser,
-                              true);
-                      [weakSelf signoutConfirmationWithContinue:YES];
-                    }
-                     style:UIAlertActionStyleDestructive];
-      [self.actionSheetCoordinator
-          addItemWithTitle:l10n_util::GetNSString(IDS_CANCEL)
-                    action:^{
-                      base::RecordAction(base::UserMetricsAction(
-                          "Signin_Signout_Cancel_Managed_ClearDataOnSignout"));
-                      signin_metrics::
-                          RecordSignoutConfirmationFromDataLossAlert(
-                              SignoutDataLossAlertReason::
-                                  kSignoutWithClearDataForManagedUser,
-                              false);
-                      [weakSelf signoutConfirmationWithContinue:NO];
-                    }
-                     style:UIAlertActionStyleCancel];
-      break;
-    }
-    case SignedInUserState::kManagedAccountAndMigratedFromSyncing: {
-      if (base::FeatureList::IsEnabled(kIdentityDiscAccountMenu)) {
-        self.actionSheetCoordinator.alertStyle = UIAlertControllerStyleAlert;
-      }
-      NSString* const clearFromDeviceTitle =
-          l10n_util::GetNSString(IDS_IOS_SIGNOUT_DIALOG_CLEAR_DATA_BUTTON);
-      [self.actionSheetCoordinator
-          addItemWithTitle:clearFromDeviceTitle
-                    action:^{
-                      base::RecordAction(base::UserMetricsAction(
-                          "Signin_Signout_Confirm_Managed_Syncing"));
-                      [weakSelf signoutConfirmationWithContinue:YES];
-                    }
-                     style:UIAlertActionStyleDestructive];
-      [self.actionSheetCoordinator
-          addItemWithTitle:l10n_util::GetNSString(IDS_CANCEL)
-                    action:^{
-                      base::RecordAction(
-                          base::UserMetricsAction("Signin_Signout_Cancel"));
-                      [weakSelf signoutConfirmationWithContinue:NO];
-                    }
-                     style:UIAlertActionStyleCancel];
-      break;
-    }
-  }
+  __weak __typeof(self) weakSelf = self;
+  self.actionSheetCoordinator = GetLeavingPrimaryAccountConfirmationDialog(
+      self.baseViewController, self.browser, _view, _rect, _signedInUserState,
+      /*account_profile_switch=*/false, ^(BOOL continueFlow) {
+        [weakSelf signoutConfirmationWithContinue:continueFlow];
+      });
   base::RecordAction(
       base::UserMetricsAction("Signin_Signout_ConfirmationRequestPresented"));
   [self.actionSheetCoordinator start];
 }
 
 - (void)signoutConfirmationWithContinue:(BOOL)continueSignout {
+  [self.actionSheetCoordinator stop];
+  self.actionSheetCoordinator = nil;
   if (continueSignout) {
     [self handleSignOut];
     [self dismissActionSheetCoordinator];
@@ -417,7 +246,7 @@ using signin_metrics::SignoutDataLossAlertReason;
   MDCSnackbarMessage* snackbarMessage = [self signoutSnackbarMessage];
 
   __weak __typeof(self) weakSelf = self;
-  signin::MultiProfileSignOut(self.browser, _signout_source_metric,
+  signin::MultiProfileSignOut(self.browser, _signoutSourceMetric,
                               _forceSnackbarOverToolbar, snackbarMessage, ^{
                                 [weakSelf signOutDidFinish];
                               });
@@ -436,16 +265,13 @@ using signin_metrics::SignoutDataLossAlertReason;
 
 // Returns snackbar if needed.
 - (MDCSnackbarMessage*)signoutSnackbarMessage {
-  if (self.accountSwitch) {
-    return nil;
-  }
   if (self.isForceSigninEnabled) {
     // Snackbar should be skipped since force sign-in dialog will be shown right
     // after.
     return nil;
   }
   syncer::SyncService* syncService =
-      SyncServiceFactory::GetForProfile(self.browser->GetProfile());
+      SyncServiceFactory::GetForProfile(self.profile);
   int message_id =
       syncService->HasDisableReason(
           syncer::SyncService::DISABLE_REASON_ENTERPRISE_POLICY) ||
@@ -460,11 +286,11 @@ using signin_metrics::SignoutDataLossAlertReason;
 // Calls `self.signoutCompletion` if available, and sets it to `null` before the
 // call.
 - (void)callCompletionBlock:(BOOL)signedOut {
-  if (!self.signoutCompletion) {
+  if (!_signoutCompletion) {
     return;
   }
-  signin_ui::SignoutCompletionCallback completion = self.signoutCompletion;
-  self.signoutCompletion = nil;
+  signin_ui::SignoutCompletionCallback completion = _signoutCompletion;
+  _signoutCompletion = nil;
   completion(signedOut);
 }
 

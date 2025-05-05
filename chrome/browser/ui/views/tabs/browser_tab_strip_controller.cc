@@ -189,8 +189,8 @@ class BrowserTabStripController::TabContextMenuContents
                                                                accelerator);
   }
   void ExecuteCommand(int command_id, int event_flags) override {
-    // Executing the command destroys |this|, and can also end up destroying
-    // |controller_|. So stop the highlights before executing the command.
+    // Executing the command destroys `this`, and can also end up destroying
+    // `controller_`. So stop the highlights before executing the command.
     controller_->ExecuteCommandForTab(
         static_cast<TabStripModel::ContextMenuCommand>(command_id), tab_);
   }
@@ -250,9 +250,11 @@ void BrowserTabStripController::InitFromModel(TabStrip* tabstrip) {
 
   // Walk the model, calling our insertion observer method for each item within
   // it.
+  std::vector<std::pair<WebContents*, int>> tabs_to_add;
   for (int i = 0; i < model_->count(); ++i) {
-    AddTab(model_->GetWebContentsAt(i), i);
+    tabs_to_add.emplace_back(model_->GetWebContentsAt(i), i);
   }
+  AddTabs(tabs_to_add);
 }
 
 bool BrowserTabStripController::IsCommandEnabledForTab(
@@ -343,7 +345,7 @@ void BrowserTabStripController::SelectTab(int model_index,
           [](std::unique_ptr<viz::PeakGpuMemoryTracker> tracker,
              const viz::FrameTimingDetails& frame_timing_details) {
             // This callback will be ran once the ui::Compositor presents the
-            // next frame for the |tabstrip_|. The destruction of |tracker| will
+            // next frame for the `tabstrip_`. The destruction of `tracker` will
             // get the peak GPU memory and record a histogram.
           },
           std::move(tracker)));
@@ -433,7 +435,7 @@ void BrowserTabStripController::OnCloseTab(
   std::vector<tab_groups::TabGroupId> groups_to_delete =
       model_->GetGroupsDestroyedFromRemovingIndices({model_index});
 
-  if (!tab_groups::IsTabGroupsSaveV2Enabled() || groups_to_delete.empty()) {
+  if (groups_to_delete.empty()) {
     std::move(callback).Run(source);
     return;
   }
@@ -755,10 +757,12 @@ void BrowserTabStripController::OnTabStripModelChanged(
     const TabStripSelectionChange& selection) {
   switch (change.type()) {
     case TabStripModelChange::kInserted: {
+      std::vector<std::pair<WebContents*, int>> tabs_to_add;
       for (const auto& contents : change.GetInsert()->contents) {
         DCHECK(model_->ContainsIndex(contents.index));
-        AddTab(contents.contents, contents.index);
+        tabs_to_add.emplace_back(contents.contents, contents.index);
       }
+      AddTabs(tabs_to_add);
       break;
     }
     case TabStripModelChange::kRemoved: {
@@ -795,7 +799,7 @@ void BrowserTabStripController::OnTabStripModelChanged(
   }
 
   if (selection.active_tab_changed()) {
-    // It's possible for |new_contents| to be null when the final tab in a tab
+    // It's possible for `new_contents` to be null when the final tab in a tab
     // strip is closed.
     content::WebContents* new_contents = selection.new_contents;
     std::optional<size_t> index = selection.new_model.active();
@@ -826,6 +830,20 @@ void BrowserTabStripController::OnTabGroupChanged(
   switch (change.type) {
     case TabGroupChange::kCreated: {
       tabstrip_->OnGroupCreated(change.group);
+      // Add tabs to the correct group if the group if re-inserted from a
+      // different tabstrip as it is not an empty tab group.
+      if (change.GetCreateChange()->reason() ==
+          TabGroupChange::TabGroupCreationReason::
+              kInsertedFromAnotherTabstrip) {
+        const gfx::Range tabs_in_group =
+            change.model->group_model()->GetTabGroup(change.group)->ListTabs();
+
+        for (int i = static_cast<int>(tabs_in_group.start());
+             i < static_cast<int>(tabs_in_group.end()); i++) {
+          tabstrip_->AddTabToGroup(change.group, i);
+        }
+        tabstrip_->OnGroupContentsChanged(change.group);
+      }
       break;
     }
     case TabGroupChange::kEditorOpened: {
@@ -918,6 +936,27 @@ bool BrowserTabStripController::IsFrameButtonsRightAligned() const {
 #endif  // BUILDFLAG(IS_MAC)
 }
 
+void BrowserTabStripController::OnSplitTabCreated(
+    std::vector<std::pair<tabs::TabInterface*, int>> tabs,
+    split_tabs::SplitTabId split_id,
+    TabStripModelObserver::SplitTabAddReason reason,
+    tabs::SplitTabLayout tab_layout) {
+  for (const auto& tab_pair : tabs) {
+    int index = tab_pair.second;
+    tabstrip_->SetSplit(index, split_id);
+  }
+}
+
+void BrowserTabStripController::OnSplitTabRemoved(
+    std::vector<std::pair<tabs::TabInterface*, int>> tabs,
+    split_tabs::SplitTabId split_id,
+    SplitTabRemoveReason reason) {
+  for (const auto& tab_pair : tabs) {
+    int index = tab_pair.second;
+    tabstrip_->SetSplit(index, std::nullopt);
+  }
+}
+
 BrowserNonClientFrameView* BrowserTabStripController::GetFrameView() {
   return browser_view_->frame()->GetFrameView();
 }
@@ -933,14 +972,23 @@ void BrowserTabStripController::SetTabDataAt(content::WebContents* web_contents,
                         TabRendererData::FromTabInModel(model_, model_index));
 }
 
-void BrowserTabStripController::AddTab(WebContents* contents, int index) {
+void BrowserTabStripController::AddTabs(
+    std::vector<std::pair<WebContents*, int>> contents_list) {
   // Cancel any pending tab transition.
   hover_tab_selector_.CancelTabTransition();
 
-  tabstrip_->AddTabAt(index, TabRendererData::FromTabInModel(model_, index));
+  std::vector<std::pair<int, TabRendererData>> tabs_data;
+  for (const auto& [contents, index] : contents_list) {
+    tabs_data.emplace_back(index,
+                           TabRendererData::FromTabInModel(model_, index));
+  }
 
-  tabstrip_->tab_at(index)->SetShouldShowDiscardIndicator(
-      should_show_discard_indicator_);
+  tabstrip_->AddTabsAt(std::move(tabs_data));
+
+  for (const auto& [contents, index] : contents_list) {
+    tabstrip_->tab_at(index)->SetShouldShowDiscardIndicator(
+        should_show_discard_indicator_);
+  }
 
   // Try to show tab search IPH if needed.
   constexpr int kTabSearchIPHTriggerThreshold = 8;

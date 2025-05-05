@@ -4,10 +4,17 @@
 
 #include "chrome/browser/ui/tabs/glic_nudge_controller.h"
 
+#include "chrome/browser/glic/glic_pref_names.h"
+#include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
 #include "chrome/browser/ui/views/tabs/tab_strip_action_container.h"
+#include "components/prefs/pref_service.h"
 #include "content/public/browser/web_contents.h"
+
+#if BUILDFLAG(ENABLE_GLIC)
+#include "chrome/browser/glic/glic_keyed_service_factory.h"
+#endif
 
 namespace tabs {
 
@@ -34,8 +41,12 @@ void GlicNudgeController::UpdateNudgeLabel(
   }
 
   nudge_activity_callback_ = callback;
-  for (auto& observer : observers_) {
-    observer.OnTriggerGlicNudgeUI(nudge_label);
+  PrefService* const pref_service =
+      browser_window_interface_->GetProfile()->GetPrefs();
+  if (pref_service->GetBoolean(glic::prefs::kGlicPinnedToTabstrip)) {
+    for (auto& observer : observers_) {
+      observer.OnTriggerGlicNudgeUI(nudge_label);
+    }
   }
 
   if (nudge_label.empty()) {
@@ -49,9 +60,21 @@ void GlicNudgeController::OnNudgeActivity(GlicNudgeActivity activity) {
     return;
   }
   switch (activity) {
-    case GlicNudgeActivity::kNudgeShown:
+    case GlicNudgeActivity::kNudgeShown: {
+      // We should only have a GlicNudgeController if the ENABLE_GLIC buildflag
+      // is set. However, since we don't prevent it by having #if's across the
+      // various places the class is referenced (which would be noisy), it's
+      // possible to have this class built even when that buildflag isn't set,
+      // so we'll conditionally compile this next section.
+#if BUILDFLAG(ENABLE_GLIC)
+      auto* profile = browser_window_interface_->GetProfile();
+      auto* glic_service =
+          glic::GlicKeyedServiceFactory::GetGlicKeyedService(profile);
+      glic_service->TryPreloadFre();
+#endif
       nudge_activity_callback_.Run(GlicNudgeActivity::kNudgeShown);
       break;
+    }
     case GlicNudgeActivity::kNudgeClicked:
     case GlicNudgeActivity::kNudgeDismissed:
     case GlicNudgeActivity::kNudgeIgnoredActiveTabChanged:
@@ -63,6 +86,10 @@ void GlicNudgeController::OnNudgeActivity(GlicNudgeActivity activity) {
       nudge_activity_callback_.Reset();
       break;
   }
+}
+
+void GlicNudgeController::SetNudgeActivityCallbackForTesting() {
+  nudge_activity_callback_ = base::DoNothing();
 }
 
 void GlicNudgeController::OnActiveTabChanged(

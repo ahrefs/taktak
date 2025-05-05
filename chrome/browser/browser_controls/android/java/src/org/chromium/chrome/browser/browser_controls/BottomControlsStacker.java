@@ -370,7 +370,8 @@ public class BottomControlsStacker implements BrowserControlsStateProvider.Obser
     public void onControlsConstraintsChanged(
             BrowserControlsOffsetTagsInfo oldOffsetTagsInfo,
             BrowserControlsOffsetTagsInfo offsetTagsInfo,
-            @BrowserControlsState int constraints) {
+            @BrowserControlsState int constraints,
+            boolean shouldUpdateOffsets) {
         mBrowserControlsState = constraints;
         if (ChromeFeatureList.sBcivBottomControls.isEnabled()) {
             mOffsetTagsInfo = offsetTagsInfo;
@@ -389,8 +390,17 @@ public class BottomControlsStacker implements BrowserControlsStateProvider.Obser
                 totalHeight = 0;
             }
 
+            mBrowserControlsSizer.setBottomControlsAdditionalHeight(additionalHeight);
             offsetTagsInfo.mBottomControlsConstraints =
                     new OffsetTagConstraints(0, 0, 0, totalHeight + additionalHeight);
+
+            if (shouldUpdateOffsets && isDispatchingYOffset()) {
+                repositionLayers(
+                        mBrowserControlsSizer.getBottomControlOffset(),
+                        mBrowserControlsSizer.getBottomControlsMinHeightOffset(),
+                        false,
+                        isVisibilityForced());
+            }
         }
     }
 

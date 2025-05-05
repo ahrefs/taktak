@@ -6,12 +6,14 @@ package org.chromium.chrome.browser.tab;
 
 import androidx.annotation.IntDef;
 
+import org.chromium.build.annotations.NullMarked;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * State in which the tab was created. This can be used in metric accounting - e.g. to
- * distinguish reasons for a tab to be restored upon first display.
+ * State in which the tab was created. This can be used in metric accounting - e.g. to distinguish
+ * reasons for a tab to be restored upon first display.
  */
 @IntDef({
     TabCreationState.LIVE_IN_FOREGROUND,
@@ -20,6 +22,7 @@ import java.lang.annotation.RetentionPolicy;
     TabCreationState.FROZEN_FOR_LAZY_LOAD
 })
 @Retention(RetentionPolicy.SOURCE)
+@NullMarked
 public @interface TabCreationState {
     int LIVE_IN_FOREGROUND = 0;
     int LIVE_IN_BACKGROUND = 1;

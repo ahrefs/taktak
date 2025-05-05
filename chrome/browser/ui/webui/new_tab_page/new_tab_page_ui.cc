@@ -376,6 +376,8 @@ content::WebUIDataSource* CreateAndAddNewTabPageUiHtmlSource(Profile* profile) {
       {"modulesOutlookCalendarInfo", IDS_NTP_MODULES_OUTLOOK_CALENDAR_INFO},
       {"modulesCalendarJoinMeetingButtonText",
        IDS_NTP_MODULES_CALENDAR_JOIN_MEETING_BUTTON_TEXT},
+      {"modulesCalendarJoinMeetingButtonAcc",
+       IDS_NTP_MODULES_CALENDAR_JOIN_MEETING_BUTTON_ACCNAME},
       {"modulesCalendarInProgress", IDS_NTP_MODULES_CALENDAR_IN_PROGRESS},
       {"modulesCalendarInXMin", IDS_NTP_MODULES_CALENDAR_IN_X_MIN},
       {"modulesCalendarInXHr", IDS_NTP_MODULES_CALENDAR_IN_X_HR},
@@ -776,7 +778,8 @@ void NewTabPageUI::CreateBrowserCommandHandler(
       Command::kNoOpCommand,
   };
   promo_browser_command_handler_ = std::make_unique<BrowserCommandHandler>(
-      std::move(pending_handler), profile_, supported_commands);
+      std::move(pending_handler), profile_, supported_commands,
+      web_ui()->GetWebContents());
 }
 
 void NewTabPageUI::CreatePageHandler(

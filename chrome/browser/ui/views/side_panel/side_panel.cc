@@ -82,7 +82,9 @@ constexpr int kAnimationDurationMs = 450;
 class SidePanelBorder : public views::Border {
  public:
   explicit SidePanelBorder(BrowserView* browser_view)
-      : Border(gfx::kPlaceholderColor), browser_view_(browser_view) {}
+      : browser_view_(browser_view) {
+    SetColor(kColorSidePanelContentAreaSeparator);
+  }
 
   SidePanelBorder(const SidePanelBorder&) = delete;
   SidePanelBorder& operator=(const SidePanelBorder&) = delete;
@@ -140,7 +142,6 @@ class SidePanelBorder : public views::Border {
       // border. This is done in DIPs because for some device scale factors, the
       // conversion to pixels can cause the clip to be off by a pixel, resulting
       // in a pixel gap between the side panel border and web contents.
-
       canvas->ClipPath(rounded_border_path, /*do_anti_alias=*/true);
 
       // Draw the top-container background.
@@ -169,7 +170,6 @@ class SidePanelBorder : public views::Border {
         views::Separator::kThickness + header_height_ - GetBorderThickness();
     return GetBorderInsets() + gfx::Insets::TLBR(top_inset, 0, 0, 2);
   }
-
   gfx::Size GetMinimumSize() const override {
     return gfx::Size(GetInsets().width(), GetInsets().height());
   }
@@ -233,8 +233,7 @@ class ContentParentView : public views::View {
  public:
   ContentParentView() {
     SetUseDefaultFillLayout(true);
-    SetBackground(
-        views::CreateThemedSolidBackground(kColorSidePanelBackground));
+    SetBackground(views::CreateSolidBackground(kColorSidePanelBackground));
     SetProperty(
         views::kFlexBehaviorKey,
         views::FlexSpecification(views::MinimumFlexSizeRule::kScaleToZero,
@@ -432,8 +431,8 @@ void SidePanel::AddHeaderView(std::unique_ptr<views::View> view) {
   header_view_->SetVisible(false);
   AddChildView(std::move(view));
   static_cast<BorderView*>(border_view_)->HeaderViewChanged(header_view_);
-  //  // Update the border so that the insets include space for the header to be
-  //  // placed on top of the border.
+  // Update the border so that the insets include space for the header to be
+  // placed on top of the border.
   int top_inset = header_view_->height() - GetBorderThickness();
   SetBorder(views::CreateEmptyBorder(GetBorderInsets() +
                                      gfx::Insets::TLBR(top_inset, 0, 0, 0)));

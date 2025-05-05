@@ -12,8 +12,10 @@
 #include <utility>
 #include <vector>
 
+#include "ash/accelerators/accelerator_controller_impl.h"
 #include "ash/constants/ash_features.h"
 #include "ash/constants/ash_pref_names.h"
+#include "ash/public/cpp/accelerator_actions.h"
 #include "ash/public/cpp/scanner/scanner_delegate.h"
 #include "ash/public/cpp/scanner/scanner_enums.h"
 #include "ash/public/cpp/scanner/scanner_feedback_info.h"
@@ -32,8 +34,11 @@
 #include "ash/system/toast/toast_overlay.h"
 #include "ash/test/ash_test_base.h"
 #include "ash/test_shell_delegate.h"
+#include "ash/wm/screen_pinning_controller.h"
+#include "ash/wm/window_util.h"
 #include "base/check.h"
 #include "base/containers/span.h"
+#include "base/functional/bind.h"
 #include "base/memory/ref_counted_memory.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/strings/string_split.h"
@@ -65,6 +70,7 @@
 #include "ui/message_center/fake_message_center.h"
 #include "ui/message_center/message_center.h"
 #include "ui/views/view_utils.h"
+#include "ui/wm/core/window_util.h"
 #include "url/gurl.h"
 
 namespace ash {
@@ -168,7 +174,8 @@ class ScannerControllerTest : public AshTestBase {
     auto shell_delegate = std::make_unique<TestShellDelegate>();
     shell_delegate->SetSendSpecializedFeatureFeedbackCallback(
         mock_send_specialized_feature_feedback_.Get());
-    AshTestBase::SetUp(std::move(shell_delegate));
+    set_shell_delegate(std::move(shell_delegate));
+    AshTestBase::SetUp();
   }
 
   base::MockCallback<TestShellDelegate::SendSpecializedFeatureFeedbackCallback>&
@@ -270,6 +277,22 @@ TEST_F(ScannerControllerTest,
   EXPECT_FALSE(scanner_controller->StartNewSession());
 }
 
+TEST_F(ScannerControllerTest, CannotStartSessionInPinnedMode) {
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  ON_CALL(*GetFakeScannerProfileScopedDelegate(*scanner_controller),
+          CheckFeatureAccess)
+      .WillByDefault(Return(specialized_features::FeatureAccessFailureSet{}));
+
+  std::unique_ptr<aura::Window> pinned_window = CreateAppWindow();
+  wm::ActivateWindow(pinned_window.get());
+  window_util::PinWindow(pinned_window.get(), /*trusted=*/false);
+  ASSERT_TRUE(Shell::Get()->screen_pinning_controller()->IsPinned());
+
+  EXPECT_FALSE(scanner_controller->CanStartSession());
+  EXPECT_FALSE(scanner_controller->StartNewSession());
+}
+
 TEST_F(ScannerControllerTest, CanShowFeatureSettingsToggleIfNoChecksFail) {
   ScannerController* scanner_controller = Shell::Get()->scanner_controller();
   ASSERT_TRUE(scanner_controller);
@@ -278,6 +301,21 @@ TEST_F(ScannerControllerTest, CanShowFeatureSettingsToggleIfNoChecksFail) {
       .WillByDefault(Return(specialized_features::FeatureAccessFailureSet{}));
 
   EXPECT_TRUE(scanner_controller->CanShowFeatureSettingsToggle());
+}
+
+TEST_F(ScannerControllerTest, DoesNotShowFeatureSettingsToggleInPinnedMode) {
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  ON_CALL(*GetFakeScannerProfileScopedDelegate(*scanner_controller),
+          CheckFeatureAccess)
+      .WillByDefault(Return(specialized_features::FeatureAccessFailureSet{}));
+
+  std::unique_ptr<aura::Window> pinned_window = CreateAppWindow();
+  wm::ActivateWindow(pinned_window.get());
+  window_util::PinWindow(pinned_window.get(), /*trusted=*/false);
+  ASSERT_TRUE(Shell::Get()->screen_pinning_controller()->IsPinned());
+
+  EXPECT_FALSE(scanner_controller->CanShowFeatureSettingsToggle());
 }
 
 TEST_F(ScannerControllerTest, CanShowUiIfConsentNotAcceptedOnly) {
@@ -372,6 +410,42 @@ TEST_F(ScannerControllerDisabledTest, CanShowUiForShellFalseWhenNoController) {
   EXPECT_FALSE(ScannerController::CanShowUiForShell());
 }
 
+TEST_F(ScannerControllerTest, CannotShowUiInPinnedMode) {
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  ON_CALL(*GetFakeScannerProfileScopedDelegate(*scanner_controller),
+          CheckFeatureAccess)
+      .WillByDefault(Return(specialized_features::FeatureAccessFailureSet{}));
+
+  std::unique_ptr<aura::Window> pinned_window = CreateAppWindow();
+  wm::ActivateWindow(pinned_window.get());
+  window_util::PinWindow(pinned_window.get(), /*trusted=*/false);
+  ASSERT_TRUE(Shell::Get()->screen_pinning_controller()->IsPinned());
+
+  EXPECT_FALSE(scanner_controller->CanShowUi());
+  EXPECT_FALSE(ScannerController::CanShowUiForShell());
+}
+
+TEST_F(ScannerControllerTest, CanShowUiAfterExitingPinnedMode) {
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  ON_CALL(*GetFakeScannerProfileScopedDelegate(*scanner_controller),
+          CheckFeatureAccess)
+      .WillByDefault(Return(specialized_features::FeatureAccessFailureSet{}));
+  std::unique_ptr<aura::Window> pinned_window = CreateAppWindow();
+  wm::ActivateWindow(pinned_window.get());
+  window_util::PinWindow(pinned_window.get(), /*trusted=*/false);
+  ASSERT_TRUE(Shell::Get()->screen_pinning_controller()->IsPinned());
+  ASSERT_FALSE(scanner_controller->CanShowUi());
+  ASSERT_FALSE(ScannerController::CanShowUiForShell());
+
+  Shell::Get()->accelerator_controller()->PerformActionIfEnabled(
+      AcceleratorAction::kUnpin, {});
+
+  EXPECT_TRUE(scanner_controller->CanShowUi());
+  EXPECT_TRUE(ScannerController::CanShowUiForShell());
+}
+
 TEST(ScannerControllerNoFixtureTest, CanShowUiForShellFalseWhenNoShellMetrics) {
   base::HistogramTester histogram_tester;
 
@@ -402,6 +476,30 @@ TEST_F(ScannerControllerDisabledTest,
       ScannerFeatureUserState::kCanShowUiReturnedFalse, 1);
 }
 
+TEST_F(ScannerControllerTest, CanShowUiForShellFalseWhenPinnedMetrics) {
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  ON_CALL(*GetFakeScannerProfileScopedDelegate(*scanner_controller),
+          CheckFeatureAccess)
+      .WillByDefault(Return(specialized_features::FeatureAccessFailureSet{}));
+  std::unique_ptr<aura::Window> pinned_window = CreateAppWindow();
+  wm::ActivateWindow(pinned_window.get());
+  window_util::PinWindow(pinned_window.get(), /*trusted=*/false);
+  ASSERT_TRUE(Shell::Get()->screen_pinning_controller()->IsPinned());
+  // This must be after pinning, as `SunfishScannerFeatureWatcher` may
+  // automatically call `CanShowUi` when the pinned state changes.
+  base::HistogramTester histogram_tester;
+
+  ASSERT_FALSE(scanner_controller->CanShowUi());
+
+  histogram_tester.ExpectBucketCount(
+      "Ash.ScannerFeature.UserState",
+      ScannerFeatureUserState::kCanShowUiReturnedFalseDueToPinnedMode, 1);
+  histogram_tester.ExpectBucketCount(
+      "Ash.ScannerFeature.UserState",
+      ScannerFeatureUserState::kCanShowUiReturnedFalse, 1);
+}
+
 TEST(ScannerControllerNoFixtureTest,
      CanShowUiFalseWhenNoProfileScopedDelegateMetrics) {
   base::HistogramTester histogram_tester;
@@ -410,7 +508,8 @@ TEST(ScannerControllerNoFixtureTest,
   EXPECT_CALL(*mock_delegate, GetProfileScopedDelegate())
       .WillRepeatedly(Return(nullptr));
   ScannerController scanner_controller(std::move(mock_delegate),
-                                       session_controller);
+                                       session_controller,
+                                       /*screen_pinning_controller=*/nullptr);
 
   ASSERT_FALSE(scanner_controller.CanShowUi());
 
@@ -426,7 +525,6 @@ TEST(ScannerControllerNoFixtureTest,
 
 TEST_F(ScannerControllerTest,
        CanShowUiFalseWhenEnterprisePolicyDisallowedMetrics) {
-  base::HistogramTester histogram_tester;
   ScannerController* scanner_controller = Shell::Get()->scanner_controller();
   ASSERT_TRUE(scanner_controller);
   EXPECT_CALL(*GetFakeScannerProfileScopedDelegate(*scanner_controller),
@@ -435,6 +533,9 @@ TEST_F(ScannerControllerTest,
   Shell::Get()->session_controller()->GetActivePrefService()->SetInteger(
       prefs::kScannerEnterprisePolicyAllowed,
       static_cast<int>(ScannerEnterprisePolicy::kDisallowed));
+  // This must be after setting the preference, as some preference observers
+  // like `SunfishScannerFeatureWatcher` may automatically call `CanShowUi`.
+  base::HistogramTester histogram_tester;
 
   ASSERT_FALSE(scanner_controller->CanShowUi());
 
@@ -756,19 +857,19 @@ TEST_F(ScannerControllerTest, NoActionsFetchedWhenNoActiveSession) {
 }
 
 TEST_F(ScannerControllerTest, ResetsScannerSessionWhenActiveUserChanges) {
-  SimulateUserLogin("user1@gmail.com");
+  SimulateUserLogin({"user1@gmail.com"});
   ScannerController* scanner_controller = Shell::Get()->scanner_controller();
   ASSERT_TRUE(scanner_controller);
   EXPECT_TRUE(scanner_controller->StartNewSession());
   EXPECT_TRUE(scanner_controller->HasActiveSessionForTesting());
 
   // Switch to a different user.
-  SimulateUserLogin("user2@gmail.com");
+  SimulateUserLogin({"user2@gmail.com"});
 
   EXPECT_FALSE(scanner_controller->HasActiveSessionForTesting());
 }
 
-TEST_F(ScannerControllerTest, ShowsNotificationWhileExecutingAction) {
+TEST_F(ScannerControllerTest, ShowsNotificationWhileExecutingNewEventAction) {
   base::test::TestFuture<ScannerSession::FetchActionsResponse> actions_future;
   ScannerController* scanner_controller = Shell::Get()->scanner_controller();
   ASSERT_TRUE(scanner_controller);
@@ -808,7 +909,50 @@ TEST_F(ScannerControllerTest, ShowsNotificationWhileExecutingAction) {
               IsEmpty());
 }
 
-TEST_F(ScannerControllerTest, ShowsToastAfterActionSuccess) {
+TEST_F(ScannerControllerTest,
+       ShowsNotificationWhileExecutingCopyToClipboardAction) {
+  base::test::TestFuture<ScannerSession::FetchActionsResponse> actions_future;
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  EXPECT_TRUE(scanner_controller->StartNewSession());
+  manta::proto::ScannerOutput output;
+  output.add_objects()
+      ->add_actions()
+      ->mutable_copy_to_clipboard()
+      ->set_html_text("<b>Hello</b>");
+  FakeScannerProfileScopedDelegate& fake_profile_scoped_delegate =
+      *GetFakeScannerProfileScopedDelegate(*scanner_controller);
+  EXPECT_CALL(fake_profile_scoped_delegate, FetchActionsForImage)
+      .WillOnce(RunOnceCallback<1>(
+          std::make_unique<manta::proto::ScannerOutput>(output),
+          manta::MantaStatus()));
+  base::test::TestFuture<manta::ScannerProvider::ScannerProtoResponseCallback>
+      fetch_action_details_future;
+  EXPECT_CALL(fake_profile_scoped_delegate, FetchActionDetailsForImage)
+      .WillOnce(WithArg<2>(InvokeFuture(fetch_action_details_future)));
+
+  // Fetch an action and execute it.
+  scanner_controller->FetchActionsForImage(/*jpeg_bytes=*/nullptr,
+                                           actions_future.GetCallback());
+  ScannerSession::FetchActionsResponse actions = actions_future.Take();
+  ASSERT_THAT(actions, ValueIs(SizeIs(1)));
+  scanner_controller->ExecuteAction(actions.value()[0]);
+
+  // Notification should be shown while the action is executing.
+  EXPECT_THAT(message_center::MessageCenter::Get()->GetVisibleNotifications(),
+              SizeIs(1));
+
+  // Finish executing the action.
+  fetch_action_details_future.Take().Run(
+      std::make_unique<manta::proto::ScannerOutput>(output),
+      manta::MantaStatus());
+
+  // Notification should be hidden.
+  EXPECT_THAT(message_center::MessageCenter::Get()->GetVisibleNotifications(),
+              IsEmpty());
+}
+
+TEST_F(ScannerControllerTest, ShowsToastAfterCopyToClipboardActionSuccess) {
   base::test::TestFuture<ScannerSession::FetchActionsResponse> actions_future;
   ScannerController* scanner_controller = Shell::Get()->scanner_controller();
   ASSERT_TRUE(scanner_controller);
@@ -838,6 +982,36 @@ TEST_F(ScannerControllerTest, ShowsToastAfterActionSuccess) {
   scanner_controller->ExecuteAction(actions.value()[0]);
 
   EXPECT_TRUE(ToastManager::Get()->IsToastShown(kScannerActionSuccessToastId));
+}
+
+TEST_F(ScannerControllerTest, DoesNotShowToastAfterNewEventActionSuccess) {
+  base::test::TestFuture<ScannerSession::FetchActionsResponse> actions_future;
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  EXPECT_TRUE(scanner_controller->StartNewSession());
+  manta::proto::ScannerOutput output;
+  output.add_objects()->add_actions()->mutable_new_event()->set_title(
+      "Event title");
+  FakeScannerProfileScopedDelegate& fake_profile_scoped_delegate =
+      *GetFakeScannerProfileScopedDelegate(*scanner_controller);
+  // Mock a successful action.
+  EXPECT_CALL(fake_profile_scoped_delegate, FetchActionsForImage)
+      .WillOnce(RunOnceCallback<1>(
+          std::make_unique<manta::proto::ScannerOutput>(output),
+          manta::MantaStatus()));
+  EXPECT_CALL(fake_profile_scoped_delegate, FetchActionDetailsForImage)
+      .WillOnce(RunOnceCallback<2>(
+          std::make_unique<manta::proto::ScannerOutput>(output),
+          manta::MantaStatus{.status_code = manta::MantaStatusCode::kOk}));
+
+  // Fetch an action and execute it.
+  scanner_controller->FetchActionsForImage(/*jpeg_bytes=*/nullptr,
+                                           actions_future.GetCallback());
+  ScannerSession::FetchActionsResponse actions = actions_future.Take();
+  ASSERT_THAT(actions, ValueIs(SizeIs(1)));
+  scanner_controller->ExecuteAction(actions.value()[0]);
+
+  EXPECT_FALSE(ToastManager::Get()->IsToastShown(kScannerActionSuccessToastId));
 }
 
 TEST_F(ScannerControllerTest, ShowsToastAfterActionFailure) {
@@ -870,6 +1044,8 @@ TEST_F(ScannerControllerTest, ShowsToastAfterActionFailure) {
 }
 
 TEST_F(ScannerControllerTest, ActionSuccessToastButtonOpensFeedbackDialog) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndEnableFeature(features::kScannerFeedbackToast);
   base::test::TestFuture<ScannerSession::FetchActionsResponse> actions_future;
   ScannerController* scanner_controller = Shell::Get()->scanner_controller();
   ASSERT_TRUE(scanner_controller);
@@ -921,9 +1097,60 @@ TEST_F(ScannerControllerTest, ActionSuccessToastButtonOpensFeedbackDialog) {
             "copy_to_clipboard.html_text: <b>Hello</b>\n");
 }
 
+TEST_F(ScannerControllerTest, ActionSuccessToastButtonEmitsMetric) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndEnableFeature(features::kScannerFeedbackToast);
+  base::HistogramTester histogram_tester;
+  base::test::TestFuture<ScannerSession::FetchActionsResponse> actions_future;
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  EXPECT_TRUE(scanner_controller->StartNewSession());
+  manta::proto::ScannerOutput output;
+  output.add_objects()
+      ->add_actions()
+      ->mutable_copy_to_clipboard()
+      ->set_html_text("<b>Hello</b>");
+  FakeScannerProfileScopedDelegate& fake_profile_scoped_delegate =
+      *GetFakeScannerProfileScopedDelegate(*scanner_controller);
+  // Mock a successful action.
+  EXPECT_CALL(fake_profile_scoped_delegate, FetchActionsForImage)
+      .WillOnce(RunOnceCallback<1>(
+          std::make_unique<manta::proto::ScannerOutput>(output),
+          manta::MantaStatus()));
+  EXPECT_CALL(fake_profile_scoped_delegate, FetchActionDetailsForImage)
+      .WillOnce(RunOnceCallback<2>(
+          std::make_unique<manta::proto::ScannerOutput>(output),
+          manta::MantaStatus{.status_code = manta::MantaStatusCode::kOk}));
+
+  // Fetch an action and execute it.
+  scanner_controller->FetchActionsForImage(/*jpeg_bytes=*/nullptr,
+                                           actions_future.GetCallback());
+  ScannerSession::FetchActionsResponse actions = actions_future.Take();
+  ASSERT_THAT(actions, ValueIs(SizeIs(1)));
+  scanner_controller->ExecuteAction(actions.value()[0]);
+
+  ASSERT_TRUE(ToastManager::Get()->IsToastShown(kScannerActionSuccessToastId));
+  ToastOverlay* toast_overlay =
+      Shell::Get()->toast_manager()->GetCurrentOverlayForTesting();
+  ASSERT_TRUE(toast_overlay);
+  views::Button* feedback_button = toast_overlay->button_for_testing();
+  ASSERT_TRUE(feedback_button);
+
+  histogram_tester.ExpectBucketCount(
+      "Ash.ScannerFeature.UserState",
+      ScannerFeatureUserState::kFeedbackFormOpened, 0);
+  LeftClickOn(feedback_button);
+
+  histogram_tester.ExpectBucketCount(
+      "Ash.ScannerFeature.UserState",
+      ScannerFeatureUserState::kFeedbackFormOpened, 1);
+}
+
 TEST_F(
     ScannerControllerTest,
     ActionSuccessToastDoesNotHaveButtonIfPolicyAllowedWithoutModelImprovement) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndEnableFeature(features::kScannerFeedbackToast);
   Shell::Get()->session_controller()->GetActivePrefService()->SetInteger(
       prefs::kScannerEnterprisePolicyAllowed,
       static_cast<int>(
@@ -966,6 +1193,8 @@ TEST_F(
 
 TEST_F(ScannerControllerTest,
        ActionSuccessToastDoesNotHaveButtonIfPolicyInvalidValue) {
+  base::test::ScopedFeatureList scoped_feature_list;
+  scoped_feature_list.InitAndEnableFeature(features::kScannerFeedbackToast);
   Shell::Get()->session_controller()->GetActivePrefService()->SetInteger(
       prefs::kScannerEnterprisePolicyAllowed, 3);
   base::test::TestFuture<ScannerSession::FetchActionsResponse> actions_future;
@@ -1099,6 +1328,37 @@ TEST_F(ScannerControllerTest, OpenFeedbackDialogCallbackSendsFeedback) {
 }
 
 TEST_F(ScannerControllerTest,
+       OpenFeedbackDialogSendFeedbackCallbackSendsMetric) {
+  base::HistogramTester histogram_tester;
+  ScannerController* scanner_controller = Shell::Get()->scanner_controller();
+  ASSERT_TRUE(scanner_controller);
+  FakeScannerDelegate& fake_scanner_delegate =
+      *GetFakeScannerDelegate(*scanner_controller);
+  base::test::TestFuture<const AccountId&, ScannerFeedbackInfo,
+                         ScannerDelegate::SendFeedbackCallback>
+      feedback_info_future;
+  fake_scanner_delegate.SetOpenFeedbackDialogCallback(
+      feedback_info_future.GetRepeatingCallback());
+  EXPECT_CALL(mock_send_specialized_feature_feedback(), Run);
+  manta::proto::ScannerAction action;
+  action.mutable_copy_to_clipboard()->set_html_text("<b>Hello</b>");
+
+  scanner_controller->OpenFeedbackDialog(
+      Shell::Get()->session_controller()->GetActiveAccountId(),
+      std::move(action),
+      /*screenshot=*/base::MakeRefCounted<base::RefCountedString>("testimage"));
+  auto [unused_account_id, feedback_dialog_info, send_feedback_callback] =
+      feedback_info_future.Take();
+  histogram_tester.ExpectBucketCount("Ash.ScannerFeature.UserState",
+                                     ScannerFeatureUserState::kFeedbackSent, 0);
+  std::move(send_feedback_callback)
+      .Run(std::move(feedback_dialog_info), "feedback");
+
+  histogram_tester.ExpectBucketCount("Ash.ScannerFeature.UserState",
+                                     ScannerFeatureUserState::kFeedbackSent, 1);
+}
+
+TEST_F(ScannerControllerTest,
        OpenFeedbackDialogCallbackSendsFeedbackWithOriginalAccount) {
   ScannerController* scanner_controller = Shell::Get()->scanner_controller();
   ASSERT_TRUE(scanner_controller);
@@ -1128,9 +1388,7 @@ TEST_F(ScannerControllerTest,
             original_account);
   AccountId new_account =
       AccountId::FromUserEmailGaiaId("user@test.com", GaiaId("fakegaia"));
-  GetSessionControllerClient()->AddUserSession(
-      new_account, /*display_email=*/account_id.GetUserEmail());
-  GetSessionControllerClient()->SwitchActiveUser(new_account);
+  SimulateUserLogin(new_account);
   ASSERT_NE(Shell::Get()->session_controller()->GetActiveAccountId(),
             original_account);
   std::move(send_feedback_callback)
@@ -1415,7 +1673,8 @@ TEST(ScannerControllerNoFixtureTest, RunningNewContactActionOpensUrl) {
                       _, _))
       .Times(1);
   ScannerController scanner_controller(std::make_unique<FakeScannerDelegate>(),
-                                       session_controller);
+                                       session_controller,
+                                       /*screen_pinning_controller=*/nullptr);
   ScannerSession* session = scanner_controller.StartNewSession();
   ASSERT_TRUE(session);
   FakeScannerProfileScopedDelegate& delegate =

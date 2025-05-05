@@ -95,7 +95,9 @@ class NET_EXPORT SessionServiceImpl : public SessionService {
   void DeleteAllSessions(
       std::optional<base::Time> created_after_time,
       std::optional<base::Time> created_before_time,
-      base::RepeatingCallback<bool(const net::SchemefulSite&)> site_matcher,
+      base::RepeatingCallback<bool(const url::Origin&,
+                                   const net::SchemefulSite&)>
+          origin_and_site_matcher,
       base::OnceClosure completion_callback) override;
   base::ScopedClosureRunner AddObserver(
       const GURL& url,
@@ -205,6 +207,10 @@ class NET_EXPORT SessionServiceImpl : public SessionService {
   const raw_ref<unexportable_keys::UnexportableKeyService> key_service_;
   raw_ptr<const URLRequestContext> context_;
   raw_ptr<SessionStore> session_store_ = nullptr;
+
+  // When true, the refresh quota is not enforced. This is only ever set to
+  // true for testing purposes.
+  bool ignore_refresh_quota_ = false;
 
   // Deferred requests are stored by session ID.
   DeferredRequestsMap deferred_requests_;

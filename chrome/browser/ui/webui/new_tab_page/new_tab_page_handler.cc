@@ -785,13 +785,17 @@ void NewTabPageHandler::UpdateDisabledModules() {
     for (const auto& id : disabled_module_ids_value) {
       module_ids_set.insert(id.GetString());
     }
+  }
 
+  // Hidden modules should be respected as long as modules are visible.
+  if (profile_->GetPrefs()->GetBoolean(prefs::kNtpModulesVisible)) {
     const auto& hidden_module_ids_value =
         profile_->GetPrefs()->GetList(prefs::kNtpHiddenModules);
     for (const auto& id : hidden_module_ids_value) {
       module_ids_set.insert(id.GetString());
     }
   }
+
   std::vector<std::string> module_ids(module_ids_set.begin(),
                                       module_ids_set.end());
   page_->SetDisabledModules(
@@ -894,6 +898,14 @@ void NewTabPageHandler::GetModulesOrder(GetModulesOrderCallback callback) {
 
   // Second, append Finch order for modules _not_ ordered by drag&drop.
   std::ranges::copy_if(ntp_features::GetModulesOrder(),
+                       std::back_inserter(module_ids),
+                       [&module_ids](const std::string& id) {
+                         return !base::Contains(module_ids, id);
+                       });
+
+  // Third, append default module order for any modules not ordered by
+  // drag&drop or Finch.
+  std::ranges::copy_if(ntp_modules::kOrderedModuleIds,
                        std::back_inserter(module_ids),
                        [&module_ids](const std::string& id) {
                          return !base::Contains(module_ids, id);

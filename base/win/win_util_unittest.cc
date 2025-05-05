@@ -92,6 +92,12 @@ TEST(BaseWinUtilTest, TestUint32ToInvalidHandle) {
   EXPECT_EQ(INVALID_HANDLE_VALUE, Uint32ToHandle(invalid_handle));
 }
 
+TEST(BaseWinUtilTest, PseudoHandles) {
+  EXPECT_TRUE(IsPseudoHandle(::GetCurrentProcess()));
+  EXPECT_TRUE(IsPseudoHandle(::GetCurrentThread()));
+  EXPECT_FALSE(IsPseudoHandle(nullptr));
+}
+
 TEST(BaseWinUtilTest, WStringFromGUID) {
   const GUID kGuid = {0x7698f759,
                       0xf5b0,
@@ -429,6 +435,12 @@ TEST(DeviceConvertibilityTest, DeviceFormAndChassisConvertible) {
   ScopedCOMInitializer com_initializer;
   ASSERT_TRUE(com_initializer.Succeeded());
   EXPECT_FALSE(IsDeviceFormConvertible() || IsChassisConvertible());
+}
+
+TEST(BaseWinUtilTest, GetSerialNumber) {
+  ScopedCOMInitializer com_initializer;
+  ASSERT_OK_AND_ASSIGN(std::wstring serial_number, GetSerialNumber());
+  EXPECT_FALSE(serial_number.empty());
 }
 
 }  // namespace win

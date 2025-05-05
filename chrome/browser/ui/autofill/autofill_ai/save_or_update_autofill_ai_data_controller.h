@@ -12,7 +12,6 @@
 #include "base/types/optional_ref.h"
 #include "components/autofill/core/browser/integrators/autofill_ai_delegate.h"
 #include "components/autofill_ai/core/browser/autofill_ai_client.h"
-#include "components/user_annotations/user_annotations_types.h"
 #include "content/public/browser/web_contents.h"
 
 namespace autofill {
@@ -43,7 +42,6 @@ class SaveOrUpdateAutofillAiDataController {
     kNewEntityAttributeAdded,
     kNewEntityAttributeUpdated,
     kNewEntityAttributeUnchanged,
-    kOldEntityAttributeUpdated
   };
 
   // Specifies for each attribute of a new instance whether the attribute is
@@ -89,6 +87,10 @@ class SaveOrUpdateAutofillAiDataController {
   virtual void OnSaveButtonClicked() = 0;
 
   virtual std::u16string GetDialogTitle() const = 0;
+
+  // Returns images resource ids to be used in the dialog header. The first
+  // value is to be used in a light mode theme and the second one in dark mode.
+  virtual std::pair<int, int> GetTitleImagesResourceId() const = 0;
 
   // Returns details about the new/updated prompted entity. This is used by the
   // UI layer to give users details about what changes will be done if they

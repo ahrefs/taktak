@@ -290,7 +290,7 @@ public class Features {
 
     // Profile.prefetchUrl
     // Profile.clearPrefetch
-    public static final String PREFETCH_WITH_URL = "PREFETCH_URL_V3";
+    public static final String PREFETCH_WITH_URL = "PREFETCH_URL_V4";
 
     // WebviewCompat.setDefaultTrafficStatsTag
     // WebviewCompat.setDefaultTrafficStatsUid
@@ -323,6 +323,10 @@ public class Features {
     // WebViewNavigationClient.onNavigationStarted()
     // WebViewNavigationClient.onNavigationRedirected()
     // WebViewNavigationClient.onNavigationCompleted()
+    // WebViewNavigationClient.onPageDeleted()
+    // WebViewNavigationClient.onPageLoadEventFired()
+    // WebViewNavigationClient.onPageDOMContentLoadedEventFired()
+    // WebViewNavigationClient.onFirstContentfulPaint()
     //
     // WebViewNavigation.getUrl()
     // WebViewNavigation.isPageInitiated()
@@ -351,4 +355,13 @@ public class Features {
     // WebResourceResponse#setResponseHeadersMultiMap
     // WebResourceResponse#getResponseHeadersMultiMap
     public static final String ASYNC_SHOULD_INTERCEPT_REQUEST = "ASYNC_SHOULD_INTERCEPT_REQUEST";
+
+    // SupportLibWebViewChromium weakly reference WebView
+    public static final String PROVIDER_WEAKLY_REF_WEBVIEW = "PROVIDER_WEAKLY_REF_WEBVIEW";
+
+    // WebSettingsCompat#setPaymentRequestEnabled
+    // WebSettingsCompat#getPaymentRequestEnabled
+    // WebSettingsCompat#setHasEnrolledInstrumentEnabled
+    // WebSettingsCompat#getHasEnrolledInstrumentEnabled
+    public static final String PAYMENT_REQUEST = "PAYMENT_REQUEST";
 }

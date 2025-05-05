@@ -80,16 +80,18 @@ export class ProfilePickerMainViewElement extends
     };
   }
 
-  protected profilesList_: ProfileState[] = [];
-  protected profilesListLoaded_: boolean = false;
-  protected hideAskOnStartup_: boolean = false;
-  protected askOnStartup_: boolean = loadTimeData.getBoolean('askOnStartup');
+  protected accessor profilesList_: ProfileState[] = [];
+  protected accessor profilesListLoaded_: boolean = false;
+  protected accessor hideAskOnStartup_: boolean = false;
+  protected accessor askOnStartup_: boolean =
+      loadTimeData.getBoolean('askOnStartup');
   // Initial value when the page is rendered.
   // Potentially updated on profile addition/removal/sign-in.
-  protected guestModeEnabled_: boolean =
+  protected accessor guestModeEnabled_: boolean =
       loadTimeData.getBoolean('isGuestModeEnabled');
-  protected profileCreationAllowed_: boolean = isProfileCreationAllowed();
-  protected isGlic_: boolean = isGlicVersion();
+  protected accessor profileCreationAllowed_: boolean =
+      isProfileCreationAllowed();
+  protected accessor isGlic_: boolean = isGlicVersion();
   private manageProfilesBrowserProxy_: ManageProfilesBrowserProxy =
       ManageProfilesBrowserProxyImpl.getInstance();
   private resizeObserver_: ResizeObserver|null = null;
@@ -101,10 +103,10 @@ export class ProfilePickerMainViewElement extends
   // TODO(crbug.com/40280498): Move the dialog into it's own element with the
   // below members. This dialog state should be independent of the Profile
   // Picker itself.
-  protected forceSigninErrorDialogTitle_: string = '';
-  protected forceSigninErrorDialogBody_: string = '';
-  private forceSigninErrorProfilePath_: string = '';
-  protected shouldShownSigninButton_: boolean = false;
+  protected accessor forceSigninErrorDialogTitle_: string = '';
+  protected accessor forceSigninErrorDialogBody_: string = '';
+  private accessor forceSigninErrorProfilePath_: string = '';
+  protected accessor shouldShownSigninButton_: boolean = false;
 
   private eventTracker_: EventTracker = new EventTracker();
 
@@ -301,16 +303,21 @@ export class ProfilePickerMainViewElement extends
   }
 
   protected getTitle_(): TrustedHTML {
-    const titleStringResouce = this.isProfileListLoadedAndEmpty_() ?
-        'glicTitleNoProfile' :
-        'mainViewTitle';
+    const titleStringResouce =
+        // <if expr="enable_glic">
+        this.isProfileListLoadedAndEmptyAndGlic_() ? 'glicTitleNoProfile' :
+        // </if>
+                                                     'mainViewTitle';
     // Special styling through 'class' attribute in some version of the title.
     return this.i18nAdvanced(titleStringResouce, {attrs: ['class']});
   }
 
   protected getSubtitle_(): TrustedHTML {
-    const subtitleStringResource = this.isProfileListLoadedAndEmpty_() ?
+    const subtitleStringResource =
+        // <if expr="enable_glic">
+        this.isProfileListLoadedAndEmptyAndGlic_() ?
         'mainViewSubtitleGlicNoProfile' :
+        // </if>
         'mainViewSubtitle';
     // Special tagging through 'class' attribute in some version of the
     // subtitle.
@@ -322,30 +329,20 @@ export class ProfilePickerMainViewElement extends
       return true;
     }
 
-    return this.isProfileListLoadedAndEmpty_();
+    return this.isProfileListLoadedAndEmptyAndGlic_();
   }
 
   protected shouldHideFooterText_(): boolean {
-    if (this.isProfileListLoadedAndEmpty_()) {
+    if (this.isProfileListLoadedAndEmptyAndGlic_()) {
       return true;
     }
 
     return !isGlicVersion();
   }
 
-  // This should only return true if the shown version is the Glic version. The
-  // regular version does not support having no profiles available (if the list
-  // is loaded).
-  private isProfileListLoadedAndEmpty_(): boolean {
-    if (!this.profilesListLoaded_) {
-      return false;
-    }
-
-    const isProfileListEmpty = this.profilesList_.length === 0;
-    assert(
-        !isProfileListEmpty || isGlicVersion(),
-        'Only Glic version supports empty profile list');
-    return isProfileListEmpty;
+  private isProfileListLoadedAndEmptyAndGlic_(): boolean {
+    return this.profilesListLoaded_ && this.profilesList_.length === 0 &&
+        isGlicVersion();
   }
 
   private updateLearnMoreLinkEvents_(): void {

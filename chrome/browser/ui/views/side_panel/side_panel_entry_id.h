@@ -23,6 +23,7 @@
   V(kReadingList, kActionSidePanelShowReadingList, "ReadingList")             \
   V(kBookmarks, kActionSidePanelShowBookmarks, "Bookmarks")                   \
   V(kHistoryClusters, kActionSidePanelShowHistoryCluster, "HistoryClusters")  \
+  V(kHistory, kActionSidePanelShowHistory, "History")                         \
   V(kReadAnything, kActionSidePanelShowReadAnything, "ReadAnything")          \
   V(kUserNote, kActionSidePanelShowUserNote, "UserNotes")                     \
   V(kFeed, kActionSidePanelShowFeed, "Feed")                                  \

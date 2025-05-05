@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <variant>
 
 #include "base/strings/to_string.h"
 #include "chrome/browser/ui/browser.h"
@@ -75,12 +76,12 @@ std::string ComputeBatchUploadSubtitle(syncer::DataType first_type,
 }
 
 GURL ComputeIconUrl(const syncer::LocalDataItemModel::Icon& icon) {
-  if (absl::holds_alternative<syncer::LocalDataItemModel::NoIcon>(icon)) {
+  if (std::holds_alternative<syncer::LocalDataItemModel::NoIcon>(icon)) {
     return GURL();
   }
 
   if (const GURL* page_url =
-          absl::get_if<syncer::LocalDataItemModel::PageUrlIcon>(&icon)) {
+          std::get_if<syncer::LocalDataItemModel::PageUrlIcon>(&icon)) {
     // Add the http:// scheme if a scheme is not already present.
     GURL::Replacements replace_scheme;
     replace_scheme.SetSchemeStr(url::kHttpScheme);
@@ -97,7 +98,7 @@ GURL ComputeIconUrl(const syncer::LocalDataItemModel::Icon& icon) {
     return favicon_url;
   }
 
-  if (absl::holds_alternative<syncer::LocalDataItemModel::FolderIcon>(icon)) {
+  if (std::holds_alternative<syncer::LocalDataItemModel::FolderIcon>(icon)) {
     return GURL(kFolderIconUrl);
   }
 
@@ -298,7 +299,7 @@ int BatchUploadHandler::GetTypeSectionTitleId(syncer::DataType type) {
     case syncer::DataType::CONTACT_INFO:
       return IDS_BATCH_UPLOAD_SECTION_TITLE_ADDRESSES;
     case syncer::DataType::THEMES:
-      return IDS_BATCH_UPLOAD_SECTION_TITLE_THEMES;
+      return IDS_BATCH_UPLOAD_SECTION_TITLE_THEMES_WITH_DESCRIPTION;
     default:
       NOTREACHED();
   }

@@ -115,7 +115,19 @@ enum class ScannerFeatureUserState {
   kSmartActionsButtonNotShownDueToCanShowUiFalse = 50,
   kSmartActionsButtonNotShownDueToOffline = 51,
 
-  kMaxValue = kSmartActionsButtonNotShownDueToOffline,
+  kSunfishSessionStartedFromDebugShortcut = 52,
+  kSunfishSessionStartedFromLauncherButton = 53,
+  kSunfishSessionStartedFromHomeButtonLongPress = 54,
+
+  kFeedbackFormOpened = 55,
+  kFeedbackSent = 56,
+
+  // These enum values should semantically be placed in a group above:
+  // Should be placed after `NoControllerOnShell` and before `EnterprisePolicy`.
+  kCanShowUiReturnedFalseDueToPinnedMode = 57,
+  kSunfishSessionStartedFromKeyboardShortcut = 58,
+
+  kMaxValue = kSunfishSessionStartedFromKeyboardShortcut,
 };
 // LINT.ThenChange(//tools/metrics/histograms/metadata/ash/enums.xml:ScannerFeatureUserState)
 

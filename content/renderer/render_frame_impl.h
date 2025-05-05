@@ -680,6 +680,7 @@ class CONTENT_EXPORT RenderFrameImpl
       const blink::WebURLRequest& request,
       const blink::WebWindowFeatures& features,
       const blink::WebString& frame_name,
+      const gfx::Rect& requested_screen_rect,
       blink::WebNavigationPolicy policy,
       network::mojom::WebSandboxFlags sandbox_flags,
       const blink::SessionStorageNamespaceId& session_storage_namespace_id,
@@ -1242,6 +1243,10 @@ class CONTENT_EXPORT RenderFrameImpl
   // Resets membmers that are needed for the duration of commit (time between
   // CommitNavigation() and DidCommitNavigation().
   void ResetMembersUsedForDurationOfCommit();
+
+  // Actual implementation of AbortClientNavigation(), as one may be deferred in
+  // case the page is being instrumented by devtools,
+  void AbortClientNavigationImpl(bool for_new_navigation);
 
   // Stores the WebLocalFrame we are associated with.  This is null from the
   // constructor until BindToFrame() is called, and it is null after

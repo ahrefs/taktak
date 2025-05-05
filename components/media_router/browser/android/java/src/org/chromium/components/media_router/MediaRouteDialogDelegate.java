@@ -4,11 +4,15 @@
 
 package org.chromium.components.media_router;
 
+import org.chromium.build.annotations.NullMarked;
+
 /** An interface providing callbacks for {@link BaseMediaRouteDialogManager}. */
+@NullMarked
 public interface MediaRouteDialogDelegate {
     /**
      * Notifies the delegate if the user has chosen a {@link MediaSink} to connect to.
      * onDialogDismissed() is not called in this case.
+     *
      * @param sourceUrn The source the sink was selected for.
      * @param sink The sink selected by the user.
      */

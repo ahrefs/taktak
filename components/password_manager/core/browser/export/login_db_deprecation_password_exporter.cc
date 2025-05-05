@@ -4,6 +4,8 @@
 
 #include "components/password_manager/core/browser/export/login_db_deprecation_password_exporter.h"
 
+#include <variant>
+
 #include "base/files/file_path.h"
 #include "base/functional/callback_helpers.h"
 #include "base/metrics/histogram_functions.h"
@@ -19,8 +21,6 @@
 namespace password_manager {
 
 namespace {
-constexpr std::string_view kExportedPasswordsFileName = "ChromePasswords.csv";
-
 void LogExportResult(LoginDbDeprecationExportResult result) {
   base::UmaHistogramEnumeration(
       "PasswordManager.UPM.LoginDbDeprecationExport.Result", result);
@@ -72,7 +72,7 @@ LoginDbDeprecationPasswordExporter::GetInternalExporterForTesting(
 void LoginDbDeprecationPasswordExporter::OnGetPasswordStoreResultsOrErrorFrom(
     PasswordStoreInterface* store,
     LoginsResultOrError logins_or_error) {
-  if (absl::holds_alternative<PasswordStoreBackendError>(logins_or_error)) {
+  if (std::holds_alternative<PasswordStoreBackendError>(logins_or_error)) {
     OnExportCompleteWithResult(
         LoginDbDeprecationExportResult::kErrorFetchingPasswords);
     return;
@@ -81,8 +81,8 @@ void LoginDbDeprecationPasswordExporter::OnGetPasswordStoreResultsOrErrorFrom(
   // This is only invoked once, since the export flow goverened by this
   // class is a one-time operation.
   CHECK(passwords_.empty());
-  passwords_.reserve(absl::get<LoginsResult>(logins_or_error).size());
-  for (const auto& password_form : absl::get<LoginsResult>(logins_or_error)) {
+  passwords_.reserve(std::get<LoginsResult>(logins_or_error).size());
+  for (const auto& password_form : std::get<LoginsResult>(logins_or_error)) {
     passwords_.emplace_back(password_form);
   }
   if (passwords_.empty()) {

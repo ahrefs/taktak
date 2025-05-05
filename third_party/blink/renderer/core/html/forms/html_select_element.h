@@ -297,11 +297,12 @@ class CORE_EXPORT HTMLSelectElement final
   // in-page rendering of the button, and IsAppearanceBasePicker should be used
   // for code which is concerned with the popup/popover and the other elements
   // which are rendered in it.
-  // |no_update| prevents these methods from running an UpdateStyleAndLayoutTree
-  // which is needed in some cases to prevent nested style/layout recalc.
-  enum class StyleUpdateBehavior { kUpdateStyle, kDontUpdateStyle };
-  bool IsAppearanceBaseButton(StyleUpdateBehavior) const;
+  // SetIsAppearanceBasePickerForDisplayNone is called during style recalc for
+  // the case where the picker is closed and is therefore display:none and
+  // doesn't have a computed style to look at inside IsAppearanceBasePicker.
+  bool IsAppearanceBaseButton() const;
   bool IsAppearanceBasePicker() const;
+  void SetIsAppearanceBasePickerForDisplayNone(bool);
 
   void SelectedContentElementInserted(
       HTMLSelectedContentElement* selectedcontent);
@@ -421,7 +422,6 @@ class CORE_EXPORT HTMLSelectElement final
   mutable ListItems list_items_;
   TypeAhead type_ahead_;
   unsigned size_;
-  Member<HTMLSlotElement> option_slot_;
   Member<HTMLOptionElement> last_on_change_option_;
   Member<HTMLOptionElement> suggested_option_;
   TreeOrderedList<HTMLSelectedContentElement> descendant_selectedcontents_;

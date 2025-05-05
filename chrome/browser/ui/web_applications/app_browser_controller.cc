@@ -26,6 +26,7 @@
 #include "chrome/browser/ui/color/chrome_color_id.h"
 #include "chrome/browser/ui/tabs/tab_menu_model_factory.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
+#include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/page_action/action_ids.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
 #include "chrome/browser/web_applications/web_app_registrar.h"
@@ -128,16 +129,18 @@ Browser* AppBrowserController::FindForWebApp(const Profile& profile,
 }
 
 // static
-std::optional<AppBrowserController::BrowserAndTabIndex>
-AppBrowserController::FindTopLevelBrowsingContextForWebApp(
-    const Profile& profile,
+std::optional<int> AppBrowserController::FindTabIndexForApp(
+    Browser* browser,
     const webapps::AppId& app_id,
-    Browser::Type browser_type,
+    bool for_focus_existing,
     HomeTabScope home_tab_scope) {
-  auto is_valid_tab = [&app_id,
-                       home_tab_scope](content::WebContents* contents) {
+  auto is_valid_tab = [&app_id, home_tab_scope,
+                       for_focus_existing](content::WebContents* contents) {
     WebAppTabHelper* tab_helper = WebAppTabHelper::FromWebContents(contents);
     if (app_id != tab_helper->app_id() || contents->HasOpener()) {
+      return false;
+    }
+    if (for_focus_existing && !tab_helper->CanBeUsedForFocusExisting()) {
       return false;
     }
     if (home_tab_scope == HomeTabScope::kDontCare) {
@@ -146,6 +149,29 @@ AppBrowserController::FindTopLevelBrowsingContextForWebApp(
     return (home_tab_scope == HomeTabScope::kInScope) ==
            tab_helper->is_pinned_home_tab();
   };
+  // The active web contents should have preference if it is in scope.
+  if (browser->tab_strip_model()->active_index() != TabStripModel::kNoTab) {
+    if (is_valid_tab(browser->tab_strip_model()->GetActiveWebContents())) {
+      return {browser->tab_strip_model()->active_index()};
+    }
+  }
+  // Otherwise, use the first one for the app.
+  for (int i = 0; i < browser->tab_strip_model()->count(); ++i) {
+    if (is_valid_tab(browser->tab_strip_model()->GetWebContentsAt(i))) {
+      return {i};
+    }
+  }
+  return std::nullopt;
+}
+
+// static
+std::optional<AppBrowserController::BrowserAndTabIndex>
+AppBrowserController::FindTopLevelBrowsingContextForWebApp(
+    const Profile& profile,
+    const webapps::AppId& app_id,
+    Browser::Type browser_type,
+    bool for_focus_existing,
+    HomeTabScope home_tab_scope) {
   for (Browser* browser : BrowserList::GetInstance()->OrderedByActivation()) {
     if (browser->IsAttemptingToCloseBrowser() || browser->IsBrowserClosing()) {
       continue;
@@ -159,17 +185,10 @@ AppBrowserController::FindTopLevelBrowsingContextForWebApp(
     if (IsWebApp(browser) && !IsForWebApp(browser, app_id)) {
       continue;
     }
-    // The active web contents should have preference if it is in scope.
-    if (browser->tab_strip_model()->active_index() != TabStripModel::kNoTab) {
-      if (is_valid_tab(browser->tab_strip_model()->GetActiveWebContents())) {
-        return {{browser, browser->tab_strip_model()->active_index()}};
-      }
-    }
-    // Otherwise, use the first one for the app.
-    for (int i = 0; i < browser->tab_strip_model()->count(); ++i) {
-      if (is_valid_tab(browser->tab_strip_model()->GetWebContentsAt(i))) {
-        return {{browser, i}};
-      }
+    std::optional<int> tab_index =
+        FindTabIndexForApp(browser, app_id, for_focus_existing, home_tab_scope);
+    if (tab_index.has_value()) {
+      return {{browser, *tab_index}};
     }
   }
   return std::nullopt;
@@ -317,8 +336,13 @@ std::vector<actions::ActionId> AppBrowserController::GetTitleBarPageActions()
   }
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
+  if (!base::FeatureList::IsEnabled(features::kPageActionsMigration)) {
+    return {};
+  }
+
   std::vector<actions::ActionId> types_enabled = {
       kActionShowTranslate,
+      kActionZoomNormal,
   };
 
 #if DCHECK_IS_ON()
@@ -345,7 +369,6 @@ AppBrowserController::GetTitleBarPageActionTypes() const {
   types_enabled.push_back(PageActionIconType::kZoom);
   types_enabled.push_back(PageActionIconType::kFileSystemAccess);
   types_enabled.push_back(PageActionIconType::kCookieControls);
-  types_enabled.push_back(PageActionIconType::kLocalCardMigration);
   types_enabled.push_back(PageActionIconType::kSaveCard);
 
   return types_enabled;

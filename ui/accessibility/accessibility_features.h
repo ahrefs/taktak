@@ -140,6 +140,12 @@ AX_BASE_EXPORT bool IsSelectiveUIAEnablementEnabled();
 // Use the browser's UIA provider when requested by
 // an accessibility client.
 AX_BASE_EXPORT BASE_DECLARE_FEATURE(kUiaProvider);
+
+// Optimizes event firing by only emitting events when at least one listener is
+// subscribed. Killswitch to turn it off in case this work has negative
+// side-effects on assistive technologies.
+// TODO(https://crbug.com/402375302): Remove in M139.
+AX_BASE_EXPORT BASE_DECLARE_FEATURE(kUiaEventOptimization);
 #endif  // BUILDFLAG(IS_WIN)
 
 #if BUILDFLAG(IS_CHROMEOS)
@@ -210,10 +216,28 @@ AX_BASE_EXPORT bool IsAccessibilitySlowKeysEnabled();
 AX_BASE_EXPORT BASE_DECLARE_FEATURE(kAccessibilityManifestV3BrailleIme);
 AX_BASE_EXPORT bool IsAccessibilityManifestV3EnabledForBrailleIme();
 
+AX_BASE_EXPORT BASE_DECLARE_FEATURE(kAccessibilityManifestV3ChromeVox);
+AX_BASE_EXPORT bool IsAccessibilityManifestV3EnabledForChromeVox();
+
 AX_BASE_EXPORT BASE_DECLARE_FEATURE(kAccessibilityManifestV3EnhancedNetworkTts);
 AX_BASE_EXPORT bool IsAccessibilityManifestV3EnabledForEnhancedNetworkTts();
 
+AX_BASE_EXPORT BASE_DECLARE_FEATURE(kAccessibilityManifestV3SelectToSpeak);
+AX_BASE_EXPORT bool IsAccessibilityManifestV3EnabledForSelectToSpeak();
+
+AX_BASE_EXPORT BASE_DECLARE_FEATURE(kAccessibilityManifestV3SwitchAccess);
+AX_BASE_EXPORT bool IsAccessibilityManifestV3EnabledForSwitchAccess();
+
 #endif  // BUILDFLAG(IS_CHROMEOS)
+
+#if BUILDFLAG(IS_ANDROID)
+// Enable on screen AXMode based on running services. If disabled,
+// then on screen AXMode will not be available to be set.
+AX_BASE_EXPORT BASE_DECLARE_FEATURE(kAccessibilityOnScreenMode);
+
+// Returns true if the on screen AXMode is enabled.
+AX_BASE_EXPORT bool IsAccessibilityOnScreenAXModeEnabled();
+#endif  // BUILDFLAG(IS_ANDROID)
 
 #if !BUILDFLAG(IS_ANDROID)
 // Use the AXTree fixing code, which may be an assortment of different

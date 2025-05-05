@@ -11,6 +11,8 @@ import androidx.preference.Preference;
 
 import org.chromium.base.supplier.ObservableSupplier;
 import org.chromium.base.supplier.ObservableSupplierImpl;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.net.SecureDnsManagementMode;
 import org.chromium.chrome.browser.privacy.secure_dns.SecureDnsProviderPreference.State;
 import org.chromium.chrome.browser.settings.ChromeBaseSettingsFragment;
@@ -25,6 +27,7 @@ import java.util.List;
  * Fragment to manage Secure DNS preference. It consists of a toggle switch and, if the switch is
  * enabled, a SecureDnsControl.
  */
+@NullMarked
 public class SecureDnsSettings extends ChromeBaseSettingsFragment {
     // Must match keys in secure_dns_settings.xml.
     private static final String PREF_SECURE_DNS_SWITCH = "secure_dns_switch";
@@ -59,7 +62,7 @@ public class SecureDnsSettings extends ChromeBaseSettingsFragment {
     }
 
     @Override
-    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+    public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         mPageTitle.set(getString(R.string.settings_secure_dns_title));
         SettingsUtils.addPreferencesFromResource(this, R.xml.secure_dns_settings);
 

@@ -392,8 +392,8 @@ void ExternalProviderImpl::RetrieveExtensionsFromPrefs(
         extension_dict.FindString(kWebAppMigrationFlag);
     bool is_migrating_to_web_app =
         web_app_migration_flag &&
-        web_app::IsPreinstalledAppInstallFeatureEnabled(*web_app_migration_flag,
-                                                        *profile_);
+        web_app::IsPreinstalledAppInstallFeatureEnabled(
+            *web_app_migration_flag);
     bool keep_if_present =
         extension_dict.FindBool(kKeepIfPresent).value_or(false);
     if (keep_if_present || is_migrating_to_web_app) {
@@ -538,6 +538,29 @@ bool ExternalProviderImpl::HasExtension(
   CHECK(prefs_);
   CHECK(ready_);
   return prefs_->contains(id);
+}
+
+bool ExternalProviderImpl::HasExtensionWithLocation(
+    const std::string& id,
+    mojom::ManifestLocation location) const {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+  CHECK(prefs_);
+  CHECK(ready_);
+  const base::Value::Dict* dict = prefs_->FindDict(id);
+  if (!dict) {
+    return false;
+  }
+
+  if (dict->contains(kExternalUpdateUrl) && location == download_location_) {
+    return true;
+  }
+
+  if (dict->contains(kExternalCrx) && dict->FindString(kExternalVersion) &&
+      location == crx_location_) {
+    return true;
+  }
+
+  return false;
 }
 
 bool ExternalProviderImpl::GetExtensionDetails(

@@ -1,10 +1,11 @@
 package com.google.protobuf;
 
+
 /**
- * ProtobufToStringOutput controls the output format of {@link Message#toString()}. Specifically, for
- * the Runnable object passed to `callWithDebugFormat` and `callWithTextFormat`, Message.toString()
- * will always output the specified format unless ProtobufToStringOutput is used again to change the
- * output format.
+ * ProtobufToStringOutput controls the output format of {@link Message#toString()}. Specifically,
+ * for the Runnable object passed to `callWithDebugFormat` and `callWithTextFormat`,
+ * Message.toString() will always output the specified format unless ProtobufToStringOutput is used
+ * again to change the output format.
  */
 public final class ProtobufToStringOutput {
   private enum OutputMode {
@@ -12,18 +13,12 @@ public final class ProtobufToStringOutput {
     TEXT_FORMAT
   }
 
-  private static final ThreadLocal<OutputMode> outputMode =
-      new ThreadLocal<OutputMode>() {
-        @Override
-        protected OutputMode initialValue() {
-          return OutputMode.TEXT_FORMAT;
-        }
-      };
+    private static final ThreadLocal<OutputMode> outputMode =
+            ThreadLocal.withInitial(() -> OutputMode.TEXT_FORMAT);
 
-  private ProtobufToStringOutput() {}
+    private ProtobufToStringOutput() {}
 
-  @CanIgnoreReturnValue
-  private static OutputMode setOutputMode(OutputMode newMode) {
+    private static OutputMode setOutputMode(OutputMode newMode) {
     OutputMode oldMode = outputMode.get();
     outputMode.set(newMode);
     return oldMode;

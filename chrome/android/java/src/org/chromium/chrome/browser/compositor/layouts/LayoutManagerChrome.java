@@ -18,7 +18,6 @@ import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.base.supplier.ObservableSupplier;
 import org.chromium.base.supplier.Supplier;
 import org.chromium.chrome.browser.browser_controls.BrowserControlsStateProvider;
-import org.chromium.chrome.browser.compositor.overlays.strip.StripLayoutHelperManager;
 import org.chromium.chrome.browser.device.DeviceClassManager;
 import org.chromium.chrome.browser.fullscreen.FullscreenManager;
 import org.chromium.chrome.browser.hub.HubLayout;
@@ -292,7 +291,8 @@ public class LayoutManagerChrome extends LayoutManagerImpl
         boolean animate = !tabRemoved && animationsEnabled();
         if (getActiveLayoutType() != LayoutType.TAB_SWITCHER
                 && showOverview
-                && getNextLayoutType() != LayoutType.TAB_SWITCHER) {
+                && getNextLayoutType() != LayoutType.TAB_SWITCHER
+                && !XrUtils.isXrDevice()) {
             showLayout(LayoutType.TAB_SWITCHER, animate);
         }
         super.tabClosed(id, nextId, incognito, tabRemoved);
@@ -300,7 +300,7 @@ public class LayoutManagerChrome extends LayoutManagerImpl
 
     @Override
     public void onTabsAllClosing(boolean incognito) {
-        if (getActiveLayout() == mStaticLayout && !incognito) {
+        if (getActiveLayout() == mStaticLayout && !incognito && !XrUtils.isXrDevice()) {
             showLayout(LayoutType.TAB_SWITCHER, /* animate= */ false);
         }
         super.onTabsAllClosing(incognito);
@@ -329,11 +329,6 @@ public class LayoutManagerChrome extends LayoutManagerImpl
      */
     public Layout getHubLayoutForTesting() {
         return mHubLayout;
-    }
-
-    /** Returns the {@link StripLayoutHelperManager} managed by this class. */
-    public StripLayoutHelperManager getStripLayoutHelperManager() {
-        return null;
     }
 
     /**

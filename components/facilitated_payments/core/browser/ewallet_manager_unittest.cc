@@ -13,6 +13,7 @@
 #include "base/test/task_environment.h"
 #include "components/autofill/core/browser/data_manager/payments/test_payments_data_manager.h"
 #include "components/autofill/core/browser/data_model/payments/ewallet.h"
+#include "components/autofill/core/browser/strike_databases/payments/test_strike_database.h"
 #include "components/autofill/core/browser/test_utils/autofill_test_utils.h"
 #include "components/autofill/core/common/autofill_prefs.h"
 #include "components/facilitated_payments/core/browser/ewallet_manager.h"
@@ -22,6 +23,7 @@
 #include "components/facilitated_payments/core/browser/mock_facilitated_payments_client.h"
 #include "components/facilitated_payments/core/browser/network_api/facilitated_payments_initiate_payment_response_details.h"
 #include "components/facilitated_payments/core/browser/network_api/mock_facilitated_payments_network_interface.h"
+#include "components/facilitated_payments/core/browser/strike_databases/payment_link_suggestion_strike_database.h"
 #include "components/facilitated_payments/core/metrics/facilitated_payments_metrics.h"
 #include "components/facilitated_payments/core/utils/facilitated_payments_ui_utils.h"
 #include "components/optimization_guide/core/mock_optimization_guide_decider.h"
@@ -61,13 +63,15 @@ class EwalletManagerTest : public testing::Test {
   EwalletManagerTest()
       : ewallet_manager_(std::make_unique<EwalletManager>(
             &client_, /*api_client_creator=*/
-            base::BindOnce(&MockFacilitatedPaymentsApiClient::CreateApiClient),
+            base::BindRepeating(
+                &MockFacilitatedPaymentsApiClient::CreateApiClient),
             &optimization_guide_decider_)) {
     // Using Autofill preferences since we use autofill's infra for syncing
     // eWallets.
     pref_service_ = autofill::test::PrefServiceForTesting();
     payments_data_manager_.SetPrefService(pref_service_.get());
     payments_data_manager_.SetSyncServiceForTest(&sync_service_);
+    test_strike_database_ = std::make_unique<autofill::TestStrikeDatabase>();
     ON_CALL(client_, GetPaymentsDataManager)
         .WillByDefault(testing::Return(&payments_data_manager_));
     ON_CALL(client_, GetFacilitatedPaymentsNetworkInterface)
@@ -76,6 +80,8 @@ class EwalletManagerTest : public testing::Test {
     ON_CALL(client_, IsFoldable).WillByDefault(testing::Return(false));
     ON_CALL(client_, GetCoreAccountInfo)
         .WillByDefault(testing::Return(CreateLoggedInAccountInfo()));
+    ON_CALL(client_, GetStrikeDatabase)
+        .WillByDefault(testing::Return(test_strike_database_.get()));
     ON_CALL(optimization_guide_decider_,
             CanApplyOptimization(
                 testing::_, testing::_,
@@ -115,6 +121,7 @@ class EwalletManagerTest : public testing::Test {
   autofill::TestPaymentsDataManager payments_data_manager_;
   MockFacilitatedPaymentsNetworkInterface payments_network_interface_;
   ukm::TestAutoSetUkmRecorder ukm_recorder_;
+  std::unique_ptr<autofill::TestStrikeDatabase> test_strike_database_;
 };
 
 // Verify that metrics are logged correctly when a supported payment link is
@@ -809,22 +816,6 @@ TEST_F(EwalletManagerTest,
       /*expected_bucket_count=*/1);
 }
 
-// Test that the `EWALLET_MERCHANT_ALLOWLIST` optimization type is
-// registered when EwalletManager is created.
-TEST_F(EwalletManagerTest, RegisterEwalletAllowlist) {
-  ewallet_manager_.reset();
-
-  EXPECT_CALL(optimization_guide_decider_,
-              RegisterOptimizationTypes(testing::ElementsAre(
-                  optimization_guide::proto::EWALLET_MERCHANT_ALLOWLIST)));
-
-  ewallet_manager_ = std::make_unique<EwalletManager>(
-      &client_,
-      /*api_client_creator=*/
-      base::BindOnce(&MockFacilitatedPaymentsApiClient::CreateApiClient),
-      &optimization_guide_decider_);
-}
-
 // Test that API availability is invoked for websites in the allowlist.
 TEST_F(EwalletManagerTest,
        TriggerEwalletPushPayment_UrlInAllowlist_ApiAvailabilityInvoked) {
@@ -1145,7 +1136,8 @@ class EwalletManagerOnTransactionResultLoggingTest
   EwalletManagerOnTransactionResultLoggingTest()
       : ewallet_manager_(std::make_unique<EwalletManager>(
             &client_, /*api_client_creator=*/
-            base::BindOnce(&MockFacilitatedPaymentsApiClient::CreateApiClient),
+            base::BindRepeating(
+                &MockFacilitatedPaymentsApiClient::CreateApiClient),
             &optimization_guide_decider_)) {
     test_api(*ewallet_manager_)
         .set_scheme(PaymentLinkValidator::Scheme::kShopeePay);
@@ -1417,6 +1409,87 @@ TEST_F(EwalletManagerTest,
 
   // The error screen shouldn't be auto-dismissed.
   EXPECT_EQ(test_api(*ewallet_manager_).ui_state(), UiState::kErrorScreen);
+}
+
+// Test that API availability is invoked if strike limitation is not reached.
+TEST_F(EwalletManagerTest,
+       TriggerEwalletPushPayment_NotEnoughStrike_ApiAvailabilityInvoked) {
+  GURL page_url("https://example.com/");
+  payments_data_manager_.AddEwalletForTest(autofill::Ewallet(
+      /*instrument_id=*/100, u"nickname",
+      /*display_icon_url=*/page_url, u"ewallet_name", u"account_display_name",
+      /*supported_payment_link_uris=*/
+      {u"^shopeepay:\\/\\/shopeepay\\.com\\.my\\?code=.*$",
+       u"^tngd:\\/\\/tngdigital\\.com\\.my\\?code=.*$"},
+      /*is_fido_enrolled=*/true));
+  GURL supported_payment_link(
+      "shopeepay://shopeepay.com.my?code=https://shopeepay.com.my/"
+      "281011051692389958586862838?merchant=Walmart&amount=101&currency=usd");
+  PaymentLinkSuggestionStrikeDatabase strike_database =
+      PaymentLinkSuggestionStrikeDatabase(test_strike_database_.get());
+  strike_database.AddStrikes(1);
+
+  EXPECT_CALL(GetApiClient(), IsAvailable);
+
+  ewallet_manager_->TriggerEwalletPushPayment(
+      supported_payment_link, page_url, ukm::UkmRecorder::GetNewSourceID());
+}
+
+// Test that API availability is not invoked if strike limitation is reached.
+TEST_F(EwalletManagerTest,
+       TriggerEwalletPushPayment_MaxStrike_ApiAvailabilityNotInvoked) {
+  base::HistogramTester histogram_tester;
+  GURL page_url("https://example.com/");
+  payments_data_manager_.AddEwalletForTest(
+      autofill::Ewallet(/*instrument_id=*/100, u"nickname",
+                        /*display_icon_url=*/GURL("http://www.example.com"),
+                        u"ewallet_name", u"account_display_name",
+                        /*supported_payment_link_uris=*/
+                        {u"^shopeepay:\\/\\/shopeepay\\.com\\.my\\?code=.*$",
+                         u"^tngd:\\/\\/tngdigital\\.com\\.my\\?code=.*$"},
+                        /*is_fido_enrolled=*/true));
+  GURL supported_payment_link(
+      "shopeepay://shopeepay.com.my?code=https://shopeepay.com.my/"
+      "281011051692389958586862838?merchant=Walmart&amount=101&currency=usd");
+  PaymentLinkSuggestionStrikeDatabase strike_database =
+      PaymentLinkSuggestionStrikeDatabase(test_strike_database_.get());
+  strike_database.AddStrikes(5);
+
+  EXPECT_CALL(GetApiClient(), IsAvailable).Times(0);
+
+  ewallet_manager_->TriggerEwalletPushPayment(
+      supported_payment_link, page_url, ukm::UkmRecorder::GetNewSourceID());
+
+  histogram_tester.ExpectUniqueSample(
+      "FacilitatedPayments.Ewallet.PayflowExitedReason.ShopeePay",
+      /*sample=*/EwalletFlowExitedReason::kMaxStrikes,
+      /*expected_bucket_count=*/1);
+}
+
+TEST_F(EwalletManagerTest,
+       OnPaymentPromptResult_FopSelectorAccepted_ClearsStrikes) {
+  payments_data_manager_.AddEwalletForTest(
+      autofill::Ewallet(/*instrument_id=*/100, u"nickname",
+                        /*display_icon_url=*/GURL("http://www.example.com"),
+                        u"ewallet_name", u"account_display_name",
+                        /*supported_payment_link_uris=*/
+                        {u"^shopeepay:\\/\\/shopeepay\\.com\\.my\\?code=.*$",
+                         u"^tngd:\\/\\/tngdigital\\.com\\.my\\?code=.*$"},
+                        /*is_fido_enrolled=*/true));
+  GURL supported_payment_link(
+      "shopeepay://shopeepay.com.my?code=https://shopeepay.com.my/"
+      "281011051692389958586862838?merchant=Walmart&amount=101&currency=usd");
+  PaymentLinkSuggestionStrikeDatabase strike_database =
+      PaymentLinkSuggestionStrikeDatabase(test_strike_database_.get());
+  strike_database.AddStrikes(2);
+
+  ewallet_manager_->TriggerEwalletPushPayment(
+      supported_payment_link, GURL("https://www.example.com"),
+      ukm::UkmRecorder::GetNewSourceID());
+  test_api(*ewallet_manager_)
+      .OnEwalletAccountSelected(/*selected_instrument_id=*/100L);
+
+  EXPECT_EQ(0, strike_database.GetStrikes());
 }
 
 }  // namespace payments::facilitated

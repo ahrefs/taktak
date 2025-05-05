@@ -4,13 +4,12 @@
 
 package org.chromium.chrome.browser.browserservices.verification;
 
+import static org.chromium.build.NullUtil.assumeNonNull;
 import static org.chromium.chrome.browser.browserservices.metrics.OriginVerifierMetricsRecorder.recordVerificationResult;
 import static org.chromium.chrome.browser.browserservices.metrics.OriginVerifierMetricsRecorder.recordVerificationTime;
 
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.browser.customtabs.CustomTabsService;
 import androidx.browser.customtabs.CustomTabsService.Relation;
@@ -25,6 +24,8 @@ import org.chromium.base.PackageUtils;
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.task.PostTask;
 import org.chromium.base.task.TaskTraits;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.browserservices.metrics.OriginVerifierMetricsRecorder.VerificationResult;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
 import org.chromium.chrome.browser.profiles.ProfileManager;
@@ -54,6 +55,7 @@ import java.util.List;
  * - Chrome specific metric logging.
  */
 @JNINamespace("customtabs")
+@NullMarked
 public class ChromeOriginVerifier extends OriginVerifier {
     private static final String TAG = "ChromeOriginVerifier";
 
@@ -66,7 +68,7 @@ public class ChromeOriginVerifier extends OriginVerifier {
             default:
                 assert false;
         }
-        return null;
+        return assumeNonNull(null);
     }
 
     /**
@@ -94,14 +96,15 @@ public class ChromeOriginVerifier extends OriginVerifier {
     }
 
     /**
-     * Verify the claimed origin for the cached package name asynchronously. This will end up
-     * making a network request for non-cached origins with a URLFetcher using the last used
-     * profile as context.
+     * Verify the claimed origin for the cached package name asynchronously. This will end up making
+     * a network request for non-cached origins with a URLFetcher using the last used profile as
+     * context.
+     *
      * @param listener The listener who will get the verification result.
      * @param origin The postMessage origin the application is claiming to have. Can't be null.
      */
     @Override
-    public void start(@NonNull OriginVerificationListener listener, @NonNull Origin origin) {
+    public void start(OriginVerificationListener listener, Origin origin) {
         ThreadUtils.assertOnUiThread();
         if (!isNativeOriginVerifierInitialized()) {
             initNativeOriginVerifier(ProfileManager.getLastUsedRegularProfile());
@@ -172,8 +175,8 @@ public class ChromeOriginVerifier extends OriginVerifier {
     /**
      * Returns whether an origin is first-party relative to a given package name.
      *
-     * This only returns data from previously cached relations, and does not trigger an asynchronous
-     * validation. This cache is persisted across Chrome restarts.
+     * <p>This only returns data from previously cached relations, and does not trigger an
+     * asynchronous validation. This cache is persisted across Chrome restarts.
      *
      * @param packageName The package name.
      * @param signatureFingerprint The signature of the package.
@@ -181,7 +184,10 @@ public class ChromeOriginVerifier extends OriginVerifier {
      * @param relation The Digital Asset Links relation to verify for.
      */
     private static boolean wasPreviouslyVerified(
-            String packageName, String signatureFingerprint, Origin origin, String relation) {
+            String packageName,
+            @Nullable String signatureFingerprint,
+            Origin origin,
+            String relation) {
         ChromeVerificationResultStore resultStore = ChromeVerificationResultStore.getInstance();
         return resultStore.shouldOverride(packageName, origin, relation)
                 || resultStore.isRelationshipSaved(
@@ -195,8 +201,8 @@ public class ChromeOriginVerifier extends OriginVerifier {
     /**
      * Returns whether an origin is first-party relative to a given package name.
      *
-     * This only returns data from previously cached relations, and does not trigger an asynchronous
-     * validation. This cache is persisted across Chrome restarts.
+     * <p>This only returns data from previously cached relations, and does not trigger an
+     * asynchronous validation. This cache is persisted across Chrome restarts.
      *
      * @param packageName The package name.
      * @param signatureFingerprints The signatures of the package.
@@ -205,7 +211,7 @@ public class ChromeOriginVerifier extends OriginVerifier {
      */
     private static boolean wasPreviouslyVerified(
             String packageName,
-            List<String> signatureFingerprints,
+            @Nullable List<String> signatureFingerprints,
             Origin origin,
             String relation) {
         ChromeVerificationResultStore resultStore = ChromeVerificationResultStore.getInstance();

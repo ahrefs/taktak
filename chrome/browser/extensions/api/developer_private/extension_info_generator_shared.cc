@@ -260,22 +260,6 @@ bool CanAccessSiteData(PermissionsManager* permissions_manager,
              .ShouldWarnAllHosts();
 }
 
-// Returns whether the extension has permission to run user scripts or can
-// request permission to do so.
-bool CanRunOrRequestUserScripts(const Extension& extension) {
-  // TODO(crbug.com/390138269): Once finch flag is default, remove the
-  // feature restriction.
-  if (!base::FeatureList::IsEnabled(
-          extensions_features::kUserScriptUserExtensionToggle)) {
-    return false;
-  }
-
-  return extension.permissions_data()->HasAPIPermission(
-             mojom::APIPermissionID::kUserScripts) ||
-         PermissionsParser::GetOptionalPermissions(&extension)
-             .HasAPIPermission(mojom::APIPermissionID::kUserScripts);
-}
-
 // Populates the `permissions` data for the given `extension`.
 void AddPermissionsInfo(content::BrowserContext* browser_context,
                         const Extension& extension,
@@ -565,6 +549,15 @@ void ExtensionInfoGeneratorShared::FillExtensionInfo(
        Manifest::ShouldAlwaysAllowFileAccess(extension.location()));
   info.file_access.is_active =
       util::AllowFileAccess(extension.id(), browser_context_);
+#if BUILDFLAG(IS_CHROMEOS)
+  info.file_access_pending_change =
+      extension_prefs_->HasAllowFileAccessPendingUpdate(extension.id());
+  if (info.file_access_pending_change) {
+    info.file_access.is_active = !info.file_access.is_active;
+  }
+#else
+  info.file_access_pending_change = false;
+#endif
 
   // Home page.
   info.home_page.url = ManifestURL::GetHomepageURL(&extension).spec();
@@ -583,15 +576,24 @@ void ExtensionInfoGeneratorShared::FillExtensionInfo(
   info.incognito_access.is_enabled = util::CanBeIncognitoEnabled(&extension);
   info.incognito_access.is_active =
       util::IsIncognitoEnabled(extension.id(), browser_context_);
+#if BUILDFLAG(IS_CHROMEOS)
+  info.incognito_access_pending_change =
+      extension_prefs_->HasIncognitoEnabledPendingUpdate(extension.id());
+  if (info.incognito_access_pending_change) {
+    info.incognito_access.is_active = !info.incognito_access.is_active;
+  }
+#else
+  info.incognito_access_pending_change = false;
+#endif
 
   // User Scripts toggle.
-  info.user_scripts_access.is_enabled = CanRunOrRequestUserScripts(extension);
+  info.user_scripts_access.is_enabled =
+      UserScriptManager::CanExtensionUseUserScriptsAPI(extension);
   const UserScriptManager* user_script_manager =
       ExtensionSystem::Get(browser_context_)->user_script_manager();
   if (user_script_manager) {  // Not created in some unit tests.
     info.user_scripts_access.is_active =
-        // User scripts will be able to run if the user has enabled the toggle.
-        user_script_manager->IsUserScriptPrefEnabled(extension.id());
+        user_script_manager->AreUserScriptsAllowed(extension, browser_context_);
   }
 
   // Install warnings, but only if unpacked, the error console isn't enabled

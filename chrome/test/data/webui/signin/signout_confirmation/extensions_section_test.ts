@@ -35,7 +35,7 @@ suite('SignoutConfirmationViewTest', function() {
 
     // All header elements should be visible by default.
     assertTrue(isChildVisible(extensionsSection, '#checkbox'));
-    assertTrue(isChildVisible(extensionsSection, '#title'));
+    assertTrue(isChildVisible(extensionsSection, '#title-container'));
     assertTrue(isChildVisible(extensionsSection, '#tooltip-icon'));
     assertTrue(isChildVisible(extensionsSection, '#expandButton'));
   });
@@ -57,7 +57,7 @@ suite('SignoutConfirmationViewTest', function() {
 
     // Test that the number of account extensions shown match.
     const accountExtensions =
-        extensionsSection.shadowRoot!.querySelectorAll<HTMLElement>(
+        extensionsSection.shadowRoot.querySelectorAll<HTMLElement>(
             '.account-extension');
     assertEquals(TEST_ACCOUNT_EXTENSIONS.length, accountExtensions.length);
 

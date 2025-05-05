@@ -360,8 +360,8 @@ class VariantVector;
 
 namespace ui {
 
+class AXFragmentRootWin;
 class AXPlatformNodeWin;
-class AXPlatformRelationWin;
 
 // A simple interface for a class that wants to be notified when Windows
 // accessibility APIs are used by a client, a strong indication that full
@@ -397,8 +397,8 @@ class COMPONENT_EXPORT(AX_PLATFORM)
   ~WinAccessibilityAPIUsageScopedUIAEventsNotifier();
 };
 
-class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
-    uuid("26f5641a-246d-457b-a96d-07f3fae6acf2")) AXPlatformNodeWin
+class COMPONENT_EXPORT(AX_PLATFORM)
+    __declspec(uuid("26f5641a-246d-457b-a96d-07f3fae6acf2")) AXPlatformNodeWin
     : public SequenceAffineComObjectRoot,
       public IDispatchImpl<IAccessible2_4,
                            &IID_IAccessible2_4,
@@ -476,9 +476,6 @@ class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
   END_COM_MAP()
 
   ~AXPlatformNodeWin() override;
-
-  // Clear any AXPlatformRelationWin nodes owned by this node.
-  void ClearOwnRelations();
 
   // AXPlatformNode overrides.
   gfx::NativeViewAccessible GetNativeViewAccessible() override;
@@ -1207,6 +1204,9 @@ class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
   // Clear the computed hypertext.
   void ResetComputedHypertext();
 
+  bool HasEventListenerForEvent(EVENTID event_id);
+  bool HasEventListenerForProperty(PROPERTYID property_id);
+
   // Convert a mojo event to an MSAA event. Exposed for testing.
   static std::optional<DWORD> MojoEventToMSAAEvent(ax::mojom::Event event);
 
@@ -1268,9 +1268,6 @@ class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
   // AXPlatformNodeBase overrides.
   void Dispose() override;
 
-  // Relationships between this node and other nodes.
-  std::vector<Microsoft::WRL::ComPtr<AXPlatformRelationWin>> relations_;
-
   // These protected methods are still used by BrowserAccessibilityComWin. At
   // some point post conversion, we can probably move these to be private
   // methods.
@@ -1324,6 +1321,8 @@ class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
     LONG control_type;
     const wchar_t* aria_role;
   };
+
+  AXFragmentRootWin* GetAXFragmentRootWin();
 
   AXPlatformNodeWin* GetParentPlatformNodeWin() const;
 
@@ -1557,7 +1556,6 @@ class COMPONENT_EXPORT(AX_PLATFORM) __declspec(
 
   // Fires UIA text edit event about composition (active or committed)
   void FireUiaTextEditTextChangedEvent(
-      const gfx::Range& range,
       const std::wstring& active_composition_text,
       bool is_composition_committed);
 

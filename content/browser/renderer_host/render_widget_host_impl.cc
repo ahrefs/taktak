@@ -901,7 +901,15 @@ void RenderWidgetHostImpl::WasShown(
   // SendScreenRects() and SynchronizeVisualProperties() should happen
   // together as one message, but we send them back-to-back for now so that
   // all state gets to the renderer as close together as possible.
-  SynchronizeVisualProperties();
+  //
+  // If we are evicted we need to unthrottle the synchronization. The pending
+  // ack could have been set after we were hidden. We need to always sync the
+  // new `viz::LocalSurfaceId` to restore from being evicted.
+  if (view_->is_evicted()) {
+    SynchronizeVisualPropertiesIgnoringPendingAck();
+  } else {
+    SynchronizeVisualProperties();
+  }
 
   CHECK(!pending_show_params_);
   if (!waiting_for_init_) {
@@ -3340,29 +3348,6 @@ RenderWidgetHostImpl::BindAndGenerateCreateFrameWidgetParams() {
 
   params->visual_properties = GetInitialVisualProperties();
 
-  return params;
-}
-
-mojom::CreateFrameWidgetParamsPtr
-RenderWidgetHostImpl::BindAndGenerateCreateFrameWidgetParamsForNewWindow() {
-  auto params = mojom::CreateFrameWidgetParams::New();
-  params->routing_id = GetRoutingID();
-  mojo::PendingAssociatedRemote<blink::mojom::Widget> widget_remote;
-  params->widget = widget_remote.InitWithNewEndpointAndPassReceiver();
-  BindWidgetInterfaces(params->widget_host.InitWithNewEndpointAndPassReceiver(),
-                       std::move(widget_remote));
-  mojo::PendingAssociatedRemote<blink::mojom::FrameWidget> frame_widget_remote;
-  params->frame_widget =
-      frame_widget_remote.InitWithNewEndpointAndPassReceiver();
-  BindFrameWidgetInterfaces(
-      params->frame_widget_host.InitWithNewEndpointAndPassReceiver(),
-      std::move(frame_widget_remote));
-  // TODO(danakj): For some reason, there is no RenderWidgetHostView here, but
-  // it seems like there should be one? In the meantime we send some nonsense
-  // with semi-valid but incorrect screen info (it needs a RenderWidgetHostView
-  // to be correct). An updated VisualProperties will get to the RenderWidget
-  // eventually.
-  params->visual_properties.screen_infos = GetScreenInfos();
   return params;
 }
 

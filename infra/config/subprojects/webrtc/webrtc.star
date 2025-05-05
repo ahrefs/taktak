@@ -42,6 +42,7 @@ defaults.set(
     properties = {
         "perf_dashboard_machine_group": "ChromiumWebRTC",
     },
+    reclient_enabled = False,
     service_account = "chromium-ci-builder@chops-service-accounts.iam.gserviceaccount.com",
     siso_enabled = True,
     siso_project = siso.project.DEFAULT_TRUSTED,
@@ -64,7 +65,7 @@ builder(
             apply_configs = ["android"],
         ),
         chromium_config = builder_config.chromium_config(
-            config = "chromium",
+            config = "base_config",
             apply_configs = [
                 "dcheck",
                 "mb",
@@ -99,7 +100,7 @@ builder(
             apply_configs = ["android"],
         ),
         chromium_config = builder_config.chromium_config(
-            config = "chromium",
+            config = "base_config",
             apply_configs = [
                 "dcheck",
                 "mb",

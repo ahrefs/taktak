@@ -29,6 +29,7 @@ ci.defaults.set(
     main_console_view = "main",
     execution_timeout = ci.DEFAULT_EXECUTION_TIMEOUT,
     health_spec = health_spec.DEFAULT,
+    reclient_enabled = False,
     service_account = ci.DEFAULT_SERVICE_ACCOUNT,
     shadow_service_account = ci.DEFAULT_SHADOW_SERVICE_ACCOUNT,
     siso_enabled = True,
@@ -64,17 +65,18 @@ ci.builder(
             ],
         ),
         chromium_config = builder_config.chromium_config(
-            config = "android",
+            config = "main_builder",
             apply_configs = [
                 "clobber",
                 "mb",
             ],
             build_config = builder_config.build_config.RELEASE,
             target_arch = builder_config.target_arch.ARM,
+            target_bits = 32,
             target_platform = builder_config.target_platform.ANDROID,
         ),
         android_config = builder_config.android_config(
-            config = "main_builder",
+            config = "base_config",
         ),
     ),
     gn_args = gn_args.config(
@@ -120,7 +122,7 @@ ci.builder(
             ],
         ),
         chromium_config = builder_config.chromium_config(
-            config = "android",
+            config = "main_builder",
             apply_configs = [
                 "clobber",
                 "mb",
@@ -131,12 +133,13 @@ ci.builder(
             target_platform = builder_config.target_platform.ANDROID,
         ),
         android_config = builder_config.android_config(
-            config = "main_builder",
+            config = "base_config",
         ),
     ),
     gn_args = gn_args.config(
         configs = [
             "android_builder_without_codecs",
+            "enable_android_secondary_abi",
             "release_builder",
             "remoteexec",
             "minimal_symbols",
@@ -177,7 +180,7 @@ ci.builder(
             ],
         ),
         chromium_config = builder_config.chromium_config(
-            config = "android",
+            config = "main_builder",
             apply_configs = [
                 "clobber",
                 "mb",
@@ -188,13 +191,14 @@ ci.builder(
             target_platform = builder_config.target_platform.ANDROID,
         ),
         android_config = builder_config.android_config(
-            config = "x64_builder",
+            config = "base_config",
         ),
     ),
     gn_args = gn_args.config(
         configs = [
             "android_builder_without_codecs",
             "android_desktop",
+            "enable_android_secondary_abi",
             "release_builder",
             "remoteexec",
             "minimal_symbols",
@@ -239,7 +243,7 @@ ci.builder(
             ],
         ),
         chromium_config = builder_config.chromium_config(
-            config = "android",
+            config = "main_builder",
             apply_configs = [
                 "clobber",
                 "mb",
@@ -250,13 +254,14 @@ ci.builder(
             target_platform = builder_config.target_platform.ANDROID,
         ),
         android_config = builder_config.android_config(
-            config = "main_builder",
+            config = "base_config",
         ),
     ),
     gn_args = gn_args.config(
         configs = [
             "android_builder_without_codecs",
             "android_desktop",
+            "enable_android_secondary_abi",
             "release_builder",
             "remoteexec",
             "minimal_symbols",
@@ -302,15 +307,17 @@ ci.builder(
             ],
         ),
         chromium_config = builder_config.chromium_config(
-            config = "android",
+            config = "main_builder",
             apply_configs = [
                 "mb",
             ],
+            build_config = builder_config.build_config.DEBUG,
             target_arch = builder_config.target_arch.ARM,
+            target_bits = 32,
             target_platform = builder_config.target_platform.ANDROID,
         ),
         android_config = builder_config.android_config(
-            config = "main_builder",
+            config = "base_config",
         ),
     ),
     gn_args = gn_args.config(

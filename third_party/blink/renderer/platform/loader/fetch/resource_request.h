@@ -66,6 +66,7 @@ namespace blink {
 
 class FeatureContext;
 class EncodedFormData;
+struct IntegrityMetadataSet;
 
 // ResourceRequestHead represents request without request body.
 // See ResourceRequest below to see what request is.
@@ -406,10 +407,10 @@ class PLATFORM_EXPORT ResourceRequestHead {
   const String& GetFetchIntegrity() const { return fetch_integrity_; }
   void SetFetchIntegrity(const String& integrity, const FeatureContext*);
 
-  // The list of expected signatures is set as a side-effect of
-  // `SetFetchIntegrity()`.
-  const WTF::Vector<String>& GetExpectedSignatures() const {
-    return expected_signatures_;
+  // This is also called as a side-effect of `SetFetchIntegrity()`.
+  void SetExpectedPublicKeys(const IntegrityMetadataSet&);
+  const WTF::Vector<String>& GetExpectedPublicKeys() const {
+    return expected_public_keys_;
   }
 
   bool CacheControlContainsNoCache() const;
@@ -673,6 +674,14 @@ class PLATFORM_EXPORT ResourceRequestHead {
 #endif
   }
 
+  bool AllowsDeviceBoundSessions() const {
+    return allows_device_bound_sessions_;
+  }
+
+  void SetAllowsDeviceBoundSessions(bool allows_device_bound_sessions) {
+    allows_device_bound_sessions_ = allows_device_bound_sessions;
+  }
+
  private:
   const CacheControlHeader& GetCacheControlHeader() const;
 
@@ -742,8 +751,8 @@ class PLATFORM_EXPORT ResourceRequestHead {
   network::mojom::RedirectMode redirect_mode_;
   // Exposed as Request.integrity in Service Workers
   String fetch_integrity_;
-  // Signature expectations extracted from `fetch_integrity_`
-  WTF::Vector<String> expected_signatures_;
+  // Public key expectations extracted from `integrity_`
+  WTF::Vector<String> expected_public_keys_;
   String referrer_string_;
   network::mojom::ReferrerPolicy referrer_policy_;
   network::mojom::CorsPreflightPolicy cors_preflight_policy_;
@@ -826,6 +835,11 @@ class PLATFORM_EXPORT ResourceRequestHead {
 #if DCHECK_IS_ON()
   bool is_set_url_allowed_ = true;
 #endif
+
+  // Whether this request is allowed to register new device bound
+  // sessions or accept challenges on device bound sessions (e.g. due to
+  // an Origin Trial)
+  bool allows_device_bound_sessions_ = false;
 };
 
 class PLATFORM_EXPORT ResourceRequestBody {

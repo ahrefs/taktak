@@ -4,23 +4,40 @@
 
 package org.chromium.android_webview;
 
+import org.chromium.build.annotations.Nullable;
 import org.chromium.content_public.browser.NavigationHandle;
 
 /** Represents a navigation and is exposed to embedders. See also AwNavigationClient */
 public class AwNavigation extends AwSupportLibIsomorphic {
     private final NavigationHandle mNavigationHandle;
+    // The Page that the navigation commits into. Set to null if the navigation doesn't commit or
+    // result in a Page (e.g. 204/download)
+    private @Nullable AwPage mPage;
 
-    public AwNavigation(NavigationHandle navigationHandle) {
+    public AwNavigation(NavigationHandle navigationHandle, @Nullable AwPage page) {
         mNavigationHandle = navigationHandle;
+        mPage = page;
     }
 
-    // TODO(crbug.com/394479273): Add Page-related functions.
+    void setPage(@Nullable AwPage page) {
+        if (mPage != page) {
+            // We can only change the page associated with the navigation if it was null before
+            // (e.g. the AwNavigation was constructed when the navigation just started, then
+            // the navigation eventually committed a page).
+            assert mPage == null;
+        }
+        mPage = page;
+    }
+
+    public @Nullable AwPage getPage() {
+        return mPage;
+    }
 
     public String getUrl() {
         return mNavigationHandle.getUrl().getValidSpecOrEmpty();
     }
 
-    public boolean isPageInitiated() {
+    public boolean wasInitiatedByPage() {
         return mNavigationHandle.isRendererInitiated();
     }
 
@@ -48,7 +65,7 @@ public class AwNavigation extends AwSupportLibIsomorphic {
         return mNavigationHandle.isForward();
     }
 
-    public boolean hasCommitted() {
+    public boolean didCommit() {
         return mNavigationHandle.hasCommitted();
     }
 

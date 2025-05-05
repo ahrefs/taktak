@@ -9,21 +9,23 @@ import org.jni_zero.JniType;
 import org.jni_zero.NativeMethods;
 
 import org.chromium.base.ResettersForTesting;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.components.policy.PolicyService;
 
 /**
- * Get the PolicyService instance. Note that the associated C++ instance won't
- * notify its deletion. It's caller's responsibility to make sure the instance
- * is still valid.
+ * Get the PolicyService instance. Note that the associated C++ instance won't notify its deletion.
+ * It's caller's responsibility to make sure the instance is still valid.
  */
 @JNINamespace("policy::android")
+@NullMarked
 public class PolicyServiceFactory {
-    private static PolicyService sPolicyServiceForTest;
+    private static @Nullable PolicyService sPolicyServiceForTest;
 
     /**
-     * Returns the PolicyService instance that contains browser policies.
-     * The associated C++ instance is deleted during shutdown.
+     * Returns the PolicyService instance that contains browser policies. The associated C++
+     * instance is deleted during shutdown.
      */
     public static PolicyService getGlobalPolicyService() {
         return sPolicyServiceForTest == null

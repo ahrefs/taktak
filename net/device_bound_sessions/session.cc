@@ -10,6 +10,7 @@
 #include "components/unexportable_keys/unexportable_key_id.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "net/cookies/canonical_cookie.h"
+#include "net/cookies/cookie_access_params.h"
 #include "net/cookies/cookie_constants.h"
 #include "net/cookies/cookie_options.h"
 #include "net/cookies/cookie_store.h"
@@ -96,16 +97,23 @@ base::expected<std::unique_ptr<Session>, SessionError> Session::CreateIfValid(
                      net::SchemefulSite(), /*session_id=*/std::nullopt});
   }
 
-  if (!params.scope.origin.empty() && !params.fetcher_url.host().empty() &&
-      params.fetcher_url.host() != params.scope.origin &&
-      net::registry_controlled_domains::GetDomainAndRegistry(
-          params.fetcher_url,
-          net::registry_controlled_domains::EXCLUDE_PRIVATE_REGISTRIES) !=
-          net::registry_controlled_domains::GetDomainAndRegistry(
-              params.scope.origin,
-              net::registry_controlled_domains::EXCLUDE_PRIVATE_REGISTRIES)) {
+  // If there is an origin in the scope, verify it is valid. Default to the
+  // fetcher URL if the origin is missing from the scope.
+  GURL scope_origin_as_url = params.scope.origin.empty()
+                                 ? params.fetcher_url
+                                 : GURL(params.scope.origin);
+  url::Origin scope_origin = url::Origin::Create(scope_origin_as_url);
+  if (scope_origin.opaque()) {
     return base::unexpected(
-        SessionError{SessionError::ErrorType::kInvalidFetcherUrl,
+        SessionError{SessionError::ErrorType::kInvalidScopeOrigin,
+                     net::SchemefulSite(), /*session_id=*/std::nullopt});
+  }
+
+  // Check if the scope-origin is samesite with fetcher URL.
+  if (net::SchemefulSite(scope_origin_as_url) !=
+      net::SchemefulSite(params.fetcher_url)) {
+    return base::unexpected(
+        SessionError{SessionError::ErrorType::kScopeOriginSameSiteMismatch,
                      net::SchemefulSite(), /*session_id=*/std::nullopt});
   }
 
@@ -118,17 +126,25 @@ base::expected<std::unique_ptr<Session>, SessionError> Session::CreateIfValid(
       base::UnescapeRule::PATH_SEPARATORS |
           base::UnescapeRule::URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
   GURL candidate_refresh_endpoint = params.fetcher_url.Resolve(unescaped_path);
+
+  // Check if the refresh URL is valid, secure.
   if (!candidate_refresh_endpoint.is_valid() ||
-      !IsSecure(candidate_refresh_endpoint) ||
-      net::SchemefulSite(candidate_refresh_endpoint) !=
-          net::SchemefulSite(params.fetcher_url)) {
+      !IsSecure(candidate_refresh_endpoint)) {
     return base::unexpected(
         SessionError{SessionError::ErrorType::kInvalidRefreshUrl,
                      net::SchemefulSite(), /*session_id=*/std::nullopt});
   }
+
+  // Check if the refresh URL is same-site with the fetcher URL.
+  if (net::SchemefulSite(candidate_refresh_endpoint) !=
+      net::SchemefulSite(params.fetcher_url)) {
+    return base::unexpected(
+        SessionError{SessionError::ErrorType::kRefreshUrlSameSiteMismatch,
+                     net::SchemefulSite(), /*session_id=*/std::nullopt});
+  }
+
   std::unique_ptr<Session> session(new Session(
-      Id(params.session_id), url::Origin::Create(params.fetcher_url),
-      candidate_refresh_endpoint));
+      Id(params.session_id), scope_origin, candidate_refresh_endpoint));
   for (const auto& spec : params.scope.specifications) {
     if (!spec.domain.empty() && !spec.path.empty()) {
       const auto inclusion_result =
@@ -146,8 +162,10 @@ base::expected<std::unique_ptr<Session>, SessionError> Session::CreateIfValid(
       SessionInclusionRules::InclusionResult::kExclude,
       candidate_refresh_endpoint.host(), candidate_refresh_endpoint.path());
 
+  session->inclusion_rules_.SetIncludeSite(params.scope.include_site);
+
   for (const auto& cred : params.credentials) {
-    if (!cred.name.empty() && !cred.attributes.empty()) {
+    if (!cred.name.empty()) {
       std::optional<CookieCraving> craving =
           CookieCraving::Create(params.fetcher_url, cred.name, cred.attributes,
                                 base::Time::Now(), std::nullopt);
@@ -408,6 +426,9 @@ void Session::InformOfRefreshResult(SessionError::ErrorType error_type) {
     case kInvalidFetcherUrl:
     case kInvalidRefreshUrl:
     case kPersistentHttpError:
+    case kScopeOriginSameSiteMismatch:
+    case kRefreshUrlSameSiteMismatch:
+    case kInvalidScopeOrigin:
 
     // We do not want to back off on many network connection errors
     // (e.g. internet disconnected), so we do not hit our maximum

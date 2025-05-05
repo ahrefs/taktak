@@ -245,6 +245,18 @@ public interface BrowserPaymentRequest {
     AndroidIntentLauncher getAndroidIntentLauncher();
 
     /**
+     * Used to check whether payment apps are required to handle shipping address and contact
+     * information, when merchant websites request that information. This information can be
+     * returned either from payment apps or from Chrome's autofill. Result of this method does not
+     * guarantee the payment. Even if this method returns true, there could be no payment apps to
+     * support providing shipping address or contact information.
+     *
+     * @return Whether payment apps are required to provide shipping address and contact
+     *     information.
+     */
+    boolean isFullDelegationRequired();
+
+    /**
      * Send the given response to the renderer process to resolve the pending JavaScript promise for
      * the PaymentRequest.canMakePayment() API call, potentially overriding the calculated value.
      *
@@ -254,6 +266,22 @@ public interface BrowserPaymentRequest {
      *     either synchronously or asynchronously.
      */
     default void maybeOverrideCanMakePaymentResponse(boolean response, Callback<Boolean> sender) {
+        // By default, there is no override of the `response` value.
+        sender.onResult(response);
+    }
+
+    /**
+     * Send the given response to the renderer process to resolve the pending JavaScript promise for
+     * the PaymentRequest.hasEnrolledInstrument() API call, potentially overriding the calculated
+     * value.
+     *
+     * @param response The response to the JavaScript PaymentRequest.hasEnrolledInstrument() API
+     *     call. Can be potentially overridden.
+     * @param sender The method for sending the response to the renderer process. May be invoked
+     *     either synchronously or asynchronously.
+     */
+    default void maybeOverrideHasEnrolledInstrumentResponse(
+            boolean response, Callback<Boolean> sender) {
         // By default, there is no override of the `response` value.
         sender.onResult(response);
     }

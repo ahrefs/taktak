@@ -4,18 +4,18 @@
 
 package org.chromium.chrome.browser.tab;
 
-import androidx.annotation.Nullable;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 
 /** Contains the state for a WebContents. */
+@NullMarked
 public class WebContentsState {
     /**
      * Version number of the format used to save the WebContents navigation history, as returned by
-     * TabStateJni.get().getContentsStateAsByteBuffer(). Version labels:
-     *   0 - Chrome m18
-     *   1 - Chrome m25
-     *   2 - Chrome m26+
+     * TabStateJni.get().getContentsStateAsByteBuffer(). Version labels: 0 - Chrome m18 1 - Chrome
+     * m25 2 - Chrome m26+
      */
     public static final int CONTENTS_STATE_CURRENT_VERSION = 2;
 
@@ -27,8 +27,8 @@ public class WebContentsState {
     private final ByteBuffer mBuffer;
 
     private int mVersion;
-    private String mFallbackUrlForRestorationFailure;
-    private static WebContentsState sEmptyWebContentsState;
+    private @Nullable String mFallbackUrlForRestorationFailure;
+    private static @Nullable WebContentsState sEmptyWebContentsState;
 
     public WebContentsState(ByteBuffer buffer) {
         assert buffer.isDirect();
@@ -48,19 +48,22 @@ public class WebContentsState {
         mVersion = version;
     }
 
-    /** @return Title currently being displayed in the saved state's current entry. */
-    public String getDisplayTitleFromState() {
+    /**
+     * @return Title currently being displayed in the saved state's current entry.
+     */
+    public @Nullable String getDisplayTitleFromState() {
         return WebContentsStateBridge.getDisplayTitleFromState(this);
     }
 
-    /** @return URL currently being displayed in the saved state's current entry. */
-    public String getVirtualUrlFromState() {
+    /**
+     * @return URL currently being displayed in the saved state's current entry.
+     */
+    public @Nullable String getVirtualUrlFromState() {
         return WebContentsStateBridge.getVirtualUrlFromState(this);
     }
 
     /** Get the URL to be loaded if restoring the serialized web content state fails. */
-    @Nullable
-    public String getFallbackUrlForRestorationFailure() {
+    public @Nullable String getFallbackUrlForRestorationFailure() {
         return mFallbackUrlForRestorationFailure;
     }
 

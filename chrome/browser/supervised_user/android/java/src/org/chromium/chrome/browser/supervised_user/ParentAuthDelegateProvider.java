@@ -10,15 +10,17 @@ import androidx.annotation.VisibleForTesting;
 
 import org.chromium.base.ServiceLoaderUtil;
 import org.chromium.base.ThreadUtils;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 
 /** Helper class that provides a test or production instance for {@link ParentAuthDelegate}. */
+@NullMarked
 public class ParentAuthDelegateProvider {
-    private static ParentAuthDelegate sInstance;
-    private static ParentAuthDelegate sTestingInstance;
+    private static @Nullable ParentAuthDelegate sInstance;
+    private static @Nullable ParentAuthDelegate sTestingInstance;
 
     /**
-     * Sets the test instance. Can be called multiple times to change the instance
-     * during testing.
+     * Sets the test instance. Can be called multiple times to change the instance during testing.
      */
     @VisibleForTesting
     @AnyThread
@@ -32,7 +34,7 @@ public class ParentAuthDelegateProvider {
 
     /** Returns singleton instance. */
     @MainThread
-    public static ParentAuthDelegate getInstance() {
+    public static @Nullable ParentAuthDelegate getInstance() {
         ThreadUtils.assertOnUiThread();
         if (sTestingInstance != null) {
             return sTestingInstance;

@@ -4,18 +4,16 @@
 
 package org.chromium.chrome.browser.tab;
 
-import androidx.annotation.Nullable;
-
 import org.chromium.base.UserData;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.ui.base.WindowAndroid;
 
-/**
- * UserData for a {@link Tab}. Used for a {@link WebContents} while it stays
- * active for the Tab.
- */
+/** UserData for a {@link Tab}. Used for a {@link WebContents} while it stays active for the Tab. */
+@NullMarked
 public abstract class TabWebContentsUserData implements UserData {
-    private WebContents mWebContents;
+    private @Nullable WebContents mWebContents;
 
     public TabWebContentsUserData(Tab tab) {
         tab.addObserver(
@@ -48,7 +46,7 @@ public abstract class TabWebContentsUserData implements UserData {
         destroyInternal();
     }
 
-    protected WebContents getWebContents() {
+    protected @Nullable WebContents getWebContents() {
         return mWebContents;
     }
 
@@ -63,7 +61,8 @@ public abstract class TabWebContentsUserData implements UserData {
 
     /**
      * Called when {@link WebContents} gets swapped out.
+     *
      * @param webContents WebContents object that just became inactive.
      */
-    public abstract void cleanupWebContents(WebContents webContents);
+    public abstract void cleanupWebContents(@Nullable WebContents webContents);
 }

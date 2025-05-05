@@ -19,6 +19,7 @@
 #include "components/facilitated_payments/core/browser/network_api/facilitated_payments_initiate_payment_request_details.h"
 #include "components/facilitated_payments/core/browser/network_api/facilitated_payments_initiate_payment_response_details.h"
 #include "components/facilitated_payments/core/browser/network_api/facilitated_payments_network_interface.h"
+#include "components/facilitated_payments/core/browser/strike_databases/payment_link_suggestion_strike_database.h"
 #include "components/facilitated_payments/core/features/features.h"
 #include "components/facilitated_payments/core/metrics/facilitated_payments_metrics.h"
 #include "components/facilitated_payments/core/utils/facilitated_payments_ui_utils.h"
@@ -42,11 +43,8 @@ EwalletManager::EwalletManager(
     FacilitatedPaymentsApiClientCreator api_client_creator,
     optimization_guide::OptimizationGuideDecider* optimization_guide_decider)
     : client_(CHECK_DEREF(client)),
-      api_client_creator_(std::move(api_client_creator)),
-      optimization_guide_decider_(CHECK_DEREF(optimization_guide_decider)) {
-  optimization_guide_decider_->RegisterOptimizationTypes(
-      {optimization_guide::proto::EWALLET_MERCHANT_ALLOWLIST});
-}
+      api_client_creator_(api_client_creator),
+      optimization_guide_decider_(CHECK_DEREF(optimization_guide_decider)) {}
 
 EwalletManager::~EwalletManager() {
   DismissPrompt();
@@ -101,6 +99,13 @@ void EwalletManager::TriggerEwalletPushPayment(const GURL& payment_link_url,
     return;
   }
 
+  if (auto* strike_database = GetOrCreateStrikeDatabase()) {
+    if (strike_database->ShouldBlockFeature()) {
+      LogEwalletFlowExitedReason(EwalletFlowExitedReason::kMaxStrikes, scheme_);
+      return;
+    }
+  }
+
   base::span<const autofill::Ewallet> ewallet_accounts =
       payments_data_manager->GetEwalletAccounts();
   supported_ewallets_.reserve(ewallet_accounts.size());
@@ -145,7 +150,7 @@ void EwalletManager::Reset() {
 FacilitatedPaymentsApiClient* EwalletManager::GetApiClient() {
   if (!api_client_) {
     if (api_client_creator_) {
-      api_client_ = std::move(api_client_creator_).Run();
+      api_client_ = api_client_creator_.Run();
     }
   }
 
@@ -174,6 +179,10 @@ void EwalletManager::OnApiAvailabilityReceived(base::TimeTicks start_time,
 }
 
 void EwalletManager::OnEwalletAccountSelected(int64_t selected_instrument_id) {
+  if (auto* strike_database = GetOrCreateStrikeDatabase()) {
+    strike_database->ClearStrikes();
+  }
+
   LogEwalletFopSelected(GetAvailableEwalletsConfiguration());
   LogEwalletFopSelectorResultUkm(/*accepted=*/true, ukm_source_id_, scheme_);
 
@@ -335,6 +344,9 @@ void EwalletManager::OnUiEvent(UiEvent ui_event_type) {
     }
     case UiEvent::kScreenClosedByUser: {
       if (ui_state_ == UiState::kFopSelector) {
+        if (auto* strike_database = GetOrCreateStrikeDatabase()) {
+          strike_database->AddStrike();
+        }
         LogEwalletFlowExitedReason(
             EwalletFlowExitedReason::kFopSelectorClosedByUser, scheme_);
         LogEwalletFopSelectorResultUkm(/*accepted=*/false, ukm_source_id_,
@@ -383,6 +395,17 @@ void EwalletManager::DismissProgressScreen() {
   if (ui_state_ == UiState::kProgressScreen) {
     DismissPrompt();
   }
+}
+
+PaymentLinkSuggestionStrikeDatabase*
+EwalletManager::GetOrCreateStrikeDatabase() {
+  if (!strike_database_) {
+    if (auto* strike_database = client_->GetStrikeDatabase()) {
+      strike_database_ = std::make_unique<PaymentLinkSuggestionStrikeDatabase>(
+          strike_database);
+    }
+  }
+  return strike_database_.get();
 }
 
 }  // namespace payments::facilitated

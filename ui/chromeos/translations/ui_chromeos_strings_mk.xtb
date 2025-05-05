@@ -107,6 +107,7 @@
 <translation id="1810764548349082891">Не е достапен преглед</translation>
 <translation id="1812302367230252929">транслитерација на амхарски</translation>
 <translation id="1813278315230285598">Услуги</translation>
+<translation id="181434555916624618">Засега, резултатите со луѓе нема да се прикажуваат. Обидете се со друго барање.</translation>
 <translation id="1829129547161959350">Пингвин</translation>
 <translation id="183183971458492120">Се вчитуваат информации…</translation>
 <translation id="1832073788765803750">катакана со половина ширина</translation>
@@ -689,7 +690,7 @@
 <translation id="6271903698064569429">Датотеките не може да се прикачат бидејќи нема доволно капацитет на „<ph name="SHARED_DRIVE_NAME" />“.</translation>
 <translation id="6279140785485544797">Вашиот пакет за мобилен интернет можеби е истечен. За поддршка, контактирајте со операторот.</translation>
 <translation id="6287852322318138013">Изберете апликација за да ја отворите оваа датотека</translation>
-<translation id="6295542640242147836">Заклучи SIM</translation>
+<translation id="6295542640242147836">Заклучи ја SIM-картичката</translation>
 <translation id="6296410173147755564">Погрешен PUK</translation>
 <translation id="6308243004861726558">Датотекава е доверлива и подлежи на администраторско правило. Важат следниве дејства за пристап до датотеки и префрлување.</translation>
 <translation id="6312403991423642364">Непозната мрежна грешка</translation>
@@ -704,7 +705,7 @@
 <translation id="6364301859968397756">Капацитетот на организацијата е полн</translation>
 <translation id="6367976544441405720">Комбе</translation>
 <translation id="637062427944097960">Оваа датотека се отвори на друг десктоп. Поместете ја на <ph name="USER_NAME" /> (<ph name="MAIL_ADDRESS" />) за да се прикаже.</translation>
-<translation id="6394388407447716302">Само за читање</translation>
+<translation id="6394388407447716302">Само за преглед</translation>
 <translation id="6395575651121294044"><ph name="NUMBER_OF_FILES" /> ставки</translation>
 <translation id="6407769893376380348">Датотеката <ph name="FILE_NAME" /> не можеше да се премести бидејќи е шифрирана.</translation>
 <translation id="642282551015776456">Имево не може да се користи како име на датотека или на папка</translation>

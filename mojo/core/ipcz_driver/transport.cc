@@ -9,6 +9,7 @@
 
 #include "mojo/core/ipcz_driver/transport.h"
 
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -34,6 +35,7 @@
 #include "third_party/ipcz/include/ipcz/ipcz.h"
 
 #if BUILDFLAG(IS_WIN)
+#include "base/win/win_util.h"
 #include "mojo/public/cpp/platform/platform_handle_security_util_win.h"
 #endif
 
@@ -135,10 +137,12 @@ bool EncodeHandle(PlatformHandle& handle,
                   HandleOwner handle_owner,
                   HandleData& out_handle_data,
                   bool is_remote_process_untrusted) {
+  CHECK(handle.is_valid());
   // Duplicating INVALID_HANDLE_VALUE passes a process handle. If you intend to
   // do this, you must open a valid process handle, not pass the result of
-  // GetCurrentProcess(). e.g. https://crbug.com/243339.
-  CHECK(handle.is_valid());
+  // GetCurrentProcess() or GetCurrentThread(). e.g. https://crbug.com/243339.
+  CHECK(!handle.is_pseudo_handle());
+
   if (handle_owner == HandleOwner::kSender) {
     // Nothing to do when sending handles that belong to us. The recipient must
     // be sufficiently privileged and equipped to duplicate such handles to
@@ -172,37 +176,53 @@ bool EncodeHandle(PlatformHandle& handle,
 
 // Decodes a Windows HANDLE value from a transmission containing a serialized
 // driver object. See documentation on HandleOwner above for general notes about
-// how handles are communicated over IPC on Windows.
-PlatformHandle DecodeHandle(HandleData data,
-                            const base::Process& remote_process,
-                            HandleOwner handle_owner,
-                            Transport& from_transport) {
+// how handles are communicated over IPC on Windows. This function returns
+// nullopt if a non-transmissable handle value is encoded in `data`, and a
+// valid handle value in this process otherwise. This specific helper returns
+// std::optional<> for failure rather than PlatformHandle.is_valid() as
+// INVALID_HANDLE_VALUE is one of the problematic handle values that a caller
+// might misinterpret.
+std::optional<PlatformHandle> DecodeHandle(HandleData data,
+                                           const base::Process& remote_process,
+                                           HandleOwner handle_owner,
+                                           Transport& from_transport) {
   const HANDLE handle = DataToHandle(data);
+  if (handle == nullptr) {
+    return std::nullopt;
+  }
+  // Do not decode sentinel values used by Windows (INVALID_HANDLE_VALUE &
+  // GetCurrentThread()).
+  if (base::win::IsPseudoHandle(handle)) {
+    return std::nullopt;
+  }
+
   if (handle_owner == HandleOwner::kRecipient) {
     if (from_transport.destination_type() != Transport::kBroker &&
         !from_transport.is_peer_trusted() && !remote_process.is_current()) {
       // Do not trust non-broker endpoints to send handles which already belong
       // to us, unless the transport is explicitly marked as trustworthy (e.g.
       // is connected to a known elevated process.)
-      return PlatformHandle();
+      return std::nullopt;
     }
     // Verify that this is a handle to a valid object. We do not yet know the
     // expected type of the handle (region, file, etc.) so cannot validate that.
     DWORD dummy;
     if (!::GetHandleInformation(handle, &dummy)) {
-      return PlatformHandle();
+      return std::nullopt;
     }
     return PlatformHandle(base::win::ScopedHandle(handle));
   }
 
   if (!remote_process.IsValid()) {
-    return PlatformHandle();
+    return std::nullopt;
   }
 
   HANDLE local_dupe = INVALID_HANDLE_VALUE;
-  ::DuplicateHandle(remote_process.Handle(), handle, ::GetCurrentProcess(),
-                    &local_dupe, 0, FALSE,
-                    DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
+  if (!::DuplicateHandle(remote_process.Handle(), handle, ::GetCurrentProcess(),
+                         &local_dupe, 0, FALSE,
+                         DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE)) {
+    return std::nullopt;
+  }
   return PlatformHandle(base::win::ScopedHandle(local_dupe));
 }
 #endif  // BUILDFLAG(IS_WIN)
@@ -526,8 +546,11 @@ IpczResult Transport::DeserializeObject(
   platform_handles.resize(num_handles);
   for (size_t i = 0; i < num_handles; ++i) {
 #if BUILDFLAG(IS_WIN)
-    platform_handles[i] =
-        DecodeHandle(handle_data[i], remote_process_, handle_owner, *this);
+    auto h = DecodeHandle(handle_data[i], remote_process_, handle_owner, *this);
+    if (!h.has_value()) {
+      return IPCZ_RESULT_INVALID_ARGUMENT;
+    }
+    platform_handles[i] = std::move(*h);
 #else
     platform_handles[i] =
         TransmissiblePlatformHandle::TakeFromHandle(handles[i])->TakeHandle();

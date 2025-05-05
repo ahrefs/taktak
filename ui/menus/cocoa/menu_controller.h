@@ -35,8 +35,8 @@ COMPONENT_EXPORT(UI_MENUS)
 
 - (instancetype)init NS_UNAVAILABLE;
 
-// Builds a NSMenu from the pre-built model (must not be nil). Changes made
-// to the contents of the model after calling this will not be noticed.
+// Builds a NSMenu from the model which must not be null. Changes made to the
+// contents of the model after calling this will not be noticed.
 - (instancetype)initWithModel:(ui::MenuModel*)model
                      delegate:(id<MenuControllerCocoaDelegate>)delegate;
 
@@ -45,18 +45,12 @@ COMPONENT_EXPORT(UI_MENUS)
 
 @property(readwrite) ui::MenuModel* model;
 
-// Access to the constructed menu. If the menu has not been built yet it will be
-// built on the first call.
+// Access to the constructed menu.
 @property(readonly) NSMenu* menu;
 
 // Whether the menu is currently open.
 @property(readonly, getter=isMenuOpen) BOOL menuOpen;
 
-@end
-
-@interface MenuControllerCocoa (TestingAPI)
-// Whether the NSMenu has been built.
-- (BOOL)isMenuBuiltForTesting;
 @end
 
 #endif  // UI_MENUS_COCOA_MENU_CONTROLLER_H_

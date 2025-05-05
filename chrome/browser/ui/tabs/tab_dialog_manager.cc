@@ -13,9 +13,9 @@
 #include "base/scoped_observation.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
 #include "chrome/browser/ui/tabs/public/tab_features.h"
-#include "chrome/browser/ui/tabs/public/tab_interface.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "components/back_forward_cache/back_forward_cache_disable.h"
+#include "components/tab_collections/public/tab_interface.h"
 #include "components/web_modal/modal_dialog_host.h"
 #include "components/web_modal/web_contents_modal_dialog_host.h"
 #include "content/public/browser/back_forward_cache.h"
@@ -241,12 +241,10 @@ std::unique_ptr<views::Widget> TabDialogManager::CreateTabScopedDialog(
       tab_interface_->GetBrowserWindowInterface()->TopContainer()->GetWidget();
   CHECK(host);
   return base::WrapUnique(views::DialogDelegate::CreateDialogWidget(
-      delegate, nullptr, host->GetNativeView()));
+      delegate, gfx::NativeWindow(), host->GetNativeView()));
 }
 
 void TabDialogManager::ShowDialogAndBlockTabInteraction(views::Widget* widget) {
-  CHECK(tab_interface_->CanShowModalUI());
-  CHECK(!widget_);
   widget_ = widget;
   auto* browser_window_interface = tab_interface_->GetBrowserWindowInterface();
   ConfigureDesiredBoundsDelegate(widget_.get(), browser_window_interface);

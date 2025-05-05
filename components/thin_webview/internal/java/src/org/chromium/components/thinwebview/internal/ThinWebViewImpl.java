@@ -9,13 +9,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import androidx.annotation.Nullable;
-
 import org.jni_zero.JNINamespace;
 import org.jni_zero.NativeMethods;
 
 import org.chromium.base.ContextUtils;
 import org.chromium.build.annotations.DoNotInline;
+import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.components.embedder_support.delegate.WebContentsDelegateAndroid;
 import org.chromium.components.thinwebview.CompositorView;
 import org.chromium.components.thinwebview.ThinWebView;
@@ -26,19 +26,23 @@ import org.chromium.ui.base.ActivityWindowAndroid;
 import org.chromium.ui.base.IntentRequestTracker;
 import org.chromium.ui.base.WindowAndroid;
 
-/** An android view backed by a {@link Surface} that is able to display a live {@link WebContents}. */
+/**
+ * An android view backed by a {@link Surface} that is able to display a live {@link WebContents}.
+ */
 @JNINamespace("thin_webview::android")
+@NullMarked
 public class ThinWebViewImpl extends FrameLayout implements ThinWebView {
     private final CompositorView mCompositorView;
     private final WindowAndroid mWindowAndroid;
     private long mNativeThinWebViewImpl;
-    private View mContentView;
+    private @Nullable View mContentView;
     // Passed to native and stored as a weak reference, so ensure this strong
     // reference is not optimized away by R8.
-    @DoNotInline private WebContentsDelegateAndroid mWebContentsDelegate;
+    @DoNotInline private @Nullable WebContentsDelegateAndroid mWebContentsDelegate;
 
     /**
      * Creates a {@link ThinWebViewImpl} backed by a {@link Surface}.
+     *
      * @param context The Context to create this view.
      * @param constraints A set of constraints associated with this view.
      * @param intentRequestTracker The {@link IntentRequestTracker} of the current activity.
@@ -118,7 +122,7 @@ public class ThinWebViewImpl extends FrameLayout implements ThinWebView {
         }
     }
 
-    private void setContentView(View contentView) {
+    private void setContentView(@Nullable View contentView) {
         if (mContentView == contentView) return;
 
         if (mContentView != null) {
@@ -141,7 +145,7 @@ public class ThinWebViewImpl extends FrameLayout implements ThinWebView {
                 long nativeThinWebView,
                 ThinWebViewImpl caller,
                 WebContents webContents,
-                WebContentsDelegateAndroid delegate);
+                @Nullable WebContentsDelegateAndroid delegate);
 
         void sizeChanged(long nativeThinWebView, ThinWebViewImpl caller, int width, int height);
     }

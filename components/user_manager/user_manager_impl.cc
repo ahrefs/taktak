@@ -262,9 +262,7 @@ const AccountId& UserManagerImpl::GetLastSessionActiveAccountId() const {
 }
 
 void UserManagerImpl::UserLoggedIn(const AccountId& account_id,
-                                   const std::string& username_hash,
-                                   bool browser_restart,
-                                   bool is_child) {
+                                   const std::string& username_hash) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   if (!last_session_active_account_id_initialized_) {
@@ -535,11 +533,25 @@ void UserManagerImpl::RemoveUser(const AccountId& account_id,
                                  UserRemovalReason reason) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
-  UserDirectoryIntegrityManager integrity_manager(local_state_.get());
+  const User* const user = FindUser(account_id);
+
   // Misconfigured user would not be included in GetPersistedUsers(),
   // account for them separately.
-  if (!CanUserBeRemoved(FindUser(account_id)) &&
-      !integrity_manager.IsUserMisconfigured(account_id)) {
+  // TODO(crbug.com/404898436): Find a better way for the special handling.
+  if (reason == UserRemovalReason::MISCONFIGURED_USER) {
+    if (user && user->IsDeviceLocalAccount()) {
+      // Device local account users are created from policy and should only be
+      // remove from the user list on policy change. So just remove crypothome
+      // for them instead of a full removal.
+      delegate_->RemoveCryptohomeAsync(account_id);
+    } else {
+      RemoveUserInternal(account_id, reason);
+    }
+
+    return;
+  }
+
+  if (!CanUserBeRemoved(user)) {
     return;
   }
 

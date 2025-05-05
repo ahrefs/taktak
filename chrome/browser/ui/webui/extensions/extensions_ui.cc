@@ -53,6 +53,10 @@
 #include "ui/base/webui/web_ui_util.h"
 #include "ui/webui/webui_util.h"
 
+#if BUILDFLAG(IS_ANDROID)
+#include "chrome/browser/ui/webui/current_channel_logo.h"
+#endif  // BUILDFLAG(IS_ANDROID)
+
 namespace extensions {
 
 namespace {
@@ -420,6 +424,7 @@ content::WebUIDataSource* CreateAndAddExtensionsSource(Profile* profile,
       {"kioskDisableBailoutWarningTitle",
        IDS_EXTENSIONS_KIOSK_DISABLE_BAILOUT_SHORTCUT_WARNING_TITLE},
 #endif  // BUILDFLAG(IS_CHROMEOS)
+      {"pendingChangeWarning", IDS_PENDING_CHANGE_WARNING},
   };
   source->AddLocalizedStrings(kLocalizedStrings);
 
@@ -478,8 +483,10 @@ content::WebUIDataSource* CreateAndAddExtensionsSource(Profile* profile,
       "safetyHubThreeDotDetails",
       base::FeatureList::IsEnabled(features::kSafetyHubThreeDotDetails));
 
-// TODO(crbug.com/392777363): Clean these up with non-placeholder values.
 #if BUILDFLAG(IS_ANDROID)
+  source->AddResourcePath("images/product_logo.png",
+                          webui::CurrentChannelLogoResourceId());
+  // TODO(crbug.com/392777363): Clean these up with non-placeholder values.
   source->AddInteger("MV2ExperimentStage", 0);
   source->AddBoolean("MV2DeprecationNoticeDismissed", true);
 #else

@@ -9,38 +9,46 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertThrows;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.test.UnittestImport;
-import protobuf_unittest.EnumWithNoOuter;
-import protobuf_unittest.MessageWithNoOuter;
-import protobuf_unittest.MultipleFilesTestProto;
-import protobuf_unittest.NestedExtension.MyNestedExtension;
-import protobuf_unittest.NonNestedExtension;
-import protobuf_unittest.NonNestedExtension.MessageToBeExtended;
-import protobuf_unittest.NonNestedExtension.MyNonNestedExtension;
-import protobuf_unittest.OuterClassNameTest2OuterClass;
-import protobuf_unittest.OuterClassNameTest3OuterClass;
-import protobuf_unittest.OuterClassNameTestOuterClass;
-import protobuf_unittest.ServiceWithNoOuter;
-import protobuf_unittest.UnittestOptimizeFor.TestOptimizedForSize;
-import protobuf_unittest.UnittestOptimizeFor.TestOptionalOptimizedForSize;
-import protobuf_unittest.UnittestOptimizeFor.TestRequiredOptimizedForSize;
-import protobuf_unittest.UnittestProto;
-import protobuf_unittest.UnittestProto.ForeignEnum;
-import protobuf_unittest.UnittestProto.ForeignMessage;
-import protobuf_unittest.UnittestProto.ForeignMessageOrBuilder;
-import protobuf_unittest.UnittestProto.NestedTestAllTypes;
-import protobuf_unittest.UnittestProto.TestAllExtensions;
-import protobuf_unittest.UnittestProto.TestAllTypes;
-import protobuf_unittest.UnittestProto.TestAllTypes.NestedMessage;
-import protobuf_unittest.UnittestProto.TestAllTypesOrBuilder;
-import protobuf_unittest.UnittestProto.TestExtremeDefaultValues;
-import protobuf_unittest.UnittestProto.TestOneof2;
-import protobuf_unittest.UnittestProto.TestPackedTypes;
-import protobuf_unittest.UnittestProto.TestUnpackedTypes;
+
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import proto2_unittest.EnumWithNoOuter;
+import proto2_unittest.MessageWithNoOuter;
+import proto2_unittest.MultipleFilesTestProto;
+import proto2_unittest.NestedExtension.MyNestedExtension;
+import proto2_unittest.NonNestedExtension;
+import proto2_unittest.NonNestedExtension.MessageToBeExtended;
+import proto2_unittest.NonNestedExtension.MyNonNestedExtension;
+import proto2_unittest.OuterClassNameTest2OuterClass;
+import proto2_unittest.OuterClassNameTest3OuterClass;
+import proto2_unittest.OuterClassNameTestOuterClass;
+import proto2_unittest.ServiceWithNoOuter;
+import proto2_unittest.UnittestOptimizeFor.TestOptimizedForSize;
+import proto2_unittest.UnittestOptimizeFor.TestOptionalOptimizedForSize;
+import proto2_unittest.UnittestOptimizeFor.TestRequiredOptimizedForSize;
+import proto2_unittest.UnittestProto;
+import proto2_unittest.UnittestProto.ForeignEnum;
+import proto2_unittest.UnittestProto.ForeignMessage;
+import proto2_unittest.UnittestProto.ForeignMessageOrBuilder;
+import proto2_unittest.UnittestProto.NestedTestAllTypes;
+import proto2_unittest.UnittestProto.TestAllExtensions;
+import proto2_unittest.UnittestProto.TestAllTypes;
+import proto2_unittest.UnittestProto.TestAllTypes.NestedMessage;
+import proto2_unittest.UnittestProto.TestAllTypesOrBuilder;
+import proto2_unittest.UnittestProto.TestExtremeDefaultValues;
+import proto2_unittest.UnittestProto.TestOneof2;
+import proto2_unittest.UnittestProto.TestPackedTypes;
+import proto2_unittest.UnittestProto.TestUnpackedTypes;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,10 +60,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Unit test for generated messages and generated code. See also {@link MessageTest}, which tests

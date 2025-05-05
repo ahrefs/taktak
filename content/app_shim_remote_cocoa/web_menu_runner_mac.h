@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include <optional>
 #include <vector>
 
 #include "base/functional/callback_forward.h"
@@ -15,24 +16,18 @@
 
 // WebMenuRunner ---------------------------------------------------------------
 // A class for presenting a menu when a HTML select element is clicked, and
-// returning the user selection or dismissal without selection. If a menu item
-// is selected, MenuDelegate is informed and sets a flag which can be queried
-// after the menu has finished running.
+// returning the user selection or dismissal without selection.
 CONTENT_EXPORT
 @interface WebMenuRunner : NSObject
 
-// Initializes the MenuDelegate with a list of items sent from Blink.
 - (id)initWithItems:(const std::vector<blink::mojom::MenuItemPtr>&)items
            fontSize:(CGFloat)fontSize
        rightAligned:(BOOL)rightAligned;
 
-// Returns YES if an item was selected from the menu, NO if the menu was
-// dismissed.
-@property(readonly) BOOL menuItemWasChosen;
-
-// Returns the index of selected menu item, or its initial value (-1) if no item
-// was selected.
-@property(readonly) int indexOfSelectedItem;
+// If the menu has been run, and an item was selected, has the index of the
+// selected menu item. If the menu has not yet been run, or if the menu was run
+// but the user did not select an item from the menu, this is nullopt.
+@property(readonly) std::optional<int> selectedMenuItemIndex;
 
 // Displays and runs a native popup menu.
 - (void)runMenuInView:(NSView*)view

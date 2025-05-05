@@ -133,7 +133,7 @@ bool MenuHasVisibleItems(const ui::MenuModel* model) {
   if ((self = [super init])) {
     _model = model->AsWeakPtr();
     _delegate = delegate;
-    [self maybeBuild];
+    [self buildMenu];
   }
   return self;
 }
@@ -207,12 +207,13 @@ bool MenuHasVisibleItems(const ui::MenuModel* model) {
     item.target = nil;
     item.action = nil;
     item.submenu = submenu;
-    // [item setSubmenu] updates target and action which means clicking on a
-    // submenu entry will not call [self validateUserInterfaceItem].
+    // [item setSubmenu:] updates target and action which means clicking on a
+    // submenu entry will not call [self validateUserInterfaceItem:].
     DCHECK_EQ(item.action, @selector(submenuAction:));
     DCHECK_EQ(item.target, submenu);
     // Set the enabled state here as submenu entries do not call into
-    // validateUserInterfaceItem. See crbug.com/981294 and crbug.com/991472.
+    // validateUserInterfaceItem. See https://crbug.com/40634897 and
+    // https://crbug.com/41474827.
     [item setEnabled:model->IsEnabledAt(index)];
   } else {
     // The MenuModel works on indexes so we can't just set the command id as the
@@ -304,10 +305,10 @@ bool MenuHasVisibleItems(const ui::MenuModel* model) {
   // Note: |self| may be destroyed by the call to ActivatedAt().
 }
 
-- (void)maybeBuild {
-  if (_menu || !_model) {
-    return;
-  }
+- (void)buildMenu {
+  // The menu is eagerly built in the initializer, so the model cannot be null
+  // at this point.
+  CHECK(_model);
 
   _menu = [self menuFromModel:_model.get()];
   _menu.delegate = self;
@@ -322,7 +323,6 @@ bool MenuHasVisibleItems(const ui::MenuModel* model) {
 }
 
 - (NSMenu*)menu {
-  [self maybeBuild];
   return _menu;
 }
 
@@ -344,14 +344,6 @@ bool MenuHasVisibleItems(const ui::MenuModel* model) {
       _model->MenuWillClose();  // Note: |model_| may trigger -[self dealloc].
     }
   }
-}
-
-@end
-
-@implementation MenuControllerCocoa (TestingAPI)
-
-- (BOOL)isMenuBuiltForTesting {
-  return _menu != nil;
 }
 
 @end

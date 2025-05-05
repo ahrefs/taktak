@@ -97,6 +97,7 @@
     grid-column: span 4;
   }
 
+  [data-bottom-left-layout='3keys'] #leftAltKey,
   [data-bottom-left-layout='4keys'] #leftAltKey {
     grid-column: span 2;
   }
@@ -111,6 +112,20 @@
 
   [data-bottom-right-layout='4keys'] #spacebar{
     grid-column: span 6;
+  }
+
+  /*
+   * For ANSI Canadian Bilingual keyboard, the usual right ctrl key is
+   * replaced by another key.
+   */
+  #caHybridKey {
+    display: none;
+  }
+  [data-region-code='ca.hybridansi'] #rightCtrlKey {
+    display: none;
+  }
+  [data-region-code='ca.hybridansi'] #caHybridKey {
+    display: block;
   }
 
   /*
@@ -189,12 +204,20 @@
     grid-column: span 6;
   }
 
+  [data-mech-layout='jis'][data-bottom-right-layout='4keys'] #spacebar {
+    grid-column: span 4;
+  }
+
   [data-mech-layout='jis'] #rightShiftKey {
     grid-column: span 3;
   }
 
-  [data-mech-layout='jis'] #arrowKeyCluster {
+  [data-mech-layout='jis'][data-bottom-right-layout='2keys'] #arrowKeyCluster {
     grid-column: span 7;
+  }
+
+  [data-mech-layout='jis'] #arrowKeyCluster {
+    grid-column: span 5;
   }
 
   /* Modifications for Dell Enterprise keyboards */
@@ -316,7 +339,8 @@
       data-show-assistant-key$="[[showAssistantKey]]"
       data-show-fn-and-globe-keys$="[[showFnAndGlobeKeys_]]"
       data-bottom-left-layout$="[[bottomLeftLayout]]"
-      data-bottom-right-layout$="[[bottomRightLayout]]">
+      data-bottom-right-layout$="[[bottomRightLayout]]"
+      data-region-code$="[[regionCode]]">
     <!--
       Most keys aren't labelled here, as their glyphs are set from the
       appropriate layout in keyboard_layouts.js. The exceptions are keys that
@@ -527,6 +551,7 @@
     </template>
 
     <keyboard-key id="rightCtrlKey" main-glyph="ctrl" data-code="97"></keyboard-key>
+    <keyboard-key id="caHybridKey" data-code="86"></keyboard-key>
 
     <div id="arrowKeyCluster">
       <template is="dom-if"

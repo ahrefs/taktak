@@ -5,6 +5,7 @@
 #include "third_party/blink/renderer/modules/ai/ai_availability.h"
 
 #include "base/metrics/histogram_functions.h"
+#include "components/language_detection/content/common/language_detection.mojom-shared.h"
 #include "third_party/blink/public/mojom/ai/ai_manager.mojom-blink-forward.h"
 #include "third_party/blink/public/mojom/ai/ai_manager.mojom-blink.h"
 #include "third_party/blink/public/mojom/on_device_translation/translation_manager.mojom-blink.h"
@@ -62,6 +63,8 @@ AIAvailability HandleTranslatorAvailabilityCheckResult(
         kAfterDownloadLanguagePackNotReady:
     case mojom::blink::CanCreateTranslatorResult::
         kAfterDownloadLibraryAndLanguagePackNotReady:
+    case mojom::blink::CanCreateTranslatorResult::
+        kAfterDownloadTranslatorCreationRequired:
       return HandleModelAvailabilityCheckResult(
           execution_context, AIMetrics::AISessionType::kTranslator,
           mojom::blink::ModelAvailabilityCheckResult::kDownloadable);
@@ -81,6 +84,29 @@ AIAvailability HandleTranslatorAvailabilityCheckResult(
           execution_context, AIMetrics::AISessionType::kTranslator,
           mojom::blink::ModelAvailabilityCheckResult::
               kUnavailableTranslationNotEligible);
+  }
+}
+
+AIAvailability HandleLanguageDetectionModelCheckResult(
+    ExecutionContext* execution_context,
+    language_detection::mojom::blink::LanguageDetectionModelStatus result) {
+  switch (result) {
+    case language_detection::mojom::blink::LanguageDetectionModelStatus::
+        kReadily:
+      return HandleModelAvailabilityCheckResult(
+          execution_context, AIMetrics::AISessionType::kLanguageDetector,
+          mojom::blink::ModelAvailabilityCheckResult::kAvailable);
+    case language_detection::mojom::blink::LanguageDetectionModelStatus::
+        kAfterDownload:
+      return HandleModelAvailabilityCheckResult(
+          execution_context, AIMetrics::AISessionType::kLanguageDetector,
+          mojom::blink::ModelAvailabilityCheckResult::kDownloadable);
+    case language_detection::mojom::blink::LanguageDetectionModelStatus::
+        kNotAvailable:
+      return HandleModelAvailabilityCheckResult(
+          execution_context, AIMetrics::AISessionType::kLanguageDetector,
+          mojom::blink::ModelAvailabilityCheckResult::
+              kUnavailableLanguageDetectionModelNotAvailable);
   }
 }
 

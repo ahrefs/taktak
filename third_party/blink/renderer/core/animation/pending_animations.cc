@@ -70,7 +70,8 @@ bool PendingAnimations::Update(
 
   for (auto& animation : animations) {
     bool had_compositor_animation =
-        animation->HasActiveAnimationsOnCompositor();
+        animation->HasActiveAnimationsOnCompositor() ||
+        animation->CompositorPendingCancel();
     // Animations with a start time or non-monotonic timeline do not participate
     // in compositor start-time grouping.
     bool has_monotonic_timeline =
@@ -95,12 +96,13 @@ bool PendingAnimations::Update(
         continue;
       }
 
-      if (animation->Playing() && !animation->StartTimeInternal() &&
-          has_monotonic_timeline) {
+      if (animation->Playing() && !animation->StartTimeInternal()) {
         // Scroll timelines get their start time set during timeline validation
         // and do not need to be added to the list. Once the start time is set
         // they must be re-added to the pending animations.
-        waiting_for_start_time.push_back(animation.Get());
+        if (has_monotonic_timeline) {
+          waiting_for_start_time.push_back(animation.Get());
+        }
       } else if (animation->PendingInternal()) {
         DCHECK(animation->TimelineInternal()->IsActive() &&
                animation->TimelineInternal()->CurrentTime() &&
@@ -166,8 +168,9 @@ bool PendingAnimations::Update(
 
   // Check if we're still waiting for any compositor animations to start.
   for (auto& animation : waiting_for_compositor_animation_start_) {
-    if (animation->HasActiveAnimationsOnCompositor())
+    if (animation->HasActiveAnimationsOnCompositor()) {
       return true;
+    }
   }
 
   // If not, go ahead and start any animations that were waiting.

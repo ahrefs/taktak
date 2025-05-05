@@ -5,19 +5,26 @@
 #include "base/test/metrics/histogram_tester.h"
 #include "base/test/scoped_feature_list.h"
 #include "base/test/test_future.h"
+#include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/contextual_cueing/contextual_cueing_enums.h"
 #include "chrome/browser/contextual_cueing/contextual_cueing_features.h"
+#include "chrome/browser/glic/glic_pref_names.h"
 #include "chrome/browser/optimization_guide/optimization_guide_keyed_service.h"
 #include "chrome/browser/optimization_guide/optimization_guide_keyed_service_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/signin/identity_test_environment_profile_adaptor.h"
 #include "chrome/browser/ui/browser.h"
+#include "chrome/browser/ui/browser_commands.h"
 #include "chrome/browser/ui/browser_tabstrip.h"
 #include "chrome/browser/ui/browser_window.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/tabs/glic_nudge_controller.h"
 #include "chrome/browser/ui/tabs/glic_nudge_observer.h"
+#include "chrome/browser/ui/views/frame/browser_view.h"
+#include "chrome/browser/ui/views/frame/tab_strip_region_view.h"
+#include "chrome/browser/ui/views/tabs/glic_button.h"
+#include "chrome/browser/ui/views/tabs/tab_strip_action_container.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/test/base/in_process_browser_test.h"
 #include "chrome/test/base/interactive_test_utils.h"
@@ -122,6 +129,14 @@ class ContextualCueingHelperBrowserTest : public InProcessBrowserTest {
     return browser()->browser_window_features()->glic_nudge_controller();
   }
 
+  glic::GlicButton* GetGlicButtonForBrowser(Browser* browser) {
+    TabStripActionContainer* const container =
+        BrowserView::GetBrowserViewForBrowser(browser)
+            ->tab_strip_region_view()
+            ->GetTabStripActionContainer();
+    return container->GetGlicButton();
+  }
+
  protected:
   base::test::ScopedFeatureList scoped_feature_list_;
 
@@ -165,6 +180,30 @@ IN_PROC_BROWSER_TEST_F(ContextualCueingHelperBrowserTest,
   ukm_recorder.ExpectEntryMetric(
       entry, ukm::builders::ContextualCueing_NudgeDecision::kNudgeDecisionName,
       static_cast<int64_t>(contextual_cueing::NudgeDecision::kSuccess));
+}
+
+IN_PROC_BROWSER_TEST_F(ContextualCueingHelperBrowserTest,
+                       DoesNotAttemptToCueOnNewTabPage) {
+  base::HistogramTester histogram_tester;
+  ukm::TestAutoSetUkmRecorder ukm_recorder;
+
+  EnableSignIn();
+  SetUpEnabledHints();
+
+  FakeGlicNudgeObserver nudge_observer;
+  glic_nudge_controller()->AddObserver(&nudge_observer);
+
+  ASSERT_TRUE(ui_test_utils::NavigateToURLWithDisposition(
+      browser(), GURL(chrome::kChromeUINewTabURL),
+      WindowOpenDisposition::NEW_FOREGROUND_TAB,
+      ui_test_utils::BROWSER_TEST_WAIT_FOR_LOAD_STOP));
+  EXPECT_TRUE(nudge_observer.last_nudge_label_.empty());
+  histogram_tester.ExpectTotalCount(
+      "ContextualCueing.NudgeDecision.GlicContextualCueing", 0);
+
+  auto entries = ukm_recorder.GetEntriesByName(
+      ukm::builders::ContextualCueing_NudgeDecision::kEntryName);
+  EXPECT_EQ(0u, entries.size());
 }
 
 IN_PROC_BROWSER_TEST_F(ContextualCueingHelperBrowserTest, TestCueNotAvailable) {
@@ -430,6 +469,61 @@ IN_PROC_BROWSER_TEST_F(ContextualCueingHelperBrowserTest,
   ukm_recorder.ExpectEntryMetric(
       entry, ukm::builders::ContextualCueing_NudgeDecision::kNudgeDecisionName,
       static_cast<int64_t>(contextual_cueing::NudgeDecision::kSuccess));
+}
+
+IN_PROC_BROWSER_TEST_F(ContextualCueingHelperBrowserTest, NudgeHideAfterUnpin) {
+  EnableSignIn();
+  SetUpEnabledHints();
+
+  PrefService* const pref_service = browser()->profile()->GetPrefs();
+  glic::GlicButton* const glic_button = GetGlicButtonForBrowser(browser());
+  ASSERT_TRUE(glic_button->GetVisible());
+
+  // Trigger the nudge to show
+  ASSERT_TRUE(ui_test_utils::NavigateToURLWithDisposition(
+      browser(),
+      https_server_.GetURL("enabled.com", "/optimization_guide/hello.html"),
+      WindowOpenDisposition::NEW_FOREGROUND_TAB,
+      ui_test_utils::BROWSER_TEST_WAIT_FOR_LOAD_STOP));
+  EXPECT_TRUE(glic_button->GetIsShowingNudge());
+
+  // Unpin the button
+  chrome::ExecuteCommand(browser(), IDC_GLIC_TOGGLE_PIN);
+  EXPECT_FALSE(pref_service->GetBoolean(glic::prefs::kGlicPinnedToTabstrip));
+
+  // The nudge is also the glic button so it should also hide when the button is
+  // unpinned.
+  EXPECT_FALSE(glic_button->GetVisible());
+}
+
+IN_PROC_BROWSER_TEST_F(ContextualCueingHelperBrowserTest,
+                       TriggerNudgeWhileUnpinned) {
+  EnableSignIn();
+  SetUpEnabledHints();
+
+  PrefService* const pref_service = browser()->profile()->GetPrefs();
+  glic::GlicButton* const glic_button = GetGlicButtonForBrowser(browser());
+  EXPECT_TRUE(glic_button->GetVisible());
+
+  // Unpin the glic button
+  chrome::ExecuteCommand(browser(), IDC_GLIC_TOGGLE_PIN);
+  EXPECT_FALSE(pref_service->GetBoolean(glic::prefs::kGlicPinnedToTabstrip));
+  ASSERT_TRUE(ui_test_utils::NavigateToURLWithDisposition(
+      browser(),
+      https_server_.GetURL("enabled.com", "/optimization_guide/hello.html"),
+      WindowOpenDisposition::NEW_FOREGROUND_TAB,
+      ui_test_utils::BROWSER_TEST_WAIT_FOR_LOAD_STOP));
+  EXPECT_FALSE(glic_button->GetVisible());
+  EXPECT_FALSE(glic_button->GetIsShowingNudge());
+
+  // Pin the glic button.
+  chrome::ExecuteCommand(browser(), IDC_GLIC_TOGGLE_PIN);
+  EXPECT_TRUE(pref_service->GetBoolean(glic::prefs::kGlicPinnedToTabstrip));
+
+  // The nudge shouldn't show because the nudge is triggered after the button
+  // was unpinned.
+  EXPECT_TRUE(glic_button->GetVisible());
+  EXPECT_FALSE(glic_button->GetIsShowingNudge());
 }
 
 #endif  // BUILDFLAG(ENABLE_GLIC)

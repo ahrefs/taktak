@@ -115,6 +115,16 @@ interface AnimationTimeline
     getter currentTime
     getter duration
     method constructor
+interface AsyncDisposableStack
+    attribute @@toStringTag
+    getter disposed
+    method Symbol(Symbol.asyncDispose)
+    method adopt
+    method constructor
+    method defer
+    method disposeAsync
+    method move
+    method use
 interface Attr : Node
     attribute @@toStringTag
     getter localName
@@ -1004,6 +1014,7 @@ interface CanvasRenderingContext2D
     getter globalCompositeOperation
     getter imageSmoothingEnabled
     getter imageSmoothingQuality
+    getter lang
     getter letterSpacing
     getter lineCap
     getter lineDashOffset
@@ -1076,6 +1087,7 @@ interface CanvasRenderingContext2D
     setter globalCompositeOperation
     setter imageSmoothingEnabled
     setter imageSmoothingQuality
+    setter lang
     setter letterSpacing
     setter lineCap
     setter lineDashOffset
@@ -1604,6 +1616,16 @@ interface DeviceOrientationEvent : Event
     getter beta
     getter gamma
     method constructor
+interface DisposableStack
+    attribute @@toStringTag
+    getter disposed
+    method Symbol(Symbol.dispose)
+    method adopt
+    method constructor
+    method defer
+    method dispose
+    method move
+    method use
 interface Document : Node
     static method parseHTMLUnsafe
     attribute @@toStringTag
@@ -2478,6 +2500,7 @@ interface EventTarget
     method constructor
     method dispatchEvent
     method removeEventListener
+    method when
 interface External
     attribute @@toStringTag
     method AddSearchProvider
@@ -2654,6 +2677,7 @@ interface GPUAdapterInfo
     getter architecture
     getter description
     getter device
+    getter isFallbackAdapter
     getter subgroupMaxSize
     getter subgroupMinSize
     getter vendor
@@ -6058,6 +6082,29 @@ interface NotRestoredReasons
     getter url
     method constructor
     method toJSON
+interface Observable
+    static method from
+    attribute @@toStringTag
+    method catch
+    method constructor
+    method drop
+    method every
+    method filter
+    method finally
+    method find
+    method first
+    method flatMap
+    method forEach
+    method inspect
+    method last
+    method map
+    method reduce
+    method some
+    method subscribe
+    method switchMap
+    method take
+    method takeUntil
+    method toArray
 interface OfflineAudioCompletionEvent : Event
     attribute @@toStringTag
     getter renderedBuffer
@@ -6099,6 +6146,7 @@ interface OffscreenCanvasRenderingContext2D
     getter globalCompositeOperation
     getter imageSmoothingEnabled
     getter imageSmoothingQuality
+    getter lang
     getter letterSpacing
     getter lineCap
     getter lineDashOffset
@@ -6170,6 +6218,7 @@ interface OffscreenCanvasRenderingContext2D
     setter globalCompositeOperation
     setter imageSmoothingEnabled
     setter imageSmoothingQuality
+    setter lang
     setter letterSpacing
     setter lineCap
     setter lineDashOffset
@@ -7011,8 +7060,12 @@ interface Response
 interface SVGAElement : SVGGraphicsElement
     attribute @@toStringTag
     getter href
+    getter rel
+    getter relList
     getter target
     method constructor
+    setter rel
+    setter relList
 interface SVGAngle
     attribute @@toStringTag
     attribute SVG_ANGLETYPE_DEG
@@ -8491,6 +8544,15 @@ interface SubmitEvent : Event
     attribute @@toStringTag
     getter submitter
     method constructor
+interface Subscriber
+    attribute @@toStringTag
+    getter active
+    getter signal
+    method addTeardown
+    method complete
+    method constructor
+    method error
+    method next
 interface SubtleCrypto
     attribute @@toStringTag
     method constructor
@@ -8506,6 +8568,10 @@ interface SubtleCrypto
     method unwrapKey
     method verify
     method wrapKey
+interface SuppressedError : Error
+    attribute message
+    attribute name
+    method constructor
 interface SyncManager
     attribute @@toStringTag
     method constructor
