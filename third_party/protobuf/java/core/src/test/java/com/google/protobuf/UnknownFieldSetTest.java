@@ -9,24 +9,25 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertThrows;
 
-import proto2_unittest.UnittestProto;
-import proto2_unittest.UnittestProto.ForeignEnum;
-import proto2_unittest.UnittestProto.TestAllExtensions;
-import proto2_unittest.UnittestProto.TestAllTypes;
-import proto2_unittest.UnittestProto.TestEmptyMessage;
-import proto2_unittest.UnittestProto.TestEmptyMessageWithExtensions;
-import proto2_unittest.UnittestProto.TestPackedExtensions;
-import proto2_unittest.UnittestProto.TestPackedTypes;
-import proto3_unittest.UnittestProto3;
-import java.util.List;
-import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto;
+import proto2_unittest.UnittestProto.TestAllExtensions;
+import proto2_unittest.UnittestProto.TestAllTypes;
+import proto2_unittest.UnittestProto.TestEmptyMessage;
+import proto2_unittest.UnittestProto.TestEmptyMessageWithExtensions;
+
+import proto3_unittest.UnittestProto3;
+
+import java.util.List;
+import java.util.Map;
 
 /** Tests related to unknown field handling. */
 @RunWith(JUnit4.class)
@@ -266,22 +267,22 @@ public class UnknownFieldSetTest {
     } catch (IllegalArgumentException expected) {
       assertThat(expected).hasMessageThat().isEqualTo("-2 is not a valid field number.");
     }
-  }
+    }
 
-  @Test
-  public void testMergeFieldFromInvalidEndGroup() {
-    byte[] data = new byte[] {(byte) WireFormat.makeTag(1, WireFormat.WIRETYPE_END_GROUP)};
-    CodedInputStream input = CodedInputStream.newInstance(data);
+    @Test
+    public void testMergeFieldFromInvalidEndGroup() {
+        byte[] data = new byte[] {(byte) WireFormat.makeTag(1, WireFormat.WIRETYPE_END_GROUP)};
+        CodedInputStream input = CodedInputStream.newInstance(data);
 
-    UnknownFieldSet.Builder instance = UnknownFieldSet.newBuilder();
-    assertThrows(
-        InvalidProtocolBufferException.class,
-        () -> instance.mergeFieldFrom(input.readTag(), input));
-  }
+        UnknownFieldSet.Builder instance = UnknownFieldSet.newBuilder();
+        assertThrows(
+                InvalidProtocolBufferException.class,
+                () -> instance.mergeFieldFrom(input.readTag(), input));
+    }
 
-  @Test
-  @SuppressWarnings("ModifiedButNotUsed")
-  public void testHasField_negative() {
+    @Test
+    @SuppressWarnings("ModifiedButNotUsed")
+    public void testHasField_negative() {
     assertThat(UnknownFieldSet.newBuilder().hasField(-2)).isFalse();
   }
 

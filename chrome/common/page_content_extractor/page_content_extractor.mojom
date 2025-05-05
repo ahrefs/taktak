@@ -1,0 +1,5 @@
+module chat.mojom;
+
+interface PageContentExtractor {
+  ExtractPageContent(bool includesHTML) => (string? page_content, string? url);
+};

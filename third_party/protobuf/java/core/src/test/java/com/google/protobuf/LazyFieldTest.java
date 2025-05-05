@@ -9,11 +9,12 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import proto2_unittest.UnittestProto.TestAllExtensions;
-import proto2_unittest.UnittestProto.TestAllTypes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.TestAllExtensions;
+import proto2_unittest.UnittestProto.TestAllTypes;
 
 /** Unit test for {@link LazyField}. */
 @RunWith(JUnit4.class)

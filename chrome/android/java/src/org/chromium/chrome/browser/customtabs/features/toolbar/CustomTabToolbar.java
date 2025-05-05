@@ -213,8 +213,10 @@ public class CustomTabToolbar extends ToolbarLayout implements View.OnLongClickL
     public static final class OmniboxParams {
         /** The {@link SearchActivityClient} instance used to request Omnibox. */
         public SearchActivityClient searchClient;
+
         /** The package name of the Custom Tabs embedder. */
         public String clientPackageName;
+
         /** A handler for taps on the omnibox, or null if the default handler should be used. */
         @Nullable public Consumer<Tab> tapHandler;
 
@@ -738,7 +740,7 @@ public class CustomTabToolbar extends ToolbarLayout implements View.OnLongClickL
     /**
      * Inflates and prepares the minimize button if it should be enabled.
      *
-     * This is only used when CCTToolbarRefactor is enabled.
+     * <p>This is only used when CCTToolbarRefactor is enabled.
      */
     private void prepareMinimizeButton() {
         if (!isMinimizeButtonEnabled()) return;
@@ -772,16 +774,16 @@ public class CustomTabToolbar extends ToolbarLayout implements View.OnLongClickL
      * button will be visible on the toolbar. The minimize button will be hidden if there isn't
      * enough space on the toolbar or if the CCT is in multi-window mode.
      *
-     * This is only used when CCTToolbarRefactor is enabled.
+     * <p>This is only used when CCTToolbarRefactor is enabled.
      */
     private boolean isMinimizeButtonEnabled() {
         if (mEnableMinimizeButton != null) return mEnableMinimizeButton;
 
         mEnableMinimizeButton =
                 MinimizedFeatureUtils.isMinimizedCustomTabAvailable(
-                        getContext(), mFeatureOverridesManager)
+                                getContext(), mFeatureOverridesManager)
                         && MinimizedFeatureUtils.shouldEnableMinimizedCustomTabs(
-                        mIntentDataProvider);
+                                mIntentDataProvider);
         return mEnableMinimizeButton;
     }
 

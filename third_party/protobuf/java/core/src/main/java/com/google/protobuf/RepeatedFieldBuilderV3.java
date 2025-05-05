@@ -27,10 +27,10 @@ import java.util.RandomAccess;
  */
 @Deprecated
 public class RepeatedFieldBuilderV3<
-        MType extends AbstractMessage,
-        BType extends AbstractMessage.Builder,
-        IType extends MessageOrBuilder>
-    implements AbstractMessage.BuilderParent {
+                MType extends AbstractMessage,
+                BType extends AbstractMessage.Builder,
+                IType extends MessageOrBuilder>
+        implements AbstractMessage.BuilderParent {
 
   private AbstractMessage.BuilderParent parent;
 

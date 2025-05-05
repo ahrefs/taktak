@@ -9,8 +9,10 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-import static java.util.Collections.singletonList;
+
 import static org.junit.Assert.assertThrows;
+
+import static java.util.Collections.singletonList;
 
 import com.google.protobuf.FieldPresenceTestProto.TestAllTypes;
 import com.google.protobuf.UnittestImportLite.ImportEnumLite;
@@ -31,9 +33,16 @@ import com.google.protobuf.UnittestLite.TestAllTypesLiteOrBuilder;
 import com.google.protobuf.UnittestLite.TestHugeFieldNumbersLite;
 import com.google.protobuf.UnittestLite.TestNestedExtensionLite;
 import com.google.protobuf.testing.Proto3TestingLite.Proto3MessageLite;
+
 import map_lite_test.MapTestProto.MapContainer;
 import map_lite_test.MapTestProto.TestMap;
 import map_lite_test.MapTestProto.TestMap.MessageValue;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.NestedExtensionLite;
 import proto2_unittest.NonNestedExtensionLite;
 import proto2_unittest.UnittestProto.TestOneof2;
@@ -42,6 +51,7 @@ import proto2_unittest.lite_equals_and_hash.LiteEqualsAndHash.BarPrime;
 import proto2_unittest.lite_equals_and_hash.LiteEqualsAndHash.Foo;
 import proto2_unittest.lite_equals_and_hash.LiteEqualsAndHash.TestOneofEquals;
 import proto2_unittest.lite_equals_and_hash.LiteEqualsAndHash.TestRecursiveOneof;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -54,10 +64,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Test lite runtime. */
 @RunWith(JUnit4.class)

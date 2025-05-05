@@ -12,6 +12,7 @@ import org.chromium.build.annotations.NullMarked;
 public interface PersistedDataStorage {
     /**
      * Save a byte array corresponding to a key
+     *
      * @param key identifier in the database
      * @param data to store
      */

@@ -14,7 +14,9 @@ import java.io.Serializable;
 /** Used by {@link WebsiteRowPreference} to display various information about one or multiple sites. */
 @NullMarked
 public interface WebsiteEntry extends Serializable {
-    /** @return the title to display in a {@link WebsiteRowPreference}. */
+    /**
+     * @return the title to display in a {@link WebsiteRowPreference}.
+     */
     String getTitleForPreferenceRow();
 
     /**
@@ -22,7 +24,9 @@ public interface WebsiteEntry extends Serializable {
      */
     String getDomainAndRegistry();
 
-    /** @return the URL for fetching a favicon. */
+    /**
+     * @return the URL for fetching a favicon.
+     */
     GURL getFaviconUrl();
 
     /** @return the total bytes used for associated storage. */

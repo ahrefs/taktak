@@ -49,10 +49,11 @@ public interface SceneOverlay extends BackPressHandler {
 
     /**
      * Called when the viewport size of the screen changes.
-     * @param width                  The new width of the viewport available in dp.
-     * @param height                 The new height of the viewport available in dp.
+     *
+     * @param width The new width of the viewport available in dp.
+     * @param height The new height of the viewport available in dp.
      * @param visibleViewportOffsetY The visible viewport Y offset in dp.
-     * @param orientation            The new orientation.
+     * @param orientation The new orientation.
      */
     void onSizeChanged(float width, float height, float visibleViewportOffsetY, int orientation);
 

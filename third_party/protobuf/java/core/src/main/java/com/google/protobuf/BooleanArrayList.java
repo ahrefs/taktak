@@ -8,9 +8,11 @@
 package com.google.protobuf;
 
 import static com.google.protobuf.Internal.checkNotNull;
+
 import static java.lang.Math.max;
 
 import com.google.protobuf.Internal.BooleanList;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.RandomAccess;
@@ -67,11 +69,10 @@ final class BooleanArrayList extends AbstractProtobufList<Boolean>
     modCount++;
   }
 
-  @Override
-  public boolean equals(
-          Object o) {
-    if (this == o) {
-      return true;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
     }
     if (!(o instanceof BooleanArrayList)) {
       return super.equals(o);

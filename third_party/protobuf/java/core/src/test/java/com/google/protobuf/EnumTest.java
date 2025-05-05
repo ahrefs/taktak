@@ -11,11 +11,13 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.protobuf.UnittestLite.ForeignEnumLite;
 import com.google.protobuf.UnittestLite.TestAllTypesLite;
-import proto2_unittest.UnittestProto.ForeignEnum;
-import proto2_unittest.UnittestProto.TestAllTypes;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.ForeignEnum;
+import proto2_unittest.UnittestProto.TestAllTypes;
 
 @RunWith(JUnit4.class)
 public class EnumTest {

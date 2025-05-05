@@ -22,19 +22,22 @@ public interface NightModeStateProvider {
     /** @return Whether or not night mode is enabled. */
     boolean isInNightMode();
 
-    /** @param observer The {@link Observer} to be registered to this provider. */
+    /**
+     * @param observer The {@link Observer} to be registered to this provider.
+     */
     void addObserver(Observer observer);
 
-    /** @param observer The {@link Observer} to be unregistered to this provider. */
+    /**
+     * @param observer The {@link Observer} to be unregistered to this provider.
+     */
     void removeObserver(Observer observer);
 
     /**
      * @return Whether or not {@link Configuration#uiMode} should be overridden for night mode by
-     *         {@link Activity#applyOverrideConfiguration(Configuration)}. This is applicable when
-     *         an Activity configures whether night mode is enabled (e.g. through a user setting)
-     *         rather than relying on the Application context UI night mode.
-     *         Note that if night mode state is initialized after
-     *         {@link Activity#attachBaseContext(Context)}, this should return false.
+     *     {@link Activity#applyOverrideConfiguration(Configuration)}. This is applicable when an
+     *     Activity configures whether night mode is enabled (e.g. through a user setting) rather
+     *     than relying on the Application context UI night mode. Note that if night mode state is
+     *     initialized after {@link Activity#attachBaseContext(Context)}, this should return false.
      */
     default boolean shouldOverrideConfiguration() {
         return true;

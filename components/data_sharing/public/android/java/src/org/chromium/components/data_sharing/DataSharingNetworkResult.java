@@ -17,9 +17,8 @@ public class DataSharingNetworkResult {
     public final @NetworkLoaderStatus int status;
     public final int networkErrorCode;
 
-    DataSharingNetworkResult(byte[] resultBytes,
-                            @NetworkLoaderStatus int status,
-                            int networkErrorCode) {
+    DataSharingNetworkResult(
+            byte[] resultBytes, @NetworkLoaderStatus int status, int networkErrorCode) {
         this.resultBytes = resultBytes;
         this.status = status;
         this.networkErrorCode = networkErrorCode;

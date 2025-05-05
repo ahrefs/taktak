@@ -1,6 +1,5 @@
 package com.google.protobuf;
 
-import java.util.Optional;
 
 /**
  * ProtobufToStringOutput controls the output format of {@link Message#toString()}. Specifically,
@@ -14,12 +13,12 @@ public final class ProtobufToStringOutput {
     TEXT_FORMAT
   }
 
-  private static final ThreadLocal<OutputMode> outputMode =
-      ThreadLocal.withInitial(() -> OutputMode.TEXT_FORMAT);
+    private static final ThreadLocal<OutputMode> outputMode =
+            ThreadLocal.withInitial(() -> OutputMode.TEXT_FORMAT);
 
-  private ProtobufToStringOutput() {}
+    private ProtobufToStringOutput() {}
 
-  private static OutputMode setOutputMode(OutputMode newMode) {
+    private static OutputMode setOutputMode(OutputMode newMode) {
     OutputMode oldMode = outputMode.get();
     outputMode.set(newMode);
     return oldMode;

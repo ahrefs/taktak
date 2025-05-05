@@ -14,16 +14,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.LruCache;
 import android.view.WindowManager;
+
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import com.google.common.hash.Hashing;
+
 import com.google.common.collect.ImmutableMap;
-import java.time.Duration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import com.google.common.hash.Hashing;
+
 import org.chromium.base.ActivityState;
 import org.chromium.base.ApplicationState;
 import org.chromium.base.ApplicationStatus;
@@ -84,6 +82,12 @@ import org.chromium.ui.InsetObserver;
 import org.chromium.ui.base.ActivityWindowAndroid;
 import org.chromium.ui.base.WindowAndroid;
 import org.chromium.url.GURL;
+
+import java.time.Duration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * The main entrypoint component for Read Aloud feature. It's responsible for checking its
@@ -190,75 +194,77 @@ public class ReadAloudController
         var oldValue = sClock;
         sClock = clock;
         ResettersForTesting.register(() -> sClock = oldValue);
-  }
-
-  private static class ReadabilityInfo {
-    private final Map<PlaybackArgs.PlaybackMode, ReadAloudReadabilityHooks.ReadabilityResult>
-        mReadabilityInfoPerMode;
-    private final long mResponseTimestamp;
-
-    /**
-     * Constructor.
-     *
-     * @param readabilityInfoPerMode Readability info per mode.
-     * @param responseTimestamp Timestamp when readability request responded.
-     */
-    ReadabilityInfo(
-        Map<PlaybackArgs.PlaybackMode, ReadAloudReadabilityHooks.ReadabilityResult>
-            readabilityInfoPerMode,
-        long responseTimestamp) {
-      mReadabilityInfoPerMode = readabilityInfoPerMode;
-      mResponseTimestamp = responseTimestamp;
     }
 
-    static ReadabilityInfo entirelyUnsupported(long responseTimestamp) {
-      return new ReadabilityInfo(
-          ImmutableMap.of(
-              PlaybackArgs.PlaybackMode.CLASSIC,
-              new ReadAloudReadabilityHooks.ReadabilityResult(false, false),
-              PlaybackArgs.PlaybackMode.OVERVIEW,
-              new ReadAloudReadabilityHooks.ReadabilityResult(false, false)),
-          responseTimestamp);
-    }
+    private static class ReadabilityInfo {
+        private final Map<PlaybackArgs.PlaybackMode, ReadAloudReadabilityHooks.ReadabilityResult>
+                mReadabilityInfoPerMode;
+        private final long mResponseTimestamp;
 
-    static ReadabilityInfo forTimepoints(boolean timepointsSupported, long responseTimestamp) {
-        return new ReadabilityInfo(
-          ImmutableMap.of(
-              PlaybackArgs.PlaybackMode.CLASSIC,
-              new ReadAloudReadabilityHooks.ReadabilityResult(true, timepointsSupported),
-              PlaybackArgs.PlaybackMode.OVERVIEW,
-              new ReadAloudReadabilityHooks.ReadabilityResult(true, timepointsSupported)),
-          responseTimestamp);
-    }
+        /**
+         * Constructor.
+         *
+         * @param readabilityInfoPerMode Readability info per mode.
+         * @param responseTimestamp Timestamp when readability request responded.
+         */
+        ReadabilityInfo(
+                Map<PlaybackArgs.PlaybackMode, ReadAloudReadabilityHooks.ReadabilityResult>
+                        readabilityInfoPerMode,
+                long responseTimestamp) {
+            mReadabilityInfoPerMode = readabilityInfoPerMode;
+            mResponseTimestamp = responseTimestamp;
+        }
 
-    boolean isReadable() {
-      return isReadable(PlaybackArgs.PlaybackMode.CLASSIC);
-    }
+        static ReadabilityInfo entirelyUnsupported(long responseTimestamp) {
+            return new ReadabilityInfo(
+                    ImmutableMap.of(
+                            PlaybackArgs.PlaybackMode.CLASSIC,
+                            new ReadAloudReadabilityHooks.ReadabilityResult(false, false),
+                            PlaybackArgs.PlaybackMode.OVERVIEW,
+                            new ReadAloudReadabilityHooks.ReadabilityResult(false, false)),
+                    responseTimestamp);
+        }
 
-    boolean isReadable(PlaybackArgs.PlaybackMode mode) {
-      return getReadabilityResultForMode(mode).readable;
-    }
+        static ReadabilityInfo forTimepoints(boolean timepointsSupported, long responseTimestamp) {
+            return new ReadabilityInfo(
+                    ImmutableMap.of(
+                            PlaybackArgs.PlaybackMode.CLASSIC,
+                            new ReadAloudReadabilityHooks.ReadabilityResult(
+                                    true, timepointsSupported),
+                            PlaybackArgs.PlaybackMode.OVERVIEW,
+                            new ReadAloudReadabilityHooks.ReadabilityResult(
+                                    true, timepointsSupported)),
+                    responseTimestamp);
+        }
 
-    long getResponseTime() {
-      return mResponseTimestamp;
-    }
+        boolean isReadable() {
+            return isReadable(PlaybackArgs.PlaybackMode.CLASSIC);
+        }
 
-    boolean getTimepointsSupported() {
-      return getTimepointsSupported(PlaybackArgs.PlaybackMode.CLASSIC);
-    }
+        boolean isReadable(PlaybackArgs.PlaybackMode mode) {
+            return getReadabilityResultForMode(mode).readable;
+        }
 
-    boolean getTimepointsSupported(PlaybackArgs.PlaybackMode mode) {
-      return getReadabilityResultForMode(mode).supportsHighlighting;
-    }
+        long getResponseTime() {
+            return mResponseTimestamp;
+        }
 
-    private ReadAloudReadabilityHooks.ReadabilityResult getReadabilityResultForMode(
-        PlaybackArgs.PlaybackMode mode) {
-      return mReadabilityInfoPerMode.getOrDefault(
-          mode,
-          new ReadAloudReadabilityHooks.ReadabilityResult(
-              /* readable= */ false, /* supportsHighlighting= */ false));
+        boolean getTimepointsSupported() {
+            return getTimepointsSupported(PlaybackArgs.PlaybackMode.CLASSIC);
+        }
+
+        boolean getTimepointsSupported(PlaybackArgs.PlaybackMode mode) {
+            return getReadabilityResultForMode(mode).supportsHighlighting;
+        }
+
+        private ReadAloudReadabilityHooks.ReadabilityResult getReadabilityResultForMode(
+                PlaybackArgs.PlaybackMode mode) {
+            return mReadabilityInfoPerMode.getOrDefault(
+                    mode,
+                    new ReadAloudReadabilityHooks.ReadabilityResult(
+                            /* readable= */ false, /* supportsHighlighting= */ false));
+        }
     }
-  }
 
     // Information about a tab playback necessary for resuming later. Does not
     // include language or voice which should come from current tab state or
@@ -471,15 +477,16 @@ public class ReadAloudController
     private final ReadAloudReadabilityHooks.ReadabilityPerModeCallback mReadabilityPerModeCallback =
             new ReadAloudReadabilityHooks.ReadabilityPerModeCallback() {
                 @Override
-                public void onSuccess(String url, Map<PlaybackArgs.PlaybackMode, ReadAloudReadabilityHooks.ReadabilityResult> readabilityPerMode) {
+                public void onSuccess(
+                        String url,
+                        Map<PlaybackArgs.PlaybackMode, ReadAloudReadabilityHooks.ReadabilityResult>
+                                readabilityPerMode) {
                     if (url.isEmpty() || url == null) {
                         assert false;
                         return;
                     }
                     ReadabilityInfo readabilityInfo =
-                            new ReadabilityInfo(
-                                    readabilityPerMode,
-                                    sClock.currentTimeMillis());
+                            new ReadabilityInfo(readabilityPerMode, sClock.currentTimeMillis());
                     boolean isReadable = readabilityInfo.isReadable();
 
                     Log.d(TAG, "onSuccess called for %s", url);
@@ -496,9 +503,7 @@ public class ReadAloudController
                     }
 
                     int urlHash = urlToHash(url);
-                    sReadabilityInfoMap.put(
-                            urlHash,
-                            readabilityInfo);
+                    sReadabilityInfoMap.put(urlHash, readabilityInfo);
                     mPendingRequests.remove(urlHash);
                     notifyReadabilityMayHaveChanged();
                 }

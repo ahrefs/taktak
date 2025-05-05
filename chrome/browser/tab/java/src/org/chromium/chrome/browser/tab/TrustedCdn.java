@@ -82,7 +82,7 @@ public class TrustedCdn extends TabWebContentsUserData {
     /**
      * @param tab Tab object currently being shown.
      * @return The name of the publisher of the content if it can be reliably extracted, or null
-     *         otherwise.
+     *     otherwise.
      */
     public static @Nullable String getContentPublisher(Tab tab) {
         if (tab == null) return null;

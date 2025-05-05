@@ -44,12 +44,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UnknownFieldSet;
 import com.google.protobuf.util.JsonFormat;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
 import org.jruby.*;
 import org.jruby.anno.JRubyMethod;
 import org.jruby.exceptions.RaiseException;
@@ -58,6 +53,13 @@ import org.jruby.runtime.Helpers;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.util.ByteList;
+
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RubyMessage extends RubyObject {
   private final String DEFAULT_VALUE = "google.protobuf.FieldDescriptorProto.default_value";
@@ -453,11 +455,12 @@ public class RubyMessage extends RubyObject {
 
         fieldDescriptor = descriptor.findFieldByName(methodName);
 
-        if (fieldDescriptor != null && fieldDescriptor.hasPresence()) {
-          return (fields.containsKey(fieldDescriptor) || builder.hasField(fieldDescriptor))
-              ? runtime.getTrue()
-              : runtime.getFalse();
-        }
+                if (fieldDescriptor != null && fieldDescriptor.hasPresence()) {
+                    return (fields.containsKey(fieldDescriptor)
+                                    || builder.hasField(fieldDescriptor))
+                            ? runtime.getTrue()
+                            : runtime.getFalse();
+                }
 
       } else if (methodName.endsWith(AS_VALUE_SUFFIX)) {
         methodName = methodName.substring(0, methodName.length() - 9);
@@ -952,11 +955,11 @@ public class RubyMessage extends RubyObject {
   protected IRubyObject hasField(ThreadContext context, FieldDescriptor fieldDescriptor) {
     validateMessageType(context, fieldDescriptor, "has?");
     if (!fieldDescriptor.hasPresence()) {
-      throw context.runtime.newArgumentError("does not track presence");
-    }
-    return (fields.containsKey(fieldDescriptor) || builder.hasField(fieldDescriptor))
-        ? context.runtime.getTrue()
-        : context.runtime.getFalse();
+            throw context.runtime.newArgumentError("does not track presence");
+        }
+        return (fields.containsKey(fieldDescriptor) || builder.hasField(fieldDescriptor))
+                ? context.runtime.getTrue()
+                : context.runtime.getFalse();
   }
 
   protected IRubyObject setField(

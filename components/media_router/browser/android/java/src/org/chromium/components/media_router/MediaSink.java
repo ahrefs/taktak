@@ -22,6 +22,7 @@ public class MediaSink {
 
     /**
      * Constructor.
+     *
      * @param id A unique identifier of the sink.
      * @param name A user friendly name of the sink.
      * @param device {@link CastDevice} corresponding to this sink.
@@ -88,7 +89,7 @@ public class MediaSink {
      * @param sinkId The id of the sink to find among known media routes.
      * @param router The instance of {@link MediaRouter} to enumerate the routes with.
      * @return A {@link MediaSink} corresponding to the {@link RouteInfo} with the specified id if
-     * found, null otherwise.
+     *     found, null otherwise.
      */
     public static @Nullable MediaSink fromSinkId(String sinkId, MediaRouter router) {
         for (MediaRouter.RouteInfo route : router.getRoutes()) {

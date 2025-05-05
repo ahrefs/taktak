@@ -31,6 +31,7 @@ import android.util.Pair;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.autofill.AutofillManager;
+
 import androidx.annotation.RequiresApi;
 
 import org.jni_zero.CalledByNative;
@@ -503,7 +504,7 @@ public class AccessibilityState {
         float contrastLevel = 0f;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             UiModeManager uiModeManager =
-                (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
+                    (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
             // This value can be between -1 and 1, but in practice the UI
             // exposes 0 (default), 0.5 (medium), or 1 (high).
             contrastLevel = uiModeManager.getContrast();
@@ -926,8 +927,7 @@ public class AccessibilityState {
                         AccessibilityState::processExtraStateChange);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            sContrastChangeListener = (contrast) ->
-                AccessibilityState.processExtraStateChange();
+            sContrastChangeListener = (contrast) -> AccessibilityState.processExtraStateChange();
         }
 
         // We want to be notified whenever the user has updated the animator duration scale.
@@ -974,10 +974,10 @@ public class AccessibilityState {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             Context context = ContextUtils.getApplicationContext();
             UiModeManager uiModeManager =
-                (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
+                    (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
             if (uiModeManager != null && sContrastChangeListener != null) {
-                uiModeManager.addContrastChangeListener(context.getMainExecutor(),
-                    sContrastChangeListener);
+                uiModeManager.addContrastChangeListener(
+                        context.getMainExecutor(), sContrastChangeListener);
             }
         }
 
@@ -1038,7 +1038,7 @@ public class AccessibilityState {
         contentResolver.unregisterContentObserver(sTextContrastObserver);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             UiModeManager uiModeManager =
-                (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
+                    (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
             if (uiModeManager != null && sContrastChangeListener != null) {
                 uiModeManager.removeContrastChangeListener(sContrastChangeListener);
             }

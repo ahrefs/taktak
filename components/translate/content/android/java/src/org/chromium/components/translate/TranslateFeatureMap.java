@@ -13,7 +13,7 @@ import org.chromium.build.annotations.NullMarked;
 /**
  * Java accessor for translate base::Features.
  *
- * Note: Features must be added to the array |kFeaturesExposedToJava| in
+ * <p>Note: Features must be added to the array |kFeaturesExposedToJava| in
  * //components/translate/content/android/translate_feature_map.cc
  */
 @JNINamespace("translate::android")

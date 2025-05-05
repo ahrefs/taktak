@@ -26,6 +26,7 @@ import org.chromium.url.GURL;
 public class WebContentsDarkModeController {
     /**
      * Return whether auto dark mode is enable for a given URL.
+     *
      * @param browserContextHandle Current browser context handle.
      * @param url Queried URL to check whether auto dark is enabled.
      * @return Whether auto dark mode is enable for a given URL.

@@ -13,8 +13,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.Locale;
 
 /**
- * Struct containing the info of ChromeTabbedActivity instance needed to manage
- * multi-instance support on Android S.
+ * Struct containing the info of ChromeTabbedActivity instance needed to manage multi-instance
+ * support on Android S.
  */
 @NullMarked
 final class InstanceInfo {

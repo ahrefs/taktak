@@ -17,6 +17,7 @@ import java.util.List;
 public interface MediaRouteManager {
     /**
      * Adds a {@link MediaRouteProvider} to be managed.
+     *
      * @param provider The provider to manage.
      */
     void addMediaRouteProvider(MediaRouteProvider provider);

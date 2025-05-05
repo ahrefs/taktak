@@ -13,6 +13,7 @@ import java.util.List;
 public interface DiscoveryDelegate {
     /**
      * Called when a new information about sinks availability becomes known.
+     *
      * @param sourceId The id of the source the sinks were found for.
      * @param sinks The list of sinks found, can be empty.
      */

@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Implements the JNI interface called from the C++ Media Router implementation on Android.
- * Owns a list of {@link MediaRouteProvider} implementations and dispatches native calls to them.
+ * Implements the JNI interface called from the C++ Media Router implementation on Android. Owns a
+ * list of {@link MediaRouteProvider} implementations and dispatches native calls to them.
  */
 @JNINamespace("media_router")
 @NullMarked
@@ -417,6 +417,7 @@ public class BrowserMediaRouter implements MediaRouteManager {
 
     /**
      * Gets a media controller to be used by native.
+     *
      * @param routeId The route ID tied to the CastSession for which we want a media controller.
      * @return A MediaControllerBridge if it can be obtained from |routeId|, null otherwise.
      */

@@ -49,8 +49,8 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Coordinator to construct the instance switcher dialog.
- * TODO: Resolve various inconsistencies that can be caused by Ui from multiple instances.
+ * Coordinator to construct the instance switcher dialog. TODO: Resolve various inconsistencies that
+ * can be caused by Ui from multiple instances.
  */
 @NullMarked
 public class InstanceSwitcherCoordinator {

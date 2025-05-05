@@ -89,7 +89,7 @@ class TranslateMessage implements TranslateMessageSecondaryMenu.Handler {
     /**
      * Create a new TranslateMessage, or return null if creation failed.
      *
-     * Creation could fail in cases where the MessageDispatcher cannot be retrieved, such as when
+     * <p>Creation could fail in cases where the MessageDispatcher cannot be retrieved, such as when
      * the activity is being recreated or destroyed.
      */
     @CalledByNative

@@ -69,7 +69,5 @@ absl_source_set("compare") {
 
 absl_test("variant_test") {
   sources = [ "variant_test.cc" ]
-  deps = [
-    ":variant",
-  ]
+  deps = [ ":variant" ]
 }

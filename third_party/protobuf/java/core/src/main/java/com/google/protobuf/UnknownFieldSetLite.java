@@ -298,11 +298,10 @@ public final class UnknownFieldSetLite {
     return true;
   }
 
-  @Override
-  public boolean equals(
-          Object obj) {
-    if (this == obj) {
-      return true;
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
     }
 
     if (obj == null) {
@@ -425,11 +424,11 @@ public final class UnknownFieldSetLite {
         subFieldSet.mergeFrom(input);
         input.checkLastTagWas(WireFormat.makeTag(fieldNumber, WireFormat.WIRETYPE_END_GROUP));
         storeField(tag, subFieldSet);
-        return true;
-      case WireFormat.WIRETYPE_END_GROUP:
-        input.checkValidEndTag();
-        return false;
-      default:
+                return true;
+            case WireFormat.WIRETYPE_END_GROUP:
+                input.checkValidEndTag();
+                return false;
+            default:
         throw InvalidProtocolBufferException.invalidWireType();
     }
   }

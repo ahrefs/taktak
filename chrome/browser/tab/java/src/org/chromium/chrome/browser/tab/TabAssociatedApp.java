@@ -115,9 +115,8 @@ public final class TabAssociatedApp extends TabWebContentsUserData implements Im
 
     /**
      * @see #setAppId(String) for more information.
-     *
-     * @return The id of the application associated with that tab (null if not
-     *         associated with an app).
+     * @return The id of the application associated with that tab (null if not associated with an
+     *     app).
      */
     public @Nullable String getAppId() {
         return mId;

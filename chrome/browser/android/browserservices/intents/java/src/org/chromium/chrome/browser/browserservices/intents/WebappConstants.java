@@ -8,9 +8,8 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.content_public.common.ScreenOrientationConstants;
 
 /**
- * This class contains constants related to adding shortcuts to the Android Home
- * screen.  These shortcuts are used to either open a page in the main browser
- * or open a web app.
+ * This class contains constants related to adding shortcuts to the Android Home screen. These
+ * shortcuts are used to either open a page in the main browser or open a web app.
  */
 @NullMarked
 public class WebappConstants {

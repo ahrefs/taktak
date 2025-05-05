@@ -38,7 +38,7 @@ public class TranslateTabLayout extends TabLayout {
     /** We define the keyframes of the scrolling animation in this object. */
     @Nullable ObjectAnimator mScrollToEndAnimator;
 
-    /** Start padding of a Tab.  Used for width calculation only.  Will not be applied to views. */
+    /** Start padding of a Tab. Used for width calculation only. Will not be applied to views. */
     private int mTabPaddingStart;
 
     /** End padding of a Tab.  Used for width calculation only.  Will not be applied to views. */
@@ -176,8 +176,9 @@ public class TranslateTabLayout extends TabLayout {
     }
 
     /**
-     * Calculate and return the width of a specified tab.  Tab doesn't provide a means of getting
-     * the width so we need to calculate the width by summing up the tab paddings and content width.
+     * Calculate and return the width of a specified tab. Tab doesn't provide a means of getting the
+     * width so we need to calculate the width by summing up the tab paddings and content width.
+     *
      * @param position Tab position.
      * @return Tab's width in pixels.
      */

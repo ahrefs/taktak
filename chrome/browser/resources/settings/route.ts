@@ -204,7 +204,7 @@ function createRoutes(): SettingsRoutes {
   }
 
   const visibility = pageVisibility || {};
-
+  visibility.ai = false;
   if (visibility.ai !== false &&
       loadTimeData.getBoolean('showAdvancedFeaturesMainControl')) {
     r.AI = r.BASIC.createSection(
@@ -236,7 +236,8 @@ function createRoutes(): SettingsRoutes {
   // <if expr="not chromeos_ash">
   if (visibility.people !== false) {
     assert(r.PEOPLE);
-    r.MANAGE_PROFILE = r.PEOPLE.createChild('/manageProfile');
+    // r.MANAGE_PROFILE = r.PEOPLE.createChild('/manageProfile');
+    r.MANAGE_PROFILE = r.PEOPLE.createChild('/');
   }
   // </if>
 

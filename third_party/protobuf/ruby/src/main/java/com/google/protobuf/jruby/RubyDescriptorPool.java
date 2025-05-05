@@ -39,19 +39,20 @@ import com.google.protobuf.Descriptors.EnumDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.Descriptors.ServiceDescriptor;
-import com.google.protobuf.Descriptors.MethodDescriptor;
 import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
 import org.jruby.*;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
 import org.jruby.exceptions.RaiseException;
 import org.jruby.runtime.*;
 import org.jruby.runtime.builtin.IRubyObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @JRubyClass(name = "DescriptorPool")
 public class RubyDescriptorPool extends RubyObject {
@@ -96,18 +97,18 @@ public class RubyDescriptorPool extends RubyObject {
     return context.nil;
   }
 
-  /*
-   * call-seq:
-   *     DescriptorPool.lookup(name) => descriptor
-   *
-   * Finds a Descriptor, EnumDescriptor, FieldDescriptor or ServiceDescriptor by name and returns it,
-   * or nil if none exists with the given name.
-   *
-   * This currently lazy loads the ruby descriptor objects as they are requested.
-   * This allows us to leave the heavy lifting to the java library
-   */
-  @JRubyMethod
-  public IRubyObject lookup(ThreadContext context, IRubyObject name) {
+    /*
+     * call-seq:
+     *     DescriptorPool.lookup(name) => descriptor
+     *
+     * Finds a Descriptor, EnumDescriptor, FieldDescriptor or ServiceDescriptor by name and returns it,
+     * or nil if none exists with the given name.
+     *
+     * This currently lazy loads the ruby descriptor objects as they are requested.
+     * This allows us to leave the heavy lifting to the java library
+     */
+    @JRubyMethod
+    public IRubyObject lookup(ThreadContext context, IRubyObject name) {
     return Helpers.nullToNil(symtab.get(name), context.nil);
   }
 
