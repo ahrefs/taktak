@@ -507,8 +507,8 @@ void PopulateChromeWebUIFrameBinders(
       SignoutConfirmationUI,
 #endif
       NewTabPageUI, OmniboxPopupUI, BookmarksSidePanelUI, CustomizeChromeUI,
-      UserEducationInternalsUI, ReadingListUI, ChatUI, TabSearchUI, WebuiGalleryUI,
-      HistoryClustersSidePanelUI, ShoppingInsightsSidePanelUI,
+      UserEducationInternalsUI, ReadingListUI, ChatUI, TabSearchUI,
+      WebuiGalleryUI, HistoryClustersSidePanelUI, ShoppingInsightsSidePanelUI,
       media_router::AccessCodeCastUI, commerce::ProductSpecificationsUI>(map);
 
   RegisterWebUIControllerInterfaceBinder<
@@ -648,8 +648,8 @@ void PopulateChromeWebUIFrameBinders(
       side_panel::mojom::BookmarksPageHandlerFactory, BookmarksSidePanelUI>(
       map);
 
-  RegisterWebUIControllerInterfaceBinder<
-      chat::mojom::PageHandlerFactory, ChatUI>(map);
+  RegisterWebUIControllerInterfaceBinder<chat::mojom::PageHandlerFactory,
+                                         ChatUI>(map);
 
   RegisterWebUIControllerInterfaceBinder<
       shopping_service::mojom::ShoppingServiceHandlerFactory,

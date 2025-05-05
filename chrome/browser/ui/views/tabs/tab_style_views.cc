@@ -374,17 +374,17 @@ SkPath TabStyleViewsImpl::GetPath(TabStyle::PathType path_type,
     //   │ Content │
     // ┏─╯         ╰─┐
     if (tab_bottom != extended_bottom) {
-    //  path.lineTo(left, tab_bottom);
+      path.lineTo(left, tab_bottom);
     }
 
     // Draw the bottom-left corner.
     //   ╭─────────╮
     //   │ Content │
     // ┌━╝         ╰─┐
-     // path.lineTo(tab_left - left_extension_corner_radius, tab_bottom);
-      path.arcTo(left_extension_corner_radius, left_extension_corner_radius, 0,
-                 SkPath::kSmall_ArcSize, SkPathDirection::kCCW, tab_left,
-                 tab_bottom - left_extension_corner_radius);
+    path.lineTo(tab_left - left_extension_corner_radius, tab_bottom);
+    path.arcTo(left_extension_corner_radius, left_extension_corner_radius, 0,
+               SkPath::kSmall_ArcSize, SkPathDirection::kCCW, tab_left,
+               tab_bottom - left_extension_corner_radius);
   }
 
   // Draw the ascender and top-left curve, if present.
@@ -424,10 +424,10 @@ SkPath TabStyleViewsImpl::GetPath(TabStyle::PathType path_type,
     //   ╭─────────╮
     //   │ Content ┃
     // ┌─╯         ╚━┐
-      path.lineTo(tab_right, tab_bottom - extension_corner_radius);
-      path.arcTo(extension_corner_radius, extension_corner_radius, 0,
-                 SkPath::kSmall_ArcSize, SkPathDirection::kCCW,
-                 tab_right + extension_corner_radius, tab_bottom);
+    path.lineTo(tab_right, tab_bottom - extension_corner_radius);
+    path.arcTo(extension_corner_radius, extension_corner_radius, 0,
+               SkPath::kSmall_ArcSize, SkPathDirection::kCCW,
+               tab_right + extension_corner_radius, tab_bottom);
     if (tab_bottom != extended_bottom) {
       path.lineTo(right, tab_bottom);
     }

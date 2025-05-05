@@ -67,6 +67,11 @@
 #include "chrome/browser/ui/views/performance_controls/battery_saver_button.h"
 #include "chrome/browser/ui/views/performance_controls/performance_intervention_button.h"
 #include "chrome/browser/ui/views/send_tab_to_self/send_tab_to_self_toolbar_icon_view.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_coordinator.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_entry_id.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_entry_key.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_enums.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_ui.h"
 #include "chrome/browser/ui/views/tabs/tab_strip.h"
 #include "chrome/browser/ui/views/toolbar/app_menu.h"
 #include "chrome/browser/ui/views/toolbar/back_forward_button.h"
@@ -84,6 +89,7 @@
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "chrome/grit/theme_resources.h"
+#include "chrome/renderer/process_state.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "components/omnibox/browser/omnibox_view.h"
 #include "components/performance_manager/public/features.h"
@@ -107,6 +113,7 @@
 #include "ui/color/color_provider.h"
 #include "ui/compositor/layer.h"
 #include "ui/gfx/canvas.h"
+#include "ui/gfx/color_palette.h"
 #include "ui/gfx/image/canvas_image_source.h"
 #include "ui/gfx/paint_vector_icon.h"
 #include "ui/gfx/scoped_canvas.h"
@@ -116,19 +123,11 @@
 #include "ui/views/layout/fill_layout.h"
 #include "ui/views/layout/flex_layout.h"
 #include "ui/views/layout/proposed_layout.h"
+#include "ui/views/view.h"
 #include "ui/views/view_class_properties.h"
 #include "ui/views/widget/tooltip_manager.h"
 #include "ui/views/widget/widget.h"
 #include "ui/views/window/non_client_view.h"
-#include "chrome/browser/ui/views/side_panel/side_panel_coordinator.h"
-#include "chrome/browser/ui/views/side_panel/side_panel_entry_key.h"
-#include "chrome/browser/ui/views/side_panel/side_panel_enums.h"
-#include "chrome/browser/ui/views/side_panel/side_panel_entry_id.h"
-#include "chrome/browser/ui/views/side_panel/side_panel_ui.h"
-#include "ui/views/background.h"
-#include "ui/views/view.h"
-#include "ui/gfx/color_palette.h"
-#include "chrome/renderer/process_state.h"
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 #include "chrome/browser/recovery/recovery_install_global_error_factory.h"
@@ -428,9 +427,9 @@ void ToolbarView::Init() {
   std::unique_ptr<ReloadButton> reload =
       std::make_unique<ReloadButton>(browser_->command_controller());
 
-  std::unique_ptr<AIChatToolbarButton> ai_chat_button = std::make_unique<AIChatToolbarButton>(
-          base::BindRepeating(
-                  &ToolbarView::AIChatButtonPressed, base::Unretained(this)));
+  std::unique_ptr<AIChatToolbarButton> ai_chat_button =
+      std::make_unique<AIChatToolbarButton>(base::BindRepeating(
+          &ToolbarView::AIChatButtonPressed, base::Unretained(this)));
 
   PrefService* const prefs = browser_->profile()->GetPrefs();
   std::unique_ptr<HomeButton> home = std::make_unique<HomeButton>(
@@ -640,15 +639,15 @@ void ToolbarView::Init() {
 }  // ToolbarView::Init
 
 void ToolbarView::ResetHighlightForAIChatButton() {
-    if(ai_chat_button_) {
-        ai_chat_button_->ResetHighlight();
-    }
+  if (ai_chat_button_) {
+    ai_chat_button_->ResetHighlight();
+  }
 }
 
 void ToolbarView::AddHighlightForAIChatButton() {
-    if(ai_chat_button_) {
-        ai_chat_button_->AddHighlight();
-    }
+  if (ai_chat_button_) {
+    ai_chat_button_->AddHighlight();
+  }
 }
 
 void ToolbarView::AnimationEnded(const gfx::Animation* animation) {
@@ -967,7 +966,8 @@ void ToolbarView::Layout(PassKey) {
   LayoutSuperclass<AccessiblePaneView>(this);
 
   if (display_mode_ == DisplayMode::NORMAL) {
-    // Calculate margin and set its bounds to shrink the width of the location bar
+    // Calculate margin and set its bounds to shrink the width of the location
+    // bar
     const gfx::Insets margin = CalculateLocationBarMargin(
         width(), location_bar_->width(),
         location_bar_->GetMinimumSize().width(), location_bar_->x());
@@ -1043,15 +1043,15 @@ void ToolbarView::NewTabButtonPressed(const ui::Event& event) {
 }
 
 void ToolbarView::AIChatButtonPressed(const ui::Event& event) {
-    is_ai_chat_button_active_ = !is_ai_chat_button_active_;
-    if (is_ai_chat_button_active_) {
-        ai_chat_button_->AddHighlight();
-    } else {
-        ai_chat_button_->ResetHighlight();
-    }
-    auto key =  SidePanelEntryKey(SidePanelEntryId::kAIChat);
-    auto *side_panel = browser_view_ -> browser()->GetFeatures().side_panel_ui();
-    side_panel->Toggle(key, SidePanelOpenTrigger::kToolbarButton);
+  is_ai_chat_button_active_ = !is_ai_chat_button_active_;
+  if (is_ai_chat_button_active_) {
+    ai_chat_button_->AddHighlight();
+  } else {
+    ai_chat_button_->ResetHighlight();
+  }
+  auto key = SidePanelEntryKey(SidePanelEntryId::kAIChat);
+  auto* side_panel = browser_view_->browser()->GetFeatures().side_panel_ui();
+  side_panel->Toggle(key, SidePanelOpenTrigger::kToolbarButton);
 }
 
 bool ToolbarView::AcceleratorPressed(const ui::Accelerator& accelerator) {

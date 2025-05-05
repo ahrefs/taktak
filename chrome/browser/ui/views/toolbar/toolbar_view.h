@@ -22,8 +22,8 @@
 #include "chrome/browser/ui/views/location_bar/custom_tab_bar_view.h"
 #include "chrome/browser/ui/views/location_bar/location_bar_view.h"
 #include "chrome/browser/ui/views/profiles/avatar_toolbar_button.h"
-#include "chrome/browser/ui/views/toolbar/overflow_button.h"
 #include "chrome/browser/ui/views/toolbar/ai_chat_toolbar_button.h"
+#include "chrome/browser/ui/views/toolbar/overflow_button.h"
 #include "components/prefs/pref_member.h"
 #include "ui/base/accelerators/accelerator.h"
 #include "ui/base/interaction/element_identifier.h"
@@ -299,7 +299,6 @@ class ToolbarView : public views::AccessiblePaneView,
 
   void NewTabButtonPressed(const ui::Event& event);
 
-
   bool is_ai_chat_button_active_ = false;
   void AIChatButtonPressed(const ui::Event& event);
 
@@ -387,7 +386,6 @@ class ToolbarView : public views::AccessiblePaneView,
   // Listens to changes to active state to update background_view_right_ and
   // background_view_left_, as their background depends on active state.
   base::CallbackListSubscription active_state_subscription_;
-
 };
 
 extern const ui::ClassProperty<bool>* const kActionItemUnderlineIndicatorKey;
