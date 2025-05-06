@@ -159,7 +159,7 @@ void PageContentExtractor::ExtractPageText(
                             const std::optional<std::string>&)> callback,
     bool includesHTML) {
   auto snapshotter = render_frame->CreateAXTreeSnapshotter(
-      ui::AXMode::kWebContents | ui::AXMode::kHTML | ui::AXMode::kScreenReader);
+      ui::AXMode::kWebContents | ui::AXMode::kHTML | ui::AXMode::kOnScreenOnly);
   ui::AXTreeUpdate snapshot;
   snapshotter->Snapshot(
       /* max_nodes= */ 9000, /* timeout= */ base::Seconds(4), &snapshot);

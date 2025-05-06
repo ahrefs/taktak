@@ -52,7 +52,7 @@ export class ActionMenuElement extends CrLitElement {
             this.renderActionMenu_ = true;
             await this.updateComplete;
         }
-        const menu = this.shadowRoot!.querySelector('cr-action-menu');
+        const menu = this.shadowRoot.querySelector('cr-action-menu');
         assert(menu);
         menu.showAt(this.$.actionMenuButton, {
                 anchorAlignmentX: AnchorAlignment.AFTER_END,

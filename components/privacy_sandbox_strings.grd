@@ -717,9 +717,6 @@
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET1" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
             Taktak notes topics of interest based on your recent browsing history. For example, things like Sports, Apparel, and more
           </message>
-          <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET2" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            Sites you visit can ask Taktak for topics that help limit what sites and their advertising partners can learn about you to show you personalized ads
-          </message>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET3" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
             Taktak auto-deletes ad topics that are older than 4 weeks
           </message>

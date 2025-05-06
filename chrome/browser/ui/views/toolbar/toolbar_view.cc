@@ -375,7 +375,7 @@ void ToolbarView::Init() {
     pinned_toolbar_actions_container_ = container_view_->AddChildView(
         std::make_unique<PinnedToolbarActionsContainer>(browser_view_));
     container_view_->SetBackground(
-        views::CreateThemedSolidBackground(kColorLocationBarBackground));
+        views::CreateSolidBackground(kColorLocationBarBackground));
     container_view_->SetLayoutManager(std::make_unique<views::FlexLayout>())
         ->SetOrientation(views::LayoutOrientation::kHorizontal)
         .SetCrossAxisAlignment(views::LayoutAlignment::kCenter)
