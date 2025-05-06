@@ -367,7 +367,7 @@ void RecentTabsSubMenuModel::Build() {
   AddSeparator(ui::NORMAL_SEPARATOR);
   history_separator_index_ = GetItemCount() - 1;
   BuildLocalEntries();
-  BuildTabsFromOtherDevices();
+  // BuildTabsFromOtherDevices();
 }
 
 void RecentTabsSubMenuModel::BuildLocalEntries() {
@@ -870,7 +870,7 @@ void RecentTabsSubMenuModel::TabRestoreServiceDestroyed(
 void RecentTabsSubMenuModel::OnForeignSessionUpdated() {
   ClearTabsFromOtherDevices();
 
-  BuildTabsFromOtherDevices();
+  // BuildTabsFromOtherDevices();
 
   ui::MenuModelDelegate* delegate = menu_model_delegate();
   if (delegate) {
