@@ -165,16 +165,15 @@ input[type='search']::-webkit-search-cancel-button {
 /** Wide layout. */
 :host(:not([narrow])) {
   background: none;
-  border-radius:
-      var(--cr-toolbar-search-field-border-radius, 46px);
+  border-radius: 8px;
   cursor: var(--cr-toolbar-search-field-cursor, text);
-  height: 36px;
+  height: 28px;
   max-width: var(--cr-toolbar-field-max-width, none);
   overflow: hidden;
   padding: 0 6px;
   position: relative;
   width: var(--cr-toolbar-field-width, 680px);
-  --cr-toolbar-search-field-border-radius: 100px;
+  --cr-toolbar-search-field-border-radius: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -202,8 +201,8 @@ input[type='search']::-webkit-search-cancel-button {
 }
 
 :host([search-focused_]:not([narrow])) {
-  outline: 2px solid var(--cr-focus-outline-color);
-  outline-offset: 2px;
+  /*outline: 2px solid var(--cr-focus-outline-color);*/
+  /*outline-offset: 2px;*/
 }
 
 :host(:not([narrow])) #stateBackground {
