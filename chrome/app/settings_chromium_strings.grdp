@@ -426,7 +426,7 @@
     Learn how Taktak keeps you safe
   </message>
   <message name="IDS_SETTINGS_SAFETY_HUB_USER_EDU_DATA_HEADER" desc="The header of the first item in the 'User Education Module' in the Safety Hub page. This item explains how Chrome's tools help user to keep their data safe.">
-    Taktak's safety tools
+    Google's safety tools
   </message>
   <message name="IDS_SETTINGS_SAFETY_HUB_USER_EDU_DATA_SUBHEADER" desc="The subheader of the first item in the 'User Education Module' in the Safety Hub page. This item explains how Chrome's tools help user to keep their data safe.">
     With <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank"&gt;</ph>the tools<ph name="END_LINK">&lt;/a&gt;</ph>, you can browse safely and stay in control

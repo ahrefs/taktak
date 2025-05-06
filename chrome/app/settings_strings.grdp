@@ -3226,10 +3226,10 @@
     See all site data and permissions
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_PAGE_DESCRIPTION" desc="Explanatory text for the Tracking Protection settings page.">
-    Chrome limits the type of information sites can use to track you as you browse. You can change your settings to choose your own level of protection.
+    Taktak limits the type of information sites can use to track you as you browse. You can change your settings to choose your own level of protection.
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_BULLET_ONE" desc="The first bullet for Tracking Protection settings. Informs users that Chrome will limit third-party cookies.">
-    Chrome automatically limits third-party cookies
+    Taktak automatically limits third-party cookies
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_BULLET_ONE_DESCRIPTION" desc="Description of the first bullet for tracking protection settings. Explains what limiting third-party cookies means.">
     Most sites can’t use third-party cookies to track you as you browse and sites can’t use third-party cookies in Incognito mode.
@@ -3592,7 +3592,7 @@
     No sites added
   </message>
   <message name="IDS_SETTINGS_SITE_SETTINGS_BLOCK_AUTOPLAY" desc="A label for a toggle in site settings to block autoplay. If the toggle is on then Chrome will block autoplay by default and use an algorithm to determine which sites should still be able to autoplay. If the toggle is off then autoplay will be enabled for all sites.">
-    Let Chrome choose when sites can play sound (recommended)
+    Let Taktak choose when sites can play sound (recommended)
   </message>
   <message name="IDS_SETTINGS_SITE_SETTINGS_EMPTY_ALL_SITES_PAGE" desc="Explanation shown when there are no sites that have appeared yet on the All Sites page.">
     Sites you visit will appear here
