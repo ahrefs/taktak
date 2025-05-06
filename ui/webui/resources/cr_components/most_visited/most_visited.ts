@@ -272,7 +272,7 @@ export class MostVisitedElement extends MostVisitedElementBase {
       this.visible_ = this.info_.visible;
       this.customLinksEnabled_ = this.info_.customLinksEnabled;
       this.maxTiles_ = this.customLinksEnabled_ ? 10 : 8;
-      this.tiles_ = this.info_.tiles.slice(0, this.maxTiles_);
+      this.tiles_ = this.info_.tiles.slice(0, this.maxTiles_).filter(t => t?.url.url !== "https://chrome.google.com/webstore?hl=en");
     }
 
     this.showAdd_ = this.computeShowAdd_();

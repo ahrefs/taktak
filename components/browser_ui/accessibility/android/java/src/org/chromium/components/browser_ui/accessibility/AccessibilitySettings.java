@@ -73,8 +73,7 @@ public class AccessibilitySettings extends PreferenceFragmentCompat
 
         mPageZoomDefaultZoomPref = findPreference(PREF_PAGE_ZOOM_DEFAULT_ZOOM);
         mPageZoomAlwaysShowPref = findPreference(PREF_PAGE_ZOOM_ALWAYS_SHOW);
-        mPageZoomIncludeOSAdjustment =
-                findPreference(PREF_PAGE_ZOOM_INCLUDE_OS_ADJUSTMENT);
+        mPageZoomIncludeOSAdjustment = findPreference(PREF_PAGE_ZOOM_INCLUDE_OS_ADJUSTMENT);
 
         // Set the initial values for the page zoom settings, and set change listeners.
         mPageZoomDefaultZoomPref.setInitialValue(
@@ -143,8 +142,7 @@ public class AccessibilitySettings extends PreferenceFragmentCompat
             mPageZoomIncludeOSAdjustment.setVisible(false);
         }
 
-        Preference imageDescriptionsPreference =
-                findPreference(PREF_IMAGE_DESCRIPTIONS);
+        Preference imageDescriptionsPreference = findPreference(PREF_IMAGE_DESCRIPTIONS);
         imageDescriptionsPreference.setVisible(mDelegate.shouldShowImageDescriptionsSetting());
     }
 

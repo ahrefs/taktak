@@ -22,16 +22,18 @@ public class CurrentTabObserver {
     private CallbackController mCallbackController;
     private @Nullable Tab mTab;
 
-    /** @see #CurrentTabObserver(ObservableSupplier, TabObserver, Callback) */
+    /**
+     * @see #CurrentTabObserver(ObservableSupplier, TabObserver, Callback)
+     */
     public CurrentTabObserver(ObservableSupplier<Tab> tabSupplier, TabObserver tabObserver) {
         this(tabSupplier, tabObserver, null);
     }
 
     /**
-     * @param tabSupplier An observable supplier of the current {@link Tab}. NOT to be owned
-     *        by this class, and should be destroyed by callsite later.
-     * @param tabObserver {@link TabObserver} that we want to observe the current tab with.
-     *        Owned by this class.
+     * @param tabSupplier An observable supplier of the current {@link Tab}. NOT to be owned by this
+     *     class, and should be destroyed by callsite later.
+     * @param tabObserver {@link TabObserver} that we want to observe the current tab with. Owned by
+     *     this class.
      * @param swapCallback Callback to invoke when the current tab is swapped.
      */
     public CurrentTabObserver(

@@ -30,6 +30,7 @@ public class WebappInfo {
 
     /**
      * Construct a WebappInfo.
+     *
      * @param intent Intent containing info about the app.
      */
     public static @Nullable WebappInfo create(

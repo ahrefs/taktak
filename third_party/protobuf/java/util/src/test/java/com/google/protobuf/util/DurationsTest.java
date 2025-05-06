@@ -10,6 +10,7 @@ package com.google.protobuf.util;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.protobuf.util.Durations.toSecondsAsDouble;
+
 import static org.junit.Assert.fail;
 
 import com.google.common.annotations.GwtIncompatible;
@@ -17,13 +18,15 @@ import com.google.common.collect.Lists;
 import com.google.j2objc.annotations.J2ObjCIncompatible;
 import com.google.protobuf.Duration;
 import com.google.protobuf.Timestamp;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Unit tests for {@link Durations}. */
 @RunWith(JUnit4.class)
@@ -48,11 +51,11 @@ public class DurationsTest {
     assertThat(Durations.isNegative(Durations.fromNanos(-1))).isTrue();
   }
 
-  @Test
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public void testCheckNotNegative() {
-    Durations.checkNotNegative(Durations.ZERO);
+    @Test
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public void testCheckNotNegative() {
+        Durations.checkNotNegative(Durations.ZERO);
     Durations.checkNotNegative(Durations.fromNanos(1));
     Durations.checkNotNegative(Durations.fromSeconds(1));
 
@@ -71,11 +74,11 @@ public class DurationsTest {
     }
   }
 
-  @Test
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public void testCheckPositive() {
-    Durations.checkPositive(Durations.fromNanos(1));
+    @Test
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public void testCheckPositive() {
+        Durations.checkPositive(Durations.fromNanos(1));
     Durations.checkPositive(Durations.fromSeconds(1));
 
     try {
@@ -168,11 +171,11 @@ public class DurationsTest {
     assertThat(Durations.isValid(315576000000L, 0)).isTrue();
   }
 
-  @Test
-  @GwtIncompatible("ParseException is not supported in Xplat")
-  @J2ObjCIncompatible
-  public void testParse_outOfRange() throws ParseException {
-    try {
+    @Test
+    @GwtIncompatible("ParseException is not supported in Xplat")
+    @J2ObjCIncompatible
+    public void testParse_outOfRange() throws ParseException {
+        try {
       Durations.parse("316576000000.123456789123456789s");
       fail("expected ParseException");
     } catch (ParseException expected) {
@@ -181,11 +184,11 @@ public class DurationsTest {
     }
   }
 
-  @Test
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public void testDurationStringFormat() throws Exception {
-    Timestamp start = Timestamps.parse("0001-01-01T00:00:00Z");
+    @Test
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public void testDurationStringFormat() throws Exception {
+        Timestamp start = Timestamps.parse("0001-01-01T00:00:00Z");
     Timestamp end = Timestamps.parse("9999-12-31T23:59:59.999999999Z");
     Duration duration = Timestamps.between(start, end);
     assertThat(Durations.toString(duration)).isEqualTo("315537897599.999999999s");
@@ -235,12 +238,12 @@ public class DurationsTest {
     assertThat(duration.getNanos()).isEqualTo(-999999999);
   }
 
-  @Test
-  @GwtIncompatible("ParseException is not supported in Xplat")
-  @J2ObjCIncompatible
-  public void testDurationInvalidFormat() {
-    // Value too small.
-    try {
+    @Test
+    @GwtIncompatible("ParseException is not supported in Xplat")
+    @J2ObjCIncompatible
+    public void testDurationInvalidFormat() {
+        // Value too small.
+        try {
       Durations.toString(
                 Duration.newBuilder().setSeconds(Durations.DURATION_SECONDS_MIN - 1).build());
       fail();
@@ -357,11 +360,11 @@ public class DurationsTest {
     }
   }
 
-  @Test
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public void testDurationConversion() throws Exception {
-    Duration duration = Durations.parse("1.111111111s");
+    @Test
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public void testDurationConversion() throws Exception {
+        Duration duration = Durations.parse("1.111111111s");
     assertThat(Durations.toNanos(duration)).isEqualTo(1111111111);
     assertThat(Durations.toMicros(duration)).isEqualTo(1111111);
     assertThat(Durations.toMillis(duration)).isEqualTo(1111);
@@ -390,11 +393,11 @@ public class DurationsTest {
     assertThat(Durations.toString(duration)).isEqualTo("-1s");
   }
 
-  @Test
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public void testTimeOperations() throws Exception {
-    Timestamp start = Timestamps.parse("0001-01-01T00:00:00Z");
+    @Test
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public void testTimeOperations() throws Exception {
+        Timestamp start = Timestamps.parse("0001-01-01T00:00:00Z");
     Timestamp end = Timestamps.parse("9999-12-31T23:59:59.999999999Z");
 
     Duration duration = Timestamps.between(start, end);
@@ -421,11 +424,11 @@ public class DurationsTest {
     assertThat(Durations.toString(duration)).isEqualTo("-1.250s");
   }
 
-  @Test
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public void testToString() {
-    assertThat(Durations.toString(duration(1, 1))).isEqualTo("1.000000001s");
+    @Test
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public void testToString() {
+        assertThat(Durations.toString(duration(1, 1))).isEqualTo("1.000000001s");
     assertThat(Durations.toString(duration(-1, -1))).isEqualTo("-1.000000001s");
     assertThat(Durations.toString(duration(1, 0))).isEqualTo("1s");
     assertThat(Durations.toString(duration(-1, 0))).isEqualTo("-1s");
@@ -521,11 +524,11 @@ public class DurationsTest {
     assertThat(Durations.compare(duration(0xFFFFFFFF00000000L, 0), duration(0, 0))).isLessThan(0);
   }
 
-  @Test
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public void testOverflows() throws Exception {
-    try {
+    @Test
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public void testOverflows() throws Exception {
+        try {
       Durations.toNanos(duration(315576000000L, 999999999));
       fail("Expected an ArithmeticException to be thrown");
     } catch (ArithmeticException expected) {

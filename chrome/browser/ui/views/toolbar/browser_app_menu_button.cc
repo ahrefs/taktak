@@ -152,7 +152,7 @@ void BrowserAppMenuButton::UpdateThemeBasedState() {
 void BrowserAppMenuButton::UpdateIcon() {
   const gfx::VectorIcon& icon = ui::TouchUiController::Get()->touch_ui()
                                     ? kBrowserToolsTouchIcon
-                                    : kBrowserToolsChromeRefreshIcon;
+                                    : kMoreHorizIcon;
   for (auto state : kButtonStates) {
     SkColor icon_color = GetForegroundColor(state);
     SetImageModel(state, ui::ImageModel::FromVectorIcon(icon, icon_color));

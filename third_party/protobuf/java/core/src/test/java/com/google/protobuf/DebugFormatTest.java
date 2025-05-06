@@ -1,15 +1,18 @@
 package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static proto2_unittest.UnittestProto.redactedExtension;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import proto2_unittest.UnittestProto.RedactedFields;
-import proto2_unittest.UnittestProto.TestEmptyMessage;
-import proto2_unittest.UnittestProto.TestNestedMessageRedaction;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.RedactedFields;
+import proto2_unittest.UnittestProto.TestEmptyMessage;
+import proto2_unittest.UnittestProto.TestNestedMessageRedaction;
 
 @RunWith(JUnit4.class)
 public class DebugFormatTest {
@@ -91,12 +94,12 @@ public class DebugFormatTest {
 
     String result = DebugFormat.multiline().toString(message);
 
-    assertThat(result)
-        .matches(
-            String.format(
-                "%s\\[proto2_unittest\\.redacted_extension\\]: %s\n",
-                UNSTABLE_PREFIX_MULTILINE, REDACTED_REGEX));
-  }
+        assertThat(result)
+                .matches(
+                        String.format(
+                                "%s\\[proto2_unittest\\.redacted_extension\\]: %s\n",
+                                UNSTABLE_PREFIX_MULTILINE, REDACTED_REGEX));
+    }
 
   @Test
   public void messageFormat_redactFalseIsNotRedacted() {

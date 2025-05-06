@@ -15,8 +15,8 @@ import org.chromium.build.annotations.Nullable;
 
 /**
  * A utility class for observing a {@link Tab} changing via {@link TabObserver}.<br>
- * When the supplier's tab changes, the observer is switched to that Tab and
- * {@link #onObservingDifferentTab} is called to notify the instance of the change.<br>
+ * When the supplier's tab changes, the observer is switched to that Tab and {@link
+ * #onObservingDifferentTab} is called to notify the instance of the change.<br>
  * This can be used with an {@code ActivityTabProvider} to track which Tab is the current Tab for an
  * Activity.
  */

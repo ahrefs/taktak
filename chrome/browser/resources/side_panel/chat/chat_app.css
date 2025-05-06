@@ -1,0 +1,810 @@
+/* #css_wrapper_metadata_start
+* #type=style-lit
+* #scheme=relative
+* #css_wrapper_metadata_end */
+
+#main-container {
+    display: flex;
+    flex-direction: column;
+    height: 99vh;
+    padding: 0 0 18px 0;
+    color: var(--color-yep-chat-primary-text);
+    box-sizing: border-box;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+    box-sizing: border-box;
+}
+
+/* begin header */
+#header-container {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    padding: 0 16px 0 12px;
+    border-bottom: 1px solid var(--color-yep-chat-panel-border);
+    z-index: 10;
+}
+
+#header-container .header-title-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: fit-content;
+    gap: 8px;
+}
+
+#header-container .header-btn {
+    display: block;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+.header-btn:focus, .header-btn:active {
+    outline: none;
+    border: none;
+}
+
+.header-btn .header-icon {
+    display: block;
+    width: 24px;
+    height: 24px;
+    color: var(--color-yep-chat-secondary-text);
+    opacity: 0.9;
+}
+
+.header-title-container .chat-title {
+    display: block;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 22px;
+}
+
+/* end header */
+
+/* begin scrollbar */
+.chat-scroller {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scroll-behavior: smooth;
+    margin-block-start: 10px;
+}
+
+.chat-scroller::-webkit-scrollbar {
+    background: transparent;
+    width: 8px;
+}
+
+.chat-scroller::-webkit-scrollbar-thumb {
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
+    background-clip: content-box;
+    border: solid 1px transparent;
+    border-radius: 100px;
+}
+
+.chat-scroller-top-of-page::-webkit-scrollbar-track {
+    margin-block-start: 8px;
+}
+
+/* end scrollbar */
+
+#conversationContainer {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 0 18px;
+    z-index: 0;
+    scroll-behavior: smooth;
+    will-change: scroll-position;
+    scrollbar-gutter: stable;
+    scroll-snap-stop: always;
+}
+
+/* The gap between header and the first conversation should be 18px */
+.gap-between-header-and-first-conversation {
+    height: 10px; /* deduct 8px cause parent container has 8px gap */
+    width: 100%;
+}
+
+.conversation-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 8px;
+    padding: 0 10px 0 0; /* deduct 8px for scrollbar width */
+}
+
+.response-markdown-container, thinking-markdown-container {
+    display: block;
+    margin: 0;
+    padding: 0;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+thinking-markdown-container {
+    display: block;
+    margin: 0;
+    padding: 0;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+    margin-block-start: 0;
+    margin-block-end: 0;
+    font-size: 13px !important;
+}
+
+/* container for thinking and response */
+.thinking-and-response-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin: 0;
+    padding: 10px 0 24px 0;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+}
+
+/* begin thinking button and text */
+.thinking-button-and-text-container {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-primary-text);
+}
+
+.thinking-button-and-text-container .thinking-button {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    min-width: 113px;
+    width: fit-content;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--color-yep-chat-panel-border);
+    padding: 10px 12px;
+    font-size: 13px;
+    gap: 6px;
+    font-weight: 500;
+    line-height: 16px;
+    cursor: pointer;
+    background: var(--color-yep-chat-panel-background);
+    color: var(--color-yep-chat-secondary-text);
+}
+
+.thinking-button .expand-less-more-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+    color: var(--color-yep-chat-secondary-text);
+}
+
+.thinking-button-and-text-container .thinking-text {
+    display: block;
+    position: relative;
+    left: 0;
+    padding-left: 18px; /* pseudo element width 5px, gap 13px*/
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--color-yep-chat-secondary-text);
+    margin-top: 8px;
+}
+
+.thinking-button-and-text-container .thinking-text p {
+    margin: 0 0 8px 0;
+    padding: 0;
+}
+
+.thinking-button-and-text-container .thinking-text p:last-child {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.thinking-button-and-text-container .thinking-text::before {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    margin: 0;
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
+    border-radius: 2px;
+}
+
+#thinking-toggle-button-container {
+    display: block;
+    margin: 0 18px 6px 18px;
+    padding: 0;
+    background: var(--color-yep-chat-panel-background);
+}
+
+.thinking-toggle-button {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    border-radius: 12px;
+    padding: 8px 12px;
+    cursor: pointer;
+    background: var(--color-yep-chat-prompt-background);
+    border: none;
+    border-top: 1px solid var(--color-yep-chat-panel-background);
+}
+
+.thinking-toggle-button:focus, .thinking-toggle-button:active {
+    outline: none;
+    border: none;
+}
+
+.thinking-toggle-button-label {
+    display: block;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 22px;
+    text-decoration: none;
+}
+
+.thinking-toggle-button-head-icon {
+    display: block;
+    flex-shrink: 0;
+    width: 30px;
+    height: 24px;
+    padding-top: 4px;
+}
+
+.thinking-toggle-button-close-icon {
+    display: block;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    padding-left: 6px;
+}
+
+.generic-error-container {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    gap: 9px;
+    color: var(--color-yep-chat-error);
+}
+
+.generic-error-icon {
+    flex-shrink: 0;
+    display: block;
+    width: 22px;
+    height: 22px;
+}
+
+.generic-error-text {
+    display: block;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+/* end thinking button and text */
+
+.vertical-space {
+    padding-top: 2px;
+}
+
+.chat-about-this-page-btn {
+    display: flex;
+    justify-content: flex-start;
+    gap: 6px;
+    background-color: transparent;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: fit-content;
+}
+
+.chat-about-this-page-btn .add-icon-wrapper {
+    flex: 0 0 auto;
+    height: 14px;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.chat-about-this-page-btn .add-icon-wrapper .add-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+    color: var(--color-yep-chat-tertiary-text);
+}
+
+.chat-about-this-page-btn span {
+    display: block;
+    flex: 0 0 auto;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 16px;
+    color: var(--color-yep-chat-tertiary-text);
+}
+
+.query-prompt-container {
+    display: flex;
+    flex-direction: column;
+    align-self: flex-end;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--color-yep-chat-prompt-background);
+    max-width: 100vw;
+}
+
+.content-wide-width {
+    width: 79vw;
+}
+
+.content-fit-width {
+    width: fit-content;
+}
+
+.siteinfo-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 10px;
+    color: var(--color-yep-chat-primary-text);
+}
+
+.siteinfo-container .siteinfo-content {
+    display: flex;
+    flex-direction: column;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+    max-width: 97vw;
+    overflow: hidden;
+    width: 97vw;
+}
+
+.siteinfo-content div {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.siteinfo-content div.siteinfo-url {
+    color: var(--color-yep-chat-secondary-text);
+}
+
+.siteinfo-button {
+    cursor: pointer;
+}
+
+.vertical-bar {
+    display: block;
+    flex: 0 0 auto;
+    width: 4px;
+    border-radius: 3px;
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
+}
+
+.remove-siteinfo-button {
+    display: block;
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+}
+
+.remove-siteinfo-button .remove-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+    color: var(--color-yep-chat-secondary-text);
+}
+
+.query-prompt-container .prompt-section {
+    word-wrap: break-word;
+    box-sizing: border-box;
+    display: block;
+    overflow-wrap: anywhere;
+    text-size-adjust: 100%;
+    text-wrap: wrap;
+    unicode-bidi: isolate;
+    white-space: pre-wrap;
+    white-space-collapse: preserve;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.action-buttons-container {
+    display: flex;
+    gap: 6px;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-bottom: 32px;
+}
+
+.action-button {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 22px;
+    cursor: pointer;
+    text-decoration: none;
+    background: var(--color-yep-chat-panel-background);
+    border: 1px solid var(--color-yep-chat-panel-border);
+    color: var(--color-yep-chat-primary-text);
+}
+
+#prompt-input-container {
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    padding: 10px 12px 10px 12px;
+    margin: 0 18px 0 18px;
+    gap: 8px;
+    background: var(--color-yep-chat-prompt-background);
+    border: 1px solid var(--color-yep-chat-panel-background);
+}
+
+.typing-content {
+    display: flex;
+    flex-direction: row;
+    align-items: end;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 100vw;
+    max-width: 100%;
+    background: transparent;
+}
+
+.typing-content .prompt-input {
+    display: block;
+    flex-grow: 1;
+}
+
+#input-error-container {
+    display: block;
+    font-size: 11px;
+    padding: 6px 12px 12px 12px;
+    margin: 0 16px 0 16px;
+    color: var(--color-yep-chat-error);
+}
+
+.send-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 8px;
+    width: 18px;
+    height: 18px;
+    border: none;
+    cursor: pointer;
+    margin: 0;
+    border-radius: 50%;
+    color: var(--color-yep-chat-send-button-background);
+    background-color: transparent;
+}
+
+.send-icon-container {
+    display: block;
+    border: none;
+    border-radius: 50%;
+}
+
+.send-icon {
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    border: none;
+}
+
+.send-btn:disabled {
+    border: none;
+    border-radius: 50%;
+    background-color: transparent;
+    color: var(--color-yep-chat-tertiary-text);
+}
+
+.response-markdown-container p {
+    margin: 0 0 8px 0;
+    padding: 0;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.response-markdown-container > p:last-child {
+    margin: 0px;
+}
+
+.response-markdown-container a, .thinking-markdown-container a {
+    text-decoration: none;
+    color: var(--color-yep-chat-link);
+    cursor: default;
+}
+
+.thinking-markdown-container a {
+    text-decoration: none;
+    color: inherit;
+    cursor: default;
+}
+
+.response-markdown-container a:hover, .thinking-markdown-container a:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+.response-markdown-container :is(h1, h2, h3, h4, h5, h6) {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    margin-bottom: 8px;
+}
+
+.thinking-markdown-container :is(h1, h2, h3, h4, h5, h6) {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    font-weight: normal;
+    text-decoration: none;
+}
+
+.response-markdown-container h1 {
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 26px;
+}
+
+.response-markdown-container h2 {
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 22px;
+}
+
+.response-markdown-container blockquote {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 100%;
+    margin: 18px 0 18px 0;
+    padding: 0;
+    color: var(--color-yep-chat-primary-text);
+}
+
+.response-markdown-container blockquote p {
+    display: block;
+    position: relative;
+    left: 0;
+    padding-left: 18px; /* pseudo element width 5px, gap 13px*/
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--color-yep-chat-primary-text);
+}
+
+.response-markdown-container blockquote p:before {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    margin: 0;
+    background: var(--color-yep-chat-site-info-vertical-bar-background);
+    border-radius: 2px;
+}
+
+.response-markdown-container hr, .thinking-markdown-container hr {
+    border: 1px solid var(--color-yep-chat-panel-border);
+    margin: 10px 0;
+}
+
+.response-markdown-container code, .thinking-markdown-container code {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 14px;
+    border-radius: 2px;
+    padding: 4px 7px;
+    background: var(--color-yep-chat-prompt-background);
+    color: var(--color-yep-chat-primary-text);
+}
+
+.response-markdown-container pre, .thinking-markdown-container pre {
+    border-radius: 6px;
+    max-width: 90vw;
+    padding: 14px;
+    background: var(--color-yep-chat-prompt-background);
+    color: var(--color-yep-chat-primary-text);
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scroll-behavior: smooth;
+}
+
+.response-markdown-container pre::-webkit-scrollbar, .thinking-markdown-container pre::-webkit-scrollbar {
+    height: 8px;
+    background-color: transparent;
+}
+
+.response-markdown-container pre::-webkit-scrollbar-thumb, .thinking-markdown-container pre::-webkit-scrollbar-thumb {
+    background-color: var(--color-yep-chat-site-info-vertical-bar-background);
+    background-clip: content-box;
+    border: solid 1px transparent;
+    border-radius: 100px;
+}
+
+.response-markdown-container pre code, .thinking-markdown-container pre code {
+    line-height: 22px;
+    padding: 0;
+}
+
+.response-markdown-container table, .thinking-markdown-container table {
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
+}
+
+.response-markdown-container table thead th, .thinking-markdown-container table thead th {
+    text-align: left;
+    vertical-align: top;
+    font-weight: 700;
+}
+
+.response-markdown-container table tr, .thinking-markdown-container table tr {
+    border-top: 1px solid var(--color-yep-chat-panel-border);
+    border: 1px solid var(--color-yep-chat-panel-border);
+    border-left: none;
+    border-right: none;
+}
+
+.response-markdown-container table th, td {
+    padding: 10px 10px 10px 0;
+    vertical-align: top;
+}
+
+.thinking-markdown-container table th, td {
+    padding: 10px 10px 10px 0;
+    vertical-align: top;
+}
+
+.response-markdown-container ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+.thinking-markdown-container ul {
+    line-height: 18px;
+    list-style-type: disc;
+    padding-left: 20px;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.response-markdown-container ol {
+    list-style-type: decimal;
+    padding-left: 20px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+.thinking-markdown-container ol {
+    list-style-type: decimal;
+    padding-left: 20px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+.response-markdown-container ol ul, ul ol {
+    padding-left: 20px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.response-markdown-container li > *:first-child {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    margin-bottom: 8px;
+}
+
+.thinking-markdown-container ol ul, ul ol {
+    padding-left: 20px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
+}
+
+.response-markdown-container ol ol {
+    list-style-type: lower-alpha;
+    padding-left: 20px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.thinking-markdown-container ol ol {
+    list-style-type: lower-alpha;
+    padding-left: 20px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
+}
+
+.response-markdown-container li {
+    margin-bottom: 8px;
+    margin-left: 10px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.thinking-markdown-container li {
+    margin-bottom: 8px;
+    margin-left: 10px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
+}
+
+.response-markdown-container .caret {
+    display: inline-block;
+    width: 8px;
+    height: 20px;
+    border-radius: 5px;
+    background-color: var(--color-yep-chat-site-info-vertical-bar-background);
+    margin-left: 1px;
+    vertical-align: middle;
+}

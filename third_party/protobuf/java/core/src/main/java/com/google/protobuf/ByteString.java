@@ -9,6 +9,7 @@ package com.google.protobuf;
 
 import static com.google.protobuf.Internal.checkNotNull;
 import static com.google.protobuf.TextFormatEscaper.escapeBytes;
+
 import static java.lang.Integer.toHexString;
 import static java.lang.System.identityHashCode;
 
@@ -925,15 +926,14 @@ public abstract class ByteString implements Iterable<Byte>, Serializable {
    */
   protected abstract int partialIsValidUtf8(int state, int offset, int length);
 
-  // =================================================================
-  // equals() and hashCode()
+    // =================================================================
+    // equals() and hashCode()
 
-  @Override
-  public abstract boolean equals(
-          Object o);
+    @Override
+    public abstract boolean equals(Object o);
 
-  /** Base class for leaf {@link ByteString}s (i.e. non-ropes). */
-  abstract static class LeafByteString extends ByteString {
+    /** Base class for leaf {@link ByteString}s (i.e. non-ropes). */
+    abstract static class LeafByteString extends ByteString {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -1475,14 +1475,13 @@ public abstract class ByteString implements Iterable<Byte>, Serializable {
       return Utf8.partialIsValidUtf8(state, bytes, index, index + length);
     }
 
-    // =================================================================
-    // equals() and hashCode()
+        // =================================================================
+        // equals() and hashCode()
 
-    @Override
-    public final boolean equals(
-            Object other) {
-      if (other == this) {
-        return true;
+        @Override
+        public final boolean equals(Object other) {
+            if (other == this) {
+                return true;
       }
       if (!(other instanceof ByteString)) {
         return false;
@@ -1817,11 +1816,10 @@ public abstract class ByteString implements Iterable<Byte>, Serializable {
       return Utf8.partialIsValidUtf8(state, buffer, offset, offset + length);
     }
 
-    @Override
-    public boolean equals(
-            Object other) {
-      if (other == this) {
-        return true;
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
       }
       if (!(other instanceof ByteString)) {
         return false;

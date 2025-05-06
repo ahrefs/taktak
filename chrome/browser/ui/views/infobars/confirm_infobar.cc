@@ -104,9 +104,11 @@ void ConfirmInfoBar::Layout(PassKey) {
   // on the correct leading style.
   std::vector<views::MdTextButton*> order_of_buttons;
   if (ok_button_) {
+    ok_button_->SetCornerRadius(8.0);
     order_of_buttons.push_back(ok_button_);
   }
   if (cancel_button_) {
+    cancel_button_->SetCornerRadius(8.0);
     order_of_buttons.push_back(cancel_button_);
   }
 

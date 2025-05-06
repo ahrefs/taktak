@@ -23,7 +23,7 @@ import org.chromium.url.GURL;
 /**
  * An implementation of the {@link TabObserver} which has empty implementations of all methods.
  *
- * Note: Do not replace this with TabObserver with default interface methods as it inadvertently
+ * <p>Note: Do not replace this with TabObserver with default interface methods as it inadvertently
  * bloats the number of methods. See https://crbug.com/781359.
  */
 @NullMarked

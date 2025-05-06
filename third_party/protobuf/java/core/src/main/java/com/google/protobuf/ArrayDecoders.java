@@ -11,6 +11,7 @@ import static com.google.protobuf.MessageSchema.getMutableUnknownFields;
 
 import com.google.protobuf.GeneratedMessageLite.ExtensionDescriptor;
 import com.google.protobuf.Internal.ProtobufList;
+
 import java.io.IOException;
 
 /**
@@ -214,33 +215,38 @@ final class ArrayDecoders {
     }
   }
 
-  /** Decodes a message value. */
-  static <T> int decodeMessageField(
-      Schema<T> schema, byte[] data, int position, int limit, Registers registers)
-      throws IOException {
-    T msg = schema.newInstance();
-    int offset = mergeMessageField(msg, schema, data, position, limit, registers);
-    schema.makeImmutable(msg);
+    /** Decodes a message value. */
+    static <T> int decodeMessageField(
+            Schema<T> schema, byte[] data, int position, int limit, Registers registers)
+            throws IOException {
+        T msg = schema.newInstance();
+        int offset = mergeMessageField(msg, schema, data, position, limit, registers);
+        schema.makeImmutable(msg);
     registers.object1 = msg;
     return offset;
   }
 
-  /** Decodes a group value. */
-  static <T> int decodeGroupField(
-      Schema<T> schema, byte[] data, int position, int limit, int endGroup, Registers registers)
-      throws IOException {
-    T msg = schema.newInstance();
-    int offset = mergeGroupField(msg, schema, data, position, limit, endGroup, registers);
-    schema.makeImmutable(msg);
+    /** Decodes a group value. */
+    static <T> int decodeGroupField(
+            Schema<T> schema,
+            byte[] data,
+            int position,
+            int limit,
+            int endGroup,
+            Registers registers)
+            throws IOException {
+        T msg = schema.newInstance();
+        int offset = mergeGroupField(msg, schema, data, position, limit, endGroup, registers);
+        schema.makeImmutable(msg);
     registers.object1 = msg;
     return offset;
-  }
+    }
 
-  @SuppressWarnings("unchecked")
-  static <T> int mergeMessageField(
-      Object msg, Schema<T> schema, byte[] data, int position, int limit, Registers registers)
-      throws IOException {
-    int length = data[position++];
+    @SuppressWarnings("unchecked")
+    static <T> int mergeMessageField(
+            Object msg, Schema<T> schema, byte[] data, int position, int limit, Registers registers)
+            throws IOException {
+        int length = data[position++];
     if (length < 0) {
       position = decodeVarint32(length, data, position, registers);
       length = registers.int1;
@@ -248,33 +254,34 @@ final class ArrayDecoders {
     if (length < 0 || length > limit - position) {
       throw InvalidProtocolBufferException.truncatedMessage();
     }
-    registers.recursionDepth++;
-    checkRecursionLimit(registers.recursionDepth);
-    schema.mergeFrom((T) msg, data, position, position + length, registers);
-    registers.recursionDepth--;
-    registers.object1 = msg;
+        registers.recursionDepth++;
+        checkRecursionLimit(registers.recursionDepth);
+        schema.mergeFrom((T) msg, data, position, position + length, registers);
+        registers.recursionDepth--;
+        registers.object1 = msg;
     return position + length;
-  }
+    }
 
-  @SuppressWarnings("unchecked")
-  static <T> int mergeGroupField(
-      Object msg,
-      Schema<T> schema,
-      byte[] data,
-      int position,
-      int limit,
-      int endGroup,
-      Registers registers)
-      throws IOException {
-    // A group field must has a MessageSchema (the only other subclass of Schema is MessageSetSchema
-    // and it can't be used in group fields).
-    final MessageSchema<T> messageSchema = (MessageSchema<T>) schema;
-    registers.recursionDepth++;
-    checkRecursionLimit(registers.recursionDepth);
-    final int endPosition =
-        messageSchema.parseMessage((T) msg, data, position, limit, endGroup, registers);
-    registers.recursionDepth--;
-    registers.object1 = msg;
+    @SuppressWarnings("unchecked")
+    static <T> int mergeGroupField(
+            Object msg,
+            Schema<T> schema,
+            byte[] data,
+            int position,
+            int limit,
+            int endGroup,
+            Registers registers)
+            throws IOException {
+        // A group field must has a MessageSchema (the only other subclass of Schema is
+        // MessageSetSchema
+        // and it can't be used in group fields).
+        final MessageSchema<T> messageSchema = (MessageSchema<T>) schema;
+        registers.recursionDepth++;
+        checkRecursionLimit(registers.recursionDepth);
+        final int endPosition =
+                messageSchema.parseMessage((T) msg, data, position, limit, endGroup, registers);
+        registers.recursionDepth--;
+        registers.object1 = msg;
     return endPosition;
   }
 
@@ -752,21 +759,21 @@ final class ArrayDecoders {
     return position;
   }
 
-  /**
-   * Decodes a repeated group field
-   *
-   * @return The position of after read all groups
-   */
-  static int decodeGroupList(
-      Schema<?> schema,
-      int tag,
-      byte[] data,
-      int position,
-      int limit,
-      ProtobufList<Object> output,
-      Registers registers)
-      throws IOException {
-    final int endgroup = (tag & ~0x7) | WireFormat.WIRETYPE_END_GROUP;
+    /**
+     * Decodes a repeated group field
+     *
+     * @return The position of after read all groups
+     */
+    static int decodeGroupList(
+            Schema<?> schema,
+            int tag,
+            byte[] data,
+            int position,
+            int limit,
+            ProtobufList<Object> output,
+            Registers registers)
+            throws IOException {
+        final int endgroup = (tag & ~0x7) | WireFormat.WIRETYPE_END_GROUP;
     position = decodeGroupField(schema, data, position, limit, endgroup, registers);
     output.add(registers.object1);
     while (position < limit) {
@@ -780,17 +787,20 @@ final class ArrayDecoders {
     return position;
   }
 
-  static int decodeExtensionOrUnknownField(
-      int tag, byte[] data, int position, int limit,
-      Object message,
-      MessageLite defaultInstance,
-      UnknownFieldSchema<UnknownFieldSetLite, UnknownFieldSetLite> unknownFieldSchema,
-      Registers registers)
-      throws IOException {
-    final int number = tag >>> 3;
-    GeneratedMessageLite.GeneratedExtension<?, ?> extension =
-        registers.extensionRegistry.findLiteExtensionByNumber(defaultInstance, number);
-    if (extension == null) {
+    static int decodeExtensionOrUnknownField(
+            int tag,
+            byte[] data,
+            int position,
+            int limit,
+            Object message,
+            MessageLite defaultInstance,
+            UnknownFieldSchema<UnknownFieldSetLite, UnknownFieldSetLite> unknownFieldSchema,
+            Registers registers)
+            throws IOException {
+        final int number = tag >>> 3;
+        GeneratedMessageLite.GeneratedExtension<?, ?> extension =
+                registers.extensionRegistry.findLiteExtensionByNumber(defaultInstance, number);
+        if (extension == null) {
       return decodeUnknownField(
           tag, data, position, limit, getMutableUnknownFields(message), registers);
     } else  {
@@ -967,11 +977,14 @@ final class ArrayDecoders {
             value = registers.object1;
             break;
           case GROUP:
-            {
-              final int endTag = (fieldNumber << 3) | WireFormat.WIRETYPE_END_GROUP;
-              final Schema<?> fieldSchema =
-                  Protobuf.getInstance()
-                      .schemaFor(extension.getMessageDefaultInstance().getClass());
+                        {
+                            final int endTag = (fieldNumber << 3) | WireFormat.WIRETYPE_END_GROUP;
+                            final Schema<?> fieldSchema =
+                                    Protobuf.getInstance()
+                                            .schemaFor(
+                                                    extension
+                                                            .getMessageDefaultInstance()
+                                                            .getClass());
               if (extension.isRepeated()) {
                 position = decodeGroupField(fieldSchema, data, position, limit, endTag, registers);
                 extensions.addRepeatedField(extension.descriptor, registers.object1);
@@ -987,11 +1000,14 @@ final class ArrayDecoders {
               }
               return position;
             }
-          case MESSAGE:
-            {
-              final Schema<?> fieldSchema =
-                  Protobuf.getInstance()
-                      .schemaFor(extension.getMessageDefaultInstance().getClass());
+                    case MESSAGE:
+                        {
+                            final Schema<?> fieldSchema =
+                                    Protobuf.getInstance()
+                                            .schemaFor(
+                                                    extension
+                                                            .getMessageDefaultInstance()
+                                                            .getClass());
               if (extension.isRepeated()) {
                 position = decodeMessageField(fieldSchema, data, position, limit, registers);
                 extensions.addRepeatedField(extension.descriptor, registers.object1);

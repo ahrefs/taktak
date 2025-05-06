@@ -8,14 +8,15 @@
 package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static proto2_unittest.UnittestProto.optionalInt32Extension;
 
-import proto2_unittest.UnittestProto.TestAllExtensions;
-import proto2_unittest.UnittestProto.TestAllTypes;
-import java.io.IOException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.TestAllExtensions;
+import proto2_unittest.UnittestProto.TestAllTypes;
 
 /** Unit test for {@link LazyFieldLite}. */
 @RunWith(JUnit4.class)

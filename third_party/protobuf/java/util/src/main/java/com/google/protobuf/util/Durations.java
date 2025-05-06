@@ -25,6 +25,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CompileTimeConstant;
 import com.google.j2objc.annotations.J2ObjCIncompatible;
 import com.google.protobuf.Duration;
+
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Comparator;
@@ -136,31 +137,32 @@ public final class Durations {
     return !isNegative(duration) && !duration.equals(ZERO);
   }
 
-  /**
-   * Ensures that the given {@link Duration} is not negative.
-   *
-   * @throws IllegalArgumentException if {@code duration} is negative or invalid
-   * @throws NullPointerException if {@code duration} is {@code null}
-   */
-  @CanIgnoreReturnValue
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public static Duration checkNotNegative(Duration duration) {
-    checkArgument(!isNegative(duration), "duration (%s) must not be negative", toString(duration));
+    /**
+     * Ensures that the given {@link Duration} is not negative.
+     *
+     * @throws IllegalArgumentException if {@code duration} is negative or invalid
+     * @throws NullPointerException if {@code duration} is {@code null}
+     */
+    @CanIgnoreReturnValue
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public static Duration checkNotNegative(Duration duration) {
+        checkArgument(
+                !isNegative(duration), "duration (%s) must not be negative", toString(duration));
     return duration;
   }
 
-  /**
-   * Ensures that the given {@link Duration} is positive.
-   *
-   * @throws IllegalArgumentException if {@code duration} is negative, {@code ZERO}, or invalid
-   * @throws NullPointerException if {@code duration} is {@code null}
-   */
-  @CanIgnoreReturnValue
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public static Duration checkPositive(Duration duration) {
-    checkArgument(isPositive(duration), "duration (%s) must be positive", toString(duration));
+    /**
+     * Ensures that the given {@link Duration} is positive.
+     *
+     * @throws IllegalArgumentException if {@code duration} is negative, {@code ZERO}, or invalid
+     * @throws NullPointerException if {@code duration} is {@code null}
+     */
+    @CanIgnoreReturnValue
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public static Duration checkPositive(Duration duration) {
+        checkArgument(isPositive(duration), "duration (%s) must be positive", toString(duration));
     return duration;
   }
 
@@ -169,14 +171,14 @@ public final class Durations {
   public static Duration checkValid(Duration duration) {
     long seconds = duration.getSeconds();
     int nanos = duration.getNanos();
-    if (!isValid(seconds, nanos)) {
-      throw new IllegalArgumentException(
-          Strings.lenientFormat(
-              "Duration is not valid. See proto definition for valid values. "
-                  + "Seconds (%s) must be in range [-315,576,000,000, +315,576,000,000]. "
-                  + "Nanos (%s) must be in range [-999,999,999, +999,999,999]. "
-                  + "Nanos must have the same sign as seconds",
-              seconds, nanos));
+        if (!isValid(seconds, nanos)) {
+            throw new IllegalArgumentException(
+                    Strings.lenientFormat(
+                            "Duration is not valid. See proto definition for valid values. Seconds"
+                                + " (%s) must be in range [-315,576,000,000, +315,576,000,000]."
+                                + " Nanos (%s) must be in range [-999,999,999, +999,999,999]. Nanos"
+                                + " must have the same sign as seconds",
+                            seconds, nanos));
     }
     return duration;
   }
@@ -191,19 +193,19 @@ public final class Durations {
     return checkValid(durationBuilder.build());
   }
 
-  /**
-   * Convert Duration to string format. The string format will contains 3, 6, or 9 fractional digits
-   * depending on the precision required to represent the exact Duration value. For example: "1s",
-   * "1.010s", "1.000000100s", "-3.100s" The range that can be represented by Duration is from
-   * -315,576,000,000 to +315,576,000,000 inclusive (in seconds).
-   *
-   * @return The string representation of the given duration.
-   * @throws IllegalArgumentException if the given duration is not in the valid range.
-   */
-  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-  @J2ObjCIncompatible
-  public static String toString(Duration duration) {
-    checkValid(duration);
+    /**
+     * Convert Duration to string format. The string format will contains 3, 6, or 9 fractional
+     * digits depending on the precision required to represent the exact Duration value. For
+     * example: "1s", "1.010s", "1.000000100s", "-3.100s" The range that can be represented by
+     * Duration is from -315,576,000,000 to +315,576,000,000 inclusive (in seconds).
+     *
+     * @return The string representation of the given duration.
+     * @throws IllegalArgumentException if the given duration is not in the valid range.
+     */
+    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+    @J2ObjCIncompatible
+    public static String toString(Duration duration) {
+        checkValid(duration);
 
     long seconds = duration.getSeconds();
     int nanos = duration.getNanos();
@@ -223,17 +225,17 @@ public final class Durations {
     return result.toString();
   }
 
-  /**
-   * Parse a string to produce a duration.
-   *
-   * @return a Duration parsed from the string
-   * @throws ParseException if the string is not in the duration format
-   */
-  @GwtIncompatible("ParseException is not supported in Xplat")
-  @J2ObjCIncompatible
-  public static Duration parse(String value) throws ParseException {
-    // Must end with "s".
-    if (value.isEmpty() || value.charAt(value.length() - 1) != 's') {
+    /**
+     * Parse a string to produce a duration.
+     *
+     * @return a Duration parsed from the string
+     * @throws ParseException if the string is not in the duration format
+     */
+    @GwtIncompatible("ParseException is not supported in Xplat")
+    @J2ObjCIncompatible
+    public static Duration parse(String value) throws ParseException {
+        // Must end with "s".
+        if (value.isEmpty() || value.charAt(value.length() - 1) != 's') {
       throw new ParseException("Invalid duration string: " + value, 0);
     }
     boolean negative = false;
@@ -246,16 +248,16 @@ public final class Durations {
     int pointPosition = secondValue.indexOf('.');
     if (pointPosition != -1) {
       nanoValue = secondValue.substring(pointPosition + 1);
-      secondValue = secondValue.substring(0, pointPosition);
-    }
-    long seconds;
-    try {
-      seconds = Long.parseLong(secondValue);
-    } catch (NumberFormatException e) {
-      throw new ParseException("Invalid duration string: " + value, 0);
-    }
-    int nanos = nanoValue.isEmpty() ? 0 : Timestamps.parseNanos(nanoValue);
-    if (seconds < 0) {
+            secondValue = secondValue.substring(0, pointPosition);
+        }
+        long seconds;
+        try {
+            seconds = Long.parseLong(secondValue);
+        } catch (NumberFormatException e) {
+            throw new ParseException("Invalid duration string: " + value, 0);
+        }
+        int nanos = nanoValue.isEmpty() ? 0 : Timestamps.parseNanos(nanoValue);
+        if (seconds < 0) {
       throw new ParseException("Invalid duration string: " + value, 0);
     }
     if (negative) {
@@ -271,19 +273,19 @@ public final class Durations {
     }
   }
 
-  /**
-   * Parses a string in RFC 3339 format into a {@link Duration}.
-   *
-   * <p>Identical to {@link #parse(String)}, but throws an {@link IllegalArgumentException} instead
-   * of a {@link ParseException} if parsing fails.
-   *
-   * @return a {@link Duration} parsed from the string
-   * @throws IllegalArgumentException if parsing fails
-   */
-  @GwtIncompatible("ParseException is not supported in Xplat")
-  @J2ObjCIncompatible
-  public static Duration parseUnchecked(@CompileTimeConstant String value) {
-    try {
+    /**
+     * Parses a string in RFC 3339 format into a {@link Duration}.
+     *
+     * <p>Identical to {@link #parse(String)}, but throws an {@link IllegalArgumentException}
+     * instead of a {@link ParseException} if parsing fails.
+     *
+     * @return a {@link Duration} parsed from the string
+     * @throws IllegalArgumentException if parsing fails
+     */
+    @GwtIncompatible("ParseException is not supported in Xplat")
+    @J2ObjCIncompatible
+    public static Duration parseUnchecked(@CompileTimeConstant String value) {
+        try {
       return parse(value);
     } catch (ParseException e) {
       // While `java.time.format.DateTimeParseException` is a more accurate representation of the

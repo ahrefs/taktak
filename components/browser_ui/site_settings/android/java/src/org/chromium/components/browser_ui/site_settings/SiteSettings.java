@@ -77,11 +77,9 @@ public class SiteSettings extends BaseSiteSettingsFragment
 
     private void configurePreferences() {
         if (getSiteSettingsDelegate().shouldShowTrackingProtectionUi()) {
-            Preference thirdPartyCookiesPref =
-                    findPreference(Type.THIRD_PARTY_COOKIES);
+            Preference thirdPartyCookiesPref = findPreference(Type.THIRD_PARTY_COOKIES);
             thirdPartyCookiesPref.setVisible(false);
-            Preference trackingProtectionPref =
-                    findPreference(Type.TRACKING_PROTECTION);
+            Preference trackingProtectionPref = findPreference(Type.TRACKING_PROTECTION);
             trackingProtectionPref.setVisible(true);
         }
 
@@ -97,8 +95,7 @@ public class SiteSettings extends BaseSiteSettingsFragment
 
         // Remove the permission autorevocation preference if Safety Hub is not enabled.
         if (!getSiteSettingsDelegate().isSafetyHubEnabled()) {
-            Preference autorevocationPref =
-                    findPreference(PERMISSION_AUTOREVOCATION_PREF);
+            Preference autorevocationPref = findPreference(PERMISSION_AUTOREVOCATION_PREF);
             getPreferenceScreen().removePreference(autorevocationPref);
             Preference dividerPref = findPreference(DIVIDER_PREF);
             getPreferenceScreen().removePreference(dividerPref);

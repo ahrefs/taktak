@@ -2,6 +2,7 @@
 import com.example.tutorial.protos.AddressBook;
 import com.example.tutorial.protos.Person;
 import com.google.protobuf.util.Timestamps;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -50,9 +51,9 @@ class AddPerson {
         stdout.println("Unknown phone type.  Using default.");
       }
 
-      person.addPhones(phoneNumber);
-      person.setLastUpdated(Timestamps.now());
-    }
+            person.addPhones(phoneNumber);
+            person.setLastUpdated(Timestamps.now());
+        }
 
     return person.build();
   }

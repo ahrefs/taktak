@@ -8,9 +8,11 @@
 package com.google.protobuf;
 
 import static com.google.protobuf.Internal.checkNotNull;
+
 import static java.lang.Math.max;
 
 import com.google.protobuf.Internal.LongList;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.RandomAccess;
@@ -66,11 +68,10 @@ final class LongArrayList extends AbstractProtobufList<Long>
     modCount++;
   }
 
-  @Override
-  public boolean equals(
-          Object o) {
-    if (this == o) {
-      return true;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
     }
     if (!(o instanceof LongArrayList)) {
       return super.equals(o);

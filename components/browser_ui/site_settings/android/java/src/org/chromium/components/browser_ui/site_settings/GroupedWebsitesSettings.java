@@ -310,10 +310,9 @@ public class GroupedWebsitesSettings extends BaseSiteSettingsFragment
         relatedSitesSection.setVisible(shouldRelatedSitesPrefBeVisible);
         ButtonPreference relatedSitesClearDataButton =
                 findPreference(PREF_RELATED_SITES_CLEAR_DATA);
-        relatedSitesClearDataButton
-                .setVisible(
-                        shouldRelatedSitesPrefBeVisible
-                                && getSiteSettingsDelegate().shouldShowPrivacySandboxRwsUi());
+        relatedSitesClearDataButton.setVisible(
+                shouldRelatedSitesPrefBeVisible
+                        && getSiteSettingsDelegate().shouldShowPrivacySandboxRwsUi());
 
         if (shouldRelatedSitesPrefBeVisible) {
             assumeNonNull(rwsInfo);

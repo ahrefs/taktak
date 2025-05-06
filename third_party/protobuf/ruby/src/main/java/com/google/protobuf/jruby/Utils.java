@@ -35,12 +35,11 @@ package com.google.protobuf.jruby;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import java.math.BigInteger;
+
 import org.jcodings.Encoding;
 import org.jcodings.specific.ASCIIEncoding;
 import org.jcodings.specific.UTF8Encoding;
 import org.jruby.*;
-import org.jruby.common.RubyWarnings;
 import org.jruby.exceptions.RaiseException;
 import org.jruby.ext.bigdecimal.RubyBigDecimal;
 import org.jruby.runtime.Block;
@@ -48,6 +47,8 @@ import org.jruby.runtime.Helpers;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.util.ByteList;
+
+import java.math.BigInteger;
 
 public class Utils {
   public static FieldDescriptor.Type rubyToFieldType(IRubyObject typeClass) {
@@ -329,19 +330,20 @@ public class Utils {
     return fieldDescriptor.getType() == FieldDescriptor.Type.MESSAGE
         && fieldDescriptor.isRepeated()
         && fieldDescriptor.getMessageType().getOptions().getMapEntry();
-  }
-
-  public static RaiseException createInvalidByteSequenceError(
-      ThreadContext context, String message) {
-    if (cInvalidByteSequenceError == null) {
-      cInvalidByteSequenceError =
-          (RubyClass) context.runtime.getClassFromPath("Encoding::InvalidByteSequenceError");
     }
-    return RaiseException.from(context.runtime, cInvalidByteSequenceError, message);
-  }
 
-  public static RaiseException createTypeError(ThreadContext context, String message) {
-    if (cTypeError == null) {
+    public static RaiseException createInvalidByteSequenceError(
+            ThreadContext context, String message) {
+        if (cInvalidByteSequenceError == null) {
+            cInvalidByteSequenceError =
+                    (RubyClass)
+                            context.runtime.getClassFromPath("Encoding::InvalidByteSequenceError");
+        }
+        return RaiseException.from(context.runtime, cInvalidByteSequenceError, message);
+    }
+
+    public static RaiseException createTypeError(ThreadContext context, String message) {
+        if (cTypeError == null) {
       cTypeError = (RubyClass) context.runtime.getClassFromPath("Google::Protobuf::TypeError");
     }
     return RaiseException.from(context.runtime, cTypeError, message);
@@ -400,11 +402,11 @@ public class Utils {
       throw createInvalidTypeError(context, fieldType, fieldName, value);
 
     RubyString string = (RubyString) value;
-    if (encoding == UTF8Encoding.INSTANCE && string.getEncoding().isUTF8()) {
-      if (string.isCodeRangeBroken()) {
-        throw createInvalidByteSequenceError(context, "String is invalid UTF-8.");
-      }
-    }
+        if (encoding == UTF8Encoding.INSTANCE && string.getEncoding().isUTF8()) {
+            if (string.isCodeRangeBroken()) {
+                throw createInvalidByteSequenceError(context, "String is invalid UTF-8.");
+            }
+        }
 
     value =
         string.encode(
@@ -427,6 +429,6 @@ public class Utils {
 
   private static final long UINT_MAX = 0xffffffffl;
 
-  private static RubyClass cTypeError;
-  private static RubyClass cInvalidByteSequenceError;
+    private static RubyClass cTypeError;
+    private static RubyClass cInvalidByteSequenceError;
 }

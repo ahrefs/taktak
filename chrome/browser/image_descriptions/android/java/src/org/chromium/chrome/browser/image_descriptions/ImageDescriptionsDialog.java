@@ -34,8 +34,8 @@ import org.chromium.ui.modelutil.PropertyModel;
 import org.chromium.ui.widget.Toast;
 
 /**
- * Dialog for the "Get Image Descriptions" feature. If a user is a screen reader user, they will
- * see a new option under the main menu to get image descriptions. If they select that option this
+ * Dialog for the "Get Image Descriptions" feature. If a user is a screen reader user, they will see
+ * a new option under the main menu to get image descriptions. If they select that option this
  * dialog will display giving the user the option to enable the feature.
  */
 @NullMarked

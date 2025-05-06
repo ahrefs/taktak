@@ -119,7 +119,13 @@ void TabIcon::SetData(const TabRendererData& data) {
 
   inhibit_loading_animation_ = data.should_hide_throbber;
   is_monochrome_favicon_ = data.is_monochrome_favicon;
-  SetIcon(data.favicon, data.should_themify_favicon);
+
+  // To make sure the taktak icon is visible if new tab is open
+  if (data.visible_url.spec().starts_with("chrome://")) {
+    SetIcon(data.favicon, false);
+  } else {
+    SetIcon(data.favicon, data.should_themify_favicon);
+  }
   SetNetworkState(data.network_state);
   SetCrashed(data.IsCrashed());
   SetDiscarded(data.should_show_discard_status);

@@ -9,8 +9,8 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.components.browser_ui.widget.gesture.BackPressHandler;
 
 /**
- * A {@link BackPressHandler} which observes fullscreen mode and exits fullscreen mode if back
- * press is performed.
+ * A {@link BackPressHandler} which observes fullscreen mode and exits fullscreen mode if back press
+ * is performed.
  */
 @NullMarked
 public class FullscreenBackPressHandler implements BackPressHandler {

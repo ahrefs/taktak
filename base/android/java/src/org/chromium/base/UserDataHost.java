@@ -69,6 +69,7 @@ public final class UserDataHost {
 
     /**
      * Associates the specified object with the specified key.
+     *
      * @param key Type token with which the specified object is to be associated.
      * @param object Object to be associated with the specified key.
      * @return the object just stored.

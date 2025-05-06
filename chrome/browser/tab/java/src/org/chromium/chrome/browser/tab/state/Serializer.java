@@ -9,14 +9,14 @@ import org.chromium.build.annotations.Nullable;
 
 /**
  * Used for serializing {@link PersistedTabData}.
+ *
  * @param <T> Return type of {@link Serializer}
  */
 @NullMarked
 public interface Serializer<T> {
     /**
-     * Acquires serialized {@link PersistedTabData}. Not all
-     * {@link PersistedTabData} clients require a pre-serialization
-     * step but if they do, get() assumes preSerialize() has been called
+     * Acquires serialized {@link PersistedTabData}. Not all {@link PersistedTabData} clients
+     * require a pre-serialization step but if they do, get() assumes preSerialize() has been called
      * Must be called from a background thread.
      */
     @Nullable T get();

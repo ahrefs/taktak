@@ -40,11 +40,11 @@
         </settings-clear-browsing-data-dialog-v2>
       </template>
     </template>
-    <template is="dom-if" if="[[showPrivacyGuideDialog_]]" restamp>
-      <settings-privacy-guide-dialog id="privacyGuideDialog" prefs="{{prefs}}"
-          on-close="onPrivacyGuideDialogClosed_">
-      </settings-privacy-guide-dialog>
-    </template>
+<!--    <template is="dom-if" if="[[showPrivacyGuideDialog_]]" restamp>-->
+<!--      <settings-privacy-guide-dialog id="privacyGuideDialog" prefs="{{prefs}}"-->
+<!--          on-close="onPrivacyGuideDialogClosed_">-->
+<!--      </settings-privacy-guide-dialog>-->
+<!--    </template>-->
     <settings-animated-pages id="pages" section="privacy"
         focus-config="[[focusConfig_]]">
       <div route-path="default">
@@ -53,15 +53,15 @@
             label="$i18n{clearBrowsingData}"
             sub-label="$i18n{clearBrowsingDataDescription}"
             on-click="onClearBrowsingDataClick_"></cr-link-row>
-        <template is="dom-if" if="[[isPrivacyGuideAvailable]]">
-          <cr-link-row id="privacyGuideLinkRow" class="hr"
-              start-icon="privacy20:signpost"
-              label="$i18n{privacyGuideLabel}"
-              sub-label="$i18n{privacyGuideSublabel}"
-              on-click="onPrivacyGuideClick_"
-              role-description="$i18n{subpageArrowRoleDescription}">
-          </cr-link-row>
-        </template>
+<!--        <template is="dom-if" if="[[isPrivacyGuideAvailable]]">-->
+<!--          <cr-link-row id="privacyGuideLinkRow" class="hr"-->
+<!--              start-icon="privacy20:signpost"-->
+<!--              label="$i18n{privacyGuideLabel}"-->
+<!--              sub-label="$i18n{privacyGuideSublabel}"-->
+<!--              on-click="onPrivacyGuideClick_"-->
+<!--              role-description="$i18n{subpageArrowRoleDescription}">-->
+<!--          </cr-link-row>-->
+<!--        </template>-->
         <cr-link-row id="thirdPartyCookiesLinkRow"
             start-icon="privacy:cookie"
             class="hr" label="$i18n{thirdPartyCookiesLinkRowLabel}"
@@ -179,27 +179,27 @@
         </settings-subpage>
       </template>
 
-      <template is="dom-if" if="[[shouldShowSafetyHub_]]">
-        <template is="dom-if" route-path="/safetyCheck">
-          <!-- TODO(crbug.com/40267370): Make the page searchable.-->
-          <settings-subpage id="safetyHub" page-title="$i18n{safetyHub}"
-              class="multi-card" no-search
-              learn-more-url="$i18n{safetyHubHelpCenterURL}">
-            <settings-safety-hub-page prefs="{{prefs}}">
-            </settings-safety-hub-page>
-          </settings-subpage>
-        </template>
-      </template>
+<!--      <template is="dom-if" if="[[shouldShowSafetyHub_]]">-->
+<!--        <template is="dom-if" route-path="/safetyCheck">-->
+<!--          &lt;!&ndash; TODO(crbug.com/40267370): Make the page searchable.&ndash;&gt;-->
+<!--          <settings-subpage id="safetyHub" page-title="$i18n{safetyHub}"-->
+<!--              class="multi-card" no-search-->
+<!--              learn-more-url="$i18n{safetyHubHelpCenterURL}">-->
+<!--            <settings-safety-hub-page prefs="{{prefs}}">-->
+<!--            </settings-safety-hub-page>-->
+<!--          </settings-subpage>-->
+<!--        </template>-->
+<!--      </template>-->
 
-      <template is="dom-if" route-path="/security">
-        <settings-subpage id="security" page-title="$i18n{securityPageTitle}"
-            associated-control="[[$$('#securityLinkRow')]]"
-            learn-more-url="$i18n{safeBrowsingHelpCenterURL}">
-          <settings-security-page prefs="{{prefs}}"
-              focus-config="[[focusConfig_]]">
-          </settings-security-page>
-        </settings-subpage>
-      </template>
+<!--      <template is="dom-if" route-path="/security">-->
+<!--        <settings-subpage id="security" page-title="$i18n{securityPageTitle}"-->
+<!--            associated-control="[[$$('#securityLinkRow')]]"-->
+<!--            learn-more-url="$i18n{safeBrowsingHelpCenterURL}">-->
+<!--          <settings-security-page prefs="{{prefs}}"-->
+<!--              focus-config="[[focusConfig_]]">-->
+<!--          </settings-security-page>-->
+<!--        </settings-subpage>-->
+<!--      </template>-->
 
       <template is="dom-if" route-path="/adPrivacy"
           no-search="[[!shouldShowAdPrivacy_(isPrivacySandboxRestricted_,

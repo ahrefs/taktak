@@ -113,7 +113,9 @@ public class PlayerCoordinatorUnitTest {
                 .when(mDelegate)
                 .getCurrentLanguageVoicesSupplier();
         doReturn(new ObservableSupplierImpl<String>()).when(mDelegate).getVoiceIdSupplier();
-        doReturn(new ObservableSupplierImpl<Boolean>()).when(mDelegate).getPlaybackModeSelectionEnabled();
+        doReturn(new ObservableSupplierImpl<Boolean>())
+                .when(mDelegate)
+                .getPlaybackModeSelectionEnabled();
         doReturn(mActivity).when(mDelegate).getActivity();
 
         mPlayerCoordinator = new PlayerCoordinator(mDelegate);

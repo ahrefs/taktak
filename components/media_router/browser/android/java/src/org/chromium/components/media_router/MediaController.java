@@ -7,8 +7,8 @@ package org.chromium.components.media_router;
 import org.chromium.build.annotations.NullMarked;
 
 /**
- * Generic interface used to control the playback of media content.
- * Changes to the media content status will be propagated via the MediaStatusObserver interface.
+ * Generic interface used to control the playback of media content. Changes to the media content
+ * status will be propagated via the MediaStatusObserver interface.
  */
 @NullMarked
 public interface MediaController {
