@@ -10718,7 +10718,7 @@ Keep your key file in a safe place. You will need it to create new versions of y
 <translation id="8557100046150195444">Touch ID to continue</translation>
 <translation id="8557856025359704738">Next download is at <ph name="NEXT_DATE_DOWNLOAD" />.</translation>
 <translation id="8559858985063901027">Passkeys</translation>
-<translation id="8559961053328923750">Chrome limits the total amount of data that sites can share through the browser to measure ad performance</translation>
+<translation id="8559961053328923750">Taktak limits the total amount of data that sites can share through the browser to measure ad performance</translation>
 <translation id="8560327176991673955">{COUNT,plural, =0{Open All in &amp;New Window}=1{Open in &amp;New Window}other{Open All ({COUNT}) in &amp;New Window}}</translation>
 <translation id="8561206103590473338">Elephant</translation>
 <translation id="8561565784790166472">Proceed with caution</translation>
