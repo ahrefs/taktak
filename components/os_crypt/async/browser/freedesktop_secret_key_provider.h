@@ -148,9 +148,9 @@ class FreedesktopSecretKeyProvider : public KeyProvider {
   static constexpr char kKeyName[] = "Chrome Safe Storage";
   static constexpr char kAppName[] = "chrome";
 #else
-  static constexpr char kKWalletFolder[] = "Chromium Keys";
-  static constexpr char kKeyName[] = "Chromium Safe Storage";
-  static constexpr char kAppName[] = "chromium";
+  static constexpr char kKWalletFolder[] = "Taktak Keys";
+  static constexpr char kKeyName[] = "Taktak Safe Storage";
+  static constexpr char kAppName[] = "Taktak";
 #endif
 
   struct KwalletServiceAndPath {
