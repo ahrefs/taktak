@@ -534,15 +534,16 @@ NSMenuItem* BuildHelpMenu(NSApplication* nsapp,
   // clang-format off
   NSMenuItem* item =
       Item(IDS_HELP_MENU_MAC)
-          .submenu({
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
-              Item(IDS_FEEDBACK_MAC)
-                  .command_id(IDC_FEEDBACK),
-#endif
-              Item(IDS_HELP_MAC)
-                  .string_format_1(product_name)
-                  .command_id(IDC_HELP_PAGE_VIA_MENU),
-          })
+//          .submenu({
+//#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
+//              Item(IDS_FEEDBACK_MAC)
+//                  .command_id(IDC_FEEDBACK),
+//#endif
+//              Item(IDS_HELP_MAC)
+//                  .string_format_1(product_name)
+//                  .command_id(IDC_HELP_PAGE_VIA_MENU),
+//          })
+            .submenu({})
           .Build();
   // clang-format on
 
