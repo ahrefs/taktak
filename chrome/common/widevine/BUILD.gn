@@ -1,0 +1,3 @@
+source_set("constants") {
+    sources = [ "constants.h" ]
+}

@@ -1,0 +1,6 @@
+module taktak_drm.mojom;
+
+// Handle notification about the presence and availability of DRM
+interface TaktakDRM {
+    HandleWidevineKeySystemRequest();
+};
