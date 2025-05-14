@@ -2,7 +2,7 @@
 #define CHROMIUM_SRC_CHROME_RENDERER_DRM_DRM_TAB_HELPER_H_
 
 #include "base/scoped_observation.h"
-#include "chrome/common/drm/taktak_drm.mojom.h"
+#include "components/drm/taktak_drm.mojom.h"
 #include "components/component_updater/component_updater_service.h"
 #include "content/public/browser/render_frame_host_receiver_set.h"
 #include "content/public/browser/web_contents_observer.h"

@@ -313,7 +313,7 @@ static_library("renderer") {
       "//chrome/renderer/drm/drm_tab_helper.cc"
     ]
     deps += [
-      "//chrome/common/drm:taktak_drm",
+      "//components/drm:taktak_drm",
       "//chrome/common/widevine:constants"
     ]
   }

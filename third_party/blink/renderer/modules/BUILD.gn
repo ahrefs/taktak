@@ -317,6 +317,7 @@ group("make_modules_generated") {
     "//third_party/blink/renderer/core:core_event_interfaces",
     "//ui/accessibility:ax_enums_mojo_blink_headers",
     "//ui/display/mojom:mojom_blink_headers",
+    "//components/drm:taktak_drm_blink",
   ]
 }
 

@@ -3,11 +3,8 @@
 #include <utility>
 #include <vector>
 
-//#include "chrome/common/widevine/widevine_utils.h"
-//#include "chrome/common/pref_names.h"
-
+#include "chrome/common/widevine/widevine_utils.h"
 #include "chrome/common/widevine/constants.h"
-
 #include "base/containers/contains.h"
 #include "build/build_config.h"
 #include "chrome/browser/browser_process_impl.h"
@@ -68,7 +65,7 @@ DrmTabHelper::~DrmTabHelper() = default;
 
 // static
 void DrmTabHelper::BindTaktakDRM(
-    mojo::PendingAssociatedReceiver<taktak_drm::mojom::DRM> receiver,
+    mojo::PendingAssociatedReceiver<taktak_drm::mojom::TaktakDRM> receiver,
     content::RenderFrameHost* rfh) {
   auto* web_contents = content::WebContents::FromRenderFrameHost(rfh);
   if (!web_contents)
@@ -109,13 +106,15 @@ void DrmTabHelper::DidStartNavigation(
   is_permission_requested_ = false;
 }
 
-void DrmTabHelper::OnWidevineKeySystemAccessRequest() {
+void DrmTabHelper::HandleWidevineKeySystemRequest() {
   is_widevine_requested_ = true;
 #if BUILDFLAG(IS_ANDROID)
   bool for_restart = true;
 #else
   bool for_restart = false;
 #endif
+
+  DVLOG(0) << "Inside HandleWidevineKeySystemRequest";
 
   if (ShouldShowWidevineOptIn() && !is_permission_requested_) {
     is_permission_requested_ = true;
