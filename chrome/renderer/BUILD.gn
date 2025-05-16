@@ -309,12 +309,12 @@ static_library("renderer") {
 
   if (enable_widevine) {
     sources += [
+      "//chrome/renderer/drm/drm_tab_helper.cc",
       "//chrome/renderer/drm/drm_tab_helper.h",
-      "//chrome/renderer/drm/drm_tab_helper.cc"
     ]
     deps += [
+      "//chrome/common/widevine",
       "//components/drm:taktak_drm",
-      "//chrome/common/widevine:constants"
     ]
   }
 

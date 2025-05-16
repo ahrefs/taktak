@@ -67,13 +67,19 @@ DrmTabHelper::~DrmTabHelper() = default;
 void DrmTabHelper::BindTaktakDRM(
     mojo::PendingAssociatedReceiver<taktak_drm::mojom::TaktakDRM> receiver,
     content::RenderFrameHost* rfh) {
+  DVLOG(0) << "||> Start... BindTaktakDRM";
   auto* web_contents = content::WebContents::FromRenderFrameHost(rfh);
-  if (!web_contents)
+  if (!web_contents) {
+    DVLOG(0) << "||> BindTaktakDRM: web_contents is null";
     return;
+  }
 
   auto* tab_helper = DrmTabHelper::FromWebContents(web_contents);
-  if (!tab_helper)
+  if (!tab_helper) {
+    DVLOG(0) << "||> BindTaktakDRM: tab_helper is null";
     return;
+  }
+  DVLOG(0) << "||> BindTaktakDRM";
   tab_helper->taktak_drm_receivers_.Bind(rfh, std::move(receiver));
 }
 
@@ -82,16 +88,17 @@ bool DrmTabHelper::ShouldShowWidevineOptIn() const {
   // On non-x64 Linux, Widevine is not publicly available. This point is a
   // convenient single place for turning this class into a no-op:
   return false;
-  // Users on non-x64 Linux may still install Widevine manually and enable it in
-  // taktak://settings.
 #else
   // If the user already opted in, don't offer it.
   PrefService* prefs =
       static_cast<Profile*>(web_contents()->GetBrowserContext())->GetPrefs();
-  if (IsWidevineEnabled() || !prefs->GetBoolean(kAskEnableWidvine)) {
+  const bool is_widevine_enabled = IsWidevineEnabled();
+  const bool is_widevine_installed = prefs->GetBoolean(kAskWidvineInstall);
+  if (is_widevine_enabled || !is_widevine_installed) {
+    DVLOG(0) << "||> false false !" << __func__;
     return false;
   }
-
+  DVLOG(0) << "||> widevine requested!";
   return is_widevine_requested_;
 #endif  // BUILDFLAG(IS_LINUX) && !defined(ARCH_CPU_X86_64)
 }
@@ -114,10 +121,10 @@ void DrmTabHelper::HandleWidevineKeySystemRequest() {
   bool for_restart = false;
 #endif
 
-  DVLOG(0) << "Inside HandleWidevineKeySystemRequest";
 
   if (ShouldShowWidevineOptIn() && !is_permission_requested_) {
     is_permission_requested_ = true;
+    DVLOG(0) << "||> RequestWidevinePermission";
     RequestWidevinePermission(web_contents(), for_restart);
   }
 }

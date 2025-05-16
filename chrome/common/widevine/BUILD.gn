@@ -1,3 +1,50 @@
-source_set("constants") {
-    sources = [ "constants.h" ]
+import("//third_party/widevine/cdm/widevine.gni")
+
+if (is_win) {
+  import("//brave/build/win/sign.gni")
+}
+
+assert(enable_widevine)
+
+source_set("widevine") {
+  deps = [
+    "//base",
+    "//chrome/browser:browser_process",
+    "//chrome/browser:browser_public_dependencies",
+    "//chrome/browser/profiles:profile",
+    "//chrome/common",
+    "//components/component_updater/",
+    "//components/content_settings/core/common",
+    "//components/pref_registry",
+    "//components/prefs",
+    "//components/subresource_filter/content/browser",
+    "//components/vector_icons",
+    "//content/public/browser",
+    "//content/public/common",
+    "//third_party/widevine/cdm:buildflags",
+    "//third_party/widevine/cdm:headers",
+    "//ui/base",
+  ]
+
+  public_deps = [
+    "//components/permissions",
+    "//url",
+  ]
+
+  sources = [
+    "constants.h",
+    "widevine_permission_request.cc",
+    "widevine_permission_request.h",
+    "widevine_utils.cc",
+    "widevine_utils.h",
+  ]
+}
+
+if (is_win && !skip_signing) {
+  widevine_sign_file("taktak_exe_sig") {
+    file = "$root_out_dir/presigned_binaries/taktak.exe"
+    signature_file = "$root_out_dir/taktak.exe.sig"
+    flags = "1"
+    deps = [ "//taktak:signed_taktak_exe" ]
+  }
 }

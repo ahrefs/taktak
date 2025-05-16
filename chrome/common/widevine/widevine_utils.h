@@ -1,0 +1,22 @@
+#ifndef CHROMIUM_SRC_CHROME_COMMON_WIDEVINE_WIDEVINE_UTILS_H_
+#define CHROMIUM_SRC_CHROME_COMMON_WIDEVINE_WIDEVINE_UTILS_H_
+
+namespace content {
+class WebContents;
+}  // namespace content
+
+class PrefRegistrySimple;
+
+// On Android, kWidevineEnabled is written through EnableWidevineCdm() for the
+// permission prompt, but r/w through BraveLocalState.java on preference screen
+void EnableWidevineCdm();
+void DisableWidevineCdm();
+int GetWidevinePermissionRequestTextFrangmentResourceId(bool for_restart);
+void RequestWidevinePermission(content::WebContents* web_contents,
+                               bool for_restart);
+void RegisterWidevineLocalstatePrefs(PrefRegistrySimple* registry);
+void RegisterWidevineProfilePrefs(PrefRegistrySimple* registry);
+bool IsWidevineEnabled();
+void SetWidevineEnabled(bool opted_in);
+
+#endif  // CHROMIUM_SRC_CHROME_COMMON_WIDEVINE_WIDEVINE_UTILS_H_
