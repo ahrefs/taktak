@@ -19,8 +19,11 @@ namespace {
 
 #if BUILDFLAG(ENABLE_WIDEVINE_CDM_COMPONENT)
 void InstallWidevineOnceRegistered() {
-  // todo: ensure install widevine here
-  DVLOG(0) << "||> InstallWidevineOnceRegistered";
+  component_updater::ComponentUpdateService *component_update_service =  g_browser_process->component_updater();
+  if (component_update_service) {
+    DVLOG(0) << "||> component update service";
+    component_update_service->MaybeThrottle(kWidevineComponentId, base::DoNothing());
+  }
 }
 #endif
 
@@ -33,10 +36,8 @@ void EnableWidevineCdm() {
 
   SetWidevineEnabled(true);
 #if BUILDFLAG(ENABLE_WIDEVINE_CDM_COMPONENT)
-  // todo: ensure to register widevine here
-//  RegisterWidevineCdmComponent(g_browser_process->component_updater(),
-//                               base::BindOnce(&InstallWidevineOnceRegistered));
-  InstallWidevineOnceRegistered();
+  RegisterWidevineCdmComponentWithCallback(g_browser_process->component_updater(),
+                               base::BindOnce(&InstallWidevineOnceRegistered));
 #endif
 }
 

@@ -130,21 +130,27 @@ void DrmTabHelper::HandleWidevineKeySystemRequest() {
 }
 
 void DrmTabHelper::OnEvent(const update_client::CrxUpdateItem& item) {
+DVLOG(0) << "||> OnEvent";
 #if !BUILDFLAG(IS_ANDROID)
   if (item.state == update_client::ComponentState::kUpdated &&
       item.id == kWidevineComponentId) {
 #if BUILDFLAG(IS_LINUX)
+    DVLOG(0) << "||> OnEvent restart";
     // Ask restart instead of reloading. Widevine is only usable after
     // restarting on linux. This restart permission request is only shown if
     // this tab asks widevine explicitely.
-    if (is_widevine_requested_)
+    if (is_widevine_requested_) {
       RequestWidevinePermission(web_contents(), true /* for_restart*/);
+    }
 #else
     // When widevine is ready to use, only active tab that requests widevine is
     // reloaded automatically.
-    if (is_widevine_requested_)
+    DVLOG(0) << "||> OnEvent reload";
+    if (is_widevine_requested_) {
       ReloadIfActive(web_contents());
+    }
 #endif  // BUILDFLAG(IS_LINUX)
+    DVLOG(0) << "||> OnEvent reset";
     // Stop observing component update event.
     observer_.Reset();
   }

@@ -11,7 +11,7 @@ bool HasWidevinePermissionRequest(
   // When widevine permission is requested, |requests| only includes Widevine
   // permission because it is not a candidate for grouping.
   if (requests.size() == 1 &&
-      requests[0]->request_type() == permissions::RequestType::kStorageAccess) {
+      requests[0]->request_type() == permissions::RequestType::kFileSystemAccess) {
     return true;
   }
 

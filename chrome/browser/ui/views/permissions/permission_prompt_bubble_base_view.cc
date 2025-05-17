@@ -38,6 +38,14 @@
 #include "ui/views/widget/widget.h"
 #include "ui/views/window/dialog_client_view.h"
 
+#include "chrome/grit/generated_resources.h"
+
+#include "third_party/widevine/cdm/buildflags.h"
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+#include "chrome/common/widevine/widevine_permission_request.h"
+#endif
+
 DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(PermissionPromptBubbleBaseView,
                                       kMainViewId);
 DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(PermissionPromptBubbleBaseView,
@@ -116,9 +124,12 @@ void PermissionPromptBubbleBaseView::CreatePermissionButtons(
                               kBlockButtonElementId);
     block_button->SetID(GetViewId(PermissionDialogButton::kDeny));
 
-    allow_once_button->SetStyle(ui::ButtonStyle::kTonal);
-    allow_always_button->SetStyle(ui::ButtonStyle::kTonal);
-    block_button->SetStyle(ui::ButtonStyle::kTonal);
+    allow_once_button->SetStyle(ui::ButtonStyle::kText);
+    allow_always_button->SetStyle(ui::ButtonStyle::kText);
+    block_button->SetStyle(ui::ButtonStyle::kText);
+    allow_once_button->SetCornerRadius(6);
+    allow_always_button->SetCornerRadius(6);
+    block_button->SetCornerRadius(6);
 
     if (permissions::feature_params::kShowAllowAlwaysAsFirstButton.Get()) {
       buttons_container->AddChildView(std::move(allow_always_button));
@@ -150,9 +161,10 @@ void PermissionPromptBubbleBaseView::CreatePermissionButtons(
         &PermissionPromptBubbleBaseView::RunButtonCallback,
         base::Unretained(this), GetViewId(PermissionDialogButton::kDeny)));
 
-    SetButtonStyle(ui::mojom::DialogButton::kOk, ui::ButtonStyle::kTonal);
-    SetButtonStyle(ui::mojom::DialogButton::kCancel, ui::ButtonStyle::kTonal);
+    SetButtonStyle(ui::mojom::DialogButton::kOk, ui::ButtonStyle::kText);
+    SetButtonStyle(ui::mojom::DialogButton::kCancel, ui::ButtonStyle::kText);
   }
+
 }
 
 void PermissionPromptBubbleBaseView::CreateExtraTextLabel(
