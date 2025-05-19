@@ -3187,6 +3187,7 @@ static_library("ui") {
       "//components/capture_mode",
       "//components/country_codes",
       "//components/html2md",
+      "//components/drm:taktak_drm",
       "//services/audio/public/mojom",
       "//services/video_capture/public/mojom",
       "//services/video_effects/buildflags",
