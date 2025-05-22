@@ -38,13 +38,59 @@
 #include "ui/views/widget/widget.h"
 #include "ui/views/window/dialog_client_view.h"
 
-#include "chrome/grit/generated_resources.h"
+#include "chrome/browser/ui/views/chrome_layout_provider.h"
+#include "ui/views/bubble/bubble_dialog_delegate_view.h"
+#include "ui/views/controls/combobox/combobox.h"
+#include "ui/views/controls/image_view.h"
+#include "ui/views/controls/label.h"
+#include "ui/views/controls/styled_label.h"
+#include "ui/views/layout/box_layout.h"
+#include "ui/views/style/typography.h"
+#include "ui/views/window/dialog_client_view.h"
+#include "ui/views/window/dialog_delegate.h"
 
+#include "chrome/grit/generated_resources.h"
 #include "third_party/widevine/cdm/buildflags.h"
+#include "chrome/common/widevine/widevine_utils.h"
+#include "components/permissions/permission_widevine_utils.h"
 
 #if BUILDFLAG(ENABLE_WIDEVINE)
 #include "chrome/common/widevine/widevine_permission_request.h"
 #endif
+
+namespace {
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+void MaybeAddWidevinePermissionRequestText(
+    views::BubbleDialogDelegateView* dialog_delegate_view,
+    const std::vector<raw_ptr<permissions::PermissionRequest,
+                              VectorExperimental>>& requests) {
+  if (!HasWidevinePermissionRequest(requests)) {
+    return;
+  }
+
+  auto* widevine_request = static_cast<WidevinePermissionRequest*>(requests[0]);
+  views::Label* text = new views::Label(
+      widevine_request->GetExplanatoryMessageText(),
+      views::style::CONTEXT_LABEL, views::style::STYLE_SECONDARY);
+  text->SetMultiLine(true);
+  text->SetHorizontalAlignment(gfx::ALIGN_LEFT);
+
+  ChromeLayoutProvider* provider = ChromeLayoutProvider::Get();
+  const int preferred_dialog_width = provider->GetSnappedDialogWidth(
+      dialog_delegate_view->GetPreferredSize().width());
+  text->SizeToFit(preferred_dialog_width -
+      dialog_delegate_view->margins().width());
+  dialog_delegate_view->AddChildView(text);
+}
+#else
+void MaybeAddWidevinePermissionRequestText(
+    views::BubbleDialogDelegateView* dialog_delegate_view,
+    const std::vector<raw_ptr<permissions::PermissionRequest,
+                              VectorExperimental>>& requests) {}
+#endif
+
+}
 
 DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(PermissionPromptBubbleBaseView,
                                       kMainViewId);
@@ -65,7 +111,7 @@ PermissionPromptBubbleBaseView::PermissionPromptBubbleBaseView(
       permission_requested_time_(permission_requested_time),
       is_one_time_permission_(IsOneTimePermission(*delegate.get())) {
   // Note that browser() may be null in unit tests.
-  SetPromptStyle(prompt_style);
+  // SetPromptStyle(prompt_style);
 
   SetLayoutManager(std::make_unique<views::BoxLayout>(
       views::BoxLayout::Orientation::kVertical, gfx::Insets(),
@@ -124,9 +170,9 @@ void PermissionPromptBubbleBaseView::CreatePermissionButtons(
                               kBlockButtonElementId);
     block_button->SetID(GetViewId(PermissionDialogButton::kDeny));
 
-    allow_once_button->SetStyle(ui::ButtonStyle::kText);
-    allow_always_button->SetStyle(ui::ButtonStyle::kText);
-    block_button->SetStyle(ui::ButtonStyle::kText);
+    allow_once_button->SetStyle(ui::ButtonStyle::kTonal);
+    allow_always_button->SetStyle(ui::ButtonStyle::kTonal);
+    block_button->SetStyle(ui::ButtonStyle::kTonal);
     allow_once_button->SetCornerRadius(6);
     allow_always_button->SetCornerRadius(6);
     block_button->SetCornerRadius(6);
@@ -161,10 +207,10 @@ void PermissionPromptBubbleBaseView::CreatePermissionButtons(
         &PermissionPromptBubbleBaseView::RunButtonCallback,
         base::Unretained(this), GetViewId(PermissionDialogButton::kDeny)));
 
-    SetButtonStyle(ui::mojom::DialogButton::kOk, ui::ButtonStyle::kText);
-    SetButtonStyle(ui::mojom::DialogButton::kCancel, ui::ButtonStyle::kText);
+    SetButtonStyle(ui::mojom::DialogButton::kOk, ui::ButtonStyle::kTonal);
+    SetButtonStyle(ui::mojom::DialogButton::kCancel, ui::ButtonStyle::kTonal);
   }
-
+  MaybeAddWidevinePermissionRequestText(this, delegate_->Requests());
 }
 
 void PermissionPromptBubbleBaseView::CreateExtraTextLabel(

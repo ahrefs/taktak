@@ -407,7 +407,7 @@ are declared in tools/grit/grit_args.gni.
           Permission request expired
       </message>
       <message name="IDS_PERMISSIONS_BUBBLE_PROMPT" desc="The label that is used to introduce permission request details to the user in a popup.">
-        <ph name="SITE_NAME">$1<ex>google.com</ex></ph> wants to
+        <ph name="SITE_NAME">$1<ex>google.com</ex></ph> is asking you to
       </message>
       <message name="IDS_PERMISSIONS_BUBBLE_PROMPT_ACCESSIBLE_TITLE_ONE_PERM" desc="The label that is read by a screen reader to describe the permissions prompt bubble. This will be followed by the short name of a single permission.">
         <ph name="SITE_NAME">$1<ex>google.com</ex></ph> wants to: <ph name="PERMISSION">$2<ex>use your microphone</ex></ph>
@@ -8995,9 +8995,6 @@ Keep your key file in a safe place. You will need it to create new versions of y
       <message name="IDS_WIDEVINE_PERMISSION_REQUEST_TEXT_FRAGMENT" desc="Text fragment for Widevine permission request. 'Widevine' is the name of a plugin and should not be translated.">
           Install and run Google Widevine
       </message>
-      <message name="IDS_WIDEVINE_DONT_ASK_AGAIN_CHECKBOX" desc="Checkbox for prevent showing widevine install prompt">
-        Don't ask again
-      </message>
       <if expr="is_linux">
         <message name="IDS_WIDEVINE_PERMISSION_REQUEST_TEXT_FRAGMENT_INSTALL" desc="Text fragment for Widevine permission request. 'Widevine' is the name of a plugin and should not be translated.">
           Install Google Widevine
@@ -9012,16 +9009,13 @@ Keep your key file in a safe place. You will need it to create new versions of y
         </message>
       </if>
       <message name="IDS_WIDEVINE_INSTALL_MESSAGE" desc="Bubble info text when Widevine is not installed. 'Widevine' is the name of a plugin and should not be translated.">
-        Widevine is sometimes needed to play media on a webpage. It's a Google extension loaded from Google servers, which Taktak cannot inspect. By installing, you'll agree to Google's terms of use.
+        Some media on this webpage may require Widevine to play. Widevine is a Google extension that loads from Google's servers and cannot be inspected by Taktak. By installing it, you agree to Google’s terms of use.
       </message>
       <message name="IDS_WIDEVINE_PERMISSIONS_BUBBLE_FOOTNOTE_TEXT" desc="Message shown on the bottom of the widevine permissions bubble.">
         <ph name="LEARN_MORE_ABOUT_WIDEVINE">$1<ex>Learn more about Widevine</ex></ph>.
       </message>
       <message name="IDS_WIDEVINE_PERMISSIONS_BUBBLE_LEARN_MORE" desc="Message shown on the bottom of the widevine permissions bubble.">
         Learn more about Widevine
-      </message>
-      <message name="IDS_TAKTAK_PERMISSIONS_BUBBLE_PROMPT" desc="The label that is used to introduce permission request details to the user in a popup.">
-        <ph name="SITE_NAME">$1<ex>google.com</ex></ph> is asking you to
       </message>
 
       <!-- Side panel strings -->
