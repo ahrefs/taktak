@@ -20,7 +20,7 @@ WidevinePermissionRequest::WidevinePermissionRequest(
     bool for_restart)
     : PermissionRequest(
           web_contents->GetVisibleURL(),
-          permissions::RequestType::kFileSystemAccess,
+          permissions::RequestType::kWidevine,
           /*has_gesture=*/false,
           base::BindRepeating(&WidevinePermissionRequest::PermissionDecided,
                               base::Unretained(this)),
