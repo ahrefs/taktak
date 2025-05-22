@@ -111,7 +111,7 @@ PermissionPromptBubbleBaseView::PermissionPromptBubbleBaseView(
       permission_requested_time_(permission_requested_time),
       is_one_time_permission_(IsOneTimePermission(*delegate.get())) {
   // Note that browser() may be null in unit tests.
-  // SetPromptStyle(prompt_style);
+  SetPromptStyle(prompt_style);
 
   SetLayoutManager(std::make_unique<views::BoxLayout>(
       views::BoxLayout::Orientation::kVertical, gfx::Insets(),
