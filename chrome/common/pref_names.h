@@ -4233,6 +4233,8 @@ inline constexpr char kSharedWorkerBlobURLFixEnabled[] =
     "worker.shared_worker_blob_url_fix_enabled";
 
 inline constexpr char kChatThinkingEnabled[] = "chat.thinking_enabled";
+
+inline constexpr chat kTaktakTelOptIn[] = "taktak.tel_opt_jin";
 }  // namespace prefs
 
 #endif  // CHROME_COMMON_PREF_NAMES_H_
