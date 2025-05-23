@@ -41,6 +41,8 @@ source_set("widevine") {
 }
 
 if (is_win && !skip_signing) {
+  # todo: to add signing widevine on Windows
+  # need to explore other build args related to widevine cdm
   widevine_sign_file("taktak_exe_sig") {
     file = "$root_out_dir/presigned_binaries/taktak.exe"
     signature_file = "$root_out_dir/taktak.exe.sig"
