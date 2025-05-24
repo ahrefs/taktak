@@ -4692,6 +4692,6 @@
     Taktak is built by the team behind Yep—an independent AI search engine—and Ahrefs—an all-in-one marketing intelligence platform. To help improve Yep’s search ranking and Ahrefs’ web analytics, you can choose to share anonymized, aggregated data about visited pages. Taktak collects this data without storing personal information or browsing history tied to you.
   </message>
   <message name="IDS_SETTINGS_TELEMETRY_OPT_IN_POLICY" desc="The link to the policy of Taktak.">
-    See our <ph name="BEGIN_LINK">&lt;a href="https://taktak.com/privacy" target="_blank"&gt;</ph>Privacy Policy<ph name="END_LINK">&lt;/a&gt;</ph>.
+    See our <ph name="BEGIN_LINK">&lt;a href="https://taktak.com/privacy" target="_blank"&gt;</ph>privacy policy<ph name="END_LINK">&lt;/a&gt;</ph>
   </message>
 </grit-part>
