@@ -577,6 +577,12 @@ export class SettingsSecurityPageElement extends
     Router.getInstance().navigateTo(routes.SECURITY_KEYS);
   }
 
+  private onTelToggle_(e: CustomEvent<boolean>) {
+    // todo: to persist the value via WebUIMessageHandler call
+    console.log(e.detail);
+    e.preventDefault();
+  }
+
   // <if expr="is_win">
   private onManagePhonesClick_() {
     Router.getInstance().navigateTo(routes.SECURITY_KEYS_PHONES);

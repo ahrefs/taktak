@@ -276,7 +276,8 @@
     <template is="dom-if" if="true">
       <settings-toggle-button id="taktakTelOptInToggle"
         label="$i18n{taktakTelLabel}"
-        sub-label="$i18n{taktakTelDesc}">
+        sub-label="$i18n{taktakTelDesc}"
+        on-change="onTelToggle_">
       </settings-toggle-button>
     </template>
     <p id="taktakTelPolicy">$i18nRaw{taktakTelPolicy}</p>
