@@ -48,7 +48,7 @@
         padding: 24px var(--cr-section-padding) 8px;
       }
 
-      #taktakTelOptInToggle,
+      #taktakTelToggle,
       #httpsOnlyModeToggle,
       #passwordsLeakToggle {
         padding: 0 var(--cr-section-padding);
@@ -273,10 +273,11 @@
     <div class="cr-row first">
       <h2 class="cr-title-text">$i18n{advancedPageTitle}</h2>
     </div>
-    <template is="dom-if" if="true">
-      <settings-toggle-button id="taktakTelOptInToggle"
+    <template is="dom-if" if="[[telToggleValue_]]">
+      <settings-toggle-button id="taktakTelToggle"
         label="$i18n{taktakTelLabel}"
         sub-label="$i18n{taktakTelDesc}"
+        checked="[[telToggleValue_]]"
         on-change="onTelToggle_">
       </settings-toggle-button>
     </template>

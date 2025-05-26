@@ -66,6 +66,7 @@ export enum HttpsFirstModeSetting {
 
 export interface SettingsSecurityPageElement {
   $: {
+    taktakTelToggle : SettingsToggleButtonElement,
     passwordsLeakToggle: SettingsToggleButtonElement,
     safeBrowsingDisabled: SettingsCollapseRadioButtonElement,
     safeBrowsingEnhanced: SettingsCollapseRadioButtonElement,
@@ -219,6 +220,14 @@ export class SettingsSecurityPageElement extends
 
       showDisableSafebrowsingDialog_: Boolean,
 
+      showTelToggle_: {
+        type: Boolean,
+        readOnly: true,
+        value: true,
+      },
+
+      telToggleValue_: Boolean,
+
       /**
        * A timestamp that records the last time the user visited this page or
        * returned to it.
@@ -266,6 +275,8 @@ export class SettingsSecurityPageElement extends
   private httpsFirstModeUncheckedValues_: HttpsFirstModeSetting[];
   private enableHttpsFirstModeNewSettings_: boolean;
   private lastFocusTime_: number|undefined;
+  public telToggleValue_: boolean;
+  private showTelToggle_: boolean;
   private totalTimeInFocus_: number;
   private lastInteraction_: SecurityPageInteraction;
   private safeBrowsingStateOnOpen_: SafeBrowsingSetting;
@@ -343,6 +354,20 @@ export class SettingsSecurityPageElement extends
 
     // Initialize the last focus time on page load.
     this.lastFocusTime_ = HatsBrowserProxyImpl.getInstance().now();
+
+    this.browserProxy_.getTelToggle().then(result =>  {
+      console.log("||> toggle: " + result);
+      this.telToggleValue_ = result;
+    });
+  }
+
+  override connectedCallback() {
+    super.connectedCallback();
+
+    this.browserProxy_.getTelToggle().then(result =>  {
+      console.log("||> connected toggle: " + result);
+      this.telToggleValue_ = result;
+    });
   }
 
   /**
