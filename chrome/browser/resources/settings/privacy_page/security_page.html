@@ -273,12 +273,11 @@
     <div class="cr-row first">
       <h2 class="cr-title-text">$i18n{advancedPageTitle}</h2>
     </div>
-    <template is="dom-if" if="[[telToggleValue_]]">
+    <template is="dom-if" if="true">
       <settings-toggle-button id="taktakTelToggle"
         label="$i18n{taktakTelLabel}"
-        sub-label="$i18n{taktakTelDesc}"
-        checked="[[telToggleValue_]]"
-        on-change="onTelToggle_">
+        pref="{{prefs.taktak.tel_enabled}}"
+        sub-label="$i18n{taktakTelDesc}">
       </settings-toggle-button>
     </template>
     <p id="taktakTelPolicy">$i18nRaw{taktakTelPolicy}</p>
