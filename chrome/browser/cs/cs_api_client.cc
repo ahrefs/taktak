@@ -3,6 +3,8 @@
 #include "base/uuid.h"
 #include "chrome/browser/buildflags.h"
 #include "components/machine_id/machine_id.h"
+#include "base/hash/hash.h"
+#include "base/strings/string_number_conversions.h"
 
 namespace {
 
@@ -28,6 +30,14 @@ net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
       }
     )");
 }
+
+std::string GetHashedMachineId(std::string machine_id) {
+  // strip off sign bit
+  uint64_t hashed_machine_id =  static_cast<uint64_t> (base::Hash(machine_id) & 0x7fffffff);
+  std::string machine_id_str = base::NumberToString(hashed_machine_id);
+  return machine_id_str;
+}
+
 }  // namespace
 
 CSApiClient::CSApiClient(
@@ -50,12 +60,15 @@ void CSApiClient::Post(std::string data, ResultCallback callback) {
   dict.Set("k", BUILDFLAG(TAKTAK_TEL_API_KEY));
   std::string machine_id;
 
-  // if machine ID is empty for some reasons, a UUID will be generated and sent.
-  if (!machine_id::GetMachineId(&machine_id)) {
+  if (machine_id::GetMachineId(&machine_id)) {
+    dict.Set("v", GetHashedMachineId(machine_id));
+  } else {
+    // if machine ID is empty for some reasons, a UUID will be generated and sent.
     base::Uuid uuid = base::Uuid::GenerateRandomV4();
     machine_id = uuid.AsLowercaseString();
+    dict.Set("v", machine_id);
   }
-  dict.Set("v", machine_id);
+
   std::string json_payload;
   base::JSONWriter::Write(dict, &json_payload);
 
