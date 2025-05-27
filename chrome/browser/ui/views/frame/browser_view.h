@@ -41,6 +41,7 @@
 #include "chrome/browser/ui/views/tabs/tab.h"
 #include "chrome/browser/ui/webui/tab_search/tab_search.mojom.h"
 #include "chrome/common/buildflags.h"
+#include "components/browsing_data/core/pref_names.h"
 #include "components/enterprise/buildflags/buildflags.h"
 #include "components/infobars/core/infobar_container.h"
 #include "components/user_education/common/feature_promo/feature_promo_controller.h"
@@ -61,7 +62,6 @@
 #include "ui/views/widget/widget_delegate.h"
 #include "ui/views/widget/widget_observer.h"
 #include "ui/views/window/client_view.h"
-#include "components/browsing_data/core/pref_names.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "ui/compositor/compositor_metrics_tracker.h"

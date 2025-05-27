@@ -88,8 +88,6 @@ export interface PrivacyPageBrowserProxy {
    *     configuration or the probe was cancelled.
    */
   probeConfig(entry: string): Promise<boolean>;
-
-  getTelToggle() : Promise<boolean>;
 }
 
 export class PrivacyPageBrowserProxyImpl implements PrivacyPageBrowserProxy {
@@ -128,10 +126,6 @@ export class PrivacyPageBrowserProxyImpl implements PrivacyPageBrowserProxy {
 
   probeConfig(entry: string): Promise<boolean> {
     return sendWithPromise('probeConfig', entry);
-  }
-
-  getTelToggle() : Promise<boolean> {
-    return sendWithPromise('getTelToggle');
   }
 
   static getInstance(): PrivacyPageBrowserProxy {

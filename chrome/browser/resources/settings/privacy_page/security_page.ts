@@ -66,7 +66,6 @@ export enum HttpsFirstModeSetting {
 
 export interface SettingsSecurityPageElement {
   $: {
-    taktakTelToggle : SettingsToggleButtonElement,
     passwordsLeakToggle: SettingsToggleButtonElement,
     safeBrowsingDisabled: SettingsCollapseRadioButtonElement,
     safeBrowsingEnhanced: SettingsCollapseRadioButtonElement,
@@ -206,7 +205,7 @@ export class SettingsSecurityPageElement extends
         type: Boolean,
         value() {
           return loadTimeData.getBoolean(
-                     'extendedReportingRemovePrefDependency') &&
+                  'extendedReportingRemovePrefDependency') &&
               loadTimeData.getBoolean('hashPrefixRealTimeLookupsSamplePing');
         },
       },
@@ -219,14 +218,6 @@ export class SettingsSecurityPageElement extends
       },
 
       showDisableSafebrowsingDialog_: Boolean,
-
-      showTelToggle_: {
-        type: Boolean,
-        readOnly: true,
-        value: true,
-      },
-
-      telToggleValue_: Boolean,
 
       /**
        * A timestamp that records the last time the user visited this page or
@@ -275,8 +266,6 @@ export class SettingsSecurityPageElement extends
   private httpsFirstModeUncheckedValues_: HttpsFirstModeSetting[];
   private enableHttpsFirstModeNewSettings_: boolean;
   private lastFocusTime_: number|undefined;
-  public telToggleValue_: boolean;
-  private showTelToggle_: boolean;
   private totalTimeInFocus_: number;
   private lastInteraction_: SecurityPageInteraction;
   private safeBrowsingStateOnOpen_: SafeBrowsingSetting;
@@ -354,20 +343,6 @@ export class SettingsSecurityPageElement extends
 
     // Initialize the last focus time on page load.
     this.lastFocusTime_ = HatsBrowserProxyImpl.getInstance().now();
-
-    this.browserProxy_.getTelToggle().then(result =>  {
-      console.log("||> toggle: " + result);
-      this.telToggleValue_ = result;
-    });
-  }
-
-  override connectedCallback() {
-    super.connectedCallback();
-
-    this.browserProxy_.getTelToggle().then(result =>  {
-      console.log("||> connected toggle: " + result);
-      this.telToggleValue_ = result;
-    });
   }
 
   /**
@@ -480,7 +455,7 @@ export class SettingsSecurityPageElement extends
   }
 
   private interactedWithPage_(securityPageInteraction:
-                                  SecurityPageInteraction) {
+                              SecurityPageInteraction) {
     this.lastInteraction_ = securityPageInteraction;
   }
 
@@ -492,7 +467,7 @@ export class SettingsSecurityPageElement extends
   private getSafeBrowsingEnhancedSubLabel_(): string {
     return this.i18n(
         this.enableEsbAiStringUpdate_ ? 'safeBrowsingEnhancedDescUpdated' :
-                                        'safeBrowsingEnhancedDesc');
+            'safeBrowsingEnhancedDesc');
   }
 
   private getSafeBrowsingStandardSubLabel_(): string {
@@ -602,12 +577,6 @@ export class SettingsSecurityPageElement extends
     Router.getInstance().navigateTo(routes.SECURITY_KEYS);
   }
 
-  private onTelToggle_(e: CustomEvent<boolean>) {
-    // todo: to persist the value via WebUIMessageHandler call
-    console.log(e.detail);
-    e.preventDefault();
-  }
-
   // <if expr="is_win">
   private onManagePhonesClick_() {
     Router.getInstance().navigateTo(routes.SECURITY_KEYS_PHONES);
@@ -677,7 +646,7 @@ export class SettingsSecurityPageElement extends
   // </if>
 
   private recordInteractionHistogramOnRadioChange_(safeBrowsingSetting:
-                                                       SafeBrowsingSetting) {
+                                                   SafeBrowsingSetting) {
     let action;
     if (safeBrowsingSetting === SafeBrowsingSetting.ENHANCED) {
       action =
@@ -703,12 +672,12 @@ export class SettingsSecurityPageElement extends
   }
 
   private recordInteractionHistogramOnSafeBrowsingDialogClose_(confirmed:
-                                                                   boolean) {
+                                                               boolean) {
     this.metricsBrowserProxy_.recordSafeBrowsingInteractionHistogram(
         confirmed ? SafeBrowsingInteractions
-                        .SAFE_BROWSING_DISABLE_SAFE_BROWSING_DIALOG_CONFIRMED :
-                    SafeBrowsingInteractions
-                        .SAFE_BROWSING_DISABLE_SAFE_BROWSING_DIALOG_DENIED);
+                .SAFE_BROWSING_DISABLE_SAFE_BROWSING_DIALOG_CONFIRMED :
+            SafeBrowsingInteractions
+                .SAFE_BROWSING_DISABLE_SAFE_BROWSING_DIALOG_DENIED);
   }
 
   private recordActionOnRadioChange_(safeBrowsingSetting: SafeBrowsingSetting) {
@@ -724,7 +693,7 @@ export class SettingsSecurityPageElement extends
   }
 
   private recordActionOnExpandButtonClicked_(safeBrowsingSetting:
-                                                 SafeBrowsingSetting) {
+                                             SafeBrowsingSetting) {
     this.metricsBrowserProxy_.recordAction(
         safeBrowsingSetting === SafeBrowsingSetting.ENHANCED ?
             'SafeBrowsing.Settings.EnhancedProtectionExpandArrowClicked' :
@@ -734,7 +703,7 @@ export class SettingsSecurityPageElement extends
   private recordActionOnSafeBrowsingDialogClose_(confirmed: boolean) {
     this.metricsBrowserProxy_.recordAction(
         confirmed ? 'SafeBrowsing.Settings.DisableSafeBrowsingDialogConfirmed' :
-                    'SafeBrowsing.Settings.DisableSafeBrowsingDialogDenied');
+            'SafeBrowsing.Settings.DisableSafeBrowsingDialogDenied');
   }
 }
 

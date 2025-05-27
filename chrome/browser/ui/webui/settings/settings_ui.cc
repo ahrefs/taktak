@@ -125,7 +125,6 @@
 #include "third_party/blink/public/common/features.h"
 #include "ui/base/interaction/element_identifier.h"
 #include "ui/webui/webui_util.h"
-#include "chrome/browser/ui/webui/settings/settings_tel_toggle_handler.h"
 
 #if !BUILDFLAG(OPTIMIZE_WEBUI)
 #include "chrome/grit/settings_shared_resources.h"
@@ -256,7 +255,6 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
   AddSettingsPageUIHandler(std::make_unique<FontHandler>(profile));
   AddSettingsPageUIHandler(std::make_unique<ImportDataHandler>());
   AddSettingsPageUIHandler(std::make_unique<HatsHandler>());
-  AddSettingsPageUIHandler(std::make_unique<TelToggleHandler>(profile->GetPrefs()));
 
 #if BUILDFLAG(IS_WIN)
   AddSettingsPageUIHandler(std::make_unique<LanguagesHandler>());

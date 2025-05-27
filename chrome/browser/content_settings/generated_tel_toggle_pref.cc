@@ -32,8 +32,7 @@ GeneratedTelTogglePref::SetPref(const base::Value* value) {
   return extensions::settings_private::SetPrefResult::SUCCESS;
 }
 
-settings_api::PrefObject GeneratedTelTogglePref::GetPrefObject()
-const {
+settings_api::PrefObject GeneratedTelTogglePref::GetPrefObject() const {
   auto* backing_preference = profile_->GetPrefs()->FindPreference(
       browsing_data::prefs::kTaktakTelEnabled);
   settings_api::PrefObject pref_object;

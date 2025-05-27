@@ -2,13 +2,9 @@
 #define CHROMIUM_SRC_CHROME_BROWSER_CONTENT_SETTINGS_GENERATED_TEL_TOGGLE_PREF_H_
 
 #include "base/memory/raw_ptr.h"
-#include "base/scoped_observation.h"
 #include "chrome/browser/extensions/api/settings_private/generated_pref.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/prefs/pref_change_registrar.h"
-#include "components/signin/public/identity_manager/identity_manager.h"
-#include "components/sync/service/sync_service.h"
-#include "components/sync/service/sync_service_observer.h"
 
 class GeneratedTelTogglePref :  public extensions::settings_private::GeneratedPref {
  public:
