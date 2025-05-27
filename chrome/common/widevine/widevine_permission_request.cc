@@ -53,19 +53,14 @@ std::u16string WidevinePermissionRequest::GetMessageTextFragment() const {
 void WidevinePermissionRequest::PermissionDecided(ContentSetting result,
                                                   bool is_one_time,
                                                   bool is_final_decision) {
-  DVLOG(0) << "||> WidevinePermissionRequest::PermissionDecided";
   // Permission granted
   if (result == ContentSetting::CONTENT_SETTING_ALLOW) {
-    DVLOG(0) << "||> WidevinePermissionRequest::PermissionDecided: ALLOW";
     if (!for_restart_) {
-      DVLOG(0) << "||> WidevinePermissionRequest::PermissionDecided: NOT RESTART";
       EnableWidevineCdm();
     } else {
 #if BUILDFLAG(IS_ANDROID)
       EnableWidevineCdm();
 #endif
-      DVLOG(0) << "||> WidevinePermissionRequest::PermissionDecided: RESTART";
-      // Try relaunch after handling permission grant logics in this turn.
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
           FROM_HERE, base::BindOnce(&chrome::AttemptRelaunch));
     }

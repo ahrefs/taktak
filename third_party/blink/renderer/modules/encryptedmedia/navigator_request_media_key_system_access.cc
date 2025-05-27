@@ -8,10 +8,10 @@
 #include <vector>
 
 #include "base/memory/ptr_util.h"
- #include "components/drm/taktak_drm.mojom-blink.h"
+#include "components/drm/taktak_drm.mojom-blink.h"
 #include "mojo/public/cpp/bindings/associated_remote.h"
 #include "services/network/public/mojom/permissions_policy/permissions_policy_feature.mojom-blink.h"
- #include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
+#include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
 #include "third_party/blink/public/platform/web_encrypted_media_client.h"
 #include "third_party/blink/public/platform/web_encrypted_media_request.h"
 #include "third_party/blink/public/platform/web_media_key_system_configuration.h"
@@ -138,7 +138,6 @@ void NotifyWidevineRequest(MediaKeySystemAccessInitializer* initializer,
           taktak_drm_binding;
       frame->Client()->GetRemoteNavigationAssociatedInterfaces()->GetInterface(
           &taktak_drm_binding);
-      DVLOG(0) << "||> Taktak DRM binding is bound: " << taktak_drm_binding.is_bound();
       DCHECK(taktak_drm_binding.is_bound());
       taktak_drm_binding->HandleWidevineKeySystemRequest();
     }

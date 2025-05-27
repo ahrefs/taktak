@@ -7,8 +7,6 @@ class WebContents;
 
 class PrefRegistrySimple;
 
-// On Android, kWidevineEnabled is written through EnableWidevineCdm() for the
-// permission prompt, but r/w through BraveLocalState.java on preference screen
 void EnableWidevineCdm();
 void DisableWidevineCdm();
 int GetWidevinePermissionRequestTextFrangmentResourceId(bool for_restart);

@@ -49,8 +49,6 @@ DrmTabHelper::DrmTabHelper(content::WebContents* contents)
       taktak_drm_receivers_(contents, this) {
 #if !BUILDFLAG(IS_ANDROID)
   auto* updater = g_browser_process->component_updater();
-  // We don't need to observe if widevine is already registered.
-  // component_updater() can return nullptr in unit tests.
   if (updater) {
     if (!IsAlreadyRegistered(updater)) {
       observer_.Observe(updater);
@@ -67,19 +65,15 @@ DrmTabHelper::~DrmTabHelper() = default;
 void DrmTabHelper::BindTaktakDRM(
     mojo::PendingAssociatedReceiver<taktak_drm::mojom::TaktakDRM> receiver,
     content::RenderFrameHost* rfh) {
-  DVLOG(0) << "||> Start... BindTaktakDRM";
   auto* web_contents = content::WebContents::FromRenderFrameHost(rfh);
   if (!web_contents) {
-    DVLOG(0) << "||> BindTaktakDRM: web_contents is null";
     return;
   }
 
   auto* tab_helper = DrmTabHelper::FromWebContents(web_contents);
   if (!tab_helper) {
-    DVLOG(0) << "||> BindTaktakDRM: tab_helper is null";
     return;
   }
-  DVLOG(0) << "||> BindTaktakDRM";
   tab_helper->taktak_drm_receivers_.Bind(rfh, std::move(receiver));
 }
 
@@ -89,16 +83,13 @@ bool DrmTabHelper::ShouldShowWidevineOptIn() const {
   // convenient single place for turning this class into a no-op:
   return false;
 #else
-  // If the user already opted in, don't offer it.
   PrefService* prefs =
       static_cast<Profile*>(web_contents()->GetBrowserContext())->GetPrefs();
   const bool is_widevine_enabled = IsWidevineEnabled();
   const bool is_widevine_installed = prefs->GetBoolean(kAskWidvineInstall);
   if (is_widevine_enabled || !is_widevine_installed) {
-    DVLOG(0) << "||> false false !" << __func__;
     return false;
   }
-  DVLOG(0) << "||> widevine requested!";
   return is_widevine_requested_;
 #endif  // BUILDFLAG(IS_LINUX) && !defined(ARCH_CPU_X86_64)
 }
@@ -121,36 +112,25 @@ void DrmTabHelper::HandleWidevineKeySystemRequest() {
   bool for_restart = false;
 #endif
 
-
   if (ShouldShowWidevineOptIn() && !is_permission_requested_) {
     is_permission_requested_ = true;
-    DVLOG(0) << "||> RequestWidevinePermission";
     RequestWidevinePermission(web_contents(), for_restart);
   }
 }
 
 void DrmTabHelper::OnEvent(const update_client::CrxUpdateItem& item) {
-DVLOG(0) << "||> OnEvent";
 #if !BUILDFLAG(IS_ANDROID)
   if (item.state == update_client::ComponentState::kUpdated &&
       item.id == kWidevineComponentId) {
 #if BUILDFLAG(IS_LINUX)
-    DVLOG(0) << "||> OnEvent restart";
-    // Ask restart instead of reloading. Widevine is only usable after
-    // restarting on linux. This restart permission request is only shown if
-    // this tab asks widevine explicitely.
     if (is_widevine_requested_) {
       RequestWidevinePermission(web_contents(), true /* for_restart*/);
     }
 #else
-    // When widevine is ready to use, only active tab that requests widevine is
-    // reloaded automatically.
-    DVLOG(0) << "||> OnEvent reload";
     if (is_widevine_requested_) {
       ReloadIfActive(web_contents());
     }
 #endif  // BUILDFLAG(IS_LINUX)
-    DVLOG(0) << "||> OnEvent reset";
     // Stop observing component update event.
     observer_.Reset();
   }

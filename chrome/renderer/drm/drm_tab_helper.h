@@ -8,7 +8,6 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
 
-// Reacts to DRM content detected on the renderer side.
 class DrmTabHelper final
     : public content::WebContentsObserver,
       public content::WebContentsUserData<DrmTabHelper>,
@@ -40,12 +39,8 @@ class DrmTabHelper final
   content::RenderFrameHostReceiverSet<taktak_drm::mojom::TaktakDRM>
       taktak_drm_receivers_;
 
-  // Permission request is done only once during the navigation. If user
-  // chooses dismiss/deny, additional request is added again only when new
-  // main frame navigation is started.
   bool is_permission_requested_ = false;
 
-  // True if we are notified that a page requested widevine availability.
   bool is_widevine_requested_ = false;
 
   base::ScopedObservation<component_updater::ComponentUpdateService,

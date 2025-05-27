@@ -21,7 +21,6 @@ namespace {
 void InstallWidevineOnceRegistered() {
   component_updater::ComponentUpdateService *component_update_service =  g_browser_process->component_updater();
   if (component_update_service) {
-    DVLOG(0) << "||> component update service";
     component_update_service->MaybeThrottle(kWidevineComponentId, base::DoNothing());
   }
 }

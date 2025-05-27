@@ -35,14 +35,12 @@ class WidevinePermissionRequest : public permissions::PermissionRequest {
                          bool is_final_decision);
   void DeleteRequest();
 
-  // It's safe to use this raw |web_contents_| because this request is deleted
-  // by PermissionManager that is tied with this |web_contents_|.
   raw_ptr<content::WebContents> web_contents_ = nullptr;
 
-  // Only can be true on linux.
-  // On linux, browser will use another permission request buble after finishing
-  // installation to ask user about restarting because installed widevine can
-  // only be used after re-launch.
+  // This flag is only applicable on Linux systems. After Widevine installation
+  // completes on Linux, the browser displays an additional permission request
+  // bubble prompting the user to restart, since the installed Widevine
+  // component requires a browser restart to become functional.
   bool for_restart_ = false;
 
   void set_dont_ask_again(bool dont_ask_again) {
