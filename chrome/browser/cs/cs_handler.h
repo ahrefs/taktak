@@ -22,8 +22,6 @@ class CSHandler {
   void Handle(const GURL& gurl);
 
  private:
-  GURL last_committed_url_;
-
   std::unique_ptr<CSApiClient> api_client_;
   base::WeakPtrFactory<CSHandler> weak_ptr_factory_{this};
 };

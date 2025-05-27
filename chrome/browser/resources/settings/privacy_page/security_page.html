@@ -48,8 +48,15 @@
         padding: 24px var(--cr-section-padding) 8px;
       }
 
+      #taktakTelToggle,
       #httpsOnlyModeToggle,
       #passwordsLeakToggle {
+        padding: 0 var(--cr-section-padding);
+      }
+
+      #taktakTelPolicy {
+        display: block;
+        margin-top: -2px;
         padding: 0 var(--cr-section-padding);
       }
 
@@ -266,8 +273,16 @@
     <div class="cr-row first">
       <h2 class="cr-title-text">$i18n{advancedPageTitle}</h2>
     </div>
+    <template is="dom-if" if="true">
+      <settings-toggle-button id="taktakTelToggle"
+        label="$i18n{taktakTelLabel}"
+        pref="{{prefs.taktak.tel_enabled}}"
+        sub-label="$i18n{taktakTelDesc}">
+      </settings-toggle-button>
+    </template>
+    <p id="taktakTelPolicy">$i18nRaw{taktakTelPolicy}</p>
     <template is="dom-if" if="[[enablePasswordLeakToggleMove_]]">
-      <settings-toggle-button id="passwordsLeakToggle"
+      <settings-toggle-button id="passwordsLeakToggle" class="hr"
           label="$i18n{passwordsLeakDetectionLabel}"
           pref="{{prefs.generated.password_leak_detection}}"
           sub-label="[[getPasswordsLeakToggleSubLabel_(
