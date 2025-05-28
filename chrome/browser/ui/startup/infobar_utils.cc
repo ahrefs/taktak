@@ -27,6 +27,7 @@
 #include "content/public/common/content_switches.h"
 #include "google_apis/google_api_keys.h"
 #include "services/network/public/cpp/network_switches.h"
+#include "chrome/browser/ui/startup/update_notifier/update_notifier_infobar_delegate.h"
 
 #if !BUILDFLAG(IS_CHROMEOS) && !BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/ui/startup/default_browser_prompt/default_browser_prompt.h"
@@ -162,6 +163,7 @@ void AddInfoBarsIfNecessary(Browser* browser,
     }
     */
 
+
     if (ObsoleteSystem::IsObsoleteNowOrSoon()) {
       PrefService* local_state = g_browser_process->local_state();
       if (!local_state ||
@@ -178,6 +180,9 @@ void AddInfoBarsIfNecessary(Browser* browser,
         ShowDefaultBrowserPrompt(profile);
       }
     }
+   if (!is_web_app) {
+     UpdateNotifierInfoBarDelegate::Create(infobar_manager, browser->profile());
+   }
 #endif
   }
 }
