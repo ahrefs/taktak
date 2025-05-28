@@ -8991,6 +8991,22 @@ Keep your key file in a safe place. You will need it to create new versions of y
         Thinking enabled
       </message>
 
+      <!-- Widevine -->
+      <message name="IDS_WIDEVINE_PERMISSION_REQUEST_TEXT_FRAGMENT" desc="Text fragment for Widevine permission request. 'Widevine' is the name of a plugin and should not be translated.">
+          Install and run Google Widevine
+      </message>
+      <if expr="is_linux">
+        <message name="IDS_WIDEVINE_PERMISSION_REQUEST_TEXT_FRAGMENT_INSTALL" desc="Text fragment for Widevine permission request. 'Widevine' is the name of a plugin and should not be translated.">
+          Install Google Widevine
+        </message>
+        <message name="IDS_WIDEVINE_PERMISSION_REQUEST_TEXT_FRAGMENT_RESTART_BROWSER" desc="Text fragment for Widevine permission request. 'Widevine' is the name of a plugin and should not be translated.">
+          Restart browser to enable Google Widevine
+        </message>
+      </if>
+      <message name="IDS_WIDEVINE_INSTALL_MESSAGE" desc="Bubble info text when Widevine is not installed. 'Widevine' is the name of a plugin and should not be translated.">
+        Some media on this webpage may require Widevine to play. Widevine is a Google extension that loads from Google's servers and cannot be inspected by Taktak. By installing it, you agree to Google’s terms of use.
+      </message>
+
       <!-- Side panel strings -->
       <message name="IDS_ACCNAME_SIDE_PANEL_RESIZE" is_accessibility_with_no_ui="true" desc="Screen reader announcement when the side panel resize handle is focused.">
         Side Panel Resize Handle

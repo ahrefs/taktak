@@ -307,6 +307,17 @@ static_library("renderer") {
     deps += [ "//third_party/widevine/cdm:headers" ]
   }
 
+  if (enable_widevine) {
+    sources += [
+      "//chrome/renderer/drm/drm_tab_helper.cc",
+      "//chrome/renderer/drm/drm_tab_helper.h",
+    ]
+    deps += [
+      "//chrome/common/widevine",
+      "//components/drm:taktak_drm",
+    ]
+  }
+
   if (enable_library_cdms || is_win || is_android) {
     sources += [
       "media/chrome_key_systems.cc",

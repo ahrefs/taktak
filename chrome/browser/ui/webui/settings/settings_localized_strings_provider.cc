@@ -1383,6 +1383,9 @@ void AddAutofillStrings(content::WebUIDataSource* html_source,
       {"autofillAiAddOrEditDialogValidationError",
        IDS_SETTINGS_AUTOFILL_AI_ADD_OR_EDIT_DIALOG_VALIDATION_ERROR},
       {"autofillPayOverTimeSettingsLabel", IDS_AUTOFILL_BNPL_SETTINGS_LABEL},
+      {"taktakTelLabel", IDS_SETTINGS_TELEMETRY_OPT_IN_TITLE},
+      {"taktakTelDesc", IDS_SETTINGS_TELEMETRY_OPT_IN_DESC},
+      {"taktakTelPolicy", IDS_SETTINGS_TELEMETRY_OPT_IN_POLICY},
   };
 
   html_source->AddString("manageAddressesUrl",

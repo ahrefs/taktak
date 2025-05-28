@@ -63,6 +63,7 @@ void RegisterBrowserUserPrefs(user_prefs::PrefRegistrySyncable* registry) {
   registry->RegisterIntegerPref(
       kClearBrowsingDataHistoryNoticeShownTimes, 0);
   registry->RegisterBooleanPref(kChatThinkingEnabled, true);
+  registry->RegisterBooleanPref(kTaktakTelEnabled, true);
 
 #if !BUILDFLAG(IS_IOS)
   registry->RegisterBooleanPref(kDeleteDownloadHistory, true);

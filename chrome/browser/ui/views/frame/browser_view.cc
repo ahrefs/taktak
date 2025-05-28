@@ -3712,10 +3712,18 @@ void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_hand
   if (IsIncognitoProcess() || browser_->profile()->IsIncognitoProfile()) {
     return;
   }
+
   if (!navigation_handle->IsInPrimaryMainFrame() ||
       !navigation_handle->HasCommitted() || navigation_handle->IsErrorPage()) {
     return;
   }
+
+  bool toggle = browser_->profile()->GetPrefs()->GetBoolean(browsing_data::prefs::kTaktakTelEnabled);
+  if (!toggle) {
+    VLOG(0) << "||> Taktak tel is disabled";
+    return;
+  }
+
   cs_handler_->Handle(navigation_handle->GetURL());
 }
 

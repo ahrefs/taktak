@@ -36,7 +36,53 @@
 #include "ui/views/layout/box_layout.h"
 #include "ui/views/view_class_properties.h"
 #include "ui/views/widget/widget.h"
+#include "chrome/browser/ui/views/chrome_layout_provider.h"
+#include "ui/views/bubble/bubble_dialog_delegate_view.h"
+#include "ui/views/controls/styled_label.h"
 #include "ui/views/window/dialog_client_view.h"
+#include "ui/views/window/dialog_delegate.h"
+#include "chrome/grit/generated_resources.h"
+#include "third_party/widevine/cdm/buildflags.h"
+#include "chrome/common/widevine/widevine_utils.h"
+#include "components/permissions/permission_widevine_utils.h"
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+#include "chrome/common/widevine/widevine_permission_request.h"
+#endif
+
+namespace {
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+void MaybeAddWidevinePermissionRequestText(
+    views::BubbleDialogDelegateView* dialog_delegate_view,
+    const std::vector<raw_ptr<permissions::PermissionRequest,
+                              VectorExperimental>>& requests) {
+  if (!HasWidevinePermissionRequest(requests)) {
+    return;
+  }
+
+  auto* widevine_request = static_cast<WidevinePermissionRequest*>(requests[0]);
+  views::Label* text = new views::Label(
+      widevine_request->GetExplanatoryMessageText(),
+      views::style::CONTEXT_LABEL, views::style::STYLE_SECONDARY);
+  text->SetMultiLine(true);
+  text->SetHorizontalAlignment(gfx::ALIGN_LEFT);
+
+  ChromeLayoutProvider* provider = ChromeLayoutProvider::Get();
+  const int preferred_dialog_width = provider->GetSnappedDialogWidth(
+      dialog_delegate_view->GetPreferredSize().width());
+  text->SizeToFit(preferred_dialog_width -
+      dialog_delegate_view->margins().width());
+  dialog_delegate_view->AddChildView(text);
+}
+#else
+void MaybeAddWidevinePermissionRequestText(
+    views::BubbleDialogDelegateView* dialog_delegate_view,
+    const std::vector<raw_ptr<permissions::PermissionRequest,
+                              VectorExperimental>>& requests) {}
+#endif
+
+}
 
 DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(PermissionPromptBubbleBaseView,
                                       kMainViewId);
@@ -119,6 +165,9 @@ void PermissionPromptBubbleBaseView::CreatePermissionButtons(
     allow_once_button->SetStyle(ui::ButtonStyle::kTonal);
     allow_always_button->SetStyle(ui::ButtonStyle::kTonal);
     block_button->SetStyle(ui::ButtonStyle::kTonal);
+    allow_once_button->SetCornerRadius(6);
+    allow_always_button->SetCornerRadius(6);
+    block_button->SetCornerRadius(6);
 
     if (permissions::feature_params::kShowAllowAlwaysAsFirstButton.Get()) {
       buttons_container->AddChildView(std::move(allow_always_button));
@@ -153,6 +202,7 @@ void PermissionPromptBubbleBaseView::CreatePermissionButtons(
     SetButtonStyle(ui::mojom::DialogButton::kOk, ui::ButtonStyle::kTonal);
     SetButtonStyle(ui::mojom::DialogButton::kCancel, ui::ButtonStyle::kTonal);
   }
+  MaybeAddWidevinePermissionRequestText(this, delegate_->Requests());
 }
 
 void PermissionPromptBubbleBaseView::CreateExtraTextLabel(
