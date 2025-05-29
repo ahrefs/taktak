@@ -20,6 +20,8 @@
 #include "chrome/browser/ui/startup/startup_browser_creator.h"
 #include "chrome/browser/ui/startup/startup_types.h"
 #include "chrome/browser/ui/startup/test_third_party_cookie_phaseout_infobar_delegate.h"
+#include "chrome/browser/ui/startup/update_notifier/update_notifier_infobar_delegate.h"
+#include "chrome/browser/ui/startup/update_notifier/update_notifier_prompt_manager.h"
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/pref_names.h"
 #include "components/infobars/content/content_infobar_manager.h"
@@ -27,7 +29,6 @@
 #include "content/public/common/content_switches.h"
 #include "google_apis/google_api_keys.h"
 #include "services/network/public/cpp/network_switches.h"
-#include "chrome/browser/ui/startup/update_notifier/update_notifier_infobar_delegate.h"
 
 #if !BUILDFLAG(IS_CHROMEOS) && !BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/ui/startup/default_browser_prompt/default_browser_prompt.h"
@@ -157,12 +158,9 @@ void AddInfoBarsIfNecessary(Browser* browser,
     infobars::ContentInfoBarManager* infobar_manager =
         infobars::ContentInfoBarManager::FromWebContents(web_contents);
 
-    /* hide google api key request popup
     if (!google_apis::HasAPIKeyConfigured()) {
       GoogleApiKeysInfoBarDelegate::Create(infobar_manager);
     }
-    */
-
 
     if (ObsoleteSystem::IsObsoleteNowOrSoon()) {
       PrefService* local_state = g_browser_process->local_state();
@@ -181,7 +179,7 @@ void AddInfoBarsIfNecessary(Browser* browser,
       }
     }
    if (!is_web_app) {
-     UpdateNotifierInfoBarDelegate::Create(infobar_manager, browser->profile());
+     UpdateNotifierPromptManager::GetInstance()->MaybeShowPrompt();
    }
 #endif
   }
