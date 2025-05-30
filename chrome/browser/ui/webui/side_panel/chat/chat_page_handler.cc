@@ -479,8 +479,8 @@ void ChatPageHandler::OpenURL(
     GURL gurl(url);
 
     if (gurl.is_valid()) {
-        content::OpenURLParams params(gurl, content::Referrer(), open_location,
-                                      ui::PAGE_TRANSITION_AUTO_BOOKMARK, false);
-        browser->OpenURL(params, /*navigation_handle_callback=*/{});
+      content::OpenURLParams params(gurl, content::Referrer(), open_location,
+                                    ui::PAGE_TRANSITION_TYPED, false);
+      browser->OpenURL(params, /*navigation_handle_callback=*/{});
     }
 }

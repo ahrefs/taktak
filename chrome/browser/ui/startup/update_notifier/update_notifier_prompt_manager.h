@@ -17,6 +17,9 @@
 #include "components/infobars/core/infobar.h"
 #include "components/infobars/core/infobar_manager.h"
 #include "content/public/browser/web_contents.h"
+#include "update_notifier_api_client.h"
+
+using web_request_helper::WebRequestResult;
 
 class UpdateNotifierPromptManager : public BrowserTabStripTrackerDelegate,
                                     public TabStripModelObserver,
@@ -68,12 +71,16 @@ class UpdateNotifierPromptManager : public BrowserTabStripTrackerDelegate,
   void OnAccept() override;
   void OnDismiss() override;
 
+  void OnCheckNewerVersion(WebRequestResult result);
+
   std::unique_ptr<BrowserTabStripTracker> browser_tab_strip_tracker_;
 
   std::map<content::WebContents*, raw_ptr<infobars::InfoBar, CtnExperimental>>
       infobars_;
 
   std::optional<CloseReason> user_initiated_info_bar_close_pending_;
+
+  std::unique_ptr<UpdateNotifierApiClient> api_client_;
 };
 
 #endif  // CHROMIUM_SRC_CHROME_BROWSER_UI_STARTUP_UPDATE_NOTIFIER_UPDATENOTIFIERPROMPTMANAGER_H_

@@ -14,23 +14,23 @@
 #include "chrome/browser/ui/browser_list.h"
 #include "chrome/browser/ui/startup/default_browser_prompt/default_browser_infobar_delegate.h"
 #include "chrome/browser/ui/startup/default_browser_prompt/default_browser_prompt_prefs.h"
+#include "chrome/browser/ui/startup/update_notifier/update_notifier_api_client.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/common/pref_names.h"
 #include "components/infobars/core/confirm_infobar_delegate.h"
 #include "components/infobars/core/infobar.h"
 #include "components/prefs/pref_service.h"
+#include "components/web_request_helper/web_request_helper.h"
 #include "content/public/browser/web_contents.h"
+#include "services/network/public/cpp/shared_url_loader_factory.h"
+#include "services/network/public/cpp/simple_url_loader.h"
+#include "services/network/public/mojom/url_response_head.mojom.h"
 #include "update_notifier_infobar_delegate.h"
+#include "url/gurl.h"
 
 namespace {
-
-#if !BUILDFLAG(IS_ANDROID)
-bool HasNewerVersion() {
-  // todo: to call API and decide whether to show prompt or not.
-  return true;
+class SharedURLLoaderFactory;
 }
-#endif  // !BUILDFLAG(IS_ANDROID)
-}  // namespace
 
 // static
 UpdateNotifierPromptManager* UpdateNotifierPromptManager::GetInstance() {
@@ -50,11 +50,16 @@ void UpdateNotifierPromptManager::MaybeShowPrompt() {
   NOTREACHED() << "Unsupported platforms for showing updater prompts.";
 #else
 
-  if (!HasNewerVersion()) {
-    return;
+  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
+      g_browser_process->system_network_context_manager()
+          ->GetSharedURLLoaderFactory();
+  if (!api_client_) {
+    api_client_ = std::make_unique<UpdateNotifierApiClient>(
+        std::move(url_loader_factory));
   }
-
-  InitTabStripTracker();
+  api_client_->Post(
+      "", base::BindOnce(&UpdateNotifierPromptManager::OnCheckNewerVersion,
+                         base::Unretained(this)));
 
 #endif  // BUILDFLAG(IS_ANDROID)
 }
@@ -70,6 +75,15 @@ void UpdateNotifierPromptManager::CloseAllPrompts(CloseReason close_reason) {
 UpdateNotifierPromptManager::UpdateNotifierPromptManager() = default;
 
 UpdateNotifierPromptManager::~UpdateNotifierPromptManager() = default;
+
+void UpdateNotifierPromptManager::OnCheckNewerVersion(WebRequestResult result) {
+  if (result.response_code() != 200) {
+    DVLOG(0) << "||>  error code: " << result.response_code();
+    return;
+  }
+  DVLOG(0) << "||> succeed to check newer version";
+  InitTabStripTracker();
+}
 
 void UpdateNotifierPromptManager::CreateInfoBarForWebContents(
     content::WebContents* web_contents,

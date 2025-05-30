@@ -16,7 +16,8 @@ void BrowserActivityObserver::OnBrowserNoLongerActive(Browser *browser) {
 }
 
 void BrowserActivityObserver::OnBrowserSetLastActive(Browser* browser) {
-  const int kInactiveDurationThresholdMinutes = 1;
+  const int kInactiveDurationThresholdMinutes =
+      1;  // todo: actual value will be 90 minutes
   base::Time now = base::Time::Now();
   base::TimeDelta inactive_duration = now - last_inactive_time_;
 

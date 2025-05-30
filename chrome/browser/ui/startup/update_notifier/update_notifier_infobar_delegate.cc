@@ -1,4 +1,5 @@
 #include "update_notifier_infobar_delegate.h"
+
 #include <memory>
 
 #include "base/functional/bind.h"
@@ -9,6 +10,8 @@
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/infobars/confirm_infobar_creator.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/ui/browser.h"
+#include "chrome/browser/ui/browser_finder.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/infobars/core/confirm_infobar_delegate.h"
 #include "components/infobars/core/infobar.h"
@@ -67,6 +70,17 @@ std::u16string UpdateNotifierInfoBarDelegate::GetButtonLabel(
 }
 
 bool UpdateNotifierInfoBarDelegate::Accept() {
-  DVLOG(0) << "||> UpdateNotifierInfoBarDelegate::Accept()";
+  Browser* browser = chrome::FindLastActiveWithProfile(profile_);
+  if (!browser) {
+    return ConfirmInfoBarDelegate::Accept();
+  }
+
+  // todo: to replace the url with the actual download url returned from the api
+  content::OpenURLParams params(
+      GURL("https://taktak.com/dev"), content::Referrer(),
+      WindowOpenDisposition::NEW_FOREGROUND_TAB, ui::PAGE_TRANSITION_LINK,
+      false /* is_renderer_initiated */);
+  browser->OpenURL(params, /*navigation_handle_callback=*/{});
+
   return ConfirmInfoBarDelegate::Accept();
 }
