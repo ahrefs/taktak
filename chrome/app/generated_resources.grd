@@ -9007,6 +9007,14 @@ Keep your key file in a safe place. You will need it to create new versions of y
         Some media on this webpage may require Widevine to play. Widevine is a Google extension that loads from Google's servers and cannot be inspected by Taktak. By installing it, you agree to Google’s terms of use.
       </message>
 
+      <!-- Update notifier -->
+      <message name="IDS_UPDATE_NOTIFIER_MESSAGE" desc="Display on update notifier info bar">
+        A new version of Taktak is available. Download the latest version to get the newest features and improvements.
+      </message>
+      <message name="IDS_UPDATE_NOTIFIER_BUTTON_TEXT" desc="The text of the button on update notifier info bar">
+        Download update
+      </message>
+
       <!-- Side panel strings -->
       <message name="IDS_ACCNAME_SIDE_PANEL_RESIZE" is_accessibility_with_no_ui="true" desc="Screen reader announcement when the side panel resize handle is focused.">
         Side Panel Resize Handle
