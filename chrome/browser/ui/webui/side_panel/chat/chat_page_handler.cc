@@ -456,7 +456,7 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
         response->result = result.value();
     } else {
         DVLOG(0) << __func__ << " error -> " << result.error();
-        response->response_type = chat::mojom::ResponseType::ERROR;
+        response->response_type = chat::mojom::ResponseType::CHAT_RESPONSE_ERROR;
         response->result = l10n_util::GetStringUTF8(IDS_CHAT_GENERIC_ERROR);
     }
     page_->OnSubmitActionResponse(response.Clone());
