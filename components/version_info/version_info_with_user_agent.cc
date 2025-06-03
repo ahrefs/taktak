@@ -12,7 +12,7 @@ namespace version_info {
 std::string GetProductNameAndVersionForReducedUserAgent(
     const std::string& build_version) {
   return base::StrCat(
-      {"Chrome/", GetMajorVersionNumber(), ".0.", build_version, ".0"});
+      {"Chrome/", GetMajorVersionNumber(), ".0.", build_version, ".0 ", "Taktak/", GetMajorVersionNumber(), ".0.", build_version, ".0"});
 }
 
 }  // namespace version_info

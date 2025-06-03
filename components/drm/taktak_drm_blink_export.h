@@ -1,0 +1,14 @@
+#ifndef COMPONENTS_DRM_TAKTAK_DRM_BLINK_EXPORT_H_
+#define COMPONENTS_DRM_TAKTAK_DRM_BLINK_EXPORT_H_
+
+#if defined(COMPONENT_BUILD)
+#if defined(IS_TAKTAK_DRM_BLINK_IMPL)
+#define TAKTAK_DRM_BLINK_EXPORT __declspec(dllexport)
+#else
+#define TAKTAK_DRM_BLINK_EXPORT __declspec(dllimport)
+#endif
+#else
+#define TAKTAK_DRM_BLINK_EXPORT
+#endif
+
+#endif  // COMPONENTS_DRM_TAKTAK_DRM_BLINK_EXPORT_H_

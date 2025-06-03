@@ -3,7 +3,20 @@ import("//mojo/public/tools/bindings/mojom.gni")
 mojom("taktak_drm") {
   sources = [ "taktak_drm.mojom" ]
 
+
   export_class_attribute_blink = "CORE_EXPORT"
   export_define_blink = "BLINK_CORE_IMPLEMENTATION=1"
   export_header_blink = "third_party/blink/renderer/core/core_export.h"
+
+#  export_class_attribute_blink = "TAKTAK_DRM_BLINK_EXPORT"
+#  export_define_blink = "IS_TAKTAK_DRM_BLINK_IMPL"
+#  export_header_blink = "components/drm/taktak_drm_blink_export.h"
 }
+
+#component("taktak_drm_blink") {
+#  sources = []
+#  defines = [ "IS_TAKTAK_DRM_BLINK_IMPL" ]
+#
+#  deps = [ ":taktak_drm" ]
+#  visibility = [ "*" ]
+#}

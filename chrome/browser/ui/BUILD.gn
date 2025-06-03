@@ -3194,7 +3194,6 @@ static_library("ui") {
       "//chrome/common/page_content_extractor:mojo_bindings",
       "//components/capture_mode",
       "//components/country_codes",
-      "//components/drm:taktak_drm",
       "//components/html2md",
       "//services/audio/public/mojom",
       "//services/video_capture/public/mojom",

@@ -31,5 +31,8 @@ blink_modules_sources("encryptedmedia") {
     "navigator_request_media_key_system_access.cc",
     "navigator_request_media_key_system_access.h",
   ]
-  deps = [ "//services/metrics/public/cpp:ukm_builders" ]
+  deps = [
+    "//services/metrics/public/cpp:ukm_builders",
+    # "//components/drm:taktak_drm_blink",
+  ]
 }

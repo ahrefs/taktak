@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "base/memory/ptr_util.h"
-#include "components/drm/taktak_drm.mojom-blink.h"
+// #include "components/drm/taktak_drm.mojom-blink.h"
 #include "mojo/public/cpp/bindings/associated_remote.h"
 #include "services/network/public/mojom/permissions_policy/permissions_policy_feature.mojom-blink.h"
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
@@ -129,6 +129,7 @@ void MediaKeySystemAccessInitializer::StartRequestAsync() {
 // Notifies Taktak about the widevine key system access request.
 // This allows Taktak browser to handle DRM-related permissions and settings
 // when a webpage attempts to use Widevine DRM.
+/*
 void NotifyWidevineRequest(MediaKeySystemAccessInitializer* initializer,
                             LocalFrame* frame) {
   if (initializer->KeySystem() == "com.widevine.alpha") {
@@ -143,6 +144,7 @@ void NotifyWidevineRequest(MediaKeySystemAccessInitializer* initializer,
     }
   }
 }
+*/
 
 }  // namespace
 
@@ -228,7 +230,7 @@ NavigatorRequestMediaKeySystemAccess::requestMediaKeySystemAccess(
   media_client->RequestMediaKeySystemAccess(
       WebEncryptedMediaRequest(initializer));
 
-  NotifyWidevineRequest(initializer, window->GetFrame());
+  // NotifyWidevineRequest(initializer, window->GetFrame());
 
   // 7. Return promise.
   return promise;
