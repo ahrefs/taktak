@@ -274,7 +274,7 @@ export class ChatAppElement extends CrLitElement {
                 });
             }
             this.shouldAutoScroll_ = true;
-        } else if (response.responseType == ResponseType.ERROR) {
+        } else if (response.responseType == ResponseType.CHAT_RESPONSE_ERROR) {
             this.isThinking_ = false;
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.currentErrorResult_ = loadTimeData.getString('genericError');

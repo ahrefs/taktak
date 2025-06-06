@@ -14,7 +14,7 @@ enum ResponseType {
     NONE,
     DELTA,
     COMPLETED,
-    ERROR,
+    CHAT_RESPONSE_ERROR,
 };
 
 enum ActionType {
