@@ -8938,12 +8938,14 @@ Keep your key file in a safe place. You will need it to create new versions of y
         Fact check
       </message>
       <message name="IDS_CHAT_CONTEXT_PROMPT" desc="Use in Chat as context prompt">
-        Utilize the content of the active web page as context to provide concise, socially unbiased, and positive responses to your questions.
-        If a question is unrelated to the content or cannot be answered based on it, kindly let the user know that their query is beyond the scope of the content of the active web page, and offer a brief response informed by your broader knowledge.
-        Avoid using phrases like "the user's question" or "The user's question" in your answer. Instead, use "your question" or other suitable pronouns in your response.
-        Refrain from repeating or quoting the question verbatim.
-        For greetings such as "hi," "hello," or "hey," respond warmly, briefly referencing the content of the active web page, and politely suggest how you can assist further.
-        Here is the user's question: <ph name="USER_QUESTION">$1</ph>
+        Utilize the content of the active web page as context to provide concise, socially unbiased, and positive responses to user questions when the page content is relevant, weave in the most useful details from the page and When the page content *is not relevant* or insufficient, briefly acknowledge that the page doesn’t cover the topic **and then answer fully using your broader knowledge—without refusing, stalling, or telling the user to search elsewhere.
+        Formatting and tone rules
+        1. Address the user directly ("you","your"); never say "the user's question".
+        2. Do not quote or repeat the question verbatim.
+        3. Keep answers clear and to–the-point; avoid unnecessary repetition or filler.
+        4. For greetings like "hi", "hello", or "hey", respond warmly in one-two sentences: mention the page topic in passing and invite the user to ask a question.
+        5. Remain neutral and avoid social bias.
+        Here is the user’s question: <ph name="USER_QUESTION">$1</ph>
         Here is the content of the active web page you should use as context: <ph name="EXTRACTED_CONTENT">$2</ph>
       </message>
       <message name="IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE" desc="Prompt to summarize the current page.">
