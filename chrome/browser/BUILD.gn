@@ -76,6 +76,10 @@ declare_args() {
   use_official_enterprise_connectors_api_keys = false
 
   taktak_tel_api_key = ""
+  taktak_tel_api_url = ""
+  taktak_update_check_api_key=""
+  taktak_update_check_api_url=""
+  taktak_download_url=""
 }
 
 additional_modules_list_file =
@@ -101,6 +105,10 @@ if (is_win) {
 
 if (is_official_build) {
   assert(taktak_tel_api_key != "")
+  assert(taktak_tel_api_url != "")
+  assert(taktak_update_check_api_key != "")
+  assert(taktak_update_check_api_url != "")
+  assert(taktak_download_url != "")
 }
 
 buildflag_header("buildflags") {
@@ -111,6 +119,10 @@ buildflag_header("buildflags") {
     "USE_MINIKIN_HYPHENATION=$use_minikin_hyphenation",
     "USE_THIN_LTO=$use_thin_lto",
     "TAKTAK_TEL_API_KEY=\"$taktak_tel_api_key\"",
+    "TAKTAK_TEL_API_URL=\"$taktak_tel_api_url\"",
+    "TAKTAK_UPDATE_CHECK_API_KEY=\"$taktak_update_check_api_key\"",
+    "TAKTAK_UPDATE_CHECK_API_URL=\"$taktak_update_check_api_url\"",
+    "TAKTAK_DOWNLOAD_URL=\"$taktak_download_url\"",
   ]
 
   if (is_win) {

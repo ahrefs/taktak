@@ -19,6 +19,7 @@
 #include "components/vector_icons/vector_icons.h"
 #include "content/public/common/content_switches.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "chrome/browser/buildflags.h"
 
 // static
 infobars::InfoBar* UpdateNotifierInfoBarDelegate::Create(
@@ -75,9 +76,8 @@ bool UpdateNotifierInfoBarDelegate::Accept() {
     return ConfirmInfoBarDelegate::Accept();
   }
 
-  // todo: to replace the url with the actual download url returned from the api
   content::OpenURLParams params(
-      GURL("https://taktak.com/dev"), content::Referrer(),
+      GURL{BUILDFLAG(TAKTAK_DOWNLOAD_URL)}, content::Referrer(),
       WindowOpenDisposition::NEW_FOREGROUND_TAB, ui::PAGE_TRANSITION_LINK,
       false /* is_renderer_initiated */);
   browser->OpenURL(params, /*navigation_handle_callback=*/{});

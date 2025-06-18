@@ -48,8 +48,7 @@ CSApiClient::CSApiClient(
 CSApiClient::~CSApiClient() = default;
 
 void CSApiClient::Post(std::string data, ResultCallback callback) {
-  GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
-                             "analytics.ahrefs.com", "/", "api/event"})};
+  GURL api_url{BUILDFLAG(TAKTAK_TEL_API_URL)};
   DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
 
   DVLOG(0) << "|>> Sending url : " << data;

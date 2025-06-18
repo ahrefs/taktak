@@ -27,6 +27,8 @@
 #include "services/network/public/mojom/url_response_head.mojom.h"
 #include "update_notifier_infobar_delegate.h"
 #include "url/gurl.h"
+#include "base/values.h"
+
 
 namespace {
 class SharedURLLoaderFactory;
@@ -77,12 +79,19 @@ UpdateNotifierPromptManager::UpdateNotifierPromptManager() = default;
 UpdateNotifierPromptManager::~UpdateNotifierPromptManager() = default;
 
 void UpdateNotifierPromptManager::OnCheckNewerVersion(WebRequestResult result) {
-  if (result.response_code() != 200) {
-    DVLOG(0) << "||>  error code: " << result.response_code();
+  if (result.response_code() != 200 ) {
+    DVLOG(0) << "||> Failed checking new version with error code: " << result.response_code();
     return;
   }
-  DVLOG(0) << "||> succeed to check newer version";
-  InitTabStripTracker();
+
+  if (result.value_body().is_dict() ) {
+    const base::Value::Dict &dict = result.value_body().GetDict();
+    const std::optional<bool> success = dict.FindBool("success");
+    const std::optional<bool> data = dict.FindBool("data");
+    if (success.has_value() && success.value() && data.has_value() && data.value()) {
+      InitTabStripTracker();
+    }
+  }
 }
 
 void UpdateNotifierPromptManager::CreateInfoBarForWebContents(

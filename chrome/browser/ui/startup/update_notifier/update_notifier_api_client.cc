@@ -1,4 +1,6 @@
 #include "update_notifier_api_client.h"
+#include "base/version_info/version_info.h"
+#include "chrome/browser/buildflags.h"
 
 namespace {
 
@@ -35,21 +37,11 @@ UpdateNotifierApiClient::UpdateNotifierApiClient(
 UpdateNotifierApiClient::~UpdateNotifierApiClient() = default;
 
 void UpdateNotifierApiClient::Post(std::string data, ResultCallback callback) {
-  // todo: testing with supabase api, need to implement our own api
-  GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
-                             "yqeigqpelhcympgbedvj.supabase.co", "/",
-                             "rest/v1/updater"})};
+  GURL api_url(BUILDFLAG(TAKTAK_UPDATE_CHECK_API_URL) + std::string("/") + std::string(version_info::GetVersionNumber()));
   DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
 
   base::flat_map<std::string, std::string> headers;
-  headers.emplace("apikey",
-                  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-                  "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxZWlncXBlbGhjeW1wZ2JlZHZq"
-                  "Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1Njk2NDEsImV4cCI6MjA2NDE0"
-                  "NTY0MX0.tbQQBBUyYjHlqkYKuvK7ETPI0q6suq0KXLCTdNWJmYs");
-
-  // todo: to provide version number to the api
-  // const std::string payload = "{\"version\":\"" + data + "\"}";
+  headers.emplace("x-api-key", BUILDFLAG(TAKTAK_UPDATE_CHECK_API_KEY));
 
   web_request_helper_.Request(kHttpMethod, api_url, {}, kContentType,
                               std::move(callback), headers, {});
