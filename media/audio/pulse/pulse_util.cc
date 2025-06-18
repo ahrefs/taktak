@@ -44,7 +44,7 @@ namespace {
 constexpr char kBrowserDisplayName[] = "google-chrome";
 #define PRODUCT_STRING "Google Chrome"
 #else
-constexpr char kBrowserDisplayName[] = "chromium-browser";
+constexpr char kBrowserDisplayName[] = "taktak-browser";
 #define PRODUCT_STRING "Chromium"
 #endif
 
