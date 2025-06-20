@@ -425,7 +425,7 @@ template("linux_package") {
   if (is_chrome_branded) {
     package = "google-chrome"
   } else {
-    package = "chromium-browser"
+    package = "taktak-browser"
   }
 
   deb_target_name = "${target_name}_deb"

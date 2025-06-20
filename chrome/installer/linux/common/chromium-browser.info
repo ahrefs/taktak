@@ -6,7 +6,9 @@
 # chromium-browser packages for various platforms.
 
 # Base name of the package.
-PACKAGE="chromium-browser"
+# PACKAGE="chromium-browser"
+PACKAGE="taktak-browser"
+
 
 # Filename of the main executable (for generating launcher scripts, etc.)
 PROGNAME=chrome
