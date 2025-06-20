@@ -1705,7 +1705,7 @@ if (is_linux || is_chromeos) {
       }
     }
     extract_symbols("chrome_symbols") {
-      binary = "$root_out_dir/chrome"
+      binary = "$root_out_dir/taktak"
 
       if (current_cpu == "x86") {
         # GYP used "ia32" so keep that naming for back-compat.
@@ -1816,7 +1816,7 @@ if (is_linux || is_chromeos) {
 
 if (_cros_generate_embed_section_target) {
   embed_sections("section_embedded_chrome_binary") {
-    binary_input = "$root_out_dir/chrome"
+    binary_input = "$root_out_dir/taktak"
     sections_embedded_binary_output = "$root_out_dir/chrome.sections_embedded"
     deps = [ ":chrome" ]
   }
