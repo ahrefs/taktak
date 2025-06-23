@@ -17,9 +17,9 @@ import("//third_party/widevine/cdm/widevine.gni")
 import("//ui/gl/features.gni")
 import("//ui/qt/qt.gni")
 
-if (bundle_widevine_cdm) {
-  import("//media/cdm/library_cdm/cdm_paths.gni")
-}
+#if (bundle_widevine_cdm) {
+#  import("//media/cdm/library_cdm/cdm_paths.gni")
+#}
 
 declare_args() {
   # Enables checks that ensure the packages are installable on all supported
@@ -41,10 +41,10 @@ packaging_files_shlibs = [
   "$root_out_dir/libGLESv2.so",
 ]
 
-if (bundle_widevine_cdm) {
-  packaging_files_shlibs +=
-      [ "$root_out_dir/$widevine_cdm_path/libwidevinecdm.so" ]
-}
+#if (bundle_widevine_cdm) {
+#  packaging_files_shlibs +=
+#      [ "$root_out_dir/$widevine_cdm_path/libwidevinecdm.so" ]
+#}
 
 if (angle_shared_libvulkan && !is_chromeos) {
   packaging_files_shlibs += [ "$root_out_dir/libvulkan.so.1" ]
@@ -126,35 +126,35 @@ action("merge_deb_dependencies") {
                       root_build_dir)
 }
 
-action_foreach("calculate_rpm_dependencies") {
-  deps = [ ":installer_deps" ]
-  script = "rpm/calculate_package_deps.py"
-  sources = packaging_files_binaries
-  inputs = [ "rpm/dist_package_provides.json" ]
-  outputs = [ "$root_out_dir/rpm_{{source_name_part}}.deps" ]
-  args = [
-    "{{source}}",
-    "rpm_{{source_name_part}}.deps",
-  ]
-  args += rebase_path(packaging_files_shlibs, root_build_dir)
-  if (is_linux && target_cpu == "x64" && enable_distro_version_check) {
-    args += [ "--distro-check" ]
-  }
-}
-
-action("merge_rpm_dependencies") {
-  deps = [ ":calculate_rpm_dependencies" ]
-  script = "rpm/merge_package_deps.py"
-  additional_deps = "rpm/additional_deps"
-  inputs = [ additional_deps ]
-  outputs = [ "$root_out_dir/rpm_common.deps" ]
-  args = [
-    "rpm_common.deps",
-    rebase_path(additional_deps, root_build_dir),
-  ]
-  args += rebase_path(get_target_outputs(":calculate_rpm_dependencies"),
-                      root_build_dir)
-}
+#action_foreach("calculate_rpm_dependencies") {
+#  deps = [ ":installer_deps" ]
+#  script = "rpm/calculate_package_deps.py"
+#  sources = packaging_files_binaries
+#  inputs = [ "rpm/dist_package_provides.json" ]
+#  outputs = [ "$root_out_dir/rpm_{{source_name_part}}.deps" ]
+#  args = [
+#    "{{source}}",
+#    "rpm_{{source_name_part}}.deps",
+#  ]
+#  args += rebase_path(packaging_files_shlibs, root_build_dir)
+#  if (is_linux && target_cpu == "x64" && enable_distro_version_check) {
+#    args += [ "--distro-check" ]
+#  }
+#}
+#
+#action("merge_rpm_dependencies") {
+#  deps = [ ":calculate_rpm_dependencies" ]
+#  script = "rpm/merge_package_deps.py"
+#  additional_deps = "rpm/additional_deps"
+#  inputs = [ additional_deps ]
+#  outputs = [ "$root_out_dir/rpm_common.deps" ]
+#  args = [
+#    "rpm_common.deps",
+#    rebase_path(additional_deps, root_build_dir),
+#  ]
+#  args += rebase_path(get_target_outputs(":calculate_rpm_dependencies"),
+#                      root_build_dir)
+#}
 
 strip_binary("strip_chrome_binary") {
   binary_input = "$root_out_dir/taktak"
@@ -325,16 +325,16 @@ copy("theme_files") {
   outputs = [ "$root_out_dir/installer/theme/{{source_file_part}}" ]
 }
 
-if (!is_chromeos) {
-  copy("rpm_packaging_files") {
-    visibility = [ ":*" ]
-    sources = [
-      "rpm/build.sh",
-      "rpm/chrome.spec.template",
-    ]
-    outputs = [ "$root_out_dir/installer/rpm/{{source_file_part}}" ]
-  }
-}
+#if (!is_chromeos) {
+#  copy("rpm_packaging_files") {
+#    visibility = [ ":*" ]
+#    sources = [
+#      "rpm/build.sh",
+#      "rpm/chrome.spec.template",
+#    ]
+#    outputs = [ "$root_out_dir/installer/rpm/{{source_file_part}}" ]
+#  }
+#}
 
 process_version("save_build_info") {
   # Just output the default version info variables (no template).
@@ -375,9 +375,9 @@ group("installer_deps") {
     "//third_party/angle:libEGL",
     "//third_party/angle:libGLESv2",
   ]
-  if (bundle_widevine_cdm) {
-    public_deps += [ "//third_party/widevine/cdm" ]
-  }
+#  if (bundle_widevine_cdm) {
+#    public_deps += [ "//third_party/widevine/cdm" ]
+#  }
   if (angle_shared_libvulkan && !is_chromeos) {
     public_deps += [
       ":strip_libvulkan_shlib",
@@ -391,9 +391,9 @@ group("installer_deps") {
       "//third_party/swiftshader/src/Vulkan:swiftshader_libvulkan",
     ]
   }
-  if (!is_chromeos) {
-    public_deps += [ ":rpm_packaging_files" ]
-  }
+#  if (!is_chromeos) {
+#    public_deps += [ ":rpm_packaging_files" ]
+#  }
   if (build_with_internal_optimization_guide) {
     public_deps += [
       ":strip_optimization_guide",
@@ -480,63 +480,63 @@ template("linux_package") {
     ]
   }
 
-  if (!is_chromeos) {
-    rpm_target_name = "${target_name}_rpm"
-    action(rpm_target_name) {
-      visibility = [ ":*" ]
-      script = "//build/gn_run_binary.py"
-
-      if (current_cpu == "x86") {
-        rpm_arch = "i386"
-      } else if (current_cpu == "x64") {
-        rpm_arch = "x86_64"
-      } else if (current_cpu == "arm") {
-        rpm_arch = "armhf"
-      } else if (current_cpu == "arm64") {
-        rpm_arch = "aarch64"
-      } else if (current_cpu == "mipsel") {
-        rpm_arch = "mipsel"
-      } else if (current_cpu == "mips64el") {
-        rpm_arch = "mips64el"
-      } else if (current_cpu == "loong64") {
-        rpm_arch = "loongarch64"
-      } else if (current_cpu == "riscv64") {
-        rpm_arch = "riscv64"
-      } else {
-        assert(false, "Linux installer not configured for this architecture.")
-      }
-
-      inputs = packaging_files
-      outputs = [ "$root_out_dir/${package}-${channel}-${chrome_version_full}-1.${rpm_arch}.rpm" ]
-
-      args = [
-        rebase_path("$root_out_dir/installer/rpm/build.sh", root_build_dir),
-        "-a",
-        rpm_arch,
-        "-c",
-        invoker.channel,
-        "-d",
-        branding_path_component,
-        "-o",
-        rebase_path(root_out_dir, root_build_dir),
-        "-t",
-        target_os,
-      ]
-      if (is_official_build) {
-        args += [ "-f" ]
-      }
-      deps = [
-        ":installer_deps",
-        ":merge_rpm_dependencies",
-      ]
-    }
-  }
+#  if (!is_chromeos) {
+#    rpm_target_name = "${target_name}_rpm"
+#    action(rpm_target_name) {
+#      visibility = [ ":*" ]
+#      script = "//build/gn_run_binary.py"
+#
+#      if (current_cpu == "x86") {
+#        rpm_arch = "i386"
+#      } else if (current_cpu == "x64") {
+#        rpm_arch = "x86_64"
+#      } else if (current_cpu == "arm") {
+#        rpm_arch = "armhf"
+#      } else if (current_cpu == "arm64") {
+#        rpm_arch = "aarch64"
+#      } else if (current_cpu == "mipsel") {
+#        rpm_arch = "mipsel"
+#      } else if (current_cpu == "mips64el") {
+#        rpm_arch = "mips64el"
+#      } else if (current_cpu == "loong64") {
+#        rpm_arch = "loongarch64"
+#      } else if (current_cpu == "riscv64") {
+#        rpm_arch = "riscv64"
+#      } else {
+#        assert(false, "Linux installer not configured for this architecture.")
+#      }
+#
+#      inputs = packaging_files
+#      outputs = [ "$root_out_dir/${package}-${channel}-${chrome_version_full}-1.${rpm_arch}.rpm" ]
+#
+#      args = [
+#        rebase_path("$root_out_dir/installer/rpm/build.sh", root_build_dir),
+#        "-a",
+#        rpm_arch,
+#        "-c",
+#        invoker.channel,
+#        "-d",
+#        branding_path_component,
+#        "-o",
+#        rebase_path(root_out_dir, root_build_dir),
+#        "-t",
+#        target_os,
+#      ]
+#      if (is_official_build) {
+#        args += [ "-f" ]
+#      }
+#      deps = [
+#        ":installer_deps",
+#        ":merge_rpm_dependencies",
+#      ]
+#    }
+#  }
 
   group(target_name) {
     deps = [ ":$deb_target_name" ]
-    if (!is_chromeos) {
-      deps += [ ":$rpm_target_name" ]
-    }
+#    if (!is_chromeos) {
+#      deps += [ ":$rpm_target_name" ]
+#    }
   }
 }
 
