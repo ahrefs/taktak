@@ -105,7 +105,7 @@ Comment[vi]=Truy cập Internet
 Comment[zh_CN]=访问互联网
 Comment[zh_HK]=連線到網際網路
 Comment[zh_TW]=連線到網際網路
-Exec=/opt/taktak.com/taktak/taktak
+Exec=/usr/bin/@@USR_BIN_SYMLINK_NAME@@ %U
 StartupNotify=true
 Terminal=false
 Icon=@@PACKAGE@@
@@ -166,7 +166,7 @@ Name[uk]=Нове вікно
 Name[vi]=Cửa sổ Mới
 Name[zh_CN]=新建窗口
 Name[zh_TW]=開新視窗
-Exec=/opt/taktak.com/taktak/taktak
+Exec=/usr/bin/@@USR_BIN_SYMLINK_NAME@@ %U
 
 [Desktop Action new-private-window]
 Name=New Incognito Window
