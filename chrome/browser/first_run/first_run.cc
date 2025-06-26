@@ -327,15 +327,16 @@ void RegisterProfilePrefs(
 }
 
 bool IsChromeFirstRun() {
-  if (g_first_run == internal::FIRST_RUN_UNKNOWN) {
-    const base::CommandLine* command_line =
-        base::CommandLine::ForCurrentProcess();
-    g_first_run = internal::DetermineFirstRunState(
-        IsFirstRunSentinelPresent(),
-        command_line->HasSwitch(switches::kForceFirstRun),
-        command_line->HasSwitch(switches::kNoFirstRun));
-  }
-  return g_first_run == internal::FIRST_RUN_TRUE;
+//  if (g_first_run == internal::FIRST_RUN_UNKNOWN) {
+//    const base::CommandLine* command_line =
+//        base::CommandLine::ForCurrentProcess();
+//    g_first_run = internal::DetermineFirstRunState(
+//        IsFirstRunSentinelPresent(),
+//        command_line->HasSwitch(switches::kForceFirstRun),
+//        command_line->HasSwitch(switches::kNoFirstRun));
+//  }
+//  return g_first_run == internal::FIRST_RUN_TRUE;
+  return false;
 }
 
 #if BUILDFLAG(IS_MAC)

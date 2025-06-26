@@ -5463,7 +5463,7 @@ Use Ctrl + Alt + Brightness down to zoom out.</translation>
 <translation id="4807098396393229769">Name on card</translation>
 <translation id="4807122856660838973">Turn on Safe Browsing</translation>
 <translation id="4807514039636325497">DBus Details</translation>
-<translation id="4808525520374557629">Get notifications that suggest ways to improve detected performance issues. <ph name="BEGIN_LINK" />Learn more about performance issue alerts<ph name="END_LINK" /></translation>
+<translation id="4808525520374557629">Get notifications that suggest ways to improve detected performance issues.</translation>
 <translation id="4808667324955055115">Pop-ups blocked:</translation>
 <translation id="4809079943450490359">Instructions from your device administrator:</translation>
 <translation id="4809447465126035330">Delete</translation>
@@ -6059,7 +6059,7 @@ Use Ctrl + Alt + Brightness down to zoom out.</translation>
 <translation id="5225324770654022472">Show apps shortcut</translation>
 <translation id="52254442782792731">Current visibility setting is not set yet</translation>
 <translation id="5225463052809312700">Turn on camera</translation>
-<translation id="5226514125747186">A dotted circle appears around site icons. <ph name="BEGIN_LINK" />Learn more about inactive tabs<ph name="END_LINK" /></translation>
+<translation id="5226514125747186">A dotted circle appears around site icons.</translation>
 <translation id="5226731562812684363">Websites are not allowed to use your location</translation>
 <translation id="5227679487546032910">Default teal avatar</translation>
 <translation id="5228245824943774148"><ph name="NUM_DEVICES_CONNECTED" /> devices connected</translation>
@@ -8343,7 +8343,7 @@ You have # more compromised passwords. Google Password Manager recommends checki
 <translation id="6878862640969460273">Landscape</translation>
 <translation id="6880587130513028875">Images were blocked on this page.</translation>
 <translation id="6881845890692344060">Your administrator has logged out. You're in control now.</translation>
-<translation id="6882210908253838664">If a site isn’t working, you can try giving it temporary permission to use third-party cookies. <ph name="BEGIN_LINK" />Learn more<ph name="END_LINK" /></translation>
+<translation id="6882210908253838664">If a site isn’t working, you can try giving it temporary permission to use third-party cookies.</translation>
 <translation id="6883319974225028188">Oops!  The system failed to save device configuration.</translation>
 <translation id="6883606786470492001">Manage your ad topics and other settings to limit what sites can learn about you to show you personalised ads</translation>
 <translation id="6884474387073389421">Are you sure that you want to delete the selected sign-in data?</translation>

@@ -2249,7 +2249,7 @@
     Most sites should work as expected
   </message>
   <message name="IDS_PRIVACY_SANDBOX_TRACKING_PROTECTION_BULLET_TWO_DESCRIPTION" desc="Description of the second explanatory bullet point on the Tracking Protection settings page." formatter_data="android_java">
-    If a site isn’t working, you can try giving it temporary permission to use third-party cookies. <ph name="BEGIN_LINK">&lt;link&gt;</ph>Learn more<ph name="END_LINK">&lt;/link&gt;</ph>
+    If a site isn’t working, you can try giving it temporary permission to use third-party cookies.
   </message>
   <message name="IDS_PRIVACY_SANDBOX_TRACKING_PROTECTION_ADVANCED_CATEGORY" desc="Category title for advanced settings on the Tracking Protection settings page." formatter_data="android_java">
     Advanced

@@ -266,7 +266,7 @@ Some features may be unavailable and changes to preferences won't be saved.</tra
 <translation id="4531137820806573936">Chromium needs permission to map your surroundings and track your hands</translation>
 <translation id="4534145890176164066">Chromium understands forms better and can autofill them faster for you</translation>
 <translation id="4536805923587466102">You're already signed in as <ph name="USER_EMAIL_ADDRESS" /> in another Chromium profile</translation>
-<translation id="4548534452171747496">Chromium preloads pages which makes browsing and searching faster. <ph name="BEGIN_LINK" />Learn more about preload pages<ph name="END_LINK" /></translation>
+<translation id="4548534452171747496">Chromium preloads pages which makes browsing and searching faster.</translation>
 <translation id="4567424176335768812">You're signed in as <ph name="USER_EMAIL_ADDRESS" />. Now you can access your bookmarks, history and other settings on all your signed in devices.</translation>
 <translation id="4570813286784708942">Chromium blocked this download because you turned Safe Browsing off and the file can't be verified</translation>
 <translation id="4594305310729380060">To Password Manager on this device</translation>
@@ -336,7 +336,7 @@ Some features may be unavailable and changes to preferences won't be saved.</tra
 <translation id="5698481217667032250">Display Chromium in this language</translation>
 <translation id="569897634095159764">Unable to connect to the Internet. Proxy server requires authentication.</translation>
 <translation id="5761096224651992291">You haven't visited recently. Chromium removed <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" />, <ph name="PERMISSION_3" /></translation>
-<translation id="5768371961535086509">Chromium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Chromium fast. Your inactive tabs automatically become active again when you go back to them. <ph name="BEGIN_LINK" />Learn more about Memory Saver<ph name="END_LINK" /></translation>
+<translation id="5768371961535086509">Chromium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Chromium fast. Your inactive tabs automatically become active again when you go back to them.</translation>
 <translation id="5775198138441669627">If you forgot your passphrase or want to change this setting, <ph name="SETTINGS_LINK" /> the Chromium data in your account</translation>
 <translation id="5800158606660203929">Customise and control Chromium. Set Chromium as your default.</translation>
 <translation id="5809516625706423866">Unable to connect to the Internet. HTTP 401 Unauthorised. Please check your proxy configuration.</translation>
