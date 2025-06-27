@@ -228,7 +228,10 @@ NavigatorRequestMediaKeySystemAccess::requestMediaKeySystemAccess(
   media_client->RequestMediaKeySystemAccess(
       WebEncryptedMediaRequest(initializer));
 
+// Taktak MVP doesn't support DRM playback on Windows.
+#if BUILDFLAG(IS_LINUX || IS_MAC)
   NotifyWidevineRequest(initializer, window->GetFrame());
+#endif
 
   // 7. Return promise.
   return promise;
