@@ -85,7 +85,8 @@ UpdateNotifierPromptManager::~UpdateNotifierPromptManager() = default;
 
 void UpdateNotifierPromptManager::OnCheckNewerVersion(WebRequestResult result) {
   if (result.response_code() != 200 ) {
-    DVLOG(0) << "||> Failed checking new version with error code: " << result.response_code();
+    DVLOG(0) << __func__ << " |>> Failed checking new version with error code: "
+             << result.response_code();
     return;
   }
 

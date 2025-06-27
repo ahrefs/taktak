@@ -252,8 +252,6 @@ void ChatPageHandler::GetChatState(GetChatStateCallback callback) {
 
 void ChatPageHandler::SaveConversation(chat::mojom::SavableConversationModelPtr conversation) {
     ChatHistoryCache::GetInstance()->SaveConversation(conversation.Clone());
-    DVLOG(0) << __func__ << " conversation count: "
-             << ChatHistoryCache::GetInstance()->GetChatState()->conversations.size();
 }
 
 void ChatPageHandler::GetSiteInfoFromCache(GetSiteInfoFromCacheCallback callback) {
@@ -352,21 +350,20 @@ void ChatPageHandler::OnPageContentExtracted(
         bool enable_thinking,
         std::string content,
         std::string url) {
+  DVLOG(0) << __func__ << " |>> extracted content -> " << content;
 
-    DVLOG(0) << __func__ << " extracted content -> " << content;
+  extracted_content_cache_.clear();
 
-    extracted_content_cache_.clear();
-
-    std::string max_content = content;
-    if (content.length() > kMaxUserPromptLength) {
-        max_content = content.substr(0, kMaxUserPromptLength);
-    }
+  std::string max_content = content;
+  if (content.length() > kMaxUserPromptLength) {
+    max_content = content.substr(0, kMaxUserPromptLength);
+  }
 
     if (action_type == chat::mojom::ActionType::TRANSLATE) {
       html2md::Converter c(max_content);
       auto md = c.convert();
       max_content = md;
-      DVLOG(0) << __func__ << " markdown content -> " << max_content;
+      DVLOG(0) << __func__ << " |>> markdown content -> " << max_content;
       // max_content = html2md::Convert(max_content);
     }
 
@@ -456,11 +453,9 @@ void ChatPageHandler::SubmitQueryCompletedCallback(
     response->action_type = action_type;
 
     if (result.has_value()) {
-        DVLOG(0) << __func__ << " success -> " << result.value();
         response->response_type = chat::mojom::ResponseType::COMPLETED;
         response->result = result.value();
     } else {
-        DVLOG(0) << __func__ << " error -> " << result.error();
         response->response_type = chat::mojom::ResponseType::CHAT_RESPONSE_ERROR;
         response->result = l10n_util::GetStringUTF8(IDS_CHAT_GENERIC_ERROR);
     }

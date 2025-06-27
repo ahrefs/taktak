@@ -77,9 +77,12 @@ declare_args() {
 
   taktak_tel_api_key = ""
   taktak_tel_api_url = ""
-  taktak_update_check_api_key=""
-  taktak_update_check_api_url=""
-  taktak_download_url=""
+  taktak_update_check_api_key = ""
+  taktak_update_check_api_url = ""
+  taktak_download_url = ""
+  taktak_chat_api_url = ""
+  taktak_chat_deepseek_model = ""
+  taktak_chat_mistral_model = ""
 }
 
 additional_modules_list_file =
@@ -109,6 +112,9 @@ if (is_official_build) {
   assert(taktak_update_check_api_key != "")
   assert(taktak_update_check_api_url != "")
   assert(taktak_download_url != "")
+  assert(taktak_chat_api_url != "")
+  assert(taktak_chat_deepseek_model != "")
+  assert(taktak_chat_mistral_model != "")
 }
 
 buildflag_header("buildflags") {
@@ -123,6 +129,9 @@ buildflag_header("buildflags") {
     "TAKTAK_UPDATE_CHECK_API_KEY=\"$taktak_update_check_api_key\"",
     "TAKTAK_UPDATE_CHECK_API_URL=\"$taktak_update_check_api_url\"",
     "TAKTAK_DOWNLOAD_URL=\"$taktak_download_url\"",
+    "TAKTAK_CHAT_API_URL=\"$taktak_chat_api_url\"",
+    "TAKTAK_CHAT_DEEPSEEK_MODEL=\"$taktak_chat_deepseek_model\"",
+    "TAKTAK_CHAT_MISTRAL_MODEL=\"$taktak_chat_mistral_model\"",
   ]
 
   if (is_win) {

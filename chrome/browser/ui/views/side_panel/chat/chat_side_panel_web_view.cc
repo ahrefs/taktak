@@ -73,7 +73,7 @@ void ChatSidePanelWebView::TabChangedAt(content::WebContents* contents,
     GURL url = contents->GetLastCommittedURL();
     if (last_visited_url_ != url) {
       last_visited_url_ = url;
-      DVLOG(0) << " |>> ChatSidePanelWebView::TabChangedAt: " << url.spec();
+      DVLOG(0) << __func__ << " |>> Tab changed to " << url.spec();
       UpdateActiveSiteInfo(
           browser_->tab_strip_model()->GetWebContentsAt(index));
     }

@@ -42,7 +42,6 @@ std::string GetHashedMachineId(std::string machine_id) {
   std::string machine_id_str = base::NumberToString(hashed_machine_id);
   return machine_id_str;
 }
-
 }  // namespace
 
 CSApiClient::CSApiClient(
@@ -74,7 +73,7 @@ void CSApiClient::Post(std::string data, ResultCallback callback) {
   std::string json_payload;
   base::JSONWriter::Write(dict, &json_payload);
 
-  DVLOG(0) << "|>> Sending payload : " << json_payload;
+  DVLOG(0) << __func__ << " |>> Sending payload : " << json_payload;
 
   web_request_helper_.Request(kHttpMethod, api_url, json_payload, kContentType,
                               std::move(callback), {}, {});

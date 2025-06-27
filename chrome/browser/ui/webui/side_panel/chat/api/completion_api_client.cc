@@ -5,27 +5,29 @@
 
 #include "completion_api_client.h"
 
+#include <base/containers/flat_map.h>
+
 #include <optional>
 #include <string_view>
 #include <utility>
 
-#include <base/containers/flat_map.h>
 #include "base/containers/flat_set.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
+#include "base/i18n/time_formatting.h"
 #include "base/json/json_writer.h"
 #include "base/no_destructor.h"
 #include "base/strings/strcat.h"
+#include "base/strings/utf_string_conversions.h"
+#include "base/time/time.h"
 #include "base/values.h"
+#include "chrome/browser/buildflags.h"
+#include "chrome/grit/generated_resources.h"
 #include "net/http/http_status_code.h"
 #include "net/traffic_annotation/network_traffic_annotation.h"
 #include "services/network/public/cpp/simple_url_loader.h"
-#include "url/gurl.h"
 #include "ui/base/l10n/l10n_util.h"
-#include "base/i18n/time_formatting.h"
-#include "base/strings/utf_string_conversions.h"
-#include "base/time/time.h"
-#include "chrome/grit/generated_resources.h"
+#include "url/gurl.h"
 
 namespace {
 
@@ -54,8 +56,9 @@ namespace {
     std::string CreateJSONRequestBody(const std::vector<struct CompletionMessage> &messages,
                                       bool enable_thinking) {
         base::Value::Dict dict;
-        const std::string model = enable_thinking ? "DeepSeek-R1-Distill-Qwen-32B" : "Mixtral-8x7B-Instruct-v0.1";
-        // dict.Set("max_tokens", enable_thinking ? 8'000 : 2'000);
+        const std::string model = enable_thinking
+                                      ? BUILDFLAG(TAKTAK_CHAT_DEEPSEEK_MODEL)
+                                      : BUILDFLAG(TAKTAK_CHAT_MISTRAL_MODEL);
         dict.Set("max_tokens", 8'000);
         dict.Set("stream", true);
         dict.Set("top_p", 0.7);
@@ -73,7 +76,7 @@ namespace {
 
         std::string json;
         base::JSONWriter::Write(dict, &json);
-        DVLOG(0) << "Request body: " << json;
+        DVLOG(0) << __func__ << " |>> Request body: " << json;
         return json;
     }
 }  // namespace
@@ -91,29 +94,28 @@ void CompletionApiClient::QueryPrompt(
         GenerationCompletedCallback data_completed_callback,
         GenerationDataCallback
         data_received_callback /* = base::NullCallback() */) {
-    GURL api_url{base::StrCat({url::kHttpsScheme, url::kStandardSchemeSeparator,
-                               "api.yep.com", "/", "v1/chat/completions"})};
-    DCHECK(api_url.is_valid()) << "Invalid Web Url: " << api_url.spec();
+  GURL api_url{BUILDFLAG(TAKTAK_CHAT_API_URL)};
+  DCHECK(api_url.is_valid()) << "Invalid Web Url: " << api_url.spec();
 
-    base::flat_map<std::string, std::string> headers;
-    headers.emplace("Accept", "text/event-stream");
+  base::flat_map<std::string, std::string> headers;
+  headers.emplace("Accept", "text/event-stream");
 
-    auto on_received = base::BindRepeating(
-            &CompletionApiClient::OnQueryDataReceived, weak_ptr_factory_.GetWeakPtr(),
-            std::move(data_received_callback));
-    auto on_complete = base::BindOnce(&CompletionApiClient::OnQueryCompleted,
-                                      weak_ptr_factory_.GetWeakPtr(),
-                                      std::move(data_completed_callback));
+  auto on_received = base::BindRepeating(
+      &CompletionApiClient::OnQueryDataReceived, weak_ptr_factory_.GetWeakPtr(),
+      std::move(data_received_callback));
+  auto on_complete = base::BindOnce(&CompletionApiClient::OnQueryCompleted,
+                                    weak_ptr_factory_.GetWeakPtr(),
+                                    std::move(data_completed_callback));
 
-    const std::string request_body = CreateJSONRequestBody(completion_messages, enable_thinking);
+  const std::string request_body =
+      CreateJSONRequestBody(completion_messages, enable_thinking);
 
-    web_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
-                                   "application/json", std::move(on_received),
-                                   std::move(on_complete), headers, {});
+  web_request_helper_.RequestSSE(kHttpMethod, api_url, request_body,
+                                 "application/json", std::move(on_received),
+                                 std::move(on_complete), headers, {});
 }
 
 void CompletionApiClient::ClearAllQueries() {
-    DVLOG(1) << "Clearing all queries";
     web_request_helper_.CancelAll();
     entire_completion_result.clear();
 }
@@ -154,14 +156,12 @@ void CompletionApiClient::OnQueryCompleted(GenerationCompletedCallback callback,
 
   // Handle error
   chat::mojom::APIErrorType error;
-  DVLOG(1) << "Error response_code: " << result.response_code();
-  DVLOG(1) << "Error error_code: " << result.error_code();
 
   if (result.value_body().is_dict()) {
     const std::string* value =
         result.value_body().GetDict().FindString("message");
     if (value) {
-      DVLOG(1) << "Error message: " << *value;
+      DVLOG(0) << __func__ << " |>> Error message: " << *value;
     }
   }
 

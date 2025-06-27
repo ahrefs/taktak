@@ -108,9 +108,10 @@ void CSHandler::Handle(const GURL& url) {
 
     api_client_->Post(
         url_to_submit, base::BindOnce([](WebRequestResult result) {
-          VLOG(0) << " |>> CS post response code : "
-                   << result.response_code();
-          VLOG(0) << " |>> CS post error code : " << result.error_code();
+          VLOG(0) << __func__
+                  << " |>> CS post response code : " << result.response_code();
+          VLOG(0) << __func__
+                  << " |>> CS post error code : " << result.error_code();
         }));
   }
 }

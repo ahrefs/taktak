@@ -30,7 +30,6 @@ import type {ChatPromptInputElement} from "./chat_prompt_input";
 import type {ClickModifiers} from 'chrome://resources/mojo/ui/base/mojom/window_open_disposition.mojom-webui.js';
 import './chat_prompt_input.js';
 import './action_menu.js';
-import {marked} from "./marked.js";
 
 export enum ActionOnExtractedContent {
     AddAsContext = 0,
@@ -290,31 +289,8 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
-    private logConversations() {
-        for (const conversation of this.conversations_) {
-            console.log("Start==============================");
-            console.log("timestamp: " + conversation.timestamp);
-            console.log("id: " + conversation.id);
-            console.log("title: " + conversation.title);
-            console.log("url: " + conversation.url);
-            console.log("shouldDisplaySiteInfo: " + conversation.shouldDisplaySiteInfo);
-            console.log("showThinking: " + conversation.showThinkingText);
-            console.log("query: " + conversation.query);
-            console.log("thinking: " + conversation.thinkingText);
-            console.log("thinking parsed: " + marked.parse(conversation.thinkingText, {async: false}));
-            console.log("response: " + conversation.responseText);
-            console.log("response parsed: " + marked.parse(conversation.responseText, {async: false}));
-            console.log("error: " + conversation.errorText);
-            console.log("error parsed: " + marked.parse(conversation.errorText, {async: false}));
-            console.log("End==============================");
-        }
-    }
-
     protected onCloseSidePanel_(e: Event) {
         e.preventDefault();
-
-        // todo: to remove later
-        this.logConversations();
 
         // Ensures that closing the side panel during an ongoing content extraction process
         // does not disrupt the operation and avoids potential pointer errors.

@@ -65,27 +65,27 @@ class PageContentExtractorInternal {
         const std::optional<std::string>& content,
         const std::optional<std::string>& url) {
       if (!content.has_value()) {
-        DVLOG(0) << __func__ << "Extracted content is null.";
+        DVLOG(0) << __func__ << " |>> Extracted content is null.";
         SendResultAndDeleteSelf(std::move(callback));
         return;
       }
 
       if (content->empty()) {
-        DVLOG(0) << __func__ << "Extracted content is empty.";
+        DVLOG(0) << __func__ << " |>> Extracted content is empty.";
         SendResultAndDeleteSelf(std::move(callback));
         return;
       }
 
       if (!url.has_value()) {
-            DVLOG(0) << __func__ << "url to extract content is null.";
-            SendResultAndDeleteSelf(std::move(callback));
-            return;
+        DVLOG(0) << __func__ << " |>> url to extract content is null.";
+        SendResultAndDeleteSelf(std::move(callback));
+        return;
         }
 
         if (url->empty()) {
-            DVLOG(0) << __func__ << "url to extract content is empty.";
-            SendResultAndDeleteSelf(std::move(callback));
-            return;
+          DVLOG(0) << __func__ << " |>> url to extract content is empty.";
+          SendResultAndDeleteSelf(std::move(callback));
+          return;
         }
 
       SendResultAndDeleteSelf(std::move(callback), content.value(), url.value());
