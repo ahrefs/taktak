@@ -1,3 +1,8 @@
+// Copyright (c) 2025 The Taktak Authors. All rights reserved.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/2.0/.
+
 #include "cs_api_client.h"
 
 #include "base/uuid.h"
@@ -50,8 +55,6 @@ CSApiClient::~CSApiClient() = default;
 void CSApiClient::Post(std::string data, ResultCallback callback) {
   GURL api_url{BUILDFLAG(TAKTAK_TEL_API_URL)};
   DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
-
-  DVLOG(0) << "|>> Sending url : " << data;
 
   base::Value::Dict dict;
   dict.Set("n", "pageview");

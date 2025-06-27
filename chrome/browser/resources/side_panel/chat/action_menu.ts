@@ -1,3 +1,8 @@
+// Copyright (c) 2025 The Taktak Authors. All rights reserved.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import '//resources/cr_elements/cr_action_menu/cr_action_menu.js';
 import '//resources/cr_elements/cr_dialog/cr_dialog.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';

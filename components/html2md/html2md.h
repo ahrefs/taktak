@@ -1,7 +1,3 @@
-//
-// Created by jazz on 4/11/25.
-//
-
 #ifndef CHROMIUM_HTML2MD_H
 #define CHROMIUM_HTML2MD_H
 

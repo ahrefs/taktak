@@ -1,3 +1,8 @@
+// Copyright (c) 2024 The Taktak Authors. All rights reserved.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 1.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/1.0/.
+
 #include "web_request_helper.h"
 
 #include <algorithm>
