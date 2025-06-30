@@ -126,6 +126,7 @@ void MediaKeySystemAccessInitializer::StartRequestAsync() {
   media_client->RequestMediaKeySystemAccess(WebEncryptedMediaRequest(this));
 }
 
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
 // Notifies Taktak about the widevine key system access request.
 // This allows Taktak browser to handle DRM-related permissions and settings
 // when a webpage attempts to use Widevine DRM.
@@ -143,6 +144,7 @@ void NotifyWidevineRequest(MediaKeySystemAccessInitializer* initializer,
     }
   }
 }
+#endif
 
 }  // namespace
 
@@ -229,7 +231,7 @@ NavigatorRequestMediaKeySystemAccess::requestMediaKeySystemAccess(
       WebEncryptedMediaRequest(initializer));
 
 // Taktak MVP doesn't support DRM playback on Windows.
-#if BUILDFLAG(IS_LINUX || IS_MAC)
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
   NotifyWidevineRequest(initializer, window->GetFrame());
 #endif
 
