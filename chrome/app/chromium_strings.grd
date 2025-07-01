@@ -523,7 +523,7 @@ If you update this file, be sure also to update google_chrome_strings.grd. -->
         To send a number from here to your Android phone, sign in to Taktak on both devices.
       </message>
       <message name="IDS_BROWSER_SHARING_CLICK_TO_CALL_DIALOG_HELP_TEXT_NO_DEVICES_ORIGIN" desc="The label to be shown as a help text of the dialog when user click on a phone number, if there are no phones to choose from.">
-        To send a number from <ph name="ORIGIN">$1<ex>www.google.com</ex></ph> to your Android phone, sign in to Taktak on both devices.
+        To send a number from <ph name="ORIGIN">$1<ex>www.google.com</ex></ph> to your Android phone, sign in to Google on both devices.
       </message>
       <message name="IDS_BROWSER_SHARING_ERROR_DIALOG_TEXT_DEVICE_NOT_FOUND" desc="The text to be shown on the dialog when an error occurred because the device is not synced.">
         Make sure you are signed in to Taktak on your <ph name="TARGET_DEVICE_NAME">$1<ex>Pixel XL</ex></ph> and then try sending again.
@@ -1067,13 +1067,13 @@ Taktak is unable to recover your settings.
       <!-- Extension requests sign in to Chrome through chrome.identity API -->
       <if expr="enable_extensions">
         <message name="IDS_EXTENSION_ASKS_IDENTITY_WHILE_SIGNED_IN_WEB_ONLY_TITLE" desc="This string is the heading of a dialog intended to inform the user that one of their installed extensions wants them to sign in to Chrome to be able to use their Google Account.">
-          The extension "<ph name="EXTENSION_NAME">$1<ex>Screencast</ex></ph>" wants you to sign in to Taktak
+          The extension "<ph name="EXTENSION_NAME">$1<ex>Screencast</ex></ph>" wants you to sign in to Google
         </message>
         <message name="IDS_EXTENSION_ASKS_IDENTITY_WHILE_SIGNED_IN_WEB_ONLY_BODY_PART_1" desc="This string is the body of a dialog intended to inform the user that one of their installed extensions wants them to sign in to Chrome to be able to use their Google Account.">
-         To use this extension as <ph name="USER_EMAIL_ADDRESS">$1<ex>elisa.g.beckett@gmail.com</ex></ph>, sign in to Taktak.
+         To use this extension as <ph name="USER_EMAIL_ADDRESS">$1<ex>elisa.g.beckett@gmail.com</ex></ph>, sign in to Google.
         </message>
         <message name="IDS_EXTENSION_ASKS_IDENTITY_WHILE_SIGNED_IN_WEB_ONLY_TITLE_FALLBACK" desc="This string is the heading of a dialog intended to inform the user that one of their installed extensions wants them to sign in to Chrome to be able to use their Google Account. Used when the extension name couldn't be retrieved.">
-          An extension wants you to sign in to Taktak
+          An extension wants you to sign in to Google
         </message>
       </if>
 
@@ -1205,10 +1205,10 @@ Taktak is unable to recover your settings.
 
         <!-- Autofill Sign In Promo Bubble -->
         <message name="IDS_AUTOFILL_SIGNIN_PROMO_SUBTITLE_PASSWORD" desc="This is the body text of a confirmation message and means that the password was only saved locally to the user's device (not in their Google Account). It appears when the user is not signed in to Taktak and is after the 'Password saved to this device' string. If the user wants to save this data to their Google Account, they can click the 'Sign in to Taktak' button at the bottom of this message. The tone should be motivating.">
-          To get your passwords and more on all your devices, sign in to Taktak. This password will be saved in your Google Account after you sign in.
+          To get your passwords and more on all your devices, sign in to Google. This password will be saved in your Google Account after you sign in.
         </message>
         <message name="IDS_AUTOFILL_SIGNIN_PROMO_SUBTITLE_ADDRESS" desc="This is the body text of a confirmation message and means that the address was only saved locally to the user's device (not in their Google Account). It appears when the user is not signed in to Taktak and is after the 'Address saved to this device' string. If the user wants to save this data to their Google Account, they can click the 'Sign in to Taktak' button at the bottom of this message. The tone should be motivating.">
-          To get your addresses and more on all your devices, sign in to Taktak. This address will be saved in your Google Account after you sign in.
+          To get your addresses and more on all your devices, sign in to Google. This address will be saved in your Google Account after you sign in.
         </message>
       </if>
 
@@ -1240,7 +1240,7 @@ Taktak is unable to recover your settings.
 
       <!-- Profile Menu -->
       <message name="IDS_PROFILE_MENU_SIGNIN_PROMO_BUTTON" desc="Text for the button in the sign-in promo in the profile menu when the used is signed out.">
-        Sign in to Taktak
+        Sign in to Google
       </message>
       <message name="IDS_PROFILE_MENU_PLACEHOLDER_PROFILE_NAME" desc="Placeholder profile name, used when the user did not enter a name for their profile.">
         Your Taktak
@@ -2105,7 +2105,7 @@ Taktak is unable to recover your settings.
         <!-- First Run Experience -->
         <message name="IDS_FRE_SIGN_IN_TITLE_0"
           desc="This string appears as a heading on a full-page screen that asks the user to sign in to Taktak with their Google Account. It appears when the user launches Taktak for the first time. When they sign in, they can personalize and customize Taktak and remember their settings in their Google Account. The tone should be inviting and alluring.">
-          Sign in to Taktak
+          Sign in to Google
         </message>
 
         <!-- Default Browser Promo -->
@@ -2525,13 +2525,13 @@ Taktak is unable to recover your settings.
       <!-- UNO Promo strings for extensions -->
       <if expr="enable_extensions">
         <message name="IDS_EXTENSION_INSTALLED_PROMO_EXPLICIT_SIGNIN_MESSAGE" desc="Text of the promo displayed at the bottom of the extension installed bubble asking the user to enable UNO.">
-          To get this extension and more on all your computers, sign in to Taktak
+          To get this extension and more on all your computers, sign in to Google
         </message>
       </if>
 
       <!-- UNO Promo strings for bookmarks -->
       <message name="IDS_BOOKMARK_INSTALLED_PROMO_EXPLICIT_SIGNIN_MESSAGE" desc="Text of the promo displayed at the bottom of the bookmark bubble asking the user to enable UNO.">
-        To get this bookmark and more on all your devices, sign in to Chromium
+        To get this bookmark and more on all your devices, sign in to Google
       </message>
     </messages>
   </release>
