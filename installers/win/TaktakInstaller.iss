@@ -2,19 +2,32 @@
 AppName=Taktak Installer
 AppVersion=1.0
 WizardStyle=modern
-DefaultDirName={autopf}\Taktak
+DefaultDirName={commonpf}\Taktak
 DefaultGroupName=Taktak
 OutputBaseFilename=Taktak Installer
 SetupIconFile=taktak_installer_icon.ico
 UninstallDisplayIcon={app}\Taktak.exe
+PrivilegesRequired=admin
+PrivilegesRequiredOverridesAllowed=dialog
+ArchitecturesInstallIn64BitMode=x64compatible
+UninstallFilesDir={app}\uninstall
 
 [Files]
-; These files will be downloaded
-Source: "{tmp}\Setup.exe"; DestDir: "{app}"; Flags: external deleteafterinstall
-Source: "{tmp}\Chrome.7z"; DestDir: "{app}"; Flags: external deleteafterinstall
+Source: "{tmp}\Setup.exe"; DestDir: "{app}"; Flags: external
+Source: "{tmp}\Chrome.7z"; DestDir: "{app}"; Flags: external
 
 [Icons]
-Name: "{group}\Taktak"; Filename: "{app}\Taktak.exe"
+Name: "{commonprograms}\Taktak"; Filename: "{app}\Taktak.exe"
+Name: "{commondesktop}\Taktak"; Filename: "{app}\Taktak.exe"; Tasks: desktopicon
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+
+[Registry]
+Root: HKLM; Subkey: "Software\Taktak"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "Software\Taktak"; ValueType: string; ValueName: "Version"; ValueData: "{#SetupSetting("AppVersion")}"
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Taktak.exe"; ValueType: string; ValueName: ""; ValueData: "{app}\Taktak.exe"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Taktak.exe"; ValueType: string; ValueName: "Path"; ValueData: "{app}"
 
 [Code]
 var
@@ -43,7 +56,7 @@ begin
     DownloadPage.Show;
     try
       try
-        DownloadPage.Download; // This downloads the files to {tmp}
+        DownloadPage.Download;
         Result := True;
       except
         if DownloadPage.AbortedByUser then
@@ -60,5 +73,5 @@ begin
 end;
 
 [Run]
-; Run Setup.exe after installation
-Filename: "{app}\Setup.exe"; Description: "Run Setup"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Setup.exe"; Parameters: "--system-level"; Description: "Run Setup"; Flags: waituntilterminated
+Filename: "{app}\Application\Taktak.exe"; Description: "Launch Taktak"; Flags: nowait postinstall skipifsilent
