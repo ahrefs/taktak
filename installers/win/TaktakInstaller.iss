@@ -1,5 +1,5 @@
 [Setup]
-AppName=Taktak Installer
+AppName=Taktak Setup
 AppVersion=1.0
 WizardStyle=modern
 DefaultDirName={commonpf}\Taktak
@@ -8,9 +8,8 @@ OutputBaseFilename=Taktak Installer
 SetupIconFile=taktak_installer_icon.ico
 UninstallDisplayIcon={app}\Taktak.exe
 PrivilegesRequired=admin
-PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesInstallIn64BitMode=x64compatible
-UninstallFilesDir={app}\uninstall
+UninstallFilesDir={commonpf}\Taktak\Application\uninstall
 
 [Files]
 Source: "{tmp}\Setup.exe"; DestDir: "{app}"; Flags: external
@@ -74,4 +73,4 @@ end;
 
 [Run]
 Filename: "{app}\Setup.exe"; Parameters: "--system-level"; Description: "Run Setup"; Flags: waituntilterminated
-Filename: "{app}\Application\Taktak.exe"; Description: "Launch Taktak"; Flags: nowait postinstall skipifsilent
+Filename: "{commonpf}\Taktak\Application\Taktak.exe"; Description: "Launch Taktak"; Flags: nowait postinstall skipifsilent
