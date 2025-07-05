@@ -13,7 +13,7 @@ UninstallFilesDir={commonpf}\Taktak\Application\uninstall
 
 [Files]
 Source: "{tmp}\Setup.exe"; DestDir: "{app}"; Flags: external
-Source: "{tmp}\Chrome.7z"; DestDir: "{app}"; Flags: external
+Source: "{tmp}\Taktak.7z"; DestDir: "{app}"; Flags: external
 
 [Icons]
 Name: "{commonprograms}\Taktak"; Filename: "{app}\Taktak.exe"
@@ -51,7 +51,7 @@ begin
     DownloadPage.Clear;
     // Using bunny CDN for testing. todo: to replace the links with production one
     DownloadPage.Add('https://taktak.b-cdn.net/Setup.exe', 'Setup.exe', '');
-    DownloadPage.Add('https://taktak.b-cdn.net/Chrome.7z', 'Chrome.7z', '');
+    DownloadPage.Add('https://taktak.b-cdn.net/Taktak.7z', 'Taktak.7z', '');
     DownloadPage.Show;
     try
       try
