@@ -46,8 +46,8 @@ public class EdgeToEdgeStateProvider extends ObservableSupplierImpl<Boolean>
     }
 
     /**
-     * Whether edge to edge has been requested by a Chrome owned window. When true, the window has a
-     * non-empty {@link EdgeToEdgeStateProvider} attached.
+     * Whether edge to edge has been requested by a Chrome owned window. When
+     * true, the window has a non-empty {@link EdgeToEdgeStateProvider} attached.
      */
     public static boolean isEdgeToEdgeEnabledForWindow(@Nullable WindowAndroid windowAndroid) {
         if (windowAndroid == null) return false;

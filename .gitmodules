@@ -9,10 +9,9 @@
 	path = chrome/installer/mac/third_party/xz/xz
 	url = https://chromium.googlesource.com/chromium/deps/xz
 	gclient-condition = checkout_mac
-[submodule "chrome/release_scripts"]
-	path = chrome/release_scripts
-	url = https://chrome-internal.googlesource.com/chrome/tools/release/scripts
-	gclient-condition = checkout_chrome_release_scripts
+[submodule "third_party/compiler-rt/src"]
+	path = third_party/compiler-rt/src
+	url = https://chromium.googlesource.com/external/github.com/llvm/llvm-project/compiler-rt
 [submodule "third_party/libc++/src"]
 	path = third_party/libc++/src
 	url = https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxx
@@ -42,10 +41,6 @@
 [submodule "chrome/test/data/xr/webvr_info"]
 	path = chrome/test/data/xr/webvr_info
 	url = https://chromium.googlesource.com/external/github.com/toji/webvr.info
-[submodule "clank"]
-	path = clank
-	url = https://chrome-internal.googlesource.com/clank/internal/apps
-	gclient-condition = checkout_android and checkout_src_internal
 [submodule "docs/website"]
 	path = docs/website
 	url = https://chromium.googlesource.com/website
@@ -212,6 +207,9 @@
 [submodule "third_party/dom_distiller_js/dist"]
 	path = third_party/dom_distiller_js/dist
 	url = https://chromium.googlesource.com/chromium/dom-distiller/dist
+[submodule "third_party/dragonbox/src"]
+	path = third_party/dragonbox/src
+	url = https://chromium.googlesource.com/external/github.com/jk-jeon/dragonbox
 [submodule "third_party/eigen3/src"]
 	path = third_party/eigen3/src
 	url = https://chromium.googlesource.com/external/gitlab.com/libeigen/eigen
@@ -351,9 +349,6 @@
 [submodule "third_party/nearby/src"]
 	path = third_party/nearby/src
 	url = https://chromium.googlesource.com/external/github.com/google/nearby-connections
-[submodule "third_party/beto-core/src"]
-	path = third_party/beto-core/src
-	url = https://beto-core.googlesource.com/beto-core
 [submodule "third_party/securemessage/src"]
 	path = third_party/securemessage/src
 	url = https://chromium.googlesource.com/external/github.com/google/securemessage
@@ -543,6 +538,10 @@
 [submodule "third_party/search_engines_data/resources"]
 	path = third_party/search_engines_data/resources
 	url = https://chromium.googlesource.com/external/search_engines_data
+[submodule "third_party/search_engines_data/resources_internal"]
+	path = third_party/search_engines_data/resources_internal
+	url = https://chrome-internal.googlesource.com/external/search_engines_data_internal
+	gclient-condition = checkout_src_internal
 [submodule "third_party/skia"]
 	path = third_party/skia
 	url = https://skia.googlesource.com/skia
@@ -651,10 +650,6 @@
 [submodule "v8"]
 	path = v8
 	url = https://chromium.googlesource.com/v8/v8
-[submodule "internal"]
-	path = internal
-	url = https://chrome-internal.googlesource.com/chrome/src-internal
-	gclient-condition = checkout_src_internal
 [submodule "third_party/android_prebuilts/build_tools"]
 	path = third_party/android_prebuilts/build_tools
 	url = https://android.googlesource.com/platform/prebuilts/build-tools
@@ -667,10 +662,6 @@
 	path = chromeos/assistant/internal
 	url = https://chrome-internal.googlesource.com/chrome/assistant
 	gclient-condition = checkout_src_internal and checkout_chromeos
-[submodule "build/fuchsia/internal"]
-	path = build/fuchsia/internal
-	url = https://chrome-internal.googlesource.com/fuchsia/build
-	gclient-condition = checkout_fuchsia_internal and checkout_src_internal
 [submodule "chrome/app/theme/default_100_percent/google_chrome"]
 	path = chrome/app/theme/default_100_percent/google_chrome
 	url = https://chrome-internal.googlesource.com/chrome/theme/default_100_percent/google_chrome
@@ -691,8 +682,8 @@
 	path = chrome/browser/glic/resources/internal
 	url = https://chrome-internal.googlesource.com/chrome/browser/glic/resources/internal
 	gclient-condition = checkout_src_internal
-[submodule "chrome/browser/glic/test/internal"]
-	path = chrome/browser/glic/test/internal
+[submodule "chrome/browser/glic/e2e_test/internal"]
+	path = chrome/browser/glic/e2e_test/internal
 	url = https://chrome-internal.googlesource.com/chrome/browser/glic/test/internal
 	gclient-condition = checkout_glic_e2e_tests
 [submodule "chrome/browser/google/linkdoctor_internal"]
@@ -715,10 +706,6 @@
 	path = chrome/browser/platform_experience/win
 	url = https://chrome-internal.googlesource.com/chrome/browser/platform_experience/win
 	gclient-condition = checkout_src_internal
-[submodule "chrome/browser/request_header_integrity/internal"]
-	path = chrome/browser/request_header_integrity/internal
-	url = https://chrome-internal.googlesource.com/chrome/browser/request_header_integrity/internal
-	gclient-condition = checkout_src_internal
 [submodule "chrome/browser/resources/downloads/internal"]
 	path = chrome/browser/resources/downloads/internal
 	url = https://chrome-internal.googlesource.com/chrome/browser/resources/downloads_internal
@@ -730,6 +717,10 @@
 [submodule "chrome/browser/spellchecker/internal"]
 	path = chrome/browser/spellchecker/internal
 	url = https://chrome-internal.googlesource.com/chrome/spellchecker/internal
+	gclient-condition = checkout_src_internal
+[submodule "chrome/common/request_header_integrity/internal"]
+	path = chrome/common/request_header_integrity/internal
+	url = https://chrome-internal.googlesource.com/chrome/browser/request_header_integrity/internal
 	gclient-condition = checkout_src_internal
 [submodule "chrome/elevation_service/internal"]
 	path = chrome/elevation_service/internal
@@ -843,10 +834,6 @@
 	path = google_apis/internal
 	url = https://chrome-internal.googlesource.com/chrome/google_apis/internal
 	gclient-condition = checkout_src_internal
-[submodule "ios_internal"]
-	path = ios_internal
-	url = https://chrome-internal.googlesource.com/chrome/ios_internal
-	gclient-condition = checkout_ios and checkout_src_internal
 [submodule "remoting/host/installer/linux/internal"]
 	path = remoting/host/installer/linux/internal
 	url = https://chrome-internal.googlesource.com/chrome/remoting/host/installer/linux/internal
@@ -927,6 +914,3 @@
 	path = webkit/data/test_shell/plugins
 	url = https://chrome-internal.googlesource.com/chrome/data/webkit_plugin_tests
 	gclient-condition = checkout_src_internal
-[submodule "third_party/compiler-rt/src"]
-	path = third_party/compiler-rt/src
-	url = https://chromium.googlesource.com/external/github.com/llvm/llvm-project/compiler-rt

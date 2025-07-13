@@ -14,13 +14,13 @@ import static com.google.common.math.LongMath.checkedMultiply;
 import static com.google.common.math.LongMath.checkedSubtract;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CompileTimeConstant;
 import com.google.j2objc.annotations.J2ObjCIncompatible;
 import com.google.protobuf.Duration;
 import com.google.protobuf.Timestamp;
-
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.text.ParseException;
@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
-
 import javax.annotation.Nullable;
 
 /**
@@ -61,26 +60,27 @@ public final class Timestamps {
   public static final Timestamp MAX_VALUE =
       Timestamp.newBuilder().setSeconds(TIMESTAMP_SECONDS_MAX).setNanos(999999999).build();
 
-    /**
-     * A constant holding the {@link Timestamp} of epoch time, {@code
-     * 1970-01-01T00:00:00.000000000Z}.
-     */
-    public static final Timestamp EPOCH = Timestamp.newBuilder().setSeconds(0).setNanos(0).build();
+  /**
+   * A constant holding the {@link Timestamp} of epoch time, {@code 1970-01-01T00:00:00.000000000Z}.
+   */
+  public static final Timestamp EPOCH = Timestamp.newBuilder().setSeconds(0).setNanos(0).build();
 
-    @GwtIncompatible("Date formatting is not supported in non JVM java.time")
-    @J2ObjCIncompatible
-    private static final ThreadLocal<SimpleDateFormat> timestampFormat =
-            new ThreadLocal<SimpleDateFormat>() {
-                @Override
-                protected SimpleDateFormat initialValue() {
-                    return createTimestampFormat();
-                }
-            };
+  @GwtIncompatible("Date formatting is not supported in non JVM java.time")
+  @J2ObjCIncompatible
+  @J2ktIncompatible
+  private static final ThreadLocal<SimpleDateFormat> timestampFormat =
+      new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+          return createTimestampFormat();
+        }
+      };
 
-    @GwtIncompatible("Date formatting is not supported in non JVM java.time")
-    @J2ObjCIncompatible
-    private static SimpleDateFormat createTimestampFormat() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH);
+  @GwtIncompatible("Date formatting is not supported in non JVM java.time")
+  @J2ObjCIncompatible
+  @J2ktIncompatible
+  private static SimpleDateFormat createTimestampFormat() {
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH);
     GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     // We use Proleptic Gregorian Calendar (i.e., Gregorian calendar extends
     // backwards to year one) for timestamp formatting.
@@ -170,13 +170,13 @@ public final class Timestamps {
   public static Timestamp checkValid(Timestamp timestamp) {
     long seconds = timestamp.getSeconds();
     int nanos = timestamp.getNanos();
-        if (!isValid(seconds, nanos)) {
-            throw new IllegalArgumentException(
-                    Strings.lenientFormat(
-                            "Timestamp is not valid. See proto definition for valid values. Seconds"
-                                + " (%s) must be in range [-62,135,596,800, +253,402,300,799]."
-                                + " Nanos (%s) must be in range [0, +999,999,999].",
-                            seconds, nanos));
+    if (!isValid(seconds, nanos)) {
+      throw new IllegalArgumentException(
+          Strings.lenientFormat(
+              "Timestamp is not valid. See proto definition for valid values. "
+                  + "Seconds (%s) must be in range [-62,135,596,800, +253,402,300,799]. "
+                  + "Nanos (%s) must be in range [0, +999,999,999].",
+              seconds, nanos));
     }
     return timestamp;
   }
@@ -191,21 +191,22 @@ public final class Timestamps {
     return checkValid(timestampBuilder.build());
   }
 
-    /**
-     * Convert Timestamp to RFC 3339 date string format. The output will always be Z-normalized and
-     * uses 0, 3, 6 or 9 fractional digits as required to represent the exact value. Note that
-     * Timestamp can only represent time from 0001-01-01T00:00:00Z to
-     * 9999-12-31T23:59:59.999999999Z. See https://www.ietf.org/rfc/rfc3339.txt
-     *
-     * <p>Example of generated format: "1972-01-01T10:00:20.021Z"
-     *
-     * @return The string representation of the given timestamp.
-     * @throws IllegalArgumentException if the given timestamp is not in the valid range.
-     */
-    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-    @J2ObjCIncompatible
-    public static String toString(Timestamp timestamp) {
-        checkValid(timestamp);
+  /**
+   * Convert Timestamp to RFC 3339 date string format. The output will always be Z-normalized and
+   * uses 0, 3, 6 or 9 fractional digits as required to represent the exact value. Note that
+   * Timestamp can only represent time from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z.
+   * See https://www.ietf.org/rfc/rfc3339.txt
+   *
+   * <p>Example of generated format: "1972-01-01T10:00:20.021Z"
+   *
+   * @return The string representation of the given timestamp.
+   * @throws IllegalArgumentException if the given timestamp is not in the valid range.
+   */
+  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  public static String toString(Timestamp timestamp) {
+    checkValid(timestamp);
 
     long seconds = timestamp.getSeconds();
     int nanos = timestamp.getNanos();
@@ -223,20 +224,21 @@ public final class Timestamps {
     return result.toString();
   }
 
-    /**
-     * Parse from RFC 3339 date string to Timestamp. This method accepts all outputs of {@link
-     * #toString(Timestamp)} and it also accepts any fractional digits (or none) and any offset as
-     * long as they fit into nano-seconds precision.
-     *
-     * <p>Example of accepted format: "1972-01-01T10:00:20.021-05:00"
-     *
-     * @return a Timestamp parsed from the string
-     * @throws ParseException if parsing fails
-     */
-    @GwtIncompatible("ParseException is not supported in Xplat")
-    @J2ObjCIncompatible
-    public static Timestamp parse(String value) throws ParseException {
-        int dayOffset = value.indexOf('T');
+  /**
+   * Parse from RFC 3339 date string to Timestamp. This method accepts all outputs of {@link
+   * #toString(Timestamp)} and it also accepts any fractional digits (or none) and any offset as
+   * long as they fit into nano-seconds precision.
+   *
+   * <p>Example of accepted format: "1972-01-01T10:00:20.021-05:00"
+   *
+   * @return a Timestamp parsed from the string
+   * @throws ParseException if parsing fails
+   */
+  @GwtIncompatible("ParseException is not supported in Xplat")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  public static Timestamp parse(String value) throws ParseException {
+    int dayOffset = value.indexOf('T');
     if (dayOffset == -1) {
       throw new ParseException("Failed to parse timestamp: invalid timestamp \"" + value + "\"", 0);
     }
@@ -291,19 +293,20 @@ public final class Timestamps {
     }
   }
 
-    /**
-     * Parses a string in RFC 3339 format into a {@link Timestamp}.
-     *
-     * <p>Identical to {@link #parse(String)}, but throws an {@link IllegalArgumentException}
-     * instead of a {@link ParseException} if parsing fails.
-     *
-     * @return a {@link Timestamp} parsed from the string
-     * @throws IllegalArgumentException if parsing fails
-     */
-    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-    @J2ObjCIncompatible
-    public static Timestamp parseUnchecked(@CompileTimeConstant String value) {
-        try {
+  /**
+   * Parses a string in RFC 3339 format into a {@link Timestamp}.
+   *
+   * <p>Identical to {@link #parse(String)}, but throws an {@link IllegalArgumentException} instead
+   * of a {@link ParseException} if parsing fails.
+   *
+   * @return a {@link Timestamp} parsed from the string
+   * @throws IllegalArgumentException if parsing fails
+   */
+  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  public static Timestamp parseUnchecked(@CompileTimeConstant String value) {
+    try {
       return parse(value);
     } catch (ParseException e) {
       // While `java.time.format.DateTimeParseException` is a more accurate representation of the
@@ -312,27 +315,31 @@ public final class Timestamps {
     }
   }
 
-    // the following 3 constants contain references to java.time.Instant methods (if that class is
-    // available at runtime); otherwise, they are null.
-    @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
-    @J2ObjCIncompatible
-    @Nullable
-    private static final Method INSTANT_NOW = instantMethod("now");
+  // the following 3 constants contain references to java.time.Instant methods (if that class is
+  // available at runtime); otherwise, they are null.
+  @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  @Nullable
+  private static final Method INSTANT_NOW = instantMethod("now");
 
-    @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
-    @J2ObjCIncompatible
-    @Nullable
-    private static final Method INSTANT_GET_EPOCH_SECOND = instantMethod("getEpochSecond");
+  @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  @Nullable
+  private static final Method INSTANT_GET_EPOCH_SECOND = instantMethod("getEpochSecond");
 
-    @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
-    @J2ObjCIncompatible
-    @Nullable
-    private static final Method INSTANT_GET_NANO = instantMethod("getNano");
+  @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  @Nullable
+  private static final Method INSTANT_GET_NANO = instantMethod("getNano");
 
-    @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
-    @J2ObjCIncompatible
-    @Nullable
-    private static Method instantMethod(String methodName) {
+  @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  @Nullable
+  private static Method instantMethod(String methodName) {
     try {
       return Class.forName("java.time.Instant").getMethod(methodName);
     } catch (Exception e) {
@@ -340,18 +347,19 @@ public final class Timestamps {
     }
   }
 
-    /**
-     * Create a {@link Timestamp} using the best-available (in terms of precision) system clock.
-     *
-     * <p><b>Note:</b> that while this API is convenient, it may harm the testability of your code,
-     * as you're unable to mock the current time. Instead, you may want to consider injecting a
-     * clock instance to read the current time.
-     */
-    @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
-    @J2ObjCIncompatible
-    @SuppressWarnings("nullness")
-    public static Timestamp now() {
-        if (INSTANT_NOW != null) {
+  /**
+   * Create a {@link Timestamp} using the best-available (in terms of precision) system clock.
+   *
+   * <p><b>Note:</b> that while this API is convenient, it may harm the testability of your code, as
+   * you're unable to mock the current time. Instead, you may want to consider injecting a clock
+   * instance to read the current time.
+   */
+  @GwtIncompatible("Uses reflection to access methods of java.time.Instant")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  @SuppressWarnings("nullness")
+  public static Timestamp now() {
+    if (INSTANT_NOW != null) {
       try {
         Object now = INSTANT_NOW.invoke(null);
         long epochSecond = (long) INSTANT_GET_EPOCH_SECOND.invoke(now);
@@ -494,15 +502,14 @@ public final class Timestamps {
   }
 
   static Timestamp normalizedTimestamp(long seconds, int nanos) {
-        // This only checks seconds, because nanos can intentionally overflow to increment the
-        // seconds
-        // when normalized.
-        if (!isValidSeconds(seconds)) {
-            throw new IllegalArgumentException(
-                    Strings.lenientFormat(
-                            "Timestamp is not valid. Input seconds is too large. Seconds (%s) must"
-                                + " be in range [-62,135,596,800, +253,402,300,799]. ",
-                            seconds));
+    // This only checks seconds, because nanos can intentionally overflow to increment the seconds
+    // when normalized.
+    if (!isValidSeconds(seconds)) {
+      throw new IllegalArgumentException(
+          Strings.lenientFormat(
+              "Timestamp is not valid. Input seconds is too large. "
+                  + "Seconds (%s) must be in range [-62,135,596,800, +253,402,300,799]. ",
+              seconds));
     }
     if (nanos <= -NANOS_PER_SECOND || nanos >= NANOS_PER_SECOND) {
       seconds = checkedAdd(seconds, nanos / NANOS_PER_SECOND);
@@ -516,12 +523,13 @@ public final class Timestamps {
     }
     Timestamp timestamp = Timestamp.newBuilder().setSeconds(seconds).setNanos(nanos).build();
     return checkValid(timestamp);
-    }
+  }
 
-    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-    @J2ObjCIncompatible
-    private static long parseTimezoneOffset(String value) throws ParseException {
-        int pos = value.indexOf(':');
+  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  private static long parseTimezoneOffset(String value) throws ParseException {
+    int pos = value.indexOf(':');
     if (pos == -1) {
       throw new ParseException("Invalid offset value: " + value, 0);
     }
@@ -534,12 +542,13 @@ public final class Timestamps {
       ex.initCause(e);
       throw ex;
     }
-    }
+  }
 
-    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-    @J2ObjCIncompatible
-    static int parseNanos(String value) throws ParseException {
-        int result = 0;
+  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  static int parseNanos(String value) throws ParseException {
+    int result = 0;
     for (int i = 0; i < 9; ++i) {
       result = result * 10;
       if (i < value.length()) {
@@ -552,12 +561,13 @@ public final class Timestamps {
     return result;
   }
 
-    /** Format the nano part of a timestamp or a duration. */
-    @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
-    @J2ObjCIncompatible
-    static String formatNanos(int nanos) {
-        // Determine whether to use 3, 6, or 9 digits for the nano part.
-        if (nanos % NANOS_PER_MILLISECOND == 0) {
+  /** Format the nano part of a timestamp or a duration. */
+  @GwtIncompatible("Depends on String.format which is not supported in Xplat.")
+  @J2ktIncompatible
+  @J2ObjCIncompatible
+  static String formatNanos(int nanos) {
+    // Determine whether to use 3, 6, or 9 digits for the nano part.
+    if (nanos % NANOS_PER_MILLISECOND == 0) {
       return String.format(Locale.ENGLISH, "%1$03d", nanos / NANOS_PER_MILLISECOND);
     } else if (nanos % NANOS_PER_MICROSECOND == 0) {
       return String.format(Locale.ENGLISH, "%1$06d", nanos / NANOS_PER_MICROSECOND);

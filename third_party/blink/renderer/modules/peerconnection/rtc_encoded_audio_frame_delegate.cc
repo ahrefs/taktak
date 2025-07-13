@@ -23,7 +23,7 @@ const void* RTCEncodedAudioFramesAttachment::kAttachmentKey;
 
 RTCEncodedAudioFrameDelegate::RTCEncodedAudioFrameDelegate(
     std::unique_ptr<webrtc::TransformableAudioFrameInterface> webrtc_frame,
-    rtc::ArrayView<const unsigned int> contributing_sources,
+    webrtc::ArrayView<const unsigned int> contributing_sources,
     std::optional<uint16_t> sequence_number)
     : webrtc_frame_(std::move(webrtc_frame)),
       contributing_sources_(contributing_sources),
@@ -65,7 +65,7 @@ DOMArrayBuffer* RTCEncodedAudioFrameDelegate::CreateDataBuffer(
 void RTCEncodedAudioFrameDelegate::SetData(const DOMArrayBuffer* data) {
   base::AutoLock lock(lock_);
   if (webrtc_frame_ && data) {
-    webrtc_frame_->SetData(rtc::ArrayView<const uint8_t>(
+    webrtc_frame_->SetData(webrtc::ArrayView<const uint8_t>(
         static_cast<const uint8_t*>(data->Data()), data->ByteLength()));
   }
 }
@@ -106,12 +106,6 @@ Vector<uint32_t> RTCEncodedAudioFrameDelegate::ContributingSources() const {
   return contributing_sources_;
 }
 
-std::optional<uint64_t> RTCEncodedAudioFrameDelegate::AbsCaptureTime() const {
-  base::AutoLock lock(lock_);
-  return webrtc_frame_ ? webrtc_frame_->AbsoluteCaptureTimestamp()
-                       : std::nullopt;
-}
-
 std::optional<base::TimeTicks> RTCEncodedAudioFrameDelegate::ReceiveTime()
     const {
   base::AutoLock lock(lock_);
@@ -124,7 +118,9 @@ std::optional<base::TimeTicks> RTCEncodedAudioFrameDelegate::ReceiveTime()
 std::optional<base::TimeTicks> RTCEncodedAudioFrameDelegate::CaptureTime()
     const {
   base::AutoLock lock(lock_);
-  if (!webrtc_frame_) {
+  if (!webrtc_frame_ ||
+      webrtc_frame_->GetDirection() !=
+          webrtc::TransformableFrameInterface::Direction::kReceiver) {
     return std::nullopt;
   }
   return ConvertToOptionalTimeTicks(webrtc_frame_->CaptureTime(),

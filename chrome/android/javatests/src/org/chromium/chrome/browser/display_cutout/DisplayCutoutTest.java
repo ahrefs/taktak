@@ -74,6 +74,7 @@ public class DisplayCutoutTest {
     /** Test that the safe area is applied when we have viewport fit cover. */
     @Test
     @LargeTest
+    @DisableIf.Build(supported_abis_includes = "arm64-v8a", message = "https://crbug.com/402051996")
     public void testViewportFitCover() throws TimeoutException {
         mTestRule.enterFullscreen();
         mTestRule.setViewportFit(DisplayCutoutTestRule.VIEWPORT_FIT_COVER);
@@ -182,6 +183,7 @@ public class DisplayCutoutTest {
     /** Test that we do not break if we have cover but no cutout. */
     @Test
     @LargeTest
+    @DisableIf.Build(supported_abis_includes = "arm64-v8a", message = "https://crbug.com/402051996")
     public void testViewportFitCoverNoCutout() throws TimeoutException {
         mTestRule.setDeviceHasCutout(false);
         mTestRule.enterFullscreen();

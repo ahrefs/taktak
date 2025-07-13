@@ -9,6 +9,7 @@ import android.view.View;
 
 import org.chromium.base.Callback;
 import org.chromium.base.supplier.ObservableSupplier;
+import org.chromium.build.annotations.NullMarked;
 import org.chromium.chrome.browser.omnibox.LocationBarDataProvider;
 import org.chromium.chrome.browser.omnibox.UrlFocusChangeListener;
 import org.chromium.components.browser_ui.widget.scrim.ScrimManager;
@@ -18,9 +19,10 @@ import org.chromium.ui.modelutil.PropertyModel;
 import org.chromium.ui.util.ColorUtils;
 
 /** Handles showing and hiding a scrim when url bar focus changes. */
+@NullMarked
 public class LocationBarFocusScrimHandler implements UrlFocusChangeListener {
     /** The params used to control how the scrim behaves when shown for the omnibox. */
-    private PropertyModel mScrimModel;
+    private final PropertyModel mScrimModel;
 
     private final ScrimManager mScrimManager;
 
@@ -28,13 +30,13 @@ public class LocationBarFocusScrimHandler implements UrlFocusChangeListener {
     private boolean mScrimShown;
 
     /** The light color to use for the scrim on the NTP. */
-    private int mLightScrimColor;
+    private final int mLightScrimColor;
 
     private final LocationBarDataProvider mLocationBarDataProvider;
     private final Runnable mClickDelegate;
     private final Context mContext;
-    private ObservableSupplier<Integer> mTabStripHeightSupplier;
-    private Callback<Integer> mTabStripHeightChangeCallback;
+    private final ObservableSupplier<Integer> mTabStripHeightSupplier;
+    private final Callback<Integer> mTabStripHeightChangeCallback;
 
     /**
      * @param scrimManager Coordinator responsible for showing and hiding the scrim view.

@@ -56,6 +56,15 @@
   [self dismissOverlay];
 }
 
+- (void)dismissInfobarBannerForUserInteraction:(BOOL)userInitiated {
+  SyncErrorInfoBarDelegate* delegate = self.syncErrorDelegate;
+  if (delegate && !userInitiated) {
+    // Notify `delegate` that infobar was dismissed by its timeout.
+    delegate->InfoBarDismissedByTimeout();
+  }
+  [super dismissInfobarBannerForUserInteraction:userInitiated];
+}
+
 @end
 
 @implementation SyncErrorInfobarBannerOverlayMediator (ConsumerSupport)
@@ -68,13 +77,13 @@
   [consumer setButtonText:base::SysUTF16ToNSString(delegate->GetButtonLabel(
                               SyncErrorInfoBarDelegate::BUTTON_OK))];
 
-  UIImage* iconImage = DefaultSymbolTemplateWithPointSize(
-      kSyncErrorSymbol, kInfobarSymbolPointSize);
-
-  [consumer setIconImage:iconImage];
-  [consumer setUseIconBackgroundTint:YES];
+  // TODO(crbug.com/408165259): Use a dedicated icon in case when
+  // `delegate->DisplayPasswordErrorIcon()` is true.
+  [consumer setIconImage:DefaultSymbolTemplateWithPointSize(
+                             kSyncErrorSymbol, kInfobarSymbolPointSize)];
   [consumer setIconBackgroundColor:[UIColor colorNamed:kRed500Color]];
   [consumer setIconImageTintColor:[UIColor colorNamed:kPrimaryBackgroundColor]];
+  [consumer setUseIconBackgroundTint:YES];
 
   [consumer setPresentsModal:NO];
   if (delegate->GetTitleText().empty()) {

@@ -31,7 +31,6 @@ import com.google.protobuf.DescriptorProtos.ServiceDescriptorProto;
 import com.google.protobuf.DescriptorProtos.ServiceOptions;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.JavaFeaturesProto.JavaFeatures;
-
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -538,6 +537,7 @@ public final class Descriptors {
     private final FileDescriptor[] dependencies;
     private final FileDescriptor[] publicDependencies;
     private final DescriptorPool pool;
+    private volatile boolean featuresResolved;
 
     private FileDescriptor(
         final FileDescriptorProto proto,
@@ -548,6 +548,7 @@ public final class Descriptors {
       this.pool = pool;
       this.proto = proto;
       this.dependencies = dependencies.clone();
+      this.featuresResolved = false;
       HashMap<String, FileDescriptor> nameToFileMap = new HashMap<>();
       for (FileDescriptor file : dependencies) {
         nameToFileMap.put(file.getName(), file);
@@ -619,6 +620,7 @@ public final class Descriptors {
               .build();
       this.dependencies = new FileDescriptor[0];
       this.publicDependencies = new FileDescriptor[0];
+      this.featuresResolved = false;
 
       messageTypes = new Descriptor[] {message};
       enumTypes = EMPTY_ENUM_DESCRIPTORS;
@@ -642,12 +644,12 @@ public final class Descriptors {
      * and all of its children.
      */
     private void resolveAllFeaturesInternal() throws DescriptorValidationException {
-      if (this.features != null) {
+      if (this.featuresResolved) {
         return;
       }
 
       synchronized (this) {
-        if (this.features != null) {
+        if (this.featuresResolved) {
           return;
         }
         resolveFeatures(proto.getOptions().getFeatures());
@@ -667,6 +669,7 @@ public final class Descriptors {
         for (FieldDescriptor extension : extensions) {
           extension.resolveAllFeatures();
         }
+        this.featuresResolved = true;
       }
     }
 
@@ -848,11 +851,11 @@ public final class Descriptors {
     /** Get a list of this message type's real oneofs. */
     public List<OneofDescriptor> getRealOneofs() {
       return Collections.unmodifiableList(Arrays.asList(oneofs).subList(0, realOneofCount));
-        }
+    }
 
-        /** Get a list of the extensions defined nested within this message type's scope. */
-        public List<FieldDescriptor> getExtensions() {
-            return Collections.unmodifiableList(Arrays.asList(extensions));
+    /** Get a list of the extensions defined nested within this message type's scope. */
+    public List<FieldDescriptor> getExtensions() {
+      return Collections.unmodifiableList(Arrays.asList(extensions));
     }
 
     /** Get a list of message types nested within this one. */
@@ -1348,7 +1351,12 @@ public final class Descriptors {
           == DescriptorProtos.FeatureSet.FieldPresence.LEGACY_REQUIRED;
     }
 
-    /** Is this field declared optional? */
+    /**
+     * Is this field declared optional? *
+     *
+     * <p>This method is deprecated. Use !isRequired() && !isRepeated() instead.
+     */
+    @Deprecated
     public boolean isOptional() {
       return proto.getLabel() == FieldDescriptorProto.Label.LABEL_OPTIONAL
           && getFeatures().getFieldPresence()
@@ -1447,7 +1455,8 @@ public final class Descriptors {
     boolean hasOptionalKeyword() {
       return isProto3Optional
           || (file.getEdition() == Edition.EDITION_PROTO2
-              && isOptional()
+              && !isRequired()
+              && !isRepeated()
               && getContainingOneof() == null);
     }
 
@@ -1615,20 +1624,20 @@ public final class Descriptors {
     private String jsonName;
     private final FileDescriptor file;
     private final Descriptor extensionScope;
-        private final boolean isProto3Optional;
+    private final boolean isProto3Optional;
 
-        private enum Sensitivity {
-            UNKNOWN,
-            SENSITIVE,
-            NOT_SENSITIVE
-        }
+    private enum Sensitivity {
+      UNKNOWN,
+      SENSITIVE,
+      NOT_SENSITIVE
+    }
 
-        // Caches the result of isSensitive() for performance reasons.
-        private volatile Sensitivity sensitivity = Sensitivity.UNKNOWN;
-        private volatile boolean isReportable = false;
+    // Caches the result of isSensitive() for performance reasons.
+    private volatile Sensitivity sensitivity = Sensitivity.UNKNOWN;
+    private volatile boolean isReportable = false;
 
-        // Possibly initialized during cross-linking.
-        private Type type;
+    // Possibly initialized during cross-linking.
+    private Type type;
     private Descriptor containingType;
     private Descriptor messageType;
     private OneofDescriptor containingOneof;
@@ -1797,85 +1806,80 @@ public final class Descriptors {
       }
 
       file.pool.addSymbol(this);
-        }
+    }
 
-        @SuppressWarnings("unchecked") // List<EnumValueDescriptor> guaranteed by protobuf runtime.
-        private List<Boolean> isOptionSensitive(FieldDescriptor field, Object value) {
-            if (field.getType() == Descriptors.FieldDescriptor.Type.ENUM) {
-                if (field.isRepeated()) {
-                    for (EnumValueDescriptor v : (List<EnumValueDescriptor>) value) {
-                        if (v.getOptions().getDebugRedact()) {
-                            return Arrays.asList(true, false);
-                        }
-                    }
-                } else {
-                    if (((EnumValueDescriptor) value).getOptions().getDebugRedact()) {
-                        return Arrays.asList(true, false);
-                    }
-                }
-            } else if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
-                if (field.isRepeated()) {
-                    for (Message m : (List<Message>) value) {
-                        for (Map.Entry<FieldDescriptor, Object> entry :
-                                m.getAllFields().entrySet()) {
-                            List<Boolean> result =
-                                    isOptionSensitive(entry.getKey(), entry.getValue());
-                            if (result.get(0)) {
-                                return result;
-                            }
-                        }
-                    }
-                } else {
-                    for (Map.Entry<FieldDescriptor, Object> entry :
-                            ((Message) value).getAllFields().entrySet()) {
-                        List<Boolean> result = isOptionSensitive(entry.getKey(), entry.getValue());
-                        if (result.get(0)) {
-                            return result;
-                        }
-                    }
-                }
+    @SuppressWarnings("unchecked") // List<EnumValueDescriptor> guaranteed by protobuf runtime.
+    private List<Boolean> isOptionSensitive(FieldDescriptor field, Object value) {
+      if (field.getType() == Descriptors.FieldDescriptor.Type.ENUM) {
+        if (field.isRepeated()) {
+          for (EnumValueDescriptor v : (List<EnumValueDescriptor>) value) {
+            if (v.getOptions().getDebugRedact()) {
+              return Arrays.asList(true, false);
             }
-            return Arrays.asList(false, false);
+          }
+        } else {
+          if (((EnumValueDescriptor) value).getOptions().getDebugRedact()) {
+            return Arrays.asList(true, false);
+          }
         }
-
-        // Lazily calculates if the field is marked as sensitive, and caches results.
-        private List<Boolean> calculateSensitivityData() {
-            if (sensitivity == Sensitivity.UNKNOWN) {
-                // If the field is directly marked with debug_redact=true, then it is sensitive.
-                synchronized (this) {
-                    if (sensitivity == Sensitivity.UNKNOWN) {
-                        boolean isSensitive = proto.getOptions().getDebugRedact();
-                        // Check if the FieldOptions contain any enums that are marked as
-                        // debug_redact=true,
-                        // either directly or indirectly via a message option.
-                        for (Map.Entry<Descriptors.FieldDescriptor, Object> entry :
-                                proto.getOptions().getAllFields().entrySet()) {
-                            List<Boolean> result =
-                                    isOptionSensitive(entry.getKey(), entry.getValue());
-                            isSensitive = isSensitive || result.get(0);
-                            isReportable = result.get(1);
-                            if (isSensitive) {
-                                break;
-                            }
-                        }
-                        sensitivity =
-                                isSensitive ? Sensitivity.SENSITIVE : Sensitivity.NOT_SENSITIVE;
-                    }
-                }
+      } else if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+        if (field.isRepeated()) {
+          for (Message m : (List<Message>) value) {
+            for (Map.Entry<FieldDescriptor, Object> entry : m.getAllFields().entrySet()) {
+              List<Boolean> result = isOptionSensitive(entry.getKey(), entry.getValue());
+              if (result.get(0)) {
+                return result;
+              }
             }
-            return Arrays.asList(sensitivity == Sensitivity.SENSITIVE, isReportable);
+          }
+        } else {
+          for (Map.Entry<FieldDescriptor, Object> entry :
+              ((Message) value).getAllFields().entrySet()) {
+            List<Boolean> result = isOptionSensitive(entry.getKey(), entry.getValue());
+            if (result.get(0)) {
+              return result;
+            }
+          }
         }
+      }
+      return Arrays.asList(false, false);
+    }
 
-        boolean isSensitive() {
-            return calculateSensitivityData().get(0);
+    // Lazily calculates if the field is marked as sensitive, and caches results.
+    private List<Boolean> calculateSensitivityData() {
+      if (sensitivity == Sensitivity.UNKNOWN) {
+        // If the field is directly marked with debug_redact=true, then it is sensitive.
+        synchronized (this) {
+          if (sensitivity == Sensitivity.UNKNOWN) {
+            boolean isSensitive = proto.getOptions().getDebugRedact();
+            // Check if the FieldOptions contain any enums that are marked as debug_redact=true,
+            // either directly or indirectly via a message option.
+            for (Map.Entry<Descriptors.FieldDescriptor, Object> entry :
+                proto.getOptions().getAllFields().entrySet()) {
+              List<Boolean> result = isOptionSensitive(entry.getKey(), entry.getValue());
+              isSensitive = isSensitive || result.get(0);
+              isReportable = result.get(1);
+              if (isSensitive) {
+                break;
+              }
+            }
+            sensitivity = isSensitive ? Sensitivity.SENSITIVE : Sensitivity.NOT_SENSITIVE;
+          }
         }
+      }
+      return Arrays.asList(sensitivity == Sensitivity.SENSITIVE, isReportable);
+    }
 
-        boolean isReportable() {
-            return calculateSensitivityData().get(1);
-        }
+    boolean isSensitive() {
+      return calculateSensitivityData().get(0);
+    }
 
-        /** See {@link FileDescriptor#resolveAllFeatures}. */
-        private void resolveAllFeatures() throws DescriptorValidationException {
+    boolean isReportable() {
+      return calculateSensitivityData().get(1);
+    }
+
+    /** See {@link FileDescriptor#resolveAllFeatures}. */
+    private void resolveAllFeatures() throws DescriptorValidationException {
       resolveFeatures(proto.getOptions().getFeatures());
     }
 
@@ -1939,9 +1943,9 @@ public final class Descriptors {
       if (containingType != null
           && containingType.toProto().getOptions().getMessageSetWireFormat()) {
         if (isExtension()) {
-          if (!isOptional() || getType() != Type.MESSAGE) {
+          if (isRequired() || isRepeated() || getType() != Type.MESSAGE) {
             throw new DescriptorValidationException(
-                this, "Extensions of MessageSets must be optional messages.");
+                this, "Extensions of MessageSets may not be required or repeated messages.");
           }
         }
       }
@@ -2180,31 +2184,31 @@ public final class Descriptors {
       return file;
     }
 
-        /**
-         * Determines if the given enum is closed.
-         *
-         * <p>Closed enum means that it:
-         *
-         * <ul>
-         *   <li>Has a fixed set of values, rather than being equivalent to an int32.
-         *   <li>Encountering values not in this set causes them to be treated as unknown fields.
-         *   <li>The first value (i.e., the default) may be nonzero.
-         * </ul>
-         *
-         * <p>WARNING: Some runtimes currently have a quirk where non-closed enums are treated as
-         * closed when used as the type of fields defined in a `syntax = proto2;` file. This quirk
-         * is not present in all runtimes; as of writing, we know that:
-         *
-         * <ul>
-         *   <li>C++, Java, and C++-based Python share this quirk.
-         *   <li>UPB and UPB-based Python do not.
-         *   <li>PHP and Ruby treat all enums as open regardless of declaration.
-         * </ul>
-         *
-         * <p>Care should be taken when using this function to respect the target runtime's enum
-         * handling quirks.
-         */
-        public boolean isClosed() {
+    /**
+     * Determines if the given enum is closed.
+     *
+     * <p>Closed enum means that it:
+     *
+     * <ul>
+     *   <li>Has a fixed set of values, rather than being equivalent to an int32.
+     *   <li>Encountering values not in this set causes them to be treated as unknown fields.
+     *   <li>The first value (i.e., the default) may be nonzero.
+     * </ul>
+     *
+     * <p>WARNING: Some runtimes currently have a quirk where non-closed enums are treated as closed
+     * when used as the type of fields defined in a `syntax = proto2;` file. This quirk is not
+     * present in all runtimes; as of writing, we know that:
+     *
+     * <ul>
+     *   <li>C++, Java, and C++-based Python share this quirk.
+     *   <li>UPB and UPB-based Python do not.
+     *   <li>PHP and Ruby treat all enums as open regardless of declaration.
+     * </ul>
+     *
+     * <p>Care should be taken when using this function to respect the target runtime's enum
+     * handling quirks.
+     */
+    public boolean isClosed() {
       return getFeatures().getEnumType() == DescriptorProtos.FeatureSet.EnumType.CLOSED;
     }
 
@@ -2904,11 +2908,11 @@ public final class Descriptors {
         } catch (InvalidProtocolBufferException e) {
           throw new DescriptorValidationException(
               this, "Failed to parse features with Java feature extension registry.", e);
-                }
-            }
+        }
+      }
 
-            FeatureSet.Builder features;
-            if (this.parent == null) {
+      FeatureSet.Builder features;
+      if (this.parent == null) {
         Edition edition = getFile().getEdition();
         features = getEditionDefaults(edition).toBuilder();
       } else {
@@ -2936,18 +2940,14 @@ public final class Descriptors {
       if (this.features == null
           && (getFile().getEdition() == Edition.EDITION_PROTO2
               || getFile().getEdition() == Edition.EDITION_PROTO3)) {
-                getFile().resolveAllFeaturesImmutable();
-            }
-            if (this.features == null) {
-                throw new NullPointerException(
-                        String.format(
-                                "Features not yet loaded for %s. This may be caused by a known"
-                                    + " issue for proto2 dependency descriptors obtained from"
-                                    + " proto1 (b/362326130)",
-                                getFullName()));
-            }
-            return this.features;
-        }
+        getFile().resolveAllFeaturesImmutable();
+      }
+      if (this.features == null) {
+        throw new NullPointerException(
+            String.format("Features not yet loaded for %s.", getFullName()));
+      }
+      return this.features;
+    }
 
     GenericDescriptor parent;
     volatile FeatureSet features;

@@ -12,16 +12,19 @@ import com.google.protobuf.Descriptors.EnumDescriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.MessageReflection.MergeTarget;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * Provide text parsing and formatting support for proto2 instances. The implementation largely
@@ -33,9 +36,11 @@ import java.util.logging.Logger;
 public final class TextFormat {
   private TextFormat() {}
 
-    private static final Logger logger = Logger.getLogger(TextFormat.class.getName());
+  private static final Logger logger = Logger.getLogger(TextFormat.class.getName());
 
-    private static final String REDACTED_MARKER = "[REDACTED]";
+  private static final String DEBUG_STRING_SILENT_MARKER = " \t ";
+
+  private static final String REDACTED_MARKER = "[REDACTED]";
 
   /**
    * Generates a human readable form of this message, useful for debugging and other purposes, with
@@ -116,62 +121,62 @@ public final class TextFormat {
   /** Helper class for converting protobufs to text. */
   public static final class Printer {
 
-        // Printer instance which escapes non-ASCII characters and prints in the text format.
-        private static final Printer DEFAULT_TEXT_FORMAT =
-                new Printer(
-                        /* escapeNonAscii= */ true,
-                        /* useShortRepeatedPrimitives= */ false,
-                        TypeRegistry.getEmptyTypeRegistry(),
-                        ExtensionRegistryLite.getEmptyRegistry(),
-                        /* enablingSafeDebugFormat= */ false,
-                        /* singleLine= */ false);
+    // Printer instance which escapes non-ASCII characters and prints in the text format.
+    private static final Printer DEFAULT_TEXT_FORMAT =
+        new Printer(
+            /* escapeNonAscii= */ true,
+            /* useShortRepeatedPrimitives= */ false,
+            TypeRegistry.getEmptyTypeRegistry(),
+            ExtensionRegistryLite.getEmptyRegistry(),
+            /* enablingSafeDebugFormat= */ false,
+            /* singleLine= */ false);
 
-        // Printer instance which escapes non-ASCII characters and prints in the debug format.
-        private static final Printer DEFAULT_DEBUG_FORMAT =
-                new Printer(
-                        /* escapeNonAscii= */ true,
-                        /* useShortRepeatedPrimitives= */ false,
-                        TypeRegistry.getEmptyTypeRegistry(),
-                        ExtensionRegistryLite.getEmptyRegistry(),
-                        /* enablingSafeDebugFormat= */ true,
-                        /* singleLine= */ false);
+    // Printer instance which escapes non-ASCII characters and prints in the debug format.
+    private static final Printer DEFAULT_DEBUG_FORMAT =
+        new Printer(
+            /* escapeNonAscii= */ true,
+            /* useShortRepeatedPrimitives= */ false,
+            TypeRegistry.getEmptyTypeRegistry(),
+            ExtensionRegistryLite.getEmptyRegistry(),
+            /* enablingSafeDebugFormat= */ true,
+            /* singleLine= */ false);
 
-        /**
-         * A list of the public APIs that output human-readable text from a message. A higher-level
-         * API must be larger than any lower-level APIs it calls under the hood, e.g
-         * DEBUG_MULTILINE.compareTo(PRINTER_PRINT_TO_STRING) > 0. The inverse is not necessarily
-         * true.
-         */
-        static enum FieldReporterLevel {
-            REPORT_ALL(0),
-            TEXT_GENERATOR(1),
-            PRINT(2),
-            PRINTER_PRINT_TO_STRING(3),
-            TEXTFORMAT_PRINT_TO_STRING(4),
-            PRINT_UNICODE(5),
-            SHORT_DEBUG_STRING(6),
-            LEGACY_MULTILINE(7),
-            LEGACY_SINGLE_LINE(8),
-            DEBUG_MULTILINE(9),
-            DEBUG_SINGLE_LINE(10),
-            ABSTRACT_TO_STRING(11),
-            ABSTRACT_MUTABLE_TO_STRING(12),
-            REPORT_NONE(13);
-            private final int index;
+    /**
+     * A list of the public APIs that output human-readable text from a message. A higher-level API
+     * must be larger than any lower-level APIs it calls under the hood, e.g
+     * DEBUG_MULTILINE.compareTo(PRINTER_PRINT_TO_STRING) > 0. The inverse is not necessarily true.
+     */
+    static enum FieldReporterLevel {
+      REPORT_ALL(0),
+      TEXT_GENERATOR(1),
+      PRINT(2),
+      PRINTER_PRINT_TO_STRING(3),
+      TEXTFORMAT_PRINT_TO_STRING(4),
+      PRINT_UNICODE(5),
+      SHORT_DEBUG_STRING(6),
+      LEGACY_MULTILINE(7),
+      LEGACY_SINGLE_LINE(8),
+      DEBUG_MULTILINE(9),
+      DEBUG_SINGLE_LINE(10),
+      ABSTRACT_TO_STRING(11),
+      ABSTRACT_BUILDER_TO_STRING(12),
+      ABSTRACT_MUTABLE_TO_STRING(13),
+      REPORT_NONE(14);
+      private final int index;
 
       FieldReporterLevel(int index) {
         this.index = index;
       }
     }
 
-        /** Whether to escape non ASCII characters with backslash and octal. */
-        private final boolean escapeNonAscii;
+    /** Whether to escape non ASCII characters with backslash and octal. */
+    private final boolean escapeNonAscii;
 
-        /** Whether to print repeated primitive fields using short square bracket notation. */
-        private final boolean useShortRepeatedPrimitives;
+    /** Whether to print repeated primitive fields using short square bracket notation. */
+    private final boolean useShortRepeatedPrimitives;
 
-        private final TypeRegistry typeRegistry;
-        private final ExtensionRegistryLite extensionRegistry;
+    private final TypeRegistry typeRegistry;
+    private final ExtensionRegistryLite extensionRegistry;
 
     /**
      * Whether to enable redaction of sensitive fields and introduce randomization. Note that when
@@ -179,51 +184,51 @@ public final class TextFormat {
      */
     private final boolean enablingSafeDebugFormat;
 
-        private final boolean singleLine;
+    private final boolean singleLine;
 
-        // Any API level equal to or greater than this level will be reported. This is set to
-        // REPORT_NONE by default to prevent reporting for now.
-        private static final ThreadLocal<FieldReporterLevel> sensitiveFieldReportingLevel =
-                new ThreadLocal<FieldReporterLevel>() {
-                    @Override
-                    protected FieldReporterLevel initialValue() {
-                        return FieldReporterLevel.REPORT_NONE;
-                    }
-                };
+    // Any API level equal to or greater than this level will be reported. This is set to
+    // REPORT_NONE by default to prevent reporting for now.
+    private static final ThreadLocal<FieldReporterLevel> sensitiveFieldReportingLevel =
+        new ThreadLocal<FieldReporterLevel>() {
+          @Override
+          protected FieldReporterLevel initialValue() {
+            return FieldReporterLevel.ABSTRACT_TO_STRING;
+          }
+        };
 
-        private Printer(
-                boolean escapeNonAscii,
-                boolean useShortRepeatedPrimitives,
-                TypeRegistry typeRegistry,
-                ExtensionRegistryLite extensionRegistry,
-                boolean enablingSafeDebugFormat,
-                boolean singleLine) {
-            this.escapeNonAscii = escapeNonAscii;
-            this.useShortRepeatedPrimitives = useShortRepeatedPrimitives;
-            this.typeRegistry = typeRegistry;
-            this.extensionRegistry = extensionRegistry;
+    private Printer(
+        boolean escapeNonAscii,
+        boolean useShortRepeatedPrimitives,
+        TypeRegistry typeRegistry,
+        ExtensionRegistryLite extensionRegistry,
+        boolean enablingSafeDebugFormat,
+        boolean singleLine) {
+      this.escapeNonAscii = escapeNonAscii;
+      this.useShortRepeatedPrimitives = useShortRepeatedPrimitives;
+      this.typeRegistry = typeRegistry;
+      this.extensionRegistry = extensionRegistry;
       this.enablingSafeDebugFormat = enablingSafeDebugFormat;
       this.singleLine = singleLine;
     }
 
-        /**
-         * Return a new Printer instance with the specified escape mode.
-         *
-         * @param escapeNonAscii If true, the new Printer will escape non-ASCII characters (this is
-         *     the default behavior. If false, the new Printer will print non-ASCII characters as
-         *     is. In either case, the new Printer still escapes newlines and quotes in strings.
-         * @return a new Printer that clones all other configurations from the current {@link
-         *     Printer}, with the escape mode set to the given parameter.
-         */
-        public Printer escapingNonAscii(boolean escapeNonAscii) {
-            return new Printer(
-                    escapeNonAscii,
-                    useShortRepeatedPrimitives,
-                    typeRegistry,
-                    extensionRegistry,
-                    enablingSafeDebugFormat,
-                    singleLine);
-        }
+    /**
+     * Return a new Printer instance with the specified escape mode.
+     *
+     * @param escapeNonAscii If true, the new Printer will escape non-ASCII characters (this is the
+     *     default behavior. If false, the new Printer will print non-ASCII characters as is. In
+     *     either case, the new Printer still escapes newlines and quotes in strings.
+     * @return a new Printer that clones all other configurations from the current {@link Printer},
+     *     with the escape mode set to the given parameter.
+     */
+    public Printer escapingNonAscii(boolean escapeNonAscii) {
+      return new Printer(
+          escapeNonAscii,
+          useShortRepeatedPrimitives,
+          typeRegistry,
+          extensionRegistry,
+          enablingSafeDebugFormat,
+          singleLine);
+    }
 
     /**
      * Creates a new {@link Printer} using the given typeRegistry. The new Printer clones all other
@@ -234,15 +239,15 @@ public final class TextFormat {
     public Printer usingTypeRegistry(TypeRegistry typeRegistry) {
       if (this.typeRegistry != TypeRegistry.getEmptyTypeRegistry()) {
         throw new IllegalArgumentException("Only one typeRegistry is allowed.");
-            }
-            return new Printer(
-                    escapeNonAscii,
-                    useShortRepeatedPrimitives,
-                    typeRegistry,
-                    extensionRegistry,
-                    enablingSafeDebugFormat,
-                    singleLine);
-        }
+      }
+      return new Printer(
+          escapeNonAscii,
+          useShortRepeatedPrimitives,
+          typeRegistry,
+          extensionRegistry,
+          enablingSafeDebugFormat,
+          singleLine);
+    }
 
     /**
      * Creates a new {@link Printer} using the given extensionRegistry. The new Printer clones all
@@ -253,70 +258,69 @@ public final class TextFormat {
     public Printer usingExtensionRegistry(ExtensionRegistryLite extensionRegistry) {
       if (this.extensionRegistry != ExtensionRegistryLite.getEmptyRegistry()) {
         throw new IllegalArgumentException("Only one extensionRegistry is allowed.");
-            }
-            return new Printer(
-                    escapeNonAscii,
-                    useShortRepeatedPrimitives,
-                    typeRegistry,
-                    extensionRegistry,
-                    enablingSafeDebugFormat,
-                    singleLine);
-        }
+      }
+      return new Printer(
+          escapeNonAscii,
+          useShortRepeatedPrimitives,
+          typeRegistry,
+          extensionRegistry,
+          enablingSafeDebugFormat,
+          singleLine);
+    }
 
-        /**
-         * Return a new Printer instance that outputs a redacted and unstable format suitable for
-         * debugging.
-         *
-         * @param enablingSafeDebugFormat If true, the new Printer will redact all proto fields that
-         *     are marked by a debug_redact=true option, and apply an unstable prefix to the output.
-         * @return a new Printer that clones all other configurations from the current {@link
-         *     Printer}, with the enablingSafeDebugFormat mode set to the given parameter.
-         */
-        Printer enablingSafeDebugFormat(boolean enablingSafeDebugFormat) {
-            return new Printer(
-                    escapeNonAscii,
-                    useShortRepeatedPrimitives,
-                    typeRegistry,
-                    extensionRegistry,
-                    enablingSafeDebugFormat,
-                    singleLine);
-        }
+    /**
+     * Return a new Printer instance that outputs a redacted and unstable format suitable for
+     * debugging.
+     *
+     * @param enablingSafeDebugFormat If true, the new Printer will redact all proto fields that are
+     *     marked by a debug_redact=true option, and apply an unstable prefix to the output.
+     * @return a new Printer that clones all other configurations from the current {@link Printer},
+     *     with the enablingSafeDebugFormat mode set to the given parameter.
+     */
+    Printer enablingSafeDebugFormat(boolean enablingSafeDebugFormat) {
+      return new Printer(
+          escapeNonAscii,
+          useShortRepeatedPrimitives,
+          typeRegistry,
+          extensionRegistry,
+          enablingSafeDebugFormat,
+          singleLine);
+    }
 
-        /**
-         * Return a new Printer instance that outputs primitive repeated fields in short notation
-         *
-         * @param useShortRepeatedPrimitives If true, repeated fields with a primitive type are
-         *     printed using the short hand notation with comma-delimited field values in square
-         *     brackets.
-         * @return a new Printer that clones all other configurations from the current {@link
-         *     Printer}, with the useShortRepeatedPrimitives mode set to the given parameter.
-         */
-        public Printer usingShortRepeatedPrimitives(boolean useShortRepeatedPrimitives) {
-            return new Printer(
-                    escapeNonAscii,
-                    useShortRepeatedPrimitives,
-                    typeRegistry,
-                    extensionRegistry,
-                    enablingSafeDebugFormat,
-                    singleLine);
-        }
+    /**
+     * Return a new Printer instance that outputs primitive repeated fields in short notation
+     *
+     * @param useShortRepeatedPrimitives If true, repeated fields with a primitive type are printed
+     *     using the short hand notation with comma-delimited field values in square brackets.
+     * @return a new Printer that clones all other configurations from the current {@link Printer},
+     *     with the useShortRepeatedPrimitives mode set to the given parameter.
+     */
+    public Printer usingShortRepeatedPrimitives(boolean useShortRepeatedPrimitives) {
+      return new Printer(
+          escapeNonAscii,
+          useShortRepeatedPrimitives,
+          typeRegistry,
+          extensionRegistry,
+          enablingSafeDebugFormat,
+          singleLine);
+    }
 
-        /**
-         * Return a new Printer instance with the specified line formatting status.
-         *
-         * @param singleLine If true, the new Printer will output no newline characters.
-         * @return a new Printer that clones all other configurations from the current {@link
-         *     Printer}, with the singleLine mode set to the given parameter.
-         */
-        public Printer emittingSingleLine(boolean singleLine) {
-            return new Printer(
-                    escapeNonAscii,
-                    useShortRepeatedPrimitives,
-                    typeRegistry,
-                    extensionRegistry,
-                    enablingSafeDebugFormat,
-                    singleLine);
-        }
+    /**
+     * Return a new Printer instance with the specified line formatting status.
+     *
+     * @param singleLine If true, the new Printer will output no newline characters.
+     * @return a new Printer that clones all other configurations from the current {@link Printer},
+     *     with the singleLine mode set to the given parameter.
+     */
+    public Printer emittingSingleLine(boolean singleLine) {
+      return new Printer(
+          escapeNonAscii,
+          useShortRepeatedPrimitives,
+          typeRegistry,
+          extensionRegistry,
+          enablingSafeDebugFormat,
+          singleLine);
+    }
 
     void setSensitiveFieldReportingLevel(FieldReporterLevel level) {
       Printer.sensitiveFieldReportingLevel.set(level);
@@ -331,14 +335,12 @@ public final class TextFormat {
       print(message, output, FieldReporterLevel.PRINT);
     }
 
-        void print(
-                final MessageOrBuilder message, final Appendable output, FieldReporterLevel level)
-                throws IOException {
-            TextGenerator generator =
-                    setSingleLineOutput(
-                            output, this.singleLine, message.getDescriptorForType(), level);
-            print(message, generator);
-        }
+    void print(final MessageOrBuilder message, final Appendable output, FieldReporterLevel level)
+        throws IOException {
+      TextGenerator generator =
+          setSingleLineOutput(output, this.singleLine, message.getDescriptorForType(), level);
+      print(message, generator);
+    }
 
     /** Outputs a textual representation of {@code fields} to {@code output}. */
     public void print(final UnknownFieldSet fields, final Appendable output) throws IOException {
@@ -446,75 +448,74 @@ public final class TextFormat {
         Collections.sort(adapters);
         for (MapEntryAdapter adapter : adapters) {
           printSingleField(field, adapter.getEntry(), generator);
-                }
-            } else if (field.isRepeated()) {
-                if (useShortRepeatedPrimitives
-                        && field.getJavaType() != FieldDescriptor.JavaType.MESSAGE) {
-                    printShortRepeatedField(field, value, generator);
-                } else {
-                    for (Object element : (List<?>) value) {
-                        printSingleField(field, element, generator);
-                    }
-                }
-            } else {
+        }
+      } else if (field.isRepeated()) {
+        if (useShortRepeatedPrimitives && field.getJavaType() != FieldDescriptor.JavaType.MESSAGE) {
+          printShortRepeatedField(field, value, generator);
+        } else {
+          for (Object element : (List<?>) value) {
+            printSingleField(field, element, generator);
+          }
+        }
+      } else {
         printSingleField(field, value, generator);
       }
     }
 
-        /** An adapter class that can take a {@link MapEntry} and returns its key and entry. */
-        static class MapEntryAdapter implements Comparable<MapEntryAdapter> {
-            private Object entry;
-            private Message messageEntry;
-            private final FieldDescriptor keyField;
+    /** An adapter class that can take a {@link MapEntry} and returns its key and entry. */
+    static class MapEntryAdapter implements Comparable<MapEntryAdapter> {
+      private Object entry;
+      private Message messageEntry;
+      private final FieldDescriptor keyField;
 
-            MapEntryAdapter(Object entry, FieldDescriptor fieldDescriptor) {
-                if (entry instanceof Message) {
-                    this.messageEntry = (Message) entry;
-                } else {
-                    this.entry = entry;
-                }
-                this.keyField = fieldDescriptor.getMessageType().findFieldByName("key");
-            }
-
-            Object getKey() {
-                if (messageEntry != null && keyField != null) {
-                    return messageEntry.getField(keyField);
-                }
-                return null;
+      MapEntryAdapter(Object entry, FieldDescriptor fieldDescriptor) {
+        if (entry instanceof Message) {
+          this.messageEntry = (Message) entry;
+        } else {
+          this.entry = entry;
+        }
+        this.keyField = fieldDescriptor.getMessageType().findFieldByName("key");
       }
 
-            Object getEntry() {
-                if (messageEntry != null) {
-                    return messageEntry;
-                }
-                return entry;
+      Object getKey() {
+        if (messageEntry != null && keyField != null) {
+          return messageEntry.getField(keyField);
+        }
+        return null;
       }
 
-            @Override
-            public int compareTo(MapEntryAdapter b) {
-                Object aKey = getKey();
-                Object bKey = b.getKey();
-                if (aKey == null && bKey == null) {
-                    return 0;
-                } else if (aKey == null) {
-                    return -1;
-                } else if (bKey == null) {
-                    return 1;
-                } else {
-                    switch (keyField.getJavaType()) {
-                        case BOOLEAN:
-                            return ((Boolean) aKey).compareTo((Boolean) bKey);
-                        case LONG:
-                            return ((Long) aKey).compareTo((Long) bKey);
-                        case INT:
-                            return ((Integer) aKey).compareTo((Integer) bKey);
-                        case STRING:
-                            return ((String) aKey).compareTo((String) bKey);
-                        default:
-                            return 0;
-                    }
-                }
-            }
+      Object getEntry() {
+        if (messageEntry != null) {
+          return messageEntry;
+        }
+        return entry;
+      }
+
+      @Override
+      public int compareTo(MapEntryAdapter b) {
+        Object aKey = getKey();
+        Object bKey = b.getKey();
+        if (aKey == null && bKey == null) {
+          return 0;
+        } else if (aKey == null) {
+          return -1;
+        } else if (bKey == null) {
+          return 1;
+        } else {
+          switch (keyField.getJavaType()) {
+            case BOOLEAN:
+              return ((Boolean) aKey).compareTo((Boolean) bKey);
+            case LONG:
+              return ((Long) aKey).compareTo((Long) bKey);
+            case INT:
+              return ((Integer) aKey).compareTo((Integer) bKey);
+            case STRING:
+              return ((String) aKey).compareTo((String) bKey);
+            default:
+              return 0;
+          }
+        }
+      }
     }
 
     /**
@@ -608,18 +609,18 @@ public final class TextFormat {
         case MESSAGE:
         case GROUP:
           print((MessageOrBuilder) value, generator);
-                    break;
-            }
-        }
+          break;
+      }
+    }
 
-        // The criteria for redacting a field is as follows: 1) The enablingSafeDebugFormat printer
-        // option must be on. 2) The field must be considered "sensitive". A sensitive field can be
-        // marked as sensitive via two methods: a) via a direct debug_redact=true annotation on the
-        // field, b) via an enum field marked with debug_redact=true that is within the proto's
-        // FieldOptions, either directly or indirectly via a message option.
-        private boolean shouldRedact(final FieldDescriptor field, TextGenerator generator) {
-            return enablingSafeDebugFormat && field.isSensitive();
-        }
+    // The criteria for redacting a field is as follows: 1) The enablingSafeDebugFormat printer
+    // option must be on. 2) The field must be considered "sensitive". A sensitive field can be
+    // marked as sensitive via two methods: a) via a direct debug_redact=true annotation on the
+    // field, b) via an enum field marked with debug_redact=true that is within the proto's
+    // FieldOptions, either directly or indirectly via a message option.
+    private boolean shouldRedact(final FieldDescriptor field, TextGenerator generator) {
+      return enablingSafeDebugFormat && field.isSensitive();
+    }
 
     /** Like {@code print()}, but writes directly to a {@code String} and returns it. */
     public String printToString(final MessageOrBuilder message) {
@@ -657,8 +658,7 @@ public final class TextFormat {
      * Generates a human readable form of this message, useful for debugging and other purposes,
      * with no newline characters.
      *
-     * @deprecated Use {@code
-     *     this.printer().emittingSingleLine(true).printToString(MessageOrBuilder)}
+     * @deprecated Use {@code this.emittingSingleLine(true).printToString(MessageOrBuilder)}
      */
     @Deprecated
     public String shortDebugString(final MessageOrBuilder message) {
@@ -748,27 +748,27 @@ public final class TextFormat {
         printField(field.getKey(), field.getValue(), generator);
       }
       printUnknownFields(message.getUnknownFields(), generator, this.enablingSafeDebugFormat);
-        }
+    }
 
-        private void printShortRepeatedField(
-                final FieldDescriptor field, final Object value, final TextGenerator generator)
-                throws IOException {
-            generator.print(field.getName());
-            generator.print(": ");
-            generator.print("[");
-            String separator = "";
-            for (Object element : (List<?>) value) {
-                generator.print(separator);
-                printFieldValue(field, element, generator);
-                separator = ", ";
-            }
-            generator.print("]");
-            generator.eol();
-        }
+    private void printShortRepeatedField(
+        final FieldDescriptor field, final Object value, final TextGenerator generator)
+        throws IOException {
+      generator.print(field.getName());
+      generator.print(": ");
+      generator.print("[");
+      String separator = "";
+      for (Object element : (List<?>) value) {
+        generator.print(separator);
+        printFieldValue(field, element, generator);
+        separator = ", ";
+      }
+      generator.print("]");
+      generator.eol();
+    }
 
-        private void printSingleField(
-                final FieldDescriptor field, final Object value, final TextGenerator generator)
-                throws IOException {
+    private void printSingleField(
+        final FieldDescriptor field, final Object value, final TextGenerator generator)
+        throws IOException {
       if (field.isExtension()) {
         generator.print("[");
         // We special-case MessageSet elements for compatibility with proto1.
@@ -878,18 +878,17 @@ public final class TextFormat {
     }
   }
 
-    private static TextGenerator setSingleLineOutput(Appendable output, boolean singleLine) {
-        return new TextGenerator(
-                output, singleLine, null, Printer.FieldReporterLevel.TEXT_GENERATOR);
-    }
+  private static TextGenerator setSingleLineOutput(Appendable output, boolean singleLine) {
+    return new TextGenerator(output, singleLine, null, Printer.FieldReporterLevel.TEXT_GENERATOR);
+  }
 
-    private static TextGenerator setSingleLineOutput(
-            Appendable output,
-            boolean singleLine,
-            Descriptor rootMessageType,
-            Printer.FieldReporterLevel fieldReporterLevel) {
-        return new TextGenerator(output, singleLine, rootMessageType, fieldReporterLevel);
-    }
+  private static TextGenerator setSingleLineOutput(
+      Appendable output,
+      boolean singleLine,
+      Descriptor rootMessageType,
+      Printer.FieldReporterLevel fieldReporterLevel) {
+    return new TextGenerator(output, singleLine, rootMessageType, fieldReporterLevel);
+  }
 
   /** An inner class for writing text to the output stream. */
   private static final class TextGenerator {
@@ -900,23 +899,23 @@ public final class TextFormat {
     // we would do in response to this is emit the (zero length) indentation, so it has no effect.
     // Setting it false here does however suppress an unwanted leading space in single-line mode.
     private boolean atStartOfLine = false;
-        // Indicate which Protobuf public stringification API (e.g AbstractMessage.toString()) is
-        // called.
-        private final Printer.FieldReporterLevel fieldReporterLevel;
-        // The root message type being printed. Null if the root message type is not known (e.g.
-        // printing a field).
-        private final Descriptor rootMessageType;
+    // Indicate which Protobuf public stringification API (e.g AbstractMessage.toString()) is
+    // called.
+    private final Printer.FieldReporterLevel fieldReporterLevel;
+    // The root message type being printed. Null if the root message type is not known (e.g.
+    // printing a field).
+    private final Descriptor rootMessageType;
 
-        private TextGenerator(
-                final Appendable output,
-                boolean singleLineMode,
-                Descriptor rootMessageType,
-                Printer.FieldReporterLevel fieldReporterLevel) {
-            this.output = output;
-            this.singleLineMode = singleLineMode;
-            this.rootMessageType = rootMessageType;
-            this.fieldReporterLevel = fieldReporterLevel;
-        }
+    private TextGenerator(
+        final Appendable output,
+        boolean singleLineMode,
+        Descriptor rootMessageType,
+        Printer.FieldReporterLevel fieldReporterLevel) {
+      this.output = output;
+      this.singleLineMode = singleLineMode;
+      this.rootMessageType = rootMessageType;
+      this.fieldReporterLevel = fieldReporterLevel;
+    }
 
     /**
      * Indent text by two spaces. After calling Indent(), two spaces will be inserted at the
@@ -961,50 +960,59 @@ public final class TextFormat {
     }
   }
 
-    // =================================================================
-    // Parsing
+  // =================================================================
+  // Parsing
 
-    /**
-     * Represents a stream of tokens parsed from a {@code String}.
-     *
-     * <p>The Java standard library provides many classes that you might think would be useful for
-     * implementing this, but aren't. For example:
-     *
-     * <ul>
-     *   <li>{@code java.io.StreamTokenizer}: This almost does what we want -- or, at least,
-     *       something that would get us close to what we want -- except for one fatal flaw: It
-     *       automatically un-escapes strings using Java escape sequences, which do not include all
-     *       the escape sequences we need to support (e.g. '\x').
-     *   <li>{@code java.util.Scanner}: This seems like a great way at least to parse regular
-     *       expressions out of a stream (so we wouldn't have to load the entire input into a single
-     *       string before parsing). Sadly, {@code Scanner} requires that tokens be delimited with
-     *       some delimiter. Thus, although the text "foo:" should parse to two tokens ("foo" and
-     *       ":"), {@code Scanner} would recognize it only as a single token. Furthermore, {@code
-     *       Scanner} provides no way to inspect the contents of delimiters, making it impossible to
-     *       keep track of line and column numbers.
-     * </ul>
-     */
-    private static final class Tokenizer {
-        private final CharSequence text;
-        private String currentToken;
+  /**
+   * Represents a stream of tokens parsed from a {@code String}.
+   *
+   * <p>The Java standard library provides many classes that you might think would be useful for
+   * implementing this, but aren't. For example:
+   *
+   * <ul>
+   *   <li>{@code java.io.StreamTokenizer}: This almost does what we want -- or, at least, something
+   *       that would get us close to what we want -- except for one fatal flaw: It automatically
+   *       un-escapes strings using Java escape sequences, which do not include all the escape
+   *       sequences we need to support (e.g. '\x').
+   *   <li>{@code java.util.Scanner}: This seems like a great way at least to parse regular
+   *       expressions out of a stream (so we wouldn't have to load the entire input into a single
+   *       string before parsing). Sadly, {@code Scanner} requires that tokens be delimited with
+   *       some delimiter. Thus, although the text "foo:" should parse to two tokens ("foo" and
+   *       ":"), {@code Scanner} would recognize it only as a single token. Furthermore, {@code
+   *       Scanner} provides no way to inspect the contents of delimiters, making it impossible to
+   *       keep track of line and column numbers.
+   * </ul>
+   */
+  private static final class Tokenizer {
+    private final CharSequence text;
+    private String currentToken;
 
     // The character index within this.text at which the current token begins.
     private int pos = 0;
 
-        // The line and column numbers of the current token.
-        private int line = 0;
-        private int column = 0;
-        private int lineInfoTrackingPos = 0;
+    // The line and column numbers of the current token.
+    private int line = 0;
+    private int column = 0;
+    private int lineInfoTrackingPos = 0;
 
-        // The line and column numbers of the previous token (allows throwing
-        // errors *after* consuming).
-        private int previousLine = 0;
-        private int previousColumn = 0;
+    // The line and column numbers of the previous token (allows throwing
+    // errors *after* consuming).
+    private int previousLine = 0;
+    private int previousColumn = 0;
 
-        /** Construct a tokenizer that parses tokens from the given text. */
-        private Tokenizer(final CharSequence text) {
-            this.text = text;
-            skipWhitespace();
+    /**
+     * {@link containsSilentMarkerAfterCurrentToken} indicates if there is a silent marker after the
+     * current token. This value is moved to {@link containsSilentMarkerAfterPrevToken} every time
+     * the next token is parsed.
+     */
+    private boolean containsSilentMarkerAfterCurrentToken = false;
+
+    private boolean containsSilentMarkerAfterPrevToken = false;
+
+    /** Construct a tokenizer that parses tokens from the given text. */
+    private Tokenizer(final CharSequence text) {
+      this.text = text;
+      skipWhitespace();
       nextToken();
     }
 
@@ -1021,11 +1029,19 @@ public final class TextFormat {
     }
 
     int getColumn() {
-            return column;
-        }
+      return column;
+    }
 
-        /** Are we at the end of the input? */
-        boolean atEnd() {
+    boolean getContainsSilentMarkerAfterCurrentToken() {
+      return containsSilentMarkerAfterCurrentToken;
+    }
+
+    boolean getContainsSilentMarkerAfterPrevToken() {
+      return containsSilentMarkerAfterPrevToken;
+    }
+
+    /** Are we at the end of the input? */
+    boolean atEnd() {
       return currentToken.length() == 0;
     }
 
@@ -1034,160 +1050,158 @@ public final class TextFormat {
       previousLine = line;
       previousColumn = column;
 
-            // Advance the line counter to the current position.
-            while (lineInfoTrackingPos < pos) {
-                if (text.charAt(lineInfoTrackingPos) == '\n') {
-                    ++line;
-                    column = 0;
+      // Advance the line counter to the current position.
+      while (lineInfoTrackingPos < pos) {
+        if (text.charAt(lineInfoTrackingPos) == '\n') {
+          ++line;
+          column = 0;
         } else {
-                    ++column;
-                }
-                ++lineInfoTrackingPos;
-            }
+          ++column;
+        }
+        ++lineInfoTrackingPos;
+      }
 
-            // Match the next token.
-            if (pos == text.length()) {
-                currentToken = ""; // EOF
+      // Match the next token.
+      if (pos == text.length()) {
+        currentToken = ""; // EOF
+      } else {
+        currentToken = nextTokenInternal();
+        skipWhitespace();
+      }
+    }
+
+    private String nextTokenInternal() {
+      final int textLength = this.text.length();
+      final int startPos = this.pos;
+      final char startChar = this.text.charAt(startPos);
+
+      int endPos = pos;
+      if (isAlphaUnder(startChar)) { // Identifier
+        while (++endPos != textLength) {
+          char c = this.text.charAt(endPos);
+          if (!(isAlphaUnder(c) || isDigitPlusMinus(c))) {
+            break;
+          }
+        }
+      } else if (isDigitPlusMinus(startChar) || startChar == '.') { // Number
+        if (startChar == '.') { // Optional leading dot
+          if (++endPos == textLength) {
+            return nextTokenSingleChar();
+          }
+
+          if (!isDigitPlusMinus(this.text.charAt(endPos))) { // Mandatory first digit
+            return nextTokenSingleChar();
+          }
+        }
+
+        while (++endPos != textLength) {
+          char c = this.text.charAt(endPos);
+          if (!(isDigitPlusMinus(c) || isAlphaUnder(c) || c == '.')) {
+            break;
+          }
+        }
+      } else if (startChar == '"' || startChar == '\'') { // String
+        while (++endPos != textLength) {
+          char c = this.text.charAt(endPos);
+          if (c == startChar) {
+            ++endPos;
+            break; // Quote terminates
+          } else if (c == '\n') {
+            break; // Newline terminates (error during parsing) (not consumed)
+          } else if (c == '\\') {
+            if (++endPos == textLength) {
+              break; // Escape into end-of-text terminates (error during parsing)
+            } else if (this.text.charAt(endPos) == '\n') {
+              break; // Escape into newline terminates (error during parsing) (not consumed)
             } else {
-                currentToken = nextTokenInternal();
-                skipWhitespace();
+              // Otherwise the escaped char is legal and consumed
             }
+          } else {
+            // Otherwise the char is a legal and consumed
+          }
         }
+      } else {
+        return nextTokenSingleChar(); // Unrecognized start character
+      }
 
-        private String nextTokenInternal() {
-            final int textLength = this.text.length();
-            final int startPos = this.pos;
-            final char startChar = this.text.charAt(startPos);
+      this.pos = endPos;
+      return this.text.subSequence(startPos, endPos).toString();
+    }
 
-            int endPos = pos;
-            if (isAlphaUnder(startChar)) { // Identifier
-                while (++endPos != textLength) {
-                    char c = this.text.charAt(endPos);
-                    if (!(isAlphaUnder(c) || isDigitPlusMinus(c))) {
-                        break;
-                    }
-                }
-            } else if (isDigitPlusMinus(startChar) || startChar == '.') { // Number
-                if (startChar == '.') { // Optional leading dot
-                    if (++endPos == textLength) {
-                        return nextTokenSingleChar();
-                    }
+    private static boolean isAlphaUnder(char c) {
+      // Defining this char-class with numeric comparisons is much faster than using a regex.
+      return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+    }
 
-                    if (!isDigitPlusMinus(this.text.charAt(endPos))) { // Mandatory first digit
-                        return nextTokenSingleChar();
-                    }
-                }
+    private static boolean isDigitPlusMinus(char c) {
+      // Defining this char-class with numeric comparisons is much faster than using a regex.
+      return ('0' <= c && c <= '9') || c == '+' || c == '-';
+    }
 
-                while (++endPos != textLength) {
-                    char c = this.text.charAt(endPos);
-                    if (!(isDigitPlusMinus(c) || isAlphaUnder(c) || c == '.')) {
-                        break;
-                    }
-                }
-            } else if (startChar == '"' || startChar == '\'') { // String
-                while (++endPos != textLength) {
-                    char c = this.text.charAt(endPos);
-                    if (c == startChar) {
-                        ++endPos;
-                        break; // Quote terminates
-                    } else if (c == '\n') {
-                        break; // Newline terminates (error during parsing) (not consumed)
-                    } else if (c == '\\') {
-                        if (++endPos == textLength) {
-                            break; // Escape into end-of-text terminates (error during parsing)
-                        } else if (this.text.charAt(endPos) == '\n') {
-                            break; // Escape into newline terminates (error during parsing) (not
-                                   // consumed)
-                        } else {
-                            // Otherwise the escaped char is legal and consumed
-                        }
-                    } else {
-                        // Otherwise the char is a legal and consumed
-                    }
-                }
-            } else {
-                return nextTokenSingleChar(); // Unrecognized start character
+    private static boolean isWhitespace(char c) {
+      // Defining this char-class with numeric comparisons is much faster than using a regex.
+      return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t';
+    }
+
+    /**
+     * Produce a token for the single char at the current position.
+     *
+     * <p>We hardcode the expected single-char tokens to avoid allocating a unique string every
+     * time, which is a GC risk. String-literals are always loaded from the class constant pool.
+     *
+     * <p>This method must not be called if the current position is after the end-of-text.
+     */
+    private String nextTokenSingleChar() {
+      final char c = this.text.charAt(this.pos++);
+      switch (c) {
+        case ':':
+          return ":";
+        case ',':
+          return ",";
+        case '[':
+          return "[";
+        case ']':
+          return "]";
+        case '{':
+          return "{";
+        case '}':
+          return "}";
+        case '<':
+          return "<";
+        case '>':
+          return ">";
+        default:
+          // If we don't recognize the char, create a string and let the parser report any errors
+          return String.valueOf(c);
+      }
+    }
+
+    /** Skip over any whitespace so that the matcher region starts at the next token. */
+    private void skipWhitespace() {
+      final int textLength = this.text.length();
+      final int startPos = this.pos;
+
+      int endPos = this.pos - 1;
+      while (++endPos != textLength) {
+        char c = this.text.charAt(endPos);
+        if (c == '#') {
+          while (++endPos != textLength) {
+            if (this.text.charAt(endPos) == '\n') {
+              break; // Consume the newline as whitespace.
             }
-
-            this.pos = endPos;
-            return this.text.subSequence(startPos, endPos).toString();
+          }
+          if (endPos == textLength) {
+            break;
+          }
+        } else if (isWhitespace(c)) {
+          // OK
+        } else {
+          break;
         }
+      }
 
-        private static boolean isAlphaUnder(char c) {
-            // Defining this char-class with numeric comparisons is much faster than using a regex.
-            return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
-        }
-
-        private static boolean isDigitPlusMinus(char c) {
-            // Defining this char-class with numeric comparisons is much faster than using a regex.
-            return ('0' <= c && c <= '9') || c == '+' || c == '-';
-        }
-
-        private static boolean isWhitespace(char c) {
-            // Defining this char-class with numeric comparisons is much faster than using a regex.
-            return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t';
-        }
-
-        /**
-         * Produce a token for the single char at the current position.
-         *
-         * <p>We hardcode the expected single-char tokens to avoid allocating a unique string every
-         * time, which is a GC risk. String-literals are always loaded from the class constant pool.
-         *
-         * <p>This method must not be called if the current position is after the end-of-text.
-         */
-        private String nextTokenSingleChar() {
-            final char c = this.text.charAt(this.pos++);
-            switch (c) {
-                case ':':
-                    return ":";
-                case ',':
-                    return ",";
-                case '[':
-                    return "[";
-                case ']':
-                    return "]";
-                case '{':
-                    return "{";
-                case '}':
-                    return "}";
-                case '<':
-                    return "<";
-                case '>':
-                    return ">";
-                default:
-                    // If we don't recognize the char, create a string and let the parser report any
-                    // errors
-                    return String.valueOf(c);
-            }
-        }
-
-        /** Skip over any whitespace so that the matcher region starts at the next token. */
-        private void skipWhitespace() {
-            final int textLength = this.text.length();
-            final int startPos = this.pos;
-
-            int endPos = this.pos - 1;
-            while (++endPos != textLength) {
-                char c = this.text.charAt(endPos);
-                if (c == '#') {
-                    while (++endPos != textLength) {
-                        if (this.text.charAt(endPos) == '\n') {
-                            break; // Consume the newline as whitespace.
-                        }
-                    }
-                    if (endPos == textLength) {
-                        break;
-                    }
-                } else if (isWhitespace(c)) {
-                    // OK
-                } else {
-                    break;
-                }
-            }
-
-            this.pos = endPos;
-        }
+      this.pos = endPos;
+    }
 
     /**
      * If the next token exactly matches {@code token}, consume it and return {@code true}.
@@ -1216,10 +1230,10 @@ public final class TextFormat {
     boolean lookingAtInteger() {
       if (currentToken.length() == 0) {
         return false;
-            }
+      }
 
-            return isDigitPlusMinus(currentToken.charAt(0));
-        }
+      return isDigitPlusMinus(currentToken.charAt(0));
+    }
 
     /** Returns {@code true} if the current token's text is equal to that specified. */
     boolean lookingAt(String text) {
@@ -1231,11 +1245,11 @@ public final class TextFormat {
      * {@link ParseException}.
      */
     String consumeIdentifier() throws ParseException {
-            for (int i = 0; i < currentToken.length(); i++) {
-                final char c = currentToken.charAt(i);
-                if (isAlphaUnder(c) || ('0' <= c && c <= '9') || (c == '.')) {
-                    // OK
-                } else {
+      for (int i = 0; i < currentToken.length(); i++) {
+        final char c = currentToken.charAt(i);
+        if (isAlphaUnder(c) || ('0' <= c && c <= '9') || (c == '.')) {
+          // OK
+        } else {
           throw parseException("Expected identifier. Found '" + currentToken + "'");
         }
       }
@@ -1345,26 +1359,26 @@ public final class TextFormat {
      * ParseException}.
      */
     public double consumeDouble() throws ParseException {
-            // We need to parse infinity and nan separately because
-            // Double.parseDouble() does not accept "inf", "infinity", or "nan".
-            switch (currentToken.toLowerCase(Locale.ROOT)) {
-                case "-inf":
-                case "-infinity":
-                    nextToken();
-                    return Double.NEGATIVE_INFINITY;
-                case "inf":
-                case "infinity":
-                    nextToken();
-                    return Double.POSITIVE_INFINITY;
-                case "nan":
-                    nextToken();
-                    return Double.NaN;
-                default:
-                    // fall through
-            }
+      // We need to parse infinity and nan separately because
+      // Double.parseDouble() does not accept "inf", "infinity", or "nan".
+      switch (currentToken.toLowerCase(Locale.ROOT)) {
+        case "-inf":
+        case "-infinity":
+          nextToken();
+          return Double.NEGATIVE_INFINITY;
+        case "inf":
+        case "infinity":
+          nextToken();
+          return Double.POSITIVE_INFINITY;
+        case "nan":
+          nextToken();
+          return Double.NaN;
+        default:
+          // fall through
+      }
 
-            try {
-                final double result = Double.parseDouble(currentToken);
+      try {
+        final double result = Double.parseDouble(currentToken);
         nextToken();
         return result;
       } catch (NumberFormatException e) {
@@ -1390,31 +1404,31 @@ public final class TextFormat {
      * ParseException}.
      */
     public float consumeFloat() throws ParseException {
-            // We need to parse infinity and nan separately because
-            // Float.parseFloat() does not accept "inf", "infinity", or "nan".
-            switch (currentToken.toLowerCase(Locale.ROOT)) {
-                case "-inf":
-                case "-inff":
-                case "-infinity":
-                case "-infinityf":
-                    nextToken();
-                    return Float.NEGATIVE_INFINITY;
-                case "inf":
-                case "inff":
-                case "infinity":
-                case "infinityf":
-                    nextToken();
-                    return Float.POSITIVE_INFINITY;
-                case "nan":
-                case "nanf":
-                    nextToken();
-                    return Float.NaN;
-                default:
-                    // fall through
-            }
+      // We need to parse infinity and nan separately because
+      // Float.parseFloat() does not accept "inf", "infinity", or "nan".
+      switch (currentToken.toLowerCase(Locale.ROOT)) {
+        case "-inf":
+        case "-inff":
+        case "-infinity":
+        case "-infinityf":
+          nextToken();
+          return Float.NEGATIVE_INFINITY;
+        case "inf":
+        case "inff":
+        case "infinity":
+        case "infinityf":
+          nextToken();
+          return Float.POSITIVE_INFINITY;
+        case "nan":
+        case "nanf":
+          nextToken();
+          return Float.NaN;
+        default:
+          // fall through
+      }
 
-            try {
-                final float result = Float.parseFloat(currentToken);
+      try {
+        final float result = Float.parseFloat(currentToken);
         nextToken();
         return result;
       } catch (NumberFormatException e) {
@@ -1706,26 +1720,39 @@ public final class TextFormat {
     return output;
   }
 
+  /**
+   * Parser for text-format proto2 instances. This class is thread-safe. The implementation largely
+   * follows google/protobuf/text_format.cc.
+   *
+   * <p>Use {@link TextFormat#getParser()} to obtain the default parser, or {@link Builder} to
+   * control the parser behavior.
+   */
+  public static class Parser {
+
     /**
-     * Parser for text-format proto2 instances. This class is thread-safe. The implementation
-     * largely follows google/protobuf/text_format.cc.
-     *
-     * <p>Use {@link TextFormat#getParser()} to obtain the default parser, or {@link Builder} to
-     * control the parser behavior.
+     * A valid silent marker appears between a field name and its value. If there is a ":" in
+     * between, the silent marker will only appear after the colon. This is called after a field
+     * name is parsed, and before the ":" if it exists. If the current token is ":", then
+     * containsSilentMarkerAfterCurrentToken indicates if there is a valid silent marker. Otherwise,
+     * the current token is part of the field value, so the silent marker is indicated by
+     * containsSilentMarkerAfterPrevToken.
      */
-    public static class Parser {
-        /**
-         * Determines if repeated values for non-repeated fields and oneofs are permitted. For
-         * example, given required/optional field "foo" and a oneof containing "baz" and "moo":
-         *
-         * <ul>
-         *   <li>"foo: 1 foo: 2"
-         *   <li>"baz: 1 moo: 2"
-         *   <li>merging "foo: 2" into a proto in which foo is already set, or
-         *   <li>merging "moo: 2" into a proto in which baz is already set.
-         * </ul>
-         */
-        public enum SingularOverwritePolicy {
+    private void detectSilentMarker(
+        Tokenizer tokenizer, Descriptor immediateMessageType, String fieldName) {
+    }
+
+    /**
+     * Determines if repeated values for non-repeated fields and oneofs are permitted. For example,
+     * given required/optional field "foo" and a oneof containing "baz" and "moo":
+     *
+     * <ul>
+     *   <li>"foo: 1 foo: 2"
+     *   <li>"baz: 1 moo: 2"
+     *   <li>merging "foo: 2" into a proto in which foo is already set, or
+     *   <li>merging "moo: 2" into a proto in which baz is already set.
+     * </ul>
+     */
+    public enum SingularOverwritePolicy {
       /**
        * Later values are merged with earlier values. For primitive fields or conflicting oneofs,
        * the last value is retained.
@@ -2084,15 +2111,17 @@ public final class TextFormat {
         }
       }
 
-            // Skips unknown fields.
-            if (field == null) {
-                guessFieldTypeAndSkip(tokenizer, type, recursionLimit);
+      // Skips unknown fields.
+      if (field == null) {
+        detectSilentMarker(tokenizer, type, name);
+        guessFieldTypeAndSkip(tokenizer, type, recursionLimit);
         return;
       }
 
-            // Handle potential ':'.
-            if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
-                tokenizer.tryConsume(":"); // optional
+      // Handle potential ':'.
+      if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
+        detectSilentMarker(tokenizer, type, field.getFullName());
+        tokenizer.tryConsume(":"); // optional
         if (parseTreeBuilder != null) {
           TextFormatParseInfoTree.Builder childParseTreeBuilder =
               parseTreeBuilder.getBuilderForSubMessageField(field);
@@ -2106,18 +2135,19 @@ public final class TextFormat {
               unknownFields,
               recursionLimit);
         } else {
-                    consumeFieldValues(
-                            tokenizer,
-                            extensionRegistry,
-                            target,
-                            field,
-                            extension,
-                            parseTreeBuilder,
-                            unknownFields,
-                            recursionLimit);
-                }
-            } else {
-                tokenizer.consume(":"); // required
+          consumeFieldValues(
+              tokenizer,
+              extensionRegistry,
+              target,
+              field,
+              extension,
+              parseTreeBuilder,
+              unknownFields,
+              recursionLimit);
+        }
+      } else {
+        detectSilentMarker(tokenizer, type, field.getFullName());
+        tokenizer.consume(":"); // required
         consumeFieldValues(
             tokenizer,
             extensionRegistry,
@@ -2138,30 +2168,29 @@ public final class TextFormat {
       if (!tokenizer.tryConsume(";")) {
         tokenizer.tryConsume(",");
       }
-        }
+    }
 
-        private void consumeFullTypeName(Tokenizer tokenizer) throws ParseException {
-            // If there is not a leading `[`, this is just a type name.
-            if (!tokenizer.tryConsume("[")) {
-                tokenizer.consumeIdentifier();
-                return;
-            }
+    private String consumeFullTypeName(Tokenizer tokenizer) throws ParseException {
+      // If there is not a leading `[`, this is just a type name.
+      if (!tokenizer.tryConsume("[")) {
+        return tokenizer.consumeIdentifier();
+      }
 
-            // Otherwise, this is an extension or google.protobuf.Any type URL: we consume proto
-            // path
-            // elements until we've addressed the type.
-            tokenizer.consumeIdentifier();
-            while (tokenizer.tryConsume(".")) {
-                tokenizer.consumeIdentifier();
-            }
-            if (tokenizer.tryConsume("/")) {
-                tokenizer.consumeIdentifier();
-                while (tokenizer.tryConsume(".")) {
-                    tokenizer.consumeIdentifier();
-                }
-            }
-            tokenizer.consume("]");
+      // Otherwise, this is an extension or google.protobuf.Any type URL: we consume proto path
+      // elements until we've addressed the type.
+      String name = tokenizer.consumeIdentifier();
+      while (tokenizer.tryConsume(".")) {
+        name += "." + tokenizer.consumeIdentifier();
+      }
+      if (tokenizer.tryConsume("/")) {
+        name += "/" + tokenizer.consumeIdentifier();
+        while (tokenizer.tryConsume(".")) {
+          name += "." + tokenizer.consumeIdentifier();
         }
+      }
+      tokenizer.consume("]");
+      return name;
+    }
 
     /**
      * Parse a one or more field values from {@code tokenizer} and merge it into {@code builder}.
@@ -2403,10 +2432,11 @@ public final class TextFormat {
         } else if (tokenizer.tryConsume(".")) {
           typeUrlBuilder.append(".");
         } else {
-                    throw tokenizer.parseExceptionPreviousToken("Expected a valid type URL.");
-                }
-            }
-            tokenizer.tryConsume(":");
+          throw tokenizer.parseExceptionPreviousToken("Expected a valid type URL.");
+        }
+      }
+      detectSilentMarker(tokenizer, anyDescriptor, typeUrlBuilder.toString());
+      tokenizer.tryConsume(":");
       final String anyEndToken;
       if (tokenizer.tryConsume("<")) {
         anyEndToken = ">";
@@ -2447,11 +2477,12 @@ public final class TextFormat {
           anyDescriptor.findFieldByName("value"), contentBuilder.build().toByteString());
     }
 
-        /** Skips the next field including the field's name and value. */
-        private void skipField(Tokenizer tokenizer, Descriptor type, int recursionLimit)
-                throws ParseException {
-            consumeFullTypeName(tokenizer);
-            guessFieldTypeAndSkip(tokenizer, type, recursionLimit);
+    /** Skips the next field including the field's name and value. */
+    private void skipField(Tokenizer tokenizer, Descriptor type, int recursionLimit)
+        throws ParseException {
+      String name = consumeFullTypeName(tokenizer);
+      detectSilentMarker(tokenizer, type, name);
+      guessFieldTypeAndSkip(tokenizer, type, recursionLimit);
 
       // For historical reasons, fields may optionally be separated by commas or
       // semicolons.

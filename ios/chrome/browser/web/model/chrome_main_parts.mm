@@ -82,6 +82,7 @@
 #import "ui/base/l10n/l10n_util.h"
 #import "ui/base/l10n/l10n_util_mac.h"
 #import "ui/base/resource/resource_bundle.h"
+#import "ui/display/screen.h"
 
 #if DCHECK_IS_ON()
 #import "ui/display/screen_base.h"
@@ -118,7 +119,9 @@ void EnsureOSCryptInitialized() {
 
 IOSChromeMainParts::IOSChromeMainParts(
     const base::CommandLine& parsed_command_line)
-    : parsed_command_line_(parsed_command_line), local_state_(nullptr) {
+    : parsed_command_line_(parsed_command_line),
+      local_state_(nullptr),
+      screen_(std::make_unique<display::ScopedNativeScreen>()) {
   // Chrome disallows cookies by default. All code paths that want to use
   // cookies need to go through one of Chrome's URLRequestContexts which have
   // a ChromeNetworkDelegate attached that selectively allows cookies again.
@@ -127,8 +130,6 @@ IOSChromeMainParts::IOSChromeMainParts(
 
 IOSChromeMainParts::~IOSChromeMainParts() {
 #if DCHECK_IS_ON()
-  // The screen object is never deleted on IOS. Make sure that all display
-  // observers are removed at the end.
   display::ScreenBase* screen =
       static_cast<display::ScreenBase*>(display::Screen::GetScreen());
   DCHECK(!screen->HasDisplayObservers());
@@ -479,6 +480,5 @@ void IOSChromeMainParts::StartMetricsRecording() {
 
   // TODO(crbug.com/40894426) Add an EG2 test for cloned install detection.
   application_context_->GetMetricsService()->CheckForClonedInstall();
-  application_context_->GetMetricsServicesManager()->UpdateUploadPermissions(
-      true);
+  application_context_->GetMetricsServicesManager()->UpdateUploadPermissions();
 }

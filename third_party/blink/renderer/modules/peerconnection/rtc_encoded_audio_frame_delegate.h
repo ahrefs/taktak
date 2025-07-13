@@ -29,7 +29,7 @@ class RTCEncodedAudioFrameDelegate
  public:
   explicit RTCEncodedAudioFrameDelegate(
       std::unique_ptr<webrtc::TransformableAudioFrameInterface> webrtc_frame,
-      rtc::ArrayView<const unsigned int> contributing_sources,
+      webrtc::ArrayView<const unsigned int> contributing_sources,
       std::optional<uint16_t> sequence_number);
 
   uint32_t RtpTimestamp() const;
@@ -41,7 +41,6 @@ class RTCEncodedAudioFrameDelegate
   std::optional<std::string> MimeType() const;
   std::optional<uint16_t> SequenceNumber() const;
   Vector<uint32_t> ContributingSources() const;
-  std::optional<uint64_t> AbsCaptureTime() const;
   std::optional<base::TimeTicks> ReceiveTime() const;
   std::optional<base::TimeTicks> CaptureTime() const;
   std::optional<base::TimeDelta> SenderCaptureTimeOffset() const;

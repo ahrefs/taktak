@@ -25,6 +25,8 @@
 
 #include "third_party/blink/renderer/modules/webaudio/media_stream_audio_destination_node.h"
 
+#include <inttypes.h>
+
 #include "base/memory/ptr_util.h"
 #include "third_party/blink/public/platform/modules/webrtc/webrtc_logging.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_audio_node_options.h"
@@ -48,7 +50,8 @@ constexpr uint32_t kDefaultNumberOfChannels = 2;
 MediaStreamAudioDestinationNode::MediaStreamAudioDestinationNode(
     AudioContext& context,
     uint32_t number_of_channels)
-    : AudioNode(context) {
+    : AudioNode(context),
+      ActiveScriptWrappable<MediaStreamAudioDestinationNode>({}) {
   DVLOG(1) << "Creating WebAudio media stream source.";
   auto audio_source = std::make_unique<WebAudioMediaStreamSource>(
     context.GetExecutionContext()->GetTaskRunner(TaskType::kInternalMedia));
@@ -131,6 +134,10 @@ MediaStreamAudioDestinationNode* MediaStreamAudioDestinationNode::Create(
   node->HandleChannelOptions(options, exception_state);
 
   return node;
+}
+
+bool MediaStreamAudioDestinationNode::HasPendingActivity() const {
+  return context()->ContextState() == V8AudioContextState::Enum::kRunning;
 }
 
 void MediaStreamAudioDestinationNode::Trace(Visitor* visitor) const {

@@ -40,11 +40,13 @@ public class WebsiteRowPreference extends ChromeImageViewPreference {
 
     private @Nullable Dialog mConfirmationDialog;
 
-    private LayoutInflater mLayoutInflater;
+    private final LayoutInflater mLayoutInflater;
 
     private Runnable mOnDeleteCallback;
 
-    private boolean mShowRwsMembershipLabels;
+    private final boolean mShowRwsMembershipLabels;
+
+    private final boolean mIsClickable;
 
     private boolean mIsClickable;
 

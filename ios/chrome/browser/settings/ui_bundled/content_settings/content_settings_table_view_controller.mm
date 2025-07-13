@@ -473,6 +473,7 @@ typedef NS_ENUM(NSInteger, ItemType) {
       break;
     }
     case ItemTypeSettingsWebInspector: {
+      [self.webInspectorStateViewCoordinator stop];
       self.webInspectorStateViewCoordinator =
           [[WebInspectorStateCoordinator alloc]
               initWithBaseNavigationController:self.navigationController
@@ -593,8 +594,15 @@ typedef NS_ENUM(NSInteger, ItemType) {
   [_linkPreviewEnabled stop];
   _linkPreviewEnabled.observer = nil;
   _linkPreviewEnabled = nil;
+  [_detectAddressesEnabled stop];
+  _detectAddressesEnabled.observer = nil;
+  _detectAddressesEnabled = nil;
+  [_detectUnitsEnabled stop];
+  _detectUnitsEnabled.observer = nil;
+  _detectUnitsEnabled = nil;
   [_webInspectorEnabled stop];
   _webInspectorEnabled.observer = nil;
+  _webInspectorEnabled = nil;
   [self.webInspectorStateViewCoordinator stop];
   self.webInspectorStateViewCoordinator = nil;
   [self.defaultModeViewCoordinator stop];

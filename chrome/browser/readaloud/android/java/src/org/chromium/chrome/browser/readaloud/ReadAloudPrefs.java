@@ -7,6 +7,7 @@ package org.chromium.chrome.browser.readaloud;
 import org.jni_zero.JNINamespace;
 import org.jni_zero.NativeMethods;
 
+import org.chromium.build.annotations.NullMarked;
 import org.chromium.chrome.modules.readaloud.PlaybackArgs.PlaybackMode;
 import org.chromium.components.prefs.PrefService;
 
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** Methods for storing and retrieving Read Aloud user settings in prefs. */
+@NullMarked
 @JNINamespace("readaloud")
 public class ReadAloudPrefs {
     private static final String TAG = "ReadAloudSettings";
@@ -82,8 +84,8 @@ public class ReadAloudPrefs {
 
     public static PlaybackMode getPlaybackMode(PrefService prefs) {
         return prefs.hasPrefPath(PLAYBACK_MODE_PATH)
-                ? PlaybackMode.fromValue(prefs.getInteger(PLAYBACK_MODE_PATH))
-                : PlaybackMode.UNSPECIFIED;
+            ? PlaybackMode.fromValue(prefs.getInteger(PLAYBACK_MODE_PATH))
+            : PlaybackMode.UNSPECIFIED;
     }
 
     public static void setPlaybackMode(PrefService prefs, PlaybackMode playbackMode) {

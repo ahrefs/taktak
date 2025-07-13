@@ -21,8 +21,9 @@
 #import "ios/chrome/browser/authentication/ui_bundled/re_signin_infobar_delegate.h"
 #import "ios/chrome/browser/bookmarks/ui_bundled/home/bookmarks_coordinator.h"
 #import "ios/chrome/browser/browser_container/ui_bundled/browser_container_view_controller.h"
+#import "ios/chrome/browser/browser_view/model/browser_view_visibility_audience.h"
+#import "ios/chrome/browser/browser_view/public/browser_view_visibility_state.h"
 #import "ios/chrome/browser/browser_view/ui_bundled/browser_view_controller+private.h"
-#import "ios/chrome/browser/browser_view/ui_bundled/browser_view_visibility_consumer.h"
 #import "ios/chrome/browser/browser_view/ui_bundled/key_commands_provider.h"
 #import "ios/chrome/browser/browser_view/ui_bundled/safe_area_provider.h"
 #import "ios/chrome/browser/content_suggestions/ui_bundled/ntp_home_constant.h"
@@ -87,6 +88,7 @@
 #import "ios/chrome/browser/toolbar/ui_bundled/toolbar_coordinator.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_browser_agent.h"
 #import "ios/chrome/browser/url_loading/model/url_loading_params.h"
+#import "ios/chrome/browser/voice/ui_bundled/voice_search_notification_names.h"
 #import "ios/chrome/browser/web/model/page_placeholder_browser_agent.h"
 #import "ios/chrome/browser/web/model/page_placeholder_tab_helper.h"
 #import "ios/chrome/browser/web/model/web_navigation_browser_agent.h"
@@ -231,6 +233,13 @@ enum HeaderBehaviour {
 
   // Used to add or cancel a page placeholder for next navigation.
   raw_ptr<PagePlaceholderBrowserAgent> _pagePlaceholderBrowserAgent;
+
+  // Whether the Lens Overlay is currently active and visible for the browser
+  // view.
+  BOOL _lensOverlayVisible;
+
+  // Whether the find bar is currently visible.
+  BOOL _findBarVisible;
 }
 
 // Activates/deactivates the object. This will enable/disable the ability for
@@ -238,17 +247,17 @@ enum HeaderBehaviour {
 // not active, the UI will not react to changes in the active web state, so
 // generally an inactive BVC should not be visible.
 @property(nonatomic, assign, getter=isActive) BOOL active;
+// Consumer that gets notified of the visibility of the browser view.
+@property(nonatomic, weak) id<BrowserViewVisibilityAudience>
+    browserViewVisibilityAudience;
 // Browser container view controller.
 @property(nonatomic, strong)
     BrowserContainerViewController* browserContainerViewController;
 // Invisible button used to dismiss the keyboard.
 @property(nonatomic, strong) UIButton* typingShield;
-// Whether the controller's view is currently available.
-// YES from viewWillAppear to viewWillDisappear.
-@property(nonatomic, assign, getter=isVisible) BOOL visible;
-// Whether the controller's view is currently visible.
-// YES from viewDidAppear to viewWillDisappear.
-@property(nonatomic, assign) BOOL viewVisible;
+// The visibility state of the browser view. Value will be set to `kVisible` on
+// viewDidAppear and to `kNotInViewHierarchy` on viewWillDisappear.
+@property(nonatomic, assign) BrowserViewVisibilityState visibilityState;
 // Whether the controller should broadcast its UI.
 @property(nonatomic, assign, getter=isBroadcasting) BOOL broadcasting;
 // A view to obscure incognito content when the user isn't authorized to
@@ -329,6 +338,10 @@ enum HeaderBehaviour {
 // Provider used to offload SceneStateBrowserAgent usage from BVC.
 @property(nonatomic, strong) SafeAreaProvider* safeAreaProvider;
 
+// Whether the content area is currently blocked by another view.
+@property(nonatomic, readonly, getter=isContentAreaObstructed)
+    BOOL contentAreaObstructed;
+
 @end
 
 @implementation BrowserViewController
@@ -362,6 +375,7 @@ enum HeaderBehaviour {
     self.applicationCommandsHandler = dependencies.applicationCommandsHandler;
     self.findInPageCommandsHandler = dependencies.findInPageCommandsHandler;
     _isOffTheRecord = dependencies.isOffTheRecord;
+    _visibilityState = BrowserViewVisibilityState::kNotInViewHierarchy;
     _urlLoadingBrowserAgent = dependencies.urlLoadingBrowserAgent;
     _tabUsageRecorderBrowserAgent = dependencies.tabUsageRecorderBrowserAgent;
     _layoutGuideCenter = dependencies.layoutGuideCenter;
@@ -437,22 +451,25 @@ enum HeaderBehaviour {
 
 #pragma mark - Private Properties
 
-- (void)setVisible:(BOOL)visible {
-  if (_visible == visible) {
-    return;
-  }
-
-  _visible = visible;
+- (BOOL)isContentAreaObstructed {
+  return _visibilityState ==
+             BrowserViewVisibilityState::kCoveredByOmniboxPopup ||
+         _visibilityState ==
+             BrowserViewVisibilityState::kCoveredByVoiceSearch ||
+         _lensOverlayVisible || _findBarVisible;
 }
 
-- (void)setViewVisible:(BOOL)viewVisible {
-  if (_viewVisible == viewVisible) {
+- (void)setVisibilityState:(BrowserViewVisibilityState)state {
+  if (_visibilityState == state) {
     return;
   }
-  _viewVisible = viewVisible;
-  self.visible = viewVisible;
-  [self.browserViewVisibilityConsumer browserViewDidChangeVisibility];
+  BrowserViewVisibilityState previousState = _visibilityState;
+  _visibilityState = state;
+  [self.browserViewVisibilityAudience
+      browserViewDidTransitionToVisibilityState:state
+                                      fromState:previousState];
   [self updateBroadcastState];
+  self.contentArea.accessibilityElementsHidden = self.contentAreaObstructed;
 }
 
 - (void)setBroadcasting:(BOOL)broadcasting {
@@ -640,7 +657,7 @@ enum HeaderBehaviour {
   // existing snapshot for the tab. This can happen when a new regular tab is
   // opened from an incognito tab. A different BVC is displayed, which may not
   // have enough time to finish appearing before a snapshot is requested.
-  if (self.currentWebState && self.viewVisible) {
+  if (self.currentWebState && [self appeared]) {
     SnapshotTabHelper::FromWebState(self.currentWebState)
         ->UpdateSnapshotWithCallback(nil);
   }
@@ -842,16 +859,14 @@ enum HeaderBehaviour {
     return NO;
   }
 
-  if (_voiceSearchController.visible) {
-    return NO;
-  }
-
-  return self.viewVisible;
+  return self.visibilityState == BrowserViewVisibilityState::kVisible;
 }
 
 #pragma mark - UIViewController
 
 - (void)viewDidLoad {
+  [self registerNotifications];
+
   CGRect initialViewsRect = self.view.bounds;
   UIViewAutoresizing initialViewAutoresizing =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -944,7 +959,7 @@ enum HeaderBehaviour {
 
 - (void)viewDidAppear:(BOOL)animated {
   [super viewDidAppear:animated];
-  self.viewVisible = YES;
+  self.visibilityState = BrowserViewVisibilityState::kVisible;
   [self updateBroadcastState];
   [self updateToolbarState];
 
@@ -966,7 +981,7 @@ enum HeaderBehaviour {
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
 
-  self.visible = YES;
+  self.visibilityState = BrowserViewVisibilityState::kAppearing;
 
   // If the controller is suspended, or has been paged out due to low memory,
   // updating the view will be handled when it's displayed again.
@@ -981,7 +996,7 @@ enum HeaderBehaviour {
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
-  self.viewVisible = NO;
+  self.visibilityState = BrowserViewVisibilityState::kNotInViewHierarchy;
   [self updateBroadcastState];
   web::WebState* activeWebState = self.currentWebState;
   if (activeWebState) {
@@ -1073,34 +1088,8 @@ enum HeaderBehaviour {
 
 - (void)dismissViewControllerAnimated:(BOOL)flag
                            completion:(void (^)())completion {
-  if (!self.presentedViewController) {
-    // TODO(crbug.com/41364311): On iOS10, UIDocumentMenuViewController and
-    // WKFileUploadPanel somehow combine to call dismiss twice instead of once.
-    // The second call would dismiss the BVC itself, so look for that case and
-    // return early.
-    //
-    // TODO(crbug.com/41370278): A similar bug exists on all iOS versions with
-    // WKFileUploadPanel and UIDocumentPickerViewController.
-    //
-    // To make M65 as safe as possible, return early whenever this method is
-    // invoked but no VC appears to be presented.  These cases will always end
-    // up dismissing the BVC itself, which would put the app into an
-    // unresponsive state.
-    return;
-  }
-
-  // Some calling code invokes `dismissViewControllerAnimated:completion:`
-  // multiple times. Because the BVC is presented, subsequent calls end up
-  // dismissing the BVC itself. This is never what should happen, so check for
-  // this case and return early.  It is not enough to check
-  // `self.dismissingModal` because some dismissals do not go through
-  // -[BrowserViewController dismissViewControllerAnimated:completion:`.
-  // TODO(crbug.com/40548564): Fix callers and remove this early return.
-  if (self.dismissingModal || self.presentedViewController.isBeingDismissed) {
-    return;
-  }
-
   self.dismissingModal = YES;
+  self.visibilityState = BrowserViewVisibilityState::kVisible;
   __weak BrowserViewController* weakSelf = self;
   [super dismissViewControllerAnimated:flag
                             completion:^{
@@ -1171,6 +1160,11 @@ enum HeaderBehaviour {
   }
 
   [_sideSwipeCoordinator stopActiveSideSwipeAnimation];
+  // TODO(crbug.com/406544789): Currently, some of the views are presented with
+  // `browserViewController` but not dismissed with this, therefore we cannot
+  // update the visibility state to `kCoveredByModal` without being sure that it
+  // would be changed back to `kVisible` afterwards. Fix the bug and update the
+  // visibility state.
 
   void (^superCall)() = ^{
     [super presentViewController:viewControllerToPresent
@@ -1182,6 +1176,7 @@ enum HeaderBehaviour {
   // rest of the App while they are being presented. Dismiss it in case the user
   // or system has triggered another presentation.
   if ([self.nonModalPromoPresentationDelegate defaultNonModalPromoIsShowing]) {
+    self.visibilityState = BrowserViewVisibilityState::kVisible;
     [self.nonModalPromoPresentationDelegate
         dismissDefaultNonModalPromoAnimated:NO
                                  completion:superCall];
@@ -1210,6 +1205,26 @@ enum HeaderBehaviour {
 }
 
 #pragma mark - ** Private BVC Methods **
+
+// Whether the browser view has appeared.
+- (BOOL)appeared {
+  return self.visibilityState !=
+             BrowserViewVisibilityState::kNotInViewHierarchy &&
+         self.visibilityState != BrowserViewVisibilityState::kAppearing;
+}
+
+// Register notifications to NSNotification center.
+- (void)registerNotifications {
+  NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+  [center addObserver:self
+             selector:@selector(voiceSearchWillAppear)
+                 name:kVoiceSearchWillShowNotification
+               object:nil];
+  [center addObserver:self
+             selector:@selector(voiceSearchWillHide)
+                 name:kVoiceSearchWillHideNotification
+               object:nil];
+}
 
 // On iOS7, iPad should match iOS6 status bar.  Install a simple black bar under
 // the status bar to mimic this layout.
@@ -1555,12 +1570,57 @@ enum HeaderBehaviour {
   }
 }
 
+// Invoked when voice search shows.
+- (void)voiceSearchWillAppear {
+  self.visibilityState = BrowserViewVisibilityState::kCoveredByVoiceSearch;
+}
+
+// Invoked when voice search hides.
+- (void)voiceSearchWillHide {
+  self.visibilityState = BrowserViewVisibilityState::kVisible;
+}
+
+// Animates hiding and showing the typing shield.
+- (void)animateTypingShieldHidden:(BOOL)hidden {
+  if (self.typingShield.hidden == hidden) {
+    return;
+  }
+
+  CGFloat finalAlpha = hidden ? 0.0 : 1.0;
+
+  if (!hidden) {
+    [self.typingShield setAlpha:0.0];
+    [self.typingShield setHidden:NO];
+  }
+
+  [UIView animateWithDuration:0.3
+      animations:^{
+        [self.typingShield setAlpha:finalAlpha];
+      }
+      completion:^(BOOL finished) {
+        if (!hidden) {
+          // Already revealed before the animation started.
+          return;
+        }
+
+        // This can happen if one quickly resigns the omnibox and then taps
+        // on the omnibox again during this animation. If the animation is
+        // interrupted and the toolbar controller is first responder, it's safe
+        // to assume `self.typingShield` shouldn't be hidden here.
+        if (!finished && [self.toolbarCoordinator isOmniboxFirstResponder]) {
+          return;
+        }
+
+        [self.typingShield setHidden:YES];
+      }];
+}
+
 #pragma mark - Private Methods: UI Configuration, update and Layout
 
 // Starts or stops broadcasting the toolbar UI and main content UI depending on
 // whether the BVC is visible and active.
 - (void)updateBroadcastState {
-  self.broadcasting = self.active && self.viewVisible;
+  self.broadcasting = self.active && [self appeared];
 }
 
 // Dismisses popups and modal dialogs that are displayed above the BVC when the
@@ -1862,13 +1922,24 @@ enum HeaderBehaviour {
 }
 
 - (void)popupDidOpenForPresenter:(OmniboxPopupPresenter*)presenter {
-  self.contentArea.accessibilityElementsHidden = YES;
+  self.visibilityState = BrowserViewVisibilityState::kCoveredByOmniboxPopup;
   self.toolbarCoordinator.secondaryToolbarViewController.view
       .accessibilityElementsHidden = YES;
+
+  if (_lensOverlayVisible) {
+    // The typing shield has to be inserted right below the presented popup
+    // omnibox to avoid being ostructed by the Lens Overlay.
+    self.typingShield.frame = UIEdgeInsetsInsetRect(
+        self.contentArea.bounds,
+        UIEdgeInsetsMake([self expandedTopToolbarHeight], 0, 0, 0));
+    [self.view insertSubview:self.typingShield
+                belowSubview:presenter.popupContainerView];
+    [self animateTypingShieldHidden:NO];
+  }
 }
 
 - (void)popupDidCloseForPresenter:(OmniboxPopupPresenter*)presenter {
-  self.contentArea.accessibilityElementsHidden = NO;
+  self.visibilityState = BrowserViewVisibilityState::kVisible;
   self.toolbarCoordinator.secondaryToolbarViewController.view
       .accessibilityElementsHidden = NO;
 }
@@ -2106,13 +2177,11 @@ enum HeaderBehaviour {
       ui::GetDeviceFormFactor() == ui::DEVICE_FORM_FACTOR_TABLET) {
     // Tapping on web content area should dismiss the keyboard. Tapping on NTP
     // gesture should propagate to NTP view.
-    [self.view insertSubview:self.typingShield aboveSubview:self.contentArea];
-    [self.typingShield setAlpha:0.0];
-    [self.typingShield setHidden:NO];
-    [UIView animateWithDuration:0.3
-                     animations:^{
-                       [self.typingShield setAlpha:1.0];
-                     }];
+
+    if (self.typingShield.hidden) {
+      [self.view insertSubview:self.typingShield aboveSubview:self.contentArea];
+      [self animateTypingShieldHidden:NO];
+    }
   }
 
   [self.toolbarCoordinator transitionToLocationBarFocusedState:YES
@@ -2124,20 +2193,7 @@ enum HeaderBehaviour {
 
   [self.ntpCoordinator locationBarWillResignFirstResponder];
 
-  [UIView animateWithDuration:0.3
-      animations:^{
-        [self.typingShield setAlpha:0.0];
-      }
-      completion:^(BOOL finished) {
-        // This can happen if one quickly resigns the omnibox and then taps
-        // on the omnibox again during this animation. If the animation is
-        // interrupted and the toolbar controller is first responder, it's safe
-        // to assume `self.typingShield` shouldn't be hidden here.
-        if (!finished && [self.toolbarCoordinator isOmniboxFirstResponder]) {
-          return;
-        }
-        [self.typingShield setHidden:YES];
-      }];
+  [self animateTypingShieldHidden:YES];
 
   ProceduralBlock completion = ^{
     // Show the NTP's fake toolbar after the defocus animation completes.
@@ -2151,7 +2207,9 @@ enum HeaderBehaviour {
 #pragma mark - BrowserCommands
 
 - (void)dismissSoftKeyboard {
-  DCHECK(self.visible || self.dismissingModal);
+  DCHECK(self.visibilityState !=
+             BrowserViewVisibilityState::kNotInViewHierarchy ||
+         self.dismissingModal);
   [self.viewForCurrentWebState endEditing:NO];
 }
 
@@ -2168,7 +2226,8 @@ enum HeaderBehaviour {
 - (void)webStateSelected {
   // Ignore changes while the tab stack view is visible (or while suspended).
   // The display will be refreshed when this view becomes active again.
-  if (!self.visible || !self.webUsageEnabled) {
+  if (self.visibilityState == BrowserViewVisibilityState::kNotInViewHierarchy ||
+      !self.webUsageEnabled) {
     return;
   }
 
@@ -2198,7 +2257,8 @@ enum HeaderBehaviour {
   }
   // Do nothing if browsing is currently suspended.  The BVC will set everything
   // up correctly when browsing resumes.
-  if (!self.visible || !self.webUsageEnabled) {
+  if (self.visibilityState == BrowserViewVisibilityState::kNotInViewHierarchy ||
+      !self.webUsageEnabled) {
     return;
   }
 
@@ -2313,8 +2373,10 @@ enum HeaderBehaviour {
   // Toolbar snapshot is only used for the UIRefresh animation.
   UIView* toolbarSnapshot;
 
-  if (tabURL == kChromeUINewTabURL && !_isOffTheRecord &&
-      !IsRegularXRegularSizeClass(self)) {
+  BOOL isNTP = tabURL == kChromeUINewTabURL;
+  BOOL isIncognito = _isOffTheRecord;
+
+  if (isNTP && !isIncognito && !IsRegularXRegularSizeClass(self)) {
     // Add a snapshot of the primary toolbar to the background as the
     // animation runs.
     UIViewController* toolbarViewController =
@@ -2335,6 +2397,8 @@ enum HeaderBehaviour {
   }
   newPage.userInteractionEnabled = NO;
   NSInteger currentAnimationIdentifier = ++_NTPAnimationIdentifier;
+
+  __weak id<OmniboxCommands> omniboxHandler = self.omniboxCommandsHandler;
 
   // Cleanup steps needed for both UI Refresh and stack-view style animations.
   UIView* webStateView = [self viewForWebState:webState];
@@ -2367,6 +2431,10 @@ enum HeaderBehaviour {
     [strongSelf webStateSelected];
     if (completion) {
       completion();
+    }
+
+    if (isNTP && isIncognito) {
+      [omniboxHandler focusOmniboxForVoiceOver];
     }
 
     [strongSelf executeAndClearForegroundTabWasAddedCompletionBlock:YES];
@@ -2650,8 +2718,9 @@ enum HeaderBehaviour {
 
 - (void)findBarDidAppearForFindBarCoordinator:
     (FindBarCoordinator*)findBarCoordinator {
+  _findBarVisible = YES;
   // When the Find bar is presented, hide underlying elements from VoiceOver.
-  self.contentArea.accessibilityElementsHidden = YES;
+  self.contentArea.accessibilityElementsHidden = self.contentAreaObstructed;
   self.toolbarCoordinator.primaryToolbarViewController.view
       .accessibilityElementsHidden = YES;
   self.toolbarCoordinator.secondaryToolbarViewController.view
@@ -2660,8 +2729,9 @@ enum HeaderBehaviour {
 
 - (void)findBarDidDisappearForFindBarCoordinator:
     (FindBarCoordinator*)findBarCoordinator {
+  _findBarVisible = NO;
   // When the Find bar is dismissed, show underlying elements to VoiceOver.
-  self.contentArea.accessibilityElementsHidden = NO;
+  self.contentArea.accessibilityElementsHidden = self.contentAreaObstructed;
   self.toolbarCoordinator.primaryToolbarViewController.view
       .accessibilityElementsHidden = NO;
   self.toolbarCoordinator.secondaryToolbarViewController.view
@@ -2690,6 +2760,28 @@ enum HeaderBehaviour {
   [self.view
       insertSubview:contextualSheet
        aboveSubview:self.toolbarCoordinator.primaryToolbarViewController.view];
+}
+
+#pragma mark - LensOverlayPresentationEnvironment
+
+- (void)lensOverlayWillAppear {
+  [_sideSwipeCoordinator setEnabled:NO];
+  _lensOverlayVisible = YES;
+  self.contentArea.accessibilityElementsHidden = self.contentAreaObstructed;
+}
+
+- (void)lensOverlayWillDisappear {
+  [_sideSwipeCoordinator setEnabled:YES];
+  _lensOverlayVisible = NO;
+  self.contentArea.accessibilityElementsHidden = self.contentAreaObstructed;
+}
+
+- (NSDirectionalEdgeInsets)presentationInsetsForLensOverlay {
+  if (IsRegularXRegularSizeClass(self)) {
+    return NSDirectionalEdgeInsetsMake([self expandedTopToolbarHeight], 0, 0,
+                                       0);
+  }
+  return NSDirectionalEdgeInsetsZero;
 }
 
 @end

@@ -22,6 +22,7 @@
 #import "ios/chrome/browser/shared/public/commands/application_commands.h"
 #import "ios/chrome/browser/shared/public/commands/command_dispatcher.h"
 #import "ios/chrome/browser/shared/public/commands/find_in_page_commands.h"
+#import "ios/chrome/browser/shared/public/commands/guided_tour_commands.h"
 #import "ios/chrome/browser/shared/public/commands/help_commands.h"
 #import "ios/chrome/browser/shared/public/commands/popup_menu_commands.h"
 #import "ios/chrome/browser/shared/public/commands/text_zoom_commands.h"
@@ -41,7 +42,8 @@
 #import "ios/chrome/common/ui/util/ui_util.h"
 #import "ios/components/webui/web_ui_url_constants.h"
 
-@interface ToolbarCoordinator () <PrimaryToolbarViewControllerDelegate,
+@interface ToolbarCoordinator () <GuidedTourCommands,
+                                  PrimaryToolbarViewControllerDelegate,
                                   ToolbarCommands,
                                   ToolbarMediatorDelegate> {
   raw_ptr<PrerenderService> _prerenderService;
@@ -120,6 +122,12 @@
   [browser->GetCommandDispatcher()
       startDispatchingToTarget:self
                    forProtocol:@protocol(FakeboxFocuser)];
+
+  if (IsBestOfAppGuidedTourEnabled()) {
+    [self.browser->GetCommandDispatcher()
+        startDispatchingToTarget:self
+                     forProtocol:@protocol(GuidedTourCommands)];
+  }
 
   segmentation_platform::DeviceSwitcherResultDispatcher* deviceSwitcherResult =
       nullptr;
@@ -263,7 +271,7 @@
   // IsActive() value rather than checking -IsVisibleURLNewTabPage.
   NewTabPageTabHelper* NTPHelper = NewTabPageTabHelper::FromWebState(webState);
   BOOL isNTP = NTPHelper && NTPHelper->IsActive();
-  BOOL isOffTheRecord = self.profile->IsOffTheRecord();
+  BOOL isOffTheRecord = self.isOffTheRecord;
   BOOL canShowTabStrip = IsRegularXRegularSizeClass(self.traitEnvironment);
 
   // Hide the toolbar when displaying content suggestions without the tab
@@ -540,11 +548,33 @@
   [self.locationBarCoordinator.locationBarViewController.view setHidden:NO];
 }
 
+#pragma mark - GuidedTourCommands
+
+- (void)highlightViewInStep:(GuidedTourStep)step {
+  for (id<GuidedTourCommands> coordinator in self.coordinators) {
+    [coordinator highlightViewInStep:step];
+  }
+}
+
+- (void)stepCompleted:(GuidedTourStep)step {
+  for (id<GuidedTourCommands> coordinator in self.coordinators) {
+    [coordinator stepCompleted:step];
+  }
+}
+
 #pragma mark - ToolbarCommands
 
 - (void)triggerToolbarSlideInAnimation {
   for (id<ToolbarCommands> coordinator in self.coordinators) {
     [coordinator triggerToolbarSlideInAnimation];
+  }
+}
+
+- (void)indicateLensOverlayVisible:(BOOL)lensOverlayVisible {
+  [self.locationBarCoordinator setLensOverlayVisible:lensOverlayVisible];
+
+  for (id<ToolbarCommands> coordinator in self.coordinators) {
+    [coordinator indicateLensOverlayVisible:lensOverlayVisible];
   }
 }
 
@@ -611,8 +641,7 @@
 /// an incognito browser, the NTP is displayed, and whether the fakebox was
 /// pinned if it was selected.
 - (OmniboxFocusTrigger)omniboxFocusTrigger {
-  if (self.profile->IsOffTheRecord() ||
-      !IsSplitToolbarMode(self.traitEnvironment)) {
+  if (self.isOffTheRecord || !IsSplitToolbarMode(self.traitEnvironment)) {
     return _focusedFromFakebox ? OmniboxFocusTrigger::kUnpinnedFakebox
                                : OmniboxFocusTrigger::kOther;
   }

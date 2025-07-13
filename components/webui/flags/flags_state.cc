@@ -22,7 +22,6 @@
 #include "base/logging.h"
 #include "base/metrics/field_trial.h"
 #include "base/metrics/field_trial_params.h"
-#include "base/not_fatal_until.h"
 #include "base/stl_util.h"
 #include "base/strings/strcat.h"
 #include "base/strings/string_tokenizer.h"
@@ -377,7 +376,7 @@ void FlagsState::GetSwitchesAndFeaturesFromFlags(
 
   for (const std::string& entry_name : enabled_entries) {
     const auto& entry_it = name_to_switch_map.find(entry_name);
-    CHECK(entry_it != name_to_switch_map.end(), base::NotFatalUntil::M130);
+    CHECK(entry_it != name_to_switch_map.end());
 
     const SwitchEntry& entry = entry_it->second;
     if (!entry.switch_name.empty()) {
@@ -1129,6 +1128,8 @@ void FlagsState::SetFlags(
     std::string feature_internal_name = flag.substr(0, at_index);
     const flags_ui::FeatureEntry* entry =
         FindFeatureEntryByName(feature_internal_name);
+    // Since this flag is currently enabled, we know for sure that we can find
+    // its feature entry using its internal name.
     CHECK(entry);
 
     if (entry->type == FeatureEntry::FEATURE_VALUE ||
@@ -1186,7 +1187,12 @@ void FlagsState::SetFlags(
       std::string feature_internal_name = flag.substr(0, at_index);
       const flags_ui::FeatureEntry* entry =
           FindFeatureEntryByName(feature_internal_name);
-      CHECK(entry);
+      // Since this flag is enabled previously but not enabled right now, it is
+      // possible that we have removed this flag from the codebase. Therefore,
+      // if we cannot find the feature entry, we just move on.
+      if (entry == nullptr) {
+        continue;
+      }
 
       if (entry->type == FeatureEntry::FEATURE_VALUE ||
           entry->type == FeatureEntry::FEATURE_WITH_PARAMS_VALUE) {

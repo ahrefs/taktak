@@ -34,6 +34,7 @@ import org.chromium.base.TerminationStatus;
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.UserData;
 import org.chromium.base.UserDataHost;
+import org.chromium.base.process_launcher.ChildProcessConnection;
 import org.chromium.blink_public.input.SelectionGranularity;
 import org.chromium.build.annotations.Initializer;
 import org.chromium.build.annotations.NullMarked;
@@ -150,7 +151,7 @@ public class WebContentsImpl
     private final List<RenderFrameHostImpl> mFrames = new ArrayList<>();
 
     private long mNativeWebContentsAndroid;
-    private @Nullable NavigationController mNavigationController;
+    private final NavigationController mNavigationController;
 
     // Lazily created proxy observer for handling all Java-based WebContentsObservers.
     private @Nullable WebContentsObserverProxy mObserverProxy;
@@ -223,7 +224,7 @@ public class WebContentsImpl
             String productVersion,
             ViewAndroidDelegate viewDelegate,
             InternalAccessDelegate accessDelegate,
-            WindowAndroid windowAndroid,
+            @Nullable WindowAndroid windowAndroid,
             InternalsHolder internalsHolder) {
         assert internalsHolder != null;
 
@@ -286,7 +287,6 @@ public class WebContentsImpl
     void clearNativePtr() {
         mNativeDestroyThrowable = new RuntimeException("clearNativePtr");
         mNativeWebContentsAndroid = 0;
-        mNavigationController = null;
         if (mObserverProxy != null) {
             mObserverProxy.webContentsDestroyed();
             mObserverProxy = null;
@@ -395,7 +395,7 @@ public class WebContentsImpl
     }
 
     @Override
-    public @Nullable NavigationController getNavigationController() {
+    public NavigationController getNavigationController() {
         return mNavigationController;
     }
 
@@ -598,10 +598,12 @@ public class WebContentsImpl
     }
 
     @Override
-    public void setImportance(@ChildProcessImportance int primaryMainFrameImportance) {
+    public void setPrimaryMainFrameImportance(@ChildProcessImportance int importance) {
         checkNotDestroyed();
+        assert ChildProcessConnection.supportNotPerceptibleBinding()
+                || importance != ChildProcessImportance.PERCEPTIBLE;
         WebContentsImplJni.get()
-                .setImportance(mNativeWebContentsAndroid, primaryMainFrameImportance);
+                .setPrimaryMainFrameImportance(mNativeWebContentsAndroid, importance);
     }
 
     @Override
@@ -1153,6 +1155,12 @@ public class WebContentsImpl
     }
 
     @Override
+    public void showInterestInElement(int nodeID) {
+        if (mNativeWebContentsAndroid == 0) return;
+        WebContentsImplJni.get().showInterestInElement(mNativeWebContentsAndroid, nodeID);
+    }
+
+    @Override
     public void notifyRendererPreferenceUpdate() {
         if (mNativeWebContentsAndroid == 0) return;
         WebContentsImplJni.get().notifyRendererPreferenceUpdate(mNativeWebContentsAndroid);
@@ -1243,6 +1251,16 @@ public class WebContentsImpl
                 .setSupportsForwardTransitionAnimation(mNativeWebContentsAndroid, supports);
     }
 
+    @Override
+    public boolean hasOpener() {
+        return WebContentsImplJni.get().hasOpener(mNativeWebContentsAndroid);
+    }
+
+    @Override
+    public int getOriginalWindowOpenDisposition() {
+        return WebContentsImplJni.get().getOriginalWindowOpenDisposition(mNativeWebContentsAndroid);
+    }
+
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     @NativeMethods
     public interface Natives {
@@ -1311,7 +1329,7 @@ public class WebContentsImpl
 
         void collapseSelection(long nativeWebContentsAndroid);
 
-        void setImportance(long nativeWebContentsAndroid, int importance);
+        void setPrimaryMainFrameImportance(long nativeWebContentsAndroid, int importance);
 
         void suspendAllMediaPlayers(long nativeWebContentsAndroid);
 
@@ -1438,6 +1456,8 @@ public class WebContentsImpl
         void setContextMenuInsets(
                 long nativeWebContentsAndroid, int top, int left, int bottom, int right);
 
+        void showInterestInElement(long nativeWebContentsAndroid, int nodeID);
+
         void notifyRendererPreferenceUpdate(long nativeWebContentsAndroid);
 
         void notifyBrowserControlsHeightChanged(long nativeWebContentsAndroid);
@@ -1461,5 +1481,9 @@ public class WebContentsImpl
                 long nativeWebContentsAndroid, Callback<Bitmap> callback);
 
         void setSupportsForwardTransitionAnimation(long nativeWebContentsAndroid, boolean enabled);
+
+        boolean hasOpener(long nativeWebContentsAndroid);
+
+        int getOriginalWindowOpenDisposition(long nativeWebContentsAndroid);
     }
 }

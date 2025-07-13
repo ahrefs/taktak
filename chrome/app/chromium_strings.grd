@@ -361,6 +361,12 @@ If you update this file, be sure also to update google_chrome_strings.grd. -->
       <message name="IDS_TASK_MANAGER_KILL_ACCESSIBILITY_NAME" desc="The accessibility description for the End Task button in the Task Manager window">
         Ends the highlighted task.
       </message>
+      <message name="IDS_TASK_MANAGER_TASK_KILL_SUCCESS_ACCESSIBILITY_MESSAGE" desc="The text announced after a process and some of its tasks are killed.">
+        Task(s) ended.
+      </message>
+      <message name="IDS_TASK_MANAGER_TASK_KILL_FAIL_ACCESSIBILITY_MESSAGE" desc="The text announced when all tasks in the process could not be killed.">
+        Failed to end task(s).
+      </message>
       <message name="IDS_TASK_MANAGER_CATEGORY_TABS_AND_EXTENSIONS_NAME" desc="The title of the 'Tabs and Extensions' filter category.">
         Tabs &amp; extensions
       </message>
@@ -699,7 +705,7 @@ Taktak is unable to recover your settings.
           Taktak isn't your default browser
       </message>
       <message name="IDS_DEFAULT_BROWSER_PIN_INFOBAR_TEXT" desc="Text to show in an infobar when Chromium is not the current default browser and can be pinned to the taskbar.">
-        Set Chromium as your default browser and pin it to your taskbar
+        Set Taktak as your default browser and pin it to your taskbar
       </message>
       <if expr="is_win or is_macosx">
         <message name="IDS_PDF_INFOBAR_TEXT" desc="Text to show in an infobar when Chromium is not the default PDF viewer.">
@@ -1035,6 +1041,8 @@ Taktak is unable to recover your settings.
         </message>
         <message name="IDS_ENTERPRISE_VALUE_PROPOSITION_PROFILE_REQUIRED_BY_ORG_KNOWN_DOMAIN_TITLE" desc="Title of the screen in the profile creation flow where the user is asked whether they want to confirm signing in to Taktak with their enterprise account when it is mandatory to sign in to Taktak with the enterprise account.">
           Your organization, <ph name="MANAGER">$1<ex>manager.com</ex></ph>, requires you to sign into Taktak
+        <message name="IDS_ENTERPRISE_VALUE_PROPOSITION_PROFILE_REQUIRED_BY_ORG_KNOWN_DOMAIN_TITLE" desc="Title of the screen in the profile creation flow where the user is asked whether they want to confirm signing in to Chromium with their enterprise account when it is mandatory to sign in to Chromium with the enterprise account.">
+          Your organization, <ph name="MANAGER">$1<ex>manager.com</ex></ph>, requires you to sign into Chromium
         </message>
         <message name="IDS_ENTERPRISE_VALUE_PROPOSITION_PROFILE_SUGGESTED_TITLE" desc="Title of the screen in the profile creation flow where the user is asked whether they want to confirm signing in to Taktak with their enterprise account.">
           Sign in to Taktak?
@@ -1709,6 +1717,14 @@ Taktak is unable to recover your settings.
           desc="Notification shown in the Lens Overlay when the user has copied the selected image to the clipboard.">
           Image copied
         </message>
+        <message name="IDS_LENS_OVERLAY_FEEDBACK_TOAST_MESSAGE"
+          desc="The message on the toast prompting the user to share their thoughts by sending feedback.">
+          Share your thoughts
+        </message>
+        <message name="IDS_LENS_OVERLAY_SEND_FEEDBACK_BUTTON_LABEL"
+          desc="The label for the button that on click opens a feedback form for the user to send feedback about the feature.">
+          Send feedback
+        </message>
         <message name="IDS_LENS_OVERLAY_MORE_OPTIONS_BUTTON_LABEL"
           desc="Text that is shown in the tooltip of the more options button in the Lens Overlay.">
           More options
@@ -1854,6 +1870,26 @@ Taktak is unable to recover your settings.
           desc="Accessibility label for the button that opens a searchbox on the language picker so the user can search through the defined languages to find one that matches the text they enter into the searchbox.">
           Search language list
         </message>
+        <message name="IDS_LENS_OVERLAY_TOP_LEFT_CORNER_SLIDER_ACCESSIBILITY_LABEL"
+          is_accessibility_with_no_ui="true"
+          desc="Accessibility label for the slider controlling the top left corner of the search area. Includes the coordinates of the left and top edges of the search area expressed as percentages of the image area.">
+          top left corner of search area: left <ph name="LEFT"><ex>15</ex>$1</ph>%, top <ph name="TOP"><ex>65</ex>$2</ph>%
+        </message>
+        <message name="IDS_LENS_OVERLAY_TOP_RIGHT_CORNER_SLIDER_ACCESSIBILITY_LABEL"
+          is_accessibility_with_no_ui="true"
+          desc="Accessibility label for the slider controlling the top right corner of the search area. Includes the coordinates of the right and top edges of the search area expressed as percentages of the image area.">
+          top right corner of search area: right <ph name="RIGHT"><ex>15</ex>$1</ph>%, top <ph name="TOP"><ex>65</ex>$2</ph>%
+        </message>
+        <message name="IDS_LENS_OVERLAY_BOTTOM_RIGHT_CORNER_SLIDER_ACCESSIBILITY_LABEL"
+          is_accessibility_with_no_ui="true"
+          desc="Accessibility label for the slider controlling the bottom right corner of the search area. Includes the coordinates of the right and bottom edges of the search area expressed as percentages of the image area.">
+          bottom right corner of search area: right <ph name="RIGHT"><ex>15</ex>$1</ph>%, bottom <ph name="BOTTOM"><ex>65</ex>$2</ph>%
+        </message>
+        <message name="IDS_LENS_OVERLAY_BOTTOM_LEFT_CORNER_SLIDER_ACCESSIBILITY_LABEL"
+          is_accessibility_with_no_ui="true"
+          desc="Accessibility label for the slider controlling the bottom left corner of the search area. Includes the coordinates of the left and bottom edges of the search area expressed as percentages of the image area.">
+          bottom left corner of search area: left <ph name="LEFT"><ex>15</ex>$1</ph>%, bottom <ph name="BOTTOM"><ex>65</ex>$2</ph>%
+        </message>
 
         <!-- IPH Strings -->
         <message name="IDS_LENS_OVERLAY_TRANSLATE_BUTTON_IPH"
@@ -1874,9 +1910,31 @@ Taktak is unable to recover your settings.
           desc="The label of the Lens overlay entrypoint in the omnibox">
           Image Search
         </message>
+        <message name="IDS_CONTENT_LENS_OVERLAY_HOMEWORK_ENTRYPOINT_LABEL"
+          desc="The label of the Lens overlay entrypoint in the omnibox offering homework help">
+          Homework help
+        </message>
         <message name="IDS_SIDE_PANEL_LENS_OVERLAY_TOOLBAR_TOOLTIP"
           desc="The tooltip for the Lens overlay toolbar button.">
           Search with Image Search
+        </message>
+
+        <!-- Lens Side Panel Error Page -->
+        <message name="IDS_SIDE_PANEL_LENS_OVERLAY_GENERIC_ERROR_PAGE_FIRST_LINE"
+            desc="Text shown on the side panel for the Lens feature when there is a network or other server error. The texts informs the user that an error has occured.">
+          Something went wrong
+        </message>
+        <message name="IDS_SIDE_PANEL_LENS_OVERLAY_GENERIC_ERROR_PAGE_SECOND_LINE"
+            desc="Text shown on the side panel for the Lens feature when there is a network or other server error. The texts informs the user the panel can not be loaded.">
+          Couldn't load this panel, try again
+        </message>
+        <message name="IDS_SIDE_PANEL_LENS_OVERLAY_PROTECTED_PAGE_ERROR_FIRST_LINE"
+            desc="Text shown on the side panel for the Lens feature when there is are no results being loaded due to the page being protected. The texts informs the user the panel can not be loaded.">
+          This page is protected
+        </message>
+        <message name="IDS_SIDE_PANEL_LENS_OVERLAY_PROTECTED_PAGE_ERROR_SECOND_LINE"
+            desc="Text shown on the side panel for the Lens feature when there is are no results being loaded due to the page being protected. The text suggests the user try a different page since the current one can not be read.">
+          Protected pages can't be read. Try a different page.
         </message>
 
         <!-- Lens Permission Bubble Dialog-->
@@ -2112,8 +2170,14 @@ Taktak is unable to recover your settings.
         <message name="IDS_FRE_DEFAULT_BROWSER_TITLE" desc="Title for the page that prompts user to set Taktak as their default browser in the first run experience.">
           Set Taktak as your default browser
         </message>
-        <message name="IDS_FRE_DEFAULT_BROWSER_SUBTITLE_NEW" desc="Subtitle for the page that prompts user to set Taktak as their default browser in the first run experience.">
+        <message name="IDS_FRE_DEFAULT_BROWSER_AND_PINNING_TITLE" desc="Title for the page that prompts user to set Chromium as their default browser and pin to taskbar in the first run experience.">
+          Use Taktak by default and get it pinned
+        </message>
+        <message name="IDS_FRE_DEFAULT_BROWSER_SUBTITLE_NEW" desc="Subtitle for the page that prompts user to set Chromium as their default browser in the first run experience.">
           Use Taktak anytime you click links in messages, documents, and other apps
+        </message>
+        <message name="IDS_FRE_DEFAULT_BROWSER_AND_PINNING_SUBTITLE" desc="Subtitle for the page that prompts user to set Chromium as their default browser and pin to taskbar in the first run experience.">
+          Open links in Taktak from any app. Plus for easy access, it gets pinned to your taskbar.
         </message>
         <message name="IDS_FRE_DEFAULT_BROWSER_ILLUSTRATION_ALT_TEXT" desc="Alt text for the illustration in the page that prompts user to set Taktak as their default browser.">
           Taktak logo inside a computer screen.
@@ -2145,13 +2209,6 @@ Taktak is unable to recover your settings.
         </message>
         <message name="IDS_SIGNOUT_DICE_WEB_INTERCEPT_BUBBLE_CHROME_SIGNOUT_IPH_TEXT_SCREENREADER" desc="Text announced by screenreaders related to the confirmation message is intended to help users to understand that signing out of a Google service (like Gmail) will not sign them out of Taktak. It appears in a blue in-product help bubble, which points to the Taktak Profile Menu; it appears after the user signs out of a Google service (like Gmail). The user can open the Profile Menu and sign out of Taktak, if they wish to do so.">
           To remove your Google Account from Taktak, sign out of Taktak in the Settings page
-        </message>
-      </if>
-
-      <!-- Strings for full restore notifications -->
-      <if expr="is_chromeos">
-        <message name="IDS_RESTORE_NOTIFICATION_DISPLAY_SOURCE" desc="This is the string shown as the display source of the notification for the user to select restore or not on startup.">
-          ChromiumOS system
         </message>
       </if>
 

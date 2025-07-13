@@ -12,12 +12,12 @@ import android.graphics.drawable.Drawable;
 import androidx.annotation.ColorInt;
 import androidx.appcompat.content.res.AppCompatResources;
 
+import org.chromium.build.annotations.NullMarked;
 import org.chromium.chrome.browser.bookmarks.BookmarkUiPrefs.BookmarkRowDisplayPref;
 import org.chromium.chrome.browser.ui.favicon.FaviconUtils;
 import org.chromium.components.bookmarks.BookmarkId;
 import org.chromium.components.bookmarks.BookmarkItem;
 import org.chromium.components.bookmarks.BookmarkType;
-import org.chromium.components.browser_ui.styles.ChromeColors;
 import org.chromium.components.browser_ui.styles.SemanticColorUtils;
 import org.chromium.components.browser_ui.widget.RoundedIconGenerator;
 import org.chromium.ui.UiUtils;
@@ -25,6 +25,7 @@ import org.chromium.ui.UiUtils;
 import java.util.Objects;
 
 /** A class holding static util functions for bookmark views. */
+@NullMarked
 public class BookmarkViewUtils {
     /**
      * @param context {@link Context} used to retrieve the drawable.
@@ -143,7 +144,7 @@ public class BookmarkViewUtils {
         if (bookmarkModel.isSpecialFolder(item)) {
             return SemanticColorUtils.getColorPrimaryContainer(context);
         } else {
-            return ChromeColors.getSurfaceColor(context, R.dimen.default_elevation_1);
+            return SemanticColorUtils.getColorSurfaceContainerLow(context);
         }
     }
 

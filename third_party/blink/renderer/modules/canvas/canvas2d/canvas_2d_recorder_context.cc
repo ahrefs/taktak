@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/390223051): Remove C-library calls to fix the errors.
-#pragma allow_unsafe_libc_calls
-#endif
-
 #include "third_party/blink/renderer/modules/canvas/canvas2d/canvas_2d_recorder_context.h"
 
 #include <algorithm>
@@ -26,6 +21,7 @@
 #include "base/check.h"
 #include "base/check_deref.h"
 #include "base/check_op.h"
+#include "base/compiler_specific.h"
 #include "base/containers/span.h"
 #include "base/feature_list.h"
 #include "base/memory/raw_ref.h"
@@ -54,6 +50,7 @@
 #include "third_party/blink/renderer/bindings/modules/v8/v8_gpu_texture_format.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_typedefs.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_union_canvasfilter_string.h"
+#include "third_party/blink/renderer/core/canvas_interventions/canvas_interventions_enums.h"
 #include "third_party/blink/renderer/core/css/css_property_names.h"
 #include "third_party/blink/renderer/core/css/css_value.h"
 #include "third_party/blink/renderer/core/css/parser/css_parser.h"
@@ -1061,10 +1058,13 @@ ColorParseResult Canvas2DRecorderContext::ParseColorOrCurrentColor(
   }
 
   if (parse_result == ColorParseResult::kColorFunction) {
-    const CSSValue* color_mix_value = CSSParser::ParseSingleValue(
+    const CSSValue* color_value = CSSParser::ParseSingleValue(
         CSSPropertyID::kColor, color_string,
         StrictCSSParserContext(SecureContextMode::kInsecureContext));
 
+    if (!color_value) {
+      return ColorParseResult::kParseFailed;
+    }
     static const TextLinkColors kDefaultTextLinkColors{};
     auto* window = DynamicTo<LocalDOMWindow>(GetTopExecutionContext());
     const TextLinkColors& text_link_colors =
@@ -1072,12 +1072,12 @@ ColorParseResult Canvas2DRecorderContext::ParseColorOrCurrentColor(
                : kDefaultTextLinkColors;
     // TODO(40946458): Don't use default length resolver here!
     const ResolveColorValueContext context{
-        .length_resolver = CSSToLengthConversionData(/*element=*/nullptr),
+        .conversion_data = CSSToLengthConversionData(/*element=*/nullptr),
         .text_link_colors = text_link_colors,
         .used_color_scheme = color_scheme_,
         .color_provider = GetColorProvider(),
         .is_in_web_app_scope = IsInWebAppScope()};
-    const StyleColor style_color = ResolveColorValue(*color_mix_value, context);
+    const StyleColor style_color = ResolveColorValue(*color_value, context);
     color = style_color.Resolve(GetCurrentColor(), color_scheme_);
     return ColorParseResult::kColor;
   }
@@ -1310,7 +1310,7 @@ void Canvas2DRecorderContext::setShadowBlur(double blur) {
                                                 blur);
   }
   if (blur > 0) {
-    SetTriggerForCanvasIntervention();
+    AddTriggersForCanvasIntervention(CanvasOperationType::kSetShadowBlur);
   }
   state.SetShadowBlur(ClampTo<float>(blur));
 }
@@ -1335,7 +1335,7 @@ void Canvas2DRecorderContext::setShadowColor(const String& color_string) {
     identifiability_study_helper_.UpdateBuilder(CanvasOps::kSetShadowColor,
                                                 color.Rgb());
   }
-  SetTriggerForCanvasIntervention();
+  AddTriggersForCanvasIntervention(CanvasOperationType::kSetShadowColor);
   state.SetShadowColor(color);
 }
 
@@ -1417,7 +1417,8 @@ void Canvas2DRecorderContext::setGlobalCompositeOperation(
         CanvasOps::kSetGlobalCompositeOpertion, sk_blend_mode);
   }
   if (op != kCompositeSourceOver || blend_mode != BlendMode::kNormal) {
-    SetTriggerForCanvasIntervention();
+    AddTriggersForCanvasIntervention(
+        CanvasOperationType::kGlobalCompositionOperation);
   }
   state.SetGlobalComposite(sk_blend_mode);
 }
@@ -1847,9 +1848,7 @@ void Canvas2DRecorderContext::FillPathImpl(Path2D* dom_path,
     identifiability_study_helper_.UpdateBuilder(
         CanvasOps::kFill__Path, dom_path->GetIdentifiableToken(), winding_rule);
   }
-  if (dom_path->HasTriggerForIntervention()) {
-    SetTriggerForCanvasIntervention();
-  }
+  AddTriggersForCanvasIntervention(dom_path->GetTriggersForIntervention());
   DrawPathInternal(*dom_path, CanvasRenderingContext2DState::kFillPaintType,
                    winding_rule, path2d_use_paint_cache_);
 }
@@ -1867,9 +1866,7 @@ void Canvas2DRecorderContext::stroke(Path2D* dom_path) {
     identifiability_study_helper_.UpdateBuilder(
         CanvasOps::kStroke__Path, dom_path->GetIdentifiableToken());
   }
-  if (dom_path->HasTriggerForIntervention()) {
-    SetTriggerForCanvasIntervention();
-  }
+  AddTriggersForCanvasIntervention(dom_path->GetTriggersForIntervention());
   DrawPathInternal(*dom_path, CanvasRenderingContext2DState::kStrokePaintType,
                    SkPathFillType::kWinding, path2d_use_paint_cache_);
 }
@@ -2689,7 +2686,8 @@ scoped_refptr<cc::RefCountedBuffer<SkPoint>> MakeSkPointBuffer(
 
   const size_t size = array->length() / 2;
   std::vector<SkPoint> skpoints(size);
-  std::memcpy(skpoints.data(), array->Data(), size * sizeof(SkPoint));
+  UNSAFE_TODO(
+      std::memcpy(skpoints.data(), array->Data(), size * sizeof(SkPoint)));
 
   return base::MakeRefCounted<cc::RefCountedBuffer<SkPoint>>(
       std::move(skpoints));

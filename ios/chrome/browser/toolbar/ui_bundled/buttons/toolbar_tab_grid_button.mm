@@ -49,12 +49,10 @@ const CGFloat kLabelOffset = 3;
     (ToolbarTabGridButtonImageLoader)tabGroupStateImageLoader {
   CHECK(tabGroupStateImageLoader);
   self = [super
-      initWithImageLoader:^{
-        return [[UIImage alloc] init];
-      }
-      IPHHighlightedImageLoader:^{
-        return [[UIImage alloc] init];
-      }];
+            initWithImageLoader:^{
+              return [[UIImage alloc] init];
+            }
+      IPHHighlightedImageLoader:nil];
   if (self) {
     _normalStateImageLoader = ^{
       return tabGroupStateImageLoader(ToolbarTabGroupState::kNormal);
@@ -90,6 +88,11 @@ const CGFloat kLabelOffset = 3;
   [self updateTabCountLabelTextColor];
 }
 
+- (void)setIphHighlighted:(BOOL)iphHighlighted {
+  [super setIphHighlighted:iphHighlighted];
+  [self updateTabCountLabelTextColor];
+}
+
 #pragma mark - UIAccessibility
 
 - (NSString*)accessibilityIdentifier {
@@ -109,18 +112,6 @@ const CGFloat kLabelOffset = 3;
 
 - (void)setHighlighted:(BOOL)highlighted {
   [super setHighlighted:highlighted];
-  [self updateTabCountLabelTextColor];
-}
-
-#pragma mark - ToolbarButton
-
-// TODO(crbug.com/40265763): Rename all the references of 'iphHighlighted' to
-// 'customHighlighted' as the highlighting UI wont be limited to IPH cases.
-- (void)setIphHighlighted:(BOOL)iphHighlighted {
-  if (self.iphHighlighted == iphHighlighted) {
-    return;
-  }
-  [super setIphHighlighted:iphHighlighted];
   [self updateTabCountLabelTextColor];
 }
 

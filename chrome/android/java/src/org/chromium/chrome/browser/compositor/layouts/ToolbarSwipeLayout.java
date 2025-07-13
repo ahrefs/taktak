@@ -77,13 +77,13 @@ public class ToolbarSwipeLayout extends Layout {
     private TopToolbarOverlayCoordinator mLeftToolbarOverlay;
     private TopToolbarOverlayCoordinator mRightToolbarOverlay;
 
-    private ObservableSupplierImpl<Tab> mLeftTabSupplier;
-    private ObservableSupplierImpl<Tab> mRightTabSupplier;
+    private final ObservableSupplierImpl<Tab> mLeftTabSupplier;
+    private final ObservableSupplierImpl<Tab> mRightTabSupplier;
 
     private final ViewGroup mContentContainer;
 
     // Whether or not to show the toolbar.
-    private boolean mMoveToolbar;
+    private final boolean mMoveToolbar;
 
     // Offsets are in pixels [0, width].
     private float mOffsetStart;
@@ -149,6 +149,7 @@ public class ToolbarSwipeLayout extends Layout {
                             () -> mRenderHost.getResourceManager(),
                             topUiColorProvider,
                             bottomControlsOffsetSupplier,
+                            new ObservableSupplierImpl<>(false),
                             LayoutType.TOOLBAR_SWIPE,
                             true);
             mLeftToolbarOverlay.setManualVisibility(true);
@@ -164,6 +165,7 @@ public class ToolbarSwipeLayout extends Layout {
                             () -> mRenderHost.getResourceManager(),
                             topUiColorProvider,
                             bottomControlsOffsetSupplier,
+                            new ObservableSupplierImpl<>(false),
                             LayoutType.TOOLBAR_SWIPE,
                             true);
             mRightToolbarOverlay.setManualVisibility(true);

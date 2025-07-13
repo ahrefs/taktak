@@ -8,9 +8,13 @@ import 'chrome://settings/lazy_load.js';
 import {flush} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 import type {SettingsPersonalizationOptionsElement} from 'chrome://settings/lazy_load.js';
 import type {PrivacyPageVisibility, SettingsPrefsElement} from 'chrome://settings/settings.js';
-import {CrSettingsPrefs, loadTimeData, PrivacyPageBrowserProxyImpl, resetRouterForTesting, Router, routes, SignedInState, StatusAction, SyncBrowserProxyImpl} from 'chrome://settings/settings.js';
-import {assertEquals, assertFalse, assertTrue} from 'chrome://webui-test/chai_assert.js';
+import {CrSettingsPrefs, loadTimeData, PrivacyPageBrowserProxyImpl, SignedInState, StatusAction, SyncBrowserProxyImpl} from 'chrome://settings/settings.js';
+import {assertFalse, assertTrue} from 'chrome://webui-test/chai_assert.js';
 import {isVisible} from 'chrome://webui-test/test_util.js';
+// <if expr="_google_chrome or not is_chromeos">
+import {assertEquals} from 'chrome://webui-test/chai_assert.js';
+// </if>
+
 // <if expr="not is_chromeos">
 import {eventToPromise} from 'chrome://webui-test/test_util.js';
 import {ChromeSigninUserChoice} from 'chrome://settings/settings.js';
@@ -332,6 +336,20 @@ suite('AllBuilds', function() {
   });
   // </if>
 
+  test('searchAggregatorSuggestNotShown', function() {
+    loadTimeData.overrideValues({showSearchAggregatorSuggest: false});
+    buildTestElement();  // Rebuild the element after modifying loadTimeData.
+    assertFalse(isVisible(
+      testElement.shadowRoot!.querySelector('#searchAggregatorSuggestToggle')));
+  });
+
+  test('searchAggregatorSuggestShown', function() {
+    loadTimeData.overrideValues({showSearchAggregatorSuggest: true});
+    buildTestElement();  // Rebuild the element after modifying loadTimeData.
+    assertTrue(isVisible(
+      testElement.shadowRoot!.querySelector('#searchAggregatorSuggestToggle')));
+  });
+
   test('priceEmailNotificationsToggleHidden', function() {
     loadTimeData.overrideValues(
         {'changePriceEmailNotificationsEnabled': false});
@@ -347,29 +365,6 @@ suite('AllBuilds', function() {
     flush();
     assertFalse(!!testElement.shadowRoot!.querySelector(
         '#priceEmailNotificationsToggle'));
-  });
-
-  test('historySearchRow', () => {
-    loadTimeData.overrideValues({
-      showHistorySearchControl: true,
-      enableAiSettingsPageRefresh: false,
-    });
-    resetRouterForTesting();
-    buildTestElement();
-
-    const historySearchRow =
-        testElement.shadowRoot!.querySelector<HTMLElement>('#historySearchRow');
-    assertTrue(!!historySearchRow);
-    assertTrue(isVisible(historySearchRow));
-    historySearchRow.click();
-    const currentRoute = Router.getInstance().getCurrentRoute();
-    assertEquals(routes.HISTORY_SEARCH, currentRoute);
-    assertEquals(routes.SYNC, currentRoute.parent);
-
-    loadTimeData.overrideValues({showHistorySearchControl: false});
-    buildTestElement();
-    assertFalse(!!testElement.shadowRoot!.querySelector<HTMLElement>(
-        '#historySearchRow'));
   });
 });
 

@@ -814,19 +814,21 @@ bool AudioContext::IsAllowedToStart(bool should_suppress_warning) const {
       DCHECK(window->GetFrame()->IsCrossOriginToOutermostMainFrame());
       if (!should_suppress_warning) {
         window->AddConsoleMessage(MakeGarbageCollected<ConsoleMessage>(
-          mojom::ConsoleMessageSource::kOther,
-          mojom::ConsoleMessageLevel::kWarning,
-          "The AudioContext was not allowed to start. It must be resumed (or "
-          "created) from a user gesture event handler. https://goo.gl/7K7WLu"));
+            mojom::blink::ConsoleMessageSource::kOther,
+            mojom::blink::ConsoleMessageLevel::kWarning,
+            "The AudioContext was not allowed to start. It must be resumed (or "
+            "created) from a user gesture event handler. "
+            "https://developer.chrome.com/blog/autoplay/#web_audio"));
       }
       break;
     case AutoplayPolicy::Type::kDocumentUserActivationRequired:
       if (!should_suppress_warning) {
         window->AddConsoleMessage(MakeGarbageCollected<ConsoleMessage>(
-          mojom::ConsoleMessageSource::kOther,
-          mojom::ConsoleMessageLevel::kWarning,
-          "The AudioContext was not allowed to start. It must be resumed (or "
-          "created) after a user gesture on the page. https://goo.gl/7K7WLu"));
+            mojom::blink::ConsoleMessageSource::kOther,
+            mojom::blink::ConsoleMessageLevel::kWarning,
+            "The AudioContext was not allowed to start. It must be resumed (or "
+            "created) after a user gesture on the page. "
+            "https://developer.chrome.com/blog/autoplay/#web_audio"));
       }
       break;
   }
@@ -1421,17 +1423,24 @@ void AudioContext::HandleRenderError() {
 
   // Implements
   // https://webaudio.github.io/web-audio-api/#error-handling-on-a-running-audio-context
-  if (ContextState() == V8AudioContextState::Enum::kRunning) {
-    // TODO(https://crbug.com/353641602): starting or stopping the renderer
-    // should happen on the render thread, but this is the current convention.
-    destination()->GetAudioDestinationHandler().StopRendering();
+  switch (ContextState()) {
+    case V8AudioContextState::Enum::kRunning:
+    case V8AudioContextState::Enum::kInterrupted:
+      // TODO(https://crbug.com/353641602): starting or stopping the renderer
+      // should happen on the render thread, but this is the current convention.
+      destination()->GetAudioDestinationHandler().StopRendering();
 
-    DispatchEvent(*Event::Create(event_type_names::kError));
-    suspended_by_user_ = false;
-    SetContextState(V8AudioContextState::Enum::kSuspended);
-  } else if (ContextState() == V8AudioContextState::Enum::kSuspended) {
-    DispatchEvent(*Event::Create(event_type_names::kError));
+      DispatchEvent(*Event::Create(event_type_names::kError));
+      suspended_by_user_ = false;
+      SetContextState(V8AudioContextState::Enum::kSuspended);
+      return;
+    case V8AudioContextState::Enum::kSuspended:
+      DispatchEvent(*Event::Create(event_type_names::kError));
+      return;
+    case V8AudioContextState::Enum::kClosed:
+      return;
   }
+  NOTREACHED();
 }
 
 void AudioContext::invoke_onrendererror_from_platform_for_testing() {

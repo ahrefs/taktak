@@ -247,8 +247,8 @@ public class SiteSettings extends BaseSiteSettingsFragment
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
         updatePreferenceStates();
     }
 
@@ -265,5 +265,10 @@ public class SiteSettings extends BaseSiteSettingsFragment
                         SingleCategorySettings.EXTRA_TITLE,
                         assumeNonNull(preference.getTitle()).toString());
         return false;
+    }
+
+    @Override
+    public @AnimationType int getAnimationType() {
+        return AnimationType.PROPERTY;
     }
 }

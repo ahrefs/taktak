@@ -23,26 +23,28 @@ import org.chromium.build.annotations.Nullable;
 @NullMarked
 public class TabSupplierObserver extends EmptyTabObserver implements Destroyable {
     /** A handle to the tab supplier. */
-    private final ObservableSupplier<Tab> mTabSupplier;
+    private final ObservableSupplier<@Nullable Tab> mTabSupplier;
 
     /** An observer to watch for a changing tab and move this tab observer. */
-    private final Callback<Tab> mTabObserver;
+    private final Callback<@Nullable Tab> mTabObserver;
 
     /** The current tab. */
     private @Nullable Tab mTab;
 
-    public TabSupplierObserver(ObservableSupplier<Tab> tabSupplier) {
+    public TabSupplierObserver(ObservableSupplier<@Nullable Tab> tabSupplier) {
         this(tabSupplier, false);
     }
 
     /**
-     * Create a new {@link TabObserver} that only observes the tab from the given supplier.
-     * It doesn't trigger for the initial tab being attached to after creation.
+     * Create a new {@link TabObserver} that only observes the tab from the given supplier. It
+     * doesn't trigger for the initial tab being attached to after creation.
+     *
      * @param tabSupplier An {@link ObservableSupplier} to get the current tab.
      * @param shouldTrigger Whether the observer should be triggered for the initial tab after
-     * creation.
+     *     creation.
      */
-    public TabSupplierObserver(ObservableSupplier<Tab> tabSupplier, boolean shouldTrigger) {
+    public TabSupplierObserver(
+            ObservableSupplier<@Nullable Tab> tabSupplier, boolean shouldTrigger) {
         mTabSupplier = tabSupplier;
         mTabObserver =
                 (tab) -> {
@@ -58,9 +60,10 @@ public class TabSupplierObserver extends EmptyTabObserver implements Destroyable
 
     /**
      * Update the tab being observed.
+     *
      * @param newTab The new tab to observe.
      */
-    private void updateObservedTab(Tab newTab) {
+    private void updateObservedTab(@Nullable Tab newTab) {
         if (mTab != null) mTab.removeObserver(TabSupplierObserver.this);
         mTab = newTab;
         if (mTab != null) mTab.addObserver(TabSupplierObserver.this);
@@ -68,9 +71,10 @@ public class TabSupplierObserver extends EmptyTabObserver implements Destroyable
 
     /**
      * A notification that the observer has switched to observing a different tab.
+     *
      * @param tab The tab that the observer is now observing. This can be null.
      */
-    protected void onObservingDifferentTab(Tab tab) {}
+    protected void onObservingDifferentTab(@Nullable Tab tab) {}
 
     /** Clean up any state held by this observer. */
     @Override
