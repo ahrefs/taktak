@@ -299,6 +299,7 @@ group("make_modules_generated") {
     ":make_modules_generated_event_target_names",
     ":make_modules_generated_indexed_db_names",
     ":make_modules_generated_media_capabilities_names",
+    "//components/drm:taktak_drm_blink",
     "//components/payments/mojom:mojom_blink_headers",
     "//components/schema_org/common:mojom_blink_headers",
     "//components/services/filesystem/public/mojom:mojom_blink_headers",
@@ -318,7 +319,6 @@ group("make_modules_generated") {
     "//third_party/blink/renderer/core:core_event_interfaces",
     "//ui/accessibility:ax_enums_mojo_blink_headers",
     "//ui/display/mojom:mojom_blink_headers",
-    "//components/drm:taktak_drm_blink",
   ]
 }
 

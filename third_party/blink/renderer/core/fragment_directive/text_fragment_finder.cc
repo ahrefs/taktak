@@ -182,8 +182,8 @@ void TextFragmentFinder::FindPrefix() {
   }
 
   FindMatchInRange(selector_.Prefix(), search_range_,
-                   /*word_start_bounded=*/true,
-                   /*word_end_bounded=*/false);
+      /*word_start_bounded=*/true,
+      /*word_end_bounded=*/false);
 }
 
 void TextFragmentFinder::OnPrefixMatchComplete(
@@ -222,10 +222,10 @@ void TextFragmentFinder::FindTextStart() {
     search_range_->SetStart(NextTextPosition(prefix_match_->EndPosition(),
                                              match_range_->EndPosition()));
     FindMatchInRange(selector_.Start(), search_range_,
-                     /*word_start_bounded=*/false, end_at_word_boundary);
+        /*word_start_bounded=*/false, end_at_word_boundary);
   } else {
     FindMatchInRange(selector_.Start(), search_range_,
-                     /*word_start_bounded=*/true, end_at_word_boundary);
+        /*word_start_bounded=*/true, end_at_word_boundary);
   }
 }
 
@@ -273,7 +273,7 @@ void TextFragmentFinder::FindTextEnd() {
     const bool end_at_word_boundary = selector_.Suffix().empty();
 
     FindMatchInRange(selector_.End(), search_range_,
-                     /*word_start_bounded=*/true, end_at_word_boundary);
+        /*word_start_bounded=*/true, end_at_word_boundary);
   } else {
     GoToStep(kMatchSuffix);
   }
@@ -303,7 +303,7 @@ void TextFragmentFinder::FindSuffix() {
   search_range_->SetStart(NextTextPosition(potential_match_->EndPosition(),
                                            match_range_->EndPosition()));
   FindMatchInRange(selector_.Suffix(), search_range_,
-                   /*word_start_bounded=*/false, /*word_end_bounded=*/true);
+      /*word_start_bounded=*/false, /*word_end_bounded=*/true);
 }
 
 void TextFragmentFinder::OnSuffixMatchComplete(
@@ -375,7 +375,20 @@ TextFragmentFinder::TextFragmentFinder(Client& client,
                                        const TextFragmentSelector& selector,
                                        Document* document,
                                        FindBufferRunnerType runner_type)
-    : client_(client), selector_(selector), document_(document) {
+    : TextFragmentFinder(client,
+                         selector,
+                         document->createRange(),
+                         runner_type) {
+  if (document->body()) {
+    range_->selectNode(document->body());
+  }
+}
+
+TextFragmentFinder::TextFragmentFinder(Client& client,
+                                       const TextFragmentSelector& selector,
+                                       Range* range,
+                                       FindBufferRunnerType runner_type)
+    : client_(client), selector_(selector), range_(range) {
   DCHECK(!selector_.Start().empty());
   DCHECK(selector_.Type() != TextFragmentSelector::SelectorType::kInvalid);
   if (runner_type == TextFragmentFinder::FindBufferRunnerType::kAsynchronous) {
@@ -393,24 +406,22 @@ void TextFragmentFinder::Cancel() {
 void TextFragmentFinder::FindMatch() {
   Cancel();
 
-  auto forced_lock_scope =
-      document_->GetDisplayLockDocumentState().GetScopedForceActivatableLocks();
-  document_->UpdateStyleAndLayout(DocumentUpdateReason::kFindInPage);
+  auto forced_lock_scope = range_->OwnerDocument()
+      .GetDisplayLockDocumentState()
+      .GetScopedForceActivatableLocks();
+  range_->OwnerDocument().UpdateStyleAndLayout(
+      DocumentUpdateReason::kFindInPage);
 
   first_match_.Clear();
-  FindMatchFromPosition(PositionInFlatTree::FirstPositionInNode(*document_));
+
+  PositionInFlatTree search_start =
+      ToPositionInFlatTree(range_->StartPosition());
+  FindMatchFromPosition(search_start);
 }
 
 void TextFragmentFinder::FindMatchFromPosition(
     PositionInFlatTree search_start) {
-  PositionInFlatTree search_end;
-  if (document_->documentElement() &&
-      document_->documentElement()->lastChild()) {
-    search_end = PositionInFlatTree::AfterNode(
-        *document_->documentElement()->lastChild());
-  } else {
-    search_end = PositionInFlatTree::LastPositionInNode(*document_);
-  }
+  PositionInFlatTree search_end = ToPositionInFlatTree(range_->EndPosition());
   search_range_ =
       MakeGarbageCollected<RangeInFlatTree>(search_start, search_end);
   match_range_ =
@@ -436,7 +447,7 @@ void TextFragmentFinder::OnMatchComplete() {
 }
 
 void TextFragmentFinder::Trace(Visitor* visitor) const {
-  visitor->Trace(document_);
+  visitor->Trace(range_);
   visitor->Trace(range_end_search_start_);
   visitor->Trace(potential_match_);
   visitor->Trace(prefix_match_);
@@ -468,13 +479,13 @@ void TextFragmentFinder::SetPrefixMatch(EphemeralRangeInFlatTree range) {
 
 bool TextFragmentFinder::HasValidRanges() {
   return !((prefix_match_ &&
-            (prefix_match_->IsNull() || !prefix_match_->IsConnected())) ||
-           (potential_match_ &&
-            (potential_match_->IsNull() || !potential_match_->IsConnected())) ||
-           (search_range_ &&
-            (search_range_->IsNull() || !search_range_->IsConnected())) ||
-           (match_range_ &&
-            (match_range_->IsNull() || !match_range_->IsConnected())));
+      (prefix_match_->IsNull() || !prefix_match_->IsConnected())) ||
+      (potential_match_ &&
+          (potential_match_->IsNull() || !potential_match_->IsConnected())) ||
+      (search_range_ &&
+          (search_range_->IsNull() || !search_range_->IsConnected())) ||
+      (match_range_ &&
+          (match_range_->IsNull() || !match_range_->IsConnected())));
 }
 
 }  // namespace blink

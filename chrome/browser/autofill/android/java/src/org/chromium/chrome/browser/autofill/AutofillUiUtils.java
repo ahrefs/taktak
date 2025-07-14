@@ -244,10 +244,18 @@ public class AutofillUiUtils {
                 case ImageType.CREDIT_CARD_ART_IMAGE:
                 case ImageType.PIX_ACCOUNT_IMAGE:
                     return getFifeIconUrlWithParams(
-                            iconUrl, getWidth(), getHeight(), /* circleCrop= */ false, /* requestPng= */ false);
+                            iconUrl,
+                            getWidth(),
+                            getHeight(),
+                            /* circleCrop= */ false,
+                            /* requestPng= */ false);
                 case ImageType.VALUABLE_IMAGE:
                     return getFifeIconUrlWithParams(
-                            iconUrl, getWidth(), getHeight(), /* circleCrop= */ true, /* requestPng= */ true);
+                            iconUrl,
+                            getWidth(),
+                            getHeight(),
+                            /* circleCrop= */ true,
+                            /* requestPng= */ true);
             }
             assert false : "Image type not handled: " + mImageType;
             return assumeNonNull(null);
@@ -673,7 +681,11 @@ public class AutofillUiUtils {
      */
     @VisibleForTesting
     static GURL getFifeIconUrlWithParams(
-            GURL customIconUrl, @Px int width, @Px int height, boolean circleCrop, boolean requestPng) {
+            GURL customIconUrl,
+            @Px int width,
+            @Px int height,
+            boolean circleCrop,
+            boolean requestPng) {
         // Params can be added to a FIFE URL by appending them at the end like URL[=params]. "w"
         // option is used to set the width in pixels, and "h" is used to set the height in pixels.
         StringBuilder url = new StringBuilder(customIconUrl.getSpec());

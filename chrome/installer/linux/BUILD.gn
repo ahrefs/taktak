@@ -375,9 +375,10 @@ group("installer_deps") {
     "//components/privacy_sandbox/privacy_sandbox_attestations/preload:component",
     "//sandbox/linux:chrome_sandbox",
   ]
-#  if (bundle_widevine_cdm) {
-#    public_deps += [ "//third_party/widevine/cdm" ]
-#  }
+
+  #  if (bundle_widevine_cdm) {
+  #    public_deps += [ "//third_party/widevine/cdm" ]
+  #  }
 
   if (!use_static_angle) {
     public_deps += [
@@ -400,9 +401,10 @@ group("installer_deps") {
       "//third_party/swiftshader/src/Vulkan:swiftshader_libvulkan",
     ]
   }
-#  if (!is_chromeos) {
-#    public_deps += [ ":rpm_packaging_files" ]
-#  }
+
+  #  if (!is_chromeos) {
+  #    public_deps += [ ":rpm_packaging_files" ]
+  #  }
   if (build_with_internal_optimization_guide) {
     public_deps += [
       ":strip_optimization_guide",
@@ -489,63 +491,63 @@ template("linux_package") {
     ]
   }
 
-#  if (!is_chromeos) {
-#    rpm_target_name = "${target_name}_rpm"
-#    action(rpm_target_name) {
-#      visibility = [ ":*" ]
-#      script = "//build/gn_run_binary.py"
-#
-#      if (current_cpu == "x86") {
-#        rpm_arch = "i386"
-#      } else if (current_cpu == "x64") {
-#        rpm_arch = "x86_64"
-#      } else if (current_cpu == "arm") {
-#        rpm_arch = "armhf"
-#      } else if (current_cpu == "arm64") {
-#        rpm_arch = "aarch64"
-#      } else if (current_cpu == "mipsel") {
-#        rpm_arch = "mipsel"
-#      } else if (current_cpu == "mips64el") {
-#        rpm_arch = "mips64el"
-#      } else if (current_cpu == "loong64") {
-#        rpm_arch = "loongarch64"
-#      } else if (current_cpu == "riscv64") {
-#        rpm_arch = "riscv64"
-#      } else {
-#        assert(false, "Linux installer not configured for this architecture.")
-#      }
-#
-#      inputs = packaging_files
-#      outputs = [ "$root_out_dir/${package}-${channel}-${chrome_version_full}-1.${rpm_arch}.rpm" ]
-#
-#      args = [
-#        rebase_path("$root_out_dir/installer/rpm/build.sh", root_build_dir),
-#        "-a",
-#        rpm_arch,
-#        "-c",
-#        invoker.channel,
-#        "-d",
-#        branding_path_component,
-#        "-o",
-#        rebase_path(root_out_dir, root_build_dir),
-#        "-t",
-#        target_os,
-#      ]
-#      if (is_official_build) {
-#        args += [ "-f" ]
-#      }
-#      deps = [
-#        ":installer_deps",
-#        ":merge_rpm_dependencies",
-#      ]
-#    }
-#  }
+  #  if (!is_chromeos) {
+  #    rpm_target_name = "${target_name}_rpm"
+  #    action(rpm_target_name) {
+  #      visibility = [ ":*" ]
+  #      script = "//build/gn_run_binary.py"
+  #
+  #      if (current_cpu == "x86") {
+  #        rpm_arch = "i386"
+  #      } else if (current_cpu == "x64") {
+  #        rpm_arch = "x86_64"
+  #      } else if (current_cpu == "arm") {
+  #        rpm_arch = "armhf"
+  #      } else if (current_cpu == "arm64") {
+  #        rpm_arch = "aarch64"
+  #      } else if (current_cpu == "mipsel") {
+  #        rpm_arch = "mipsel"
+  #      } else if (current_cpu == "mips64el") {
+  #        rpm_arch = "mips64el"
+  #      } else if (current_cpu == "loong64") {
+  #        rpm_arch = "loongarch64"
+  #      } else if (current_cpu == "riscv64") {
+  #        rpm_arch = "riscv64"
+  #      } else {
+  #        assert(false, "Linux installer not configured for this architecture.")
+  #      }
+  #
+  #      inputs = packaging_files
+  #      outputs = [ "$root_out_dir/${package}-${channel}-${chrome_version_full}-1.${rpm_arch}.rpm" ]
+  #
+  #      args = [
+  #        rebase_path("$root_out_dir/installer/rpm/build.sh", root_build_dir),
+  #        "-a",
+  #        rpm_arch,
+  #        "-c",
+  #        invoker.channel,
+  #        "-d",
+  #        branding_path_component,
+  #        "-o",
+  #        rebase_path(root_out_dir, root_build_dir),
+  #        "-t",
+  #        target_os,
+  #      ]
+  #      if (is_official_build) {
+  #        args += [ "-f" ]
+  #      }
+  #      deps = [
+  #        ":installer_deps",
+  #        ":merge_rpm_dependencies",
+  #      ]
+  #    }
+  #  }
 
   group(target_name) {
     deps = [ ":$deb_target_name" ]
-#    if (!is_chromeos) {
-#      deps += [ ":$rpm_target_name" ]
-#    }
+    #    if (!is_chromeos) {
+    #      deps += [ ":$rpm_target_name" ]
+    #    }
   }
 }
 

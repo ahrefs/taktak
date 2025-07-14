@@ -83,8 +83,8 @@ public class AutofillKeyboardAccessoryViewBridge implements AutofillDelegate {
     }
 
     /**
-     * Initializes this object.
-     * This function should be called at most one time.
+     * Initializes this object. This function should be called at most one time.
+     *
      * @param nativeAutofillKeyboardAccessory Handle to the native counterpart.
      * @param windowAndroid The window on which to show the suggestions.
      */

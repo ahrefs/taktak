@@ -115,7 +115,9 @@ public class BookmarkManagerOpenerImpl implements BookmarkManagerOpener {
     }
 
     private void showBookmarkManagerOnTablet(
-            Context context, @Nullable ComponentName componentName, String url,
+            Context context,
+            @Nullable ComponentName componentName,
+            String url,
             boolean isIncognito) {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         intent.putExtra(

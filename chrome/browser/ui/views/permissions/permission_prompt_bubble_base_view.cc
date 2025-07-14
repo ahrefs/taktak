@@ -15,35 +15,35 @@
 #include "chrome/browser/ui/browser_tabstrip.h"
 #include "chrome/browser/ui/browser_window.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
+#include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/chrome_widget_sublevel.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/location_bar/location_bar_view.h"
 #include "chrome/browser/ui/web_applications/app_browser_controller.h"
+#include "chrome/common/widevine/widevine_utils.h"
+#include "chrome/grit/generated_resources.h"
 #include "components/permissions/permission_request.h"
 #include "components/permissions/permission_uma_util.h"
 #include "components/permissions/permission_util.h"
+#include "components/permissions/permission_widevine_utils.h"
 #include "components/permissions/request_type.h"
 #include "components/strings/grit/components_strings.h"
+#include "third_party/widevine/cdm/buildflags.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
 #include "ui/base/mojom/dialog_button.mojom.h"
 #include "ui/base/ui_base_types.h"
 #include "ui/gfx/geometry/insets.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/views/bubble/bubble_dialog_delegate_view.h"
 #include "ui/views/controls/button/md_text_button.h"
 #include "ui/views/controls/label.h"
+#include "ui/views/controls/styled_label.h"
 #include "ui/views/layout/box_layout.h"
 #include "ui/views/view_class_properties.h"
 #include "ui/views/widget/widget.h"
-#include "chrome/browser/ui/views/chrome_layout_provider.h"
-#include "ui/views/bubble/bubble_dialog_delegate_view.h"
-#include "ui/views/controls/styled_label.h"
 #include "ui/views/window/dialog_client_view.h"
 #include "ui/views/window/dialog_delegate.h"
-#include "chrome/grit/generated_resources.h"
-#include "third_party/widevine/cdm/buildflags.h"
-#include "chrome/common/widevine/widevine_utils.h"
-#include "components/permissions/permission_widevine_utils.h"
 
 #if BUILDFLAG(ENABLE_WIDEVINE)
 #include "chrome/common/widevine/widevine_permission_request.h"
@@ -54,13 +54,13 @@ namespace {
 #if BUILDFLAG(ENABLE_WIDEVINE)
 void MaybeAddWidevinePermissionRequestText(
     views::BubbleDialogDelegateView* dialog_delegate_view,
-    const std::vector<raw_ptr<permissions::PermissionRequest,
-                              VectorExperimental>>& requests) {
+    const std::vector<std::unique_ptr<permissions::PermissionRequest>>&
+        requests) {
   if (!HasWidevinePermissionRequest(requests)) {
     return;
   }
 
-  auto* widevine_request = static_cast<WidevinePermissionRequest*>(requests[0]);
+  auto* widevine_request = static_cast<WidevinePermissionRequest*>(requests[0].get());
   views::Label* text = new views::Label(
       widevine_request->GetExplanatoryMessageText(),
       views::style::CONTEXT_LABEL, views::style::STYLE_SECONDARY);
@@ -77,8 +77,8 @@ void MaybeAddWidevinePermissionRequestText(
 #else
 void MaybeAddWidevinePermissionRequestText(
     views::BubbleDialogDelegateView* dialog_delegate_view,
-    const std::vector<raw_ptr<permissions::PermissionRequest,
-                              VectorExperimental>>& requests) {}
+    const std::vector<std::unique_ptr<permissions::PermissionRequest>>&
+        requests) {}
 #endif
 
 }

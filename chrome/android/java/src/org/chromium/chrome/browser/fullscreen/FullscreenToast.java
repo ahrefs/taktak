@@ -19,8 +19,8 @@ import org.chromium.ui.widget.Toast.ToastPriority;
 import java.util.function.BooleanSupplier;
 
 /**
- * Interface for fullscreen notification toast that allows experimenting different
- * implementations, based on Android Toast widget and a custom view.
+ * Interface for fullscreen notification toast that allows experimenting different implementations,
+ * based on Android Toast widget and a custom view.
  */
 @NullMarked
 interface FullscreenToast {

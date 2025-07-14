@@ -58,7 +58,7 @@ class MODULES_EXPORT AudioContext final
       public mojom::blink::MediaDevicesListener,
       public FrameVisibilityObserver,
       public media::mojom::blink::MediaPlayer {
-  DEFINE_WRAPPERTYPEINFO();
+ DEFINE_WRAPPERTYPEINFO();
 
  public:
   static AudioContext* Create(ExecutionContext*,
@@ -129,7 +129,7 @@ class MODULES_EXPORT AudioContext final
       RequestVisibilityCallback request_visibility_cb) override {}
   void RecordAutoPictureInPictureInfo(
       const media::PictureInPictureEventsInfo::AutoPipInfo&
-          auto_picture_in_picture_info) override {}
+  auto_picture_in_picture_info) override {}
 
   // https://webaudio.github.io/web-audio-api/#AudioContext
   double baseLatency() const;
@@ -273,14 +273,14 @@ class MODULES_EXPORT AudioContext final
   void ResolvePromisesForUnpause();
 
   AudioIOPosition OutputPosition() const
-      VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
+  VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
 
   // Send notification to browser that an AudioContext has started or stopped
   // playing audible audio.
   void NotifyAudibleAudioStarted()
-      VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
+  VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
   void NotifyAudibleAudioStopped()
-      VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
+  VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
 
   void EnsureAudioContextManagerService();
   void OnAudioContextManagerServiceConnectionError();
@@ -295,10 +295,10 @@ class MODULES_EXPORT AudioContext final
   // Callback from blink::mojom::MediaDevicesDispatcherHost::EnumerateDevices().
   void DevicesEnumerated(const Vector<Vector<WebMediaDeviceInfo>>& enumeration,
                          Vector<mojom::blink::VideoInputDeviceCapabilitiesPtr>
-                             video_input_capabilities,
+                         video_input_capabilities,
                          Vector<mojom::blink::AudioInputDeviceCapabilitiesPtr>
-                             audio_input_capabilities)
-      VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
+                         audio_input_capabilities)
+  VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
 
   // A helper function used to update `v8_sink_id_` whenever `sink_id_` is
   // updated.
@@ -309,7 +309,7 @@ class MODULES_EXPORT AudioContext final
   void ResumeOnPrerenderActivation();
 
   void HandleRenderError()
-      VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
+  VALID_CONTEXT_REQUIRED(main_thread_sequence_checker_);
 
   // https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/media/capture/README.md#logs
   void SendLogMessage(const char* const function_name, const String& message);
@@ -321,6 +321,10 @@ class MODULES_EXPORT AudioContext final
 
   // Handles a disconnection from the MediaPlayerHost.
   void OnMediaPlayerDisconnect();
+
+  // Returns whether the media-playback-while-not-visible permission policy
+  // allows this audio context to play while not visible.
+  bool CanPlayWhileHidden() const;
 
   // https://webaudio.github.io/web-audio-api/#dom-audiocontext-suspended-by-user-slot
   bool suspended_by_user_ = false;
@@ -445,7 +449,7 @@ class MODULES_EXPORT AudioContext final
   // device list is refrehsed before using it.  A value of 0 means no updates
   // are pending.
   int pending_device_list_updates_
-      GUARDED_BY_CONTEXT(main_thread_sequence_checker_) = 0;
+  GUARDED_BY_CONTEXT(main_thread_sequence_checker_) = 0;
 
   // ID used for mojo communication with the MediaPlayerHost.
   const int player_id_;

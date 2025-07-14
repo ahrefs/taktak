@@ -15,8 +15,6 @@ class PrefRegistrySimple;
 void EnableWidevineCdm();
 void DisableWidevineCdm();
 int GetWidevinePermissionRequestTextFrangmentResourceId(bool for_restart);
-void RequestWidevinePermission(content::WebContents* web_contents,
-                               bool for_restart);
 void RegisterWidevineLocalstatePrefs(PrefRegistrySimple* registry);
 void RegisterWidevineProfilePrefs(PrefRegistrySimple* registry);
 bool IsWidevineEnabled();

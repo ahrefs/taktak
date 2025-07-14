@@ -57,12 +57,11 @@ public class PostMessageHandler implements OriginVerificationListener {
 
     /**
      * Basic constructor. Everytime the given {@link CustomTabsSessionToken} is associated with a
-     * new {@link WebContents},
-     * {@link PostMessageHandler#reset(WebContents)} should be called to
+     * new {@link WebContents}, {@link PostMessageHandler#reset(WebContents)} should be called to
      * reset all internal state.
      *
      * @param postMessageBackend The {@link PostMessageBackend} to which updates about the channel
-     *                           and posted messages will be sent.
+     *     and posted messages will be sent.
      */
     public PostMessageHandler(PostMessageBackend postMessageBackend) {
         mPostMessageBackend = postMessageBackend;
@@ -168,6 +167,7 @@ public class PostMessageHandler implements OriginVerificationListener {
 
     /**
      * Sets the postMessage postMessageUri for this session to the given {@link Uri}.
+     *
      * @param postMessageUri The postMessageUri value to be set.
      */
     public void initializeWithPostMessageUri(Uri postMessageUri, @Nullable Uri targetOrigin) {

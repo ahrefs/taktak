@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser;
 
-
 import android.os.Build;
 import android.os.Looper;
 import android.os.StrictMode;

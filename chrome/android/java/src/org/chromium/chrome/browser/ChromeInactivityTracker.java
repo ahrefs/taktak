@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser;
 
-
 import androidx.annotation.VisibleForTesting;
 
 import org.chromium.base.Log;
@@ -41,8 +40,9 @@ public class ChromeInactivityTracker
     private @Nullable ActivityLifecycleDispatcher mLifecycleDispatcher;
 
     /**
-     * Creates an inactivity tracker without a timeout callback. This is useful if clients only
-     * want to query the inactivity state manually.
+     * Creates an inactivity tracker without a timeout callback. This is useful if clients only want
+     * to query the inactivity state manually.
+     *
      * @param prefName the location in shared preferences that the timestamp is stored.
      */
     public ChromeInactivityTracker(String prefName) {

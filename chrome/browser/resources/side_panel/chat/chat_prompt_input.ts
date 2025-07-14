@@ -44,7 +44,10 @@ export class ChatPromptInputElement extends CrLitElement {
                 reflect: true,
             },
 
-            maxlength: {type: Number},
+            maxlength: {
+                type: Number,
+                reflect: true,
+            },
 
             readonly: {
                 type: Boolean,
@@ -75,15 +78,15 @@ export class ChatPromptInputElement extends CrLitElement {
         };
     }
 
-    override autofocus: boolean = false;
-    disabled: boolean = false;
-    readonly: boolean = false;
-    required: boolean = false;
-    rows: number = 1;
-    maxlength?: number;
-    value: string = '';
-    placeholder: string = '';
-    protected internalValue_: string = '';
+    override accessor autofocus: boolean = false;
+    accessor disabled: boolean = false;
+    accessor readonly: boolean = false;
+    accessor required: boolean = false;
+    accessor rows: number = 1;
+    accessor maxlength!: number;
+    accessor value: string = '';
+    accessor placeholder: string = '';
+    protected accessor internalValue_: string = '';
 
     override willUpdate(changedProperties: PropertyValues<this>) {
         super.willUpdate(changedProperties);

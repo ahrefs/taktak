@@ -16,7 +16,7 @@ import org.chromium.support_lib_glue.SupportLibWebViewChromiumFactory.ApiCall;
 /**
  * Adapter between WebViewRendererBoundaryInterface and AwRenderProcess.
  *
- * Once created, instances are kept alive by the peer AwRendererProcess.
+ * <p>Once created, instances are kept alive by the peer AwRendererProcess.
  */
 @Lifetime.Renderer
 class SupportLibWebViewRendererAdapter extends IsomorphicAdapter

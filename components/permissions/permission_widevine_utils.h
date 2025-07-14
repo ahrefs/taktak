@@ -9,13 +9,12 @@
 #include <vector>
 
 #include "base/memory/raw_ptr.h"
+#include "components/permissions/permission_request.h"
 
 namespace permissions {
 class PermissionRequest;
 
 bool HasWidevinePermissionRequest(
-    const std::vector<
-        raw_ptr<permissions::PermissionRequest, VectorExperimental>>& requests);
-
+    const std::vector<std::unique_ptr<permissions::PermissionRequest>>& requests);
 }  // namespace permissions
 #endif  // CHROMIUM_SRC_COMPONENTS_PERMISSIONS_PERMISSION_WIDEVINE_UTILS_H_

@@ -365,13 +365,14 @@
         </then>
         <else>
           <message name="IDS_PAGE_INFO_PRIVACY_SITE_DATA_3PCS_ENTERPRISE_ALLOWED_DESCRIPTION" desc="" translateable="false">
-            Chromium blocks third-party cookies in Incognito, but your administrator allowed third-party cookies for this site. Incognito also provides features that can limit the information available to companies whose content is embedded on a site you visit.
+            Taktak blocks third-party cookies in Incognito, but your administrator allowed third-party cookies for this site. Incognito also provides features that can limit the information available to companies whose content is embedded on a site you visit.
           </message>
           <message name="IDS_PAGE_INFO_PRIVACY_SITE_DATA_3PCS_EXTENSION_ALLOWED_DESCRIPTION" desc="" translateable="false">
-            Chromium blocks third-party cookies in Incognito, but an extension allowed third-party cookies for this site.
+            Taktak blocks third-party cookies in Incognito, but an extension allowed third-party cookies for this site.
           </message>
           <message name="IDS_PAGE_INFO_PRIVACY_SITE_DATA_3PCS_USER_ALLOWED_DESCRIPTION" desc="" translateable="false">
-            Chromium blocks third-party cookies in Incognito, but you made an exception for this site.
+            Taktak blocks third-party cookies in Incognito, but you made an exception for this site.
+          </message>
           <message name="IDS_SETTINGS_TRACKING_PROTECTION_IP_PROTECTION_TOGGLE_SUB_LABEL" desc="Sub-label for the IP protection toggle. Explains that the feature only works for signed-in users and that some traffic may be sent through privacy servers when the feature is on. Provides a link to a help center article.">
               When you're signed in to Taktak, this setting helps keep your IP address private. If Taktak suspects a site may be tracking you, some of your traffic may be sent through privacy servers. Learn more about <ph name="LINK_BEGIN">&lt;a href="#" aria-label="$1" aria-description="$2" target="_blank"&gt;</ph>how IP protection works<ph name="LINK_END">&lt;/a&gt;</ph>
           </message>
@@ -1089,22 +1090,22 @@
         </then>
         <else>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_PAGE_DESCRIPTION" desc="" formatter_data="android_java" translateable="false">
-            When you browse in Incognito, Chromium won't save your browsing history, cookies and site data, and the information you enter in forms. Incognito also provides features that can limit the information available to embedded sites.
+            When you browse in Incognito, Taktak won't save your browsing history, cookies and site data, and the information you enter in forms. Incognito also provides features that can limit the information available to embedded sites.
           </message>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_BLOCK_3PCS_TOGGLE_SUBLABEL" desc="" formatter_data="android_java" translateable="false">
-            Chromium blocks sites from using third-party cookies in Incognito
+            Taktak blocks sites from using third-party cookies in Incognito
           </message>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_IP_PROTECTION_WHEN_ON" desc="" formatter_data="android_java" translateable="false">
-            Chromium will try to protect your IP address from embedded sites that may be trying to learn about you
+            Taktak will try to protect your IP address from embedded sites that may be trying to learn about you
           </message>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_IP_PROTECTION_THINGS_TO_CONSIDER_BULLET_TWO" desc="" formatter_data="android_java" translateable="false">
-            Only available when Incognito is opened from a signed-in Chromium tab
+            Only available when Incognito is opened from a signed-in Taktak tab
           </message>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_FINGERPRINTING_PROTECTION_WHEN_ON" desc="" formatter_data="android_java" translateable="false">
-            Chromium will try to limit device and browser data, like installed fonts or your time zone, from embedded sites that may be trying to learn about you
+            Taktak will try to limit device and browser data, like installed fonts or your time zone, from embedded sites that may be trying to learn about you
           </message>
           <message name="IDS_INCOGNITO_NTP_INCOGNITO_TRACKING_PROTECTIONS_LINK_A11Y_DESCRIPTION" desc="" translateable="false">
-            Opens in a regular Chromium window
+            Opens in a regular Taktak window
           </message>
         </else>
       </if>

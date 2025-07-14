@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.about_settings;
 
-
 import org.jni_zero.JniType;
 import org.jni_zero.NativeMethods;
 

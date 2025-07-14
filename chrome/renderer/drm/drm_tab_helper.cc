@@ -8,12 +8,14 @@
 #include <utility>
 #include <vector>
 
-#include "chrome/common/widevine/widevine_utils.h"
-#include "chrome/common/widevine/constants.h"
 #include "base/containers/contains.h"
 #include "build/build_config.h"
 #include "chrome/browser/browser_process_impl.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/common/widevine/constants.h"
+#include "chrome/common/widevine/widevine_permission_request.h"
+#include "chrome/common/widevine/widevine_utils.h"
+#include "components/permissions/permission_request_manager.h"
 #include "components/prefs/pref_service.h"
 #include "components/update_client/crx_update_item.h"
 #include "content/public/browser/navigation_controller.h"
@@ -119,7 +121,10 @@ void DrmTabHelper::HandleWidevineKeySystemRequest() {
 
   if (ShouldShowWidevineOptIn() && !is_permission_requested_) {
     is_permission_requested_ = true;
-    RequestWidevinePermission(web_contents(), for_restart);
+    permissions::PermissionRequestManager::FromWebContents(web_contents())
+        ->AddRequest(web_contents()->GetPrimaryMainFrame(),
+                     std::make_unique<WidevinePermissionRequest>(web_contents(),
+                                                                 for_restart));
   }
 }
 
@@ -129,7 +134,10 @@ void DrmTabHelper::OnEvent(const update_client::CrxUpdateItem& item) {
       item.id == kWidevineComponentId) {
 #if BUILDFLAG(IS_LINUX)
     if (is_widevine_requested_) {
-      RequestWidevinePermission(web_contents(), true /* for_restart*/);
+      permissions::PermissionRequestManager::FromWebContents(web_contents())
+          ->AddRequest(web_contents()->GetPrimaryMainFrame(),
+                       std::make_unique<WidevinePermissionRequest>(
+                           web_contents(), /*for_restart*/true));
     }
 #else
     if (is_widevine_requested_) {

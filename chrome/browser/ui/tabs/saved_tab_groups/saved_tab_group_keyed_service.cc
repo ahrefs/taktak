@@ -73,7 +73,7 @@ class ScopedLocalObservationPauserImpl : public ScopedLocalObservationPauser {
 
   // Disallow copy/assign.
   ScopedLocalObservationPauserImpl(const ScopedLocalObservationPauserImpl&) =
-      delete;
+  delete;
   ScopedLocalObservationPauserImpl& operator=(
       const ScopedLocalObservationPauserImpl&) = delete;
 
@@ -193,7 +193,7 @@ void SavedTabGroupKeyedService::ConnectRestoredGroupToSaveId(
       // associated group from the model.
       // See crbug.com/392174867 for more details.
       SavedTabGroupUtils::RemoveGroupFromTabstrip(/*browser=*/nullptr,
-                                                  local_group_id);
+                                                              local_group_id);
       return;
     }
 
@@ -207,7 +207,7 @@ void SavedTabGroupKeyedService::ConnectRestoredGroupToSaveId(
 void SavedTabGroupKeyedService::SaveRestoredGroup(SavedTabGroup group) {
   if (model()->is_loaded()) {
     CHECK(!model()->Contains(group.saved_guid()))
-        << "This group is somehow saved already when it shouldn't be.";
+    << "This group is somehow saved already when it shouldn't be.";
     const std::optional<LocalTabGroupID> local_id = group.local_group_id();
     const base::Uuid sync_id = group.saved_guid();
     model_->AddedLocally(std::move(group));
@@ -228,7 +228,7 @@ void SavedTabGroupKeyedService::UpdateAttributions(
 }
 
 std::optional<std::string> SavedTabGroupKeyedService::GetLocalCacheGuid()
-    const {
+const {
   return sync_bridge_mediator_->GetLocalCacheGuidForSavedBridge();
 }
 
@@ -519,7 +519,7 @@ void SavedTabGroupKeyedService::SavedTabGroupModelLoaded() {
   }
 
   for (const auto& [saved_guid, local_group_id] :
-       restored_groups_to_connect_on_load_) {
+      restored_groups_to_connect_on_load_) {
     if (!model()->Contains(saved_guid)) {
       // Close the tab group in the case the group we want to connect to has
       // been removed from the model. This prevents a crash during session
@@ -527,7 +527,7 @@ void SavedTabGroupKeyedService::SavedTabGroupModelLoaded() {
       // associated group from the model.
       // See crbug.com/392174867 for more details.
       SavedTabGroupUtils::RemoveGroupFromTabstrip(/*browser=*/nullptr,
-                                                  local_group_id);
+                                                              local_group_id);
       continue;
     }
 
@@ -714,29 +714,6 @@ void SavedTabGroupKeyedService::UpdateGroupVisualData(
       saved_group->title(), saved_group->color(),
       /*is_collapsed=*/tab_group->visual_data()->is_collapsed());
   browser->tab_strip_model()->ChangeTabGroupVisuals(group_id, visual_data);
-}
-
-bool SavedTabGroupKeyedService::IsRemoteDevice(
-    const std::optional<std::string>& cache_guid) const {
-  std::optional<std::string> local_cache_guid =
-      sync_bridge_mediator_->GetLocalCacheGuidForSavedBridge();
-  if (!local_cache_guid || !cache_guid) {
-    return false;
-  }
-
-  return local_cache_guid.value() != cache_guid.value();
-}
-
-void SavedTabGroupKeyedService::RecordStartupMetrics() {
-  auto saved_tab_groups = model_->saved_tab_groups();
-  std::vector<bool> is_remote(saved_tab_groups.size());
-
-  for (size_t i = 0; i < saved_tab_groups.size(); ++i) {
-    is_remote[i] = IsRemoteDevice(saved_tab_groups[i].creator_cache_guid());
-  }
-
-  TabGroupSyncMetricsLoggerImpl metrics_logger(nullptr);
-  metrics_logger.RecordMetricsOnStartup(saved_tab_groups, is_remote);
 }
 
 bool SavedTabGroupKeyedService::IsRemoteDevice(

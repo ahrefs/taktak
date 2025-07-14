@@ -256,7 +256,7 @@ export class SettingsPrivacyPageElement extends SettingsPrivacyPageElementBase {
 
           if (routes.INCOGNITO_TRACKING_PROTECTIONS) {
             map.set(routes.INCOGNITO_TRACKING_PROTECTIONS.path,
-              '#incognitoTrackingProtectionsLinkRow');
+                '#incognitoTrackingProtectionsLinkRow');
           }
 
           return map;
@@ -480,30 +480,6 @@ export class SettingsPrivacyPageElement extends SettingsPrivacyPageElementBase {
     Router.getInstance().navigateTo(routes.INCOGNITO_TRACKING_PROTECTIONS);
   }
 
-  private onLocationTopLevelRadioChanged2_(
-      event: CustomEvent<{value: boolean}>) {
-    const selected = event.detail.value;
-    if (selected) {
-      this.setPrefValue('generated.geolocation', SettingsState.CPSS);
-      this.isLocationAllowed_ = true;
-    } else {
-      this.setPrefValue('generated.geolocation', SettingsState.BLOCK);
-      this.isLocationAllowed_ = false;
-    }
-  }
-
-  private onNotificationTopLevelRadioChanged2_(
-      event: CustomEvent<{value: boolean}>) {
-    const selected = event.detail.value;
-    if (selected) {
-      this.setPrefValue('generated.notification', SettingsState.CPSS);
-      this.isNotificationAllowed_ = true;
-    } else {
-      this.setPrefValue('generated.notification', SettingsState.BLOCK);
-      this.isNotificationAllowed_ = false;
-    }
-  }
-
   private onPrivacyGuideClick_() {
     this.metricsBrowserProxy_.recordPrivacyGuideEntryExitHistogram(
         PrivacyGuideInteractions.SETTINGS_LINK_ROW_ENTRY);
@@ -525,14 +501,14 @@ export class SettingsPrivacyPageElement extends SettingsPrivacyPageElementBase {
     const restricted = this.isPrivacySandboxRestricted_ &&
         this.isPrivacySandboxRestrictedNoticeEnabled_;
     return restricted ? this.i18n('adPrivacyRestrictedLinkRowSubLabel') :
-                        this.i18n('adPrivacyLinkRowSubLabel');
+        this.i18n('adPrivacyLinkRowSubLabel');
   }
 
   private computeThirdPartyCookiesSublabel_(): string {
     // Handle the correct pref in Mode B.
     if (loadTimeData.getBoolean('is3pcdCookieSettingsRedesignEnabled')) {
       if (this.getPref('tracking_protection.block_all_3pc_toggle_enabled')
-              .value) {
+          .value) {
         return this.i18n('thirdPartyCookiesLinkRowSublabelDisabled');
       }
       return this.i18n('thirdPartyCookiesLinkRowSublabelLimited');

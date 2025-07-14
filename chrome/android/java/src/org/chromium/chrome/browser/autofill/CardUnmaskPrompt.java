@@ -548,8 +548,9 @@ public class CardUnmaskPrompt
 
     /**
      * Sets the enabled state of the main contents, and hides or shows the verification overlay.
+     *
      * @param enabled True if the inputs should be usable, false if the verification overlay
-     *        obscures them.
+     *     obscures them.
      */
     private void setInputsEnabled(boolean enabled) {
         assumeNonNull(mDialogModel);

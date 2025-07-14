@@ -26,8 +26,8 @@ import org.chromium.chrome.browser.tabmodel.TabModelSelectorTabModelObserver;
 public class ActivityTabProvider extends ObservableSupplierImpl<@Nullable Tab>
         implements Destroyable {
     /**
-     * A utility class for observing the activity tab via {@link TabObserver}. When the activity
-     * tab changes, the observer is switched to that tab.
+     * A utility class for observing the activity tab via {@link TabObserver}. When the activity tab
+     * changes, the observer is switched to that tab.
      */
     public static class ActivityTabTabObserver extends TabSupplierObserver {
         /**
@@ -160,6 +160,7 @@ public class ActivityTabProvider extends ObservableSupplierImpl<@Nullable Tab>
 
     /**
      * Check if the interactive tab change event needs to be triggered based on the provided tab.
+     *
      * @param tab The activity's tab.
      */
     private void triggerActivityTabChangeEvent(@Nullable Tab tab) {

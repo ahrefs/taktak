@@ -11,8 +11,8 @@
 namespace permissions {
 
 bool HasWidevinePermissionRequest(
-    const std::vector<raw_ptr<permissions::PermissionRequest,
-                              VectorExperimental>>& requests) {
+    const std::vector<std::unique_ptr<permissions::PermissionRequest>>&
+        requests) {
   if (requests.size() == 1 &&
       requests[0]->request_type() == permissions::RequestType::kWidevine) {
     return true;

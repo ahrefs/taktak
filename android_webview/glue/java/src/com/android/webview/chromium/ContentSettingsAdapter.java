@@ -19,8 +19,8 @@ import org.chromium.base.Log;
 import org.chromium.base.TraceEvent;
 
 /**
- * Type adaptation layer between {@link android.webkit.WebSettings} and
- * {@link org.chromium.android_webview.AwSettings}.
+ * Type adaptation layer between {@link android.webkit.WebSettings} and {@link
+ * org.chromium.android_webview.AwSettings}.
  */
 @SuppressWarnings({"deprecation", "NoSynchronizedMethodCheck"})
 public class ContentSettingsAdapter extends android.webkit.WebSettings {

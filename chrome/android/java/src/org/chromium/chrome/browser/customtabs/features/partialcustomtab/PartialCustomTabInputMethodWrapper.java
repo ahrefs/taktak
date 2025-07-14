@@ -17,8 +17,8 @@ import org.chromium.content_public.browser.InputMethodManagerWrapper;
 import org.chromium.ui.base.WindowAndroid;
 
 /**
- * A wrapper around the default IMMWrapper. Intercepts {@link #showSoftInput()} to
- * trigger PCCT height change when the soft keyboard appears.
+ * A wrapper around the default IMMWrapper. Intercepts {@link #showSoftInput()} to trigger PCCT
+ * height change when the soft keyboard appears.
  */
 public class PartialCustomTabInputMethodWrapper implements InputMethodManagerWrapper {
     private final InputMethodManagerWrapper mWrapper;

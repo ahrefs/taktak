@@ -85,11 +85,6 @@ class GlicWindowAnimator : public gfx::AnimationDelegate {
   // request or glic has already been resized to the target size.
   gfx::Size last_target_size_;
 
- private:
-  // Last requested target size. Will be (0, 0) if there hasn't been a resize
-  // request or glic has already been resized to the target size.
-  gfx::Size last_target_size_;
-
   base::WeakPtrFactory<GlicWindowAnimator> weak_ptr_factory_{this};
 };
 

@@ -709,7 +709,7 @@ Taktak is unable to recover your settings.
       </message>
       <if expr="is_win or is_macosx">
         <message name="IDS_PDF_INFOBAR_TEXT" desc="Text to show in an infobar when Chromium is not the default PDF viewer.">
-          Set Chromium as your default PDF viewer
+          Set Taktak as your default PDF viewer
         </message>
       </if>
       <!-- Download Bubble Items -->
@@ -1039,10 +1039,8 @@ Taktak is unable to recover your settings.
         <message name="IDS_ENTERPRISE_SIGNIN_WORK_PROFILE_EXPLANATION" desc="The warning message displayed to an enterprise user about to link their profile to their Google account. This message is followed by a 'Learn more' link.">
           Any Taktak data that is generated during the use of this profile (such as the creation of bookmarks, history, passwords, and other settings) can be removed by the work profile administrator. <ph name="LEARN_MORE">$1<ex>Learn more</ex></ph>
         </message>
-        <message name="IDS_ENTERPRISE_VALUE_PROPOSITION_PROFILE_REQUIRED_BY_ORG_KNOWN_DOMAIN_TITLE" desc="Title of the screen in the profile creation flow where the user is asked whether they want to confirm signing in to Taktak with their enterprise account when it is mandatory to sign in to Taktak with the enterprise account.">
-          Your organization, <ph name="MANAGER">$1<ex>manager.com</ex></ph>, requires you to sign into Taktak
         <message name="IDS_ENTERPRISE_VALUE_PROPOSITION_PROFILE_REQUIRED_BY_ORG_KNOWN_DOMAIN_TITLE" desc="Title of the screen in the profile creation flow where the user is asked whether they want to confirm signing in to Chromium with their enterprise account when it is mandatory to sign in to Chromium with the enterprise account.">
-          Your organization, <ph name="MANAGER">$1<ex>manager.com</ex></ph>, requires you to sign into Chromium
+          Your organization, <ph name="MANAGER">$1<ex>manager.com</ex></ph>, requires you to sign into Taktak
         </message>
         <message name="IDS_ENTERPRISE_VALUE_PROPOSITION_PROFILE_SUGGESTED_TITLE" desc="Title of the screen in the profile creation flow where the user is asked whether they want to confirm signing in to Taktak with their enterprise account.">
           Sign in to Taktak?
@@ -2157,7 +2155,7 @@ Taktak is unable to recover your settings.
           A Taktak profile with this account already exists on this device
         </message>
         <message name="IDS_PROFILE_PICKER_FORCE_SIGN_IN_ERROR_DIALOG_NOT_SUPPORTED_BY_GLIC_FLOW_BODY" desc="Body of the force sign in error dialog, the dialog is shown when the user attempts to reauth a profile while in the Glic version. This flow is not supported in this version of the picker. The overall purpose of the dialog is to redirect the user to the regular picker to finalize the reauth." translateable="false">
-          To use this profile with Glic, open Chromium and sign in
+          To use this profile with Glic, open Taktak and sign in
         </message>
 
         <!-- First Run Experience -->
@@ -2542,15 +2540,15 @@ Taktak is unable to recover your settings.
         <if expr="use_titlecase">
           <message name="IDS_PERFORMANCE_INTERVENTION_DIALOG_TITLE_UPDATED_V3" desc="Title text for a dialog with information on tabs that could be causing performance issues.">
             {NUM_TABS, plural,
-            =1 {Chromium Recommends Pausing the Tab Slowing Your Browser}
-            other {Chromium Recommends Pausing the Tabs Slowing Your Browser}}
+            =1 {Taktak Recommends Pausing the Tab Slowing Your Browser}
+            other {Taktak Recommends Pausing the Tabs Slowing Your Browser}}
           </message>
         </if>
         <if expr="not use_titlecase">
           <message name="IDS_PERFORMANCE_INTERVENTION_DIALOG_TITLE_UPDATED_V3" desc="Title text for a dialog with information on tabs that could be causing performance issues.">
             {NUM_TABS, plural,
-            =1 {Chromium recommends pausing the tab slowing your browser}
-            other {Chromium recommends pausing the tabs slowing your browser}}
+            =1 {Taktak recommends pausing the tab slowing your browser}
+            other {Taktak recommends pausing the tabs slowing your browser}}
           </message>
         </if>
       </if>

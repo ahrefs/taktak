@@ -19,7 +19,7 @@ import org.chromium.components.offline_items_collection.OfflineItemState;
  * A generic class representing a download item. The item can be either downloaded through the
  * Android DownloadManager, or through Chrome's network stack.
  *
- * This represents the native DownloadItem at a specific point in time -- the native side
+ * <p>This represents the native DownloadItem at a specific point in time -- the native side
  * DownloadManager must be queried for the correct status.
  */
 public class DownloadItem {

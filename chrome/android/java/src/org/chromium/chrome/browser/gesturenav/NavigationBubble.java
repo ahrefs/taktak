@@ -29,15 +29,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * View class for a bubble used in gesture navigation UI that consists of an icon
- * and an optional text.
+ * View class for a bubble used in gesture navigation UI that consists of an icon and an optional
+ * text.
  */
 @NullMarked
 public class NavigationBubble extends LinearLayout {
     /**
-     * Target to close when gesture navigation takes place on the beginning
-     * of the navigation history. It can close either the current tab or
-     * chrome itself (putting it background).
+     * Target to close when gesture navigation takes place on the beginning of the navigation
+     * history. It can close either the current tab or chrome itself (putting it background).
      */
     @IntDef({CloseTarget.NONE, CloseTarget.TAB, CloseTarget.APP})
     @Retention(RetentionPolicy.SOURCE)

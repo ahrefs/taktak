@@ -29,9 +29,11 @@ ChatSidePanelCoordinator::~ChatSidePanelCoordinator() = default;
 void ChatSidePanelCoordinator::CreateAndRegisterEntry(
     SidePanelRegistry* global_registry) {
   global_registry->Register(std::make_unique<SidePanelEntry>(
-      SidePanelEntry::Id::kAIChat,
-      base::BindRepeating(&ChatSidePanelCoordinator::CreateChatWebView,
-                          base::Unretained(this))));
+      SidePanelEntry::Key(SidePanelEntry::Id::kAIChat),
+      base::BindRepeating(
+          &ChatSidePanelCoordinator::CreateChatWebView,
+          base::Unretained(this)),
+      SidePanelEntry::kSidePanelDefaultContentWidth));
 }
 
 std::unique_ptr<views::View> ChatSidePanelCoordinator::CreateChatWebView(

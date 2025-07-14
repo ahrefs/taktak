@@ -10,6 +10,7 @@
 #include "base/memory/raw_ptr.h"
 #include "components/permissions/permission_request.h"
 #include "url/gurl.h"
+#include "components/permissions/permission_request_data.h"
 
 namespace content {
 class WebContents;
@@ -37,7 +38,8 @@ class WidevinePermissionRequest : public permissions::PermissionRequest {
 #endif
   void PermissionDecided(ContentSetting result,
                          bool is_one_time,
-                         bool is_final_decision);
+                         bool is_final_decision,
+                         const permissions::PermissionRequestData& request_data);
   void DeleteRequest();
 
   raw_ptr<content::WebContents> web_contents_ = nullptr;
