@@ -13,8 +13,8 @@ import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
 /**
  * Records number of crashes uploaded in SharedPreferences.
  *
- * These numbers may be recorded even when running in background and the main Chrome Activity does
- * not exist, so they are persisted until the next time it runs.
+ * <p>These numbers may be recorded even when running in background and the main Chrome Activity
+ * does not exist, so they are persisted until the next time it runs.
  */
 @NullMarked
 public class CrashUploadCountStore {

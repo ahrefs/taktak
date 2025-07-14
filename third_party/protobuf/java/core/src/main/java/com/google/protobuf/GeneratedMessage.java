@@ -7,13 +7,11 @@
 
 package com.google.protobuf;
 
-import static com.google.protobuf.Internal.checkNotNull;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumDescriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.Descriptors.OneofDescriptor;
 import com.google.protobuf.Internal.BooleanList;
 import com.google.protobuf.Internal.DoubleList;
@@ -21,6 +19,7 @@ import com.google.protobuf.Internal.FloatList;
 import com.google.protobuf.Internal.IntList;
 import com.google.protobuf.Internal.LongList;
 import com.google.protobuf.Internal.ProtobufList;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectStreamException;
@@ -33,7 +32,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -983,29 +981,30 @@ public abstract class GeneratedMessage extends AbstractMessage implements Serial
       Extension<MessageT, T> extension = checkNotLite(extensionLite);
 
       verifyExtensionContainingType(extension);
-      FieldDescriptor descriptor = extension.getDescriptor();
-      final Object value = extensions.getField(descriptor);
-      T result = null;
-      if (value == null) {
-        if (descriptor.isRepeated()) {
-          result = (T) ProtobufArrayList.emptyList();
-        } else if (descriptor.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
-          result = (T) extension.getMessageDefaultInstance();
-        } else {
-          result = (T) extension.fromReflectionType(descriptor.getDefaultValue());
-        }
-      } else {
-        result = (T) extension.fromReflectionType(value);
-      }
+            FieldDescriptor descriptor = extension.getDescriptor();
+            final Object value = extensions.getField(descriptor);
+            T result = null;
+            if (value == null) {
+                if (descriptor.isRepeated()) {
+                    result = (T) ProtobufArrayList.emptyList();
+                } else if (descriptor.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
+                    result = (T) extension.getMessageDefaultInstance();
+                } else {
+                    result = (T) extension.fromReflectionType(descriptor.getDefaultValue());
+                }
+            } else {
+                result = (T) extension.fromReflectionType(value);
+            }
 
-      // If the lazy field is corrupted, we need to invalidate the memoized size in case the
-      // corrupted message data was replaced with an empty ByteString and yet a previous serialized
-      // size was memoized.
-      if (extensions.lazyFieldCorrupted(descriptor)) {
-        setMemoizedSerializedSize(-1);
-      }
-      return result;
-    }
+            // If the lazy field is corrupted, we need to invalidate the memoized size in case the
+            // corrupted message data was replaced with an empty ByteString and yet a previous
+            // serialized
+            // size was memoized.
+            if (extensions.lazyFieldCorrupted(descriptor)) {
+                setMemoizedSerializedSize(-1);
+            }
+            return result;
+        }
 
     /** Get one element of a repeated extension. */
     @Override
@@ -1103,15 +1102,15 @@ public abstract class GeneratedMessage extends AbstractMessage implements Serial
       }
     }
 
-    /**
-     * For compatibility with older gencode.
-     *
-     * <p>TODO Remove this in the next breaking release.
-     *
-     * @deprecated Use {@link newExtensionSerializer()} instead.
-     */
-    @Deprecated
-    protected ExtensionWriter newExtensionWriter() {
+        /**
+         * For compatibility with older gencode.
+         *
+         * <p>TODO Remove this in the next breaking release.
+         *
+         * @deprecated Use {@link newExtensionSerializer()} instead.
+         */
+        @Deprecated
+        protected ExtensionWriter newExtensionWriter() {
       return new ExtensionWriter(false);
     }
 
@@ -2392,22 +2391,22 @@ public abstract class GeneratedMessage extends AbstractMessage implements Serial
         }
       }
 
-      SingularFieldAccessor(
-          final FieldDescriptor descriptor,
-          final String camelCaseName,
-          final Class<? extends GeneratedMessage> messageClass,
-          final Class<? extends Builder<?>> builderClass,
-          final String containingOneofCamelCaseName) {
-        isOneofField = descriptor.getRealContainingOneof() != null;
-        hasHasMethod = descriptor.hasPresence();
-        ReflectionInvoker reflectionInvoker =
-            new ReflectionInvoker(
-                camelCaseName,
-                messageClass,
-                builderClass,
-                containingOneofCamelCaseName,
-                isOneofField,
-                hasHasMethod);
+            SingularFieldAccessor(
+                    final FieldDescriptor descriptor,
+                    final String camelCaseName,
+                    final Class<? extends GeneratedMessage> messageClass,
+                    final Class<? extends Builder<?>> builderClass,
+                    final String containingOneofCamelCaseName) {
+                isOneofField = descriptor.getRealContainingOneof() != null;
+                hasHasMethod = descriptor.hasPresence();
+                ReflectionInvoker reflectionInvoker =
+                        new ReflectionInvoker(
+                                camelCaseName,
+                                messageClass,
+                                builderClass,
+                                containingOneofCamelCaseName,
+                                isOneofField,
+                                hasHasMethod);
         field = descriptor;
         type = reflectionInvoker.getMethod.getReturnType();
         invoker = getMethodInvoker(reflectionInvoker);
@@ -2714,15 +2713,17 @@ public abstract class GeneratedMessage extends AbstractMessage implements Serial
         invoker.clear(builder);
       }
 
-      @Override
-      public Message.Builder newBuilder() {
-        throw new UnsupportedOperationException("newBuilderForField() called on a repeated field.");
-      }
+            @Override
+            public Message.Builder newBuilder() {
+                throw new UnsupportedOperationException(
+                        "newBuilderForField() called on a repeated field.");
+            }
 
-      @Override
-      public Message.Builder getBuilder(GeneratedMessage.Builder<?> builder) {
-        throw new UnsupportedOperationException("getFieldBuilder() called on a repeated field.");
-      }
+            @Override
+            public Message.Builder getBuilder(GeneratedMessage.Builder<?> builder) {
+                throw new UnsupportedOperationException(
+                        "getFieldBuilder() called on a repeated field.");
+            }
 
       @Override
       public Message.Builder getRepeatedBuilder(GeneratedMessage.Builder<?> builder, int index) {

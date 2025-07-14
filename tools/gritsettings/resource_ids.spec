@@ -648,6 +648,10 @@
     "META": {"sizes": {"includes": [18],}},
     "includes": [4920],
   },
+  "<(SHARED_INTERMEDIATE_DIR)/chrome/browser/resources/side_panel/chat/resources.grd": {
+       "META": {"sizes": {"includes": [20]}},
+       "includes": [4930],
+  },
   "<(SHARED_INTERMEDIATE_DIR)/chrome/browser/resources/signin/batch_upload/resources.grd": {
     "META": {"sizes": {"includes": [10]}},
     "includes": [4940],

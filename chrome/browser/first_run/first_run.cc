@@ -257,11 +257,12 @@ base::Time ReadFirstRunSentinelCreationTime() {
 }
 
 // Returns true if the sentinel file exists (or the path cannot be obtained).
+/*
 bool IsFirstRunSentinelPresent() {
   base::FilePath sentinel;
   return !GetFirstRunSentinelFilePath(&sentinel) || base::PathExists(sentinel);
 }
-
+*/
 }  // namespace
 
 namespace first_run {
@@ -329,15 +330,18 @@ void RegisterProfilePrefs(
 }
 
 bool IsChromeFirstRun() {
+  /*
   if (g_first_run == internal::FIRST_RUN_UNKNOWN) {
     const base::CommandLine* command_line =
-        base::CommandLine::ForCurrentProcess();
+       base::CommandLine::ForCurrentProcess();
     g_first_run = internal::DetermineFirstRunState(
         IsFirstRunSentinelPresent(),
         command_line->HasSwitch(switches::kForceFirstRun),
-        command_line->HasSwitch(switches::kNoFirstRun));
+       command_line->HasSwitch(switches::kNoFirstRun));
   }
   return g_first_run == internal::FIRST_RUN_TRUE;
+  */
+  return false;
 }
 
 #if BUILDFLAG(IS_MAC)

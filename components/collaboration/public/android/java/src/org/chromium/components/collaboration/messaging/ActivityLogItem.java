@@ -9,8 +9,8 @@ import org.chromium.build.annotations.NullMarked;
 /**
  * Contains information needed to show one row in the activity log UI. This is a shim layer for the
  * native representation of the object. See
- * //components/collaboration/public/messaging/activity_log.h for specific details.
- * TODO: Add a proper constructor to avoid @SuppressWarnings("NullAway.Init")
+ * //components/collaboration/public/messaging/activity_log.h for specific details. TODO: Add a
+ * proper constructor to avoid @SuppressWarnings("NullAway.Init")
  */
 @NullMarked
 public class ActivityLogItem {

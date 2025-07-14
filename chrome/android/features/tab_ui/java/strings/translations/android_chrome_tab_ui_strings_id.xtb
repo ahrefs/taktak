@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{Dibuat <ph name="NUM_MINS_ONE" /> menit lalu}other{Dibuat <ph name="NUM_MINS_MANY" /> menit lalu}}</translation>
 <translation id="1499635324672558517">Tutup semua tab Samaran?</translation>
 <translation id="1501480321619201731">Hapus grup</translation>
+<translation id="1505526451013346974">Tambahkan ke <ph name="TITLE_OF_GROUP" /></translation>
 <translation id="1555130319947370107">Biru</translation>
 <translation id="161042844686301425">Sian</translation>
 <translation id="1645759014353344461"><ph name="TABS_COUNT_MANY" /> tab dikelompokkan</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Chrome otomatis menutup item di tab tidak aktif yang tidak Anda gunakan selama 3 bulan. Anda dapat menonaktifkannya sekarang atau kapan saja di Setelan.</translation>
 <translation id="8887921976452567404">Tab dan grup yang ditutup dapat dibuka kembali dari bagian Tab terbaru dan bagian Grup tab.</translation>
 <translation id="8915916167043355778">Tutup semua</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{Pindahkan ke jendela baru}other{Pindahkan ke jendela lain}}</translation>
 <translation id="9090098097337832354">Informasi tentang toko ini ditutup</translation>
 <translation id="9114502155681725011">Buka menu tindakan grup tab untuk grup tab <ph name="TITLE_OF_GROUP" />, warna <ph name="COLOR_NAME" />.</translation>
 <translation id="9169594135889675189">Tambahkan tab baru ke grup</translation>

@@ -52,17 +52,17 @@ bool FindBuffer::ShouldIgnoreContents(const Node& node) {
   if (!element)
     return false;
   return (!element->ShouldSerializeEndTag() &&
-          !IsA<HTMLInputElement>(*element)) ||
-         (IsA<TextControlElement>(*element) &&
+      !IsA<HTMLInputElement>(*element)) ||
+      (IsA<TextControlElement>(*element) &&
           !To<TextControlElement>(*element).SuggestedValue().empty()) ||
-         IsA<HTMLIFrameElement>(*element) || IsA<HTMLImageElement>(*element) ||
-         IsA<HTMLMeterElement>(*element) || IsA<HTMLObjectElement>(*element) ||
-         IsA<HTMLProgressElement>(*element) ||
-         (IsA<HTMLSelectElement>(*element) &&
+      IsA<HTMLIFrameElement>(*element) || IsA<HTMLImageElement>(*element) ||
+      IsA<HTMLMeterElement>(*element) || IsA<HTMLObjectElement>(*element) ||
+      IsA<HTMLProgressElement>(*element) ||
+      (IsA<HTMLSelectElement>(*element) &&
           To<HTMLSelectElement>(*element).UsesMenuList()) ||
-         IsA<HTMLStyleElement>(*element) || IsA<HTMLScriptElement>(*element) ||
-         IsA<HTMLVideoElement>(*element) || IsA<HTMLAudioElement>(*element) ||
-         (element->GetDisplayLockContext() &&
+      IsA<HTMLStyleElement>(*element) || IsA<HTMLScriptElement>(*element) ||
+      IsA<HTMLVideoElement>(*element) || IsA<HTMLAudioElement>(*element) ||
+      (element->GetDisplayLockContext() &&
           element->GetDisplayLockContext()->IsLocked() &&
           !element->GetDisplayLockContext()->IsActivatable(
               DisplayLockActivationReason::kFindInPage));
@@ -142,7 +142,7 @@ Node* GetVisibleTextNode(Node& start_node, Node* past_last_node = nullptr) {
   // it, it must be searchable otherwise node might skip past it.
   if (past_last_node) {
     while (Node* ancestor =
-               GetOutermostNonSearchableAncestor(*past_last_node)) {
+        GetOutermostNonSearchableAncestor(*past_last_node)) {
       past_last_node = Direction::NextSkippingSubtree(*ancestor);
       if (!past_last_node) {
         break;
@@ -199,7 +199,7 @@ bool AreInOrder(const Node& start, const Node& end) {
 
 bool IsIfcWithRuby(const Node& block_ancestor) {
   if (const auto* block_flow =
-          DynamicTo<LayoutBlockFlow>(block_ancestor.GetLayoutObject())) {
+      DynamicTo<LayoutBlockFlow>(block_ancestor.GetLayoutObject())) {
     if (const auto* node_data = block_flow->GetInlineNodeData()) {
       return node_data->HasRuby();
     }
@@ -339,7 +339,7 @@ bool FindBuffer::IsInSameUninterruptedBlock(const Node& start_node,
   // It's possible that 2 nodes are in the same block flow but there is a node
   // in between that has a separate block flow. An example is an input field.
   for (const Node* node = &start_node; !node->isSameNode(&end_node);
-       node = FlatTreeTraversal::Next(*node)) {
+             node = FlatTreeTraversal::Next(*node)) {
     const ComputedStyle* style = ComputedStyle::NullifyEnsured(
         GetComputedStyleForElementOrLayoutObject(*node));
     if (ShouldIgnoreContents(*node) || !VisibleForStyle(style)) {
@@ -435,7 +435,7 @@ void FindBuffer::CollectTextUntilBlockBoundary(
 
   if (ruby_support == RubySupport::kEnabledForcefully ||
       (ruby_support == RubySupport::kEnabledIfNecessary &&
-       IsIfcWithRuby(block_ancestor))) {
+          IsIfcWithRuby(block_ancestor))) {
     auto [corpus_chunk_list, level_list, next_node] =
         BuildChunkGraph(*node, end_node, block_ancestor, just_after_block);
     node_after_block_ = next_node;
@@ -455,7 +455,7 @@ void FindBuffer::CollectTextUntilBlockBoundary(
   while (node && node != just_after_block) {
     if (ShouldIgnoreContents(*node)) {
       if (end_node && (end_node == node ||
-                       FlatTreeTraversal::IsDescendantOf(*end_node, *node))) {
+          FlatTreeTraversal::IsDescendantOf(*end_node, *node))) {
         // For setting |node_after_block| later.
         node = FlatTreeTraversal::NextSkippingChildren(*node);
         break;
@@ -472,7 +472,7 @@ void FindBuffer::CollectTextUntilBlockBoundary(
       // We can safely just check the computed style of this node since
       // we guarantee |block_ancestor| is visible.
       if (end_node && (end_node == node ||
-                       FlatTreeTraversal::IsDescendantOf(*end_node, *node))) {
+          FlatTreeTraversal::IsDescendantOf(*end_node, *node))) {
         // For setting |node_after_block| later.
         node = FlatTreeTraversal::NextSkippingChildren(*node);
         break;
@@ -614,18 +614,18 @@ void FindBuffer::AddTextToBuffer(const Text& text_node,
 
   Position node_start =
       (&text_node == range.StartPosition().ComputeContainerNode())
-          ? ToPositionInDOMTree(range.StartPosition().ToOffsetInAnchor())
-          : Position::FirstPositionInNode(text_node);
+      ? ToPositionInDOMTree(range.StartPosition().ToOffsetInAnchor())
+      : Position::FirstPositionInNode(text_node);
   Position node_end =
       (&text_node == range.EndPosition().ComputeContainerNode())
-          ? ToPositionInDOMTree(range.EndPosition().ToOffsetInAnchor())
-          : Position::LastPositionInNode(text_node);
+      ? ToPositionInDOMTree(range.EndPosition().ToOffsetInAnchor())
+      : Position::LastPositionInNode(text_node);
   unsigned last_unit_end = 0;
   bool first_unit = true;
   const String mapped_text = offset_mapping_->GetText();
   for (const OffsetMappingUnit& unit :
-       offset_mapping_->GetMappingUnitsForDOMRange(
-           EphemeralRange(node_start, node_end))) {
+      offset_mapping_->GetMappingUnitsForDOMRange(
+          EphemeralRange(node_start, node_end))) {
     if (first_unit || last_unit_end != unit.TextContentStart()) {
       if (mappings) {
         // This is the first unit, or the units are not consecutive, so we need

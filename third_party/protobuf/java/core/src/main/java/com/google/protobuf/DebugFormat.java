@@ -22,32 +22,32 @@ public final class DebugFormat {
     return new DebugFormat(false);
   }
 
-  public String toString(MessageOrBuilder message) {
-    if (!this.isSingleLine) {
-      return TextFormat.debugFormatPrinter()
-          .printToString(message, TextFormat.Printer.FieldReporterLevel.DEBUG_MULTILINE);
+    public String toString(MessageOrBuilder message) {
+        if (!this.isSingleLine) {
+            return TextFormat.debugFormatPrinter()
+                    .printToString(message, TextFormat.Printer.FieldReporterLevel.DEBUG_MULTILINE);
+        }
+        return TextFormat.debugFormatPrinter()
+                .emittingSingleLine(this.isSingleLine)
+                .printToString(message, TextFormat.Printer.FieldReporterLevel.DEBUG_SINGLE_LINE);
     }
-    return TextFormat.debugFormatPrinter()
-        .emittingSingleLine(this.isSingleLine)
-        .printToString(message, TextFormat.Printer.FieldReporterLevel.DEBUG_SINGLE_LINE);
+
+    public String toString(FieldDescriptor field, Object value) {
+        if (!this.isSingleLine) {
+            return TextFormat.debugFormatPrinter().printFieldToString(field, value);
+        }
+        return TextFormat.debugFormatPrinter()
+                .emittingSingleLine(this.isSingleLine)
+                .printFieldToString(field, value);
   }
 
-  public String toString(FieldDescriptor field, Object value) {
-    if (!this.isSingleLine) {
-      return TextFormat.debugFormatPrinter().printFieldToString(field, value);
-    }
-    return TextFormat.debugFormatPrinter()
-        .emittingSingleLine(this.isSingleLine)
-        .printFieldToString(field, value);
-  }
-
-  public String toString(UnknownFieldSet fields) {
-    if (!this.isSingleLine) {
-      return TextFormat.debugFormatPrinter().printToString(fields);
-    }
-    return TextFormat.debugFormatPrinter()
-        .emittingSingleLine(this.isSingleLine)
-        .printToString(fields);
+    public String toString(UnknownFieldSet fields) {
+        if (!this.isSingleLine) {
+            return TextFormat.debugFormatPrinter().printToString(fields);
+        }
+        return TextFormat.debugFormatPrinter()
+                .emittingSingleLine(this.isSingleLine)
+                .printToString(fields);
   }
 
   public Object lazyToString(MessageOrBuilder message) {

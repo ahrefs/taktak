@@ -15,7 +15,9 @@ import org.chromium.build.annotations.Nullable;
 import org.chromium.components.browser_ui.media.MediaNotificationInfo;
 import org.chromium.content_public.browser.WebContents;
 
-/** An abstraction that allows embedders to implement behavior needed by shared Media Router code. */
+/**
+ * An abstraction that allows embedders to implement behavior needed by shared Media Router code.
+ */
 @NullMarked
 public abstract class MediaRouterClient {
     @SuppressLint("StaticFieldLeak")
@@ -23,6 +25,7 @@ public abstract class MediaRouterClient {
 
     /**
      * Sets the singleton client instance.
+     *
      * @param client the {@link Client} provided by the given embedder.
      */
     public static void setInstance(MediaRouterClient mediaRouterClient) {

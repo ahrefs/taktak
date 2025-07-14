@@ -25,26 +25,47 @@ void AddMaterialTabStripColorMixer(ui::ColorProvider* provider,
     return;
   }
 
+  const bool dark_mode =
+      key.color_mode == ui::ColorProviderKey::ColorMode::kDark;
+
   // TODO(crbug.com/40883407): Validate final mappings for ChromeRefresh23
   // color.
   ui::ColorMixer& mixer = provider->AddMixer();
-  mixer[kColorTabBackgroundActiveFrameActive] = {ui::kColorSysBase};
-  mixer[kColorTabBackgroundActiveFrameInactive] = {
-      kColorTabBackgroundActiveFrameActive};
+
+  // Taktak - Tab background
+  const SkColor active_tab_background = {
+      dark_mode ? SkColorSetRGB(0x2A, 0x29, 0x33) : SK_ColorWHITE};
+  const SkColor hover_tab_background = {
+      dark_mode ? SkColorSetARGB(0x17, 0x9E, 0x9D, 0xAE)
+                : SkColorSetARGB(0x17, 0x68, 0x54, 0x9A)};
+
+  // mixer[kColorTabBackgroundActiveFrameActive] = {ui::kColorSysBase};
+  // mixer[kColorTabBackgroundActiveFrameInactive] =
+  // {kColorTabBackgroundActiveFrameActive};
+  mixer[kColorTabBackgroundActiveFrameActive] = {active_tab_background};
+  mixer[kColorTabBackgroundActiveFrameInactive] = {ui::kColorSysBase};
 
   mixer[kColorTabBackgroundInactiveFrameActive] = {ui::kColorSysHeader};
   mixer[kColorTabBackgroundInactiveFrameInactive] = {
       ui::kColorSysHeaderInactive};
-  mixer[kColorTabBackgroundInactiveHoverFrameActive] = {
-      ui::kColorSysStateHeaderHover};
+
+  // mixer[kColorTabBackgroundInactiveHoverFrameActive] =
+  // {ui::kColorSysStateHeaderHover};
+  mixer[kColorTabBackgroundInactiveHoverFrameActive] = {hover_tab_background};
+
   mixer[kColorTabStripComboButtonSeparator] = {ui::kColorSysDivider};
-  mixer[kColorTabStripControlButtonInkDrop] = {ui::kColorSysStateHeaderHover};
+
+  // mixer[kColorTabStripControlButtonInkDrop] =
+  // {ui::kColorSysStateHeaderHover};
+  mixer[kColorTabStripControlButtonInkDrop] = {hover_tab_background};
+
   mixer[kColorTabStripControlButtonInkDropRipple] = {
       ui::kColorSysStateRippleNeutralOnSubtle};
 
   // TODO(tbergquist): Use kColorSysStateHeaderHoverInactive, once it exists.
-  mixer[kColorTabBackgroundInactiveHoverFrameInactive] = {
-      ui::kColorSysStateHeaderHoverInactive};
+  //  mixer[kColorTabBackgroundInactiveHoverFrameInactive] = {
+  //      ui::kColorSysStateHeaderHoverInactive};
+  mixer[kColorTabBackgroundInactiveHoverFrameInactive] = {hover_tab_background};
 
   mixer[kColorTabBackgroundSelectedFrameActive] = {ui::GetResultingPaintColor(
       ui::kColorSysStateHeaderSelect, kColorTabBackgroundInactiveFrameActive)};

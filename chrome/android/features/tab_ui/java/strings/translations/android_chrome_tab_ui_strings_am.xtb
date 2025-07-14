@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{ከ<ph name="NUM_MINS_ONE" /> ደቂቃ በፊት የተፈጠረ}one{ከ<ph name="NUM_MINS_MANY" /> ደቂቃ በፊት የተፈጠረ}other{ከ<ph name="NUM_MINS_MANY" /> ደቂቃዎች በፊት የተፈጠረ}}</translation>
 <translation id="1499635324672558517">ሁሉም ማንነት የማያሳውቁ ትሮች ይዘጉ?</translation>
 <translation id="1501480321619201731">ቡድን ሰርዝ</translation>
+<translation id="1505526451013346974">ወደ <ph name="TITLE_OF_GROUP" /> ያክሉ</translation>
 <translation id="1555130319947370107">ሰማያዊ</translation>
 <translation id="161042844686301425">ውሃ ሰማያዊ</translation>
 <translation id="1645759014353344461"><ph name="TABS_COUNT_MANY" /> ትሮች ተሰብስበዋል</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Chrome በ3 ወራት ውስጥ ያልተጠቀሙባቸውን ገቢር ባልሆነ ክፍል ውስጥ ያሉ ንጥሎችን በራስ-ሰር ይዘጋል። ይህን አሁን ወይም በማንኛውም ጊዜ ቅንብሮች ውስጥ ማጥፋት ይችላሉ።</translation>
 <translation id="8887921976452567404">የእርስዎ የተዘጉ ትሮች እና ቡድኖች ከቅርብ ጊዜ የትሮች ክፍል እና ከትር ቡድኖች ክፍል እንደገና ሊከፈቱ ይችላሉ።</translation>
 <translation id="8915916167043355778">ሁሉንም ዝጋ</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{ወደ አዲስ መስኮት ያንቀሳቅሱ}one{ወደ ሌላ መስኮት ያንቀሳቅሱ}other{ወደ ሌላ መስኮት ያንቀሳቅሱ}}</translation>
 <translation id="9090098097337832354">ስለዚህ መደብር መረጃ ተዘግቷል</translation>
 <translation id="9114502155681725011">ለትር ቡድን <ph name="TITLE_OF_GROUP" />፣ ቀለም <ph name="COLOR_NAME" /> የትር ቡድን የእርምጃ ምናሌ ይክፈቱ።</translation>
 <translation id="9169594135889675189">አዲስ ትር ወደ ቡድን አክል</translation>

@@ -7,9 +7,9 @@ package org.chromium.components.collaboration.messaging;
 import org.chromium.build.annotations.NullMarked;
 
 /**
- * Query params for retrieving a list of rows to be shown on the activity log UI.
- * TODO: Add a proper constructor to avoid @SuppressWarnings("NullAway.Init")
-*/
+ * Query params for retrieving a list of rows to be shown on the activity log UI. TODO: Add a proper
+ * constructor to avoid @SuppressWarnings("NullAway.Init")
+ */
 @NullMarked
 public class ActivityLogQueryParams {
     /** The collaboration ID associated with the activity log. */

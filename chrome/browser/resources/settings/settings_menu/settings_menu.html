@@ -78,8 +78,7 @@
           $i18n{performancePageTitle}
           <cr-ripple></cr-ripple>
         </a>
-        <a role="menuitem" href="/ai"
-            hidden="[[!showAiPageMenuItem_(showAiPage_, pageVisibility.ai)]]"
+        <a role="menuitem" href="/ai" hidden="true"
             on-click="onAiPageClick_"
             class="cr-nav-menu-item">
           <cr-icon icon="settings20:magic"></cr-icon>
@@ -164,7 +163,17 @@
         </a>
         <a role="menuitem" id="about-menu" href="/help"
             class="cr-nav-menu-item">
-          <cr-icon icon="cr:chrome-product"></cr-icon>
+            <div>
+                <cr-iconset name="about">
+                    <svg>
+                        <g id="taktak" clip-path="url(#clip0_391_16131)">
+                            <circle cx="11" cy="11" r="11" fill="black"/>
+                            <path d="M4.38672 6.98076L5.53499 10.8143C6.40064 10.5139 7.28388 10.2489 8.16719 10.0369L7.61953 13.0402C7.49588 13.7291 7.44284 14.3475 7.44284 14.8774C7.44284 17.5273 8.78546 18.4459 10.7817 18.4459C11.8594 18.4459 12.8486 18.181 14.8096 16.8207L16.2405 15.8844L14.2796 12.5279L11.2234 14.5242L12.1421 9.4364C12.6367 9.40109 13.1314 9.38343 13.6436 9.38343C14.8272 9.38343 15.9932 9.47177 17.1945 9.66612L17.4418 5.74427C15.8518 5.39097 14.3149 5.23193 12.7956 5.23193C9.86311 5.23193 7.05422 5.86793 4.38672 6.98082V6.98076Z" fill="white"/>
+                        </g>
+                    </svg>
+                </cr-iconset>
+                <cr-icon icon="about:taktak"></cr-icon>
+            </div>
           $i18n{aboutPageTitle}
           <cr-ripple></cr-ripple>
         </a>

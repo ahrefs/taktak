@@ -20,9 +20,9 @@ import android.view.inputmethod.InputConnection;
 import org.chromium.android_webview.AwContents.InternalAccessDelegate;
 
 /**
- * No-op implementation of {@link AwViewMethods} that follows the null object pattern.
- * This {@link NullAwViewMethods} is hooked up to the WebView in fullscreen mode, and
- * to the {@link FullScreenView} in embedded mode, but not to both at the same time.
+ * No-op implementation of {@link AwViewMethods} that follows the null object pattern. This {@link
+ * NullAwViewMethods} is hooked up to the WebView in fullscreen mode, and to the {@link
+ * FullScreenView} in embedded mode, but not to both at the same time.
  */
 class NullAwViewMethods implements AwViewMethods {
     private final AwContents mAwContents;

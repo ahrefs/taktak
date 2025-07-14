@@ -13,6 +13,11 @@ import static com.google.protobuf.TestUtil.TEST_REQUIRED_INITIALIZED;
 import static com.google.protobuf.TestUtil.TEST_REQUIRED_UNINITIALIZED;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.UnittestOptimizeFor.TestOptimizedForSize;
 import proto2_unittest.UnittestProto;
 import proto2_unittest.UnittestProto.ForeignMessage;
@@ -22,10 +27,8 @@ import proto2_unittest.UnittestProto.TestPackedTypes;
 import proto2_unittest.UnittestProto.TestRequired;
 import proto2_unittest.UnittestProto.TestRequiredForeign;
 import proto2_unittest.UnittestProto.TestUnpackedTypes;
+
 import java.util.Map;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Unit test for {@link AbstractMessage}. */
 @RunWith(JUnit4.class)

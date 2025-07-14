@@ -18,17 +18,17 @@ namespace {
 
 // Thickness in DIPs of the separator painted on the left and right edges of
 // the tab.
-constexpr int kChromeRefreshSeparatorThickness = 2;
-constexpr int kChromeRefreshSeparatorHorizontalMargin = 2;
+constexpr int kChromeRefreshSeparatorThickness = 0;
+constexpr int kChromeRefreshSeparatorHorizontalMargin = 7;
 // TODO (crbug.com/1451400): This constant should be in LayoutConstants.
-constexpr int kChromeRefreshSeparatorHeight = 16;
+constexpr int kChromeRefreshSeparatorHeight = 0;
 
 // The padding from the top of the tab to the content area.
 constexpr int kChromeRefreshTabVerticalPadding = 6;
-constexpr int kChromeRefreshTabHorizontalPadding = 8;
+constexpr int kChromeRefreshTabHorizontalPadding = 6;
 
-// The standard tab width is 232 DIP, excluding separators and overlap.
-constexpr int kTabWidth = 232;
+// The standard tab width is 226 DIP, excluding separators and overlap.
+constexpr int kTabWidth = 226;
 
 }  // namespace
 
@@ -50,7 +50,7 @@ int TabStyle::GetStandardWidth(const bool is_split) const {
 }
 
 int TabStyle::GetPinnedWidth(const bool is_split) const {
-  constexpr int kTabPinnedContentWidth = 24;
+  constexpr int kTabPinnedContentWidth = 18;
   const int standard_pinned_width = kTabPinnedContentWidth +
                                     GetContentsInsets().left() +
                                     GetContentsInsets().right();
@@ -116,7 +116,8 @@ int TabStyle::GetTabOverlap() const {
   const float total_separator_width = GetSeparatorMargins().left() +
                                       GetSeparatorSize().width() +
                                       GetSeparatorMargins().right();
-  return 2 * GetBottomCornerRadius() - total_separator_width;
+  // The gap between the tabs is 6px.
+  return 2 * GetBottomCornerRadius() - (total_separator_width);
 }
 
 gfx::Size TabStyle::GetPreviewImageSize() const {

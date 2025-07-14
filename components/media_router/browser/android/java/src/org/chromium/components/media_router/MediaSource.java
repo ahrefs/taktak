@@ -13,14 +13,16 @@ import org.chromium.build.annotations.Nullable;
 @NullMarked
 public interface MediaSource {
     /**
-     * Returns a new {@link MediaRouteSelector} to use for Cast device filtering for this
-     * particular media source or null if the application id is invalid.
+     * Returns a new {@link MediaRouteSelector} to use for Cast device filtering for this particular
+     * media source or null if the application id is invalid.
      *
      * @return an initialized route selector or null.
      */
     public @Nullable MediaRouteSelector buildRouteSelector();
 
-    /** @return the Cast application id corresponding to the source. */
+    /**
+     * @return the Cast application id corresponding to the source.
+     */
     public String getApplicationId();
 
     /** @return the id identifying the media source */

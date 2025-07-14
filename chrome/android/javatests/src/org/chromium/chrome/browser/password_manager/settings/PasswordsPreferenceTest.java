@@ -149,4 +149,25 @@ public class PasswordsPreferenceTest {
                 "passwords_preference_pwds_not_accessible_auto");
         TransitAsserts.assertFinalDestination(page);
     }
+
+    @Test
+    @MediumTest
+    @Feature({"RenderTest"})
+    @Restriction({DeviceRestriction.RESTRICTION_TYPE_AUTO})
+    public void testSomePasswordsNotAccessibleSubtitleNotDisplayedOnAuto() throws IOException {
+        when(mPasswordManagerUtilBridgeJniMock.isPasswordManagerAvailable(any(), eq(true)))
+                .thenReturn(true);
+        when(mPrefService.getBoolean(Pref.UPM_UNMIGRATED_PASSWORDS_EXPORTED)).thenReturn(true);
+        File fakeCsv = File.createTempFile("passwords", null, null);
+        fakeCsv.deleteOnExit();
+        when(mLoginDbDeprecationUtilBridgeJniMock.getAutoExportCsvFilePath(any()))
+                .thenReturn(fakeCsv.getAbsolutePath());
+
+        SettingsStation<MainSettings> page = mEntryPoints.startMainSettingsNonBatched();
+        PreferenceFacility passwordsPref = page.scrollToPref(MainSettings.PREF_PASSWORDS);
+
+        mRenderTestRule.render(
+                passwordsPref.getPrefView(), "passwords_preference_pwds_not_accessible_auto");
+        TransitAsserts.assertFinalDestination(page);
+    }
 }

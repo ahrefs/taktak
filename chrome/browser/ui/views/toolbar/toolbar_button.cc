@@ -157,7 +157,7 @@ void ToolbarButton::ClearHighlight() {
 
 int ToolbarButton::GetRoundedCornerRadius() const {
   return ChromeLayoutProvider::Get()->GetCornerRadiusMetric(
-      views::Emphasis::kMaximum, GetTargetSize());
+      views::Emphasis::kHigh, GetTargetSize());
 }
 
 float ToolbarButton::GetCornerRadiusFor(ToolbarButton::Edge edge) const {
@@ -243,13 +243,13 @@ void ToolbarButton::UpdateIconsWithColors(const gfx::VectorIcon& icon,
                                           SkColor disabled_color) {
   const int icon_size = GetIconSize();
   SetImageModel(ButtonState::STATE_NORMAL,
-                ui::ImageModel::FromVectorIcon(icon, normal_color, icon_size));
+                  ui::ImageModel::FromVectorIcon(icon, normal_color, icon_size));
   SetImageModel(ButtonState::STATE_HOVERED,
-                ui::ImageModel::FromVectorIcon(icon, hovered_color, icon_size));
+                  ui::ImageModel::FromVectorIcon(icon, hovered_color, icon_size));
   SetImageModel(ButtonState::STATE_PRESSED,
-                ui::ImageModel::FromVectorIcon(icon, pressed_color, icon_size));
-  SetImageModel(Button::STATE_DISABLED, ui::ImageModel::FromVectorIcon(
-                                            icon, disabled_color, icon_size));
+                  ui::ImageModel::FromVectorIcon(icon, pressed_color, icon_size));
+  SetImageModel(Button::STATE_DISABLED,
+                ui::ImageModel::FromVectorIcon(icon, disabled_color, icon_size));
 }
 
 int ToolbarButton::GetIconSize() const {

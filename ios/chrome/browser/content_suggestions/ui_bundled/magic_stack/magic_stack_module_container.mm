@@ -468,6 +468,25 @@ const CGFloat kSeparatorHeight = 0.5;
   }
 }
 
+- (void)setCustomAccessibilityLabelForSeeMoreButton:
+            (ContentSuggestionsModuleType)type
+                                             config:(MagicStackModule*)config {
+  switch (type) {
+    case ContentSuggestionsModuleType::kShopCard: {
+      if (commerce::kShopCardVariation.Get() == commerce::kShopCardArm1) {
+        ShopCardItem* shopCardItem = static_cast<ShopCardItem*>(config);
+        _seeMoreButton.accessibilityLabel = [@[
+          _seeMoreButton.titleLabel.text, shopCardItem.shopCardData.productTitle
+        ] componentsJoinedByString:@", "];
+      }
+      break;
+    }
+    default:
+      // No customized accessibility label
+      break;
+  }
+}
+
 // Updates the bottom content margins if the module contents need it.
 - (void)updateBottomContentMarginsForConfig:(MagicStackModule*)config {
   switch (config.type) {

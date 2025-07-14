@@ -88,8 +88,8 @@ void GlicWindowAnimator::ResetLastTargetSize() {
 void GlicWindowAnimator::MaybeAnimateToTargetSize() {
   if (!last_target_size_.IsEmpty() &&
       last_target_size_ != window_controller_->GetGlicWidget()
-                               ->GetWindowBoundsInScreen()
-                               .size()) {
+          ->GetWindowBoundsInScreen()
+          .size()) {
     AnimateSize(last_target_size_, base::Milliseconds(300), base::DoNothing());
   }
   ResetLastTargetSize();

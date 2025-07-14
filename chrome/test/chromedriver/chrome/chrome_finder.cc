@@ -130,7 +130,7 @@ std::vector<base::FilePath> GetChromeProgramNames() {
     base::FilePath(chrome::kBrowserProcessExecutablePath),
         base::FilePath("chrome"),  // Chrome for Testing or Google Chrome
         base::FilePath("google-chrome"), base::FilePath("chromium"),
-        base::FilePath("chromium-browser"),
+        base::FilePath("taktak-browser"),
 #else
     // it will compile but won't work on other OSes
     base::FilePath()

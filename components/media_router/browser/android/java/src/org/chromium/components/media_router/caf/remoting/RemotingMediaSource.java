@@ -49,6 +49,7 @@ public class RemotingMediaSource implements MediaSource {
 
     /**
      * Initializes the media source from the source id.
+     *
      * @param sourceId a URL containing encoded info about the media element's source.
      * @return an initialized media source if the id is valid, null otherwise.
      */

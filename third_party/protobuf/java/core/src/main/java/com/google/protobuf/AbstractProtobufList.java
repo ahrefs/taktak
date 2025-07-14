@@ -8,6 +8,7 @@
 package com.google.protobuf;
 
 import com.google.protobuf.Internal.ProtobufList;
+
 import java.util.AbstractList;
 import java.util.Collection;
 import java.util.List;
@@ -37,11 +38,10 @@ abstract class AbstractProtobufList<E> extends AbstractList<E> implements Protob
     this.isMutable = isMutable;
   }
 
-  @Override
-  public boolean equals(
-          Object o) {
-    if (o == this) {
-      return true;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
     }
     if (!(o instanceof List)) {
       return false;

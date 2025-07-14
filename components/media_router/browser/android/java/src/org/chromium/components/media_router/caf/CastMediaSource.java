@@ -63,8 +63,8 @@ public class CastMediaSource implements MediaSource {
     private final String mApplicationId;
 
     /**
-     * A numeric identifier for the Cast Web SDK, unique for the frame providing the
-     * presentation URL. Can be null.
+     * A numeric identifier for the Cast Web SDK, unique for the frame providing the presentation
+     * URL. Can be null.
      */
     private final @Nullable String mClientId;
 
@@ -79,6 +79,7 @@ public class CastMediaSource implements MediaSource {
 
     /**
      * Initializes the media source from the source id.
+     *
      * @param sourceId the source id for the Cast media source (a presentation url).
      * @return an initialized media source if the id is valid, null otherwise.
      */
@@ -90,8 +91,8 @@ public class CastMediaSource implements MediaSource {
     }
 
     /**
-     * Returns a new {@link MediaRouteSelector} to use for Cast device filtering for this
-     * particular media source or null if the application id is invalid.
+     * Returns a new {@link MediaRouteSelector} to use for Cast device filtering for this particular
+     * media source or null if the application id is invalid.
      *
      * @return an initialized route selector or null.
      */
@@ -112,7 +113,9 @@ public class CastMediaSource implements MediaSource {
         return mApplicationId;
     }
 
-    /** @return the client id if passed in the source id. Can be null. */
+    /**
+     * @return the client id if passed in the source id. Can be null.
+     */
     public @Nullable String getClientId() {
         return mClientId;
     }
@@ -128,7 +131,9 @@ public class CastMediaSource implements MediaSource {
         return mSourceId;
     }
 
-    /** @return application capabilities */
+    /**
+     * @return application capabilities
+     */
     public String @Nullable [] getCapabilities() {
         return mCapabilities == null ? null : Arrays.copyOf(mCapabilities, mCapabilities.length);
     }
@@ -178,9 +183,10 @@ public class CastMediaSource implements MediaSource {
 
     /**
      * Helper method to create a MediaSource object from a Cast (cast:) presentation URL.
+     *
      * @param sourceId the source id for the Cast media source.
      * @return an initialized media source if the uri is a valid Cast presentation URL, null
-     * otherwise.
+     *     otherwise.
      */
     private static @Nullable CastMediaSource fromCastUrl(String sourceId) {
         // Strip the scheme as the Uri parser works better without it.

@@ -2633,6 +2633,7 @@ https://www.chromium.org/chromium-os/how-tos-and-troubleshooting/debugging-featu
 <translation id="2790112944253231361">Променихте този раздел</translation>
 <translation id="2790750268015892264">Изолираните уеб приложения не могат да контролират четците на смарткарти. Приложенията няма да получат достъп до смарткартите.</translation>
 <translation id="2791529110887957050">Премахване на Linux</translation>
+<translation id="279182647442890396">Да се изтрие ли информацията?</translation>
 <translation id="2791952154587244007">Възникна грешка. Павилионното приложение няма да може да стартира автоматично на това устройство.</translation>
 <translation id="2792465461386711506">Включете функцията за синхронизиране в Chrome, за да прегледате скорошните раздели на браузъра от телефона си</translation>
 <translation id="2792697226874849938">Изображение за ограничение</translation>
@@ -4630,6 +4631,7 @@ https://www.chromium.org/chromium-os/how-tos-and-troubleshooting/debugging-featu
 <translation id="4203769790323223880">Достъпът до камерата не е разрешен</translation>
 <translation id="4204415812590935863">В момента не може да се създаде тема.</translation>
 <translation id="4205157409548006256">При конфигурирането на Linux възникна грешка.</translation>
+<translation id="4205643719206044108">За да ви показваме предложения, посещаваните от вас сайтове и съдържанието на страниците се споделят с Google.</translation>
 <translation id="4206144641569145248">Извънземно</translation>
 <translation id="4206323443866416204">Сигнал с отзив</translation>
 <translation id="4206585797409671301">Има разрешение да показва заявки</translation>

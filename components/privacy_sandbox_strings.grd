@@ -365,13 +365,16 @@
         </then>
         <else>
           <message name="IDS_PAGE_INFO_PRIVACY_SITE_DATA_3PCS_ENTERPRISE_ALLOWED_DESCRIPTION" desc="" translateable="false">
-            Chromium blocks third-party cookies in Incognito, but your administrator allowed third-party cookies for this site. Incognito also provides features that can limit the information available to companies whose content is embedded on a site you visit.
+            Taktak blocks third-party cookies in Incognito, but your administrator allowed third-party cookies for this site. Incognito also provides features that can limit the information available to companies whose content is embedded on a site you visit.
           </message>
           <message name="IDS_PAGE_INFO_PRIVACY_SITE_DATA_3PCS_EXTENSION_ALLOWED_DESCRIPTION" desc="" translateable="false">
-            Chromium blocks third-party cookies in Incognito, but an extension allowed third-party cookies for this site.
+            Taktak blocks third-party cookies in Incognito, but an extension allowed third-party cookies for this site.
           </message>
           <message name="IDS_PAGE_INFO_PRIVACY_SITE_DATA_3PCS_USER_ALLOWED_DESCRIPTION" desc="" translateable="false">
-            Chromium blocks third-party cookies in Incognito, but you made an exception for this site.
+            Taktak blocks third-party cookies in Incognito, but you made an exception for this site.
+          </message>
+          <message name="IDS_SETTINGS_TRACKING_PROTECTION_IP_PROTECTION_TOGGLE_SUB_LABEL" desc="Sub-label for the IP protection toggle. Explains that the feature only works for signed-in users and that some traffic may be sent through privacy servers when the feature is on. Provides a link to a help center article.">
+              When you're signed in to Taktak, this setting helps keep your IP address private. If Taktak suspects a site may be tracking you, some of your traffic may be sent through privacy servers. Learn more about <ph name="LINK_BEGIN">&lt;a href="#" aria-label="$1" aria-description="$2" target="_blank"&gt;</ph>how IP protection works<ph name="LINK_END">&lt;/a&gt;</ph>
           </message>
         </else>
       </if>
@@ -681,7 +684,7 @@
       <if expr="_google_chrome">
         <then>
           <message name="IDS_SETTINGS_SITE_SUGGESTED_ADS_CURRENT_SITES_DESCRIPTION_V2" desc="This string signals to users that they have the ability to block any website they don’t want using their activity. “Auto-deletes” means “automatically deletes”." formatter_data="android_java">
-            You can block sites you don't want. Chrome also auto-deletes sites from the list that are older than 30 days.
+            You can block sites you don't want. Taktak also auto-deletes sites from the list that are older than 30 days.
           </message>
           <message name="IDS_SETTINGS_SITE_SUGGESTED_ADS_PAGE_LEARN_MORE_BULLET_3_V2" desc="This string appears in the “More about site-suggested ads” dialog. “Activity data” refers to information about a user's actions or behaviors on the internet.">
             Chrome deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK1">&lt;a href="$1" aria-description="$2" target="_blank"&gt;</ph>managing your ad privacy in Chrome<ph name="LINK_END1">&lt;/a&gt;</ph>.
@@ -692,13 +695,13 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_SITE_SUGGESTED_ADS_CURRENT_SITES_DESCRIPTION_V2" desc="This string signals to users that they have the ability to block any website they don’t want using their activity. “Auto-deletes” means “automatically deletes”." formatter_data="android_java">
-            You can block sites you don't want. Chromium also auto-deletes sites from the list that are older than 30 days.
+            You can block sites you don't want. Taktak also auto-deletes sites from the list that are older than 30 days.
           </message>
           <message name="IDS_SETTINGS_SITE_SUGGESTED_ADS_PAGE_LEARN_MORE_BULLET_3_V2" desc="This string appears in the “More about site-suggested ads” dialog. “Activity data” refers to information about a user's actions or behaviors on the internet.">
-            Chromium deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK1">&lt;a href="$1" aria-description="$2" target="_blank"&gt;</ph>managing your ad privacy in Chromium<ph name="LINK_END1">&lt;/a&gt;</ph>.
+            Taktak deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK1">&lt;a href="$1" aria-description="$2" target="_blank"&gt;</ph>managing your ad privacy in Taktak<ph name="LINK_END1">&lt;/a&gt;</ph>.
           </message>
           <message name="IDS_SETTINGS_SITE_SUGGESTED_ADS_PAGE_LEARN_MORE_BULLET_3_V2_CLANK" desc="This string appears in the “More about site-suggested ads” dialog. “Activity data” refers to information about a user's actions or behaviors on the internet." formatter_data="android_java">
-            Chromium deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK">&lt;link&gt;</ph>managing your ad privacy in Chromium<ph name="END_LINK">&lt;/link&gt;</ph>.
+            Taktak deletes any activity data that you've shared with sites after 30 days. If you visit a site again it may reappear on the list. Learn more about <ph name="BEGIN_LINK">&lt;link&gt;</ph>managing your ad privacy in Taktak<ph name="END_LINK">&lt;/link&gt;</ph>.
           </message>
         </else>
       </if>
@@ -782,13 +785,13 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET1" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            Chromium notes topics of interest based on your recent browsing history. For example, things like Sports, Apparel, and more
+            Taktak notes topics of interest based on your recent browsing history. For example, things like Sports, Apparel, and more
           </message>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_WHEN_ON_BULLET3" desc="A part of the feature description of Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            Chromium auto-deletes ad topics that are older than 4 weeks
+            Taktak auto-deletes ad topics that are older than 4 weeks
           </message>
           <message name="IDS_SETTINGS_PRIVACY_GUIDE_AD_TOPICS_THINGS_TO_CONSIDER_BULLET1" desc="A part of the things to consider section of the Ad Topics card in the Privacy Guide." formatter_data="android_java">
-            You can see your ad topics in Chromium settings and block the ones you don't want shared with sites
+            You can see your ad topics in Taktak settings and block the ones you don't want shared with sites
           </message>
         </else>
       </if>
@@ -815,8 +818,8 @@
           </message>
         </then>
         <else>
-          <message name="IDS_SETTINGS_AD_TOPICS_PAGE_ACTIVE_TOPICS_DESCRIPTION" desc="A description that appears beneath the 'Active topics' label." formatter_data="android_java">
-            Chromium auto-deletes ad topics that are older than 4 weeks
+          <message name="IDS_SETTINGS_AD_TOPICS_PAGE_ACTIVE_TOPICS_DESCRIPTION" desc="A description that appears beneath the 'Active topics' label." translateable="false" formatter_data="android_java">
+            Taktak auto-deletes ad topics that are older than 4 weeks
           </message>
         </else>
       </if>
@@ -859,7 +862,7 @@
         </then>
         <else>
           <message name="IDS_SETTINGS_COOKIES_BLOCK_THIRD_PARTY_SETTINGS_ALLOW_BULLET_THREE" desc="This text is for a bullet that provides detail about the first setting option. It describes the key new detail that now applies to this setting option." formatter_data="android_java">
-            When you're in Incognito mode, Chromium blocks sites from using third-party cookies
+            When you're in Incognito mode, Taktak blocks sites from using third-party cookies
           </message>
         </else>
       </if>
@@ -897,7 +900,7 @@
         </then>
         <else>
           <message name="IDS_PRIVACY_GUIDE_COOKIE_SETTINGS_ALLOW_THINGS_TO_CONSIDER_BULLET_TWO" desc="This text is for a bullet that provides key considerations about the first setting option. It describes the key new detail that now applies to this setting option.">
-            When you're in Incognito mode, Chromium blocks sites from using third-party cookies
+            When you're in Incognito mode, Taktak blocks sites from using third-party cookies
           </message>
         </else>
       </if>
@@ -942,10 +945,10 @@
         Third-party cookies are blocked
       </message>
       <message name="IDS_INCOGNITO_NTP_BLOCK_THIRD_PARTY_COOKIES_DESCRIPTION_DESKTOP" desc="This text is for the body of the “Third-party cookies are blocked” section. It specifies the scope of blocking third-party cookies and informs the user of possible functional impacts, a means of addressing it, and a link to learn how to do so.">
-        When you're in Incognito mode, sites can't use third-party cookies. If a site that relies on these cookies isn't working, you can <ph name="START_LINK">&lt;a target="_blank" href="$1" aria-description="$2"&gt;</ph>try giving that site temporary access to third-party cookies<ph name="END_LINK">&lt;/a&gt;</ph>.
+        When you're in Incognito mode, sites can't use third-party cookies.
       </message>
       <message name="IDS_INCOGNITO_NTP_BLOCK_THIRD_PARTY_COOKIES_DESCRIPTION_ANDROID" desc="This text is for the body of the “Third-party cookies are blocked” section. It specifies the scope of blocking third-party cookies and informs the user of possible functional impacts, a means of addressing it, and a link to learn how to do so." formatter_data="android_java">
-        When you're in Incognito mode, sites can't use third-party cookies. If a site that relies on these cookies isn't working, you can <ph name="BEGIN_LINK">&lt;link&gt;</ph>try giving that site temporary access to third-party cookies<ph name="END_LINK">&lt;/link&gt;</ph>.
+        When you're in Incognito mode, sites can't use third-party cookies.
       </message>
 
       <!-- RWS - PageInfo -->
@@ -1087,22 +1090,22 @@
         </then>
         <else>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_PAGE_DESCRIPTION" desc="" formatter_data="android_java" translateable="false">
-            When you browse in Incognito, Chromium won't save your browsing history, cookies and site data, and the information you enter in forms. Incognito also provides features that can limit the information available to embedded sites.
+            When you browse in Incognito, Taktak won't save your browsing history, cookies and site data, and the information you enter in forms. Incognito also provides features that can limit the information available to embedded sites.
           </message>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_BLOCK_3PCS_TOGGLE_SUBLABEL" desc="" formatter_data="android_java" translateable="false">
-            Chromium blocks sites from using third-party cookies in Incognito
+            Taktak blocks sites from using third-party cookies in Incognito
           </message>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_IP_PROTECTION_WHEN_ON" desc="" formatter_data="android_java" translateable="false">
-            Chromium will try to protect your IP address from embedded sites that may be trying to learn about you
+            Taktak will try to protect your IP address from embedded sites that may be trying to learn about you
           </message>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_IP_PROTECTION_THINGS_TO_CONSIDER_BULLET_TWO" desc="" formatter_data="android_java" translateable="false">
-            Only available when Incognito is opened from a signed-in Chromium tab
+            Only available when Incognito is opened from a signed-in Taktak tab
           </message>
           <message name="IDS_INCOGNITO_TRACKING_PROTECTIONS_FINGERPRINTING_PROTECTION_WHEN_ON" desc="" formatter_data="android_java" translateable="false">
-            Chromium will try to limit device and browser data, like installed fonts or your time zone, from embedded sites that may be trying to learn about you
+            Taktak will try to limit device and browser data, like installed fonts or your time zone, from embedded sites that may be trying to learn about you
           </message>
           <message name="IDS_INCOGNITO_NTP_INCOGNITO_TRACKING_PROTECTIONS_LINK_A11Y_DESCRIPTION" desc="" translateable="false">
-            Opens in a regular Chromium window
+            Opens in a regular Taktak window
           </message>
         </else>
       </if>

@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{<ph name="NUM_MINS_ONE" /> મિનિટ પહેલાં બનાવ્યું}one{<ph name="NUM_MINS_MANY" /> મિનિટ પહેલાં બનાવ્યું}other{<ph name="NUM_MINS_MANY" /> મિનિટ પહેલાં બનાવ્યું}}</translation>
 <translation id="1499635324672558517">બધી છૂપી ટૅબ બંધ કરીએ?</translation>
 <translation id="1501480321619201731">જૂથ ડિલીટ કરો</translation>
+<translation id="1505526451013346974"><ph name="TITLE_OF_GROUP" />માં ઉમેરો</translation>
 <translation id="1555130319947370107">વાદળી</translation>
 <translation id="161042844686301425">સ્યાન</translation>
 <translation id="1645759014353344461"><ph name="TABS_COUNT_MANY" /> ટૅબનું ગ્રૂપ બનાવ્યું</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Chrome નિષ્ક્રિય વિભાગમાંની આઇટમને ઑટોમૅટિક રીતે બંધ કરે છે, જેનો તમારા 3 મહિનામાં ઉપયોગ ન કર્યો હોય. તમે સેટિંગમાં જઈને આને અત્યારે અથવા કોઈપણ સમયે બંધ કરી શકો છો.</translation>
 <translation id="8887921976452567404">તમારા બંધ થયેલા ટૅબ અને ગ્રૂપ તાજેતરના ટૅબ વિભાગ અને ટૅબના ગ્રૂપ વિભાગમાંથી ફરીથી ખોલી શકાય છે.</translation>
 <translation id="8915916167043355778">બધા બંધ કરો</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{નવી વિન્ડો પર ખસેડો}one{અન્ય વિન્ડો પર ખસેડો}other{અન્ય વિન્ડો પર ખસેડો}}</translation>
 <translation id="9090098097337832354">આ સ્ટોર વિશેની માહિતી બતાવવાની બંધ કરી છે</translation>
 <translation id="9114502155681725011"><ph name="COLOR_NAME" /> રંગના, ટૅબના ગ્રૂપ <ph name="TITLE_OF_GROUP" /> માટેનું ટૅબના ગ્રૂપનું ક્રિયા મેનૂ ખોલો.</translation>
 <translation id="9169594135889675189">ગ્રૂપમાં નવું ટૅબ ઉમેરો</translation>

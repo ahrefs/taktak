@@ -210,7 +210,7 @@ class CONTENT_EXPORT PrefetchService {
   CollectMatchCandidates(const PrefetchContainer::Key& key,
                          bool is_nav_prerender,
                          base::WeakPtr<PrefetchServingPageMetricsContainer>
-                             serving_page_metrics_container);
+                         serving_page_metrics_container);
 
   // Exposes methods for `PrefetchScheduler`. See documentation of private
   // methods with the same names.
@@ -234,21 +234,21 @@ class CONTENT_EXPORT PrefetchService {
       const GURL& url,
       std::optional<
           std::pair<net::RedirectInfo, network::mojom::URLResponseHeadPtr>>
-          redirect_data);
+      redirect_data);
 
   void CheckHasServiceWorker(
       base::WeakPtr<PrefetchContainer> prefetch_container,
       const GURL& url,
       std::optional<
           std::pair<net::RedirectInfo, network::mojom::URLResponseHeadPtr>>
-          redirect_data);
+      redirect_data);
 
   void OnGotServiceWorkerResult(
       base::WeakPtr<PrefetchContainer> prefetch_container,
       const GURL& url,
       std::optional<
           std::pair<net::RedirectInfo, network::mojom::URLResponseHeadPtr>>
-          redirect_data,
+      redirect_data,
       base::Time check_has_service_worker_start_time,
       ServiceWorkerCapability service_worker_capability);
 
@@ -260,7 +260,7 @@ class CONTENT_EXPORT PrefetchService {
       const GURL& url,
       std::optional<
           std::pair<net::RedirectInfo, network::mojom::URLResponseHeadPtr>>
-          redirect_data,
+      redirect_data,
       const net::CookieAccessResultList& cookie_list,
       const net::CookieAccessResultList& excluded_cookies);
 
@@ -272,7 +272,7 @@ class CONTENT_EXPORT PrefetchService {
       const GURL& url,
       std::optional<
           std::pair<net::RedirectInfo, network::mojom::URLResponseHeadPtr>>
-          redirect_data);
+      redirect_data);
 
   // Called after looking up the proxy configuration for the URL of
   // |prefetch_container|. If there is an existing proxy, then the prefetch is
@@ -281,7 +281,7 @@ class CONTENT_EXPORT PrefetchService {
       base::WeakPtr<PrefetchContainer> prefetch_container,
       std::optional<
           std::pair<net::RedirectInfo, network::mojom::URLResponseHeadPtr>>
-          redirect_data,
+      redirect_data,
       bool has_proxy);
 
   // Called when the eligibility is determined for each fetch of prefetch, i.e.
@@ -296,7 +296,7 @@ class CONTENT_EXPORT PrefetchService {
       base::WeakPtr<PrefetchContainer> prefetch_container,
       std::optional<
           std::pair<net::RedirectInfo, network::mojom::URLResponseHeadPtr>>
-          redirect_data,
+      redirect_data,
       PreloadingEligibility eligibility);
   void OnGotEligibilityForNonRedirect(
       base::WeakPtr<PrefetchContainer> prefetch_container,
@@ -407,8 +407,8 @@ class CONTENT_EXPORT PrefetchService {
       PrefetchContainer::Reader reader,
       PrefetchMatchResolver& prefetch_match_resolver,
       FallbackToRegularNavigationWhenPrefetchNotUsable
-          when_prefetch_not_used_fallback_to_regular_navigation =
-              FallbackToRegularNavigationWhenPrefetchNotUsable(true));
+      when_prefetch_not_used_fallback_to_regular_navigation =
+      FallbackToRegularNavigationWhenPrefetchNotUsable(true));
 
   // Callback for non-blocking call `PrefetchContainer::StartBlockUntilHead()`.
   // Waits non-redirect response header for No-Vary-Search to determine a

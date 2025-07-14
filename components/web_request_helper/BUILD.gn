@@ -1,0 +1,14 @@
+static_library("web_request_helper") {
+  sources = [
+    "web_request_helper.cc",
+    "web_request_helper.h",
+  ]
+
+  public_deps = [
+    "//base",
+    "//net/traffic_annotation",
+    "//services/data_decoder/public/cpp",
+    "//services/network/public/cpp",
+    "//url",
+  ]
+}

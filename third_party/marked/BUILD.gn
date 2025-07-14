@@ -1,0 +1,9 @@
+import("//ui/webui/resources/tools/generate_grd.gni")
+
+generate_grd("build_grdp") {
+    grd_prefix = "marked"
+    out_grd = "$target_gen_dir/marked_resources.grdp"
+    input_files_base_dir = rebase_path("./src", "//")
+    input_files = [ "marked.min.js" ]
+    resource_path_prefix = "marked"
+}

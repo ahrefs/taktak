@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{Создано <ph name="NUM_MINS_ONE" /> минуту назад}one{Создано <ph name="NUM_MINS_MANY" /> минуту назад}few{Создано <ph name="NUM_MINS_MANY" /> минуты назад}many{Создано <ph name="NUM_MINS_MANY" /> минут назад}other{Создано <ph name="NUM_MINS_MANY" /> минуты назад}}</translation>
 <translation id="1499635324672558517">Закрыть все вкладки инкогнито?</translation>
 <translation id="1501480321619201731">Удалить группу</translation>
+<translation id="1505526451013346974">Добавить в группу вкладок "<ph name="TITLE_OF_GROUP" />"</translation>
 <translation id="1555130319947370107">Синий</translation>
 <translation id="161042844686301425">Голубой</translation>
 <translation id="1645759014353344461">Вкладки (<ph name="TABS_COUNT_MANY" />) сгруппированы.</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Вкладки в Chrome, на которые вы не переходили 3 месяца, будут автоматически закрываться. Эту функцию всегда можно отключить в настройках.</translation>
 <translation id="8887921976452567404">Вернуть закрытые вкладки и группы можно в разделах "Недавние вкладки" и "Группы вкладок".</translation>
 <translation id="8915916167043355778">Закрыть все</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{Перенести в другое окно}one{Перенести в другое окно}few{Перенести в другое окно}many{Перенести в другое окно}other{Перенести в другое окно}}</translation>
 <translation id="9090098097337832354">Информация об этом магазине закрыта</translation>
 <translation id="9114502155681725011">Открыть меню действий для группы вкладок "<ph name="TITLE_OF_GROUP" />", которой присвоен цвет "<ph name="COLOR_NAME" />".</translation>
 <translation id="9169594135889675189">Добавить новую вкладку в группу</translation>

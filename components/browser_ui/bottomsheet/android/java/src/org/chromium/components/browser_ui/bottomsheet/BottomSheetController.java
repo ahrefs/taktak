@@ -129,10 +129,14 @@ public interface BottomSheetController {
      */
     boolean collapseSheet(boolean animate);
 
-    /** @return The content currently showing in the bottom sheet. */
+    /**
+     * @return The content currently showing in the bottom sheet.
+     */
     @Nullable BottomSheetContent getCurrentSheetContent();
 
-    /** @return The current state of the bottom sheet. */
+    /**
+     * @return The current state of the bottom sheet.
+     */
     @SheetState
     int getSheetState();
 

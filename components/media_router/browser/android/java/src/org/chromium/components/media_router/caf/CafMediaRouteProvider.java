@@ -26,7 +26,9 @@ import org.chromium.components.media_router.MediaSource;
 import java.util.HashMap;
 import java.util.Map;
 
-/** A {@link MediaRouteProvider} implementation for Cast devices and applications, using Cast v3 API. */
+/**
+ * A {@link MediaRouteProvider} implementation for Cast devices and applications, using Cast v3 API.
+ */
 @NullMarked
 @SuppressWarnings("NullAway") // https://crbug.com/401584051
 public class CafMediaRouteProvider extends CafBaseMediaRouteProvider {

@@ -18,8 +18,8 @@ import org.chromium.components.signin.base.GaiaId;
 import java.util.List;
 
 /**
- * This class is used to pass consent records from Android Java UI to the C++
- * consent_auditor component.
+ * This class is used to pass consent records from Android Java UI to the C++ consent_auditor
+ * component.
  */
 @NullMarked
 public final class ConsentAuditorBridge {

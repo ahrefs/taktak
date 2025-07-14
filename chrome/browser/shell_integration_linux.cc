@@ -473,21 +473,23 @@ std::string GetProgramClassClass(const base::CommandLine& command_line,
 
 std::string GetProgramClassName() {
   std::unique_ptr<base::Environment> env(base::Environment::Create());
-  return internal::GetProgramClassName(*base::CommandLine::ForCurrentProcess(),
-                                       chrome::GetDesktopName(env.get()));
+//  return internal::GetProgramClassName(*base::CommandLine::ForCurrentProcess(),
+//                                       chrome::GetDesktopName(env.get()));
+  return "taktak-browser";
 }
 
 std::string GetProgramClassClass() {
   std::unique_ptr<base::Environment> env(base::Environment::Create());
-  return internal::GetProgramClassClass(*base::CommandLine::ForCurrentProcess(),
-                                        chrome::GetDesktopName(env.get()));
+//  return internal::GetProgramClassClass(*base::CommandLine::ForCurrentProcess(),
+//                                        chrome::GetDesktopName(env.get()));
+  return "taktak-browser";
 }
 
 std::string GetIconName() {
 #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
   return "google-chrome";
 #else  // BUILDFLAG(CHROMIUM_BRANDING)
-  return "chromium-browser";
+  return "taktak-browser";
 #endif
 }
 

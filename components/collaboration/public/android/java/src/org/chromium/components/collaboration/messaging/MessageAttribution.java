@@ -11,8 +11,8 @@ import org.chromium.components.data_sharing.GroupMember;
 /**
  * Attribution data for an {@link InstantMessage} or {@link PersistentMessage}. This is a shim layer
  * for the native representation of the object. See
- * //components/collaboration/public/messaging/message.h for specific details.
- * TODO: Add a proper constructor to avoid @SuppressWarnings("NullAway.Init")
+ * //components/collaboration/public/messaging/message.h for specific details. TODO: Add a proper
+ * constructor to avoid @SuppressWarnings("NullAway.Init")
  */
 @NullMarked
 public class MessageAttribution {

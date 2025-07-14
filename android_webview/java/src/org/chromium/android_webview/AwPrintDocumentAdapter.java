@@ -15,9 +15,8 @@ import android.print.PrintDocumentInfo;
 import java.util.ArrayList;
 
 /**
- * Adapter for printing Webview. This class implements the abstract
- * system class PrintDocumentAdapter and hides all printing details from
- * the developer.
+ * Adapter for printing Webview. This class implements the abstract system class
+ * PrintDocumentAdapter and hides all printing details from the developer.
  */
 public class AwPrintDocumentAdapter extends PrintDocumentAdapter {
 
@@ -26,8 +25,7 @@ public class AwPrintDocumentAdapter extends PrintDocumentAdapter {
     private final String mDocumentName;
 
     /**
-     * Constructor.
-     * TODO(sgurun) remove in favor of constructor below once the AOSP changes are in.
+     * Constructor. TODO(sgurun) remove in favor of constructor below once the AOSP changes are in.
      *
      * @param pdfExporter The PDF exporter to export the webview contents to a PDF file.
      */

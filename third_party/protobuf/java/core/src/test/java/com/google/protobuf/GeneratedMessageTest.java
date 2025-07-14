@@ -9,11 +9,18 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertThrows;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.test.UnittestImport;
+
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.EnumWithNoOuter;
 import proto2_unittest.MessageWithNoOuter;
 import proto2_unittest.MultipleFilesTestProto;
@@ -41,6 +48,7 @@ import proto2_unittest.UnittestProto.TestExtremeDefaultValues;
 import proto2_unittest.UnittestProto.TestOneof2;
 import proto2_unittest.UnittestProto.TestPackedTypes;
 import proto2_unittest.UnittestProto.TestUnpackedTypes;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,10 +60,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Unit test for generated messages and generated code. See also {@link MessageTest}, which tests

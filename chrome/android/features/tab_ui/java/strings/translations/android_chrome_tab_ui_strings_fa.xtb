@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{‫<ph name="NUM_MINS_ONE" /> دقیقه پیش ایجاد شد}one{‫<ph name="NUM_MINS_MANY" /> دقیقه پیش ایجاد شد}other{‫<ph name="NUM_MINS_MANY" /> دقیقه پیش ایجاد شد}}</translation>
 <translation id="1499635324672558517">همه «برگه‌های ناشناس» بسته شود؟</translation>
 <translation id="1501480321619201731">حذف گروه</translation>
+<translation id="1505526451013346974">افزودن به <ph name="TITLE_OF_GROUP" /></translation>
 <translation id="1555130319947370107">آبی</translation>
 <translation id="161042844686301425">فیروزه‌ای</translation>
 <translation id="1645759014353344461">‫<ph name="TABS_COUNT_MANY" /> زبانه گروه‌بندی شد</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">‏‫Chrome به‌طور خودکار موارد موجود در بخش غیرفعال را که طی ۳ ماه گذشته استفاده نکرده‌اید می‌بندد. می‌توانید این ویژگی را اکنون یا در هر زمان دیگری در «تنظیمات» خاموش کنید.</translation>
 <translation id="8887921976452567404">برگه‌ها و گروه‌های بسته‌شده از بخش «برگه‌های اخیر» و بخش «گروه‌های برگه» مجدداً باز خواهند شد.</translation>
 <translation id="8915916167043355778">بستن همه</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{انتقال به پنجره جدید}one{انتقال به پنجره دیگر}other{انتقال به پنجره دیگر}}</translation>
 <translation id="9090098097337832354">اطلاعات مربوط به این فروشگاه بسته شد</translation>
 <translation id="9114502155681725011">باز کردن منوِ کنش‌های گروه برگه برای گروه برگه <ph name="TITLE_OF_GROUP" />، به‌رنگ <ph name="COLOR_NAME" />.</translation>
 <translation id="9169594135889675189">افزودن برگه جدید به گروه</translation>

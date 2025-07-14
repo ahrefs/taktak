@@ -12,8 +12,8 @@ import org.chromium.build.annotations.Nullable;
 import org.chromium.ui.base.WindowAndroid;
 
 /**
- * A {@link UnownedUserDataSupplier} which manages the supplier and UnownedUserData for a
- * {@link TabObscuringHandler}.
+ * A {@link UnownedUserDataSupplier} which manages the supplier and UnownedUserData for a {@link
+ * TabObscuringHandler}.
  */
 @NullMarked
 public class TabObscuringHandlerSupplier extends UnownedUserDataSupplier<TabObscuringHandler> {

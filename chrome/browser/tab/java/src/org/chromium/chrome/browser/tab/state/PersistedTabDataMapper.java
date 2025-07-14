@@ -9,8 +9,8 @@ import org.chromium.build.annotations.NullMarked;
 import java.nio.ByteBuffer;
 
 /**
- * @param <T> a {@link PersistedTabDataResult}
- * Maps a {@link ByteBuffer} to a {@link PersistedTabDataResult}
+ * @param <T> a {@link PersistedTabDataResult} Maps a {@link ByteBuffer} to a {@link
+ *     PersistedTabDataResult}
  */
 @NullMarked
 public interface PersistedTabDataMapper<T extends PersistedTabDataResult> {

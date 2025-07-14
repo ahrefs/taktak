@@ -74,6 +74,15 @@ declare_args() {
   # was explicitly set to true, i.e. they always use official keys,
   # and will fail to build if the internal file is missing.
   use_official_enterprise_connectors_api_keys = false
+
+  taktak_tel_api_key = ""
+  taktak_tel_api_url = ""
+  taktak_update_check_api_key = ""
+  taktak_update_check_api_url = ""
+  taktak_download_url = ""
+  taktak_chat_api_url = ""
+  taktak_chat_deepseek_model = ""
+  taktak_chat_mistral_model = ""
 }
 
 additional_modules_list_file =
@@ -97,6 +106,17 @@ if (is_win) {
   }
 }
 
+if (is_official_build) {
+  assert(taktak_tel_api_key != "")
+  assert(taktak_tel_api_url != "")
+  assert(taktak_update_check_api_key != "")
+  assert(taktak_update_check_api_url != "")
+  assert(taktak_download_url != "")
+  assert(taktak_chat_api_url != "")
+  assert(taktak_chat_deepseek_model != "")
+  assert(taktak_chat_mistral_model != "")
+}
+
 buildflag_header("buildflags") {
   header = "buildflags.h"
   flags = [
@@ -104,6 +124,14 @@ buildflag_header("buildflags") {
     "ENABLE_UPDATE_NOTIFICATIONS=$enable_update_notifications",
     "USE_MINIKIN_HYPHENATION=$use_minikin_hyphenation",
     "USE_THIN_LTO=$use_thin_lto",
+    "TAKTAK_TEL_API_KEY=\"$taktak_tel_api_key\"",
+    "TAKTAK_TEL_API_URL=\"$taktak_tel_api_url\"",
+    "TAKTAK_UPDATE_CHECK_API_KEY=\"$taktak_update_check_api_key\"",
+    "TAKTAK_UPDATE_CHECK_API_URL=\"$taktak_update_check_api_url\"",
+    "TAKTAK_DOWNLOAD_URL=\"$taktak_download_url\"",
+    "TAKTAK_CHAT_API_URL=\"$taktak_chat_api_url\"",
+    "TAKTAK_CHAT_DEEPSEEK_MODEL=\"$taktak_chat_deepseek_model\"",
+    "TAKTAK_CHAT_MISTRAL_MODEL=\"$taktak_chat_mistral_model\"",
   ]
 
   if (is_win) {
@@ -2079,6 +2107,7 @@ static_library("browser") {
     "//chrome/common:version_header",
     "//chrome/common/net",
     "//chrome/common/notifications",
+    "//chrome/common/page_content_extractor:mojo_bindings",
     "//chrome/installer/util:with_no_strings",
     "//chrome/services/speech/buildflags",
     "//components/application_locale_storage",
@@ -2473,6 +2502,7 @@ static_library("browser") {
     "//components/visitedlink/browser",
     "//components/visitedlink/common",
     "//components/web_cache/browser",
+    "//components/web_request_helper",
     "//components/web_resource",
     "//components/webapps/browser",
     "//components/webapps/common",
@@ -3685,6 +3715,10 @@ static_library("browser") {
       "contextual_cueing/contextual_cueing_service.cc",
       "contextual_cueing/contextual_cueing_service.h",
       "contextual_cueing/contextual_cueing_service_factory.cc",
+      "cs/cs_api_client.cc",
+      "cs/cs_api_client.h",
+      "cs/cs_handler.cc",
+      "cs/cs_handler.h",
       "data_sharing/desktop/data_sharing_conversion_utils.cc",
       "data_sharing/desktop/data_sharing_conversion_utils.h",
       "data_sharing/desktop/data_sharing_sdk_delegate_desktop.cc",
@@ -4444,6 +4478,7 @@ static_library("browser") {
       "//chrome/browser/ui/webui/searchbox",
       "//chrome/browser/ui/webui/settings",
       "//chrome/browser/ui/webui/settings:impl",
+      "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings",
       "//chrome/browser/ui/webui/signin",
       "//chrome/browser/ui/webui/signin:login",
       "//chrome/browser/ui/webui/signin:login_impl",

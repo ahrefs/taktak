@@ -77,9 +77,9 @@ public interface Tab extends TabLifecycle {
     boolean hasObserver(TabObserver observer);
 
     /**
-     * @return {@link UserDataHost} that manages {@link UserData} objects attached to.
-     *         This is used for managing Tab-specific attributes/objects without Tab
-     *         object having to know about them directly.
+     * @return {@link UserDataHost} that manages {@link UserData} objects attached to. This is used
+     *     for managing Tab-specific attributes/objects without Tab object having to know about them
+     *     directly.
      */
     UserDataHost getUserDataHost();
 
@@ -92,9 +92,9 @@ public interface Tab extends TabLifecycle {
     @Nullable WebContents getWebContents();
 
     /**
-     * @return The {@link Activity} {@link Context} if this {@link Tab} is attached to an
-     *         {@link Activity}, otherwise the themed application context (e.g. hidden tab or
-     *         browser action tab).
+     * @return The {@link Activity} {@link Context} if this {@link Tab} is attached to an {@link
+     *     Activity}, otherwise the themed application context (e.g. hidden tab or browser action
+     *     tab).
      */
     Context getContext();
 

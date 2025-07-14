@@ -539,9 +539,10 @@ public class AndroidPaymentAppFinderUnitTest {
                              ArgumentMatchers.argThat(sPayIntentArgumentMatcher)))
                 .thenReturn(activities);
 
-        Mockito.when(mPackageManagerDelegate.getStringArrayResourceForApplication(
-                             ArgumentMatchers.eq(bobPay.activityInfo.applicationInfo),
-                             ArgumentMatchers.eq(1)))
+        Mockito.when(
+                        mPackageManagerDelegate.getStringArrayResourceForApplication(
+                                ArgumentMatchers.eq(bobPay.activityInfo.applicationInfo),
+                                ArgumentMatchers.eq(1)))
                 .thenReturn(new String[] {"https://bobpay.test", "basic-card"});
 
         Mockito.when(

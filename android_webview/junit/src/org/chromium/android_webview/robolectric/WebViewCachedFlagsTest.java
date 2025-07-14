@@ -8,11 +8,11 @@ import androidx.test.filters.SmallTest;
 
 import com.android.webview.chromium.WebViewCachedFlags;
 
-import org.chromium.android_webview.common.AwFeatures;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.chromium.android_webview.common.AwFeatures;
 import org.chromium.base.test.BaseRobolectricTestRunner;
 import org.chromium.base.test.util.Feature;
 import org.chromium.base.test.util.Features;

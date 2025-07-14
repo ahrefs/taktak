@@ -40,8 +40,8 @@ import java.util.Queue;
 
 /**
  * The handler for cast messages. It receives events between the Cast SDK and the page, process and
- * dispatch the messages accordingly. The handler talks to the Cast SDK via CastSession, and
- * talks to the pages via the media router.
+ * dispatch the messages accordingly. The handler talks to the Cast SDK via CastSession, and talks
+ * to the pages via the media router.
  */
 @NullMarked
 @SuppressWarnings("NullAway") // https://crbug.com/401584051
@@ -498,8 +498,9 @@ public class CafMessageHandler {
     }
 
     /**
-     * Forwards the media message to the page via the media router.
-     * The MEDIA_STATUS message needs to be sent to all the clients.
+     * Forwards the media message to the page via the media router. The MEDIA_STATUS message needs
+     * to be sent to all the clients.
+     *
      * @param message The media that's being send by the receiver.
      * @param request The information about the client and the sequence number to respond with.
      */
@@ -521,6 +522,7 @@ public class CafMessageHandler {
 
     /**
      * Forwards the application specific message to the page via the media router.
+     *
      * @param message The message within the namespace that's being sent by the receiver.
      * @param namespace The application specific namespace this message belongs to.
      * @param request The information about the client and the sequence number to respond with.
@@ -628,9 +630,10 @@ public class CafMessageHandler {
 
     /**
      * Sends a message to a specific client.
+     *
      * @param clientId The id of the receiving client.
-     * @param type     The type of the message.
-     * @param message  The message to be sent.
+     * @param type The type of the message.
+     * @param message The message to be sent.
      * @param sequenceNumber The sequence number for matching requesting and responding messages.
      */
     public void sendEnclosedMessageToClient(
@@ -670,7 +673,9 @@ public class CafMessageHandler {
         return json.toString();
     }
 
-    /** @return A message containing the information of the {@link CastSession}. */
+    /**
+     * @return A message containing the information of the {@link CastSession}.
+     */
     public String buildSessionMessage() {
         if (!mSessionController.isConnected()) return "{}";
         assumeNonNull(mSessionController.getSession());

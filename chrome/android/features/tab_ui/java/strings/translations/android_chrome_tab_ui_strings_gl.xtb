@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{Creouse hai <ph name="NUM_MINS_ONE" /> minuto}other{Creouse hai <ph name="NUM_MINS_MANY" /> minutos}}</translation>
 <translation id="1499635324672558517">Queres pechar todas as pestanas do modo de incógnito?</translation>
 <translation id="1501480321619201731">Eliminar grupo</translation>
+<translation id="1505526451013346974">Engadir a <ph name="TITLE_OF_GROUP" /></translation>
 <translation id="1555130319947370107">Azul</translation>
 <translation id="161042844686301425">Ciano</translation>
 <translation id="1645759014353344461"><ph name="TABS_COUNT_MANY" /> pestanas agrupadas</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Chrome pechará automaticamente os elementos da sesión inactiva que non usases en tres meses. Podes desactivar esta opción agora ou en calquera momento en Configuración.</translation>
 <translation id="8887921976452567404">As pestanas e grupos pechados poden volver abrirse desde as seccións Pestanas recentes e Grupos de pestanas.</translation>
 <translation id="8915916167043355778">Pechar todo</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{Mover a unha nova ventá}other{Mover a outra ventá}}</translation>
 <translation id="9090098097337832354">A folla de información sobre esta tenda está pechada</translation>
 <translation id="9114502155681725011">Abrir o menú de accións do grupo de pestanas <ph name="TITLE_OF_GROUP" />, de cor <ph name="COLOR_NAME" />.</translation>
 <translation id="9169594135889675189">Engadir nova pestana ao grupo</translation>

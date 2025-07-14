@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{Ստեղծվել է <ph name="NUM_MINS_ONE" /> րոպե առաջ}one{Ստեղծվել է <ph name="NUM_MINS_MANY" /> րոպե առաջ}other{Ստեղծվել է <ph name="NUM_MINS_MANY" /> րոպե առաջ}}</translation>
 <translation id="1499635324672558517">Փակե՞լ բոլոր ինկոգնիտո ներդիրները</translation>
 <translation id="1501480321619201731">Ջնջել խումբը</translation>
+<translation id="1505526451013346974">Ավելացնել «<ph name="TITLE_OF_GROUP" />» խմբում</translation>
 <translation id="1555130319947370107">Կապույտ</translation>
 <translation id="161042844686301425">Երկնագույն</translation>
 <translation id="1645759014353344461"><ph name="TABS_COUNT_MANY" /> ներդիր խմբավորվեց</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Chrome-ն ավտոմատ փակում է ներդիրները, որոնք չեք օգտագործել 3 ամսվա ընթացքում։ Այս գործառույթը ցանկացած ժամանակ կարող եք անջատել Կարգավորումներում։</translation>
 <translation id="8887921976452567404">Ձեր փակված ներդիրները և խմբերը կարող եք նորից բացել «Վերջին ներդիրները» և «Ներդիրների խմբեր» բաժիններում։</translation>
 <translation id="8915916167043355778">Փակել բոլորը</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{Տեղափոխել նոր պատուհան}one{Տեղափոխել այլ պատուհան}other{Տեղափոխել այլ պատուհան}}</translation>
 <translation id="9090098097337832354">Այս խանութի մասին տեղեկությունները փակված են</translation>
 <translation id="9114502155681725011">Բացել «<ph name="TITLE_OF_GROUP" />» ներդիրների խմբի գործողությունների ընտրացանկը, գույնը՝ <ph name="COLOR_NAME" />։</translation>
 <translation id="9169594135889675189">Ավելացնել նոր ներդիր խմբում</translation>

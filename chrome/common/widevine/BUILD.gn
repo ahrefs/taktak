@@ -1,0 +1,42 @@
+# Copyright (c) 2025 The Taktak Authors. All rights reserved.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at https://mozilla.org/MPL/2.0/.
+
+import("//third_party/widevine/cdm/widevine.gni")
+
+assert(enable_widevine)
+
+source_set("widevine") {
+  deps = [
+    "//base",
+    "//chrome/browser:browser_process",
+    "//chrome/browser:browser_public_dependencies",
+    "//chrome/browser/profiles:profile",
+    "//chrome/common",
+    "//components/component_updater/",
+    "//components/content_settings/core/common",
+    "//components/pref_registry",
+    "//components/prefs",
+    "//components/subresource_filter/content/browser",
+    "//components/vector_icons",
+    "//content/public/browser",
+    "//content/public/common",
+    "//third_party/widevine/cdm:buildflags",
+    "//third_party/widevine/cdm:headers",
+    "//ui/base",
+  ]
+
+  public_deps = [
+    "//components/permissions",
+    "//url",
+  ]
+
+  sources = [
+    "constants.h",
+    "widevine_permission_request.cc",
+    "widevine_permission_request.h",
+    "widevine_utils.cc",
+    "widevine_utils.h",
+  ]
+}

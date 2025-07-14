@@ -1,0 +1,17 @@
+Name: MarkedJS
+Short Name: markedjs
+URL: https://github.com/markedjs/marked
+Version: v15.0.3
+Revision: 7e4e3435eaca2b0f48f5aedb53d67a36170086f3
+License: MIT
+License File: LICENSE
+Security Critical: no
+Shipped: yes
+
+Description:
+low-level compiler for parsing markdown without caching or blocking for long periods of time
+
+Local Modifications:
+Copy the entire file into Chat and use as it.
+
+

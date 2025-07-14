@@ -920,20 +920,58 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
       gfx::kGoogleBlue500, kColorReadAnythingBackgroundYellow,
       color_utils::kMinimumVisibleContrastRatio);
 
-  // Apply high contrast recipes if necessary.
-  if (!ShouldApplyHighContrastColors(key)) {
-    return;
-  }
-  mixer[kColorDownloadShelfContentAreaSeparator] = {
-      kColorToolbarContentAreaSeparator};
-  mixer[kColorInfoBarContentAreaSeparator] = {
-      kColorToolbarContentAreaSeparator};
-  mixer[kColorLocationBarBorder] = {kColorToolbarText};
-  mixer[kColorToolbar] = {dark_mode ? SK_ColorBLACK : SK_ColorWHITE};
-  mixer[kColorToolbarContentAreaSeparator] = {kColorToolbarText};
-  mixer[kColorToolbarText] = {dark_mode ? SK_ColorWHITE : SK_ColorBLACK};
-  mixer[kColorToolbarTopSeparatorFrameActive] = {dark_mode ? SK_ColorDKGRAY
-                                                           : SK_ColorLTGRAY};
-  mixer[ui::kColorFrameActive] = {SK_ColorDKGRAY};
-  mixer[ui::kColorFrameInactive] = {SK_ColorGRAY};
+    /* Yep Chat Colors */
+    mixer[kColorYepChatPromptBackground] = {
+            dark_mode ? SkColorSetRGB(24, 24, 28) : SkColorSetRGB(235, 233, 240)};
+    mixer[kColorYepChatPanelBackground] = {dark_mode ? SkColorSetRGB(42, 41, 51)
+                                                     : SK_ColorWHITE};
+    mixer[kColorYepChatSiteInfoVerticalBarBackground] = {
+            dark_mode ? SkColorSetARGB(26, 255, 255, 255)
+                      : SkColorSetARGB(26, 0, 0, 0)};
+    mixer[kColorYepChatPrimaryText] = {dark_mode
+                                       ? SkColorSetARGB(217, 255, 255, 255)
+                                       : SkColorSetARGB(217, 0, 0, 0)};
+    mixer[kColorYepChatSecondaryText] = {dark_mode
+                                         ? SkColorSetARGB(128, 255, 255, 255)
+                                         : SkColorSetARGB(128, 0, 0, 0)};
+    mixer[kColorYepChatTertiaryText] = {dark_mode
+                                        ? SkColorSetARGB(64, 255, 255, 255)
+                                        : SkColorSetARGB(64, 0, 0, 0)};
+    mixer[kColorYepChatPanelBorder] = {dark_mode
+                                       ? SkColorSetARGB(26, 255, 255, 255)
+                                       : SkColorSetARGB(26, 0, 0, 0)};
+    mixer[kColorYepChatSendButtonBackground] = {dark_mode ? SK_ColorWHITE
+                                                          : SK_ColorBLACK};
+    mixer[kColorYepChatSendButtonForeground] = {dark_mode ? SK_ColorBLACK
+                                                          : SK_ColorWHITE};
+
+    mixer[kColorYepChatError] = {dark_mode
+                                 ? SkColorSetARGB(255, 255, 130, 124)
+                                 : SkColorSetARGB(255, 179, 38, 30)};
+    mixer[kColorYepChatThinkingEnabled] = {SkColorSetARGB(255, 90, 100, 205)};
+    mixer[kColorYepChatThinkingHeadIcon] = {SkColorSetARGB(255, 217, 217, 217)};
+
+    mixer[kColorYepChatToolbarIcon] = {dark_mode
+                                           ? SkColorSetARGB(255, 255, 242, 1)
+                                           : SkColorSetARGB(217, 0, 0, 0)};
+    mixer[kColorYepChatLink] = {dark_mode
+                                ? SkColorSetARGB(255, 129, 160, 240)
+                                : SkColorSetARGB(255, 8, 40, 187)};
+
+    // Apply high contrast recipes if necessary.
+    if (!ShouldApplyHighContrastColors(key)) {
+        return;
+    }
+    mixer[kColorDownloadShelfContentAreaSeparator] = {
+            kColorToolbarContentAreaSeparator};
+    mixer[kColorInfoBarContentAreaSeparator] = {
+            kColorToolbarContentAreaSeparator};
+    mixer[kColorLocationBarBorder] = {kColorToolbarText};
+    mixer[kColorToolbar] = {dark_mode ? SK_ColorBLACK : SK_ColorWHITE};
+    mixer[kColorToolbarContentAreaSeparator] = {kColorToolbarText};
+    mixer[kColorToolbarText] = {dark_mode ? SK_ColorWHITE : SK_ColorBLACK};
+    mixer[kColorToolbarTopSeparatorFrameActive] = {dark_mode ? SK_ColorDKGRAY
+                                                             : SK_ColorLTGRAY};
+    mixer[ui::kColorFrameActive] = {SK_ColorDKGRAY};
+    mixer[ui::kColorFrameInactive] = {SK_ColorGRAY};
 }

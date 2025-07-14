@@ -84,7 +84,7 @@ public class FacilitatedPaymentsApiClient {
          * a payment.
          *
          * @param clientToken An opaque client token for initiating a payment. Can be null or empty
-         * to indicate a failure.
+         *     to indicate a failure.
          */
         default void onGetClientToken(byte @Nullable [] clientToken) {}
 

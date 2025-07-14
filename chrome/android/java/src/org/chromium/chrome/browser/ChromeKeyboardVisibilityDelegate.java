@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser;
 
-
 import android.app.Activity;
 import android.content.Context;
 import android.view.View;
@@ -31,6 +30,7 @@ public class ChromeKeyboardVisibilityDelegate extends ActivityKeyboardVisibility
 
     /**
      * Creates a new visibility delegate.
+     *
      * @param activity A {@link WeakReference} to an {@link Activity}.
      */
     public ChromeKeyboardVisibilityDelegate(

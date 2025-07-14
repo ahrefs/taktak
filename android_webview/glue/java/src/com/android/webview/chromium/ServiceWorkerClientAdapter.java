@@ -12,8 +12,8 @@ import org.chromium.android_webview.AwWebResourceRequest;
 import org.chromium.components.embedder_support.util.WebResourceResponseInfo;
 
 /**
- * An adapter class that forwards the callbacks from {@link AwServiceWorkerClient}
- * to the corresponding {@link ServiceWorkerClient}.
+ * An adapter class that forwards the callbacks from {@link AwServiceWorkerClient} to the
+ * corresponding {@link ServiceWorkerClient}.
  */
 public class ServiceWorkerClientAdapter extends AwServiceWorkerClient {
     private final ServiceWorkerClient mServiceWorkerClient;

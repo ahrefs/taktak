@@ -54,6 +54,11 @@
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 #include "third_party/widevine/cdm/buildflags.h"
 
+#if BUILDFLAG(ENABLE_WIDEVINE)
+#include "chrome/renderer/drm/drm_tab_helper.h"
+#include "components/drm/taktak_drm.mojom.h"
+#endif
+
 #if BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/plugins/plugin_observer_android.h"
 #elif BUILDFLAG(IS_WIN)
@@ -630,6 +635,17 @@ void ChromeContentBrowserClient::
                     std::move(receiver), render_frame_host);
               },
               &render_frame_host));
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+  associated_registry.AddInterface<taktak_drm::mojom::TaktakDRM>(
+      base::BindRepeating(
+          [](content::RenderFrameHost* render_frame_host,
+             mojo::PendingAssociatedReceiver<taktak_drm::mojom::TaktakDRM>
+                 receiver) {
+            DrmTabHelper::BindTaktakDRM(std::move(receiver), render_frame_host);
+          },
+          &render_frame_host));
+#endif  // BUILDFLAG(ENABLE_WIDEVINE)
 }
 
 void ChromeContentBrowserClient::BindGpuHostReceiver(

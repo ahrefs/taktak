@@ -533,6 +533,37 @@ TEST_F(AutofillAiMqlsMetricsTest, NoMqlsMetricsWhenOffTheRecord) {
   EXPECT_TRUE(mqls_logs().empty());
 }
 
+// Tests that metrics are not recorded in MQLS if the enterprise policy forbids
+// it.
+TEST_F(AutofillAiMqlsMetricsTest, NoMqlsMetricsIfDisabledByEnterprisePolicy) {
+  autofill_client().GetPrefs()->SetInteger(
+      optimization_guide::prefs::
+          kAutofillPredictionImprovementsEnterprisePolicyAllowed,
+      base::to_underlying(optimization_guide::model_execution::prefs::
+                              ModelExecutionEnterprisePolicyValue::kDisable));
+
+  std::unique_ptr<autofill::FormStructure> form = CreateEligibleForm();
+  test_api(manager()).logger().OnSuggestionsShown(*form, *form->field(0),
+                                                  /*ukm_source_id=*/{});
+  test_api(manager()).logger().RecordFormMetrics(*form, /*ukm_source_id=*/{},
+                                                 /*submitted_state=*/true,
+                                                 /*opt_in_status=*/true);
+  EXPECT_TRUE(mqls_logs().empty());
+}
+
+// Tests that metrics are not recorded in MQLS when off-the-record.
+TEST_F(AutofillAiMqlsMetricsTest, NoMqlsMetricsWhenOffTheRecord) {
+  autofill_client().set_is_off_the_record(true);
+
+  std::unique_ptr<autofill::FormStructure> form = CreateEligibleForm();
+  test_api(manager()).logger().OnSuggestionsShown(*form, *form->field(0),
+                                                  /*ukm_source_id=*/{});
+  test_api(manager()).logger().RecordFormMetrics(*form, /*ukm_source_id=*/{},
+                                                 /*submitted_state=*/true,
+                                                 /*opt_in_status=*/true);
+  EXPECT_TRUE(mqls_logs().empty());
+}
+
 }  // namespace
 
 }  // namespace autofill_ai

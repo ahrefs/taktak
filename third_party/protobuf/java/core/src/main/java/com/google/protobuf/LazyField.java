@@ -49,11 +49,10 @@ public class LazyField extends LazyFieldLite {
     return getValue().hashCode();
   }
 
-  @Override
-  public boolean equals(
-          Object obj) {
-    return getValue().equals(obj);
-  }
+    @Override
+    public boolean equals(Object obj) {
+        return getValue().equals(obj);
+    }
 
   @Override
   public String toString() {

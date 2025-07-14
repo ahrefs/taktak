@@ -18,8 +18,8 @@ import java.nio.ByteBuffer;
 /**
  * MockPersistedTabData object used for testing
  *
- * This class should not be merged because it is being used as a key in a Map
- * in PersistedTabDataConfiguration.java.
+ * <p>This class should not be merged because it is being used as a key in a Map in
+ * PersistedTabDataConfiguration.java.
  */
 @DoNotClassMerge
 @NullMarked
@@ -47,9 +47,9 @@ public class MockPersistedTabData extends PersistedTabData {
     }
 
     /**
-     * Acquire {@link MockPersistedTabData} from storage or create it and
-     * associate with {@link Tab}
-     * @param tab      {@link Tab} {@link MockPersistedTabData} will be associated with
+     * Acquire {@link MockPersistedTabData} from storage or create it and associate with {@link Tab}
+     *
+     * @param tab {@link Tab} {@link MockPersistedTabData} will be associated with
      * @param callback callback {@link MockPersistedTabData} will be passed back in
      */
     @NullUnmarked

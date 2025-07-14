@@ -44,12 +44,11 @@ import org.chromium.ui.interpolators.Interpolators;
 
 /**
  * This class defines the bottom sheet that has multiple states and a persistently showing toolbar.
- * Namely, the states are:
- * - PEEK: Only the toolbar is visible at the bottom of the screen.
- * - HALF: The sheet is expanded to consume around half of the screen.
- * - FULL: The sheet is expanded to its full height.
+ * Namely, the states are: - PEEK: Only the toolbar is visible at the bottom of the screen. - HALF:
+ * The sheet is expanded to consume around half of the screen. - FULL: The sheet is expanded to its
+ * full height.
  *
- * All the computation in this file is based off of the bottom of the screen instead of the top
+ * <p>All the computation in this file is based off of the bottom of the screen instead of the top
  * for simplicity. This means that the bottom of the screen is 0 on the Y axis.
  */
 @NullMarked
@@ -599,6 +598,7 @@ class BottomSheet extends FrameLayout
 
     /**
      * Removes the oldView (or sets it to invisible) and adds the new view to the specified parent.
+     *
      * @param newView The new view to transition to.
      * @param oldView The old view to transition from.
      * @param parent The parent for newView and oldView.
@@ -1090,7 +1090,9 @@ class BottomSheet extends FrameLayout
         return mSettleAnimator != null;
     }
 
-    /** @return The current sheet content, or null if there is no content. */
+    /**
+     * @return The current sheet content, or null if there is no content.
+     */
     @Nullable BottomSheetContent getCurrentSheetContent() {
         return mSheetContent;
     }

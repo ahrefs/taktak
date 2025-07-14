@@ -15,6 +15,10 @@ namespace user_prefs {
 class PrefRegistrySyncable;
 }
 
+// Enables bound sessions marked with "wsbeta" flag even when the main
+// `switches::kBoundSessionCredentialsEnabled` feature is disabled.
+BASE_DECLARE_FEATURE(kEnableBoundSessionCredentialsWsbetaBypass);
+
 class BoundSessionCookieRefreshServiceFactory
     : public ProfileKeyedServiceFactory {
  public:

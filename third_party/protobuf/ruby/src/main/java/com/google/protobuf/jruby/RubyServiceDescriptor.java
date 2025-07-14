@@ -35,8 +35,7 @@ package com.google.protobuf.jruby;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors.MethodDescriptor;
 import com.google.protobuf.Descriptors.ServiceDescriptor;
-import java.util.LinkedHashMap;
-import java.util.Map;
+
 import org.jruby.*;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
@@ -44,8 +43,9 @@ import org.jruby.runtime.Block;
 import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
-import org.jruby.anno.JRubyClass;
-import org.jruby.anno.JRubyMethod;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @JRubyClass(name = "ServiceDescriptor")
 public class RubyServiceDescriptor extends RubyObject {
@@ -127,32 +127,35 @@ public class RubyServiceDescriptor extends RubyObject {
       block.yield(context, entry.getValue());
     }
     return context.nil;
-  }
+    }
 
-  /*
-   * call-seq:
-   *     ServiceDescriptor.to_proto => ServiceDescriptorProto
-   *
-   * Returns the `ServiceDescriptorProto` of this `ServiceDescriptor`.
-   */
-  @JRubyMethod(name = "to_proto")
-  public IRubyObject toProto(ThreadContext context) {
-    RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
-    RubyDescriptor serviceDescriptorProto =
-        (RubyDescriptor)
-            pool.lookup(
-                context, context.runtime.newString("google.protobuf.ServiceDescriptorProto"));
-    RubyClass msgClass = (RubyClass) serviceDescriptorProto.msgclass(context);
-    RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
-    return msg.decodeBytes(
-        context,
-        msg,
-        CodedInputStream.newInstance(descriptor.toProto().toByteString().toByteArray()), /*freeze*/
-        true);
-  }
+    /*
+     * call-seq:
+     *     ServiceDescriptor.to_proto => ServiceDescriptorProto
+     *
+     * Returns the `ServiceDescriptorProto` of this `ServiceDescriptor`.
+     */
+    @JRubyMethod(name = "to_proto")
+    public IRubyObject toProto(ThreadContext context) {
+        RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
+        RubyDescriptor serviceDescriptorProto =
+                (RubyDescriptor)
+                        pool.lookup(
+                                context,
+                                context.runtime.newString(
+                                        "google.protobuf.ServiceDescriptorProto"));
+        RubyClass msgClass = (RubyClass) serviceDescriptorProto.msgclass(context);
+        RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
+        return msg.decodeBytes(
+                context,
+                msg,
+                CodedInputStream.newInstance(
+                        descriptor.toProto().toByteString().toByteArray()), /*freeze*/
+                true);
+    }
 
-  protected void setDescriptor(
-      ThreadContext context, ServiceDescriptor descriptor, RubyDescriptorPool pool) {
+    protected void setDescriptor(
+            ThreadContext context, ServiceDescriptor descriptor, RubyDescriptorPool pool) {
     this.descriptor = descriptor;
 
     // Populate the methods (and preserve the order by using LinkedHashMap)

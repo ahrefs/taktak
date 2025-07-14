@@ -10,10 +10,7 @@ import org.chromium.build.annotations.Nullable;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.ui.base.WindowAndroid;
 
-/**
- * UserData for a {@link Tab}. Used for a {@link WebContents} while it stays
- * active for the Tab.
- */
+/** UserData for a {@link Tab}. Used for a {@link WebContents} while it stays active for the Tab. */
 @NullMarked
 public abstract class TabWebContentsUserData implements UserData {
     private @Nullable WebContents mWebContents;
@@ -64,6 +61,7 @@ public abstract class TabWebContentsUserData implements UserData {
 
     /**
      * Called when {@link WebContents} gets swapped out.
+     *
      * @param webContents WebContents object that just became inactive.
      */
     public abstract void cleanupWebContents(@Nullable WebContents webContents);

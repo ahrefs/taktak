@@ -559,9 +559,7 @@ public class RelatedSearchesControl {
             setBottomMargin();
         }
 
-        /**
-         * Sets the bottom margin of the control view.
-         */
+        /** Sets the bottom margin of the control view. */
         private void setBottomMargin() {
             View controlView = getControlView();
             if (controlView == null) return;

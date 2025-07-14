@@ -1,0 +1,8 @@
+static_library("html2md") {
+  sources = [
+    "html2md.cc",
+    "html2md.h",
+    "table.cc",
+    "table.h",
+  ]
+}

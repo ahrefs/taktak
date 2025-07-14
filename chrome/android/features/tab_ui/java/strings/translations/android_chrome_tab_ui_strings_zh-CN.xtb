@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{创建时间：<ph name="NUM_MINS_ONE" /> 分钟前}other{创建时间：<ph name="NUM_MINS_MANY" /> 分钟前}}</translation>
 <translation id="1499635324672558517">要关闭所有无痕式标签页吗？</translation>
 <translation id="1501480321619201731">删除群组</translation>
+<translation id="1505526451013346974">添加到“<ph name="TITLE_OF_GROUP" />”</translation>
 <translation id="1555130319947370107">蓝色</translation>
 <translation id="161042844686301425">青色</translation>
 <translation id="1645759014353344461">已将 <ph name="TABS_COUNT_MANY" /> 个标签页合为一组</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Chrome 会自动关闭“闲置”部分中 3 个月内未曾使用的标签页。您可以现在关闭此功能，也可以随时在“设置”中进行关闭。</translation>
 <translation id="8887921976452567404">您可以从“最近打开的标签页”部分和“标签页分组”部分重新打开已关闭的标签页和分组。</translation>
 <translation id="8915916167043355778">全部关闭</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{移至新窗口}other{移至其他窗口}}</translation>
 <translation id="9090098097337832354">此商店的相关信息已关闭</translation>
 <translation id="9114502155681725011">打开标签页分组“<ph name="TITLE_OF_GROUP" />”（颜色为<ph name="COLOR_NAME" />）的操作菜单。</translation>
 <translation id="9169594135889675189">向组中添加新标签页</translation>

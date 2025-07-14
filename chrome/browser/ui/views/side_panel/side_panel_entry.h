@@ -45,7 +45,7 @@ class SidePanelEntry final : public ui::PropertyHandler {
                  CreateContentCallback create_content_callback,
                  base::RepeatingCallback<GURL()> open_in_new_tab_url_callback,
                  base::RepeatingCallback<std::unique_ptr<ui::MenuModel>()>
-                     more_info_callback,
+                 more_info_callback,
                  int default_content_width);
 
   // This constructor is primarily used for extensions.Extensions don't have

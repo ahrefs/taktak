@@ -19,8 +19,8 @@ import java.lang.reflect.Proxy;
 /**
  * Support library glue renderer client callback adapter.
  *
- * A new instance of this class is created transiently for every shared library
- * WebViewCompat call. Do not store state here.
+ * <p>A new instance of this class is created transiently for every shared library WebViewCompat
+ * call. Do not store state here.
  */
 @Lifetime.WebView
 class SupportLibWebViewRendererClientAdapter extends SharedWebViewRendererClientAdapter {

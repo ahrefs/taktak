@@ -1194,7 +1194,7 @@ void Tab::UpdateIconVisibility() {
 #if BUILDFLAG(IS_CHROMEOS)
         !controller_->IsLockedForOnTask() &&
 #endif
-        large_enough_for_close_button;
+        mouse_hovered();
     if (showing_close_button_) {
       available_width -= close_button_width;
     }

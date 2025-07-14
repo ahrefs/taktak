@@ -1,0 +1,14 @@
+{
+    "distribution": {
+        "create_all_shortcuts": true,
+        "verbose_logging": true,
+    },
+    "browser": {
+        "enable_spellchecking": true
+    },
+    "bookmark_bar": {
+        "show_on_all_tabs": true
+    },
+    "default_apps_install_state": 2,
+    "hide_web_store_icon": true,
+}

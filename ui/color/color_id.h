@@ -581,7 +581,8 @@
   E_CPONLY(kColorWebNativeControlSliderDisabled) \
   E_CPONLY(kColorWebNativeControlSliderHovered) \
   E_CPONLY(kColorWebNativeControlSliderPressed) \
-  E_CPONLY(kColorWindowBackground)
+  E_CPONLY(kColorWindowBackground) \
+  E_CPONLY(kColorTransparent) \
 
 #if BUILDFLAG(IS_CHROMEOS)
 #define CHROMEOS_ASH_COLOR_IDS \

@@ -12,8 +12,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * State in which the tab was created. This can be used in metric accounting - e.g. to
- * distinguish reasons for a tab to be restored upon first display.
+ * State in which the tab was created. This can be used in metric accounting - e.g. to distinguish
+ * reasons for a tab to be restored upon first display.
  */
 @IntDef({
     TabCreationState.LIVE_IN_FOREGROUND,

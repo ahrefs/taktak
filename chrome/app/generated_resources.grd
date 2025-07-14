@@ -469,7 +469,7 @@ are declared in tools/grit/grit_args.gni.
         Main menu
       </message>
       <message name="IDS_HISTORY_HISTORY_MENU_ITEM" desc="Label displayed in history sidebar button to display history.">
-        Chrome history
+        Taktak history
       </message>
       <message name="IDS_HISTORY_NO_SYNCED_RESULTS" desc="Text indicating that there are no synced tabs from other devices.">
         No tabs from other devices
@@ -7404,7 +7404,7 @@ Keep your key file in a safe place. You will need it to create new versions of y
           Reason: The inverted rule <ph name="REVERT_RULE">$1<ex>!example.com</ex></ph> was found in the "Force open in" list.
         </message>
         <message name="IDS_ABOUT_BROWSER_SWITCH_INTERNALS_OPEN_BROWSER_DEFAULT_REASON" desc="about:browser-switch/internals, section URL Checker, the explaination reason for check result, displayed when the entered URL did not match any listed rule and default browser will not get switched">
-          Reason: LBS stays in <ph name="DEFAULT_OPEN_BROWSER">$1<ex>Chromium</ex></ph> by default.
+          Reason: LBS stays in <ph name="DEFAULT_OPEN_BROWSER">$1<ex>Taktak</ex></ph> by default.
         </message>
         <message name="IDS_ABOUT_BROWSER_SWITCH_INTERNALS_INVALID_URL" desc="about:browser-switch/internals, section URL Checker, specific error message when the url is invalid">
           Invalid URL. Make sure it is formatted properly.
@@ -8940,6 +8940,118 @@ Keep your key file in a safe place. You will need it to create new versions of y
           Show Reading List
         </message>
       </if>
+
+      <!-- AI Chat button -->
+      <if expr="use_titlecase">
+          <message name="IDS_AI_CHAT_TITLE" desc="Title of the AI Chat">
+            Chat
+          </message>
+      </if>
+      <if expr="not use_titlecase">
+        <message name="IDS_AI_CHAT_TITLE" desc="Title of the AI Chat">
+            Chat
+        </message>
+      </if>
+      <message name="IDS_CHAT_SUMMARIZE_THIS_PAGE" desc="Label of the button in Chat to summarize the current page.">
+        Summarize this page
+      </message>
+      <message name="IDS_CHAT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE" desc="Label of the button in Chat to explain the current page's content in simple language.">
+        Explain it in simple language
+      </message>
+      <message name="IDS_CHAT_TRANSLATE" desc="Label of the button in Chat to translate the current page's content.">
+        Translate to...
+      </message>
+      <message name="IDS_CHAT_TRANSLATE_LANGS" desc="Use in sub menu list">
+        Afrikaans, Albanian, Amharic, Arabic, Armenian, Assamese, Azerbaijani, Basque, Belarusian, Bengali, Bosnian, Bulgarian, Catalan, Cebuano, Chichewa, Chinese (Simplified), Chinese (Traditional), Corsican, Croatian, Czech, Danish, Dutch, English, Esperanto, Estonian, Filipino, Finnish, French, Frisian, Galician, Georgian, German, Greek, Gujarati, Haitian Creole, Hausa, Hawaiian, Hebrew, Hindi, Hmong, Hungarian, Icelandic, Igbo, Indonesian, Irish, Italian, Japanese, Javanese, Kannada, Kazakh, Khmer, Kinyarwanda, Korean, Kurdish (Kurmanji), Kyrgyz, Lao, Latin, Latvian, Lithuanian, Luxembourgish, Macedonian, Malagasy, Malay, Malayalam, Maltese, Maori, Marathi, Mongolian, Myanmar (Burmese), Nepali, Norwegian, Odia, Pashto, Persian, Polish, Portuguese, Punjabi, Romanian, Russian, Samoan, Scots Gaelic, Serbian, Sesotho, Shona, Sindhi, Sinhala, Slovak, Slovenian, Somali, Spanish, Sundanese, Swahili, Swedish, Tajik, Tamil, Tatar, Telugu, Thai, Turkish, Turkmen, Ukrainian, Urdu, Uyghur, Uzbek, Vietnamese, Welsh, Xhosa, Yiddish, Yoruba, Zulu
+      </message>
+      <message name="IDS_CHAT_DRAFT_A_SOCIAL_MEDIA_POST" desc="Label of the button in Chat to draft a social media post of the current page's content.">
+        Draft a post for...
+      </message>
+      <message name="IDS_CHAT_SOCIAL_MEDIAS" desc="Use in sub menu list">
+        X (Twitter), Facebook, Instagram, LinkedIn
+      </message>
+      <message name="IDS_CHAT_DRAFT_FACT_CHECK" desc="Label of the button in Chat to fact-check the current page's content.">
+        Fact check
+      </message>
+      <message name="IDS_CHAT_CONTEXT_PROMPT" desc="Use in Chat as context prompt">
+        Utilize the content of the active web page as context to provide concise, socially unbiased, and positive responses to user questions when the page content is relevant, weave in the most useful details from the page and When the page content *is not relevant* or insufficient, briefly acknowledge that the page doesn’t cover the topic **and then answer fully using your broader knowledge—without refusing, stalling, or telling the user to search elsewhere.
+        Formatting and tone rules
+        1. Address the user directly ("you","your"); never say "the user's question".
+        2. Do not quote or repeat the question verbatim.
+        3. Keep answers clear and to–the-point; avoid unnecessary repetition or filler.
+        4. For greetings like "hi", "hello", or "hey", respond warmly in one-two sentences: mention the page topic in passing and invite the user to ask a question.
+        5. Remain neutral and avoid social bias.
+        Here is the user’s question: <ph name="USER_QUESTION">$1</ph>
+        Here is the content of the active web page you should use as context: <ph name="EXTRACTED_CONTENT">$2</ph>
+      </message>
+      <message name="IDS_CHAT_PROMPT_SUMMARIZE_THIS_PAGE" desc="Prompt to summarize the current page.">
+        Provide a brief summary of the key takeaways for this page.
+      </message>
+      <message name="IDS_CHAT_PROMPT_EXPLAIN_IT_IN_SIMPLE_LANGUAGE" desc="Prompt to explain the current page's content in simple language.">
+        Explain this page in simple language.
+      </message>
+      <message name="IDS_CHAT_DISPLAY_PROMPT_TRANSLATE" desc="To display on Chat UI">
+        Translate this page to
+      </message>
+      <message name="IDS_CHAT_PROMPT_TRANSLATE" desc="Prompt to translate the current page's content.">
+        Translate the content to <ph name="LANGUAGE">$1</ph>.
+        Identify headings, lists, and other text blocks based on provided markdown structure and apply basic formatting.
+        Here is the content to translate: <ph name="HTML_TAGS">$2</ph>
+      </message>
+      <message name="IDS_CHAT_PROMPT_DRAFT_A_SOCIAL_MEDIA_POST" desc="Prompt to draft a social media post of the current page's content.">
+        Draft a post about this page for
+      </message>
+      <message name="IDS_CHAT_PROMPT_DRAFT_FACT_CHECK" desc="Prompt to fact-check the current page's content.">
+        Fact check this page and highlight major claims that may require verification or be biased.
+      </message>
+      <message name="IDS_CHAT_ASK_ANYTHING" desc="Use in the chat prompt input box.">
+        Ask anything...
+      </message>
+      <message name="IDS_CHAT_CHAT_ABOUT_THIS_PAGE" desc="Use in the chat prompt input box.">
+        Chat about this page
+      </message>
+      <message name="IDS_CHAT_PROMPT_INPUT_EXCEED" desc="Use to display the error message when prompt exceeds max length.">
+        Your message is too long
+      </message>
+      <message name="IDS_CHAT_GENERIC_ERROR" desc="Display on the chat UI when an error occurred">
+        An error has occurred. Please check your connection and try again, or restart the chat by closing and reopening the panel.
+      </message>
+      <message name="IDS_CHAT_THINKING" desc="Display while thinking">
+        Thinking...
+      </message>
+      <message name="IDS_CHAT_DONE_THINKING" desc="Display when thinking is done">
+        Done thinking
+      </message>
+      <message name="IDS_CHAT_ENABLE_THINKING" desc="Display on enable thinking button">
+        Enable thinking
+      </message>
+      <message name="IDS_CHAT_THINKING_ENABLED" desc="Display on enable thinking button">
+        Thinking enabled
+      </message>
+
+      <!-- Widevine -->
+      <message name="IDS_WIDEVINE_PERMISSION_REQUEST_TEXT_FRAGMENT" desc="Text fragment for Widevine permission request. 'Widevine' is the name of a plugin and should not be translated.">
+          Install and run Google Widevine
+      </message>
+      <if expr="is_linux">
+        <message name="IDS_WIDEVINE_PERMISSION_REQUEST_TEXT_FRAGMENT_INSTALL" desc="Text fragment for Widevine permission request. 'Widevine' is the name of a plugin and should not be translated.">
+          Install Google Widevine
+        </message>
+        <message name="IDS_WIDEVINE_PERMISSION_REQUEST_TEXT_FRAGMENT_RESTART_BROWSER" desc="Text fragment for Widevine permission request. 'Widevine' is the name of a plugin and should not be translated.">
+          Restart browser to enable Google Widevine
+        </message>
+      </if>
+      <message name="IDS_WIDEVINE_INSTALL_MESSAGE" desc="Bubble info text when Widevine is not installed. 'Widevine' is the name of a plugin and should not be translated.">
+        Some media on this webpage may require Widevine to play. Widevine is a Google extension that loads from Google's servers and cannot be inspected by Taktak. By installing it, you agree to Google’s terms of use.
+      </message>
+
+      <!-- Update notifier -->
+      <message name="IDS_UPDATE_NOTIFIER_MESSAGE" desc="Display on update notifier info bar">
+        A new version of Taktak is available. Download the latest version to get the newest features and improvements.
+      </message>
+      <message name="IDS_UPDATE_NOTIFIER_BUTTON_TEXT" desc="The text of the button on update notifier info bar">
+        Download update
+      </message>
 
       <!-- Side panel strings -->
       <message name="IDS_ACCNAME_SIDE_PANEL_RESIZE" is_accessibility_with_no_ui="true" desc="Screen reader announcement when the side panel resize handle is focused.">
@@ -17359,7 +17471,7 @@ Please help our engineers fix this problem. Tell us what happened right before y
         On other devices
       </message>
       <message name="IDS_WEBAUTHN_SOURCE_CHROME_PROFILE" desc="The subtitle shown in a button that lets the user select a passkey to sign in, indicating that the passkey resides in the user's Chrome Profile.">
-        Your Chrome profile
+        Your Taktak profile
       </message>
       <message name="IDS_WEBAUTHN_SOURCE_ICLOUD_KEYCHAIN" desc="The subtitle shown in a button that lets the user select a passkey to sign in, indicating that the passkey resides in the user's iCloud Keychain.">
         iCloud Keychain

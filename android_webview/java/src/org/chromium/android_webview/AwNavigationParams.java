@@ -4,8 +4,6 @@
 
 package org.chromium.android_webview;
 
-
-
 /**
  * Parameters to {@link AwContents#navigate}.
  *

@@ -9,6 +9,7 @@ package com.google.protobuf;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -1331,13 +1332,13 @@ class MessageReflection {
             continue;
           }
         }
-        // We haven't seen a type ID yet or we want parse message lazily.
-        rawBytes = input.readBytes();
+                // We haven't seen a type ID yet or we want parse message lazily.
+                rawBytes = input.readBytes();
 
-      } else if (tag == WireFormat.MESSAGE_SET_ITEM_END_TAG) {
-        break;
-      } else { // Unknown tag. Skip it.
-        if (!input.skipField(tag)) {
+            } else if (tag == WireFormat.MESSAGE_SET_ITEM_END_TAG) {
+                break;
+            } else { // Unknown tag. Skip it.
+                if (!input.skipField(tag)) {
           break; // End of group
         }
       }

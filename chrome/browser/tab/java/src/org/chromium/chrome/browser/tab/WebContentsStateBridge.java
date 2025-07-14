@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 public class WebContentsStateBridge {
     /**
      * Creates a WebContents from the buffer.
+     *
      * @param isHidden Whether or not the tab initially starts hidden.
      * @return Pointer A WebContents object.
      */
@@ -33,6 +34,7 @@ public class WebContentsStateBridge {
 
     /**
      * Creates a WebContents from the buffer.
+     *
      * @param isHidden Whether or not the tab initially starts hidden.
      * @param noRenderer Explicitly request to create without a renderer. If false a renderer may or
      *     may not be created.
@@ -131,13 +133,17 @@ public class WebContentsStateBridge {
         return WebContentsStateBridgeJni.get().getContentsStateAsByteBuffer(webContents);
     }
 
-    /** @return Title currently being displayed in the saved state's current entry. */
+    /**
+     * @return Title currently being displayed in the saved state's current entry.
+     */
     public static @Nullable String getDisplayTitleFromState(WebContentsState contentsState) {
         return WebContentsStateBridgeJni.get()
                 .getDisplayTitleFromByteBuffer(contentsState.buffer(), contentsState.version());
     }
 
-    /** @return URL currently being displayed in the saved state's current entry. */
+    /**
+     * @return URL currently being displayed in the saved state's current entry.
+     */
     public static @Nullable String getVirtualUrlFromState(WebContentsState contentsState) {
         return WebContentsStateBridgeJni.get()
                 .getVirtualUrlFromByteBuffer(contentsState.buffer(), contentsState.version());

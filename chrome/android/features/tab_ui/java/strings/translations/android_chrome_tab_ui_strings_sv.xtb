@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{Skapades för <ph name="NUM_MINS_ONE" /> minut sedan}other{Skapades för <ph name="NUM_MINS_MANY" /> minuter sedan}}</translation>
 <translation id="1499635324672558517">Vill du stänga alla inkognitoflikar?</translation>
 <translation id="1501480321619201731">Ta bort grupp</translation>
+<translation id="1505526451013346974">Lägg till i <ph name="TITLE_OF_GROUP" /></translation>
 <translation id="1555130319947370107">Blå</translation>
 <translation id="161042844686301425">Cyanblå</translation>
 <translation id="1645759014353344461"><ph name="TABS_COUNT_MANY" /> flikar har grupperats</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Chrome stänger automatiskt objekt i avsnittet Inaktiva som du inte har använt på tre månader. Du kan inaktivera detta nu eller när som helst i inställningarna.</translation>
 <translation id="8887921976452567404">Du kan öppna dina stängda flikar och grupper på nytt från avsnittet Senaste flikar och avsnittet Flikgrupper.</translation>
 <translation id="8915916167043355778">Stäng alla</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{Flytta till ett nytt fönster}other{Flytta till ett annat fönster}}</translation>
 <translation id="9090098097337832354">Informationen om den här butiken stängdes</translation>
 <translation id="9114502155681725011">Öppna åtgärdsmenyn för flikgruppen <ph name="TITLE_OF_GROUP" /> med färgen <ph name="COLOR_NAME" /></translation>
 <translation id="9169594135889675189">Lägg till ny flik i gruppen</translation>

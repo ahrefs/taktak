@@ -23,6 +23,7 @@ import org.chromium.ui.modelutil.PropertyModel;
 class GestureNavigationViewBinder {
     /**
      * view binder that associates a view with a model.
+     *
      * @param model The {@link PropertyObservable} model.
      * @param view The view {@link HistoryNavigationLayout} object that is changing.
      * @param key The property of the view that changed.

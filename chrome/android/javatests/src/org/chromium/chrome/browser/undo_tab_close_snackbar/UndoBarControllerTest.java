@@ -265,8 +265,7 @@ public class UndoBarControllerTest {
                             List.of(mTabModel.getTabAt(0), mTabModel.getTabAt(1)),
                             mTabModel.getTabAt(0),
                             /* notify= */ false);
-                    mTabGroupModelFilter.setTabGroupTitle(
-                            mTabModel.getTabAt(0).getRootId(), "");
+                    mTabGroupModelFilter.setTabGroupTitle(mTabModel.getTabAt(0).getRootId(), "");
                 });
 
         assertNull(getCurrentSnackbar());
@@ -776,10 +775,7 @@ public class UndoBarControllerTest {
             String actualEnd = actual.substring(index + 1);
             // End of the expected text should be present.
             String expectedEnd = expected.substring(expected.length() - actualEnd.length());
-            assertEquals(
-                    "Last part of truncated snackbar text mismatched",
-                    expectedEnd,
-                    actualEnd);
+            assertEquals("Last part of truncated snackbar text mismatched", expectedEnd, actualEnd);
         } else {
             assertEquals("Incorrect snackbar text", expected, actual);
         }

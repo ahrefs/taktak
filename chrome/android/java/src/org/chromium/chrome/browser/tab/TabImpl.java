@@ -179,7 +179,7 @@ class TabImpl implements Tab {
      */
     private final TabViewManagerImpl mTabViewManager;
 
-    /** A list of Tab observers.  These are used to broadcast Tab events to listeners. */
+    /** A list of Tab observers. These are used to broadcast Tab events to listeners. */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     protected final ObserverList<TabObserver> mObservers = new ObserverList<>();
 

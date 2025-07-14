@@ -96,6 +96,7 @@
 <translation id="1377508275003315939">პაროლები</translation>
 <translation id="1381022135873211423">{count,plural, =1{{count}-დან {position} მისამართი}other{{count}-დან {position} მისამართი}}</translation>
 <translation id="1383876407941801731">ძიება</translation>
+<translation id="1385168997509105202">თქვენ მომენტალურად დაკარგავთ წვდომას ჩანართების ჯგუფზე „<ph name="GROUP_NAME" />“ <ph name="USER_NAME" /> (<ph name="USER_EMAIL" />) ვეღარ შეძლებს თქვენთან ინტერაქციას Google სერვისებში.</translation>
 <translation id="138618066238211776">გაგრძელება, როგორც <ph name="USER_NAME" /></translation>
 <translation id="138692594145659985">ბარათის შენახვის ვარიანტები</translation>
 <translation id="1396260204083880024">შესული ხართ, როგორც <ph name="USER_NAME" />. <ph name="USER_EMAIL" />. ანგარიშის მენიუს გახსნა.</translation>
@@ -1017,6 +1018,7 @@
 <translation id="5197255632782567636">ინტერნეტი</translation>
 <translation id="5200894869889836319">ნებართვების დაყენების ვარიანტები</translation>
 <translation id="5203051773066903947">შეყვანა</translation>
+<translation id="5205750905107419335"><ph name="USER_NAME" /> (<ph name="USER_EMAIL" />) მომენტალურად დაკარგავს წვდომას ჩანართების ჯგუფზე „<ph name="GROUP_NAME" />“ და ვეღარ შეძლებს თქვენთან ინტერაქციას Google სერვისებში.</translation>
 <translation id="5206453674369664567">გასვლა და მონაცემთა გასუფთავება</translation>
 <translation id="5210365745912300556">ჩანართის დახურვა</translation>
 <translation id="5211488077761630279">გსურთ, დართოთ ნება „<ph name="SITE_NAME" />“-ს, გამოიყენოს თქვენი <ph name="PERMISSION" />?</translation>
@@ -1098,6 +1100,7 @@ Handoff ასევე უნდა იყოს ჩართული პა�
 <translation id="5567439033041178034">შეიტყვეთ მეტი</translation>
 <translation id="5572648434713976849">მისამართთა ზოლში გაუმჯობესებული შემოთავაზებები დაგხვდებათ</translation>
 <translation id="5576885723883013398">ახალი ფანჯარა</translation>
+<translation id="5578543325423650885"><ph name="USER_NAME" /> (<ph name="USER_EMAIL" />) მომენტალურად დაკარგავს წვდომას ჩანართების ჯგუფზე „<ph name="GROUP_NAME" />“.</translation>
 <translation id="5578795271662203820">ამ გამოსახულების ძიება <ph name="SEARCH_ENGINE" />-ში</translation>
 <translation id="5579012242779565775">საკითხავი სიის დამალვა</translation>
 <translation id="5585019845078534178">ბარათები</translation>

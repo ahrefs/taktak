@@ -10,6 +10,10 @@ package com.google.protobuf;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.UnittestOptimizeFor;
 import proto2_unittest.UnittestOptimizeFor.TestOptimizedForSize;
 import proto2_unittest.UnittestOptimizeFor.TestRequiredOptimizedForSize;
@@ -20,14 +24,12 @@ import proto2_unittest.UnittestProto.TestEmptyMessage;
 import proto2_unittest.UnittestProto.TestMergeException;
 import proto2_unittest.UnittestProto.TestParsingMerge;
 import proto2_unittest.UnittestProto.TestRequired;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Unit test for {@link Parser}. */
 @RunWith(JUnit4.class)

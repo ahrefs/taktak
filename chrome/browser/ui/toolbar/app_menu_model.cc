@@ -915,13 +915,14 @@ void ToolsMenuModel::Build(Browser* browser) {
   AddItemWithStringIdAndVectorIcon(this, IDC_NAME_WINDOW, IDS_NAME_WINDOW,
                                    kNameWindowIcon);
 
-  if (CustomizeChromePageHandler::IsSupported(
-          NtpCustomBackgroundServiceFactory::GetForProfile(browser->profile()),
-          browser->profile())) {
-    AddItemWithStringIdAndVectorIcon(this, IDC_SHOW_CUSTOMIZE_CHROME_SIDE_PANEL,
-                                     IDS_SHOW_CUSTOMIZE_CHROME_SIDE_PANEL,
-                                     kEditChromeRefreshIcon);
-  }
+  //  if (CustomizeChromePageHandler::IsSupported(
+  //          NtpCustomBackgroundServiceFactory::GetForProfile(browser->profile()),
+  //          browser->profile())) {
+  //    AddItemWithStringIdAndVectorIcon(this,
+  //    IDC_SHOW_CUSTOMIZE_CHROME_SIDE_PANEL,
+  //                                     IDS_SHOW_CUSTOMIZE_CHROME_SIDE_PANEL,
+  //                                     kEditChromeRefreshIcon);
+  //  }
 
   AddSeparator(ui::NORMAL_SEPARATOR);
 
@@ -1830,18 +1831,18 @@ void AppMenuModel::Build() {
   AddSeparator(ui::NORMAL_SEPARATOR);
 
 #if !BUILDFLAG(IS_CHROMEOS)
-  sub_menus_.push_back(std::make_unique<ProfileSubMenuModel>(
-      this, browser()->profile(), browser()->window()->GetColorProvider()));
-  auto* const profile_submenu_model =
-      static_cast<ProfileSubMenuModel*>(sub_menus_.back().get());
-  AddSubMenu(IDC_PROFILE_MENU_IN_APP_MENU,
-             profile_submenu_model->profile_name(), profile_submenu_model);
-  SetIcon(GetIndexOfCommandId(IDC_PROFILE_MENU_IN_APP_MENU).value(),
-          profile_submenu_model->avatar_image_model());
-  SetElementIdentifierAt(
-      GetIndexOfCommandId(IDC_PROFILE_MENU_IN_APP_MENU).value(),
-      kProfileMenuItem);
-  AddSeparator(ui::SPACING_SEPARATOR);
+//  sub_menus_.push_back(std::make_unique<ProfileSubMenuModel>(
+//      this, browser()->profile(), browser()->window()->GetColorProvider()));
+//  auto* const profile_submenu_model =
+//      static_cast<ProfileSubMenuModel*>(sub_menus_.back().get());
+//  AddSubMenu(IDC_PROFILE_MENU_IN_APP_MENU,
+//             profile_submenu_model->profile_name(), profile_submenu_model);
+//  SetIcon(GetIndexOfCommandId(IDC_PROFILE_MENU_IN_APP_MENU).value(),
+//          profile_submenu_model->avatar_image_model());
+//  SetElementIdentifierAt(
+//      GetIndexOfCommandId(IDC_PROFILE_MENU_IN_APP_MENU).value(),
+//      kProfileMenuItem);
+//  AddSeparator(ui::SPACING_SEPARATOR);
 #endif
 
   if (!browser_->profile()->IsGuestSession()) {

@@ -74,7 +74,7 @@
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   border: var(--cr-button-border, 1px solid var(--cr-button-border-color));
-  border-radius: 100px;
+  border-radius: 8px;
   background: var(--cr-button-background-color);
   color: var(--cr-button-text-color);
   font-weight: 500;

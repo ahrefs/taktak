@@ -1,43 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
-  <g opacity="1" style="mix-blend-mode:normal">
-    <defs>
-      <clipPath id="a" width="200%" height="200%" x="-50%" y="-50%">
-        <path fill="#fff" d="M0 160V0h160v160z" clip-rule="nonzero" />
-      </clipPath>
-    </defs>
-    <g clip-path="url(#a)">
-      <g transform="matrix(0 -1 1 0 .01 160)">
-        <g id="b" opacity="0" style="mix-blend-mode:normal">
-          <g style="mix-blend-mode:normal">
-            <path fill="#669DF6" fill-opacity="1" fill-rule="nonzero" d="M59.994 74.641a39.8 39.8 0 0 1-14.637-14.643l-.004.002L10.712 0a80.017 80.017 0 0 0 69.275 120.011l34.648-60.01a39.99 39.99 0 0 1-24.288 18.637 40.004 40.004 0 0 1-30.353-3.997z" opacity="1" style="mix-blend-mode:NORMAL" transform="translate(0 39.973)" />
-          </g>
-          <g style="mix-blend-mode:normal">
-            <path fill="#AECBFA" fill-opacity="1" fill-rule="nonzero" d="M40 40a39.802 39.802 0 0 1-5.363 19.998l.004.002L0 120A80.018 80.018 0 0 0 69.295 0H0a40 40 0 0 1 40 40z" opacity="1" style="mix-blend-mode:NORMAL" transform="translate(79.983 39.973)" />
-          </g>
-          <g style="mix-blend-mode:normal">
-            <path fill="#1967D2" fill-opacity="1" fill-rule="nonzero" d="M49.288 45.352a39.802 39.802 0 0 1 20-5.354v-.005h69.282A80.022 80.022 0 0 0 69.288 0 80.017 80.017 0 0 0 0 39.982l34.647 60.011a40.002 40.002 0 0 1 14.641-54.64z" opacity="1" style="mix-blend-mode:NORMAL" transform="translate(10.694)" />
-          </g>
-        </g>
-      </g>
-      <g transform="translate(40 39.997)">
-        <g id="c" opacity="0" style="mix-blend-mode:normal">
-          <g style="mix-blend-mode:normal">
-            <path fill="#FFF" fill-opacity="1" fill-rule="nonzero" d="M40 80c22.091 0 40-17.909 40-40S62.091 0 40 0 0 17.909 0 40s17.909 40 40 40z" opacity="1" style="mix-blend-mode:NORMAL" />
-          </g>
-          <g style="mix-blend-mode:normal">
-            <path fill="#1A73E8" fill-opacity="1" fill-rule="nonzero" d="M32.5 65C50.45 65 65 50.45 65 32.5S50.45 0 32.5 0 0 14.55 0 32.5 14.55 65 32.5 65z" opacity="1" style="mix-blend-mode:NORMAL" transform="translate(7.5 7.503)" />
-          </g>
-        </g>
-      </g>
-    </g>
-  </g>
-  <animateTransform additive="sum" attributeName="transform" fill="freeze" calcMode="spline" dur="1s" href="#b" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" type="rotate" values="0 79.9912 79.9923;0 79.9912 79.9923;90 79.9912 79.9923" />
-  <animateTransform additive="sum" attributeName="transform" fill="freeze" calcMode="spline" dur="1s" href="#b" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" type="translate" values="79.9912 79.9923;79.9912 79.9923;79.9912 79.9923" />
-  <animateTransform additive="sum" attributeName="transform" fill="freeze" calcMode="spline" dur="1s" href="#b" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" type="scale" values="1 1;1 1;0.5625 0.5625" />
-  <animateTransform additive="sum" attributeName="transform" fill="freeze" calcMode="spline" dur="1s" href="#b" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" type="translate" values="-79.9912 -79.9923;-79.9912 -79.9923;-79.9912 -79.9923" />
-  <animate attributeName="opacity" fill="freeze" calcMode="spline" dur="1s" href="#b" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" values="0;0;1" />
-  <animateTransform additive="sum" fill="freeze" attributeName="transform" calcMode="spline" dur="1s" href="#c" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" type="translate" values="40 40.0001;40 40.0001;40 40.0001" />
-  <animateTransform additive="sum" fill="freeze" attributeName="transform" calcMode="spline" dur="1s" href="#c" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" type="scale" values="0.3 0.3;2 2;0.56 0.56" />
-  <animateTransform additive="sum" fill="freeze" attributeName="transform" calcMode="spline" dur="1s" href="#c" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" type="translate" values="-40 -40.0001;-40 -40.0001;-40 -40.0001" />
-  <animate attributeName="opacity" fill="freeze" calcMode="spline" dur="1s" href="#c" keySplines="0.5 0.35 0.15 1;0.5 0.35 0.15 1" keyTimes="0;0.5;1" repeatCount="1" values="0;1;1" />
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_391_16155)">
+<circle cx="128" cy="128" r="128" fill="#5762D5"/>
+<g filter="url(#filter0_d_391_16155)">
+<path d="M51.0586 81.2323L64.4203 125.84C74.4933 122.345 84.771 119.262 95.0495 116.795L88.6768 151.742C87.2379 159.759 86.6208 166.954 86.6208 173.121C86.6208 203.955 102.244 214.645 125.473 214.645C138.013 214.645 149.524 211.562 172.343 195.734L188.994 184.839L166.176 145.781L130.613 169.01L141.303 109.807C147.058 109.396 152.814 109.191 158.775 109.191C172.548 109.191 186.116 110.219 200.094 112.48L202.972 66.8441C184.471 62.7329 166.586 60.8823 148.908 60.8823C114.784 60.8823 82.0987 68.283 51.0586 81.233V81.2323Z" fill="url(#paint0_linear_391_16155)"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_391_16155" x="-11.5885" y="-1.76473" width="277.208" height="279.057" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="31.3235"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.25325 0 0 0 0 0.298026 0 0 0 0 0.766146 0 0 0 1 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_391_16155"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_391_16155" result="shape"/>
+</filter>
+<linearGradient id="paint0_linear_391_16155" x1="127.015" y1="60.8823" x2="127.015" y2="214.645" gradientUnits="userSpaceOnUse">
+<stop stop-color="#C1FF9B"/>
+<stop offset="1" stop-color="#9CED6A"/>
+</linearGradient>
+<clipPath id="clip0_391_16155">
+<rect width="256" height="256" fill="white"/>
+</clipPath>
+</defs>
 </svg>

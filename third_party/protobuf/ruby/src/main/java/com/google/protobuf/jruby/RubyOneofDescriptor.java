@@ -3,10 +3,7 @@ package com.google.protobuf.jruby;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.OneofDescriptor;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+
 import org.jruby.Ruby;
 import org.jruby.RubyClass;
 import org.jruby.RubyModule;
@@ -17,6 +14,11 @@ import org.jruby.runtime.Block;
 import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @JRubyClass(name = "OneofDescriptor", include = "Enumerable")
 public class RubyOneofDescriptor extends RubyObject {
@@ -81,31 +83,34 @@ public class RubyOneofDescriptor extends RubyObject {
         CodedInputStream.newInstance(
             descriptor.getOptions().toByteString().toByteArray()), /*freeze*/
         true);
-  }
+    }
 
-  /*
-   * call-seq:
-   *     OneofDescriptor.to_proto => OneofDescriptor
-   *
-   * Returns the `OneofDescriptorProto` of this `OneofDescriptor`.
-   */
-  @JRubyMethod(name = "to_proto")
-  public IRubyObject toProto(ThreadContext context) {
-    RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
-    RubyDescriptor oneofDescriptorProto =
-        (RubyDescriptor)
-            pool.lookup(context, context.runtime.newString("google.protobuf.OneofDescriptorProto"));
-    RubyClass msgClass = (RubyClass) oneofDescriptorProto.msgclass(context);
-    RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
-    return msg.decodeBytes(
-        context,
-        msg,
-        CodedInputStream.newInstance(descriptor.toProto().toByteString().toByteArray()), /*freeze*/
-        true);
-  }
+    /*
+     * call-seq:
+     *     OneofDescriptor.to_proto => OneofDescriptor
+     *
+     * Returns the `OneofDescriptorProto` of this `OneofDescriptor`.
+     */
+    @JRubyMethod(name = "to_proto")
+    public IRubyObject toProto(ThreadContext context) {
+        RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
+        RubyDescriptor oneofDescriptorProto =
+                (RubyDescriptor)
+                        pool.lookup(
+                                context,
+                                context.runtime.newString("google.protobuf.OneofDescriptorProto"));
+        RubyClass msgClass = (RubyClass) oneofDescriptorProto.msgclass(context);
+        RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
+        return msg.decodeBytes(
+                context,
+                msg,
+                CodedInputStream.newInstance(
+                        descriptor.toProto().toByteString().toByteArray()), /*freeze*/
+                true);
+    }
 
-  protected Collection<RubyFieldDescriptor> getFields() {
-    return fields;
+    protected Collection<RubyFieldDescriptor> getFields() {
+        return fields;
   }
 
   protected OneofDescriptor getDescriptor() {

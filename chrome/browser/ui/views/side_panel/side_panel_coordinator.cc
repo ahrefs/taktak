@@ -75,6 +75,7 @@
 #include "ui/views/vector_icons.h"
 #include "ui/views/view.h"
 #include "ui/views/view_class_properties.h"
+#include "chrome/browser/ui/views/side_panel/chat/chat_side_panel_coordinator.h"
 
 namespace {
 
@@ -144,41 +145,40 @@ std::unique_ptr<views::ImageButton> CreateControlButton(
   return button;
 }
 
-std::unique_ptr<views::ImageView> CreateIcon() {
-  std::unique_ptr<views::ImageView> icon = std::make_unique<views::ImageView>();
-  const int horizontal_margin =
-      ChromeLayoutProvider::Get()->GetDistanceMetric(
-          ChromeDistanceMetric::
-              DISTANCE_SIDE_PANEL_HEADER_INTERIOR_MARGIN_HORIZONTAL) *
-      2;
-  icon->SetProperty(views::kMarginsKey,
-                    gfx::Insets().set_left(horizontal_margin));
-  return icon;
-}
-
-std::unique_ptr<views::Label> CreateTitle() {
-  std::unique_ptr<views::Label> title = std::make_unique<views::Label>(
-      std::u16string(), views::style::CONTEXT_LABEL,
-      views::style::STYLE_HEADLINE_5);
-
-  title->SetEnabledColor(kColorSidePanelEntryTitle);
-  title->SetBackgroundColor(kColorToolbar);
-  title->SetSubpixelRenderingEnabled(false);
-  const int horizontal_margin =
-      ChromeLayoutProvider::Get()->GetDistanceMetric(
-          ChromeDistanceMetric::
-              DISTANCE_SIDE_PANEL_HEADER_INTERIOR_MARGIN_HORIZONTAL) *
-      2;
-  title->SetProperty(views::kMarginsKey,
-                     gfx::Insets().set_left(horizontal_margin));
-  title->SetProperty(
-      views::kFlexBehaviorKey,
-      views::FlexSpecification(views::LayoutOrientation::kHorizontal,
-                               views::MinimumFlexSizeRule::kScaleToZero,
-                               views::MaximumFlexSizeRule::kUnbounded)
-          .WithAlignment(views::LayoutAlignment::kStart));
-  return title;
-}
+// std::unique_ptr<views::ImageView> CreateIcon() {
+//   std::unique_ptr<views::ImageView> icon =
+//   std::make_unique<views::ImageView>(); const int horizontal_margin =
+//       ChromeLayoutProvider::Get()->GetDistanceMetric(
+//           ChromeDistanceMetric::
+//               DISTANCE_SIDE_PANEL_HEADER_INTERIOR_MARGIN_HORIZONTAL) *
+//       2;
+//   icon->SetProperty(views::kMarginsKey,
+//                     gfx::Insets().set_left(horizontal_margin));
+//   return icon;
+// }
+//
+// std::unique_ptr<views::Label> CreateTitle() {
+//   std::unique_ptr<views::Label> title = std::make_unique<views::Label>(
+//       std::u16string(), views::style::CONTEXT_LABEL,
+//       views::style::STYLE_HEADLINE_5);
+//
+//   title->SetEnabledColorId(kColorSidePanelEntryTitle);
+//   title->SetSubpixelRenderingEnabled(false);
+//   const int horizontal_margin =
+//       ChromeLayoutProvider::Get()->GetDistanceMetric(
+//           ChromeDistanceMetric::
+//               DISTANCE_SIDE_PANEL_HEADER_INTERIOR_MARGIN_HORIZONTAL) *
+//       2;
+//   title->SetProperty(views::kMarginsKey,
+//                      gfx::Insets().set_left(horizontal_margin));
+//   title->SetProperty(
+//       views::kFlexBehaviorKey,
+//       views::FlexSpecification(views::LayoutOrientation::kHorizontal,
+//                                views::MinimumFlexSizeRule::kScaleToZero,
+//                                views::MaximumFlexSizeRule::kUnbounded)
+//           .WithAlignment(views::LayoutAlignment::kStart));
+//   return title;
+// }
 
 using PopulateSidePanelCallback = base::OnceCallback<void(
     SidePanelEntry* entry,
@@ -387,10 +387,12 @@ void SidePanelCoordinator::UpdatePinState() {
     updated_pin_state = !actions_model->IsActionPinned(*extension_id);
     actions_model->SetActionVisibility(*extension_id, updated_pin_state);
   } else {
-    PinnedToolbarActionsModel* const actions_model =
-        PinnedToolbarActionsModel::Get(profile);
-
-    updated_pin_state = !actions_model->Contains(action_id.value());
+    PinnedToolbarActionsModel* const actions_model = PinnedToolbarActionsModel::Get(profile);
+    if (current_entry_->key().id() == SidePanelEntryId::kAIChat) {
+        updated_pin_state = false;
+    } else {
+        updated_pin_state = !actions_model->Contains(action_id.value());
+    }
     actions_model->UpdatePinnedState(action_id.value(), updated_pin_state);
   }
 
@@ -528,6 +530,9 @@ void SidePanelCoordinator::Show(
       entry,
       base::BindOnce(&SidePanelCoordinator::PopulateSidePanel,
                      base::Unretained(this), suppress_animations, input));
+
+  auto* ai_chat_coordinator = ChatSidePanelCoordinator::GetOrCreateForBrowser(browser_view_->browser());
+  ai_chat_coordinator->UpdateOpeningPanelId(entry->key().id());
 }
 
 base::CallbackListSubscription SidePanelCoordinator::RegisterSidePanelShown(
@@ -566,9 +571,12 @@ void SidePanelCoordinator::Close(bool suppress_animations) {
     }
     SidePanelEntry* entry = GetEntryForUniqueKey(*current_key_);
     if (entry) {
+      auto* ai_chat_coordinator = ChatSidePanelCoordinator::GetOrCreateForBrowser(browser_view_->browser());
+      ai_chat_coordinator->UpdateClosingPanelId(entry->key().id());
       entry->OnEntryWillHide(SidePanelEntryHideReason::kSidePanelClosed);
     }
   }
+
   browser_view_->unified_side_panel()->Close(
       /*animated=*/!suppress_animations);
 
@@ -709,11 +717,11 @@ std::unique_ptr<views::View> SidePanelCoordinator::CreateHeader() {
   layout->SetCrossAxisAlignment(views::LayoutAlignment::kCenter);
 
   // The minimum cross axis size should the expected height of the header.
-  constexpr int kDefaultSidePanelHeaderHeight = 40;
+  constexpr int kDefaultSidePanelHeaderHeight = 0;
   layout->SetMinimumCrossAxisSize(kDefaultSidePanelHeaderHeight);
 
-  panel_icon_ = header->AddChildView(CreateIcon());
-  panel_title_ = header->AddChildView(CreateTitle());
+  //  panel_icon_ = header->AddChildView(CreateIcon());
+  //  panel_title_ = header->AddChildView(CreateTitle());
 
   header_pin_button_ =
       header->AddChildView(CreatePinToggleButton(base::BindRepeating(
@@ -763,15 +771,15 @@ std::unique_ptr<views::View> SidePanelCoordinator::CreateHeader() {
           std::make_unique<views::Button::DefaultButtonControllerDelegate>(
               header_more_info_button_)));
 
-  auto* header_close_button = header->AddChildView(CreateControlButton(
-      header.get(),
-      base::BindRepeating(&SidePanelUI::Close, base::Unretained(this)),
-      views::kIcCloseIcon,
-      l10n_util::GetStringUTF16(IDS_ACCNAME_SIDE_PANEL_CLOSE),
-      kSidePanelCloseButtonElementId,
-      ChromeLayoutProvider::Get()->GetDistanceMetric(
-          ChromeDistanceMetric::DISTANCE_SIDE_PANEL_HEADER_VECTOR_ICON_SIZE)));
-  header_close_button->SetFocusBehavior(views::View::FocusBehavior::ALWAYS);
+  //  auto* header_close_button = header->AddChildView(CreateControlButton(
+  //      header.get(),
+  //      base::BindRepeating(&SidePanelUI::Close, base::Unretained(this)),
+  //      views::kIcCloseIcon,
+  //      l10n_util::GetStringUTF16(IDS_ACCNAME_SIDE_PANEL_CLOSE),
+  //      kSidePanelCloseButtonElementId,
+  //      ChromeLayoutProvider::Get()->GetDistanceMetric(
+  //          ChromeDistanceMetric::DISTANCE_SIDE_PANEL_HEADER_VECTOR_ICON_SIZE)));
+  //  header_close_button->SetFocusBehavior(views::View::FocusBehavior::ALWAYS);
 
   return header;
 }
@@ -831,6 +839,9 @@ void SidePanelCoordinator::NotifyPinnedContainerOfActiveStateChange(
     std::optional<actions::ActionId> action_id =
         SidePanelEntryIdToActionId(key.id());
     CHECK(action_id.has_value());
+    if (key.id() == SidePanelEntryId::kAIChat) {
+      is_active = false;
+    }
     toolbar_container->UpdateActionState(*action_id, is_active);
   }
 }
@@ -1044,10 +1055,16 @@ void SidePanelCoordinator::UpdatePanelIconAndTitle(
           *icon.GetVectorIcon().vector_icon(), kColorSidePanelEntryIcon,
           icon.GetVectorIcon().icon_size());
     }
-    panel_icon_->SetImage(updated_icon);
+    if (panel_icon_) {
+      panel_icon_->SetImage(updated_icon);
+    }
   }
-  panel_icon_->SetVisible(is_extension);
-  panel_title_->SetText(should_show_title_text ? text : std::u16string_view());
+  if (panel_icon_) {
+    panel_icon_->SetVisible(is_extension);
+  }
+  if (panel_title_) {
+    panel_title_->SetText(should_show_title_text ? text : std::u16string_view());
+  }
 }
 
 void SidePanelCoordinator::OnViewVisibilityChanged(views::View* observed_view,

@@ -66,8 +66,11 @@ public class ChromeAsyncTabLauncher implements AsyncTabLauncher {
      */
     public void launchTabInOtherWindow(
             LoadUrlParams loadUrlParams, Activity activity, int parentId, Activity otherActivity) {
-        Intent intent = createNewTabIntent(new AsyncTabCreationParams(loadUrlParams), parentId,
-                TabLaunchType.FROM_CHROME_UI);
+        Intent intent =
+                createNewTabIntent(
+                        new AsyncTabCreationParams(loadUrlParams),
+                        parentId,
+                        TabLaunchType.FROM_CHROME_UI);
 
         Class<? extends Activity> targetActivity =
                 MultiWindowUtils.getInstance().getOpenInOtherWindowActivity(activity);
@@ -124,14 +127,12 @@ public class ChromeAsyncTabLauncher implements AsyncTabLauncher {
         assert !(type == TabLaunchType.FROM_LONGPRESS_BACKGROUND
                 && asyncParams.getWebContents() != null);
 
-        Intent intent =
-                createNewTabIntent(asyncParams, parentId, type);
+        Intent intent = createNewTabIntent(asyncParams, parentId, type);
         IntentHandler.startActivityForTrustedIntent(intent);
     }
 
     private Intent createNewTabIntent(
-            AsyncTabCreationParams asyncParams, int parentId,
-            @TabLaunchType int launchType) {
+            AsyncTabCreationParams asyncParams, int parentId, @TabLaunchType int launchType) {
         int assignedTabId = TabIdManager.getInstance().generateValidId(Tab.INVALID_TAB_ID);
         AsyncTabParamsManagerSingleton.getInstance().add(assignedTabId, asyncParams);
 

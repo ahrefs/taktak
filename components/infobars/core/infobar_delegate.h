@@ -189,6 +189,7 @@ class InfoBarDelegate {
     CREDENTIAL_PROVIDER_INFOBAR_DELEGATE_IOS = 122,
     PDF_INFOBAR_DELEGATE = 123,
     INSTALLER_DOWNLOADER_INFOBAR_DELEGATE = 124,
+    UPDATE_NOTIFIER_INFOBAR_DELEGATE = 132,
   };
   // LINT.ThenChange(//tools/metrics/histograms/metadata/browser/enums.xml:InfoBarIdentifier)
 

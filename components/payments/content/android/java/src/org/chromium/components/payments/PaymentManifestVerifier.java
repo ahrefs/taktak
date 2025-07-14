@@ -247,6 +247,13 @@ public class PaymentManifestVerifier
                 continue;
             }
 
+            Signature[] signatures = packageInfo.signatures;
+            if (signatures == null) {
+                Log.e(TAG, "Unable to get signatures for \"%s\".", packageName);
+                invalidAppsToRemove.add(packageName);
+                continue;
+            }
+
             appInfo.version = packageInfo.versionCode;
             appInfo.sha256CertFingerprints = new HashSet<>();
             assumeNonNull(mMessageDigest);

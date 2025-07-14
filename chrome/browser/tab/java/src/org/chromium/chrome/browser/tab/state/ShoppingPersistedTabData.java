@@ -50,8 +50,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * {@link PersistedTabData} for Shopping related websites
  *
- * This class should not be merged because it is being used as a key in a Map
- * in PersistedTabDataConfiguration.java.
+ * <p>This class should not be merged because it is being used as a key in a Map in
+ * PersistedTabDataConfiguration.java.
  */
 @DoNotClassMerge
 @NullMarked
@@ -107,8 +107,8 @@ public class ShoppingPersistedTabData extends PersistedTabData {
     }
 
     /**
-     * Used to defer initialization/acquisition of {@link ShoppingPersistedTabData}
-     * until DeferredStartup.
+     * Used to defer initialization/acquisition of {@link ShoppingPersistedTabData} until
+     * DeferredStartup.
      */
     private static class ShoppingDataRequest {
         public final Tab tab;
@@ -212,7 +212,7 @@ public class ShoppingPersistedTabData extends PersistedTabData {
      * @param tab {@link Tab} associated with {@link ShoppingPersistedTabData}
      * @param navigationHandle the {@link NavigationHandle} associated with the new navigation
      * @param onCompleteForTesting runnable which indicates when the callback has completed for test
-     *         synchronization
+     *     synchronization
      */
     @VisibleForTesting
     protected void prefetchOnNewNavigation(
@@ -345,12 +345,13 @@ public class ShoppingPersistedTabData extends PersistedTabData {
     }
 
     /**
-     * Initializes {@link ShoppingPersistedTabData} for a {@link Tab}. This results in
-     * a {@link ShoppingPersistedTabData} being acquired from storage, via a network call
-     * or a blank one being created. In any case, a {@link ShoppingPersistedTabData} object will be
-     * created which enables pricing data to be prefetched on each new navigation. The only scenario
-     * where no {@link ShoppingPersistedTabData} will be returned is if the {@link Tab} was
-     * destroyed shortly after calling this method.
+     * Initializes {@link ShoppingPersistedTabData} for a {@link Tab}. This results in a {@link
+     * ShoppingPersistedTabData} being acquired from storage, via a network call or a blank one
+     * being created. In any case, a {@link ShoppingPersistedTabData} object will be created which
+     * enables pricing data to be prefetched on each new navigation. The only scenario where no
+     * {@link ShoppingPersistedTabData} will be returned is if the {@link Tab} was destroyed shortly
+     * after calling this method.
+     *
      * @param tab {@link Tab} for which {@link ShoppingPersistedTabData} is initialized.
      */
     public static void initialize(Tab tab) {
@@ -384,15 +385,12 @@ public class ShoppingPersistedTabData extends PersistedTabData {
 
     /**
      * Acquire {@link ShoppingPersistedTabData} for a {@link Tab}
+     *
      * @param tab {@link Tab} ShoppingPersistedTabData is acquired for
-     * @param callback {@link Callback} receiving the Tab's {@link ShoppingPersistedTabData}
-     * The result in the callback wil be null for a:
-     * - Custom Tab
-     * - Incognito Tab
-     * - Tab greater than 90 days old
-     * - Tab with a non-shopping related page currently navigated to
-     * - Tab with a shopping related page for which no shopping related data was found
-     * - Uninitialized Tab
+     * @param callback {@link Callback} receiving the Tab's {@link ShoppingPersistedTabData} The
+     *     result in the callback wil be null for a: - Custom Tab - Incognito Tab - Tab greater than
+     *     90 days old - Tab with a non-shopping related page currently navigated to - Tab with a
+     *     shopping related page for which no shopping related data was found - Uninitialized Tab
      */
     public static void from(Tab tab, Callback<@Nullable ShoppingPersistedTabData> callback) {
         if (tab == null || tab.isDestroyed()) {
@@ -424,17 +422,14 @@ public class ShoppingPersistedTabData extends PersistedTabData {
     /**
      * Acquire {@link ShoppingPersistedTabData} for a {@link Tab}, with an option to skip delayed
      * initialization and initialize immediately.
+     *
      * @param tab {@link Tab} ShoppingPersistedTabData is acquired for
      * @param callback {@link Callback} receiving the Tab's {@link ShoppingPersistedTabData}
      * @param skipDelayedInit whether to skip the delayed initialization of {@link
-     * ShoppingPersistedTabData} and initialize immediately
-     * The result in the callback wil be null for a:
-     * - Custom Tab
-     * - Incognito Tab
-     * - Tab greater than 90 days old
-     * - Tab with a non-shopping related page currently navigated to
-     * - Tab with a shopping related page for which no shopping related data was found
-     * - Uninitialized Tab
+     *     ShoppingPersistedTabData} and initialize immediately The result in the callback wil be
+     *     null for a: - Custom Tab - Incognito Tab - Tab greater than 90 days old - Tab with a
+     *     non-shopping related page currently navigated to - Tab with a shopping related page for
+     *     which no shopping related data was found - Uninitialized Tab
      */
     static void from(
             Tab tab,

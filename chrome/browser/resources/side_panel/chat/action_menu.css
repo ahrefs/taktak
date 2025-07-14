@@ -1,0 +1,37 @@
+/* #css_wrapper_metadata_start
+ * #type=style-lit
+ * #scheme=relative
+ * #css_wrapper_metadata_end */
+
+.action-button {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 22px;
+    cursor: pointer;
+    text-decoration: none;
+    background: var(--color-yep-chat-panel-background);
+    border: 1px solid var(--color-yep-chat-panel-border);
+    color: var(--color-yep-chat-primary-text);
+}
+
+.dropdown-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 248px;
+    height: 24px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 15px;
+    padding-left: 34px;
+}
+
+.dropdown-item span{
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 15px;
+}

@@ -74,6 +74,7 @@ struct WebPreferences;
 }  // namespace web_pref
 class StorageKey;
 class URLLoaderThrottle;
+class AssociatedInterfaceRegistry;
 }  // namespace blink
 
 namespace blocked_content {

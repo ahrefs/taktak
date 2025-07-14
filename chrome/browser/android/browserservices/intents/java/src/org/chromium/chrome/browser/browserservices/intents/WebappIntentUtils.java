@@ -21,8 +21,8 @@ import java.util.HashSet;
 @NullMarked
 public class WebappIntentUtils {
     /**
-     * PWA homescreen shortcut intent extras. Used for copying intent extras for
-     * {@link WebappActivity} launch intent.
+     * PWA homescreen shortcut intent extras. Used for copying intent extras for {@link
+     * WebappActivity} launch intent.
      */
     private static final String[] WEBAPP_INTENT_EXTRAS =
             new String[] {
@@ -87,9 +87,9 @@ public class WebappIntentUtils {
     }
 
     /**
-     * Converts color from unsigned long where an unspecified color is represented as
-     * {@link ColorUtils.INVALID_COLOR} to a signed Integer where an
-     * unspecified color is represented as null.
+     * Converts color from unsigned long where an unspecified color is represented as {@link
+     * ColorUtils.INVALID_COLOR} to a signed Integer where an unspecified color is represented as
+     * null.
      */
     public static @Nullable Integer colorFromLongColor(long longColor) {
         return isLongColorValid(longColor) ? Integer.valueOf((int) longColor) : null;

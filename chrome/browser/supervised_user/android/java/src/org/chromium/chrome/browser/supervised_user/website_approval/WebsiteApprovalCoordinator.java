@@ -19,8 +19,8 @@ import org.chromium.ui.modelutil.PropertyModelChangeProcessor;
 import org.chromium.url.GURL;
 
 /**
- * Coordinator for the bottom sheet content in the screen which allows a parent to approve or deny
- * a website.
+ * Coordinator for the bottom sheet content in the screen which allows a parent to approve or deny a
+ * website.
  */
 @NullMarked
 public class WebsiteApprovalCoordinator {
