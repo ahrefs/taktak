@@ -494,7 +494,10 @@ bool HasTabSearchToolbarButton() {
     }
     // Gate on server-side Finch config for all other countries
     // as well as ChromeOS.
-    return features::kTabSearchToolbarButton.Get();
+    // return features::kTabSearchToolbarButton.Get();
+
+    // Ignore Finch config
+    return false;
   }();
 
   return has_tab_search_toolbar_button;

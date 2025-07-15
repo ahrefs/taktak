@@ -834,8 +834,13 @@ std::u16string FormatString(const std::u16string& format_string,
     placeholder += static_cast<char16_t>('1' + static_cast<char>(i));
     size_t pos = format_string.find(placeholder);
     if (placeholder_should_exist) {
-      DCHECK_NE(std::string::npos, pos) << " Didn't find a " << placeholder
-                                        << " placeholder in " << format_string;
+      //     Turn DCHECK off, cuase links to Google content are removed.
+      //      DCHECK_NE(std::string::npos, pos) << " Didn't find a " <<
+      //      placeholder
+      //                                        << " placeholder in " <<
+      //                                        format_string;
+      DVLOG(0) << "***Alert*** Didn't find a " << placeholder
+               << " placeholder in " << format_string;
     } else {
       DCHECK_EQ(std::string::npos, pos)
           << " Unexpectedly found a " << placeholder << " placeholder in "
