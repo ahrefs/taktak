@@ -237,7 +237,8 @@ void TabStripControlButton::UpdateBackground() {
 int TabStripControlButton::GetCornerRadius() const {
   return features::IsTabSearchMoving() && !features::HasTabSearchToolbarButton()
              ? kTabstripComboButtonCornerRadius
-             : TabStripControlButton::kButtonSize.width() / 2;
+             : kTabstripComboButtonCornerRadius;
+             // : TabStripControlButton::kButtonSize.width() / 2;
 }
 
 int TabStripControlButton::GetFlatCornerRadius() const {
