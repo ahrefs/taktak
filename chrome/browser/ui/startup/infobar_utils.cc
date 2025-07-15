@@ -5,7 +5,6 @@
 #include "chrome/browser/ui/startup/infobar_utils.h"
 
 #include "base/command_line.h"
-#include "base/task/sequenced_task_runner.h"
 #include "build/branding_buildflags.h"
 #include "build/buildflag.h"
 #include "chrome/browser/browser_process.h"
@@ -21,7 +20,6 @@
 #include "chrome/browser/ui/startup/startup_browser_creator.h"
 #include "chrome/browser/ui/startup/startup_types.h"
 #include "chrome/browser/ui/startup/test_third_party_cookie_phaseout_infobar_delegate.h"
-#include "chrome/browser/ui/startup/update_notifier/update_notifier_infobar_delegate.h"
 #include "chrome/browser/ui/startup/update_notifier/update_notifier_prompt_manager.h"
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/pref_names.h"
@@ -191,9 +189,6 @@ void AddInfoBarsIfNecessary(Browser* browser,
                                ->installer_downloader_controller()) {
       controller->MaybeShowInfoBar();
     }
-   if (!is_web_app) {
-     UpdateNotifierPromptManager::GetInstance()->MaybeShowPrompt();
-   }
 #endif
 
 #if !BUILDFLAG(IS_CHROMEOS) && !BUILDFLAG(IS_ANDROID)
@@ -212,11 +207,14 @@ void AddInfoBarsIfNecessary(Browser* browser,
                        browser->GetWeakPtr());
   }
 #endif  // BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
-
   // The default browser prompt should only be shown after the first run.
   if (is_first_run == chrome::startup::IsFirstRun::kNo) {
     ShowDefaultBrowserPrompt(profile,
                              std::move(default_browser_prompt_shown_callback));
   }
 #endif
+
+  if (!is_web_app) {
+    UpdateNotifierPromptManager::GetInstance()->MaybeShowPrompt();
+  }
 }
