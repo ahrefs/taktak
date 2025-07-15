@@ -62,71 +62,6 @@ function transformToArray(input: string): string[] {
 }
 
 export class ChatAppElement extends CrLitElement {
-    private chatApiProxy_: ChatApiProxy = ChatApiProxyImpl.getInstance();
-    private listenerIds_: number[] = [];
-    protected actionList_: ActionItem[] = [];
-    protected translateToLanguages_: string[] = [];
-    protected socialMediaPlatforms_: string[] = [];
-    protected conversations_: ConversationRecord[] = [];
-    protected title_: string = loadTimeData.getString('title');
-    protected askAnythingLabel_ = loadTimeData.getString('askAnything');
-    protected chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
-    protected thinkingBtnLabel_ = loadTimeData.getString('thinking');
-    protected doneThinkingBtnLabel_ = loadTimeData.getString('doneThinking');
-    protected enableThinkingBtnLabel_ = loadTimeData.getString('enableThinking');
-    protected thinkingEnabledBtnLabel_ = loadTimeData.getString('thinkingEnabled');
-
-    protected maxPromptInputLength_: number = 90_000;
-
-    protected siteInfo_: SiteInfo = {
-        url: "",
-        title: "",
-        isContentUsableInConversations: false,
-    };
-    protected query_?: string;
-    protected submittedQuery_?: string;
-    protected isQuerySubmitting_: boolean = false;
-
-    protected hasExceededMaxTokenCount_: boolean = false;
-    protected exceedMaxTokenCountErrorMessages_: string = "";
-
-    protected shouldDisplayChatAboutThisPageButton_: boolean = false;
-    protected shouldHideContextActionElementsInPromptInputDueToKnownContext_: boolean = false;
-    protected shouldUseCurrentPageContentAsChatContext_: boolean = false;
-    private shouldHideSiteInfoInUserQueryElement_: boolean = false;
-    protected shouldShowActionsMenu_: boolean = false;
-
-    private isActivePageUrlNew_: boolean = false;
-    protected enableThinking_: boolean = true;
-
-    private shouldAutoScroll_: boolean = true;
-    private scrollInterval_: number = 0;
-    private scrollThreshold_: number = 0;
-    private totalConversationLength_: number = 0;
-    private conversationLengthThreshold_: number = 100_000;
-    private isPointerDown_: boolean = false;
-
-    // Individual properties are used to signal changes in the UI
-    // instead of a single object. Using an object would result in
-    // frequent allocations, which, over time, could degrade performance
-    // and make the chat feature sluggish.
-    protected isThinking_: boolean = false;
-    protected currentResponseResult_: string = "";
-    protected currentThinkingResult_: string = "";
-    protected currentErrorResult_: string = "";
-    protected currentConversationId_: string = "";
-    protected showThinkingText_: boolean = true;
-
-    private handleWheelOrTouchMove_ = this.onWheelOrTouchMove.bind(this);
-    private handlePointerDown_ = this.onPointerDown.bind(this);
-    private handlePointerUp_ = this.onPointerUp.bind(this);
-    private handleConversationContainerScroll_ = this.onConversationContainerScroll.bind(this);
-
-    constructor() {
-        super();
-        this.translateToLanguages_ = transformToArray(loadTimeData.getString('translateLanguages'));
-        this.socialMediaPlatforms_ = transformToArray(loadTimeData.getString('socialMedias'));
-    }
 
     static get is() {
         return 'chat-app';
@@ -142,37 +77,95 @@ export class ChatAppElement extends CrLitElement {
 
     static override get properties() {
         return {
+            conversations_: {type: Array},
             siteInfo_: {type: Object},
             actionList_: {type: Array},
-
+            translateToLanguages_: {type: Array},
+            socialMediaPlatforms_: {type: Array},
+            title_: {type: String},
             askAnythingLabel_: {type: String},
-            translateToSubItems_: {type: String},
-            socialMediaPostSubItems_: {type: String},
+            chatAboutThisPageLabel_: {type: String},
+            thinkingBtnLabel_: {type: String},
+            doneThinkingBtnLabel_: {type: String},
             enableThinkingBtnLabel_: {type: String},
             thinkingEnabledBtnLabel_: {type: String},
-            exceedMaxLengthErrorMessages_: {type: String},
-
-            hasExceededMaxTokenCount: {type: Boolean},
             maxPromptInputLength_: {type: Number},
-
+            query_: {type: String},
+            isQuerySubmitting_: {type: Boolean},
+            hasExceededMaxTokenCount_: {type: Boolean},
+            exceedMaxTokenCountErrorMessages_: {type: String},
             shouldDisplayChatAboutThisPageButton_: {type: Boolean},
             shouldUseCurrentPageContentAsChatContext_: {type: Boolean},
             shouldHideContextActionElementsInPromptInputDueToKnownContext_: {type: Boolean},
             shouldShowActionsMenu_: {type: Boolean},
-            isActivePageUrlNew_: {type: Boolean},
-
-            conversations_: {type: Array},
-            query_: {type: String},
-            submittedQuery_: {type: String},
-            isSubmittingQuery_: {type: Boolean},
+            enableThinking_: {type: Boolean},
             isThinking_: {type: Boolean},
             currentResponseResult_: {type: String},
             currentThinkingResult_: {type: String},
             currentErrorResult_: {type: String},
             currentConversationId_: {type: String},
             showThinkingText_: {type: Boolean},
-            enableThinking_: {type: Boolean},
         };
+    }
+
+    private chatApiProxy_: ChatApiProxy = ChatApiProxyImpl.getInstance();
+    private listenerIds_: number[] = [];
+    private isActivePageUrlNew_: boolean = false;
+    private submittedQuery_?: string;
+    private shouldHideSiteInfoInUserQueryElement_: boolean = false;
+    private shouldAutoScroll_: boolean = true;
+    private scrollInterval_: number = 0;
+    private scrollThreshold_: number = 0;
+    private totalConversationLength_: number = 0;
+    private conversationLengthThreshold_: number = 100_000;
+    private isPointerDown_: boolean = false;
+    private handleWheelOrTouchMove_ = this.onWheelOrTouchMove.bind(this);
+    private handlePointerDown_ = this.onPointerDown.bind(this);
+    private handlePointerUp_ = this.onPointerUp.bind(this);
+    private handleConversationContainerScroll_ = this.onConversationContainerScroll.bind(this);
+
+    protected accessor conversations_: ConversationRecord[] = [];
+    protected accessor siteInfo_: SiteInfo = {
+        url: "",
+        title: "",
+        isContentUsableInConversations: false,
+    };
+    protected accessor actionList_: ActionItem[] = [];
+    protected accessor translateToLanguages_: string[] = [];
+    protected accessor socialMediaPlatforms_: string[] = [];
+    protected accessor title_: string = loadTimeData.getString('title');
+    protected accessor askAnythingLabel_ = loadTimeData.getString('askAnything');
+    protected accessor chatAboutThisPageLabel_ = loadTimeData.getString('chatAboutThisPage');
+    protected accessor thinkingBtnLabel_ = loadTimeData.getString('thinking');
+    protected accessor doneThinkingBtnLabel_ = loadTimeData.getString('doneThinking');
+    protected accessor enableThinkingBtnLabel_ = loadTimeData.getString('enableThinking');
+    protected accessor thinkingEnabledBtnLabel_ = loadTimeData.getString('thinkingEnabled');
+    protected accessor maxPromptInputLength_: number = 90_000;
+    protected accessor query_: string = "";
+    protected accessor isQuerySubmitting_: boolean = false;
+    protected accessor hasExceededMaxTokenCount_: boolean = false;
+    protected accessor exceedMaxTokenCountErrorMessages_: string = "";
+    protected accessor shouldDisplayChatAboutThisPageButton_: boolean = false;
+    protected accessor shouldHideContextActionElementsInPromptInputDueToKnownContext_: boolean = false;
+    protected accessor shouldUseCurrentPageContentAsChatContext_: boolean = false;
+    protected accessor shouldShowActionsMenu_: boolean = false;
+    protected accessor enableThinking_: boolean = true;
+    // Individual properties are used to signal changes in the UI
+    // instead of a single object. Using an object would result in
+    // frequent allocations, which, over time, could degrade performance
+    // and make the chat feature sluggish.
+    protected accessor isThinking_: boolean = false;
+    protected accessor currentResponseResult_: string = "";
+    protected accessor currentThinkingResult_: string = "";
+    protected accessor currentErrorResult_: string = "";
+    protected accessor currentConversationId_: string = "";
+    protected accessor showThinkingText_: boolean = true;
+
+
+    constructor() {
+        super();
+        this.translateToLanguages_ = transformToArray(loadTimeData.getString('translateLanguages'));
+        this.socialMediaPlatforms_ = transformToArray(loadTimeData.getString('socialMedias'));
     }
 
     protected onToggleEnableThinking(e: Event) {
@@ -217,6 +210,7 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private updateCompletionResult(response: ActionResponse) {
+        console.log('|>> updateCompletionResult:' + response.result);
         if (response.responseType == ResponseType.DELTA) {
             const responseResult = response.result;
             if (responseResult == "<think>") {
@@ -509,6 +503,9 @@ export class ChatAppElement extends CrLitElement {
             behavior: 'instant'
         });
 
+        console.log(" |>> " + this.query_);
+        console.log(" |>> submitQuery");
+
         setTimeout(() => {
             this.chatApiProxy_.submitQuery(
                 ActionType.QUERY,
@@ -519,6 +516,7 @@ export class ChatAppElement extends CrLitElement {
 
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {
         this.query_ = e.detail.value;
+        console.log(" |>> " + this.query_);
 
         if (this.query_.length > this.maxPromptInputLength_) {
             this.exceedMaxTokenCountErrorMessages_ = loadTimeData.getString("promptExceedMaxTokenCount") + " - " + this.query_.length + "/" + this.maxPromptInputLength_ + ".";
