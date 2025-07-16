@@ -25,17 +25,9 @@
 #include "ui/views/layout/flex_layout.h"
 #include "ui/views/view_class_properties.h"
 
-/*
- * Note: This implementation maintains the default button styling and ignores
- * most feature flag configurations, with the exception of the reverse button
- * order feature param.
- * 
- * Known issue: The separator positioning between new_tab_button and 
- * search_tab_button is not properly centered and needs adjustment.
- * 
- * TODO: Exercise caution when merging changes from upstream to preserve
- * these customizations or take the upstream in if the separator positioning bug is fixed
- */
+// NOTE: It's Chromium's bug that the separator is not in the middle of new_tab_button and tab_search_button
+// Need to carefully check when merge with upstream next time
+
 namespace {
 
 // LINT.IfChange(AccidentalClickType)
@@ -48,7 +40,7 @@ enum class AccidentalClickType {
 };
 // LINT.ThenChange(//tools/metrics/histograms/metadata/tab/enums.xml:AccidentalClickType)
 
-constexpr int kButtonGapNoBackground = 4;
+constexpr int kButtonGapNoBackground = 14;
 constexpr base::TimeDelta kAccidentalClickThreshold = base::Seconds(1);
 constexpr char kNewTabButtonAccidentalClickName[] =
     "Tabs.NewTabButton.AccidentalClicks";
@@ -59,6 +51,15 @@ constexpr char kTabSearchAccidentalClickName[] =
 TabStripComboButton::TabStripComboButton(BrowserWindowInterface* browser,
                                          TabStrip* tab_strip) {
   Edge new_tab_button_flat_edge = Edge::kNone;
+  if (features::HasTabstripComboButtonWithBackground()) {
+    if (features::HasTabstripComboButtonWithReverseButtonOrder()) {
+      new_tab_button_flat_edge =
+          base::i18n::IsRTL() ? Edge::kRight : Edge::kLeft;
+    } else {
+      new_tab_button_flat_edge =
+          base::i18n::IsRTL() ? Edge::kLeft : Edge::kRight;
+    }
+  }
   std::unique_ptr<TabStripControlButton> new_tab_button =
       std::make_unique<TabStripControlButton>(
           tab_strip->controller(),
@@ -68,10 +69,25 @@ TabStripComboButton::TabStripComboButton(BrowserWindowInterface* browser,
   new_tab_button->SetProperty(views::kElementIdentifierKey,
                               kNewTabButtonElementId);
 
-  // Add a gap between the new tab button and tab search button.
-  gfx::Insets button_margins =
-      gfx::Insets::TLBR(0, kButtonGapNoBackground, 0, kButtonGapNoBackground);
-  new_tab_button->SetProperty(views::kMarginsKey, button_margins);
+  if (features::HasTabstripComboButtonWithBackground()) {
+    new_tab_button->SetForegroundFrameActiveColorId(
+        kColorNewTabButtonForegroundFrameActive);
+    new_tab_button->SetForegroundFrameInactiveColorId(
+        kColorNewTabButtonForegroundFrameInactive);
+    new_tab_button->SetBackgroundFrameActiveColorId(
+        kColorNewTabButtonCRBackgroundFrameActive);
+    new_tab_button->SetBackgroundFrameInactiveColorId(
+        kColorNewTabButtonCRBackgroundFrameInactive);
+  } else {
+    // Add a gap between the new tab button and tab search button.
+    gfx::Insets button_margins;
+    if (features::HasTabstripComboButtonWithReverseButtonOrder()) {
+      button_margins = gfx::Insets::TLBR(0, kButtonGapNoBackground, 0, 0);
+    } else {
+      button_margins = gfx::Insets::TLBR(0, 0, 0, kButtonGapNoBackground);
+    }
+    new_tab_button->SetProperty(views::kMarginsKey, button_margins);
+  }
 
   new_tab_button->SetTooltipText(
       l10n_util::GetStringUTF16(IDS_TOOLTIP_NEW_TAB));
@@ -91,7 +107,6 @@ TabStripComboButton::TabStripComboButton(BrowserWindowInterface* browser,
       std::make_unique<views::Separator>();
   separator->SetBorderRadius(TabStyle::Get()->GetSeparatorCornerRadius());
   separator->SetPreferredSize(TabStyle::Get()->GetSeparatorSize());
-  separator->SetVisible(true);
   subscriptions_.push_back(browser->RegisterDidBecomeActive(base::BindRepeating(
       &TabStripComboButton::DidBecomeActive, base::Unretained(this))));
   subscriptions_.push_back(
@@ -99,6 +114,15 @@ TabStripComboButton::TabStripComboButton(BrowserWindowInterface* browser,
           &TabStripComboButton::DidBecomeInactive, base::Unretained(this))));
 
   Edge tab_search_button_flat_edge = Edge::kNone;
+  if (features::HasTabstripComboButtonWithBackground()) {
+    if (features::HasTabstripComboButtonWithReverseButtonOrder()) {
+      tab_search_button_flat_edge =
+          base::i18n::IsRTL() ? Edge::kLeft : Edge::kRight;
+    } else {
+      tab_search_button_flat_edge =
+          base::i18n::IsRTL() ? Edge::kRight : Edge::kLeft;
+    }
+  }
   std::unique_ptr<TabSearchButton> tab_search_button =
       std::make_unique<TabSearchButton>(tab_strip->controller(), browser,
                                         tab_search_button_flat_edge,
@@ -106,24 +130,27 @@ TabStripComboButton::TabStripComboButton(BrowserWindowInterface* browser,
   tab_search_button->SetFlatEdgeFactor(1);
   tab_search_button->SetProperty(views::kCrossAxisAlignmentKey,
                                  views::LayoutAlignment::kCenter);
-  tab_search_button->SetProperty(views::kMarginsKey, button_margins);
   subscriptions_.push_back(tab_search_button->AddStateChangedCallback(
       base::BindRepeating(&TabStripComboButton::OnTabSearchButtonStateChanged,
                           base::Unretained(this))));
 
   auto* button_container = AddChildView(std::make_unique<views::View>());
-  button_container->SetLayoutManager(std::make_unique<views::FlexLayout>())
+  auto* separator_container = AddChildView(std::make_unique<views::View>());
+  button_container->SetLayoutManager(std::make_unique<views::FlexLayout>());
+  separator_container->SetLayoutManager(std::make_unique<views::FlexLayout>())
       ->SetOrientation(views::LayoutOrientation::kHorizontal)
       .SetMainAxisAlignment(views::LayoutAlignment::kCenter)
       .SetCrossAxisAlignment(views::LayoutAlignment::kCenter);
+  separator_container->SetCanProcessEventsWithinSubtree(false);
+
   if (features::HasTabstripComboButtonWithReverseButtonOrder()) {
     tab_search_button_ =
         button_container->AddChildView(std::move(tab_search_button));
-    separator_ = button_container->AddChildView(std::move(separator));
+    separator_ = separator_container->AddChildView(std::move(separator));
     new_tab_button_ = button_container->AddChildView(std::move(new_tab_button));
   } else {
     new_tab_button_ = button_container->AddChildView(std::move(new_tab_button));
-    separator_ = button_container->AddChildView(std::move(separator));
+    separator_ = separator_container->AddChildView(std::move(separator));
     tab_search_button_ =
         button_container->AddChildView(std::move(tab_search_button));
   }
@@ -147,7 +174,8 @@ void TabStripComboButton::OnNewTabButtonStateChanged() {
                                     AccidentalClickType::kAccidentalClick);
     }
   }
-  separator_->SetVisible(true);
+
+  UpdateSeparatorVisibility();
 }
 
 void TabStripComboButton::OnTabSearchButtonStateChanged() {
@@ -163,16 +191,27 @@ void TabStripComboButton::OnTabSearchButtonStateChanged() {
     }
   }
 
-  separator_->SetVisible(true);
+  UpdateSeparatorVisibility();
 }
 
 void TabStripComboButton::DidBecomeActive(BrowserWindowInterface* browser) {
-  separator_->SetVisible(true);
+  if (features::HasTabstripComboButtonWithBackground()) {
+    if (using_custom_theme_) {
+      separator_->SetColorId(ui::kColorFrameActive);
+    } else {
+      separator_->SetColorId(kColorTabStripComboButtonSeparator);
+    }
+  } else {
+    separator_->SetColorId(kColorTabDividerFrameActive);
+  }
 }
 
 void TabStripComboButton::DidBecomeInactive(BrowserWindowInterface* browser) {
-  separator_->SetVisible(true);
-  separator_->SetColorId(kColorTabDividerFrameActive);
+  if (using_custom_theme_) {
+    separator_->SetColorId(ui::kColorFrameInactive);
+  } else {
+    separator_->SetColorId(kColorTabDividerFrameInactive);
+  }
 }
 
 void TabStripComboButton::OnThemeChanged() {
@@ -183,7 +222,7 @@ void TabStripComboButton::OnThemeChanged() {
   ui::ColorId foreground_inactive_color;
   ui::ColorId background_active_color;
   ui::ColorId background_inactive_color;
-  if (using_custom_theme_ /*|| features::HasTabstripComboButtonWithBackground()*/) {
+  if (using_custom_theme_ || features::HasTabstripComboButtonWithBackground()) {
     foreground_active_color = kColorNewTabButtonForegroundFrameActive;
     foreground_inactive_color = kColorNewTabButtonForegroundFrameInactive;
     background_active_color = kColorNewTabButtonCRBackgroundFrameActive;
@@ -204,12 +243,21 @@ void TabStripComboButton::OnThemeChanged() {
   tab_search_button_->SetBackgroundFrameActiveColorId(background_active_color);
   tab_search_button_->SetBackgroundFrameInactiveColorId(
       background_inactive_color);
-
-  separator_->SetVisible(true);
 }
 
 void TabStripComboButton::UpdateSeparatorVisibility() {
-  separator_->SetVisible(true);
+  const views::Button::ButtonState new_tab_button_state =
+      new_tab_button_->GetState();
+  const views::Button::ButtonState tab_search_button_state =
+      tab_search_button_->GetState();
+  const bool is_visible =
+      features::HasTabstripComboButtonWithBackground()
+      ? new_tab_button_state != views::Button::STATE_HOVERED &&
+          new_tab_button_state != views::Button::STATE_PRESSED &&
+          tab_search_button_state != views::Button::STATE_HOVERED &&
+          tab_search_button_state != views::Button::STATE_PRESSED
+      : true;
+  separator_->SetVisible(is_visible);
 }
 
 BEGIN_METADATA(TabStripComboButton)
