@@ -210,7 +210,6 @@ export class ChatAppElement extends CrLitElement {
     }
 
     private updateCompletionResult(response: ActionResponse) {
-        console.log('|>> updateCompletionResult:' + response.result);
         if (response.responseType == ResponseType.DELTA) {
             const responseResult = response.result;
             if (responseResult == "<think>") {
@@ -309,7 +308,7 @@ export class ChatAppElement extends CrLitElement {
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_);
             this.saveCurrentConversation();
             this.$.promptInput.focusInput();
-        }, 0);
+        }, 300);
     }
 
     protected onDeleteAll_(e: Event) {
@@ -503,9 +502,6 @@ export class ChatAppElement extends CrLitElement {
             behavior: 'instant'
         });
 
-        console.log(" |>> " + this.query_);
-        console.log(" |>> submitQuery");
-
         setTimeout(() => {
             this.chatApiProxy_.submitQuery(
                 ActionType.QUERY,
@@ -516,7 +512,6 @@ export class ChatAppElement extends CrLitElement {
 
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {
         this.query_ = e.detail.value;
-        console.log(" |>> " + this.query_);
 
         if (this.query_.length > this.maxPromptInputLength_) {
             this.exceedMaxTokenCountErrorMessages_ = loadTimeData.getString("promptExceedMaxTokenCount") + " - " + this.query_.length + "/" + this.maxPromptInputLength_ + ".";

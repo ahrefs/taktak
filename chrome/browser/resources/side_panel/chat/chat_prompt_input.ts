@@ -80,13 +80,13 @@ export class ChatPromptInputElement extends CrLitElement {
 
     override accessor autofocus: boolean = false;
     accessor disabled: boolean = false;
-    accessor readonly: boolean = false;
-    accessor required: boolean = false;
-    accessor rows: number = 1;
-    accessor maxlength!: number;
+    protected accessor required: boolean = false;
+    protected accessor maxlength!: number;
+    protected accessor readonly: boolean = false;
+    protected accessor rows: number = 1;
     accessor value: string = '';
-    accessor placeholder: string = '';
     protected accessor internalValue_: string = '';
+    protected accessor placeholder: string = '';
 
     override willUpdate(changedProperties: PropertyValues<this>) {
         super.willUpdate(changedProperties);

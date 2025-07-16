@@ -19,11 +19,6 @@ export interface ActionMenuElement {
 }
 
 export class ActionMenuElement extends CrLitElement {
-    protected renderActionMenu_: boolean = false;
-    protected actionType_: ActionType = ActionType.NONE;
-    protected actionLabel_: string = '';
-    protected actionItems_: string[] = [];
-    protected disabled_: boolean = false;
 
     constructor() {
         super();
@@ -37,6 +32,10 @@ export class ActionMenuElement extends CrLitElement {
         return getCss();
     }
 
+    override render() {
+        return getHtml.bind(this)();
+    }
+
     static override get properties() {
         return {
             actionType_: {type: ActionType},
@@ -47,9 +46,11 @@ export class ActionMenuElement extends CrLitElement {
         };
     }
 
-    override render() {
-        return getHtml.bind(this)();
-    }
+    protected accessor actionType_: ActionType = ActionType.NONE;
+    protected accessor actionLabel_: string = '';
+    protected accessor actionItems_: string[] = [];
+    protected accessor renderActionMenu_: boolean = false;
+    protected accessor disabled_: boolean = false;
 
     protected async onActionMenuButtonClick_(event: Event) {
         event.preventDefault();  // Prevent default browser action (navigation).
