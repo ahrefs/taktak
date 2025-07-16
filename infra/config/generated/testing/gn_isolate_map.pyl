@@ -533,8 +533,8 @@
       "${ISOLATED_OUTDIR}",
     ],
   },
-  "chrome_sandbox": {
-    "label": "//sandbox/linux:chrome_sandbox",
+  "taktak_sandbox": {
+    "label": "//sandbox/linux:taktak_sandbox",
     "type": "additional_compile_target",
   },
   "chrome_sizes": {

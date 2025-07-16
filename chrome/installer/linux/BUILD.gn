@@ -33,7 +33,7 @@ packaging_files_executables = [
   "$root_out_dir/taktak",
   "$root_out_dir/chrome_crashpad_handler",
   "$root_out_dir/chrome_management_service",
-  "$root_out_dir/chrome_sandbox",
+  "$root_out_dir/taktak_sandbox",
 ]
 
 packaging_files_shlibs = []
@@ -176,8 +176,8 @@ strip_binary("strip_chrome_management_service") {
 }
 
 strip_binary("strip_chrome_sandbox") {
-  binary_input = "$root_out_dir/chrome_sandbox"
-  deps = [ "//sandbox/linux:chrome_sandbox" ]
+  binary_input = "$root_out_dir/taktak_sandbox"
+  deps = [ "//sandbox/linux:taktak_sandbox" ]
 }
 
 strip_binary("strip_libEGL_shlib") {
@@ -373,7 +373,7 @@ group("installer_deps") {
     "//chrome/browser/resources/media/mei_preload:component",
     "//components/crash/core/app:chrome_crashpad_handler",
     "//components/privacy_sandbox/privacy_sandbox_attestations/preload:component",
-    "//sandbox/linux:chrome_sandbox",
+    "//sandbox/linux:taktak_sandbox",
   ]
 
   #  if (bundle_widevine_cdm) {

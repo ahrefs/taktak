@@ -177,7 +177,7 @@ if (!is_android && !is_mac) {
     if (is_chromeos) {
       data_deps += [
         "//components/variations/cros_evaluate_seed:evaluate_seed",
-        "//sandbox/linux:chrome_sandbox",
+        "//sandbox/linux:taktak_sandbox",
       ]
       if (build_mojo_proxy) {
         data_deps += [ "//mojo/proxy:mojo_proxy" ]
