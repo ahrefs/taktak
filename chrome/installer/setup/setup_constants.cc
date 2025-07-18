@@ -7,14 +7,14 @@
 namespace installer {
 
 // Elements that make up install paths.
-const wchar_t kChromeArchive[] = L"taktak.7z";
-const wchar_t kChromeCompressedArchive[] = L"taktak.packed.7z";
+const wchar_t kChromeArchive[] = L"chrome.7z";
+const wchar_t kChromeCompressedArchive[] = L"chrome.packed.7z";
 const char kVisualElements[] = "VisualElements";
 const wchar_t kVisualElementsManifest[] = L"chrome.VisualElementsManifest.xml";
 
 // Sub directory of install source package under install temporary directory.
 const wchar_t kInstallSourceDir[] = L"source";
-const wchar_t kInstallSourceChromeDir[] = L"Taktak-bin";
+const wchar_t kInstallSourceChromeDir[] = L"Chrome-bin";
 
 const wchar_t kMediaPlayerRegPath[] =
     L"Software\\Microsoft\\MediaPlayer\\ShimInclusionList";

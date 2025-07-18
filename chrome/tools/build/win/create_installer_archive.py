@@ -25,7 +25,7 @@ ARCHIVE_DIR = "installer_archive"
 # suffix to uncompressed full archive file, appended to options.output_name
 ARCHIVE_SUFFIX = ".7z"
 BSDIFF_EXEC = "bsdiff.exe"
-CHROME_DIR = "Taktak-bin"
+CHROME_DIR = "Chrome-bin"
 CHROME_PATCH_FILE_SUFFIX = "_patch"  # prefixed by options.output_name
 
 # compressed full archive suffix, will be prefixed by options.output_name

@@ -1,5 +1,5 @@
 [Setup]
-AppName=Taktak Setup
+AppName=Taktak
 AppVersion=1.0
 WizardStyle=modern
 DefaultDirName={commonpf}\Taktak
@@ -9,11 +9,11 @@ SetupIconFile=taktak_installer_icon.ico
 UninstallDisplayIcon={app}\Taktak.exe
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible
-UninstallFilesDir={commonpf}\Taktak\Application\uninstall
+UninstallFilesDir={commonpf}\Taktak\uninstall
 
 [Files]
 Source: "{tmp}\Setup.exe"; DestDir: "{app}"; Flags: external
-Source: "{tmp}\Taktak.7z"; DestDir: "{app}"; Flags: external
+Source: "{tmp}\Taktak.7z"; DestDir: "{app}"; DestName: "Chrome.7z";  Flags: external
 
 [Icons]
 Name: "{commonprograms}\Taktak"; Filename: "{app}\Taktak.exe"
@@ -35,7 +35,7 @@ var
 function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
 begin
   if Progress = ProgressMax then
-    Log(Format('Successfully downloaded file to {tmp}: %s', [FileName]));
+      Log(Format('Successfully downloaded file to: %s', [ExpandConstant('{tmp}\'+FileName)]));
   Result := True;
 end;
 
@@ -50,8 +50,8 @@ begin
   if CurPageID = wpReady then begin
     DownloadPage.Clear;
     // Using bunny CDN for testing. todo: to replace the links with production one
-    DownloadPage.Add('https://taktak.b-cdn.net/Setup.exe', 'Setup.exe', '');
-    DownloadPage.Add('https://taktak.b-cdn.net/Taktak.7z', 'Taktak.7z', '');
+    DownloadPage.Add('https://taktak.b-cdn.net/138/setup.exe', 'Setup.exe', '');
+    DownloadPage.Add('https://taktak.b-cdn.net/138/Chrome.7z', 'Taktak.7z', '');
     DownloadPage.Show;
     try
       try
@@ -72,5 +72,5 @@ begin
 end;
 
 [Run]
-Filename: "{app}\Setup.exe"; Parameters: "--system-level"; Description: "Run Setup"; Flags: waituntilterminated
+Filename: "{app}\Setup.exe"; Parameters: "--system-level"; Description: "Install Taktak"; Flags: waituntilterminated
 Filename: "{commonpf}\Taktak\Application\Taktak.exe"; Description: "Launch Taktak"; Flags: nowait postinstall skipifsilent
