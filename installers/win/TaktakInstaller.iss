@@ -9,11 +9,12 @@ SetupIconFile=taktak_installer_icon.ico
 UninstallDisplayIcon={app}\Taktak.exe
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible
-UninstallFilesDir={commonpf}\Taktak\uninstall
+CreateUninstallRegKey=no
+Uninstallable=no
 
 [Files]
 Source: "{tmp}\Setup.exe"; DestDir: "{app}"; Flags: external
-Source: "{tmp}\Taktak.7z"; DestDir: "{app}"; DestName: "Chrome.7z";  Flags: external
+Source: "{tmp}\Taktak.7z"; DestDir: "{app}"; DestName: "Chrome.7z"; Flags: external
 
 [Icons]
 Name: "{commonprograms}\Taktak"; Filename: "{app}\Taktak.exe"
@@ -51,7 +52,7 @@ begin
     DownloadPage.Clear;
     // Using bunny CDN for testing. todo: to replace the links with production one
     DownloadPage.Add('https://taktak.b-cdn.net/138/setup.exe', 'Setup.exe', '');
-    DownloadPage.Add('https://taktak.b-cdn.net/138/Chrome.7z', 'Taktak.7z', '');
+    DownloadPage.Add('https://taktak.b-cdn.net/138/taktak.7z', 'Taktak.7z', '');
     DownloadPage.Show;
     try
       try
@@ -69,6 +70,17 @@ begin
     end;
   end else
     Result := True;
+end;
+
+[Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    // Delete downloaded files after installation is complete
+    DeleteFile(ExpandConstant('{app}\Setup.exe'));
+    DeleteFile(ExpandConstant('{app}\Chrome.7z'));
+  end;
 end;
 
 [Run]
