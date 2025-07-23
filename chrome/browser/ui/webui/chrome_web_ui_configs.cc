@@ -152,6 +152,7 @@
 #include "chrome/browser/ui/webui/app_settings/web_app_settings_ui.h"
 #include "chrome/browser/ui/webui/browser_switch/browser_switch_ui.h"
 #include "chrome/browser/ui/webui/signin/history_sync_optin/history_sync_optin_ui.h"
+#include "chrome/browser/ui/webui/side_panel/chat/chat_ui.h"
 #include "chrome/browser/ui/webui/whats_new/whats_new_ui.h"
 #endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
 
@@ -376,6 +377,7 @@ void RegisterChromeWebUIConfigs() {
   map.AddWebUIConfig(std::make_unique<OnDeviceTranslationInternalsUIConfig>());
   map.AddWebUIConfig(std::make_unique<WebAppSettingsUIConfig>());
   map.AddWebUIConfig(std::make_unique<WhatsNewUIConfig>());
+  map.AddWebUIConfig(std::make_unique<ChatUIConfig>());
 #endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || \

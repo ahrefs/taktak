@@ -8282,4 +8282,37 @@ TEST_F(FederatedAuthRequestImplTest,
                         FedCmEntry::kEntryName, 0);
 }
 
+TEST_F(FederatedAuthRequestImplTest, CancelReasonMetrics) {
+  MockConfiguration config = kConfigurationValid;
+  config.accounts_dialog_action = AccountsDialogAction::kClose;
+  RequestExpectations expectations = {
+      RequestTokenStatus::kError, FederatedAuthRequestResult::kShouldEmbargo,
+      /*standalone_console_message=*/std::nullopt,
+      /*selected_idp_config_url=*/std::nullopt};
+  RunAuthTest(kDefaultRequestParameters, expectations, config);
+
+  histogram_tester_.ExpectUniqueSample(
+      "Blink.FedCm.CancelReason",
+      IdentityRequestDialogController::DismissReason::kCloseButton, 1);
+  ExpectUkmValueInEntry(
+      "CancelReason", FedCmEntry::kEntryName,
+      static_cast<std::underlying_type_t<
+          IdentityRequestDialogController::DismissReason>>(
+          IdentityRequestDialogController::DismissReason::kCloseButton));
+  CheckAllFedCmSessionIDs();
+}
+
+// Tests that the correct FederatedAuthRequestResult is returned when the
+// accounts dialog is suppressed by segmentation platform.
+TEST_F(FederatedAuthRequestImplTest, SuppressedBySegmentationPlatform) {
+  MockConfiguration configuration = kConfigurationValid;
+  configuration.accounts_dialog_action = AccountsDialogAction::kSuppressed;
+  RequestExpectations expectations = {
+      RequestTokenStatus::kError,
+      FederatedAuthRequestResult::kSuppressedBySegmentationPlatform,
+      /*standalone_console_message=*/std::nullopt,
+      /*selected_idp_config_url=*/std::nullopt};
+  RunAuthTest(kDefaultRequestParameters, expectations, configuration);
+}
+
 }  // namespace content

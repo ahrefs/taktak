@@ -18,7 +18,7 @@ SidePanelEntry::SidePanelEntry(
     CreateContentCallback create_content_callback,
     base::RepeatingCallback<GURL()> open_in_new_tab_url_callback,
     base::RepeatingCallback<std::unique_ptr<ui::MenuModel>()>
-        more_info_callback,
+    more_info_callback,
     int default_content_width)
     : key_(key),
       create_content_callback_(std::move(create_content_callback)),
@@ -27,9 +27,9 @@ SidePanelEntry::SidePanelEntry(
       default_content_width_(default_content_width) {
   DCHECK(create_content_callback_);
   CHECK(!default_content_width ||
-        default_content_width >= kSidePanelDefaultContentWidth)
-      << "The default width must be greater than or equal to the default side "
-         "panel width: "
+      default_content_width >= kSidePanelDefaultContentWidth)
+  << "The default width must be greater than or equal to the default side "
+     "panel width: "
       << kSidePanelDefaultContentWidth;
 }
 

@@ -10,12 +10,20 @@ package com.google.protobuf;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.TruthJUnit.assume;
+
 import static org.junit.Assert.assertThrows;
 
 import com.google.protobuf.CodedOutputStream.OutOfSpaceException;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import proto2_unittest.UnittestProto.SparseEnumMessage;
 import proto2_unittest.UnittestProto.TestAllTypes;
 import proto2_unittest.UnittestProto.TestSparseEnum;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,10 +31,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
 /** Unit test for {@link CodedOutputStream}. */
 @RunWith(Parameterized.class)
@@ -46,44 +50,46 @@ public class CodedOutputStreamTest {
     CodedOutputStream stream();
 
     byte[] toByteArray();
-  }
-
-  // Like ByteArrayOutputStream, but doesn't dynamically grow the backing byte[]. Instead, it
-  // throws OutOfSpaceException if we overflow the backing byte[].
-  private static final class FixedSizeByteArrayOutputStream extends OutputStream {
-    private final byte[] buf;
-    private int size = 0;
-
-    FixedSizeByteArrayOutputStream(int size) {
-      this.buf = new byte[size];
     }
 
-    @Override
-    public void write(int b) throws IOException {
-      try {
-        buf[size] = (byte) b;
-      } catch (IndexOutOfBoundsException e) {
-        // Real OutputStreams probably won't be so kind as to throw the exact OutOfSpaceException
-        // that we want in our tests. Throwing this makes our tests simpler, and OutputStream
-        // doesn't really have a good protocol for signalling running out of buffer space.
-        throw new OutOfSpaceException(size, buf.length, 1, e);
-      }
-      size++;
+    // Like ByteArrayOutputStream, but doesn't dynamically grow the backing byte[]. Instead, it
+    // throws OutOfSpaceException if we overflow the backing byte[].
+    private static final class FixedSizeByteArrayOutputStream extends OutputStream {
+        private final byte[] buf;
+        private int size = 0;
+
+        FixedSizeByteArrayOutputStream(int size) {
+            this.buf = new byte[size];
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            try {
+                buf[size] = (byte) b;
+            } catch (IndexOutOfBoundsException e) {
+                // Real OutputStreams probably won't be so kind as to throw the exact
+                // OutOfSpaceException
+                // that we want in our tests. Throwing this makes our tests simpler, and
+                // OutputStream
+                // doesn't really have a good protocol for signalling running out of buffer space.
+                throw new OutOfSpaceException(size, buf.length, 1, e);
+            }
+            size++;
+        }
+
+        public byte[] toByteArray() {
+            return Arrays.copyOf(buf, size);
+        }
     }
 
-    public byte[] toByteArray() {
-      return Arrays.copyOf(buf, size);
-    }
-  }
+    private static final class OutputStreamCoder implements Coder {
+        private final CodedOutputStream stream;
+        private final FixedSizeByteArrayOutputStream output;
 
-  private static final class OutputStreamCoder implements Coder {
-    private final CodedOutputStream stream;
-    private final FixedSizeByteArrayOutputStream output;
-
-    OutputStreamCoder(int size, int blockSize) {
-      output = new FixedSizeByteArrayOutputStream(size);
-      stream = CodedOutputStream.newInstance(output, blockSize);
-    }
+        OutputStreamCoder(int size, int blockSize) {
+            output = new FixedSizeByteArrayOutputStream(size);
+            stream = CodedOutputStream.newInstance(output, blockSize);
+        }
 
     @Override
     public CodedOutputStream stream() {
@@ -183,33 +189,33 @@ public class CodedOutputStreamTest {
       dup.get(bytes);
       return bytes;
     }
-  }
-
-  private static final class ByteOutputWrappingArrayCoder implements Coder {
-    private final CodedOutputStream stream;
-    private final byte[] bytes;
-
-    ByteOutputWrappingArrayCoder(int size) {
-      bytes = new byte[size];
-      // Any ByteOutput subclass would do. All CodedInputStreams implement ByteOutput, so it
-      // seemed most convenient to this this with a CodedInputStream.newInstance(byte[]).
-      ByteOutput byteOutput = CodedOutputStream.newInstance(bytes);
-      stream = CodedOutputStream.newInstance(byteOutput, size);
     }
 
-    @Override
-    public CodedOutputStream stream() {
-      return stream;
+    private static final class ByteOutputWrappingArrayCoder implements Coder {
+        private final CodedOutputStream stream;
+        private final byte[] bytes;
+
+        ByteOutputWrappingArrayCoder(int size) {
+            bytes = new byte[size];
+            // Any ByteOutput subclass would do. All CodedInputStreams implement ByteOutput, so it
+            // seemed most convenient to this this with a CodedInputStream.newInstance(byte[]).
+            ByteOutput byteOutput = CodedOutputStream.newInstance(bytes);
+            stream = CodedOutputStream.newInstance(byteOutput, size);
+        }
+
+        @Override
+        public CodedOutputStream stream() {
+            return stream;
+        }
+
+        @Override
+        public byte[] toByteArray() {
+            return Arrays.copyOf(bytes, stream.getTotalBytesWritten());
+        }
     }
 
-    @Override
-    public byte[] toByteArray() {
-      return Arrays.copyOf(bytes, stream.getTotalBytesWritten());
-    }
-  }
-
-  private enum OutputType {
-    ARRAY() {
+    private enum OutputType {
+        ARRAY() {
       @Override
       Coder newCoder(int size) {
         return new ArrayCoder(size);
@@ -255,40 +261,40 @@ public class CodedOutputStreamTest {
       }
     },
     STREAM() {
-      @Override
-      Coder newCoder(int size) {
-        return new OutputStreamCoder(size, /* blockSize= */ size);
-      }
-    },
-    STREAM_MINIMUM_BUFFER_SIZE() {
-      @Override
-      Coder newCoder(int size) {
-        // Block Size 0 gets rounded up to minimum block size, see AbstractBufferedEncoder.
-        return new OutputStreamCoder(size, /* blockSize= */ 0);
-      }
-    },
-    BYTE_OUTPUT_WRAPPING_ARRAY() {
-      @Override
-      Coder newCoder(int size) {
-        return new ByteOutputWrappingArrayCoder(size);
-      }
-    };
+            @Override
+            Coder newCoder(int size) {
+                return new OutputStreamCoder(size, /* blockSize= */ size);
+            }
+        },
+        STREAM_MINIMUM_BUFFER_SIZE() {
+            @Override
+            Coder newCoder(int size) {
+                // Block Size 0 gets rounded up to minimum block size, see AbstractBufferedEncoder.
+                return new OutputStreamCoder(size, /* blockSize= */ 0);
+            }
+        },
+        BYTE_OUTPUT_WRAPPING_ARRAY() {
+            @Override
+            Coder newCoder(int size) {
+                return new ByteOutputWrappingArrayCoder(size);
+            }
+        };
 
     abstract Coder newCoder(int size);
 
-    /** Whether we can call CodedOutputStream.spaceLeft(). */
-    boolean supportsSpaceLeft() {
-      // Buffered encoders don't know how much space is left.
-      switch (this) {
-        case STREAM:
-        case STREAM_MINIMUM_BUFFER_SIZE:
-        case BYTE_OUTPUT_WRAPPING_ARRAY:
-          return false;
-        default:
-          return true;
-      }
+        /** Whether we can call CodedOutputStream.spaceLeft(). */
+        boolean supportsSpaceLeft() {
+            // Buffered encoders don't know how much space is left.
+            switch (this) {
+                case STREAM:
+                case STREAM_MINIMUM_BUFFER_SIZE:
+                case BYTE_OUTPUT_WRAPPING_ARRAY:
+                    return false;
+                default:
+                    return true;
+            }
+        }
     }
-  }
 
   /** Checks that invariants are maintained for varint round trip input and output. */
   @Test
@@ -359,90 +365,92 @@ public class CodedOutputStreamTest {
     assertWriteFixed64(bytes(0x78, 0x56, 0x34, 0x12, 0xf0, 0xde, 0xbc, 0x9a), 0x9abcdef012345678L);
   }
 
-  @Test
-  public void testWriteFixed32NoTag_outOfBounds_throws() throws Exception {
-    for (int i = 0; i < 4; i++) {
-      Coder coder = outputType.newCoder(i);
-      // Some coders throw immediately on write, some throw on flush.
-      @SuppressWarnings("AssertThrowsMultipleStatements")
-      OutOfSpaceException e =
-          assertThrows(
-              OutOfSpaceException.class,
-              () -> {
-                coder.stream().writeFixed32NoTag(1);
-                coder.stream().flush();
-              });
-      // STREAM writes one byte at a time.
-      if (outputType != OutputType.STREAM && outputType != OutputType.STREAM_MINIMUM_BUFFER_SIZE) {
-        assertThat(e).hasMessageThat().contains("len: 4");
-      }
-      if (outputType.supportsSpaceLeft()) {
-        assertThat(coder.stream().spaceLeft()).isEqualTo(i);
-      }
+    @Test
+    public void testWriteFixed32NoTag_outOfBounds_throws() throws Exception {
+        for (int i = 0; i < 4; i++) {
+            Coder coder = outputType.newCoder(i);
+            // Some coders throw immediately on write, some throw on flush.
+            @SuppressWarnings("AssertThrowsMultipleStatements")
+            OutOfSpaceException e =
+                    assertThrows(
+                            OutOfSpaceException.class,
+                            () -> {
+                                coder.stream().writeFixed32NoTag(1);
+                                coder.stream().flush();
+                            });
+            // STREAM writes one byte at a time.
+            if (outputType != OutputType.STREAM
+                    && outputType != OutputType.STREAM_MINIMUM_BUFFER_SIZE) {
+                assertThat(e).hasMessageThat().contains("len: 4");
+            }
+            if (outputType.supportsSpaceLeft()) {
+                assertThat(coder.stream().spaceLeft()).isEqualTo(i);
+            }
+        }
     }
-  }
 
-  @Test
-  public void testWriteFixed64NoTag_outOfBounds_throws() throws Exception {
-    for (int i = 0; i < 8; i++) {
-      Coder coder = outputType.newCoder(i);
-      // Some coders throw immediately on write, some throw on flush.
-      @SuppressWarnings("AssertThrowsMultipleStatements")
-      OutOfSpaceException e =
-          assertThrows(
-              OutOfSpaceException.class,
-              () -> {
-                coder.stream().writeFixed64NoTag(1);
-                coder.stream().flush();
-              });
-      if (outputType != OutputType.STREAM && outputType != OutputType.STREAM_MINIMUM_BUFFER_SIZE) {
-        assertThat(e).hasMessageThat().contains("len: 8");
-      }
-      if (outputType.supportsSpaceLeft()) {
-        assertThat(coder.stream().spaceLeft()).isEqualTo(i);
-      }
+    @Test
+    public void testWriteFixed64NoTag_outOfBounds_throws() throws Exception {
+        for (int i = 0; i < 8; i++) {
+            Coder coder = outputType.newCoder(i);
+            // Some coders throw immediately on write, some throw on flush.
+            @SuppressWarnings("AssertThrowsMultipleStatements")
+            OutOfSpaceException e =
+                    assertThrows(
+                            OutOfSpaceException.class,
+                            () -> {
+                                coder.stream().writeFixed64NoTag(1);
+                                coder.stream().flush();
+                            });
+            if (outputType != OutputType.STREAM
+                    && outputType != OutputType.STREAM_MINIMUM_BUFFER_SIZE) {
+                assertThat(e).hasMessageThat().contains("len: 8");
+            }
+            if (outputType.supportsSpaceLeft()) {
+                assertThat(coder.stream().spaceLeft()).isEqualTo(i);
+            }
+        }
     }
-  }
 
-  @Test
-  // Some coders throw immediately on write, some throw on flush.
-  @SuppressWarnings("AssertThrowsMultipleStatements")
-  public void testWriteUInt32NoTag_outOfBounds_throws() throws Exception {
-    for (int i = 0; i < 5; i++) {
-      Coder coder = outputType.newCoder(i);
-      assertThrows(
-          OutOfSpaceException.class,
-          () -> {
-            coder.stream().writeUInt32NoTag(Integer.MAX_VALUE);
-            coder.stream().flush();
-          });
+    @Test
+    // Some coders throw immediately on write, some throw on flush.
+    @SuppressWarnings("AssertThrowsMultipleStatements")
+    public void testWriteUInt32NoTag_outOfBounds_throws() throws Exception {
+        for (int i = 0; i < 5; i++) {
+            Coder coder = outputType.newCoder(i);
+            assertThrows(
+                    OutOfSpaceException.class,
+                    () -> {
+                        coder.stream().writeUInt32NoTag(Integer.MAX_VALUE);
+                        coder.stream().flush();
+                    });
 
-      // Space left should not go negative.
-      if (outputType.supportsSpaceLeft()) {
-        assertWithMessage("i=%s", i).that(coder.stream().spaceLeft()).isAtLeast(0);
-      }
+            // Space left should not go negative.
+            if (outputType.supportsSpaceLeft()) {
+                assertWithMessage("i=%s", i).that(coder.stream().spaceLeft()).isAtLeast(0);
+            }
+        }
     }
-  }
 
-  @Test
-  // Some coders throw immediately on write, some throw on flush.
-  @SuppressWarnings("AssertThrowsMultipleStatements")
-  public void testWriteUInt64NoTag_outOfBounds_throws() throws Exception {
-    for (int i = 0; i < 9; i++) {
-      Coder coder = outputType.newCoder(i);
-      assertThrows(
-          OutOfSpaceException.class,
-          () -> {
-            coder.stream().writeUInt64NoTag(Long.MAX_VALUE);
-            coder.stream().flush();
-          });
+    @Test
+    // Some coders throw immediately on write, some throw on flush.
+    @SuppressWarnings("AssertThrowsMultipleStatements")
+    public void testWriteUInt64NoTag_outOfBounds_throws() throws Exception {
+        for (int i = 0; i < 9; i++) {
+            Coder coder = outputType.newCoder(i);
+            assertThrows(
+                    OutOfSpaceException.class,
+                    () -> {
+                        coder.stream().writeUInt64NoTag(Long.MAX_VALUE);
+                        coder.stream().flush();
+                    });
 
-      // Space left should not go negative.
-      if (outputType.supportsSpaceLeft()) {
-        assertWithMessage("i=%s", i).that(coder.stream().spaceLeft()).isAtLeast(0);
-      }
+            // Space left should not go negative.
+            if (outputType.supportsSpaceLeft()) {
+                assertWithMessage("i=%s", i).that(coder.stream().spaceLeft()).isAtLeast(0);
+            }
+        }
     }
-  }
 
   /** Test encodeZigZag32() and encodeZigZag64(). */
   @Test
@@ -605,13 +613,13 @@ public class CodedOutputStreamTest {
   /** Test getTotalBytesWritten() */
   @Test
   public void testGetTotalBytesWritten() throws Exception {
-    assume().that(outputType).isEqualTo(OutputType.STREAM);
+        assume().that(outputType).isEqualTo(OutputType.STREAM);
 
-    Coder coder = outputType.newCoder(/* size= */ 16 * 1024);
+        Coder coder = outputType.newCoder(/* size= */ 16 * 1024);
 
-    // Write some some bytes (more than the buffer can hold) and verify that totalWritten
-    // is correct.
-    byte[] value = "abcde".getBytes(Internal.UTF_8);
+        // Write some some bytes (more than the buffer can hold) and verify that totalWritten
+        // is correct.
+        byte[] value = "abcde".getBytes(Internal.UTF_8);
     for (int i = 0; i < 1024; ++i) {
       coder.stream().writeRawBytes(value, 0, value.length);
     }
@@ -704,43 +712,43 @@ public class CodedOutputStreamTest {
     assertThat(rawBytes).isEqualTo(new byte[] {1, 1, 1, 1, 1});
     if (outputType.supportsSpaceLeft()) {
       assertThat(coder.stream().spaceLeft()).isEqualTo(0);
-    }
+        }
 
-    // Some coders throw immediately on write, some throw on flush.
-    @SuppressWarnings("AssertThrowsMultipleStatements")
-    OutOfSpaceException e =
-        assertThrows(
-            OutOfSpaceException.class,
-            () -> {
-              coder.stream().write((byte) 1);
-              coder.stream().flush();
-            });
-    assertThat(e).hasMessageThat().contains("len: 1");
-    if (outputType.supportsSpaceLeft()) {
-      assertThat(coder.stream().spaceLeft()).isEqualTo(0);
+        // Some coders throw immediately on write, some throw on flush.
+        @SuppressWarnings("AssertThrowsMultipleStatements")
+        OutOfSpaceException e =
+                assertThrows(
+                        OutOfSpaceException.class,
+                        () -> {
+                            coder.stream().write((byte) 1);
+                            coder.stream().flush();
+                        });
+        assertThat(e).hasMessageThat().contains("len: 1");
+        if (outputType.supportsSpaceLeft()) {
+            assertThat(coder.stream().spaceLeft()).isEqualTo(0);
     }
   }
 
-  @Test
-  public void testWriteRawBytes_byteBuffer() throws Exception {
-    byte[] value = "abcde".getBytes(Internal.UTF_8);
-    Coder coder = outputType.newCoder(100);
-    CodedOutputStream codedStream = coder.stream();
-    ByteBuffer byteBuffer = ByteBuffer.wrap(value, /* offset= */ 0, /* length= */ 1);
-    assertThat(byteBuffer.capacity()).isEqualTo(5);
-    // This will actually write 5 bytes into the CodedOutputStream as the
-    // ByteBuffer's capacity() is 5.
-    codedStream.writeRawBytes(byteBuffer);
-    assertThat(codedStream.getTotalBytesWritten()).isEqualTo(5);
+    @Test
+    public void testWriteRawBytes_byteBuffer() throws Exception {
+        byte[] value = "abcde".getBytes(Internal.UTF_8);
+        Coder coder = outputType.newCoder(100);
+        CodedOutputStream codedStream = coder.stream();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(value, /* offset= */ 0, /* length= */ 1);
+        assertThat(byteBuffer.capacity()).isEqualTo(5);
+        // This will actually write 5 bytes into the CodedOutputStream as the
+        // ByteBuffer's capacity() is 5.
+        codedStream.writeRawBytes(byteBuffer);
+        assertThat(codedStream.getTotalBytesWritten()).isEqualTo(5);
 
-    // writeRawBytes shouldn't affect the ByteBuffer's state.
-    assertThat(byteBuffer.position()).isEqualTo(0);
-    assertThat(byteBuffer.limit()).isEqualTo(1);
+        // writeRawBytes shouldn't affect the ByteBuffer's state.
+        assertThat(byteBuffer.position()).isEqualTo(0);
+        assertThat(byteBuffer.limit()).isEqualTo(1);
 
-    // The correct way to write part of an array using ByteBuffer.
-    codedStream.writeRawBytes(ByteBuffer.wrap(value, /* offset= */ 2, /* length= */ 1).slice());
+        // The correct way to write part of an array using ByteBuffer.
+        codedStream.writeRawBytes(ByteBuffer.wrap(value, /* offset= */ 2, /* length= */ 1).slice());
 
-    codedStream.flush();
+        codedStream.flush();
     byte[] result = coder.toByteArray();
     assertThat(result).hasLength(6);
     for (int i = 0; i < 5; i++) {
@@ -749,76 +757,82 @@ public class CodedOutputStreamTest {
     assertThat(value[2]).isEqualTo(result[5]);
   }
 
-  @Test
-  public void testWrite_byteBuffer() throws Exception {
-    byte[] bytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    Coder coder = outputType.newCoder(100);
-    CodedOutputStream codedStream = coder.stream();
-    ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-    assertThat(byteBuffer.capacity()).isEqualTo(10);
-    assertThat(byteBuffer.position()).isEqualTo(0);
-    assertThat(byteBuffer.limit()).isEqualTo(10);
+    @Test
+    public void testWrite_byteBuffer() throws Exception {
+        byte[] bytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        Coder coder = outputType.newCoder(100);
+        CodedOutputStream codedStream = coder.stream();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+        assertThat(byteBuffer.capacity()).isEqualTo(10);
+        assertThat(byteBuffer.position()).isEqualTo(0);
+        assertThat(byteBuffer.limit()).isEqualTo(10);
 
-    codedStream.write(byteBuffer);
-    codedStream.flush();
-    assertThat(codedStream.getTotalBytesWritten()).isEqualTo(10);
-
-    // write should update the ByteBuffer's state.
-    assertThat(byteBuffer.position()).isEqualTo(10);
-    assertThat(byteBuffer.limit()).isEqualTo(10);
-
-    assertThat(coder.toByteArray()).isEqualTo(bytes);
-  }
-
-  @Test
-  // Some coders throw immediately on write, some throw on flush.
-  @SuppressWarnings("AssertThrowsMultipleStatements")
-  public void testWrite_byteBuffer_outOfSpace() throws Exception {
-    byte[] bytes = new byte[10];
-
-    for (int i = 0; i < 10; i++) {
-      ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-      Coder coder = outputType.newCoder(i);
-      CodedOutputStream codedStream = coder.stream();
-      assertThrows("i=" + i, OutOfSpaceException.class, () -> {
         codedStream.write(byteBuffer);
         codedStream.flush();
-      });
+        assertThat(codedStream.getTotalBytesWritten()).isEqualTo(10);
+
+        // write should update the ByteBuffer's state.
+        assertThat(byteBuffer.position()).isEqualTo(10);
+        assertThat(byteBuffer.limit()).isEqualTo(10);
+
+        assertThat(coder.toByteArray()).isEqualTo(bytes);
     }
-  }
 
-  @Test
-  public void testWrite_byteArray() throws Exception {
-    byte[] bytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    Coder coder = outputType.newCoder(100);
-    CodedOutputStream codedStream = coder.stream();
+    @Test
+    // Some coders throw immediately on write, some throw on flush.
+    @SuppressWarnings("AssertThrowsMultipleStatements")
+    public void testWrite_byteBuffer_outOfSpace() throws Exception {
+        byte[] bytes = new byte[10];
 
-    codedStream.write(bytes, 0, bytes.length);
-    codedStream.flush();
-    assertThat(codedStream.getTotalBytesWritten()).isEqualTo(10);
+        for (int i = 0; i < 10; i++) {
+            ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+            Coder coder = outputType.newCoder(i);
+            CodedOutputStream codedStream = coder.stream();
+            assertThrows(
+                    "i=" + i,
+                    OutOfSpaceException.class,
+                    () -> {
+                        codedStream.write(byteBuffer);
+                        codedStream.flush();
+                    });
+        }
+    }
 
-    assertThat(coder.toByteArray()).isEqualTo(bytes);
-  }
+    @Test
+    public void testWrite_byteArray() throws Exception {
+        byte[] bytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        Coder coder = outputType.newCoder(100);
+        CodedOutputStream codedStream = coder.stream();
 
-  @Test
-  // Some coders throw immediately on write, some throw on flush.
-  @SuppressWarnings("AssertThrowsMultipleStatements")
-  public void testWrite_byteArray_outOfSpace() throws Exception {
-    byte[] bytes = new byte[10];
-
-    for (int i = 0; i < 10; i++) {
-      Coder coder = outputType.newCoder(i);
-      CodedOutputStream codedStream = coder.stream();
-      assertThrows("i=" + i, OutOfSpaceException.class, () -> {
         codedStream.write(bytes, 0, bytes.length);
         codedStream.flush();
-      });
-    }
-  }
+        assertThat(codedStream.getTotalBytesWritten()).isEqualTo(10);
 
-  @Test
-  public void testWriteByteArrayNoTag_withOffsets() throws Exception {
-    assume().that(outputType).isEqualTo(OutputType.ARRAY);
+        assertThat(coder.toByteArray()).isEqualTo(bytes);
+    }
+
+    @Test
+    // Some coders throw immediately on write, some throw on flush.
+    @SuppressWarnings("AssertThrowsMultipleStatements")
+    public void testWrite_byteArray_outOfSpace() throws Exception {
+        byte[] bytes = new byte[10];
+
+        for (int i = 0; i < 10; i++) {
+            Coder coder = outputType.newCoder(i);
+            CodedOutputStream codedStream = coder.stream();
+            assertThrows(
+                    "i=" + i,
+                    OutOfSpaceException.class,
+                    () -> {
+                        codedStream.write(bytes, 0, bytes.length);
+                        codedStream.flush();
+                    });
+        }
+    }
+
+    @Test
+    public void testWriteByteArrayNoTag_withOffsets() throws Exception {
+        assume().that(outputType).isEqualTo(OutputType.ARRAY);
 
     byte[] fullArray = bytes(0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88);
     Coder coder = outputType.newCoder(4);
@@ -869,35 +883,36 @@ public class CodedOutputStreamTest {
     }
   }
 
-  // TODO: This test can be deleted once we properly throw IOException while
-  // encoding invalid UTF-8 strings.
-  @Test
-  public void testSerializeInvalidUtf8FollowedByOutOfSpace() throws Exception {
-    final int notEnoughBytes = 4;
-    // This test fails for BYTE_OUTPUT_WRAPPING_ARRAY
-    assume().that(outputType).isNotEqualTo(OutputType.BYTE_OUTPUT_WRAPPING_ARRAY);
+    // TODO: This test can be deleted once we properly throw IOException while
+    // encoding invalid UTF-8 strings.
+    @Test
+    public void testSerializeInvalidUtf8FollowedByOutOfSpace() throws Exception {
+        final int notEnoughBytes = 4;
+        // This test fails for BYTE_OUTPUT_WRAPPING_ARRAY
+        assume().that(outputType).isNotEqualTo(OutputType.BYTE_OUTPUT_WRAPPING_ARRAY);
 
-    Coder coder = outputType.newCoder(notEnoughBytes);
+        Coder coder = outputType.newCoder(notEnoughBytes);
 
-    String invalidString = newString(Character.MIN_HIGH_SURROGATE, 'f', 'o', 'o', 'b', 'a', 'r');
+        String invalidString =
+                newString(Character.MIN_HIGH_SURROGATE, 'f', 'o', 'o', 'b', 'a', 'r');
+        // Some coders throw immediately on write, some throw on flush.
+        @SuppressWarnings("AssertThrowsMultipleStatements")
+        OutOfSpaceException e =
+                assertThrows(
+                        OutOfSpaceException.class,
+                        () -> {
+                            coder.stream().writeStringNoTag(invalidString);
+                            coder.stream().flush();
+                        });
+        assertThat(e).hasCauseThat().isInstanceOf(IndexOutOfBoundsException.class);
+    }
+
+    /** Regression test for https://github.com/protocolbuffers/protobuf/issues/292 */
+    @Test
     // Some coders throw immediately on write, some throw on flush.
     @SuppressWarnings("AssertThrowsMultipleStatements")
-    OutOfSpaceException e =
-        assertThrows(
-            OutOfSpaceException.class,
-            () -> {
-              coder.stream().writeStringNoTag(invalidString);
-              coder.stream().flush();
-            });
-    assertThat(e).hasCauseThat().isInstanceOf(IndexOutOfBoundsException.class);
-  }
-
-  /** Regression test for https://github.com/protocolbuffers/protobuf/issues/292 */
-  @Test
-  // Some coders throw immediately on write, some throw on flush.
-  @SuppressWarnings("AssertThrowsMultipleStatements")
-  public void testCorrectExceptionThrowWhenEncodingStringsWithoutEnoughSpace() throws Exception {
-    String testCase = "Foooooooo";
+    public void testCorrectExceptionThrowWhenEncodingStringsWithoutEnoughSpace() throws Exception {
+        String testCase = "Foooooooo";
     assertThat(CodedOutputStream.computeUInt32SizeNoTag(testCase.length()))
         .isEqualTo(CodedOutputStream.computeUInt32SizeNoTag(testCase.length() * 3));
     assertThat(CodedOutputStream.computeStringSize(1, testCase)).isEqualTo(11);
@@ -908,14 +923,16 @@ public class CodedOutputStreamTest {
     // Stream's buffering means we don't throw.
     assume().that(outputType).isNotEqualTo(OutputType.STREAM);
 
-    for (int i = 0; i < 11; i++) {
-      Coder coder = outputType.newCoder(i);
-      assertThrows(OutOfSpaceException.class, () -> {
-        coder.stream().writeString(1, testCase);
-        coder.stream().flush();
-      });
+        for (int i = 0; i < 11; i++) {
+            Coder coder = outputType.newCoder(i);
+            assertThrows(
+                    OutOfSpaceException.class,
+                    () -> {
+                        coder.stream().writeString(1, testCase);
+                        coder.stream().flush();
+                    });
+        }
     }
-  }
 
   @Test
   public void testDifferentStringLengths() throws Exception {
@@ -949,27 +966,27 @@ public class CodedOutputStreamTest {
     assertThat(coder.toByteArray()).isEqualTo(new byte[] {3, 'a', 'b', 'c'});
   }
 
-  /**
-   * Parses the given bytes using writeFixed32NoTag() and checks that the result matches the given
-   * value.
-   */
-  private void assertWriteFixed32(byte[] data, int value) throws Exception {
-    Coder coder = outputType.newCoder(data.length);
-    coder.stream().writeFixed32NoTag(value);
-    coder.stream().flush();
-    assertThat(coder.toByteArray()).isEqualTo(data);
-  }
+    /**
+     * Parses the given bytes using writeFixed32NoTag() and checks that the result matches the given
+     * value.
+     */
+    private void assertWriteFixed32(byte[] data, int value) throws Exception {
+        Coder coder = outputType.newCoder(data.length);
+        coder.stream().writeFixed32NoTag(value);
+        coder.stream().flush();
+        assertThat(coder.toByteArray()).isEqualTo(data);
+    }
 
-  /**
-   * Parses the given bytes using writeFixed64NoTag() and checks that the result matches the given
-   * value.
-   */
-  private void assertWriteFixed64(byte[] data, long value) throws Exception {
-    Coder coder = outputType.newCoder(data.length);
-    coder.stream().writeFixed64NoTag(value);
-    coder.stream().flush();
-    assertThat(coder.toByteArray()).isEqualTo(data);
-  }
+    /**
+     * Parses the given bytes using writeFixed64NoTag() and checks that the result matches the given
+     * value.
+     */
+    private void assertWriteFixed64(byte[] data, long value) throws Exception {
+        Coder coder = outputType.newCoder(data.length);
+        coder.stream().writeFixed64NoTag(value);
+        coder.stream().flush();
+        assertThat(coder.toByteArray()).isEqualTo(data);
+    }
 
   private static String newString(char... chars) {
     return new String(chars);
@@ -1026,10 +1043,10 @@ public class CodedOutputStreamTest {
       coder.stream().flush();
       assertThat(coder.toByteArray()).isEqualTo(data);
 
-      // Also try computing size.
-      assertThat(data).hasLength(CodedOutputStream.computeUInt64SizeNoTag(value));
+            // Also try computing size.
+            assertThat(data).hasLength(CodedOutputStream.computeUInt64SizeNoTag(value));
+        }
     }
-  }
 
   private void assertVarintRoundTrip(long value) throws Exception {
     {

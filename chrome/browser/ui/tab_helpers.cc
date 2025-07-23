@@ -157,6 +157,7 @@
 #include "rlz/buildflags/buildflags.h"
 #include "third_party/blink/public/common/features.h"
 #include "ui/accessibility/accessibility_features.h"
+#include "third_party/widevine/cdm/buildflags.h"
 
 #if BUILDFLAG(IS_ANDROID)
 #include "base/android/build_info.h"
@@ -288,6 +289,10 @@
 #include "chrome/browser/safe_browsing/tailored_security/tailored_security_url_observer.h"
 #include "chrome/browser/safe_browsing/trigger_creator.h"
 #include "components/safe_browsing/content/browser/safe_browsing_tab_observer.h"
+#endif
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+#include "chrome/renderer/drm/drm_tab_helper.h"
 #endif
 
 using content::WebContents;
@@ -782,6 +787,10 @@ void TabHelpers::AttachTabHelpers(WebContents* web_contents) {
   }
 #elif BUILDFLAG(ENABLE_PRINTING)
   printing::InitializePrintingForWebContents(web_contents);
+#endif
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+  DrmTabHelper::CreateForWebContents(web_contents);
 #endif
 
   // --- Section 4: The warning ---

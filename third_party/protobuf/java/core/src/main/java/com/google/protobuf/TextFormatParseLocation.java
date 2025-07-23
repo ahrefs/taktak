@@ -58,11 +58,10 @@ public final class TextFormatParseLocation {
     return String.format("ParseLocation{line=%d, column=%d}", line, column);
   }
 
-  @Override
-  public boolean equals(
-          Object o) {
-    if (o == this) {
-      return true;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
     }
     if (!(o instanceof TextFormatParseLocation)) {
       return false;

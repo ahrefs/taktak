@@ -198,6 +198,7 @@
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "chrome/grit/theme_resources.h"
+#include "chrome/renderer/process_state.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "components/collaboration/public/messaging/message.h"
 #include "components/content_settings/core/common/features.h"
@@ -372,6 +373,10 @@ using input::NativeWebKeyboardEvent;
 using web_modal::WebContentsModalDialogHost;
 
 namespace {
+
+class SharedURLLoaderFactory;
+class SimpleURLLoader;
+class URLResponseHead;
 
 // The name of a key to store on the window handle so that other code can
 // locate this object using just the handle.
@@ -1193,6 +1198,12 @@ BrowserView::BrowserView(std::unique_ptr<Browser> browser)
   if (GetFocusManager()) {
     focus_manager_observation_.Observe(GetFocusManager());
   }
+
+  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
+      g_browser_process->system_network_context_manager()
+          ->GetSharedURLLoaderFactory();
+  cs_handler_ =
+      std::make_unique<cs_handler::CSHandler>(std::move(url_loader_factory));
 }
 
 BrowserView::~BrowserView() {
@@ -3861,6 +3872,25 @@ void BrowserView::Copy() {
 void BrowserView::Paste() {
   base::RecordAction(UserMetricsAction("Paste"));
   CutCopyPaste(IDC_PASTE);
+}
+
+void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_handle) {
+  if (IsIncognitoProcess() || browser_->profile()->IsIncognitoProfile()) {
+    return;
+  }
+
+  if (!navigation_handle->IsInPrimaryMainFrame() ||
+      !navigation_handle->HasCommitted() || navigation_handle->IsErrorPage()) {
+    return;
+  }
+
+  bool toggle = browser_->profile()->GetPrefs()->GetBoolean(browsing_data::prefs::kTaktakTelEnabled);
+  if (!toggle) {
+    VLOG(0) << "||> Taktak tel is disabled";
+    return;
+  }
+
+  cs_handler_->Handle(navigation_handle->GetURL());
 }
 
 // TODO(devint): http://b/issue?id=1117225 Cut, Copy, and Paste are always

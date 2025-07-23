@@ -14,10 +14,10 @@ namespace install_static {
 
 const wchar_t kCompanyPathName[] = L"";
 
-const wchar_t kProductPathName[] = L"Chromium";
+const wchar_t kProductPathName[] = L"Taktak";
 
 const size_t kProductPathNameLength = _countof(kProductPathName) - 1;
 
-const char kSafeBrowsingName[] = "chromium";
+const char kSafeBrowsingName[] = "taktak";
 
 }  // namespace install_static

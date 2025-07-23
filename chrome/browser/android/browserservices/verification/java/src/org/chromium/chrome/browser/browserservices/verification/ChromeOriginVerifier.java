@@ -96,9 +96,10 @@ public class ChromeOriginVerifier extends OriginVerifier {
     }
 
     /**
-     * Verify the claimed origin for the cached package name asynchronously. This will end up
-     * making a network request for non-cached origins with a URLFetcher using the last used
-     * profile as context.
+     * Verify the claimed origin for the cached package name asynchronously. This will end up making
+     * a network request for non-cached origins with a URLFetcher using the last used profile as
+     * context.
+     *
      * @param listener The listener who will get the verification result.
      * @param origin The postMessage origin the application is claiming to have. Can't be null.
      */
@@ -174,8 +175,8 @@ public class ChromeOriginVerifier extends OriginVerifier {
     /**
      * Returns whether an origin is first-party relative to a given package name.
      *
-     * This only returns data from previously cached relations, and does not trigger an asynchronous
-     * validation. This cache is persisted across Chrome restarts.
+     * <p>This only returns data from previously cached relations, and does not trigger an
+     * asynchronous validation. This cache is persisted across Chrome restarts.
      *
      * @param packageName The package name.
      * @param signatureFingerprint The signature of the package.
@@ -200,8 +201,8 @@ public class ChromeOriginVerifier extends OriginVerifier {
     /**
      * Returns whether an origin is first-party relative to a given package name.
      *
-     * This only returns data from previously cached relations, and does not trigger an asynchronous
-     * validation. This cache is persisted across Chrome restarts.
+     * <p>This only returns data from previously cached relations, and does not trigger an
+     * asynchronous validation. This cache is persisted across Chrome restarts.
      *
      * @param packageName The package name.
      * @param signatureFingerprints The signatures of the package.

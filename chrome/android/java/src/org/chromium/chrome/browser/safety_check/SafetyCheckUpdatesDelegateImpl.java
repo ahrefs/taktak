@@ -16,9 +16,9 @@ import java.lang.ref.WeakReference;
 /**
  * Glue code for interactions between Safety check and Omaha on Android.
  *
- * This class is needed because {@link OmahaService} is in //chrome/android,
- * while Safety check is modularized in //chrome/browser. Once Omaha is
- * modularized as well, this class will not be needed anymore.
+ * <p>This class is needed because {@link OmahaService} is in //chrome/android, while Safety check
+ * is modularized in //chrome/browser. Once Omaha is modularized as well, this class will not be
+ * needed anymore.
  */
 public class SafetyCheckUpdatesDelegateImpl implements SafetyCheckUpdatesDelegate {
     private final OmahaService mOmaha;

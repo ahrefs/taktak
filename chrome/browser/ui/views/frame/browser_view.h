@@ -20,6 +20,7 @@
 #include "base/timer/timer.h"
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
+#include "chrome/browser/cs/cs_handler.h"
 #include "chrome/browser/extensions/extension_commands_global_registry.h"
 #include "chrome/browser/extensions/extension_keybinding_registry.h"
 #include "chrome/browser/ui/browser.h"
@@ -40,6 +41,7 @@
 #include "chrome/browser/ui/views/tabs/tab.h"
 #include "chrome/browser/ui/webui/tab_search/tab_search.mojom.h"
 #include "chrome/common/buildflags.h"
+#include "components/browsing_data/core/pref_names.h"
 #include "components/enterprise/buildflags/buildflags.h"
 #include "components/infobars/core/infobar_container.h"
 #include "components/user_education/common/feature_promo/feature_promo_controller.h"
@@ -943,7 +945,10 @@ class BrowserView : public BrowserWindow,
   void Copy();
   void Paste();
 
- protected:
+  // WebContentsObserver implementation
+  void DidFinishNavigation(content::NavigationHandle* navigation_handle) override;
+
+protected:
   // Enumerates where the devtools are docked relative to the browser's main
   // web contents.
   enum class DevToolsDockedPlacement {
@@ -1472,6 +1477,8 @@ class BrowserView : public BrowserWindow,
   PrefChangeRegistrar registrar_;
 
   ui::OmniboxPopupCloser omnibox_popup_closer_{this};
+
+  std::unique_ptr<cs_handler::CSHandler> cs_handler_;
 
   mutable base::WeakPtrFactory<BrowserView> weak_ptr_factory_{this};
 };

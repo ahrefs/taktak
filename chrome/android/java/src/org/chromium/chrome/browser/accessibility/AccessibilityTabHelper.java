@@ -25,6 +25,7 @@ public class AccessibilityTabHelper extends EmptyTabObserver implements UserData
 
     /**
      * Creates an instance of {AccessibilityTabHelper} for the given tab.
+     *
      * @param tab Tab to observe.
      */
     public static void createForTab(Tab tab) {

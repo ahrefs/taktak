@@ -58,8 +58,8 @@ public class ContextualSearchBarControl {
     private final ContextualSearchImageControl mImageControl;
 
     /**
-     * The opacity of the Bar's Search Context.
-     * This text control may not be initialized until the opacity is set beyond 0.
+     * The opacity of the Bar's Search Context. This text control may not be initialized until the
+     * opacity is set beyond 0.
      */
     private float mSearchBarContextOpacity;
 

@@ -2625,6 +2625,7 @@ Poți gestiona setările contului dacă instalezi aplicația Family Link pe disp
 <translation id="2790112944253231361">A modificat această filă</translation>
 <translation id="2790750268015892264">Aplicațiile web izolate nu pot controla cititoarele de carduri inteligente. Aplicațiile nu vor avea acces la carduri inteligente.</translation>
 <translation id="2791529110887957050">Elimină Linux</translation>
+<translation id="279182647442890396">Ștergi informațiile?</translation>
 <translation id="2791952154587244007">A apărut o eroare. Aplicația de tip chioșc nu se va putea lansa automat pe acest dispozitiv.</translation>
 <translation id="2792465461386711506">Activează Sincronizarea Chrome pentru a vedea filele Chrome recente pe telefon</translation>
 <translation id="2792697226874849938">Imagine pentru restricție</translation>
@@ -4620,6 +4621,7 @@ Mesaj de la server: <ph name="SERVER_MSG" /></translation>
 <translation id="4203769790323223880">Folosirea camerei foto nu este permisă</translation>
 <translation id="4204415812590935863">Momentan, nu se poate crea o temă.</translation>
 <translation id="4205157409548006256">A apărut o eroare la configurarea Linux.</translation>
+<translation id="4205643719206044108">Pentru a oferi sugestii, site-urile pe care le accesezi și conținutul paginilor se trimit la Google</translation>
 <translation id="4206144641569145248">Extraterestru</translation>
 <translation id="4206323443866416204">Raport de feedback</translation>
 <translation id="4206585797409671301">Are permisiunea de a afișa solicitări</translation>

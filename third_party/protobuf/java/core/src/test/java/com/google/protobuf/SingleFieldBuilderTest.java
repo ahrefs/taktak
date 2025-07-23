@@ -9,11 +9,12 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import proto2_unittest.UnittestProto.TestAllTypes;
-import proto2_unittest.UnittestProto.TestAllTypesOrBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.TestAllTypes;
+import proto2_unittest.UnittestProto.TestAllTypesOrBuilder;
 
 /**
  * Tests for {@link SingleFieldBuilder}. This tests basic functionality. More extensive testing is

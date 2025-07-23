@@ -213,6 +213,7 @@ void SettingsUI::RegisterProfilePrefs(
 
 SettingsUI::SettingsUI(content::WebUI* web_ui)
     : ui::MojoWebUIController(web_ui, /*enable_chrome_send=*/true) {
+
   Profile* profile = Profile::FromWebUI(web_ui);
   content::WebUIDataSource* html_source =
       content::WebUIDataSource::CreateAndAdd(

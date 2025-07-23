@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "base/functional/callback_forward.h"
+
 #ifndef CHROME_BROWSER_COMPONENT_UPDATER_WIDEVINE_CDM_COMPONENT_INSTALLER_H_
 #define CHROME_BROWSER_COMPONENT_UPDATER_WIDEVINE_CDM_COMPONENT_INSTALLER_H_
 
@@ -17,6 +19,8 @@ class ComponentUpdateService;
 // 4) Register the Widevine CDM (via the adapter) with Chrome.
 // The first part is IO intensive so we do it asynchronously in the file thread.
 void RegisterWidevineCdmComponent(ComponentUpdateService* cus);
+
+void RegisterWidevineCdmComponentWithCallback(ComponentUpdateService* cus, base::OnceClosure callback);
 
 }  // namespace component_updater
 

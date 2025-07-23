@@ -1,0 +1,64 @@
+<!--Copyright (c) 2025 The Taktak Authors. All rights reserved.-->
+<!--This Source Code Form is subject to the terms of the Mozilla Public-->
+<!--License, v. 2.0. If a copy of the MPL was not distributed with this file,-->
+<!--You can obtain one at https://mozilla.org/MPL/2.0/.-->
+
+<!doctype html>
+<html dir="$i18n{textdirection}" lang="$i18n{language}">
+<head>
+    <meta charset="utf-8">
+    <title>$i18n{title}</title>
+    <link rel="stylesheet" href="chrome://theme/colors.css?sets=ui,chrome">
+    <link rel="stylesheet" href="chrome://resources/css/text_defaults_md.css">
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            background-color: var(--color-yep-chat-panel-background);
+            color: var(--color-side-panel-card-primary-foreground);
+        }
+
+        *, *:before, *:after {
+            padding: 0;
+            margin: 0;
+            box-sizing: inherit;
+        }
+
+        h1, h2, h3, h4, h5, h6, p, ol, ul {
+            margin: 0;
+            padding: 0;
+            font-weight: normal;
+            margin-block-start: 0;
+            margin-block-end: 0;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        blockquote {
+            margin: 0;
+            padding: 0;
+            border: none;
+            font-style: normal;
+            background: none;
+            color: inherit;
+            font-size: inherit;
+            line-height: inherit;
+        }
+
+        button:focus, button:active, button:hover {
+            outline: none;
+            border: none;
+        }
+
+    </style>
+</head>
+<body>
+<chat-app></chat-app>
+<script type="module" src="chat_app.js"></script>
+</body>
+</html>

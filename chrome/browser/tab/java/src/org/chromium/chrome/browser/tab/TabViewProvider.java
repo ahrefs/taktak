@@ -17,15 +17,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * An interface that provides a {@link View} to be shown in a {@link Tab}.
- * Refer to the Javadoc on {@link TabViewManager} to learn how to add a new {@link TabViewProvider}
- * to a {@link Tab}.
+ * An interface that provides a {@link View} to be shown in a {@link Tab}. Refer to the Javadoc on
+ * {@link TabViewManager} to learn how to add a new {@link TabViewProvider} to a {@link Tab}.
  */
 @NullMarked
 public interface TabViewProvider {
     /**
-     * Represents each {@link TabViewProvider} implementer. Please note that the integer values
-     * bear no ordering or prioritization meaning.
+     * Represents each {@link TabViewProvider} implementer. Please note that the integer values bear
+     * no ordering or prioritization meaning.
      */
     @IntDef({Type.SUSPENDED_TAB, Type.SAD_TAB, Type.PAINT_PREVIEW, Type.NEW_DOWNLOAD_TAB})
     @Retention(RetentionPolicy.SOURCE)

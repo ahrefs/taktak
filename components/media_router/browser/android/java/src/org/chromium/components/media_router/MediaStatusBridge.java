@@ -15,8 +15,8 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 
 /**
- * Wrapper layer that exposes a gms.cast.MediaStatus to native code.
- * See also media/base/media_status.h.
+ * Wrapper layer that exposes a gms.cast.MediaStatus to native code. See also
+ * media/base/media_status.h.
  */
 @JNINamespace("media_router")
 @NullMarked
@@ -56,8 +56,8 @@ public class MediaStatusBridge {
     }
 
     /**
-     * The main title of the media. For example, in a MediaStatus representing
-     * a YouTube Cast session, this could be the title of the video.
+     * The main title of the media. For example, in a MediaStatus representing a YouTube Cast
+     * session, this could be the title of the video.
      */
     @CalledByNative
     public @Nullable String title() {

@@ -187,8 +187,12 @@ void AddSysColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
                                         {kColorSysSurface}, 0x14);
   mixer[kColorSysSurface3] = AlphaBlend({kColorSysSurfaceNumberedForeground},
                                         {kColorSysSurface}, 0x1C);
-  mixer[kColorSysSurface4] = AlphaBlend({kColorSysSurfaceNumberedForeground},
-                                        {kColorSysSurface}, 0x1E);
+
+  // mixer[kColorSysSurface4] = AlphaBlend({kColorSysSurfaceNumberedForeground},
+  //                                        {kColorSysSurface}, 0x1E);
+  // Taktak - Omnibox background in light theme
+  mixer[kColorSysSurface4] = {SkColorSetRGB(0xEB, 0xE9, 0xF0)};
+
   mixer[kColorSysSurface5] = AlphaBlend({kColorSysSurfaceNumberedForeground},
                                         {kColorSysSurface}, 0x23);
 
@@ -228,18 +232,26 @@ void AddSysColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
 
   mixer[kColorSysHeader] = {dark_mode ? kColorRefNeutral12
                                       : kColorRefPrimary90};
-  mixer[kColorSysHeaderInactive] = {
-      dark_mode
-          ? AlphaBlend({kColorSysHeader}, {kColorRefNeutral25}, 0x99)
-          : AlphaBlend({kColorSysHeader}, {kColorSysSurfaceVariant}, 0x48)};
+  //  mixer[kColorSysHeaderInactive] = {
+  //      dark_mode
+  //          ? AlphaBlend({kColorSysHeader}, {kColorRefNeutral25}, 0x99)
+  //          : AlphaBlend({kColorSysHeader}, {kColorSysSurfaceVariant}, 0x48)};
+  // Taktak - inactive or dragged tabstrip background color
+  mixer[kColorSysHeaderInactive] = {dark_mode ? kColorRefNeutral12
+                                              : kColorRefPrimary90};
+
   mixer[kColorSysHeaderContainer] = {dark_mode ? kColorRefNeutral25
                                                : kColorRefPrimary95};
   mixer[kColorSysHeaderContainerInactive] = {dark_mode ? kColorRefNeutral25
                                                        : kColorRefNeutral100};
-  mixer[kColorSysOnHeaderDivider] = {dark_mode ? kColorRefNeutral25
-                                               : kColorRefPrimary80};
+
+  // Taktak - make tab divider color the same in active or inactive state
+  mixer[kColorSysOnHeaderDivider] = {
+      dark_mode ? kColorRefNeutral25
+                : kColorRefNeutral80 /* kColorRefPrimary80 */};
   mixer[kColorSysOnHeaderDividerInactive] = {dark_mode ? kColorRefNeutral25
                                                        : kColorRefNeutral80};
+
   mixer[kColorSysOnHeaderPrimary] = {dark_mode ? kColorRefPrimary80
                                                : kColorRefPrimary40};
   mixer[kColorSysOnHeaderPrimaryInactive] = {dark_mode ? kColorRefNeutral80
@@ -355,6 +367,9 @@ void AddSysColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
   // Experimentation.
   mixer[kColorSysOmniboxContainer] = {dark_mode ? kColorRefNeutral15
                                                 : kColorSysSurface4};
+
+  // Taktak
+  mixer[kColorTransparent] = {SK_ColorTRANSPARENT};
 
   // Deprecated.
   // TODO(crbug.com/350783235): Remove remaining uses of these deprecated sys

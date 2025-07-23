@@ -25,17 +25,13 @@ import org.chromium.components.browser_ui.widget.RadioButtonWithDescriptionAndAu
 import org.chromium.components.browser_ui.widget.RadioButtonWithDescriptionLayout;
 
 /**
- * <p>
  * A radio button group used for Safe Browsing. Currently, it has 3 options: Enhanced Protection,
  * Standard Protection and No Protection. When the Enhanced Protection flag is disabled, the
  * Enhanced Protection option will be removed.
- * </p>
  *
- * <p>
- * This preference also provides an interface {@link
+ * <p>This preference also provides an interface {@link
  * RadioButtonGroupSafeBrowsingPreference.OnSafeBrowsingModeDetailsRequested} that is triggered when
  * more information of a Safe Browsing mode is requested.
- * </p>
  */
 @NullMarked
 public class RadioButtonGroupSafeBrowsingPreference extends Preference
@@ -146,8 +142,9 @@ public class RadioButtonGroupSafeBrowsingPreference extends Preference
 
     /**
      * Sets a listener that will be notified when details of a Safe Browsing mode are requested.
+     *
      * @param listener New listener that will be notified when details of a Safe Browsing mode are
-     *         requested.
+     *     requested.
      */
     @Initializer
     public void setSafeBrowsingModeDetailsRequestedListener(

@@ -394,6 +394,8 @@ std::u16string PermissionRequest::GetMessageTextFragment() const {
     case RequestType::kIdentityProvider:
       message_id = IDS_IDENTITY_PROVIDER_PERMISSION_FRAGMENT;
       break;
+    case RequestType::kWidevine:
+      NOTREACHED();
   }
   DCHECK_NE(0, message_id);
   return l10n_util::GetStringUTF16(message_id);

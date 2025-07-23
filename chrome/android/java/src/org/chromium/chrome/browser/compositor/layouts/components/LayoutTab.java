@@ -174,7 +174,7 @@ public class LayoutTab extends PropertyModel {
     /**
      * Initializes a {@link LayoutTab} to its default value so it can be reused.
      *
-     * @param maxContentTextureWidth  The maximum width of the page content in px.
+     * @param maxContentTextureWidth The maximum width of the page content in px.
      * @param maxContentTextureHeight The maximum height of the page content in px.
      */
     public void init(int maxContentTextureWidth, int maxContentTextureHeight) {

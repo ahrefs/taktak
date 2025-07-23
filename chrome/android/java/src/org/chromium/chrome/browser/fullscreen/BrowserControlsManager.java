@@ -563,7 +563,7 @@ public class BrowserControlsManager implements ActivityStateListener, BrowserCon
     public int getTopControlsHairlineHeight() {
         if (mControlContainer == null) {
             return 0;
-        }  else {
+        } else {
             return mControlContainer.getToolbarHairlineHeight();
         }
     }

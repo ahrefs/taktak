@@ -2624,6 +2624,7 @@
 <translation id="2790112944253231361">เปลี่ยนแท็บนี้แล้ว</translation>
 <translation id="2790750268015892264">Isolated Web App ไม่สามารถควบคุมเครื่องอ่านสมาร์ทการ์ดได้ แอปจะไม่มีสิทธิ์เข้าถึงสมาร์ทการ์ด</translation>
 <translation id="2791529110887957050">นำ Linux ออก</translation>
+<translation id="279182647442890396">ลบข้อมูลไหม</translation>
 <translation id="2791952154587244007">เกิดข้อผิดพลาดขึ้น แอปพลิเคชันคีออสก์ไม่สามารถเปิดอัตโนมัติได้บนอุปกรณ์นี้</translation>
 <translation id="2792465461386711506">เปิดการซิงค์ของ Chrome เพื่อดูแท็บ Chrome ล่าสุดจากโทรศัพท์ของคุณ</translation>
 <translation id="2792697226874849938">รูปภาพการจำกัด</translation>
@@ -4618,6 +4619,7 @@
 <translation id="4203769790323223880">ไม่อนุญาตให้ใช้กล้องถ่ายรูป</translation>
 <translation id="4204415812590935863">สร้างธีมไม่ได้ในขณะนี้</translation>
 <translation id="4205157409548006256">เกิดข้อผิดพลาดขณะกำหนดค่า Linux</translation>
+<translation id="4205643719206044108">ระบบจะแชร์เว็บไซต์ที่คุณเข้าชมและเนื้อหาหน้าเว็บกับ Google เพื่อแสดงคำแนะนำ</translation>
 <translation id="4206144641569145248">มนุษย์ต่างดาว</translation>
 <translation id="4206323443866416204">รายงานความคิดเห็น</translation>
 <translation id="4206585797409671301">ได้รับอนุญาตให้แสดงคำขอ</translation>

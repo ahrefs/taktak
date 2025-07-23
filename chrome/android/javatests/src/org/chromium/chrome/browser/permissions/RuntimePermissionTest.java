@@ -241,7 +241,7 @@ public class RuntimePermissionTest {
             value = Build.VERSION_CODES.P,
             reason =
                     "WRITE_EXTERNAL_STORAGE is not supported starting in Android R and Q requires a"
-                        + " workaround")
+                            + " workaround")
     public void testDenyRuntimeDownload() throws Exception {
         DownloadObserver observer =
                 new DownloadObserver() {

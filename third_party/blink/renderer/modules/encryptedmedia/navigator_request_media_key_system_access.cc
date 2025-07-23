@@ -8,7 +8,10 @@
 #include <vector>
 
 #include "base/memory/ptr_util.h"
+#include "components/drm/taktak_drm.mojom-blink.h"
+#include "mojo/public/cpp/bindings/associated_remote.h"
 #include "services/network/public/mojom/permissions_policy/permissions_policy_feature.mojom-blink.h"
+#include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
 #include "third_party/blink/public/platform/web_encrypted_media_client.h"
 #include "third_party/blink/public/platform/web_encrypted_media_request.h"
 #include "third_party/blink/public/platform/web_media_key_system_configuration.h"
@@ -19,6 +22,8 @@
 #include "third_party/blink/renderer/core/execution_context/execution_context.h"
 #include "third_party/blink/renderer/core/frame/local_dom_window.h"
 #include "third_party/blink/renderer/core/frame/local_frame.h"
+#include "third_party/blink/renderer/core/frame/local_frame_client.h"
+#include "third_party/blink/renderer/core/frame/web_local_frame_impl.h"
 #include "third_party/blink/renderer/core/inspector/console_message.h"
 #include "third_party/blink/renderer/modules/encryptedmedia/encrypted_media_utils.h"
 #include "third_party/blink/renderer/modules/encryptedmedia/media_key_session.h"
@@ -35,6 +40,7 @@
 #include "third_party/blink/renderer/platform/wtf/vector.h"
 
 namespace blink {
+class LocalFrame;
 
 namespace {
 
@@ -120,6 +126,26 @@ void MediaKeySystemAccessInitializer::StartRequestAsync() {
   media_client->RequestMediaKeySystemAccess(WebEncryptedMediaRequest(this));
 }
 
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
+// Notifies Taktak about the widevine key system access request.
+// This allows Taktak browser to handle DRM-related permissions and settings
+// when a webpage attempts to use Widevine DRM.
+void NotifyWidevineRequest(MediaKeySystemAccessInitializer* initializer,
+                            LocalFrame* frame) {
+  if (initializer->KeySystem() == "com.widevine.alpha") {
+    if (frame->Client()->GetRemoteNavigationAssociatedInterfaces()) {
+      DVLOG(0) << "||> Notifying Taktak about Widevine DRM request.";
+      mojo::AssociatedRemote<taktak_drm::mojom::blink::TaktakDRM>
+          taktak_drm_binding;
+      frame->Client()->GetRemoteNavigationAssociatedInterfaces()->GetInterface(
+          &taktak_drm_binding);
+      DCHECK(taktak_drm_binding.is_bound());
+      taktak_drm_binding->HandleWidevineKeySystemRequest();
+    }
+  }
+}
+#endif
+
 }  // namespace
 
 ScriptPromise<MediaKeySystemAccess>
@@ -203,6 +229,11 @@ NavigatorRequestMediaKeySystemAccess::requestMediaKeySystemAccess(
       EncryptedMediaUtils::GetEncryptedMediaClientFromLocalDOMWindow(window);
   media_client->RequestMediaKeySystemAccess(
       WebEncryptedMediaRequest(initializer));
+
+// Taktak MVP doesn't support DRM playback on Windows.
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
+  NotifyWidevineRequest(initializer, window->GetFrame());
+#endif
 
   // 7. Return promise.
   return promise;

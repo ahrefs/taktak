@@ -70,6 +70,11 @@
 #include "chrome/browser/ui/views/page_action/page_action_view.h"
 #include "chrome/browser/ui/views/performance_controls/battery_saver_button.h"
 #include "chrome/browser/ui/views/performance_controls/performance_intervention_button.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_coordinator.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_entry_id.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_entry_key.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_enums.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_ui.h"
 #include "chrome/browser/ui/views/tabs/tab_strip.h"
 #include "chrome/browser/ui/views/tabs/tab_strip_controller.h"
 #include "chrome/browser/ui/views/toolbar/app_menu.h"
@@ -90,6 +95,7 @@
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "chrome/grit/theme_resources.h"
+#include "chrome/renderer/process_state.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "components/omnibox/browser/omnibox_view.h"
 #include "components/prefs/pref_service.h"
@@ -112,6 +118,7 @@
 #include "ui/color/color_provider.h"
 #include "ui/compositor/layer.h"
 #include "ui/gfx/canvas.h"
+#include "ui/gfx/color_palette.h"
 #include "ui/gfx/image/canvas_image_source.h"
 #include "ui/gfx/paint_vector_icon.h"
 #include "ui/gfx/scoped_canvas.h"
@@ -168,12 +175,13 @@ ToolbarView::DisplayMode GetDisplayMode(Browser* browser) {
 }
 
 auto& GetViewCommandMap() {
-  static constexpr auto kViewCommandMap = base::MakeFixedFlatMap<int, int>(
-      {{VIEW_ID_BACK_BUTTON, IDC_BACK},
-       {VIEW_ID_FORWARD_BUTTON, IDC_FORWARD},
-       {VIEW_ID_HOME_BUTTON, IDC_HOME},
-       {VIEW_ID_RELOAD_BUTTON, IDC_RELOAD},
-       {VIEW_ID_AVATAR_BUTTON, IDC_SHOW_AVATAR_MENU}});
+  static constexpr auto kViewCommandMap = base::MakeFixedFlatMap<int, int>({
+      {VIEW_ID_BACK_BUTTON, IDC_BACK},
+      {VIEW_ID_FORWARD_BUTTON, IDC_FORWARD},
+      {VIEW_ID_HOME_BUTTON, IDC_HOME},
+      {VIEW_ID_RELOAD_BUTTON, IDC_RELOAD},
+      //  {VIEW_ID_AVATAR_BUTTON, IDC_SHOW_AVATAR_MENU}
+  });
   return kViewCommandMap;
 }
 
@@ -201,6 +209,71 @@ class TabstripLikeBackground : public views::Background {
 
   const raw_ptr<BrowserView> browser_view_;
 };
+
+constexpr int kLocationBarMaxWidth = 766;
+constexpr double kDefaultMargin = 0.1;
+constexpr double kSmallToolbarMargin = 0.035;
+constexpr double kMediumToolbarMargin = 0.07;
+constexpr double kLargeToolbarMargin = 0.1;
+constexpr int kToolbarWidthThreshold1 = 700;
+constexpr int kToolbarWidthThreshold2 = 850;
+constexpr int kToolbarWidthThreshold3 = 960;
+constexpr double kMaxRightShrinkFactor = 0.25;
+
+double GetMarginForWidth(int toolbar_width) {
+  if (toolbar_width < kToolbarWidthThreshold1) {
+    return kSmallToolbarMargin;
+  } else if (toolbar_width < kToolbarWidthThreshold2) {
+    return kMediumToolbarMargin;
+  } else if (toolbar_width < kToolbarWidthThreshold3) {
+    return kLargeToolbarMargin;
+  }
+  return kDefaultMargin;
+}
+
+int CalculateToolbarCenterPoint(int location_bar_x,
+                                int location_bar_margin_h,
+                                int location_bar_width) {
+  return location_bar_x + location_bar_margin_h + (location_bar_width / 2);
+}
+
+gfx::Insets CalculateLocationBarMargin(int toolbar_width,
+                                       int available_location_bar_width,
+                                       int location_bar_min_width,
+                                       int location_bar_x) {
+  int location_bar_max_margin_h =
+      (available_location_bar_width - location_bar_min_width) / 2;
+  int location_bar_margin_h = std::min(
+      static_cast<int>(toolbar_width * GetMarginForWidth(toolbar_width)),
+      location_bar_max_margin_h);
+  int location_bar_width =
+      available_location_bar_width - (location_bar_margin_h * 2);
+
+  if (location_bar_width > kLocationBarMaxWidth) {
+    location_bar_margin_h += (location_bar_width - kLocationBarMaxWidth) / 2;
+    location_bar_width = kLocationBarMaxWidth;
+  }
+
+  const int location_bar_toolbar_center_point = CalculateToolbarCenterPoint(
+      location_bar_x, location_bar_margin_h, location_bar_width);
+
+  int location_bar_center_offset =
+      location_bar_toolbar_center_point - (toolbar_width / 2);
+
+  location_bar_center_offset =
+      (location_bar_center_offset > 0)
+          ? std::min(location_bar_margin_h, location_bar_center_offset)
+          : std::max(static_cast<int>(-location_bar_margin_h *
+                                      kMaxRightShrinkFactor),
+                     location_bar_center_offset);
+
+  const int location_bar_margin_l =
+      location_bar_margin_h - location_bar_center_offset;
+  const int location_bar_margin_r =
+      location_bar_margin_h + location_bar_center_offset;
+
+  return gfx::Insets::TLBR(0, location_bar_margin_l, 0, location_bar_margin_r);
+}
 
 }  // namespace
 
@@ -237,8 +310,7 @@ ToolbarView::ToolbarView(Browser* browser, BrowserView* browser_view)
   container_view_ = AddChildView(std::make_unique<ContainerView>());
   container_view_->SetProperty(views::kElementIdentifierKey,
                                kToolbarContainerElementId);
-
-  GetViewAccessibility().SetRole(ax::mojom::Role::kToolbar);
+  container_view_->GetViewAccessibility().SetRole(ax::mojom::Role::kToolbar);
 
   if (display_mode_ == DisplayMode::NORMAL) {
     container_view_->SetBackground(
@@ -324,7 +396,10 @@ void ToolbarView::Init() {
         views::kFlexBehaviorKey,
         views::FlexSpecification(views::LayoutOrientation::kHorizontal,
                                  views::MinimumFlexSizeRule::kScaleToZero,
-                                 views::MaximumFlexSizeRule::kUnbounded));
+                                 views::MaximumFlexSizeRule::kScaleToMaximum));
+
+    location_bar_->SetBorder(
+        views::CreateEmptyBorder(gfx::Insets::TLBR(0, 20, 0, 20)));
     initialized_ = true;
     return;
   }
@@ -345,6 +420,10 @@ void ToolbarView::Init() {
 
   std::unique_ptr<ReloadButton> reload =
       std::make_unique<ReloadButton>(browser_->command_controller());
+
+  std::unique_ptr<AIChatToolbarButton> ai_chat_button =
+      std::make_unique<AIChatToolbarButton>(base::BindRepeating(
+          &ToolbarView::AIChatButtonPressed, base::Unretained(this)));
 
   PrefService* const prefs = browser_->profile()->GetPrefs();
   std::unique_ptr<HomeButton> home = std::make_unique<HomeButton>(
@@ -454,24 +533,25 @@ void ToolbarView::Init() {
     media_button_ = container_view_->AddChildView(std::move(media_button));
   }
 
-  avatar_ = container_view_->AddChildView(
-      std::make_unique<AvatarToolbarButton>(browser_view_));
-  bool show_avatar_toolbar_button = true;
-#if BUILDFLAG(IS_CHROMEOS)
-  // ChromeOS only badges Incognito, Guest, and captive portal signin icons in
-  // the browser window.
-  show_avatar_toolbar_button =
-      browser_->profile()->IsIncognitoProfile() ||
-      browser_->profile()->IsGuestSession() ||
-      (browser_->profile()->IsOffTheRecord() &&
-       browser_->profile()->GetOTRProfileID().IsCaptivePortal());
-#else
-  // DevTools profiles are OffTheRecord, so hide it there.
-  show_avatar_toolbar_button = browser_->profile()->IsIncognitoProfile() ||
-                               browser_->profile()->IsGuestSession() ||
-                               browser_->profile()->IsRegularProfile();
-#endif
-  avatar_->SetVisible(show_avatar_toolbar_button);
+  //  avatar_ = container_view_->AddChildView(
+  //      std::make_unique<AvatarToolbarButton>(browser_view_));
+  //  bool show_avatar_toolbar_button = true;
+  // #if BUILDFLAG(IS_CHROMEOS)
+  //  // ChromeOS only badges Incognito, Guest, and captive portal signin icons
+  //  in
+  //  // the browser window.
+  //  show_avatar_toolbar_button =
+  //      browser_->profile()->IsIncognitoProfile() ||
+  //      browser_->profile()->IsGuestSession() ||
+  //      (browser_->profile()->IsOffTheRecord() &&
+  //       browser_->profile()->GetOTRProfileID().IsCaptivePortal());
+  // #else
+  //  // DevTools profiles are OffTheRecord, so hide it there.
+  //  show_avatar_toolbar_button = browser_->profile()->IsIncognitoProfile() ||
+  //                               browser_->profile()->IsGuestSession() ||
+  //                               browser_->profile()->IsRegularProfile();
+  // #endif
+  //  avatar_->SetVisible(show_avatar_toolbar_button);
 
 #if BUILDFLAG(ENABLE_WEBUI_TAB_STRIP)
   auto new_tab_button = std::make_unique<ToolbarButton>(base::BindRepeating(
@@ -489,6 +569,11 @@ void ToolbarView::Init() {
   overflow_button_ =
       container_view_->AddChildView(std::make_unique<OverflowButton>());
   overflow_button_->SetVisible(false);
+
+  if (!IsIncognitoProcess() && !browser_->profile()->IsIncognitoProfile() &&
+      !browser_->profile()->IsGuestSession()) {
+    ai_chat_button_ = container_view_->AddChildView(std::move(ai_chat_button));
+  }
 
   auto app_menu_button = std::make_unique<BrowserAppMenuButton>(this);
   app_menu_button->SetFlipCanvasOnPaintForRTLUI(true);
@@ -529,8 +614,8 @@ void ToolbarView::Init() {
 
   InitLayout();
 
-  for (auto* button : std::array<views::Button*, 5>{back_, forward_, reload_,
-                                                    home_, avatar_}) {
+  for (auto* button :
+       std::array<views::Button*, 5>{back_, forward_, reload_, home_}) {
     if (button) {
       button->set_tag(GetViewCommandMap().at(button->GetID()));
     }
@@ -540,6 +625,18 @@ void ToolbarView::Init() {
   }
 
   initialized_ = true;
+}  // ToolbarView::Init
+
+void ToolbarView::ResetHighlightForAIChatButton() {
+  if (ai_chat_button_) {
+    ai_chat_button_->ResetHighlight();
+  }
+}
+
+void ToolbarView::AddHighlightForAIChatButton() {
+  if (ai_chat_button_) {
+    ai_chat_button_->AddHighlight();
+  }
 }
 
 void ToolbarView::AnimationEnded(const gfx::Animation* animation) {
@@ -735,8 +832,7 @@ ToolbarView::GetContentSettingBubbleModelDelegate() {
 
 void ToolbarView::EnabledStateChangedForCommand(int id, bool enabled) {
   DCHECK(display_mode_ == DisplayMode::NORMAL);
-  const std::array<views::Button*, 5> kButtons{back_, forward_, reload_, home_,
-                                               avatar_};
+  const std::array<views::Button*, 5> kButtons{back_, forward_, reload_, home_};
   auto* button = *std::ranges::find(kButtons, id, &views::Button::tag);
   DCHECK(button);
   button->SetEnabled(enabled);
@@ -822,6 +918,10 @@ void ToolbarView::Layout(PassKey) {
   // The container view should be the exact same size/position as ToolbarView.
   container_view_->SetSize(size());
 
+  // Make sure the container_view height is 28 based on the UI guideline
+  container_view_->SetBorder(
+      views::CreateEmptyBorder(gfx::Insets::TLBR(3, 0, 3, 0)));
+
   // The background views should be behind the top-left and top-right corners
   // of the container_view_.
   background_view_left_->SetBounds(0, 0, receding_corner_radius_,
@@ -862,6 +962,18 @@ void ToolbarView::Layout(PassKey) {
   // Call super implementation to ensure layout manager and child layouts
   // happen.
   LayoutSuperclass<AccessiblePaneView>(this);
+
+  if (display_mode_ == DisplayMode::NORMAL) {
+    // Calculate margin and set its bounds to shrink the width of the location
+    // bar
+    const gfx::Insets margin = CalculateLocationBarMargin(
+        width(), location_bar_->width(),
+        location_bar_->GetMinimumSize().width(), location_bar_->x());
+
+    location_bar_->SetBounds(
+        location_bar_->x() + margin.left(), location_bar_->y(),
+        location_bar_->width() - margin.width(), location_bar_->height());
+  }
 }
 
 void ToolbarView::OnThemeChanged() {
@@ -914,6 +1026,18 @@ void ToolbarView::NewTabButtonPressed(const ui::Event& event) {
   UMA_HISTOGRAM_ENUMERATION("Tab.NewTab",
                             NewTabTypes::NEW_TAB_BUTTON_IN_TOOLBAR_FOR_TOUCH,
                             NewTabTypes::NEW_TAB_ENUM_COUNT);
+}
+
+void ToolbarView::AIChatButtonPressed(const ui::Event& event) {
+  is_ai_chat_button_active_ = !is_ai_chat_button_active_;
+  if (is_ai_chat_button_active_) {
+    ai_chat_button_->AddHighlight();
+  } else {
+    ai_chat_button_->ResetHighlight();
+  }
+  auto key = SidePanelEntryKey(SidePanelEntryId::kAIChat);
+  auto* side_panel = browser_view_->browser()->GetFeatures().side_panel_ui();
+  side_panel->Toggle(key, SidePanelOpenTrigger::kToolbarButton);
 }
 
 bool ToolbarView::AcceleratorPressed(const ui::Accelerator& accelerator) {
@@ -1034,15 +1158,15 @@ void ToolbarView::LayoutCommon() {
 
     // The margins of the `avatar_` uses the same constants as the
     // `app_menu_button_`.
-    if (avatar_->IsLabelPresentAndVisible()) {
-      avatar_->SetProperty(
-          views::kMarginsKey,
-          gfx::Insets::VH(0, kBrowserAppMenuRefreshExpandedMargin));
-    } else {
-      avatar_->SetProperty(
-          views::kMarginsKey,
-          gfx::Insets::VH(0, kBrowserAppMenuRefreshCollapsedMargin));
-    }
+    //    if (avatar_->IsLabelPresentAndVisible()) {
+    //      avatar_->SetProperty(
+    //          views::kMarginsKey,
+    //          gfx::Insets::VH(0, kBrowserAppMenuRefreshExpandedMargin));
+    //    } else {
+    //      avatar_->SetProperty(
+    //          views::kMarginsKey,
+    //          gfx::Insets::VH(0, kBrowserAppMenuRefreshCollapsedMargin));
+    //    }
   }
 
   layout_manager_->SetInteriorMargin(interior_margin);
@@ -1196,10 +1320,10 @@ IntentChipButton* ToolbarView::GetIntentChipButton() {
 }
 
 ToolbarButton* ToolbarView::GetDownloadButton() {
-    return pinned_toolbar_actions_container_
-               ? pinned_toolbar_actions_container_->GetButtonFor(
-                     kActionShowDownloads)
-               : nullptr;
+  return pinned_toolbar_actions_container_
+             ? pinned_toolbar_actions_container_->GetButtonFor(
+                   kActionShowDownloads)
+             : nullptr;
 }
 
 std::optional<BrowserRootView::DropIndex> ToolbarView::GetDropIndex(

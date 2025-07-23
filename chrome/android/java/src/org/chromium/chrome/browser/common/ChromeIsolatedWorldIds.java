@@ -13,10 +13,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * The Java copy of //chrome/common/chrome_isolated_world_ids.
- * Please check there for details about each id.
+ * The Java copy of //chrome/common/chrome_isolated_world_ids. Please check there for details about
+ * each id.
  *
- * Both files must be kept in sync.
+ * <p>Both files must be kept in sync.
  */
 // LINT.IfChange
 @IntDef({

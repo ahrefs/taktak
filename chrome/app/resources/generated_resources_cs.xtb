@@ -2626,6 +2626,7 @@ Chcete-li spravovat nastavení tohoto účtu, nainstalujte si do zařízení apl
 <translation id="2790112944253231361">Změnil(a) tuto kartu</translation>
 <translation id="2790750268015892264">Izolované webové aplikace nemohou ovládat čtečky čipových karet. Aplikace nezískají přístup k žádné čipové kartě.</translation>
 <translation id="2791529110887957050">Odstranit Linux</translation>
+<translation id="279182647442890396">Smazat informace?</translation>
 <translation id="2791952154587244007">Došlo k chybě. Aplikace veřejného terminálu se v tomto zařízení nebude moci automaticky spustit.</translation>
 <translation id="2792465461386711506">Pokud chcete v telefonu zobrazit nedávné karty Chromu, zapněte Synchronizaci Chromu</translation>
 <translation id="2792697226874849938">Obrázek omezení</translation>
@@ -4619,6 +4620,7 @@ Zpráva serveru: <ph name="SERVER_MSG" /></translation>
 <translation id="4203769790323223880">Fotoaparát není povolen</translation>
 <translation id="4204415812590935863">V tuto chvíli motiv nelze vytvořit.</translation>
 <translation id="4205157409548006256">Při konfiguraci Linuxu došlo k chybě.</translation>
+<translation id="4205643719206044108">Aby bylo možné nabízet návrhy, navštívené weby a obsah stránek se sdílí s Googlem</translation>
 <translation id="4206144641569145248">Mimozemšťan</translation>
 <translation id="4206323443866416204">Zpětná vazba</translation>
 <translation id="4206585797409671301">Povoleno zobrazovat žádosti</translation>

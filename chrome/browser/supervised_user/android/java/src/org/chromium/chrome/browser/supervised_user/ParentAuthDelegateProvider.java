@@ -20,8 +20,7 @@ public class ParentAuthDelegateProvider {
     private static @Nullable ParentAuthDelegate sTestingInstance;
 
     /**
-     * Sets the test instance. Can be called multiple times to change the instance
-     * during testing.
+     * Sets the test instance. Can be called multiple times to change the instance during testing.
      */
     @VisibleForTesting
     @AnyThread

@@ -35,6 +35,7 @@ public class TranslateTabContent extends FrameLayout {
 
     /**
      * Sets the text color for all the states (normal, selected, focused) to be this color.
+     *
      * @param colors The color state list of the title text.
      */
     public void setTextColor(@Nullable ColorStateList colors) {

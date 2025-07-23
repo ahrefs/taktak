@@ -1281,25 +1281,25 @@ abstract class BinaryWriter extends ByteOutput implements Writer {
       buffer[pos--] = (byte) ((value & 0x7F) | 0x80);
     }
 
-    @Override
-    void writeFixed32(int value) {
-      buffer[pos--] = (byte) (value >> 24);
-      buffer[pos--] = (byte) (value >> 16);
-      buffer[pos--] = (byte) (value >> 8);
-      buffer[pos--] = (byte) value;
-    }
+        @Override
+        void writeFixed32(int value) {
+            buffer[pos--] = (byte) (value >> 24);
+            buffer[pos--] = (byte) (value >> 16);
+            buffer[pos--] = (byte) (value >> 8);
+            buffer[pos--] = (byte) value;
+        }
 
-    @Override
-    void writeFixed64(long value) {
-      buffer[pos--] = (byte) ((int) (value >> 56));
-      buffer[pos--] = (byte) ((int) (value >> 48));
-      buffer[pos--] = (byte) ((int) (value >> 40));
-      buffer[pos--] = (byte) ((int) (value >> 32));
-      buffer[pos--] = (byte) ((int) (value >> 24));
-      buffer[pos--] = (byte) ((int) (value >> 16));
-      buffer[pos--] = (byte) ((int) (value >> 8));
-      buffer[pos--] = (byte) ((int) value);
-    }
+        @Override
+        void writeFixed64(long value) {
+            buffer[pos--] = (byte) ((int) (value >> 56));
+            buffer[pos--] = (byte) ((int) (value >> 48));
+            buffer[pos--] = (byte) ((int) (value >> 40));
+            buffer[pos--] = (byte) ((int) (value >> 32));
+            buffer[pos--] = (byte) ((int) (value >> 24));
+            buffer[pos--] = (byte) ((int) (value >> 16));
+            buffer[pos--] = (byte) ((int) (value >> 8));
+            buffer[pos--] = (byte) ((int) value);
+        }
 
     @Override
     void writeString(String in) {
@@ -1818,25 +1818,25 @@ abstract class BinaryWriter extends ByteOutput implements Writer {
       UnsafeUtil.putByte(buffer, pos--, (byte) ((value & 0x7F) | 0x80));
     }
 
-    @Override
-    void writeFixed32(int value) {
-      UnsafeUtil.putByte(buffer, pos--, (byte) (value >> 24));
-      UnsafeUtil.putByte(buffer, pos--, (byte) (value >> 16));
-      UnsafeUtil.putByte(buffer, pos--, (byte) (value >> 8));
-      UnsafeUtil.putByte(buffer, pos--, (byte) value);
-    }
+        @Override
+        void writeFixed32(int value) {
+            UnsafeUtil.putByte(buffer, pos--, (byte) (value >> 24));
+            UnsafeUtil.putByte(buffer, pos--, (byte) (value >> 16));
+            UnsafeUtil.putByte(buffer, pos--, (byte) (value >> 8));
+            UnsafeUtil.putByte(buffer, pos--, (byte) value);
+        }
 
-    @Override
-    void writeFixed64(long value) {
-      UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 56)));
-      UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 48)));
-      UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 40)));
-      UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 32)));
-      UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 24)));
-      UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 16)));
-      UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 8)));
-      UnsafeUtil.putByte(buffer, pos--, (byte) ((int) value));
-    }
+        @Override
+        void writeFixed64(long value) {
+            UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 56)));
+            UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 48)));
+            UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 40)));
+            UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 32)));
+            UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 24)));
+            UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 16)));
+            UnsafeUtil.putByte(buffer, pos--, (byte) ((int) (value >> 8)));
+            UnsafeUtil.putByte(buffer, pos--, (byte) ((int) value));
+        }
 
     @Override
     void writeString(String in) {
@@ -2911,25 +2911,25 @@ abstract class BinaryWriter extends ByteOutput implements Writer {
       UnsafeUtil.putByte(pos--, (byte) ((value & 0x7F) | 0x80));
     }
 
-    @Override
-    void writeFixed32(int value) {
-      UnsafeUtil.putByte(pos--, (byte) (value >> 24));
-      UnsafeUtil.putByte(pos--, (byte) (value >> 16));
-      UnsafeUtil.putByte(pos--, (byte) (value >> 8));
-      UnsafeUtil.putByte(pos--, (byte) value);
-    }
+        @Override
+        void writeFixed32(int value) {
+            UnsafeUtil.putByte(pos--, (byte) (value >> 24));
+            UnsafeUtil.putByte(pos--, (byte) (value >> 16));
+            UnsafeUtil.putByte(pos--, (byte) (value >> 8));
+            UnsafeUtil.putByte(pos--, (byte) value);
+        }
 
-    @Override
-    void writeFixed64(long value) {
-      UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 56)));
-      UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 48)));
-      UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 40)));
-      UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 32)));
-      UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 24)));
-      UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 16)));
-      UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 8)));
-      UnsafeUtil.putByte(pos--, (byte) ((int) value));
-    }
+        @Override
+        void writeFixed64(long value) {
+            UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 56)));
+            UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 48)));
+            UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 40)));
+            UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 32)));
+            UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 24)));
+            UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 16)));
+            UnsafeUtil.putByte(pos--, (byte) ((int) (value >> 8)));
+            UnsafeUtil.putByte(pos--, (byte) ((int) value));
+        }
 
     @Override
     void writeString(String in) {

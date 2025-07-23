@@ -46,6 +46,7 @@ import java.util.List;
 public class EditorDialogViewBinder {
     /**
      * Called whenever a property in the given model changes. It updates the given view accordingly.
+     *
      * @param model The observed {@link PropertyModel}. Its data need to be reflected in the view.
      * @param view The {@link EditorDialogView} to update.
      * @param propertyKey The {@link PropertyKey} which changed.

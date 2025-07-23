@@ -14,7 +14,8 @@ public interface ImageDescriptionsControllerDelegate {
     /**
      * Enable image descriptions for the given Profile. Any currently opened tabs for this profile
      * will receive image descriptions, as will any future pages.
-     * @param profile       Profile - the profile to enable descriptions for.
+     *
+     * @param profile Profile - the profile to enable descriptions for.
      */
     void enableImageDescriptions(Profile profile);
 

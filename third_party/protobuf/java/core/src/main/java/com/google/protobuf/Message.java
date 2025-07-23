@@ -28,32 +28,31 @@ public interface Message extends MessageLite, MessageOrBuilder {
   @Override
   Parser<? extends Message> getParserForType();
 
-  // -----------------------------------------------------------------
-  // Comparison and hashing
+    // -----------------------------------------------------------------
+    // Comparison and hashing
 
-  /**
-   * Compares the specified object with this message for equality. Returns {@code true} if the given
-   * object is a message of the same type (as defined by {@code getDescriptorForType()}) and has
-   * identical values for all of its fields. Subclasses must implement this; inheriting {@code
-   * Object.equals()} is incorrect.
-   *
-   * @param other object to be compared for equality with this message
-   * @return {@code true} if the specified object is equal to this message
-   */
-  @Override
-  boolean equals(
-          Object other);
+    /**
+     * Compares the specified object with this message for equality. Returns {@code true} if the
+     * given object is a message of the same type (as defined by {@code getDescriptorForType()}) and
+     * has identical values for all of its fields. Subclasses must implement this; inheriting {@code
+     * Object.equals()} is incorrect.
+     *
+     * @param other object to be compared for equality with this message
+     * @return {@code true} if the specified object is equal to this message
+     */
+    @Override
+    boolean equals(Object other);
 
-  /**
-   * Returns the hash code value for this message. The hash code of a message should mix the
-   * message's type (object identity of the descriptor) with its contents (known and unknown field
-   * values). Subclasses must implement this; inheriting {@code Object.hashCode()} is incorrect.
-   *
-   * @return the hash code value for this message
-   * @see Map#hashCode()
-   */
-  @Override
-  int hashCode();
+    /**
+     * Returns the hash code value for this message. The hash code of a message should mix the
+     * message's type (object identity of the descriptor) with its contents (known and unknown field
+     * values). Subclasses must implement this; inheriting {@code Object.hashCode()} is incorrect.
+     *
+     * @return the hash code value for this message
+     * @see Map#hashCode()
+     */
+    @Override
+    int hashCode();
 
   // -----------------------------------------------------------------
   // Convenience methods.

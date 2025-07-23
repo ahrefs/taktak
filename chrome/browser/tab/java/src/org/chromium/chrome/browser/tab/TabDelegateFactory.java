@@ -19,6 +19,7 @@ import org.chromium.components.navigation_interception.InterceptNavigationDelega
 public interface TabDelegateFactory {
     /**
      * Creates the {@link WebContentsDelegateAndroid} the tab will be initialized with.
+     *
      * @param tab The associated {@link Tab}.
      * @return The {@link WebContentsDelegateAndroid} to be used for this tab.
      */

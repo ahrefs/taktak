@@ -182,8 +182,8 @@ void TextFragmentFinder::FindPrefix() {
   }
 
   FindMatchInRange(selector_.Prefix(), search_range_,
-                   /*word_start_bounded=*/true,
-                   /*word_end_bounded=*/false);
+      /*word_start_bounded=*/true,
+      /*word_end_bounded=*/false);
 }
 
 void TextFragmentFinder::OnPrefixMatchComplete(
@@ -222,10 +222,10 @@ void TextFragmentFinder::FindTextStart() {
     search_range_->SetStart(NextTextPosition(prefix_match_->EndPosition(),
                                              match_range_->EndPosition()));
     FindMatchInRange(selector_.Start(), search_range_,
-                     /*word_start_bounded=*/false, end_at_word_boundary);
+        /*word_start_bounded=*/false, end_at_word_boundary);
   } else {
     FindMatchInRange(selector_.Start(), search_range_,
-                     /*word_start_bounded=*/true, end_at_word_boundary);
+        /*word_start_bounded=*/true, end_at_word_boundary);
   }
 }
 
@@ -273,7 +273,7 @@ void TextFragmentFinder::FindTextEnd() {
     const bool end_at_word_boundary = selector_.Suffix().empty();
 
     FindMatchInRange(selector_.End(), search_range_,
-                     /*word_start_bounded=*/true, end_at_word_boundary);
+        /*word_start_bounded=*/true, end_at_word_boundary);
   } else {
     GoToStep(kMatchSuffix);
   }
@@ -303,7 +303,7 @@ void TextFragmentFinder::FindSuffix() {
   search_range_->SetStart(NextTextPosition(potential_match_->EndPosition(),
                                            match_range_->EndPosition()));
   FindMatchInRange(selector_.Suffix(), search_range_,
-                   /*word_start_bounded=*/false, /*word_end_bounded=*/true);
+      /*word_start_bounded=*/false, /*word_end_bounded=*/true);
 }
 
 void TextFragmentFinder::OnSuffixMatchComplete(
@@ -407,8 +407,8 @@ void TextFragmentFinder::FindMatch() {
   Cancel();
 
   auto forced_lock_scope = range_->OwnerDocument()
-                               .GetDisplayLockDocumentState()
-                               .GetScopedForceActivatableLocks();
+      .GetDisplayLockDocumentState()
+      .GetScopedForceActivatableLocks();
   range_->OwnerDocument().UpdateStyleAndLayout(
       DocumentUpdateReason::kFindInPage);
 
@@ -479,13 +479,13 @@ void TextFragmentFinder::SetPrefixMatch(EphemeralRangeInFlatTree range) {
 
 bool TextFragmentFinder::HasValidRanges() {
   return !((prefix_match_ &&
-            (prefix_match_->IsNull() || !prefix_match_->IsConnected())) ||
-           (potential_match_ &&
-            (potential_match_->IsNull() || !potential_match_->IsConnected())) ||
-           (search_range_ &&
-            (search_range_->IsNull() || !search_range_->IsConnected())) ||
-           (match_range_ &&
-            (match_range_->IsNull() || !match_range_->IsConnected())));
+      (prefix_match_->IsNull() || !prefix_match_->IsConnected())) ||
+      (potential_match_ &&
+          (potential_match_->IsNull() || !potential_match_->IsConnected())) ||
+      (search_range_ &&
+          (search_range_->IsNull() || !search_range_->IsConnected())) ||
+      (match_range_ &&
+          (match_range_->IsNull() || !match_range_->IsConnected())));
 }
 
 }  // namespace blink

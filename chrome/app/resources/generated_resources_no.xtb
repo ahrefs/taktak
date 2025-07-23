@@ -2631,6 +2631,7 @@ Du kan administrere innstillingene for denne kontoen ved å installere Family Li
 <translation id="2790112944253231361">Endret denne fanen</translation>
 <translation id="2790750268015892264">Isolerte nettapper kan ikke kontrollere smartkortlesere. Apper får ikke tilgang til smartkort.</translation>
 <translation id="2791529110887957050">Fjern Linux</translation>
+<translation id="279182647442890396">Vil du slette informasjonen?</translation>
 <translation id="2791952154587244007">Det oppsto en feil. Kioskappen er ikke i stand til å starte automatisk på denne enheten.</translation>
 <translation id="2792465461386711506">Slå på Chrome-synkronisering for å se nylige Chrome-faner fra telefonen din</translation>
 <translation id="2792697226874849938">Restriksjonsbilde</translation>
@@ -4625,6 +4626,7 @@ Du kan administrere innstillingene for denne kontoen ved å installere Family Li
 <translation id="4203769790323223880">Kamera er ikke tillatt</translation>
 <translation id="4204415812590935863">Kan ikke opprette noe tema akkurat nå.</translation>
 <translation id="4205157409548006256">Det oppsto en feil under konfigureringen av Linux.</translation>
+<translation id="4205643719206044108">For å kunne gi deg forslag deler nettleseren nettstedene du besøker, og innholdet på sidene, med Google</translation>
 <translation id="4206144641569145248">Romvesen</translation>
 <translation id="4206323443866416204">Tilbakemeldingsrapport</translation>
 <translation id="4206585797409671301">Tillatt å vise forespørsler</translation>

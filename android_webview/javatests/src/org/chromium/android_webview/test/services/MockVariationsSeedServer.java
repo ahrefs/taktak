@@ -16,9 +16,9 @@ import org.chromium.android_webview.services.VariationsSeedServer;
 import org.chromium.base.test.util.CallbackHelper;
 
 /**
- * VariationsSeedServer is a bound service that shares the Variations seed with all the WebViews
- * on the system. A WebView will bind and call getSeed, passing a file descriptor to which the
- * service should write the seed.
+ * VariationsSeedServer is a bound service that shares the Variations seed with all the WebViews on
+ * the system. A WebView will bind and call getSeed, passing a file descriptor to which the service
+ * should write the seed.
  */
 public class MockVariationsSeedServer extends VariationsSeedServer {
     private static final CallbackHelper sOnSeedRequested = new CallbackHelper();

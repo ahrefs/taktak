@@ -1626,12 +1626,9 @@ public class CustomTabIntentDataProviderTest {
         Network network = Mockito.mock(Network.class);
 
         Intent intent = new CustomTabsIntent.Builder().build().intent;
+        intent.putExtra(CustomTabsIntent.EXTRA_NETWORK, network);
         intent.putExtra(
-                CustomTabsIntent.EXTRA_NETWORK,
-                network);
-        intent.putExtra(
-                CustomTabIntentDataProvider.EXTRA_UI_TYPE,
-                CustomTabsUiType.NETWORK_BOUND_TAB);
+                CustomTabIntentDataProvider.EXTRA_UI_TYPE, CustomTabsUiType.NETWORK_BOUND_TAB);
 
         var dataProvider = new CustomTabIntentDataProvider(intent, mContext, COLOR_SCHEME_LIGHT);
         assertEquals(CustomTabsUiType.NETWORK_BOUND_TAB, dataProvider.getUiType());

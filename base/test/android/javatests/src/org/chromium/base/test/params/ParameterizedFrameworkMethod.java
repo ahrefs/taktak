@@ -13,8 +13,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Custom FrameworkMethod that includes a {@code ParameterSet} that
- * represents the parameters for this test method
+ * Custom FrameworkMethod that includes a {@code ParameterSet} that represents the parameters for
+ * this test method
  */
 public class ParameterizedFrameworkMethod extends FrameworkMethod {
     private final ParameterSet mParameterSet;

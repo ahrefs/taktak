@@ -105,7 +105,9 @@ public interface AwViewMethods {
     /** @see android.view.View#computeVerticalScrollExtent */
     int computeVerticalScrollExtent();
 
-    /** @see android.view.View#computeScroll */
+    /**
+     * @see android.view.View#computeScroll
+     */
     void computeScroll();
 
     /**
@@ -122,12 +124,18 @@ public interface AwViewMethods {
      */
     AccessibilityNodeProvider getAccessibilityNodeProvider();
 
-    /** @see android.view.View#performAccessibilityAction */
+    /**
+     * @see android.view.View#performAccessibilityAction
+     */
     boolean performAccessibilityAction(final int action, final Bundle arguments);
 
-    /** @see android.view.View#onStartTemporaryDetach() */
+    /**
+     * @see android.view.View#onStartTemporaryDetach()
+     */
     void onStartTemporaryDetach();
 
-    /** @see android.view.View#onFinishTemporaryDetach() */
+    /**
+     * @see android.view.View#onFinishTemporaryDetach()
+     */
     void onFinishTemporaryDetach();
 }

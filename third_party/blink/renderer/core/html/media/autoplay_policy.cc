@@ -51,9 +51,9 @@ bool ComputeLockPendingUserGestureRequired(const Document& document) {
       return false;
     case AutoplayPolicy::Type::kUserGestureRequired:
       return true;
-    // kDocumentUserActivationRequired policy does not imply that a user gesture
-    // is required on the element but instead requires a user gesture on the
-    // document, therefore the element is not locked.
+      // kDocumentUserActivationRequired policy does not imply that a user gesture
+      // is required on the element but instead requires a user gesture on the
+      // document, therefore the element is not locked.
     case AutoplayPolicy::Type::kDocumentUserActivationRequired:
       return false;
   }
@@ -104,7 +104,7 @@ bool AutoplayPolicy::IsDocumentAllowedToPlay(const Document& document) {
     }
 
     if (RuntimeEnabledFeatures::
-            MediaEngagementBypassAutoplayPoliciesEnabled() &&
+    MediaEngagementBypassAutoplayPoliciesEnabled() &&
         frame->IsOutermostMainFrame() &&
         DocumentHasHighMediaEngagement(document)) {
       return true;
@@ -122,7 +122,7 @@ bool AutoplayPolicy::DocumentHasHighMediaEngagement(const Document& document) {
   if (!document.GetPage())
     return false;
   return document.GetPage()->AutoplayFlags() &
-         mojom::blink::kAutoplayFlagHighMediaEngagement;
+      mojom::blink::kAutoplayFlagHighMediaEngagement;
 }
 
 // static
@@ -130,7 +130,7 @@ bool AutoplayPolicy::DocumentHasForceAllowFlag(const Document& document) {
   if (!document.GetPage())
     return false;
   return document.GetPage()->AutoplayFlags() &
-         mojom::blink::kAutoplayFlagForceAllow;
+      mojom::blink::kAutoplayFlagForceAllow;
 }
 
 // static
@@ -138,14 +138,14 @@ bool AutoplayPolicy::DocumentHasUserExceptionFlag(const Document& document) {
   if (!document.GetPage())
     return false;
   return document.GetPage()->AutoplayFlags() &
-         mojom::blink::kAutoplayFlagUserException;
+      mojom::blink::kAutoplayFlagUserException;
 }
 
 // static
 bool AutoplayPolicy::DocumentShouldAutoplayMutedVideos(
     const Document& document) {
   return GetAutoplayPolicyForDocument(document) !=
-         AutoplayPolicy::Type::kNoUserGestureRequired;
+      AutoplayPolicy::Type::kNoUserGestureRequired;
 }
 
 // static
@@ -191,7 +191,7 @@ bool AutoplayPolicy::IsEligibleForAutoplayMuted() const {
   }
 
   return !element_->EffectiveMediaVolume() &&
-         DocumentShouldAutoplayMutedVideos(element_->GetDocument());
+      DocumentShouldAutoplayMutedVideos(element_->GetDocument());
 }
 
 void AutoplayPolicy::StartAutoplayMutedWhenVisible() {
@@ -340,7 +340,7 @@ bool AutoplayPolicy::IsLockedPendingUserGesture() const {
 
 void AutoplayPolicy::TryUnlockingUserGesture() {
   if (IsLockedPendingUserGesture() && LocalFrame::HasTransientUserActivation(
-                                          element_->GetDocument().GetFrame())) {
+      element_->GetDocument().GetFrame())) {
     locked_pending_user_gesture_ = false;
   }
 }
@@ -356,22 +356,22 @@ bool AutoplayPolicy::IsGestureNeededForPlayback() const {
 
 bool AutoplayPolicy::CanPlayWhileHidden() const {
   return element_->GetExecutionContext() &&
-         element_->GetExecutionContext()->IsFeatureEnabled(
-             network::mojom::PermissionsPolicyFeature::
-                 kMediaPlaybackWhileNotVisible);
+      element_->GetExecutionContext()->IsFeatureEnabled(
+          network::mojom::PermissionsPolicyFeature::
+          kMediaPlaybackWhileNotVisible);
 }
 
 bool AutoplayPolicy::IsFrameHidden() const {
   Frame* frame = element_->GetDocument().GetFrame();
   return frame && (frame->View()->GetFrameVisibility().value_or(
-                       mojom::blink::FrameVisibility::kRenderedInViewport) ==
-                   mojom::blink::FrameVisibility::kNotRendered);
+      mojom::blink::FrameVisibility::kRenderedInViewport) ==
+      mojom::blink::FrameVisibility::kNotRendered);
 }
 
 String AutoplayPolicy::GetPlayErrorMessage() const {
   return IsUsingDocumentUserActivationRequiredPolicy()
-             ? kErrorAutoplayFuncUnified
-             : kErrorAutoplayFuncMobile;
+         ? kErrorAutoplayFuncUnified
+         : kErrorAutoplayFuncMobile;
 }
 
 bool AutoplayPolicy::WasAutoplayInitiated() const {
@@ -432,7 +432,7 @@ void AutoplayPolicy::OnIntersectionChangedForAutoplay(
 
 bool AutoplayPolicy::IsUsingDocumentUserActivationRequiredPolicy() const {
   return GetAutoplayPolicyForDocument(element_->GetDocument()) ==
-         AutoplayPolicy::Type::kDocumentUserActivationRequired;
+      AutoplayPolicy::Type::kDocumentUserActivationRequired;
 }
 
 void AutoplayPolicy::MaybeSetAutoplayInitiated() {
@@ -443,8 +443,8 @@ void AutoplayPolicy::MaybeSetAutoplayInitiated() {
 
   bool permissions_policy_enabled =
       element_->GetExecutionContext() &&
-      element_->GetExecutionContext()->IsFeatureEnabled(
-          network::mojom::PermissionsPolicyFeature::kAutoplay);
+          element_->GetExecutionContext()->IsFeatureEnabled(
+              network::mojom::PermissionsPolicyFeature::kAutoplay);
 
   for (Frame* frame = element_->GetDocument().GetFrame(); frame;
        frame = frame->Tree().Parent()) {
@@ -474,9 +474,9 @@ void AutoplayPolicy::Trace(Visitor* visitor) const {
 }
 
 STATIC_ASSERT_ENUM(mojom::blink::AutoplayPolicy::kNoUserGestureRequired,
-                   AutoplayPolicy::Type::kNoUserGestureRequired);
+    AutoplayPolicy::Type::kNoUserGestureRequired);
 STATIC_ASSERT_ENUM(mojom::blink::AutoplayPolicy::kUserGestureRequired,
-                   AutoplayPolicy::Type::kUserGestureRequired);
+    AutoplayPolicy::Type::kUserGestureRequired);
 STATIC_ASSERT_ENUM(
     mojom::blink::AutoplayPolicy::kDocumentUserActivationRequired,
     AutoplayPolicy::Type::kDocumentUserActivationRequired);

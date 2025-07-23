@@ -16,6 +16,7 @@ import org.chromium.chrome.browser.tab.TabSelectionType;
 public interface TabModelDelegate {
     /**
      * Requests the specified to be shown.
+     *
      * @param tab The tab that is requested to be shown.
      * @param type The reason why this tab was requested to be shown.
      */

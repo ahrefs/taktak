@@ -45,17 +45,6 @@ export function getHtml(this: MostVisitedElement) {
       </div>
     </div>
   `)}
-  <cr-button id="addShortcut" tabindex="0" @click="${this.onAdd_}"
-      ?hidden="${!this.showAdd_}" @keydown="${this.onAddShortcutKeyDown_}"
-      aria-label="${this.i18n('addLinkTitle')}"
-      title="${this.i18n('addLinkTitle')}" noink>
-    <div id="addShortcutIconContainer" class="tile-icon">
-      <div id="addShortcutIcon" draggable="false"></div>
-    </div>
-    <div class="tile-title">
-      <span>${this.i18n('addLinkTitle')}</span>
-    </div>
-  </cr-button>
   <cr-dialog id="dialog" @close="${this.onDialogClose_}">
     <div slot="title">${this.dialogTitle_}</div>
     <div slot="body" id="dialogContent">

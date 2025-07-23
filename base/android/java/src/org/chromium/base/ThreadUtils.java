@@ -90,13 +90,13 @@ public class ThreadUtils {
                 if (curThread == uiThread) {
                     assert false
                             : "Class was initialized on a background thread, but current operation"
-                                  + " was performed on the UI thread (expected: "
+                                    + " was performed on the UI thread (expected: "
                                     + mThread
                                     + ")";
                 } else if (mThread == uiThread) {
                     assert false
                             : "Class was initialized on the UI thread, but current operation was"
-                                  + " performed on a background thread: "
+                                    + " performed on a background thread: "
                                     + curThread;
                 }
                 assert false

@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.app.download.home;
 
-
 import android.graphics.Bitmap;
 import android.util.LruCache;
 

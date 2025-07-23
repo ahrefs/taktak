@@ -25,8 +25,9 @@ import org.chromium.url.GURL;
 @NullMarked
 public interface TabObserver {
     /**
-     * Called when a {@link Tab} finished initialization. The {@link TabState} contains,
-     * if not {@code null}, various states that a Tab should restore itself from.
+     * Called when a {@link Tab} finished initialization. The {@link TabState} contains, if not
+     * {@code null}, various states that a Tab should restore itself from.
+     *
      * @param tab The notifying {@link Tab}.
      * @param appId ID of the external app that opened this tab.
      */

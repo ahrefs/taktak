@@ -31,9 +31,9 @@ public class CustomTabNightModeStateController implements DestroyObserver, Night
     private final Runnable mPowerSaveModeObserver = this::updateNightMode;
 
     /**
-     * The color scheme requested for the CCT. Only {@link CustomTabsIntent#COLOR_SCHEME_LIGHT}
-     * and {@link CustomTabsIntent#COLOR_SCHEME_DARK} should be considered - fall back to the
-     * system status for {@link CustomTabsIntent#COLOR_SCHEME_SYSTEM} when enabled.
+     * The color scheme requested for the CCT. Only {@link CustomTabsIntent#COLOR_SCHEME_LIGHT} and
+     * {@link CustomTabsIntent#COLOR_SCHEME_DARK} should be considered - fall back to the system
+     * status for {@link CustomTabsIntent#COLOR_SCHEME_SYSTEM} when enabled.
      */
     private int mRequestedColorScheme;
 

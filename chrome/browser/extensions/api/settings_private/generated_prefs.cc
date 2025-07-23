@@ -19,6 +19,8 @@
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "components/content_settings/core/common/pref_names.h"
 #include "components/permissions/features.h"
+#include "components/browsing_data/core/pref_names.h"
+#include "chrome/browser/content_settings/generated_tel_toggle_pref.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/extensions/api/settings_private/chromeos_resolve_time_zone_by_geolocation_method_short.h"
@@ -111,6 +113,8 @@ void GeneratedPrefs::CreatePrefs() {
       profile_, ContentSettingsType::GEOLOCATION);
   prefs_[kGeneratedHttpsFirstModePref] =
       std::make_unique<GeneratedHttpsFirstModePref>(profile_);
+  prefs_[browsing_data::prefs::kTaktakTelEnabled] =
+      std::make_unique<GeneratedTelTogglePref>(profile_);
 }
 
 }  // namespace settings_private

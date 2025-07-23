@@ -15,14 +15,17 @@ import com.google.protobuf.UnittestLite.TestAllTypesLite;
 import com.google.protobuf.UnittestLite.TestMergeExceptionLite;
 import com.google.protobuf.UnittestLite.TestPackedExtensionsLite;
 import com.google.protobuf.UnittestLite.TestParsingMergeLite;
-import proto2_unittest.MapLiteUnittest;
-import proto2_unittest.MapLiteUnittest.TestRequiredLite;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.MapLiteUnittest;
+import proto2_unittest.MapLiteUnittest.TestRequiredLite;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 @RunWith(JUnit4.class)
 public class ParserLiteTest {

@@ -44,6 +44,18 @@ export function sanitizeInnerHtml(
   }
   return sanitizedPolicy.createHTML(rawString, opts);
 }
+
+export function getTrustedHTML(rawString: string) : (TrustedHTML | string) {
+    assert(window.trustedTypes);
+    if (sanitizedPolicy === null) {
+        sanitizedPolicy = window.trustedTypes.createPolicy('sanitize-inner-html', {
+            createHTML: (s : string) => s,
+            createScript: () => assertNotReached(),
+            createScriptURL: () => assertNotReached(),
+        });
+    }
+    return sanitizedPolicy.createHTML(rawString);
+}
 // </if>
 
 // <if expr="is_ios">

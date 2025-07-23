@@ -12,11 +12,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.FieldMask;
-import proto2_unittest.UnittestProto.NestedTestAllTypes;
-import proto2_unittest.UnittestProto.TestAllTypes;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.NestedTestAllTypes;
+import proto2_unittest.UnittestProto.TestAllTypes;
 
 /** Unit tests for {@link FieldMaskUtil}. */
 @RunWith(JUnit4.class)

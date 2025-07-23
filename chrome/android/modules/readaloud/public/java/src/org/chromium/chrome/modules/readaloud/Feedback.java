@@ -5,6 +5,7 @@
 package org.chromium.chrome.modules.readaloud;
 
 import org.chromium.build.annotations.NullMarked;
+
 import java.util.Locale;
 
 /** Enum definitions for Audio Overviews feedback args. */
@@ -64,7 +65,7 @@ public class Feedback {
 
         @Override
         public String toString() {
-          return String.format(Locale.US, "%s (%d)", this.name(), this.getValue());
+            return String.format(Locale.US, "%s (%d)", this.name(), this.getValue());
         }
     }
 }

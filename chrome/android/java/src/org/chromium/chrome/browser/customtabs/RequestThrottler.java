@@ -21,14 +21,13 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Applications are throttled in two ways:
- * (a) Cannot issue mayLaunchUrl() too often.
- * (b) Will be banned from prerendering if too many failed attempts are registered.
+ * Applications are throttled in two ways: (a) Cannot issue mayLaunchUrl() too often. (b) Will be
+ * banned from prerendering if too many failed attempts are registered.
  *
- * The first throttling is handled by {@link updateStatsAndReturnIfAllowed}, and the second one
+ * <p>The first throttling is handled by {@link updateStatsAndReturnIfAllowed}, and the second one
  * is persisted to disk and handled by {@link isPrerenderingAllowed()}.
  *
- * This class is *not* thread-safe.
+ * <p>This class is *not* thread-safe.
  */
 @NullMarked
 class RequestThrottler {
@@ -62,16 +61,15 @@ class RequestThrottler {
     /**
      * Updates the prediction stats and returns whether prediction is allowed.
      *
-     * The policy is:
-     * 1. If the client does not wait more than mDelayMs, decline the request.
-     * 2. If the client waits for more than mDelayMs but less than 2*mDelayMs, accept the request
-     *    and double mDelayMs.
-     * 3. If the client waits for more than 2*mDelayMs, accept the request and reset mDelayMs.
+     * <p>The policy is: 1. If the client does not wait more than mDelayMs, decline the request. 2.
+     * If the client waits for more than mDelayMs but less than 2*mDelayMs, accept the request and
+     * double mDelayMs. 3. If the client waits for more than 2*mDelayMs, accept the request and
+     * reset mDelayMs.
      *
-     * And: 100ms <= mDelayMs <= 10s.
+     * <p>And: 100ms <= mDelayMs <= 10s.
      *
-     * This way, if an application sends a burst of requests, it is quickly seriously throttled. If
-     * it stops being this way, back to normal.
+     * <p>This way, if an application sends a burst of requests, it is quickly seriously throttled.
+     * If it stops being this way, back to normal.
      */
     public boolean updateStatsAndReturnWhetherAllowed() {
         long now = SystemClock.elapsedRealtime();

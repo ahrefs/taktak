@@ -181,13 +181,10 @@ public class AddressEditor extends EditorBase<AutofillAddress>
     /**
      * Builds and shows an editor model with the following fields.
      *
-     * [ country dropdown    ] <----- country dropdown is always present.
-     * [ an address field    ] \
-     * [ an address field    ]  \
-     *         ...                <-- field order, presence, required, and labels depend on country.
-     * [ an address field    ]  /
-     * [ an address field    ] /
-     * [ phone number field  ] <----- phone is always present.
+     * <p>[ country dropdown ] <----- country dropdown is always present. [ an address field ] \ [
+     * an address field ] \ ... <-- field order, presence, required, and labels depend on country. [
+     * an address field ] / [ an address field ] / [ phone number field ] <----- phone is always
+     * present.
      */
     @Override
     public void showEditPrompt(

@@ -161,7 +161,8 @@ verify_channel() {
   case $CHANNEL in
     stable )
       CHANNEL=stable
-      RELEASENOTES="https://chromereleases.googleblog.com/search/label/Stable%20updates"
+      RELEASENOTES="https://taktak.com"
+      # RELEASENOTES="https://chromereleases.googleblog.com/search/label/Stable%20updates"
       ;;
     beta|testing )
       CHANNEL=beta

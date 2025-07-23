@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{Izveidota pirms <ph name="NUM_MINS_ONE" /> minūtes}zero{Izveidota pirms <ph name="NUM_MINS_MANY" /> minūtēm}one{Izveidota pirms <ph name="NUM_MINS_MANY" /> minūtes}other{Izveidota pirms <ph name="NUM_MINS_MANY" /> minūtēm}}</translation>
 <translation id="1499635324672558517">Vai aizvērt visas inkognito cilnes?</translation>
 <translation id="1501480321619201731">Dzēst grupu</translation>
+<translation id="1505526451013346974">Pievienot grupai “<ph name="TITLE_OF_GROUP" />”</translation>
 <translation id="1555130319947370107">Zila</translation>
 <translation id="161042844686301425">Ciānzila</translation>
 <translation id="1645759014353344461">Grupētas <ph name="TABS_COUNT_MANY" /> cilnes</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Pārlūkā Chrome tiek automātiskas aizvērtas neaktīvās sadaļas cilnes, kuras neesat izmantojis trīs mēnešus. Iestatījumos varat to izslēgt tūlīt vai jebkurā laikā.</translation>
 <translation id="8887921976452567404">Aizvērtās cilnes un grupas var atkārtoti atvērt sadaļās “Nesen atvērtās cilnes” un “Ciļņu grupas”.</translation>
 <translation id="8915916167043355778">Aizvērt visu</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{Pārvietot uz jaunu logu}zero{Pārvietot uz citu logu}one{Pārvietot uz citu logu}other{Pārvietot uz citu logu}}</translation>
 <translation id="9090098097337832354">Informācija par šo veikalu ir aizvērta</translation>
 <translation id="9114502155681725011">Atvērt ciļņu grupas “<ph name="TITLE_OF_GROUP" />” (krāsa: <ph name="COLOR_NAME" />) darbību izvēlni</translation>
 <translation id="9169594135889675189">Pievienot grupai jaunu cilni</translation>

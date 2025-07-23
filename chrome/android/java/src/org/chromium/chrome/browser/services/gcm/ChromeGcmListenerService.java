@@ -11,8 +11,8 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.chrome.browser.base.SplitCompatGcmListenerService;
 
 /**
- * See {@link ChromeGcmListenerServiceImpl}.
- * Suppressing linting as onNewToken() is implemented in base class.
+ * See {@link ChromeGcmListenerServiceImpl}. Suppressing linting as onNewToken() is implemented in
+ * base class.
  */
 @SuppressLint("MissingFirebaseInstanceTokenRefresh")
 @NullMarked

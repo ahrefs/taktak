@@ -211,7 +211,7 @@ class CONTENT_EXPORT RenderFrameHostDelegate {
   virtual void ShowContextMenu(
       RenderFrameHostImpl& render_frame_host,
       mojo::PendingAssociatedRemote<blink::mojom::ContextMenuClient>
-          context_menu_client,
+      context_menu_client,
       const ContextMenuParams& params) {}
 
   // A JavaScript alert, confirmation or prompt dialog should be shown.
@@ -253,7 +253,7 @@ class CONTENT_EXPORT RenderFrameHostDelegate {
   virtual void BindDisplayCutoutHost(
       RenderFrameHostImpl* render_frame_host,
       mojo::PendingAssociatedReceiver<blink::mojom::DisplayCutoutHost>
-          receiver) {}
+      receiver) {}
 
   // The display style of the frame has changed.
   virtual void DidChangeDisplayState(RenderFrameHostImpl* render_frame_host,
@@ -543,7 +543,7 @@ class CONTENT_EXPORT RenderFrameHostDelegate {
   virtual void OnRemoteSubframeViewportIntersectionStateChanged(
       RenderFrameHostImpl* host,
       const blink::mojom::ViewportIntersectionState&
-          viewport_intersection_state) {}
+  viewport_intersection_state) {}
 
   // Notifies observers that the frame's visibility has changed.
   virtual void OnFrameVisibilityChanged(
@@ -616,7 +616,7 @@ class CONTENT_EXPORT RenderFrameHostDelegate {
   virtual void BindScreenOrientation(
       RenderFrameHost* render_frame_host,
       mojo::PendingAssociatedReceiver<device::mojom::ScreenOrientation>
-          receiver) {}
+      receiver) {}
 
   // Return whether HTML Fullscreen requires transient activation.
   virtual bool IsTransientActivationRequiredForHtmlFullscreen();
@@ -633,9 +633,9 @@ class CONTENT_EXPORT RenderFrameHostDelegate {
       base::SafeRef<SiteInstanceGroup> site_instance_group,
       int32_t route_id,
       mojo::PendingAssociatedReceiver<blink::mojom::PopupWidgetHost>
-          blink_popup_widget_host,
+      blink_popup_widget_host,
       mojo::PendingAssociatedReceiver<blink::mojom::WidgetHost>
-          blink_widget_host,
+      blink_widget_host,
       mojo::PendingAssociatedRemote<blink::mojom::Widget> blink_widget);
 
   virtual void DidLoadResourceFromMemoryCache(

@@ -11,10 +11,7 @@ import android.webkit.WebMessagePort;
 import org.chromium.content_public.browser.MessagePayload;
 import org.chromium.content_public.browser.MessagePort;
 
-/**
- * This class is used to convert a WebMessagePort to a MessagePort in chromium
- * world.
- */
+/** This class is used to convert a WebMessagePort to a MessagePort in chromium world. */
 public class WebMessagePortAdapter extends WebMessagePort {
     private final MessagePort mPort;
 

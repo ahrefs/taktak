@@ -33,8 +33,8 @@ public class OfflineContentAvailabilityStatusProvider implements OfflineContentP
     private final Set<ContentId> mPersistentItems = new HashSet<>();
 
     /**
-     * @return An {@link OfflineContentAvailabilityStatusProvider} instance singleton.  If one
-     *         is not available this will create a new one.
+     * @return An {@link OfflineContentAvailabilityStatusProvider} instance singleton. If one is not
+     *     available this will create a new one.
      */
     public static OfflineContentAvailabilityStatusProvider getInstance() {
         if (sInstance == null) {

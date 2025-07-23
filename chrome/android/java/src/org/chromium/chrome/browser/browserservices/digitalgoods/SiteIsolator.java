@@ -12,9 +12,8 @@ import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.url.GURL;
 
 /**
- * This class calls into native to request that a given tab starts site
- * isolation for the provided url's site.  Note that the site will be isolated
- * with a USER_TRIGGERED IsolatedOriginSource.
+ * This class calls into native to request that a given tab starts site isolation for the provided
+ * url's site. Note that the site will be isolated with a USER_TRIGGERED IsolatedOriginSource.
  */
 @NullMarked
 public class SiteIsolator {

@@ -19,6 +19,7 @@
 // since we cannot autogenerate this in actions.xml.
 #define SIDE_PANEL_ENTRY_IDS(V)                                               \
   /* Global Entries */                                                        \
+  V(kAIChat, kActionAIChat, "AIChat")                                         \
   V(kReadingList, kActionSidePanelShowReadingList, "ReadingList")             \
   V(kBookmarks, kActionSidePanelShowBookmarks, "Bookmarks")                   \
   V(kHistoryClusters, kActionSidePanelShowHistoryCluster, "HistoryClusters")  \

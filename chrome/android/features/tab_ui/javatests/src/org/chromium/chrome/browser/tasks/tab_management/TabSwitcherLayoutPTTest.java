@@ -709,7 +709,8 @@ public class TabSwitcherLayoutPTTest {
         Tab regularTab = regularPage.loadedTabElement.get();
         IncognitoNewTabPageStation incognitoPage = regularPage.openNewIncognitoTabFast();
         Tab incognitoTab = incognitoPage.loadedTabElement.get();
-        IncognitoTabSwitcherStation incognitoTabSwitcherStation = incognitoPage.openIncognitoTabSwitcher();
+        IncognitoTabSwitcherStation incognitoTabSwitcherStation =
+                incognitoPage.openIncognitoTabSwitcher();
         // Load URL in Regular Model
         mCtaTestRule.loadUrlInTab(
                 mCtaTestRule.getTestServer().getURL(TEST_URL),

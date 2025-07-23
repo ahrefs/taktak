@@ -3338,8 +3338,10 @@ public class ChromeTabbedActivity extends ChromeActivity {
             LoadUrlParams params =
                     new LoadUrlParams(UrlConstants.RECENT_TABS_URL, PageTransition.AUTO_BOOKMARK);
             boolean isInOverviewMode = isInOverviewMode();
-            if (currentTab == null || (ChromeFeatureList.sAndroidNativePagesInNewTab.isEnabled()
-                    && ChromeFeatureList.sAndroidNativePagesInNewTabRecentTabsEnabled.getValue())) {
+            if (currentTab == null
+                    || (ChromeFeatureList.sAndroidNativePagesInNewTab.isEnabled()
+                            && ChromeFeatureList.sAndroidNativePagesInNewTabRecentTabsEnabled
+                                    .getValue())) {
                 getTabCreator(getCurrentTabModel().isIncognito())
                         .createNewTab(params, TabLaunchType.FROM_CHROME_UI, null);
             } else {

@@ -184,6 +184,9 @@
 #include "url/origin.h"
 #include "v8/include/v8-isolate.h"
 
+#include "chrome/renderer/chat/page_content_extractor.h"
+#include "chrome/renderer/process_state.h"
+
 #if BUILDFLAG(IS_ANDROID)
 #include "chrome/renderer/sandbox_status_extension_android.h"
 #include "chrome/renderer/wallet/boarding_pass_extractor.h"
@@ -777,6 +780,13 @@ void ChromeContentRendererClient::RenderFrameCreated(
       render_frame->IsMainFrame()) {
     new wallet::BoardingPassExtractor(render_frame, registry);
   }
+#endif
+
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
+    if (render_frame->IsMainFrame() && !IsIncognitoProcess()) {
+        new ai_chat::PageContentExtractor(render_frame, registry,
+                                      ISOLATED_WORLD_ID_CHROME_INTERNAL);
+    }
 #endif
 }
 

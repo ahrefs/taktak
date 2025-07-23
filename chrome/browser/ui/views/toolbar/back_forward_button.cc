@@ -57,7 +57,12 @@ BackForwardButton::BackForwardButton(Direction direction,
     GetViewAccessibility().SetDescription(
         l10n_util::GetStringUTF8(IDS_ACCDESCRIPTION_FORWARD));
     SetID(VIEW_ID_FORWARD_BUTTON);
-    SetProperty(views::kElementIdentifierKey, kToolbarForwardButtonElementId);
+
+    // The following line is commented out because setting the top and bottom border of
+    // 'toolbar_view::container_view' as shown here causes the forward button to disappear.
+    // container_view_->SetBorder(views::CreateEmptyBorder(gfx::Insets::TLBR(3, 0, 3, 0)));
+    // SetProperty(views::kElementIdentifierKey, kToolbarForwardButtonElementId);
+
     set_menu_identifier(kToolbarForwardButtonMenuElementId);
   }
 }

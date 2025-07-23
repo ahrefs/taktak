@@ -60,24 +60,24 @@
             <settings-autofill-page prefs="{{prefs}}"></settings-autofill-page>
           </settings-section>
         </template>
-        <settings-section id="privacyGuidePromoSection" page-title=""
-            hidden$="[[!showPrivacyGuidePromo_]]" nest-under-section="privacy"
-            no-search>
-          <settings-privacy-guide-promo id="privacyGuidePromo"
-              prefs="{{prefs}}">
-          </settings-privacy-guide-promo>
-        </settings-section>
+<!--        <settings-section id="privacyGuidePromoSection" page-title=""-->
+<!--            hidden$="[[!showPrivacyGuidePromo_]]" nest-under-section="privacy"-->
+<!--            no-search>-->
+<!--          <settings-privacy-guide-promo id="privacyGuidePromo"-->
+<!--              prefs="{{prefs}}">-->
+<!--          </settings-privacy-guide-promo>-->
+<!--        </settings-section>-->
         <!--  TODO(crbug.com/40267370): Add a test to basic_page_test.ts
         to check that settings-safety-hub-entry-point is not visible
         in the guest mode. -->
-        <template is="dom-if" if="[[showPage_(pageVisibility.safetyHub)]]"
-            restamp>
-          <settings-section page-title="$i18n{safetyHub}"
-              section="safetyHubEntryPoint" nest-under-section="privacy"
-              id="safetyHubEntryPointSection">
-            <settings-safety-hub-entry-point></settings-safety-hub-entry-point>
-          </settings-section>
-        </template>
+<!--        <template is="dom-if" if="[[showPage_(pageVisibility.safetyHub)]]"-->
+<!--            restamp>-->
+<!--          <settings-section page-title="$i18n{safetyHub}"-->
+<!--              section="safetyHubEntryPoint" nest-under-section="privacy"-->
+<!--              id="safetyHubEntryPointSection">-->
+<!--            <settings-safety-hub-entry-point></settings-safety-hub-entry-point>-->
+<!--          </settings-section>-->
+<!--        </template>-->
         <template is="dom-if" if="[[showPage_(pageVisibility.privacy)]]"
             restamp>
           <settings-section page-title="$i18n{privacyPageTitle}"

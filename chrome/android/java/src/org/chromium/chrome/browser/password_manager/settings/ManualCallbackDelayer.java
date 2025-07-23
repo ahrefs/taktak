@@ -11,7 +11,7 @@ import java.util.List;
  * An implementation of {@link CallbackDelayer} for tests. It runs callbacks after a manual signal.
  */
 public final class ManualCallbackDelayer implements CallbackDelayer {
-    /** The callbacks to be run within {@link runCallbacksSynchronously}.*/
+    /** The callbacks to be run within {@link runCallbacksSynchronously}. */
     private final List<Runnable> mCallbacks = new ArrayList<>();
 
     @Override

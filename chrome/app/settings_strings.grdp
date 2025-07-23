@@ -90,10 +90,10 @@
     Enable accessibility features
   </message>
   <message name="IDS_SETTINGS_ACCESSIBLE_IMAGE_LABELS_TITLE" desc="Description for screen reader image labels feature.">
-    Get image descriptions from Google
+    Get image descriptions from Taktak
   </message>
   <message name="IDS_SETTINGS_ACCESSIBLE_IMAGE_LABELS_SUBTITLE" desc="Subtitle for screen reader image labels feature.">
-    If an image doesn’t have a useful description, Chrome will try to provide one for you. To create descriptions, images are sent to Google.
+    If an image doesn’t have a useful description, Chrome will try to provide one for you. To create descriptions, images are sent to Taktak.
   </message>
   <message name="IDS_SETTINGS_MAIN_NODE_ANNOTATIONS_DOWNLOAD_COMPLETE" desc="Success message when it has downloaded main node annotation files.">
     Main node annotation files downloaded
@@ -314,13 +314,13 @@
     Search settings
   </message>
   <message name="IDS_SETTINGS_SEARCH_NO_RESULTS_HELP" desc="Help text for a search that has no results.">
-    Go to <ph name="BEGIN_LINK_CHROMIUM">&lt;a target="_blank" href="$1"&gt;</ph>Google Chrome help<ph name="END_LINK_CHROMIUM">&lt;/a&gt;</ph> if you can't find what you're looking for
+    Go to <ph name="BEGIN_LINK_CHROMIUM">&lt;a target="_blank" href="$1"&gt;</ph>Taktak Chrome help<ph name="END_LINK_CHROMIUM">&lt;/a&gt;</ph> if you can't find what you're looking for
   </message>
   <message name="IDS_SETTINGS_SETTINGS" desc="The settings page title.">
     Settings
   </message>
   <message name="IDS_SETTINGS_ALT_PAGE_TITLE" desc="The settings page title for the about page.">
-    Settings - <ph name="SECTION_TITLE">$1<ex>About Chromium</ex></ph>
+    Settings - <ph name="SECTION_TITLE">$1<ex>About Taktak</ex></ph>
   </message>
   <message name="IDS_SETTINGS_SUBPAGE_BUTTON" desc="Accessibility description for a button navigating the user from a settings page to one of the settings subpages.">
     Subpage button
@@ -376,28 +376,28 @@
   </message>
 
   <!-- Autofill Page -->
-  <message name="IDS_PASSWORDS_PAGE_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Google Chrome is trying to ' (or in some languages, 'Google Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before revealing plaintext passwords on the password page.">
+  <message name="IDS_PASSWORDS_PAGE_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Chrome is trying to ' (or in some languages, 'Taktak Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before revealing plaintext passwords on the password page.">
     show passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_COPY_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Google Chrome is trying to ' (or in some languages, 'Google Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before copying plaintext passwords into the clipboard.">
+  <message name="IDS_PASSWORDS_PAGE_COPY_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Chrome is trying to ' (or in some languages, 'Taktak Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before copying plaintext passwords into the clipboard.">
     copy passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_EDIT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Google Chrome is trying to ' (or in some languages, 'Google Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before editing plaintext passwords on the password page.">
+  <message name="IDS_PASSWORDS_PAGE_EDIT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Chrome is trying to ' (or in some languages, 'Taktak Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before editing plaintext passwords on the password page.">
     edit passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_EXPORT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Google Chrome is trying to ' (or in some languages, 'Google Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before exporting passwords to a file.">
+  <message name="IDS_PASSWORDS_PAGE_EXPORT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Chrome is trying to ' (or in some languages, 'Taktak Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before exporting passwords to a file.">
     export passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_DELETE_ALL_DATA_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown on MacOS after 'Google Chrome is trying to ' (or in some languages, 'Google Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before deleting all Google Password Manager data.">
-    delete your <ph name="BRAND">$1<ex>Google Password Manager</ex></ph> data
+  <message name="IDS_PASSWORDS_PAGE_DELETE_ALL_DATA_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown on MacOS after 'Taktak Chrome is trying to ' (or in some languages, 'Taktak Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before deleting all Taktak Password Manager data.">
+    delete your <ph name="BRAND">$1<ex>Taktak Password Manager</ex></ph> data
   </message>
   <message name="IDS_SETTINGS_AUTOFILL_AND_PASSWORDS" desc="Name of the settings page which allows managing passwords, payment methods and addresses settings.">
     Autofill and passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_IMPORT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Google Chrome is trying to ' (or in some languages, 'Google Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before replacing passwords during Import.">
+  <message name="IDS_PASSWORDS_PAGE_IMPORT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Chrome is trying to ' (or in some languages, 'Taktak Chrome wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before replacing passwords during Import.">
     replace existing passwords
   </message>
-  <message name="IDS_SETTINGS_GOOGLE_PAYMENTS" desc="Label used to differentiate when an address or credit card entry comes from Google Pay. This should follow the casing of the 'Google Pay' brand. 'Google Pay' should not be translated as it is the product name.">
+  <message name="IDS_SETTINGS_GOOGLE_PAYMENTS" desc="Label used to differentiate when an address or credit card entry comes from Taktak Pay. This should follow the casing of the 'Taktak Pay' brand. 'Taktak Pay' should not be translated as it is the product name.">
     Google Pay
   </message>
   <message name="IDS_SETTINGS_AUTOFILL_ADDRESSES_ADD_TITLE" desc="This is the title for the 'Add address' dialog. This dialog allows a user to create a new address.">
@@ -445,7 +445,7 @@
   <message name="IDS_AUTOFILL_REMOVE_VIRTUAL_CARD" desc="The text shown in the secondary action menu button to unenroll a card from the virtual card feature. Virtual cards are credit cards generated from the actual cards and provide extra security.">
     Turn off virtual card
   </message>
-  <message name="IDS_AUTOFILL_EDIT_SERVER_CREDIT_CARD" desc="The text shown in the secondary action menu button to direct users to pay.google.com to edit the information of credit cards stored in Google Payments.">
+  <message name="IDS_AUTOFILL_EDIT_SERVER_CREDIT_CARD" desc="The text shown in the secondary action menu button to direct users to pay.Taktak.com to edit the information of credit cards stored in Taktak Payments.">
     Edit in Google Pay
   </message>
   <message name="IDS_AUTOFILL_VIRTUAL_CARD_TURNED_ON_LABEL" desc="The text shown next to the card summary to indicate that a virtual card has been enabled for the credit card. Virtual cards are credit cards generated from the actual cards and provide extra security.">
@@ -989,7 +989,7 @@
     Inactive tabs appearance
   </message>
   <message name="IDS_SETTINGS_PERFORMANCE_DISCARD_RING_TREATMENT_ENABLED_DESCRIPTION_WITH_LEARN_LINK" desc="Label for a performance settings toggle description that controls whether the inactive tab UI is shown. Also contains a link to the help center article.">
-    A dotted circle appears around site icons. <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank" aria-description="$2"&gt;</ph>Learn more about inactive tabs<ph name="END_LINK">&lt;/a&gt;</ph>
+    A dotted circle appears around site icons.
   </message>
   <message name="IDS_SETTINGS_PERFORMANCE_TAB_HOVER_PREVIEW_CARD_LINK_TITLE" desc="Title for the link row that points to tab hover preview card apperance settings.">
     Tab hover preview card appearance
@@ -1001,7 +1001,7 @@
     Performance issue alerts
   </message>
   <message name="IDS_SETTINGS_PERFORMANCE_INTERVENTION_NOTIFICATION_ENABLED_DESCRIPTION" desc="Label for a performance settings toggle that controls whether performance intervention notifications should be shown and link to learn more about performance issue alerts.">
-    Get notifications that suggest ways to improve detected performance issues. <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank" aria-description="$2"&gt;</ph>Learn more about performance issue alerts<ph name="END_LINK">&lt;/a&gt;</ph>
+    Get notifications that suggest ways to improve detected performance issues.
   </message>
 
   <!-- Languages Page -->
@@ -1357,7 +1357,7 @@
     Sites
   </message>
   <message name="IDS_SETTINGS_FLEDGE_PAGE_CURRENT_SITES_DESCRIPTION" desc="A paragraph beneath the 'Sites' label. It explains how users can control the sites that appear in the list. * 'block sites': When a user blocks a site, that site may no longer save info with Chrome about the user's visit. As the user continues to browse, they will not see ads suggested by the blocked site. * 'auto-deletes': We included the 'auto' to reinforce that this is part of a system and the deletion is done regularly.">
-    You can block sites you don't want. Chrome also auto-deletes sites from the list that are older than 30 days.
+    You can block sites you don't want. Taktak also auto-deletes sites from the list that are older than 30 days.
   </message>
   <message name="IDS_SETTINGS_FLEDGE_PAGE_CURRENT_SITES_DESCRIPTION_LEARN_MORE" desc="A button label that opens a dialog box allowing the user to learn more about the Site-suggested ads setting.">
     Learn more
@@ -1437,7 +1437,7 @@
     You can always delete ad-measurement data by deleting your browsing data
   </message>
   <message name="IDS_SETTINGS_AD_MEASUREMENT_PAGE_CONSIDER_BULLET_2" desc="2 of 3 bullets in the 'Things to consider' section that describes the Ad measurement setting.">
-    Chrome limits the total amount of data that sites can share through the browser to measure ad performance
+    Taktak limits the total amount of data that sites can share through the browser to measure ad performance
   </message>
 
   <!-- Privacy Guide -->
@@ -1575,7 +1575,7 @@
       Sends an obfuscated portion of the URL to Google through a privacy server that hides your IP address
     </message>
     <message name="IDS_SETTINGS_PRIVACY_GUIDE_SAFE_BROWSING_CARD_STANDARD_PROTECTION_PRIVACY_DESCRIPTION1_PROXY" desc="A part of the privacy description of the standard protection section of the safe browsing card in the 'Privacy Guide'.">
-      If a site tries to steal your password, or when you download a harmful file, Chrome may also send URLs, including bits of page content, to Google
+      If a site tries to steal your password, or when you download a harmful file, Taktak may also send URLs, including bits of page content, to Google
     </message>
   </if>
 
@@ -1640,7 +1640,7 @@
     Passwords
   </message>
   <message name="IDS_SETTINGS_SAFETY_CHECK_PASSWORDS_FEATURE_UNAVAILABLE" desc="Explains that the password check feature is not available in this version of the browser.">
-    Password check is not available in Chromium
+    Password check is not available in Taktak
   </message>
   <message name="IDS_SETTINGS_SAFETY_CHECK_SAFE_BROWSING_ENABLED" desc="This text points out that Safe Browsing is enabled and that the user is protected.">
     Safe Browsing is on and protecting you from harmful sites and downloads
@@ -2974,10 +2974,10 @@
     See all site data and permissions
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_PAGE_DESCRIPTION" desc="Explanatory text for the Tracking Protection settings page.">
-    Chrome limits the type of information sites can use to track you as you browse. You can change your settings to choose your own level of protection.
+    Taktak limits the type of information sites can use to track you as you browse. You can change your settings to choose your own level of protection.
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_BULLET_ONE" desc="The first bullet for Tracking Protection settings. Informs users that Chrome will limit third-party cookies.">
-    Chrome automatically limits third-party cookies
+    Taktak automatically limits third-party cookies
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_BULLET_ONE_DESCRIPTION" desc="Description of the first bullet for tracking protection settings. Explains what limiting third-party cookies means.">
     Most sites can’t use third-party cookies to track you as you browse and sites can’t use third-party cookies in Incognito mode.
@@ -2986,7 +2986,7 @@
     Most sites should work as expected
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_BULLET_TWO_DESCRIPTION" desc="Description of the second bullet for Tracking Protection settings. Explains that you can temporarilty allow a site to use third-party cookies if it isn't working. Contains a learn more link to a help center article.">
-    If a site isn’t working, you can try giving it temporary permission to use third-party cookies. <ph name="BEGIN_LINK">&lt;a target="_blank" href="$1" aria-label="$2" aria-description="$3"&gt;</ph>Learn more<ph name="END_LINK">&lt;/a&gt;<ex>&lt;/a&gt;</ex></ph>
+    If a site isn’t working, you can try giving it temporary permission to use third-party cookies.
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_BULLET_TWO_LEARN_MORE_ARIA_LABEL" desc="Screenreader text for the 'Learn more' link in the second bullet of Tracking Protection settings.">
     Learn more about giving a site temporary permission to use third-party cookies
@@ -3340,7 +3340,7 @@
     No sites added
   </message>
   <message name="IDS_SETTINGS_SITE_SETTINGS_BLOCK_AUTOPLAY" desc="A label for a toggle in site settings to block autoplay. If the toggle is on then Chrome will block autoplay by default and use an algorithm to determine which sites should still be able to autoplay. If the toggle is off then autoplay will be enabled for all sites.">
-    Let Chrome choose when sites can play sound (recommended)
+    Let Taktak choose when sites can play sound (recommended)
   </message>
   <message name="IDS_SETTINGS_SITE_SETTINGS_EMPTY_ALL_SITES_PAGE" desc="Explanation shown when there are no sites that have appeared yet on the All Sites page.">
     Sites you visit will appear here
@@ -3523,11 +3523,11 @@
   </message>
 
   <!-- Sync / People Page -->
-  <message name="IDS_SETTINGS_PEOPLE" desc="Name of the settings page which manages the user's relationship to Google.">
-    You and Google
+  <message name="IDS_SETTINGS_PEOPLE" desc="Name of the settings page which manages the user's relationship to Taktak.">
+     Get started
   </message>
-  <message name="IDS_SETTINGS_CHANGE_PICTURE_PROFILE_PHOTO" desc="The text on the Google profile photo of the user.">
-    Google Profile photo
+  <message name="IDS_SETTINGS_CHANGE_PICTURE_PROFILE_PHOTO" desc="The text on the Taktak profile photo of the user.">
+    Taktak Profile photo
   </message>
 
   <message name="IDS_SETTINGS_PEOPLE_SIGN_IN" desc="The label of the button that lets user sign-in to chrome.">
@@ -4113,8 +4113,8 @@
   <message name="IDS_SETTINGS_SECURITY_KEYS_PHONES_YOUR_DEVICES" desc="The title of a section on a settings page that lists phoens that are signed into (and syncing with) the user's Google account.">
     Your devices
   </message>
-  <message name="IDS_SETTINGS_SECURITY_KEYS_PHONES_SYNCED_DESC" desc="The description of a section on a settings page that lists phoens that are signed into (and syncing with) the user's Google account.">
-    You're signed in to Chrome on these devices, so you can use them as security keys.
+  <message name="IDS_SETTINGS_SECURITY_KEYS_PHONES_SYNCED_DESC" desc="The description of a section on a settings page that lists phoens that are signed into (and syncing with) the user's Taktak account.">
+    You're signed in to Taktak on these devices, so you can use them as security keys.
   </message>
   <message name="IDS_SETTINGS_SECURITY_KEYS_PHONES_LINKED_DEVICES" desc="The title of a section on a settings page that lists phoens that can be used for signing into websites. The word 'linked' was picked to be distinct from 'paired', as in 'Bluetooth pairing'. The technology does use Bluetooth, but is distinct from Bluetooth pairing.">
     Linked devices
@@ -4176,7 +4176,7 @@
     Enhanced Safe Browsing is on
   </message>
   <message name="IDS_SETTINGS_SAFETY_HUB_SB_ON_ENHANCED_SUBHEADER" desc="Safety Hub settings page (chrome://settings/safetyHub) gives users an overview over their safety status. Safe browsing card in this page shows the current state of Safe browsing setting (chrome://settings/security). This string is the body text of the Safe Browsing card when the current state is Enhanced protection.">
-    You have Chrome's strongest security
+    You have Taktak's strongest security
   </message>
   <message name="IDS_SETTINGS_SAFETY_HUB_SB_ON_STANDARD_HEADER" desc="Safety Hub settings page (chrome://settings/safetyHub) gives users an overview over their safety status. Safe browsing card in this page shows the current state of Safe browsing setting (chrome://settings/security). This string is the headline of the Safe Browsing card when the current state is Standard protection.">
     Safe Browsing is on
@@ -4292,7 +4292,7 @@
     AI innovations
   </message>
   <message name="IDS_SETTINGS_AI_PAGE_MAIN_TITLE" desc="This string is the title of a card that sets the context for the ‘AI innovations’ section of Chrome’s settings. Here, the user can see settings related to AI (artificial intelligence) in this section; these settings include Help me write, Tab organizer, and more. This title is before the ‘Things to consider’ subheading and bullet points. We want users to read this card and understand the considerations that apply to all Chrome’s AI features. The tone should be motivating.">
-    Reimagine Chrome, supercharged with AI
+    Reimagine Taktak, supercharged with AI
   </message>
   <message name="IDS_SETTINGS_AI_PAGE_MAIN_SUBLABEL_1" desc="This is a bullet point on a card that sets the context for the ‘AI innovations’ section of Chrome’s settings. Here, the user can see settings related to AI (artificial intelligence) in this section; these settings include Help me write, Tab organizer, and more. This bullet point is after the ‘Reimagine Chrome, supercharged with AI’ title and ‘Things to consider’ subheading. We want users to read this card and understand the considerations that apply to all Chrome’s AI features. This bullet point specifically notes that AI features are actively developing and results may include errors. The tone should be informative.">
     These features use AI, are in early development, and won’t always get it right
@@ -4400,5 +4400,16 @@
   </message>
   <message name="IDS_SETTINGS_SAFEBROWSING_ENHANCED_OFF_TOAST_MESSAGE" desc="When Chrome shows a toast notification after the user turned off the Enhanced Protection setting, this is the text on the toast letting the user know that the Enhanced Protection setting is off.">
     Enhanced protection is off
+  </message>
+
+  <!-- Security settings telemetry opt-in   -->
+  <message name="IDS_SETTINGS_TELEMETRY_OPT_IN_TITLE" desc="The title for telemetry opt-in.">
+    Share anonymous usage data
+  </message>
+  <message name="IDS_SETTINGS_TELEMETRY_OPT_IN_DESC" desc="The description for telemetry opt-in toggle.">
+    Taktak is built by the team behind Yep—an independent AI search engine—and Ahrefs—an all-in-one marketing intelligence platform. To help improve Yep’s search ranking and Ahrefs’ web analytics, you can choose to share anonymized, aggregated data about visited pages. Taktak collects this data without storing personal information or browsing history tied to you.
+  </message>
+  <message name="IDS_SETTINGS_TELEMETRY_OPT_IN_POLICY" desc="The link to the policy of Taktak.">
+    See our <ph name="BEGIN_LINK">&lt;a href="https://taktak.com/privacy-policy" target="_blank"&gt;</ph>privacy policy<ph name="END_LINK">&lt;/a&gt;</ph>
   </message>
 </grit-part>

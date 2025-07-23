@@ -17,6 +17,7 @@
 <translation id="149054111719651807">{NUM_MINS,plural, =1{<ph name="NUM_MINS_ONE" /> минутын өмнө үүсгэсэн}other{<ph name="NUM_MINS_MANY" /> минутын өмнө үүсгэсэн}}</translation>
 <translation id="1499635324672558517">Бүх Нууцлалтай табыг хаах уу?</translation>
 <translation id="1501480321619201731">Бүлгийг устгах</translation>
+<translation id="1505526451013346974"><ph name="TITLE_OF_GROUP" />-д нэмэх</translation>
 <translation id="1555130319947370107">Цэнхэр</translation>
 <translation id="161042844686301425">Шар хөх өнгө</translation>
 <translation id="1645759014353344461"><ph name="TABS_COUNT_MANY" /> табыг бүлэглэсэн</translation>
@@ -202,6 +203,7 @@
 <translation id="883379923675618699">Chrome таны 3 сарын хугацаанд ашиглаагүй идэвхгүй харилцан үйлдэл дэх зүйлийг автоматаар хаана. Та хүссэн үедээ үүнийг Тохиргооноос унтраах боломжтой.</translation>
 <translation id="8887921976452567404">Та хаасан таб, бүлгээ Саяхны табын хэсэг, Табын бүлгийн хэсгээс дахин нээх боломжтой.</translation>
 <translation id="8915916167043355778">Бүгдийг хаах</translation>
+<translation id="8917994835293470029">{WINDOW_COUNT,plural, =1{Шинэ цонх руу зөөх}other{Өөр цонх руу зөөх}}</translation>
 <translation id="9090098097337832354">Энэ дэлгүүрийн талаарх мэдээллийг хаасан</translation>
 <translation id="9114502155681725011">Табын бүлгийн үйлдлийн цэсийг <ph name="COLOR_NAME" /> өнгөтэй, <ph name="TITLE_OF_GROUP" /> табын бүлэгт зориулж нээнэ үү.</translation>
 <translation id="9169594135889675189">Бүлэгт шинэ таб нэмэх</translation>

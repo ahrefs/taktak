@@ -527,6 +527,9 @@ NSMenuItem* BuildHelpMenu(NSApplication* nsapp,
                           id app_delegate,
                           const std::u16string& product_name,
                           bool is_pwa) {
+  // no help menu for Taktak MVP
+  return nil;
+  /*
   if (is_pwa) {
     return nil;
   }
@@ -543,11 +546,13 @@ NSMenuItem* BuildHelpMenu(NSApplication* nsapp,
                   .string_format_1(product_name)
                   .command_id(IDC_HELP_PAGE_VIA_MENU),
           })
+            .submenu({})
           .Build();
   // clang-format on
 
   nsapp.helpMenu = item.submenu;
   return item;
+  */
 }
 
 }  // namespace

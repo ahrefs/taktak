@@ -18,24 +18,25 @@ import org.chromium.base.Log;
 import org.chromium.base.metrics.RecordHistogram;
 
 /**
- * Manage multiple SurfaceViews for the compositor, so that transitions between
- * surfaces with and without an alpha channel can be visually smooth.
+ * Manage multiple SurfaceViews for the compositor, so that transitions between surfaces with and
+ * without an alpha channel can be visually smooth.
  *
- * This class allows a client to request a 'translucent' or 'opaque' surface, and we will signal via
- * SurfaceHolder.Callback when it's ready.  We guarantee that the client will receive surfaceCreated
- * / surfaceDestroyed only for a surface that represents the most recently requested PixelFormat.
+ * <p>This class allows a client to request a 'translucent' or 'opaque' surface, and we will signal
+ * via SurfaceHolder.Callback when it's ready. We guarantee that the client will receive
+ * surfaceCreated / surfaceDestroyed only for a surface that represents the most recently requested
+ * PixelFormat.
  *
- * Internally, we maintain two SurfaceViews, since calling setFormat() to change the PixelFormat
- * results in a visual glitch as the surface is torn down.  crbug.com/679902
+ * <p>Internally, we maintain two SurfaceViews, since calling setFormat() to change the PixelFormat
+ * results in a visual glitch as the surface is torn down. crbug.com/679902
  *
- * The client has the responsibility to call doneWithUnownedSurface() at some point between when we
- * call back its surfaceCreated, when it is safe for us to hide the SurfaceView with the wrong
- * format.  It is okay if it requests multiple surfaces without calling doneWithUnownedSurface.
+ * <p>The client has the responsibility to call doneWithUnownedSurface() at some point between when
+ * we call back its surfaceCreated, when it is safe for us to hide the SurfaceView with the wrong
+ * format. It is okay if it requests multiple surfaces without calling doneWithUnownedSurface.
  *
- * If the client requests the same format more than once in a row, it will still receive destroyed /
- * created / changed messages for it, even though we won't tear it down.
+ * <p>If the client requests the same format more than once in a row, it will still receive
+ * destroyed / created / changed messages for it, even though we won't tear it down.
  *
- * The full design doc is at https://goo.gl/aAmQzR .
+ * <p>The full design doc is at https://goo.gl/aAmQzR .
  */
 class CompositorSurfaceManagerImpl implements SurfaceHolder.Callback2, CompositorSurfaceManager {
     private static class SurfaceState {

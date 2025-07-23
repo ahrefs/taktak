@@ -70,11 +70,10 @@ public final class SafeModeService extends Service {
          *     certificate. This is honored on any type of Android build. This value is required. If
          *     the trusted caller
          * @param debugCertHash This is similar to {@code releaseCertHash}, but for the <b>debug</b>
-         *         (development)
-         *     certificate. This is honored on userdebug/eng Android images but not on user Android
-         *     builds. If the caller always uses the same signing certificate, this parameter should
-         *     be {@code null} and the certificate hash should be passed into {@code
-         *     releaseCertHash} instead.
+         *     (development) certificate. This is honored on userdebug/eng Android images but not on
+         *     user Android builds. If the caller always uses the same signing certificate, this
+         *     parameter should be {@code null} and the certificate hash should be passed into
+         *     {@code releaseCertHash} instead.
          */
         public TrustedPackage(
                 @NonNull String packageName,

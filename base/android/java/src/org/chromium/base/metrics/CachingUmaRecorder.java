@@ -220,8 +220,9 @@ final class CachingUmaRecorder implements UmaRecorder {
     /**
      * Number of histogram samples that couldn't be cached, because some limit of cache size been
      * reached.
-     * <p>
-     * Using {@link AtomicInteger} because the value may need to be updated with a read lock held.
+     *
+     * <p>Using {@link AtomicInteger} because the value may need to be updated with a read lock
+     * held.
      */
     private final AtomicInteger mDroppedHistogramSampleCount = new AtomicInteger();
 

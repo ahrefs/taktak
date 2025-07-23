@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * A base wrapper for {@link CastSession}, extending its functionality for Chrome MediaRouter.
  *
- * Has persistent lifecycle and always attaches itself to the current {@link CastSession}.
+ * <p>Has persistent lifecycle and always attaches itself to the current {@link CastSession}.
  */
 @NullMarked
 @SuppressWarnings("NullAway") // https://crbug.com/401584051
@@ -216,8 +216,8 @@ public abstract class BaseSessionController {
     }
 
     /**
-     *  Helper message to get the session ID of the attached session. For stubbing in tests as
-     * {@link CastSession#getSessionId()} is final.
+     * Helper message to get the session ID of the attached session. For stubbing in tests as {@link
+     * CastSession#getSessionId()} is final.
      */
     public @Nullable String getSessionId() {
         return isConnected() ? mCastSession.getSessionId() : null;

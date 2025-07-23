@@ -23,8 +23,8 @@ import java.util.ListIterator;
 @NullMarked
 public class PendingTabClosureManager {
     /**
-     * Delegate for applying changes to a {@link TabList} based on the decision logic in
-     * {@link PendingTabClosureManager}.
+     * Delegate for applying changes to a {@link TabList} based on the decision logic in {@link
+     * PendingTabClosureManager}.
      */
     public interface PendingTabClosureDelegate {
         /**
@@ -236,10 +236,10 @@ public class PendingTabClosureManager {
     private final LinkedList<TabClosureEvent> mTabClosureEvents = new LinkedList<>();
 
     /**
-     * A {@link TabList} that represents the complete list of {@link Tab}s. This is so that
-     * certain UI elements can call {@link TabModel#getComprehensiveModel()} to get a full list of
-     * {@link Tab}s that includes rewindable entries, as the typical {@link TabModel} does not
-     * return rewindable entries.
+     * A {@link TabList} that represents the complete list of {@link Tab}s. This is so that certain
+     * UI elements can call {@link TabModel#getComprehensiveModel()} to get a full list of {@link
+     * Tab}s that includes rewindable entries, as the typical {@link TabModel} does not return
+     * rewindable entries.
      */
     private final RewoundList mRewoundList = new RewoundList();
 

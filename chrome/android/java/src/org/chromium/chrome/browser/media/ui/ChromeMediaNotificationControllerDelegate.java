@@ -73,9 +73,9 @@ class ChromeMediaNotificationControllerDelegate implements MediaNotificationCont
     }
 
     /**
-     * Service used to transform intent requests triggered from the notification into
-     * {@code MediaNotificationListener} callbacks. We have to create a separate derived class for
-     * each type of notification since one class corresponds to one instance of the service only.
+     * Service used to transform intent requests triggered from the notification into {@code
+     * MediaNotificationListener} callbacks. We have to create a separate derived class for each
+     * type of notification since one class corresponds to one instance of the service only.
      */
     @VisibleForTesting
     abstract static class ListenerServiceImpl extends SplitCompatService.Impl {

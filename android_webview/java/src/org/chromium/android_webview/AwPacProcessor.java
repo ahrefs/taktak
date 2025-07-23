@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class to evaluate PAC scripts. Its lifecycle is independent of
- * any Renderer, Profile, or WebView instance.
+ * Class to evaluate PAC scripts. Its lifecycle is independent of any Renderer, Profile, or WebView
+ * instance.
  */
 @JNINamespace("android_webview")
 @RequiresApi(Build.VERSION_CODES.P)

@@ -78,6 +78,10 @@ class TabStyleViewsImpl : public TabStyleViews {
                  float scale,
                  bool force_active,
                  TabStyle::RenderUnits render_units) const override;
+  SkPath GetRoundedPath(TabStyle::PathType path_type,
+                        float scale,
+                        bool force_active,
+                        TabStyle::RenderUnits render_units) const override;
   gfx::Insets GetContentsInsets() const override;
   float GetZValue() const override;
   float GetCurrentActiveOpacity() const override;
@@ -493,6 +497,118 @@ SkPath TabStyleViewsImpl::GetPath(TabStyle::PathType path_type,
 
   // Convert path to be relative to the tab origin.
   gfx::PointF origin(tab_->origin());
+  origin.Scale(scale);
+  path.offset(-origin.x(), -origin.y());
+
+  // Possibly convert back to DIPs.
+  if (render_units == TabStyle::RenderUnits::kDips && scale != 1.0f) {
+    path.transform(SkMatrix::Scale(1.0f / scale, 1.0f / scale));
+  }
+
+  return path;
+}  // end of TabStyleViewsImpl::GetPath
+
+SkPath TabStyleViewsImpl::GetRoundedPath(
+    TabStyle::PathType path_type,
+    float scale,
+    bool force_active,
+    TabStyle::RenderUnits render_units) const {
+  CHECK(tab());
+  const int stroke_thickness = GetStrokeThickness(force_active);
+
+  // We'll do the entire path calculation in aligned pixels.
+  // TODO(dfried): determine if we actually want to use |stroke_thickness| as
+  // the inset in this case.
+  gfx::RectF aligned_bounds =
+      ScaleAndAlignBounds(tab()->bounds(), scale, stroke_thickness);
+
+  // Calculate the corner radii. Note that corner radius is based on original
+  // tab width (in DIP), not our new, scaled-and-aligned bounds.
+  float taktak_corner_radius_factor = 4.0;
+  float content_corner_radius = (GetTopCornerRadiusForWidth(tab()->width()) -
+                                 taktak_corner_radius_factor) *
+                                scale;
+  float extension_corner_radius =
+      (tab_style()->GetBottomCornerRadius() - taktak_corner_radius_factor) *
+      scale;
+
+  // Selected, hover, and inactive tab fills are a detached squarcle tab.
+  float top_content_corner_radius = content_corner_radius;
+  float bottom_content_corner_radius = content_corner_radius;
+  float tab_height = GetLayoutConstant(TAB_HEIGHT) * scale;
+
+  // The tab displays favicon animations that can emerge from the toolbar. The
+  // interior clip needs to extend the entire height of the toolbar to support
+  // this. Detached tab shapes do not need to respect this.
+  if (path_type != TabStyle::PathType::kInteriorClip &&
+      path_type != TabStyle::PathType::kHitTest) {
+    tab_height -= GetLayoutConstant(TAB_STRIP_PADDING) * scale;
+    tab_height -= GetLayoutConstant(TABSTRIP_TOOLBAR_OVERLAP) * scale;
+  }
+
+  // Don't round the bottom corners to avoid creating dead space between tabs.
+  if (path_type == TabStyle::PathType::kHitTest) {
+    bottom_content_corner_radius = 0;
+  }
+
+  int left = aligned_bounds.x() + extension_corner_radius;
+  int top = aligned_bounds.y() + GetLayoutConstant(TAB_STRIP_PADDING) * scale;
+  int right = aligned_bounds.right() - extension_corner_radius;
+  const int bottom = top + tab_height;
+
+  // For maximized and full screen windows, extend the tab hit test to the top
+  // of the tab, encompassing the top padding. This makes it easy to click on
+  // tabs by moving the mouse to the top of the screen.
+  if (path_type == TabStyle::PathType::kHitTest &&
+      tab()->controller()->IsFrameCondensed()) {
+    top -= GetLayoutConstant(TAB_STRIP_PADDING) * scale;
+    // Don't round the top corners to avoid creating dead space between tabs.
+    top_content_corner_radius = 0;
+  }
+
+  // if the size of the space for the path is smaller than the size of a
+  // favicon or if we are building a path for the hit test, expand to take the
+  // entire width of the separator margins AND the separator.
+  if ((right - left) < (gfx::kFaviconSize * scale) ||
+      path_type == TabStyle::PathType::kHitTest) {
+    // Take the entire size of the separator. in odd separator size cases, the
+    // right side will take the remaining space.
+    const int left_separator_overlap =
+        tab_style()->GetSeparatorSize().width() / 2;
+    const int right_separator_overlap =
+        tab_style()->GetSeparatorSize().width() - left_separator_overlap;
+
+    // If there is a tab before this one, then expand into its overlap.
+    const Tab* const previous_tab =
+        tab()->controller()->GetAdjacentTab(tab(), -1);
+    if (previous_tab) {
+      left -= (tab_style()->GetSeparatorMargins().right() +
+               left_separator_overlap) *
+              scale;
+    }
+
+    // If there is a tab after this one, then expand into its overlap.
+    const Tab* const next_tab = tab()->controller()->GetAdjacentTab(tab(), 1);
+    if (next_tab) {
+      right += (tab_style()->GetSeparatorMargins().left() +
+                right_separator_overlap) *
+               scale;
+    }
+  }
+
+  // Radii are clockwise from top left.
+  const SkVector radii[4] = {
+      SkVector(top_content_corner_radius, top_content_corner_radius),
+      SkVector(top_content_corner_radius, top_content_corner_radius),
+      SkVector(bottom_content_corner_radius, bottom_content_corner_radius),
+      SkVector(bottom_content_corner_radius, bottom_content_corner_radius)};
+  SkRRect rrect;
+  rrect.setRectRadii(SkRect::MakeLTRB(left, top, right, bottom), radii);
+  SkPath path;
+  path.addRRect(rrect);
+
+  // Convert path to be relative to the tab origin.
+  gfx::PointF origin(tab()->origin());
   origin.Scale(scale);
   path.offset(-origin.x(), -origin.y());
 
@@ -978,9 +1094,9 @@ void TabStyleViewsImpl::PaintTabBackgroundFill(
     std::optional<int> fill_id,
     int y_inset) const {
   const SkPath fill_path =
-      GetPath(TabStyle::PathType::kFill, canvas->image_scale(),
-              selection_state == TabStyle::TabSelectionState::kActive,
-              TabStyle::RenderUnits::kPixels);
+      GetRoundedPath(TabStyle::PathType::kFill, canvas->image_scale(),
+                     selection_state == TabStyle::TabSelectionState::kActive,
+                     TabStyle::RenderUnits::kPixels);
   gfx::ScopedCanvas scoped_canvas(canvas);
   const float scale = canvas->UndoDeviceScaleFactor();
 
@@ -1013,8 +1129,8 @@ void TabStyleViewsImpl::PaintTabBackgroundFill(
 void TabStyleViewsImpl::PaintBackgroundHover(gfx::Canvas* canvas,
                                              float scale) const {
   const SkPath fill_path =
-      GetPath(TabStyle::PathType::kHighlight, canvas->image_scale(), true,
-              TabStyle::RenderUnits::kPixels);
+      GetRoundedPath(TabStyle::PathType::kHighlight, canvas->image_scale(),
+                     true, TabStyle::RenderUnits::kPixels);
   canvas->ClipPath(fill_path, true);
 
   const SkColor hover_color =
@@ -1039,8 +1155,8 @@ void TabStyleViewsImpl::PaintBackgroundStroke(
   }
 
   SkPath outer_path =
-      GetPath(TabStyle::PathType::kBorder, canvas->image_scale(), is_active,
-              TabStyle::RenderUnits::kPixels);
+      GetRoundedPath(TabStyle::PathType::kBorder, canvas->image_scale(),
+                     is_active, TabStyle::RenderUnits::kPixels);
   gfx::ScopedCanvas scoped_canvas(canvas);
   float scale = canvas->UndoDeviceScaleFactor();
   cc::PaintFlags flags;

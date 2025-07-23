@@ -41,7 +41,7 @@ public class ThreadUtilsTest {
                 e.getCause().getMessage(),
                 startsWith(
                         "Class was initialized on the UI thread, but current operation was"
-                            + " performed on a background thread:"));
+                                + " performed on a background thread:"));
     }
 
     @Test
@@ -61,6 +61,6 @@ public class ThreadUtilsTest {
                 e.getMessage(),
                 startsWith(
                         "Class was initialized on a background thread, but current operation was"
-                            + " performed on the UI thread (expected:"));
+                                + " performed on the UI thread (expected:"));
     }
 }

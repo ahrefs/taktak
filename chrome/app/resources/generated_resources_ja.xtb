@@ -2618,6 +2618,7 @@
 <translation id="2790112944253231361">このタブを変更しました</translation>
 <translation id="2790750268015892264">独立したウェブアプリにスマートカード リーダーの操作を許可しない（アプリはスマートカードに一切アクセスできません）。</translation>
 <translation id="2791529110887957050">Linux の削除</translation>
+<translation id="279182647442890396">情報を削除しますか？</translation>
 <translation id="2791952154587244007">エラーが発生しました。キオスク アプリケーションをこのデバイスで自動的に起動することはできません。</translation>
 <translation id="2792465461386711506">スマートフォンで最近使った Chrome タブを表示するには、Chrome 同期を有効にします</translation>
 <translation id="2792697226874849938">制限の画像</translation>
@@ -4610,6 +4611,7 @@
 <translation id="4203769790323223880">カメラは許可されていません</translation>
 <translation id="4204415812590935863">現在、テーマを作成できません。</translation>
 <translation id="4205157409548006256">Linux の設定中にエラーが発生しました。</translation>
+<translation id="4205643719206044108">候補を表示するため、アクセスしたサイトとページのコンテンツが Google と共有されます</translation>
 <translation id="4206144641569145248">エイリアン</translation>
 <translation id="4206323443866416204">ご意見の報告</translation>
 <translation id="4206585797409671301">リクエストの表示を許可するウェブサイト</translation>

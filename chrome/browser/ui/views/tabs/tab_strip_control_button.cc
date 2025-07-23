@@ -26,7 +26,8 @@
 using std::make_unique;
 
 namespace {
-constexpr int kTabstripComboButtonCornerRadius = 10;
+constexpr int kTabstripComboButtonCornerRadius = 8;
+constexpr int kTabstripComboButtonFlatCornerRadius = 0;
 
 class ControlButtonHighlightPathGenerator
     : public views::HighlightPathGenerator {
@@ -236,11 +237,14 @@ void TabStripControlButton::UpdateBackground() {
 int TabStripControlButton::GetCornerRadius() const {
   return features::IsTabSearchMoving() && !features::HasTabSearchToolbarButton()
              ? kTabstripComboButtonCornerRadius
-             : TabStripControlButton::kButtonSize.width() / 2;
+             : kTabstripComboButtonCornerRadius;
+             // : TabStripControlButton::kButtonSize.width() / 2;
 }
 
 int TabStripControlButton::GetFlatCornerRadius() const {
-  return 0;
+  return features::IsTabSearchMoving() && !features::HasTabSearchToolbarButton()
+             ? kTabstripComboButtonFlatCornerRadius
+             : 0;
 }
 
 float TabStripControlButton::GetScaledCornerRadius(float initial_radius,

@@ -177,7 +177,7 @@ RenderWidgetHostImpl* RenderFrameHostDelegate::CreateNewPopupWidget(
     base::SafeRef<SiteInstanceGroup> site_instance_group,
     int32_t route_id,
     mojo::PendingAssociatedReceiver<blink::mojom::PopupWidgetHost>
-        blink_popup_widget_host,
+    blink_popup_widget_host,
     mojo::PendingAssociatedReceiver<blink::mojom::WidgetHost> blink_widget_host,
     mojo::PendingAssociatedRemote<blink::mojom::Widget> blink_widget) {
   return nullptr;

@@ -5,6 +5,7 @@
 import("//components/guest_view/buildflags/buildflags.gni")
 import("//device/vr/buildflags/buildflags.gni")
 import("//services/device/public/cpp/geolocation/buildflags.gni")
+import("//third_party/widevine/cdm/widevine.gni")
 
 source_set("permissions_common") {
   sources = [
@@ -154,6 +155,14 @@ source_set("permissions") {
     "//ui/strings:ui_strings_grit",
     "//url",
   ]
+
+  if (enable_widevine) {
+    sources += [
+      "permission_widevine_utils.cc",
+      "permission_widevine_utils.h",
+    ]
+  }
+
   if (enable_vr) {
     deps += [ "//device/vr/public/cpp" ]
   }

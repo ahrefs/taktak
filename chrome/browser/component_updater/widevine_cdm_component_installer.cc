@@ -442,4 +442,11 @@ void RegisterWidevineCdmComponent(ComponentUpdateService* cus) {
   installer->Register(cus, base::OnceClosure());
 }
 
+void RegisterWidevineCdmComponentWithCallback(ComponentUpdateService* cus, base::OnceClosure callback) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  auto installer = base::MakeRefCounted<ComponentInstaller>(
+      std::make_unique<WidevineCdmComponentInstallerPolicy>());
+  installer->Register(cus, std::move(callback));
+}
+
 }  // namespace component_updater

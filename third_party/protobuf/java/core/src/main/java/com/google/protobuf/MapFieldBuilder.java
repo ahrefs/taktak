@@ -164,12 +164,11 @@ public class MapFieldBuilder<
         ensureBuilderMap(), other.ensureBuilderMap());
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean equals(
-          Object object) {
-    if (!(object instanceof MapFieldBuilder)) {
-      return false;
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof MapFieldBuilder)) {
+            return false;
     }
     return typedEquals((MapFieldBuilder<KeyT, MessageOrBuilderT, MessageT, BuilderT>) object);
   }

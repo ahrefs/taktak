@@ -1242,23 +1242,17 @@ public class SingleCategorySettings extends BaseSiteSettingsFragment
 
         // Find all preferences on the current preference screen. Some preferences are
         // not needed for the current category and will be removed in the steps below.
-        ChromeSwitchPreference binaryToggle =
-                screen.findPreference(BINARY_TOGGLE_KEY);
+        ChromeSwitchPreference binaryToggle = screen.findPreference(BINARY_TOGGLE_KEY);
         BinaryStatePermissionPreference binaryRadioButton =
                 screen.findPreference(BINARY_RADIO_BUTTON_KEY);
-        TriStateSiteSettingsPreference triStateToggle =
-                screen.findPreference(TRI_STATE_TOGGLE_KEY);
+        TriStateSiteSettingsPreference triStateToggle = screen.findPreference(TRI_STATE_TOGGLE_KEY);
         TriStateCookieSettingsPreference triStateCookieToggle =
                 screen.findPreference(TRI_STATE_COOKIE_TOGGLE);
-        Preference notificationsVibrate =
-                screen.findPreference(NOTIFICATIONS_VIBRATE_TOGGLE_KEY);
-        mNotificationsQuietUiPref =
-                screen.findPreference(NOTIFICATIONS_QUIET_UI_TOGGLE_KEY);
-        mNotificationsTriStatePref =
-                screen.findPreference(NOTIFICATIONS_TRI_STATE_PREF_KEY);
+        Preference notificationsVibrate = screen.findPreference(NOTIFICATIONS_VIBRATE_TOGGLE_KEY);
+        mNotificationsQuietUiPref = screen.findPreference(NOTIFICATIONS_QUIET_UI_TOGGLE_KEY);
+        mNotificationsTriStatePref = screen.findPreference(NOTIFICATIONS_TRI_STATE_PREF_KEY);
         mLocationTriStatePref = screen.findPreference(LOCATION_TRI_STATE_PREF_KEY);
-        mDesktopSiteWindowPref =
-                screen.findPreference(DESKTOP_SITE_WINDOW_TOGGLE_KEY);
+        mDesktopSiteWindowPref = screen.findPreference(DESKTOP_SITE_WINDOW_TOGGLE_KEY);
         LearnMorePreference explainProtectedMediaKey =
                 screen.findPreference(EXPLAIN_PROTECTED_MEDIA_KEY);
         PreferenceGroup allowedGroup = screen.findPreference(ALLOWED_GROUP);

@@ -13,14 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Gets crashes info about unuploaded minidump files in crash directory.
- * Minidump file name contains information about the upload state of the file, its local id and
- * number of trials of upload for that report.
+ * Gets crashes info about unuploaded minidump files in crash directory. Minidump file name contains
+ * information about the upload state of the file, its local id and number of trials of upload for
+ * that report.
  */
 public class UnuploadedFilesStateLoader extends CrashInfoLoader {
     private final CrashFileManager mCrashFileManager;
 
-    /** @param crashDir the directory where WebView stores crash reports files. */
+    /**
+     * @param crashDir the directory where WebView stores crash reports files.
+     */
     public UnuploadedFilesStateLoader(CrashFileManager crashFileManager) {
         mCrashFileManager = crashFileManager;
     }

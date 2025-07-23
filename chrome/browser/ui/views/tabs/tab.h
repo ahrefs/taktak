@@ -62,7 +62,7 @@ class Tab : public gfx::AnimationDelegate,
   // When the content's width of the tab shrinks to below this size we should
   // hide the close button on inactive tabs. Any smaller and they're too easy
   // to hit on accident.
-  static constexpr int kMinimumContentsWidthForCloseButtons = 68;
+  static constexpr int kMinimumContentsWidthForCloseButtons = 50;
   static constexpr int kTouchMinimumContentsWidthForCloseButtons = 100;
 
   // Sets whether hover cards should appear on mouse hover. Used in browser

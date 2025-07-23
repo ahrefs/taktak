@@ -14,8 +14,8 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.components.externalauth.ExternalAuthUtils;
 
 /**
- * Used to check whether Google Play Services version on the device is as
- * expected for BackgroundSync. This check is made at browser startup.
+ * Used to check whether Google Play Services version on the device is as expected for
+ * BackgroundSync. This check is made at browser startup.
  */
 @NullMarked
 final class GooglePlayServicesChecker {

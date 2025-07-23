@@ -13,8 +13,7 @@ import java.util.Optional;
 /**
  * Metadata about a tab within {@link MessageAttribution}. This is a shim layer for the native
  * representation of the object. See //components/collaboration/public/messaging/message.h for
- * specific details.
- * TODO: Add a proper constructor to avoid @SuppressWarnings("NullAway.Init")
+ * specific details. TODO: Add a proper constructor to avoid @SuppressWarnings("NullAway.Init")
  */
 @NullMarked
 public class TabGroupMessageMetadata {

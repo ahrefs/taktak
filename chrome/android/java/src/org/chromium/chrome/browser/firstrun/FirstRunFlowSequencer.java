@@ -97,8 +97,8 @@ public abstract class FirstRunFlowSequencer {
     }
 
     /**
-     * The delegate to be used by the Sequencer. By default, it's an instance of
-     * {@link FirstRunFlowSequencerDelegate}, unless it's overridden by {@code sDelegateForTesting}.
+     * The delegate to be used by the Sequencer. By default, it's an instance of {@link
+     * FirstRunFlowSequencerDelegate}, unless it's overridden by {@code sDelegateForTesting}.
      */
     private final FirstRunFlowSequencerDelegate mDelegate;
 

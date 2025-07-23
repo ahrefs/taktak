@@ -9,6 +9,7 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertThrows;
 
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
@@ -37,8 +38,18 @@ import com.google.protobuf.Descriptors.ServiceDescriptor;
 import com.google.protobuf.test.UnittestImport;
 import com.google.protobuf.test.UnittestImport.ImportEnum;
 import com.google.protobuf.test.UnittestImport.ImportEnumForMap;
+
 import legacy_features_unittest.UnittestLegacyFeatures;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
+
 import pb.UnittestFeatures;
+
+import proto2_unittest.NestedExtension;
+import proto2_unittest.NonNestedExtension;
 import proto2_unittest.TestCustomOptions;
 import proto2_unittest.UnittestCustomOptions;
 import proto2_unittest.UnittestProto;
@@ -54,16 +65,11 @@ import proto2_unittest.UnittestProto.TestReservedEnumFields;
 import proto2_unittest.UnittestProto.TestReservedFields;
 import proto2_unittest.UnittestProto.TestService;
 import proto2_unittest.UnittestRetention;
+
 import protobuf_unittest.UnittestProto3Extensions.Proto3FileExtensions;
+
 import java.util.Collections;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
-
-import proto2_unittest.NestedExtension;
-import proto2_unittest.NonNestedExtension;
 
 /** Unit test for {@link Descriptors}. */
 @RunWith(Enclosed.class)
@@ -91,51 +97,54 @@ public class DescriptorsTest {
     public void testFileDescriptor() throws Exception {
       FileDescriptor file = UnittestProto.getDescriptor();
 
-      assertThat(file.getName()).isEqualTo("google/protobuf/unittest.proto");
-      assertThat(file.getPackage()).isEqualTo("proto2_unittest");
-      assertThat(file.getOptions().getJavaOuterClassname()).isEqualTo("UnittestProto");
-      assertThat(file.toProto().getName()).isEqualTo("google/protobuf/unittest.proto");
+            assertThat(file.getName()).isEqualTo("google/protobuf/unittest.proto");
+            assertThat(file.getPackage()).isEqualTo("proto2_unittest");
+            assertThat(file.getOptions().getJavaOuterClassname()).isEqualTo("UnittestProto");
+            assertThat(file.toProto().getName()).isEqualTo("google/protobuf/unittest.proto");
 
       assertThat(file.getDependencies()).containsExactly(UnittestImport.getDescriptor());
 
       Descriptor messageType = TestAllTypes.getDescriptor();
       assertThat(file.getMessageTypes().get(0)).isEqualTo(messageType);
-      assertThat(file.findMessageTypeByName("TestAllTypes")).isEqualTo(messageType);
-      assertThat(file.findMessageTypeByName("NoSuchType")).isNull();
-      assertThat(file.findMessageTypeByName("proto2_unittest.TestAllTypes")).isNull();
-      for (int i = 0; i < file.getMessageTypes().size(); i++) {
-        assertThat(file.getMessageTypes().get(i).getIndex()).isEqualTo(i);
+            assertThat(file.findMessageTypeByName("TestAllTypes")).isEqualTo(messageType);
+            assertThat(file.findMessageTypeByName("NoSuchType")).isNull();
+            assertThat(file.findMessageTypeByName("proto2_unittest.TestAllTypes")).isNull();
+            for (int i = 0; i < file.getMessageTypes().size(); i++) {
+                assertThat(file.getMessageTypes().get(i).getIndex()).isEqualTo(i);
       }
 
       EnumDescriptor enumType = ForeignEnum.getDescriptor();
       assertThat(file.getEnumTypes().get(0)).isEqualTo(enumType);
-      assertThat(file.findEnumTypeByName("ForeignEnum")).isEqualTo(enumType);
-      assertThat(file.findEnumTypeByName("NoSuchType")).isNull();
-      assertThat(file.findEnumTypeByName("proto2_unittest.ForeignEnum")).isNull();
-      assertThat(UnittestImport.getDescriptor().getEnumTypes())
-          .containsExactly(ImportEnum.getDescriptor(), ImportEnumForMap.getDescriptor())
-          .inOrder();
+            assertThat(file.findEnumTypeByName("ForeignEnum")).isEqualTo(enumType);
+            assertThat(file.findEnumTypeByName("NoSuchType")).isNull();
+            assertThat(file.findEnumTypeByName("proto2_unittest.ForeignEnum")).isNull();
+            assertThat(UnittestImport.getDescriptor().getEnumTypes())
+                    .containsExactly(ImportEnum.getDescriptor(), ImportEnumForMap.getDescriptor())
+                    .inOrder();
       for (int i = 0; i < file.getEnumTypes().size(); i++) {
         assertThat(file.getEnumTypes().get(i).getIndex()).isEqualTo(i);
       }
 
       ServiceDescriptor service = TestService.getDescriptor();
       assertThat(file.getServices().get(0)).isEqualTo(service);
-      assertThat(file.findServiceByName("TestService")).isEqualTo(service);
-      assertThat(file.findServiceByName("NoSuchType")).isNull();
-      assertThat(file.findServiceByName("proto2_unittest.TestService")).isNull();
-      assertThat(UnittestImport.getDescriptor().getServices()).isEqualTo(Collections.emptyList());
-      for (int i = 0; i < file.getServices().size(); i++) {
+            assertThat(file.findServiceByName("TestService")).isEqualTo(service);
+            assertThat(file.findServiceByName("NoSuchType")).isNull();
+            assertThat(file.findServiceByName("proto2_unittest.TestService")).isNull();
+            assertThat(UnittestImport.getDescriptor().getServices())
+                    .isEqualTo(Collections.emptyList());
+            for (int i = 0; i < file.getServices().size(); i++) {
         assertThat(file.getServices().get(i).getIndex()).isEqualTo(i);
       }
 
       FieldDescriptor extension = UnittestProto.optionalInt32Extension.getDescriptor();
       assertThat(file.getExtensions().get(0)).isEqualTo(extension);
-      assertThat(file.findExtensionByName("optional_int32_extension")).isEqualTo(extension);
-      assertThat(file.findExtensionByName("no_such_ext")).isNull();
-      assertThat(file.findExtensionByName("proto2_unittest.optional_int32_extension")).isNull();
-      assertThat(UnittestImport.getDescriptor().getExtensions()).isEqualTo(Collections.emptyList());
-      for (int i = 0; i < file.getExtensions().size(); i++) {
+            assertThat(file.findExtensionByName("optional_int32_extension")).isEqualTo(extension);
+            assertThat(file.findExtensionByName("no_such_ext")).isNull();
+            assertThat(file.findExtensionByName("proto2_unittest.optional_int32_extension"))
+                    .isNull();
+            assertThat(UnittestImport.getDescriptor().getExtensions())
+                    .isEqualTo(Collections.emptyList());
+            for (int i = 0; i < file.getExtensions().size(); i++) {
         assertThat(file.getExtensions().get(i).getIndex()).isEqualTo(i);
       }
     }
@@ -210,18 +219,19 @@ public class DescriptorsTest {
       Descriptor messageType = TestAllTypes.getDescriptor();
       Descriptor nestedType = TestAllTypes.NestedMessage.getDescriptor();
 
-      assertThat(messageType.getName()).isEqualTo("TestAllTypes");
-      assertThat(messageType.getFullName()).isEqualTo("proto2_unittest.TestAllTypes");
-      assertThat(messageType.getFile()).isEqualTo(UnittestProto.getDescriptor());
-      assertThat(messageType.getContainingType()).isNull();
+            assertThat(messageType.getName()).isEqualTo("TestAllTypes");
+            assertThat(messageType.getFullName()).isEqualTo("proto2_unittest.TestAllTypes");
+            assertThat(messageType.getFile()).isEqualTo(UnittestProto.getDescriptor());
+            assertThat(messageType.getContainingType()).isNull();
       assertThat(messageType.getOptions())
           .isEqualTo(DescriptorProtos.MessageOptions.getDefaultInstance());
       assertThat(messageType.toProto().getName()).isEqualTo("TestAllTypes");
 
-      assertThat(nestedType.getName()).isEqualTo("NestedMessage");
-      assertThat(nestedType.getFullName()).isEqualTo("proto2_unittest.TestAllTypes.NestedMessage");
-      assertThat(nestedType.getFile()).isEqualTo(UnittestProto.getDescriptor());
-      assertThat(nestedType.getContainingType()).isEqualTo(messageType);
+            assertThat(nestedType.getName()).isEqualTo("NestedMessage");
+            assertThat(nestedType.getFullName())
+                    .isEqualTo("proto2_unittest.TestAllTypes.NestedMessage");
+            assertThat(nestedType.getFile()).isEqualTo(UnittestProto.getDescriptor());
+            assertThat(nestedType.getContainingType()).isEqualTo(messageType);
 
       FieldDescriptor field = messageType.getFields().get(0);
       assertThat(field.getName()).isEqualTo("optional_int32");
@@ -259,11 +269,11 @@ public class DescriptorsTest {
       FieldDescriptor extension = UnittestProto.optionalInt32Extension.getDescriptor();
       FieldDescriptor nestedExtension = TestRequired.single.getDescriptor();
 
-      assertThat(primitiveField.getName()).isEqualTo("optional_int32");
-      assertThat(primitiveField.getFullName())
-          .isEqualTo("proto2_unittest.TestAllTypes.optional_int32");
-      assertThat(primitiveField.getNumber()).isEqualTo(1);
-      assertThat(primitiveField.getContainingType()).isEqualTo(messageType);
+            assertThat(primitiveField.getName()).isEqualTo("optional_int32");
+            assertThat(primitiveField.getFullName())
+                    .isEqualTo("proto2_unittest.TestAllTypes.optional_int32");
+            assertThat(primitiveField.getNumber()).isEqualTo(1);
+            assertThat(primitiveField.getContainingType()).isEqualTo(messageType);
       assertThat(primitiveField.getFile()).isEqualTo(UnittestProto.getDescriptor());
       assertThat(primitiveField.getType()).isEqualTo(FieldDescriptor.Type.INT32);
       assertThat(primitiveField.getJavaType()).isEqualTo(FieldDescriptor.JavaType.INT);
@@ -288,10 +298,11 @@ public class DescriptorsTest {
       assertThat(cordField.getOptions().getCtype())
           .isEqualTo(DescriptorProtos.FieldOptions.CType.CORD);
 
-      assertThat(extension.getName()).isEqualTo("optional_int32_extension");
-      assertThat(extension.getFullName()).isEqualTo("proto2_unittest.optional_int32_extension");
-      assertThat(extension.getNumber()).isEqualTo(1);
-      assertThat(extension.getContainingType()).isEqualTo(TestAllExtensions.getDescriptor());
+            assertThat(extension.getName()).isEqualTo("optional_int32_extension");
+            assertThat(extension.getFullName())
+                    .isEqualTo("proto2_unittest.optional_int32_extension");
+            assertThat(extension.getNumber()).isEqualTo(1);
+            assertThat(extension.getContainingType()).isEqualTo(TestAllExtensions.getDescriptor());
       assertThat(extension.getFile()).isEqualTo(UnittestProto.getDescriptor());
       assertThat(extension.getType()).isEqualTo(FieldDescriptor.Type.INT32);
       assertThat(extension.getJavaType()).isEqualTo(FieldDescriptor.JavaType.INT);
@@ -301,10 +312,11 @@ public class DescriptorsTest {
       assertThat(extension.getExtensionScope()).isNull();
       assertThat(extension.toProto().getName()).isEqualTo("optional_int32_extension");
 
-      assertThat(nestedExtension.getName()).isEqualTo("single");
-      assertThat(nestedExtension.getFullName()).isEqualTo("proto2_unittest.TestRequired.single");
-      assertThat(nestedExtension.getExtensionScope()).isEqualTo(TestRequired.getDescriptor());
-    }
+            assertThat(nestedExtension.getName()).isEqualTo("single");
+            assertThat(nestedExtension.getFullName())
+                    .isEqualTo("proto2_unittest.TestRequired.single");
+            assertThat(nestedExtension.getExtensionScope()).isEqualTo(TestRequired.getDescriptor());
+        }
 
     @Test
     public void testFieldDescriptorLabel() throws Exception {
@@ -621,18 +633,19 @@ public class DescriptorsTest {
       EnumDescriptor enumType = ForeignEnum.getDescriptor();
       EnumDescriptor nestedType = TestAllTypes.NestedEnum.getDescriptor();
 
-      assertThat(enumType.getName()).isEqualTo("ForeignEnum");
-      assertThat(enumType.getFullName()).isEqualTo("proto2_unittest.ForeignEnum");
-      assertThat(enumType.getFile()).isEqualTo(UnittestProto.getDescriptor());
-      assertThat(enumType.isClosed()).isTrue();
+            assertThat(enumType.getName()).isEqualTo("ForeignEnum");
+            assertThat(enumType.getFullName()).isEqualTo("proto2_unittest.ForeignEnum");
+            assertThat(enumType.getFile()).isEqualTo(UnittestProto.getDescriptor());
+            assertThat(enumType.isClosed()).isTrue();
       assertThat(enumType.getContainingType()).isNull();
       assertThat(enumType.getOptions())
           .isEqualTo(DescriptorProtos.EnumOptions.getDefaultInstance());
 
-      assertThat(nestedType.getName()).isEqualTo("NestedEnum");
-      assertThat(nestedType.getFullName()).isEqualTo("proto2_unittest.TestAllTypes.NestedEnum");
-      assertThat(nestedType.getFile()).isEqualTo(UnittestProto.getDescriptor());
-      assertThat(nestedType.getContainingType()).isEqualTo(TestAllTypes.getDescriptor());
+            assertThat(nestedType.getName()).isEqualTo("NestedEnum");
+            assertThat(nestedType.getFullName())
+                    .isEqualTo("proto2_unittest.TestAllTypes.NestedEnum");
+            assertThat(nestedType.getFile()).isEqualTo(UnittestProto.getDescriptor());
+            assertThat(nestedType.getContainingType()).isEqualTo(TestAllTypes.getDescriptor());
 
       EnumValueDescriptor value = ForeignEnum.FOREIGN_FOO.getValueDescriptor();
       assertThat(enumType.getValues().get(0)).isEqualTo(value);
@@ -651,9 +664,9 @@ public class DescriptorsTest {
     public void testServiceDescriptor() throws Exception {
       ServiceDescriptor service = TestService.getDescriptor();
 
-      assertThat(service.getName()).isEqualTo("TestService");
-      assertThat(service.getFullName()).isEqualTo("proto2_unittest.TestService");
-      assertThat(service.getFile()).isEqualTo(UnittestProto.getDescriptor());
+            assertThat(service.getName()).isEqualTo("TestService");
+            assertThat(service.getFullName()).isEqualTo("proto2_unittest.TestService");
+            assertThat(service.getFile()).isEqualTo(UnittestProto.getDescriptor());
 
       MethodDescriptor fooMethod = service.getMethods().get(0);
       assertThat(fooMethod.getName()).isEqualTo("Foo");
@@ -1158,12 +1171,13 @@ public class DescriptorsTest {
 
     @Test
     public void testToString() {
-      assertThat(
-              UnittestProto.TestAllTypes.getDescriptor()
-                  .findFieldByNumber(UnittestProto.TestAllTypes.OPTIONAL_UINT64_FIELD_NUMBER)
-                  .toString())
-          .isEqualTo("proto2_unittest.TestAllTypes.optional_uint64");
-    }
+            assertThat(
+                            UnittestProto.TestAllTypes.getDescriptor()
+                                    .findFieldByNumber(
+                                            UnittestProto.TestAllTypes.OPTIONAL_UINT64_FIELD_NUMBER)
+                                    .toString())
+                    .isEqualTo("proto2_unittest.TestAllTypes.optional_uint64");
+        }
 
     @Test
     public void testPackedEnumField() throws Exception {
@@ -1362,29 +1376,30 @@ public class DescriptorsTest {
 
     @Test
     public void testLegacyInferProto2Utf8Validation() throws Exception {
-      FileDescriptor file =
-          FileDescriptor.buildFrom(
-              FileDescriptorProto.newBuilder()
-                  .setName("some/filename/some.proto")
-                  .setPackage("proto2_unittest")
-                  .setSyntax("proto2")
-                  .setOptions(FileOptions.newBuilder().setJavaStringCheckUtf8(true))
-                  .build(),
-              new FileDescriptor[0]);
+            FileDescriptor file =
+                    FileDescriptor.buildFrom(
+                            FileDescriptorProto.newBuilder()
+                                    .setName("some/filename/some.proto")
+                                    .setPackage("proto2_unittest")
+                                    .setSyntax("proto2")
+                                    .setOptions(
+                                            FileOptions.newBuilder().setJavaStringCheckUtf8(true))
+                                    .build(),
+                            new FileDescriptor[0]);
       assertThat(file.features.getExtension(JavaFeaturesProto.java_).getUtf8Validation())
           .isEqualTo(JavaFeaturesProto.JavaFeatures.Utf8Validation.VERIFY);
     }
 
     @Test
     public void testProto2Defaults() throws Exception {
-      FileDescriptor proto2File =
-          FileDescriptor.buildFrom(
-              FileDescriptorProto.newBuilder()
-                  .setName("some/filename/some.proto")
-                  .setPackage("proto2_unittest")
-                  .setSyntax("proto2")
-                  .build(),
-              new FileDescriptor[0]);
+            FileDescriptor proto2File =
+                    FileDescriptor.buildFrom(
+                            FileDescriptorProto.newBuilder()
+                                    .setName("some/filename/some.proto")
+                                    .setPackage("proto2_unittest")
+                                    .setSyntax("proto2")
+                                    .build(),
+                            new FileDescriptor[0]);
       DescriptorProtos.FeatureSet features = proto2File.features;
       assertThat(features.getFieldPresence())
           .isEqualTo(DescriptorProtos.FeatureSet.FieldPresence.EXPLICIT);
@@ -1472,23 +1487,23 @@ public class DescriptorsTest {
       }
       Descriptors.setTestJavaEditionDefaults(defaults.build());
 
-      this.fileProto =
-          DescriptorProtos.FileDescriptorProto.newBuilder()
-              .setName("some/filename/some.proto")
-              .setPackage("proto2_unittest")
-              .setEdition(DescriptorProtos.Edition.EDITION_2023)
-              .setSyntax("editions");
+            this.fileProto =
+                    DescriptorProtos.FileDescriptorProto.newBuilder()
+                            .setName("some/filename/some.proto")
+                            .setPackage("proto2_unittest")
+                            .setEdition(DescriptorProtos.Edition.EDITION_2023)
+                            .setSyntax("editions");
 
-      this.topExtensionProto =
-          this.fileProto
-              .addExtensionBuilder()
-              .setName("top_extension")
-              .setNumber(10)
-              .setType(FieldDescriptorProto.Type.TYPE_INT32)
-              .setLabel(FieldDescriptorProto.Label.LABEL_OPTIONAL)
-              .setExtendee(".proto2_unittest.TopMessage");
+            this.topExtensionProto =
+                    this.fileProto
+                            .addExtensionBuilder()
+                            .setName("top_extension")
+                            .setNumber(10)
+                            .setType(FieldDescriptorProto.Type.TYPE_INT32)
+                            .setLabel(FieldDescriptorProto.Label.LABEL_OPTIONAL)
+                            .setExtendee(".proto2_unittest.TopMessage");
 
-      this.topEnumProto = this.fileProto.addEnumTypeBuilder().setName("TopEnum");
+            this.topEnumProto = this.fileProto.addEnumTypeBuilder().setName("TopEnum");
       this.enumValueProto = this.topEnumProto.addValueBuilder().setName("TOP_VALUE").setNumber(0);
 
       this.topMessageProto =
@@ -1504,16 +1519,16 @@ public class DescriptorsTest {
               .setNumber(1)
               .setType(FieldDescriptorProto.Type.TYPE_INT32)
               .setLabel(FieldDescriptorProto.Label.LABEL_OPTIONAL);
-      this.nestedExtensionProto =
-          this.topMessageProto
-              .addExtensionBuilder()
-              .setName("nested_extension")
-              .setNumber(11)
-              .setType(FieldDescriptorProto.Type.TYPE_INT32)
-              .setLabel(FieldDescriptorProto.Label.LABEL_OPTIONAL)
-              .setExtendee(".proto2_unittest.TopMessage");
-      this.nestedMessageProto =
-          this.topMessageProto.addNestedTypeBuilder().setName("NestedMessage");
+            this.nestedExtensionProto =
+                    this.topMessageProto
+                            .addExtensionBuilder()
+                            .setName("nested_extension")
+                            .setNumber(11)
+                            .setType(FieldDescriptorProto.Type.TYPE_INT32)
+                            .setLabel(FieldDescriptorProto.Label.LABEL_OPTIONAL)
+                            .setExtendee(".proto2_unittest.TopMessage");
+            this.nestedMessageProto =
+                    this.topMessageProto.addNestedTypeBuilder().setName("NestedMessage");
       this.nestedEnumProto =
           this.topMessageProto
               .addEnumTypeBuilder()
@@ -1529,13 +1544,13 @@ public class DescriptorsTest {
               .setLabel(FieldDescriptorProto.Label.LABEL_OPTIONAL)
               .setOneofIndex(0);
       this.serviceProto = this.fileProto.addServiceBuilder().setName("TestService");
-      this.methodProto =
-          this.serviceProto
-              .addMethodBuilder()
-              .setName("CallMethod")
-              .setInputType(".proto2_unittest.TopMessage")
-              .setOutputType(".proto2_unittest.TopMessage");
-    }
+            this.methodProto =
+                    this.serviceProto
+                            .addMethodBuilder()
+                            .setName("CallMethod")
+                            .setInputType(".proto2_unittest.TopMessage")
+                            .setOutputType(".proto2_unittest.TopMessage");
+        }
 
     void setTestFeature(DescriptorProtos.FeatureSet.Builder features, int value) {
       features.setExtension(

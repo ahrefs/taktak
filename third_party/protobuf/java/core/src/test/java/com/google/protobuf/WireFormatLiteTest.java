@@ -14,8 +14,14 @@ import static com.google.protobuf.UnittestLite.optionalForeignEnumExtensionLite;
 import com.google.protobuf.UnittestLite.ForeignEnumLite;
 import com.google.protobuf.UnittestLite.TestAllExtensionsLite;
 import com.google.protobuf.UnittestLite.TestPackedExtensionsLite;
+
 import map_test.MapForProto2TestProto;
 import map_test.MapTestProto.TestMap;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.UnittestMset.RawMessageSet;
 import proto2_unittest.UnittestMset.TestMessageSetExtension1;
 import proto2_unittest.UnittestMset.TestMessageSetExtension2;
@@ -28,16 +34,16 @@ import proto2_unittest.UnittestProto.TestOneof2;
 import proto2_unittest.UnittestProto.TestOneofBackwardsCompatible;
 import proto2_unittest.UnittestProto.TestPackedExtensions;
 import proto2_unittest.UnittestProto.TestPackedTypes;
+
 import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
+
 import proto3_unittest.UnittestProto3;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class WireFormatLiteTest {

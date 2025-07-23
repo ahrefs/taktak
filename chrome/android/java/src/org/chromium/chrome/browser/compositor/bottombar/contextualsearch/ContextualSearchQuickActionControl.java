@@ -35,9 +35,9 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 /**
- * Stores information related to a Contextual Search "quick action."
- * Actions can be activated through a tap on the Bar and include intents like calling a phone
- * number or launching Maps for a street address.
+ * Stores information related to a Contextual Search "quick action." Actions can be activated
+ * through a tap on the Bar and include intents like calling a phone number or launching Maps for a
+ * street address.
  */
 public class ContextualSearchQuickActionControl extends ViewResourceInflater {
     private final Context mContext;

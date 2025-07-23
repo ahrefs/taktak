@@ -439,6 +439,10 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
   default_status::RegisterDefaultStatusPrefs(registry);
 #endif  // !BUILDFLAG(IS_IOS_MACCATALYST)
 
+#if !BUILDFLAG(IS_IOS_MACCATALYST)
+  default_status::RegisterDefaultStatusPrefs(registry);
+#endif  // !BUILDFLAG(IS_IOS_MACCATALYST)
+
   // Preferences related to the profile manager.
   registry->RegisterStringPref(prefs::kLastUsedProfile, std::string());
   registry->RegisterBooleanPref(prefs::kLegacyProfileHidden, false);

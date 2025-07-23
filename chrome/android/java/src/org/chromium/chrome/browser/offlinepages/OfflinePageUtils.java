@@ -65,7 +65,7 @@ public class OfflinePageUtils {
 
     /**
      * Tracks the observers of each Activity's TabModelSelectors. This is weak so the activity can
-     * be garbage collected without worrying about this map.  The RecentTabTracker is held here so
+     * be garbage collected without worrying about this map. The RecentTabTracker is held here so
      * that it can be destroyed when the Activity gets a new TabModelSelector.
      */
     private static final Map<Activity, RecentTabTracker> sTabModelObservers = new HashMap<>();
@@ -725,10 +725,10 @@ public class OfflinePageUtils {
     }
 
     /**
-     * Tracks tab creation and closure for the Recent Tabs feature.  UI needs to stop showing
-     * recent offline pages as soon as the tab is closed.  The TabModel is used to get profile
-     * information because Tab's profile is tied to the native WebContents, which may not exist at
-     * tab adding or tab closing time.
+     * Tracks tab creation and closure for the Recent Tabs feature. UI needs to stop showing recent
+     * offline pages as soon as the tab is closed. The TabModel is used to get profile information
+     * because Tab's profile is tied to the native WebContents, which may not exist at tab adding or
+     * tab closing time.
      */
     private static class RecentTabTracker extends TabModelSelectorTabModelObserver {
         /** The single, stateless TabRestoreTracker instance to monitor all tab restores. */

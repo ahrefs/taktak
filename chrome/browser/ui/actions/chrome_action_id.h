@@ -537,6 +537,7 @@
   E(kActionSidePanelShowLensOverlayResults, IDC_CONTENT_CONTEXT_LENS_OVERLAY) \
   E(kActionSidePanelShowReadAnything) \
   E(kActionSidePanelShowReadingList, IDC_READING_LIST_MENU_SHOW_UI) \
+  E(kActionAIChat, IDC_SHOW_AI_CHAT) \
   E(kActionSidePanelShowSearchCompanion, IDC_SHOW_SEARCH_COMPANION) \
   E(kActionSidePanelShowShoppingInsights) \
   E(kActionSidePanelShowSideSearch) \
