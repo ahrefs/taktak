@@ -42,7 +42,8 @@ constexpr char kAssistantRole[] = "assistant";
 
 std::string BuildPrompt(const std::string& query,
                         const std::string& extracted_content,
-                        chat::mojom::ActionType action_type) {
+                        chat::mojom::ActionType action_type,
+                        const std::string& context_prompt) {
   if (action_type == chat::mojom::ActionType::SUMMARIZE_PAGE ||
       action_type == chat::mojom::ActionType::EXPLAIN ||
       action_type == chat::mojom::ActionType::FACT_CHECK ||
@@ -55,10 +56,14 @@ std::string BuildPrompt(const std::string& query,
                                            {query, extracted_content}, nullptr);
 
   } else {
-    std::string context_prompt =
-        l10n_util::GetStringUTF8(IDS_CHAT_CONTEXT_PROMPT);
-    return base::ReplaceStringPlaceholders(context_prompt,
-                                           {query, extracted_content}, nullptr);
+    if (!context_prompt.empty()) {
+      return context_prompt + "\n Inputs:\n User's question: " + query + "\n Active page content: " + extracted_content;
+    } else {
+      std::string default_context_prompt =
+          l10n_util::GetStringUTF8(IDS_CHAT_CONTEXT_PROMPT);
+      return base::ReplaceStringPlaceholders(default_context_prompt,
+                                             {query, extracted_content}, nullptr);
+    }
   }
 }
 
@@ -306,7 +311,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
               base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                              base::Unretained(this), action_type,
                              summarize_prompt, completion_messages,
-                             enable_thinking),
+                             enable_thinking, ""),
               false);
 
         } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
@@ -314,7 +319,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
               base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                              base::Unretained(this), action_type,
                              explain_prompt, completion_messages,
-                             enable_thinking),
+                             enable_thinking, ""),
               false);
 
         } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
@@ -322,13 +327,13 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
               base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                              base::Unretained(this), action_type,
                              fact_check_prompt, completion_messages,
-                             enable_thinking),
+                             enable_thinking, ""),
               false);
         } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
           page_content_extractor_helper_->ExtractPageContent(
               base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                              base::Unretained(this), action_type, action_param,
-                             completion_messages, enable_thinking),
+                             completion_messages, enable_thinking, ""),
               true);
         } else if (action_type ==
                    chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
@@ -337,7 +342,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
                   &ChatPageHandler::OnPageContentExtracted,
                   base::Unretained(this), action_type,
                   draft_social_media_post_prompt + " " + action_param,
-                  completion_messages, enable_thinking),
+                  completion_messages, enable_thinking, ""),
               false);
         }
     }
@@ -348,9 +353,10 @@ void ChatPageHandler::OnPageContentExtracted(
         const std::string &prompt,
         const std::vector<struct CompletionMessage> &completion_messages,
         bool enable_thinking,
+        const std::string &context_prompt,
         std::string content,
         std::string url) {
-  DVLOG(0) << __func__ << " |>> extracted content -> " << content;
+  // DVLOG(0) << __func__ << " |>> extracted content -> " << content;
 
   extracted_content_cache_.clear();
 
@@ -363,8 +369,7 @@ void ChatPageHandler::OnPageContentExtracted(
       html2md::Converter c(max_content);
       auto md = c.convert();
       max_content = md;
-      DVLOG(0) << __func__ << " |>> markdown content -> " << max_content;
-      // max_content = html2md::Convert(max_content);
+      // DVLOG(0) << __func__ << " |>> markdown content -> " << max_content;
     }
 
     if (!url.empty()) {
@@ -381,7 +386,7 @@ void ChatPageHandler::OnPageContentExtracted(
         all_messages.push_back(msg);
     }
     all_messages.push_back(
-            {BuildPrompt(prompt, max_content, action_type), kUserRole});
+            {BuildPrompt(prompt, max_content, action_type, context_prompt), kUserRole});
 
     api_client_->QueryPrompt(
             all_messages,
@@ -396,7 +401,8 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                                   const std::string &query,
                                   const std::string &url,
                                   std::vector<chat::mojom::ConversationItemPtr> conversation_history,
-                                  bool enable_thinking) {
+                                  bool enable_thinking,
+                                  const std::string &context_prompt) {
 
     std::vector<struct CompletionMessage> completion_messages;
 
@@ -408,7 +414,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
     if (extracted_content_cache_.contains(url) /* Context is in the cache */) {
         auto previous_content = extracted_content_cache_[url];
         completion_messages.push_back(
-                {BuildPrompt(query, previous_content, action_type), kUserRole});
+                {BuildPrompt(query, previous_content, action_type, context_prompt), kUserRole});
         api_client_->QueryPrompt(
                 completion_messages,
                 enable_thinking,
@@ -421,7 +427,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
       page_content_extractor_helper_->ExtractPageContent(
           base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                          base::Unretained(this), action_type, query,
-                         completion_messages, enable_thinking),
+                         completion_messages, enable_thinking, context_prompt),
           action_type == chat::mojom::ActionType::TRANSLATE ? true : false);
     } else /* user removed the context via Chat UI or the current opening tab is
               empty */

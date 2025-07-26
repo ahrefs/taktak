@@ -105,6 +105,8 @@ export class ChatAppElement extends CrLitElement {
             currentErrorResult_: {type: String},
             currentConversationId_: {type: String},
             showThinkingText_: {type: Boolean},
+
+            contextPrompt_: {type: String},
         };
     }
 
@@ -160,6 +162,9 @@ export class ChatAppElement extends CrLitElement {
     protected accessor currentErrorResult_: string = "";
     protected accessor currentConversationId_: string = "";
     protected accessor showThinkingText_: boolean = true;
+
+    // this is for tweaking context prompt
+    protected accessor contextPrompt_: string = "";
 
 
     constructor() {
@@ -488,11 +493,14 @@ export class ChatAppElement extends CrLitElement {
         const conversation_history: ConversationItem[] = [];
         for (let i = this.conversations_.length - 1; i >= 0; i--) {
             const conversation = this.conversations_[i];
-            if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0 && conversation_history.length <= 3) {
+            if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0) {
                 conversation_history.push({
                     userQuery: conversation.query,
                     llmResponse: conversation.responseText,
                 })
+                if (conversation_history.length > 2) {
+                    break;
+                }
             }
         }
 
@@ -506,8 +514,14 @@ export class ChatAppElement extends CrLitElement {
             this.chatApiProxy_.submitQuery(
                 ActionType.QUERY,
                 this.submittedQuery_ ?? "",
-                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse(), this.enableThinking_)
+                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse(), this.enableThinking_,
+                this.contextPrompt_)
         }, 0);
+    }
+
+    // this is for tweaking context prompt
+    protected onContextPromptInputChange_(e: CustomEvent<{ value: string }>) {
+        this.contextPrompt_ = e.detail.value;
     }
 
     protected onPromptInputChange_(e: CustomEvent<{ value: string }>) {

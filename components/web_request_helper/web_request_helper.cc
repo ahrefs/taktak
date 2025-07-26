@@ -339,7 +339,6 @@ void WebRequestHelper::URLLoaderHandler::ParseJsonImpl(
     std::string json,
     base::OnceCallback<void(ValueOrError)> callback) {
   if (!data_decoder_) {
-    VLOG(0) << "Creating DataDecoder for WebRequestHelper";
     data_decoder_ = std::make_unique<data_decoder::DataDecoder>();
   }
 

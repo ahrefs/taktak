@@ -141,7 +141,6 @@ base::WeakPtr<PageContentExtractor> PageContentExtractor::GetWeakPtr() {
 
 void PageContentExtractor::BindReceiver(
     mojo::PendingReceiver<chat::mojom::PageContentExtractor> receiver) {
-  DVLOG(0) << __func__ << " |>> Yep Chat PageContentExtractor handler bound.";
   receiver_.reset();
   receiver_.Bind(std::move(receiver));
 }
@@ -150,7 +149,7 @@ void PageContentExtractor::ExtractPageContent(
     bool includesHTML,
     chat::mojom::PageContentExtractor::ExtractPageContentCallback callback) {
   DVLOG(0) << __func__
-           << " |>> The current page will be extracted for Yep Chat.";
+           << " |>> The current page will be extracted to use in a conversation.";
   ExtractPageText(
       render_frame(), isolated_world_id_,
       base::BindOnce(&PageContentExtractor::OnPageTextExtracted,

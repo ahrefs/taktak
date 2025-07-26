@@ -126,7 +126,7 @@ interface PageHandler {
   SubmitAction(ActionType action_type, string param, bool enable_thinking);
 
   // Usual conversation
-  SubmitQuery(ActionType action_type, string query, string url, array<ConversationItem> conversation_history, bool enable_thinking);
+  SubmitQuery(ActionType action_type, string query, string url, array<ConversationItem> conversation_history, bool enable_thinking, string contextPrompt);
 
   // Notify the backend that the UI is ready to be shown.
   ShowUI();

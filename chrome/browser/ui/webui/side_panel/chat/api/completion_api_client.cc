@@ -76,7 +76,11 @@ namespace {
 
         std::string json;
         base::JSONWriter::Write(dict, &json);
-        DVLOG(0) << __func__ << " |>> Request body: " << json;
+        DVLOG(0) << "  ";
+        DVLOG(0) << "BEGIN==============================================================================================" ;
+        DVLOG(0) << json;
+        DVLOG(0) << "END================================================================================================" ;
+        DVLOG(0) << "  ";
         return json;
     }
 }  // namespace

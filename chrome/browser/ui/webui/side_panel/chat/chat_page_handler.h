@@ -74,7 +74,8 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   void SubmitQuery(chat::mojom::ActionType action_type,
                    const std::string& query,
                    const std::string& url,
-                   std::vector<chat::mojom::ConversationItemPtr> conversation_history, bool enable_thinking) override;
+                   std::vector<chat::mojom::ConversationItemPtr> conversation_history, bool enable_thinking,
+                   const std::string& context_prompt) override;
 
   void ShowUI() override;
 
@@ -102,6 +103,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
       const std::string& prompt,
       const std::vector<struct CompletionMessage>& completion_messages,
       bool enable_thinking,
+      const std::string& context_prompt,
       std::string content,
       std::string url);
 

@@ -302,6 +302,21 @@ export function getHtml(this: ChatAppElement) {
                         </div>` : html``
             }
             <div id="prompt-input-container">
+                <div class="typing-content">
+                    <div class="prompt-input">
+                        <chat-prompt-input
+                                id="contextPrompt"
+                                .value=${this.contextPrompt_ ?? ""}
+                                .placeholder= ${"Enter context prompt"}
+                                .maxlength=${this.maxPromptInputLength_}
+                                ?disabled=${this.isQuerySubmitting_}
+                                @value-changed=${this.onContextPromptInputChange_}
+                                @enter=${this.onSetAndSubmitQuery_}>
+                        </chat-prompt-input>
+                    </div>
+                </div>
+            </div>
+            <div id="prompt-input-container">
                 ${getSiteInfoOrAddChatAboutThisPage.bind(this)()}
                 <div class="typing-content">
                     <div class="prompt-input">

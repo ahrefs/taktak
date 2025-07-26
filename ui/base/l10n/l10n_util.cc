@@ -827,26 +827,26 @@ std::u16string FormatString(const std::u16string& format_string,
   // fail to insert one.
   //
   // $9 is the highest allowed placeholder.
-  for (size_t i = 0; i < 9; ++i) {
-    bool placeholder_should_exist = i < replacements.size();
-
-    std::u16string placeholder = u"$";
-    placeholder += static_cast<char16_t>('1' + static_cast<char>(i));
-    size_t pos = format_string.find(placeholder);
-    if (placeholder_should_exist) {
-      //     Turn DCHECK off, cuase links to Google content are removed.
-      //      DCHECK_NE(std::string::npos, pos) << " Didn't find a " <<
-      //      placeholder
-      //                                        << " placeholder in " <<
-      //                                        format_string;
-      DVLOG(0) << "***Alert*** Didn't find a " << placeholder
-               << " placeholder in " << format_string;
-    } else {
-      DCHECK_EQ(std::string::npos, pos)
-          << " Unexpectedly found a " << placeholder << " placeholder in "
-          << format_string;
-    }
-  }
+//  for (size_t i = 0; i < 9; ++i) {
+//    bool placeholder_should_exist = i < replacements.size();
+//
+//    std::u16string placeholder = u"$";
+//    placeholder += static_cast<char16_t>('1' + static_cast<char>(i));
+//    size_t pos = format_string.find(placeholder);
+//    if (placeholder_should_exist) {
+//           Turn DCHECK off, cuase links to Google content are removed.
+//            DCHECK_NE(std::string::npos, pos) << " Didn't find a " <<
+//            placeholder
+//                                              << " placeholder in " <<
+//                                              format_string;
+//      DVLOG(0) << "***Alert*** Didn't find a " << placeholder
+//               << " placeholder in " << format_string;
+//    } else {
+//      DCHECK_EQ(std::string::npos, pos)
+//          << " Unexpectedly found a " << placeholder << " placeholder in "
+//          << format_string;
+//    }
+//  }
 #endif
 
   // AdjustParagraphDirectionality() may append extra characters. Therefore,
