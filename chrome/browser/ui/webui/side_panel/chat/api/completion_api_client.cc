@@ -57,8 +57,8 @@ namespace {
                                       bool enable_thinking) {
         base::Value::Dict dict;
         const std::string model = enable_thinking
-                                      ? BUILDFLAG(TAKTAK_CHAT_DEEPSEEK_MODEL)
-                                      : BUILDFLAG(TAKTAK_CHAT_MISTRAL_MODEL);
+                                      ? BUILDFLAG(TAKTAK_CHAT_THINKING_MODEL)
+                                      : BUILDFLAG(TAKTAK_CHAT_NO_THINKING_MODEL);
         dict.Set("max_tokens", 8'000);
         dict.Set("stream", true);
         dict.Set("top_p", 0.7);
@@ -76,7 +76,11 @@ namespace {
 
         std::string json;
         base::JSONWriter::Write(dict, &json);
-        DVLOG(0) << __func__ << " |>> Request body: " << json;
+        LOG(INFO) << "  ";
+        LOG(INFO) << "BEGIN==============================================================================================" ;
+        LOG(INFO) << json;
+        LOG(INFO) << "END================================================================================================" ;
+        LOG(INFO) << "  ";
         return json;
     }
 }  // namespace

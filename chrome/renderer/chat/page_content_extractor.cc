@@ -236,7 +236,7 @@ void PageContentExtractor::ExtractPageText(
         "!child.textContent.trim()) {\n"
         "                    child.remove();\n"
         "                } else {\n"
-        "                    while (child.attributes.length > 0) {\n"
+        "                    while (child.attributes.length > 0 && child.tagName != 'A') {\n"
         "                        "
         "child.removeAttribute(child.attributes[0].name);\n"
         "                    }\n"

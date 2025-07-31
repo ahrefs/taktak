@@ -307,7 +307,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
                              base::Unretained(this), action_type,
                              summarize_prompt, completion_messages,
                              enable_thinking),
-              false);
+              true);
 
         } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
           page_content_extractor_helper_->ExtractPageContent(
@@ -315,7 +315,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
                              base::Unretained(this), action_type,
                              explain_prompt, completion_messages,
                              enable_thinking),
-              false);
+              true);
 
         } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
           page_content_extractor_helper_->ExtractPageContent(
@@ -323,7 +323,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
                              base::Unretained(this), action_type,
                              fact_check_prompt, completion_messages,
                              enable_thinking),
-              false);
+              true);
         } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
           page_content_extractor_helper_->ExtractPageContent(
               base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
@@ -338,7 +338,7 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
                   base::Unretained(this), action_type,
                   draft_social_media_post_prompt + " " + action_param,
                   completion_messages, enable_thinking),
-              false);
+              true);
         }
     }
 }
@@ -359,12 +359,11 @@ void ChatPageHandler::OnPageContentExtracted(
     max_content = content.substr(0, kMaxUserPromptLength);
   }
 
-    if (action_type == chat::mojom::ActionType::TRANSLATE) {
+    if (action_type != chat::mojom::ActionType::NONE) {
       html2md::Converter c(max_content);
       auto md = c.convert();
       max_content = md;
       DVLOG(0) << __func__ << " |>> markdown content -> " << max_content;
-      // max_content = html2md::Convert(max_content);
     }
 
     if (!url.empty()) {
@@ -422,7 +421,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
           base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                          base::Unretained(this), action_type, query,
                          completion_messages, enable_thinking),
-          action_type == chat::mojom::ActionType::TRANSLATE ? true : false);
+          action_type != chat::mojom::ActionType::NONE ? true : false);
     } else /* user removed the context via Chat UI or the current opening tab is
               empty */
     {

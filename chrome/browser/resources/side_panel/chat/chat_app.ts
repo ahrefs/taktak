@@ -488,11 +488,14 @@ export class ChatAppElement extends CrLitElement {
         const conversation_history: ConversationItem[] = [];
         for (let i = this.conversations_.length - 1; i >= 0; i--) {
             const conversation = this.conversations_[i];
-            if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0 && conversation_history.length <= 3) {
+            if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0) {
                 conversation_history.push({
                     userQuery: conversation.query,
                     llmResponse: conversation.responseText,
                 })
+                if (conversation_history.length > 2) {
+                    break;
+                }
             }
         }
 
