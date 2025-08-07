@@ -84,12 +84,12 @@ function getThinkingElement(this: ChatAppElement,
         </div>`;
 }
 
-function getResponseElement(responseText: string) {
+function getResponseElement(responseText: string, onClick: (e: MouseEvent | KeyboardEvent) => void) {
     if (responseText.trim().length == 0) {
         return html``;
     }
     return html`
-        <div class="response-markdown-container"
+        <div class="response-markdown-container" @click="${onClick}"
              .innerHTML="${getTrustedHTML(marked.parse(responseText, {async: false}))}">
         </div>`;
 }
@@ -119,7 +119,7 @@ function getThinkingAndResponseElements(this: ChatAppElement,
     return html`
         <div class="thinking-and-response-container">
             ${getThinkingElement.bind(this)(thinkingText, id, isThinking, showThinkingText)}
-            ${getResponseElement(responseText)}
+            ${getResponseElement(responseText, this.onResponseMarkdownContainerClick_)}
             ${getErrorElement(errorText)}
         </div>`;
 }

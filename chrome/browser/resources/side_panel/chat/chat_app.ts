@@ -635,6 +635,26 @@ export class ChatAppElement extends CrLitElement {
         }
     }
 
+    onResponseMarkdownContainerClick_(event: MouseEvent | KeyboardEvent) {
+        const targetElement = event.target as HTMLElement;
+        if (targetElement.tagName === 'A') {
+            event.preventDefault();
+            const href = targetElement.getAttribute('href') ?? "";
+            // @ts-ignore
+            if (href.startsWith('http')) {
+                // Open the link in a new tab and make it active
+                const modifier: ClickModifiers = {
+                    middleButton: true,
+                    altKey: true,
+                    ctrlKey: true,
+                    metaKey: true,
+                    shiftKey: true,
+                };
+                this.openUrl_(href, modifier);
+            }
+        }
+    }
+
     override connectedCallback() {
         super.connectedCallback();
 
