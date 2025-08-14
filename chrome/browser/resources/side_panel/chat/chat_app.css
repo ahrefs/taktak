@@ -555,10 +555,28 @@ thinking-markdown-container {
     margin: 0px;
 }
 
-.response-markdown-container a, .thinking-markdown-container a {
+.response-markdown-container a {
+    text-decoration: none;
+    color: inherit;
+    cursor: default;
+}
+
+.response-markdown-container a:hover {
+    text-decoration: none;
+    color: inherit;
+    cursor: default;
+}
+
+.response-markdown-container a[href^="http"] {
     text-decoration: none;
     color: var(--color-yep-chat-link);
     cursor: default;
+}
+
+.response-markdown-container a[href^="http"]:hover {
+    text-decoration: underline;
+    color: var(--color-yep-chat-link);
+    cursor: pointer;
 }
 
 .thinking-markdown-container a {
@@ -567,9 +585,10 @@ thinking-markdown-container {
     cursor: default;
 }
 
-.response-markdown-container a:hover, .thinking-markdown-container a:hover {
+.thinking-markdown-container a:hover {
     text-decoration: none;
     color: inherit;
+    cursor: default;
 }
 
 .response-markdown-container :is(h1, h2, h3, h4, h5, h6) {

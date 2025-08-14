@@ -488,11 +488,14 @@ export class ChatAppElement extends CrLitElement {
         const conversation_history: ConversationItem[] = [];
         for (let i = this.conversations_.length - 1; i >= 0; i--) {
             const conversation = this.conversations_[i];
-            if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0 && conversation_history.length <= 3) {
+            if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0) {
                 conversation_history.push({
                     userQuery: conversation.query,
                     llmResponse: conversation.responseText,
                 })
+                if (conversation_history.length > 2) {
+                    break;
+                }
             }
         }
 
@@ -629,6 +632,26 @@ export class ChatAppElement extends CrLitElement {
     onConversationContainerScroll() {
         if (this.isPointerDown_) {
             this.shouldAutoScroll_ = false;
+        }
+    }
+
+    onResponseMarkdownContainerClick_(event: MouseEvent | KeyboardEvent) {
+        const targetElement = event.target as HTMLElement;
+        if (targetElement.tagName === 'A') {
+            event.preventDefault();
+            const href = targetElement.getAttribute('href') ?? "";
+            // @ts-ignore
+            if (href.startsWith('http')) {
+                // Open the link in a new tab and make it active
+                const modifier: ClickModifiers = {
+                    middleButton: true,
+                    altKey: true,
+                    ctrlKey: true,
+                    metaKey: true,
+                    shiftKey: true,
+                };
+                this.openUrl_(href, modifier);
+            }
         }
     }
 
