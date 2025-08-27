@@ -246,6 +246,7 @@ chromium-metrics-reviews@google.com.
   <variant name=""/>
   <variant name=".BookmarksSidePanel"/>
   <variant name=".Chat"/>
+  <variant name=".Chat"/>
   <variant name=".Compose"/>
   <variant name=".CustomizeChrome"/>
   <variant name=".DataSharingBubble"/>
