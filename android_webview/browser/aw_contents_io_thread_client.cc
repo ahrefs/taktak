@@ -30,7 +30,7 @@
 #include "base/synchronization/lock.h"
 #include "base/task/thread_pool.h"
 #include "base/threading/scoped_blocking_call.h"
-#include "base/trace_event/base_tracing.h"
+#include "base/trace_event/trace_event.h"
 #include "base/unguessable_token.h"
 #include "components/embedder_support/android/util/features.h"
 #include "components/embedder_support/android/util/input_stream.h"
@@ -364,17 +364,6 @@ void ClientMapEntryUpdater::WebContentsDestroyed() {
 class WebContentsKeyHolder
     : public content::WebContentsUserData<WebContentsKeyHolder> {
  public:
-  // [M138] We cherry-pick the helper function introduced in [*] only for this
-  // class's use.
-  // [*] crrev.com/6626551
-  static WebContentsKeyHolder* GetOrCreateForWebContents(
-      WebContents* contents) {
-    if (!FromWebContents(contents)) {
-      CreateForWebContents(contents);
-    }
-    return FromWebContents(contents);
-  }
-
   ~WebContentsKeyHolder() override = default;
 
   const base::UnguessableToken& GetToken() { return token_; }

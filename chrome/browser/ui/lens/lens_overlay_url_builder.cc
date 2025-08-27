@@ -9,6 +9,7 @@
 #include "base/base64url.h"
 #include "base/notreached.h"
 #include "base/strings/escape.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/strings/stringprintf.h"
 #include "chrome/browser/browser_process.h"
 #include "components/language/core/common/language_util.h"
@@ -132,10 +133,10 @@ inline constexpr char kClientIdQueryParameterValue[] = "lens-overlay";
 // time when the query leaves the client and is sent to the server.
 inline constexpr char kQuerySubmissionTimeQueryParameter[] = "qsubts";
 
-// Query parameter for the perceived query submission time. This should
-// be set to the time when the user performed the action that triggered
-// the query.
-inline constexpr char kUserPerceivedStateTimeQueryParameter[] = "pqsubts";
+// Query parameter for the client upload processing duration. This is the time
+// between the user-perceived query submission time and the time when the
+// search request is made (i.e. qsubts).
+inline constexpr char kClientUploadDurationQueryParameter[] = "cud";
 
 // Appends the url params from the map to the url.
 GURL AppendUrlParamsFromMap(
@@ -276,6 +277,8 @@ GURL AppendInvocationSourceParamToURL(
     case lens::LensOverlayInvocationSource::kLVFShutterButton:
     case lens::LensOverlayInvocationSource::kLVFGallery:
     case lens::LensOverlayInvocationSource::kContextMenu:
+    case lens::LensOverlayInvocationSource::kAIHub:
+    case lens::LensOverlayInvocationSource::kFREPromo:
       NOTREACHED() << "Invocation source not supported.";
   }
   return net::AppendOrReplaceQueryParameter(
@@ -289,10 +292,20 @@ GURL AppendDarkModeParamToURL(const GURL& url_to_modify, bool use_dark_mode) {
                     : kDarkModeParameterLightValue);
 }
 
-GURL AppendQuerySubmissionTimeParamToURL(const GURL& url_to_modify) {
-  return net::AppendOrReplaceQueryParameter(
-      url_to_modify, kQuerySubmissionTimeQueryParameter,
-      base::NumberToString(base::Time::Now().InMillisecondsSinceUnixEpoch()));
+GURL AppendQuerySubmissionTimeAndClientUploadDurationParamToURL(
+    const GURL& url_to_modify,
+    base::Time query_start_time) {
+  GURL new_url = url_to_modify;
+  base::Time query_submission_time = base::Time::Now();
+  new_url = net::AppendOrReplaceQueryParameter(
+      new_url, kClientUploadDurationQueryParameter,
+      base::NumberToString(
+          (query_submission_time - query_start_time).InMilliseconds()));
+  new_url = net::AppendOrReplaceQueryParameter(
+      new_url, kQuerySubmissionTimeQueryParameter,
+      base::NumberToString(
+          query_submission_time.InMillisecondsSinceUnixEpoch()));
+  return new_url;
 }
 
 GURL BuildTextOnlySearchURL(
@@ -325,17 +338,9 @@ GURL BuildTextOnlySearchURL(
   }
   url_with_query_params =
       AppendCommonSearchParametersToURL(url_with_query_params, use_dark_mode);
-  if (lens::features::UseVideoContextForTextOnlyLensOverlayRequests()) {
-    // All queries use the video context param to report page context
-    // information even if the page does not contain a video.
-    url_with_query_params =
-        AppendVideoContextParamToURL(url_with_query_params, page_url);
-  }
-  url_with_query_params = net::AppendOrReplaceQueryParameter(
-      url_with_query_params, kUserPerceivedStateTimeQueryParameter,
-      base::NumberToString(query_start_time.InMillisecondsSinceUnixEpoch()));
   url_with_query_params =
-      AppendQuerySubmissionTimeParamToURL(url_with_query_params);
+      AppendQuerySubmissionTimeAndClientUploadDurationParamToURL(
+          url_with_query_params, query_start_time);
   return url_with_query_params;
 }
 
@@ -396,11 +401,9 @@ GURL BuildLensSearchURL(
                         &encoded_request_id);
   url_with_query_params = net::AppendOrReplaceQueryParameter(
       url_with_query_params, kRequestIdParameterKey, encoded_request_id);
-  url_with_query_params = net::AppendOrReplaceQueryParameter(
-      url_with_query_params, kUserPerceivedStateTimeQueryParameter,
-      base::NumberToString(query_start_time.InMillisecondsSinceUnixEpoch()));
   url_with_query_params =
-      AppendQuerySubmissionTimeParamToURL(url_with_query_params);
+      AppendQuerySubmissionTimeAndClientUploadDurationParamToURL(
+          url_with_query_params, query_start_time);
   return url_with_query_params;
 }
 
@@ -535,7 +538,8 @@ GURL GetSidePanelNewTabUrl(const GURL& side_panel_url, std::string vsrid) {
                                             kRequestIdParameterKey, vsrid);
 }
 
-GURL BuildTranslateLanguagesURL(std::string country, std::string language) {
+GURL BuildTranslateLanguagesURL(std::string_view country,
+                                std::string_view language) {
   GURL url = GURL(lens::features::GetLensOverlayTranslateEndpointURL());
   url =
       net::AppendOrReplaceQueryParameter(url, kCountryQueryParameter, country);

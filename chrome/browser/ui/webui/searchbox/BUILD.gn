@@ -17,6 +17,7 @@ source_set("searchbox") {
   public_deps = [
     "//base",
     "//chrome/browser:browser_public_dependencies",
+    "//chrome/browser/ui/webui/new_tab_page/composebox",
     "//components/lens/proto/server:proto",
     "//components/omnibox/browser",
     "//components/omnibox/browser:mojo_bindings",
@@ -34,7 +35,9 @@ source_set("searchbox") {
     "//chrome/app:generated_resources",
     "//chrome/app:generated_resources_grit",
     "//chrome/browser:browser_process",
+    "//chrome/browser/autocomplete",
     "//chrome/browser/omnibox",
+    "//chrome/browser/preloading/search_preload",
     "//chrome/browser/profiles:profile",
     "//chrome/browser/resources/new_tab_page:resources",
     "//chrome/browser/resources/new_tab_page:resources_grit",

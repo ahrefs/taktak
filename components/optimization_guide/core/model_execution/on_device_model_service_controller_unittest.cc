@@ -24,6 +24,8 @@
 #include "base/types/expected.h"
 #include "base/uuid.h"
 #include "build/build_config.h"
+#include "components/optimization_guide/core/delivery/model_info.h"
+#include "components/optimization_guide/core/delivery/test_model_info_builder.h"
 #include "components/optimization_guide/core/model_execution/execute_remote_fn.h"
 #include "components/optimization_guide/core/model_execution/feature_keys.h"
 #include "components/optimization_guide/core/model_execution/model_broker_client.h"
@@ -42,16 +44,13 @@
 #include "components/optimization_guide/core/model_execution/test/request_builder.h"
 #include "components/optimization_guide/core/model_execution/test/response_holder.h"
 #include "components/optimization_guide/core/model_execution/test/test_on_device_model_component_state_manager.h"
-#include "components/optimization_guide/core/model_info.h"
 #include "components/optimization_guide/core/optimization_guide_constants.h"
 #include "components/optimization_guide/core/optimization_guide_enums.h"
 #include "components/optimization_guide/core/optimization_guide_features.h"
 #include "components/optimization_guide/core/optimization_guide_logger.h"
 #include "components/optimization_guide/core/optimization_guide_model_executor.h"
 #include "components/optimization_guide/core/optimization_guide_proto_util.h"
-#include "components/optimization_guide/core/optimization_guide_test_util.h"
 #include "components/optimization_guide/core/optimization_guide_util.h"
-#include "components/optimization_guide/core/test_model_info_builder.h"
 #include "components/optimization_guide/proto/features/compose.pb.h"
 #include "components/optimization_guide/proto/features/example_for_testing.pb.h"
 #include "components/optimization_guide/proto/model_execution.pb.h"
@@ -1679,7 +1678,8 @@ TEST_F(OnDeviceModelServiceControllerTest, DontRecreateSessionIfGpuBlocked) {
 TEST_F(OnDeviceModelServiceControllerTest, StopsConnectingAfterMultipleDrops) {
   Initialize(standard_assets_);
   // Start a session.
-  fake_settings_.set_drop_connection_request(true);
+  fake_settings_.set_drop_connection_request(
+      on_device_model::ModelDisconnectReason::kUnspecified);
   for (int i = 0; i < features::GetOnDeviceModelCrashCountBeforeDisable();
        ++i) {
     EXPECT_TRUE(CreateSession()) << i;
@@ -1689,9 +1689,23 @@ TEST_F(OnDeviceModelServiceControllerTest, StopsConnectingAfterMultipleDrops) {
   ExpectFailedSession(OnDeviceModelEligibilityReason::kTooManyRecentCrashes);
 }
 
+TEST_F(OnDeviceModelServiceControllerTest, IdleTimeoutNotCountedAsCrash) {
+  Initialize(standard_assets_);
+  fake_settings_.set_drop_connection_request(
+      on_device_model::ModelDisconnectReason::kIdleShutdown);
+  for (int i = 0; i < features::GetOnDeviceModelCrashCountBeforeDisable();
+       ++i) {
+    EXPECT_TRUE(CreateSession()) << i;
+    task_environment_.RunUntilIdle();
+  }
+
+  EXPECT_TRUE(CreateSession());
+}
+
 TEST_F(OnDeviceModelServiceControllerTest, AllowsConnectingAfterBackoffPeriod) {
   Initialize(standard_assets_);
-  fake_settings_.set_drop_connection_request(true);
+  fake_settings_.set_drop_connection_request(
+      on_device_model::ModelDisconnectReason::kUnspecified);
 
   for (int i = 0; i < features::GetOnDeviceModelCrashCountBeforeDisable();
        ++i) {
@@ -1725,7 +1739,8 @@ TEST_F(OnDeviceModelServiceControllerTest, AllowsConnectingAfterBackoffPeriod) {
 TEST_F(OnDeviceModelServiceControllerTest,
        ClearsCrashDataOnSuccessAfterBackoff) {
   Initialize(standard_assets_);
-  fake_settings_.set_drop_connection_request(true);
+  fake_settings_.set_drop_connection_request(
+      on_device_model::ModelDisconnectReason::kUnspecified);
 
   for (int i = 0; i < features::GetOnDeviceModelCrashCountBeforeDisable();
        ++i) {
@@ -1737,7 +1752,7 @@ TEST_F(OnDeviceModelServiceControllerTest,
   ExpectFailedSession(OnDeviceModelEligibilityReason::kTooManyRecentCrashes);
 
   // Fast forward by backoff time and starting a session should succeed.
-  fake_settings_.set_drop_connection_request(false);
+  fake_settings_.set_drop_connection_request(std::nullopt);
   task_environment_.FastForwardBy(
       features::GetOnDeviceModelCrashBackoffBaseTime() + base::Milliseconds(1));
   EXPECT_TRUE(CreateSession());
@@ -1747,7 +1762,8 @@ TEST_F(OnDeviceModelServiceControllerTest,
   EXPECT_TRUE(CreateSession());
 
   // Single crash should not disable sessions.
-  fake_settings_.set_drop_connection_request(true);
+  fake_settings_.set_drop_connection_request(
+      on_device_model::ModelDisconnectReason::kUnspecified);
   EXPECT_TRUE(CreateSession());
   task_environment_.RunUntilIdle();
 
@@ -1758,7 +1774,10 @@ TEST_F(OnDeviceModelServiceControllerTest, AlternatingDisconnectSucceeds) {
   Initialize(standard_assets_);
   // Start a session.
   for (int i = 0; i < 10; ++i) {
-    fake_settings_.set_drop_connection_request(i % 2 == 1);
+    fake_settings_.set_drop_connection_request(
+        i % 2 == 1 ? std::make_optional(
+                         on_device_model::ModelDisconnectReason::kUnspecified)
+                   : std::nullopt);
     EXPECT_TRUE(CreateSession()) << i;
     task_environment_.RunUntilIdle();
   }
@@ -1768,7 +1787,8 @@ TEST_F(OnDeviceModelServiceControllerTest,
        MultipleDisconnectsThenVersionChangeRetries) {
   Initialize(standard_assets_);
   // Create enough sessions that fail to trigger no longer creating a session.
-  fake_settings_.set_drop_connection_request(true);
+  fake_settings_.set_drop_connection_request(
+      on_device_model::ModelDisconnectReason::kUnspecified);
   for (int i = 0; i < features::GetOnDeviceModelCrashCountBeforeDisable();
        ++i) {
     EXPECT_TRUE(CreateSession()) << i;
@@ -3908,6 +3928,101 @@ TEST_F(OnDeviceModelServiceControllerTest, ResponseConstraintConfigRegex) {
   EXPECT_EQ(response_.value(),
             "Constraint: regex [A-Z]*"
             "execute:input max:1024");
+}
+
+TEST_F(OnDeviceModelServiceControllerTest, EvictModelForRankUpdate) {
+  base::test::ScopedFeatureList feature_list;
+  feature_list.InitWithFeaturesAndParameters(
+      /*enabled_features=*/
+      {
+          {features::kOptimizationGuideOnDeviceModel,
+           {{"allowed_adaptation_ranks", "1,32"}}},
+          {features::internal::kOnDeviceModelTestFeature, {}},
+      },
+      /*disabled_features=*/{});
+  std::vector<uint32_t> initial_ranks = {1, 32};
+
+  auto get_current_ranks = [launcher =
+                                &fake_launcher_]() -> std::vector<uint32_t> {
+    auto* service = launcher->service();
+    if (!service) {
+      return std::vector<uint32_t>();
+    }
+    auto* model = service->model();
+    if (!model) {
+      return std::vector<uint32_t>();
+    }
+    return model->data().adaptation_ranks;
+  };
+
+  base::HistogramTester histogram_tester;
+  FakeAdaptationAsset rank1_asset({
+      .config =
+          []() {
+            auto config = SimpleComposeConfig();
+            config.set_can_skip_text_safety(true);
+            config.set_adaptation_rank(1);
+            config.mutable_sampling_params()->set_top_k(1);
+            config.mutable_sampling_params()->set_temperature(0);
+            return config;
+          }(),
+      .weight = 10,
+  });
+  FakeAdaptationAsset rank2_asset({
+      .config =
+          []() {
+            auto config = SimpleComposeConfig();
+            config.set_can_skip_text_safety(true);
+            config.set_feature(proto::MODEL_EXECUTION_FEATURE_TEST);
+            config.set_adaptation_rank(2);
+            return config;
+          }(),
+      .weight = 20,
+  });
+
+  Initialize({
+      .base_model = &standard_assets_.base_model,
+      .safety = &standard_assets_.safety,
+      .language = &standard_assets_.language,
+      // Init with just the
+      .adaptations = {&rank1_asset},
+  });
+
+  auto session = test_controller_->CreateSession(
+      rank1_asset.feature(), FailOnRemoteFallback(), logger_.GetWeakPtr(),
+      /*config_params=*/std::nullopt);
+  ASSERT_TRUE(session);
+  MultimodalMessage msg1(PageUrlRequest("input"));
+  session->SetInput(std::move(msg1), {});
+
+  task_environment_.FastForwardBy(base::Seconds(1));
+  EXPECT_EQ(get_current_ranks(), initial_ranks);
+
+  // The rank1 feature shouldn't require an eviction at any point, because
+  // it's in the allowed_adaptation_ranks.
+  histogram_tester.ExpectTotalCount(
+      "OptimizationGuide.ModelExecution.DidEvictBaseModelForRankUpdate", 0);
+
+  // The rank2 feature "download" finishing should evict the model.
+  test_controller_->MaybeUpdateModelAdaptation(rank2_asset.feature(),
+                                               rank2_asset.metadata());
+  histogram_tester.ExpectUniqueSample(
+      "OptimizationGuide.ModelExecution.DidEvictBaseModelForRankUpdate", true,
+      1);
+  task_environment_.FastForwardBy(base::Seconds(1));
+  EXPECT_EQ(get_current_ranks(), std::vector<uint32_t>());
+
+  // Session should work even after the eviction, and just reload the model.
+  session->ExecuteModel(proto::ComposeRequest(),
+                        response_.GetStreamingCallback());
+  ASSERT_TRUE(response_.GetFinalStatus());
+  EXPECT_EQ(response_.value(),
+            "Adaptation model: 10"
+            "ctx: max:8192"
+            "execute:input max:1024");
+
+  std::vector<uint32_t> expected_ranks{1, 32, 2};
+  EXPECT_EQ(get_current_ranks(), expected_ranks);
 }
 
 }  // namespace optimization_guide

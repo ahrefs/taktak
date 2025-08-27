@@ -16,6 +16,7 @@
 #include "chrome/browser/ui/lens/lens_overlay_side_panel_web_view.h"
 #include "chrome/browser/ui/lens/lens_overlay_url_builder.h"
 #include "chrome/browser/ui/lens/lens_search_controller.h"
+#include "chrome/browser/ui/lens/lens_search_feature_flag_utils.h"
 #include "chrome/browser/ui/lens/lens_searchbox_controller.h"
 #include "chrome/browser/ui/lens/page_content_type_conversions.h"
 #include "chrome/browser/ui/tabs/public/tab_features.h"
@@ -884,7 +885,8 @@ void LensOverlaySidePanelCoordinator::OnTextFinderLookupComplete(
                              ->GetContents()
                              ->GetLastCommittedURL();
   if (lookup_results.empty()) {
-    if (URLsMatchWithoutTextFragment(page_url, nav_url)) {
+    if (lens::features::IsLensSearchNotFoundOnPageToastEnabled() &&
+        URLsMatchWithoutTextFragment(page_url, nav_url)) {
       lens::RecordHandleTextDirectiveResult(
           lens::LensOverlayTextDirectiveResult::kNotFoundOnPage);
       ShowToast(l10n_util::GetStringUTF8(
@@ -904,7 +906,8 @@ void LensOverlaySidePanelCoordinator::OnTextFinderLookupComplete(
   for (auto pair : lookup_results) {
     // If any of the text fragments are not found, then open in a new tab.
     if (!pair.second) {
-      if (URLsMatchWithoutTextFragment(page_url, nav_url)) {
+      if (lens::features::IsLensSearchNotFoundOnPageToastEnabled() &&
+          URLsMatchWithoutTextFragment(page_url, nav_url)) {
         lens::RecordHandleTextDirectiveResult(
             lens::LensOverlayTextDirectiveResult::kNotFoundOnPage);
         ShowToast(l10n_util::GetStringUTF8(
@@ -966,7 +969,10 @@ void LensOverlaySidePanelCoordinator::RegisterEntry() {
         base::BindRepeating(
             &LensOverlaySidePanelCoordinator::GetOpenInNewTabUrl,
             base::Unretained(this)),
-        GetMoreInfoCallback(), SidePanelEntry::kSidePanelDefaultContentWidth);
+        GetMoreInfoCallback(),
+        lens::features::IsLensSearchSidePanelDefaultWidthChangeEnabled()
+            ? lens::features::GetLensSearchSidePanelDefaultWidth()
+            : SidePanelEntry::kSidePanelDefaultContentWidth);
     entry->SetProperty(kShouldShowTitleInSidePanelHeaderKey, false);
     registry->Register(std::move(entry));
 
@@ -1018,7 +1024,7 @@ GURL LensOverlaySidePanelCoordinator::GetOpenInNewTabUrl() {
 
 base::RepeatingCallback<std::unique_ptr<ui::MenuModel>()>
 LensOverlaySidePanelCoordinator::GetMoreInfoCallback() {
-  if (lens::features::IsLensOverlayContextualSearchboxEnabled()) {
+  if (lens::IsLensOverlayContextualSearchboxEnabled()) {
     return base::BindRepeating(
         &LensOverlaySidePanelCoordinator::GetMoreInfoMenuModel,
         base::Unretained(this));

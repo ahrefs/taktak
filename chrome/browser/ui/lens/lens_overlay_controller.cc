@@ -53,6 +53,7 @@
 #include "chrome/browser/ui/lens/lens_preselection_bubble.h"
 #include "chrome/browser/ui/lens/lens_search_contextualization_controller.h"
 #include "chrome/browser/ui/lens/lens_search_controller.h"
+#include "chrome/browser/ui/lens/lens_search_feature_flag_utils.h"
 #include "chrome/browser/ui/lens/lens_searchbox_controller.h"
 #include "chrome/browser/ui/lens/lens_session_metrics_logger.h"
 #include "chrome/browser/ui/lens/page_content_type_conversions.h"
@@ -199,21 +200,6 @@ LensOverlayController* GetLensOverlayControllerFromTabInterface(
              : nullptr;
 }
 
-bool IsPageContextEligible(
-    const GURL& main_frame_url,
-    std::vector<optimization_guide::FrameMetadata> frame_metadata,
-    optimization_guide::PageContextEligibility* page_context_eligibility) {
-  if (!page_context_eligibility ||
-      !lens::features::IsLensSearchProtectedPageEnabled() ||
-      !lens::features::IsLensOverlayContextualSearchboxEnabled() ||
-      !lens::features::UseApcAsContext()) {
-    return true;
-  }
-  return optimization_guide::IsPageContextEligible(
-      main_frame_url.host(), main_frame_url.path(), std::move(frame_metadata),
-      page_context_eligibility);
-}
-
 }  // namespace
 
 LensOverlayController::LensOverlayController(
@@ -263,7 +249,7 @@ LensOverlayController* LensOverlayController::FromTabWebContents(
       tabs::TabInterface::GetFromContents(tab_web_contents));
 }
 
-void LensOverlayController::TriggerOverlayCloseAnimation(
+void LensOverlayController::TriggerOverlayFadeOutAnimation(
     base::OnceClosure callback) {
   if (state_ == State::kOff || IsOverlayClosing()) {
     return;
@@ -362,7 +348,6 @@ void LensOverlayController::CloseUI(
   }
 
   lens_selection_type_ = lens::UNKNOWN_SELECTION_TYPE;
-  is_page_context_eligible_ = true;
   should_send_screenshot_on_init_ = false;
 
   state_ = State::kOff;
@@ -1042,18 +1027,6 @@ void LensOverlayController::ClearRegionSelection() {
   page_->ClearRegionSelection();
 }
 
-void LensOverlayController::ClearAllSelections() {
-  if (page_) {
-    page_->ClearAllSelections();
-  }
-  initialization_data_->selected_region_.reset();
-  initialization_data_->selected_region_bitmap_.reset();
-  initialization_data_->selected_text_.reset();
-  if (!IsContextualSearchbox()) {
-    lens_selection_type_ = lens::UNKNOWN_SELECTION_TYPE;
-  }
-}
-
 void LensOverlayController::OnSearchboxFocusChanged(bool focused) {
   if (!focused) {
     return;
@@ -1066,10 +1039,9 @@ void LensOverlayController::OnSearchboxFocusChanged(bool focused) {
       // If the live page is showing and the searchbox becomes focused, showing
       // intent to issue a new query, upload the new page content for
       // contextualization.
-      // TODO(crbug.com/418856988): Replace this with a call that starts
-      // contextualization without the unneeded callback.
       GetContextualizationController()->TryUpdatePageContextualization(
-          base::DoNothing());
+          base::BindOnce(&LensOverlayController::NotifyPageContentUpdated,
+                         weak_factory_.GetWeakPtr()));
     }
   }
 }
@@ -1101,7 +1073,7 @@ void LensOverlayController::IssueLensRequest(
     initialization_data_->selected_region_bitmap_.reset();
   }
 
-  if (is_page_context_eligible_) {
+  if (GetContextualizationController()->GetCurrentPageContextEligibility()) {
     lens_overlay_query_controller_->SendRegionSearch(
         query_start_time, region.Clone(), selection_type,
         initialization_data_->additional_search_query_params_, region_bytes);
@@ -1109,8 +1081,17 @@ void LensOverlayController::IssueLensRequest(
   MaybeOpenSidePanel();
   GetLensSessionMetricsLogger()->RecordTimeToFirstInteraction(
       lens::LensOverlayFirstInteractionType::kRegionSelect);
-  state_ = State::kOverlayAndResults;
-  MaybeLaunchSurvey();
+
+  // TODO(crbug.com/428208291): The overlay can be in the live page and results
+  // state and this could be a query coming from the back stack which would make
+  // setting this to kOverlayAndResults incorrect. Check if the overlay is
+  // currently in that state to determine if this should be set to
+  // kOverlayAndResults or not. This should be fixed by moving the functionality
+  // to make Lens requests to a more appropriate location.
+  if (state_ != State::kLivePageAndResults) {
+    state_ = State::kOverlayAndResults;
+    MaybeLaunchSurvey();
+  }
 }
 
 void LensOverlayController::IssueMultimodalRequest(
@@ -1119,7 +1100,7 @@ void LensOverlayController::IssueMultimodalRequest(
     const std::string& text_query,
     lens::LensOverlaySelectionType selection_type,
     std::optional<SkBitmap> region_bitmap) {
-  if (is_page_context_eligible_) {
+  if (GetContextualizationController()->GetCurrentPageContextEligibility()) {
     lens_overlay_query_controller_->SendMultimodalRequest(
         query_start_time, std::move(region), text_query, selection_type,
         initialization_data_->additional_search_query_params_, region_bitmap);
@@ -1143,7 +1124,7 @@ void LensOverlayController::IssueSearchBoxRequest(
   // on each query is disabled, if the live page is not being displayed, or if
   // the user is not in the contextual search flow (aka, issues an image request
   // already).
-  if (!lens::features::IsLensOverlayContextualSearchboxEnabled() ||
+  if (!lens::IsLensOverlayContextualSearchboxEnabled() ||
       !lens::features::ShouldLensOverlayRecontextualizeOnQuery() ||
       state() != State::kLivePageAndResults || !IsContextualSearchbox()) {
     IssueSearchBoxRequestPart2(query_start_time, search_box_text, match_type,
@@ -1165,7 +1146,7 @@ void LensOverlayController::IssueContextualTextRequest(
     base::Time query_start_time,
     const std::string& text_query,
     lens::LensOverlaySelectionType selection_type) {
-  if (is_page_context_eligible_) {
+  if (GetContextualizationController()->GetCurrentPageContextEligibility()) {
     lens_selection_type_ = selection_type;
     lens_overlay_query_controller_->SendContextualTextQuery(
         query_start_time, text_query, selection_type,
@@ -1390,23 +1371,43 @@ void LensOverlayController::DidCaptureScreenshot(
     // with other async startup processes.
     const auto& tab_url = tab_->GetContents()->GetLastCommittedURL();
 
-    auto bitmap_to_send = bitmap;
-    auto page_url = lens_search_controller_->GetPageURL();
-    auto page_title = lens_search_controller_->GetPageTitle();
-    if (!IsPageContextEligible(
-            tab_url, {}, lens_search_controller_->page_context_eligibility())) {
-      is_page_context_eligible_ = false;
-      bitmap_to_send = SkBitmap();
-      page_url = GURL();
-      page_title = "";
-    }
-
-    lens_overlay_query_controller_->StartQueryFlow(
-        bitmap_to_send, page_url, page_title,
-        ConvertSignificantRegionBoxes(all_bounds),
-        std::vector<lens::PageContent>(), lens::MimeType::kUnknown,
-        pdf_current_page, GetUiScaleFactor(), invocation_time_);
+    // Check if the page is context eligible. This should start the query flow
+    // after the eligibility is fetched.
+    GetContextualizationController()->IsPageContextEligible(
+        tab_url, /*frame_metadata=*/{},
+        base::BindOnce(&LensOverlayController::OnPageContextEligibilityFetched,
+                       weak_factory_.GetWeakPtr(), bitmap, all_bounds,
+                       pdf_current_page));
+    return;
   }
+
+  // The following two methods happen async to parallelize the two bottlenecks
+  // in our invocation flow.
+  CreateInitializationData(bitmap, all_bounds, pdf_current_page);
+  ShowOverlay();
+
+  state_ = State::kStartingWebUI;
+}
+
+void LensOverlayController::OnPageContextEligibilityFetched(
+    const SkBitmap& bitmap,
+    const std::vector<gfx::Rect>& all_bounds,
+    std::optional<uint32_t> pdf_current_page,
+    bool is_page_context_eligible) {
+  auto bitmap_to_send = bitmap;
+  auto page_url = lens_search_controller_->GetPageURL();
+  auto page_title = lens_search_controller_->GetPageTitle();
+  if (!is_page_context_eligible) {
+    bitmap_to_send = SkBitmap();
+    page_url = GURL();
+    page_title = "";
+  }
+
+  lens_overlay_query_controller_->StartQueryFlow(
+      bitmap_to_send, page_url, page_title,
+      ConvertSignificantRegionBoxes(all_bounds),
+      std::vector<lens::PageContent>(), lens::MimeType::kUnknown,
+      pdf_current_page, GetUiScaleFactor(), invocation_time_);
 
   // The following two methods happen async to parallelize the two bottlenecks
   // in our invocation flow.
@@ -1554,10 +1555,8 @@ void LensOverlayController::SetLiveBlur(bool enabled) {
 }
 
 void LensOverlayController::ShowOverlay() {
-  // Grab the tab contents web view and disable mouse and keyboard inputs to it.
   auto* contents_web_view = tab_->GetBrowserWindowInterface()->GetWebView();
   CHECK(contents_web_view);
-  contents_web_view->SetEnabled(false);
 
   // If the view already exists, we just need to reshow it.
   if (overlay_view_) {
@@ -1572,6 +1571,12 @@ void LensOverlayController::ShowOverlay() {
     // The overlay needs to be focused on show to immediately begin
     // receiving key events.
     overlay_web_view_->RequestFocus();
+
+    // Disable mouse and keyboard inputs to the tab contents web view. Do this
+    // after the overlay takes focus. If it is done before, focus will move from
+    // the contents web view to another Chrome UI element before the overlay can
+    // take focus.
+    contents_web_view->SetEnabled(false);
     return;
   }
 
@@ -1606,26 +1611,17 @@ void LensOverlayController::ShowOverlay() {
   CHECK(overlay_web_view_);
   overlay_web_view_->RequestFocus();
 
+  // Disable mouse and keyboard inputs to the tab contents web view. Do this
+  // after the overlay takes focus. If it is done before, focus will move from
+  // the contents web view to another Chrome UI element before the overlay can
+  // take focus.
+  contents_web_view->SetEnabled(false);
+
   // Listen to the render process housing out overlay.
   overlay_web_view_->GetWebContents()
       ->GetPrimaryMainFrame()
       ->GetProcess()
       ->AddObserver(this);
-}
-
-void LensOverlayController::HideOverlay() {
-  // Hide the overlay view, but keep the web view attached to the overlay view
-  // so that the overlay can be re-shown without creating a new web view.
-  preselection_widget_anchor_->SetVisible(false);
-  overlay_web_view_->SetVisible(false);
-  MaybeHideSharedOverlayView();
-
-  SetLiveBlur(false);
-  HidePreselectionBubble();
-  // Re-enable mouse and keyboard events to the tab contents web view.
-  auto* contents_web_view = tab_->GetBrowserWindowInterface()->GetWebView();
-  CHECK(contents_web_view);
-  contents_web_view->SetEnabled(true);
 }
 
 void LensOverlayController::MaybeHideSharedOverlayView() {
@@ -1679,9 +1675,9 @@ void LensOverlayController::InitializeOverlay(
 
   // If the StartQueryFlow optimization is enabled, the page contents will not
   // be sent with the initial image request, so we need to send it here.
-  if (lens::features::IsLensOverlayContextualSearchboxEnabled() &&
+  if (lens::IsLensOverlayContextualSearchboxEnabled() &&
       lens::features::IsLensOverlayEarlyStartQueryFlowOptimizationEnabled() &&
-      is_page_context_eligible_) {
+      GetContextualizationController()->GetCurrentPageContextEligibility()) {
     // TODO(crbug.com/418856988): Replace this with a call that starts
     // contextualization without the unneeded callback.
     GetContextualizationController()->TryUpdatePageContextualization(
@@ -1717,7 +1713,7 @@ void LensOverlayController::InitializeOverlay(
   // response, unless the early start query flow optimization is enabled.
   if (!initialization_data_->has_full_image_response() &&
       !lens::features::IsLensOverlayEarlyStartQueryFlowOptimizationEnabled()) {
-    if (!is_page_context_eligible_) {
+    if (!GetContextualizationController()->GetCurrentPageContextEligibility()) {
       initialization_data_->initial_screenshot_ = SkBitmap();
       initialization_data_->page_url_ = GURL();
       initialization_data_->page_title_ = "";
@@ -1733,6 +1729,7 @@ void LensOverlayController::InitializeOverlay(
         initialization_data_->last_retrieved_most_visible_page_,
         GetUiScaleFactor(), invocation_time_);
 
+#if BUILDFLAG(ENABLE_PDF)
     // TODO(crbug.com/418825720): When StorePageContentAndContinueInitialization
     // is called, the contextualization controller does not update its own
     // contextualization. In this case, the partial PDF text should be sent here
@@ -1745,6 +1742,7 @@ void LensOverlayController::InitializeOverlay(
                   &LensOverlayController::OnPdfPartialPageTextRetrieved,
                   weak_factory_.GetWeakPtr()));
     }
+#endif
   }
 
   // If there is a pending contextual search request, issue it now that the
@@ -2095,7 +2093,7 @@ void LensOverlayController::TabForegrounded(tabs::TabInterface* tab) {
       backgrounded_state_ != State::kLivePageAndResults) {
     ShowPreselectionBubble();
   }
-  if (lens::features::IsLensOverlayContextualSearchboxEnabled()) {
+  if (lens::IsLensOverlayContextualSearchboxEnabled()) {
     SuppressGhostLoader();
   }
 
@@ -2122,14 +2120,7 @@ void LensOverlayController::TabWillEnterBackground(tabs::TabInterface* tab) {
     UpdateEntryPointsState();
 
     // TODO(crbug.com/335516480): Schedule the UI to be suspended.
-    return;
   }
-
-  // This is still possible when the controller is in state kScreenshot and the
-  // tab was backgrounded. We should close the UI as the overlay has not been
-  // created yet.
-  lens_search_controller_->CloseLensSync(
-      lens::LensOverlayDismissalSource::kTabBackgroundedWhileScreenshotting);
 }
 
 void LensOverlayController::ActivityRequestedByOverlay(
@@ -2165,11 +2156,23 @@ void LensOverlayController::AddBackgroundBlur() {
 }
 
 void LensOverlayController::CloseRequestedByOverlayCloseButton() {
+  if (lens::features::IsLensOverlayBackToPageEnabled()) {
+    lens_search_controller_->HideOverlay(
+        lens::LensOverlayDismissalSource::kOverlayCloseButton);
+    return;
+  }
+
   lens_search_controller_->CloseLensAsync(
       lens::LensOverlayDismissalSource::kOverlayCloseButton);
 }
 
 void LensOverlayController::CloseRequestedByOverlayBackgroundClick() {
+  if (lens::features::IsLensOverlayBackToPageEnabled()) {
+    lens_search_controller_->HideOverlay(
+        lens::LensOverlayDismissalSource::kOverlayBackgroundClick);
+    return;
+  }
+
   lens_search_controller_->CloseLensAsync(
       lens::LensOverlayDismissalSource::kOverlayBackgroundClick);
 }
@@ -2416,7 +2419,7 @@ void LensOverlayController::IssueSearchBoxRequestPart2(
     lens_selection_type_ = lens::MULTIMODAL_SUGGEST_TYPEAHEAD;
   }
 
-  if (!is_page_context_eligible_) {
+  if (!GetContextualizationController()->GetCurrentPageContextEligibility()) {
     // Do not send any requests if the page is not context eligible.
   } else if (initialization_data_->selected_region_.is_null() &&
              IsContextualSearchbox()) {
@@ -2463,8 +2466,12 @@ void LensOverlayController::IssueSearchBoxRequestPart2(
   MaybeOpenSidePanel();
   // Only set the side panel to loading if the page is context eligible because
   // otherwise there will be no results to load.
+  bool is_context_eligible =
+      GetContextualizationController()->GetCurrentPageContextEligibility();
   results_side_panel_coordinator_->SetSidePanelIsLoadingResults(
-      is_page_context_eligible_);
+      is_context_eligible);
+  results_side_panel_coordinator_->SetShowProtectedErrorPage(
+      !is_context_eligible);
 
   MaybeLaunchSurvey();
 }
@@ -2484,10 +2491,11 @@ void LensOverlayController::HandleStartQueryResponse(
   // If the side panel is open, then the error page state can change depending
   // on whether the query succeeded or not. If the side panel is not open, the
   // error page state can only change if the query failed since the first side
-  // panel navigation will take care of recording whether the result was shown
+  // panel navigation will take care of recording whether the result was shown.
   const bool is_side_panel_open =
       results_side_panel_coordinator_->IsSidePanelBound();
-  if (is_side_panel_open) {
+  if (is_side_panel_open &&
+      !results_side_panel_coordinator_->IsShowingProtectedErrorPage()) {
     results_side_panel_coordinator_->MaybeSetSidePanelShowErrorPage(
         is_error,
         is_error
@@ -2559,6 +2567,35 @@ void LensOverlayController::HandlePageContentUploadProgress(uint64_t position,
 
   results_side_panel_coordinator_->SetPageContentUploadProgress(
       total > 0 ? static_cast<float>(position) / total : 1.0f);
+}
+
+void LensOverlayController::HideOverlay() {
+  // Re-enable mouse and keyboard events to the tab contents web view, and take
+  // focus before the overlay view is hidden. If it is done after, focus will
+  // move from the overlay view to another Chrome UI element before the contents
+  // web view can take focus.
+  auto* contents_web_view = tab_->GetBrowserWindowInterface()->GetWebView();
+  CHECK(contents_web_view);
+  contents_web_view->SetEnabled(true);
+  contents_web_view->RequestFocus();
+
+  // Hide the overlay view, but keep the web view attached to the overlay view
+  // so that the overlay can be re-shown without creating a new web view.
+  preselection_widget_anchor_->SetVisible(false);
+  overlay_web_view_->SetVisible(false);
+  MaybeHideSharedOverlayView();
+
+  SetLiveBlur(false);
+  HidePreselectionBubble();
+}
+
+void LensOverlayController::HideOverlayAndMaybeSetLivePageState() {
+  HideOverlay();
+
+  // If the side panel is open, set the overlay state to kLivePageAndResults.
+  if (results_side_panel_coordinator_->IsSidePanelBound()) {
+    state_ = State::kLivePageAndResults;
+  }
 }
 
 void LensOverlayController::MaybeLaunchSurvey() {
@@ -2648,6 +2685,36 @@ void LensOverlayController::MaybeShowDelayedTutorialIPH(const GURL& url) {
 
 void LensOverlayController::UpdateNavigationMetrics() {
   GetLensSessionMetricsLogger()->OnPageNavigation();
+}
+
+void LensOverlayController::ClearAllSelections() {
+  if (state_ == State::kOff) {
+    return;
+  }
+
+  if (page_) {
+    page_->ClearAllSelections();
+  }
+  initialization_data_->selected_region_.reset();
+  initialization_data_->selected_region_bitmap_.reset();
+  initialization_data_->selected_text_.reset();
+  if (!IsContextualSearchbox()) {
+    lens_selection_type_ = lens::UNKNOWN_SELECTION_TYPE;
+  }
+}
+
+void LensOverlayController::HandleRegionBitmapCreated(
+    const SkBitmap& region_bitmap) {
+  // Do not update the selected region bitmap if the overlay is off or if the
+  // region bitmap is already set. This is only enabled when the back to page
+  // feature is enabled.
+  if (state_ == State::kOff ||
+      !initialization_data_->selected_region_bitmap_.drawsNothing() ||
+      !lens::features::IsLensOverlayBackToPageEnabled()) {
+    return;
+  }
+
+  initialization_data_->selected_region_bitmap_ = region_bitmap;
 }
 
 bool LensOverlayController::IsUrlEligibleForTutorialIPH(const GURL& url) {

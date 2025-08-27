@@ -32,7 +32,6 @@
 #include "components/viz/common/features.h"
 #include "components/viz/common/resources/peak_gpu_memory_tracker_util.h"
 #include "components/viz/service/gl/gpu_log_message_manager.h"
-#include "gpu/command_buffer/client/gpu_memory_buffer_manager.h"
 #include "gpu/command_buffer/service/dawn_caching_interface.h"
 #include "gpu/command_buffer/service/gpu_switches.h"
 #include "gpu/command_buffer/service/scheduler.h"
@@ -46,7 +45,6 @@
 #include "gpu/config/gpu_switches.h"
 #include "gpu/config/gpu_util.h"
 #include "gpu/ipc/common/gpu_client_ids.h"
-#include "gpu/ipc/common/gpu_memory_buffer_impl_shared_memory.h"
 #include "gpu/ipc/common/gpu_memory_buffer_support.h"
 #include "gpu/ipc/common/gpu_peak_memory.h"
 #include "gpu/ipc/common/memory_stats.h"
@@ -127,7 +125,7 @@
 #endif
 
 #if BUILDFLAG(SKIA_USE_METAL)
-#include "components/viz/common/gpu/metal_context_provider.h"
+#include "gpu/command_buffer/service/metal_context_provider.h"
 #endif
 
 #if BUILDFLAG(CLANG_PROFILING_INSIDE_SANDBOX)
@@ -311,10 +309,6 @@ GpuServiceImpl::~GpuServiceImpl() {
 
   bind_task_tracker_.TryCancelAll();
 
-  if (!in_host_process()) {
-    GpuLogMessageManager::GetInstance()->ShutdownLogging();
-  }
-
 #if BUILDFLAG(IS_WIN)
   gl::DirectCompositionOverlayCapsMonitor::GetInstance()->RemoveObserver(this);
 #endif
@@ -362,6 +356,9 @@ GpuServiceImpl::~GpuServiceImpl() {
       wait.Wait();
     }
   }
+
+  // WebNN must be destroyed before the scheduler is destroyed.
+  webnn_context_provider_.reset();
 
   // Scheduler must be destroyed before sync point manager is destroyed.
   owned_scheduler_.reset();
@@ -513,6 +510,8 @@ void GpuServiceImpl::InitializeWithHostInternal(
   scheduler_ = scheduler;
   shutdown_event_ = shutdown_event;
 
+  use_shader_cache_shm_count_ = std::move(use_shader_cache_shm_count);
+
   mojo::Remote<mojom::GpuHost> gpu_host(std::move(pending_gpu_host));
 
 #if BUILDFLAG(IS_LINUX)
@@ -523,14 +522,6 @@ void GpuServiceImpl::InitializeWithHostInternal(
                           gpu_info_for_hardware_gpu_,
                           gpu_feature_info_for_hardware_gpu_, gpu_extra_info_);
   gpu_host_ = mojo::SharedRemote<mojom::GpuHost>(gpu_host.Unbind(), io_runner_);
-  if (!in_host_process()) {
-    // The global callback is reset from the dtor. So Unretained() here is safe.
-    // Note that the callback can be called from any thread. Consequently, the
-    // callback cannot use a WeakPtr.
-    GpuLogMessageManager::GetInstance()->InstallPostInitializeLogHandler(
-        base::BindRepeating(&GpuServiceImpl::RecordLogMessage,
-                            base::Unretained(this)));
-  }
 
   // Defer creation of the render thread. This is to prevent it from handling
   // IPC messages before the sandbox has been enabled and all other necessary
@@ -539,8 +530,7 @@ void GpuServiceImpl::InitializeWithHostInternal(
       gpu_preferences_, this, watchdog_thread_.get(), main_runner_, io_runner_,
       scheduler_, sync_point_manager, shared_image_manager,
       gpu_memory_buffer_factory_.get(), gpu_feature_info_,
-      std::move(use_shader_cache_shm_count),
-      std::move(default_offscreen_surface),
+      &use_shader_cache_shm_count_, std::move(default_offscreen_surface),
       image_decode_accelerator_worker_.get(), vulkan_context_provider(),
       metal_context_provider(), dawn_context_provider(),
       dawn_caching_interface_factory(), gr_context_options_provider_);
@@ -565,6 +555,14 @@ void GpuServiceImpl::InitializeWithHostInternal(
                               : nullptr;
 #endif
 #if BUILDFLAG(SKIA_USE_DAWN)
+    // Initialize the thread-safe GraphiteSharedContext before starting the DrDC
+    // thread to prevent a race on accessing it via SharedContextState.
+    if (dawn_context_provider_ &&
+        dawn_context_provider_->use_thread_safe_shared_context()) {
+      dawn_context_provider_->InitializeThreadSafeGraphiteContext(
+          gpu::GetDefaultGraphiteContextOptions(gpu_driver_bug_workarounds_),
+          &use_shader_cache_shm_count_);
+    }
     params.dawn_context_provider = dawn_context_provider_.get();
 #endif
     compositor_gpu_thread_ = CompositorGpuThread::MaybeCreate(params);
@@ -606,13 +604,6 @@ void GpuServiceImpl::SetVisibilityChangedCallback(
     VisibilityChangedCallback callback) {
   DCHECK(main_runner_->BelongsToCurrentThread());
   visibility_changed_callback_ = std::move(callback);
-}
-
-void GpuServiceImpl::RecordLogMessage(int severity,
-                                      const std::string& header,
-                                      const std::string& message) {
-  // This can be run from any thread.
-  gpu_host_->RecordLogMessage(severity, std::move(header), std::move(message));
 }
 
 #if BUILDFLAG(IS_CHROMEOS)
@@ -807,9 +798,9 @@ void GpuServiceImpl::BindWebNNContextProvider(
   if (!webnn_context_provider_) {
     scoped_refptr<gpu::SharedContextState> shared_context_state =
         GetContextState();
-    if (!shared_context_state) {
-      return;
-    }
+    // `shared_context_state` may be nullptr if there is no GPU acceleration.
+    // For such case, WebNN CPU backend, e.g. TFLite XNNPACK, is still useful.
+
     // TODO(crbug.com/345352987): manage `WebNNContextProviderImpl` instance per
     // `client_id` in order to support memory metrics.
     webnn_context_provider_ = webnn::WebNNContextProviderImpl::Create(
@@ -833,6 +824,36 @@ void GpuServiceImpl::GetVideoMemoryUsageStats(
   }
   gpu::VideoMemoryUsageStats video_memory_usage_stats;
   gpu_channel_manager_->GetVideoMemoryUsageStats(&video_memory_usage_stats);
+
+  if (compositor_gpu_thread()) {
+    // when DrDC is enabled, add SKIA and SHARED_CONTEXT_STATE memory from
+    // CompositorGpuThread.
+    AddVideoMemoryUsageStatsOnCompositorGpu(std::move(callback),
+                                            video_memory_usage_stats);
+  } else {
+    std::move(callback).Run(video_memory_usage_stats);
+  }
+}
+
+void GpuServiceImpl::AddVideoMemoryUsageStatsOnCompositorGpu(
+    GetVideoMemoryUsageStatsCallback callback,
+    gpu::VideoMemoryUsageStats video_memory_usage_stats) {
+  // Called only when CompositorGpuThread exists.
+  CompositorGpuThread* thread = compositor_gpu_thread();
+  DCHECK(thread);
+  if (!thread->task_runner()->BelongsToCurrentThread()) {
+    thread->task_runner()->PostTask(
+        FROM_HERE,
+        base::BindOnce(&GpuServiceImpl::AddVideoMemoryUsageStatsOnCompositorGpu,
+                       weak_ptr_, std::move(callback),
+                       video_memory_usage_stats));
+    return;
+  }
+
+  uint64_t size = thread->GetSharedContextState()->GetMemoryUsage();
+  video_memory_usage_stats.process_map[base::GetCurrentProcId()].video_memory +=
+      size;
+  video_memory_usage_stats.bytes_allocated += size;
   std::move(callback).Run(video_memory_usage_stats);
 }
 

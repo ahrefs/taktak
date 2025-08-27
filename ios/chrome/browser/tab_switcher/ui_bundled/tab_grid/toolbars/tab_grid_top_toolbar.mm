@@ -43,7 +43,7 @@ const CGFloat kSymbolSearchImagePointSize = 22;
 
 }  // namespace
 
-@interface TabGridTopToolbar () <UIToolbarDelegate>
+@interface TabGridTopToolbar ()
 @end
 
 @implementation TabGridTopToolbar {
@@ -222,12 +222,26 @@ const CGFloat kSymbolSearchImagePointSize = 22;
 }
 
 - (void)hide {
-  self.backgroundColor = UIColor.blackColor;
+#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
+  if (@available(iOS 26, *)) {
+  } else {
+#endif
+    self.backgroundColor = UIColor.blackColor;
+#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
+  }
+#endif
   self.pageControl.alpha = 0.0;
 }
 
 - (void)show {
-  self.backgroundColor = UIColor.clearColor;
+#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
+  if (@available(iOS 26, *)) {
+  } else {
+#endif
+    self.backgroundColor = UIColor.clearColor;
+#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
+  }
+#endif
   self.pageControl.alpha = 1.0;
 }
 
@@ -307,14 +321,6 @@ const CGFloat kSymbolSearchImagePointSize = 22;
   [self setItemsForTraitCollection:self.traitCollection];
 }
 #endif
-
-#pragma mark - UIBarPositioningDelegate
-
-// Returns UIBarPositionTopAttached, otherwise the toolbar's translucent
-// background won't extend below the status bar.
-- (UIBarPosition)positionForBar:(id<UIBarPositioning>)bar {
-  return UIBarPositionTopAttached;
-}
 
 #pragma mark - Private
 
@@ -435,10 +441,13 @@ const CGFloat kSymbolSearchImagePointSize = 22;
 }
 
 - (void)setupViews {
+  UIToolbarAppearance* appearance = [[UIToolbarAppearance alloc] init];
+  [appearance configureWithTransparentBackground];
+  [self setStandardAppearance:appearance];
+
   self.translatesAutoresizingMaskIntoConstraints = NO;
   self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
   [self createScrolledBackgrounds];
-  self.delegate = self;
   [self setShadowImage:[[UIImage alloc] init]
       forToolbarPosition:UIBarPositionAny];
 
@@ -553,28 +562,35 @@ const CGFloat kSymbolSearchImagePointSize = 22;
 - (void)createScrolledBackgrounds {
   _scrolledToEdge = YES;
 
-  if (IsIOSSoftLockEnabled()) {
-    _scrollBackgroundView = [[TabGridToolbarScrollingBackground alloc] init];
-    _scrollBackgroundView.translatesAutoresizingMaskIntoConstraints = NO;
-    [self addSubview:_scrollBackgroundView];
-    AddSameConstraintsToSides(
-        self, _scrollBackgroundView,
-        LayoutSides::kLeading | LayoutSides::kBottom | LayoutSides::kTrailing);
+#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
+  if (@available(iOS 26, *)) {
   } else {
-    _backgroundView =
-        [[TabGridToolbarBackground alloc] initWithFrame:self.frame];
-    _backgroundView.translatesAutoresizingMaskIntoConstraints = NO;
-    [self addSubview:_backgroundView];
-    AddSameConstraintsToSides(
-        self, _backgroundView,
-        LayoutSides::kLeading | LayoutSides::kBottom | LayoutSides::kTrailing);
-  }
+#endif
+    if (IsIOSSoftLockEnabled()) {
+      _scrollBackgroundView = [[TabGridToolbarScrollingBackground alloc] init];
+      _scrollBackgroundView.translatesAutoresizingMaskIntoConstraints = NO;
+      [self insertSubview:_scrollBackgroundView atIndex:0];
+      AddSameConstraintsToSides(self, _scrollBackgroundView,
+                                LayoutSides::kLeading | LayoutSides::kBottom |
+                                    LayoutSides::kTrailing);
+    } else {
+      _backgroundView =
+          [[TabGridToolbarBackground alloc] initWithFrame:self.frame];
+      _backgroundView.translatesAutoresizingMaskIntoConstraints = NO;
+      [self addSubview:_backgroundView];
+      AddSameConstraintsToSides(self, _backgroundView,
+                                LayoutSides::kLeading | LayoutSides::kBottom |
+                                    LayoutSides::kTrailing);
+    }
 
-  // A non-nil UIImage has to be added in the background of the toolbar to
-  // avoid having an additional blur effect.
-  [self setBackgroundImage:[[UIImage alloc] init]
-        forToolbarPosition:UIBarPositionAny
-                barMetrics:UIBarMetricsDefault];
+    // A non-nil UIImage has to be added in the background of the toolbar to
+    // avoid having an additional blur effect.
+    [self setBackgroundImage:[[UIImage alloc] init]
+          forToolbarPosition:UIBarPositionAny
+                  barMetrics:UIBarMetricsDefault];
+#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
+  }
+#endif
 }
 
 // Returns YES if should use compact bottom toolbar layout.
@@ -638,7 +654,7 @@ const CGFloat kSymbolSearchImagePointSize = 22;
 }
 
 - (void)keyCommand_close {
-  base::RecordAction(base::UserMetricsAction("MobileKeyCommandClose"));
+  base::RecordAction(base::UserMetricsAction(kMobileKeyCommandClose));
   if (_mode == TabGridMode::kSearch) {
     [self cancelSearchButtonTapped:nil];
   } else {

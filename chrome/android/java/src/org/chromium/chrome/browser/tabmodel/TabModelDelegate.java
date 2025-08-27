@@ -5,6 +5,7 @@
 package org.chromium.chrome.browser.tabmodel;
 
 import org.chromium.build.annotations.NullMarked;
+import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab.TabSelectionType;
 
@@ -20,7 +21,7 @@ public interface TabModelDelegate {
      * @param tab The tab that is requested to be shown.
      * @param type The reason why this tab was requested to be shown.
      */
-    void requestToShowTab(Tab tab, @TabSelectionType int type);
+    void requestToShowTab(@Nullable Tab tab, @TabSelectionType int type);
 
     /**
      * @return Whether reparenting is currently in progress for this TabModel.
@@ -43,7 +44,11 @@ public interface TabModelDelegate {
     /** Provides the top level tab group manager object for the current scope. */
     TabGroupModelFilter getFilter(boolean incognito);
 
-    boolean isSessionRestoreInProgress();
+    /**
+     * Whether all the tabs in the tab model have been restored from disk. If this is false session
+     * restore is still ongoing.
+     */
+    boolean isTabModelRestored();
 
     void selectModel(boolean incognito);
 }

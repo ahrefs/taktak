@@ -38,6 +38,13 @@ chromium-metrics-reviews@google.com.
   <int value="2" label="Discover Feed Bottom Sheet"/>
 </enum>
 
+<enum name="ComposeboxFileValidationError">
+  <int value="0" label="No error"/>
+  <int value="1" label="Too many files uploaded"/>
+  <int value="2" label="File is empty"/>
+  <int value="3" label="File size is too large"/>
+</enum>
+
 <enum name="Entry">
   <summary/>
   <int value="0" label="App Menu"/>
@@ -52,6 +59,11 @@ chromium-metrics-reviews@google.com.
   <int value="4" label="The native page is frozen"/>
 </enum>
 
+<enum name="FooterContextMenuItem">
+  <int value="0" label="Hide footer clicked."/>
+  <int value="1" label="Customize chrome clicked."/>
+</enum>
+
 <enum name="FooterCustomizeChromeEntryPoint">
   <int value="0" label="Customize Chrome button clicked."/>
   <int value="1" label="NTP URL has customize chrome parameters."/>
@@ -62,6 +74,14 @@ chromium-metrics-reviews@google.com.
   <int value="0" label="Other Element"/>
   <int value="1" label="Customize Chrome Button"/>
   <int value="2" label="Extension name"/>
+  <int value="3" label="Management notice"/>
+  <int value="4" label="Background name"/>
+  <int value="5" label="Context menu opened"/>
+</enum>
+
+<enum name="FooterNoticeItem">
+  <int value="0" label="Extension name"/>
+  <int value="1" label="Management notice"/>
 </enum>
 
 <enum name="ItemSuggestRequestResult">
@@ -308,6 +328,12 @@ chromium-metrics-reviews@google.com.
     Rising Artists Collection
   </int>
   <int value="1967788069" label="solidcolors_for_NTP">Colors for NTP</int>
+</enum>
+
+<enum name="NtpComposeboxMultimodalState">
+  <int value="1" label="Text Only"/>
+  <int value="2" label="File Only"/>
+  <int value="3" label="Text and File"/>
 </enum>
 
 <enum name="NTPCustomizeChromeBackgroundAction">
@@ -609,7 +635,8 @@ chromium-metrics-reviews@google.com.
   <int value="28" label="From History Navigation Background"/>
   <int value="29" label="From History Navigation Foreground"/>
   <int value="30" label="From Longpress Foreground In Group"/>
-  <int value="31" label="Size"/>
+  <int value="31" label="From Tab List Interface"/>
+  <int value="32" label="Size"/>
 </enum>
 
 <!-- LINT.ThenChange(//chrome/browser/ui/android/tab_model/tab_model.h:TabLaunchType) -->

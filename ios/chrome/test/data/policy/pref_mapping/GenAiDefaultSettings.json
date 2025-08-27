@@ -9,7 +9,7 @@
           "GenAiDefaultSettings": 0
         },
         "prefs": {
-          "omnibox.ai_mode_search_suggest_settings": {
+          "omnibox.ai_mode_settings": {
             "value": 0
           },
           "omnibox.ai_mode_settings": {
@@ -22,7 +22,7 @@
           "GenAiDefaultSettings": 1
         },
         "prefs": {
-          "omnibox.ai_mode_search_suggest_settings": {
+          "omnibox.ai_mode_settings": {
             "value": 0
           },
           "omnibox.ai_mode_settings": {
@@ -35,7 +35,7 @@
           "GenAiDefaultSettings": 2
         },
         "prefs": {
-          "omnibox.ai_mode_search_suggest_settings": {
+          "omnibox.ai_mode_settings": {
             "value": 1
           },
           "omnibox.ai_mode_settings": {
@@ -46,11 +46,33 @@
       {
         "policies": {},
         "prefs": {
-          "omnibox.ai_mode_search_suggest_settings": {
+          "omnibox.ai_mode_settings": {
             "default_value": 0
           },
           "omnibox.ai_mode_settings": {
             "default_value": 0
+          }
+        }
+      },
+      {
+        "policies": {
+          "GenAiDefaultSettings": 1,
+          "AIModeSettings": 1
+        },
+        "prefs": {
+          "omnibox.ai_mode_settings": {
+            "value": 1
+          }
+        }
+      },
+      {
+        "policies": {
+          "GenAiDefaultSettings": 2,
+          "AIModeSettings": 1
+        },
+        "prefs": {
+          "omnibox.ai_mode_settings": {
+            "value": 1
           }
         }
       },

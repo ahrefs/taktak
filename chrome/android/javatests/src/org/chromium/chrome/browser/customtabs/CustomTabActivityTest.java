@@ -510,6 +510,31 @@ public class CustomTabActivityTest {
                 menuButtonView.getBrandedColorSchemeForTesting());
     }
 
+    @Test
+    @SmallTest
+    @EnableFeatures(ChromeFeatureList.CCT_ADAPTIVE_BUTTON)
+    public void testOptionalButton_supportedOnDefaultType() {
+        Intent intent = createMinimalCustomTabIntent();
+        mCustomTabActivityTestRule.startCustomTabActivityWithIntent(intent);
+        var dataProvider = mCustomTabActivityTestRule.getActivity().getIntentDataProvider();
+        assertTrue(
+                "Normal CCT should support optional button",
+                dataProvider.isOptionalButtonSupported());
+    }
+
+    @Test
+    @SmallTest
+    @EnableFeatures(ChromeFeatureList.CCT_ADAPTIVE_BUTTON)
+    public void testOptionalButton_notSupportedOnNonDefaultType() {
+        Intent intent = createMinimalCustomTabIntent();
+        CustomTabIntentDataProvider.addReaderModeUiExtras(intent);
+        mCustomTabActivityTestRule.startCustomTabActivityWithIntent(intent);
+        var dataProvider = mCustomTabActivityTestRule.getActivity().getIntentDataProvider();
+        assertFalse(
+                "Reader mode CCT should not support optional button",
+                dataProvider.isOptionalButtonSupported());
+    }
+
     /**
      * Test if an action button is shown with correct image and size, and clicking it sends the
      * correct {@link PendingIntent}.
@@ -1649,7 +1674,7 @@ public class CustomTabActivityTest {
         var sessionHolder = new SessionHolder<>(token);
         connection.newSession(token);
         setCanUseHiddenTabForSession(sessionHolder, true);
-        connection.warmup(0);
+        connection.warmup();
 
         // Needs the browser process to be initialized.
         ThreadUtils.runOnUiThreadBlocking(
@@ -2224,9 +2249,8 @@ public class CustomTabActivityTest {
     @SmallTest
     @Restriction(DeviceRestriction.RESTRICTION_TYPE_NON_AUTO)
     @EnableFeatures({ChromeFeatureList.CCT_RESIZABLE_FOR_THIRD_PARTIES})
-    @MinAndroidSdkLevel(Build.VERSION_CODES.O_MR1)
     // crbug.com/350394860
-    @DisableIf.Device(DeviceFormFactor.TABLET)
+    @DisableIf.Device(DeviceFormFactor.ONLY_TABLET)
     public void testLaunchPartialCustomTabActivity_SideSheet() throws Exception {
         Intent intent = createMinimalCustomTabIntent();
         var token = SessionHolder.getSessionHolderFromIntent(intent);
@@ -2281,7 +2305,6 @@ public class CustomTabActivityTest {
     @EnableFeatures({ChromeFeatureList.CCT_RESIZABLE_FOR_THIRD_PARTIES})
     // Screen rotation is not relevant on automotive.
     @Restriction(DeviceRestriction.RESTRICTION_TYPE_NON_AUTO)
-    @MinAndroidSdkLevel(Build.VERSION_CODES.O_MR1)
     // Bug in O that's been fixed in 8.1
     // https://issuetracker.google.com/issues/68427483
     public void testLaunchPartialCustomTabActivity_Transition() throws Exception {

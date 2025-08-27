@@ -97,16 +97,19 @@ public class NewTabAnimationLayout extends Layout {
     private final BrowserStateBrowserControlsVisibilityDelegate mBrowserVisibilityDelegate;
 
     private @Nullable StaticTabSceneLayer mSceneLayer;
-    private AnimatorSet mTabCreatedForegroundAnimation;
-    private AnimatorSet mTabCreatedBackgroundAnimation;
-    private ObjectAnimator mFadeAnimator;
+    private @Nullable AnimatorSet mTabCreatedForegroundAnimation;
+    private @Nullable AnimatorSet mTabCreatedBackgroundAnimation;
+    private @Nullable ObjectAnimator mFadeAnimator;
     // Retains a strong reference to the {@link ShrinkExpandAnimator} on the class to prevent it
     // from being prematurely GC'd when using {@link ObjectAnimator}.
-    private ShrinkExpandAnimator mExpandAnimator;
-    private ShrinkExpandImageView mRectView;
-    private NewBackgroundTabAnimationHostView mBackgroundHostView;
-    private Runnable mAnimationRunnable;
-    private Runnable mTimeoutRunnable;
+    private @Nullable ShrinkExpandAnimator mExpandAnimator;
+    private @Nullable ObjectAnimator mRectAnimator;
+    private @Nullable ValueAnimator mCornerAnimator;
+    private @Nullable ShrinkExpandImageView mRectView;
+    private @Nullable NewBackgroundTabAnimationHostView mBackgroundHostView;
+    private @Nullable NewForegroundTabAnimationHostView mForegroundHostView;
+    private @Nullable Runnable mAnimationRunnable;
+    private @Nullable Runnable mTimeoutRunnable;
     private Callback<Boolean> mVisibilityObserver;
     private @TabId int mNextTabId = Tab.INVALID_TAB_ID;
     private int mToken = TokenHolder.INVALID_TOKEN;
@@ -453,7 +456,7 @@ public class NewTabAnimationLayout extends Layout {
             mHandler.removeCallbacks(mTimeoutRunnable);
             mTimeoutRunnable.run();
         } else if (mAnimationRunnable != null) {
-            if (mRectView != null) mRectView.runOnNextLayoutRunnables();
+            if (mForegroundHostView != null) mForegroundHostView.runOnNextLayoutRunnables();
             if (mBackgroundHostView != null) mBackgroundHostView.runOnNextLayoutRunnables();
         }
         assert mTimeoutRunnable == null : "Timeout runnable exists";
@@ -475,11 +478,10 @@ public class NewTabAnimationLayout extends Layout {
      */
     @VisibleForTesting
     void forceNewTabAnimationToFinish() {
-        // TODO(crbug.com/40933120): Make sure the right mode is selected after forcing the
-        // animation to finish.
         runQueuedRunnableIfExists();
         if (mTabCreatedForegroundAnimation != null) {
-            mAnimationHostView.removeView(mRectView);
+            mAnimationHostView.removeView(mForegroundHostView);
+            mForegroundHostView = null;
             mRectView = null;
             mFadeAnimator = null;
             mTabCreatedForegroundAnimation.end();
@@ -520,9 +522,6 @@ public class NewTabAnimationLayout extends Layout {
         int backgroundColor = NewTabAnimationUtils.getBackgroundColor(context, newIsIncognito);
         mRectView.setRoundedFillColor(backgroundColor);
 
-        // TODO(crbug.com/40933120): Investigate why {@link
-        // RoundedCornerImageView#setRoundedCorners} sometimes incorrectly detects the view as LTR
-        // during the animation.
         boolean isRtl = LocalizationUtils.isLayoutRtl();
         mRectView.setLayoutDirection(isRtl ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
 
@@ -549,15 +548,16 @@ public class NewTabAnimationLayout extends Layout {
                 startRadii[0] = 0;
                 mCompositorViewHolder.getWindowViewport(compositorViewportRectf);
                 finalRect.bottom = Math.round(compositorViewportRectf.bottom);
-                finalRect.top =
-                        rectStart == RectStart.TOP ? hostViewRect.top - 1 : finalRect.top - 1;
+                finalRect.top = rectStart == RectStart.TOP ? -1 : finalRect.top - 1;
             } else {
                 startRadii[2] = 0;
-                finalRect.top = hostViewRect.top;
                 finalRect.bottom =
                         rectStart == RectStart.BOTTOM
                                 ? hostViewRect.bottom + 1
                                 : finalRect.bottom + 1;
+
+                // 0 instead of -1 since the rect is not expanding from this corner.
+                finalRect.top = 0;
             }
             if (isRtl) {
                 finalRect.right += 1;
@@ -569,6 +569,9 @@ public class NewTabAnimationLayout extends Layout {
             Rect compositorViewRect = new Rect();
             mCompositorViewHolder.getGlobalVisibleRect(compositorViewRect);
             finalRect.bottom -= compositorViewRect.top;
+
+            // 0 instead of -1 since the rect is not expanding from this corner.
+            finalRect.top = 0;
         }
 
         NewTabAnimationUtils.updateRects(rectStart, isRtl, initialRect, finalRect);
@@ -576,7 +579,7 @@ public class NewTabAnimationLayout extends Layout {
         mExpandAnimator =
                 new ShrinkExpandAnimator(
                         mRectView, initialRect, finalRect, /* searchBoxHeight= */ 0);
-        ObjectAnimator rectAnimator =
+        mRectAnimator =
                 ObjectAnimator.ofObject(
                         mExpandAnimator,
                         ShrinkExpandAnimator.RECT,
@@ -590,7 +593,7 @@ public class NewTabAnimationLayout extends Layout {
             endRadii[i] = Math.round(startRadii[i] * scaleFactor);
         }
         mRectView.setRoundedCorners(startRadii[0], startRadii[1], startRadii[2], startRadii[3]);
-        ValueAnimator cornerAnimator =
+        mCornerAnimator =
                 RoundedCornerAnimatorUtil.createRoundedCornerAnimator(
                         mRectView, startRadii, endRadii);
 
@@ -602,25 +605,33 @@ public class NewTabAnimationLayout extends Layout {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mFadeAnimator = null;
-                        mAnimationHostView.removeView(mRectView);
+                        mAnimationHostView.removeView(mForegroundHostView);
                         mRectView = null;
+                        mForegroundHostView = null;
                     }
                 });
 
         mTabCreatedForegroundAnimation = new AnimatorSet();
         mTabCreatedForegroundAnimation.setInterpolator(Interpolators.STANDARD_INTERPOLATOR);
         mTabCreatedForegroundAnimation.setDuration(FOREGROUND_ANIMATION_DURATION_MS);
-        mTabCreatedForegroundAnimation.playTogether(rectAnimator, cornerAnimator);
+        mTabCreatedForegroundAnimation.playTogether(mRectAnimator, mCornerAnimator);
         mTabCreatedForegroundAnimation.addListener(
                 new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mTabCreatedForegroundAnimation = null;
                         mExpandAnimator = null;
+                        mRectAnimator = null;
+                        mCornerAnimator = null;
                         if (mFadeAnimator != null) mFadeAnimator.start();
                         startHiding();
                         mTabModelSelector.selectModel(newIsIncognito);
                         mNextTabId = id;
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        mTabCreatedForegroundAnimation.end();
                     }
                 });
         mAnimationRunnable =
@@ -633,9 +644,11 @@ public class NewTabAnimationLayout extends Layout {
 
         // {@link View#INVISIBLE} is needed to generate the geometry information.
         mRectView.setVisibility(View.INVISIBLE);
-        mAnimationHostView.addView(mRectView);
+        mForegroundHostView = new NewForegroundTabAnimationHostView(context);
+        mForegroundHostView.addView(mRectView);
+        mAnimationHostView.addView(mForegroundHostView);
         mRectView.reset(initialRect);
-        setRunOnNextLayout(mRectView, mAnimationRunnable);
+        setRunOnNextLayout(mForegroundHostView, mAnimationRunnable);
     }
 
     /**
@@ -705,8 +718,17 @@ public class NewTabAnimationLayout extends Layout {
 
         // {@link View#INVISIBLE} is needed to generate the geometry information.
         mBackgroundHostView.setVisibility(View.INVISIBLE);
-        mAnimationHostView.addView(mBackgroundHostView);
 
+        // It makes sure to add the view under the message container so the inner container in
+        // NewBackgroundTabFakeTabSwitcherButton does not clash with the message view (Ex:
+        // Translate).
+        ViewGroup messageContainer = mAnimationHostView.findViewById(R.id.message_container);
+        if (messageContainer != null) {
+            int index = mAnimationHostView.indexOfChild(messageContainer);
+            mAnimationHostView.addView(mBackgroundHostView, index);
+        } else {
+            mAnimationHostView.addView(mBackgroundHostView);
+        }
         // This ensures the view to be properly laid out in order to do calculations within the
         // background animation host view. The main reason we need this is to get values from
         // {@link NewBackgroundTabSwitcherButton#getButtonLocation}.
@@ -737,6 +759,11 @@ public class NewTabAnimationLayout extends Layout {
                                 public void onAnimationEnd(Animator animation) {
                                     interruptor.destroy();
                                     cleanUpAnimation();
+                                }
+
+                                @Override
+                                public void onAnimationCancel(Animator animation) {
+                                    mTabCreatedBackgroundAnimation.end();
                                 }
                             });
                     mBackgroundHostView.setVisibility(View.VISIBLE);

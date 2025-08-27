@@ -422,7 +422,8 @@ class KeepAliveURLLoaderServiceTestBase : public RenderViewHostTestHarness {
   KeepAliveURLLoaderService& loader_service() {
     if (!loader_service_) {
       loader_service_ = std::make_unique<KeepAliveURLLoaderService>(
-          main_rfh()->GetBrowserContext());
+          static_cast<StoragePartitionImpl*>(
+              main_rfh()->GetStoragePartition()));
     }
     return *loader_service_;
   }
@@ -1757,7 +1758,7 @@ TEST_F(KeepAliveURLLoaderServiceRetryTest, OnCompleteWillBeRetried) {
           FakeRemoteURLLoaderFactory::kRequestId);
   loader->OnComplete(
       network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED));
-  EXPECT_TRUE(loader->IsAttemptingRetry());
+  EXPECT_TRUE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
 }
 // Test which errors are eligible for retry when opting in to retry only if the
 // server is not reached yet.
@@ -1840,7 +1841,7 @@ TEST_F(KeepAliveURLLoaderServiceRetryTest, CancelWithStatusWillBeRetried) {
           FakeRemoteURLLoaderFactory::kRequestId);
   loader->CancelWithStatus(
       network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED));
-  EXPECT_TRUE(loader->IsAttemptingRetry());
+  EXPECT_TRUE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
 }
 
 // Test that failing a request with no retry options won't be retried.
@@ -1887,7 +1888,15 @@ TEST_F(KeepAliveURLLoaderServiceRetryTest, NonHTTPSWillNotBeRetried) {
           FakeRemoteURLLoaderFactory::kRequestId);
   loader->OnComplete(
       network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED));
-  // The loader is deleted as it can't be retried.
+
+  // The loader is deleted after max age, as it can't be retried, and the error
+  // gets forwarded at that time.
+  EXPECT_FALSE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
+  EXPECT_CALL(
+      renderer_loader_client,
+      OnComplete(network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED)))
+      .Times(1);
+  task_environment()->FastForwardBy(loader->GetMaxAgeForRetry());
   EXPECT_FALSE(loader.get());
 }
 
@@ -1916,7 +1925,58 @@ TEST_F(KeepAliveURLLoaderServiceRetryTest,
           FakeRemoteURLLoaderFactory::kRequestId);
   loader->OnComplete(
       network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED));
-  // The loader is deleted as it can't be retried.
+
+  // The loader is deleted after max age, as it can't be retried, and the error
+  // gets forwarded at that time.
+  EXPECT_FALSE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
+  EXPECT_CALL(
+      renderer_loader_client,
+      OnComplete(network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED)))
+      .Times(1);
+  task_environment()->FastForwardBy(loader->GetMaxAgeForRetry());
+  EXPECT_FALSE(loader.get());
+}
+
+// Test that failing all the attmpte
+TEST_F(KeepAliveURLLoaderServiceRetryTest,
+       FailedMaxAttemptWillForwardLastError) {
+  FakeRemoteURLLoaderFactory renderer_loader_factory;
+  MockReceiverURLLoaderClient renderer_loader_client;
+  BindKeepAliveURLLoaderFactory(renderer_loader_factory);
+
+  auto resource_request = CreateResourceRequest(GURL(kTestRequestUrl));
+  network::FetchRetryOptions options;
+  options.max_attempts = 1;
+  resource_request.fetch_retry_options = options;
+
+  // Loads keepalive request:
+  renderer_loader_factory.CreateLoaderAndStart(
+      resource_request, renderer_loader_client.BindNewPipeAndPassRemote());
+  ASSERT_EQ(network_url_loader_factory().NumPending(), 1);
+  ASSERT_EQ(loader_service().NumLoadersForTesting(), 1u);
+
+  base::WeakPtr<KeepAliveURLLoader> loader =
+      loader_service().GetLoaderWithRequestIdForTesting(
+          FakeRemoteURLLoaderFactory::kRequestId);
+  // First failure.
+  loader->OnComplete(
+      network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED));
+  EXPECT_TRUE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
+
+  // Second failure.
+  loader->OnComplete(network::URLLoaderCompletionStatus(net::ERR_TIMED_OUT));
+  // We can only retry once, since that's the max attempt set.
+  EXPECT_FALSE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
+  EXPECT_FALSE(loader->IsForwardURLLoadStarted());
+
+  // The renderer should get the latest OnComplete call when we hit the max age.
+  EXPECT_CALL(
+      renderer_loader_client,
+      OnComplete(network::URLLoaderCompletionStatus(net::ERR_TIMED_OUT)))
+      .Times(1);
+  task_environment()->FastForwardBy(loader->GetMaxAgeForRetry());
+  // Note that we can't check IsForwardURLLoadStarted() here as we delete the
+  // loader after the OnComplete is forwarded.
   EXPECT_FALSE(loader.get());
 }
 
@@ -1984,7 +2044,7 @@ TEST_F(KeepAliveURLLoaderServiceRetryTest,
   loader->OnComplete(
       network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED));
   // The load should be eligible for retry still.
-  EXPECT_TRUE(loader->IsAttemptingRetry());
+  EXPECT_TRUE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
   EXPECT_FALSE(loader->IsForwardURLLoadStarted());
 
   // But if we hit another redirect, the loader will fail with
@@ -1994,7 +2054,14 @@ TEST_F(KeepAliveURLLoaderServiceRetryTest,
                                                   kTestResponseHeaderValue}}));
 
   // The loader can't be retried. Note that it won't be immediately deleted like
-  // in other cases, because it will forward the redirects to the renderer.
+  // in other cases, because it will forward the redirects to the renderer, but
+  // only after it reached the max age.
+  EXPECT_FALSE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
+  EXPECT_FALSE(loader->IsForwardURLLoadStarted());
+
+  // After hitting max age, the redirects will be forwarded.
+  EXPECT_CALL(renderer_loader_client, OnReceiveRedirect(_, _)).Times(1);
+  task_environment()->FastForwardBy(loader->GetMaxAgeForRetry());
   EXPECT_TRUE(loader->IsForwardURLLoadStarted());
 }
 
@@ -2022,16 +2089,15 @@ TEST_F(KeepAliveURLLoaderServiceRetryTest, SelfDeletionOnMaxAge) {
           FakeRemoteURLLoaderFactory::kRequestId);
   loader->OnComplete(
       network::URLLoaderCompletionStatus(net::ERR_NETWORK_CHANGED));
-  EXPECT_TRUE(loader->IsAttemptingRetry());
+  EXPECT_TRUE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
 
   // Fast forwards to just before the max age timeout fires.
   task_environment()->FastForwardBy(options.max_age.value() - base::Seconds(5));
   EXPECT_EQ(loader_service().NumLoadersForTesting(), 1u);
-  EXPECT_TRUE(loader->IsAttemptingRetry());
+  EXPECT_TRUE(loader->IsAttemptingRetry(/*include_failed_retry=*/false));
 
   // Fast forward to after the max age timeout fires.
   task_environment()->FastForwardBy(base::Seconds(10));
-  base::RunLoop().RunUntilIdle();
 
   // The loader should be deleted after hitting max age.
   EXPECT_EQ(loader_service().NumLoadersForTesting(), 0u);

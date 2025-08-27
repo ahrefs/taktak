@@ -40,6 +40,7 @@
 
 #include "base/containers/flat_map.h"
 #include "base/feature_list.h"
+#include "base/strings/string_view_util.h"
 #include "base/time/time.h"
 #include "net/http/http_content_disposition.h"
 #include "net/http/http_response_headers.h"
@@ -200,8 +201,9 @@ blink::CSPSourceListPtr ConvertToBlink(const CSPSourceListPtr& source_list) {
       source_list->allow_star, source_list->allow_inline,
       source_list->allow_inline_speculation_rules, source_list->allow_eval,
       source_list->allow_wasm_eval, source_list->allow_wasm_unsafe_eval,
-      source_list->allow_dynamic, source_list->allow_unsafe_hashes,
-      source_list->report_sample, source_list->report_hash_algorithm);
+      source_list->allow_dynamic, source_list->allow_dynamic_url,
+      source_list->allow_unsafe_hashes, source_list->report_sample,
+      source_list->report_hash_algorithm);
 }
 
 blink::ContentSecurityPolicyHeaderPtr ConvertToBlink(
@@ -454,7 +456,7 @@ bool ParseRefreshTime(const String& source, base::TimeDelta& delay) {
   unsigned number_end = source.length();
   for (unsigned i = 0; i < source.length(); ++i) {
     UChar ch = source[i];
-    if (ch == kFullstopCharacter) {
+    if (ch == uchar::kFullStop) {
       if (++full_stop_count == 2)
         number_end = i;
     } else if (!IsASCIIDigit(ch)) {
@@ -567,6 +569,13 @@ bool ParseHTTPRefresh(const String& refresh,
 std::optional<base::Time> ParseDate(const String& value,
                                     UseCounter& use_counter) {
   const std::string utf8_value = value.Utf8();
+  if (RuntimeEnabledFeatures::ParseDateUsesBaseTimeFromUtcStringEnabled()) {
+    base::Time parsed_time;
+    if (!base::Time::FromUTCString(utf8_value.c_str(), &parsed_time)) {
+      return std::nullopt;
+    }
+    return parsed_time;
+  }
   std::optional<base::Time> maybe_parsed_time =
       ParseDateFromNullTerminatedCharacters(utf8_value.c_str());
   {
@@ -642,7 +651,7 @@ AtomicString ExtractMIMETypeFromMediaType(const AtomicString& media_type) {
 
 bool IsHTTPTabOrSpace(UChar c) {
   // https://fetch.spec.whatwg.org/#http-tab-or-space
-  return c == kSpaceCharacter || c == kTabulationCharacter;
+  return c == uchar::kSpace || c == uchar::kTab;
 }
 
 // https://mimesniff.spec.whatwg.org/#minimize-a-supported-mime-type

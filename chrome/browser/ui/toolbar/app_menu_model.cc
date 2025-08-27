@@ -47,7 +47,6 @@
 #include "chrome/browser/ui/bookmarks/bookmark_utils.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_commands.h"
-#include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_list.h"
 #include "chrome/browser/ui/browser_window.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
@@ -788,6 +787,11 @@ SaveAndShareSubMenuModel::SaveAndShareSubMenuModel(
                                      IDS_SHARING_HUB_SCREENSHOT_LABEL,
                                      kSharingHubScreenshotIcon);
   }
+}
+
+bool ArePromotionsEnabled() {
+  PrefService* local_state = g_browser_process->local_state();
+  return local_state && local_state->GetBoolean(prefs::kPromotionsEnabled);
 }
 
 }  // namespace
@@ -1895,7 +1899,8 @@ void AppMenuModel::Build() {
   }
 
   // Extensions sub menu.
-  if (base::FeatureList::IsEnabled(features::kExtensionsCollapseMainMenu) &&
+  if (ArePromotionsEnabled() &&
+      base::FeatureList::IsEnabled(features::kExtensionsCollapseMainMenu) &&
       !extensions::ui_util::HasManageableExtensions(browser_->profile())) {
     AddItemWithStringIdAndVectorIcon(this, IDC_FIND_EXTENSIONS,
                                      IDS_FIND_EXTENSIONS,

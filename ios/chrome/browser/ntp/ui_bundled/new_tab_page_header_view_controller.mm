@@ -20,7 +20,6 @@
 #import "ios/chrome/browser/content_suggestions/ui_bundled/content_suggestions_collection_utils.h"
 #import "ios/chrome/browser/content_suggestions/ui_bundled/ntp_home_constant.h"
 #import "ios/chrome/browser/home_customization/coordinator/home_customization_delegate.h"
-#import "ios/chrome/browser/lens/ui_bundled/lens_entrypoint.h"
 #import "ios/chrome/browser/ntp/model/new_tab_page_tab_helper.h"
 #import "ios/chrome/browser/ntp/shared/metrics/new_tab_page_metrics_recorder.h"
 #import "ios/chrome/browser/ntp/ui_bundled/logo_vendor.h"
@@ -31,13 +30,11 @@
 #import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_header_constants.h"
 #import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_header_view.h"
 #import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_header_view_controller_delegate.h"
+#import "ios/chrome/browser/ntp/ui_bundled/new_tab_page_shortcuts_handler.h"
 #import "ios/chrome/browser/omnibox/ui/omnibox_container_view.h"
 #import "ios/chrome/browser/shared/model/profile/features.h"
-#import "ios/chrome/browser/shared/public/commands/application_commands.h"
-#import "ios/chrome/browser/shared/public/commands/browser_coordinator_commands.h"
 #import "ios/chrome/browser/shared/public/commands/help_commands.h"
-#import "ios/chrome/browser/shared/public/commands/lens_commands.h"
-#import "ios/chrome/browser/shared/public/commands/open_lens_input_selection_command.h"
+#import "ios/chrome/browser/shared/public/commands/open_new_tab_command.h"
 #import "ios/chrome/browser/shared/public/features/features.h"
 #import "ios/chrome/browser/shared/ui/elements/extended_touch_target_button.h"
 #import "ios/chrome/browser/shared/ui/elements/new_feature_badge_view.h"
@@ -129,6 +126,11 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
   NSLayoutConstraint* _identityDiscTrailingConstraint;
   // Constraint for the identity disc button's capsule-style width.
   NSLayoutConstraint* _identityDiscCapsuleWidthConstraint;
+  // Whether MIA is allowed by policy.
+  BOOL _MIAAllowedByPolicy;
+  // The logo for the default search engine. This is owned by the caching system
+  // backing this logo.
+  __weak UIImage* _dseLogo;
 }
 
 - (instancetype)initWithUseNewBadgeForLensButton:(BOOL)useNewBadgeForLensButton
@@ -160,6 +162,10 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
 
 - (UIView*)toolBarView {
   return self.headerView.toolBarView;
+}
+
+- (UIView*)fakeOmniboxView {
+  return self.headerView.omnibox;
 }
 
 #if !defined(__IPHONE_17_0) || __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_17_0
@@ -253,9 +259,7 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
                     safeAreaInsets:(UIEdgeInsets)safeAreaInsets
             animateScrollAnimation:(BOOL)animateScrollAnimation {
   if (self.isShowing) {
-    if (IsTabGroupInGridEnabled()) {
-      [self.headerView updateTabGroupIndicatorAvailabilityWithOffset:offset];
-    }
+    [self.headerView updateTabGroupIndicatorAvailabilityWithOffset:offset];
     CGFloat progress =
         self.logoIsShowing || !IsRegularXRegularSizeClass(self)
             ? [self.headerView searchFieldProgressForOffset:offset]
@@ -314,6 +318,8 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
 
     self.headerView = [[NewTabPageHeaderView alloc]
         initWithUseNewBadgeForLensButton:_useNewBadgeForLensButton];
+    [self.headerView setMIAAllowedByPolicy:_MIAAllowedByPolicy];
+    self.headerView.NTPShortcutsHandler = self.NTPShortcutsHandler;
     self.headerView.isGoogleDefaultSearchEngine =
         self.isGoogleDefaultSearchEngine;
     self.headerView.placeholderText = self.placeholderText;
@@ -356,6 +362,11 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
   }
 }
 
+- (void)setIsGoogleDefaultSearchEngine:(BOOL)isGoogleDefaultSearchEngine {
+  _isGoogleDefaultSearchEngine = isGoogleDefaultSearchEngine;
+  self.headerView.isGoogleDefaultSearchEngine = isGoogleDefaultSearchEngine;
+}
+
 - (void)viewDidAppear:(BOOL)animated {
   [super viewDidAppear:animated];
   // Check if the identity disc button was properly set before the view appears.
@@ -388,6 +399,12 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
 
 - (void)setTabGroupIndicatorView:(TabGroupIndicatorView*)view {
   self.headerView.tabGroupIndicatorView = view;
+}
+
+- (void)setNTPShortcutsHandler:
+    (id<NewTabPageShortcutsHandler>)NTPShortcutsHandler {
+  _NTPShortcutsHandler = NTPShortcutsHandler;
+  self.headerView.NTPShortcutsHandler = NTPShortcutsHandler;
 }
 
 #pragma mark - FakeboxButtonsSnapshotProvider
@@ -453,24 +470,19 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
       addInteraction:[[UIPointerInteraction alloc] initWithDelegate:self]];
 
   [self.headerView addViewsToSearchField:self.fakeOmnibox];
+  if (_dseLogo) {
+    [self.headerView setDefaultSearchEngineLogo:_dseLogo];
+  }
 
   UIIndirectScribbleInteraction* scribbleInteraction =
       [[UIIndirectScribbleInteraction alloc] initWithDelegate:self];
   [self.fakeOmnibox addInteraction:scribbleInteraction];
 
-  [self.headerView.voiceSearchButton addTarget:self
-                                        action:@selector(loadVoiceSearch:)
-                              forControlEvents:UIControlEventTouchUpInside];
-  [self.headerView.voiceSearchButton addTarget:self
-                                        action:@selector(preloadVoiceSearch:)
-                              forControlEvents:UIControlEventTouchDown];
   if (self.headerView.lensButton) {
-    [self.headerView.lensButton addTarget:self
-                                   action:@selector(openLens)
-                         forControlEvents:UIControlEventTouchUpInside];
     [self.layoutGuideCenter referenceView:self.headerView.lensButton
                                 underName:kFakeboxLensIconGuide];
   }
+
   [self updateVoiceSearchDisplay];
 }
 
@@ -622,37 +634,6 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
 
   button.accessibilityLabel = self.identityDiscAccessibilityLabel;
   button.clipsToBounds = YES;
-}
-
-- (void)openLens {
-  [self.NTPMetricsRecorder recordLensTapped];
-  TriggerHapticFeedbackForSelectionChange();
-  OpenLensInputSelectionCommand* command = [[OpenLensInputSelectionCommand
-      alloc]
-          initWithEntryPoint:LensEntrypoint::NewTabPage
-           presentationStyle:LensInputSelectionPresentationStyle::SlideFromRight
-      presentationCompletion:nil];
-  [self.customizationDelegate dismissCustomizationMenu];
-  [self.lensHandler openLensInputSelection:command];
-}
-
-- (void)loadVoiceSearch:(id)sender {
-  DCHECK(self.voiceSearchIsEnabled);
-  [self.NTPMetricsRecorder recordVoiceSearchTapped];
-  TriggerHapticFeedbackForSelectionChange();
-  UIView* voiceSearchButton = base::apple::ObjCCastStrict<UIView>(sender);
-  [self.layoutGuideCenter referenceView:voiceSearchButton
-                              underName:kVoiceSearchButtonGuide];
-  [self.customizationDelegate dismissCustomizationMenu];
-  [self.applicationHandler startVoiceSearch];
-}
-
-- (void)preloadVoiceSearch:(id)sender {
-  DCHECK(self.voiceSearchIsEnabled);
-  [sender removeTarget:self
-                action:@selector(preloadVoiceSearch:)
-      forControlEvents:UIControlEventTouchDown];
-  [self.browserCoordinatorHandler preloadVoiceSearch];
 }
 
 - (void)fakeTapViewTapped {
@@ -832,6 +813,10 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
       setConstant:content_suggestions::DoodleHeight(self.logoVendor.showingLogo,
                                                     doodleShowing,
                                                     self.traitCollection)];
+  self.doodleTopMarginConstraint.constant =
+      content_suggestions::DoodleTopMargin(self.logoVendor.showingLogo,
+                                           self.logoVendor.isShowingDoodle,
+                                           self.traitCollection);
   self.headerViewHeightConstraint.constant =
       content_suggestions::HeightForLogoHeader(self.logoIsShowing,
                                                self.logoVendor.isShowingDoodle,
@@ -872,6 +857,20 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
   self.headerView.placeholderText = self.placeholderText;
 }
 
+- (void)setDefaultSearchEngineImage:(UIImage*)image {
+  if (!base::FeatureList::IsEnabled(omnibox::kOmniboxMobileParityUpdateV2)) {
+    return;
+  }
+  // The header view might not be created yet. Store the logo image until it is
+  // consumed.
+  if (!self.headerView) {
+    _dseLogo = image;
+    return;
+  }
+
+  [self.headerView setDefaultSearchEngineLogo:image];
+}
+
 - (void)updateADPBadgeWithErrorFound:(BOOL)hasAccountError
                                 name:(NSString*)name
                                email:(NSString*)email {
@@ -890,6 +889,11 @@ const CGFloat kIdentityDiscMaxFontSize = 24;
     [self.headerView removeIdentityDiscErrorBadge];
   }
   [self updateIdentityDiscAccessibilityLabelWithName:name email:email];
+}
+
+- (void)setMIAAllowedByPolicy:(BOOL)policyAllowed {
+  [_headerView setMIAAllowedByPolicy:policyAllowed];
+  _MIAAllowedByPolicy = policyAllowed;
 }
 
 #pragma mark - UserAccountImageUpdateDelegate

@@ -19,6 +19,7 @@
 #include "base/functional/callback.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/scoped_refptr.h"
+#include "base/metrics/histogram_macros.h"
 #include "base/notreached.h"
 #include "base/task/bind_post_task.h"
 #include "base/task/common/task_annotator.h"
@@ -224,19 +225,20 @@ namespace {
 
 std::unique_ptr<gpu::SharedImageFactory> CreateSharedImageFactory(
     SkiaOutputSurfaceDependency* deps,
-    gpu::MemoryTracker* memory_tracker) {
+    scoped_refptr<gpu::MemoryTracker> memory_tracker) {
   return std::make_unique<gpu::SharedImageFactory>(
       deps->GetGpuPreferences(), deps->GetGpuDriverBugWorkarounds(),
       deps->GetGpuFeatureInfo(), deps->GetSharedContextState().get(),
-      deps->GetSharedImageManager(), memory_tracker,
+      deps->GetSharedImageManager(), std::move(memory_tracker),
       /*is_for_display_compositor=*/true);
 }
 
 std::unique_ptr<gpu::SharedImageRepresentationFactory>
-CreateSharedImageRepresentationFactory(SkiaOutputSurfaceDependency* deps,
-                                       gpu::MemoryTracker* memory_tracker) {
+CreateSharedImageRepresentationFactory(
+    SkiaOutputSurfaceDependency* deps,
+    scoped_refptr<gpu::MemoryTracker> memory_tracker) {
   return std::make_unique<gpu::SharedImageRepresentationFactory>(
-      deps->GetSharedImageManager(), memory_tracker);
+      deps->GetSharedImageManager(), std::move(memory_tracker));
 }
 
 }  // namespace
@@ -1104,10 +1106,7 @@ void SkiaOutputSurfaceImplOnGpu::CopyOutputRGBAInTexture(
   }
 
   if (graphite_shared_context() && scoped_write->NeedGraphiteContextSubmit()) {
-    if (!graphite_shared_context()->submit()) {
-      DLOG(ERROR) << "CopyOutputRGBA graphite_shared_context->submit() failed";
-      return;
-    }
+    graphite_shared_context()->submit();
   }
 
   representation->SetCleared();
@@ -1515,10 +1514,7 @@ void SkiaOutputSurfaceImplOnGpu::CopyOutputNV12(
 
   if (graphite_shared_context() &&
       mailbox_access_data.scoped_write->NeedGraphiteContextSubmit()) {
-    if (!graphite_shared_context()->submit()) {
-      DLOG(ERROR) << "CopyOutputNV12 graphite_shared_context->submit() failed";
-      return;
-    }
+    graphite_shared_context()->submit();
   }
 
   if (should_wait_for_gpu_work) {

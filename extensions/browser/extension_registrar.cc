@@ -6,6 +6,7 @@
 
 #include "base/check_op.h"
 #include "base/containers/contains.h"
+#include "base/debug/alias.h"
 #include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
@@ -755,6 +756,10 @@ void ExtensionRegistrar::BlockAllExtensions() {
 // All locked extensions should revert to being either enabled or disabled
 // as appropriate.
 void ExtensionRegistrar::UnblockAllExtensions() {
+  if (!block_extensions_) {
+    return;
+  }
+
   block_extensions_ = false;
 
   const ExtensionSet to_unblock =

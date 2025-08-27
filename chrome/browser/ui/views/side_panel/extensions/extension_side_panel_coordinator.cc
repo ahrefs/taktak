@@ -53,7 +53,7 @@ GURL GetSidePanelURL(const Extension& extension,
       absolute_url.SchemeIs(url::kHttpsScheme)) {
     return absolute_url;
   }
-  return extension.GetResourceURL(*options.path);
+  return extension.ResolveExtensionURL(*options.path);
 }
 
 }  // namespace

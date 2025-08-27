@@ -5,6 +5,7 @@
 #include "chrome/browser/ui/lens/lens_search_controller.h"
 
 #include "base/check.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/task/task_traits.h"
 #include "base/task/thread_pool.h"
 #include "chrome/browser/lens/core/mojom/geometry.mojom.h"
@@ -21,6 +22,7 @@
 #include "chrome/browser/ui/lens/lens_overlay_theme_utils.h"
 #include "chrome/browser/ui/lens/lens_permission_bubble_controller.h"
 #include "chrome/browser/ui/lens/lens_search_contextualization_controller.h"
+#include "chrome/browser/ui/lens/lens_search_feature_flag_utils.h"
 #include "chrome/browser/ui/lens/lens_searchbox_controller.h"
 #include "chrome/browser/ui/lens/lens_session_metrics_logger.h"
 #include "chrome/browser/ui/tabs/public/tab_features.h"
@@ -93,14 +95,15 @@ void LensSearchController::Initialize(
 
   lens_contextualization_controller_ =
       CreateLensSearchContextualizationController();
+  // Create the page context eligibility API as soon as possible as it is needed
+  // for every contextualization request.
+  lens_contextualization_controller_->CreatePageContextEligibilityAPI();
 
   lens_overlay_event_handler_ =
       std::make_unique<lens::LensOverlayEventHandler>(this);
 
   lens_session_metrics_logger_ =
       std::make_unique<lens::LensSessionMetricsLogger>();
-
-  CreatePageContextEligibilityAPI();
 }
 
 // static.
@@ -250,7 +253,7 @@ void LensSearchController::CloseLensAsync(
     // Also trigger the overlay fade out animation, but don't pass a callback
     // to finish the closing process since the side panel will call
     // the finish closing process callback in OnSidePanelHidden().
-    lens_overlay_controller_->TriggerOverlayCloseAnimation(base::DoNothing());
+    lens_overlay_controller_->TriggerOverlayFadeOutAnimation(base::DoNothing());
     return;
   }
   state_ = State::kClosing;
@@ -259,7 +262,7 @@ void LensSearchController::CloseLensAsync(
   // fade out. Play the fade out animation and then clean up the rest of the UI
   // afterwards.
   if (lens_overlay_controller_->state() != LensOverlayController::State::kOff) {
-    lens_overlay_controller_->TriggerOverlayCloseAnimation(
+    lens_overlay_controller_->TriggerOverlayFadeOutAnimation(
         base::BindOnce(&LensSearchController::CloseLensPart2,
                        weak_ptr_factory_.GetWeakPtr(), dismissal_source));
   } else {
@@ -274,6 +277,21 @@ void LensSearchController::CloseLensSync(
   }
   state_ = State::kClosing;
   CloseLensPart2(dismissal_source);
+}
+
+void LensSearchController::HideOverlay(
+    lens::LensOverlayDismissalSource dismissal_source) {
+  if (state() == State::kOff) {
+    return;
+  }
+
+  // If the overlay is showing, the overlay needs to fade out. Play the fade out
+  // animation and then clean up the rest of the UI afterwards.
+  if (lens_overlay_controller_->state() != LensOverlayController::State::kOff) {
+    lens_overlay_controller_->TriggerOverlayFadeOutAnimation(
+        base::BindOnce(&LensSearchController::OnOverlayHidden,
+                       weak_ptr_factory_.GetWeakPtr(), dismissal_source));
+  }
 }
 
 void LensSearchController::MaybeLaunchSurvey() {
@@ -379,16 +397,6 @@ LensSearchController::lens_overlay_event_handler() {
   return lens_overlay_event_handler_.get();
 }
 
-optimization_guide::PageContextEligibility*
-LensSearchController::page_context_eligibility() {
-  CheckInitialized(initialized_);
-  if (page_context_eligibility_) {
-    return page_context_eligibility_;
-  }
-
-  return nullptr;
-}
-
 lens::LensSearchContextualizationController*
 LensSearchController::lens_search_contextualization_controller() {
   CheckInitialized(initialized_);
@@ -452,20 +460,6 @@ LensSearchController::CreateLensSearchContextualizationController() {
   return std::make_unique<lens::LensSearchContextualizationController>(this);
 }
 
-void LensSearchController::CreatePageContextEligibilityAPI() {
-  // Post to a background thread to avoid blocking the set up of the overlay.
-  base::ThreadPool::PostTaskAndReplyWithResult(
-      FROM_HERE, {base::TaskPriority::BEST_EFFORT, base::MayBlock()},
-      base::BindOnce(&optimization_guide::PageContextEligibility::Get),
-      base::BindOnce(&LensSearchController::OnPageContextEligibilityAPILoaded,
-                     weak_ptr_factory_.GetWeakPtr()));
-}
-
-void LensSearchController::OnPageContextEligibilityAPILoaded(
-    optimization_guide::PageContextEligibility* page_context_eligibility) {
-  page_context_eligibility_ = page_context_eligibility;
-}
-
 std::unique_ptr<lens::LensOverlayQueryController>
 LensSearchController::CreateLensQueryController(
     lens::LensOverlayInvocationSource invocation_source) {
@@ -523,7 +517,7 @@ bool LensSearchController::RunLensEligibilityChecks(
   // If the user hasn't granted permission, request user permission before
   // showing the UI.
   if (!lens::CanSharePageScreenshotWithLensOverlay(pref_service_) ||
-      (lens::features::IsLensOverlayContextualSearchboxEnabled() &&
+      (lens::IsLensOverlayContextualSearchboxEnabled() &&
        !lens::CanSharePageContentWithLensOverlay(pref_service_))) {
     if (!lens_permission_bubble_controller_) {
       lens_permission_bubble_controller_ =
@@ -539,8 +533,15 @@ bool LensSearchController::RunLensEligibilityChecks(
 }
 
 void LensSearchController::NotifyOverlayOpened() {
-  CHECK(state() == State::kInitializing);
-  state_ = State::kActive;
+  CHECK(state() != State::kOff);
+  // The search controller could be backgrounded as the overlay controller
+  // is being initialized. If so, set the backgrounded state to active and
+  // record the invocation instead of setting the current state to active.
+  if (state_ == State::kBackground) {
+    backgrounded_state_ = State::kActive;
+  } else {
+    state_ = State::kActive;
+  }
 
   // Record the UMA for lens overlay invocation.
   lens_session_metrics_logger_->RecordInvocation();
@@ -565,6 +566,20 @@ void LensSearchController::CloseLensPart2(
   lens_session_metrics_logger_->RecordEndOfSessionMetrics(dismissal_source);
 
   state_ = State::kOff;
+}
+
+void LensSearchController::OnOverlayHidden(
+    lens::LensOverlayDismissalSource dismissal_source) {
+  // If the side panel is not open, end the session.
+  if (lens_overlay_side_panel_coordinator_->state() ==
+      lens::LensOverlaySidePanelCoordinator::State::kOff) {
+    CloseLensPart2(dismissal_source);
+    return;
+  }
+
+  // Since the side panel is open and the overlay has smoothly faded out, hide
+  // the overlay to restore state to the live page.
+  lens_overlay_controller_->HideOverlayAndMaybeSetLivePageState();
 }
 
 void LensSearchController::OnSidePanelWillHide(
@@ -629,12 +644,14 @@ void LensSearchController::HandlePageContentUploadProgress(uint64_t position,
 }
 
 void LensSearchController::HandleThumbnailCreated(
-    const std::string& thumbnail_bytes) {
+    const std::string& thumbnail_bytes,
+    const SkBitmap& region_bitmap) {
+  lens_overlay_controller_->HandleRegionBitmapCreated(region_bitmap);
   lens_searchbox_controller_->HandleThumbnailCreated(thumbnail_bytes);
 }
 
 void LensSearchController::TabForegrounded(tabs::TabInterface* tab) {
-  // Ignore the event if the overlay is not backgrounded.
+  // Ignore the event if the search controller is not backgrounded.
   if (state_ != State::kBackground) {
     return;
   }
@@ -643,7 +660,7 @@ void LensSearchController::TabForegrounded(tabs::TabInterface* tab) {
   // restore to the previous state.
   lens_overlay_controller_->TabForegrounded(tab);
 
-  state_ = State::kActive;
+  state_ = backgrounded_state_;
 }
 
 void LensSearchController::TabWillEnterBackground(tabs::TabInterface* tab) {
@@ -656,10 +673,20 @@ void LensSearchController::TabWillEnterBackground(tabs::TabInterface* tab) {
     return;
   }
 
+  // If the overlay is not active when the tab is backgrounded, then the entire
+  // Lens session should be closed. Note that the overlay is considered active
+  // when it is hidden and the side panel is open.
+  if (!lens_overlay_controller_->IsOverlayActive()) {
+    CloseLensSync(
+        lens::LensOverlayDismissalSource::kTabBackgroundedWhileScreenshotting);
+    return;
+  }
+
   // Notify the overlay controller of the tab will enter background event so
   // it can hide the overlay.
   lens_overlay_controller_->TabWillEnterBackground(tab);
 
+  backgrounded_state_ = state_;
   state_ = State::kBackground;
 }
 

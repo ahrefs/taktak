@@ -200,36 +200,41 @@ void ProfilePicker::SwitchToDiceSignIn(
     base::OnceCallback<void(bool)> switch_finished_callback) {
   if (g_profile_picker_view) {
     g_profile_picker_view->SwitchToDiceSignIn(
-        std::move(profile_info), std::move(switch_finished_callback));
+        std::move(profile_info),
+        StepSwitchFinishedCallback(std::move(switch_finished_callback)));
   }
 }
 
 // static
 void ProfilePicker::SwitchToReauth(
     Profile* profile,
+    base::OnceCallback<void(bool)> switch_finished_callback,
     base::OnceCallback<void(const ForceSigninUIError&)> on_error_callback) {
   if (g_profile_picker_view) {
-    g_profile_picker_view->SwitchToReauth(profile,
-                                          std::move(on_error_callback));
+    g_profile_picker_view->SwitchToReauth(
+        profile,
+        StepSwitchFinishedCallback(std::move(switch_finished_callback)),
+        std::move(on_error_callback));
   }
 }
 #endif
 
 // static
 void ProfilePicker::SwitchToSignedOutPostIdentityFlow(
-    std::optional<SkColor> profile_color,
-    base::OnceCallback<void(bool)> switch_finished_callback) {
+    std::optional<SkColor> profile_color) {
   if (g_profile_picker_view) {
-    g_profile_picker_view->SwitchToSignedOutPostIdentityFlow(
-        profile_color, std::move(switch_finished_callback));
+    g_profile_picker_view->SwitchToSignedOutPostIdentityFlow(profile_color);
   }
 }
 
 // static
-void ProfilePicker::PickProfile(const base::FilePath& profile_path,
-                                ProfilePickingArgs args) {
+void ProfilePicker::PickProfile(
+    const base::FilePath& profile_path,
+    ProfilePickingArgs args,
+    base::OnceCallback<void(bool)> pick_profile_complete_callback) {
   if (g_profile_picker_view) {
-    g_profile_picker_view->flow_controller_->PickProfile(profile_path, args);
+    g_profile_picker_view->flow_controller_->PickProfile(
+        profile_path, args, std::move(pick_profile_complete_callback));
   }
 }
 
@@ -360,8 +365,10 @@ void ProfilePickerView::ShowScreen(
   }
 
   if (url.is_empty()) {
-    DCHECK(!navigation_finished_closure);
     ShowScreenFinished(contents);
+    if (navigation_finished_closure) {
+      std::move(navigation_finished_closure).Run();
+    }
     return;
   }
 
@@ -443,21 +450,18 @@ void ProfilePickerView::Reset(StepSwitchFinishedCallback callback) {
 }
 
 void ProfilePickerView::SwitchToSignedOutPostIdentityFlow(
-    std::optional<SkColor> profile_color,
-    base::OnceCallback<void(bool)> switch_finished_callback) {
+    std::optional<SkColor> profile_color) {
   ProfileManager::CreateMultiProfileAsync(
       g_browser_process->profile_manager()
           ->GetProfileAttributesStorage()
           .ChooseNameForNewProfile(),
       profiles::GetPlaceholderAvatarIndex(), /*is_hidden=*/true,
       base::BindOnce(&ProfilePickerView::OnLocalProfileInitialized,
-                     weak_ptr_factory_.GetWeakPtr(), profile_color,
-                     std::move(switch_finished_callback)));
+                     weak_ptr_factory_.GetWeakPtr(), profile_color));
 }
 
 void ProfilePickerView::OnLocalProfileInitialized(
     std::optional<SkColor> profile_color,
-    base::OnceCallback<void(bool)> switch_finished_callback,
     Profile* profile) {
   if (!profile) {
     NOTREACHED() << "Local fail in creating new profile";
@@ -475,11 +479,7 @@ void ProfilePickerView::OnLocalProfileInitialized(
     theme_service->UseDefaultTheme();
   }
 
-  // TODO(crbug.com/40209493): Add shortcut creation.
-  // Skip the FRE for this profile as sign-in was offered as part of the flow.
-  profile->GetPrefs()->SetBoolean(prefs::kHasSeenWelcomePage, true);
-  GetProfilePickerFlowController()->SwitchToSignedOutPostIdentityFlow(
-      profile, std::move(switch_finished_callback));
+  GetProfilePickerFlowController()->SwitchToSignedOutPostIdentityFlow(profile);
 }
 
 #if BUILDFLAG(ENABLE_DICE_SUPPORT)
@@ -718,16 +718,18 @@ ProfilePickerView::CreateFlowController(Profile* picker_profile,
 #if BUILDFLAG(ENABLE_DICE_SUPPORT)
 void ProfilePickerView::SwitchToDiceSignIn(
     ProfilePicker::ProfileInfo profile_info,
-    base::OnceCallback<void(bool)> switch_finished_callback) {
+    StepSwitchFinishedCallback switch_finished_callback) {
   GetProfilePickerFlowController()->SwitchToDiceSignIn(
       std::move(profile_info), std::move(switch_finished_callback));
 }
 
 void ProfilePickerView::SwitchToReauth(
     Profile* profile,
+    StepSwitchFinishedCallback switch_finished_callback,
     base::OnceCallback<void(const ForceSigninUIError&)> on_error_callback) {
   GetProfilePickerFlowController()->SwitchToReauth(
-      profile, std::move(on_error_callback));
+      profile, std::move(switch_finished_callback),
+      std::move(on_error_callback));
 }
 #endif
 

@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import './composebox/composebox.js';
 import './iframe.js';
 import './logo.js';
 import '/strings.m.js';
@@ -12,6 +13,7 @@ import 'chrome://resources/cr_elements/cr_button/cr_button.js';
 import type {CustomizeButtonsElement} from 'chrome://new-tab-page/shared/customize_buttons/customize_buttons.js';
 import {ColorChangeUpdater} from 'chrome://resources/cr_components/color_change_listener/colors_css_updater.js';
 import {HelpBubbleMixinLit} from 'chrome://resources/cr_components/help_bubble/help_bubble_mixin_lit.js';
+import type {SearchboxElement} from 'chrome://resources/cr_components/searchbox/searchbox.js';
 import type {CrToastElement} from 'chrome://resources/cr_elements/cr_toast/cr_toast.js';
 import type {ClickInfo} from 'chrome://resources/js/browser_command.mojom-webui.js';
 import {Command} from 'chrome://resources/js/browser_command.mojom-webui.js';
@@ -28,13 +30,15 @@ import type {SkColor} from 'chrome://resources/mojo/skia/public/mojom/skcolor.mo
 import {getCss} from './app.css.js';
 import {getHtml} from './app.html.js';
 import {BackgroundManager} from './background_manager.js';
+import type {ComposeboxElement} from './composebox/composebox.js';
+import {ComposeboxProxyImpl} from './composebox/composebox_proxy.js';
 import type {CustomizeButtonsDocumentCallbackRouter, CustomizeButtonsHandlerRemote} from './customize_buttons.mojom-webui.js';
 import {CustomizeChromeSection, SidePanelOpenTrigger} from './customize_buttons.mojom-webui.js';
 import {CustomizeButtonsProxy} from './customize_buttons_proxy.js';
 import {CustomizeDialogPage} from './customize_dialog_types.js';
 import type {IframeElement} from './iframe.js';
 import type {LogoElement} from './logo.js';
-import {recordDuration, recordLoadDuration} from './metrics_utils.js';
+import {recordBoolean, recordDuration, recordEnumeration, recordLoadDuration, recordSparseValueWithPersistentHash, recordValue} from './metrics_utils.js';
 import {ParentTrustedDocumentProxy} from './modules/microsoft_auth_frame_connector.js';
 import type {PageCallbackRouter, PageHandlerRemote, Theme} from './new_tab_page.mojom-webui.js';
 import {IphFeature, NtpBackgroundImageSource} from './new_tab_page.mojom-webui.js';
@@ -112,12 +116,11 @@ const realboxCanShowSecondarySideMediaQueryList =
     window.matchMedia('(min-width: 900px)');
 
 function recordClick(element: NtpElement) {
-  chrome.metricsPrivate.recordEnumerationValue(
-      'NewTabPage.Click', element, NtpElement.MAX_VALUE + 1);
+  recordEnumeration('NewTabPage.Click', element, NtpElement.MAX_VALUE + 1);
 }
 
 function recordCustomizeChromeOpen(element: NtpCustomizeChromeEntryPoint) {
-  chrome.metricsPrivate.recordEnumerationValue(
+  recordEnumeration(
       'NewTabPage.CustomizeChromeOpened', element,
       NtpCustomizeChromeEntryPoint.MAX_VALUE + 1);
 }
@@ -137,6 +140,8 @@ export interface AppElement {
     customizeButtons: CustomizeButtonsElement,
     oneGoogleBarClipPath: HTMLElement,
     logo: LogoElement,
+    searchbox: SearchboxElement,
+    composebox: ComposeboxElement,
   };
 }
 
@@ -164,6 +169,8 @@ export class AppElement extends AppElementBase {
 
       showWallpaperSearch_: {type: Boolean},
 
+      isFooterVisible_: {type: Boolean},
+
       selectedCustomizeDialogPage_: {type: String},
       showVoiceSearchOverlay_: {type: Boolean},
 
@@ -175,7 +182,6 @@ export class AppElement extends AppElementBase {
       backgroundImageAttribution1_: {type: String},
       backgroundImageAttribution2_: {type: String},
       backgroundImageAttributionUrl_: {type: String},
-      backgroundColor_: {type: Object},
 
       // Used in cr-searchbox component via host-context.
       colorSourceIsBaseline: {type: Boolean},
@@ -201,6 +207,7 @@ export class AppElement extends AppElementBase {
         notify: true,
       },
 
+      composeboxCloseByClickOutside_: {type: Boolean},
       composeboxEnabled: {type: Boolean},
       composeButtonEnabled: {type: Boolean},
 
@@ -228,6 +235,11 @@ export class AppElement extends AppElementBase {
        */
       promoAndModulesLoaded_: {type: Boolean},
 
+      showComposebox_: {
+        type: Boolean,
+        reflect: true,
+      },
+
       showLensUploadDialog_: {type: Boolean},
 
       /**
@@ -249,7 +261,7 @@ export class AppElement extends AppElementBase {
   protected accessor oneGoogleBarIframeOrigin_: string = OGB_IFRAME_ORIGIN;
   protected accessor oneGoogleBarIframePath_: string|undefined;
   protected accessor oneGoogleBarLoaded_: boolean = false;
-  protected accessor theme_: Theme|undefined;
+  protected accessor theme_: Theme|null = null;
   protected accessor showCustomize_: boolean = false;
   protected accessor showCustomizeChromeText_: boolean = false;
   protected accessor showWallpaperSearch_: boolean = false;
@@ -259,7 +271,6 @@ export class AppElement extends AppElementBase {
   protected accessor backgroundImageAttribution1_: string = '';
   protected accessor backgroundImageAttribution2_: string = '';
   protected accessor backgroundImageAttributionUrl_: string = '';
-  protected accessor backgroundColor_: SkColor|null = null;
   protected accessor colorSourceIsBaseline: boolean = false;
   protected accessor logoColor_: SkColor|null = null;
   protected accessor singleColoredLogo_: boolean = false;
@@ -267,6 +278,7 @@ export class AppElement extends AppElementBase {
   accessor realboxHadSecondarySide: boolean = false;
   protected accessor realboxShown_: boolean = false;
   protected accessor showLensUploadDialog_: boolean = false;
+  protected accessor showComposebox_: boolean = false;
   protected accessor logoEnabled_: boolean =
       loadTimeData.getBoolean('logoEnabled');
   protected accessor oneGoogleBarEnabled_: boolean =
@@ -294,8 +306,12 @@ export class AppElement extends AppElementBase {
   protected accessor showWallpaperSearchButton_: boolean = false;
   accessor composeButtonEnabled: boolean =
       loadTimeData.getBoolean('searchboxShowComposeEntrypoint');
+  protected accessor composeboxCloseByClickOutside_: boolean =
+      loadTimeData.getBoolean('composeboxCloseByClickOutside');
   accessor composeboxEnabled: boolean =
       loadTimeData.getBoolean('searchboxShowComposebox');
+  protected accessor isFooterVisible_: boolean = false;
+
   private callbackRouter_: PageCallbackRouter;
   private pageHandler_: PageHandlerRemote;
   private customizeButtonsCallbackRouter_:
@@ -306,6 +322,7 @@ export class AppElement extends AppElementBase {
   private setThemeListenerId_: number|null = null;
   private setCustomizeChromeSidePanelVisibilityListener_: number|null = null;
   private setWallpaperSearchButtonVisibilityListener_: number|null = null;
+  private footerVisibilityUpdatedListener_: number|null = null;
   private eventTracker_: EventTracker = new EventTracker();
   private shouldPrintPerformance_: boolean = false;
   private backgroundImageLoadStartEpoch_: number = 0;
@@ -346,7 +363,7 @@ export class AppElement extends AppElementBase {
      */
     this.backgroundImageLoadStartEpoch_ = performance.timeOrigin;
 
-    chrome.metricsPrivate.recordValue(
+    recordValue(
         {
           metricName: 'NewTabPage.Height',
           type: chrome.metricsPrivate.MetricTypeType.HISTOGRAM_LINEAR,
@@ -355,7 +372,7 @@ export class AppElement extends AppElementBase {
           buckets: 200,
         },
         Math.floor(window.innerHeight));
-    chrome.metricsPrivate.recordValue(
+    recordValue(
         {
           metricName: 'NewTabPage.Width',
           type: chrome.metricsPrivate.MetricTypeType.HISTOGRAM_LINEAR,
@@ -421,6 +438,13 @@ export class AppElement extends AppElementBase {
               }
             });
 
+    this.footerVisibilityUpdatedListener_ =
+        this.callbackRouter_.footerVisibilityUpdated.addListener(
+            (visible: boolean) => {
+              this.isFooterVisible_ = visible;
+            });
+    this.pageHandler_.updateFooterVisibility();
+
     // Open Customize Chrome if there are Customize Chrome URL params.
     if (this.showCustomize_) {
       this.setCustomizeChromeSidePanelVisible_(this.showCustomize_);
@@ -464,8 +488,7 @@ export class AppElement extends AppElementBase {
     }
     FocusOutlineManager.forDocument(document);
     if (this.composeButtonEnabled) {
-      chrome.metricsPrivate.recordBoolean(
-          'NewTabPage.ComposeEntrypoint.Shown', true);
+      recordBoolean('NewTabPage.ComposeEntrypoint.Shown', true);
       this.pageHandler_.incrementComposeButtonShownCount();
     }
   }
@@ -482,6 +505,7 @@ export class AppElement extends AppElementBase {
         this.setWallpaperSearchButtonVisibilityListener_!);
     this.customizeButtonsCallbackRouter_.removeListener(
         this.setCustomizeChromeSidePanelVisibilityListener_!);
+    this.callbackRouter_.removeListener(this.footerVisibilityUpdatedListener_!);
     this.eventTracker_.removeAll();
   }
 
@@ -515,8 +539,10 @@ export class AppElement extends AppElementBase {
       this.singleColoredLogo_ = this.computeSingleColoredLogo_();
     }
 
-    // theme_, showBackgroundImage_
-    this.backgroundColor_ = this.computeBackgroundColor_();
+    if (changedPrivateProperties.has('showComposebox_')) {
+      this.logoColor_ = this.computeLogoColor_();
+      this.singleColoredLogo_ = this.computeSingleColoredLogo_();
+    }
 
     // theme_, showLensUploadDialog_
     this.realboxShown_ = this.computeRealboxShown_();
@@ -559,7 +585,8 @@ export class AppElement extends AppElementBase {
     }
 
     if (changedPrivateProperties.has('oneGoogleBarLoaded_') ||
-        changedPrivateProperties.has('theme_')) {
+        changedPrivateProperties.has('theme_') ||
+        changedPrivateProperties.has('showComposebox_')) {
       this.updateOneGoogleBarAppearance_();
     }
   }
@@ -567,8 +594,13 @@ export class AppElement extends AppElementBase {
   // Called to update the OGB of relevant NTP state changes.
   private updateOneGoogleBarAppearance_() {
     if (this.oneGoogleBarLoaded_) {
-      const isNtpDarkTheme =
-          this.theme_ && (!!this.theme_.backgroundImage || this.theme_.isDark);
+      let isNtpDarkTheme;
+      if (this.showComposebox_) {
+        isNtpDarkTheme = this.theme_ && this.theme_.isDark;
+      } else {
+        isNtpDarkTheme = this.theme_ &&
+            (!!this.theme_.backgroundImage || this.theme_.isDark);
+      }
       $$<IframeElement>(this, '#oneGoogleBar')!.postMessage({
         type: 'updateAppearance',
         // We should be using a light OGB for dark themes and vice versa.
@@ -600,7 +632,8 @@ export class AppElement extends AppElementBase {
 
   private computeRealboxShown_(): boolean {
     // Do not show the realbox if the upload dialog is showing.
-    return !!this.theme_ && !this.showLensUploadDialog_;
+    return !!this.theme_ && !this.showLensUploadDialog_ &&
+        !this.showComposebox_;
   }
 
   private computePromoAndModulesLoaded_(): boolean {
@@ -624,6 +657,32 @@ export class AppElement extends AppElementBase {
     if (this.showWallpaperSearchButton_) {
       this.customizeButtonsHandler_.incrementWallpaperSearchButtonShownCount();
     }
+  }
+
+  protected toggleComposebox_() {
+    this.showComposebox_ = !this.showComposebox_;
+  }
+
+  protected onComposeboxClickOutside_() {
+    this.closeComposebox_(this.$.composebox.getText());
+  }
+
+  protected closeComposebox_(e: CustomEvent|string) {
+    let composeboxText: string;
+
+    if (typeof e === 'string') {
+      composeboxText = e;
+    } else {
+      composeboxText = e.detail.uuid;
+    }
+
+    if (composeboxText && composeboxText.trim()) {
+      this.$.searchbox.setInputText(composeboxText);
+    }
+    this.$.composebox.resetText();
+    this.toggleComposebox_();
+    const composeboxHandler = ComposeboxProxyImpl.getInstance().handler;
+    composeboxHandler.notifySessionAbandoned();
   }
 
   protected onOpenVoiceSearch_() {
@@ -730,16 +789,16 @@ export class AppElement extends AppElementBase {
   }
 
   private onThemeLoaded_(theme: Theme) {
-    chrome.metricsPrivate.recordSparseValueWithPersistentHash(
+    recordSparseValueWithPersistentHash(
         'NewTabPage.Collections.IdOnLoad',
         theme.backgroundImageCollectionId ?? '');
 
     if (!theme.backgroundImage) {
-      chrome.metricsPrivate.recordEnumerationValue(
+      recordEnumeration(
           'NewTabPage.BackgroundImageSource', NtpBackgroundImageSource.kNoImage,
           NtpBackgroundImageSource.MAX_VALUE + 1);
     } else {
-      chrome.metricsPrivate.recordEnumerationValue(
+      recordEnumeration(
           'NewTabPage.BackgroundImageSource', theme.backgroundImage.imageSource,
           NtpBackgroundImageSource.MAX_VALUE + 1);
     }
@@ -778,14 +837,6 @@ export class AppElement extends AppElementBase {
     }
   }
 
-  private computeBackgroundColor_(): SkColor|null {
-    if (this.showBackgroundImage_ || !this.theme_) {
-      return null;
-    }
-
-    return this.theme_.backgroundColor;
-  }
-
   private computeColorSourceIsBaseline(): boolean {
     return !!this.theme_ && this.theme_.isBaseline;
   }
@@ -795,11 +846,18 @@ export class AppElement extends AppElementBase {
       return null;
     }
 
+    if (this.showComposebox_) {
+      return this.theme_.isDark ? hexColorToSkColor('#ffffff') : null;
+    }
+
     return this.theme_.logoColor ||
         (this.theme_.isDark ? hexColorToSkColor('#ffffff') : null);
   }
 
   private computeSingleColoredLogo_(): boolean {
+    if (this.showComposebox_) {
+      return !!this.theme_ && this.theme_.isDark;
+    }
     return !!this.theme_ && (!!this.theme_.logoColor || this.theme_.isDark);
   }
 

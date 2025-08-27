@@ -34,19 +34,19 @@ class DropdownFieldAdapter<T> extends ArrayAdapter<T> {
      */
     public DropdownFieldAdapter(
             Context context, int resource, int textViewResourceId, List<T> objects) {
-        super(context, resource, textViewResourceId, new ArrayList<T>(objects));
+        super(context, resource, textViewResourceId, new ArrayList<>(objects));
     }
 
     /**
      * Creates an array adapter.
      *
-     * @param context            The current context.
-     * @param resource           The resource ID for a layout file containing a layout to use when
-     *                           instantiating views.
-     * @param objects            The objects to represent in the ListView.
+     * @param context The current context.
+     * @param resource The resource ID for a layout file containing a layout to use when
+     *     instantiating views.
+     * @param objects The objects to represent in the ListView.
      */
     public DropdownFieldAdapter(Context context, int resource, List<T> objects) {
-        super(context, resource, new ArrayList<T>(objects));
+        super(context, resource, new ArrayList<>(objects));
     }
 
     @Override

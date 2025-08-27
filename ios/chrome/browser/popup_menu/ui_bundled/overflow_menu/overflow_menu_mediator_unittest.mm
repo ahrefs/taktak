@@ -7,6 +7,7 @@
 #import "base/files/scoped_temp_dir.h"
 #import "base/ios/ios_util.h"
 #import "base/memory/raw_ptr.h"
+#import "base/strings/string_number_conversions.h"
 #import "base/strings/sys_string_conversions.h"
 #import "base/test/ios/wait_util.h"
 #import "base/test/metrics/histogram_tester.h"
@@ -482,10 +483,6 @@ TEST_F(OverflowMenuMediatorTest, TestMenuItemsCount) {
   mediator_.model = model_;
 
   NSUInteger number_of_action_items = 6;
-
-  if (IsLensOverlayAvailable(profilePrefs_.get())) {
-    number_of_action_items++;
-  }
 
   if (ios::provider::IsTextZoomEnabled()) {
     number_of_action_items++;

@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/strings/string_util.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/password_manager/password_store_utils.h"
 #include "chrome/browser/profiles/profile.h"
@@ -170,6 +171,8 @@ PasswordSaveUpdateView::PasswordSaveUpdateView(
       extra_view_->SetCallback(
           base::BindOnce(button_clicked, base::Unretained(this),
                          &Controller::OnNeverForThisSiteClicked));
+      extra_view_->SetStyle(
+          GetDialogButtonStyle(ui::mojom::DialogButton::kCancel));
 
       // The third button will usually stretch the bubble beyond its intended
       // width. Permit the bubble to use vertical buttons if this happens.

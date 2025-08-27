@@ -48,6 +48,7 @@
 #include "components/autofill/core/browser/form_parsing/autofill_parsing_utils.h"
 #include "components/autofill/core/browser/form_parsing/buildflags.h"
 #include "components/autofill/core/browser/form_parsing/form_field_parser.h"
+#include "components/autofill/core/browser/form_processing/autofill_ai/determine_attribute_types.h"
 #include "components/autofill/core/browser/form_processing/label_processing_util.h"
 #include "components/autofill/core/browser/form_processing/name_processing_util.h"
 #include "components/autofill/core/browser/form_structure_rationalizer.h"
@@ -163,6 +164,7 @@ FormStructure::FormStructure(const FormData& form)
 
   form_signature_ = CalculateFormSignature(form);
   alternative_form_signature_ = CalculateAlternativeFormSignature(form);
+  structural_form_signature_ = CalculateStructuralFormSignature(form);
   // Do further processing on the fields, as needed.
   // Computes the `parseable_name_` of the fields by removing common affixes
   // from their names.
@@ -619,6 +621,13 @@ void FormStructure::RetrieveFromCache(const FormStructure& cached_form,
   // request.
   form_signature_ = cached_form.form_signature_;
 
+  // Keeping the behavior for structural signature consistent with the main one.
+  // In practice, first-encountered signatures are preserved only for purely
+  // credit card forms.
+  // TODO(crbug.com/431754194): Investigate making the behavior consistent
+  // across all form types.
+  structural_form_signature_ = cached_form.structural_form_signature_;
+
   // Whether the AutofillAI model may be run is set at the same time as the
   // server predictions - it also needs to be retrieved from the cache.
   may_run_autofill_ai_model_ = cached_form.may_run_autofill_ai_model_;
@@ -680,18 +689,9 @@ FieldCandidatesMap FormStructure::ParseFieldTypesWithPatterns(
     // For standalone email fields, allow heuristics even when the minimum
     // number of fields is not met. See similar comments in
     // `FormFieldParser::ClearCandidatesIfHeuristicsDidNotFindEnoughFields`.
-    // Note that if a form tag is present this behaviour is enabled by default.
-    // The alternative case it relies on
-    // `kAutofillEnableEmailHeuristicOutsideForms` being enabled.
-    const bool parse_standalone_email_fields =
-        is_form_element() ||
-        base::FeatureList::IsEnabled(
-            features::kAutofillEnableEmailHeuristicOutsideForms);
+    FormFieldParser::ParseStandaloneEmailFields(context, fields_,
+                                                field_type_map);
 
-    if (parse_standalone_email_fields) {
-      FormFieldParser::ParseStandaloneEmailFields(context, fields_,
-                                                  field_type_map);
-    }
     // Try parsing standalone loyalty card fields after an attempt has been
     // made to parse multi-purpose input fields e.g. email or loyalty number
     // fields.
@@ -982,6 +982,16 @@ LogBuffer& operator<<(LogBuffer& buffer, const FormStructure& form) {
     buffer << Tr{} << "May run AutofillAI model: "
            << ToYesOrNo(form.may_run_autofill_ai_model());
   }
+  std::map<const AutofillField*, std::vector<AttributeType>>
+      field_to_attribute_types;
+  for (const auto& [section, entities_and_fields] :
+       DetermineAttributeTypes(form.fields())) {
+    for (const auto& [entity, fields] : entities_and_fields) {
+      for (const AutofillFieldWithAttributeType& f : fields) {
+        field_to_attribute_types[&*f.field].push_back(f.type);
+      }
+    }
+  }
   for (size_t i = 0; i < form.field_count(); ++i) {
     buffer << Tag{"tr"};
     buffer << Tag{"td"} << "Field " << i << ": " << CTag{};
@@ -1046,6 +1056,16 @@ LogBuffer& operator<<(LogBuffer& buffer, const FormStructure& form) {
             field->GetAutofillAiServerTypePredictions()) {
       buffer << Tr{}
              << "Autofill AI Type:" << FieldTypeToStringView(*autofill_ai_type);
+    }
+    if (auto it = field_to_attribute_types.find(&*field);
+        it != field_to_attribute_types.end()) {
+      auto attribute_type_to_string = [](AttributeType t) {
+        return base::StrCat(
+            {t.entity_type().name_as_string(), ": ", t.name_as_string()});
+      };
+      buffer << Tr{} << "Autofill AI AttributeType:"
+             << base::JoinString(
+                    base::ToVector(it->second, attribute_type_to_string), "; ");
     }
     if (base::optional_ref<const std::u16string> format_string =
             field->format_string()) {

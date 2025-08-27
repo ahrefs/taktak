@@ -11,6 +11,7 @@
 #include "base/memory/raw_ptr.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/test/test_future.h"
+#include "base/test/values_test_util.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
 #include "chrome/browser/devtools/devtools_window_testing.h"
@@ -20,6 +21,7 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/safe_browsing/chrome_enterprise_url_lookup_service_factory.h"
 #include "chrome/browser/ui/browser.h"
+#include "chrome/browser/ui/browser_commands_mac.h"
 #include "chrome/browser/ui/browser_navigator.h"
 #include "chrome/browser/ui/browser_tabstrip.h"
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
@@ -35,6 +37,7 @@
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/frame/multi_contents_view.h"
 #include "chrome/browser/ui/views/frame/scrim_view.h"
+#include "chrome/browser/ui/views/frame/top_container_view.h"
 #include "chrome/browser/ui/views/side_panel/side_panel.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/side_panel_util.h"
@@ -75,6 +78,10 @@
 #include "ui/views/widget/native_widget_aura.h"
 #endif  // USE_AURA
 
+#if BUILDFLAG(IS_OZONE)
+#include "ui/ozone/public/ozone_platform.h"
+#endif
+
 class BrowserViewTest : public InProcessBrowserTest {
  public:
   BrowserViewTest() : devtools_(nullptr) {}
@@ -107,7 +114,8 @@ class BrowserViewTest : public InProcessBrowserTest {
   }
 
   void CloseDevToolsWindow() {
-    DevToolsWindowTesting::CloseDevToolsWindowSync(devtools_);
+    DevToolsWindowTesting::CloseDevToolsWindowSync(
+        devtools_.ExtractAsDangling());
   }
 
   void SetDevToolsBounds(const gfx::Rect& bounds) {
@@ -139,6 +147,49 @@ class TestWebContentsObserver : public content::WebContentsObserver {
 
  private:
   raw_ptr<content::WebContents, DanglingUntriaged> other_;
+};
+
+// Waits for a different view to claim focus within a widget with the specified
+// name.
+class TestFocusChangeWaiter : public views::FocusChangeListener {
+ public:
+  TestFocusChangeWaiter(views::FocusManager* focus_manager,
+                        const std::string& expected_widget_name)
+      : focus_manager_(focus_manager),
+        expected_widget_name_(expected_widget_name) {
+    if (auto* current_focused_view = focus_manager->GetFocusedView()) {
+      previous_view_id_ = current_focused_view->GetID();
+    } else {
+      previous_view_id_ = -1;
+    }
+    focus_manager_->AddFocusChangeListener(this);
+  }
+
+  TestFocusChangeWaiter(const TestFocusChangeWaiter&) = delete;
+  TestFocusChangeWaiter& operator=(const TestFocusChangeWaiter&) = delete;
+  ~TestFocusChangeWaiter() override {
+    focus_manager_->RemoveFocusChangeListener(this);
+  }
+
+  void Wait() { run_loop_.Run(); }
+
+ private:
+  // views::FocusChangeListener:
+  void OnDidChangeFocus(views::View* focused_before,
+                        views::View* focused_now) override {
+    if (focused_now && focused_now->GetID() != previous_view_id_) {
+      views::Widget* widget = focused_now->GetWidget();
+      if (widget && widget->GetName() == expected_widget_name_) {
+        run_loop_.Quit();
+      }
+    }
+  }
+
+  raw_ptr<views::FocusManager> focus_manager_;
+  base::RunLoop run_loop_;
+  int previous_view_id_;
+  std::string expected_widget_name_;
+  base::WeakPtrFactory<TestFocusChangeWaiter> weak_factory_{this};
 };
 
 class TestTabModalConfirmDialogDelegate : public TabModalConfirmDialogDelegate {
@@ -201,9 +252,15 @@ IN_PROC_BROWSER_TEST_F(BrowserViewTest, OnTaskUnlockedBrowserView) {
 #endif
 
 // Verifies that page and devtools WebViews are being correctly laid out
-// when DevTools is opened/closed/updated/undocked.
-// TODO(crbug.com/40834238): Re-enable; currently failing on multiple platforms.
-IN_PROC_BROWSER_TEST_F(BrowserViewTest, DISABLED_DevToolsUpdatesBrowserWindow) {
+// when DevTools is opened/closed/updated while docked.
+IN_PROC_BROWSER_TEST_F(BrowserViewTest, DevToolsDockedUpdatesBrowserWindow) {
+#if BUILDFLAG(IS_OZONE)
+  // Ozone/wayland doesn't support getting/setting window position in global
+  // screen coordinates. So this test is not applicable.
+  if (ui::OzonePlatform::GetPlatformNameForTest() == "wayland") {
+    GTEST_SKIP();
+  }
+#endif
   gfx::Rect full_bounds =
       browser_view()->GetContentsContainerForTest()->GetLocalBounds();
   gfx::Rect small_bounds(10, 20, 30, 40);
@@ -237,8 +294,22 @@ IN_PROC_BROWSER_TEST_F(BrowserViewTest, DISABLED_DevToolsUpdatesBrowserWindow) {
   EXPECT_FALSE(devtools_web_view()->web_contents());
   EXPECT_EQ(full_bounds, devtools_web_view()->bounds());
   EXPECT_EQ(full_bounds, contents_web_view()->bounds());
+}
 
-  // Undocked.
+// Verifies that page and devtools WebViews are being correctly laid out
+// when DevTools is opened/closed/updated while undocked.
+IN_PROC_BROWSER_TEST_F(BrowserViewTest, DevToolsUndockedUpdatesBrowserWindow) {
+#if BUILDFLAG(IS_OZONE)
+  // Ozone/wayland doesn't support getting/setting window position in global
+  // screen coordinates. So this test is not applicable.
+  if (ui::OzonePlatform::GetPlatformNameForTest() == "wayland") {
+    GTEST_SKIP();
+  }
+#endif
+  gfx::Rect full_bounds =
+      browser_view()->GetContentsContainerForTest()->GetLocalBounds();
+  gfx::Rect small_bounds(10, 20, 30, 40);
+
   OpenDevToolsWindow(false);
   EXPECT_TRUE(devtools_web_view()->web_contents());
   EXPECT_EQ(full_bounds, devtools_web_view()->bounds());
@@ -262,6 +333,90 @@ IN_PROC_BROWSER_TEST_F(BrowserViewTest, DISABLED_DevToolsUpdatesBrowserWindow) {
   EXPECT_FALSE(devtools_web_view()->web_contents());
   EXPECT_EQ(full_bounds, devtools_web_view()->bounds());
   EXPECT_EQ(full_bounds, contents_web_view()->bounds());
+}
+
+void SetDevToolsWindowSizePrefs(Browser* browser,
+                                int left,
+                                int right,
+                                int top,
+                                int bottom) {
+  PrefService* prefs = browser->GetProfile()->GetPrefs();
+  ScopedDictPrefUpdate update(prefs, prefs::kAppWindowPlacement);
+  base::Value::Dict& wp_prefs = update.Get();
+  base::Value::Dict dev_tools_defaults;
+  dev_tools_defaults.Set("left", left);
+  dev_tools_defaults.Set("right", right);
+  dev_tools_defaults.Set("top", top);
+  dev_tools_defaults.Set("bottom", bottom);
+  dev_tools_defaults.Set("maximized", false);
+  dev_tools_defaults.Set("always_on_top", false);
+  wp_prefs.Set(DevToolsWindow::kDevToolsApp, std::move(dev_tools_defaults));
+}
+
+const base::Value::Dict& GetDevToolsWindowSizePrefs(Browser* browser) {
+  PrefService* prefs = browser->GetProfile()->GetPrefs();
+  return prefs->GetDict(prefs::kAppWindowPlacement)
+      .Find(DevToolsWindow::kDevToolsApp)
+      ->GetDict();
+}
+
+auto HasDimensions(int left, int right, int top, int bottom) {
+  return base::test::DictionaryHasValues(base::Value::Dict()
+                                             .Set("left", left)
+                                             .Set("right", right)
+                                             .Set("top", top)
+                                             .Set("bottom", bottom));
+}
+
+IN_PROC_BROWSER_TEST_F(BrowserViewTest, DevToolsWindowDefaultSize) {
+#if BUILDFLAG(IS_OZONE)
+  // Ozone/wayland doesn't support getting/setting window position in global
+  // screen coordinates. So this test is not applicable.
+  if (ui::OzonePlatform::GetPlatformNameForTest() == "wayland") {
+    GTEST_SKIP();
+  }
+#endif
+  // Starting DevTools the first time sets the window size to the default.
+  OpenDevToolsWindow(false);
+  CloseDevToolsWindow();
+  EXPECT_THAT(GetDevToolsWindowSizePrefs(browser()),
+              HasDimensions(100, 740, 100, 740));
+}
+
+IN_PROC_BROWSER_TEST_F(BrowserViewTest, DevToolsWindowKeepsSize) {
+#if BUILDFLAG(IS_OZONE)
+  // Ozone/wayland doesn't support getting/setting window position in global
+  // screen coordinates. So this test is not applicable.
+  if (ui::OzonePlatform::GetPlatformNameForTest() == "wayland") {
+    GTEST_SKIP();
+  }
+#endif
+  // Setting reasonable size prefs does not change the prefs.
+  SetDevToolsWindowSizePrefs(browser(), 123, 567, 234, 678);
+  EXPECT_THAT(GetDevToolsWindowSizePrefs(browser()),
+              HasDimensions(123, 567, 234, 678));
+  OpenDevToolsWindow(false);
+  CloseDevToolsWindow();
+  EXPECT_THAT(GetDevToolsWindowSizePrefs(browser()),
+              HasDimensions(123, 567, 234, 678));
+}
+
+IN_PROC_BROWSER_TEST_F(BrowserViewTest, DevToolsWindowResetsSize) {
+#if BUILDFLAG(IS_OZONE)
+  // Ozone/wayland doesn't support getting/setting window position in global
+  // screen coordinates. So this test is not applicable.
+  if (ui::OzonePlatform::GetPlatformNameForTest() == "wayland") {
+    GTEST_SKIP();
+  }
+#endif
+  // Setting unreasonably small size prefs resets the prefs.
+  SetDevToolsWindowSizePrefs(browser(), 121, 232, 343, 454);
+  EXPECT_THAT(GetDevToolsWindowSizePrefs(browser()),
+              HasDimensions(121, 232, 343, 454));
+  OpenDevToolsWindow(false);
+  CloseDevToolsWindow();
+  EXPECT_THAT(GetDevToolsWindowSizePrefs(browser()),
+              HasDimensions(100, 740, 100, 740));
 }
 
 // Verifies that the side panel's rounded corner is being correctly layed out.
@@ -421,7 +576,19 @@ IN_PROC_BROWSER_TEST_F(BrowserViewTest, GetAccessibleTabModalDialogTree) {
 
   content::WebContents* contents = browser_view()->GetActiveWebContents();
   auto delegate = std::make_unique<TestTabModalConfirmDialogDelegate>(contents);
+
+  // `ViewAXPlatformNodeDelegate::GetChildWidgets` expects the following
+  // conditions to be met in order to conclude that a tab modal dialog is
+  // showing:
+  // 1. The dialog is included in `Widget::GetAllOwnedWidgets()`.
+  // 2. The currently-focused view is contained in the dialog.
+  // Waiting for the dialog to be shown should ensure that the first
+  // condition is met. But we also need to wait for the focus to change
+  // or the second condition flakily fails.
+  TestFocusChangeWaiter focus_waiter(browser_view()->GetFocusManager(),
+                                     "MessageBoxView");
   TabModalConfirmDialog::Create(std::move(delegate), contents);
+  focus_waiter.Wait();
 
   // The tab modal dialog should be in the accessibility tree; everything else
   // should be hidden. So we expect an "OK" button and no reload button.
@@ -463,7 +630,7 @@ IN_PROC_BROWSER_TEST_F(BrowserViewTest, ScrimForTabModal) {
 }
 
 // MacOS does not need views window scrim. We use sheet to show window modals
-// (-[NSWindow beginSheet:]), which natively draws a scrim since macOS 11.
+// (-[NSWindow beginSheet:]), which natively draws a scrim.
 #if !BUILDFLAG(IS_MAC)
 IN_PROC_BROWSER_TEST_F(BrowserViewTest, ScrimForBrowserWindowModal) {
   if (!base::FeatureList::IsEnabled(features::kScrimForBrowserWindowModal)) {
@@ -528,30 +695,72 @@ IN_PROC_BROWSER_TEST_F(SideBySideBrowserViewTest, SplitViewActiveIndexTest) {
                                               split_tabs::SplitTabVisualData());
 
   browser()->tab_strip_model()->ActivateTabAt(0);
-  EXPECT_TRUE(browser_view()->multi_contents_view_for_testing());
-  EXPECT_EQ(browser_view()
-                ->multi_contents_view_for_testing()
-                ->GetActiveContentsView(),
-            browser_view()
-                ->multi_contents_view_for_testing()
-                ->start_contents_view_for_testing());
+  EXPECT_TRUE(browser_view()->multi_contents_view());
+  EXPECT_EQ(
+      browser_view()->multi_contents_view()->GetActiveContentsView(),
+      browser_view()->multi_contents_view()->start_contents_view_for_testing());
 
   browser()->tab_strip_model()->ActivateTabAt(2);
-  EXPECT_EQ(browser_view()
-                ->multi_contents_view_for_testing()
-                ->GetActiveContentsView(),
-            browser_view()
-                ->multi_contents_view_for_testing()
-                ->start_contents_view_for_testing());
+  EXPECT_EQ(
+      browser_view()->multi_contents_view()->GetActiveContentsView(),
+      browser_view()->multi_contents_view()->start_contents_view_for_testing());
 
   browser()->tab_strip_model()->ActivateTabAt(3);
-  EXPECT_EQ(browser_view()
-                ->multi_contents_view_for_testing()
-                ->GetActiveContentsView(),
-            browser_view()
-                ->multi_contents_view_for_testing()
-                ->end_contents_view_for_testing());
+  EXPECT_EQ(
+      browser_view()->multi_contents_view()->GetActiveContentsView(),
+      browser_view()->multi_contents_view()->end_contents_view_for_testing());
 }
+
+#if BUILDFLAG(IS_MAC)
+class MacSideBySideBrowserViewTest : public InProcessBrowserTest {
+ public:
+  MacSideBySideBrowserViewTest() {
+    scoped_feature_list_.InitWithFeatures({features::kSideBySide}, {});
+  }
+
+  MacSideBySideBrowserViewTest(const MacSideBySideBrowserViewTest&) = delete;
+  MacSideBySideBrowserViewTest& operator=(const MacSideBySideBrowserViewTest&) =
+      delete;
+
+ protected:
+  BrowserView* browser_view() {
+    return BrowserView::GetBrowserViewForBrowser(browser());
+  }
+
+  base::test::ScopedFeatureList scoped_feature_list_;
+};
+
+IN_PROC_BROWSER_TEST_F(MacSideBySideBrowserViewTest,
+                       SplitViewFullscreenLayout) {
+  // Disable always show toolbar in fullscreen
+  chrome::SetAlwaysShowToolbarInFullscreenForTesting(browser(), false);
+
+  // Create tabs and add to split
+  chrome::AddTabAt(browser(), GURL(), -1, true);
+  chrome::AddTabAt(browser(), GURL(), -1, true);
+  browser()->tab_strip_model()->ActivateTabAt(0);
+  browser()->tab_strip_model()->AddToNewSplit({1},
+                                              split_tabs::SplitTabVisualData());
+
+  ASSERT_TRUE(browser()->tab_strip_model()->selection_model().IsSelected(0));
+  ASSERT_TRUE(browser()->tab_strip_model()->selection_model().IsSelected(1));
+
+  TopContainerView* top_container = browser_view()->top_container();
+  views::View* overlay_view = browser_view()->overlay_view();
+
+  // Verify top_container is parented to browser_view before fullscreen
+  EXPECT_EQ(browser_view(), top_container->parent());
+  ui_test_utils::ToggleFullscreenModeAndWait(browser());
+
+  // Verify top_container is parented to overlay after entering fullscreen
+  EXPECT_EQ(overlay_view, top_container->parent());
+
+  browser_view()->ExitFullscreen();
+
+  // Verify top_container is re-parented to browser_view after fullscreen exit
+  EXPECT_EQ(browser_view(), top_container->parent());
+}
+#endif
 
 namespace {
 
@@ -561,13 +770,14 @@ class FakeRealTimeUrlLookupService
   FakeRealTimeUrlLookupService() = default;
 
   // RealTimeUrlLookupServiceBase:
-  void StartLookup(
+  void StartMaybeCachedLookup(
       const GURL& url,
       safe_browsing::RTLookupResponseCallback response_callback,
       scoped_refptr<base::SequencedTaskRunner> callback_task_runner,
       SessionID session_id,
       std::optional<safe_browsing::internal::ReferringAppInfo>
-          referring_app_info) override {
+          referring_app_info,
+      bool use_cache) override {
     auto response = std::make_unique<safe_browsing::RTLookupResponse>();
     safe_browsing::RTLookupResponse::ThreatInfo* new_threat_info =
         response->add_threat_info();

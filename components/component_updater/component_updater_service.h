@@ -51,14 +51,14 @@ class AutotestPrivateLoadSmartDimComponentFunction;
 namespace component_updater {
 
 // Called when a non-blocking call in this module completes.
-using Callback = update_client::Callback;
+using Callback = ::update_client::Callback;
 
 class OnDemandUpdater;
 class UpdateScheduler;
 
-using Configurator = update_client::Configurator;
-using CrxComponent = update_client::CrxComponent;
-using CrxUpdateItem = update_client::CrxUpdateItem;
+using Configurator = ::update_client::Configurator;
+using CrxComponent = ::update_client::CrxComponent;
+using CrxUpdateItem = ::update_client::CrxUpdateItem;
 
 struct ComponentInfo {
   ComponentInfo(const std::string& id,
@@ -132,7 +132,7 @@ struct ComponentRegistration {
 // All methods are safe to call ONLY from the browser's main sequence.
 class ComponentUpdateService {
  public:
-  using Observer = update_client::UpdateClient::Observer;
+  using Observer = ::update_client::UpdateClient::Observer;
 
   // Adds an observer for this class. An observer should not be added more
   // than once. The caller retains the ownership of the observer object.
@@ -194,17 +194,16 @@ class ComponentUpdateService {
 
   virtual ~ComponentUpdateService() = default;
 
- private:
   // Returns details about registered component in the |item| parameter. The
   // function returns true in case of success and false in case of errors.
   virtual bool GetComponentDetails(const std::string& id,
                                    CrxUpdateItem* item) const = 0;
 
+ private:
   friend class screen_ai::ScreenAIDownloaderNonChromeOS;
   friend class speech::SodaInstallerImpl;
   friend class ::ComponentsHandler;
   FRIEND_TEST_ALL_PREFIXES(ComponentInstallerTest, RegisterComponent);
-  FRIEND_TEST_ALL_PREFIXES(ComponentUpdaterTest, ComponentDetails);
   FRIEND_TEST_ALL_PREFIXES(ComponentUpdaterTest, UpdatesDisabled);
 };
 

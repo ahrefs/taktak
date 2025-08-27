@@ -21,6 +21,7 @@
 #import "ios/chrome/browser/shared/model/url/url_util.h"
 #import "ios/chrome/browser/shared/public/commands/reader_mode_commands.h"
 #import "ios/chrome/browser/shared/public/commands/snackbar_commands.h"
+#import "ios/chrome/browser/snapshots/model/snapshot_tab_helper.h"
 #import "ios/web/navigation/wk_navigation_util.h"
 #import "ios/web/public/js_messaging/web_frames_manager.h"
 #import "ios/web/public/navigation/navigation_context.h"
@@ -258,6 +259,14 @@ void ReaderModeTabHelper::ResetUrlEligibility(const GURL& url) {
   }
 }
 
+void ReaderModeTabHelper::ReaderModeContentDidLoadData(
+    ReaderModeContentTabHelper* reader_mode_content_tab_helper) {
+  // Generic snapshot image generation on side-swipe has a long tail latency.
+  // Force update the snapshot storage to ensure that the latest snapshot is
+  // presented before a transition.
+  SnapshotTabHelper::FromWebState(web_state_)->UpdateSnapshotWithCallback(nil);
+}
+
 void ReaderModeTabHelper::ReaderModeContentDidCancelRequest(
     ReaderModeContentTabHelper* reader_mode_content_tab_helper,
     NSURLRequest* request,
@@ -421,6 +430,28 @@ void ReaderModeTabHelper::DestroyReaderModeWebState() {
   reader_mode_web_state_.reset();
   // Cancel any ongoing distillation task.
   distiller_viewer_.reset();
+  // Update the snapshot with the original web page.
+  SnapshotTabHelper::FromWebState(web_state_)->UpdateSnapshotWithCallback(nil);
+}
+
+void ReaderModeTabHelper::SetLastCommittedUrl(const GURL& url) {
+  if (url.EqualsIgnoringRef(last_committed_url_without_ref_)) {
+    return;
+  }
+  last_committed_url_without_ref_ = url;
+  last_committed_url_eligibility_ready_ = false;
+  // At this point, the only callbacks waiting for results have been added since
+  // the last committed URL, before the Reader mode heuristic could determine
+  // eligibility. Hence, they can all be called with nullopt (no result).
+  CallLastCommittedUrlEligibilityCallbacks(std::nullopt);
+}
+
+void ReaderModeTabHelper::CallLastCommittedUrlEligibilityCallbacks(
+    std::optional<bool> result) {
+  for (auto& callback : last_committed_url_eligibility_callbacks_) {
+    std::move(callback).Run(result);
+  }
+  last_committed_url_eligibility_callbacks_.clear();
 }
 
 void ReaderModeTabHelper::SetLastCommittedUrl(const GURL& url) {

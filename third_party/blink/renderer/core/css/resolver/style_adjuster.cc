@@ -94,6 +94,7 @@
 #include "third_party/blink/renderer/core/svg/svg_tspan_element.h"
 #include "third_party/blink/renderer/core/svg/svg_use_element.h"
 #include "third_party/blink/renderer/core/svg_names.h"
+#include "third_party/blink/renderer/core/view_transition/view_transition.h"
 #include "third_party/blink/renderer/platform/geometry/length.h"
 #include "third_party/blink/renderer/platform/instrumentation/use_counter.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
@@ -161,18 +162,12 @@ bool ShouldBeInlinified(const Element* element) {
   if (!element) {
     return true;
   }
-  const Element* parent;
-  if (RuntimeEnabledFeatures::RubyFieldsetCrashFixEnabled()) {
-    parent = FlatTreeTraversal::ParentElement(*element);
-    while (parent) {
-      const ComputedStyle* parent_style = parent->GetComputedStyle();
-      if (!parent_style || parent_style->Display() != EDisplay::kContents) {
-        break;
-      }
-      parent = FlatTreeTraversal::ParentElement(*parent);
+  const Element* parent = FlatTreeTraversal::ParentElement(*element);
+  for (; parent; parent = FlatTreeTraversal::ParentElement(*parent)) {
+    const ComputedStyle* parent_style = parent->GetComputedStyle();
+    if (!parent_style || parent_style->Display() != EDisplay::kContents) {
+      break;
     }
-  } else {
-    parent = element->ParentOrShadowHostElement();
   }
   return !IsA<HTMLFieldSetElement>(parent) && !IsA<HTMLMediaElement>(parent);
 }
@@ -389,7 +384,8 @@ static bool StopPropagateTextDecorations(const ComputedStyleBuilder& builder,
 
 static bool LayoutParentStyleForcesZIndexToCreateStackingContext(
     const ComputedStyle& layout_parent_style) {
-  return layout_parent_style.IsDisplayFlexibleOrGridBox();
+  return layout_parent_style.IsDisplayFlexibleOrGridBox() ||
+         layout_parent_style.IsDisplayMasonryBox();
 }
 
 void StyleAdjuster::AdjustStyleForEditing(ComputedStyleBuilder& builder,
@@ -424,8 +420,10 @@ void StyleAdjuster::AdjustStyleForTextCombine(ComputedStyleBuilder& builder) {
   const auto line_height = builder.FontHeight();
   const auto size =
       LengthSize(Length::Fixed(line_height), Length::Fixed(one_em));
-  builder.SetContainIntrinsicWidth(StyleIntrinsicLength(false, size.Width()));
-  builder.SetContainIntrinsicHeight(StyleIntrinsicLength(false, size.Height()));
+  builder.SetContainIntrinsicWidth(
+      StyleIntrinsicLength(false, false, size.Width()));
+  builder.SetContainIntrinsicHeight(
+      StyleIntrinsicLength(false, false, size.Height()));
   builder.SetHeight(size.Height());
   builder.SetLineHeight(size.Height());
   builder.SetMaxHeight(size.Height());
@@ -438,7 +436,7 @@ void StyleAdjuster::AdjustStyleForTextCombine(ComputedStyleBuilder& builder) {
 
 void StyleAdjuster::AdjustStyleForCombinedText(ComputedStyleBuilder& builder) {
   builder.ResetTextCombine();
-  builder.SetLetterSpacing(0.0f);
+  builder.SetLetterSpacing(Length::Fixed(0.0f));
   builder.SetTextAlign(ETextAlign::kCenter);
   builder.SetTextDecorationLine(TextDecorationLine::kNone);
   builder.SetTextEmphasisMark(TextEmphasisMark::kNone);
@@ -737,6 +735,7 @@ void StyleAdjuster::AdjustStyleForDisplay(
       }
     }
     if (layout_parent_style.IsDisplayFlexibleOrGridBox() ||
+        layout_parent_style.IsDisplayMasonryBox() ||
         layout_parent_style.IsDisplayMathType() || is_canvas_draw_element) {
       builder.SetIsInsideDisplayIgnoringFloatingChildren();
     }
@@ -1165,8 +1164,17 @@ void StyleAdjuster::AdjustComputedStyle(StyleResolverState& state,
       builder.Overlay() == EOverlay::kAuto ||
       builder.StyleType() == kPseudoIdBackdrop ||
       builder.StyleType() == kPseudoIdViewTransition ||
-      IsCanvasWithDrawElements(element)) {
+      IsCanvasWithDrawElements(element) ||
+      (builder.Contain() & kContainsViewTransition)) {
     builder.SetForcesStackingContext(true);
+  } else if (element) {
+    // The scoped element of a view transition requires a stacking context.
+    if (const ViewTransition* view_transition =
+            ViewTransitionUtils::GetTransition(*element)) {
+      if (view_transition->Scope() == element) {
+        builder.SetForcesStackingContext(true);
+      }
+    }
   }
 
   if (builder.OverflowX() != EOverflow::kVisible ||

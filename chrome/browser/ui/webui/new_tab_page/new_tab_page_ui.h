@@ -30,6 +30,7 @@
 #include "chrome/browser/themes/theme_service.h"
 #include "chrome/browser/themes/theme_service_observer.h"
 #include "chrome/browser/ui/webui/customize_buttons/customize_buttons.mojom.h"
+#include "chrome/browser/ui/webui/new_tab_page/composebox/composebox.mojom.h"
 #include "chrome/browser/ui/webui/new_tab_page/new_tab_page.mojom.h"
 #include "chrome/common/webui_url_constants.h"
 #include "components/page_image_service/mojom/page_image_service.mojom.h"
@@ -103,6 +104,7 @@ class NewTabPageUI
       public new_tab_page::mojom::PageHandlerFactory,
       public customize_buttons::mojom::CustomizeButtonsHandlerFactory,
       public most_visited::mojom::MostVisitedPageHandlerFactory,
+      public composebox::mojom::PageHandlerFactory,
       public browser_command::mojom::CommandHandlerFactory,
       public help_bubble::mojom::HelpBubbleHandlerFactory,
       public NtpCustomBackgroundServiceObserver,
@@ -196,6 +198,12 @@ class NewTabPageUI
       mojo::PendingReceiver<file_suggestion::mojom::MicrosoftFilesPageHandler>
           pending_receiver);
 
+  // Instantiates the implementor of the composebox::mojom::PageHandlerFactory
+  // mojo interface passing the pending receiver that will be internally bound.
+  void BindInterface(
+      mojo::PendingReceiver<composebox::mojom::PageHandlerFactory>
+          pending_receiver);
+
 #if !defined(OFFICIAL_BUILD)
   // Instantiates the implementor of the foo::mojom::FooHandler mojo interface
   // passing the pending receiver that will be internally bound.
@@ -247,6 +255,12 @@ class NewTabPageUI
       mojo::PendingReceiver<most_visited::mojom::MostVisitedPageHandler>
           pending_page_handler) override;
 
+  // composebox::mojom::PageHandlerFactory:
+  void CreatePageHandler(
+      mojo::PendingRemote<composebox::mojom::Page> pending_page,
+      mojo::PendingReceiver<composebox::mojom::PageHandler>
+          pending_page_handler) override;
+
   // help_bubble::mojom::HelpBubbleHandlerFactory:
   void CreateHelpBubbleHandler(
       mojo::PendingRemote<help_bubble::mojom::HelpBubbleClient> client,
@@ -282,6 +296,9 @@ class NewTabPageUI
   std::unique_ptr<MostVisitedHandler> most_visited_page_handler_;
   mojo::Receiver<most_visited::mojom::MostVisitedPageHandlerFactory>
       most_visited_page_factory_receiver_;
+  std::unique_ptr<composebox::mojom::PageHandler> composebox_handler_;
+  mojo::Receiver<composebox::mojom::PageHandlerFactory>
+      composebox_page_factory_receiver_;
   std::unique_ptr<BrowserCommandHandler> promo_browser_command_handler_;
   mojo::Receiver<browser_command::mojom::CommandHandlerFactory>
       browser_command_factory_receiver_;

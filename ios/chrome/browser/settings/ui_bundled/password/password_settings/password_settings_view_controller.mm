@@ -52,19 +52,6 @@ namespace {
 constexpr base::TimeDelta kReEnableTurnOnPasswordsInOtherAppsButtonDelay =
     base::Seconds(10);
 
-// Sections of the password settings UI.
-typedef NS_ENUM(NSInteger, SectionIdentifier) {
-  SectionIdentifierSavePasswordsSwitch = kSectionIdentifierEnumZero,
-  SectionIdentifierBulkMovePasswordsToAccount,
-  SectionIdentifierPasswordsInOtherApps,
-  SectionIdentifierAutomaticPasskeyUpgradesSwitch,
-  SectionIdentifierGooglePasswordManagerPin,
-  SectionIdentifierOnDeviceEncryption,
-  SectionIdentifierExportPasswordsButton,
-  SectionIdentifierImportPasswordsButton,
-  SectionIdentifierDeleteCredentialsButton,
-};
-
 // Items within the password settings UI.
 typedef NS_ENUM(NSInteger, ItemType) {
   ItemTypeSavePasswordsSwitch = kItemTypeEnumZero,
@@ -311,7 +298,9 @@ BOOL AutomaticPasskeyUpgradeFeatureEnabled() {
   if ([self shouldDisplayPasskeyUpgradesSwitch]) {
     [model addSectionWithIdentifier:
                SectionIdentifierAutomaticPasskeyUpgradesSwitch];
-    [model addItem:[self createAutomaticPasskeyUpgradesSwitchItem]
+    _automaticPasskeyUpgradesSwitchItem =
+        [self createAutomaticPasskeyUpgradesSwitchItem];
+    [model addItem:_automaticPasskeyUpgradesSwitchItem
         toSectionWithIdentifier:
             SectionIdentifierAutomaticPasskeyUpgradesSwitch];
   }
@@ -341,8 +330,6 @@ BOOL AutomaticPasskeyUpgradeFeatureEnabled() {
         toSectionWithIdentifier:SectionIdentifierImportPasswordsButton];
   }
 
-  if (base::FeatureList::IsEnabled(
-          password_manager::features::kIOSEnableDeleteAllSavedCredentials)) {
     // Delete credentials button.
     [model addSectionWithIdentifier:SectionIdentifierDeleteCredentialsButton];
     _deleteCredentialsItem = [self createDeleteCredentialsItem];
@@ -354,7 +341,6 @@ BOOL AutomaticPasskeyUpgradeFeatureEnabled() {
     // Add footer for the delete credential section.
     [model setFooter:_deleteCredentialsFooterItem
         forSectionWithIdentifier:SectionIdentifierDeleteCredentialsButton];
-  }
 
   if (_canBulkMoveLocalPasswordsToAccount) {
     [self updateBulkMovePasswordsToAccountSection];
@@ -608,6 +594,8 @@ BOOL AutomaticPasskeyUpgradeFeatureEnabled() {
   automaticPasskeyUpgradesSwitchItem.detailText =
       l10n_util::GetNSString(IDS_IOS_ALLOW_AUTOMATIC_PASSKEY_UPGRADES_SUBTITLE);
   automaticPasskeyUpgradesSwitchItem.on = _automaticPasskeyUpgradesEnabled;
+  automaticPasskeyUpgradesSwitchItem.accessibilityIdentifier =
+      kPasswordSettingsAutomaticPasskeyUpgradeToggleId;
   return automaticPasskeyUpgradesSwitchItem;
 }
 
@@ -1322,9 +1310,7 @@ BOOL AutomaticPasskeyUpgradeFeatureEnabled() {
 }
 
 - (void)updateDeleteAllCredentialsSection {
-  if (_modelLoadStatus == ModelNotLoaded ||
-      !base::FeatureList::IsEnabled(
-          password_manager::features::kIOSEnableDeleteAllSavedCredentials)) {
+  if (_modelLoadStatus == ModelNotLoaded) {
     return;
   }
 

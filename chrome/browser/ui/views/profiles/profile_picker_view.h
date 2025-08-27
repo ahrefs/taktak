@@ -15,6 +15,7 @@
 #include "build/buildflag.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/profiles/profile_picker.h"
+#include "chrome/browser/ui/views/profiles/profile_management_types.h"
 #include "chrome/browser/ui/views/profiles/profile_picker_web_contents_host.h"
 #include "components/keep_alive_registry/scoped_keep_alive.h"
 #include "components/user_education/common/feature_promo/feature_promo_controller.h"
@@ -184,25 +185,17 @@ class ProfilePickerView : public views::WidgetDelegateView,
   // without signing in.
   // `profile_color` is the profile's color. It is undefined for the default
   // theme.
-  // `profile_picked_time_on_startup` is the time when the user picked a
-  // profile to open, to measure browser startup performance. It is only set
-  // when the picker is shown on startup.
-  void SwitchToSignedOutPostIdentityFlow(
-      std::optional<SkColor> profile_color,
-      base::OnceCallback<void(bool)> switch_finished_callback);
+  void SwitchToSignedOutPostIdentityFlow(std::optional<SkColor> profile_color);
 
   // Callback used when the profile is created in the signed out flow.
-  void OnLocalProfileInitialized(
-      std::optional<SkColor> profile_color,
-      base::OnceCallback<void(bool)> switch_finished_callback,
-      Profile* profile);
+  void OnLocalProfileInitialized(std::optional<SkColor> profile_color,
+                                 Profile* profile);
 
 #if BUILDFLAG(ENABLE_DICE_SUPPORT)
   // Switches the layout to the sign-in screen (and creates a new profile or
   // load an existing one based on the `profile_info` content).
-  void SwitchToDiceSignIn(
-      ProfilePicker::ProfileInfo profile_info,
-      base::OnceCallback<void(bool)> switch_finished_callback);
+  void SwitchToDiceSignIn(ProfilePicker::ProfileInfo profile_info,
+                          StepSwitchFinishedCallback switch_finished_callback);
 
   // Switches the profile picker layout to display the reauth page to the main
   // account of the given `profile` if needed. On success the `profile` is
@@ -211,6 +204,7 @@ class ProfilePickerView : public views::WidgetDelegateView,
   // `on_error_callback`.
   void SwitchToReauth(
       Profile* profile,
+      StepSwitchFinishedCallback switch_finished_callback,
       base::OnceCallback<void(const ForceSigninUIError&)> on_error_callback);
 #endif
 
