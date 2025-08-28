@@ -13,6 +13,7 @@ export function getHtml(this: AppElement) {
     class="sp-scroller sp-scroller-top-of-page sp-scroller-bottom-of-page"
     selected="${this.page_}" attr-for-selected="page-name">
   <div page-name="overview" id="overviewPage">
+    <!--
     <div id="appearance" class="section sp-card">
       <sp-heading hide-back-button>
         <h2 slot="heading">$i18n{appearanceHeader}</h2>
@@ -23,6 +24,7 @@ export function getHtml(this: AppElement) {
       </customize-chrome-appearance>
     </div>
     <hr class="sp-cards-separator">
+    -->
     <cr-button id="toolbarButton" class="section sp-card"
         @click="${this.onToolbarCustomizationButtonClick_}">
       <sp-heading hide-back-button id="toolbar-customization-heading">

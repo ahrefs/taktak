@@ -604,6 +604,7 @@ class BottomSheet extends FrameLayout
 
     /**
      * Removes the oldView (or sets it to invisible) and adds the new view to the specified parent.
+     *
      * @param newView The new view to transition to.
      * @param oldView The old view to transition from.
      * @param parent The parent for newView and oldView.
@@ -1102,7 +1103,9 @@ class BottomSheet extends FrameLayout
         return mSettleAnimator != null;
     }
 
-    /** @return The current sheet content, or null if there is no content. */
+    /**
+     * @return The current sheet content, or null if there is no content.
+     */
     @Nullable BottomSheetContent getCurrentSheetContent() {
         return mSheetContent;
     }

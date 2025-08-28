@@ -42,6 +42,7 @@ public final class ScreenshotTask implements ScreenshotSource {
 
     /**
      * Creates a {@link ScreenshotTask} instance that, will grab a screenshot of {@code activity}.
+     *
      * @param activity The {@link Activity} to grab a screenshot of.
      * @param screenshotMode The kind of screenshot to take.
      */

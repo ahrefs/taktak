@@ -52,6 +52,7 @@
 @types/wicg-file-system-access/index.d.ts
 @typescript-eslint/types/dist/**.d.ts
 @typescript-eslint/utils/dist/**.d.ts
+@types/marked/*
 /chai/chai.js
 /chai/LICENSE
 /chai/package.json
@@ -68,3 +69,8 @@
 /typescript/lib/_tsc.js
 /typescript/lib/tsserver.js
 /typescript/lib/typescript.js
+/marked/lib/marked.esm.js
+/marked/marked.min.js
+/marked/lib/marked.d.ts
+/marked/LICENSE.md
+/marked/package.json

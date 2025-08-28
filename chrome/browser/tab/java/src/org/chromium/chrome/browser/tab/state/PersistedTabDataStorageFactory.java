@@ -8,6 +8,7 @@ import org.chromium.build.annotations.NullMarked;
 
 /**
  * Creates a {@link PersistedTabDataStorage}
+ *
  * @param <T> {@link PersistedTabDataStorage} being created
  */
 @NullMarked

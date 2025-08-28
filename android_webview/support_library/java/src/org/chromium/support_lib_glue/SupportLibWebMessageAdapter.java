@@ -16,8 +16,8 @@ import org.chromium.support_lib_glue.SupportLibWebViewChromiumFactory.ApiCall;
 import java.lang.reflect.InvocationHandler;
 
 /**
- * Utility class for creating a WebMessageBoundaryInterface (this is necessary to pass a
- * WebMessage back across the boundary).
+ * Utility class for creating a WebMessageBoundaryInterface (this is necessary to pass a WebMessage
+ * back across the boundary).
  */
 public class SupportLibWebMessageAdapter implements WebMessageBoundaryInterface {
     private final MessagePayload mMessagePayload;

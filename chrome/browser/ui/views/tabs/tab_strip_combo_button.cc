@@ -25,6 +25,9 @@
 #include "ui/views/layout/flex_layout.h"
 #include "ui/views/view_class_properties.h"
 
+// NOTE: It's Chromium's bug that the separator is not in the middle of new_tab_button and tab_search_button
+// Need to carefully check when merge with upstream next time
+
 namespace {
 
 // LINT.IfChange(AccidentalClickType)
@@ -143,14 +146,16 @@ TabStripComboButton::TabStripComboButton(BrowserWindowInterface* browser,
   if (features::HasTabstripComboButtonWithReverseButtonOrder()) {
     tab_search_button_ =
         button_container->AddChildView(std::move(tab_search_button));
+    separator_ = separator_container->AddChildView(std::move(separator));
     new_tab_button_ = button_container->AddChildView(std::move(new_tab_button));
   } else {
     new_tab_button_ = button_container->AddChildView(std::move(new_tab_button));
+    separator_ = separator_container->AddChildView(std::move(separator));
     tab_search_button_ =
         button_container->AddChildView(std::move(tab_search_button));
   }
-  separator_ = separator_container->AddChildView(std::move(separator));
-
+  separator_->SetPreferredSize(gfx::Size(2, 18));
+  separator_->SetVisible(true);
   SetLayoutManager(std::make_unique<views::FillLayout>());
   SetNotifyEnterExitOnChild(true);
 }
@@ -247,11 +252,11 @@ void TabStripComboButton::UpdateSeparatorVisibility() {
       tab_search_button_->GetState();
   const bool is_visible =
       features::HasTabstripComboButtonWithBackground()
-          ? new_tab_button_state != views::Button::STATE_HOVERED &&
-                new_tab_button_state != views::Button::STATE_PRESSED &&
-                tab_search_button_state != views::Button::STATE_HOVERED &&
-                tab_search_button_state != views::Button::STATE_PRESSED
-          : true;
+      ? new_tab_button_state != views::Button::STATE_HOVERED &&
+          new_tab_button_state != views::Button::STATE_PRESSED &&
+          tab_search_button_state != views::Button::STATE_HOVERED &&
+          tab_search_button_state != views::Button::STATE_PRESSED
+      : true;
   separator_->SetVisible(is_visible);
 }
 

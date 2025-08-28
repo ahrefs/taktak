@@ -114,6 +114,8 @@ const gfx::VectorIcon& GetIconIdDesktop(RequestType type) {
       return vector_icons::kNotificationsChromeRefreshIcon;
     case RequestType::kPointerLock:
       return vector_icons::kPointerLockIcon;
+    case RequestType::kWidevine:
+      return vector_icons::kExtensionIcon;
 #if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_WIN)
     case RequestType::kProtectedMediaIdentifier:
       // This icon is provided by ChromePermissionsClient::GetOverrideIconId.
@@ -262,6 +264,8 @@ std::optional<RequestType> ContentSettingsTypeToRequestTypeIfExists(
 #endif
     case ContentSettingsType::FEDERATED_IDENTITY_API:
       return RequestType::kIdentityProvider;
+    case ContentSettingsType::DEFAULT:
+      return RequestType::kWidevine;
     default:
       return std::nullopt;
 #if !BUILDFLAG(IS_ANDROID)
@@ -352,6 +356,8 @@ std::optional<ContentSettingsType> RequestTypeToContentSettingsType(
     case RequestType::kWebAppInstallation:
       return ContentSettingsType::WEB_APP_INSTALLATION;
 #endif  // !BUILDFLAG(IS_ANDROID)
+    case RequestType::kWidevine:
+      return ContentSettingsType::DEFAULT;
     default:
       // Not associated with a ContentSettingsType.
       return std::nullopt;
@@ -471,6 +477,8 @@ const char* PermissionKeyForRequestType(permissions::RequestType request_type) {
       return "window_management";
     case permissions::RequestType::kIdentityProvider:
       return "identity_provider";
+    case permissions::RequestType::kWidevine:
+      return "widevine";
   }
 
   return nullptr;

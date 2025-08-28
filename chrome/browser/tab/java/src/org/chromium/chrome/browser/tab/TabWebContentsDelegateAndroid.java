@@ -100,7 +100,7 @@ public abstract class TabWebContentsDelegateAndroid extends WebContentsDelegateA
 
     /**
      * @return the WebAPK manifest scope. This gives frames within the scope increased privileges
-     * such as autoplaying media unmuted.
+     *     such as autoplaying media unmuted.
      */
     protected @Nullable String getManifestScope() {
         return null;

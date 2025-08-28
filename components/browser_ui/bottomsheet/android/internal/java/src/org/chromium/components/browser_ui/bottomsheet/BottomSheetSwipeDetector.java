@@ -18,10 +18,10 @@ import org.chromium.build.annotations.Nullable;
  * A class that determines whether a sequence of motion events is a valid swipe in the context of a
  * bottom sheet. The {@link SwipeableBottomSheet} that this class is built with provides information
  * useful to determining if a swipe is valid. This class does not move the sheet itself, it only
- * provides information on if/where it should move and whether it should animate. The
- * {@link SwipeableBottomSheet} is responsible for applying the changes to the relevant views. Each
- * swipe or fling is converted into a sequence of calls to
- * {@link SwipeableBottomSheet#setSheetOffset(float, boolean)}.
+ * provides information on if/where it should move and whether it should animate. The {@link
+ * SwipeableBottomSheet} is responsible for applying the changes to the relevant views. Each swipe
+ * or fling is converted into a sequence of calls to {@link
+ * SwipeableBottomSheet#setSheetOffset(float, boolean)}.
  */
 @NullMarked
 class BottomSheetSwipeDetector extends GestureDetector.SimpleOnGestureListener {

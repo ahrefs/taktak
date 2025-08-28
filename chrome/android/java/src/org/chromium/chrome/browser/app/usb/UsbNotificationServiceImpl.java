@@ -12,10 +12,7 @@ import org.chromium.chrome.browser.usb.UsbNotificationManager;
 import org.chromium.chrome.browser.usb.UsbNotificationManagerDelegate;
 import org.chromium.components.browser_ui.notifications.BaseNotificationManagerProxyFactory;
 
-/**
- * Service that manages the WebUSB notification when a website is connected
- * to a USB device.
- */
+/** Service that manages the WebUSB notification when a website is connected to a USB device. */
 public class UsbNotificationServiceImpl extends UsbNotificationService.Impl {
     private final UsbNotificationManagerDelegate mManagerDelegate =
             new UsbNotificationManagerDelegate() {

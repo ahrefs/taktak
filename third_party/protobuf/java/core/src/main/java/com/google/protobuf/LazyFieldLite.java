@@ -82,17 +82,17 @@ public class LazyFieldLite {
    */
   protected volatile MessageLite value;
 
-  /**
-   * The memoized bytes for {@code value}. This is an optimization for the toByteString() method to
-   * not have to recompute its return-value on each invocation. TODO: Figure out whether this
-   * optimization is actually necessary.
-   */
-  private volatile ByteString memoizedBytes;
+    /**
+     * The memoized bytes for {@code value}. This is an optimization for the toByteString() method
+     * to not have to recompute its return-value on each invocation. TODO: Figure out whether this
+     * optimization is actually necessary.
+     */
+    private volatile ByteString memoizedBytes;
 
-  private volatile boolean corrupted;
+    private volatile boolean corrupted;
 
-  /** Constructs a LazyFieldLite with bytes that will be parsed lazily. */
-  public LazyFieldLite(ExtensionRegistryLite extensionRegistry, ByteString bytes) {
+    /** Constructs a LazyFieldLite with bytes that will be parsed lazily. */
+    public LazyFieldLite(ExtensionRegistryLite extensionRegistry, ByteString bytes) {
     checkArguments(extensionRegistry, bytes);
     this.extensionRegistry = extensionRegistry;
     this.delayedBytes = bytes;
@@ -111,11 +111,10 @@ public class LazyFieldLite {
     return lf;
   }
 
-  @Override
-  public boolean equals(
-          Object o) {
-    if (this == o) {
-      return true;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
     }
 
     if (!(o instanceof LazyFieldLite)) {
@@ -400,11 +399,12 @@ public class LazyFieldLite {
           this.memoizedBytes = ByteString.EMPTY;
         }
       } catch (InvalidProtocolBufferException e) {
-        // Nothing is logged and no exceptions are thrown. Clients will be unaware that this proto
-        // was invalid.
-        this.corrupted = true;
-        this.value = defaultInstance;
-        this.memoizedBytes = ByteString.EMPTY;
+                // Nothing is logged and no exceptions are thrown. Clients will be unaware that this
+                // proto
+                // was invalid.
+                this.corrupted = true;
+                this.value = defaultInstance;
+                this.memoizedBytes = ByteString.EMPTY;
       }
     }
   }
@@ -415,11 +415,11 @@ public class LazyFieldLite {
     }
     if (bytes == null) {
       throw new NullPointerException("found null ByteString");
+        }
     }
-  }
 
-  /** Returns whether the lazy field was corrupted and replaced with an empty message. */
-  boolean isCorrupted() {
-    return corrupted;
-  }
+    /** Returns whether the lazy field was corrupted and replaced with an empty message. */
+    boolean isCorrupted() {
+        return corrupted;
+    }
 }

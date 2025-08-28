@@ -1,0 +1,6 @@
+?package(taktak):needs="x11" \
+  section="Applications/Network/Web Browsing" \
+  hints="Web browsers" \
+  title="Taktak Web Browser" \
+  icon="/usr/lib/taktak/taktak_logo_32.xpm" \
+  command="/usr/lib/taktak"

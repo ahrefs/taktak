@@ -10,6 +10,7 @@ package com.google.protobuf;
 import static com.google.protobuf.Internal.checkNotNull;
 
 import com.google.protobuf.LazyField.LazyIterator;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -126,11 +127,10 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
     return isImmutable;
   }
 
-  @Override
-  public boolean equals(
-          Object o) {
-    if (this == o) {
-      return true;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
     }
 
     if (!(o instanceof FieldSet)) {
@@ -267,20 +267,20 @@ final class FieldSet<T extends FieldSet.FieldDescriptorLite<T>> {
       return ((LazyField) o).getValue();
     }
     return o;
-  }
+    }
 
-  /** Returns true if the field is a lazy field and it is corrupted. */
-  boolean lazyFieldCorrupted(final T descriptor) {
-    Object o = fields.get(descriptor);
-    return o instanceof LazyField && ((LazyField) o).isCorrupted();
-  }
+    /** Returns true if the field is a lazy field and it is corrupted. */
+    boolean lazyFieldCorrupted(final T descriptor) {
+        Object o = fields.get(descriptor);
+        return o instanceof LazyField && ((LazyField) o).isCorrupted();
+    }
 
-  /**
-   * Useful for implementing {@link Message.Builder#setField(Descriptors.FieldDescriptor,Object)}.
-   */
-  // Avoid iterator allocation.
-  @SuppressWarnings({"ForeachList", "ForeachListWithUserVar"})
-  public void setField(final T descriptor, Object value) {
+    /**
+     * Useful for implementing {@link Message.Builder#setField(Descriptors.FieldDescriptor,Object)}.
+     */
+    // Avoid iterator allocation.
+    @SuppressWarnings({"ForeachList", "ForeachListWithUserVar"})
+    public void setField(final T descriptor, Object value) {
     if (descriptor.isRepeated()) {
       if (!(value instanceof List)) {
         throw new IllegalArgumentException(

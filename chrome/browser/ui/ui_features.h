@@ -135,6 +135,8 @@ inline constexpr base::FeatureParam<std::string>
 
 BASE_DECLARE_FEATURE(kPreloadTopChromeWebUILessNavigations);
 
+BASE_DECLARE_FEATURE(kPreloadTopChromeWebUILessNavigations);
+
 #if !BUILDFLAG(IS_ANDROID)
 BASE_DECLARE_FEATURE(kPressAndHoldEscToExitBrowserFullscreen);
 #endif

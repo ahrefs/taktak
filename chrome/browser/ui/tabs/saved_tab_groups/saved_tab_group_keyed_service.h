@@ -53,7 +53,7 @@ class SavedTabGroupKeyedService : public KeyedService,
       syncer::DeviceInfoTracker* device_info_tracker);
   SavedTabGroupKeyedService(const SavedTabGroupKeyedService&) = delete;
   SavedTabGroupKeyedService& operator=(const SavedTabGroupKeyedService& other) =
-      delete;
+  delete;
   ~SavedTabGroupKeyedService() override;
 
   SavedTabGroupModelListener* listener() { return listener_.get(); }

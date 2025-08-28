@@ -6,5 +6,10 @@ found in the LICENSE file.
 -->
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+<<<<<<<< HEAD:chrome/android/features/tab_ui/java/res/color-night/tab_grid_dialog_bg_color.xml
+  <item android:color="?attr/colorSurfaceContainerLow" />
+</selector>
+========
   <item android:color="?attr/colorSurfaceContainerHigh"/>
 </selector>
+>>>>>>>> tt139_0_7258_150/develop:chrome/android/features/tab_ui/java/res/color-night/tab_group_favicon_quater_empty_fill_color.xml

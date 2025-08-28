@@ -453,3 +453,23 @@ void ReaderModeTabHelper::CallLastCommittedUrlEligibilityCallbacks(
   }
   last_committed_url_eligibility_callbacks_.clear();
 }
+
+void ReaderModeTabHelper::SetLastCommittedUrl(const GURL& url) {
+  if (url.EqualsIgnoringRef(last_committed_url_without_ref_)) {
+    return;
+  }
+  last_committed_url_without_ref_ = url;
+  last_committed_url_eligibility_ready_ = false;
+  // At this point, the only callbacks waiting for results have been added since
+  // the last committed URL, before the Reader mode heuristic could determine
+  // eligibility. Hence, they can all be called with nullopt (no result).
+  CallLastCommittedUrlEligibilityCallbacks(std::nullopt);
+}
+
+void ReaderModeTabHelper::CallLastCommittedUrlEligibilityCallbacks(
+    std::optional<bool> result) {
+  for (auto& callback : last_committed_url_eligibility_callbacks_) {
+    std::move(callback).Run(result);
+  }
+  last_committed_url_eligibility_callbacks_.clear();
+}

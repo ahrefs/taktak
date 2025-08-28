@@ -11,8 +11,8 @@ import org.jni_zero.NativeMethods;
 import org.chromium.build.annotations.NullMarked;
 
 /**
- * A wrapper around a FlingingController that allows the native code to use it
- * See flinging_controller_bridge.h for the corresponding native code.
+ * A wrapper around a FlingingController that allows the native code to use it See
+ * flinging_controller_bridge.h for the corresponding native code.
  */
 @JNINamespace("media_router")
 @NullMarked

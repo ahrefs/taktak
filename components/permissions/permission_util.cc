@@ -209,6 +209,8 @@ RequestTypeForUma PermissionUtil::GetUmaValueForRequestType(
 #endif
     case RequestType::kIdentityProvider:
       return RequestTypeForUma::PERMISSION_IDENTITY_PROVIDER;
+    case RequestType::kWidevine:
+      return RequestTypeForUma::PERMISSION_VR;
   }
 }
 

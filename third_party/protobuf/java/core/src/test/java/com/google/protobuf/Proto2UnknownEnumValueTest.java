@@ -10,12 +10,14 @@ package com.google.protobuf;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import proto2_unittest.UnittestProto;
-import proto2_unittest.UnittestProto.TestAllExtensions;
-import proto2_unittest.UnittestProto.TestAllTypes;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto;
+import proto2_unittest.UnittestProto.TestAllExtensions;
+import proto2_unittest.UnittestProto.TestAllTypes;
 
 /** Unit tests for proto2 that treats unknown enum values as unknown fields. */
 @RunWith(JUnit4.class)

@@ -18,8 +18,9 @@ import java.io.ByteArrayOutputStream;
 @NullMarked
 public class BitmapHelper {
     /**
-     * Compresses a bitmap into a PNG and converts into a Base64 encoded string.
-     * The encoded string can be decoded using {@link decodeBitmapFromString(String)}.
+     * Compresses a bitmap into a PNG and converts into a Base64 encoded string. The encoded string
+     * can be decoded using {@link decodeBitmapFromString(String)}.
+     *
      * @param bitmap The Bitmap to compress and encode.
      * @return the String encoding the Bitmap.
      */
@@ -31,8 +32,9 @@ public class BitmapHelper {
     }
 
     /**
-     * Decodes a Base64 string into a Bitmap. Used to decode Bitmaps encoded by
-     * {@link encodeBitmapAsString(Bitmap)}.
+     * Decodes a Base64 string into a Bitmap. Used to decode Bitmaps encoded by {@link
+     * encodeBitmapAsString(Bitmap)}.
+     *
      * @param encodedString the Base64 String to decode.
      * @return the Bitmap which was encoded by the String.
      */

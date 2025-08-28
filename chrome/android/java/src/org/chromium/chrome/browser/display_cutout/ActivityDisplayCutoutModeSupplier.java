@@ -15,7 +15,7 @@ import org.chromium.ui.base.WindowAndroid;
 /**
  * Provides activity-wide display cutout mode override.
  *
- * If the activity uses a custom display cutout mode, ActivityDisplayCutoutModeSupplier should be
+ * <p>If the activity uses a custom display cutout mode, ActivityDisplayCutoutModeSupplier should be
  * attached to WindowAndroid prior to the first tab getting attached to WindowAndroid.
  */
 @NullMarked

@@ -26,7 +26,9 @@ import org.chromium.ui.base.ActivityWindowAndroid;
 import org.chromium.ui.base.IntentRequestTracker;
 import org.chromium.ui.base.WindowAndroid;
 
-/** An android view backed by a {@link Surface} that is able to display a live {@link WebContents}. */
+/**
+ * An android view backed by a {@link Surface} that is able to display a live {@link WebContents}.
+ */
 @JNINamespace("thin_webview::android")
 @NullMarked
 public class ThinWebViewImpl extends FrameLayout implements ThinWebView {
@@ -40,6 +42,7 @@ public class ThinWebViewImpl extends FrameLayout implements ThinWebView {
 
     /**
      * Creates a {@link ThinWebViewImpl} backed by a {@link Surface}.
+     *
      * @param context The Context to create this view.
      * @param constraints A set of constraints associated with this view.
      * @param intentRequestTracker The {@link IntentRequestTracker} of the current activity.

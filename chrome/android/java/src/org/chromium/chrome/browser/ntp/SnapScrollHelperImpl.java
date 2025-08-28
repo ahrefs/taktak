@@ -45,8 +45,10 @@ public class SnapScrollHelperImpl implements SnapScrollHelper {
 
         Resources res = newTabPageLayout.getResources();
         if (ChromeFeatureList.sAndroidProgressBarVisualUpdate.isEnabled()) {
-            mToolbarHeight = res.getDimensionPixelSize(R.dimen.toolbar_height_no_shadow)
-                    + res.getDimensionPixelSize(R.dimen.toolbar_progress_bar_increased_height);
+            mToolbarHeight =
+                    res.getDimensionPixelSize(R.dimen.toolbar_height_no_shadow)
+                            + res.getDimensionPixelSize(
+                                    R.dimen.toolbar_progress_bar_increased_height);
         } else {
             mToolbarHeight =
                     res.getDimensionPixelSize(R.dimen.toolbar_height_no_shadow)

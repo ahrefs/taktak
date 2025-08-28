@@ -7,8 +7,8 @@ package com.android.webview.chromium;
 import org.chromium.android_webview.AwServiceWorkerSettings;
 
 /**
- * Type adaptation layer between {@link android.webkit.ServiceWorkerWebSettings}
- * and {@link org.chromium.android_webview.AwServiceWorkerSettings}.
+ * Type adaptation layer between {@link android.webkit.ServiceWorkerWebSettings} and {@link
+ * org.chromium.android_webview.AwServiceWorkerSettings}.
  */
 @SuppressWarnings("NoSynchronizedMethodCheck")
 public class ServiceWorkerSettingsAdapter extends android.webkit.ServiceWorkerWebSettings {

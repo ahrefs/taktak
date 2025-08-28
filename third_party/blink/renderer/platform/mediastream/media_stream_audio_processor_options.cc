@@ -24,8 +24,8 @@ bool AudioProcessingProperties::HasSameReconfigurableSettings(
 bool AudioProcessingProperties::HasSameNonReconfigurableSettings(
     const AudioProcessingProperties& other) const {
   return auto_gain_control == other.auto_gain_control &&
-         noise_suppression == other.noise_suppression &&
-         voice_isolation == other.voice_isolation;
+      noise_suppression == other.noise_suppression &&
+      voice_isolation == other.voice_isolation;
 }
 
 std::string AudioProcessingProperties::ToString() const {

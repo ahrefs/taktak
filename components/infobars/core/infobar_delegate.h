@@ -192,6 +192,7 @@ class InfoBarDelegate {
     INSTALLER_DOWNLOADER_INFOBAR_DELEGATE = 124,
     COLLABORATION_GROUP_UPDATE_INFOBAR_DELEGATE = 125,
     COLLABORATION_OUT_OF_DATE_INFOBAR_DELEGATE = 126,
+    UPDATE_NOTIFIER_INFOBAR_DELEGATE = 132,
   };
   // LINT.ThenChange(//tools/metrics/histograms/metadata/browser/enums.xml:InfoBarIdentifier)
 

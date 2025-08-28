@@ -44,6 +44,7 @@ source_set("content_settings") {
     sources += [
       "generated_cookie_prefs.h",
       "generated_permission_prompting_behavior_pref.h",
+      "generated_tel_toggle_pref.h",
     ]
 
     if (enable_extensions) {
@@ -102,6 +103,7 @@ source_set("impl") {
     sources += [
       "generated_cookie_prefs.cc",
       "generated_permission_prompting_behavior_pref.cc",
+      "generated_tel_toggle_pref.cc",
     ]
 
     deps += [

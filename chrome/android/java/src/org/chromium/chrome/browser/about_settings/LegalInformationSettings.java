@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.about_settings;
 
-
 import android.os.Bundle;
 
 import androidx.preference.PreferenceFragmentCompat;

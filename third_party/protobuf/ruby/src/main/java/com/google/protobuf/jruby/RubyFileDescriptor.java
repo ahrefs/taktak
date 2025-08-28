@@ -35,6 +35,7 @@ package com.google.protobuf.jruby;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.Descriptors.GenericDescriptor;
+
 import org.jruby.*;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
@@ -98,31 +99,33 @@ public class RubyFileDescriptor extends RubyObject {
         CodedInputStream.newInstance(
             fileDescriptor.getOptions().toByteString().toByteArray()), /*freeze*/
         true);
-  }
+    }
 
-  /*
-   * call-seq:
-   *     FileDescriptor.to_proto => FileDescriptorProto
-   *
-   * Returns the `FileDescriptorProto` of this `FileDescriptor`.
-   */
-  @JRubyMethod(name = "to_proto")
-  public IRubyObject toProto(ThreadContext context) {
-    RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
-    RubyDescriptor fileDescriptorProto =
-        (RubyDescriptor)
-            pool.lookup(context, context.runtime.newString("google.protobuf.FileDescriptorProto"));
-    RubyClass msgClass = (RubyClass) fileDescriptorProto.msgclass(context);
-    RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
-    return msg.decodeBytes(
-        context,
-        msg,
-        CodedInputStream.newInstance(
-            fileDescriptor.toProto().toByteString().toByteArray()), /*freeze*/
-        true);
-  }
+    /*
+     * call-seq:
+     *     FileDescriptor.to_proto => FileDescriptorProto
+     *
+     * Returns the `FileDescriptorProto` of this `FileDescriptor`.
+     */
+    @JRubyMethod(name = "to_proto")
+    public IRubyObject toProto(ThreadContext context) {
+        RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
+        RubyDescriptor fileDescriptorProto =
+                (RubyDescriptor)
+                        pool.lookup(
+                                context,
+                                context.runtime.newString("google.protobuf.FileDescriptorProto"));
+        RubyClass msgClass = (RubyClass) fileDescriptorProto.msgclass(context);
+        RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
+        return msg.decodeBytes(
+                context,
+                msg,
+                CodedInputStream.newInstance(
+                        fileDescriptor.toProto().toByteString().toByteArray()), /*freeze*/
+                true);
+    }
 
-  private static RubyClass cFileDescriptor;
+    private static RubyClass cFileDescriptor;
 
   private FileDescriptor fileDescriptor;
 }

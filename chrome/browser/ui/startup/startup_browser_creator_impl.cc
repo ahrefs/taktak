@@ -59,6 +59,8 @@
 #include "content/public/browser/dom_storage_context.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/common/content_switches.h"
+#include "base/no_destructor.h"
+#include "chrome/browser/ui/startup/update_notifier/browser_activity_observer.h"
 
 #if BUILDFLAG(IS_MAC)
 #include "base/mac/mac_util.h"
@@ -114,6 +116,8 @@ void PrependTabs(const StartupTabs& from, StartupTabs* to) {
 
 }  // namespace
 
+static base::NoDestructor<std::unique_ptr<BrowserActivityObserver>> activity_observer_;
+
 StartupBrowserCreatorImpl::StartupBrowserCreatorImpl(
     const base::FilePath& cur_dir,
     const base::CommandLine& command_line,
@@ -149,6 +153,10 @@ void StartupBrowserCreatorImpl::Launch(
     bool restore_tabbed_browser) {
   DCHECK(profile);
   profile_ = profile;
+
+  if (!(*activity_observer_)) {
+    *activity_observer_ = std::make_unique<BrowserActivityObserver>();
+  }
 
   DetermineURLsAndLaunch(process_startup, restore_tabbed_browser);
 

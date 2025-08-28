@@ -57,7 +57,7 @@ public class UsbChooserDialog implements ItemChooserDialog.ItemSelectedCallback 
      * @param activity Activity which is used for launching a dialog.
      * @param origin The origin for the site wanting to connect to the USB device.
      * @param securityLevel The security level of the connection to the site wanting to connect to
-     *                      the USB device. For valid values see SecurityStateModel::SecurityLevel.
+     *     the USB device. For valid values see SecurityStateModel::SecurityLevel.
      */
     @VisibleForTesting
     @Initializer

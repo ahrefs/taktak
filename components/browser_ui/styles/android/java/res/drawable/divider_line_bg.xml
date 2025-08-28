@@ -5,8 +5,14 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<<<<<<<< HEAD:chrome/android/features/tab_ui/java/res/color/tab_grid_dialog_bg_color.xml
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:color="?attr/colorSurface" />
+</selector>
+========
 <shape
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
   <solid android:color="@macro/divider_line_bg_color"/>
 </shape>
+>>>>>>>> tt139_0_7258_150/develop:components/browser_ui/styles/android/java/res/drawable/divider_line_bg.xml

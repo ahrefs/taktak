@@ -18,8 +18,8 @@ public class NightModeMetrics {
     /**
      * Entries that navigate the user into Theme Settings.
      *
-     * This is used for histograms and should therefore be treated as append-only.
-     * See AndroidThemeSettingsEntry in tools/metrics/histograms/enums.xml.
+     * <p>This is used for histograms and should therefore be treated as append-only. See
+     * AndroidThemeSettingsEntry in tools/metrics/histograms/enums.xml.
      */
     @IntDef({ThemeSettingsEntry.SETTINGS, ThemeSettingsEntry.AUTO_DARK_MODE_MESSAGE})
     @Retention(RetentionPolicy.SOURCE)

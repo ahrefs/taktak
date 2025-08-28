@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Creates a {@link PersistedTabData}
+ *
  * @param <T> {@link PersistedTabData} being created
  */
 @NullMarked

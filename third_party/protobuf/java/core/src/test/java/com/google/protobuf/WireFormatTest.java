@@ -9,6 +9,11 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.UnittestMset.RawMessageSet;
 import proto2_unittest.UnittestMset.TestMessageSetExtension1;
 import proto2_unittest.UnittestMset.TestMessageSetExtension2;
@@ -21,14 +26,12 @@ import proto2_unittest.UnittestProto.TestOneof2;
 import proto2_unittest.UnittestProto.TestOneofBackwardsCompatible;
 import proto2_unittest.UnittestProto.TestPackedExtensions;
 import proto2_unittest.UnittestProto.TestPackedTypes;
+
 import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Tests related to parsing and serialization. */
 @RunWith(JUnit4.class)

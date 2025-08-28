@@ -9,6 +9,8 @@ import("//ui/webui/webui_features.gni")
 
 source_set("toolbar") {
   sources = [
+    "ai_chat_toolbar_button.cc",
+    "ai_chat_toolbar_button.h",
     "app_menu.cc",
     "app_menu.h",
     "back_forward_button.cc",

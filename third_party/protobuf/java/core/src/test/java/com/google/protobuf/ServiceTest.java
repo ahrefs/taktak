@@ -9,11 +9,19 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.Descriptors.MethodDescriptor;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
+
 import proto2_unittest.MessageWithNoOuter;
 import proto2_unittest.ServiceWithNoOuter;
 import proto2_unittest.UnittestProto.BarRequest;
@@ -23,13 +31,9 @@ import proto2_unittest.UnittestProto.FooResponse;
 import proto2_unittest.UnittestProto.TestAllTypes;
 import proto2_unittest.UnittestProto.TestService;
 import proto2_unittest.no_generic_services_test.UnittestNoGenericServices;
+
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-import org.mockito.InOrder;
-import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class ServiceTest {
@@ -190,10 +194,9 @@ public class ServiceTest {
     assertThat(message.getA()).isEqualTo(123);
     assertThat(UnittestNoGenericServices.TestEnum.FOO.getNumber()).isEqualTo(1);
 
-    // Build a list of the class names nested in UnittestNoGenericServices.
-    String outerName =
-        "proto2_unittest.no_generic_services_test.UnittestNoGenericServices";
-    Class<?> outerClass = Class.forName(outerName);
+        // Build a list of the class names nested in UnittestNoGenericServices.
+        String outerName = "proto2_unittest.no_generic_services_test.UnittestNoGenericServices";
+        Class<?> outerClass = Class.forName(outerName);
 
     Set<String> innerClassNames = new HashSet<>();
     for (Class<?> innerClass : outerClass.getClasses()) {

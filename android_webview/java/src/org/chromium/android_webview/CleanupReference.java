@@ -124,8 +124,7 @@ public class CleanupReference extends WeakReference<Object> {
     }
 
     /**
-     * Keep a strong reference to {@link CleanupReference} so that it will
-     * actually get enqueued.
+     * Keep a strong reference to {@link CleanupReference} so that it will actually get enqueued.
      * Only accessed on the UI thread.
      */
     private static final Set<CleanupReference> sRefs = new HashSet<CleanupReference>();

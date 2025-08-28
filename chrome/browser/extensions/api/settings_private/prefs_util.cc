@@ -375,6 +375,8 @@ const PrefsUtil::TypedPrefMap& PrefsUtil::GetAllowlistedKeys() {
       settings_api::PrefType::kBoolean;
   (*s_allowlist)[::kGeneratedHttpsFirstModePref] =
       settings_api::PrefType::kNumber;
+  (*s_allowlist)[browsing_data::prefs::kTaktakTelEnabled] =
+      settings_api::PrefType::kBoolean;
   (*s_allowlist)[::prefs::kSecuritySettingsBundle] =
       settings_api::PrefType::kNumber;
   (*s_allowlist)[::safe_browsing::kGeneratedSecuritySettingsBundlePref] =

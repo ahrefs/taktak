@@ -11,11 +11,14 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import any_test.AnyTestProto.TestAny;
-import proto2_unittest.UnittestProto.TestAllTypes;
-import java.util.Objects;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.TestAllTypes;
+
+import java.util.Objects;
 
 /** Unit tests for Any message. */
 @RunWith(JUnit4.class)

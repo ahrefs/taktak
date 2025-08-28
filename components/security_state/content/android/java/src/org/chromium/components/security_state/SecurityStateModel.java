@@ -20,7 +20,6 @@ public class SecurityStateModel {
      *
      * @param webContents The web contents to get the security level for.
      * @return The ConnectionSecurityLevel for the specified web contents.
-     *
      * @see ConnectionSecurityLevel
      */
     public static int getSecurityLevelForWebContents(@Nullable WebContents webContents) {

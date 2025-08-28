@@ -14,8 +14,8 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.chrome.browser.profiles.Profile;
 
 /**
- * Bridge for native |AndroidSessionDurationsService| state, for storage and retrieval
- * of Incognito session duration metrics.
+ * Bridge for native |AndroidSessionDurationsService| state, for storage and retrieval of Incognito
+ * session duration metrics.
  */
 @NullMarked
 public class AndroidSessionDurationsServiceState {

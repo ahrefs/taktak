@@ -918,6 +918,7 @@
 
 系統會封鎖同時符合封鎖和許可政策模式的來源。如果不是政策或使用者設定中指定的來源，則只能在使用者做出手勢後呼叫這個 API。</translation>
 <translation id="1645793986494086629">架構：</translation>
+<translation id="1647420986475965896">網址列和新分頁搜尋框的 AI 模式搜尋建議設定</translation>
 <translation id="1647558381546345298">設定這項政策後，無論使用者是否指定 --media-cache-size 旗標，<ph name="PRODUCT_NAME" /> 都會使用你設定的快取大小，在磁碟上儲存快取媒體檔案。這項政策所指定的值並非不可變動的界線，而是提供給快取系統的建議值。MB 以下的值會進位為 MB。
 
       如果將這項政策的值設為 0，系統會使用預設的快取大小，且使用者無法變更設定。
@@ -2337,6 +2338,16 @@
 <translation id="2702682139813393777">強制透過 cmd.exe 啟動 Windows 內建訊息傳遞主機</translation>
 <translation id="270582584528242502">使用者嘗試關閉瀏覽器時，不會顯示警告對話方塊</translation>
 <translation id="2706708761587205154">只在 PIN 碼啟用時允許列印</translation>
+<translation id="2706972066112233185">這項政策會控管網址列和新分頁搜尋框的 AI 模式建議專區。
+
+除非將這項政策設為停用，否則所有將預設搜尋引擎設為 Google 的使用者都能使用這項功能。
+
+如果未設定這項政策，系統會根據 <ph name="GEN_AI_DEFAULT_SETTINGS_POLICY_NAME" /> 政策決定其行為。
+
+如果將政策設為「0 - 啟用」或未設定，使用者就能存取這項功能。如果將政策設為「1 - 停用」，使用者將無法存取這項功能。
+
+0 = 允許使用這項功能。
+1 = 不允許使用這項功能。</translation>
 <translation id="2707733461906745082">設定檔區隔</translation>
 <translation id="2707873794476722903">已啟用標準模式中的安全瀏覽功能。</translation>
 <translation id="2709516037105925701">自動填入</translation>
@@ -3925,6 +3936,7 @@ SwiftShader 曾在沒有 GPU 加速功能的系統 (例如無頭系統或虛擬�
 
  如未設定這項政策、設為空白或無效值，系統就不會在列印工作要求中新增額外的 <ph name="CLIENT_INFO_IPP_ATTRIBUTE" />。
 </translation>
+<translation id="3895626555961466729">允許使用 AI 模式建議。</translation>
 <translation id="3896591584655529057">允許使用密碼管理工具儲存密碼金鑰</translation>
 <translation id="3896751141670591496">如果將這項政策設為啟用或不設定，使用具有安全疑慮的指令列旗標啟動 Chrome 時，系統將顯示安全性警告。
 
@@ -10147,6 +10159,7 @@ Origin-Agent-Cluster HTTP 標頭會控制文件要在 origin-keyed 代理程式�
 
       如果停用這項政策，對於螢幕畫面分享 API 的任何呼叫就會失敗並傳回錯誤訊息；不過，如果網站與下列任何政策中的來源模式相符，系統就不會考量這項政策 (網站將可以使用螢幕畫面分享 API)：<ph name="SCREEN_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />、<ph name="WINDOW_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />、<ph name="TAB_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />、<ph name="SAME_ORIGIN_TAB_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />。
       </translation>
+<translation id="8309511882585098865">不允許使用 AI 模式建議。</translation>
 <translation id="8310392396850884147">支援 CORS 非萬用字元要求標頭。</translation>
 <translation id="8312129124898414409">允許您設定網站是否可以使用金鑰產生功能。您可以允許或禁止所有網站使用金鑰產生功能。
 

@@ -22,17 +22,9 @@ import java.util.List;
  * element is selected.
  *
  * @param <T> The type of element to be inserted into the adapter.
- *
- *
- * collapsed view:       --------          Expanded view:   ------------
- *                                                         . hint       .
- *                                                         ..............
- * (no item selected)   | hint   |                         | option 1   |
- *                       --------                          |------------|
- *                                                         | option 2   |
- * collapsed view:       ----------                        |------------|
- * (with selected item) | option X |                       .    ...     .
- *                       ----------                        .------------.
+ *     <p>collapsed view: -------- Expanded view: ------------ . hint . .............. (no item
+ *     selected) | hint | | option 1 | -------- |------------| | option 2 | collapsed view:
+ *     ---------- |------------| (with selected item) | option X | . ... . ---------- .------------.
  */
 @NullMarked
 class HintedDropDownAdapter<T> extends DropdownFieldAdapter<T> {
@@ -42,12 +34,12 @@ class HintedDropDownAdapter<T> extends DropdownFieldAdapter<T> {
     /**
      * Creates an array adapter for which the first element is a hint.
      *
-     * @param context            The current context.
-     * @param resource           The resource ID for a layout file containing a layout to use when
-     *                           instantiating views.
+     * @param context The current context.
+     * @param resource The resource ID for a layout file containing a layout to use when
+     *     instantiating views.
      * @param textViewResourceId The id of the TextView within the layout resource to be populated.
-     * @param objects            The objects to represent in the ListView.
-     * @param hint               The element to be used as a hint when no element is selected.
+     * @param objects The objects to represent in the ListView.
+     * @param hint The element to be used as a hint when no element is selected.
      */
     public HintedDropDownAdapter(
             Context context, int resource, int textViewResourceId, List<T> objects, T hint) {

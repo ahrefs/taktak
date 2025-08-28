@@ -67,6 +67,10 @@ inline constexpr char kLastClearBrowsingDataTab[] =
 inline constexpr char kMigratedToQuickDeletePrefValues[] =
     "browser.migrated_to_quick_delete_pref_values";
 
+// Taktak Chat & Tel
+inline constexpr char kChatThinkingEnabled[] = "chat.thinking_enabled";
+inline constexpr char kTaktakTelEnabled[] = "taktak.tel_enabled";
+
 // Registers the Clear Browsing Data UI prefs.
 void RegisterBrowserUserPrefs(user_prefs::PrefRegistrySyncable* registry);
 

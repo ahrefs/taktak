@@ -11,8 +11,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.protobuf.TestUtil.TEST_REQUIRED_INITIALIZED;
 import static com.google.protobuf.TestUtil.TEST_REQUIRED_UNINITIALIZED;
-import static proto2_unittest.UnittestProto.optionalInt32Extension;
+
 import static org.junit.Assert.assertThrows;
+
+import static proto2_unittest.UnittestProto.optionalInt32Extension;
+
+import any_test.AnyTestProto.TestAny;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
@@ -25,13 +29,20 @@ import com.google.protobuf.TextFormat.InvalidEscapeSequenceException;
 import com.google.protobuf.TextFormat.Parser.SingularOverwritePolicy;
 import com.google.protobuf.testing.proto.TestProto3Optional;
 import com.google.protobuf.testing.proto.TestProto3Optional.NestedEnum;
-import any_test.AnyTestProto.TestAny;
+
 import editions_unittest.GroupLikeFileScope;
 import editions_unittest.MessageImport;
 import editions_unittest.NotGroupLikeScope;
 import editions_unittest.TestDelimited;
 import editions_unittest.UnittestDelimited;
+
 import map_test.MapTestProto.TestMap;
+
+import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.UnittestMset.TestMessageSetExtension1;
 import proto2_unittest.UnittestMset.TestMessageSetExtension2;
 import proto2_unittest.UnittestProto.OneString;
@@ -42,16 +53,13 @@ import proto2_unittest.UnittestProto.TestEmptyMessage;
 import proto2_unittest.UnittestProto.TestOneof2;
 import proto2_unittest.UnittestProto.TestRecursiveMessage;
 import proto2_unittest.UnittestProto.TestRequired;
-import proto2_unittest.UnittestProto.TestReservedFields;
+
 import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
+
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
-import org.junit.Test;
-import org.junit.function.ThrowingRunnable;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Test case for {@link TextFormat}. */
 @RunWith(JUnit4.class)
@@ -66,36 +74,36 @@ public class TextFormatTest {
       "\\\"A string with \\' characters \\n and \\r newlines "
           + "and \\t tabs and \\001 slashes \\\\";
 
-  private static final String EXOTIC_TEXT =
-      ""
-          + "repeated_int32: -1\n"
-          + "repeated_int32: -2147483648\n"
-          + "repeated_int64: -1,\n"
-          + "repeated_int64: -9223372036854775808\n"
-          + "repeated_uint32: 4294967295\n"
-          + "repeated_uint32: 2147483648\n"
-          + "repeated_uint64: 18446744073709551615\n"
-          + "repeated_uint64: 9223372036854775808\n"
-          + "repeated_double: 123.0\n"
-          + "repeated_double: 123.5\n"
-          + "repeated_double: 0.125\n"
-          + "repeated_double: .125\n"
-          + "repeated_double: -.125\n"
-          + "repeated_double: .0\n"
-          + "repeated_double: 1.23E17\n"
-          + "repeated_double: 1.23E+17\n"
-          + "repeated_double: -1.23e-17\n"
-          + "repeated_double: .23e+17\n"
-          + "repeated_double: -.23E17\n"
-          + "repeated_double: 1.235E22\n"
-          + "repeated_double: 1.235E-18\n"
-          + "repeated_double: 123.456789\n"
-          + "repeated_double: Infinity\n"
-          + "repeated_double: -Infinity\n"
-          + "repeated_double: NaN\n"
-          + "repeated_string: \"\\000\\001\\a\\b\\f\\n\\r\\t\\v\\\\\\'\\\""
-          + "\\341\\210\\264\"\n"
-          + "repeated_bytes: \"\\000\\001\\a\\b\\f\\n\\r\\t\\v\\\\\\'\\\"\\376\"\n";
+    private static final String EXOTIC_TEXT =
+            ""
+                    + "repeated_int32: -1\n"
+                    + "repeated_int32: -2147483648\n"
+                    + "repeated_int64: -1,\n"
+                    + "repeated_int64: -9223372036854775808\n"
+                    + "repeated_uint32: 4294967295\n"
+                    + "repeated_uint32: 2147483648\n"
+                    + "repeated_uint64: 18446744073709551615\n"
+                    + "repeated_uint64: 9223372036854775808\n"
+                    + "repeated_double: 123.0\n"
+                    + "repeated_double: 123.5\n"
+                    + "repeated_double: 0.125\n"
+                    + "repeated_double: .125\n"
+                    + "repeated_double: -.125\n"
+                    + "repeated_double: .0\n"
+                    + "repeated_double: 1.23E17\n"
+                    + "repeated_double: 1.23E+17\n"
+                    + "repeated_double: -1.23e-17\n"
+                    + "repeated_double: .23e+17\n"
+                    + "repeated_double: -.23E17\n"
+                    + "repeated_double: 1.235E22\n"
+                    + "repeated_double: 1.235E-18\n"
+                    + "repeated_double: 123.456789\n"
+                    + "repeated_double: Infinity\n"
+                    + "repeated_double: -Infinity\n"
+                    + "repeated_double: NaN\n"
+                    + "repeated_string: \"\\000\\001\\a\\b\\f\\n\\r\\t\\v\\\\\\'\\\""
+                    + "\\341\\210\\264\"\n"
+                    + "repeated_bytes: \"\\000\\001\\a\\b\\f\\n\\r\\t\\v\\\\\\'\\\"\\376\"\n";
 
   private static final String CANONICAL_EXOTIC_TEXT =
       EXOTIC_TEXT
@@ -106,23 +114,23 @@ public class TextFormatTest {
           .replace("0.23E17", "2.3E16")
           .replace(",", "");
 
-  private static final String MESSAGE_SET_TEXT =
-      ""
-          + "[proto2_unittest.TestMessageSetExtension1] {\n"
-          + "  i: 123\n"
-          + "}\n"
-          + "[proto2_unittest.TestMessageSetExtension2] {\n"
-          + "  str: \"foo\"\n"
-          + "}\n";
+    private static final String MESSAGE_SET_TEXT =
+            ""
+                    + "[proto2_unittest.TestMessageSetExtension1] {\n"
+                    + "  i: 123\n"
+                    + "}\n"
+                    + "[proto2_unittest.TestMessageSetExtension2] {\n"
+                    + "  str: \"foo\"\n"
+                    + "}\n";
 
-  private static final String MESSAGE_SET_TEXT_WITH_REPEATED_EXTENSION =
-      ""
-          + "[proto2_unittest.TestMessageSetExtension1] {\n"
-          + "  i: 123\n"
-          + "}\n"
-          + "[proto2_unittest.TestMessageSetExtension1] {\n"
-          + "  i: 456\n"
-          + "}\n";
+    private static final String MESSAGE_SET_TEXT_WITH_REPEATED_EXTENSION =
+            ""
+                    + "[proto2_unittest.TestMessageSetExtension1] {\n"
+                    + "  i: 123\n"
+                    + "}\n"
+                    + "[proto2_unittest.TestMessageSetExtension1] {\n"
+                    + "  i: 456\n"
+                    + "}\n";
 
   private static final TextFormat.Parser PARSER_ALLOWING_UNKNOWN_FIELDS =
       TextFormat.Parser.newBuilder().setAllowUnknownFields(true).build();
@@ -240,46 +248,49 @@ public class TextFormatTest {
 
     assertThat(TextFormat.printer().printFieldToString(optionalField, value))
         .isEqualTo("optional_nested_message {\n  bb: 42\n}\n");
-  }
+    }
 
-  @Test
-  public void testPrintRepeatedFieldUsingShortRepeatedPrimitives_usesRegularNotationForMessageType()
-      throws Exception {
-    final FieldDescriptor repeatedMessageField =
-        TestAllTypes.getDescriptor().findFieldByName("repeated_nested_message");
-    assertThat(
-            TextFormat.printer()
-                .usingShortRepeatedPrimitives(true)
-                .printFieldToString(
-                    repeatedMessageField,
-                    ImmutableList.of(
-                        TestAllTypes.NestedMessage.getDefaultInstance(),
-                        TestAllTypes.NestedMessage.getDefaultInstance())))
-        .isEqualTo("repeated_nested_message {\n}\nrepeated_nested_message {\n}\n");
-  }
+    @Test
+    public void
+            testPrintRepeatedFieldUsingShortRepeatedPrimitives_usesRegularNotationForMessageType()
+                    throws Exception {
+        final FieldDescriptor repeatedMessageField =
+                TestAllTypes.getDescriptor().findFieldByName("repeated_nested_message");
+        assertThat(
+                        TextFormat.printer()
+                                .usingShortRepeatedPrimitives(true)
+                                .printFieldToString(
+                                        repeatedMessageField,
+                                        ImmutableList.of(
+                                                TestAllTypes.NestedMessage.getDefaultInstance(),
+                                                TestAllTypes.NestedMessage.getDefaultInstance())))
+                .isEqualTo("repeated_nested_message {\n}\nrepeated_nested_message {\n}\n");
+    }
 
-  @Test
-  public void testPrintRepeatedFieldUsingShortRepeatedPrimitives_usesShortNotationForPrimitiveType()
-      throws Exception {
-    final FieldDescriptor repeatedInt32Field =
-        TestAllTypes.getDescriptor().findFieldByName("repeated_int32");
-    assertThat(
-            TextFormat.printer()
-                .usingShortRepeatedPrimitives(true)
-                .printFieldToString(repeatedInt32Field, ImmutableList.of(0)))
-        .isEqualTo("repeated_int32: [0]\n");
-    assertThat(
-            TextFormat.printer()
-                .usingShortRepeatedPrimitives(true)
-                .printFieldToString(repeatedInt32Field, ImmutableList.of(0, 1, 2, 3)))
-        .isEqualTo("repeated_int32: [0, 1, 2, 3]\n");
-  }
+    @Test
+    public void
+            testPrintRepeatedFieldUsingShortRepeatedPrimitives_usesShortNotationForPrimitiveType()
+                    throws Exception {
+        final FieldDescriptor repeatedInt32Field =
+                TestAllTypes.getDescriptor().findFieldByName("repeated_int32");
+        assertThat(
+                        TextFormat.printer()
+                                .usingShortRepeatedPrimitives(true)
+                                .printFieldToString(repeatedInt32Field, ImmutableList.of(0)))
+                .isEqualTo("repeated_int32: [0]\n");
+        assertThat(
+                        TextFormat.printer()
+                                .usingShortRepeatedPrimitives(true)
+                                .printFieldToString(
+                                        repeatedInt32Field, ImmutableList.of(0, 1, 2, 3)))
+                .isEqualTo("repeated_int32: [0, 1, 2, 3]\n");
+    }
 
-  /**
-   * Helper to construct a ByteString from a String containing only 8-bit characters. The characters
-   * are converted directly to bytes, *not* encoded using UTF-8.
-   */
-  private ByteString bytes(String str) {
+    /**
+     * Helper to construct a ByteString from a String containing only 8-bit characters. The
+     * characters are converted directly to bytes, *not* encoded using UTF-8.
+     */
+    private ByteString bytes(String str) {
     return ByteString.copyFrom(str.getBytes(Internal.ISO_8859_1));
   }
 
@@ -297,41 +308,41 @@ public class TextFormatTest {
 
   @Test
   public void testPrintExotic() throws Exception {
-    Message message =
-        TestAllTypes.newBuilder()
-            // Signed vs. unsigned numbers.
-            .addRepeatedInt32(-1)
-            .addRepeatedUint32(-1)
-            .addRepeatedInt64(-1)
-            .addRepeatedUint64(-1)
-            .addRepeatedInt32(1 << 31)
-            .addRepeatedUint32(1 << 31)
-            .addRepeatedInt64(1L << 63)
-            .addRepeatedUint64(1L << 63)
+        Message message =
+                TestAllTypes.newBuilder()
+                        // Signed vs. unsigned numbers.
+                        .addRepeatedInt32(-1)
+                        .addRepeatedUint32(-1)
+                        .addRepeatedInt64(-1)
+                        .addRepeatedUint64(-1)
+                        .addRepeatedInt32(1 << 31)
+                        .addRepeatedUint32(1 << 31)
+                        .addRepeatedInt64(1L << 63)
+                        .addRepeatedUint64(1L << 63)
 
-            // Floats of various precisions and exponents.
-            .addRepeatedDouble(123)
-            .addRepeatedDouble(123.5)
-            .addRepeatedDouble(0.125)
-            .addRepeatedDouble(.125)
-            .addRepeatedDouble(-.125)
-            .addRepeatedDouble(.0)
-            .addRepeatedDouble(123e15)
-            .addRepeatedDouble(123e15)
-            .addRepeatedDouble(-1.23e-17)
-            .addRepeatedDouble(.23e17)
-            .addRepeatedDouble(-23e15)
-            .addRepeatedDouble(123.5e20)
-            .addRepeatedDouble(123.5e-20)
-            .addRepeatedDouble(123.456789)
-            .addRepeatedDouble(Double.POSITIVE_INFINITY)
-            .addRepeatedDouble(Double.NEGATIVE_INFINITY)
-            .addRepeatedDouble(Double.NaN)
+                        // Floats of various precisions and exponents.
+                        .addRepeatedDouble(123)
+                        .addRepeatedDouble(123.5)
+                        .addRepeatedDouble(0.125)
+                        .addRepeatedDouble(.125)
+                        .addRepeatedDouble(-.125)
+                        .addRepeatedDouble(.0)
+                        .addRepeatedDouble(123e15)
+                        .addRepeatedDouble(123e15)
+                        .addRepeatedDouble(-1.23e-17)
+                        .addRepeatedDouble(.23e17)
+                        .addRepeatedDouble(-23e15)
+                        .addRepeatedDouble(123.5e20)
+                        .addRepeatedDouble(123.5e-20)
+                        .addRepeatedDouble(123.456789)
+                        .addRepeatedDouble(Double.POSITIVE_INFINITY)
+                        .addRepeatedDouble(Double.NEGATIVE_INFINITY)
+                        .addRepeatedDouble(Double.NaN)
 
-            // Strings and bytes that needing escaping.
-            .addRepeatedString("\0\001\007\b\f\n\r\t\013\\\'\"\u1234")
-            .addRepeatedBytes(bytes("\0\001\007\b\f\n\r\t\013\\\'\"\u00fe"))
-            .build();
+                        // Strings and bytes that needing escaping.
+                        .addRepeatedString("\0\001\007\b\f\n\r\t\013\\\'\"\u1234")
+                        .addRepeatedBytes(bytes("\0\001\007\b\f\n\r\t\013\\\'\"\u00fe"))
+                        .build();
 
     assertThat(message.toString()).isEqualTo(CANONICAL_EXOTIC_TEXT);
   }
@@ -536,13 +547,13 @@ public class TextFormatTest {
           MESSAGE_SET_TEXT_WITH_REPEATED_EXTENSION, extensionRegistry, builder);
       assertWithMessage("expected parse exception").fail();
     } catch (TextFormat.ParseException e) {
-      assertThat(e)
-          .hasMessageThat()
-          .isEqualTo(
-              "4:42: Non-repeated field "
-                  + "\"proto2_unittest.TestMessageSetExtension1.message_set_extension\""
-                  + " cannot be overwritten.");
-    }
+            assertThat(e)
+                    .hasMessageThat()
+                    .isEqualTo(
+                            "4:42: Non-repeated field "
+                                + "\"proto2_unittest.TestMessageSetExtension1.message_set_extension\""
+                                + " cannot be overwritten.");
+        }
   }
 
   @Test
@@ -588,12 +599,12 @@ public class TextFormatTest {
         TextFormat.printer()
             .usingTypeRegistry(TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
             .printToString(testAny);
-    String expected =
-        "value {\n"
-            + "  [type.googleapis.com/proto2_unittest.TestAllTypes] {\n"
-            + "    optional_int32: 12345\n"
-            + "  }\n"
-            + "}\n";
+        String expected =
+                "value {\n"
+                        + "  [type.googleapis.com/proto2_unittest.TestAllTypes] {\n"
+                        + "    optional_int32: 12345\n"
+                        + "  }\n"
+                        + "}\n";
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -637,14 +648,15 @@ public class TextFormatTest {
                 descriptor.findFieldByNumber(2),
                 TestAllTypes.newBuilder().setOptionalInt32(12345).build().toByteString())
             .build();
-    String actual =
-        TextFormat.printer()
-            .usingTypeRegistry(TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
-            .printToString(testAny);
-    String expected =
-        "[type.googleapis.com/proto2_unittest.TestAllTypes] {\n"
-            + "  optional_int32: 12345\n"
-            + "}\n";
+        String actual =
+                TextFormat.printer()
+                        .usingTypeRegistry(
+                                TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
+                        .printToString(testAny);
+        String expected =
+                "[type.googleapis.com/proto2_unittest.TestAllTypes] {\n"
+                        + "  optional_int32: 12345\n"
+                        + "}\n";
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -677,13 +689,15 @@ public class TextFormatTest {
                     .build()
                     .toByteString())
             .build();
-    String actual =
-        TextFormat.printer()
-            .usingTypeRegistry(TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
-            .printToString(testAny);
-    String expected = "[type.googleapis.com/proto2_unittest.TestAllExtensions] {\n  1: 12345\n}\n";
-    assertThat(actual).isEqualTo(expected);
-  }
+        String actual =
+                TextFormat.printer()
+                        .usingTypeRegistry(
+                                TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
+                        .printToString(testAny);
+        String expected =
+                "[type.googleapis.com/proto2_unittest.TestAllExtensions] {\n  1: 12345\n}\n";
+        assertThat(actual).isEqualTo(expected);
+    }
 
   @Test
   public void testPrintAny_anyWithDynamicMessageContainingExtensionWithRegistry() throws Exception {
@@ -713,16 +727,17 @@ public class TextFormatTest {
                     .build()
                     .toByteString())
             .build();
-    String actual =
-        TextFormat.printer()
-            .usingTypeRegistry(TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
-            .usingExtensionRegistry(TestUtil.getFullExtensionRegistry())
-            .printToString(testAny);
-    String expected =
-        "[type.googleapis.com/proto2_unittest.TestAllExtensions] {\n"
-            + "  [proto2_unittest.optional_int32_extension]: 12345\n"
-            + "}\n";
-    assertThat(actual).isEqualTo(expected);
+        String actual =
+                TextFormat.printer()
+                        .usingTypeRegistry(
+                                TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
+                        .usingExtensionRegistry(TestUtil.getFullExtensionRegistry())
+                        .printToString(testAny);
+        String expected =
+                "[type.googleapis.com/proto2_unittest.TestAllExtensions] {\n"
+                        + "  [proto2_unittest.optional_int32_extension]: 12345\n"
+                        + "}\n";
+        assertThat(actual).isEqualTo(expected);
   }
 
   @Test
@@ -741,13 +756,14 @@ public class TextFormatTest {
                 descriptor.findFieldByNumber(1),
                 "type.googleapis.com/" + TestAllTypes.getDescriptor().getFullName())
             .build();
-    String actual =
-        TextFormat.printer()
-            .usingTypeRegistry(TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
-            .printToString(testAny);
-    String expected = "type_url: \"type.googleapis.com/proto2_unittest.TestAllTypes\"\n";
-    assertThat(actual).isEqualTo(expected);
-  }
+        String actual =
+                TextFormat.printer()
+                        .usingTypeRegistry(
+                                TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
+                        .printToString(testAny);
+        String expected = "type_url: \"type.googleapis.com/proto2_unittest.TestAllTypes\"\n";
+        assertThat(actual).isEqualTo(expected);
+    }
 
   @Test
   public void testPrintAny_anyFromWithNoTypeUrlField() throws Exception {
@@ -796,31 +812,34 @@ public class TextFormatTest {
                 "type.googleapis.com/" + TestAllTypes.getDescriptor().getFullName())
             .setField(descriptor.findFieldByNumber(2), "test")
             .build();
-    String actual =
-        TextFormat.printer()
-            .usingTypeRegistry(TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
-            .printToString(testAny);
-    String expected =
-        "type_url: \"type.googleapis.com/proto2_unittest.TestAllTypes\"\n" + "value: \"test\"\n";
-    assertThat(actual).isEqualTo(expected);
-  }
+        String actual =
+                TextFormat.printer()
+                        .usingTypeRegistry(
+                                TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
+                        .printToString(testAny);
+        String expected =
+                "type_url: \"type.googleapis.com/proto2_unittest.TestAllTypes\"\n"
+                        + "value: \"test\"\n";
+        assertThat(actual).isEqualTo(expected);
+    }
 
   @Test
   public void testMergeAny_customBuiltTypeRegistry() throws Exception {
     TestAny.Builder builder = TestAny.newBuilder();
-    TextFormat.Parser.newBuilder()
-        .setTypeRegistry(TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
-        .build()
-        .merge(
-            "value: {\n"
-                + "[type.googleapis.com/proto2_unittest.TestAllTypes] {\n"
-                + "optional_int32: 12345\n"
-                + "optional_nested_message {\n"
-                + "  bb: 123\n"
-                + "}\n"
-                + "}\n"
-                + "}",
-            builder);
+        TextFormat.Parser.newBuilder()
+                .setTypeRegistry(
+                        TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
+                .build()
+                .merge(
+                        "value: {\n"
+                                + "[type.googleapis.com/proto2_unittest.TestAllTypes] {\n"
+                                + "optional_int32: 12345\n"
+                                + "optional_nested_message {\n"
+                                + "  bb: 123\n"
+                                + "}\n"
+                                + "}\n"
+                                + "}",
+                        builder);
     assertThat(builder.build())
         .isEqualTo(
             TestAny.newBuilder()
@@ -930,33 +949,34 @@ public class TextFormatTest {
     assertParseError("1:18: Invalid escape sequence: '\\z'", "optional_string: \"\\z\"");
     assertParseError(
         "1:18: String missing ending quote.", "optional_string: \"ueoauaoe\noptional_int32: 123");
-    assertParseError(
-        "1:2: Input contains unknown fields and/or extensions:\n"
-            + "1:2:\tproto2_unittest.TestAllTypes.[nosuchext]",
-        "[nosuchext]: 123");
-    assertParseError(
-        "1:18: Extension \"proto2_unittest.optional_int32_extension\" does "
-            + "not extend message type \"proto2_unittest.TestAllTypes\".",
-        "[proto2_unittest.optional_int32_extension]: 123");
-    assertParseError(
-        "1:1: Input contains unknown fields and/or extensions:\n"
-            + "1:1:\tproto2_unittest.TestAllTypes.nosuchfield",
-        "nosuchfield: 123");
-    assertParseError("1:21: Expected \">\".", "OptionalGroup < a: 1");
-    assertParseError(
-        "1:23: Enum type \"proto2_unittest.TestAllTypes.NestedEnum\" has no "
-            + "value named \"NO_SUCH_VALUE\".",
-        "optional_nested_enum: NO_SUCH_VALUE");
-    assertParseError(
-        "1:23: Enum type \"proto2_unittest.TestAllTypes.NestedEnum\" has no "
-            + "value with number 123.",
-        "optional_nested_enum: 123");
-    assertParseError("1:18: Couldn't parse number: For input string: \".\"", "repeated_double: .");
-    assertParseError(
-        "1:18: Couldn't parse number: For input string: \".+\"", "repeated_double: .+");
+        assertParseError(
+                "1:2: Input contains unknown fields and/or extensions:\n"
+                        + "1:2:\tproto2_unittest.TestAllTypes.[nosuchext]",
+                "[nosuchext]: 123");
+        assertParseError(
+                "1:18: Extension \"proto2_unittest.optional_int32_extension\" does "
+                        + "not extend message type \"proto2_unittest.TestAllTypes\".",
+                "[proto2_unittest.optional_int32_extension]: 123");
+        assertParseError(
+                "1:1: Input contains unknown fields and/or extensions:\n"
+                        + "1:1:\tproto2_unittest.TestAllTypes.nosuchfield",
+                "nosuchfield: 123");
+        assertParseError("1:21: Expected \">\".", "OptionalGroup < a: 1");
+        assertParseError(
+                "1:23: Enum type \"proto2_unittest.TestAllTypes.NestedEnum\" has no "
+                        + "value named \"NO_SUCH_VALUE\".",
+                "optional_nested_enum: NO_SUCH_VALUE");
+        assertParseError(
+                "1:23: Enum type \"proto2_unittest.TestAllTypes.NestedEnum\" has no "
+                        + "value with number 123.",
+                "optional_nested_enum: 123");
+        assertParseError(
+                "1:18: Couldn't parse number: For input string: \".\"", "repeated_double: .");
+        assertParseError(
+                "1:18: Couldn't parse number: For input string: \".+\"", "repeated_double: .+");
 
-    // Delimiters must match.
-    assertParseError("1:22: Expected identifier. Found '}'", "OptionalGroup < a: 1 }");
+        // Delimiters must match.
+        assertParseError("1:22: Expected identifier. Found '}'", "OptionalGroup < a: 1 }");
     assertParseError("1:22: Expected identifier. Found '>'", "OptionalGroup { a: 1 >");
   }
 
@@ -1492,56 +1512,56 @@ public class TextFormatTest {
     assertParseSuccessWithUnknownExtensions("[unknown_extension]: 123");
     assertParseSuccessWithUnknownExtensions(
         "[unknown_extension]: 123\n" + "[unknown_ext]: inf\n" + "[unknown]: 1.234");
-    // Test warning messages.
-    assertThat(logHandler.getStoredLogRecords().get(0).getMessage())
-        .isEqualTo(
-            "Input contains unknown fields and/or extensions:\n"
-                + "1:2:\tproto2_unittest.TestAllTypes.[unknown_extension]");
-    assertThat(logHandler.getStoredLogRecords().get(1).getMessage())
-        .isEqualTo(
-            "Input contains unknown fields and/or extensions:\n"
-                + "1:2:\tproto2_unittest.TestAllTypes.[unknown_extension]\n"
-                + "2:2:\tproto2_unittest.TestAllTypes.[unknown_ext]\n"
-                + "3:2:\tproto2_unittest.TestAllTypes.[unknown]");
+        // Test warning messages.
+        assertThat(logHandler.getStoredLogRecords().get(0).getMessage())
+                .isEqualTo(
+                        "Input contains unknown fields and/or extensions:\n"
+                                + "1:2:\tproto2_unittest.TestAllTypes.[unknown_extension]");
+        assertThat(logHandler.getStoredLogRecords().get(1).getMessage())
+                .isEqualTo(
+                        "Input contains unknown fields and/or extensions:\n"
+                                + "1:2:\tproto2_unittest.TestAllTypes.[unknown_extension]\n"
+                                + "2:2:\tproto2_unittest.TestAllTypes.[unknown_ext]\n"
+                                + "3:2:\tproto2_unittest.TestAllTypes.[unknown]");
 
-    // Test unknown field can not pass.
-    assertParseErrorWithUnknownExtensions(
-        "2:1: Input contains unknown fields and/or extensions:\n"
-            + "1:2:\tproto2_unittest.TestAllTypes.[unknown_extension]\n"
-            + "2:1:\tproto2_unittest.TestAllTypes.unknown_field",
-        "[unknown_extension]: 1\n" + "unknown_field: 12345");
-    assertParseErrorWithUnknownExtensions(
-        "3:1: Input contains unknown fields and/or extensions:\n"
-            + "1:2:\tproto2_unittest.TestAllTypes.[unknown_extension1]\n"
-            + "2:2:\tproto2_unittest.TestAllTypes.[unknown_extension2]\n"
-            + "3:1:\tproto2_unittest.TestAllTypes.unknown_field\n"
-            + "4:2:\tproto2_unittest.TestAllTypes.[unknown_extension3]",
-        "[unknown_extension1]: 1\n"
-            + "[unknown_extension2]: 2\n"
-            + "unknown_field: 12345\n"
-            + "[unknown_extension3]: 3\n");
-    assertParseErrorWithUnknownExtensions(
-        "1:1: Input contains unknown fields and/or extensions:\n"
-            + "1:1:\tproto2_unittest.TestAllTypes.unknown_field1\n"
-            + "2:1:\tproto2_unittest.TestAllTypes.unknown_field2\n"
-            + "3:2:\tproto2_unittest.TestAllTypes.[unknown_extension]\n"
-            + "4:1:\tproto2_unittest.TestAllTypes.unknown_field3",
-        "unknown_field1: 1\n"
-            + "unknown_field2: 2\n"
-            + "[unknown_extension]: 12345\n"
-            + "unknown_field3: 3\n");
+        // Test unknown field can not pass.
+        assertParseErrorWithUnknownExtensions(
+                "2:1: Input contains unknown fields and/or extensions:\n"
+                        + "1:2:\tproto2_unittest.TestAllTypes.[unknown_extension]\n"
+                        + "2:1:\tproto2_unittest.TestAllTypes.unknown_field",
+                "[unknown_extension]: 1\n" + "unknown_field: 12345");
+        assertParseErrorWithUnknownExtensions(
+                "3:1: Input contains unknown fields and/or extensions:\n"
+                        + "1:2:\tproto2_unittest.TestAllTypes.[unknown_extension1]\n"
+                        + "2:2:\tproto2_unittest.TestAllTypes.[unknown_extension2]\n"
+                        + "3:1:\tproto2_unittest.TestAllTypes.unknown_field\n"
+                        + "4:2:\tproto2_unittest.TestAllTypes.[unknown_extension3]",
+                "[unknown_extension1]: 1\n"
+                        + "[unknown_extension2]: 2\n"
+                        + "unknown_field: 12345\n"
+                        + "[unknown_extension3]: 3\n");
+        assertParseErrorWithUnknownExtensions(
+                "1:1: Input contains unknown fields and/or extensions:\n"
+                        + "1:1:\tproto2_unittest.TestAllTypes.unknown_field1\n"
+                        + "2:1:\tproto2_unittest.TestAllTypes.unknown_field2\n"
+                        + "3:2:\tproto2_unittest.TestAllTypes.[unknown_extension]\n"
+                        + "4:1:\tproto2_unittest.TestAllTypes.unknown_field3",
+                "unknown_field1: 1\n"
+                        + "unknown_field2: 2\n"
+                        + "[unknown_extension]: 12345\n"
+                        + "unknown_field3: 3\n");
   }
 
   @Test
   public void testParseUnknownExtensionWithAnyMessage() throws Exception {
-    assertParseSuccessWithUnknownExtensions(
-        "[unknown_extension]: { "
-            + "  any_value { "
-            + "    [type.googleapis.com/proto2_unittest.OneString] { "
-            + "      data: 123 "
-            + "    } "
-            + " } "
-            + "}");
+        assertParseSuccessWithUnknownExtensions(
+                "[unknown_extension]: { "
+                        + "  any_value { "
+                        + "    [type.googleapis.com/proto2_unittest.OneString] { "
+                        + "      data: 123 "
+                        + "    } "
+                        + " } "
+                        + "}");
   }
 
   // See additional coverage in testOneofOverwriteForbidden and testMapOverwriteForbidden.
@@ -1552,33 +1572,33 @@ public class TextFormatTest {
     assertParseSuccessWithOverwriteForbidden(
         "repeated_nested_message { bb: 1 }\nrepeated_nested_message { bb: 2 }\n");
 
-    assertParseErrorWithOverwriteForbidden(
-        "3:15: Non-repeated field "
-            + "\"proto2_unittest.TestAllTypes.optional_int32\" "
-            + "cannot be overwritten.",
-        "optional_int32: 1\noptional_bool: true\noptional_int32: 1\n");
-    assertParseErrorWithOverwriteForbidden(
-        "2:1: Non-repeated field "
-            + "\"proto2_unittest.TestAllTypes.optionalgroup\" "
-            + "cannot be overwritten.",
-        "OptionalGroup { a: 1 }\nOptionalGroup { }\n");
-    assertParseErrorWithOverwriteForbidden(
-        "2:1: Non-repeated field "
-            + "\"proto2_unittest.TestAllTypes.optional_nested_message\" "
-            + "cannot be overwritten.",
-        "optional_nested_message { }\noptional_nested_message { bb: 3 }\n");
-    assertParseErrorWithOverwriteForbidden(
-        "2:14: Non-repeated field "
-            + "\"proto2_unittest.TestAllTypes.default_int32\" "
-            + "cannot be overwritten.",
-        "default_int32: 41\n"
-            + // the default value
-            "default_int32: 41\n");
-    assertParseErrorWithOverwriteForbidden(
-        "2:15: Non-repeated field "
-            + "\"proto2_unittest.TestAllTypes.default_string\" "
-            + "cannot be overwritten.",
-        "default_string: \"zxcv\"\ndefault_string: \"asdf\"\n");
+        assertParseErrorWithOverwriteForbidden(
+                "3:15: Non-repeated field "
+                        + "\"proto2_unittest.TestAllTypes.optional_int32\" "
+                        + "cannot be overwritten.",
+                "optional_int32: 1\noptional_bool: true\noptional_int32: 1\n");
+        assertParseErrorWithOverwriteForbidden(
+                "2:1: Non-repeated field "
+                        + "\"proto2_unittest.TestAllTypes.optionalgroup\" "
+                        + "cannot be overwritten.",
+                "OptionalGroup { a: 1 }\nOptionalGroup { }\n");
+        assertParseErrorWithOverwriteForbidden(
+                "2:1: Non-repeated field "
+                        + "\"proto2_unittest.TestAllTypes.optional_nested_message\" "
+                        + "cannot be overwritten.",
+                "optional_nested_message { }\noptional_nested_message { bb: 3 }\n");
+        assertParseErrorWithOverwriteForbidden(
+                "2:14: Non-repeated field "
+                        + "\"proto2_unittest.TestAllTypes.default_int32\" "
+                        + "cannot be overwritten.",
+                "default_int32: 41\n"
+                        + // the default value
+                        "default_int32: 41\n");
+        assertParseErrorWithOverwriteForbidden(
+                "2:15: Non-repeated field "
+                        + "\"proto2_unittest.TestAllTypes.default_string\" "
+                        + "cannot be overwritten.",
+                "default_string: \"zxcv\"\ndefault_string: \"asdf\"\n");
   }
 
   @Test
@@ -1836,13 +1856,13 @@ public class TextFormatTest {
       PARSER_WITH_OVERWRITE_FORBIDDEN.merge(input, TestUtil.getFullExtensionRegistry(), builder);
       assertWithMessage("Expected parse exception.").fail();
     } catch (TextFormat.ParseException e) {
-      assertThat(e)
-          .hasMessageThat()
-          .isEqualTo(
-              "1:34: Field \"proto2_unittest.TestOneof2.foo_int\""
-                  + " is specified along with field \"proto2_unittest.TestOneof2.foo_string\","
-                  + " another member of oneof \"foo\".");
-    }
+            assertThat(e)
+                    .hasMessageThat()
+                    .isEqualTo(
+                            "1:34: Field \"proto2_unittest.TestOneof2.foo_int\" is specified along"
+                                + " with field \"proto2_unittest.TestOneof2.foo_string\", another"
+                                + " member of oneof \"foo\".");
+        }
   }
 
   @Test
@@ -1976,65 +1996,69 @@ public class TextFormatTest {
       assertThat(map.getInt32ToInt32FieldMap()).hasSize(2);
       assertThat(map.getInt32ToInt32FieldMap().get(1).intValue()).isEqualTo(30);
     }
-  }
+    }
 
-  @Test
-  public void testMapDynamicMessage() throws Exception {
-    TestMap message =
-        TestMap.newBuilder()
-            .putInt32ToStringField(30, "cherry")
-            .putInt32ToStringField(10, "apple")
-            .putInt32ToStringField(20, "banana")
-            .build();
-    DynamicMessage dynamic =
-        DynamicMessage.parseFrom(
-            TestMap.getDescriptor(), message.toByteString(), ExtensionRegistry.getEmptyRegistry());
-    assertThat(TextFormat.printer().printToString(dynamic))
-        .isEqualTo(TextFormat.printer().printToString(message));
-  }
+    @Test
+    public void testMapDynamicMessage() throws Exception {
+        TestMap message =
+                TestMap.newBuilder()
+                        .putInt32ToStringField(30, "cherry")
+                        .putInt32ToStringField(10, "apple")
+                        .putInt32ToStringField(20, "banana")
+                        .build();
+        DynamicMessage dynamic =
+                DynamicMessage.parseFrom(
+                        TestMap.getDescriptor(),
+                        message.toByteString(),
+                        ExtensionRegistry.getEmptyRegistry());
+        assertThat(TextFormat.printer().printToString(dynamic))
+                .isEqualTo(TextFormat.printer().printToString(message));
+    }
 
-  @Test
-  public void testMapKeyAdapterComparison() throws Exception {
-    FieldDescriptor int32ToStringField =
-        TestMap.getDescriptor().findFieldByNumber(TestMap.INT32_TO_STRING_FIELD_FIELD_NUMBER);
-    TestMap map =
-        TestMap.newBuilder()
-            .putInt32ToStringField(10, "apple")
-            .putInt32ToStringField(20, "banana")
-            .build();
-    TextFormat.Printer.MapEntryAdapter nullEntry =
-        new TextFormat.Printer.MapEntryAdapter(null, int32ToStringField);
-    TextFormat.Printer.MapEntryAdapter entry1 =
-        new TextFormat.Printer.MapEntryAdapter(
-            map.getRepeatedField(int32ToStringField, 0), int32ToStringField);
-    TextFormat.Printer.MapEntryAdapter entry2 =
-        new TextFormat.Printer.MapEntryAdapter(
-            map.getRepeatedField(int32ToStringField, 1), int32ToStringField);
-    assertThat(nullEntry).isEquivalentAccordingToCompareTo(nullEntry);
-    assertThat(entry1).isEquivalentAccordingToCompareTo(entry1);
-    assertThat(entry2).isEquivalentAccordingToCompareTo(entry2);
-    assertThat(nullEntry).isLessThan(entry1);
-    assertThat(entry1).isGreaterThan(nullEntry);
-    assertThat(nullEntry).isLessThan(entry2);
-    assertThat(entry2).isGreaterThan(nullEntry);
-    assertThat(entry1).isLessThan(entry2);
-    assertThat(entry2).isGreaterThan(entry1);
-  }
+    @Test
+    public void testMapKeyAdapterComparison() throws Exception {
+        FieldDescriptor int32ToStringField =
+                TestMap.getDescriptor()
+                        .findFieldByNumber(TestMap.INT32_TO_STRING_FIELD_FIELD_NUMBER);
+        TestMap map =
+                TestMap.newBuilder()
+                        .putInt32ToStringField(10, "apple")
+                        .putInt32ToStringField(20, "banana")
+                        .build();
+        TextFormat.Printer.MapEntryAdapter nullEntry =
+                new TextFormat.Printer.MapEntryAdapter(null, int32ToStringField);
+        TextFormat.Printer.MapEntryAdapter entry1 =
+                new TextFormat.Printer.MapEntryAdapter(
+                        map.getRepeatedField(int32ToStringField, 0), int32ToStringField);
+        TextFormat.Printer.MapEntryAdapter entry2 =
+                new TextFormat.Printer.MapEntryAdapter(
+                        map.getRepeatedField(int32ToStringField, 1), int32ToStringField);
+        assertThat(nullEntry).isEquivalentAccordingToCompareTo(nullEntry);
+        assertThat(entry1).isEquivalentAccordingToCompareTo(entry1);
+        assertThat(entry2).isEquivalentAccordingToCompareTo(entry2);
+        assertThat(nullEntry).isLessThan(entry1);
+        assertThat(entry1).isGreaterThan(nullEntry);
+        assertThat(nullEntry).isLessThan(entry2);
+        assertThat(entry2).isGreaterThan(nullEntry);
+        assertThat(entry1).isLessThan(entry2);
+        assertThat(entry2).isGreaterThan(entry1);
+    }
 
-  @Test
-  public void testMapKeyAdapterComparisonInvalidType() throws Exception {
-    TextFormat.Printer.MapEntryAdapter invalidEntry =
-        new TextFormat.Printer.MapEntryAdapter(
-            TestOneof2.NestedMessage.getDefaultInstance(),
-            TestOneof2.getDescriptor().findFieldByNumber(TestOneof2.FOO_MESSAGE_FIELD_NUMBER));
-    assertThat(invalidEntry).isEquivalentAccordingToCompareTo(invalidEntry);
-  }
+    @Test
+    public void testMapKeyAdapterComparisonInvalidType() throws Exception {
+        TextFormat.Printer.MapEntryAdapter invalidEntry =
+                new TextFormat.Printer.MapEntryAdapter(
+                        TestOneof2.NestedMessage.getDefaultInstance(),
+                        TestOneof2.getDescriptor()
+                                .findFieldByNumber(TestOneof2.FOO_MESSAGE_FIELD_NUMBER));
+        assertThat(invalidEntry).isEquivalentAccordingToCompareTo(invalidEntry);
+    }
 
-  // =======================================================================
-  // test location information
+    // =======================================================================
+    // test location information
 
-  @Test
-  public void testParseInfoTreeBuilding() throws Exception {
+    @Test
+    public void testParseInfoTreeBuilding() throws Exception {
     TestAllTypes.Builder builder = TestAllTypes.newBuilder();
 
     Descriptor descriptor = TestAllTypes.getDescriptor();
@@ -2234,16 +2258,17 @@ public class TextFormatTest {
             .setRecursionLimit(2)
             .setTypeRegistry(TypeRegistry.newBuilder().add(TestAllTypes.getDescriptor()).build())
             .build();
-    TestAny.Builder depth2 = TestAny.newBuilder();
-    parser.merge(
-        "value { [type.googleapis.com/proto2_unittest.TestAllTypes] { optional_int32: 1 } }",
-        depth2);
-    try {
-      TestAny.Builder depth3 = TestAny.newBuilder();
-      parser.merge(
-          "value { [type.googleapis.com/proto2_unittest.TestAllTypes] { optional_nested_message {"
-              + "} } }",
-          depth3);
+        TestAny.Builder depth2 = TestAny.newBuilder();
+        parser.merge(
+                "value { [type.googleapis.com/proto2_unittest.TestAllTypes] { optional_int32: 1 }"
+                    + " }",
+                depth2);
+        try {
+            TestAny.Builder depth3 = TestAny.newBuilder();
+            parser.merge(
+                    "value { [type.googleapis.com/proto2_unittest.TestAllTypes] {"
+                        + " optional_nested_message {} } }",
+                    depth3);
       assertWithMessage("Parsing deep message should have failed").fail();
     } catch (TextFormat.ParseException e) {
       assertThat(e).hasMessageThat().contains("too deep");
@@ -2258,15 +2283,17 @@ public class TextFormatTest {
             .setTypeRegistry(
                 TypeRegistry.newBuilder().add(TestRecursiveMessage.getDescriptor()).build())
             .build();
-    Any.Builder depth2 = Any.newBuilder();
-    parser.merge(
-        "[type.googleapis.com/proto2_unittest.TestRecursiveMessage] { a { i: 0 } }", depth2);
-    try {
-      Any.Builder depth3 = Any.newBuilder();
-      parser.merge(
-          "[type.googleapis.com/proto2_unittest.TestRecursiveMessage] { a { a { i: 0 } } }",
-          depth3);
-      assertWithMessage("Parsing deep message should have failed").fail();
+        Any.Builder depth2 = Any.newBuilder();
+        parser.merge(
+                "[type.googleapis.com/proto2_unittest.TestRecursiveMessage] { a { i: 0 } }",
+                depth2);
+        try {
+            Any.Builder depth3 = Any.newBuilder();
+            parser.merge(
+                    "[type.googleapis.com/proto2_unittest.TestRecursiveMessage] { a { a { i: 0 } }"
+                        + " }",
+                    depth3);
+            assertWithMessage("Parsing deep message should have failed").fail();
     } catch (TextFormat.ParseException e) {
       assertThat(e).hasMessageThat().contains("too deep");
     }

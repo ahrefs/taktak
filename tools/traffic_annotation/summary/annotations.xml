@@ -515,3 +515,4 @@ Refer to README.md for content description and update process.
  <item id="iwa_dev_tools_installation_web_bundle" added_in_milestone="139" type="partial" second_id="iwa_bundle_downloader" content_hash_code="00669d7d" os_list="linux,windows,chromeos" semantics_fields="1,2,3" policy_fields="3,5" file_path="chrome/browser/web_applications/isolated_web_apps/isolated_web_app_installation_manager.cc" />
  <item id="ntp_composebox_query_controller" added_in_milestone="139" content_hash_code="06439b42" os_list="linux,windows,chromeos,android" file_path="components/omnibox/composebox/composebox_query_controller.cc" />
 </annotations>
+ <item id="keepalive_fetch_retry" added_in_milestone="138" content_hash_code="07e1463e" os_list="linux,windows,android" file_path="content/browser/loader/keep_alive_url_loader.cc" />

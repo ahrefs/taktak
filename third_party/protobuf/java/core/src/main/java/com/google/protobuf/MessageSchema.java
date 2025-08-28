@@ -52,6 +52,7 @@ import com.google.protobuf.FieldSet.FieldDescriptorLite;
 import com.google.protobuf.Internal.EnumVerifier;
 import com.google.protobuf.Internal.ProtobufList;
 import com.google.protobuf.MapEntryLite.Metadata;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -3708,16 +3709,16 @@ final class MessageSchema<T> implements Schema<T> {
         break;
       case 49: // GROUP_LIST:
         if (wireType == WireFormat.WIRETYPE_START_GROUP) {
-          position =
-              decodeGroupList(
-                  getMessageFieldSchema(bufferPosition),
-                  tag,
-                  data,
-                  position,
-                  limit,
-                  (ProtobufList<Object>) list,
-                  registers);
-        }
+                    position =
+                            decodeGroupList(
+                                    getMessageFieldSchema(bufferPosition),
+                                    tag,
+                                    data,
+                                    position,
+                                    limit,
+                                    (ProtobufList<Object>) list,
+                                    registers);
+                }
         break;
       default:
         break;

@@ -9,6 +9,7 @@
 
 // Please keep this list alphabetized.
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kAddCurrentTabToReadingListElementId);
+DECLARE_ELEMENT_IDENTIFIER_VALUE(kAIChatSidePanelElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(
     kAnonymizedUrlCollectionPersonalizationSettingId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kAppUninstallDialogOkButtonId);
@@ -16,6 +17,7 @@ DEFINE_ELEMENT_IDENTIFIER_VALUE(kBookmarkBarElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kBookmarkSidePanelWebViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kBookmarkStarViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kBrowserViewElementId);
+DEFINE_ELEMENT_IDENTIFIER_VALUE(kChatSidePanelWebViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kConstrainedDialogWebViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kContentsSeparatorViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kCookieControlsIconElementId);

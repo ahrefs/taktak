@@ -23,13 +23,13 @@ public class KnownInterceptionDisclosureInfoBar extends ConfirmInfoBar {
     private final String mDescription;
 
     /**
-     * Creates and begins the process for showing a KnownInterceptionDisclosureInfoBar.
-     * This constructor is similar to ConfirmInfoBar's create(), adding a description.
+     * Creates and begins the process for showing a KnownInterceptionDisclosureInfoBar. This
+     * constructor is similar to ConfirmInfoBar's create(), adding a description.
      *
      * @param iconId ID corresponding to the icon that will be shown for the infobar.
      * @param iconBitmap Bitmap to use if there is no equivalent Java resource for iconId.
      * @param message Title of message to display to the user indicating what the infobar is for.
-     *                This should be 'title', but we're keeping consistency with ConfirmInfoBar.
+     *     This should be 'title', but we're keeping consistency with ConfirmInfoBar.
      * @param linkText Link text to display in addition to the message.
      * @param buttonOk String to display on the OK button.
      * @param description String to display below the "message" title.

@@ -1,0 +1,148 @@
+// Copyright (c) 2025 The Taktak Authors. All rights reserved.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/2.0/.
+
+module chat.mojom;
+
+import "url/mojom/url.mojom";
+import "ui/base/mojom/window_open_disposition.mojom";
+
+enum APIErrorType {
+    None,
+    ConnectionError,
+    RateLimitReached,
+    ContextLimitReached,
+};
+
+enum ResponseType {
+    NONE,
+    DELTA,
+    COMPLETED,
+    CHAT_RESPONSE_ERROR,
+};
+
+enum ActionType {
+     SUMMARIZE_PAGE,
+     EXPLAIN,
+     TRANSLATE,
+     DRAFT_SOCIAL_MEDIA_POST,
+     FACT_CHECK,
+     QUERY,
+     NONE,
+};
+
+struct APIError {
+    APIErrorType error_type;
+    string error_message;
+};
+
+struct ConversationItem {
+    string user_query;
+    string llm_response;
+};
+
+struct SiteInfo {
+  // The title of the currently active tab, if it has an open page
+  string? title;
+
+  // The url of the currently active tab if it has opening page
+  string? url;
+
+  // Indicates whether the current URL contains content that can be used in conversations with Yep Chat
+  bool is_content_usable_in_conversations;
+};
+
+struct ActionItem {
+    ActionType action_type;
+    string label;
+};
+
+struct ActionResponse {
+    ActionType action_type;
+    ResponseType response_type;
+    string result;
+};
+
+struct SavableConversationModel {
+    string id;
+    string query;
+    string title;
+    string url;
+    bool should_display_site_info;
+
+    // true if the content of url is being used as the chat context, otherwise; false
+    bool is_url_context;
+
+    string thinking_text;
+    bool show_thinking_text;
+    string response_text;
+    string error_text;
+    int64 timestamp;
+};
+
+struct ChatState {
+    array<SavableConversationModel> conversations;
+};
+
+// Used by the WebUI page to bootstrap bidirectional communication.
+interface PageHandlerFactory {
+    CreatePageHandler(pending_remote<Page> page,
+                      pending_receiver<PageHandler> handler);
+};
+
+// Browser-side handler for requests from WebUI page.
+// Renderer -> Browser
+interface PageHandler {
+
+  GetSiteInfo() => (SiteInfo site_info);
+
+  // Show as menu items in Chat UI
+  // This will be called only when SiteInfo.is_content_usable_in_conversations is true
+  GetActionList() => (array<ActionItem> action_list);
+
+  // Restore the entire chat UI state from in-memory cache
+  GetChatState() => (ChatState chat_state);
+
+  // Get the latest SiteInfo from cache
+  GetSiteInfoFromCache() => (SiteInfo site_info);
+
+  // Put conversation into in-memory cache
+  SaveConversation(SavableConversationModel conversation);
+
+  // Put the toggle state of the "Enable Thinking" button into in-memory cache
+  SaveThinkingState(bool thinking_state);
+  GetThinkingState() => (bool thinking_state);
+
+  // Cache the latest SiteInfo if any, or empty one
+  SaveSiteInfo(SiteInfo site_info);
+
+  // Clear the entire chat UI state from in-memory cache
+  ClearChatState();
+
+  // The user selects a predefined action by clicking on menu items in the Chat UI
+  // The content of the current opening page will serve as context
+  // and a predefined prompt will be applied accordingly.
+  SubmitAction(ActionType action_type, string param, bool enable_thinking);
+
+  // Usual conversation
+  SubmitQuery(ActionType action_type, string query, string url, array<ConversationItem> conversation_history, bool enable_thinking);
+
+  // Notify the backend that the UI is ready to be shown.
+  ShowUI();
+
+  // Notify the backend that the dialog should be closed.
+  CloseUI();
+
+  CancelQuery();
+
+  OpenURL(string url, ui.mojom.ClickModifiers click_modifiers);
+};
+
+// WebUI-side handler for requests from the browser.
+// Browser -> Renderer
+interface Page {
+    OnSiteInfoChanged(SiteInfo info);
+
+    OnSubmitActionResponse(ActionResponse response);
+};

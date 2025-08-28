@@ -7,8 +7,6 @@ package org.chromium.build.annotations;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-/**
- * Prevents optimization. R8 supports Mockito now, so this should be rarely be needed.
- */
+/** Prevents optimization. R8 supports Mockito now, so this should be rarely be needed. */
 @Target(ElementType.TYPE)
 public @interface MockedInTests {}

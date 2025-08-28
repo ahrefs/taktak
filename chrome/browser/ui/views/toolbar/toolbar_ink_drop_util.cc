@@ -40,10 +40,11 @@ class ToolbarButtonHighlightPathGenerator
     rect.Inset(GetToolbarInkDropInsets(view));
 
     const int radii = ChromeLayoutProvider::Get()->GetCornerRadiusMetric(
-        views::Emphasis::kMaximum, rect.size());
+        views::Emphasis::kHigh, rect.size()
+        );
 
     SkPath path;
-    path.addRoundRect(gfx::RectToSkRect(rect), radii, radii);
+    path.addRoundRect(gfx::RectToSkRect( gfx::Rect( rect)), radii, radii);
     return path;
   }
 };

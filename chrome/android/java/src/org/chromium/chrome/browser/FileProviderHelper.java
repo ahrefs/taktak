@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser;
 
-
 import android.content.Context;
 import android.net.Uri;
 

@@ -10,14 +10,16 @@ package com.google.protobuf;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.LazyFieldsLite.LazyExtension;
 import proto2_unittest.LazyFieldsLite.LazyInnerMessageLite;
 import proto2_unittest.LazyFieldsLite.LazyMessageLite;
 import proto2_unittest.LazyFieldsLite.LazyNestedInnerMessageLite;
+
 import java.util.ArrayList;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Unit test for messages with lazy fields. */
 @RunWith(JUnit4.class)

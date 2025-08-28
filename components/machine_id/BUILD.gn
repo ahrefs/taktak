@@ -1,0 +1,43 @@
+static_library("machine_id") {
+  sources = [
+    "assert.cc",
+    "assert.h",
+    "crc8.cc",
+    "crc8.h",
+    "machine_id.cc",
+    "machine_id.h",
+    "string_utils.cc",
+    "string_utils.h",
+  ]
+
+  if (is_win) {
+    sources += [ "machine_id_win.cc" ]
+  }
+
+  if (is_apple) {
+    frameworks = [ "Foundation.framework" ]
+
+    if (is_mac) {
+      sources += [ "machine_id_mac.cc" ]
+      frameworks += [ "IOKit.framework" ]
+    }
+
+    if (is_ios) {
+      sources += [ "machine_id_ios.cc" ]
+    }
+  }
+
+  public_deps = [ "//base" ]
+
+  deps = [ "//build:chromeos_buildflags" ]
+}
+
+if (!is_ios && !is_android) {
+  executable("mid") {
+    sources = [ "examples/mid.cc" ]
+    deps = [
+      ":machine_id",
+      "//build/win:default_exe_manifest",
+    ]
+  }
+}

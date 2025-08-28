@@ -61,8 +61,11 @@ SkColor GetPaintColor(FocusRing* focus_ring, bool valid) {
 }
 
 double GetCornerRadius(float halo_thickness) {
-  const double thickness = halo_thickness / 2.f;
-  return FocusRing::kDefaultCornerRadiusDp + thickness;
+    //  const double thickness = halo_thickness / 2.f;
+    //  return FocusRing::kDefaultCornerRadiusDp + thickness;
+
+    // because we are pixel perfect
+    return 6.0;
 }
 
 SkPath GetHighlightPathInternal(const View* view, float halo_thickness) {

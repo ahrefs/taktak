@@ -58,6 +58,7 @@ class HistoryNavigationLayout extends FrameLayout implements ViewGroup.OnHierarc
 
     /**
      * Creates a view hosting the gesture navigation UI.
+     *
      * @return The created view.
      */
     @EnsuresNonNull("mSideSlideLayout")

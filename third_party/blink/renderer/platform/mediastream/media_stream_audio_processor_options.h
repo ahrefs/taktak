@@ -53,4 +53,4 @@ struct PLATFORM_EXPORT AudioProcessingProperties {
 
 }  // namespace blink
 
-#endif  // THIRD_PARTY_BLINK_RENDERER_PLATFORM_MEDIASTREAM_MEDIA_STREAM_AUDIO_PROCESSOR_OPTIONS_H_
+#endif  // THIRD_PARTY_BLINK_

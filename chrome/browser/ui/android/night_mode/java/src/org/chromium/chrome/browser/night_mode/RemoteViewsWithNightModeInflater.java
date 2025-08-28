@@ -19,9 +19,9 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 
 /**
- * Performs inflation of {@link RemoteViews} taking into account the local night mode.
- * {@link RemoteViews#apply} always uses resource configuration corresponding to system
- *  settings, see https://buganizer.corp.google.com/issues/133424086, http://crbug.com/1626864.
+ * Performs inflation of {@link RemoteViews} taking into account the local night mode. {@link
+ * RemoteViews#apply} always uses resource configuration corresponding to system settings, see
+ * https://buganizer.corp.google.com/issues/133424086, http://crbug.com/1626864.
  */
 @NullMarked
 public class RemoteViewsWithNightModeInflater {

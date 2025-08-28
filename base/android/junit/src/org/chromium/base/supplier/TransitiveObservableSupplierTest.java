@@ -182,7 +182,8 @@ public class TransitiveObservableSupplierTest {
         assertEquals(mObject1, transitiveSupplier.get());
         verifyNoInteractions(mOnChangeCallback);
 
-        assertEquals(transitiveSupplier.addSyncObserverAndCallIfNonNull(mOnChangeCallback), mObject1);
+        assertEquals(
+                transitiveSupplier.addSyncObserverAndCallIfNonNull(mOnChangeCallback), mObject1);
         ShadowLooper.runUiThreadTasks();
         verify(mOnChangeCallback).onResult(eq(mObject1));
     }

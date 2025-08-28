@@ -48,6 +48,8 @@ public class WebsiteRowPreference extends ChromeImageViewPreference {
 
     private final boolean mIsClickable;
 
+    private boolean mIsClickable;
+
     WebsiteRowPreference(
             Context context,
             SiteSettingsDelegate siteSettingsDelegate,

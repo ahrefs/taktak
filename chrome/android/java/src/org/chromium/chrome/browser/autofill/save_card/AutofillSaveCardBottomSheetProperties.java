@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.autofill.save_card;
 
-
 import org.chromium.build.annotations.NullMarked;
 import org.chromium.components.autofill.payments.LegalMessageLine;
 import org.chromium.ui.modelutil.PropertyKey;

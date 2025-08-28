@@ -14,10 +14,7 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 import org.chromium.chrome.R;
 
-/**
- * {@link View} class for navigation sheet. Provided as content view for
- * {@link BottomSheet}.
- */
+/** {@link View} class for navigation sheet. Provided as content view for {@link BottomSheet}. */
 @NullMarked
 public class NavigationSheetView extends RelativeLayout {
     private ListView mListView;

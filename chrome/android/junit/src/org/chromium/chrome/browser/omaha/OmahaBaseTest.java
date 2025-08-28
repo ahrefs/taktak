@@ -40,10 +40,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Tests for the {@link OmahaClient}.
- * Tests override the original OmahaClient's functions with the MockOmahaClient, which
- * provides a way to hook into functions to return values that would normally be provided by the
- * system, such as whether Chrome was installed through the system image.
+ * Tests for the {@link OmahaClient}. Tests override the original OmahaClient's functions with the
+ * MockOmahaClient, which provides a way to hook into functions to return values that would normally
+ * be provided by the system, such as whether Chrome was installed through the system image.
  */
 @RunWith(BaseRobolectricTestRunner.class)
 @Batch(Batch.UNIT_TESTS)

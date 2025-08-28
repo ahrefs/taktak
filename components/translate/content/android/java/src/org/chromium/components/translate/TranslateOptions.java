@@ -261,6 +261,7 @@ public class TranslateOptions {
 
     /**
      * Gets the language's translated representation from a given language code.
+     *
      * @param languageCode ISO code for the language
      * @return The translated representation of the language, or "" if not found.
      */

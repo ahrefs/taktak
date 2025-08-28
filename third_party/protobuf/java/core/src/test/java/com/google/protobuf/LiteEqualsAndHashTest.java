@@ -8,6 +8,7 @@
 package com.google.protobuf;
 
 import junit.framework.TestCase;
+
 import proto2_unittest.lite_equals_and_hash.LiteEqualsAndHash.Bar;
 import proto2_unittest.lite_equals_and_hash.LiteEqualsAndHash.BarPrime;
 import proto2_unittest.lite_equals_and_hash.LiteEqualsAndHash.Foo;

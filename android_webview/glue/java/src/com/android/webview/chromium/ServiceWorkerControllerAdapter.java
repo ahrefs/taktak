@@ -13,8 +13,8 @@ import androidx.annotation.Nullable;
 import org.chromium.android_webview.AwServiceWorkerController;
 
 /**
- * Chromium implementation of ServiceWorkerController -- forwards calls to
- * the chromium internal implementation.
+ * Chromium implementation of ServiceWorkerController -- forwards calls to the chromium internal
+ * implementation.
  */
 public class ServiceWorkerControllerAdapter extends ServiceWorkerController {
     private final AwServiceWorkerController mAwServiceWorkerController;

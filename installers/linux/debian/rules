@@ -1,0 +1,28 @@
+#!/usr/bin/make -f
+
+CUR_DIR := $(CURDIR)
+DB_DIR := $(CUR_DIR)/debian
+OUT_DIR := out/Debug
+
+# Changelog and control template variables
+VERSION  := 136.0.7103.80
+RELEASE  := focal
+AUTHOR   := Taktak Maintainers <taktak@ahrefs.com>
+DATETIME := $(shell date -R)
+
+changelog:
+	sed -e "s;@@VERSION@@;$(VERSION);g" -e "s;@@RELEASE@@;$(RELEASE);g" -e "s;@@AUTHOR@@;$(AUTHOR);g" -e "s;@@DATETIME@@;$(DATETIME);g" < $(DB_DIR)/changelog.in > $(DB_DIR)/changelog
+
+control:
+	sed -e "s;@@AUTHOR@@;$(AUTHOR);g" < $(DB_DIR)/control.in > $(DB_DIR)/control
+
+setup: changelog control
+
+override_dh_auto_build:
+	@echo "Skipping build, assuming binaries already exist"
+
+override_dh_auto_clean:
+	@echo "No clean step needed"
+
+override_dh_auto_install:
+	@echo "Skipping install, handled manually in packaging"

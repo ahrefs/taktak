@@ -21,9 +21,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A wrapper around ReTrace that:
- *  1. Hardcodes a more useful line regular expression
- *  2. Disables output buffering
+ * A wrapper around ReTrace that: 1. Hardcodes a more useful line regular expression 2. Disables
+ * output buffering
  */
 @NullMarked
 public class FlushingReTrace {

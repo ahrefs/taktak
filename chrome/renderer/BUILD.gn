@@ -69,6 +69,8 @@ static_library("renderer") {
     "benchmarking_extension.h",
     "browser_exposed_renderer_interfaces.cc",
     "browser_exposed_renderer_interfaces.h",
+    "chat/page_content_extractor.cc",
+    "chat/page_content_extractor.h",
     "chrome_content_renderer_client.cc",
     "chrome_content_renderer_client.h",
     "chrome_content_settings_agent_delegate.cc",
@@ -139,6 +141,7 @@ static_library("renderer") {
     "//chrome/common",
     "//chrome/common:mojo_bindings",
     "//chrome/common/net",
+    "//chrome/common/page_content_extractor:mojo_bindings",
     "//chrome/common/request_header_integrity:buildflags",
     "//chrome/common/search:mojo_bindings",
     "//chrome/services/speech/buildflags",
@@ -304,6 +307,17 @@ static_library("renderer") {
 
   if (enable_widevine_cdm_component) {
     deps += [ "//third_party/widevine/cdm:headers" ]
+  }
+
+  if (enable_widevine) {
+    sources += [
+      "//chrome/renderer/drm/drm_tab_helper.cc",
+      "//chrome/renderer/drm/drm_tab_helper.h",
+    ]
+    deps += [
+      "//chrome/common/widevine",
+      "//components/drm:taktak_drm",
+    ]
   }
 
   if (enable_library_cdms || is_win || is_android) {

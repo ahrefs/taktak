@@ -416,11 +416,10 @@ class SmallSortedMap<K extends Comparable<K>, V> extends AbstractMap<K, V> {
       return oldValue;
     }
 
-    @Override
-    public boolean equals(
-            Object o) {
-      if (o == this) {
-        return true;
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
       }
       if (!(o instanceof Map.Entry)) {
         return false;
@@ -439,12 +438,10 @@ class SmallSortedMap<K extends Comparable<K>, V> extends AbstractMap<K, V> {
       return key + "=" + value;
     }
 
-    /** equals() that handles null values. */
-    private boolean equals(
-            Object o1,
-        Object o2) {
-      return o1 == null ? o2 == null : o1.equals(o2);
-    }
+        /** equals() that handles null values. */
+        private boolean equals(Object o1, Object o2) {
+            return o1 == null ? o2 == null : o1.equals(o2);
+        }
   }
 
   /** Stateless view of the entries in the field map. */
@@ -611,11 +608,10 @@ class SmallSortedMap<K extends Comparable<K>, V> extends AbstractMap<K, V> {
     }
   }
 
-  @Override
-  public boolean equals(
-          Object o) {
-    if (this == o) {
-      return true;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
     }
 
     if (!(o instanceof SmallSortedMap)) {

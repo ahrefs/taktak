@@ -68,8 +68,8 @@ void ContentCredentialManager::BindRequest(
   // TODO(crbug.com/40653684): Remove this workaround.
   content::BackForwardCache::DisableForRenderFrameHost(
       frame_host, back_forward_cache::DisabledReason(
-                      back_forward_cache::DisabledReasonId::
-                          kContentCredentialManager_BindCredentialManager));
+          back_forward_cache::DisabledReasonId::
+          kContentCredentialManager_BindCredentialManager));
 
   if (receiver_.is_bound()) {
     mojo::ReportBadMessage("CredentialManager is already bound.");

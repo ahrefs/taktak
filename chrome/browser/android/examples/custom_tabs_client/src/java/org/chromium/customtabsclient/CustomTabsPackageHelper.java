@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Helper class for fetching supporting package for Custom Tabs along with
- * saving the last used package.
+ * Helper class for fetching supporting package for Custom Tabs along with saving the last used
+ * package.
  */
 @NullMarked
 public class CustomTabsPackageHelper {
