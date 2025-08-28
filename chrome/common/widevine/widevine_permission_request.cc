@@ -56,12 +56,11 @@ std::u16string WidevinePermissionRequest::GetMessageTextFragment() const {
 }
 #endif
 
-void WidevinePermissionRequest::PermissionDecided(ContentSetting result,
-                                                  bool is_one_time,
-                                                  bool is_final_decision,
-                                                  const permissions::PermissionRequestData& request_data) {
-  // Permission granted
-  if (result == ContentSetting::CONTENT_SETTING_ALLOW) {
+void WidevinePermissionRequest::PermissionDecided(
+    PermissionDecision decision,
+    bool is_final_decision,
+    const permissions::PermissionRequestData& request_data) {
+  if (decision == PermissionDecision::kAllow) {
     if (!for_restart_) {
       EnableWidevineCdm();
     } else {
@@ -69,17 +68,12 @@ void WidevinePermissionRequest::PermissionDecided(ContentSetting result,
       EnableWidevineCdm();
 #endif
       base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
-          FROM_HERE, base::BindOnce(&chrome::AttemptRelaunch));
+            FROM_HERE, base::BindOnce(&chrome::AttemptRelaunch));
     }
-    // Permission denied
-  } else if (result == ContentSetting::CONTENT_SETTING_BLOCK) {
+  } else if (decision == PermissionDecision::kDeny) {
     Profile* profile =
         static_cast<Profile*>(web_contents_->GetBrowserContext());
     profile->GetPrefs()->SetBoolean(kAskWidvineInstall, !get_dont_ask_again());
-    // Cancelled
-  } else {
-    DCHECK(result == CONTENT_SETTING_DEFAULT);
-    // Do nothing.
   }
 }
 

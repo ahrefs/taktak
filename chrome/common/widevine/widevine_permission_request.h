@@ -36,10 +36,12 @@ class WidevinePermissionRequest : public permissions::PermissionRequest {
 #else
   std::u16string GetMessageTextFragment() const override;
 #endif
-  void PermissionDecided(ContentSetting result,
-                         bool is_one_time,
-                         bool is_final_decision,
-                         const permissions::PermissionRequestData& request_data);
+
+  void PermissionDecided(
+      PermissionDecision decision,
+      bool is_final_decision,
+      const permissions::PermissionRequestData& request_data);
+
   void DeleteRequest();
 
   raw_ptr<content::WebContents> web_contents_ = nullptr;

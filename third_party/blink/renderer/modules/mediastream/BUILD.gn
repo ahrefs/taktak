@@ -40,6 +40,8 @@ blink_modules_sources("mediastream") {
     "media_devices.h",
     "media_stream.cc",
     "media_stream.h",
+    "media_stream_audio_processing_layout.cc",
+    "media_stream_audio_processing_layout.h",
     "media_stream_audio_processor.cc",
     "media_stream_audio_processor.h",
     "media_stream_audio_renderer.h",
@@ -138,7 +140,7 @@ blink_modules_sources("mediastream") {
     "//third_party/libyuv:libyuv",
   ]
   allow_circular_includes_from =
-      [ "//third_party/blink/renderer/modules/imagecapture:imagecapture" ]
+  [ "//third_party/blink/renderer/modules/imagecapture:imagecapture" ]
 
   public_deps = [ "//media/capture:capture_lib" ]
 }

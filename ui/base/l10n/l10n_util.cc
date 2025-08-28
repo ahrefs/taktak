@@ -829,7 +829,7 @@ std::u16string FormatString(const std::u16string& format_string,
       //      placeholder
       //                                        << " placeholder in " <<
       //                                        format_string;
-      DVLOG(0) << "***Alert*** Didn't find a " << placeholder
+      DVLOG(1) << "***Alert*** Didn't find a " << placeholder
                << " placeholder in " << format_string;
     } else {
       DCHECK_EQ(std::string::npos, pos)

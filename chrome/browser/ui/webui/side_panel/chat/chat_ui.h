@@ -7,6 +7,7 @@
 #define CHROMIUM_CHAT_UI_H
 
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
@@ -62,7 +63,7 @@ public:
       embedder_ = embedder;
     }
 
-    static constexpr std::string GetWebUIName() { return "Chat"; }
+    static constexpr std::string_view GetWebUIName() { return "Chat"; }
 
     void SetSiteInfo(chat::mojom::SiteInfoPtr site_info, content::WebContents* contents );
 

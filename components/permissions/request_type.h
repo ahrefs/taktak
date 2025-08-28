@@ -72,7 +72,6 @@ enum class RequestType {
   kWebPrinting,
 #endif
   kWidevine,
-#if !BUILDFLAG(IS_ANDROID)
   kWindowManagement,
   kMaxValue = kWindowManagement
 };

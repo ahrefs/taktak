@@ -110,7 +110,7 @@ class ChromeAutofillClient : public ContentAutofillClient,
   VotesUploader& GetVotesUploader() final;
   AutofillOptimizationGuide* GetAutofillOptimizationGuide() const final;
   FieldClassificationModelHandler* GetAutofillFieldClassificationModelHandler()
-      final;
+  final;
   FieldClassificationModelHandler*
   GetPasswordManagerFieldClassificationModelHandler() final;
   PersonalDataManager& GetPersonalDataManager() final;
@@ -190,7 +190,7 @@ class ChromeAutofillClient : public ContentAutofillClient,
   bool IsContextSecure() const final;
   LogManager* GetCurrentLogManager() final;
   autofill_metrics::FormInteractionsUkmLogger& GetFormInteractionsUkmLogger()
-      final;
+  final;
 
   const AutofillAblationStudy& GetAblationStudy() const final;
 #if BUILDFLAG(IS_ANDROID)
@@ -200,7 +200,7 @@ class ChromeAutofillClient : public ContentAutofillClient,
 #endif
   FormInteractionsFlowId GetCurrentFormInteractionsFlowId() final;
   std::unique_ptr<device_reauth::DeviceAuthenticator> GetDeviceAuthenticator()
-      final;
+  final;
   bool ShowAutofillFieldIphForFeature(const FormFieldData& field,
                                       AutofillClient::IphFeature feature) final;
   void HideAutofillFieldIph() final;
@@ -214,12 +214,12 @@ class ChromeAutofillClient : public ContentAutofillClient,
   void TriggerPlusAddressUserPerceptionSurvey(
       plus_addresses::hats::SurveyType survey_type) final;
   optimization_guide::ModelQualityLogsUploaderService* GetMqlsUploadService()
-      override;
+  override;
   void ShowEntitySaveOrUpdateBubble(
       EntityInstance new_entity,
       std::optional<EntityInstance> old_entity,
       EntitySaveOrUpdatePromptResultCallback save_prompt_acceptance_callback)
-      override;
+  override;
 
   // TODO(crbug.com/407666146): Create a test API.
   base::WeakPtr<AutofillSuggestionController>
@@ -252,6 +252,10 @@ class ChromeAutofillClient : public ContentAutofillClient,
   std::unique_ptr<AutofillManager> CreateManager(
       base::PassKey<ContentAutofillDriver> pass_key,
       ContentAutofillDriver& driver) final;
+
+  // ContentAutofillClient:
+  credential_management::ContentCredentialManager* GetContentCredentialManager()
+  override;
 
  protected:
   explicit ChromeAutofillClient(content::WebContents* web_contents);
