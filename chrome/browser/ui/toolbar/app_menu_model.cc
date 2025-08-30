@@ -1938,6 +1938,7 @@ void AppMenuModel::Build() {
   }
 #endif
 
+/*
   if (browser()
           ->GetFeatures()
           .lens_overlay_entry_point_controller()
@@ -1957,6 +1958,7 @@ void AppMenuModel::Build() {
                       browser()->window()->MaybeShowNewBadgeFor(
                           lens::features::kLensOverlay));
   }
+*/
 
   AddItemWithStringIdAndVectorIcon(this, IDC_SHOW_TRANSLATE, IDS_SHOW_TRANSLATE,
                                    kTranslateIcon);

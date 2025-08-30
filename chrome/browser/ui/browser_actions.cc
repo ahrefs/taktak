@@ -251,6 +251,7 @@ void BrowserActions::InitializeBrowserActions() {
                       kActionSidePanelShowReadAnything, browser, true)
           .Build());
 
+ /*
   if (lens::features::IsLensOverlayEnabled()) {
     actions::ActionItem::InvokeActionCallback callback = base::BindRepeating(
         [](base::WeakPtr<Browser> browser, actions::ActionItem* item,
@@ -281,6 +282,7 @@ void BrowserActions::InitializeBrowserActions() {
                              actions::ActionPinnableState::kPinnable))
             .Build());
   }
+*/
 
   root_action_item_->AddChild(
       actions::ActionItem::Builder(

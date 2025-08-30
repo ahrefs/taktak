@@ -2128,9 +2128,13 @@ void RenderViewContextMenu::AppendPageItems() {
   menu_model_.AddItemWithStringId(IDC_PRINT, IDS_CONTENT_CONTEXT_PRINT);
   AppendLiveCaptionItem();
   AppendMediaRouterItem();
+
+  /*
   if (IsRegionSearchEnabled()) {
     AppendRegionSearchItem();
   }
+  */
+
   AppendReadingModeItem();
 
   // Note: `has_sharing_menu_items = true` also implies a separator was added
