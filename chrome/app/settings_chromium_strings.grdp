@@ -122,7 +122,7 @@
 
   <!-- Delete Browsing Data -->
   <message name="IDS_SETTINGS_MANAGE_PASSWORDS_SUB_LABEL" desc="Sub-label for the 'Manage other Data' subpage entrypoint in the 'Delete Browsing Data' dialog, explaining to the user that passwords can only be deleted outside of Chromium.">
-    Passwords can only be deleted outside Chromium
+    Passwords can only be deleted outside Taktak
   </message>
 
   <!-- Preloading Page-->

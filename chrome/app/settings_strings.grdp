@@ -829,7 +829,7 @@
     More
   </message>
   <message name="IDS_SETTINGS_MANAGE_IN_GOOGLE_PASSWORD_MANAGER" desc="Description for the 'Passwords and Passkeys' linkout in the 'Other Google Data' subpage inside the 'Delete browsing data' dialog. This lets users know that passwords and passkeys can be managed and deleted in Google password manager.">
-    Manage in Google Password Manager
+    Manage in Password Manager
   </message>
   <message name="IDS_SETTINGS_MANAGE_IN_YOUR_GOOGLE_ACCOUNT" desc="Description for the MyActivity and Search History linkouts in the 'Other Google Data' subpage inside the 'Delete browsing data' dialog. This lets users know that this data can be managed and deleted in their Google account.">
     Manage in your Google Account
@@ -847,7 +847,7 @@
     Other data
   </message>
   <message name="IDS_SETTINGS_OTHER_GOOGLE_DATA_TITLE" desc="Title for the 'Other Google Data' subpage inside the 'Delete browsing data' dialog, where the user can see and manage data that is stored outside of Chrome. This is the title shown when the user set Google as their default search engine, indicating that all data linked in this subpage is stored within Google.">
-    Other Google data
+    Other Taktak data
   </message>
   <message name="IDS_SETTINGS_DELETE_DATA_FROM_DEVICE" desc="This is the label for the primary button on the 'Delete browsing data' dialog. Clicking on this will trigger the deletion. This is the label shown when account data cannot be cleared, for example: the user is signed out. It indicates that the deletion will only affect data stored on this device and will not affect synced data.">
     Delete from this device
@@ -859,7 +859,7 @@
     Deleted
   </message>
   <message name="IDS_SETTINGS_MANAGE_OTHER_GOOGLE_DATA_LABEL" desc="Label for the 'Manage other Google data' subpage entry-point in the 'Delete Browsing Data' dialog where the user can find link-outs to manage their data outside of Chrome. This is the label shown when the user has Google as their default search engine.">
-    Manage other Google data
+    Manage other Taktak data
   </message>
   <message name="IDS_SETTINGS_MANAGE_OTHER_DATA_LABEL" desc="Label for the 'Manage other data' subpage entry-point in the 'Delete Browsing Data' dialog where the user can find link-outs to manage their data outside of Chrome. This is the label shown when the user does not have Google as their default search engine.">
     Manage other data

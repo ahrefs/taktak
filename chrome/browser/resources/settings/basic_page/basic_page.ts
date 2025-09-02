@@ -78,305 +78,305 @@ const SettingsBasicPageElementBase =
         WebUiListenerMixin(I18nMixin(PolymerElement))))));
 
 export class SettingsBasicPageElement extends SettingsBasicPageElementBase {
-  static get is() {
-    return 'settings-basic-page';
-  }
-
-  static get template() {
-    return getTemplate();
-  }
-
-  static get properties() {
-    return {
-      // <if expr="not chromeos_ash">
-      /**
-       * Read-only reference to the languages model provided by the
-       * 'settings-languages' instance.
-       */
-      languages: Object,
-
-      languageHelper: Object,
-      // </if>
-
-      /**
-       * Dictionary defining page visibility.
-       */
-      pageVisibility_: {
-        type: Object,
-        value() {
-          return pageVisibility || {};
-        },
-      },
-
-      /**
-       * Whether a search operation is in progress or previous search
-       * results are being displayed.
-       */
-      inSearchMode: {
-        type: Boolean,
-        value: false,
-        reflectToAttribute: true,
-      },
-
-      /**
-       * True if the basic page should currently display the reset profile
-       * banner.
-       */
-      showResetProfileBanner_: {
-        type: Boolean,
-        value() {
-          return loadTimeData.getBoolean('showResetProfileBanner');
-        },
-      },
-
-      /**
-       * True if the basic page should currently display the privacy guide
-       * promo.
-       */
-      showPrivacyGuidePromo_: {
-        type: Boolean,
-        value: false,
-      },
-
-      currentRoute_: Object,
-
-      /**
-       * Used to avoid handling a new toggle while currently toggling.
-       */
-      advancedTogglingInProgress_: {
-        type: Boolean,
-        value: false,
-        reflectToAttribute: true,
-      },
-
-      /**
-       * Used to hide battery settings section if the device has no battery
-       */
-      showBatterySettings_: {
-        type: Boolean,
-        value: false,
-      },
-
-      showAiPageAiFeatureSection_: {
-        type: Boolean,
-        value: () => loadTimeData.getBoolean('showAiPageAiFeatureSection'),
-      },
-
-      // <if expr="enable_glic">
-      showGlicSection_: {
-        type: Boolean,
-        value: () => loadTimeData.getBoolean('showGlicSettings'),
-      },
-      // </if>
-    };
-  }
-
-  static get observers() {
-    return [
-      'updatePrivacyGuidePromoVisibility_(isPrivacyGuideAvailable, prefs.privacy_guide.viewed.value)',
-    ];
-  }
-
-  // <if expr="not chromeos_ash">
-  declare languages?: LanguagesModel;
-  declare languageHelper: LanguageHelper;
-  // </if>
-  declare private pageVisibility_: PageVisibility;
-  declare inSearchMode: boolean;
-  declare private showResetProfileBanner_: boolean;
-
-  declare private currentRoute_: Route;
-  declare private advancedTogglingInProgress_: boolean;
-  declare private showBatterySettings_: boolean;
-  declare private showAiPageAiFeatureSection_: boolean;
-  // <if expr="enable_glic">
-  declare private showGlicSection_: boolean;
-  // </if>
-  declare private showPrivacyGuidePromo_: boolean;
-  private privacyGuidePromoWasShown_: boolean;
-  private privacyGuideBrowserProxy_: PrivacyGuideBrowserProxy =
-      PrivacyGuideBrowserProxyImpl.getInstance();
-  private performanceBrowserProxy_: PerformanceBrowserProxy =
-      PerformanceBrowserProxyImpl.getInstance();
-
-  override ready() {
-    super.ready();
-
-    this.setAttribute('role', 'main');
-  }
-
-
-  override connectedCallback() {
-    super.connectedCallback();
-
-    this.addWebUiListener(
-        'device-has-battery-changed',
-        this.onDeviceHasBatteryChanged_.bind(this));
-    this.performanceBrowserProxy_.getDeviceHasBattery().then(
-        this.onDeviceHasBatteryChanged_.bind(this));
-
-    this.currentRoute_ = Router.getInstance().getCurrentRoute();
-  }
-
-  override currentRouteChanged(newRoute: Route, oldRoute?: Route) {
-    this.currentRoute_ = newRoute;
-
-    if (routes.ADVANCED && routes.ADVANCED.contains(newRoute)) {
-      // Render the advanced page now (don't wait for idle).
-      // In Polymer3, async() does not wait long enough for layout to complete.
-      // beforeNextRender() must be used instead.
-      beforeNextRender(this, () => {
-        this.getIdleLoad_();
-      });
+    static get is() {
+        return 'settings-basic-page';
     }
 
-    super.currentRouteChanged(newRoute, oldRoute);
-    if (newRoute === routes.PRIVACY) {
-      this.updatePrivacyGuidePromoVisibility_();
+    static get template() {
+        return getTemplate();
     }
-  }
 
-  /** Overrides MainPageMixin method. */
-  override containsRoute(route: Route|null): boolean {
-    return !route || routes.BASIC.contains(route) ||
-        (routes.ADVANCED && routes.ADVANCED.contains(route));
-  }
+    static get properties() {
+        return {
+            // <if expr="not chromeos_ash">
+            /**
+             * Read-only reference to the languages model provided by the
+             * 'settings-languages' instance.
+             */
+            languages: Object,
 
-  private showPage_(visibility?: boolean): boolean {
-    return visibility !== false;
-  }
+            languageHelper: Object,
+            // </if>
 
-  private getIdleLoad_(): Promise<Element> {
-    const idleLoad = this.shadowRoot!.querySelector<SettingsIdleLoadElement>(
-        '#advancedPageTemplate');
-    assert(idleLoad);
-    return idleLoad.get();
-  }
+            /**
+             * Dictionary defining page visibility.
+             */
+            pageVisibility_: {
+                type: Object,
+                value() {
+                    return pageVisibility || {};
+                },
+            },
 
-  private updatePrivacyGuidePromoVisibility_() {
-    if (!this.isPrivacyGuideAvailable ||
-        this.pageVisibility_.privacy === false || this.prefs === undefined ||
-        this.getPref('privacy_guide.viewed').value ||
-        this.privacyGuideBrowserProxy_.getPromoImpressionCount() >=
+            /**
+             * Whether a search operation is in progress or previous search
+             * results are being displayed.
+             */
+            inSearchMode: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+            },
+
+            /**
+             * True if the basic page should currently display the reset profile
+             * banner.
+             */
+            showResetProfileBanner_: {
+                type: Boolean,
+                value() {
+                    return loadTimeData.getBoolean('showResetProfileBanner');
+                },
+            },
+
+            /**
+             * True if the basic page should currently display the privacy guide
+             * promo.
+             */
+            showPrivacyGuidePromo_: {
+                type: Boolean,
+                value: false,
+            },
+
+            currentRoute_: Object,
+
+            /**
+             * Used to avoid handling a new toggle while currently toggling.
+             */
+            advancedTogglingInProgress_: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+            },
+
+            /**
+             * Used to hide battery settings section if the device has no battery
+             */
+            showBatterySettings_: {
+                type: Boolean,
+                value: false,
+            },
+
+            showAiPageAiFeatureSection_: {
+                type: Boolean,
+                value: () => loadTimeData.getBoolean('showAiPageAiFeatureSection'),
+            },
+
+            // <if expr="enable_glic">
+            showGlicSection_: {
+                type: Boolean,
+                value: () => loadTimeData.getBoolean('showGlicSettings'),
+            },
+            // </if>
+        };
+    }
+
+    static get observers() {
+        return [
+            'updatePrivacyGuidePromoVisibility_(isPrivacyGuideAvailable, prefs.privacy_guide.viewed.value)',
+        ];
+    }
+
+    // <if expr="not chromeos_ash">
+    declare languages?: LanguagesModel;
+    declare languageHelper: LanguageHelper;
+    // </if>
+    declare private pageVisibility_: PageVisibility;
+    declare inSearchMode: boolean;
+    declare private showResetProfileBanner_: boolean;
+
+    declare private currentRoute_: Route;
+    declare private advancedTogglingInProgress_: boolean;
+    declare private showBatterySettings_: boolean;
+    declare private showAiPageAiFeatureSection_: boolean;
+    // <if expr="enable_glic">
+    declare private showGlicSection_: boolean;
+    // </if>
+    declare private showPrivacyGuidePromo_: boolean;
+    private privacyGuidePromoWasShown_: boolean;
+    private privacyGuideBrowserProxy_: PrivacyGuideBrowserProxy =
+        PrivacyGuideBrowserProxyImpl.getInstance();
+    private performanceBrowserProxy_: PerformanceBrowserProxy =
+        PerformanceBrowserProxyImpl.getInstance();
+
+    override ready() {
+        super.ready();
+
+        this.setAttribute('role', 'main');
+    }
+
+
+    override connectedCallback() {
+        super.connectedCallback();
+
+        this.addWebUiListener(
+            'device-has-battery-changed',
+            this.onDeviceHasBatteryChanged_.bind(this));
+        this.performanceBrowserProxy_.getDeviceHasBattery().then(
+            this.onDeviceHasBatteryChanged_.bind(this));
+
+        this.currentRoute_ = Router.getInstance().getCurrentRoute();
+    }
+
+    override currentRouteChanged(newRoute: Route, oldRoute?: Route) {
+        this.currentRoute_ = newRoute;
+
+        if (routes.ADVANCED && routes.ADVANCED.contains(newRoute)) {
+            // Render the advanced page now (don't wait for idle).
+            // In Polymer3, async() does not wait long enough for layout to complete.
+            // beforeNextRender() must be used instead.
+            beforeNextRender(this, () => {
+                this.getIdleLoad_();
+            });
+        }
+
+        super.currentRouteChanged(newRoute, oldRoute);
+        if (newRoute === routes.PRIVACY) {
+            this.updatePrivacyGuidePromoVisibility_();
+        }
+    }
+
+    /** Overrides MainPageMixin method. */
+    override containsRoute(route: Route|null): boolean {
+        return !route || routes.BASIC.contains(route) ||
+            (routes.ADVANCED && routes.ADVANCED.contains(route));
+    }
+
+    private showPage_(visibility?: boolean): boolean {
+        return visibility !== false;
+    }
+
+    private getIdleLoad_(): Promise<Element> {
+        const idleLoad = this.shadowRoot!.querySelector<SettingsIdleLoadElement>(
+            '#advancedPageTemplate');
+        assert(idleLoad);
+        return idleLoad.get();
+    }
+
+    private updatePrivacyGuidePromoVisibility_() {
+        if (!this.isPrivacyGuideAvailable ||
+            this.pageVisibility_.privacy === false || this.prefs === undefined ||
+            this.getPref('privacy_guide.viewed').value ||
+            this.privacyGuideBrowserProxy_.getPromoImpressionCount() >=
             MAX_PRIVACY_GUIDE_PROMO_IMPRESSION ||
-        this.currentRoute_ !== routes.PRIVACY) {
-      this.showPrivacyGuidePromo_ = false;
-      return;
-    }
-    this.showPrivacyGuidePromo_ = true;
-    if (!this.privacyGuidePromoWasShown_) {
-      this.privacyGuideBrowserProxy_.incrementPromoImpressionCount();
-      this.privacyGuidePromoWasShown_ = true;
-    }
-  }
-
-  private onDeviceHasBatteryChanged_(deviceHasBattery: boolean) {
-    this.showBatterySettings_ = deviceHasBattery;
-  }
-
-  /**
-   * Queues a task to search the basic sections, then another for the advanced
-   * sections.
-   * @param query The text to search for.
-   * @return A signal indicating that searching finished.
-   */
-  searchContents(query: string): Promise<SearchResult> {
-    const basicPage = this.shadowRoot!.querySelector<HTMLElement>('#basicPage');
-    assert(basicPage);
-    const whenSearchDone = [
-      getSearchManager().search(query, basicPage),
-    ];
-
-    if (this.pageVisibility_.advancedSettings !== false) {
-      whenSearchDone.push(this.getIdleLoad_().then(function(advancedPage) {
-        return getSearchManager().search(query, advancedPage);
-      }));
+            this.currentRoute_ !== routes.PRIVACY) {
+            this.showPrivacyGuidePromo_ = false;
+            return;
+        }
+        this.showPrivacyGuidePromo_ = true;
+        if (!this.privacyGuidePromoWasShown_) {
+            this.privacyGuideBrowserProxy_.incrementPromoImpressionCount();
+            this.privacyGuidePromoWasShown_ = true;
+        }
     }
 
-    return Promise.all(whenSearchDone).then(function(requests) {
-      // Combine the SearchRequests results to a single SearchResult object.
-      return {
-        canceled: requests.some(function(r) {
-          return r.canceled;
-        }),
-        didFindMatches: requests.some(function(r) {
-          return r.didFindMatches();
-        }),
-        // All requests correspond to the same user query, so only need to check
-        // one of them.
-        wasClearSearch: requests[0].isSame(''),
-      };
-    });
-  }
-
-  // <if expr="chromeos_ash">
-  private onOpenChromeOsLanguagesSettingsClick_() {
-    OpenWindowProxyImpl.getInstance().openUrl(
-        loadTimeData.getString('osSettingsLanguagesPageUrl'));
-  }
-  // </if>
-
-  private onResetProfileBannerClosed_() {
-    this.showResetProfileBanner_ = false;
-  }
-
-  private fire_(eventName: string, detail: any) {
-    this.dispatchEvent(
-        new CustomEvent(eventName, {bubbles: true, composed: true, detail}));
-  }
-
-  /**
-   * @return Whether to show #basicPage. This is an optimization to lazy render
-   *     #basicPage only when a section/subpage within it is being shown, or
-   *     when in search mode.
-   */
-  private showBasicPage_(): boolean {
-    if (this.currentRoute_ === undefined) {
-      return false;
+    private onDeviceHasBatteryChanged_(deviceHasBattery: boolean) {
+        this.showBatterySettings_ = deviceHasBattery;
     }
 
-    return this.inSearchMode || routes.BASIC.contains(this.currentRoute_);
-  }
+    /**
+     * Queues a task to search the basic sections, then another for the advanced
+     * sections.
+     * @param query The text to search for.
+     * @return A signal indicating that searching finished.
+     */
+    searchContents(query: string): Promise<SearchResult> {
+        const basicPage = this.shadowRoot!.querySelector<HTMLElement>('#basicPage');
+        assert(basicPage);
+        const whenSearchDone = [
+            getSearchManager().search(query, basicPage),
+        ];
 
-  private showAdvancedSettings_(visibility?: boolean): boolean {
-    return this.showPage_(visibility);
-  }
+        if (this.pageVisibility_.advancedSettings !== false) {
+            whenSearchDone.push(this.getIdleLoad_().then(function(advancedPage) {
+                return getSearchManager().search(query, advancedPage);
+            }));
+        }
 
-  private showAiPage_(visibility?: boolean): boolean {
-    return loadTimeData.getBoolean('showAiPage') && this.showPage_(visibility);
-  }
+        return Promise.all(whenSearchDone).then(function(requests) {
+            // Combine the SearchRequests results to a single SearchResult object.
+            return {
+                canceled: requests.some(function(r) {
+                    return r.canceled;
+                }),
+                didFindMatches: requests.some(function(r) {
+                    return r.didFindMatches();
+                }),
+                // All requests correspond to the same user query, so only need to check
+                // one of them.
+                wasClearSearch: requests[0].isSame(''),
+            };
+        });
+    }
 
-  // <if expr="_google_chrome">
-  private onSendPerformanceFeedbackClick_(e: Event) {
-    e.stopPropagation();
-    this.performanceBrowserProxy_.openFeedbackDialog(
-        PerformanceFeedbackCategory.NOTIFICATIONS);
-  }
+    // <if expr="chromeos_ash">
+    private onOpenChromeOsLanguagesSettingsClick_() {
+        OpenWindowProxyImpl.getInstance().openUrl(
+            loadTimeData.getString('osSettingsLanguagesPageUrl'));
+    }
+    // </if>
 
-  private onSendMemorySaverFeedbackClick_(e: Event) {
-    e.stopPropagation();
-    this.performanceBrowserProxy_.openFeedbackDialog(
-        PerformanceFeedbackCategory.TABS);
-  }
+    private onResetProfileBannerClosed_() {
+        this.showResetProfileBanner_ = false;
+    }
 
-  private onSendBatterySaverFeedbackClick_(e: Event) {
-    e.stopPropagation();
-    this.performanceBrowserProxy_.openFeedbackDialog(
-        PerformanceFeedbackCategory.BATTERY);
-  }
+    private fire_(eventName: string, detail: any) {
+        this.dispatchEvent(
+            new CustomEvent(eventName, {bubbles: true, composed: true, detail}));
+    }
 
-  private onSendSpeedFeedbackClick_(e: Event) {
-    e.stopPropagation();
-    this.performanceBrowserProxy_.openFeedbackDialog(
-        PerformanceFeedbackCategory.SPEED);
-  }
-  // </if>
+    /**
+     * @return Whether to show #basicPage. This is an optimization to lazy render
+     *     #basicPage only when a section/subpage within it is being shown, or
+     *     when in search mode.
+     */
+    private showBasicPage_(): boolean {
+        if (this.currentRoute_ === undefined) {
+            return false;
+        }
+
+        return this.inSearchMode || routes.BASIC.contains(this.currentRoute_);
+    }
+
+    private showAdvancedSettings_(visibility?: boolean): boolean {
+        return this.showPage_(visibility);
+    }
+
+    private showAiPage_(visibility?: boolean): boolean {
+        return loadTimeData.getBoolean('showAiPage') && this.showPage_(visibility);
+    }
+
+    // <if expr="_google_chrome">
+    private onSendPerformanceFeedbackClick_(e: Event) {
+        e.stopPropagation();
+        this.performanceBrowserProxy_.openFeedbackDialog(
+            PerformanceFeedbackCategory.NOTIFICATIONS);
+    }
+
+    private onSendMemorySaverFeedbackClick_(e: Event) {
+        e.stopPropagation();
+        this.performanceBrowserProxy_.openFeedbackDialog(
+            PerformanceFeedbackCategory.TABS);
+    }
+
+    private onSendBatterySaverFeedbackClick_(e: Event) {
+        e.stopPropagation();
+        this.performanceBrowserProxy_.openFeedbackDialog(
+            PerformanceFeedbackCategory.BATTERY);
+    }
+
+    private onSendSpeedFeedbackClick_(e: Event) {
+        e.stopPropagation();
+        this.performanceBrowserProxy_.openFeedbackDialog(
+            PerformanceFeedbackCategory.SPEED);
+    }
+    // </if>
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    'settings-basic-page': SettingsBasicPageElement;
-  }
+    interface HTMLElementTagNameMap {
+        'settings-basic-page': SettingsBasicPageElement;
+    }
 }
 
 customElements.define(SettingsBasicPageElement.is, SettingsBasicPageElement);
