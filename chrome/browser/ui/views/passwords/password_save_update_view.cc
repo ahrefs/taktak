@@ -11,6 +11,7 @@
 
 #include "base/strings/string_util.h"
 #include "chrome/app/vector_icons/vector_icons.h"
+#include "chrome/browser/buildflags.h"
 #include "chrome/browser/password_manager/password_store_utils.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/signin/chrome_signin_pref_names.h"
@@ -240,11 +241,15 @@ bool PasswordSaveUpdateView::CloseOrReplaceWithPromo() {
   accessibility_alert_ = AddChildView(std::move(accessibility_view));
 
   // Show the sign in promo.
-  auto sign_in_promo = std::make_unique<BubbleSignInPromoView>(
-      controller_.GetWebContents(),
-      signin_metrics::AccessPoint::kPasswordBubble,
-      PasswordFormUniqueKey(controller_.pending_password()));
-  AddChildView(std::move(sign_in_promo));
+  bool enabled_promo_view =
+      BUILDFLAG(TAKTAK_ENABLE_BUBBLE_GOOGLE_SIGNIN_PROMO_VIEW);
+  if (enabled_promo_view) {
+    auto sign_in_promo = std::make_unique<BubbleSignInPromoView>(
+        controller_.GetWebContents(),
+        signin_metrics::AccessPoint::kPasswordBubble,
+        PasswordFormUniqueKey(controller_.pending_password()));
+    AddChildView(std::move(sign_in_promo));
+  }
   // TODO(crbug.com/41493925) remove this SizeToContents() when the subsequent
   // code no longer depends on the sync auto-size here.
   SizeToContents();

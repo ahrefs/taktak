@@ -10,6 +10,7 @@
 #include "base/strings/strcat.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
+#include "chrome/browser/buildflags.h"
 #include "chrome/browser/extensions/account_extension_tracker.h"
 #include "chrome/browser/extensions/extension_util.h"
 #include "chrome/browser/platform_util.h"
@@ -98,7 +99,8 @@ views::View* AnchorViewForBrowser(const ExtensionInstalledBubbleModel* model,
   return reference_view;
 }
 
-#if !BUILDFLAG(IS_CHROMEOS)
+#if !BUILDFLAG(IS_CHROMEOS) && \
+    BUILDFLAG(TAKTAK_ENABLE_BUBBLE_GOOGLE_SIGNIN_PROMO_VIEW)
 std::unique_ptr<views::View> CreateSigninPromoView(
     content::WebContents* web_contents,
     const extensions::ExtensionId& extension_id) {
@@ -154,7 +156,8 @@ ExtensionInstalledBubbleView::ExtensionInstalledBubbleView(
   SetTitle(l10n_util::GetStringFUTF16(IDS_EXTENSION_INSTALLED_HEADING,
                                       extension_name));
 
-#if !BUILDFLAG(IS_CHROMEOS)
+#if !BUILDFLAG(IS_CHROMEOS) && \
+    BUILDFLAG(TAKTAK_ENABLE_BUBBLE_GOOGLE_SIGNIN_PROMO_VIEW)
   // Add a sync or sign in promo in the footer if it should be shown.
   extensions::ExtensionRegistry* registry =
       extensions::ExtensionRegistry::Get(browser->profile());

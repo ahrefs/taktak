@@ -83,6 +83,7 @@ declare_args() {
   taktak_chat_api_url = ""
   taktak_chat_thinking_model = ""
   taktak_chat_no_thinking_model = ""
+  taktak_enable_bubble_google_signin_promo_view = true
 }
 
 additional_modules_list_file =
@@ -115,6 +116,8 @@ if (is_official_build) {
   assert(taktak_chat_api_url != "")
   assert(taktak_chat_thinking_model != "")
   assert(taktak_chat_no_thinking_model != "")
+  assert(taktak_enable_bubble_google_signin_promo_view == true ||
+         taktak_enable_bubble_google_signin_promo_view == false)
 }
 
 buildflag_header("buildflags") {
@@ -132,6 +135,7 @@ buildflag_header("buildflags") {
     "TAKTAK_CHAT_API_URL=\"$taktak_chat_api_url\"",
     "TAKTAK_CHAT_THINKING_MODEL=\"$taktak_chat_thinking_model\"",
     "TAKTAK_CHAT_NO_THINKING_MODEL=\"$taktak_chat_no_thinking_model\"",
+    "TAKTAK_ENABLE_BUBBLE_GOOGLE_SIGNIN_PROMO_VIEW=$taktak_enable_bubble_google_signin_promo_view",
   ]
 
   if (is_win) {
