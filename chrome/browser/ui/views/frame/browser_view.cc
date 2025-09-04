@@ -3735,7 +3735,8 @@ void BrowserView::DidFinishNavigation(content::NavigationHandle* navigation_hand
   }
 
   if (!navigation_handle->IsInPrimaryMainFrame() ||
-      !navigation_handle->HasCommitted() || navigation_handle->IsErrorPage()) {
+      !navigation_handle->HasCommitted() || navigation_handle->IsErrorPage() ||
+      navigation_handle->IsSameDocument()) {
     return;
   }
 
