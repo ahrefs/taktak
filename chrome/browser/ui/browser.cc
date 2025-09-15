@@ -140,6 +140,7 @@
 #include "chrome/browser/ui/unload_controller.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/browser/ui/views/frame/contents_web_view.h"
+#include "chrome/browser/ui/views/side_panel/side_panel_coordinator.h"
 #include "chrome/browser/ui/views/status_bubble_views.h"
 #include "chrome/browser/ui/web_applications/app_browser_controller.h"
 #include "chrome/browser/ui/web_applications/web_app_launch_utils.h"
@@ -2028,6 +2029,17 @@ void Browser::OnWindowDidShow() {
   // Nothing to do for non-tabbed windows.
   if (!is_type_normal()) {
     return;
+  }
+
+  BrowserView* browser_view = BrowserView::GetBrowserViewForBrowser(this);
+  if (browser_view) {
+    auto* browser = browser_view->browser();
+    if (browser) {
+      auto* coordinator = browser->GetFeatures().side_panel_coordinator();
+      if (coordinator) {
+        coordinator->Show(SidePanelEntry::Id::kAIChat);
+      }
+    }
   }
 
   // Show any pending global error bubble.
