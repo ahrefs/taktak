@@ -24,11 +24,14 @@
 #include "ui/base/metadata/metadata_header_macros.h"
 #include "ui/views/controls/webview/webview.h"
 #include "ui/views/view.h"
+#include "content/public/browser/web_contents_observer.h"
+#include "content/public/browser/web_contents.h"
 
 class Browser;
 
 class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
-                             public TabStripModelObserver {
+                             public TabStripModelObserver
+                             {
   using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
   METADATA_HEADER(ChatSidePanelWebView, SidePanelWebUIViewT_ChatUI)
  public:
@@ -48,12 +51,23 @@ class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
                     int index,
                     TabChangeType change_type) override;
 
+  void DidFinishNavigation(content::NavigationHandle* nav) override;
+  void DocumentOnLoadCompletedInPrimaryMainFrame() override;
+  void PrimaryPageChanged(content::Page& page) override;
+
   void UpdateActiveSiteInfo(content::WebContents* contents);
   void UpdateActiveWebContents();
+
   base::WeakPtr<ChatSidePanelWebView> GetWeakPtr();
 
  private:
+  void AttachToActiveTab();
+  void TryRunDescriptionScript();
+  void OnDescriptionJSResult(base::Value result);
+
+  chat::mojom::SiteInfoPtr site_info_;
   const raw_ptr<Browser> browser_;
+  raw_ptr<content::WebContents> active_tab_ = nullptr;
   GURL last_visited_url_;
   base::WeakPtrFactory<ChatSidePanelWebView> weak_ptr_factory_{this};
 };

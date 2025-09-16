@@ -8,6 +8,8 @@
 #include <memory>
 #include <string>
 
+#include "base/containers/contains.h"
+#include "base/containers/fixed_flat_set.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/profiles/profile.h"
@@ -18,6 +20,10 @@
 #include "chrome/browser/ui/views/frame/browser_view.h"
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/generated_resources.h"
+#include "content/public/browser/navigation_handle.h"
+#include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/web_contents.h"
+#include "services/service_manager/public/cpp/interface_provider.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
 #include "ui/views/controls/label.h"
 #include "ui/views/controls/webview/webview.h"
@@ -27,11 +33,6 @@
 #include "ui/views/view.h"
 #include "ui/views/view_class_properties.h"
 #include "url/gurl.h"
-#include "services/service_manager/public/cpp/interface_provider.h"
-#include "base/containers/contains.h"
-#include "base/containers/fixed_flat_set.h"
-#include "base/strings/string_util.h"
-#include "base/strings/utf_string_conversions.h"
 
 using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
 BEGIN_TEMPLATE_METADATA(SidePanelWebUIViewT_ChatUI, SidePanelWebUIViewT)
@@ -56,13 +57,23 @@ ChatSidePanelWebView::ChatSidePanelWebView(Browser* browser,
   browser_->tab_strip_model()->AddObserver(this);
 }
 
+ChatSidePanelWebView::~ChatSidePanelWebView() {
+  if (browser_) {
+    browser_->tab_strip_model()->RemoveObserver(this);
+  }
+  Observe(nullptr);
+}
+
 void ChatSidePanelWebView::OnTabStripModelChanged(
     TabStripModel* tab_strip_model,
     const TabStripModelChange& change,
     const TabStripSelectionChange& selection) {
+/*
   if (GetVisible() && selection.active_tab_changed()) {
     UpdateActiveSiteInfo(tab_strip_model->GetActiveWebContents());
+    TryRunDescriptionScript();
   }
+*/
 }
 
 void ChatSidePanelWebView::TabChangedAt(content::WebContents* contents,
@@ -77,7 +88,99 @@ void ChatSidePanelWebView::TabChangedAt(content::WebContents* contents,
       UpdateActiveSiteInfo(
           browser_->tab_strip_model()->GetWebContentsAt(index));
     }
+    //active_tab_ = browser_->tab_strip_model()->GetWebContentsAt(index);
+    //TryRunDescriptionScript();
+
   }
+}
+
+// ---- WebContentsObserver (for the *active tab*) ----
+void ChatSidePanelWebView::DidFinishNavigation(content::NavigationHandle* nav) {
+  VLOG(0) << __func__ << " |>> Navigation finished to "
+           << nav->GetURL().spec();
+  if (nav->IsInPrimaryMainFrame() && nav->HasCommitted()) {
+      VLOG(0) << __func__ << " |>> Navigation finished to "
+               << nav->GetURL().spec();
+      active_tab_ = nav->GetWebContents();
+      TryRunDescriptionScript();
+  }
+}
+
+void ChatSidePanelWebView::DocumentOnLoadCompletedInPrimaryMainFrame() {
+   TryRunDescriptionScript();
+}
+
+void ChatSidePanelWebView::PrimaryPageChanged(content::Page& page) {
+   TryRunDescriptionScript();
+}
+
+void ChatSidePanelWebView::AttachToActiveTab() {
+  Observe(nullptr);
+  active_tab_ = browser_->tab_strip_model()->GetActiveWebContents();
+  if (!active_tab_) {
+    return;
+  }
+  Observe(active_tab_);
+  TryRunDescriptionScript();
+}
+
+void ChatSidePanelWebView::TryRunDescriptionScript() {
+  if (!active_tab_) {
+    return;
+  }
+  content::RenderFrameHost* rfh = active_tab_->GetPrimaryMainFrame();
+  if (!rfh) {
+    return;  // Not ready yet.
+  }
+  if (!rfh->IsActive() || !rfh->IsRenderFrameLive()) {
+    return;
+  }
+
+  static const char16_t kScript[] =
+      uR"JS(
+      (() => {
+        const pick = (sel, attr='content') => {
+          const el = document.querySelector(sel);
+          return el ? (attr === 'text' ? el.textContent.trim()
+                                       : (el.getAttribute(attr) || '').trim())
+                    : '';
+        };
+        let desc = pick('meta[name="description"]')
+                || pick('meta[name="Description"]')
+                || pick('meta[property="og:description"]')
+                || pick('meta[name="twitter:description"]');
+        if (!desc) {
+          const p = Array.from(document.querySelectorAll('p'))
+            .map(n => (n.textContent || '').trim())
+            .find(t => t && t.length > 40);
+          if (p) desc = p.slice(0, 320);
+        }
+        if (desc.length > 500) desc = desc.slice(0, 500);
+        return desc;
+      })()
+    )JS";
+
+  rfh->ExecuteJavaScript(
+      std::u16string(kScript),
+      base::BindOnce(&ChatSidePanelWebView::OnDescriptionJSResult,
+                     GetWeakPtr()));
+}
+
+void ChatSidePanelWebView::OnDescriptionJSResult(base::Value result) {
+  auto* controller = contents_wrapper()->GetWebUIController();
+  if (!controller) {
+    return;
+  }
+  std::string desc;
+  if (result.is_string()) {
+    desc = result.GetString();
+  }
+
+  if (!site_info_) {
+    site_info_ = chat::mojom::SiteInfo::New();
+  }
+  site_info_->description = std::move(desc);
+  controller->GetAs<ChatUI>()->SetSiteInfo(std::move(site_info_), active_tab_);
 }
 
 void ChatSidePanelWebView::UpdateActiveSiteInfo(
@@ -87,19 +190,20 @@ void ChatSidePanelWebView::UpdateActiveSiteInfo(
     return;
   }
 
-  chat::mojom::SiteInfoPtr site_info = chat::mojom::SiteInfo::New();
-  site_info->title = base::UTF16ToUTF8(contents->GetTitle());
+  chat::mojom::SiteInfoPtr siteinfo = chat::mojom::SiteInfo::New();
+  siteinfo->title = base::UTF16ToUTF8(contents->GetTitle());
 
   const GURL gurl = contents->GetLastCommittedURL();
   if (gurl.SchemeIsHTTPOrHTTPS()) {
-    site_info->url = gurl.spec();
-    site_info->is_content_usable_in_conversations = true;
+    siteinfo->url = gurl.spec();
+    siteinfo->is_content_usable_in_conversations = true;
   } else {
-    site_info->url = "";
-    site_info->is_content_usable_in_conversations = false;
+    siteinfo->url = "";
+    siteinfo->is_content_usable_in_conversations = false;
   }
 
-  controller->GetAs<ChatUI>()->SetSiteInfo(site_info.Clone(), contents);
+  site_info_ = std::move(siteinfo);
+  controller->GetAs<ChatUI>()->SetSiteInfo(std::move(site_info_), active_tab_);
 }
 
 base::WeakPtr<ChatSidePanelWebView> ChatSidePanelWebView::GetWeakPtr() {
@@ -107,10 +211,8 @@ base::WeakPtr<ChatSidePanelWebView> ChatSidePanelWebView::GetWeakPtr() {
 }
 
 void ChatSidePanelWebView::UpdateActiveWebContents() {
-  UpdateActiveSiteInfo(browser_->tab_strip_model()->GetActiveWebContents());
+ // UpdateActiveSiteInfo(browser_->tab_strip_model()->GetActiveWebContents());
 }
-
-ChatSidePanelWebView::~ChatSidePanelWebView() = default;
 
 BEGIN_METADATA(ChatSidePanelWebView)
 END_METADATA

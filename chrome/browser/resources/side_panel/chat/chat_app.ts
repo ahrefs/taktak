@@ -128,6 +128,7 @@ export class ChatAppElement extends CrLitElement {
     protected accessor siteInfo_: SiteInfo = {
         url: "",
         title: "",
+        description: "",
         isContentUsableInConversations: false,
     };
     protected accessor actionList_: ActionItem[] = [];
@@ -545,68 +546,69 @@ export class ChatAppElement extends CrLitElement {
         this.chatApiProxy_.openUrl(url, modifiers);
     }
 
-    private async updateSiteInfo(siteInfo: SiteInfo, willSaveInCache: boolean) {
-        if (willSaveInCache) {
-            this.chatApiProxy_.saveSiteInfo(siteInfo);
-        }
-        if (this.siteInfo_.url === siteInfo.url) {
-            const lastConversation = this.conversations_[this.conversations_.length - 1];
-            if (lastConversation) {
-                if (lastConversation.url == this.stripUrlProtocol_(siteInfo.url ?? "")) {
-                    this.isActivePageUrlNew_ = false;
-                    this.shouldHideSiteInfoInUserQueryElement_ = lastConversation.isUrlContext;
-                    this.shouldShowActionsMenu_ = !lastConversation.isUrlContext;
-                    this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = lastConversation.isUrlContext;
-                } else {
-                    this.isActivePageUrlNew_ = true;
-                    this.shouldHideSiteInfoInUserQueryElement_ = false;
-                    this.shouldShowActionsMenu_ = true;
-                    this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
-                }
-            } else {
-                this.isActivePageUrlNew_ = false;
-                this.shouldHideSiteInfoInUserQueryElement_ = false;
-                this.shouldShowActionsMenu_ = true;
-                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
-            }
-        } else {
-            const lastConversation = this.conversations_[this.conversations_.length - 1];
-            /*
-             This `if` condition evaluates the following scenarios:
-             1. The user visits abc.com, where the content can be utilized as chat context,
-                and they interact with it by asking a related question.
-             2. Afterward, the user navigates to other websites, but user don't use these sites' content
-                as the chat context.
-             3. Finally, the user navigates back to abc.com, potentially resuming the context
-                for further questions.
-
-                In this scenario, the known context is still the content of abc.com,
-                so suggestion list and site info in the prompt input container will not be displayed.
-                But the content of the abc.com will be used as the context of the chat.
-             */
-            if (lastConversation && lastConversation.isUrlContext && lastConversation.url == this.stripUrlProtocol_(siteInfo.url ?? "")) {
-                this.shouldShowActionsMenu_ = false;
-                this.shouldHideSiteInfoInUserQueryElement_ = true;
-                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
-            } else {
-                this.isActivePageUrlNew_ = true;
-                this.shouldHideSiteInfoInUserQueryElement_ = false;
-                this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
-                this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
-            }
-        }
+    private async updateSiteInfo(siteInfo: SiteInfo, _: boolean) {
+        // if (willSaveInCache) {
+        //     this.chatApiProxy_.saveSiteInfo(siteInfo);
+        // }
+        // if (this.siteInfo_.url === siteInfo.url) {
+        //     const lastConversation = this.conversations_[this.conversations_.length - 1];
+        //     if (lastConversation) {
+        //         if (lastConversation.url == this.stripUrlProtocol_(siteInfo.url ?? "")) {
+        //             this.isActivePageUrlNew_ = false;
+        //             this.shouldHideSiteInfoInUserQueryElement_ = lastConversation.isUrlContext;
+        //             this.shouldShowActionsMenu_ = !lastConversation.isUrlContext;
+        //             this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = lastConversation.isUrlContext;
+        //         } else {
+        //             this.isActivePageUrlNew_ = true;
+        //             this.shouldHideSiteInfoInUserQueryElement_ = false;
+        //             this.shouldShowActionsMenu_ = true;
+        //             this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
+        //         }
+        //     } else {
+        //         this.isActivePageUrlNew_ = false;
+        //         this.shouldHideSiteInfoInUserQueryElement_ = false;
+        //         this.shouldShowActionsMenu_ = true;
+        //         this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
+        //     }
+        // } else {
+        //     const lastConversation = this.conversations_[this.conversations_.length - 1];
+        //     /*
+        //      This `if` condition evaluates the following scenarios:
+        //      1. The user visits abc.com, where the content can be utilized as chat context,
+        //         and they interact with it by asking a related question.
+        //      2. Afterward, the user navigates to other websites, but user don't use these sites' content
+        //         as the chat context.
+        //      3. Finally, the user navigates back to abc.com, potentially resuming the context
+        //         for further questions.
+        //
+        //         In this scenario, the known context is still the content of abc.com,
+        //         so suggestion list and site info in the prompt input container will not be displayed.
+        //         But the content of the abc.com will be used as the context of the chat.
+        //      */
+        //     if (lastConversation && lastConversation.isUrlContext && lastConversation.url == this.stripUrlProtocol_(siteInfo.url ?? "")) {
+        //         this.shouldShowActionsMenu_ = false;
+        //         this.shouldHideSiteInfoInUserQueryElement_ = true;
+        //         this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = true;
+        //     } else {
+        //         this.isActivePageUrlNew_ = true;
+        //         this.shouldHideSiteInfoInUserQueryElement_ = false;
+        //         this.shouldShowActionsMenu_ = siteInfo.isContentUsableInConversations;
+        //         this.shouldHideContextActionElementsInPromptInputDueToKnownContext_ = false;
+        //     }
+        // }
+        //
+        // this.siteInfo_ = siteInfo;
+        // if (this.siteInfo_.isContentUsableInConversations) {
+        //     const {actionList} = await this.chatApiProxy_.getActionList();
+        //     this.actionList_ = actionList;
+        //     this.shouldUseCurrentPageContentAsChatContext_ = true;
+        //     this.shouldDisplayChatAboutThisPageButton_ = false;
+        // } else {
+        //     this.shouldUseCurrentPageContentAsChatContext_ = false;
+        //     this.shouldShowActionsMenu_ = false;
+        // }
 
         this.siteInfo_ = siteInfo;
-        if (this.siteInfo_.isContentUsableInConversations) {
-            const {actionList} = await this.chatApiProxy_.getActionList();
-            this.actionList_ = actionList;
-            this.shouldUseCurrentPageContentAsChatContext_ = true;
-            this.shouldDisplayChatAboutThisPageButton_ = false;
-        } else {
-            this.shouldUseCurrentPageContentAsChatContext_ = false;
-            this.shouldShowActionsMenu_ = false;
-        }
-
         // Lit requires this to update
         await this.updateComplete;
     }
@@ -677,8 +679,8 @@ export class ChatAppElement extends CrLitElement {
             const {thinkingState} = await this.chatApiProxy_.getThinkingState();
             this.enableThinking_ = thinkingState;
 
-            let cacheSiteInfo = await this.chatApiProxy_.getSiteInfoFromCache();
-            await this.updateSiteInfo(cacheSiteInfo.siteInfo, false /* willSaveInCache */);
+            // let cacheSiteInfo = await this.chatApiProxy_.getSiteInfoFromCache();
+            // await this.updateSiteInfo(cacheSiteInfo.siteInfo, false /* willSaveInCache */);
 
             let {siteInfo} = await this.chatApiProxy_.getSiteInfo();
             await this.updateSiteInfo(siteInfo, true /* willSaveInCache */);

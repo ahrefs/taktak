@@ -49,6 +49,9 @@ struct SiteInfo {
   // The url of the currently active tab if it has opening page
   string? url;
 
+  // The description of the currently active tab if it has an open page
+  string? description;
+
   // Indicates whether the current URL contains content that can be used in conversations with Yep Chat
   bool is_content_usable_in_conversations;
 };

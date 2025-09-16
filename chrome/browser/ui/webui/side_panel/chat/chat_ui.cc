@@ -102,10 +102,17 @@ ChatUI::ChatUI(content::WebUI *web_ui)
     for (const auto &str: kLocalizedStrings)
         webui::AddLocalizedString(source, str.name, str.id);
 
+  source->OverrideContentSecurityPolicy(
+   network::mojom::CSPDirectiveName::ChildSrc,
+   "child-src http://localhost:3001;");
+
+  source->OverrideContentSecurityPolicy(
+      network::mojom::CSPDirectiveName::FrameSrc,
+      "frame-src http://localhost:3001;");
+
     webui::SetupWebUIDataSource(
             source,
             kSidePanelChatResources,
-//            base::span(kSidePanelChatResources, kSidePanelChatResourcesSize),
             IDR_SIDE_PANEL_CHAT_CHAT_HTML);
 }
 
