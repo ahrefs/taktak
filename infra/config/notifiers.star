@@ -363,3 +363,9 @@ luci.notifier(
         "web-windowing-team@google.com",
     ],
 )
+
+luci.builder_health_notifier(
+    owner_email = "chrome-browser-infra-team@google.com",
+    ignore_buckets = ["try"],
+    notify_all_healthy = True,
+)

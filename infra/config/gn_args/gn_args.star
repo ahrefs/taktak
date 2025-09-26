@@ -590,13 +590,6 @@ gn_args.config(
     },
 )
 
-gn_args.config(
-    name = "enable_rust_png",
-    args = {
-        "enable_rust_png": True,
-    },
-)
-
 # TODO(crbug.com/40101527): Explicitly enable DirectX 12.
 gn_args.config(
     name = "dx12vk",
@@ -887,9 +880,9 @@ gn_args.config(
 
 # Do not use this for non-FYI builders.
 gn_args.config(
-    name = "libcxx_modules",
+    name = "clang_modules",
     args = {
-        "use_libcxx_modules": True,
+        "use_clang_modules": True,
     },
 )
 

@@ -63,7 +63,16 @@ public class DownloadManagerUiConfig {
      */
     public final boolean showDangerousItems;
 
-    /** Whether need to focus on search box at first. */
+    /**
+     * A generator for the {@link EdgeToEdgePadAdjuster} to be used to adjust the padding for the
+     * download manager.
+     */
+    public final @Nullable Function<View, EdgeToEdgePadAdjuster> edgeToEdgePadAdjusterGenerator;
+
+    /** Whether to show the search bar inline with the content. */
+    public final boolean inlineSearchBar;
+
+    /** Whether to auto-focus the search box. */
     public final boolean autoFocusSearchBox;
 
     /**
@@ -84,6 +93,7 @@ public class DownloadManagerUiConfig {
         showPaginationHeaders = builder.mShowPaginationHeaders;
         startWithPrefetchedContent = builder.mStartWithPrefetchedContent;
         showDangerousItems = builder.mShowDangerousItems;
+        inlineSearchBar = builder.mInlineSearchBar;
         autoFocusSearchBox = builder.mAutoFocusSearchBox;
         edgeToEdgePadAdjusterGenerator = builder.mEdgeToEdgePadAdjusterGenerator;
     }
@@ -104,6 +114,8 @@ public class DownloadManagerUiConfig {
         private boolean mShowPaginationHeaders;
         private boolean mStartWithPrefetchedContent;
         private boolean mShowDangerousItems;
+        private @Nullable Function<View, EdgeToEdgePadAdjuster> mEdgeToEdgePadAdjusterGenerator;
+        private boolean mInlineSearchBar;
         private boolean mAutoFocusSearchBox;
         private @Nullable Function<View, EdgeToEdgePadAdjuster> mEdgeToEdgePadAdjusterGenerator;
 
@@ -161,6 +173,17 @@ public class DownloadManagerUiConfig {
 
         public Builder setShowDangerousItems(boolean showDangerousItems) {
             mShowDangerousItems = showDangerousItems;
+            return this;
+        }
+
+        public Builder setEdgeToEdgePadAdjusterGenerator(
+                Function<View, EdgeToEdgePadAdjuster> edgeToEdgePadAdjusterGenerator) {
+            mEdgeToEdgePadAdjusterGenerator = edgeToEdgePadAdjusterGenerator;
+            return this;
+        }
+
+        public Builder setInlineSearchBar(boolean inlineSearchBar) {
+            mInlineSearchBar = inlineSearchBar;
             return this;
         }
 

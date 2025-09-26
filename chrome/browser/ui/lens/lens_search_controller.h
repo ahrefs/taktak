@@ -17,6 +17,7 @@
 #include "components/omnibox/browser/autocomplete_match_type.h"
 #include "components/tabs/public/tab_interface.h"
 #include "third_party/skia/include/core/SkBitmap.h"
+#include "ui/base/unowned_user_data/scoped_unowned_user_data.h"
 #include "ui/gfx/geometry/rect.h"
 
 class LensOverlayController;
@@ -28,6 +29,7 @@ class LensOverlayEventHandler;
 class LensOverlayGen204Controller;
 class LensOverlaySidePanelCoordinator;
 class LensPermissionBubbleController;
+class LensComposeboxController;
 class LensSearchboxController;
 class LensSearchContextualizationController;
 }  // namespace lens
@@ -54,6 +56,9 @@ class LensSearchController {
  public:
   explicit LensSearchController(tabs::TabInterface* tab);
   virtual ~LensSearchController();
+
+  DECLARE_USER_DATA(LensSearchController);
+  static LensSearchController* From(tabs::TabInterface* tab);
 
   // Initializes all the necessary dependencies for the LensSearchController.
   void Initialize(variations::VariationsClient* variations_client,
@@ -119,6 +124,23 @@ class LensSearchController {
       AutocompleteMatchType::Type match_type,
       bool is_zero_prefix_suggestion);
 
+  // Issues a text search request for Lens to fulfill using query text.
+  // Starts contextualization flow if its not already in progress. If the Lens
+  // Overlay is in the process of opening, the request will be queued until the
+  // overlay is fully opened.
+  // If `suppress_contextualization` is true, queries will not be performed with
+  // contextualization for the duration of the session. However,
+  // contextualization may still be initialized as normal.
+  // TODO(crbug.com/439082079): Remove `suppress_contextualization` after
+  // experiment completes as it is not intended to launch.
+  void IssueTextSearchRequest(
+      lens::LensOverlayInvocationSource invocation_source,
+      std::string query_text,
+      std::map<std::string, std::string> additional_query_parameters,
+      AutocompleteMatchType::Type match_type,
+      bool is_zero_prefix_suggestion,
+      bool suppress_contextualization);
+
   // Starts the closing process of the overlay. This is an asynchronous process
   // with the following sequence:
   //   (1) Close the side panel
@@ -134,6 +156,10 @@ class LensSearchController {
   // Hides the Lens overlay. This does not close the side panel. If the overlay
   // is open without the side panel, this will end the Lens session.
   void HideOverlay(lens::LensOverlayDismissalSource dismissal_source);
+
+  // Same as above, but does not close the session when the overlay is closed.
+  // Can only be called when the side panel is open.
+  void HideOverlay();
 
   // Launches the survey if the user has not already seen it.
   void MaybeLaunchSurvey();
@@ -175,6 +201,9 @@ class LensSearchController {
 
   // Returns the LensSearchboxController.
   lens::LensSearchboxController* lens_searchbox_controller();
+
+  // Returns the LensComposeboxController.
+  lens::LensComposeboxController* lens_composebox_controller();
 
   // Returns the event handler for this instance of the Lens Overlay.
   lens::LensOverlayEventHandler* lens_overlay_event_handler();
@@ -232,6 +261,11 @@ class LensSearchController {
   virtual std::unique_ptr<lens::LensSearchboxController>
   CreateLensSearchboxController();
 
+  // Override these methods to be able to track calls made to the composebox
+  // controller.
+  virtual std::unique_ptr<lens::LensComposeboxController>
+  CreateLensComposeboxController();
+
   // Override these methods to be able to track calls made to the
   // contextualization controller.
   virtual std::unique_ptr<lens::LensSearchContextualizationController>
@@ -250,7 +284,7 @@ class LensSearchController {
 
   // The final step for closing the overlay. This is called after the lens
   // overlay has faded out.
-  void OnOverlayHidden(lens::LensOverlayDismissalSource dismissal_source);
+  void OnOverlayHidden(std::optional<lens::LensOverlayDismissalSource> dismissal_source);
 
   // Called before the lens results panel begins hiding. This is called before
   // any side panel closing animations begin.
@@ -297,7 +331,8 @@ class LensSearchController {
 
   // Creates all state necessary to start a Lens session. This method contains
   // shared state that is used no matter the entrypoint.
-  void StartLensSession(lens::LensOverlayInvocationSource invocation_source);
+  void StartLensSession(lens::LensOverlayInvocationSource invocation_source,
+                        bool suppress_contextualization = false);
 
   // Runs the eligibility checks necessary for Lens to open on this tab. If the
   // user has not granted permission to use Lens on this tab, the permission
@@ -402,6 +437,9 @@ class LensSearchController {
   // interactions, without a dependency on the overlay controller.
   std::unique_ptr<lens::LensSearchboxController> lens_searchbox_controller_;
 
+  // The composebox controller for the Lens Search feature on this tab.
+  std::unique_ptr<lens::LensComposeboxController> lens_composebox_controller_;
+
   // The contextualization controller for the Lens Search feature on this tab.
   std::unique_ptr<lens::LensSearchContextualizationController>
       lens_contextualization_controller_;
@@ -436,6 +474,8 @@ class LensSearchController {
 
   // Owns this class.
   raw_ptr<tabs::TabInterface> tab_;
+
+  ui::ScopedUnownedUserData<LensSearchController> scoped_unowned_user_data_;
 
   // Must be the last member.
   base::WeakPtrFactory<LensSearchController> weak_ptr_factory_{this};

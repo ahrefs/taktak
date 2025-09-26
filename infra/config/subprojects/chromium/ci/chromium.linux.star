@@ -664,8 +664,15 @@ ci.thin_tester(
 )
 
 ci.thin_tester(
-    name = "Linux Tests (Wayland)",
+    name = "linux-wayland-weston-rel-tests",
     branch_selector = branches.selector.LINUX_BRANCHES,
+    description_html =
+        "Runs Wayland tests on Weston. See the {} for details.".format(
+            linkify(
+                "https://chromium.googlesource.com/chromium/src/+/main/docs/ozone_overview.md#wayland",
+                "ozone wayland doc",
+            ),
+        ),
     parent = "ci/Linux Builder (Wayland)",
     builder_spec = builder_config.builder_spec(
         execution_mode = builder_config.execution_mode.TEST,
@@ -705,7 +712,7 @@ ci.thin_tester(
             # https://crbug.com/1084469
             "browser_tests": targets.mixin(
                 args = [
-                    "--test-launcher-filter-file=../../testing/buildbot/filters/ozone-linux.wayland_browser_tests.filter",
+                    "--test-launcher-filter-file=../../testing/buildbot/filters/ozone-linux.browser_tests_weston.filter",
                 ],
                 # Only retry the individual failed tests instead of rerunning
                 # entire shards.
@@ -727,7 +734,11 @@ ci.thin_tester(
             "interactive_ui_tests": targets.mixin(
                 # https://crbug.com/1192997
                 args = [
-                    "--test-launcher-filter-file=../../testing/buildbot/filters/ozone-linux.interactive_ui_tests_wayland.filter",
+                    "--test-launcher-filter-file=../../testing/buildbot/filters/ozone-linux.interactive_ui_tests_weston.filter",
+                    # TODO(crbug.com/334413759) Until bubble subsurfaces can be
+                    # properly tested using weston, disable the feature when
+                    # running tests there.
+                    "--disable-accelerated-subwindows-for-testing",
                 ],
             ),
             "ozone_x11_unittests": targets.remove(
@@ -818,7 +829,7 @@ ci.thin_tester(
                 swarming = targets.swarming(
                     expiration_sec = 18000,
                     hard_timeout_sec = 14400,
-                    shards = 10,
+                    shards = 20,
                 ),
             ),
             "content_browsertests": targets.mixin(
@@ -1122,8 +1133,6 @@ ci.builder(
             "empty_main",
         ],
     ),
-    # Focal is needed for better C++20 support. See crbug.com/1284275.
-    os = os.LINUX_FOCAL,
     console_view_entry = consoles.console_view_entry(
         category = "release",
         short_name = "gcc",
@@ -1134,7 +1143,7 @@ ci.builder(
 ci.builder(
     name = "linux-modules-compile-fyi-rel",
     branch_selector = branches.selector.MAIN,
-    description_html = "Experimental compile with use_libcxx_modules=true.",
+    description_html = "Experimental compile with use_clang_modules=true.",
     builder_spec = builder_config.builder_spec(
         gclient_config = builder_config.gclient_config(config = "chromium"),
         chromium_config = builder_config.chromium_config(
@@ -1148,11 +1157,8 @@ ci.builder(
     ),
     gn_args = gn_args.config(
         configs = [
-            "libcxx_modules",
-            "linux",
-            "release_builder",
-            "remoteexec",
-            "x64",
+            "ci/Linux Builder",
+            "clang_modules",
         ],
     ),
     targets = targets.bundle(
@@ -1160,8 +1166,6 @@ ci.builder(
             "all",
         ],
     ),
-    cores = 32,
-    ssd = True,
     gardener_rotations = args.ignore_default(None),
     tree_closing = False,
     console_view_entry = consoles.console_view_entry(
@@ -1174,6 +1178,7 @@ ci.builder(
     execution_timeout = 6 * time.hour,
     notifies = args.ignore_default([]),
     siso_keep_going = True,
+    siso_remote_linking = True,
 )
 
 ci.builder(

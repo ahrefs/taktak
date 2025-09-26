@@ -381,6 +381,11 @@ uint64_t LensOverlayController::GetInvocationTimeSinceEpoch() {
   return invocation_time_since_epoch_.InMillisecondsSinceUnixEpoch();
 }
 
+lens::LensOverlayBlurLayerDelegate*
+LensOverlayController::GetLensOverlayBlurLayerDelegateForTesting() {
+  return lens_overlay_blur_layer_delegate_.get();
+}
+
 views::View* LensOverlayController::GetOverlayViewForTesting() {
   return overlay_view_.get();
 }
@@ -886,8 +891,23 @@ void LensOverlayController::ShowUI(
   }
 }
 
-void LensOverlayController::IssueContextualSearchRequest(
-    const GURL& destination_url,
+void LensOverlayController::IssueTextSearchRequest(
+    std::string query_text,
+    std::map<std::string, std::string> additional_query_parameters,
+    lens::LensOverlayQueryController* lens_overlay_query_controller,
+    AutocompleteMatchType::Type match_type,
+    bool is_zero_prefix_suggestion,
+    lens::LensOverlayInvocationSource invocation_source) {
+  IssueTextSearchRequestInner(
+      /*query_start_time=*/base::Time::Now(), query_text,
+      additional_query_parameters, lens_overlay_query_controller, match_type,
+      is_zero_prefix_suggestion, invocation_source);
+}
+
+void LensOverlayController::IssueTextSearchRequestInner(
+    base::Time query_start_time,
+    std::string query_text,
+    std::map<std::string, std::string> additional_query_parameters,
     lens::LensOverlayQueryController* lens_overlay_query_controller,
     AutocompleteMatchType::Type match_type,
     bool is_zero_prefix_suggestion,
@@ -904,6 +924,9 @@ void LensOverlayController::IssueContextualSearchRequest(
     // not overlay UI, this flow does a lot of unnecessary work. There should be
     // a new flow that can contextualize without the overlay UI being
     // initialized.
+    // TODO(crbug.com/439082713) Decouple the contextualization controller from
+    // the overlay controller so that the overlay controller is less dependent
+    // on it for proper functioning.
     // Set the query controller if it is not already set. This happens in cases
     // when a contextual request is made but the overlay is not shown.
     lens_overlay_query_controller_ = lens_overlay_query_controller;
@@ -912,18 +935,19 @@ void LensOverlayController::IssueContextualSearchRequest(
         invocation_source,
         base::BindOnce(
             &LensOverlayController::OnPageContextUpdatedForSuggestion,
-            weak_factory_.GetWeakPtr(), destination_url, match_type,
-            is_zero_prefix_suggestion, invocation_source));
+            weak_factory_.GetWeakPtr(), query_start_time, query_text,
+            additional_query_parameters, match_type, is_zero_prefix_suggestion,
+            invocation_source));
     return;
   }
 
   if (IsOverlayInitializing()) {
     // Hold the request until the overlay has finished initializing.
-    pending_contextual_search_request_ =
-        base::BindOnce(&LensOverlayController::IssueContextualSearchRequest,
-                       weak_factory_.GetWeakPtr(), destination_url,
-                       lens_overlay_query_controller, match_type,
-                       is_zero_prefix_suggestion, invocation_source);
+    pending_contextual_search_request_ = base::BindOnce(
+        &LensOverlayController::IssueTextSearchRequestInner,
+        weak_factory_.GetWeakPtr(), query_start_time, query_text,
+        additional_query_parameters, lens_overlay_query_controller, match_type,
+        is_zero_prefix_suggestion, invocation_source);
     return;
   } else if (state_ != State::kOff) {
     // If the state is not off or initializing, the Lens sessions should already
@@ -934,16 +958,15 @@ void LensOverlayController::IssueContextualSearchRequest(
     GetContextualizationController()->TryUpdatePageContextualization(
         base::BindOnce(
             &LensOverlayController::OnPageContextUpdatedForSuggestion,
-            weak_factory_.GetWeakPtr(), destination_url, match_type,
-            is_zero_prefix_suggestion, invocation_source));
+            weak_factory_.GetWeakPtr(), query_start_time, query_text,
+            additional_query_parameters, match_type, is_zero_prefix_suggestion,
+            invocation_source));
     return;
   }
 
-  // TODO(crbug.com/401583049): Revisit if this should go through the
-  // OnSuggestionAccepted flow or if there should be a more direct contextual
-  // search flow.
-  GetLensSearchboxController()->OnSuggestionAccepted(
-      destination_url, match_type, is_zero_prefix_suggestion);
+  IssueSearchBoxRequest(
+      query_start_time, query_text, AutocompleteMatch::Type::SEARCH_SUGGEST,
+      /*is_zero_prefix_suggestion=*/false, additional_query_parameters);
 }
 
 void LensOverlayController::ShowUIWithPendingRegion(
@@ -1247,6 +1270,17 @@ class LensOverlayController::UnderlyingWebContentsObserver
       lens_overlay_controller_->NotifyPageContentUpdated();
       return;
     }
+
+    // If back to page feature is enabled and the page changes, only the overlay
+    // needs to be hidden, possibly leaving the side panel open. The search
+    // controller will handle whether the side panel should stay open or the
+    // entire session should terminate.
+    if (lens::features::IsLensOverlayBackToPageEnabled()) {
+      lens_overlay_controller_->lens_search_controller_->HideOverlay(
+          lens::LensOverlayDismissalSource::kPageChanged);
+      return;
+    }
+
     lens_overlay_controller_->lens_search_controller_->CloseLensSync(
         lens::LensOverlayDismissalSource::kPageChanged);
   }
@@ -1320,16 +1354,14 @@ void LensOverlayController::GetPdfCurrentPage(
     const SkBitmap& bitmap,
     const std::vector<gfx::Rect>& bounds) {
 #if BUILDFLAG(ENABLE_PDF)
-  if (lens::features::SendPdfCurrentPageEnabled()) {
-    pdf::PDFDocumentHelper* pdf_helper =
-        pdf::PDFDocumentHelper::MaybeGetForWebContents(tab_->GetContents());
-    if (pdf_helper) {
-      pdf_helper->GetMostVisiblePageIndex(base::BindOnce(
-          &LensOverlayController::DidCaptureScreenshot,
-          weak_factory_.GetWeakPtr(), std::move(chrome_render_frame),
-          attempt_id, bitmap, bounds));
-      return;
-    }
+  pdf::PDFDocumentHelper* pdf_helper =
+      pdf::PDFDocumentHelper::MaybeGetForWebContents(tab_->GetContents());
+  if (pdf_helper) {
+    pdf_helper->GetMostVisiblePageIndex(base::BindOnce(
+        &LensOverlayController::DidCaptureScreenshot,
+        weak_factory_.GetWeakPtr(), std::move(chrome_render_frame), attempt_id,
+        bitmap, bounds));
+    return;
   }
 #endif  // BUILDFLAG(ENABLE_PDF)
 
@@ -1776,21 +1808,15 @@ void LensOverlayController::InitializeOverlayUI(
 
   auto* lens_session_metrics_logger = GetLensSessionMetricsLogger();
 
-  bool should_show_csb = !init_data.page_contents_.empty() &&
-                         !init_data.page_contents_.front().bytes_.empty();
-  if (should_show_csb) {
-    lens_session_metrics_logger->OnContextualSearchboxShown();
-  }
+  lens_session_metrics_logger->OnContextualSearchboxShown();
   lens_session_metrics_logger->OnInitialPageContentRetrieved(
       /*page_content_type=*/init_data.page_contents_.empty()
           ? lens::MimeType::kUnknown
           : init_data.primary_content_type_);
 
-  page_->ShouldShowContextualSearchBox(should_show_csb);
-
+  page_->ShouldShowContextualSearchBox(/*should_show=*/true);
   // If should show CSB, and the CSB viewport thumbnail is enabled, send it now.
-  if (should_show_csb &&
-      lens::features::GetVisualSelectionUpdatesEnableCsbThumbnail()) {
+  if (lens::features::GetVisualSelectionUpdatesEnableCsbThumbnail()) {
     GetLensSearchboxController()->HandleThumbnailCreatedBitmap(
         init_data.initial_screenshot_);
   }
@@ -2473,6 +2499,10 @@ void LensOverlayController::IssueSearchBoxRequestPart2(
   results_side_panel_coordinator_->SetShowProtectedErrorPage(
       !is_context_eligible);
 
+  // Update the entry points state here in case InitializeOverlay() was
+  // bypassed by straight to SRP flows.
+  UpdateEntryPointsState();
+
   MaybeLaunchSurvey();
 }
 
@@ -2530,10 +2560,8 @@ void LensOverlayController::HandleStartQueryResponse(
 void LensOverlayController::HandleInteractionURLResponse(
     lens::proto::LensOverlayUrlResponse response) {
   MaybeOpenSidePanel();
-  if (lens::features::IsLensSearchSidePanelScrollToAPIEnabled()) {
-    results_side_panel_coordinator_->SetLatestPageUrlWithResponse(
-        GURL(response.page_url()));
-  }
+  results_side_panel_coordinator_->SetLatestPageUrlWithResponse(
+      GURL(response.page_url()));
   results_side_panel_coordinator_->LoadURLInResultsFrame(GURL(response.url()));
 }
 
@@ -2544,9 +2572,9 @@ void LensOverlayController::HandleInteractionResponse(
 
 void LensOverlayController::HandlePageContentUploadProgress(uint64_t position,
                                                             uint64_t total) {
-  // If the progress bar is disabled, do not show it.
-  if (!lens::features::ShouldShowUploadProgressBar() ||
-      !is_upload_progress_bar_shown_ || !IsContextualSearchbox()) {
+  // If the progress bar is not being shown for this upload, or if this user is
+  // not making contextual queries, do not update the progress bar.
+  if (!is_upload_progress_bar_shown_ || !IsContextualSearchbox()) {
     return;
   }
 
@@ -2770,15 +2798,15 @@ bool LensOverlayController::IsUrlEligibleForTutorialIPH(const GURL& url) {
 }
 
 void LensOverlayController::ShowTutorialIPH() {
-  if (auto* user_ed =
-          tab_->GetBrowserWindowInterface()->GetUserEducationInterface()) {
+  if (auto* user_ed = BrowserUserEducationInterface::From(
+          tab_->GetBrowserWindowInterface())) {
     user_ed->MaybeShowFeaturePromo(feature_engagement::kIPHLensOverlayFeature);
   }
 }
 
 void LensOverlayController::NotifyUserEducationAboutOverlayUsed() {
-  if (auto* user_ed =
-          tab_->GetBrowserWindowInterface()->GetUserEducationInterface()) {
+  if (auto* user_ed = BrowserUserEducationInterface::From(
+          tab_->GetBrowserWindowInterface())) {
     user_ed->NotifyFeaturePromoFeatureUsed(
         feature_engagement::kIPHLensOverlayFeature,
         FeaturePromoFeatureUsedAction::kClosePromoIfPresent);
@@ -2808,7 +2836,9 @@ void LensOverlayController::OnPdfPartialPageTextRetrieved(
 }
 
 void LensOverlayController::OnPageContextUpdatedForSuggestion(
-    const GURL& destination_url,
+    base::Time query_start_time,
+    std::string query,
+    std::map<std::string, std::string> additional_query_parameters,
     AutocompleteMatchType::Type match_type,
     bool is_zero_prefix_suggestion,
     lens::LensOverlayInvocationSource invocation_source) {
@@ -2836,8 +2866,8 @@ void LensOverlayController::OnPageContextUpdatedForSuggestion(
   CHECK(lens_overlay_query_controller_);
   // TODO(crbug.com/404941800): This flow should not start the overlay once
   // contextualization is separated from the overlay.
-  GetLensSearchboxController()->OnSuggestionAccepted(
-      destination_url, match_type, is_zero_prefix_suggestion);
+  IssueSearchBoxRequest(query_start_time, query, match_type,
+                        is_zero_prefix_suggestion, additional_query_parameters);
 }
 
 lens::LensSearchboxController*

@@ -96,7 +96,6 @@ try_.presubmit_builder(
                 "cfg_file": [
                     "buildtools/reclient_cfgs/chromium-browser-clang/rewrapper_linux.cfg",
                     "buildtools/reclient_cfgs/chromium-browser-clang/rewrapper_windows.cfg",
-                    "buildtools/reclient_cfgs/nacl/rewrapper_linux.cfg",
                 ],
             },
         ],

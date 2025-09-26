@@ -125,7 +125,6 @@ ci.builder(
             "chromium_win_scripts",
         ],
         additional_compile_targets = [
-            "ipc_fuzzer",
             "pdf_fuzzers",
         ],
     ),
@@ -363,7 +362,6 @@ ci.builder(
             "blink_platform_nocompile_tests",
             "blink_probes_nocompile_tests",
             "content_nocompile_tests",
-            "ipc_fuzzer",
             "pdf_fuzzers",
         ],
     ),

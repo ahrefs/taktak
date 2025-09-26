@@ -14,12 +14,14 @@
 #include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
 #include "chrome/browser/ui/hats/hats_service.h"
 #include "chrome/browser/ui/hats/hats_service_factory.h"
+#include "chrome/browser/ui/lens/lens_composebox_controller.h"
 #include "chrome/browser/ui/lens/lens_overlay_controller.h"
 #include "chrome/browser/ui/lens/lens_overlay_event_handler.h"
 #include "chrome/browser/ui/lens/lens_overlay_image_helper.h"
 #include "chrome/browser/ui/lens/lens_overlay_query_controller.h"
 #include "chrome/browser/ui/lens/lens_overlay_side_panel_coordinator.h"
 #include "chrome/browser/ui/lens/lens_overlay_theme_utils.h"
+#include "chrome/browser/ui/lens/lens_overlay_url_builder.h"
 #include "chrome/browser/ui/lens/lens_permission_bubble_controller.h"
 #include "chrome/browser/ui/lens/lens_search_contextualization_controller.h"
 #include "chrome/browser/ui/lens/lens_search_feature_flag_utils.h"
@@ -35,23 +37,24 @@
 #include "ui/gfx/geometry/rect.h"
 
 namespace {
-
 void CheckInitialized(bool initialized) {
   CHECK(initialized)
       << "The LensSearchController has not been initialized. Initialize() must "
          "be called before using the LensSearchController.";
 }
 
-LensSearchController* GetLensSearchControllerFromTabInterface(
-    tabs::TabInterface* tab_interface) {
-  return tab_interface
-             ? tab_interface->GetTabFeatures()->lens_search_controller()
-             : nullptr;
-}
 }  // namespace
 
+DEFINE_USER_DATA(LensSearchController);
+
+// static
+LensSearchController* LensSearchController::From(tabs::TabInterface* tab) {
+  return tab ? Get(tab->GetUnownedUserDataHost()) : nullptr;
+}
+
 LensSearchController::LensSearchController(tabs::TabInterface* tab)
-    : tab_(tab) {
+    : tab_(tab),
+      scoped_unowned_user_data_(tab->GetUnownedUserDataHost(), *this) {
   tab_subscriptions_.push_back(tab_->RegisterDidActivate(base::BindRepeating(
       &LensSearchController::TabForegrounded, weak_ptr_factory_.GetWeakPtr())));
   tab_subscriptions_.push_back(tab_->RegisterWillDeactivate(
@@ -93,6 +96,8 @@ void LensSearchController::Initialize(
 
   lens_searchbox_controller_ = CreateLensSearchboxController();
 
+  lens_composebox_controller_ = CreateLensComposeboxController();
+
   lens_contextualization_controller_ =
       CreateLensSearchContextualizationController();
   // Create the page context eligibility API as soon as possible as it is needed
@@ -109,15 +114,13 @@ void LensSearchController::Initialize(
 // static.
 LensSearchController* LensSearchController::FromWebUIWebContents(
     content::WebContents* webui_web_contents) {
-  return GetLensSearchControllerFromTabInterface(
-      webui::GetTabInterface(webui_web_contents));
+  return From(webui::GetTabInterface(webui_web_contents));
 }
 
 // static.
 LensSearchController* LensSearchController::FromTabWebContents(
     content::WebContents* tab_web_contents) {
-  return GetLensSearchControllerFromTabInterface(
-      tabs::TabInterface::GetFromContents(tab_web_contents));
+  return From(tabs::TabInterface::GetFromContents(tab_web_contents));
 }
 
 void LensSearchController::OpenLensOverlay(
@@ -207,25 +210,44 @@ void LensSearchController::IssueContextualSearchRequest(
   CHECK(invocation_source ==
         lens::LensOverlayInvocationSource::kOmniboxContextualSuggestion);
 
+  std::string query_text =
+      lens::ExtractTextQueryParameterValue(destination_url);
+  std::map<std::string, std::string> additional_query_parameters =
+      lens::GetParametersMapWithoutQuery(destination_url);
+
+  IssueTextSearchRequest(
+      invocation_source, query_text, additional_query_parameters, match_type,
+      is_zero_prefix_suggestion, /*suppress_contextualization=*/false);
+}
+
+void LensSearchController::IssueTextSearchRequest(
+    lens::LensOverlayInvocationSource invocation_source,
+    std::string query_text,
+    std::map<std::string, std::string> additional_query_parameters,
+    AutocompleteMatchType::Type match_type,
+    bool is_zero_prefix_suggestion,
+    bool suppress_contextualization) {
   // If the eligibility checks fail, do not procced with opening any UI.
   if (!RunLensEligibilityChecks(
           invocation_source,
           /*permission_granted_callback=*/base::BindRepeating(
-              &LensSearchController::IssueContextualSearchRequest,
-              weak_ptr_factory_.GetWeakPtr(), invocation_source,
-              destination_url, match_type, is_zero_prefix_suggestion))) {
+              &LensSearchController::IssueTextSearchRequest,
+              weak_ptr_factory_.GetWeakPtr(), invocation_source, query_text,
+              additional_query_parameters, match_type,
+              is_zero_prefix_suggestion, suppress_contextualization))) {
     return;
   }
 
   if (IsOff()) {
     // If the state is off, the Lens sessions needs to be initialized.
-    StartLensSession(invocation_source);
+    StartLensSession(invocation_source, suppress_contextualization);
   }
 
   // TODO(crbug.com/404941800): This flow should not start the overlay once
   // contextualization is separated from the overlay.
-  lens_overlay_controller_->IssueContextualSearchRequest(
-      destination_url, lens_overlay_query_controller_.get(), match_type,
+  lens_overlay_controller_->IssueTextSearchRequest(
+      query_text, additional_query_parameters,
+      lens_overlay_query_controller_.get(), match_type,
       is_zero_prefix_suggestion, invocation_source);
 }
 
@@ -291,6 +313,24 @@ void LensSearchController::HideOverlay(
     lens_overlay_controller_->TriggerOverlayFadeOutAnimation(
         base::BindOnce(&LensSearchController::OnOverlayHidden,
                        weak_ptr_factory_.GetWeakPtr(), dismissal_source));
+  }
+}
+
+void LensSearchController::HideOverlay() {
+  if (state() == State::kOff) {
+    return;
+  }
+
+  // This method should only be called when the side panel is open.
+  DCHECK(lens_overlay_side_panel_coordinator_->state() !=
+         lens::LensOverlaySidePanelCoordinator::State::kOff);
+
+  // If the overlay is showing, the overlay needs to fade out. Play the fade out
+  // animation and then clean up the rest of the UI afterwards.
+  if (lens_overlay_controller_->state() != LensOverlayController::State::kOff) {
+    lens_overlay_controller_->TriggerOverlayFadeOutAnimation(
+        base::BindOnce(&LensSearchController::OnOverlayHidden,
+                       weak_ptr_factory_.GetWeakPtr(), std::nullopt));
   }
 }
 
@@ -391,6 +431,12 @@ LensSearchController::lens_searchbox_controller() {
   return lens_searchbox_controller_.get();
 }
 
+lens::LensComposeboxController*
+LensSearchController::lens_composebox_controller() {
+  CheckInitialized(initialized_);
+  return lens_composebox_controller_.get();
+}
+
 lens::LensOverlayEventHandler*
 LensSearchController::lens_overlay_event_handler() {
   CheckInitialized(initialized_);
@@ -455,6 +501,13 @@ LensSearchController::CreateLensSearchboxController() {
   return std::make_unique<lens::LensSearchboxController>(this);
 }
 
+std::unique_ptr<lens::LensComposeboxController>
+LensSearchController::CreateLensComposeboxController() {
+  Profile* profile =
+      Profile::FromBrowserContext(tab_->GetContents()->GetBrowserContext());
+  return std::make_unique<lens::LensComposeboxController>(this, profile);
+}
+
 std::unique_ptr<lens::LensSearchContextualizationController>
 LensSearchController::CreateLensSearchContextualizationController() {
   return std::make_unique<lens::LensSearchContextualizationController>(this);
@@ -486,7 +539,8 @@ LensSearchController::CreateLensQueryController(
 }
 
 void LensSearchController::StartLensSession(
-    lens::LensOverlayInvocationSource invocation_source) {
+    lens::LensOverlayInvocationSource invocation_source,
+    bool suppress_contextualization) {
   state_ = State::kInitializing;
 
   // Create the query controller to be used for the current invocation.
@@ -499,7 +553,7 @@ void LensSearchController::StartLensSession(
 
   // Let the searchbox controller know that a new session has started so it can
   // initialize any data needed for the searchbox.
-  lens_searchbox_controller_->OnSessionStart();
+  lens_searchbox_controller_->OnSessionStart(suppress_contextualization);
 
   // Reset session state.
   hats_triggered_in_session_ = false;
@@ -554,6 +608,7 @@ void LensSearchController::CloseLensPart2(
   // dependent on the overlay controller.
   lens_overlay_controller_->CloseUI(dismissal_source);
   lens_searchbox_controller_->CloseUI();
+  lens_composebox_controller_->CloseUI();
   lens_permission_bubble_controller_.reset();
   lens_contextualization_controller_->ResetState();
   lens_overlay_side_panel_coordinator_->DeregisterEntryAndCleanup();
@@ -569,11 +624,20 @@ void LensSearchController::CloseLensPart2(
 }
 
 void LensSearchController::OnOverlayHidden(
-    lens::LensOverlayDismissalSource dismissal_source) {
+    std::optional<lens::LensOverlayDismissalSource> dismissal_source) {
   // If the side panel is not open, end the session.
   if (lens_overlay_side_panel_coordinator_->state() ==
       lens::LensOverlaySidePanelCoordinator::State::kOff) {
-    CloseLensPart2(dismissal_source);
+    // The caller should not have called this function without a dismissal
+    // source if the side panel is not open, because it would leave the Lens
+    // session in an inconsistent state.
+    // TODO(crbug.com/440608864): Make this a CHECK once this is verified.
+    if (!dismissal_source.has_value()) {
+      // Exit early to avoid a crash.
+      DCHECK(dismissal_source.has_value());
+      return;
+    }
+    CloseLensPart2(dismissal_source.value());
     return;
   }
 

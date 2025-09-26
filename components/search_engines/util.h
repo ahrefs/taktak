@@ -17,6 +17,7 @@
 #include "components/lens/lens_overlay_mime_type.h"
 #include "components/search_engines/keyword_web_data_service.h"
 #include "components/search_engines/template_url_service.h"
+#include "third_party/omnibox_proto/chrome_aim_entry_point.pb.h"
 
 class KeywordWebDataService;
 class PrefService;
@@ -154,18 +155,6 @@ void ApplyActionsFromCurrentData(
     TemplateURL* default_search_provider,
     std::set<std::string>* removed_keyword_guids);
 
-// Returns the GUID of the default search provider.
-// Migrates `kSyncedDefaultSearchProviderGUID` to `kDefaultSearchProviderGUID`
-// if the latter is empty and the search engine choice feature is enabled.
-// Gets the value of the corresponding preference based on the search engine
-// choice feature flag.
-const std::string& GetDefaultSearchProviderGuidFromPrefs(PrefService& prefs);
-
-// Sets the corresponding default search provider preference based on the search
-// engine choice feature flag.
-void SetDefaultSearchProviderGuidToPrefs(PrefService& prefs,
-                                         const std::string& value);
-
 // Processes the results of KeywordWebDataService::GetKeywords, combining it
 // with prepopulated search providers to result in:
 //  * a set of template_urls (search providers). The caller owns the
@@ -236,7 +225,7 @@ TemplateURLService::OwnedTemplateURLVector::iterator FindTemplateURL(
 // request. `query_start_time` is the time that the user clicked the submit
 // button.
 GURL GetUrlForAim(TemplateURLService* turl_service,
-                  const std::string& aim_entrypoint,
+                  omnibox::ChromeAimEntryPoint aim_entrypoint,
                   const base::Time& query_start_time,
                   const std::u16string& query_text = std::u16string());
 
@@ -252,7 +241,7 @@ GURL GetUrlForAim(TemplateURLService* turl_service,
 // the server supports it.
 GURL GetUrlForMultimodalAim(
     TemplateURLService* turl_service,
-    const std::string& aim_entrypoint,
+    omnibox::ChromeAimEntryPoint aim_entrypoint,
     const base::Time& query_start_time,
     const std::string& search_session_id,
     const std::unique_ptr<lens::LensOverlayRequestId> request_id,

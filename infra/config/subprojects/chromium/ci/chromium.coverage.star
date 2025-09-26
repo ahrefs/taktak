@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+load("@chromium-luci//args.star", "args")
 load("@chromium-luci//branches.star", "branches")
 load("@chromium-luci//builder_config.star", "builder_config")
 load("@chromium-luci//builder_health_indicators.star", "health_spec")
@@ -11,6 +12,7 @@ load("@chromium-luci//consoles.star", "consoles")
 load("@chromium-luci//gn_args.star", "gn_args")
 load("@chromium-luci//targets.star", "targets")
 load("//lib/ci_constants.star", "ci_constants")
+load("//lib/gardener_rotations.star", "gardener_rotations")
 load("//lib/siso.star", "siso")
 load("//lib/xcode.star", "xcode")
 load("//project.star", "settings")
@@ -307,7 +309,7 @@ coverage_builder(
             # Keep this same as android-10-x86-rel
             "chrome_public_test_apk": targets.mixin(
                 args = [
-                    "--test-launcher-filter-file=../../testing/buildbot/filters/android.emulator_o.chrome_public_test_apk.filter",
+                    "--test-launcher-filter-file=../../testing/buildbot/filters/android.emulator_10.chrome_public_test_apk.filter",
                 ],
                 swarming = targets.swarming(
                     dimensions = {
@@ -706,13 +708,14 @@ coverage_builder(
         os_type = targets.os_type.ANDROID,
     ),
     os = os.LINUX_DEFAULT,
+    gardener_rotations = args.ignore_default(gardener_rotations.CRONET),
     console_view_entry = [
         consoles.console_view_entry(
             category = "cronet",
-            short_name = "x64",
+            short_name = "java",
         ),
     ],
-    contact_team_email = "woa-engprod@google.com",
+    contact_team_email = "cronet-team@google.com",
     coverage_test_types = ["overall", "unit"],
     export_coverage_to_zoss = True,
     siso_remote_jobs = siso.remote_jobs.HIGH_JOBS_FOR_CI,
@@ -774,13 +777,14 @@ coverage_builder(
         os_type = targets.os_type.ANDROID,
     ),
     os = os.LINUX_DEFAULT,
+    gardener_rotations = args.ignore_default(gardener_rotations.CRONET),
     console_view_entry = [
         consoles.console_view_entry(
             category = "cronet",
-            short_name = "x64",
+            short_name = "native",
         ),
     ],
-    contact_team_email = "woa-engprod@google.com",
+    contact_team_email = "cronet-team@google.com",
     coverage_test_types = ["overall", "unit"],
     export_coverage_to_zoss = True,
     siso_remote_jobs = siso.remote_jobs.HIGH_JOBS_FOR_CI,

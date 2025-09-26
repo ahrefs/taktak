@@ -73,6 +73,13 @@ targets.compile_target(
 )
 
 targets.compile_target(
+    name = "cast_browser_dist_aar",
+    label = "//chromecast:cast_browser_dist_aar",
+    # All references have been moved to starlark
+    skip_usage_check = True,
+)
+
+targets.compile_target(
     name = "cast_test_lists",
     label = "//chromecast:cast_test_lists",
     # All references have been moved to starlark
@@ -466,13 +473,6 @@ targets.compile_target(
 targets.compile_target(
     name = "chrome/enterprise_companion:all",
     label = "//chrome/enterprise_companion:all",
-    # All references have been moved to starlark
-    skip_usage_check = True,
-)
-
-targets.compile_target(
-    name = "ipc_fuzzer",
-    label = "//tools/ipc_fuzzer/fuzzer:ipc_fuzzer",
     # All references have been moved to starlark
     skip_usage_check = True,
 )

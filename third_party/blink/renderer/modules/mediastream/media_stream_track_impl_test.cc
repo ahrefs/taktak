@@ -23,6 +23,7 @@
 #include "third_party/blink/renderer/bindings/modules/v8/v8_media_stream_track_state.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_media_track_constraints.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_union_constrainlongrange_long.h"
+#include "third_party/blink/renderer/core/dom/events/native_event_listener.h"
 #include "third_party/blink/renderer/core/frame/frame_test_helpers.h"
 #include "third_party/blink/renderer/core/html/media/html_media_element.h"
 #include "third_party/blink/renderer/core/html/media/html_video_element.h"
@@ -518,7 +519,18 @@ TEST_F(MediaStreamTrackImplTest, CloningPreservesConstraints) {
   EXPECT_EQ(clone_constraints->width()->GetAsConstrainLongRange()->max(), 240);
 }
 
-TEST_F(MediaStreamTrackImplTest, ApplyConstraintsUpdatesSourceFormat) {
+// These tests rely on the ability to restart content capture. This is
+// currently not possible on Android.
+// TODO(crbug.com/436623747): We may be able to re-enable these once we have
+// an API to reconfigure the capture instead of restarting it.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_ApplyConstraintsUpdatesSourceFormat \
+  DISABLED_ApplyConstraintsUpdatesSourceFormat
+#else
+#define MAYBE_ApplyConstraintsUpdatesSourceFormat \
+  ApplyConstraintsUpdatesSourceFormat
+#endif
+TEST_F(MediaStreamTrackImplTest, MAYBE_ApplyConstraintsUpdatesSourceFormat) {
   V8TestingScope v8_scope;
   MediaStreamComponent* component;
   MockMediaStreamVideoSource* platform_source_ptr;
@@ -554,8 +566,16 @@ TEST_F(MediaStreamTrackImplTest, ApplyConstraintsUpdatesSourceFormat) {
   EXPECT_EQ(video_track->min_frame_rate(), kMinFrameRate);
 }
 
+// TODO(crbug.com/436623747): Re-enable.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_ApplyConstraintsFramerateDoesNotAffectResolution \
+  DISABLED_ApplyConstraintsFramerateDoesNotAffectResolution
+#else
+#define MAYBE_ApplyConstraintsFramerateDoesNotAffectResolution \
+  ApplyConstraintsFramerateDoesNotAffectResolution
+#endif
 TEST_F(MediaStreamTrackImplTest,
-       ApplyConstraintsFramerateDoesNotAffectResolution) {
+       MAYBE_ApplyConstraintsFramerateDoesNotAffectResolution) {
   V8TestingScope v8_scope;
   MediaStreamComponent* component;
   MockMediaStreamVideoSource* platform_source_ptr;
@@ -589,8 +609,16 @@ TEST_F(MediaStreamTrackImplTest,
   EXPECT_EQ(platform_source_ptr->max_requested_frame_rate(), kMaxFrameRate);
 }
 
+// TODO(crbug.com/436623747): Re-enable.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_ApplyConstraintsResolutionDoesNotAffectFramerate \
+  DISABLED_ApplyConstraintsResolutionDoesNotAffectFramerate
+#else
+#define MAYBE_ApplyConstraintsResolutionDoesNotAffectFramerate \
+  ApplyConstraintsResolutionDoesNotAffectFramerate
+#endif
 TEST_F(MediaStreamTrackImplTest,
-       ApplyConstraintsResolutionDoesNotAffectFramerate) {
+       MAYBE_ApplyConstraintsResolutionDoesNotAffectFramerate) {
   V8TestingScope v8_scope;
   MediaStreamComponent* component;
   MockMediaStreamVideoSource* platform_source_ptr;
@@ -625,8 +653,16 @@ TEST_F(MediaStreamTrackImplTest,
   EXPECT_EQ(platform_source_ptr->max_requested_frame_rate(), initialFrameRate);
 }
 
+// TODO(crbug.com/436623747): Re-enable.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_ApplyConstraintsWidthDoesNotAffectAspectRatio \
+  DISABLED_ApplyConstraintsWidthDoesNotAffectAspectRatio
+#else
+#define MAYBE_ApplyConstraintsWidthDoesNotAffectAspectRatio \
+  ApplyConstraintsWidthDoesNotAffectAspectRatio
+#endif
 TEST_F(MediaStreamTrackImplTest,
-       ApplyConstraintsWidthDoesNotAffectAspectRatio) {
+       MAYBE_ApplyConstraintsWidthDoesNotAffectAspectRatio) {
   V8TestingScope v8_scope;
   MediaStreamComponent* component;
   MockMediaStreamVideoSource* platform_source_ptr;
@@ -664,7 +700,15 @@ TEST_F(MediaStreamTrackImplTest,
   EXPECT_EQ(platform_source_ptr->max_requested_frame_rate(), initialFrameRate);
 }
 
-TEST_F(MediaStreamTrackImplTest, ApplyConstraintsWidthAndAspectRatio) {
+// TODO(crbug.com/436623747): Re-enable.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_ApplyConstraintsWidthAndAspectRatio \
+  DISABLED_ApplyConstraintsWidthAndAspectRatio
+#else
+#define MAYBE_ApplyConstraintsWidthAndAspectRatio \
+  ApplyConstraintsWidthAndAspectRatio
+#endif
+TEST_F(MediaStreamTrackImplTest, MAYBE_ApplyConstraintsWidthAndAspectRatio) {
   V8TestingScope v8_scope;
   MediaStreamComponent* component;
   MockMediaStreamVideoSource* platform_source_ptr;

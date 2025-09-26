@@ -45,7 +45,7 @@
         white-space: nowrap;
       }
     </style>
-    <settings-section page-title="$i18n{aboutPageTitle}" section="about">
+    <settings-section page-title="$i18n{aboutPageTitle}">
       <div class="cr-row two-line first">
         <img id="product-logo" on-click="onProductLogoClick_"
             srcset="chrome://theme/current-channel-logo@1x 1x,
@@ -96,7 +96,7 @@
 <!--</if>-->
           <div class="secondary">$i18n{aboutBrowserVersion}</div>
         </div>
-<!--<if expr="not chromeos_ash">-->
+<!--<if expr="not is_chromeos">-->
 <!--        <div class="separator" hidden="[[!showButtonContainer_]]"></div>-->
 <!--        <span id="buttonContainer" hidden="[[!showButtonContainer_]]">-->
 <!--          <cr-button id="relaunch" hidden="[[!showRelaunch_]]"-->
@@ -160,7 +160,7 @@
 <!--          <a id="tos" href="$i18n{aboutTermsURL}">$i18n{aboutProductTos}</a>-->
 <!--        </div>-->
 <!--</if>-->
-<!--<if expr="not chromeos_ash">-->
+<!--<if expr="not is_chromeos">-->
 <!--  <template is="dom-if" if="[[shouldShowRelaunchDialog]]" restamp>-->
 <!--    <relaunch-confirmation-dialog restart-type="[[restartTypeEnum.RELAUNCH]]"-->
 <!--        on-close="onRelaunchDialogClose"></relaunch-confirmation-dialog>-->

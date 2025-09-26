@@ -12,7 +12,7 @@
           "omnibox.ai_mode_settings": {
             "value": 0
           },
-          "omnibox.ai_mode_settings": {
+          "lens.policy.lens_overlay_settings": {
             "value": 0
           }
         }
@@ -25,7 +25,7 @@
           "omnibox.ai_mode_settings": {
             "value": 0
           },
-          "omnibox.ai_mode_settings": {
+          "lens.policy.lens_overlay_settings": {
             "value": 0
           }
         }
@@ -38,7 +38,7 @@
           "omnibox.ai_mode_settings": {
             "value": 1
           },
-          "omnibox.ai_mode_settings": {
+          "lens.policy.lens_overlay_settings": {
             "value": 1
           }
         }
@@ -49,7 +49,7 @@
           "omnibox.ai_mode_settings": {
             "default_value": 0
           },
-          "omnibox.ai_mode_settings": {
+          "lens.policy.lens_overlay_settings": {
             "default_value": 0
           }
         }
@@ -57,10 +57,14 @@
       {
         "policies": {
           "GenAiDefaultSettings": 1,
-          "AIModeSettings": 1
+          "AIModeSettings": 1,
+          "LensOverlaySettings": 1
         },
         "prefs": {
           "omnibox.ai_mode_settings": {
+            "value": 1
+          },
+          "lens.policy.lens_overlay_settings": {
             "value": 1
           }
         }
@@ -68,32 +72,14 @@
       {
         "policies": {
           "GenAiDefaultSettings": 2,
-          "AIModeSettings": 1
+          "AIModeSettings": 1,
+          "LensOverlaySettings": 1
         },
         "prefs": {
           "omnibox.ai_mode_settings": {
             "value": 1
-          }
-        }
-      },
-      {
-        "policies": {
-          "GenAiDefaultSettings": 1,
-          "AIModeSettings": 1
-        },
-        "prefs": {
-          "omnibox.ai_mode_settings": {
-            "value": 1
-          }
-        }
-      },
-      {
-        "policies": {
-          "GenAiDefaultSettings": 2,
-          "AIModeSettings": 1
-        },
-        "prefs": {
-          "omnibox.ai_mode_settings": {
+          },
+          "lens.policy.lens_overlay_settings": {
             "value": 1
           }
         }

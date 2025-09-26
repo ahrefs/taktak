@@ -46,6 +46,7 @@ class GPU_GLES2_EXPORT GraphiteSharedContext {
       std::unique_ptr<skgpu::graphite::Context> graphite_context,
       GpuProcessShmCount* use_shader_cache_shm_count,
       bool is_thread_safe,
+      size_t max_pending_recordings,
       FlushCallback backend_flush_callback = FlushCallback());
 
   GraphiteSharedContext(const GraphiteSharedContext&) = delete;
@@ -196,6 +197,7 @@ class GPU_GLES2_EXPORT GraphiteSharedContext {
 
   raw_ptr<GpuProcessShmCount> use_shader_cache_shm_count_ = nullptr;
 
+  const size_t max_pending_recordings_;
   size_t num_pending_recordings_ = 0;
 
   FlushCallback backend_flush_callback_;

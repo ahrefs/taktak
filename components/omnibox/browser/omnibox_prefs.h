@@ -111,9 +111,6 @@ std::string GetUserPreferenceForZeroSuggestCachedResponse(
     PrefService* prefs,
     const std::string& page_url);
 
-// Returns true if the AIM is allowed per the policy.
-bool IsAimAllowedByPolicy(PrefService* prefs);
-
 }  // namespace omnibox
 
 #endif  // COMPONENTS_OMNIBOX_BROWSER_OMNIBOX_PREFS_H_

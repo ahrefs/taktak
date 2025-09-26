@@ -62,11 +62,11 @@ bool MetalContextProvider::InitializeGraphiteContext(
     return false;
   }
 
-  bool is_thread_safe = features::IsGraphiteContextThreadSafe();
   objc_storage_->graphite_shared_context =
-      std::make_unique<gpu::GraphiteSharedContext>(std::move(graphite_context),
-                                                   use_shader_cache_shm_count,
-                                                   is_thread_safe);
+      std::make_unique<gpu::GraphiteSharedContext>(
+          std::move(graphite_context), use_shader_cache_shm_count,
+          /*is_thread_safe=*/false,
+          features::kSkiaGraphiteMaxPendingRecordings.Get());
   return true;
 }
 

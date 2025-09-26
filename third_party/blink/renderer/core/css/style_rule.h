@@ -80,6 +80,7 @@ class CORE_EXPORT StyleRuleBase : public GarbageCollected<StyleRuleBase> {
     kMixin,
     kApplyMixin,
     kPositionTry,
+    kCustomMedia,
   };
 
   // Name of a cascade layer as given by an @layer rule, split at '.' into a
@@ -130,6 +131,7 @@ class CORE_EXPORT StyleRuleBase : public GarbageCollected<StyleRuleBase> {
   bool IsMixinRule() const { return GetType() == kMixin; }
   bool IsApplyMixinRule() const { return GetType() == kApplyMixin; }
   bool IsPositionTryRule() const { return GetType() == kPositionTry; }
+  bool IsCustomMediaRule() const { return GetType() == kCustomMedia; }
 
   StyleRuleBase* Copy() const;
 
@@ -713,6 +715,36 @@ class CORE_EXPORT StyleRuleApplyMixin : public StyleRuleBase {
   AtomicString name_;
 };
 
+class CORE_EXPORT StyleRuleCustomMedia : public StyleRuleBase {
+ public:
+  StyleRuleCustomMedia(AtomicString name, MediaQuerySet* media_query_set);
+  StyleRuleCustomMedia(AtomicString name, bool value);
+
+  const String& GetName() const { return name_; }
+  bool IsMediaQueryValue() const {
+    return std::holds_alternative<Member<const MediaQuerySet>>(value_);
+  }
+  bool IsBooleanValue() const { return std::holds_alternative<bool>(value_); }
+  const MediaQuerySet* GetMediaQueryValue() const {
+    DCHECK(std::holds_alternative<Member<const MediaQuerySet>>(value_));
+    return std::get<Member<const MediaQuerySet>>(value_);
+  }
+  bool GetBooleanValue() const {
+    DCHECK(std::holds_alternative<bool>(value_));
+    return std::get<bool>(value_);
+  }
+  void SetMediaQueries(const MediaQuerySet* media_queries) {
+    value_ = media_queries;
+  }
+
+  void TraceAfterDispatch(blink::Visitor*) const;
+
+ private:
+  AtomicString name_;
+  using CustomMediaValue = std::variant<Member<const MediaQuerySet>, bool>;
+  CustomMediaValue value_;
+};
+
 template <>
 struct DowncastTraits<StyleRule> {
   static bool AllowFrom(const StyleRuleBase& rule) {
@@ -830,6 +862,13 @@ template <>
 struct DowncastTraits<StyleRuleApplyMixin> {
   static bool AllowFrom(const StyleRuleBase& rule) {
     return rule.IsApplyMixinRule();
+  }
+};
+
+template <>
+struct DowncastTraits<StyleRuleCustomMedia> {
+  static bool AllowFrom(const StyleRuleBase& rule) {
+    return rule.IsCustomMediaRule();
   }
 };
 

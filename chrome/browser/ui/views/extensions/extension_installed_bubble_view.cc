@@ -11,8 +11,8 @@
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
 #include "chrome/browser/buildflags.h"
-#include "chrome/browser/extensions/account_extension_tracker.h"
 #include "chrome/browser/extensions/extension_util.h"
+#include "chrome/browser/extensions/sync/account_extension_tracker.h"
 #include "chrome/browser/platform_util.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/signin/signin_promo_util.h"
@@ -166,8 +166,7 @@ ExtensionInstalledBubbleView::ExtensionInstalledBubbleView(
 
   if (signin::ShouldShowExtensionSignInPromo(*browser->profile(), *extension) ||
       (signin::ShouldShowExtensionSyncPromo(*browser->profile(), *extension) &&
-       !base::FeatureList::IsEnabled(
-           switches::kEnableExtensionsExplicitBrowserSignin))) {
+       !switches::IsExtensionsExplicitBrowserSigninEnabled())) {
     SetFootnoteView(CreateSigninPromoView(
         browser->tab_strip_model()->GetActiveWebContents(),
         model_->extension_id()));

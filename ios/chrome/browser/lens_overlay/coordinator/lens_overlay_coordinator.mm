@@ -171,7 +171,7 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
   LensOverlayNetworkIssuePresenter* _networkIssuePresenter;
 
   /// Presenter for the results page.
-  LensOverlayResultsPagePresenter* _resultsPagePresenter;
+  id<LensOverlayResultsPagePresenting> _resultsPagePresenter;
 
   /// Presenter for the lens container.
   LensOverlayContainerPresenter* _containerPresenter;
@@ -181,6 +181,9 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 
   // The view controller that serves as the base of the presentation.
   __weak UIViewController* _presentationBaseViewController;
+
+  // A factory for creating the results page presenter.
+  LensResultsPresenterFactory _presenterFactory;
 
   // Accumulates the callbacks that are to be run once the overlay is destroyed.
   NSMutableArray<ProceduralBlock>* _runOnDestroy;
@@ -300,6 +303,8 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
   [browser->GetCommandDispatcher()
       startDispatchingToTarget:self
                    forProtocol:@protocol(LensOverlayCommands)];
+
+  _runOnDestroy = [[NSMutableArray alloc] init];
 }
 
 - (void)stop {
@@ -341,7 +346,11 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 
 - (void)searchImageWithLens:(UIImage*)image
                  entrypoint:(LensOverlayEntrypoint)entrypoint
+    initialPresentationBase:(UIViewController*)initialPresentationBase
+    resultsPresenterFactory:(LensResultsPresenterFactory)presenterFactory
                  completion:(void (^)(BOOL))completion {
+  _presentationBaseViewController = initialPresentationBase;
+  _presenterFactory = presenterFactory;
   BOOL success = [self prepareOverlayWithEntrypoint:entrypoint];
   if (!success) {
     if (completion) {
@@ -429,6 +438,14 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
   }
 
   [_selectionViewController setTopIconsHidden:self.shouldShowConsentFlow];
+  if (self.shouldShowConsentFlow) {
+    [_selectionViewController updateGuidanceViewVisibility:NO animated:YES];
+  }
+
+  if (_entrypoint == LensOverlayEntrypoint::kFREPromo) {
+    [_selectionViewController setHUDViewHidden:YES];
+    [_selectionViewController setGuidanceViewHidden:YES];
+  }
 
   [_metricsRecorder setLensOverlayInForeground:YES];
 
@@ -518,6 +535,13 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
   // dismissed.
   if (completion) {
     [_runOnDestroy addObject:completion];
+  }
+
+  // If there is nothing to be destroyed, immediatelly complete and exit.
+  if (!self.isUICreated) {
+    [self cleanupAssociatedTabHelper];
+    [self completeLensOverlayDestroy];
+    return;
   }
 
   [self prepareForLensOverlayDestroyWithReason:dismissalSource];
@@ -660,9 +684,13 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
   LensOverlayDismissalCause dismissalCause =
       [self dismissalCauseForSource:dismissalSource];
   [weakCommands lensOverlayWillDismissWithCause:dismissalCause];
-  [_runOnDestroy addObject:^{
-    [weakCommands lensOverlayDidDismissWithCause:dismissalCause];
-  }];
+  // The dismiss confirmation event should be the first to be called when
+  // destroyed.
+  [_runOnDestroy
+      insertObject:^{
+        [weakCommands lensOverlayDidDismissWithCause:dismissalCause];
+      }
+           atIndex:0];
 }
 
 // Called before a destroy flow is finalized.
@@ -810,6 +838,7 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 - (void)lensOverlayContainerPresenterDidReadjustPresentation:
     (LensOverlayContainerPresenter*)containerPresenter {
   [_resultsPagePresenter readjustPresentationIfNeeded];
+  [self.presentationEnvironment lensOverlayDidReadjustPresentation];
 }
 
 - (NSDirectionalEdgeInsets)lensOverlayContainerPresenterInsetsForPresentation:
@@ -853,12 +882,25 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 - (void)lensOverlayResultsPagePresenter:
             (LensOverlayResultsPagePresenter*)presenter
           updateVerticalOcclusionOffset:(CGFloat)offsetNeeded {
-  UIWindow* sceneWindow = self.browser->GetSceneState().window;
-  CGFloat topOffset = kTopHeaderPadding + sceneWindow.safeAreaInsets.top;
+  CGFloat topOffset =
+      kTopHeaderPadding + _containerViewController.view.safeAreaInsets.top;
   [_selectionViewController
       setOcclusionInsets:UIEdgeInsetsMake(topOffset, 0, offsetNeeded, 0)
               reposition:YES
                 animated:YES];
+}
+
+- (void)lensOverlayResultsPagePresenter:
+            (id<LensOverlayResultsPagePresenting>)presenter
+        updateHorizontalOcclusionOffset:(CGFloat)horizontalOffset {
+  // The top and bottom insets are set to zero when the side panel is
+  // displayed since there is no Chrome UI intersecting the lens overlay.
+  // The horizontal inset is just used as layout padding.
+  UIEdgeInsets horizontalOcclusionInsets =
+      UIEdgeInsetsMake(0, horizontalOffset, 0, horizontalOffset);
+  [_selectionViewController setOcclusionInsets:horizontalOcclusionInsets
+                                    reposition:YES
+                                      animated:YES];
 }
 
 - (void)lensOverlayResultsPagePresenter:
@@ -926,12 +968,13 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 
 // This coordinator acts as a proxy consumer to the result consumer to implement
 // lazy initialization of the result UI.
-- (void)loadResultsURL:(GURL)url {
+- (void)loadResultsURL:(GURL)url
+           httpHeaders:(NSDictionary<NSString*, NSString*>*)httpHeaders {
   [_metricsRecorder
       recordResultLoadedWithTextSelection:_mediator.currentLensResult
                                               .isTextSelection];
   [self startResultPage];
-  [_resultMediator loadResultsURL:url];
+  [_resultMediator loadResultsURL:url httpHeaders:httpHeaders];
 }
 
 - (void)handleSearchRequestStarted {
@@ -1118,7 +1161,6 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
     return NO;
   }
 
-  _runOnDestroy = [[NSMutableArray alloc] init];
   if (self.isUICreated) {
     // The UI is probably associated with the non-active tab. Destroy it with no
     // animation.
@@ -1193,8 +1235,7 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 
 // Returns whether or not the consent dialog should be shown.
 - (BOOL)shouldShowConsentFlow {
-  if (lens::IsLVFEntrypoint(_entrypoint) ||
-      lens::IsImageContextMenuEntrypoint(_entrypoint)) {
+  if (!lens::EntrypointRequiresUserConsent(_entrypoint)) {
     return NO;
   }
 
@@ -1216,8 +1257,7 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 
 // Asserts that the terms of service has been accepted.
 - (void)checkTermsOfServiceIfNeeded {
-  if (lens::IsLVFEntrypoint(_entrypoint) ||
-      lens::IsImageContextMenuEntrypoint(_entrypoint)) {
+  if (!lens::EntrypointRequiresUserConsent(_entrypoint)) {
     return;
   }
 
@@ -1515,6 +1555,7 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
   [self disableSelectionInteraction:NO];
   [_selectionViewController setTopIconsHidden:NO];
   [_selectionViewController start];
+  [_selectionViewController updateGuidanceViewVisibility:YES animated:YES];
 
   [self scheduleTooltipHintDisplayIfNecessary];
 }
@@ -1522,9 +1563,14 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 // Configures and initializes the presenter responsible for displaying the
 // results bottom sheet.
 - (void)buildResultsBottomSheetPresentation {
-  _resultsPagePresenter = [[LensOverlayResultsPagePresenter alloc]
-      initWithBaseViewController:_containerViewController
-        resultPageViewController:_resultViewController];
+  if (_presenterFactory) {
+    _resultsPagePresenter =
+        _presenterFactory(_containerViewController, _resultViewController);
+  } else {
+    _resultsPagePresenter = [[LensOverlayResultsPagePresenter alloc]
+        initWithBaseViewController:_containerViewController
+          resultPageViewController:_resultViewController];
+  }
 
   _resultsPagePresenter.delegate = self;
   _resultMediator.presentationDelegate = _resultsPagePresenter;
@@ -1535,6 +1581,10 @@ const base::TimeDelta kSearchWithCameraTooltipHintDelay = base::Seconds(2.0);
 - (void)showResultsPageAnimated:(BOOL)animated {
   if (!_associatedTabHelper) {
     return;
+  }
+
+  if (_entrypoint == LensOverlayEntrypoint::kFREPromo) {
+    [_selectionViewController setHUDViewHidden:NO];
   }
 
   __weak __typeof(self) weakSelf = self;

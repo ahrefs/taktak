@@ -155,38 +155,10 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
   mixer[kColorCastDialogHelpIcon] = {ui::kColorAccent};
   mixer[kColorDesktopMediaTabListBorder] = {ui::kColorMidground};
   mixer[kColorDesktopMediaTabListPreviewBackground] = {ui::kColorMidground};
-  mixer[kColorDownloadItemForeground] = {kColorDownloadShelfForeground};
-  mixer[kColorDownloadItemForegroundDangerous] = ui::PickGoogleColor(
-      ui::kColorAlertHighSeverity, kColorDownloadShelfBackground,
-      color_utils::kMinimumReadableContrastRatio);
-  mixer[kColorDownloadItemForegroundDisabled] = BlendForMinContrast(
-      ui::AlphaBlend(kColorDownloadItemForeground,
-                     kColorDownloadShelfBackground, gfx::kGoogleGreyAlpha600),
-      kColorDownloadShelfBackground, kColorDownloadItemForeground);
-  mixer[kColorDownloadItemForegroundSafe] = ui::PickGoogleColor(
-      ui::kColorAlertLowSeverity, kColorDownloadShelfBackground,
-      color_utils::kMinimumReadableContrastRatio);
   mixer[kColorDownloadItemIconDangerous] = {ui::kColorAlertHighSeverity};
   mixer[kColorDownloadItemIconWarning] = {ui::kColorSecondaryForeground};
-  mixer[kColorDownloadItemProgressRingBackground] = ui::SetAlpha(
-      kColorDownloadItemProgressRingForeground, gfx::kGoogleGreyAlpha400);
-  mixer[kColorDownloadItemProgressRingForeground] = {ui::kColorThrobber};
   mixer[kColorDownloadItemTextDangerous] = {ui::kColorAlertHighSeverity};
   mixer[kColorDownloadItemTextWarning] = {ui::kColorSecondaryForeground};
-  mixer[kColorDownloadShelfBackground] = {kColorToolbar};
-  mixer[kColorDownloadShelfButtonBackground] = {kColorDownloadShelfBackground};
-  mixer[kColorDownloadShelfButtonIcon] = {kColorToolbarButtonIcon};
-  mixer[kColorDownloadShelfButtonIconDisabled] = {
-      kColorToolbarButtonIconDisabled};
-  mixer[kColorDownloadShelfButtonText] =
-      ui::PickGoogleColor(ui::kColorAccent, kColorDownloadShelfBackground,
-                          color_utils::kMinimumReadableContrastRatio);
-  mixer[kColorDownloadShelfContentAreaSeparator] = ui::AlphaBlend(
-      kColorDownloadShelfButtonIcon, kColorDownloadShelfBackground, 0x3A);
-  mixer[kColorDownloadShelfForeground] = {kColorToolbarText};
-  mixer[kColorDownloadStartedAnimationForeground] =
-      PickGoogleColor(ui::kColorAccent, kColorDownloadShelfBackground,
-                      color_utils::kMinimumVisibleContrastRatio);
   mixer[kColorDownloadToolbarButtonActive] =
       ui::PickGoogleColor(ui::kColorThrobber, kColorToolbar,
                           color_utils::kMinimumVisibleContrastRatio);
@@ -294,6 +266,7 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
       ui::kColorSysOnSurfacePrimary};
   mixer[kColorMulitContentsViewInactiveContentOutline] = {
       ui::kColorSysNeutralOutline};
+  mixer[kColorMulitContentsViewMiniToolbarForeground] = {kColorToolbarText};
   mixer[kColorOmniboxChipBackground] = {kColorTabBackgroundActiveFrameActive};
   mixer[kColorOmniboxChipBlockedActivityIndicatorBackground] = {
       kColorInfoBarBackground};
@@ -920,6 +893,21 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
       gfx::kGoogleBlue500, kColorReadAnythingBackgroundYellow,
       color_utils::kMinimumVisibleContrastRatio);
 
+  // Apply high contrast recipes if necessary.
+  if (!ShouldApplyHighContrastColors(key)) {
+    return;
+  }
+  mixer[kColorInfoBarContentAreaSeparator] = {
+      kColorToolbarContentAreaSeparator};
+  mixer[kColorLocationBarBorder] = {kColorToolbarText};
+  mixer[kColorToolbar] = {dark_mode ? SK_ColorBLACK : SK_ColorWHITE};
+  mixer[kColorToolbarContentAreaSeparator] = {kColorToolbarText};
+  mixer[kColorToolbarText] = {dark_mode ? SK_ColorWHITE : SK_ColorBLACK};
+  mixer[kColorToolbarTopSeparatorFrameActive] = {dark_mode ? SK_ColorDKGRAY
+                                                           : SK_ColorLTGRAY};
+  mixer[ui::kColorFrameActive] = {SK_ColorDKGRAY};
+  mixer[ui::kColorFrameInactive] = {SK_ColorGRAY};
+
     /* Yep Chat Colors */
     mixer[kColorYepChatPromptBackground] = {
             dark_mode ? SkColorSetRGB(24, 24, 28) : SkColorSetRGB(235, 233, 240)};
@@ -958,20 +946,4 @@ void AddChromeColorMixer(ui::ColorProvider* provider,
                                 ? SkColorSetARGB(255, 129, 160, 240)
                                 : SkColorSetARGB(255, 8, 40, 187)};
 
-    // Apply high contrast recipes if necessary.
-    if (!ShouldApplyHighContrastColors(key)) {
-        return;
-    }
-    mixer[kColorDownloadShelfContentAreaSeparator] = {
-            kColorToolbarContentAreaSeparator};
-    mixer[kColorInfoBarContentAreaSeparator] = {
-            kColorToolbarContentAreaSeparator};
-    mixer[kColorLocationBarBorder] = {kColorToolbarText};
-    mixer[kColorToolbar] = {dark_mode ? SK_ColorBLACK : SK_ColorWHITE};
-    mixer[kColorToolbarContentAreaSeparator] = {kColorToolbarText};
-    mixer[kColorToolbarText] = {dark_mode ? SK_ColorWHITE : SK_ColorBLACK};
-    mixer[kColorToolbarTopSeparatorFrameActive] = {dark_mode ? SK_ColorDKGRAY
-                                                             : SK_ColorLTGRAY};
-    mixer[ui::kColorFrameActive] = {SK_ColorDKGRAY};
-    mixer[ui::kColorFrameInactive] = {SK_ColorGRAY};
 }

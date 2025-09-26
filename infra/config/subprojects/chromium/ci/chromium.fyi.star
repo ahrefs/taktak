@@ -299,6 +299,9 @@ ci.builder(
             target_platform = builder_config.target_platform.CHROMEOS,
         ),
     ),
+    builder_config_settings = builder_config.ci_settings(
+        retry_failed_shards = True,
+    ),
     gn_args = gn_args.config(
         configs = [
             "chromeos_with_codecs",
@@ -1619,9 +1622,25 @@ fyi_ios_builder(
         ],
     ),
     targets = targets.bundle(
+        targets = [
+            "tvos_rel_tests",
+        ],
         additional_compile_targets = [
+            "base_unittests",
             "content_shell",
+            "components_browsertests",
+            "components_unittests",
             "content_unittests",
+            "media_unittests",
+        ],
+        mixins = [
+            "expand-as-isolated-script",
+            "has_native_resultdb_integration",
+            "mac_default_arm64",
+            "mac_toolchain",
+            "out_dir_arg",
+            "xcode_16_beta",
+            "xctest",
         ],
     ),
     builderless = True,
@@ -1632,7 +1651,7 @@ fyi_ios_builder(
     ),
     contact_team_email = "cobalt-appletv@google.com",
     execution_timeout = 3 * time.hour,
-    xcode = xcode.xcode_default,
+    xcode = xcode.x16betabots,
 )
 
 fyi_ios_builder(
@@ -1829,7 +1848,7 @@ fyi_ios_builder(
         mixins = [
             "expand-as-isolated-script",
             "has_native_resultdb_integration",
-            "mac_15_arm64",
+            "mac_15_beta_arm64",
             "mac_toolchain",
             "out_dir_arg",
             "xcode_26_beta",
@@ -1943,7 +1962,7 @@ fyi_ios_builder(
         mixins = [
             "expand-as-isolated-script",
             "has_native_resultdb_integration",
-            "mac_15_arm64",
+            "mac_15_beta_arm64",
             "mac_toolchain",
             "out_dir_arg",
             "xcode_26_beta",
@@ -2004,10 +2023,10 @@ fyi_ios_builder(
         mixins = [
             "expand-as-isolated-script",
             "has_native_resultdb_integration",
-            "mac_15_arm64",
+            "mac_15_beta_arm64",
             "mac_toolchain",
             "out_dir_arg",
-            "xcode_16_beta",
+            "xcode_26_beta",
             "xctest",
         ],
     ),
@@ -2017,7 +2036,7 @@ fyi_ios_builder(
         category = "iOS|iOS18",
         short_name = "sdk18",
     ),
-    xcode = xcode.x16betabots,
+    xcode = xcode.x26betabots,
 )
 
 fyi_mac_builder(

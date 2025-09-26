@@ -9,7 +9,7 @@
 
 // Please keep this list alphabetized.
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kAddCurrentTabToReadingListElementId);
-DECLARE_ELEMENT_IDENTIFIER_VALUE(kAIChatSidePanelElementId);
+DEFINE_ELEMENT_IDENTIFIER_VALUE(kAiModePageActionIconElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(
     kAnonymizedUrlCollectionPersonalizationSettingId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kAppUninstallDialogOkButtonId);
@@ -17,7 +17,6 @@ DEFINE_ELEMENT_IDENTIFIER_VALUE(kBookmarkBarElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kBookmarkSidePanelWebViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kBookmarkStarViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kBrowserViewElementId);
-DEFINE_ELEMENT_IDENTIFIER_VALUE(kChatSidePanelWebViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kConstrainedDialogWebViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kContentsSeparatorViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kCookieControlsIconElementId);
@@ -48,6 +47,7 @@ DEFINE_ELEMENT_IDENTIFIER_VALUE(kGlicButtonElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kGlicOsWidgetKeyboardShortcutElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kGlicOsToggleElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kGlicNudgeButtonElementId);
+DEFINE_ELEMENT_IDENTIFIER_VALUE(kGlicActorTaskIconElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kGlicViewElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kHatsNextWebDialogId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kHistorySearchInputElementId);
@@ -90,6 +90,7 @@ DEFINE_ELEMENT_IDENTIFIER_VALUE(kSavedTabGroupBarElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kSavedTabGroupButtonElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kSavedTabGroupOverflowButtonElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kSavedTabGroupOverflowMenuId);
+DEFINE_ELEMENT_IDENTIFIER_VALUE(kSharedTabGroupCommentsActionElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kSharedTabGroupFeedbackElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kCollaborationMessagingPageActionIconElementId);
 DEFINE_ELEMENT_IDENTIFIER_VALUE(kSearchEngineChoiceDialogId);

@@ -34,7 +34,6 @@
 #include "cc/base/switches.h"
 #include "chrome/browser/page_load_metrics/observers/core/ukm_page_load_metrics_observer.h"
 #include "chrome/browser/page_load_metrics/observers/document_write_page_load_metrics_observer.h"
-#include "chrome/browser/page_load_metrics/observers/service_worker_page_load_metrics_observer.h"
 #include "chrome/browser/page_load_metrics/page_load_metrics_initialize.h"
 #include "chrome/browser/prefs/session_startup_pref.h"
 #include "chrome/browser/preloading/prefetch/no_state_prefetch/no_state_prefetch_manager_factory.h"
@@ -71,6 +70,7 @@
 #include "components/no_state_prefetch/common/no_state_prefetch_origin.h"
 #include "components/page_load_metrics/browser/observers/abandoned_page_load_metrics_observer.h"
 #include "components/page_load_metrics/browser/observers/core/uma_page_load_metrics_observer.h"
+#include "components/page_load_metrics/browser/observers/service_worker_page_load_metrics_observer.h"
 #include "components/page_load_metrics/browser/observers/use_counter_page_load_metrics_observer.h"
 #include "components/page_load_metrics/browser/page_load_metrics_test_waiter.h"
 #include "components/page_load_metrics/browser/page_load_tracker.h"
@@ -527,7 +527,7 @@ IN_PROC_BROWSER_TEST_F(PageLoadMetricsBrowserTest, PageLCPImagePriority) {
         }
       })
   )");
-  EXPECT_EQ("", result.error);
+  EXPECT_TRUE(result.is_ok());
 
   img_response->Send(kImgHttpResponseHeader);
   img_response->Send(file_contents);
@@ -547,7 +547,7 @@ IN_PROC_BROWSER_TEST_F(PageLoadMetricsBrowserTest, PageLCPImagePriority) {
      }))
      .observe({type: 'largest-contentful-paint', buffered: true});
  })})())");
-  EXPECT_EQ("", result2.error);
+  EXPECT_TRUE(result2.is_ok());
   waiter->Wait();
 
   // LCP is collected only at the end of the page lifecycle. Navigate to
@@ -653,7 +653,7 @@ class PageLoadMetricsBrowserTestAnimatedLCP
   await new Promise(r => setTimeout(r, 50));
   return timestamp;
 })();)");
-    EXPECT_EQ("", result.error);
+    EXPECT_TRUE(result.is_ok());
     double timestamp = result.ExtractDouble();
 
     img_response->Send(second_frame);
@@ -673,7 +673,7 @@ class PageLoadMetricsBrowserTestAnimatedLCP
      }))
      .observe({type: 'largest-contentful-paint', buffered: true});
  })})())");
-    EXPECT_EQ("", result2.error);
+    EXPECT_TRUE(result2.is_ok());
     waiter->Wait();
 
     // LCP is collected only at the end of the page lifecycle. Navigate to

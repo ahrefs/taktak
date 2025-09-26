@@ -6,7 +6,9 @@
 #include <utility>
 
 #include "ash/constants/ash_features.h"
+#include "ash/constants/ash_pref_names.h"
 #include "ash/public/cpp/test/shell_test_api.h"
+#include "ash/session/session_controller_impl.h"
 #include "ash/shell.h"
 #include "ash/test/ash_test_base.h"
 #include "ash/test/ash_test_util.h"
@@ -162,10 +164,13 @@ TEST_F(WmPixelDiffTest, DISABLED_WindowCycleBasic) {
 
   EXPECT_TRUE(GetPixelDiffer()->CompareUiComponentsOnPrimaryScreen(
       "window_cycle_basic",
-      /*revision_number=*/25, widget));
+      /*revision_number=*/26, widget));
 }
 
 TEST_F(WmPixelDiffTest, InformedRestoreNoScreenshotDialog) {
+  ash::Shell::Get()->session_controller()->GetActivePrefService()->SetBoolean(
+      prefs::kShowInformedRestoreOnboarding, false);
+
   UpdateDisplay("1600x1000");
 
   // Chrome apps are unique as they show tab info additionally. Create one

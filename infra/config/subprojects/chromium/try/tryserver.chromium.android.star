@@ -397,6 +397,22 @@ try_.builder(
 )
 
 try_.builder(
+    name = "android-16-x64-dbg",
+    mirrors = [
+        "ci/Android x64 Builder (dbg)",
+        "ci/android-16-x64-dbg-tests",
+    ],
+    gn_args = gn_args.config(
+        configs = [
+            "ci/Android x64 Builder (dbg)",
+            "debug_try_builder",
+        ],
+    ),
+    contact_team_email = "clank-engprod@google.com",
+    siso_remote_jobs = siso.remote_jobs.LOW_JOBS_FOR_CQ,
+)
+
+try_.builder(
     name = "android-16-x64-rel",
     branch_selector = branches.selector.ANDROID_BRANCHES,
     description_html = "Run Chromium tests on Android 16 emulator.",
@@ -619,6 +635,7 @@ try_.builder(
             "components/grpc_support/.+",
             "build/android/.+",
             "build/config/android/.+",
+            "third_party/jni_zero/.+",
         ],
     ),
 )
@@ -707,6 +724,7 @@ try_.builder(
             "components/grpc_support/.+",
             "build/android/.+",
             "build/config/android/.+",
+            "third_party/jni_zero/.+",
         ],
     ),
 )
@@ -872,6 +890,22 @@ try_.builder(
 )
 
 try_.builder(
+    name = "android-cronet-code-coverage-native",
+    mirrors = ["ci/android-cronet-code-coverage-native"],
+    gn_args = "ci/android-cronet-code-coverage-native",
+    contact_team_email = "cronet-team@google.com",
+    siso_remote_jobs = siso.remote_jobs.LOW_JOBS_FOR_CQ,
+)
+
+try_.builder(
+    name = "android-cronet-code-coverage-java",
+    mirrors = ["ci/android-cronet-code-coverage-java"],
+    gn_args = "ci/android-cronet-code-coverage-java",
+    contact_team_email = "cronet-team@google.com",
+    siso_remote_jobs = siso.remote_jobs.LOW_JOBS_FOR_CQ,
+)
+
+try_.builder(
     name = "android-cronet-x86-dbg-marshmallow-tests",
     mirrors = [
         "ci/android-cronet-x86-dbg",
@@ -968,24 +1002,6 @@ try_.builder(
     ),
 )
 
-# TODO(crbug.com/425745287): Remove this builder after android-10-arm64-rel
-# run properly as an optional CQ builder.
-try_.builder(
-    name = "android-pie-arm64-dbg",
-    # branch_selector = branches.selector.ANDROID_BRANCHES,
-    mirrors = [
-        "ci/Android arm64 Builder (dbg)",
-        "ci/android-pie-arm64-dbg",
-    ],
-    gn_args = gn_args.config(
-        configs = [
-            "ci/Android arm64 Builder (dbg)",
-        ],
-    ),
-    builderless = False,
-    cores = 16,
-)
-
 try_.builder(
     name = "android-webview-10-x86-rel-tests",
     mirrors = [
@@ -1013,6 +1029,22 @@ try_.builder(
     mirrors = ["ci/android-15-webview-wpt-fyi-rel"],
     gn_args = "ci/android-15-webview-wpt-fyi-rel",
     contact_team_email = "chrome-product-engprod@google.com",
+    siso_remote_jobs = siso.remote_jobs.LOW_JOBS_FOR_CQ,
+)
+
+# Temporary builder for checking structured test ids.
+try_.builder(
+    name = "android-structured-test-ids-16-x64-rel-fyi",
+    mirrors = [
+        "ci/android-structured-test-ids-16-x64-rel-fyi",
+    ],
+    gn_args = gn_args.config(
+        configs = [
+            "ci/android-structured-test-ids-16-x64-rel-fyi",
+            "release_try_builder",
+        ],
+    ),
+    contact_team_email = "chrome-browser-infra-team@google.com",
     siso_remote_jobs = siso.remote_jobs.LOW_JOBS_FOR_CQ,
 )
 
@@ -1258,6 +1290,7 @@ try_.builder(
             "components/cast_receiver/.+",
             "components/cast_streaming/.+",
             "third_party/cast_core/.+",
+            "third_party/jni_zero/.+",
             "third_party/openscreen/.+",
         ],
     ),
@@ -1281,6 +1314,7 @@ try_.builder(
             "components/cast_receiver/.+",
             "components/cast_streaming/.+",
             "third_party/cast_core/.+",
+            "third_party/jni_zero/.+",
             "third_party/openscreen/.+",
         ],
     ),

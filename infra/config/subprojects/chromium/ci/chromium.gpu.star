@@ -274,7 +274,6 @@ gpu.ci.mac_builder(
     targets = targets.bundle(),
     cores = None,
     cpu = cpu.ARM64,
-    gardener_rotations = args.ignore_default(None),
     tree_closing = False,
     console_view_entry = consoles.console_view_entry(
         category = "Mac",
@@ -351,7 +350,6 @@ gpu.ci.windows_builder(
             "x64",
         ],
     ),
-    gardener_rotations = args.ignore_default(None),
     tree_closing = False,
     console_view_entry = consoles.console_view_entry(
         category = "Windows",

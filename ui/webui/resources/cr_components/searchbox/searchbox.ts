@@ -13,12 +13,12 @@ import {assert} from '//resources/js/assert.js';
 import {loadTimeData} from '//resources/js/load_time_data.js';
 import {MetricsReporterImpl} from '//resources/js/metrics_reporter/metrics_reporter.js';
 import {hasKeyModifiers} from '//resources/js/util.js';
+import {NavigationPredictor} from '//resources/mojo/components/omnibox/browser/omnibox.mojom-webui.js';
+import type {AutocompleteMatch, AutocompleteResult, PageCallbackRouter, PageHandlerInterface} from '//resources/mojo/components/omnibox/browser/searchbox.mojom-webui.js';
+import {SideType} from '//resources/mojo/components/omnibox/browser/searchbox.mojom-webui.js';
 import {PolymerElement} from '//resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 
-import {NavigationPredictor} from './omnibox.mojom-webui.js';
 import {getTemplate} from './searchbox.html.js';
-import type {AutocompleteMatch, AutocompleteResult, PageCallbackRouter, PageHandlerInterface} from './searchbox.mojom-webui.js';
-import {SideType} from './searchbox.mojom-webui.js';
 import {SearchboxBrowserProxy} from './searchbox_browser_proxy.js';
 import type {SearchboxDropdownElement} from './searchbox_dropdown.js';
 import type {SearchboxIconElement} from './searchbox_icon.js';
@@ -861,10 +861,6 @@ export class SearchboxElement extends SearchboxElementBase {
       queryUrl.search = searchParams.toString();
       const href = queryUrl.href;
 
-      chrome.metricsPrivate.recordBoolean(
-          'NewTabPage.ComposeEntrypoint.Click.UserTextPresent',
-          !this.isInputEmpty());
-
       // Handle mouse events.
       if (e.detail.ctrlKey || e.detail.metaKey) {
         window.open(href, '_blank');
@@ -876,6 +872,10 @@ export class SearchboxElement extends SearchboxElementBase {
     } else {
       this.dispatchEvent(new CustomEvent('open-composebox'));
     }
+
+    chrome.metricsPrivate.recordBoolean(
+        'NewTabPage.ComposeEntrypoint.Click.UserTextPresent',
+        !this.isInputEmpty());
   }
 
   private onRemoveThumbnailClick_() {

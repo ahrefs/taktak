@@ -4,6 +4,7 @@
 
 import {FileUploadStatus} from 'chrome://new-tab-page/composebox_query.mojom-webui.js';
 import type {ComposeboxFile} from 'chrome://new-tab-page/lazy_load.js';
+import {FileUploadStatus} from 'chrome://resources/cr_components/composebox/composebox_query.mojom-webui.js';
 
 export function createComposeboxFile(
     index: number, override: Partial<ComposeboxFile> = {}): ComposeboxFile {

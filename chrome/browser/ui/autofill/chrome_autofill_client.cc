@@ -39,7 +39,9 @@
 #include "chrome/browser/keyboard_accessory/android/manual_filling_controller.h"
 #include "chrome/browser/metrics/variations/google_groups_manager_factory.h"
 #include "chrome/browser/optimization_guide/optimization_guide_keyed_service_factory.h"
+#include "chrome/browser/password_manager/chrome_password_change_service.h"
 #include "chrome/browser/password_manager/chrome_password_manager_client.h"
+#include "chrome/browser/password_manager/password_change_service_factory.h"
 #include "chrome/browser/password_manager/password_manager_settings_service_factory.h"
 #include "chrome/browser/plus_addresses/plus_address_service_factory.h"
 #include "chrome/browser/profiles/profile.h"
@@ -242,7 +244,7 @@ void LaunchPlusAddressUserPerceptionSurvey(
   switch (survey_type) {
     case plus_addresses::hats::SurveyType::kAcceptedFirstTimeCreate:
       if (!base::FeatureList::IsEnabled(
-          features::kPlusAddressAcceptedFirstTimeCreateSurvey)) {
+              features::kPlusAddressAcceptedFirstTimeCreateSurvey)) {
         return;
       }
       survey_trigger = kHatsSurveyTriggerPlusAddressAcceptedFirstTimeCreate;
@@ -253,7 +255,7 @@ void LaunchPlusAddressUserPerceptionSurvey(
       break;
     case plus_addresses::hats::SurveyType::kDeclinedFirstTimeCreate:
       if (!base::FeatureList::IsEnabled(
-          features::kPlusAddressDeclinedFirstTimeCreateSurvey)) {
+              features::kPlusAddressDeclinedFirstTimeCreateSurvey)) {
         return;
       }
       survey_trigger = kHatsSurveyTriggerPlusAddressDeclinedFirstTimeCreate;
@@ -264,7 +266,7 @@ void LaunchPlusAddressUserPerceptionSurvey(
       break;
     case plus_addresses::hats::SurveyType::kCreatedMultiplePlusAddresses:
       if (!base::FeatureList::IsEnabled(
-          features::kPlusAddressUserCreatedMultiplePlusAddressesSurvey)) {
+              features::kPlusAddressUserCreatedMultiplePlusAddressesSurvey)) {
         return;
       }
       survey_trigger =
@@ -276,8 +278,8 @@ void LaunchPlusAddressUserPerceptionSurvey(
       break;
     case plus_addresses::hats::SurveyType::kCreatedPlusAddressViaManualFallback:
       if (!base::FeatureList::IsEnabled(
-          features::
-          kPlusAddressUserCreatedPlusAddressViaManualFallbackSurvey)) {
+              features::
+                  kPlusAddressUserCreatedPlusAddressViaManualFallbackSurvey)) {
         return;
       }
       survey_trigger =
@@ -289,7 +291,7 @@ void LaunchPlusAddressUserPerceptionSurvey(
       break;
     case plus_addresses::hats::SurveyType::kDidChoosePlusAddressOverEmail:
       if (!base::FeatureList::IsEnabled(
-          features::kPlusAddressUserDidChoosePlusAddressOverEmailSurvey)) {
+              features::kPlusAddressUserDidChoosePlusAddressOverEmailSurvey)) {
         return;
       }
       survey_trigger =
@@ -301,7 +303,7 @@ void LaunchPlusAddressUserPerceptionSurvey(
       break;
     case plus_addresses::hats::SurveyType::kDidChooseEmailOverPlusAddress:
       if (!base::FeatureList::IsEnabled(
-          features::kPlusAddressUserDidChooseEmailOverPlusAddressSurvey)) {
+              features::kPlusAddressUserDidChooseEmailOverPlusAddressSurvey)) {
         return;
       }
       survey_trigger =
@@ -313,7 +315,7 @@ void LaunchPlusAddressUserPerceptionSurvey(
       break;
     case plus_addresses::hats::SurveyType::kFilledPlusAddressViaManualFallack:
       if (!base::FeatureList::IsEnabled(
-          features::kPlusAddressFilledPlusAddressViaManualFallbackSurvey)) {
+              features::kPlusAddressFilledPlusAddressViaManualFallbackSurvey)) {
         return;
       }
       survey_trigger =
@@ -407,12 +409,12 @@ VotesUploader& ChromeAutofillClient::GetVotesUploader() {
 }
 
 AutofillOptimizationGuide* ChromeAutofillClient::GetAutofillOptimizationGuide()
-const {
+    const {
   Profile* profile =
       Profile::FromBrowserContext(web_contents()->GetBrowserContext());
   return profile->ShutdownStarted()
-         ? nullptr
-         : AutofillOptimizationGuideFactory::GetForProfile(profile);
+             ? nullptr
+             : AutofillOptimizationGuideFactory::GetForProfile(profile);
 }
 
 FieldClassificationModelHandler*
@@ -429,8 +431,12 @@ ChromeAutofillClient::GetAutofillFieldClassificationModelHandler() {
 FieldClassificationModelHandler*
 ChromeAutofillClient::GetPasswordManagerFieldClassificationModelHandler() {
 #if BUILDFLAG(BUILD_WITH_TFLITE_LIB)
+  ChromePasswordChangeService* password_change_service =
+      PasswordChangeServiceFactory::GetForProfile(GetProfile());
   if (base::FeatureList::IsEnabled(
-          password_manager::features::kPasswordFormClientsideClassifier)) {
+          password_manager::features::kPasswordFormClientsideClassifier) ||
+      (password_change_service &&
+       password_change_service->UserIsActivePasswordChangeUser())) {
     return PasswordFieldClassificationModelHandlerFactory::GetForBrowserContext(
         web_contents()->GetBrowserContext());
   }
@@ -480,7 +486,7 @@ AutofillPlusAddressDelegate* ChromeAutofillClient::GetPlusAddressDelegate() {
   // created without the feature enabled, but being defensive here to avoid
   // surprises.
   if (!base::FeatureList::IsEnabled(
-      plus_addresses::features::kPlusAddressesEnabled)) {
+          plus_addresses::features::kPlusAddressesEnabled)) {
     return nullptr;
   }
   return PlusAddressServiceFactory::GetForBrowserContext(
@@ -494,6 +500,12 @@ PasswordManagerDelegate* ChromeAutofillClient::GetPasswordManagerDelegate(
   return client ? client->GetAutofillDelegate(field_id) : nullptr;
 }
 
+OtpSuggestionDelegate* ChromeAutofillClient::GetOtpSuggestionDelegate() {
+  ChromePasswordManagerClient* client =
+      ChromePasswordManagerClient::FromWebContents(web_contents());
+  return client ? client->GetOtpManager() : nullptr;
+}
+
 void ChromeAutofillClient::GetAiPageContent(GetAiPageContentCallback callback) {
   blink::mojom::AIPageContentOptionsPtr extraction_options =
       optimization_guide::DefaultAIPageContentOptions();
@@ -501,9 +513,9 @@ void ChromeAutofillClient::GetAiPageContent(GetAiPageContentCallback callback) {
   optimization_guide::GetAIPageContent(
       web_contents(), std::move(extraction_options),
       base::BindOnce([](std::optional<optimization_guide::AIPageContentResult>
-                        result)
+                            result)
                          -> std::optional<
-              optimization_guide::proto::AnnotatedPageContent> {
+                             optimization_guide::proto::AnnotatedPageContent> {
         if (!result) {
           return std::nullopt;
         }
@@ -535,7 +547,7 @@ AutofillAiModelExecutor* ChromeAutofillClient::GetAutofillAiModelExecutor() {
 IdentityCredentialDelegate*
 ChromeAutofillClient::GetIdentityCredentialDelegate() {
   if (!(base::FeatureList::IsEnabled(::features::kFedCmDelegation) ||
-      base::FeatureList::IsEnabled(::features::kFedCmAutofill))) {
+        base::FeatureList::IsEnabled(::features::kFedCmAutofill))) {
     return nullptr;
   }
 
@@ -595,14 +607,14 @@ signin::IdentityManager* ChromeAutofillClient::GetIdentityManager() {
 }
 
 const signin::IdentityManager* ChromeAutofillClient::GetIdentityManager()
-const {
+    const {
   Profile* profile =
       Profile::FromBrowserContext(web_contents()->GetBrowserContext());
   return IdentityManagerFactory::GetForProfile(profile->GetOriginalProfile());
 }
 
 const GoogleGroupsManager* ChromeAutofillClient::GetGoogleGroupsManager()
-const {
+    const {
   // Always return the GoogleGroupsManager of the original profile to allow us
   // to do per-profile feature checks.
   Profile* profile =
@@ -617,7 +629,7 @@ FormDataImporter* ChromeAutofillClient::GetFormDataImporter() {
         Profile::FromBrowserContext(web_contents()->GetBrowserContext());
     form_data_importer_ = std::make_unique<FormDataImporter>(
         this, HistoryServiceFactory::GetForProfile(
-            profile, ServiceAccessType::EXPLICIT_ACCESS));
+                  profile, ServiceAccessType::EXPLICIT_ACCESS));
   }
   return form_data_importer_.get();
 }
@@ -650,7 +662,7 @@ const GURL& ChromeAutofillClient::GetLastCommittedPrimaryMainFrameURL() const {
 }
 
 url::Origin ChromeAutofillClient::GetLastCommittedPrimaryMainFrameOrigin()
-const {
+    const {
   return web_contents()->GetPrimaryMainFrame()->GetLastCommittedOrigin();
 }
 
@@ -698,12 +710,12 @@ GeoIpCountryCode ChromeAutofillClient::GetVariationConfigCountryCode() const {
   // case.
   return GeoIpCountryCode(
       variation_service
-      ? base::ToUpperASCII(variation_service->GetLatestCountry())
-      : std::string());
+          ? base::ToUpperASCII(variation_service->GetLatestCountry())
+          : std::string());
 }
 
 profile_metrics::BrowserProfileType ChromeAutofillClient::GetProfileType()
-const {
+    const {
   Profile* profile = GetProfile();
   // Profile can only be null in tests, therefore it is safe to always return
   // |kRegular| when it does not exist.
@@ -757,7 +769,9 @@ void ChromeAutofillClient::ShowAutofillSettings(
         CHECK(base::FeatureList::IsEnabled(
             features::kAutofillEnableLoyaltyCardsFilling));
         static constexpr std::string_view kValuableManagementUrl =
-                                              "https://wallet.google.com/wallet/passes";
+            "https://wallet.google.com/"
+            "wallet?p=loyalty&utm_source=chrome&utm_medium=redirect&utm_"
+            "campaign=loyalty";
         ShowSingletonTab(browser, GURL(kValuableManagementUrl));
         return;
       default:
@@ -779,6 +793,7 @@ void ChromeAutofillClient::ConfirmSaveAddressProfile(
 #else
   AddressBubblesController::SetUpAndShowSaveOrUpdateAddressBubble(
       web_contents(), profile, original_profile, is_migration_to_account,
+      !GetPersonalDataManager().address_data_manager().GetProfiles().empty(),
       std::move(callback));
 #endif
 }
@@ -818,7 +833,7 @@ void ChromeAutofillClient::ShowPlusAddressEmailOverrideNotification(
     return;
   }
   if (ToastController* const controller =
-      browser->browser_window_features()->toast_controller()) {
+          browser->browser_window_features()->toast_controller()) {
     ToastParams params(ToastId::kPlusAddressOverride);
     params.menu_model = std::make_unique<plus_addresses::PlusAddressMenuModel>(
         base::UTF8ToUTF16(
@@ -841,7 +856,7 @@ void ChromeAutofillClient::UpdateAutofillDataListValues(
 }
 
 base::span<const Suggestion> ChromeAutofillClient::GetAutofillSuggestions()
-const {
+    const {
   return suggestion_controller_ ? suggestion_controller_->GetSuggestions()
                                 : base::span<const Suggestion>();
 }
@@ -849,8 +864,8 @@ const {
 std::optional<AutofillClient::PopupScreenLocation>
 ChromeAutofillClient::GetPopupScreenLocation() const {
   return suggestion_controller_
-         ? suggestion_controller_->GetPopupScreenLocation()
-         : std::make_optional<AutofillClient::PopupScreenLocation>();
+             ? suggestion_controller_->GetPopupScreenLocation()
+             : std::make_optional<AutofillClient::PopupScreenLocation>();
 }
 
 std::optional<AutofillClient::SuggestionUiSessionId>
@@ -919,6 +934,19 @@ void ChromeAutofillClient::TriggerUserPerceptionOfAutofillSurvey(
 #endif
 }
 
+void ChromeAutofillClient::TriggerDeclinedSaveAddressReasonSurvey() {
+#if !BUILDFLAG(IS_ANDROID)
+  Profile* profile =
+      Profile::FromBrowserContext(web_contents()->GetBrowserContext());
+  auto* hats_service =
+      HatsServiceFactory::GetForProfile(profile, /*create_if_necessary=*/true);
+  CHECK(hats_service);
+  hats_service->LaunchDelayedSurveyForWebContents(
+      kHatsSurveyTriggerAutofillAddressUserDeclinedSave, web_contents(),
+      /*timeout_ms=*/5000);
+#endif
+}
+
 bool ChromeAutofillClient::IsAutofillEnabled() const {
   return IsAutofillProfileEnabled() || IsAutofillPaymentMethodsEnabled();
 }
@@ -939,8 +967,8 @@ bool ChromeAutofillClient::IsPasswordManagerEnabled() const {
   password_manager::PasswordManagerSettingsService* settings_service =
       PasswordManagerSettingsServiceFactory::GetForProfile(GetProfile());
   return settings_service &&
-      settings_service->IsSettingEnabled(
-          password_manager::PasswordManagerSetting::kOfferToSavePasswords);
+         settings_service->IsSettingEnabled(
+             password_manager::PasswordManagerSetting::kOfferToSavePasswords);
 }
 
 void ChromeAutofillClient::DidFillForm(AutofillTriggerSource trigger_source,
@@ -948,8 +976,7 @@ void ChromeAutofillClient::DidFillForm(AutofillTriggerSource trigger_source,
 #if BUILDFLAG(IS_ANDROID)
   if (trigger_source == AutofillTriggerSource::kTouchToFillCreditCard &&
       !is_refill) {
-    // TODO(crbug.com/40900538): Test that the message was announced.
-    autofill::AnnounceTextForA11y(
+    autofill::AutofillAccessibilityHelper::GetInstance()->AnnounceTextForA11y(
         l10n_util::GetStringUTF16(IDS_AUTOFILL_A11Y_ANNOUNCE_FILLED_FORM));
   }
 #endif  // BUILDFLAG(IS_ANDROID)
@@ -971,7 +998,7 @@ bool ChromeAutofillClient::IsContextSecure() const {
   // TODO(crbug.com/41307071): Once passive mixed content and legacy TLS are
   // less common, just use IsSslCertificateValid().
   return entry && entry->GetURL().SchemeIsCryptographic() &&
-      security_level != security_state::DANGEROUS;
+         security_level != security_state::DANGEROUS;
 }
 
 LogManager* ChromeAutofillClient::GetCurrentLogManager() {
@@ -1085,7 +1112,7 @@ ChromeAutofillClient::ChromeAutofillClient(content::WebContents* web_contents)
     : ContentAutofillClient(web_contents),
       content::WebContentsObserver(web_contents),
 #if !BUILDFLAG(IS_ANDROID)
-    autofill_ai_manager_(
+      autofill_ai_manager_(
           this,
           StrikeDatabaseFactory::GetForProfile(
               Profile::FromBrowserContext(web_contents->GetBrowserContext()))),
@@ -1150,7 +1177,7 @@ std::unique_ptr<AutofillManager> ChromeAutofillClient::CreateManager(
 credential_management::ContentCredentialManager*
 ChromeAutofillClient::GetContentCredentialManager() {
   if (auto* chrome_password_manager_client =
-      ChromePasswordManagerClient::FromWebContents(web_contents())) {
+          ChromePasswordManagerClient::FromWebContents(web_contents())) {
     return chrome_password_manager_client->GetContentCredentialManager();
   }
   return nullptr;
@@ -1162,7 +1189,7 @@ void ChromeAutofillClient::set_test_addresses(
 }
 
 base::span<const AutofillProfile> ChromeAutofillClient::GetTestAddresses()
-const {
+    const {
   return test_addresses_;
 }
 
@@ -1182,7 +1209,7 @@ void ChromeAutofillClient::TriggerPlusAddressUserPerceptionSurvey(
   LaunchPlusAddressUserPerceptionSurvey(
       web_contents(),
       HatsServiceFactory::GetForProfile(profile,
-          /*create_if_necessary=*/true),
+                                        /*create_if_necessary=*/true),
       delegate, survey_type);
 }
 

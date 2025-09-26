@@ -37,6 +37,12 @@
           },
           "browser.gemini_settings": {
             "value": 0
+          },
+          "lens.policy.lens_overlay_settings": {
+            "value": 0
+          },
+          "optimization_guide.model_execution.password_change_submission_enterprise_policy_allowed": {
+            "value": 0
           }
         }
       },
@@ -71,6 +77,12 @@
           },
           "browser.gemini_settings": {
             "value": 0
+          },
+          "lens.policy.lens_overlay_settings": {
+            "value": 0
+          },
+          "optimization_guide.model_execution.password_change_submission_enterprise_policy_allowed": {
+            "value": 1
           }
         }
       },
@@ -105,6 +117,12 @@
           },
           "browser.gemini_settings": {
             "value": 1
+          },
+          "lens.policy.lens_overlay_settings": {
+            "value": 1
+          },
+          "optimization_guide.model_execution.password_change_submission_enterprise_policy_allowed": {
+            "value": 2
           }
         }
       },
@@ -137,6 +155,12 @@
           },
           "browser.gemini_settings": {
             "default_value": 0
+          },
+          "lens.policy.lens_overlay_settings": {
+            "default_value": 0
+          },
+          "optimization_guide.model_execution.password_change_submission_enterprise_policy_allowed": {
+            "default_value": 0
           }
         }
       },
@@ -150,7 +174,9 @@
           "HistorySearchSettings": 2,
           "TabCompareSettings": 2,
           "GeminiSettings": 1,
-          "AIModeSettings": 1
+          "AIModeSettings": 1,
+          "LensOverlaySettings": 1,
+          "AutomatedPasswordChangeSettings": 2
         },
         "prefs": {
           "devtools.gen_ai_settings": {
@@ -176,6 +202,12 @@
           },
           "omnibox.ai_mode_settings": {
             "value": 1
+          },
+          "lens.policy.lens_overlay_settings": {
+            "value": 1
+          },
+          "optimization_guide.model_execution.password_change_submission_enterprise_policy_allowed": {
+            "value": 2
           }
         }
       }
@@ -241,6 +273,12 @@
           },
           "browser.gemini_settings": {
             "value": 0
+          },
+          "lens.policy.lens_overlay_settings": {
+            "value": 0
+          },
+          "optimization_guide.model_execution.password_change_submission_enterprise_policy_allowed": {
+            "value": 0
           }
         }
       },
@@ -294,6 +332,12 @@
           },
           "omnibox.ai_mode_settings": {
             "value": 0
+          },
+          "lens.policy.lens_overlay_settings": {
+            "value": 0
+          },
+          "optimization_guide.model_execution.password_change_submission_enterprise_policy_allowed": {
+            "value": 1
           }
         }
       },
@@ -314,7 +358,9 @@
           "HistorySearchSettings": 2,
           "TabCompareSettings": 2,
           "GeminiSettings": 1,
-          "AIModeSettings": 1
+          "AIModeSettings": 1,
+          "LensOverlaySettings": 1,
+          "AutomatedPasswordChangeSettings": 2
         },
         "prefs": {
           "ash.gen_ai_photo_editing_settings": {
@@ -364,6 +410,12 @@
           },
           "omnibox.ai_mode_settings": {
             "value": 1
+          },
+          "lens.policy.lens_overlay_settings": {
+            "value": 1
+          },
+          "optimization_guide.model_execution.password_change_submission_enterprise_policy_allowed": {
+            "value": 2
           }
         }
       }

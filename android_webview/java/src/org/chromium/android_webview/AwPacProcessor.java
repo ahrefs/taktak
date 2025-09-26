@@ -10,9 +10,6 @@ import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkRequest;
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
 
 import org.jni_zero.JNINamespace;
 import org.jni_zero.JniType;
@@ -29,7 +26,6 @@ import java.util.List;
  * instance.
  */
 @JNINamespace("android_webview")
-@RequiresApi(Build.VERSION_CODES.P)
 // TODO(amalova): remove UsedByReflection
 @UsedByReflection("Android")
 public class AwPacProcessor {
@@ -102,17 +98,17 @@ public class AwPacProcessor {
     @UsedByReflection("Android")
     public void destroy() {
         unregisterNetworkCallback();
-        AwPacProcessorJni.get().destroyNative(mNativePacProcessor, this);
+        AwPacProcessorJni.get().destroyNative(mNativePacProcessor);
     }
 
     @UsedByReflection("Android")
     public boolean setProxyScript(String script) {
-        return AwPacProcessorJni.get().setProxyScript(mNativePacProcessor, this, script);
+        return AwPacProcessorJni.get().setProxyScript(mNativePacProcessor, script);
     }
 
     @UsedByReflection("Android")
     public String makeProxyRequest(String url) {
-        return AwPacProcessorJni.get().makeProxyRequest(mNativePacProcessor, this, url);
+        return AwPacProcessorJni.get().makeProxyRequest(mNativePacProcessor, url);
     }
 
     @UsedByReflection("Android")
@@ -141,14 +137,11 @@ public class AwPacProcessor {
 
         long createNativePacProcessor();
 
-        boolean setProxyScript(
-                long nativeAwPacProcessor,
-                AwPacProcessor caller,
-                @JniType("std::string") String script);
+        boolean setProxyScript(long nativeAwPacProcessor, @JniType("std::string") String script);
 
-        String makeProxyRequest(long nativeAwPacProcessor, AwPacProcessor caller, String url);
+        String makeProxyRequest(long nativeAwPacProcessor, String url);
 
-        void destroyNative(long nativeAwPacProcessor, AwPacProcessor caller);
+        void destroyNative(long nativeAwPacProcessor);
 
         void setNetworkAndLinkAddresses(
                 long nativeAwPacProcessor,
